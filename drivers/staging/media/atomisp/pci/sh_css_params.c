@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "gdc_device.h"		/* gdc_lut_store(), ... */
-#समावेश "isp.h"			/* ISP_VEC_ELEMBITS */
-#समावेश "vamem.h"
-#अगर !defined(HAS_NO_HMEM)
-#अगर_अघोषित __INLINE_HMEM__
-#घोषणा __INLINE_HMEM__
-#पूर्ण_अगर
-#समावेश "hmem.h"
-#पूर्ण_अगर /* !defined(HAS_NO_HMEM) */
-#घोषणा IA_CSS_INCLUDE_PARAMETERS
-#घोषणा IA_CSS_INCLUDE_ACC_PARAMETERS
+#include "gdc_device.h"		/* gdc_lut_store(), ... */
+#include "isp.h"			/* ISP_VEC_ELEMBITS */
+#include "vamem.h"
+#if !defined(HAS_NO_HMEM)
+#ifndef __INLINE_HMEM__
+#define __INLINE_HMEM__
+#endif
+#include "hmem.h"
+#endif /* !defined(HAS_NO_HMEM) */
+#define IA_CSS_INCLUDE_PARAMETERS
+#define IA_CSS_INCLUDE_ACC_PARAMETERS
 
-#समावेश "hmm.h"
-#समावेश "sh_css_params.h"
-#समावेश "ia_css_queue.h"
-#समावेश "sw_event_global.h"		/* Event IDs */
+#include "hmm.h"
+#include "sh_css_params.h"
+#include "ia_css_queue.h"
+#include "sw_event_global.h"		/* Event IDs */
 
-#समावेश "platform_support.h"
-#समावेश "assert_support.h"
-#समावेश "misc_support.h"	/* NOT_USED */
-#समावेश "math_support.h"	/* max(), min()  EVEN_FLOOR()*/
+#include "platform_support.h"
+#include "assert_support.h"
+#include "misc_support.h"	/* NOT_USED */
+#include "math_support.h"	/* max(), min()  EVEN_FLOOR()*/
 
-#समावेश "ia_css_stream.h"
-#समावेश "sh_css_params_internal.h"
-#समावेश "sh_css_param_shading.h"
-#समावेश "sh_css_param_dvs.h"
-#समावेश "ia_css_refcount.h"
-#समावेश "sh_css_internal.h"
-#समावेश "ia_css_control.h"
-#समावेश "ia_css_shading.h"
-#समावेश "sh_css_defs.h"
-#समावेश "sh_css_sp.h"
-#समावेश "ia_css_pipeline.h"
-#समावेश "ia_css_debug.h"
+#include "ia_css_stream.h"
+#include "sh_css_params_internal.h"
+#include "sh_css_param_shading.h"
+#include "sh_css_param_dvs.h"
+#include "ia_css_refcount.h"
+#include "sh_css_internal.h"
+#include "ia_css_control.h"
+#include "ia_css_shading.h"
+#include "sh_css_defs.h"
+#include "sh_css_sp.h"
+#include "ia_css_pipeline.h"
+#include "ia_css_debug.h"
 
-#समावेश "ia_css_isp_param.h"
-#समावेश "ia_css_isp_params.h"
-#समावेश "ia_css_mipi.h"
-#समावेश "ia_css_morph.h"
-#समावेश "ia_css_host_data.h"
-#समावेश "ia_css_pipe.h"
-#समावेश "ia_css_pipe_binarydesc.h"
+#include "ia_css_isp_param.h"
+#include "ia_css_isp_params.h"
+#include "ia_css_mipi.h"
+#include "ia_css_morph.h"
+#include "ia_css_host_data.h"
+#include "ia_css_pipe.h"
+#include "ia_css_pipe_binarydesc.h"
 
-/* Include all kernel host पूर्णांकerfaces क्रम ISP1 */
+/* Include all kernel host interfaces for ISP1 */
 
-#समावेश "anr/anr_1.0/ia_css_anr.host.h"
-#समावेश "cnr/cnr_1.0/ia_css_cnr.host.h"
-#समावेश "csc/csc_1.0/ia_css_csc.host.h"
-#समावेश "de/de_1.0/ia_css_de.host.h"
-#समावेश "dp/dp_1.0/ia_css_dp.host.h"
-#समावेश "bnr/bnr_1.0/ia_css_bnr.host.h"
-#समावेश "dvs/dvs_1.0/ia_css_dvs.host.h"
-#समावेश "fpn/fpn_1.0/ia_css_fpn.host.h"
-#समावेश "gc/gc_1.0/ia_css_gc.host.h"
-#समावेश "macc/macc_1.0/ia_css_macc.host.h"
-#समावेश "ctc/ctc_1.0/ia_css_ctc.host.h"
-#समावेश "ob/ob_1.0/ia_css_ob.host.h"
-#समावेश "raw/raw_1.0/ia_css_raw.host.h"
-#समावेश "fixedbds/fixedbds_1.0/ia_css_fixedbds_param.h"
-#समावेश "s3a/s3a_1.0/ia_css_s3a.host.h"
-#समावेश "sc/sc_1.0/ia_css_sc.host.h"
-#समावेश "sdis/sdis_1.0/ia_css_sdis.host.h"
-#समावेश "tnr/tnr_1.0/ia_css_tnr.host.h"
-#समावेश "uds/uds_1.0/ia_css_uds_param.h"
-#समावेश "wb/wb_1.0/ia_css_wb.host.h"
-#समावेश "ynr/ynr_1.0/ia_css_ynr.host.h"
-#समावेश "xnr/xnr_1.0/ia_css_xnr.host.h"
+#include "anr/anr_1.0/ia_css_anr.host.h"
+#include "cnr/cnr_1.0/ia_css_cnr.host.h"
+#include "csc/csc_1.0/ia_css_csc.host.h"
+#include "de/de_1.0/ia_css_de.host.h"
+#include "dp/dp_1.0/ia_css_dp.host.h"
+#include "bnr/bnr_1.0/ia_css_bnr.host.h"
+#include "dvs/dvs_1.0/ia_css_dvs.host.h"
+#include "fpn/fpn_1.0/ia_css_fpn.host.h"
+#include "gc/gc_1.0/ia_css_gc.host.h"
+#include "macc/macc_1.0/ia_css_macc.host.h"
+#include "ctc/ctc_1.0/ia_css_ctc.host.h"
+#include "ob/ob_1.0/ia_css_ob.host.h"
+#include "raw/raw_1.0/ia_css_raw.host.h"
+#include "fixedbds/fixedbds_1.0/ia_css_fixedbds_param.h"
+#include "s3a/s3a_1.0/ia_css_s3a.host.h"
+#include "sc/sc_1.0/ia_css_sc.host.h"
+#include "sdis/sdis_1.0/ia_css_sdis.host.h"
+#include "tnr/tnr_1.0/ia_css_tnr.host.h"
+#include "uds/uds_1.0/ia_css_uds_param.h"
+#include "wb/wb_1.0/ia_css_wb.host.h"
+#include "ynr/ynr_1.0/ia_css_ynr.host.h"
+#include "xnr/xnr_1.0/ia_css_xnr.host.h"
 
-/* Include additional kernel host पूर्णांकerfaces क्रम ISP2 */
+/* Include additional kernel host interfaces for ISP2 */
 
-#समावेश "aa/aa_2/ia_css_aa2.host.h"
-#समावेश "anr/anr_2/ia_css_anr2.host.h"
-#समावेश "bh/bh_2/ia_css_bh.host.h"
-#समावेश "cnr/cnr_2/ia_css_cnr2.host.h"
-#समावेश "ctc/ctc1_5/ia_css_ctc1_5.host.h"
-#समावेश "de/de_2/ia_css_de2.host.h"
-#समावेश "gc/gc_2/ia_css_gc2.host.h"
-#समावेश "sdis/sdis_2/ia_css_sdis2.host.h"
-#समावेश "ynr/ynr_2/ia_css_ynr2.host.h"
-#समावेश "fc/fc_1.0/ia_css_formats.host.h"
+#include "aa/aa_2/ia_css_aa2.host.h"
+#include "anr/anr_2/ia_css_anr2.host.h"
+#include "bh/bh_2/ia_css_bh.host.h"
+#include "cnr/cnr_2/ia_css_cnr2.host.h"
+#include "ctc/ctc1_5/ia_css_ctc1_5.host.h"
+#include "de/de_2/ia_css_de2.host.h"
+#include "gc/gc_2/ia_css_gc2.host.h"
+#include "sdis/sdis_2/ia_css_sdis2.host.h"
+#include "ynr/ynr_2/ia_css_ynr2.host.h"
+#include "fc/fc_1.0/ia_css_formats.host.h"
 
-#समावेश "xnr/xnr_3.0/ia_css_xnr3.host.h"
+#include "xnr/xnr_3.0/ia_css_xnr3.host.h"
 
-#अगर defined(HAS_OUTPUT_SYSTEM)
-#समावेश <components/output_प्रणाली/sc_output_प्रणाली_1.0/host/output_प्रणाली.host.h>
-#पूर्ण_अगर
+#if defined(HAS_OUTPUT_SYSTEM)
+#include <components/output_system/sc_output_system_1.0/host/output_system.host.h>
+#endif
 
-#समावेश "sh_css_frac.h"
-#समावेश "ia_css_bufq.h"
+#include "sh_css_frac.h"
+#include "ia_css_bufq.h"
 
-#घोषणा FPNTBL_BYTES(binary) \
-	(माप(अक्षर) * (binary)->in_frame_info.res.height * \
+#define FPNTBL_BYTES(binary) \
+	(sizeof(char) * (binary)->in_frame_info.res.height * \
 	 (binary)->in_frame_info.padded_width)
 
-#घोषणा ISP2400_SCTBL_BYTES(binary) \
-	(माप(अचिन्हित लघु) * (binary)->sctbl_height * \
+#define ISP2400_SCTBL_BYTES(binary) \
+	(sizeof(unsigned short) * (binary)->sctbl_height * \
 	 (binary)->sctbl_aligned_width_per_color * IA_CSS_SC_NUM_COLORS)
 
-#घोषणा ISP2401_SCTBL_BYTES(binary) \
-	(माप(अचिन्हित लघु) * max((binary)->sctbl_height, (binary)->sctbl_legacy_height) * \
+#define ISP2401_SCTBL_BYTES(binary) \
+	(sizeof(unsigned short) * max((binary)->sctbl_height, (binary)->sctbl_legacy_height) * \
 			/* height should be the larger height between new api and legacy api */ \
 	 (binary)->sctbl_aligned_width_per_color * IA_CSS_SC_NUM_COLORS)
 
-#घोषणा MORPH_PLANE_BYTES(binary) \
+#define MORPH_PLANE_BYTES(binary) \
 	(SH_CSS_MORPH_TABLE_ELEM_BYTES * (binary)->morph_tbl_aligned_width * \
 	 (binary)->morph_tbl_height)
 
-/* We keep a second copy of the ptr काष्ठा क्रम the SP to access.
+/* We keep a second copy of the ptr struct for the SP to access.
    Again, this would not be necessary on the chip. */
-अटल ia_css_ptr sp_ddr_ptrs;
+static ia_css_ptr sp_ddr_ptrs;
 
 /* sp group address on DDR */
-अटल ia_css_ptr xmem_sp_group_ptrs;
+static ia_css_ptr xmem_sp_group_ptrs;
 
-अटल ia_css_ptr xmem_sp_stage_ptrs[IA_CSS_PIPE_ID_NUM]
+static ia_css_ptr xmem_sp_stage_ptrs[IA_CSS_PIPE_ID_NUM]
 [SH_CSS_MAX_STAGES];
-अटल ia_css_ptr xmem_isp_stage_ptrs[IA_CSS_PIPE_ID_NUM]
+static ia_css_ptr xmem_isp_stage_ptrs[IA_CSS_PIPE_ID_NUM]
 [SH_CSS_MAX_STAGES];
 
-अटल ia_css_ptr शेष_gdc_lut;
-अटल पूर्णांक पूर्णांकerleaved_lut_temp[4][HRT_GDC_N];
+static ia_css_ptr default_gdc_lut;
+static int interleaved_lut_temp[4][HRT_GDC_N];
 
 /* END DO NOT MOVE INTO VIMALS_WORLD */
 
-/* Digital Zoom lookup table. See करोcumentation क्रम more details about the
+/* Digital Zoom lookup table. See documentation for more details about the
  * contents of this table.
  */
-अटल स्थिर पूर्णांक zoom_table[4][HRT_GDC_N] = अणु
-	अणु
+static const int zoom_table[4][HRT_GDC_N] = {
+	{
 		0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
@@ -271,8 +270,8 @@
 		  -3 << 4,  -3 << 4,  -3 << 4,  -3 << 4,  -3 << 4,  -3 << 4,  -3 << 4,  -3 << 4,
 		  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,
 		  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4
-	पूर्ण,
-	अणु
+	},
+	{
 		0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,
@@ -401,8 +400,8 @@
 		  255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4,
 		  255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4,
 		  255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4
-	पूर्ण,
-	अणु
+	},
+	{
 		256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4,
 		    256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4, 256 << 4,
 		    255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4, 255 << 4,
@@ -531,8 +530,8 @@
 		    4 << 4,   4 << 4,   4 << 4,   4 << 4,   4 << 4,   4 << 4,   4 << 4,   4 << 4,
 		    2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,
 		    2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4,   2 << 4
-	पूर्ण,
-	अणु
+	},
+	{
 		0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,  -1 << 4,
@@ -661,109 +660,109 @@
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,
 		  0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4,   0 << 4
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा ia_css_dz_config शेष_dz_config = अणु
+static const struct ia_css_dz_config default_dz_config = {
 	HRT_GDC_N,
 	HRT_GDC_N,
-	अणु
+	{
 		\
-		अणु0, 0पूर्ण, \
-		अणु0, 0पूर्ण, \
-	पूर्ण
-पूर्ण;
+		{0, 0}, \
+		{0, 0}, \
+	}
+};
 
-अटल स्थिर काष्ठा ia_css_vector शेष_motion_config = अणु
+static const struct ia_css_vector default_motion_config = {
 	0,
 	0
-पूर्ण;
+};
 
 /* ------ deprecated(bz675) : from ------ */
-अटल स्थिर काष्ठा ia_css_shading_settings शेष_shading_settings = अणु
+static const struct ia_css_shading_settings default_shading_settings = {
 	1	/* enable shading table conversion in the css
 		(This matches the legacy way.) */
-पूर्ण;
+};
 
 /* ------ deprecated(bz675) : to ------ */
 
-काष्ठा ia_css_isp_skc_dvs_statistics अणु
+struct ia_css_isp_skc_dvs_statistics {
 	ia_css_ptr p_data;
-पूर्ण;
+};
 
-अटल पूर्णांक
+static int
 ref_sh_css_ddr_address_map(
-    काष्ठा sh_css_ddr_address_map *map,
-    काष्ठा sh_css_ddr_address_map *out);
+    struct sh_css_ddr_address_map *map,
+    struct sh_css_ddr_address_map *out);
 
-अटल पूर्णांक
-ग_लिखो_ia_css_isp_parameter_set_info_to_ddr(
-    काष्ठा ia_css_isp_parameter_set_info *me,
+static int
+write_ia_css_isp_parameter_set_info_to_ddr(
+    struct ia_css_isp_parameter_set_info *me,
     ia_css_ptr *out);
 
-अटल पूर्णांक
-मुक्त_ia_css_isp_parameter_set_info(ia_css_ptr ptr);
+static int
+free_ia_css_isp_parameter_set_info(ia_css_ptr ptr);
 
-अटल पूर्णांक
-sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
-    काष्ठा ia_css_pipe *pipe,
-    अचिन्हित पूर्णांक pipe_id,
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_pipeline_stage *stage,
-    काष्ठा sh_css_ddr_address_map *ddr_map,
-    काष्ठा sh_css_ddr_address_map_size *ddr_map_size);
+static int
+sh_css_params_write_to_ddr_internal(
+    struct ia_css_pipe *pipe,
+    unsigned int pipe_id,
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_pipeline_stage *stage,
+    struct sh_css_ddr_address_map *ddr_map,
+    struct sh_css_ddr_address_map_size *ddr_map_size);
 
-अटल पूर्णांक
-sh_css_create_isp_params(काष्ठा ia_css_stream *stream,
-			 काष्ठा ia_css_isp_parameters **isp_params_out);
+static int
+sh_css_create_isp_params(struct ia_css_stream *stream,
+			 struct ia_css_isp_parameters **isp_params_out);
 
-अटल bool
-sh_css_init_isp_params_from_global(काष्ठा ia_css_stream *stream,
-				   काष्ठा ia_css_isp_parameters *params,
-				   bool use_शेष_config,
-				   काष्ठा ia_css_pipe *pipe_in);
+static bool
+sh_css_init_isp_params_from_global(struct ia_css_stream *stream,
+				   struct ia_css_isp_parameters *params,
+				   bool use_default_config,
+				   struct ia_css_pipe *pipe_in);
 
-अटल पूर्णांक
-sh_css_init_isp_params_from_config(काष्ठा ia_css_pipe *pipe,
-				   काष्ठा ia_css_isp_parameters *params,
-				   स्थिर काष्ठा ia_css_isp_config *config,
-				   काष्ठा ia_css_pipe *pipe_in);
+static int
+sh_css_init_isp_params_from_config(struct ia_css_pipe *pipe,
+				   struct ia_css_isp_parameters *params,
+				   const struct ia_css_isp_config *config,
+				   struct ia_css_pipe *pipe_in);
 
-अटल पूर्णांक
+static int
 sh_css_set_global_isp_config_on_pipe(
-    काष्ठा ia_css_pipe *curr_pipe,
-    स्थिर काष्ठा ia_css_isp_config *config,
-    काष्ठा ia_css_pipe *pipe);
+    struct ia_css_pipe *curr_pipe,
+    const struct ia_css_isp_config *config,
+    struct ia_css_pipe *pipe);
 
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
-अटल पूर्णांक
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+static int
 sh_css_set_per_frame_isp_config_on_pipe(
-    काष्ठा ia_css_stream *stream,
-    स्थिर काष्ठा ia_css_isp_config *config,
-    काष्ठा ia_css_pipe *pipe);
-#पूर्ण_अगर
+    struct ia_css_stream *stream,
+    const struct ia_css_isp_config *config,
+    struct ia_css_pipe *pipe);
+#endif
 
-अटल पूर्णांक
+static int
 sh_css_update_uds_and_crop_info_based_on_zoom_region(
-    स्थिर काष्ठा ia_css_binary_info *info,
-    स्थिर काष्ठा ia_css_frame_info *in_frame_info,
-    स्थिर काष्ठा ia_css_frame_info *out_frame_info,
-    स्थिर काष्ठा ia_css_resolution *dvs_env,
-    स्थिर काष्ठा ia_css_dz_config *zoom,
-    स्थिर काष्ठा ia_css_vector *motion_vector,
-    काष्ठा sh_css_uds_info *uds,		/* out */
-    काष्ठा sh_css_crop_pos *sp_out_crop_pos,	/* out */
-    काष्ठा ia_css_resolution pipe_in_res,
+    const struct ia_css_binary_info *info,
+    const struct ia_css_frame_info *in_frame_info,
+    const struct ia_css_frame_info *out_frame_info,
+    const struct ia_css_resolution *dvs_env,
+    const struct ia_css_dz_config *zoom,
+    const struct ia_css_vector *motion_vector,
+    struct sh_css_uds_info *uds,		/* out */
+    struct sh_css_crop_pos *sp_out_crop_pos,	/* out */
+    struct ia_css_resolution pipe_in_res,
     bool enable_zoom);
 
 ia_css_ptr
-sh_css_params_ddr_address_map(व्योम)
-अणु
-	वापस sp_ddr_ptrs;
-पूर्ण
+sh_css_params_ddr_address_map(void)
+{
+	return sp_ddr_ptrs;
+}
 
 /* ****************************************************
- * Each coefficient is stored as 7bits to fit 2 of them पूर्णांकo one
+ * Each coefficient is stored as 7bits to fit 2 of them into one
  * ISP vector element, so we will store 4 coefficents on every
  * memory word (32bits)
  *
@@ -777,176 +776,176 @@ sh_css_params_ddr_address_map(व्योम)
  *
  * ***************************************************
  */
-अटल काष्ठा ia_css_host_data *
-convert_allocate_fpntbl(काष्ठा ia_css_isp_parameters *params)
-अणु
-	अचिन्हित पूर्णांक i, j;
-	लघु *data_ptr;
-	काष्ठा ia_css_host_data *me;
-	अचिन्हित पूर्णांक isp_क्रमmat_data_size;
-	u32 *isp_क्रमmat_data_ptr;
+static struct ia_css_host_data *
+convert_allocate_fpntbl(struct ia_css_isp_parameters *params)
+{
+	unsigned int i, j;
+	short *data_ptr;
+	struct ia_css_host_data *me;
+	unsigned int isp_format_data_size;
+	u32 *isp_format_data_ptr;
 
-	निश्चित(params);
+	assert(params);
 
 	data_ptr = params->fpn_config.data;
-	isp_क्रमmat_data_size = params->fpn_config.height * params->fpn_config.width *
-			       माप(uपूर्णांक32_t);
+	isp_format_data_size = params->fpn_config.height * params->fpn_config.width *
+			       sizeof(uint32_t);
 
-	me = ia_css_host_data_allocate(isp_क्रमmat_data_size);
+	me = ia_css_host_data_allocate(isp_format_data_size);
 
-	अगर (!me)
-		वापस शून्य;
+	if (!me)
+		return NULL;
 
-	isp_क्रमmat_data_ptr = (uपूर्णांक32_t *)me->address;
+	isp_format_data_ptr = (uint32_t *)me->address;
 
-	क्रम (i = 0; i < params->fpn_config.height; i++) अणु
-		क्रम (j = 0;
+	for (i = 0; i < params->fpn_config.height; i++) {
+		for (j = 0;
 		     j < params->fpn_config.width;
-		     j += 4, data_ptr += 4, isp_क्रमmat_data_ptr++) अणु
-			पूर्णांक data = data_ptr[0] << 0 |
+		     j += 4, data_ptr += 4, isp_format_data_ptr++) {
+			int data = data_ptr[0] << 0 |
 				   data_ptr[1] << 7 |
 				   data_ptr[2] << 16 |
 				   data_ptr[3] << 23;
-			*isp_क्रमmat_data_ptr = data;
-		पूर्ण
-	पूर्ण
-	वापस me;
-पूर्ण
+			*isp_format_data_ptr = data;
+		}
+	}
+	return me;
+}
 
-अटल पूर्णांक
-store_fpntbl(काष्ठा ia_css_isp_parameters *params, ia_css_ptr ptr) अणु
-	काष्ठा ia_css_host_data *isp_data;
+static int
+store_fpntbl(struct ia_css_isp_parameters *params, ia_css_ptr ptr) {
+	struct ia_css_host_data *isp_data;
 
-	निश्चित(params);
-	निश्चित(ptr != mmgr_शून्य);
+	assert(params);
+	assert(ptr != mmgr_NULL);
 
 	isp_data = convert_allocate_fpntbl(params);
-	अगर (!isp_data)
-	अणु
+	if (!isp_data)
+	{
 		IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ia_css_params_store_ia_css_host_data(ptr, isp_data);
 
-	ia_css_host_data_मुक्त(isp_data);
-	वापस 0;
-पूर्ण
+	ia_css_host_data_free(isp_data);
+	return 0;
+}
 
-अटल व्योम
-convert_raw_to_fpn(काष्ठा ia_css_isp_parameters *params)
-अणु
-	पूर्णांक maxval = 0;
-	अचिन्हित पूर्णांक i;
+static void
+convert_raw_to_fpn(struct ia_css_isp_parameters *params)
+{
+	int maxval = 0;
+	unsigned int i;
 
-	निश्चित(params);
+	assert(params);
 
 	/* Find the maximum value in the table */
-	क्रम (i = 0; i < params->fpn_config.height * params->fpn_config.width; i++) अणु
-		पूर्णांक val = params->fpn_config.data[i];
-		/* Make sure FPN value can be represented in 13-bit अचिन्हित
+	for (i = 0; i < params->fpn_config.height * params->fpn_config.width; i++) {
+		int val = params->fpn_config.data[i];
+		/* Make sure FPN value can be represented in 13-bit unsigned
 		 * number (ISP precision - 1), but note that actual input range
 		 * depends on precision of input frame data.
 		 */
-		अगर (val < 0) अणु
+		if (val < 0) {
 			/* Checkpatch patch */
 			val = 0;
-		पूर्ण अन्यथा अगर (val >= (1 << 13)) अणु
+		} else if (val >= (1 << 13)) {
 			/* Checkpatch patch */
-			/* MW: BUG, is "13" a प्रणाली or application property */
+			/* MW: BUG, is "13" a system or application property */
 			val = (1 << 13) - 1;
-		पूर्ण
+		}
 		maxval = max(maxval, val);
-	पूर्ण
-	/* Find the lowest shअगरt value to remap the values in the range
-	 * 0..maxval to 0..2^shअगरtval*63.
+	}
+	/* Find the lowest shift value to remap the values in the range
+	 * 0..maxval to 0..2^shiftval*63.
 	 */
-	params->fpn_config.shअगरt = 0;
-	जबतक (maxval > 63) अणु
-		/* MW: BUG, is "63" a प्रणाली or application property */
+	params->fpn_config.shift = 0;
+	while (maxval > 63) {
+		/* MW: BUG, is "63" a system or application property */
 		maxval >>= 1;
-		params->fpn_config.shअगरt++;
-	पूर्ण
-	/* Adjust the values in the table क्रम the shअगरt value */
-	क्रम (i = 0; i < params->fpn_config.height * params->fpn_config.width; i++)
-		((अचिन्हित लघु *)params->fpn_config.data)[i] >>= params->fpn_config.shअगरt;
-पूर्ण
+		params->fpn_config.shift++;
+	}
+	/* Adjust the values in the table for the shift value */
+	for (i = 0; i < params->fpn_config.height * params->fpn_config.width; i++)
+		((unsigned short *)params->fpn_config.data)[i] >>= params->fpn_config.shift;
+}
 
-अटल व्योम
-ia_css_process_kernel(काष्ठा ia_css_stream *stream,
-		      काष्ठा ia_css_isp_parameters *params,
-		      व्योम (*process)(अचिन्हित पूर्णांक pipe_id,
-				      स्थिर काष्ठा ia_css_pipeline_stage *stage,
-				      काष्ठा ia_css_isp_parameters *params))
-अणु
-	पूर्णांक i;
+static void
+ia_css_process_kernel(struct ia_css_stream *stream,
+		      struct ia_css_isp_parameters *params,
+		      void (*process)(unsigned int pipe_id,
+				      const struct ia_css_pipeline_stage *stage,
+				      struct ia_css_isp_parameters *params))
+{
+	int i;
 
-	क्रम (i = 0; i < stream->num_pipes; i++) अणु
-		काष्ठा ia_css_pipe *pipe = stream->pipes[i];
-		काष्ठा ia_css_pipeline *pipeline = ia_css_pipe_get_pipeline(pipe);
-		काष्ठा ia_css_pipeline_stage *stage;
+	for (i = 0; i < stream->num_pipes; i++) {
+		struct ia_css_pipe *pipe = stream->pipes[i];
+		struct ia_css_pipeline *pipeline = ia_css_pipe_get_pipeline(pipe);
+		struct ia_css_pipeline_stage *stage;
 
-		/* update the other buffers to the pipe specअगरic copies */
-		क्रम (stage = pipeline->stages; stage; stage = stage->next) अणु
-			अगर (!stage || !stage->binary) जारी;
+		/* update the other buffers to the pipe specific copies */
+		for (stage = pipeline->stages; stage; stage = stage->next) {
+			if (!stage || !stage->binary) continue;
 			process(pipeline->pipe_id, stage, params);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक
-sh_css_select_dp_10bpp_config(स्थिर काष्ठा ia_css_pipe *pipe,
-			      bool *is_dp_10bpp) अणु
-	पूर्णांक err = 0;
-	/* Currently we check अगर 10bpp DPC configuration is required based
-	 * on the use हाल,i.e. अगर BDS and DPC is both enabled. The more cleaner
+static int
+sh_css_select_dp_10bpp_config(const struct ia_css_pipe *pipe,
+			      bool *is_dp_10bpp) {
+	int err = 0;
+	/* Currently we check if 10bpp DPC configuration is required based
+	 * on the use case,i.e. if BDS and DPC is both enabled. The more cleaner
 	 * design choice would be to expose the type of DPC (either 10bpp or 13bpp)
-	 * using the binary info, but the current control flow करोes not allow this
-	 * implementation. (This is because the configuration is set beक्रमe a
+	 * using the binary info, but the current control flow does not allow this
+	 * implementation. (This is because the configuration is set before a
 	 * binary is selected, and the binary info is not available)
 	 */
-	अगर ((!pipe) || (!is_dp_10bpp))
-	अणु
+	if ((!pipe) || (!is_dp_10bpp))
+	{
 		IA_CSS_LEAVE_ERR_PRIVATE(-EINVAL);
 		err = -EINVAL;
-	पूर्ण अन्यथा
-	अणु
+	} else
+	{
 		*is_dp_10bpp = false;
 
-		/* check अगर DPC is enabled from the host */
-		अगर (pipe->config.enable_dpc) अणु
-			/*check अगर BDS is enabled*/
-			अचिन्हित पूर्णांक required_bds_factor = SH_CSS_BDS_FACTOR_1_00;
+		/* check if DPC is enabled from the host */
+		if (pipe->config.enable_dpc) {
+			/*check if BDS is enabled*/
+			unsigned int required_bds_factor = SH_CSS_BDS_FACTOR_1_00;
 
-			अगर ((pipe->config.bayer_ds_out_res.width != 0) &&
-			    (pipe->config.bayer_ds_out_res.height != 0)) अणु
-				अगर (0 == binarydesc_calculate_bds_factor(
+			if ((pipe->config.bayer_ds_out_res.width != 0) &&
+			    (pipe->config.bayer_ds_out_res.height != 0)) {
+				if (0 == binarydesc_calculate_bds_factor(
 					pipe->config.input_effective_res,
 					pipe->config.bayer_ds_out_res,
-					&required_bds_factor)) अणु
-					अगर (required_bds_factor != SH_CSS_BDS_FACTOR_1_00) अणु
+					&required_bds_factor)) {
+					if (required_bds_factor != SH_CSS_BDS_FACTOR_1_00) {
 						/*we use 10bpp BDS configuration*/
 						*is_dp_10bpp = true;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					}
+				}
+			}
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक
-sh_css_set_black_frame(काष्ठा ia_css_stream *stream,
-		       स्थिर काष्ठा ia_css_frame *raw_black_frame) अणु
-	काष्ठा ia_css_isp_parameters *params;
+int
+sh_css_set_black_frame(struct ia_css_stream *stream,
+		       const struct ia_css_frame *raw_black_frame) {
+	struct ia_css_isp_parameters *params;
 	/* this function desperately needs to be moved to the ISP or SP such
 	 * that it can use the DMA.
 	 */
-	अचिन्हित पूर्णांक height, width, y, x, k, data;
+	unsigned int height, width, y, x, k, data;
 	ia_css_ptr ptr;
 
-	निश्चित(stream);
-	निश्चित(raw_black_frame);
+	assert(stream);
+	assert(raw_black_frame);
 
 	params = stream->isp_params_configs;
 	height = raw_black_frame->info.res.height;
@@ -957,288 +956,288 @@ sh_css_set_black_frame(काष्ठा ia_css_stream *stream,
 
 	IA_CSS_ENTER_PRIVATE("black_frame=%p", raw_black_frame);
 
-	अगर (params->fpn_config.data &&
+	if (params->fpn_config.data &&
 	    (params->fpn_config.width != width || params->fpn_config.height != height))
-	अणु
-		kvमुक्त(params->fpn_config.data);
-		params->fpn_config.data = शून्य;
-	पूर्ण
-	अगर (!params->fpn_config.data)
-	अणु
-		params->fpn_config.data = kvदो_स्मृति(height * width *
-						   माप(लघु), GFP_KERNEL);
-		अगर (!params->fpn_config.data) अणु
+	{
+		kvfree(params->fpn_config.data);
+		params->fpn_config.data = NULL;
+	}
+	if (!params->fpn_config.data)
+	{
+		params->fpn_config.data = kvmalloc(height * width *
+						   sizeof(short), GFP_KERNEL);
+		if (!params->fpn_config.data) {
 			IA_CSS_ERROR("out of memory");
 			IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		params->fpn_config.width = width;
 		params->fpn_config.height = height;
-		params->fpn_config.shअगरt = 0;
-	पूर्ण
+		params->fpn_config.shift = 0;
+	}
 
 	/* store raw to fpntbl */
-	क्रम (y = 0; y < height; y++)
-	अणु
-		क्रम (x = 0; x < width; x += (ISP_VEC_NELEMS * 2)) अणु
-			पूर्णांक ofs = y * width + x;
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x += (ISP_VEC_NELEMS * 2)) {
+			int ofs = y * width + x;
 
-			क्रम (k = 0; k < ISP_VEC_NELEMS; k += 2) अणु
-				hmm_load(ptr, (व्योम *)(&data), माप(पूर्णांक));
+			for (k = 0; k < ISP_VEC_NELEMS; k += 2) {
+				hmm_load(ptr, (void *)(&data), sizeof(int));
 				params->fpn_config.data[ofs + 2 * k] =
-				    (लघु)(data & 0xFFFF);
+				    (short)(data & 0xFFFF);
 				params->fpn_config.data[ofs + 2 * k + 2] =
-				    (लघु)((data >> 16) & 0xFFFF);
-				ptr += माप(पूर्णांक);	/* byte प्रणाली address */
-			पूर्ण
-			क्रम (k = 0; k < ISP_VEC_NELEMS; k += 2) अणु
-				hmm_load(ptr, (व्योम *)(&data), माप(पूर्णांक));
+				    (short)((data >> 16) & 0xFFFF);
+				ptr += sizeof(int);	/* byte system address */
+			}
+			for (k = 0; k < ISP_VEC_NELEMS; k += 2) {
+				hmm_load(ptr, (void *)(&data), sizeof(int));
 				params->fpn_config.data[ofs + 2 * k + 1] =
-				    (लघु)(data & 0xFFFF);
+				    (short)(data & 0xFFFF);
 				params->fpn_config.data[ofs + 2 * k + 3] =
-				    (लघु)((data >> 16) & 0xFFFF);
-				ptr += माप(पूर्णांक);	/* byte प्रणाली address */
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				    (short)((data >> 16) & 0xFFFF);
+				ptr += sizeof(int);	/* byte system address */
+			}
+		}
+	}
 
 	/* raw -> fpn */
 	convert_raw_to_fpn(params);
 
-	/* overग_लिखो isp parameter */
+	/* overwrite isp parameter */
 	ia_css_process_kernel(stream, params, ia_css_kernel_process_param[IA_CSS_FPN_ID]);
 
 	IA_CSS_LEAVE_ERR_PRIVATE(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 bool
-sh_css_params_set_binning_factor(काष्ठा ia_css_stream *stream,
-				 अचिन्हित पूर्णांक binning_fact)
-अणु
-	काष्ठा ia_css_isp_parameters *params;
+sh_css_params_set_binning_factor(struct ia_css_stream *stream,
+				 unsigned int binning_fact)
+{
+	struct ia_css_isp_parameters *params;
 
 	IA_CSS_ENTER_PRIVATE("void");
-	निश्चित(stream);
+	assert(stream);
 
 	params = stream->isp_params_configs;
 
-	अगर (params->sensor_binning != binning_fact) अणु
+	if (params->sensor_binning != binning_fact) {
 		params->sensor_binning = binning_fact;
 		params->sc_table_changed = true;
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
 
-	वापस params->sc_table_changed;
-पूर्ण
+	return params->sc_table_changed;
+}
 
-अटल व्योम
-sh_css_update_shading_table_status(काष्ठा ia_css_pipe *pipe,
-				   काष्ठा ia_css_isp_parameters *params)
-अणु
-	अगर (params && pipe && (pipe->pipe_num != params->sc_table_last_pipe_num)) अणु
+static void
+sh_css_update_shading_table_status(struct ia_css_pipe *pipe,
+				   struct ia_css_isp_parameters *params)
+{
+	if (params && pipe && (pipe->pipe_num != params->sc_table_last_pipe_num)) {
 		params->sc_table_dirty = true;
 		params->sc_table_last_pipe_num = pipe->pipe_num;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-sh_css_set_shading_table(काष्ठा ia_css_stream *stream,
-			 काष्ठा ia_css_isp_parameters *params,
-			 स्थिर काष्ठा ia_css_shading_table *table)
-अणु
+static void
+sh_css_set_shading_table(struct ia_css_stream *stream,
+			 struct ia_css_isp_parameters *params,
+			 const struct ia_css_shading_table *table)
+{
 	IA_CSS_ENTER_PRIVATE("");
-	अगर (!table)
-		वापस;
-	निश्चित(stream);
+	if (!table)
+		return;
+	assert(stream);
 
-	अगर (!table->enable)
-		table = शून्य;
+	if (!table->enable)
+		table = NULL;
 
-	अगर ((table != params->sc_table) || params->sc_table_dirty) अणु
+	if ((table != params->sc_table) || params->sc_table_dirty) {
 		params->sc_table = table;
 		params->sc_table_changed = true;
 		params->sc_table_dirty = false;
 		/* Not very clean, this goes to sh_css.c to invalidate the
-		 * shading table क्रम all pipes. Should replaced by a loop
-		 * and a pipe-specअगरic call.
+		 * shading table for all pipes. Should replaced by a loop
+		 * and a pipe-specific call.
 		 */
-		अगर (!params->output_frame)
+		if (!params->output_frame)
 			sh_css_invalidate_shading_tables(stream);
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
+void
 ia_css_params_store_ia_css_host_data(
     ia_css_ptr ddr_addr,
-    काष्ठा ia_css_host_data *data)
-अणु
-	निश्चित(data);
-	निश्चित(data->address);
-	निश्चित(ddr_addr != mmgr_शून्य);
+    struct ia_css_host_data *data)
+{
+	assert(data);
+	assert(data->address);
+	assert(ddr_addr != mmgr_NULL);
 
 	IA_CSS_ENTER_PRIVATE("");
 
 	hmm_store(ddr_addr,
-		   (व्योम *)(data->address),
-		   (माप_प्रकार)data->size);
+		   (void *)(data->address),
+		   (size_t)data->size);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-काष्ठा ia_css_host_data *
+struct ia_css_host_data *
 ia_css_params_alloc_convert_sctbl(
-    स्थिर काष्ठा ia_css_pipeline_stage *stage,
-    स्थिर काष्ठा ia_css_shading_table *shading_table)
-अणु
-	स्थिर काष्ठा ia_css_binary *binary = stage->binary;
-	काष्ठा ia_css_host_data    *sctbl;
-	अचिन्हित पूर्णांक i, j, aligned_width;
-	अचिन्हित पूर्णांक sctbl_size;
-	लघु पूर्णांक    *ptr;
+    const struct ia_css_pipeline_stage *stage,
+    const struct ia_css_shading_table *shading_table)
+{
+	const struct ia_css_binary *binary = stage->binary;
+	struct ia_css_host_data    *sctbl;
+	unsigned int i, j, aligned_width;
+	unsigned int sctbl_size;
+	short int    *ptr;
 
-	निश्चित(binary);
-	निश्चित(shading_table);
+	assert(binary);
+	assert(shading_table);
 
 	IA_CSS_ENTER_PRIVATE("");
 
-	अगर (!shading_table) अणु
+	if (!shading_table) {
 		IA_CSS_LEAVE_PRIVATE("void");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	aligned_width = binary->sctbl_aligned_width_per_color;
 	sctbl_size = shading_table->height * IA_CSS_SC_NUM_COLORS * aligned_width *
-		     माप(लघु);
+		     sizeof(short);
 
-	sctbl = ia_css_host_data_allocate((माप_प्रकार)sctbl_size);
+	sctbl = ia_css_host_data_allocate((size_t)sctbl_size);
 
-	अगर (!sctbl)
-		वापस शून्य;
-	ptr = (लघु पूर्णांक *)sctbl->address;
-	स_रखो(ptr,
+	if (!sctbl)
+		return NULL;
+	ptr = (short int *)sctbl->address;
+	memset(ptr,
 	       0,
 	       sctbl_size);
 
-	क्रम (i = 0; i < shading_table->height; i++) अणु
-		क्रम (j = 0; j < IA_CSS_SC_NUM_COLORS; j++) अणु
-			स_नकल(ptr,
+	for (i = 0; i < shading_table->height; i++) {
+		for (j = 0; j < IA_CSS_SC_NUM_COLORS; j++) {
+			memcpy(ptr,
 			       &shading_table->data[j]
 			       [i * shading_table->width],
-			       shading_table->width * माप(लघु));
+			       shading_table->width * sizeof(short));
 			ptr += aligned_width;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-	वापस sctbl;
-पूर्ण
+	return sctbl;
+}
 
-पूर्णांक ia_css_params_store_sctbl(
-    स्थिर काष्ठा ia_css_pipeline_stage *stage,
+int ia_css_params_store_sctbl(
+    const struct ia_css_pipeline_stage *stage,
     ia_css_ptr sc_tbl,
-    स्थिर काष्ठा ia_css_shading_table  *sc_config)
-अणु
-	काष्ठा ia_css_host_data *isp_sc_tbl;
+    const struct ia_css_shading_table  *sc_config)
+{
+	struct ia_css_host_data *isp_sc_tbl;
 
 	IA_CSS_ENTER_PRIVATE("");
 
-	अगर (!sc_config) अणु
+	if (!sc_config) {
 		IA_CSS_LEAVE_PRIVATE("void");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	isp_sc_tbl = ia_css_params_alloc_convert_sctbl(stage, sc_config);
-	अगर (!isp_sc_tbl) अणु
+	if (!isp_sc_tbl) {
 		IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	/* store the shading table to ddr */
 	ia_css_params_store_ia_css_host_data(sc_tbl, isp_sc_tbl);
-	ia_css_host_data_मुक्त(isp_sc_tbl);
+	ia_css_host_data_free(isp_sc_tbl);
 
 	IA_CSS_LEAVE_PRIVATE("void");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sh_css_enable_pipeline(स्थिर काष्ठा ia_css_binary *binary)
-अणु
-	अगर (!binary)
-		वापस;
+static void
+sh_css_enable_pipeline(const struct ia_css_binary *binary)
+{
+	if (!binary)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("");
 
 	ia_css_isp_param_enable_pipeline(&binary->mem_params);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल पूर्णांक
+static int
 ia_css_process_zoom_and_motion(
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_pipeline_stage *first_stage) अणु
-	/* first_stage can be  शून्य */
-	स्थिर काष्ठा ia_css_pipeline_stage *stage;
-	पूर्णांक err = 0;
-	काष्ठा ia_css_resolution pipe_in_res;
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_pipeline_stage *first_stage) {
+	/* first_stage can be  NULL */
+	const struct ia_css_pipeline_stage *stage;
+	int err = 0;
+	struct ia_css_resolution pipe_in_res;
 
 	pipe_in_res.width = 0;
 	pipe_in_res.height = 0;
 
-	निश्चित(params);
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("");
 
 	/* Go through all stages to udate uds and cropping */
-	क्रम (stage = first_stage; stage; stage = stage->next)
-	अणु
-		काष्ठा ia_css_binary *binary;
-		/* note: the var below is made अटल as it is quite large;
-		   अगर it is not अटल it ends up on the stack which could
-		   cause issues क्रम drivers
+	for (stage = first_stage; stage; stage = stage->next)
+	{
+		struct ia_css_binary *binary;
+		/* note: the var below is made static as it is quite large;
+		   if it is not static it ends up on the stack which could
+		   cause issues for drivers
 		*/
-		अटल काष्ठा ia_css_binary पंचांगp_binary;
+		static struct ia_css_binary tmp_binary;
 
-		स्थिर काष्ठा ia_css_binary_xinfo *info = शून्य;
+		const struct ia_css_binary_xinfo *info = NULL;
 
 		binary = stage->binary;
-		अगर (binary) अणु
+		if (binary) {
 			info = binary->info;
-		पूर्ण अन्यथा अणु
-			स्थिर काष्ठा sh_css_binary_args *args = &stage->args;
-			स्थिर काष्ठा ia_css_frame_info *out_infos[IA_CSS_BINARY_MAX_OUTPUT_PORTS] = अणुशून्यपूर्ण;
+		} else {
+			const struct sh_css_binary_args *args = &stage->args;
+			const struct ia_css_frame_info *out_infos[IA_CSS_BINARY_MAX_OUTPUT_PORTS] = {NULL};
 
-			अगर (args->out_frame[0])
+			if (args->out_frame[0])
 				out_infos[0] = &args->out_frame[0]->info;
 			info = &stage->firmware->info.isp;
 			ia_css_binary_fill_info(info, false, false,
 						ATOMISP_INPUT_FORMAT_RAW_10,
-						args->in_frame  ? &args->in_frame->info  : शून्य,
-						शून्य,
+						args->in_frame  ? &args->in_frame->info  : NULL,
+						NULL,
 						out_infos,
 						args->out_vf_frame ? &args->out_vf_frame->info
-						: शून्य,
-						&पंचांगp_binary,
-						शून्य,
+						: NULL,
+						&tmp_binary,
+						NULL,
 						-1, true);
-			binary = &पंचांगp_binary;
+			binary = &tmp_binary;
 			binary->info = info;
-		पूर्ण
+		}
 
-		अगर (stage == first_stage) अणु
-			/* we will use pipe_in_res to scale the zoom crop region अगर needed */
+		if (stage == first_stage) {
+			/* we will use pipe_in_res to scale the zoom crop region if needed */
 			pipe_in_res = binary->effective_in_frame_res;
-		पूर्ण
+		}
 
-		निश्चित(stage->stage_num < SH_CSS_MAX_STAGES);
-		अगर (params->dz_config.zoom_region.resolution.width == 0 &&
-		    params->dz_config.zoom_region.resolution.height == 0) अणु
+		assert(stage->stage_num < SH_CSS_MAX_STAGES);
+		if (params->dz_config.zoom_region.resolution.width == 0 &&
+		    params->dz_config.zoom_region.resolution.height == 0) {
 			sh_css_update_uds_and_crop_info(
 			    &info->sp,
 			    &binary->in_frame_info,
@@ -1249,7 +1248,7 @@ ia_css_process_zoom_and_motion(
 			    &params->uds[stage->stage_num].uds,
 			    &params->uds[stage->stage_num].crop_pos,
 			    stage->enable_zoom);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = sh_css_update_uds_and_crop_info_based_on_zoom_region(
 				  &info->sp,
 				  &binary->in_frame_info,
@@ -1261,185 +1260,185 @@ ia_css_process_zoom_and_motion(
 				  &params->uds[stage->stage_num].crop_pos,
 				  pipe_in_res,
 				  stage->enable_zoom);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 	params->isp_params_changed = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-sh_css_set_gamma_table(काष्ठा ia_css_isp_parameters *params,
-		       स्थिर काष्ठा ia_css_gamma_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_set_gamma_table(struct ia_css_isp_parameters *params,
+		       const struct ia_css_gamma_table *table)
+{
+	if (!table)
+		return;
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	params->gc_table = *table;
 	params->config_changed[IA_CSS_GC_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_gamma_table(स्थिर काष्ठा ia_css_isp_parameters *params,
-		       काष्ठा ia_css_gamma_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_get_gamma_table(const struct ia_css_isp_parameters *params,
+		       struct ia_css_gamma_table *table)
+{
+	if (!table)
+		return;
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	*table = params->gc_table;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_ctc_table(काष्ठा ia_css_isp_parameters *params,
-		     स्थिर काष्ठा ia_css_ctc_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_set_ctc_table(struct ia_css_isp_parameters *params,
+		     const struct ia_css_ctc_table *table)
+{
+	if (!table)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	params->ctc_table = *table;
 	params->config_changed[IA_CSS_CTC_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_ctc_table(स्थिर काष्ठा ia_css_isp_parameters *params,
-		     काष्ठा ia_css_ctc_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_get_ctc_table(const struct ia_css_isp_parameters *params,
+		     struct ia_css_ctc_table *table)
+{
+	if (!table)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	*table = params->ctc_table;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_macc_table(काष्ठा ia_css_isp_parameters *params,
-		      स्थिर काष्ठा ia_css_macc_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_set_macc_table(struct ia_css_isp_parameters *params,
+		      const struct ia_css_macc_table *table)
+{
+	if (!table)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	params->macc_table = *table;
 	params->config_changed[IA_CSS_MACC_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_macc_table(स्थिर काष्ठा ia_css_isp_parameters *params,
-		      काष्ठा ia_css_macc_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_get_macc_table(const struct ia_css_isp_parameters *params,
+		      struct ia_css_macc_table *table)
+{
+	if (!table)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
+	assert(params);
 	*table = params->macc_table;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम ia_css_morph_table_मुक्त(
-    काष्ठा ia_css_morph_table *me)
-अणु
-	अचिन्हित पूर्णांक i;
+void ia_css_morph_table_free(
+    struct ia_css_morph_table *me)
+{
+	unsigned int i;
 
-	अगर (!me)
-		वापस;
+	if (!me)
+		return;
 
 	IA_CSS_ENTER("");
 
-	क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
-		अगर (me->coordinates_x[i]) अणु
-			kvमुक्त(me->coordinates_x[i]);
-			me->coordinates_x[i] = शून्य;
-		पूर्ण
-		अगर (me->coordinates_y[i]) अणु
-			kvमुक्त(me->coordinates_y[i]);
-			me->coordinates_y[i] = शून्य;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
+		if (me->coordinates_x[i]) {
+			kvfree(me->coordinates_x[i]);
+			me->coordinates_x[i] = NULL;
+		}
+		if (me->coordinates_y[i]) {
+			kvfree(me->coordinates_y[i]);
+			me->coordinates_y[i] = NULL;
+		}
+	}
 
-	kvमुक्त(me);
+	kvfree(me);
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
-काष्ठा ia_css_morph_table *ia_css_morph_table_allocate(
-    अचिन्हित पूर्णांक width,
-    अचिन्हित पूर्णांक height)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा ia_css_morph_table *me;
+struct ia_css_morph_table *ia_css_morph_table_allocate(
+    unsigned int width,
+    unsigned int height)
+{
+	unsigned int i;
+	struct ia_css_morph_table *me;
 
 	IA_CSS_ENTER("");
 
-	me = kvदो_स्मृति(माप(*me), GFP_KERNEL);
-	अगर (!me) अणु
+	me = kvmalloc(sizeof(*me), GFP_KERNEL);
+	if (!me) {
 		IA_CSS_ERROR("out of memory");
-		वापस me;
-	पूर्ण
+		return me;
+	}
 
-	क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
-		me->coordinates_x[i] = शून्य;
-		me->coordinates_y[i] = शून्य;
-	पूर्ण
+	for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
+		me->coordinates_x[i] = NULL;
+		me->coordinates_y[i] = NULL;
+	}
 
-	क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
-		me->coordinates_x[i] = kvदो_स्मृति(height * width *
-						माप(*me->coordinates_x[i]),
+	for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
+		me->coordinates_x[i] = kvmalloc(height * width *
+						sizeof(*me->coordinates_x[i]),
 						GFP_KERNEL);
-		me->coordinates_y[i] = kvदो_स्मृति(height * width *
-						माप(*me->coordinates_y[i]),
+		me->coordinates_y[i] = kvmalloc(height * width *
+						sizeof(*me->coordinates_y[i]),
 						GFP_KERNEL);
 
-		अगर ((!me->coordinates_x[i]) ||
-		    (!me->coordinates_y[i])) अणु
-			ia_css_morph_table_मुक्त(me);
-			me = शून्य;
-			वापस me;
-		पूर्ण
-	पूर्ण
+		if ((!me->coordinates_x[i]) ||
+		    (!me->coordinates_y[i])) {
+			ia_css_morph_table_free(me);
+			me = NULL;
+			return me;
+		}
+	}
 	me->width = width;
 	me->height = height;
 	IA_CSS_LEAVE("");
-	वापस me;
-पूर्ण
+	return me;
+}
 
-अटल पूर्णांक sh_css_params_शेष_morph_table(
-    काष्ठा ia_css_morph_table **table,
-    स्थिर काष्ठा ia_css_binary *binary)
-अणु
-	/* MW 2400 advanced requires dअगरferent scaling */
-	अचिन्हित पूर्णांक i, j, k, step, width, height;
-	लघु start_x[IA_CSS_MORPH_TABLE_NUM_PLANES] = अणु -8, 0, -8, 0, 0, -8 पूर्ण,
-		start_y[IA_CSS_MORPH_TABLE_NUM_PLANES] = अणु 0, 0, -8, -8, -8, 0 पूर्ण;
-	काष्ठा ia_css_morph_table *tab;
+static int sh_css_params_default_morph_table(
+    struct ia_css_morph_table **table,
+    const struct ia_css_binary *binary)
+{
+	/* MW 2400 advanced requires different scaling */
+	unsigned int i, j, k, step, width, height;
+	short start_x[IA_CSS_MORPH_TABLE_NUM_PLANES] = { -8, 0, -8, 0, 0, -8 },
+		start_y[IA_CSS_MORPH_TABLE_NUM_PLANES] = { 0, 0, -8, -8, -8, 0 };
+	struct ia_css_morph_table *tab;
 
-	निश्चित(table);
-	निश्चित(binary);
+	assert(table);
+	assert(binary);
 
 	IA_CSS_ENTER_PRIVATE("");
 
@@ -1448,239 +1447,239 @@ sh_css_get_macc_table(स्थिर काष्ठा ia_css_isp_parameters *
 	height = binary->morph_tbl_height;
 
 	tab = ia_css_morph_table_allocate(width, height);
-	अगर (!tab)
-		वापस -ENOMEM;
+	if (!tab)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
-		लघु val_y = start_y[i];
+	for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
+		short val_y = start_y[i];
 
-		क्रम (j = 0; j < height; j++) अणु
-			लघु val_x = start_x[i];
-			अचिन्हित लघु *x_ptr, *y_ptr;
+		for (j = 0; j < height; j++) {
+			short val_x = start_x[i];
+			unsigned short *x_ptr, *y_ptr;
 
 			x_ptr = &tab->coordinates_x[i][j * width];
 			y_ptr = &tab->coordinates_y[i][j * width];
-			क्रम (k = 0; k < width;
-			     k++, x_ptr++, y_ptr++, val_x += (लघु)step) अणु
-				अगर (k == 0)
+			for (k = 0; k < width;
+			     k++, x_ptr++, y_ptr++, val_x += (short)step) {
+				if (k == 0)
 					*x_ptr = 0;
-				अन्यथा अगर (k == width - 1)
+				else if (k == width - 1)
 					*x_ptr = val_x + 2 * start_x[i];
-				अन्यथा
+				else
 					*x_ptr = val_x;
-				अगर (j == 0)
+				if (j == 0)
 					*y_ptr = 0;
-				अन्यथा
+				else
 					*y_ptr = val_y;
-			पूर्ण
-			val_y += (लघु)step;
-		पूर्ण
-	पूर्ण
+			}
+			val_y += (short)step;
+		}
+	}
 	*table = tab;
 
 	IA_CSS_LEAVE_ERR_PRIVATE(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sh_css_set_morph_table(काष्ठा ia_css_isp_parameters *params,
-		       स्थिर काष्ठा ia_css_morph_table *table)
-अणु
-	अगर (!table)
-		वापस;
+static void
+sh_css_set_morph_table(struct ia_css_isp_parameters *params,
+		       const struct ia_css_morph_table *table)
+{
+	if (!table)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("table=%p", table);
 
-	निश्चित(params);
-	अगर (table->enable == false)
-		table = शून्य;
+	assert(params);
+	if (table->enable == false)
+		table = NULL;
 	params->morph_table = table;
 	params->morph_table_changed = true;
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
+void
 ia_css_translate_3a_statistics(
-    काष्ठा ia_css_3a_statistics               *host_stats,
-    स्थिर काष्ठा ia_css_isp_3a_statistics_map *isp_stats)
-अणु
+    struct ia_css_3a_statistics               *host_stats,
+    const struct ia_css_isp_3a_statistics_map *isp_stats)
+{
 	IA_CSS_ENTER("");
-	अगर (host_stats->grid.use_dmem) अणु
+	if (host_stats->grid.use_dmem) {
 		IA_CSS_LOG("3A: DMEM");
 		ia_css_s3a_dmem_decode(host_stats, isp_stats->dmem_stats);
-	पूर्ण अन्यथा अणु
+	} else {
 		IA_CSS_LOG("3A: VMEM");
 		ia_css_s3a_vmem_decode(host_stats, isp_stats->vmem_stats_hi,
 				       isp_stats->vmem_stats_lo);
-	पूर्ण
-#अगर !defined(HAS_NO_HMEM)
+	}
+#if !defined(HAS_NO_HMEM)
 	IA_CSS_LOG("3A: HMEM");
 	ia_css_s3a_hmem_decode(host_stats, isp_stats->hmem_stats);
-#पूर्ण_अगर
+#endif
 
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
-व्योम
-ia_css_isp_3a_statistics_map_मुक्त(काष्ठा ia_css_isp_3a_statistics_map *me)
-अणु
-	अगर (me) अणु
-		अगर (me->data_allocated) अणु
-			kvमुक्त(me->data_ptr);
-			me->data_ptr = शून्य;
+void
+ia_css_isp_3a_statistics_map_free(struct ia_css_isp_3a_statistics_map *me)
+{
+	if (me) {
+		if (me->data_allocated) {
+			kvfree(me->data_ptr);
+			me->data_ptr = NULL;
 			me->data_allocated = false;
-		पूर्ण
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+		}
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_isp_3a_statistics_map *
+struct ia_css_isp_3a_statistics_map *
 ia_css_isp_3a_statistics_map_allocate(
-    स्थिर काष्ठा ia_css_isp_3a_statistics *isp_stats,
-    व्योम *data_ptr)
-अणु
-	काष्ठा ia_css_isp_3a_statistics_map *me;
-	/* Winकरोws compiler करोes not like adding sizes to a व्योम *
-	 * so we use a local अक्षर * instead. */
-	अक्षर *base_ptr;
+    const struct ia_css_isp_3a_statistics *isp_stats,
+    void *data_ptr)
+{
+	struct ia_css_isp_3a_statistics_map *me;
+	/* Windows compiler does not like adding sizes to a void *
+	 * so we use a local char * instead. */
+	char *base_ptr;
 
-	me = kvदो_स्मृति(माप(*me), GFP_KERNEL);
-	अगर (!me) अणु
+	me = kvmalloc(sizeof(*me), GFP_KERNEL);
+	if (!me) {
 		IA_CSS_LEAVE("cannot allocate memory");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	me->data_ptr = data_ptr;
 	me->data_allocated = !data_ptr;
-	अगर (!data_ptr) अणु
-		me->data_ptr = kvदो_स्मृति(isp_stats->size, GFP_KERNEL);
-		अगर (!me->data_ptr) अणु
+	if (!data_ptr) {
+		me->data_ptr = kvmalloc(isp_stats->size, GFP_KERNEL);
+		if (!me->data_ptr) {
 			IA_CSS_LEAVE("cannot allocate memory");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 	base_ptr = me->data_ptr;
 
 	me->size = isp_stats->size;
-	/* GCC complains when we assign a अक्षर * to a व्योम *, so these
-	 * casts are necessary unक्रमtunately. */
-	me->dmem_stats    = (व्योम *)base_ptr;
-	me->vmem_stats_hi = (व्योम *)(base_ptr + isp_stats->dmem_size);
-	me->vmem_stats_lo = (व्योम *)(base_ptr + isp_stats->dmem_size +
+	/* GCC complains when we assign a char * to a void *, so these
+	 * casts are necessary unfortunately. */
+	me->dmem_stats    = (void *)base_ptr;
+	me->vmem_stats_hi = (void *)(base_ptr + isp_stats->dmem_size);
+	me->vmem_stats_lo = (void *)(base_ptr + isp_stats->dmem_size +
 				     isp_stats->vmem_size);
-	me->hmem_stats    = (व्योम *)(base_ptr + isp_stats->dmem_size +
+	me->hmem_stats    = (void *)(base_ptr + isp_stats->dmem_size +
 				     2 * isp_stats->vmem_size);
 
 	IA_CSS_LEAVE("map=%p", me);
-	वापस me;
+	return me;
 
 err:
-	kvमुक्त(me);
-	वापस शून्य;
-पूर्ण
+	kvfree(me);
+	return NULL;
+}
 
-पूर्णांक
-ia_css_get_3a_statistics(काष्ठा ia_css_3a_statistics           *host_stats,
-			 स्थिर काष्ठा ia_css_isp_3a_statistics *isp_stats) अणु
-	काष्ठा ia_css_isp_3a_statistics_map *map;
-	पूर्णांक ret = 0;
+int
+ia_css_get_3a_statistics(struct ia_css_3a_statistics           *host_stats,
+			 const struct ia_css_isp_3a_statistics *isp_stats) {
+	struct ia_css_isp_3a_statistics_map *map;
+	int ret = 0;
 
 	IA_CSS_ENTER("host_stats=%p, isp_stats=%p", host_stats, isp_stats);
 
-	निश्चित(host_stats);
-	निश्चित(isp_stats);
+	assert(host_stats);
+	assert(isp_stats);
 
-	map = ia_css_isp_3a_statistics_map_allocate(isp_stats, शून्य);
-	अगर (map)
-	अणु
+	map = ia_css_isp_3a_statistics_map_allocate(isp_stats, NULL);
+	if (map)
+	{
 		hmm_load(isp_stats->data_ptr, map->data_ptr, isp_stats->size);
 		ia_css_translate_3a_statistics(host_stats, map);
-		ia_css_isp_3a_statistics_map_मुक्त(map);
-	पूर्ण अन्यथा
-	अणु
+		ia_css_isp_3a_statistics_map_free(map);
+	} else
+	{
 		IA_CSS_ERROR("out of memory");
 		ret = -ENOMEM;
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_ERR(ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Parameter encoding is not yet orthogonal.
    This function hnadles some of the exceptions.
 */
-अटल व्योम
-ia_css_set_param_exceptions(स्थिर काष्ठा ia_css_pipe *pipe,
-			    काष्ठा ia_css_isp_parameters *params)
-अणु
-	निश्चित(params);
+static void
+ia_css_set_param_exceptions(const struct ia_css_pipe *pipe,
+			    struct ia_css_isp_parameters *params)
+{
+	assert(params);
 
-	/* Copy also to DP. Should be करोne by the driver. */
+	/* Copy also to DP. Should be done by the driver. */
 	params->dp_config.gr = params->wb_config.gr;
 	params->dp_config.r  = params->wb_config.r;
 	params->dp_config.b  = params->wb_config.b;
 	params->dp_config.gb = params->wb_config.gb;
 
-	अगर (IS_ISP2401) अणु
-		निश्चित(pipe);
-		निश्चित(pipe->mode < IA_CSS_PIPE_ID_NUM);
+	if (IS_ISP2401) {
+		assert(pipe);
+		assert(pipe->mode < IA_CSS_PIPE_ID_NUM);
 
-		अगर (pipe->mode < IA_CSS_PIPE_ID_NUM) अणु
+		if (pipe->mode < IA_CSS_PIPE_ID_NUM) {
 			params->pipe_dp_config[pipe->mode].gr = params->wb_config.gr;
 			params->pipe_dp_config[pipe->mode].r  = params->wb_config.r;
 			params->pipe_dp_config[pipe->mode].b  = params->wb_config.b;
 			params->pipe_dp_config[pipe->mode].gb = params->wb_config.gb;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* ISP2401 */
-अटल व्योम
-sh_css_set_dp_config(स्थिर काष्ठा ia_css_pipe *pipe,
-		     काष्ठा ia_css_isp_parameters *params,
-		     स्थिर काष्ठा ia_css_dp_config *config)
-अणु
-	अगर (!config)
-		वापस;
+static void
+sh_css_set_dp_config(const struct ia_css_pipe *pipe,
+		     struct ia_css_isp_parameters *params,
+		     const struct ia_css_dp_config *config)
+{
+	if (!config)
+		return;
 
-	निश्चित(params);
-	निश्चित(pipe);
-	निश्चित(pipe->mode < IA_CSS_PIPE_ID_NUM);
+	assert(params);
+	assert(pipe);
+	assert(pipe->mode < IA_CSS_PIPE_ID_NUM);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 	ia_css_dp_debug_dtrace(config, IA_CSS_DEBUG_TRACE_PRIVATE);
-	अगर (pipe->mode < IA_CSS_PIPE_ID_NUM) अणु
+	if (pipe->mode < IA_CSS_PIPE_ID_NUM) {
 		params->pipe_dp_config[pipe->mode] = *config;
 		params->pipe_dpc_config_changed[pipe->mode] = true;
-	पूर्ण
+	}
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_dp_config(स्थिर काष्ठा ia_css_pipe *pipe,
-		     स्थिर काष्ठा ia_css_isp_parameters *params,
-		     काष्ठा ia_css_dp_config *config)
-अणु
-	अगर (!config)
-		वापस;
+static void
+sh_css_get_dp_config(const struct ia_css_pipe *pipe,
+		     const struct ia_css_isp_parameters *params,
+		     struct ia_css_dp_config *config)
+{
+	if (!config)
+		return;
 
-	निश्चित(params);
-	निश्चित(pipe);
+	assert(params);
+	assert(pipe);
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
 	*config = params->pipe_dp_config[pipe->mode];
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_nr_config(काष्ठा ia_css_isp_parameters *params,
-		     स्थिर काष्ठा ia_css_nr_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_set_nr_config(struct ia_css_isp_parameters *params,
+		     const struct ia_css_nr_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
@@ -1692,15 +1691,15 @@ sh_css_set_nr_config(काष्ठा ia_css_isp_parameters *params,
 	params->config_changed[IA_CSS_BNR_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_ee_config(काष्ठा ia_css_isp_parameters *params,
-		     स्थिर काष्ठा ia_css_ee_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_set_ee_config(struct ia_css_isp_parameters *params,
+		     const struct ia_css_ee_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 	ia_css_ee_debug_dtrace(config, IA_CSS_DEBUG_TRACE_PRIVATE);
@@ -1710,63 +1709,63 @@ sh_css_set_ee_config(काष्ठा ia_css_isp_parameters *params,
 	params->config_changed[IA_CSS_YEE_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_ee_config(स्थिर काष्ठा ia_css_isp_parameters *params,
-		     काष्ठा ia_css_ee_config *config)
-अणु
-	अगर (!config)
-		वापस;
+static void
+sh_css_get_ee_config(const struct ia_css_isp_parameters *params,
+		     struct ia_css_ee_config *config)
+{
+	if (!config)
+		return;
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
-	निश्चित(params);
+	assert(params);
 	*config = params->ee_config;
 
 	ia_css_ee_debug_dtrace(config, IA_CSS_DEBUG_TRACE_PRIVATE);
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_pipe_dvs_6axis_config(स्थिर काष्ठा ia_css_pipe *pipe,
-				 काष्ठा ia_css_isp_parameters *params,
-				 स्थिर काष्ठा ia_css_dvs_6axis_config  *dvs_config)
-अणु
-	अगर (!dvs_config)
-		वापस;
-	निश्चित(params);
-	निश्चित(pipe);
-	निश्चित(dvs_config->height_y == dvs_config->height_uv);
-	निश्चित((dvs_config->width_y - 1) == 2 * (dvs_config->width_uv - 1));
-	निश्चित(pipe->mode < IA_CSS_PIPE_ID_NUM);
+static void
+sh_css_set_pipe_dvs_6axis_config(const struct ia_css_pipe *pipe,
+				 struct ia_css_isp_parameters *params,
+				 const struct ia_css_dvs_6axis_config  *dvs_config)
+{
+	if (!dvs_config)
+		return;
+	assert(params);
+	assert(pipe);
+	assert(dvs_config->height_y == dvs_config->height_uv);
+	assert((dvs_config->width_y - 1) == 2 * (dvs_config->width_uv - 1));
+	assert(pipe->mode < IA_CSS_PIPE_ID_NUM);
 
 	IA_CSS_ENTER_PRIVATE("dvs_config=%p", dvs_config);
 
 	copy_dvs_6axis_table(params->pipe_dvs_6axis_config[pipe->mode], dvs_config);
 
-#अगर !defined(HAS_NO_DVS_6AXIS_CONFIG_UPDATE)
+#if !defined(HAS_NO_DVS_6AXIS_CONFIG_UPDATE)
 	params->pipe_dvs_6axis_config_changed[pipe->mode] = true;
-#पूर्ण_अगर
+#endif
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_pipe_dvs_6axis_config(स्थिर काष्ठा ia_css_pipe *pipe,
-				 स्थिर काष्ठा ia_css_isp_parameters *params,
-				 काष्ठा ia_css_dvs_6axis_config *dvs_config)
-अणु
-	अगर (!dvs_config)
-		वापस;
-	निश्चित(params);
-	निश्चित(pipe);
-	निश्चित(dvs_config->height_y == dvs_config->height_uv);
-	निश्चित((dvs_config->width_y - 1) == 2 * dvs_config->width_uv - 1);
+static void
+sh_css_get_pipe_dvs_6axis_config(const struct ia_css_pipe *pipe,
+				 const struct ia_css_isp_parameters *params,
+				 struct ia_css_dvs_6axis_config *dvs_config)
+{
+	if (!dvs_config)
+		return;
+	assert(params);
+	assert(pipe);
+	assert(dvs_config->height_y == dvs_config->height_uv);
+	assert((dvs_config->width_y - 1) == 2 * dvs_config->width_uv - 1);
 
 	IA_CSS_ENTER_PRIVATE("dvs_config=%p", dvs_config);
 
-	अगर ((pipe->mode < IA_CSS_PIPE_ID_NUM) &&
+	if ((pipe->mode < IA_CSS_PIPE_ID_NUM) &&
 	    (dvs_config->width_y == params->pipe_dvs_6axis_config[pipe->mode]->width_y) &&
 	    (dvs_config->height_y == params->pipe_dvs_6axis_config[pipe->mode]->height_y) &&
 	    (dvs_config->width_uv == params->pipe_dvs_6axis_config[pipe->mode]->width_uv) &&
@@ -1775,20 +1774,20 @@ sh_css_get_pipe_dvs_6axis_config(स्थिर काष्ठा ia_css_pipe 
 	    dvs_config->xcoords_y &&
 	    dvs_config->ycoords_y &&
 	    dvs_config->xcoords_uv &&
-	    dvs_config->ycoords_uv) अणु
+	    dvs_config->ycoords_uv) {
 		copy_dvs_6axis_table(dvs_config, params->pipe_dvs_6axis_config[pipe->mode]);
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_baa_config(काष्ठा ia_css_isp_parameters *params,
-		      स्थिर काष्ठा ia_css_aa_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_set_baa_config(struct ia_css_isp_parameters *params,
+		      const struct ia_css_aa_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
@@ -1796,35 +1795,35 @@ sh_css_set_baa_config(काष्ठा ia_css_isp_parameters *params,
 	params->config_changed[IA_CSS_BDS_ID] = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_baa_config(स्थिर काष्ठा ia_css_isp_parameters *params,
-		      काष्ठा ia_css_aa_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_get_baa_config(const struct ia_css_isp_parameters *params,
+		      struct ia_css_aa_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
 	*config = params->bds_config;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_dz_config(काष्ठा ia_css_isp_parameters *params,
-		     स्थिर काष्ठा ia_css_dz_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_set_dz_config(struct ia_css_isp_parameters *params,
+		     const struct ia_css_dz_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("dx=%d, dy=%d", config->dx, config->dy);
 
-	निश्चित(config->dx <= HRT_GDC_N);
-	निश्चित(config->dy <= HRT_GDC_N);
+	assert(config->dx <= HRT_GDC_N);
+	assert(config->dy <= HRT_GDC_N);
 
 	params->dz_config = *config;
 	params->dz_config_changed = true;
@@ -1832,127 +1831,127 @@ sh_css_set_dz_config(काष्ठा ia_css_isp_parameters *params,
 	params->isp_params_changed = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_dz_config(स्थिर काष्ठा ia_css_isp_parameters *params,
-		     काष्ठा ia_css_dz_config *config)
-अणु
-	अगर (!config)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_get_dz_config(const struct ia_css_isp_parameters *params,
+		     struct ia_css_dz_config *config)
+{
+	if (!config)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("config=%p", config);
 
 	*config = params->dz_config;
 
 	IA_CSS_LEAVE_PRIVATE("dx=%d, dy=%d", config->dx, config->dy);
-पूर्ण
+}
 
-अटल व्योम
-sh_css_set_motion_vector(काष्ठा ia_css_isp_parameters *params,
-			 स्थिर काष्ठा ia_css_vector *motion)
-अणु
-	अगर (!motion)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_set_motion_vector(struct ia_css_isp_parameters *params,
+			 const struct ia_css_vector *motion)
+{
+	if (!motion)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("x=%d, y=%d", motion->x, motion->y);
 
 	params->motion_config = *motion;
-	/* JK: Why करो isp params change? */
+	/* JK: Why do isp params change? */
 	params->motion_config_changed = true;
 	params->isp_params_changed = true;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-sh_css_get_motion_vector(स्थिर काष्ठा ia_css_isp_parameters *params,
-			 काष्ठा ia_css_vector *motion)
-अणु
-	अगर (!motion)
-		वापस;
-	निश्चित(params);
+static void
+sh_css_get_motion_vector(const struct ia_css_isp_parameters *params,
+			 struct ia_css_vector *motion)
+{
+	if (!motion)
+		return;
+	assert(params);
 
 	IA_CSS_ENTER_PRIVATE("motion=%p", motion);
 
 	*motion = params->motion_config;
 
 	IA_CSS_LEAVE_PRIVATE("x=%d, y=%d", motion->x, motion->y);
-पूर्ण
+}
 
-काष्ठा ia_css_isp_config *
-sh_css_pipe_isp_config_get(काष्ठा ia_css_pipe *pipe)
-अणु
-	अगर (!pipe) अणु
-		IA_CSS_ERROR("pipe=%p", शून्य);
-		वापस शून्य;
-	पूर्ण
-	वापस pipe->config.p_isp_config;
-पूर्ण
+struct ia_css_isp_config *
+sh_css_pipe_isp_config_get(struct ia_css_pipe *pipe)
+{
+	if (!pipe) {
+		IA_CSS_ERROR("pipe=%p", NULL);
+		return NULL;
+	}
+	return pipe->config.p_isp_config;
+}
 
-पूर्णांक
+int
 ia_css_stream_set_isp_config(
-    काष्ठा ia_css_stream *stream,
-    स्थिर काष्ठा ia_css_isp_config *config) अणु
-	वापस ia_css_stream_set_isp_config_on_pipe(stream, config, शून्य);
-पूर्ण
+    struct ia_css_stream *stream,
+    const struct ia_css_isp_config *config) {
+	return ia_css_stream_set_isp_config_on_pipe(stream, config, NULL);
+}
 
-पूर्णांक
+int
 ia_css_stream_set_isp_config_on_pipe(
-    काष्ठा ia_css_stream *stream,
-    स्थिर काष्ठा ia_css_isp_config *config,
-    काष्ठा ia_css_pipe *pipe) अणु
-	पूर्णांक err = 0;
+    struct ia_css_stream *stream,
+    const struct ia_css_isp_config *config,
+    struct ia_css_pipe *pipe) {
+	int err = 0;
 
-	अगर ((!stream) || (!config))
-		वापस -EINVAL;
+	if ((!stream) || (!config))
+		return -EINVAL;
 
 	IA_CSS_ENTER("stream=%p, config=%p, pipe=%p", stream, config, pipe);
 
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
-	अगर (config->output_frame)
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+	if (config->output_frame)
 		err = sh_css_set_per_frame_isp_config_on_pipe(stream, config, pipe);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		err = sh_css_set_global_isp_config_on_pipe(stream->pipes[0], config, pipe);
 
 	IA_CSS_LEAVE_ERR(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक
-ia_css_pipe_set_isp_config(काष्ठा ia_css_pipe *pipe,
-			   काष्ठा ia_css_isp_config *config) अणु
-	काष्ठा ia_css_pipe *pipe_in = pipe;
-	पूर्णांक err = 0;
+int
+ia_css_pipe_set_isp_config(struct ia_css_pipe *pipe,
+			   struct ia_css_isp_config *config) {
+	struct ia_css_pipe *pipe_in = pipe;
+	int err = 0;
 
 	IA_CSS_ENTER("pipe=%p", pipe);
 
-	अगर ((!pipe) || (!pipe->stream))
-		वापस -EINVAL;
+	if ((!pipe) || (!pipe->stream))
+		return -EINVAL;
 
 	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE, "config=%p\n", config);
 
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
-	अगर (config->output_frame)
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+	if (config->output_frame)
 		err = sh_css_set_per_frame_isp_config_on_pipe(pipe->stream, config, pipe);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		err = sh_css_set_global_isp_config_on_pipe(pipe, config, pipe_in);
 	IA_CSS_LEAVE_ERR(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
+static int
 sh_css_set_global_isp_config_on_pipe(
-    काष्ठा ia_css_pipe *curr_pipe,
-    स्थिर काष्ठा ia_css_isp_config *config,
-    काष्ठा ia_css_pipe *pipe) अणु
-	पूर्णांक err = 0;
-	पूर्णांक err1 = 0;
-	पूर्णांक err2 = 0;
+    struct ia_css_pipe *curr_pipe,
+    const struct ia_css_isp_config *config,
+    struct ia_css_pipe *pipe) {
+	int err = 0;
+	int err1 = 0;
+	int err2 = 0;
 
 	IA_CSS_ENTER_PRIVATE("stream=%p, config=%p, pipe=%p", curr_pipe, config, pipe);
 
@@ -1961,102 +1960,102 @@ sh_css_set_global_isp_config_on_pipe(
 	/* Now commit all changes to the SP */
 	err2 = sh_css_param_update_isp_params(curr_pipe, curr_pipe->stream->isp_params_configs, sh_css_sp_is_running(), pipe);
 
-	/* The following code is पूर्णांकentional. The sh_css_init_isp_params_from_config पूर्णांकerface
+	/* The following code is intentional. The sh_css_init_isp_params_from_config interface
 	 * throws an error when both DPC and BDS is enabled. The CSS API must pass this error
-	 * inक्रमmation to the caller, ie. the host. We करो not वापस this error immediately,
-	 * but instead जारी with updating the ISP params to enable testing of features
+	 * information to the caller, ie. the host. We do not return this error immediately,
+	 * but instead continue with updating the ISP params to enable testing of features
 	 * which are currently in TR phase. */
 
 	err = (err1 != 0) ? err1 : ((err2 != 0) ? err2 : err);
 
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
-अटल पूर्णांक
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+static int
 sh_css_set_per_frame_isp_config_on_pipe(
-    काष्ठा ia_css_stream *stream,
-    स्थिर काष्ठा ia_css_isp_config *config,
-    काष्ठा ia_css_pipe *pipe) अणु
-	अचिन्हित पूर्णांक i;
+    struct ia_css_stream *stream,
+    const struct ia_css_isp_config *config,
+    struct ia_css_pipe *pipe) {
+	unsigned int i;
 	bool per_frame_config_created = false;
-	पूर्णांक err = 0;
-	पूर्णांक err1 = 0;
-	पूर्णांक err2 = 0;
-	पूर्णांक err3 = 0;
+	int err = 0;
+	int err1 = 0;
+	int err2 = 0;
+	int err3 = 0;
 
-	काष्ठा sh_css_ddr_address_map *ddr_ptrs;
-	काष्ठा sh_css_ddr_address_map_size *ddr_ptrs_size;
-	काष्ठा ia_css_isp_parameters *params;
+	struct sh_css_ddr_address_map *ddr_ptrs;
+	struct sh_css_ddr_address_map_size *ddr_ptrs_size;
+	struct ia_css_isp_parameters *params;
 
 	IA_CSS_ENTER_PRIVATE("stream=%p, config=%p, pipe=%p", stream, config, pipe);
 
-	अगर (!pipe)
-	अणु
+	if (!pipe)
+	{
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* create per-frame ISP params object with शेष values
-	 * from stream->isp_params_configs अगर one करोesn't alपढ़ोy exist
+	/* create per-frame ISP params object with default values
+	 * from stream->isp_params_configs if one doesn't already exist
 	*/
-	अगर (!stream->per_frame_isp_params_configs)
-	अणु
+	if (!stream->per_frame_isp_params_configs)
+	{
 		err = sh_css_create_isp_params(stream,
 					       &stream->per_frame_isp_params_configs);
-		अगर (err)
-			जाओ निकास;
+		if (err)
+			goto exit;
 		per_frame_config_created = true;
-	पूर्ण
+	}
 
 	params = stream->per_frame_isp_params_configs;
 
 	/* update new ISP params object with the new config */
-	अगर (!sh_css_init_isp_params_from_global(stream, params, false, pipe))
-	अणु
+	if (!sh_css_init_isp_params_from_global(stream, params, false, pipe))
+	{
 		err1 = -EINVAL;
-	पूर्ण
+	}
 
 	err2 = sh_css_init_isp_params_from_config(stream->pipes[0], params, config, pipe);
 
-	अगर (per_frame_config_created)
-	अणु
+	if (per_frame_config_created)
+	{
 		ddr_ptrs = &params->ddr_ptrs;
 		ddr_ptrs_size = &params->ddr_ptrs_size;
 		/* create per pipe reference to general ddr_ptrs */
-		क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) अणु
+		for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) {
 			ref_sh_css_ddr_address_map(ddr_ptrs, &params->pipe_ddr_ptrs[i]);
 			params->pipe_ddr_ptrs_size[i] = *ddr_ptrs_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* now commit to ddr */
 	err3 = sh_css_param_update_isp_params(stream->pipes[0], params, sh_css_sp_is_running(), pipe);
 
-	/* The following code is पूर्णांकentional. The sh_css_init_sp_params_from_config and
+	/* The following code is intentional. The sh_css_init_sp_params_from_config and
 	 * sh_css_init_isp_params_from_config throws an error when both DPC and BDS is enabled.
-	 * The CSS API must pass this error inक्रमmation to the caller, ie. the host.
-	 * We करो not वापस this error immediately, but instead जारी with updating the ISP params
+	 * The CSS API must pass this error information to the caller, ie. the host.
+	 * We do not return this error immediately, but instead continue with updating the ISP params
 	 *  to enable testing of features which are currently in TR phase. */
 	err = (err1 != 0) ? err1 :
 	      (err2 != 0) ? err2 :
 	      (err3 != 0) ? err3 : err;
-निकास:
+exit:
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
-#पूर्ण_अगर
+	return err;
+}
+#endif
 
-अटल पूर्णांक
-sh_css_init_isp_params_from_config(काष्ठा ia_css_pipe *pipe,
-				   काष्ठा ia_css_isp_parameters *params,
-				   स्थिर काष्ठा ia_css_isp_config *config,
-				   काष्ठा ia_css_pipe *pipe_in) अणु
-	पूर्णांक err = 0;
+static int
+sh_css_init_isp_params_from_config(struct ia_css_pipe *pipe,
+				   struct ia_css_isp_parameters *params,
+				   const struct ia_css_isp_config *config,
+				   struct ia_css_pipe *pipe_in) {
+	int err = 0;
 	bool is_dp_10bpp = true;
 
-	निश्चित(pipe);
+	assert(pipe);
 
 	IA_CSS_ENTER_PRIVATE("pipe=%p, config=%p, params=%p", pipe, config, params);
 
@@ -2065,7 +2064,7 @@ sh_css_init_isp_params_from_config(काष्ठा ia_css_pipe *pipe,
 	sh_css_set_nr_config(params, config->nr_config);
 	sh_css_set_ee_config(params, config->ee_config);
 	sh_css_set_baa_config(params, config->baa_config);
-	अगर ((pipe->mode < IA_CSS_PIPE_ID_NUM) &&
+	if ((pipe->mode < IA_CSS_PIPE_ID_NUM) &&
 	    (params->pipe_dvs_6axis_config[pipe->mode]))
 		sh_css_set_pipe_dvs_6axis_config(pipe, params, config->dvs_6axis_config);
 	sh_css_set_dz_config(params, config->dz_config);
@@ -2086,62 +2085,62 @@ sh_css_init_isp_params_from_config(काष्ठा ia_css_pipe *pipe,
 	params->output_frame = config->output_frame;
 	params->isp_parameters_id = config->isp_config_id;
 
-	/* Currently we करो not offer CSS पूर्णांकerface to set dअगरferent
-	 * configurations क्रम DPC, i.e. depending on DPC being enabled
-	 * beक्रमe (NORM+OBC) or after. The folllowing code to set the
-	 * DPC configuration should be updated when this पूर्णांकerface is made
+	/* Currently we do not offer CSS interface to set different
+	 * configurations for DPC, i.e. depending on DPC being enabled
+	 * before (NORM+OBC) or after. The folllowing code to set the
+	 * DPC configuration should be updated when this interface is made
 	 * available */
-	अगर (IS_ISP2401) अणु
+	if (IS_ISP2401) {
 		sh_css_set_dp_config(pipe, params, config->dp_config);
 		ia_css_set_param_exceptions(pipe, params);
-	पूर्ण
+	}
 
-	अगर (0 ==
+	if (0 ==
 	    sh_css_select_dp_10bpp_config(pipe, &is_dp_10bpp))
-	अणु
-		/* वापस an error when both DPC and BDS is enabled by the
+	{
+		/* return an error when both DPC and BDS is enabled by the
 		 * user. */
-		/* we करो not निकास from this poपूर्णांक immediately to allow पूर्णांकernal
+		/* we do not exit from this point immediately to allow internal
 		 * firmware feature testing. */
-		अगर (is_dp_10bpp) अणु
+		if (is_dp_10bpp) {
 			err = -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा
-	अणु
+		}
+	} else
+	{
 		err = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!IS_ISP2401)
+	if (!IS_ISP2401)
 		ia_css_set_param_exceptions(pipe, params);
 
-निकास:
+exit:
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम
+void
 ia_css_stream_get_isp_config(
-    स्थिर काष्ठा ia_css_stream *stream,
-    काष्ठा ia_css_isp_config *config)
-अणु
+    const struct ia_css_stream *stream,
+    struct ia_css_isp_config *config)
+{
 	IA_CSS_ENTER("void");
 	ia_css_pipe_get_isp_config(stream->pipes[0], config);
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
-व्योम
-ia_css_pipe_get_isp_config(काष्ठा ia_css_pipe *pipe,
-			   काष्ठा ia_css_isp_config *config)
-अणु
-	काष्ठा ia_css_isp_parameters *params = शून्य;
+void
+ia_css_pipe_get_isp_config(struct ia_css_pipe *pipe,
+			   struct ia_css_isp_config *config)
+{
+	struct ia_css_isp_parameters *params = NULL;
 
-	निश्चित(config);
+	assert(config);
 
 	IA_CSS_ENTER("config=%p", config);
 
 	params = pipe->stream->isp_params_configs;
-	निश्चित(params);
+	assert(params);
 
 	ia_css_get_configs(params, config);
 
@@ -2162,432 +2161,432 @@ ia_css_pipe_get_isp_config(काष्ठा ia_css_pipe *pipe,
 	config->isp_config_id = params->isp_parameters_id;
 
 	IA_CSS_LEAVE("void");
-पूर्ण
+}
 
 /*
- * coding style says the वापस of "mmgr_NULL" is the error संकेत
+ * coding style says the return of "mmgr_NULL" is the error signal
  *
- * Deprecated: Implement mmgr_पुनः_स्मृति()
+ * Deprecated: Implement mmgr_realloc()
  */
-अटल bool पुनः_स्मृति_isp_css_mm_buf(
+static bool realloc_isp_css_mm_buf(
     ia_css_ptr *curr_buf,
-    माप_प्रकार *curr_size,
-    माप_प्रकार needed_size,
-    bool क्रमce,
-    पूर्णांक *err,
-    uपूर्णांक16_t mmgr_attribute)
-अणु
+    size_t *curr_size,
+    size_t needed_size,
+    bool force,
+    int *err,
+    uint16_t mmgr_attribute)
+{
 	s32 id;
 
 	*err = 0;
-	/* Possible optimization: add a function sh_css_isp_css_mm_पुनः_स्मृति()
+	/* Possible optimization: add a function sh_css_isp_css_mm_realloc()
 	 * and implement on top of hmm. */
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	अगर (!क्रमce && *curr_size >= needed_size) अणु
+	if (!force && *curr_size >= needed_size) {
 		IA_CSS_LEAVE_PRIVATE("false");
-		वापस false;
-	पूर्ण
-	/* करोn't पुनः_स्मृतिate अगर single ref to buffer and same size */
-	अगर (*curr_size == needed_size && ia_css_refcount_is_single(*curr_buf)) अणु
+		return false;
+	}
+	/* don't reallocate if single ref to buffer and same size */
+	if (*curr_size == needed_size && ia_css_refcount_is_single(*curr_buf)) {
 		IA_CSS_LEAVE_PRIVATE("false");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	id = IA_CSS_REFCOUNT_PARAM_BUFFER;
 	ia_css_refcount_decrement(id, *curr_buf);
 	*curr_buf = ia_css_refcount_increment(id, hmm_alloc(needed_size,
 							    HMM_BO_PRIVATE, 0,
-							    शून्य,
+							    NULL,
 							    mmgr_attribute));
 
-	अगर (!*curr_buf) अणु
+	if (!*curr_buf) {
 		*err = -ENOMEM;
 		*curr_size = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		*curr_size = needed_size;
-	पूर्ण
+	}
 	IA_CSS_LEAVE_PRIVATE("true");
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool पुनः_स्मृतिate_buffer(
+static bool reallocate_buffer(
     ia_css_ptr *curr_buf,
-    माप_प्रकार *curr_size,
-    माप_प्रकार needed_size,
-    bool क्रमce,
-    पूर्णांक *err)
-अणु
+    size_t *curr_size,
+    size_t needed_size,
+    bool force,
+    int *err)
+{
 	bool ret;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	ret = पुनः_स्मृति_isp_css_mm_buf(curr_buf,
-				     curr_size, needed_size, क्रमce, err, 0);
+	ret = realloc_isp_css_mm_buf(curr_buf,
+				     curr_size, needed_size, force, err, 0);
 
 	IA_CSS_LEAVE_PRIVATE("ret=%d", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा ia_css_isp_3a_statistics *
-ia_css_isp_3a_statistics_allocate(स्थिर काष्ठा ia_css_3a_grid_info *grid)
-अणु
-	काष्ठा ia_css_isp_3a_statistics *me;
+struct ia_css_isp_3a_statistics *
+ia_css_isp_3a_statistics_allocate(const struct ia_css_3a_grid_info *grid)
+{
+	struct ia_css_isp_3a_statistics *me;
 
 	IA_CSS_ENTER("grid=%p", grid);
 
-	निश्चित(grid);
+	assert(grid);
 
 	/* MW: Does "grid->enable" also control the histogram output ?? */
-	अगर (!grid->enable)
-		वापस शून्य;
+	if (!grid->enable)
+		return NULL;
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
-	अगर (grid->use_dmem) अणु
-		me->dmem_size = माप(काष्ठा ia_css_3a_output) *
+	if (grid->use_dmem) {
+		me->dmem_size = sizeof(struct ia_css_3a_output) *
 				grid->aligned_width *
 				grid->aligned_height;
-	पूर्ण अन्यथा अणु
+	} else {
 		me->vmem_size = ISP_S3ATBL_HI_LO_STRIDE_BYTES *
 				grid->aligned_height;
-	पूर्ण
-#अगर !defined(HAS_NO_HMEM)
-	me->hmem_size = माप_hmem(HMEM0_ID);
-#पूर्ण_अगर
+	}
+#if !defined(HAS_NO_HMEM)
+	me->hmem_size = sizeof_hmem(HMEM0_ID);
+#endif
 
-	/* All subsections need to be aligned to the प्रणाली bus width */
+	/* All subsections need to be aligned to the system bus width */
 	me->dmem_size = CEIL_MUL(me->dmem_size, HIVE_ISP_DDR_WORD_BYTES);
 	me->vmem_size = CEIL_MUL(me->vmem_size, HIVE_ISP_DDR_WORD_BYTES);
 	me->hmem_size = CEIL_MUL(me->hmem_size, HIVE_ISP_DDR_WORD_BYTES);
 
 	me->size = me->dmem_size + me->vmem_size * 2 + me->hmem_size;
-	me->data_ptr = hmm_alloc(me->size, HMM_BO_PRIVATE, 0, शून्य, 0);
-	अगर (me->data_ptr == mmgr_शून्य) अणु
-		kvमुक्त(me);
-		me = शून्य;
-		जाओ err;
-	पूर्ण
-	अगर (me->dmem_size)
+	me->data_ptr = hmm_alloc(me->size, HMM_BO_PRIVATE, 0, NULL, 0);
+	if (me->data_ptr == mmgr_NULL) {
+		kvfree(me);
+		me = NULL;
+		goto err;
+	}
+	if (me->dmem_size)
 		me->data.dmem.s3a_tbl = me->data_ptr;
-	अगर (me->vmem_size) अणु
+	if (me->vmem_size) {
 		me->data.vmem.s3a_tbl_hi = me->data_ptr + me->dmem_size;
 		me->data.vmem.s3a_tbl_lo = me->data_ptr + me->dmem_size + me->vmem_size;
-	पूर्ण
-	अगर (me->hmem_size)
+	}
+	if (me->hmem_size)
 		me->data_hmem.rgby_tbl = me->data_ptr + me->dmem_size + 2 * me->vmem_size;
 
 err:
 	IA_CSS_LEAVE("return=%p", me);
-	वापस me;
-पूर्ण
+	return me;
+}
 
-व्योम
-ia_css_isp_3a_statistics_मुक्त(काष्ठा ia_css_isp_3a_statistics *me)
-अणु
-	अगर (me) अणु
-		hmm_मुक्त(me->data_ptr);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_isp_3a_statistics_free(struct ia_css_isp_3a_statistics *me)
+{
+	if (me) {
+		hmm_free(me->data_ptr);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_isp_skc_dvs_statistics *ia_css_skc_dvs_statistics_allocate(व्योम)
-अणु
-	वापस शून्य;
-पूर्ण
+struct ia_css_isp_skc_dvs_statistics *ia_css_skc_dvs_statistics_allocate(void)
+{
+	return NULL;
+}
 
-काष्ठा ia_css_metadata *
-ia_css_metadata_allocate(स्थिर काष्ठा ia_css_metadata_info *metadata_info)
-अणु
-	काष्ठा ia_css_metadata *md = शून्य;
+struct ia_css_metadata *
+ia_css_metadata_allocate(const struct ia_css_metadata_info *metadata_info)
+{
+	struct ia_css_metadata *md = NULL;
 
 	IA_CSS_ENTER("");
 
-	अगर (metadata_info->size == 0)
-		वापस शून्य;
+	if (metadata_info->size == 0)
+		return NULL;
 
-	md = kvदो_स्मृति(माप(*md), GFP_KERNEL);
-	अगर (!md)
-		जाओ error;
+	md = kvmalloc(sizeof(*md), GFP_KERNEL);
+	if (!md)
+		goto error;
 
 	md->info = *metadata_info;
 	md->exp_id = 0;
-	md->address = hmm_alloc(metadata_info->size, HMM_BO_PRIVATE, 0, शून्य, 0);
-	अगर (md->address == mmgr_शून्य)
-		जाओ error;
+	md->address = hmm_alloc(metadata_info->size, HMM_BO_PRIVATE, 0, NULL, 0);
+	if (md->address == mmgr_NULL)
+		goto error;
 
 	IA_CSS_LEAVE("return=%p", md);
-	वापस md;
+	return md;
 
 error:
-	ia_css_metadata_मुक्त(md);
-	IA_CSS_LEAVE("return=%p", शून्य);
-	वापस शून्य;
-पूर्ण
+	ia_css_metadata_free(md);
+	IA_CSS_LEAVE("return=%p", NULL);
+	return NULL;
+}
 
-व्योम
-ia_css_metadata_मुक्त(काष्ठा ia_css_metadata *me)
-अणु
-	अगर (me) अणु
+void
+ia_css_metadata_free(struct ia_css_metadata *me)
+{
+	if (me) {
 		/* The enter and leave macros are placed inside
-		 * the condition to aव्योम false logging of metadata
-		 * मुक्त events when metadata is disabled.
+		 * the condition to avoid false logging of metadata
+		 * free events when metadata is disabled.
 		 * We found this to be confusing during development
 		 * and debugging. */
 		IA_CSS_ENTER("me=%p", me);
-		hmm_मुक्त(me->address);
-		kvमुक्त(me);
+		hmm_free(me->address);
+		kvfree(me);
 		IA_CSS_LEAVE("void");
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-ia_css_metadata_मुक्त_multiple(अचिन्हित पूर्णांक num_bufs,
-			      काष्ठा ia_css_metadata **bufs)
-अणु
-	अचिन्हित पूर्णांक i;
+void
+ia_css_metadata_free_multiple(unsigned int num_bufs,
+			      struct ia_css_metadata **bufs)
+{
+	unsigned int i;
 
-	अगर (bufs) अणु
-		क्रम (i = 0; i < num_bufs; i++)
-			ia_css_metadata_मुक्त(bufs[i]);
-	पूर्ण
-पूर्ण
+	if (bufs) {
+		for (i = 0; i < num_bufs; i++)
+			ia_css_metadata_free(bufs[i]);
+	}
+}
 
-अटल अचिन्हित पूर्णांक g_param_buffer_dequeue_count;
-अटल अचिन्हित पूर्णांक g_param_buffer_enqueue_count;
+static unsigned int g_param_buffer_dequeue_count;
+static unsigned int g_param_buffer_enqueue_count;
 
-पूर्णांक
-ia_css_stream_isp_parameters_init(काष्ठा ia_css_stream *stream) अणु
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक i;
-	काष्ठा sh_css_ddr_address_map *ddr_ptrs;
-	काष्ठा sh_css_ddr_address_map_size *ddr_ptrs_size;
-	काष्ठा ia_css_isp_parameters *params;
+int
+ia_css_stream_isp_parameters_init(struct ia_css_stream *stream) {
+	int err = 0;
+	unsigned int i;
+	struct sh_css_ddr_address_map *ddr_ptrs;
+	struct sh_css_ddr_address_map_size *ddr_ptrs_size;
+	struct ia_css_isp_parameters *params;
 
-	निश्चित(stream);
+	assert(stream);
 	IA_CSS_ENTER_PRIVATE("void");
 
-	अगर (!stream)
-	अणु
+	if (!stream)
+	{
 		IA_CSS_LEAVE_ERR_PRIVATE(-EINVAL);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* TMP: tracking of paramsets */
 	g_param_buffer_dequeue_count = 0;
 	g_param_buffer_enqueue_count = 0;
 
-	stream->per_frame_isp_params_configs = शून्य;
+	stream->per_frame_isp_params_configs = NULL;
 	err = sh_css_create_isp_params(stream,
 				       &stream->isp_params_configs);
-	अगर (err)
-		जाओ ERR;
+	if (err)
+		goto ERR;
 
 	params = stream->isp_params_configs;
-	अगर (!sh_css_init_isp_params_from_global(stream, params, true, शून्य))
-	अणु
-		/* we करो not वापस the error immediately to enable पूर्णांकernal
+	if (!sh_css_init_isp_params_from_global(stream, params, true, NULL))
+	{
+		/* we do not return the error immediately to enable internal
 		 * firmware feature testing */
 		err = -EINVAL;
-	पूर्ण
+	}
 
 	ddr_ptrs = &params->ddr_ptrs;
 	ddr_ptrs_size = &params->ddr_ptrs_size;
 
 	/* create per pipe reference to general ddr_ptrs */
-	क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++)
-	अणु
+	for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++)
+	{
 		ref_sh_css_ddr_address_map(ddr_ptrs, &params->pipe_ddr_ptrs[i]);
 		params->pipe_ddr_ptrs_size[i] = *ddr_ptrs_size;
-	पूर्ण
+	}
 
 ERR:
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
+static void
 ia_css_set_sdis_config(
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_dvs_coefficients *dvs_coefs)
-अणु
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_dvs_coefficients *dvs_coefs)
+{
 	ia_css_set_sdis_horicoef_config(params, dvs_coefs);
 	ia_css_set_sdis_vertcoef_config(params, dvs_coefs);
 	ia_css_set_sdis_horiproj_config(params, dvs_coefs);
 	ia_css_set_sdis_vertproj_config(params, dvs_coefs);
-पूर्ण
+}
 
-अटल व्योम
+static void
 ia_css_set_sdis2_config(
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_dvs2_coefficients *dvs2_coefs)
-अणु
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_dvs2_coefficients *dvs2_coefs)
+{
 	ia_css_set_sdis2_horicoef_config(params, dvs2_coefs);
 	ia_css_set_sdis2_vertcoef_config(params, dvs2_coefs);
 	ia_css_set_sdis2_horiproj_config(params, dvs2_coefs);
 	ia_css_set_sdis2_vertproj_config(params, dvs2_coefs);
-पूर्ण
+}
 
-अटल पूर्णांक
-sh_css_create_isp_params(काष्ठा ia_css_stream *stream,
-			 काष्ठा ia_css_isp_parameters **isp_params_out) अणु
+static int
+sh_css_create_isp_params(struct ia_css_stream *stream,
+			 struct ia_css_isp_parameters **isp_params_out) {
 	bool succ = true;
-	अचिन्हित पूर्णांक i;
-	काष्ठा sh_css_ddr_address_map *ddr_ptrs;
-	काष्ठा sh_css_ddr_address_map_size *ddr_ptrs_size;
-	पूर्णांक err = 0;
-	माप_प्रकार params_size;
-	काष्ठा ia_css_isp_parameters *params =
-	kvदो_स्मृति(माप(काष्ठा ia_css_isp_parameters), GFP_KERNEL);
+	unsigned int i;
+	struct sh_css_ddr_address_map *ddr_ptrs;
+	struct sh_css_ddr_address_map_size *ddr_ptrs_size;
+	int err = 0;
+	size_t params_size;
+	struct ia_css_isp_parameters *params =
+	kvmalloc(sizeof(struct ia_css_isp_parameters), GFP_KERNEL);
 
-	अगर (!params)
-	अणु
-		*isp_params_out = शून्य;
+	if (!params)
+	{
+		*isp_params_out = NULL;
 		err = -ENOMEM;
-		IA_CSS_ERROR("%s:%d error: cannot allocate memory", __खाता__, __LINE__);
+		IA_CSS_ERROR("%s:%d error: cannot allocate memory", __FILE__, __LINE__);
 		IA_CSS_LEAVE_ERR_PRIVATE(err);
-		वापस err;
-	पूर्ण अन्यथा
-	अणु
-		स_रखो(params, 0, माप(काष्ठा ia_css_isp_parameters));
-	पूर्ण
+		return err;
+	} else
+	{
+		memset(params, 0, sizeof(struct ia_css_isp_parameters));
+	}
 
 	ddr_ptrs = &params->ddr_ptrs;
 	ddr_ptrs_size = &params->ddr_ptrs_size;
 
-	क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++)
-	अणु
-		स_रखो(&params->pipe_ddr_ptrs[i], 0,
-		       माप(params->pipe_ddr_ptrs[i]));
-		स_रखो(&params->pipe_ddr_ptrs_size[i], 0,
-		       माप(params->pipe_ddr_ptrs_size[i]));
-	पूर्ण
+	for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++)
+	{
+		memset(&params->pipe_ddr_ptrs[i], 0,
+		       sizeof(params->pipe_ddr_ptrs[i]));
+		memset(&params->pipe_ddr_ptrs_size[i], 0,
+		       sizeof(params->pipe_ddr_ptrs_size[i]));
+	}
 
-	स_रखो(ddr_ptrs, 0, माप(*ddr_ptrs));
-	स_रखो(ddr_ptrs_size, 0, माप(*ddr_ptrs_size));
+	memset(ddr_ptrs, 0, sizeof(*ddr_ptrs));
+	memset(ddr_ptrs_size, 0, sizeof(*ddr_ptrs_size));
 
-	params_size = माप(params->uds);
+	params_size = sizeof(params->uds);
 	ddr_ptrs_size->isp_param = params_size;
 	ddr_ptrs->isp_param =
 	ia_css_refcount_increment(IA_CSS_REFCOUNT_PARAM_BUFFER,
-				  hmm_alloc(params_size, HMM_BO_PRIVATE, 0, शून्य, 0));
-	succ &= (ddr_ptrs->isp_param != mmgr_शून्य);
+				  hmm_alloc(params_size, HMM_BO_PRIVATE, 0, NULL, 0));
+	succ &= (ddr_ptrs->isp_param != mmgr_NULL);
 
-	ddr_ptrs_size->macc_tbl = माप(काष्ठा ia_css_macc_table);
+	ddr_ptrs_size->macc_tbl = sizeof(struct ia_css_macc_table);
 	ddr_ptrs->macc_tbl =
 	ia_css_refcount_increment(IA_CSS_REFCOUNT_PARAM_BUFFER,
-				  hmm_alloc(माप(काष्ठा ia_css_macc_table), HMM_BO_PRIVATE, 0, शून्य, 0));
-	succ &= (ddr_ptrs->macc_tbl != mmgr_शून्य);
+				  hmm_alloc(sizeof(struct ia_css_macc_table), HMM_BO_PRIVATE, 0, NULL, 0));
+	succ &= (ddr_ptrs->macc_tbl != mmgr_NULL);
 
 	*isp_params_out = params;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool
-sh_css_init_isp_params_from_global(काष्ठा ia_css_stream *stream,
-				   काष्ठा ia_css_isp_parameters *params,
-				   bool use_शेष_config,
-				   काष्ठा ia_css_pipe *pipe_in)
-अणु
+static bool
+sh_css_init_isp_params_from_global(struct ia_css_stream *stream,
+				   struct ia_css_isp_parameters *params,
+				   bool use_default_config,
+				   struct ia_css_pipe *pipe_in)
+{
 	bool retval = true;
-	पूर्णांक i = 0;
+	int i = 0;
 	bool is_dp_10bpp = true;
-	अचिन्हित पूर्णांक isp_pipe_version = ia_css_pipe_get_isp_pipe_version(
+	unsigned int isp_pipe_version = ia_css_pipe_get_isp_pipe_version(
 					    stream->pipes[0]);
-	काष्ठा ia_css_isp_parameters *stream_params = stream->isp_params_configs;
+	struct ia_css_isp_parameters *stream_params = stream->isp_params_configs;
 
-	अगर (!use_शेष_config && !stream_params) अणु
+	if (!use_default_config && !stream_params) {
 		retval = false;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	params->output_frame = शून्य;
+	params->output_frame = NULL;
 	params->isp_parameters_id = 0;
 
-	अगर (use_शेष_config) अणु
-		ia_css_set_xnr3_config(params, &शेष_xnr3_config);
+	if (use_default_config) {
+		ia_css_set_xnr3_config(params, &default_xnr3_config);
 
-		sh_css_set_nr_config(params, &शेष_nr_config);
-		sh_css_set_ee_config(params, &शेष_ee_config);
-		अगर (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1)
-			sh_css_set_macc_table(params, &शेष_macc_table);
-		अन्यथा अगर (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_2_2)
-			sh_css_set_macc_table(params, &शेष_macc2_table);
-		sh_css_set_gamma_table(params, &शेष_gamma_table);
-		sh_css_set_ctc_table(params, &शेष_ctc_table);
-		sh_css_set_baa_config(params, &शेष_baa_config);
-		sh_css_set_dz_config(params, &शेष_dz_config);
+		sh_css_set_nr_config(params, &default_nr_config);
+		sh_css_set_ee_config(params, &default_ee_config);
+		if (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1)
+			sh_css_set_macc_table(params, &default_macc_table);
+		else if (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_2_2)
+			sh_css_set_macc_table(params, &default_macc2_table);
+		sh_css_set_gamma_table(params, &default_gamma_table);
+		sh_css_set_ctc_table(params, &default_ctc_table);
+		sh_css_set_baa_config(params, &default_baa_config);
+		sh_css_set_dz_config(params, &default_dz_config);
 		/* ------ deprecated(bz675) : from ------ */
-		sh_css_set_shading_settings(params, &शेष_shading_settings);
+		sh_css_set_shading_settings(params, &default_shading_settings);
 		/* ------ deprecated(bz675) : to ------ */
 
-		ia_css_set_s3a_config(params, &शेष_3a_config);
-		ia_css_set_wb_config(params, &शेष_wb_config);
-		ia_css_set_csc_config(params, &शेष_cc_config);
-		ia_css_set_tnr_config(params, &शेष_tnr_config);
-		ia_css_set_ob_config(params, &शेष_ob_config);
-		ia_css_set_dp_config(params, &शेष_dp_config);
+		ia_css_set_s3a_config(params, &default_3a_config);
+		ia_css_set_wb_config(params, &default_wb_config);
+		ia_css_set_csc_config(params, &default_cc_config);
+		ia_css_set_tnr_config(params, &default_tnr_config);
+		ia_css_set_ob_config(params, &default_ob_config);
+		ia_css_set_dp_config(params, &default_dp_config);
 
-		अगर (!IS_ISP2401) अणु
+		if (!IS_ISP2401) {
 			ia_css_set_param_exceptions(pipe_in, params);
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < stream->num_pipes; i++) अणु
-				अगर (sh_css_select_dp_10bpp_config(stream->pipes[i],
-								&is_dp_10bpp) == 0) अणु
-					/* set the वापस value as false अगर both DPC and
-					* BDS is enabled by the user. But we करो not वापस
-					* the value immediately to enable पूर्णांकernal firmware
+		} else {
+			for (i = 0; i < stream->num_pipes; i++) {
+				if (sh_css_select_dp_10bpp_config(stream->pipes[i],
+								&is_dp_10bpp) == 0) {
+					/* set the return value as false if both DPC and
+					* BDS is enabled by the user. But we do not return
+					* the value immediately to enable internal firmware
 					* feature testing. */
-					अगर (is_dp_10bpp) अणु
-						sh_css_set_dp_config(stream->pipes[i], params, &शेष_dp_10bpp_config);
-					पूर्ण अन्यथा अणु
-						sh_css_set_dp_config(stream->pipes[i], params, &शेष_dp_config);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					if (is_dp_10bpp) {
+						sh_css_set_dp_config(stream->pipes[i], params, &default_dp_10bpp_config);
+					} else {
+						sh_css_set_dp_config(stream->pipes[i], params, &default_dp_config);
+					}
+				} else {
 					retval = false;
-					जाओ निकास;
-				पूर्ण
+					goto exit;
+				}
 
 				ia_css_set_param_exceptions(stream->pipes[i], params);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		ia_css_set_de_config(params, &शेष_de_config);
-		ia_css_set_gc_config(params, &शेष_gc_config);
-		ia_css_set_anr_config(params, &शेष_anr_config);
-		ia_css_set_anr2_config(params, &शेष_anr_thres);
-		ia_css_set_ce_config(params, &शेष_ce_config);
-		ia_css_set_xnr_table_config(params, &शेष_xnr_table);
-		ia_css_set_ecd_config(params, &शेष_ecd_config);
-		ia_css_set_ynr_config(params, &शेष_ynr_config);
-		ia_css_set_fc_config(params, &शेष_fc_config);
-		ia_css_set_cnr_config(params, &शेष_cnr_config);
-		ia_css_set_macc_config(params, &शेष_macc_config);
-		ia_css_set_ctc_config(params, &शेष_ctc_config);
-		ia_css_set_aa_config(params, &शेष_aa_config);
-		ia_css_set_r_gamma_config(params, &शेष_r_gamma_table);
-		ia_css_set_g_gamma_config(params, &शेष_g_gamma_table);
-		ia_css_set_b_gamma_config(params, &शेष_b_gamma_table);
-		ia_css_set_yuv2rgb_config(params, &शेष_yuv2rgb_cc_config);
-		ia_css_set_rgb2yuv_config(params, &शेष_rgb2yuv_cc_config);
-		ia_css_set_xnr_config(params, &शेष_xnr_config);
-		ia_css_set_sdis_config(params, &शेष_sdis_config);
-		ia_css_set_sdis2_config(params, &शेष_sdis2_config);
-		ia_css_set_क्रमmats_config(params, &शेष_क्रमmats_config);
+		ia_css_set_de_config(params, &default_de_config);
+		ia_css_set_gc_config(params, &default_gc_config);
+		ia_css_set_anr_config(params, &default_anr_config);
+		ia_css_set_anr2_config(params, &default_anr_thres);
+		ia_css_set_ce_config(params, &default_ce_config);
+		ia_css_set_xnr_table_config(params, &default_xnr_table);
+		ia_css_set_ecd_config(params, &default_ecd_config);
+		ia_css_set_ynr_config(params, &default_ynr_config);
+		ia_css_set_fc_config(params, &default_fc_config);
+		ia_css_set_cnr_config(params, &default_cnr_config);
+		ia_css_set_macc_config(params, &default_macc_config);
+		ia_css_set_ctc_config(params, &default_ctc_config);
+		ia_css_set_aa_config(params, &default_aa_config);
+		ia_css_set_r_gamma_config(params, &default_r_gamma_table);
+		ia_css_set_g_gamma_config(params, &default_g_gamma_table);
+		ia_css_set_b_gamma_config(params, &default_b_gamma_table);
+		ia_css_set_yuv2rgb_config(params, &default_yuv2rgb_cc_config);
+		ia_css_set_rgb2yuv_config(params, &default_rgb2yuv_cc_config);
+		ia_css_set_xnr_config(params, &default_xnr_config);
+		ia_css_set_sdis_config(params, &default_sdis_config);
+		ia_css_set_sdis2_config(params, &default_sdis2_config);
+		ia_css_set_formats_config(params, &default_formats_config);
 
-		params->fpn_config.data = शून्य;
+		params->fpn_config.data = NULL;
 		params->config_changed[IA_CSS_FPN_ID] = true;
 		params->fpn_config.enabled = 0;
 
-		params->motion_config = शेष_motion_config;
+		params->motion_config = default_motion_config;
 		params->motion_config_changed = true;
 
-		params->morph_table = शून्य;
+		params->morph_table = NULL;
 		params->morph_table_changed = true;
 
-		params->sc_table = शून्य;
+		params->sc_table = NULL;
 		params->sc_table_changed = true;
 		params->sc_table_dirty = false;
 		params->sc_table_last_pipe_num = 0;
@@ -2597,14 +2596,14 @@ sh_css_init_isp_params_from_global(काष्ठा ia_css_stream *stream,
 
 		ia_css_sdis_clear_coefficients(&params->dvs_coefs);
 		params->dis_coef_table_changed = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ia_css_set_xnr3_config(params, &stream_params->xnr3_config);
 
 		sh_css_set_nr_config(params, &stream_params->nr_config);
 		sh_css_set_ee_config(params, &stream_params->ee_config);
-		अगर (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1)
+		if (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1)
 			sh_css_set_macc_table(params, &stream_params->macc_table);
-		अन्यथा अगर (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_2_2)
+		else if (isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_2_2)
 			sh_css_set_macc_table(params, &stream_params->macc_table);
 		sh_css_set_gamma_table(params, &stream_params->gc_table);
 		sh_css_set_ctc_table(params, &stream_params->ctc_table);
@@ -2639,37 +2638,37 @@ sh_css_init_isp_params_from_global(काष्ठा ia_css_stream *stream,
 		ia_css_set_yuv2rgb_config(params, &stream_params->yuv2rgb_cc_config);
 		ia_css_set_rgb2yuv_config(params, &stream_params->rgb2yuv_cc_config);
 		ia_css_set_xnr_config(params, &stream_params->xnr_config);
-		ia_css_set_क्रमmats_config(params, &stream_params->क्रमmats_config);
+		ia_css_set_formats_config(params, &stream_params->formats_config);
 
-		क्रम (i = 0; i < stream->num_pipes; i++) अणु
-			अगर (0 ==
-			    sh_css_select_dp_10bpp_config(stream->pipes[i], &is_dp_10bpp)) अणु
-				/* set the वापस value as false अगर both DPC and
-				 * BDS is enabled by the user. But we करो not वापस
-				 * the value immediately to enable पूर्णांकernal firmware
+		for (i = 0; i < stream->num_pipes; i++) {
+			if (0 ==
+			    sh_css_select_dp_10bpp_config(stream->pipes[i], &is_dp_10bpp)) {
+				/* set the return value as false if both DPC and
+				 * BDS is enabled by the user. But we do not return
+				 * the value immediately to enable internal firmware
 				 * feature testing. */
 
-				अगर (is_dp_10bpp) अणु
+				if (is_dp_10bpp) {
 					retval = false;
 					/* FIXME: should it ignore this error? */
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				retval = false;
-				जाओ निकास;
-			पूर्ण
-			अगर (IS_ISP2401) अणु
-				अगर (stream->pipes[i]->mode < IA_CSS_PIPE_ID_NUM) अणु
+				goto exit;
+			}
+			if (IS_ISP2401) {
+				if (stream->pipes[i]->mode < IA_CSS_PIPE_ID_NUM) {
 					sh_css_set_dp_config(stream->pipes[i], params,
 							    &stream_params->pipe_dp_config[stream->pipes[i]->mode]);
 					ia_css_set_param_exceptions(stream->pipes[i], params);
-				पूर्ण अन्यथा अणु
+				} else {
 					retval = false;
-					जाओ निकास;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					goto exit;
+				}
+			}
+		}
 
-		अगर (!IS_ISP2401)
+		if (!IS_ISP2401)
 			ia_css_set_param_exceptions(pipe_in, params);
 
 		params->fpn_config.data = stream_params->fpn_config.data;
@@ -2680,43 +2679,43 @@ sh_css_init_isp_params_from_global(काष्ठा ia_css_stream *stream,
 		sh_css_set_motion_vector(params, &stream_params->motion_config);
 		sh_css_set_morph_table(params, stream_params->morph_table);
 
-		अगर (stream_params->sc_table) अणु
+		if (stream_params->sc_table) {
 			sh_css_update_shading_table_status(pipe_in, params);
 			sh_css_set_shading_table(stream, params, stream_params->sc_table);
-		पूर्ण अन्यथा अणु
-			params->sc_table = शून्य;
+		} else {
+			params->sc_table = NULL;
 			params->sc_table_changed = true;
 			params->sc_table_dirty = false;
 			params->sc_table_last_pipe_num = 0;
-		पूर्ण
+		}
 
 		/* Only IA_CSS_PIPE_ID_VIDEO & IA_CSS_PIPE_ID_CAPTURE will support dvs_6axis_config*/
-		क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) अणु
-			अगर (stream_params->pipe_dvs_6axis_config[i]) अणु
-				अगर (params->pipe_dvs_6axis_config[i]) अणु
+		for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) {
+			if (stream_params->pipe_dvs_6axis_config[i]) {
+				if (params->pipe_dvs_6axis_config[i]) {
 					copy_dvs_6axis_table(params->pipe_dvs_6axis_config[i],
 							     stream_params->pipe_dvs_6axis_config[i]);
-				पूर्ण अन्यथा अणु
+				} else {
 					params->pipe_dvs_6axis_config[i] =
 					    generate_dvs_6axis_table_from_config(stream_params->pipe_dvs_6axis_config[i]);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		ia_css_set_sdis_config(params, &stream_params->dvs_coefs);
 		params->dis_coef_table_changed = stream_params->dis_coef_table_changed;
 
 		ia_css_set_sdis2_config(params, &stream_params->dvs2_coefs);
 		params->dvs2_coef_table_changed = stream_params->dvs2_coef_table_changed;
 		params->sensor_binning = stream_params->sensor_binning;
-	पूर्ण
+	}
 
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-पूर्णांक
-sh_css_params_init(व्योम) अणु
-	पूर्णांक i, p;
+int
+sh_css_params_init(void) {
+	int i, p;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
@@ -2724,28 +2723,28 @@ sh_css_params_init(व्योम) अणु
 	g_param_buffer_dequeue_count = 0;
 	g_param_buffer_enqueue_count = 0;
 
-	क्रम (p = 0; p < IA_CSS_PIPE_ID_NUM; p++)
-	अणु
-		क्रम (i = 0; i < SH_CSS_MAX_STAGES; i++) अणु
+	for (p = 0; p < IA_CSS_PIPE_ID_NUM; p++)
+	{
+		for (i = 0; i < SH_CSS_MAX_STAGES; i++) {
 			xmem_sp_stage_ptrs[p][i] =
 			ia_css_refcount_increment(-1,
-						  hmm_alloc(माप(काष्ठा sh_css_sp_stage),
-							    HMM_BO_PRIVATE, 0, शून्य,
+						  hmm_alloc(sizeof(struct sh_css_sp_stage),
+							    HMM_BO_PRIVATE, 0, NULL,
 							    ATOMISP_MAP_FLAG_CLEARED));
 			xmem_isp_stage_ptrs[p][i] =
 			ia_css_refcount_increment(-1,
-						  hmm_alloc(माप(काष्ठा sh_css_sp_stage),
-							    HMM_BO_PRIVATE, 0, शून्य,
+						  hmm_alloc(sizeof(struct sh_css_sp_stage),
+							    HMM_BO_PRIVATE, 0, NULL,
 							    ATOMISP_MAP_FLAG_CLEARED));
 
-			अगर ((xmem_sp_stage_ptrs[p][i] == mmgr_शून्य) ||
-			    (xmem_isp_stage_ptrs[p][i] == mmgr_शून्य)) अणु
+			if ((xmem_sp_stage_ptrs[p][i] == mmgr_NULL) ||
+			    (xmem_isp_stage_ptrs[p][i] == mmgr_NULL)) {
 				sh_css_params_uninit();
 				IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -ENOMEM;
+			}
+		}
+	}
 
 	ia_css_config_gamma_table();
 	ia_css_config_ctc_table();
@@ -2753,386 +2752,386 @@ sh_css_params_init(व्योम) अणु
 	ia_css_config_xnr_table();
 
 	sp_ddr_ptrs = ia_css_refcount_increment(-1,
-						hmm_alloc(CEIL_MUL(माप(काष्ठा sh_css_ddr_address_map),
+						hmm_alloc(CEIL_MUL(sizeof(struct sh_css_ddr_address_map),
 								   HIVE_ISP_DDR_WORD_BYTES),
-							  HMM_BO_PRIVATE, 0, शून्य,
+							  HMM_BO_PRIVATE, 0, NULL,
 							  ATOMISP_MAP_FLAG_CLEARED));
 	xmem_sp_group_ptrs = ia_css_refcount_increment(-1,
-						       hmm_alloc(माप(काष्ठा sh_css_sp_group),
-								 HMM_BO_PRIVATE, 0, शून्य,
+						       hmm_alloc(sizeof(struct sh_css_sp_group),
+								 HMM_BO_PRIVATE, 0, NULL,
 								 ATOMISP_MAP_FLAG_CLEARED));
 
-	अगर ((sp_ddr_ptrs == mmgr_शून्य) ||
-	    (xmem_sp_group_ptrs == mmgr_शून्य))
-	अणु
+	if ((sp_ddr_ptrs == mmgr_NULL) ||
+	    (xmem_sp_group_ptrs == mmgr_NULL))
+	{
 		ia_css_uninit();
 		IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	IA_CSS_LEAVE_ERR_PRIVATE(0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम host_lut_store(स्थिर व्योम *lut)
-अणु
-	अचिन्हित पूर्णांक i;
+static void host_lut_store(const void *lut)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < N_GDC_ID; i++)
-		gdc_lut_store((gdc_ID_t)i, (स्थिर पूर्णांक (*)[HRT_GDC_N]) lut);
-पूर्ण
+	for (i = 0; i < N_GDC_ID; i++)
+		gdc_lut_store((gdc_ID_t)i, (const int (*)[HRT_GDC_N]) lut);
+}
 
 /* Note that allocation is in ipu address space. */
-अंतरभूत ia_css_ptr sh_css_params_alloc_gdc_lut(व्योम)
-अणु
-	वापस hmm_alloc(माप(zoom_table), HMM_BO_PRIVATE, 0, शून्य, 0);
-पूर्ण
+inline ia_css_ptr sh_css_params_alloc_gdc_lut(void)
+{
+	return hmm_alloc(sizeof(zoom_table), HMM_BO_PRIVATE, 0, NULL, 0);
+}
 
-अंतरभूत व्योम sh_css_params_मुक्त_gdc_lut(ia_css_ptr addr)
-अणु
-	अगर (addr != mmgr_शून्य)
-		hmm_मुक्त(addr);
-पूर्ण
+inline void sh_css_params_free_gdc_lut(ia_css_ptr addr)
+{
+	if (addr != mmgr_NULL)
+		hmm_free(addr);
+}
 
-पूर्णांक ia_css_pipe_set_bci_scaler_lut(काष्ठा ia_css_pipe *pipe,
-	स्थिर व्योम *lut)
-अणु
-	पूर्णांक err = 0;
+int ia_css_pipe_set_bci_scaler_lut(struct ia_css_pipe *pipe,
+	const void *lut)
+{
+	int err = 0;
 	bool stream_started = false;
 
 	IA_CSS_ENTER("pipe=%p lut=%p", pipe, lut);
 
-	अगर (!lut || !pipe) अणु
+	if (!lut || !pipe) {
 		err = -EINVAL;
 		IA_CSS_LEAVE("err=%d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* If the pipe beदीर्घs to a stream and the stream has started, it is not
-	 * safe to store lut to gdc HW. If pipe->stream is शून्य, then no stream is
-	 * created with this pipe, so it is safe to करो this operation as दीर्घ as
+	/* If the pipe belongs to a stream and the stream has started, it is not
+	 * safe to store lut to gdc HW. If pipe->stream is NULL, then no stream is
+	 * created with this pipe, so it is safe to do this operation as long as
 	 * ia_css_init() has been called. */
-	अगर (pipe->stream && pipe->stream->started) अणु
+	if (pipe->stream && pipe->stream->started) {
 		ia_css_debug_dtrace(IA_CSS_DEBUG_ERROR,
 				    "unable to set scaler lut since stream has started\n");
 		stream_started = true;
 		err = -ENOTSUPP;
-	पूर्ण
+	}
 
 	/* Free any existing tables. */
-	sh_css_params_मुक्त_gdc_lut(pipe->scaler_pp_lut);
-	pipe->scaler_pp_lut = mmgr_शून्य;
+	sh_css_params_free_gdc_lut(pipe->scaler_pp_lut);
+	pipe->scaler_pp_lut = mmgr_NULL;
 
-	अगर (!stream_started) अणु
-		अगर (!IS_ISP2401)
-			pipe->scaler_pp_lut = hmm_alloc(माप(zoom_table), HMM_BO_PRIVATE, 0, शून्य, 0);
-		अन्यथा
+	if (!stream_started) {
+		if (!IS_ISP2401)
+			pipe->scaler_pp_lut = hmm_alloc(sizeof(zoom_table), HMM_BO_PRIVATE, 0, NULL, 0);
+		else
 			pipe->scaler_pp_lut = sh_css_params_alloc_gdc_lut();
 
-		अगर (pipe->scaler_pp_lut == mmgr_शून्य) अणु
+		if (pipe->scaler_pp_lut == mmgr_NULL) {
 			ia_css_debug_dtrace(IA_CSS_DEBUG_ERROR,
 					    "unable to allocate scaler_pp_lut\n");
 			err = -ENOMEM;
-		पूर्ण अन्यथा अणु
-			gdc_lut_convert_to_isp_क्रमmat((स्थिर पूर्णांक(*)[HRT_GDC_N])lut,
-						      पूर्णांकerleaved_lut_temp);
+		} else {
+			gdc_lut_convert_to_isp_format((const int(*)[HRT_GDC_N])lut,
+						      interleaved_lut_temp);
 			hmm_store(pipe->scaler_pp_lut,
-				   (पूर्णांक *)पूर्णांकerleaved_lut_temp,
-				   माप(zoom_table));
-		पूर्ण
-	पूर्ण
+				   (int *)interleaved_lut_temp,
+				   sizeof(zoom_table));
+		}
+	}
 
 	IA_CSS_LEAVE("lut(%u) err=%d", pipe->scaler_pp_lut, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* अगर pipe is शून्य, वापसs शेष lut addr. */
-ia_css_ptr sh_css_pipe_get_pp_gdc_lut(स्थिर काष्ठा ia_css_pipe *pipe)
-अणु
-	निश्चित(pipe);
+/* if pipe is NULL, returns default lut addr. */
+ia_css_ptr sh_css_pipe_get_pp_gdc_lut(const struct ia_css_pipe *pipe)
+{
+	assert(pipe);
 
-	अगर (pipe->scaler_pp_lut != mmgr_शून्य)
-		वापस pipe->scaler_pp_lut;
-	अन्यथा
-		वापस sh_css_params_get_शेष_gdc_lut();
-पूर्ण
+	if (pipe->scaler_pp_lut != mmgr_NULL)
+		return pipe->scaler_pp_lut;
+	else
+		return sh_css_params_get_default_gdc_lut();
+}
 
-पूर्णांक sh_css_params_map_and_store_शेष_gdc_lut(व्योम)
-अणु
-	पूर्णांक err = 0;
+int sh_css_params_map_and_store_default_gdc_lut(void)
+{
+	int err = 0;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	/* Is table alपढ़ोy mapped? Nothing to करो अगर it is mapped. */
-	अगर (शेष_gdc_lut != mmgr_शून्य)
-		वापस err;
+	/* Is table already mapped? Nothing to do if it is mapped. */
+	if (default_gdc_lut != mmgr_NULL)
+		return err;
 
-	host_lut_store((व्योम *)zoom_table);
+	host_lut_store((void *)zoom_table);
 
-	अगर (!IS_ISP2401)
-		शेष_gdc_lut = hmm_alloc(माप(zoom_table), HMM_BO_PRIVATE, 0, शून्य, 0);
-	अन्यथा
-		शेष_gdc_lut = sh_css_params_alloc_gdc_lut();
+	if (!IS_ISP2401)
+		default_gdc_lut = hmm_alloc(sizeof(zoom_table), HMM_BO_PRIVATE, 0, NULL, 0);
+	else
+		default_gdc_lut = sh_css_params_alloc_gdc_lut();
 
-	अगर (शेष_gdc_lut == mmgr_शून्य)
-		वापस -ENOMEM;
+	if (default_gdc_lut == mmgr_NULL)
+		return -ENOMEM;
 
-	gdc_lut_convert_to_isp_क्रमmat((स्थिर पूर्णांक(*)[HRT_GDC_N])zoom_table,
-				      पूर्णांकerleaved_lut_temp);
-	hmm_store(शेष_gdc_lut, (पूर्णांक *)पूर्णांकerleaved_lut_temp,
-		   माप(zoom_table));
+	gdc_lut_convert_to_isp_format((const int(*)[HRT_GDC_N])zoom_table,
+				      interleaved_lut_temp);
+	hmm_store(default_gdc_lut, (int *)interleaved_lut_temp,
+		   sizeof(zoom_table));
 
-	IA_CSS_LEAVE_PRIVATE("lut(%u) err=%d", शेष_gdc_lut, err);
-	वापस err;
-पूर्ण
+	IA_CSS_LEAVE_PRIVATE("lut(%u) err=%d", default_gdc_lut, err);
+	return err;
+}
 
-व्योम sh_css_params_मुक्त_शेष_gdc_lut(व्योम)
-अणु
+void sh_css_params_free_default_gdc_lut(void)
+{
 	IA_CSS_ENTER_PRIVATE("void");
 
-	sh_css_params_मुक्त_gdc_lut(शेष_gdc_lut);
-	शेष_gdc_lut = mmgr_शून्य;
+	sh_css_params_free_gdc_lut(default_gdc_lut);
+	default_gdc_lut = mmgr_NULL;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-ia_css_ptr sh_css_params_get_शेष_gdc_lut(व्योम)
-अणु
-	वापस शेष_gdc_lut;
-पूर्ण
+ia_css_ptr sh_css_params_get_default_gdc_lut(void)
+{
+	return default_gdc_lut;
+}
 
-अटल व्योम मुक्त_param_set_callback(
+static void free_param_set_callback(
     ia_css_ptr ptr)
-अणु
+{
 	IA_CSS_ENTER_PRIVATE("void");
 
-	मुक्त_ia_css_isp_parameter_set_info(ptr);
+	free_ia_css_isp_parameter_set_info(ptr);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम मुक्त_buffer_callback(
+static void free_buffer_callback(
     ia_css_ptr ptr)
-अणु
+{
 	IA_CSS_ENTER_PRIVATE("void");
 
-	hmm_मुक्त(ptr);
+	hmm_free(ptr);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
-sh_css_param_clear_param_sets(व्योम)
-अणु
+void
+sh_css_param_clear_param_sets(void)
+{
 	IA_CSS_ENTER_PRIVATE("void");
 
-	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_SET_POOL, &मुक्त_param_set_callback);
+	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_SET_POOL, &free_param_set_callback);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
 /*
- * MW: we can define hmm_मुक्त() to वापस a शून्य
- * then you can ग_लिखो ptr = hmm_मुक्त(ptr);
+ * MW: we can define hmm_free() to return a NULL
+ * then you can write ptr = hmm_free(ptr);
  */
-#घोषणा safe_मुक्त(id, x)      \
-	करो अणु                  \
+#define safe_free(id, x)      \
+	do {                  \
 		ia_css_refcount_decrement(id, x);     \
-		(x) = mmgr_शून्य;  \
-	पूर्ण जबतक (0)
+		(x) = mmgr_NULL;  \
+	} while (0)
 
-अटल व्योम मुक्त_map(काष्ठा sh_css_ddr_address_map *map)
-अणु
-	अचिन्हित पूर्णांक i;
+static void free_map(struct sh_css_ddr_address_map *map)
+{
+	unsigned int i;
 
 	ia_css_ptr *addrs = (ia_css_ptr *)map;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	/* मुक्त buffers */
-	क्रम (i = 0; i < (माप(काष्ठा sh_css_ddr_address_map_size) /
-			 माप(माप_प्रकार)); i++) अणु
-		अगर (addrs[i] == mmgr_शून्य)
-			जारी;
-		safe_मुक्त(IA_CSS_REFCOUNT_PARAM_BUFFER, addrs[i]);
-	पूर्ण
+	/* free buffers */
+	for (i = 0; i < (sizeof(struct sh_css_ddr_address_map_size) /
+			 sizeof(size_t)); i++) {
+		if (addrs[i] == mmgr_NULL)
+			continue;
+		safe_free(IA_CSS_REFCOUNT_PARAM_BUFFER, addrs[i]);
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
-ia_css_stream_isp_parameters_uninit(काष्ठा ia_css_stream *stream)
-अणु
-	पूर्णांक i;
-	काष्ठा ia_css_isp_parameters *params = stream->isp_params_configs;
-	काष्ठा ia_css_isp_parameters *per_frame_params =
+void
+ia_css_stream_isp_parameters_uninit(struct ia_css_stream *stream)
+{
+	int i;
+	struct ia_css_isp_parameters *params = stream->isp_params_configs;
+	struct ia_css_isp_parameters *per_frame_params =
 		    stream->per_frame_isp_params_configs;
 
 	IA_CSS_ENTER_PRIVATE("void");
-	अगर (!params) अणु
+	if (!params) {
 		IA_CSS_LEAVE_PRIVATE("isp_param_configs is NULL");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* मुक्त existing ddr_ptr maps */
-	क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) अणु
-		मुक्त_map(&params->pipe_ddr_ptrs[i]);
-		अगर (per_frame_params)
-			मुक्त_map(&per_frame_params->pipe_ddr_ptrs[i]);
-		/* Free up theDVS table memory blocks beक्रमe recomputing new table */
-		अगर (params->pipe_dvs_6axis_config[i])
-			मुक्त_dvs_6axis_table(&params->pipe_dvs_6axis_config[i]);
-		अगर (per_frame_params && per_frame_params->pipe_dvs_6axis_config[i])
-			मुक्त_dvs_6axis_table(&per_frame_params->pipe_dvs_6axis_config[i]);
-	पूर्ण
-	मुक्त_map(&params->ddr_ptrs);
-	अगर (per_frame_params)
-		मुक्त_map(&per_frame_params->ddr_ptrs);
+	/* free existing ddr_ptr maps */
+	for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) {
+		free_map(&params->pipe_ddr_ptrs[i]);
+		if (per_frame_params)
+			free_map(&per_frame_params->pipe_ddr_ptrs[i]);
+		/* Free up theDVS table memory blocks before recomputing new table */
+		if (params->pipe_dvs_6axis_config[i])
+			free_dvs_6axis_table(&params->pipe_dvs_6axis_config[i]);
+		if (per_frame_params && per_frame_params->pipe_dvs_6axis_config[i])
+			free_dvs_6axis_table(&per_frame_params->pipe_dvs_6axis_config[i]);
+	}
+	free_map(&params->ddr_ptrs);
+	if (per_frame_params)
+		free_map(&per_frame_params->ddr_ptrs);
 
-	अगर (params->fpn_config.data) अणु
-		kvमुक्त(params->fpn_config.data);
-		params->fpn_config.data = शून्य;
-	पूर्ण
+	if (params->fpn_config.data) {
+		kvfree(params->fpn_config.data);
+		params->fpn_config.data = NULL;
+	}
 
-	/* Free up sc_config (temporal shading table) अगर it is allocated. */
-	अगर (params->sc_config) अणु
-		ia_css_shading_table_मुक्त(params->sc_config);
-		params->sc_config = शून्य;
-	पूर्ण
-	अगर (per_frame_params) अणु
-		अगर (per_frame_params->sc_config) अणु
-			ia_css_shading_table_मुक्त(per_frame_params->sc_config);
-			per_frame_params->sc_config = शून्य;
-		पूर्ण
-	पूर्ण
+	/* Free up sc_config (temporal shading table) if it is allocated. */
+	if (params->sc_config) {
+		ia_css_shading_table_free(params->sc_config);
+		params->sc_config = NULL;
+	}
+	if (per_frame_params) {
+		if (per_frame_params->sc_config) {
+			ia_css_shading_table_free(per_frame_params->sc_config);
+			per_frame_params->sc_config = NULL;
+		}
+	}
 
-	kvमुक्त(params);
-	kvमुक्त(per_frame_params);
-	stream->isp_params_configs = शून्य;
-	stream->per_frame_isp_params_configs = शून्य;
+	kvfree(params);
+	kvfree(per_frame_params);
+	stream->isp_params_configs = NULL;
+	stream->per_frame_isp_params_configs = NULL;
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
-sh_css_params_uninit(व्योम)
-अणु
-	अचिन्हित पूर्णांक p, i;
+void
+sh_css_params_uninit(void)
+{
+	unsigned int p, i;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
 	ia_css_refcount_decrement(-1, sp_ddr_ptrs);
-	sp_ddr_ptrs = mmgr_शून्य;
+	sp_ddr_ptrs = mmgr_NULL;
 	ia_css_refcount_decrement(-1, xmem_sp_group_ptrs);
-	xmem_sp_group_ptrs = mmgr_शून्य;
+	xmem_sp_group_ptrs = mmgr_NULL;
 
-	क्रम (p = 0; p < IA_CSS_PIPE_ID_NUM; p++)
-		क्रम (i = 0; i < SH_CSS_MAX_STAGES; i++) अणु
+	for (p = 0; p < IA_CSS_PIPE_ID_NUM; p++)
+		for (i = 0; i < SH_CSS_MAX_STAGES; i++) {
 			ia_css_refcount_decrement(-1, xmem_sp_stage_ptrs[p][i]);
-			xmem_sp_stage_ptrs[p][i] = mmgr_शून्य;
+			xmem_sp_stage_ptrs[p][i] = mmgr_NULL;
 			ia_css_refcount_decrement(-1, xmem_isp_stage_ptrs[p][i]);
-			xmem_isp_stage_ptrs[p][i] = mmgr_शून्य;
-		पूर्ण
+			xmem_isp_stage_ptrs[p][i] = mmgr_NULL;
+		}
 
 	/* go through the pools to clear references */
-	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_SET_POOL, &मुक्त_param_set_callback);
-	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_BUFFER, &मुक्त_buffer_callback);
-	ia_css_refcount_clear(-1, &मुक्त_buffer_callback);
+	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_SET_POOL, &free_param_set_callback);
+	ia_css_refcount_clear(IA_CSS_REFCOUNT_PARAM_BUFFER, &free_buffer_callback);
+	ia_css_refcount_clear(-1, &free_buffer_callback);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल काष्ठा ia_css_host_data *
+static struct ia_css_host_data *
 convert_allocate_morph_plane(
-    अचिन्हित लघु *data,
-    अचिन्हित पूर्णांक width,
-    अचिन्हित पूर्णांक height,
-    अचिन्हित पूर्णांक aligned_width)
-अणु
-	अचिन्हित पूर्णांक i, j, padding, w;
-	काष्ठा ia_css_host_data *me;
-	अचिन्हित पूर्णांक isp_data_size;
+    unsigned short *data,
+    unsigned int width,
+    unsigned int height,
+    unsigned int aligned_width)
+{
+	unsigned int i, j, padding, w;
+	struct ia_css_host_data *me;
+	unsigned int isp_data_size;
 	u16 *isp_data_ptr;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	/* currently we करोn't have morph table पूर्णांकerpolation yet,
-	 * so we allow a wider table to be used. This will be हटाओd
+	/* currently we don't have morph table interpolation yet,
+	 * so we allow a wider table to be used. This will be removed
 	 * in the future. */
-	अगर (width > aligned_width) अणु
+	if (width > aligned_width) {
 		padding = 0;
 		w = aligned_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		padding = aligned_width - width;
 		w = width;
-	पूर्ण
-	isp_data_size = height * (w + padding) * माप(uपूर्णांक16_t);
+	}
+	isp_data_size = height * (w + padding) * sizeof(uint16_t);
 
-	me = ia_css_host_data_allocate((माप_प्रकार)isp_data_size);
+	me = ia_css_host_data_allocate((size_t)isp_data_size);
 
-	अगर (!me) अणु
+	if (!me) {
 		IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	isp_data_ptr = (uपूर्णांक16_t *)me->address;
+	isp_data_ptr = (uint16_t *)me->address;
 
-	स_रखो(isp_data_ptr, 0, (माप_प्रकार)isp_data_size);
+	memset(isp_data_ptr, 0, (size_t)isp_data_size);
 
-	क्रम (i = 0; i < height; i++) अणु
-		क्रम (j = 0; j < w; j++)
-			*isp_data_ptr++ = (uपूर्णांक16_t)data[j];
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < w; j++)
+			*isp_data_ptr++ = (uint16_t)data[j];
 		isp_data_ptr += padding;
 		data += width;
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-	वापस me;
-पूर्ण
+	return me;
+}
 
-अटल पूर्णांक
+static int
 store_morph_plane(
-    अचिन्हित लघु *data,
-    अचिन्हित पूर्णांक width,
-    अचिन्हित पूर्णांक height,
+    unsigned short *data,
+    unsigned int width,
+    unsigned int height,
     ia_css_ptr dest,
-    अचिन्हित पूर्णांक aligned_width) अणु
-	काष्ठा ia_css_host_data *isp_data;
+    unsigned int aligned_width) {
+	struct ia_css_host_data *isp_data;
 
-	निश्चित(dest != mmgr_शून्य);
+	assert(dest != mmgr_NULL);
 
 	isp_data = convert_allocate_morph_plane(data, width, height, aligned_width);
-	अगर (!isp_data)
-	अणु
+	if (!isp_data)
+	{
 		IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ia_css_params_store_ia_css_host_data(dest, isp_data);
 
-	ia_css_host_data_मुक्त(isp_data);
-	वापस 0;
-पूर्ण
+	ia_css_host_data_free(isp_data);
+	return 0;
+}
 
-अटल व्योम sh_css_update_isp_params_to_ddr(
-    काष्ठा ia_css_isp_parameters *params,
+static void sh_css_update_isp_params_to_ddr(
+    struct ia_css_isp_parameters *params,
     ia_css_ptr ddr_ptr)
-अणु
-	माप_प्रकार size = माप(params->uds);
+{
+	size_t size = sizeof(params->uds);
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	निश्चित(params);
+	assert(params);
 
 	hmm_store(ddr_ptr, &params->uds, size);
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम sh_css_update_isp_mem_params_to_ddr(
-    स्थिर काष्ठा ia_css_binary *binary,
+static void sh_css_update_isp_mem_params_to_ddr(
+    const struct ia_css_binary *binary,
     ia_css_ptr ddr_mem_ptr,
-    माप_प्रकार size,
-    क्रमागत ia_css_isp_memories mem)
-अणु
-	स्थिर काष्ठा ia_css_host_data *params;
+    size_t size,
+    enum ia_css_isp_memories mem)
+{
+	const struct ia_css_host_data *params;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
@@ -3141,30 +3140,30 @@ store_morph_plane(
 	hmm_store(ddr_mem_ptr, params->address, size);
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम ia_css_dequeue_param_buffers(/*अचिन्हित पूर्णांक pipe_num*/ व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+void ia_css_dequeue_param_buffers(/*unsigned int pipe_num*/ void)
+{
+	unsigned int i;
 	ia_css_ptr cpy;
-	क्रमागत sh_css_queue_id param_queue_ids[3] = अणु	IA_CSS_PARAMETER_SET_QUEUE_ID,
+	enum sh_css_queue_id param_queue_ids[3] = {	IA_CSS_PARAMETER_SET_QUEUE_ID,
 						    IA_CSS_PER_FRAME_PARAMETER_SET_QUEUE_ID,
 						    SH_CSS_INVALID_QUEUE_ID
-						  पूर्ण;
+						  };
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	अगर (!sh_css_sp_is_running()) अणु
+	if (!sh_css_sp_is_running()) {
 		IA_CSS_LEAVE_PRIVATE("sp is not running");
 		/* SP is not running. The queues are not valid */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; SH_CSS_INVALID_QUEUE_ID != param_queue_ids[i]; i++) अणु
+	for (i = 0; SH_CSS_INVALID_QUEUE_ID != param_queue_ids[i]; i++) {
 		cpy = (ia_css_ptr)0;
 		/* clean-up old copy */
-		जबतक (ia_css_bufq_dequeue_buffer(param_queue_ids[i],
-						  (uपूर्णांक32_t *)&cpy) == 0) अणु
+		while (ia_css_bufq_dequeue_buffer(param_queue_ids[i],
+						  (uint32_t *)&cpy) == 0) {
 			/* TMP: keep track of dequeued param set count
 			 */
 			g_param_buffer_dequeue_count++;
@@ -3175,145 +3174,145 @@ store_morph_plane(
 			    0);
 
 			IA_CSS_LOG("dequeued param set %x from %d, release ref", cpy, 0);
-			मुक्त_ia_css_isp_parameter_set_info(cpy);
+			free_ia_css_isp_parameter_set_info(cpy);
 			cpy = (ia_css_ptr)0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल व्योम
-process_kernel_parameters(अचिन्हित पूर्णांक pipe_id,
-			  काष्ठा ia_css_pipeline_stage *stage,
-			  काष्ठा ia_css_isp_parameters *params,
-			  अचिन्हित पूर्णांक isp_pipe_version,
-			  अचिन्हित पूर्णांक raw_bit_depth)
-अणु
-	अचिन्हित पूर्णांक param_id;
+static void
+process_kernel_parameters(unsigned int pipe_id,
+			  struct ia_css_pipeline_stage *stage,
+			  struct ia_css_isp_parameters *params,
+			  unsigned int isp_pipe_version,
+			  unsigned int raw_bit_depth)
+{
+	unsigned int param_id;
 
-	(व्योम)isp_pipe_version;
-	(व्योम)raw_bit_depth;
+	(void)isp_pipe_version;
+	(void)raw_bit_depth;
 
 	sh_css_enable_pipeline(stage->binary);
 
-	अगर (params->config_changed[IA_CSS_OB_ID]) अणु
+	if (params->config_changed[IA_CSS_OB_ID]) {
 		ia_css_ob_configure(&params->stream_configs.ob,
 				    isp_pipe_version, raw_bit_depth);
-	पूर्ण
-	अगर (params->config_changed[IA_CSS_S3A_ID]) अणु
+	}
+	if (params->config_changed[IA_CSS_S3A_ID]) {
 		ia_css_s3a_configure(raw_bit_depth);
-	पूर्ण
-	/* Copy stage uds parameters to config, since they can dअगरfer per stage.
+	}
+	/* Copy stage uds parameters to config, since they can differ per stage.
 	 */
 	params->crop_config.crop_pos = params->uds[stage->stage_num].crop_pos;
 	params->uds_config.crop_pos  = params->uds[stage->stage_num].crop_pos;
 	params->uds_config.uds       = params->uds[stage->stage_num].uds;
-	/* Call parameter process functions क्रम all kernels */
+	/* Call parameter process functions for all kernels */
 	/* Skip SC, since that is called on a temp sc table */
-	क्रम (param_id = 0; param_id < IA_CSS_NUM_PARAMETER_IDS; param_id++) अणु
-		अगर (param_id == IA_CSS_SC_ID) जारी;
-		अगर (params->config_changed[param_id])
+	for (param_id = 0; param_id < IA_CSS_NUM_PARAMETER_IDS; param_id++) {
+		if (param_id == IA_CSS_SC_ID) continue;
+		if (params->config_changed[param_id])
 			ia_css_kernel_process_param[param_id](pipe_id, stage, params);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक
-sh_css_param_update_isp_params(काष्ठा ia_css_pipe *curr_pipe,
-			       काष्ठा ia_css_isp_parameters *params,
+int
+sh_css_param_update_isp_params(struct ia_css_pipe *curr_pipe,
+			       struct ia_css_isp_parameters *params,
 			       bool commit,
-			       काष्ठा ia_css_pipe *pipe_in) अणु
-	पूर्णांक err = 0;
+			       struct ia_css_pipe *pipe_in) {
+	int err = 0;
 	ia_css_ptr cpy;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक raw_bit_depth = 10;
-	अचिन्हित पूर्णांक isp_pipe_version = SH_CSS_ISP_PIPE_VERSION_1;
+	int i;
+	unsigned int raw_bit_depth = 10;
+	unsigned int isp_pipe_version = SH_CSS_ISP_PIPE_VERSION_1;
 	bool acc_cluster_params_changed = false;
-	अचिन्हित पूर्णांक thपढ़ो_id, pipe_num;
+	unsigned int thread_id, pipe_num;
 
-	(व्योम)acc_cluster_params_changed;
+	(void)acc_cluster_params_changed;
 
-	निश्चित(curr_pipe);
+	assert(curr_pipe);
 
 	IA_CSS_ENTER_PRIVATE("pipe=%p, isp_parameters_id=%d", pipe_in, params->isp_parameters_id);
-	raw_bit_depth = ia_css_stream_input_क्रमmat_bits_per_pixel(curr_pipe->stream);
+	raw_bit_depth = ia_css_stream_input_format_bits_per_pixel(curr_pipe->stream);
 
 	/* now make the map available to the sp */
-	अगर (!commit)
-	अणु
+	if (!commit)
+	{
 		IA_CSS_LEAVE_ERR_PRIVATE(err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	/* enqueue a copies of the mem_map to
 	   the designated pipelines */
-	क्रम (i = 0; i < curr_pipe->stream->num_pipes; i++)
-	अणु
-		काष्ठा ia_css_pipe *pipe;
-		काष्ठा sh_css_ddr_address_map *cur_map;
-		काष्ठा sh_css_ddr_address_map_size *cur_map_size;
-		काष्ठा ia_css_isp_parameter_set_info isp_params_info;
-		काष्ठा ia_css_pipeline *pipeline;
-		काष्ठा ia_css_pipeline_stage *stage;
+	for (i = 0; i < curr_pipe->stream->num_pipes; i++)
+	{
+		struct ia_css_pipe *pipe;
+		struct sh_css_ddr_address_map *cur_map;
+		struct sh_css_ddr_address_map_size *cur_map_size;
+		struct ia_css_isp_parameter_set_info isp_params_info;
+		struct ia_css_pipeline *pipeline;
+		struct ia_css_pipeline_stage *stage;
 
-		क्रमागत sh_css_queue_id queue_id;
+		enum sh_css_queue_id queue_id;
 
 		pipe = curr_pipe->stream->pipes[i];
 		pipeline = ia_css_pipe_get_pipeline(pipe);
 		pipe_num = ia_css_pipe_get_pipe_num(pipe);
 		isp_pipe_version = ia_css_pipe_get_isp_pipe_version(pipe);
-		ia_css_pipeline_get_sp_thपढ़ो_id(pipe_num, &thपढ़ो_id);
+		ia_css_pipeline_get_sp_thread_id(pipe_num, &thread_id);
 
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
-		ia_css_query_पूर्णांकernal_queue_id(params->output_frame
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+		ia_css_query_internal_queue_id(params->output_frame
 					       ? IA_CSS_BUFFER_TYPE_PER_FRAME_PARAMETER_SET
 					       : IA_CSS_BUFFER_TYPE_PARAMETER_SET,
-					       thपढ़ो_id, &queue_id);
-#अन्यथा
-		ia_css_query_पूर्णांकernal_queue_id(IA_CSS_BUFFER_TYPE_PARAMETER_SET, thपढ़ो_id,
+					       thread_id, &queue_id);
+#else
+		ia_css_query_internal_queue_id(IA_CSS_BUFFER_TYPE_PARAMETER_SET, thread_id,
 					       &queue_id);
-#पूर्ण_अगर
-		अगर (!sh_css_sp_is_running()) अणु
+#endif
+		if (!sh_css_sp_is_running()) {
 			/* SP is not running. The queues are not valid */
 			err = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cur_map = &params->pipe_ddr_ptrs[pipeline->pipe_id];
 		cur_map_size = &params->pipe_ddr_ptrs_size[pipeline->pipe_id];
 
 		/* TODO: Normally, zoom and motion parameters shouldn't
 		 * be part of "isp_params" as it is resolution/pipe dependent
-		 * Thereक्रमe, move the zoom config अन्यथाwhere (e.g. shading
+		 * Therefore, move the zoom config elsewhere (e.g. shading
 		 * table can be taken as an example! @GC
 		 * */
-		अणु
-			/* we have to करो this per pipeline because */
+		{
+			/* we have to do this per pipeline because */
 			/* the processing is a.o. resolution dependent */
 			err = ia_css_process_zoom_and_motion(params,
 							     pipeline->stages);
-			अगर (err)
-				वापस err;
-		पूर्ण
-		/* check अगर to actually update the parameters क्रम this pipe */
+			if (err)
+				return err;
+		}
+		/* check if to actually update the parameters for this pipe */
 		/* When API change is implemented making good distinction between
-		* stream config and pipe config this skipping code can be moved out of the #अगर_घोषित */
-		अगर (pipe_in && (pipe != pipe_in)) अणु
+		* stream config and pipe config this skipping code can be moved out of the #ifdef */
+		if (pipe_in && (pipe != pipe_in)) {
 			IA_CSS_LOG("skipping pipe %p", pipe);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* BZ 125915, should be moved till after "update other buff" */
-		/* update the other buffers to the pipe specअगरic copies */
-		क्रम (stage = pipeline->stages; stage; stage = stage->next) अणु
-			अचिन्हित पूर्णांक mem;
+		/* update the other buffers to the pipe specific copies */
+		for (stage = pipeline->stages; stage; stage = stage->next) {
+			unsigned int mem;
 
-			अगर (!stage || !stage->binary)
-				जारी;
+			if (!stage || !stage->binary)
+				continue;
 
 			process_kernel_parameters(pipeline->pipe_id,
 						  stage, params,
 						  isp_pipe_version, raw_bit_depth);
 
-			err = sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
+			err = sh_css_params_write_to_ddr_internal(
 				  pipe,
 				  pipeline->pipe_id,
 				  params,
@@ -3321,92 +3320,92 @@ sh_css_param_update_isp_params(काष्ठा ia_css_pipe *curr_pipe,
 				  cur_map,
 				  cur_map_size);
 
-			अगर (err)
-				अवरोध;
-			क्रम (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) अणु
+			if (err)
+				break;
+			for (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) {
 				params->isp_mem_params_changed
 				[pipeline->pipe_id][stage->stage_num][mem] = false;
-			पूर्ण
-		पूर्ण /* क्रम */
-		अगर (err)
-			अवरोध;
-		/* update isp_params to pipe specअगरic copies */
-		अगर (params->isp_params_changed) अणु
-			पुनः_स्मृतिate_buffer(&cur_map->isp_param,
+			}
+		} /* for */
+		if (err)
+			break;
+		/* update isp_params to pipe specific copies */
+		if (params->isp_params_changed) {
+			reallocate_buffer(&cur_map->isp_param,
 					  &cur_map_size->isp_param,
 					  cur_map_size->isp_param,
 					  true,
 					  &err);
-			अगर (err)
-				अवरोध;
+			if (err)
+				break;
 			sh_css_update_isp_params_to_ddr(params, cur_map->isp_param);
-		पूर्ण
+		}
 
 		/* last make referenced copy */
 		err = ref_sh_css_ddr_address_map(
 			  cur_map,
 			  &isp_params_info.mem_map);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		/* Update Parameters ID */
 		isp_params_info.isp_parameters_id = params->isp_parameters_id;
 
-		/* Update output frame poपूर्णांकer */
+		/* Update output frame pointer */
 		isp_params_info.output_frame_ptr =
-		    (params->output_frame) ? params->output_frame->data : mmgr_शून्य;
+		    (params->output_frame) ? params->output_frame->data : mmgr_NULL;
 
-		/* now ग_लिखो the copy to ddr */
-		err = ग_लिखो_ia_css_isp_parameter_set_info_to_ddr(&isp_params_info, &cpy);
-		अगर (err)
-			अवरोध;
+		/* now write the copy to ddr */
+		err = write_ia_css_isp_parameter_set_info_to_ddr(&isp_params_info, &cpy);
+		if (err)
+			break;
 
 		/* enqueue the set to sp */
-		IA_CSS_LOG("queue param set %x to %d", cpy, thपढ़ो_id);
+		IA_CSS_LOG("queue param set %x to %d", cpy, thread_id);
 
-		err = ia_css_bufq_enqueue_buffer(thपढ़ो_id, queue_id, (uपूर्णांक32_t)cpy);
-		अगर (err) अणु
-			मुक्त_ia_css_isp_parameter_set_info(cpy);
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+		err = ia_css_bufq_enqueue_buffer(thread_id, queue_id, (uint32_t)cpy);
+		if (err) {
+			free_ia_css_isp_parameter_set_info(cpy);
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
 			IA_CSS_LOG("pfp: FAILED to add config id %d for OF %d to q %d on thread %d",
 				   isp_params_info.isp_parameters_id,
 				   isp_params_info.output_frame_ptr,
-				   queue_id, thपढ़ो_id);
-#पूर्ण_अगर
-			अवरोध;
-		पूर्ण अन्यथा अणु
+				   queue_id, thread_id);
+#endif
+			break;
+		} else {
 			/* TMP: check discrepancy between nr of enqueued
 			 * parameter sets and dequeued sets
 			 */
 			g_param_buffer_enqueue_count++;
-			निश्चित(g_param_buffer_enqueue_count < g_param_buffer_dequeue_count + 50);
+			assert(g_param_buffer_enqueue_count < g_param_buffer_dequeue_count + 50);
 			/*
 			 * Tell the SP which queues are not empty,
 			 * by sending the software event.
 			 */
-			अगर (!sh_css_sp_is_running()) अणु
+			if (!sh_css_sp_is_running()) {
 				/* SP is not running. The queues are not valid */
 				IA_CSS_LEAVE_ERR_PRIVATE(-EBUSY);
-				वापस -EBUSY;
-			पूर्ण
+				return -EBUSY;
+			}
 			ia_css_bufq_enqueue_psys_event(
 			    IA_CSS_PSYS_SW_EVENT_BUFFER_ENQUEUED,
-			    (uपूर्णांक8_t)thपढ़ो_id,
-			    (uपूर्णांक8_t)queue_id,
+			    (uint8_t)thread_id,
+			    (uint8_t)queue_id,
 			    0);
-#अगर defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
+#if defined(SH_CSS_ENABLE_PER_FRAME_PARAMS)
 			IA_CSS_LOG("pfp: added config id %d for OF %d to q %d on thread %d",
 				   isp_params_info.isp_parameters_id,
 				   isp_params_info.output_frame_ptr,
-				   queue_id, thपढ़ो_id);
-#पूर्ण_अगर
-		पूर्ण
+				   queue_id, thread_id);
+#endif
+		}
 		/* clean-up old copy */
 		ia_css_dequeue_param_buffers(/*pipe_num*/);
 		params->pipe_dvs_6axis_config_changed[pipeline->pipe_id] = false;
-	पूर्ण /* end क्रम each 'active' pipeline */
+	} /* end for each 'active' pipeline */
 	/* clear the changed flags after all params
-	क्रम all pipelines have been updated */
+	for all pipelines have been updated */
 	params->isp_params_changed = false;
 	params->sc_table_changed = false;
 	params->dis_coef_table_changed = false;
@@ -3418,211 +3417,211 @@ sh_css_param_update_isp_params(काष्ठा ia_css_pipe *curr_pipe,
 	params->shading_settings_changed = false;
 	/* ------ deprecated(bz675) : to ------ */
 
-	स_रखो(&params->config_changed[0], 0, माप(params->config_changed));
+	memset(&params->config_changed[0], 0, sizeof(params->config_changed));
 
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
-    काष्ठा ia_css_pipe *pipe,
-    अचिन्हित पूर्णांक pipe_id,
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_pipeline_stage *stage,
-    काष्ठा sh_css_ddr_address_map *ddr_map,
-    काष्ठा sh_css_ddr_address_map_size *ddr_map_size) अणु
-	पूर्णांक err;
-	स्थिर काष्ठा ia_css_binary *binary;
+static int
+sh_css_params_write_to_ddr_internal(
+    struct ia_css_pipe *pipe,
+    unsigned int pipe_id,
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_pipeline_stage *stage,
+    struct sh_css_ddr_address_map *ddr_map,
+    struct sh_css_ddr_address_map_size *ddr_map_size) {
+	int err;
+	const struct ia_css_binary *binary;
 
-	अचिन्हित पूर्णांक stage_num;
-	अचिन्हित पूर्णांक mem;
-	bool buff_पुनः_स्मृतिed;
+	unsigned int stage_num;
+	unsigned int mem;
+	bool buff_realloced;
 
-	/* काष्ठा is > 128 bytes so it should not be on stack (see checkpatch) */
-	अटल काष्ठा ia_css_macc_table converted_macc_table;
+	/* struct is > 128 bytes so it should not be on stack (see checkpatch) */
+	static struct ia_css_macc_table converted_macc_table;
 
 	IA_CSS_ENTER_PRIVATE("void");
-	निश्चित(params);
-	निश्चित(ddr_map);
-	निश्चित(ddr_map_size);
-	निश्चित(stage);
+	assert(params);
+	assert(ddr_map);
+	assert(ddr_map_size);
+	assert(stage);
 
 	binary = stage->binary;
-	निश्चित(binary);
+	assert(binary);
 
 	stage_num = stage->stage_num;
 
-	अगर (binary->info->sp.enable.fpnr)
-	अणु
-		buff_पुनः_स्मृतिed = पुनः_स्मृतिate_buffer(&ddr_map->fpn_tbl,
+	if (binary->info->sp.enable.fpnr)
+	{
+		buff_realloced = reallocate_buffer(&ddr_map->fpn_tbl,
 						   &ddr_map_size->fpn_tbl,
-						   (माप_प्रकार)(FPNTBL_BYTES(binary)),
+						   (size_t)(FPNTBL_BYTES(binary)),
 						   params->config_changed[IA_CSS_FPN_ID],
 						   &err);
-		अगर (err) अणु
+		if (err) {
 			IA_CSS_LEAVE_ERR_PRIVATE(err);
-			वापस err;
-		पूर्ण
-		अगर (params->config_changed[IA_CSS_FPN_ID] || buff_पुनः_स्मृतिed) अणु
-			अगर (params->fpn_config.enabled) अणु
+			return err;
+		}
+		if (params->config_changed[IA_CSS_FPN_ID] || buff_realloced) {
+			if (params->fpn_config.enabled) {
 				err = store_fpntbl(params, ddr_map->fpn_tbl);
-				अगर (err) अणु
+				if (err) {
 					IA_CSS_LEAVE_ERR_PRIVATE(err);
-					वापस err;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return err;
+				}
+			}
+		}
+	}
 
-	अगर (binary->info->sp.enable.sc)
-	अणु
+	if (binary->info->sp.enable.sc)
+	{
 		u32 enable_conv;
-		माप_प्रकार bytes;
+		size_t bytes;
 
-		अगर (!IS_ISP2401)
+		if (!IS_ISP2401)
 			bytes = ISP2400_SCTBL_BYTES(binary);
-		अन्यथा
+		else
 			bytes = ISP2401_SCTBL_BYTES(binary);
 
 		enable_conv = params->shading_settings.enable_shading_table_conversion;
 
-		buff_पुनः_स्मृतिed = पुनः_स्मृतिate_buffer(&ddr_map->sc_tbl,
+		buff_realloced = reallocate_buffer(&ddr_map->sc_tbl,
 						   &ddr_map_size->sc_tbl,
 						   bytes,
 						   params->sc_table_changed,
 						   &err);
-		अगर (err) अणु
+		if (err) {
 			IA_CSS_LEAVE_ERR_PRIVATE(err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		अगर (params->shading_settings_changed ||
-		    params->sc_table_changed || buff_पुनः_स्मृतिed) अणु
-			अगर (enable_conv == 0) अणु
-				अगर (params->sc_table) अणु
+		if (params->shading_settings_changed ||
+		    params->sc_table_changed || buff_realloced) {
+			if (enable_conv == 0) {
+				if (params->sc_table) {
 					/* store the shading table to ddr */
 					err = ia_css_params_store_sctbl(stage, ddr_map->sc_tbl, params->sc_table);
-					अगर (err) अणु
+					if (err) {
 						IA_CSS_LEAVE_ERR_PRIVATE(err);
-						वापस err;
-					पूर्ण
+						return err;
+					}
 					/* set sc_config to isp */
-					params->sc_config = (काष्ठा ia_css_shading_table *)params->sc_table;
+					params->sc_config = (struct ia_css_shading_table *)params->sc_table;
 					ia_css_kernel_process_param[IA_CSS_SC_ID](pipe_id, stage, params);
-					params->sc_config = शून्य;
-				पूर्ण अन्यथा अणु
+					params->sc_config = NULL;
+				} else {
 					/* generate the identical shading table */
-					अगर (params->sc_config) अणु
-						ia_css_shading_table_मुक्त(params->sc_config);
-						params->sc_config = शून्य;
-					पूर्ण
+					if (params->sc_config) {
+						ia_css_shading_table_free(params->sc_config);
+						params->sc_config = NULL;
+					}
 					sh_css_params_shading_id_table_generate(&params->sc_config,
 										binary->sctbl_width_per_color,
 										binary->sctbl_height);
-					अगर (!params->sc_config) अणु
+					if (!params->sc_config) {
 						IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-						वापस -ENOMEM;
-					पूर्ण
+						return -ENOMEM;
+					}
 
 					/* store the shading table to ddr */
 					err = ia_css_params_store_sctbl(stage, ddr_map->sc_tbl, params->sc_config);
-					अगर (err) अणु
+					if (err) {
 						IA_CSS_LEAVE_ERR_PRIVATE(err);
-						वापस err;
-					पूर्ण
+						return err;
+					}
 
 					/* set sc_config to isp */
 					ia_css_kernel_process_param[IA_CSS_SC_ID](pipe_id, stage, params);
 
-					/* मुक्त the shading table */
-					ia_css_shading_table_मुक्त(params->sc_config);
-					params->sc_config = शून्य;
-				पूर्ण
-			पूर्ण अन्यथा अणु /* legacy */
+					/* free the shading table */
+					ia_css_shading_table_free(params->sc_config);
+					params->sc_config = NULL;
+				}
+			} else { /* legacy */
 				/* ------ deprecated(bz675) : from ------ */
 				/* shading table is full resolution, reduce */
-				अगर (params->sc_config) अणु
-					ia_css_shading_table_मुक्त(params->sc_config);
-					params->sc_config = शून्य;
-				पूर्ण
+				if (params->sc_config) {
+					ia_css_shading_table_free(params->sc_config);
+					params->sc_config = NULL;
+				}
 				prepare_shading_table(
-				    (स्थिर काष्ठा ia_css_shading_table *)params->sc_table,
+				    (const struct ia_css_shading_table *)params->sc_table,
 				    params->sensor_binning,
 				    &params->sc_config,
 				    binary, pipe->required_bds_factor);
-				अगर (!params->sc_config) अणु
+				if (!params->sc_config) {
 					IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-					वापस -ENOMEM;
-				पूर्ण
+					return -ENOMEM;
+				}
 
 				/* store the shading table to ddr */
 				err = ia_css_params_store_sctbl(stage, ddr_map->sc_tbl, params->sc_config);
-				अगर (err) अणु
+				if (err) {
 					IA_CSS_LEAVE_ERR_PRIVATE(err);
-					वापस err;
-				पूर्ण
+					return err;
+				}
 
 				/* set sc_config to isp */
 				ia_css_kernel_process_param[IA_CSS_SC_ID](pipe_id, stage, params);
 
-				/* मुक्त the shading table */
-				ia_css_shading_table_मुक्त(params->sc_config);
-				params->sc_config = शून्य;
+				/* free the shading table */
+				ia_css_shading_table_free(params->sc_config);
+				params->sc_config = NULL;
 				/* ------ deprecated(bz675) : to ------ */
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* DPC configuration is made pipe specअगरic to allow flexibility in positioning of the
-	 * DPC kernel. The code below sets the pipe specअगरic configuration to
-	 * inभागidual binaries. */
-	अगर (IS_ISP2401 &&
+	/* DPC configuration is made pipe specific to allow flexibility in positioning of the
+	 * DPC kernel. The code below sets the pipe specific configuration to
+	 * individual binaries. */
+	if (IS_ISP2401 &&
 	    params->pipe_dpc_config_changed[pipe_id] && binary->info->sp.enable.dpc)
-	अणु
-		अचिन्हित पूर्णांक size   =
+	{
+		unsigned int size   =
 		    stage->binary->info->mem_offsets.offsets.param->dmem.dp.size;
 
-		अचिन्हित पूर्णांक offset =
+		unsigned int offset =
 		    stage->binary->info->mem_offsets.offsets.param->dmem.dp.offset;
 
-		अगर (size) अणु
-			ia_css_dp_encode((काष्ठा sh_css_isp_dp_params *)
+		if (size) {
+			ia_css_dp_encode((struct sh_css_isp_dp_params *)
 					 &binary->mem_params.params[IA_CSS_PARAM_CLASS_PARAM][IA_CSS_ISP_DMEM].address[offset],
 					 &params->pipe_dp_config[pipe_id], size);
 
 			params->isp_params_changed = true;
 			params->isp_mem_params_changed[pipe_id][stage->stage_num][IA_CSS_ISP_DMEM] =
 			    true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (params->config_changed[IA_CSS_MACC_ID] && binary->info->sp.enable.macc)
-	अणु
-		अचिन्हित पूर्णांक i, j, idx;
-		अचिन्हित पूर्णांक idx_map[] = अणु
+	if (params->config_changed[IA_CSS_MACC_ID] && binary->info->sp.enable.macc)
+	{
+		unsigned int i, j, idx;
+		unsigned int idx_map[] = {
 			0, 1, 3, 2, 6, 7, 5, 4, 12, 13, 15, 14, 10, 11, 9, 8
-		पूर्ण;
+		};
 
-		क्रम (i = 0; i < IA_CSS_MACC_NUM_AXES; i++) अणु
+		for (i = 0; i < IA_CSS_MACC_NUM_AXES; i++) {
 			idx = 4 * idx_map[i];
 			j   = 4 * i;
 
-			अगर (binary->info->sp.pipeline.isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1) अणु
+			if (binary->info->sp.pipeline.isp_pipe_version == SH_CSS_ISP_PIPE_VERSION_1) {
 				converted_macc_table.data[idx] =
-				    (पूर्णांक16_t)sDIGIT_FITTING(params->macc_table.data[j],
+				    (int16_t)sDIGIT_FITTING(params->macc_table.data[j],
 							    13, SH_CSS_MACC_COEF_SHIFT);
 				converted_macc_table.data[idx + 1] =
-				    (पूर्णांक16_t)sDIGIT_FITTING(params->macc_table.data[j + 1],
+				    (int16_t)sDIGIT_FITTING(params->macc_table.data[j + 1],
 							    13, SH_CSS_MACC_COEF_SHIFT);
 				converted_macc_table.data[idx + 2] =
-				    (पूर्णांक16_t)sDIGIT_FITTING(params->macc_table.data[j + 2],
+				    (int16_t)sDIGIT_FITTING(params->macc_table.data[j + 2],
 							    13, SH_CSS_MACC_COEF_SHIFT);
 				converted_macc_table.data[idx + 3] =
-				    (पूर्णांक16_t)sDIGIT_FITTING(params->macc_table.data[j + 3],
+				    (int16_t)sDIGIT_FITTING(params->macc_table.data[j + 3],
 							    13, SH_CSS_MACC_COEF_SHIFT);
-			पूर्ण अन्यथा अगर (binary->info->sp.pipeline.isp_pipe_version ==
-				   SH_CSS_ISP_PIPE_VERSION_2_2) अणु
+			} else if (binary->info->sp.pipeline.isp_pipe_version ==
+				   SH_CSS_ISP_PIPE_VERSION_2_2) {
 				converted_macc_table.data[idx] =
 				    params->macc_table.data[j];
 				converted_macc_table.data[idx + 1] =
@@ -3631,70 +3630,70 @@ sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
 				    params->macc_table.data[j + 2];
 				converted_macc_table.data[idx + 3] =
 				    params->macc_table.data[j + 3];
-			पूर्ण
-		पूर्ण
-		पुनः_स्मृतिate_buffer(&ddr_map->macc_tbl,
+			}
+		}
+		reallocate_buffer(&ddr_map->macc_tbl,
 				  &ddr_map_size->macc_tbl,
 				  ddr_map_size->macc_tbl,
 				  true,
 				  &err);
-		अगर (err) अणु
+		if (err) {
 			IA_CSS_LEAVE_ERR_PRIVATE(err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		hmm_store(ddr_map->macc_tbl,
 			   converted_macc_table.data,
-			   माप(converted_macc_table.data));
-	पूर्ण
+			   sizeof(converted_macc_table.data));
+	}
 
-	अगर (binary->info->sp.enable.dvs_6axis)
-	अणु
-		/* because UV is packed पूर्णांकo the Y plane, calc total
+	if (binary->info->sp.enable.dvs_6axis)
+	{
+		/* because UV is packed into the Y plane, calc total
 		 * YYU size = /2 gives size of UV-only,
 		 * total YYU size = UV-only * 3.
 		 */
-		buff_पुनः_स्मृतिed = पुनः_स्मृतिate_buffer(
+		buff_realloced = reallocate_buffer(
 				     &ddr_map->dvs_6axis_params_y,
 				     &ddr_map_size->dvs_6axis_params_y,
-				     (माप_प्रकार)((DVS_6AXIS_BYTES(binary) / 2) * 3),
+				     (size_t)((DVS_6AXIS_BYTES(binary) / 2) * 3),
 				     params->pipe_dvs_6axis_config_changed[pipe_id],
 				     &err);
-		अगर (err) अणु
+		if (err) {
 			IA_CSS_LEAVE_ERR_PRIVATE(err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		अगर (params->pipe_dvs_6axis_config_changed[pipe_id] || buff_पुनः_स्मृतिed) अणु
-			स्थिर काष्ठा ia_css_frame_info *dvs_in_frame_info;
+		if (params->pipe_dvs_6axis_config_changed[pipe_id] || buff_realloced) {
+			const struct ia_css_frame_info *dvs_in_frame_info;
 
-			अगर (stage->args.delay_frames[0]) अणु
-				/*When delay frames are present(as in हाल of video),
-				they are used क्रम dvs. Configure DVS using those params*/
+			if (stage->args.delay_frames[0]) {
+				/*When delay frames are present(as in case of video),
+				they are used for dvs. Configure DVS using those params*/
 				dvs_in_frame_info = &stage->args.delay_frames[0]->info;
-			पूर्ण अन्यथा अणु
+			} else {
 				/*Otherwise, use input frame to configure DVS*/
 				dvs_in_frame_info = &stage->args.in_frame->info;
-			पूर्ण
+			}
 
-			/* Generate शेष DVS unity table on start up*/
-			अगर (!params->pipe_dvs_6axis_config[pipe_id]) अणु
-				काष्ठा ia_css_resolution dvs_offset = अणु0पूर्ण;
+			/* Generate default DVS unity table on start up*/
+			if (!params->pipe_dvs_6axis_config[pipe_id]) {
+				struct ia_css_resolution dvs_offset = {0};
 
-				अगर (!IS_ISP2401) अणु
+				if (!IS_ISP2401) {
 					dvs_offset.width = (PIX_SHIFT_FILTER_RUN_IN_X + binary->dvs_envelope.width) / 2;
-				पूर्ण अन्यथा अणु
-					अगर (binary->dvs_envelope.width || binary->dvs_envelope.height) अणु
+				} else {
+					if (binary->dvs_envelope.width || binary->dvs_envelope.height) {
 						dvs_offset.width  = (PIX_SHIFT_FILTER_RUN_IN_X + binary->dvs_envelope.width) / 2;
-					पूर्ण
-				पूर्ण
+					}
+				}
 				dvs_offset.height = (PIX_SHIFT_FILTER_RUN_IN_Y + binary->dvs_envelope.height) / 2;
 
 				params->pipe_dvs_6axis_config[pipe_id] =
 				    generate_dvs_6axis_table(&binary->out_frame_info[0].res, &dvs_offset);
-				अगर (!params->pipe_dvs_6axis_config[pipe_id]) अणु
+				if (!params->pipe_dvs_6axis_config[pipe_id]) {
 					IA_CSS_LEAVE_ERR_PRIVATE(-ENOMEM);
-					वापस -ENOMEM;
-				पूर्ण
+					return -ENOMEM;
+				}
 				params->pipe_dvs_6axis_config_changed[pipe_id] = true;
 
 				store_dvs_6axis_config(params->pipe_dvs_6axis_config[pipe_id],
@@ -3702,23 +3701,23 @@ sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
 						    dvs_in_frame_info,
 						    ddr_map->dvs_6axis_params_y);
 				params->isp_params_changed = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (binary->info->sp.enable.ca_gdc)
-	अणु
-		अचिन्हित पूर्णांक i;
+	if (binary->info->sp.enable.ca_gdc)
+	{
+		unsigned int i;
 		ia_css_ptr *virt_addr_tetra_x[
 
 		IA_CSS_MORPH_TABLE_NUM_PLANES];
-		माप_प्रकार *virt_माप_प्रकारetra_x[
+		size_t *virt_size_tetra_x[
 
 		IA_CSS_MORPH_TABLE_NUM_PLANES];
 		ia_css_ptr *virt_addr_tetra_y[
 
 		IA_CSS_MORPH_TABLE_NUM_PLANES];
-		माप_प्रकार *virt_माप_प्रकारetra_y[
+		size_t *virt_size_tetra_y[
 
 		IA_CSS_MORPH_TABLE_NUM_PLANES];
 
@@ -3729,12 +3728,12 @@ sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
 		virt_addr_tetra_x[4] = &ddr_map->tetra_ratb_x;
 		virt_addr_tetra_x[5] = &ddr_map->tetra_batr_x;
 
-		virt_माप_प्रकारetra_x[0] = &ddr_map_size->tetra_r_x;
-		virt_माप_प्रकारetra_x[1] = &ddr_map_size->tetra_gr_x;
-		virt_माप_प्रकारetra_x[2] = &ddr_map_size->tetra_gb_x;
-		virt_माप_प्रकारetra_x[3] = &ddr_map_size->tetra_b_x;
-		virt_माप_प्रकारetra_x[4] = &ddr_map_size->tetra_ratb_x;
-		virt_माप_प्रकारetra_x[5] = &ddr_map_size->tetra_batr_x;
+		virt_size_tetra_x[0] = &ddr_map_size->tetra_r_x;
+		virt_size_tetra_x[1] = &ddr_map_size->tetra_gr_x;
+		virt_size_tetra_x[2] = &ddr_map_size->tetra_gb_x;
+		virt_size_tetra_x[3] = &ddr_map_size->tetra_b_x;
+		virt_size_tetra_x[4] = &ddr_map_size->tetra_ratb_x;
+		virt_size_tetra_x[5] = &ddr_map_size->tetra_batr_x;
 
 		virt_addr_tetra_y[0] = &ddr_map->tetra_r_y;
 		virt_addr_tetra_y[1] = &ddr_map->tetra_gr_y;
@@ -3743,58 +3742,58 @@ sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
 		virt_addr_tetra_y[4] = &ddr_map->tetra_ratb_y;
 		virt_addr_tetra_y[5] = &ddr_map->tetra_batr_y;
 
-		virt_माप_प्रकारetra_y[0] = &ddr_map_size->tetra_r_y;
-		virt_माप_प्रकारetra_y[1] = &ddr_map_size->tetra_gr_y;
-		virt_माप_प्रकारetra_y[2] = &ddr_map_size->tetra_gb_y;
-		virt_माप_प्रकारetra_y[3] = &ddr_map_size->tetra_b_y;
-		virt_माप_प्रकारetra_y[4] = &ddr_map_size->tetra_ratb_y;
-		virt_माप_प्रकारetra_y[5] = &ddr_map_size->tetra_batr_y;
+		virt_size_tetra_y[0] = &ddr_map_size->tetra_r_y;
+		virt_size_tetra_y[1] = &ddr_map_size->tetra_gr_y;
+		virt_size_tetra_y[2] = &ddr_map_size->tetra_gb_y;
+		virt_size_tetra_y[3] = &ddr_map_size->tetra_b_y;
+		virt_size_tetra_y[4] = &ddr_map_size->tetra_ratb_y;
+		virt_size_tetra_y[5] = &ddr_map_size->tetra_batr_y;
 
-		buff_पुनः_स्मृतिed = false;
-		क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
-			buff_पुनः_स्मृतिed |=
-			    पुनः_स्मृतिate_buffer(virt_addr_tetra_x[i],
-					    virt_माप_प्रकारetra_x[i],
-					    (माप_प्रकार)
+		buff_realloced = false;
+		for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
+			buff_realloced |=
+			    reallocate_buffer(virt_addr_tetra_x[i],
+					    virt_size_tetra_x[i],
+					    (size_t)
 					    (MORPH_PLANE_BYTES(binary)),
 					    params->morph_table_changed,
 					    &err);
-			अगर (err) अणु
+			if (err) {
 				IA_CSS_LEAVE_ERR_PRIVATE(err);
-				वापस err;
-			पूर्ण
-			buff_पुनः_स्मृतिed |=
-			    पुनः_स्मृतिate_buffer(virt_addr_tetra_y[i],
-					    virt_माप_प्रकारetra_y[i],
-					    (माप_प्रकार)
+				return err;
+			}
+			buff_realloced |=
+			    reallocate_buffer(virt_addr_tetra_y[i],
+					    virt_size_tetra_y[i],
+					    (size_t)
 					    (MORPH_PLANE_BYTES(binary)),
 					    params->morph_table_changed,
 					    &err);
-			अगर (err) अणु
+			if (err) {
 				IA_CSS_LEAVE_ERR_PRIVATE(err);
-				वापस err;
-			पूर्ण
-		पूर्ण
-		अगर (params->morph_table_changed || buff_पुनः_स्मृतिed) अणु
-			स्थिर काष्ठा ia_css_morph_table *table = params->morph_table;
-			काष्ठा ia_css_morph_table *id_table = शून्य;
+				return err;
+			}
+		}
+		if (params->morph_table_changed || buff_realloced) {
+			const struct ia_css_morph_table *table = params->morph_table;
+			struct ia_css_morph_table *id_table = NULL;
 
-			अगर ((table) &&
+			if ((table) &&
 			    (table->width < binary->morph_tbl_width ||
-			    table->height < binary->morph_tbl_height)) अणु
-				table = शून्य;
-			पूर्ण
-			अगर (!table) अणु
-				err = sh_css_params_शेष_morph_table(&id_table,
+			    table->height < binary->morph_tbl_height)) {
+				table = NULL;
+			}
+			if (!table) {
+				err = sh_css_params_default_morph_table(&id_table,
 									binary);
-				अगर (err) अणु
+				if (err) {
 					IA_CSS_LEAVE_ERR_PRIVATE(err);
-					वापस err;
-				पूर्ण
+					return err;
+				}
 				table = id_table;
-			पूर्ण
+			}
 
-			क्रम (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) अणु
+			for (i = 0; i < IA_CSS_MORPH_TABLE_NUM_PLANES; i++) {
 				store_morph_plane(table->coordinates_x[i],
 						table->width,
 						table->height,
@@ -3805,290 +3804,290 @@ sh_css_params_ग_लिखो_to_ddr_पूर्णांकernal(
 						table->height,
 						*virt_addr_tetra_y[i],
 						binary->morph_tbl_aligned_width);
-			पूर्ण
-			अगर (id_table)
-				ia_css_morph_table_मुक्त(id_table);
-		पूर्ण
-	पूर्ण
+			}
+			if (id_table)
+				ia_css_morph_table_free(id_table);
+		}
+	}
 
-	/* After special हालs like SC, FPN since they may change parameters */
-	क्रम (mem = 0; mem < N_IA_CSS_MEMORIES; mem++)
-	अणु
-		स्थिर काष्ठा ia_css_isp_data *isp_data =
+	/* After special cases like SC, FPN since they may change parameters */
+	for (mem = 0; mem < N_IA_CSS_MEMORIES; mem++)
+	{
+		const struct ia_css_isp_data *isp_data =
 		    ia_css_isp_param_get_isp_mem_init(&binary->info->sp.mem_initializers,
 						    IA_CSS_PARAM_CLASS_PARAM, mem);
-		माप_प्रकार size = isp_data->size;
+		size_t size = isp_data->size;
 
-		अगर (!size) जारी;
-		buff_पुनः_स्मृतिed = पुनः_स्मृतिate_buffer(&ddr_map->isp_mem_param[stage_num][mem],
+		if (!size) continue;
+		buff_realloced = reallocate_buffer(&ddr_map->isp_mem_param[stage_num][mem],
 						&ddr_map_size->isp_mem_param[stage_num][mem],
 						size,
 						params->isp_mem_params_changed[pipe_id][stage_num][mem],
 						&err);
-		अगर (err) अणु
+		if (err) {
 			IA_CSS_LEAVE_ERR_PRIVATE(err);
-			वापस err;
-		पूर्ण
-		अगर (params->isp_mem_params_changed[pipe_id][stage_num][mem] || buff_पुनः_स्मृतिed) अणु
+			return err;
+		}
+		if (params->isp_mem_params_changed[pipe_id][stage_num][mem] || buff_realloced) {
 			sh_css_update_isp_mem_params_to_ddr(binary,
 							    ddr_map->isp_mem_param[stage_num][mem],
 							    ddr_map_size->isp_mem_param[stage_num][mem], mem);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	IA_CSS_LEAVE_ERR_PRIVATE(0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा ia_css_fpn_table *ia_css_get_fpn_table(काष्ठा ia_css_stream
+const struct ia_css_fpn_table *ia_css_get_fpn_table(struct ia_css_stream
 	*stream)
-अणु
-	काष्ठा ia_css_isp_parameters *params;
+{
+	struct ia_css_isp_parameters *params;
 
 	IA_CSS_ENTER_LEAVE("void");
-	निश्चित(stream);
+	assert(stream);
 
 	params = stream->isp_params_configs;
 
-	वापस &params->fpn_config;
-पूर्ण
+	return &params->fpn_config;
+}
 
-काष्ठा ia_css_shading_table *ia_css_get_shading_table(काष्ठा ia_css_stream
+struct ia_css_shading_table *ia_css_get_shading_table(struct ia_css_stream
 	*stream)
-अणु
-	काष्ठा ia_css_shading_table *table = शून्य;
-	काष्ठा ia_css_isp_parameters *params;
+{
+	struct ia_css_shading_table *table = NULL;
+	struct ia_css_isp_parameters *params;
 
 	IA_CSS_ENTER("void");
 
-	निश्चित(stream);
+	assert(stream);
 
 	params = stream->isp_params_configs;
-	अगर (!params)
-		वापस शून्य;
+	if (!params)
+		return NULL;
 
-	अगर (params->shading_settings.enable_shading_table_conversion == 0) अणु
-		अगर (params->sc_table) अणु
-			table = (काष्ठा ia_css_shading_table *)params->sc_table;
-		पूर्ण अन्यथा अणु
-			स्थिर काष्ठा ia_css_binary *binary
+	if (params->shading_settings.enable_shading_table_conversion == 0) {
+		if (params->sc_table) {
+			table = (struct ia_css_shading_table *)params->sc_table;
+		} else {
+			const struct ia_css_binary *binary
 			    = ia_css_stream_get_shading_correction_binary(stream);
-			अगर (binary) अणु
+			if (binary) {
 				/* generate the identical shading table */
-				अगर (params->sc_config) अणु
-					ia_css_shading_table_मुक्त(params->sc_config);
-					params->sc_config = शून्य;
-				पूर्ण
+				if (params->sc_config) {
+					ia_css_shading_table_free(params->sc_config);
+					params->sc_config = NULL;
+				}
 				sh_css_params_shading_id_table_generate(&params->sc_config,
 									binary->sctbl_width_per_color,
 									binary->sctbl_height);
 				table = params->sc_config;
-				/* The sc_config will be मुक्तd in the
+				/* The sc_config will be freed in the
 				 * ia_css_stream_isp_parameters_uninit function. */
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* ------ deprecated(bz675) : from ------ */
-		स्थिर काष्ठा ia_css_binary *binary
+		const struct ia_css_binary *binary
 		    = ia_css_stream_get_shading_correction_binary(stream);
-		काष्ठा ia_css_pipe *pipe;
+		struct ia_css_pipe *pipe;
 
 		/**********************************************************************/
 		/* following code is copied from function ia_css_stream_get_shading_correction_binary()
 		 * to match with the binary */
 		pipe = stream->pipes[0];
 
-		अगर (stream->num_pipes == 2) अणु
-			निश्चित(stream->pipes[1]);
-			अगर (stream->pipes[1]->config.mode == IA_CSS_PIPE_MODE_VIDEO ||
+		if (stream->num_pipes == 2) {
+			assert(stream->pipes[1]);
+			if (stream->pipes[1]->config.mode == IA_CSS_PIPE_MODE_VIDEO ||
 			    stream->pipes[1]->config.mode == IA_CSS_PIPE_MODE_PREVIEW)
 				pipe = stream->pipes[1];
-		पूर्ण
+		}
 		/**********************************************************************/
-		अगर (binary) अणु
-			अगर (params->sc_config) अणु
-				ia_css_shading_table_मुक्त(params->sc_config);
-				params->sc_config = शून्य;
-			पूर्ण
+		if (binary) {
+			if (params->sc_config) {
+				ia_css_shading_table_free(params->sc_config);
+				params->sc_config = NULL;
+			}
 			prepare_shading_table(
-			    (स्थिर काष्ठा ia_css_shading_table *)params->sc_table,
+			    (const struct ia_css_shading_table *)params->sc_table,
 			    params->sensor_binning,
 			    &params->sc_config,
 			    binary, pipe->required_bds_factor);
 
 			table = params->sc_config;
-			/* The sc_config will be मुक्तd in the
+			/* The sc_config will be freed in the
 			 * ia_css_stream_isp_parameters_uninit function. */
-		पूर्ण
+		}
 		/* ------ deprecated(bz675) : to ------ */
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE("table=%p", table);
 
-	वापस table;
-पूर्ण
+	return table;
+}
 
-ia_css_ptr sh_css_store_sp_group_to_ddr(व्योम)
-अणु
+ia_css_ptr sh_css_store_sp_group_to_ddr(void)
+{
 	IA_CSS_ENTER_LEAVE_PRIVATE("void");
 	hmm_store(xmem_sp_group_ptrs,
 		   &sh_css_sp_group,
-		   माप(काष्ठा sh_css_sp_group));
-	वापस xmem_sp_group_ptrs;
-पूर्ण
+		   sizeof(struct sh_css_sp_group));
+	return xmem_sp_group_ptrs;
+}
 
 ia_css_ptr sh_css_store_sp_stage_to_ddr(
-    अचिन्हित पूर्णांक pipe,
-    अचिन्हित पूर्णांक stage)
-अणु
+    unsigned int pipe,
+    unsigned int stage)
+{
 	IA_CSS_ENTER_LEAVE_PRIVATE("void");
 	hmm_store(xmem_sp_stage_ptrs[pipe][stage],
 		   &sh_css_sp_stage,
-		   माप(काष्ठा sh_css_sp_stage));
-	वापस xmem_sp_stage_ptrs[pipe][stage];
-पूर्ण
+		   sizeof(struct sh_css_sp_stage));
+	return xmem_sp_stage_ptrs[pipe][stage];
+}
 
 ia_css_ptr sh_css_store_isp_stage_to_ddr(
-    अचिन्हित पूर्णांक pipe,
-    अचिन्हित पूर्णांक stage)
-अणु
+    unsigned int pipe,
+    unsigned int stage)
+{
 	IA_CSS_ENTER_LEAVE_PRIVATE("void");
 	hmm_store(xmem_isp_stage_ptrs[pipe][stage],
 		   &sh_css_isp_stage,
-		   माप(काष्ठा sh_css_isp_stage));
-	वापस xmem_isp_stage_ptrs[pipe][stage];
-पूर्ण
+		   sizeof(struct sh_css_isp_stage));
+	return xmem_isp_stage_ptrs[pipe][stage];
+}
 
-अटल पूर्णांक ref_sh_css_ddr_address_map(
-    काष्ठा sh_css_ddr_address_map *map,
-    काष्ठा sh_css_ddr_address_map *out)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक i;
+static int ref_sh_css_ddr_address_map(
+    struct sh_css_ddr_address_map *map,
+    struct sh_css_ddr_address_map *out)
+{
+	int err = 0;
+	unsigned int i;
 
-	/* we will use a जोड़ to copy things; overlaying an array
-	   with the काष्ठा; that way adding fields in the काष्ठा
+	/* we will use a union to copy things; overlaying an array
+	   with the struct; that way adding fields in the struct
 	   will keep things working, and we will not get type errors.
 	*/
-	जोड़ अणु
-		काष्ठा sh_css_ddr_address_map *map;
+	union {
+		struct sh_css_ddr_address_map *map;
 		ia_css_ptr *addrs;
-	पूर्ण in_addrs, to_addrs;
+	} in_addrs, to_addrs;
 
 	IA_CSS_ENTER_PRIVATE("void");
-	निश्चित(map);
-	निश्चित(out);
+	assert(map);
+	assert(out);
 
 	in_addrs.map = map;
 	to_addrs.map = out;
 
-	निश्चित(माप(काष्ठा sh_css_ddr_address_map_size) / माप(माप_प्रकार) ==
-	       माप(काष्ठा sh_css_ddr_address_map) / माप(ia_css_ptr));
+	assert(sizeof(struct sh_css_ddr_address_map_size) / sizeof(size_t) ==
+	       sizeof(struct sh_css_ddr_address_map) / sizeof(ia_css_ptr));
 
 	/* copy map using size info */
-	क्रम (i = 0; i < (माप(काष्ठा sh_css_ddr_address_map_size) /
-			 माप(माप_प्रकार)); i++) अणु
-		अगर (in_addrs.addrs[i] == mmgr_शून्य)
-			to_addrs.addrs[i] = mmgr_शून्य;
-		अन्यथा
+	for (i = 0; i < (sizeof(struct sh_css_ddr_address_map_size) /
+			 sizeof(size_t)); i++) {
+		if (in_addrs.addrs[i] == mmgr_NULL)
+			to_addrs.addrs[i] = mmgr_NULL;
+		else
 			to_addrs.addrs[i] = ia_css_refcount_increment(IA_CSS_REFCOUNT_PARAM_BUFFER,
 					    in_addrs.addrs[i]);
-	पूर्ण
+	}
 
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ग_लिखो_ia_css_isp_parameter_set_info_to_ddr(
-    काष्ठा ia_css_isp_parameter_set_info *me,
+static int write_ia_css_isp_parameter_set_info_to_ddr(
+    struct ia_css_isp_parameter_set_info *me,
     ia_css_ptr *out)
-अणु
-	पूर्णांक err = 0;
+{
+	int err = 0;
 	bool succ;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	निश्चित(me);
-	निश्चित(out);
+	assert(me);
+	assert(out);
 
 	*out = ia_css_refcount_increment(IA_CSS_REFCOUNT_PARAM_SET_POOL,
-					 hmm_alloc(माप(काष्ठा ia_css_isp_parameter_set_info), HMM_BO_PRIVATE, 0, शून्य, 0));
-	succ = (*out != mmgr_शून्य);
-	अगर (succ)
+					 hmm_alloc(sizeof(struct ia_css_isp_parameter_set_info), HMM_BO_PRIVATE, 0, NULL, 0));
+	succ = (*out != mmgr_NULL);
+	if (succ)
 		hmm_store(*out,
-			   me, माप(काष्ठा ia_css_isp_parameter_set_info));
-	अन्यथा
+			   me, sizeof(struct ia_css_isp_parameter_set_info));
+	else
 		err = -ENOMEM;
 
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-मुक्त_ia_css_isp_parameter_set_info(
-    ia_css_ptr ptr) अणु
-	पूर्णांक err = 0;
-	काष्ठा ia_css_isp_parameter_set_info isp_params_info;
-	अचिन्हित पूर्णांक i;
+static int
+free_ia_css_isp_parameter_set_info(
+    ia_css_ptr ptr) {
+	int err = 0;
+	struct ia_css_isp_parameter_set_info isp_params_info;
+	unsigned int i;
 	ia_css_ptr *addrs = (ia_css_ptr *)&isp_params_info.mem_map;
 
 	IA_CSS_ENTER_PRIVATE("ptr = %u", ptr);
 
 	/* sanity check - ptr must be valid */
-	अगर (!ia_css_refcount_is_valid(ptr))
-	अणु
+	if (!ia_css_refcount_is_valid(ptr))
+	{
 		IA_CSS_ERROR("%s: IA_CSS_REFCOUNT_PARAM_SET_POOL(0x%x) invalid arg", __func__,
 			     ptr);
 		err = -EINVAL;
 		IA_CSS_LEAVE_ERR_PRIVATE(err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	hmm_load(ptr, &isp_params_info.mem_map, माप(काष्ठा sh_css_ddr_address_map));
+	hmm_load(ptr, &isp_params_info.mem_map, sizeof(struct sh_css_ddr_address_map));
 	/* copy map using size info */
-	क्रम (i = 0; i < (माप(काष्ठा sh_css_ddr_address_map_size) /
-			 माप(माप_प्रकार)); i++)
-	अणु
-		अगर (addrs[i] == mmgr_शून्य)
-			जारी;
+	for (i = 0; i < (sizeof(struct sh_css_ddr_address_map_size) /
+			 sizeof(size_t)); i++)
+	{
+		if (addrs[i] == mmgr_NULL)
+			continue;
 
 		/* sanity check - ptr must be valid */
-		अगर (!ia_css_refcount_is_valid(addrs[i])) अणु
+		if (!ia_css_refcount_is_valid(addrs[i])) {
 			IA_CSS_ERROR("%s: IA_CSS_REFCOUNT_PARAM_BUFFER(0x%x) invalid arg", __func__,
 				     ptr);
 			err = -EINVAL;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		ia_css_refcount_decrement(IA_CSS_REFCOUNT_PARAM_BUFFER, addrs[i]);
-	पूर्ण
+	}
 	ia_css_refcount_decrement(IA_CSS_REFCOUNT_PARAM_SET_POOL, ptr);
 
 	IA_CSS_LEAVE_ERR_PRIVATE(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Mark all parameters as changed to क्रमce recomputing the derived ISP parameters */
-व्योम
-sh_css_invalidate_params(काष्ठा ia_css_stream *stream)
-अणु
-	काष्ठा	ia_css_isp_parameters *params;
-	अचिन्हित पूर्णांक i, j, mem;
+/* Mark all parameters as changed to force recomputing the derived ISP parameters */
+void
+sh_css_invalidate_params(struct ia_css_stream *stream)
+{
+	struct	ia_css_isp_parameters *params;
+	unsigned int i, j, mem;
 
 	IA_CSS_ENTER_PRIVATE("void");
-	निश्चित(stream);
+	assert(stream);
 
 	params = stream->isp_params_configs;
 	params->isp_params_changed = true;
-	क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) अणु
-		क्रम (j = 0; j < SH_CSS_MAX_STAGES; j++) अणु
-			क्रम (mem = 0; mem < N_IA_CSS_MEMORIES; mem++) अणु
+	for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) {
+		for (j = 0; j < SH_CSS_MAX_STAGES; j++) {
+			for (mem = 0; mem < N_IA_CSS_MEMORIES; mem++) {
 				params->isp_mem_params_changed[i][j][mem] = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	स_रखो(&params->config_changed[0], 1, माप(params->config_changed));
+	memset(&params->config_changed[0], 1, sizeof(params->config_changed));
 	params->dis_coef_table_changed = true;
 	params->dvs2_coef_table_changed = true;
 	params->morph_table_changed = true;
@@ -4096,60 +4095,60 @@ sh_css_invalidate_params(काष्ठा ia_css_stream *stream)
 	params->dz_config_changed = true;
 	params->motion_config_changed = true;
 
-	/*Free up theDVS table memory blocks beक्रमe recomputing new table  */
-	क्रम (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) अणु
-		अगर (params->pipe_dvs_6axis_config[i]) अणु
-			मुक्त_dvs_6axis_table(&params->pipe_dvs_6axis_config[i]);
+	/*Free up theDVS table memory blocks before recomputing new table  */
+	for (i = 0; i < IA_CSS_PIPE_ID_NUM; i++) {
+		if (params->pipe_dvs_6axis_config[i]) {
+			free_dvs_6axis_table(&params->pipe_dvs_6axis_config[i]);
 			params->pipe_dvs_6axis_config_changed[i] = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-व्योम
+void
 sh_css_update_uds_and_crop_info(
-    स्थिर काष्ठा ia_css_binary_info *info,
-    स्थिर काष्ठा ia_css_frame_info *in_frame_info,
-    स्थिर काष्ठा ia_css_frame_info *out_frame_info,
-    स्थिर काष्ठा ia_css_resolution *dvs_env,
-    स्थिर काष्ठा ia_css_dz_config *zoom,
-    स्थिर काष्ठा ia_css_vector *motion_vector,
-    काष्ठा sh_css_uds_info *uds,		/* out */
-    काष्ठा sh_css_crop_pos *sp_out_crop_pos,	/* out */
+    const struct ia_css_binary_info *info,
+    const struct ia_css_frame_info *in_frame_info,
+    const struct ia_css_frame_info *out_frame_info,
+    const struct ia_css_resolution *dvs_env,
+    const struct ia_css_dz_config *zoom,
+    const struct ia_css_vector *motion_vector,
+    struct sh_css_uds_info *uds,		/* out */
+    struct sh_css_crop_pos *sp_out_crop_pos,	/* out */
 
     bool enable_zoom)
-अणु
+{
 	IA_CSS_ENTER_PRIVATE("void");
 
-	निश्चित(info);
-	निश्चित(in_frame_info);
-	निश्चित(out_frame_info);
-	निश्चित(dvs_env);
-	निश्चित(zoom);
-	निश्चित(motion_vector);
-	निश्चित(uds);
-	निश्चित(sp_out_crop_pos);
+	assert(info);
+	assert(in_frame_info);
+	assert(out_frame_info);
+	assert(dvs_env);
+	assert(zoom);
+	assert(motion_vector);
+	assert(uds);
+	assert(sp_out_crop_pos);
 
-	uds->curr_dx   = enable_zoom ? (uपूर्णांक16_t)zoom->dx : HRT_GDC_N;
-	uds->curr_dy   = enable_zoom ? (uपूर्णांक16_t)zoom->dy : HRT_GDC_N;
+	uds->curr_dx   = enable_zoom ? (uint16_t)zoom->dx : HRT_GDC_N;
+	uds->curr_dy   = enable_zoom ? (uint16_t)zoom->dy : HRT_GDC_N;
 
-	अगर (info->enable.dvs_envelope) अणु
-		अचिन्हित पूर्णांक crop_x = 0,
+	if (info->enable.dvs_envelope) {
+		unsigned int crop_x = 0,
 			     crop_y = 0,
 			     uds_xc = 0,
 			     uds_yc = 0,
 			     env_width, env_height;
-		पूर्णांक half_env_x, half_env_y;
-		पूर्णांक motion_x = motion_vector->x;
-		पूर्णांक motion_y = motion_vector->y;
+		int half_env_x, half_env_y;
+		int motion_x = motion_vector->x;
+		int motion_y = motion_vector->y;
 		bool upscale_x = in_frame_info->res.width < out_frame_info->res.width;
 		bool upscale_y = in_frame_info->res.height < out_frame_info->res.height;
 
-		अगर (info->enable.uds && !info->enable.ds) अणु
+		if (info->enable.uds && !info->enable.ds) {
 			/**
 			 * we calculate with the envelope that we can actually
-			 * use, the min dvs envelope is क्रम the filter
+			 * use, the min dvs envelope is for the filter
 			 * initialization.
 			 */
 			env_width  = dvs_env->width -
@@ -4159,36 +4158,36 @@ sh_css_update_uds_and_crop_info(
 			half_env_x = env_width / 2;
 			half_env_y = env_height / 2;
 			/**
-			 * क्रम digital zoom, we use the dvs envelope and make
-			 * sure that we करोn't include the 8 lefपंचांगost pixels or
+			 * for digital zoom, we use the dvs envelope and make
+			 * sure that we don't include the 8 leftmost pixels or
 			 * 8 topmost rows.
 			 */
-			अगर (upscale_x) अणु
+			if (upscale_x) {
 				uds_xc = (in_frame_info->res.width
 					  + env_width
 					  + SH_CSS_MIN_DVS_ENVELOPE) / 2;
-			पूर्ण अन्यथा अणु
+			} else {
 				uds_xc = (out_frame_info->res.width
 					  + env_width) / 2
 					 + SH_CSS_MIN_DVS_ENVELOPE;
-			पूर्ण
-			अगर (upscale_y) अणु
+			}
+			if (upscale_y) {
 				uds_yc = (in_frame_info->res.height
 					  + env_height
 					  + SH_CSS_MIN_DVS_ENVELOPE) / 2;
-			पूर्ण अन्यथा अणु
+			} else {
 				uds_yc = (out_frame_info->res.height
 					  + env_height) / 2
 					 + SH_CSS_MIN_DVS_ENVELOPE;
-			पूर्ण
+			}
 			/* clip the motion vector to +/- half the envelope */
 			motion_x = clamp(motion_x, -half_env_x, half_env_x);
 			motion_y = clamp(motion_y, -half_env_y, half_env_y);
 			uds_xc += motion_x;
 			uds_yc += motion_y;
-			/* uds can be pipelined, हटाओ top lines */
+			/* uds can be pipelined, remove top lines */
 			crop_y = 2;
-		पूर्ण अन्यथा अगर (info->enable.ds) अणु
+		} else if (info->enable.ds) {
 			env_width  = dvs_env->width;
 			env_height = dvs_env->height;
 			half_env_x = env_width / 2;
@@ -4196,18 +4195,18 @@ sh_css_update_uds_and_crop_info(
 			/* clip the motion vector to +/- half the envelope */
 			motion_x = clamp(motion_x, -half_env_x, half_env_x);
 			motion_y = clamp(motion_y, -half_env_y, half_env_y);
-			/* क्रम video with करोwnscaling, the envelope is included
+			/* for video with downscaling, the envelope is included
 			    in the input resolution. */
 			uds_xc = in_frame_info->res.width / 2 + motion_x;
 			uds_yc = in_frame_info->res.height / 2 + motion_y;
 			crop_x = info->pipeline.left_cropping;
-			/* ds == 2 (yuv_ds) can be pipelined, हटाओ top
+			/* ds == 2 (yuv_ds) can be pipelined, remove top
 			   lines */
-			अगर (info->enable.ds & 1)
+			if (info->enable.ds & 1)
 				crop_y = info->pipeline.top_cropping;
-			अन्यथा
+			else
 				crop_y = 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* video nodz: here we can only crop. We make sure we
 			   crop at least the first 8x8 pixels away. */
 			env_width  = dvs_env->width -
@@ -4222,439 +4221,439 @@ sh_css_update_uds_and_crop_info(
 				 + half_env_x + motion_x;
 			crop_y = SH_CSS_MIN_DVS_ENVELOPE
 				 + half_env_y + motion_y;
-		पूर्ण
+		}
 
-		/* Must enक्रमce that the crop position is even */
+		/* Must enforce that the crop position is even */
 		crop_x = EVEN_FLOOR(crop_x);
 		crop_y = EVEN_FLOOR(crop_y);
 		uds_xc = EVEN_FLOOR(uds_xc);
 		uds_yc = EVEN_FLOOR(uds_yc);
 
-		uds->xc = (uपूर्णांक16_t)uds_xc;
-		uds->yc = (uपूर्णांक16_t)uds_yc;
-		sp_out_crop_pos->x = (uपूर्णांक16_t)crop_x;
-		sp_out_crop_pos->y = (uपूर्णांक16_t)crop_y;
-	पूर्ण अन्यथा अणु
-		/* क्रम करोwn scaling, we always use the center of the image */
-		uds->xc = (uपूर्णांक16_t)in_frame_info->res.width / 2;
-		uds->yc = (uपूर्णांक16_t)in_frame_info->res.height / 2;
-		sp_out_crop_pos->x = (uपूर्णांक16_t)info->pipeline.left_cropping;
-		sp_out_crop_pos->y = (uपूर्णांक16_t)info->pipeline.top_cropping;
-	पूर्ण
+		uds->xc = (uint16_t)uds_xc;
+		uds->yc = (uint16_t)uds_yc;
+		sp_out_crop_pos->x = (uint16_t)crop_x;
+		sp_out_crop_pos->y = (uint16_t)crop_y;
+	} else {
+		/* for down scaling, we always use the center of the image */
+		uds->xc = (uint16_t)in_frame_info->res.width / 2;
+		uds->yc = (uint16_t)in_frame_info->res.height / 2;
+		sp_out_crop_pos->x = (uint16_t)info->pipeline.left_cropping;
+		sp_out_crop_pos->y = (uint16_t)info->pipeline.top_cropping;
+	}
 	IA_CSS_LEAVE_PRIVATE("void");
-पूर्ण
+}
 
-अटल पूर्णांक
+static int
 sh_css_update_uds_and_crop_info_based_on_zoom_region(
-    स्थिर काष्ठा ia_css_binary_info *info,
-    स्थिर काष्ठा ia_css_frame_info *in_frame_info,
-    स्थिर काष्ठा ia_css_frame_info *out_frame_info,
-    स्थिर काष्ठा ia_css_resolution *dvs_env,
-    स्थिर काष्ठा ia_css_dz_config *zoom,
-    स्थिर काष्ठा ia_css_vector *motion_vector,
-    काष्ठा sh_css_uds_info *uds,		/* out */
-    काष्ठा sh_css_crop_pos *sp_out_crop_pos,	/* out */
-    काष्ठा ia_css_resolution pipe_in_res,
-    bool enable_zoom) अणु
-	अचिन्हित पूर्णांक x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-	पूर्णांक err = 0;
+    const struct ia_css_binary_info *info,
+    const struct ia_css_frame_info *in_frame_info,
+    const struct ia_css_frame_info *out_frame_info,
+    const struct ia_css_resolution *dvs_env,
+    const struct ia_css_dz_config *zoom,
+    const struct ia_css_vector *motion_vector,
+    struct sh_css_uds_info *uds,		/* out */
+    struct sh_css_crop_pos *sp_out_crop_pos,	/* out */
+    struct ia_css_resolution pipe_in_res,
+    bool enable_zoom) {
+	unsigned int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+	int err = 0;
 	/* Note:
-	* Filter_Envelope = 0 क्रम NND/LUT
-	* Filter_Envelope = 1 क्रम BCI
-	* Filter_Envelope = 3 क्रम BLI
+	* Filter_Envelope = 0 for NND/LUT
+	* Filter_Envelope = 1 for BCI
+	* Filter_Envelope = 3 for BLI
 	* Currently, not considering this filter envelope because, In uds.sp.c is recalculating
-	* the dx/dy based on filter envelope and other inक्रमmation (ia_css_uds_sp_scale_params)
-	* Ideally, That should be करोne on host side not on sp side.
+	* the dx/dy based on filter envelope and other information (ia_css_uds_sp_scale_params)
+	* Ideally, That should be done on host side not on sp side.
 	*/
-	अचिन्हित पूर्णांक filter_envelope = 0;
+	unsigned int filter_envelope = 0;
 
 	IA_CSS_ENTER_PRIVATE("void");
 
-	निश्चित(info);
-	निश्चित(in_frame_info);
-	निश्चित(out_frame_info);
-	निश्चित(dvs_env);
-	निश्चित(zoom);
-	निश्चित(motion_vector);
-	निश्चित(uds);
-	निश्चित(sp_out_crop_pos);
+	assert(info);
+	assert(in_frame_info);
+	assert(out_frame_info);
+	assert(dvs_env);
+	assert(zoom);
+	assert(motion_vector);
+	assert(uds);
+	assert(sp_out_crop_pos);
 	x0 = zoom->zoom_region.origin.x;
 	y0 = zoom->zoom_region.origin.y;
 	x1 = zoom->zoom_region.resolution.width + x0;
 	y1 = zoom->zoom_region.resolution.height + y0;
 
-	अगर ((x0 > x1) || (y0 > y1) || (x1 > pipe_in_res.width) || (y1 > pipe_in_res.height))
-		वापस -EINVAL;
+	if ((x0 > x1) || (y0 > y1) || (x1 > pipe_in_res.width) || (y1 > pipe_in_res.height))
+		return -EINVAL;
 
-	अगर (!enable_zoom)
-	अणु
+	if (!enable_zoom)
+	{
 		uds->curr_dx = HRT_GDC_N;
 		uds->curr_dy = HRT_GDC_N;
-	पूर्ण
+	}
 
-	अगर (info->enable.dvs_envelope)
-	अणु
+	if (info->enable.dvs_envelope)
+	{
 		/* Zoom region is only supported by the UDS module on ISP
 		 * 2 and higher. It is not supported in video mode on ISP 1 */
-		वापस -EINVAL;
-	पूर्ण अन्यथा
-	अणु
-		अगर (enable_zoom) अणु
+		return -EINVAL;
+	} else
+	{
+		if (enable_zoom) {
 			/* A. Calculate dx/dy based on crop region using in_frame_info
-			* Scale the crop region अगर in_frame_info to the stage is not same as
+			* Scale the crop region if in_frame_info to the stage is not same as
 			* actual effective input of the pipeline
 			*/
-			अगर (in_frame_info->res.width != pipe_in_res.width ||
-			    in_frame_info->res.height != pipe_in_res.height) अणु
+			if (in_frame_info->res.width != pipe_in_res.width ||
+			    in_frame_info->res.height != pipe_in_res.height) {
 				x0 = (x0 * in_frame_info->res.width) / (pipe_in_res.width);
 				y0 = (y0 * in_frame_info->res.height) / (pipe_in_res.height);
 				x1 = (x1 * in_frame_info->res.width) / (pipe_in_res.width);
 				y1 = (y1 * in_frame_info->res.height) / (pipe_in_res.height);
-			पूर्ण
+			}
 			uds->curr_dx =
 			    ((x1 - x0 - filter_envelope) * HRT_GDC_N) / in_frame_info->res.width;
 			uds->curr_dy =
 			    ((y1 - y0 - filter_envelope) * HRT_GDC_N) / in_frame_info->res.height;
 
 			/* B. Calculate xc/yc based on crop region */
-			uds->xc = (uपूर्णांक16_t)x0 + (((x1) - (x0)) / 2);
-			uds->yc = (uपूर्णांक16_t)y0 + (((y1) - (y0)) / 2);
-		पूर्ण अन्यथा अणु
-			uds->xc = (uपूर्णांक16_t)in_frame_info->res.width / 2;
-			uds->yc = (uपूर्णांक16_t)in_frame_info->res.height / 2;
-		पूर्ण
+			uds->xc = (uint16_t)x0 + (((x1) - (x0)) / 2);
+			uds->yc = (uint16_t)y0 + (((y1) - (y0)) / 2);
+		} else {
+			uds->xc = (uint16_t)in_frame_info->res.width / 2;
+			uds->yc = (uint16_t)in_frame_info->res.height / 2;
+		}
 
 		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
 				    "uds->curr_dx=%d, uds->xc=%d, uds->yc=%d\n",
 				    uds->curr_dx, uds->xc, uds->yc);
 		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE, "x0=%d, y0=%d, x1=%d, y1=%d\n",
 				    x0, y0, x1, y1);
-		sp_out_crop_pos->x = (uपूर्णांक16_t)info->pipeline.left_cropping;
-		sp_out_crop_pos->y = (uपूर्णांक16_t)info->pipeline.top_cropping;
-	पूर्ण
+		sp_out_crop_pos->x = (uint16_t)info->pipeline.left_cropping;
+		sp_out_crop_pos->y = (uint16_t)info->pipeline.top_cropping;
+	}
 	IA_CSS_LEAVE_PRIVATE("void");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा ia_css_3a_statistics *
-ia_css_3a_statistics_allocate(स्थिर काष्ठा ia_css_3a_grid_info *grid)
-अणु
-	काष्ठा ia_css_3a_statistics *me;
-	पूर्णांक grid_size;
+struct ia_css_3a_statistics *
+ia_css_3a_statistics_allocate(const struct ia_css_3a_grid_info *grid)
+{
+	struct ia_css_3a_statistics *me;
+	int grid_size;
 
 	IA_CSS_ENTER("grid=%p", grid);
 
-	निश्चित(grid);
+	assert(grid);
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
 	me->grid = *grid;
 	grid_size = grid->width * grid->height;
-	me->data = kvदो_स्मृति(grid_size * माप(*me->data), GFP_KERNEL);
-	अगर (!me->data)
-		जाओ err;
-#अगर !defined(HAS_NO_HMEM)
-	/* No weighted histogram, no काष्ठाure, treat the histogram data as a byte dump in a byte array */
-	me->rgby_data = kvदो_स्मृति(माप_hmem(HMEM0_ID), GFP_KERNEL);
-#अन्यथा
-	me->rgby_data = शून्य;
-#पूर्ण_अगर
+	me->data = kvmalloc(grid_size * sizeof(*me->data), GFP_KERNEL);
+	if (!me->data)
+		goto err;
+#if !defined(HAS_NO_HMEM)
+	/* No weighted histogram, no structure, treat the histogram data as a byte dump in a byte array */
+	me->rgby_data = kvmalloc(sizeof_hmem(HMEM0_ID), GFP_KERNEL);
+#else
+	me->rgby_data = NULL;
+#endif
 
 	IA_CSS_LEAVE("return=%p", me);
-	वापस me;
+	return me;
 err:
-	ia_css_3a_statistics_मुक्त(me);
+	ia_css_3a_statistics_free(me);
 
-	IA_CSS_LEAVE("return=%p", शून्य);
-	वापस शून्य;
-पूर्ण
+	IA_CSS_LEAVE("return=%p", NULL);
+	return NULL;
+}
 
-व्योम
-ia_css_3a_statistics_मुक्त(काष्ठा ia_css_3a_statistics *me)
-अणु
-	अगर (me) अणु
-		kvमुक्त(me->rgby_data);
-		kvमुक्त(me->data);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_3a_statistics_free(struct ia_css_3a_statistics *me)
+{
+	if (me) {
+		kvfree(me->rgby_data);
+		kvfree(me->data);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_dvs_statistics *
-ia_css_dvs_statistics_allocate(स्थिर काष्ठा ia_css_dvs_grid_info *grid)
-अणु
-	काष्ठा ia_css_dvs_statistics *me;
+struct ia_css_dvs_statistics *
+ia_css_dvs_statistics_allocate(const struct ia_css_dvs_grid_info *grid)
+{
+	struct ia_css_dvs_statistics *me;
 
-	निश्चित(grid);
+	assert(grid);
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
 	me->grid = *grid;
-	me->hor_proj = kvदो_स्मृति(grid->height * IA_CSS_DVS_NUM_COEF_TYPES *
-				माप(*me->hor_proj), GFP_KERNEL);
-	अगर (!me->hor_proj)
-		जाओ err;
+	me->hor_proj = kvmalloc(grid->height * IA_CSS_DVS_NUM_COEF_TYPES *
+				sizeof(*me->hor_proj), GFP_KERNEL);
+	if (!me->hor_proj)
+		goto err;
 
-	me->ver_proj = kvदो_स्मृति(grid->width * IA_CSS_DVS_NUM_COEF_TYPES *
-				माप(*me->ver_proj), GFP_KERNEL);
-	अगर (!me->ver_proj)
-		जाओ err;
+	me->ver_proj = kvmalloc(grid->width * IA_CSS_DVS_NUM_COEF_TYPES *
+				sizeof(*me->ver_proj), GFP_KERNEL);
+	if (!me->ver_proj)
+		goto err;
 
-	वापस me;
+	return me;
 err:
-	ia_css_dvs_statistics_मुक्त(me);
-	वापस शून्य;
-पूर्ण
+	ia_css_dvs_statistics_free(me);
+	return NULL;
+}
 
-व्योम
-ia_css_dvs_statistics_मुक्त(काष्ठा ia_css_dvs_statistics *me)
-अणु
-	अगर (me) अणु
-		kvमुक्त(me->hor_proj);
-		kvमुक्त(me->ver_proj);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_dvs_statistics_free(struct ia_css_dvs_statistics *me)
+{
+	if (me) {
+		kvfree(me->hor_proj);
+		kvfree(me->ver_proj);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_dvs_coefficients *
-ia_css_dvs_coefficients_allocate(स्थिर काष्ठा ia_css_dvs_grid_info *grid)
-अणु
-	काष्ठा ia_css_dvs_coefficients *me;
+struct ia_css_dvs_coefficients *
+ia_css_dvs_coefficients_allocate(const struct ia_css_dvs_grid_info *grid)
+{
+	struct ia_css_dvs_coefficients *me;
 
-	निश्चित(grid);
+	assert(grid);
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
 	me->grid = *grid;
 
-	me->hor_coefs = kvदो_स्मृति(grid->num_hor_coefs *
+	me->hor_coefs = kvmalloc(grid->num_hor_coefs *
 				 IA_CSS_DVS_NUM_COEF_TYPES *
-				 माप(*me->hor_coefs), GFP_KERNEL);
-	अगर (!me->hor_coefs)
-		जाओ err;
+				 sizeof(*me->hor_coefs), GFP_KERNEL);
+	if (!me->hor_coefs)
+		goto err;
 
-	me->ver_coefs = kvदो_स्मृति(grid->num_ver_coefs *
+	me->ver_coefs = kvmalloc(grid->num_ver_coefs *
 				 IA_CSS_DVS_NUM_COEF_TYPES *
-				 माप(*me->ver_coefs), GFP_KERNEL);
-	अगर (!me->ver_coefs)
-		जाओ err;
+				 sizeof(*me->ver_coefs), GFP_KERNEL);
+	if (!me->ver_coefs)
+		goto err;
 
-	वापस me;
+	return me;
 err:
-	ia_css_dvs_coefficients_मुक्त(me);
-	वापस शून्य;
-पूर्ण
+	ia_css_dvs_coefficients_free(me);
+	return NULL;
+}
 
-व्योम
-ia_css_dvs_coefficients_मुक्त(काष्ठा ia_css_dvs_coefficients *me)
-अणु
-	अगर (me) अणु
-		kvमुक्त(me->hor_coefs);
-		kvमुक्त(me->ver_coefs);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_dvs_coefficients_free(struct ia_css_dvs_coefficients *me)
+{
+	if (me) {
+		kvfree(me->hor_coefs);
+		kvfree(me->ver_coefs);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_dvs2_statistics *
-ia_css_dvs2_statistics_allocate(स्थिर काष्ठा ia_css_dvs_grid_info *grid)
-अणु
-	काष्ठा ia_css_dvs2_statistics *me;
+struct ia_css_dvs2_statistics *
+ia_css_dvs2_statistics_allocate(const struct ia_css_dvs_grid_info *grid)
+{
+	struct ia_css_dvs2_statistics *me;
 
-	निश्चित(grid);
+	assert(grid);
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
 	me->grid = *grid;
 
-	me->hor_prod.odd_real = kvदो_स्मृति(grid->aligned_width *
+	me->hor_prod.odd_real = kvmalloc(grid->aligned_width *
 					 grid->aligned_height *
-					 माप(*me->hor_prod.odd_real),
+					 sizeof(*me->hor_prod.odd_real),
 					 GFP_KERNEL);
-	अगर (!me->hor_prod.odd_real)
-		जाओ err;
+	if (!me->hor_prod.odd_real)
+		goto err;
 
-	me->hor_prod.odd_imag = kvदो_स्मृति(grid->aligned_width *
+	me->hor_prod.odd_imag = kvmalloc(grid->aligned_width *
 					 grid->aligned_height *
-					 माप(*me->hor_prod.odd_imag),
+					 sizeof(*me->hor_prod.odd_imag),
 					 GFP_KERNEL);
-	अगर (!me->hor_prod.odd_imag)
-		जाओ err;
+	if (!me->hor_prod.odd_imag)
+		goto err;
 
-	me->hor_prod.even_real = kvदो_स्मृति(grid->aligned_width *
+	me->hor_prod.even_real = kvmalloc(grid->aligned_width *
 					  grid->aligned_height *
-					  माप(*me->hor_prod.even_real),
+					  sizeof(*me->hor_prod.even_real),
 					  GFP_KERNEL);
-	अगर (!me->hor_prod.even_real)
-		जाओ err;
+	if (!me->hor_prod.even_real)
+		goto err;
 
-	me->hor_prod.even_imag = kvदो_स्मृति(grid->aligned_width *
+	me->hor_prod.even_imag = kvmalloc(grid->aligned_width *
 					  grid->aligned_height *
-					  माप(*me->hor_prod.even_imag),
+					  sizeof(*me->hor_prod.even_imag),
 					  GFP_KERNEL);
-	अगर (!me->hor_prod.even_imag)
-		जाओ err;
+	if (!me->hor_prod.even_imag)
+		goto err;
 
-	me->ver_prod.odd_real = kvदो_स्मृति(grid->aligned_width *
+	me->ver_prod.odd_real = kvmalloc(grid->aligned_width *
 					 grid->aligned_height *
-					 माप(*me->ver_prod.odd_real),
+					 sizeof(*me->ver_prod.odd_real),
 					 GFP_KERNEL);
-	अगर (!me->ver_prod.odd_real)
-		जाओ err;
+	if (!me->ver_prod.odd_real)
+		goto err;
 
-	me->ver_prod.odd_imag = kvदो_स्मृति(grid->aligned_width *
+	me->ver_prod.odd_imag = kvmalloc(grid->aligned_width *
 					 grid->aligned_height *
-					 माप(*me->ver_prod.odd_imag),
+					 sizeof(*me->ver_prod.odd_imag),
 					 GFP_KERNEL);
-	अगर (!me->ver_prod.odd_imag)
-		जाओ err;
+	if (!me->ver_prod.odd_imag)
+		goto err;
 
-	me->ver_prod.even_real = kvदो_स्मृति(grid->aligned_width *
+	me->ver_prod.even_real = kvmalloc(grid->aligned_width *
 					  grid->aligned_height *
-					  माप(*me->ver_prod.even_real),
+					  sizeof(*me->ver_prod.even_real),
 					  GFP_KERNEL);
-	अगर (!me->ver_prod.even_real)
-		जाओ err;
+	if (!me->ver_prod.even_real)
+		goto err;
 
-	me->ver_prod.even_imag = kvदो_स्मृति(grid->aligned_width *
+	me->ver_prod.even_imag = kvmalloc(grid->aligned_width *
 					  grid->aligned_height *
-					  माप(*me->ver_prod.even_imag),
+					  sizeof(*me->ver_prod.even_imag),
 					  GFP_KERNEL);
-	अगर (!me->ver_prod.even_imag)
-		जाओ err;
+	if (!me->ver_prod.even_imag)
+		goto err;
 
-	वापस me;
+	return me;
 err:
-	ia_css_dvs2_statistics_मुक्त(me);
-	वापस शून्य;
-पूर्ण
+	ia_css_dvs2_statistics_free(me);
+	return NULL;
+}
 
-व्योम
-ia_css_dvs2_statistics_मुक्त(काष्ठा ia_css_dvs2_statistics *me)
-अणु
-	अगर (me) अणु
-		kvमुक्त(me->hor_prod.odd_real);
-		kvमुक्त(me->hor_prod.odd_imag);
-		kvमुक्त(me->hor_prod.even_real);
-		kvमुक्त(me->hor_prod.even_imag);
-		kvमुक्त(me->ver_prod.odd_real);
-		kvमुक्त(me->ver_prod.odd_imag);
-		kvमुक्त(me->ver_prod.even_real);
-		kvमुक्त(me->ver_prod.even_imag);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_dvs2_statistics_free(struct ia_css_dvs2_statistics *me)
+{
+	if (me) {
+		kvfree(me->hor_prod.odd_real);
+		kvfree(me->hor_prod.odd_imag);
+		kvfree(me->hor_prod.even_real);
+		kvfree(me->hor_prod.even_imag);
+		kvfree(me->ver_prod.odd_real);
+		kvfree(me->ver_prod.odd_imag);
+		kvfree(me->ver_prod.even_real);
+		kvfree(me->ver_prod.even_imag);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_dvs2_coefficients *
-ia_css_dvs2_coefficients_allocate(स्थिर काष्ठा ia_css_dvs_grid_info *grid)
-अणु
-	काष्ठा ia_css_dvs2_coefficients *me;
+struct ia_css_dvs2_coefficients *
+ia_css_dvs2_coefficients_allocate(const struct ia_css_dvs_grid_info *grid)
+{
+	struct ia_css_dvs2_coefficients *me;
 
-	निश्चित(grid);
+	assert(grid);
 
-	me = kvसुस्मृति(1, माप(*me), GFP_KERNEL);
-	अगर (!me)
-		जाओ err;
+	me = kvcalloc(1, sizeof(*me), GFP_KERNEL);
+	if (!me)
+		goto err;
 
 	me->grid = *grid;
 
-	me->hor_coefs.odd_real = kvदो_स्मृति(grid->num_hor_coefs *
-					  माप(*me->hor_coefs.odd_real),
+	me->hor_coefs.odd_real = kvmalloc(grid->num_hor_coefs *
+					  sizeof(*me->hor_coefs.odd_real),
 					  GFP_KERNEL);
-	अगर (!me->hor_coefs.odd_real)
-		जाओ err;
+	if (!me->hor_coefs.odd_real)
+		goto err;
 
-	me->hor_coefs.odd_imag = kvदो_स्मृति(grid->num_hor_coefs *
-					  माप(*me->hor_coefs.odd_imag),
+	me->hor_coefs.odd_imag = kvmalloc(grid->num_hor_coefs *
+					  sizeof(*me->hor_coefs.odd_imag),
 					  GFP_KERNEL);
-	अगर (!me->hor_coefs.odd_imag)
-		जाओ err;
+	if (!me->hor_coefs.odd_imag)
+		goto err;
 
-	me->hor_coefs.even_real = kvदो_स्मृति(grid->num_hor_coefs *
-					   माप(*me->hor_coefs.even_real),
+	me->hor_coefs.even_real = kvmalloc(grid->num_hor_coefs *
+					   sizeof(*me->hor_coefs.even_real),
 					   GFP_KERNEL);
-	अगर (!me->hor_coefs.even_real)
-		जाओ err;
+	if (!me->hor_coefs.even_real)
+		goto err;
 
-	me->hor_coefs.even_imag = kvदो_स्मृति(grid->num_hor_coefs *
-					   माप(*me->hor_coefs.even_imag),
+	me->hor_coefs.even_imag = kvmalloc(grid->num_hor_coefs *
+					   sizeof(*me->hor_coefs.even_imag),
 					   GFP_KERNEL);
-	अगर (!me->hor_coefs.even_imag)
-		जाओ err;
+	if (!me->hor_coefs.even_imag)
+		goto err;
 
-	me->ver_coefs.odd_real = kvदो_स्मृति(grid->num_ver_coefs *
-					  माप(*me->ver_coefs.odd_real),
+	me->ver_coefs.odd_real = kvmalloc(grid->num_ver_coefs *
+					  sizeof(*me->ver_coefs.odd_real),
 					  GFP_KERNEL);
-	अगर (!me->ver_coefs.odd_real)
-		जाओ err;
+	if (!me->ver_coefs.odd_real)
+		goto err;
 
-	me->ver_coefs.odd_imag = kvदो_स्मृति(grid->num_ver_coefs *
-					  माप(*me->ver_coefs.odd_imag),
+	me->ver_coefs.odd_imag = kvmalloc(grid->num_ver_coefs *
+					  sizeof(*me->ver_coefs.odd_imag),
 					  GFP_KERNEL);
-	अगर (!me->ver_coefs.odd_imag)
-		जाओ err;
+	if (!me->ver_coefs.odd_imag)
+		goto err;
 
-	me->ver_coefs.even_real = kvदो_स्मृति(grid->num_ver_coefs *
-					   माप(*me->ver_coefs.even_real),
+	me->ver_coefs.even_real = kvmalloc(grid->num_ver_coefs *
+					   sizeof(*me->ver_coefs.even_real),
 					   GFP_KERNEL);
-	अगर (!me->ver_coefs.even_real)
-		जाओ err;
+	if (!me->ver_coefs.even_real)
+		goto err;
 
-	me->ver_coefs.even_imag = kvदो_स्मृति(grid->num_ver_coefs *
-					   माप(*me->ver_coefs.even_imag),
+	me->ver_coefs.even_imag = kvmalloc(grid->num_ver_coefs *
+					   sizeof(*me->ver_coefs.even_imag),
 					   GFP_KERNEL);
-	अगर (!me->ver_coefs.even_imag)
-		जाओ err;
+	if (!me->ver_coefs.even_imag)
+		goto err;
 
-	वापस me;
+	return me;
 err:
-	ia_css_dvs2_coefficients_मुक्त(me);
-	वापस शून्य;
-पूर्ण
+	ia_css_dvs2_coefficients_free(me);
+	return NULL;
+}
 
-व्योम
-ia_css_dvs2_coefficients_मुक्त(काष्ठा ia_css_dvs2_coefficients *me)
-अणु
-	अगर (me) अणु
-		kvमुक्त(me->hor_coefs.odd_real);
-		kvमुक्त(me->hor_coefs.odd_imag);
-		kvमुक्त(me->hor_coefs.even_real);
-		kvमुक्त(me->hor_coefs.even_imag);
-		kvमुक्त(me->ver_coefs.odd_real);
-		kvमुक्त(me->ver_coefs.odd_imag);
-		kvमुक्त(me->ver_coefs.even_real);
-		kvमुक्त(me->ver_coefs.even_imag);
-		kvमुक्त(me);
-	पूर्ण
-पूर्ण
+void
+ia_css_dvs2_coefficients_free(struct ia_css_dvs2_coefficients *me)
+{
+	if (me) {
+		kvfree(me->hor_coefs.odd_real);
+		kvfree(me->hor_coefs.odd_imag);
+		kvfree(me->hor_coefs.even_real);
+		kvfree(me->hor_coefs.even_imag);
+		kvfree(me->ver_coefs.odd_real);
+		kvfree(me->ver_coefs.odd_imag);
+		kvfree(me->ver_coefs.even_real);
+		kvfree(me->ver_coefs.even_imag);
+		kvfree(me);
+	}
+}
 
-काष्ठा ia_css_dvs_6axis_config *
-ia_css_dvs2_6axis_config_allocate(स्थिर काष्ठा ia_css_stream *stream)
-अणु
-	काष्ठा ia_css_dvs_6axis_config *dvs_config = शून्य;
-	काष्ठा ia_css_isp_parameters *params = शून्य;
-	अचिन्हित पूर्णांक width_y;
-	अचिन्हित पूर्णांक height_y;
-	अचिन्हित पूर्णांक width_uv;
-	अचिन्हित पूर्णांक height_uv;
+struct ia_css_dvs_6axis_config *
+ia_css_dvs2_6axis_config_allocate(const struct ia_css_stream *stream)
+{
+	struct ia_css_dvs_6axis_config *dvs_config = NULL;
+	struct ia_css_isp_parameters *params = NULL;
+	unsigned int width_y;
+	unsigned int height_y;
+	unsigned int width_uv;
+	unsigned int height_uv;
 
-	निश्चित(stream);
+	assert(stream);
 	params = stream->isp_params_configs;
 
-	/* Backward compatibility by शेष consider pipe as Video*/
-	अगर (!params || !params->pipe_dvs_6axis_config[IA_CSS_PIPE_ID_VIDEO])
-		जाओ err;
+	/* Backward compatibility by default consider pipe as Video*/
+	if (!params || !params->pipe_dvs_6axis_config[IA_CSS_PIPE_ID_VIDEO])
+		goto err;
 
-	dvs_config = kvसुस्मृति(1, माप(काष्ठा ia_css_dvs_6axis_config),
+	dvs_config = kvcalloc(1, sizeof(struct ia_css_dvs_6axis_config),
 			      GFP_KERNEL);
-	अगर (!dvs_config)
-		जाओ err;
+	if (!dvs_config)
+		goto err;
 
 	dvs_config->width_y = width_y =
 				  params->pipe_dvs_6axis_config[IA_CSS_PIPE_ID_VIDEO]->width_y;
@@ -4666,70 +4665,70 @@ ia_css_dvs2_6axis_config_allocate(स्थिर काष्ठा ia_css_stre
 				    params->pipe_dvs_6axis_config[IA_CSS_PIPE_ID_VIDEO]->height_uv;
 	IA_CSS_LOG("table Y: W %d H %d", width_y, height_y);
 	IA_CSS_LOG("table UV: W %d H %d", width_uv, height_uv);
-	dvs_config->xcoords_y = kvदो_स्मृति(width_y * height_y * माप(uपूर्णांक32_t),
+	dvs_config->xcoords_y = kvmalloc(width_y * height_y * sizeof(uint32_t),
 					 GFP_KERNEL);
-	अगर (!dvs_config->xcoords_y)
-		जाओ err;
+	if (!dvs_config->xcoords_y)
+		goto err;
 
-	dvs_config->ycoords_y = kvदो_स्मृति(width_y * height_y * माप(uपूर्णांक32_t),
+	dvs_config->ycoords_y = kvmalloc(width_y * height_y * sizeof(uint32_t),
 					 GFP_KERNEL);
-	अगर (!dvs_config->ycoords_y)
-		जाओ err;
+	if (!dvs_config->ycoords_y)
+		goto err;
 
-	dvs_config->xcoords_uv = kvदो_स्मृति(width_uv * height_uv *
-					  माप(uपूर्णांक32_t),
+	dvs_config->xcoords_uv = kvmalloc(width_uv * height_uv *
+					  sizeof(uint32_t),
 					  GFP_KERNEL);
-	अगर (!dvs_config->xcoords_uv)
-		जाओ err;
+	if (!dvs_config->xcoords_uv)
+		goto err;
 
-	dvs_config->ycoords_uv = kvदो_स्मृति(width_uv * height_uv *
-					  माप(uपूर्णांक32_t),
+	dvs_config->ycoords_uv = kvmalloc(width_uv * height_uv *
+					  sizeof(uint32_t),
 					  GFP_KERNEL);
-	अगर (!dvs_config->ycoords_uv)
-		जाओ err;
+	if (!dvs_config->ycoords_uv)
+		goto err;
 
-	वापस dvs_config;
+	return dvs_config;
 err:
-	ia_css_dvs2_6axis_config_मुक्त(dvs_config);
-	वापस शून्य;
-पूर्ण
+	ia_css_dvs2_6axis_config_free(dvs_config);
+	return NULL;
+}
 
-व्योम
-ia_css_dvs2_6axis_config_मुक्त(काष्ठा ia_css_dvs_6axis_config *dvs_6axis_config)
-अणु
-	अगर (dvs_6axis_config) अणु
-		kvमुक्त(dvs_6axis_config->xcoords_y);
-		kvमुक्त(dvs_6axis_config->ycoords_y);
-		kvमुक्त(dvs_6axis_config->xcoords_uv);
-		kvमुक्त(dvs_6axis_config->ycoords_uv);
-		kvमुक्त(dvs_6axis_config);
-	पूर्ण
-पूर्ण
+void
+ia_css_dvs2_6axis_config_free(struct ia_css_dvs_6axis_config *dvs_6axis_config)
+{
+	if (dvs_6axis_config) {
+		kvfree(dvs_6axis_config->xcoords_y);
+		kvfree(dvs_6axis_config->ycoords_y);
+		kvfree(dvs_6axis_config->xcoords_uv);
+		kvfree(dvs_6axis_config->ycoords_uv);
+		kvfree(dvs_6axis_config);
+	}
+}
 
-व्योम
-ia_css_en_dz_capt_pipe(काष्ठा ia_css_stream *stream, bool enable)
-अणु
-	काष्ठा ia_css_pipe *pipe;
-	काष्ठा ia_css_pipeline *pipeline;
-	काष्ठा ia_css_pipeline_stage *stage;
-	क्रमागत ia_css_pipe_id pipe_id;
-	पूर्णांक err;
-	पूर्णांक i;
+void
+ia_css_en_dz_capt_pipe(struct ia_css_stream *stream, bool enable)
+{
+	struct ia_css_pipe *pipe;
+	struct ia_css_pipeline *pipeline;
+	struct ia_css_pipeline_stage *stage;
+	enum ia_css_pipe_id pipe_id;
+	int err;
+	int i;
 
-	अगर (!stream)
-		वापस;
+	if (!stream)
+		return;
 
-	क्रम (i = 0; i < stream->num_pipes; i++) अणु
+	for (i = 0; i < stream->num_pipes; i++) {
 		pipe = stream->pipes[i];
 		pipeline = ia_css_pipe_get_pipeline(pipe);
 		pipe_id = pipeline->pipe_id;
 
-		अगर (pipe_id == IA_CSS_PIPE_ID_CAPTURE) अणु
+		if (pipe_id == IA_CSS_PIPE_ID_CAPTURE) {
 			err = ia_css_pipeline_get_stage(pipeline, IA_CSS_BINARY_MODE_CAPTURE_PP,
 							&stage);
-			अगर (!err)
+			if (!err)
 				stage->enable_zoom = enable;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}

@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * loongson-specअगरic suspend support
+ * loongson-specific suspend support
  *
  *  Copyright (C) 2009 Lemote Inc.
  *  Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
-#समावेश <linux/suspend.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm.h>
+#include <linux/suspend.h>
+#include <linux/interrupt.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/i8259.h>
-#समावेश <यंत्र/mipsregs.h>
+#include <asm/i8259.h>
+#include <asm/mipsregs.h>
 
-#समावेश <loongson.h>
+#include <loongson.h>
 
-अटल अचिन्हित पूर्णांक __maybe_unused cached_master_mask;	/* i8259A */
-अटल अचिन्हित पूर्णांक __maybe_unused cached_slave_mask;
-अटल अचिन्हित पूर्णांक __maybe_unused cached_bonito_irq_mask; /* bonito */
+static unsigned int __maybe_unused cached_master_mask;	/* i8259A */
+static unsigned int __maybe_unused cached_slave_mask;
+static unsigned int __maybe_unused cached_bonito_irq_mask; /* bonito */
 
-व्योम arch_suspend_disable_irqs(व्योम)
-अणु
+void arch_suspend_disable_irqs(void)
+{
 	/* disable all mips events */
 	local_irq_disable();
 
-#अगर_घोषित CONFIG_I8259
+#ifdef CONFIG_I8259
 	/* disable all events of i8259A */
 	cached_slave_mask = inb(PIC_SLAVE_IMR);
 	cached_master_mask = inb(PIC_MASTER_IMR);
@@ -33,73 +32,73 @@
 	inb(PIC_SLAVE_IMR);
 	outb(0xff, PIC_MASTER_IMR);
 	inb(PIC_MASTER_IMR);
-#पूर्ण_अगर
+#endif
 	/* disable all events of bonito */
 	cached_bonito_irq_mask = LOONGSON_INTEN;
 	LOONGSON_INTENCLR = 0xffff;
-	(व्योम)LOONGSON_INTENCLR;
-पूर्ण
+	(void)LOONGSON_INTENCLR;
+}
 
-व्योम arch_suspend_enable_irqs(व्योम)
-अणु
+void arch_suspend_enable_irqs(void)
+{
 	/* enable all mips events */
 	local_irq_enable();
-#अगर_घोषित CONFIG_I8259
+#ifdef CONFIG_I8259
 	/* only enable the cached events of i8259A */
 	outb(cached_slave_mask, PIC_SLAVE_IMR);
 	outb(cached_master_mask, PIC_MASTER_IMR);
-#पूर्ण_अगर
+#endif
 	/* enable all cached events of bonito */
 	LOONGSON_INTENSET = cached_bonito_irq_mask;
-	(व्योम)LOONGSON_INTENSET;
-पूर्ण
+	(void)LOONGSON_INTENSET;
+}
 
 /*
- * Setup the board-specअगरic events क्रम waking up loongson from रुको mode
+ * Setup the board-specific events for waking up loongson from wait mode
  */
-व्योम __weak setup_wakeup_events(व्योम)
-अणु
-पूर्ण
+void __weak setup_wakeup_events(void)
+{
+}
 
-व्योम __weak mach_suspend(व्योम)
-अणु
-पूर्ण
+void __weak mach_suspend(void)
+{
+}
 
-व्योम __weak mach_resume(व्योम)
-अणु
-पूर्ण
+void __weak mach_resume(void)
+{
+}
 
-अटल पूर्णांक loongson_pm_enter(suspend_state_t state)
-अणु
+static int loongson_pm_enter(suspend_state_t state)
+{
 	mach_suspend();
 
 	mach_resume();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक loongson_pm_valid_state(suspend_state_t state)
-अणु
-	चयन (state) अणु
-	हाल PM_SUSPEND_ON:
-	हाल PM_SUSPEND_STANDBY:
-	हाल PM_SUSPEND_MEM:
-		वापस 1;
+static int loongson_pm_valid_state(suspend_state_t state)
+{
+	switch (state) {
+	case PM_SUSPEND_ON:
+	case PM_SUSPEND_STANDBY:
+	case PM_SUSPEND_MEM:
+		return 1;
 
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops loongson_pm_ops = अणु
+static const struct platform_suspend_ops loongson_pm_ops = {
 	.valid	= loongson_pm_valid_state,
 	.enter	= loongson_pm_enter,
-पूर्ण;
+};
 
-अटल पूर्णांक __init loongson_pm_init(व्योम)
-अणु
+static int __init loongson_pm_init(void)
+{
 	suspend_set_ops(&loongson_pm_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(loongson_pm_init);

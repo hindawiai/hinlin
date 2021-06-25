@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/osq_lock.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/percpu.h>
+#include <linux/sched.h>
+#include <linux/osq_lock.h>
 
 /*
- * An MCS like lock especially tailored क्रम optimistic spinning क्रम sleeping
+ * An MCS like lock especially tailored for optimistic spinning for sleeping
  * lock implementations (mutex, rwsem, etc).
  *
  * Using a single mcs node per CPU is safe because sleeping locks should not be
- * called from पूर्णांकerrupt context and we have preemption disabled जबतक
+ * called from interrupt context and we have preemption disabled while
  * spinning.
  */
-अटल DEFINE_PER_CPU_SHARED_ALIGNED(काष्ठा optimistic_spin_node, osq_node);
+static DEFINE_PER_CPU_SHARED_ALIGNED(struct optimistic_spin_node, osq_node);
 
 /*
  * We use the value 0 to represent "no CPU", thus the encoded value
  * will be the CPU number incremented by 1.
  */
-अटल अंतरभूत पूर्णांक encode_cpu(पूर्णांक cpu_nr)
-अणु
-	वापस cpu_nr + 1;
-पूर्ण
+static inline int encode_cpu(int cpu_nr)
+{
+	return cpu_nr + 1;
+}
 
-अटल अंतरभूत पूर्णांक node_cpu(काष्ठा optimistic_spin_node *node)
-अणु
-	वापस node->cpu - 1;
-पूर्ण
+static inline int node_cpu(struct optimistic_spin_node *node)
+{
+	return node->cpu - 1;
+}
 
-अटल अंतरभूत काष्ठा optimistic_spin_node *decode_cpu(पूर्णांक encoded_cpu_val)
-अणु
-	पूर्णांक cpu_nr = encoded_cpu_val - 1;
+static inline struct optimistic_spin_node *decode_cpu(int encoded_cpu_val)
+{
+	int cpu_nr = encoded_cpu_val - 1;
 
-	वापस per_cpu_ptr(&osq_node, cpu_nr);
-पूर्ण
+	return per_cpu_ptr(&osq_node, cpu_nr);
+}
 
 /*
- * Get a stable @node->next poपूर्णांकer, either क्रम unlock() or unqueue() purposes.
- * Can वापस शून्य in हाल we were the last queued and we updated @lock instead.
+ * Get a stable @node->next pointer, either for unlock() or unqueue() purposes.
+ * Can return NULL in case we were the last queued and we updated @lock instead.
  */
-अटल अंतरभूत काष्ठा optimistic_spin_node *
-osq_रुको_next(काष्ठा optimistic_spin_queue *lock,
-	      काष्ठा optimistic_spin_node *node,
-	      काष्ठा optimistic_spin_node *prev)
-अणु
-	काष्ठा optimistic_spin_node *next = शून्य;
-	पूर्णांक curr = encode_cpu(smp_processor_id());
-	पूर्णांक old;
+static inline struct optimistic_spin_node *
+osq_wait_next(struct optimistic_spin_queue *lock,
+	      struct optimistic_spin_node *node,
+	      struct optimistic_spin_node *prev)
+{
+	struct optimistic_spin_node *next = NULL;
+	int curr = encode_cpu(smp_processor_id());
+	int old;
 
 	/*
 	 * If there is a prev node in queue, then the 'old' value will be
-	 * the prev node's CPU #, else it's set to OSQ_UNLOCKED_VAL since अगर
+	 * the prev node's CPU #, else it's set to OSQ_UNLOCKED_VAL since if
 	 * we're currently last in queue, then the queue will then become empty.
 	 */
 	old = prev ? prev->cpu : OSQ_UNLOCKED_VAL;
 
-	क्रम (;;) अणु
-		अगर (atomic_पढ़ो(&lock->tail) == curr &&
-		    atomic_cmpxchg_acquire(&lock->tail, curr, old) == curr) अणु
+	for (;;) {
+		if (atomic_read(&lock->tail) == curr &&
+		    atomic_cmpxchg_acquire(&lock->tail, curr, old) == curr) {
 			/*
 			 * We were the last queued, we moved @lock back. @prev
 			 * will now observe @lock and will complete its
 			 * unlock()/unqueue().
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * We must xchg() the @node->next value, because अगर we were to
+		 * We must xchg() the @node->next value, because if we were to
 		 * leave it in, a concurrent unlock()/unqueue() from
 		 * @node->next might complete Step-A and think its @prev is
 		 * still valid.
 		 *
 		 * If the concurrent unlock()/unqueue() wins the race, we'll
-		 * रुको क्रम either @lock to poपूर्णांक to us, through its Step-B, or
-		 * रुको क्रम a new @node->next from its Step-C.
+		 * wait for either @lock to point to us, through its Step-B, or
+		 * wait for a new @node->next from its Step-C.
 		 */
-		अगर (node->next) अणु
-			next = xchg(&node->next, शून्य);
-			अगर (next)
-				अवरोध;
-		पूर्ण
+		if (node->next) {
+			next = xchg(&node->next, NULL);
+			if (next)
+				break;
+		}
 
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-bool osq_lock(काष्ठा optimistic_spin_queue *lock)
-अणु
-	काष्ठा optimistic_spin_node *node = this_cpu_ptr(&osq_node);
-	काष्ठा optimistic_spin_node *prev, *next;
-	पूर्णांक curr = encode_cpu(smp_processor_id());
-	पूर्णांक old;
+bool osq_lock(struct optimistic_spin_queue *lock)
+{
+	struct optimistic_spin_node *node = this_cpu_ptr(&osq_node);
+	struct optimistic_spin_node *prev, *next;
+	int curr = encode_cpu(smp_processor_id());
+	int old;
 
 	node->locked = 0;
-	node->next = शून्य;
+	node->next = NULL;
 	node->cpu = curr;
 
 	/*
@@ -106,8 +105,8 @@ bool osq_lock(काष्ठा optimistic_spin_queue *lock)
 	 * the lock tail.
 	 */
 	old = atomic_xchg(&lock->tail, curr);
-	अगर (old == OSQ_UNLOCKED_VAL)
-		वापस true;
+	if (old == OSQ_UNLOCKED_VAL)
+		return true;
 
 	prev = decode_cpu(old);
 	node->prev = prev;
@@ -115,12 +114,12 @@ bool osq_lock(काष्ठा optimistic_spin_queue *lock)
 	/*
 	 * osq_lock()			unqueue
 	 *
-	 * node->prev = prev		osq_रुको_next()
+	 * node->prev = prev		osq_wait_next()
 	 * WMB				MB
 	 * prev->next = node		next->prev = prev // unqueue-C
 	 *
 	 * Here 'node->prev' and 'next->prev' are the same variable and we need
-	 * to ensure these stores happen in-order to aव्योम corrupting the list.
+	 * to ensure these stores happen in-order to avoid corrupting the list.
 	 */
 	smp_wmb();
 
@@ -130,104 +129,104 @@ bool osq_lock(काष्ठा optimistic_spin_queue *lock)
 	 * Normally @prev is untouchable after the above store; because at that
 	 * moment unlock can proceed and wipe the node element from stack.
 	 *
-	 * However, since our nodes are अटल per-cpu storage, we're
+	 * However, since our nodes are static per-cpu storage, we're
 	 * guaranteed their existence -- this allows us to apply
-	 * cmpxchg in an attempt to unकरो our queueing.
+	 * cmpxchg in an attempt to undo our queueing.
 	 */
 
 	/*
 	 * Wait to acquire the lock or cancellation. Note that need_resched()
-	 * will come with an IPI, which will wake smp_cond_load_relaxed() अगर it
-	 * is implemented with a monitor-रुको. vcpu_is_preempted() relies on
+	 * will come with an IPI, which will wake smp_cond_load_relaxed() if it
+	 * is implemented with a monitor-wait. vcpu_is_preempted() relies on
 	 * polling, be careful.
 	 */
-	अगर (smp_cond_load_relaxed(&node->locked, VAL || need_resched() ||
+	if (smp_cond_load_relaxed(&node->locked, VAL || need_resched() ||
 				  vcpu_is_preempted(node_cpu(node->prev))))
-		वापस true;
+		return true;
 
 	/* unqueue */
 	/*
 	 * Step - A  -- stabilize @prev
 	 *
-	 * Unकरो our @prev->next assignment; this will make @prev's
-	 * unlock()/unqueue() रुको क्रम a next poपूर्णांकer since @lock poपूर्णांकs to us
+	 * Undo our @prev->next assignment; this will make @prev's
+	 * unlock()/unqueue() wait for a next pointer since @lock points to us
 	 * (or later).
 	 */
 
-	क्रम (;;) अणु
+	for (;;) {
 		/*
 		 * cpu_relax() below implies a compiler barrier which would
 		 * prevent this comparison being optimized away.
 		 */
-		अगर (data_race(prev->next) == node &&
-		    cmpxchg(&prev->next, node, शून्य) == node)
-			अवरोध;
+		if (data_race(prev->next) == node &&
+		    cmpxchg(&prev->next, node, NULL) == node)
+			break;
 
 		/*
 		 * We can only fail the cmpxchg() racing against an unlock(),
-		 * in which हाल we should observe @node->locked becoming
+		 * in which case we should observe @node->locked becoming
 		 * true.
 		 */
-		अगर (smp_load_acquire(&node->locked))
-			वापस true;
+		if (smp_load_acquire(&node->locked))
+			return true;
 
 		cpu_relax();
 
 		/*
 		 * Or we race against a concurrent unqueue()'s step-B, in which
-		 * हाल its step-C will ग_लिखो us a new @node->prev poपूर्णांकer.
+		 * case its step-C will write us a new @node->prev pointer.
 		 */
 		prev = READ_ONCE(node->prev);
-	पूर्ण
+	}
 
 	/*
 	 * Step - B -- stabilize @next
 	 *
-	 * Similar to unlock(), रुको क्रम @node->next or move @lock from @node
+	 * Similar to unlock(), wait for @node->next or move @lock from @node
 	 * back to @prev.
 	 */
 
-	next = osq_रुको_next(lock, node, prev);
-	अगर (!next)
-		वापस false;
+	next = osq_wait_next(lock, node, prev);
+	if (!next)
+		return false;
 
 	/*
 	 * Step - C -- unlink
 	 *
-	 * @prev is stable because its still रुकोing क्रम a new @prev->next
-	 * poपूर्णांकer, @next is stable because our @node->next poपूर्णांकer is शून्य and
-	 * it will रुको in Step-A.
+	 * @prev is stable because its still waiting for a new @prev->next
+	 * pointer, @next is stable because our @node->next pointer is NULL and
+	 * it will wait in Step-A.
 	 */
 
 	WRITE_ONCE(next->prev, prev);
 	WRITE_ONCE(prev->next, next);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम osq_unlock(काष्ठा optimistic_spin_queue *lock)
-अणु
-	काष्ठा optimistic_spin_node *node, *next;
-	पूर्णांक curr = encode_cpu(smp_processor_id());
+void osq_unlock(struct optimistic_spin_queue *lock)
+{
+	struct optimistic_spin_node *node, *next;
+	int curr = encode_cpu(smp_processor_id());
 
 	/*
-	 * Fast path क्रम the uncontended हाल.
+	 * Fast path for the uncontended case.
 	 */
-	अगर (likely(atomic_cmpxchg_release(&lock->tail, curr,
+	if (likely(atomic_cmpxchg_release(&lock->tail, curr,
 					  OSQ_UNLOCKED_VAL) == curr))
-		वापस;
+		return;
 
 	/*
-	 * Second most likely हाल.
+	 * Second most likely case.
 	 */
 	node = this_cpu_ptr(&osq_node);
-	next = xchg(&node->next, शून्य);
-	अगर (next) अणु
+	next = xchg(&node->next, NULL);
+	if (next) {
 		WRITE_ONCE(next->locked, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	next = osq_रुको_next(lock, node, शून्य);
-	अगर (next)
+	next = osq_wait_next(lock, node, NULL);
+	if (next)
 		WRITE_ONCE(next->locked, 1);
-पूर्ण
+}

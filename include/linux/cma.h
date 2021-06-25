@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CMA_H__
-#घोषणा __CMA_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CMA_H__
+#define __CMA_H__
 
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/numa.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/numa.h>
 
 /*
  * There is always at least global CMA area and a few optional
  * areas configured in kernel .config.
  */
-#अगर_घोषित CONFIG_CMA_AREAS
-#घोषणा MAX_CMA_AREAS	(1 + CONFIG_CMA_AREAS)
+#ifdef CONFIG_CMA_AREAS
+#define MAX_CMA_AREAS	(1 + CONFIG_CMA_AREAS)
 
-#अन्यथा
-#घोषणा MAX_CMA_AREAS	(0)
+#else
+#define MAX_CMA_AREAS	(0)
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा CMA_MAX_NAME 64
+#define CMA_MAX_NAME 64
 
-काष्ठा cma;
+struct cma;
 
-बाह्य अचिन्हित दीर्घ totalcma_pages;
-बाह्य phys_addr_t cma_get_base(स्थिर काष्ठा cma *cma);
-बाह्य अचिन्हित दीर्घ cma_get_size(स्थिर काष्ठा cma *cma);
-बाह्य स्थिर अक्षर *cma_get_name(स्थिर काष्ठा cma *cma);
+extern unsigned long totalcma_pages;
+extern phys_addr_t cma_get_base(const struct cma *cma);
+extern unsigned long cma_get_size(const struct cma *cma);
+extern const char *cma_get_name(const struct cma *cma);
 
-बाह्य पूर्णांक __init cma_declare_contiguous_nid(phys_addr_t base,
+extern int __init cma_declare_contiguous_nid(phys_addr_t base,
 			phys_addr_t size, phys_addr_t limit,
-			phys_addr_t alignment, अचिन्हित पूर्णांक order_per_bit,
-			bool fixed, स्थिर अक्षर *name, काष्ठा cma **res_cma,
-			पूर्णांक nid);
-अटल अंतरभूत पूर्णांक __init cma_declare_contiguous(phys_addr_t base,
+			phys_addr_t alignment, unsigned int order_per_bit,
+			bool fixed, const char *name, struct cma **res_cma,
+			int nid);
+static inline int __init cma_declare_contiguous(phys_addr_t base,
 			phys_addr_t size, phys_addr_t limit,
-			phys_addr_t alignment, अचिन्हित पूर्णांक order_per_bit,
-			bool fixed, स्थिर अक्षर *name, काष्ठा cma **res_cma)
-अणु
-	वापस cma_declare_contiguous_nid(base, size, limit, alignment,
+			phys_addr_t alignment, unsigned int order_per_bit,
+			bool fixed, const char *name, struct cma **res_cma)
+{
+	return cma_declare_contiguous_nid(base, size, limit, alignment,
 			order_per_bit, fixed, name, res_cma, NUMA_NO_NODE);
-पूर्ण
-बाह्य पूर्णांक cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
-					अचिन्हित पूर्णांक order_per_bit,
-					स्थिर अक्षर *name,
-					काष्ठा cma **res_cma);
-बाह्य काष्ठा page *cma_alloc(काष्ठा cma *cma, अचिन्हित दीर्घ count, अचिन्हित पूर्णांक align,
+}
+extern int cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
+					unsigned int order_per_bit,
+					const char *name,
+					struct cma **res_cma);
+extern struct page *cma_alloc(struct cma *cma, unsigned long count, unsigned int align,
 			      bool no_warn);
-बाह्य bool cma_release(काष्ठा cma *cma, स्थिर काष्ठा page *pages, अचिन्हित दीर्घ count);
+extern bool cma_release(struct cma *cma, const struct page *pages, unsigned long count);
 
-बाह्य पूर्णांक cma_क्रम_each_area(पूर्णांक (*it)(काष्ठा cma *cma, व्योम *data), व्योम *data);
-#पूर्ण_अगर
+extern int cma_for_each_area(int (*it)(struct cma *cma, void *data), void *data);
+#endif

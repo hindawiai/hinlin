@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/btf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <पूर्णांकernal/lib.h>
-#समावेश <symbol/kallsyms.h>
-#समावेश "bpf-event.h"
-#समावेश "debug.h"
-#समावेश "dso.h"
-#समावेश "symbol.h"
-#समावेश "machine.h"
-#समावेश "env.h"
-#समावेश "session.h"
-#समावेश "map.h"
-#समावेश "evlist.h"
-#समावेश "record.h"
-#समावेश "util/synthetic-events.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <stdlib.h>
+#include <bpf/bpf.h>
+#include <bpf/btf.h>
+#include <bpf/libbpf.h>
+#include <linux/btf.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <internal/lib.h>
+#include <symbol/kallsyms.h>
+#include "bpf-event.h"
+#include "debug.h"
+#include "dso.h"
+#include "symbol.h"
+#include "machine.h"
+#include "env.h"
+#include "session.h"
+#include "map.h"
+#include "evlist.h"
+#include "record.h"
+#include "util/synthetic-events.h"
 
-#घोषणा ptr_to_u64(ptr)    ((__u64)(अचिन्हित दीर्घ)(ptr))
+#define ptr_to_u64(ptr)    ((__u64)(unsigned long)(ptr))
 
-अटल पूर्णांक snम_लिखो_hex(अक्षर *buf, माप_प्रकार size, अचिन्हित अक्षर *data, माप_प्रकार len)
-अणु
-	पूर्णांक ret = 0;
-	माप_प्रकार i;
+static int snprintf_hex(char *buf, size_t size, unsigned char *data, size_t len)
+{
+	int ret = 0;
+	size_t i;
 
-	क्रम (i = 0; i < len; i++)
-		ret += snम_लिखो(buf + ret, size - ret, "%02x", data[i]);
-	वापस ret;
-पूर्ण
+	for (i = 0; i < len; i++)
+		ret += snprintf(buf + ret, size - ret, "%02x", data[i]);
+	return ret;
+}
 
-अटल पूर्णांक machine__process_bpf_event_load(काष्ठा machine *machine,
-					   जोड़ perf_event *event,
-					   काष्ठा perf_sample *sample __maybe_unused)
-अणु
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा bpf_prog_info_node *info_node;
-	काष्ठा perf_env *env = machine->env;
-	पूर्णांक id = event->bpf.id;
-	अचिन्हित पूर्णांक i;
+static int machine__process_bpf_event_load(struct machine *machine,
+					   union perf_event *event,
+					   struct perf_sample *sample __maybe_unused)
+{
+	struct bpf_prog_info_linear *info_linear;
+	struct bpf_prog_info_node *info_node;
+	struct perf_env *env = machine->env;
+	int id = event->bpf.id;
+	unsigned int i;
 
 	/* perf-record, no need to handle bpf-event */
-	अगर (env == शून्य)
-		वापस 0;
+	if (env == NULL)
+		return 0;
 
 	info_node = perf_env__find_bpf_prog_info(env, id);
-	अगर (!info_node)
-		वापस 0;
+	if (!info_node)
+		return 0;
 	info_linear = info_node->info_linear;
 
-	क्रम (i = 0; i < info_linear->info.nr_jited_ksyms; i++) अणु
-		u64 *addrs = (u64 *)(uपूर्णांकptr_t)(info_linear->info.jited_ksyms);
+	for (i = 0; i < info_linear->info.nr_jited_ksyms; i++) {
+		u64 *addrs = (u64 *)(uintptr_t)(info_linear->info.jited_ksyms);
 		u64 addr = addrs[i];
-		काष्ठा map *map = maps__find(&machine->kmaps, addr);
+		struct map *map = maps__find(&machine->kmaps, addr);
 
-		अगर (map) अणु
+		if (map) {
 			map->dso->binary_type = DSO_BINARY_TYPE__BPF_PROG_INFO;
 			map->dso->bpf_prog.id = id;
 			map->dso->bpf_prog.sub_id = i;
 			map->dso->bpf_prog.env = env;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-पूर्णांक machine__process_bpf(काष्ठा machine *machine, जोड़ perf_event *event,
-			 काष्ठा perf_sample *sample)
-अणु
-	अगर (dump_trace)
-		perf_event__ख_लिखो_bpf(event, मानक_निकास);
+int machine__process_bpf(struct machine *machine, union perf_event *event,
+			 struct perf_sample *sample)
+{
+	if (dump_trace)
+		perf_event__fprintf_bpf(event, stdout);
 
-	चयन (event->bpf.type) अणु
-	हाल PERF_BPF_EVENT_PROG_LOAD:
-		वापस machine__process_bpf_event_load(machine, event, sample);
+	switch (event->bpf.type) {
+	case PERF_BPF_EVENT_PROG_LOAD:
+		return machine__process_bpf_event_load(machine, event, sample);
 
-	हाल PERF_BPF_EVENT_PROG_UNLOAD:
+	case PERF_BPF_EVENT_PROG_UNLOAD:
 		/*
-		 * Do not मुक्त bpf_prog_info and btf of the program here,
-		 * as annotation still need them. They will be मुक्तd at
+		 * Do not free bpf_prog_info and btf of the program here,
+		 * as annotation still need them. They will be freed at
 		 * the end of the session.
 		 */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("unexpected bpf event type of %d\n", event->bpf.type);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक perf_env__fetch_btf(काष्ठा perf_env *env,
+static int perf_env__fetch_btf(struct perf_env *env,
 			       u32 btf_id,
-			       काष्ठा btf *btf)
-अणु
-	काष्ठा btf_node *node;
+			       struct btf *btf)
+{
+	struct btf_node *node;
 	u32 data_size;
-	स्थिर व्योम *data;
+	const void *data;
 
 	data = btf__get_raw_data(btf, &data_size);
 
-	node = दो_स्मृति(data_size + माप(काष्ठा btf_node));
-	अगर (!node)
-		वापस -1;
+	node = malloc(data_size + sizeof(struct btf_node));
+	if (!node)
+		return -1;
 
 	node->id = btf_id;
 	node->data_size = data_size;
-	स_नकल(node->data, data, data_size);
+	memcpy(node->data, data, data_size);
 
 	perf_env__insert_btf(env, node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक synthesize_bpf_prog_name(अक्षर *buf, पूर्णांक size,
-				    काष्ठा bpf_prog_info *info,
-				    काष्ठा btf *btf,
+static int synthesize_bpf_prog_name(char *buf, int size,
+				    struct bpf_prog_info *info,
+				    struct btf *btf,
 				    u32 sub_id)
-अणु
-	u8 (*prog_tags)[BPF_TAG_SIZE] = (व्योम *)(uपूर्णांकptr_t)(info->prog_tags);
-	व्योम *func_infos = (व्योम *)(uपूर्णांकptr_t)(info->func_info);
+{
+	u8 (*prog_tags)[BPF_TAG_SIZE] = (void *)(uintptr_t)(info->prog_tags);
+	void *func_infos = (void *)(uintptr_t)(info->func_info);
 	u32 sub_prog_cnt = info->nr_jited_ksyms;
-	स्थिर काष्ठा bpf_func_info *finfo;
-	स्थिर अक्षर *लघु_name = शून्य;
-	स्थिर काष्ठा btf_type *t;
-	पूर्णांक name_len;
+	const struct bpf_func_info *finfo;
+	const char *short_name = NULL;
+	const struct btf_type *t;
+	int name_len;
 
-	name_len = snम_लिखो(buf, size, "bpf_prog_");
-	name_len += snम_लिखो_hex(buf + name_len, size - name_len,
+	name_len = snprintf(buf, size, "bpf_prog_");
+	name_len += snprintf_hex(buf + name_len, size - name_len,
 				 prog_tags[sub_id], BPF_TAG_SIZE);
-	अगर (btf) अणु
+	if (btf) {
 		finfo = func_infos + sub_id * info->func_info_rec_size;
 		t = btf__type_by_id(btf, finfo->type_id);
-		लघु_name = btf__name_by_offset(btf, t->name_off);
-	पूर्ण अन्यथा अगर (sub_id == 0 && sub_prog_cnt == 1) अणु
+		short_name = btf__name_by_offset(btf, t->name_off);
+	} else if (sub_id == 0 && sub_prog_cnt == 1) {
 		/* no subprog */
-		अगर (info->name[0])
-			लघु_name = info->name;
-	पूर्ण अन्यथा
-		लघु_name = "F";
-	अगर (लघु_name)
-		name_len += snम_लिखो(buf + name_len, size - name_len,
-				     "_%s", लघु_name);
-	वापस name_len;
-पूर्ण
+		if (info->name[0])
+			short_name = info->name;
+	} else
+		short_name = "F";
+	if (short_name)
+		name_len += snprintf(buf + name_len, size - name_len,
+				     "_%s", short_name);
+	return name_len;
+}
 
 /*
- * Synthesize PERF_RECORD_KSYMBOL and PERF_RECORD_BPF_EVENT क्रम one bpf
- * program. One PERF_RECORD_BPF_EVENT is generated क्रम the program. And
- * one PERF_RECORD_KSYMBOL is generated क्रम each sub program.
+ * Synthesize PERF_RECORD_KSYMBOL and PERF_RECORD_BPF_EVENT for one bpf
+ * program. One PERF_RECORD_BPF_EVENT is generated for the program. And
+ * one PERF_RECORD_KSYMBOL is generated for each sub program.
  *
  * Returns:
- *    0 क्रम success;
- *   -1 क्रम failures;
- *   -2 क्रम lack of kernel support.
+ *    0 for success;
+ *   -1 for failures;
+ *   -2 for lack of kernel support.
  */
-अटल पूर्णांक perf_event__synthesize_one_bpf_prog(काष्ठा perf_session *session,
+static int perf_event__synthesize_one_bpf_prog(struct perf_session *session,
 					       perf_event__handler_t process,
-					       काष्ठा machine *machine,
-					       पूर्णांक fd,
-					       जोड़ perf_event *event,
-					       काष्ठा record_opts *opts)
-अणु
-	काष्ठा perf_record_ksymbol *ksymbol_event = &event->ksymbol;
-	काष्ठा perf_record_bpf_event *bpf_event = &event->bpf;
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा perf_tool *tool = session->tool;
-	काष्ठा bpf_prog_info_node *info_node;
-	काष्ठा bpf_prog_info *info;
-	काष्ठा btf *btf = शून्य;
-	काष्ठा perf_env *env;
+					       struct machine *machine,
+					       int fd,
+					       union perf_event *event,
+					       struct record_opts *opts)
+{
+	struct perf_record_ksymbol *ksymbol_event = &event->ksymbol;
+	struct perf_record_bpf_event *bpf_event = &event->bpf;
+	struct bpf_prog_info_linear *info_linear;
+	struct perf_tool *tool = session->tool;
+	struct bpf_prog_info_node *info_node;
+	struct bpf_prog_info *info;
+	struct btf *btf = NULL;
+	struct perf_env *env;
 	u32 sub_prog_cnt, i;
-	पूर्णांक err = 0;
+	int err = 0;
 	u64 arrays;
 
 	/*
-	 * क्रम perf-record and perf-report use header.env;
+	 * for perf-record and perf-report use header.env;
 	 * otherwise, use global perf_env.
 	 */
 	env = session->data ? &session->header.env : &perf_env;
@@ -190,268 +189,268 @@
 	arrays |= 1UL << BPF_PROG_INFO_JITED_LINE_INFO;
 
 	info_linear = bpf_program__get_prog_info_linear(fd, arrays);
-	अगर (IS_ERR_OR_शून्य(info_linear)) अणु
-		info_linear = शून्य;
+	if (IS_ERR_OR_NULL(info_linear)) {
+		info_linear = NULL;
 		pr_debug("%s: failed to get BPF program info. aborting\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (info_linear->info_len < दुरत्व(काष्ठा bpf_prog_info, prog_tags)) अणु
-		मुक्त(info_linear);
+	if (info_linear->info_len < offsetof(struct bpf_prog_info, prog_tags)) {
+		free(info_linear);
 		pr_debug("%s: the kernel is too old, aborting\n", __func__);
-		वापस -2;
-	पूर्ण
+		return -2;
+	}
 
 	info = &info_linear->info;
-	अगर (!info->jited_ksyms) अणु
-		मुक्त(info_linear);
-		वापस -1;
-	पूर्ण
+	if (!info->jited_ksyms) {
+		free(info_linear);
+		return -1;
+	}
 
 	/* number of ksyms, func_lengths, and tags should match */
 	sub_prog_cnt = info->nr_jited_ksyms;
-	अगर (sub_prog_cnt != info->nr_prog_tags ||
-	    sub_prog_cnt != info->nr_jited_func_lens) अणु
-		मुक्त(info_linear);
-		वापस -1;
-	पूर्ण
+	if (sub_prog_cnt != info->nr_prog_tags ||
+	    sub_prog_cnt != info->nr_jited_func_lens) {
+		free(info_linear);
+		return -1;
+	}
 
 	/* check BTF func info support */
-	अगर (info->btf_id && info->nr_func_info && info->func_info_rec_size) अणु
+	if (info->btf_id && info->nr_func_info && info->func_info_rec_size) {
 		/* btf func info number should be same as sub_prog_cnt */
-		अगर (sub_prog_cnt != info->nr_func_info) अणु
+		if (sub_prog_cnt != info->nr_func_info) {
 			pr_debug("%s: mismatch in BPF sub program count and BTF function info count, aborting\n", __func__);
-			मुक्त(info_linear);
-			वापस -1;
-		पूर्ण
-		अगर (btf__get_from_id(info->btf_id, &btf)) अणु
+			free(info_linear);
+			return -1;
+		}
+		if (btf__get_from_id(info->btf_id, &btf)) {
 			pr_debug("%s: failed to get BTF of id %u, aborting\n", __func__, info->btf_id);
 			err = -1;
-			btf = शून्य;
-			जाओ out;
-		पूर्ण
+			btf = NULL;
+			goto out;
+		}
 		perf_env__fetch_btf(env, info->btf_id, btf);
-	पूर्ण
+	}
 
 	/* Synthesize PERF_RECORD_KSYMBOL */
-	क्रम (i = 0; i < sub_prog_cnt; i++) अणु
-		__u32 *prog_lens = (__u32 *)(uपूर्णांकptr_t)(info->jited_func_lens);
-		__u64 *prog_addrs = (__u64 *)(uपूर्णांकptr_t)(info->jited_ksyms);
-		पूर्णांक name_len;
+	for (i = 0; i < sub_prog_cnt; i++) {
+		__u32 *prog_lens = (__u32 *)(uintptr_t)(info->jited_func_lens);
+		__u64 *prog_addrs = (__u64 *)(uintptr_t)(info->jited_ksyms);
+		int name_len;
 
-		*ksymbol_event = (काष्ठा perf_record_ksymbol) अणु
-			.header = अणु
+		*ksymbol_event = (struct perf_record_ksymbol) {
+			.header = {
 				.type = PERF_RECORD_KSYMBOL,
-				.size = दुरत्व(काष्ठा perf_record_ksymbol, name),
-			पूर्ण,
+				.size = offsetof(struct perf_record_ksymbol, name),
+			},
 			.addr = prog_addrs[i],
 			.len = prog_lens[i],
 			.ksym_type = PERF_RECORD_KSYMBOL_TYPE_BPF,
 			.flags = 0,
-		पूर्ण;
+		};
 
 		name_len = synthesize_bpf_prog_name(ksymbol_event->name,
 						    KSYM_NAME_LEN, info, btf, i);
 		ksymbol_event->header.size += PERF_ALIGN(name_len + 1,
-							 माप(u64));
+							 sizeof(u64));
 
-		स_रखो((व्योम *)event + event->header.size, 0, machine->id_hdr_size);
+		memset((void *)event + event->header.size, 0, machine->id_hdr_size);
 		event->header.size += machine->id_hdr_size;
 		err = perf_tool__process_synth_event(tool, event,
 						     machine, process);
-	पूर्ण
+	}
 
-	अगर (!opts->no_bpf_event) अणु
+	if (!opts->no_bpf_event) {
 		/* Synthesize PERF_RECORD_BPF_EVENT */
-		*bpf_event = (काष्ठा perf_record_bpf_event) अणु
-			.header = अणु
+		*bpf_event = (struct perf_record_bpf_event) {
+			.header = {
 				.type = PERF_RECORD_BPF_EVENT,
-				.size = माप(काष्ठा perf_record_bpf_event),
-			पूर्ण,
+				.size = sizeof(struct perf_record_bpf_event),
+			},
 			.type = PERF_BPF_EVENT_PROG_LOAD,
 			.flags = 0,
 			.id = info->id,
-		पूर्ण;
-		स_नकल(bpf_event->tag, info->tag, BPF_TAG_SIZE);
-		स_रखो((व्योम *)event + event->header.size, 0, machine->id_hdr_size);
+		};
+		memcpy(bpf_event->tag, info->tag, BPF_TAG_SIZE);
+		memset((void *)event + event->header.size, 0, machine->id_hdr_size);
 		event->header.size += machine->id_hdr_size;
 
 		/* save bpf_prog_info to env */
-		info_node = दो_स्मृति(माप(काष्ठा bpf_prog_info_node));
-		अगर (!info_node) अणु
+		info_node = malloc(sizeof(struct bpf_prog_info_node));
+		if (!info_node) {
 			err = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		info_node->info_linear = info_linear;
 		perf_env__insert_bpf_prog_info(env, info_node);
-		info_linear = शून्य;
+		info_linear = NULL;
 
 		/*
 		 * process after saving bpf_prog_info to env, so that
-		 * required inक्रमmation is पढ़ोy क्रम look up
+		 * required information is ready for look up
 		 */
 		err = perf_tool__process_synth_event(tool, event,
 						     machine, process);
-	पूर्ण
+	}
 
 out:
-	मुक्त(info_linear);
-	मुक्त(btf);
-	वापस err ? -1 : 0;
-पूर्ण
+	free(info_linear);
+	free(btf);
+	return err ? -1 : 0;
+}
 
-काष्ठा kallsyms_parse अणु
-	जोड़ perf_event	*event;
+struct kallsyms_parse {
+	union perf_event	*event;
 	perf_event__handler_t	 process;
-	काष्ठा machine		*machine;
-	काष्ठा perf_tool	*tool;
-पूर्ण;
+	struct machine		*machine;
+	struct perf_tool	*tool;
+};
 
-अटल पूर्णांक
-process_bpf_image(अक्षर *name, u64 addr, काष्ठा kallsyms_parse *data)
-अणु
-	काष्ठा machine *machine = data->machine;
-	जोड़ perf_event *event = data->event;
-	काष्ठा perf_record_ksymbol *ksymbol;
-	पूर्णांक len;
+static int
+process_bpf_image(char *name, u64 addr, struct kallsyms_parse *data)
+{
+	struct machine *machine = data->machine;
+	union perf_event *event = data->event;
+	struct perf_record_ksymbol *ksymbol;
+	int len;
 
 	ksymbol = &event->ksymbol;
 
-	*ksymbol = (काष्ठा perf_record_ksymbol) अणु
-		.header = अणु
+	*ksymbol = (struct perf_record_ksymbol) {
+		.header = {
 			.type = PERF_RECORD_KSYMBOL,
-			.size = दुरत्व(काष्ठा perf_record_ksymbol, name),
-		पूर्ण,
+			.size = offsetof(struct perf_record_ksymbol, name),
+		},
 		.addr      = addr,
 		.len       = page_size,
 		.ksym_type = PERF_RECORD_KSYMBOL_TYPE_BPF,
 		.flags     = 0,
-	पूर्ण;
+	};
 
-	len = scnम_लिखो(ksymbol->name, KSYM_NAME_LEN, "%s", name);
-	ksymbol->header.size += PERF_ALIGN(len + 1, माप(u64));
-	स_रखो((व्योम *) event + event->header.size, 0, machine->id_hdr_size);
+	len = scnprintf(ksymbol->name, KSYM_NAME_LEN, "%s", name);
+	ksymbol->header.size += PERF_ALIGN(len + 1, sizeof(u64));
+	memset((void *) event + event->header.size, 0, machine->id_hdr_size);
 	event->header.size += machine->id_hdr_size;
 
-	वापस perf_tool__process_synth_event(data->tool, event, machine,
+	return perf_tool__process_synth_event(data->tool, event, machine,
 					      data->process);
-पूर्ण
+}
 
-अटल पूर्णांक
-kallsyms_process_symbol(व्योम *data, स्थिर अक्षर *_name,
-			अक्षर type __maybe_unused, u64 start)
-अणु
-	अक्षर disp[KSYM_NAME_LEN];
-	अक्षर *module, *name;
-	अचिन्हित दीर्घ id;
-	पूर्णांक err = 0;
+static int
+kallsyms_process_symbol(void *data, const char *_name,
+			char type __maybe_unused, u64 start)
+{
+	char disp[KSYM_NAME_LEN];
+	char *module, *name;
+	unsigned long id;
+	int err = 0;
 
-	module = म_अक्षर(_name, '\t');
-	अगर (!module)
-		वापस 0;
+	module = strchr(_name, '\t');
+	if (!module)
+		return 0;
 
 	/* We are going after [bpf] module ... */
-	अगर (म_भेद(module + 1, "[bpf]"))
-		वापस 0;
+	if (strcmp(module + 1, "[bpf]"))
+		return 0;
 
 	name = memdup(_name, (module - _name) + 1);
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
 	name[module - _name] = 0;
 
-	/* .. and only क्रम trampolines and dispatchers */
-	अगर ((माला_पूछो(name, "bpf_trampoline_%lu", &id) == 1) ||
-	    (माला_पूछो(name, "bpf_dispatcher_%s", disp) == 1))
+	/* .. and only for trampolines and dispatchers */
+	if ((sscanf(name, "bpf_trampoline_%lu", &id) == 1) ||
+	    (sscanf(name, "bpf_dispatcher_%s", disp) == 1))
 		err = process_bpf_image(name, start, data);
 
-	मुक्त(name);
-	वापस err;
-पूर्ण
+	free(name);
+	return err;
+}
 
-पूर्णांक perf_event__synthesize_bpf_events(काष्ठा perf_session *session,
+int perf_event__synthesize_bpf_events(struct perf_session *session,
 				      perf_event__handler_t process,
-				      काष्ठा machine *machine,
-				      काष्ठा record_opts *opts)
-अणु
-	स्थिर अक्षर *kallsyms_filename = "/proc/kallsyms";
-	काष्ठा kallsyms_parse arg;
-	जोड़ perf_event *event;
+				      struct machine *machine,
+				      struct record_opts *opts)
+{
+	const char *kallsyms_filename = "/proc/kallsyms";
+	struct kallsyms_parse arg;
+	union perf_event *event;
 	__u32 id = 0;
-	पूर्णांक err;
-	पूर्णांक fd;
+	int err;
+	int fd;
 
-	event = दो_स्मृति(माप(event->bpf) + KSYM_NAME_LEN + machine->id_hdr_size);
-	अगर (!event)
-		वापस -1;
+	event = malloc(sizeof(event->bpf) + KSYM_NAME_LEN + machine->id_hdr_size);
+	if (!event)
+		return -1;
 
-	/* Synthesize all the bpf programs in प्रणाली. */
-	जबतक (true) अणु
+	/* Synthesize all the bpf programs in system. */
+	while (true) {
 		err = bpf_prog_get_next_id(id, &id);
-		अगर (err) अणु
-			अगर (त्रुटि_सं == ENOENT) अणु
+		if (err) {
+			if (errno == ENOENT) {
 				err = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			pr_debug("%s: can't get next program: %s%s\n",
-				 __func__, म_त्रुटि(त्रुटि_सं),
-				 त्रुटि_सं == EINVAL ? " -- kernel too old?" : "");
-			/* करोn't report error on old kernel or EPERM  */
-			err = (त्रुटि_सं == EINVAL || त्रुटि_सं == EPERM) ? 0 : -1;
-			अवरोध;
-		पूर्ण
+				 __func__, strerror(errno),
+				 errno == EINVAL ? " -- kernel too old?" : "");
+			/* don't report error on old kernel or EPERM  */
+			err = (errno == EINVAL || errno == EPERM) ? 0 : -1;
+			break;
+		}
 		fd = bpf_prog_get_fd_by_id(id);
-		अगर (fd < 0) अणु
+		if (fd < 0) {
 			pr_debug("%s: failed to get fd for prog_id %u\n",
 				 __func__, id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		err = perf_event__synthesize_one_bpf_prog(session, process,
 							  machine, fd,
 							  event, opts);
-		बंद(fd);
-		अगर (err) अणु
-			/* करो not वापस error क्रम old kernel */
-			अगर (err == -2)
+		close(fd);
+		if (err) {
+			/* do not return error for old kernel */
+			if (err == -2)
 				err = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Synthesize all the bpf images - trampolines/dispatchers. */
-	अगर (symbol_conf.kallsyms_name != शून्य)
+	if (symbol_conf.kallsyms_name != NULL)
 		kallsyms_filename = symbol_conf.kallsyms_name;
 
-	arg = (काष्ठा kallsyms_parse) अणु
+	arg = (struct kallsyms_parse) {
 		.event   = event,
 		.process = process,
 		.machine = machine,
 		.tool    = session->tool,
-	पूर्ण;
+	};
 
-	अगर (kallsyms__parse(kallsyms_filename, &arg, kallsyms_process_symbol)) अणु
+	if (kallsyms__parse(kallsyms_filename, &arg, kallsyms_process_symbol)) {
 		pr_err("%s: failed to synthesize bpf images: %s\n",
-		       __func__, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		       __func__, strerror(errno));
+	}
 
-	मुक्त(event);
-	वापस err;
-पूर्ण
+	free(event);
+	return err;
+}
 
-अटल व्योम perf_env__add_bpf_info(काष्ठा perf_env *env, u32 id)
-अणु
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा bpf_prog_info_node *info_node;
-	काष्ठा btf *btf = शून्य;
+static void perf_env__add_bpf_info(struct perf_env *env, u32 id)
+{
+	struct bpf_prog_info_linear *info_linear;
+	struct bpf_prog_info_node *info_node;
+	struct btf *btf = NULL;
 	u64 arrays;
 	u32 btf_id;
-	पूर्णांक fd;
+	int fd;
 
 	fd = bpf_prog_get_fd_by_id(id);
-	अगर (fd < 0)
-		वापस;
+	if (fd < 0)
+		return;
 
 	arrays = 1UL << BPF_PROG_INFO_JITED_KSYMS;
 	arrays |= 1UL << BPF_PROG_INFO_JITED_FUNC_LENS;
@@ -462,117 +461,117 @@ kallsyms_process_symbol(व्योम *data, स्थिर अक्षर *
 	arrays |= 1UL << BPF_PROG_INFO_JITED_LINE_INFO;
 
 	info_linear = bpf_program__get_prog_info_linear(fd, arrays);
-	अगर (IS_ERR_OR_शून्य(info_linear)) अणु
+	if (IS_ERR_OR_NULL(info_linear)) {
 		pr_debug("%s: failed to get BPF program info. aborting\n", __func__);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	btf_id = info_linear->info.btf_id;
 
-	info_node = दो_स्मृति(माप(काष्ठा bpf_prog_info_node));
-	अगर (info_node) अणु
+	info_node = malloc(sizeof(struct bpf_prog_info_node));
+	if (info_node) {
 		info_node->info_linear = info_linear;
 		perf_env__insert_bpf_prog_info(env, info_node);
-	पूर्ण अन्यथा
-		मुक्त(info_linear);
+	} else
+		free(info_linear);
 
-	अगर (btf_id == 0)
-		जाओ out;
+	if (btf_id == 0)
+		goto out;
 
-	अगर (btf__get_from_id(btf_id, &btf)) अणु
+	if (btf__get_from_id(btf_id, &btf)) {
 		pr_debug("%s: failed to get BTF of id %u, aborting\n",
 			 __func__, btf_id);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	perf_env__fetch_btf(env, btf_id, btf);
 
 out:
-	मुक्त(btf);
-	बंद(fd);
-पूर्ण
+	free(btf);
+	close(fd);
+}
 
-अटल पूर्णांक bpf_event__sb_cb(जोड़ perf_event *event, व्योम *data)
-अणु
-	काष्ठा perf_env *env = data;
+static int bpf_event__sb_cb(union perf_event *event, void *data)
+{
+	struct perf_env *env = data;
 
-	अगर (event->header.type != PERF_RECORD_BPF_EVENT)
-		वापस -1;
+	if (event->header.type != PERF_RECORD_BPF_EVENT)
+		return -1;
 
-	चयन (event->bpf.type) अणु
-	हाल PERF_BPF_EVENT_PROG_LOAD:
+	switch (event->bpf.type) {
+	case PERF_BPF_EVENT_PROG_LOAD:
 		perf_env__add_bpf_info(env, event->bpf.id);
 
-	हाल PERF_BPF_EVENT_PROG_UNLOAD:
+	case PERF_BPF_EVENT_PROG_UNLOAD:
 		/*
-		 * Do not मुक्त bpf_prog_info and btf of the program here,
-		 * as annotation still need them. They will be मुक्तd at
+		 * Do not free bpf_prog_info and btf of the program here,
+		 * as annotation still need them. They will be freed at
 		 * the end of the session.
 		 */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("unexpected bpf event type of %d\n", event->bpf.type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक evlist__add_bpf_sb_event(काष्ठा evlist *evlist, काष्ठा perf_env *env)
-अणु
-	काष्ठा perf_event_attr attr = अणु
+int evlist__add_bpf_sb_event(struct evlist *evlist, struct perf_env *env)
+{
+	struct perf_event_attr attr = {
 		.type	          = PERF_TYPE_SOFTWARE,
 		.config           = PERF_COUNT_SW_DUMMY,
 		.sample_id_all    = 1,
 		.watermark        = 1,
 		.bpf_event        = 1,
-		.size	   = माप(attr), /* to capture ABI version */
-	पूर्ण;
+		.size	   = sizeof(attr), /* to capture ABI version */
+	};
 
 	/*
-	 * Older gcc versions करोn't support designated initializers, like above,
-	 * क्रम unnamed जोड़ members, such as the following:
+	 * Older gcc versions don't support designated initializers, like above,
+	 * for unnamed union members, such as the following:
 	 */
 	attr.wakeup_watermark = 1;
 
-	वापस evlist__add_sb_event(evlist, &attr, bpf_event__sb_cb, env);
-पूर्ण
+	return evlist__add_sb_event(evlist, &attr, bpf_event__sb_cb, env);
+}
 
-व्योम bpf_event__prपूर्णांक_bpf_prog_info(काष्ठा bpf_prog_info *info,
-				    काष्ठा perf_env *env,
-				    खाता *fp)
-अणु
-	__u32 *prog_lens = (__u32 *)(uपूर्णांकptr_t)(info->jited_func_lens);
-	__u64 *prog_addrs = (__u64 *)(uपूर्णांकptr_t)(info->jited_ksyms);
-	अक्षर name[KSYM_NAME_LEN];
-	काष्ठा btf *btf = शून्य;
+void bpf_event__print_bpf_prog_info(struct bpf_prog_info *info,
+				    struct perf_env *env,
+				    FILE *fp)
+{
+	__u32 *prog_lens = (__u32 *)(uintptr_t)(info->jited_func_lens);
+	__u64 *prog_addrs = (__u64 *)(uintptr_t)(info->jited_ksyms);
+	char name[KSYM_NAME_LEN];
+	struct btf *btf = NULL;
 	u32 sub_prog_cnt, i;
 
 	sub_prog_cnt = info->nr_jited_ksyms;
-	अगर (sub_prog_cnt != info->nr_prog_tags ||
+	if (sub_prog_cnt != info->nr_prog_tags ||
 	    sub_prog_cnt != info->nr_jited_func_lens)
-		वापस;
+		return;
 
-	अगर (info->btf_id) अणु
-		काष्ठा btf_node *node;
+	if (info->btf_id) {
+		struct btf_node *node;
 
 		node = perf_env__find_btf(env, info->btf_id);
-		अगर (node)
+		if (node)
 			btf = btf__new((__u8 *)(node->data),
 				       node->data_size);
-	पूर्ण
+	}
 
-	अगर (sub_prog_cnt == 1) अणु
+	if (sub_prog_cnt == 1) {
 		synthesize_bpf_prog_name(name, KSYM_NAME_LEN, info, btf, 0);
-		ख_लिखो(fp, "# bpf_prog_info %u: %s addr 0x%llx size %u\n",
+		fprintf(fp, "# bpf_prog_info %u: %s addr 0x%llx size %u\n",
 			info->id, name, prog_addrs[0], prog_lens[0]);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ख_लिखो(fp, "# bpf_prog_info %u:\n", info->id);
-	क्रम (i = 0; i < sub_prog_cnt; i++) अणु
+	fprintf(fp, "# bpf_prog_info %u:\n", info->id);
+	for (i = 0; i < sub_prog_cnt; i++) {
 		synthesize_bpf_prog_name(name, KSYM_NAME_LEN, info, btf, i);
 
-		ख_लिखो(fp, "# \tsub_prog %u: %s addr 0x%llx size %u\n",
+		fprintf(fp, "# \tsub_prog %u: %s addr 0x%llx size %u\n",
 			i, name, prog_addrs[i], prog_lens[i]);
-	पूर्ण
-पूर्ण
+	}
+}

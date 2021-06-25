@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/lib/string.c
  *
@@ -8,524 +7,524 @@
 
 /*
  * stupid library routines.. The optimized versions should generally be found
- * as अंतरभूत code in <यंत्र-xx/माला.स>
+ * as inline code in <asm-xx/string.h>
  *
  * These are buggy as well..
  *
- * * Fri Jun 25 1999, Ingo Oeser <ioe@inक्रमmatik.tu-chemnitz.de>
- * -  Added strsep() which will replace म_मोहर() soon (because strsep() is
+ * * Fri Jun 25 1999, Ingo Oeser <ioe@informatik.tu-chemnitz.de>
+ * -  Added strsep() which will replace strtok() soon (because strsep() is
  *    reentrant and should be faster). Use only strsep() in new code, please.
  *
  * * Sat Feb 09 2002, Jason Thomas <jason@topic.com.au>,
  *                    Matthew Hawkins <matt@mh.dropbear.id.au>
- * -  Kissed म_मोहर() goodbye
+ * -  Kissed strtok() goodbye
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/bug.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/word-at-a-समय.स>
-#समावेश <यंत्र/page.h>
+#include <asm/byteorder.h>
+#include <asm/word-at-a-time.h>
+#include <asm/page.h>
 
-#अगर_अघोषित __HAVE_ARCH_STRNCASECMP
+#ifndef __HAVE_ARCH_STRNCASECMP
 /**
- * strnहालcmp - Case insensitive, length-limited string comparison
+ * strncasecmp - Case insensitive, length-limited string comparison
  * @s1: One string
  * @s2: The other string
- * @len: the maximum number of अक्षरacters to compare
+ * @len: the maximum number of characters to compare
  */
-पूर्णांक strnहालcmp(स्थिर अक्षर *s1, स्थिर अक्षर *s2, माप_प्रकार len)
-अणु
-	/* Yes, Virginia, it had better be अचिन्हित */
-	अचिन्हित अक्षर c1, c2;
+int strncasecmp(const char *s1, const char *s2, size_t len)
+{
+	/* Yes, Virginia, it had better be unsigned */
+	unsigned char c1, c2;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	करो अणु
+	do {
 		c1 = *s1++;
 		c2 = *s2++;
-		अगर (!c1 || !c2)
-			अवरोध;
-		अगर (c1 == c2)
-			जारी;
-		c1 = छोटे(c1);
-		c2 = छोटे(c2);
-		अगर (c1 != c2)
-			अवरोध;
-	पूर्ण जबतक (--len);
-	वापस (पूर्णांक)c1 - (पूर्णांक)c2;
-पूर्ण
-EXPORT_SYMBOL(strnहालcmp);
-#पूर्ण_अगर
+		if (!c1 || !c2)
+			break;
+		if (c1 == c2)
+			continue;
+		c1 = tolower(c1);
+		c2 = tolower(c2);
+		if (c1 != c2)
+			break;
+	} while (--len);
+	return (int)c1 - (int)c2;
+}
+EXPORT_SYMBOL(strncasecmp);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCASECMP
-पूर्णांक strहालcmp(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
-अणु
-	पूर्णांक c1, c2;
+#ifndef __HAVE_ARCH_STRCASECMP
+int strcasecmp(const char *s1, const char *s2)
+{
+	int c1, c2;
 
-	करो अणु
-		c1 = छोटे(*s1++);
-		c2 = छोटे(*s2++);
-	पूर्ण जबतक (c1 == c2 && c1 != 0);
-	वापस c1 - c2;
-पूर्ण
-EXPORT_SYMBOL(strहालcmp);
-#पूर्ण_अगर
+	do {
+		c1 = tolower(*s1++);
+		c2 = tolower(*s2++);
+	} while (c1 == c2 && c1 != 0);
+	return c1 - c2;
+}
+EXPORT_SYMBOL(strcasecmp);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCPY
+#ifndef __HAVE_ARCH_STRCPY
 /**
- * म_नकल - Copy a %NUL terminated string
+ * strcpy - Copy a %NUL terminated string
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  */
-अक्षर *म_नकल(अक्षर *dest, स्थिर अक्षर *src)
-अणु
-	अक्षर *पंचांगp = dest;
+char *strcpy(char *dest, const char *src)
+{
+	char *tmp = dest;
 
-	जबतक ((*dest++ = *src++) != '\0')
+	while ((*dest++ = *src++) != '\0')
 		/* nothing */;
-	वापस पंचांगp;
-पूर्ण
-EXPORT_SYMBOL(म_नकल);
-#पूर्ण_अगर
+	return tmp;
+}
+EXPORT_SYMBOL(strcpy);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNCPY
+#ifndef __HAVE_ARCH_STRNCPY
 /**
- * म_नकलन - Copy a length-limited, C-string
+ * strncpy - Copy a length-limited, C-string
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  * @count: The maximum number of bytes to copy
  *
- * The result is not %NUL-terminated अगर the source exceeds
+ * The result is not %NUL-terminated if the source exceeds
  * @count bytes.
  *
- * In the हाल where the length of @src is less than  that  of
- * count, the reमुख्यder of @dest will be padded with %NUL.
+ * In the case where the length of @src is less than  that  of
+ * count, the remainder of @dest will be padded with %NUL.
  *
  */
-अक्षर *म_नकलन(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	अक्षर *पंचांगp = dest;
+char *strncpy(char *dest, const char *src, size_t count)
+{
+	char *tmp = dest;
 
-	जबतक (count) अणु
-		अगर ((*पंचांगp = *src) != 0)
+	while (count) {
+		if ((*tmp = *src) != 0)
 			src++;
-		पंचांगp++;
+		tmp++;
 		count--;
-	पूर्ण
-	वापस dest;
-पूर्ण
-EXPORT_SYMBOL(म_नकलन);
-#पूर्ण_अगर
+	}
+	return dest;
+}
+EXPORT_SYMBOL(strncpy);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRLCPY
+#ifndef __HAVE_ARCH_STRLCPY
 /**
- * strlcpy - Copy a C-string पूर्णांकo a sized buffer
+ * strlcpy - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  * @size: size of destination buffer
  *
  * Compatible with ``*BSD``: the result is always a valid
  * NUL-terminated string that fits in the buffer (unless,
- * of course, the buffer size is zero). It करोes not pad
- * out the result like म_नकलन() करोes.
+ * of course, the buffer size is zero). It does not pad
+ * out the result like strncpy() does.
  */
-माप_प्रकार strlcpy(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार size)
-अणु
-	माप_प्रकार ret = म_माप(src);
+size_t strlcpy(char *dest, const char *src, size_t size)
+{
+	size_t ret = strlen(src);
 
-	अगर (size) अणु
-		माप_प्रकार len = (ret >= size) ? size - 1 : ret;
-		स_नकल(dest, src, len);
+	if (size) {
+		size_t len = (ret >= size) ? size - 1 : ret;
+		memcpy(dest, src, len);
 		dest[len] = '\0';
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL(strlcpy);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRSCPY
+#ifndef __HAVE_ARCH_STRSCPY
 /**
- * strscpy - Copy a C-string पूर्णांकo a sized buffer
+ * strscpy - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  * @count: Size of destination buffer
  *
- * Copy the string, or as much of it as fits, पूर्णांकo the dest buffer.  The
- * behavior is undefined अगर the string buffers overlap.  The destination
+ * Copy the string, or as much of it as fits, into the dest buffer.  The
+ * behavior is undefined if the string buffers overlap.  The destination
  * buffer is always NUL terminated, unless it's zero-sized.
  *
- * Preferred to strlcpy() since the API करोesn't require पढ़ोing memory
- * from the src string beyond the specअगरied "count" bytes, and since
- * the वापस value is easier to error-check than strlcpy()'s.
+ * Preferred to strlcpy() since the API doesn't require reading memory
+ * from the src string beyond the specified "count" bytes, and since
+ * the return value is easier to error-check than strlcpy()'s.
  * In addition, the implementation is robust to the string changing out
  * from underneath it, unlike the current strlcpy() implementation.
  *
- * Preferred to म_नकलन() since it always वापसs a valid string, and
- * करोesn't unnecessarily क्रमce the tail of the destination buffer to be
+ * Preferred to strncpy() since it always returns a valid string, and
+ * doesn't unnecessarily force the tail of the destination buffer to be
  * zeroed.  If zeroing is desired please use strscpy_pad().
  *
  * Returns:
- * * The number of अक्षरacters copied (not including the trailing %NUL)
- * * -E2BIG अगर count is 0 or @src was truncated.
+ * * The number of characters copied (not including the trailing %NUL)
+ * * -E2BIG if count is 0 or @src was truncated.
  */
-sमाप_प्रकार strscpy(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	स्थिर काष्ठा word_at_a_समय स्थिरants = WORD_AT_A_TIME_CONSTANTS;
-	माप_प्रकार max = count;
-	दीर्घ res = 0;
+ssize_t strscpy(char *dest, const char *src, size_t count)
+{
+	const struct word_at_a_time constants = WORD_AT_A_TIME_CONSTANTS;
+	size_t max = count;
+	long res = 0;
 
-	अगर (count == 0 || WARN_ON_ONCE(count > पूर्णांक_उच्च))
-		वापस -E2BIG;
+	if (count == 0 || WARN_ON_ONCE(count > INT_MAX))
+		return -E2BIG;
 
-#अगर_घोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 	/*
-	 * If src is unaligned, करोn't cross a page boundary,
-	 * since we करोn't know अगर the next page is mapped.
+	 * If src is unaligned, don't cross a page boundary,
+	 * since we don't know if the next page is mapped.
 	 */
-	अगर ((दीर्घ)src & (माप(दीर्घ) - 1)) अणु
-		माप_प्रकार limit = PAGE_SIZE - ((दीर्घ)src & (PAGE_SIZE - 1));
-		अगर (limit < max)
+	if ((long)src & (sizeof(long) - 1)) {
+		size_t limit = PAGE_SIZE - ((long)src & (PAGE_SIZE - 1));
+		if (limit < max)
 			max = limit;
-	पूर्ण
-#अन्यथा
-	/* If src or dest is unaligned, करोn't करो word-at-a-समय. */
-	अगर (((दीर्घ) dest | (दीर्घ) src) & (माप(दीर्घ) - 1))
+	}
+#else
+	/* If src or dest is unaligned, don't do word-at-a-time. */
+	if (((long) dest | (long) src) & (sizeof(long) - 1))
 		max = 0;
-#पूर्ण_अगर
+#endif
 
-	जबतक (max >= माप(अचिन्हित दीर्घ)) अणु
-		अचिन्हित दीर्घ c, data;
+	while (max >= sizeof(unsigned long)) {
+		unsigned long c, data;
 
-		c = पढ़ो_word_at_a_समय(src+res);
-		अगर (has_zero(c, &data, &स्थिरants)) अणु
-			data = prep_zero_mask(c, data, &स्थिरants);
+		c = read_word_at_a_time(src+res);
+		if (has_zero(c, &data, &constants)) {
+			data = prep_zero_mask(c, data, &constants);
 			data = create_zero_mask(data);
-			*(अचिन्हित दीर्घ *)(dest+res) = c & zero_bytemask(data);
-			वापस res + find_zero(data);
-		पूर्ण
-		*(अचिन्हित दीर्घ *)(dest+res) = c;
-		res += माप(अचिन्हित दीर्घ);
-		count -= माप(अचिन्हित दीर्घ);
-		max -= माप(अचिन्हित दीर्घ);
-	पूर्ण
+			*(unsigned long *)(dest+res) = c & zero_bytemask(data);
+			return res + find_zero(data);
+		}
+		*(unsigned long *)(dest+res) = c;
+		res += sizeof(unsigned long);
+		count -= sizeof(unsigned long);
+		max -= sizeof(unsigned long);
+	}
 
-	जबतक (count) अणु
-		अक्षर c;
+	while (count) {
+		char c;
 
 		c = src[res];
 		dest[res] = c;
-		अगर (!c)
-			वापस res;
+		if (!c)
+			return res;
 		res++;
 		count--;
-	पूर्ण
+	}
 
-	/* Hit buffer length without finding a NUL; क्रमce NUL-termination. */
-	अगर (res)
+	/* Hit buffer length without finding a NUL; force NUL-termination. */
+	if (res)
 		dest[res-1] = '\0';
 
-	वापस -E2BIG;
-पूर्ण
+	return -E2BIG;
+}
 EXPORT_SYMBOL(strscpy);
-#पूर्ण_अगर
+#endif
 
 /**
- * strscpy_pad() - Copy a C-string पूर्णांकo a sized buffer
+ * strscpy_pad() - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
  * @count: Size of destination buffer
  *
- * Copy the string, or as much of it as fits, पूर्णांकo the dest buffer.  The
- * behavior is undefined अगर the string buffers overlap.  The destination
+ * Copy the string, or as much of it as fits, into the dest buffer.  The
+ * behavior is undefined if the string buffers overlap.  The destination
  * buffer is always %NUL terminated, unless it's zero-sized.
  *
- * If the source string is लघुer than the destination buffer, zeros
+ * If the source string is shorter than the destination buffer, zeros
  * the tail of the destination buffer.
  *
  * For full explanation of why you may want to consider using the
- * 'strscpy' functions please see the function करोcstring क्रम strscpy().
+ * 'strscpy' functions please see the function docstring for strscpy().
  *
  * Returns:
- * * The number of अक्षरacters copied (not including the trailing %NUL)
- * * -E2BIG अगर count is 0 or @src was truncated.
+ * * The number of characters copied (not including the trailing %NUL)
+ * * -E2BIG if count is 0 or @src was truncated.
  */
-sमाप_प्रकार strscpy_pad(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	sमाप_प्रकार written;
+ssize_t strscpy_pad(char *dest, const char *src, size_t count)
+{
+	ssize_t written;
 
 	written = strscpy(dest, src, count);
-	अगर (written < 0 || written == count - 1)
-		वापस written;
+	if (written < 0 || written == count - 1)
+		return written;
 
-	स_रखो(dest + written + 1, 0, count - written - 1);
+	memset(dest + written + 1, 0, count - written - 1);
 
-	वापस written;
-पूर्ण
+	return written;
+}
 EXPORT_SYMBOL(strscpy_pad);
 
 /**
- * stpcpy - copy a string from src to dest वापसing a poपूर्णांकer to the new end
+ * stpcpy - copy a string from src to dest returning a pointer to the new end
  *          of dest, including src's %NUL-terminator. May overrun dest.
- * @dest: poपूर्णांकer to end of string being copied पूर्णांकo. Must be large enough
+ * @dest: pointer to end of string being copied into. Must be large enough
  *        to receive copy.
- * @src: poपूर्णांकer to the beginning of string being copied from. Must not overlap
+ * @src: pointer to the beginning of string being copied from. Must not overlap
  *       dest.
  *
- * stpcpy dअगरfers from म_नकल in a key way: the वापस value is a poपूर्णांकer
- * to the new %NUL-terminating अक्षरacter in @dest. (For म_नकल, the वापस
- * value is a poपूर्णांकer to the start of @dest). This पूर्णांकerface is considered
- * unsafe as it करोesn't perform bounds checking of the inputs. As such it's
- * not recommended क्रम usage. Instead, its definition is provided in हाल
+ * stpcpy differs from strcpy in a key way: the return value is a pointer
+ * to the new %NUL-terminating character in @dest. (For strcpy, the return
+ * value is a pointer to the start of @dest). This interface is considered
+ * unsafe as it doesn't perform bounds checking of the inputs. As such it's
+ * not recommended for usage. Instead, its definition is provided in case
  * the compiler lowers other libcalls to stpcpy.
  */
-अक्षर *stpcpy(अक्षर *__restrict__ dest, स्थिर अक्षर *__restrict__ src);
-अक्षर *stpcpy(अक्षर *__restrict__ dest, स्थिर अक्षर *__restrict__ src)
-अणु
-	जबतक ((*dest++ = *src++) != '\0')
+char *stpcpy(char *__restrict__ dest, const char *__restrict__ src);
+char *stpcpy(char *__restrict__ dest, const char *__restrict__ src)
+{
+	while ((*dest++ = *src++) != '\0')
 		/* nothing */;
-	वापस --dest;
-पूर्ण
+	return --dest;
+}
 EXPORT_SYMBOL(stpcpy);
 
-#अगर_अघोषित __HAVE_ARCH_STRCAT
+#ifndef __HAVE_ARCH_STRCAT
 /**
- * म_जोड़ो - Append one %NUL-terminated string to another
+ * strcat - Append one %NUL-terminated string to another
  * @dest: The string to be appended to
  * @src: The string to append to it
  */
-अक्षर *म_जोड़ो(अक्षर *dest, स्थिर अक्षर *src)
-अणु
-	अक्षर *पंचांगp = dest;
+char *strcat(char *dest, const char *src)
+{
+	char *tmp = dest;
 
-	जबतक (*dest)
+	while (*dest)
 		dest++;
-	जबतक ((*dest++ = *src++) != '\0')
+	while ((*dest++ = *src++) != '\0')
 		;
-	वापस पंचांगp;
-पूर्ण
-EXPORT_SYMBOL(म_जोड़ो);
-#पूर्ण_अगर
+	return tmp;
+}
+EXPORT_SYMBOL(strcat);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNCAT
+#ifndef __HAVE_ARCH_STRNCAT
 /**
- * म_जोड़न - Append a length-limited, C-string to another
+ * strncat - Append a length-limited, C-string to another
  * @dest: The string to be appended to
  * @src: The string to append to it
  * @count: The maximum numbers of bytes to copy
  *
- * Note that in contrast to म_नकलन(), म_जोड़न() ensures the result is
+ * Note that in contrast to strncpy(), strncat() ensures the result is
  * terminated.
  */
-अक्षर *म_जोड़न(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	अक्षर *पंचांगp = dest;
+char *strncat(char *dest, const char *src, size_t count)
+{
+	char *tmp = dest;
 
-	अगर (count) अणु
-		जबतक (*dest)
+	if (count) {
+		while (*dest)
 			dest++;
-		जबतक ((*dest++ = *src++) != 0) अणु
-			अगर (--count == 0) अणु
+		while ((*dest++ = *src++) != 0) {
+			if (--count == 0) {
 				*dest = '\0';
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस पंचांगp;
-पूर्ण
-EXPORT_SYMBOL(म_जोड़न);
-#पूर्ण_अगर
+				break;
+			}
+		}
+	}
+	return tmp;
+}
+EXPORT_SYMBOL(strncat);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRLCAT
+#ifndef __HAVE_ARCH_STRLCAT
 /**
  * strlcat - Append a length-limited, C-string to another
  * @dest: The string to be appended to
  * @src: The string to append to it
  * @count: The size of the destination buffer.
  */
-माप_प्रकार strlcat(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
-अणु
-	माप_प्रकार dsize = म_माप(dest);
-	माप_प्रकार len = म_माप(src);
-	माप_प्रकार res = dsize + len;
+size_t strlcat(char *dest, const char *src, size_t count)
+{
+	size_t dsize = strlen(dest);
+	size_t len = strlen(src);
+	size_t res = dsize + len;
 
 	/* This would be a bug */
 	BUG_ON(dsize >= count);
 
 	dest += dsize;
 	count -= dsize;
-	अगर (len >= count)
+	if (len >= count)
 		len = count-1;
-	स_नकल(dest, src, len);
+	memcpy(dest, src, len);
 	dest[len] = 0;
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(strlcat);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCMP
+#ifndef __HAVE_ARCH_STRCMP
 /**
- * म_भेद - Compare two strings
+ * strcmp - Compare two strings
  * @cs: One string
  * @ct: Another string
  */
-पूर्णांक म_भेद(स्थिर अक्षर *cs, स्थिर अक्षर *ct)
-अणु
-	अचिन्हित अक्षर c1, c2;
+int strcmp(const char *cs, const char *ct)
+{
+	unsigned char c1, c2;
 
-	जबतक (1) अणु
+	while (1) {
 		c1 = *cs++;
 		c2 = *ct++;
-		अगर (c1 != c2)
-			वापस c1 < c2 ? -1 : 1;
-		अगर (!c1)
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(म_भेद);
-#पूर्ण_अगर
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
+	}
+	return 0;
+}
+EXPORT_SYMBOL(strcmp);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNCMP
+#ifndef __HAVE_ARCH_STRNCMP
 /**
- * म_भेदन - Compare two length-limited strings
+ * strncmp - Compare two length-limited strings
  * @cs: One string
  * @ct: Another string
  * @count: The maximum number of bytes to compare
  */
-पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count)
-अणु
-	अचिन्हित अक्षर c1, c2;
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
 
-	जबतक (count) अणु
+	while (count) {
 		c1 = *cs++;
 		c2 = *ct++;
-		अगर (c1 != c2)
-			वापस c1 < c2 ? -1 : 1;
-		अगर (!c1)
-			अवरोध;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
 		count--;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(म_भेदन);
-#पूर्ण_अगर
+	}
+	return 0;
+}
+EXPORT_SYMBOL(strncmp);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCHR
+#ifndef __HAVE_ARCH_STRCHR
 /**
- * म_अक्षर - Find the first occurrence of a अक्षरacter in a string
+ * strchr - Find the first occurrence of a character in a string
  * @s: The string to be searched
- * @c: The अक्षरacter to search क्रम
+ * @c: The character to search for
  *
  * Note that the %NUL-terminator is considered part of the string, and can
- * be searched क्रम.
+ * be searched for.
  */
-अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c)
-अणु
-	क्रम (; *s != (अक्षर)c; ++s)
-		अगर (*s == '\0')
-			वापस शून्य;
-	वापस (अक्षर *)s;
-पूर्ण
-EXPORT_SYMBOL(म_अक्षर);
-#पूर्ण_अगर
+char *strchr(const char *s, int c)
+{
+	for (; *s != (char)c; ++s)
+		if (*s == '\0')
+			return NULL;
+	return (char *)s;
+}
+EXPORT_SYMBOL(strchr);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCHRNUL
+#ifndef __HAVE_ARCH_STRCHRNUL
 /**
- * म_अक्षरnul - Find and वापस a अक्षरacter in a string, or end of string
+ * strchrnul - Find and return a character in a string, or end of string
  * @s: The string to be searched
- * @c: The अक्षरacter to search क्रम
+ * @c: The character to search for
  *
- * Returns poपूर्णांकer to first occurrence of 'c' in s. If c is not found, then
- * वापस a poपूर्णांकer to the null byte at the end of s.
+ * Returns pointer to first occurrence of 'c' in s. If c is not found, then
+ * return a pointer to the null byte at the end of s.
  */
-अक्षर *म_अक्षरnul(स्थिर अक्षर *s, पूर्णांक c)
-अणु
-	जबतक (*s && *s != (अक्षर)c)
+char *strchrnul(const char *s, int c)
+{
+	while (*s && *s != (char)c)
 		s++;
-	वापस (अक्षर *)s;
-पूर्ण
-EXPORT_SYMBOL(म_अक्षरnul);
-#पूर्ण_अगर
+	return (char *)s;
+}
+EXPORT_SYMBOL(strchrnul);
+#endif
 
 /**
- * strnchrnul - Find and वापस a अक्षरacter in a length limited string,
+ * strnchrnul - Find and return a character in a length limited string,
  * or end of string
  * @s: The string to be searched
- * @count: The number of अक्षरacters to be searched
- * @c: The अक्षरacter to search क्रम
+ * @count: The number of characters to be searched
+ * @c: The character to search for
  *
- * Returns poपूर्णांकer to the first occurrence of 'c' in s. If c is not found,
- * then वापस a poपूर्णांकer to the last अक्षरacter of the string.
+ * Returns pointer to the first occurrence of 'c' in s. If c is not found,
+ * then return a pointer to the last character of the string.
  */
-अक्षर *strnchrnul(स्थिर अक्षर *s, माप_प्रकार count, पूर्णांक c)
-अणु
-	जबतक (count-- && *s && *s != (अक्षर)c)
+char *strnchrnul(const char *s, size_t count, int c)
+{
+	while (count-- && *s && *s != (char)c)
 		s++;
-	वापस (अक्षर *)s;
-पूर्ण
+	return (char *)s;
+}
 
-#अगर_अघोषित __HAVE_ARCH_STRRCHR
+#ifndef __HAVE_ARCH_STRRCHR
 /**
- * म_खोजप - Find the last occurrence of a अक्षरacter in a string
+ * strrchr - Find the last occurrence of a character in a string
  * @s: The string to be searched
- * @c: The अक्षरacter to search क्रम
+ * @c: The character to search for
  */
-अक्षर *म_खोजप(स्थिर अक्षर *s, पूर्णांक c)
-अणु
-	स्थिर अक्षर *last = शून्य;
-	करो अणु
-		अगर (*s == (अक्षर)c)
+char *strrchr(const char *s, int c)
+{
+	const char *last = NULL;
+	do {
+		if (*s == (char)c)
 			last = s;
-	पूर्ण जबतक (*s++);
-	वापस (अक्षर *)last;
-पूर्ण
-EXPORT_SYMBOL(म_खोजप);
-#पूर्ण_अगर
+	} while (*s++);
+	return (char *)last;
+}
+EXPORT_SYMBOL(strrchr);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNCHR
+#ifndef __HAVE_ARCH_STRNCHR
 /**
- * strnchr - Find a अक्षरacter in a length limited string
+ * strnchr - Find a character in a length limited string
  * @s: The string to be searched
- * @count: The number of अक्षरacters to be searched
- * @c: The अक्षरacter to search क्रम
+ * @count: The number of characters to be searched
+ * @c: The character to search for
  *
  * Note that the %NUL-terminator is considered part of the string, and can
- * be searched क्रम.
+ * be searched for.
  */
-अक्षर *strnchr(स्थिर अक्षर *s, माप_प्रकार count, पूर्णांक c)
-अणु
-	जबतक (count--) अणु
-		अगर (*s == (अक्षर)c)
-			वापस (अक्षर *)s;
-		अगर (*s++ == '\0')
-			अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+char *strnchr(const char *s, size_t count, int c)
+{
+	while (count--) {
+		if (*s == (char)c)
+			return (char *)s;
+		if (*s++ == '\0')
+			break;
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(strnchr);
-#पूर्ण_अगर
+#endif
 
 /**
  * skip_spaces - Removes leading whitespace from @str.
  * @str: The string to be stripped.
  *
- * Returns a poपूर्णांकer to the first non-whitespace अक्षरacter in @str.
+ * Returns a pointer to the first non-whitespace character in @str.
  */
-अक्षर *skip_spaces(स्थिर अक्षर *str)
-अणु
-	जबतक (है_खाली(*str))
+char *skip_spaces(const char *str)
+{
+	while (isspace(*str))
 		++str;
-	वापस (अक्षर *)str;
-पूर्ण
+	return (char *)str;
+}
 EXPORT_SYMBOL(skip_spaces);
 
 /**
@@ -533,620 +532,620 @@ EXPORT_SYMBOL(skip_spaces);
  * @s: The string to be stripped.
  *
  * Note that the first trailing whitespace is replaced with a %NUL-terminator
- * in the given string @s. Returns a poपूर्णांकer to the first non-whitespace
- * अक्षरacter in @s.
+ * in the given string @s. Returns a pointer to the first non-whitespace
+ * character in @s.
  */
-अक्षर *strim(अक्षर *s)
-अणु
-	माप_प्रकार size;
-	अक्षर *end;
+char *strim(char *s)
+{
+	size_t size;
+	char *end;
 
-	size = म_माप(s);
-	अगर (!size)
-		वापस s;
+	size = strlen(s);
+	if (!size)
+		return s;
 
 	end = s + size - 1;
-	जबतक (end >= s && है_खाली(*end))
+	while (end >= s && isspace(*end))
 		end--;
 	*(end + 1) = '\0';
 
-	वापस skip_spaces(s);
-पूर्ण
+	return skip_spaces(s);
+}
 EXPORT_SYMBOL(strim);
 
-#अगर_अघोषित __HAVE_ARCH_STRLEN
+#ifndef __HAVE_ARCH_STRLEN
 /**
- * म_माप - Find the length of a string
+ * strlen - Find the length of a string
  * @s: The string to be sized
  */
-माप_प्रकार म_माप(स्थिर अक्षर *s)
-अणु
-	स्थिर अक्षर *sc;
+size_t strlen(const char *s)
+{
+	const char *sc;
 
-	क्रम (sc = s; *sc != '\0'; ++sc)
+	for (sc = s; *sc != '\0'; ++sc)
 		/* nothing */;
-	वापस sc - s;
-पूर्ण
-EXPORT_SYMBOL(म_माप);
-#पूर्ण_अगर
+	return sc - s;
+}
+EXPORT_SYMBOL(strlen);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNLEN
+#ifndef __HAVE_ARCH_STRNLEN
 /**
  * strnlen - Find the length of a length-limited string
  * @s: The string to be sized
  * @count: The maximum number of bytes to search
  */
-माप_प्रकार strnlen(स्थिर अक्षर *s, माप_प्रकार count)
-अणु
-	स्थिर अक्षर *sc;
+size_t strnlen(const char *s, size_t count)
+{
+	const char *sc;
 
-	क्रम (sc = s; count-- && *sc != '\0'; ++sc)
+	for (sc = s; count-- && *sc != '\0'; ++sc)
 		/* nothing */;
-	वापस sc - s;
-पूर्ण
+	return sc - s;
+}
 EXPORT_SYMBOL(strnlen);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRSPN
+#ifndef __HAVE_ARCH_STRSPN
 /**
- * म_अखोज - Calculate the length of the initial substring of @s which only contain letters in @accept
+ * strspn - Calculate the length of the initial substring of @s which only contain letters in @accept
  * @s: The string to be searched
- * @accept: The string to search क्रम
+ * @accept: The string to search for
  */
-माप_प्रकार म_अखोज(स्थिर अक्षर *s, स्थिर अक्षर *accept)
-अणु
-	स्थिर अक्षर *p;
-	स्थिर अक्षर *a;
-	माप_प्रकार count = 0;
+size_t strspn(const char *s, const char *accept)
+{
+	const char *p;
+	const char *a;
+	size_t count = 0;
 
-	क्रम (p = s; *p != '\0'; ++p) अणु
-		क्रम (a = accept; *a != '\0'; ++a) अणु
-			अगर (*p == *a)
-				अवरोध;
-		पूर्ण
-		अगर (*a == '\0')
-			वापस count;
+	for (p = s; *p != '\0'; ++p) {
+		for (a = accept; *a != '\0'; ++a) {
+			if (*p == *a)
+				break;
+		}
+		if (*a == '\0')
+			return count;
 		++count;
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-EXPORT_SYMBOL(म_अखोज);
-#पूर्ण_अगर
+EXPORT_SYMBOL(strspn);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRCSPN
+#ifndef __HAVE_ARCH_STRCSPN
 /**
- * म_खोज - Calculate the length of the initial substring of @s which करोes not contain letters in @reject
+ * strcspn - Calculate the length of the initial substring of @s which does not contain letters in @reject
  * @s: The string to be searched
- * @reject: The string to aव्योम
+ * @reject: The string to avoid
  */
-माप_प्रकार म_खोज(स्थिर अक्षर *s, स्थिर अक्षर *reject)
-अणु
-	स्थिर अक्षर *p;
-	स्थिर अक्षर *r;
-	माप_प्रकार count = 0;
+size_t strcspn(const char *s, const char *reject)
+{
+	const char *p;
+	const char *r;
+	size_t count = 0;
 
-	क्रम (p = s; *p != '\0'; ++p) अणु
-		क्रम (r = reject; *r != '\0'; ++r) अणु
-			अगर (*p == *r)
-				वापस count;
-		पूर्ण
+	for (p = s; *p != '\0'; ++p) {
+		for (r = reject; *r != '\0'; ++r) {
+			if (*p == *r)
+				return count;
+		}
 		++count;
-	पूर्ण
-	वापस count;
-पूर्ण
-EXPORT_SYMBOL(म_खोज);
-#पूर्ण_अगर
+	}
+	return count;
+}
+EXPORT_SYMBOL(strcspn);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRPBRK
+#ifndef __HAVE_ARCH_STRPBRK
 /**
- * strpbrk - Find the first occurrence of a set of अक्षरacters
+ * strpbrk - Find the first occurrence of a set of characters
  * @cs: The string to be searched
- * @ct: The अक्षरacters to search क्रम
+ * @ct: The characters to search for
  */
-अक्षर *strpbrk(स्थिर अक्षर *cs, स्थिर अक्षर *ct)
-अणु
-	स्थिर अक्षर *sc1, *sc2;
+char *strpbrk(const char *cs, const char *ct)
+{
+	const char *sc1, *sc2;
 
-	क्रम (sc1 = cs; *sc1 != '\0'; ++sc1) अणु
-		क्रम (sc2 = ct; *sc2 != '\0'; ++sc2) अणु
-			अगर (*sc1 == *sc2)
-				वापस (अक्षर *)sc1;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (sc1 = cs; *sc1 != '\0'; ++sc1) {
+		for (sc2 = ct; *sc2 != '\0'; ++sc2) {
+			if (*sc1 == *sc2)
+				return (char *)sc1;
+		}
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(strpbrk);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRSEP
+#ifndef __HAVE_ARCH_STRSEP
 /**
- * strsep - Split a string पूर्णांकo tokens
+ * strsep - Split a string into tokens
  * @s: The string to be searched
- * @ct: The अक्षरacters to search क्रम
+ * @ct: The characters to search for
  *
- * strsep() updates @s to poपूर्णांक after the token, पढ़ोy क्रम the next call.
+ * strsep() updates @s to point after the token, ready for the next call.
  *
- * It वापसs empty tokens, too, behaving exactly like the libc function
+ * It returns empty tokens, too, behaving exactly like the libc function
  * of that name. In fact, it was stolen from glibc2 and de-fancy-fied.
  * Same semantics, slimmer shape. ;)
  */
-अक्षर *strsep(अक्षर **s, स्थिर अक्षर *ct)
-अणु
-	अक्षर *sbegin = *s;
-	अक्षर *end;
+char *strsep(char **s, const char *ct)
+{
+	char *sbegin = *s;
+	char *end;
 
-	अगर (sbegin == शून्य)
-		वापस शून्य;
+	if (sbegin == NULL)
+		return NULL;
 
 	end = strpbrk(sbegin, ct);
-	अगर (end)
+	if (end)
 		*end++ = '\0';
 	*s = end;
-	वापस sbegin;
-पूर्ण
+	return sbegin;
+}
 EXPORT_SYMBOL(strsep);
-#पूर्ण_अगर
+#endif
 
 /**
- * sysfs_streq - वापस true अगर strings are equal, modulo trailing newline
+ * sysfs_streq - return true if strings are equal, modulo trailing newline
  * @s1: one string
  * @s2: another string
  *
- * This routine वापसs true अगरf two strings are equal, treating both
+ * This routine returns true iff two strings are equal, treating both
  * NUL and newline-then-NUL as equivalent string terminations.  It's
- * geared क्रम use with sysfs input strings, which generally terminate
+ * geared for use with sysfs input strings, which generally terminate
  * with newlines but are compared against values without newlines.
  */
-bool sysfs_streq(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
-अणु
-	जबतक (*s1 && *s1 == *s2) अणु
+bool sysfs_streq(const char *s1, const char *s2)
+{
+	while (*s1 && *s1 == *s2) {
 		s1++;
 		s2++;
-	पूर्ण
+	}
 
-	अगर (*s1 == *s2)
-		वापस true;
-	अगर (!*s1 && *s2 == '\n' && !s2[1])
-		वापस true;
-	अगर (*s1 == '\n' && !s1[1] && !*s2)
-		वापस true;
-	वापस false;
-पूर्ण
+	if (*s1 == *s2)
+		return true;
+	if (!*s1 && *s2 == '\n' && !s2[1])
+		return true;
+	if (*s1 == '\n' && !s1[1] && !*s2)
+		return true;
+	return false;
+}
 EXPORT_SYMBOL(sysfs_streq);
 
 /**
  * match_string - matches given string in an array
  * @array:	array of strings
- * @n:		number of strings in the array or -1 क्रम शून्य terminated arrays
+ * @n:		number of strings in the array or -1 for NULL terminated arrays
  * @string:	string to match with
  *
- * This routine will look क्रम a string in an array of strings up to the
- * n-th element in the array or until the first शून्य element.
+ * This routine will look for a string in an array of strings up to the
+ * n-th element in the array or until the first NULL element.
  *
- * Historically the value of -1 क्रम @n, was used to search in arrays that
- * are शून्य terminated. However, the function करोes not make a distinction
+ * Historically the value of -1 for @n, was used to search in arrays that
+ * are NULL terminated. However, the function does not make a distinction
  * when finishing the search: either @n elements have been compared OR
- * the first शून्य element was found.
+ * the first NULL element was found.
  *
  * Return:
- * index of a @string in the @array अगर matches, or %-EINVAL otherwise.
+ * index of a @string in the @array if matches, or %-EINVAL otherwise.
  */
-पूर्णांक match_string(स्थिर अक्षर * स्थिर *array, माप_प्रकार n, स्थिर अक्षर *string)
-अणु
-	पूर्णांक index;
-	स्थिर अक्षर *item;
+int match_string(const char * const *array, size_t n, const char *string)
+{
+	int index;
+	const char *item;
 
-	क्रम (index = 0; index < n; index++) अणु
+	for (index = 0; index < n; index++) {
 		item = array[index];
-		अगर (!item)
-			अवरोध;
-		अगर (!म_भेद(item, string))
-			वापस index;
-	पूर्ण
+		if (!item)
+			break;
+		if (!strcmp(item, string))
+			return index;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL(match_string);
 
 /**
  * __sysfs_match_string - matches given string in an array
  * @array: array of strings
- * @n: number of strings in the array or -1 क्रम शून्य terminated arrays
+ * @n: number of strings in the array or -1 for NULL terminated arrays
  * @str: string to match with
  *
  * Returns index of @str in the @array or -EINVAL, just like match_string().
- * Uses sysfs_streq instead of म_भेद क्रम matching.
+ * Uses sysfs_streq instead of strcmp for matching.
  *
- * This routine will look क्रम a string in an array of strings up to the
- * n-th element in the array or until the first शून्य element.
+ * This routine will look for a string in an array of strings up to the
+ * n-th element in the array or until the first NULL element.
  *
- * Historically the value of -1 क्रम @n, was used to search in arrays that
- * are शून्य terminated. However, the function करोes not make a distinction
+ * Historically the value of -1 for @n, was used to search in arrays that
+ * are NULL terminated. However, the function does not make a distinction
  * when finishing the search: either @n elements have been compared OR
- * the first शून्य element was found.
+ * the first NULL element was found.
  */
-पूर्णांक __sysfs_match_string(स्थिर अक्षर * स्थिर *array, माप_प्रकार n, स्थिर अक्षर *str)
-अणु
-	स्थिर अक्षर *item;
-	पूर्णांक index;
+int __sysfs_match_string(const char * const *array, size_t n, const char *str)
+{
+	const char *item;
+	int index;
 
-	क्रम (index = 0; index < n; index++) अणु
+	for (index = 0; index < n; index++) {
 		item = array[index];
-		अगर (!item)
-			अवरोध;
-		अगर (sysfs_streq(item, str))
-			वापस index;
-	पूर्ण
+		if (!item)
+			break;
+		if (sysfs_streq(item, str))
+			return index;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL(__sysfs_match_string);
 
-#अगर_अघोषित __HAVE_ARCH_MEMSET
+#ifndef __HAVE_ARCH_MEMSET
 /**
- * स_रखो - Fill a region of memory with the given value
- * @s: Poपूर्णांकer to the start of the area.
+ * memset - Fill a region of memory with the given value
+ * @s: Pointer to the start of the area.
  * @c: The byte to fill the area with
  * @count: The size of the area.
  *
- * Do not use स_रखो() to access IO space, use स_रखो_io() instead.
+ * Do not use memset() to access IO space, use memset_io() instead.
  */
-व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count)
-अणु
-	अक्षर *xs = s;
+void *memset(void *s, int c, size_t count)
+{
+	char *xs = s;
 
-	जबतक (count--)
+	while (count--)
 		*xs++ = c;
-	वापस s;
-पूर्ण
-EXPORT_SYMBOL(स_रखो);
-#पूर्ण_अगर
+	return s;
+}
+EXPORT_SYMBOL(memset);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMSET16
+#ifndef __HAVE_ARCH_MEMSET16
 /**
- * स_रखो16() - Fill a memory area with a uपूर्णांक16_t
- * @s: Poपूर्णांकer to the start of the area.
+ * memset16() - Fill a memory area with a uint16_t
+ * @s: Pointer to the start of the area.
  * @v: The value to fill the area with
  * @count: The number of values to store
  *
- * Dअगरfers from स_रखो() in that it fills with a uपूर्णांक16_t instead
- * of a byte.  Remember that @count is the number of uपूर्णांक16_ts to
+ * Differs from memset() in that it fills with a uint16_t instead
+ * of a byte.  Remember that @count is the number of uint16_ts to
  * store, not the number of bytes.
  */
-व्योम *स_रखो16(uपूर्णांक16_t *s, uपूर्णांक16_t v, माप_प्रकार count)
-अणु
-	uपूर्णांक16_t *xs = s;
+void *memset16(uint16_t *s, uint16_t v, size_t count)
+{
+	uint16_t *xs = s;
 
-	जबतक (count--)
+	while (count--)
 		*xs++ = v;
-	वापस s;
-पूर्ण
-EXPORT_SYMBOL(स_रखो16);
-#पूर्ण_अगर
+	return s;
+}
+EXPORT_SYMBOL(memset16);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMSET32
+#ifndef __HAVE_ARCH_MEMSET32
 /**
- * स_रखो32() - Fill a memory area with a uपूर्णांक32_t
- * @s: Poपूर्णांकer to the start of the area.
+ * memset32() - Fill a memory area with a uint32_t
+ * @s: Pointer to the start of the area.
  * @v: The value to fill the area with
  * @count: The number of values to store
  *
- * Dअगरfers from स_रखो() in that it fills with a uपूर्णांक32_t instead
- * of a byte.  Remember that @count is the number of uपूर्णांक32_ts to
+ * Differs from memset() in that it fills with a uint32_t instead
+ * of a byte.  Remember that @count is the number of uint32_ts to
  * store, not the number of bytes.
  */
-व्योम *स_रखो32(uपूर्णांक32_t *s, uपूर्णांक32_t v, माप_प्रकार count)
-अणु
-	uपूर्णांक32_t *xs = s;
+void *memset32(uint32_t *s, uint32_t v, size_t count)
+{
+	uint32_t *xs = s;
 
-	जबतक (count--)
+	while (count--)
 		*xs++ = v;
-	वापस s;
-पूर्ण
-EXPORT_SYMBOL(स_रखो32);
-#पूर्ण_अगर
+	return s;
+}
+EXPORT_SYMBOL(memset32);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMSET64
+#ifndef __HAVE_ARCH_MEMSET64
 /**
- * स_रखो64() - Fill a memory area with a uपूर्णांक64_t
- * @s: Poपूर्णांकer to the start of the area.
+ * memset64() - Fill a memory area with a uint64_t
+ * @s: Pointer to the start of the area.
  * @v: The value to fill the area with
  * @count: The number of values to store
  *
- * Dअगरfers from स_रखो() in that it fills with a uपूर्णांक64_t instead
- * of a byte.  Remember that @count is the number of uपूर्णांक64_ts to
+ * Differs from memset() in that it fills with a uint64_t instead
+ * of a byte.  Remember that @count is the number of uint64_ts to
  * store, not the number of bytes.
  */
-व्योम *स_रखो64(uपूर्णांक64_t *s, uपूर्णांक64_t v, माप_प्रकार count)
-अणु
-	uपूर्णांक64_t *xs = s;
+void *memset64(uint64_t *s, uint64_t v, size_t count)
+{
+	uint64_t *xs = s;
 
-	जबतक (count--)
+	while (count--)
 		*xs++ = v;
-	वापस s;
-पूर्ण
-EXPORT_SYMBOL(स_रखो64);
-#पूर्ण_अगर
+	return s;
+}
+EXPORT_SYMBOL(memset64);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMCPY
+#ifndef __HAVE_ARCH_MEMCPY
 /**
- * स_नकल - Copy one area of memory to another
+ * memcpy - Copy one area of memory to another
  * @dest: Where to copy to
  * @src: Where to copy from
  * @count: The size of the area.
  *
- * You should not use this function to access IO space, use स_नकल_toio()
- * or स_नकल_fromio() instead.
+ * You should not use this function to access IO space, use memcpy_toio()
+ * or memcpy_fromio() instead.
  */
-व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार count)
-अणु
-	अक्षर *पंचांगp = dest;
-	स्थिर अक्षर *s = src;
+void *memcpy(void *dest, const void *src, size_t count)
+{
+	char *tmp = dest;
+	const char *s = src;
 
-	जबतक (count--)
-		*पंचांगp++ = *s++;
-	वापस dest;
-पूर्ण
-EXPORT_SYMBOL(स_नकल);
-#पूर्ण_अगर
+	while (count--)
+		*tmp++ = *s++;
+	return dest;
+}
+EXPORT_SYMBOL(memcpy);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMMOVE
+#ifndef __HAVE_ARCH_MEMMOVE
 /**
- * स_हटाओ - Copy one area of memory to another
+ * memmove - Copy one area of memory to another
  * @dest: Where to copy to
  * @src: Where to copy from
  * @count: The size of the area.
  *
- * Unlike स_नकल(), स_हटाओ() copes with overlapping areas.
+ * Unlike memcpy(), memmove() copes with overlapping areas.
  */
-व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार count)
-अणु
-	अक्षर *पंचांगp;
-	स्थिर अक्षर *s;
+void *memmove(void *dest, const void *src, size_t count)
+{
+	char *tmp;
+	const char *s;
 
-	अगर (dest <= src) अणु
-		पंचांगp = dest;
+	if (dest <= src) {
+		tmp = dest;
 		s = src;
-		जबतक (count--)
-			*पंचांगp++ = *s++;
-	पूर्ण अन्यथा अणु
-		पंचांगp = dest;
-		पंचांगp += count;
+		while (count--)
+			*tmp++ = *s++;
+	} else {
+		tmp = dest;
+		tmp += count;
 		s = src;
 		s += count;
-		जबतक (count--)
-			*--पंचांगp = *--s;
-	पूर्ण
-	वापस dest;
-पूर्ण
-EXPORT_SYMBOL(स_हटाओ);
-#पूर्ण_अगर
+		while (count--)
+			*--tmp = *--s;
+	}
+	return dest;
+}
+EXPORT_SYMBOL(memmove);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMCMP
+#ifndef __HAVE_ARCH_MEMCMP
 /**
- * स_भेद - Compare two areas of memory
+ * memcmp - Compare two areas of memory
  * @cs: One area of memory
  * @ct: Another area of memory
  * @count: The size of the area.
  */
-#अघोषित स_भेद
-__visible पूर्णांक स_भेद(स्थिर व्योम *cs, स्थिर व्योम *ct, माप_प्रकार count)
-अणु
-	स्थिर अचिन्हित अक्षर *su1, *su2;
-	पूर्णांक res = 0;
+#undef memcmp
+__visible int memcmp(const void *cs, const void *ct, size_t count)
+{
+	const unsigned char *su1, *su2;
+	int res = 0;
 
-	क्रम (su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
-		अगर ((res = *su1 - *su2) != 0)
-			अवरोध;
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL(स_भेद);
-#पूर्ण_अगर
+	for (su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
+		if ((res = *su1 - *su2) != 0)
+			break;
+	return res;
+}
+EXPORT_SYMBOL(memcmp);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_BCMP
+#ifndef __HAVE_ARCH_BCMP
 /**
- * bcmp - वापसs 0 अगर and only अगर the buffers have identical contents.
- * @a: poपूर्णांकer to first buffer.
- * @b: poपूर्णांकer to second buffer.
+ * bcmp - returns 0 if and only if the buffers have identical contents.
+ * @a: pointer to first buffer.
+ * @b: pointer to second buffer.
  * @len: size of buffers.
  *
- * The sign or magnitude of a non-zero वापस value has no particular
+ * The sign or magnitude of a non-zero return value has no particular
  * meaning, and architectures may implement their own more efficient bcmp(). So
- * जबतक this particular implementation is a simple (tail) call to स_भेद, करो
- * not rely on anything but whether the वापस value is zero or non-zero.
+ * while this particular implementation is a simple (tail) call to memcmp, do
+ * not rely on anything but whether the return value is zero or non-zero.
  */
-पूर्णांक bcmp(स्थिर व्योम *a, स्थिर व्योम *b, माप_प्रकार len)
-अणु
-	वापस स_भेद(a, b, len);
-पूर्ण
+int bcmp(const void *a, const void *b, size_t len)
+{
+	return memcmp(a, b, len);
+}
 EXPORT_SYMBOL(bcmp);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMSCAN
+#ifndef __HAVE_ARCH_MEMSCAN
 /**
- * memscan - Find a अक्षरacter in an area of memory.
+ * memscan - Find a character in an area of memory.
  * @addr: The memory area
- * @c: The byte to search क्रम
+ * @c: The byte to search for
  * @size: The size of the area.
  *
- * वापसs the address of the first occurrence of @c, or 1 byte past
- * the area अगर @c is not found
+ * returns the address of the first occurrence of @c, or 1 byte past
+ * the area if @c is not found
  */
-व्योम *memscan(व्योम *addr, पूर्णांक c, माप_प्रकार size)
-अणु
-	अचिन्हित अक्षर *p = addr;
+void *memscan(void *addr, int c, size_t size)
+{
+	unsigned char *p = addr;
 
-	जबतक (size) अणु
-		अगर (*p == c)
-			वापस (व्योम *)p;
+	while (size) {
+		if (*p == c)
+			return (void *)p;
 		p++;
 		size--;
-	पूर्ण
-  	वापस (व्योम *)p;
-पूर्ण
+	}
+  	return (void *)p;
+}
 EXPORT_SYMBOL(memscan);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRSTR
+#ifndef __HAVE_ARCH_STRSTR
 /**
- * म_माला - Find the first substring in a %NUL terminated string
+ * strstr - Find the first substring in a %NUL terminated string
  * @s1: The string to be searched
- * @s2: The string to search क्रम
+ * @s2: The string to search for
  */
-अक्षर *म_माला(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
-अणु
-	माप_प्रकार l1, l2;
+char *strstr(const char *s1, const char *s2)
+{
+	size_t l1, l2;
 
-	l2 = म_माप(s2);
-	अगर (!l2)
-		वापस (अक्षर *)s1;
-	l1 = म_माप(s1);
-	जबतक (l1 >= l2) अणु
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	l1 = strlen(s1);
+	while (l1 >= l2) {
 		l1--;
-		अगर (!स_भेद(s1, s2, l2))
-			वापस (अक्षर *)s1;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
 		s1++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(म_माला);
-#पूर्ण_अगर
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(strstr);
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNSTR
+#ifndef __HAVE_ARCH_STRNSTR
 /**
  * strnstr - Find the first substring in a length-limited string
  * @s1: The string to be searched
- * @s2: The string to search क्रम
- * @len: the maximum number of अक्षरacters to search
+ * @s2: The string to search for
+ * @len: the maximum number of characters to search
  */
-अक्षर *strnstr(स्थिर अक्षर *s1, स्थिर अक्षर *s2, माप_प्रकार len)
-अणु
-	माप_प्रकार l2;
+char *strnstr(const char *s1, const char *s2, size_t len)
+{
+	size_t l2;
 
-	l2 = म_माप(s2);
-	अगर (!l2)
-		वापस (अक्षर *)s1;
-	जबतक (len >= l2) अणु
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	while (len >= l2) {
 		len--;
-		अगर (!स_भेद(s1, s2, l2))
-			वापस (अक्षर *)s1;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
 		s1++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(strnstr);
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_MEMCHR
+#ifndef __HAVE_ARCH_MEMCHR
 /**
- * स_प्रथम - Find a अक्षरacter in an area of memory.
+ * memchr - Find a character in an area of memory.
  * @s: The memory area
- * @c: The byte to search क्रम
+ * @c: The byte to search for
  * @n: The size of the area.
  *
- * वापसs the address of the first occurrence of @c, or %शून्य
- * अगर @c is not found
+ * returns the address of the first occurrence of @c, or %NULL
+ * if @c is not found
  */
-व्योम *स_प्रथम(स्थिर व्योम *s, पूर्णांक c, माप_प्रकार n)
-अणु
-	स्थिर अचिन्हित अक्षर *p = s;
-	जबतक (n-- != 0) अणु
-        	अगर ((अचिन्हित अक्षर)c == *p++) अणु
-			वापस (व्योम *)(p - 1);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(स_प्रथम);
-#पूर्ण_अगर
+void *memchr(const void *s, int c, size_t n)
+{
+	const unsigned char *p = s;
+	while (n-- != 0) {
+        	if ((unsigned char)c == *p++) {
+			return (void *)(p - 1);
+		}
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(memchr);
+#endif
 
-अटल व्योम *check_bytes8(स्थिर u8 *start, u8 value, अचिन्हित पूर्णांक bytes)
-अणु
-	जबतक (bytes) अणु
-		अगर (*start != value)
-			वापस (व्योम *)start;
+static void *check_bytes8(const u8 *start, u8 value, unsigned int bytes)
+{
+	while (bytes) {
+		if (*start != value)
+			return (void *)start;
 		start++;
 		bytes--;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
 /**
- * स_प्रथम_inv - Find an unmatching अक्षरacter in an area of memory.
+ * memchr_inv - Find an unmatching character in an area of memory.
  * @start: The memory area
- * @c: Find a अक्षरacter other than c
+ * @c: Find a character other than c
  * @bytes: The size of the area.
  *
- * वापसs the address of the first अक्षरacter other than @c, or %शून्य
- * अगर the whole buffer contains just @c.
+ * returns the address of the first character other than @c, or %NULL
+ * if the whole buffer contains just @c.
  */
-व्योम *स_प्रथम_inv(स्थिर व्योम *start, पूर्णांक c, माप_प्रकार bytes)
-अणु
+void *memchr_inv(const void *start, int c, size_t bytes)
+{
 	u8 value = c;
 	u64 value64;
-	अचिन्हित पूर्णांक words, prefix;
+	unsigned int words, prefix;
 
-	अगर (bytes <= 16)
-		वापस check_bytes8(start, value, bytes);
+	if (bytes <= 16)
+		return check_bytes8(start, value, bytes);
 
 	value64 = value;
-#अगर defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER) && BITS_PER_LONG == 64
+#if defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER) && BITS_PER_LONG == 64
 	value64 *= 0x0101010101010101ULL;
-#या_अगर defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER)
+#elif defined(CONFIG_ARCH_HAS_FAST_MULTIPLIER)
 	value64 *= 0x01010101;
 	value64 |= value64 << 32;
-#अन्यथा
+#else
 	value64 |= value64 << 8;
 	value64 |= value64 << 16;
 	value64 |= value64 << 32;
-#पूर्ण_अगर
+#endif
 
-	prefix = (अचिन्हित दीर्घ)start % 8;
-	अगर (prefix) अणु
+	prefix = (unsigned long)start % 8;
+	if (prefix) {
 		u8 *r;
 
 		prefix = 8 - prefix;
 		r = check_bytes8(start, value, prefix);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 		start += prefix;
 		bytes -= prefix;
-	पूर्ण
+	}
 
 	words = bytes / 8;
 
-	जबतक (words) अणु
-		अगर (*(u64 *)start != value64)
-			वापस check_bytes8(start, value, 8);
+	while (words) {
+		if (*(u64 *)start != value64)
+			return check_bytes8(start, value, 8);
 		start += 8;
 		words--;
-	पूर्ण
+	}
 
-	वापस check_bytes8(start, value, bytes % 8);
-पूर्ण
-EXPORT_SYMBOL(स_प्रथम_inv);
+	return check_bytes8(start, value, bytes % 8);
+}
+EXPORT_SYMBOL(memchr_inv);
 
 /**
- * strreplace - Replace all occurrences of अक्षरacter in string.
+ * strreplace - Replace all occurrences of character in string.
  * @s: The string to operate on.
- * @old: The अक्षरacter being replaced.
- * @new: The अक्षरacter @old is replaced with.
+ * @old: The character being replaced.
+ * @new: The character @old is replaced with.
  *
- * Returns poपूर्णांकer to the nul byte at the end of @s.
+ * Returns pointer to the nul byte at the end of @s.
  */
-अक्षर *strreplace(अक्षर *s, अक्षर old, अक्षर new)
-अणु
-	क्रम (; *s; ++s)
-		अगर (*s == old)
+char *strreplace(char *s, char old, char new)
+{
+	for (; *s; ++s)
+		if (*s == old)
 			*s = new;
-	वापस s;
-पूर्ण
+	return s;
+}
 EXPORT_SYMBOL(strreplace);
 
-व्योम क्रमtअगरy_panic(स्थिर अक्षर *name)
-अणु
+void fortify_panic(const char *name)
+{
 	pr_emerg("detected buffer overflow in %s\n", name);
 	BUG();
-पूर्ण
-EXPORT_SYMBOL(क्रमtअगरy_panic);
+}
+EXPORT_SYMBOL(fortify_panic);

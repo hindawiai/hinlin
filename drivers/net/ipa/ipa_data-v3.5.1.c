@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
-#समावेश <linux/log2.h>
+#include <linux/log2.h>
 
-#समावेश "gsi.h"
-#समावेश "ipa_data.h"
-#समावेश "ipa_endpoint.h"
-#समावेश "ipa_mem.h"
+#include "gsi.h"
+#include "ipa_data.h"
+#include "ipa_endpoint.h"
+#include "ipa_mem.h"
 
-/** क्रमागत ipa_resource_type - IPA resource types क्रम an SoC having IPA v3.5.1 */
-क्रमागत ipa_resource_type अणु
+/** enum ipa_resource_type - IPA resource types for an SoC having IPA v3.5.1 */
+enum ipa_resource_type {
 	/* Source resource types; first must have value 0 */
 	IPA_RESOURCE_TYPE_SRC_PKT_CONTEXTS		= 0,
 	IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_LISTS,
@@ -24,370 +23,370 @@
 	/* Destination resource types; first must have value 0 */
 	IPA_RESOURCE_TYPE_DST_DATA_SECTORS		= 0,
 	IPA_RESOURCE_TYPE_DST_DPS_DMARS,
-पूर्ण;
+};
 
-/* Resource groups used क्रम an SoC having IPA v3.5.1 */
-क्रमागत ipa_rsrc_group_id अणु
-	/* Source resource group identअगरiers */
+/* Resource groups used for an SoC having IPA v3.5.1 */
+enum ipa_rsrc_group_id {
+	/* Source resource group identifiers */
 	IPA_RSRC_GROUP_SRC_LWA_DL	= 0,
 	IPA_RSRC_GROUP_SRC_UL_DL,
 	IPA_RSRC_GROUP_SRC_MHI_DMA,
 	IPA_RSRC_GROUP_SRC_UC_RX_Q,
 	IPA_RSRC_GROUP_SRC_COUNT,	/* Last in set; not a source group */
 
-	/* Destination resource group identअगरiers */
+	/* Destination resource group identifiers */
 	IPA_RSRC_GROUP_DST_LWA_DL	= 0,
 	IPA_RSRC_GROUP_DST_UL_DL_DPL,
 	IPA_RSRC_GROUP_DST_UNUSED_2,
 	IPA_RSRC_GROUP_DST_COUNT,	/* Last; not a destination group */
-पूर्ण;
+};
 
-/* QSB configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_qsb_data ipa_qsb_data[] = अणु
-	[IPA_QSB_MASTER_DDR] = अणु
-		.max_ग_लिखोs	= 8,
-		.max_पढ़ोs	= 8,
-	पूर्ण,
-	[IPA_QSB_MASTER_PCIE] = अणु
-		.max_ग_लिखोs	= 4,
-		.max_पढ़ोs	= 12,
-	पूर्ण,
-पूर्ण;
+/* QSB configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_qsb_data ipa_qsb_data[] = {
+	[IPA_QSB_MASTER_DDR] = {
+		.max_writes	= 8,
+		.max_reads	= 8,
+	},
+	[IPA_QSB_MASTER_PCIE] = {
+		.max_writes	= 4,
+		.max_reads	= 12,
+	},
+};
 
-/* Endpoपूर्णांक datdata क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_gsi_endpoपूर्णांक_data ipa_gsi_endpoपूर्णांक_data[] = अणु
-	[IPA_ENDPOINT_AP_COMMAND_TX] = अणु
+/* Endpoint datdata for an SoC having IPA v3.5.1 */
+static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
+	[IPA_ENDPOINT_AP_COMMAND_TX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 4,
-		.endpoपूर्णांक_id	= 5,
+		.endpoint_id	= 5,
 		.toward_ipa	= true,
-		.channel = अणु
+		.channel = {
 			.tre_count	= 512,
 			.event_count	= 256,
 			.tlv_count	= 20,
-		पूर्ण,
-		.endpoपूर्णांक = अणु
-			.config = अणु
+		},
+		.endpoint = {
+			.config = {
 				.resource_group	= IPA_RSRC_GROUP_SRC_UL_DL,
 				.dma_mode	= true,
-				.dma_endpoपूर्णांक	= IPA_ENDPOINT_AP_LAN_RX,
-				.tx = अणु
+				.dma_endpoint	= IPA_ENDPOINT_AP_LAN_RX,
+				.tx = {
 					.seq_type = IPA_SEQ_DMA,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_AP_LAN_RX] = अणु
+				},
+			},
+		},
+	},
+	[IPA_ENDPOINT_AP_LAN_RX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 5,
-		.endpoपूर्णांक_id	= 9,
+		.endpoint_id	= 9,
 		.toward_ipa	= false,
-		.channel = अणु
+		.channel = {
 			.tre_count	= 256,
 			.event_count	= 256,
 			.tlv_count	= 8,
-		पूर्ण,
-		.endpoपूर्णांक = अणु
-			.config = अणु
+		},
+		.endpoint = {
+			.config = {
 				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL_DPL,
 				.aggregation	= true,
 				.status_enable	= true,
-				.rx = अणु
-					.pad_align	= ilog2(माप(u32)),
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_AP_MODEM_TX] = अणु
+				.rx = {
+					.pad_align	= ilog2(sizeof(u32)),
+				},
+			},
+		},
+	},
+	[IPA_ENDPOINT_AP_MODEM_TX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 3,
-		.endpoपूर्णांक_id	= 2,
+		.endpoint_id	= 2,
 		.toward_ipa	= true,
-		.channel = अणु
+		.channel = {
 			.tre_count	= 512,
 			.event_count	= 512,
 			.tlv_count	= 16,
-		पूर्ण,
-		.endpoपूर्णांक = अणु
+		},
+		.endpoint = {
 			.filter_support	= true,
-			.config = अणु
+			.config = {
 				.resource_group	= IPA_RSRC_GROUP_SRC_UL_DL,
 				.checksum	= true,
 				.qmap		= true,
 				.status_enable	= true,
-				.tx = अणु
+				.tx = {
 					.seq_type = IPA_SEQ_2_PASS_SKIP_LAST_UC,
 					.seq_rep_type = IPA_SEQ_REP_DMA_PARSER,
-					.status_endpoपूर्णांक =
+					.status_endpoint =
 						IPA_ENDPOINT_MODEM_AP_RX,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_AP_MODEM_RX] = अणु
+				},
+			},
+		},
+	},
+	[IPA_ENDPOINT_AP_MODEM_RX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 6,
-		.endpoपूर्णांक_id	= 10,
+		.endpoint_id	= 10,
 		.toward_ipa	= false,
-		.channel = अणु
+		.channel = {
 			.tre_count	= 256,
 			.event_count	= 256,
 			.tlv_count	= 8,
-		पूर्ण,
-		.endpoपूर्णांक = अणु
-			.config = अणु
+		},
+		.endpoint = {
+			.config = {
 				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL_DPL,
 				.checksum	= true,
 				.qmap		= true,
 				.aggregation	= true,
-				.rx = अणु
-					.aggr_बंद_eof	= true,
-				पूर्ण,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_MODEM_LAN_TX] = अणु
+				.rx = {
+					.aggr_close_eof	= true,
+				},
+			},
+		},
+	},
+	[IPA_ENDPOINT_MODEM_LAN_TX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 0,
-		.endpoपूर्णांक_id	= 3,
+		.endpoint_id	= 3,
 		.toward_ipa	= true,
-		.endpoपूर्णांक = अणु
+		.endpoint = {
 			.filter_support	= true,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_MODEM_AP_TX] = अणु
+		},
+	},
+	[IPA_ENDPOINT_MODEM_AP_TX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 4,
-		.endpoपूर्णांक_id	= 6,
+		.endpoint_id	= 6,
 		.toward_ipa	= true,
-		.endpoपूर्णांक = अणु
+		.endpoint = {
 			.filter_support	= true,
-		पूर्ण,
-	पूर्ण,
-	[IPA_ENDPOINT_MODEM_AP_RX] = अणु
+		},
+	},
+	[IPA_ENDPOINT_MODEM_AP_RX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 2,
-		.endpoपूर्णांक_id	= 12,
+		.endpoint_id	= 12,
 		.toward_ipa	= false,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Source resource configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_resource ipa_resource_src[] = अणु
-	[IPA_RESOURCE_TYPE_SRC_PKT_CONTEXTS] = अणु
-		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = अणु
+/* Source resource configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_resource ipa_resource_src[] = {
+	[IPA_RESOURCE_TYPE_SRC_PKT_CONTEXTS] = {
+		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = {
 			.min = 1,	.max = 255,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = {
 			.min = 1,	.max = 255,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = {
 			.min = 1,	.max = 63,
-		पूर्ण,
-	पूर्ण,
-	[IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_LISTS] = अणु
-		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = अणु
+		},
+	},
+	[IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_LISTS] = {
+		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = {
 			.min = 10,	.max = 10,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = {
 			.min = 10,	.max = 10,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = {
 			.min = 8,	.max = 8,
-		पूर्ण,
-	पूर्ण,
-	[IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_BUFF] = अणु
-		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = अणु
+		},
+	},
+	[IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_BUFF] = {
+		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = {
 			.min = 12,	.max = 12,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = {
 			.min = 14,	.max = 14,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = {
 			.min = 8,	.max = 8,
-		पूर्ण,
-	पूर्ण,
-	[IPA_RESOURCE_TYPE_SRC_HPS_DMARS] = अणु
-		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = अणु
+		},
+	},
+	[IPA_RESOURCE_TYPE_SRC_HPS_DMARS] = {
+		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = {
 			.min = 0,	.max = 63,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = {
 			.min = 0,	.max = 63,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_MHI_DMA] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_MHI_DMA] = {
 			.min = 0,	.max = 63,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = {
 			.min = 0,	.max = 63,
-		पूर्ण,
-	पूर्ण,
-	[IPA_RESOURCE_TYPE_SRC_ACK_ENTRIES] = अणु
-		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = अणु
+		},
+	},
+	[IPA_RESOURCE_TYPE_SRC_ACK_ENTRIES] = {
+		.limits[IPA_RSRC_GROUP_SRC_LWA_DL] = {
 			.min = 14,	.max = 14,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UL_DL] = {
 			.min = 20,	.max = 20,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_SRC_UC_RX_Q] = {
 			.min = 14,	.max = 14,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-/* Destination resource configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_resource ipa_resource_dst[] = अणु
-	[IPA_RESOURCE_TYPE_DST_DATA_SECTORS] = अणु
-		.limits[IPA_RSRC_GROUP_DST_LWA_DL] = अणु
+/* Destination resource configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_resource ipa_resource_dst[] = {
+	[IPA_RESOURCE_TYPE_DST_DATA_SECTORS] = {
+		.limits[IPA_RSRC_GROUP_DST_LWA_DL] = {
 			.min = 4,	.max = 4,
-		पूर्ण,
-		.limits[1] = अणु
+		},
+		.limits[1] = {
 			.min = 4,	.max = 4,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_DST_UNUSED_2] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_DST_UNUSED_2] = {
 			.min = 3,	.max = 3,
-		पूर्ण
-	पूर्ण,
-	[IPA_RESOURCE_TYPE_DST_DPS_DMARS] = अणु
-		.limits[IPA_RSRC_GROUP_DST_LWA_DL] = अणु
+		}
+	},
+	[IPA_RESOURCE_TYPE_DST_DPS_DMARS] = {
+		.limits[IPA_RSRC_GROUP_DST_LWA_DL] = {
 			.min = 2,	.max = 63,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_DST_UL_DL_DPL] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_DST_UL_DL_DPL] = {
 			.min = 1,	.max = 63,
-		पूर्ण,
-		.limits[IPA_RSRC_GROUP_DST_UNUSED_2] = अणु
+		},
+		.limits[IPA_RSRC_GROUP_DST_UNUSED_2] = {
 			.min = 1,	.max = 2,
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+		}
+	},
+};
 
-/* Resource configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_resource_data ipa_resource_data = अणु
+/* Resource configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_resource_data ipa_resource_data = {
 	.rsrc_group_src_count	= IPA_RSRC_GROUP_SRC_COUNT,
 	.rsrc_group_dst_count	= IPA_RSRC_GROUP_DST_COUNT,
 	.resource_src_count	= ARRAY_SIZE(ipa_resource_src),
 	.resource_src		= ipa_resource_src,
 	.resource_dst_count	= ARRAY_SIZE(ipa_resource_dst),
 	.resource_dst		= ipa_resource_dst,
-पूर्ण;
+};
 
-/* IPA-resident memory region data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_mem ipa_mem_local_data[] = अणु
-	[IPA_MEM_UC_SHARED] = अणु
+/* IPA-resident memory region data for an SoC having IPA v3.5.1 */
+static const struct ipa_mem ipa_mem_local_data[] = {
+	[IPA_MEM_UC_SHARED] = {
 		.offset		= 0x0000,
 		.size		= 0x0080,
 		.canary_count	= 0,
-	पूर्ण,
-	[IPA_MEM_UC_INFO] = अणु
+	},
+	[IPA_MEM_UC_INFO] = {
 		.offset		= 0x0080,
 		.size		= 0x0200,
 		.canary_count	= 0,
-	पूर्ण,
-	[IPA_MEM_V4_FILTER_HASHED] = अणु
+	},
+	[IPA_MEM_V4_FILTER_HASHED] = {
 		.offset		= 0x0288,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V4_FILTER] = अणु
+	},
+	[IPA_MEM_V4_FILTER] = {
 		.offset		= 0x0308,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V6_FILTER_HASHED] = अणु
+	},
+	[IPA_MEM_V6_FILTER_HASHED] = {
 		.offset		= 0x0388,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V6_FILTER] = अणु
+	},
+	[IPA_MEM_V6_FILTER] = {
 		.offset		= 0x0408,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V4_ROUTE_HASHED] = अणु
+	},
+	[IPA_MEM_V4_ROUTE_HASHED] = {
 		.offset		= 0x0488,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V4_ROUTE] = अणु
+	},
+	[IPA_MEM_V4_ROUTE] = {
 		.offset		= 0x0508,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V6_ROUTE_HASHED] = अणु
+	},
+	[IPA_MEM_V6_ROUTE_HASHED] = {
 		.offset		= 0x0588,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_V6_ROUTE] = अणु
+	},
+	[IPA_MEM_V6_ROUTE] = {
 		.offset		= 0x0608,
 		.size		= 0x0078,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_MODEM_HEADER] = अणु
+	},
+	[IPA_MEM_MODEM_HEADER] = {
 		.offset		= 0x0688,
 		.size		= 0x0140,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_MODEM_PROC_CTX] = अणु
+	},
+	[IPA_MEM_MODEM_PROC_CTX] = {
 		.offset		= 0x07d0,
 		.size		= 0x0200,
 		.canary_count	= 2,
-	पूर्ण,
-	[IPA_MEM_AP_PROC_CTX] = अणु
+	},
+	[IPA_MEM_AP_PROC_CTX] = {
 		.offset		= 0x09d0,
 		.size		= 0x0200,
 		.canary_count	= 0,
-	पूर्ण,
-	[IPA_MEM_MODEM] = अणु
+	},
+	[IPA_MEM_MODEM] = {
 		.offset		= 0x0bd8,
 		.size		= 0x1024,
 		.canary_count	= 0,
-	पूर्ण,
-	[IPA_MEM_UC_EVENT_RING] = अणु
+	},
+	[IPA_MEM_UC_EVENT_RING] = {
 		.offset		= 0x1c00,
 		.size		= 0x0400,
 		.canary_count	= 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Memory configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_mem_data ipa_mem_data = अणु
+/* Memory configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_mem_data ipa_mem_data = {
 	.local_count	= ARRAY_SIZE(ipa_mem_local_data),
 	.local		= ipa_mem_local_data,
 	.imem_addr	= 0x146bd000,
 	.imem_size	= 0x00002000,
 	.smem_id	= 497,
 	.smem_size	= 0x00002000,
-पूर्ण;
+};
 
 /* Interconnect bandwidths are in 1000 byte/second units */
-अटल स्थिर काष्ठा ipa_पूर्णांकerconnect_data ipa_पूर्णांकerconnect_data[] = अणु
-	अणु
+static const struct ipa_interconnect_data ipa_interconnect_data[] = {
+	{
 		.name			= "memory",
 		.peak_bandwidth		= 600000,	/* 600 MBps */
 		.average_bandwidth	= 80000,	/* 80 MBps */
-	पूर्ण,
-	/* Average bandwidth is unused क्रम the next two पूर्णांकerconnects */
-	अणु
+	},
+	/* Average bandwidth is unused for the next two interconnects */
+	{
 		.name			= "imem",
 		.peak_bandwidth		= 350000,	/* 350 MBps */
 		.average_bandwidth	= 0,		/* unused */
-	पूर्ण,
-	अणु
+	},
+	{
 		.name			= "config",
 		.peak_bandwidth		= 40000,	/* 40 MBps */
 		.average_bandwidth	= 0,		/* unused */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Clock and पूर्णांकerconnect configuration data क्रम an SoC having IPA v3.5.1 */
-अटल स्थिर काष्ठा ipa_घड़ी_data ipa_घड़ी_data = अणु
-	.core_घड़ी_rate	= 75 * 1000 * 1000,	/* Hz */
-	.पूर्णांकerconnect_count	= ARRAY_SIZE(ipa_पूर्णांकerconnect_data),
-	.पूर्णांकerconnect_data	= ipa_पूर्णांकerconnect_data,
-पूर्ण;
+/* Clock and interconnect configuration data for an SoC having IPA v3.5.1 */
+static const struct ipa_clock_data ipa_clock_data = {
+	.core_clock_rate	= 75 * 1000 * 1000,	/* Hz */
+	.interconnect_count	= ARRAY_SIZE(ipa_interconnect_data),
+	.interconnect_data	= ipa_interconnect_data,
+};
 
-/* Configuration data क्रम an SoC having IPA v3.5.1 */
-स्थिर काष्ठा ipa_data ipa_data_v3_5_1 = अणु
+/* Configuration data for an SoC having IPA v3.5.1 */
+const struct ipa_data ipa_data_v3_5_1 = {
 	.version	= IPA_VERSION_3_5_1,
 	.backward_compat = BCR_CMDQ_L_LACK_ONE_ENTRY_FMASK |
 			   BCR_TX_NOT_USING_BRESP_FMASK |
@@ -396,9 +395,9 @@
 			   BCR_DUAL_TX_FMASK,
 	.qsb_count	= ARRAY_SIZE(ipa_qsb_data),
 	.qsb_data	= ipa_qsb_data,
-	.endpoपूर्णांक_count	= ARRAY_SIZE(ipa_gsi_endpoपूर्णांक_data),
-	.endpoपूर्णांक_data	= ipa_gsi_endpoपूर्णांक_data,
+	.endpoint_count	= ARRAY_SIZE(ipa_gsi_endpoint_data),
+	.endpoint_data	= ipa_gsi_endpoint_data,
 	.resource_data	= &ipa_resource_data,
 	.mem_data	= &ipa_mem_data,
-	.घड़ी_data	= &ipa_घड़ी_data,
-पूर्ण;
+	.clock_data	= &ipa_clock_data,
+};

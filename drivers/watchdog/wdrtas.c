@@ -1,629 +1,628 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * FIXME: add wdrtas_get_status and wdrtas_get_boot_status as soon as
  * RTAS calls are available
  */
 
 /*
- * RTAS watchकरोg driver
+ * RTAS watchdog driver
  *
  * (C) Copyright IBM Corp. 2005
- * device driver to exploit watchकरोg RTAS functions
+ * device driver to exploit watchdog RTAS functions
  *
  * Authors : Utz Bacher <utz.bacher@de.ibm.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/types.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/uaccess.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/types.h>
+#include <linux/watchdog.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/rtas.h>
+#include <asm/rtas.h>
 
-#घोषणा WDRTAS_MAGIC_CHAR		42
-#घोषणा WDRTAS_SUPPORTED_MASK		(WDIOF_SETTIMEOUT | \
+#define WDRTAS_MAGIC_CHAR		42
+#define WDRTAS_SUPPORTED_MASK		(WDIOF_SETTIMEOUT | \
 					 WDIOF_MAGICCLOSE)
 
 MODULE_AUTHOR("Utz Bacher <utz.bacher@de.ibm.com>");
 MODULE_DESCRIPTION("RTAS watchdog driver");
 MODULE_LICENSE("GPL");
 
-अटल bool wdrtas_nowayout = WATCHDOG_NOWAYOUT;
-अटल atomic_t wdrtas_miscdev_खोलो = ATOMIC_INIT(0);
-अटल अक्षर wdrtas_expect_बंद;
+static bool wdrtas_nowayout = WATCHDOG_NOWAYOUT;
+static atomic_t wdrtas_miscdev_open = ATOMIC_INIT(0);
+static char wdrtas_expect_close;
 
-अटल पूर्णांक wdrtas_पूर्णांकerval;
+static int wdrtas_interval;
 
-#घोषणा WDRTAS_THERMAL_SENSOR		3
-अटल पूर्णांक wdrtas_token_get_sensor_state;
-#घोषणा WDRTAS_SURVEILLANCE_IND		9000
-अटल पूर्णांक wdrtas_token_set_indicator;
-#घोषणा WDRTAS_SP_SPI			28
-अटल पूर्णांक wdrtas_token_get_sp;
-अटल पूर्णांक wdrtas_token_event_scan;
+#define WDRTAS_THERMAL_SENSOR		3
+static int wdrtas_token_get_sensor_state;
+#define WDRTAS_SURVEILLANCE_IND		9000
+static int wdrtas_token_set_indicator;
+#define WDRTAS_SP_SPI			28
+static int wdrtas_token_get_sp;
+static int wdrtas_token_event_scan;
 
-#घोषणा WDRTAS_DEFAULT_INTERVAL		300
+#define WDRTAS_DEFAULT_INTERVAL		300
 
-#घोषणा WDRTAS_LOGBUFFER_LEN		128
-अटल अक्षर wdrtas_logbuffer[WDRTAS_LOGBUFFER_LEN];
+#define WDRTAS_LOGBUFFER_LEN		128
+static char wdrtas_logbuffer[WDRTAS_LOGBUFFER_LEN];
 
 
-/*** watchकरोg access functions */
+/*** watchdog access functions */
 
 /**
- * wdrtas_set_पूर्णांकerval - sets the watchकरोg पूर्णांकerval
- * @पूर्णांकerval: new पूर्णांकerval
+ * wdrtas_set_interval - sets the watchdog interval
+ * @interval: new interval
  *
- * वापसs 0 on success, <0 on failures
+ * returns 0 on success, <0 on failures
  *
- * wdrtas_set_पूर्णांकerval sets the watchकरोg keepalive पूर्णांकerval by calling the
- * RTAS function set-indicator (surveillance). The unit of पूर्णांकerval is
+ * wdrtas_set_interval sets the watchdog keepalive interval by calling the
+ * RTAS function set-indicator (surveillance). The unit of interval is
  * seconds.
  */
 
-अटल पूर्णांक wdrtas_set_पूर्णांकerval(पूर्णांक पूर्णांकerval)
-अणु
-	दीर्घ result;
-	अटल पूर्णांक prपूर्णांक_msg = 10;
+static int wdrtas_set_interval(int interval)
+{
+	long result;
+	static int print_msg = 10;
 
 	/* rtas uses minutes */
-	पूर्णांकerval = (पूर्णांकerval + 59) / 60;
+	interval = (interval + 59) / 60;
 
-	result = rtas_call(wdrtas_token_set_indicator, 3, 1, शून्य,
-			   WDRTAS_SURVEILLANCE_IND, 0, पूर्णांकerval);
-	अगर (result < 0 && prपूर्णांक_msg) अणु
+	result = rtas_call(wdrtas_token_set_indicator, 3, 1, NULL,
+			   WDRTAS_SURVEILLANCE_IND, 0, interval);
+	if (result < 0 && print_msg) {
 		pr_err("setting the watchdog to %i timeout failed: %li\n",
-		       पूर्णांकerval, result);
-		prपूर्णांक_msg--;
-	पूर्ण
+		       interval, result);
+		print_msg--;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#घोषणा WDRTAS_SP_SPI_LEN 4
+#define WDRTAS_SP_SPI_LEN 4
 
 /**
- * wdrtas_get_पूर्णांकerval - वापसs the current watchकरोg पूर्णांकerval
- * @fallback_value: value (in seconds) to use, अगर the RTAS call fails
+ * wdrtas_get_interval - returns the current watchdog interval
+ * @fallback_value: value (in seconds) to use, if the RTAS call fails
  *
- * वापसs the पूर्णांकerval
+ * returns the interval
  *
- * wdrtas_get_पूर्णांकerval वापसs the current watchकरोg keepalive पूर्णांकerval
- * as reported by the RTAS function ibm,get-प्रणाली-parameter. The unit
- * of the वापस value is seconds.
+ * wdrtas_get_interval returns the current watchdog keepalive interval
+ * as reported by the RTAS function ibm,get-system-parameter. The unit
+ * of the return value is seconds.
  */
-अटल पूर्णांक wdrtas_get_पूर्णांकerval(पूर्णांक fallback_value)
-अणु
-	दीर्घ result;
-	अक्षर value[WDRTAS_SP_SPI_LEN];
+static int wdrtas_get_interval(int fallback_value)
+{
+	long result;
+	char value[WDRTAS_SP_SPI_LEN];
 
 	spin_lock(&rtas_data_buf_lock);
-	स_रखो(rtas_data_buf, 0, WDRTAS_SP_SPI_LEN);
-	result = rtas_call(wdrtas_token_get_sp, 3, 1, शून्य,
+	memset(rtas_data_buf, 0, WDRTAS_SP_SPI_LEN);
+	result = rtas_call(wdrtas_token_get_sp, 3, 1, NULL,
 			   WDRTAS_SP_SPI, __pa(rtas_data_buf),
 			   WDRTAS_SP_SPI_LEN);
 
-	स_नकल(value, rtas_data_buf, WDRTAS_SP_SPI_LEN);
+	memcpy(value, rtas_data_buf, WDRTAS_SP_SPI_LEN);
 	spin_unlock(&rtas_data_buf_lock);
 
-	अगर (value[0] != 0 || value[1] != 2 || value[3] != 0 || result < 0) अणु
+	if (value[0] != 0 || value[1] != 2 || value[3] != 0 || result < 0) {
 		pr_warn("could not get sp_spi watchdog timeout (%li). Continuing\n",
 			result);
-		वापस fallback_value;
-	पूर्ण
+		return fallback_value;
+	}
 
 	/* rtas uses minutes */
-	वापस ((पूर्णांक)value[2]) * 60;
-पूर्ण
+	return ((int)value[2]) * 60;
+}
 
 /**
- * wdrtas_समयr_start - starts watchकरोg
+ * wdrtas_timer_start - starts watchdog
  *
- * wdrtas_समयr_start starts the watchकरोg by calling the RTAS function
- * set-पूर्णांकerval (surveillance)
+ * wdrtas_timer_start starts the watchdog by calling the RTAS function
+ * set-interval (surveillance)
  */
-अटल व्योम wdrtas_समयr_start(व्योम)
-अणु
-	wdrtas_set_पूर्णांकerval(wdrtas_पूर्णांकerval);
-पूर्ण
+static void wdrtas_timer_start(void)
+{
+	wdrtas_set_interval(wdrtas_interval);
+}
 
 /**
- * wdrtas_समयr_stop - stops watchकरोg
+ * wdrtas_timer_stop - stops watchdog
  *
- * wdrtas_समयr_stop stops the watchकरोg समयr by calling the RTAS function
- * set-पूर्णांकerval (surveillance)
+ * wdrtas_timer_stop stops the watchdog timer by calling the RTAS function
+ * set-interval (surveillance)
  */
-अटल व्योम wdrtas_समयr_stop(व्योम)
-अणु
-	wdrtas_set_पूर्णांकerval(0);
-पूर्ण
+static void wdrtas_timer_stop(void)
+{
+	wdrtas_set_interval(0);
+}
 
 /**
- * wdrtas_समयr_keepalive - resets watchकरोg समयr to keep प्रणाली alive
+ * wdrtas_timer_keepalive - resets watchdog timer to keep system alive
  *
- * wdrtas_समयr_keepalive restarts the watchकरोg समयr by calling the
- * RTAS function event-scan and repeats these calls as दीर्घ as there are
+ * wdrtas_timer_keepalive restarts the watchdog timer by calling the
+ * RTAS function event-scan and repeats these calls as long as there are
  * events available. All events will be dumped.
  */
-अटल व्योम wdrtas_समयr_keepalive(व्योम)
-अणु
-	दीर्घ result;
+static void wdrtas_timer_keepalive(void)
+{
+	long result;
 
-	करो अणु
-		result = rtas_call(wdrtas_token_event_scan, 4, 1, शून्य,
+	do {
+		result = rtas_call(wdrtas_token_event_scan, 4, 1, NULL,
 				   RTAS_EVENT_SCAN_ALL_EVENTS, 0,
-				   (व्योम *)__pa(wdrtas_logbuffer),
+				   (void *)__pa(wdrtas_logbuffer),
 				   WDRTAS_LOGBUFFER_LEN);
-		अगर (result < 0)
+		if (result < 0)
 			pr_err("event-scan failed: %li\n", result);
-		अगर (result == 0)
-			prपूर्णांक_hex_dump(KERN_INFO, "dumping event, data: ",
+		if (result == 0)
+			print_hex_dump(KERN_INFO, "dumping event, data: ",
 				DUMP_PREFIX_OFFSET, 16, 1,
 				wdrtas_logbuffer, WDRTAS_LOGBUFFER_LEN, false);
-	पूर्ण जबतक (result == 0);
-पूर्ण
+	} while (result == 0);
+}
 
 /**
- * wdrtas_get_temperature - वापसs current temperature
+ * wdrtas_get_temperature - returns current temperature
  *
- * वापसs temperature or <0 on failures
+ * returns temperature or <0 on failures
  *
- * wdrtas_get_temperature वापसs the current temperature in Fahrenheit. It
- * uses the RTAS call get-sensor-state, token 3 to करो so
+ * wdrtas_get_temperature returns the current temperature in Fahrenheit. It
+ * uses the RTAS call get-sensor-state, token 3 to do so
  */
-अटल पूर्णांक wdrtas_get_temperature(व्योम)
-अणु
-	पूर्णांक result;
-	पूर्णांक temperature = 0;
+static int wdrtas_get_temperature(void)
+{
+	int result;
+	int temperature = 0;
 
 	result = rtas_get_sensor(WDRTAS_THERMAL_SENSOR, 0, &temperature);
 
-	अगर (result < 0)
+	if (result < 0)
 		pr_warn("reading the thermal sensor failed: %i\n", result);
-	अन्यथा
+	else
 		temperature = ((temperature * 9) / 5) + 32; /* fahrenheit */
 
-	वापस temperature;
-पूर्ण
+	return temperature;
+}
 
 /**
- * wdrtas_get_status - वापसs the status of the watchकरोg
+ * wdrtas_get_status - returns the status of the watchdog
  *
- * वापसs a biपंचांगask of defines WDIOF_... as defined in
- * include/linux/watchकरोg.h
+ * returns a bitmask of defines WDIOF_... as defined in
+ * include/linux/watchdog.h
  */
-अटल पूर्णांक wdrtas_get_status(व्योम)
-अणु
-	वापस 0; /* TODO */
-पूर्ण
+static int wdrtas_get_status(void)
+{
+	return 0; /* TODO */
+}
 
 /**
- * wdrtas_get_boot_status - वापसs the reason क्रम the last boot
+ * wdrtas_get_boot_status - returns the reason for the last boot
  *
- * वापसs a biपंचांगask of defines WDIOF_... as defined in
- * include/linux/watchकरोg.h, indicating why the watchकरोg rebooted the प्रणाली
+ * returns a bitmask of defines WDIOF_... as defined in
+ * include/linux/watchdog.h, indicating why the watchdog rebooted the system
  */
-अटल पूर्णांक wdrtas_get_boot_status(व्योम)
-अणु
-	वापस 0; /* TODO */
-पूर्ण
+static int wdrtas_get_boot_status(void)
+{
+	return 0; /* TODO */
+}
 
-/*** watchकरोg API and operations stuff */
+/*** watchdog API and operations stuff */
 
-/* wdrtas_ग_लिखो - called when watchकरोg device is written to
- * @file: file काष्ठाure
+/* wdrtas_write - called when watchdog device is written to
+ * @file: file structure
  * @buf: user buffer with data
  * @len: amount to data written
  * @ppos: position in file
  *
- * वापसs the number of successfully processed अक्षरacters, which is always
+ * returns the number of successfully processed characters, which is always
  * the number of bytes passed to this function
  *
- * wdrtas_ग_लिखो processes all the data given to it and looks क्रम the magic
- * अक्षरacter 'V'. This अक्षरacter allows the watchकरोg device to be बंदd
+ * wdrtas_write processes all the data given to it and looks for the magic
+ * character 'V'. This character allows the watchdog device to be closed
  * properly.
  */
-अटल sमाप_प्रकार wdrtas_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-	     माप_प्रकार len, loff_t *ppos)
-अणु
-	पूर्णांक i;
-	अक्षर c;
+static ssize_t wdrtas_write(struct file *file, const char __user *buf,
+	     size_t len, loff_t *ppos)
+{
+	int i;
+	char c;
 
-	अगर (!len)
-		जाओ out;
+	if (!len)
+		goto out;
 
-	अगर (!wdrtas_nowayout) अणु
-		wdrtas_expect_बंद = 0;
-		/* look क्रम 'V' */
-		क्रम (i = 0; i < len; i++) अणु
-			अगर (get_user(c, buf + i))
-				वापस -EFAULT;
-			/* allow to बंद device */
-			अगर (c == 'V')
-				wdrtas_expect_बंद = WDRTAS_MAGIC_CHAR;
-		पूर्ण
-	पूर्ण
+	if (!wdrtas_nowayout) {
+		wdrtas_expect_close = 0;
+		/* look for 'V' */
+		for (i = 0; i < len; i++) {
+			if (get_user(c, buf + i))
+				return -EFAULT;
+			/* allow to close device */
+			if (c == 'V')
+				wdrtas_expect_close = WDRTAS_MAGIC_CHAR;
+		}
+	}
 
-	wdrtas_समयr_keepalive();
+	wdrtas_timer_keepalive();
 
 out:
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
- * wdrtas_ioctl - ioctl function क्रम the watchकरोg device
- * @file: file काष्ठाure
- * @cmd: command क्रम ioctl
- * @arg: argument poपूर्णांकer
+ * wdrtas_ioctl - ioctl function for the watchdog device
+ * @file: file structure
+ * @cmd: command for ioctl
+ * @arg: argument pointer
  *
- * वापसs 0 on success, <0 on failure
+ * returns 0 on success, <0 on failure
  *
- * wdrtas_ioctl implements the watchकरोg API ioctls
+ * wdrtas_ioctl implements the watchdog API ioctls
  */
 
-अटल दीर्घ wdrtas_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-							अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक __user *argp = (व्योम __user *)arg;
-	पूर्णांक i;
-	अटल स्थिर काष्ठा watchकरोg_info wdinfo = अणु
+static long wdrtas_ioctl(struct file *file, unsigned int cmd,
+							unsigned long arg)
+{
+	int __user *argp = (void __user *)arg;
+	int i;
+	static const struct watchdog_info wdinfo = {
 		.options = WDRTAS_SUPPORTED_MASK,
 		.firmware_version = 0,
 		.identity = "wdrtas",
-	पूर्ण;
+	};
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &wdinfo, माप(wdinfo)))
-			वापस -EFAULT;
-		वापस 0;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &wdinfo, sizeof(wdinfo)))
+			return -EFAULT;
+		return 0;
 
-	हाल WDIOC_GETSTATUS:
+	case WDIOC_GETSTATUS:
 		i = wdrtas_get_status();
-		वापस put_user(i, argp);
+		return put_user(i, argp);
 
-	हाल WDIOC_GETBOOTSTATUS:
+	case WDIOC_GETBOOTSTATUS:
 		i = wdrtas_get_boot_status();
-		वापस put_user(i, argp);
+		return put_user(i, argp);
 
-	हाल WDIOC_GETTEMP:
-		अगर (wdrtas_token_get_sensor_state == RTAS_UNKNOWN_SERVICE)
-			वापस -EOPNOTSUPP;
+	case WDIOC_GETTEMP:
+		if (wdrtas_token_get_sensor_state == RTAS_UNKNOWN_SERVICE)
+			return -EOPNOTSUPP;
 
 		i = wdrtas_get_temperature();
-		वापस put_user(i, argp);
+		return put_user(i, argp);
 
-	हाल WDIOC_SETOPTIONS:
-		अगर (get_user(i, argp))
-			वापस -EFAULT;
-		अगर (i & WDIOS_DISABLECARD)
-			wdrtas_समयr_stop();
-		अगर (i & WDIOS_ENABLECARD) अणु
-			wdrtas_समयr_keepalive();
-			wdrtas_समयr_start();
-		पूर्ण
+	case WDIOC_SETOPTIONS:
+		if (get_user(i, argp))
+			return -EFAULT;
+		if (i & WDIOS_DISABLECARD)
+			wdrtas_timer_stop();
+		if (i & WDIOS_ENABLECARD) {
+			wdrtas_timer_keepalive();
+			wdrtas_timer_start();
+		}
 		/* not implemented. Done by H8
-		अगर (i & WDIOS_TEMPPANIC) अणु
-		पूर्ण */
-		वापस 0;
+		if (i & WDIOS_TEMPPANIC) {
+		} */
+		return 0;
 
-	हाल WDIOC_KEEPALIVE:
-		wdrtas_समयr_keepalive();
-		वापस 0;
+	case WDIOC_KEEPALIVE:
+		wdrtas_timer_keepalive();
+		return 0;
 
-	हाल WDIOC_SETTIMEOUT:
-		अगर (get_user(i, argp))
-			वापस -EFAULT;
+	case WDIOC_SETTIMEOUT:
+		if (get_user(i, argp))
+			return -EFAULT;
 
-		अगर (wdrtas_set_पूर्णांकerval(i))
-			वापस -EINVAL;
+		if (wdrtas_set_interval(i))
+			return -EINVAL;
 
-		wdrtas_समयr_keepalive();
+		wdrtas_timer_keepalive();
 
-		अगर (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE)
-			wdrtas_पूर्णांकerval = i;
-		अन्यथा
-			wdrtas_पूर्णांकerval = wdrtas_get_पूर्णांकerval(i);
+		if (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE)
+			wdrtas_interval = i;
+		else
+			wdrtas_interval = wdrtas_get_interval(i);
 		fallthrough;
 
-	हाल WDIOC_GETTIMEOUT:
-		वापस put_user(wdrtas_पूर्णांकerval, argp);
+	case WDIOC_GETTIMEOUT:
+		return put_user(wdrtas_interval, argp);
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}
 
 /**
- * wdrtas_खोलो - खोलो function of watchकरोg device
- * @inode: inode काष्ठाure
- * @file: file काष्ठाure
+ * wdrtas_open - open function of watchdog device
+ * @inode: inode structure
+ * @file: file structure
  *
- * वापसs 0 on success, -EBUSY अगर the file has been खोलोed alपढ़ोy, <0 on
+ * returns 0 on success, -EBUSY if the file has been opened already, <0 on
  * other failures
  *
- * function called when watchकरोg device is खोलोed
+ * function called when watchdog device is opened
  */
-अटल पूर्णांक wdrtas_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* only खोलो once */
-	अगर (atomic_inc_वापस(&wdrtas_miscdev_खोलो) > 1) अणु
-		atomic_dec(&wdrtas_miscdev_खोलो);
-		वापस -EBUSY;
-	पूर्ण
+static int wdrtas_open(struct inode *inode, struct file *file)
+{
+	/* only open once */
+	if (atomic_inc_return(&wdrtas_miscdev_open) > 1) {
+		atomic_dec(&wdrtas_miscdev_open);
+		return -EBUSY;
+	}
 
-	wdrtas_समयr_start();
-	wdrtas_समयr_keepalive();
+	wdrtas_timer_start();
+	wdrtas_timer_keepalive();
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
 /**
- * wdrtas_बंद - बंद function of watchकरोg device
- * @inode: inode काष्ठाure
- * @file: file काष्ठाure
+ * wdrtas_close - close function of watchdog device
+ * @inode: inode structure
+ * @file: file structure
  *
- * वापसs 0 on success
+ * returns 0 on success
  *
- * बंद function. Always succeeds
+ * close function. Always succeeds
  */
-अटल पूर्णांक wdrtas_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* only stop watchकरोg, अगर this was announced using 'V' beक्रमe */
-	अगर (wdrtas_expect_बंद == WDRTAS_MAGIC_CHAR)
-		wdrtas_समयr_stop();
-	अन्यथा अणु
+static int wdrtas_close(struct inode *inode, struct file *file)
+{
+	/* only stop watchdog, if this was announced using 'V' before */
+	if (wdrtas_expect_close == WDRTAS_MAGIC_CHAR)
+		wdrtas_timer_stop();
+	else {
 		pr_warn("got unexpected close. Watchdog not stopped.\n");
-		wdrtas_समयr_keepalive();
-	पूर्ण
+		wdrtas_timer_keepalive();
+	}
 
-	wdrtas_expect_बंद = 0;
-	atomic_dec(&wdrtas_miscdev_खोलो);
-	वापस 0;
-पूर्ण
+	wdrtas_expect_close = 0;
+	atomic_dec(&wdrtas_miscdev_open);
+	return 0;
+}
 
 /**
- * wdrtas_temp_पढ़ो - gives back the temperature in fahrenheit
- * @file: file काष्ठाure
+ * wdrtas_temp_read - gives back the temperature in fahrenheit
+ * @file: file structure
  * @buf: user buffer
- * @count: number of bytes to be पढ़ो
+ * @count: number of bytes to be read
  * @ppos: position in file
  *
- * वापसs always 1 or -EFAULT in हाल of user space copy failures, <0 on
+ * returns always 1 or -EFAULT in case of user space copy failures, <0 on
  * other failures
  *
- * wdrtas_temp_पढ़ो gives the temperature to the users by copying this
- * value as one byte पूर्णांकo the user space buffer. The unit is Fahrenheit...
+ * wdrtas_temp_read gives the temperature to the users by copying this
+ * value as one byte into the user space buffer. The unit is Fahrenheit...
  */
-अटल sमाप_प्रकार wdrtas_temp_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-		 माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक temperature = 0;
+static ssize_t wdrtas_temp_read(struct file *file, char __user *buf,
+		 size_t count, loff_t *ppos)
+{
+	int temperature = 0;
 
 	temperature = wdrtas_get_temperature();
-	अगर (temperature < 0)
-		वापस temperature;
+	if (temperature < 0)
+		return temperature;
 
-	अगर (copy_to_user(buf, &temperature, 1))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &temperature, 1))
+		return -EFAULT;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * wdrtas_temp_खोलो - खोलो function of temperature device
- * @inode: inode काष्ठाure
- * @file: file काष्ठाure
+ * wdrtas_temp_open - open function of temperature device
+ * @inode: inode structure
+ * @file: file structure
  *
- * वापसs 0 on success, <0 on failure
+ * returns 0 on success, <0 on failure
  *
- * function called when temperature device is खोलोed
+ * function called when temperature device is opened
  */
-अटल पूर्णांक wdrtas_temp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस stream_खोलो(inode, file);
-पूर्ण
+static int wdrtas_temp_open(struct inode *inode, struct file *file)
+{
+	return stream_open(inode, file);
+}
 
 /**
- * wdrtas_temp_बंद - बंद function of temperature device
- * @inode: inode काष्ठाure
- * @file: file काष्ठाure
+ * wdrtas_temp_close - close function of temperature device
+ * @inode: inode structure
+ * @file: file structure
  *
- * वापसs 0 on success
+ * returns 0 on success
  *
- * बंद function. Always succeeds
+ * close function. Always succeeds
  */
-अटल पूर्णांक wdrtas_temp_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int wdrtas_temp_close(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
 /**
- * wdrtas_reboot - reboot notअगरier function
- * @nb: notअगरier block काष्ठाure
+ * wdrtas_reboot - reboot notifier function
+ * @nb: notifier block structure
  * @code: reboot code
  * @ptr: unused
  *
- * वापसs NOTIFY_DONE
+ * returns NOTIFY_DONE
  *
- * wdrtas_reboot stops the watchकरोg in हाल of a reboot
+ * wdrtas_reboot stops the watchdog in case of a reboot
  */
-अटल पूर्णांक wdrtas_reboot(काष्ठा notअगरier_block *this,
-					अचिन्हित दीर्घ code, व्योम *ptr)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
-		wdrtas_समयr_stop();
+static int wdrtas_reboot(struct notifier_block *this,
+					unsigned long code, void *ptr)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
+		wdrtas_timer_stop();
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*** initialization stuff */
 
-अटल स्थिर काष्ठा file_operations wdrtas_fops = अणु
+static const struct file_operations wdrtas_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= wdrtas_ग_लिखो,
+	.write		= wdrtas_write,
 	.unlocked_ioctl	= wdrtas_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= wdrtas_खोलो,
-	.release	= wdrtas_बंद,
-पूर्ण;
+	.open		= wdrtas_open,
+	.release	= wdrtas_close,
+};
 
-अटल काष्ठा miscdevice wdrtas_miscdev = अणु
+static struct miscdevice wdrtas_miscdev = {
 	.minor =	WATCHDOG_MINOR,
 	.name =		"watchdog",
 	.fops =		&wdrtas_fops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations wdrtas_temp_fops = अणु
+static const struct file_operations wdrtas_temp_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.पढ़ो		= wdrtas_temp_पढ़ो,
-	.खोलो		= wdrtas_temp_खोलो,
-	.release	= wdrtas_temp_बंद,
-पूर्ण;
+	.read		= wdrtas_temp_read,
+	.open		= wdrtas_temp_open,
+	.release	= wdrtas_temp_close,
+};
 
-अटल काष्ठा miscdevice wdrtas_tempdev = अणु
+static struct miscdevice wdrtas_tempdev = {
 	.minor =	TEMP_MINOR,
 	.name =		"temperature",
 	.fops =		&wdrtas_temp_fops,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block wdrtas_notअगरier = अणु
-	.notअगरier_call =	wdrtas_reboot,
-पूर्ण;
+static struct notifier_block wdrtas_notifier = {
+	.notifier_call =	wdrtas_reboot,
+};
 
 /**
- * wdrtas_get_tokens - पढ़ोs in RTAS tokens
+ * wdrtas_get_tokens - reads in RTAS tokens
  *
- * वापसs 0 on success, <0 on failure
+ * returns 0 on success, <0 on failure
  *
- * wdrtas_get_tokens पढ़ोs in the tokens क्रम the RTAS calls used in
- * this watchकरोg driver. It tolerates, अगर "get-sensor-state" and
+ * wdrtas_get_tokens reads in the tokens for the RTAS calls used in
+ * this watchdog driver. It tolerates, if "get-sensor-state" and
  * "ibm,get-system-parameter" are not available.
  */
-अटल पूर्णांक wdrtas_get_tokens(व्योम)
-अणु
+static int wdrtas_get_tokens(void)
+{
 	wdrtas_token_get_sensor_state = rtas_token("get-sensor-state");
-	अगर (wdrtas_token_get_sensor_state == RTAS_UNKNOWN_SERVICE) अणु
+	if (wdrtas_token_get_sensor_state == RTAS_UNKNOWN_SERVICE) {
 		pr_warn("couldn't get token for get-sensor-state. Trying to continue without temperature support.\n");
-	पूर्ण
+	}
 
 	wdrtas_token_get_sp = rtas_token("ibm,get-system-parameter");
-	अगर (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE) अणु
+	if (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE) {
 		pr_warn("couldn't get token for ibm,get-system-parameter. Trying to continue with a default timeout value of %i seconds.\n",
 			WDRTAS_DEFAULT_INTERVAL);
-	पूर्ण
+	}
 
 	wdrtas_token_set_indicator = rtas_token("set-indicator");
-	अगर (wdrtas_token_set_indicator == RTAS_UNKNOWN_SERVICE) अणु
+	if (wdrtas_token_set_indicator == RTAS_UNKNOWN_SERVICE) {
 		pr_err("couldn't get token for set-indicator. Terminating watchdog code.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	wdrtas_token_event_scan = rtas_token("event-scan");
-	अगर (wdrtas_token_event_scan == RTAS_UNKNOWN_SERVICE) अणु
+	if (wdrtas_token_event_scan == RTAS_UNKNOWN_SERVICE) {
 		pr_err("couldn't get token for event-scan. Terminating watchdog code.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
-
-/**
- * wdrtas_unरेजिस्टर_devs - unरेजिस्टरs the misc dev handlers
- *
- * wdrtas_रेजिस्टर_devs unरेजिस्टरs the watchकरोg and temperature watchकरोg
- * misc devs
- */
-अटल व्योम wdrtas_unरेजिस्टर_devs(व्योम)
-अणु
-	misc_deरेजिस्टर(&wdrtas_miscdev);
-	अगर (wdrtas_token_get_sensor_state != RTAS_UNKNOWN_SERVICE)
-		misc_deरेजिस्टर(&wdrtas_tempdev);
-पूर्ण
+	return 0;
+}
 
 /**
- * wdrtas_रेजिस्टर_devs - रेजिस्टरs the misc dev handlers
+ * wdrtas_unregister_devs - unregisters the misc dev handlers
  *
- * वापसs 0 on success, <0 on failure
- *
- * wdrtas_रेजिस्टर_devs रेजिस्टरs the watchकरोg and temperature watchकरोg
+ * wdrtas_register_devs unregisters the watchdog and temperature watchdog
  * misc devs
  */
-अटल पूर्णांक wdrtas_रेजिस्टर_devs(व्योम)
-अणु
-	पूर्णांक result;
+static void wdrtas_unregister_devs(void)
+{
+	misc_deregister(&wdrtas_miscdev);
+	if (wdrtas_token_get_sensor_state != RTAS_UNKNOWN_SERVICE)
+		misc_deregister(&wdrtas_tempdev);
+}
 
-	result = misc_रेजिस्टर(&wdrtas_miscdev);
-	अगर (result) अणु
+/**
+ * wdrtas_register_devs - registers the misc dev handlers
+ *
+ * returns 0 on success, <0 on failure
+ *
+ * wdrtas_register_devs registers the watchdog and temperature watchdog
+ * misc devs
+ */
+static int wdrtas_register_devs(void)
+{
+	int result;
+
+	result = misc_register(&wdrtas_miscdev);
+	if (result) {
 		pr_err("couldn't register watchdog misc device. Terminating watchdog code.\n");
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	अगर (wdrtas_token_get_sensor_state != RTAS_UNKNOWN_SERVICE) अणु
-		result = misc_रेजिस्टर(&wdrtas_tempdev);
-		अगर (result) अणु
+	if (wdrtas_token_get_sensor_state != RTAS_UNKNOWN_SERVICE) {
+		result = misc_register(&wdrtas_tempdev);
+		if (result) {
 			pr_warn("couldn't register watchdog temperature misc device. Continuing without temperature support.\n");
 			wdrtas_token_get_sensor_state = RTAS_UNKNOWN_SERVICE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * wdrtas_init - init function of the watchकरोg driver
+ * wdrtas_init - init function of the watchdog driver
  *
- * वापसs 0 on success, <0 on failure
+ * returns 0 on success, <0 on failure
  *
- * रेजिस्टरs the file handlers and the reboot notअगरier
+ * registers the file handlers and the reboot notifier
  */
-अटल पूर्णांक __init wdrtas_init(व्योम)
-अणु
-	अगर (wdrtas_get_tokens())
-		वापस -ENODEV;
+static int __init wdrtas_init(void)
+{
+	if (wdrtas_get_tokens())
+		return -ENODEV;
 
-	अगर (wdrtas_रेजिस्टर_devs())
-		वापस -ENODEV;
+	if (wdrtas_register_devs())
+		return -ENODEV;
 
-	अगर (रेजिस्टर_reboot_notअगरier(&wdrtas_notअगरier)) अणु
+	if (register_reboot_notifier(&wdrtas_notifier)) {
 		pr_err("could not register reboot notifier. Terminating watchdog code.\n");
-		wdrtas_unरेजिस्टर_devs();
-		वापस -ENODEV;
-	पूर्ण
+		wdrtas_unregister_devs();
+		return -ENODEV;
+	}
 
-	अगर (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE)
-		wdrtas_पूर्णांकerval = WDRTAS_DEFAULT_INTERVAL;
-	अन्यथा
-		wdrtas_पूर्णांकerval = wdrtas_get_पूर्णांकerval(WDRTAS_DEFAULT_INTERVAL);
+	if (wdrtas_token_get_sp == RTAS_UNKNOWN_SERVICE)
+		wdrtas_interval = WDRTAS_DEFAULT_INTERVAL;
+	else
+		wdrtas_interval = wdrtas_get_interval(WDRTAS_DEFAULT_INTERVAL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * wdrtas_निकास - निकास function of the watchकरोg driver
+ * wdrtas_exit - exit function of the watchdog driver
  *
- * unरेजिस्टरs the file handlers and the reboot notअगरier
+ * unregisters the file handlers and the reboot notifier
  */
-अटल व्योम __निकास wdrtas_निकास(व्योम)
-अणु
-	अगर (!wdrtas_nowayout)
-		wdrtas_समयr_stop();
+static void __exit wdrtas_exit(void)
+{
+	if (!wdrtas_nowayout)
+		wdrtas_timer_stop();
 
-	wdrtas_unरेजिस्टर_devs();
+	wdrtas_unregister_devs();
 
-	unरेजिस्टर_reboot_notअगरier(&wdrtas_notअगरier);
-पूर्ण
+	unregister_reboot_notifier(&wdrtas_notifier);
+}
 
 module_init(wdrtas_init);
-module_निकास(wdrtas_निकास);
+module_exit(wdrtas_exit);

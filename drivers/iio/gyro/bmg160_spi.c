@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/module.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/spi/spi.h>
+#include <linux/regmap.h>
+#include <linux/iio/iio.h>
+#include <linux/module.h>
 
-#समावेश "bmg160.h"
+#include "bmg160.h"
 
-अटल स्थिर काष्ठा regmap_config bmg160_regmap_spi_conf = अणु
+static const struct regmap_config bmg160_regmap_spi_conf = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0x3f,
-पूर्ण;
+	.max_register = 0x3f,
+};
 
-अटल पूर्णांक bmg160_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+static int bmg160_spi_probe(struct spi_device *spi)
+{
+	struct regmap *regmap;
+	const struct spi_device_id *id = spi_get_device_id(spi);
 
 	regmap = devm_regmap_init_spi(spi, &bmg160_regmap_spi_conf);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&spi->dev, "Failed to register spi regmap: %pe\n",
 			regmap);
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	वापस bmg160_core_probe(&spi->dev, regmap, spi->irq, id->name);
-पूर्ण
+	return bmg160_core_probe(&spi->dev, regmap, spi->irq, id->name);
+}
 
-अटल पूर्णांक bmg160_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	bmg160_core_हटाओ(&spi->dev);
+static int bmg160_spi_remove(struct spi_device *spi)
+{
+	bmg160_core_remove(&spi->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id bmg160_spi_id[] = अणु
-	अणु"bmg160", 0पूर्ण,
-	अणु"bmi055_gyro", 0पूर्ण,
-	अणु"bmi088_gyro", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id bmg160_spi_id[] = {
+	{"bmg160", 0},
+	{"bmi055_gyro", 0},
+	{"bmi088_gyro", 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(spi, bmg160_spi_id);
 
-अटल काष्ठा spi_driver bmg160_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver bmg160_spi_driver = {
+	.driver = {
 		.name	= "bmg160_spi",
 		.pm	= &bmg160_pm_ops,
-	पूर्ण,
+	},
 	.probe		= bmg160_spi_probe,
-	.हटाओ		= bmg160_spi_हटाओ,
+	.remove		= bmg160_spi_remove,
 	.id_table	= bmg160_spi_id,
-पूर्ण;
+};
 module_spi_driver(bmg160_spi_driver);
 
 MODULE_AUTHOR("Markus Pargmann <mpa@pengutronix.de>");

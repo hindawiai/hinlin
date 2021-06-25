@@ -1,185 +1,184 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _CORESIGHT_CORESIGHT_ETM_H
-#घोषणा _CORESIGHT_CORESIGHT_ETM_H
+#ifndef _CORESIGHT_CORESIGHT_ETM_H
+#define _CORESIGHT_CORESIGHT_ETM_H
 
-#समावेश <यंत्र/local.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश "coresight-priv.h"
+#include <asm/local.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include "coresight-priv.h"
 
 /*
- * Device रेजिस्टरs:
- * 0x000 - 0x2FC: Trace		रेजिस्टरs
- * 0x300 - 0x314: Management	रेजिस्टरs
- * 0x318 - 0xEFC: Trace		रेजिस्टरs
- * 0xF00: Management		रेजिस्टरs
- * 0xFA0 - 0xFA4: Trace		रेजिस्टरs
- * 0xFA8 - 0xFFC: Management	रेजिस्टरs
+ * Device registers:
+ * 0x000 - 0x2FC: Trace		registers
+ * 0x300 - 0x314: Management	registers
+ * 0x318 - 0xEFC: Trace		registers
+ * 0xF00: Management		registers
+ * 0xFA0 - 0xFA4: Trace		registers
+ * 0xFA8 - 0xFFC: Management	registers
  */
-/* Trace रेजिस्टरs (0x000-0x2FC) */
-/* Main control and configuration रेजिस्टरs */
-#घोषणा TRCPRGCTLR			0x004
-#घोषणा TRCPROCSELR			0x008
-#घोषणा TRCSTATR			0x00C
-#घोषणा TRCCONFIGR			0x010
-#घोषणा TRCAUXCTLR			0x018
-#घोषणा TRCEVENTCTL0R			0x020
-#घोषणा TRCEVENTCTL1R			0x024
-#घोषणा TRCRSR				0x028
-#घोषणा TRCSTALLCTLR			0x02C
-#घोषणा TRCTSCTLR			0x030
-#घोषणा TRCSYNCPR			0x034
-#घोषणा TRCCCCTLR			0x038
-#घोषणा TRCBBCTLR			0x03C
-#घोषणा TRCTRACEIDR			0x040
-#घोषणा TRCQCTLR			0x044
-/* Filtering control रेजिस्टरs */
-#घोषणा TRCVICTLR			0x080
-#घोषणा TRCVIIECTLR			0x084
-#घोषणा TRCVISSCTLR			0x088
-#घोषणा TRCVIPCSSCTLR			0x08C
-#घोषणा TRCVDCTLR			0x0A0
-#घोषणा TRCVDSACCTLR			0x0A4
-#घोषणा TRCVDARCCTLR			0x0A8
-/* Derived resources रेजिस्टरs */
-#घोषणा TRCSEQEVRn(n)			(0x100 + (n * 4)) /* n = 0-2 */
-#घोषणा TRCSEQRSTEVR			0x118
-#घोषणा TRCSEQSTR			0x11C
-#घोषणा TRCEXTINSELR			0x120
-#घोषणा TRCEXTINSELRn(n)		(0x120 + (n * 4)) /* n = 0-3 */
-#घोषणा TRCCNTRLDVRn(n)			(0x140 + (n * 4)) /* n = 0-3 */
-#घोषणा TRCCNTCTLRn(n)			(0x150 + (n * 4)) /* n = 0-3 */
-#घोषणा TRCCNTVRn(n)			(0x160 + (n * 4)) /* n = 0-3 */
-/* ID रेजिस्टरs */
-#घोषणा TRCIDR8				0x180
-#घोषणा TRCIDR9				0x184
-#घोषणा TRCIDR10			0x188
-#घोषणा TRCIDR11			0x18C
-#घोषणा TRCIDR12			0x190
-#घोषणा TRCIDR13			0x194
-#घोषणा TRCIMSPEC0			0x1C0
-#घोषणा TRCIMSPECn(n)			(0x1C0 + (n * 4)) /* n = 1-7 */
-#घोषणा TRCIDR0				0x1E0
-#घोषणा TRCIDR1				0x1E4
-#घोषणा TRCIDR2				0x1E8
-#घोषणा TRCIDR3				0x1EC
-#घोषणा TRCIDR4				0x1F0
-#घोषणा TRCIDR5				0x1F4
-#घोषणा TRCIDR6				0x1F8
-#घोषणा TRCIDR7				0x1FC
+/* Trace registers (0x000-0x2FC) */
+/* Main control and configuration registers */
+#define TRCPRGCTLR			0x004
+#define TRCPROCSELR			0x008
+#define TRCSTATR			0x00C
+#define TRCCONFIGR			0x010
+#define TRCAUXCTLR			0x018
+#define TRCEVENTCTL0R			0x020
+#define TRCEVENTCTL1R			0x024
+#define TRCRSR				0x028
+#define TRCSTALLCTLR			0x02C
+#define TRCTSCTLR			0x030
+#define TRCSYNCPR			0x034
+#define TRCCCCTLR			0x038
+#define TRCBBCTLR			0x03C
+#define TRCTRACEIDR			0x040
+#define TRCQCTLR			0x044
+/* Filtering control registers */
+#define TRCVICTLR			0x080
+#define TRCVIIECTLR			0x084
+#define TRCVISSCTLR			0x088
+#define TRCVIPCSSCTLR			0x08C
+#define TRCVDCTLR			0x0A0
+#define TRCVDSACCTLR			0x0A4
+#define TRCVDARCCTLR			0x0A8
+/* Derived resources registers */
+#define TRCSEQEVRn(n)			(0x100 + (n * 4)) /* n = 0-2 */
+#define TRCSEQRSTEVR			0x118
+#define TRCSEQSTR			0x11C
+#define TRCEXTINSELR			0x120
+#define TRCEXTINSELRn(n)		(0x120 + (n * 4)) /* n = 0-3 */
+#define TRCCNTRLDVRn(n)			(0x140 + (n * 4)) /* n = 0-3 */
+#define TRCCNTCTLRn(n)			(0x150 + (n * 4)) /* n = 0-3 */
+#define TRCCNTVRn(n)			(0x160 + (n * 4)) /* n = 0-3 */
+/* ID registers */
+#define TRCIDR8				0x180
+#define TRCIDR9				0x184
+#define TRCIDR10			0x188
+#define TRCIDR11			0x18C
+#define TRCIDR12			0x190
+#define TRCIDR13			0x194
+#define TRCIMSPEC0			0x1C0
+#define TRCIMSPECn(n)			(0x1C0 + (n * 4)) /* n = 1-7 */
+#define TRCIDR0				0x1E0
+#define TRCIDR1				0x1E4
+#define TRCIDR2				0x1E8
+#define TRCIDR3				0x1EC
+#define TRCIDR4				0x1F0
+#define TRCIDR5				0x1F4
+#define TRCIDR6				0x1F8
+#define TRCIDR7				0x1FC
 /*
- * Resource selection रेजिस्टरs, n = 2-31.
+ * Resource selection registers, n = 2-31.
  * First pair (regs 0, 1) is always present and is reserved.
  */
-#घोषणा TRCRSCTLRn(n)			(0x200 + (n * 4))
-/* Single-shot comparator रेजिस्टरs, n = 0-7 */
-#घोषणा TRCSSCCRn(n)			(0x280 + (n * 4))
-#घोषणा TRCSSCSRn(n)			(0x2A0 + (n * 4))
-#घोषणा TRCSSPCICRn(n)			(0x2C0 + (n * 4))
-/* Management रेजिस्टरs (0x300-0x314) */
-#घोषणा TRCOSLAR			0x300
-#घोषणा TRCOSLSR			0x304
-#घोषणा TRCPDCR				0x310
-#घोषणा TRCPDSR				0x314
-/* Trace रेजिस्टरs (0x318-0xEFC) */
-/* Address Comparator रेजिस्टरs n = 0-15 */
-#घोषणा TRCACVRn(n)			(0x400 + (n * 8))
-#घोषणा TRCACATRn(n)			(0x480 + (n * 8))
-/* Data Value Comparator Value रेजिस्टरs, n = 0-7 */
-#घोषणा TRCDVCVRn(n)			(0x500 + (n * 16))
-#घोषणा TRCDVCMRn(n)			(0x580 + (n * 16))
+#define TRCRSCTLRn(n)			(0x200 + (n * 4))
+/* Single-shot comparator registers, n = 0-7 */
+#define TRCSSCCRn(n)			(0x280 + (n * 4))
+#define TRCSSCSRn(n)			(0x2A0 + (n * 4))
+#define TRCSSPCICRn(n)			(0x2C0 + (n * 4))
+/* Management registers (0x300-0x314) */
+#define TRCOSLAR			0x300
+#define TRCOSLSR			0x304
+#define TRCPDCR				0x310
+#define TRCPDSR				0x314
+/* Trace registers (0x318-0xEFC) */
+/* Address Comparator registers n = 0-15 */
+#define TRCACVRn(n)			(0x400 + (n * 8))
+#define TRCACATRn(n)			(0x480 + (n * 8))
+/* Data Value Comparator Value registers, n = 0-7 */
+#define TRCDVCVRn(n)			(0x500 + (n * 16))
+#define TRCDVCMRn(n)			(0x580 + (n * 16))
 /* ContextID/Virtual ContextID comparators, n = 0-7 */
-#घोषणा TRCCIDCVRn(n)			(0x600 + (n * 8))
-#घोषणा TRCVMIDCVRn(n)			(0x640 + (n * 8))
-#घोषणा TRCCIDCCTLR0			0x680
-#घोषणा TRCCIDCCTLR1			0x684
-#घोषणा TRCVMIDCCTLR0			0x688
-#घोषणा TRCVMIDCCTLR1			0x68C
-/* Management रेजिस्टर (0xF00) */
-/* Integration control रेजिस्टरs */
-#घोषणा TRCITCTRL			0xF00
-/* Trace रेजिस्टरs (0xFA0-0xFA4) */
-/* Claim tag रेजिस्टरs */
-#घोषणा TRCCLAIMSET			0xFA0
-#घोषणा TRCCLAIMCLR			0xFA4
-/* Management रेजिस्टरs (0xFA8-0xFFC) */
-#घोषणा TRCDEVAFF0			0xFA8
-#घोषणा TRCDEVAFF1			0xFAC
-#घोषणा TRCLAR				0xFB0
-#घोषणा TRCLSR				0xFB4
-#घोषणा TRCAUTHSTATUS			0xFB8
-#घोषणा TRCDEVARCH			0xFBC
-#घोषणा TRCDEVID			0xFC8
-#घोषणा TRCDEVTYPE			0xFCC
-#घोषणा TRCPIDR4			0xFD0
-#घोषणा TRCPIDR5			0xFD4
-#घोषणा TRCPIDR6			0xFD8
-#घोषणा TRCPIDR7			0xFDC
-#घोषणा TRCPIDR0			0xFE0
-#घोषणा TRCPIDR1			0xFE4
-#घोषणा TRCPIDR2			0xFE8
-#घोषणा TRCPIDR3			0xFEC
-#घोषणा TRCCIDR0			0xFF0
-#घोषणा TRCCIDR1			0xFF4
-#घोषणा TRCCIDR2			0xFF8
-#घोषणा TRCCIDR3			0xFFC
+#define TRCCIDCVRn(n)			(0x600 + (n * 8))
+#define TRCVMIDCVRn(n)			(0x640 + (n * 8))
+#define TRCCIDCCTLR0			0x680
+#define TRCCIDCCTLR1			0x684
+#define TRCVMIDCCTLR0			0x688
+#define TRCVMIDCCTLR1			0x68C
+/* Management register (0xF00) */
+/* Integration control registers */
+#define TRCITCTRL			0xF00
+/* Trace registers (0xFA0-0xFA4) */
+/* Claim tag registers */
+#define TRCCLAIMSET			0xFA0
+#define TRCCLAIMCLR			0xFA4
+/* Management registers (0xFA8-0xFFC) */
+#define TRCDEVAFF0			0xFA8
+#define TRCDEVAFF1			0xFAC
+#define TRCLAR				0xFB0
+#define TRCLSR				0xFB4
+#define TRCAUTHSTATUS			0xFB8
+#define TRCDEVARCH			0xFBC
+#define TRCDEVID			0xFC8
+#define TRCDEVTYPE			0xFCC
+#define TRCPIDR4			0xFD0
+#define TRCPIDR5			0xFD4
+#define TRCPIDR6			0xFD8
+#define TRCPIDR7			0xFDC
+#define TRCPIDR0			0xFE0
+#define TRCPIDR1			0xFE4
+#define TRCPIDR2			0xFE8
+#define TRCPIDR3			0xFEC
+#define TRCCIDR0			0xFF0
+#define TRCCIDR1			0xFF4
+#define TRCCIDR2			0xFF8
+#define TRCCIDR3			0xFFC
 
-#घोषणा TRCRSR_TA			BIT(12)
+#define TRCRSR_TA			BIT(12)
 
 /*
- * System inकाष्ठाions to access ETM रेजिस्टरs.
- * See ETMv4.4 spec ARM IHI0064F section 4.3.6 System inकाष्ठाions
+ * System instructions to access ETM registers.
+ * See ETMv4.4 spec ARM IHI0064F section 4.3.6 System instructions
  */
-#घोषणा ETM4x_OFFSET_TO_REG(x)		((x) >> 2)
+#define ETM4x_OFFSET_TO_REG(x)		((x) >> 2)
 
-#घोषणा ETM4x_CRn(n)			(((n) >> 7) & 0x7)
-#घोषणा ETM4x_Op2(n)			(((n) >> 4) & 0x7)
-#घोषणा ETM4x_CRm(n)			((n) & 0xf)
+#define ETM4x_CRn(n)			(((n) >> 7) & 0x7)
+#define ETM4x_Op2(n)			(((n) >> 4) & 0x7)
+#define ETM4x_CRm(n)			((n) & 0xf)
 
-#समावेश <यंत्र/sysreg.h>
-#घोषणा ETM4x_REG_NUM_TO_SYSREG(n)				\
+#include <asm/sysreg.h>
+#define ETM4x_REG_NUM_TO_SYSREG(n)				\
 	sys_reg(2, 1, ETM4x_CRn(n), ETM4x_CRm(n), ETM4x_Op2(n))
 
-#घोषणा READ_ETM4x_REG(reg)					\
-	पढ़ो_sysreg_s(ETM4x_REG_NUM_TO_SYSREG((reg)))
-#घोषणा WRITE_ETM4x_REG(val, reg)				\
-	ग_लिखो_sysreg_s(val, ETM4x_REG_NUM_TO_SYSREG((reg)))
+#define READ_ETM4x_REG(reg)					\
+	read_sysreg_s(ETM4x_REG_NUM_TO_SYSREG((reg)))
+#define WRITE_ETM4x_REG(val, reg)				\
+	write_sysreg_s(val, ETM4x_REG_NUM_TO_SYSREG((reg)))
 
-#घोषणा पढ़ो_eपंचांग4x_sysreg_स्थिर_offset(offset)			\
+#define read_etm4x_sysreg_const_offset(offset)			\
 	READ_ETM4x_REG(ETM4x_OFFSET_TO_REG(offset))
 
-#घोषणा ग_लिखो_eपंचांग4x_sysreg_स्थिर_offset(val, offset)		\
+#define write_etm4x_sysreg_const_offset(val, offset)		\
 	WRITE_ETM4x_REG(val, ETM4x_OFFSET_TO_REG(offset))
 
-#घोषणा CASE_READ(res, x)					\
-	हाल (x): अणु (res) = पढ़ो_eपंचांग4x_sysreg_स्थिर_offset((x)); अवरोध; पूर्ण
+#define CASE_READ(res, x)					\
+	case (x): { (res) = read_etm4x_sysreg_const_offset((x)); break; }
 
-#घोषणा CASE_WRITE(val, x)					\
-	हाल (x): अणु ग_लिखो_eपंचांग4x_sysreg_स्थिर_offset((val), (x)); अवरोध; पूर्ण
+#define CASE_WRITE(val, x)					\
+	case (x): { write_etm4x_sysreg_const_offset((val), (x)); break; }
 
-#घोषणा CASE_NOP(__unused, x)					\
-	हाल (x):	/* fall through */
+#define CASE_NOP(__unused, x)					\
+	case (x):	/* fall through */
 
-#घोषणा ETE_ONLY_SYSREG_LIST(op, val)		\
+#define ETE_ONLY_SYSREG_LIST(op, val)		\
 	CASE_##op((val), TRCRSR)		\
 	CASE_##op((val), TRCEXTINSELRn(1))	\
 	CASE_##op((val), TRCEXTINSELRn(2))	\
 	CASE_##op((val), TRCEXTINSELRn(3))
 
-/* List of रेजिस्टरs accessible via System inकाष्ठाions */
-#घोषणा ETM4x_ONLY_SYSREG_LIST(op, val)		\
+/* List of registers accessible via System instructions */
+#define ETM4x_ONLY_SYSREG_LIST(op, val)		\
 	CASE_##op((val), TRCPROCSELR)		\
 	CASE_##op((val), TRCVDCTLR)		\
 	CASE_##op((val), TRCVDSACCTLR)		\
 	CASE_##op((val), TRCVDARCCTLR)		\
 	CASE_##op((val), TRCOSLAR)
 
-#घोषणा ETM_COMMON_SYSREG_LIST(op, val)		\
+#define ETM_COMMON_SYSREG_LIST(op, val)		\
 	CASE_##op((val), TRCPRGCTLR)		\
 	CASE_##op((val), TRCSTATR)		\
 	CASE_##op((val), TRCCONFIGR)		\
@@ -366,8 +365,8 @@
 	CASE_##op((val), TRCDEVARCH)		\
 	CASE_##op((val), TRCDEVID)
 
-/* List of रेजिस्टरs only accessible via memory-mapped पूर्णांकerface */
-#घोषणा ETM_MMAP_LIST(op, val)			\
+/* List of registers only accessible via memory-mapped interface */
+#define ETM_MMAP_LIST(op, val)			\
 	CASE_##op((val), TRCDEVTYPE)		\
 	CASE_##op((val), TRCPDCR)		\
 	CASE_##op((val), TRCPDSR)		\
@@ -382,165 +381,165 @@
 	CASE_##op((val), TRCPIDR2)		\
 	CASE_##op((val), TRCPIDR3)
 
-#घोषणा ETM4x_READ_SYSREG_CASES(res)		\
+#define ETM4x_READ_SYSREG_CASES(res)		\
 	ETM_COMMON_SYSREG_LIST(READ, (res))	\
 	ETM4x_ONLY_SYSREG_LIST(READ, (res))
 
-#घोषणा ETM4x_WRITE_SYSREG_CASES(val)		\
+#define ETM4x_WRITE_SYSREG_CASES(val)		\
 	ETM_COMMON_SYSREG_LIST(WRITE, (val))	\
 	ETM4x_ONLY_SYSREG_LIST(WRITE, (val))
 
-#घोषणा ETM_COMMON_SYSREG_LIST_CASES		\
+#define ETM_COMMON_SYSREG_LIST_CASES		\
 	ETM_COMMON_SYSREG_LIST(NOP, __unused)
 
-#घोषणा ETM4x_ONLY_SYSREG_LIST_CASES		\
+#define ETM4x_ONLY_SYSREG_LIST_CASES		\
 	ETM4x_ONLY_SYSREG_LIST(NOP, __unused)
 
-#घोषणा ETM4x_SYSREG_LIST_CASES			\
+#define ETM4x_SYSREG_LIST_CASES			\
 	ETM_COMMON_SYSREG_LIST_CASES		\
 	ETM4x_ONLY_SYSREG_LIST(NOP, __unused)
 
-#घोषणा ETM4x_MMAP_LIST_CASES		ETM_MMAP_LIST(NOP, __unused)
+#define ETM4x_MMAP_LIST_CASES		ETM_MMAP_LIST(NOP, __unused)
 
-/* ETE only supports प्रणाली रेजिस्टर access */
-#घोषणा ETE_READ_CASES(res)			\
+/* ETE only supports system register access */
+#define ETE_READ_CASES(res)			\
 	ETM_COMMON_SYSREG_LIST(READ, (res))	\
 	ETE_ONLY_SYSREG_LIST(READ, (res))
 
-#घोषणा ETE_WRITE_CASES(val)			\
+#define ETE_WRITE_CASES(val)			\
 	ETM_COMMON_SYSREG_LIST(WRITE, (val))	\
 	ETE_ONLY_SYSREG_LIST(WRITE, (val))
 
-#घोषणा ETE_ONLY_SYSREG_LIST_CASES		\
+#define ETE_ONLY_SYSREG_LIST_CASES		\
 	ETE_ONLY_SYSREG_LIST(NOP, __unused)
 
-#घोषणा पढ़ो_eपंचांग4x_sysreg_offset(offset, _64bit)				\
-	(अणु									\
+#define read_etm4x_sysreg_offset(offset, _64bit)				\
+	({									\
 		u64 __val;							\
 										\
-		अगर (__builtin_स्थिरant_p((offset)))				\
-			__val = पढ़ो_eपंचांग4x_sysreg_स्थिर_offset((offset));	\
-		अन्यथा								\
-			__val = eपंचांग4x_sysreg_पढ़ो((offset), true, (_64bit));	\
+		if (__builtin_constant_p((offset)))				\
+			__val = read_etm4x_sysreg_const_offset((offset));	\
+		else								\
+			__val = etm4x_sysreg_read((offset), true, (_64bit));	\
 		__val;								\
-	 पूर्ण)
+	 })
 
-#घोषणा ग_लिखो_eपंचांग4x_sysreg_offset(val, offset, _64bit)			\
-	करो अणु								\
-		अगर (__builtin_स्थिरant_p((offset)))			\
-			ग_लिखो_eपंचांग4x_sysreg_स्थिर_offset((val),		\
+#define write_etm4x_sysreg_offset(val, offset, _64bit)			\
+	do {								\
+		if (__builtin_constant_p((offset)))			\
+			write_etm4x_sysreg_const_offset((val),		\
 							(offset));	\
-		अन्यथा							\
-			eपंचांग4x_sysreg_ग_लिखो((val), (offset), true,	\
+		else							\
+			etm4x_sysreg_write((val), (offset), true,	\
 					   (_64bit));			\
-	पूर्ण जबतक (0)
+	} while (0)
 
 
-#घोषणा eपंचांग4x_relaxed_पढ़ो32(csa, offset)				\
+#define etm4x_relaxed_read32(csa, offset)				\
 	((u32)((csa)->io_mem ?						\
-		 पढ़ोl_relaxed((csa)->base + (offset)) :		\
-		 पढ़ो_eपंचांग4x_sysreg_offset((offset), false)))
+		 readl_relaxed((csa)->base + (offset)) :		\
+		 read_etm4x_sysreg_offset((offset), false)))
 
-#घोषणा eपंचांग4x_relaxed_पढ़ो64(csa, offset)				\
+#define etm4x_relaxed_read64(csa, offset)				\
 	((u64)((csa)->io_mem ?						\
-		 पढ़ोq_relaxed((csa)->base + (offset)) :		\
-		 पढ़ो_eपंचांग4x_sysreg_offset((offset), true)))
+		 readq_relaxed((csa)->base + (offset)) :		\
+		 read_etm4x_sysreg_offset((offset), true)))
 
-#घोषणा eपंचांग4x_पढ़ो32(csa, offset)					\
-	(अणु								\
-		u32 __val = eपंचांग4x_relaxed_पढ़ो32((csa), (offset));	\
+#define etm4x_read32(csa, offset)					\
+	({								\
+		u32 __val = etm4x_relaxed_read32((csa), (offset));	\
 		__iormb(__val);						\
 		__val;							\
-	 पूर्ण)
+	 })
 
-#घोषणा eपंचांग4x_पढ़ो64(csa, offset)					\
-	(अणु								\
-		u64 __val = eपंचांग4x_relaxed_पढ़ो64((csa), (offset));	\
+#define etm4x_read64(csa, offset)					\
+	({								\
+		u64 __val = etm4x_relaxed_read64((csa), (offset));	\
 		__iormb(__val);						\
 		__val;							\
-	 पूर्ण)
+	 })
 
-#घोषणा eपंचांग4x_relaxed_ग_लिखो32(csa, val, offset)				\
-	करो अणु								\
-		अगर ((csa)->io_mem)					\
-			ग_लिखोl_relaxed((val), (csa)->base + (offset));	\
-		अन्यथा							\
-			ग_लिखो_eपंचांग4x_sysreg_offset((val), (offset),	\
+#define etm4x_relaxed_write32(csa, val, offset)				\
+	do {								\
+		if ((csa)->io_mem)					\
+			writel_relaxed((val), (csa)->base + (offset));	\
+		else							\
+			write_etm4x_sysreg_offset((val), (offset),	\
 						  false);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा eपंचांग4x_relaxed_ग_लिखो64(csa, val, offset)				\
-	करो अणु								\
-		अगर ((csa)->io_mem)					\
-			ग_लिखोq_relaxed((val), (csa)->base + (offset));	\
-		अन्यथा							\
-			ग_लिखो_eपंचांग4x_sysreg_offset((val), (offset),	\
+#define etm4x_relaxed_write64(csa, val, offset)				\
+	do {								\
+		if ((csa)->io_mem)					\
+			writeq_relaxed((val), (csa)->base + (offset));	\
+		else							\
+			write_etm4x_sysreg_offset((val), (offset),	\
 						  true);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा eपंचांग4x_ग_लिखो32(csa, val, offset)					\
-	करो अणु								\
+#define etm4x_write32(csa, val, offset)					\
+	do {								\
 		__iowmb();						\
-		eपंचांग4x_relaxed_ग_लिखो32((csa), (val), (offset));		\
-	पूर्ण जबतक (0)
+		etm4x_relaxed_write32((csa), (val), (offset));		\
+	} while (0)
 
-#घोषणा eपंचांग4x_ग_लिखो64(csa, val, offset)					\
-	करो अणु								\
+#define etm4x_write64(csa, val, offset)					\
+	do {								\
 		__iowmb();						\
-		eपंचांग4x_relaxed_ग_लिखो64((csa), (val), (offset));		\
-	पूर्ण जबतक (0)
+		etm4x_relaxed_write64((csa), (val), (offset));		\
+	} while (0)
 
 
 /* ETMv4 resources */
-#घोषणा ETM_MAX_NR_PE			8
-#घोषणा ETMv4_MAX_CNTR			4
-#घोषणा ETM_MAX_SEQ_STATES		4
-#घोषणा ETM_MAX_EXT_INP_SEL		4
-#घोषणा ETM_MAX_EXT_INP			256
-#घोषणा ETM_MAX_EXT_OUT			4
-#घोषणा ETM_MAX_SINGLE_ADDR_CMP		16
-#घोषणा ETM_MAX_ADDR_RANGE_CMP		(ETM_MAX_SINGLE_ADDR_CMP / 2)
-#घोषणा ETM_MAX_DATA_VAL_CMP		8
-#घोषणा ETMv4_MAX_CTXID_CMP		8
-#घोषणा ETM_MAX_VMID_CMP		8
-#घोषणा ETM_MAX_PE_CMP			8
-#घोषणा ETM_MAX_RES_SEL			32
-#घोषणा ETM_MAX_SS_CMP			8
+#define ETM_MAX_NR_PE			8
+#define ETMv4_MAX_CNTR			4
+#define ETM_MAX_SEQ_STATES		4
+#define ETM_MAX_EXT_INP_SEL		4
+#define ETM_MAX_EXT_INP			256
+#define ETM_MAX_EXT_OUT			4
+#define ETM_MAX_SINGLE_ADDR_CMP		16
+#define ETM_MAX_ADDR_RANGE_CMP		(ETM_MAX_SINGLE_ADDR_CMP / 2)
+#define ETM_MAX_DATA_VAL_CMP		8
+#define ETMv4_MAX_CTXID_CMP		8
+#define ETM_MAX_VMID_CMP		8
+#define ETM_MAX_PE_CMP			8
+#define ETM_MAX_RES_SEL			32
+#define ETM_MAX_SS_CMP			8
 
-#घोषणा ETMv4_SYNC_MASK			0x1F
-#घोषणा ETM_CYC_THRESHOLD_MASK		0xFFF
-#घोषणा ETM_CYC_THRESHOLD_DEFAULT       0x100
-#घोषणा ETMv4_EVENT_MASK		0xFF
-#घोषणा ETM_CNTR_MAX_VAL		0xFFFF
-#घोषणा ETM_TRACEID_MASK		0x3f
+#define ETMv4_SYNC_MASK			0x1F
+#define ETM_CYC_THRESHOLD_MASK		0xFFF
+#define ETM_CYC_THRESHOLD_DEFAULT       0x100
+#define ETMv4_EVENT_MASK		0xFF
+#define ETM_CNTR_MAX_VAL		0xFFFF
+#define ETM_TRACEID_MASK		0x3f
 
 /* ETMv4 programming modes */
-#घोषणा ETM_MODE_EXCLUDE		BIT(0)
-#घोषणा ETM_MODE_LOAD			BIT(1)
-#घोषणा ETM_MODE_STORE			BIT(2)
-#घोषणा ETM_MODE_LOAD_STORE		BIT(3)
-#घोषणा ETM_MODE_BB			BIT(4)
-#घोषणा ETMv4_MODE_CYCACC		BIT(5)
-#घोषणा ETMv4_MODE_CTXID		BIT(6)
-#घोषणा ETM_MODE_VMID			BIT(7)
-#घोषणा ETM_MODE_COND(val)		BMVAL(val, 8, 10)
-#घोषणा ETMv4_MODE_TIMESTAMP		BIT(11)
-#घोषणा ETM_MODE_RETURNSTACK		BIT(12)
-#घोषणा ETM_MODE_QELEM(val)		BMVAL(val, 13, 14)
-#घोषणा ETM_MODE_DATA_TRACE_ADDR	BIT(15)
-#घोषणा ETM_MODE_DATA_TRACE_VAL		BIT(16)
-#घोषणा ETM_MODE_ISTALL			BIT(17)
-#घोषणा ETM_MODE_DSTALL			BIT(18)
-#घोषणा ETM_MODE_ATB_TRIGGER		BIT(19)
-#घोषणा ETM_MODE_LPOVERRIDE		BIT(20)
-#घोषणा ETM_MODE_ISTALL_EN		BIT(21)
-#घोषणा ETM_MODE_DSTALL_EN		BIT(22)
-#घोषणा ETM_MODE_INSTPRIO		BIT(23)
-#घोषणा ETM_MODE_NOOVERFLOW		BIT(24)
-#घोषणा ETM_MODE_TRACE_RESET		BIT(25)
-#घोषणा ETM_MODE_TRACE_ERR		BIT(26)
-#घोषणा ETM_MODE_VIEWINST_STARTSTOP	BIT(27)
-#घोषणा ETMv4_MODE_ALL			(GENMASK(27, 0) | \
+#define ETM_MODE_EXCLUDE		BIT(0)
+#define ETM_MODE_LOAD			BIT(1)
+#define ETM_MODE_STORE			BIT(2)
+#define ETM_MODE_LOAD_STORE		BIT(3)
+#define ETM_MODE_BB			BIT(4)
+#define ETMv4_MODE_CYCACC		BIT(5)
+#define ETMv4_MODE_CTXID		BIT(6)
+#define ETM_MODE_VMID			BIT(7)
+#define ETM_MODE_COND(val)		BMVAL(val, 8, 10)
+#define ETMv4_MODE_TIMESTAMP		BIT(11)
+#define ETM_MODE_RETURNSTACK		BIT(12)
+#define ETM_MODE_QELEM(val)		BMVAL(val, 13, 14)
+#define ETM_MODE_DATA_TRACE_ADDR	BIT(15)
+#define ETM_MODE_DATA_TRACE_VAL		BIT(16)
+#define ETM_MODE_ISTALL			BIT(17)
+#define ETM_MODE_DSTALL			BIT(18)
+#define ETM_MODE_ATB_TRIGGER		BIT(19)
+#define ETM_MODE_LPOVERRIDE		BIT(20)
+#define ETM_MODE_ISTALL_EN		BIT(21)
+#define ETM_MODE_DSTALL_EN		BIT(22)
+#define ETM_MODE_INSTPRIO		BIT(23)
+#define ETM_MODE_NOOVERFLOW		BIT(24)
+#define ETM_MODE_TRACE_RESET		BIT(25)
+#define ETM_MODE_TRACE_ERR		BIT(26)
+#define ETM_MODE_VIEWINST_STARTSTOP	BIT(27)
+#define ETMv4_MODE_ALL			(GENMASK(27, 0) | \
 					 ETM_MODE_EXCL_KERN | \
 					 ETM_MODE_EXCL_USER)
 
@@ -552,169 +551,169 @@
  *	0b010 - Trace OS Lock is implemented.
  *	0b100 - Trace OS Lock is not implemented, unit is controlled by PE OS Lock.
  */
-#घोषणा ETM_OSLOCK_NI		0b000
-#घोषणा ETM_OSLOCK_PRESENT	0b010
-#घोषणा ETM_OSLOCK_PE		0b100
+#define ETM_OSLOCK_NI		0b000
+#define ETM_OSLOCK_PRESENT	0b010
+#define ETM_OSLOCK_PE		0b100
 
-#घोषणा ETM_OSLSR_OSLM(oslsr)	((((oslsr) & GENMASK(4, 3)) >> 2) | (oslsr & 0x1))
+#define ETM_OSLSR_OSLM(oslsr)	((((oslsr) & GENMASK(4, 3)) >> 2) | (oslsr & 0x1))
 
 /*
  * TRCDEVARCH Bit field definitions
  * Bits[31:21]	- ARCHITECT = Always Arm Ltd.
  *                * Bits[31:28] = 0x4
  *                * Bits[27:21] = 0b0111011
- * Bit[20]	- PRESENT,  Indicates the presence of this रेजिस्टर.
+ * Bit[20]	- PRESENT,  Indicates the presence of this register.
  *
  * Bit[19:16]	- REVISION, Revision of the architecture.
  *
- * Bit[15:0]	- ARCHID, Identअगरies this component as an ETM
+ * Bit[15:0]	- ARCHID, Identifies this component as an ETM
  *                * Bits[15:12] - architecture version of ETM
- *                *             = 4 क्रम ETMv4
- *                * Bits[11:0] = 0xA13, architecture part number क्रम ETM.
+ *                *             = 4 for ETMv4
+ *                * Bits[11:0] = 0xA13, architecture part number for ETM.
  */
-#घोषणा ETM_DEVARCH_ARCHITECT_MASK		GENMASK(31, 21)
-#घोषणा ETM_DEVARCH_ARCHITECT_ARM		((0x4 << 28) | (0b0111011 << 21))
-#घोषणा ETM_DEVARCH_PRESENT			BIT(20)
-#घोषणा ETM_DEVARCH_REVISION_SHIFT		16
-#घोषणा ETM_DEVARCH_REVISION_MASK		GENMASK(19, 16)
-#घोषणा ETM_DEVARCH_REVISION(x)			\
+#define ETM_DEVARCH_ARCHITECT_MASK		GENMASK(31, 21)
+#define ETM_DEVARCH_ARCHITECT_ARM		((0x4 << 28) | (0b0111011 << 21))
+#define ETM_DEVARCH_PRESENT			BIT(20)
+#define ETM_DEVARCH_REVISION_SHIFT		16
+#define ETM_DEVARCH_REVISION_MASK		GENMASK(19, 16)
+#define ETM_DEVARCH_REVISION(x)			\
 	(((x) & ETM_DEVARCH_REVISION_MASK) >> ETM_DEVARCH_REVISION_SHIFT)
-#घोषणा ETM_DEVARCH_ARCHID_MASK			GENMASK(15, 0)
-#घोषणा ETM_DEVARCH_ARCHID_ARCH_VER_SHIFT	12
-#घोषणा ETM_DEVARCH_ARCHID_ARCH_VER_MASK	GENMASK(15, 12)
-#घोषणा ETM_DEVARCH_ARCHID_ARCH_VER(x)		\
+#define ETM_DEVARCH_ARCHID_MASK			GENMASK(15, 0)
+#define ETM_DEVARCH_ARCHID_ARCH_VER_SHIFT	12
+#define ETM_DEVARCH_ARCHID_ARCH_VER_MASK	GENMASK(15, 12)
+#define ETM_DEVARCH_ARCHID_ARCH_VER(x)		\
 	(((x) & ETM_DEVARCH_ARCHID_ARCH_VER_MASK) >> ETM_DEVARCH_ARCHID_ARCH_VER_SHIFT)
 
-#घोषणा ETM_DEVARCH_MAKE_ARCHID_ARCH_VER(ver)			\
+#define ETM_DEVARCH_MAKE_ARCHID_ARCH_VER(ver)			\
 	(((ver) << ETM_DEVARCH_ARCHID_ARCH_VER_SHIFT) & ETM_DEVARCH_ARCHID_ARCH_VER_MASK)
 
-#घोषणा ETM_DEVARCH_ARCHID_ARCH_PART(x)		((x) & 0xfffUL)
+#define ETM_DEVARCH_ARCHID_ARCH_PART(x)		((x) & 0xfffUL)
 
-#घोषणा ETM_DEVARCH_MAKE_ARCHID(major)			\
+#define ETM_DEVARCH_MAKE_ARCHID(major)			\
 	((ETM_DEVARCH_MAKE_ARCHID_ARCH_VER(major)) | ETM_DEVARCH_ARCHID_ARCH_PART(0xA13))
 
-#घोषणा ETM_DEVARCH_ARCHID_ETMv4x		ETM_DEVARCH_MAKE_ARCHID(0x4)
-#घोषणा ETM_DEVARCH_ARCHID_ETE			ETM_DEVARCH_MAKE_ARCHID(0x5)
+#define ETM_DEVARCH_ARCHID_ETMv4x		ETM_DEVARCH_MAKE_ARCHID(0x4)
+#define ETM_DEVARCH_ARCHID_ETE			ETM_DEVARCH_MAKE_ARCHID(0x5)
 
-#घोषणा ETM_DEVARCH_ID_MASK						\
+#define ETM_DEVARCH_ID_MASK						\
 	(ETM_DEVARCH_ARCHITECT_MASK | ETM_DEVARCH_ARCHID_MASK | ETM_DEVARCH_PRESENT)
-#घोषणा ETM_DEVARCH_ETMv4x_ARCH						\
+#define ETM_DEVARCH_ETMv4x_ARCH						\
 	(ETM_DEVARCH_ARCHITECT_ARM | ETM_DEVARCH_ARCHID_ETMv4x | ETM_DEVARCH_PRESENT)
-#घोषणा ETM_DEVARCH_ETE_ARCH						\
+#define ETM_DEVARCH_ETE_ARCH						\
 	(ETM_DEVARCH_ARCHITECT_ARM | ETM_DEVARCH_ARCHID_ETE | ETM_DEVARCH_PRESENT)
 
-#घोषणा TRCSTATR_IDLE_BIT		0
-#घोषणा TRCSTATR_PMSTABLE_BIT		1
-#घोषणा ETM_DEFAULT_ADDR_COMP		0
+#define TRCSTATR_IDLE_BIT		0
+#define TRCSTATR_PMSTABLE_BIT		1
+#define ETM_DEFAULT_ADDR_COMP		0
 
-#घोषणा TRCSSCSRn_PC			BIT(3)
+#define TRCSSCSRn_PC			BIT(3)
 
 /* PowerDown Control Register bits */
-#घोषणा TRCPDCR_PU			BIT(3)
+#define TRCPDCR_PU			BIT(3)
 
-#घोषणा TRCACATR_EXLEVEL_SHIFT		8
+#define TRCACATR_EXLEVEL_SHIFT		8
 
 /*
- * Exception level mask क्रम Secure and Non-Secure ELs.
- * ETM defines the bits क्रम EL control (e.g, TRVICTLR, TRCACTRn).
+ * Exception level mask for Secure and Non-Secure ELs.
+ * ETM defines the bits for EL control (e.g, TRVICTLR, TRCACTRn).
  * The Secure and Non-Secure ELs are always to gether.
  * Non-secure EL3 is never implemented.
- * We use the following generic mask as they appear in dअगरferent
- * रेजिस्टरs and this can be shअगरted क्रम the appropriate
+ * We use the following generic mask as they appear in different
+ * registers and this can be shifted for the appropriate
  * fields.
  */
-#घोषणा ETM_EXLEVEL_S_APP		BIT(0)	/* Secure EL0		*/
-#घोषणा ETM_EXLEVEL_S_OS		BIT(1)	/* Secure EL1		*/
-#घोषणा ETM_EXLEVEL_S_HYP		BIT(2)	/* Secure EL2		*/
-#घोषणा ETM_EXLEVEL_S_MON		BIT(3)	/* Secure EL3/Monitor	*/
-#घोषणा ETM_EXLEVEL_NS_APP		BIT(4)	/* NonSecure EL0	*/
-#घोषणा ETM_EXLEVEL_NS_OS		BIT(5)	/* NonSecure EL1	*/
-#घोषणा ETM_EXLEVEL_NS_HYP		BIT(6)	/* NonSecure EL2	*/
+#define ETM_EXLEVEL_S_APP		BIT(0)	/* Secure EL0		*/
+#define ETM_EXLEVEL_S_OS		BIT(1)	/* Secure EL1		*/
+#define ETM_EXLEVEL_S_HYP		BIT(2)	/* Secure EL2		*/
+#define ETM_EXLEVEL_S_MON		BIT(3)	/* Secure EL3/Monitor	*/
+#define ETM_EXLEVEL_NS_APP		BIT(4)	/* NonSecure EL0	*/
+#define ETM_EXLEVEL_NS_OS		BIT(5)	/* NonSecure EL1	*/
+#define ETM_EXLEVEL_NS_HYP		BIT(6)	/* NonSecure EL2	*/
 
-#घोषणा ETM_EXLEVEL_MASK		(GENMASK(6, 0))
-#घोषणा ETM_EXLEVEL_S_MASK		(GENMASK(3, 0))
-#घोषणा ETM_EXLEVEL_NS_MASK		(GENMASK(6, 4))
+#define ETM_EXLEVEL_MASK		(GENMASK(6, 0))
+#define ETM_EXLEVEL_S_MASK		(GENMASK(3, 0))
+#define ETM_EXLEVEL_NS_MASK		(GENMASK(6, 4))
 
 /* access level controls in TRCACATRn */
-#घोषणा TRCACATR_EXLEVEL_SHIFT		8
+#define TRCACATR_EXLEVEL_SHIFT		8
 
 /* access level control in TRCVICTLR */
-#घोषणा TRCVICTLR_EXLEVEL_SHIFT		16
-#घोषणा TRCVICTLR_EXLEVEL_S_SHIFT	16
-#घोषणा TRCVICTLR_EXLEVEL_NS_SHIFT	20
+#define TRCVICTLR_EXLEVEL_SHIFT		16
+#define TRCVICTLR_EXLEVEL_S_SHIFT	16
+#define TRCVICTLR_EXLEVEL_NS_SHIFT	20
 
 /* secure / non secure masks - TRCVICTLR, IDR3 */
-#घोषणा TRCVICTLR_EXLEVEL_MASK		(ETM_EXLEVEL_MASK << TRCVICTLR_EXLEVEL_SHIFT)
-#घोषणा TRCVICTLR_EXLEVEL_S_MASK	(ETM_EXLEVEL_S_MASK << TRCVICTLR_EXLEVEL_SHIFT)
-#घोषणा TRCVICTLR_EXLEVEL_NS_MASK	(ETM_EXLEVEL_NS_MASK << TRCVICTLR_EXLEVEL_SHIFT)
+#define TRCVICTLR_EXLEVEL_MASK		(ETM_EXLEVEL_MASK << TRCVICTLR_EXLEVEL_SHIFT)
+#define TRCVICTLR_EXLEVEL_S_MASK	(ETM_EXLEVEL_S_MASK << TRCVICTLR_EXLEVEL_SHIFT)
+#define TRCVICTLR_EXLEVEL_NS_MASK	(ETM_EXLEVEL_NS_MASK << TRCVICTLR_EXLEVEL_SHIFT)
 
-#घोषणा ETM_TRCIDR1_ARCH_MAJOR_SHIFT	8
-#घोषणा ETM_TRCIDR1_ARCH_MAJOR_MASK	(0xfU << ETM_TRCIDR1_ARCH_MAJOR_SHIFT)
-#घोषणा ETM_TRCIDR1_ARCH_MAJOR(x)	\
+#define ETM_TRCIDR1_ARCH_MAJOR_SHIFT	8
+#define ETM_TRCIDR1_ARCH_MAJOR_MASK	(0xfU << ETM_TRCIDR1_ARCH_MAJOR_SHIFT)
+#define ETM_TRCIDR1_ARCH_MAJOR(x)	\
 	(((x) & ETM_TRCIDR1_ARCH_MAJOR_MASK) >> ETM_TRCIDR1_ARCH_MAJOR_SHIFT)
-#घोषणा ETM_TRCIDR1_ARCH_MINOR_SHIFT	4
-#घोषणा ETM_TRCIDR1_ARCH_MINOR_MASK	(0xfU << ETM_TRCIDR1_ARCH_MINOR_SHIFT)
-#घोषणा ETM_TRCIDR1_ARCH_MINOR(x)	\
+#define ETM_TRCIDR1_ARCH_MINOR_SHIFT	4
+#define ETM_TRCIDR1_ARCH_MINOR_MASK	(0xfU << ETM_TRCIDR1_ARCH_MINOR_SHIFT)
+#define ETM_TRCIDR1_ARCH_MINOR(x)	\
 	(((x) & ETM_TRCIDR1_ARCH_MINOR_MASK) >> ETM_TRCIDR1_ARCH_MINOR_SHIFT)
-#घोषणा ETM_TRCIDR1_ARCH_SHIFT		ETM_TRCIDR1_ARCH_MINOR_SHIFT
-#घोषणा ETM_TRCIDR1_ARCH_MASK		\
+#define ETM_TRCIDR1_ARCH_SHIFT		ETM_TRCIDR1_ARCH_MINOR_SHIFT
+#define ETM_TRCIDR1_ARCH_MASK		\
 	(ETM_TRCIDR1_ARCH_MAJOR_MASK | ETM_TRCIDR1_ARCH_MINOR_MASK)
 
-#घोषणा ETM_TRCIDR1_ARCH_ETMv4		0x4
+#define ETM_TRCIDR1_ARCH_ETMv4		0x4
 
 /*
  * Driver representation of the ETM architecture.
  * The version of an ETM component can be detected from
  *
- * TRCDEVARCH	- CoreSight architected रेजिस्टर
+ * TRCDEVARCH	- CoreSight architected register
  *                - Bits[15:12] - Major version
  *                - Bits[19:16] - Minor version
- * TRCIDR1	- ETM architected रेजिस्टर
+ * TRCIDR1	- ETM architected register
  *                - Bits[11:8] - Major version
  *                - Bits[7:4]  - Minor version
- * We must rely on TRCDEVARCH क्रम the version inक्रमmation,
- * however we करोn't want to अवरोध the support क्रम potential
+ * We must rely on TRCDEVARCH for the version information,
+ * however we don't want to break the support for potential
  * old implementations which might not implement it. Thus
- * we fall back to TRCIDR1 अगर TRCDEVARCH is not implemented
- * क्रम memory mapped components.
+ * we fall back to TRCIDR1 if TRCDEVARCH is not implemented
+ * for memory mapped components.
  * Now to make certain decisions easier based on the version
- * we use an पूर्णांकernal representation of the version in the
+ * we use an internal representation of the version in the
  * driver, as follows :
  *
  * ETM_ARCH_VERSION[7:0], where :
  *      Bits[7:4] - Major version
  *      Bits[3:0] - Minro version
  */
-#घोषणा ETM_ARCH_VERSION(major, minor)		\
+#define ETM_ARCH_VERSION(major, minor)		\
 	((((major) & 0xfU) << 4) | (((minor) & 0xfU)))
-#घोषणा ETM_ARCH_MAJOR_VERSION(arch)	(((arch) >> 4) & 0xfU)
-#घोषणा ETM_ARCH_MINOR_VERSION(arch)	((arch) & 0xfU)
+#define ETM_ARCH_MAJOR_VERSION(arch)	(((arch) >> 4) & 0xfU)
+#define ETM_ARCH_MINOR_VERSION(arch)	((arch) & 0xfU)
 
-#घोषणा ETM_ARCH_V4	ETM_ARCH_VERSION(4, 0)
-#घोषणा ETM_ARCH_ETE	ETM_ARCH_VERSION(5, 0)
+#define ETM_ARCH_V4	ETM_ARCH_VERSION(4, 0)
+#define ETM_ARCH_ETE	ETM_ARCH_VERSION(5, 0)
 
 /* Interpretation of resource numbers change at ETM v4.3 architecture */
-#घोषणा ETM_ARCH_V4_3	ETM_ARCH_VERSION(4, 3)
+#define ETM_ARCH_V4_3	ETM_ARCH_VERSION(4, 3)
 
-अटल अंतरभूत u8 eपंचांग_devarch_to_arch(u32 devarch)
-अणु
-	वापस ETM_ARCH_VERSION(ETM_DEVARCH_ARCHID_ARCH_VER(devarch),
+static inline u8 etm_devarch_to_arch(u32 devarch)
+{
+	return ETM_ARCH_VERSION(ETM_DEVARCH_ARCHID_ARCH_VER(devarch),
 				ETM_DEVARCH_REVISION(devarch));
-पूर्ण
+}
 
-अटल अंतरभूत u8 eपंचांग_trcidr_to_arch(u32 trcidr1)
-अणु
-	वापस ETM_ARCH_VERSION(ETM_TRCIDR1_ARCH_MAJOR(trcidr1),
+static inline u8 etm_trcidr_to_arch(u32 trcidr1)
+{
+	return ETM_ARCH_VERSION(ETM_TRCIDR1_ARCH_MAJOR(trcidr1),
 				ETM_TRCIDR1_ARCH_MINOR(trcidr1));
-पूर्ण
+}
 
-क्रमागत eपंचांग_impdef_type अणु
+enum etm_impdef_type {
 	ETM4_IMPDEF_HISI_CORE_COMMIT,
 	ETM4_IMPDEF_FEATURE_MAX,
-पूर्ण;
+};
 
 /**
- * काष्ठा eपंचांगv4_config - configuration inक्रमmation related to an ETMv4
+ * struct etmv4_config - configuration information related to an ETMv4
  * @mode:	Controls various modes supported by this ETM.
  * @pe_sel:	Controls which PE to trace.
  * @cfg:	Controls the tracing options.
@@ -722,47 +721,47 @@
  * @eventctrl1: Controls the behavior of the events that @event_ctrl0 selects.
  * @stallctl:	If functionality that prevents trace unit buffer overflows
  *		is available.
- * @ts_ctrl:	Controls the insertion of global बारtamps in the
+ * @ts_ctrl:	Controls the insertion of global timestamps in the
  *		trace streams.
  * @syncfreq:	Controls how often trace synchronization requests occur.
- *		the TRCCCCTLR रेजिस्टर.
- * @ccctlr:	Sets the threshold value क्रम cycle counting.
- * @vinst_ctrl:	Controls inकाष्ठाion trace filtering.
- * @viiectlr:	Set or पढ़ो, the address range comparators.
- * @vissctlr:	Set, or पढ़ो, the single address comparators that control the
+ *		the TRCCCCTLR register.
+ * @ccctlr:	Sets the threshold value for cycle counting.
+ * @vinst_ctrl:	Controls instruction trace filtering.
+ * @viiectlr:	Set or read, the address range comparators.
+ * @vissctlr:	Set, or read, the single address comparators that control the
  *		ViewInst start-stop logic.
- * @vipcssctlr:	Set, or पढ़ो, which PE comparator inमाला_दो can control the
+ * @vipcssctlr:	Set, or read, which PE comparator inputs can control the
  *		ViewInst start-stop logic.
  * @seq_idx:	Sequencor index selector.
- * @seq_ctrl:	Control क्रम the sequencer state transition control रेजिस्टर.
+ * @seq_ctrl:	Control for the sequencer state transition control register.
  * @seq_rst:	Moves the sequencer to state 0 when a programmed event occurs.
- * @seq_state:	Set, or पढ़ो the sequencer state.
+ * @seq_state:	Set, or read the sequencer state.
  * @cntr_idx:	Counter index seletor.
- * @cntrldvr:	Sets or वापसs the reload count value क्रम a counter.
+ * @cntrldvr:	Sets or returns the reload count value for a counter.
  * @cntr_ctrl:	Controls the operation of a counter.
- * @cntr_val:	Sets or वापसs the value क्रम a counter.
+ * @cntr_val:	Sets or returns the value for a counter.
  * @res_idx:	Resource index selector.
  * @res_ctrl:	Controls the selection of the resources in the trace unit.
  * @ss_idx:	Single-shot index selector.
  * @ss_ctrl:	Controls the corresponding single-shot comparator resource.
  * @ss_status:	The status of the corresponding single-shot comparator.
- * @ss_pe_cmp:	Selects the PE comparator inमाला_दो क्रम Single-shot control.
+ * @ss_pe_cmp:	Selects the PE comparator inputs for Single-shot control.
  * @addr_idx:	Address comparator index selector.
- * @addr_val:	Value क्रम address comparator.
+ * @addr_val:	Value for address comparator.
  * @addr_acc:	Address comparator access type.
- * @addr_type:	Current status of the comparator रेजिस्टर.
+ * @addr_type:	Current status of the comparator register.
  * @ctxid_idx:	Context ID index selector.
  * @ctxid_pid:	Value of the context ID comparator.
- * @ctxid_mask0:Context ID comparator mask क्रम comparator 0-3.
- * @ctxid_mask1:Context ID comparator mask क्रम comparator 4-7.
+ * @ctxid_mask0:Context ID comparator mask for comparator 0-3.
+ * @ctxid_mask1:Context ID comparator mask for comparator 4-7.
  * @vmid_idx:	VM ID index selector.
  * @vmid_val:	Value of the VM ID comparator.
- * @vmid_mask0:	VM ID comparator mask क्रम comparator 0-3.
- * @vmid_mask1:	VM ID comparator mask क्रम comparator 4-7.
+ * @vmid_mask0:	VM ID comparator mask for comparator 0-3.
+ * @vmid_mask1:	VM ID comparator mask for comparator 4-7.
  * @ext_inp:	External input selection.
  * @s_ex_level: Secure ELs where tracing is supported.
  */
-काष्ठा eपंचांगv4_config अणु
+struct etmv4_config {
 	u32				mode;
 	u32				pe_sel;
 	u32				cfg;
@@ -805,12 +804,12 @@
 	u32				vmid_mask1;
 	u32				ext_inp;
 	u8				s_ex_level;
-पूर्ण;
+};
 
 /**
- * काष्ठा eपंचांग4_save_state - state to be preserved when ETM is without घातer
+ * struct etm4_save_state - state to be preserved when ETM is without power
  */
-काष्ठा eपंचांगv4_save_state अणु
+struct etmv4_save_state {
 	u32	trcprgctlr;
 	u32	trcprocselr;
 	u32	trcconfigr;
@@ -864,76 +863,76 @@
 	u32	ss_status[ETM_MAX_SS_CMP];
 
 	u32	trcpdcr;
-पूर्ण;
+};
 
 /**
- * काष्ठा eपंचांग4_drvdata - specअगरics associated to an ETM component
- * @base:       Memory mapped base address क्रम this component.
+ * struct etm4_drvdata - specifics associated to an ETM component
+ * @base:       Memory mapped base address for this component.
  * @csdev:      Component vitals needed by the framework.
- * @spinlock:   Only one at a समय pls.
+ * @spinlock:   Only one at a time pls.
  * @mode:	This tracer's mode, i.e sysFS, Perf or disabled.
  * @cpu:        The cpu this component is affined to.
  * @arch:       ETM architecture version.
- * @nr_pe:	The number of processing entity available क्रम tracing.
- * @nr_pe_cmp:	The number of processing entity comparator inमाला_दो that are
- *		available क्रम tracing.
+ * @nr_pe:	The number of processing entity available for tracing.
+ * @nr_pe_cmp:	The number of processing entity comparator inputs that are
+ *		available for tracing.
  * @nr_addr_cmp:Number of pairs of address comparators available
  *		as found in ETMIDR4 0-3.
  * @nr_cntr:    Number of counters as found in ETMIDR5 bit 28-30.
- * @nr_ext_inp: Number of बाह्यal input.
+ * @nr_ext_inp: Number of external input.
  * @numcidc:	Number of contextID comparators.
  * @numvmidc:	Number of VMID comparators.
  * @nrseqstate: The number of sequencer states that are implemented.
  * @nr_event:	Indicates how many events the trace unit support.
- * @nr_resource:The number of resource selection pairs available क्रम tracing.
+ * @nr_resource:The number of resource selection pairs available for tracing.
  * @nr_ss_cmp:	Number of single-shot comparator controls that are available.
- * @trcid:	value of the current ID क्रम this component.
+ * @trcid:	value of the current ID for this component.
  * @trcid_size: Indicates the trace ID width.
- * @ts_size:	Global बारtamp size field.
+ * @ts_size:	Global timestamp size field.
  * @ctxid_size:	Size of the context ID field to consider.
  * @vmid_size:	Size of the VM ID comparator to consider.
  * @ccsize:	Indicates the size of the cycle counter in bits.
- * @cciपंचांगin:	minimum value that can be programmed in
- * @s_ex_level:	In secure state, indicates whether inकाष्ठाion tracing is
- *		supported क्रम the corresponding Exception level.
- * @ns_ex_level:In non-secure state, indicates whether inकाष्ठाion tracing is
- *		supported क्रम the corresponding Exception level.
- * @sticky_enable: true अगर ETM base configuration has been करोne.
- * @boot_enable:True अगर we should start tracing at boot समय.
- * @os_unlock:  True अगर access to management रेजिस्टरs is allowed.
- * @instrp0:	Tracing of load and store inकाष्ठाions
+ * @ccitmin:	minimum value that can be programmed in
+ * @s_ex_level:	In secure state, indicates whether instruction tracing is
+ *		supported for the corresponding Exception level.
+ * @ns_ex_level:In non-secure state, indicates whether instruction tracing is
+ *		supported for the corresponding Exception level.
+ * @sticky_enable: true if ETM base configuration has been done.
+ * @boot_enable:True if we should start tracing at boot time.
+ * @os_unlock:  True if access to management registers is allowed.
+ * @instrp0:	Tracing of load and store instructions
  *		as P0 elements is supported.
- * @trcbb:	Indicates अगर the trace unit supports branch broadcast tracing.
+ * @trcbb:	Indicates if the trace unit supports branch broadcast tracing.
  * @trccond:	If the trace unit supports conditional
- *		inकाष्ठाion tracing.
- * @retstack:	Indicates अगर the implementation supports a वापस stack.
- * @trccci:	Indicates अगर the trace unit supports cycle counting
- *		क्रम inकाष्ठाion.
- * @q_support:	Q element support अक्षरacteristics.
- * @trc_error:	Whether a trace unit can trace a प्रणाली
+ *		instruction tracing.
+ * @retstack:	Indicates if the implementation supports a return stack.
+ * @trccci:	Indicates if the trace unit supports cycle counting
+ *		for instruction.
+ * @q_support:	Q element support characteristics.
+ * @trc_error:	Whether a trace unit can trace a system
  *		error exception.
- * @syncpr:	Indicates अगर an implementation has a fixed
+ * @syncpr:	Indicates if an implementation has a fixed
  *		synchronization period.
  * @stall_ctrl:	Enables trace unit functionality that prevents trace
  *		unit buffer overflows.
- * @sysstall:	Does the प्रणाली support stall control of the PE?
- * @nooverflow:	Indicate अगर overflow prevention is supported.
+ * @sysstall:	Does the system support stall control of the PE?
+ * @nooverflow:	Indicate if overflow prevention is supported.
  * @atbtrig:	If the implementation can support ATB triggers
- * @lpoverride:	If the implementation can support low-घातer state over.
+ * @lpoverride:	If the implementation can support low-power state over.
  * @trfc:	If the implementation supports Arm v8.4 trace filter controls.
- * @config:	काष्ठाure holding configuration parameters.
- * @save_state:	State to be preserved across घातer loss
- * @state_needs_restore: True when there is context to restore after PM निकास
- * @skip_घातer_up: Indicates अगर an implementation can skip घातering up
+ * @config:	structure holding configuration parameters.
+ * @save_state:	State to be preserved across power loss
+ * @state_needs_restore: True when there is context to restore after PM exit
+ * @skip_power_up: Indicates if an implementation can skip powering up
  *		   the trace unit.
- * @arch_features: Biपंचांगap of arch features of eपंचांगv4 devices.
+ * @arch_features: Bitmap of arch features of etmv4 devices.
  */
-काष्ठा eपंचांगv4_drvdata अणु
-	व्योम __iomem			*base;
-	काष्ठा coresight_device		*csdev;
+struct etmv4_drvdata {
+	void __iomem			*base;
+	struct coresight_device		*csdev;
 	spinlock_t			spinlock;
 	local_t				mode;
-	पूर्णांक				cpu;
+	int				cpu;
 	u8				arch;
 	u8				nr_pe;
 	u8				nr_pe_cmp;
@@ -952,7 +951,7 @@
 	u8				ctxid_size;
 	u8				vmid_size;
 	u8				ccsize;
-	u8				cciपंचांगin;
+	u8				ccitmin;
 	u8				s_ex_level;
 	u8				ns_ex_level;
 	u8				q_support;
@@ -973,37 +972,37 @@
 	bool				atbtrig;
 	bool				lpoverride;
 	bool				trfc;
-	काष्ठा eपंचांगv4_config		config;
-	काष्ठा eपंचांगv4_save_state		*save_state;
+	struct etmv4_config		config;
+	struct etmv4_save_state		*save_state;
 	bool				state_needs_restore;
-	bool				skip_घातer_up;
+	bool				skip_power_up;
 	DECLARE_BITMAP(arch_features, ETM4_IMPDEF_FEATURE_MAX);
-पूर्ण;
+};
 
 /* Address comparator access types */
-क्रमागत eपंचांग_addr_acctype अणु
+enum etm_addr_acctype {
 	ETM_INSTR_ADDR,
 	ETM_DATA_LOAD_ADDR,
 	ETM_DATA_STORE_ADDR,
 	ETM_DATA_LOAD_STORE_ADDR,
-पूर्ण;
+};
 
 /* Address comparator context types */
-क्रमागत eपंचांग_addr_ctxtype अणु
+enum etm_addr_ctxtype {
 	ETM_CTX_NONE,
 	ETM_CTX_CTXID,
 	ETM_CTX_VMID,
 	ETM_CTX_CTXID_VMID,
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा attribute_group *coresight_eपंचांगv4_groups[];
-व्योम eपंचांग4_config_trace_mode(काष्ठा eपंचांगv4_config *config);
+extern const struct attribute_group *coresight_etmv4_groups[];
+void etm4_config_trace_mode(struct etmv4_config *config);
 
-u64 eपंचांग4x_sysreg_पढ़ो(u32 offset, bool _relaxed, bool _64bit);
-व्योम eपंचांग4x_sysreg_ग_लिखो(u64 val, u32 offset, bool _relaxed, bool _64bit);
+u64 etm4x_sysreg_read(u32 offset, bool _relaxed, bool _64bit);
+void etm4x_sysreg_write(u64 val, u32 offset, bool _relaxed, bool _64bit);
 
-अटल अंतरभूत bool eपंचांग4x_is_ete(काष्ठा eपंचांगv4_drvdata *drvdata)
-अणु
-	वापस drvdata->arch >= ETM_ARCH_ETE;
-पूर्ण
-#पूर्ण_अगर
+static inline bool etm4x_is_ete(struct etmv4_drvdata *drvdata)
+{
+	return drvdata->arch >= ETM_ARCH_ETE;
+}
+#endif

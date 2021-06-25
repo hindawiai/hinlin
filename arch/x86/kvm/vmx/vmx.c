@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Kernel-based Virtual Machine driver क्रम Linux
+ * Kernel-based Virtual Machine driver for Linux
  *
- * This module enables machines with Intel VT-x extensions to run भव
+ * This module enables machines with Intel VT-x extensions to run virtual
  * machines without emulation or binary translation.
  *
  * Copyright (C) 2006 Qumranet, Inc.
@@ -14,139 +13,139 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/objtool.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/smt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tboot.h>
-#समावेश <linux/trace_events.h>
-#समावेश <linux/entry-kvm.h>
+#include <linux/highmem.h>
+#include <linux/hrtimer.h>
+#include <linux/kernel.h>
+#include <linux/kvm_host.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/mod_devicetable.h>
+#include <linux/mm.h>
+#include <linux/objtool.h>
+#include <linux/sched.h>
+#include <linux/sched/smt.h>
+#include <linux/slab.h>
+#include <linux/tboot.h>
+#include <linux/trace_events.h>
+#include <linux/entry-kvm.h>
 
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu_device_id.h>
-#समावेश <यंत्र/debugreg.h>
-#समावेश <यंत्र/desc.h>
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>
-#समावेश <यंत्र/idtentry.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq_remapping.h>
-#समावेश <यंत्र/kexec.h>
-#समावेश <यंत्र/perf_event.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/mshyperv.h>
-#समावेश <यंत्र/mरुको.h>
-#समावेश <यंत्र/spec-ctrl.h>
-#समावेश <यंत्र/virtext.h>
-#समावेश <यंत्र/vmx.h>
+#include <asm/apic.h>
+#include <asm/asm.h>
+#include <asm/cpu.h>
+#include <asm/cpu_device_id.h>
+#include <asm/debugreg.h>
+#include <asm/desc.h>
+#include <asm/fpu/internal.h>
+#include <asm/idtentry.h>
+#include <asm/io.h>
+#include <asm/irq_remapping.h>
+#include <asm/kexec.h>
+#include <asm/perf_event.h>
+#include <asm/mmu_context.h>
+#include <asm/mshyperv.h>
+#include <asm/mwait.h>
+#include <asm/spec-ctrl.h>
+#include <asm/virtext.h>
+#include <asm/vmx.h>
 
-#समावेश "capabilities.h"
-#समावेश "cpuid.h"
-#समावेश "evmcs.h"
-#समावेश "hyperv.h"
-#समावेश "irq.h"
-#समावेश "kvm_cache_regs.h"
-#समावेश "lapic.h"
-#समावेश "mmu.h"
-#समावेश "nested.h"
-#समावेश "pmu.h"
-#समावेश "sgx.h"
-#समावेश "trace.h"
-#समावेश "vmcs.h"
-#समावेश "vmcs12.h"
-#समावेश "vmx.h"
-#समावेश "x86.h"
+#include "capabilities.h"
+#include "cpuid.h"
+#include "evmcs.h"
+#include "hyperv.h"
+#include "irq.h"
+#include "kvm_cache_regs.h"
+#include "lapic.h"
+#include "mmu.h"
+#include "nested.h"
+#include "pmu.h"
+#include "sgx.h"
+#include "trace.h"
+#include "vmcs.h"
+#include "vmcs12.h"
+#include "vmx.h"
+#include "x86.h"
 
 MODULE_AUTHOR("Qumranet");
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित MODULE
-अटल स्थिर काष्ठा x86_cpu_id vmx_cpu_id[] = अणु
-	X86_MATCH_FEATURE(X86_FEATURE_VMX, शून्य),
-	अणुपूर्ण
-पूर्ण;
+#ifdef MODULE
+static const struct x86_cpu_id vmx_cpu_id[] = {
+	X86_MATCH_FEATURE(X86_FEATURE_VMX, NULL),
+	{}
+};
 MODULE_DEVICE_TABLE(x86cpu, vmx_cpu_id);
-#पूर्ण_अगर
+#endif
 
-bool __पढ़ो_mostly enable_vpid = 1;
+bool __read_mostly enable_vpid = 1;
 module_param_named(vpid, enable_vpid, bool, 0444);
 
-अटल bool __पढ़ो_mostly enable_vnmi = 1;
+static bool __read_mostly enable_vnmi = 1;
 module_param_named(vnmi, enable_vnmi, bool, S_IRUGO);
 
-bool __पढ़ो_mostly flexpriority_enabled = 1;
+bool __read_mostly flexpriority_enabled = 1;
 module_param_named(flexpriority, flexpriority_enabled, bool, S_IRUGO);
 
-bool __पढ़ो_mostly enable_ept = 1;
+bool __read_mostly enable_ept = 1;
 module_param_named(ept, enable_ept, bool, S_IRUGO);
 
-bool __पढ़ो_mostly enable_unrestricted_guest = 1;
+bool __read_mostly enable_unrestricted_guest = 1;
 module_param_named(unrestricted_guest,
 			enable_unrestricted_guest, bool, S_IRUGO);
 
-bool __पढ़ो_mostly enable_ept_ad_bits = 1;
+bool __read_mostly enable_ept_ad_bits = 1;
 module_param_named(eptad, enable_ept_ad_bits, bool, S_IRUGO);
 
-अटल bool __पढ़ो_mostly emulate_invalid_guest_state = true;
+static bool __read_mostly emulate_invalid_guest_state = true;
 module_param(emulate_invalid_guest_state, bool, S_IRUGO);
 
-अटल bool __पढ़ो_mostly fasteoi = 1;
+static bool __read_mostly fasteoi = 1;
 module_param(fasteoi, bool, S_IRUGO);
 
-bool __पढ़ो_mostly enable_apicv = 1;
+bool __read_mostly enable_apicv = 1;
 module_param(enable_apicv, bool, S_IRUGO);
 
 /*
- * If nested=1, nested भवization is supported, i.e., guests may use
- * VMX and be a hypervisor क्रम its own guests. If nested=0, guests may not
- * use VMX inकाष्ठाions.
+ * If nested=1, nested virtualization is supported, i.e., guests may use
+ * VMX and be a hypervisor for its own guests. If nested=0, guests may not
+ * use VMX instructions.
  */
-अटल bool __पढ़ो_mostly nested = 1;
+static bool __read_mostly nested = 1;
 module_param(nested, bool, S_IRUGO);
 
-bool __पढ़ो_mostly enable_pml = 1;
+bool __read_mostly enable_pml = 1;
 module_param_named(pml, enable_pml, bool, S_IRUGO);
 
-अटल bool __पढ़ो_mostly dump_invalid_vmcs = 0;
+static bool __read_mostly dump_invalid_vmcs = 0;
 module_param(dump_invalid_vmcs, bool, 0644);
 
-#घोषणा MSR_BITMAP_MODE_X2APIC		1
-#घोषणा MSR_BITMAP_MODE_X2APIC_APICV	2
+#define MSR_BITMAP_MODE_X2APIC		1
+#define MSR_BITMAP_MODE_X2APIC_APICV	2
 
-#घोषणा KVM_VMX_TSC_MULTIPLIER_MAX     0xffffffffffffffffULL
+#define KVM_VMX_TSC_MULTIPLIER_MAX     0xffffffffffffffffULL
 
-/* Guest_tsc -> host_tsc conversion requires 64-bit भागision.  */
-अटल पूर्णांक __पढ़ो_mostly cpu_preemption_समयr_multi;
-अटल bool __पढ़ो_mostly enable_preemption_समयr = 1;
-#अगर_घोषित CONFIG_X86_64
-module_param_named(preemption_समयr, enable_preemption_समयr, bool, S_IRUGO);
-#पूर्ण_अगर
+/* Guest_tsc -> host_tsc conversion requires 64-bit division.  */
+static int __read_mostly cpu_preemption_timer_multi;
+static bool __read_mostly enable_preemption_timer = 1;
+#ifdef CONFIG_X86_64
+module_param_named(preemption_timer, enable_preemption_timer, bool, S_IRUGO);
+#endif
 
-बाह्य bool __पढ़ो_mostly allow_smaller_maxphyaddr;
+extern bool __read_mostly allow_smaller_maxphyaddr;
 module_param(allow_smaller_maxphyaddr, bool, S_IRUGO);
 
-#घोषणा KVM_VM_CR0_ALWAYS_OFF (X86_CR0_NW | X86_CR0_CD)
-#घोषणा KVM_VM_CR0_ALWAYS_ON_UNRESTRICTED_GUEST X86_CR0_NE
-#घोषणा KVM_VM_CR0_ALWAYS_ON				\
+#define KVM_VM_CR0_ALWAYS_OFF (X86_CR0_NW | X86_CR0_CD)
+#define KVM_VM_CR0_ALWAYS_ON_UNRESTRICTED_GUEST X86_CR0_NE
+#define KVM_VM_CR0_ALWAYS_ON				\
 	(KVM_VM_CR0_ALWAYS_ON_UNRESTRICTED_GUEST | 	\
 	 X86_CR0_WP | X86_CR0_PG | X86_CR0_PE)
 
-#घोषणा KVM_VM_CR4_ALWAYS_ON_UNRESTRICTED_GUEST X86_CR4_VMXE
-#घोषणा KVM_PMODE_VM_CR4_ALWAYS_ON (X86_CR4_PAE | X86_CR4_VMXE)
-#घोषणा KVM_RMODE_VM_CR4_ALWAYS_ON (X86_CR4_VME | X86_CR4_PAE | X86_CR4_VMXE)
+#define KVM_VM_CR4_ALWAYS_ON_UNRESTRICTED_GUEST X86_CR4_VMXE
+#define KVM_PMODE_VM_CR4_ALWAYS_ON (X86_CR4_PAE | X86_CR4_VMXE)
+#define KVM_RMODE_VM_CR4_ALWAYS_ON (X86_CR4_VME | X86_CR4_PAE | X86_CR4_VMXE)
 
-#घोषणा RMODE_GUEST_OWNED_EFLAGS_BITS (~(X86_EFLAGS_IOPL | X86_EFLAGS_VM))
+#define RMODE_GUEST_OWNED_EFLAGS_BITS (~(X86_EFLAGS_IOPL | X86_EFLAGS_VM))
 
-#घोषणा MSR_IA32_RTIT_STATUS_MASK (~(RTIT_STATUS_FILTEREN | \
+#define MSR_IA32_RTIT_STATUS_MASK (~(RTIT_STATUS_FILTEREN | \
 	RTIT_STATUS_CONTEXTEN | RTIT_STATUS_TRIGGEREN | \
 	RTIT_STATUS_ERROR | RTIT_STATUS_STOPPED | \
 	RTIT_STATUS_BYTECNT))
@@ -155,15 +154,15 @@ module_param(allow_smaller_maxphyaddr, bool, S_IRUGO);
  * List of MSRs that can be directly passed to the guest.
  * In addition to these x2apic and PT MSRs are handled specially.
  */
-अटल u32 vmx_possible_passthrough_msrs[MAX_POSSIBLE_PASSTHROUGH_MSRS] = अणु
+static u32 vmx_possible_passthrough_msrs[MAX_POSSIBLE_PASSTHROUGH_MSRS] = {
 	MSR_IA32_SPEC_CTRL,
 	MSR_IA32_PRED_CMD,
 	MSR_IA32_TSC,
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	MSR_FS_BASE,
 	MSR_GS_BASE,
 	MSR_KERNEL_GS_BASE,
-#पूर्ण_अगर
+#endif
 	MSR_IA32_SYSENTER_CS,
 	MSR_IA32_SYSENTER_ESP,
 	MSR_IA32_SYSENTER_EIP,
@@ -171,274 +170,274 @@ module_param(allow_smaller_maxphyaddr, bool, S_IRUGO);
 	MSR_CORE_C3_RESIDENCY,
 	MSR_CORE_C6_RESIDENCY,
 	MSR_CORE_C7_RESIDENCY,
-पूर्ण;
+};
 
 /*
- * These 2 parameters are used to config the controls क्रम Pause-Loop Exiting:
- * ple_gap:    upper bound on the amount of समय between two successive
- *             executions of PAUSE in a loop. Also indicate अगर ple enabled.
- *             According to test, this समय is usually smaller than 128 cycles.
- * ple_winकरोw: upper bound on the amount of समय a guest is allowed to execute
- *             in a PAUSE loop. Tests indicate that most spinlocks are held क्रम
+ * These 2 parameters are used to config the controls for Pause-Loop Exiting:
+ * ple_gap:    upper bound on the amount of time between two successive
+ *             executions of PAUSE in a loop. Also indicate if ple enabled.
+ *             According to test, this time is usually smaller than 128 cycles.
+ * ple_window: upper bound on the amount of time a guest is allowed to execute
+ *             in a PAUSE loop. Tests indicate that most spinlocks are held for
  *             less than 2^12 cycles
  * Time is measured based on a counter that runs at the same rate as the TSC,
  * refer SDM volume 3b section 21.6.13 & 22.1.3.
  */
-अटल अचिन्हित पूर्णांक ple_gap = KVM_DEFAULT_PLE_GAP;
-module_param(ple_gap, uपूर्णांक, 0444);
+static unsigned int ple_gap = KVM_DEFAULT_PLE_GAP;
+module_param(ple_gap, uint, 0444);
 
-अटल अचिन्हित पूर्णांक ple_winकरोw = KVM_VMX_DEFAULT_PLE_WINDOW;
-module_param(ple_winकरोw, uपूर्णांक, 0444);
+static unsigned int ple_window = KVM_VMX_DEFAULT_PLE_WINDOW;
+module_param(ple_window, uint, 0444);
 
-/* Default द्विगुनs per-vcpu winकरोw every निकास. */
-अटल अचिन्हित पूर्णांक ple_winकरोw_grow = KVM_DEFAULT_PLE_WINDOW_GROW;
-module_param(ple_winकरोw_grow, uपूर्णांक, 0444);
+/* Default doubles per-vcpu window every exit. */
+static unsigned int ple_window_grow = KVM_DEFAULT_PLE_WINDOW_GROW;
+module_param(ple_window_grow, uint, 0444);
 
-/* Default resets per-vcpu winकरोw every निकास to ple_winकरोw. */
-अटल अचिन्हित पूर्णांक ple_winकरोw_shrink = KVM_DEFAULT_PLE_WINDOW_SHRINK;
-module_param(ple_winकरोw_shrink, uपूर्णांक, 0444);
+/* Default resets per-vcpu window every exit to ple_window. */
+static unsigned int ple_window_shrink = KVM_DEFAULT_PLE_WINDOW_SHRINK;
+module_param(ple_window_shrink, uint, 0444);
 
 /* Default is to compute the maximum so we can never overflow. */
-अटल अचिन्हित पूर्णांक ple_winकरोw_max        = KVM_VMX_DEFAULT_PLE_WINDOW_MAX;
-module_param(ple_winकरोw_max, uपूर्णांक, 0444);
+static unsigned int ple_window_max        = KVM_VMX_DEFAULT_PLE_WINDOW_MAX;
+module_param(ple_window_max, uint, 0444);
 
-/* Default is SYSTEM mode, 1 क्रम host-guest mode */
-पूर्णांक __पढ़ो_mostly pt_mode = PT_MODE_SYSTEM;
-module_param(pt_mode, पूर्णांक, S_IRUGO);
+/* Default is SYSTEM mode, 1 for host-guest mode */
+int __read_mostly pt_mode = PT_MODE_SYSTEM;
+module_param(pt_mode, int, S_IRUGO);
 
-अटल DEFINE_STATIC_KEY_FALSE(vmx_l1d_should_flush);
-अटल DEFINE_STATIC_KEY_FALSE(vmx_l1d_flush_cond);
-अटल DEFINE_MUTEX(vmx_l1d_flush_mutex);
+static DEFINE_STATIC_KEY_FALSE(vmx_l1d_should_flush);
+static DEFINE_STATIC_KEY_FALSE(vmx_l1d_flush_cond);
+static DEFINE_MUTEX(vmx_l1d_flush_mutex);
 
-/* Storage क्रम pre module init parameter parsing */
-अटल क्रमागत vmx_l1d_flush_state __पढ़ो_mostly vmentry_l1d_flush_param = VMENTER_L1D_FLUSH_AUTO;
+/* Storage for pre module init parameter parsing */
+static enum vmx_l1d_flush_state __read_mostly vmentry_l1d_flush_param = VMENTER_L1D_FLUSH_AUTO;
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *option;
-	bool क्रम_parse;
-पूर्ण vmentry_l1d_param[] = अणु
-	[VMENTER_L1D_FLUSH_AUTO]	 = अणु"auto", trueपूर्ण,
-	[VMENTER_L1D_FLUSH_NEVER]	 = अणु"never", trueपूर्ण,
-	[VMENTER_L1D_FLUSH_COND]	 = अणु"cond", trueपूर्ण,
-	[VMENTER_L1D_FLUSH_ALWAYS]	 = अणु"always", trueपूर्ण,
-	[VMENTER_L1D_FLUSH_EPT_DISABLED] = अणु"EPT disabled", falseपूर्ण,
-	[VMENTER_L1D_FLUSH_NOT_REQUIRED] = अणु"not required", falseपूर्ण,
-पूर्ण;
+static const struct {
+	const char *option;
+	bool for_parse;
+} vmentry_l1d_param[] = {
+	[VMENTER_L1D_FLUSH_AUTO]	 = {"auto", true},
+	[VMENTER_L1D_FLUSH_NEVER]	 = {"never", true},
+	[VMENTER_L1D_FLUSH_COND]	 = {"cond", true},
+	[VMENTER_L1D_FLUSH_ALWAYS]	 = {"always", true},
+	[VMENTER_L1D_FLUSH_EPT_DISABLED] = {"EPT disabled", false},
+	[VMENTER_L1D_FLUSH_NOT_REQUIRED] = {"not required", false},
+};
 
-#घोषणा L1D_CACHE_ORDER 4
-अटल व्योम *vmx_l1d_flush_pages;
+#define L1D_CACHE_ORDER 4
+static void *vmx_l1d_flush_pages;
 
-अटल पूर्णांक vmx_setup_l1d_flush(क्रमागत vmx_l1d_flush_state l1tf)
-अणु
-	काष्ठा page *page;
-	अचिन्हित पूर्णांक i;
+static int vmx_setup_l1d_flush(enum vmx_l1d_flush_state l1tf)
+{
+	struct page *page;
+	unsigned int i;
 
-	अगर (!boot_cpu_has_bug(X86_BUG_L1TF)) अणु
+	if (!boot_cpu_has_bug(X86_BUG_L1TF)) {
 		l1tf_vmx_mitigation = VMENTER_L1D_FLUSH_NOT_REQUIRED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!enable_ept) अणु
+	if (!enable_ept) {
 		l1tf_vmx_mitigation = VMENTER_L1D_FLUSH_EPT_DISABLED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (boot_cpu_has(X86_FEATURE_ARCH_CAPABILITIES)) अणु
+	if (boot_cpu_has(X86_FEATURE_ARCH_CAPABILITIES)) {
 		u64 msr;
 
 		rdmsrl(MSR_IA32_ARCH_CAPABILITIES, msr);
-		अगर (msr & ARCH_CAP_SKIP_VMENTRY_L1DFLUSH) अणु
+		if (msr & ARCH_CAP_SKIP_VMENTRY_L1DFLUSH) {
 			l1tf_vmx_mitigation = VMENTER_L1D_FLUSH_NOT_REQUIRED;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	/* If set to स्वतः use the शेष l1tf mitigation method */
-	अगर (l1tf == VMENTER_L1D_FLUSH_AUTO) अणु
-		चयन (l1tf_mitigation) अणु
-		हाल L1TF_MITIGATION_OFF:
+	/* If set to auto use the default l1tf mitigation method */
+	if (l1tf == VMENTER_L1D_FLUSH_AUTO) {
+		switch (l1tf_mitigation) {
+		case L1TF_MITIGATION_OFF:
 			l1tf = VMENTER_L1D_FLUSH_NEVER;
-			अवरोध;
-		हाल L1TF_MITIGATION_FLUSH_NOWARN:
-		हाल L1TF_MITIGATION_FLUSH:
-		हाल L1TF_MITIGATION_FLUSH_NOSMT:
+			break;
+		case L1TF_MITIGATION_FLUSH_NOWARN:
+		case L1TF_MITIGATION_FLUSH:
+		case L1TF_MITIGATION_FLUSH_NOSMT:
 			l1tf = VMENTER_L1D_FLUSH_COND;
-			अवरोध;
-		हाल L1TF_MITIGATION_FULL:
-		हाल L1TF_MITIGATION_FULL_FORCE:
+			break;
+		case L1TF_MITIGATION_FULL:
+		case L1TF_MITIGATION_FULL_FORCE:
 			l1tf = VMENTER_L1D_FLUSH_ALWAYS;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (l1tf_mitigation == L1TF_MITIGATION_FULL_FORCE) अणु
+			break;
+		}
+	} else if (l1tf_mitigation == L1TF_MITIGATION_FULL_FORCE) {
 		l1tf = VMENTER_L1D_FLUSH_ALWAYS;
-	पूर्ण
+	}
 
-	अगर (l1tf != VMENTER_L1D_FLUSH_NEVER && !vmx_l1d_flush_pages &&
-	    !boot_cpu_has(X86_FEATURE_FLUSH_L1D)) अणु
+	if (l1tf != VMENTER_L1D_FLUSH_NEVER && !vmx_l1d_flush_pages &&
+	    !boot_cpu_has(X86_FEATURE_FLUSH_L1D)) {
 		/*
-		 * This allocation क्रम vmx_l1d_flush_pages is not tied to a VM
-		 * lअगरeसमय and so should not be अक्षरged to a memcg.
+		 * This allocation for vmx_l1d_flush_pages is not tied to a VM
+		 * lifetime and so should not be charged to a memcg.
 		 */
 		page = alloc_pages(GFP_KERNEL, L1D_CACHE_ORDER);
-		अगर (!page)
-			वापस -ENOMEM;
+		if (!page)
+			return -ENOMEM;
 		vmx_l1d_flush_pages = page_address(page);
 
 		/*
-		 * Initialize each page with a dअगरferent pattern in
+		 * Initialize each page with a different pattern in
 		 * order to protect against KSM in the nested
-		 * भवization हाल.
+		 * virtualization case.
 		 */
-		क्रम (i = 0; i < 1u << L1D_CACHE_ORDER; ++i) अणु
-			स_रखो(vmx_l1d_flush_pages + i * PAGE_SIZE, i + 1,
+		for (i = 0; i < 1u << L1D_CACHE_ORDER; ++i) {
+			memset(vmx_l1d_flush_pages + i * PAGE_SIZE, i + 1,
 			       PAGE_SIZE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	l1tf_vmx_mitigation = l1tf;
 
-	अगर (l1tf != VMENTER_L1D_FLUSH_NEVER)
-		अटल_branch_enable(&vmx_l1d_should_flush);
-	अन्यथा
-		अटल_branch_disable(&vmx_l1d_should_flush);
+	if (l1tf != VMENTER_L1D_FLUSH_NEVER)
+		static_branch_enable(&vmx_l1d_should_flush);
+	else
+		static_branch_disable(&vmx_l1d_should_flush);
 
-	अगर (l1tf == VMENTER_L1D_FLUSH_COND)
-		अटल_branch_enable(&vmx_l1d_flush_cond);
-	अन्यथा
-		अटल_branch_disable(&vmx_l1d_flush_cond);
-	वापस 0;
-पूर्ण
+	if (l1tf == VMENTER_L1D_FLUSH_COND)
+		static_branch_enable(&vmx_l1d_flush_cond);
+	else
+		static_branch_disable(&vmx_l1d_flush_cond);
+	return 0;
+}
 
-अटल पूर्णांक vmentry_l1d_flush_parse(स्थिर अक्षर *s)
-अणु
-	अचिन्हित पूर्णांक i;
+static int vmentry_l1d_flush_parse(const char *s)
+{
+	unsigned int i;
 
-	अगर (s) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(vmentry_l1d_param); i++) अणु
-			अगर (vmentry_l1d_param[i].क्रम_parse &&
+	if (s) {
+		for (i = 0; i < ARRAY_SIZE(vmentry_l1d_param); i++) {
+			if (vmentry_l1d_param[i].for_parse &&
 			    sysfs_streq(s, vmentry_l1d_param[i].option))
-				वापस i;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+				return i;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक vmentry_l1d_flush_set(स्थिर अक्षर *s, स्थिर काष्ठा kernel_param *kp)
-अणु
-	पूर्णांक l1tf, ret;
+static int vmentry_l1d_flush_set(const char *s, const struct kernel_param *kp)
+{
+	int l1tf, ret;
 
 	l1tf = vmentry_l1d_flush_parse(s);
-	अगर (l1tf < 0)
-		वापस l1tf;
+	if (l1tf < 0)
+		return l1tf;
 
-	अगर (!boot_cpu_has(X86_BUG_L1TF))
-		वापस 0;
+	if (!boot_cpu_has(X86_BUG_L1TF))
+		return 0;
 
 	/*
-	 * Has vmx_init() run alपढ़ोy? If not then this is the pre init
-	 * parameter parsing. In that हाल just store the value and let
-	 * vmx_init() करो the proper setup after enable_ept has been
+	 * Has vmx_init() run already? If not then this is the pre init
+	 * parameter parsing. In that case just store the value and let
+	 * vmx_init() do the proper setup after enable_ept has been
 	 * established.
 	 */
-	अगर (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_AUTO) अणु
+	if (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_AUTO) {
 		vmentry_l1d_flush_param = l1tf;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&vmx_l1d_flush_mutex);
 	ret = vmx_setup_l1d_flush(l1tf);
 	mutex_unlock(&vmx_l1d_flush_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vmentry_l1d_flush_get(अक्षर *s, स्थिर काष्ठा kernel_param *kp)
-अणु
-	अगर (WARN_ON_ONCE(l1tf_vmx_mitigation >= ARRAY_SIZE(vmentry_l1d_param)))
-		वापस प्र_लिखो(s, "???\n");
+static int vmentry_l1d_flush_get(char *s, const struct kernel_param *kp)
+{
+	if (WARN_ON_ONCE(l1tf_vmx_mitigation >= ARRAY_SIZE(vmentry_l1d_param)))
+		return sprintf(s, "???\n");
 
-	वापस प्र_लिखो(s, "%s\n", vmentry_l1d_param[l1tf_vmx_mitigation].option);
-पूर्ण
+	return sprintf(s, "%s\n", vmentry_l1d_param[l1tf_vmx_mitigation].option);
+}
 
-अटल स्थिर काष्ठा kernel_param_ops vmentry_l1d_flush_ops = अणु
+static const struct kernel_param_ops vmentry_l1d_flush_ops = {
 	.set = vmentry_l1d_flush_set,
 	.get = vmentry_l1d_flush_get,
-पूर्ण;
-module_param_cb(vmentry_l1d_flush, &vmentry_l1d_flush_ops, शून्य, 0644);
+};
+module_param_cb(vmentry_l1d_flush, &vmentry_l1d_flush_ops, NULL, 0644);
 
-अटल u32 vmx_segment_access_rights(काष्ठा kvm_segment *var);
+static u32 vmx_segment_access_rights(struct kvm_segment *var);
 
-व्योम vmx_vmनिकास(व्योम);
+void vmx_vmexit(void);
 
-#घोषणा vmx_insn_failed(fmt...)		\
-करो अणु					\
+#define vmx_insn_failed(fmt...)		\
+do {					\
 	WARN_ONCE(1, fmt);		\
 	pr_warn_ratelimited(fmt);	\
-पूर्ण जबतक (0)
+} while (0)
 
-यंत्रlinkage व्योम vmपढ़ो_error(अचिन्हित दीर्घ field, bool fault)
-अणु
-	अगर (fault)
+asmlinkage void vmread_error(unsigned long field, bool fault)
+{
+	if (fault)
 		kvm_spurious_fault();
-	अन्यथा
+	else
 		vmx_insn_failed("kvm: vmread failed: field=%lx\n", field);
-पूर्ण
+}
 
-noअंतरभूत व्योम vmग_लिखो_error(अचिन्हित दीर्घ field, अचिन्हित दीर्घ value)
-अणु
+noinline void vmwrite_error(unsigned long field, unsigned long value)
+{
 	vmx_insn_failed("kvm: vmwrite failed: field=%lx val=%lx err=%d\n",
-			field, value, vmcs_पढ़ो32(VM_INSTRUCTION_ERROR));
-पूर्ण
+			field, value, vmcs_read32(VM_INSTRUCTION_ERROR));
+}
 
-noअंतरभूत व्योम vmclear_error(काष्ठा vmcs *vmcs, u64 phys_addr)
-अणु
+noinline void vmclear_error(struct vmcs *vmcs, u64 phys_addr)
+{
 	vmx_insn_failed("kvm: vmclear failed: %p/%llx\n", vmcs, phys_addr);
-पूर्ण
+}
 
-noअंतरभूत व्योम vmptrld_error(काष्ठा vmcs *vmcs, u64 phys_addr)
-अणु
+noinline void vmptrld_error(struct vmcs *vmcs, u64 phys_addr)
+{
 	vmx_insn_failed("kvm: vmptrld failed: %p/%llx\n", vmcs, phys_addr);
-पूर्ण
+}
 
-noअंतरभूत व्योम invvpid_error(अचिन्हित दीर्घ ext, u16 vpid, gva_t gva)
-अणु
+noinline void invvpid_error(unsigned long ext, u16 vpid, gva_t gva)
+{
 	vmx_insn_failed("kvm: invvpid failed: ext=0x%lx vpid=%u gva=0x%lx\n",
 			ext, vpid, gva);
-पूर्ण
+}
 
-noअंतरभूत व्योम invept_error(अचिन्हित दीर्घ ext, u64 eptp, gpa_t gpa)
-अणु
+noinline void invept_error(unsigned long ext, u64 eptp, gpa_t gpa)
+{
 	vmx_insn_failed("kvm: invept failed: ext=0x%lx eptp=%llx gpa=0x%llx\n",
 			ext, eptp, gpa);
-पूर्ण
+}
 
-अटल DEFINE_PER_CPU(काष्ठा vmcs *, vmxarea);
-DEFINE_PER_CPU(काष्ठा vmcs *, current_vmcs);
+static DEFINE_PER_CPU(struct vmcs *, vmxarea);
+DEFINE_PER_CPU(struct vmcs *, current_vmcs);
 /*
- * We मुख्यtain a per-CPU linked-list of VMCS loaded on that CPU. This is needed
- * when a CPU is brought करोwn, and we need to VMCLEAR all VMCSs loaded on it.
+ * We maintain a per-CPU linked-list of VMCS loaded on that CPU. This is needed
+ * when a CPU is brought down, and we need to VMCLEAR all VMCSs loaded on it.
  */
-अटल DEFINE_PER_CPU(काष्ठा list_head, loaded_vmcss_on_cpu);
+static DEFINE_PER_CPU(struct list_head, loaded_vmcss_on_cpu);
 
-अटल DECLARE_BITMAP(vmx_vpid_biपंचांगap, VMX_NR_VPIDS);
-अटल DEFINE_SPINLOCK(vmx_vpid_lock);
+static DECLARE_BITMAP(vmx_vpid_bitmap, VMX_NR_VPIDS);
+static DEFINE_SPINLOCK(vmx_vpid_lock);
 
-काष्ठा vmcs_config vmcs_config;
-काष्ठा vmx_capability vmx_capability;
+struct vmcs_config vmcs_config;
+struct vmx_capability vmx_capability;
 
-#घोषणा VMX_SEGMENT_FIELD(seg)					\
-	[VCPU_SREG_##seg] = अणु                                   \
+#define VMX_SEGMENT_FIELD(seg)					\
+	[VCPU_SREG_##seg] = {                                   \
 		.selector = GUEST_##seg##_SELECTOR,		\
 		.base = GUEST_##seg##_BASE,		   	\
 		.limit = GUEST_##seg##_LIMIT,		   	\
 		.ar_bytes = GUEST_##seg##_AR_BYTES,	   	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा kvm_vmx_segment_field अणु
-	अचिन्हित selector;
-	अचिन्हित base;
-	अचिन्हित limit;
-	अचिन्हित ar_bytes;
-पूर्ण kvm_vmx_segment_fields[] = अणु
+static const struct kvm_vmx_segment_field {
+	unsigned selector;
+	unsigned base;
+	unsigned limit;
+	unsigned ar_bytes;
+} kvm_vmx_segment_fields[] = {
 	VMX_SEGMENT_FIELD(CS),
 	VMX_SEGMENT_FIELD(DS),
 	VMX_SEGMENT_FIELD(ES),
@@ -447,147 +446,147 @@ DEFINE_PER_CPU(काष्ठा vmcs *, current_vmcs);
 	VMX_SEGMENT_FIELD(SS),
 	VMX_SEGMENT_FIELD(TR),
 	VMX_SEGMENT_FIELD(LDTR),
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम vmx_segment_cache_clear(काष्ठा vcpu_vmx *vmx)
-अणु
-	vmx->segment_cache.biपंचांगask = 0;
-पूर्ण
+static inline void vmx_segment_cache_clear(struct vcpu_vmx *vmx)
+{
+	vmx->segment_cache.bitmask = 0;
+}
 
-अटल अचिन्हित दीर्घ host_idt_base;
+static unsigned long host_idt_base;
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
-अटल bool __पढ़ो_mostly enlightened_vmcs = true;
+#if IS_ENABLED(CONFIG_HYPERV)
+static bool __read_mostly enlightened_vmcs = true;
 module_param(enlightened_vmcs, bool, 0444);
 
-अटल पूर्णांक kvm_fill_hv_flush_list_func(काष्ठा hv_guest_mapping_flush_list *flush,
-		व्योम *data)
-अणु
-	काष्ठा kvm_tlb_range *range = data;
+static int kvm_fill_hv_flush_list_func(struct hv_guest_mapping_flush_list *flush,
+		void *data)
+{
+	struct kvm_tlb_range *range = data;
 
-	वापस hyperv_fill_flush_guest_mapping_list(flush, range->start_gfn,
+	return hyperv_fill_flush_guest_mapping_list(flush, range->start_gfn,
 			range->pages);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक hv_remote_flush_root_ept(hpa_t root_ept,
-					   काष्ठा kvm_tlb_range *range)
-अणु
-	अगर (range)
-		वापस hyperv_flush_guest_mapping_range(root_ept,
-				kvm_fill_hv_flush_list_func, (व्योम *)range);
-	अन्यथा
-		वापस hyperv_flush_guest_mapping(root_ept);
-पूर्ण
+static inline int hv_remote_flush_root_ept(hpa_t root_ept,
+					   struct kvm_tlb_range *range)
+{
+	if (range)
+		return hyperv_flush_guest_mapping_range(root_ept,
+				kvm_fill_hv_flush_list_func, (void *)range);
+	else
+		return hyperv_flush_guest_mapping(root_ept);
+}
 
-अटल पूर्णांक hv_remote_flush_tlb_with_range(काष्ठा kvm *kvm,
-		काष्ठा kvm_tlb_range *range)
-अणु
-	काष्ठा kvm_vmx *kvm_vmx = to_kvm_vmx(kvm);
-	काष्ठा kvm_vcpu *vcpu;
-	पूर्णांक ret = 0, i, nr_unique_valid_roots;
+static int hv_remote_flush_tlb_with_range(struct kvm *kvm,
+		struct kvm_tlb_range *range)
+{
+	struct kvm_vmx *kvm_vmx = to_kvm_vmx(kvm);
+	struct kvm_vcpu *vcpu;
+	int ret = 0, i, nr_unique_valid_roots;
 	hpa_t root;
 
 	spin_lock(&kvm_vmx->hv_root_ept_lock);
 
-	अगर (!VALID_PAGE(kvm_vmx->hv_root_ept)) अणु
+	if (!VALID_PAGE(kvm_vmx->hv_root_ept)) {
 		nr_unique_valid_roots = 0;
 
 		/*
-		 * Flush all valid roots, and see अगर all vCPUs have converged
-		 * on a common root, in which हाल future flushes can skip the
+		 * Flush all valid roots, and see if all vCPUs have converged
+		 * on a common root, in which case future flushes can skip the
 		 * loop and flush the common root.
 		 */
-		kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
+		kvm_for_each_vcpu(i, vcpu, kvm) {
 			root = to_vmx(vcpu)->hv_root_ept;
-			अगर (!VALID_PAGE(root) || root == kvm_vmx->hv_root_ept)
-				जारी;
+			if (!VALID_PAGE(root) || root == kvm_vmx->hv_root_ept)
+				continue;
 
 			/*
 			 * Set the tracked root to the first valid root.  Keep
-			 * this root क्रम the entirety of the loop even अगर more
-			 * roots are encountered as a low efक्रमt optimization
-			 * to aव्योम flushing the same (first) root again.
+			 * this root for the entirety of the loop even if more
+			 * roots are encountered as a low effort optimization
+			 * to avoid flushing the same (first) root again.
 			 */
-			अगर (++nr_unique_valid_roots == 1)
+			if (++nr_unique_valid_roots == 1)
 				kvm_vmx->hv_root_ept = root;
 
-			अगर (!ret)
+			if (!ret)
 				ret = hv_remote_flush_root_ept(root, range);
 
 			/*
-			 * Stop processing roots अगर a failure occurred and
-			 * multiple valid roots have alपढ़ोy been detected.
+			 * Stop processing roots if a failure occurred and
+			 * multiple valid roots have already been detected.
 			 */
-			अगर (ret && nr_unique_valid_roots > 1)
-				अवरोध;
-		पूर्ण
+			if (ret && nr_unique_valid_roots > 1)
+				break;
+		}
 
 		/*
-		 * The optimized flush of a single root can't be used अगर there
+		 * The optimized flush of a single root can't be used if there
 		 * are multiple valid roots (obviously).
 		 */
-		अगर (nr_unique_valid_roots > 1)
+		if (nr_unique_valid_roots > 1)
 			kvm_vmx->hv_root_ept = INVALID_PAGE;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = hv_remote_flush_root_ept(kvm_vmx->hv_root_ept, range);
-	पूर्ण
+	}
 
 	spin_unlock(&kvm_vmx->hv_root_ept_lock);
-	वापस ret;
-पूर्ण
-अटल पूर्णांक hv_remote_flush_tlb(काष्ठा kvm *kvm)
-अणु
-	वापस hv_remote_flush_tlb_with_range(kvm, शून्य);
-पूर्ण
+	return ret;
+}
+static int hv_remote_flush_tlb(struct kvm *kvm)
+{
+	return hv_remote_flush_tlb_with_range(kvm, NULL);
+}
 
-अटल पूर्णांक hv_enable_direct_tlbflush(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा hv_enlightened_vmcs *evmcs;
-	काष्ठा hv_partition_assist_pg **p_hv_pa_pg =
+static int hv_enable_direct_tlbflush(struct kvm_vcpu *vcpu)
+{
+	struct hv_enlightened_vmcs *evmcs;
+	struct hv_partition_assist_pg **p_hv_pa_pg =
 			&to_kvm_hv(vcpu->kvm)->hv_pa_pg;
 	/*
 	 * Synthetic VM-Exit is not enabled in current code and so All
 	 * evmcs in singe VM shares same assist page.
 	 */
-	अगर (!*p_hv_pa_pg)
+	if (!*p_hv_pa_pg)
 		*p_hv_pa_pg = kzalloc(PAGE_SIZE, GFP_KERNEL_ACCOUNT);
 
-	अगर (!*p_hv_pa_pg)
-		वापस -ENOMEM;
+	if (!*p_hv_pa_pg)
+		return -ENOMEM;
 
-	evmcs = (काष्ठा hv_enlightened_vmcs *)to_vmx(vcpu)->loaded_vmcs->vmcs;
+	evmcs = (struct hv_enlightened_vmcs *)to_vmx(vcpu)->loaded_vmcs->vmcs;
 
 	evmcs->partition_assist_page =
 		__pa(*p_hv_pa_pg);
-	evmcs->hv_vm_id = (अचिन्हित दीर्घ)vcpu->kvm;
+	evmcs->hv_vm_id = (unsigned long)vcpu->kvm;
 	evmcs->hv_enlightenments_control.nested_flush_hypercall = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_HYPERV) */
+#endif /* IS_ENABLED(CONFIG_HYPERV) */
 
-अटल व्योम hv_track_root_ept(काष्ठा kvm_vcpu *vcpu, hpa_t root_ept)
-अणु
-#अगर IS_ENABLED(CONFIG_HYPERV)
-	काष्ठा kvm_vmx *kvm_vmx = to_kvm_vmx(vcpu->kvm);
+static void hv_track_root_ept(struct kvm_vcpu *vcpu, hpa_t root_ept)
+{
+#if IS_ENABLED(CONFIG_HYPERV)
+	struct kvm_vmx *kvm_vmx = to_kvm_vmx(vcpu->kvm);
 
-	अगर (kvm_x86_ops.tlb_remote_flush == hv_remote_flush_tlb) अणु
+	if (kvm_x86_ops.tlb_remote_flush == hv_remote_flush_tlb) {
 		spin_lock(&kvm_vmx->hv_root_ept_lock);
 		to_vmx(vcpu)->hv_root_ept = root_ept;
-		अगर (root_ept != kvm_vmx->hv_root_ept)
+		if (root_ept != kvm_vmx->hv_root_ept)
 			kvm_vmx->hv_root_ept = INVALID_PAGE;
 		spin_unlock(&kvm_vmx->hv_root_ept_lock);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
 /*
- * Comment's क्रमmat: करोcument - errata name - stepping - processor name.
+ * Comment's format: document - errata name - stepping - processor name.
  * Refer from
- * https://www.भवbox.org/svn/vbox/trunk/src/VBox/VMM/VMMR0/HMR0.cpp
+ * https://www.virtualbox.org/svn/vbox/trunk/src/VBox/VMM/VMMR0/HMR0.cpp
  */
-अटल u32 vmx_preemption_cpu_tfms[] = अणु
+static u32 vmx_preemption_cpu_tfms[] = {
 /* 323344.pdf - BA86   - D0 - Xeon 7500 Series */
 0x000206E6,
 /* 323056.pdf - AAX65  - C2 - Xeon L3406 */
@@ -615,451 +614,451 @@ module_param(enlightened_vmcs, bool, 0444);
 0x000106A5,
  /* Xeon E3-1220 V2 */
 0x000306A8,
-पूर्ण;
+};
 
-अटल अंतरभूत bool cpu_has_broken_vmx_preemption_समयr(व्योम)
-अणु
+static inline bool cpu_has_broken_vmx_preemption_timer(void)
+{
 	u32 eax = cpuid_eax(0x00000001), i;
 
 	/* Clear the reserved bits */
 	eax &= ~(0x3U << 14 | 0xfU << 28);
-	क्रम (i = 0; i < ARRAY_SIZE(vmx_preemption_cpu_tfms); i++)
-		अगर (eax == vmx_preemption_cpu_tfms[i])
-			वापस true;
+	for (i = 0; i < ARRAY_SIZE(vmx_preemption_cpu_tfms); i++)
+		if (eax == vmx_preemption_cpu_tfms[i])
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool cpu_need_भवize_apic_accesses(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस flexpriority_enabled && lapic_in_kernel(vcpu);
-पूर्ण
+static inline bool cpu_need_virtualize_apic_accesses(struct kvm_vcpu *vcpu)
+{
+	return flexpriority_enabled && lapic_in_kernel(vcpu);
+}
 
-अटल अंतरभूत bool report_flexpriority(व्योम)
-अणु
-	वापस flexpriority_enabled;
-पूर्ण
+static inline bool report_flexpriority(void)
+{
+	return flexpriority_enabled;
+}
 
-अटल पूर्णांक possible_passthrough_msr_slot(u32 msr)
-अणु
+static int possible_passthrough_msr_slot(u32 msr)
+{
 	u32 i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vmx_possible_passthrough_msrs); i++)
-		अगर (vmx_possible_passthrough_msrs[i] == msr)
-			वापस i;
+	for (i = 0; i < ARRAY_SIZE(vmx_possible_passthrough_msrs); i++)
+		if (vmx_possible_passthrough_msrs[i] == msr)
+			return i;
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल bool is_valid_passthrough_msr(u32 msr)
-अणु
+static bool is_valid_passthrough_msr(u32 msr)
+{
 	bool r;
 
-	चयन (msr) अणु
-	हाल 0x800 ... 0x8ff:
-		/* x2APIC MSRs. These are handled in vmx_update_msr_biपंचांगap_x2apic() */
-		वापस true;
-	हाल MSR_IA32_RTIT_STATUS:
-	हाल MSR_IA32_RTIT_OUTPUT_BASE:
-	हाल MSR_IA32_RTIT_OUTPUT_MASK:
-	हाल MSR_IA32_RTIT_CR3_MATCH:
-	हाल MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
-		/* PT MSRs. These are handled in pt_update_पूर्णांकercept_क्रम_msr() */
-	हाल MSR_LBR_SELECT:
-	हाल MSR_LBR_TOS:
-	हाल MSR_LBR_INFO_0 ... MSR_LBR_INFO_0 + 31:
-	हाल MSR_LBR_NHM_FROM ... MSR_LBR_NHM_FROM + 31:
-	हाल MSR_LBR_NHM_TO ... MSR_LBR_NHM_TO + 31:
-	हाल MSR_LBR_CORE_FROM ... MSR_LBR_CORE_FROM + 8:
-	हाल MSR_LBR_CORE_TO ... MSR_LBR_CORE_TO + 8:
-		/* LBR MSRs. These are handled in vmx_update_पूर्णांकercept_क्रम_lbr_msrs() */
-		वापस true;
-	पूर्ण
+	switch (msr) {
+	case 0x800 ... 0x8ff:
+		/* x2APIC MSRs. These are handled in vmx_update_msr_bitmap_x2apic() */
+		return true;
+	case MSR_IA32_RTIT_STATUS:
+	case MSR_IA32_RTIT_OUTPUT_BASE:
+	case MSR_IA32_RTIT_OUTPUT_MASK:
+	case MSR_IA32_RTIT_CR3_MATCH:
+	case MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
+		/* PT MSRs. These are handled in pt_update_intercept_for_msr() */
+	case MSR_LBR_SELECT:
+	case MSR_LBR_TOS:
+	case MSR_LBR_INFO_0 ... MSR_LBR_INFO_0 + 31:
+	case MSR_LBR_NHM_FROM ... MSR_LBR_NHM_FROM + 31:
+	case MSR_LBR_NHM_TO ... MSR_LBR_NHM_TO + 31:
+	case MSR_LBR_CORE_FROM ... MSR_LBR_CORE_FROM + 8:
+	case MSR_LBR_CORE_TO ... MSR_LBR_CORE_TO + 8:
+		/* LBR MSRs. These are handled in vmx_update_intercept_for_lbr_msrs() */
+		return true;
+	}
 
 	r = possible_passthrough_msr_slot(msr) != -ENOENT;
 
 	WARN(!r, "Invalid MSR %x, please adapt vmx_possible_passthrough_msrs[]", msr);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-काष्ठा vmx_uret_msr *vmx_find_uret_msr(काष्ठा vcpu_vmx *vmx, u32 msr)
-अणु
-	पूर्णांक i;
+struct vmx_uret_msr *vmx_find_uret_msr(struct vcpu_vmx *vmx, u32 msr)
+{
+	int i;
 
-	i = kvm_find_user_वापस_msr(msr);
-	अगर (i >= 0)
-		वापस &vmx->guest_uret_msrs[i];
-	वापस शून्य;
-पूर्ण
+	i = kvm_find_user_return_msr(msr);
+	if (i >= 0)
+		return &vmx->guest_uret_msrs[i];
+	return NULL;
+}
 
-अटल पूर्णांक vmx_set_guest_uret_msr(काष्ठा vcpu_vmx *vmx,
-				  काष्ठा vmx_uret_msr *msr, u64 data)
-अणु
-	अचिन्हित पूर्णांक slot = msr - vmx->guest_uret_msrs;
-	पूर्णांक ret = 0;
+static int vmx_set_guest_uret_msr(struct vcpu_vmx *vmx,
+				  struct vmx_uret_msr *msr, u64 data)
+{
+	unsigned int slot = msr - vmx->guest_uret_msrs;
+	int ret = 0;
 
 	u64 old_msr_data = msr->data;
 	msr->data = data;
-	अगर (msr->load_पूर्णांकo_hardware) अणु
+	if (msr->load_into_hardware) {
 		preempt_disable();
-		ret = kvm_set_user_वापस_msr(slot, msr->data, msr->mask);
+		ret = kvm_set_user_return_msr(slot, msr->data, msr->mask);
 		preempt_enable();
-		अगर (ret)
+		if (ret)
 			msr->data = old_msr_data;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_KEXEC_CORE
-अटल व्योम crash_vmclear_local_loaded_vmcss(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	काष्ठा loaded_vmcs *v;
+#ifdef CONFIG_KEXEC_CORE
+static void crash_vmclear_local_loaded_vmcss(void)
+{
+	int cpu = raw_smp_processor_id();
+	struct loaded_vmcs *v;
 
-	list_क्रम_each_entry(v, &per_cpu(loaded_vmcss_on_cpu, cpu),
+	list_for_each_entry(v, &per_cpu(loaded_vmcss_on_cpu, cpu),
 			    loaded_vmcss_on_cpu_link)
 		vmcs_clear(v->vmcs);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KEXEC_CORE */
+}
+#endif /* CONFIG_KEXEC_CORE */
 
-अटल व्योम __loaded_vmcs_clear(व्योम *arg)
-अणु
-	काष्ठा loaded_vmcs *loaded_vmcs = arg;
-	पूर्णांक cpu = raw_smp_processor_id();
+static void __loaded_vmcs_clear(void *arg)
+{
+	struct loaded_vmcs *loaded_vmcs = arg;
+	int cpu = raw_smp_processor_id();
 
-	अगर (loaded_vmcs->cpu != cpu)
-		वापस; /* vcpu migration can race with cpu offline */
-	अगर (per_cpu(current_vmcs, cpu) == loaded_vmcs->vmcs)
-		per_cpu(current_vmcs, cpu) = शून्य;
+	if (loaded_vmcs->cpu != cpu)
+		return; /* vcpu migration can race with cpu offline */
+	if (per_cpu(current_vmcs, cpu) == loaded_vmcs->vmcs)
+		per_cpu(current_vmcs, cpu) = NULL;
 
 	vmcs_clear(loaded_vmcs->vmcs);
-	अगर (loaded_vmcs->shaकरोw_vmcs && loaded_vmcs->launched)
-		vmcs_clear(loaded_vmcs->shaकरोw_vmcs);
+	if (loaded_vmcs->shadow_vmcs && loaded_vmcs->launched)
+		vmcs_clear(loaded_vmcs->shadow_vmcs);
 
 	list_del(&loaded_vmcs->loaded_vmcss_on_cpu_link);
 
 	/*
-	 * Ensure all ग_लिखोs to loaded_vmcs, including deleting it from its
-	 * current percpu list, complete beक्रमe setting loaded_vmcs->vcpu to
-	 * -1, otherwise a dअगरferent cpu can see vcpu == -1 first and add
-	 * loaded_vmcs to its percpu list beक्रमe it's deleted from this cpu's
+	 * Ensure all writes to loaded_vmcs, including deleting it from its
+	 * current percpu list, complete before setting loaded_vmcs->vcpu to
+	 * -1, otherwise a different cpu can see vcpu == -1 first and add
+	 * loaded_vmcs to its percpu list before it's deleted from this cpu's
 	 * list. Pairs with the smp_rmb() in vmx_vcpu_load_vmcs().
 	 */
 	smp_wmb();
 
 	loaded_vmcs->cpu = -1;
 	loaded_vmcs->launched = 0;
-पूर्ण
+}
 
-व्योम loaded_vmcs_clear(काष्ठा loaded_vmcs *loaded_vmcs)
-अणु
-	पूर्णांक cpu = loaded_vmcs->cpu;
+void loaded_vmcs_clear(struct loaded_vmcs *loaded_vmcs)
+{
+	int cpu = loaded_vmcs->cpu;
 
-	अगर (cpu != -1)
+	if (cpu != -1)
 		smp_call_function_single(cpu,
 			 __loaded_vmcs_clear, loaded_vmcs, 1);
-पूर्ण
+}
 
-अटल bool vmx_segment_cache_test_set(काष्ठा vcpu_vmx *vmx, अचिन्हित seg,
-				       अचिन्हित field)
-अणु
+static bool vmx_segment_cache_test_set(struct vcpu_vmx *vmx, unsigned seg,
+				       unsigned field)
+{
 	bool ret;
 	u32 mask = 1 << (seg * SEG_FIELD_NR + field);
 
-	अगर (!kvm_रेजिस्टर_is_available(&vmx->vcpu, VCPU_EXREG_SEGMENTS)) अणु
-		kvm_रेजिस्टर_mark_available(&vmx->vcpu, VCPU_EXREG_SEGMENTS);
-		vmx->segment_cache.biपंचांगask = 0;
-	पूर्ण
-	ret = vmx->segment_cache.biपंचांगask & mask;
-	vmx->segment_cache.biपंचांगask |= mask;
-	वापस ret;
-पूर्ण
+	if (!kvm_register_is_available(&vmx->vcpu, VCPU_EXREG_SEGMENTS)) {
+		kvm_register_mark_available(&vmx->vcpu, VCPU_EXREG_SEGMENTS);
+		vmx->segment_cache.bitmask = 0;
+	}
+	ret = vmx->segment_cache.bitmask & mask;
+	vmx->segment_cache.bitmask |= mask;
+	return ret;
+}
 
-अटल u16 vmx_पढ़ो_guest_seg_selector(काष्ठा vcpu_vmx *vmx, अचिन्हित seg)
-अणु
+static u16 vmx_read_guest_seg_selector(struct vcpu_vmx *vmx, unsigned seg)
+{
 	u16 *p = &vmx->segment_cache.seg[seg].selector;
 
-	अगर (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_SEL))
-		*p = vmcs_पढ़ो16(kvm_vmx_segment_fields[seg].selector);
-	वापस *p;
-पूर्ण
+	if (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_SEL))
+		*p = vmcs_read16(kvm_vmx_segment_fields[seg].selector);
+	return *p;
+}
 
-अटल uदीर्घ vmx_पढ़ो_guest_seg_base(काष्ठा vcpu_vmx *vmx, अचिन्हित seg)
-अणु
-	uदीर्घ *p = &vmx->segment_cache.seg[seg].base;
+static ulong vmx_read_guest_seg_base(struct vcpu_vmx *vmx, unsigned seg)
+{
+	ulong *p = &vmx->segment_cache.seg[seg].base;
 
-	अगर (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_BASE))
-		*p = vmcs_पढ़ोl(kvm_vmx_segment_fields[seg].base);
-	वापस *p;
-पूर्ण
+	if (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_BASE))
+		*p = vmcs_readl(kvm_vmx_segment_fields[seg].base);
+	return *p;
+}
 
-अटल u32 vmx_पढ़ो_guest_seg_limit(काष्ठा vcpu_vmx *vmx, अचिन्हित seg)
-अणु
+static u32 vmx_read_guest_seg_limit(struct vcpu_vmx *vmx, unsigned seg)
+{
 	u32 *p = &vmx->segment_cache.seg[seg].limit;
 
-	अगर (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_LIMIT))
-		*p = vmcs_पढ़ो32(kvm_vmx_segment_fields[seg].limit);
-	वापस *p;
-पूर्ण
+	if (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_LIMIT))
+		*p = vmcs_read32(kvm_vmx_segment_fields[seg].limit);
+	return *p;
+}
 
-अटल u32 vmx_पढ़ो_guest_seg_ar(काष्ठा vcpu_vmx *vmx, अचिन्हित seg)
-अणु
+static u32 vmx_read_guest_seg_ar(struct vcpu_vmx *vmx, unsigned seg)
+{
 	u32 *p = &vmx->segment_cache.seg[seg].ar;
 
-	अगर (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_AR))
-		*p = vmcs_पढ़ो32(kvm_vmx_segment_fields[seg].ar_bytes);
-	वापस *p;
-पूर्ण
+	if (!vmx_segment_cache_test_set(vmx, seg, SEG_FIELD_AR))
+		*p = vmcs_read32(kvm_vmx_segment_fields[seg].ar_bytes);
+	return *p;
+}
 
-व्योम vmx_update_exception_biपंचांगap(काष्ठा kvm_vcpu *vcpu)
-अणु
+void vmx_update_exception_bitmap(struct kvm_vcpu *vcpu)
+{
 	u32 eb;
 
 	eb = (1u << PF_VECTOR) | (1u << UD_VECTOR) | (1u << MC_VECTOR) |
 	     (1u << DB_VECTOR) | (1u << AC_VECTOR);
 	/*
-	 * Guest access to VMware backकरोor ports could legitimately
-	 * trigger #GP because of TSS I/O permission biपंचांगap.
-	 * We पूर्णांकercept those #GP and allow access to them anyway
-	 * as VMware करोes.
+	 * Guest access to VMware backdoor ports could legitimately
+	 * trigger #GP because of TSS I/O permission bitmap.
+	 * We intercept those #GP and allow access to them anyway
+	 * as VMware does.
 	 */
-	अगर (enable_vmware_backकरोor)
+	if (enable_vmware_backdoor)
 		eb |= (1u << GP_VECTOR);
-	अगर ((vcpu->guest_debug &
+	if ((vcpu->guest_debug &
 	     (KVM_GUESTDBG_ENABLE | KVM_GUESTDBG_USE_SW_BP)) ==
 	    (KVM_GUESTDBG_ENABLE | KVM_GUESTDBG_USE_SW_BP))
 		eb |= 1u << BP_VECTOR;
-	अगर (to_vmx(vcpu)->rmode.vm86_active)
+	if (to_vmx(vcpu)->rmode.vm86_active)
 		eb = ~0;
-	अगर (!vmx_need_pf_पूर्णांकercept(vcpu))
+	if (!vmx_need_pf_intercept(vcpu))
 		eb &= ~(1u << PF_VECTOR);
 
-	/* When we are running a nested L2 guest and L1 specअगरied क्रम it a
-	 * certain exception biपंचांगap, we must trap the same exceptions and pass
+	/* When we are running a nested L2 guest and L1 specified for it a
+	 * certain exception bitmap, we must trap the same exceptions and pass
 	 * them to L1. When running L2, we will only handle the exceptions
-	 * specअगरied above अगर L1 did not want them.
+	 * specified above if L1 did not want them.
 	 */
-	अगर (is_guest_mode(vcpu))
-		eb |= get_vmcs12(vcpu)->exception_biपंचांगap;
-        अन्यथा अणु
+	if (is_guest_mode(vcpu))
+		eb |= get_vmcs12(vcpu)->exception_bitmap;
+        else {
 		/*
-		 * If EPT is enabled, #PF is only trapped अगर MAXPHYADDR is mismatched
-		 * between guest and host.  In that हाल we only care about present
+		 * If EPT is enabled, #PF is only trapped if MAXPHYADDR is mismatched
+		 * between guest and host.  In that case we only care about present
 		 * faults.  For vmcs02, however, PFEC_MASK and PFEC_MATCH are set in
 		 * prepare_vmcs02_rare.
 		 */
 		bool selective_pf_trap = enable_ept && (eb & (1u << PF_VECTOR));
-		पूर्णांक mask = selective_pf_trap ? PFERR_PRESENT_MASK : 0;
-		vmcs_ग_लिखो32(PAGE_FAULT_ERROR_CODE_MASK, mask);
-		vmcs_ग_लिखो32(PAGE_FAULT_ERROR_CODE_MATCH, mask);
-	पूर्ण
+		int mask = selective_pf_trap ? PFERR_PRESENT_MASK : 0;
+		vmcs_write32(PAGE_FAULT_ERROR_CODE_MASK, mask);
+		vmcs_write32(PAGE_FAULT_ERROR_CODE_MATCH, mask);
+	}
 
-	vmcs_ग_लिखो32(EXCEPTION_BITMAP, eb);
-पूर्ण
+	vmcs_write32(EXCEPTION_BITMAP, eb);
+}
 
 /*
- * Check अगर MSR is पूर्णांकercepted क्रम currently loaded MSR biपंचांगap.
+ * Check if MSR is intercepted for currently loaded MSR bitmap.
  */
-अटल bool msr_ग_लिखो_पूर्णांकercepted(काष्ठा kvm_vcpu *vcpu, u32 msr)
-अणु
-	अचिन्हित दीर्घ *msr_biपंचांगap;
-	पूर्णांक f = माप(अचिन्हित दीर्घ);
+static bool msr_write_intercepted(struct kvm_vcpu *vcpu, u32 msr)
+{
+	unsigned long *msr_bitmap;
+	int f = sizeof(unsigned long);
 
-	अगर (!cpu_has_vmx_msr_biपंचांगap())
-		वापस true;
+	if (!cpu_has_vmx_msr_bitmap())
+		return true;
 
-	msr_biपंचांगap = to_vmx(vcpu)->loaded_vmcs->msr_biपंचांगap;
+	msr_bitmap = to_vmx(vcpu)->loaded_vmcs->msr_bitmap;
 
-	अगर (msr <= 0x1fff) अणु
-		वापस !!test_bit(msr, msr_biपंचांगap + 0x800 / f);
-	पूर्ण अन्यथा अगर ((msr >= 0xc0000000) && (msr <= 0xc0001fff)) अणु
+	if (msr <= 0x1fff) {
+		return !!test_bit(msr, msr_bitmap + 0x800 / f);
+	} else if ((msr >= 0xc0000000) && (msr <= 0xc0001fff)) {
 		msr &= 0x1fff;
-		वापस !!test_bit(msr, msr_biपंचांगap + 0xc00 / f);
-	पूर्ण
+		return !!test_bit(msr, msr_bitmap + 0xc00 / f);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम clear_atomic_चयन_msr_special(काष्ठा vcpu_vmx *vmx,
-		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ निकास)
-अणु
+static void clear_atomic_switch_msr_special(struct vcpu_vmx *vmx,
+		unsigned long entry, unsigned long exit)
+{
 	vm_entry_controls_clearbit(vmx, entry);
-	vm_निकास_controls_clearbit(vmx, निकास);
-पूर्ण
+	vm_exit_controls_clearbit(vmx, exit);
+}
 
-पूर्णांक vmx_find_loadstore_msr_slot(काष्ठा vmx_msrs *m, u32 msr)
-अणु
-	अचिन्हित पूर्णांक i;
+int vmx_find_loadstore_msr_slot(struct vmx_msrs *m, u32 msr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < m->nr; ++i) अणु
-		अगर (m->val[i].index == msr)
-			वापस i;
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+	for (i = 0; i < m->nr; ++i) {
+		if (m->val[i].index == msr)
+			return i;
+	}
+	return -ENOENT;
+}
 
-अटल व्योम clear_atomic_चयन_msr(काष्ठा vcpu_vmx *vmx, अचिन्हित msr)
-अणु
-	पूर्णांक i;
-	काष्ठा msr_स्वतःload *m = &vmx->msr_स्वतःload;
+static void clear_atomic_switch_msr(struct vcpu_vmx *vmx, unsigned msr)
+{
+	int i;
+	struct msr_autoload *m = &vmx->msr_autoload;
 
-	चयन (msr) अणु
-	हाल MSR_EFER:
-		अगर (cpu_has_load_ia32_efer()) अणु
-			clear_atomic_चयन_msr_special(vmx,
+	switch (msr) {
+	case MSR_EFER:
+		if (cpu_has_load_ia32_efer()) {
+			clear_atomic_switch_msr_special(vmx,
 					VM_ENTRY_LOAD_IA32_EFER,
 					VM_EXIT_LOAD_IA32_EFER);
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल MSR_CORE_PERF_GLOBAL_CTRL:
-		अगर (cpu_has_load_perf_global_ctrl()) अणु
-			clear_atomic_चयन_msr_special(vmx,
+			return;
+		}
+		break;
+	case MSR_CORE_PERF_GLOBAL_CTRL:
+		if (cpu_has_load_perf_global_ctrl()) {
+			clear_atomic_switch_msr_special(vmx,
 					VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL,
 					VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL);
-			वापस;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return;
+		}
+		break;
+	}
 	i = vmx_find_loadstore_msr_slot(&m->guest, msr);
-	अगर (i < 0)
-		जाओ skip_guest;
+	if (i < 0)
+		goto skip_guest;
 	--m->guest.nr;
 	m->guest.val[i] = m->guest.val[m->guest.nr];
-	vmcs_ग_लिखो32(VM_ENTRY_MSR_LOAD_COUNT, m->guest.nr);
+	vmcs_write32(VM_ENTRY_MSR_LOAD_COUNT, m->guest.nr);
 
 skip_guest:
 	i = vmx_find_loadstore_msr_slot(&m->host, msr);
-	अगर (i < 0)
-		वापस;
+	if (i < 0)
+		return;
 
 	--m->host.nr;
 	m->host.val[i] = m->host.val[m->host.nr];
-	vmcs_ग_लिखो32(VM_EXIT_MSR_LOAD_COUNT, m->host.nr);
-पूर्ण
+	vmcs_write32(VM_EXIT_MSR_LOAD_COUNT, m->host.nr);
+}
 
-अटल व्योम add_atomic_चयन_msr_special(काष्ठा vcpu_vmx *vmx,
-		अचिन्हित दीर्घ entry, अचिन्हित दीर्घ निकास,
-		अचिन्हित दीर्घ guest_val_vmcs, अचिन्हित दीर्घ host_val_vmcs,
+static void add_atomic_switch_msr_special(struct vcpu_vmx *vmx,
+		unsigned long entry, unsigned long exit,
+		unsigned long guest_val_vmcs, unsigned long host_val_vmcs,
 		u64 guest_val, u64 host_val)
-अणु
-	vmcs_ग_लिखो64(guest_val_vmcs, guest_val);
-	अगर (host_val_vmcs != HOST_IA32_EFER)
-		vmcs_ग_लिखो64(host_val_vmcs, host_val);
+{
+	vmcs_write64(guest_val_vmcs, guest_val);
+	if (host_val_vmcs != HOST_IA32_EFER)
+		vmcs_write64(host_val_vmcs, host_val);
 	vm_entry_controls_setbit(vmx, entry);
-	vm_निकास_controls_setbit(vmx, निकास);
-पूर्ण
+	vm_exit_controls_setbit(vmx, exit);
+}
 
-अटल व्योम add_atomic_चयन_msr(काष्ठा vcpu_vmx *vmx, अचिन्हित msr,
+static void add_atomic_switch_msr(struct vcpu_vmx *vmx, unsigned msr,
 				  u64 guest_val, u64 host_val, bool entry_only)
-अणु
-	पूर्णांक i, j = 0;
-	काष्ठा msr_स्वतःload *m = &vmx->msr_स्वतःload;
+{
+	int i, j = 0;
+	struct msr_autoload *m = &vmx->msr_autoload;
 
-	चयन (msr) अणु
-	हाल MSR_EFER:
-		अगर (cpu_has_load_ia32_efer()) अणु
-			add_atomic_चयन_msr_special(vmx,
+	switch (msr) {
+	case MSR_EFER:
+		if (cpu_has_load_ia32_efer()) {
+			add_atomic_switch_msr_special(vmx,
 					VM_ENTRY_LOAD_IA32_EFER,
 					VM_EXIT_LOAD_IA32_EFER,
 					GUEST_IA32_EFER,
 					HOST_IA32_EFER,
 					guest_val, host_val);
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल MSR_CORE_PERF_GLOBAL_CTRL:
-		अगर (cpu_has_load_perf_global_ctrl()) अणु
-			add_atomic_चयन_msr_special(vmx,
+			return;
+		}
+		break;
+	case MSR_CORE_PERF_GLOBAL_CTRL:
+		if (cpu_has_load_perf_global_ctrl()) {
+			add_atomic_switch_msr_special(vmx,
 					VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL,
 					VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL,
 					GUEST_IA32_PERF_GLOBAL_CTRL,
 					HOST_IA32_PERF_GLOBAL_CTRL,
 					guest_val, host_val);
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल MSR_IA32_PEBS_ENABLE:
-		/* PEBS needs a quiescent period after being disabled (to ग_लिखो
-		 * a record).  Disabling PEBS through VMX MSR swapping करोesn't
-		 * provide that period, so a CPU could ग_लिखो host's record पूर्णांकo
+			return;
+		}
+		break;
+	case MSR_IA32_PEBS_ENABLE:
+		/* PEBS needs a quiescent period after being disabled (to write
+		 * a record).  Disabling PEBS through VMX MSR swapping doesn't
+		 * provide that period, so a CPU could write host's record into
 		 * guest's memory.
 		 */
 		wrmsrl(MSR_IA32_PEBS_ENABLE, 0);
-	पूर्ण
+	}
 
 	i = vmx_find_loadstore_msr_slot(&m->guest, msr);
-	अगर (!entry_only)
+	if (!entry_only)
 		j = vmx_find_loadstore_msr_slot(&m->host, msr);
 
-	अगर ((i < 0 && m->guest.nr == MAX_NR_LOADSTORE_MSRS) ||
-	    (j < 0 &&  m->host.nr == MAX_NR_LOADSTORE_MSRS)) अणु
-		prपूर्णांकk_once(KERN_WARNING "Not enough msr switch entries. "
+	if ((i < 0 && m->guest.nr == MAX_NR_LOADSTORE_MSRS) ||
+	    (j < 0 &&  m->host.nr == MAX_NR_LOADSTORE_MSRS)) {
+		printk_once(KERN_WARNING "Not enough msr switch entries. "
 				"Can't add msr %x\n", msr);
-		वापस;
-	पूर्ण
-	अगर (i < 0) अणु
+		return;
+	}
+	if (i < 0) {
 		i = m->guest.nr++;
-		vmcs_ग_लिखो32(VM_ENTRY_MSR_LOAD_COUNT, m->guest.nr);
-	पूर्ण
+		vmcs_write32(VM_ENTRY_MSR_LOAD_COUNT, m->guest.nr);
+	}
 	m->guest.val[i].index = msr;
 	m->guest.val[i].value = guest_val;
 
-	अगर (entry_only)
-		वापस;
+	if (entry_only)
+		return;
 
-	अगर (j < 0) अणु
+	if (j < 0) {
 		j = m->host.nr++;
-		vmcs_ग_लिखो32(VM_EXIT_MSR_LOAD_COUNT, m->host.nr);
-	पूर्ण
+		vmcs_write32(VM_EXIT_MSR_LOAD_COUNT, m->host.nr);
+	}
 	m->host.val[j].index = msr;
 	m->host.val[j].value = host_val;
-पूर्ण
+}
 
-अटल bool update_transition_efer(काष्ठा vcpu_vmx *vmx)
-अणु
+static bool update_transition_efer(struct vcpu_vmx *vmx)
+{
 	u64 guest_efer = vmx->vcpu.arch.efer;
 	u64 ignore_bits = 0;
-	पूर्णांक i;
+	int i;
 
-	/* Shaकरोw paging assumes NX to be available.  */
-	अगर (!enable_ept)
+	/* Shadow paging assumes NX to be available.  */
+	if (!enable_ept)
 		guest_efer |= EFER_NX;
 
 	/*
-	 * LMA and LME handled by hardware; SCE meaningless outside दीर्घ mode.
+	 * LMA and LME handled by hardware; SCE meaningless outside long mode.
 	 */
 	ignore_bits |= EFER_SCE;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	ignore_bits |= EFER_LMA | EFER_LME;
-	/* SCE is meaningful only in दीर्घ mode on Intel */
-	अगर (guest_efer & EFER_LMA)
+	/* SCE is meaningful only in long mode on Intel */
+	if (guest_efer & EFER_LMA)
 		ignore_bits &= ~(u64)EFER_SCE;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * On EPT, we can't emulate NX, so we must चयन EFER atomically.
-	 * On CPUs that support "load IA32_EFER", always चयन EFER
-	 * atomically, since it's faster than चयनing it manually.
+	 * On EPT, we can't emulate NX, so we must switch EFER atomically.
+	 * On CPUs that support "load IA32_EFER", always switch EFER
+	 * atomically, since it's faster than switching it manually.
 	 */
-	अगर (cpu_has_load_ia32_efer() ||
-	    (enable_ept && ((vmx->vcpu.arch.efer ^ host_efer) & EFER_NX))) अणु
-		अगर (!(guest_efer & EFER_LMA))
+	if (cpu_has_load_ia32_efer() ||
+	    (enable_ept && ((vmx->vcpu.arch.efer ^ host_efer) & EFER_NX))) {
+		if (!(guest_efer & EFER_LMA))
 			guest_efer &= ~EFER_LME;
-		अगर (guest_efer != host_efer)
-			add_atomic_चयन_msr(vmx, MSR_EFER,
+		if (guest_efer != host_efer)
+			add_atomic_switch_msr(vmx, MSR_EFER,
 					      guest_efer, host_efer, false);
-		अन्यथा
-			clear_atomic_चयन_msr(vmx, MSR_EFER);
-		वापस false;
-	पूर्ण
+		else
+			clear_atomic_switch_msr(vmx, MSR_EFER);
+		return false;
+	}
 
-	i = kvm_find_user_वापस_msr(MSR_EFER);
-	अगर (i < 0)
-		वापस false;
+	i = kvm_find_user_return_msr(MSR_EFER);
+	if (i < 0)
+		return false;
 
-	clear_atomic_चयन_msr(vmx, MSR_EFER);
+	clear_atomic_switch_msr(vmx, MSR_EFER);
 
 	guest_efer &= ~ignore_bits;
 	guest_efer |= host_efer & ignore_bits;
@@ -1067,282 +1066,282 @@ skip_guest:
 	vmx->guest_uret_msrs[i].data = guest_efer;
 	vmx->guest_uret_msrs[i].mask = ~ignore_bits;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#अगर_घोषित CONFIG_X86_32
+#ifdef CONFIG_X86_32
 /*
- * On 32-bit kernels, VM निकासs still load the FS and GS bases from the
+ * On 32-bit kernels, VM exits still load the FS and GS bases from the
  * VMCS rather than the segment table.  KVM uses this helper to figure
- * out the current bases to poke them पूर्णांकo the VMCS beक्रमe entry.
+ * out the current bases to poke them into the VMCS before entry.
  */
-अटल अचिन्हित दीर्घ segment_base(u16 selector)
-अणु
-	काष्ठा desc_काष्ठा *table;
-	अचिन्हित दीर्घ v;
+static unsigned long segment_base(u16 selector)
+{
+	struct desc_struct *table;
+	unsigned long v;
 
-	अगर (!(selector & ~SEGMENT_RPL_MASK))
-		वापस 0;
+	if (!(selector & ~SEGMENT_RPL_MASK))
+		return 0;
 
 	table = get_current_gdt_ro();
 
-	अगर ((selector & SEGMENT_TI_MASK) == SEGMENT_LDT) अणु
-		u16 ldt_selector = kvm_पढ़ो_ldt();
+	if ((selector & SEGMENT_TI_MASK) == SEGMENT_LDT) {
+		u16 ldt_selector = kvm_read_ldt();
 
-		अगर (!(ldt_selector & ~SEGMENT_RPL_MASK))
-			वापस 0;
+		if (!(ldt_selector & ~SEGMENT_RPL_MASK))
+			return 0;
 
-		table = (काष्ठा desc_काष्ठा *)segment_base(ldt_selector);
-	पूर्ण
+		table = (struct desc_struct *)segment_base(ldt_selector);
+	}
 	v = get_desc_base(&table[selector >> 3]);
-	वापस v;
-पूर्ण
-#पूर्ण_अगर
+	return v;
+}
+#endif
 
-अटल अंतरभूत bool pt_can_ग_लिखो_msr(काष्ठा vcpu_vmx *vmx)
-अणु
-	वापस vmx_pt_mode_is_host_guest() &&
+static inline bool pt_can_write_msr(struct vcpu_vmx *vmx)
+{
+	return vmx_pt_mode_is_host_guest() &&
 	       !(vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN);
-पूर्ण
+}
 
-अटल अंतरभूत bool pt_output_base_valid(काष्ठा kvm_vcpu *vcpu, u64 base)
-अणु
+static inline bool pt_output_base_valid(struct kvm_vcpu *vcpu, u64 base)
+{
 	/* The base must be 128-byte aligned and a legal physical address. */
-	वापस kvm_vcpu_is_legal_aligned_gpa(vcpu, base, 128);
-पूर्ण
+	return kvm_vcpu_is_legal_aligned_gpa(vcpu, base, 128);
+}
 
-अटल अंतरभूत व्योम pt_load_msr(काष्ठा pt_ctx *ctx, u32 addr_range)
-अणु
+static inline void pt_load_msr(struct pt_ctx *ctx, u32 addr_range)
+{
 	u32 i;
 
 	wrmsrl(MSR_IA32_RTIT_STATUS, ctx->status);
 	wrmsrl(MSR_IA32_RTIT_OUTPUT_BASE, ctx->output_base);
 	wrmsrl(MSR_IA32_RTIT_OUTPUT_MASK, ctx->output_mask);
 	wrmsrl(MSR_IA32_RTIT_CR3_MATCH, ctx->cr3_match);
-	क्रम (i = 0; i < addr_range; i++) अणु
+	for (i = 0; i < addr_range; i++) {
 		wrmsrl(MSR_IA32_RTIT_ADDR0_A + i * 2, ctx->addr_a[i]);
 		wrmsrl(MSR_IA32_RTIT_ADDR0_B + i * 2, ctx->addr_b[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम pt_save_msr(काष्ठा pt_ctx *ctx, u32 addr_range)
-अणु
+static inline void pt_save_msr(struct pt_ctx *ctx, u32 addr_range)
+{
 	u32 i;
 
 	rdmsrl(MSR_IA32_RTIT_STATUS, ctx->status);
 	rdmsrl(MSR_IA32_RTIT_OUTPUT_BASE, ctx->output_base);
 	rdmsrl(MSR_IA32_RTIT_OUTPUT_MASK, ctx->output_mask);
 	rdmsrl(MSR_IA32_RTIT_CR3_MATCH, ctx->cr3_match);
-	क्रम (i = 0; i < addr_range; i++) अणु
+	for (i = 0; i < addr_range; i++) {
 		rdmsrl(MSR_IA32_RTIT_ADDR0_A + i * 2, ctx->addr_a[i]);
 		rdmsrl(MSR_IA32_RTIT_ADDR0_B + i * 2, ctx->addr_b[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pt_guest_enter(काष्ठा vcpu_vmx *vmx)
-अणु
-	अगर (vmx_pt_mode_is_प्रणाली())
-		वापस;
+static void pt_guest_enter(struct vcpu_vmx *vmx)
+{
+	if (vmx_pt_mode_is_system())
+		return;
 
 	/*
-	 * GUEST_IA32_RTIT_CTL is alपढ़ोy set in the VMCS.
-	 * Save host state beक्रमe VM entry.
+	 * GUEST_IA32_RTIT_CTL is already set in the VMCS.
+	 * Save host state before VM entry.
 	 */
 	rdmsrl(MSR_IA32_RTIT_CTL, vmx->pt_desc.host.ctl);
-	अगर (vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) अणु
+	if (vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) {
 		wrmsrl(MSR_IA32_RTIT_CTL, 0);
 		pt_save_msr(&vmx->pt_desc.host, vmx->pt_desc.addr_range);
 		pt_load_msr(&vmx->pt_desc.guest, vmx->pt_desc.addr_range);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pt_guest_निकास(काष्ठा vcpu_vmx *vmx)
-अणु
-	अगर (vmx_pt_mode_is_प्रणाली())
-		वापस;
+static void pt_guest_exit(struct vcpu_vmx *vmx)
+{
+	if (vmx_pt_mode_is_system())
+		return;
 
-	अगर (vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) अणु
+	if (vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) {
 		pt_save_msr(&vmx->pt_desc.guest, vmx->pt_desc.addr_range);
 		pt_load_msr(&vmx->pt_desc.host, vmx->pt_desc.addr_range);
-	पूर्ण
+	}
 
-	/* Reload host state (IA32_RTIT_CTL will be cleared on VM निकास). */
+	/* Reload host state (IA32_RTIT_CTL will be cleared on VM exit). */
 	wrmsrl(MSR_IA32_RTIT_CTL, vmx->pt_desc.host.ctl);
-पूर्ण
+}
 
-व्योम vmx_set_host_fs_gs(काष्ठा vmcs_host_state *host, u16 fs_sel, u16 gs_sel,
-			अचिन्हित दीर्घ fs_base, अचिन्हित दीर्घ gs_base)
-अणु
-	अगर (unlikely(fs_sel != host->fs_sel)) अणु
-		अगर (!(fs_sel & 7))
-			vmcs_ग_लिखो16(HOST_FS_SELECTOR, fs_sel);
-		अन्यथा
-			vmcs_ग_लिखो16(HOST_FS_SELECTOR, 0);
+void vmx_set_host_fs_gs(struct vmcs_host_state *host, u16 fs_sel, u16 gs_sel,
+			unsigned long fs_base, unsigned long gs_base)
+{
+	if (unlikely(fs_sel != host->fs_sel)) {
+		if (!(fs_sel & 7))
+			vmcs_write16(HOST_FS_SELECTOR, fs_sel);
+		else
+			vmcs_write16(HOST_FS_SELECTOR, 0);
 		host->fs_sel = fs_sel;
-	पूर्ण
-	अगर (unlikely(gs_sel != host->gs_sel)) अणु
-		अगर (!(gs_sel & 7))
-			vmcs_ग_लिखो16(HOST_GS_SELECTOR, gs_sel);
-		अन्यथा
-			vmcs_ग_लिखो16(HOST_GS_SELECTOR, 0);
+	}
+	if (unlikely(gs_sel != host->gs_sel)) {
+		if (!(gs_sel & 7))
+			vmcs_write16(HOST_GS_SELECTOR, gs_sel);
+		else
+			vmcs_write16(HOST_GS_SELECTOR, 0);
 		host->gs_sel = gs_sel;
-	पूर्ण
-	अगर (unlikely(fs_base != host->fs_base)) अणु
-		vmcs_ग_लिखोl(HOST_FS_BASE, fs_base);
+	}
+	if (unlikely(fs_base != host->fs_base)) {
+		vmcs_writel(HOST_FS_BASE, fs_base);
 		host->fs_base = fs_base;
-	पूर्ण
-	अगर (unlikely(gs_base != host->gs_base)) अणु
-		vmcs_ग_लिखोl(HOST_GS_BASE, gs_base);
+	}
+	if (unlikely(gs_base != host->gs_base)) {
+		vmcs_writel(HOST_GS_BASE, gs_base);
 		host->gs_base = gs_base;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम vmx_prepare_चयन_to_guest(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा vmcs_host_state *host_state;
-#अगर_घोषित CONFIG_X86_64
-	पूर्णांक cpu = raw_smp_processor_id();
-#पूर्ण_अगर
-	अचिन्हित दीर्घ fs_base, gs_base;
+void vmx_prepare_switch_to_guest(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct vmcs_host_state *host_state;
+#ifdef CONFIG_X86_64
+	int cpu = raw_smp_processor_id();
+#endif
+	unsigned long fs_base, gs_base;
 	u16 fs_sel, gs_sel;
-	पूर्णांक i;
+	int i;
 
-	vmx->req_immediate_निकास = false;
+	vmx->req_immediate_exit = false;
 
 	/*
 	 * Note that guest MSRs to be saved/restored can also be changed
 	 * when guest state is loaded. This happens when guest transitions
-	 * to/from दीर्घ-mode by setting MSR_EFER.LMA.
+	 * to/from long-mode by setting MSR_EFER.LMA.
 	 */
-	अगर (!vmx->guest_uret_msrs_loaded) अणु
+	if (!vmx->guest_uret_msrs_loaded) {
 		vmx->guest_uret_msrs_loaded = true;
-		क्रम (i = 0; i < kvm_nr_uret_msrs; ++i) अणु
-			अगर (!vmx->guest_uret_msrs[i].load_पूर्णांकo_hardware)
-				जारी;
+		for (i = 0; i < kvm_nr_uret_msrs; ++i) {
+			if (!vmx->guest_uret_msrs[i].load_into_hardware)
+				continue;
 
-			kvm_set_user_वापस_msr(i,
+			kvm_set_user_return_msr(i,
 						vmx->guest_uret_msrs[i].data,
 						vmx->guest_uret_msrs[i].mask);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-    	अगर (vmx->nested.need_vmcs12_to_shaकरोw_sync)
-		nested_sync_vmcs12_to_shaकरोw(vcpu);
+    	if (vmx->nested.need_vmcs12_to_shadow_sync)
+		nested_sync_vmcs12_to_shadow(vcpu);
 
-	अगर (vmx->guest_state_loaded)
-		वापस;
+	if (vmx->guest_state_loaded)
+		return;
 
 	host_state = &vmx->loaded_vmcs->host_state;
 
 	/*
-	 * Set host fs and gs selectors.  Unक्रमtunately, 22.2.3 करोes not
+	 * Set host fs and gs selectors.  Unfortunately, 22.2.3 does not
 	 * allow segment selectors with cpl > 0 or ti == 1.
 	 */
-	host_state->ldt_sel = kvm_पढ़ो_ldt();
+	host_state->ldt_sel = kvm_read_ldt();
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	savesegment(ds, host_state->ds_sel);
 	savesegment(es, host_state->es_sel);
 
 	gs_base = cpu_kernelmode_gs_base(cpu);
-	अगर (likely(is_64bit_mm(current->mm))) अणु
+	if (likely(is_64bit_mm(current->mm))) {
 		current_save_fsgs();
-		fs_sel = current->thपढ़ो.fsindex;
-		gs_sel = current->thपढ़ो.gsindex;
-		fs_base = current->thपढ़ो.fsbase;
-		vmx->msr_host_kernel_gs_base = current->thपढ़ो.gsbase;
-	पूर्ण अन्यथा अणु
+		fs_sel = current->thread.fsindex;
+		gs_sel = current->thread.gsindex;
+		fs_base = current->thread.fsbase;
+		vmx->msr_host_kernel_gs_base = current->thread.gsbase;
+	} else {
 		savesegment(fs, fs_sel);
 		savesegment(gs, gs_sel);
-		fs_base = पढ़ो_msr(MSR_FS_BASE);
-		vmx->msr_host_kernel_gs_base = पढ़ो_msr(MSR_KERNEL_GS_BASE);
-	पूर्ण
+		fs_base = read_msr(MSR_FS_BASE);
+		vmx->msr_host_kernel_gs_base = read_msr(MSR_KERNEL_GS_BASE);
+	}
 
 	wrmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
-#अन्यथा
+#else
 	savesegment(fs, fs_sel);
 	savesegment(gs, gs_sel);
 	fs_base = segment_base(fs_sel);
 	gs_base = segment_base(gs_sel);
-#पूर्ण_अगर
+#endif
 
 	vmx_set_host_fs_gs(host_state, fs_sel, gs_sel, fs_base, gs_base);
 	vmx->guest_state_loaded = true;
-पूर्ण
+}
 
-अटल व्योम vmx_prepare_चयन_to_host(काष्ठा vcpu_vmx *vmx)
-अणु
-	काष्ठा vmcs_host_state *host_state;
+static void vmx_prepare_switch_to_host(struct vcpu_vmx *vmx)
+{
+	struct vmcs_host_state *host_state;
 
-	अगर (!vmx->guest_state_loaded)
-		वापस;
+	if (!vmx->guest_state_loaded)
+		return;
 
 	host_state = &vmx->loaded_vmcs->host_state;
 
-	++vmx->vcpu.स्थिति.सost_state_reload;
+	++vmx->vcpu.stat.host_state_reload;
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	rdmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
-#पूर्ण_अगर
-	अगर (host_state->ldt_sel || (host_state->gs_sel & 7)) अणु
+#endif
+	if (host_state->ldt_sel || (host_state->gs_sel & 7)) {
 		kvm_load_ldt(host_state->ldt_sel);
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 		load_gs_index(host_state->gs_sel);
-#अन्यथा
+#else
 		loadsegment(gs, host_state->gs_sel);
-#पूर्ण_अगर
-	पूर्ण
-	अगर (host_state->fs_sel & 7)
+#endif
+	}
+	if (host_state->fs_sel & 7)
 		loadsegment(fs, host_state->fs_sel);
-#अगर_घोषित CONFIG_X86_64
-	अगर (unlikely(host_state->ds_sel | host_state->es_sel)) अणु
+#ifdef CONFIG_X86_64
+	if (unlikely(host_state->ds_sel | host_state->es_sel)) {
 		loadsegment(ds, host_state->ds_sel);
 		loadsegment(es, host_state->es_sel);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	invalidate_tss_limit();
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	wrmsrl(MSR_KERNEL_GS_BASE, vmx->msr_host_kernel_gs_base);
-#पूर्ण_अगर
+#endif
 	load_fixmap_gdt(raw_smp_processor_id());
 	vmx->guest_state_loaded = false;
 	vmx->guest_uret_msrs_loaded = false;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_X86_64
-अटल u64 vmx_पढ़ो_guest_kernel_gs_base(काष्ठा vcpu_vmx *vmx)
-अणु
+#ifdef CONFIG_X86_64
+static u64 vmx_read_guest_kernel_gs_base(struct vcpu_vmx *vmx)
+{
 	preempt_disable();
-	अगर (vmx->guest_state_loaded)
+	if (vmx->guest_state_loaded)
 		rdmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
 	preempt_enable();
-	वापस vmx->msr_guest_kernel_gs_base;
-पूर्ण
+	return vmx->msr_guest_kernel_gs_base;
+}
 
-अटल व्योम vmx_ग_लिखो_guest_kernel_gs_base(काष्ठा vcpu_vmx *vmx, u64 data)
-अणु
+static void vmx_write_guest_kernel_gs_base(struct vcpu_vmx *vmx, u64 data)
+{
 	preempt_disable();
-	अगर (vmx->guest_state_loaded)
+	if (vmx->guest_state_loaded)
 		wrmsrl(MSR_KERNEL_GS_BASE, data);
 	preempt_enable();
 	vmx->msr_guest_kernel_gs_base = data;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-व्योम vmx_vcpu_load_vmcs(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu,
-			काष्ठा loaded_vmcs *buddy)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	bool alपढ़ोy_loaded = vmx->loaded_vmcs->cpu == cpu;
-	काष्ठा vmcs *prev;
+void vmx_vcpu_load_vmcs(struct kvm_vcpu *vcpu, int cpu,
+			struct loaded_vmcs *buddy)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	bool already_loaded = vmx->loaded_vmcs->cpu == cpu;
+	struct vmcs *prev;
 
-	अगर (!alपढ़ोy_loaded) अणु
+	if (!already_loaded) {
 		loaded_vmcs_clear(vmx->loaded_vmcs);
 		local_irq_disable();
 
 		/*
-		 * Ensure loaded_vmcs->cpu is पढ़ो beक्रमe adding loaded_vmcs to
+		 * Ensure loaded_vmcs->cpu is read before adding loaded_vmcs to
 		 * this cpu's percpu list, otherwise it may not yet be deleted
 		 * from its previous cpu's percpu list.  Pairs with the
 		 * smb_wmb() in __loaded_vmcs_clear().
@@ -1352,25 +1351,25 @@ skip_guest:
 		list_add(&vmx->loaded_vmcs->loaded_vmcss_on_cpu_link,
 			 &per_cpu(loaded_vmcss_on_cpu, cpu));
 		local_irq_enable();
-	पूर्ण
+	}
 
 	prev = per_cpu(current_vmcs, cpu);
-	अगर (prev != vmx->loaded_vmcs->vmcs) अणु
+	if (prev != vmx->loaded_vmcs->vmcs) {
 		per_cpu(current_vmcs, cpu) = vmx->loaded_vmcs->vmcs;
 		vmcs_load(vmx->loaded_vmcs->vmcs);
 
 		/*
-		 * No indirect branch prediction barrier needed when चयनing
+		 * No indirect branch prediction barrier needed when switching
 		 * the active VMCS within a guest, e.g. on nested VM-Enter.
 		 * The L1 VMM can protect itself with retpolines, IBPB or IBRS.
 		 */
-		अगर (!buddy || WARN_ON_ONCE(buddy->vmcs != prev))
+		if (!buddy || WARN_ON_ONCE(buddy->vmcs != prev))
 			indirect_branch_prediction_barrier();
-	पूर्ण
+	}
 
-	अगर (!alपढ़ोy_loaded) अणु
-		व्योम *gdt = get_current_gdt_ro();
-		अचिन्हित दीर्घ sysenter_esp;
+	if (!already_loaded) {
+		void *gdt = get_current_gdt_ro();
+		unsigned long sysenter_esp;
 
 		/*
 		 * Flush all EPTP/VPID contexts, the new pCPU may have stale
@@ -1379,215 +1378,215 @@ skip_guest:
 		kvm_make_request(KVM_REQ_TLB_FLUSH, vcpu);
 
 		/*
-		 * Linux uses per-cpu TSS and GDT, so set these when चयनing
+		 * Linux uses per-cpu TSS and GDT, so set these when switching
 		 * processors.  See 22.2.4.
 		 */
-		vmcs_ग_लिखोl(HOST_TR_BASE,
-			    (अचिन्हित दीर्घ)&get_cpu_entry_area(cpu)->tss.x86_tss);
-		vmcs_ग_लिखोl(HOST_GDTR_BASE, (अचिन्हित दीर्घ)gdt);   /* 22.2.4 */
+		vmcs_writel(HOST_TR_BASE,
+			    (unsigned long)&get_cpu_entry_area(cpu)->tss.x86_tss);
+		vmcs_writel(HOST_GDTR_BASE, (unsigned long)gdt);   /* 22.2.4 */
 
 		rdmsrl(MSR_IA32_SYSENTER_ESP, sysenter_esp);
-		vmcs_ग_लिखोl(HOST_IA32_SYSENTER_ESP, sysenter_esp); /* 22.2.3 */
+		vmcs_writel(HOST_IA32_SYSENTER_ESP, sysenter_esp); /* 22.2.3 */
 
 		vmx->loaded_vmcs->cpu = cpu;
-	पूर्ण
+	}
 
 	/* Setup TSC multiplier */
-	अगर (kvm_has_tsc_control &&
+	if (kvm_has_tsc_control &&
 	    vmx->current_tsc_ratio != vcpu->arch.tsc_scaling_ratio)
 		decache_tsc_multiplier(vmx);
-पूर्ण
+}
 
 /*
- * Switches to specअगरied vcpu, until a matching vcpu_put(), but assumes
- * vcpu mutex is alपढ़ोy taken.
+ * Switches to specified vcpu, until a matching vcpu_put(), but assumes
+ * vcpu mutex is already taken.
  */
-अटल व्योम vmx_vcpu_load(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	vmx_vcpu_load_vmcs(vcpu, cpu, शून्य);
+	vmx_vcpu_load_vmcs(vcpu, cpu, NULL);
 
 	vmx_vcpu_pi_load(vcpu, cpu);
 
 	vmx->host_debugctlmsr = get_debugctlmsr();
-पूर्ण
+}
 
-अटल व्योम vmx_vcpu_put(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_vcpu_put(struct kvm_vcpu *vcpu)
+{
 	vmx_vcpu_pi_put(vcpu);
 
-	vmx_prepare_चयन_to_host(to_vmx(vcpu));
-पूर्ण
+	vmx_prepare_switch_to_host(to_vmx(vcpu));
+}
 
-अटल bool emulation_required(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस emulate_invalid_guest_state && !vmx_guest_state_valid(vcpu);
-पूर्ण
+static bool emulation_required(struct kvm_vcpu *vcpu)
+{
+	return emulate_invalid_guest_state && !vmx_guest_state_valid(vcpu);
+}
 
-अचिन्हित दीर्घ vmx_get_rflags(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ rflags, save_rflags;
+unsigned long vmx_get_rflags(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long rflags, save_rflags;
 
-	अगर (!kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_RFLAGS)) अणु
-		kvm_रेजिस्टर_mark_available(vcpu, VCPU_EXREG_RFLAGS);
-		rflags = vmcs_पढ़ोl(GUEST_RFLAGS);
-		अगर (vmx->rmode.vm86_active) अणु
+	if (!kvm_register_is_available(vcpu, VCPU_EXREG_RFLAGS)) {
+		kvm_register_mark_available(vcpu, VCPU_EXREG_RFLAGS);
+		rflags = vmcs_readl(GUEST_RFLAGS);
+		if (vmx->rmode.vm86_active) {
 			rflags &= RMODE_GUEST_OWNED_EFLAGS_BITS;
 			save_rflags = vmx->rmode.save_rflags;
 			rflags |= save_rflags & ~RMODE_GUEST_OWNED_EFLAGS_BITS;
-		पूर्ण
+		}
 		vmx->rflags = rflags;
-	पूर्ण
-	वापस vmx->rflags;
-पूर्ण
+	}
+	return vmx->rflags;
+}
 
-व्योम vmx_set_rflags(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ rflags)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ old_rflags;
+void vmx_set_rflags(struct kvm_vcpu *vcpu, unsigned long rflags)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long old_rflags;
 
-	अगर (is_unrestricted_guest(vcpu)) अणु
-		kvm_रेजिस्टर_mark_available(vcpu, VCPU_EXREG_RFLAGS);
+	if (is_unrestricted_guest(vcpu)) {
+		kvm_register_mark_available(vcpu, VCPU_EXREG_RFLAGS);
 		vmx->rflags = rflags;
-		vmcs_ग_लिखोl(GUEST_RFLAGS, rflags);
-		वापस;
-	पूर्ण
+		vmcs_writel(GUEST_RFLAGS, rflags);
+		return;
+	}
 
 	old_rflags = vmx_get_rflags(vcpu);
 	vmx->rflags = rflags;
-	अगर (vmx->rmode.vm86_active) अणु
+	if (vmx->rmode.vm86_active) {
 		vmx->rmode.save_rflags = rflags;
 		rflags |= X86_EFLAGS_IOPL | X86_EFLAGS_VM;
-	पूर्ण
-	vmcs_ग_लिखोl(GUEST_RFLAGS, rflags);
+	}
+	vmcs_writel(GUEST_RFLAGS, rflags);
 
-	अगर ((old_rflags ^ vmx->rflags) & X86_EFLAGS_VM)
+	if ((old_rflags ^ vmx->rflags) & X86_EFLAGS_VM)
 		vmx->emulation_required = emulation_required(vcpu);
-पूर्ण
+}
 
-u32 vmx_get_पूर्णांकerrupt_shaकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
-	u32 पूर्णांकerruptibility = vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO);
-	पूर्णांक ret = 0;
+u32 vmx_get_interrupt_shadow(struct kvm_vcpu *vcpu)
+{
+	u32 interruptibility = vmcs_read32(GUEST_INTERRUPTIBILITY_INFO);
+	int ret = 0;
 
-	अगर (पूर्णांकerruptibility & GUEST_INTR_STATE_STI)
+	if (interruptibility & GUEST_INTR_STATE_STI)
 		ret |= KVM_X86_SHADOW_INT_STI;
-	अगर (पूर्णांकerruptibility & GUEST_INTR_STATE_MOV_SS)
+	if (interruptibility & GUEST_INTR_STATE_MOV_SS)
 		ret |= KVM_X86_SHADOW_INT_MOV_SS;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम vmx_set_पूर्णांकerrupt_shaकरोw(काष्ठा kvm_vcpu *vcpu, पूर्णांक mask)
-अणु
-	u32 पूर्णांकerruptibility_old = vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO);
-	u32 पूर्णांकerruptibility = पूर्णांकerruptibility_old;
+void vmx_set_interrupt_shadow(struct kvm_vcpu *vcpu, int mask)
+{
+	u32 interruptibility_old = vmcs_read32(GUEST_INTERRUPTIBILITY_INFO);
+	u32 interruptibility = interruptibility_old;
 
-	पूर्णांकerruptibility &= ~(GUEST_INTR_STATE_STI | GUEST_INTR_STATE_MOV_SS);
+	interruptibility &= ~(GUEST_INTR_STATE_STI | GUEST_INTR_STATE_MOV_SS);
 
-	अगर (mask & KVM_X86_SHADOW_INT_MOV_SS)
-		पूर्णांकerruptibility |= GUEST_INTR_STATE_MOV_SS;
-	अन्यथा अगर (mask & KVM_X86_SHADOW_INT_STI)
-		पूर्णांकerruptibility |= GUEST_INTR_STATE_STI;
+	if (mask & KVM_X86_SHADOW_INT_MOV_SS)
+		interruptibility |= GUEST_INTR_STATE_MOV_SS;
+	else if (mask & KVM_X86_SHADOW_INT_STI)
+		interruptibility |= GUEST_INTR_STATE_STI;
 
-	अगर ((पूर्णांकerruptibility != पूर्णांकerruptibility_old))
-		vmcs_ग_लिखो32(GUEST_INTERRUPTIBILITY_INFO, पूर्णांकerruptibility);
-पूर्ण
+	if ((interruptibility != interruptibility_old))
+		vmcs_write32(GUEST_INTERRUPTIBILITY_INFO, interruptibility);
+}
 
-अटल पूर्णांक vmx_rtit_ctl_check(काष्ठा kvm_vcpu *vcpu, u64 data)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ value;
-
-	/*
-	 * Any MSR ग_लिखो that attempts to change bits marked reserved will
-	 * हाल a #GP fault.
-	 */
-	अगर (data & vmx->pt_desc.ctl_biपंचांगask)
-		वापस 1;
+static int vmx_rtit_ctl_check(struct kvm_vcpu *vcpu, u64 data)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long value;
 
 	/*
-	 * Any attempt to modअगरy IA32_RTIT_CTL जबतक TraceEn is set will
-	 * result in a #GP unless the same ग_लिखो also clears TraceEn.
+	 * Any MSR write that attempts to change bits marked reserved will
+	 * case a #GP fault.
 	 */
-	अगर ((vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) &&
+	if (data & vmx->pt_desc.ctl_bitmask)
+		return 1;
+
+	/*
+	 * Any attempt to modify IA32_RTIT_CTL while TraceEn is set will
+	 * result in a #GP unless the same write also clears TraceEn.
+	 */
+	if ((vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN) &&
 		((vmx->pt_desc.guest.ctl ^ data) & ~RTIT_CTL_TRACEEN))
-		वापस 1;
+		return 1;
 
 	/*
 	 * WRMSR to IA32_RTIT_CTL that sets TraceEn but clears this bit
-	 * and FabricEn would cause #GP, अगर
+	 * and FabricEn would cause #GP, if
 	 * CPUID.(EAX=14H, ECX=0):ECX.SNGLRGNOUT[bit 2] = 0
 	 */
-	अगर ((data & RTIT_CTL_TRACEEN) && !(data & RTIT_CTL_TOPA) &&
+	if ((data & RTIT_CTL_TRACEEN) && !(data & RTIT_CTL_TOPA) &&
 		!(data & RTIT_CTL_FABRIC_EN) &&
-		!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		!intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_single_range_output))
-		वापस 1;
+		return 1;
 
 	/*
-	 * MTCFreq, CycThresh and PSBFreq encodings check, any MSR ग_लिखो that
+	 * MTCFreq, CycThresh and PSBFreq encodings check, any MSR write that
 	 * utilize encodings marked reserved will cause a #GP fault.
 	 */
-	value = पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc_periods);
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc) &&
+	value = intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc_periods);
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc) &&
 			!test_bit((data & RTIT_CTL_MTC_RANGE) >>
 			RTIT_CTL_MTC_RANGE_OFFSET, &value))
-		वापस 1;
-	value = पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		return 1;
+	value = intel_pt_validate_cap(vmx->pt_desc.caps,
 						PT_CAP_cycle_thresholds);
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc) &&
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc) &&
 			!test_bit((data & RTIT_CTL_CYC_THRESH) >>
 			RTIT_CTL_CYC_THRESH_OFFSET, &value))
-		वापस 1;
-	value = पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_periods);
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc) &&
+		return 1;
+	value = intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_periods);
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc) &&
 			!test_bit((data & RTIT_CTL_PSB_FREQ) >>
 			RTIT_CTL_PSB_FREQ_OFFSET, &value))
-		वापस 1;
+		return 1;
 
 	/*
 	 * If ADDRx_CFG is reserved or the encodings is >2 will
 	 * cause a #GP fault.
 	 */
 	value = (data & RTIT_CTL_ADDR0) >> RTIT_CTL_ADDR0_OFFSET;
-	अगर ((value && (vmx->pt_desc.addr_range < 1)) || (value > 2))
-		वापस 1;
+	if ((value && (vmx->pt_desc.addr_range < 1)) || (value > 2))
+		return 1;
 	value = (data & RTIT_CTL_ADDR1) >> RTIT_CTL_ADDR1_OFFSET;
-	अगर ((value && (vmx->pt_desc.addr_range < 2)) || (value > 2))
-		वापस 1;
+	if ((value && (vmx->pt_desc.addr_range < 2)) || (value > 2))
+		return 1;
 	value = (data & RTIT_CTL_ADDR2) >> RTIT_CTL_ADDR2_OFFSET;
-	अगर ((value && (vmx->pt_desc.addr_range < 3)) || (value > 2))
-		वापस 1;
+	if ((value && (vmx->pt_desc.addr_range < 3)) || (value > 2))
+		return 1;
 	value = (data & RTIT_CTL_ADDR3) >> RTIT_CTL_ADDR3_OFFSET;
-	अगर ((value && (vmx->pt_desc.addr_range < 4)) || (value > 2))
-		वापस 1;
+	if ((value && (vmx->pt_desc.addr_range < 4)) || (value > 2))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool vmx_can_emulate_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu, व्योम *insn, पूर्णांक insn_len)
-अणु
+static bool vmx_can_emulate_instruction(struct kvm_vcpu *vcpu, void *insn, int insn_len)
+{
 	/*
-	 * Emulation of inकाष्ठाions in SGX enclaves is impossible as RIP करोes
-	 * not poपूर्णांक  tthe failing inकाष्ठाion, and even अगर it did, the code
-	 * stream is inaccessible.  Inject #UD instead of निकासing to userspace
+	 * Emulation of instructions in SGX enclaves is impossible as RIP does
+	 * not point  tthe failing instruction, and even if it did, the code
+	 * stream is inaccessible.  Inject #UD instead of exiting to userspace
 	 * so that guest userspace can't DoS the guest simply by triggering
 	 * emulation (enclaves are CPL3 only).
 	 */
-	अगर (to_vmx(vcpu)->निकास_reason.enclave_mode) अणु
+	if (to_vmx(vcpu)->exit_reason.enclave_mode) {
 		kvm_queue_exception(vcpu, UD_VECTOR);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक skip_emulated_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu)
-अणु
-	जोड़ vmx_निकास_reason निकास_reason = to_vmx(vcpu)->निकास_reason;
-	अचिन्हित दीर्घ rip, orig_rip;
+static int skip_emulated_instruction(struct kvm_vcpu *vcpu)
+{
+	union vmx_exit_reason exit_reason = to_vmx(vcpu)->exit_reason;
+	unsigned long rip, orig_rip;
 	u32 instr_len;
 
 	/*
@@ -1595,175 +1594,175 @@ u32 vmx_get_पूर्णांकerrupt_shaकरोw(काष्ठा kvm_
 	 * undefined behavior: Intel's SDM doesn't mandate the VMCS field be
 	 * set when EPT misconfig occurs.  In practice, real hardware updates
 	 * VM_EXIT_INSTRUCTION_LEN on EPT misconfig, but other hypervisors
-	 * (namely Hyper-V) करोn't set it due to it being undefined behavior,
-	 * i.e. we end up advancing IP with some अक्रमom value.
+	 * (namely Hyper-V) don't set it due to it being undefined behavior,
+	 * i.e. we end up advancing IP with some random value.
 	 */
-	अगर (!अटल_cpu_has(X86_FEATURE_HYPERVISOR) ||
-	    निकास_reason.basic != EXIT_REASON_EPT_MISCONFIG) अणु
-		instr_len = vmcs_पढ़ो32(VM_EXIT_INSTRUCTION_LEN);
+	if (!static_cpu_has(X86_FEATURE_HYPERVISOR) ||
+	    exit_reason.basic != EXIT_REASON_EPT_MISCONFIG) {
+		instr_len = vmcs_read32(VM_EXIT_INSTRUCTION_LEN);
 
 		/*
 		 * Emulating an enclave's instructions isn't supported as KVM
 		 * cannot access the enclave's memory or its true RIP, e.g. the
-		 * vmcs.GUEST_RIP poपूर्णांकs at the निकास poपूर्णांक of the enclave, not
+		 * vmcs.GUEST_RIP points at the exit point of the enclave, not
 		 * the RIP that actually triggered the VM-Exit.  But, because
-		 * most inकाष्ठाions that cause VM-Exit will #UD in an enclave,
-		 * most inकाष्ठाion-based VM-Exits simply करो not occur.
+		 * most instructions that cause VM-Exit will #UD in an enclave,
+		 * most instruction-based VM-Exits simply do not occur.
 		 *
-		 * There are a few exceptions, notably the debug inकाष्ठाions
+		 * There are a few exceptions, notably the debug instructions
 		 * INT1ICEBRK and INT3, as they are allowed in debug enclaves
-		 * and generate #DB/#BP as expected, which KVM might पूर्णांकercept.
-		 * But again, the CPU करोes the dirty work and saves an instr
-		 * length of zero so VMMs करोn't shoot themselves in the foot.
-		 * WARN अगर KVM tries to skip a non-zero length inकाष्ठाion on
+		 * and generate #DB/#BP as expected, which KVM might intercept.
+		 * But again, the CPU does the dirty work and saves an instr
+		 * length of zero so VMMs don't shoot themselves in the foot.
+		 * WARN if KVM tries to skip a non-zero length instruction on
 		 * a VM-Exit from an enclave.
 		 */
-		अगर (!instr_len)
-			जाओ rip_updated;
+		if (!instr_len)
+			goto rip_updated;
 
-		WARN(निकास_reason.enclave_mode,
+		WARN(exit_reason.enclave_mode,
 		     "KVM: skipping instruction after SGX enclave VM-Exit");
 
-		orig_rip = kvm_rip_पढ़ो(vcpu);
+		orig_rip = kvm_rip_read(vcpu);
 		rip = orig_rip + instr_len;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 		/*
-		 * We need to mask out the high 32 bits of RIP अगर not in 64-bit
+		 * We need to mask out the high 32 bits of RIP if not in 64-bit
 		 * mode, but just finding out that we are in 64-bit mode is
-		 * quite expensive.  Only करो it अगर there was a carry.
+		 * quite expensive.  Only do it if there was a carry.
 		 */
-		अगर (unlikely(((rip ^ orig_rip) >> 31) == 3) && !is_64_bit_mode(vcpu))
+		if (unlikely(((rip ^ orig_rip) >> 31) == 3) && !is_64_bit_mode(vcpu))
 			rip = (u32)rip;
-#पूर्ण_अगर
-		kvm_rip_ग_लिखो(vcpu, rip);
-	पूर्ण अन्यथा अणु
-		अगर (!kvm_emulate_inकाष्ठाion(vcpu, EMULTYPE_SKIP))
-			वापस 0;
-	पूर्ण
+#endif
+		kvm_rip_write(vcpu, rip);
+	} else {
+		if (!kvm_emulate_instruction(vcpu, EMULTYPE_SKIP))
+			return 0;
+	}
 
 rip_updated:
-	/* skipping an emulated inकाष्ठाion also counts */
-	vmx_set_पूर्णांकerrupt_shaकरोw(vcpu, 0);
+	/* skipping an emulated instruction also counts */
+	vmx_set_interrupt_shadow(vcpu, 0);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Recognizes a pending MTF VM-निकास and records the nested state क्रम later
+ * Recognizes a pending MTF VM-exit and records the nested state for later
  * delivery.
  */
-अटल व्योम vmx_update_emulated_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_update_emulated_instruction(struct kvm_vcpu *vcpu)
+{
+	struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (!is_guest_mode(vcpu))
-		वापस;
+	if (!is_guest_mode(vcpu))
+		return;
 
 	/*
 	 * Per the SDM, MTF takes priority over debug-trap exceptions besides
-	 * T-bit traps. As inकाष्ठाion emulation is completed (i.e. at the
-	 * inकाष्ठाion boundary), any #DB exception pending delivery must be a
+	 * T-bit traps. As instruction emulation is completed (i.e. at the
+	 * instruction boundary), any #DB exception pending delivery must be a
 	 * debug-trap. Record the pending MTF state to be delivered in
 	 * vmx_check_nested_events().
 	 */
-	अगर (nested_cpu_has_mtf(vmcs12) &&
+	if (nested_cpu_has_mtf(vmcs12) &&
 	    (!vcpu->arch.exception.pending ||
 	     vcpu->arch.exception.nr == DB_VECTOR))
 		vmx->nested.mtf_pending = true;
-	अन्यथा
+	else
 		vmx->nested.mtf_pending = false;
-पूर्ण
+}
 
-अटल पूर्णांक vmx_skip_emulated_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu)
-अणु
-	vmx_update_emulated_inकाष्ठाion(vcpu);
-	वापस skip_emulated_inकाष्ठाion(vcpu);
-पूर्ण
+static int vmx_skip_emulated_instruction(struct kvm_vcpu *vcpu)
+{
+	vmx_update_emulated_instruction(vcpu);
+	return skip_emulated_instruction(vcpu);
+}
 
-अटल व्योम vmx_clear_hlt(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_clear_hlt(struct kvm_vcpu *vcpu)
+{
 	/*
-	 * Ensure that we clear the HLT state in the VMCS.  We करोn't need to
-	 * explicitly skip the inकाष्ठाion because अगर the HLT state is set,
-	 * then the inकाष्ठाion is alपढ़ोy executing and RIP has alपढ़ोy been
+	 * Ensure that we clear the HLT state in the VMCS.  We don't need to
+	 * explicitly skip the instruction because if the HLT state is set,
+	 * then the instruction is already executing and RIP has already been
 	 * advanced.
 	 */
-	अगर (kvm_hlt_in_guest(vcpu->kvm) &&
-			vmcs_पढ़ो32(GUEST_ACTIVITY_STATE) == GUEST_ACTIVITY_HLT)
-		vmcs_ग_लिखो32(GUEST_ACTIVITY_STATE, GUEST_ACTIVITY_ACTIVE);
-पूर्ण
+	if (kvm_hlt_in_guest(vcpu->kvm) &&
+			vmcs_read32(GUEST_ACTIVITY_STATE) == GUEST_ACTIVITY_HLT)
+		vmcs_write32(GUEST_ACTIVITY_STATE, GUEST_ACTIVITY_ACTIVE);
+}
 
-अटल व्योम vmx_queue_exception(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित nr = vcpu->arch.exception.nr;
+static void vmx_queue_exception(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned nr = vcpu->arch.exception.nr;
 	bool has_error_code = vcpu->arch.exception.has_error_code;
 	u32 error_code = vcpu->arch.exception.error_code;
-	u32 पूर्णांकr_info = nr | INTR_INFO_VALID_MASK;
+	u32 intr_info = nr | INTR_INFO_VALID_MASK;
 
 	kvm_deliver_exception_payload(vcpu);
 
-	अगर (has_error_code) अणु
-		vmcs_ग_लिखो32(VM_ENTRY_EXCEPTION_ERROR_CODE, error_code);
-		पूर्णांकr_info |= INTR_INFO_DELIVER_CODE_MASK;
-	पूर्ण
+	if (has_error_code) {
+		vmcs_write32(VM_ENTRY_EXCEPTION_ERROR_CODE, error_code);
+		intr_info |= INTR_INFO_DELIVER_CODE_MASK;
+	}
 
-	अगर (vmx->rmode.vm86_active) अणु
-		पूर्णांक inc_eip = 0;
-		अगर (kvm_exception_is_soft(nr))
-			inc_eip = vcpu->arch.event_निकास_inst_len;
-		kvm_inject_realmode_पूर्णांकerrupt(vcpu, nr, inc_eip);
-		वापस;
-	पूर्ण
+	if (vmx->rmode.vm86_active) {
+		int inc_eip = 0;
+		if (kvm_exception_is_soft(nr))
+			inc_eip = vcpu->arch.event_exit_inst_len;
+		kvm_inject_realmode_interrupt(vcpu, nr, inc_eip);
+		return;
+	}
 
 	WARN_ON_ONCE(vmx->emulation_required);
 
-	अगर (kvm_exception_is_soft(nr)) अणु
-		vmcs_ग_लिखो32(VM_ENTRY_INSTRUCTION_LEN,
-			     vmx->vcpu.arch.event_निकास_inst_len);
-		पूर्णांकr_info |= INTR_TYPE_SOFT_EXCEPTION;
-	पूर्ण अन्यथा
-		पूर्णांकr_info |= INTR_TYPE_HARD_EXCEPTION;
+	if (kvm_exception_is_soft(nr)) {
+		vmcs_write32(VM_ENTRY_INSTRUCTION_LEN,
+			     vmx->vcpu.arch.event_exit_inst_len);
+		intr_info |= INTR_TYPE_SOFT_EXCEPTION;
+	} else
+		intr_info |= INTR_TYPE_HARD_EXCEPTION;
 
-	vmcs_ग_लिखो32(VM_ENTRY_INTR_INFO_FIELD, पूर्णांकr_info);
+	vmcs_write32(VM_ENTRY_INTR_INFO_FIELD, intr_info);
 
 	vmx_clear_hlt(vcpu);
-पूर्ण
+}
 
-अटल व्योम vmx_setup_uret_msr(काष्ठा vcpu_vmx *vmx, अचिन्हित पूर्णांक msr,
-			       bool load_पूर्णांकo_hardware)
-अणु
-	काष्ठा vmx_uret_msr *uret_msr;
+static void vmx_setup_uret_msr(struct vcpu_vmx *vmx, unsigned int msr,
+			       bool load_into_hardware)
+{
+	struct vmx_uret_msr *uret_msr;
 
 	uret_msr = vmx_find_uret_msr(vmx, msr);
-	अगर (!uret_msr)
-		वापस;
+	if (!uret_msr)
+		return;
 
-	uret_msr->load_पूर्णांकo_hardware = load_पूर्णांकo_hardware;
-पूर्ण
+	uret_msr->load_into_hardware = load_into_hardware;
+}
 
 /*
- * Set up the vmcs to स्वतःmatically save and restore प्रणाली
- * msrs.  Don't touch the 64-bit msrs अगर the guest is in legacy
+ * Set up the vmcs to automatically save and restore system
+ * msrs.  Don't touch the 64-bit msrs if the guest is in legacy
  * mode, as fiddling with msrs is very expensive.
  */
-अटल व्योम setup_msrs(काष्ठा vcpu_vmx *vmx)
-अणु
-#अगर_घोषित CONFIG_X86_64
+static void setup_msrs(struct vcpu_vmx *vmx)
+{
+#ifdef CONFIG_X86_64
 	bool load_syscall_msrs;
 
 	/*
-	 * The SYSCALL MSRs are only needed on दीर्घ mode guests, and only
+	 * The SYSCALL MSRs are only needed on long mode guests, and only
 	 * when EFER.SCE is set.
 	 */
-	load_syscall_msrs = is_दीर्घ_mode(&vmx->vcpu) &&
+	load_syscall_msrs = is_long_mode(&vmx->vcpu) &&
 			    (vmx->vcpu.arch.efer & EFER_SCE);
 
 	vmx_setup_uret_msr(vmx, MSR_STAR, load_syscall_msrs);
 	vmx_setup_uret_msr(vmx, MSR_LSTAR, load_syscall_msrs);
 	vmx_setup_uret_msr(vmx, MSR_SYSCALL_MASK, load_syscall_msrs);
-#पूर्ण_अगर
+#endif
 	vmx_setup_uret_msr(vmx, MSR_EFER, update_transition_efer(vmx));
 
 	vmx_setup_uret_msr(vmx, MSR_TSC_AUX,
@@ -1771,697 +1770,697 @@ rip_updated:
 			   guest_cpuid_has(&vmx->vcpu, X86_FEATURE_RDPID));
 
 	/*
-	 * hle=0, rपंचांग=0, tsx_ctrl=1 can be found with some combinations of new
-	 * kernel and old userspace.  If those guests run on a tsx=off host, करो
-	 * allow guests to use TSX_CTRL, but करोn't change the value in hardware
-	 * so that TSX reमुख्यs always disabled.
+	 * hle=0, rtm=0, tsx_ctrl=1 can be found with some combinations of new
+	 * kernel and old userspace.  If those guests run on a tsx=off host, do
+	 * allow guests to use TSX_CTRL, but don't change the value in hardware
+	 * so that TSX remains always disabled.
 	 */
 	vmx_setup_uret_msr(vmx, MSR_IA32_TSX_CTRL, boot_cpu_has(X86_FEATURE_RTM));
 
-	अगर (cpu_has_vmx_msr_biपंचांगap())
-		vmx_update_msr_biपंचांगap(&vmx->vcpu);
+	if (cpu_has_vmx_msr_bitmap())
+		vmx_update_msr_bitmap(&vmx->vcpu);
 
 	/*
-	 * The set of MSRs to load may have changed, reload MSRs beक्रमe the
+	 * The set of MSRs to load may have changed, reload MSRs before the
 	 * next VM-Enter.
 	 */
 	vmx->guest_uret_msrs_loaded = false;
-पूर्ण
+}
 
-अटल u64 vmx_ग_लिखो_l1_tsc_offset(काष्ठा kvm_vcpu *vcpu, u64 offset)
-अणु
-	काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
+static u64 vmx_write_l1_tsc_offset(struct kvm_vcpu *vcpu, u64 offset)
+{
+	struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
 	u64 g_tsc_offset = 0;
 
 	/*
-	 * We're here अगर L1 chose not to trap WRMSR to TSC. According
+	 * We're here if L1 chose not to trap WRMSR to TSC. According
 	 * to the spec, this should set L1's TSC; The offset that L1
-	 * set क्रम L2 reमुख्यs unchanged, and still needs to be added
+	 * set for L2 remains unchanged, and still needs to be added
 	 * to the newly set TSC to get L2's TSC.
 	 */
-	अगर (is_guest_mode(vcpu) &&
+	if (is_guest_mode(vcpu) &&
 	    (vmcs12->cpu_based_vm_exec_control & CPU_BASED_USE_TSC_OFFSETTING))
 		g_tsc_offset = vmcs12->tsc_offset;
 
-	trace_kvm_ग_लिखो_tsc_offset(vcpu->vcpu_id,
+	trace_kvm_write_tsc_offset(vcpu->vcpu_id,
 				   vcpu->arch.tsc_offset - g_tsc_offset,
 				   offset);
-	vmcs_ग_लिखो64(TSC_OFFSET, offset + g_tsc_offset);
-	वापस offset + g_tsc_offset;
-पूर्ण
+	vmcs_write64(TSC_OFFSET, offset + g_tsc_offset);
+	return offset + g_tsc_offset;
+}
 
 /*
  * nested_vmx_allowed() checks whether a guest should be allowed to use VMX
- * inकाष्ठाions and MSRs (i.e., nested VMX). Nested VMX is disabled क्रम
- * all guests अगर the "nested" module option is off, and can also be disabled
- * क्रम a single guest by disabling its VMX cpuid bit.
+ * instructions and MSRs (i.e., nested VMX). Nested VMX is disabled for
+ * all guests if the "nested" module option is off, and can also be disabled
+ * for a single guest by disabling its VMX cpuid bit.
  */
-bool nested_vmx_allowed(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस nested && guest_cpuid_has(vcpu, X86_FEATURE_VMX);
-पूर्ण
+bool nested_vmx_allowed(struct kvm_vcpu *vcpu)
+{
+	return nested && guest_cpuid_has(vcpu, X86_FEATURE_VMX);
+}
 
-अटल अंतरभूत bool vmx_feature_control_msr_valid(काष्ठा kvm_vcpu *vcpu,
-						 uपूर्णांक64_t val)
-अणु
-	uपूर्णांक64_t valid_bits = to_vmx(vcpu)->msr_ia32_feature_control_valid_bits;
+static inline bool vmx_feature_control_msr_valid(struct kvm_vcpu *vcpu,
+						 uint64_t val)
+{
+	uint64_t valid_bits = to_vmx(vcpu)->msr_ia32_feature_control_valid_bits;
 
-	वापस !(val & ~valid_bits);
-पूर्ण
+	return !(val & ~valid_bits);
+}
 
-अटल पूर्णांक vmx_get_msr_feature(काष्ठा kvm_msr_entry *msr)
-अणु
-	चयन (msr->index) अणु
-	हाल MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
-		अगर (!nested)
-			वापस 1;
-		वापस vmx_get_vmx_msr(&vmcs_config.nested, msr->index, &msr->data);
-	हाल MSR_IA32_PERF_CAPABILITIES:
+static int vmx_get_msr_feature(struct kvm_msr_entry *msr)
+{
+	switch (msr->index) {
+	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
+		if (!nested)
+			return 1;
+		return vmx_get_vmx_msr(&vmcs_config.nested, msr->index, &msr->data);
+	case MSR_IA32_PERF_CAPABILITIES:
 		msr->data = vmx_get_perf_capabilities();
-		वापस 0;
-	शेष:
-		वापस KVM_MSR_RET_INVALID;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return KVM_MSR_RET_INVALID;
+	}
+}
 
 /*
  * Reads an msr value (of 'msr_index') into 'pdata'.
  * Returns 0 on success, non-0 otherwise.
- * Assumes vcpu_load() was alपढ़ोy called.
+ * Assumes vcpu_load() was already called.
  */
-अटल पूर्णांक vmx_get_msr(काष्ठा kvm_vcpu *vcpu, काष्ठा msr_data *msr_info)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा vmx_uret_msr *msr;
+static int vmx_get_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct vmx_uret_msr *msr;
 	u32 index;
 
-	चयन (msr_info->index) अणु
-#अगर_घोषित CONFIG_X86_64
-	हाल MSR_FS_BASE:
-		msr_info->data = vmcs_पढ़ोl(GUEST_FS_BASE);
-		अवरोध;
-	हाल MSR_GS_BASE:
-		msr_info->data = vmcs_पढ़ोl(GUEST_GS_BASE);
-		अवरोध;
-	हाल MSR_KERNEL_GS_BASE:
-		msr_info->data = vmx_पढ़ो_guest_kernel_gs_base(vmx);
-		अवरोध;
-#पूर्ण_अगर
-	हाल MSR_EFER:
-		वापस kvm_get_msr_common(vcpu, msr_info);
-	हाल MSR_IA32_TSX_CTRL:
-		अगर (!msr_info->host_initiated &&
+	switch (msr_info->index) {
+#ifdef CONFIG_X86_64
+	case MSR_FS_BASE:
+		msr_info->data = vmcs_readl(GUEST_FS_BASE);
+		break;
+	case MSR_GS_BASE:
+		msr_info->data = vmcs_readl(GUEST_GS_BASE);
+		break;
+	case MSR_KERNEL_GS_BASE:
+		msr_info->data = vmx_read_guest_kernel_gs_base(vmx);
+		break;
+#endif
+	case MSR_EFER:
+		return kvm_get_msr_common(vcpu, msr_info);
+	case MSR_IA32_TSX_CTRL:
+		if (!msr_info->host_initiated &&
 		    !(vcpu->arch.arch_capabilities & ARCH_CAP_TSX_CTRL_MSR))
-			वापस 1;
-		जाओ find_uret_msr;
-	हाल MSR_IA32_UMWAIT_CONTROL:
-		अगर (!msr_info->host_initiated && !vmx_has_रुकोpkg(vmx))
-			वापस 1;
+			return 1;
+		goto find_uret_msr;
+	case MSR_IA32_UMWAIT_CONTROL:
+		if (!msr_info->host_initiated && !vmx_has_waitpkg(vmx))
+			return 1;
 
-		msr_info->data = vmx->msr_ia32_umरुको_control;
-		अवरोध;
-	हाल MSR_IA32_SPEC_CTRL:
-		अगर (!msr_info->host_initiated &&
+		msr_info->data = vmx->msr_ia32_umwait_control;
+		break;
+	case MSR_IA32_SPEC_CTRL:
+		if (!msr_info->host_initiated &&
 		    !guest_has_spec_ctrl_msr(vcpu))
-			वापस 1;
+			return 1;
 
 		msr_info->data = to_vmx(vcpu)->spec_ctrl;
-		अवरोध;
-	हाल MSR_IA32_SYSENTER_CS:
-		msr_info->data = vmcs_पढ़ो32(GUEST_SYSENTER_CS);
-		अवरोध;
-	हाल MSR_IA32_SYSENTER_EIP:
-		msr_info->data = vmcs_पढ़ोl(GUEST_SYSENTER_EIP);
-		अवरोध;
-	हाल MSR_IA32_SYSENTER_ESP:
-		msr_info->data = vmcs_पढ़ोl(GUEST_SYSENTER_ESP);
-		अवरोध;
-	हाल MSR_IA32_BNDCFGS:
-		अगर (!kvm_mpx_supported() ||
+		break;
+	case MSR_IA32_SYSENTER_CS:
+		msr_info->data = vmcs_read32(GUEST_SYSENTER_CS);
+		break;
+	case MSR_IA32_SYSENTER_EIP:
+		msr_info->data = vmcs_readl(GUEST_SYSENTER_EIP);
+		break;
+	case MSR_IA32_SYSENTER_ESP:
+		msr_info->data = vmcs_readl(GUEST_SYSENTER_ESP);
+		break;
+	case MSR_IA32_BNDCFGS:
+		if (!kvm_mpx_supported() ||
 		    (!msr_info->host_initiated &&
 		     !guest_cpuid_has(vcpu, X86_FEATURE_MPX)))
-			वापस 1;
-		msr_info->data = vmcs_पढ़ो64(GUEST_BNDCFGS);
-		अवरोध;
-	हाल MSR_IA32_MCG_EXT_CTL:
-		अगर (!msr_info->host_initiated &&
+			return 1;
+		msr_info->data = vmcs_read64(GUEST_BNDCFGS);
+		break;
+	case MSR_IA32_MCG_EXT_CTL:
+		if (!msr_info->host_initiated &&
 		    !(vmx->msr_ia32_feature_control &
 		      FEAT_CTL_LMCE_ENABLED))
-			वापस 1;
+			return 1;
 		msr_info->data = vcpu->arch.mcg_ext_ctl;
-		अवरोध;
-	हाल MSR_IA32_FEAT_CTL:
+		break;
+	case MSR_IA32_FEAT_CTL:
 		msr_info->data = vmx->msr_ia32_feature_control;
-		अवरोध;
-	हाल MSR_IA32_SGXLEPUBKEYHASH0 ... MSR_IA32_SGXLEPUBKEYHASH3:
-		अगर (!msr_info->host_initiated &&
+		break;
+	case MSR_IA32_SGXLEPUBKEYHASH0 ... MSR_IA32_SGXLEPUBKEYHASH3:
+		if (!msr_info->host_initiated &&
 		    !guest_cpuid_has(vcpu, X86_FEATURE_SGX_LC))
-			वापस 1;
+			return 1;
 		msr_info->data = to_vmx(vcpu)->msr_ia32_sgxlepubkeyhash
 			[msr_info->index - MSR_IA32_SGXLEPUBKEYHASH0];
-		अवरोध;
-	हाल MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
-		अगर (!nested_vmx_allowed(vcpu))
-			वापस 1;
-		अगर (vmx_get_vmx_msr(&vmx->nested.msrs, msr_info->index,
+		break;
+	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
+		if (!nested_vmx_allowed(vcpu))
+			return 1;
+		if (vmx_get_vmx_msr(&vmx->nested.msrs, msr_info->index,
 				    &msr_info->data))
-			वापस 1;
+			return 1;
 		/*
-		 * Enlightened VMCS v1 करोesn't have certain fields, but buggy
+		 * Enlightened VMCS v1 doesn't have certain fields, but buggy
 		 * Hyper-V versions are still trying to use corresponding
 		 * features when they are exposed. Filter out the essential
 		 * minimum.
 		 */
-		अगर (!msr_info->host_initiated &&
+		if (!msr_info->host_initiated &&
 		    vmx->nested.enlightened_vmcs_enabled)
 			nested_evmcs_filter_control_msr(msr_info->index,
 							&msr_info->data);
-		अवरोध;
-	हाल MSR_IA32_RTIT_CTL:
-		अगर (!vmx_pt_mode_is_host_guest())
-			वापस 1;
+		break;
+	case MSR_IA32_RTIT_CTL:
+		if (!vmx_pt_mode_is_host_guest())
+			return 1;
 		msr_info->data = vmx->pt_desc.guest.ctl;
-		अवरोध;
-	हाल MSR_IA32_RTIT_STATUS:
-		अगर (!vmx_pt_mode_is_host_guest())
-			वापस 1;
+		break;
+	case MSR_IA32_RTIT_STATUS:
+		if (!vmx_pt_mode_is_host_guest())
+			return 1;
 		msr_info->data = vmx->pt_desc.guest.status;
-		अवरोध;
-	हाल MSR_IA32_RTIT_CR3_MATCH:
-		अगर (!vmx_pt_mode_is_host_guest() ||
-			!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_CR3_MATCH:
+		if (!vmx_pt_mode_is_host_guest() ||
+			!intel_pt_validate_cap(vmx->pt_desc.caps,
 						PT_CAP_cr3_filtering))
-			वापस 1;
+			return 1;
 		msr_info->data = vmx->pt_desc.guest.cr3_match;
-		अवरोध;
-	हाल MSR_IA32_RTIT_OUTPUT_BASE:
-		अगर (!vmx_pt_mode_is_host_guest() ||
-			(!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_OUTPUT_BASE:
+		if (!vmx_pt_mode_is_host_guest() ||
+			(!intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_topa_output) &&
-			 !पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+			 !intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_single_range_output)))
-			वापस 1;
+			return 1;
 		msr_info->data = vmx->pt_desc.guest.output_base;
-		अवरोध;
-	हाल MSR_IA32_RTIT_OUTPUT_MASK:
-		अगर (!vmx_pt_mode_is_host_guest() ||
-			(!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_OUTPUT_MASK:
+		if (!vmx_pt_mode_is_host_guest() ||
+			(!intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_topa_output) &&
-			 !पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+			 !intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_single_range_output)))
-			वापस 1;
+			return 1;
 		msr_info->data = vmx->pt_desc.guest.output_mask;
-		अवरोध;
-	हाल MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
+		break;
+	case MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
 		index = msr_info->index - MSR_IA32_RTIT_ADDR0_A;
-		अगर (!vmx_pt_mode_is_host_guest() ||
-			(index >= 2 * पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		if (!vmx_pt_mode_is_host_guest() ||
+			(index >= 2 * intel_pt_validate_cap(vmx->pt_desc.caps,
 					PT_CAP_num_address_ranges)))
-			वापस 1;
-		अगर (index % 2)
+			return 1;
+		if (index % 2)
 			msr_info->data = vmx->pt_desc.guest.addr_b[index / 2];
-		अन्यथा
+		else
 			msr_info->data = vmx->pt_desc.guest.addr_a[index / 2];
-		अवरोध;
-	हाल MSR_IA32_DEBUGCTLMSR:
-		msr_info->data = vmcs_पढ़ो64(GUEST_IA32_DEBUGCTL);
-		अवरोध;
-	शेष:
+		break;
+	case MSR_IA32_DEBUGCTLMSR:
+		msr_info->data = vmcs_read64(GUEST_IA32_DEBUGCTL);
+		break;
+	default:
 	find_uret_msr:
 		msr = vmx_find_uret_msr(vmx, msr_info->index);
-		अगर (msr) अणु
+		if (msr) {
 			msr_info->data = msr->data;
-			अवरोध;
-		पूर्ण
-		वापस kvm_get_msr_common(vcpu, msr_info);
-	पूर्ण
+			break;
+		}
+		return kvm_get_msr_common(vcpu, msr_info);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 nested_vmx_truncate_sysenter_addr(काष्ठा kvm_vcpu *vcpu,
+static u64 nested_vmx_truncate_sysenter_addr(struct kvm_vcpu *vcpu,
 						    u64 data)
-अणु
-#अगर_घोषित CONFIG_X86_64
-	अगर (!guest_cpuid_has(vcpu, X86_FEATURE_LM))
-		वापस (u32)data;
-#पूर्ण_अगर
-	वापस (अचिन्हित दीर्घ)data;
-पूर्ण
+{
+#ifdef CONFIG_X86_64
+	if (!guest_cpuid_has(vcpu, X86_FEATURE_LM))
+		return (u32)data;
+#endif
+	return (unsigned long)data;
+}
 
-अटल u64 vcpu_supported_debugctl(काष्ठा kvm_vcpu *vcpu)
-अणु
+static u64 vcpu_supported_debugctl(struct kvm_vcpu *vcpu)
+{
 	u64 debugctl = vmx_supported_debugctl();
 
-	अगर (!पूर्णांकel_pmu_lbr_is_enabled(vcpu))
+	if (!intel_pmu_lbr_is_enabled(vcpu))
 		debugctl &= ~DEBUGCTLMSR_LBR_MASK;
 
-	अगर (!guest_cpuid_has(vcpu, X86_FEATURE_BUS_LOCK_DETECT))
+	if (!guest_cpuid_has(vcpu, X86_FEATURE_BUS_LOCK_DETECT))
 		debugctl &= ~DEBUGCTLMSR_BUS_LOCK_DETECT;
 
-	वापस debugctl;
-पूर्ण
+	return debugctl;
+}
 
 /*
- * Writes msr value पूर्णांकo the appropriate "register".
+ * Writes msr value into the appropriate "register".
  * Returns 0 on success, non-0 otherwise.
- * Assumes vcpu_load() was alपढ़ोy called.
+ * Assumes vcpu_load() was already called.
  */
-अटल पूर्णांक vmx_set_msr(काष्ठा kvm_vcpu *vcpu, काष्ठा msr_data *msr_info)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा vmx_uret_msr *msr;
-	पूर्णांक ret = 0;
+static int vmx_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct vmx_uret_msr *msr;
+	int ret = 0;
 	u32 msr_index = msr_info->index;
 	u64 data = msr_info->data;
 	u32 index;
 
-	चयन (msr_index) अणु
-	हाल MSR_EFER:
+	switch (msr_index) {
+	case MSR_EFER:
 		ret = kvm_set_msr_common(vcpu, msr_info);
-		अवरोध;
-#अगर_घोषित CONFIG_X86_64
-	हाल MSR_FS_BASE:
+		break;
+#ifdef CONFIG_X86_64
+	case MSR_FS_BASE:
 		vmx_segment_cache_clear(vmx);
-		vmcs_ग_लिखोl(GUEST_FS_BASE, data);
-		अवरोध;
-	हाल MSR_GS_BASE:
+		vmcs_writel(GUEST_FS_BASE, data);
+		break;
+	case MSR_GS_BASE:
 		vmx_segment_cache_clear(vmx);
-		vmcs_ग_लिखोl(GUEST_GS_BASE, data);
-		अवरोध;
-	हाल MSR_KERNEL_GS_BASE:
-		vmx_ग_लिखो_guest_kernel_gs_base(vmx, data);
-		अवरोध;
-#पूर्ण_अगर
-	हाल MSR_IA32_SYSENTER_CS:
-		अगर (is_guest_mode(vcpu))
+		vmcs_writel(GUEST_GS_BASE, data);
+		break;
+	case MSR_KERNEL_GS_BASE:
+		vmx_write_guest_kernel_gs_base(vmx, data);
+		break;
+#endif
+	case MSR_IA32_SYSENTER_CS:
+		if (is_guest_mode(vcpu))
 			get_vmcs12(vcpu)->guest_sysenter_cs = data;
-		vmcs_ग_लिखो32(GUEST_SYSENTER_CS, data);
-		अवरोध;
-	हाल MSR_IA32_SYSENTER_EIP:
-		अगर (is_guest_mode(vcpu)) अणु
+		vmcs_write32(GUEST_SYSENTER_CS, data);
+		break;
+	case MSR_IA32_SYSENTER_EIP:
+		if (is_guest_mode(vcpu)) {
 			data = nested_vmx_truncate_sysenter_addr(vcpu, data);
 			get_vmcs12(vcpu)->guest_sysenter_eip = data;
-		पूर्ण
-		vmcs_ग_लिखोl(GUEST_SYSENTER_EIP, data);
-		अवरोध;
-	हाल MSR_IA32_SYSENTER_ESP:
-		अगर (is_guest_mode(vcpu)) अणु
+		}
+		vmcs_writel(GUEST_SYSENTER_EIP, data);
+		break;
+	case MSR_IA32_SYSENTER_ESP:
+		if (is_guest_mode(vcpu)) {
 			data = nested_vmx_truncate_sysenter_addr(vcpu, data);
 			get_vmcs12(vcpu)->guest_sysenter_esp = data;
-		पूर्ण
-		vmcs_ग_लिखोl(GUEST_SYSENTER_ESP, data);
-		अवरोध;
-	हाल MSR_IA32_DEBUGCTLMSR: अणु
+		}
+		vmcs_writel(GUEST_SYSENTER_ESP, data);
+		break;
+	case MSR_IA32_DEBUGCTLMSR: {
 		u64 invalid = data & ~vcpu_supported_debugctl(vcpu);
-		अगर (invalid & (DEBUGCTLMSR_BTF|DEBUGCTLMSR_LBR)) अणु
-			अगर (report_ignored_msrs)
+		if (invalid & (DEBUGCTLMSR_BTF|DEBUGCTLMSR_LBR)) {
+			if (report_ignored_msrs)
 				vcpu_unimpl(vcpu, "%s: BTF|LBR in IA32_DEBUGCTLMSR 0x%llx, nop\n",
 					    __func__, data);
 			data &= ~(DEBUGCTLMSR_BTF|DEBUGCTLMSR_LBR);
 			invalid &= ~(DEBUGCTLMSR_BTF|DEBUGCTLMSR_LBR);
-		पूर्ण
+		}
 
-		अगर (invalid)
-			वापस 1;
+		if (invalid)
+			return 1;
 
-		अगर (is_guest_mode(vcpu) && get_vmcs12(vcpu)->vm_निकास_controls &
+		if (is_guest_mode(vcpu) && get_vmcs12(vcpu)->vm_exit_controls &
 						VM_EXIT_SAVE_DEBUG_CONTROLS)
 			get_vmcs12(vcpu)->guest_ia32_debugctl = data;
 
-		vmcs_ग_लिखो64(GUEST_IA32_DEBUGCTL, data);
-		अगर (पूर्णांकel_pmu_lbr_is_enabled(vcpu) && !to_vmx(vcpu)->lbr_desc.event &&
+		vmcs_write64(GUEST_IA32_DEBUGCTL, data);
+		if (intel_pmu_lbr_is_enabled(vcpu) && !to_vmx(vcpu)->lbr_desc.event &&
 		    (data & DEBUGCTLMSR_LBR))
-			पूर्णांकel_pmu_create_guest_lbr_event(vcpu);
-		वापस 0;
-	पूर्ण
-	हाल MSR_IA32_BNDCFGS:
-		अगर (!kvm_mpx_supported() ||
+			intel_pmu_create_guest_lbr_event(vcpu);
+		return 0;
+	}
+	case MSR_IA32_BNDCFGS:
+		if (!kvm_mpx_supported() ||
 		    (!msr_info->host_initiated &&
 		     !guest_cpuid_has(vcpu, X86_FEATURE_MPX)))
-			वापस 1;
-		अगर (is_noncanonical_address(data & PAGE_MASK, vcpu) ||
+			return 1;
+		if (is_noncanonical_address(data & PAGE_MASK, vcpu) ||
 		    (data & MSR_IA32_BNDCFGS_RSVD))
-			वापस 1;
-		vmcs_ग_लिखो64(GUEST_BNDCFGS, data);
-		अवरोध;
-	हाल MSR_IA32_UMWAIT_CONTROL:
-		अगर (!msr_info->host_initiated && !vmx_has_रुकोpkg(vmx))
-			वापस 1;
+			return 1;
+		vmcs_write64(GUEST_BNDCFGS, data);
+		break;
+	case MSR_IA32_UMWAIT_CONTROL:
+		if (!msr_info->host_initiated && !vmx_has_waitpkg(vmx))
+			return 1;
 
 		/* The reserved bit 1 and non-32 bit [63:32] should be zero */
-		अगर (data & (BIT_ULL(1) | GENMASK_ULL(63, 32)))
-			वापस 1;
+		if (data & (BIT_ULL(1) | GENMASK_ULL(63, 32)))
+			return 1;
 
-		vmx->msr_ia32_umरुको_control = data;
-		अवरोध;
-	हाल MSR_IA32_SPEC_CTRL:
-		अगर (!msr_info->host_initiated &&
+		vmx->msr_ia32_umwait_control = data;
+		break;
+	case MSR_IA32_SPEC_CTRL:
+		if (!msr_info->host_initiated &&
 		    !guest_has_spec_ctrl_msr(vcpu))
-			वापस 1;
+			return 1;
 
-		अगर (kvm_spec_ctrl_test_value(data))
-			वापस 1;
+		if (kvm_spec_ctrl_test_value(data))
+			return 1;
 
 		vmx->spec_ctrl = data;
-		अगर (!data)
-			अवरोध;
+		if (!data)
+			break;
 
 		/*
 		 * For non-nested:
-		 * When it's written (to non-zero) क्रम the first समय, pass
+		 * When it's written (to non-zero) for the first time, pass
 		 * it through.
 		 *
 		 * For nested:
-		 * The handling of the MSR biपंचांगap क्रम L2 guests is करोne in
-		 * nested_vmx_prepare_msr_biपंचांगap. We should not touch the
-		 * vmcs02.msr_biपंचांगap here since it माला_लो completely overwritten
-		 * in the merging. We update the vmcs01 here क्रम L1 as well
+		 * The handling of the MSR bitmap for L2 guests is done in
+		 * nested_vmx_prepare_msr_bitmap. We should not touch the
+		 * vmcs02.msr_bitmap here since it gets completely overwritten
+		 * in the merging. We update the vmcs01 here for L1 as well
 		 * since it will end up touching the MSR anyway now.
 		 */
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu,
+		vmx_disable_intercept_for_msr(vcpu,
 					      MSR_IA32_SPEC_CTRL,
 					      MSR_TYPE_RW);
-		अवरोध;
-	हाल MSR_IA32_TSX_CTRL:
-		अगर (!msr_info->host_initiated &&
+		break;
+	case MSR_IA32_TSX_CTRL:
+		if (!msr_info->host_initiated &&
 		    !(vcpu->arch.arch_capabilities & ARCH_CAP_TSX_CTRL_MSR))
-			वापस 1;
-		अगर (data & ~(TSX_CTRL_RTM_DISABLE | TSX_CTRL_CPUID_CLEAR))
-			वापस 1;
-		जाओ find_uret_msr;
-	हाल MSR_IA32_PRED_CMD:
-		अगर (!msr_info->host_initiated &&
+			return 1;
+		if (data & ~(TSX_CTRL_RTM_DISABLE | TSX_CTRL_CPUID_CLEAR))
+			return 1;
+		goto find_uret_msr;
+	case MSR_IA32_PRED_CMD:
+		if (!msr_info->host_initiated &&
 		    !guest_has_pred_cmd_msr(vcpu))
-			वापस 1;
+			return 1;
 
-		अगर (data & ~PRED_CMD_IBPB)
-			वापस 1;
-		अगर (!boot_cpu_has(X86_FEATURE_IBPB))
-			वापस 1;
-		अगर (!data)
-			अवरोध;
+		if (data & ~PRED_CMD_IBPB)
+			return 1;
+		if (!boot_cpu_has(X86_FEATURE_IBPB))
+			return 1;
+		if (!data)
+			break;
 
 		wrmsrl(MSR_IA32_PRED_CMD, PRED_CMD_IBPB);
 
 		/*
 		 * For non-nested:
-		 * When it's written (to non-zero) क्रम the first समय, pass
+		 * When it's written (to non-zero) for the first time, pass
 		 * it through.
 		 *
 		 * For nested:
-		 * The handling of the MSR biपंचांगap क्रम L2 guests is करोne in
-		 * nested_vmx_prepare_msr_biपंचांगap. We should not touch the
-		 * vmcs02.msr_biपंचांगap here since it माला_लो completely overwritten
+		 * The handling of the MSR bitmap for L2 guests is done in
+		 * nested_vmx_prepare_msr_bitmap. We should not touch the
+		 * vmcs02.msr_bitmap here since it gets completely overwritten
 		 * in the merging.
 		 */
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_PRED_CMD, MSR_TYPE_W);
-		अवरोध;
-	हाल MSR_IA32_CR_PAT:
-		अगर (!kvm_pat_valid(data))
-			वापस 1;
+		vmx_disable_intercept_for_msr(vcpu, MSR_IA32_PRED_CMD, MSR_TYPE_W);
+		break;
+	case MSR_IA32_CR_PAT:
+		if (!kvm_pat_valid(data))
+			return 1;
 
-		अगर (is_guest_mode(vcpu) &&
-		    get_vmcs12(vcpu)->vm_निकास_controls & VM_EXIT_SAVE_IA32_PAT)
+		if (is_guest_mode(vcpu) &&
+		    get_vmcs12(vcpu)->vm_exit_controls & VM_EXIT_SAVE_IA32_PAT)
 			get_vmcs12(vcpu)->guest_ia32_pat = data;
 
-		अगर (vmcs_config.vmentry_ctrl & VM_ENTRY_LOAD_IA32_PAT) अणु
-			vmcs_ग_लिखो64(GUEST_IA32_PAT, data);
+		if (vmcs_config.vmentry_ctrl & VM_ENTRY_LOAD_IA32_PAT) {
+			vmcs_write64(GUEST_IA32_PAT, data);
 			vcpu->arch.pat = data;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = kvm_set_msr_common(vcpu, msr_info);
-		अवरोध;
-	हाल MSR_IA32_TSC_ADJUST:
+		break;
+	case MSR_IA32_TSC_ADJUST:
 		ret = kvm_set_msr_common(vcpu, msr_info);
-		अवरोध;
-	हाल MSR_IA32_MCG_EXT_CTL:
-		अगर ((!msr_info->host_initiated &&
+		break;
+	case MSR_IA32_MCG_EXT_CTL:
+		if ((!msr_info->host_initiated &&
 		     !(to_vmx(vcpu)->msr_ia32_feature_control &
 		       FEAT_CTL_LMCE_ENABLED)) ||
 		    (data & ~MCG_EXT_CTL_LMCE_EN))
-			वापस 1;
+			return 1;
 		vcpu->arch.mcg_ext_ctl = data;
-		अवरोध;
-	हाल MSR_IA32_FEAT_CTL:
-		अगर (!vmx_feature_control_msr_valid(vcpu, data) ||
+		break;
+	case MSR_IA32_FEAT_CTL:
+		if (!vmx_feature_control_msr_valid(vcpu, data) ||
 		    (to_vmx(vcpu)->msr_ia32_feature_control &
 		     FEAT_CTL_LOCKED && !msr_info->host_initiated))
-			वापस 1;
+			return 1;
 		vmx->msr_ia32_feature_control = data;
-		अगर (msr_info->host_initiated && data == 0)
+		if (msr_info->host_initiated && data == 0)
 			vmx_leave_nested(vcpu);
 
 		/* SGX may be enabled/disabled by guest's firmware */
-		vmx_ग_लिखो_encls_biपंचांगap(vcpu, शून्य);
-		अवरोध;
-	हाल MSR_IA32_SGXLEPUBKEYHASH0 ... MSR_IA32_SGXLEPUBKEYHASH3:
+		vmx_write_encls_bitmap(vcpu, NULL);
+		break;
+	case MSR_IA32_SGXLEPUBKEYHASH0 ... MSR_IA32_SGXLEPUBKEYHASH3:
 		/*
-		 * On real hardware, the LE hash MSRs are writable beक्रमe
+		 * On real hardware, the LE hash MSRs are writable before
 		 * the firmware sets bit 0 in MSR 0x7a ("activating" SGX),
-		 * at which poपूर्णांक SGX related bits in IA32_FEATURE_CONTROL
+		 * at which point SGX related bits in IA32_FEATURE_CONTROL
 		 * become writable.
 		 *
-		 * KVM करोes not emulate SGX activation क्रम simplicity, so
-		 * allow ग_लिखोs to the LE hash MSRs अगर IA32_FEATURE_CONTROL
+		 * KVM does not emulate SGX activation for simplicity, so
+		 * allow writes to the LE hash MSRs if IA32_FEATURE_CONTROL
 		 * is unlocked.  This is technically not architectural
-		 * behavior, but it's बंद enough.
+		 * behavior, but it's close enough.
 		 */
-		अगर (!msr_info->host_initiated &&
+		if (!msr_info->host_initiated &&
 		    (!guest_cpuid_has(vcpu, X86_FEATURE_SGX_LC) ||
 		    ((vmx->msr_ia32_feature_control & FEAT_CTL_LOCKED) &&
 		    !(vmx->msr_ia32_feature_control & FEAT_CTL_SGX_LC_ENABLED))))
-			वापस 1;
+			return 1;
 		vmx->msr_ia32_sgxlepubkeyhash
 			[msr_index - MSR_IA32_SGXLEPUBKEYHASH0] = data;
-		अवरोध;
-	हाल MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
-		अगर (!msr_info->host_initiated)
-			वापस 1; /* they are पढ़ो-only */
-		अगर (!nested_vmx_allowed(vcpu))
-			वापस 1;
-		वापस vmx_set_vmx_msr(vcpu, msr_index, data);
-	हाल MSR_IA32_RTIT_CTL:
-		अगर (!vmx_pt_mode_is_host_guest() ||
+		break;
+	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
+		if (!msr_info->host_initiated)
+			return 1; /* they are read-only */
+		if (!nested_vmx_allowed(vcpu))
+			return 1;
+		return vmx_set_vmx_msr(vcpu, msr_index, data);
+	case MSR_IA32_RTIT_CTL:
+		if (!vmx_pt_mode_is_host_guest() ||
 			vmx_rtit_ctl_check(vcpu, data) ||
 			vmx->nested.vmxon)
-			वापस 1;
-		vmcs_ग_लिखो64(GUEST_IA32_RTIT_CTL, data);
+			return 1;
+		vmcs_write64(GUEST_IA32_RTIT_CTL, data);
 		vmx->pt_desc.guest.ctl = data;
-		pt_update_पूर्णांकercept_क्रम_msr(vcpu);
-		अवरोध;
-	हाल MSR_IA32_RTIT_STATUS:
-		अगर (!pt_can_ग_लिखो_msr(vmx))
-			वापस 1;
-		अगर (data & MSR_IA32_RTIT_STATUS_MASK)
-			वापस 1;
+		pt_update_intercept_for_msr(vcpu);
+		break;
+	case MSR_IA32_RTIT_STATUS:
+		if (!pt_can_write_msr(vmx))
+			return 1;
+		if (data & MSR_IA32_RTIT_STATUS_MASK)
+			return 1;
 		vmx->pt_desc.guest.status = data;
-		अवरोध;
-	हाल MSR_IA32_RTIT_CR3_MATCH:
-		अगर (!pt_can_ग_लिखो_msr(vmx))
-			वापस 1;
-		अगर (!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_CR3_MATCH:
+		if (!pt_can_write_msr(vmx))
+			return 1;
+		if (!intel_pt_validate_cap(vmx->pt_desc.caps,
 					   PT_CAP_cr3_filtering))
-			वापस 1;
+			return 1;
 		vmx->pt_desc.guest.cr3_match = data;
-		अवरोध;
-	हाल MSR_IA32_RTIT_OUTPUT_BASE:
-		अगर (!pt_can_ग_लिखो_msr(vmx))
-			वापस 1;
-		अगर (!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_OUTPUT_BASE:
+		if (!pt_can_write_msr(vmx))
+			return 1;
+		if (!intel_pt_validate_cap(vmx->pt_desc.caps,
 					   PT_CAP_topa_output) &&
-		    !पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		    !intel_pt_validate_cap(vmx->pt_desc.caps,
 					   PT_CAP_single_range_output))
-			वापस 1;
-		अगर (!pt_output_base_valid(vcpu, data))
-			वापस 1;
+			return 1;
+		if (!pt_output_base_valid(vcpu, data))
+			return 1;
 		vmx->pt_desc.guest.output_base = data;
-		अवरोध;
-	हाल MSR_IA32_RTIT_OUTPUT_MASK:
-		अगर (!pt_can_ग_लिखो_msr(vmx))
-			वापस 1;
-		अगर (!पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		break;
+	case MSR_IA32_RTIT_OUTPUT_MASK:
+		if (!pt_can_write_msr(vmx))
+			return 1;
+		if (!intel_pt_validate_cap(vmx->pt_desc.caps,
 					   PT_CAP_topa_output) &&
-		    !पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		    !intel_pt_validate_cap(vmx->pt_desc.caps,
 					   PT_CAP_single_range_output))
-			वापस 1;
+			return 1;
 		vmx->pt_desc.guest.output_mask = data;
-		अवरोध;
-	हाल MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
-		अगर (!pt_can_ग_लिखो_msr(vmx))
-			वापस 1;
+		break;
+	case MSR_IA32_RTIT_ADDR0_A ... MSR_IA32_RTIT_ADDR3_B:
+		if (!pt_can_write_msr(vmx))
+			return 1;
 		index = msr_info->index - MSR_IA32_RTIT_ADDR0_A;
-		अगर (index >= 2 * पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+		if (index >= 2 * intel_pt_validate_cap(vmx->pt_desc.caps,
 						       PT_CAP_num_address_ranges))
-			वापस 1;
-		अगर (is_noncanonical_address(data, vcpu))
-			वापस 1;
-		अगर (index % 2)
+			return 1;
+		if (is_noncanonical_address(data, vcpu))
+			return 1;
+		if (index % 2)
 			vmx->pt_desc.guest.addr_b[index / 2] = data;
-		अन्यथा
+		else
 			vmx->pt_desc.guest.addr_a[index / 2] = data;
-		अवरोध;
-	हाल MSR_IA32_PERF_CAPABILITIES:
-		अगर (data && !vcpu_to_pmu(vcpu)->version)
-			वापस 1;
-		अगर (data & PMU_CAP_LBR_FMT) अणु
-			अगर ((data & PMU_CAP_LBR_FMT) !=
+		break;
+	case MSR_IA32_PERF_CAPABILITIES:
+		if (data && !vcpu_to_pmu(vcpu)->version)
+			return 1;
+		if (data & PMU_CAP_LBR_FMT) {
+			if ((data & PMU_CAP_LBR_FMT) !=
 			    (vmx_get_perf_capabilities() & PMU_CAP_LBR_FMT))
-				वापस 1;
-			अगर (!पूर्णांकel_pmu_lbr_is_compatible(vcpu))
-				वापस 1;
-		पूर्ण
+				return 1;
+			if (!intel_pmu_lbr_is_compatible(vcpu))
+				return 1;
+		}
 		ret = kvm_set_msr_common(vcpu, msr_info);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 	find_uret_msr:
 		msr = vmx_find_uret_msr(vmx, msr_index);
-		अगर (msr)
+		if (msr)
 			ret = vmx_set_guest_uret_msr(vmx, msr, data);
-		अन्यथा
+		else
 			ret = kvm_set_msr_common(vcpu, msr_info);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vmx_cache_reg(काष्ठा kvm_vcpu *vcpu, क्रमागत kvm_reg reg)
-अणु
-	अचिन्हित दीर्घ guest_owned_bits;
+static void vmx_cache_reg(struct kvm_vcpu *vcpu, enum kvm_reg reg)
+{
+	unsigned long guest_owned_bits;
 
-	kvm_रेजिस्टर_mark_available(vcpu, reg);
+	kvm_register_mark_available(vcpu, reg);
 
-	चयन (reg) अणु
-	हाल VCPU_REGS_RSP:
-		vcpu->arch.regs[VCPU_REGS_RSP] = vmcs_पढ़ोl(GUEST_RSP);
-		अवरोध;
-	हाल VCPU_REGS_RIP:
-		vcpu->arch.regs[VCPU_REGS_RIP] = vmcs_पढ़ोl(GUEST_RIP);
-		अवरोध;
-	हाल VCPU_EXREG_PDPTR:
-		अगर (enable_ept)
+	switch (reg) {
+	case VCPU_REGS_RSP:
+		vcpu->arch.regs[VCPU_REGS_RSP] = vmcs_readl(GUEST_RSP);
+		break;
+	case VCPU_REGS_RIP:
+		vcpu->arch.regs[VCPU_REGS_RIP] = vmcs_readl(GUEST_RIP);
+		break;
+	case VCPU_EXREG_PDPTR:
+		if (enable_ept)
 			ept_save_pdptrs(vcpu);
-		अवरोध;
-	हाल VCPU_EXREG_CR0:
+		break;
+	case VCPU_EXREG_CR0:
 		guest_owned_bits = vcpu->arch.cr0_guest_owned_bits;
 
 		vcpu->arch.cr0 &= ~guest_owned_bits;
-		vcpu->arch.cr0 |= vmcs_पढ़ोl(GUEST_CR0) & guest_owned_bits;
-		अवरोध;
-	हाल VCPU_EXREG_CR3:
-		अगर (is_unrestricted_guest(vcpu) ||
+		vcpu->arch.cr0 |= vmcs_readl(GUEST_CR0) & guest_owned_bits;
+		break;
+	case VCPU_EXREG_CR3:
+		if (is_unrestricted_guest(vcpu) ||
 		    (enable_ept && is_paging(vcpu)))
-			vcpu->arch.cr3 = vmcs_पढ़ोl(GUEST_CR3);
-		अवरोध;
-	हाल VCPU_EXREG_CR4:
+			vcpu->arch.cr3 = vmcs_readl(GUEST_CR3);
+		break;
+	case VCPU_EXREG_CR4:
 		guest_owned_bits = vcpu->arch.cr4_guest_owned_bits;
 
 		vcpu->arch.cr4 &= ~guest_owned_bits;
-		vcpu->arch.cr4 |= vmcs_पढ़ोl(GUEST_CR4) & guest_owned_bits;
-		अवरोध;
-	शेष:
+		vcpu->arch.cr4 |= vmcs_readl(GUEST_CR4) & guest_owned_bits;
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल __init पूर्णांक cpu_has_kvm_support(व्योम)
-अणु
-	वापस cpu_has_vmx();
-पूर्ण
+static __init int cpu_has_kvm_support(void)
+{
+	return cpu_has_vmx();
+}
 
-अटल __init पूर्णांक vmx_disabled_by_bios(व्योम)
-अणु
-	वापस !boot_cpu_has(X86_FEATURE_MSR_IA32_FEAT_CTL) ||
+static __init int vmx_disabled_by_bios(void)
+{
+	return !boot_cpu_has(X86_FEATURE_MSR_IA32_FEAT_CTL) ||
 	       !boot_cpu_has(X86_FEATURE_VMX);
-पूर्ण
+}
 
-अटल पूर्णांक kvm_cpu_vmxon(u64 vmxon_poपूर्णांकer)
-अणु
+static int kvm_cpu_vmxon(u64 vmxon_pointer)
+{
 	u64 msr;
 
 	cr4_set_bits(X86_CR4_VMXE);
 
-	यंत्र_अस्थिर_जाओ("1: vmxon %[vmxon_pointer]\n\t"
+	asm_volatile_goto("1: vmxon %[vmxon_pointer]\n\t"
 			  _ASM_EXTABLE(1b, %l[fault])
-			  : : [vmxon_poपूर्णांकer] "m"(vmxon_poपूर्णांकer)
+			  : : [vmxon_pointer] "m"(vmxon_pointer)
 			  : : fault);
-	वापस 0;
+	return 0;
 
 fault:
 	WARN_ONCE(1, "VMXON faulted, MSR_IA32_FEAT_CTL (0x3a) = 0x%llx\n",
 		  rdmsrl_safe(MSR_IA32_FEAT_CTL, &msr) ? 0xdeadbeef : msr);
 	cr4_clear_bits(X86_CR4_VMXE);
 
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक hardware_enable(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
+static int hardware_enable(void)
+{
+	int cpu = raw_smp_processor_id();
 	u64 phys_addr = __pa(per_cpu(vmxarea, cpu));
-	पूर्णांक r;
+	int r;
 
-	अगर (cr4_पढ़ो_shaकरोw() & X86_CR4_VMXE)
-		वापस -EBUSY;
+	if (cr4_read_shadow() & X86_CR4_VMXE)
+		return -EBUSY;
 
 	/*
-	 * This can happen अगर we hot-added a CPU but failed to allocate
-	 * VP assist page क्रम it.
+	 * This can happen if we hot-added a CPU but failed to allocate
+	 * VP assist page for it.
 	 */
-	अगर (अटल_branch_unlikely(&enable_evmcs) &&
+	if (static_branch_unlikely(&enable_evmcs) &&
 	    !hv_get_vp_assist_page(cpu))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	पूर्णांकel_pt_handle_vmx(1);
+	intel_pt_handle_vmx(1);
 
 	r = kvm_cpu_vmxon(phys_addr);
-	अगर (r) अणु
-		पूर्णांकel_pt_handle_vmx(0);
-		वापस r;
-	पूर्ण
+	if (r) {
+		intel_pt_handle_vmx(0);
+		return r;
+	}
 
-	अगर (enable_ept)
+	if (enable_ept)
 		ept_sync_global();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vmclear_local_loaded_vmcss(व्योम)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
-	काष्ठा loaded_vmcs *v, *n;
+static void vmclear_local_loaded_vmcss(void)
+{
+	int cpu = raw_smp_processor_id();
+	struct loaded_vmcs *v, *n;
 
-	list_क्रम_each_entry_safe(v, n, &per_cpu(loaded_vmcss_on_cpu, cpu),
+	list_for_each_entry_safe(v, n, &per_cpu(loaded_vmcss_on_cpu, cpu),
 				 loaded_vmcss_on_cpu_link)
 		__loaded_vmcs_clear(v);
-पूर्ण
+}
 
-अटल व्योम hardware_disable(व्योम)
-अणु
+static void hardware_disable(void)
+{
 	vmclear_local_loaded_vmcss();
 
-	अगर (cpu_vmxoff())
+	if (cpu_vmxoff())
 		kvm_spurious_fault();
 
-	पूर्णांकel_pt_handle_vmx(0);
-पूर्ण
+	intel_pt_handle_vmx(0);
+}
 
 /*
- * There is no X86_FEATURE क्रम SGX yet, but anyway we need to query CPUID
+ * There is no X86_FEATURE for SGX yet, but anyway we need to query CPUID
  * directly instead of going through cpu_has(), to ensure KVM is trapping
- * ENCLS whenever it's supported in hardware.  It करोes not matter whether
+ * ENCLS whenever it's supported in hardware.  It does not matter whether
  * the host OS supports or has enabled SGX.
  */
-अटल bool cpu_has_sgx(व्योम)
-अणु
-	वापस cpuid_eax(0) >= 0x12 && (cpuid_eax(0x12) & BIT(0));
-पूर्ण
+static bool cpu_has_sgx(void)
+{
+	return cpuid_eax(0) >= 0x12 && (cpuid_eax(0x12) & BIT(0));
+}
 
-अटल __init पूर्णांक adjust_vmx_controls(u32 ctl_min, u32 ctl_opt,
+static __init int adjust_vmx_controls(u32 ctl_min, u32 ctl_opt,
 				      u32 msr, u32 *result)
-अणु
+{
 	u32 vmx_msr_low, vmx_msr_high;
 	u32 ctl = ctl_min | ctl_opt;
 
@@ -2471,30 +2470,30 @@ fault:
 	ctl |= vmx_msr_low;  /* bit == 1 in low word  ==> must be one  */
 
 	/* Ensure minimum (required) set of control bits are supported. */
-	अगर (ctl_min & ~ctl)
-		वापस -EIO;
+	if (ctl_min & ~ctl)
+		return -EIO;
 
 	*result = ctl;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init पूर्णांक setup_vmcs_config(काष्ठा vmcs_config *vmcs_conf,
-				    काष्ठा vmx_capability *vmx_cap)
-अणु
+static __init int setup_vmcs_config(struct vmcs_config *vmcs_conf,
+				    struct vmx_capability *vmx_cap)
+{
 	u32 vmx_msr_low, vmx_msr_high;
 	u32 min, opt, min2, opt2;
 	u32 _pin_based_exec_control = 0;
 	u32 _cpu_based_exec_control = 0;
 	u32 _cpu_based_2nd_exec_control = 0;
-	u32 _vmनिकास_control = 0;
+	u32 _vmexit_control = 0;
 	u32 _vmentry_control = 0;
 
-	स_रखो(vmcs_conf, 0, माप(*vmcs_conf));
+	memset(vmcs_conf, 0, sizeof(*vmcs_conf));
 	min = CPU_BASED_HLT_EXITING |
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	      CPU_BASED_CR8_LOAD_EXITING |
 	      CPU_BASED_CR8_STORE_EXITING |
-#पूर्ण_अगर
+#endif
 	      CPU_BASED_CR3_LOAD_EXITING |
 	      CPU_BASED_CR3_STORE_EXITING |
 	      CPU_BASED_UNCOND_IO_EXITING |
@@ -2508,15 +2507,15 @@ fault:
 	opt = CPU_BASED_TPR_SHADOW |
 	      CPU_BASED_USE_MSR_BITMAPS |
 	      CPU_BASED_ACTIVATE_SECONDARY_CONTROLS;
-	अगर (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PROCBASED_CTLS,
+	if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PROCBASED_CTLS,
 				&_cpu_based_exec_control) < 0)
-		वापस -EIO;
-#अगर_घोषित CONFIG_X86_64
-	अगर ((_cpu_based_exec_control & CPU_BASED_TPR_SHADOW))
+		return -EIO;
+#ifdef CONFIG_X86_64
+	if ((_cpu_based_exec_control & CPU_BASED_TPR_SHADOW))
 		_cpu_based_exec_control &= ~CPU_BASED_CR8_LOAD_EXITING &
 					   ~CPU_BASED_CR8_STORE_EXITING;
-#पूर्ण_अगर
-	अगर (_cpu_based_exec_control & CPU_BASED_ACTIVATE_SECONDARY_CONTROLS) अणु
+#endif
+	if (_cpu_based_exec_control & CPU_BASED_ACTIVATE_SECONDARY_CONTROLS) {
 		min2 = 0;
 		opt2 = SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES |
 			SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE |
@@ -2541,20 +2540,20 @@ fault:
 			SECONDARY_EXEC_PT_CONCEAL_VMX |
 			SECONDARY_EXEC_ENABLE_VMFUNC |
 			SECONDARY_EXEC_BUS_LOCK_DETECTION;
-		अगर (cpu_has_sgx())
+		if (cpu_has_sgx())
 			opt2 |= SECONDARY_EXEC_ENCLS_EXITING;
-		अगर (adjust_vmx_controls(min2, opt2,
+		if (adjust_vmx_controls(min2, opt2,
 					MSR_IA32_VMX_PROCBASED_CTLS2,
 					&_cpu_based_2nd_exec_control) < 0)
-			वापस -EIO;
-	पूर्ण
-#अगर_अघोषित CONFIG_X86_64
-	अगर (!(_cpu_based_2nd_exec_control &
+			return -EIO;
+	}
+#ifndef CONFIG_X86_64
+	if (!(_cpu_based_2nd_exec_control &
 				SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES))
 		_cpu_based_exec_control &= ~CPU_BASED_TPR_SHADOW;
-#पूर्ण_अगर
+#endif
 
-	अगर (!(_cpu_based_exec_control & CPU_BASED_TPR_SHADOW))
+	if (!(_cpu_based_exec_control & CPU_BASED_TPR_SHADOW))
 		_cpu_based_2nd_exec_control &= ~(
 				SECONDARY_EXEC_APIC_REGISTER_VIRT |
 				SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE |
@@ -2563,48 +2562,48 @@ fault:
 	rdmsr_safe(MSR_IA32_VMX_EPT_VPID_CAP,
 		&vmx_cap->ept, &vmx_cap->vpid);
 
-	अगर (_cpu_based_2nd_exec_control & SECONDARY_EXEC_ENABLE_EPT) अणु
-		/* CR3 accesses and invlpg करोn't need to cause VM Exits when EPT
+	if (_cpu_based_2nd_exec_control & SECONDARY_EXEC_ENABLE_EPT) {
+		/* CR3 accesses and invlpg don't need to cause VM Exits when EPT
 		   enabled */
 		_cpu_based_exec_control &= ~(CPU_BASED_CR3_LOAD_EXITING |
 					     CPU_BASED_CR3_STORE_EXITING |
 					     CPU_BASED_INVLPG_EXITING);
-	पूर्ण अन्यथा अगर (vmx_cap->ept) अणु
+	} else if (vmx_cap->ept) {
 		vmx_cap->ept = 0;
 		pr_warn_once("EPT CAP should not exist if not support "
 				"1-setting enable EPT VM-execution control\n");
-	पूर्ण
-	अगर (!(_cpu_based_2nd_exec_control & SECONDARY_EXEC_ENABLE_VPID) &&
-		vmx_cap->vpid) अणु
+	}
+	if (!(_cpu_based_2nd_exec_control & SECONDARY_EXEC_ENABLE_VPID) &&
+		vmx_cap->vpid) {
 		vmx_cap->vpid = 0;
 		pr_warn_once("VPID CAP should not exist if not support "
 				"1-setting enable VPID VM-execution control\n");
-	पूर्ण
+	}
 
 	min = VM_EXIT_SAVE_DEBUG_CONTROLS | VM_EXIT_ACK_INTR_ON_EXIT;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	min |= VM_EXIT_HOST_ADDR_SPACE_SIZE;
-#पूर्ण_अगर
+#endif
 	opt = VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL |
 	      VM_EXIT_LOAD_IA32_PAT |
 	      VM_EXIT_LOAD_IA32_EFER |
 	      VM_EXIT_CLEAR_BNDCFGS |
 	      VM_EXIT_PT_CONCEAL_PIP |
 	      VM_EXIT_CLEAR_IA32_RTIT_CTL;
-	अगर (adjust_vmx_controls(min, opt, MSR_IA32_VMX_EXIT_CTLS,
-				&_vmनिकास_control) < 0)
-		वापस -EIO;
+	if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_EXIT_CTLS,
+				&_vmexit_control) < 0)
+		return -EIO;
 
 	min = PIN_BASED_EXT_INTR_MASK | PIN_BASED_NMI_EXITING;
 	opt = PIN_BASED_VIRTUAL_NMIS | PIN_BASED_POSTED_INTR |
 		 PIN_BASED_VMX_PREEMPTION_TIMER;
-	अगर (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PINBASED_CTLS,
+	if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PINBASED_CTLS,
 				&_pin_based_exec_control) < 0)
-		वापस -EIO;
+		return -EIO;
 
-	अगर (cpu_has_broken_vmx_preemption_समयr())
+	if (cpu_has_broken_vmx_preemption_timer())
 		_pin_based_exec_control &= ~PIN_BASED_VMX_PREEMPTION_TIMER;
-	अगर (!(_cpu_based_2nd_exec_control &
+	if (!(_cpu_based_2nd_exec_control &
 		SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY))
 		_pin_based_exec_control &= ~PIN_BASED_POSTED_INTR;
 
@@ -2615,49 +2614,49 @@ fault:
 	      VM_ENTRY_LOAD_BNDCFGS |
 	      VM_ENTRY_PT_CONCEAL_PIP |
 	      VM_ENTRY_LOAD_IA32_RTIT_CTL;
-	अगर (adjust_vmx_controls(min, opt, MSR_IA32_VMX_ENTRY_CTLS,
+	if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_ENTRY_CTLS,
 				&_vmentry_control) < 0)
-		वापस -EIO;
+		return -EIO;
 
 	/*
-	 * Some cpus support VM_अणुENTRY,EXITपूर्ण_IA32_PERF_GLOBAL_CTRL but they
+	 * Some cpus support VM_{ENTRY,EXIT}_IA32_PERF_GLOBAL_CTRL but they
 	 * can't be used due to an errata where VM Exit may incorrectly clear
 	 * IA32_PERF_GLOBAL_CTRL[34:32].  Workaround the errata by using the
-	 * MSR load mechanism to चयन IA32_PERF_GLOBAL_CTRL.
+	 * MSR load mechanism to switch IA32_PERF_GLOBAL_CTRL.
 	 */
-	अगर (boot_cpu_data.x86 == 0x6) अणु
-		चयन (boot_cpu_data.x86_model) अणु
-		हाल 26: /* AAK155 */
-		हाल 30: /* AAP115 */
-		हाल 37: /* AAT100 */
-		हाल 44: /* BC86,AAY89,BD102 */
-		हाल 46: /* BA97 */
+	if (boot_cpu_data.x86 == 0x6) {
+		switch (boot_cpu_data.x86_model) {
+		case 26: /* AAK155 */
+		case 30: /* AAP115 */
+		case 37: /* AAT100 */
+		case 44: /* BC86,AAY89,BD102 */
+		case 46: /* BA97 */
 			_vmentry_control &= ~VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL;
-			_vmनिकास_control &= ~VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL;
+			_vmexit_control &= ~VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL;
 			pr_warn_once("kvm: VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL "
 					"does not work properly. Using workaround\n");
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
 
 	rdmsr(MSR_IA32_VMX_BASIC, vmx_msr_low, vmx_msr_high);
 
 	/* IA-32 SDM Vol 3B: VMCS size is never greater than 4kB. */
-	अगर ((vmx_msr_high & 0x1fff) > PAGE_SIZE)
-		वापस -EIO;
+	if ((vmx_msr_high & 0x1fff) > PAGE_SIZE)
+		return -EIO;
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 	/* IA-32 SDM Vol 3B: 64-bit CPUs always have VMX_BASIC_MSR[48]==0. */
-	अगर (vmx_msr_high & (1u<<16))
-		वापस -EIO;
-#पूर्ण_अगर
+	if (vmx_msr_high & (1u<<16))
+		return -EIO;
+#endif
 
-	/* Require Write-Back (WB) memory type क्रम VMCS accesses. */
-	अगर (((vmx_msr_high >> 18) & 15) != 6)
-		वापस -EIO;
+	/* Require Write-Back (WB) memory type for VMCS accesses. */
+	if (((vmx_msr_high >> 18) & 15) != 6)
+		return -EIO;
 
 	vmcs_conf->size = vmx_msr_high & 0x1fff;
 	vmcs_conf->order = get_order(vmcs_conf->size);
@@ -2668,169 +2667,169 @@ fault:
 	vmcs_conf->pin_based_exec_ctrl = _pin_based_exec_control;
 	vmcs_conf->cpu_based_exec_ctrl = _cpu_based_exec_control;
 	vmcs_conf->cpu_based_2nd_exec_ctrl = _cpu_based_2nd_exec_control;
-	vmcs_conf->vmनिकास_ctrl         = _vmनिकास_control;
+	vmcs_conf->vmexit_ctrl         = _vmexit_control;
 	vmcs_conf->vmentry_ctrl        = _vmentry_control;
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
-	अगर (enlightened_vmcs)
+#if IS_ENABLED(CONFIG_HYPERV)
+	if (enlightened_vmcs)
 		evmcs_sanitize_exec_ctrls(vmcs_conf);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा vmcs *alloc_vmcs_cpu(bool shaकरोw, पूर्णांक cpu, gfp_t flags)
-अणु
-	पूर्णांक node = cpu_to_node(cpu);
-	काष्ठा page *pages;
-	काष्ठा vmcs *vmcs;
+struct vmcs *alloc_vmcs_cpu(bool shadow, int cpu, gfp_t flags)
+{
+	int node = cpu_to_node(cpu);
+	struct page *pages;
+	struct vmcs *vmcs;
 
 	pages = __alloc_pages_node(node, flags, vmcs_config.order);
-	अगर (!pages)
-		वापस शून्य;
+	if (!pages)
+		return NULL;
 	vmcs = page_address(pages);
-	स_रखो(vmcs, 0, vmcs_config.size);
+	memset(vmcs, 0, vmcs_config.size);
 
 	/* KVM supports Enlightened VMCS v1 only */
-	अगर (अटल_branch_unlikely(&enable_evmcs))
+	if (static_branch_unlikely(&enable_evmcs))
 		vmcs->hdr.revision_id = KVM_EVMCS_VERSION;
-	अन्यथा
+	else
 		vmcs->hdr.revision_id = vmcs_config.revision_id;
 
-	अगर (shaकरोw)
-		vmcs->hdr.shaकरोw_vmcs = 1;
-	वापस vmcs;
-पूर्ण
+	if (shadow)
+		vmcs->hdr.shadow_vmcs = 1;
+	return vmcs;
+}
 
-व्योम मुक्त_vmcs(काष्ठा vmcs *vmcs)
-अणु
-	मुक्त_pages((अचिन्हित दीर्घ)vmcs, vmcs_config.order);
-पूर्ण
+void free_vmcs(struct vmcs *vmcs)
+{
+	free_pages((unsigned long)vmcs, vmcs_config.order);
+}
 
 /*
- * Free a VMCS, but beक्रमe that VMCLEAR it on the CPU where it was last loaded
+ * Free a VMCS, but before that VMCLEAR it on the CPU where it was last loaded
  */
-व्योम मुक्त_loaded_vmcs(काष्ठा loaded_vmcs *loaded_vmcs)
-अणु
-	अगर (!loaded_vmcs->vmcs)
-		वापस;
+void free_loaded_vmcs(struct loaded_vmcs *loaded_vmcs)
+{
+	if (!loaded_vmcs->vmcs)
+		return;
 	loaded_vmcs_clear(loaded_vmcs);
-	मुक्त_vmcs(loaded_vmcs->vmcs);
-	loaded_vmcs->vmcs = शून्य;
-	अगर (loaded_vmcs->msr_biपंचांगap)
-		मुक्त_page((अचिन्हित दीर्घ)loaded_vmcs->msr_biपंचांगap);
-	WARN_ON(loaded_vmcs->shaकरोw_vmcs != शून्य);
-पूर्ण
+	free_vmcs(loaded_vmcs->vmcs);
+	loaded_vmcs->vmcs = NULL;
+	if (loaded_vmcs->msr_bitmap)
+		free_page((unsigned long)loaded_vmcs->msr_bitmap);
+	WARN_ON(loaded_vmcs->shadow_vmcs != NULL);
+}
 
-पूर्णांक alloc_loaded_vmcs(काष्ठा loaded_vmcs *loaded_vmcs)
-अणु
+int alloc_loaded_vmcs(struct loaded_vmcs *loaded_vmcs)
+{
 	loaded_vmcs->vmcs = alloc_vmcs(false);
-	अगर (!loaded_vmcs->vmcs)
-		वापस -ENOMEM;
+	if (!loaded_vmcs->vmcs)
+		return -ENOMEM;
 
 	vmcs_clear(loaded_vmcs->vmcs);
 
-	loaded_vmcs->shaकरोw_vmcs = शून्य;
-	loaded_vmcs->hv_समयr_soft_disabled = false;
+	loaded_vmcs->shadow_vmcs = NULL;
+	loaded_vmcs->hv_timer_soft_disabled = false;
 	loaded_vmcs->cpu = -1;
 	loaded_vmcs->launched = 0;
 
-	अगर (cpu_has_vmx_msr_biपंचांगap()) अणु
-		loaded_vmcs->msr_biपंचांगap = (अचिन्हित दीर्घ *)
-				__get_मुक्त_page(GFP_KERNEL_ACCOUNT);
-		अगर (!loaded_vmcs->msr_biपंचांगap)
-			जाओ out_vmcs;
-		स_रखो(loaded_vmcs->msr_biपंचांगap, 0xff, PAGE_SIZE);
+	if (cpu_has_vmx_msr_bitmap()) {
+		loaded_vmcs->msr_bitmap = (unsigned long *)
+				__get_free_page(GFP_KERNEL_ACCOUNT);
+		if (!loaded_vmcs->msr_bitmap)
+			goto out_vmcs;
+		memset(loaded_vmcs->msr_bitmap, 0xff, PAGE_SIZE);
 
-		अगर (IS_ENABLED(CONFIG_HYPERV) &&
-		    अटल_branch_unlikely(&enable_evmcs) &&
-		    (ms_hyperv.nested_features & HV_X64_NESTED_MSR_BITMAP)) अणु
-			काष्ठा hv_enlightened_vmcs *evmcs =
-				(काष्ठा hv_enlightened_vmcs *)loaded_vmcs->vmcs;
+		if (IS_ENABLED(CONFIG_HYPERV) &&
+		    static_branch_unlikely(&enable_evmcs) &&
+		    (ms_hyperv.nested_features & HV_X64_NESTED_MSR_BITMAP)) {
+			struct hv_enlightened_vmcs *evmcs =
+				(struct hv_enlightened_vmcs *)loaded_vmcs->vmcs;
 
-			evmcs->hv_enlightenments_control.msr_biपंचांगap = 1;
-		पूर्ण
-	पूर्ण
+			evmcs->hv_enlightenments_control.msr_bitmap = 1;
+		}
+	}
 
-	स_रखो(&loaded_vmcs->host_state, 0, माप(काष्ठा vmcs_host_state));
-	स_रखो(&loaded_vmcs->controls_shaकरोw, 0,
-		माप(काष्ठा vmcs_controls_shaकरोw));
+	memset(&loaded_vmcs->host_state, 0, sizeof(struct vmcs_host_state));
+	memset(&loaded_vmcs->controls_shadow, 0,
+		sizeof(struct vmcs_controls_shadow));
 
-	वापस 0;
+	return 0;
 
 out_vmcs:
-	मुक्त_loaded_vmcs(loaded_vmcs);
-	वापस -ENOMEM;
-पूर्ण
+	free_loaded_vmcs(loaded_vmcs);
+	return -ENOMEM;
+}
 
-अटल व्योम मुक्त_kvm_area(व्योम)
-अणु
-	पूर्णांक cpu;
+static void free_kvm_area(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		मुक्त_vmcs(per_cpu(vmxarea, cpu));
-		per_cpu(vmxarea, cpu) = शून्य;
-	पूर्ण
-पूर्ण
+	for_each_possible_cpu(cpu) {
+		free_vmcs(per_cpu(vmxarea, cpu));
+		per_cpu(vmxarea, cpu) = NULL;
+	}
+}
 
-अटल __init पूर्णांक alloc_kvm_area(व्योम)
-अणु
-	पूर्णांक cpu;
+static __init int alloc_kvm_area(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा vmcs *vmcs;
+	for_each_possible_cpu(cpu) {
+		struct vmcs *vmcs;
 
 		vmcs = alloc_vmcs_cpu(false, cpu, GFP_KERNEL);
-		अगर (!vmcs) अणु
-			मुक्त_kvm_area();
-			वापस -ENOMEM;
-		पूर्ण
+		if (!vmcs) {
+			free_kvm_area();
+			return -ENOMEM;
+		}
 
 		/*
 		 * When eVMCS is enabled, alloc_vmcs_cpu() sets
 		 * vmcs->revision_id to KVM_EVMCS_VERSION instead of
 		 * revision_id reported by MSR_IA32_VMX_BASIC.
 		 *
-		 * However, even though not explicitly करोcumented by
+		 * However, even though not explicitly documented by
 		 * TLFS, VMXArea passed as VMXON argument should
 		 * still be marked with revision_id reported by
 		 * physical CPU.
 		 */
-		अगर (अटल_branch_unlikely(&enable_evmcs))
+		if (static_branch_unlikely(&enable_evmcs))
 			vmcs->hdr.revision_id = vmcs_config.revision_id;
 
 		per_cpu(vmxarea, cpu) = vmcs;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम fix_pmode_seg(काष्ठा kvm_vcpu *vcpu, पूर्णांक seg,
-		काष्ठा kvm_segment *save)
-अणु
-	अगर (!emulate_invalid_guest_state) अणु
+static void fix_pmode_seg(struct kvm_vcpu *vcpu, int seg,
+		struct kvm_segment *save)
+{
+	if (!emulate_invalid_guest_state) {
 		/*
 		 * CS and SS RPL should be equal during guest entry according
 		 * to VMX spec, but in reality it is not always so. Since vcpu
 		 * is in the middle of the transition from real mode to
-		 * रक्षित mode it is safe to assume that RPL 0 is a good
-		 * शेष value.
+		 * protected mode it is safe to assume that RPL 0 is a good
+		 * default value.
 		 */
-		अगर (seg == VCPU_SREG_CS || seg == VCPU_SREG_SS)
+		if (seg == VCPU_SREG_CS || seg == VCPU_SREG_SS)
 			save->selector &= ~SEGMENT_RPL_MASK;
 		save->dpl = save->selector & SEGMENT_RPL_MASK;
 		save->s = 1;
-	पूर्ण
+	}
 	vmx_set_segment(vcpu, save, seg);
-पूर्ण
+}
 
-अटल व्योम enter_pmode(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void enter_pmode(struct kvm_vcpu *vcpu)
+{
+	unsigned long flags;
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	/*
-	 * Update real mode segment cache. It may be not up-to-date अगर segment
-	 * रेजिस्टर was written जबतक vcpu was in a guest mode.
+	 * Update real mode segment cache. It may be not up-to-date if segment
+	 * register was written while vcpu was in a guest mode.
 	 */
 	vmx_get_segment(vcpu, &vmx->rmode.segs[VCPU_SREG_ES], VCPU_SREG_ES);
 	vmx_get_segment(vcpu, &vmx->rmode.segs[VCPU_SREG_DS], VCPU_SREG_DS);
@@ -2843,15 +2842,15 @@ out_vmcs:
 
 	vmx_set_segment(vcpu, &vmx->rmode.segs[VCPU_SREG_TR], VCPU_SREG_TR);
 
-	flags = vmcs_पढ़ोl(GUEST_RFLAGS);
+	flags = vmcs_readl(GUEST_RFLAGS);
 	flags &= RMODE_GUEST_OWNED_EFLAGS_BITS;
 	flags |= vmx->rmode.save_rflags & ~RMODE_GUEST_OWNED_EFLAGS_BITS;
-	vmcs_ग_लिखोl(GUEST_RFLAGS, flags);
+	vmcs_writel(GUEST_RFLAGS, flags);
 
-	vmcs_ग_लिखोl(GUEST_CR4, (vmcs_पढ़ोl(GUEST_CR4) & ~X86_CR4_VME) |
-			(vmcs_पढ़ोl(CR4_READ_SHADOW) & X86_CR4_VME));
+	vmcs_writel(GUEST_CR4, (vmcs_readl(GUEST_CR4) & ~X86_CR4_VME) |
+			(vmcs_readl(CR4_READ_SHADOW) & X86_CR4_VME));
 
-	vmx_update_exception_biपंचांगap(vcpu);
+	vmx_update_exception_bitmap(vcpu);
 
 	fix_pmode_seg(vcpu, VCPU_SREG_CS, &vmx->rmode.segs[VCPU_SREG_CS]);
 	fix_pmode_seg(vcpu, VCPU_SREG_SS, &vmx->rmode.segs[VCPU_SREG_SS]);
@@ -2859,18 +2858,18 @@ out_vmcs:
 	fix_pmode_seg(vcpu, VCPU_SREG_DS, &vmx->rmode.segs[VCPU_SREG_DS]);
 	fix_pmode_seg(vcpu, VCPU_SREG_FS, &vmx->rmode.segs[VCPU_SREG_FS]);
 	fix_pmode_seg(vcpu, VCPU_SREG_GS, &vmx->rmode.segs[VCPU_SREG_GS]);
-पूर्ण
+}
 
-अटल व्योम fix_rmode_seg(पूर्णांक seg, काष्ठा kvm_segment *save)
-अणु
-	स्थिर काष्ठा kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
-	काष्ठा kvm_segment var = *save;
+static void fix_rmode_seg(int seg, struct kvm_segment *save)
+{
+	const struct kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
+	struct kvm_segment var = *save;
 
 	var.dpl = 0x3;
-	अगर (seg == VCPU_SREG_CS)
+	if (seg == VCPU_SREG_CS)
 		var.type = 0x3;
 
-	अगर (!emulate_invalid_guest_state) अणु
+	if (!emulate_invalid_guest_state) {
 		var.selector = var.base >> 4;
 		var.base = var.base & 0xffff0;
 		var.limit = 0xffff;
@@ -2882,23 +2881,23 @@ out_vmcs:
 		var.unusable = 0;
 		var.type = 0x3;
 		var.avl = 0;
-		अगर (save->base & 0xf)
-			prपूर्णांकk_once(KERN_WARNING "kvm: segment base is not "
+		if (save->base & 0xf)
+			printk_once(KERN_WARNING "kvm: segment base is not "
 					"paragraph aligned when entering "
 					"protected mode (seg=%d)", seg);
-	पूर्ण
+	}
 
-	vmcs_ग_लिखो16(sf->selector, var.selector);
-	vmcs_ग_लिखोl(sf->base, var.base);
-	vmcs_ग_लिखो32(sf->limit, var.limit);
-	vmcs_ग_लिखो32(sf->ar_bytes, vmx_segment_access_rights(&var));
-पूर्ण
+	vmcs_write16(sf->selector, var.selector);
+	vmcs_writel(sf->base, var.base);
+	vmcs_write32(sf->limit, var.limit);
+	vmcs_write32(sf->ar_bytes, vmx_segment_access_rights(&var));
+}
 
-अटल व्योम enter_rmode(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा kvm_vmx *kvm_vmx = to_kvm_vmx(vcpu->kvm);
+static void enter_rmode(struct kvm_vcpu *vcpu)
+{
+	unsigned long flags;
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct kvm_vmx *kvm_vmx = to_kvm_vmx(vcpu->kvm);
 
 	vmx_get_segment(vcpu, &vmx->rmode.segs[VCPU_SREG_TR], VCPU_SREG_TR);
 	vmx_get_segment(vcpu, &vmx->rmode.segs[VCPU_SREG_ES], VCPU_SREG_ES);
@@ -2911,27 +2910,27 @@ out_vmcs:
 	vmx->rmode.vm86_active = 1;
 
 	/*
-	 * Very old userspace करोes not call KVM_SET_TSS_ADDR beक्रमe entering
+	 * Very old userspace does not call KVM_SET_TSS_ADDR before entering
 	 * vcpu. Warn the user that an update is overdue.
 	 */
-	अगर (!kvm_vmx->tss_addr)
-		prपूर्णांकk_once(KERN_WARNING "kvm: KVM_SET_TSS_ADDR need to be "
+	if (!kvm_vmx->tss_addr)
+		printk_once(KERN_WARNING "kvm: KVM_SET_TSS_ADDR need to be "
 			     "called before entering vcpu\n");
 
 	vmx_segment_cache_clear(vmx);
 
-	vmcs_ग_लिखोl(GUEST_TR_BASE, kvm_vmx->tss_addr);
-	vmcs_ग_लिखो32(GUEST_TR_LIMIT, RMODE_TSS_SIZE - 1);
-	vmcs_ग_लिखो32(GUEST_TR_AR_BYTES, 0x008b);
+	vmcs_writel(GUEST_TR_BASE, kvm_vmx->tss_addr);
+	vmcs_write32(GUEST_TR_LIMIT, RMODE_TSS_SIZE - 1);
+	vmcs_write32(GUEST_TR_AR_BYTES, 0x008b);
 
-	flags = vmcs_पढ़ोl(GUEST_RFLAGS);
+	flags = vmcs_readl(GUEST_RFLAGS);
 	vmx->rmode.save_rflags = flags;
 
 	flags |= X86_EFLAGS_IOPL | X86_EFLAGS_VM;
 
-	vmcs_ग_लिखोl(GUEST_RFLAGS, flags);
-	vmcs_ग_लिखोl(GUEST_CR4, vmcs_पढ़ोl(GUEST_CR4) | X86_CR4_VME);
-	vmx_update_exception_biपंचांगap(vcpu);
+	vmcs_writel(GUEST_RFLAGS, flags);
+	vmcs_writel(GUEST_CR4, vmcs_readl(GUEST_CR4) | X86_CR4_VME);
+	vmx_update_exception_bitmap(vcpu);
 
 	fix_rmode_seg(VCPU_SREG_SS, &vmx->rmode.segs[VCPU_SREG_SS]);
 	fix_rmode_seg(VCPU_SREG_CS, &vmx->rmode.segs[VCPU_SREG_CS]);
@@ -2941,371 +2940,371 @@ out_vmcs:
 	fix_rmode_seg(VCPU_SREG_FS, &vmx->rmode.segs[VCPU_SREG_FS]);
 
 	kvm_mmu_reset_context(vcpu);
-पूर्ण
+}
 
-पूर्णांक vmx_set_efer(काष्ठा kvm_vcpu *vcpu, u64 efer)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा vmx_uret_msr *msr = vmx_find_uret_msr(vmx, MSR_EFER);
+int vmx_set_efer(struct kvm_vcpu *vcpu, u64 efer)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct vmx_uret_msr *msr = vmx_find_uret_msr(vmx, MSR_EFER);
 
-	/* Nothing to करो अगर hardware करोesn't support EFER. */
-	अगर (!msr)
-		वापस 0;
+	/* Nothing to do if hardware doesn't support EFER. */
+	if (!msr)
+		return 0;
 
 	vcpu->arch.efer = efer;
-	अगर (efer & EFER_LMA) अणु
+	if (efer & EFER_LMA) {
 		vm_entry_controls_setbit(to_vmx(vcpu), VM_ENTRY_IA32E_MODE);
 		msr->data = efer;
-	पूर्ण अन्यथा अणु
+	} else {
 		vm_entry_controls_clearbit(to_vmx(vcpu), VM_ENTRY_IA32E_MODE);
 
 		msr->data = efer & ~EFER_LME;
-	पूर्ण
+	}
 	setup_msrs(vmx);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 
-अटल व्योम enter_lmode(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void enter_lmode(struct kvm_vcpu *vcpu)
+{
 	u32 guest_tr_ar;
 
 	vmx_segment_cache_clear(to_vmx(vcpu));
 
-	guest_tr_ar = vmcs_पढ़ो32(GUEST_TR_AR_BYTES);
-	अगर ((guest_tr_ar & VMX_AR_TYPE_MASK) != VMX_AR_TYPE_BUSY_64_TSS) अणु
+	guest_tr_ar = vmcs_read32(GUEST_TR_AR_BYTES);
+	if ((guest_tr_ar & VMX_AR_TYPE_MASK) != VMX_AR_TYPE_BUSY_64_TSS) {
 		pr_debug_ratelimited("%s: tss fixup for long mode. \n",
 				     __func__);
-		vmcs_ग_लिखो32(GUEST_TR_AR_BYTES,
+		vmcs_write32(GUEST_TR_AR_BYTES,
 			     (guest_tr_ar & ~VMX_AR_TYPE_MASK)
 			     | VMX_AR_TYPE_BUSY_64_TSS);
-	पूर्ण
+	}
 	vmx_set_efer(vcpu, vcpu->arch.efer | EFER_LMA);
-पूर्ण
+}
 
-अटल व्योम निकास_lmode(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void exit_lmode(struct kvm_vcpu *vcpu)
+{
 	vm_entry_controls_clearbit(to_vmx(vcpu), VM_ENTRY_IA32E_MODE);
 	vmx_set_efer(vcpu, vcpu->arch.efer & ~EFER_LMA);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम vmx_flush_tlb_all(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_flush_tlb_all(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	/*
 	 * INVEPT must be issued when EPT is enabled, irrespective of VPID, as
 	 * the CPU is not required to invalidate guest-physical mappings on
-	 * VM-Entry, even अगर VPID is disabled.  Guest-physical mappings are
-	 * associated with the root EPT काष्ठाure and not any particular VPID
+	 * VM-Entry, even if VPID is disabled.  Guest-physical mappings are
+	 * associated with the root EPT structure and not any particular VPID
 	 * (INVVPID also isn't required to invalidate guest-physical mappings).
 	 */
-	अगर (enable_ept) अणु
+	if (enable_ept) {
 		ept_sync_global();
-	पूर्ण अन्यथा अगर (enable_vpid) अणु
-		अगर (cpu_has_vmx_invvpid_global()) अणु
+	} else if (enable_vpid) {
+		if (cpu_has_vmx_invvpid_global()) {
 			vpid_sync_vcpu_global();
-		पूर्ण अन्यथा अणु
+		} else {
 			vpid_sync_vcpu_single(vmx->vpid);
 			vpid_sync_vcpu_single(vmx->nested.vpid02);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम vmx_flush_tlb_current(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_mmu *mmu = vcpu->arch.mmu;
+static void vmx_flush_tlb_current(struct kvm_vcpu *vcpu)
+{
+	struct kvm_mmu *mmu = vcpu->arch.mmu;
 	u64 root_hpa = mmu->root_hpa;
 
-	/* No flush required अगर the current context is invalid. */
-	अगर (!VALID_PAGE(root_hpa))
-		वापस;
+	/* No flush required if the current context is invalid. */
+	if (!VALID_PAGE(root_hpa))
+		return;
 
-	अगर (enable_ept)
-		ept_sync_context(स्थिरruct_eptp(vcpu, root_hpa,
-						mmu->shaकरोw_root_level));
-	अन्यथा अगर (!is_guest_mode(vcpu))
+	if (enable_ept)
+		ept_sync_context(construct_eptp(vcpu, root_hpa,
+						mmu->shadow_root_level));
+	else if (!is_guest_mode(vcpu))
 		vpid_sync_context(to_vmx(vcpu)->vpid);
-	अन्यथा
+	else
 		vpid_sync_context(nested_get_vpid02(vcpu));
-पूर्ण
+}
 
-अटल व्योम vmx_flush_tlb_gva(काष्ठा kvm_vcpu *vcpu, gva_t addr)
-अणु
+static void vmx_flush_tlb_gva(struct kvm_vcpu *vcpu, gva_t addr)
+{
 	/*
-	 * vpid_sync_vcpu_addr() is a nop अगर vmx->vpid==0, see the comment in
-	 * vmx_flush_tlb_guest() क्रम an explanation of why this is ok.
+	 * vpid_sync_vcpu_addr() is a nop if vmx->vpid==0, see the comment in
+	 * vmx_flush_tlb_guest() for an explanation of why this is ok.
 	 */
 	vpid_sync_vcpu_addr(to_vmx(vcpu)->vpid, addr);
-पूर्ण
+}
 
-अटल व्योम vmx_flush_tlb_guest(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_flush_tlb_guest(struct kvm_vcpu *vcpu)
+{
 	/*
-	 * vpid_sync_context() is a nop अगर vmx->vpid==0, e.g. अगर enable_vpid==0
-	 * or a vpid couldn't be allocated क्रम this vCPU.  VM-Enter and VM-Exit
-	 * are required to flush GVA->अणुG,Hपूर्णPA mappings from the TLB अगर vpid is
+	 * vpid_sync_context() is a nop if vmx->vpid==0, e.g. if enable_vpid==0
+	 * or a vpid couldn't be allocated for this vCPU.  VM-Enter and VM-Exit
+	 * are required to flush GVA->{G,H}PA mappings from the TLB if vpid is
 	 * disabled (VM-Enter with vpid enabled and vpid==0 is disallowed),
 	 * i.e. no explicit INVVPID is necessary.
 	 */
 	vpid_sync_context(to_vmx(vcpu)->vpid);
-पूर्ण
+}
 
-व्योम vmx_ept_load_pdptrs(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_mmu *mmu = vcpu->arch.walk_mmu;
+void vmx_ept_load_pdptrs(struct kvm_vcpu *vcpu)
+{
+	struct kvm_mmu *mmu = vcpu->arch.walk_mmu;
 
-	अगर (!kvm_रेजिस्टर_is_dirty(vcpu, VCPU_EXREG_PDPTR))
-		वापस;
+	if (!kvm_register_is_dirty(vcpu, VCPU_EXREG_PDPTR))
+		return;
 
-	अगर (is_pae_paging(vcpu)) अणु
-		vmcs_ग_लिखो64(GUEST_PDPTR0, mmu->pdptrs[0]);
-		vmcs_ग_लिखो64(GUEST_PDPTR1, mmu->pdptrs[1]);
-		vmcs_ग_लिखो64(GUEST_PDPTR2, mmu->pdptrs[2]);
-		vmcs_ग_लिखो64(GUEST_PDPTR3, mmu->pdptrs[3]);
-	पूर्ण
-पूर्ण
+	if (is_pae_paging(vcpu)) {
+		vmcs_write64(GUEST_PDPTR0, mmu->pdptrs[0]);
+		vmcs_write64(GUEST_PDPTR1, mmu->pdptrs[1]);
+		vmcs_write64(GUEST_PDPTR2, mmu->pdptrs[2]);
+		vmcs_write64(GUEST_PDPTR3, mmu->pdptrs[3]);
+	}
+}
 
-व्योम ept_save_pdptrs(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_mmu *mmu = vcpu->arch.walk_mmu;
+void ept_save_pdptrs(struct kvm_vcpu *vcpu)
+{
+	struct kvm_mmu *mmu = vcpu->arch.walk_mmu;
 
-	अगर (WARN_ON_ONCE(!is_pae_paging(vcpu)))
-		वापस;
+	if (WARN_ON_ONCE(!is_pae_paging(vcpu)))
+		return;
 
-	mmu->pdptrs[0] = vmcs_पढ़ो64(GUEST_PDPTR0);
-	mmu->pdptrs[1] = vmcs_पढ़ो64(GUEST_PDPTR1);
-	mmu->pdptrs[2] = vmcs_पढ़ो64(GUEST_PDPTR2);
-	mmu->pdptrs[3] = vmcs_पढ़ो64(GUEST_PDPTR3);
+	mmu->pdptrs[0] = vmcs_read64(GUEST_PDPTR0);
+	mmu->pdptrs[1] = vmcs_read64(GUEST_PDPTR1);
+	mmu->pdptrs[2] = vmcs_read64(GUEST_PDPTR2);
+	mmu->pdptrs[3] = vmcs_read64(GUEST_PDPTR3);
 
-	kvm_रेजिस्टर_mark_dirty(vcpu, VCPU_EXREG_PDPTR);
-पूर्ण
+	kvm_register_mark_dirty(vcpu, VCPU_EXREG_PDPTR);
+}
 
-अटल व्योम ept_update_paging_mode_cr0(अचिन्हित दीर्घ *hw_cr0,
-					अचिन्हित दीर्घ cr0,
-					काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void ept_update_paging_mode_cr0(unsigned long *hw_cr0,
+					unsigned long cr0,
+					struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (!kvm_रेजिस्टर_is_available(vcpu, VCPU_EXREG_CR3))
+	if (!kvm_register_is_available(vcpu, VCPU_EXREG_CR3))
 		vmx_cache_reg(vcpu, VCPU_EXREG_CR3);
-	अगर (!(cr0 & X86_CR0_PG)) अणु
+	if (!(cr0 & X86_CR0_PG)) {
 		/* From paging/starting to nonpaging */
 		exec_controls_setbit(vmx, CPU_BASED_CR3_LOAD_EXITING |
 					  CPU_BASED_CR3_STORE_EXITING);
 		vcpu->arch.cr0 = cr0;
-		vmx_set_cr4(vcpu, kvm_पढ़ो_cr4(vcpu));
-	पूर्ण अन्यथा अगर (!is_paging(vcpu)) अणु
+		vmx_set_cr4(vcpu, kvm_read_cr4(vcpu));
+	} else if (!is_paging(vcpu)) {
 		/* From nonpaging to paging */
 		exec_controls_clearbit(vmx, CPU_BASED_CR3_LOAD_EXITING |
 					    CPU_BASED_CR3_STORE_EXITING);
 		vcpu->arch.cr0 = cr0;
-		vmx_set_cr4(vcpu, kvm_पढ़ो_cr4(vcpu));
-	पूर्ण
+		vmx_set_cr4(vcpu, kvm_read_cr4(vcpu));
+	}
 
-	अगर (!(cr0 & X86_CR0_WP))
+	if (!(cr0 & X86_CR0_WP))
 		*hw_cr0 &= ~X86_CR0_WP;
-पूर्ण
+}
 
-व्योम vmx_set_cr0(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cr0)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ hw_cr0;
+void vmx_set_cr0(struct kvm_vcpu *vcpu, unsigned long cr0)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long hw_cr0;
 
 	hw_cr0 = (cr0 & ~KVM_VM_CR0_ALWAYS_OFF);
-	अगर (is_unrestricted_guest(vcpu))
+	if (is_unrestricted_guest(vcpu))
 		hw_cr0 |= KVM_VM_CR0_ALWAYS_ON_UNRESTRICTED_GUEST;
-	अन्यथा अणु
+	else {
 		hw_cr0 |= KVM_VM_CR0_ALWAYS_ON;
 
-		अगर (vmx->rmode.vm86_active && (cr0 & X86_CR0_PE))
+		if (vmx->rmode.vm86_active && (cr0 & X86_CR0_PE))
 			enter_pmode(vcpu);
 
-		अगर (!vmx->rmode.vm86_active && !(cr0 & X86_CR0_PE))
+		if (!vmx->rmode.vm86_active && !(cr0 & X86_CR0_PE))
 			enter_rmode(vcpu);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_X86_64
-	अगर (vcpu->arch.efer & EFER_LME) अणु
-		अगर (!is_paging(vcpu) && (cr0 & X86_CR0_PG))
+#ifdef CONFIG_X86_64
+	if (vcpu->arch.efer & EFER_LME) {
+		if (!is_paging(vcpu) && (cr0 & X86_CR0_PG))
 			enter_lmode(vcpu);
-		अगर (is_paging(vcpu) && !(cr0 & X86_CR0_PG))
-			निकास_lmode(vcpu);
-	पूर्ण
-#पूर्ण_अगर
+		if (is_paging(vcpu) && !(cr0 & X86_CR0_PG))
+			exit_lmode(vcpu);
+	}
+#endif
 
-	अगर (enable_ept && !is_unrestricted_guest(vcpu))
+	if (enable_ept && !is_unrestricted_guest(vcpu))
 		ept_update_paging_mode_cr0(&hw_cr0, cr0, vcpu);
 
-	vmcs_ग_लिखोl(CR0_READ_SHADOW, cr0);
-	vmcs_ग_लिखोl(GUEST_CR0, hw_cr0);
+	vmcs_writel(CR0_READ_SHADOW, cr0);
+	vmcs_writel(GUEST_CR0, hw_cr0);
 	vcpu->arch.cr0 = cr0;
-	kvm_रेजिस्टर_mark_available(vcpu, VCPU_EXREG_CR0);
+	kvm_register_mark_available(vcpu, VCPU_EXREG_CR0);
 
 	/* depends on vcpu->arch.cr0 to be set to a new value */
 	vmx->emulation_required = emulation_required(vcpu);
-पूर्ण
+}
 
-अटल पूर्णांक vmx_get_max_tdp_level(व्योम)
-अणु
-	अगर (cpu_has_vmx_ept_5levels())
-		वापस 5;
-	वापस 4;
-पूर्ण
+static int vmx_get_max_tdp_level(void)
+{
+	if (cpu_has_vmx_ept_5levels())
+		return 5;
+	return 4;
+}
 
-u64 स्थिरruct_eptp(काष्ठा kvm_vcpu *vcpu, hpa_t root_hpa, पूर्णांक root_level)
-अणु
+u64 construct_eptp(struct kvm_vcpu *vcpu, hpa_t root_hpa, int root_level)
+{
 	u64 eptp = VMX_EPTP_MT_WB;
 
 	eptp |= (root_level == 5) ? VMX_EPTP_PWL_5 : VMX_EPTP_PWL_4;
 
-	अगर (enable_ept_ad_bits &&
+	if (enable_ept_ad_bits &&
 	    (!is_guest_mode(vcpu) || nested_ept_ad_enabled(vcpu)))
 		eptp |= VMX_EPTP_AD_ENABLE_BIT;
 	eptp |= root_hpa;
 
-	वापस eptp;
-पूर्ण
+	return eptp;
+}
 
-अटल व्योम vmx_load_mmu_pgd(काष्ठा kvm_vcpu *vcpu, hpa_t root_hpa,
-			     पूर्णांक root_level)
-अणु
-	काष्ठा kvm *kvm = vcpu->kvm;
+static void vmx_load_mmu_pgd(struct kvm_vcpu *vcpu, hpa_t root_hpa,
+			     int root_level)
+{
+	struct kvm *kvm = vcpu->kvm;
 	bool update_guest_cr3 = true;
-	अचिन्हित दीर्घ guest_cr3;
+	unsigned long guest_cr3;
 	u64 eptp;
 
-	अगर (enable_ept) अणु
-		eptp = स्थिरruct_eptp(vcpu, root_hpa, root_level);
-		vmcs_ग_लिखो64(EPT_POINTER, eptp);
+	if (enable_ept) {
+		eptp = construct_eptp(vcpu, root_hpa, root_level);
+		vmcs_write64(EPT_POINTER, eptp);
 
 		hv_track_root_ept(vcpu, root_hpa);
 
-		अगर (!enable_unrestricted_guest && !is_paging(vcpu))
+		if (!enable_unrestricted_guest && !is_paging(vcpu))
 			guest_cr3 = to_kvm_vmx(kvm)->ept_identity_map_addr;
-		अन्यथा अगर (test_bit(VCPU_EXREG_CR3, (uदीर्घ *)&vcpu->arch.regs_avail))
+		else if (test_bit(VCPU_EXREG_CR3, (ulong *)&vcpu->arch.regs_avail))
 			guest_cr3 = vcpu->arch.cr3;
-		अन्यथा /* vmcs01.GUEST_CR3 is alपढ़ोy up-to-date. */
+		else /* vmcs01.GUEST_CR3 is already up-to-date. */
 			update_guest_cr3 = false;
 		vmx_ept_load_pdptrs(vcpu);
-	पूर्ण अन्यथा अणु
+	} else {
 		guest_cr3 = root_hpa | kvm_get_active_pcid(vcpu);
-	पूर्ण
+	}
 
-	अगर (update_guest_cr3)
-		vmcs_ग_लिखोl(GUEST_CR3, guest_cr3);
-पूर्ण
+	if (update_guest_cr3)
+		vmcs_writel(GUEST_CR3, guest_cr3);
+}
 
-अटल bool vmx_is_valid_cr4(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cr4)
-अणु
+static bool vmx_is_valid_cr4(struct kvm_vcpu *vcpu, unsigned long cr4)
+{
 	/*
-	 * We operate under the शेष treaपंचांगent of SMM, so VMX cannot be
+	 * We operate under the default treatment of SMM, so VMX cannot be
 	 * enabled under SMM.  Note, whether or not VMXE is allowed at all is
 	 * handled by kvm_is_valid_cr4().
 	 */
-	अगर ((cr4 & X86_CR4_VMXE) && is_smm(vcpu))
-		वापस false;
+	if ((cr4 & X86_CR4_VMXE) && is_smm(vcpu))
+		return false;
 
-	अगर (to_vmx(vcpu)->nested.vmxon && !nested_cr4_valid(vcpu, cr4))
-		वापस false;
+	if (to_vmx(vcpu)->nested.vmxon && !nested_cr4_valid(vcpu, cr4))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम vmx_set_cr4(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cr4)
-अणु
-	अचिन्हित दीर्घ old_cr4 = vcpu->arch.cr4;
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vmx_set_cr4(struct kvm_vcpu *vcpu, unsigned long cr4)
+{
+	unsigned long old_cr4 = vcpu->arch.cr4;
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	/*
 	 * Pass through host's Machine Check Enable value to hw_cr4, which
-	 * is in क्रमce जबतक we are in guest mode.  Do not let guests control
-	 * this bit, even अगर host CR4.MCE == 0.
+	 * is in force while we are in guest mode.  Do not let guests control
+	 * this bit, even if host CR4.MCE == 0.
 	 */
-	अचिन्हित दीर्घ hw_cr4;
+	unsigned long hw_cr4;
 
-	hw_cr4 = (cr4_पढ़ो_shaकरोw() & X86_CR4_MCE) | (cr4 & ~X86_CR4_MCE);
-	अगर (is_unrestricted_guest(vcpu))
+	hw_cr4 = (cr4_read_shadow() & X86_CR4_MCE) | (cr4 & ~X86_CR4_MCE);
+	if (is_unrestricted_guest(vcpu))
 		hw_cr4 |= KVM_VM_CR4_ALWAYS_ON_UNRESTRICTED_GUEST;
-	अन्यथा अगर (vmx->rmode.vm86_active)
+	else if (vmx->rmode.vm86_active)
 		hw_cr4 |= KVM_RMODE_VM_CR4_ALWAYS_ON;
-	अन्यथा
+	else
 		hw_cr4 |= KVM_PMODE_VM_CR4_ALWAYS_ON;
 
-	अगर (!boot_cpu_has(X86_FEATURE_UMIP) && vmx_umip_emulated()) अणु
-		अगर (cr4 & X86_CR4_UMIP) अणु
+	if (!boot_cpu_has(X86_FEATURE_UMIP) && vmx_umip_emulated()) {
+		if (cr4 & X86_CR4_UMIP) {
 			secondary_exec_controls_setbit(vmx, SECONDARY_EXEC_DESC);
 			hw_cr4 &= ~X86_CR4_UMIP;
-		पूर्ण अन्यथा अगर (!is_guest_mode(vcpu) ||
-			!nested_cpu_has2(get_vmcs12(vcpu), SECONDARY_EXEC_DESC)) अणु
+		} else if (!is_guest_mode(vcpu) ||
+			!nested_cpu_has2(get_vmcs12(vcpu), SECONDARY_EXEC_DESC)) {
 			secondary_exec_controls_clearbit(vmx, SECONDARY_EXEC_DESC);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	vcpu->arch.cr4 = cr4;
-	kvm_रेजिस्टर_mark_available(vcpu, VCPU_EXREG_CR4);
+	kvm_register_mark_available(vcpu, VCPU_EXREG_CR4);
 
-	अगर (!is_unrestricted_guest(vcpu)) अणु
-		अगर (enable_ept) अणु
-			अगर (!is_paging(vcpu)) अणु
+	if (!is_unrestricted_guest(vcpu)) {
+		if (enable_ept) {
+			if (!is_paging(vcpu)) {
 				hw_cr4 &= ~X86_CR4_PAE;
 				hw_cr4 |= X86_CR4_PSE;
-			पूर्ण अन्यथा अगर (!(cr4 & X86_CR4_PAE)) अणु
+			} else if (!(cr4 & X86_CR4_PAE)) {
 				hw_cr4 &= ~X86_CR4_PAE;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
-		 * SMEP/SMAP/PKU is disabled अगर CPU is in non-paging mode in
+		 * SMEP/SMAP/PKU is disabled if CPU is in non-paging mode in
 		 * hardware.  To emulate this behavior, SMEP/SMAP/PKU needs
-		 * to be manually disabled when guest चयनes to non-paging
+		 * to be manually disabled when guest switches to non-paging
 		 * mode.
 		 *
 		 * If !enable_unrestricted_guest, the CPU is always running
-		 * with CR0.PG=1 and CR4 needs to be modअगरied.
-		 * If enable_unrestricted_guest, the CPU स्वतःmatically
+		 * with CR0.PG=1 and CR4 needs to be modified.
+		 * If enable_unrestricted_guest, the CPU automatically
 		 * disables SMEP/SMAP/PKU when the guest sets CR0.PG=0.
 		 */
-		अगर (!is_paging(vcpu))
+		if (!is_paging(vcpu))
 			hw_cr4 &= ~(X86_CR4_SMEP | X86_CR4_SMAP | X86_CR4_PKE);
-	पूर्ण
+	}
 
-	vmcs_ग_लिखोl(CR4_READ_SHADOW, cr4);
-	vmcs_ग_लिखोl(GUEST_CR4, hw_cr4);
+	vmcs_writel(CR4_READ_SHADOW, cr4);
+	vmcs_writel(GUEST_CR4, hw_cr4);
 
-	अगर ((cr4 ^ old_cr4) & (X86_CR4_OSXSAVE | X86_CR4_PKE))
-		kvm_update_cpuid_runसमय(vcpu);
-पूर्ण
+	if ((cr4 ^ old_cr4) & (X86_CR4_OSXSAVE | X86_CR4_PKE))
+		kvm_update_cpuid_runtime(vcpu);
+}
 
-व्योम vmx_get_segment(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_segment *var, पूर्णांक seg)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vmx_get_segment(struct kvm_vcpu *vcpu, struct kvm_segment *var, int seg)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	u32 ar;
 
-	अगर (vmx->rmode.vm86_active && seg != VCPU_SREG_LDTR) अणु
+	if (vmx->rmode.vm86_active && seg != VCPU_SREG_LDTR) {
 		*var = vmx->rmode.segs[seg];
-		अगर (seg == VCPU_SREG_TR
-		    || var->selector == vmx_पढ़ो_guest_seg_selector(vmx, seg))
-			वापस;
-		var->base = vmx_पढ़ो_guest_seg_base(vmx, seg);
-		var->selector = vmx_पढ़ो_guest_seg_selector(vmx, seg);
-		वापस;
-	पूर्ण
-	var->base = vmx_पढ़ो_guest_seg_base(vmx, seg);
-	var->limit = vmx_पढ़ो_guest_seg_limit(vmx, seg);
-	var->selector = vmx_पढ़ो_guest_seg_selector(vmx, seg);
-	ar = vmx_पढ़ो_guest_seg_ar(vmx, seg);
+		if (seg == VCPU_SREG_TR
+		    || var->selector == vmx_read_guest_seg_selector(vmx, seg))
+			return;
+		var->base = vmx_read_guest_seg_base(vmx, seg);
+		var->selector = vmx_read_guest_seg_selector(vmx, seg);
+		return;
+	}
+	var->base = vmx_read_guest_seg_base(vmx, seg);
+	var->limit = vmx_read_guest_seg_limit(vmx, seg);
+	var->selector = vmx_read_guest_seg_selector(vmx, seg);
+	ar = vmx_read_guest_seg_ar(vmx, seg);
 	var->unusable = (ar >> 16) & 1;
 	var->type = ar & 15;
 	var->s = (ar >> 4) & 1;
 	var->dpl = (ar >> 5) & 3;
 	/*
-	 * Some userspaces करो not preserve unusable property. Since usable
+	 * Some userspaces do not preserve unusable property. Since usable
 	 * segment has to be present according to VMX spec we can use present
 	 * property to amend userspace bug by making unusable segment always
-	 * nonpresent. vmx_segment_access_rights() alपढ़ोy marks nonpresent
+	 * nonpresent. vmx_segment_access_rights() already marks nonpresent
 	 * segment as unusable.
 	 */
 	var->present = !var->unusable;
@@ -3313,38 +3312,38 @@ u64 स्थिरruct_eptp(काष्ठा kvm_vcpu *vcpu, hpa_t root_hpa, 
 	var->l = (ar >> 13) & 1;
 	var->db = (ar >> 14) & 1;
 	var->g = (ar >> 15) & 1;
-पूर्ण
+}
 
-अटल u64 vmx_get_segment_base(काष्ठा kvm_vcpu *vcpu, पूर्णांक seg)
-अणु
-	काष्ठा kvm_segment s;
+static u64 vmx_get_segment_base(struct kvm_vcpu *vcpu, int seg)
+{
+	struct kvm_segment s;
 
-	अगर (to_vmx(vcpu)->rmode.vm86_active) अणु
+	if (to_vmx(vcpu)->rmode.vm86_active) {
 		vmx_get_segment(vcpu, &s, seg);
-		वापस s.base;
-	पूर्ण
-	वापस vmx_पढ़ो_guest_seg_base(to_vmx(vcpu), seg);
-पूर्ण
+		return s.base;
+	}
+	return vmx_read_guest_seg_base(to_vmx(vcpu), seg);
+}
 
-पूर्णांक vmx_get_cpl(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+int vmx_get_cpl(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (unlikely(vmx->rmode.vm86_active))
-		वापस 0;
-	अन्यथा अणु
-		पूर्णांक ar = vmx_पढ़ो_guest_seg_ar(vmx, VCPU_SREG_SS);
-		वापस VMX_AR_DPL(ar);
-	पूर्ण
-पूर्ण
+	if (unlikely(vmx->rmode.vm86_active))
+		return 0;
+	else {
+		int ar = vmx_read_guest_seg_ar(vmx, VCPU_SREG_SS);
+		return VMX_AR_DPL(ar);
+	}
+}
 
-अटल u32 vmx_segment_access_rights(काष्ठा kvm_segment *var)
-अणु
+static u32 vmx_segment_access_rights(struct kvm_segment *var)
+{
 	u32 ar;
 
-	अगर (var->unusable || !var->present)
+	if (var->unusable || !var->present)
 		ar = 1 << 16;
-	अन्यथा अणु
+	else {
 		ar = var->type & 15;
 		ar |= (var->s & 1) << 4;
 		ar |= (var->dpl & 3) << 5;
@@ -3353,989 +3352,989 @@ u64 स्थिरruct_eptp(काष्ठा kvm_vcpu *vcpu, hpa_t root_hpa, 
 		ar |= (var->l & 1) << 13;
 		ar |= (var->db & 1) << 14;
 		ar |= (var->g & 1) << 15;
-	पूर्ण
+	}
 
-	वापस ar;
-पूर्ण
+	return ar;
+}
 
-व्योम vmx_set_segment(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_segment *var, पूर्णांक seg)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	स्थिर काष्ठा kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
+void vmx_set_segment(struct kvm_vcpu *vcpu, struct kvm_segment *var, int seg)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	const struct kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
 
 	vmx_segment_cache_clear(vmx);
 
-	अगर (vmx->rmode.vm86_active && seg != VCPU_SREG_LDTR) अणु
+	if (vmx->rmode.vm86_active && seg != VCPU_SREG_LDTR) {
 		vmx->rmode.segs[seg] = *var;
-		अगर (seg == VCPU_SREG_TR)
-			vmcs_ग_लिखो16(sf->selector, var->selector);
-		अन्यथा अगर (var->s)
+		if (seg == VCPU_SREG_TR)
+			vmcs_write16(sf->selector, var->selector);
+		else if (var->s)
 			fix_rmode_seg(seg, &vmx->rmode.segs[seg]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	vmcs_ग_लिखोl(sf->base, var->base);
-	vmcs_ग_लिखो32(sf->limit, var->limit);
-	vmcs_ग_लिखो16(sf->selector, var->selector);
+	vmcs_writel(sf->base, var->base);
+	vmcs_write32(sf->limit, var->limit);
+	vmcs_write16(sf->selector, var->selector);
 
 	/*
-	 *   Fix the "Accessed" bit in AR field of segment रेजिस्टरs क्रम older
+	 *   Fix the "Accessed" bit in AR field of segment registers for older
 	 * qemu binaries.
-	 *   IA32 arch specअगरies that at the समय of processor reset the
-	 * "Accessed" bit in the AR field of segment रेजिस्टरs is 1. And qemu
+	 *   IA32 arch specifies that at the time of processor reset the
+	 * "Accessed" bit in the AR field of segment registers is 1. And qemu
 	 * is setting it to 0 in the userland code. This causes invalid guest
-	 * state vmनिकास when "unrestricted guest" mode is turned on.
-	 *    Fix क्रम this setup issue in cpu_reset is being pushed in the qemu
+	 * state vmexit when "unrestricted guest" mode is turned on.
+	 *    Fix for this setup issue in cpu_reset is being pushed in the qemu
 	 * tree. Newer qemu binaries with that qemu fix would not need this
 	 * kvm hack.
 	 */
-	अगर (is_unrestricted_guest(vcpu) && (seg != VCPU_SREG_LDTR))
+	if (is_unrestricted_guest(vcpu) && (seg != VCPU_SREG_LDTR))
 		var->type |= 0x1; /* Accessed */
 
-	vmcs_ग_लिखो32(sf->ar_bytes, vmx_segment_access_rights(var));
+	vmcs_write32(sf->ar_bytes, vmx_segment_access_rights(var));
 
 out:
 	vmx->emulation_required = emulation_required(vcpu);
-पूर्ण
+}
 
-अटल व्योम vmx_get_cs_db_l_bits(काष्ठा kvm_vcpu *vcpu, पूर्णांक *db, पूर्णांक *l)
-अणु
-	u32 ar = vmx_पढ़ो_guest_seg_ar(to_vmx(vcpu), VCPU_SREG_CS);
+static void vmx_get_cs_db_l_bits(struct kvm_vcpu *vcpu, int *db, int *l)
+{
+	u32 ar = vmx_read_guest_seg_ar(to_vmx(vcpu), VCPU_SREG_CS);
 
 	*db = (ar >> 14) & 1;
 	*l = (ar >> 13) & 1;
-पूर्ण
+}
 
-अटल व्योम vmx_get_idt(काष्ठा kvm_vcpu *vcpu, काष्ठा desc_ptr *dt)
-अणु
-	dt->size = vmcs_पढ़ो32(GUEST_IDTR_LIMIT);
-	dt->address = vmcs_पढ़ोl(GUEST_IDTR_BASE);
-पूर्ण
+static void vmx_get_idt(struct kvm_vcpu *vcpu, struct desc_ptr *dt)
+{
+	dt->size = vmcs_read32(GUEST_IDTR_LIMIT);
+	dt->address = vmcs_readl(GUEST_IDTR_BASE);
+}
 
-अटल व्योम vmx_set_idt(काष्ठा kvm_vcpu *vcpu, काष्ठा desc_ptr *dt)
-अणु
-	vmcs_ग_लिखो32(GUEST_IDTR_LIMIT, dt->size);
-	vmcs_ग_लिखोl(GUEST_IDTR_BASE, dt->address);
-पूर्ण
+static void vmx_set_idt(struct kvm_vcpu *vcpu, struct desc_ptr *dt)
+{
+	vmcs_write32(GUEST_IDTR_LIMIT, dt->size);
+	vmcs_writel(GUEST_IDTR_BASE, dt->address);
+}
 
-अटल व्योम vmx_get_gdt(काष्ठा kvm_vcpu *vcpu, काष्ठा desc_ptr *dt)
-अणु
-	dt->size = vmcs_पढ़ो32(GUEST_GDTR_LIMIT);
-	dt->address = vmcs_पढ़ोl(GUEST_GDTR_BASE);
-पूर्ण
+static void vmx_get_gdt(struct kvm_vcpu *vcpu, struct desc_ptr *dt)
+{
+	dt->size = vmcs_read32(GUEST_GDTR_LIMIT);
+	dt->address = vmcs_readl(GUEST_GDTR_BASE);
+}
 
-अटल व्योम vmx_set_gdt(काष्ठा kvm_vcpu *vcpu, काष्ठा desc_ptr *dt)
-अणु
-	vmcs_ग_लिखो32(GUEST_GDTR_LIMIT, dt->size);
-	vmcs_ग_लिखोl(GUEST_GDTR_BASE, dt->address);
-पूर्ण
+static void vmx_set_gdt(struct kvm_vcpu *vcpu, struct desc_ptr *dt)
+{
+	vmcs_write32(GUEST_GDTR_LIMIT, dt->size);
+	vmcs_writel(GUEST_GDTR_BASE, dt->address);
+}
 
-अटल bool rmode_segment_valid(काष्ठा kvm_vcpu *vcpu, पूर्णांक seg)
-अणु
-	काष्ठा kvm_segment var;
+static bool rmode_segment_valid(struct kvm_vcpu *vcpu, int seg)
+{
+	struct kvm_segment var;
 	u32 ar;
 
 	vmx_get_segment(vcpu, &var, seg);
 	var.dpl = 0x3;
-	अगर (seg == VCPU_SREG_CS)
+	if (seg == VCPU_SREG_CS)
 		var.type = 0x3;
 	ar = vmx_segment_access_rights(&var);
 
-	अगर (var.base != (var.selector << 4))
-		वापस false;
-	अगर (var.limit != 0xffff)
-		वापस false;
-	अगर (ar != 0xf3)
-		वापस false;
+	if (var.base != (var.selector << 4))
+		return false;
+	if (var.limit != 0xffff)
+		return false;
+	if (ar != 0xf3)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool code_segment_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_segment cs;
-	अचिन्हित पूर्णांक cs_rpl;
+static bool code_segment_valid(struct kvm_vcpu *vcpu)
+{
+	struct kvm_segment cs;
+	unsigned int cs_rpl;
 
 	vmx_get_segment(vcpu, &cs, VCPU_SREG_CS);
 	cs_rpl = cs.selector & SEGMENT_RPL_MASK;
 
-	अगर (cs.unusable)
-		वापस false;
-	अगर (~cs.type & (VMX_AR_TYPE_CODE_MASK|VMX_AR_TYPE_ACCESSES_MASK))
-		वापस false;
-	अगर (!cs.s)
-		वापस false;
-	अगर (cs.type & VMX_AR_TYPE_WRITEABLE_MASK) अणु
-		अगर (cs.dpl > cs_rpl)
-			वापस false;
-	पूर्ण अन्यथा अणु
-		अगर (cs.dpl != cs_rpl)
-			वापस false;
-	पूर्ण
-	अगर (!cs.present)
-		वापस false;
+	if (cs.unusable)
+		return false;
+	if (~cs.type & (VMX_AR_TYPE_CODE_MASK|VMX_AR_TYPE_ACCESSES_MASK))
+		return false;
+	if (!cs.s)
+		return false;
+	if (cs.type & VMX_AR_TYPE_WRITEABLE_MASK) {
+		if (cs.dpl > cs_rpl)
+			return false;
+	} else {
+		if (cs.dpl != cs_rpl)
+			return false;
+	}
+	if (!cs.present)
+		return false;
 
-	/* TODO: Add Reserved field check, this'll require a new member in the kvm_segment_field काष्ठाure */
-	वापस true;
-पूर्ण
+	/* TODO: Add Reserved field check, this'll require a new member in the kvm_segment_field structure */
+	return true;
+}
 
-अटल bool stack_segment_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_segment ss;
-	अचिन्हित पूर्णांक ss_rpl;
+static bool stack_segment_valid(struct kvm_vcpu *vcpu)
+{
+	struct kvm_segment ss;
+	unsigned int ss_rpl;
 
 	vmx_get_segment(vcpu, &ss, VCPU_SREG_SS);
 	ss_rpl = ss.selector & SEGMENT_RPL_MASK;
 
-	अगर (ss.unusable)
-		वापस true;
-	अगर (ss.type != 3 && ss.type != 7)
-		वापस false;
-	अगर (!ss.s)
-		वापस false;
-	अगर (ss.dpl != ss_rpl) /* DPL != RPL */
-		वापस false;
-	अगर (!ss.present)
-		वापस false;
+	if (ss.unusable)
+		return true;
+	if (ss.type != 3 && ss.type != 7)
+		return false;
+	if (!ss.s)
+		return false;
+	if (ss.dpl != ss_rpl) /* DPL != RPL */
+		return false;
+	if (!ss.present)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool data_segment_valid(काष्ठा kvm_vcpu *vcpu, पूर्णांक seg)
-अणु
-	काष्ठा kvm_segment var;
-	अचिन्हित पूर्णांक rpl;
+static bool data_segment_valid(struct kvm_vcpu *vcpu, int seg)
+{
+	struct kvm_segment var;
+	unsigned int rpl;
 
 	vmx_get_segment(vcpu, &var, seg);
 	rpl = var.selector & SEGMENT_RPL_MASK;
 
-	अगर (var.unusable)
-		वापस true;
-	अगर (!var.s)
-		वापस false;
-	अगर (!var.present)
-		वापस false;
-	अगर (~var.type & (VMX_AR_TYPE_CODE_MASK|VMX_AR_TYPE_WRITEABLE_MASK)) अणु
-		अगर (var.dpl < rpl) /* DPL < RPL */
-			वापस false;
-	पूर्ण
+	if (var.unusable)
+		return true;
+	if (!var.s)
+		return false;
+	if (!var.present)
+		return false;
+	if (~var.type & (VMX_AR_TYPE_CODE_MASK|VMX_AR_TYPE_WRITEABLE_MASK)) {
+		if (var.dpl < rpl) /* DPL < RPL */
+			return false;
+	}
 
-	/* TODO: Add other members to kvm_segment_field to allow checking क्रम other access
+	/* TODO: Add other members to kvm_segment_field to allow checking for other access
 	 * rights flags
 	 */
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tr_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_segment tr;
+static bool tr_valid(struct kvm_vcpu *vcpu)
+{
+	struct kvm_segment tr;
 
 	vmx_get_segment(vcpu, &tr, VCPU_SREG_TR);
 
-	अगर (tr.unusable)
-		वापस false;
-	अगर (tr.selector & SEGMENT_TI_MASK)	/* TI = 1 */
-		वापस false;
-	अगर (tr.type != 3 && tr.type != 11) /* TODO: Check अगर guest is in IA32e mode */
-		वापस false;
-	अगर (!tr.present)
-		वापस false;
+	if (tr.unusable)
+		return false;
+	if (tr.selector & SEGMENT_TI_MASK)	/* TI = 1 */
+		return false;
+	if (tr.type != 3 && tr.type != 11) /* TODO: Check if guest is in IA32e mode */
+		return false;
+	if (!tr.present)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ldtr_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_segment ldtr;
+static bool ldtr_valid(struct kvm_vcpu *vcpu)
+{
+	struct kvm_segment ldtr;
 
 	vmx_get_segment(vcpu, &ldtr, VCPU_SREG_LDTR);
 
-	अगर (ldtr.unusable)
-		वापस true;
-	अगर (ldtr.selector & SEGMENT_TI_MASK)	/* TI = 1 */
-		वापस false;
-	अगर (ldtr.type != 2)
-		वापस false;
-	अगर (!ldtr.present)
-		वापस false;
+	if (ldtr.unusable)
+		return true;
+	if (ldtr.selector & SEGMENT_TI_MASK)	/* TI = 1 */
+		return false;
+	if (ldtr.type != 2)
+		return false;
+	if (!ldtr.present)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool cs_ss_rpl_check(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvm_segment cs, ss;
+static bool cs_ss_rpl_check(struct kvm_vcpu *vcpu)
+{
+	struct kvm_segment cs, ss;
 
 	vmx_get_segment(vcpu, &cs, VCPU_SREG_CS);
 	vmx_get_segment(vcpu, &ss, VCPU_SREG_SS);
 
-	वापस ((cs.selector & SEGMENT_RPL_MASK) ==
+	return ((cs.selector & SEGMENT_RPL_MASK) ==
 		 (ss.selector & SEGMENT_RPL_MASK));
-पूर्ण
+}
 
 /*
- * Check अगर guest state is valid. Returns true अगर valid, false अगर
+ * Check if guest state is valid. Returns true if valid, false if
  * not.
- * We assume that रेजिस्टरs are always usable
+ * We assume that registers are always usable
  */
-bool __vmx_guest_state_valid(काष्ठा kvm_vcpu *vcpu)
-अणु
+bool __vmx_guest_state_valid(struct kvm_vcpu *vcpu)
+{
 	/* real mode guest state checks */
-	अगर (!is_proपंचांगode(vcpu) || (vmx_get_rflags(vcpu) & X86_EFLAGS_VM)) अणु
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_CS))
-			वापस false;
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_SS))
-			वापस false;
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_DS))
-			वापस false;
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_ES))
-			वापस false;
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_FS))
-			वापस false;
-		अगर (!rmode_segment_valid(vcpu, VCPU_SREG_GS))
-			वापस false;
-	पूर्ण अन्यथा अणु
-	/* रक्षित mode guest state checks */
-		अगर (!cs_ss_rpl_check(vcpu))
-			वापस false;
-		अगर (!code_segment_valid(vcpu))
-			वापस false;
-		अगर (!stack_segment_valid(vcpu))
-			वापस false;
-		अगर (!data_segment_valid(vcpu, VCPU_SREG_DS))
-			वापस false;
-		अगर (!data_segment_valid(vcpu, VCPU_SREG_ES))
-			वापस false;
-		अगर (!data_segment_valid(vcpu, VCPU_SREG_FS))
-			वापस false;
-		अगर (!data_segment_valid(vcpu, VCPU_SREG_GS))
-			वापस false;
-		अगर (!tr_valid(vcpu))
-			वापस false;
-		अगर (!ldtr_valid(vcpu))
-			वापस false;
-	पूर्ण
+	if (!is_protmode(vcpu) || (vmx_get_rflags(vcpu) & X86_EFLAGS_VM)) {
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_CS))
+			return false;
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_SS))
+			return false;
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_DS))
+			return false;
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_ES))
+			return false;
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_FS))
+			return false;
+		if (!rmode_segment_valid(vcpu, VCPU_SREG_GS))
+			return false;
+	} else {
+	/* protected mode guest state checks */
+		if (!cs_ss_rpl_check(vcpu))
+			return false;
+		if (!code_segment_valid(vcpu))
+			return false;
+		if (!stack_segment_valid(vcpu))
+			return false;
+		if (!data_segment_valid(vcpu, VCPU_SREG_DS))
+			return false;
+		if (!data_segment_valid(vcpu, VCPU_SREG_ES))
+			return false;
+		if (!data_segment_valid(vcpu, VCPU_SREG_FS))
+			return false;
+		if (!data_segment_valid(vcpu, VCPU_SREG_GS))
+			return false;
+		if (!tr_valid(vcpu))
+			return false;
+		if (!ldtr_valid(vcpu))
+			return false;
+	}
 	/* TODO:
 	 * - Add checks on RIP
 	 * - Add checks on RFLAGS
 	 */
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक init_rmode_tss(काष्ठा kvm *kvm, व्योम __user *ua)
-अणु
-	स्थिर व्योम *zero_page = (स्थिर व्योम *) __va(page_to_phys(ZERO_PAGE(0)));
+static int init_rmode_tss(struct kvm *kvm, void __user *ua)
+{
+	const void *zero_page = (const void *) __va(page_to_phys(ZERO_PAGE(0)));
 	u16 data;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 3; i++) अणु
-		अगर (__copy_to_user(ua + PAGE_SIZE * i, zero_page, PAGE_SIZE))
-			वापस -EFAULT;
-	पूर्ण
+	for (i = 0; i < 3; i++) {
+		if (__copy_to_user(ua + PAGE_SIZE * i, zero_page, PAGE_SIZE))
+			return -EFAULT;
+	}
 
-	data = TSS_BASE_SIZE + TSS_REसूचीECTION_SIZE;
-	अगर (__copy_to_user(ua + TSS_IOPB_BASE_OFFSET, &data, माप(u16)))
-		वापस -EFAULT;
+	data = TSS_BASE_SIZE + TSS_REDIRECTION_SIZE;
+	if (__copy_to_user(ua + TSS_IOPB_BASE_OFFSET, &data, sizeof(u16)))
+		return -EFAULT;
 
 	data = ~0;
-	अगर (__copy_to_user(ua + RMODE_TSS_SIZE - 1, &data, माप(u8)))
-		वापस -EFAULT;
+	if (__copy_to_user(ua + RMODE_TSS_SIZE - 1, &data, sizeof(u8)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_rmode_identity_map(काष्ठा kvm *kvm)
-अणु
-	काष्ठा kvm_vmx *kvm_vmx = to_kvm_vmx(kvm);
-	पूर्णांक i, r = 0;
-	व्योम __user *uaddr;
-	u32 पंचांगp;
+static int init_rmode_identity_map(struct kvm *kvm)
+{
+	struct kvm_vmx *kvm_vmx = to_kvm_vmx(kvm);
+	int i, r = 0;
+	void __user *uaddr;
+	u32 tmp;
 
-	/* Protect kvm_vmx->ept_identity_pagetable_करोne. */
+	/* Protect kvm_vmx->ept_identity_pagetable_done. */
 	mutex_lock(&kvm->slots_lock);
 
-	अगर (likely(kvm_vmx->ept_identity_pagetable_करोne))
-		जाओ out;
+	if (likely(kvm_vmx->ept_identity_pagetable_done))
+		goto out;
 
-	अगर (!kvm_vmx->ept_identity_map_addr)
+	if (!kvm_vmx->ept_identity_map_addr)
 		kvm_vmx->ept_identity_map_addr = VMX_EPT_IDENTITY_PAGETABLE_ADDR;
 
 	uaddr = __x86_set_memory_region(kvm,
 					IDENTITY_PAGETABLE_PRIVATE_MEMSLOT,
 					kvm_vmx->ept_identity_map_addr,
 					PAGE_SIZE);
-	अगर (IS_ERR(uaddr)) अणु
+	if (IS_ERR(uaddr)) {
 		r = PTR_ERR(uaddr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Set up identity-mapping pagetable क्रम EPT in real mode */
-	क्रम (i = 0; i < PT32_ENT_PER_PAGE; i++) अणु
-		पंचांगp = (i << 22) + (_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |
-			_PAGE_ACCESSED | _PAGE_सूचीTY | _PAGE_PSE);
-		अगर (__copy_to_user(uaddr + i * माप(पंचांगp), &पंचांगp, माप(पंचांगp))) अणु
+	/* Set up identity-mapping pagetable for EPT in real mode */
+	for (i = 0; i < PT32_ENT_PER_PAGE; i++) {
+		tmp = (i << 22) + (_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |
+			_PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_PSE);
+		if (__copy_to_user(uaddr + i * sizeof(tmp), &tmp, sizeof(tmp))) {
 			r = -EFAULT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	kvm_vmx->ept_identity_pagetable_करोne = true;
+			goto out;
+		}
+	}
+	kvm_vmx->ept_identity_pagetable_done = true;
 
 out:
 	mutex_unlock(&kvm->slots_lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम seg_setup(पूर्णांक seg)
-अणु
-	स्थिर काष्ठा kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
-	अचिन्हित पूर्णांक ar;
+static void seg_setup(int seg)
+{
+	const struct kvm_vmx_segment_field *sf = &kvm_vmx_segment_fields[seg];
+	unsigned int ar;
 
-	vmcs_ग_लिखो16(sf->selector, 0);
-	vmcs_ग_लिखोl(sf->base, 0);
-	vmcs_ग_लिखो32(sf->limit, 0xffff);
+	vmcs_write16(sf->selector, 0);
+	vmcs_writel(sf->base, 0);
+	vmcs_write32(sf->limit, 0xffff);
 	ar = 0x93;
-	अगर (seg == VCPU_SREG_CS)
+	if (seg == VCPU_SREG_CS)
 		ar |= 0x08; /* code segment */
 
-	vmcs_ग_लिखो32(sf->ar_bytes, ar);
-पूर्ण
+	vmcs_write32(sf->ar_bytes, ar);
+}
 
-अटल पूर्णांक alloc_apic_access_page(काष्ठा kvm *kvm)
-अणु
-	काष्ठा page *page;
-	व्योम __user *hva;
-	पूर्णांक ret = 0;
+static int alloc_apic_access_page(struct kvm *kvm)
+{
+	struct page *page;
+	void __user *hva;
+	int ret = 0;
 
 	mutex_lock(&kvm->slots_lock);
-	अगर (kvm->arch.apic_access_page_करोne)
-		जाओ out;
+	if (kvm->arch.apic_access_page_done)
+		goto out;
 	hva = __x86_set_memory_region(kvm, APIC_ACCESS_PAGE_PRIVATE_MEMSLOT,
 				      APIC_DEFAULT_PHYS_BASE, PAGE_SIZE);
-	अगर (IS_ERR(hva)) अणु
+	if (IS_ERR(hva)) {
 		ret = PTR_ERR(hva);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	page = gfn_to_page(kvm, APIC_DEFAULT_PHYS_BASE >> PAGE_SHIFT);
-	अगर (is_error_page(page)) अणु
+	if (is_error_page(page)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Do not pin the page in memory, so that memory hot-unplug
 	 * is able to migrate it.
 	 */
 	put_page(page);
-	kvm->arch.apic_access_page_करोne = true;
+	kvm->arch.apic_access_page_done = true;
 out:
 	mutex_unlock(&kvm->slots_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक allocate_vpid(व्योम)
-अणु
-	पूर्णांक vpid;
+int allocate_vpid(void)
+{
+	int vpid;
 
-	अगर (!enable_vpid)
-		वापस 0;
+	if (!enable_vpid)
+		return 0;
 	spin_lock(&vmx_vpid_lock);
-	vpid = find_first_zero_bit(vmx_vpid_biपंचांगap, VMX_NR_VPIDS);
-	अगर (vpid < VMX_NR_VPIDS)
-		__set_bit(vpid, vmx_vpid_biपंचांगap);
-	अन्यथा
+	vpid = find_first_zero_bit(vmx_vpid_bitmap, VMX_NR_VPIDS);
+	if (vpid < VMX_NR_VPIDS)
+		__set_bit(vpid, vmx_vpid_bitmap);
+	else
 		vpid = 0;
 	spin_unlock(&vmx_vpid_lock);
-	वापस vpid;
-पूर्ण
+	return vpid;
+}
 
-व्योम मुक्त_vpid(पूर्णांक vpid)
-अणु
-	अगर (!enable_vpid || vpid == 0)
-		वापस;
+void free_vpid(int vpid)
+{
+	if (!enable_vpid || vpid == 0)
+		return;
 	spin_lock(&vmx_vpid_lock);
-	__clear_bit(vpid, vmx_vpid_biपंचांगap);
+	__clear_bit(vpid, vmx_vpid_bitmap);
 	spin_unlock(&vmx_vpid_lock);
-पूर्ण
+}
 
-अटल व्योम vmx_clear_msr_biपंचांगap_पढ़ो(uदीर्घ *msr_biपंचांगap, u32 msr)
-अणु
-	पूर्णांक f = माप(अचिन्हित दीर्घ);
+static void vmx_clear_msr_bitmap_read(ulong *msr_bitmap, u32 msr)
+{
+	int f = sizeof(unsigned long);
 
-	अगर (msr <= 0x1fff)
-		__clear_bit(msr, msr_biपंचांगap + 0x000 / f);
-	अन्यथा अगर ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
-		__clear_bit(msr & 0x1fff, msr_biपंचांगap + 0x400 / f);
-पूर्ण
+	if (msr <= 0x1fff)
+		__clear_bit(msr, msr_bitmap + 0x000 / f);
+	else if ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
+		__clear_bit(msr & 0x1fff, msr_bitmap + 0x400 / f);
+}
 
-अटल व्योम vmx_clear_msr_biपंचांगap_ग_लिखो(uदीर्घ *msr_biपंचांगap, u32 msr)
-अणु
-	पूर्णांक f = माप(अचिन्हित दीर्घ);
+static void vmx_clear_msr_bitmap_write(ulong *msr_bitmap, u32 msr)
+{
+	int f = sizeof(unsigned long);
 
-	अगर (msr <= 0x1fff)
-		__clear_bit(msr, msr_biपंचांगap + 0x800 / f);
-	अन्यथा अगर ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
-		__clear_bit(msr & 0x1fff, msr_biपंचांगap + 0xc00 / f);
-पूर्ण
+	if (msr <= 0x1fff)
+		__clear_bit(msr, msr_bitmap + 0x800 / f);
+	else if ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
+		__clear_bit(msr & 0x1fff, msr_bitmap + 0xc00 / f);
+}
 
-अटल व्योम vmx_set_msr_biपंचांगap_पढ़ो(uदीर्घ *msr_biपंचांगap, u32 msr)
-अणु
-	पूर्णांक f = माप(अचिन्हित दीर्घ);
+static void vmx_set_msr_bitmap_read(ulong *msr_bitmap, u32 msr)
+{
+	int f = sizeof(unsigned long);
 
-	अगर (msr <= 0x1fff)
-		__set_bit(msr, msr_biपंचांगap + 0x000 / f);
-	अन्यथा अगर ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
-		__set_bit(msr & 0x1fff, msr_biपंचांगap + 0x400 / f);
-पूर्ण
+	if (msr <= 0x1fff)
+		__set_bit(msr, msr_bitmap + 0x000 / f);
+	else if ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
+		__set_bit(msr & 0x1fff, msr_bitmap + 0x400 / f);
+}
 
-अटल व्योम vmx_set_msr_biपंचांगap_ग_लिखो(uदीर्घ *msr_biपंचांगap, u32 msr)
-अणु
-	पूर्णांक f = माप(अचिन्हित दीर्घ);
+static void vmx_set_msr_bitmap_write(ulong *msr_bitmap, u32 msr)
+{
+	int f = sizeof(unsigned long);
 
-	अगर (msr <= 0x1fff)
-		__set_bit(msr, msr_biपंचांगap + 0x800 / f);
-	अन्यथा अगर ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
-		__set_bit(msr & 0x1fff, msr_biपंचांगap + 0xc00 / f);
-पूर्ण
+	if (msr <= 0x1fff)
+		__set_bit(msr, msr_bitmap + 0x800 / f);
+	else if ((msr >= 0xc0000000) && (msr <= 0xc0001fff))
+		__set_bit(msr & 0x1fff, msr_bitmap + 0xc00 / f);
+}
 
-व्योम vmx_disable_पूर्णांकercept_क्रम_msr(काष्ठा kvm_vcpu *vcpu, u32 msr, पूर्णांक type)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ *msr_biपंचांगap = vmx->vmcs01.msr_biपंचांगap;
+void vmx_disable_intercept_for_msr(struct kvm_vcpu *vcpu, u32 msr, int type)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long *msr_bitmap = vmx->vmcs01.msr_bitmap;
 
-	अगर (!cpu_has_vmx_msr_biपंचांगap())
-		वापस;
+	if (!cpu_has_vmx_msr_bitmap())
+		return;
 
-	अगर (अटल_branch_unlikely(&enable_evmcs))
-		evmcs_touch_msr_biपंचांगap();
+	if (static_branch_unlikely(&enable_evmcs))
+		evmcs_touch_msr_bitmap();
 
 	/*
-	 * Mark the desired पूर्णांकercept state in shaकरोw biपंचांगap, this is needed
-	 * क्रम resync when the MSR filters change.
+	 * Mark the desired intercept state in shadow bitmap, this is needed
+	 * for resync when the MSR filters change.
 	*/
-	अगर (is_valid_passthrough_msr(msr)) अणु
-		पूर्णांक idx = possible_passthrough_msr_slot(msr);
+	if (is_valid_passthrough_msr(msr)) {
+		int idx = possible_passthrough_msr_slot(msr);
 
-		अगर (idx != -ENOENT) अणु
-			अगर (type & MSR_TYPE_R)
-				clear_bit(idx, vmx->shaकरोw_msr_पूर्णांकercept.पढ़ो);
-			अगर (type & MSR_TYPE_W)
-				clear_bit(idx, vmx->shaकरोw_msr_पूर्णांकercept.ग_लिखो);
-		पूर्ण
-	पूर्ण
+		if (idx != -ENOENT) {
+			if (type & MSR_TYPE_R)
+				clear_bit(idx, vmx->shadow_msr_intercept.read);
+			if (type & MSR_TYPE_W)
+				clear_bit(idx, vmx->shadow_msr_intercept.write);
+		}
+	}
 
-	अगर ((type & MSR_TYPE_R) &&
-	    !kvm_msr_allowed(vcpu, msr, KVM_MSR_FILTER_READ)) अणु
-		vmx_set_msr_biपंचांगap_पढ़ो(msr_biपंचांगap, msr);
+	if ((type & MSR_TYPE_R) &&
+	    !kvm_msr_allowed(vcpu, msr, KVM_MSR_FILTER_READ)) {
+		vmx_set_msr_bitmap_read(msr_bitmap, msr);
 		type &= ~MSR_TYPE_R;
-	पूर्ण
+	}
 
-	अगर ((type & MSR_TYPE_W) &&
-	    !kvm_msr_allowed(vcpu, msr, KVM_MSR_FILTER_WRITE)) अणु
-		vmx_set_msr_biपंचांगap_ग_लिखो(msr_biपंचांगap, msr);
+	if ((type & MSR_TYPE_W) &&
+	    !kvm_msr_allowed(vcpu, msr, KVM_MSR_FILTER_WRITE)) {
+		vmx_set_msr_bitmap_write(msr_bitmap, msr);
 		type &= ~MSR_TYPE_W;
-	पूर्ण
+	}
 
-	अगर (type & MSR_TYPE_R)
-		vmx_clear_msr_biपंचांगap_पढ़ो(msr_biपंचांगap, msr);
+	if (type & MSR_TYPE_R)
+		vmx_clear_msr_bitmap_read(msr_bitmap, msr);
 
-	अगर (type & MSR_TYPE_W)
-		vmx_clear_msr_biपंचांगap_ग_लिखो(msr_biपंचांगap, msr);
-पूर्ण
+	if (type & MSR_TYPE_W)
+		vmx_clear_msr_bitmap_write(msr_bitmap, msr);
+}
 
-व्योम vmx_enable_पूर्णांकercept_क्रम_msr(काष्ठा kvm_vcpu *vcpu, u32 msr, पूर्णांक type)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ *msr_biपंचांगap = vmx->vmcs01.msr_biपंचांगap;
+void vmx_enable_intercept_for_msr(struct kvm_vcpu *vcpu, u32 msr, int type)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long *msr_bitmap = vmx->vmcs01.msr_bitmap;
 
-	अगर (!cpu_has_vmx_msr_biपंचांगap())
-		वापस;
+	if (!cpu_has_vmx_msr_bitmap())
+		return;
 
-	अगर (अटल_branch_unlikely(&enable_evmcs))
-		evmcs_touch_msr_biपंचांगap();
+	if (static_branch_unlikely(&enable_evmcs))
+		evmcs_touch_msr_bitmap();
 
 	/*
-	 * Mark the desired पूर्णांकercept state in shaकरोw biपंचांगap, this is needed
-	 * क्रम resync when the MSR filter changes.
+	 * Mark the desired intercept state in shadow bitmap, this is needed
+	 * for resync when the MSR filter changes.
 	*/
-	अगर (is_valid_passthrough_msr(msr)) अणु
-		पूर्णांक idx = possible_passthrough_msr_slot(msr);
+	if (is_valid_passthrough_msr(msr)) {
+		int idx = possible_passthrough_msr_slot(msr);
 
-		अगर (idx != -ENOENT) अणु
-			अगर (type & MSR_TYPE_R)
-				set_bit(idx, vmx->shaकरोw_msr_पूर्णांकercept.पढ़ो);
-			अगर (type & MSR_TYPE_W)
-				set_bit(idx, vmx->shaकरोw_msr_पूर्णांकercept.ग_लिखो);
-		पूर्ण
-	पूर्ण
+		if (idx != -ENOENT) {
+			if (type & MSR_TYPE_R)
+				set_bit(idx, vmx->shadow_msr_intercept.read);
+			if (type & MSR_TYPE_W)
+				set_bit(idx, vmx->shadow_msr_intercept.write);
+		}
+	}
 
-	अगर (type & MSR_TYPE_R)
-		vmx_set_msr_biपंचांगap_पढ़ो(msr_biपंचांगap, msr);
+	if (type & MSR_TYPE_R)
+		vmx_set_msr_bitmap_read(msr_bitmap, msr);
 
-	अगर (type & MSR_TYPE_W)
-		vmx_set_msr_biपंचांगap_ग_लिखो(msr_biपंचांगap, msr);
-पूर्ण
+	if (type & MSR_TYPE_W)
+		vmx_set_msr_bitmap_write(msr_bitmap, msr);
+}
 
-अटल u8 vmx_msr_biपंचांगap_mode(काष्ठा kvm_vcpu *vcpu)
-अणु
+static u8 vmx_msr_bitmap_mode(struct kvm_vcpu *vcpu)
+{
 	u8 mode = 0;
 
-	अगर (cpu_has_secondary_exec_ctrls() &&
+	if (cpu_has_secondary_exec_ctrls() &&
 	    (secondary_exec_controls_get(to_vmx(vcpu)) &
-	     SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE)) अणु
+	     SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE)) {
 		mode |= MSR_BITMAP_MODE_X2APIC;
-		अगर (enable_apicv && kvm_vcpu_apicv_active(vcpu))
+		if (enable_apicv && kvm_vcpu_apicv_active(vcpu))
 			mode |= MSR_BITMAP_MODE_X2APIC_APICV;
-	पूर्ण
+	}
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल व्योम vmx_reset_x2apic_msrs(काष्ठा kvm_vcpu *vcpu, u8 mode)
-अणु
-	अचिन्हित दीर्घ *msr_biपंचांगap = to_vmx(vcpu)->vmcs01.msr_biपंचांगap;
-	अचिन्हित दीर्घ पढ़ो_पूर्णांकercept;
-	पूर्णांक msr;
+static void vmx_reset_x2apic_msrs(struct kvm_vcpu *vcpu, u8 mode)
+{
+	unsigned long *msr_bitmap = to_vmx(vcpu)->vmcs01.msr_bitmap;
+	unsigned long read_intercept;
+	int msr;
 
-	पढ़ो_पूर्णांकercept = (mode & MSR_BITMAP_MODE_X2APIC_APICV) ? 0 : ~0;
+	read_intercept = (mode & MSR_BITMAP_MODE_X2APIC_APICV) ? 0 : ~0;
 
-	क्रम (msr = 0x800; msr <= 0x8ff; msr += BITS_PER_LONG) अणु
-		अचिन्हित पूर्णांक पढ़ो_idx = msr / BITS_PER_LONG;
-		अचिन्हित पूर्णांक ग_लिखो_idx = पढ़ो_idx + (0x800 / माप(दीर्घ));
+	for (msr = 0x800; msr <= 0x8ff; msr += BITS_PER_LONG) {
+		unsigned int read_idx = msr / BITS_PER_LONG;
+		unsigned int write_idx = read_idx + (0x800 / sizeof(long));
 
-		msr_biपंचांगap[पढ़ो_idx] = पढ़ो_पूर्णांकercept;
-		msr_biपंचांगap[ग_लिखो_idx] = ~0ul;
-	पूर्ण
-पूर्ण
+		msr_bitmap[read_idx] = read_intercept;
+		msr_bitmap[write_idx] = ~0ul;
+	}
+}
 
-अटल व्योम vmx_update_msr_biपंचांगap_x2apic(काष्ठा kvm_vcpu *vcpu, u8 mode)
-अणु
-	अगर (!cpu_has_vmx_msr_biपंचांगap())
-		वापस;
+static void vmx_update_msr_bitmap_x2apic(struct kvm_vcpu *vcpu, u8 mode)
+{
+	if (!cpu_has_vmx_msr_bitmap())
+		return;
 
 	vmx_reset_x2apic_msrs(vcpu, mode);
 
 	/*
-	 * TPR पढ़ोs and ग_लिखोs can be भवized even अगर भव पूर्णांकerrupt
+	 * TPR reads and writes can be virtualized even if virtual interrupt
 	 * delivery is not in use.
 	 */
-	vmx_set_पूर्णांकercept_क्रम_msr(vcpu, X2APIC_MSR(APIC_TASKPRI), MSR_TYPE_RW,
+	vmx_set_intercept_for_msr(vcpu, X2APIC_MSR(APIC_TASKPRI), MSR_TYPE_RW,
 				  !(mode & MSR_BITMAP_MODE_X2APIC));
 
-	अगर (mode & MSR_BITMAP_MODE_X2APIC_APICV) अणु
-		vmx_enable_पूर्णांकercept_क्रम_msr(vcpu, X2APIC_MSR(APIC_TMCCT), MSR_TYPE_RW);
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, X2APIC_MSR(APIC_EOI), MSR_TYPE_W);
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, X2APIC_MSR(APIC_SELF_IPI), MSR_TYPE_W);
-	पूर्ण
-पूर्ण
+	if (mode & MSR_BITMAP_MODE_X2APIC_APICV) {
+		vmx_enable_intercept_for_msr(vcpu, X2APIC_MSR(APIC_TMCCT), MSR_TYPE_RW);
+		vmx_disable_intercept_for_msr(vcpu, X2APIC_MSR(APIC_EOI), MSR_TYPE_W);
+		vmx_disable_intercept_for_msr(vcpu, X2APIC_MSR(APIC_SELF_IPI), MSR_TYPE_W);
+	}
+}
 
-व्योम vmx_update_msr_biपंचांगap(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	u8 mode = vmx_msr_biपंचांगap_mode(vcpu);
-	u8 changed = mode ^ vmx->msr_biपंचांगap_mode;
+void vmx_update_msr_bitmap(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	u8 mode = vmx_msr_bitmap_mode(vcpu);
+	u8 changed = mode ^ vmx->msr_bitmap_mode;
 
-	अगर (!changed)
-		वापस;
+	if (!changed)
+		return;
 
-	अगर (changed & (MSR_BITMAP_MODE_X2APIC | MSR_BITMAP_MODE_X2APIC_APICV))
-		vmx_update_msr_biपंचांगap_x2apic(vcpu, mode);
+	if (changed & (MSR_BITMAP_MODE_X2APIC | MSR_BITMAP_MODE_X2APIC_APICV))
+		vmx_update_msr_bitmap_x2apic(vcpu, mode);
 
-	vmx->msr_biपंचांगap_mode = mode;
-पूर्ण
+	vmx->msr_bitmap_mode = mode;
+}
 
-व्योम pt_update_पूर्णांकercept_क्रम_msr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void pt_update_intercept_for_msr(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	bool flag = !(vmx->pt_desc.guest.ctl & RTIT_CTL_TRACEEN);
 	u32 i;
 
-	vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_STATUS, MSR_TYPE_RW, flag);
-	vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_OUTPUT_BASE, MSR_TYPE_RW, flag);
-	vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_OUTPUT_MASK, MSR_TYPE_RW, flag);
-	vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_CR3_MATCH, MSR_TYPE_RW, flag);
-	क्रम (i = 0; i < vmx->pt_desc.addr_range; i++) अणु
-		vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_ADDR0_A + i * 2, MSR_TYPE_RW, flag);
-		vmx_set_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_RTIT_ADDR0_B + i * 2, MSR_TYPE_RW, flag);
-	पूर्ण
-पूर्ण
+	vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_STATUS, MSR_TYPE_RW, flag);
+	vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_OUTPUT_BASE, MSR_TYPE_RW, flag);
+	vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_OUTPUT_MASK, MSR_TYPE_RW, flag);
+	vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_CR3_MATCH, MSR_TYPE_RW, flag);
+	for (i = 0; i < vmx->pt_desc.addr_range; i++) {
+		vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_ADDR0_A + i * 2, MSR_TYPE_RW, flag);
+		vmx_set_intercept_for_msr(vcpu, MSR_IA32_RTIT_ADDR0_B + i * 2, MSR_TYPE_RW, flag);
+	}
+}
 
-अटल bool vmx_guest_apic_has_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	व्योम *vapic_page;
+static bool vmx_guest_apic_has_interrupt(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	void *vapic_page;
 	u32 vppr;
-	पूर्णांक rvi;
+	int rvi;
 
-	अगर (WARN_ON_ONCE(!is_guest_mode(vcpu)) ||
+	if (WARN_ON_ONCE(!is_guest_mode(vcpu)) ||
 		!nested_cpu_has_vid(get_vmcs12(vcpu)) ||
-		WARN_ON_ONCE(!vmx->nested.भव_apic_map.gfn))
-		वापस false;
+		WARN_ON_ONCE(!vmx->nested.virtual_apic_map.gfn))
+		return false;
 
 	rvi = vmx_get_rvi();
 
-	vapic_page = vmx->nested.भव_apic_map.hva;
+	vapic_page = vmx->nested.virtual_apic_map.hva;
 	vppr = *((u32 *)(vapic_page + APIC_PROCPRI));
 
-	वापस ((rvi & 0xf0) > (vppr & 0xf0));
-पूर्ण
+	return ((rvi & 0xf0) > (vppr & 0xf0));
+}
 
-अटल व्योम vmx_msr_filter_changed(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_msr_filter_changed(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	u32 i;
 
 	/*
-	 * Set पूर्णांकercept permissions क्रम all potentially passed through MSRs
-	 * again. They will स्वतःmatically get filtered through the MSR filter,
+	 * Set intercept permissions for all potentially passed through MSRs
+	 * again. They will automatically get filtered through the MSR filter,
 	 * so we are back in sync after this.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(vmx_possible_passthrough_msrs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(vmx_possible_passthrough_msrs); i++) {
 		u32 msr = vmx_possible_passthrough_msrs[i];
-		bool पढ़ो = test_bit(i, vmx->shaकरोw_msr_पूर्णांकercept.पढ़ो);
-		bool ग_लिखो = test_bit(i, vmx->shaकरोw_msr_पूर्णांकercept.ग_लिखो);
+		bool read = test_bit(i, vmx->shadow_msr_intercept.read);
+		bool write = test_bit(i, vmx->shadow_msr_intercept.write);
 
-		vmx_set_पूर्णांकercept_क्रम_msr(vcpu, msr, MSR_TYPE_R, पढ़ो);
-		vmx_set_पूर्णांकercept_क्रम_msr(vcpu, msr, MSR_TYPE_W, ग_लिखो);
-	पूर्ण
+		vmx_set_intercept_for_msr(vcpu, msr, MSR_TYPE_R, read);
+		vmx_set_intercept_for_msr(vcpu, msr, MSR_TYPE_W, write);
+	}
 
-	pt_update_पूर्णांकercept_क्रम_msr(vcpu);
-	vmx_update_msr_biपंचांगap_x2apic(vcpu, vmx_msr_biपंचांगap_mode(vcpu));
-पूर्ण
+	pt_update_intercept_for_msr(vcpu);
+	vmx_update_msr_bitmap_x2apic(vcpu, vmx_msr_bitmap_mode(vcpu));
+}
 
-अटल अंतरभूत bool kvm_vcpu_trigger_posted_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu,
+static inline bool kvm_vcpu_trigger_posted_interrupt(struct kvm_vcpu *vcpu,
 						     bool nested)
-अणु
-#अगर_घोषित CONFIG_SMP
-	पूर्णांक pi_vec = nested ? POSTED_INTR_NESTED_VECTOR : POSTED_INTR_VECTOR;
+{
+#ifdef CONFIG_SMP
+	int pi_vec = nested ? POSTED_INTR_NESTED_VECTOR : POSTED_INTR_VECTOR;
 
-	अगर (vcpu->mode == IN_GUEST_MODE) अणु
+	if (vcpu->mode == IN_GUEST_MODE) {
 		/*
-		 * The vector of पूर्णांकerrupt to be delivered to vcpu had
-		 * been set in PIR beक्रमe this function.
+		 * The vector of interrupt to be delivered to vcpu had
+		 * been set in PIR before this function.
 		 *
-		 * Following हालs will be reached in this block, and
-		 * we always send a notअगरication event in all हालs as
+		 * Following cases will be reached in this block, and
+		 * we always send a notification event in all cases as
 		 * explained below.
 		 *
 		 * Case 1: vcpu keeps in non-root mode. Sending a
-		 * notअगरication event posts the पूर्णांकerrupt to vcpu.
+		 * notification event posts the interrupt to vcpu.
 		 *
-		 * Case 2: vcpu निकासs to root mode and is still
-		 * runnable. PIR will be synced to vIRR beक्रमe the
-		 * next vcpu entry. Sending a notअगरication event in
-		 * this हाल has no effect, as vcpu is not in root
+		 * Case 2: vcpu exits to root mode and is still
+		 * runnable. PIR will be synced to vIRR before the
+		 * next vcpu entry. Sending a notification event in
+		 * this case has no effect, as vcpu is not in root
 		 * mode.
 		 *
-		 * Case 3: vcpu निकासs to root mode and is blocked.
-		 * vcpu_block() has alपढ़ोy synced PIR to vIRR and
-		 * never blocks vcpu अगर vIRR is not cleared. Thereक्रमe,
-		 * a blocked vcpu here करोes not रुको क्रम any requested
-		 * पूर्णांकerrupts in PIR, and sending a notअगरication event
+		 * Case 3: vcpu exits to root mode and is blocked.
+		 * vcpu_block() has already synced PIR to vIRR and
+		 * never blocks vcpu if vIRR is not cleared. Therefore,
+		 * a blocked vcpu here does not wait for any requested
+		 * interrupts in PIR, and sending a notification event
 		 * which has no effect is safe here.
 		 */
 
 		apic->send_IPI_mask(get_cpu_mask(vcpu->cpu), pi_vec);
-		वापस true;
-	पूर्ण
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+		return true;
+	}
+#endif
+	return false;
+}
 
-अटल पूर्णांक vmx_deliver_nested_posted_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu,
-						पूर्णांक vector)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static int vmx_deliver_nested_posted_interrupt(struct kvm_vcpu *vcpu,
+						int vector)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (is_guest_mode(vcpu) &&
-	    vector == vmx->nested.posted_पूर्णांकr_nv) अणु
+	if (is_guest_mode(vcpu) &&
+	    vector == vmx->nested.posted_intr_nv) {
 		/*
-		 * If a posted पूर्णांकr is not recognized by hardware,
+		 * If a posted intr is not recognized by hardware,
 		 * we will accomplish it in the next vmentry.
 		 */
 		vmx->nested.pi_pending = true;
 		kvm_make_request(KVM_REQ_EVENT, vcpu);
 		/* the PIR and ON have been set by L1. */
-		अगर (!kvm_vcpu_trigger_posted_पूर्णांकerrupt(vcpu, true))
+		if (!kvm_vcpu_trigger_posted_interrupt(vcpu, true))
 			kvm_vcpu_kick(vcpu);
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		return 0;
+	}
+	return -1;
+}
 /*
- * Send पूर्णांकerrupt to vcpu via posted पूर्णांकerrupt way.
- * 1. If target vcpu is running(non-root mode), send posted पूर्णांकerrupt
- * notअगरication to vcpu and hardware will sync PIR to vIRR atomically.
+ * Send interrupt to vcpu via posted interrupt way.
+ * 1. If target vcpu is running(non-root mode), send posted interrupt
+ * notification to vcpu and hardware will sync PIR to vIRR atomically.
  * 2. If target vcpu isn't running(root mode), kick it to pick up the
- * पूर्णांकerrupt from PIR in next vmentry.
+ * interrupt from PIR in next vmentry.
  */
-अटल पूर्णांक vmx_deliver_posted_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu, पूर्णांक vector)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	पूर्णांक r;
+static int vmx_deliver_posted_interrupt(struct kvm_vcpu *vcpu, int vector)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	int r;
 
-	r = vmx_deliver_nested_posted_पूर्णांकerrupt(vcpu, vector);
-	अगर (!r)
-		वापस 0;
+	r = vmx_deliver_nested_posted_interrupt(vcpu, vector);
+	if (!r)
+		return 0;
 
-	अगर (!vcpu->arch.apicv_active)
-		वापस -1;
+	if (!vcpu->arch.apicv_active)
+		return -1;
 
-	अगर (pi_test_and_set_pir(vector, &vmx->pi_desc))
-		वापस 0;
+	if (pi_test_and_set_pir(vector, &vmx->pi_desc))
+		return 0;
 
-	/* If a previous notअगरication has sent the IPI, nothing to करो.  */
-	अगर (pi_test_and_set_on(&vmx->pi_desc))
-		वापस 0;
+	/* If a previous notification has sent the IPI, nothing to do.  */
+	if (pi_test_and_set_on(&vmx->pi_desc))
+		return 0;
 
-	अगर (vcpu != kvm_get_running_vcpu() &&
-	    !kvm_vcpu_trigger_posted_पूर्णांकerrupt(vcpu, false))
+	if (vcpu != kvm_get_running_vcpu() &&
+	    !kvm_vcpu_trigger_posted_interrupt(vcpu, false))
 		kvm_vcpu_kick(vcpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set up the vmcs's स्थिरant host-state fields, i.e., host-state fields that
- * will not change in the lअगरeसमय of the guest.
- * Note that host-state that करोes change is set अन्यथाwhere. E.g., host-state
- * that is set dअगरferently क्रम each CPU is set in vmx_vcpu_load(), not here.
+ * Set up the vmcs's constant host-state fields, i.e., host-state fields that
+ * will not change in the lifetime of the guest.
+ * Note that host-state that does change is set elsewhere. E.g., host-state
+ * that is set differently for each CPU is set in vmx_vcpu_load(), not here.
  */
-व्योम vmx_set_स्थिरant_host_state(काष्ठा vcpu_vmx *vmx)
-अणु
+void vmx_set_constant_host_state(struct vcpu_vmx *vmx)
+{
 	u32 low32, high32;
-	अचिन्हित दीर्घ पंचांगpl;
-	अचिन्हित दीर्घ cr0, cr3, cr4;
+	unsigned long tmpl;
+	unsigned long cr0, cr3, cr4;
 
-	cr0 = पढ़ो_cr0();
+	cr0 = read_cr0();
 	WARN_ON(cr0 & X86_CR0_TS);
-	vmcs_ग_लिखोl(HOST_CR0, cr0);  /* 22.2.3 */
+	vmcs_writel(HOST_CR0, cr0);  /* 22.2.3 */
 
 	/*
-	 * Save the most likely value क्रम this task's CR3 in the VMCS.
+	 * Save the most likely value for this task's CR3 in the VMCS.
 	 * We can't use __get_current_cr3_fast() because we're not atomic.
 	 */
-	cr3 = __पढ़ो_cr3();
-	vmcs_ग_लिखोl(HOST_CR3, cr3);		/* 22.2.3  FIXME: shaकरोw tables */
+	cr3 = __read_cr3();
+	vmcs_writel(HOST_CR3, cr3);		/* 22.2.3  FIXME: shadow tables */
 	vmx->loaded_vmcs->host_state.cr3 = cr3;
 
-	/* Save the most likely value क्रम this task's CR4 in the VMCS. */
-	cr4 = cr4_पढ़ो_shaकरोw();
-	vmcs_ग_लिखोl(HOST_CR4, cr4);			/* 22.2.3, 22.2.5 */
+	/* Save the most likely value for this task's CR4 in the VMCS. */
+	cr4 = cr4_read_shadow();
+	vmcs_writel(HOST_CR4, cr4);			/* 22.2.3, 22.2.5 */
 	vmx->loaded_vmcs->host_state.cr4 = cr4;
 
-	vmcs_ग_लिखो16(HOST_CS_SELECTOR, __KERNEL_CS);  /* 22.2.4 */
-#अगर_घोषित CONFIG_X86_64
+	vmcs_write16(HOST_CS_SELECTOR, __KERNEL_CS);  /* 22.2.4 */
+#ifdef CONFIG_X86_64
 	/*
-	 * Load null selectors, so we can aव्योम reloading them in
-	 * vmx_prepare_चयन_to_host(), in हाल userspace uses
-	 * the null selectors too (the expected हाल).
+	 * Load null selectors, so we can avoid reloading them in
+	 * vmx_prepare_switch_to_host(), in case userspace uses
+	 * the null selectors too (the expected case).
 	 */
-	vmcs_ग_लिखो16(HOST_DS_SELECTOR, 0);
-	vmcs_ग_लिखो16(HOST_ES_SELECTOR, 0);
-#अन्यथा
-	vmcs_ग_लिखो16(HOST_DS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
-	vmcs_ग_लिखो16(HOST_ES_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
-#पूर्ण_अगर
-	vmcs_ग_लिखो16(HOST_SS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
-	vmcs_ग_लिखो16(HOST_TR_SELECTOR, GDT_ENTRY_TSS*8);  /* 22.2.4 */
+	vmcs_write16(HOST_DS_SELECTOR, 0);
+	vmcs_write16(HOST_ES_SELECTOR, 0);
+#else
+	vmcs_write16(HOST_DS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
+	vmcs_write16(HOST_ES_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
+#endif
+	vmcs_write16(HOST_SS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
+	vmcs_write16(HOST_TR_SELECTOR, GDT_ENTRY_TSS*8);  /* 22.2.4 */
 
-	vmcs_ग_लिखोl(HOST_IDTR_BASE, host_idt_base);   /* 22.2.4 */
+	vmcs_writel(HOST_IDTR_BASE, host_idt_base);   /* 22.2.4 */
 
-	vmcs_ग_लिखोl(HOST_RIP, (अचिन्हित दीर्घ)vmx_vmनिकास); /* 22.2.5 */
+	vmcs_writel(HOST_RIP, (unsigned long)vmx_vmexit); /* 22.2.5 */
 
 	rdmsr(MSR_IA32_SYSENTER_CS, low32, high32);
-	vmcs_ग_लिखो32(HOST_IA32_SYSENTER_CS, low32);
-	rdmsrl(MSR_IA32_SYSENTER_EIP, पंचांगpl);
-	vmcs_ग_लिखोl(HOST_IA32_SYSENTER_EIP, पंचांगpl);   /* 22.2.3 */
+	vmcs_write32(HOST_IA32_SYSENTER_CS, low32);
+	rdmsrl(MSR_IA32_SYSENTER_EIP, tmpl);
+	vmcs_writel(HOST_IA32_SYSENTER_EIP, tmpl);   /* 22.2.3 */
 
-	अगर (vmcs_config.vmनिकास_ctrl & VM_EXIT_LOAD_IA32_PAT) अणु
+	if (vmcs_config.vmexit_ctrl & VM_EXIT_LOAD_IA32_PAT) {
 		rdmsr(MSR_IA32_CR_PAT, low32, high32);
-		vmcs_ग_लिखो64(HOST_IA32_PAT, low32 | ((u64) high32 << 32));
-	पूर्ण
+		vmcs_write64(HOST_IA32_PAT, low32 | ((u64) high32 << 32));
+	}
 
-	अगर (cpu_has_load_ia32_efer())
-		vmcs_ग_लिखो64(HOST_IA32_EFER, host_efer);
-पूर्ण
+	if (cpu_has_load_ia32_efer())
+		vmcs_write64(HOST_IA32_EFER, host_efer);
+}
 
-व्योम set_cr4_guest_host_mask(काष्ठा vcpu_vmx *vmx)
-अणु
-	काष्ठा kvm_vcpu *vcpu = &vmx->vcpu;
+void set_cr4_guest_host_mask(struct vcpu_vmx *vmx)
+{
+	struct kvm_vcpu *vcpu = &vmx->vcpu;
 
 	vcpu->arch.cr4_guest_owned_bits = KVM_POSSIBLE_CR4_GUEST_BITS &
 					  ~vcpu->arch.cr4_guest_rsvd_bits;
-	अगर (!enable_ept)
+	if (!enable_ept)
 		vcpu->arch.cr4_guest_owned_bits &= ~X86_CR4_PGE;
-	अगर (is_guest_mode(&vmx->vcpu))
+	if (is_guest_mode(&vmx->vcpu))
 		vcpu->arch.cr4_guest_owned_bits &=
 			~get_vmcs12(vcpu)->cr4_guest_host_mask;
-	vmcs_ग_लिखोl(CR4_GUEST_HOST_MASK, ~vcpu->arch.cr4_guest_owned_bits);
-पूर्ण
+	vmcs_writel(CR4_GUEST_HOST_MASK, ~vcpu->arch.cr4_guest_owned_bits);
+}
 
-u32 vmx_pin_based_exec_ctrl(काष्ठा vcpu_vmx *vmx)
-अणु
+u32 vmx_pin_based_exec_ctrl(struct vcpu_vmx *vmx)
+{
 	u32 pin_based_exec_ctrl = vmcs_config.pin_based_exec_ctrl;
 
-	अगर (!kvm_vcpu_apicv_active(&vmx->vcpu))
+	if (!kvm_vcpu_apicv_active(&vmx->vcpu))
 		pin_based_exec_ctrl &= ~PIN_BASED_POSTED_INTR;
 
-	अगर (!enable_vnmi)
+	if (!enable_vnmi)
 		pin_based_exec_ctrl &= ~PIN_BASED_VIRTUAL_NMIS;
 
-	अगर (!enable_preemption_समयr)
+	if (!enable_preemption_timer)
 		pin_based_exec_ctrl &= ~PIN_BASED_VMX_PREEMPTION_TIMER;
 
-	वापस pin_based_exec_ctrl;
-पूर्ण
+	return pin_based_exec_ctrl;
+}
 
-अटल व्योम vmx_refresh_apicv_exec_ctrl(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_refresh_apicv_exec_ctrl(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	pin_controls_set(vmx, vmx_pin_based_exec_ctrl(vmx));
-	अगर (cpu_has_secondary_exec_ctrls()) अणु
-		अगर (kvm_vcpu_apicv_active(vcpu))
+	if (cpu_has_secondary_exec_ctrls()) {
+		if (kvm_vcpu_apicv_active(vcpu))
 			secondary_exec_controls_setbit(vmx,
 				      SECONDARY_EXEC_APIC_REGISTER_VIRT |
 				      SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY);
-		अन्यथा
+		else
 			secondary_exec_controls_clearbit(vmx,
 					SECONDARY_EXEC_APIC_REGISTER_VIRT |
 					SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY);
-	पूर्ण
+	}
 
-	अगर (cpu_has_vmx_msr_biपंचांगap())
-		vmx_update_msr_biपंचांगap(vcpu);
-पूर्ण
+	if (cpu_has_vmx_msr_bitmap())
+		vmx_update_msr_bitmap(vcpu);
+}
 
-u32 vmx_exec_control(काष्ठा vcpu_vmx *vmx)
-अणु
+u32 vmx_exec_control(struct vcpu_vmx *vmx)
+{
 	u32 exec_control = vmcs_config.cpu_based_exec_ctrl;
 
-	अगर (vmx->vcpu.arch.चयन_db_regs & KVM_DEBUGREG_WONT_EXIT)
+	if (vmx->vcpu.arch.switch_db_regs & KVM_DEBUGREG_WONT_EXIT)
 		exec_control &= ~CPU_BASED_MOV_DR_EXITING;
 
-	अगर (!cpu_need_tpr_shaकरोw(&vmx->vcpu)) अणु
+	if (!cpu_need_tpr_shadow(&vmx->vcpu)) {
 		exec_control &= ~CPU_BASED_TPR_SHADOW;
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 		exec_control |= CPU_BASED_CR8_STORE_EXITING |
 				CPU_BASED_CR8_LOAD_EXITING;
-#पूर्ण_अगर
-	पूर्ण
-	अगर (!enable_ept)
+#endif
+	}
+	if (!enable_ept)
 		exec_control |= CPU_BASED_CR3_STORE_EXITING |
 				CPU_BASED_CR3_LOAD_EXITING  |
 				CPU_BASED_INVLPG_EXITING;
-	अगर (kvm_mरुको_in_guest(vmx->vcpu.kvm))
+	if (kvm_mwait_in_guest(vmx->vcpu.kvm))
 		exec_control &= ~(CPU_BASED_MWAIT_EXITING |
 				CPU_BASED_MONITOR_EXITING);
-	अगर (kvm_hlt_in_guest(vmx->vcpu.kvm))
+	if (kvm_hlt_in_guest(vmx->vcpu.kvm))
 		exec_control &= ~CPU_BASED_HLT_EXITING;
-	वापस exec_control;
-पूर्ण
+	return exec_control;
+}
 
 /*
- * Adjust a single secondary execution control bit to पूर्णांकercept/allow an
- * inकाष्ठाion in the guest.  This is usually करोne based on whether or not a
+ * Adjust a single secondary execution control bit to intercept/allow an
+ * instruction in the guest.  This is usually done based on whether or not a
  * feature has been exposed to the guest in order to correctly emulate faults.
  */
-अटल अंतरभूत व्योम
-vmx_adjust_secondary_exec_control(काष्ठा vcpu_vmx *vmx, u32 *exec_control,
-				  u32 control, bool enabled, bool निकासing)
-अणु
+static inline void
+vmx_adjust_secondary_exec_control(struct vcpu_vmx *vmx, u32 *exec_control,
+				  u32 control, bool enabled, bool exiting)
+{
 	/*
-	 * If the control is क्रम an opt-in feature, clear the control अगर the
+	 * If the control is for an opt-in feature, clear the control if the
 	 * feature is not exposed to the guest, i.e. not enabled.  If the
-	 * control is opt-out, i.e. an निकासing control, clear the control अगर
-	 * the feature _is_ exposed to the guest, i.e. निकासing/पूर्णांकerception is
-	 * disabled क्रम the associated inकाष्ठाion.  Note, the caller is
+	 * control is opt-out, i.e. an exiting control, clear the control if
+	 * the feature _is_ exposed to the guest, i.e. exiting/interception is
+	 * disabled for the associated instruction.  Note, the caller is
 	 * responsible presetting exec_control to set all supported bits.
 	 */
-	अगर (enabled == निकासing)
+	if (enabled == exiting)
 		*exec_control &= ~control;
 
 	/*
 	 * Update the nested MSR settings so that a nested VMM can/can't set
-	 * controls क्रम features that are/aren't exposed to the guest.
+	 * controls for features that are/aren't exposed to the guest.
 	 */
-	अगर (nested) अणु
-		अगर (enabled)
+	if (nested) {
+		if (enabled)
 			vmx->nested.msrs.secondary_ctls_high |= control;
-		अन्यथा
+		else
 			vmx->nested.msrs.secondary_ctls_high &= ~control;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Wrapper macro क्रम the common हाल of adjusting a secondary execution control
+ * Wrapper macro for the common case of adjusting a secondary execution control
  * based on a single guest CPUID bit, with a dedicated feature bit.  This also
- * verअगरies that the control is actually supported by KVM and hardware.
+ * verifies that the control is actually supported by KVM and hardware.
  */
-#घोषणा vmx_adjust_sec_exec_control(vmx, exec_control, name, feat_name, ctrl_name, निकासing) \
-(अणु									 \
+#define vmx_adjust_sec_exec_control(vmx, exec_control, name, feat_name, ctrl_name, exiting) \
+({									 \
 	bool __enabled;							 \
 									 \
-	अगर (cpu_has_vmx_##name()) अणु					 \
+	if (cpu_has_vmx_##name()) {					 \
 		__enabled = guest_cpuid_has(&(vmx)->vcpu,		 \
 					    X86_FEATURE_##feat_name);	 \
 		vmx_adjust_secondary_exec_control(vmx, exec_control,	 \
-			SECONDARY_EXEC_##ctrl_name, __enabled, निकासing); \
-	पूर्ण								 \
-पूर्ण)
+			SECONDARY_EXEC_##ctrl_name, __enabled, exiting); \
+	}								 \
+})
 
-/* More macro magic क्रम ENABLE_/opt-in versus _EXITING/opt-out controls. */
-#घोषणा vmx_adjust_sec_exec_feature(vmx, exec_control, lname, uname) \
+/* More macro magic for ENABLE_/opt-in versus _EXITING/opt-out controls. */
+#define vmx_adjust_sec_exec_feature(vmx, exec_control, lname, uname) \
 	vmx_adjust_sec_exec_control(vmx, exec_control, lname, uname, ENABLE_##uname, false)
 
-#घोषणा vmx_adjust_sec_exec_निकासing(vmx, exec_control, lname, uname) \
+#define vmx_adjust_sec_exec_exiting(vmx, exec_control, lname, uname) \
 	vmx_adjust_sec_exec_control(vmx, exec_control, lname, uname, uname##_EXITING, true)
 
-अटल व्योम vmx_compute_secondary_exec_control(काष्ठा vcpu_vmx *vmx)
-अणु
-	काष्ठा kvm_vcpu *vcpu = &vmx->vcpu;
+static void vmx_compute_secondary_exec_control(struct vcpu_vmx *vmx)
+{
+	struct kvm_vcpu *vcpu = &vmx->vcpu;
 
 	u32 exec_control = vmcs_config.cpu_based_2nd_exec_ctrl;
 
-	अगर (vmx_pt_mode_is_प्रणाली())
+	if (vmx_pt_mode_is_system())
 		exec_control &= ~(SECONDARY_EXEC_PT_USE_GPA | SECONDARY_EXEC_PT_CONCEAL_VMX);
-	अगर (!cpu_need_भवize_apic_accesses(vcpu))
+	if (!cpu_need_virtualize_apic_accesses(vcpu))
 		exec_control &= ~SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES;
-	अगर (vmx->vpid == 0)
+	if (vmx->vpid == 0)
 		exec_control &= ~SECONDARY_EXEC_ENABLE_VPID;
-	अगर (!enable_ept) अणु
+	if (!enable_ept) {
 		exec_control &= ~SECONDARY_EXEC_ENABLE_EPT;
 		enable_unrestricted_guest = 0;
-	पूर्ण
-	अगर (!enable_unrestricted_guest)
+	}
+	if (!enable_unrestricted_guest)
 		exec_control &= ~SECONDARY_EXEC_UNRESTRICTED_GUEST;
-	अगर (kvm_छोड़ो_in_guest(vmx->vcpu.kvm))
+	if (kvm_pause_in_guest(vmx->vcpu.kvm))
 		exec_control &= ~SECONDARY_EXEC_PAUSE_LOOP_EXITING;
-	अगर (!kvm_vcpu_apicv_active(vcpu))
+	if (!kvm_vcpu_apicv_active(vcpu))
 		exec_control &= ~(SECONDARY_EXEC_APIC_REGISTER_VIRT |
 				  SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY);
 	exec_control &= ~SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE;
 
-	/* SECONDARY_EXEC_DESC is enabled/disabled on ग_लिखोs to CR4.UMIP,
+	/* SECONDARY_EXEC_DESC is enabled/disabled on writes to CR4.UMIP,
 	 * in vmx_set_cr4.  */
 	exec_control &= ~SECONDARY_EXEC_DESC;
 
 	/* SECONDARY_EXEC_SHADOW_VMCS is enabled when L1 executes VMPTRLD
 	   (handle_vmptrld).
-	   We can NOT enable shaकरोw_vmcs here because we करोn't have yet
+	   We can NOT enable shadow_vmcs here because we don't have yet
 	   a current VMCS12
 	*/
 	exec_control &= ~SECONDARY_EXEC_SHADOW_VMCS;
 
 	/*
 	 * PML is enabled/disabled when dirty logging of memsmlots changes, but
-	 * it needs to be set here when dirty logging is alपढ़ोy active, e.g.
-	 * अगर this vCPU was created after dirty logging was enabled.
+	 * it needs to be set here when dirty logging is already active, e.g.
+	 * if this vCPU was created after dirty logging was enabled.
 	 */
-	अगर (!vcpu->kvm->arch.cpu_dirty_logging_count)
+	if (!vcpu->kvm->arch.cpu_dirty_logging_count)
 		exec_control &= ~SECONDARY_EXEC_ENABLE_PML;
 
-	अगर (cpu_has_vmx_xsaves()) अणु
+	if (cpu_has_vmx_xsaves()) {
 		/* Exposing XSAVES only when XSAVE is exposed */
 		bool xsaves_enabled =
 			boot_cpu_has(X86_FEATURE_XSAVE) &&
@@ -4347,17 +4346,17 @@ vmx_adjust_secondary_exec_control(काष्ठा vcpu_vmx *vmx, u32 *exec_co
 		vmx_adjust_secondary_exec_control(vmx, &exec_control,
 						  SECONDARY_EXEC_XSAVES,
 						  xsaves_enabled, false);
-	पूर्ण
+	}
 
 	/*
-	 * RDPID is also gated by ENABLE_RDTSCP, turn on the control अगर either
-	 * feature is exposed to the guest.  This creates a भवization hole
-	 * अगर both are supported in hardware but only one is exposed to the
+	 * RDPID is also gated by ENABLE_RDTSCP, turn on the control if either
+	 * feature is exposed to the guest.  This creates a virtualization hole
+	 * if both are supported in hardware but only one is exposed to the
 	 * guest, but letting the guest execute RDTSCP or RDPID when either one
-	 * is advertised is preferable to emulating the advertised inकाष्ठाion
+	 * is advertised is preferable to emulating the advertised instruction
 	 * in KVM on #UD, and obviously better than incorrectly injecting #UD.
 	 */
-	अगर (cpu_has_vmx_rdtscp()) अणु
+	if (cpu_has_vmx_rdtscp()) {
 		bool rdpid_or_rdtscp_enabled =
 			guest_cpuid_has(vcpu, X86_FEATURE_RDTSCP) ||
 			guest_cpuid_has(vcpu, X86_FEATURE_RDPID);
@@ -4365,147 +4364,147 @@ vmx_adjust_secondary_exec_control(काष्ठा vcpu_vmx *vmx, u32 *exec_co
 		vmx_adjust_secondary_exec_control(vmx, &exec_control,
 						  SECONDARY_EXEC_ENABLE_RDTSCP,
 						  rdpid_or_rdtscp_enabled, false);
-	पूर्ण
+	}
 	vmx_adjust_sec_exec_feature(vmx, &exec_control, invpcid, INVPCID);
 
-	vmx_adjust_sec_exec_निकासing(vmx, &exec_control, rdअक्रम, RDRAND);
-	vmx_adjust_sec_exec_निकासing(vmx, &exec_control, rdseed, RDSEED);
+	vmx_adjust_sec_exec_exiting(vmx, &exec_control, rdrand, RDRAND);
+	vmx_adjust_sec_exec_exiting(vmx, &exec_control, rdseed, RDSEED);
 
-	vmx_adjust_sec_exec_control(vmx, &exec_control, रुकोpkg, WAITPKG,
+	vmx_adjust_sec_exec_control(vmx, &exec_control, waitpkg, WAITPKG,
 				    ENABLE_USR_WAIT_PAUSE, false);
 
-	अगर (!vcpu->kvm->arch.bus_lock_detection_enabled)
+	if (!vcpu->kvm->arch.bus_lock_detection_enabled)
 		exec_control &= ~SECONDARY_EXEC_BUS_LOCK_DETECTION;
 
 	vmx->secondary_exec_control = exec_control;
-पूर्ण
+}
 
-#घोषणा VMX_XSS_EXIT_BITMAP 0
+#define VMX_XSS_EXIT_BITMAP 0
 
 /*
  * Noting that the initialization of Guest-state Area of VMCS is in
  * vmx_vcpu_reset().
  */
-अटल व्योम init_vmcs(काष्ठा vcpu_vmx *vmx)
-अणु
-	अगर (nested)
-		nested_vmx_set_vmcs_shaकरोwing_biपंचांगap();
+static void init_vmcs(struct vcpu_vmx *vmx)
+{
+	if (nested)
+		nested_vmx_set_vmcs_shadowing_bitmap();
 
-	अगर (cpu_has_vmx_msr_biपंचांगap())
-		vmcs_ग_लिखो64(MSR_BITMAP, __pa(vmx->vmcs01.msr_biपंचांगap));
+	if (cpu_has_vmx_msr_bitmap())
+		vmcs_write64(MSR_BITMAP, __pa(vmx->vmcs01.msr_bitmap));
 
-	vmcs_ग_लिखो64(VMCS_LINK_POINTER, -1ull); /* 22.3.1.5 */
+	vmcs_write64(VMCS_LINK_POINTER, -1ull); /* 22.3.1.5 */
 
 	/* Control */
 	pin_controls_set(vmx, vmx_pin_based_exec_ctrl(vmx));
 
 	exec_controls_set(vmx, vmx_exec_control(vmx));
 
-	अगर (cpu_has_secondary_exec_ctrls()) अणु
+	if (cpu_has_secondary_exec_ctrls()) {
 		vmx_compute_secondary_exec_control(vmx);
 		secondary_exec_controls_set(vmx, vmx->secondary_exec_control);
-	पूर्ण
+	}
 
-	अगर (kvm_vcpu_apicv_active(&vmx->vcpu)) अणु
-		vmcs_ग_लिखो64(EOI_EXIT_BITMAP0, 0);
-		vmcs_ग_लिखो64(EOI_EXIT_BITMAP1, 0);
-		vmcs_ग_लिखो64(EOI_EXIT_BITMAP2, 0);
-		vmcs_ग_लिखो64(EOI_EXIT_BITMAP3, 0);
+	if (kvm_vcpu_apicv_active(&vmx->vcpu)) {
+		vmcs_write64(EOI_EXIT_BITMAP0, 0);
+		vmcs_write64(EOI_EXIT_BITMAP1, 0);
+		vmcs_write64(EOI_EXIT_BITMAP2, 0);
+		vmcs_write64(EOI_EXIT_BITMAP3, 0);
 
-		vmcs_ग_लिखो16(GUEST_INTR_STATUS, 0);
+		vmcs_write16(GUEST_INTR_STATUS, 0);
 
-		vmcs_ग_लिखो16(POSTED_INTR_NV, POSTED_INTR_VECTOR);
-		vmcs_ग_लिखो64(POSTED_INTR_DESC_ADDR, __pa((&vmx->pi_desc)));
-	पूर्ण
+		vmcs_write16(POSTED_INTR_NV, POSTED_INTR_VECTOR);
+		vmcs_write64(POSTED_INTR_DESC_ADDR, __pa((&vmx->pi_desc)));
+	}
 
-	अगर (!kvm_छोड़ो_in_guest(vmx->vcpu.kvm)) अणु
-		vmcs_ग_लिखो32(PLE_GAP, ple_gap);
-		vmx->ple_winकरोw = ple_winकरोw;
-		vmx->ple_winकरोw_dirty = true;
-	पूर्ण
+	if (!kvm_pause_in_guest(vmx->vcpu.kvm)) {
+		vmcs_write32(PLE_GAP, ple_gap);
+		vmx->ple_window = ple_window;
+		vmx->ple_window_dirty = true;
+	}
 
-	vmcs_ग_लिखो32(PAGE_FAULT_ERROR_CODE_MASK, 0);
-	vmcs_ग_लिखो32(PAGE_FAULT_ERROR_CODE_MATCH, 0);
-	vmcs_ग_लिखो32(CR3_TARGET_COUNT, 0);           /* 22.2.1 */
+	vmcs_write32(PAGE_FAULT_ERROR_CODE_MASK, 0);
+	vmcs_write32(PAGE_FAULT_ERROR_CODE_MATCH, 0);
+	vmcs_write32(CR3_TARGET_COUNT, 0);           /* 22.2.1 */
 
-	vmcs_ग_लिखो16(HOST_FS_SELECTOR, 0);            /* 22.2.4 */
-	vmcs_ग_लिखो16(HOST_GS_SELECTOR, 0);            /* 22.2.4 */
-	vmx_set_स्थिरant_host_state(vmx);
-	vmcs_ग_लिखोl(HOST_FS_BASE, 0); /* 22.2.4 */
-	vmcs_ग_लिखोl(HOST_GS_BASE, 0); /* 22.2.4 */
+	vmcs_write16(HOST_FS_SELECTOR, 0);            /* 22.2.4 */
+	vmcs_write16(HOST_GS_SELECTOR, 0);            /* 22.2.4 */
+	vmx_set_constant_host_state(vmx);
+	vmcs_writel(HOST_FS_BASE, 0); /* 22.2.4 */
+	vmcs_writel(HOST_GS_BASE, 0); /* 22.2.4 */
 
-	अगर (cpu_has_vmx_vmfunc())
-		vmcs_ग_लिखो64(VM_FUNCTION_CONTROL, 0);
+	if (cpu_has_vmx_vmfunc())
+		vmcs_write64(VM_FUNCTION_CONTROL, 0);
 
-	vmcs_ग_लिखो32(VM_EXIT_MSR_STORE_COUNT, 0);
-	vmcs_ग_लिखो32(VM_EXIT_MSR_LOAD_COUNT, 0);
-	vmcs_ग_लिखो64(VM_EXIT_MSR_LOAD_ADDR, __pa(vmx->msr_स्वतःload.host.val));
-	vmcs_ग_लिखो32(VM_ENTRY_MSR_LOAD_COUNT, 0);
-	vmcs_ग_लिखो64(VM_ENTRY_MSR_LOAD_ADDR, __pa(vmx->msr_स्वतःload.guest.val));
+	vmcs_write32(VM_EXIT_MSR_STORE_COUNT, 0);
+	vmcs_write32(VM_EXIT_MSR_LOAD_COUNT, 0);
+	vmcs_write64(VM_EXIT_MSR_LOAD_ADDR, __pa(vmx->msr_autoload.host.val));
+	vmcs_write32(VM_ENTRY_MSR_LOAD_COUNT, 0);
+	vmcs_write64(VM_ENTRY_MSR_LOAD_ADDR, __pa(vmx->msr_autoload.guest.val));
 
-	अगर (vmcs_config.vmentry_ctrl & VM_ENTRY_LOAD_IA32_PAT)
-		vmcs_ग_लिखो64(GUEST_IA32_PAT, vmx->vcpu.arch.pat);
+	if (vmcs_config.vmentry_ctrl & VM_ENTRY_LOAD_IA32_PAT)
+		vmcs_write64(GUEST_IA32_PAT, vmx->vcpu.arch.pat);
 
-	vm_निकास_controls_set(vmx, vmx_vmनिकास_ctrl());
+	vm_exit_controls_set(vmx, vmx_vmexit_ctrl());
 
 	/* 22.2.1, 20.8.1 */
 	vm_entry_controls_set(vmx, vmx_vmentry_ctrl());
 
 	vmx->vcpu.arch.cr0_guest_owned_bits = KVM_POSSIBLE_CR0_GUEST_BITS;
-	vmcs_ग_लिखोl(CR0_GUEST_HOST_MASK, ~vmx->vcpu.arch.cr0_guest_owned_bits);
+	vmcs_writel(CR0_GUEST_HOST_MASK, ~vmx->vcpu.arch.cr0_guest_owned_bits);
 
 	set_cr4_guest_host_mask(vmx);
 
-	अगर (vmx->vpid != 0)
-		vmcs_ग_लिखो16(VIRTUAL_PROCESSOR_ID, vmx->vpid);
+	if (vmx->vpid != 0)
+		vmcs_write16(VIRTUAL_PROCESSOR_ID, vmx->vpid);
 
-	अगर (cpu_has_vmx_xsaves())
-		vmcs_ग_लिखो64(XSS_EXIT_BITMAP, VMX_XSS_EXIT_BITMAP);
+	if (cpu_has_vmx_xsaves())
+		vmcs_write64(XSS_EXIT_BITMAP, VMX_XSS_EXIT_BITMAP);
 
-	अगर (enable_pml) अणु
-		vmcs_ग_लिखो64(PML_ADDRESS, page_to_phys(vmx->pml_pg));
-		vmcs_ग_लिखो16(GUEST_PML_INDEX, PML_ENTITY_NUM - 1);
-	पूर्ण
+	if (enable_pml) {
+		vmcs_write64(PML_ADDRESS, page_to_phys(vmx->pml_pg));
+		vmcs_write16(GUEST_PML_INDEX, PML_ENTITY_NUM - 1);
+	}
 
-	vmx_ग_लिखो_encls_biपंचांगap(&vmx->vcpu, शून्य);
+	vmx_write_encls_bitmap(&vmx->vcpu, NULL);
 
-	अगर (vmx_pt_mode_is_host_guest()) अणु
-		स_रखो(&vmx->pt_desc, 0, माप(vmx->pt_desc));
-		/* Bit[6~0] are क्रमced to 1, ग_लिखोs are ignored. */
+	if (vmx_pt_mode_is_host_guest()) {
+		memset(&vmx->pt_desc, 0, sizeof(vmx->pt_desc));
+		/* Bit[6~0] are forced to 1, writes are ignored. */
 		vmx->pt_desc.guest.output_mask = 0x7F;
-		vmcs_ग_लिखो64(GUEST_IA32_RTIT_CTL, 0);
-	पूर्ण
-पूर्ण
+		vmcs_write64(GUEST_IA32_RTIT_CTL, 0);
+	}
+}
 
-अटल व्योम vmx_vcpu_reset(काष्ठा kvm_vcpu *vcpu, bool init_event)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा msr_data apic_base_msr;
+static void vmx_vcpu_reset(struct kvm_vcpu *vcpu, bool init_event)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct msr_data apic_base_msr;
 	u64 cr0;
 
 	vmx->rmode.vm86_active = 0;
 	vmx->spec_ctrl = 0;
 
-	vmx->msr_ia32_umरुको_control = 0;
+	vmx->msr_ia32_umwait_control = 0;
 
 	vmx->vcpu.arch.regs[VCPU_REGS_RDX] = get_rdx_init_val();
 	vmx->hv_deadline_tsc = -1;
 	kvm_set_cr8(vcpu, 0);
 
-	अगर (!init_event) अणु
+	if (!init_event) {
 		apic_base_msr.data = APIC_DEFAULT_PHYS_BASE |
 				     MSR_IA32_APICBASE_ENABLE;
-		अगर (kvm_vcpu_is_reset_bsp(vcpu))
+		if (kvm_vcpu_is_reset_bsp(vcpu))
 			apic_base_msr.data |= MSR_IA32_APICBASE_BSP;
 		apic_base_msr.host_initiated = true;
 		kvm_set_apic_base(vcpu, &apic_base_msr);
-	पूर्ण
+	}
 
 	vmx_segment_cache_clear(vmx);
 
 	seg_setup(VCPU_SREG_CS);
-	vmcs_ग_लिखो16(GUEST_CS_SELECTOR, 0xf000);
-	vmcs_ग_लिखोl(GUEST_CS_BASE, 0xffff0000ul);
+	vmcs_write16(GUEST_CS_SELECTOR, 0xf000);
+	vmcs_writel(GUEST_CS_BASE, 0xffff0000ul);
 
 	seg_setup(VCPU_SREG_DS);
 	seg_setup(VCPU_SREG_ES);
@@ -4513,49 +4512,49 @@ vmx_adjust_secondary_exec_control(काष्ठा vcpu_vmx *vmx, u32 *exec_co
 	seg_setup(VCPU_SREG_GS);
 	seg_setup(VCPU_SREG_SS);
 
-	vmcs_ग_लिखो16(GUEST_TR_SELECTOR, 0);
-	vmcs_ग_लिखोl(GUEST_TR_BASE, 0);
-	vmcs_ग_लिखो32(GUEST_TR_LIMIT, 0xffff);
-	vmcs_ग_लिखो32(GUEST_TR_AR_BYTES, 0x008b);
+	vmcs_write16(GUEST_TR_SELECTOR, 0);
+	vmcs_writel(GUEST_TR_BASE, 0);
+	vmcs_write32(GUEST_TR_LIMIT, 0xffff);
+	vmcs_write32(GUEST_TR_AR_BYTES, 0x008b);
 
-	vmcs_ग_लिखो16(GUEST_LDTR_SELECTOR, 0);
-	vmcs_ग_लिखोl(GUEST_LDTR_BASE, 0);
-	vmcs_ग_लिखो32(GUEST_LDTR_LIMIT, 0xffff);
-	vmcs_ग_लिखो32(GUEST_LDTR_AR_BYTES, 0x00082);
+	vmcs_write16(GUEST_LDTR_SELECTOR, 0);
+	vmcs_writel(GUEST_LDTR_BASE, 0);
+	vmcs_write32(GUEST_LDTR_LIMIT, 0xffff);
+	vmcs_write32(GUEST_LDTR_AR_BYTES, 0x00082);
 
-	अगर (!init_event) अणु
-		vmcs_ग_लिखो32(GUEST_SYSENTER_CS, 0);
-		vmcs_ग_लिखोl(GUEST_SYSENTER_ESP, 0);
-		vmcs_ग_लिखोl(GUEST_SYSENTER_EIP, 0);
-		vmcs_ग_लिखो64(GUEST_IA32_DEBUGCTL, 0);
-	पूर्ण
+	if (!init_event) {
+		vmcs_write32(GUEST_SYSENTER_CS, 0);
+		vmcs_writel(GUEST_SYSENTER_ESP, 0);
+		vmcs_writel(GUEST_SYSENTER_EIP, 0);
+		vmcs_write64(GUEST_IA32_DEBUGCTL, 0);
+	}
 
 	kvm_set_rflags(vcpu, X86_EFLAGS_FIXED);
-	kvm_rip_ग_लिखो(vcpu, 0xfff0);
+	kvm_rip_write(vcpu, 0xfff0);
 
-	vmcs_ग_लिखोl(GUEST_GDTR_BASE, 0);
-	vmcs_ग_लिखो32(GUEST_GDTR_LIMIT, 0xffff);
+	vmcs_writel(GUEST_GDTR_BASE, 0);
+	vmcs_write32(GUEST_GDTR_LIMIT, 0xffff);
 
-	vmcs_ग_लिखोl(GUEST_IDTR_BASE, 0);
-	vmcs_ग_लिखो32(GUEST_IDTR_LIMIT, 0xffff);
+	vmcs_writel(GUEST_IDTR_BASE, 0);
+	vmcs_write32(GUEST_IDTR_LIMIT, 0xffff);
 
-	vmcs_ग_लिखो32(GUEST_ACTIVITY_STATE, GUEST_ACTIVITY_ACTIVE);
-	vmcs_ग_लिखो32(GUEST_INTERRUPTIBILITY_INFO, 0);
-	vmcs_ग_लिखोl(GUEST_PENDING_DBG_EXCEPTIONS, 0);
-	अगर (kvm_mpx_supported())
-		vmcs_ग_लिखो64(GUEST_BNDCFGS, 0);
+	vmcs_write32(GUEST_ACTIVITY_STATE, GUEST_ACTIVITY_ACTIVE);
+	vmcs_write32(GUEST_INTERRUPTIBILITY_INFO, 0);
+	vmcs_writel(GUEST_PENDING_DBG_EXCEPTIONS, 0);
+	if (kvm_mpx_supported())
+		vmcs_write64(GUEST_BNDCFGS, 0);
 
 	setup_msrs(vmx);
 
-	vmcs_ग_लिखो32(VM_ENTRY_INTR_INFO_FIELD, 0);  /* 22.2.1 */
+	vmcs_write32(VM_ENTRY_INTR_INFO_FIELD, 0);  /* 22.2.1 */
 
-	अगर (cpu_has_vmx_tpr_shaकरोw() && !init_event) अणु
-		vmcs_ग_लिखो64(VIRTUAL_APIC_PAGE_ADDR, 0);
-		अगर (cpu_need_tpr_shaकरोw(vcpu))
-			vmcs_ग_लिखो64(VIRTUAL_APIC_PAGE_ADDR,
+	if (cpu_has_vmx_tpr_shadow() && !init_event) {
+		vmcs_write64(VIRTUAL_APIC_PAGE_ADDR, 0);
+		if (cpu_need_tpr_shadow(vcpu))
+			vmcs_write64(VIRTUAL_APIC_PAGE_ADDR,
 				     __pa(vcpu->arch.apic->regs));
-		vmcs_ग_लिखो32(TPR_THRESHOLD, 0);
-	पूर्ण
+		vmcs_write32(TPR_THRESHOLD, 0);
+	}
 
 	kvm_make_request(KVM_REQ_APIC_PAGE_RELOAD, vcpu);
 
@@ -4565,1272 +4564,1272 @@ vmx_adjust_secondary_exec_control(काष्ठा vcpu_vmx *vmx, u32 *exec_co
 	vmx_set_cr4(vcpu, 0);
 	vmx_set_efer(vcpu, 0);
 
-	vmx_update_exception_biपंचांगap(vcpu);
+	vmx_update_exception_bitmap(vcpu);
 
 	vpid_sync_context(vmx->vpid);
-	अगर (init_event)
+	if (init_event)
 		vmx_clear_hlt(vcpu);
-पूर्ण
+}
 
-अटल व्योम vmx_enable_irq_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_enable_irq_window(struct kvm_vcpu *vcpu)
+{
 	exec_controls_setbit(to_vmx(vcpu), CPU_BASED_INTR_WINDOW_EXITING);
-पूर्ण
+}
 
-अटल व्योम vmx_enable_nmi_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!enable_vnmi ||
-	    vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO) & GUEST_INTR_STATE_STI) अणु
-		vmx_enable_irq_winकरोw(vcpu);
-		वापस;
-	पूर्ण
+static void vmx_enable_nmi_window(struct kvm_vcpu *vcpu)
+{
+	if (!enable_vnmi ||
+	    vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) & GUEST_INTR_STATE_STI) {
+		vmx_enable_irq_window(vcpu);
+		return;
+	}
 
 	exec_controls_setbit(to_vmx(vcpu), CPU_BASED_NMI_WINDOW_EXITING);
-पूर्ण
+}
 
-अटल व्योम vmx_inject_irq(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	uपूर्णांक32_t पूर्णांकr;
-	पूर्णांक irq = vcpu->arch.पूर्णांकerrupt.nr;
+static void vmx_inject_irq(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	uint32_t intr;
+	int irq = vcpu->arch.interrupt.nr;
 
 	trace_kvm_inj_virq(irq);
 
 	++vcpu->stat.irq_injections;
-	अगर (vmx->rmode.vm86_active) अणु
-		पूर्णांक inc_eip = 0;
-		अगर (vcpu->arch.पूर्णांकerrupt.soft)
-			inc_eip = vcpu->arch.event_निकास_inst_len;
-		kvm_inject_realmode_पूर्णांकerrupt(vcpu, irq, inc_eip);
-		वापस;
-	पूर्ण
-	पूर्णांकr = irq | INTR_INFO_VALID_MASK;
-	अगर (vcpu->arch.पूर्णांकerrupt.soft) अणु
-		पूर्णांकr |= INTR_TYPE_SOFT_INTR;
-		vmcs_ग_लिखो32(VM_ENTRY_INSTRUCTION_LEN,
-			     vmx->vcpu.arch.event_निकास_inst_len);
-	पूर्ण अन्यथा
-		पूर्णांकr |= INTR_TYPE_EXT_INTR;
-	vmcs_ग_लिखो32(VM_ENTRY_INTR_INFO_FIELD, पूर्णांकr);
+	if (vmx->rmode.vm86_active) {
+		int inc_eip = 0;
+		if (vcpu->arch.interrupt.soft)
+			inc_eip = vcpu->arch.event_exit_inst_len;
+		kvm_inject_realmode_interrupt(vcpu, irq, inc_eip);
+		return;
+	}
+	intr = irq | INTR_INFO_VALID_MASK;
+	if (vcpu->arch.interrupt.soft) {
+		intr |= INTR_TYPE_SOFT_INTR;
+		vmcs_write32(VM_ENTRY_INSTRUCTION_LEN,
+			     vmx->vcpu.arch.event_exit_inst_len);
+	} else
+		intr |= INTR_TYPE_EXT_INTR;
+	vmcs_write32(VM_ENTRY_INTR_INFO_FIELD, intr);
 
 	vmx_clear_hlt(vcpu);
-पूर्ण
+}
 
-अटल व्योम vmx_inject_nmi(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_inject_nmi(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (!enable_vnmi) अणु
+	if (!enable_vnmi) {
 		/*
 		 * Tracking the NMI-blocked state in software is built upon
-		 * finding the next खोलो IRQ winकरोw. This, in turn, depends on
+		 * finding the next open IRQ window. This, in turn, depends on
 		 * well-behaving guests: They have to keep IRQs disabled at
-		 * least as दीर्घ as the NMI handler runs. Otherwise we may
-		 * cause NMI nesting, maybe अवरोधing the guest. But as this is
+		 * least as long as the NMI handler runs. Otherwise we may
+		 * cause NMI nesting, maybe breaking the guest. But as this is
 		 * highly unlikely, we can live with the residual risk.
 		 */
 		vmx->loaded_vmcs->soft_vnmi_blocked = 1;
-		vmx->loaded_vmcs->vnmi_blocked_समय = 0;
-	पूर्ण
+		vmx->loaded_vmcs->vnmi_blocked_time = 0;
+	}
 
 	++vcpu->stat.nmi_injections;
 	vmx->loaded_vmcs->nmi_known_unmasked = false;
 
-	अगर (vmx->rmode.vm86_active) अणु
-		kvm_inject_realmode_पूर्णांकerrupt(vcpu, NMI_VECTOR, 0);
-		वापस;
-	पूर्ण
+	if (vmx->rmode.vm86_active) {
+		kvm_inject_realmode_interrupt(vcpu, NMI_VECTOR, 0);
+		return;
+	}
 
-	vmcs_ग_लिखो32(VM_ENTRY_INTR_INFO_FIELD,
+	vmcs_write32(VM_ENTRY_INTR_INFO_FIELD,
 			INTR_TYPE_NMI_INTR | INTR_INFO_VALID_MASK | NMI_VECTOR);
 
 	vmx_clear_hlt(vcpu);
-पूर्ण
+}
 
-bool vmx_get_nmi_mask(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+bool vmx_get_nmi_mask(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	bool masked;
 
-	अगर (!enable_vnmi)
-		वापस vmx->loaded_vmcs->soft_vnmi_blocked;
-	अगर (vmx->loaded_vmcs->nmi_known_unmasked)
-		वापस false;
-	masked = vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO) & GUEST_INTR_STATE_NMI;
+	if (!enable_vnmi)
+		return vmx->loaded_vmcs->soft_vnmi_blocked;
+	if (vmx->loaded_vmcs->nmi_known_unmasked)
+		return false;
+	masked = vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) & GUEST_INTR_STATE_NMI;
 	vmx->loaded_vmcs->nmi_known_unmasked = !masked;
-	वापस masked;
-पूर्ण
+	return masked;
+}
 
-व्योम vmx_set_nmi_mask(काष्ठा kvm_vcpu *vcpu, bool masked)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vmx_set_nmi_mask(struct kvm_vcpu *vcpu, bool masked)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (!enable_vnmi) अणु
-		अगर (vmx->loaded_vmcs->soft_vnmi_blocked != masked) अणु
+	if (!enable_vnmi) {
+		if (vmx->loaded_vmcs->soft_vnmi_blocked != masked) {
 			vmx->loaded_vmcs->soft_vnmi_blocked = masked;
-			vmx->loaded_vmcs->vnmi_blocked_समय = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			vmx->loaded_vmcs->vnmi_blocked_time = 0;
+		}
+	} else {
 		vmx->loaded_vmcs->nmi_known_unmasked = !masked;
-		अगर (masked)
+		if (masked)
 			vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO,
 				      GUEST_INTR_STATE_NMI);
-		अन्यथा
+		else
 			vmcs_clear_bits(GUEST_INTERRUPTIBILITY_INFO,
 					GUEST_INTR_STATE_NMI);
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool vmx_nmi_blocked(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (is_guest_mode(vcpu) && nested_निकास_on_nmi(vcpu))
-		वापस false;
+bool vmx_nmi_blocked(struct kvm_vcpu *vcpu)
+{
+	if (is_guest_mode(vcpu) && nested_exit_on_nmi(vcpu))
+		return false;
 
-	अगर (!enable_vnmi && to_vmx(vcpu)->loaded_vmcs->soft_vnmi_blocked)
-		वापस true;
+	if (!enable_vnmi && to_vmx(vcpu)->loaded_vmcs->soft_vnmi_blocked)
+		return true;
 
-	वापस (vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO) &
+	return (vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) &
 		(GUEST_INTR_STATE_MOV_SS | GUEST_INTR_STATE_STI |
 		 GUEST_INTR_STATE_NMI));
-पूर्ण
+}
 
-अटल पूर्णांक vmx_nmi_allowed(काष्ठा kvm_vcpu *vcpu, bool क्रम_injection)
-अणु
-	अगर (to_vmx(vcpu)->nested.nested_run_pending)
-		वापस -EBUSY;
+static int vmx_nmi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+{
+	if (to_vmx(vcpu)->nested.nested_run_pending)
+		return -EBUSY;
 
-	/* An NMI must not be injected पूर्णांकo L2 अगर it's supposed to VM-Exit.  */
-	अगर (क्रम_injection && is_guest_mode(vcpu) && nested_निकास_on_nmi(vcpu))
-		वापस -EBUSY;
+	/* An NMI must not be injected into L2 if it's supposed to VM-Exit.  */
+	if (for_injection && is_guest_mode(vcpu) && nested_exit_on_nmi(vcpu))
+		return -EBUSY;
 
-	वापस !vmx_nmi_blocked(vcpu);
-पूर्ण
+	return !vmx_nmi_blocked(vcpu);
+}
 
-bool vmx_पूर्णांकerrupt_blocked(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (is_guest_mode(vcpu) && nested_निकास_on_पूर्णांकr(vcpu))
-		वापस false;
+bool vmx_interrupt_blocked(struct kvm_vcpu *vcpu)
+{
+	if (is_guest_mode(vcpu) && nested_exit_on_intr(vcpu))
+		return false;
 
-	वापस !(vmx_get_rflags(vcpu) & X86_EFLAGS_IF) ||
-	       (vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO) &
+	return !(vmx_get_rflags(vcpu) & X86_EFLAGS_IF) ||
+	       (vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) &
 		(GUEST_INTR_STATE_STI | GUEST_INTR_STATE_MOV_SS));
-पूर्ण
+}
 
-अटल पूर्णांक vmx_पूर्णांकerrupt_allowed(काष्ठा kvm_vcpu *vcpu, bool क्रम_injection)
-अणु
-	अगर (to_vmx(vcpu)->nested.nested_run_pending)
-		वापस -EBUSY;
+static int vmx_interrupt_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+{
+	if (to_vmx(vcpu)->nested.nested_run_pending)
+		return -EBUSY;
 
        /*
-        * An IRQ must not be injected पूर्णांकo L2 अगर it's supposed to VM-Exit,
-        * e.g. अगर the IRQ arrived asynchronously after checking nested events.
+        * An IRQ must not be injected into L2 if it's supposed to VM-Exit,
+        * e.g. if the IRQ arrived asynchronously after checking nested events.
         */
-	अगर (क्रम_injection && is_guest_mode(vcpu) && nested_निकास_on_पूर्णांकr(vcpu))
-		वापस -EBUSY;
+	if (for_injection && is_guest_mode(vcpu) && nested_exit_on_intr(vcpu))
+		return -EBUSY;
 
-	वापस !vmx_पूर्णांकerrupt_blocked(vcpu);
-पूर्ण
+	return !vmx_interrupt_blocked(vcpu);
+}
 
-अटल पूर्णांक vmx_set_tss_addr(काष्ठा kvm *kvm, अचिन्हित पूर्णांक addr)
-अणु
-	व्योम __user *ret;
+static int vmx_set_tss_addr(struct kvm *kvm, unsigned int addr)
+{
+	void __user *ret;
 
-	अगर (enable_unrestricted_guest)
-		वापस 0;
+	if (enable_unrestricted_guest)
+		return 0;
 
 	mutex_lock(&kvm->slots_lock);
 	ret = __x86_set_memory_region(kvm, TSS_PRIVATE_MEMSLOT, addr,
 				      PAGE_SIZE * 3);
 	mutex_unlock(&kvm->slots_lock);
 
-	अगर (IS_ERR(ret))
-		वापस PTR_ERR(ret);
+	if (IS_ERR(ret))
+		return PTR_ERR(ret);
 
 	to_kvm_vmx(kvm)->tss_addr = addr;
 
-	वापस init_rmode_tss(kvm, ret);
-पूर्ण
+	return init_rmode_tss(kvm, ret);
+}
 
-अटल पूर्णांक vmx_set_identity_map_addr(काष्ठा kvm *kvm, u64 ident_addr)
-अणु
+static int vmx_set_identity_map_addr(struct kvm *kvm, u64 ident_addr)
+{
 	to_kvm_vmx(kvm)->ept_identity_map_addr = ident_addr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool rmode_exception(काष्ठा kvm_vcpu *vcpu, पूर्णांक vec)
-अणु
-	चयन (vec) अणु
-	हाल BP_VECTOR:
+static bool rmode_exception(struct kvm_vcpu *vcpu, int vec)
+{
+	switch (vec) {
+	case BP_VECTOR:
 		/*
-		 * Update inकाष्ठाion length as we may reinject the exception
-		 * from user space जबतक in guest debugging mode.
+		 * Update instruction length as we may reinject the exception
+		 * from user space while in guest debugging mode.
 		 */
-		to_vmx(vcpu)->vcpu.arch.event_निकास_inst_len =
-			vmcs_पढ़ो32(VM_EXIT_INSTRUCTION_LEN);
-		अगर (vcpu->guest_debug & KVM_GUESTDBG_USE_SW_BP)
-			वापस false;
+		to_vmx(vcpu)->vcpu.arch.event_exit_inst_len =
+			vmcs_read32(VM_EXIT_INSTRUCTION_LEN);
+		if (vcpu->guest_debug & KVM_GUESTDBG_USE_SW_BP)
+			return false;
 		fallthrough;
-	हाल DB_VECTOR:
-		वापस !(vcpu->guest_debug &
+	case DB_VECTOR:
+		return !(vcpu->guest_debug &
 			(KVM_GUESTDBG_SINGLESTEP | KVM_GUESTDBG_USE_HW_BP));
-	हाल DE_VECTOR:
-	हाल OF_VECTOR:
-	हाल BR_VECTOR:
-	हाल UD_VECTOR:
-	हाल DF_VECTOR:
-	हाल SS_VECTOR:
-	हाल GP_VECTOR:
-	हाल MF_VECTOR:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	case DE_VECTOR:
+	case OF_VECTOR:
+	case BR_VECTOR:
+	case UD_VECTOR:
+	case DF_VECTOR:
+	case SS_VECTOR:
+	case GP_VECTOR:
+	case MF_VECTOR:
+		return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक handle_rmode_exception(काष्ठा kvm_vcpu *vcpu,
-				  पूर्णांक vec, u32 err_code)
-अणु
+static int handle_rmode_exception(struct kvm_vcpu *vcpu,
+				  int vec, u32 err_code)
+{
 	/*
-	 * Inकाष्ठाion with address size override prefix opcode 0x67
+	 * Instruction with address size override prefix opcode 0x67
 	 * Cause the #SS fault with 0 error code in VM86 mode.
 	 */
-	अगर (((vec == GP_VECTOR) || (vec == SS_VECTOR)) && err_code == 0) अणु
-		अगर (kvm_emulate_inकाष्ठाion(vcpu, 0)) अणु
-			अगर (vcpu->arch.halt_request) अणु
+	if (((vec == GP_VECTOR) || (vec == SS_VECTOR)) && err_code == 0) {
+		if (kvm_emulate_instruction(vcpu, 0)) {
+			if (vcpu->arch.halt_request) {
 				vcpu->arch.halt_request = 0;
-				वापस kvm_vcpu_halt(vcpu);
-			पूर्ण
-			वापस 1;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+				return kvm_vcpu_halt(vcpu);
+			}
+			return 1;
+		}
+		return 0;
+	}
 
 	/*
 	 * Forward all other exceptions that are valid in real mode.
 	 * FIXME: Breaks guest debugging in real mode, needs to be fixed with
-	 *        the required debugging infraकाष्ठाure rework.
+	 *        the required debugging infrastructure rework.
 	 */
 	kvm_queue_exception(vcpu, vec);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक handle_machine_check(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_machine_check(struct kvm_vcpu *vcpu)
+{
 	/* handled by vmx_vcpu_run() */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * If the host has split lock detection disabled, then #AC is
- * unconditionally injected पूर्णांकo the guest, which is the pre split lock
+ * unconditionally injected into the guest, which is the pre split lock
  * detection behaviour.
  *
  * If the host has split lock detection enabled then #AC is
- * only injected पूर्णांकo the guest when:
+ * only injected into the guest when:
  *  - Guest CPL == 3 (user mode)
  *  - Guest has #AC detection enabled in CR0
  *  - Guest EFLAGS has AC bit set
  */
-अटल अंतरभूत bool guest_inject_ac(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!boot_cpu_has(X86_FEATURE_SPLIT_LOCK_DETECT))
-		वापस true;
+static inline bool guest_inject_ac(struct kvm_vcpu *vcpu)
+{
+	if (!boot_cpu_has(X86_FEATURE_SPLIT_LOCK_DETECT))
+		return true;
 
-	वापस vmx_get_cpl(vcpu) == 3 && kvm_पढ़ो_cr0_bits(vcpu, X86_CR0_AM) &&
+	return vmx_get_cpl(vcpu) == 3 && kvm_read_cr0_bits(vcpu, X86_CR0_AM) &&
 	       (kvm_get_rflags(vcpu) & X86_EFLAGS_AC);
-पूर्ण
+}
 
-अटल पूर्णांक handle_exception_nmi(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा kvm_run *kvm_run = vcpu->run;
-	u32 पूर्णांकr_info, ex_no, error_code;
-	अचिन्हित दीर्घ cr2, dr6;
+static int handle_exception_nmi(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct kvm_run *kvm_run = vcpu->run;
+	u32 intr_info, ex_no, error_code;
+	unsigned long cr2, dr6;
 	u32 vect_info;
 
 	vect_info = vmx->idt_vectoring_info;
-	पूर्णांकr_info = vmx_get_पूर्णांकr_info(vcpu);
+	intr_info = vmx_get_intr_info(vcpu);
 
-	अगर (is_machine_check(पूर्णांकr_info) || is_nmi(पूर्णांकr_info))
-		वापस 1; /* handled by handle_exception_nmi_irqoff() */
+	if (is_machine_check(intr_info) || is_nmi(intr_info))
+		return 1; /* handled by handle_exception_nmi_irqoff() */
 
-	अगर (is_invalid_opcode(पूर्णांकr_info))
-		वापस handle_ud(vcpu);
+	if (is_invalid_opcode(intr_info))
+		return handle_ud(vcpu);
 
 	error_code = 0;
-	अगर (पूर्णांकr_info & INTR_INFO_DELIVER_CODE_MASK)
-		error_code = vmcs_पढ़ो32(VM_EXIT_INTR_ERROR_CODE);
+	if (intr_info & INTR_INFO_DELIVER_CODE_MASK)
+		error_code = vmcs_read32(VM_EXIT_INTR_ERROR_CODE);
 
-	अगर (!vmx->rmode.vm86_active && is_gp_fault(पूर्णांकr_info)) अणु
-		WARN_ON_ONCE(!enable_vmware_backकरोor);
+	if (!vmx->rmode.vm86_active && is_gp_fault(intr_info)) {
+		WARN_ON_ONCE(!enable_vmware_backdoor);
 
 		/*
-		 * VMware backकरोor emulation on #GP पूर्णांकerception only handles
-		 * INअणुSपूर्ण, OUTअणुSपूर्ण, and RDPMC, none of which generate a non-zero
+		 * VMware backdoor emulation on #GP interception only handles
+		 * IN{S}, OUT{S}, and RDPMC, none of which generate a non-zero
 		 * error code on #GP.
 		 */
-		अगर (error_code) अणु
+		if (error_code) {
 			kvm_queue_exception_e(vcpu, GP_VECTOR, error_code);
-			वापस 1;
-		पूर्ण
-		वापस kvm_emulate_inकाष्ठाion(vcpu, EMULTYPE_VMWARE_GP);
-	पूर्ण
+			return 1;
+		}
+		return kvm_emulate_instruction(vcpu, EMULTYPE_VMWARE_GP);
+	}
 
 	/*
 	 * The #PF with PFEC.RSVD = 1 indicates the guest is accessing
-	 * MMIO, it is better to report an पूर्णांकernal error.
-	 * See the comments in vmx_handle_निकास.
+	 * MMIO, it is better to report an internal error.
+	 * See the comments in vmx_handle_exit.
 	 */
-	अगर ((vect_info & VECTORING_INFO_VALID_MASK) &&
-	    !(is_page_fault(पूर्णांकr_info) && !(error_code & PFERR_RSVD_MASK))) अणु
-		vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-		vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_SIMUL_EX;
-		vcpu->run->पूर्णांकernal.ndata = 4;
-		vcpu->run->पूर्णांकernal.data[0] = vect_info;
-		vcpu->run->पूर्णांकernal.data[1] = पूर्णांकr_info;
-		vcpu->run->पूर्णांकernal.data[2] = error_code;
-		vcpu->run->पूर्णांकernal.data[3] = vcpu->arch.last_vmentry_cpu;
-		वापस 0;
-	पूर्ण
+	if ((vect_info & VECTORING_INFO_VALID_MASK) &&
+	    !(is_page_fault(intr_info) && !(error_code & PFERR_RSVD_MASK))) {
+		vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_SIMUL_EX;
+		vcpu->run->internal.ndata = 4;
+		vcpu->run->internal.data[0] = vect_info;
+		vcpu->run->internal.data[1] = intr_info;
+		vcpu->run->internal.data[2] = error_code;
+		vcpu->run->internal.data[3] = vcpu->arch.last_vmentry_cpu;
+		return 0;
+	}
 
-	अगर (is_page_fault(पूर्णांकr_info)) अणु
-		cr2 = vmx_get_निकास_qual(vcpu);
-		अगर (enable_ept && !vcpu->arch.apf.host_apf_flags) अणु
+	if (is_page_fault(intr_info)) {
+		cr2 = vmx_get_exit_qual(vcpu);
+		if (enable_ept && !vcpu->arch.apf.host_apf_flags) {
 			/*
-			 * EPT will cause page fault only अगर we need to
+			 * EPT will cause page fault only if we need to
 			 * detect illegal GPAs.
 			 */
 			WARN_ON_ONCE(!allow_smaller_maxphyaddr);
 			kvm_fixup_and_inject_pf_error(vcpu, cr2, error_code);
-			वापस 1;
-		पूर्ण अन्यथा
-			वापस kvm_handle_page_fault(vcpu, error_code, cr2, शून्य, 0);
-	पूर्ण
+			return 1;
+		} else
+			return kvm_handle_page_fault(vcpu, error_code, cr2, NULL, 0);
+	}
 
-	ex_no = पूर्णांकr_info & INTR_INFO_VECTOR_MASK;
+	ex_no = intr_info & INTR_INFO_VECTOR_MASK;
 
-	अगर (vmx->rmode.vm86_active && rmode_exception(vcpu, ex_no))
-		वापस handle_rmode_exception(vcpu, ex_no, error_code);
+	if (vmx->rmode.vm86_active && rmode_exception(vcpu, ex_no))
+		return handle_rmode_exception(vcpu, ex_no, error_code);
 
-	चयन (ex_no) अणु
-	हाल DB_VECTOR:
-		dr6 = vmx_get_निकास_qual(vcpu);
-		अगर (!(vcpu->guest_debug &
-		      (KVM_GUESTDBG_SINGLESTEP | KVM_GUESTDBG_USE_HW_BP))) अणु
-			अगर (is_icebp(पूर्णांकr_info))
-				WARN_ON(!skip_emulated_inकाष्ठाion(vcpu));
+	switch (ex_no) {
+	case DB_VECTOR:
+		dr6 = vmx_get_exit_qual(vcpu);
+		if (!(vcpu->guest_debug &
+		      (KVM_GUESTDBG_SINGLESTEP | KVM_GUESTDBG_USE_HW_BP))) {
+			if (is_icebp(intr_info))
+				WARN_ON(!skip_emulated_instruction(vcpu));
 
 			kvm_queue_exception_p(vcpu, DB_VECTOR, dr6);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		kvm_run->debug.arch.dr6 = dr6 | DR6_ACTIVE_LOW;
-		kvm_run->debug.arch.dr7 = vmcs_पढ़ोl(GUEST_DR7);
+		kvm_run->debug.arch.dr7 = vmcs_readl(GUEST_DR7);
 		fallthrough;
-	हाल BP_VECTOR:
+	case BP_VECTOR:
 		/*
-		 * Update inकाष्ठाion length as we may reinject #BP from
-		 * user space जबतक in guest debugging mode. Reading it क्रम
-		 * #DB as well causes no harm, it is not used in that हाल.
+		 * Update instruction length as we may reinject #BP from
+		 * user space while in guest debugging mode. Reading it for
+		 * #DB as well causes no harm, it is not used in that case.
 		 */
-		vmx->vcpu.arch.event_निकास_inst_len =
-			vmcs_पढ़ो32(VM_EXIT_INSTRUCTION_LEN);
-		kvm_run->निकास_reason = KVM_EXIT_DEBUG;
+		vmx->vcpu.arch.event_exit_inst_len =
+			vmcs_read32(VM_EXIT_INSTRUCTION_LEN);
+		kvm_run->exit_reason = KVM_EXIT_DEBUG;
 		kvm_run->debug.arch.pc = kvm_get_linear_rip(vcpu);
 		kvm_run->debug.arch.exception = ex_no;
-		अवरोध;
-	हाल AC_VECTOR:
-		अगर (guest_inject_ac(vcpu)) अणु
+		break;
+	case AC_VECTOR:
+		if (guest_inject_ac(vcpu)) {
 			kvm_queue_exception_e(vcpu, AC_VECTOR, error_code);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		/*
 		 * Handle split lock. Depending on detection mode this will
-		 * either warn and disable split lock detection क्रम this
-		 * task or क्रमce SIGBUS on it.
+		 * either warn and disable split lock detection for this
+		 * task or force SIGBUS on it.
 		 */
-		अगर (handle_guest_split_lock(kvm_rip_पढ़ो(vcpu)))
-			वापस 1;
+		if (handle_guest_split_lock(kvm_rip_read(vcpu)))
+			return 1;
 		fallthrough;
-	शेष:
-		kvm_run->निकास_reason = KVM_EXIT_EXCEPTION;
+	default:
+		kvm_run->exit_reason = KVM_EXIT_EXCEPTION;
 		kvm_run->ex.exception = ex_no;
 		kvm_run->ex.error_code = error_code;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल __always_अंतरभूत पूर्णांक handle_बाह्यal_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu)
-अणु
-	++vcpu->stat.irq_निकासs;
-	वापस 1;
-पूर्ण
+static __always_inline int handle_external_interrupt(struct kvm_vcpu *vcpu)
+{
+	++vcpu->stat.irq_exits;
+	return 1;
+}
 
-अटल पूर्णांक handle_triple_fault(काष्ठा kvm_vcpu *vcpu)
-अणु
-	vcpu->run->निकास_reason = KVM_EXIT_SHUTDOWN;
+static int handle_triple_fault(struct kvm_vcpu *vcpu)
+{
+	vcpu->run->exit_reason = KVM_EXIT_SHUTDOWN;
 	vcpu->mmio_needed = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक handle_io(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication;
-	पूर्णांक size, in, string;
-	अचिन्हित port;
+static int handle_io(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification;
+	int size, in, string;
+	unsigned port;
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-	string = (निकास_qualअगरication & 16) != 0;
+	exit_qualification = vmx_get_exit_qual(vcpu);
+	string = (exit_qualification & 16) != 0;
 
-	++vcpu->stat.io_निकासs;
+	++vcpu->stat.io_exits;
 
-	अगर (string)
-		वापस kvm_emulate_inकाष्ठाion(vcpu, 0);
+	if (string)
+		return kvm_emulate_instruction(vcpu, 0);
 
-	port = निकास_qualअगरication >> 16;
-	size = (निकास_qualअगरication & 7) + 1;
-	in = (निकास_qualअगरication & 8) != 0;
+	port = exit_qualification >> 16;
+	size = (exit_qualification & 7) + 1;
+	in = (exit_qualification & 8) != 0;
 
-	वापस kvm_fast_pio(vcpu, size, port, in);
-पूर्ण
+	return kvm_fast_pio(vcpu, size, port, in);
+}
 
-अटल व्योम
-vmx_patch_hypercall(काष्ठा kvm_vcpu *vcpu, अचिन्हित अक्षर *hypercall)
-अणु
+static void
+vmx_patch_hypercall(struct kvm_vcpu *vcpu, unsigned char *hypercall)
+{
 	/*
-	 * Patch in the VMCALL inकाष्ठाion:
+	 * Patch in the VMCALL instruction:
 	 */
 	hypercall[0] = 0x0f;
 	hypercall[1] = 0x01;
 	hypercall[2] = 0xc1;
-पूर्ण
+}
 
-/* called to set cr0 as appropriate क्रम a mov-to-cr0 निकास. */
-अटल पूर्णांक handle_set_cr0(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ val)
-अणु
-	अगर (is_guest_mode(vcpu)) अणु
-		काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
-		अचिन्हित दीर्घ orig_val = val;
+/* called to set cr0 as appropriate for a mov-to-cr0 exit. */
+static int handle_set_cr0(struct kvm_vcpu *vcpu, unsigned long val)
+{
+	if (is_guest_mode(vcpu)) {
+		struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
+		unsigned long orig_val = val;
 
 		/*
 		 * We get here when L2 changed cr0 in a way that did not change
-		 * any of L1's shaकरोwed bits (see nested_vmx_निकास_handled_cr),
-		 * but did change L0 shaकरोwed bits. So we first calculate the
-		 * effective cr0 value that L1 would like to ग_लिखो पूर्णांकo the
+		 * any of L1's shadowed bits (see nested_vmx_exit_handled_cr),
+		 * but did change L0 shadowed bits. So we first calculate the
+		 * effective cr0 value that L1 would like to write into the
 		 * hardware. It consists of the L2-owned bits from the new
 		 * value combined with the L1-owned bits from L1's guest_cr0.
 		 */
 		val = (val & ~vmcs12->cr0_guest_host_mask) |
 			(vmcs12->guest_cr0 & vmcs12->cr0_guest_host_mask);
 
-		अगर (!nested_guest_cr0_valid(vcpu, val))
-			वापस 1;
+		if (!nested_guest_cr0_valid(vcpu, val))
+			return 1;
 
-		अगर (kvm_set_cr0(vcpu, val))
-			वापस 1;
-		vmcs_ग_लिखोl(CR0_READ_SHADOW, orig_val);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (to_vmx(vcpu)->nested.vmxon &&
+		if (kvm_set_cr0(vcpu, val))
+			return 1;
+		vmcs_writel(CR0_READ_SHADOW, orig_val);
+		return 0;
+	} else {
+		if (to_vmx(vcpu)->nested.vmxon &&
 		    !nested_host_cr0_valid(vcpu, val))
-			वापस 1;
+			return 1;
 
-		वापस kvm_set_cr0(vcpu, val);
-	पूर्ण
-पूर्ण
+		return kvm_set_cr0(vcpu, val);
+	}
+}
 
-अटल पूर्णांक handle_set_cr4(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ val)
-अणु
-	अगर (is_guest_mode(vcpu)) अणु
-		काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
-		अचिन्हित दीर्घ orig_val = val;
+static int handle_set_cr4(struct kvm_vcpu *vcpu, unsigned long val)
+{
+	if (is_guest_mode(vcpu)) {
+		struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
+		unsigned long orig_val = val;
 
 		/* analogously to handle_set_cr0 */
 		val = (val & ~vmcs12->cr4_guest_host_mask) |
 			(vmcs12->guest_cr4 & vmcs12->cr4_guest_host_mask);
-		अगर (kvm_set_cr4(vcpu, val))
-			वापस 1;
-		vmcs_ग_लिखोl(CR4_READ_SHADOW, orig_val);
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस kvm_set_cr4(vcpu, val);
-पूर्ण
+		if (kvm_set_cr4(vcpu, val))
+			return 1;
+		vmcs_writel(CR4_READ_SHADOW, orig_val);
+		return 0;
+	} else
+		return kvm_set_cr4(vcpu, val);
+}
 
-अटल पूर्णांक handle_desc(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_desc(struct kvm_vcpu *vcpu)
+{
 	WARN_ON(!(vcpu->arch.cr4 & X86_CR4_UMIP));
-	वापस kvm_emulate_inकाष्ठाion(vcpu, 0);
-पूर्ण
+	return kvm_emulate_instruction(vcpu, 0);
+}
 
-अटल पूर्णांक handle_cr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication, val;
-	पूर्णांक cr;
-	पूर्णांक reg;
-	पूर्णांक err;
-	पूर्णांक ret;
+static int handle_cr(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification, val;
+	int cr;
+	int reg;
+	int err;
+	int ret;
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-	cr = निकास_qualअगरication & 15;
-	reg = (निकास_qualअगरication >> 8) & 15;
-	चयन ((निकास_qualअगरication >> 4) & 3) अणु
-	हाल 0: /* mov to cr */
-		val = kvm_रेजिस्टर_पढ़ो(vcpu, reg);
-		trace_kvm_cr_ग_लिखो(cr, val);
-		चयन (cr) अणु
-		हाल 0:
+	exit_qualification = vmx_get_exit_qual(vcpu);
+	cr = exit_qualification & 15;
+	reg = (exit_qualification >> 8) & 15;
+	switch ((exit_qualification >> 4) & 3) {
+	case 0: /* mov to cr */
+		val = kvm_register_read(vcpu, reg);
+		trace_kvm_cr_write(cr, val);
+		switch (cr) {
+		case 0:
 			err = handle_set_cr0(vcpu, val);
-			वापस kvm_complete_insn_gp(vcpu, err);
-		हाल 3:
+			return kvm_complete_insn_gp(vcpu, err);
+		case 3:
 			WARN_ON_ONCE(enable_unrestricted_guest);
 			err = kvm_set_cr3(vcpu, val);
-			वापस kvm_complete_insn_gp(vcpu, err);
-		हाल 4:
+			return kvm_complete_insn_gp(vcpu, err);
+		case 4:
 			err = handle_set_cr4(vcpu, val);
-			वापस kvm_complete_insn_gp(vcpu, err);
-		हाल 8: अणु
+			return kvm_complete_insn_gp(vcpu, err);
+		case 8: {
 				u8 cr8_prev = kvm_get_cr8(vcpu);
 				u8 cr8 = (u8)val;
 				err = kvm_set_cr8(vcpu, cr8);
 				ret = kvm_complete_insn_gp(vcpu, err);
-				अगर (lapic_in_kernel(vcpu))
-					वापस ret;
-				अगर (cr8_prev <= cr8)
-					वापस ret;
+				if (lapic_in_kernel(vcpu))
+					return ret;
+				if (cr8_prev <= cr8)
+					return ret;
 				/*
 				 * TODO: we might be squashing a
 				 * KVM_GUESTDBG_SINGLESTEP-triggered
 				 * KVM_EXIT_DEBUG here.
 				 */
-				vcpu->run->निकास_reason = KVM_EXIT_SET_TPR;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल 2: /* clts */
+				vcpu->run->exit_reason = KVM_EXIT_SET_TPR;
+				return 0;
+			}
+		}
+		break;
+	case 2: /* clts */
 		WARN_ONCE(1, "Guest should always own CR0.TS");
-		vmx_set_cr0(vcpu, kvm_पढ़ो_cr0_bits(vcpu, ~X86_CR0_TS));
-		trace_kvm_cr_ग_लिखो(0, kvm_पढ़ो_cr0(vcpu));
-		वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-	हाल 1: /*mov from cr*/
-		चयन (cr) अणु
-		हाल 3:
+		vmx_set_cr0(vcpu, kvm_read_cr0_bits(vcpu, ~X86_CR0_TS));
+		trace_kvm_cr_write(0, kvm_read_cr0(vcpu));
+		return kvm_skip_emulated_instruction(vcpu);
+	case 1: /*mov from cr*/
+		switch (cr) {
+		case 3:
 			WARN_ON_ONCE(enable_unrestricted_guest);
-			val = kvm_पढ़ो_cr3(vcpu);
-			kvm_रेजिस्टर_ग_लिखो(vcpu, reg, val);
-			trace_kvm_cr_पढ़ो(cr, val);
-			वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-		हाल 8:
+			val = kvm_read_cr3(vcpu);
+			kvm_register_write(vcpu, reg, val);
+			trace_kvm_cr_read(cr, val);
+			return kvm_skip_emulated_instruction(vcpu);
+		case 8:
 			val = kvm_get_cr8(vcpu);
-			kvm_रेजिस्टर_ग_लिखो(vcpu, reg, val);
-			trace_kvm_cr_पढ़ो(cr, val);
-			वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-		पूर्ण
-		अवरोध;
-	हाल 3: /* lmsw */
-		val = (निकास_qualअगरication >> LMSW_SOURCE_DATA_SHIFT) & 0x0f;
-		trace_kvm_cr_ग_लिखो(0, (kvm_पढ़ो_cr0(vcpu) & ~0xful) | val);
+			kvm_register_write(vcpu, reg, val);
+			trace_kvm_cr_read(cr, val);
+			return kvm_skip_emulated_instruction(vcpu);
+		}
+		break;
+	case 3: /* lmsw */
+		val = (exit_qualification >> LMSW_SOURCE_DATA_SHIFT) & 0x0f;
+		trace_kvm_cr_write(0, (kvm_read_cr0(vcpu) & ~0xful) | val);
 		kvm_lmsw(vcpu, val);
 
-		वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-	शेष:
-		अवरोध;
-	पूर्ण
-	vcpu->run->निकास_reason = 0;
+		return kvm_skip_emulated_instruction(vcpu);
+	default:
+		break;
+	}
+	vcpu->run->exit_reason = 0;
 	vcpu_unimpl(vcpu, "unhandled control register: op %d cr %d\n",
-	       (पूर्णांक)(निकास_qualअगरication >> 4) & 3, cr);
-	वापस 0;
-पूर्ण
+	       (int)(exit_qualification >> 4) & 3, cr);
+	return 0;
+}
 
-अटल पूर्णांक handle_dr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication;
-	पूर्णांक dr, dr7, reg;
-	पूर्णांक err = 1;
+static int handle_dr(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification;
+	int dr, dr7, reg;
+	int err = 1;
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-	dr = निकास_qualअगरication & DEBUG_REG_ACCESS_NUM;
+	exit_qualification = vmx_get_exit_qual(vcpu);
+	dr = exit_qualification & DEBUG_REG_ACCESS_NUM;
 
-	/* First, अगर DR करोes not exist, trigger UD */
-	अगर (!kvm_require_dr(vcpu, dr))
-		वापस 1;
+	/* First, if DR does not exist, trigger UD */
+	if (!kvm_require_dr(vcpu, dr))
+		return 1;
 
-	अगर (kvm_x86_ops.get_cpl(vcpu) > 0)
-		जाओ out;
+	if (kvm_x86_ops.get_cpl(vcpu) > 0)
+		goto out;
 
-	dr7 = vmcs_पढ़ोl(GUEST_DR7);
-	अगर (dr7 & DR7_GD) अणु
+	dr7 = vmcs_readl(GUEST_DR7);
+	if (dr7 & DR7_GD) {
 		/*
-		 * As the vm-निकास takes precedence over the debug trap, we
-		 * need to emulate the latter, either क्रम the host or the
+		 * As the vm-exit takes precedence over the debug trap, we
+		 * need to emulate the latter, either for the host or the
 		 * guest debugging itself.
 		 */
-		अगर (vcpu->guest_debug & KVM_GUESTDBG_USE_HW_BP) अणु
+		if (vcpu->guest_debug & KVM_GUESTDBG_USE_HW_BP) {
 			vcpu->run->debug.arch.dr6 = DR6_BD | DR6_ACTIVE_LOW;
 			vcpu->run->debug.arch.dr7 = dr7;
 			vcpu->run->debug.arch.pc = kvm_get_linear_rip(vcpu);
 			vcpu->run->debug.arch.exception = DB_VECTOR;
-			vcpu->run->निकास_reason = KVM_EXIT_DEBUG;
-			वापस 0;
-		पूर्ण अन्यथा अणु
+			vcpu->run->exit_reason = KVM_EXIT_DEBUG;
+			return 0;
+		} else {
 			kvm_queue_exception_p(vcpu, DB_VECTOR, DR6_BD);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	अगर (vcpu->guest_debug == 0) अणु
+	if (vcpu->guest_debug == 0) {
 		exec_controls_clearbit(to_vmx(vcpu), CPU_BASED_MOV_DR_EXITING);
 
 		/*
-		 * No more DR vmनिकासs; क्रमce a reload of the debug रेजिस्टरs
-		 * and reenter on this inकाष्ठाion.  The next vmनिकास will
-		 * retrieve the full state of the debug रेजिस्टरs.
+		 * No more DR vmexits; force a reload of the debug registers
+		 * and reenter on this instruction.  The next vmexit will
+		 * retrieve the full state of the debug registers.
 		 */
-		vcpu->arch.चयन_db_regs |= KVM_DEBUGREG_WONT_EXIT;
-		वापस 1;
-	पूर्ण
+		vcpu->arch.switch_db_regs |= KVM_DEBUGREG_WONT_EXIT;
+		return 1;
+	}
 
-	reg = DEBUG_REG_ACCESS_REG(निकास_qualअगरication);
-	अगर (निकास_qualअगरication & TYPE_MOV_FROM_DR) अणु
-		अचिन्हित दीर्घ val;
+	reg = DEBUG_REG_ACCESS_REG(exit_qualification);
+	if (exit_qualification & TYPE_MOV_FROM_DR) {
+		unsigned long val;
 
 		kvm_get_dr(vcpu, dr, &val);
-		kvm_रेजिस्टर_ग_लिखो(vcpu, reg, val);
+		kvm_register_write(vcpu, reg, val);
 		err = 0;
-	पूर्ण अन्यथा अणु
-		err = kvm_set_dr(vcpu, dr, kvm_रेजिस्टर_पढ़ो(vcpu, reg));
-	पूर्ण
+	} else {
+		err = kvm_set_dr(vcpu, dr, kvm_register_read(vcpu, reg));
+	}
 
 out:
-	वापस kvm_complete_insn_gp(vcpu, err);
-पूर्ण
+	return kvm_complete_insn_gp(vcpu, err);
+}
 
-अटल व्योम vmx_sync_dirty_debug_regs(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_sync_dirty_debug_regs(struct kvm_vcpu *vcpu)
+{
 	get_debugreg(vcpu->arch.db[0], 0);
 	get_debugreg(vcpu->arch.db[1], 1);
 	get_debugreg(vcpu->arch.db[2], 2);
 	get_debugreg(vcpu->arch.db[3], 3);
 	get_debugreg(vcpu->arch.dr6, 6);
-	vcpu->arch.dr7 = vmcs_पढ़ोl(GUEST_DR7);
+	vcpu->arch.dr7 = vmcs_readl(GUEST_DR7);
 
-	vcpu->arch.चयन_db_regs &= ~KVM_DEBUGREG_WONT_EXIT;
+	vcpu->arch.switch_db_regs &= ~KVM_DEBUGREG_WONT_EXIT;
 	exec_controls_setbit(to_vmx(vcpu), CPU_BASED_MOV_DR_EXITING);
-पूर्ण
+}
 
-अटल व्योम vmx_set_dr7(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ val)
-अणु
-	vmcs_ग_लिखोl(GUEST_DR7, val);
-पूर्ण
+static void vmx_set_dr7(struct kvm_vcpu *vcpu, unsigned long val)
+{
+	vmcs_writel(GUEST_DR7, val);
+}
 
-अटल पूर्णांक handle_tpr_below_threshold(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_tpr_below_threshold(struct kvm_vcpu *vcpu)
+{
 	kvm_apic_update_ppr(vcpu);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक handle_पूर्णांकerrupt_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_interrupt_window(struct kvm_vcpu *vcpu)
+{
 	exec_controls_clearbit(to_vmx(vcpu), CPU_BASED_INTR_WINDOW_EXITING);
 
 	kvm_make_request(KVM_REQ_EVENT, vcpu);
 
-	++vcpu->stat.irq_winकरोw_निकासs;
-	वापस 1;
-पूर्ण
+	++vcpu->stat.irq_window_exits;
+	return 1;
+}
 
-अटल पूर्णांक handle_invlpg(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
+static int handle_invlpg(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification = vmx_get_exit_qual(vcpu);
 
-	kvm_mmu_invlpg(vcpu, निकास_qualअगरication);
-	वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-पूर्ण
+	kvm_mmu_invlpg(vcpu, exit_qualification);
+	return kvm_skip_emulated_instruction(vcpu);
+}
 
-अटल पूर्णांक handle_apic_access(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (likely(fasteoi)) अणु
-		अचिन्हित दीर्घ निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-		पूर्णांक access_type, offset;
+static int handle_apic_access(struct kvm_vcpu *vcpu)
+{
+	if (likely(fasteoi)) {
+		unsigned long exit_qualification = vmx_get_exit_qual(vcpu);
+		int access_type, offset;
 
-		access_type = निकास_qualअगरication & APIC_ACCESS_TYPE;
-		offset = निकास_qualअगरication & APIC_ACCESS_OFFSET;
+		access_type = exit_qualification & APIC_ACCESS_TYPE;
+		offset = exit_qualification & APIC_ACCESS_OFFSET;
 		/*
-		 * Sane guest uses MOV to ग_लिखो EOI, with written value
-		 * not cared. So make a लघु-circuit here by aव्योमing
-		 * heavy inकाष्ठाion emulation.
+		 * Sane guest uses MOV to write EOI, with written value
+		 * not cared. So make a short-circuit here by avoiding
+		 * heavy instruction emulation.
 		 */
-		अगर ((access_type == TYPE_LINEAR_APIC_INST_WRITE) &&
-		    (offset == APIC_EOI)) अणु
+		if ((access_type == TYPE_LINEAR_APIC_INST_WRITE) &&
+		    (offset == APIC_EOI)) {
 			kvm_lapic_set_eoi(vcpu);
-			वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-		पूर्ण
-	पूर्ण
-	वापस kvm_emulate_inकाष्ठाion(vcpu, 0);
-पूर्ण
+			return kvm_skip_emulated_instruction(vcpu);
+		}
+	}
+	return kvm_emulate_instruction(vcpu, 0);
+}
 
-अटल पूर्णांक handle_apic_eoi_induced(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-	पूर्णांक vector = निकास_qualअगरication & 0xff;
+static int handle_apic_eoi_induced(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification = vmx_get_exit_qual(vcpu);
+	int vector = exit_qualification & 0xff;
 
-	/* EOI-induced VM निकास is trap-like and thus no need to adjust IP */
+	/* EOI-induced VM exit is trap-like and thus no need to adjust IP */
 	kvm_apic_set_eoi_accelerated(vcpu, vector);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक handle_apic_ग_लिखो(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
-	u32 offset = निकास_qualअगरication & 0xfff;
+static int handle_apic_write(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification = vmx_get_exit_qual(vcpu);
+	u32 offset = exit_qualification & 0xfff;
 
-	/* APIC-ग_लिखो VM निकास is trap-like and thus no need to adjust IP */
-	kvm_apic_ग_लिखो_nodecode(vcpu, offset);
-	वापस 1;
-पूर्ण
+	/* APIC-write VM exit is trap-like and thus no need to adjust IP */
+	kvm_apic_write_nodecode(vcpu, offset);
+	return 1;
+}
 
-अटल पूर्णांक handle_task_चयन(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ निकास_qualअगरication;
+static int handle_task_switch(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long exit_qualification;
 	bool has_error_code = false;
 	u32 error_code = 0;
 	u16 tss_selector;
-	पूर्णांक reason, type, idt_v, idt_index;
+	int reason, type, idt_v, idt_index;
 
 	idt_v = (vmx->idt_vectoring_info & VECTORING_INFO_VALID_MASK);
 	idt_index = (vmx->idt_vectoring_info & VECTORING_INFO_VECTOR_MASK);
 	type = (vmx->idt_vectoring_info & VECTORING_INFO_TYPE_MASK);
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
+	exit_qualification = vmx_get_exit_qual(vcpu);
 
-	reason = (u32)निकास_qualअगरication >> 30;
-	अगर (reason == TASK_SWITCH_GATE && idt_v) अणु
-		चयन (type) अणु
-		हाल INTR_TYPE_NMI_INTR:
+	reason = (u32)exit_qualification >> 30;
+	if (reason == TASK_SWITCH_GATE && idt_v) {
+		switch (type) {
+		case INTR_TYPE_NMI_INTR:
 			vcpu->arch.nmi_injected = false;
 			vmx_set_nmi_mask(vcpu, true);
-			अवरोध;
-		हाल INTR_TYPE_EXT_INTR:
-		हाल INTR_TYPE_SOFT_INTR:
-			kvm_clear_पूर्णांकerrupt_queue(vcpu);
-			अवरोध;
-		हाल INTR_TYPE_HARD_EXCEPTION:
-			अगर (vmx->idt_vectoring_info &
-			    VECTORING_INFO_DELIVER_CODE_MASK) अणु
+			break;
+		case INTR_TYPE_EXT_INTR:
+		case INTR_TYPE_SOFT_INTR:
+			kvm_clear_interrupt_queue(vcpu);
+			break;
+		case INTR_TYPE_HARD_EXCEPTION:
+			if (vmx->idt_vectoring_info &
+			    VECTORING_INFO_DELIVER_CODE_MASK) {
 				has_error_code = true;
 				error_code =
-					vmcs_पढ़ो32(IDT_VECTORING_ERROR_CODE);
-			पूर्ण
+					vmcs_read32(IDT_VECTORING_ERROR_CODE);
+			}
 			fallthrough;
-		हाल INTR_TYPE_SOFT_EXCEPTION:
+		case INTR_TYPE_SOFT_EXCEPTION:
 			kvm_clear_exception_queue(vcpu);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	tss_selector = निकास_qualअगरication;
+			break;
+		default:
+			break;
+		}
+	}
+	tss_selector = exit_qualification;
 
-	अगर (!idt_v || (type != INTR_TYPE_HARD_EXCEPTION &&
+	if (!idt_v || (type != INTR_TYPE_HARD_EXCEPTION &&
 		       type != INTR_TYPE_EXT_INTR &&
 		       type != INTR_TYPE_NMI_INTR))
-		WARN_ON(!skip_emulated_inकाष्ठाion(vcpu));
+		WARN_ON(!skip_emulated_instruction(vcpu));
 
 	/*
-	 * TODO: What about debug traps on tss चयन?
+	 * TODO: What about debug traps on tss switch?
 	 *       Are we supposed to inject them and update dr6?
 	 */
-	वापस kvm_task_चयन(vcpu, tss_selector,
+	return kvm_task_switch(vcpu, tss_selector,
 			       type == INTR_TYPE_SOFT_INTR ? idt_index : -1,
 			       reason, has_error_code, error_code);
-पूर्ण
+}
 
-अटल पूर्णांक handle_ept_violation(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication;
+static int handle_ept_violation(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification;
 	gpa_t gpa;
 	u64 error_code;
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
+	exit_qualification = vmx_get_exit_qual(vcpu);
 
 	/*
-	 * EPT violation happened जबतक executing iret from NMI,
-	 * "blocked by NMI" bit has to be set beक्रमe next VM entry.
+	 * EPT violation happened while executing iret from NMI,
+	 * "blocked by NMI" bit has to be set before next VM entry.
 	 * There are errata that may cause this bit to not be set:
 	 * AAK134, BY25.
 	 */
-	अगर (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
+	if (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
 			enable_vnmi &&
-			(निकास_qualअगरication & INTR_INFO_UNBLOCK_NMI))
+			(exit_qualification & INTR_INFO_UNBLOCK_NMI))
 		vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO, GUEST_INTR_STATE_NMI);
 
-	gpa = vmcs_पढ़ो64(GUEST_PHYSICAL_ADDRESS);
-	trace_kvm_page_fault(gpa, निकास_qualअगरication);
+	gpa = vmcs_read64(GUEST_PHYSICAL_ADDRESS);
+	trace_kvm_page_fault(gpa, exit_qualification);
 
-	/* Is it a पढ़ो fault? */
-	error_code = (निकास_qualअगरication & EPT_VIOLATION_ACC_READ)
+	/* Is it a read fault? */
+	error_code = (exit_qualification & EPT_VIOLATION_ACC_READ)
 		     ? PFERR_USER_MASK : 0;
-	/* Is it a ग_लिखो fault? */
-	error_code |= (निकास_qualअगरication & EPT_VIOLATION_ACC_WRITE)
+	/* Is it a write fault? */
+	error_code |= (exit_qualification & EPT_VIOLATION_ACC_WRITE)
 		      ? PFERR_WRITE_MASK : 0;
 	/* Is it a fetch fault? */
-	error_code |= (निकास_qualअगरication & EPT_VIOLATION_ACC_INSTR)
+	error_code |= (exit_qualification & EPT_VIOLATION_ACC_INSTR)
 		      ? PFERR_FETCH_MASK : 0;
 	/* ept page table entry is present? */
-	error_code |= (निकास_qualअगरication &
+	error_code |= (exit_qualification &
 		       (EPT_VIOLATION_READABLE | EPT_VIOLATION_WRITABLE |
 			EPT_VIOLATION_EXECUTABLE))
 		      ? PFERR_PRESENT_MASK : 0;
 
-	error_code |= (निकास_qualअगरication & EPT_VIOLATION_GVA_TRANSLATED) != 0 ?
+	error_code |= (exit_qualification & EPT_VIOLATION_GVA_TRANSLATED) != 0 ?
 	       PFERR_GUEST_FINAL_MASK : PFERR_GUEST_PAGE_MASK;
 
-	vcpu->arch.निकास_qualअगरication = निकास_qualअगरication;
+	vcpu->arch.exit_qualification = exit_qualification;
 
 	/*
-	 * Check that the GPA करोesn't exceed physical memory limits, as that is
-	 * a guest page fault.  We have to emulate the inकाष्ठाion here, because
-	 * अगर the illegal address is that of a paging काष्ठाure, then
-	 * EPT_VIOLATION_ACC_WRITE bit is set.  Alternatively, अगर supported we
-	 * would also use advanced VM-निकास inक्रमmation क्रम EPT violations to
-	 * reस्थिरruct the page fault error code.
+	 * Check that the GPA doesn't exceed physical memory limits, as that is
+	 * a guest page fault.  We have to emulate the instruction here, because
+	 * if the illegal address is that of a paging structure, then
+	 * EPT_VIOLATION_ACC_WRITE bit is set.  Alternatively, if supported we
+	 * would also use advanced VM-exit information for EPT violations to
+	 * reconstruct the page fault error code.
 	 */
-	अगर (unlikely(allow_smaller_maxphyaddr && kvm_vcpu_is_illegal_gpa(vcpu, gpa)))
-		वापस kvm_emulate_inकाष्ठाion(vcpu, 0);
+	if (unlikely(allow_smaller_maxphyaddr && kvm_vcpu_is_illegal_gpa(vcpu, gpa)))
+		return kvm_emulate_instruction(vcpu, 0);
 
-	वापस kvm_mmu_page_fault(vcpu, gpa, error_code, शून्य, 0);
-पूर्ण
+	return kvm_mmu_page_fault(vcpu, gpa, error_code, NULL, 0);
+}
 
-अटल पूर्णांक handle_ept_misconfig(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_ept_misconfig(struct kvm_vcpu *vcpu)
+{
 	gpa_t gpa;
 
-	अगर (!vmx_can_emulate_inकाष्ठाion(vcpu, शून्य, 0))
-		वापस 1;
+	if (!vmx_can_emulate_instruction(vcpu, NULL, 0))
+		return 1;
 
 	/*
-	 * A nested guest cannot optimize MMIO vmनिकासs, because we have an
+	 * A nested guest cannot optimize MMIO vmexits, because we have an
 	 * nGPA here instead of the required GPA.
 	 */
-	gpa = vmcs_पढ़ो64(GUEST_PHYSICAL_ADDRESS);
-	अगर (!is_guest_mode(vcpu) &&
-	    !kvm_io_bus_ग_लिखो(vcpu, KVM_FAST_MMIO_BUS, gpa, 0, शून्य)) अणु
+	gpa = vmcs_read64(GUEST_PHYSICAL_ADDRESS);
+	if (!is_guest_mode(vcpu) &&
+	    !kvm_io_bus_write(vcpu, KVM_FAST_MMIO_BUS, gpa, 0, NULL)) {
 		trace_kvm_fast_mmio(gpa);
-		वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-	पूर्ण
+		return kvm_skip_emulated_instruction(vcpu);
+	}
 
-	वापस kvm_mmu_page_fault(vcpu, gpa, PFERR_RSVD_MASK, शून्य, 0);
-पूर्ण
+	return kvm_mmu_page_fault(vcpu, gpa, PFERR_RSVD_MASK, NULL, 0);
+}
 
-अटल पूर्णांक handle_nmi_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_nmi_window(struct kvm_vcpu *vcpu)
+{
 	WARN_ON_ONCE(!enable_vnmi);
 	exec_controls_clearbit(to_vmx(vcpu), CPU_BASED_NMI_WINDOW_EXITING);
-	++vcpu->stat.nmi_winकरोw_निकासs;
+	++vcpu->stat.nmi_window_exits;
 	kvm_make_request(KVM_REQ_EVENT, vcpu);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक handle_invalid_guest_state(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	bool पूर्णांकr_winकरोw_requested;
-	अचिन्हित count = 130;
+static int handle_invalid_guest_state(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	bool intr_window_requested;
+	unsigned count = 130;
 
-	पूर्णांकr_winकरोw_requested = exec_controls_get(vmx) &
+	intr_window_requested = exec_controls_get(vmx) &
 				CPU_BASED_INTR_WINDOW_EXITING;
 
-	जबतक (vmx->emulation_required && count-- != 0) अणु
-		अगर (पूर्णांकr_winकरोw_requested && !vmx_पूर्णांकerrupt_blocked(vcpu))
-			वापस handle_पूर्णांकerrupt_winकरोw(&vmx->vcpu);
+	while (vmx->emulation_required && count-- != 0) {
+		if (intr_window_requested && !vmx_interrupt_blocked(vcpu))
+			return handle_interrupt_window(&vmx->vcpu);
 
-		अगर (kvm_test_request(KVM_REQ_EVENT, vcpu))
-			वापस 1;
+		if (kvm_test_request(KVM_REQ_EVENT, vcpu))
+			return 1;
 
-		अगर (!kvm_emulate_inकाष्ठाion(vcpu, 0))
-			वापस 0;
+		if (!kvm_emulate_instruction(vcpu, 0))
+			return 0;
 
-		अगर (vmx->emulation_required && !vmx->rmode.vm86_active &&
-		    vcpu->arch.exception.pending) अणु
-			vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-			vcpu->run->पूर्णांकernal.suberror =
+		if (vmx->emulation_required && !vmx->rmode.vm86_active &&
+		    vcpu->arch.exception.pending) {
+			vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+			vcpu->run->internal.suberror =
 						KVM_INTERNAL_ERROR_EMULATION;
-			vcpu->run->पूर्णांकernal.ndata = 0;
-			वापस 0;
-		पूर्ण
+			vcpu->run->internal.ndata = 0;
+			return 0;
+		}
 
-		अगर (vcpu->arch.halt_request) अणु
+		if (vcpu->arch.halt_request) {
 			vcpu->arch.halt_request = 0;
-			वापस kvm_vcpu_halt(vcpu);
-		पूर्ण
+			return kvm_vcpu_halt(vcpu);
+		}
 
 		/*
-		 * Note, वापस 1 and not 0, vcpu_run() will invoke
-		 * xfer_to_guest_mode() which will create a proper वापस
+		 * Note, return 1 and not 0, vcpu_run() will invoke
+		 * xfer_to_guest_mode() which will create a proper return
 		 * code.
 		 */
-		अगर (__xfer_to_guest_mode_work_pending())
-			वापस 1;
-	पूर्ण
+		if (__xfer_to_guest_mode_work_pending())
+			return 1;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम grow_ple_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित पूर्णांक old = vmx->ple_winकरोw;
+static void grow_ple_window(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned int old = vmx->ple_window;
 
-	vmx->ple_winकरोw = __grow_ple_winकरोw(old, ple_winकरोw,
-					    ple_winकरोw_grow,
-					    ple_winकरोw_max);
+	vmx->ple_window = __grow_ple_window(old, ple_window,
+					    ple_window_grow,
+					    ple_window_max);
 
-	अगर (vmx->ple_winकरोw != old) अणु
-		vmx->ple_winकरोw_dirty = true;
-		trace_kvm_ple_winकरोw_update(vcpu->vcpu_id,
-					    vmx->ple_winकरोw, old);
-	पूर्ण
-पूर्ण
+	if (vmx->ple_window != old) {
+		vmx->ple_window_dirty = true;
+		trace_kvm_ple_window_update(vcpu->vcpu_id,
+					    vmx->ple_window, old);
+	}
+}
 
-अटल व्योम shrink_ple_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित पूर्णांक old = vmx->ple_winकरोw;
+static void shrink_ple_window(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned int old = vmx->ple_window;
 
-	vmx->ple_winकरोw = __shrink_ple_winकरोw(old, ple_winकरोw,
-					      ple_winकरोw_shrink,
-					      ple_winकरोw);
+	vmx->ple_window = __shrink_ple_window(old, ple_window,
+					      ple_window_shrink,
+					      ple_window);
 
-	अगर (vmx->ple_winकरोw != old) अणु
-		vmx->ple_winकरोw_dirty = true;
-		trace_kvm_ple_winकरोw_update(vcpu->vcpu_id,
-					    vmx->ple_winकरोw, old);
-	पूर्ण
-पूर्ण
+	if (vmx->ple_window != old) {
+		vmx->ple_window_dirty = true;
+		trace_kvm_ple_window_update(vcpu->vcpu_id,
+					    vmx->ple_window, old);
+	}
+}
 
 /*
- * Indicate a busy-रुकोing vcpu in spinlock. We करो not enable the PAUSE
- * निकासing, so only get here on cpu with PAUSE-Loop-Exiting.
+ * Indicate a busy-waiting vcpu in spinlock. We do not enable the PAUSE
+ * exiting, so only get here on cpu with PAUSE-Loop-Exiting.
  */
-अटल पूर्णांक handle_छोड़ो(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!kvm_छोड़ो_in_guest(vcpu->kvm))
-		grow_ple_winकरोw(vcpu);
+static int handle_pause(struct kvm_vcpu *vcpu)
+{
+	if (!kvm_pause_in_guest(vcpu->kvm))
+		grow_ple_window(vcpu);
 
 	/*
 	 * Intel sdm vol3 ch-25.1.3 says: The "PAUSE-loop exiting"
-	 * VM-execution control is ignored अगर CPL > 0. OTOH, KVM
-	 * never set PAUSE_EXITING and just set PLE अगर supported,
-	 * so the vcpu must be CPL=0 अगर it माला_लो a PAUSE निकास.
+	 * VM-execution control is ignored if CPL > 0. OTOH, KVM
+	 * never set PAUSE_EXITING and just set PLE if supported,
+	 * so the vcpu must be CPL=0 if it gets a PAUSE exit.
 	 */
 	kvm_vcpu_on_spin(vcpu, true);
-	वापस kvm_skip_emulated_inकाष्ठाion(vcpu);
-पूर्ण
+	return kvm_skip_emulated_instruction(vcpu);
+}
 
-अटल पूर्णांक handle_monitor_trap(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस 1;
-पूर्ण
+static int handle_monitor_trap(struct kvm_vcpu *vcpu)
+{
+	return 1;
+}
 
-अटल पूर्णांक handle_invpcid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	u32 vmx_inकाष्ठाion_info;
-	अचिन्हित दीर्घ type;
+static int handle_invpcid(struct kvm_vcpu *vcpu)
+{
+	u32 vmx_instruction_info;
+	unsigned long type;
 	gva_t gva;
-	काष्ठा अणु
+	struct {
 		u64 pcid;
 		u64 gla;
-	पूर्ण opeअक्रम;
+	} operand;
 
-	अगर (!guest_cpuid_has(vcpu, X86_FEATURE_INVPCID)) अणु
+	if (!guest_cpuid_has(vcpu, X86_FEATURE_INVPCID)) {
 		kvm_queue_exception(vcpu, UD_VECTOR);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	vmx_inकाष्ठाion_info = vmcs_पढ़ो32(VMX_INSTRUCTION_INFO);
-	type = kvm_रेजिस्टर_पढ़ो(vcpu, (vmx_inकाष्ठाion_info >> 28) & 0xf);
+	vmx_instruction_info = vmcs_read32(VMX_INSTRUCTION_INFO);
+	type = kvm_register_read(vcpu, (vmx_instruction_info >> 28) & 0xf);
 
-	अगर (type > 3) अणु
+	if (type > 3) {
 		kvm_inject_gp(vcpu, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* According to the Intel inकाष्ठाion reference, the memory opeअक्रम
-	 * is पढ़ो even अगर it isn't needed (e.g., क्रम type==all)
+	/* According to the Intel instruction reference, the memory operand
+	 * is read even if it isn't needed (e.g., for type==all)
 	 */
-	अगर (get_vmx_mem_address(vcpu, vmx_get_निकास_qual(vcpu),
-				vmx_inकाष्ठाion_info, false,
-				माप(opeअक्रम), &gva))
-		वापस 1;
+	if (get_vmx_mem_address(vcpu, vmx_get_exit_qual(vcpu),
+				vmx_instruction_info, false,
+				sizeof(operand), &gva))
+		return 1;
 
-	वापस kvm_handle_invpcid(vcpu, type, gva);
-पूर्ण
+	return kvm_handle_invpcid(vcpu, type, gva);
+}
 
-अटल पूर्णांक handle_pml_full(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ निकास_qualअगरication;
+static int handle_pml_full(struct kvm_vcpu *vcpu)
+{
+	unsigned long exit_qualification;
 
 	trace_kvm_pml_full(vcpu->vcpu_id);
 
-	निकास_qualअगरication = vmx_get_निकास_qual(vcpu);
+	exit_qualification = vmx_get_exit_qual(vcpu);
 
 	/*
-	 * PML buffer FULL happened जबतक executing iret from NMI,
-	 * "blocked by NMI" bit has to be set beक्रमe next VM entry.
+	 * PML buffer FULL happened while executing iret from NMI,
+	 * "blocked by NMI" bit has to be set before next VM entry.
 	 */
-	अगर (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
+	if (!(to_vmx(vcpu)->idt_vectoring_info & VECTORING_INFO_VALID_MASK) &&
 			enable_vnmi &&
-			(निकास_qualअगरication & INTR_INFO_UNBLOCK_NMI))
+			(exit_qualification & INTR_INFO_UNBLOCK_NMI))
 		vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO,
 				GUEST_INTR_STATE_NMI);
 
 	/*
-	 * PML buffer alपढ़ोy flushed at beginning of VMEXIT. Nothing to करो
-	 * here.., and there's no userspace involvement needed क्रम PML.
+	 * PML buffer already flushed at beginning of VMEXIT. Nothing to do
+	 * here.., and there's no userspace involvement needed for PML.
 	 */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल fastpath_t handle_fastpath_preemption_समयr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static fastpath_t handle_fastpath_preemption_timer(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (!vmx->req_immediate_निकास &&
-	    !unlikely(vmx->loaded_vmcs->hv_समयr_soft_disabled)) अणु
-		kvm_lapic_expired_hv_समयr(vcpu);
-		वापस EXIT_FASTPATH_REENTER_GUEST;
-	पूर्ण
+	if (!vmx->req_immediate_exit &&
+	    !unlikely(vmx->loaded_vmcs->hv_timer_soft_disabled)) {
+		kvm_lapic_expired_hv_timer(vcpu);
+		return EXIT_FASTPATH_REENTER_GUEST;
+	}
 
-	वापस EXIT_FASTPATH_NONE;
-पूर्ण
+	return EXIT_FASTPATH_NONE;
+}
 
-अटल पूर्णांक handle_preemption_समयr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	handle_fastpath_preemption_समयr(vcpu);
-	वापस 1;
-पूर्ण
+static int handle_preemption_timer(struct kvm_vcpu *vcpu)
+{
+	handle_fastpath_preemption_timer(vcpu);
+	return 1;
+}
 
 /*
- * When nested=0, all VMX inकाष्ठाion VM Exits filter here.  The handlers
+ * When nested=0, all VMX instruction VM Exits filter here.  The handlers
  * are overwritten by nested_vmx_setup() when nested=1.
  */
-अटल पूर्णांक handle_vmx_inकाष्ठाion(काष्ठा kvm_vcpu *vcpu)
-अणु
+static int handle_vmx_instruction(struct kvm_vcpu *vcpu)
+{
 	kvm_queue_exception(vcpu, UD_VECTOR);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अगर_अघोषित CONFIG_X86_SGX_KVM
-अटल पूर्णांक handle_encls(काष्ठा kvm_vcpu *vcpu)
-अणु
+#ifndef CONFIG_X86_SGX_KVM
+static int handle_encls(struct kvm_vcpu *vcpu)
+{
 	/*
-	 * SGX भवization is disabled.  There is no software enable bit क्रम
-	 * SGX, so KVM पूर्णांकercepts all ENCLS leafs and injects a #UD to prevent
+	 * SGX virtualization is disabled.  There is no software enable bit for
+	 * SGX, so KVM intercepts all ENCLS leafs and injects a #UD to prevent
 	 * the guest from executing ENCLS (when SGX is supported by hardware).
 	 */
 	kvm_queue_exception(vcpu, UD_VECTOR);
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_SGX_KVM */
+	return 1;
+}
+#endif /* CONFIG_X86_SGX_KVM */
 
-अटल पूर्णांक handle_bus_lock_vmनिकास(काष्ठा kvm_vcpu *vcpu)
-अणु
-	vcpu->run->निकास_reason = KVM_EXIT_X86_BUS_LOCK;
+static int handle_bus_lock_vmexit(struct kvm_vcpu *vcpu)
+{
+	vcpu->run->exit_reason = KVM_EXIT_X86_BUS_LOCK;
 	vcpu->run->flags |= KVM_RUN_X86_BUS_LOCK;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The निकास handlers वापस 1 अगर the निकास was handled fully and guest execution
+ * The exit handlers return 1 if the exit was handled fully and guest execution
  * may resume.  Otherwise they set the kvm_run parameter to indicate what needs
- * to be करोne to userspace and वापस 0.
+ * to be done to userspace and return 0.
  */
-अटल पूर्णांक (*kvm_vmx_निकास_handlers[])(काष्ठा kvm_vcpu *vcpu) = अणु
+static int (*kvm_vmx_exit_handlers[])(struct kvm_vcpu *vcpu) = {
 	[EXIT_REASON_EXCEPTION_NMI]           = handle_exception_nmi,
-	[EXIT_REASON_EXTERNAL_INTERRUPT]      = handle_बाह्यal_पूर्णांकerrupt,
+	[EXIT_REASON_EXTERNAL_INTERRUPT]      = handle_external_interrupt,
 	[EXIT_REASON_TRIPLE_FAULT]            = handle_triple_fault,
-	[EXIT_REASON_NMI_WINDOW]	      = handle_nmi_winकरोw,
+	[EXIT_REASON_NMI_WINDOW]	      = handle_nmi_window,
 	[EXIT_REASON_IO_INSTRUCTION]          = handle_io,
 	[EXIT_REASON_CR_ACCESS]               = handle_cr,
 	[EXIT_REASON_DR_ACCESS]               = handle_dr,
 	[EXIT_REASON_CPUID]                   = kvm_emulate_cpuid,
 	[EXIT_REASON_MSR_READ]                = kvm_emulate_rdmsr,
 	[EXIT_REASON_MSR_WRITE]               = kvm_emulate_wrmsr,
-	[EXIT_REASON_INTERRUPT_WINDOW]        = handle_पूर्णांकerrupt_winकरोw,
+	[EXIT_REASON_INTERRUPT_WINDOW]        = handle_interrupt_window,
 	[EXIT_REASON_HLT]                     = kvm_emulate_halt,
 	[EXIT_REASON_INVD]		      = kvm_emulate_invd,
 	[EXIT_REASON_INVLPG]		      = handle_invlpg,
 	[EXIT_REASON_RDPMC]                   = kvm_emulate_rdpmc,
 	[EXIT_REASON_VMCALL]                  = kvm_emulate_hypercall,
-	[EXIT_REASON_VMCLEAR]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMLAUNCH]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMPTRLD]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMPTRST]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMREAD]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMRESUME]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMWRITE]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMOFF]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_VMON]		      = handle_vmx_inकाष्ठाion,
+	[EXIT_REASON_VMCLEAR]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMLAUNCH]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMPTRLD]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMPTRST]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMREAD]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMRESUME]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMWRITE]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMOFF]		      = handle_vmx_instruction,
+	[EXIT_REASON_VMON]		      = handle_vmx_instruction,
 	[EXIT_REASON_TPR_BELOW_THRESHOLD]     = handle_tpr_below_threshold,
 	[EXIT_REASON_APIC_ACCESS]             = handle_apic_access,
-	[EXIT_REASON_APIC_WRITE]              = handle_apic_ग_लिखो,
+	[EXIT_REASON_APIC_WRITE]              = handle_apic_write,
 	[EXIT_REASON_EOI_INDUCED]             = handle_apic_eoi_induced,
 	[EXIT_REASON_WBINVD]                  = kvm_emulate_wbinvd,
 	[EXIT_REASON_XSETBV]                  = kvm_emulate_xsetbv,
-	[EXIT_REASON_TASK_SWITCH]             = handle_task_चयन,
+	[EXIT_REASON_TASK_SWITCH]             = handle_task_switch,
 	[EXIT_REASON_MCE_DURING_VMENTRY]      = handle_machine_check,
 	[EXIT_REASON_GDTR_IDTR]		      = handle_desc,
 	[EXIT_REASON_LDTR_TR]		      = handle_desc,
 	[EXIT_REASON_EPT_VIOLATION]	      = handle_ept_violation,
 	[EXIT_REASON_EPT_MISCONFIG]           = handle_ept_misconfig,
-	[EXIT_REASON_PAUSE_INSTRUCTION]       = handle_छोड़ो,
-	[EXIT_REASON_MWAIT_INSTRUCTION]	      = kvm_emulate_mरुको,
+	[EXIT_REASON_PAUSE_INSTRUCTION]       = handle_pause,
+	[EXIT_REASON_MWAIT_INSTRUCTION]	      = kvm_emulate_mwait,
 	[EXIT_REASON_MONITOR_TRAP_FLAG]       = handle_monitor_trap,
 	[EXIT_REASON_MONITOR_INSTRUCTION]     = kvm_emulate_monitor,
-	[EXIT_REASON_INVEPT]                  = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_INVVPID]                 = handle_vmx_inकाष्ठाion,
+	[EXIT_REASON_INVEPT]                  = handle_vmx_instruction,
+	[EXIT_REASON_INVVPID]                 = handle_vmx_instruction,
 	[EXIT_REASON_RDRAND]                  = kvm_handle_invalid_op,
 	[EXIT_REASON_RDSEED]                  = kvm_handle_invalid_op,
 	[EXIT_REASON_PML_FULL]		      = handle_pml_full,
 	[EXIT_REASON_INVPCID]                 = handle_invpcid,
-	[EXIT_REASON_VMFUNC]		      = handle_vmx_inकाष्ठाion,
-	[EXIT_REASON_PREEMPTION_TIMER]	      = handle_preemption_समयr,
+	[EXIT_REASON_VMFUNC]		      = handle_vmx_instruction,
+	[EXIT_REASON_PREEMPTION_TIMER]	      = handle_preemption_timer,
 	[EXIT_REASON_ENCLS]		      = handle_encls,
-	[EXIT_REASON_BUS_LOCK]                = handle_bus_lock_vmनिकास,
-पूर्ण;
+	[EXIT_REASON_BUS_LOCK]                = handle_bus_lock_vmexit,
+};
 
-अटल स्थिर पूर्णांक kvm_vmx_max_निकास_handlers =
-	ARRAY_SIZE(kvm_vmx_निकास_handlers);
+static const int kvm_vmx_max_exit_handlers =
+	ARRAY_SIZE(kvm_vmx_exit_handlers);
 
-अटल व्योम vmx_get_निकास_info(काष्ठा kvm_vcpu *vcpu, u64 *info1, u64 *info2,
-			      u32 *पूर्णांकr_info, u32 *error_code)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_get_exit_info(struct kvm_vcpu *vcpu, u64 *info1, u64 *info2,
+			      u32 *intr_info, u32 *error_code)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	*info1 = vmx_get_निकास_qual(vcpu);
-	अगर (!(vmx->निकास_reason.failed_vmentry)) अणु
+	*info1 = vmx_get_exit_qual(vcpu);
+	if (!(vmx->exit_reason.failed_vmentry)) {
 		*info2 = vmx->idt_vectoring_info;
-		*पूर्णांकr_info = vmx_get_पूर्णांकr_info(vcpu);
-		अगर (is_exception_with_error_code(*पूर्णांकr_info))
-			*error_code = vmcs_पढ़ो32(VM_EXIT_INTR_ERROR_CODE);
-		अन्यथा
+		*intr_info = vmx_get_intr_info(vcpu);
+		if (is_exception_with_error_code(*intr_info))
+			*error_code = vmcs_read32(VM_EXIT_INTR_ERROR_CODE);
+		else
 			*error_code = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		*info2 = 0;
-		*पूर्णांकr_info = 0;
+		*intr_info = 0;
 		*error_code = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vmx_destroy_pml_buffer(काष्ठा vcpu_vmx *vmx)
-अणु
-	अगर (vmx->pml_pg) अणु
-		__मुक्त_page(vmx->pml_pg);
-		vmx->pml_pg = शून्य;
-	पूर्ण
-पूर्ण
+static void vmx_destroy_pml_buffer(struct vcpu_vmx *vmx)
+{
+	if (vmx->pml_pg) {
+		__free_page(vmx->pml_pg);
+		vmx->pml_pg = NULL;
+	}
+}
 
-अटल व्योम vmx_flush_pml_buffer(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_flush_pml_buffer(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	u64 *pml_buf;
 	u16 pml_idx;
 
-	pml_idx = vmcs_पढ़ो16(GUEST_PML_INDEX);
+	pml_idx = vmcs_read16(GUEST_PML_INDEX);
 
-	/* Do nothing अगर PML buffer is empty */
-	अगर (pml_idx == (PML_ENTITY_NUM - 1))
-		वापस;
+	/* Do nothing if PML buffer is empty */
+	if (pml_idx == (PML_ENTITY_NUM - 1))
+		return;
 
-	/* PML index always poपूर्णांकs to next available PML buffer entity */
-	अगर (pml_idx >= PML_ENTITY_NUM)
+	/* PML index always points to next available PML buffer entity */
+	if (pml_idx >= PML_ENTITY_NUM)
 		pml_idx = 0;
-	अन्यथा
+	else
 		pml_idx++;
 
 	pml_buf = page_address(vmx->pml_pg);
-	क्रम (; pml_idx < PML_ENTITY_NUM; pml_idx++) अणु
+	for (; pml_idx < PML_ENTITY_NUM; pml_idx++) {
 		u64 gpa;
 
 		gpa = pml_buf[pml_idx];
 		WARN_ON(gpa & (PAGE_SIZE - 1));
 		kvm_vcpu_mark_page_dirty(vcpu, gpa >> PAGE_SHIFT);
-	पूर्ण
+	}
 
 	/* reset PML index */
-	vmcs_ग_लिखो16(GUEST_PML_INDEX, PML_ENTITY_NUM - 1);
-पूर्ण
+	vmcs_write16(GUEST_PML_INDEX, PML_ENTITY_NUM - 1);
+}
 
-अटल व्योम vmx_dump_sel(अक्षर *name, uपूर्णांक32_t sel)
-अणु
+static void vmx_dump_sel(char *name, uint32_t sel)
+{
 	pr_err("%s sel=0x%04x, attr=0x%05x, limit=0x%08x, base=0x%016lx\n",
-	       name, vmcs_पढ़ो16(sel),
-	       vmcs_पढ़ो32(sel + GUEST_ES_AR_BYTES - GUEST_ES_SELECTOR),
-	       vmcs_पढ़ो32(sel + GUEST_ES_LIMIT - GUEST_ES_SELECTOR),
-	       vmcs_पढ़ोl(sel + GUEST_ES_BASE - GUEST_ES_SELECTOR));
-पूर्ण
+	       name, vmcs_read16(sel),
+	       vmcs_read32(sel + GUEST_ES_AR_BYTES - GUEST_ES_SELECTOR),
+	       vmcs_read32(sel + GUEST_ES_LIMIT - GUEST_ES_SELECTOR),
+	       vmcs_readl(sel + GUEST_ES_BASE - GUEST_ES_SELECTOR));
+}
 
-अटल व्योम vmx_dump_dtsel(अक्षर *name, uपूर्णांक32_t limit)
-अणु
+static void vmx_dump_dtsel(char *name, uint32_t limit)
+{
 	pr_err("%s                           limit=0x%08x, base=0x%016lx\n",
-	       name, vmcs_पढ़ो32(limit),
-	       vmcs_पढ़ोl(limit + GUEST_GDTR_BASE - GUEST_GDTR_LIMIT));
-पूर्ण
+	       name, vmcs_read32(limit),
+	       vmcs_readl(limit + GUEST_GDTR_BASE - GUEST_GDTR_LIMIT));
+}
 
-अटल व्योम vmx_dump_msrs(अक्षर *name, काष्ठा vmx_msrs *m)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा vmx_msr_entry *e;
+static void vmx_dump_msrs(char *name, struct vmx_msrs *m)
+{
+	unsigned int i;
+	struct vmx_msr_entry *e;
 
 	pr_err("MSR %s:\n", name);
-	क्रम (i = 0, e = m->val; i < m->nr; ++i, ++e)
+	for (i = 0, e = m->val; i < m->nr; ++i, ++e)
 		pr_err("  %2d: msr=0x%08x value=0x%016llx\n", i, e->index, e->value);
-पूर्ण
+}
 
-व्योम dump_vmcs(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	u32 vmentry_ctl, vmनिकास_ctl;
+void dump_vmcs(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	u32 vmentry_ctl, vmexit_ctl;
 	u32 cpu_based_exec_ctrl, pin_based_exec_ctrl, secondary_exec_control;
-	अचिन्हित दीर्घ cr4;
-	पूर्णांक efer_slot;
+	unsigned long cr4;
+	int efer_slot;
 
-	अगर (!dump_invalid_vmcs) अणु
+	if (!dump_invalid_vmcs) {
 		pr_warn_ratelimited("set kvm_intel.dump_invalid_vmcs=1 to dump internal KVM state.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	vmentry_ctl = vmcs_पढ़ो32(VM_ENTRY_CONTROLS);
-	vmनिकास_ctl = vmcs_पढ़ो32(VM_EXIT_CONTROLS);
-	cpu_based_exec_ctrl = vmcs_पढ़ो32(CPU_BASED_VM_EXEC_CONTROL);
-	pin_based_exec_ctrl = vmcs_पढ़ो32(PIN_BASED_VM_EXEC_CONTROL);
-	cr4 = vmcs_पढ़ोl(GUEST_CR4);
+	vmentry_ctl = vmcs_read32(VM_ENTRY_CONTROLS);
+	vmexit_ctl = vmcs_read32(VM_EXIT_CONTROLS);
+	cpu_based_exec_ctrl = vmcs_read32(CPU_BASED_VM_EXEC_CONTROL);
+	pin_based_exec_ctrl = vmcs_read32(PIN_BASED_VM_EXEC_CONTROL);
+	cr4 = vmcs_readl(GUEST_CR4);
 	secondary_exec_control = 0;
-	अगर (cpu_has_secondary_exec_ctrls())
-		secondary_exec_control = vmcs_पढ़ो32(SECONDARY_VM_EXEC_CONTROL);
+	if (cpu_has_secondary_exec_ctrls())
+		secondary_exec_control = vmcs_read32(SECONDARY_VM_EXEC_CONTROL);
 
 	pr_err("*** Guest State ***\n");
 	pr_err("CR0: actual=0x%016lx, shadow=0x%016lx, gh_mask=%016lx\n",
-	       vmcs_पढ़ोl(GUEST_CR0), vmcs_पढ़ोl(CR0_READ_SHADOW),
-	       vmcs_पढ़ोl(CR0_GUEST_HOST_MASK));
+	       vmcs_readl(GUEST_CR0), vmcs_readl(CR0_READ_SHADOW),
+	       vmcs_readl(CR0_GUEST_HOST_MASK));
 	pr_err("CR4: actual=0x%016lx, shadow=0x%016lx, gh_mask=%016lx\n",
-	       cr4, vmcs_पढ़ोl(CR4_READ_SHADOW), vmcs_पढ़ोl(CR4_GUEST_HOST_MASK));
-	pr_err("CR3 = 0x%016lx\n", vmcs_पढ़ोl(GUEST_CR3));
-	अगर (cpu_has_vmx_ept()) अणु
+	       cr4, vmcs_readl(CR4_READ_SHADOW), vmcs_readl(CR4_GUEST_HOST_MASK));
+	pr_err("CR3 = 0x%016lx\n", vmcs_readl(GUEST_CR3));
+	if (cpu_has_vmx_ept()) {
 		pr_err("PDPTR0 = 0x%016llx  PDPTR1 = 0x%016llx\n",
-		       vmcs_पढ़ो64(GUEST_PDPTR0), vmcs_पढ़ो64(GUEST_PDPTR1));
+		       vmcs_read64(GUEST_PDPTR0), vmcs_read64(GUEST_PDPTR1));
 		pr_err("PDPTR2 = 0x%016llx  PDPTR3 = 0x%016llx\n",
-		       vmcs_पढ़ो64(GUEST_PDPTR2), vmcs_पढ़ो64(GUEST_PDPTR3));
-	पूर्ण
+		       vmcs_read64(GUEST_PDPTR2), vmcs_read64(GUEST_PDPTR3));
+	}
 	pr_err("RSP = 0x%016lx  RIP = 0x%016lx\n",
-	       vmcs_पढ़ोl(GUEST_RSP), vmcs_पढ़ोl(GUEST_RIP));
+	       vmcs_readl(GUEST_RSP), vmcs_readl(GUEST_RIP));
 	pr_err("RFLAGS=0x%08lx         DR7 = 0x%016lx\n",
-	       vmcs_पढ़ोl(GUEST_RFLAGS), vmcs_पढ़ोl(GUEST_DR7));
+	       vmcs_readl(GUEST_RFLAGS), vmcs_readl(GUEST_DR7));
 	pr_err("Sysenter RSP=%016lx CS:RIP=%04x:%016lx\n",
-	       vmcs_पढ़ोl(GUEST_SYSENTER_ESP),
-	       vmcs_पढ़ो32(GUEST_SYSENTER_CS), vmcs_पढ़ोl(GUEST_SYSENTER_EIP));
+	       vmcs_readl(GUEST_SYSENTER_ESP),
+	       vmcs_read32(GUEST_SYSENTER_CS), vmcs_readl(GUEST_SYSENTER_EIP));
 	vmx_dump_sel("CS:  ", GUEST_CS_SELECTOR);
 	vmx_dump_sel("DS:  ", GUEST_DS_SELECTOR);
 	vmx_dump_sel("SS:  ", GUEST_SS_SELECTOR);
@@ -5841,325 +5840,325 @@ out:
 	vmx_dump_sel("LDTR:", GUEST_LDTR_SELECTOR);
 	vmx_dump_dtsel("IDTR:", GUEST_IDTR_LIMIT);
 	vmx_dump_sel("TR:  ", GUEST_TR_SELECTOR);
-	efer_slot = vmx_find_loadstore_msr_slot(&vmx->msr_स्वतःload.guest, MSR_EFER);
-	अगर (vmentry_ctl & VM_ENTRY_LOAD_IA32_EFER)
-		pr_err("EFER= 0x%016llx\n", vmcs_पढ़ो64(GUEST_IA32_EFER));
-	अन्यथा अगर (efer_slot >= 0)
+	efer_slot = vmx_find_loadstore_msr_slot(&vmx->msr_autoload.guest, MSR_EFER);
+	if (vmentry_ctl & VM_ENTRY_LOAD_IA32_EFER)
+		pr_err("EFER= 0x%016llx\n", vmcs_read64(GUEST_IA32_EFER));
+	else if (efer_slot >= 0)
 		pr_err("EFER= 0x%016llx (autoload)\n",
-		       vmx->msr_स्वतःload.guest.val[efer_slot].value);
-	अन्यथा अगर (vmentry_ctl & VM_ENTRY_IA32E_MODE)
+		       vmx->msr_autoload.guest.val[efer_slot].value);
+	else if (vmentry_ctl & VM_ENTRY_IA32E_MODE)
 		pr_err("EFER= 0x%016llx (effective)\n",
 		       vcpu->arch.efer | (EFER_LMA | EFER_LME));
-	अन्यथा
+	else
 		pr_err("EFER= 0x%016llx (effective)\n",
 		       vcpu->arch.efer & ~(EFER_LMA | EFER_LME));
-	अगर (vmentry_ctl & VM_ENTRY_LOAD_IA32_PAT)
-		pr_err("PAT = 0x%016llx\n", vmcs_पढ़ो64(GUEST_IA32_PAT));
+	if (vmentry_ctl & VM_ENTRY_LOAD_IA32_PAT)
+		pr_err("PAT = 0x%016llx\n", vmcs_read64(GUEST_IA32_PAT));
 	pr_err("DebugCtl = 0x%016llx  DebugExceptions = 0x%016lx\n",
-	       vmcs_पढ़ो64(GUEST_IA32_DEBUGCTL),
-	       vmcs_पढ़ोl(GUEST_PENDING_DBG_EXCEPTIONS));
-	अगर (cpu_has_load_perf_global_ctrl() &&
+	       vmcs_read64(GUEST_IA32_DEBUGCTL),
+	       vmcs_readl(GUEST_PENDING_DBG_EXCEPTIONS));
+	if (cpu_has_load_perf_global_ctrl() &&
 	    vmentry_ctl & VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL)
 		pr_err("PerfGlobCtl = 0x%016llx\n",
-		       vmcs_पढ़ो64(GUEST_IA32_PERF_GLOBAL_CTRL));
-	अगर (vmentry_ctl & VM_ENTRY_LOAD_BNDCFGS)
-		pr_err("BndCfgS = 0x%016llx\n", vmcs_पढ़ो64(GUEST_BNDCFGS));
+		       vmcs_read64(GUEST_IA32_PERF_GLOBAL_CTRL));
+	if (vmentry_ctl & VM_ENTRY_LOAD_BNDCFGS)
+		pr_err("BndCfgS = 0x%016llx\n", vmcs_read64(GUEST_BNDCFGS));
 	pr_err("Interruptibility = %08x  ActivityState = %08x\n",
-	       vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO),
-	       vmcs_पढ़ो32(GUEST_ACTIVITY_STATE));
-	अगर (secondary_exec_control & SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY)
+	       vmcs_read32(GUEST_INTERRUPTIBILITY_INFO),
+	       vmcs_read32(GUEST_ACTIVITY_STATE));
+	if (secondary_exec_control & SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY)
 		pr_err("InterruptStatus = %04x\n",
-		       vmcs_पढ़ो16(GUEST_INTR_STATUS));
-	अगर (vmcs_पढ़ो32(VM_ENTRY_MSR_LOAD_COUNT) > 0)
-		vmx_dump_msrs("guest autoload", &vmx->msr_स्वतःload.guest);
-	अगर (vmcs_पढ़ो32(VM_EXIT_MSR_STORE_COUNT) > 0)
-		vmx_dump_msrs("guest autostore", &vmx->msr_स्वतःstore.guest);
+		       vmcs_read16(GUEST_INTR_STATUS));
+	if (vmcs_read32(VM_ENTRY_MSR_LOAD_COUNT) > 0)
+		vmx_dump_msrs("guest autoload", &vmx->msr_autoload.guest);
+	if (vmcs_read32(VM_EXIT_MSR_STORE_COUNT) > 0)
+		vmx_dump_msrs("guest autostore", &vmx->msr_autostore.guest);
 
 	pr_err("*** Host State ***\n");
 	pr_err("RIP = 0x%016lx  RSP = 0x%016lx\n",
-	       vmcs_पढ़ोl(HOST_RIP), vmcs_पढ़ोl(HOST_RSP));
+	       vmcs_readl(HOST_RIP), vmcs_readl(HOST_RSP));
 	pr_err("CS=%04x SS=%04x DS=%04x ES=%04x FS=%04x GS=%04x TR=%04x\n",
-	       vmcs_पढ़ो16(HOST_CS_SELECTOR), vmcs_पढ़ो16(HOST_SS_SELECTOR),
-	       vmcs_पढ़ो16(HOST_DS_SELECTOR), vmcs_पढ़ो16(HOST_ES_SELECTOR),
-	       vmcs_पढ़ो16(HOST_FS_SELECTOR), vmcs_पढ़ो16(HOST_GS_SELECTOR),
-	       vmcs_पढ़ो16(HOST_TR_SELECTOR));
+	       vmcs_read16(HOST_CS_SELECTOR), vmcs_read16(HOST_SS_SELECTOR),
+	       vmcs_read16(HOST_DS_SELECTOR), vmcs_read16(HOST_ES_SELECTOR),
+	       vmcs_read16(HOST_FS_SELECTOR), vmcs_read16(HOST_GS_SELECTOR),
+	       vmcs_read16(HOST_TR_SELECTOR));
 	pr_err("FSBase=%016lx GSBase=%016lx TRBase=%016lx\n",
-	       vmcs_पढ़ोl(HOST_FS_BASE), vmcs_पढ़ोl(HOST_GS_BASE),
-	       vmcs_पढ़ोl(HOST_TR_BASE));
+	       vmcs_readl(HOST_FS_BASE), vmcs_readl(HOST_GS_BASE),
+	       vmcs_readl(HOST_TR_BASE));
 	pr_err("GDTBase=%016lx IDTBase=%016lx\n",
-	       vmcs_पढ़ोl(HOST_GDTR_BASE), vmcs_पढ़ोl(HOST_IDTR_BASE));
+	       vmcs_readl(HOST_GDTR_BASE), vmcs_readl(HOST_IDTR_BASE));
 	pr_err("CR0=%016lx CR3=%016lx CR4=%016lx\n",
-	       vmcs_पढ़ोl(HOST_CR0), vmcs_पढ़ोl(HOST_CR3),
-	       vmcs_पढ़ोl(HOST_CR4));
+	       vmcs_readl(HOST_CR0), vmcs_readl(HOST_CR3),
+	       vmcs_readl(HOST_CR4));
 	pr_err("Sysenter RSP=%016lx CS:RIP=%04x:%016lx\n",
-	       vmcs_पढ़ोl(HOST_IA32_SYSENTER_ESP),
-	       vmcs_पढ़ो32(HOST_IA32_SYSENTER_CS),
-	       vmcs_पढ़ोl(HOST_IA32_SYSENTER_EIP));
-	अगर (vmनिकास_ctl & VM_EXIT_LOAD_IA32_EFER)
-		pr_err("EFER= 0x%016llx\n", vmcs_पढ़ो64(HOST_IA32_EFER));
-	अगर (vmनिकास_ctl & VM_EXIT_LOAD_IA32_PAT)
-		pr_err("PAT = 0x%016llx\n", vmcs_पढ़ो64(HOST_IA32_PAT));
-	अगर (cpu_has_load_perf_global_ctrl() &&
-	    vmनिकास_ctl & VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL)
+	       vmcs_readl(HOST_IA32_SYSENTER_ESP),
+	       vmcs_read32(HOST_IA32_SYSENTER_CS),
+	       vmcs_readl(HOST_IA32_SYSENTER_EIP));
+	if (vmexit_ctl & VM_EXIT_LOAD_IA32_EFER)
+		pr_err("EFER= 0x%016llx\n", vmcs_read64(HOST_IA32_EFER));
+	if (vmexit_ctl & VM_EXIT_LOAD_IA32_PAT)
+		pr_err("PAT = 0x%016llx\n", vmcs_read64(HOST_IA32_PAT));
+	if (cpu_has_load_perf_global_ctrl() &&
+	    vmexit_ctl & VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL)
 		pr_err("PerfGlobCtl = 0x%016llx\n",
-		       vmcs_पढ़ो64(HOST_IA32_PERF_GLOBAL_CTRL));
-	अगर (vmcs_पढ़ो32(VM_EXIT_MSR_LOAD_COUNT) > 0)
-		vmx_dump_msrs("host autoload", &vmx->msr_स्वतःload.host);
+		       vmcs_read64(HOST_IA32_PERF_GLOBAL_CTRL));
+	if (vmcs_read32(VM_EXIT_MSR_LOAD_COUNT) > 0)
+		vmx_dump_msrs("host autoload", &vmx->msr_autoload.host);
 
 	pr_err("*** Control State ***\n");
 	pr_err("PinBased=%08x CPUBased=%08x SecondaryExec=%08x\n",
 	       pin_based_exec_ctrl, cpu_based_exec_ctrl, secondary_exec_control);
-	pr_err("EntryControls=%08x ExitControls=%08x\n", vmentry_ctl, vmनिकास_ctl);
+	pr_err("EntryControls=%08x ExitControls=%08x\n", vmentry_ctl, vmexit_ctl);
 	pr_err("ExceptionBitmap=%08x PFECmask=%08x PFECmatch=%08x\n",
-	       vmcs_पढ़ो32(EXCEPTION_BITMAP),
-	       vmcs_पढ़ो32(PAGE_FAULT_ERROR_CODE_MASK),
-	       vmcs_पढ़ो32(PAGE_FAULT_ERROR_CODE_MATCH));
+	       vmcs_read32(EXCEPTION_BITMAP),
+	       vmcs_read32(PAGE_FAULT_ERROR_CODE_MASK),
+	       vmcs_read32(PAGE_FAULT_ERROR_CODE_MATCH));
 	pr_err("VMEntry: intr_info=%08x errcode=%08x ilen=%08x\n",
-	       vmcs_पढ़ो32(VM_ENTRY_INTR_INFO_FIELD),
-	       vmcs_पढ़ो32(VM_ENTRY_EXCEPTION_ERROR_CODE),
-	       vmcs_पढ़ो32(VM_ENTRY_INSTRUCTION_LEN));
+	       vmcs_read32(VM_ENTRY_INTR_INFO_FIELD),
+	       vmcs_read32(VM_ENTRY_EXCEPTION_ERROR_CODE),
+	       vmcs_read32(VM_ENTRY_INSTRUCTION_LEN));
 	pr_err("VMExit: intr_info=%08x errcode=%08x ilen=%08x\n",
-	       vmcs_पढ़ो32(VM_EXIT_INTR_INFO),
-	       vmcs_पढ़ो32(VM_EXIT_INTR_ERROR_CODE),
-	       vmcs_पढ़ो32(VM_EXIT_INSTRUCTION_LEN));
+	       vmcs_read32(VM_EXIT_INTR_INFO),
+	       vmcs_read32(VM_EXIT_INTR_ERROR_CODE),
+	       vmcs_read32(VM_EXIT_INSTRUCTION_LEN));
 	pr_err("        reason=%08x qualification=%016lx\n",
-	       vmcs_पढ़ो32(VM_EXIT_REASON), vmcs_पढ़ोl(EXIT_QUALIFICATION));
+	       vmcs_read32(VM_EXIT_REASON), vmcs_readl(EXIT_QUALIFICATION));
 	pr_err("IDTVectoring: info=%08x errcode=%08x\n",
-	       vmcs_पढ़ो32(IDT_VECTORING_INFO_FIELD),
-	       vmcs_पढ़ो32(IDT_VECTORING_ERROR_CODE));
-	pr_err("TSC Offset = 0x%016llx\n", vmcs_पढ़ो64(TSC_OFFSET));
-	अगर (secondary_exec_control & SECONDARY_EXEC_TSC_SCALING)
+	       vmcs_read32(IDT_VECTORING_INFO_FIELD),
+	       vmcs_read32(IDT_VECTORING_ERROR_CODE));
+	pr_err("TSC Offset = 0x%016llx\n", vmcs_read64(TSC_OFFSET));
+	if (secondary_exec_control & SECONDARY_EXEC_TSC_SCALING)
 		pr_err("TSC Multiplier = 0x%016llx\n",
-		       vmcs_पढ़ो64(TSC_MULTIPLIER));
-	अगर (cpu_based_exec_ctrl & CPU_BASED_TPR_SHADOW) अणु
-		अगर (secondary_exec_control & SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY) अणु
-			u16 status = vmcs_पढ़ो16(GUEST_INTR_STATUS);
+		       vmcs_read64(TSC_MULTIPLIER));
+	if (cpu_based_exec_ctrl & CPU_BASED_TPR_SHADOW) {
+		if (secondary_exec_control & SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY) {
+			u16 status = vmcs_read16(GUEST_INTR_STATUS);
 			pr_err("SVI|RVI = %02x|%02x ", status >> 8, status & 0xff);
-		पूर्ण
-		pr_cont("TPR Threshold = 0x%02x\n", vmcs_पढ़ो32(TPR_THRESHOLD));
-		अगर (secondary_exec_control & SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES)
-			pr_err("APIC-access addr = 0x%016llx ", vmcs_पढ़ो64(APIC_ACCESS_ADDR));
-		pr_cont("virt-APIC addr = 0x%016llx\n", vmcs_पढ़ो64(VIRTUAL_APIC_PAGE_ADDR));
-	पूर्ण
-	अगर (pin_based_exec_ctrl & PIN_BASED_POSTED_INTR)
-		pr_err("PostedIntrVec = 0x%02x\n", vmcs_पढ़ो16(POSTED_INTR_NV));
-	अगर ((secondary_exec_control & SECONDARY_EXEC_ENABLE_EPT))
-		pr_err("EPT pointer = 0x%016llx\n", vmcs_पढ़ो64(EPT_POINTER));
-	अगर (secondary_exec_control & SECONDARY_EXEC_PAUSE_LOOP_EXITING)
+		}
+		pr_cont("TPR Threshold = 0x%02x\n", vmcs_read32(TPR_THRESHOLD));
+		if (secondary_exec_control & SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES)
+			pr_err("APIC-access addr = 0x%016llx ", vmcs_read64(APIC_ACCESS_ADDR));
+		pr_cont("virt-APIC addr = 0x%016llx\n", vmcs_read64(VIRTUAL_APIC_PAGE_ADDR));
+	}
+	if (pin_based_exec_ctrl & PIN_BASED_POSTED_INTR)
+		pr_err("PostedIntrVec = 0x%02x\n", vmcs_read16(POSTED_INTR_NV));
+	if ((secondary_exec_control & SECONDARY_EXEC_ENABLE_EPT))
+		pr_err("EPT pointer = 0x%016llx\n", vmcs_read64(EPT_POINTER));
+	if (secondary_exec_control & SECONDARY_EXEC_PAUSE_LOOP_EXITING)
 		pr_err("PLE Gap=%08x Window=%08x\n",
-		       vmcs_पढ़ो32(PLE_GAP), vmcs_पढ़ो32(PLE_WINDOW));
-	अगर (secondary_exec_control & SECONDARY_EXEC_ENABLE_VPID)
+		       vmcs_read32(PLE_GAP), vmcs_read32(PLE_WINDOW));
+	if (secondary_exec_control & SECONDARY_EXEC_ENABLE_VPID)
 		pr_err("Virtual processor ID = 0x%04x\n",
-		       vmcs_पढ़ो16(VIRTUAL_PROCESSOR_ID));
-पूर्ण
+		       vmcs_read16(VIRTUAL_PROCESSOR_ID));
+}
 
 /*
- * The guest has निकासed.  See अगर we can fix it or अगर we need userspace
+ * The guest has exited.  See if we can fix it or if we need userspace
  * assistance.
  */
-अटल पूर्णांक __vmx_handle_निकास(काष्ठा kvm_vcpu *vcpu, fastpath_t निकास_fastpath)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	जोड़ vmx_निकास_reason निकास_reason = vmx->निकास_reason;
+static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	union vmx_exit_reason exit_reason = vmx->exit_reason;
 	u32 vectoring_info = vmx->idt_vectoring_info;
-	u16 निकास_handler_index;
+	u16 exit_handler_index;
 
 	/*
-	 * Flush logged GPAs PML buffer, this will make dirty_biपंचांगap more
-	 * updated. Another good is, in kvm_vm_ioctl_get_dirty_log, beक्रमe
-	 * querying dirty_biपंचांगap, we only need to kick all vcpus out of guest
-	 * mode as अगर vcpus is in root mode, the PML buffer must has been
-	 * flushed alपढ़ोy.  Note, PML is never enabled in hardware जबतक
+	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
+	 * updated. Another good is, in kvm_vm_ioctl_get_dirty_log, before
+	 * querying dirty_bitmap, we only need to kick all vcpus out of guest
+	 * mode as if vcpus is in root mode, the PML buffer must has been
+	 * flushed already.  Note, PML is never enabled in hardware while
 	 * running L2.
 	 */
-	अगर (enable_pml && !is_guest_mode(vcpu))
+	if (enable_pml && !is_guest_mode(vcpu))
 		vmx_flush_pml_buffer(vcpu);
 
 	/*
-	 * We should never reach this poपूर्णांक with a pending nested VM-Enter, and
-	 * more specअगरically emulation of L2 due to invalid guest state (see
+	 * We should never reach this point with a pending nested VM-Enter, and
+	 * more specifically emulation of L2 due to invalid guest state (see
 	 * below) should never happen as that means we incorrectly allowed a
 	 * nested VM-Enter with an invalid vmcs12.
 	 */
 	WARN_ON_ONCE(vmx->nested.nested_run_pending);
 
 	/* If guest state is invalid, start emulating */
-	अगर (vmx->emulation_required)
-		वापस handle_invalid_guest_state(vcpu);
+	if (vmx->emulation_required)
+		return handle_invalid_guest_state(vcpu);
 
-	अगर (is_guest_mode(vcpu)) अणु
+	if (is_guest_mode(vcpu)) {
 		/*
-		 * PML is never enabled when running L2, bail immediately अगर a
-		 * PML full निकास occurs as something is horribly wrong.
+		 * PML is never enabled when running L2, bail immediately if a
+		 * PML full exit occurs as something is horribly wrong.
 		 */
-		अगर (निकास_reason.basic == EXIT_REASON_PML_FULL)
-			जाओ unexpected_vmनिकास;
+		if (exit_reason.basic == EXIT_REASON_PML_FULL)
+			goto unexpected_vmexit;
 
 		/*
 		 * The host physical addresses of some pages of guest memory
-		 * are loaded पूर्णांकo the vmcs02 (e.g. vmcs12's Virtual APIC
-		 * Page). The CPU may ग_लिखो to these pages via their host
-		 * physical address जबतक L2 is running, bypassing any
-		 * address-translation-based dirty tracking (e.g. EPT ग_लिखो
+		 * are loaded into the vmcs02 (e.g. vmcs12's Virtual APIC
+		 * Page). The CPU may write to these pages via their host
+		 * physical address while L2 is running, bypassing any
+		 * address-translation-based dirty tracking (e.g. EPT write
 		 * protection).
 		 *
-		 * Mark them dirty on every निकास from L2 to prevent them from
+		 * Mark them dirty on every exit from L2 to prevent them from
 		 * getting out of sync with dirty tracking.
 		 */
 		nested_mark_vmcs12_pages_dirty(vcpu);
 
-		अगर (nested_vmx_reflect_vmनिकास(vcpu))
-			वापस 1;
-	पूर्ण
+		if (nested_vmx_reflect_vmexit(vcpu))
+			return 1;
+	}
 
-	अगर (निकास_reason.failed_vmentry) अणु
+	if (exit_reason.failed_vmentry) {
 		dump_vmcs(vcpu);
-		vcpu->run->निकास_reason = KVM_EXIT_FAIL_ENTRY;
+		vcpu->run->exit_reason = KVM_EXIT_FAIL_ENTRY;
 		vcpu->run->fail_entry.hardware_entry_failure_reason
-			= निकास_reason.full;
+			= exit_reason.full;
 		vcpu->run->fail_entry.cpu = vcpu->arch.last_vmentry_cpu;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (unlikely(vmx->fail)) अणु
+	if (unlikely(vmx->fail)) {
 		dump_vmcs(vcpu);
-		vcpu->run->निकास_reason = KVM_EXIT_FAIL_ENTRY;
+		vcpu->run->exit_reason = KVM_EXIT_FAIL_ENTRY;
 		vcpu->run->fail_entry.hardware_entry_failure_reason
-			= vmcs_पढ़ो32(VM_INSTRUCTION_ERROR);
+			= vmcs_read32(VM_INSTRUCTION_ERROR);
 		vcpu->run->fail_entry.cpu = vcpu->arch.last_vmentry_cpu;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Note:
-	 * Do not try to fix EXIT_REASON_EPT_MISCONFIG अगर it caused by
+	 * Do not try to fix EXIT_REASON_EPT_MISCONFIG if it caused by
 	 * delivery event since it indicates guest is accessing MMIO.
-	 * The vm-निकास can be triggered again after वापस to guest that
+	 * The vm-exit can be triggered again after return to guest that
 	 * will cause infinite loop.
 	 */
-	अगर ((vectoring_info & VECTORING_INFO_VALID_MASK) &&
-	    (निकास_reason.basic != EXIT_REASON_EXCEPTION_NMI &&
-	     निकास_reason.basic != EXIT_REASON_EPT_VIOLATION &&
-	     निकास_reason.basic != EXIT_REASON_PML_FULL &&
-	     निकास_reason.basic != EXIT_REASON_APIC_ACCESS &&
-	     निकास_reason.basic != EXIT_REASON_TASK_SWITCH)) अणु
-		पूर्णांक ndata = 3;
+	if ((vectoring_info & VECTORING_INFO_VALID_MASK) &&
+	    (exit_reason.basic != EXIT_REASON_EXCEPTION_NMI &&
+	     exit_reason.basic != EXIT_REASON_EPT_VIOLATION &&
+	     exit_reason.basic != EXIT_REASON_PML_FULL &&
+	     exit_reason.basic != EXIT_REASON_APIC_ACCESS &&
+	     exit_reason.basic != EXIT_REASON_TASK_SWITCH)) {
+		int ndata = 3;
 
-		vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-		vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_DELIVERY_EV;
-		vcpu->run->पूर्णांकernal.data[0] = vectoring_info;
-		vcpu->run->पूर्णांकernal.data[1] = निकास_reason.full;
-		vcpu->run->पूर्णांकernal.data[2] = vcpu->arch.निकास_qualअगरication;
-		अगर (निकास_reason.basic == EXIT_REASON_EPT_MISCONFIG) अणु
-			vcpu->run->पूर्णांकernal.data[ndata++] =
-				vmcs_पढ़ो64(GUEST_PHYSICAL_ADDRESS);
-		पूर्ण
-		vcpu->run->पूर्णांकernal.data[ndata++] = vcpu->arch.last_vmentry_cpu;
-		vcpu->run->पूर्णांकernal.ndata = ndata;
-		वापस 0;
-	पूर्ण
+		vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+		vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_DELIVERY_EV;
+		vcpu->run->internal.data[0] = vectoring_info;
+		vcpu->run->internal.data[1] = exit_reason.full;
+		vcpu->run->internal.data[2] = vcpu->arch.exit_qualification;
+		if (exit_reason.basic == EXIT_REASON_EPT_MISCONFIG) {
+			vcpu->run->internal.data[ndata++] =
+				vmcs_read64(GUEST_PHYSICAL_ADDRESS);
+		}
+		vcpu->run->internal.data[ndata++] = vcpu->arch.last_vmentry_cpu;
+		vcpu->run->internal.ndata = ndata;
+		return 0;
+	}
 
-	अगर (unlikely(!enable_vnmi &&
-		     vmx->loaded_vmcs->soft_vnmi_blocked)) अणु
-		अगर (!vmx_पूर्णांकerrupt_blocked(vcpu)) अणु
+	if (unlikely(!enable_vnmi &&
+		     vmx->loaded_vmcs->soft_vnmi_blocked)) {
+		if (!vmx_interrupt_blocked(vcpu)) {
 			vmx->loaded_vmcs->soft_vnmi_blocked = 0;
-		पूर्ण अन्यथा अगर (vmx->loaded_vmcs->vnmi_blocked_समय > 1000000000LL &&
-			   vcpu->arch.nmi_pending) अणु
+		} else if (vmx->loaded_vmcs->vnmi_blocked_time > 1000000000LL &&
+			   vcpu->arch.nmi_pending) {
 			/*
-			 * This CPU करोn't support us in finding the end of an
-			 * NMI-blocked winकरोw अगर the guest runs with IRQs
+			 * This CPU don't support us in finding the end of an
+			 * NMI-blocked window if the guest runs with IRQs
 			 * disabled. So we pull the trigger after 1 s of
-			 * futile रुकोing, but inक्रमm the user about this.
+			 * futile waiting, but inform the user about this.
 			 */
-			prपूर्णांकk(KERN_WARNING "%s: Breaking out of NMI-blocked "
+			printk(KERN_WARNING "%s: Breaking out of NMI-blocked "
 			       "state on VCPU %d after 1 s timeout\n",
 			       __func__, vcpu->vcpu_id);
 			vmx->loaded_vmcs->soft_vnmi_blocked = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (निकास_fastpath != EXIT_FASTPATH_NONE)
-		वापस 1;
+	if (exit_fastpath != EXIT_FASTPATH_NONE)
+		return 1;
 
-	अगर (निकास_reason.basic >= kvm_vmx_max_निकास_handlers)
-		जाओ unexpected_vmनिकास;
-#अगर_घोषित CONFIG_RETPOLINE
-	अगर (निकास_reason.basic == EXIT_REASON_MSR_WRITE)
-		वापस kvm_emulate_wrmsr(vcpu);
-	अन्यथा अगर (निकास_reason.basic == EXIT_REASON_PREEMPTION_TIMER)
-		वापस handle_preemption_समयr(vcpu);
-	अन्यथा अगर (निकास_reason.basic == EXIT_REASON_INTERRUPT_WINDOW)
-		वापस handle_पूर्णांकerrupt_winकरोw(vcpu);
-	अन्यथा अगर (निकास_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT)
-		वापस handle_बाह्यal_पूर्णांकerrupt(vcpu);
-	अन्यथा अगर (निकास_reason.basic == EXIT_REASON_HLT)
-		वापस kvm_emulate_halt(vcpu);
-	अन्यथा अगर (निकास_reason.basic == EXIT_REASON_EPT_MISCONFIG)
-		वापस handle_ept_misconfig(vcpu);
-#पूर्ण_अगर
+	if (exit_reason.basic >= kvm_vmx_max_exit_handlers)
+		goto unexpected_vmexit;
+#ifdef CONFIG_RETPOLINE
+	if (exit_reason.basic == EXIT_REASON_MSR_WRITE)
+		return kvm_emulate_wrmsr(vcpu);
+	else if (exit_reason.basic == EXIT_REASON_PREEMPTION_TIMER)
+		return handle_preemption_timer(vcpu);
+	else if (exit_reason.basic == EXIT_REASON_INTERRUPT_WINDOW)
+		return handle_interrupt_window(vcpu);
+	else if (exit_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT)
+		return handle_external_interrupt(vcpu);
+	else if (exit_reason.basic == EXIT_REASON_HLT)
+		return kvm_emulate_halt(vcpu);
+	else if (exit_reason.basic == EXIT_REASON_EPT_MISCONFIG)
+		return handle_ept_misconfig(vcpu);
+#endif
 
-	निकास_handler_index = array_index_nospec((u16)निकास_reason.basic,
-						kvm_vmx_max_निकास_handlers);
-	अगर (!kvm_vmx_निकास_handlers[निकास_handler_index])
-		जाओ unexpected_vmनिकास;
+	exit_handler_index = array_index_nospec((u16)exit_reason.basic,
+						kvm_vmx_max_exit_handlers);
+	if (!kvm_vmx_exit_handlers[exit_handler_index])
+		goto unexpected_vmexit;
 
-	वापस kvm_vmx_निकास_handlers[निकास_handler_index](vcpu);
+	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
-unexpected_vmनिकास:
+unexpected_vmexit:
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
-		    निकास_reason.full);
+		    exit_reason.full);
 	dump_vmcs(vcpu);
-	vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
-	vcpu->run->पूर्णांकernal.suberror =
+	vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
+	vcpu->run->internal.suberror =
 			KVM_INTERNAL_ERROR_UNEXPECTED_EXIT_REASON;
-	vcpu->run->पूर्णांकernal.ndata = 2;
-	vcpu->run->पूर्णांकernal.data[0] = निकास_reason.full;
-	vcpu->run->पूर्णांकernal.data[1] = vcpu->arch.last_vmentry_cpu;
-	वापस 0;
-पूर्ण
+	vcpu->run->internal.ndata = 2;
+	vcpu->run->internal.data[0] = exit_reason.full;
+	vcpu->run->internal.data[1] = vcpu->arch.last_vmentry_cpu;
+	return 0;
+}
 
-अटल पूर्णांक vmx_handle_निकास(काष्ठा kvm_vcpu *vcpu, fastpath_t निकास_fastpath)
-अणु
-	पूर्णांक ret = __vmx_handle_निकास(vcpu, निकास_fastpath);
+static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
+{
+	int ret = __vmx_handle_exit(vcpu, exit_fastpath);
 
 	/*
-	 * Even when current निकास reason is handled by KVM पूर्णांकernally, we
-	 * still need to निकास to user space when bus lock detected to inक्रमm
+	 * Even when current exit reason is handled by KVM internally, we
+	 * still need to exit to user space when bus lock detected to inform
 	 * that there is a bus lock in guest.
 	 */
-	अगर (to_vmx(vcpu)->निकास_reason.bus_lock_detected) अणु
-		अगर (ret > 0)
-			vcpu->run->निकास_reason = KVM_EXIT_X86_BUS_LOCK;
+	if (to_vmx(vcpu)->exit_reason.bus_lock_detected) {
+		if (ret > 0)
+			vcpu->run->exit_reason = KVM_EXIT_X86_BUS_LOCK;
 
 		vcpu->run->flags |= KVM_RUN_X86_BUS_LOCK;
-		वापस 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		return 0;
+	}
+	return ret;
+}
 
 /*
  * Software based L1D cache flush which is used when microcode providing
  * the cache control MSR is not loaded.
  *
  * The L1D cache is 32 KiB on Nehalem and later microarchitectures, but to
- * flush it is required to पढ़ो in 64 KiB because the replacement algorithm
- * is not exactly LRU. This could be sized at runसमय via topology
- * inक्रमmation but as all relevant affected CPUs have 32KiB L1D cache size
- * there is no poपूर्णांक in करोing so.
+ * flush it is required to read in 64 KiB because the replacement algorithm
+ * is not exactly LRU. This could be sized at runtime via topology
+ * information but as all relevant affected CPUs have 32KiB L1D cache size
+ * there is no point in doing so.
  */
-अटल noinstr व्योम vmx_l1d_flush(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक size = PAGE_SIZE << L1D_CACHE_ORDER;
+static noinstr void vmx_l1d_flush(struct kvm_vcpu *vcpu)
+{
+	int size = PAGE_SIZE << L1D_CACHE_ORDER;
 
 	/*
 	 * This code is only executed when the the flush mode is 'cond' or
 	 * 'always'
 	 */
-	अगर (अटल_branch_likely(&vmx_l1d_flush_cond)) अणु
+	if (static_branch_likely(&vmx_l1d_flush_cond)) {
 		bool flush_l1d;
 
 		/*
-		 * Clear the per-vcpu flush bit, it माला_लो set again
+		 * Clear the per-vcpu flush bit, it gets set again
 		 * either from vcpu_run() or from one of the unsafe
 		 * VMEXIT handlers.
 		 */
@@ -6167,24 +6166,24 @@ unexpected_vmनिकास:
 		vcpu->arch.l1tf_flush_l1d = false;
 
 		/*
-		 * Clear the per-cpu flush bit, it माला_लो set again from
-		 * the पूर्णांकerrupt handlers.
+		 * Clear the per-cpu flush bit, it gets set again from
+		 * the interrupt handlers.
 		 */
 		flush_l1d |= kvm_get_cpu_l1tf_flush_l1d();
 		kvm_clear_cpu_l1tf_flush_l1d();
 
-		अगर (!flush_l1d)
-			वापस;
-	पूर्ण
+		if (!flush_l1d)
+			return;
+	}
 
 	vcpu->stat.l1d_flush++;
 
-	अगर (अटल_cpu_has(X86_FEATURE_FLUSH_L1D)) अणु
+	if (static_cpu_has(X86_FEATURE_FLUSH_L1D)) {
 		native_wrmsrl(MSR_IA32_FLUSH_CMD, L1D_FLUSH);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	यंत्र अस्थिर(
+	asm volatile(
 		/* First ensure the pages are in the TLB */
 		"xorl	%%eax, %%eax\n"
 		".Lpopulate_tlb:\n\t"
@@ -6205,165 +6204,165 @@ unexpected_vmनिकास:
 		:: [flush_pages] "r" (vmx_l1d_flush_pages),
 		    [size] "r" (size)
 		: "eax", "ebx", "ecx", "edx");
-पूर्ण
+}
 
-अटल व्योम vmx_update_cr8_पूर्णांकercept(काष्ठा kvm_vcpu *vcpu, पूर्णांक tpr, पूर्णांक irr)
-अणु
-	काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
-	पूर्णांक tpr_threshold;
+static void vmx_update_cr8_intercept(struct kvm_vcpu *vcpu, int tpr, int irr)
+{
+	struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
+	int tpr_threshold;
 
-	अगर (is_guest_mode(vcpu) &&
+	if (is_guest_mode(vcpu) &&
 		nested_cpu_has(vmcs12, CPU_BASED_TPR_SHADOW))
-		वापस;
+		return;
 
 	tpr_threshold = (irr == -1 || tpr < irr) ? 0 : irr;
-	अगर (is_guest_mode(vcpu))
+	if (is_guest_mode(vcpu))
 		to_vmx(vcpu)->nested.l1_tpr_threshold = tpr_threshold;
-	अन्यथा
-		vmcs_ग_लिखो32(TPR_THRESHOLD, tpr_threshold);
-पूर्ण
+	else
+		vmcs_write32(TPR_THRESHOLD, tpr_threshold);
+}
 
-व्योम vmx_set_भव_apic_mode(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vmx_set_virtual_apic_mode(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	u32 sec_exec_control;
 
-	अगर (!lapic_in_kernel(vcpu))
-		वापस;
+	if (!lapic_in_kernel(vcpu))
+		return;
 
-	अगर (!flexpriority_enabled &&
-	    !cpu_has_vmx_भवize_x2apic_mode())
-		वापस;
+	if (!flexpriority_enabled &&
+	    !cpu_has_vmx_virtualize_x2apic_mode())
+		return;
 
 	/* Postpone execution until vmcs01 is the current VMCS. */
-	अगर (is_guest_mode(vcpu)) अणु
-		vmx->nested.change_vmcs01_भव_apic_mode = true;
-		वापस;
-	पूर्ण
+	if (is_guest_mode(vcpu)) {
+		vmx->nested.change_vmcs01_virtual_apic_mode = true;
+		return;
+	}
 
 	sec_exec_control = secondary_exec_controls_get(vmx);
 	sec_exec_control &= ~(SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES |
 			      SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE);
 
-	चयन (kvm_get_apic_mode(vcpu)) अणु
-	हाल LAPIC_MODE_INVALID:
+	switch (kvm_get_apic_mode(vcpu)) {
+	case LAPIC_MODE_INVALID:
 		WARN_ONCE(true, "Invalid local APIC state");
-		अवरोध;
-	हाल LAPIC_MODE_DISABLED:
-		अवरोध;
-	हाल LAPIC_MODE_XAPIC:
-		अगर (flexpriority_enabled) अणु
+		break;
+	case LAPIC_MODE_DISABLED:
+		break;
+	case LAPIC_MODE_XAPIC:
+		if (flexpriority_enabled) {
 			sec_exec_control |=
 				SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES;
 			kvm_make_request(KVM_REQ_APIC_PAGE_RELOAD, vcpu);
 
 			/*
 			 * Flush the TLB, reloading the APIC access page will
-			 * only करो so अगर its physical address has changed, but
-			 * the guest may have inserted a non-APIC mapping पूर्णांकo
-			 * the TLB जबतक the APIC access page was disabled.
+			 * only do so if its physical address has changed, but
+			 * the guest may have inserted a non-APIC mapping into
+			 * the TLB while the APIC access page was disabled.
 			 */
 			kvm_make_request(KVM_REQ_TLB_FLUSH_CURRENT, vcpu);
-		पूर्ण
-		अवरोध;
-	हाल LAPIC_MODE_X2APIC:
-		अगर (cpu_has_vmx_भवize_x2apic_mode())
+		}
+		break;
+	case LAPIC_MODE_X2APIC:
+		if (cpu_has_vmx_virtualize_x2apic_mode())
 			sec_exec_control |=
 				SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	secondary_exec_controls_set(vmx, sec_exec_control);
 
-	vmx_update_msr_biपंचांगap(vcpu);
-पूर्ण
+	vmx_update_msr_bitmap(vcpu);
+}
 
-अटल व्योम vmx_set_apic_access_page_addr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा page *page;
+static void vmx_set_apic_access_page_addr(struct kvm_vcpu *vcpu)
+{
+	struct page *page;
 
 	/* Defer reload until vmcs01 is the current VMCS. */
-	अगर (is_guest_mode(vcpu)) अणु
+	if (is_guest_mode(vcpu)) {
 		to_vmx(vcpu)->nested.reload_vmcs01_apic_access_page = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(secondary_exec_controls_get(to_vmx(vcpu)) &
+	if (!(secondary_exec_controls_get(to_vmx(vcpu)) &
 	    SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES))
-		वापस;
+		return;
 
 	page = gfn_to_page(vcpu->kvm, APIC_DEFAULT_PHYS_BASE >> PAGE_SHIFT);
-	अगर (is_error_page(page))
-		वापस;
+	if (is_error_page(page))
+		return;
 
-	vmcs_ग_लिखो64(APIC_ACCESS_ADDR, page_to_phys(page));
+	vmcs_write64(APIC_ACCESS_ADDR, page_to_phys(page));
 	vmx_flush_tlb_current(vcpu);
 
 	/*
-	 * Do not pin apic access page in memory, the MMU notअगरier
-	 * will call us again अगर it is migrated or swapped out.
+	 * Do not pin apic access page in memory, the MMU notifier
+	 * will call us again if it is migrated or swapped out.
 	 */
 	put_page(page);
-पूर्ण
+}
 
-अटल व्योम vmx_hwapic_isr_update(काष्ठा kvm_vcpu *vcpu, पूर्णांक max_isr)
-अणु
+static void vmx_hwapic_isr_update(struct kvm_vcpu *vcpu, int max_isr)
+{
 	u16 status;
 	u8 old;
 
-	अगर (max_isr == -1)
+	if (max_isr == -1)
 		max_isr = 0;
 
-	status = vmcs_पढ़ो16(GUEST_INTR_STATUS);
+	status = vmcs_read16(GUEST_INTR_STATUS);
 	old = status >> 8;
-	अगर (max_isr != old) अणु
+	if (max_isr != old) {
 		status &= 0xff;
 		status |= max_isr << 8;
-		vmcs_ग_लिखो16(GUEST_INTR_STATUS, status);
-	पूर्ण
-पूर्ण
+		vmcs_write16(GUEST_INTR_STATUS, status);
+	}
+}
 
-अटल व्योम vmx_set_rvi(पूर्णांक vector)
-अणु
+static void vmx_set_rvi(int vector)
+{
 	u16 status;
 	u8 old;
 
-	अगर (vector == -1)
+	if (vector == -1)
 		vector = 0;
 
-	status = vmcs_पढ़ो16(GUEST_INTR_STATUS);
+	status = vmcs_read16(GUEST_INTR_STATUS);
 	old = (u8)status & 0xff;
-	अगर ((u8)vector != old) अणु
+	if ((u8)vector != old) {
 		status &= ~0xff;
 		status |= (u8)vector;
-		vmcs_ग_लिखो16(GUEST_INTR_STATUS, status);
-	पूर्ण
-पूर्ण
+		vmcs_write16(GUEST_INTR_STATUS, status);
+	}
+}
 
-अटल व्योम vmx_hwapic_irr_update(काष्ठा kvm_vcpu *vcpu, पूर्णांक max_irr)
-अणु
+static void vmx_hwapic_irr_update(struct kvm_vcpu *vcpu, int max_irr)
+{
 	/*
 	 * When running L2, updating RVI is only relevant when
-	 * vmcs12 भव-पूर्णांकerrupt-delivery enabled.
+	 * vmcs12 virtual-interrupt-delivery enabled.
 	 * However, it can be enabled only when L1 also
-	 * पूर्णांकercepts बाह्यal-पूर्णांकerrupts and in that हाल
-	 * we should not update vmcs02 RVI but instead पूर्णांकercept
-	 * पूर्णांकerrupt. Thereक्रमe, करो nothing when running L2.
+	 * intercepts external-interrupts and in that case
+	 * we should not update vmcs02 RVI but instead intercept
+	 * interrupt. Therefore, do nothing when running L2.
 	 */
-	अगर (!is_guest_mode(vcpu))
+	if (!is_guest_mode(vcpu))
 		vmx_set_rvi(max_irr);
-पूर्ण
+}
 
-अटल पूर्णांक vmx_sync_pir_to_irr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	पूर्णांक max_irr;
+static int vmx_sync_pir_to_irr(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	int max_irr;
 	bool max_irr_updated;
 
 	WARN_ON(!vcpu->arch.apicv_active);
-	अगर (pi_test_on(&vmx->pi_desc)) अणु
+	if (pi_test_on(&vmx->pi_desc)) {
 		pi_clear_on(&vmx->pi_desc);
 		/*
-		 * IOMMU can ग_लिखो to PID.ON, so the barrier matters even on UP.
+		 * IOMMU can write to PID.ON, so the barrier matters even on UP.
 		 * But on x86 this is just a compiler barrier anyway.
 		 */
 		smp_mb__after_atomic();
@@ -6371,382 +6370,382 @@ unexpected_vmनिकास:
 			kvm_apic_update_irr(vcpu, vmx->pi_desc.pir, &max_irr);
 
 		/*
-		 * If we are running L2 and L1 has a new pending पूर्णांकerrupt
+		 * If we are running L2 and L1 has a new pending interrupt
 		 * which can be injected, we should re-evaluate
-		 * what should be करोne with this new L1 पूर्णांकerrupt.
-		 * If L1 पूर्णांकercepts बाह्यal-पूर्णांकerrupts, we should
-		 * निकास from L2 to L1. Otherwise, पूर्णांकerrupt should be
+		 * what should be done with this new L1 interrupt.
+		 * If L1 intercepts external-interrupts, we should
+		 * exit from L2 to L1. Otherwise, interrupt should be
 		 * delivered directly to L2.
 		 */
-		अगर (is_guest_mode(vcpu) && max_irr_updated) अणु
-			अगर (nested_निकास_on_पूर्णांकr(vcpu))
-				kvm_vcpu_निकासing_guest_mode(vcpu);
-			अन्यथा
+		if (is_guest_mode(vcpu) && max_irr_updated) {
+			if (nested_exit_on_intr(vcpu))
+				kvm_vcpu_exiting_guest_mode(vcpu);
+			else
 				kvm_make_request(KVM_REQ_EVENT, vcpu);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		max_irr = kvm_lapic_find_highest_irr(vcpu);
-	पूर्ण
+	}
 	vmx_hwapic_irr_update(vcpu, max_irr);
-	वापस max_irr;
-पूर्ण
+	return max_irr;
+}
 
-अटल व्योम vmx_load_eoi_निकासmap(काष्ठा kvm_vcpu *vcpu, u64 *eoi_निकास_biपंचांगap)
-अणु
-	अगर (!kvm_vcpu_apicv_active(vcpu))
-		वापस;
+static void vmx_load_eoi_exitmap(struct kvm_vcpu *vcpu, u64 *eoi_exit_bitmap)
+{
+	if (!kvm_vcpu_apicv_active(vcpu))
+		return;
 
-	vmcs_ग_लिखो64(EOI_EXIT_BITMAP0, eoi_निकास_biपंचांगap[0]);
-	vmcs_ग_लिखो64(EOI_EXIT_BITMAP1, eoi_निकास_biपंचांगap[1]);
-	vmcs_ग_लिखो64(EOI_EXIT_BITMAP2, eoi_निकास_biपंचांगap[2]);
-	vmcs_ग_लिखो64(EOI_EXIT_BITMAP3, eoi_निकास_biपंचांगap[3]);
-पूर्ण
+	vmcs_write64(EOI_EXIT_BITMAP0, eoi_exit_bitmap[0]);
+	vmcs_write64(EOI_EXIT_BITMAP1, eoi_exit_bitmap[1]);
+	vmcs_write64(EOI_EXIT_BITMAP2, eoi_exit_bitmap[2]);
+	vmcs_write64(EOI_EXIT_BITMAP3, eoi_exit_bitmap[3]);
+}
 
-अटल व्योम vmx_apicv_post_state_restore(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_apicv_post_state_restore(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	pi_clear_on(&vmx->pi_desc);
-	स_रखो(vmx->pi_desc.pir, 0, माप(vmx->pi_desc.pir));
-पूर्ण
+	memset(vmx->pi_desc.pir, 0, sizeof(vmx->pi_desc.pir));
+}
 
-व्योम vmx_करो_पूर्णांकerrupt_nmi_irqoff(अचिन्हित दीर्घ entry);
+void vmx_do_interrupt_nmi_irqoff(unsigned long entry);
 
-अटल व्योम handle_पूर्णांकerrupt_nmi_irqoff(काष्ठा kvm_vcpu *vcpu,
-					अचिन्हित दीर्घ entry)
-अणु
-	kvm_beक्रमe_पूर्णांकerrupt(vcpu);
-	vmx_करो_पूर्णांकerrupt_nmi_irqoff(entry);
-	kvm_after_पूर्णांकerrupt(vcpu);
-पूर्ण
+static void handle_interrupt_nmi_irqoff(struct kvm_vcpu *vcpu,
+					unsigned long entry)
+{
+	kvm_before_interrupt(vcpu);
+	vmx_do_interrupt_nmi_irqoff(entry);
+	kvm_after_interrupt(vcpu);
+}
 
-अटल व्योम handle_exception_nmi_irqoff(काष्ठा vcpu_vmx *vmx)
-अणु
-	स्थिर अचिन्हित दीर्घ nmi_entry = (अचिन्हित दीर्घ)यंत्र_exc_nmi_noist;
-	u32 पूर्णांकr_info = vmx_get_पूर्णांकr_info(&vmx->vcpu);
+static void handle_exception_nmi_irqoff(struct vcpu_vmx *vmx)
+{
+	const unsigned long nmi_entry = (unsigned long)asm_exc_nmi_noist;
+	u32 intr_info = vmx_get_intr_info(&vmx->vcpu);
 
-	/* अगर निकास due to PF check क्रम async PF */
-	अगर (is_page_fault(पूर्णांकr_info))
-		vmx->vcpu.arch.apf.host_apf_flags = kvm_पढ़ो_and_reset_apf_flags();
-	/* Handle machine checks beक्रमe पूर्णांकerrupts are enabled */
-	अन्यथा अगर (is_machine_check(पूर्णांकr_info))
+	/* if exit due to PF check for async PF */
+	if (is_page_fault(intr_info))
+		vmx->vcpu.arch.apf.host_apf_flags = kvm_read_and_reset_apf_flags();
+	/* Handle machine checks before interrupts are enabled */
+	else if (is_machine_check(intr_info))
 		kvm_machine_check();
-	/* We need to handle NMIs beक्रमe पूर्णांकerrupts are enabled */
-	अन्यथा अगर (is_nmi(पूर्णांकr_info))
-		handle_पूर्णांकerrupt_nmi_irqoff(&vmx->vcpu, nmi_entry);
-पूर्ण
+	/* We need to handle NMIs before interrupts are enabled */
+	else if (is_nmi(intr_info))
+		handle_interrupt_nmi_irqoff(&vmx->vcpu, nmi_entry);
+}
 
-अटल व्योम handle_बाह्यal_पूर्णांकerrupt_irqoff(काष्ठा kvm_vcpu *vcpu)
-अणु
-	u32 पूर्णांकr_info = vmx_get_पूर्णांकr_info(vcpu);
-	अचिन्हित पूर्णांक vector = पूर्णांकr_info & INTR_INFO_VECTOR_MASK;
+static void handle_external_interrupt_irqoff(struct kvm_vcpu *vcpu)
+{
+	u32 intr_info = vmx_get_intr_info(vcpu);
+	unsigned int vector = intr_info & INTR_INFO_VECTOR_MASK;
 	gate_desc *desc = (gate_desc *)host_idt_base + vector;
 
-	अगर (WARN_ONCE(!is_बाह्यal_पूर्णांकr(पूर्णांकr_info),
-	    "KVM: unexpected VM-Exit interrupt info: 0x%x", पूर्णांकr_info))
-		वापस;
+	if (WARN_ONCE(!is_external_intr(intr_info),
+	    "KVM: unexpected VM-Exit interrupt info: 0x%x", intr_info))
+		return;
 
-	handle_पूर्णांकerrupt_nmi_irqoff(vcpu, gate_offset(desc));
-पूर्ण
+	handle_interrupt_nmi_irqoff(vcpu, gate_offset(desc));
+}
 
-अटल व्योम vmx_handle_निकास_irqoff(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_handle_exit_irqoff(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (vmx->निकास_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT)
-		handle_बाह्यal_पूर्णांकerrupt_irqoff(vcpu);
-	अन्यथा अगर (vmx->निकास_reason.basic == EXIT_REASON_EXCEPTION_NMI)
+	if (vmx->exit_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT)
+		handle_external_interrupt_irqoff(vcpu);
+	else if (vmx->exit_reason.basic == EXIT_REASON_EXCEPTION_NMI)
 		handle_exception_nmi_irqoff(vmx);
-पूर्ण
+}
 
 /*
- * The kvm parameter can be शून्य (module initialization, or invocation beक्रमe
- * VM creation). Be sure to check the kvm parameter beक्रमe using it.
+ * The kvm parameter can be NULL (module initialization, or invocation before
+ * VM creation). Be sure to check the kvm parameter before using it.
  */
-अटल bool vmx_has_emulated_msr(काष्ठा kvm *kvm, u32 index)
-अणु
-	चयन (index) अणु
-	हाल MSR_IA32_SMBASE:
+static bool vmx_has_emulated_msr(struct kvm *kvm, u32 index)
+{
+	switch (index) {
+	case MSR_IA32_SMBASE:
 		/*
-		 * We cannot करो SMM unless we can run the guest in big
+		 * We cannot do SMM unless we can run the guest in big
 		 * real mode.
 		 */
-		वापस enable_unrestricted_guest || emulate_invalid_guest_state;
-	हाल MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
-		वापस nested;
-	हाल MSR_AMD64_VIRT_SPEC_CTRL:
+		return enable_unrestricted_guest || emulate_invalid_guest_state;
+	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
+		return nested;
+	case MSR_AMD64_VIRT_SPEC_CTRL:
 		/* This is AMD only.  */
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+		return false;
+	default:
+		return true;
+	}
+}
 
-अटल व्योम vmx_recover_nmi_blocking(काष्ठा vcpu_vmx *vmx)
-अणु
-	u32 निकास_पूर्णांकr_info;
+static void vmx_recover_nmi_blocking(struct vcpu_vmx *vmx)
+{
+	u32 exit_intr_info;
 	bool unblock_nmi;
 	u8 vector;
 	bool idtv_info_valid;
 
 	idtv_info_valid = vmx->idt_vectoring_info & VECTORING_INFO_VALID_MASK;
 
-	अगर (enable_vnmi) अणु
-		अगर (vmx->loaded_vmcs->nmi_known_unmasked)
-			वापस;
+	if (enable_vnmi) {
+		if (vmx->loaded_vmcs->nmi_known_unmasked)
+			return;
 
-		निकास_पूर्णांकr_info = vmx_get_पूर्णांकr_info(&vmx->vcpu);
-		unblock_nmi = (निकास_पूर्णांकr_info & INTR_INFO_UNBLOCK_NMI) != 0;
-		vector = निकास_पूर्णांकr_info & INTR_INFO_VECTOR_MASK;
+		exit_intr_info = vmx_get_intr_info(&vmx->vcpu);
+		unblock_nmi = (exit_intr_info & INTR_INFO_UNBLOCK_NMI) != 0;
+		vector = exit_intr_info & INTR_INFO_VECTOR_MASK;
 		/*
 		 * SDM 3: 27.7.1.2 (September 2008)
-		 * Re-set bit "block by NMI" beक्रमe VM entry अगर vmनिकास caused by
+		 * Re-set bit "block by NMI" before VM entry if vmexit caused by
 		 * a guest IRET fault.
 		 * SDM 3: 23.2.2 (September 2008)
-		 * Bit 12 is undefined in any of the following हालs:
-		 *  If the VM निकास sets the valid bit in the IDT-vectoring
-		 *   inक्रमmation field.
-		 *  If the VM निकास is due to a द्विगुन fault.
+		 * Bit 12 is undefined in any of the following cases:
+		 *  If the VM exit sets the valid bit in the IDT-vectoring
+		 *   information field.
+		 *  If the VM exit is due to a double fault.
 		 */
-		अगर ((निकास_पूर्णांकr_info & INTR_INFO_VALID_MASK) && unblock_nmi &&
+		if ((exit_intr_info & INTR_INFO_VALID_MASK) && unblock_nmi &&
 		    vector != DF_VECTOR && !idtv_info_valid)
 			vmcs_set_bits(GUEST_INTERRUPTIBILITY_INFO,
 				      GUEST_INTR_STATE_NMI);
-		अन्यथा
+		else
 			vmx->loaded_vmcs->nmi_known_unmasked =
-				!(vmcs_पढ़ो32(GUEST_INTERRUPTIBILITY_INFO)
+				!(vmcs_read32(GUEST_INTERRUPTIBILITY_INFO)
 				  & GUEST_INTR_STATE_NMI);
-	पूर्ण अन्यथा अगर (unlikely(vmx->loaded_vmcs->soft_vnmi_blocked))
-		vmx->loaded_vmcs->vnmi_blocked_समय +=
-			kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(),
-					      vmx->loaded_vmcs->entry_समय));
-पूर्ण
+	} else if (unlikely(vmx->loaded_vmcs->soft_vnmi_blocked))
+		vmx->loaded_vmcs->vnmi_blocked_time +=
+			ktime_to_ns(ktime_sub(ktime_get(),
+					      vmx->loaded_vmcs->entry_time));
+}
 
-अटल व्योम __vmx_complete_पूर्णांकerrupts(काष्ठा kvm_vcpu *vcpu,
+static void __vmx_complete_interrupts(struct kvm_vcpu *vcpu,
 				      u32 idt_vectoring_info,
-				      पूर्णांक instr_len_field,
-				      पूर्णांक error_code_field)
-अणु
+				      int instr_len_field,
+				      int error_code_field)
+{
 	u8 vector;
-	पूर्णांक type;
+	int type;
 	bool idtv_info_valid;
 
 	idtv_info_valid = idt_vectoring_info & VECTORING_INFO_VALID_MASK;
 
 	vcpu->arch.nmi_injected = false;
 	kvm_clear_exception_queue(vcpu);
-	kvm_clear_पूर्णांकerrupt_queue(vcpu);
+	kvm_clear_interrupt_queue(vcpu);
 
-	अगर (!idtv_info_valid)
-		वापस;
+	if (!idtv_info_valid)
+		return;
 
 	kvm_make_request(KVM_REQ_EVENT, vcpu);
 
 	vector = idt_vectoring_info & VECTORING_INFO_VECTOR_MASK;
 	type = idt_vectoring_info & VECTORING_INFO_TYPE_MASK;
 
-	चयन (type) अणु
-	हाल INTR_TYPE_NMI_INTR:
+	switch (type) {
+	case INTR_TYPE_NMI_INTR:
 		vcpu->arch.nmi_injected = true;
 		/*
 		 * SDM 3: 27.7.1.2 (September 2008)
-		 * Clear bit "block by NMI" beक्रमe VM entry अगर a NMI
+		 * Clear bit "block by NMI" before VM entry if a NMI
 		 * delivery faulted.
 		 */
 		vmx_set_nmi_mask(vcpu, false);
-		अवरोध;
-	हाल INTR_TYPE_SOFT_EXCEPTION:
-		vcpu->arch.event_निकास_inst_len = vmcs_पढ़ो32(instr_len_field);
+		break;
+	case INTR_TYPE_SOFT_EXCEPTION:
+		vcpu->arch.event_exit_inst_len = vmcs_read32(instr_len_field);
 		fallthrough;
-	हाल INTR_TYPE_HARD_EXCEPTION:
-		अगर (idt_vectoring_info & VECTORING_INFO_DELIVER_CODE_MASK) अणु
-			u32 err = vmcs_पढ़ो32(error_code_field);
+	case INTR_TYPE_HARD_EXCEPTION:
+		if (idt_vectoring_info & VECTORING_INFO_DELIVER_CODE_MASK) {
+			u32 err = vmcs_read32(error_code_field);
 			kvm_requeue_exception_e(vcpu, vector, err);
-		पूर्ण अन्यथा
+		} else
 			kvm_requeue_exception(vcpu, vector);
-		अवरोध;
-	हाल INTR_TYPE_SOFT_INTR:
-		vcpu->arch.event_निकास_inst_len = vmcs_पढ़ो32(instr_len_field);
+		break;
+	case INTR_TYPE_SOFT_INTR:
+		vcpu->arch.event_exit_inst_len = vmcs_read32(instr_len_field);
 		fallthrough;
-	हाल INTR_TYPE_EXT_INTR:
-		kvm_queue_पूर्णांकerrupt(vcpu, vector, type == INTR_TYPE_SOFT_INTR);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case INTR_TYPE_EXT_INTR:
+		kvm_queue_interrupt(vcpu, vector, type == INTR_TYPE_SOFT_INTR);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम vmx_complete_पूर्णांकerrupts(काष्ठा vcpu_vmx *vmx)
-अणु
-	__vmx_complete_पूर्णांकerrupts(&vmx->vcpu, vmx->idt_vectoring_info,
+static void vmx_complete_interrupts(struct vcpu_vmx *vmx)
+{
+	__vmx_complete_interrupts(&vmx->vcpu, vmx->idt_vectoring_info,
 				  VM_EXIT_INSTRUCTION_LEN,
 				  IDT_VECTORING_ERROR_CODE);
-पूर्ण
+}
 
-अटल व्योम vmx_cancel_injection(काष्ठा kvm_vcpu *vcpu)
-अणु
-	__vmx_complete_पूर्णांकerrupts(vcpu,
-				  vmcs_पढ़ो32(VM_ENTRY_INTR_INFO_FIELD),
+static void vmx_cancel_injection(struct kvm_vcpu *vcpu)
+{
+	__vmx_complete_interrupts(vcpu,
+				  vmcs_read32(VM_ENTRY_INTR_INFO_FIELD),
 				  VM_ENTRY_INSTRUCTION_LEN,
 				  VM_ENTRY_EXCEPTION_ERROR_CODE);
 
-	vmcs_ग_लिखो32(VM_ENTRY_INTR_INFO_FIELD, 0);
-पूर्ण
+	vmcs_write32(VM_ENTRY_INTR_INFO_FIELD, 0);
+}
 
-अटल व्योम atomic_चयन_perf_msrs(काष्ठा vcpu_vmx *vmx)
-अणु
-	पूर्णांक i, nr_msrs;
-	काष्ठा perf_guest_चयन_msr *msrs;
+static void atomic_switch_perf_msrs(struct vcpu_vmx *vmx)
+{
+	int i, nr_msrs;
+	struct perf_guest_switch_msr *msrs;
 
-	/* Note, nr_msrs may be garbage अगर perf_guest_get_msrs() वापसs शून्य. */
+	/* Note, nr_msrs may be garbage if perf_guest_get_msrs() returns NULL. */
 	msrs = perf_guest_get_msrs(&nr_msrs);
-	अगर (!msrs)
-		वापस;
+	if (!msrs)
+		return;
 
-	क्रम (i = 0; i < nr_msrs; i++)
-		अगर (msrs[i].host == msrs[i].guest)
-			clear_atomic_चयन_msr(vmx, msrs[i].msr);
-		अन्यथा
-			add_atomic_चयन_msr(vmx, msrs[i].msr, msrs[i].guest,
+	for (i = 0; i < nr_msrs; i++)
+		if (msrs[i].host == msrs[i].guest)
+			clear_atomic_switch_msr(vmx, msrs[i].msr);
+		else
+			add_atomic_switch_msr(vmx, msrs[i].msr, msrs[i].guest,
 					msrs[i].host, false);
-पूर्ण
+}
 
-अटल व्योम vmx_update_hv_समयr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_update_hv_timer(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	u64 tscl;
 	u32 delta_tsc;
 
-	अगर (vmx->req_immediate_निकास) अणु
-		vmcs_ग_लिखो32(VMX_PREEMPTION_TIMER_VALUE, 0);
-		vmx->loaded_vmcs->hv_समयr_soft_disabled = false;
-	पूर्ण अन्यथा अगर (vmx->hv_deadline_tsc != -1) अणु
+	if (vmx->req_immediate_exit) {
+		vmcs_write32(VMX_PREEMPTION_TIMER_VALUE, 0);
+		vmx->loaded_vmcs->hv_timer_soft_disabled = false;
+	} else if (vmx->hv_deadline_tsc != -1) {
 		tscl = rdtsc();
-		अगर (vmx->hv_deadline_tsc > tscl)
-			/* set_hv_समयr ensures the delta fits in 32-bits */
+		if (vmx->hv_deadline_tsc > tscl)
+			/* set_hv_timer ensures the delta fits in 32-bits */
 			delta_tsc = (u32)((vmx->hv_deadline_tsc - tscl) >>
-				cpu_preemption_समयr_multi);
-		अन्यथा
+				cpu_preemption_timer_multi);
+		else
 			delta_tsc = 0;
 
-		vmcs_ग_लिखो32(VMX_PREEMPTION_TIMER_VALUE, delta_tsc);
-		vmx->loaded_vmcs->hv_समयr_soft_disabled = false;
-	पूर्ण अन्यथा अगर (!vmx->loaded_vmcs->hv_समयr_soft_disabled) अणु
-		vmcs_ग_लिखो32(VMX_PREEMPTION_TIMER_VALUE, -1);
-		vmx->loaded_vmcs->hv_समयr_soft_disabled = true;
-	पूर्ण
-पूर्ण
+		vmcs_write32(VMX_PREEMPTION_TIMER_VALUE, delta_tsc);
+		vmx->loaded_vmcs->hv_timer_soft_disabled = false;
+	} else if (!vmx->loaded_vmcs->hv_timer_soft_disabled) {
+		vmcs_write32(VMX_PREEMPTION_TIMER_VALUE, -1);
+		vmx->loaded_vmcs->hv_timer_soft_disabled = true;
+	}
+}
 
-व्योम noinstr vmx_update_host_rsp(काष्ठा vcpu_vmx *vmx, अचिन्हित दीर्घ host_rsp)
-अणु
-	अगर (unlikely(host_rsp != vmx->loaded_vmcs->host_state.rsp)) अणु
+void noinstr vmx_update_host_rsp(struct vcpu_vmx *vmx, unsigned long host_rsp)
+{
+	if (unlikely(host_rsp != vmx->loaded_vmcs->host_state.rsp)) {
 		vmx->loaded_vmcs->host_state.rsp = host_rsp;
-		vmcs_ग_लिखोl(HOST_RSP, host_rsp);
-	पूर्ण
-पूर्ण
+		vmcs_writel(HOST_RSP, host_rsp);
+	}
+}
 
-अटल fastpath_t vmx_निकास_handlers_fastpath(काष्ठा kvm_vcpu *vcpu)
-अणु
-	चयन (to_vmx(vcpu)->निकास_reason.basic) अणु
-	हाल EXIT_REASON_MSR_WRITE:
-		वापस handle_fastpath_set_msr_irqoff(vcpu);
-	हाल EXIT_REASON_PREEMPTION_TIMER:
-		वापस handle_fastpath_preemption_समयr(vcpu);
-	शेष:
-		वापस EXIT_FASTPATH_NONE;
-	पूर्ण
-पूर्ण
+static fastpath_t vmx_exit_handlers_fastpath(struct kvm_vcpu *vcpu)
+{
+	switch (to_vmx(vcpu)->exit_reason.basic) {
+	case EXIT_REASON_MSR_WRITE:
+		return handle_fastpath_set_msr_irqoff(vcpu);
+	case EXIT_REASON_PREEMPTION_TIMER:
+		return handle_fastpath_preemption_timer(vcpu);
+	default:
+		return EXIT_FASTPATH_NONE;
+	}
+}
 
-अटल noinstr व्योम vmx_vcpu_enter_निकास(काष्ठा kvm_vcpu *vcpu,
-					काष्ठा vcpu_vmx *vmx)
-अणु
+static noinstr void vmx_vcpu_enter_exit(struct kvm_vcpu *vcpu,
+					struct vcpu_vmx *vmx)
+{
 	kvm_guest_enter_irqoff();
 
 	/* L1D Flush includes CPU buffer clear to mitigate MDS */
-	अगर (अटल_branch_unlikely(&vmx_l1d_should_flush))
+	if (static_branch_unlikely(&vmx_l1d_should_flush))
 		vmx_l1d_flush(vcpu);
-	अन्यथा अगर (अटल_branch_unlikely(&mds_user_clear))
+	else if (static_branch_unlikely(&mds_user_clear))
 		mds_clear_cpu_buffers();
 
-	अगर (vcpu->arch.cr2 != native_पढ़ो_cr2())
-		native_ग_लिखो_cr2(vcpu->arch.cr2);
+	if (vcpu->arch.cr2 != native_read_cr2())
+		native_write_cr2(vcpu->arch.cr2);
 
-	vmx->fail = __vmx_vcpu_run(vmx, (अचिन्हित दीर्घ *)&vcpu->arch.regs,
+	vmx->fail = __vmx_vcpu_run(vmx, (unsigned long *)&vcpu->arch.regs,
 				   vmx->loaded_vmcs->launched);
 
-	vcpu->arch.cr2 = native_पढ़ो_cr2();
+	vcpu->arch.cr2 = native_read_cr2();
 
-	kvm_guest_निकास_irqoff();
-पूर्ण
+	kvm_guest_exit_irqoff();
+}
 
-अटल fastpath_t vmx_vcpu_run(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	अचिन्हित दीर्घ cr3, cr4;
+static fastpath_t vmx_vcpu_run(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	unsigned long cr3, cr4;
 
-	/* Record the guest's net vcpu समय क्रम enक्रमced NMI injections. */
-	अगर (unlikely(!enable_vnmi &&
+	/* Record the guest's net vcpu time for enforced NMI injections. */
+	if (unlikely(!enable_vnmi &&
 		     vmx->loaded_vmcs->soft_vnmi_blocked))
-		vmx->loaded_vmcs->entry_समय = kसमय_get();
+		vmx->loaded_vmcs->entry_time = ktime_get();
 
-	/* Don't enter VMX अगर guest state is invalid, let the निकास handler
+	/* Don't enter VMX if guest state is invalid, let the exit handler
 	   start emulation until we arrive back to a valid state */
-	अगर (vmx->emulation_required)
-		वापस EXIT_FASTPATH_NONE;
+	if (vmx->emulation_required)
+		return EXIT_FASTPATH_NONE;
 
 	trace_kvm_entry(vcpu);
 
-	अगर (vmx->ple_winकरोw_dirty) अणु
-		vmx->ple_winकरोw_dirty = false;
-		vmcs_ग_लिखो32(PLE_WINDOW, vmx->ple_winकरोw);
-	पूर्ण
+	if (vmx->ple_window_dirty) {
+		vmx->ple_window_dirty = false;
+		vmcs_write32(PLE_WINDOW, vmx->ple_window);
+	}
 
 	/*
-	 * We did this in prepare_चयन_to_guest, because it needs to
-	 * be within srcu_पढ़ो_lock.
+	 * We did this in prepare_switch_to_guest, because it needs to
+	 * be within srcu_read_lock.
 	 */
-	WARN_ON_ONCE(vmx->nested.need_vmcs12_to_shaकरोw_sync);
+	WARN_ON_ONCE(vmx->nested.need_vmcs12_to_shadow_sync);
 
-	अगर (kvm_रेजिस्टर_is_dirty(vcpu, VCPU_REGS_RSP))
-		vmcs_ग_लिखोl(GUEST_RSP, vcpu->arch.regs[VCPU_REGS_RSP]);
-	अगर (kvm_रेजिस्टर_is_dirty(vcpu, VCPU_REGS_RIP))
-		vmcs_ग_लिखोl(GUEST_RIP, vcpu->arch.regs[VCPU_REGS_RIP]);
+	if (kvm_register_is_dirty(vcpu, VCPU_REGS_RSP))
+		vmcs_writel(GUEST_RSP, vcpu->arch.regs[VCPU_REGS_RSP]);
+	if (kvm_register_is_dirty(vcpu, VCPU_REGS_RIP))
+		vmcs_writel(GUEST_RIP, vcpu->arch.regs[VCPU_REGS_RIP]);
 
 	cr3 = __get_current_cr3_fast();
-	अगर (unlikely(cr3 != vmx->loaded_vmcs->host_state.cr3)) अणु
-		vmcs_ग_लिखोl(HOST_CR3, cr3);
+	if (unlikely(cr3 != vmx->loaded_vmcs->host_state.cr3)) {
+		vmcs_writel(HOST_CR3, cr3);
 		vmx->loaded_vmcs->host_state.cr3 = cr3;
-	पूर्ण
+	}
 
-	cr4 = cr4_पढ़ो_shaकरोw();
-	अगर (unlikely(cr4 != vmx->loaded_vmcs->host_state.cr4)) अणु
-		vmcs_ग_लिखोl(HOST_CR4, cr4);
+	cr4 = cr4_read_shadow();
+	if (unlikely(cr4 != vmx->loaded_vmcs->host_state.cr4)) {
+		vmcs_writel(HOST_CR4, cr4);
 		vmx->loaded_vmcs->host_state.cr4 = cr4;
-	पूर्ण
+	}
 
 	/* When single-stepping over STI and MOV SS, we must clear the
-	 * corresponding पूर्णांकerruptibility bits in the guest state. Otherwise
+	 * corresponding interruptibility bits in the guest state. Otherwise
 	 * vmentry fails as it then expects bit 14 (BS) in pending debug
-	 * exceptions being set, but that's not correct क्रम the guest debugging
-	 * हाल. */
-	अगर (vcpu->guest_debug & KVM_GUESTDBG_SINGLESTEP)
-		vmx_set_पूर्णांकerrupt_shaकरोw(vcpu, 0);
+	 * exceptions being set, but that's not correct for the guest debugging
+	 * case. */
+	if (vcpu->guest_debug & KVM_GUESTDBG_SINGLESTEP)
+		vmx_set_interrupt_shadow(vcpu, 0);
 
 	kvm_load_guest_xsave_state(vcpu);
 
 	pt_guest_enter(vmx);
 
-	atomic_चयन_perf_msrs(vmx);
-	अगर (पूर्णांकel_pmu_lbr_is_enabled(vcpu))
+	atomic_switch_perf_msrs(vmx);
+	if (intel_pmu_lbr_is_enabled(vcpu))
 		vmx_passthrough_lbr_msrs(vcpu);
 
-	अगर (enable_preemption_समयr)
-		vmx_update_hv_समयr(vcpu);
+	if (enable_preemption_timer)
+		vmx_update_hv_timer(vcpu);
 
-	kvm_रुको_lapic_expire(vcpu);
+	kvm_wait_lapic_expire(vcpu);
 
 	/*
-	 * If this vCPU has touched SPEC_CTRL, restore the guest's value अगर
+	 * If this vCPU has touched SPEC_CTRL, restore the guest's value if
 	 * it's non-zero. Since vmentry is serialising on affected CPUs, there
 	 * is no need to worry about the conditional branch over the wrmsr
 	 * being speculatively taken.
@@ -6754,108 +6753,108 @@ unexpected_vmनिकास:
 	x86_spec_ctrl_set_guest(vmx->spec_ctrl, 0);
 
 	/* The actual VMENTER/EXIT is in the .noinstr.text section. */
-	vmx_vcpu_enter_निकास(vcpu, vmx);
+	vmx_vcpu_enter_exit(vcpu, vmx);
 
 	/*
-	 * We करो not use IBRS in the kernel. If this vCPU has used the
+	 * We do not use IBRS in the kernel. If this vCPU has used the
 	 * SPEC_CTRL MSR it may have left it on; save the value and
 	 * turn it off. This is much more efficient than blindly adding
-	 * it to the atomic save/restore list. Especially as the क्रमmer
-	 * (Saving guest MSRs on vmनिकास) करोesn't even exist in KVM.
+	 * it to the atomic save/restore list. Especially as the former
+	 * (Saving guest MSRs on vmexit) doesn't even exist in KVM.
 	 *
-	 * For non-nested हाल:
-	 * If the L01 MSR biपंचांगap करोes not पूर्णांकercept the MSR, then we need to
+	 * For non-nested case:
+	 * If the L01 MSR bitmap does not intercept the MSR, then we need to
 	 * save it.
 	 *
-	 * For nested हाल:
-	 * If the L02 MSR biपंचांगap करोes not पूर्णांकercept the MSR, then we need to
+	 * For nested case:
+	 * If the L02 MSR bitmap does not intercept the MSR, then we need to
 	 * save it.
 	 */
-	अगर (unlikely(!msr_ग_लिखो_पूर्णांकercepted(vcpu, MSR_IA32_SPEC_CTRL)))
-		vmx->spec_ctrl = native_पढ़ो_msr(MSR_IA32_SPEC_CTRL);
+	if (unlikely(!msr_write_intercepted(vcpu, MSR_IA32_SPEC_CTRL)))
+		vmx->spec_ctrl = native_read_msr(MSR_IA32_SPEC_CTRL);
 
 	x86_spec_ctrl_restore_host(vmx->spec_ctrl, 0);
 
-	/* All fields are clean at this poपूर्णांक */
-	अगर (अटल_branch_unlikely(&enable_evmcs)) अणु
+	/* All fields are clean at this point */
+	if (static_branch_unlikely(&enable_evmcs)) {
 		current_evmcs->hv_clean_fields |=
 			HV_VMX_ENLIGHTENED_CLEAN_FIELD_ALL;
 
 		current_evmcs->hv_vp_id = kvm_hv_get_vpindex(vcpu);
-	पूर्ण
+	}
 
-	/* MSR_IA32_DEBUGCTLMSR is zeroed on vmनिकास. Restore it अगर needed */
-	अगर (vmx->host_debugctlmsr)
+	/* MSR_IA32_DEBUGCTLMSR is zeroed on vmexit. Restore it if needed */
+	if (vmx->host_debugctlmsr)
 		update_debugctlmsr(vmx->host_debugctlmsr);
 
-#अगर_अघोषित CONFIG_X86_64
+#ifndef CONFIG_X86_64
 	/*
-	 * The sysनिकास path करोes not restore ds/es, so we must set them to
+	 * The sysexit path does not restore ds/es, so we must set them to
 	 * a reasonable value ourselves.
 	 *
-	 * We can't defer this to vmx_prepare_चयन_to_host() since that
-	 * function may be executed in पूर्णांकerrupt context, which saves and
-	 * restore segments around it, nullअगरying its effect.
+	 * We can't defer this to vmx_prepare_switch_to_host() since that
+	 * function may be executed in interrupt context, which saves and
+	 * restore segments around it, nullifying its effect.
 	 */
 	loadsegment(ds, __USER_DS);
 	loadsegment(es, __USER_DS);
-#पूर्ण_अगर
+#endif
 
-	vmx_रेजिस्टर_cache_reset(vcpu);
+	vmx_register_cache_reset(vcpu);
 
-	pt_guest_निकास(vmx);
+	pt_guest_exit(vmx);
 
 	kvm_load_host_xsave_state(vcpu);
 
 	vmx->nested.nested_run_pending = 0;
 	vmx->idt_vectoring_info = 0;
 
-	अगर (unlikely(vmx->fail)) अणु
-		vmx->निकास_reason.full = 0xdead;
-		वापस EXIT_FASTPATH_NONE;
-	पूर्ण
+	if (unlikely(vmx->fail)) {
+		vmx->exit_reason.full = 0xdead;
+		return EXIT_FASTPATH_NONE;
+	}
 
-	vmx->निकास_reason.full = vmcs_पढ़ो32(VM_EXIT_REASON);
-	अगर (unlikely((u16)vmx->निकास_reason.basic == EXIT_REASON_MCE_DURING_VMENTRY))
+	vmx->exit_reason.full = vmcs_read32(VM_EXIT_REASON);
+	if (unlikely((u16)vmx->exit_reason.basic == EXIT_REASON_MCE_DURING_VMENTRY))
 		kvm_machine_check();
 
-	अगर (likely(!vmx->निकास_reason.failed_vmentry))
-		vmx->idt_vectoring_info = vmcs_पढ़ो32(IDT_VECTORING_INFO_FIELD);
+	if (likely(!vmx->exit_reason.failed_vmentry))
+		vmx->idt_vectoring_info = vmcs_read32(IDT_VECTORING_INFO_FIELD);
 
-	trace_kvm_निकास(vmx->निकास_reason.full, vcpu, KVM_ISA_VMX);
+	trace_kvm_exit(vmx->exit_reason.full, vcpu, KVM_ISA_VMX);
 
-	अगर (unlikely(vmx->निकास_reason.failed_vmentry))
-		वापस EXIT_FASTPATH_NONE;
+	if (unlikely(vmx->exit_reason.failed_vmentry))
+		return EXIT_FASTPATH_NONE;
 
 	vmx->loaded_vmcs->launched = 1;
 
 	vmx_recover_nmi_blocking(vmx);
-	vmx_complete_पूर्णांकerrupts(vmx);
+	vmx_complete_interrupts(vmx);
 
-	अगर (is_guest_mode(vcpu))
-		वापस EXIT_FASTPATH_NONE;
+	if (is_guest_mode(vcpu))
+		return EXIT_FASTPATH_NONE;
 
-	वापस vmx_निकास_handlers_fastpath(vcpu);
-पूर्ण
+	return vmx_exit_handlers_fastpath(vcpu);
+}
 
-अटल व्योम vmx_मुक्त_vcpu(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_free_vcpu(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (enable_pml)
+	if (enable_pml)
 		vmx_destroy_pml_buffer(vmx);
-	मुक्त_vpid(vmx->vpid);
-	nested_vmx_मुक्त_vcpu(vcpu);
-	मुक्त_loaded_vmcs(vmx->loaded_vmcs);
-पूर्ण
+	free_vpid(vmx->vpid);
+	nested_vmx_free_vcpu(vcpu);
+	free_loaded_vmcs(vmx->loaded_vmcs);
+}
 
-अटल पूर्णांक vmx_create_vcpu(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vmx_uret_msr *tsx_ctrl;
-	काष्ठा vcpu_vmx *vmx;
-	पूर्णांक i, cpu, err;
+static int vmx_create_vcpu(struct kvm_vcpu *vcpu)
+{
+	struct vmx_uret_msr *tsx_ctrl;
+	struct vcpu_vmx *vmx;
+	int i, cpu, err;
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा vcpu_vmx, vcpu) != 0);
+	BUILD_BUG_ON(offsetof(struct vcpu_vmx, vcpu) != 0);
 	vmx = to_vmx(vcpu);
 
 	err = -ENOMEM;
@@ -6864,55 +6863,55 @@ unexpected_vmनिकास:
 
 	/*
 	 * If PML is turned on, failure on enabling PML just results in failure
-	 * of creating the vcpu, thereक्रमe we can simplअगरy PML logic (by
-	 * aव्योमing dealing with हालs, such as enabling PML partially on vcpus
-	 * क्रम the guest), etc.
+	 * of creating the vcpu, therefore we can simplify PML logic (by
+	 * avoiding dealing with cases, such as enabling PML partially on vcpus
+	 * for the guest), etc.
 	 */
-	अगर (enable_pml) अणु
+	if (enable_pml) {
 		vmx->pml_pg = alloc_page(GFP_KERNEL_ACCOUNT | __GFP_ZERO);
-		अगर (!vmx->pml_pg)
-			जाओ मुक्त_vpid;
-	पूर्ण
+		if (!vmx->pml_pg)
+			goto free_vpid;
+	}
 
-	क्रम (i = 0; i < kvm_nr_uret_msrs; ++i) अणु
+	for (i = 0; i < kvm_nr_uret_msrs; ++i) {
 		vmx->guest_uret_msrs[i].data = 0;
 		vmx->guest_uret_msrs[i].mask = -1ull;
-	पूर्ण
-	अगर (boot_cpu_has(X86_FEATURE_RTM)) अणु
+	}
+	if (boot_cpu_has(X86_FEATURE_RTM)) {
 		/*
-		 * TSX_CTRL_CPUID_CLEAR is handled in the CPUID पूर्णांकerception.
-		 * Keep the host value unchanged to aव्योम changing CPUID bits
+		 * TSX_CTRL_CPUID_CLEAR is handled in the CPUID interception.
+		 * Keep the host value unchanged to avoid changing CPUID bits
 		 * under the host kernel's feet.
 		 */
 		tsx_ctrl = vmx_find_uret_msr(vmx, MSR_IA32_TSX_CTRL);
-		अगर (tsx_ctrl)
+		if (tsx_ctrl)
 			vmx->guest_uret_msrs[i].mask = ~(u64)TSX_CTRL_CPUID_CLEAR;
-	पूर्ण
+	}
 
 	err = alloc_loaded_vmcs(&vmx->vmcs01);
-	अगर (err < 0)
-		जाओ मुक्त_pml;
+	if (err < 0)
+		goto free_pml;
 
-	/* The MSR biपंचांगap starts with all ones */
-	biपंचांगap_fill(vmx->shaकरोw_msr_पूर्णांकercept.पढ़ो, MAX_POSSIBLE_PASSTHROUGH_MSRS);
-	biपंचांगap_fill(vmx->shaकरोw_msr_पूर्णांकercept.ग_लिखो, MAX_POSSIBLE_PASSTHROUGH_MSRS);
+	/* The MSR bitmap starts with all ones */
+	bitmap_fill(vmx->shadow_msr_intercept.read, MAX_POSSIBLE_PASSTHROUGH_MSRS);
+	bitmap_fill(vmx->shadow_msr_intercept.write, MAX_POSSIBLE_PASSTHROUGH_MSRS);
 
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_TSC, MSR_TYPE_R);
-#अगर_घोषित CONFIG_X86_64
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_FS_BASE, MSR_TYPE_RW);
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_GS_BASE, MSR_TYPE_RW);
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_KERNEL_GS_BASE, MSR_TYPE_RW);
-#पूर्ण_अगर
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_SYSENTER_CS, MSR_TYPE_RW);
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_SYSENTER_ESP, MSR_TYPE_RW);
-	vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_IA32_SYSENTER_EIP, MSR_TYPE_RW);
-	अगर (kvm_cstate_in_guest(vcpu->kvm)) अणु
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_CORE_C1_RES, MSR_TYPE_R);
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_CORE_C3_RESIDENCY, MSR_TYPE_R);
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_CORE_C6_RESIDENCY, MSR_TYPE_R);
-		vmx_disable_पूर्णांकercept_क्रम_msr(vcpu, MSR_CORE_C7_RESIDENCY, MSR_TYPE_R);
-	पूर्ण
-	vmx->msr_biपंचांगap_mode = 0;
+	vmx_disable_intercept_for_msr(vcpu, MSR_IA32_TSC, MSR_TYPE_R);
+#ifdef CONFIG_X86_64
+	vmx_disable_intercept_for_msr(vcpu, MSR_FS_BASE, MSR_TYPE_RW);
+	vmx_disable_intercept_for_msr(vcpu, MSR_GS_BASE, MSR_TYPE_RW);
+	vmx_disable_intercept_for_msr(vcpu, MSR_KERNEL_GS_BASE, MSR_TYPE_RW);
+#endif
+	vmx_disable_intercept_for_msr(vcpu, MSR_IA32_SYSENTER_CS, MSR_TYPE_RW);
+	vmx_disable_intercept_for_msr(vcpu, MSR_IA32_SYSENTER_ESP, MSR_TYPE_RW);
+	vmx_disable_intercept_for_msr(vcpu, MSR_IA32_SYSENTER_EIP, MSR_TYPE_RW);
+	if (kvm_cstate_in_guest(vcpu->kvm)) {
+		vmx_disable_intercept_for_msr(vcpu, MSR_CORE_C1_RES, MSR_TYPE_R);
+		vmx_disable_intercept_for_msr(vcpu, MSR_CORE_C3_RESIDENCY, MSR_TYPE_R);
+		vmx_disable_intercept_for_msr(vcpu, MSR_CORE_C6_RESIDENCY, MSR_TYPE_R);
+		vmx_disable_intercept_for_msr(vcpu, MSR_CORE_C7_RESIDENCY, MSR_TYPE_R);
+	}
+	vmx->msr_bitmap_mode = 0;
 
 	vmx->loaded_vmcs = &vmx->vmcs01;
 	cpu = get_cpu();
@@ -6921,121 +6920,121 @@ unexpected_vmनिकास:
 	init_vmcs(vmx);
 	vmx_vcpu_put(vcpu);
 	put_cpu();
-	अगर (cpu_need_भवize_apic_accesses(vcpu)) अणु
+	if (cpu_need_virtualize_apic_accesses(vcpu)) {
 		err = alloc_apic_access_page(vcpu->kvm);
-		अगर (err)
-			जाओ मुक्त_vmcs;
-	पूर्ण
+		if (err)
+			goto free_vmcs;
+	}
 
-	अगर (enable_ept && !enable_unrestricted_guest) अणु
+	if (enable_ept && !enable_unrestricted_guest) {
 		err = init_rmode_identity_map(vcpu->kvm);
-		अगर (err)
-			जाओ मुक्त_vmcs;
-	पूर्ण
+		if (err)
+			goto free_vmcs;
+	}
 
-	अगर (nested)
-		स_नकल(&vmx->nested.msrs, &vmcs_config.nested, माप(vmx->nested.msrs));
-	अन्यथा
-		स_रखो(&vmx->nested.msrs, 0, माप(vmx->nested.msrs));
+	if (nested)
+		memcpy(&vmx->nested.msrs, &vmcs_config.nested, sizeof(vmx->nested.msrs));
+	else
+		memset(&vmx->nested.msrs, 0, sizeof(vmx->nested.msrs));
 
 	vcpu_setup_sgx_lepubkeyhash(vcpu);
 
-	vmx->nested.posted_पूर्णांकr_nv = -1;
+	vmx->nested.posted_intr_nv = -1;
 	vmx->nested.current_vmptr = -1ull;
 
 	vcpu->arch.microcode_version = 0x100000000ULL;
 	vmx->msr_ia32_feature_control_valid_bits = FEAT_CTL_LOCKED;
 
 	/*
-	 * Enक्रमce invariant: pi_desc.nv is always either POSTED_INTR_VECTOR
+	 * Enforce invariant: pi_desc.nv is always either POSTED_INTR_VECTOR
 	 * or POSTED_INTR_WAKEUP_VECTOR.
 	 */
 	vmx->pi_desc.nv = POSTED_INTR_VECTOR;
 	vmx->pi_desc.sn = 1;
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
+#if IS_ENABLED(CONFIG_HYPERV)
 	vmx->hv_root_ept = INVALID_PAGE;
-#पूर्ण_अगर
-	वापस 0;
+#endif
+	return 0;
 
-मुक्त_vmcs:
-	मुक्त_loaded_vmcs(vmx->loaded_vmcs);
-मुक्त_pml:
+free_vmcs:
+	free_loaded_vmcs(vmx->loaded_vmcs);
+free_pml:
 	vmx_destroy_pml_buffer(vmx);
-मुक्त_vpid:
-	मुक्त_vpid(vmx->vpid);
-	वापस err;
-पूर्ण
+free_vpid:
+	free_vpid(vmx->vpid);
+	return err;
+}
 
-#घोषणा L1TF_MSG_SMT "L1TF CPU bug present and SMT on, data leak possible. See CVE-2018-3646 and https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/l1tf.html for details.\n"
-#घोषणा L1TF_MSG_L1D "L1TF CPU bug present and virtualization mitigation disabled, data leak possible. See CVE-2018-3646 and https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/l1tf.html for details.\n"
+#define L1TF_MSG_SMT "L1TF CPU bug present and SMT on, data leak possible. See CVE-2018-3646 and https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/l1tf.html for details.\n"
+#define L1TF_MSG_L1D "L1TF CPU bug present and virtualization mitigation disabled, data leak possible. See CVE-2018-3646 and https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/l1tf.html for details.\n"
 
-अटल पूर्णांक vmx_vm_init(काष्ठा kvm *kvm)
-अणु
-#अगर IS_ENABLED(CONFIG_HYPERV)
+static int vmx_vm_init(struct kvm *kvm)
+{
+#if IS_ENABLED(CONFIG_HYPERV)
 	spin_lock_init(&to_kvm_vmx(kvm)->hv_root_ept_lock);
-#पूर्ण_अगर
+#endif
 
-	अगर (!ple_gap)
-		kvm->arch.छोड़ो_in_guest = true;
+	if (!ple_gap)
+		kvm->arch.pause_in_guest = true;
 
-	अगर (boot_cpu_has(X86_BUG_L1TF) && enable_ept) अणु
-		चयन (l1tf_mitigation) अणु
-		हाल L1TF_MITIGATION_OFF:
-		हाल L1TF_MITIGATION_FLUSH_NOWARN:
+	if (boot_cpu_has(X86_BUG_L1TF) && enable_ept) {
+		switch (l1tf_mitigation) {
+		case L1TF_MITIGATION_OFF:
+		case L1TF_MITIGATION_FLUSH_NOWARN:
 			/* 'I explicitly don't care' is set */
-			अवरोध;
-		हाल L1TF_MITIGATION_FLUSH:
-		हाल L1TF_MITIGATION_FLUSH_NOSMT:
-		हाल L1TF_MITIGATION_FULL:
+			break;
+		case L1TF_MITIGATION_FLUSH:
+		case L1TF_MITIGATION_FLUSH_NOSMT:
+		case L1TF_MITIGATION_FULL:
 			/*
 			 * Warn upon starting the first VM in a potentially
 			 * insecure environment.
 			 */
-			अगर (sched_smt_active())
+			if (sched_smt_active())
 				pr_warn_once(L1TF_MSG_SMT);
-			अगर (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_NEVER)
+			if (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_NEVER)
 				pr_warn_once(L1TF_MSG_L1D);
-			अवरोध;
-		हाल L1TF_MITIGATION_FULL_FORCE:
-			/* Flush is enक्रमced */
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		case L1TF_MITIGATION_FULL_FORCE:
+			/* Flush is enforced */
+			break;
+		}
+	}
 	kvm_apicv_init(kvm, enable_apicv);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init vmx_check_processor_compat(व्योम)
-अणु
-	काष्ठा vmcs_config vmcs_conf;
-	काष्ठा vmx_capability vmx_cap;
+static int __init vmx_check_processor_compat(void)
+{
+	struct vmcs_config vmcs_conf;
+	struct vmx_capability vmx_cap;
 
-	अगर (!this_cpu_has(X86_FEATURE_MSR_IA32_FEAT_CTL) ||
-	    !this_cpu_has(X86_FEATURE_VMX)) अणु
+	if (!this_cpu_has(X86_FEATURE_MSR_IA32_FEAT_CTL) ||
+	    !this_cpu_has(X86_FEATURE_VMX)) {
 		pr_err("kvm: VMX is disabled on CPU %d\n", smp_processor_id());
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (setup_vmcs_config(&vmcs_conf, &vmx_cap) < 0)
-		वापस -EIO;
-	अगर (nested)
+	if (setup_vmcs_config(&vmcs_conf, &vmx_cap) < 0)
+		return -EIO;
+	if (nested)
 		nested_vmx_setup_ctls_msrs(&vmcs_conf.nested, vmx_cap.ept);
-	अगर (स_भेद(&vmcs_config, &vmcs_conf, माप(काष्ठा vmcs_config)) != 0) अणु
-		prपूर्णांकk(KERN_ERR "kvm: CPU %d feature inconsistency!\n",
+	if (memcmp(&vmcs_config, &vmcs_conf, sizeof(struct vmcs_config)) != 0) {
+		printk(KERN_ERR "kvm: CPU %d feature inconsistency!\n",
 				smp_processor_id());
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EIO;
+	}
+	return 0;
+}
 
-अटल u64 vmx_get_mt_mask(काष्ठा kvm_vcpu *vcpu, gfn_t gfn, bool is_mmio)
-अणु
+static u64 vmx_get_mt_mask(struct kvm_vcpu *vcpu, gfn_t gfn, bool is_mmio)
+{
 	u8 cache;
 	u64 ipat = 0;
 
-	/* We wanted to honor guest CD/MTRR/PAT, but करोing so could result in
-	 * memory aliases with conflicting memory types and someबार MCEs.
+	/* We wanted to honor guest CD/MTRR/PAT, but doing so could result in
+	 * memory aliases with conflicting memory types and sometimes MCEs.
 	 * We have to be careful as to what are honored and when.
 	 *
 	 * For MMIO, guest CD/MTRR are ignored.  The EPT memory type is set to
@@ -7045,41 +7044,41 @@ unexpected_vmनिकास:
 	 *
 	 * When there is no need to deal with noncoherent DMA (e.g., no VT-d
 	 * or VT-d has snoop control), guest CD/MTRR/PAT are all ignored.  The
-	 * EPT memory type is set to WB.  The effective memory type is क्रमced
+	 * EPT memory type is set to WB.  The effective memory type is forced
 	 * WB.
 	 *
 	 * Otherwise, we trust guest.  Guest CD/MTRR/PAT are all honored.  The
 	 * EPT memory type is used to emulate guest CD/MTRR.
 	 */
 
-	अगर (is_mmio) अणु
+	if (is_mmio) {
 		cache = MTRR_TYPE_UNCACHABLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!kvm_arch_has_noncoherent_dma(vcpu->kvm)) अणु
+	if (!kvm_arch_has_noncoherent_dma(vcpu->kvm)) {
 		ipat = VMX_EPT_IPAT_BIT;
 		cache = MTRR_TYPE_WRBACK;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (kvm_पढ़ो_cr0(vcpu) & X86_CR0_CD) अणु
+	if (kvm_read_cr0(vcpu) & X86_CR0_CD) {
 		ipat = VMX_EPT_IPAT_BIT;
-		अगर (kvm_check_has_quirk(vcpu->kvm, KVM_X86_QUIRK_CD_NW_CLEARED))
+		if (kvm_check_has_quirk(vcpu->kvm, KVM_X86_QUIRK_CD_NW_CLEARED))
 			cache = MTRR_TYPE_WRBACK;
-		अन्यथा
+		else
 			cache = MTRR_TYPE_UNCACHABLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	cache = kvm_mtrr_get_guest_memory_type(vcpu, gfn);
 
-निकास:
-	वापस (cache << VMX_EPT_MT_EPTE_SHIFT) | ipat;
-पूर्ण
+exit:
+	return (cache << VMX_EPT_MT_EPTE_SHIFT) | ipat;
+}
 
-अटल व्योम vmcs_set_secondary_exec_control(काष्ठा vcpu_vmx *vmx)
-अणु
+static void vmcs_set_secondary_exec_control(struct vcpu_vmx *vmx)
+{
 	/*
 	 * These bits in the secondary execution controls field
 	 * are dynamic, the others are mostly based on the hypervisor
@@ -7096,24 +7095,24 @@ unexpected_vmनिकास:
 	u32 cur_ctl = secondary_exec_controls_get(vmx);
 
 	secondary_exec_controls_set(vmx, (new_ctl & ~mask) | (cur_ctl & mask));
-पूर्ण
+}
 
 /*
- * Generate MSR_IA32_VMX_CRअणु0,4पूर्ण_FIXED1 according to CPUID. Only set bits
- * (indicating "allowed-1") अगर they are supported in the guest's CPUID.
+ * Generate MSR_IA32_VMX_CR{0,4}_FIXED1 according to CPUID. Only set bits
+ * (indicating "allowed-1") if they are supported in the guest's CPUID.
  */
-अटल व्योम nested_vmx_cr_fixed1_bits_update(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा kvm_cpuid_entry2 *entry;
+static void nested_vmx_cr_fixed1_bits_update(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct kvm_cpuid_entry2 *entry;
 
 	vmx->nested.msrs.cr0_fixed1 = 0xffffffff;
 	vmx->nested.msrs.cr4_fixed1 = X86_CR4_PCE;
 
-#घोषणा cr4_fixed1_update(_cr4_mask, _reg, _cpuid_mask) करो अणु		\
-	अगर (entry && (entry->_reg & (_cpuid_mask)))			\
+#define cr4_fixed1_update(_cr4_mask, _reg, _cpuid_mask) do {		\
+	if (entry && (entry->_reg & (_cpuid_mask)))			\
 		vmx->nested.msrs.cr4_fixed1 |= (_cr4_mask);	\
-पूर्ण जबतक (0)
+} while (0)
 
 	entry = kvm_find_cpuid_entry(vcpu, 0x1, 0);
 	cr4_fixed1_update(X86_CR4_VME,        edx, feature_bit(VME));
@@ -7139,481 +7138,481 @@ unexpected_vmनिकास:
 	cr4_fixed1_update(X86_CR4_UMIP,       ecx, feature_bit(UMIP));
 	cr4_fixed1_update(X86_CR4_LA57,       ecx, feature_bit(LA57));
 
-#अघोषित cr4_fixed1_update
-पूर्ण
+#undef cr4_fixed1_update
+}
 
-अटल व्योम nested_vmx_entry_निकास_ctls_update(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void nested_vmx_entry_exit_ctls_update(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (kvm_mpx_supported()) अणु
+	if (kvm_mpx_supported()) {
 		bool mpx_enabled = guest_cpuid_has(vcpu, X86_FEATURE_MPX);
 
-		अगर (mpx_enabled) अणु
+		if (mpx_enabled) {
 			vmx->nested.msrs.entry_ctls_high |= VM_ENTRY_LOAD_BNDCFGS;
-			vmx->nested.msrs.निकास_ctls_high |= VM_EXIT_CLEAR_BNDCFGS;
-		पूर्ण अन्यथा अणु
+			vmx->nested.msrs.exit_ctls_high |= VM_EXIT_CLEAR_BNDCFGS;
+		} else {
 			vmx->nested.msrs.entry_ctls_high &= ~VM_ENTRY_LOAD_BNDCFGS;
-			vmx->nested.msrs.निकास_ctls_high &= ~VM_EXIT_CLEAR_BNDCFGS;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			vmx->nested.msrs.exit_ctls_high &= ~VM_EXIT_CLEAR_BNDCFGS;
+		}
+	}
+}
 
-अटल व्योम update_पूर्णांकel_pt_cfg(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	काष्ठा kvm_cpuid_entry2 *best = शून्य;
-	पूर्णांक i;
+static void update_intel_pt_cfg(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	struct kvm_cpuid_entry2 *best = NULL;
+	int i;
 
-	क्रम (i = 0; i < PT_CPUID_LEAVES; i++) अणु
+	for (i = 0; i < PT_CPUID_LEAVES; i++) {
 		best = kvm_find_cpuid_entry(vcpu, 0x14, i);
-		अगर (!best)
-			वापस;
+		if (!best)
+			return;
 		vmx->pt_desc.caps[CPUID_EAX + i*PT_CPUID_REGS_NUM] = best->eax;
 		vmx->pt_desc.caps[CPUID_EBX + i*PT_CPUID_REGS_NUM] = best->ebx;
 		vmx->pt_desc.caps[CPUID_ECX + i*PT_CPUID_REGS_NUM] = best->ecx;
 		vmx->pt_desc.caps[CPUID_EDX + i*PT_CPUID_REGS_NUM] = best->edx;
-	पूर्ण
+	}
 
-	/* Get the number of configurable Address Ranges क्रम filtering */
-	vmx->pt_desc.addr_range = पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps,
+	/* Get the number of configurable Address Ranges for filtering */
+	vmx->pt_desc.addr_range = intel_pt_validate_cap(vmx->pt_desc.caps,
 						PT_CAP_num_address_ranges);
 
 	/* Initialize and clear the no dependency bits */
-	vmx->pt_desc.ctl_biपंचांगask = ~(RTIT_CTL_TRACEEN | RTIT_CTL_OS |
+	vmx->pt_desc.ctl_bitmask = ~(RTIT_CTL_TRACEEN | RTIT_CTL_OS |
 			RTIT_CTL_USR | RTIT_CTL_TSC_EN | RTIT_CTL_DISRETC);
 
 	/*
 	 * If CPUID.(EAX=14H,ECX=0):EBX[0]=1 CR3Filter can be set otherwise
 	 * will inject an #GP
 	 */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_cr3_filtering))
-		vmx->pt_desc.ctl_biपंचांगask &= ~RTIT_CTL_CR3EN;
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_cr3_filtering))
+		vmx->pt_desc.ctl_bitmask &= ~RTIT_CTL_CR3EN;
 
 	/*
 	 * If CPUID.(EAX=14H,ECX=0):EBX[1]=1 CYCEn, CycThresh and
 	 * PSBFreq can be set
 	 */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc))
-		vmx->pt_desc.ctl_biपंचांगask &= ~(RTIT_CTL_CYCLEACC |
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_psb_cyc))
+		vmx->pt_desc.ctl_bitmask &= ~(RTIT_CTL_CYCLEACC |
 				RTIT_CTL_CYC_THRESH | RTIT_CTL_PSB_FREQ);
 
 	/*
 	 * If CPUID.(EAX=14H,ECX=0):EBX[3]=1 MTCEn BranchEn and
 	 * MTCFreq can be set
 	 */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc))
-		vmx->pt_desc.ctl_biपंचांगask &= ~(RTIT_CTL_MTC_EN |
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_mtc))
+		vmx->pt_desc.ctl_bitmask &= ~(RTIT_CTL_MTC_EN |
 				RTIT_CTL_BRANCH_EN | RTIT_CTL_MTC_RANGE);
 
 	/* If CPUID.(EAX=14H,ECX=0):EBX[4]=1 FUPonPTW and PTWEn can be set */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_ptग_लिखो))
-		vmx->pt_desc.ctl_biपंचांगask &= ~(RTIT_CTL_FUP_ON_PTW |
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_ptwrite))
+		vmx->pt_desc.ctl_bitmask &= ~(RTIT_CTL_FUP_ON_PTW |
 							RTIT_CTL_PTW_EN);
 
 	/* If CPUID.(EAX=14H,ECX=0):EBX[5]=1 PwrEvEn can be set */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_घातer_event_trace))
-		vmx->pt_desc.ctl_biपंचांगask &= ~RTIT_CTL_PWR_EVT_EN;
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_power_event_trace))
+		vmx->pt_desc.ctl_bitmask &= ~RTIT_CTL_PWR_EVT_EN;
 
 	/* If CPUID.(EAX=14H,ECX=0):ECX[0]=1 ToPA can be set */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_topa_output))
-		vmx->pt_desc.ctl_biपंचांगask &= ~RTIT_CTL_TOPA;
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_topa_output))
+		vmx->pt_desc.ctl_bitmask &= ~RTIT_CTL_TOPA;
 
 	/* If CPUID.(EAX=14H,ECX=0):ECX[3]=1 FabricEn can be set */
-	अगर (पूर्णांकel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_output_subsys))
-		vmx->pt_desc.ctl_biपंचांगask &= ~RTIT_CTL_FABRIC_EN;
+	if (intel_pt_validate_cap(vmx->pt_desc.caps, PT_CAP_output_subsys))
+		vmx->pt_desc.ctl_bitmask &= ~RTIT_CTL_FABRIC_EN;
 
 	/* unmask address range configure area */
-	क्रम (i = 0; i < vmx->pt_desc.addr_range; i++)
-		vmx->pt_desc.ctl_biपंचांगask &= ~(0xfULL << (32 + i * 4));
-पूर्ण
+	for (i = 0; i < vmx->pt_desc.addr_range; i++)
+		vmx->pt_desc.ctl_bitmask &= ~(0xfULL << (32 + i * 4));
+}
 
-अटल व्योम vmx_vcpu_after_set_cpuid(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static void vmx_vcpu_after_set_cpuid(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	/* xsaves_enabled is recomputed in vmx_compute_secondary_exec_control(). */
 	vcpu->arch.xsaves_enabled = false;
 
-	अगर (cpu_has_secondary_exec_ctrls()) अणु
+	if (cpu_has_secondary_exec_ctrls()) {
 		vmx_compute_secondary_exec_control(vmx);
 		vmcs_set_secondary_exec_control(vmx);
-	पूर्ण
+	}
 
-	अगर (nested_vmx_allowed(vcpu))
+	if (nested_vmx_allowed(vcpu))
 		to_vmx(vcpu)->msr_ia32_feature_control_valid_bits |=
 			FEAT_CTL_VMX_ENABLED_INSIDE_SMX |
 			FEAT_CTL_VMX_ENABLED_OUTSIDE_SMX;
-	अन्यथा
+	else
 		to_vmx(vcpu)->msr_ia32_feature_control_valid_bits &=
 			~(FEAT_CTL_VMX_ENABLED_INSIDE_SMX |
 			  FEAT_CTL_VMX_ENABLED_OUTSIDE_SMX);
 
-	अगर (nested_vmx_allowed(vcpu)) अणु
+	if (nested_vmx_allowed(vcpu)) {
 		nested_vmx_cr_fixed1_bits_update(vcpu);
-		nested_vmx_entry_निकास_ctls_update(vcpu);
-	पूर्ण
+		nested_vmx_entry_exit_ctls_update(vcpu);
+	}
 
-	अगर (boot_cpu_has(X86_FEATURE_INTEL_PT) &&
+	if (boot_cpu_has(X86_FEATURE_INTEL_PT) &&
 			guest_cpuid_has(vcpu, X86_FEATURE_INTEL_PT))
-		update_पूर्णांकel_pt_cfg(vcpu);
+		update_intel_pt_cfg(vcpu);
 
-	अगर (boot_cpu_has(X86_FEATURE_RTM)) अणु
-		काष्ठा vmx_uret_msr *msr;
+	if (boot_cpu_has(X86_FEATURE_RTM)) {
+		struct vmx_uret_msr *msr;
 		msr = vmx_find_uret_msr(vmx, MSR_IA32_TSX_CTRL);
-		अगर (msr) अणु
+		if (msr) {
 			bool enabled = guest_cpuid_has(vcpu, X86_FEATURE_RTM);
 			vmx_set_guest_uret_msr(vmx, msr, enabled ? 0 : TSX_CTRL_RTM_DISABLE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	set_cr4_guest_host_mask(vmx);
 
-	vmx_ग_लिखो_encls_biपंचांगap(vcpu, शून्य);
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_SGX))
+	vmx_write_encls_bitmap(vcpu, NULL);
+	if (guest_cpuid_has(vcpu, X86_FEATURE_SGX))
 		vmx->msr_ia32_feature_control_valid_bits |= FEAT_CTL_SGX_ENABLED;
-	अन्यथा
+	else
 		vmx->msr_ia32_feature_control_valid_bits &= ~FEAT_CTL_SGX_ENABLED;
 
-	अगर (guest_cpuid_has(vcpu, X86_FEATURE_SGX_LC))
+	if (guest_cpuid_has(vcpu, X86_FEATURE_SGX_LC))
 		vmx->msr_ia32_feature_control_valid_bits |=
 			FEAT_CTL_SGX_LC_ENABLED;
-	अन्यथा
+	else
 		vmx->msr_ia32_feature_control_valid_bits &=
 			~FEAT_CTL_SGX_LC_ENABLED;
 
-	/* Refresh #PF पूर्णांकerception to account क्रम MAXPHYADDR changes. */
-	vmx_update_exception_biपंचांगap(vcpu);
-पूर्ण
+	/* Refresh #PF interception to account for MAXPHYADDR changes. */
+	vmx_update_exception_bitmap(vcpu);
+}
 
-अटल __init व्योम vmx_set_cpu_caps(व्योम)
-अणु
+static __init void vmx_set_cpu_caps(void)
+{
 	kvm_set_cpu_caps();
 
 	/* CPUID 0x1 */
-	अगर (nested)
+	if (nested)
 		kvm_cpu_cap_set(X86_FEATURE_VMX);
 
 	/* CPUID 0x7 */
-	अगर (kvm_mpx_supported())
+	if (kvm_mpx_supported())
 		kvm_cpu_cap_check_and_set(X86_FEATURE_MPX);
-	अगर (!cpu_has_vmx_invpcid())
+	if (!cpu_has_vmx_invpcid())
 		kvm_cpu_cap_clear(X86_FEATURE_INVPCID);
-	अगर (vmx_pt_mode_is_host_guest())
+	if (vmx_pt_mode_is_host_guest())
 		kvm_cpu_cap_check_and_set(X86_FEATURE_INTEL_PT);
 
-	अगर (!enable_sgx) अणु
+	if (!enable_sgx) {
 		kvm_cpu_cap_clear(X86_FEATURE_SGX);
 		kvm_cpu_cap_clear(X86_FEATURE_SGX_LC);
 		kvm_cpu_cap_clear(X86_FEATURE_SGX1);
 		kvm_cpu_cap_clear(X86_FEATURE_SGX2);
-	पूर्ण
+	}
 
-	अगर (vmx_umip_emulated())
+	if (vmx_umip_emulated())
 		kvm_cpu_cap_set(X86_FEATURE_UMIP);
 
 	/* CPUID 0xD.1 */
 	supported_xss = 0;
-	अगर (!cpu_has_vmx_xsaves())
+	if (!cpu_has_vmx_xsaves())
 		kvm_cpu_cap_clear(X86_FEATURE_XSAVES);
 
 	/* CPUID 0x80000001 and 0x7 (RDPID) */
-	अगर (!cpu_has_vmx_rdtscp()) अणु
+	if (!cpu_has_vmx_rdtscp()) {
 		kvm_cpu_cap_clear(X86_FEATURE_RDTSCP);
 		kvm_cpu_cap_clear(X86_FEATURE_RDPID);
-	पूर्ण
+	}
 
-	अगर (cpu_has_vmx_रुकोpkg())
+	if (cpu_has_vmx_waitpkg())
 		kvm_cpu_cap_check_and_set(X86_FEATURE_WAITPKG);
-पूर्ण
+}
 
-अटल व्योम vmx_request_immediate_निकास(काष्ठा kvm_vcpu *vcpu)
-अणु
-	to_vmx(vcpu)->req_immediate_निकास = true;
-पूर्ण
+static void vmx_request_immediate_exit(struct kvm_vcpu *vcpu)
+{
+	to_vmx(vcpu)->req_immediate_exit = true;
+}
 
-अटल पूर्णांक vmx_check_पूर्णांकercept_io(काष्ठा kvm_vcpu *vcpu,
-				  काष्ठा x86_inकाष्ठाion_info *info)
-अणु
-	काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
-	अचिन्हित लघु port;
-	bool पूर्णांकercept;
-	पूर्णांक size;
+static int vmx_check_intercept_io(struct kvm_vcpu *vcpu,
+				  struct x86_instruction_info *info)
+{
+	struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
+	unsigned short port;
+	bool intercept;
+	int size;
 
-	अगर (info->पूर्णांकercept == x86_पूर्णांकercept_in ||
-	    info->पूर्णांकercept == x86_पूर्णांकercept_ins) अणु
+	if (info->intercept == x86_intercept_in ||
+	    info->intercept == x86_intercept_ins) {
 		port = info->src_val;
 		size = info->dst_bytes;
-	पूर्ण अन्यथा अणु
+	} else {
 		port = info->dst_val;
 		size = info->src_bytes;
-	पूर्ण
+	}
 
 	/*
-	 * If the 'use IO bitmaps' VM-execution control is 0, IO inकाष्ठाion
-	 * VM-निकासs depend on the 'unconditional IO exiting' VM-execution
+	 * If the 'use IO bitmaps' VM-execution control is 0, IO instruction
+	 * VM-exits depend on the 'unconditional IO exiting' VM-execution
 	 * control.
 	 *
-	 * Otherwise, IO inकाष्ठाion VM-निकासs are controlled by the IO biपंचांगaps.
+	 * Otherwise, IO instruction VM-exits are controlled by the IO bitmaps.
 	 */
-	अगर (!nested_cpu_has(vmcs12, CPU_BASED_USE_IO_BITMAPS))
-		पूर्णांकercept = nested_cpu_has(vmcs12,
+	if (!nested_cpu_has(vmcs12, CPU_BASED_USE_IO_BITMAPS))
+		intercept = nested_cpu_has(vmcs12,
 					   CPU_BASED_UNCOND_IO_EXITING);
-	अन्यथा
-		पूर्णांकercept = nested_vmx_check_io_biपंचांगaps(vcpu, port, size);
+	else
+		intercept = nested_vmx_check_io_bitmaps(vcpu, port, size);
 
-	/* FIXME: produce nested vmनिकास and वापस X86EMUL_INTERCEPTED.  */
-	वापस पूर्णांकercept ? X86EMUL_UNHANDLEABLE : X86EMUL_CONTINUE;
-पूर्ण
+	/* FIXME: produce nested vmexit and return X86EMUL_INTERCEPTED.  */
+	return intercept ? X86EMUL_UNHANDLEABLE : X86EMUL_CONTINUE;
+}
 
-अटल पूर्णांक vmx_check_पूर्णांकercept(काष्ठा kvm_vcpu *vcpu,
-			       काष्ठा x86_inकाष्ठाion_info *info,
-			       क्रमागत x86_पूर्णांकercept_stage stage,
-			       काष्ठा x86_exception *exception)
-अणु
-	काष्ठा vmcs12 *vmcs12 = get_vmcs12(vcpu);
+static int vmx_check_intercept(struct kvm_vcpu *vcpu,
+			       struct x86_instruction_info *info,
+			       enum x86_intercept_stage stage,
+			       struct x86_exception *exception)
+{
+	struct vmcs12 *vmcs12 = get_vmcs12(vcpu);
 
-	चयन (info->पूर्णांकercept) अणु
+	switch (info->intercept) {
 	/*
-	 * RDPID causes #UD अगर disabled through secondary execution controls.
-	 * Because it is marked as EmulateOnUD, we need to पूर्णांकercept it here.
+	 * RDPID causes #UD if disabled through secondary execution controls.
+	 * Because it is marked as EmulateOnUD, we need to intercept it here.
 	 * Note, RDPID is hidden behind ENABLE_RDTSCP.
 	 */
-	हाल x86_पूर्णांकercept_rdpid:
-		अगर (!nested_cpu_has2(vmcs12, SECONDARY_EXEC_ENABLE_RDTSCP)) अणु
+	case x86_intercept_rdpid:
+		if (!nested_cpu_has2(vmcs12, SECONDARY_EXEC_ENABLE_RDTSCP)) {
 			exception->vector = UD_VECTOR;
 			exception->error_code_valid = false;
-			वापस X86EMUL_PROPAGATE_FAULT;
-		पूर्ण
-		अवरोध;
+			return X86EMUL_PROPAGATE_FAULT;
+		}
+		break;
 
-	हाल x86_पूर्णांकercept_in:
-	हाल x86_पूर्णांकercept_ins:
-	हाल x86_पूर्णांकercept_out:
-	हाल x86_पूर्णांकercept_outs:
-		वापस vmx_check_पूर्णांकercept_io(vcpu, info);
+	case x86_intercept_in:
+	case x86_intercept_ins:
+	case x86_intercept_out:
+	case x86_intercept_outs:
+		return vmx_check_intercept_io(vcpu, info);
 
-	हाल x86_पूर्णांकercept_lgdt:
-	हाल x86_पूर्णांकercept_lidt:
-	हाल x86_पूर्णांकercept_lldt:
-	हाल x86_पूर्णांकercept_ltr:
-	हाल x86_पूर्णांकercept_sgdt:
-	हाल x86_पूर्णांकercept_sidt:
-	हाल x86_पूर्णांकercept_sldt:
-	हाल x86_पूर्णांकercept_str:
-		अगर (!nested_cpu_has2(vmcs12, SECONDARY_EXEC_DESC))
-			वापस X86EMUL_CONTINUE;
+	case x86_intercept_lgdt:
+	case x86_intercept_lidt:
+	case x86_intercept_lldt:
+	case x86_intercept_ltr:
+	case x86_intercept_sgdt:
+	case x86_intercept_sidt:
+	case x86_intercept_sldt:
+	case x86_intercept_str:
+		if (!nested_cpu_has2(vmcs12, SECONDARY_EXEC_DESC))
+			return X86EMUL_CONTINUE;
 
-		/* FIXME: produce nested vmनिकास and वापस X86EMUL_INTERCEPTED.  */
-		अवरोध;
+		/* FIXME: produce nested vmexit and return X86EMUL_INTERCEPTED.  */
+		break;
 
-	/* TODO: check more पूर्णांकercepts... */
-	शेष:
-		अवरोध;
-	पूर्ण
+	/* TODO: check more intercepts... */
+	default:
+		break;
+	}
 
-	वापस X86EMUL_UNHANDLEABLE;
-पूर्ण
+	return X86EMUL_UNHANDLEABLE;
+}
 
-#अगर_घोषित CONFIG_X86_64
-/* (a << shअगरt) / भागisor, वापस 1 अगर overflow otherwise 0 */
-अटल अंतरभूत पूर्णांक u64_shl_भाग_u64(u64 a, अचिन्हित पूर्णांक shअगरt,
-				  u64 भागisor, u64 *result)
-अणु
-	u64 low = a << shअगरt, high = a >> (64 - shअगरt);
+#ifdef CONFIG_X86_64
+/* (a << shift) / divisor, return 1 if overflow otherwise 0 */
+static inline int u64_shl_div_u64(u64 a, unsigned int shift,
+				  u64 divisor, u64 *result)
+{
+	u64 low = a << shift, high = a >> (64 - shift);
 
-	/* To aव्योम the overflow on भागq */
-	अगर (high >= भागisor)
-		वापस 1;
+	/* To avoid the overflow on divq */
+	if (high >= divisor)
+		return 1;
 
 	/* Low hold the result, high hold rem which is discarded */
-	यंत्र("divq %2\n\t" : "=a" (low), "=d" (high) :
-	    "rm" (भागisor), "0" (low), "1" (high));
+	asm("divq %2\n\t" : "=a" (low), "=d" (high) :
+	    "rm" (divisor), "0" (low), "1" (high));
 	*result = low;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmx_set_hv_समयr(काष्ठा kvm_vcpu *vcpu, u64 guest_deadline_tsc,
+static int vmx_set_hv_timer(struct kvm_vcpu *vcpu, u64 guest_deadline_tsc,
 			    bool *expired)
-अणु
-	काष्ठा vcpu_vmx *vmx;
-	u64 tscl, guest_tscl, delta_tsc, lapic_समयr_advance_cycles;
-	काष्ठा kvm_समयr *kसमयr = &vcpu->arch.apic->lapic_समयr;
+{
+	struct vcpu_vmx *vmx;
+	u64 tscl, guest_tscl, delta_tsc, lapic_timer_advance_cycles;
+	struct kvm_timer *ktimer = &vcpu->arch.apic->lapic_timer;
 
 	vmx = to_vmx(vcpu);
 	tscl = rdtsc();
-	guest_tscl = kvm_पढ़ो_l1_tsc(vcpu, tscl);
+	guest_tscl = kvm_read_l1_tsc(vcpu, tscl);
 	delta_tsc = max(guest_deadline_tsc, guest_tscl) - guest_tscl;
-	lapic_समयr_advance_cycles = nsec_to_cycles(vcpu,
-						    kसमयr->समयr_advance_ns);
+	lapic_timer_advance_cycles = nsec_to_cycles(vcpu,
+						    ktimer->timer_advance_ns);
 
-	अगर (delta_tsc > lapic_समयr_advance_cycles)
-		delta_tsc -= lapic_समयr_advance_cycles;
-	अन्यथा
+	if (delta_tsc > lapic_timer_advance_cycles)
+		delta_tsc -= lapic_timer_advance_cycles;
+	else
 		delta_tsc = 0;
 
-	/* Convert to host delta tsc अगर tsc scaling is enabled */
-	अगर (vcpu->arch.tsc_scaling_ratio != kvm_शेष_tsc_scaling_ratio &&
-	    delta_tsc && u64_shl_भाग_u64(delta_tsc,
+	/* Convert to host delta tsc if tsc scaling is enabled */
+	if (vcpu->arch.tsc_scaling_ratio != kvm_default_tsc_scaling_ratio &&
+	    delta_tsc && u64_shl_div_u64(delta_tsc,
 				kvm_tsc_scaling_ratio_frac_bits,
 				vcpu->arch.tsc_scaling_ratio, &delta_tsc))
-		वापस -दुस्फल;
+		return -ERANGE;
 
 	/*
-	 * If the delta tsc can't fit in the 32 bit after the multi shअगरt,
-	 * we can't use the preemption समयr.
+	 * If the delta tsc can't fit in the 32 bit after the multi shift,
+	 * we can't use the preemption timer.
 	 * It's possible that it fits on later vmentries, but checking
-	 * on every vmentry is costly so we just use an hrसमयr.
+	 * on every vmentry is costly so we just use an hrtimer.
 	 */
-	अगर (delta_tsc >> (cpu_preemption_समयr_multi + 32))
-		वापस -दुस्फल;
+	if (delta_tsc >> (cpu_preemption_timer_multi + 32))
+		return -ERANGE;
 
 	vmx->hv_deadline_tsc = tscl + delta_tsc;
 	*expired = !delta_tsc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vmx_cancel_hv_समयr(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void vmx_cancel_hv_timer(struct kvm_vcpu *vcpu)
+{
 	to_vmx(vcpu)->hv_deadline_tsc = -1;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम vmx_sched_in(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu)
-अणु
-	अगर (!kvm_छोड़ो_in_guest(vcpu->kvm))
-		shrink_ple_winकरोw(vcpu);
-पूर्ण
+static void vmx_sched_in(struct kvm_vcpu *vcpu, int cpu)
+{
+	if (!kvm_pause_in_guest(vcpu->kvm))
+		shrink_ple_window(vcpu);
+}
 
-व्योम vmx_update_cpu_dirty_logging(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+void vmx_update_cpu_dirty_logging(struct kvm_vcpu *vcpu)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
-	अगर (is_guest_mode(vcpu)) अणु
+	if (is_guest_mode(vcpu)) {
 		vmx->nested.update_vmcs01_cpu_dirty_logging = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Note, cpu_dirty_logging_count can be changed concurrent with this
-	 * code, but in that हाल another update request will be made and so
+	 * code, but in that case another update request will be made and so
 	 * the guest will never run with a stale PML value.
 	 */
-	अगर (vcpu->kvm->arch.cpu_dirty_logging_count)
+	if (vcpu->kvm->arch.cpu_dirty_logging_count)
 		secondary_exec_controls_setbit(vmx, SECONDARY_EXEC_ENABLE_PML);
-	अन्यथा
+	else
 		secondary_exec_controls_clearbit(vmx, SECONDARY_EXEC_ENABLE_PML);
-पूर्ण
+}
 
-अटल पूर्णांक vmx_pre_block(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (pi_pre_block(vcpu))
-		वापस 1;
+static int vmx_pre_block(struct kvm_vcpu *vcpu)
+{
+	if (pi_pre_block(vcpu))
+		return 1;
 
-	अगर (kvm_lapic_hv_समयr_in_use(vcpu))
-		kvm_lapic_चयन_to_sw_समयr(vcpu);
+	if (kvm_lapic_hv_timer_in_use(vcpu))
+		kvm_lapic_switch_to_sw_timer(vcpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vmx_post_block(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (kvm_x86_ops.set_hv_समयr)
-		kvm_lapic_चयन_to_hv_समयr(vcpu);
+static void vmx_post_block(struct kvm_vcpu *vcpu)
+{
+	if (kvm_x86_ops.set_hv_timer)
+		kvm_lapic_switch_to_hv_timer(vcpu);
 
 	pi_post_block(vcpu);
-पूर्ण
+}
 
-अटल व्योम vmx_setup_mce(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (vcpu->arch.mcg_cap & MCG_LMCE_P)
+static void vmx_setup_mce(struct kvm_vcpu *vcpu)
+{
+	if (vcpu->arch.mcg_cap & MCG_LMCE_P)
 		to_vmx(vcpu)->msr_ia32_feature_control_valid_bits |=
 			FEAT_CTL_LMCE_ENABLED;
-	अन्यथा
+	else
 		to_vmx(vcpu)->msr_ia32_feature_control_valid_bits &=
 			~FEAT_CTL_LMCE_ENABLED;
-पूर्ण
+}
 
-अटल पूर्णांक vmx_smi_allowed(काष्ठा kvm_vcpu *vcpu, bool क्रम_injection)
-अणु
-	/* we need a nested vmनिकास to enter SMM, postpone अगर run is pending */
-	अगर (to_vmx(vcpu)->nested.nested_run_pending)
-		वापस -EBUSY;
-	वापस !is_smm(vcpu);
-पूर्ण
+static int vmx_smi_allowed(struct kvm_vcpu *vcpu, bool for_injection)
+{
+	/* we need a nested vmexit to enter SMM, postpone if run is pending */
+	if (to_vmx(vcpu)->nested.nested_run_pending)
+		return -EBUSY;
+	return !is_smm(vcpu);
+}
 
-अटल पूर्णांक vmx_pre_enter_smm(काष्ठा kvm_vcpu *vcpu, अक्षर *smstate)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
+static int vmx_pre_enter_smm(struct kvm_vcpu *vcpu, char *smstate)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
 
 	vmx->nested.smm.guest_mode = is_guest_mode(vcpu);
-	अगर (vmx->nested.smm.guest_mode)
-		nested_vmx_vmनिकास(vcpu, -1, 0, 0);
+	if (vmx->nested.smm.guest_mode)
+		nested_vmx_vmexit(vcpu, -1, 0, 0);
 
 	vmx->nested.smm.vmxon = vmx->nested.vmxon;
 	vmx->nested.vmxon = false;
 	vmx_clear_hlt(vcpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmx_pre_leave_smm(काष्ठा kvm_vcpu *vcpu, स्थिर अक्षर *smstate)
-अणु
-	काष्ठा vcpu_vmx *vmx = to_vmx(vcpu);
-	पूर्णांक ret;
+static int vmx_pre_leave_smm(struct kvm_vcpu *vcpu, const char *smstate)
+{
+	struct vcpu_vmx *vmx = to_vmx(vcpu);
+	int ret;
 
-	अगर (vmx->nested.smm.vmxon) अणु
+	if (vmx->nested.smm.vmxon) {
 		vmx->nested.vmxon = true;
 		vmx->nested.smm.vmxon = false;
-	पूर्ण
+	}
 
-	अगर (vmx->nested.smm.guest_mode) अणु
+	if (vmx->nested.smm.guest_mode) {
 		ret = nested_vmx_enter_non_root_mode(vcpu, false);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		vmx->nested.smm.guest_mode = false;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम vmx_enable_smi_winकरोw(काष्ठा kvm_vcpu *vcpu)
-अणु
-	/* RSM will cause a vmनिकास anyway.  */
-पूर्ण
+static void vmx_enable_smi_window(struct kvm_vcpu *vcpu)
+{
+	/* RSM will cause a vmexit anyway.  */
+}
 
-अटल bool vmx_apic_init_संकेत_blocked(काष्ठा kvm_vcpu *vcpu)
-अणु
-	वापस to_vmx(vcpu)->nested.vmxon && !is_guest_mode(vcpu);
-पूर्ण
+static bool vmx_apic_init_signal_blocked(struct kvm_vcpu *vcpu)
+{
+	return to_vmx(vcpu)->nested.vmxon && !is_guest_mode(vcpu);
+}
 
-अटल व्योम vmx_migrate_समयrs(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (is_guest_mode(vcpu)) अणु
-		काष्ठा hrसमयr *समयr = &to_vmx(vcpu)->nested.preemption_समयr;
+static void vmx_migrate_timers(struct kvm_vcpu *vcpu)
+{
+	if (is_guest_mode(vcpu)) {
+		struct hrtimer *timer = &to_vmx(vcpu)->nested.preemption_timer;
 
-		अगर (hrसमयr_try_to_cancel(समयr) == 1)
-			hrसमयr_start_expires(समयr, HRTIMER_MODE_ABS_PINNED);
-	पूर्ण
-पूर्ण
+		if (hrtimer_try_to_cancel(timer) == 1)
+			hrtimer_start_expires(timer, HRTIMER_MODE_ABS_PINNED);
+	}
+}
 
-अटल व्योम hardware_unsetup(व्योम)
-अणु
-	अगर (nested)
+static void hardware_unsetup(void)
+{
+	if (nested)
 		nested_vmx_hardware_unsetup();
 
-	मुक्त_kvm_area();
-पूर्ण
+	free_kvm_area();
+}
 
-अटल bool vmx_check_apicv_inhibit_reasons(uदीर्घ bit)
-अणु
-	uदीर्घ supported = BIT(APICV_INHIBIT_REASON_DISABLE) |
+static bool vmx_check_apicv_inhibit_reasons(ulong bit)
+{
+	ulong supported = BIT(APICV_INHIBIT_REASON_DISABLE) |
 			  BIT(APICV_INHIBIT_REASON_HYPERV);
 
-	वापस supported & BIT(bit);
-पूर्ण
+	return supported & BIT(bit);
+}
 
-अटल काष्ठा kvm_x86_ops vmx_x86_ops __initdata = अणु
+static struct kvm_x86_ops vmx_x86_ops __initdata = {
 	.hardware_unsetup = hardware_unsetup,
 
 	.hardware_enable = hardware_enable,
@@ -7621,18 +7620,18 @@ unexpected_vmनिकास:
 	.cpu_has_accelerated_tpr = report_flexpriority,
 	.has_emulated_msr = vmx_has_emulated_msr,
 
-	.vm_size = माप(काष्ठा kvm_vmx),
+	.vm_size = sizeof(struct kvm_vmx),
 	.vm_init = vmx_vm_init,
 
 	.vcpu_create = vmx_create_vcpu,
-	.vcpu_मुक्त = vmx_मुक्त_vcpu,
+	.vcpu_free = vmx_free_vcpu,
 	.vcpu_reset = vmx_vcpu_reset,
 
-	.prepare_guest_चयन = vmx_prepare_चयन_to_guest,
+	.prepare_guest_switch = vmx_prepare_switch_to_guest,
 	.vcpu_load = vmx_vcpu_load,
 	.vcpu_put = vmx_vcpu_put,
 
-	.update_exception_biपंचांगap = vmx_update_exception_biपंचांगap,
+	.update_exception_bitmap = vmx_update_exception_bitmap,
 	.get_msr_feature = vmx_get_msr_feature,
 	.get_msr = vmx_get_msr,
 	.set_msr = vmx_set_msr,
@@ -7661,54 +7660,54 @@ unexpected_vmनिकास:
 	.tlb_flush_guest = vmx_flush_tlb_guest,
 
 	.run = vmx_vcpu_run,
-	.handle_निकास = vmx_handle_निकास,
-	.skip_emulated_inकाष्ठाion = vmx_skip_emulated_inकाष्ठाion,
-	.update_emulated_inकाष्ठाion = vmx_update_emulated_inकाष्ठाion,
-	.set_पूर्णांकerrupt_shaकरोw = vmx_set_पूर्णांकerrupt_shaकरोw,
-	.get_पूर्णांकerrupt_shaकरोw = vmx_get_पूर्णांकerrupt_shaकरोw,
+	.handle_exit = vmx_handle_exit,
+	.skip_emulated_instruction = vmx_skip_emulated_instruction,
+	.update_emulated_instruction = vmx_update_emulated_instruction,
+	.set_interrupt_shadow = vmx_set_interrupt_shadow,
+	.get_interrupt_shadow = vmx_get_interrupt_shadow,
 	.patch_hypercall = vmx_patch_hypercall,
 	.set_irq = vmx_inject_irq,
 	.set_nmi = vmx_inject_nmi,
 	.queue_exception = vmx_queue_exception,
 	.cancel_injection = vmx_cancel_injection,
-	.पूर्णांकerrupt_allowed = vmx_पूर्णांकerrupt_allowed,
+	.interrupt_allowed = vmx_interrupt_allowed,
 	.nmi_allowed = vmx_nmi_allowed,
 	.get_nmi_mask = vmx_get_nmi_mask,
 	.set_nmi_mask = vmx_set_nmi_mask,
-	.enable_nmi_winकरोw = vmx_enable_nmi_winकरोw,
-	.enable_irq_winकरोw = vmx_enable_irq_winकरोw,
-	.update_cr8_पूर्णांकercept = vmx_update_cr8_पूर्णांकercept,
-	.set_भव_apic_mode = vmx_set_भव_apic_mode,
+	.enable_nmi_window = vmx_enable_nmi_window,
+	.enable_irq_window = vmx_enable_irq_window,
+	.update_cr8_intercept = vmx_update_cr8_intercept,
+	.set_virtual_apic_mode = vmx_set_virtual_apic_mode,
 	.set_apic_access_page_addr = vmx_set_apic_access_page_addr,
 	.refresh_apicv_exec_ctrl = vmx_refresh_apicv_exec_ctrl,
-	.load_eoi_निकासmap = vmx_load_eoi_निकासmap,
+	.load_eoi_exitmap = vmx_load_eoi_exitmap,
 	.apicv_post_state_restore = vmx_apicv_post_state_restore,
 	.check_apicv_inhibit_reasons = vmx_check_apicv_inhibit_reasons,
 	.hwapic_irr_update = vmx_hwapic_irr_update,
 	.hwapic_isr_update = vmx_hwapic_isr_update,
-	.guest_apic_has_पूर्णांकerrupt = vmx_guest_apic_has_पूर्णांकerrupt,
+	.guest_apic_has_interrupt = vmx_guest_apic_has_interrupt,
 	.sync_pir_to_irr = vmx_sync_pir_to_irr,
-	.deliver_posted_पूर्णांकerrupt = vmx_deliver_posted_पूर्णांकerrupt,
-	.dy_apicv_has_pending_पूर्णांकerrupt = pi_has_pending_पूर्णांकerrupt,
+	.deliver_posted_interrupt = vmx_deliver_posted_interrupt,
+	.dy_apicv_has_pending_interrupt = pi_has_pending_interrupt,
 
 	.set_tss_addr = vmx_set_tss_addr,
 	.set_identity_map_addr = vmx_set_identity_map_addr,
 	.get_mt_mask = vmx_get_mt_mask,
 
-	.get_निकास_info = vmx_get_निकास_info,
+	.get_exit_info = vmx_get_exit_info,
 
 	.vcpu_after_set_cpuid = vmx_vcpu_after_set_cpuid,
 
-	.has_wbinvd_निकास = cpu_has_vmx_wbinvd_निकास,
+	.has_wbinvd_exit = cpu_has_vmx_wbinvd_exit,
 
-	.ग_लिखो_l1_tsc_offset = vmx_ग_लिखो_l1_tsc_offset,
+	.write_l1_tsc_offset = vmx_write_l1_tsc_offset,
 
 	.load_mmu_pgd = vmx_load_mmu_pgd,
 
-	.check_पूर्णांकercept = vmx_check_पूर्णांकercept,
-	.handle_निकास_irqoff = vmx_handle_निकास_irqoff,
+	.check_intercept = vmx_check_intercept,
+	.handle_exit_irqoff = vmx_handle_exit_irqoff,
 
-	.request_immediate_निकास = vmx_request_immediate_निकास,
+	.request_immediate_exit = vmx_request_immediate_exit,
 
 	.sched_in = vmx_sched_in,
 
@@ -7718,162 +7717,162 @@ unexpected_vmनिकास:
 	.pre_block = vmx_pre_block,
 	.post_block = vmx_post_block,
 
-	.pmu_ops = &पूर्णांकel_pmu_ops,
+	.pmu_ops = &intel_pmu_ops,
 	.nested_ops = &vmx_nested_ops,
 
 	.update_pi_irte = pi_update_irte,
 	.start_assignment = vmx_pi_start_assignment,
 
-#अगर_घोषित CONFIG_X86_64
-	.set_hv_समयr = vmx_set_hv_समयr,
-	.cancel_hv_समयr = vmx_cancel_hv_समयr,
-#पूर्ण_अगर
+#ifdef CONFIG_X86_64
+	.set_hv_timer = vmx_set_hv_timer,
+	.cancel_hv_timer = vmx_cancel_hv_timer,
+#endif
 
 	.setup_mce = vmx_setup_mce,
 
 	.smi_allowed = vmx_smi_allowed,
 	.pre_enter_smm = vmx_pre_enter_smm,
 	.pre_leave_smm = vmx_pre_leave_smm,
-	.enable_smi_winकरोw = vmx_enable_smi_winकरोw,
+	.enable_smi_window = vmx_enable_smi_window,
 
-	.can_emulate_inकाष्ठाion = vmx_can_emulate_inकाष्ठाion,
-	.apic_init_संकेत_blocked = vmx_apic_init_संकेत_blocked,
-	.migrate_समयrs = vmx_migrate_समयrs,
+	.can_emulate_instruction = vmx_can_emulate_instruction,
+	.apic_init_signal_blocked = vmx_apic_init_signal_blocked,
+	.migrate_timers = vmx_migrate_timers,
 
 	.msr_filter_changed = vmx_msr_filter_changed,
 	.complete_emulated_msr = kvm_complete_insn_gp,
 
 	.vcpu_deliver_sipi_vector = kvm_vcpu_deliver_sipi_vector,
-पूर्ण;
+};
 
-अटल __init व्योम vmx_setup_user_वापस_msrs(व्योम)
-अणु
+static __init void vmx_setup_user_return_msrs(void)
+{
 
 	/*
 	 * Though SYSCALL is only supported in 64-bit mode on Intel CPUs, kvm
-	 * will emulate SYSCALL in legacy mode अगर the venकरोr string in guest
-	 * CPUID.0:अणुEBX,ECX,EDXपूर्ण is "AuthenticAMD" or "AMDisbetter!" To
-	 * support this emulation, MSR_STAR is included in the list क्रम i386,
-	 * but is never loaded पूर्णांकo hardware.  MSR_CSTAR is also never loaded
-	 * पूर्णांकo hardware and is here purely क्रम emulation purposes.
+	 * will emulate SYSCALL in legacy mode if the vendor string in guest
+	 * CPUID.0:{EBX,ECX,EDX} is "AuthenticAMD" or "AMDisbetter!" To
+	 * support this emulation, MSR_STAR is included in the list for i386,
+	 * but is never loaded into hardware.  MSR_CSTAR is also never loaded
+	 * into hardware and is here purely for emulation purposes.
 	 */
-	स्थिर u32 vmx_uret_msrs_list[] = अणु
-	#अगर_घोषित CONFIG_X86_64
+	const u32 vmx_uret_msrs_list[] = {
+	#ifdef CONFIG_X86_64
 		MSR_SYSCALL_MASK, MSR_LSTAR, MSR_CSTAR,
-	#पूर्ण_अगर
+	#endif
 		MSR_EFER, MSR_TSC_AUX, MSR_STAR,
 		MSR_IA32_TSX_CTRL,
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(vmx_uret_msrs_list) != MAX_NR_USER_RETURN_MSRS);
 
-	क्रम (i = 0; i < ARRAY_SIZE(vmx_uret_msrs_list); ++i)
-		kvm_add_user_वापस_msr(vmx_uret_msrs_list[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(vmx_uret_msrs_list); ++i)
+		kvm_add_user_return_msr(vmx_uret_msrs_list[i]);
+}
 
-अटल __init पूर्णांक hardware_setup(व्योम)
-अणु
-	अचिन्हित दीर्घ host_bndcfgs;
-	काष्ठा desc_ptr dt;
-	पूर्णांक r, ept_lpage_level;
+static __init int hardware_setup(void)
+{
+	unsigned long host_bndcfgs;
+	struct desc_ptr dt;
+	int r, ept_lpage_level;
 
 	store_idt(&dt);
 	host_idt_base = dt.address;
 
-	vmx_setup_user_वापस_msrs();
+	vmx_setup_user_return_msrs();
 
-	अगर (setup_vmcs_config(&vmcs_config, &vmx_capability) < 0)
-		वापस -EIO;
+	if (setup_vmcs_config(&vmcs_config, &vmx_capability) < 0)
+		return -EIO;
 
-	अगर (boot_cpu_has(X86_FEATURE_NX))
+	if (boot_cpu_has(X86_FEATURE_NX))
 		kvm_enable_efer_bits(EFER_NX);
 
-	अगर (boot_cpu_has(X86_FEATURE_MPX)) अणु
+	if (boot_cpu_has(X86_FEATURE_MPX)) {
 		rdmsrl(MSR_IA32_BNDCFGS, host_bndcfgs);
 		WARN_ONCE(host_bndcfgs, "KVM: BNDCFGS in host will be lost");
-	पूर्ण
+	}
 
-	अगर (!cpu_has_vmx_mpx())
+	if (!cpu_has_vmx_mpx())
 		supported_xcr0 &= ~(XFEATURE_MASK_BNDREGS |
 				    XFEATURE_MASK_BNDCSR);
 
-	अगर (!cpu_has_vmx_vpid() || !cpu_has_vmx_invvpid() ||
+	if (!cpu_has_vmx_vpid() || !cpu_has_vmx_invvpid() ||
 	    !(cpu_has_vmx_invvpid_single() || cpu_has_vmx_invvpid_global()))
 		enable_vpid = 0;
 
-	अगर (!cpu_has_vmx_ept() ||
+	if (!cpu_has_vmx_ept() ||
 	    !cpu_has_vmx_ept_4levels() ||
 	    !cpu_has_vmx_ept_mt_wb() ||
 	    !cpu_has_vmx_invept_global())
 		enable_ept = 0;
 
-	अगर (!cpu_has_vmx_ept_ad_bits() || !enable_ept)
+	if (!cpu_has_vmx_ept_ad_bits() || !enable_ept)
 		enable_ept_ad_bits = 0;
 
-	अगर (!cpu_has_vmx_unrestricted_guest() || !enable_ept)
+	if (!cpu_has_vmx_unrestricted_guest() || !enable_ept)
 		enable_unrestricted_guest = 0;
 
-	अगर (!cpu_has_vmx_flexpriority())
+	if (!cpu_has_vmx_flexpriority())
 		flexpriority_enabled = 0;
 
-	अगर (!cpu_has_भव_nmis())
+	if (!cpu_has_virtual_nmis())
 		enable_vnmi = 0;
 
 	/*
 	 * set_apic_access_page_addr() is used to reload apic access
-	 * page upon invalidation.  No need to करो anything अगर not
+	 * page upon invalidation.  No need to do anything if not
 	 * using the APIC_ACCESS_ADDR VMCS field.
 	 */
-	अगर (!flexpriority_enabled)
-		vmx_x86_ops.set_apic_access_page_addr = शून्य;
+	if (!flexpriority_enabled)
+		vmx_x86_ops.set_apic_access_page_addr = NULL;
 
-	अगर (!cpu_has_vmx_tpr_shaकरोw())
-		vmx_x86_ops.update_cr8_पूर्णांकercept = शून्य;
+	if (!cpu_has_vmx_tpr_shadow())
+		vmx_x86_ops.update_cr8_intercept = NULL;
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
-	अगर (ms_hyperv.nested_features & HV_X64_NESTED_GUEST_MAPPING_FLUSH
-	    && enable_ept) अणु
+#if IS_ENABLED(CONFIG_HYPERV)
+	if (ms_hyperv.nested_features & HV_X64_NESTED_GUEST_MAPPING_FLUSH
+	    && enable_ept) {
 		vmx_x86_ops.tlb_remote_flush = hv_remote_flush_tlb;
 		vmx_x86_ops.tlb_remote_flush_with_range =
 				hv_remote_flush_tlb_with_range;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (!cpu_has_vmx_ple()) अणु
+	if (!cpu_has_vmx_ple()) {
 		ple_gap = 0;
-		ple_winकरोw = 0;
-		ple_winकरोw_grow = 0;
-		ple_winकरोw_max = 0;
-		ple_winकरोw_shrink = 0;
-	पूर्ण
+		ple_window = 0;
+		ple_window_grow = 0;
+		ple_window_max = 0;
+		ple_window_shrink = 0;
+	}
 
-	अगर (!cpu_has_vmx_apicv()) अणु
+	if (!cpu_has_vmx_apicv()) {
 		enable_apicv = 0;
-		vmx_x86_ops.sync_pir_to_irr = शून्य;
-	पूर्ण
+		vmx_x86_ops.sync_pir_to_irr = NULL;
+	}
 
-	अगर (cpu_has_vmx_tsc_scaling()) अणु
+	if (cpu_has_vmx_tsc_scaling()) {
 		kvm_has_tsc_control = true;
 		kvm_max_tsc_scaling_ratio = KVM_VMX_TSC_MULTIPLIER_MAX;
 		kvm_tsc_scaling_ratio_frac_bits = 48;
-	पूर्ण
+	}
 
-	kvm_has_bus_lock_निकास = cpu_has_vmx_bus_lock_detection();
+	kvm_has_bus_lock_exit = cpu_has_vmx_bus_lock_detection();
 
-	set_bit(0, vmx_vpid_biपंचांगap); /* 0 is reserved क्रम host */
+	set_bit(0, vmx_vpid_bitmap); /* 0 is reserved for host */
 
-	अगर (enable_ept)
+	if (enable_ept)
 		kvm_mmu_set_ept_masks(enable_ept_ad_bits,
 				      cpu_has_vmx_ept_execute_only());
 
-	अगर (!enable_ept)
+	if (!enable_ept)
 		ept_lpage_level = 0;
-	अन्यथा अगर (cpu_has_vmx_ept_1g_page())
+	else if (cpu_has_vmx_ept_1g_page())
 		ept_lpage_level = PG_LEVEL_1G;
-	अन्यथा अगर (cpu_has_vmx_ept_2m_page())
+	else if (cpu_has_vmx_ept_2m_page())
 		ept_lpage_level = PG_LEVEL_2M;
-	अन्यथा
+	else
 		ept_lpage_level = PG_LEVEL_4K;
 	kvm_configure_mmu(enable_ept, vmx_get_max_tdp_level(), ept_lpage_level);
 
@@ -7881,167 +7880,167 @@ unexpected_vmनिकास:
 	 * Only enable PML when hardware supports PML feature, and both EPT
 	 * and EPT A/D bit features are enabled -- PML depends on them to work.
 	 */
-	अगर (!enable_ept || !enable_ept_ad_bits || !cpu_has_vmx_pml())
+	if (!enable_ept || !enable_ept_ad_bits || !cpu_has_vmx_pml())
 		enable_pml = 0;
 
-	अगर (!enable_pml)
+	if (!enable_pml)
 		vmx_x86_ops.cpu_dirty_log_size = 0;
 
-	अगर (!cpu_has_vmx_preemption_समयr())
-		enable_preemption_समयr = false;
+	if (!cpu_has_vmx_preemption_timer())
+		enable_preemption_timer = false;
 
-	अगर (enable_preemption_समयr) अणु
-		u64 use_समयr_freq = 5000ULL * 1000 * 1000;
+	if (enable_preemption_timer) {
+		u64 use_timer_freq = 5000ULL * 1000 * 1000;
 		u64 vmx_msr;
 
 		rdmsrl(MSR_IA32_VMX_MISC, vmx_msr);
-		cpu_preemption_समयr_multi =
+		cpu_preemption_timer_multi =
 			vmx_msr & VMX_MISC_PREEMPTION_TIMER_RATE_MASK;
 
-		अगर (tsc_khz)
-			use_समयr_freq = (u64)tsc_khz * 1000;
-		use_समयr_freq >>= cpu_preemption_समयr_multi;
+		if (tsc_khz)
+			use_timer_freq = (u64)tsc_khz * 1000;
+		use_timer_freq >>= cpu_preemption_timer_multi;
 
 		/*
-		 * KVM "disables" the preemption समयr by setting it to its max
-		 * value.  Don't use the समयr अगर it might cause spurious निकासs
-		 * at a rate faster than 0.1 Hz (of unपूर्णांकerrupted guest समय).
+		 * KVM "disables" the preemption timer by setting it to its max
+		 * value.  Don't use the timer if it might cause spurious exits
+		 * at a rate faster than 0.1 Hz (of uninterrupted guest time).
 		 */
-		अगर (use_समयr_freq > 0xffffffffu / 10)
-			enable_preemption_समयr = false;
-	पूर्ण
+		if (use_timer_freq > 0xffffffffu / 10)
+			enable_preemption_timer = false;
+	}
 
-	अगर (!enable_preemption_समयr) अणु
-		vmx_x86_ops.set_hv_समयr = शून्य;
-		vmx_x86_ops.cancel_hv_समयr = शून्य;
-		vmx_x86_ops.request_immediate_निकास = __kvm_request_immediate_निकास;
-	पूर्ण
+	if (!enable_preemption_timer) {
+		vmx_x86_ops.set_hv_timer = NULL;
+		vmx_x86_ops.cancel_hv_timer = NULL;
+		vmx_x86_ops.request_immediate_exit = __kvm_request_immediate_exit;
+	}
 
-	kvm_set_posted_पूर्णांकr_wakeup_handler(pi_wakeup_handler);
+	kvm_set_posted_intr_wakeup_handler(pi_wakeup_handler);
 
 	kvm_mce_cap_supported |= MCG_LMCE_P;
 
-	अगर (pt_mode != PT_MODE_SYSTEM && pt_mode != PT_MODE_HOST_GUEST)
-		वापस -EINVAL;
-	अगर (!enable_ept || !cpu_has_vmx_पूर्णांकel_pt())
+	if (pt_mode != PT_MODE_SYSTEM && pt_mode != PT_MODE_HOST_GUEST)
+		return -EINVAL;
+	if (!enable_ept || !cpu_has_vmx_intel_pt())
 		pt_mode = PT_MODE_SYSTEM;
 
-	setup_शेष_sgx_lepubkeyhash();
+	setup_default_sgx_lepubkeyhash();
 
-	अगर (nested) अणु
+	if (nested) {
 		nested_vmx_setup_ctls_msrs(&vmcs_config.nested,
 					   vmx_capability.ept);
 
-		r = nested_vmx_hardware_setup(kvm_vmx_निकास_handlers);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		r = nested_vmx_hardware_setup(kvm_vmx_exit_handlers);
+		if (r)
+			return r;
+	}
 
 	vmx_set_cpu_caps();
 
 	r = alloc_kvm_area();
-	अगर (r)
+	if (r)
 		nested_vmx_hardware_unsetup();
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा kvm_x86_init_ops vmx_init_ops __initdata = अणु
+static struct kvm_x86_init_ops vmx_init_ops __initdata = {
 	.cpu_has_kvm_support = cpu_has_kvm_support,
 	.disabled_by_bios = vmx_disabled_by_bios,
 	.check_processor_compatibility = vmx_check_processor_compat,
 	.hardware_setup = hardware_setup,
 
-	.runसमय_ops = &vmx_x86_ops,
-पूर्ण;
+	.runtime_ops = &vmx_x86_ops,
+};
 
-अटल व्योम vmx_cleanup_l1d_flush(व्योम)
-अणु
-	अगर (vmx_l1d_flush_pages) अणु
-		मुक्त_pages((अचिन्हित दीर्घ)vmx_l1d_flush_pages, L1D_CACHE_ORDER);
-		vmx_l1d_flush_pages = शून्य;
-	पूर्ण
+static void vmx_cleanup_l1d_flush(void)
+{
+	if (vmx_l1d_flush_pages) {
+		free_pages((unsigned long)vmx_l1d_flush_pages, L1D_CACHE_ORDER);
+		vmx_l1d_flush_pages = NULL;
+	}
 	/* Restore state so sysfs ignores VMX */
 	l1tf_vmx_mitigation = VMENTER_L1D_FLUSH_AUTO;
-पूर्ण
+}
 
-अटल व्योम vmx_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_KEXEC_CORE
-	RCU_INIT_POINTER(crash_vmclear_loaded_vmcss, शून्य);
+static void vmx_exit(void)
+{
+#ifdef CONFIG_KEXEC_CORE
+	RCU_INIT_POINTER(crash_vmclear_loaded_vmcss, NULL);
 	synchronize_rcu();
-#पूर्ण_अगर
+#endif
 
-	kvm_निकास();
+	kvm_exit();
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
-	अगर (अटल_branch_unlikely(&enable_evmcs)) अणु
-		पूर्णांक cpu;
-		काष्ठा hv_vp_assist_page *vp_ap;
+#if IS_ENABLED(CONFIG_HYPERV)
+	if (static_branch_unlikely(&enable_evmcs)) {
+		int cpu;
+		struct hv_vp_assist_page *vp_ap;
 		/*
 		 * Reset everything to support using non-enlightened VMCS
 		 * access later (e.g. when we reload the module with
 		 * enlightened_vmcs=0)
 		 */
-		क्रम_each_online_cpu(cpu) अणु
+		for_each_online_cpu(cpu) {
 			vp_ap =	hv_get_vp_assist_page(cpu);
 
-			अगर (!vp_ap)
-				जारी;
+			if (!vp_ap)
+				continue;
 
 			vp_ap->nested_control.features.directhypercall = 0;
 			vp_ap->current_nested_vmcs = 0;
 			vp_ap->enlighten_vmentry = 0;
-		पूर्ण
+		}
 
-		अटल_branch_disable(&enable_evmcs);
-	पूर्ण
-#पूर्ण_अगर
+		static_branch_disable(&enable_evmcs);
+	}
+#endif
 	vmx_cleanup_l1d_flush();
-पूर्ण
-module_निकास(vmx_निकास);
+}
+module_exit(vmx_exit);
 
-अटल पूर्णांक __init vmx_init(व्योम)
-अणु
-	पूर्णांक r, cpu;
+static int __init vmx_init(void)
+{
+	int r, cpu;
 
-#अगर IS_ENABLED(CONFIG_HYPERV)
+#if IS_ENABLED(CONFIG_HYPERV)
 	/*
 	 * Enlightened VMCS usage should be recommended and the host needs
 	 * to support eVMCS v1 or above. We can also disable eVMCS support
 	 * with module parameter.
 	 */
-	अगर (enlightened_vmcs &&
-	    ms_hyperv.hपूर्णांकs & HV_X64_ENLIGHTENED_VMCS_RECOMMENDED &&
+	if (enlightened_vmcs &&
+	    ms_hyperv.hints & HV_X64_ENLIGHTENED_VMCS_RECOMMENDED &&
 	    (ms_hyperv.nested_features & HV_X64_ENLIGHTENED_VMCS_VERSION) >=
-	    KVM_EVMCS_VERSION) अणु
-		पूर्णांक cpu;
+	    KVM_EVMCS_VERSION) {
+		int cpu;
 
 		/* Check that we have assist pages on all online CPUs */
-		क्रम_each_online_cpu(cpu) अणु
-			अगर (!hv_get_vp_assist_page(cpu)) अणु
+		for_each_online_cpu(cpu) {
+			if (!hv_get_vp_assist_page(cpu)) {
 				enlightened_vmcs = false;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (enlightened_vmcs) अणु
+		if (enlightened_vmcs) {
 			pr_info("KVM: vmx: using Hyper-V Enlightened VMCS\n");
-			अटल_branch_enable(&enable_evmcs);
-		पूर्ण
+			static_branch_enable(&enable_evmcs);
+		}
 
-		अगर (ms_hyperv.nested_features & HV_X64_NESTED_सूचीECT_FLUSH)
+		if (ms_hyperv.nested_features & HV_X64_NESTED_DIRECT_FLUSH)
 			vmx_x86_ops.enable_direct_tlbflush
 				= hv_enable_direct_tlbflush;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		enlightened_vmcs = false;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	r = kvm_init(&vmx_init_ops, माप(काष्ठा vcpu_vmx),
-		     __alignof__(काष्ठा vcpu_vmx), THIS_MODULE);
-	अगर (r)
-		वापस r;
+	r = kvm_init(&vmx_init_ops, sizeof(struct vcpu_vmx),
+		     __alignof__(struct vcpu_vmx), THIS_MODULE);
+	if (r)
+		return r;
 
 	/*
 	 * Must be called after kvm_init() so enable_ept is properly set
@@ -8051,31 +8050,31 @@ module_निकास(vmx_निकास);
 	 * mitigation mode.
 	 */
 	r = vmx_setup_l1d_flush(vmentry_l1d_flush_param);
-	अगर (r) अणु
-		vmx_निकास();
-		वापस r;
-	पूर्ण
+	if (r) {
+		vmx_exit();
+		return r;
+	}
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		INIT_LIST_HEAD(&per_cpu(loaded_vmcss_on_cpu, cpu));
 
 		pi_init_cpu(cpu);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_KEXEC_CORE
-	rcu_assign_poपूर्णांकer(crash_vmclear_loaded_vmcss,
+#ifdef CONFIG_KEXEC_CORE
+	rcu_assign_pointer(crash_vmclear_loaded_vmcss,
 			   crash_vmclear_local_loaded_vmcss);
-#पूर्ण_अगर
+#endif
 	vmx_check_vmcs12_offsets();
 
 	/*
-	 * Shaकरोw paging करोesn't have a (further) perक्रमmance penalty
+	 * Shadow paging doesn't have a (further) performance penalty
 	 * from GUEST_MAXPHYADDR < HOST_MAXPHYADDR so enable it
-	 * by शेष
+	 * by default
 	 */
-	अगर (!enable_ept)
+	if (!enable_ept)
 		allow_smaller_maxphyaddr = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(vmx_init);

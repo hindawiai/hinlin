@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/sh/mm/cache-j2.c
  *
  * Copyright (C) 2015-2016 Smart Energy Instruments, Inc.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/cpumask.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/cpumask.h>
 
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/cache.h>
+#include <asm/addrspace.h>
+#include <asm/processor.h>
+#include <asm/cacheflush.h>
+#include <asm/io.h>
 
-#घोषणा ICACHE_ENABLE	0x1
-#घोषणा DCACHE_ENABLE	0x2
-#घोषणा CACHE_ENABLE	(ICACHE_ENABLE | DCACHE_ENABLE)
-#घोषणा ICACHE_FLUSH	0x100
-#घोषणा DCACHE_FLUSH	0x200
-#घोषणा CACHE_FLUSH	(ICACHE_FLUSH | DCACHE_FLUSH)
+#define ICACHE_ENABLE	0x1
+#define DCACHE_ENABLE	0x2
+#define CACHE_ENABLE	(ICACHE_ENABLE | DCACHE_ENABLE)
+#define ICACHE_FLUSH	0x100
+#define DCACHE_FLUSH	0x200
+#define CACHE_FLUSH	(ICACHE_FLUSH | DCACHE_FLUSH)
 
 u32 __iomem *j2_ccr_base;
 
-अटल व्योम j2_flush_icache(व्योम *args)
-अणु
-	अचिन्हित cpu;
-	क्रम_each_possible_cpu(cpu)
-		__raw_ग_लिखोl(CACHE_ENABLE | ICACHE_FLUSH, j2_ccr_base + cpu);
-पूर्ण
+static void j2_flush_icache(void *args)
+{
+	unsigned cpu;
+	for_each_possible_cpu(cpu)
+		__raw_writel(CACHE_ENABLE | ICACHE_FLUSH, j2_ccr_base + cpu);
+}
 
-अटल व्योम j2_flush_dcache(व्योम *args)
-अणु
-	अचिन्हित cpu;
-	क्रम_each_possible_cpu(cpu)
-		__raw_ग_लिखोl(CACHE_ENABLE | DCACHE_FLUSH, j2_ccr_base + cpu);
-पूर्ण
+static void j2_flush_dcache(void *args)
+{
+	unsigned cpu;
+	for_each_possible_cpu(cpu)
+		__raw_writel(CACHE_ENABLE | DCACHE_FLUSH, j2_ccr_base + cpu);
+}
 
-अटल व्योम j2_flush_both(व्योम *args)
-अणु
-	अचिन्हित cpu;
-	क्रम_each_possible_cpu(cpu)
-		__raw_ग_लिखोl(CACHE_ENABLE | CACHE_FLUSH, j2_ccr_base + cpu);
-पूर्ण
+static void j2_flush_both(void *args)
+{
+	unsigned cpu;
+	for_each_possible_cpu(cpu)
+		__raw_writel(CACHE_ENABLE | CACHE_FLUSH, j2_ccr_base + cpu);
+}
 
-व्योम __init j2_cache_init(व्योम)
-अणु
-	अगर (!j2_ccr_base)
-		वापस;
+void __init j2_cache_init(void)
+{
+	if (!j2_ccr_base)
+		return;
 
 	local_flush_cache_all = j2_flush_both;
 	local_flush_cache_mm = j2_flush_both;
@@ -61,5 +60,5 @@ u32 __iomem *j2_ccr_base;
 	local_flush_icache_page = j2_flush_icache;
 	local_flush_cache_sigtramp = j2_flush_icache;
 
-	pr_info("Initial J2 CCR is %.8x\n", __raw_पढ़ोl(j2_ccr_base));
-पूर्ण
+	pr_info("Initial J2 CCR is %.8x\n", __raw_readl(j2_ccr_base));
+}

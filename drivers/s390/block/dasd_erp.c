@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Horst Hummel <Horst.Hummel@de.ibm.com>
@@ -10,195 +9,195 @@
  *
  */
 
-#घोषणा KMSG_COMPONENT "dasd"
+#define KMSG_COMPONENT "dasd"
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/init.h>
+#include <linux/ctype.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <linux/uaccess.h>
+#include <asm/debug.h>
+#include <asm/ebcdic.h>
+#include <linux/uaccess.h>
 
 /* This is ugly... */
-#घोषणा PRINTK_HEADER "dasd_erp:"
+#define PRINTK_HEADER "dasd_erp:"
 
-#समावेश "dasd_int.h"
+#include "dasd_int.h"
 
-काष्ठा dasd_ccw_req *
-dasd_alloc_erp_request(अक्षर *magic, पूर्णांक cplength, पूर्णांक datasize,
-		       काष्ठा dasd_device * device)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dasd_ccw_req *cqr;
-	अक्षर *data;
-	पूर्णांक size;
+struct dasd_ccw_req *
+dasd_alloc_erp_request(char *magic, int cplength, int datasize,
+		       struct dasd_device * device)
+{
+	unsigned long flags;
+	struct dasd_ccw_req *cqr;
+	char *data;
+	int size;
 
 	/* Sanity checks */
-	BUG_ON( magic == शून्य || datasize > PAGE_SIZE ||
-	     (cplength*माप(काष्ठा ccw1)) > PAGE_SIZE);
+	BUG_ON( magic == NULL || datasize > PAGE_SIZE ||
+	     (cplength*sizeof(struct ccw1)) > PAGE_SIZE);
 
-	size = (माप(काष्ठा dasd_ccw_req) + 7L) & -8L;
-	अगर (cplength > 0)
-		size += cplength * माप(काष्ठा ccw1);
-	अगर (datasize > 0)
+	size = (sizeof(struct dasd_ccw_req) + 7L) & -8L;
+	if (cplength > 0)
+		size += cplength * sizeof(struct ccw1);
+	if (datasize > 0)
 		size += datasize;
 	spin_lock_irqsave(&device->mem_lock, flags);
-	cqr = (काष्ठा dasd_ccw_req *)
+	cqr = (struct dasd_ccw_req *)
 		dasd_alloc_chunk(&device->erp_chunks, size);
 	spin_unlock_irqrestore(&device->mem_lock, flags);
-	अगर (cqr == शून्य)
-		वापस ERR_PTR(-ENOMEM);
-	स_रखो(cqr, 0, माप(काष्ठा dasd_ccw_req));
+	if (cqr == NULL)
+		return ERR_PTR(-ENOMEM);
+	memset(cqr, 0, sizeof(struct dasd_ccw_req));
 	INIT_LIST_HEAD(&cqr->devlist);
 	INIT_LIST_HEAD(&cqr->blocklist);
-	data = (अक्षर *) cqr + ((माप(काष्ठा dasd_ccw_req) + 7L) & -8L);
-	cqr->cpaddr = शून्य;
-	अगर (cplength > 0) अणु
-		cqr->cpaddr = (काष्ठा ccw1 *) data;
-		data += cplength*माप(काष्ठा ccw1);
-		स_रखो(cqr->cpaddr, 0, cplength*माप(काष्ठा ccw1));
-	पूर्ण
-	cqr->data = शून्य;
-	अगर (datasize > 0) अणु
+	data = (char *) cqr + ((sizeof(struct dasd_ccw_req) + 7L) & -8L);
+	cqr->cpaddr = NULL;
+	if (cplength > 0) {
+		cqr->cpaddr = (struct ccw1 *) data;
+		data += cplength*sizeof(struct ccw1);
+		memset(cqr->cpaddr, 0, cplength*sizeof(struct ccw1));
+	}
+	cqr->data = NULL;
+	if (datasize > 0) {
 		cqr->data = data;
- 		स_रखो(cqr->data, 0, datasize);
-	पूर्ण
-	म_नकलन((अक्षर *) &cqr->magic, magic, 4);
-	ASCEBC((अक्षर *) &cqr->magic, 4);
+ 		memset(cqr->data, 0, datasize);
+	}
+	strncpy((char *) &cqr->magic, magic, 4);
+	ASCEBC((char *) &cqr->magic, 4);
 	set_bit(DASD_CQR_FLAGS_USE_ERP, &cqr->flags);
 	dasd_get_device(device);
-	वापस cqr;
-पूर्ण
+	return cqr;
+}
 
-व्योम
-dasd_मुक्त_erp_request(काष्ठा dasd_ccw_req *cqr, काष्ठा dasd_device * device)
-अणु
-	अचिन्हित दीर्घ flags;
+void
+dasd_free_erp_request(struct dasd_ccw_req *cqr, struct dasd_device * device)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&device->mem_lock, flags);
-	dasd_मुक्त_chunk(&device->erp_chunks, cqr);
+	dasd_free_chunk(&device->erp_chunks, cqr);
 	spin_unlock_irqrestore(&device->mem_lock, flags);
 	atomic_dec(&device->ref_count);
-पूर्ण
+}
 
 
 /*
- * dasd_शेष_erp_action just retries the current cqr
+ * dasd_default_erp_action just retries the current cqr
  */
-काष्ठा dasd_ccw_req *
-dasd_शेष_erp_action(काष्ठा dasd_ccw_req *cqr)
-अणु
-	काष्ठा dasd_device *device;
+struct dasd_ccw_req *
+dasd_default_erp_action(struct dasd_ccw_req *cqr)
+{
+	struct dasd_device *device;
 
 	device = cqr->startdev;
 
         /* just retry - there is nothing to save ... I got no sense data.... */
-        अगर (cqr->retries > 0) अणु
+        if (cqr->retries > 0) {
 		DBF_DEV_EVENT(DBF_DEBUG, device,
                              "default ERP called (%i retries left)",
                              cqr->retries);
-		अगर (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags))
+		if (!test_bit(DASD_CQR_VERIFY_PATH, &cqr->flags))
 			cqr->lpm = dasd_path_get_opm(device);
 		cqr->status = DASD_CQR_FILLED;
-        पूर्ण अन्यथा अणु
+        } else {
 		pr_err("%s: default ERP has run out of retries and failed\n",
 		       dev_name(&device->cdev->dev));
 		cqr->status = DASD_CQR_FAILED;
-		cqr->stopclk = get_tod_घड़ी();
-        पूर्ण
-        वापस cqr;
-पूर्ण				/* end dasd_शेष_erp_action */
+		cqr->stopclk = get_tod_clock();
+        }
+        return cqr;
+}				/* end dasd_default_erp_action */
 
 /*
  * DESCRIPTION
  *   Frees all ERPs of the current ERP Chain and set the status
- *   of the original CQR either to DASD_CQR_DONE अगर ERP was successful
- *   or to DASD_CQR_FAILED अगर ERP was NOT successful.
- *   NOTE: This function is only called अगर no discipline postaction
+ *   of the original CQR either to DASD_CQR_DONE if ERP was successful
+ *   or to DASD_CQR_FAILED if ERP was NOT successful.
+ *   NOTE: This function is only called if no discipline postaction
  *	   is available
  *
  * PARAMETER
  *   erp		current erp_head
  *
  * RETURN VALUES
- *   cqr		poपूर्णांकer to the original CQR
+ *   cqr		pointer to the original CQR
  */
-काष्ठा dasd_ccw_req *dasd_शेष_erp_postaction(काष्ठा dasd_ccw_req *cqr)
-अणु
-	पूर्णांक success;
-	अचिन्हित दीर्घ startclk, stopclk;
-	काष्ठा dasd_device *startdev;
+struct dasd_ccw_req *dasd_default_erp_postaction(struct dasd_ccw_req *cqr)
+{
+	int success;
+	unsigned long startclk, stopclk;
+	struct dasd_device *startdev;
 
-	BUG_ON(cqr->refers == शून्य || cqr->function == शून्य);
+	BUG_ON(cqr->refers == NULL || cqr->function == NULL);
 
 	success = cqr->status == DASD_CQR_DONE;
 	startclk = cqr->startclk;
 	stopclk = cqr->stopclk;
 	startdev = cqr->startdev;
 
-	/* मुक्त all ERPs - but NOT the original cqr */
-	जबतक (cqr->refers != शून्य) अणु
-		काष्ठा dasd_ccw_req *refers;
+	/* free all ERPs - but NOT the original cqr */
+	while (cqr->refers != NULL) {
+		struct dasd_ccw_req *refers;
 
 		refers = cqr->refers;
-		/* हटाओ the request from the block queue */
+		/* remove the request from the block queue */
 		list_del(&cqr->blocklist);
-		/* मुक्त the finished erp request */
-		dasd_मुक्त_erp_request(cqr, cqr->memdev);
+		/* free the finished erp request */
+		dasd_free_erp_request(cqr, cqr->memdev);
 		cqr = refers;
-	पूर्ण
+	}
 
 	/* set corresponding status to original cqr */
 	cqr->startclk = startclk;
 	cqr->stopclk = stopclk;
 	cqr->startdev = startdev;
-	अगर (success)
+	if (success)
 		cqr->status = DASD_CQR_DONE;
-	अन्यथा अणु
+	else {
 		cqr->status = DASD_CQR_FAILED;
-		cqr->stopclk = get_tod_घड़ी();
-	पूर्ण
+		cqr->stopclk = get_tod_clock();
+	}
 
-	वापस cqr;
+	return cqr;
 
-पूर्ण				/* end शेष_erp_postaction */
+}				/* end default_erp_postaction */
 
-व्योम
-dasd_log_sense(काष्ठा dasd_ccw_req *cqr, काष्ठा irb *irb)
-अणु
-	काष्ठा dasd_device *device;
+void
+dasd_log_sense(struct dasd_ccw_req *cqr, struct irb *irb)
+{
+	struct dasd_device *device;
 
 	device = cqr->startdev;
-	अगर (cqr->पूर्णांकrc == -ETIMEDOUT) अणु
+	if (cqr->intrc == -ETIMEDOUT) {
 		dev_err(&device->cdev->dev,
 			"A timeout error occurred for cqr %p\n", cqr);
-		वापस;
-	पूर्ण
-	अगर (cqr->पूर्णांकrc == -ENOLINK) अणु
+		return;
+	}
+	if (cqr->intrc == -ENOLINK) {
 		dev_err(&device->cdev->dev,
 			"A transport error occurred for cqr %p\n", cqr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* dump sense data */
-	अगर (device->discipline && device->discipline->dump_sense)
+	if (device->discipline && device->discipline->dump_sense)
 		device->discipline->dump_sense(device, cqr, irb);
-पूर्ण
+}
 
-व्योम
-dasd_log_sense_dbf(काष्ठा dasd_ccw_req *cqr, काष्ठा irb *irb)
-अणु
-	काष्ठा dasd_device *device;
+void
+dasd_log_sense_dbf(struct dasd_ccw_req *cqr, struct irb *irb)
+{
+	struct dasd_device *device;
 
 	device = cqr->startdev;
 	/* dump sense data to s390 debugfeature*/
-	अगर (device->discipline && device->discipline->dump_sense_dbf)
+	if (device->discipline && device->discipline->dump_sense_dbf)
 		device->discipline->dump_sense_dbf(device, irb, "log");
-पूर्ण
+}
 EXPORT_SYMBOL(dasd_log_sense_dbf);
 
-EXPORT_SYMBOL(dasd_शेष_erp_action);
-EXPORT_SYMBOL(dasd_शेष_erp_postaction);
+EXPORT_SYMBOL(dasd_default_erp_action);
+EXPORT_SYMBOL(dasd_default_erp_postaction);
 EXPORT_SYMBOL(dasd_alloc_erp_request);
-EXPORT_SYMBOL(dasd_मुक्त_erp_request);
+EXPORT_SYMBOL(dasd_free_erp_request);
 EXPORT_SYMBOL(dasd_log_sense);
 

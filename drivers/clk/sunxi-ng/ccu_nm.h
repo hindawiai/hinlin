@@ -1,168 +1,167 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#अगर_अघोषित _CCU_NM_H_
-#घोषणा _CCU_NM_H_
+#ifndef _CCU_NM_H_
+#define _CCU_NM_H_
 
-#समावेश <linux/clk-provider.h>
+#include <linux/clk-provider.h>
 
-#समावेश "ccu_common.h"
-#समावेश "ccu_div.h"
-#समावेश "ccu_frac.h"
-#समावेश "ccu_mult.h"
-#समावेश "ccu_sdm.h"
+#include "ccu_common.h"
+#include "ccu_div.h"
+#include "ccu_frac.h"
+#include "ccu_mult.h"
+#include "ccu_sdm.h"
 
 /*
- * काष्ठा ccu_nm - Definition of an N-M घड़ी
+ * struct ccu_nm - Definition of an N-M clock
  *
- * Clocks based on the क्रमmula parent * N / M
+ * Clocks based on the formula parent * N / M
  */
-काष्ठा ccu_nm अणु
+struct ccu_nm {
 	u32			enable;
 	u32			lock;
 
-	काष्ठा ccu_mult_पूर्णांकernal	n;
-	काष्ठा ccu_भाग_पूर्णांकernal		m;
-	काष्ठा ccu_frac_पूर्णांकernal	frac;
-	काष्ठा ccu_sdm_पूर्णांकernal		sdm;
+	struct ccu_mult_internal	n;
+	struct ccu_div_internal		m;
+	struct ccu_frac_internal	frac;
+	struct ccu_sdm_internal		sdm;
 
-	अचिन्हित पूर्णांक		fixed_post_भाग;
-	अचिन्हित पूर्णांक		min_rate;
-	अचिन्हित पूर्णांक		max_rate;
+	unsigned int		fixed_post_div;
+	unsigned int		min_rate;
+	unsigned int		max_rate;
 
-	काष्ठा ccu_common	common;
-पूर्ण;
+	struct ccu_common	common;
+};
 
-#घोषणा SUNXI_CCU_NM_WITH_SDM_GATE_LOCK(_काष्ठा, _name, _parent, _reg,	\
-					_nshअगरt, _nwidth,		\
-					_mshअगरt, _mwidth,		\
+#define SUNXI_CCU_NM_WITH_SDM_GATE_LOCK(_struct, _name, _parent, _reg,	\
+					_nshift, _nwidth,		\
+					_mshift, _mwidth,		\
 					_sdm_table, _sdm_en,		\
 					_sdm_reg, _sdm_reg_en,		\
 					_gate, _lock, _flags)		\
-	काष्ठा ccu_nm _काष्ठा = अणु					\
+	struct ccu_nm _struct = {					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
-		.m		= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),	\
+		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
+		.m		= _SUNXI_CCU_DIV(_mshift, _mwidth),	\
 		.sdm		= _SUNXI_CCU_SDM(_sdm_table, _sdm_en,	\
 						 _sdm_reg, _sdm_reg_en),\
-		.common		= अणु					\
+		.common		= {					\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_SIGMA_DELTA_MOD,	\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nm_ops,	\
 						      _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK(_काष्ठा, _name, _parent, _reg,	\
-					 _nshअगरt, _nwidth,		\
-					 _mshअगरt, _mwidth,		\
+#define SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK(_struct, _name, _parent, _reg,	\
+					 _nshift, _nwidth,		\
+					 _mshift, _mwidth,		\
 					 _frac_en, _frac_sel,		\
 					 _frac_rate_0, _frac_rate_1,	\
 					 _gate, _lock, _flags)		\
-	काष्ठा ccu_nm _काष्ठा = अणु					\
+	struct ccu_nm _struct = {					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
-		.m		= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),	\
+		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
+		.m		= _SUNXI_CCU_DIV(_mshift, _mwidth),	\
 		.frac		= _SUNXI_CCU_FRAC(_frac_en, _frac_sel,	\
 						  _frac_rate_0,		\
 						  _frac_rate_1),	\
-		.common		= अणु					\
+		.common		= {					\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_FRACTIONAL,	\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nm_ops,	\
 						      _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK_MIN(_काष्ठा, _name, _parent,	\
+#define SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK_MIN(_struct, _name, _parent,	\
 					     _reg, _min_rate,		\
-					     _nshअगरt, _nwidth,		\
-					     _mshअगरt, _mwidth,		\
+					     _nshift, _nwidth,		\
+					     _mshift, _mwidth,		\
 					     _frac_en, _frac_sel,	\
 					     _frac_rate_0, _frac_rate_1,\
 					     _gate, _lock, _flags)	\
-	काष्ठा ccu_nm _काष्ठा = अणु					\
+	struct ccu_nm _struct = {					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
-		.m		= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),	\
+		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
+		.m		= _SUNXI_CCU_DIV(_mshift, _mwidth),	\
 		.frac		= _SUNXI_CCU_FRAC(_frac_en, _frac_sel,	\
 						  _frac_rate_0,		\
 						  _frac_rate_1),	\
 		.min_rate	= _min_rate,				\
-		.common		= अणु					\
+		.common		= {					\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_FRACTIONAL,	\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nm_ops,	\
 						      _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK_MIN_MAX(_काष्ठा, _name,	\
+#define SUNXI_CCU_NM_WITH_FRAC_GATE_LOCK_MIN_MAX(_struct, _name,	\
 						 _parent, _reg,		\
 						 _min_rate, _max_rate,	\
-						 _nshअगरt, _nwidth,	\
-						 _mshअगरt, _mwidth,	\
+						 _nshift, _nwidth,	\
+						 _mshift, _mwidth,	\
 						 _frac_en, _frac_sel,	\
 						 _frac_rate_0,		\
 						 _frac_rate_1,		\
 						 _gate, _lock, _flags)	\
-	काष्ठा ccu_nm _काष्ठा = अणु					\
+	struct ccu_nm _struct = {					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
-		.m		= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),	\
+		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
+		.m		= _SUNXI_CCU_DIV(_mshift, _mwidth),	\
 		.frac		= _SUNXI_CCU_FRAC(_frac_en, _frac_sel,	\
 						  _frac_rate_0,		\
 						  _frac_rate_1),	\
 		.min_rate	= _min_rate,				\
 		.max_rate	= _max_rate,				\
-		.common		= अणु					\
+		.common		= {					\
 			.reg		= _reg,				\
 			.features	= CCU_FEATURE_FRACTIONAL,	\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nm_ops,	\
 						      _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा SUNXI_CCU_NM_WITH_GATE_LOCK(_काष्ठा, _name, _parent, _reg,	\
-				    _nshअगरt, _nwidth,			\
-				    _mshअगरt, _mwidth,			\
+#define SUNXI_CCU_NM_WITH_GATE_LOCK(_struct, _name, _parent, _reg,	\
+				    _nshift, _nwidth,			\
+				    _mshift, _mwidth,			\
 				    _gate, _lock, _flags)		\
-	काष्ठा ccu_nm _काष्ठा = अणु					\
+	struct ccu_nm _struct = {					\
 		.enable		= _gate,				\
 		.lock		= _lock,				\
-		.n		= _SUNXI_CCU_MULT(_nshअगरt, _nwidth),	\
-		.m		= _SUNXI_CCU_DIV(_mshअगरt, _mwidth),	\
-		.common		= अणु					\
+		.n		= _SUNXI_CCU_MULT(_nshift, _nwidth),	\
+		.m		= _SUNXI_CCU_DIV(_mshift, _mwidth),	\
+		.common		= {					\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_nm_ops,	\
 						      _flags),		\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-अटल अंतरभूत काष्ठा ccu_nm *hw_to_ccu_nm(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
+static inline struct ccu_nm *hw_to_ccu_nm(struct clk_hw *hw)
+{
+	struct ccu_common *common = hw_to_ccu_common(hw);
 
-	वापस container_of(common, काष्ठा ccu_nm, common);
-पूर्ण
+	return container_of(common, struct ccu_nm, common);
+}
 
-बाह्य स्थिर काष्ठा clk_ops ccu_nm_ops;
+extern const struct clk_ops ccu_nm_ops;
 
-#पूर्ण_अगर /* _CCU_NM_H_ */
+#endif /* _CCU_NM_H_ */

@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित _ASM_ARC_BUG_H
-#घोषणा _ASM_ARC_BUG_H
+#ifndef _ASM_ARC_BUG_H
+#define _ASM_ARC_BUG_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-व्योम show_regs(काष्ठा pt_regs *regs);
-व्योम show_stacktrace(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs,
-		     स्थिर अक्षर *loglvl);
-व्योम show_kernel_fault_diag(स्थिर अक्षर *str, काष्ठा pt_regs *regs,
-			    अचिन्हित दीर्घ address);
-व्योम die(स्थिर अक्षर *str, काष्ठा pt_regs *regs, अचिन्हित दीर्घ address);
+void show_regs(struct pt_regs *regs);
+void show_stacktrace(struct task_struct *tsk, struct pt_regs *regs,
+		     const char *loglvl);
+void show_kernel_fault_diag(const char *str, struct pt_regs *regs,
+			    unsigned long address);
+void die(const char *str, struct pt_regs *regs, unsigned long address);
 
-#घोषणा BUG()	करो अणु								\
-	pr_warn("BUG: failure at %s:%d/%s()!\n", __खाता__, __LINE__, __func__); \
-	barrier_beक्रमe_unreachable();						\
+#define BUG()	do {								\
+	pr_warn("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
+	barrier_before_unreachable();						\
 	__builtin_trap();							\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा HAVE_ARCH_BUG
+#define HAVE_ARCH_BUG
 
-#समावेश <यंत्र-generic/bug.h>
+#include <asm-generic/bug.h>
 
-#पूर्ण_अगर	/* !__ASSEMBLY__ */
+#endif	/* !__ASSEMBLY__ */
 
-#पूर्ण_अगर
+#endif

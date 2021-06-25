@@ -1,96 +1,95 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/assembler.h
+ *  arch/arm/include/asm/assembler.h
  *
  *  Copyright (C) 1996-2000 Russell King
  *
- *  This file contains arm architecture specअगरic defines
- *  क्रम the dअगरferent processors.
+ *  This file contains arm architecture specific defines
+ *  for the different processors.
  *
  *  Do not include any C declarations in this file - it is included by
  *  assembler source.
  */
-#अगर_अघोषित __ASM_ASSEMBLER_H__
-#घोषणा __ASM_ASSEMBLER_H__
+#ifndef __ASM_ASSEMBLER_H__
+#define __ASM_ASSEMBLER_H__
 
-#अगर_अघोषित __ASSEMBLY__
-#त्रुटि "Only include this from assembly code"
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+#error "Only include this from assembly code"
+#endif
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/opcodes-virt.h>
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/thपढ़ो_info.h>
-#समावेश <यंत्र/uaccess-यंत्र.h>
+#include <asm/ptrace.h>
+#include <asm/opcodes-virt.h>
+#include <asm/asm-offsets.h>
+#include <asm/page.h>
+#include <asm/thread_info.h>
+#include <asm/uaccess-asm.h>
 
-#घोषणा IOMEM(x)	(x)
-
-/*
- * Endian independent macros क्रम shअगरting bytes within रेजिस्टरs.
- */
-#अगर_अघोषित __ARMEB__
-#घोषणा lspull          lsr
-#घोषणा lspush          lsl
-#घोषणा get_byte_0      lsl #0
-#घोषणा get_byte_1	lsr #8
-#घोषणा get_byte_2	lsr #16
-#घोषणा get_byte_3	lsr #24
-#घोषणा put_byte_0      lsl #0
-#घोषणा put_byte_1	lsl #8
-#घोषणा put_byte_2	lsl #16
-#घोषणा put_byte_3	lsl #24
-#अन्यथा
-#घोषणा lspull          lsl
-#घोषणा lspush          lsr
-#घोषणा get_byte_0	lsr #24
-#घोषणा get_byte_1	lsr #16
-#घोषणा get_byte_2	lsr #8
-#घोषणा get_byte_3      lsl #0
-#घोषणा put_byte_0	lsl #24
-#घोषणा put_byte_1	lsl #16
-#घोषणा put_byte_2	lsl #8
-#घोषणा put_byte_3      lsl #0
-#पूर्ण_अगर
-
-/* Select code क्रम any configuration running in BE8 mode */
-#अगर_घोषित CONFIG_CPU_ENDIAN_BE8
-#घोषणा ARM_BE8(code...) code
-#अन्यथा
-#घोषणा ARM_BE8(code...)
-#पूर्ण_अगर
+#define IOMEM(x)	(x)
 
 /*
- * Data preload क्रम architectures that support it
+ * Endian independent macros for shifting bytes within registers.
  */
-#अगर __LINUX_ARM_ARCH__ >= 5
-#घोषणा PLD(code...)	code
-#अन्यथा
-#घोषणा PLD(code...)
-#पूर्ण_अगर
+#ifndef __ARMEB__
+#define lspull          lsr
+#define lspush          lsl
+#define get_byte_0      lsl #0
+#define get_byte_1	lsr #8
+#define get_byte_2	lsr #16
+#define get_byte_3	lsr #24
+#define put_byte_0      lsl #0
+#define put_byte_1	lsl #8
+#define put_byte_2	lsl #16
+#define put_byte_3	lsl #24
+#else
+#define lspull          lsl
+#define lspush          lsr
+#define get_byte_0	lsr #24
+#define get_byte_1	lsr #16
+#define get_byte_2	lsr #8
+#define get_byte_3      lsl #0
+#define put_byte_0	lsl #24
+#define put_byte_1	lsl #16
+#define put_byte_2	lsl #8
+#define put_byte_3      lsl #0
+#endif
+
+/* Select code for any configuration running in BE8 mode */
+#ifdef CONFIG_CPU_ENDIAN_BE8
+#define ARM_BE8(code...) code
+#else
+#define ARM_BE8(code...)
+#endif
+
+/*
+ * Data preload for architectures that support it
+ */
+#if __LINUX_ARM_ARCH__ >= 5
+#define PLD(code...)	code
+#else
+#define PLD(code...)
+#endif
 
 /*
  * This can be used to enable code to cacheline align the destination
- * poपूर्णांकer when bulk writing to memory.  Experiments on StrongARM and
- * XScale didn't show this a worthजबतक thing to करो when the cache is not
- * set to ग_लिखो-allocate (this would need further testing on XScale when WA
+ * pointer when bulk writing to memory.  Experiments on StrongARM and
+ * XScale didn't show this a worthwhile thing to do when the cache is not
+ * set to write-allocate (this would need further testing on XScale when WA
  * is used).
  *
  * On Feroceon there is much to gain however, regardless of cache mode.
  */
-#अगर_घोषित CONFIG_CPU_FEROCEON
-#घोषणा CALGN(code...) code
-#अन्यथा
-#घोषणा CALGN(code...)
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_FEROCEON
+#define CALGN(code...) code
+#else
+#define CALGN(code...)
+#endif
 
-#घोषणा IMM12_MASK 0xfff
+#define IMM12_MASK 0xfff
 
 /*
- * Enable and disable पूर्णांकerrupts
+ * Enable and disable interrupts
  */
-#अगर __LINUX_ARM_ARCH__ >= 6
+#if __LINUX_ARM_ARCH__ >= 6
 	.macro	disable_irq_notrace
 	cpsid	i
 	.endm
@@ -98,7 +97,7 @@
 	.macro	enable_irq_notrace
 	cpsie	i
 	.endm
-#अन्यथा
+#else
 	.macro	disable_irq_notrace
 	msr	cpsr_c, #PSR_I_BIT | SVC_MODE
 	.endm
@@ -106,43 +105,43 @@
 	.macro	enable_irq_notrace
 	msr	cpsr_c, #SVC_MODE
 	.endm
-#पूर्ण_अगर
+#endif
 
-	.macro यंत्र_trace_hardirqs_off, save=1
-#अगर defined(CONFIG_TRACE_IRQFLAGS)
-	.अगर \save
-	sपंचांगdb   sp!, अणुr0-r3, ip, lrपूर्ण
-	.endअगर
+	.macro asm_trace_hardirqs_off, save=1
+#if defined(CONFIG_TRACE_IRQFLAGS)
+	.if \save
+	stmdb   sp!, {r0-r3, ip, lr}
+	.endif
 	bl	trace_hardirqs_off
-	.अगर \save
-	ldmia	sp!, अणुr0-r3, ip, lrपूर्ण
-	.endअगर
-#पूर्ण_अगर
+	.if \save
+	ldmia	sp!, {r0-r3, ip, lr}
+	.endif
+#endif
 	.endm
 
-	.macro यंत्र_trace_hardirqs_on, cond=al, save=1
-#अगर defined(CONFIG_TRACE_IRQFLAGS)
+	.macro asm_trace_hardirqs_on, cond=al, save=1
+#if defined(CONFIG_TRACE_IRQFLAGS)
 	/*
-	 * actually the रेजिस्टरs should be pushed and pop'd conditionally, but
+	 * actually the registers should be pushed and pop'd conditionally, but
 	 * after bl the flags are certainly clobbered
 	 */
-	.अगर \save
-	sपंचांगdb   sp!, अणुr0-r3, ip, lrपूर्ण
-	.endअगर
+	.if \save
+	stmdb   sp!, {r0-r3, ip, lr}
+	.endif
 	bl\cond	trace_hardirqs_on
-	.अगर \save
-	ldmia	sp!, अणुr0-r3, ip, lrपूर्ण
-	.endअगर
-#पूर्ण_अगर
+	.if \save
+	ldmia	sp!, {r0-r3, ip, lr}
+	.endif
+#endif
 	.endm
 
 	.macro disable_irq, save=1
 	disable_irq_notrace
-	यंत्र_trace_hardirqs_off \save
+	asm_trace_hardirqs_off \save
 	.endm
 
 	.macro enable_irq
-	यंत्र_trace_hardirqs_on
+	asm_trace_hardirqs_on
 	enable_irq_notrace
 	.endm
 /*
@@ -150,38 +149,38 @@
  * assumes FIQs are enabled, and that the processor is in SVC mode.
  */
 	.macro	save_and_disable_irqs, oldcpsr
-#अगर_घोषित CONFIG_CPU_V7M
+#ifdef CONFIG_CPU_V7M
 	mrs	\oldcpsr, primask
-#अन्यथा
+#else
 	mrs	\oldcpsr, cpsr
-#पूर्ण_अगर
+#endif
 	disable_irq
 	.endm
 
 	.macro	save_and_disable_irqs_notrace, oldcpsr
-#अगर_घोषित CONFIG_CPU_V7M
+#ifdef CONFIG_CPU_V7M
 	mrs	\oldcpsr, primask
-#अन्यथा
+#else
 	mrs	\oldcpsr, cpsr
-#पूर्ण_अगर
+#endif
 	disable_irq_notrace
 	.endm
 
 /*
- * Restore पूर्णांकerrupt state previously stored in a रेजिस्टर.  We करोn't
+ * Restore interrupt state previously stored in a register.  We don't
  * guarantee that this will preserve the flags.
  */
 	.macro	restore_irqs_notrace, oldcpsr
-#अगर_घोषित CONFIG_CPU_V7M
+#ifdef CONFIG_CPU_V7M
 	msr	primask, \oldcpsr
-#अन्यथा
+#else
 	msr	cpsr_c, \oldcpsr
-#पूर्ण_अगर
+#endif
 	.endm
 
 	.macro restore_irqs, oldcpsr
 	tst	\oldcpsr, #PSR_I_BIT
-	यंत्र_trace_hardirqs_on cond=eq
+	asm_trace_hardirqs_on cond=eq
 	restore_irqs_notrace \oldcpsr
 	.endm
 
@@ -192,288 +191,288 @@
  */
 	.irp	c,,eq,ne,cs,cc,mi,pl,vs,vc,hi,ls,ge,lt,gt,le,hs,lo
 	.macro	badr\c, rd, sym
-#अगर_घोषित CONFIG_THUMB2_KERNEL
-	adr\c	\लd, \sym + 1
-#अन्यथा
-	adr\c	\लd, \sym
-#पूर्ण_अगर
+#ifdef CONFIG_THUMB2_KERNEL
+	adr\c	\rd, \sym + 1
+#else
+	adr\c	\rd, \sym
+#endif
 	.endm
 	.endr
 
 /*
- * Get current thपढ़ो_info.
+ * Get current thread_info.
  */
-	.macro	get_thपढ़ो_info, rd
- ARM(	mov	\लd, sp, lsr #THREAD_SIZE_ORDER + PAGE_SHIFT	)
- THUMB(	mov	\लd, sp			)
- THUMB(	lsr	\लd, \लd, #THREAD_SIZE_ORDER + PAGE_SHIFT	)
-	mov	\लd, \लd, lsl #THREAD_SIZE_ORDER + PAGE_SHIFT
+	.macro	get_thread_info, rd
+ ARM(	mov	\rd, sp, lsr #THREAD_SIZE_ORDER + PAGE_SHIFT	)
+ THUMB(	mov	\rd, sp			)
+ THUMB(	lsr	\rd, \rd, #THREAD_SIZE_ORDER + PAGE_SHIFT	)
+	mov	\rd, \rd, lsl #THREAD_SIZE_ORDER + PAGE_SHIFT
 	.endm
 
 /*
  * Increment/decrement the preempt count.
  */
-#अगर_घोषित CONFIG_PREEMPT_COUNT
-	.macro	inc_preempt_count, ti, पंचांगp
-	ldr	\टmp, [\टi, #TI_PREEMPT]	@ get preempt count
-	add	\टmp, \टmp, #1			@ increment it
-	str	\टmp, [\टi, #TI_PREEMPT]
+#ifdef CONFIG_PREEMPT_COUNT
+	.macro	inc_preempt_count, ti, tmp
+	ldr	\tmp, [\ti, #TI_PREEMPT]	@ get preempt count
+	add	\tmp, \tmp, #1			@ increment it
+	str	\tmp, [\ti, #TI_PREEMPT]
 	.endm
 
-	.macro	dec_preempt_count, ti, पंचांगp
-	ldr	\टmp, [\टi, #TI_PREEMPT]	@ get preempt count
-	sub	\टmp, \टmp, #1			@ decrement it
-	str	\टmp, [\टi, #TI_PREEMPT]
+	.macro	dec_preempt_count, ti, tmp
+	ldr	\tmp, [\ti, #TI_PREEMPT]	@ get preempt count
+	sub	\tmp, \tmp, #1			@ decrement it
+	str	\tmp, [\ti, #TI_PREEMPT]
 	.endm
 
-	.macro	dec_preempt_count_ti, ti, पंचांगp
-	get_thपढ़ो_info \टi
-	dec_preempt_count \टi, \टmp
+	.macro	dec_preempt_count_ti, ti, tmp
+	get_thread_info \ti
+	dec_preempt_count \ti, \tmp
 	.endm
-#अन्यथा
-	.macro	inc_preempt_count, ti, पंचांगp
-	.endm
-
-	.macro	dec_preempt_count, ti, पंचांगp
+#else
+	.macro	inc_preempt_count, ti, tmp
 	.endm
 
-	.macro	dec_preempt_count_ti, ti, पंचांगp
+	.macro	dec_preempt_count, ti, tmp
 	.endm
-#पूर्ण_अगर
 
-#घोषणा USERL(l, x...)				\
+	.macro	dec_preempt_count_ti, ti, tmp
+	.endm
+#endif
+
+#define USERL(l, x...)				\
 9999:	x;					\
 	.pushsection __ex_table,"a";		\
 	.align	3;				\
-	.दीर्घ	9999b,l;			\
+	.long	9999b,l;			\
 	.popsection
 
-#घोषणा USER(x...)	USERL(9001f, x)
+#define USER(x...)	USERL(9001f, x)
 
-#अगर_घोषित CONFIG_SMP
-#घोषणा ALT_SMP(instr...)					\
+#ifdef CONFIG_SMP
+#define ALT_SMP(instr...)					\
 9998:	instr
 /*
- * Note: अगर you get assembler errors from ALT_UP() when building with
+ * Note: if you get assembler errors from ALT_UP() when building with
  * CONFIG_THUMB2_KERNEL, you almost certainly need to use
  * ALT_SMP( W(instr) ... )
  */
-#घोषणा ALT_UP(instr...)					\
+#define ALT_UP(instr...)					\
 	.pushsection ".alt.smp.init", "a"			;\
-	.दीर्घ	9998b - .					;\
+	.long	9998b - .					;\
 9997:	instr							;\
-	.अगर . - 9997b == 2					;\
+	.if . - 9997b == 2					;\
 		nop						;\
-	.endअगर							;\
-	.अगर . - 9997b != 4					;\
+	.endif							;\
+	.if . - 9997b != 4					;\
 		.error "ALT_UP() content must assemble to exactly 4 bytes";\
-	.endअगर							;\
+	.endif							;\
 	.popsection
-#घोषणा ALT_UP_B(label)					\
+#define ALT_UP_B(label)					\
 	.pushsection ".alt.smp.init", "a"			;\
-	.दीर्घ	9998b - .					;\
+	.long	9998b - .					;\
 	W(b)	. + (label - 9998b)					;\
 	.popsection
-#अन्यथा
-#घोषणा ALT_SMP(instr...)
-#घोषणा ALT_UP(instr...) instr
-#घोषणा ALT_UP_B(label) b label
-#पूर्ण_अगर
+#else
+#define ALT_SMP(instr...)
+#define ALT_UP(instr...) instr
+#define ALT_UP_B(label) b label
+#endif
 
 /*
- * Inकाष्ठाion barrier
+ * Instruction barrier
  */
 	.macro	instr_sync
-#अगर __LINUX_ARM_ARCH__ >= 7
+#if __LINUX_ARM_ARCH__ >= 7
 	isb
-#या_अगर __LINUX_ARM_ARCH__ == 6
+#elif __LINUX_ARM_ARCH__ == 6
 	mcr	p15, 0, r0, c7, c5, 4
-#पूर्ण_अगर
+#endif
 	.endm
 
 /*
  * SMP data memory barrier
  */
 	.macro	smp_dmb mode
-#अगर_घोषित CONFIG_SMP
-#अगर __LINUX_ARM_ARCH__ >= 7
-	.अगरeqs "\mode","arm"
+#ifdef CONFIG_SMP
+#if __LINUX_ARM_ARCH__ >= 7
+	.ifeqs "\mode","arm"
 	ALT_SMP(dmb	ish)
-	.अन्यथा
+	.else
 	ALT_SMP(W(dmb)	ish)
-	.endअगर
-#या_अगर __LINUX_ARM_ARCH__ == 6
+	.endif
+#elif __LINUX_ARM_ARCH__ == 6
 	ALT_SMP(mcr	p15, 0, r0, c7, c10, 5)	@ dmb
-#अन्यथा
-#त्रुटि Incompatible SMP platक्रमm
-#पूर्ण_अगर
-	.अगरeqs "\mode","arm"
+#else
+#error Incompatible SMP platform
+#endif
+	.ifeqs "\mode","arm"
 	ALT_UP(nop)
-	.अन्यथा
+	.else
 	ALT_UP(W(nop))
-	.endअगर
-#पूर्ण_अगर
+	.endif
+#endif
 	.endm
 
-#अगर defined(CONFIG_CPU_V7M)
+#if defined(CONFIG_CPU_V7M)
 	/*
-	 * seपंचांगode is used to निश्चित to be in svc mode during boot. For v7-M
-	 * this is करोne in __v7m_setup, so seपंचांगode can be empty here.
+	 * setmode is used to assert to be in svc mode during boot. For v7-M
+	 * this is done in __v7m_setup, so setmode can be empty here.
 	 */
-	.macro	seपंचांगode, mode, reg
+	.macro	setmode, mode, reg
 	.endm
-#या_अगर defined(CONFIG_THUMB2_KERNEL)
-	.macro	seपंचांगode, mode, reg
-	mov	\लeg, #\mode
-	msr	cpsr_c, \लeg
+#elif defined(CONFIG_THUMB2_KERNEL)
+	.macro	setmode, mode, reg
+	mov	\reg, #\mode
+	msr	cpsr_c, \reg
 	.endm
-#अन्यथा
-	.macro	seपंचांगode, mode, reg
+#else
+	.macro	setmode, mode, reg
 	msr	cpsr_c, #\mode
 	.endm
-#पूर्ण_अगर
+#endif
 
 /*
- * Helper macro to enter SVC mode cleanly and mask पूर्णांकerrupts. reg is
- * a scratch रेजिस्टर क्रम the macro to overग_लिखो.
+ * Helper macro to enter SVC mode cleanly and mask interrupts. reg is
+ * a scratch register for the macro to overwrite.
  *
- * This macro is पूर्णांकended क्रम क्रमcing the CPU पूर्णांकo SVC mode at boot समय.
- * you cannot वापस to the original mode.
+ * This macro is intended for forcing the CPU into SVC mode at boot time.
+ * you cannot return to the original mode.
  */
 .macro safe_svcmode_maskall reg:req
-#अगर __LINUX_ARM_ARCH__ >= 6 && !defined(CONFIG_CPU_V7M)
-	mrs	\लeg , cpsr
-	eor	\लeg, \लeg, #HYP_MODE
-	tst	\लeg, #MODE_MASK
-	bic	\लeg , \लeg , #MODE_MASK
-	orr	\लeg , \लeg , #PSR_I_BIT | PSR_F_BIT | SVC_MODE
-THUMB(	orr	\लeg , \लeg , #PSR_T_BIT	)
+#if __LINUX_ARM_ARCH__ >= 6 && !defined(CONFIG_CPU_V7M)
+	mrs	\reg , cpsr
+	eor	\reg, \reg, #HYP_MODE
+	tst	\reg, #MODE_MASK
+	bic	\reg , \reg , #MODE_MASK
+	orr	\reg , \reg , #PSR_I_BIT | PSR_F_BIT | SVC_MODE
+THUMB(	orr	\reg , \reg , #PSR_T_BIT	)
 	bne	1f
-	orr	\लeg, \लeg, #PSR_A_BIT
+	orr	\reg, \reg, #PSR_A_BIT
 	badr	lr, 2f
-	msr	spsr_cxsf, \लeg
+	msr	spsr_cxsf, \reg
 	__MSR_ELR_HYP(14)
 	__ERET
-1:	msr	cpsr_c, \लeg
+1:	msr	cpsr_c, \reg
 2:
-#अन्यथा
+#else
 /*
- * workaround क्रम possibly broken pre-v6 hardware
+ * workaround for possibly broken pre-v6 hardware
  * (akita, Sharp Zaurus C-1000, PXA270-based)
  */
-	seपंचांगode	PSR_F_BIT | PSR_I_BIT | SVC_MODE, \लeg
-#पूर्ण_अगर
+	setmode	PSR_F_BIT | PSR_I_BIT | SVC_MODE, \reg
+#endif
 .endm
 
 /*
  * STRT/LDRT access macros with ARM and Thumb-2 variants
  */
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL
 
-	.macro	usraccoff, instr, reg, ptr, inc, off, cond, पात, t=TUSER()
+	.macro	usraccoff, instr, reg, ptr, inc, off, cond, abort, t=TUSER()
 9999:
-	.अगर	\inc == 1
-	\instr\()b\ट\cond\().w \लeg, [\ptr, #\off]
-	.अन्यथाअगर	\inc == 4
-	\instr\ट\cond\().w \लeg, [\ptr, #\off]
-	.अन्यथा
+	.if	\inc == 1
+	\instr\()b\t\cond\().w \reg, [\ptr, #\off]
+	.elseif	\inc == 4
+	\instr\t\cond\().w \reg, [\ptr, #\off]
+	.else
 	.error	"Unsupported inc macro argument"
-	.endअगर
+	.endif
 
 	.pushsection __ex_table,"a"
 	.align	3
-	.दीर्घ	9999b, \चbort
+	.long	9999b, \abort
 	.popsection
 	.endm
 
-	.macro	usracc, instr, reg, ptr, inc, cond, rept, पात
-	@ explicit IT inकाष्ठाion needed because of the label
-	@ पूर्णांकroduced by the USER macro
-	.अगरnc	\cond,al
-	.अगर	\लept == 1
+	.macro	usracc, instr, reg, ptr, inc, cond, rept, abort
+	@ explicit IT instruction needed because of the label
+	@ introduced by the USER macro
+	.ifnc	\cond,al
+	.if	\rept == 1
 	itt	\cond
-	.अन्यथाअगर	\लept == 2
+	.elseif	\rept == 2
 	ittt	\cond
-	.अन्यथा
+	.else
 	.error	"Unsupported rept macro argument"
-	.endअगर
-	.endअगर
+	.endif
+	.endif
 
-	@ Slightly optimised to aव्योम incrementing the poपूर्णांकer twice
-	usraccoff \instr, \लeg, \ptr, \inc, 0, \cond, \चbort
-	.अगर	\लept == 2
-	usraccoff \instr, \लeg, \ptr, \inc, \inc, \cond, \चbort
-	.endअगर
+	@ Slightly optimised to avoid incrementing the pointer twice
+	usraccoff \instr, \reg, \ptr, \inc, 0, \cond, \abort
+	.if	\rept == 2
+	usraccoff \instr, \reg, \ptr, \inc, \inc, \cond, \abort
+	.endif
 
-	add\cond \ptr, #\लept * \inc
+	add\cond \ptr, #\rept * \inc
 	.endm
 
-#अन्यथा	/* !CONFIG_THUMB2_KERNEL */
+#else	/* !CONFIG_THUMB2_KERNEL */
 
-	.macro	usracc, instr, reg, ptr, inc, cond, rept, पात, t=TUSER()
-	.rept	\लept
+	.macro	usracc, instr, reg, ptr, inc, cond, rept, abort, t=TUSER()
+	.rept	\rept
 9999:
-	.अगर	\inc == 1
-	\instr\()b\ट\cond \लeg, [\ptr], #\inc
-	.अन्यथाअगर	\inc == 4
-	\instr\ट\cond \लeg, [\ptr], #\inc
-	.अन्यथा
+	.if	\inc == 1
+	\instr\()b\t\cond \reg, [\ptr], #\inc
+	.elseif	\inc == 4
+	\instr\t\cond \reg, [\ptr], #\inc
+	.else
 	.error	"Unsupported inc macro argument"
-	.endअगर
+	.endif
 
 	.pushsection __ex_table,"a"
 	.align	3
-	.दीर्घ	9999b, \चbort
+	.long	9999b, \abort
 	.popsection
 	.endr
 	.endm
 
-#पूर्ण_अगर	/* CONFIG_THUMB2_KERNEL */
+#endif	/* CONFIG_THUMB2_KERNEL */
 
-	.macro	strusr, reg, ptr, inc, cond=al, rept=1, पात=9001f
-	usracc	str, \लeg, \ptr, \inc, \cond, \लept, \चbort
+	.macro	strusr, reg, ptr, inc, cond=al, rept=1, abort=9001f
+	usracc	str, \reg, \ptr, \inc, \cond, \rept, \abort
 	.endm
 
-	.macro	ldrusr, reg, ptr, inc, cond=al, rept=1, पात=9001f
-	usracc	ldr, \लeg, \ptr, \inc, \cond, \लept, \चbort
+	.macro	ldrusr, reg, ptr, inc, cond=al, rept=1, abort=9001f
+	usracc	ldr, \reg, \ptr, \inc, \cond, \rept, \abort
 	.endm
 
-/* Utility macro क्रम declaring string literals */
+/* Utility macro for declaring string literals */
 	.macro	string name:req, string
-	.type \नame , #object
-\नame:
+	.type \name , #object
+\name:
 	.asciz "\string"
-	.size \नame , . - \नame
+	.size \name , . - \name
 	.endm
 
 	.irp	c,,eq,ne,cs,cc,mi,pl,vs,vc,hi,ls,ge,lt,gt,le,hs,lo
 	.macro	ret\c, reg
-#अगर __LINUX_ARM_ARCH__ < 6
-	mov\c	pc, \लeg
-#अन्यथा
-	.अगरeqs	"\reg", "lr"
-	bx\c	\लeg
-	.अन्यथा
-	mov\c	pc, \लeg
-	.endअगर
-#पूर्ण_अगर
+#if __LINUX_ARM_ARCH__ < 6
+	mov\c	pc, \reg
+#else
+	.ifeqs	"\reg", "lr"
+	bx\c	\reg
+	.else
+	mov\c	pc, \reg
+	.endif
+#endif
 	.endm
 	.endr
 
 	.macro	ret.w, reg
-	ret	\लeg
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+	ret	\reg
+#ifdef CONFIG_THUMB2_KERNEL
 	nop
-#पूर्ण_अगर
+#endif
 	.endm
 
 	.macro	bug, msg, line
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL
 1:	.inst	0xde02
-#अन्यथा
+#else
 1:	.inst	0xe7f001f2
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
+#endif
+#ifdef CONFIG_DEBUG_BUGVERBOSE
 	.pushsection .rodata.str, "aMS", %progbits, 1
 2:	.asciz	"\msg"
 	.popsection
@@ -482,73 +481,73 @@ THUMB(	orr	\लeg , \लeg , #PSR_T_BIT	)
 	.word	1b, 2b
 	.hword	\line
 	.popsection
-#पूर्ण_अगर
+#endif
 	.endm
 
-#अगर_घोषित CONFIG_KPROBES
-#घोषणा _ASM_NOKPROBE(entry)				\
+#ifdef CONFIG_KPROBES
+#define _ASM_NOKPROBE(entry)				\
 	.pushsection "_kprobe_blacklist", "aw" ;	\
 	.balign 4 ;					\
-	.दीर्घ entry;					\
+	.long entry;					\
 	.popsection
-#अन्यथा
-#घोषणा _ASM_NOKPROBE(entry)
-#पूर्ण_अगर
+#else
+#define _ASM_NOKPROBE(entry)
+#endif
 
-	.macro		__adldst_l, op, reg, sym, पंचांगp, c
-	.अगर		__LINUX_ARM_ARCH__ < 7
-	ldr\c		\टmp, .La\@
+	.macro		__adldst_l, op, reg, sym, tmp, c
+	.if		__LINUX_ARM_ARCH__ < 7
+	ldr\c		\tmp, .La\@
 	.subsection	1
 	.align		2
-.La\@:	.दीर्घ		\sym - .Lpc\@
+.La\@:	.long		\sym - .Lpc\@
 	.previous
-	.अन्यथा
-	.अगरnb		\c
+	.else
+	.ifnb		\c
  THUMB(	ittt		\c			)
-	.endअगर
-	movw\c		\टmp, #:lower16:\sym - .Lpc\@
-	movt\c		\टmp, #:upper16:\sym - .Lpc\@
-	.endअगर
+	.endif
+	movw\c		\tmp, #:lower16:\sym - .Lpc\@
+	movt\c		\tmp, #:upper16:\sym - .Lpc\@
+	.endif
 
-#अगर_अघोषित CONFIG_THUMB2_KERNEL
+#ifndef CONFIG_THUMB2_KERNEL
 	.set		.Lpc\@, . + 8			// PC bias
-	.अगरc		\op, add
-	add\c		\लeg, \टmp, pc
-	.अन्यथा
-	\op\c		\लeg, [pc, \टmp]
-	.endअगर
-#अन्यथा
-.Lb\@:	add\c		\टmp, \टmp, pc
+	.ifc		\op, add
+	add\c		\reg, \tmp, pc
+	.else
+	\op\c		\reg, [pc, \tmp]
+	.endif
+#else
+.Lb\@:	add\c		\tmp, \tmp, pc
 	/*
 	 * In Thumb-2 builds, the PC bias depends on whether we are currently
-	 * emitting पूर्णांकo a .arm or a .thumb section. The size of the add opcode
+	 * emitting into a .arm or a .thumb section. The size of the add opcode
 	 * above will be 2 bytes when emitting in Thumb mode and 4 bytes when
-	 * emitting in ARM mode, so let's use this to account क्रम the bias.
+	 * emitting in ARM mode, so let's use this to account for the bias.
 	 */
 	.set		.Lpc\@, . + (. - .Lb\@)
 
-	.अगरnc		\op, add
-	\op\c		\लeg, [\टmp]
-	.endअगर
-#पूर्ण_अगर
+	.ifnc		\op, add
+	\op\c		\reg, [\tmp]
+	.endif
+#endif
 	.endm
 
 	/*
-	 * mov_l - move a स्थिरant value or [relocated] address पूर्णांकo a रेजिस्टर
+	 * mov_l - move a constant value or [relocated] address into a register
 	 */
 	.macro		mov_l, dst:req, imm:req
-	.अगर		__LINUX_ARM_ARCH__ < 7
+	.if		__LINUX_ARM_ARCH__ < 7
 	ldr		\dst, =\imm
-	.अन्यथा
+	.else
 	movw		\dst, #:lower16:\imm
 	movt		\dst, #:upper16:\imm
-	.endअगर
+	.endif
 	.endm
 
 	/*
-	 * adr_l - adr pseuकरो-op with unlimited range
+	 * adr_l - adr pseudo-op with unlimited range
 	 *
-	 * @dst: destination रेजिस्टर
+	 * @dst: destination register
 	 * @sym: name of the symbol
 	 * @cond: conditional opcode suffix
 	 */
@@ -557,9 +556,9 @@ THUMB(	orr	\लeg , \लeg , #PSR_T_BIT	)
 	.endm
 
 	/*
-	 * ldr_l - ldr <literal> pseuकरो-op with unlimited range
+	 * ldr_l - ldr <literal> pseudo-op with unlimited range
 	 *
-	 * @dst: destination रेजिस्टर
+	 * @dst: destination register
 	 * @sym: name of the symbol
 	 * @cond: conditional opcode suffix
 	 */
@@ -568,32 +567,32 @@ THUMB(	orr	\लeg , \लeg , #PSR_T_BIT	)
 	.endm
 
 	/*
-	 * str_l - str <literal> pseuकरो-op with unlimited range
+	 * str_l - str <literal> pseudo-op with unlimited range
 	 *
-	 * @src: source रेजिस्टर
+	 * @src: source register
 	 * @sym: name of the symbol
-	 * @पंचांगp: mandatory scratch रेजिस्टर
+	 * @tmp: mandatory scratch register
 	 * @cond: conditional opcode suffix
 	 */
-	.macro		str_l, src:req, sym:req, पंचांगp:req, cond
-	__adldst_l	str, \src, \sym, \टmp, \cond
+	.macro		str_l, src:req, sym:req, tmp:req, cond
+	__adldst_l	str, \src, \sym, \tmp, \cond
 	.endm
 
 	/*
 	 * rev_l - byte-swap a 32-bit value
 	 *
-	 * @val: source/destination रेजिस्टर
-	 * @पंचांगp: scratch रेजिस्टर
+	 * @val: source/destination register
+	 * @tmp: scratch register
 	 */
-	.macro		rev_l, val:req, पंचांगp:req
-	.अगर		__LINUX_ARM_ARCH__ < 6
-	eor		\टmp, \खal, \खal, ror #16
-	bic		\टmp, \टmp, #0x00ff0000
-	mov		\खal, \खal, ror #8
-	eor		\खal, \खal, \टmp, lsr #8
-	.अन्यथा
-	rev		\खal, \खal
-	.endअगर
+	.macro		rev_l, val:req, tmp:req
+	.if		__LINUX_ARM_ARCH__ < 6
+	eor		\tmp, \val, \val, ror #16
+	bic		\tmp, \tmp, #0x00ff0000
+	mov		\val, \val, ror #8
+	eor		\val, \val, \tmp, lsr #8
+	.else
+	rev		\val, \val
+	.endif
 	.endm
 
-#पूर्ण_अगर /* __ASM_ASSEMBLER_H__ */
+#endif /* __ASM_ASSEMBLER_H__ */

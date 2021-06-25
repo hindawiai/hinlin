@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * fs/kernfs/kernfs-पूर्णांकernal.h - kernfs पूर्णांकernal header file
+ * fs/kernfs/kernfs-internal.h - kernfs internal header file
  *
  * Copyright (c) 2001-3 Patrick Mochel
  * Copyright (c) 2007 SUSE Linux Products GmbH
  * Copyright (c) 2007, 2013 Tejun Heo <teheo@suse.de>
  */
 
-#अगर_अघोषित __KERNFS_INTERNAL_H
-#घोषणा __KERNFS_INTERNAL_H
+#ifndef __KERNFS_INTERNAL_H
+#define __KERNFS_INTERNAL_H
 
-#समावेश <linux/lockdep.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/xattr.h>
+#include <linux/lockdep.h>
+#include <linux/fs.h>
+#include <linux/mutex.h>
+#include <linux/xattr.h>
 
-#समावेश <linux/kernfs.h>
-#समावेश <linux/fs_context.h>
+#include <linux/kernfs.h>
+#include <linux/fs_context.h>
 
-काष्ठा kernfs_iattrs अणु
+struct kernfs_iattrs {
 	kuid_t			ia_uid;
 	kgid_t			ia_gid;
-	काष्ठा बारpec64	ia_aसमय;
-	काष्ठा बारpec64	ia_mसमय;
-	काष्ठा बारpec64	ia_स_समय;
+	struct timespec64	ia_atime;
+	struct timespec64	ia_mtime;
+	struct timespec64	ia_ctime;
 
-	काष्ठा simple_xattrs	xattrs;
+	struct simple_xattrs	xattrs;
 	atomic_t		nr_user_xattrs;
 	atomic_t		user_xattr_size;
-पूर्ण;
+};
 
-/* +1 to aव्योम triggering overflow warning when negating it */
-#घोषणा KN_DEACTIVATED_BIAS		(पूर्णांक_न्यून + 1)
+/* +1 to avoid triggering overflow warning when negating it */
+#define KN_DEACTIVATED_BIAS		(INT_MIN + 1)
 
 /* KERNFS_TYPE_MASK and types are defined in include/linux/kernfs.h */
 
 /**
- * kernfs_root - find out the kernfs_root a kernfs_node beदीर्घs to
- * @kn: kernfs_node of पूर्णांकerest
+ * kernfs_root - find out the kernfs_root a kernfs_node belongs to
+ * @kn: kernfs_node of interest
  *
- * Return the kernfs_root @kn beदीर्घs to.
+ * Return the kernfs_root @kn belongs to.
  */
-अटल अंतरभूत काष्ठा kernfs_root *kernfs_root(काष्ठा kernfs_node *kn)
-अणु
-	/* अगर parent exists, it's always a dir; otherwise, @sd is a dir */
-	अगर (kn->parent)
+static inline struct kernfs_root *kernfs_root(struct kernfs_node *kn)
+{
+	/* if parent exists, it's always a dir; otherwise, @sd is a dir */
+	if (kn->parent)
 		kn = kn->parent;
-	वापस kn->dir.root;
-पूर्ण
+	return kn->dir.root;
+}
 
 /*
  * mount.c
  */
-काष्ठा kernfs_super_info अणु
-	काष्ठा super_block	*sb;
+struct kernfs_super_info {
+	struct super_block	*sb;
 
 	/*
 	 * The root associated with this super_block.  Each super_block is
-	 * identअगरied by the root and ns it's associated with.
+	 * identified by the root and ns it's associated with.
 	 */
-	काष्ठा kernfs_root	*root;
+	struct kernfs_root	*root;
 
 	/*
 	 * Each sb is associated with one namespace tag, currently the
@@ -68,64 +67,64 @@
 	 * instance.  If multiple tags become necessary, make the following
 	 * an array and compare kernfs_node tag against every entry.
 	 */
-	स्थिर व्योम		*ns;
+	const void		*ns;
 
-	/* anchored at kernfs_root->supers, रक्षित by kernfs_mutex */
-	काष्ठा list_head	node;
-पूर्ण;
-#घोषणा kernfs_info(SB) ((काष्ठा kernfs_super_info *)(SB->s_fs_info))
+	/* anchored at kernfs_root->supers, protected by kernfs_mutex */
+	struct list_head	node;
+};
+#define kernfs_info(SB) ((struct kernfs_super_info *)(SB->s_fs_info))
 
-अटल अंतरभूत काष्ठा kernfs_node *kernfs_dentry_node(काष्ठा dentry *dentry)
-अणु
-	अगर (d_really_is_negative(dentry))
-		वापस शून्य;
-	वापस d_inode(dentry)->i_निजी;
-पूर्ण
+static inline struct kernfs_node *kernfs_dentry_node(struct dentry *dentry)
+{
+	if (d_really_is_negative(dentry))
+		return NULL;
+	return d_inode(dentry)->i_private;
+}
 
-बाह्य स्थिर काष्ठा super_operations kernfs_sops;
-बाह्य काष्ठा kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
+extern const struct super_operations kernfs_sops;
+extern struct kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
 
 /*
  * inode.c
  */
-बाह्य स्थिर काष्ठा xattr_handler *kernfs_xattr_handlers[];
-व्योम kernfs_evict_inode(काष्ठा inode *inode);
-पूर्णांक kernfs_iop_permission(काष्ठा user_namespace *mnt_userns,
-			  काष्ठा inode *inode, पूर्णांक mask);
-पूर्णांक kernfs_iop_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
-		       काष्ठा iattr *iattr);
-पूर्णांक kernfs_iop_getattr(काष्ठा user_namespace *mnt_userns,
-		       स्थिर काष्ठा path *path, काष्ठा kstat *stat,
-		       u32 request_mask, अचिन्हित पूर्णांक query_flags);
-sमाप_प्रकार kernfs_iop_listxattr(काष्ठा dentry *dentry, अक्षर *buf, माप_प्रकार size);
-पूर्णांक __kernfs_setattr(काष्ठा kernfs_node *kn, स्थिर काष्ठा iattr *iattr);
+extern const struct xattr_handler *kernfs_xattr_handlers[];
+void kernfs_evict_inode(struct inode *inode);
+int kernfs_iop_permission(struct user_namespace *mnt_userns,
+			  struct inode *inode, int mask);
+int kernfs_iop_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		       struct iattr *iattr);
+int kernfs_iop_getattr(struct user_namespace *mnt_userns,
+		       const struct path *path, struct kstat *stat,
+		       u32 request_mask, unsigned int query_flags);
+ssize_t kernfs_iop_listxattr(struct dentry *dentry, char *buf, size_t size);
+int __kernfs_setattr(struct kernfs_node *kn, const struct iattr *iattr);
 
 /*
  * dir.c
  */
-बाह्य काष्ठा mutex kernfs_mutex;
-बाह्य स्थिर काष्ठा dentry_operations kernfs_करोps;
-बाह्य स्थिर काष्ठा file_operations kernfs_dir_fops;
-बाह्य स्थिर काष्ठा inode_operations kernfs_dir_iops;
+extern struct mutex kernfs_mutex;
+extern const struct dentry_operations kernfs_dops;
+extern const struct file_operations kernfs_dir_fops;
+extern const struct inode_operations kernfs_dir_iops;
 
-काष्ठा kernfs_node *kernfs_get_active(काष्ठा kernfs_node *kn);
-व्योम kernfs_put_active(काष्ठा kernfs_node *kn);
-पूर्णांक kernfs_add_one(काष्ठा kernfs_node *kn);
-काष्ठा kernfs_node *kernfs_new_node(काष्ठा kernfs_node *parent,
-				    स्थिर अक्षर *name, umode_t mode,
+struct kernfs_node *kernfs_get_active(struct kernfs_node *kn);
+void kernfs_put_active(struct kernfs_node *kn);
+int kernfs_add_one(struct kernfs_node *kn);
+struct kernfs_node *kernfs_new_node(struct kernfs_node *parent,
+				    const char *name, umode_t mode,
 				    kuid_t uid, kgid_t gid,
-				    अचिन्हित flags);
+				    unsigned flags);
 
 /*
  * file.c
  */
-बाह्य स्थिर काष्ठा file_operations kernfs_file_fops;
+extern const struct file_operations kernfs_file_fops;
 
-व्योम kernfs_drain_खोलो_files(काष्ठा kernfs_node *kn);
+void kernfs_drain_open_files(struct kernfs_node *kn);
 
 /*
  * symlink.c
  */
-बाह्य स्थिर काष्ठा inode_operations kernfs_symlink_iops;
+extern const struct inode_operations kernfs_symlink_iops;
 
-#पूर्ण_अगर	/* __KERNFS_INTERNAL_H */
+#endif	/* __KERNFS_INTERNAL_H */

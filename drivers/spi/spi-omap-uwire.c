@@ -1,20 +1,19 @@
-<शैली गुरु>
 /*
- * MicroWire पूर्णांकerface driver क्रम OMAP
+ * MicroWire interface driver for OMAP
  *
  * Copyright 2003 MontaVista Software Inc. <source@mvista.com>
  *
- * Ported to 2.6 OMAP uwire पूर्णांकerface.
+ * Ported to 2.6 OMAP uwire interface.
  * Copyright (C) 2004 Texas Instruments.
  *
  * Generalization patches by Juha Yrjola <juha.yrjola@nokia.com>
  *
- * Copyright (C) 2005 David Brownell (ported to 2.6 SPI पूर्णांकerface)
+ * Copyright (C) 2005 David Brownell (ported to 2.6 SPI interface)
  * Copyright (C) 2006 Nokia
  *
  * Many updates by Imre Deak <imre.deak@nokia.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
@@ -22,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
  * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -30,467 +29,467 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/slab.h>
+#include <linux/device.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/spi_bitbang.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
+#include <linux/spi/spi.h>
+#include <linux/spi/spi_bitbang.h>
+#include <linux/module.h>
+#include <linux/io.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/mach-types.h>
+#include <mach/hardware.h>
+#include <asm/mach-types.h>
 
-#समावेश <mach/mux.h>
+#include <mach/mux.h>
 
-#समावेश <mach/omap7xx.h>	/* OMAP7XX_IO_CONF रेजिस्टरs */
+#include <mach/omap7xx.h>	/* OMAP7XX_IO_CONF registers */
 
 
-/* FIXME address is now a platक्रमm device resource,
+/* FIXME address is now a platform device resource,
  * and irqs should show there too...
  */
-#घोषणा UWIRE_BASE_PHYS		0xFFFB3000
+#define UWIRE_BASE_PHYS		0xFFFB3000
 
 /* uWire Registers: */
-#घोषणा UWIRE_IO_SIZE 0x20
-#घोषणा UWIRE_TDR     0x00
-#घोषणा UWIRE_RDR     0x00
-#घोषणा UWIRE_CSR     0x01
-#घोषणा UWIRE_SR1     0x02
-#घोषणा UWIRE_SR2     0x03
-#घोषणा UWIRE_SR3     0x04
-#घोषणा UWIRE_SR4     0x05
-#घोषणा UWIRE_SR5     0x06
+#define UWIRE_IO_SIZE 0x20
+#define UWIRE_TDR     0x00
+#define UWIRE_RDR     0x00
+#define UWIRE_CSR     0x01
+#define UWIRE_SR1     0x02
+#define UWIRE_SR2     0x03
+#define UWIRE_SR3     0x04
+#define UWIRE_SR4     0x05
+#define UWIRE_SR5     0x06
 
 /* CSR bits */
-#घोषणा	RDRB	(1 << 15)
-#घोषणा	CSRB	(1 << 14)
-#घोषणा	START	(1 << 13)
-#घोषणा	CS_CMD	(1 << 12)
+#define	RDRB	(1 << 15)
+#define	CSRB	(1 << 14)
+#define	START	(1 << 13)
+#define	CS_CMD	(1 << 12)
 
 /* SR1 or SR2 bits */
-#घोषणा UWIRE_READ_FALLING_EDGE		0x0001
-#घोषणा UWIRE_READ_RISING_EDGE		0x0000
-#घोषणा UWIRE_WRITE_FALLING_EDGE	0x0000
-#घोषणा UWIRE_WRITE_RISING_EDGE		0x0002
-#घोषणा UWIRE_CS_ACTIVE_LOW		0x0000
-#घोषणा UWIRE_CS_ACTIVE_HIGH		0x0004
-#घोषणा UWIRE_FREQ_DIV_2		0x0000
-#घोषणा UWIRE_FREQ_DIV_4		0x0008
-#घोषणा UWIRE_FREQ_DIV_8		0x0010
-#घोषणा UWIRE_CHK_READY			0x0020
-#घोषणा UWIRE_CLK_INVERTED		0x0040
+#define UWIRE_READ_FALLING_EDGE		0x0001
+#define UWIRE_READ_RISING_EDGE		0x0000
+#define UWIRE_WRITE_FALLING_EDGE	0x0000
+#define UWIRE_WRITE_RISING_EDGE		0x0002
+#define UWIRE_CS_ACTIVE_LOW		0x0000
+#define UWIRE_CS_ACTIVE_HIGH		0x0004
+#define UWIRE_FREQ_DIV_2		0x0000
+#define UWIRE_FREQ_DIV_4		0x0008
+#define UWIRE_FREQ_DIV_8		0x0010
+#define UWIRE_CHK_READY			0x0020
+#define UWIRE_CLK_INVERTED		0x0040
 
 
-काष्ठा uwire_spi अणु
-	काष्ठा spi_bitbang	bitbang;
-	काष्ठा clk		*ck;
-पूर्ण;
+struct uwire_spi {
+	struct spi_bitbang	bitbang;
+	struct clk		*ck;
+};
 
-काष्ठा uwire_state अणु
-	अचिन्हित	भाग1_idx;
-पूर्ण;
+struct uwire_state {
+	unsigned	div1_idx;
+};
 
-/* REVISIT compile समय स्थिरant क्रम idx_shअगरt? */
+/* REVISIT compile time constant for idx_shift? */
 /*
- * Or, put it in a काष्ठाure which is used throughout the driver;
- * that aव्योमs having to issue two loads क्रम each bit of अटल data.
+ * Or, put it in a structure which is used throughout the driver;
+ * that avoids having to issue two loads for each bit of static data.
  */
-अटल अचिन्हित पूर्णांक uwire_idx_shअगरt;
-अटल व्योम __iomem *uwire_base;
+static unsigned int uwire_idx_shift;
+static void __iomem *uwire_base;
 
-अटल अंतरभूत व्योम uwire_ग_लिखो_reg(पूर्णांक idx, u16 val)
-अणु
-	__raw_ग_लिखोw(val, uwire_base + (idx << uwire_idx_shअगरt));
-पूर्ण
+static inline void uwire_write_reg(int idx, u16 val)
+{
+	__raw_writew(val, uwire_base + (idx << uwire_idx_shift));
+}
 
-अटल अंतरभूत u16 uwire_पढ़ो_reg(पूर्णांक idx)
-अणु
-	वापस __raw_पढ़ोw(uwire_base + (idx << uwire_idx_shअगरt));
-पूर्ण
+static inline u16 uwire_read_reg(int idx)
+{
+	return __raw_readw(uwire_base + (idx << uwire_idx_shift));
+}
 
-अटल अंतरभूत व्योम omap_uwire_configure_mode(u8 cs, अचिन्हित दीर्घ flags)
-अणु
+static inline void omap_uwire_configure_mode(u8 cs, unsigned long flags)
+{
 	u16	w, val = 0;
-	पूर्णांक	shअगरt, reg;
+	int	shift, reg;
 
-	अगर (flags & UWIRE_CLK_INVERTED)
+	if (flags & UWIRE_CLK_INVERTED)
 		val ^= 0x03;
 	val = flags & 0x3f;
-	अगर (cs & 1)
-		shअगरt = 6;
-	अन्यथा
-		shअगरt = 0;
-	अगर (cs <= 1)
+	if (cs & 1)
+		shift = 6;
+	else
+		shift = 0;
+	if (cs <= 1)
 		reg = UWIRE_SR1;
-	अन्यथा
+	else
 		reg = UWIRE_SR2;
 
-	w = uwire_पढ़ो_reg(reg);
-	w &= ~(0x3f << shअगरt);
-	w |= val << shअगरt;
-	uwire_ग_लिखो_reg(reg, w);
-पूर्ण
+	w = uwire_read_reg(reg);
+	w &= ~(0x3f << shift);
+	w |= val << shift;
+	uwire_write_reg(reg, w);
+}
 
-अटल पूर्णांक रुको_uwire_csr_flag(u16 mask, u16 val, पूर्णांक might_not_catch)
-अणु
+static int wait_uwire_csr_flag(u16 mask, u16 val, int might_not_catch)
+{
 	u16 w;
-	पूर्णांक c = 0;
-	अचिन्हित दीर्घ max_jअगरfies = jअगरfies + HZ;
+	int c = 0;
+	unsigned long max_jiffies = jiffies + HZ;
 
-	क्रम (;;) अणु
-		w = uwire_पढ़ो_reg(UWIRE_CSR);
-		अगर ((w & mask) == val)
-			अवरोध;
-		अगर (समय_after(jअगरfies, max_jअगरfies)) अणु
-			prपूर्णांकk(KERN_ERR "%s: timeout. reg=%#06x "
+	for (;;) {
+		w = uwire_read_reg(UWIRE_CSR);
+		if ((w & mask) == val)
+			break;
+		if (time_after(jiffies, max_jiffies)) {
+			printk(KERN_ERR "%s: timeout. reg=%#06x "
 					"mask=%#06x val=%#06x\n",
 			       __func__, w, mask, val);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		c++;
-		अगर (might_not_catch && c > 64)
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (might_not_catch && c > 64)
+			break;
+	}
+	return 0;
+}
 
-अटल व्योम uwire_set_clk1_भाग(पूर्णांक भाग1_idx)
-अणु
+static void uwire_set_clk1_div(int div1_idx)
+{
 	u16 w;
 
-	w = uwire_पढ़ो_reg(UWIRE_SR3);
+	w = uwire_read_reg(UWIRE_SR3);
 	w &= ~(0x03 << 1);
-	w |= भाग1_idx << 1;
-	uwire_ग_लिखो_reg(UWIRE_SR3, w);
-पूर्ण
+	w |= div1_idx << 1;
+	uwire_write_reg(UWIRE_SR3, w);
+}
 
-अटल व्योम uwire_chipselect(काष्ठा spi_device *spi, पूर्णांक value)
-अणु
-	काष्ठा	uwire_state *ust = spi->controller_state;
+static void uwire_chipselect(struct spi_device *spi, int value)
+{
+	struct	uwire_state *ust = spi->controller_state;
 	u16	w;
-	पूर्णांक	old_cs;
+	int	old_cs;
 
 
-	BUG_ON(रुको_uwire_csr_flag(CSRB, 0, 0));
+	BUG_ON(wait_uwire_csr_flag(CSRB, 0, 0));
 
-	w = uwire_पढ़ो_reg(UWIRE_CSR);
+	w = uwire_read_reg(UWIRE_CSR);
 	old_cs = (w >> 10) & 0x03;
-	अगर (value == BITBANG_CS_INACTIVE || old_cs != spi->chip_select) अणु
+	if (value == BITBANG_CS_INACTIVE || old_cs != spi->chip_select) {
 		/* Deselect this CS, or the previous CS */
 		w &= ~CS_CMD;
-		uwire_ग_लिखो_reg(UWIRE_CSR, w);
-	पूर्ण
+		uwire_write_reg(UWIRE_CSR, w);
+	}
 	/* activate specfied chipselect */
-	अगर (value == BITBANG_CS_ACTIVE) अणु
-		uwire_set_clk1_भाग(ust->भाग1_idx);
-		/* invert घड़ी? */
-		अगर (spi->mode & SPI_CPOL)
-			uwire_ग_लिखो_reg(UWIRE_SR4, 1);
-		अन्यथा
-			uwire_ग_लिखो_reg(UWIRE_SR4, 0);
+	if (value == BITBANG_CS_ACTIVE) {
+		uwire_set_clk1_div(ust->div1_idx);
+		/* invert clock? */
+		if (spi->mode & SPI_CPOL)
+			uwire_write_reg(UWIRE_SR4, 1);
+		else
+			uwire_write_reg(UWIRE_SR4, 0);
 
 		w = spi->chip_select << 10;
 		w |= CS_CMD;
-		uwire_ग_लिखो_reg(UWIRE_CSR, w);
-	पूर्ण
-पूर्ण
+		uwire_write_reg(UWIRE_CSR, w);
+	}
+}
 
-अटल पूर्णांक uwire_txrx(काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
-अणु
-	अचिन्हित	len = t->len;
-	अचिन्हित	bits = t->bits_per_word;
-	अचिन्हित	bytes;
+static int uwire_txrx(struct spi_device *spi, struct spi_transfer *t)
+{
+	unsigned	len = t->len;
+	unsigned	bits = t->bits_per_word;
+	unsigned	bytes;
 	u16		val, w;
-	पूर्णांक		status = 0;
+	int		status = 0;
 
-	अगर (!t->tx_buf && !t->rx_buf)
-		वापस 0;
+	if (!t->tx_buf && !t->rx_buf)
+		return 0;
 
 	w = spi->chip_select << 10;
 	w |= CS_CMD;
 
-	अगर (t->tx_buf) अणु
-		स्थिर u8	*buf = t->tx_buf;
+	if (t->tx_buf) {
+		const u8	*buf = t->tx_buf;
 
-		/* NOTE:  DMA could be used क्रम TX transfers */
+		/* NOTE:  DMA could be used for TX transfers */
 
-		/* ग_लिखो one or two bytes at a समय */
-		जबतक (len >= 1) अणु
+		/* write one or two bytes at a time */
+		while (len >= 1) {
 			/* tx bit 15 is first sent; we byteswap multibyte words
 			 * (msb-first) on the way out from memory.
 			 */
 			val = *buf++;
-			अगर (bits > 8) अणु
+			if (bits > 8) {
 				bytes = 2;
 				val |= *buf++ << 8;
-			पूर्ण अन्यथा
+			} else
 				bytes = 1;
 			val <<= 16 - bits;
 
-#अगर_घोषित	VERBOSE
+#ifdef	VERBOSE
 			pr_debug("%s: write-%d =%04x\n",
 					dev_name(&spi->dev), bits, val);
-#पूर्ण_अगर
-			अगर (रुको_uwire_csr_flag(CSRB, 0, 0))
-				जाओ eio;
+#endif
+			if (wait_uwire_csr_flag(CSRB, 0, 0))
+				goto eio;
 
-			uwire_ग_लिखो_reg(UWIRE_TDR, val);
+			uwire_write_reg(UWIRE_TDR, val);
 
-			/* start ग_लिखो */
+			/* start write */
 			val = START | w | (bits << 5);
 
-			uwire_ग_लिखो_reg(UWIRE_CSR, val);
+			uwire_write_reg(UWIRE_CSR, val);
 			len -= bytes;
 
-			/* Wait till ग_लिखो actually starts.
-			 * This is needed with MPU घड़ी 60+ MHz.
-			 * REVISIT: we may not have समय to catch it...
+			/* Wait till write actually starts.
+			 * This is needed with MPU clock 60+ MHz.
+			 * REVISIT: we may not have time to catch it...
 			 */
-			अगर (रुको_uwire_csr_flag(CSRB, CSRB, 1))
-				जाओ eio;
+			if (wait_uwire_csr_flag(CSRB, CSRB, 1))
+				goto eio;
 
 			status += bytes;
-		पूर्ण
+		}
 
-		/* REVISIT:  save this क्रम later to get more i/o overlap */
-		अगर (रुको_uwire_csr_flag(CSRB, 0, 0))
-			जाओ eio;
+		/* REVISIT:  save this for later to get more i/o overlap */
+		if (wait_uwire_csr_flag(CSRB, 0, 0))
+			goto eio;
 
-	पूर्ण अन्यथा अगर (t->rx_buf) अणु
+	} else if (t->rx_buf) {
 		u8		*buf = t->rx_buf;
 
-		/* पढ़ो one or two bytes at a समय */
-		जबतक (len) अणु
-			अगर (bits > 8) अणु
+		/* read one or two bytes at a time */
+		while (len) {
+			if (bits > 8) {
 				bytes = 2;
-			पूर्ण अन्यथा
+			} else
 				bytes = 1;
 
-			/* start पढ़ो */
+			/* start read */
 			val = START | w | (bits << 0);
-			uwire_ग_लिखो_reg(UWIRE_CSR, val);
+			uwire_write_reg(UWIRE_CSR, val);
 			len -= bytes;
 
-			/* Wait till पढ़ो actually starts */
-			(व्योम) रुको_uwire_csr_flag(CSRB, CSRB, 1);
+			/* Wait till read actually starts */
+			(void) wait_uwire_csr_flag(CSRB, CSRB, 1);
 
-			अगर (रुको_uwire_csr_flag(RDRB | CSRB,
+			if (wait_uwire_csr_flag(RDRB | CSRB,
 						RDRB, 0))
-				जाओ eio;
+				goto eio;
 
 			/* rx bit 0 is last received; multibyte words will
 			 * be properly byteswapped on the way to memory.
 			 */
-			val = uwire_पढ़ो_reg(UWIRE_RDR);
+			val = uwire_read_reg(UWIRE_RDR);
 			val &= (1 << bits) - 1;
 			*buf++ = (u8) val;
-			अगर (bytes == 2)
+			if (bytes == 2)
 				*buf++ = val >> 8;
 			status += bytes;
-#अगर_घोषित	VERBOSE
+#ifdef	VERBOSE
 			pr_debug("%s: read-%d =%04x\n",
 					dev_name(&spi->dev), bits, val);
-#पूर्ण_अगर
+#endif
 
-		पूर्ण
-	पूर्ण
-	वापस status;
+		}
+	}
+	return status;
 eio:
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक uwire_setup_transfer(काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
-अणु
-	काष्ठा uwire_state	*ust = spi->controller_state;
-	काष्ठा uwire_spi	*uwire;
-	अचिन्हित		flags = 0;
-	अचिन्हित		hz;
-	अचिन्हित दीर्घ		rate;
-	पूर्णांक			भाग1_idx;
-	पूर्णांक			भाग1;
-	पूर्णांक			भाग2;
-	पूर्णांक			status;
+static int uwire_setup_transfer(struct spi_device *spi, struct spi_transfer *t)
+{
+	struct uwire_state	*ust = spi->controller_state;
+	struct uwire_spi	*uwire;
+	unsigned		flags = 0;
+	unsigned		hz;
+	unsigned long		rate;
+	int			div1_idx;
+	int			div1;
+	int			div2;
+	int			status;
 
 	uwire = spi_master_get_devdata(spi->master);
 
-	/* mode 0..3, घड़ी inverted separately;
-	 * standard nCS संकेतing;
-	 * करोn't treat DI=high as "not ready"
+	/* mode 0..3, clock inverted separately;
+	 * standard nCS signaling;
+	 * don't treat DI=high as "not ready"
 	 */
-	अगर (spi->mode & SPI_CS_HIGH)
+	if (spi->mode & SPI_CS_HIGH)
 		flags |= UWIRE_CS_ACTIVE_HIGH;
 
-	अगर (spi->mode & SPI_CPOL)
+	if (spi->mode & SPI_CPOL)
 		flags |= UWIRE_CLK_INVERTED;
 
-	चयन (spi->mode & (SPI_CPOL | SPI_CPHA)) अणु
-	हाल SPI_MODE_0:
-	हाल SPI_MODE_3:
+	switch (spi->mode & (SPI_CPOL | SPI_CPHA)) {
+	case SPI_MODE_0:
+	case SPI_MODE_3:
 		flags |= UWIRE_WRITE_FALLING_EDGE | UWIRE_READ_RISING_EDGE;
-		अवरोध;
-	हाल SPI_MODE_1:
-	हाल SPI_MODE_2:
+		break;
+	case SPI_MODE_1:
+	case SPI_MODE_2:
 		flags |= UWIRE_WRITE_RISING_EDGE | UWIRE_READ_FALLING_EDGE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* assume it's alपढ़ोy enabled */
+	/* assume it's already enabled */
 	rate = clk_get_rate(uwire->ck);
 
-	अगर (t != शून्य)
+	if (t != NULL)
 		hz = t->speed_hz;
-	अन्यथा
+	else
 		hz = spi->max_speed_hz;
 
-	अगर (!hz) अणु
+	if (!hz) {
 		pr_debug("%s: zero speed?\n", dev_name(&spi->dev));
 		status = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* F_INT = mpu_xor_clk / DIV1 */
-	क्रम (भाग1_idx = 0; भाग1_idx < 4; भाग1_idx++) अणु
-		चयन (भाग1_idx) अणु
-		हाल 0:
-			भाग1 = 2;
-			अवरोध;
-		हाल 1:
-			भाग1 = 4;
-			अवरोध;
-		हाल 2:
-			भाग1 = 7;
-			अवरोध;
-		शेष:
-		हाल 3:
-			भाग1 = 10;
-			अवरोध;
-		पूर्ण
-		भाग2 = (rate / भाग1 + hz - 1) / hz;
-		अगर (भाग2 <= 8)
-			अवरोध;
-	पूर्ण
-	अगर (भाग1_idx == 4) अणु
+	for (div1_idx = 0; div1_idx < 4; div1_idx++) {
+		switch (div1_idx) {
+		case 0:
+			div1 = 2;
+			break;
+		case 1:
+			div1 = 4;
+			break;
+		case 2:
+			div1 = 7;
+			break;
+		default:
+		case 3:
+			div1 = 10;
+			break;
+		}
+		div2 = (rate / div1 + hz - 1) / hz;
+		if (div2 <= 8)
+			break;
+	}
+	if (div1_idx == 4) {
 		pr_debug("%s: lowest clock %ld, need %d\n",
 			dev_name(&spi->dev), rate / 10 / 8, hz);
-		status = -गलत_तर्क;
-		जाओ करोne;
-	पूर्ण
+		status = -EDOM;
+		goto done;
+	}
 
 	/* we have to cache this and reset in uwire_chipselect as this is a
 	 * global parameter and another uwire device can change it under
 	 * us */
-	ust->भाग1_idx = भाग1_idx;
-	uwire_set_clk1_भाग(भाग1_idx);
+	ust->div1_idx = div1_idx;
+	uwire_set_clk1_div(div1_idx);
 
-	rate /= भाग1;
+	rate /= div1;
 
-	चयन (भाग2) अणु
-	हाल 0:
-	हाल 1:
-	हाल 2:
+	switch (div2) {
+	case 0:
+	case 1:
+	case 2:
 		flags |= UWIRE_FREQ_DIV_2;
 		rate /= 2;
-		अवरोध;
-	हाल 3:
-	हाल 4:
+		break;
+	case 3:
+	case 4:
 		flags |= UWIRE_FREQ_DIV_4;
 		rate /= 4;
-		अवरोध;
-	हाल 5:
-	हाल 6:
-	हाल 7:
-	हाल 8:
+		break;
+	case 5:
+	case 6:
+	case 7:
+	case 8:
 		flags |= UWIRE_FREQ_DIV_8;
 		rate /= 8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	omap_uwire_configure_mode(spi->chip_select, flags);
 	pr_debug("%s: uwire flags %02x, armxor %lu KHz, SCK %lu KHz\n",
 			__func__, flags,
 			clk_get_rate(uwire->ck) / 1000,
 			rate / 1000);
 	status = 0;
-करोne:
-	वापस status;
-पूर्ण
+done:
+	return status;
+}
 
-अटल पूर्णांक uwire_setup(काष्ठा spi_device *spi)
-अणु
-	काष्ठा uwire_state *ust = spi->controller_state;
+static int uwire_setup(struct spi_device *spi)
+{
+	struct uwire_state *ust = spi->controller_state;
 	bool initial_setup = false;
-	पूर्णांक status;
+	int status;
 
-	अगर (ust == शून्य) अणु
-		ust = kzalloc(माप(*ust), GFP_KERNEL);
-		अगर (ust == शून्य)
-			वापस -ENOMEM;
+	if (ust == NULL) {
+		ust = kzalloc(sizeof(*ust), GFP_KERNEL);
+		if (ust == NULL)
+			return -ENOMEM;
 		spi->controller_state = ust;
 		initial_setup = true;
-	पूर्ण
+	}
 
-	status = uwire_setup_transfer(spi, शून्य);
-	अगर (status && initial_setup)
-		kमुक्त(ust);
+	status = uwire_setup_transfer(spi, NULL);
+	if (status && initial_setup)
+		kfree(ust);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम uwire_cleanup(काष्ठा spi_device *spi)
-अणु
-	kमुक्त(spi->controller_state);
-पूर्ण
+static void uwire_cleanup(struct spi_device *spi)
+{
+	kfree(spi->controller_state);
+}
 
-अटल व्योम uwire_off(काष्ठा uwire_spi *uwire)
-अणु
-	uwire_ग_लिखो_reg(UWIRE_SR3, 0);
+static void uwire_off(struct uwire_spi *uwire)
+{
+	uwire_write_reg(UWIRE_SR3, 0);
 	clk_disable_unprepare(uwire->ck);
 	spi_master_put(uwire->bitbang.master);
-पूर्ण
+}
 
-अटल पूर्णांक uwire_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master	*master;
-	काष्ठा uwire_spi	*uwire;
-	पूर्णांक			status;
+static int uwire_probe(struct platform_device *pdev)
+{
+	struct spi_master	*master;
+	struct uwire_spi	*uwire;
+	int			status;
 
-	master = spi_alloc_master(&pdev->dev, माप *uwire);
-	अगर (!master)
-		वापस -ENODEV;
+	master = spi_alloc_master(&pdev->dev, sizeof *uwire);
+	if (!master)
+		return -ENODEV;
 
 	uwire = spi_master_get_devdata(master);
 
 	uwire_base = devm_ioremap(&pdev->dev, UWIRE_BASE_PHYS, UWIRE_IO_SIZE);
-	अगर (!uwire_base) अणु
+	if (!uwire_base) {
 		dev_dbg(&pdev->dev, "can't ioremap UWIRE\n");
 		spi_master_put(master);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	platक्रमm_set_drvdata(pdev, uwire);
+	platform_set_drvdata(pdev, uwire);
 
 	uwire->ck = devm_clk_get(&pdev->dev, "fck");
-	अगर (IS_ERR(uwire->ck)) अणु
+	if (IS_ERR(uwire->ck)) {
 		status = PTR_ERR(uwire->ck);
 		dev_dbg(&pdev->dev, "no functional clock?\n");
 		spi_master_put(master);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 	clk_prepare_enable(uwire->ck);
 
-	अगर (cpu_is_omap7xx())
-		uwire_idx_shअगरt = 1;
-	अन्यथा
-		uwire_idx_shअगरt = 2;
+	if (cpu_is_omap7xx())
+		uwire_idx_shift = 1;
+	else
+		uwire_idx_shift = 2;
 
-	uwire_ग_लिखो_reg(UWIRE_SR3, 1);
+	uwire_write_reg(UWIRE_SR3, 1);
 
 	/* the spi->mode bits understood by this driver: */
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH;
@@ -508,63 +507,63 @@ eio:
 	uwire->bitbang.txrx_bufs = uwire_txrx;
 
 	status = spi_bitbang_start(&uwire->bitbang);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		uwire_off(uwire);
-	पूर्ण
-	वापस status;
-पूर्ण
+	}
+	return status;
+}
 
-अटल पूर्णांक uwire_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uwire_spi	*uwire = platक्रमm_get_drvdata(pdev);
+static int uwire_remove(struct platform_device *pdev)
+{
+	struct uwire_spi	*uwire = platform_get_drvdata(pdev);
 
-	// FIXME हटाओ all child devices, somewhere ...
+	// FIXME remove all child devices, somewhere ...
 
 	spi_bitbang_stop(&uwire->bitbang);
 	uwire_off(uwire);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:omap_uwire");
 
-अटल काष्ठा platक्रमm_driver uwire_driver = अणु
-	.driver = अणु
+static struct platform_driver uwire_driver = {
+	.driver = {
 		.name		= "omap_uwire",
-	पूर्ण,
+	},
 	.probe = uwire_probe,
-	.हटाओ = uwire_हटाओ,
+	.remove = uwire_remove,
 	// suspend ... unuse ck
 	// resume ... use ck
-पूर्ण;
+};
 
-अटल पूर्णांक __init omap_uwire_init(व्योम)
-अणु
-	/* FIXME move these पूर्णांकo the relevant board init code. also, include
-	 * H3 support; it uses tsc2101 like H2 (on a dअगरferent chipselect).
+static int __init omap_uwire_init(void)
+{
+	/* FIXME move these into the relevant board init code. also, include
+	 * H3 support; it uses tsc2101 like H2 (on a different chipselect).
 	 */
 
-	अगर (machine_is_omap_h2()) अणु
-		/* शेषs: W21 SDO, U18 SDI, V19 SCL */
+	if (machine_is_omap_h2()) {
+		/* defaults: W21 SDO, U18 SDI, V19 SCL */
 		omap_cfg_reg(N14_1610_UWIRE_CS0);
 		omap_cfg_reg(N15_1610_UWIRE_CS1);
-	पूर्ण
-	अगर (machine_is_omap_perseus2()) अणु
+	}
+	if (machine_is_omap_perseus2()) {
 		/* configure pins: MPU_UW_nSCS1, MPU_UW_SDO, MPU_UW_SCLK */
-		पूर्णांक val = omap_पढ़ोl(OMAP7XX_IO_CONF_9) & ~0x00EEE000;
-		omap_ग_लिखोl(val | 0x00AAA000, OMAP7XX_IO_CONF_9);
-	पूर्ण
+		int val = omap_readl(OMAP7XX_IO_CONF_9) & ~0x00EEE000;
+		omap_writel(val | 0x00AAA000, OMAP7XX_IO_CONF_9);
+	}
 
-	वापस platक्रमm_driver_रेजिस्टर(&uwire_driver);
-पूर्ण
+	return platform_driver_register(&uwire_driver);
+}
 
-अटल व्योम __निकास omap_uwire_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&uwire_driver);
-पूर्ण
+static void __exit omap_uwire_exit(void)
+{
+	platform_driver_unregister(&uwire_driver);
+}
 
 subsys_initcall(omap_uwire_init);
-module_निकास(omap_uwire_निकास);
+module_exit(omap_uwire_exit);
 
 MODULE_LICENSE("GPL");
 

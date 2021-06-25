@@ -1,63 +1,62 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Misc low level processor primitives */
-#अगर_अघोषित _LINUX_PROCESSOR_H
-#घोषणा _LINUX_PROCESSOR_H
+#ifndef _LINUX_PROCESSOR_H
+#define _LINUX_PROCESSOR_H
 
-#समावेश <यंत्र/processor.h>
+#include <asm/processor.h>
 
 /*
- * spin_begin is used beक्रमe beginning a busy-रुको loop, and must be paired
- * with spin_end when the loop is निकासed. spin_cpu_relax must be called
+ * spin_begin is used before beginning a busy-wait loop, and must be paired
+ * with spin_end when the loop is exited. spin_cpu_relax must be called
  * within the loop.
  *
  * The loop body should be as small and fast as possible, on the order of
- * tens of inकाष्ठाions/cycles as a guide. It should and aव्योम calling
+ * tens of instructions/cycles as a guide. It should and avoid calling
  * cpu_relax, or any "spin" or sleep type of primitive including nested uses
  * of these primitives. It should not lock or take any other resource.
  * Violations of these guidelies will not cause a bug, but may cause sub
- * optimal perक्रमmance.
+ * optimal performance.
  *
- * These loops are optimized to be used where रुको बार are expected to be
- * less than the cost of a context चयन (and associated overhead).
+ * These loops are optimized to be used where wait times are expected to be
+ * less than the cost of a context switch (and associated overhead).
  *
  * Detection of resource owner and decision to spin or sleep or guest-yield
  * (e.g., spin lock holder vcpu preempted, or mutex owner not on CPU) can be
  * tested within the loop body.
  */
-#अगर_अघोषित spin_begin
-#घोषणा spin_begin()
-#पूर्ण_अगर
+#ifndef spin_begin
+#define spin_begin()
+#endif
 
-#अगर_अघोषित spin_cpu_relax
-#घोषणा spin_cpu_relax() cpu_relax()
-#पूर्ण_अगर
+#ifndef spin_cpu_relax
+#define spin_cpu_relax() cpu_relax()
+#endif
 
-#अगर_अघोषित spin_end
-#घोषणा spin_end()
-#पूर्ण_अगर
+#ifndef spin_end
+#define spin_end()
+#endif
 
 /*
- * spin_until_cond can be used to रुको क्रम a condition to become true. It
- * may be expected that the first iteration will true in the common हाल
+ * spin_until_cond can be used to wait for a condition to become true. It
+ * may be expected that the first iteration will true in the common case
  * (no spinning), so that callers should not require a first "likely" test
- * क्रम the uncontended हाल beक्रमe using this primitive.
+ * for the uncontended case before using this primitive.
  *
- * Usage and implementation guidelines are the same as क्रम the spin_begin
+ * Usage and implementation guidelines are the same as for the spin_begin
  * primitives, above.
  */
-#अगर_अघोषित spin_until_cond
-#घोषणा spin_until_cond(cond)					\
-करो अणु								\
-	अगर (unlikely(!(cond))) अणु				\
+#ifndef spin_until_cond
+#define spin_until_cond(cond)					\
+do {								\
+	if (unlikely(!(cond))) {				\
 		spin_begin();					\
-		करो अणु						\
+		do {						\
 			spin_cpu_relax();			\
-		पूर्ण जबतक (!(cond));				\
+		} while (!(cond));				\
 		spin_end();					\
-	पूर्ण							\
-पूर्ण जबतक (0)
+	}							\
+} while (0)
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* _LINUX_PROCESSOR_H */
+#endif /* _LINUX_PROCESSOR_H */

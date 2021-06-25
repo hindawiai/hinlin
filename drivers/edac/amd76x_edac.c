@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * AMD 76x Memory Controller kernel module
  * (C) 2003 Linux Networx (http://lnxi.com)
@@ -6,34 +5,34 @@
  * GNU General Public License.
  *
  * Written by Thayne Harbaugh
- * Based on work by Dan Hollis <goemon at anime करोt net> and others.
+ * Based on work by Dan Hollis <goemon at anime dot net> and others.
  *	http://www.anime.net/~goemon/linux-ecc/
  *
  * $Id: edac_amd76x.c,v 1.4.2.5 2005/10/05 00:43:44 dsp_llnl Exp $
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/edac.h>
-#समावेश "edac_module.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/edac.h>
+#include "edac_module.h"
 
-#घोषणा EDAC_MOD_STR	"amd76x_edac"
+#define EDAC_MOD_STR	"amd76x_edac"
 
-#घोषणा amd76x_prपूर्णांकk(level, fmt, arg...) \
-	edac_prपूर्णांकk(level, "amd76x", fmt, ##arg)
+#define amd76x_printk(level, fmt, arg...) \
+	edac_printk(level, "amd76x", fmt, ##arg)
 
-#घोषणा amd76x_mc_prपूर्णांकk(mci, level, fmt, arg...) \
-	edac_mc_chipset_prपूर्णांकk(mci, level, "amd76x", fmt, ##arg)
+#define amd76x_mc_printk(mci, level, fmt, arg...) \
+	edac_mc_chipset_printk(mci, level, "amd76x", fmt, ##arg)
 
-#घोषणा AMD76X_NR_CSROWS 8
-#घोषणा AMD76X_NR_DIMMS  4
+#define AMD76X_NR_CSROWS 8
+#define AMD76X_NR_DIMMS  4
 
-/* AMD 76x रेजिस्टर addresses - device 0 function 0 - PCI bridge */
+/* AMD 76x register addresses - device 0 function 0 - PCI bridge */
 
-#घोषणा AMD76X_ECC_MODE_STATUS	0x48	/* Mode and status of ECC (32b)
+#define AMD76X_ECC_MODE_STATUS	0x48	/* Mode and status of ECC (32b)
 					 *
 					 * 31:16 reserved
 					 * 15:14 SERR enabled: x1=ue 1x=ce
@@ -45,12 +44,12 @@
 					 *  3:0  CE cs row
 					 */
 
-#घोषणा AMD76X_DRAM_MODE_STATUS	0x58	/* DRAM Mode and status (32b)
+#define AMD76X_DRAM_MODE_STATUS	0x58	/* DRAM Mode and status (32b)
 					 *
-					 * 31:26 घड़ी disable 5 - 0
+					 * 31:26 clock disable 5 - 0
 					 * 25    SDRAM init
 					 * 24    reserved
-					 * 23    mode रेजिस्टर service
+					 * 23    mode register service
 					 * 22:21 suspend to RAM
 					 * 20    burst refresh enable
 					 * 19    refresh disable
@@ -60,7 +59,7 @@
 					 *  7:0  x4 mode enable 7 - 0
 					 */
 
-#घोषणा AMD76X_MEM_BASE_ADDR	0xC0	/* Memory base address (8 x 32b)
+#define AMD76X_MEM_BASE_ADDR	0xC0	/* Memory base address (8 x 32b)
 					 *
 					 * 31:23 chip-select base
 					 * 22:16 reserved
@@ -70,142 +69,142 @@
 					 *  0    chip-select enable
 					 */
 
-काष्ठा amd76x_error_info अणु
+struct amd76x_error_info {
 	u32 ecc_mode_status;
-पूर्ण;
+};
 
-क्रमागत amd76x_chips अणु
+enum amd76x_chips {
 	AMD761 = 0,
 	AMD762
-पूर्ण;
+};
 
-काष्ठा amd76x_dev_info अणु
-	स्थिर अक्षर *ctl_name;
-पूर्ण;
+struct amd76x_dev_info {
+	const char *ctl_name;
+};
 
-अटल स्थिर काष्ठा amd76x_dev_info amd76x_devs[] = अणु
-	[AMD761] = अणु
-		.ctl_name = "AMD761"पूर्ण,
-	[AMD762] = अणु
-		.ctl_name = "AMD762"पूर्ण,
-पूर्ण;
+static const struct amd76x_dev_info amd76x_devs[] = {
+	[AMD761] = {
+		.ctl_name = "AMD761"},
+	[AMD762] = {
+		.ctl_name = "AMD762"},
+};
 
-अटल काष्ठा edac_pci_ctl_info *amd76x_pci;
+static struct edac_pci_ctl_info *amd76x_pci;
 
 /**
- *	amd76x_get_error_info	-	fetch error inक्रमmation
+ *	amd76x_get_error_info	-	fetch error information
  *	@mci: Memory controller
  *	@info: Info to fill in
  *
  *	Fetch and store the AMD76x ECC status. Clear pending status
  *	on the chip so that further errors will be reported
  */
-अटल व्योम amd76x_get_error_info(काष्ठा mem_ctl_info *mci,
-				काष्ठा amd76x_error_info *info)
-अणु
-	काष्ठा pci_dev *pdev;
+static void amd76x_get_error_info(struct mem_ctl_info *mci,
+				struct amd76x_error_info *info)
+{
+	struct pci_dev *pdev;
 
 	pdev = to_pci_dev(mci->pdev);
-	pci_पढ़ो_config_dword(pdev, AMD76X_ECC_MODE_STATUS,
+	pci_read_config_dword(pdev, AMD76X_ECC_MODE_STATUS,
 			&info->ecc_mode_status);
 
-	अगर (info->ecc_mode_status & BIT(8))
-		pci_ग_लिखो_bits32(pdev, AMD76X_ECC_MODE_STATUS,
+	if (info->ecc_mode_status & BIT(8))
+		pci_write_bits32(pdev, AMD76X_ECC_MODE_STATUS,
 				 (u32) BIT(8), (u32) BIT(8));
 
-	अगर (info->ecc_mode_status & BIT(9))
-		pci_ग_लिखो_bits32(pdev, AMD76X_ECC_MODE_STATUS,
+	if (info->ecc_mode_status & BIT(9))
+		pci_write_bits32(pdev, AMD76X_ECC_MODE_STATUS,
 				 (u32) BIT(9), (u32) BIT(9));
-पूर्ण
+}
 
 /**
  *	amd76x_process_error_info	-	Error check
  *	@mci: Memory controller
- *	@info: Previously fetched inक्रमmation from chip
- *	@handle_errors: 1 अगर we should करो recovery
+ *	@info: Previously fetched information from chip
+ *	@handle_errors: 1 if we should do recovery
  *
- *	Process the chip state and decide अगर an error has occurred.
- *	A वापस of 1 indicates an error. Also अगर handle_errors is true
+ *	Process the chip state and decide if an error has occurred.
+ *	A return of 1 indicates an error. Also if handle_errors is true
  *	then attempt to handle and clean up after the error
  */
-अटल पूर्णांक amd76x_process_error_info(काष्ठा mem_ctl_info *mci,
-				काष्ठा amd76x_error_info *info,
-				पूर्णांक handle_errors)
-अणु
-	पूर्णांक error_found;
+static int amd76x_process_error_info(struct mem_ctl_info *mci,
+				struct amd76x_error_info *info,
+				int handle_errors)
+{
+	int error_found;
 	u32 row;
 
 	error_found = 0;
 
 	/*
-	 *      Check क्रम an uncorrectable error
+	 *      Check for an uncorrectable error
 	 */
-	अगर (info->ecc_mode_status & BIT(8)) अणु
+	if (info->ecc_mode_status & BIT(8)) {
 		error_found = 1;
 
-		अगर (handle_errors) अणु
+		if (handle_errors) {
 			row = (info->ecc_mode_status >> 4) & 0xf;
 			edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					     mci->csrows[row]->first_page, 0, 0,
 					     row, 0, -1,
 					     mci->ctl_name, "");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 *      Check क्रम a correctable error
+	 *      Check for a correctable error
 	 */
-	अगर (info->ecc_mode_status & BIT(9)) अणु
+	if (info->ecc_mode_status & BIT(9)) {
 		error_found = 1;
 
-		अगर (handle_errors) अणु
+		if (handle_errors) {
 			row = info->ecc_mode_status & 0xf;
 			edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 					     mci->csrows[row]->first_page, 0, 0,
 					     row, 0, -1,
 					     mci->ctl_name, "");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस error_found;
-पूर्ण
+	return error_found;
+}
 
 /**
  *	amd76x_check	-	Poll the controller
  *	@mci: Memory controller
  *
- *	Called by the poll handlers this function पढ़ोs the status
- *	from the controller and checks क्रम errors.
+ *	Called by the poll handlers this function reads the status
+ *	from the controller and checks for errors.
  */
-अटल व्योम amd76x_check(काष्ठा mem_ctl_info *mci)
-अणु
-	काष्ठा amd76x_error_info info;
+static void amd76x_check(struct mem_ctl_info *mci)
+{
+	struct amd76x_error_info info;
 	amd76x_get_error_info(mci, &info);
 	amd76x_process_error_info(mci, &info, 1);
-पूर्ण
+}
 
-अटल व्योम amd76x_init_csrows(काष्ठा mem_ctl_info *mci, काष्ठा pci_dev *pdev,
-			क्रमागत edac_type edac_mode)
-अणु
-	काष्ठा csrow_info *csrow;
-	काष्ठा dimm_info *dimm;
+static void amd76x_init_csrows(struct mem_ctl_info *mci, struct pci_dev *pdev,
+			enum edac_type edac_mode)
+{
+	struct csrow_info *csrow;
+	struct dimm_info *dimm;
 	u32 mba, mba_base, mba_mask, dms;
-	पूर्णांक index;
+	int index;
 
-	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
+	for (index = 0; index < mci->nr_csrows; index++) {
 		csrow = mci->csrows[index];
 		dimm = csrow->channels[0]->dimm;
 
 		/* find the DRAM Chip Select Base address and mask */
-		pci_पढ़ो_config_dword(pdev,
+		pci_read_config_dword(pdev,
 				AMD76X_MEM_BASE_ADDR + (index * 4), &mba);
 
-		अगर (!(mba & BIT(0)))
-			जारी;
+		if (!(mba & BIT(0)))
+			continue;
 
 		mba_base = mba & 0xff800000UL;
 		mba_mask = ((mba & 0xff80) << 16) | 0x7fffffUL;
-		pci_पढ़ो_config_dword(pdev, AMD76X_DRAM_MODE_STATUS, &dms);
+		pci_read_config_dword(pdev, AMD76X_DRAM_MODE_STATUS, &dms);
 		csrow->first_page = mba_base >> PAGE_SHIFT;
 		dimm->nr_pages = (mba_mask + 1) >> PAGE_SHIFT;
 		csrow->last_page = csrow->first_page + dimm->nr_pages - 1;
@@ -214,11 +213,11 @@
 		dimm->mtype = MEM_RDDR;
 		dimm->dtype = ((dms >> index) & 0x1) ? DEV_X4 : DEV_UNKNOWN;
 		dimm->edac_mode = edac_mode;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	amd76x_probe1	-	Perक्रमm set up क्रम detected device
+ *	amd76x_probe1	-	Perform set up for detected device
  *	@pdev; PCI device detected
  *	@dev_idx: Device type index
  *
@@ -226,22 +225,22 @@
  *	controller status reporting. We configure and set up the
  *	memory controller reporting and claim the device.
  */
-अटल पूर्णांक amd76x_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
-अणु
-	अटल स्थिर क्रमागत edac_type ems_modes[] = अणु
+static int amd76x_probe1(struct pci_dev *pdev, int dev_idx)
+{
+	static const enum edac_type ems_modes[] = {
 		EDAC_NONE,
 		EDAC_EC,
 		EDAC_SECDED,
 		EDAC_SECDED
-	पूर्ण;
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा edac_mc_layer layers[2];
+	};
+	struct mem_ctl_info *mci;
+	struct edac_mc_layer layers[2];
 	u32 ems;
 	u32 ems_mode;
-	काष्ठा amd76x_error_info discard;
+	struct amd76x_error_info discard;
 
 	edac_dbg(0, "\n");
-	pci_पढ़ो_config_dword(pdev, AMD76X_ECC_MODE_STATUS, &ems);
+	pci_read_config_dword(pdev, AMD76X_ECC_MODE_STATUS, &ems);
 	ems_mode = (ems >> 10) & 0x3;
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
@@ -252,8 +251,8 @@
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
 
-	अगर (mci == शून्य)
-		वापस -ENOMEM;
+	if (mci == NULL)
+		return -ENOMEM;
 
 	edac_dbg(0, "mci = %p\n", mci);
 	mci->pdev = &pdev->dev;
@@ -265,112 +264,112 @@
 	mci->ctl_name = amd76x_devs[dev_idx].ctl_name;
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = amd76x_check;
-	mci->ctl_page_to_phys = शून्य;
+	mci->ctl_page_to_phys = NULL;
 
 	amd76x_init_csrows(mci, pdev, ems_modes[ems_mode]);
 	amd76x_get_error_info(mci, &discard);	/* clear counters */
 
 	/* Here we assume that we will never see multiple instances of this
-	 * type of memory controller.  The ID is thereक्रमe hardcoded to 0.
+	 * type of memory controller.  The ID is therefore hardcoded to 0.
 	 */
-	अगर (edac_mc_add_mc(mci)) अणु
+	if (edac_mc_add_mc(mci)) {
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* allocating generic PCI control info */
 	amd76x_pci = edac_pci_create_generic_ctl(&pdev->dev, EDAC_MOD_STR);
-	अगर (!amd76x_pci) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (!amd76x_pci) {
+		printk(KERN_WARNING
 			"%s(): Unable to create PCI control\n",
 			__func__);
-		prपूर्णांकk(KERN_WARNING
+		printk(KERN_WARNING
 			"%s(): PCI error report via EDAC not setup\n",
 			__func__);
-	पूर्ण
+	}
 
 	/* get this far and it's successful */
 	edac_dbg(3, "success\n");
-	वापस 0;
+	return 0;
 
 fail:
-	edac_mc_मुक्त(mci);
-	वापस -ENODEV;
-पूर्ण
+	edac_mc_free(mci);
+	return -ENODEV;
+}
 
-/* वापसs count (>= 0), or negative on error */
-अटल पूर्णांक amd76x_init_one(काष्ठा pci_dev *pdev,
-			   स्थिर काष्ठा pci_device_id *ent)
-अणु
+/* returns count (>= 0), or negative on error */
+static int amd76x_init_one(struct pci_dev *pdev,
+			   const struct pci_device_id *ent)
+{
 	edac_dbg(0, "\n");
 
-	/* करोn't need to call pci_enable_device() */
-	वापस amd76x_probe1(pdev, ent->driver_data);
-पूर्ण
+	/* don't need to call pci_enable_device() */
+	return amd76x_probe1(pdev, ent->driver_data);
+}
 
 /**
- *	amd76x_हटाओ_one	-	driver shutकरोwn
+ *	amd76x_remove_one	-	driver shutdown
  *	@pdev: PCI device being handed back
  *
  *	Called when the driver is unloaded. Find the matching mci
- *	काष्ठाure क्रम the device then delete the mci and मुक्त the
+ *	structure for the device then delete the mci and free the
  *	resources.
  */
-अटल व्योम amd76x_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mem_ctl_info *mci;
+static void amd76x_remove_one(struct pci_dev *pdev)
+{
+	struct mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
-	अगर (amd76x_pci)
+	if (amd76x_pci)
 		edac_pci_release_generic_ctl(amd76x_pci);
 
-	अगर ((mci = edac_mc_del_mc(&pdev->dev)) == शून्य)
-		वापस;
+	if ((mci = edac_mc_del_mc(&pdev->dev)) == NULL)
+		return;
 
-	edac_mc_मुक्त(mci);
-पूर्ण
+	edac_mc_free(mci);
+}
 
-अटल स्थिर काष्ठा pci_device_id amd76x_pci_tbl[] = अणु
-	अणु
+static const struct pci_device_id amd76x_pci_tbl[] = {
+	{
 	 PCI_VEND_DEV(AMD, FE_GATE_700C), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 AMD762पूर्ण,
-	अणु
+	 AMD762},
+	{
 	 PCI_VEND_DEV(AMD, FE_GATE_700E), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 AMD761पूर्ण,
-	अणु
+	 AMD761},
+	{
 	 0,
-	 पूर्ण			/* 0 terminated list. */
-पूर्ण;
+	 }			/* 0 terminated list. */
+};
 
 MODULE_DEVICE_TABLE(pci, amd76x_pci_tbl);
 
-अटल काष्ठा pci_driver amd76x_driver = अणु
+static struct pci_driver amd76x_driver = {
 	.name = EDAC_MOD_STR,
 	.probe = amd76x_init_one,
-	.हटाओ = amd76x_हटाओ_one,
+	.remove = amd76x_remove_one,
 	.id_table = amd76x_pci_tbl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init amd76x_init(व्योम)
-अणु
-       /* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
+static int __init amd76x_init(void)
+{
+       /* Ensure that the OPSTATE is set correctly for POLL or NMI */
        opstate_init();
 
-	वापस pci_रेजिस्टर_driver(&amd76x_driver);
-पूर्ण
+	return pci_register_driver(&amd76x_driver);
+}
 
-अटल व्योम __निकास amd76x_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&amd76x_driver);
-पूर्ण
+static void __exit amd76x_exit(void)
+{
+	pci_unregister_driver(&amd76x_driver);
+}
 
 module_init(amd76x_init);
-module_निकास(amd76x_निकास);
+module_exit(amd76x_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Linux Networx (http://lnxi.com) Thayne Harbaugh");
 MODULE_DESCRIPTION("MC support for AMD 76x memory controllers");
 
-module_param(edac_op_state, पूर्णांक, 0444);
+module_param(edac_op_state, int, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Freescale Enhanced Local Bus Controller न_अंकD driver
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Freescale Enhanced Local Bus Controller NAND driver
  *
- * Copyright तऊ 2006-2007, 2010 Freescale Semiconductor
+ * Copyright © 2006-2007, 2010 Freescale Semiconductor
  *
- * Authors: Nick Spence <nick.spence@मुक्तscale.com>,
- *          Scott Wood <scottwood@मुक्तscale.com>
- *          Jack Lan <jack.lan@मुक्तscale.com>
- *          Roy Zang <tie-fei.zang@मुक्तscale.com>
+ * Authors: Nick Spence <nick.spence@freescale.com>,
+ *          Scott Wood <scottwood@freescale.com>
+ *          Jack Lan <jack.lan@freescale.com>
+ *          Roy Zang <tie-fei.zang@freescale.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/ioport.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/fsl_lbc.h>
+#include <asm/io.h>
+#include <asm/fsl_lbc.h>
 
-#घोषणा MAX_BANKS 8
-#घोषणा ERR_BYTE 0xFF /* Value वापसed क्रम पढ़ो bytes when पढ़ो failed */
-#घोषणा FCM_TIMEOUT_MSECS 500 /* Maximum number of mSecs to रुको क्रम FCM */
+#define MAX_BANKS 8
+#define ERR_BYTE 0xFF /* Value returned for read bytes when read failed */
+#define FCM_TIMEOUT_MSECS 500 /* Maximum number of mSecs to wait for FCM */
 
-/* mtd inक्रमmation per set */
+/* mtd information per set */
 
-काष्ठा fsl_elbc_mtd अणु
-	काष्ठा nand_chip chip;
-	काष्ठा fsl_lbc_ctrl *ctrl;
+struct fsl_elbc_mtd {
+	struct nand_chip chip;
+	struct fsl_lbc_ctrl *ctrl;
 
-	काष्ठा device *dev;
-	पूर्णांक bank;               /* Chip select bank number           */
-	u8 __iomem *vbase;      /* Chip select base भव address  */
-	पूर्णांक page_size;          /* न_अंकD page size (0=512, 1=2048)    */
-	अचिन्हित पूर्णांक fmr;       /* FCM Flash Mode Register value     */
-पूर्ण;
+	struct device *dev;
+	int bank;               /* Chip select bank number           */
+	u8 __iomem *vbase;      /* Chip select base virtual address  */
+	int page_size;          /* NAND page size (0=512, 1=2048)    */
+	unsigned int fmr;       /* FCM Flash Mode Register value     */
+};
 
-/* Freescale eLBC FCM controller inक्रमmation */
+/* Freescale eLBC FCM controller information */
 
-काष्ठा fsl_elbc_fcm_ctrl अणु
-	काष्ठा nand_controller controller;
-	काष्ठा fsl_elbc_mtd *chips[MAX_BANKS];
+struct fsl_elbc_fcm_ctrl {
+	struct nand_controller controller;
+	struct fsl_elbc_mtd *chips[MAX_BANKS];
 
-	u8 __iomem *addr;        /* Address of asचिन्हित FCM buffer        */
-	अचिन्हित पूर्णांक page;       /* Last page written to / पढ़ो from      */
-	अचिन्हित पूर्णांक पढ़ो_bytes; /* Number of bytes पढ़ो during command   */
-	अचिन्हित पूर्णांक column;     /* Saved column from SEQIN               */
-	अचिन्हित पूर्णांक index;      /* Poपूर्णांकer to next byte to 'read'        */
-	अचिन्हित पूर्णांक status;     /* status पढ़ो from LTESR after last op  */
-	अचिन्हित पूर्णांक mdr;        /* UPM/FCM Data Register value           */
-	अचिन्हित पूर्णांक use_mdr;    /* Non zero अगर the MDR is to be set      */
-	अचिन्हित पूर्णांक oob;        /* Non zero अगर operating on OOB data     */
-	अचिन्हित पूर्णांक counter;	 /* counter क्रम the initializations	  */
-	अचिन्हित पूर्णांक max_bitflips;  /* Saved during READ0 cmd		  */
-पूर्ण;
+	u8 __iomem *addr;        /* Address of assigned FCM buffer        */
+	unsigned int page;       /* Last page written to / read from      */
+	unsigned int read_bytes; /* Number of bytes read during command   */
+	unsigned int column;     /* Saved column from SEQIN               */
+	unsigned int index;      /* Pointer to next byte to 'read'        */
+	unsigned int status;     /* status read from LTESR after last op  */
+	unsigned int mdr;        /* UPM/FCM Data Register value           */
+	unsigned int use_mdr;    /* Non zero if the MDR is to be set      */
+	unsigned int oob;        /* Non zero if operating on OOB data     */
+	unsigned int counter;	 /* counter for the initializations	  */
+	unsigned int max_bitflips;  /* Saved during READ0 cmd		  */
+};
 
 /* These map to the positions used by the FCM hardware ECC generator */
 
-अटल पूर्णांक fsl_elbc_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-				  काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+static int fsl_elbc_ooblayout_ecc(struct mtd_info *mtd, int section,
+				  struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
 
-	अगर (section >= chip->ecc.steps)
-		वापस -दुस्फल;
+	if (section >= chip->ecc.steps)
+		return -ERANGE;
 
 	oobregion->offset = (16 * section) + 6;
-	अगर (priv->fmr & FMR_ECCM)
+	if (priv->fmr & FMR_ECCM)
 		oobregion->offset += 2;
 
 	oobregion->length = chip->ecc.bytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_elbc_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-				   काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+static int fsl_elbc_ooblayout_free(struct mtd_info *mtd, int section,
+				   struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
 
-	अगर (section > chip->ecc.steps)
-		वापस -दुस्फल;
+	if (section > chip->ecc.steps)
+		return -ERANGE;
 
-	अगर (!section) अणु
+	if (!section) {
 		oobregion->offset = 0;
-		अगर (mtd->ग_लिखोsize > 512)
+		if (mtd->writesize > 512)
 			oobregion->offset++;
 		oobregion->length = (priv->fmr & FMR_ECCM) ? 7 : 5;
-	पूर्ण अन्यथा अणु
+	} else {
 		oobregion->offset = (16 * section) -
 				    ((priv->fmr & FMR_ECCM) ? 5 : 7);
-		अगर (section < chip->ecc.steps)
+		if (section < chip->ecc.steps)
 			oobregion->length = 13;
-		अन्यथा
+		else
 			oobregion->length = mtd->oobsize - oobregion->offset;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops fsl_elbc_ooblayout_ops = अणु
+static const struct mtd_ooblayout_ops fsl_elbc_ooblayout_ops = {
 	.ecc = fsl_elbc_ooblayout_ecc,
-	.मुक्त = fsl_elbc_ooblayout_मुक्त,
-पूर्ण;
+	.free = fsl_elbc_ooblayout_free,
+};
 
 /*
- * ELBC may use HW ECC, so that OOB offsets, that न_अंकD core uses क्रम bbt,
- * पूर्णांकerfere with ECC positions, that's why we implement our own descriptors.
- * OOB अणु11, 5पूर्ण, works क्रम both SP and LP chips, with ECCM = 1 and ECCM = 0.
+ * ELBC may use HW ECC, so that OOB offsets, that NAND core uses for bbt,
+ * interfere with ECC positions, that's why we implement our own descriptors.
+ * OOB {11, 5}, works for both SP and LP chips, with ECCM = 1 and ECCM = 0.
  */
-अटल u8 bbt_pattern[] = अणु'B', 'b', 't', '0' पूर्ण;
-अटल u8 mirror_pattern[] = अणु'1', 't', 'b', 'B' पूर्ण;
+static u8 bbt_pattern[] = {'B', 'b', 't', '0' };
+static u8 mirror_pattern[] = {'1', 't', 'b', 'B' };
 
-अटल काष्ठा nand_bbt_descr bbt_मुख्य_descr = अणु
-	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE |
-		   न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION,
+static struct nand_bbt_descr bbt_main_descr = {
+	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE |
+		   NAND_BBT_2BIT | NAND_BBT_VERSION,
 	.offs =	11,
 	.len = 4,
 	.veroffs = 15,
 	.maxblocks = 4,
 	.pattern = bbt_pattern,
-पूर्ण;
+};
 
-अटल काष्ठा nand_bbt_descr bbt_mirror_descr = अणु
-	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE |
-		   न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION,
+static struct nand_bbt_descr bbt_mirror_descr = {
+	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE |
+		   NAND_BBT_2BIT | NAND_BBT_VERSION,
 	.offs =	11,
 	.len = 4,
 	.veroffs = 15,
 	.maxblocks = 4,
 	.pattern = mirror_pattern,
-पूर्ण;
+};
 
 /*=================================*/
 
 /*
  * Set up the FCM hardware block and page address fields, and the fcm
- * काष्ठाure addr field to poपूर्णांक to the correct FCM buffer in memory
+ * structure addr field to point to the correct FCM buffer in memory
  */
-अटल व्योम set_addr(काष्ठा mtd_info *mtd, पूर्णांक column, पूर्णांक page_addr, पूर्णांक oob)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
-	पूर्णांक buf_num;
+static void set_addr(struct mtd_info *mtd, int column, int page_addr, int oob)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
+	int buf_num;
 
 	elbc_fcm_ctrl->page = page_addr;
 
-	अगर (priv->page_size) अणु
+	if (priv->page_size) {
 		/*
 		 * large page size chip : FPAR[PI] save the lowest 6 bits,
 		 *                        FBAR[BLK] save the other bits.
@@ -170,7 +169,7 @@
 		         ((page_addr << FPAR_LP_PI_SHIFT) & FPAR_LP_PI) |
 		         (oob ? FPAR_LP_MS : 0) | column);
 		buf_num = (page_addr & 1) << 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * small page size chip : FPAR[PI] save the lowest 5 bits,
 		 *                        FBAR[BLK] save the other bits.
@@ -180,13 +179,13 @@
 		         ((page_addr << FPAR_SP_PI_SHIFT) & FPAR_SP_PI) |
 		         (oob ? FPAR_SP_MS : 0) | column);
 		buf_num = page_addr & 7;
-	पूर्ण
+	}
 
 	elbc_fcm_ctrl->addr = priv->vbase + buf_num * 1024;
 	elbc_fcm_ctrl->index = column;
 
-	/* क्रम OOB data poपूर्णांक to the second half of the buffer */
-	अगर (oob)
+	/* for OOB data point to the second half of the buffer */
+	if (oob)
 		elbc_fcm_ctrl->index += priv->page_size ? 2048 : 512;
 
 	dev_vdbg(priv->dev, "set_addr: bank=%d, "
@@ -194,23 +193,23 @@
 	                    "index %x, pes %d ps %d\n",
 		 buf_num, elbc_fcm_ctrl->addr, priv->vbase,
 		 elbc_fcm_ctrl->index,
-	         chip->phys_erase_shअगरt, chip->page_shअगरt);
-पूर्ण
+	         chip->phys_erase_shift, chip->page_shift);
+}
 
 /*
- * execute FCM command and रुको क्रम it to complete
+ * execute FCM command and wait for it to complete
  */
-अटल पूर्णांक fsl_elbc_run_command(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
+static int fsl_elbc_run_command(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
 
-	/* Setup the FMR[OP] to execute without ग_लिखो protection */
+	/* Setup the FMR[OP] to execute without write protection */
 	out_be32(&lbc->fmr, priv->fmr | 3);
-	अगर (elbc_fcm_ctrl->use_mdr)
+	if (elbc_fcm_ctrl->use_mdr)
 		out_be32(&lbc->mdr, elbc_fcm_ctrl->mdr);
 
 	dev_vdbg(priv->dev,
@@ -226,60 +225,60 @@
 	/* execute special operation */
 	out_be32(&lbc->lsor, priv->bank);
 
-	/* रुको क्रम FCM complete flag or समयout */
-	रुको_event_समयout(ctrl->irq_रुको, ctrl->irq_status,
+	/* wait for FCM complete flag or timeout */
+	wait_event_timeout(ctrl->irq_wait, ctrl->irq_status,
 	                   FCM_TIMEOUT_MSECS * HZ/1000);
 	elbc_fcm_ctrl->status = ctrl->irq_status;
-	/* store mdr value in हाल it was needed */
-	अगर (elbc_fcm_ctrl->use_mdr)
+	/* store mdr value in case it was needed */
+	if (elbc_fcm_ctrl->use_mdr)
 		elbc_fcm_ctrl->mdr = in_be32(&lbc->mdr);
 
 	elbc_fcm_ctrl->use_mdr = 0;
 
-	अगर (elbc_fcm_ctrl->status != LTESR_CC) अणु
+	if (elbc_fcm_ctrl->status != LTESR_CC) {
 		dev_info(priv->dev,
 		         "command failed: fir %x fcr %x status %x mdr %x\n",
 		         in_be32(&lbc->fir), in_be32(&lbc->fcr),
 			 elbc_fcm_ctrl->status, elbc_fcm_ctrl->mdr);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST)
-		वापस 0;
+	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST)
+		return 0;
 
 	elbc_fcm_ctrl->max_bitflips = 0;
 
-	अगर (elbc_fcm_ctrl->पढ़ो_bytes == mtd->ग_लिखोsize + mtd->oobsize) अणु
-		uपूर्णांक32_t lteccr = in_be32(&lbc->lteccr);
+	if (elbc_fcm_ctrl->read_bytes == mtd->writesize + mtd->oobsize) {
+		uint32_t lteccr = in_be32(&lbc->lteccr);
 		/*
-		 * अगर command was a full page पढ़ो and the ELBC
-		 * has the LTECCR रेजिस्टर, then bits 12-15 (ppc order) of
+		 * if command was a full page read and the ELBC
+		 * has the LTECCR register, then bits 12-15 (ppc order) of
 		 * LTECCR indicates which 512 byte sub-pages had fixed errors.
-		 * bits 28-31 are uncorrectable errors, marked अन्यथाwhere.
-		 * क्रम small page nand only 1 bit is used.
-		 * अगर the ELBC करोesn't have the lteccr रेजिस्टर it पढ़ोs 0
-		 * FIXME: 4 bits can be corrected on न_अंकDs with 2k pages, so
+		 * bits 28-31 are uncorrectable errors, marked elsewhere.
+		 * for small page nand only 1 bit is used.
+		 * if the ELBC doesn't have the lteccr register it reads 0
+		 * FIXME: 4 bits can be corrected on NANDs with 2k pages, so
 		 * count the number of sub-pages with bitflips and update
 		 * ecc_stats.corrected accordingly.
 		 */
-		अगर (lteccr & 0x000F000F)
+		if (lteccr & 0x000F000F)
 			out_be32(&lbc->lteccr, 0x000F000F); /* clear lteccr */
-		अगर (lteccr & 0x000F0000) अणु
+		if (lteccr & 0x000F0000) {
 			mtd->ecc_stats.corrected++;
 			elbc_fcm_ctrl->max_bitflips = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fsl_elbc_करो_पढ़ो(काष्ठा nand_chip *chip, पूर्णांक oob)
-अणु
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
+static void fsl_elbc_do_read(struct nand_chip *chip, int oob)
+{
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
 
-	अगर (priv->page_size) अणु
+	if (priv->page_size) {
 		out_be32(&lbc->fir,
 		         (FIR_OP_CM0 << FIR_OP0_SHIFT) |
 		         (FIR_OP_CA  << FIR_OP1_SHIFT) |
@@ -287,71 +286,71 @@
 		         (FIR_OP_CM1 << FIR_OP3_SHIFT) |
 		         (FIR_OP_RBW << FIR_OP4_SHIFT));
 
-		out_be32(&lbc->fcr, (न_अंकD_CMD_READ0 << FCR_CMD0_SHIFT) |
-		                    (न_अंकD_CMD_READSTART << FCR_CMD1_SHIFT));
-	पूर्ण अन्यथा अणु
+		out_be32(&lbc->fcr, (NAND_CMD_READ0 << FCR_CMD0_SHIFT) |
+		                    (NAND_CMD_READSTART << FCR_CMD1_SHIFT));
+	} else {
 		out_be32(&lbc->fir,
 		         (FIR_OP_CM0 << FIR_OP0_SHIFT) |
 		         (FIR_OP_CA  << FIR_OP1_SHIFT) |
 		         (FIR_OP_PA  << FIR_OP2_SHIFT) |
 		         (FIR_OP_RBW << FIR_OP3_SHIFT));
 
-		अगर (oob)
-			out_be32(&lbc->fcr, न_अंकD_CMD_READOOB << FCR_CMD0_SHIFT);
-		अन्यथा
-			out_be32(&lbc->fcr, न_अंकD_CMD_READ0 << FCR_CMD0_SHIFT);
-	पूर्ण
-पूर्ण
+		if (oob)
+			out_be32(&lbc->fcr, NAND_CMD_READOOB << FCR_CMD0_SHIFT);
+		else
+			out_be32(&lbc->fcr, NAND_CMD_READ0 << FCR_CMD0_SHIFT);
+	}
+}
 
 /* cmdfunc send commands to the FCM */
-अटल व्योम fsl_elbc_cmdfunc(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक command,
-                             पूर्णांक column, पूर्णांक page_addr)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
+static void fsl_elbc_cmdfunc(struct nand_chip *chip, unsigned int command,
+                             int column, int page_addr)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
 
 	elbc_fcm_ctrl->use_mdr = 0;
 
-	/* clear the पढ़ो buffer */
-	elbc_fcm_ctrl->पढ़ो_bytes = 0;
-	अगर (command != न_अंकD_CMD_PAGEPROG)
+	/* clear the read buffer */
+	elbc_fcm_ctrl->read_bytes = 0;
+	if (command != NAND_CMD_PAGEPROG)
 		elbc_fcm_ctrl->index = 0;
 
-	चयन (command) अणु
-	/* READ0 and READ1 पढ़ो the entire buffer to use hardware ECC. */
-	हाल न_अंकD_CMD_READ1:
+	switch (command) {
+	/* READ0 and READ1 read the entire buffer to use hardware ECC. */
+	case NAND_CMD_READ1:
 		column += 256;
 		fallthrough;
-	हाल न_अंकD_CMD_READ0:
+	case NAND_CMD_READ0:
 		dev_dbg(priv->dev,
 		        "fsl_elbc_cmdfunc: NAND_CMD_READ0, page_addr:"
 		        " 0x%x, column: 0x%x.\n", page_addr, column);
 
 
-		out_be32(&lbc->fbcr, 0); /* पढ़ो entire page to enable ECC */
+		out_be32(&lbc->fbcr, 0); /* read entire page to enable ECC */
 		set_addr(mtd, 0, page_addr, 0);
 
-		elbc_fcm_ctrl->पढ़ो_bytes = mtd->ग_लिखोsize + mtd->oobsize;
+		elbc_fcm_ctrl->read_bytes = mtd->writesize + mtd->oobsize;
 		elbc_fcm_ctrl->index += column;
 
-		fsl_elbc_करो_पढ़ो(chip, 0);
+		fsl_elbc_do_read(chip, 0);
 		fsl_elbc_run_command(mtd);
-		वापस;
+		return;
 
-	/* RNDOUT moves the poपूर्णांकer inside the page */
-	हाल न_अंकD_CMD_RNDOUT:
+	/* RNDOUT moves the pointer inside the page */
+	case NAND_CMD_RNDOUT:
 		dev_dbg(priv->dev,
 			"fsl_elbc_cmdfunc: NAND_CMD_RNDOUT, column: 0x%x.\n",
 			column);
 
 		elbc_fcm_ctrl->index = column;
-		वापस;
+		return;
 
-	/* READOOB पढ़ोs only the OOB because no ECC is perक्रमmed. */
-	हाल न_अंकD_CMD_READOOB:
+	/* READOOB reads only the OOB because no ECC is performed. */
+	case NAND_CMD_READOOB:
 		dev_vdbg(priv->dev,
 		         "fsl_elbc_cmdfunc: NAND_CMD_READOOB, page_addr:"
 			 " 0x%x, column: 0x%x.\n", page_addr, column);
@@ -359,14 +358,14 @@
 		out_be32(&lbc->fbcr, mtd->oobsize - column);
 		set_addr(mtd, column, page_addr, 1);
 
-		elbc_fcm_ctrl->पढ़ो_bytes = mtd->ग_लिखोsize + mtd->oobsize;
+		elbc_fcm_ctrl->read_bytes = mtd->writesize + mtd->oobsize;
 
-		fsl_elbc_करो_पढ़ो(chip, 1);
+		fsl_elbc_do_read(chip, 1);
 		fsl_elbc_run_command(mtd);
-		वापस;
+		return;
 
-	हाल न_अंकD_CMD_READID:
-	हाल न_अंकD_CMD_PARAM:
+	case NAND_CMD_READID:
+	case NAND_CMD_PARAM:
 		dev_vdbg(priv->dev, "fsl_elbc_cmdfunc: NAND_CMD %x\n", command);
 
 		out_be32(&lbc->fir, (FIR_OP_CM0 << FIR_OP0_SHIFT) |
@@ -374,27 +373,27 @@
 		                    (FIR_OP_RBW << FIR_OP2_SHIFT));
 		out_be32(&lbc->fcr, command << FCR_CMD0_SHIFT);
 		/*
-		 * although currently it's 8 bytes क्रम READID, we always पढ़ो
-		 * the maximum 256 bytes(क्रम PARAM)
+		 * although currently it's 8 bytes for READID, we always read
+		 * the maximum 256 bytes(for PARAM)
 		 */
 		out_be32(&lbc->fbcr, 256);
-		elbc_fcm_ctrl->पढ़ो_bytes = 256;
+		elbc_fcm_ctrl->read_bytes = 256;
 		elbc_fcm_ctrl->use_mdr = 1;
 		elbc_fcm_ctrl->mdr = column;
 		set_addr(mtd, 0, 0, 0);
 		fsl_elbc_run_command(mtd);
-		वापस;
+		return;
 
 	/* ERASE1 stores the block and page address */
-	हाल न_अंकD_CMD_ERASE1:
+	case NAND_CMD_ERASE1:
 		dev_vdbg(priv->dev,
 		         "fsl_elbc_cmdfunc: NAND_CMD_ERASE1, "
 		         "page_addr: 0x%x.\n", page_addr);
 		set_addr(mtd, 0, page_addr, 0);
-		वापस;
+		return;
 
 	/* ERASE2 uses the block and page address from ERASE1 */
-	हाल न_अंकD_CMD_ERASE2:
+	case NAND_CMD_ERASE2:
 		dev_vdbg(priv->dev, "fsl_elbc_cmdfunc: NAND_CMD_ERASE2.\n");
 
 		out_be32(&lbc->fir,
@@ -405,19 +404,19 @@
 		         (FIR_OP_RS  << FIR_OP4_SHIFT));
 
 		out_be32(&lbc->fcr,
-		         (न_अंकD_CMD_ERASE1 << FCR_CMD0_SHIFT) |
-		         (न_अंकD_CMD_STATUS << FCR_CMD1_SHIFT) |
-		         (न_अंकD_CMD_ERASE2 << FCR_CMD2_SHIFT));
+		         (NAND_CMD_ERASE1 << FCR_CMD0_SHIFT) |
+		         (NAND_CMD_STATUS << FCR_CMD1_SHIFT) |
+		         (NAND_CMD_ERASE2 << FCR_CMD2_SHIFT));
 
 		out_be32(&lbc->fbcr, 0);
-		elbc_fcm_ctrl->पढ़ो_bytes = 0;
+		elbc_fcm_ctrl->read_bytes = 0;
 		elbc_fcm_ctrl->use_mdr = 1;
 
 		fsl_elbc_run_command(mtd);
-		वापस;
+		return;
 
-	/* SEQIN sets up the addr buffer and all रेजिस्टरs except the length */
-	हाल न_अंकD_CMD_SEQIN: अणु
+	/* SEQIN sets up the addr buffer and all registers except the length */
+	case NAND_CMD_SEQIN: {
 		__be32 fcr;
 		dev_vdbg(priv->dev,
 			 "fsl_elbc_cmdfunc: NAND_CMD_SEQIN/PAGE_PROG, "
@@ -427,20 +426,20 @@
 		elbc_fcm_ctrl->column = column;
 		elbc_fcm_ctrl->use_mdr = 1;
 
-		अगर (column >= mtd->ग_लिखोsize) अणु
+		if (column >= mtd->writesize) {
 			/* OOB area */
-			column -= mtd->ग_लिखोsize;
+			column -= mtd->writesize;
 			elbc_fcm_ctrl->oob = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ON(column != 0);
 			elbc_fcm_ctrl->oob = 0;
-		पूर्ण
+		}
 
-		fcr = (न_अंकD_CMD_STATUS   << FCR_CMD1_SHIFT) |
-		      (न_अंकD_CMD_SEQIN    << FCR_CMD2_SHIFT) |
-		      (न_अंकD_CMD_PAGEPROG << FCR_CMD3_SHIFT);
+		fcr = (NAND_CMD_STATUS   << FCR_CMD1_SHIFT) |
+		      (NAND_CMD_SEQIN    << FCR_CMD2_SHIFT) |
+		      (NAND_CMD_PAGEPROG << FCR_CMD3_SHIFT);
 
-		अगर (priv->page_size) अणु
+		if (priv->page_size) {
 			out_be32(&lbc->fir,
 			         (FIR_OP_CM2 << FIR_OP0_SHIFT) |
 			         (FIR_OP_CA  << FIR_OP1_SHIFT) |
@@ -449,7 +448,7 @@
 			         (FIR_OP_CM3 << FIR_OP4_SHIFT) |
 			         (FIR_OP_CW1 << FIR_OP5_SHIFT) |
 			         (FIR_OP_RS  << FIR_OP6_SHIFT));
-		पूर्ण अन्यथा अणु
+		} else {
 			out_be32(&lbc->fir,
 			         (FIR_OP_CM0 << FIR_OP0_SHIFT) |
 			         (FIR_OP_CM2 << FIR_OP1_SHIFT) |
@@ -460,318 +459,318 @@
 			         (FIR_OP_CW1 << FIR_OP6_SHIFT) |
 			         (FIR_OP_RS  << FIR_OP7_SHIFT));
 
-			अगर (elbc_fcm_ctrl->oob)
+			if (elbc_fcm_ctrl->oob)
 				/* OOB area --> READOOB */
-				fcr |= न_अंकD_CMD_READOOB << FCR_CMD0_SHIFT;
-			अन्यथा
+				fcr |= NAND_CMD_READOOB << FCR_CMD0_SHIFT;
+			else
 				/* First 256 bytes --> READ0 */
-				fcr |= न_अंकD_CMD_READ0 << FCR_CMD0_SHIFT;
-		पूर्ण
+				fcr |= NAND_CMD_READ0 << FCR_CMD0_SHIFT;
+		}
 
 		out_be32(&lbc->fcr, fcr);
 		set_addr(mtd, column, page_addr, elbc_fcm_ctrl->oob);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* PAGEPROG reuses all of the setup from SEQIN and adds the length */
-	हाल न_अंकD_CMD_PAGEPROG: अणु
+	case NAND_CMD_PAGEPROG: {
 		dev_vdbg(priv->dev,
 		         "fsl_elbc_cmdfunc: NAND_CMD_PAGEPROG "
 			 "writing %d bytes.\n", elbc_fcm_ctrl->index);
 
-		/* अगर the ग_लिखो did not start at 0 or is not a full page
+		/* if the write did not start at 0 or is not a full page
 		 * then set the exact length, otherwise use a full page
-		 * ग_लिखो so the HW generates the ECC.
+		 * write so the HW generates the ECC.
 		 */
-		अगर (elbc_fcm_ctrl->oob || elbc_fcm_ctrl->column != 0 ||
-		    elbc_fcm_ctrl->index != mtd->ग_लिखोsize + mtd->oobsize)
+		if (elbc_fcm_ctrl->oob || elbc_fcm_ctrl->column != 0 ||
+		    elbc_fcm_ctrl->index != mtd->writesize + mtd->oobsize)
 			out_be32(&lbc->fbcr,
 				elbc_fcm_ctrl->index - elbc_fcm_ctrl->column);
-		अन्यथा
+		else
 			out_be32(&lbc->fbcr, 0);
 
 		fsl_elbc_run_command(mtd);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* CMD_STATUS must पढ़ो the status byte जबतक CEB is active */
-	/* Note - it करोes not रुको क्रम the पढ़ोy line */
-	हाल न_अंकD_CMD_STATUS:
+	/* CMD_STATUS must read the status byte while CEB is active */
+	/* Note - it does not wait for the ready line */
+	case NAND_CMD_STATUS:
 		out_be32(&lbc->fir,
 		         (FIR_OP_CM0 << FIR_OP0_SHIFT) |
 		         (FIR_OP_RBW << FIR_OP1_SHIFT));
-		out_be32(&lbc->fcr, न_अंकD_CMD_STATUS << FCR_CMD0_SHIFT);
+		out_be32(&lbc->fcr, NAND_CMD_STATUS << FCR_CMD0_SHIFT);
 		out_be32(&lbc->fbcr, 1);
 		set_addr(mtd, 0, 0, 0);
-		elbc_fcm_ctrl->पढ़ो_bytes = 1;
+		elbc_fcm_ctrl->read_bytes = 1;
 
 		fsl_elbc_run_command(mtd);
 
 		/* The chip always seems to report that it is
-		 * ग_लिखो-रक्षित, even when it is not.
+		 * write-protected, even when it is not.
 		 */
-		setbits8(elbc_fcm_ctrl->addr, न_अंकD_STATUS_WP);
-		वापस;
+		setbits8(elbc_fcm_ctrl->addr, NAND_STATUS_WP);
+		return;
 
-	/* RESET without रुकोing क्रम the पढ़ोy line */
-	हाल न_अंकD_CMD_RESET:
+	/* RESET without waiting for the ready line */
+	case NAND_CMD_RESET:
 		dev_dbg(priv->dev, "fsl_elbc_cmdfunc: NAND_CMD_RESET.\n");
 		out_be32(&lbc->fir, FIR_OP_CM0 << FIR_OP0_SHIFT);
-		out_be32(&lbc->fcr, न_अंकD_CMD_RESET << FCR_CMD0_SHIFT);
+		out_be32(&lbc->fcr, NAND_CMD_RESET << FCR_CMD0_SHIFT);
 		fsl_elbc_run_command(mtd);
-		वापस;
+		return;
 
-	शेष:
+	default:
 		dev_err(priv->dev,
 		        "fsl_elbc_cmdfunc: error, unsupported command 0x%x.\n",
 		        command);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fsl_elbc_select_chip(काष्ठा nand_chip *chip, पूर्णांक cs)
-अणु
-	/* The hardware करोes not seem to support multiple
+static void fsl_elbc_select_chip(struct nand_chip *chip, int cs)
+{
+	/* The hardware does not seem to support multiple
 	 * chips per bank.
 	 */
-पूर्ण
+}
 
 /*
  * Write buf to the FCM Controller Data Buffer
  */
-अटल व्योम fsl_elbc_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
-	अचिन्हित पूर्णांक bufsize = mtd->ग_लिखोsize + mtd->oobsize;
+static void fsl_elbc_write_buf(struct nand_chip *chip, const u8 *buf, int len)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
+	unsigned int bufsize = mtd->writesize + mtd->oobsize;
 
-	अगर (len <= 0) अणु
+	if (len <= 0) {
 		dev_err(priv->dev, "write_buf of %d bytes", len);
 		elbc_fcm_ctrl->status = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((अचिन्हित पूर्णांक)len > bufsize - elbc_fcm_ctrl->index) अणु
+	if ((unsigned int)len > bufsize - elbc_fcm_ctrl->index) {
 		dev_err(priv->dev,
 		        "write_buf beyond end of buffer "
 		        "(%d requested, %u available)\n",
 			len, bufsize - elbc_fcm_ctrl->index);
 		len = bufsize - elbc_fcm_ctrl->index;
-	पूर्ण
+	}
 
-	स_नकल_toio(&elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index], buf, len);
+	memcpy_toio(&elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index], buf, len);
 	/*
-	 * This is workaround क्रम the weird elbc hangs during nand ग_लिखो,
-	 * Scott Wood says: "...perhaps dअगरference in how दीर्घ it takes a
-	 * ग_लिखो to make it through the localbus compared to a ग_लिखो to IMMR
-	 * is causing problems, and sync isn't helping क्रम some reason."
+	 * This is workaround for the weird elbc hangs during nand write,
+	 * Scott Wood says: "...perhaps difference in how long it takes a
+	 * write to make it through the localbus compared to a write to IMMR
+	 * is causing problems, and sync isn't helping for some reason."
 	 * Reading back the last byte helps though.
 	 */
 	in_8(&elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index] + len - 1);
 
 	elbc_fcm_ctrl->index += len;
-पूर्ण
+}
 
 /*
- * पढ़ो a byte from either the FCM hardware buffer अगर it has any data left
- * otherwise issue a command to पढ़ो a single byte.
+ * read a byte from either the FCM hardware buffer if it has any data left
+ * otherwise issue a command to read a single byte.
  */
-अटल u8 fsl_elbc_पढ़ो_byte(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
+static u8 fsl_elbc_read_byte(struct nand_chip *chip)
+{
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
 
 	/* If there are still bytes in the FCM, then use the next byte. */
-	अगर (elbc_fcm_ctrl->index < elbc_fcm_ctrl->पढ़ो_bytes)
-		वापस in_8(&elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index++]);
+	if (elbc_fcm_ctrl->index < elbc_fcm_ctrl->read_bytes)
+		return in_8(&elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index++]);
 
 	dev_err(priv->dev, "read_byte beyond end of buffer\n");
-	वापस ERR_BYTE;
-पूर्ण
+	return ERR_BYTE;
+}
 
 /*
  * Read from the FCM Controller Data Buffer
  */
-अटल व्योम fsl_elbc_पढ़ो_buf(काष्ठा nand_chip *chip, u8 *buf, पूर्णांक len)
-अणु
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
-	पूर्णांक avail;
+static void fsl_elbc_read_buf(struct nand_chip *chip, u8 *buf, int len)
+{
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
+	int avail;
 
-	अगर (len < 0)
-		वापस;
+	if (len < 0)
+		return;
 
-	avail = min((अचिन्हित पूर्णांक)len,
-			elbc_fcm_ctrl->पढ़ो_bytes - elbc_fcm_ctrl->index);
-	स_नकल_fromio(buf, &elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index], avail);
+	avail = min((unsigned int)len,
+			elbc_fcm_ctrl->read_bytes - elbc_fcm_ctrl->index);
+	memcpy_fromio(buf, &elbc_fcm_ctrl->addr[elbc_fcm_ctrl->index], avail);
 	elbc_fcm_ctrl->index += avail;
 
-	अगर (len > avail)
+	if (len > avail)
 		dev_err(priv->dev,
 		        "read_buf beyond end of buffer "
 		        "(%d requested, %d available)\n",
 		        len, avail);
-पूर्ण
+}
 
 /* This function is called after Program and Erase Operations to
- * check क्रम success or failure.
+ * check for success or failure.
  */
-अटल पूर्णांक fsl_elbc_रुको(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
+static int fsl_elbc_wait(struct nand_chip *chip)
+{
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
 
-	अगर (elbc_fcm_ctrl->status != LTESR_CC)
-		वापस न_अंकD_STATUS_FAIL;
+	if (elbc_fcm_ctrl->status != LTESR_CC)
+		return NAND_STATUS_FAIL;
 
 	/* The chip always seems to report that it is
-	 * ग_लिखो-रक्षित, even when it is not.
+	 * write-protected, even when it is not.
 	 */
-	वापस (elbc_fcm_ctrl->mdr & 0xff) | न_अंकD_STATUS_WP;
-पूर्ण
+	return (elbc_fcm_ctrl->mdr & 0xff) | NAND_STATUS_WP;
+}
 
-अटल पूर्णांक fsl_elbc_पढ़ो_page(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
-			      पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
+static int fsl_elbc_read_page(struct nand_chip *chip, uint8_t *buf,
+			      int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
 
-	nand_पढ़ो_page_op(chip, page, 0, buf, mtd->ग_लिखोsize);
-	अगर (oob_required)
-		fsl_elbc_पढ़ो_buf(chip, chip->oob_poi, mtd->oobsize);
+	nand_read_page_op(chip, page, 0, buf, mtd->writesize);
+	if (oob_required)
+		fsl_elbc_read_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	अगर (fsl_elbc_रुको(chip) & न_अंकD_STATUS_FAIL)
+	if (fsl_elbc_wait(chip) & NAND_STATUS_FAIL)
 		mtd->ecc_stats.failed++;
 
-	वापस elbc_fcm_ctrl->max_bitflips;
-पूर्ण
+	return elbc_fcm_ctrl->max_bitflips;
+}
 
-/* ECC will be calculated स्वतःmatically, and errors will be detected in
- * रुकोfunc.
+/* ECC will be calculated automatically, and errors will be detected in
+ * waitfunc.
  */
-अटल पूर्णांक fsl_elbc_ग_लिखो_page(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
-			       पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int fsl_elbc_write_page(struct nand_chip *chip, const uint8_t *buf,
+			       int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	nand_prog_page_begin_op(chip, page, 0, buf, mtd->ग_लिखोsize);
-	fsl_elbc_ग_लिखो_buf(chip, chip->oob_poi, mtd->oobsize);
+	nand_prog_page_begin_op(chip, page, 0, buf, mtd->writesize);
+	fsl_elbc_write_buf(chip, chip->oob_poi, mtd->oobsize);
 
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	return nand_prog_page_end_op(chip);
+}
 
-/* ECC will be calculated स्वतःmatically, and errors will be detected in
- * रुकोfunc.
+/* ECC will be calculated automatically, and errors will be detected in
+ * waitfunc.
  */
-अटल पूर्णांक fsl_elbc_ग_लिखो_subpage(काष्ठा nand_chip *chip, uपूर्णांक32_t offset,
-				  uपूर्णांक32_t data_len, स्थिर uपूर्णांक8_t *buf,
-				  पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int fsl_elbc_write_subpage(struct nand_chip *chip, uint32_t offset,
+				  uint32_t data_len, const uint8_t *buf,
+				  int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
-	fsl_elbc_ग_लिखो_buf(chip, buf, mtd->ग_लिखोsize);
-	fsl_elbc_ग_लिखो_buf(chip, chip->oob_poi, mtd->oobsize);
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	nand_prog_page_begin_op(chip, page, 0, NULL, 0);
+	fsl_elbc_write_buf(chip, buf, mtd->writesize);
+	fsl_elbc_write_buf(chip, chip->oob_poi, mtd->oobsize);
+	return nand_prog_page_end_op(chip);
+}
 
-अटल पूर्णांक fsl_elbc_chip_init(काष्ठा fsl_elbc_mtd *priv)
-अणु
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
-	काष्ठा nand_chip *chip = &priv->chip;
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int fsl_elbc_chip_init(struct fsl_elbc_mtd *priv)
+{
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = ctrl->nand;
+	struct nand_chip *chip = &priv->chip;
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
 	dev_dbg(priv->dev, "eLBC Set Information for bank %d\n", priv->bank);
 
-	/* Fill in fsl_elbc_mtd काष्ठाure */
+	/* Fill in fsl_elbc_mtd structure */
 	mtd->dev.parent = priv->dev;
 	nand_set_flash_node(chip, priv->dev->of_node);
 
-	/* set समयout to maximum */
+	/* set timeout to maximum */
 	priv->fmr = 15 << FMR_CWTO_SHIFT;
-	अगर (in_be32(&lbc->bank[priv->bank].or) & OR_FCM_PGS)
+	if (in_be32(&lbc->bank[priv->bank].or) & OR_FCM_PGS)
 		priv->fmr |= FMR_ECCM;
 
-	/* fill in nand_chip काष्ठाure */
+	/* fill in nand_chip structure */
 	/* set up function call table */
-	chip->legacy.पढ़ो_byte = fsl_elbc_पढ़ो_byte;
-	chip->legacy.ग_लिखो_buf = fsl_elbc_ग_लिखो_buf;
-	chip->legacy.पढ़ो_buf = fsl_elbc_पढ़ो_buf;
+	chip->legacy.read_byte = fsl_elbc_read_byte;
+	chip->legacy.write_buf = fsl_elbc_write_buf;
+	chip->legacy.read_buf = fsl_elbc_read_buf;
 	chip->legacy.select_chip = fsl_elbc_select_chip;
 	chip->legacy.cmdfunc = fsl_elbc_cmdfunc;
-	chip->legacy.रुकोfunc = fsl_elbc_रुको;
+	chip->legacy.waitfunc = fsl_elbc_wait;
 	chip->legacy.set_features = nand_get_set_features_notsupp;
 	chip->legacy.get_features = nand_get_set_features_notsupp;
 
-	chip->bbt_td = &bbt_मुख्य_descr;
+	chip->bbt_td = &bbt_main_descr;
 	chip->bbt_md = &bbt_mirror_descr;
 
 	/* set up nand options */
-	chip->bbt_options = न_अंकD_BBT_USE_FLASH;
+	chip->bbt_options = NAND_BBT_USE_FLASH;
 
 	chip->controller = &elbc_fcm_ctrl->controller;
 	nand_set_controller_data(chip, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fsl_elbc_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा fsl_elbc_mtd *priv = nand_get_controller_data(chip);
-	काष्ठा fsl_lbc_ctrl *ctrl = priv->ctrl;
-	काष्ठा fsl_lbc_regs __iomem *lbc = ctrl->regs;
-	अचिन्हित पूर्णांक al;
+static int fsl_elbc_attach_chip(struct nand_chip *chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct fsl_elbc_mtd *priv = nand_get_controller_data(chip);
+	struct fsl_lbc_ctrl *ctrl = priv->ctrl;
+	struct fsl_lbc_regs __iomem *lbc = ctrl->regs;
+	unsigned int al;
 
-	चयन (chip->ecc.engine_type) अणु
+	switch (chip->ecc.engine_type) {
 	/*
-	 * अगर ECC was not chosen in DT, decide whether to use HW or SW ECC from
+	 * if ECC was not chosen in DT, decide whether to use HW or SW ECC from
 	 * CS Base Register
 	 */
-	हाल न_अंकD_ECC_ENGINE_TYPE_NONE:
+	case NAND_ECC_ENGINE_TYPE_NONE:
 		/* If CS Base Register selects full hardware ECC then use it */
-		अगर ((in_be32(&lbc->bank[priv->bank].br) & BR_DECC) ==
-		    BR_DECC_CHK_GEN) अणु
-			chip->ecc.पढ़ो_page = fsl_elbc_पढ़ो_page;
-			chip->ecc.ग_लिखो_page = fsl_elbc_ग_लिखो_page;
-			chip->ecc.ग_लिखो_subpage = fsl_elbc_ग_लिखो_subpage;
+		if ((in_be32(&lbc->bank[priv->bank].br) & BR_DECC) ==
+		    BR_DECC_CHK_GEN) {
+			chip->ecc.read_page = fsl_elbc_read_page;
+			chip->ecc.write_page = fsl_elbc_write_page;
+			chip->ecc.write_subpage = fsl_elbc_write_subpage;
 
-			chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+			chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
 			mtd_set_ooblayout(mtd, &fsl_elbc_ooblayout_ops);
 			chip->ecc.size = 512;
 			chip->ecc.bytes = 3;
 			chip->ecc.strength = 1;
-		पूर्ण अन्यथा अणु
-			/* otherwise fall back to शेष software ECC */
-			chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
-			chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
-		पूर्ण
-		अवरोध;
+		} else {
+			/* otherwise fall back to default software ECC */
+			chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
+			chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
+		}
+		break;
 
-	/* अगर SW ECC was chosen in DT, we करो not need to set anything here */
-	हाल न_अंकD_ECC_ENGINE_TYPE_SOFT:
-		अवरोध;
+	/* if SW ECC was chosen in DT, we do not need to set anything here */
+	case NAND_ECC_ENGINE_TYPE_SOFT:
+		break;
 
-	/* should we also implement *_ECC_ENGINE_CONTROLLER to करो as above? */
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	/* should we also implement *_ECC_ENGINE_CONTROLLER to do as above? */
+	default:
+		return -EINVAL;
+	}
 
 	/* calculate FMR Address Length field */
 	al = 0;
-	अगर (chip->pagemask & 0xffff0000)
+	if (chip->pagemask & 0xffff0000)
 		al++;
-	अगर (chip->pagemask & 0xff000000)
+	if (chip->pagemask & 0xff000000)
 		al++;
 
 	priv->fmr |= al << FMR_AL_SHIFT;
 
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->numchips = %d\n",
-	        nanddev_ntarमाला_लो(&chip->base));
+	        nanddev_ntargets(&chip->base));
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->chipsize = %lld\n",
 	        nanddev_target_size(&chip->base));
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->pagemask = %8x\n",
@@ -781,11 +780,11 @@
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->badblockpos = %d\n",
 	        chip->badblockpos);
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->chip_shift = %d\n",
-	        chip->chip_shअगरt);
+	        chip->chip_shift);
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->page_shift = %d\n",
-	        chip->page_shअगरt);
+	        chip->page_shift);
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->phys_erase_shift = %d\n",
-	        chip->phys_erase_shअगरt);
+	        chip->phys_erase_shift);
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->ecc.engine_type = %d\n",
 		chip->ecc.engine_type);
 	dev_dbg(priv->dev, "fsl_elbc_init: nand->ecc.steps = %d\n",
@@ -801,107 +800,107 @@
 	dev_dbg(priv->dev, "fsl_elbc_init: mtd->erasesize = %d\n",
 	        mtd->erasesize);
 	dev_dbg(priv->dev, "fsl_elbc_init: mtd->writesize = %d\n",
-	        mtd->ग_लिखोsize);
+	        mtd->writesize);
 	dev_dbg(priv->dev, "fsl_elbc_init: mtd->oobsize = %d\n",
 	        mtd->oobsize);
 
 	/* adjust Option Register and ECC to match Flash page size */
-	अगर (mtd->ग_लिखोsize == 512) अणु
+	if (mtd->writesize == 512) {
 		priv->page_size = 0;
 		clrbits32(&lbc->bank[priv->bank].or, OR_FCM_PGS);
-	पूर्ण अन्यथा अगर (mtd->ग_लिखोsize == 2048) अणु
+	} else if (mtd->writesize == 2048) {
 		priv->page_size = 1;
 		setbits32(&lbc->bank[priv->bank].or, OR_FCM_PGS);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(priv->dev,
 		        "fsl_elbc_init: page size %d is not supported\n",
-		        mtd->ग_लिखोsize);
-		वापस -ENOTSUPP;
-	पूर्ण
+		        mtd->writesize);
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops fsl_elbc_controller_ops = अणु
+static const struct nand_controller_ops fsl_elbc_controller_ops = {
 	.attach_chip = fsl_elbc_attach_chip,
-पूर्ण;
+};
 
-अटल पूर्णांक fsl_elbc_chip_हटाओ(काष्ठा fsl_elbc_mtd *priv)
-अणु
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
-	काष्ठा mtd_info *mtd = nand_to_mtd(&priv->chip);
+static int fsl_elbc_chip_remove(struct fsl_elbc_mtd *priv)
+{
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = priv->ctrl->nand;
+	struct mtd_info *mtd = nand_to_mtd(&priv->chip);
 
-	kमुक्त(mtd->name);
+	kfree(mtd->name);
 
-	अगर (priv->vbase)
+	if (priv->vbase)
 		iounmap(priv->vbase);
 
-	elbc_fcm_ctrl->chips[priv->bank] = शून्य;
-	kमुक्त(priv);
-	वापस 0;
-पूर्ण
+	elbc_fcm_ctrl->chips[priv->bank] = NULL;
+	kfree(priv);
+	return 0;
+}
 
-अटल DEFINE_MUTEX(fsl_elbc_nand_mutex);
+static DEFINE_MUTEX(fsl_elbc_nand_mutex);
 
-अटल पूर्णांक fsl_elbc_nand_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_lbc_regs __iomem *lbc;
-	काष्ठा fsl_elbc_mtd *priv;
-	काष्ठा resource res;
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl;
-	अटल स्थिर अक्षर *part_probe_types[]
-		= अणु "cmdlinepart", "RedBoot", "ofpart", शून्य पूर्ण;
-	पूर्णांक ret;
-	पूर्णांक bank;
-	काष्ठा device *dev;
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा mtd_info *mtd;
+static int fsl_elbc_nand_probe(struct platform_device *pdev)
+{
+	struct fsl_lbc_regs __iomem *lbc;
+	struct fsl_elbc_mtd *priv;
+	struct resource res;
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl;
+	static const char *part_probe_types[]
+		= { "cmdlinepart", "RedBoot", "ofpart", NULL };
+	int ret;
+	int bank;
+	struct device *dev;
+	struct device_node *node = pdev->dev.of_node;
+	struct mtd_info *mtd;
 
-	अगर (!fsl_lbc_ctrl_dev || !fsl_lbc_ctrl_dev->regs)
-		वापस -ENODEV;
+	if (!fsl_lbc_ctrl_dev || !fsl_lbc_ctrl_dev->regs)
+		return -ENODEV;
 	lbc = fsl_lbc_ctrl_dev->regs;
 	dev = fsl_lbc_ctrl_dev->dev;
 
 	/* get, allocate and map the memory resource */
 	ret = of_address_to_resource(node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to get resource\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* find which chip select it is connected to */
-	क्रम (bank = 0; bank < MAX_BANKS; bank++)
-		अगर ((in_be32(&lbc->bank[bank].br) & BR_V) &&
+	for (bank = 0; bank < MAX_BANKS; bank++)
+		if ((in_be32(&lbc->bank[bank].br) & BR_V) &&
 		    (in_be32(&lbc->bank[bank].br) & BR_MSEL) == BR_MS_FCM &&
 		    (in_be32(&lbc->bank[bank].br) &
 		     in_be32(&lbc->bank[bank].or) & BR_BA)
 		     == fsl_lbc_addr(res.start))
-			अवरोध;
+			break;
 
-	अगर (bank >= MAX_BANKS) अणु
+	if (bank >= MAX_BANKS) {
 		dev_err(dev, "address did not match any chip selects\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	mutex_lock(&fsl_elbc_nand_mutex);
-	अगर (!fsl_lbc_ctrl_dev->nand) अणु
-		elbc_fcm_ctrl = kzalloc(माप(*elbc_fcm_ctrl), GFP_KERNEL);
-		अगर (!elbc_fcm_ctrl) अणु
+	if (!fsl_lbc_ctrl_dev->nand) {
+		elbc_fcm_ctrl = kzalloc(sizeof(*elbc_fcm_ctrl), GFP_KERNEL);
+		if (!elbc_fcm_ctrl) {
 			mutex_unlock(&fsl_elbc_nand_mutex);
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		elbc_fcm_ctrl->counter++;
 
 		nand_controller_init(&elbc_fcm_ctrl->controller);
 		fsl_lbc_ctrl_dev->nand = elbc_fcm_ctrl;
-	पूर्ण अन्यथा अणु
+	} else {
 		elbc_fcm_ctrl = fsl_lbc_ctrl_dev->nand;
-	पूर्ण
+	}
 	mutex_unlock(&fsl_elbc_nand_mutex);
 
 	elbc_fcm_ctrl->chips[bank] = priv;
@@ -911,88 +910,88 @@
 	dev_set_drvdata(priv->dev, priv);
 
 	priv->vbase = ioremap(res.start, resource_size(&res));
-	अगर (!priv->vbase) अणु
+	if (!priv->vbase) {
 		dev_err(dev, "failed to map chip region\n");
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	mtd = nand_to_mtd(&priv->chip);
-	mtd->name = kaप्र_लिखो(GFP_KERNEL, "%llx.flash", (u64)res.start);
-	अगर (!nand_to_mtd(&priv->chip)->name) अणु
+	mtd->name = kasprintf(GFP_KERNEL, "%llx.flash", (u64)res.start);
+	if (!nand_to_mtd(&priv->chip)->name) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	ret = fsl_elbc_chip_init(priv);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	priv->chip.controller->ops = &fsl_elbc_controller_ops;
 	ret = nand_scan(&priv->chip, 1);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	/* First look क्रम RedBoot table or partitions on the command
-	 * line, these take precedence over device tree inक्रमmation */
-	ret = mtd_device_parse_रेजिस्टर(mtd, part_probe_types, शून्य, शून्य, 0);
-	अगर (ret)
-		जाओ cleanup_nand;
+	/* First look for RedBoot table or partitions on the command
+	 * line, these take precedence over device tree information */
+	ret = mtd_device_parse_register(mtd, part_probe_types, NULL, NULL, 0);
+	if (ret)
+		goto cleanup_nand;
 
 	pr_info("eLBC NAND device at 0x%llx, bank %d\n",
-		(अचिन्हित दीर्घ दीर्घ)res.start, priv->bank);
+		(unsigned long long)res.start, priv->bank);
 
-	वापस 0;
+	return 0;
 
 cleanup_nand:
 	nand_cleanup(&priv->chip);
 err:
-	fsl_elbc_chip_हटाओ(priv);
+	fsl_elbc_chip_remove(priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fsl_elbc_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = fsl_lbc_ctrl_dev->nand;
-	काष्ठा fsl_elbc_mtd *priv = dev_get_drvdata(&pdev->dev);
-	काष्ठा nand_chip *chip = &priv->chip;
-	पूर्णांक ret;
+static int fsl_elbc_nand_remove(struct platform_device *pdev)
+{
+	struct fsl_elbc_fcm_ctrl *elbc_fcm_ctrl = fsl_lbc_ctrl_dev->nand;
+	struct fsl_elbc_mtd *priv = dev_get_drvdata(&pdev->dev);
+	struct nand_chip *chip = &priv->chip;
+	int ret;
 
-	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+	ret = mtd_device_unregister(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
-	fsl_elbc_chip_हटाओ(priv);
+	fsl_elbc_chip_remove(priv);
 
 	mutex_lock(&fsl_elbc_nand_mutex);
 	elbc_fcm_ctrl->counter--;
-	अगर (!elbc_fcm_ctrl->counter) अणु
-		fsl_lbc_ctrl_dev->nand = शून्य;
-		kमुक्त(elbc_fcm_ctrl);
-	पूर्ण
+	if (!elbc_fcm_ctrl->counter) {
+		fsl_lbc_ctrl_dev->nand = NULL;
+		kfree(elbc_fcm_ctrl);
+	}
 	mutex_unlock(&fsl_elbc_nand_mutex);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id fsl_elbc_nand_match[] = अणु
-	अणु .compatible = "fsl,elbc-fcm-nand", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id fsl_elbc_nand_match[] = {
+	{ .compatible = "fsl,elbc-fcm-nand", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, fsl_elbc_nand_match);
 
-अटल काष्ठा platक्रमm_driver fsl_elbc_nand_driver = अणु
-	.driver = अणु
+static struct platform_driver fsl_elbc_nand_driver = {
+	.driver = {
 		.name = "fsl,elbc-fcm-nand",
 		.of_match_table = fsl_elbc_nand_match,
-	पूर्ण,
+	},
 	.probe = fsl_elbc_nand_probe,
-	.हटाओ = fsl_elbc_nand_हटाओ,
-पूर्ण;
+	.remove = fsl_elbc_nand_remove,
+};
 
-module_platक्रमm_driver(fsl_elbc_nand_driver);
+module_platform_driver(fsl_elbc_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Freescale");

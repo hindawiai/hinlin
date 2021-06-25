@@ -1,638 +1,637 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* vcc.c: sun4v भव channel concentrator
+// SPDX-License-Identifier: GPL-2.0
+/* vcc.c: sun4v virtual channel concentrator
  *
  * Copyright (C) 2017 Oracle. All rights reserved.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <यंत्र/vपन.स>
-#समावेश <यंत्र/ldc.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <asm/vio.h>
+#include <asm/ldc.h>
 
 MODULE_DESCRIPTION("Sun LDOM virtual console concentrator driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("1.1");
 
-काष्ठा vcc_port अणु
-	काष्ठा vio_driver_state vio;
+struct vcc_port {
+	struct vio_driver_state vio;
 
 	spinlock_t lock;
-	अक्षर *करोमुख्य;
-	काष्ठा tty_काष्ठा *tty;	/* only populated जबतक dev is खोलो */
-	अचिन्हित दीर्घ index;	/* index पूर्णांकo the vcc_table */
+	char *domain;
+	struct tty_struct *tty;	/* only populated while dev is open */
+	unsigned long index;	/* index into the vcc_table */
 
 	u64 refcnt;
 	bool excl_locked;
 
-	bool हटाओd;
+	bool removed;
 
-	/* This buffer is required to support the tty ग_लिखो_room पूर्णांकerface
-	 * and guarantee that any अक्षरacters that the driver accepts will
+	/* This buffer is required to support the tty write_room interface
+	 * and guarantee that any characters that the driver accepts will
 	 * be eventually sent, either immediately or later.
 	 */
-	पूर्णांक अक्षरs_in_buffer;
-	काष्ठा vio_vcc buffer;
+	int chars_in_buffer;
+	struct vio_vcc buffer;
 
-	काष्ठा समयr_list rx_समयr;
-	काष्ठा समयr_list tx_समयr;
-पूर्ण;
+	struct timer_list rx_timer;
+	struct timer_list tx_timer;
+};
 
-/* Microseconds that thपढ़ो will delay रुकोing क्रम a vcc port ref */
-#घोषणा VCC_REF_DELAY		100
+/* Microseconds that thread will delay waiting for a vcc port ref */
+#define VCC_REF_DELAY		100
 
-#घोषणा VCC_MAX_PORTS		1024
-#घोषणा VCC_MINOR_START		0	/* must be zero */
-#घोषणा VCC_BUFF_LEN		VIO_VCC_MTU_SIZE
+#define VCC_MAX_PORTS		1024
+#define VCC_MINOR_START		0	/* must be zero */
+#define VCC_BUFF_LEN		VIO_VCC_MTU_SIZE
 
-#घोषणा VCC_CTL_BREAK		-1
-#घोषणा VCC_CTL_HUP		-2
+#define VCC_CTL_BREAK		-1
+#define VCC_CTL_HUP		-2
 
-अटल काष्ठा tty_driver *vcc_tty_driver;
+static struct tty_driver *vcc_tty_driver;
 
-अटल काष्ठा vcc_port *vcc_table[VCC_MAX_PORTS];
-अटल DEFINE_SPINLOCK(vcc_table_lock);
+static struct vcc_port *vcc_table[VCC_MAX_PORTS];
+static DEFINE_SPINLOCK(vcc_table_lock);
 
-अटल अचिन्हित पूर्णांक vcc_dbg;
-अटल अचिन्हित पूर्णांक vcc_dbg_ldc;
-अटल अचिन्हित पूर्णांक vcc_dbg_vio;
+static unsigned int vcc_dbg;
+static unsigned int vcc_dbg_ldc;
+static unsigned int vcc_dbg_vio;
 
-module_param(vcc_dbg, uपूर्णांक, 0664);
-module_param(vcc_dbg_ldc, uपूर्णांक, 0664);
-module_param(vcc_dbg_vio, uपूर्णांक, 0664);
+module_param(vcc_dbg, uint, 0664);
+module_param(vcc_dbg_ldc, uint, 0664);
+module_param(vcc_dbg_vio, uint, 0664);
 
-#घोषणा VCC_DBG_DRV	0x1
-#घोषणा VCC_DBG_LDC	0x2
-#घोषणा VCC_DBG_PKT	0x4
+#define VCC_DBG_DRV	0x1
+#define VCC_DBG_LDC	0x2
+#define VCC_DBG_PKT	0x4
 
-#घोषणा vccdbg(f, a...)						\
-	करो अणु							\
-		अगर (vcc_dbg & VCC_DBG_DRV)			\
+#define vccdbg(f, a...)						\
+	do {							\
+		if (vcc_dbg & VCC_DBG_DRV)			\
 			pr_info(f, ## a);			\
-	पूर्ण जबतक (0)						\
+	} while (0)						\
 
-#घोषणा vccdbgl(l)						\
-	करो अणु							\
-		अगर (vcc_dbg & VCC_DBG_LDC)			\
-			ldc_prपूर्णांक(l);				\
-	पूर्ण जबतक (0)						\
+#define vccdbgl(l)						\
+	do {							\
+		if (vcc_dbg & VCC_DBG_LDC)			\
+			ldc_print(l);				\
+	} while (0)						\
 
-#घोषणा vccdbgp(pkt)						\
-	करो अणु							\
-		अगर (vcc_dbg & VCC_DBG_PKT) अणु			\
-			पूर्णांक i;					\
-			क्रम (i = 0; i < pkt.tag.stype; i++)	\
+#define vccdbgp(pkt)						\
+	do {							\
+		if (vcc_dbg & VCC_DBG_PKT) {			\
+			int i;					\
+			for (i = 0; i < pkt.tag.stype; i++)	\
 				pr_info("[%c]", pkt.data[i]);	\
-		पूर्ण						\
-	पूर्ण जबतक (0)						\
+		}						\
+	} while (0)						\
 
 /* Note: Be careful when adding flags to this line discipline.  Don't
- * add anything that will cause echoing or we'll go पूर्णांकo recursive
- * loop echoing अक्षरs back and क्रमth with the console drivers.
+ * add anything that will cause echoing or we'll go into recursive
+ * loop echoing chars back and forth with the console drivers.
  */
-अटल स्थिर काष्ठा ktermios vcc_tty_termios = अणु
-	.c_अगरlag = IGNBRK | IGNPAR,
+static const struct ktermios vcc_tty_termios = {
+	.c_iflag = IGNBRK | IGNPAR,
 	.c_oflag = OPOST,
 	.c_cflag = B38400 | CS8 | CREAD | HUPCL,
 	.c_cc = INIT_C_CC,
 	.c_ispeed = 38400,
 	.c_ospeed = 38400
-पूर्ण;
+};
 
 /**
  * vcc_table_add() - Add VCC port to the VCC table
- * @port: poपूर्णांकer to the VCC port
+ * @port: pointer to the VCC port
  *
  * Return: index of the port in the VCC table on success,
  *	   -1 on failure
  */
-अटल पूर्णांक vcc_table_add(काष्ठा vcc_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int vcc_table_add(struct vcc_port *port)
+{
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&vcc_table_lock, flags);
-	क्रम (i = VCC_MINOR_START; i < VCC_MAX_PORTS; i++) अणु
-		अगर (!vcc_table[i]) अणु
+	for (i = VCC_MINOR_START; i < VCC_MAX_PORTS; i++) {
+		if (!vcc_table[i]) {
 			vcc_table[i] = port;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&vcc_table_lock, flags);
 
-	अगर (i < VCC_MAX_PORTS)
-		वापस i;
-	अन्यथा
-		वापस -1;
-पूर्ण
+	if (i < VCC_MAX_PORTS)
+		return i;
+	else
+		return -1;
+}
 
 /**
- * vcc_table_हटाओ() - Removes a VCC port from the VCC table
- * @index: Index पूर्णांकo the VCC table
+ * vcc_table_remove() - Removes a VCC port from the VCC table
+ * @index: Index into the VCC table
  */
-अटल व्योम vcc_table_हटाओ(अचिन्हित दीर्घ index)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vcc_table_remove(unsigned long index)
+{
+	unsigned long flags;
 
-	अगर (WARN_ON(index >= VCC_MAX_PORTS))
-		वापस;
+	if (WARN_ON(index >= VCC_MAX_PORTS))
+		return;
 
 	spin_lock_irqsave(&vcc_table_lock, flags);
-	vcc_table[index] = शून्य;
+	vcc_table[index] = NULL;
 	spin_unlock_irqrestore(&vcc_table_lock, flags);
-पूर्ण
+}
 
 /**
  * vcc_get() - Gets a reference to VCC port
- * @index: Index पूर्णांकo the VCC table
- * @excl: Indicates अगर an exclusive access is requested
+ * @index: Index into the VCC table
+ * @excl: Indicates if an exclusive access is requested
  *
- * Return: reference to the VCC port, अगर found
- *	   शून्य, अगर port not found
+ * Return: reference to the VCC port, if found
+ *	   NULL, if port not found
  */
-अटल काष्ठा vcc_port *vcc_get(अचिन्हित दीर्घ index, bool excl)
-अणु
-	काष्ठा vcc_port *port;
-	अचिन्हित दीर्घ flags;
+static struct vcc_port *vcc_get(unsigned long index, bool excl)
+{
+	struct vcc_port *port;
+	unsigned long flags;
 
 try_again:
 	spin_lock_irqsave(&vcc_table_lock, flags);
 
 	port = vcc_table[index];
-	अगर (!port) अणु
+	if (!port) {
 		spin_unlock_irqrestore(&vcc_table_lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (!excl) अणु
-		अगर (port->excl_locked) अणु
+	if (!excl) {
+		if (port->excl_locked) {
 			spin_unlock_irqrestore(&vcc_table_lock, flags);
 			udelay(VCC_REF_DELAY);
-			जाओ try_again;
-		पूर्ण
+			goto try_again;
+		}
 		port->refcnt++;
 		spin_unlock_irqrestore(&vcc_table_lock, flags);
-		वापस port;
-	पूर्ण
+		return port;
+	}
 
-	अगर (port->refcnt) अणु
+	if (port->refcnt) {
 		spin_unlock_irqrestore(&vcc_table_lock, flags);
-		/* Thपढ़ोs wanting exclusive access will रुको half the समय,
-		 * probably giving them higher priority in the हाल of
-		 * multiple रुकोers.
+		/* Threads wanting exclusive access will wait half the time,
+		 * probably giving them higher priority in the case of
+		 * multiple waiters.
 		 */
 		udelay(VCC_REF_DELAY/2);
-		जाओ try_again;
-	पूर्ण
+		goto try_again;
+	}
 
 	port->refcnt++;
 	port->excl_locked = true;
 	spin_unlock_irqrestore(&vcc_table_lock, flags);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
 /**
  * vcc_put() - Returns a reference to VCC port
- * @port: poपूर्णांकer to VCC port
- * @excl: Indicates अगर the वापसed reference is an exclusive reference
+ * @port: pointer to VCC port
+ * @excl: Indicates if the returned reference is an exclusive reference
  *
  * Note: It's the caller's responsibility to ensure the correct value
- *	 क्रम the excl flag
+ *	 for the excl flag
  */
-अटल व्योम vcc_put(काष्ठा vcc_port *port, bool excl)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vcc_put(struct vcc_port *port, bool excl)
+{
+	unsigned long flags;
 
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
 	spin_lock_irqsave(&vcc_table_lock, flags);
 
-	/* check अगर caller attempted to put with the wrong flags */
-	अगर (WARN_ON((excl && !port->excl_locked) ||
+	/* check if caller attempted to put with the wrong flags */
+	if (WARN_ON((excl && !port->excl_locked) ||
 		    (!excl && port->excl_locked)))
-		जाओ करोne;
+		goto done;
 
 	port->refcnt--;
 
-	अगर (excl)
+	if (excl)
 		port->excl_locked = false;
 
-करोne:
+done:
 	spin_unlock_irqrestore(&vcc_table_lock, flags);
-पूर्ण
+}
 
 /**
  * vcc_get_ne() - Get a non-exclusive reference to VCC port
- * @index: Index पूर्णांकo the VCC table
+ * @index: Index into the VCC table
  *
- * Gets a non-exclusive reference to VCC port, अगर it's not हटाओd
+ * Gets a non-exclusive reference to VCC port, if it's not removed
  *
- * Return: poपूर्णांकer to the VCC port, अगर found
- *	   शून्य, अगर port not found
+ * Return: pointer to the VCC port, if found
+ *	   NULL, if port not found
  */
-अटल काष्ठा vcc_port *vcc_get_ne(अचिन्हित दीर्घ index)
-अणु
-	काष्ठा vcc_port *port;
+static struct vcc_port *vcc_get_ne(unsigned long index)
+{
+	struct vcc_port *port;
 
 	port = vcc_get(index, false);
 
-	अगर (port && port->हटाओd) अणु
+	if (port && port->removed) {
 		vcc_put(port, false);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
-अटल व्योम vcc_kick_rx(काष्ठा vcc_port *port)
-अणु
-	काष्ठा vio_driver_state *vio = &port->vio;
+static void vcc_kick_rx(struct vcc_port *port)
+{
+	struct vio_driver_state *vio = &port->vio;
 
-	निश्चित_spin_locked(&port->lock);
+	assert_spin_locked(&port->lock);
 
-	अगर (!समयr_pending(&port->rx_समयr) && !port->हटाओd) अणु
+	if (!timer_pending(&port->rx_timer) && !port->removed) {
 		disable_irq_nosync(vio->vdev->rx_irq);
-		port->rx_समयr.expires = (jअगरfies + 1);
-		add_समयr(&port->rx_समयr);
-	पूर्ण
-पूर्ण
+		port->rx_timer.expires = (jiffies + 1);
+		add_timer(&port->rx_timer);
+	}
+}
 
-अटल व्योम vcc_kick_tx(काष्ठा vcc_port *port)
-अणु
-	निश्चित_spin_locked(&port->lock);
+static void vcc_kick_tx(struct vcc_port *port)
+{
+	assert_spin_locked(&port->lock);
 
-	अगर (!समयr_pending(&port->tx_समयr) && !port->हटाओd) अणु
-		port->tx_समयr.expires = (jअगरfies + 1);
-		add_समयr(&port->tx_समयr);
-	पूर्ण
-पूर्ण
+	if (!timer_pending(&port->tx_timer) && !port->removed) {
+		port->tx_timer.expires = (jiffies + 1);
+		add_timer(&port->tx_timer);
+	}
+}
 
-अटल पूर्णांक vcc_rx_check(काष्ठा tty_काष्ठा *tty, पूर्णांक size)
-अणु
-	अगर (WARN_ON(!tty || !tty->port))
-		वापस 1;
+static int vcc_rx_check(struct tty_struct *tty, int size)
+{
+	if (WARN_ON(!tty || !tty->port))
+		return 1;
 
 	/* tty_buffer_request_room won't sleep because it uses
 	 * GFP_ATOMIC flag to allocate buffer
 	 */
-	अगर (test_bit(TTY_THROTTLED, &tty->flags) ||
+	if (test_bit(TTY_THROTTLED, &tty->flags) ||
 	    (tty_buffer_request_room(tty->port, VCC_BUFF_LEN) < VCC_BUFF_LEN))
-		वापस 0;
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक vcc_rx(काष्ठा tty_काष्ठा *tty, अक्षर *buf, पूर्णांक size)
-अणु
-	पूर्णांक len = 0;
+static int vcc_rx(struct tty_struct *tty, char *buf, int size)
+{
+	int len = 0;
 
-	अगर (WARN_ON(!tty || !tty->port))
-		वापस len;
+	if (WARN_ON(!tty || !tty->port))
+		return len;
 
 	len = tty_insert_flip_string(tty->port, buf, size);
-	अगर (len)
+	if (len)
 		tty_flip_buffer_push(tty->port);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक vcc_ldc_पढ़ो(काष्ठा vcc_port *port)
-अणु
-	काष्ठा vio_driver_state *vio = &port->vio;
-	काष्ठा tty_काष्ठा *tty;
-	काष्ठा vio_vcc pkt;
-	पूर्णांक rv = 0;
+static int vcc_ldc_read(struct vcc_port *port)
+{
+	struct vio_driver_state *vio = &port->vio;
+	struct tty_struct *tty;
+	struct vio_vcc pkt;
+	int rv = 0;
 
 	tty = port->tty;
-	अगर (!tty) अणु
+	if (!tty) {
 		rv = ldc_rx_reset(vio->lp);
 		vccdbg("VCC: reset rx q: rv=%d\n", rv);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Read as दीर्घ as LDC has incoming data. */
-	जबतक (1) अणु
-		अगर (!vcc_rx_check(tty, VIO_VCC_MTU_SIZE)) अणु
+	/* Read as long as LDC has incoming data. */
+	while (1) {
+		if (!vcc_rx_check(tty, VIO_VCC_MTU_SIZE)) {
 			vcc_kick_rx(port);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		vccdbgl(vio->lp);
 
-		rv = ldc_पढ़ो(vio->lp, &pkt, माप(pkt));
-		अगर (rv <= 0)
-			अवरोध;
+		rv = ldc_read(vio->lp, &pkt, sizeof(pkt));
+		if (rv <= 0)
+			break;
 
 		vccdbg("VCC: ldc_read()=%d\n", rv);
 		vccdbg("TAG [%02x:%02x:%04x:%08x]\n",
 		       pkt.tag.type, pkt.tag.stype,
 		       pkt.tag.stype_env, pkt.tag.sid);
 
-		अगर (pkt.tag.type == VIO_TYPE_DATA) अणु
+		if (pkt.tag.type == VIO_TYPE_DATA) {
 			vccdbgp(pkt);
 			/* vcc_rx_check ensures memory availability */
 			vcc_rx(tty, pkt.data, pkt.tag.stype);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err("VCC: unknown msg [%02x:%02x:%04x:%08x]\n",
 			       pkt.tag.type, pkt.tag.stype,
 			       pkt.tag.stype_env, pkt.tag.sid);
 			rv = -ECONNRESET;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		WARN_ON(rv != LDC_PACKET_SIZE);
-	पूर्ण
+	}
 
-करोne:
-	वापस rv;
-पूर्ण
+done:
+	return rv;
+}
 
-अटल व्योम vcc_rx_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा vcc_port *port = from_समयr(port, t, rx_समयr);
-	काष्ठा vio_driver_state *vio;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rv;
+static void vcc_rx_timer(struct timer_list *t)
+{
+	struct vcc_port *port = from_timer(port, t, rx_timer);
+	struct vio_driver_state *vio;
+	unsigned long flags;
+	int rv;
 
 	spin_lock_irqsave(&port->lock, flags);
-	port->rx_समयr.expires = 0;
+	port->rx_timer.expires = 0;
 
 	vio = &port->vio;
 
 	enable_irq(vio->vdev->rx_irq);
 
-	अगर (!port->tty || port->हटाओd)
-		जाओ करोne;
+	if (!port->tty || port->removed)
+		goto done;
 
-	rv = vcc_ldc_पढ़ो(port);
-	अगर (rv == -ECONNRESET)
+	rv = vcc_ldc_read(port);
+	if (rv == -ECONNRESET)
 		vio_conn_reset(vio);
 
-करोne:
+done:
 	spin_unlock_irqrestore(&port->lock, flags);
 	vcc_put(port, false);
-पूर्ण
+}
 
-अटल व्योम vcc_tx_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा vcc_port *port = from_समयr(port, t, tx_समयr);
-	काष्ठा vio_vcc *pkt;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक tosend = 0;
-	पूर्णांक rv;
+static void vcc_tx_timer(struct timer_list *t)
+{
+	struct vcc_port *port = from_timer(port, t, tx_timer);
+	struct vio_vcc *pkt;
+	unsigned long flags;
+	int tosend = 0;
+	int rv;
 
 	spin_lock_irqsave(&port->lock, flags);
-	port->tx_समयr.expires = 0;
+	port->tx_timer.expires = 0;
 
-	अगर (!port->tty || port->हटाओd)
-		जाओ करोne;
+	if (!port->tty || port->removed)
+		goto done;
 
-	tosend = min(VCC_BUFF_LEN, port->अक्षरs_in_buffer);
-	अगर (!tosend)
-		जाओ करोne;
+	tosend = min(VCC_BUFF_LEN, port->chars_in_buffer);
+	if (!tosend)
+		goto done;
 
 	pkt = &port->buffer;
 	pkt->tag.type = VIO_TYPE_DATA;
 	pkt->tag.stype = tosend;
 	vccdbgl(port->vio.lp);
 
-	rv = ldc_ग_लिखो(port->vio.lp, pkt, (VIO_TAG_SIZE + tosend));
+	rv = ldc_write(port->vio.lp, pkt, (VIO_TAG_SIZE + tosend));
 	WARN_ON(!rv);
 
-	अगर (rv < 0) अणु
+	if (rv < 0) {
 		vccdbg("VCC: ldc_write()=%d\n", rv);
 		vcc_kick_tx(port);
-	पूर्ण अन्यथा अणु
-		काष्ठा tty_काष्ठा *tty = port->tty;
+	} else {
+		struct tty_struct *tty = port->tty;
 
-		port->अक्षरs_in_buffer = 0;
-		अगर (tty)
+		port->chars_in_buffer = 0;
+		if (tty)
 			tty_wakeup(tty);
-	पूर्ण
+	}
 
-करोne:
+done:
 	spin_unlock_irqrestore(&port->lock, flags);
 	vcc_put(port, false);
-पूर्ण
+}
 
 /**
  * vcc_event() - LDC event processing engine
- * @arg: VCC निजी data
+ * @arg: VCC private data
  * @event: LDC event
  *
- * Handles LDC events क्रम VCC
+ * Handles LDC events for VCC
  */
-अटल व्योम vcc_event(व्योम *arg, पूर्णांक event)
-अणु
-	काष्ठा vio_driver_state *vio;
-	काष्ठा vcc_port *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rv;
+static void vcc_event(void *arg, int event)
+{
+	struct vio_driver_state *vio;
+	struct vcc_port *port;
+	unsigned long flags;
+	int rv;
 
 	port = arg;
 	vio = &port->vio;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	चयन (event) अणु
-	हाल LDC_EVENT_RESET:
-	हाल LDC_EVENT_UP:
+	switch (event) {
+	case LDC_EVENT_RESET:
+	case LDC_EVENT_UP:
 		vio_link_state_change(vio, event);
-		अवरोध;
+		break;
 
-	हाल LDC_EVENT_DATA_READY:
-		rv = vcc_ldc_पढ़ो(port);
-		अगर (rv == -ECONNRESET)
+	case LDC_EVENT_DATA_READY:
+		rv = vcc_ldc_read(port);
+		if (rv == -ECONNRESET)
 			vio_conn_reset(vio);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("VCC: unexpected LDC event(%d)\n", event);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा ldc_channel_config vcc_ldc_cfg = अणु
+static struct ldc_channel_config vcc_ldc_cfg = {
 	.event		= vcc_event,
 	.mtu		= VIO_VCC_MTU_SIZE,
 	.mode		= LDC_MODE_RAW,
 	.debug		= 0,
-पूर्ण;
+};
 
 /* Ordered from largest major to lowest */
-अटल काष्ठा vio_version vcc_versions[] = अणु
-	अणु .major = 1, .minor = 0 पूर्ण,
-पूर्ण;
+static struct vio_version vcc_versions[] = {
+	{ .major = 1, .minor = 0 },
+};
 
-अटल काष्ठा tty_port_operations vcc_port_ops = अणु 0 पूर्ण;
+static struct tty_port_operations vcc_port_ops = { 0 };
 
-अटल sमाप_प्रकार vcc_sysfs_करोमुख्य_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     अक्षर *buf)
-अणु
-	काष्ठा vcc_port *port;
-	पूर्णांक rv;
+static ssize_t vcc_sysfs_domain_show(struct device *dev,
+				     struct device_attribute *attr,
+				     char *buf)
+{
+	struct vcc_port *port;
+	int rv;
 
 	port = dev_get_drvdata(dev);
-	अगर (!port)
-		वापस -ENODEV;
+	if (!port)
+		return -ENODEV;
 
-	rv = scnम_लिखो(buf, PAGE_SIZE, "%s\n", port->करोमुख्य);
+	rv = scnprintf(buf, PAGE_SIZE, "%s\n", port->domain);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक vcc_send_ctl(काष्ठा vcc_port *port, पूर्णांक ctl)
-अणु
-	काष्ठा vio_vcc pkt;
-	पूर्णांक rv;
+static int vcc_send_ctl(struct vcc_port *port, int ctl)
+{
+	struct vio_vcc pkt;
+	int rv;
 
 	pkt.tag.type = VIO_TYPE_CTRL;
 	pkt.tag.sid = ctl;
 	pkt.tag.stype = 0;
 
-	rv = ldc_ग_लिखो(port->vio.lp, &pkt, माप(pkt.tag));
+	rv = ldc_write(port->vio.lp, &pkt, sizeof(pkt.tag));
 	WARN_ON(!rv);
-	vccdbg("VCC: ldc_write(%ld)=%d\n", माप(pkt.tag), rv);
+	vccdbg("VCC: ldc_write(%ld)=%d\n", sizeof(pkt.tag), rv);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल sमाप_प्रकार vcc_sysfs_अवरोध_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा vcc_port *port;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rv = count;
-	पूर्णांक brk;
+static ssize_t vcc_sysfs_break_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct vcc_port *port;
+	unsigned long flags;
+	int rv = count;
+	int brk;
 
 	port = dev_get_drvdata(dev);
-	अगर (!port)
-		वापस -ENODEV;
+	if (!port)
+		return -ENODEV;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (माला_पूछो(buf, "%ud", &brk) != 1 || brk != 1)
+	if (sscanf(buf, "%ud", &brk) != 1 || brk != 1)
 		rv = -EINVAL;
-	अन्यथा अगर (vcc_send_ctl(port, VCC_CTL_BREAK) < 0)
+	else if (vcc_send_ctl(port, VCC_CTL_BREAK) < 0)
 		vcc_kick_tx(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल DEVICE_ATTR(करोमुख्य, 0400, vcc_sysfs_करोमुख्य_show, शून्य);
-अटल DEVICE_ATTR(अवरोध, 0200, शून्य, vcc_sysfs_अवरोध_store);
+static DEVICE_ATTR(domain, 0400, vcc_sysfs_domain_show, NULL);
+static DEVICE_ATTR(break, 0200, NULL, vcc_sysfs_break_store);
 
-अटल काष्ठा attribute *vcc_sysfs_entries[] = अणु
-	&dev_attr_करोमुख्य.attr,
-	&dev_attr_अवरोध.attr,
-	शून्य
-पूर्ण;
+static struct attribute *vcc_sysfs_entries[] = {
+	&dev_attr_domain.attr,
+	&dev_attr_break.attr,
+	NULL
+};
 
-अटल काष्ठा attribute_group vcc_attribute_group = अणु
-	.name = शून्य,
+static struct attribute_group vcc_attribute_group = {
+	.name = NULL,
 	.attrs = vcc_sysfs_entries,
-पूर्ण;
+};
 
 /**
  * vcc_probe() - Initialize VCC port
- * @vdev: Poपूर्णांकer to VIO device of the new VCC port
+ * @vdev: Pointer to VIO device of the new VCC port
  * @id: VIO device ID
  *
  * Initializes a VCC port to receive serial console data from
- * the guest करोमुख्य. Sets up a TTY end poपूर्णांक on the control
- * करोमुख्य. Sets up VIO/LDC link between the guest & control
- * करोमुख्य endpoपूर्णांकs.
+ * the guest domain. Sets up a TTY end point on the control
+ * domain. Sets up VIO/LDC link between the guest & control
+ * domain endpoints.
  *
  * Return: status of the probe
  */
-अटल पूर्णांक vcc_probe(काष्ठा vio_dev *vdev, स्थिर काष्ठा vio_device_id *id)
-अणु
-	काष्ठा mdesc_handle *hp;
-	काष्ठा vcc_port *port;
-	काष्ठा device *dev;
-	स्थिर अक्षर *करोमुख्य;
-	अक्षर *name;
+static int vcc_probe(struct vio_dev *vdev, const struct vio_device_id *id)
+{
+	struct mdesc_handle *hp;
+	struct vcc_port *port;
+	struct device *dev;
+	const char *domain;
+	char *name;
 	u64 node;
-	पूर्णांक rv;
+	int rv;
 
 	vccdbg("VCC: name=%s\n", dev_name(&vdev->dev));
 
-	अगर (!vcc_tty_driver) अणु
+	if (!vcc_tty_driver) {
 		pr_err("VCC: TTY driver not registered\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	port = kzalloc(माप(काष्ठा vcc_port), GFP_KERNEL);
-	अगर (!port)
-		वापस -ENOMEM;
+	port = kzalloc(sizeof(struct vcc_port), GFP_KERNEL);
+	if (!port)
+		return -ENOMEM;
 
 	name = kstrdup(dev_name(&vdev->dev), GFP_KERNEL);
 
 	rv = vio_driver_init(&port->vio, vdev, VDEV_CONSOLE_CON, vcc_versions,
-			     ARRAY_SIZE(vcc_versions), शून्य, name);
-	अगर (rv)
-		जाओ मुक्त_port;
+			     ARRAY_SIZE(vcc_versions), NULL, name);
+	if (rv)
+		goto free_port;
 
 	port->vio.debug = vcc_dbg_vio;
 	vcc_ldc_cfg.debug = vcc_dbg_ldc;
 
 	rv = vio_ldc_alloc(&port->vio, &vcc_ldc_cfg, port);
-	अगर (rv)
-		जाओ मुक्त_port;
+	if (rv)
+		goto free_port;
 
 	spin_lock_init(&port->lock);
 
 	port->index = vcc_table_add(port);
-	अगर (port->index == -1) अणु
+	if (port->index == -1) {
 		pr_err("VCC: no more TTY indices left for allocation\n");
 		rv = -ENOMEM;
-		जाओ मुक्त_ldc;
-	पूर्ण
+		goto free_ldc;
+	}
 
 	/* Register the device using VCC table index as TTY index */
-	dev = tty_रेजिस्टर_device(vcc_tty_driver, port->index, &vdev->dev);
-	अगर (IS_ERR(dev)) अणु
+	dev = tty_register_device(vcc_tty_driver, port->index, &vdev->dev);
+	if (IS_ERR(dev)) {
 		rv = PTR_ERR(dev);
-		जाओ मुक्त_table;
-	पूर्ण
+		goto free_table;
+	}
 
 	hp = mdesc_grab();
 
 	node = vio_vdev_node(hp, vdev);
-	अगर (node == MDESC_NODE_शून्य) अणु
+	if (node == MDESC_NODE_NULL) {
 		rv = -ENXIO;
 		mdesc_release(hp);
-		जाओ unreg_tty;
-	पूर्ण
+		goto unreg_tty;
+	}
 
-	करोमुख्य = mdesc_get_property(hp, node, "vcc-domain-name", शून्य);
-	अगर (!करोमुख्य) अणु
+	domain = mdesc_get_property(hp, node, "vcc-domain-name", NULL);
+	if (!domain) {
 		rv = -ENXIO;
 		mdesc_release(hp);
-		जाओ unreg_tty;
-	पूर्ण
-	port->करोमुख्य = kstrdup(करोमुख्य, GFP_KERNEL);
+		goto unreg_tty;
+	}
+	port->domain = kstrdup(domain, GFP_KERNEL);
 
 	mdesc_release(hp);
 
 	rv = sysfs_create_group(&vdev->dev.kobj, &vcc_attribute_group);
-	अगर (rv)
-		जाओ मुक्त_करोमुख्य;
+	if (rv)
+		goto free_domain;
 
-	समयr_setup(&port->rx_समयr, vcc_rx_समयr, 0);
-	समयr_setup(&port->tx_समयr, vcc_tx_समयr, 0);
+	timer_setup(&port->rx_timer, vcc_rx_timer, 0);
+	timer_setup(&port->tx_timer, vcc_tx_timer, 0);
 
 	dev_set_drvdata(&vdev->dev, port);
 
@@ -643,44 +642,44 @@ try_again:
 	vio_port_up(&port->vio);
 	enable_irq(vdev->rx_irq);
 
-	वापस 0;
+	return 0;
 
-मुक्त_करोमुख्य:
-	kमुक्त(port->करोमुख्य);
+free_domain:
+	kfree(port->domain);
 unreg_tty:
-	tty_unरेजिस्टर_device(vcc_tty_driver, port->index);
-मुक्त_table:
-	vcc_table_हटाओ(port->index);
-मुक्त_ldc:
-	vio_ldc_मुक्त(&port->vio);
-मुक्त_port:
-	kमुक्त(name);
-	kमुक्त(port);
+	tty_unregister_device(vcc_tty_driver, port->index);
+free_table:
+	vcc_table_remove(port->index);
+free_ldc:
+	vio_ldc_free(&port->vio);
+free_port:
+	kfree(name);
+	kfree(port);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
- * vcc_हटाओ() - Terminate a VCC port
- * @vdev: Poपूर्णांकer to VIO device of the VCC port
+ * vcc_remove() - Terminate a VCC port
+ * @vdev: Pointer to VIO device of the VCC port
  *
- * Terminates a VCC port. Sets up the tearकरोwn of TTY and
- * VIO/LDC link between guest and primary करोमुख्यs.
+ * Terminates a VCC port. Sets up the teardown of TTY and
+ * VIO/LDC link between guest and primary domains.
  *
  * Return: status of removal
  */
-अटल पूर्णांक vcc_हटाओ(काष्ठा vio_dev *vdev)
-अणु
-	काष्ठा vcc_port *port = dev_get_drvdata(&vdev->dev);
+static int vcc_remove(struct vio_dev *vdev)
+{
+	struct vcc_port *port = dev_get_drvdata(&vdev->dev);
 
-	del_समयr_sync(&port->rx_समयr);
-	del_समयr_sync(&port->tx_समयr);
+	del_timer_sync(&port->rx_timer);
+	del_timer_sync(&port->tx_timer);
 
-	/* If there's a process with the device खोलो, करो a synchronous
-	 * hangup of the TTY. This *may* cause the process to call बंद
+	/* If there's a process with the device open, do a synchronous
+	 * hangup of the TTY. This *may* cause the process to call close
 	 * asynchronously, but it's not guaranteed.
 	 */
-	अगर (port->tty)
+	if (port->tty)
 		tty_vhangup(port->tty);
 
 	/* Get exclusive reference to VCC, ensures that there are no other
@@ -688,155 +687,155 @@ unreg_tty:
 	 */
 	vcc_get(port->index, true);
 
-	tty_unरेजिस्टर_device(vcc_tty_driver, port->index);
+	tty_unregister_device(vcc_tty_driver, port->index);
 
-	del_समयr_sync(&port->vio.समयr);
-	vio_ldc_मुक्त(&port->vio);
-	sysfs_हटाओ_group(&vdev->dev.kobj, &vcc_attribute_group);
-	dev_set_drvdata(&vdev->dev, शून्य);
-	अगर (port->tty) अणु
-		port->हटाओd = true;
+	del_timer_sync(&port->vio.timer);
+	vio_ldc_free(&port->vio);
+	sysfs_remove_group(&vdev->dev.kobj, &vcc_attribute_group);
+	dev_set_drvdata(&vdev->dev, NULL);
+	if (port->tty) {
+		port->removed = true;
 		vcc_put(port, true);
-	पूर्ण अन्यथा अणु
-		vcc_table_हटाओ(port->index);
+	} else {
+		vcc_table_remove(port->index);
 
-		kमुक्त(port->vio.name);
-		kमुक्त(port->करोमुख्य);
-		kमुक्त(port);
-	पूर्ण
+		kfree(port->vio.name);
+		kfree(port->domain);
+		kfree(port);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा vio_device_id vcc_match[] = अणु
-	अणु
+static const struct vio_device_id vcc_match[] = {
+	{
 		.type = "vcc-port",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(vio, vcc_match);
 
-अटल काष्ठा vio_driver vcc_driver = अणु
+static struct vio_driver vcc_driver = {
 	.id_table	= vcc_match,
 	.probe		= vcc_probe,
-	.हटाओ		= vcc_हटाओ,
+	.remove		= vcc_remove,
 	.name		= "vcc",
-पूर्ण;
+};
 
-अटल पूर्णांक vcc_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *vcc_file)
-अणु
-	काष्ठा vcc_port *port;
+static int vcc_open(struct tty_struct *tty, struct file *vcc_file)
+{
+	struct vcc_port *port;
 
-	अगर (tty->count > 1)
-		वापस -EBUSY;
+	if (tty->count > 1)
+		return -EBUSY;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: open: Failed to find VCC port\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (unlikely(!port->vio.lp)) अणु
+	if (unlikely(!port->vio.lp)) {
 		pr_err("VCC: open: LDC channel not configured\n");
 		vcc_put(port, false);
-		वापस -EPIPE;
-	पूर्ण
+		return -EPIPE;
+	}
 	vccdbgl(port->vio.lp);
 
 	vcc_put(port, false);
 
-	अगर (unlikely(!tty->port)) अणु
+	if (unlikely(!tty->port)) {
 		pr_err("VCC: open: TTY port not found\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (unlikely(!tty->port->ops)) अणु
+	if (unlikely(!tty->port->ops)) {
 		pr_err("VCC: open: TTY ops not defined\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस tty_port_खोलो(tty->port, tty, vcc_file);
-पूर्ण
+	return tty_port_open(tty->port, tty, vcc_file);
+}
 
-अटल व्योम vcc_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *vcc_file)
-अणु
-	अगर (unlikely(tty->count > 1))
-		वापस;
+static void vcc_close(struct tty_struct *tty, struct file *vcc_file)
+{
+	if (unlikely(tty->count > 1))
+		return;
 
-	अगर (unlikely(!tty->port)) अणु
+	if (unlikely(!tty->port)) {
 		pr_err("VCC: close: TTY port not found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tty_port_बंद(tty->port, tty, vcc_file);
-पूर्ण
+	tty_port_close(tty->port, tty, vcc_file);
+}
 
-अटल व्योम vcc_ldc_hup(काष्ठा vcc_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vcc_ldc_hup(struct vcc_port *port)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (vcc_send_ctl(port, VCC_CTL_HUP) < 0)
+	if (vcc_send_ctl(port, VCC_CTL_HUP) < 0)
 		vcc_kick_tx(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल व्योम vcc_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा vcc_port *port;
+static void vcc_hangup(struct tty_struct *tty)
+{
+	struct vcc_port *port;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: hangup: Failed to find VCC port\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (unlikely(!tty->port)) अणु
+	if (unlikely(!tty->port)) {
 		pr_err("VCC: hangup: TTY port not found\n");
 		vcc_put(port, false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vcc_ldc_hup(port);
 
 	vcc_put(port, false);
 
 	tty_port_hangup(tty->port);
-पूर्ण
+}
 
-अटल पूर्णांक vcc_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf,
-		     पूर्णांक count)
-अणु
-	काष्ठा vcc_port *port;
-	काष्ठा vio_vcc *pkt;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक total_sent = 0;
-	पूर्णांक tosend = 0;
-	पूर्णांक rv = -EINVAL;
+static int vcc_write(struct tty_struct *tty, const unsigned char *buf,
+		     int count)
+{
+	struct vcc_port *port;
+	struct vio_vcc *pkt;
+	unsigned long flags;
+	int total_sent = 0;
+	int tosend = 0;
+	int rv = -EINVAL;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: write: Failed to find VCC port");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	pkt = &port->buffer;
 	pkt->tag.type = VIO_TYPE_DATA;
 
-	जबतक (count > 0) अणु
-		/* Minimum of data to ग_लिखो and space available */
-		tosend = min(count, (VCC_BUFF_LEN - port->अक्षरs_in_buffer));
+	while (count > 0) {
+		/* Minimum of data to write and space available */
+		tosend = min(count, (VCC_BUFF_LEN - port->chars_in_buffer));
 
-		अगर (!tosend)
-			अवरोध;
+		if (!tosend)
+			break;
 
-		स_नकल(&pkt->data[port->अक्षरs_in_buffer], &buf[total_sent],
+		memcpy(&pkt->data[port->chars_in_buffer], &buf[total_sent],
 		       tosend);
-		port->अक्षरs_in_buffer += tosend;
+		port->chars_in_buffer += tosend;
 		pkt->tag.stype = tosend;
 
 		vccdbg("TAG [%02x:%02x:%04x:%08x]\n", pkt->tag.type,
@@ -844,23 +843,23 @@ MODULE_DEVICE_TABLE(vio, vcc_match);
 		vccdbg("DATA [%s]\n", pkt->data);
 		vccdbgl(port->vio.lp);
 
-		/* Since we know we have enough room in VCC buffer क्रम tosend
+		/* Since we know we have enough room in VCC buffer for tosend
 		 * we record that it was sent regardless of whether the
 		 * hypervisor actually took it because we have it buffered.
 		 */
-		rv = ldc_ग_लिखो(port->vio.lp, pkt, (VIO_TAG_SIZE + tosend));
+		rv = ldc_write(port->vio.lp, pkt, (VIO_TAG_SIZE + tosend));
 		vccdbg("VCC: write: ldc_write(%d)=%d\n",
 		       (VIO_TAG_SIZE + tosend), rv);
 
 		total_sent += tosend;
 		count -= tosend;
-		अगर (rv < 0) अणु
+		if (rv < 0) {
 			vcc_kick_tx(port);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		port->अक्षरs_in_buffer = 0;
-	पूर्ण
+		port->chars_in_buffer = 0;
+	}
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
@@ -868,98 +867,98 @@ MODULE_DEVICE_TABLE(vio, vcc_match);
 
 	vccdbg("VCC: write: total=%d rv=%d", total_sent, rv);
 
-	वापस total_sent ? total_sent : rv;
-पूर्ण
+	return total_sent ? total_sent : rv;
+}
 
-अटल पूर्णांक vcc_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा vcc_port *port;
+static int vcc_write_room(struct tty_struct *tty)
+{
+	struct vcc_port *port;
 	u64 num;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: write_room: Failed to find VCC port\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	num = VCC_BUFF_LEN - port->अक्षरs_in_buffer;
+	num = VCC_BUFF_LEN - port->chars_in_buffer;
 
 	vcc_put(port, false);
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल पूर्णांक vcc_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा vcc_port *port;
+static int vcc_chars_in_buffer(struct tty_struct *tty)
+{
+	struct vcc_port *port;
 	u64 num;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: chars_in_buffer: Failed to find VCC port\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	num = port->अक्षरs_in_buffer;
+	num = port->chars_in_buffer;
 
 	vcc_put(port, false);
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल पूर्णांक vcc_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक state)
-अणु
-	काष्ठा vcc_port *port;
-	अचिन्हित दीर्घ flags;
+static int vcc_break_ctl(struct tty_struct *tty, int state)
+{
+	struct vcc_port *port;
+	unsigned long flags;
 
 	port = vcc_get_ne(tty->index);
-	अगर (unlikely(!port)) अणु
+	if (unlikely(!port)) {
 		pr_err("VCC: break_ctl: Failed to find VCC port\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Turn off अवरोध */
-	अगर (state == 0) अणु
+	/* Turn off break */
+	if (state == 0) {
 		vcc_put(port, false);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	अगर (vcc_send_ctl(port, VCC_CTL_BREAK) < 0)
+	if (vcc_send_ctl(port, VCC_CTL_BREAK) < 0)
 		vcc_kick_tx(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	vcc_put(port, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vcc_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा vcc_port *port_vcc;
-	काष्ठा tty_port *port_tty;
-	पूर्णांक ret;
+static int vcc_install(struct tty_driver *driver, struct tty_struct *tty)
+{
+	struct vcc_port *port_vcc;
+	struct tty_port *port_tty;
+	int ret;
 
-	अगर (tty->index >= VCC_MAX_PORTS)
-		वापस -EINVAL;
+	if (tty->index >= VCC_MAX_PORTS)
+		return -EINVAL;
 
 	ret = tty_standard_install(driver, tty);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	port_tty = kzalloc(माप(काष्ठा tty_port), GFP_KERNEL);
-	अगर (!port_tty)
-		वापस -ENOMEM;
+	port_tty = kzalloc(sizeof(struct tty_port), GFP_KERNEL);
+	if (!port_tty)
+		return -ENOMEM;
 
 	port_vcc = vcc_get(tty->index, true);
-	अगर (!port_vcc) अणु
+	if (!port_vcc) {
 		pr_err("VCC: install: Failed to find VCC port\n");
-		tty->port = शून्य;
-		kमुक्त(port_tty);
-		वापस -ENODEV;
-	पूर्ण
+		tty->port = NULL;
+		kfree(port_tty);
+		return -ENODEV;
+	}
 
 	tty_port_init(port_tty);
 	port_tty->ops = &vcc_port_ops;
@@ -969,55 +968,55 @@ MODULE_DEVICE_TABLE(vio, vcc_match);
 
 	vcc_put(port_vcc, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vcc_cleanup(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा vcc_port *port;
+static void vcc_cleanup(struct tty_struct *tty)
+{
+	struct vcc_port *port;
 
 	port = vcc_get(tty->index, true);
-	अगर (port) अणु
-		port->tty = शून्य;
+	if (port) {
+		port->tty = NULL;
 
-		अगर (port->हटाओd) अणु
-			vcc_table_हटाओ(tty->index);
-			kमुक्त(port->vio.name);
-			kमुक्त(port->करोमुख्य);
-			kमुक्त(port);
-		पूर्ण अन्यथा अणु
+		if (port->removed) {
+			vcc_table_remove(tty->index);
+			kfree(port->vio.name);
+			kfree(port->domain);
+			kfree(port);
+		} else {
 			vcc_put(port, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tty_port_destroy(tty->port);
-	kमुक्त(tty->port);
-	tty->port = शून्य;
-पूर्ण
+	kfree(tty->port);
+	tty->port = NULL;
+}
 
-अटल स्थिर काष्ठा tty_operations vcc_ops = अणु
-	.खोलो			= vcc_खोलो,
-	.बंद			= vcc_बंद,
+static const struct tty_operations vcc_ops = {
+	.open			= vcc_open,
+	.close			= vcc_close,
 	.hangup			= vcc_hangup,
-	.ग_लिखो			= vcc_ग_लिखो,
-	.ग_लिखो_room		= vcc_ग_लिखो_room,
-	.अक्षरs_in_buffer	= vcc_अक्षरs_in_buffer,
-	.अवरोध_ctl		= vcc_अवरोध_ctl,
+	.write			= vcc_write,
+	.write_room		= vcc_write_room,
+	.chars_in_buffer	= vcc_chars_in_buffer,
+	.break_ctl		= vcc_break_ctl,
 	.install		= vcc_install,
 	.cleanup		= vcc_cleanup,
-पूर्ण;
+};
 
-#घोषणा VCC_TTY_FLAGS   (TTY_DRIVER_DYNAMIC_DEV | TTY_DRIVER_REAL_RAW)
+#define VCC_TTY_FLAGS   (TTY_DRIVER_DYNAMIC_DEV | TTY_DRIVER_REAL_RAW)
 
-अटल पूर्णांक vcc_tty_init(व्योम)
-अणु
-	पूर्णांक rv;
+static int vcc_tty_init(void)
+{
+	int rv;
 
 	vcc_tty_driver = tty_alloc_driver(VCC_MAX_PORTS, VCC_TTY_FLAGS);
-	अगर (IS_ERR(vcc_tty_driver)) अणु
+	if (IS_ERR(vcc_tty_driver)) {
 		pr_err("VCC: TTY driver alloc failed\n");
-		वापस PTR_ERR(vcc_tty_driver);
-	पूर्ण
+		return PTR_ERR(vcc_tty_driver);
+	}
 
 	vcc_tty_driver->driver_name = "vcc";
 	vcc_tty_driver->name = "vcc";
@@ -1028,56 +1027,56 @@ MODULE_DEVICE_TABLE(vio, vcc_match);
 
 	tty_set_operations(vcc_tty_driver, &vcc_ops);
 
-	rv = tty_रेजिस्टर_driver(vcc_tty_driver);
-	अगर (rv) अणु
+	rv = tty_register_driver(vcc_tty_driver);
+	if (rv) {
 		pr_err("VCC: TTY driver registration failed\n");
 		put_tty_driver(vcc_tty_driver);
-		vcc_tty_driver = शून्य;
-		वापस rv;
-	पूर्ण
+		vcc_tty_driver = NULL;
+		return rv;
+	}
 
 	vccdbg("VCC: TTY driver registered\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vcc_tty_निकास(व्योम)
-अणु
-	tty_unरेजिस्टर_driver(vcc_tty_driver);
+static void vcc_tty_exit(void)
+{
+	tty_unregister_driver(vcc_tty_driver);
 	put_tty_driver(vcc_tty_driver);
 	vccdbg("VCC: TTY driver unregistered\n");
 
-	vcc_tty_driver = शून्य;
-पूर्ण
+	vcc_tty_driver = NULL;
+}
 
-अटल पूर्णांक __init vcc_init(व्योम)
-अणु
-	पूर्णांक rv;
+static int __init vcc_init(void)
+{
+	int rv;
 
 	rv = vcc_tty_init();
-	अगर (rv) अणु
+	if (rv) {
 		pr_err("VCC: TTY init failed\n");
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	rv = vio_रेजिस्टर_driver(&vcc_driver);
-	अगर (rv) अणु
+	rv = vio_register_driver(&vcc_driver);
+	if (rv) {
 		pr_err("VCC: VIO driver registration failed\n");
-		vcc_tty_निकास();
-	पूर्ण अन्यथा अणु
+		vcc_tty_exit();
+	} else {
 		vccdbg("VCC: VIO driver registered successfully\n");
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम __निकास vcc_निकास(व्योम)
-अणु
-	vio_unरेजिस्टर_driver(&vcc_driver);
+static void __exit vcc_exit(void)
+{
+	vio_unregister_driver(&vcc_driver);
 	vccdbg("VCC: VIO driver unregistered\n");
-	vcc_tty_निकास();
+	vcc_tty_exit();
 	vccdbg("VCC: TTY driver unregistered\n");
-पूर्ण
+}
 
 module_init(vcc_init);
-module_निकास(vcc_निकास);
+module_exit(vcc_exit);

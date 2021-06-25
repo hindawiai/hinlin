@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  cx18 audio-related functions
  *
@@ -8,72 +7,72 @@
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#समावेश "cx18-driver.h"
-#समावेश "cx18-io.h"
-#समावेश "cx18-cards.h"
-#समावेश "cx18-audio.h"
+#include "cx18-driver.h"
+#include "cx18-io.h"
+#include "cx18-cards.h"
+#include "cx18-audio.h"
 
-#घोषणा CX18_AUDIO_ENABLE    0xc72014
-#घोषणा CX18_AI1_MUX_MASK    0x30
-#घोषणा CX18_AI1_MUX_I2S1    0x00
-#घोषणा CX18_AI1_MUX_I2S2    0x10
-#घोषणा CX18_AI1_MUX_843_I2S 0x20
+#define CX18_AUDIO_ENABLE    0xc72014
+#define CX18_AI1_MUX_MASK    0x30
+#define CX18_AI1_MUX_I2S1    0x00
+#define CX18_AI1_MUX_I2S2    0x10
+#define CX18_AI1_MUX_843_I2S 0x20
 
 /* Selects the audio input and output according to the current
    settings. */
-पूर्णांक cx18_audio_set_io(काष्ठा cx18 *cx)
-अणु
-	स्थिर काष्ठा cx18_card_audio_input *in;
+int cx18_audio_set_io(struct cx18 *cx)
+{
+	const struct cx18_card_audio_input *in;
 	u32 u, v;
-	पूर्णांक err;
+	int err;
 
 	/* Determine which input to use */
-	अगर (test_bit(CX18_F_I_RADIO_USER, &cx->i_flags))
+	if (test_bit(CX18_F_I_RADIO_USER, &cx->i_flags))
 		in = &cx->card->radio_input;
-	अन्यथा
-		in = &cx->card->audio_inमाला_दो[cx->audio_input];
+	else
+		in = &cx->card->audio_inputs[cx->audio_input];
 
 	/* handle muxer chips */
-	v4l2_subdev_call(cx->sd_exपंचांगux, audio, s_routing,
+	v4l2_subdev_call(cx->sd_extmux, audio, s_routing,
 			 (u32) in->muxer_input, 0, 0);
 
 	err = cx18_call_hw_err(cx, cx->card->hw_audio_ctrl,
 			       audio, s_routing, in->audio_input, 0, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* FIXME - this पूर्णांकernal mux should be असलtracted to a subdev */
-	u = cx18_पढ़ो_reg(cx, CX18_AUDIO_ENABLE);
+	/* FIXME - this internal mux should be abstracted to a subdev */
+	u = cx18_read_reg(cx, CX18_AUDIO_ENABLE);
 	v = u & ~CX18_AI1_MUX_MASK;
-	चयन (in->audio_input) अणु
-	हाल CX18_AV_AUDIO_SERIAL1:
+	switch (in->audio_input) {
+	case CX18_AV_AUDIO_SERIAL1:
 		v |= CX18_AI1_MUX_I2S1;
-		अवरोध;
-	हाल CX18_AV_AUDIO_SERIAL2:
+		break;
+	case CX18_AV_AUDIO_SERIAL2:
 		v |= CX18_AI1_MUX_I2S2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		v |= CX18_AI1_MUX_843_I2S;
-		अवरोध;
-	पूर्ण
-	अगर (v == u) अणु
-		/* क्रमce a toggle of some AI1 MUX control bits */
+		break;
+	}
+	if (v == u) {
+		/* force a toggle of some AI1 MUX control bits */
 		u &= ~CX18_AI1_MUX_MASK;
-		चयन (in->audio_input) अणु
-		हाल CX18_AV_AUDIO_SERIAL1:
+		switch (in->audio_input) {
+		case CX18_AV_AUDIO_SERIAL1:
 			u |= CX18_AI1_MUX_843_I2S;
-			अवरोध;
-		हाल CX18_AV_AUDIO_SERIAL2:
+			break;
+		case CX18_AV_AUDIO_SERIAL2:
 			u |= CX18_AI1_MUX_843_I2S;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			u |= CX18_AI1_MUX_I2S1;
-			अवरोध;
-		पूर्ण
-		cx18_ग_लिखो_reg_expect(cx, u | 0xb00, CX18_AUDIO_ENABLE,
+			break;
+		}
+		cx18_write_reg_expect(cx, u | 0xb00, CX18_AUDIO_ENABLE,
 				      u, CX18_AI1_MUX_MASK);
-	पूर्ण
-	cx18_ग_लिखो_reg_expect(cx, v | 0xb00, CX18_AUDIO_ENABLE,
+	}
+	cx18_write_reg_expect(cx, v | 0xb00, CX18_AUDIO_ENABLE,
 			      v, CX18_AI1_MUX_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}

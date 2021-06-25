@@ -1,281 +1,280 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम NXP PN533 NFC Chip - USB transport layer
+ * Driver for NXP PN533 NFC Chip - USB transport layer
  *
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  * Copyright (C) 2012-2013 Tieto Poland
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/nfc.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/nfc/nfc.h>
-#समावेश "pn533.h"
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/nfc.h>
+#include <linux/netdevice.h>
+#include <net/nfc/nfc.h>
+#include "pn533.h"
 
-#घोषणा VERSION "0.1"
+#define VERSION "0.1"
 
-#घोषणा PN533_VENDOR_ID 0x4CC
-#घोषणा PN533_PRODUCT_ID 0x2533
+#define PN533_VENDOR_ID 0x4CC
+#define PN533_PRODUCT_ID 0x2533
 
-#घोषणा SCM_VENDOR_ID 0x4E6
-#घोषणा SCL3711_PRODUCT_ID 0x5591
+#define SCM_VENDOR_ID 0x4E6
+#define SCL3711_PRODUCT_ID 0x5591
 
-#घोषणा SONY_VENDOR_ID         0x054c
-#घोषणा PASORI_PRODUCT_ID      0x02e1
+#define SONY_VENDOR_ID         0x054c
+#define PASORI_PRODUCT_ID      0x02e1
 
-#घोषणा ACS_VENDOR_ID 0x072f
-#घोषणा ACR122U_PRODUCT_ID 0x2200
+#define ACS_VENDOR_ID 0x072f
+#define ACR122U_PRODUCT_ID 0x2200
 
-अटल स्थिर काष्ठा usb_device_id pn533_usb_table[] = अणु
-	अणु USB_DEVICE(PN533_VENDOR_ID, PN533_PRODUCT_ID),
-	  .driver_info = PN533_DEVICE_STD पूर्ण,
-	अणु USB_DEVICE(SCM_VENDOR_ID, SCL3711_PRODUCT_ID),
-	  .driver_info = PN533_DEVICE_STD पूर्ण,
-	अणु USB_DEVICE(SONY_VENDOR_ID, PASORI_PRODUCT_ID),
-	  .driver_info = PN533_DEVICE_PASORI पूर्ण,
-	अणु USB_DEVICE(ACS_VENDOR_ID, ACR122U_PRODUCT_ID),
-	  .driver_info = PN533_DEVICE_ACR122U पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id pn533_usb_table[] = {
+	{ USB_DEVICE(PN533_VENDOR_ID, PN533_PRODUCT_ID),
+	  .driver_info = PN533_DEVICE_STD },
+	{ USB_DEVICE(SCM_VENDOR_ID, SCL3711_PRODUCT_ID),
+	  .driver_info = PN533_DEVICE_STD },
+	{ USB_DEVICE(SONY_VENDOR_ID, PASORI_PRODUCT_ID),
+	  .driver_info = PN533_DEVICE_PASORI },
+	{ USB_DEVICE(ACS_VENDOR_ID, ACR122U_PRODUCT_ID),
+	  .driver_info = PN533_DEVICE_ACR122U },
+	{ }
+};
 MODULE_DEVICE_TABLE(usb, pn533_usb_table);
 
-काष्ठा pn533_usb_phy अणु
-	काष्ठा usb_device *udev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+struct pn533_usb_phy {
+	struct usb_device *udev;
+	struct usb_interface *interface;
 
-	काष्ठा urb *out_urb;
-	काष्ठा urb *in_urb;
+	struct urb *out_urb;
+	struct urb *in_urb;
 
-	काष्ठा urb *ack_urb;
+	struct urb *ack_urb;
 	u8 *ack_buffer;
 
-	काष्ठा pn533 *priv;
-पूर्ण;
+	struct pn533 *priv;
+};
 
-अटल व्योम pn533_recv_response(काष्ठा urb *urb)
-अणु
-	काष्ठा pn533_usb_phy *phy = urb->context;
-	काष्ठा sk_buff *skb = शून्य;
+static void pn533_recv_response(struct urb *urb)
+{
+	struct pn533_usb_phy *phy = urb->context;
+	struct sk_buff *skb = NULL;
 
-	अगर (!urb->status) अणु
+	if (!urb->status) {
 		skb = alloc_skb(urb->actual_length, GFP_ATOMIC);
-		अगर (!skb) अणु
+		if (!skb) {
 			nfc_err(&phy->udev->dev, "failed to alloc memory\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			skb_put_data(skb, urb->transfer_buffer,
 				     urb->actual_length);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	pn533_recv_frame(phy->priv, skb, urb->status);
-पूर्ण
+}
 
-अटल पूर्णांक pn533_submit_urb_क्रम_response(काष्ठा pn533_usb_phy *phy, gfp_t flags)
-अणु
+static int pn533_submit_urb_for_response(struct pn533_usb_phy *phy, gfp_t flags)
+{
 	phy->in_urb->complete = pn533_recv_response;
 
-	वापस usb_submit_urb(phy->in_urb, flags);
-पूर्ण
+	return usb_submit_urb(phy->in_urb, flags);
+}
 
-अटल व्योम pn533_recv_ack(काष्ठा urb *urb)
-अणु
-	काष्ठा pn533_usb_phy *phy = urb->context;
-	काष्ठा pn533 *priv = phy->priv;
-	काष्ठा pn533_cmd *cmd = priv->cmd;
-	काष्ठा pn533_std_frame *in_frame;
-	पूर्णांक rc;
+static void pn533_recv_ack(struct urb *urb)
+{
+	struct pn533_usb_phy *phy = urb->context;
+	struct pn533 *priv = phy->priv;
+	struct pn533_cmd *cmd = priv->cmd;
+	struct pn533_std_frame *in_frame;
+	int rc;
 
 	cmd->status = urb->status;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध; /* success */
-	हाल -ECONNRESET:
-	हाल -ENOENT:
+	switch (urb->status) {
+	case 0:
+		break; /* success */
+	case -ECONNRESET:
+	case -ENOENT:
 		dev_dbg(&phy->udev->dev,
 			"The urb has been stopped (status %d)\n",
 			urb->status);
-		जाओ sched_wq;
-	हाल -ESHUTDOWN:
-	शेष:
+		goto sched_wq;
+	case -ESHUTDOWN:
+	default:
 		nfc_err(&phy->udev->dev,
 			"Urb failure (status %d)\n", urb->status);
-		जाओ sched_wq;
-	पूर्ण
+		goto sched_wq;
+	}
 
 	in_frame = phy->in_urb->transfer_buffer;
 
-	अगर (!pn533_rx_frame_is_ack(in_frame)) अणु
+	if (!pn533_rx_frame_is_ack(in_frame)) {
 		nfc_err(&phy->udev->dev, "Received an invalid ack\n");
 		cmd->status = -EIO;
-		जाओ sched_wq;
-	पूर्ण
+		goto sched_wq;
+	}
 
-	rc = pn533_submit_urb_क्रम_response(phy, GFP_ATOMIC);
-	अगर (rc) अणु
+	rc = pn533_submit_urb_for_response(phy, GFP_ATOMIC);
+	if (rc) {
 		nfc_err(&phy->udev->dev,
 			"usb_submit_urb failed with result %d\n", rc);
 		cmd->status = rc;
-		जाओ sched_wq;
-	पूर्ण
+		goto sched_wq;
+	}
 
-	वापस;
+	return;
 
 sched_wq:
 	queue_work(priv->wq, &priv->cmd_complete_work);
-पूर्ण
+}
 
-अटल पूर्णांक pn533_submit_urb_क्रम_ack(काष्ठा pn533_usb_phy *phy, gfp_t flags)
-अणु
+static int pn533_submit_urb_for_ack(struct pn533_usb_phy *phy, gfp_t flags)
+{
 	phy->in_urb->complete = pn533_recv_ack;
 
-	वापस usb_submit_urb(phy->in_urb, flags);
-पूर्ण
+	return usb_submit_urb(phy->in_urb, flags);
+}
 
-अटल पूर्णांक pn533_usb_send_ack(काष्ठा pn533 *dev, gfp_t flags)
-अणु
-	काष्ठा pn533_usb_phy *phy = dev->phy;
-	अटल स्थिर u8 ack[6] = अणु0x00, 0x00, 0xff, 0x00, 0xff, 0x00पूर्ण;
+static int pn533_usb_send_ack(struct pn533 *dev, gfp_t flags)
+{
+	struct pn533_usb_phy *phy = dev->phy;
+	static const u8 ack[6] = {0x00, 0x00, 0xff, 0x00, 0xff, 0x00};
 	/* spec 7.1.1.3:  Preamble, SoPC (2), ACK Code (2), Postamble */
 
-	अगर (!phy->ack_buffer) अणु
-		phy->ack_buffer = kmemdup(ack, माप(ack), flags);
-		अगर (!phy->ack_buffer)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!phy->ack_buffer) {
+		phy->ack_buffer = kmemdup(ack, sizeof(ack), flags);
+		if (!phy->ack_buffer)
+			return -ENOMEM;
+	}
 
 	phy->ack_urb->transfer_buffer = phy->ack_buffer;
-	phy->ack_urb->transfer_buffer_length = माप(ack);
-	वापस usb_submit_urb(phy->ack_urb, flags);
-पूर्ण
+	phy->ack_urb->transfer_buffer_length = sizeof(ack);
+	return usb_submit_urb(phy->ack_urb, flags);
+}
 
-अटल पूर्णांक pn533_usb_send_frame(काष्ठा pn533 *dev,
-				काष्ठा sk_buff *out)
-अणु
-	काष्ठा pn533_usb_phy *phy = dev->phy;
-	पूर्णांक rc;
+static int pn533_usb_send_frame(struct pn533 *dev,
+				struct sk_buff *out)
+{
+	struct pn533_usb_phy *phy = dev->phy;
+	int rc;
 
-	अगर (phy->priv == शून्य)
+	if (phy->priv == NULL)
 		phy->priv = dev;
 
 	phy->out_urb->transfer_buffer = out->data;
 	phy->out_urb->transfer_buffer_length = out->len;
 
-	prपूर्णांक_hex_dump_debug("PN533 TX: ", DUMP_PREFIX_NONE, 16, 1,
+	print_hex_dump_debug("PN533 TX: ", DUMP_PREFIX_NONE, 16, 1,
 			     out->data, out->len, false);
 
 	rc = usb_submit_urb(phy->out_urb, GFP_KERNEL);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (dev->protocol_type == PN533_PROTO_REQ_RESP) अणु
-		/* request क्रम response क्रम sent packet directly */
-		rc = pn533_submit_urb_क्रम_response(phy, GFP_KERNEL);
-		अगर (rc)
-			जाओ error;
-	पूर्ण अन्यथा अगर (dev->protocol_type == PN533_PROTO_REQ_ACK_RESP) अणु
-		/* request क्रम ACK अगर that's the हाल */
-		rc = pn533_submit_urb_क्रम_ack(phy, GFP_KERNEL);
-		अगर (rc)
-			जाओ error;
-	पूर्ण
+	if (dev->protocol_type == PN533_PROTO_REQ_RESP) {
+		/* request for response for sent packet directly */
+		rc = pn533_submit_urb_for_response(phy, GFP_KERNEL);
+		if (rc)
+			goto error;
+	} else if (dev->protocol_type == PN533_PROTO_REQ_ACK_RESP) {
+		/* request for ACK if that's the case */
+		rc = pn533_submit_urb_for_ack(phy, GFP_KERNEL);
+		if (rc)
+			goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
 	usb_unlink_urb(phy->out_urb);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम pn533_usb_पात_cmd(काष्ठा pn533 *dev, gfp_t flags)
-अणु
-	काष्ठा pn533_usb_phy *phy = dev->phy;
+static void pn533_usb_abort_cmd(struct pn533 *dev, gfp_t flags)
+{
+	struct pn533_usb_phy *phy = dev->phy;
 
-	/* ACR122U करोes not support any command which पातs last
-	 * issued command i.e. as ACK क्रम standard PN533. Additionally,
+	/* ACR122U does not support any command which aborts last
+	 * issued command i.e. as ACK for standard PN533. Additionally,
 	 * it behaves stange, sending broken or incorrect responses,
-	 * when we cancel urb beक्रमe the chip will send response.
+	 * when we cancel urb before the chip will send response.
 	 */
-	अगर (dev->device_type == PN533_DEVICE_ACR122U)
-		वापस;
+	if (dev->device_type == PN533_DEVICE_ACR122U)
+		return;
 
 	/* An ack will cancel the last issued command */
 	pn533_usb_send_ack(dev, flags);
 
 	/* cancel the urb request */
-	usb_समाप्त_urb(phy->in_urb);
-पूर्ण
+	usb_kill_urb(phy->in_urb);
+}
 
-/* ACR122 specअगरic काष्ठाs and functions */
+/* ACR122 specific structs and functions */
 
 /* ACS ACR122 pn533 frame definitions */
-#घोषणा PN533_ACR122_TX_FRAME_HEADER_LEN (माप(काष्ठा pn533_acr122_tx_frame) \
+#define PN533_ACR122_TX_FRAME_HEADER_LEN (sizeof(struct pn533_acr122_tx_frame) \
 					  + 2)
-#घोषणा PN533_ACR122_TX_FRAME_TAIL_LEN 0
-#घोषणा PN533_ACR122_RX_FRAME_HEADER_LEN (माप(काष्ठा pn533_acr122_rx_frame) \
+#define PN533_ACR122_TX_FRAME_TAIL_LEN 0
+#define PN533_ACR122_RX_FRAME_HEADER_LEN (sizeof(struct pn533_acr122_rx_frame) \
 					  + 2)
-#घोषणा PN533_ACR122_RX_FRAME_TAIL_LEN 2
-#घोषणा PN533_ACR122_FRAME_MAX_PAYLOAD_LEN PN533_STD_FRAME_MAX_PAYLOAD_LEN
+#define PN533_ACR122_RX_FRAME_TAIL_LEN 2
+#define PN533_ACR122_FRAME_MAX_PAYLOAD_LEN PN533_STD_FRAME_MAX_PAYLOAD_LEN
 
 /* CCID messages types */
-#घोषणा PN533_ACR122_PC_TO_RDR_ICCPOWERON 0x62
-#घोषणा PN533_ACR122_PC_TO_RDR_ESCAPE 0x6B
+#define PN533_ACR122_PC_TO_RDR_ICCPOWERON 0x62
+#define PN533_ACR122_PC_TO_RDR_ESCAPE 0x6B
 
-#घोषणा PN533_ACR122_RDR_TO_PC_ESCAPE 0x83
+#define PN533_ACR122_RDR_TO_PC_ESCAPE 0x83
 
 
-काष्ठा pn533_acr122_ccid_hdr अणु
+struct pn533_acr122_ccid_hdr {
 	u8 type;
 	u32 datalen;
 	u8 slot;
 	u8 seq;
 
 	/*
-	 * 3 msg specअगरic bytes or status, error and 1 specअगरic
-	 * byte क्रम reposnse msg
+	 * 3 msg specific bytes or status, error and 1 specific
+	 * byte for reposnse msg
 	 */
 	u8 params[3];
 	u8 data[]; /* payload */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा pn533_acr122_apdu_hdr अणु
+struct pn533_acr122_apdu_hdr {
 	u8 class;
 	u8 ins;
 	u8 p1;
 	u8 p2;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा pn533_acr122_tx_frame अणु
-	काष्ठा pn533_acr122_ccid_hdr ccid;
-	काष्ठा pn533_acr122_apdu_hdr apdu;
+struct pn533_acr122_tx_frame {
+	struct pn533_acr122_ccid_hdr ccid;
+	struct pn533_acr122_apdu_hdr apdu;
 	u8 datalen;
 	u8 data[]; /* pn533 frame: TFI ... */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा pn533_acr122_rx_frame अणु
-	काष्ठा pn533_acr122_ccid_hdr ccid;
+struct pn533_acr122_rx_frame {
+	struct pn533_acr122_ccid_hdr ccid;
 	u8 data[]; /* pn533 frame : TFI ... */
-पूर्ण __packed;
+} __packed;
 
-अटल व्योम pn533_acr122_tx_frame_init(व्योम *_frame, u8 cmd_code)
-अणु
-	काष्ठा pn533_acr122_tx_frame *frame = _frame;
+static void pn533_acr122_tx_frame_init(void *_frame, u8 cmd_code)
+{
+	struct pn533_acr122_tx_frame *frame = _frame;
 
 	frame->ccid.type = PN533_ACR122_PC_TO_RDR_ESCAPE;
-	/* माप(apdu_hdr) + माप(datalen) */
-	frame->ccid.datalen = माप(frame->apdu) + 1;
+	/* sizeof(apdu_hdr) + sizeof(datalen) */
+	frame->ccid.datalen = sizeof(frame->apdu) + 1;
 	frame->ccid.slot = 0;
 	frame->ccid.seq = 0;
 	frame->ccid.params[0] = 0;
 	frame->ccid.params[1] = 0;
 	frame->ccid.params[2] = 0;
 
-	frame->data[0] = PN533_STD_FRAME_सूची_OUT;
+	frame->data[0] = PN533_STD_FRAME_DIR_OUT;
 	frame->data[1] = cmd_code;
 	frame->datalen = 2;  /* data[0] + data[1] */
 
@@ -283,54 +282,54 @@ error:
 	frame->apdu.ins = 0;
 	frame->apdu.p1 = 0;
 	frame->apdu.p2 = 0;
-पूर्ण
+}
 
-अटल व्योम pn533_acr122_tx_frame_finish(व्योम *_frame)
-अणु
-	काष्ठा pn533_acr122_tx_frame *frame = _frame;
+static void pn533_acr122_tx_frame_finish(void *_frame)
+{
+	struct pn533_acr122_tx_frame *frame = _frame;
 
 	frame->ccid.datalen += frame->datalen;
-पूर्ण
+}
 
-अटल व्योम pn533_acr122_tx_update_payload_len(व्योम *_frame, पूर्णांक len)
-अणु
-	काष्ठा pn533_acr122_tx_frame *frame = _frame;
+static void pn533_acr122_tx_update_payload_len(void *_frame, int len)
+{
+	struct pn533_acr122_tx_frame *frame = _frame;
 
 	frame->datalen += len;
-पूर्ण
+}
 
-अटल bool pn533_acr122_is_rx_frame_valid(व्योम *_frame, काष्ठा pn533 *dev)
-अणु
-	काष्ठा pn533_acr122_rx_frame *frame = _frame;
+static bool pn533_acr122_is_rx_frame_valid(void *_frame, struct pn533 *dev)
+{
+	struct pn533_acr122_rx_frame *frame = _frame;
 
-	अगर (frame->ccid.type != 0x83)
-		वापस false;
+	if (frame->ccid.type != 0x83)
+		return false;
 
-	अगर (!frame->ccid.datalen)
-		वापस false;
+	if (!frame->ccid.datalen)
+		return false;
 
-	अगर (frame->data[frame->ccid.datalen - 2] == 0x63)
-		वापस false;
+	if (frame->data[frame->ccid.datalen - 2] == 0x63)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक pn533_acr122_rx_frame_size(व्योम *frame)
-अणु
-	काष्ठा pn533_acr122_rx_frame *f = frame;
+static int pn533_acr122_rx_frame_size(void *frame)
+{
+	struct pn533_acr122_rx_frame *f = frame;
 
-	/* f->ccid.datalen alपढ़ोy includes tail length */
-	वापस माप(काष्ठा pn533_acr122_rx_frame) + f->ccid.datalen;
-पूर्ण
+	/* f->ccid.datalen already includes tail length */
+	return sizeof(struct pn533_acr122_rx_frame) + f->ccid.datalen;
+}
 
-अटल u8 pn533_acr122_get_cmd_code(व्योम *frame)
-अणु
-	काष्ठा pn533_acr122_rx_frame *f = frame;
+static u8 pn533_acr122_get_cmd_code(void *frame)
+{
+	struct pn533_acr122_rx_frame *f = frame;
 
-	वापस PN533_FRAME_CMD(f);
-पूर्ण
+	return PN533_FRAME_CMD(f);
+}
 
-अटल काष्ठा pn533_frame_ops pn533_acr122_frame_ops = अणु
+static struct pn533_frame_ops pn533_acr122_frame_ops = {
 	.tx_frame_init = pn533_acr122_tx_frame_init,
 	.tx_frame_finish = pn533_acr122_tx_frame_finish,
 	.tx_update_payload_len = pn533_acr122_tx_update_payload_len,
@@ -344,267 +343,267 @@ error:
 
 	.max_payload_len = PN533_ACR122_FRAME_MAX_PAYLOAD_LEN,
 	.get_cmd_code = pn533_acr122_get_cmd_code,
-पूर्ण;
+};
 
-काष्ठा pn533_acr122_घातeron_rdr_arg अणु
-	पूर्णांक rc;
-	काष्ठा completion करोne;
-पूर्ण;
+struct pn533_acr122_poweron_rdr_arg {
+	int rc;
+	struct completion done;
+};
 
-अटल व्योम pn533_acr122_घातeron_rdr_resp(काष्ठा urb *urb)
-अणु
-	काष्ठा pn533_acr122_घातeron_rdr_arg *arg = urb->context;
+static void pn533_acr122_poweron_rdr_resp(struct urb *urb)
+{
+	struct pn533_acr122_poweron_rdr_arg *arg = urb->context;
 
 	dev_dbg(&urb->dev->dev, "%s\n", __func__);
 
-	prपूर्णांक_hex_dump_debug("ACR122 RX: ", DUMP_PREFIX_NONE, 16, 1,
+	print_hex_dump_debug("ACR122 RX: ", DUMP_PREFIX_NONE, 16, 1,
 		       urb->transfer_buffer, urb->transfer_buffer_length,
 		       false);
 
 	arg->rc = urb->status;
-	complete(&arg->करोne);
-पूर्ण
+	complete(&arg->done);
+}
 
-अटल पूर्णांक pn533_acr122_घातeron_rdr(काष्ठा pn533_usb_phy *phy)
-अणु
-	/* Power on th पढ़ोer (CCID cmd) */
-	u8 cmd[10] = अणुPN533_ACR122_PC_TO_RDR_ICCPOWERON,
-		      0, 0, 0, 0, 0, 0, 3, 0, 0पूर्ण;
-	अक्षर *buffer;
-	पूर्णांक transferred;
-	पूर्णांक rc;
-	व्योम *cntx;
-	काष्ठा pn533_acr122_घातeron_rdr_arg arg;
+static int pn533_acr122_poweron_rdr(struct pn533_usb_phy *phy)
+{
+	/* Power on th reader (CCID cmd) */
+	u8 cmd[10] = {PN533_ACR122_PC_TO_RDR_ICCPOWERON,
+		      0, 0, 0, 0, 0, 0, 3, 0, 0};
+	char *buffer;
+	int transferred;
+	int rc;
+	void *cntx;
+	struct pn533_acr122_poweron_rdr_arg arg;
 
 	dev_dbg(&phy->udev->dev, "%s\n", __func__);
 
-	buffer = kmemdup(cmd, माप(cmd), GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmemdup(cmd, sizeof(cmd), GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
-	init_completion(&arg.करोne);
+	init_completion(&arg.done);
 	cntx = phy->in_urb->context;  /* backup context */
 
-	phy->in_urb->complete = pn533_acr122_घातeron_rdr_resp;
+	phy->in_urb->complete = pn533_acr122_poweron_rdr_resp;
 	phy->in_urb->context = &arg;
 
-	prपूर्णांक_hex_dump_debug("ACR122 TX: ", DUMP_PREFIX_NONE, 16, 1,
-		       cmd, माप(cmd), false);
+	print_hex_dump_debug("ACR122 TX: ", DUMP_PREFIX_NONE, 16, 1,
+		       cmd, sizeof(cmd), false);
 
-	rc = usb_bulk_msg(phy->udev, phy->out_urb->pipe, buffer, माप(cmd),
+	rc = usb_bulk_msg(phy->udev, phy->out_urb->pipe, buffer, sizeof(cmd),
 			  &transferred, 5000);
-	kमुक्त(buffer);
-	अगर (rc || (transferred != माप(cmd))) अणु
+	kfree(buffer);
+	if (rc || (transferred != sizeof(cmd))) {
 		nfc_err(&phy->udev->dev,
 			"Reader power on cmd error %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc =  usb_submit_urb(phy->in_urb, GFP_KERNEL);
-	अगर (rc) अणु
+	if (rc) {
 		nfc_err(&phy->udev->dev,
 			"Can't submit reader poweron cmd response %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	रुको_क्रम_completion(&arg.करोne);
+	wait_for_completion(&arg.done);
 	phy->in_urb->context = cntx; /* restore context */
 
-	वापस arg.rc;
-पूर्ण
+	return arg.rc;
+}
 
-अटल व्योम pn533_send_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा pn533_usb_phy *phy = urb->context;
+static void pn533_send_complete(struct urb *urb)
+{
+	struct pn533_usb_phy *phy = urb->context;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध; /* success */
-	हाल -ECONNRESET:
-	हाल -ENOENT:
+	switch (urb->status) {
+	case 0:
+		break; /* success */
+	case -ECONNRESET:
+	case -ENOENT:
 		dev_dbg(&phy->udev->dev,
 			"The urb has been stopped (status %d)\n",
 			urb->status);
-		अवरोध;
-	हाल -ESHUTDOWN:
-	शेष:
+		break;
+	case -ESHUTDOWN:
+	default:
 		nfc_err(&phy->udev->dev,
 			"Urb failure (status %d)\n",
 			urb->status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा pn533_phy_ops usb_phy_ops = अणु
+static struct pn533_phy_ops usb_phy_ops = {
 	.send_frame = pn533_usb_send_frame,
 	.send_ack = pn533_usb_send_ack,
-	.पात_cmd = pn533_usb_पात_cmd,
-पूर्ण;
+	.abort_cmd = pn533_usb_abort_cmd,
+};
 
-अटल पूर्णांक pn533_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा pn533 *priv;
-	काष्ठा pn533_usb_phy *phy;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	पूर्णांक in_endpoपूर्णांक = 0;
-	पूर्णांक out_endpoपूर्णांक = 0;
-	पूर्णांक rc = -ENOMEM;
-	पूर्णांक i;
+static int pn533_usb_probe(struct usb_interface *interface,
+			const struct usb_device_id *id)
+{
+	struct pn533 *priv;
+	struct pn533_usb_phy *phy;
+	struct usb_host_interface *iface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+	int in_endpoint = 0;
+	int out_endpoint = 0;
+	int rc = -ENOMEM;
+	int i;
 	u32 protocols;
-	क्रमागत pn533_protocol_type protocol_type = PN533_PROTO_REQ_ACK_RESP;
-	काष्ठा pn533_frame_ops *fops = शून्य;
-	अचिन्हित अक्षर *in_buf;
-	पूर्णांक in_buf_len = PN533_EXT_FRAME_HEADER_LEN +
+	enum pn533_protocol_type protocol_type = PN533_PROTO_REQ_ACK_RESP;
+	struct pn533_frame_ops *fops = NULL;
+	unsigned char *in_buf;
+	int in_buf_len = PN533_EXT_FRAME_HEADER_LEN +
 			 PN533_STD_FRAME_MAX_PAYLOAD_LEN +
 			 PN533_STD_FRAME_TAIL_LEN;
 
-	phy = devm_kzalloc(&पूर्णांकerface->dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENOMEM;
+	phy = devm_kzalloc(&interface->dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		return -ENOMEM;
 
 	in_buf = kzalloc(in_buf_len, GFP_KERNEL);
-	अगर (!in_buf)
-		वापस -ENOMEM;
+	if (!in_buf)
+		return -ENOMEM;
 
-	phy->udev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
-	phy->पूर्णांकerface = पूर्णांकerface;
+	phy->udev = usb_get_dev(interface_to_usbdev(interface));
+	phy->interface = interface;
 
-	अगरace_desc = पूर्णांकerface->cur_altsetting;
-	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++i) अणु
-		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[i].desc;
+	iface_desc = interface->cur_altsetting;
+	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
+		endpoint = &iface_desc->endpoint[i].desc;
 
-		अगर (!in_endpoपूर्णांक && usb_endpoपूर्णांक_is_bulk_in(endpoपूर्णांक))
-			in_endpoपूर्णांक = endpoपूर्णांक->bEndpoपूर्णांकAddress;
+		if (!in_endpoint && usb_endpoint_is_bulk_in(endpoint))
+			in_endpoint = endpoint->bEndpointAddress;
 
-		अगर (!out_endpoपूर्णांक && usb_endpoपूर्णांक_is_bulk_out(endpoपूर्णांक))
-			out_endpoपूर्णांक = endpoपूर्णांक->bEndpoपूर्णांकAddress;
-	पूर्ण
+		if (!out_endpoint && usb_endpoint_is_bulk_out(endpoint))
+			out_endpoint = endpoint->bEndpointAddress;
+	}
 
-	अगर (!in_endpoपूर्णांक || !out_endpoपूर्णांक) अणु
-		nfc_err(&पूर्णांकerface->dev,
+	if (!in_endpoint || !out_endpoint) {
+		nfc_err(&interface->dev,
 			"Could not find bulk-in or bulk-out endpoint\n");
 		rc = -ENODEV;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	phy->in_urb = usb_alloc_urb(0, GFP_KERNEL);
 	phy->out_urb = usb_alloc_urb(0, GFP_KERNEL);
 	phy->ack_urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	अगर (!phy->in_urb || !phy->out_urb || !phy->ack_urb)
-		जाओ error;
+	if (!phy->in_urb || !phy->out_urb || !phy->ack_urb)
+		goto error;
 
 	usb_fill_bulk_urb(phy->in_urb, phy->udev,
-			  usb_rcvbulkpipe(phy->udev, in_endpoपूर्णांक),
-			  in_buf, in_buf_len, शून्य, phy);
+			  usb_rcvbulkpipe(phy->udev, in_endpoint),
+			  in_buf, in_buf_len, NULL, phy);
 
 	usb_fill_bulk_urb(phy->out_urb, phy->udev,
-			  usb_sndbulkpipe(phy->udev, out_endpoपूर्णांक),
-			  शून्य, 0, pn533_send_complete, phy);
+			  usb_sndbulkpipe(phy->udev, out_endpoint),
+			  NULL, 0, pn533_send_complete, phy);
 	usb_fill_bulk_urb(phy->ack_urb, phy->udev,
-			  usb_sndbulkpipe(phy->udev, out_endpoपूर्णांक),
-			  शून्य, 0, pn533_send_complete, phy);
+			  usb_sndbulkpipe(phy->udev, out_endpoint),
+			  NULL, 0, pn533_send_complete, phy);
 
-	चयन (id->driver_info) अणु
-	हाल PN533_DEVICE_STD:
+	switch (id->driver_info) {
+	case PN533_DEVICE_STD:
 		protocols = PN533_ALL_PROTOCOLS;
-		अवरोध;
+		break;
 
-	हाल PN533_DEVICE_PASORI:
+	case PN533_DEVICE_PASORI:
 		protocols = PN533_NO_TYPE_B_PROTOCOLS;
-		अवरोध;
+		break;
 
-	हाल PN533_DEVICE_ACR122U:
+	case PN533_DEVICE_ACR122U:
 		protocols = PN533_NO_TYPE_B_PROTOCOLS;
 		fops = &pn533_acr122_frame_ops;
 		protocol_type = PN533_PROTO_REQ_RESP;
 
-		rc = pn533_acr122_घातeron_rdr(phy);
-		अगर (rc < 0) अणु
-			nfc_err(&पूर्णांकerface->dev,
+		rc = pn533_acr122_poweron_rdr(phy);
+		if (rc < 0) {
+			nfc_err(&interface->dev,
 				"Couldn't poweron the reader (error %d)\n", rc);
-			जाओ error;
-		पूर्ण
-		अवरोध;
+			goto error;
+		}
+		break;
 
-	शेष:
-		nfc_err(&पूर्णांकerface->dev, "Unknown device type %lu\n",
+	default:
+		nfc_err(&interface->dev, "Unknown device type %lu\n",
 			id->driver_info);
 		rc = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	priv = pn53x_common_init(id->driver_info, protocol_type,
 					phy, &usb_phy_ops, fops,
 					&phy->udev->dev);
 
-	अगर (IS_ERR(priv)) अणु
+	if (IS_ERR(priv)) {
 		rc = PTR_ERR(priv);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	phy->priv = priv;
 
 	rc = pn533_finalize_setup(priv);
-	अगर (rc)
-		जाओ err_clean;
+	if (rc)
+		goto err_clean;
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, phy);
-	rc = pn53x_रेजिस्टर_nfc(priv, protocols, &पूर्णांकerface->dev);
-	अगर (rc)
-		जाओ err_clean;
+	usb_set_intfdata(interface, phy);
+	rc = pn53x_register_nfc(priv, protocols, &interface->dev);
+	if (rc)
+		goto err_clean;
 
-	वापस 0;
+	return 0;
 
 err_clean:
 	pn53x_common_clean(priv);
 error:
-	usb_समाप्त_urb(phy->in_urb);
-	usb_समाप्त_urb(phy->out_urb);
-	usb_समाप्त_urb(phy->ack_urb);
+	usb_kill_urb(phy->in_urb);
+	usb_kill_urb(phy->out_urb);
+	usb_kill_urb(phy->ack_urb);
 
-	usb_मुक्त_urb(phy->in_urb);
-	usb_मुक्त_urb(phy->out_urb);
-	usb_मुक्त_urb(phy->ack_urb);
+	usb_free_urb(phy->in_urb);
+	usb_free_urb(phy->out_urb);
+	usb_free_urb(phy->ack_urb);
 	usb_put_dev(phy->udev);
-	kमुक्त(in_buf);
-	kमुक्त(phy->ack_buffer);
+	kfree(in_buf);
+	kfree(phy->ack_buffer);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम pn533_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा pn533_usb_phy *phy = usb_get_पूर्णांकfdata(पूर्णांकerface);
+static void pn533_usb_disconnect(struct usb_interface *interface)
+{
+	struct pn533_usb_phy *phy = usb_get_intfdata(interface);
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
-	pn53x_unरेजिस्टर_nfc(phy->priv);
+	pn53x_unregister_nfc(phy->priv);
 	pn53x_common_clean(phy->priv);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	usb_set_intfdata(interface, NULL);
 
-	usb_समाप्त_urb(phy->in_urb);
-	usb_समाप्त_urb(phy->out_urb);
-	usb_समाप्त_urb(phy->ack_urb);
+	usb_kill_urb(phy->in_urb);
+	usb_kill_urb(phy->out_urb);
+	usb_kill_urb(phy->ack_urb);
 
-	kमुक्त(phy->in_urb->transfer_buffer);
-	usb_मुक्त_urb(phy->in_urb);
-	usb_मुक्त_urb(phy->out_urb);
-	usb_मुक्त_urb(phy->ack_urb);
-	kमुक्त(phy->ack_buffer);
+	kfree(phy->in_urb->transfer_buffer);
+	usb_free_urb(phy->in_urb);
+	usb_free_urb(phy->out_urb);
+	usb_free_urb(phy->ack_urb);
+	kfree(phy->ack_buffer);
 
-	nfc_info(&पूर्णांकerface->dev, "NXP PN533 NFC device disconnected\n");
-पूर्ण
+	nfc_info(&interface->dev, "NXP PN533 NFC device disconnected\n");
+}
 
-अटल काष्ठा usb_driver pn533_usb_driver = अणु
+static struct usb_driver pn533_usb_driver = {
 	.name =		"pn533_usb",
 	.probe =	pn533_usb_probe,
 	.disconnect =	pn533_usb_disconnect,
 	.id_table =	pn533_usb_table,
-पूर्ण;
+};
 
 module_usb_driver(pn533_usb_driver);
 

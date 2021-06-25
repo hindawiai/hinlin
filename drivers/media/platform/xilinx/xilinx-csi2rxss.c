@@ -1,428 +1,427 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Xilinx MIPI CSI-2 Rx Subप्रणाली
+ * Driver for Xilinx MIPI CSI-2 Rx Subsystem
  *
  * Copyright (C) 2016 - 2020 Xilinx, Inc.
  *
  * Contacts: Vishal Sagar <vishal.sagar@xilinx.com>
  *
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/v4l2-subdev.h>
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश "xilinx-vip.h"
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/v4l2-subdev.h>
+#include <media/media-entity.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
+#include "xilinx-vip.h"
 
-/* Register रेजिस्टर map */
-#घोषणा XCSI_CCR_OFFSET		0x00
-#घोषणा XCSI_CCR_SOFTRESET	BIT(1)
-#घोषणा XCSI_CCR_ENABLE		BIT(0)
+/* Register register map */
+#define XCSI_CCR_OFFSET		0x00
+#define XCSI_CCR_SOFTRESET	BIT(1)
+#define XCSI_CCR_ENABLE		BIT(0)
 
-#घोषणा XCSI_PCR_OFFSET		0x04
-#घोषणा XCSI_PCR_MAXLANES_MASK	GENMASK(4, 3)
-#घोषणा XCSI_PCR_ACTLANES_MASK	GENMASK(1, 0)
+#define XCSI_PCR_OFFSET		0x04
+#define XCSI_PCR_MAXLANES_MASK	GENMASK(4, 3)
+#define XCSI_PCR_ACTLANES_MASK	GENMASK(1, 0)
 
-#घोषणा XCSI_CSR_OFFSET		0x10
-#घोषणा XCSI_CSR_PKTCNT		GENMASK(31, 16)
-#घोषणा XCSI_CSR_SPFIFOFULL	BIT(3)
-#घोषणा XCSI_CSR_SPFIFONE	BIT(2)
-#घोषणा XCSI_CSR_SLBF		BIT(1)
-#घोषणा XCSI_CSR_RIPCD		BIT(0)
+#define XCSI_CSR_OFFSET		0x10
+#define XCSI_CSR_PKTCNT		GENMASK(31, 16)
+#define XCSI_CSR_SPFIFOFULL	BIT(3)
+#define XCSI_CSR_SPFIFONE	BIT(2)
+#define XCSI_CSR_SLBF		BIT(1)
+#define XCSI_CSR_RIPCD		BIT(0)
 
-#घोषणा XCSI_GIER_OFFSET	0x20
-#घोषणा XCSI_GIER_GIE		BIT(0)
+#define XCSI_GIER_OFFSET	0x20
+#define XCSI_GIER_GIE		BIT(0)
 
-#घोषणा XCSI_ISR_OFFSET		0x24
-#घोषणा XCSI_IER_OFFSET		0x28
+#define XCSI_ISR_OFFSET		0x24
+#define XCSI_IER_OFFSET		0x28
 
-#घोषणा XCSI_ISR_FR		BIT(31)
-#घोषणा XCSI_ISR_VCXFE		BIT(30)
-#घोषणा XCSI_ISR_WCC		BIT(22)
-#घोषणा XCSI_ISR_ILC		BIT(21)
-#घोषणा XCSI_ISR_SPFIFOF	BIT(20)
-#घोषणा XCSI_ISR_SPFIFONE	BIT(19)
-#घोषणा XCSI_ISR_SLBF		BIT(18)
-#घोषणा XCSI_ISR_STOP		BIT(17)
-#घोषणा XCSI_ISR_SOTERR		BIT(13)
-#घोषणा XCSI_ISR_SOTSYNCERR	BIT(12)
-#घोषणा XCSI_ISR_ECC2BERR	BIT(11)
-#घोषणा XCSI_ISR_ECC1BERR	BIT(10)
-#घोषणा XCSI_ISR_CRCERR		BIT(9)
-#घोषणा XCSI_ISR_DATAIDERR	BIT(8)
-#घोषणा XCSI_ISR_VC3FSYNCERR	BIT(7)
-#घोषणा XCSI_ISR_VC3FLVLERR	BIT(6)
-#घोषणा XCSI_ISR_VC2FSYNCERR	BIT(5)
-#घोषणा XCSI_ISR_VC2FLVLERR	BIT(4)
-#घोषणा XCSI_ISR_VC1FSYNCERR	BIT(3)
-#घोषणा XCSI_ISR_VC1FLVLERR	BIT(2)
-#घोषणा XCSI_ISR_VC0FSYNCERR	BIT(1)
-#घोषणा XCSI_ISR_VC0FLVLERR	BIT(0)
+#define XCSI_ISR_FR		BIT(31)
+#define XCSI_ISR_VCXFE		BIT(30)
+#define XCSI_ISR_WCC		BIT(22)
+#define XCSI_ISR_ILC		BIT(21)
+#define XCSI_ISR_SPFIFOF	BIT(20)
+#define XCSI_ISR_SPFIFONE	BIT(19)
+#define XCSI_ISR_SLBF		BIT(18)
+#define XCSI_ISR_STOP		BIT(17)
+#define XCSI_ISR_SOTERR		BIT(13)
+#define XCSI_ISR_SOTSYNCERR	BIT(12)
+#define XCSI_ISR_ECC2BERR	BIT(11)
+#define XCSI_ISR_ECC1BERR	BIT(10)
+#define XCSI_ISR_CRCERR		BIT(9)
+#define XCSI_ISR_DATAIDERR	BIT(8)
+#define XCSI_ISR_VC3FSYNCERR	BIT(7)
+#define XCSI_ISR_VC3FLVLERR	BIT(6)
+#define XCSI_ISR_VC2FSYNCERR	BIT(5)
+#define XCSI_ISR_VC2FLVLERR	BIT(4)
+#define XCSI_ISR_VC1FSYNCERR	BIT(3)
+#define XCSI_ISR_VC1FLVLERR	BIT(2)
+#define XCSI_ISR_VC0FSYNCERR	BIT(1)
+#define XCSI_ISR_VC0FLVLERR	BIT(0)
 
-#घोषणा XCSI_ISR_ALLINTR_MASK	(0xc07e3fff)
+#define XCSI_ISR_ALLINTR_MASK	(0xc07e3fff)
 
 /*
- * Removed VCXFE mask as it करोesn't exist in IER
+ * Removed VCXFE mask as it doesn't exist in IER
  * Removed STOP state irq as this will keep driver in irq handler only
  */
-#घोषणा XCSI_IER_INTR_MASK	(XCSI_ISR_ALLINTR_MASK &\
+#define XCSI_IER_INTR_MASK	(XCSI_ISR_ALLINTR_MASK &\
 				 ~(XCSI_ISR_STOP | XCSI_ISR_VCXFE))
 
-#घोषणा XCSI_SPKTR_OFFSET	0x30
-#घोषणा XCSI_SPKTR_DATA		GENMASK(23, 8)
-#घोषणा XCSI_SPKTR_VC		GENMASK(7, 6)
-#घोषणा XCSI_SPKTR_DT		GENMASK(5, 0)
-#घोषणा XCSI_SPKT_FIFO_DEPTH	31
+#define XCSI_SPKTR_OFFSET	0x30
+#define XCSI_SPKTR_DATA		GENMASK(23, 8)
+#define XCSI_SPKTR_VC		GENMASK(7, 6)
+#define XCSI_SPKTR_DT		GENMASK(5, 0)
+#define XCSI_SPKT_FIFO_DEPTH	31
 
-#घोषणा XCSI_VCXR_OFFSET	0x34
-#घोषणा XCSI_VCXR_VCERR		GENMASK(23, 0)
-#घोषणा XCSI_VCXR_FSYNCERR	BIT(1)
-#घोषणा XCSI_VCXR_FLVLERR	BIT(0)
+#define XCSI_VCXR_OFFSET	0x34
+#define XCSI_VCXR_VCERR		GENMASK(23, 0)
+#define XCSI_VCXR_FSYNCERR	BIT(1)
+#define XCSI_VCXR_FLVLERR	BIT(0)
 
-#घोषणा XCSI_CLKINFR_OFFSET	0x3C
-#घोषणा XCSI_CLKINFR_STOP	BIT(1)
+#define XCSI_CLKINFR_OFFSET	0x3C
+#define XCSI_CLKINFR_STOP	BIT(1)
 
-#घोषणा XCSI_DLXINFR_OFFSET	0x40
-#घोषणा XCSI_DLXINFR_STOP	BIT(5)
-#घोषणा XCSI_DLXINFR_SOTERR	BIT(1)
-#घोषणा XCSI_DLXINFR_SOTSYNCERR	BIT(0)
-#घोषणा XCSI_MAXDL_COUNT	0x4
+#define XCSI_DLXINFR_OFFSET	0x40
+#define XCSI_DLXINFR_STOP	BIT(5)
+#define XCSI_DLXINFR_SOTERR	BIT(1)
+#define XCSI_DLXINFR_SOTSYNCERR	BIT(0)
+#define XCSI_MAXDL_COUNT	0x4
 
-#घोषणा XCSI_VCXINF1R_OFFSET		0x60
-#घोषणा XCSI_VCXINF1R_LINECOUNT		GENMASK(31, 16)
-#घोषणा XCSI_VCXINF1R_LINECOUNT_SHIFT	16
-#घोषणा XCSI_VCXINF1R_BYTECOUNT		GENMASK(15, 0)
+#define XCSI_VCXINF1R_OFFSET		0x60
+#define XCSI_VCXINF1R_LINECOUNT		GENMASK(31, 16)
+#define XCSI_VCXINF1R_LINECOUNT_SHIFT	16
+#define XCSI_VCXINF1R_BYTECOUNT		GENMASK(15, 0)
 
-#घोषणा XCSI_VCXINF2R_OFFSET	0x64
-#घोषणा XCSI_VCXINF2R_DT	GENMASK(5, 0)
-#घोषणा XCSI_MAXVCX_COUNT	16
+#define XCSI_VCXINF2R_OFFSET	0x64
+#define XCSI_VCXINF2R_DT	GENMASK(5, 0)
+#define XCSI_MAXVCX_COUNT	16
 
 /*
  * Sink pad connected to sensor source pad.
  * Source pad connected to next module like demosaic.
  */
-#घोषणा XCSI_MEDIA_PADS		2
-#घोषणा XCSI_DEFAULT_WIDTH	1920
-#घोषणा XCSI_DEFAULT_HEIGHT	1080
+#define XCSI_MEDIA_PADS		2
+#define XCSI_DEFAULT_WIDTH	1920
+#define XCSI_DEFAULT_HEIGHT	1080
 
 /* MIPI CSI-2 Data Types from spec */
-#घोषणा XCSI_DT_YUV4228B	0x1e
-#घोषणा XCSI_DT_YUV42210B	0x1f
-#घोषणा XCSI_DT_RGB444		0x20
-#घोषणा XCSI_DT_RGB555		0x21
-#घोषणा XCSI_DT_RGB565		0x22
-#घोषणा XCSI_DT_RGB666		0x23
-#घोषणा XCSI_DT_RGB888		0x24
-#घोषणा XCSI_DT_RAW6		0x28
-#घोषणा XCSI_DT_RAW7		0x29
-#घोषणा XCSI_DT_RAW8		0x2a
-#घोषणा XCSI_DT_RAW10		0x2b
-#घोषणा XCSI_DT_RAW12		0x2c
-#घोषणा XCSI_DT_RAW14		0x2d
-#घोषणा XCSI_DT_RAW16		0x2e
-#घोषणा XCSI_DT_RAW20		0x2f
+#define XCSI_DT_YUV4228B	0x1e
+#define XCSI_DT_YUV42210B	0x1f
+#define XCSI_DT_RGB444		0x20
+#define XCSI_DT_RGB555		0x21
+#define XCSI_DT_RGB565		0x22
+#define XCSI_DT_RGB666		0x23
+#define XCSI_DT_RGB888		0x24
+#define XCSI_DT_RAW6		0x28
+#define XCSI_DT_RAW7		0x29
+#define XCSI_DT_RAW8		0x2a
+#define XCSI_DT_RAW10		0x2b
+#define XCSI_DT_RAW12		0x2c
+#define XCSI_DT_RAW14		0x2d
+#define XCSI_DT_RAW16		0x2e
+#define XCSI_DT_RAW20		0x2f
 
-#घोषणा XCSI_VCX_START		4
-#घोषणा XCSI_MAX_VC		4
-#घोषणा XCSI_MAX_VCX		16
+#define XCSI_VCX_START		4
+#define XCSI_MAX_VC		4
+#define XCSI_MAX_VCX		16
 
-#घोषणा XCSI_NEXTREG_OFFSET	4
+#define XCSI_NEXTREG_OFFSET	4
 
 /* There are 2 events frame sync and frame level error per VC */
-#घोषणा XCSI_VCX_NUM_EVENTS	((XCSI_MAX_VCX - XCSI_MAX_VC) * 2)
+#define XCSI_VCX_NUM_EVENTS	((XCSI_MAX_VCX - XCSI_MAX_VC) * 2)
 
 /**
- * काष्ठा xcsi2rxss_event - Event log काष्ठाure
+ * struct xcsi2rxss_event - Event log structure
  * @mask: Event mask
  * @name: Name of the event
  */
-काष्ठा xcsi2rxss_event अणु
+struct xcsi2rxss_event {
 	u32 mask;
-	स्थिर अक्षर *name;
-पूर्ण;
+	const char *name;
+};
 
-अटल स्थिर काष्ठा xcsi2rxss_event xcsi2rxss_events[] = अणु
-	अणु XCSI_ISR_FR, "Frame Received" पूर्ण,
-	अणु XCSI_ISR_VCXFE, "VCX Frame Errors" पूर्ण,
-	अणु XCSI_ISR_WCC, "Word Count Errors" पूर्ण,
-	अणु XCSI_ISR_ILC, "Invalid Lane Count Error" पूर्ण,
-	अणु XCSI_ISR_SPFIFOF, "Short Packet FIFO OverFlow Error" पूर्ण,
-	अणु XCSI_ISR_SPFIFONE, "Short Packet FIFO Not Empty" पूर्ण,
-	अणु XCSI_ISR_SLBF, "Streamline Buffer Full Error" पूर्ण,
-	अणु XCSI_ISR_STOP, "Lane Stop State" पूर्ण,
-	अणु XCSI_ISR_SOTERR, "SOT Error" पूर्ण,
-	अणु XCSI_ISR_SOTSYNCERR, "SOT Sync Error" पूर्ण,
-	अणु XCSI_ISR_ECC2BERR, "2 Bit ECC Unrecoverable Error" पूर्ण,
-	अणु XCSI_ISR_ECC1BERR, "1 Bit ECC Recoverable Error" पूर्ण,
-	अणु XCSI_ISR_CRCERR, "CRC Error" पूर्ण,
-	अणु XCSI_ISR_DATAIDERR, "Data Id Error" पूर्ण,
-	अणु XCSI_ISR_VC3FSYNCERR, "Virtual Channel 3 Frame Sync Error" पूर्ण,
-	अणु XCSI_ISR_VC3FLVLERR, "Virtual Channel 3 Frame Level Error" पूर्ण,
-	अणु XCSI_ISR_VC2FSYNCERR, "Virtual Channel 2 Frame Sync Error" पूर्ण,
-	अणु XCSI_ISR_VC2FLVLERR, "Virtual Channel 2 Frame Level Error" पूर्ण,
-	अणु XCSI_ISR_VC1FSYNCERR, "Virtual Channel 1 Frame Sync Error" पूर्ण,
-	अणु XCSI_ISR_VC1FLVLERR, "Virtual Channel 1 Frame Level Error" पूर्ण,
-	अणु XCSI_ISR_VC0FSYNCERR, "Virtual Channel 0 Frame Sync Error" पूर्ण,
-	अणु XCSI_ISR_VC0FLVLERR, "Virtual Channel 0 Frame Level Error" पूर्ण
-पूर्ण;
+static const struct xcsi2rxss_event xcsi2rxss_events[] = {
+	{ XCSI_ISR_FR, "Frame Received" },
+	{ XCSI_ISR_VCXFE, "VCX Frame Errors" },
+	{ XCSI_ISR_WCC, "Word Count Errors" },
+	{ XCSI_ISR_ILC, "Invalid Lane Count Error" },
+	{ XCSI_ISR_SPFIFOF, "Short Packet FIFO OverFlow Error" },
+	{ XCSI_ISR_SPFIFONE, "Short Packet FIFO Not Empty" },
+	{ XCSI_ISR_SLBF, "Streamline Buffer Full Error" },
+	{ XCSI_ISR_STOP, "Lane Stop State" },
+	{ XCSI_ISR_SOTERR, "SOT Error" },
+	{ XCSI_ISR_SOTSYNCERR, "SOT Sync Error" },
+	{ XCSI_ISR_ECC2BERR, "2 Bit ECC Unrecoverable Error" },
+	{ XCSI_ISR_ECC1BERR, "1 Bit ECC Recoverable Error" },
+	{ XCSI_ISR_CRCERR, "CRC Error" },
+	{ XCSI_ISR_DATAIDERR, "Data Id Error" },
+	{ XCSI_ISR_VC3FSYNCERR, "Virtual Channel 3 Frame Sync Error" },
+	{ XCSI_ISR_VC3FLVLERR, "Virtual Channel 3 Frame Level Error" },
+	{ XCSI_ISR_VC2FSYNCERR, "Virtual Channel 2 Frame Sync Error" },
+	{ XCSI_ISR_VC2FLVLERR, "Virtual Channel 2 Frame Level Error" },
+	{ XCSI_ISR_VC1FSYNCERR, "Virtual Channel 1 Frame Sync Error" },
+	{ XCSI_ISR_VC1FLVLERR, "Virtual Channel 1 Frame Level Error" },
+	{ XCSI_ISR_VC0FSYNCERR, "Virtual Channel 0 Frame Sync Error" },
+	{ XCSI_ISR_VC0FLVLERR, "Virtual Channel 0 Frame Level Error" }
+};
 
-#घोषणा XCSI_NUM_EVENTS		ARRAY_SIZE(xcsi2rxss_events)
+#define XCSI_NUM_EVENTS		ARRAY_SIZE(xcsi2rxss_events)
 
 /*
  * This table provides a mapping between CSI-2 Data type
- * and media bus क्रमmats
+ * and media bus formats
  */
-अटल स्थिर u32 xcsi2dt_mbus_lut[][2] = अणु
-	अणु XCSI_DT_YUV4228B, MEDIA_BUS_FMT_UYVY8_1X16 पूर्ण,
-	अणु XCSI_DT_YUV42210B, MEDIA_BUS_FMT_UYVY10_1X20 पूर्ण,
-	अणु XCSI_DT_RGB444, 0 पूर्ण,
-	अणु XCSI_DT_RGB555, 0 पूर्ण,
-	अणु XCSI_DT_RGB565, 0 पूर्ण,
-	अणु XCSI_DT_RGB666, 0 पूर्ण,
-	अणु XCSI_DT_RGB888, MEDIA_BUS_FMT_RBG888_1X24 पूर्ण,
-	अणु XCSI_DT_RAW6, 0 पूर्ण,
-	अणु XCSI_DT_RAW7, 0 पूर्ण,
-	अणु XCSI_DT_RAW8, MEDIA_BUS_FMT_SRGGB8_1X8 पूर्ण,
-	अणु XCSI_DT_RAW8, MEDIA_BUS_FMT_SBGGR8_1X8 पूर्ण,
-	अणु XCSI_DT_RAW8, MEDIA_BUS_FMT_SGBRG8_1X8 पूर्ण,
-	अणु XCSI_DT_RAW8, MEDIA_BUS_FMT_SGRBG8_1X8 पूर्ण,
-	अणु XCSI_DT_RAW10, MEDIA_BUS_FMT_SRGGB10_1X10 पूर्ण,
-	अणु XCSI_DT_RAW10, MEDIA_BUS_FMT_SBGGR10_1X10 पूर्ण,
-	अणु XCSI_DT_RAW10, MEDIA_BUS_FMT_SGBRG10_1X10 पूर्ण,
-	अणु XCSI_DT_RAW10, MEDIA_BUS_FMT_SGRBG10_1X10 पूर्ण,
-	अणु XCSI_DT_RAW12, MEDIA_BUS_FMT_SRGGB12_1X12 पूर्ण,
-	अणु XCSI_DT_RAW12, MEDIA_BUS_FMT_SBGGR12_1X12 पूर्ण,
-	अणु XCSI_DT_RAW12, MEDIA_BUS_FMT_SGBRG12_1X12 पूर्ण,
-	अणु XCSI_DT_RAW12, MEDIA_BUS_FMT_SGRBG12_1X12 पूर्ण,
-	अणु XCSI_DT_RAW16, MEDIA_BUS_FMT_SRGGB16_1X16 पूर्ण,
-	अणु XCSI_DT_RAW16, MEDIA_BUS_FMT_SBGGR16_1X16 पूर्ण,
-	अणु XCSI_DT_RAW16, MEDIA_BUS_FMT_SGBRG16_1X16 पूर्ण,
-	अणु XCSI_DT_RAW16, MEDIA_BUS_FMT_SGRBG16_1X16 पूर्ण,
-	अणु XCSI_DT_RAW20, 0 पूर्ण,
-पूर्ण;
+static const u32 xcsi2dt_mbus_lut[][2] = {
+	{ XCSI_DT_YUV4228B, MEDIA_BUS_FMT_UYVY8_1X16 },
+	{ XCSI_DT_YUV42210B, MEDIA_BUS_FMT_UYVY10_1X20 },
+	{ XCSI_DT_RGB444, 0 },
+	{ XCSI_DT_RGB555, 0 },
+	{ XCSI_DT_RGB565, 0 },
+	{ XCSI_DT_RGB666, 0 },
+	{ XCSI_DT_RGB888, MEDIA_BUS_FMT_RBG888_1X24 },
+	{ XCSI_DT_RAW6, 0 },
+	{ XCSI_DT_RAW7, 0 },
+	{ XCSI_DT_RAW8, MEDIA_BUS_FMT_SRGGB8_1X8 },
+	{ XCSI_DT_RAW8, MEDIA_BUS_FMT_SBGGR8_1X8 },
+	{ XCSI_DT_RAW8, MEDIA_BUS_FMT_SGBRG8_1X8 },
+	{ XCSI_DT_RAW8, MEDIA_BUS_FMT_SGRBG8_1X8 },
+	{ XCSI_DT_RAW10, MEDIA_BUS_FMT_SRGGB10_1X10 },
+	{ XCSI_DT_RAW10, MEDIA_BUS_FMT_SBGGR10_1X10 },
+	{ XCSI_DT_RAW10, MEDIA_BUS_FMT_SGBRG10_1X10 },
+	{ XCSI_DT_RAW10, MEDIA_BUS_FMT_SGRBG10_1X10 },
+	{ XCSI_DT_RAW12, MEDIA_BUS_FMT_SRGGB12_1X12 },
+	{ XCSI_DT_RAW12, MEDIA_BUS_FMT_SBGGR12_1X12 },
+	{ XCSI_DT_RAW12, MEDIA_BUS_FMT_SGBRG12_1X12 },
+	{ XCSI_DT_RAW12, MEDIA_BUS_FMT_SGRBG12_1X12 },
+	{ XCSI_DT_RAW16, MEDIA_BUS_FMT_SRGGB16_1X16 },
+	{ XCSI_DT_RAW16, MEDIA_BUS_FMT_SBGGR16_1X16 },
+	{ XCSI_DT_RAW16, MEDIA_BUS_FMT_SGBRG16_1X16 },
+	{ XCSI_DT_RAW16, MEDIA_BUS_FMT_SGRBG16_1X16 },
+	{ XCSI_DT_RAW20, 0 },
+};
 
 /**
- * काष्ठा xcsi2rxss_state - CSI-2 Rx Subप्रणाली device काष्ठाure
- * @subdev: The v4l2 subdev काष्ठाure
- * @क्रमmat: Active V4L2 क्रमmats on each pad
- * @शेष_क्रमmat: Default V4L2 क्रमmat
- * @events: counter क्रम events
- * @vcx_events: counter क्रम vcx_events
- * @dev: Platक्रमm काष्ठाure
+ * struct xcsi2rxss_state - CSI-2 Rx Subsystem device structure
+ * @subdev: The v4l2 subdev structure
+ * @format: Active V4L2 formats on each pad
+ * @default_format: Default V4L2 format
+ * @events: counter for events
+ * @vcx_events: counter for vcx_events
+ * @dev: Platform structure
  * @rsubdev: Remote subdev connected to sink pad
  * @rst_gpio: reset to video_aresetn
- * @clks: array of घड़ीs
- * @iomem: Base address of subप्रणाली
+ * @clks: array of clocks
+ * @iomem: Base address of subsystem
  * @max_num_lanes: Maximum number of lanes present
  * @datatype: Data type filter
- * @lock: mutex क्रम accessing this काष्ठाure
+ * @lock: mutex for accessing this structure
  * @pads: media pads
- * @streaming: Flag क्रम storing streaming state
- * @enable_active_lanes: If number of active lanes can be modअगरied
+ * @streaming: Flag for storing streaming state
+ * @enable_active_lanes: If number of active lanes can be modified
  * @en_vcx: If more than 4 VC are enabled
  *
- * This काष्ठाure contains the device driver related parameters
+ * This structure contains the device driver related parameters
  */
-काष्ठा xcsi2rxss_state अणु
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
-	काष्ठा v4l2_mbus_framefmt शेष_क्रमmat;
+struct xcsi2rxss_state {
+	struct v4l2_subdev subdev;
+	struct v4l2_mbus_framefmt format;
+	struct v4l2_mbus_framefmt default_format;
 	u32 events[XCSI_NUM_EVENTS];
 	u32 vcx_events[XCSI_VCX_NUM_EVENTS];
-	काष्ठा device *dev;
-	काष्ठा v4l2_subdev *rsubdev;
-	काष्ठा gpio_desc *rst_gpio;
-	काष्ठा clk_bulk_data *clks;
-	व्योम __iomem *iomem;
+	struct device *dev;
+	struct v4l2_subdev *rsubdev;
+	struct gpio_desc *rst_gpio;
+	struct clk_bulk_data *clks;
+	void __iomem *iomem;
 	u32 max_num_lanes;
 	u32 datatype;
-	/* used to protect access to this काष्ठा */
-	काष्ठा mutex lock;
-	काष्ठा media_pad pads[XCSI_MEDIA_PADS];
+	/* used to protect access to this struct */
+	struct mutex lock;
+	struct media_pad pads[XCSI_MEDIA_PADS];
 	bool streaming;
 	bool enable_active_lanes;
 	bool en_vcx;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_bulk_data xcsi2rxss_clks[] = अणु
-	अणु .id = "lite_aclk" पूर्ण,
-	अणु .id = "video_aclk" पूर्ण,
-पूर्ण;
+static const struct clk_bulk_data xcsi2rxss_clks[] = {
+	{ .id = "lite_aclk" },
+	{ .id = "video_aclk" },
+};
 
-अटल अंतरभूत काष्ठा xcsi2rxss_state *
-to_xcsi2rxssstate(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा xcsi2rxss_state, subdev);
-पूर्ण
+static inline struct xcsi2rxss_state *
+to_xcsi2rxssstate(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct xcsi2rxss_state, subdev);
+}
 
 /*
  * Register related operations
  */
-अटल अंतरभूत u32 xcsi2rxss_पढ़ो(काष्ठा xcsi2rxss_state *xcsi2rxss, u32 addr)
-अणु
-	वापस ioपढ़ो32(xcsi2rxss->iomem + addr);
-पूर्ण
+static inline u32 xcsi2rxss_read(struct xcsi2rxss_state *xcsi2rxss, u32 addr)
+{
+	return ioread32(xcsi2rxss->iomem + addr);
+}
 
-अटल अंतरभूत व्योम xcsi2rxss_ग_लिखो(काष्ठा xcsi2rxss_state *xcsi2rxss, u32 addr,
+static inline void xcsi2rxss_write(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				   u32 value)
-अणु
-	ioग_लिखो32(value, xcsi2rxss->iomem + addr);
-पूर्ण
+{
+	iowrite32(value, xcsi2rxss->iomem + addr);
+}
 
-अटल अंतरभूत व्योम xcsi2rxss_clr(काष्ठा xcsi2rxss_state *xcsi2rxss, u32 addr,
+static inline void xcsi2rxss_clr(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				 u32 clr)
-अणु
-	xcsi2rxss_ग_लिखो(xcsi2rxss, addr,
-			xcsi2rxss_पढ़ो(xcsi2rxss, addr) & ~clr);
-पूर्ण
+{
+	xcsi2rxss_write(xcsi2rxss, addr,
+			xcsi2rxss_read(xcsi2rxss, addr) & ~clr);
+}
 
-अटल अंतरभूत व्योम xcsi2rxss_set(काष्ठा xcsi2rxss_state *xcsi2rxss, u32 addr,
+static inline void xcsi2rxss_set(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				 u32 set)
-अणु
-	xcsi2rxss_ग_लिखो(xcsi2rxss, addr, xcsi2rxss_पढ़ो(xcsi2rxss, addr) | set);
-पूर्ण
+{
+	xcsi2rxss_write(xcsi2rxss, addr, xcsi2rxss_read(xcsi2rxss, addr) | set);
+}
 
 /*
- * This function वापसs the nth mbus क्रम a data type.
- * In हाल of error, mbus code वापसed is 0.
+ * This function returns the nth mbus for a data type.
+ * In case of error, mbus code returned is 0.
  */
-अटल u32 xcsi2rxss_get_nth_mbus(u32 dt, u32 n)
-अणु
-	अचिन्हित पूर्णांक i;
+static u32 xcsi2rxss_get_nth_mbus(u32 dt, u32 n)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(xcsi2dt_mbus_lut); i++) अणु
-		अगर (xcsi2dt_mbus_lut[i][0] == dt) अणु
-			अगर (n-- == 0)
-				वापस xcsi2dt_mbus_lut[i][1];
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(xcsi2dt_mbus_lut); i++) {
+		if (xcsi2dt_mbus_lut[i][0] == dt) {
+			if (n-- == 0)
+				return xcsi2dt_mbus_lut[i][1];
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This वापसs the data type क्रम a media bus क्रमmat अन्यथा 0 */
-अटल u32 xcsi2rxss_get_dt(u32 mbus)
-अणु
-	अचिन्हित पूर्णांक i;
+/* This returns the data type for a media bus format else 0 */
+static u32 xcsi2rxss_get_dt(u32 mbus)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(xcsi2dt_mbus_lut); i++) अणु
-		अगर (xcsi2dt_mbus_lut[i][1] == mbus)
-			वापस xcsi2dt_mbus_lut[i][0];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(xcsi2dt_mbus_lut); i++) {
+		if (xcsi2dt_mbus_lut[i][1] == mbus)
+			return xcsi2dt_mbus_lut[i][0];
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xcsi2rxss_soft_reset - Does a soft reset of the MIPI CSI-2 Rx Subप्रणाली
- * @state: Xilinx CSI-2 Rx Subप्रणाली काष्ठाure poपूर्णांकer
+ * xcsi2rxss_soft_reset - Does a soft reset of the MIPI CSI-2 Rx Subsystem
+ * @state: Xilinx CSI-2 Rx Subsystem structure pointer
  *
- * Core takes less than 100 video घड़ी cycles to reset.
- * So a larger समयout value is chosen क्रम margin.
+ * Core takes less than 100 video clock cycles to reset.
+ * So a larger timeout value is chosen for margin.
  *
- * Return: 0 - on success OR -ETIME अगर reset बार out
+ * Return: 0 - on success OR -ETIME if reset times out
  */
-अटल पूर्णांक xcsi2rxss_soft_reset(काष्ठा xcsi2rxss_state *state)
-अणु
-	u32 समयout = 1000; /* us */
+static int xcsi2rxss_soft_reset(struct xcsi2rxss_state *state)
+{
+	u32 timeout = 1000; /* us */
 
 	xcsi2rxss_set(state, XCSI_CCR_OFFSET, XCSI_CCR_SOFTRESET);
 
-	जबतक (xcsi2rxss_पढ़ो(state, XCSI_CSR_OFFSET) & XCSI_CSR_RIPCD) अणु
-		अगर (समयout == 0) अणु
+	while (xcsi2rxss_read(state, XCSI_CSR_OFFSET) & XCSI_CSR_RIPCD) {
+		if (timeout == 0) {
 			dev_err(state->dev, "soft reset timed out!\n");
-			वापस -ETIME;
-		पूर्ण
+			return -ETIME;
+		}
 
-		समयout--;
+		timeout--;
 		udelay(1);
-	पूर्ण
+	}
 
 	xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_SOFTRESET);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xcsi2rxss_hard_reset(काष्ठा xcsi2rxss_state *state)
-अणु
-	अगर (!state->rst_gpio)
-		वापस;
+static void xcsi2rxss_hard_reset(struct xcsi2rxss_state *state)
+{
+	if (!state->rst_gpio)
+		return;
 
 	/* minimum of 40 dphy_clk_200M cycles */
 	gpiod_set_value_cansleep(state->rst_gpio, 1);
 	usleep_range(1, 2);
 	gpiod_set_value_cansleep(state->rst_gpio, 0);
-पूर्ण
+}
 
-अटल व्योम xcsi2rxss_reset_event_counters(काष्ठा xcsi2rxss_state *state)
-अणु
-	अचिन्हित पूर्णांक i;
+static void xcsi2rxss_reset_event_counters(struct xcsi2rxss_state *state)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < XCSI_NUM_EVENTS; i++)
+	for (i = 0; i < XCSI_NUM_EVENTS; i++)
 		state->events[i] = 0;
 
-	क्रम (i = 0; i < XCSI_VCX_NUM_EVENTS; i++)
+	for (i = 0; i < XCSI_VCX_NUM_EVENTS; i++)
 		state->vcx_events[i] = 0;
-पूर्ण
+}
 
-/* Prपूर्णांक event counters */
-अटल व्योम xcsi2rxss_log_counters(काष्ठा xcsi2rxss_state *state)
-अणु
-	काष्ठा device *dev = state->dev;
-	अचिन्हित पूर्णांक i;
+/* Print event counters */
+static void xcsi2rxss_log_counters(struct xcsi2rxss_state *state)
+{
+	struct device *dev = state->dev;
+	unsigned int i;
 
-	क्रम (i = 0; i < XCSI_NUM_EVENTS; i++) अणु
-		अगर (state->events[i] > 0) अणु
+	for (i = 0; i < XCSI_NUM_EVENTS; i++) {
+		if (state->events[i] > 0) {
 			dev_info(dev, "%s events: %d\n",
 				 xcsi2rxss_events[i].name,
 				 state->events[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (state->en_vcx) अणु
-		क्रम (i = 0; i < XCSI_VCX_NUM_EVENTS; i++) अणु
-			अगर (state->vcx_events[i] > 0) अणु
+	if (state->en_vcx) {
+		for (i = 0; i < XCSI_VCX_NUM_EVENTS; i++) {
+			if (state->vcx_events[i] > 0) {
 				dev_info(dev,
 					 "VC %d Frame %s err vcx events: %d\n",
 					 (i / 2) + XCSI_VCX_START,
 					 i & 1 ? "Sync" : "Level",
 					 state->vcx_events[i]);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /**
  * xcsi2rxss_log_status - Logs the status of the CSI-2 Receiver
- * @sd: Poपूर्णांकer to V4L2 subdevice काष्ठाure
+ * @sd: Pointer to V4L2 subdevice structure
  *
- * This function prपूर्णांकs the current status of Xilinx MIPI CSI-2
+ * This function prints the current status of Xilinx MIPI CSI-2
  *
  * Return: 0 on success
  */
-अटल पूर्णांक xcsi2rxss_log_status(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
-	काष्ठा device *dev = xcsi2rxss->dev;
+static int xcsi2rxss_log_status(struct v4l2_subdev *sd)
+{
+	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
+	struct device *dev = xcsi2rxss->dev;
 	u32 reg, data;
-	अचिन्हित पूर्णांक i, max_vc;
+	unsigned int i, max_vc;
 
 	mutex_lock(&xcsi2rxss->lock);
 
 	xcsi2rxss_log_counters(xcsi2rxss);
 
 	dev_info(dev, "***** Core Status *****\n");
-	data = xcsi2rxss_पढ़ो(xcsi2rxss, XCSI_CSR_OFFSET);
+	data = xcsi2rxss_read(xcsi2rxss, XCSI_CSR_OFFSET);
 	dev_info(dev, "Short Packet FIFO Full = %s\n",
 		 data & XCSI_CSR_SPFIFOFULL ? "true" : "false");
 	dev_info(dev, "Short Packet FIFO Not Empty = %s\n",
@@ -434,15 +433,15 @@ to_xcsi2rxssstate(काष्ठा v4l2_subdev *subdev)
 
 	/* Clk & Lane Info  */
 	dev_info(dev, "******** Clock Lane Info *********\n");
-	data = xcsi2rxss_पढ़ो(xcsi2rxss, XCSI_CLKINFR_OFFSET);
+	data = xcsi2rxss_read(xcsi2rxss, XCSI_CLKINFR_OFFSET);
 	dev_info(dev, "Clock Lane in Stop State = %s\n",
 		 data & XCSI_CLKINFR_STOP ? "true" : "false");
 
 	dev_info(dev, "******** Data Lane Info *********\n");
 	dev_info(dev, "Lane\tSoT Error\tSoT Sync Error\tStop State\n");
 	reg = XCSI_DLXINFR_OFFSET;
-	क्रम (i = 0; i < XCSI_MAXDL_COUNT; i++) अणु
-		data = xcsi2rxss_पढ़ो(xcsi2rxss, reg);
+	for (i = 0; i < XCSI_MAXDL_COUNT; i++) {
+		data = xcsi2rxss_read(xcsi2rxss, reg);
 
 		dev_info(dev, "%d\t%s\t\t%s\t\t%s\n", i,
 			 data & XCSI_DLXINFR_SOTERR ? "true" : "false",
@@ -450,70 +449,70 @@ to_xcsi2rxssstate(काष्ठा v4l2_subdev *subdev)
 			 data & XCSI_DLXINFR_STOP ? "true" : "false");
 
 		reg += XCSI_NEXTREG_OFFSET;
-	पूर्ण
+	}
 
-	/* Virtual Channel Image Inक्रमmation */
+	/* Virtual Channel Image Information */
 	dev_info(dev, "********** Virtual Channel Info ************\n");
 	dev_info(dev, "VC\tLine Count\tByte Count\tData Type\n");
-	अगर (xcsi2rxss->en_vcx)
+	if (xcsi2rxss->en_vcx)
 		max_vc = XCSI_MAX_VCX;
-	अन्यथा
+	else
 		max_vc = XCSI_MAX_VC;
 
 	reg = XCSI_VCXINF1R_OFFSET;
-	क्रम (i = 0; i < max_vc; i++) अणु
+	for (i = 0; i < max_vc; i++) {
 		u32 line_count, byte_count, data_type;
 
 		/* Get line and byte count from VCXINFR1 Register */
-		data = xcsi2rxss_पढ़ो(xcsi2rxss, reg);
+		data = xcsi2rxss_read(xcsi2rxss, reg);
 		byte_count = data & XCSI_VCXINF1R_BYTECOUNT;
 		line_count = data & XCSI_VCXINF1R_LINECOUNT;
 		line_count >>= XCSI_VCXINF1R_LINECOUNT_SHIFT;
 
 		/* Get data type from VCXINFR2 Register */
 		reg += XCSI_NEXTREG_OFFSET;
-		data = xcsi2rxss_पढ़ो(xcsi2rxss, reg);
+		data = xcsi2rxss_read(xcsi2rxss, reg);
 		data_type = data & XCSI_VCXINF2R_DT;
 
 		dev_info(dev, "%d\t%d\t\t%d\t\t0x%x\n", i, line_count,
 			 byte_count, data_type);
 
-		/* Move to next pair of VC Info रेजिस्टरs */
+		/* Move to next pair of VC Info registers */
 		reg += XCSI_NEXTREG_OFFSET;
-	पूर्ण
+	}
 
 	mutex_unlock(&xcsi2rxss->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा v4l2_subdev *xcsi2rxss_get_remote_subdev(काष्ठा media_pad *local)
-अणु
-	काष्ठा media_pad *remote;
+static struct v4l2_subdev *xcsi2rxss_get_remote_subdev(struct media_pad *local)
+{
+	struct media_pad *remote;
 
 	remote = media_entity_remote_pad(local);
-	अगर (!remote || !is_media_entity_v4l2_subdev(remote->entity))
-		वापस शून्य;
+	if (!remote || !is_media_entity_v4l2_subdev(remote->entity))
+		return NULL;
 
-	वापस media_entity_to_v4l2_subdev(remote->entity);
-पूर्ण
+	return media_entity_to_v4l2_subdev(remote->entity);
+}
 
-अटल पूर्णांक xcsi2rxss_start_stream(काष्ठा xcsi2rxss_state *state)
-अणु
-	पूर्णांक ret = 0;
+static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
+{
+	int ret = 0;
 
 	/* enable core */
 	xcsi2rxss_set(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 
 	ret = xcsi2rxss_soft_reset(state);
-	अगर (ret) अणु
+	if (ret) {
 		state->streaming = false;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* enable पूर्णांकerrupts */
+	/* enable interrupts */
 	xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
-	xcsi2rxss_ग_लिखो(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
+	xcsi2rxss_write(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 	xcsi2rxss_set(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 	state->streaming = true;
@@ -522,84 +521,84 @@ to_xcsi2rxssstate(काष्ठा v4l2_subdev *subdev)
 		xcsi2rxss_get_remote_subdev(&state->pads[XVIP_PAD_SINK]);
 
 	ret = v4l2_subdev_call(state->rsubdev, video, s_stream, 1);
-	अगर (ret) अणु
-		/* disable पूर्णांकerrupts */
+	if (ret) {
+		/* disable interrupts */
 		xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 		xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 		/* disable core */
 		xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 		state->streaming = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xcsi2rxss_stop_stream(काष्ठा xcsi2rxss_state *state)
-अणु
+static void xcsi2rxss_stop_stream(struct xcsi2rxss_state *state)
+{
 	v4l2_subdev_call(state->rsubdev, video, s_stream, 0);
 
-	/* disable पूर्णांकerrupts */
+	/* disable interrupts */
 	xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 	xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 	/* disable core */
 	xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 	state->streaming = false;
-पूर्ण
+}
 
 /**
- * xcsi2rxss_irq_handler - Interrupt handler क्रम CSI-2
+ * xcsi2rxss_irq_handler - Interrupt handler for CSI-2
  * @irq: IRQ number
- * @data: Poपूर्णांकer to device state
+ * @data: Pointer to device state
  *
- * In the पूर्णांकerrupt handler, a list of event counters are updated क्रम
- * corresponding पूर्णांकerrupts. This is useful to get status / debug.
+ * In the interrupt handler, a list of event counters are updated for
+ * corresponding interrupts. This is useful to get status / debug.
  *
- * Return: IRQ_HANDLED after handling पूर्णांकerrupts
+ * Return: IRQ_HANDLED after handling interrupts
  */
-अटल irqवापस_t xcsi2rxss_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा xcsi2rxss_state *state = (काष्ठा xcsi2rxss_state *)data;
-	काष्ठा device *dev = state->dev;
+static irqreturn_t xcsi2rxss_irq_handler(int irq, void *data)
+{
+	struct xcsi2rxss_state *state = (struct xcsi2rxss_state *)data;
+	struct device *dev = state->dev;
 	u32 status;
 
-	status = xcsi2rxss_पढ़ो(state, XCSI_ISR_OFFSET) & XCSI_ISR_ALLINTR_MASK;
-	xcsi2rxss_ग_लिखो(state, XCSI_ISR_OFFSET, status);
+	status = xcsi2rxss_read(state, XCSI_ISR_OFFSET) & XCSI_ISR_ALLINTR_MASK;
+	xcsi2rxss_write(state, XCSI_ISR_OFFSET, status);
 
-	/* Received a लघु packet */
-	अगर (status & XCSI_ISR_SPFIFONE) अणु
+	/* Received a short packet */
+	if (status & XCSI_ISR_SPFIFONE) {
 		u32 count = 0;
 
 		/*
-		 * Drain generic लघु packet FIFO by पढ़ोing max 31
-		 * (fअगरo depth) लघु packets from fअगरo or till fअगरo is empty.
+		 * Drain generic short packet FIFO by reading max 31
+		 * (fifo depth) short packets from fifo or till fifo is empty.
 		 */
-		क्रम (count = 0; count < XCSI_SPKT_FIFO_DEPTH; ++count) अणु
-			u32 spfअगरostat, spkt;
+		for (count = 0; count < XCSI_SPKT_FIFO_DEPTH; ++count) {
+			u32 spfifostat, spkt;
 
-			spkt = xcsi2rxss_पढ़ो(state, XCSI_SPKTR_OFFSET);
+			spkt = xcsi2rxss_read(state, XCSI_SPKTR_OFFSET);
 			dev_dbg(dev, "Short packet = 0x%08x\n", spkt);
-			spfअगरostat = xcsi2rxss_पढ़ो(state, XCSI_ISR_OFFSET);
-			spfअगरostat &= XCSI_ISR_SPFIFONE;
-			अगर (!spfअगरostat)
-				अवरोध;
-			xcsi2rxss_ग_लिखो(state, XCSI_ISR_OFFSET, spfअगरostat);
-		पूर्ण
-	पूर्ण
+			spfifostat = xcsi2rxss_read(state, XCSI_ISR_OFFSET);
+			spfifostat &= XCSI_ISR_SPFIFONE;
+			if (!spfifostat)
+				break;
+			xcsi2rxss_write(state, XCSI_ISR_OFFSET, spfifostat);
+		}
+	}
 
 	/* Short packet FIFO overflow */
-	अगर (status & XCSI_ISR_SPFIFOF)
+	if (status & XCSI_ISR_SPFIFOF)
 		dev_dbg_ratelimited(dev, "Short packet FIFO overflowed\n");
 
 	/*
 	 * Stream line buffer full
-	 * This means there is a backpressure from करोwnstream IP
+	 * This means there is a backpressure from downstream IP
 	 */
-	अगर (status & XCSI_ISR_SLBF) अणु
+	if (status & XCSI_ISR_SLBF) {
 		dev_alert_ratelimited(dev, "Stream Line Buffer Full!\n");
 
-		/* disable पूर्णांकerrupts */
+		/* disable interrupts */
 		xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 		xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
@@ -607,355 +606,355 @@ to_xcsi2rxssstate(काष्ठा v4l2_subdev *subdev)
 		xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 
 		/*
-		 * The IP needs to be hard reset beक्रमe it can be used now.
-		 * This will be करोne in streamoff.
+		 * The IP needs to be hard reset before it can be used now.
+		 * This will be done in streamoff.
 		 */
 
 		/*
-		 * TODO: Notअगरy the whole pipeline with v4l2_subdev_notअगरy() to
-		 * inक्रमm userspace.
+		 * TODO: Notify the whole pipeline with v4l2_subdev_notify() to
+		 * inform userspace.
 		 */
-	पूर्ण
+	}
 
 	/* Increment event counters */
-	अगर (status & XCSI_ISR_ALLINTR_MASK) अणु
-		अचिन्हित पूर्णांक i;
+	if (status & XCSI_ISR_ALLINTR_MASK) {
+		unsigned int i;
 
-		क्रम (i = 0; i < XCSI_NUM_EVENTS; i++) अणु
-			अगर (!(status & xcsi2rxss_events[i].mask))
-				जारी;
+		for (i = 0; i < XCSI_NUM_EVENTS; i++) {
+			if (!(status & xcsi2rxss_events[i].mask))
+				continue;
 			state->events[i]++;
 			dev_dbg_ratelimited(dev, "%s: %u\n",
 					    xcsi2rxss_events[i].name,
 					    state->events[i]);
-		पूर्ण
+		}
 
-		अगर (status & XCSI_ISR_VCXFE && state->en_vcx) अणु
+		if (status & XCSI_ISR_VCXFE && state->en_vcx) {
 			u32 vcxstatus;
 
-			vcxstatus = xcsi2rxss_पढ़ो(state, XCSI_VCXR_OFFSET);
+			vcxstatus = xcsi2rxss_read(state, XCSI_VCXR_OFFSET);
 			vcxstatus &= XCSI_VCXR_VCERR;
-			क्रम (i = 0; i < XCSI_VCX_NUM_EVENTS; i++) अणु
-				अगर (!(vcxstatus & BIT(i)))
-					जारी;
+			for (i = 0; i < XCSI_VCX_NUM_EVENTS; i++) {
+				if (!(vcxstatus & BIT(i)))
+					continue;
 				state->vcx_events[i]++;
-			पूर्ण
-			xcsi2rxss_ग_लिखो(state, XCSI_VCXR_OFFSET, vcxstatus);
-		पूर्ण
-	पूर्ण
+			}
+			xcsi2rxss_write(state, XCSI_VCXR_OFFSET, vcxstatus);
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
  * xcsi2rxss_s_stream - It is used to start/stop the streaming.
  * @sd: V4L2 Sub device
  * @enable: Flag (True / False)
  *
- * This function controls the start or stop of streaming क्रम the
- * Xilinx MIPI CSI-2 Rx Subप्रणाली.
+ * This function controls the start or stop of streaming for the
+ * Xilinx MIPI CSI-2 Rx Subsystem.
  *
  * Return: 0 on success, errors otherwise
  */
-अटल पूर्णांक xcsi2rxss_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
-	पूर्णांक ret = 0;
+static int xcsi2rxss_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
+	int ret = 0;
 
 	mutex_lock(&xcsi2rxss->lock);
 
-	अगर (enable == xcsi2rxss->streaming)
-		जाओ stream_करोne;
+	if (enable == xcsi2rxss->streaming)
+		goto stream_done;
 
-	अगर (enable) अणु
+	if (enable) {
 		xcsi2rxss_reset_event_counters(xcsi2rxss);
 		ret = xcsi2rxss_start_stream(xcsi2rxss);
-	पूर्ण अन्यथा अणु
+	} else {
 		xcsi2rxss_stop_stream(xcsi2rxss);
 		xcsi2rxss_hard_reset(xcsi2rxss);
-	पूर्ण
+	}
 
-stream_करोne:
+stream_done:
 	mutex_unlock(&xcsi2rxss->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__xcsi2rxss_get_pad_क्रमmat(काष्ठा xcsi2rxss_state *xcsi2rxss,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   अचिन्हित पूर्णांक pad, u32 which)
-अणु
-	चयन (which) अणु
-	हाल V4L2_SUBDEV_FORMAT_TRY:
-		वापस v4l2_subdev_get_try_क्रमmat(&xcsi2rxss->subdev, cfg, pad);
-	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
-		वापस &xcsi2rxss->क्रमmat;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static struct v4l2_mbus_framefmt *
+__xcsi2rxss_get_pad_format(struct xcsi2rxss_state *xcsi2rxss,
+			   struct v4l2_subdev_pad_config *cfg,
+			   unsigned int pad, u32 which)
+{
+	switch (which) {
+	case V4L2_SUBDEV_FORMAT_TRY:
+		return v4l2_subdev_get_try_format(&xcsi2rxss->subdev, cfg, pad);
+	case V4L2_SUBDEV_FORMAT_ACTIVE:
+		return &xcsi2rxss->format;
+	default:
+		return NULL;
+	}
+}
 
 /**
- * xcsi2rxss_init_cfg - Initialise the pad क्रमmat config to शेष
- * @sd: Poपूर्णांकer to V4L2 Sub device काष्ठाure
- * @cfg: Poपूर्णांकer to sub device pad inक्रमmation काष्ठाure
+ * xcsi2rxss_init_cfg - Initialise the pad format config to default
+ * @sd: Pointer to V4L2 Sub device structure
+ * @cfg: Pointer to sub device pad information structure
  *
- * This function is used to initialize the pad क्रमmat with the शेष
+ * This function is used to initialize the pad format with the default
  * values.
  *
  * Return: 0 on success
  */
-अटल पूर्णांक xcsi2rxss_init_cfg(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_subdev_pad_config *cfg)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	अचिन्हित पूर्णांक i;
+static int xcsi2rxss_init_cfg(struct v4l2_subdev *sd,
+			      struct v4l2_subdev_pad_config *cfg)
+{
+	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
+	struct v4l2_mbus_framefmt *format;
+	unsigned int i;
 
 	mutex_lock(&xcsi2rxss->lock);
-	क्रम (i = 0; i < XCSI_MEDIA_PADS; i++) अणु
-		क्रमmat = v4l2_subdev_get_try_क्रमmat(sd, cfg, i);
-		*क्रमmat = xcsi2rxss->शेष_क्रमmat;
-	पूर्ण
+	for (i = 0; i < XCSI_MEDIA_PADS; i++) {
+		format = v4l2_subdev_get_try_format(sd, cfg, i);
+		*format = xcsi2rxss->default_format;
+	}
 	mutex_unlock(&xcsi2rxss->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xcsi2rxss_get_क्रमmat - Get the pad क्रमmat
- * @sd: Poपूर्णांकer to V4L2 Sub device काष्ठाure
- * @cfg: Poपूर्णांकer to sub device pad inक्रमmation काष्ठाure
- * @fmt: Poपूर्णांकer to pad level media bus क्रमmat
+ * xcsi2rxss_get_format - Get the pad format
+ * @sd: Pointer to V4L2 Sub device structure
+ * @cfg: Pointer to sub device pad information structure
+ * @fmt: Pointer to pad level media bus format
  *
- * This function is used to get the pad क्रमmat inक्रमmation.
+ * This function is used to get the pad format information.
  *
  * Return: 0 on success
  */
-अटल पूर्णांक xcsi2rxss_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
+static int xcsi2rxss_get_format(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_format *fmt)
+{
+	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
 
 	mutex_lock(&xcsi2rxss->lock);
-	fmt->क्रमmat = *__xcsi2rxss_get_pad_क्रमmat(xcsi2rxss, cfg, fmt->pad,
+	fmt->format = *__xcsi2rxss_get_pad_format(xcsi2rxss, cfg, fmt->pad,
 						  fmt->which);
 	mutex_unlock(&xcsi2rxss->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * xcsi2rxss_set_क्रमmat - This is used to set the pad क्रमmat
- * @sd: Poपूर्णांकer to V4L2 Sub device काष्ठाure
- * @cfg: Poपूर्णांकer to sub device pad inक्रमmation काष्ठाure
- * @fmt: Poपूर्णांकer to pad level media bus क्रमmat
+ * xcsi2rxss_set_format - This is used to set the pad format
+ * @sd: Pointer to V4L2 Sub device structure
+ * @cfg: Pointer to sub device pad information structure
+ * @fmt: Pointer to pad level media bus format
  *
- * This function is used to set the pad क्रमmat. Since the pad क्रमmat is fixed
- * in hardware, it can't be modअगरied on run समय. So when a क्रमmat set is
- * requested by application, all parameters except the क्रमmat type is saved
- * क्रम the pad and the original pad क्रमmat is sent back to the application.
+ * This function is used to set the pad format. Since the pad format is fixed
+ * in hardware, it can't be modified on run time. So when a format set is
+ * requested by application, all parameters except the format type is saved
+ * for the pad and the original pad format is sent back to the application.
  *
  * Return: 0 on success
  */
-अटल पूर्णांक xcsi2rxss_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
-	काष्ठा v4l2_mbus_framefmt *__क्रमmat;
+static int xcsi2rxss_set_format(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_format *fmt)
+{
+	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
+	struct v4l2_mbus_framefmt *__format;
 	u32 dt;
 
 	mutex_lock(&xcsi2rxss->lock);
 
 	/*
-	 * Only the क्रमmat->code parameter matters क्रम CSI as the
-	 * CSI क्रमmat cannot be changed at runसमय.
-	 * Ensure that क्रमmat to set is copied to over to CSI pad क्रमmat
+	 * Only the format->code parameter matters for CSI as the
+	 * CSI format cannot be changed at runtime.
+	 * Ensure that format to set is copied to over to CSI pad format
 	 */
-	__क्रमmat = __xcsi2rxss_get_pad_क्रमmat(xcsi2rxss, cfg,
+	__format = __xcsi2rxss_get_pad_format(xcsi2rxss, cfg,
 					      fmt->pad, fmt->which);
 
-	/* only sink pad क्रमmat can be updated */
-	अगर (fmt->pad == XVIP_PAD_SOURCE) अणु
-		fmt->क्रमmat = *__क्रमmat;
+	/* only sink pad format can be updated */
+	if (fmt->pad == XVIP_PAD_SOURCE) {
+		fmt->format = *__format;
 		mutex_unlock(&xcsi2rxss->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * RAW8 is supported in all datatypes. So अगर requested media bus क्रमmat
-	 * is of RAW8 type, then allow to be set. In हाल core is configured to
-	 * other RAW, YUV422 8/10 or RGB888, set appropriate media bus क्रमmat.
+	 * RAW8 is supported in all datatypes. So if requested media bus format
+	 * is of RAW8 type, then allow to be set. In case core is configured to
+	 * other RAW, YUV422 8/10 or RGB888, set appropriate media bus format.
 	 */
-	dt = xcsi2rxss_get_dt(fmt->क्रमmat.code);
-	अगर (dt != xcsi2rxss->datatype && dt != XCSI_DT_RAW8) अणु
+	dt = xcsi2rxss_get_dt(fmt->format.code);
+	if (dt != xcsi2rxss->datatype && dt != XCSI_DT_RAW8) {
 		dev_dbg(xcsi2rxss->dev, "Unsupported media bus format");
-		/* set the शेष क्रमmat क्रम the data type */
-		fmt->क्रमmat.code = xcsi2rxss_get_nth_mbus(xcsi2rxss->datatype,
+		/* set the default format for the data type */
+		fmt->format.code = xcsi2rxss_get_nth_mbus(xcsi2rxss->datatype,
 							  0);
-	पूर्ण
+	}
 
-	*__क्रमmat = fmt->क्रमmat;
+	*__format = fmt->format;
 	mutex_unlock(&xcsi2rxss->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * xcsi2rxss_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
- * @sd: poपूर्णांकer to v4l2 subdev काष्ठाure
+ * xcsi2rxss_enum_mbus_code - Handle pixel format enumeration
+ * @sd: pointer to v4l2 subdev structure
  * @cfg: V4L2 subdev pad configuration
- * @code: poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
+ * @code: pointer to v4l2_subdev_mbus_code_enum structure
  *
  * Return: -EINVAL or zero on success
  */
-अटल पूर्णांक xcsi2rxss_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				    काष्ठा v4l2_subdev_pad_config *cfg,
-				    काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
+static int xcsi2rxss_enum_mbus_code(struct v4l2_subdev *sd,
+				    struct v4l2_subdev_pad_config *cfg,
+				    struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
 	u32 dt, n;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/* RAW8 dt packets are available in all DT configurations */
-	अगर (code->index < 4) अणु
+	if (code->index < 4) {
 		n = code->index;
 		dt = XCSI_DT_RAW8;
-	पूर्ण अन्यथा अगर (state->datatype != XCSI_DT_RAW8) अणु
+	} else if (state->datatype != XCSI_DT_RAW8) {
 		n = code->index - 4;
 		dt = state->datatype;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	code->code = xcsi2rxss_get_nth_mbus(dt, n);
-	अगर (!code->code)
+	if (!code->code)
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * Media Operations
  */
 
-अटल स्थिर काष्ठा media_entity_operations xcsi2rxss_media_ops = अणु
+static const struct media_entity_operations xcsi2rxss_media_ops = {
 	.link_validate = v4l2_subdev_link_validate
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops xcsi2rxss_core_ops = अणु
+static const struct v4l2_subdev_core_ops xcsi2rxss_core_ops = {
 	.log_status = xcsi2rxss_log_status,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops xcsi2rxss_video_ops = अणु
+static const struct v4l2_subdev_video_ops xcsi2rxss_video_ops = {
 	.s_stream = xcsi2rxss_s_stream
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops xcsi2rxss_pad_ops = अणु
+static const struct v4l2_subdev_pad_ops xcsi2rxss_pad_ops = {
 	.init_cfg = xcsi2rxss_init_cfg,
-	.get_fmt = xcsi2rxss_get_क्रमmat,
-	.set_fmt = xcsi2rxss_set_क्रमmat,
-	.क्रमागत_mbus_code = xcsi2rxss_क्रमागत_mbus_code,
-	.link_validate = v4l2_subdev_link_validate_शेष,
-पूर्ण;
+	.get_fmt = xcsi2rxss_get_format,
+	.set_fmt = xcsi2rxss_set_format,
+	.enum_mbus_code = xcsi2rxss_enum_mbus_code,
+	.link_validate = v4l2_subdev_link_validate_default,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops xcsi2rxss_ops = अणु
+static const struct v4l2_subdev_ops xcsi2rxss_ops = {
 	.core = &xcsi2rxss_core_ops,
 	.video = &xcsi2rxss_video_ops,
 	.pad = &xcsi2rxss_pad_ops
-पूर्ण;
+};
 
-अटल पूर्णांक xcsi2rxss_parse_of(काष्ठा xcsi2rxss_state *xcsi2rxss)
-अणु
-	काष्ठा device *dev = xcsi2rxss->dev;
-	काष्ठा device_node *node = dev->of_node;
+static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
+{
+	struct device *dev = xcsi2rxss->dev;
+	struct device_node *node = dev->of_node;
 
-	काष्ठा fwnode_handle *ep;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु
+	struct fwnode_handle *ep;
+	struct v4l2_fwnode_endpoint vep = {
 		.bus_type = V4L2_MBUS_CSI2_DPHY
-	पूर्ण;
+	};
 	bool en_csi_v20, vfb;
-	पूर्णांक ret;
+	int ret;
 
-	en_csi_v20 = of_property_पढ़ो_bool(node, "xlnx,en-csi-v2-0");
-	अगर (en_csi_v20)
-		xcsi2rxss->en_vcx = of_property_पढ़ो_bool(node, "xlnx,en-vcx");
+	en_csi_v20 = of_property_read_bool(node, "xlnx,en-csi-v2-0");
+	if (en_csi_v20)
+		xcsi2rxss->en_vcx = of_property_read_bool(node, "xlnx,en-vcx");
 
 	xcsi2rxss->enable_active_lanes =
-		of_property_पढ़ो_bool(node, "xlnx,en-active-lanes");
+		of_property_read_bool(node, "xlnx,en-active-lanes");
 
-	ret = of_property_पढ़ो_u32(node, "xlnx,csi-pxl-format",
+	ret = of_property_read_u32(node, "xlnx,csi-pxl-format",
 				   &xcsi2rxss->datatype);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "missing xlnx,csi-pxl-format property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	चयन (xcsi2rxss->datatype) अणु
-	हाल XCSI_DT_YUV4228B:
-	हाल XCSI_DT_RGB444:
-	हाल XCSI_DT_RGB555:
-	हाल XCSI_DT_RGB565:
-	हाल XCSI_DT_RGB666:
-	हाल XCSI_DT_RGB888:
-	हाल XCSI_DT_RAW6:
-	हाल XCSI_DT_RAW7:
-	हाल XCSI_DT_RAW8:
-	हाल XCSI_DT_RAW10:
-	हाल XCSI_DT_RAW12:
-	हाल XCSI_DT_RAW14:
-		अवरोध;
-	हाल XCSI_DT_YUV42210B:
-	हाल XCSI_DT_RAW16:
-	हाल XCSI_DT_RAW20:
-		अगर (!en_csi_v20) अणु
+	switch (xcsi2rxss->datatype) {
+	case XCSI_DT_YUV4228B:
+	case XCSI_DT_RGB444:
+	case XCSI_DT_RGB555:
+	case XCSI_DT_RGB565:
+	case XCSI_DT_RGB666:
+	case XCSI_DT_RGB888:
+	case XCSI_DT_RAW6:
+	case XCSI_DT_RAW7:
+	case XCSI_DT_RAW8:
+	case XCSI_DT_RAW10:
+	case XCSI_DT_RAW12:
+	case XCSI_DT_RAW14:
+		break;
+	case XCSI_DT_YUV42210B:
+	case XCSI_DT_RAW16:
+	case XCSI_DT_RAW20:
+		if (!en_csi_v20) {
 			ret = -EINVAL;
 			dev_dbg(dev, "enable csi v2 for this pixel format");
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	अगर (ret < 0) अणु
+	}
+	if (ret < 0) {
 		dev_err(dev, "invalid csi-pxl-format property!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	vfb = of_property_पढ़ो_bool(node, "xlnx,vfb");
-	अगर (!vfb) अणु
+	vfb = of_property_read_bool(node, "xlnx,vfb");
+	if (!vfb) {
 		dev_err(dev, "operation without VFB is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ep = fwnode_graph_get_endpoपूर्णांक_by_id(dev_fwnode(dev),
+	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev),
 					     XVIP_PAD_SINK, 0,
 					     FWNODE_GRAPH_ENDPOINT_NEXT);
-	अगर (!ep) अणु
+	if (!ep) {
 		dev_err(dev, "no sink port found");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
+	ret = v4l2_fwnode_endpoint_parse(ep, &vep);
 	fwnode_handle_put(ep);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error parsing sink port");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(dev, "mipi number lanes = %d\n",
 		vep.bus.mipi_csi2.num_data_lanes);
 
 	xcsi2rxss->max_num_lanes = vep.bus.mipi_csi2.num_data_lanes;
 
-	ep = fwnode_graph_get_endpoपूर्णांक_by_id(dev_fwnode(dev),
+	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev),
 					     XVIP_PAD_SOURCE, 0,
 					     FWNODE_GRAPH_ENDPOINT_NEXT);
-	अगर (!ep) अणु
+	if (!ep) {
 		dev_err(dev, "no source port found");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	fwnode_handle_put(ep);
 
@@ -965,65 +964,65 @@ __xcsi2rxss_get_pad_क्रमmat(काष्ठा xcsi2rxss_state *xcsi2rxs
 		xcsi2rxss->enable_active_lanes ? "dynamic" : "static",
 		xcsi2rxss->datatype);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xcsi2rxss_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा xcsi2rxss_state *xcsi2rxss;
-	पूर्णांक num_clks = ARRAY_SIZE(xcsi2rxss_clks);
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक irq, ret;
+static int xcsi2rxss_probe(struct platform_device *pdev)
+{
+	struct v4l2_subdev *subdev;
+	struct xcsi2rxss_state *xcsi2rxss;
+	int num_clks = ARRAY_SIZE(xcsi2rxss_clks);
+	struct device *dev = &pdev->dev;
+	int irq, ret;
 
-	xcsi2rxss = devm_kzalloc(dev, माप(*xcsi2rxss), GFP_KERNEL);
-	अगर (!xcsi2rxss)
-		वापस -ENOMEM;
+	xcsi2rxss = devm_kzalloc(dev, sizeof(*xcsi2rxss), GFP_KERNEL);
+	if (!xcsi2rxss)
+		return -ENOMEM;
 
 	xcsi2rxss->dev = dev;
 
 	xcsi2rxss->clks = devm_kmemdup(dev, xcsi2rxss_clks,
-				       माप(xcsi2rxss_clks), GFP_KERNEL);
-	अगर (!xcsi2rxss->clks)
-		वापस -ENOMEM;
+				       sizeof(xcsi2rxss_clks), GFP_KERNEL);
+	if (!xcsi2rxss->clks)
+		return -ENOMEM;
 
 	/* Reset GPIO */
 	xcsi2rxss->rst_gpio = devm_gpiod_get_optional(dev, "video-reset",
 						      GPIOD_OUT_HIGH);
-	अगर (IS_ERR(xcsi2rxss->rst_gpio)) अणु
-		अगर (PTR_ERR(xcsi2rxss->rst_gpio) != -EPROBE_DEFER)
+	if (IS_ERR(xcsi2rxss->rst_gpio)) {
+		if (PTR_ERR(xcsi2rxss->rst_gpio) != -EPROBE_DEFER)
 			dev_err(dev, "Video Reset GPIO not setup in DT");
-		वापस PTR_ERR(xcsi2rxss->rst_gpio);
-	पूर्ण
+		return PTR_ERR(xcsi2rxss->rst_gpio);
+	}
 
 	ret = xcsi2rxss_parse_of(xcsi2rxss);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	xcsi2rxss->iomem = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(xcsi2rxss->iomem))
-		वापस PTR_ERR(xcsi2rxss->iomem);
+	xcsi2rxss->iomem = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(xcsi2rxss->iomem))
+		return PTR_ERR(xcsi2rxss->iomem);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	ret = devm_request_thपढ़ोed_irq(dev, irq, शून्य,
+	ret = devm_request_threaded_irq(dev, irq, NULL,
 					xcsi2rxss_irq_handler, IRQF_ONESHOT,
 					dev_name(dev), xcsi2rxss);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Err = %d Interrupt handler reg failed!\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_bulk_get(dev, num_clks, xcsi2rxss->clks);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* TODO: Enable/disable घड़ीs at stream on/off समय. */
+	/* TODO: Enable/disable clocks at stream on/off time. */
 	ret = clk_bulk_prepare_enable(num_clks, xcsi2rxss->clks);
-	अगर (ret)
-		जाओ err_clk_put;
+	if (ret)
+		goto err_clk_put;
 
 	mutex_init(&xcsi2rxss->lock);
 
@@ -1034,78 +1033,78 @@ __xcsi2rxss_get_pad_क्रमmat(काष्ठा xcsi2rxss_state *xcsi2rxs
 	xcsi2rxss->pads[XVIP_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
 	xcsi2rxss->pads[XVIP_PAD_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
 
-	/* Initialize the शेष क्रमmat */
-	xcsi2rxss->शेष_क्रमmat.code =
+	/* Initialize the default format */
+	xcsi2rxss->default_format.code =
 		xcsi2rxss_get_nth_mbus(xcsi2rxss->datatype, 0);
-	xcsi2rxss->शेष_क्रमmat.field = V4L2_FIELD_NONE;
-	xcsi2rxss->शेष_क्रमmat.colorspace = V4L2_COLORSPACE_SRGB;
-	xcsi2rxss->शेष_क्रमmat.width = XCSI_DEFAULT_WIDTH;
-	xcsi2rxss->शेष_क्रमmat.height = XCSI_DEFAULT_HEIGHT;
-	xcsi2rxss->क्रमmat = xcsi2rxss->शेष_क्रमmat;
+	xcsi2rxss->default_format.field = V4L2_FIELD_NONE;
+	xcsi2rxss->default_format.colorspace = V4L2_COLORSPACE_SRGB;
+	xcsi2rxss->default_format.width = XCSI_DEFAULT_WIDTH;
+	xcsi2rxss->default_format.height = XCSI_DEFAULT_HEIGHT;
+	xcsi2rxss->format = xcsi2rxss->default_format;
 
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &xcsi2rxss->subdev;
 	v4l2_subdev_init(subdev, &xcsi2rxss_ops);
 	subdev->dev = dev;
-	strscpy(subdev->name, dev_name(dev), माप(subdev->name));
+	strscpy(subdev->name, dev_name(dev), sizeof(subdev->name));
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_EVENTS | V4L2_SUBDEV_FL_HAS_DEVNODE;
 	subdev->entity.ops = &xcsi2rxss_media_ops;
 	v4l2_set_subdevdata(subdev, xcsi2rxss);
 
 	ret = media_entity_pads_init(&subdev->entity, XCSI_MEDIA_PADS,
 				     xcsi2rxss->pads);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
-	platक्रमm_set_drvdata(pdev, xcsi2rxss);
+	platform_set_drvdata(pdev, xcsi2rxss);
 
-	ret = v4l2_async_रेजिस्टर_subdev(subdev);
-	अगर (ret < 0) अणु
+	ret = v4l2_async_register_subdev(subdev);
+	if (ret < 0) {
 		dev_err(dev, "failed to register subdev\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 error:
 	media_entity_cleanup(&subdev->entity);
 	mutex_destroy(&xcsi2rxss->lock);
 	clk_bulk_disable_unprepare(num_clks, xcsi2rxss->clks);
 err_clk_put:
 	clk_bulk_put(num_clks, xcsi2rxss->clks);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xcsi2rxss_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xcsi2rxss_state *xcsi2rxss = platक्रमm_get_drvdata(pdev);
-	काष्ठा v4l2_subdev *subdev = &xcsi2rxss->subdev;
-	पूर्णांक num_clks = ARRAY_SIZE(xcsi2rxss_clks);
+static int xcsi2rxss_remove(struct platform_device *pdev)
+{
+	struct xcsi2rxss_state *xcsi2rxss = platform_get_drvdata(pdev);
+	struct v4l2_subdev *subdev = &xcsi2rxss->subdev;
+	int num_clks = ARRAY_SIZE(xcsi2rxss_clks);
 
-	v4l2_async_unरेजिस्टर_subdev(subdev);
+	v4l2_async_unregister_subdev(subdev);
 	media_entity_cleanup(&subdev->entity);
 	mutex_destroy(&xcsi2rxss->lock);
 	clk_bulk_disable_unprepare(num_clks, xcsi2rxss->clks);
 	clk_bulk_put(num_clks, xcsi2rxss->clks);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id xcsi2rxss_of_id_table[] = अणु
-	अणु .compatible = "xlnx,mipi-csi2-rx-subsystem-5.0", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id xcsi2rxss_of_id_table[] = {
+	{ .compatible = "xlnx,mipi-csi2-rx-subsystem-5.0", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, xcsi2rxss_of_id_table);
 
-अटल काष्ठा platक्रमm_driver xcsi2rxss_driver = अणु
-	.driver = अणु
+static struct platform_driver xcsi2rxss_driver = {
+	.driver = {
 		.name		= "xilinx-csi2rxss",
 		.of_match_table	= xcsi2rxss_of_id_table,
-	पूर्ण,
+	},
 	.probe			= xcsi2rxss_probe,
-	.हटाओ			= xcsi2rxss_हटाओ,
-पूर्ण;
+	.remove			= xcsi2rxss_remove,
+};
 
-module_platक्रमm_driver(xcsi2rxss_driver);
+module_platform_driver(xcsi2rxss_driver);
 
 MODULE_AUTHOR("Vishal Sagar <vsagar@xilinx.com>");
 MODULE_DESCRIPTION("Xilinx MIPI CSI-2 Rx Subsystem Driver");

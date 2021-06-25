@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,143 +21,143 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश <core/notअगरy.h>
-#समावेश <core/event.h>
+#include <core/notify.h>
+#include <core/event.h>
 
-अटल अंतरभूत व्योम
-nvkm_notअगरy_put_locked(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	अगर (notअगरy->block++ == 0)
-		nvkm_event_put(notअगरy->event, notअगरy->types, notअगरy->index);
-पूर्ण
+static inline void
+nvkm_notify_put_locked(struct nvkm_notify *notify)
+{
+	if (notify->block++ == 0)
+		nvkm_event_put(notify->event, notify->types, notify->index);
+}
 
-व्योम
-nvkm_notअगरy_put(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	काष्ठा nvkm_event *event = notअगरy->event;
-	अचिन्हित दीर्घ flags;
-	अगर (likely(event) &&
-	    test_and_clear_bit(NVKM_NOTIFY_USER, &notअगरy->flags)) अणु
+void
+nvkm_notify_put(struct nvkm_notify *notify)
+{
+	struct nvkm_event *event = notify->event;
+	unsigned long flags;
+	if (likely(event) &&
+	    test_and_clear_bit(NVKM_NOTIFY_USER, &notify->flags)) {
 		spin_lock_irqsave(&event->refs_lock, flags);
-		nvkm_notअगरy_put_locked(notअगरy);
+		nvkm_notify_put_locked(notify);
 		spin_unlock_irqrestore(&event->refs_lock, flags);
-		अगर (test_bit(NVKM_NOTIFY_WORK, &notअगरy->flags))
-			flush_work(&notअगरy->work);
-	पूर्ण
-पूर्ण
+		if (test_bit(NVKM_NOTIFY_WORK, &notify->flags))
+			flush_work(&notify->work);
+	}
+}
 
-अटल अंतरभूत व्योम
-nvkm_notअगरy_get_locked(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	अगर (--notअगरy->block == 0)
-		nvkm_event_get(notअगरy->event, notअगरy->types, notअगरy->index);
-पूर्ण
+static inline void
+nvkm_notify_get_locked(struct nvkm_notify *notify)
+{
+	if (--notify->block == 0)
+		nvkm_event_get(notify->event, notify->types, notify->index);
+}
 
-व्योम
-nvkm_notअगरy_get(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	काष्ठा nvkm_event *event = notअगरy->event;
-	अचिन्हित दीर्घ flags;
-	अगर (likely(event) &&
-	    !test_and_set_bit(NVKM_NOTIFY_USER, &notअगरy->flags)) अणु
+void
+nvkm_notify_get(struct nvkm_notify *notify)
+{
+	struct nvkm_event *event = notify->event;
+	unsigned long flags;
+	if (likely(event) &&
+	    !test_and_set_bit(NVKM_NOTIFY_USER, &notify->flags)) {
 		spin_lock_irqsave(&event->refs_lock, flags);
-		nvkm_notअगरy_get_locked(notअगरy);
+		nvkm_notify_get_locked(notify);
 		spin_unlock_irqrestore(&event->refs_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
-nvkm_notअगरy_func(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	काष्ठा nvkm_event *event = notअगरy->event;
-	पूर्णांक ret = notअगरy->func(notअगरy);
-	अचिन्हित दीर्घ flags;
-	अगर ((ret == NVKM_NOTIFY_KEEP) ||
-	    !test_and_clear_bit(NVKM_NOTIFY_USER, &notअगरy->flags)) अणु
+static inline void
+nvkm_notify_func(struct nvkm_notify *notify)
+{
+	struct nvkm_event *event = notify->event;
+	int ret = notify->func(notify);
+	unsigned long flags;
+	if ((ret == NVKM_NOTIFY_KEEP) ||
+	    !test_and_clear_bit(NVKM_NOTIFY_USER, &notify->flags)) {
 		spin_lock_irqsave(&event->refs_lock, flags);
-		nvkm_notअगरy_get_locked(notअगरy);
+		nvkm_notify_get_locked(notify);
 		spin_unlock_irqrestore(&event->refs_lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-nvkm_notअगरy_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvkm_notअगरy *notअगरy = container_of(work, typeof(*notअगरy), work);
-	nvkm_notअगरy_func(notअगरy);
-पूर्ण
+static void
+nvkm_notify_work(struct work_struct *work)
+{
+	struct nvkm_notify *notify = container_of(work, typeof(*notify), work);
+	nvkm_notify_func(notify);
+}
 
-व्योम
-nvkm_notअगरy_send(काष्ठा nvkm_notअगरy *notअगरy, व्योम *data, u32 size)
-अणु
-	काष्ठा nvkm_event *event = notअगरy->event;
-	अचिन्हित दीर्घ flags;
+void
+nvkm_notify_send(struct nvkm_notify *notify, void *data, u32 size)
+{
+	struct nvkm_event *event = notify->event;
+	unsigned long flags;
 
-	निश्चित_spin_locked(&event->list_lock);
-	BUG_ON(size != notअगरy->size);
+	assert_spin_locked(&event->list_lock);
+	BUG_ON(size != notify->size);
 
 	spin_lock_irqsave(&event->refs_lock, flags);
-	अगर (notअगरy->block) अणु
+	if (notify->block) {
 		spin_unlock_irqrestore(&event->refs_lock, flags);
-		वापस;
-	पूर्ण
-	nvkm_notअगरy_put_locked(notअगरy);
+		return;
+	}
+	nvkm_notify_put_locked(notify);
 	spin_unlock_irqrestore(&event->refs_lock, flags);
 
-	अगर (test_bit(NVKM_NOTIFY_WORK, &notअगरy->flags)) अणु
-		स_नकल((व्योम *)notअगरy->data, data, size);
-		schedule_work(&notअगरy->work);
-	पूर्ण अन्यथा अणु
-		notअगरy->data = data;
-		nvkm_notअगरy_func(notअगरy);
-		notअगरy->data = शून्य;
-	पूर्ण
-पूर्ण
+	if (test_bit(NVKM_NOTIFY_WORK, &notify->flags)) {
+		memcpy((void *)notify->data, data, size);
+		schedule_work(&notify->work);
+	} else {
+		notify->data = data;
+		nvkm_notify_func(notify);
+		notify->data = NULL;
+	}
+}
 
-व्योम
-nvkm_notअगरy_fini(काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर (notअगरy->event) अणु
-		nvkm_notअगरy_put(notअगरy);
-		spin_lock_irqsave(&notअगरy->event->list_lock, flags);
-		list_del(&notअगरy->head);
-		spin_unlock_irqrestore(&notअगरy->event->list_lock, flags);
-		kमुक्त((व्योम *)notअगरy->data);
-		notअगरy->event = शून्य;
-	पूर्ण
-पूर्ण
+void
+nvkm_notify_fini(struct nvkm_notify *notify)
+{
+	unsigned long flags;
+	if (notify->event) {
+		nvkm_notify_put(notify);
+		spin_lock_irqsave(&notify->event->list_lock, flags);
+		list_del(&notify->head);
+		spin_unlock_irqrestore(&notify->event->list_lock, flags);
+		kfree((void *)notify->data);
+		notify->event = NULL;
+	}
+}
 
-पूर्णांक
-nvkm_notअगरy_init(काष्ठा nvkm_object *object, काष्ठा nvkm_event *event,
-		 पूर्णांक (*func)(काष्ठा nvkm_notअगरy *), bool work,
-		 व्योम *data, u32 size, u32 reply,
-		 काष्ठा nvkm_notअगरy *notअगरy)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -ENODEV;
-	अगर ((notअगरy->event = event), event->refs) अणु
-		ret = event->func->ctor(object, data, size, notअगरy);
-		अगर (ret == 0 && (ret = -EINVAL, notअगरy->size == reply)) अणु
-			notअगरy->flags = 0;
-			notअगरy->block = 1;
-			notअगरy->func = func;
-			notअगरy->data = शून्य;
-			अगर (ret = 0, work) अणु
-				INIT_WORK(&notअगरy->work, nvkm_notअगरy_work);
-				set_bit(NVKM_NOTIFY_WORK, &notअगरy->flags);
-				notअगरy->data = kदो_स्मृति(reply, GFP_KERNEL);
-				अगर (!notअगरy->data)
+int
+nvkm_notify_init(struct nvkm_object *object, struct nvkm_event *event,
+		 int (*func)(struct nvkm_notify *), bool work,
+		 void *data, u32 size, u32 reply,
+		 struct nvkm_notify *notify)
+{
+	unsigned long flags;
+	int ret = -ENODEV;
+	if ((notify->event = event), event->refs) {
+		ret = event->func->ctor(object, data, size, notify);
+		if (ret == 0 && (ret = -EINVAL, notify->size == reply)) {
+			notify->flags = 0;
+			notify->block = 1;
+			notify->func = func;
+			notify->data = NULL;
+			if (ret = 0, work) {
+				INIT_WORK(&notify->work, nvkm_notify_work);
+				set_bit(NVKM_NOTIFY_WORK, &notify->flags);
+				notify->data = kmalloc(reply, GFP_KERNEL);
+				if (!notify->data)
 					ret = -ENOMEM;
-			पूर्ण
-		पूर्ण
-		अगर (ret == 0) अणु
+			}
+		}
+		if (ret == 0) {
 			spin_lock_irqsave(&event->list_lock, flags);
-			list_add_tail(&notअगरy->head, &event->list);
+			list_add_tail(&notify->head, &event->list);
 			spin_unlock_irqrestore(&event->list_lock, flags);
-		पूर्ण
-	पूर्ण
-	अगर (ret)
-		notअगरy->event = शून्य;
-	वापस ret;
-पूर्ण
+		}
+	}
+	if (ret)
+		notify->event = NULL;
+	return ret;
+}

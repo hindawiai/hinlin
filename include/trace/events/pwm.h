@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM pwm
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM pwm
 
-#अगर !defined(_TRACE_PWM_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_PWM_H
+#if !defined(_TRACE_PWM_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_PWM_H
 
-#समावेश <linux/pwm.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/pwm.h>
+#include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(pwm,
 
-	TP_PROTO(काष्ठा pwm_device *pwm, स्थिर काष्ठा pwm_state *state),
+	TP_PROTO(struct pwm_device *pwm, const struct pwm_state *state),
 
 	TP_ARGS(pwm, state),
 
 	TP_STRUCT__entry(
-		__field(काष्ठा pwm_device *, pwm)
+		__field(struct pwm_device *, pwm)
 		__field(u64, period)
 		__field(u64, duty_cycle)
-		__field(क्रमागत pwm_polarity, polarity)
+		__field(enum pwm_polarity, polarity)
 		__field(bool, enabled)
 	),
 
@@ -31,7 +30,7 @@ DECLARE_EVENT_CLASS(pwm,
 		__entry->enabled = state->enabled;
 	),
 
-	TP_prपूर्णांकk("%p: period=%llu duty_cycle=%llu polarity=%d enabled=%d",
+	TP_printk("%p: period=%llu duty_cycle=%llu polarity=%d enabled=%d",
 		  __entry->pwm, __entry->period, __entry->duty_cycle,
 		  __entry->polarity, __entry->enabled)
 
@@ -39,7 +38,7 @@ DECLARE_EVENT_CLASS(pwm,
 
 DEFINE_EVENT(pwm, pwm_apply,
 
-	TP_PROTO(काष्ठा pwm_device *pwm, स्थिर काष्ठा pwm_state *state),
+	TP_PROTO(struct pwm_device *pwm, const struct pwm_state *state),
 
 	TP_ARGS(pwm, state)
 
@@ -47,13 +46,13 @@ DEFINE_EVENT(pwm, pwm_apply,
 
 DEFINE_EVENT(pwm, pwm_get,
 
-	TP_PROTO(काष्ठा pwm_device *pwm, स्थिर काष्ठा pwm_state *state),
+	TP_PROTO(struct pwm_device *pwm, const struct pwm_state *state),
 
 	TP_ARGS(pwm, state)
 
 );
 
-#पूर्ण_अगर /* _TRACE_PWM_H */
+#endif /* _TRACE_PWM_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

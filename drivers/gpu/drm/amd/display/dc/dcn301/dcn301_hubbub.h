@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,18 +22,18 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित DAL_DC_DCN301_DCN301_HUBBUB_H_
-#घोषणा DAL_DC_DCN301_DCN301_HUBBUB_H_
+#ifndef DAL_DC_DCN301_DCN301_HUBBUB_H_
+#define DAL_DC_DCN301_DCN301_HUBBUB_H_
 
-#समावेश "dcn30/dcn30_hubbub.h"
+#include "dcn30/dcn30_hubbub.h"
 
 
-#घोषणा HUBBUB_REG_LIST_DCN301(id)\
+#define HUBBUB_REG_LIST_DCN301(id)\
 	HUBBUB_REG_LIST_DCN30(id), \
 	HUBBUB_HVM_REG_LIST()
 
 
-#घोषणा HUBBUB_MASK_SH_LIST_DCN301(mask_sh)\
+#define HUBBUB_MASK_SH_LIST_DCN301(mask_sh)\
 	HUBBUB_MASK_SH_LIST_DCN30(mask_sh), \
 	HUBBUB_SF(DCHVM_CTRL0, HOSTVM_INIT_REQ, mask_sh), \
 	HUBBUB_SF(DCHVM_MEM_CTRL, HVM_GPUVMRET_PWR_REQ_DIS, mask_sh), \
@@ -51,11 +50,11 @@
 	HUBBUB_SF(DCHVM_RIOMMU_STAT0, RIOMMU_ACTIVE, mask_sh), \
 	HUBBUB_SF(DCHVM_RIOMMU_STAT0, HOSTVM_PREFETCH_DONE, mask_sh)
 
-व्योम hubbub301_स्थिरruct(काष्ठा dcn20_hubbub *hubbub3,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn_hubbub_रेजिस्टरs *hubbub_regs,
-	स्थिर काष्ठा dcn_hubbub_shअगरt *hubbub_shअगरt,
-	स्थिर काष्ठा dcn_hubbub_mask *hubbub_mask);
+void hubbub301_construct(struct dcn20_hubbub *hubbub3,
+	struct dc_context *ctx,
+	const struct dcn_hubbub_registers *hubbub_regs,
+	const struct dcn_hubbub_shift *hubbub_shift,
+	const struct dcn_hubbub_mask *hubbub_mask);
 
 
-#पूर्ण_अगर /* DAL_DC_DCN301_DCN301_HUBBUB_H_ */
+#endif /* DAL_DC_DCN301_DCN301_HUBBUB_H_ */

@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
-काष्ठा S अणु
-	पूर्णांक	a;
-	पूर्णांक	b;
-	पूर्णांक	c;
-पूर्ण;
+struct S {
+	int	a;
+	int	b;
+	int	c;
+};
 
-जोड़ U अणु
-	पूर्णांक	a;
-	पूर्णांक	b;
-	पूर्णांक	c;
-पूर्ण;
+union U {
+	int	a;
+	int	b;
+	int	c;
+};
 
-काष्ठा S1 अणु
-	पूर्णांक	a;
-	पूर्णांक	b;
-	पूर्णांक	c;
-पूर्ण;
+struct S1 {
+	int	a;
+	int	b;
+	int	c;
+};
 
-जोड़ U1 अणु
-	पूर्णांक	a;
-	पूर्णांक	b;
-	पूर्णांक	c;
-पूर्ण;
+union U1 {
+	int	a;
+	int	b;
+	int	c;
+};
 
-प्रकार पूर्णांक T;
-प्रकार पूर्णांक S;
-प्रकार पूर्णांक U;
-प्रकार पूर्णांक T1;
-प्रकार पूर्णांक S1;
-प्रकार पूर्णांक U1;
+typedef int T;
+typedef int S;
+typedef int U;
+typedef int T1;
+typedef int S1;
+typedef int U1;
 
-काष्ठा root_काष्ठा अणु
+struct root_struct {
 	S		m_1;
 	T		m_2;
 	U		m_3;
 	S1		m_4;
 	T1		m_5;
 	U1		m_6;
-	काष्ठा S	m_7;
-	काष्ठा S1	m_8;
-	जोड़  U	m_9;
-	जोड़  U1	m_10;
-पूर्ण;
+	struct S	m_7;
+	struct S1	m_8;
+	union  U	m_9;
+	union  U1	m_10;
+};
 
-पूर्णांक func(काष्ठा root_काष्ठा *root)
-अणु
-	वापस 0;
-पूर्ण
+int func(struct root_struct *root)
+{
+	return 0;
+}

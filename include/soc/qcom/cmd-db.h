@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved. */
 
-#अगर_अघोषित __QCOM_COMMAND_DB_H__
-#घोषणा __QCOM_COMMAND_DB_H__
+#ifndef __QCOM_COMMAND_DB_H__
+#define __QCOM_COMMAND_DB_H__
 
-#समावेश <linux/err.h>
+#include <linux/err.h>
 
-क्रमागत cmd_db_hw_type अणु
+enum cmd_db_hw_type {
 	CMD_DB_HW_INVALID = 0,
 	CMD_DB_HW_MIN     = 3,
 	CMD_DB_HW_ARC     = CMD_DB_HW_MIN,
@@ -15,27 +14,27 @@
 	CMD_DB_HW_BCM     = 5,
 	CMD_DB_HW_MAX     = CMD_DB_HW_BCM,
 	CMD_DB_HW_ALL     = 0xff,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_QCOM_COMMAND_DB)
-u32 cmd_db_पढ़ो_addr(स्थिर अक्षर *resource_id);
+#if IS_ENABLED(CONFIG_QCOM_COMMAND_DB)
+u32 cmd_db_read_addr(const char *resource_id);
 
-स्थिर व्योम *cmd_db_पढ़ो_aux_data(स्थिर अक्षर *resource_id, माप_प्रकार *len);
+const void *cmd_db_read_aux_data(const char *resource_id, size_t *len);
 
-क्रमागत cmd_db_hw_type cmd_db_पढ़ो_slave_id(स्थिर अक्षर *resource_id);
+enum cmd_db_hw_type cmd_db_read_slave_id(const char *resource_id);
 
-पूर्णांक cmd_db_पढ़ोy(व्योम);
-#अन्यथा
-अटल अंतरभूत u32 cmd_db_पढ़ो_addr(स्थिर अक्षर *resource_id)
-अणु वापस 0; पूर्ण
+int cmd_db_ready(void);
+#else
+static inline u32 cmd_db_read_addr(const char *resource_id)
+{ return 0; }
 
-अटल अंतरभूत स्थिर व्योम *cmd_db_पढ़ो_aux_data(स्थिर अक्षर *resource_id, माप_प्रकार *len)
-अणु वापस ERR_PTR(-ENODEV); पूर्ण
+static inline const void *cmd_db_read_aux_data(const char *resource_id, size_t *len)
+{ return ERR_PTR(-ENODEV); }
 
-अटल अंतरभूत क्रमागत cmd_db_hw_type cmd_db_पढ़ो_slave_id(स्थिर अक्षर *resource_id)
-अणु वापस -ENODEV; पूर्ण
+static inline enum cmd_db_hw_type cmd_db_read_slave_id(const char *resource_id)
+{ return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक cmd_db_पढ़ोy(व्योम)
-अणु वापस -ENODEV; पूर्ण
-#पूर्ण_अगर /* CONFIG_QCOM_COMMAND_DB */
-#पूर्ण_अगर /* __QCOM_COMMAND_DB_H__ */
+static inline int cmd_db_ready(void)
+{ return -ENODEV; }
+#endif /* CONFIG_QCOM_COMMAND_DB */
+#endif /* __QCOM_COMMAND_DB_H__ */

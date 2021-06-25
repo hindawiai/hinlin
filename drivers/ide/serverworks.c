@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 1998-2000 Michel Aubry
  * Copyright (C) 1998-2000 Andrzej Krzysztofowicz
  * Copyright (C) 1998-2000 Andre Hedrick <andre@linux-ide.org>
  * Copyright (C) 2007-2010 Bartlomiej Zolnierkiewicz
- * Portions copyright (c) 2001 Sun Microप्रणालीs
+ * Portions copyright (c) 2001 Sun Microsystems
  *
  *
- * RCC/ServerWorks IDE driver क्रम Linux
+ * RCC/ServerWorks IDE driver for Linux
  *
  *   OSB4: `Open South Bridge' IDE Interface (fn 1)
  *         supports UDMA mode 2 (33 MB/s)
@@ -17,12 +16,12 @@
  *         all revisions support UDMA mode 4 (66 MB/s)
  *         revision A2.0 and up support UDMA mode 5 (100 MB/s)
  *
- *         *** The CSB5 करोes not provide ANY रेजिस्टर ***
+ *         *** The CSB5 does not provide ANY register ***
  *         *** to detect 80-conductor cable presence. ***
  *
  *   CSB6: `Champion South Bridge' IDE Interface (optional: third channel)
  *
- *   HT1000: AKA BCM5785 - Hypertransport Southbridge क्रम Opteron प्रणालीs. IDE
+ *   HT1000: AKA BCM5785 - Hypertransport Southbridge for Opteron systems. IDE
  *   controller same as the CSB6. Single channel ATA100 only.
  *
  * Documentation:
@@ -30,215 +29,215 @@
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/init.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/ide.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#घोषणा DRV_NAME "serverworks"
+#define DRV_NAME "serverworks"
 
-#घोषणा SVWKS_CSB5_REVISION_NEW	0x92 /* min PCI_REVISION_ID क्रम UDMA5 (A2.0) */
-#घोषणा SVWKS_CSB6_REVISION	0xa0 /* min PCI_REVISION_ID क्रम UDMA4 (A1.0) */
+#define SVWKS_CSB5_REVISION_NEW	0x92 /* min PCI_REVISION_ID for UDMA5 (A2.0) */
+#define SVWKS_CSB6_REVISION	0xa0 /* min PCI_REVISION_ID for UDMA4 (A1.0) */
 
 /* Seagate Barracuda ATA IV Family drives in UDMA mode 5
  * can overrun their FIFOs when used with the CSB5 */
-अटल स्थिर अक्षर *svwks_bad_ata100[] = अणु
+static const char *svwks_bad_ata100[] = {
 	"ST320011A",
 	"ST340016A",
 	"ST360021A",
 	"ST380021A",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक check_in_drive_lists (ide_drive_t *drive, स्थिर अक्षर **list)
-अणु
-	अक्षर *m = (अक्षर *)&drive->id[ATA_ID_PROD];
+static int check_in_drive_lists (ide_drive_t *drive, const char **list)
+{
+	char *m = (char *)&drive->id[ATA_ID_PROD];
 
-	जबतक (*list)
-		अगर (!म_भेद(*list++, m))
-			वापस 1;
-	वापस 0;
-पूर्ण
+	while (*list)
+		if (!strcmp(*list++, m))
+			return 1;
+	return 0;
+}
 
-अटल u8 svwks_udma_filter(ide_drive_t *drive)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(drive->hwअगर->dev);
+static u8 svwks_udma_filter(ide_drive_t *drive)
+{
+	struct pci_dev *dev = to_pci_dev(drive->hwif->dev);
 
-	अगर (dev->device == PCI_DEVICE_ID_SERVERWORKS_HT1000IDE) अणु
-		वापस 0x1f;
-	पूर्ण अन्यथा अगर (dev->revision < SVWKS_CSB5_REVISION_NEW) अणु
-		वापस 0x07;
-	पूर्ण अन्यथा अणु
+	if (dev->device == PCI_DEVICE_ID_SERVERWORKS_HT1000IDE) {
+		return 0x1f;
+	} else if (dev->revision < SVWKS_CSB5_REVISION_NEW) {
+		return 0x07;
+	} else {
 		u8 btr = 0, mode, mask;
 
-		pci_पढ़ो_config_byte(dev, 0x5A, &btr);
+		pci_read_config_byte(dev, 0x5A, &btr);
 		mode = btr & 0x3;
 
-		/* If someone decides to करो UDMA133 on CSB5 the same
+		/* If someone decides to do UDMA133 on CSB5 the same
 		   issue will bite so be inclusive */
-		अगर (mode > 2 && check_in_drive_lists(drive, svwks_bad_ata100))
+		if (mode > 2 && check_in_drive_lists(drive, svwks_bad_ata100))
 			mode = 2;
 
-		चयन(mode) अणु
-		हाल 3:	 mask = 0x3f; अवरोध;
-		हाल 2:	 mask = 0x1f; अवरोध;
-		हाल 1:	 mask = 0x07; अवरोध;
-		शेष: mask = 0x00; अवरोध;
-		पूर्ण
+		switch(mode) {
+		case 3:	 mask = 0x3f; break;
+		case 2:	 mask = 0x1f; break;
+		case 1:	 mask = 0x07; break;
+		default: mask = 0x00; break;
+		}
 
-		वापस mask;
-	पूर्ण
-पूर्ण
+		return mask;
+	}
+}
 
-अटल u8 svwks_csb_check (काष्ठा pci_dev *dev)
-अणु
-	चयन (dev->device) अणु
-		हाल PCI_DEVICE_ID_SERVERWORKS_CSB5IDE:
-		हाल PCI_DEVICE_ID_SERVERWORKS_CSB6IDE:
-		हाल PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2:
-		हाल PCI_DEVICE_ID_SERVERWORKS_HT1000IDE:
-			वापस 1;
-		शेष:
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static u8 svwks_csb_check (struct pci_dev *dev)
+{
+	switch (dev->device) {
+		case PCI_DEVICE_ID_SERVERWORKS_CSB5IDE:
+		case PCI_DEVICE_ID_SERVERWORKS_CSB6IDE:
+		case PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2:
+		case PCI_DEVICE_ID_SERVERWORKS_HT1000IDE:
+			return 1;
+		default:
+			break;
+	}
+	return 0;
+}
 
-अटल व्योम svwks_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
-अणु
-	अटल स्थिर u8 pio_modes[] = अणु 0x5d, 0x47, 0x34, 0x22, 0x20 पूर्ण;
-	अटल स्थिर u8 drive_pci[] = अणु 0x41, 0x40, 0x43, 0x42 पूर्ण;
+static void svwks_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
+{
+	static const u8 pio_modes[] = { 0x5d, 0x47, 0x34, 0x22, 0x20 };
+	static const u8 drive_pci[] = { 0x41, 0x40, 0x43, 0x42 };
 
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
-	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
+	const u8 pio = drive->pio_mode - XFER_PIO_0;
 
-	अगर (drive->dn >= ARRAY_SIZE(drive_pci))
-		वापस;
+	if (drive->dn >= ARRAY_SIZE(drive_pci))
+		return;
 
-	pci_ग_लिखो_config_byte(dev, drive_pci[drive->dn], pio_modes[pio]);
+	pci_write_config_byte(dev, drive_pci[drive->dn], pio_modes[pio]);
 
-	अगर (svwks_csb_check(dev)) अणु
+	if (svwks_csb_check(dev)) {
 		u16 csb_pio = 0;
 
-		pci_पढ़ो_config_word(dev, 0x4a, &csb_pio);
+		pci_read_config_word(dev, 0x4a, &csb_pio);
 
 		csb_pio &= ~(0x0f << (4 * drive->dn));
 		csb_pio |= (pio << (4 * drive->dn));
 
-		pci_ग_लिखो_config_word(dev, 0x4a, csb_pio);
-	पूर्ण
-पूर्ण
+		pci_write_config_word(dev, 0x4a, csb_pio);
+	}
+}
 
-अटल व्योम svwks_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
-अणु
-	अटल स्थिर u8 udma_modes[]		= अणु 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 पूर्ण;
-	अटल स्थिर u8 dma_modes[]		= अणु 0x77, 0x21, 0x20 पूर्ण;
-	अटल स्थिर u8 drive_pci2[]		= अणु 0x45, 0x44, 0x47, 0x46 पूर्ण;
+static void svwks_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
+{
+	static const u8 udma_modes[]		= { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+	static const u8 dma_modes[]		= { 0x77, 0x21, 0x20 };
+	static const u8 drive_pci2[]		= { 0x45, 0x44, 0x47, 0x46 };
 
-	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
-	स्थिर u8 speed		= drive->dma_mode;
+	struct pci_dev *dev	= to_pci_dev(hwif->dev);
+	const u8 speed		= drive->dma_mode;
 	u8 unit			= drive->dn & 1;
 
 	u8 ultra_enable	 = 0, ultra_timing = 0, dma_timing = 0;
 
-	अगर (drive->dn >= ARRAY_SIZE(drive_pci2))
-		वापस;
+	if (drive->dn >= ARRAY_SIZE(drive_pci2))
+		return;
 
-	pci_पढ़ो_config_byte(dev, (0x56|hwअगर->channel), &ultra_timing);
-	pci_पढ़ो_config_byte(dev, 0x54, &ultra_enable);
+	pci_read_config_byte(dev, (0x56|hwif->channel), &ultra_timing);
+	pci_read_config_byte(dev, 0x54, &ultra_enable);
 
 	ultra_timing	&= ~(0x0F << (4*unit));
 	ultra_enable	&= ~(0x01 << drive->dn);
 
-	अगर (speed >= XFER_UDMA_0) अणु
+	if (speed >= XFER_UDMA_0) {
 		dma_timing   |= dma_modes[2];
 		ultra_timing |= (udma_modes[speed - XFER_UDMA_0] << (4 * unit));
 		ultra_enable |= (0x01 << drive->dn);
-	पूर्ण अन्यथा अगर (speed >= XFER_MW_DMA_0)
+	} else if (speed >= XFER_MW_DMA_0)
 		dma_timing   |= dma_modes[speed - XFER_MW_DMA_0];
 
-	pci_ग_लिखो_config_byte(dev, drive_pci2[drive->dn], dma_timing);
-	pci_ग_लिखो_config_byte(dev, (0x56|hwअगर->channel), ultra_timing);
-	pci_ग_लिखो_config_byte(dev, 0x54, ultra_enable);
-पूर्ण
+	pci_write_config_byte(dev, drive_pci2[drive->dn], dma_timing);
+	pci_write_config_byte(dev, (0x56|hwif->channel), ultra_timing);
+	pci_write_config_byte(dev, 0x54, ultra_enable);
+}
 
-अटल पूर्णांक init_chipset_svwks(काष्ठा pci_dev *dev)
-अणु
-	अचिन्हित पूर्णांक reg;
+static int init_chipset_svwks(struct pci_dev *dev)
+{
+	unsigned int reg;
 	u8 btr;
 
-	/* क्रमce Master Latency Timer value to 64 PCICLKs */
-	pci_ग_लिखो_config_byte(dev, PCI_LATENCY_TIMER, 0x40);
+	/* force Master Latency Timer value to 64 PCICLKs */
+	pci_write_config_byte(dev, PCI_LATENCY_TIMER, 0x40);
 
 	/* OSB4 : South Bridge and IDE */
-	अगर (dev->device == PCI_DEVICE_ID_SERVERWORKS_OSB4IDE) अणु
-		काष्ठा pci_dev *isa_dev =
+	if (dev->device == PCI_DEVICE_ID_SERVERWORKS_OSB4IDE) {
+		struct pci_dev *isa_dev =
 			pci_get_device(PCI_VENDOR_ID_SERVERWORKS,
-					PCI_DEVICE_ID_SERVERWORKS_OSB4, शून्य);
-		अगर (isa_dev) अणु
-			pci_पढ़ो_config_dword(isa_dev, 0x64, &reg);
-			reg &= ~0x00002000; /* disable 600ns पूर्णांकerrupt mask */
-			अगर(!(reg & 0x00004000))
-				prपूर्णांकk(KERN_DEBUG DRV_NAME " %s: UDMA not BIOS "
+					PCI_DEVICE_ID_SERVERWORKS_OSB4, NULL);
+		if (isa_dev) {
+			pci_read_config_dword(isa_dev, 0x64, &reg);
+			reg &= ~0x00002000; /* disable 600ns interrupt mask */
+			if(!(reg & 0x00004000))
+				printk(KERN_DEBUG DRV_NAME " %s: UDMA not BIOS "
 					"enabled.\n", pci_name(dev));
 			reg |=  0x00004000; /* enable UDMA/33 support */
-			pci_ग_लिखो_config_dword(isa_dev, 0x64, reg);
+			pci_write_config_dword(isa_dev, 0x64, reg);
 			pci_dev_put(isa_dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* setup CSB5/CSB6 : South Bridge and IDE option RAID */
-	अन्यथा अगर ((dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB5IDE) ||
+	else if ((dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB5IDE) ||
 		 (dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE) ||
-		 (dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2)) अणु
+		 (dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2)) {
 
 		/* Third Channel Test */
-		अगर (!(PCI_FUNC(dev->devfn) & 1)) अणु
-			काष्ठा pci_dev * findev = शून्य;
+		if (!(PCI_FUNC(dev->devfn) & 1)) {
+			struct pci_dev * findev = NULL;
 			u32 reg4c = 0;
 			findev = pci_get_device(PCI_VENDOR_ID_SERVERWORKS,
-				PCI_DEVICE_ID_SERVERWORKS_CSB5, शून्य);
-			अगर (findev) अणु
-				pci_पढ़ो_config_dword(findev, 0x4C, &reg4c);
+				PCI_DEVICE_ID_SERVERWORKS_CSB5, NULL);
+			if (findev) {
+				pci_read_config_dword(findev, 0x4C, &reg4c);
 				reg4c &= ~0x000007FF;
 				reg4c |=  0x00000040;
 				reg4c |=  0x00000020;
-				pci_ग_लिखो_config_dword(findev, 0x4C, reg4c);
+				pci_write_config_dword(findev, 0x4C, reg4c);
 				pci_dev_put(findev);
-			पूर्ण
+			}
 			outb_p(0x06, 0x0c00);
 			dev->irq = inb_p(0x0c01);
-		पूर्ण अन्यथा अणु
-			काष्ठा pci_dev * findev = शून्य;
+		} else {
+			struct pci_dev * findev = NULL;
 			u8 reg41 = 0;
 
 			findev = pci_get_device(PCI_VENDOR_ID_SERVERWORKS,
-					PCI_DEVICE_ID_SERVERWORKS_CSB6, शून्य);
-			अगर (findev) अणु
-				pci_पढ़ो_config_byte(findev, 0x41, &reg41);
+					PCI_DEVICE_ID_SERVERWORKS_CSB6, NULL);
+			if (findev) {
+				pci_read_config_byte(findev, 0x41, &reg41);
 				reg41 &= ~0x40;
-				pci_ग_लिखो_config_byte(findev, 0x41, reg41);
+				pci_write_config_byte(findev, 0x41, reg41);
 				pci_dev_put(findev);
-			पूर्ण
+			}
 			/*
 			 * This is a device pin issue on CSB6.
 			 * Since there will be a future raid mode,
 			 * early versions of the chipset require the
-			 * पूर्णांकerrupt pin to be set, and it is a compatibility
+			 * interrupt pin to be set, and it is a compatibility
 			 * mode issue.
 			 */
-			अगर ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE)
+			if ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE)
 				dev->irq = 0;
-		पूर्ण
-//		pci_पढ़ो_config_dword(dev, 0x40, &pioreg)
-//		pci_ग_लिखो_config_dword(dev, 0x40, 0x99999999);
-//		pci_पढ़ो_config_dword(dev, 0x44, &dmareg);
-//		pci_ग_लिखो_config_dword(dev, 0x44, 0xFFFFFFFF);
-		/* setup the UDMA Control रेजिस्टर
+		}
+//		pci_read_config_dword(dev, 0x40, &pioreg)
+//		pci_write_config_dword(dev, 0x40, 0x99999999);
+//		pci_read_config_dword(dev, 0x44, &dmareg);
+//		pci_write_config_dword(dev, 0x44, 0xFFFFFFFF);
+		/* setup the UDMA Control register
 		 *
 		 * 1. clear bit 6 to enable DMA
 		 * 2. enable DMA modes with bits 0-1
@@ -247,139 +246,130 @@
 		 * 	10 : udma2/udma4
 		 * 	11 : udma2/udma4/udma5
 		 */
-		pci_पढ़ो_config_byte(dev, 0x5A, &btr);
+		pci_read_config_byte(dev, 0x5A, &btr);
 		btr &= ~0x40;
-		अगर (!(PCI_FUNC(dev->devfn) & 1))
+		if (!(PCI_FUNC(dev->devfn) & 1))
 			btr |= 0x2;
-		अन्यथा
+		else
 			btr |= (dev->revision >= SVWKS_CSB5_REVISION_NEW) ? 0x3 : 0x2;
-		pci_ग_लिखो_config_byte(dev, 0x5A, btr);
-	पूर्ण
+		pci_write_config_byte(dev, 0x5A, btr);
+	}
 	/* Setup HT1000 SouthBridge Controller - Single Channel Only */
-	अन्यथा अगर (dev->device == PCI_DEVICE_ID_SERVERWORKS_HT1000IDE) अणु
-		pci_पढ़ो_config_byte(dev, 0x5A, &btr);
+	else if (dev->device == PCI_DEVICE_ID_SERVERWORKS_HT1000IDE) {
+		pci_read_config_byte(dev, 0x5A, &btr);
 		btr &= ~0x40;
 		btr |= 0x3;
-		pci_ग_लिखो_config_byte(dev, 0x5A, btr);
-	पूर्ण
+		pci_write_config_byte(dev, 0x5A, btr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 ata66_svwks_svwks(ide_hwअगर_t *hwअगर)
-अणु
-	वापस ATA_CBL_PATA80;
-पूर्ण
+static u8 ata66_svwks_svwks(ide_hwif_t *hwif)
+{
+	return ATA_CBL_PATA80;
+}
 
 /* On Dell PowerEdge servers with a CSB5/CSB6, the top two bits
- * of the subप्रणाली device ID indicate presence of an 80-pin cable.
- * Bit 15 clear = secondary IDE channel करोes not have 80-pin cable.
+ * of the subsystem device ID indicate presence of an 80-pin cable.
+ * Bit 15 clear = secondary IDE channel does not have 80-pin cable.
  * Bit 15 set   = secondary IDE channel has 80-pin cable.
- * Bit 14 clear = primary IDE channel करोes not have 80-pin cable.
+ * Bit 14 clear = primary IDE channel does not have 80-pin cable.
  * Bit 14 set   = primary IDE channel has 80-pin cable.
  */
-अटल u8 ata66_svwks_dell(ide_hwअगर_t *hwअगर)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+static u8 ata66_svwks_dell(ide_hwif_t *hwif)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
 
-	अगर (dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL &&
-	    dev->venकरोr	== PCI_VENDOR_ID_SERVERWORKS &&
+	if (dev->subsystem_vendor == PCI_VENDOR_ID_DELL &&
+	    dev->vendor	== PCI_VENDOR_ID_SERVERWORKS &&
 	    (dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB5IDE ||
 	     dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE))
-		वापस ((1 << (hwअगर->channel + 14)) &
-			dev->subप्रणाली_device) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
-	वापस ATA_CBL_PATA40;
-पूर्ण
+		return ((1 << (hwif->channel + 14)) &
+			dev->subsystem_device) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
+	return ATA_CBL_PATA40;
+}
 
-/* Sun Cobalt Alpine hardware aव्योमs the 80-pin cable
+/* Sun Cobalt Alpine hardware avoids the 80-pin cable
  * detect issue by attaching the drives directly to the board.
  * This check follows the Dell precedent (how scary is that?!)
  *
  * WARNING: this only works on Alpine hardware!
  */
-अटल u8 ata66_svwks_cobalt(ide_hwअगर_t *hwअगर)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+static u8 ata66_svwks_cobalt(ide_hwif_t *hwif)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
 
-	अगर (dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_SUN &&
-	    dev->venकरोr	== PCI_VENDOR_ID_SERVERWORKS &&
+	if (dev->subsystem_vendor == PCI_VENDOR_ID_SUN &&
+	    dev->vendor	== PCI_VENDOR_ID_SERVERWORKS &&
 	    dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB5IDE)
-		वापस ((1 << (hwअगर->channel + 14)) &
-			dev->subप्रणाली_device) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
-	वापस ATA_CBL_PATA40;
-पूर्ण
+		return ((1 << (hwif->channel + 14)) &
+			dev->subsystem_device) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
+	return ATA_CBL_PATA40;
+}
 
-अटल u8 svwks_cable_detect(ide_hwअगर_t *hwअगर)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+static u8 svwks_cable_detect(ide_hwif_t *hwif)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
 
 	/* Server Works */
-	अगर (dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_SERVERWORKS)
-		वापस ata66_svwks_svwks (hwअगर);
+	if (dev->subsystem_vendor == PCI_VENDOR_ID_SERVERWORKS)
+		return ata66_svwks_svwks (hwif);
 	
 	/* Dell PowerEdge */
-	अगर (dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL)
-		वापस ata66_svwks_dell (hwअगर);
+	if (dev->subsystem_vendor == PCI_VENDOR_ID_DELL)
+		return ata66_svwks_dell (hwif);
 
 	/* Cobalt Alpine */
-	अगर (dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_SUN)
-		वापस ata66_svwks_cobalt (hwअगर);
+	if (dev->subsystem_vendor == PCI_VENDOR_ID_SUN)
+		return ata66_svwks_cobalt (hwif);
 
-	/* Per Specअगरied Design by OEM, and ASIC Architect */
-	अगर ((dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE) ||
+	/* Per Specified Design by OEM, and ASIC Architect */
+	if ((dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE) ||
 	    (dev->device == PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2))
-		वापस ATA_CBL_PATA80;
+		return ATA_CBL_PATA80;
 
-	वापस ATA_CBL_PATA40;
-पूर्ण
+	return ATA_CBL_PATA40;
+}
 
-अटल स्थिर काष्ठा ide_port_ops osb4_port_ops = अणु
+static const struct ide_port_ops osb4_port_ops = {
 	.set_pio_mode		= svwks_set_pio_mode,
 	.set_dma_mode		= svwks_set_dma_mode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_ops svwks_port_ops = अणु
+static const struct ide_port_ops svwks_port_ops = {
 	.set_pio_mode		= svwks_set_pio_mode,
 	.set_dma_mode		= svwks_set_dma_mode,
 	.udma_filter		= svwks_udma_filter,
 	.cable_detect		= svwks_cable_detect,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_info serverworks_chipsets[] = अणु
-	अणु	/* 0: OSB4 */
+static const struct ide_port_info serverworks_chipsets[] = {
+	{	/* 0: OSB4 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_svwks,
 		.port_ops	= &osb4_port_ops,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= 0x00, /* UDMA is problematic on OSB4 */
-	पूर्ण,
-	अणु	/* 1: CSB5 */
+	},
+	{	/* 1: CSB5 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_svwks,
 		.port_ops	= &svwks_port_ops,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
-	पूर्ण,
-	अणु	/* 2: CSB6 */
+	},
+	{	/* 2: CSB6 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_svwks,
 		.port_ops	= &svwks_port_ops,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
-	पूर्ण,
-	अणु	/* 3: CSB6-2 */
-		.name		= DRV_NAME,
-		.init_chipset	= init_chipset_svwks,
-		.port_ops	= &svwks_port_ops,
-		.host_flags	= IDE_HFLAG_SINGLE,
-		.pio_mask	= ATA_PIO4,
-		.mwdma_mask	= ATA_MWDMA2,
-		.udma_mask	= ATA_UDMA5,
-	पूर्ण,
-	अणु	/* 4: HT1000 */
+	},
+	{	/* 3: CSB6-2 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_svwks,
 		.port_ops	= &svwks_port_ops,
@@ -387,8 +377,17 @@
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
-	पूर्ण
-पूर्ण;
+	},
+	{	/* 4: HT1000 */
+		.name		= DRV_NAME,
+		.init_chipset	= init_chipset_svwks,
+		.port_ops	= &svwks_port_ops,
+		.host_flags	= IDE_HFLAG_SINGLE,
+		.pio_mask	= ATA_PIO4,
+		.mwdma_mask	= ATA_MWDMA2,
+		.udma_mask	= ATA_UDMA5,
+	}
+};
 
 /**
  *	svwks_init_one	-	called when a OSB/CSB is found
@@ -399,58 +398,58 @@
  *	finds a device matching our IDE device tables.
  */
  
-अटल पूर्णांक svwks_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ide_port_info d;
+static int svwks_init_one(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	struct ide_port_info d;
 	u8 idx = id->driver_data;
 
 	d = serverworks_chipsets[idx];
 
-	अगर (idx == 1)
+	if (idx == 1)
 		d.host_flags |= IDE_HFLAG_CLEAR_SIMPLEX;
-	अन्यथा अगर (idx == 2 || idx == 3) अणु
-		अगर ((PCI_FUNC(dev->devfn) & 1) == 0) अणु
-			अगर (pci_resource_start(dev, 0) != 0x01f1)
+	else if (idx == 2 || idx == 3) {
+		if ((PCI_FUNC(dev->devfn) & 1) == 0) {
+			if (pci_resource_start(dev, 0) != 0x01f1)
 				d.host_flags |= IDE_HFLAG_NON_BOOTABLE;
 			d.host_flags |= IDE_HFLAG_SINGLE;
-		पूर्ण अन्यथा
+		} else
 			d.host_flags &= ~IDE_HFLAG_SINGLE;
-	पूर्ण
+	}
 
-	वापस ide_pci_init_one(dev, &d, शून्य);
-पूर्ण
+	return ide_pci_init_one(dev, &d, NULL);
+}
 
-अटल स्थिर काष्ठा pci_device_id svwks_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_OSB4IDE),   0 पूर्ण,
-	अणु PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB5IDE),   1 पूर्ण,
-	अणु PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB6IDE),   2 पूर्ण,
-	अणु PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2),  3 पूर्ण,
-	अणु PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_HT1000IDE), 4 पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id svwks_pci_tbl[] = {
+	{ PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_OSB4IDE),   0 },
+	{ PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB5IDE),   1 },
+	{ PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB6IDE),   2 },
+	{ PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_CSB6IDE2),  3 },
+	{ PCI_VDEVICE(SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_HT1000IDE), 4 },
+	{ 0, },
+};
 MODULE_DEVICE_TABLE(pci, svwks_pci_tbl);
 
-अटल काष्ठा pci_driver svwks_pci_driver = अणु
+static struct pci_driver svwks_pci_driver = {
 	.name		= "Serverworks_IDE",
 	.id_table	= svwks_pci_tbl,
 	.probe		= svwks_init_one,
-	.हटाओ		= ide_pci_हटाओ,
+	.remove		= ide_pci_remove,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init svwks_ide_init(व्योम)
-अणु
-	वापस ide_pci_रेजिस्टर_driver(&svwks_pci_driver);
-पूर्ण
+static int __init svwks_ide_init(void)
+{
+	return ide_pci_register_driver(&svwks_pci_driver);
+}
 
-अटल व्योम __निकास svwks_ide_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&svwks_pci_driver);
-पूर्ण
+static void __exit svwks_ide_exit(void)
+{
+	pci_unregister_driver(&svwks_pci_driver);
+}
 
 module_init(svwks_ide_init);
-module_निकास(svwks_ide_निकास);
+module_exit(svwks_ide_exit);
 
 MODULE_AUTHOR("Michael Aubry. Andrzej Krzysztofowicz, Andre Hedrick, Bartlomiej Zolnierkiewicz");
 MODULE_DESCRIPTION("PCI driver module for Serverworks OSB4/CSB5/CSB6 IDE");

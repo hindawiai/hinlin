@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश "netlink.h"
-#समावेश "common.h"
+#include "netlink.h"
+#include "common.h"
 
-काष्ठा linkinfo_req_info अणु
-	काष्ठा ethnl_req_info		base;
-पूर्ण;
+struct linkinfo_req_info {
+	struct ethnl_req_info		base;
+};
 
-काष्ठा linkinfo_reply_data अणु
-	काष्ठा ethnl_reply_data		base;
-	काष्ठा ethtool_link_ksettings	ksettings;
-	काष्ठा ethtool_link_settings	*lsettings;
-पूर्ण;
+struct linkinfo_reply_data {
+	struct ethnl_reply_data		base;
+	struct ethtool_link_ksettings	ksettings;
+	struct ethtool_link_settings	*lsettings;
+};
 
-#घोषणा LINKINFO_REPDATA(__reply_base) \
-	container_of(__reply_base, काष्ठा linkinfo_reply_data, base)
+#define LINKINFO_REPDATA(__reply_base) \
+	container_of(__reply_base, struct linkinfo_reply_data, base)
 
-स्थिर काष्ठा nla_policy ethnl_linkinfo_get_policy[] = अणु
+const struct nla_policy ethnl_linkinfo_get_policy[] = {
 	[ETHTOOL_A_LINKINFO_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-पूर्ण;
+};
 
-अटल पूर्णांक linkinfo_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
-				 काष्ठा ethnl_reply_data *reply_base,
-				 काष्ठा genl_info *info)
-अणु
-	काष्ठा linkinfo_reply_data *data = LINKINFO_REPDATA(reply_base);
-	काष्ठा net_device *dev = reply_base->dev;
-	पूर्णांक ret;
+static int linkinfo_prepare_data(const struct ethnl_req_info *req_base,
+				 struct ethnl_reply_data *reply_base,
+				 struct genl_info *info)
+{
+	struct linkinfo_reply_data *data = LINKINFO_REPDATA(reply_base);
+	struct net_device *dev = reply_base->dev;
+	int ret;
 
 	data->lsettings = &data->ksettings.base;
 
 	ret = ethnl_ops_begin(dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = __ethtool_get_link_ksettings(dev, &data->ksettings);
-	अगर (ret < 0 && info)
+	if (ret < 0 && info)
 		GENL_SET_ERR_MSG(info, "failed to retrieve link settings");
 	ethnl_ops_complete(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक linkinfo_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
-			       स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	वापस nla_total_size(माप(u8)) /* LINKINFO_PORT */
-		+ nla_total_size(माप(u8)) /* LINKINFO_PHYADDR */
-		+ nla_total_size(माप(u8)) /* LINKINFO_TP_MDIX */
-		+ nla_total_size(माप(u8)) /* LINKINFO_TP_MDIX_CTRL */
-		+ nla_total_size(माप(u8)) /* LINKINFO_TRANSCEIVER */
+static int linkinfo_reply_size(const struct ethnl_req_info *req_base,
+			       const struct ethnl_reply_data *reply_base)
+{
+	return nla_total_size(sizeof(u8)) /* LINKINFO_PORT */
+		+ nla_total_size(sizeof(u8)) /* LINKINFO_PHYADDR */
+		+ nla_total_size(sizeof(u8)) /* LINKINFO_TP_MDIX */
+		+ nla_total_size(sizeof(u8)) /* LINKINFO_TP_MDIX_CTRL */
+		+ nla_total_size(sizeof(u8)) /* LINKINFO_TRANSCEIVER */
 		+ 0;
-पूर्ण
+}
 
-अटल पूर्णांक linkinfo_fill_reply(काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा ethnl_req_info *req_base,
-			       स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	स्थिर काष्ठा linkinfo_reply_data *data = LINKINFO_REPDATA(reply_base);
+static int linkinfo_fill_reply(struct sk_buff *skb,
+			       const struct ethnl_req_info *req_base,
+			       const struct ethnl_reply_data *reply_base)
+{
+	const struct linkinfo_reply_data *data = LINKINFO_REPDATA(reply_base);
 
-	अगर (nla_put_u8(skb, ETHTOOL_A_LINKINFO_PORT, data->lsettings->port) ||
+	if (nla_put_u8(skb, ETHTOOL_A_LINKINFO_PORT, data->lsettings->port) ||
 	    nla_put_u8(skb, ETHTOOL_A_LINKINFO_PHYADDR,
 		       data->lsettings->phy_address) ||
 	    nla_put_u8(skb, ETHTOOL_A_LINKINFO_TP_MDIX,
@@ -69,65 +68,65 @@
 		       data->lsettings->eth_tp_mdix_ctrl) ||
 	    nla_put_u8(skb, ETHTOOL_A_LINKINFO_TRANSCEIVER,
 		       data->lsettings->transceiver))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा ethnl_request_ops ethnl_linkinfo_request_ops = अणु
+const struct ethnl_request_ops ethnl_linkinfo_request_ops = {
 	.request_cmd		= ETHTOOL_MSG_LINKINFO_GET,
 	.reply_cmd		= ETHTOOL_MSG_LINKINFO_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_LINKINFO_HEADER,
-	.req_info_size		= माप(काष्ठा linkinfo_req_info),
-	.reply_data_size	= माप(काष्ठा linkinfo_reply_data),
+	.req_info_size		= sizeof(struct linkinfo_req_info),
+	.reply_data_size	= sizeof(struct linkinfo_reply_data),
 
 	.prepare_data		= linkinfo_prepare_data,
 	.reply_size		= linkinfo_reply_size,
 	.fill_reply		= linkinfo_fill_reply,
-पूर्ण;
+};
 
 /* LINKINFO_SET */
 
-स्थिर काष्ठा nla_policy ethnl_linkinfo_set_policy[] = अणु
+const struct nla_policy ethnl_linkinfo_set_policy[] = {
 	[ETHTOOL_A_LINKINFO_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_LINKINFO_PORT]		= अणु .type = NLA_U8 पूर्ण,
-	[ETHTOOL_A_LINKINFO_PHYADDR]		= अणु .type = NLA_U8 पूर्ण,
-	[ETHTOOL_A_LINKINFO_TP_MDIX_CTRL]	= अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+	[ETHTOOL_A_LINKINFO_PORT]		= { .type = NLA_U8 },
+	[ETHTOOL_A_LINKINFO_PHYADDR]		= { .type = NLA_U8 },
+	[ETHTOOL_A_LINKINFO_TP_MDIX_CTRL]	= { .type = NLA_U8 },
+};
 
-पूर्णांक ethnl_set_linkinfo(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा ethtool_link_ksettings ksettings = अणुपूर्ण;
-	काष्ठा ethtool_link_settings *lsettings;
-	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
-	काष्ठा nlattr **tb = info->attrs;
-	काष्ठा net_device *dev;
+int ethnl_set_linkinfo(struct sk_buff *skb, struct genl_info *info)
+{
+	struct ethtool_link_ksettings ksettings = {};
+	struct ethtool_link_settings *lsettings;
+	struct ethnl_req_info req_info = {};
+	struct nlattr **tb = info->attrs;
+	struct net_device *dev;
 	bool mod = false;
-	पूर्णांक ret;
+	int ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_LINKINFO_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	dev = req_info.dev;
 	ret = -EOPNOTSUPP;
-	अगर (!dev->ethtool_ops->get_link_ksettings ||
+	if (!dev->ethtool_ops->get_link_ksettings ||
 	    !dev->ethtool_ops->set_link_ksettings)
-		जाओ out_dev;
+		goto out_dev;
 
 	rtnl_lock();
 	ret = ethnl_ops_begin(dev);
-	अगर (ret < 0)
-		जाओ out_rtnl;
+	if (ret < 0)
+		goto out_rtnl;
 
 	ret = __ethtool_get_link_ksettings(dev, &ksettings);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		GENL_SET_ERR_MSG(info, "failed to retrieve link settings");
-		जाओ out_ops;
-	पूर्ण
+		goto out_ops;
+	}
 	lsettings = &ksettings.base;
 
 	ethnl_update_u8(&lsettings->port, tb[ETHTOOL_A_LINKINFO_PORT], &mod);
@@ -136,14 +135,14 @@
 	ethnl_update_u8(&lsettings->eth_tp_mdix_ctrl,
 			tb[ETHTOOL_A_LINKINFO_TP_MDIX_CTRL], &mod);
 	ret = 0;
-	अगर (!mod)
-		जाओ out_ops;
+	if (!mod)
+		goto out_ops;
 
 	ret = dev->ethtool_ops->set_link_ksettings(dev, &ksettings);
-	अगर (ret < 0)
+	if (ret < 0)
 		GENL_SET_ERR_MSG(info, "link settings update failed");
-	अन्यथा
-		ethtool_notअगरy(dev, ETHTOOL_MSG_LINKINFO_NTF, शून्य);
+	else
+		ethtool_notify(dev, ETHTOOL_MSG_LINKINFO_NTF, NULL);
 
 out_ops:
 	ethnl_ops_complete(dev);
@@ -151,5 +150,5 @@ out_rtnl:
 	rtnl_unlock();
 out_dev:
 	dev_put(dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}

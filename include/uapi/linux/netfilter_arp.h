@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-1.0+ WITH Linux-syscall-note */
-#अगर_अघोषित __LINUX_ARP_NETFILTER_H
-#घोषणा __LINUX_ARP_NETFILTER_H
+/* SPDX-License-Identifier: GPL-1.0+ WITH Linux-syscall-note */
+#ifndef __LINUX_ARP_NETFILTER_H
+#define __LINUX_ARP_NETFILTER_H
 
-/* ARP-specअगरic defines क्रम netfilter.
+/* ARP-specific defines for netfilter.
  * (C)2002 Rusty Russell IBM -- This code is GPL.
  */
 
-#समावेश <linux/netfilter.h>
+#include <linux/netfilter.h>
 
 /* There is no PF_ARP. */
-#घोषणा NF_ARP		0
+#define NF_ARP		0
 
 /* ARP Hooks */
-#घोषणा NF_ARP_IN	0
-#घोषणा NF_ARP_OUT	1
-#घोषणा NF_ARP_FORWARD	2
+#define NF_ARP_IN	0
+#define NF_ARP_OUT	1
+#define NF_ARP_FORWARD	2
 
-#अगर_अघोषित __KERNEL__
-#घोषणा NF_ARP_NUMHOOKS	3
-#पूर्ण_अगर
+#ifndef __KERNEL__
+#define NF_ARP_NUMHOOKS	3
+#endif
 
-#पूर्ण_अगर /* __LINUX_ARP_NETFILTER_H */
+#endif /* __LINUX_ARP_NETFILTER_H */

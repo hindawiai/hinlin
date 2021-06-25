@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
@@ -7,199 +6,199 @@
  ******************************************************************************/
 
 
-#घोषणा _OSDEP_SERVICE_C_
+#define _OSDEP_SERVICE_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
 
 /*
 * Translate the OS dependent @param error_code to OS independent RTW_STATUS_CODE
-* @वापस: one of RTW_STATUS_CODE
+* @return: one of RTW_STATUS_CODE
 */
-अंतरभूत पूर्णांक RTW_STATUS_CODE(पूर्णांक error_code)
-अणु
-	अगर (error_code >= 0)
-		वापस _SUCCESS;
-	वापस _FAIL;
-पूर्ण
+inline int RTW_STATUS_CODE(int error_code)
+{
+	if (error_code >= 0)
+		return _SUCCESS;
+	return _FAIL;
+}
 
-व्योम *_rtw_दो_स्मृति(u32 sz)
-अणु
-	वापस kदो_स्मृति(sz, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_KERNEL);
-पूर्ण
+void *_rtw_malloc(u32 sz)
+{
+	return kmalloc(sz, in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+}
 
-व्योम *_rtw_zदो_स्मृति(u32 sz)
-अणु
-	व्योम *pbuf = _rtw_दो_स्मृति(sz);
+void *_rtw_zmalloc(u32 sz)
+{
+	void *pbuf = _rtw_malloc(sz);
 
-	अगर (pbuf)
-		स_रखो(pbuf, 0, sz);
+	if (pbuf)
+		memset(pbuf, 0, sz);
 
-	वापस pbuf;
-पूर्ण
+	return pbuf;
+}
 
-अंतरभूत काष्ठा sk_buff *_rtw_skb_alloc(u32 sz)
-अणु
-	वापस __dev_alloc_skb(sz, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_KERNEL);
-पूर्ण
+inline struct sk_buff *_rtw_skb_alloc(u32 sz)
+{
+	return __dev_alloc_skb(sz, in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+}
 
-अंतरभूत काष्ठा sk_buff *_rtw_skb_copy(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस skb_copy(skb, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_KERNEL);
-पूर्ण
+inline struct sk_buff *_rtw_skb_copy(const struct sk_buff *skb)
+{
+	return skb_copy(skb, in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+}
 
-अंतरभूत पूर्णांक _rtw_netअगर_rx(काष्ठा net_device *ndev, काष्ठा sk_buff *skb)
-अणु
+inline int _rtw_netif_rx(struct net_device *ndev, struct sk_buff *skb)
+{
 	skb->dev = ndev;
-	वापस netअगर_rx(skb);
-पूर्ण
+	return netif_rx(skb);
+}
 
-व्योम _rtw_init_queue(काष्ठा __queue *pqueue)
-अणु
+void _rtw_init_queue(struct __queue *pqueue)
+{
 	INIT_LIST_HEAD(&(pqueue->queue));
 
 	spin_lock_init(&(pqueue->lock));
-पूर्ण
+}
 
-काष्ठा net_device *rtw_alloc_etherdev_with_old_priv(पूर्णांक माप_priv, व्योम *old_priv)
-अणु
-	काष्ठा net_device *pnetdev;
-	काष्ठा rtw_netdev_priv_indicator *pnpi;
+struct net_device *rtw_alloc_etherdev_with_old_priv(int sizeof_priv, void *old_priv)
+{
+	struct net_device *pnetdev;
+	struct rtw_netdev_priv_indicator *pnpi;
 
-	pnetdev = alloc_etherdev_mq(माप(काष्ठा rtw_netdev_priv_indicator), 4);
-	अगर (!pnetdev)
-		जाओ RETURN;
+	pnetdev = alloc_etherdev_mq(sizeof(struct rtw_netdev_priv_indicator), 4);
+	if (!pnetdev)
+		goto RETURN;
 
 	pnpi = netdev_priv(pnetdev);
 	pnpi->priv = old_priv;
-	pnpi->माप_priv = माप_priv;
+	pnpi->sizeof_priv = sizeof_priv;
 
 RETURN:
-	वापस pnetdev;
-पूर्ण
+	return pnetdev;
+}
 
-काष्ठा net_device *rtw_alloc_etherdev(पूर्णांक माप_priv)
-अणु
-	काष्ठा net_device *pnetdev;
-	काष्ठा rtw_netdev_priv_indicator *pnpi;
+struct net_device *rtw_alloc_etherdev(int sizeof_priv)
+{
+	struct net_device *pnetdev;
+	struct rtw_netdev_priv_indicator *pnpi;
 
-	pnetdev = alloc_etherdev_mq(माप(काष्ठा rtw_netdev_priv_indicator), 4);
-	अगर (!pnetdev)
-		जाओ RETURN;
+	pnetdev = alloc_etherdev_mq(sizeof(struct rtw_netdev_priv_indicator), 4);
+	if (!pnetdev)
+		goto RETURN;
 
 	pnpi = netdev_priv(pnetdev);
 
-	pnpi->priv = vzalloc(माप_priv);
-	अगर (!pnpi->priv) अणु
-		मुक्त_netdev(pnetdev);
-		pnetdev = शून्य;
-		जाओ RETURN;
-	पूर्ण
+	pnpi->priv = vzalloc(sizeof_priv);
+	if (!pnpi->priv) {
+		free_netdev(pnetdev);
+		pnetdev = NULL;
+		goto RETURN;
+	}
 
-	pnpi->माप_priv = माप_priv;
+	pnpi->sizeof_priv = sizeof_priv;
 RETURN:
-	वापस pnetdev;
-पूर्ण
+	return pnetdev;
+}
 
-व्योम rtw_मुक्त_netdev(काष्ठा net_device *netdev)
-अणु
-	काष्ठा rtw_netdev_priv_indicator *pnpi;
+void rtw_free_netdev(struct net_device *netdev)
+{
+	struct rtw_netdev_priv_indicator *pnpi;
 
-	अगर (!netdev)
-		जाओ RETURN;
+	if (!netdev)
+		goto RETURN;
 
 	pnpi = netdev_priv(netdev);
 
-	अगर (!pnpi->priv)
-		जाओ RETURN;
+	if (!pnpi->priv)
+		goto RETURN;
 
-	vमुक्त(pnpi->priv);
-	मुक्त_netdev(netdev);
+	vfree(pnpi->priv);
+	free_netdev(netdev);
 
 RETURN:
-	वापस;
-पूर्ण
+	return;
+}
 
-पूर्णांक rtw_change_अगरname(काष्ठा adapter *padapter, स्थिर अक्षर *अगरname)
-अणु
-	काष्ठा net_device *pnetdev;
-	काष्ठा net_device *cur_pnetdev;
-	काष्ठा rereg_nd_name_data *rereg_priv;
-	पूर्णांक ret;
+int rtw_change_ifname(struct adapter *padapter, const char *ifname)
+{
+	struct net_device *pnetdev;
+	struct net_device *cur_pnetdev;
+	struct rereg_nd_name_data *rereg_priv;
+	int ret;
 
-	अगर (!padapter)
-		जाओ error;
+	if (!padapter)
+		goto error;
 
 	cur_pnetdev = padapter->pnetdev;
 	rereg_priv = &padapter->rereg_nd_name_priv;
 
-	/* मुक्त the old_pnetdev */
-	अगर (rereg_priv->old_pnetdev) अणु
-		मुक्त_netdev(rereg_priv->old_pnetdev);
-		rereg_priv->old_pnetdev = शून्य;
-	पूर्ण
+	/* free the old_pnetdev */
+	if (rereg_priv->old_pnetdev) {
+		free_netdev(rereg_priv->old_pnetdev);
+		rereg_priv->old_pnetdev = NULL;
+	}
 
-	अगर (!rtnl_is_locked())
-		unरेजिस्टर_netdev(cur_pnetdev);
-	अन्यथा
-		unरेजिस्टर_netdevice(cur_pnetdev);
+	if (!rtnl_is_locked())
+		unregister_netdev(cur_pnetdev);
+	else
+		unregister_netdevice(cur_pnetdev);
 
 	rereg_priv->old_pnetdev = cur_pnetdev;
 
 	pnetdev = rtw_init_netdev(padapter);
-	अगर (!pnetdev)
-		जाओ error;
+	if (!pnetdev)
+		goto error;
 
 	SET_NETDEV_DEV(pnetdev, dvobj_to_dev(adapter_to_dvobj(padapter)));
 
-	rtw_init_netdev_name(pnetdev, अगरname);
+	rtw_init_netdev_name(pnetdev, ifname);
 
-	स_नकल(pnetdev->dev_addr, padapter->eeprompriv.mac_addr, ETH_ALEN);
+	memcpy(pnetdev->dev_addr, padapter->eeprompriv.mac_addr, ETH_ALEN);
 
-	अगर (!rtnl_is_locked())
-		ret = रेजिस्टर_netdev(pnetdev);
-	अन्यथा
-		ret = रेजिस्टर_netdevice(pnetdev);
+	if (!rtnl_is_locked())
+		ret = register_netdev(pnetdev);
+	else
+		ret = register_netdevice(pnetdev);
 
-	अगर (ret != 0)
-		जाओ error;
+	if (ret != 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-व्योम rtw_buf_मुक्त(u8 **buf, u32 *buf_len)
-अणु
-	अगर (!buf || !buf_len)
-		वापस;
+void rtw_buf_free(u8 **buf, u32 *buf_len)
+{
+	if (!buf || !buf_len)
+		return;
 
-	अगर (*buf) अणु
+	if (*buf) {
 		*buf_len = 0;
-		kमुक्त(*buf);
-		*buf = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(*buf);
+		*buf = NULL;
+	}
+}
 
-व्योम rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len)
-अणु
+void rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len)
+{
 	u32 ori_len = 0, dup_len = 0;
-	u8 *ori = शून्य;
-	u8 *dup = शून्य;
+	u8 *ori = NULL;
+	u8 *dup = NULL;
 
-	अगर (!buf || !buf_len)
-		वापस;
+	if (!buf || !buf_len)
+		return;
 
-	अगर (!src || !src_len)
-		जाओ keep_ori;
+	if (!src || !src_len)
+		goto keep_ori;
 
 	/* duplicate src */
-	dup = rtw_दो_स्मृति(src_len);
-	अगर (dup) अणु
+	dup = rtw_malloc(src_len);
+	if (dup) {
 		dup_len = src_len;
-		स_नकल(dup, src, dup_len);
-	पूर्ण
+		memcpy(dup, src, dup_len);
+	}
 
 keep_ori:
 	ori = *buf;
@@ -210,88 +209,88 @@ keep_ori:
 	*buf = dup;
 	*buf_len = dup_len;
 
-	/* मुक्त ori */
-	अगर (ori && ori_len > 0)
-		kमुक्त(ori);
-पूर्ण
+	/* free ori */
+	if (ori && ori_len > 0)
+		kfree(ori);
+}
 
 
 /**
- * rtw_cbuf_full - test अगर cbuf is full
- * @cbuf: poपूर्णांकer of काष्ठा rtw_cbuf
+ * rtw_cbuf_full - test if cbuf is full
+ * @cbuf: pointer of struct rtw_cbuf
  *
- * Returns: true अगर cbuf is full
+ * Returns: true if cbuf is full
  */
-अंतरभूत bool rtw_cbuf_full(काष्ठा rtw_cbuf *cbuf)
-अणु
-	वापस (cbuf->ग_लिखो == cbuf->पढ़ो - 1) ? true : false;
-पूर्ण
+inline bool rtw_cbuf_full(struct rtw_cbuf *cbuf)
+{
+	return (cbuf->write == cbuf->read - 1) ? true : false;
+}
 
 /**
- * rtw_cbuf_empty - test अगर cbuf is empty
- * @cbuf: poपूर्णांकer of काष्ठा rtw_cbuf
+ * rtw_cbuf_empty - test if cbuf is empty
+ * @cbuf: pointer of struct rtw_cbuf
  *
- * Returns: true अगर cbuf is empty
+ * Returns: true if cbuf is empty
  */
-अंतरभूत bool rtw_cbuf_empty(काष्ठा rtw_cbuf *cbuf)
-अणु
-	वापस (cbuf->ग_लिखो == cbuf->पढ़ो) ? true : false;
-पूर्ण
+inline bool rtw_cbuf_empty(struct rtw_cbuf *cbuf)
+{
+	return (cbuf->write == cbuf->read) ? true : false;
+}
 
 /**
- * rtw_cbuf_push - push a poपूर्णांकer पूर्णांकo cbuf
- * @cbuf: poपूर्णांकer of काष्ठा rtw_cbuf
- * @buf: poपूर्णांकer to push in
+ * rtw_cbuf_push - push a pointer into cbuf
+ * @cbuf: pointer of struct rtw_cbuf
+ * @buf: pointer to push in
  *
- * Lock मुक्त operation, be careful of the use scheme
+ * Lock free operation, be careful of the use scheme
  * Returns: true push success
  */
-bool rtw_cbuf_push(काष्ठा rtw_cbuf *cbuf, व्योम *buf)
-अणु
-	अगर (rtw_cbuf_full(cbuf))
-		वापस _FAIL;
+bool rtw_cbuf_push(struct rtw_cbuf *cbuf, void *buf)
+{
+	if (rtw_cbuf_full(cbuf))
+		return _FAIL;
 
-	cbuf->bufs[cbuf->ग_लिखो] = buf;
-	cbuf->ग_लिखो = (cbuf->ग_लिखो + 1) % cbuf->size;
+	cbuf->bufs[cbuf->write] = buf;
+	cbuf->write = (cbuf->write + 1) % cbuf->size;
 
-	वापस _SUCCESS;
-पूर्ण
-
-/**
- * rtw_cbuf_pop - pop a poपूर्णांकer from cbuf
- * @cbuf: poपूर्णांकer of काष्ठा rtw_cbuf
- *
- * Lock मुक्त operation, be careful of the use scheme
- * Returns: poपूर्णांकer popped out
- */
-व्योम *rtw_cbuf_pop(काष्ठा rtw_cbuf *cbuf)
-अणु
-	व्योम *buf;
-	अगर (rtw_cbuf_empty(cbuf))
-		वापस शून्य;
-
-	buf = cbuf->bufs[cbuf->पढ़ो];
-	cbuf->पढ़ो = (cbuf->पढ़ो + 1) % cbuf->size;
-
-	वापस buf;
-पूर्ण
+	return _SUCCESS;
+}
 
 /**
- * rtw_cbuf_alloc - allocate a rtw_cbuf with given size and करो initialization
- * @size: size of poपूर्णांकer
+ * rtw_cbuf_pop - pop a pointer from cbuf
+ * @cbuf: pointer of struct rtw_cbuf
  *
- * Returns: poपूर्णांकer of srtuct rtw_cbuf, शून्य क्रम allocation failure
+ * Lock free operation, be careful of the use scheme
+ * Returns: pointer popped out
  */
-काष्ठा rtw_cbuf *rtw_cbuf_alloc(u32 size)
-अणु
-	काष्ठा rtw_cbuf *cbuf;
+void *rtw_cbuf_pop(struct rtw_cbuf *cbuf)
+{
+	void *buf;
+	if (rtw_cbuf_empty(cbuf))
+		return NULL;
 
-	cbuf = rtw_दो_स्मृति(माप(*cbuf) + माप(व्योम *) * size);
+	buf = cbuf->bufs[cbuf->read];
+	cbuf->read = (cbuf->read + 1) % cbuf->size;
 
-	अगर (cbuf) अणु
-		cbuf->ग_लिखो = cbuf->पढ़ो = 0;
+	return buf;
+}
+
+/**
+ * rtw_cbuf_alloc - allocate a rtw_cbuf with given size and do initialization
+ * @size: size of pointer
+ *
+ * Returns: pointer of srtuct rtw_cbuf, NULL for allocation failure
+ */
+struct rtw_cbuf *rtw_cbuf_alloc(u32 size)
+{
+	struct rtw_cbuf *cbuf;
+
+	cbuf = rtw_malloc(sizeof(*cbuf) + sizeof(void *) * size);
+
+	if (cbuf) {
+		cbuf->write = cbuf->read = 0;
 		cbuf->size = size;
-	पूर्ण
+	}
 
-	वापस cbuf;
-पूर्ण
+	return cbuf;
+}

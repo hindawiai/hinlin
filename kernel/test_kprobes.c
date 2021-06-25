@@ -1,314 +1,313 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * test_kprobes.c - simple sanity test क्रम *probes
+ * test_kprobes.c - simple sanity test for *probes
  *
  * Copyright IBM Corp. 2008
  */
 
-#घोषणा pr_fmt(fmt) "Kprobe smoke test: " fmt
+#define pr_fmt(fmt) "Kprobe smoke test: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/kernel.h>
+#include <linux/kprobes.h>
+#include <linux/random.h>
 
-#घोषणा भाग_factor 3
+#define div_factor 3
 
-अटल u32 अक्रम1, preh_val, posth_val;
-अटल पूर्णांक errors, handler_errors, num_tests;
-अटल u32 (*target)(u32 value);
-अटल u32 (*target2)(u32 value);
+static u32 rand1, preh_val, posth_val;
+static int errors, handler_errors, num_tests;
+static u32 (*target)(u32 value);
+static u32 (*target2)(u32 value);
 
-अटल noअंतरभूत u32 kprobe_target(u32 value)
-अणु
-	वापस (value / भाग_factor);
-पूर्ण
+static noinline u32 kprobe_target(u32 value)
+{
+	return (value / div_factor);
+}
 
-अटल पूर्णांक kp_pre_handler(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	अगर (preemptible()) अणु
+static int kp_pre_handler(struct kprobe *p, struct pt_regs *regs)
+{
+	if (preemptible()) {
 		handler_errors++;
 		pr_err("pre-handler is preemptible\n");
-	पूर्ण
-	preh_val = (अक्रम1 / भाग_factor);
-	वापस 0;
-पूर्ण
+	}
+	preh_val = (rand1 / div_factor);
+	return 0;
+}
 
-अटल व्योम kp_post_handler(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-		अचिन्हित दीर्घ flags)
-अणु
-	अगर (preemptible()) अणु
+static void kp_post_handler(struct kprobe *p, struct pt_regs *regs,
+		unsigned long flags)
+{
+	if (preemptible()) {
 		handler_errors++;
 		pr_err("post-handler is preemptible\n");
-	पूर्ण
-	अगर (preh_val != (अक्रम1 / भाग_factor)) अणु
+	}
+	if (preh_val != (rand1 / div_factor)) {
 		handler_errors++;
 		pr_err("incorrect value in post_handler\n");
-	पूर्ण
-	posth_val = preh_val + भाग_factor;
-पूर्ण
+	}
+	posth_val = preh_val + div_factor;
+}
 
-अटल काष्ठा kprobe kp = अणु
+static struct kprobe kp = {
 	.symbol_name = "kprobe_target",
 	.pre_handler = kp_pre_handler,
 	.post_handler = kp_post_handler
-पूर्ण;
+};
 
-अटल पूर्णांक test_kprobe(व्योम)
-अणु
-	पूर्णांक ret;
+static int test_kprobe(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_kprobe(&kp);
-	अगर (ret < 0) अणु
+	ret = register_kprobe(&kp);
+	if (ret < 0) {
 		pr_err("register_kprobe returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = target(अक्रम1);
-	unरेजिस्टर_kprobe(&kp);
+	ret = target(rand1);
+	unregister_kprobe(&kp);
 
-	अगर (preh_val == 0) अणु
+	if (preh_val == 0) {
 		pr_err("kprobe pre_handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	अगर (posth_val == 0) अणु
+	if (posth_val == 0) {
 		pr_err("kprobe post_handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत u32 kprobe_target2(u32 value)
-अणु
-	वापस (value / भाग_factor) + 1;
-पूर्ण
+static noinline u32 kprobe_target2(u32 value)
+{
+	return (value / div_factor) + 1;
+}
 
-अटल पूर्णांक kp_pre_handler2(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
-अणु
-	preh_val = (अक्रम1 / भाग_factor) + 1;
-	वापस 0;
-पूर्ण
+static int kp_pre_handler2(struct kprobe *p, struct pt_regs *regs)
+{
+	preh_val = (rand1 / div_factor) + 1;
+	return 0;
+}
 
-अटल व्योम kp_post_handler2(काष्ठा kprobe *p, काष्ठा pt_regs *regs,
-		अचिन्हित दीर्घ flags)
-अणु
-	अगर (preh_val != (अक्रम1 / भाग_factor) + 1) अणु
+static void kp_post_handler2(struct kprobe *p, struct pt_regs *regs,
+		unsigned long flags)
+{
+	if (preh_val != (rand1 / div_factor) + 1) {
 		handler_errors++;
 		pr_err("incorrect value in post_handler2\n");
-	पूर्ण
-	posth_val = preh_val + भाग_factor;
-पूर्ण
+	}
+	posth_val = preh_val + div_factor;
+}
 
-अटल काष्ठा kprobe kp2 = अणु
+static struct kprobe kp2 = {
 	.symbol_name = "kprobe_target2",
 	.pre_handler = kp_pre_handler2,
 	.post_handler = kp_post_handler2
-पूर्ण;
+};
 
-अटल पूर्णांक test_kprobes(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा kprobe *kps[2] = अणु&kp, &kp2पूर्ण;
+static int test_kprobes(void)
+{
+	int ret;
+	struct kprobe *kps[2] = {&kp, &kp2};
 
-	/* addr and flags should be cleard क्रम reusing kprobe. */
-	kp.addr = शून्य;
+	/* addr and flags should be cleard for reusing kprobe. */
+	kp.addr = NULL;
 	kp.flags = 0;
-	ret = रेजिस्टर_kprobes(kps, 2);
-	अगर (ret < 0) अणु
+	ret = register_kprobes(kps, 2);
+	if (ret < 0) {
 		pr_err("register_kprobes returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	preh_val = 0;
 	posth_val = 0;
-	ret = target(अक्रम1);
+	ret = target(rand1);
 
-	अगर (preh_val == 0) अणु
+	if (preh_val == 0) {
 		pr_err("kprobe pre_handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	अगर (posth_val == 0) अणु
+	if (posth_val == 0) {
 		pr_err("kprobe post_handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
 	preh_val = 0;
 	posth_val = 0;
-	ret = target2(अक्रम1);
+	ret = target2(rand1);
 
-	अगर (preh_val == 0) अणु
+	if (preh_val == 0) {
 		pr_err("kprobe pre_handler2 not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	अगर (posth_val == 0) अणु
+	if (posth_val == 0) {
 		pr_err("kprobe post_handler2 not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	unरेजिस्टर_kprobes(kps, 2);
-	वापस 0;
+	unregister_kprobes(kps, 2);
+	return 0;
 
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_KRETPROBES
-अटल u32 krph_val;
+#ifdef CONFIG_KRETPROBES
+static u32 krph_val;
 
-अटल पूर्णांक entry_handler(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
-अणु
-	अगर (preemptible()) अणु
+static int entry_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+	if (preemptible()) {
 		handler_errors++;
 		pr_err("kretprobe entry handler is preemptible\n");
-	पूर्ण
-	krph_val = (अक्रम1 / भाग_factor);
-	वापस 0;
-पूर्ण
+	}
+	krph_val = (rand1 / div_factor);
+	return 0;
+}
 
-अटल पूर्णांक वापस_handler(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ ret = regs_वापस_value(regs);
+static int return_handler(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+	unsigned long ret = regs_return_value(regs);
 
-	अगर (preemptible()) अणु
+	if (preemptible()) {
 		handler_errors++;
 		pr_err("kretprobe return handler is preemptible\n");
-	पूर्ण
-	अगर (ret != (अक्रम1 / भाग_factor)) अणु
+	}
+	if (ret != (rand1 / div_factor)) {
 		handler_errors++;
 		pr_err("incorrect value in kretprobe handler\n");
-	पूर्ण
-	अगर (krph_val == 0) अणु
+	}
+	if (krph_val == 0) {
 		handler_errors++;
 		pr_err("call to kretprobe entry handler failed\n");
-	पूर्ण
+	}
 
-	krph_val = अक्रम1;
-	वापस 0;
-पूर्ण
+	krph_val = rand1;
+	return 0;
+}
 
-अटल काष्ठा kretprobe rp = अणु
-	.handler	= वापस_handler,
+static struct kretprobe rp = {
+	.handler	= return_handler,
 	.entry_handler  = entry_handler,
 	.kp.symbol_name = "kprobe_target"
-पूर्ण;
+};
 
-अटल पूर्णांक test_kretprobe(व्योम)
-अणु
-	पूर्णांक ret;
+static int test_kretprobe(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_kretprobe(&rp);
-	अगर (ret < 0) अणु
+	ret = register_kretprobe(&rp);
+	if (ret < 0) {
 		pr_err("register_kretprobe returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = target(अक्रम1);
-	unरेजिस्टर_kretprobe(&rp);
-	अगर (krph_val != अक्रम1) अणु
+	ret = target(rand1);
+	unregister_kretprobe(&rp);
+	if (krph_val != rand1) {
 		pr_err("kretprobe handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक वापस_handler2(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ ret = regs_वापस_value(regs);
+static int return_handler2(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+	unsigned long ret = regs_return_value(regs);
 
-	अगर (ret != (अक्रम1 / भाग_factor) + 1) अणु
+	if (ret != (rand1 / div_factor) + 1) {
 		handler_errors++;
 		pr_err("incorrect value in kretprobe handler2\n");
-	पूर्ण
-	अगर (krph_val == 0) अणु
+	}
+	if (krph_val == 0) {
 		handler_errors++;
 		pr_err("call to kretprobe entry handler failed\n");
-	पूर्ण
+	}
 
-	krph_val = अक्रम1;
-	वापस 0;
-पूर्ण
+	krph_val = rand1;
+	return 0;
+}
 
-अटल काष्ठा kretprobe rp2 = अणु
-	.handler	= वापस_handler2,
+static struct kretprobe rp2 = {
+	.handler	= return_handler2,
 	.entry_handler  = entry_handler,
 	.kp.symbol_name = "kprobe_target2"
-पूर्ण;
+};
 
-अटल पूर्णांक test_kretprobes(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा kretprobe *rps[2] = अणु&rp, &rp2पूर्ण;
+static int test_kretprobes(void)
+{
+	int ret;
+	struct kretprobe *rps[2] = {&rp, &rp2};
 
-	/* addr and flags should be cleard क्रम reusing kprobe. */
-	rp.kp.addr = शून्य;
+	/* addr and flags should be cleard for reusing kprobe. */
+	rp.kp.addr = NULL;
 	rp.kp.flags = 0;
-	ret = रेजिस्टर_kretprobes(rps, 2);
-	अगर (ret < 0) अणु
+	ret = register_kretprobes(rps, 2);
+	if (ret < 0) {
 		pr_err("register_kretprobe returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	krph_val = 0;
-	ret = target(अक्रम1);
-	अगर (krph_val != अक्रम1) अणु
+	ret = target(rand1);
+	if (krph_val != rand1) {
 		pr_err("kretprobe handler not called\n");
 		handler_errors++;
-	पूर्ण
+	}
 
 	krph_val = 0;
-	ret = target2(अक्रम1);
-	अगर (krph_val != अक्रम1) अणु
+	ret = target2(rand1);
+	if (krph_val != rand1) {
 		pr_err("kretprobe handler2 not called\n");
 		handler_errors++;
-	पूर्ण
-	unरेजिस्टर_kretprobes(rps, 2);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KRETPROBES */
+	}
+	unregister_kretprobes(rps, 2);
+	return 0;
+}
+#endif /* CONFIG_KRETPROBES */
 
-पूर्णांक init_test_probes(व्योम)
-अणु
-	पूर्णांक ret;
+int init_test_probes(void)
+{
+	int ret;
 
 	target = kprobe_target;
 	target2 = kprobe_target2;
 
-	करो अणु
-		अक्रम1 = pअक्रमom_u32();
-	पूर्ण जबतक (अक्रम1 <= भाग_factor);
+	do {
+		rand1 = prandom_u32();
+	} while (rand1 <= div_factor);
 
 	pr_info("started\n");
 	num_tests++;
 	ret = test_kprobe();
-	अगर (ret < 0)
+	if (ret < 0)
 		errors++;
 
 	num_tests++;
 	ret = test_kprobes();
-	अगर (ret < 0)
+	if (ret < 0)
 		errors++;
 
-#अगर_घोषित CONFIG_KRETPROBES
+#ifdef CONFIG_KRETPROBES
 	num_tests++;
 	ret = test_kretprobe();
-	अगर (ret < 0)
+	if (ret < 0)
 		errors++;
 
 	num_tests++;
 	ret = test_kretprobes();
-	अगर (ret < 0)
+	if (ret < 0)
 		errors++;
-#पूर्ण_अगर /* CONFIG_KRETPROBES */
+#endif /* CONFIG_KRETPROBES */
 
-	अगर (errors)
+	if (errors)
 		pr_err("BUG: %d out of %d tests failed\n", errors, num_tests);
-	अन्यथा अगर (handler_errors)
+	else if (handler_errors)
 		pr_err("BUG: %d error(s) running handlers\n", handler_errors);
-	अन्यथा
+	else
 		pr_info("passed successfully\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

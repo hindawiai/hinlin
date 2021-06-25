@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2009 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -8,157 +7,157 @@
  * S3C24XX CPU Frequency scaling - debugfs status support
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/err.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/cpufreq.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/err.h>
 
-#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
+#include <linux/soc/samsung/s3c-cpufreq-core.h>
 
-अटल काष्ठा dentry *dbgfs_root;
-अटल काष्ठा dentry *dbgfs_file_io;
-अटल काष्ठा dentry *dbgfs_file_info;
-अटल काष्ठा dentry *dbgfs_file_board;
+static struct dentry *dbgfs_root;
+static struct dentry *dbgfs_file_io;
+static struct dentry *dbgfs_file_info;
+static struct dentry *dbgfs_file_board;
 
-#घोषणा prपूर्णांक_ns(x) ((x) / 10), ((x) % 10)
+#define print_ns(x) ((x) / 10), ((x) % 10)
 
-अटल व्योम show_max(काष्ठा seq_file *seq, काष्ठा s3c_freq *f)
-अणु
-	seq_म_लिखो(seq, "MAX: F=%lu, H=%lu, P=%lu, A=%lu\n",
+static void show_max(struct seq_file *seq, struct s3c_freq *f)
+{
+	seq_printf(seq, "MAX: F=%lu, H=%lu, P=%lu, A=%lu\n",
 		   f->fclk, f->hclk, f->pclk, f->armclk);
-पूर्ण
+}
 
-अटल पूर्णांक board_show(काष्ठा seq_file *seq, व्योम *p)
-अणु
-	काष्ठा s3c_cpufreq_config *cfg;
-	काष्ठा s3c_cpufreq_board *brd;
+static int board_show(struct seq_file *seq, void *p)
+{
+	struct s3c_cpufreq_config *cfg;
+	struct s3c_cpufreq_board *brd;
 
-	cfg = s3c_cpufreq_अ_लोonfig();
-	अगर (!cfg) अणु
-		seq_म_लिखो(seq, "no configuration registered\n");
-		वापस 0;
-	पूर्ण
+	cfg = s3c_cpufreq_getconfig();
+	if (!cfg) {
+		seq_printf(seq, "no configuration registered\n");
+		return 0;
+	}
 
 	brd = cfg->board;
-	अगर (!brd) अणु
-		seq_म_लिखो(seq, "no board definition set?\n");
-		वापस 0;
-	पूर्ण
+	if (!brd) {
+		seq_printf(seq, "no board definition set?\n");
+		return 0;
+	}
 
-	seq_म_लिखो(seq, "SDRAM refresh %u ns\n", brd->refresh);
-	seq_म_लिखो(seq, "auto_io=%u\n", brd->स्वतः_io);
-	seq_म_लिखो(seq, "need_io=%u\n", brd->need_io);
+	seq_printf(seq, "SDRAM refresh %u ns\n", brd->refresh);
+	seq_printf(seq, "auto_io=%u\n", brd->auto_io);
+	seq_printf(seq, "need_io=%u\n", brd->need_io);
 
 	show_max(seq, &brd->max);
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(board);
 
-अटल पूर्णांक info_show(काष्ठा seq_file *seq, व्योम *p)
-अणु
-	काष्ठा s3c_cpufreq_config *cfg;
+static int info_show(struct seq_file *seq, void *p)
+{
+	struct s3c_cpufreq_config *cfg;
 
-	cfg = s3c_cpufreq_अ_लोonfig();
-	अगर (!cfg) अणु
-		seq_म_लिखो(seq, "no configuration registered\n");
-		वापस 0;
-	पूर्ण
+	cfg = s3c_cpufreq_getconfig();
+	if (!cfg) {
+		seq_printf(seq, "no configuration registered\n");
+		return 0;
+	}
 
-	seq_म_लिखो(seq, "  FCLK %ld Hz\n", cfg->freq.fclk);
-	seq_म_लिखो(seq, "  HCLK %ld Hz (%lu.%lu ns)\n",
-		   cfg->freq.hclk, prपूर्णांक_ns(cfg->freq.hclk_tns));
-	seq_म_लिखो(seq, "  PCLK %ld Hz\n", cfg->freq.hclk);
-	seq_म_लिखो(seq, "ARMCLK %ld Hz\n", cfg->freq.armclk);
-	seq_म_लिखो(seq, "\n");
+	seq_printf(seq, "  FCLK %ld Hz\n", cfg->freq.fclk);
+	seq_printf(seq, "  HCLK %ld Hz (%lu.%lu ns)\n",
+		   cfg->freq.hclk, print_ns(cfg->freq.hclk_tns));
+	seq_printf(seq, "  PCLK %ld Hz\n", cfg->freq.hclk);
+	seq_printf(seq, "ARMCLK %ld Hz\n", cfg->freq.armclk);
+	seq_printf(seq, "\n");
 
 	show_max(seq, &cfg->max);
 
-	seq_म_लिखो(seq, "Divisors: P=%d, H=%d, A=%d, dvs=%s\n",
-		   cfg->भागs.h_भागisor, cfg->भागs.p_भागisor,
-		   cfg->भागs.arm_भागisor, cfg->भागs.dvs ? "on" : "off");
-	seq_म_लिखो(seq, "\n");
+	seq_printf(seq, "Divisors: P=%d, H=%d, A=%d, dvs=%s\n",
+		   cfg->divs.h_divisor, cfg->divs.p_divisor,
+		   cfg->divs.arm_divisor, cfg->divs.dvs ? "on" : "off");
+	seq_printf(seq, "\n");
 
-	seq_म_लिखो(seq, "lock_pll=%u\n", cfg->lock_pll);
+	seq_printf(seq, "lock_pll=%u\n", cfg->lock_pll);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(info);
 
-अटल पूर्णांक io_show(काष्ठा seq_file *seq, व्योम *p)
-अणु
-	व्योम (*show_bank)(काष्ठा seq_file *, काष्ठा s3c_cpufreq_config *, जोड़ s3c_iobank *);
-	काष्ठा s3c_cpufreq_config *cfg;
-	काष्ठा s3c_iotimings *iot;
-	जोड़ s3c_iobank *iob;
-	पूर्णांक bank;
+static int io_show(struct seq_file *seq, void *p)
+{
+	void (*show_bank)(struct seq_file *, struct s3c_cpufreq_config *, union s3c_iobank *);
+	struct s3c_cpufreq_config *cfg;
+	struct s3c_iotimings *iot;
+	union s3c_iobank *iob;
+	int bank;
 
-	cfg = s3c_cpufreq_अ_लोonfig();
-	अगर (!cfg) अणु
-		seq_म_लिखो(seq, "no configuration registered\n");
-		वापस 0;
-	पूर्ण
+	cfg = s3c_cpufreq_getconfig();
+	if (!cfg) {
+		seq_printf(seq, "no configuration registered\n");
+		return 0;
+	}
 
 	show_bank = cfg->info->debug_io_show;
-	अगर (!show_bank) अणु
-		seq_म_लिखो(seq, "no code to show bank timing\n");
-		वापस 0;
-	पूर्ण
+	if (!show_bank) {
+		seq_printf(seq, "no code to show bank timing\n");
+		return 0;
+	}
 
 	iot = s3c_cpufreq_getiotimings();
-	अगर (!iot) अणु
-		seq_म_लिखो(seq, "no io timings registered\n");
-		वापस 0;
-	पूर्ण
+	if (!iot) {
+		seq_printf(seq, "no io timings registered\n");
+		return 0;
+	}
 
-	seq_म_लिखो(seq, "hclk period is %lu.%lu ns\n", prपूर्णांक_ns(cfg->freq.hclk_tns));
+	seq_printf(seq, "hclk period is %lu.%lu ns\n", print_ns(cfg->freq.hclk_tns));
 
-	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+	for (bank = 0; bank < MAX_BANKS; bank++) {
 		iob = &iot->bank[bank];
 
-		seq_म_लिखो(seq, "bank %d: ", bank);
+		seq_printf(seq, "bank %d: ", bank);
 
-		अगर (!iob->io_2410) अणु
-			seq_म_लिखो(seq, "nothing set\n");
-			जारी;
-		पूर्ण
+		if (!iob->io_2410) {
+			seq_printf(seq, "nothing set\n");
+			continue;
+		}
 
 		show_bank(seq, cfg, iob);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(io);
 
-अटल पूर्णांक __init s3c_freq_debugfs_init(व्योम)
-अणु
-	dbgfs_root = debugfs_create_dir("s3c-cpufreq", शून्य);
-	अगर (IS_ERR(dbgfs_root)) अणु
+static int __init s3c_freq_debugfs_init(void)
+{
+	dbgfs_root = debugfs_create_dir("s3c-cpufreq", NULL);
+	if (IS_ERR(dbgfs_root)) {
 		pr_err("%s: error creating debugfs root\n", __func__);
-		वापस PTR_ERR(dbgfs_root);
-	पूर्ण
+		return PTR_ERR(dbgfs_root);
+	}
 
 	dbgfs_file_io = debugfs_create_file("io-timing", S_IRUGO, dbgfs_root,
-					    शून्य, &io_fops);
+					    NULL, &io_fops);
 
 	dbgfs_file_info = debugfs_create_file("info", S_IRUGO, dbgfs_root,
-					      शून्य, &info_fops);
+					      NULL, &info_fops);
 
 	dbgfs_file_board = debugfs_create_file("board", S_IRUGO, dbgfs_root,
-					       शून्य, &board_fops);
+					       NULL, &board_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(s3c_freq_debugfs_init);
 

@@ -1,116 +1,115 @@
-<शैली गुरु>
 /******************************************************************************
  * This software may be used and distributed according to the terms of
  * the GNU General Public License (GPL), incorporated herein by reference.
  * Drivers based on or derived from this code fall under the GPL and must
  * retain the authorship, copyright and license notice.  This file is not
  * a complete program and may only be used when the entire operating
- * प्रणाली is licensed under the GPL.
- * See the file COPYING in this distribution क्रम more inक्रमmation.
+ * system is licensed under the GPL.
+ * See the file COPYING in this distribution for more information.
  *
- * vxge-traffic.c: Driver क्रम Exar Corp's X3100 Series 10GbE PCIe I/O
+ * vxge-traffic.c: Driver for Exar Corp's X3100 Series 10GbE PCIe I/O
  *                 Virtualized Server Adapter.
  * Copyright(c) 2002-2010 Exar Corp.
  ******************************************************************************/
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश <linux/prefetch.h>
+#include <linux/etherdevice.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/prefetch.h>
 
-#समावेश "vxge-traffic.h"
-#समावेश "vxge-config.h"
-#समावेश "vxge-main.h"
+#include "vxge-traffic.h"
+#include "vxge-config.h"
+#include "vxge-main.h"
 
 /*
- * vxge_hw_vpath_पूर्णांकr_enable - Enable vpath पूर्णांकerrupts.
+ * vxge_hw_vpath_intr_enable - Enable vpath interrupts.
  * @vp: Virtual Path handle.
  *
- * Enable vpath पूर्णांकerrupts. The function is to be executed the last in
+ * Enable vpath interrupts. The function is to be executed the last in
  * vpath initialization sequence.
  *
- * See also: vxge_hw_vpath_पूर्णांकr_disable()
+ * See also: vxge_hw_vpath_intr_disable()
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_पूर्णांकr_enable(काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
-	काष्ठा __vxge_hw_भवpath *vpath;
-	काष्ठा vxge_hw_vpath_reg __iomem *vp_reg;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
-	अगर (vp == शून्य) अणु
+enum vxge_hw_status vxge_hw_vpath_intr_enable(struct __vxge_hw_vpath_handle *vp)
+{
+	struct __vxge_hw_virtualpath *vpath;
+	struct vxge_hw_vpath_reg __iomem *vp_reg;
+	enum vxge_hw_status status = VXGE_HW_OK;
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	अगर (vpath->vp_खोलो == VXGE_HW_VP_NOT_OPEN) अणु
+	if (vpath->vp_open == VXGE_HW_VP_NOT_OPEN) {
 		status = VXGE_HW_ERR_VPATH_NOT_OPEN;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vp_reg = vpath->vp_reg;
 
-	ग_लिखोq(VXGE_HW_INTR_MASK_ALL, &vp_reg->kdfcctl_errors_reg);
+	writeq(VXGE_HW_INTR_MASK_ALL, &vp_reg->kdfcctl_errors_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->general_errors_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->pci_config_errors_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->mrpcim_to_vpath_alarm_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_to_vpath_alarm_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->vpath_ppअगर_पूर्णांक_status);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->vpath_ppif_int_status);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_msg_to_vpath_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->vpath_pcipअगर_पूर्णांक_status);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->vpath_pcipif_int_status);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->prc_alarm_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->wrdma_alarm_status);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->asic_ntwk_vp_err_reg);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->xgmac_vp_पूर्णांक_status);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->xgmac_vp_int_status);
 
-	पढ़ोq(&vp_reg->vpath_general_पूर्णांक_status);
+	readq(&vp_reg->vpath_general_int_status);
 
-	/* Mask unwanted पूर्णांकerrupts */
+	/* Mask unwanted interrupts */
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->vpath_pcipअगर_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->vpath_pcipif_int_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_msg_to_vpath_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_to_vpath_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->mrpcim_to_vpath_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->pci_config_errors_mask);
 
-	/* Unmask the inभागidual पूर्णांकerrupts */
+	/* Unmask the individual interrupts */
 
-	ग_लिखोq((u32)vxge_bVALn((VXGE_HW_GENERAL_ERRORS_REG_DBLGEN_FIFO1_OVRFLOW|
+	writeq((u32)vxge_bVALn((VXGE_HW_GENERAL_ERRORS_REG_DBLGEN_FIFO1_OVRFLOW|
 		VXGE_HW_GENERAL_ERRORS_REG_DBLGEN_FIFO2_OVRFLOW|
 		VXGE_HW_GENERAL_ERRORS_REG_STATSB_DROP_TIMEOUT_REQ|
 		VXGE_HW_GENERAL_ERRORS_REG_STATSB_PIF_CHAIN_ERR), 0, 32),
 		&vp_reg->general_errors_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+	__vxge_hw_pio_mem_write32_upper(
 		(u32)vxge_bVALn((VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO1_OVRWR|
 		VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO2_OVRWR|
 		VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO1_POISON|
@@ -119,466 +118,466 @@
 		VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO2_DMA_ERR), 0, 32),
 		&vp_reg->kdfcctl_errors_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(0, &vp_reg->vpath_ppअगर_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper(0, &vp_reg->vpath_ppif_int_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+	__vxge_hw_pio_mem_write32_upper(
 		(u32)vxge_bVALn(VXGE_HW_PRC_ALARM_REG_PRC_RING_BUMP, 0, 32),
 		&vp_reg->prc_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(0, &vp_reg->wrdma_alarm_mask);
-	__vxge_hw_pio_mem_ग_लिखो32_upper(0, &vp_reg->xgmac_vp_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper(0, &vp_reg->wrdma_alarm_mask);
+	__vxge_hw_pio_mem_write32_upper(0, &vp_reg->xgmac_vp_int_mask);
 
-	अगर (vpath->hldev->first_vp_id != vpath->vp_id)
-		__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	if (vpath->hldev->first_vp_id != vpath->vp_id)
+		__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->asic_ntwk_vp_err_mask);
-	अन्यथा
-		__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn((
+	else
+		__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn((
 		VXGE_HW_ASIC_NTWK_VP_ERR_REG_XMACJ_NTWK_REAFFIRMED_FAULT |
 		VXGE_HW_ASIC_NTWK_VP_ERR_REG_XMACJ_NTWK_REAFFIRMED_OK), 0, 32),
 		&vp_reg->asic_ntwk_vp_err_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(0,
-		&vp_reg->vpath_general_पूर्णांक_mask);
-निकास:
-	वापस status;
+	__vxge_hw_pio_mem_write32_upper(0,
+		&vp_reg->vpath_general_int_mask);
+exit:
+	return status;
 
-पूर्ण
+}
 
 /*
- * vxge_hw_vpath_पूर्णांकr_disable - Disable vpath पूर्णांकerrupts.
+ * vxge_hw_vpath_intr_disable - Disable vpath interrupts.
  * @vp: Virtual Path handle.
  *
- * Disable vpath पूर्णांकerrupts. The function is to be executed the last in
+ * Disable vpath interrupts. The function is to be executed the last in
  * vpath initialization sequence.
  *
- * See also: vxge_hw_vpath_पूर्णांकr_enable()
+ * See also: vxge_hw_vpath_intr_enable()
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_पूर्णांकr_disable(
-			काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
-	काष्ठा vxge_hw_vpath_reg __iomem *vp_reg;
-	अगर (vp == शून्य) अणु
+enum vxge_hw_status vxge_hw_vpath_intr_disable(
+			struct __vxge_hw_vpath_handle *vp)
+{
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
+	struct vxge_hw_vpath_reg __iomem *vp_reg;
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	अगर (vpath->vp_खोलो == VXGE_HW_VP_NOT_OPEN) अणु
+	if (vpath->vp_open == VXGE_HW_VP_NOT_OPEN) {
 		status = VXGE_HW_ERR_VPATH_NOT_OPEN;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	vp_reg = vpath->vp_reg;
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+	__vxge_hw_pio_mem_write32_upper(
 		(u32)VXGE_HW_INTR_MASK_ALL,
-		&vp_reg->vpath_general_पूर्णांक_mask);
+		&vp_reg->vpath_general_int_mask);
 
-	ग_लिखोq(VXGE_HW_INTR_MASK_ALL, &vp_reg->kdfcctl_errors_mask);
+	writeq(VXGE_HW_INTR_MASK_ALL, &vp_reg->kdfcctl_errors_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->general_errors_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->pci_config_errors_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->mrpcim_to_vpath_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_to_vpath_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->vpath_ppअगर_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->vpath_ppif_int_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->srpcim_msg_to_vpath_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->vpath_pcipअगर_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->vpath_pcipif_int_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->wrdma_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->prc_alarm_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
-			&vp_reg->xgmac_vp_पूर्णांक_mask);
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+			&vp_reg->xgmac_vp_int_mask);
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)VXGE_HW_INTR_MASK_ALL,
+	__vxge_hw_pio_mem_write32_upper((u32)VXGE_HW_INTR_MASK_ALL,
 			&vp_reg->asic_ntwk_vp_err_mask);
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
-व्योम vxge_hw_vpath_tti_ci_set(काष्ठा __vxge_hw_fअगरo *fअगरo)
-अणु
-	काष्ठा vxge_hw_vpath_reg __iomem *vp_reg;
-	काष्ठा vxge_hw_vp_config *config;
+void vxge_hw_vpath_tti_ci_set(struct __vxge_hw_fifo *fifo)
+{
+	struct vxge_hw_vpath_reg __iomem *vp_reg;
+	struct vxge_hw_vp_config *config;
 	u64 val64;
 
-	अगर (fअगरo->config->enable != VXGE_HW_FIFO_ENABLE)
-		वापस;
+	if (fifo->config->enable != VXGE_HW_FIFO_ENABLE)
+		return;
 
-	vp_reg = fअगरo->vp_reg;
-	config = container_of(fअगरo->config, काष्ठा vxge_hw_vp_config, fअगरo);
+	vp_reg = fifo->vp_reg;
+	config = container_of(fifo->config, struct vxge_hw_vp_config, fifo);
 
-	अगर (config->tti.समयr_ci_en != VXGE_HW_TIM_TIMER_CI_ENABLE) अणु
-		config->tti.समयr_ci_en = VXGE_HW_TIM_TIMER_CI_ENABLE;
-		val64 = पढ़ोq(&vp_reg->tim_cfg1_पूर्णांक_num[VXGE_HW_VPATH_INTR_TX]);
+	if (config->tti.timer_ci_en != VXGE_HW_TIM_TIMER_CI_ENABLE) {
+		config->tti.timer_ci_en = VXGE_HW_TIM_TIMER_CI_ENABLE;
+		val64 = readq(&vp_reg->tim_cfg1_int_num[VXGE_HW_VPATH_INTR_TX]);
 		val64 |= VXGE_HW_TIM_CFG1_INT_NUM_TIMER_CI;
-		fअगरo->tim_tti_cfg1_saved = val64;
-		ग_लिखोq(val64, &vp_reg->tim_cfg1_पूर्णांक_num[VXGE_HW_VPATH_INTR_TX]);
-	पूर्ण
-पूर्ण
+		fifo->tim_tti_cfg1_saved = val64;
+		writeq(val64, &vp_reg->tim_cfg1_int_num[VXGE_HW_VPATH_INTR_TX]);
+	}
+}
 
-व्योम vxge_hw_vpath_dynamic_rti_ci_set(काष्ठा __vxge_hw_ring *ring)
-अणु
+void vxge_hw_vpath_dynamic_rti_ci_set(struct __vxge_hw_ring *ring)
+{
 	u64 val64 = ring->tim_rti_cfg1_saved;
 
 	val64 |= VXGE_HW_TIM_CFG1_INT_NUM_TIMER_CI;
 	ring->tim_rti_cfg1_saved = val64;
-	ग_लिखोq(val64, &ring->vp_reg->tim_cfg1_पूर्णांक_num[VXGE_HW_VPATH_INTR_RX]);
-पूर्ण
+	writeq(val64, &ring->vp_reg->tim_cfg1_int_num[VXGE_HW_VPATH_INTR_RX]);
+}
 
-व्योम vxge_hw_vpath_dynamic_tti_rसमयr_set(काष्ठा __vxge_hw_fअगरo *fअगरo)
-अणु
-	u64 val64 = fअगरo->tim_tti_cfg3_saved;
-	u64 समयr = (fअगरo->rसमयr * 1000) / 272;
+void vxge_hw_vpath_dynamic_tti_rtimer_set(struct __vxge_hw_fifo *fifo)
+{
+	u64 val64 = fifo->tim_tti_cfg3_saved;
+	u64 timer = (fifo->rtimer * 1000) / 272;
 
 	val64 &= ~VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(0x3ffffff);
-	अगर (समयr)
-		val64 |= VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(समयr) |
+	if (timer)
+		val64 |= VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(timer) |
 			VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_EVENT_SF(5);
 
-	ग_लिखोq(val64, &fअगरo->vp_reg->tim_cfg3_पूर्णांक_num[VXGE_HW_VPATH_INTR_TX]);
+	writeq(val64, &fifo->vp_reg->tim_cfg3_int_num[VXGE_HW_VPATH_INTR_TX]);
 	/* tti_cfg3_saved is not updated again because it is
-	 * initialized at one place only - init समय.
+	 * initialized at one place only - init time.
 	 */
-पूर्ण
+}
 
-व्योम vxge_hw_vpath_dynamic_rti_rसमयr_set(काष्ठा __vxge_hw_ring *ring)
-अणु
+void vxge_hw_vpath_dynamic_rti_rtimer_set(struct __vxge_hw_ring *ring)
+{
 	u64 val64 = ring->tim_rti_cfg3_saved;
-	u64 समयr = (ring->rसमयr * 1000) / 272;
+	u64 timer = (ring->rtimer * 1000) / 272;
 
 	val64 &= ~VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(0x3ffffff);
-	अगर (समयr)
-		val64 |= VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(समयr) |
+	if (timer)
+		val64 |= VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_VAL(timer) |
 			VXGE_HW_TIM_CFG3_INT_NUM_RTIMER_EVENT_SF(4);
 
-	ग_लिखोq(val64, &ring->vp_reg->tim_cfg3_पूर्णांक_num[VXGE_HW_VPATH_INTR_RX]);
+	writeq(val64, &ring->vp_reg->tim_cfg3_int_num[VXGE_HW_VPATH_INTR_RX]);
 	/* rti_cfg3_saved is not updated again because it is
-	 * initialized at one place only - init समय.
+	 * initialized at one place only - init time.
 	 */
-पूर्ण
+}
 
 /**
  * vxge_hw_channel_msix_mask - Mask MSIX Vector.
- * @channel: Channel क्रम rx or tx handle
+ * @channel: Channel for rx or tx handle
  * @msix_id:  MSIX ID
  *
- * The function masks the msix पूर्णांकerrupt क्रम the given msix_id
+ * The function masks the msix interrupt for the given msix_id
  *
  * Returns: 0
  */
-व्योम vxge_hw_channel_msix_mask(काष्ठा __vxge_hw_channel *channel, पूर्णांक msix_id)
-अणु
+void vxge_hw_channel_msix_mask(struct __vxge_hw_channel *channel, int msix_id)
+{
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+	__vxge_hw_pio_mem_write32_upper(
 		(u32)vxge_bVALn(vxge_mBIT(msix_id >> 2), 0, 32),
 		&channel->common_reg->set_msix_mask_vect[msix_id%4]);
-पूर्ण
+}
 
 /**
  * vxge_hw_channel_msix_unmask - Unmask the MSIX Vector.
- * @channel: Channel क्रम rx or tx handle
+ * @channel: Channel for rx or tx handle
  * @msix_id:  MSI ID
  *
- * The function unmasks the msix पूर्णांकerrupt क्रम the given msix_id
+ * The function unmasks the msix interrupt for the given msix_id
  *
  * Returns: 0
  */
-व्योम
-vxge_hw_channel_msix_unmask(काष्ठा __vxge_hw_channel *channel, पूर्णांक msix_id)
-अणु
+void
+vxge_hw_channel_msix_unmask(struct __vxge_hw_channel *channel, int msix_id)
+{
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+	__vxge_hw_pio_mem_write32_upper(
 		(u32)vxge_bVALn(vxge_mBIT(msix_id >> 2), 0, 32),
 		&channel->common_reg->clear_msix_mask_vect[msix_id%4]);
-पूर्ण
+}
 
 /**
  * vxge_hw_channel_msix_clear - Unmask the MSIX Vector.
- * @channel: Channel क्रम rx or tx handle
+ * @channel: Channel for rx or tx handle
  * @msix_id:  MSI ID
  *
- * The function unmasks the msix पूर्णांकerrupt क्रम the given msix_id
- * अगर configured in MSIX oneshot mode
+ * The function unmasks the msix interrupt for the given msix_id
+ * if configured in MSIX oneshot mode
  *
  * Returns: 0
  */
-व्योम vxge_hw_channel_msix_clear(काष्ठा __vxge_hw_channel *channel, पूर्णांक msix_id)
-अणु
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+void vxge_hw_channel_msix_clear(struct __vxge_hw_channel *channel, int msix_id)
+{
+	__vxge_hw_pio_mem_write32_upper(
 		(u32) vxge_bVALn(vxge_mBIT(msix_id >> 2), 0, 32),
 		&channel->common_reg->clr_msix_one_shot_vec[msix_id % 4]);
-पूर्ण
+}
 
 /**
- * vxge_hw_device_set_पूर्णांकr_type - Updates the configuration
- *		with new पूर्णांकerrupt type.
+ * vxge_hw_device_set_intr_type - Updates the configuration
+ *		with new interrupt type.
  * @hldev: HW device handle.
- * @पूर्णांकr_mode: New पूर्णांकerrupt type
+ * @intr_mode: New interrupt type
  */
-u32 vxge_hw_device_set_पूर्णांकr_type(काष्ठा __vxge_hw_device *hldev, u32 पूर्णांकr_mode)
-अणु
+u32 vxge_hw_device_set_intr_type(struct __vxge_hw_device *hldev, u32 intr_mode)
+{
 
-	अगर ((पूर्णांकr_mode != VXGE_HW_INTR_MODE_IRQLINE) &&
-	   (पूर्णांकr_mode != VXGE_HW_INTR_MODE_MSIX) &&
-	   (पूर्णांकr_mode != VXGE_HW_INTR_MODE_MSIX_ONE_SHOT) &&
-	   (पूर्णांकr_mode != VXGE_HW_INTR_MODE_DEF))
-		पूर्णांकr_mode = VXGE_HW_INTR_MODE_IRQLINE;
+	if ((intr_mode != VXGE_HW_INTR_MODE_IRQLINE) &&
+	   (intr_mode != VXGE_HW_INTR_MODE_MSIX) &&
+	   (intr_mode != VXGE_HW_INTR_MODE_MSIX_ONE_SHOT) &&
+	   (intr_mode != VXGE_HW_INTR_MODE_DEF))
+		intr_mode = VXGE_HW_INTR_MODE_IRQLINE;
 
-	hldev->config.पूर्णांकr_mode = पूर्णांकr_mode;
-	वापस पूर्णांकr_mode;
-पूर्ण
+	hldev->config.intr_mode = intr_mode;
+	return intr_mode;
+}
 
 /**
- * vxge_hw_device_पूर्णांकr_enable - Enable पूर्णांकerrupts.
+ * vxge_hw_device_intr_enable - Enable interrupts.
  * @hldev: HW device handle.
  *
- * Enable Titan पूर्णांकerrupts. The function is to be executed the last in
+ * Enable Titan interrupts. The function is to be executed the last in
  * Titan initialization sequence.
  *
- * See also: vxge_hw_device_पूर्णांकr_disable()
+ * See also: vxge_hw_device_intr_disable()
  */
-व्योम vxge_hw_device_पूर्णांकr_enable(काष्ठा __vxge_hw_device *hldev)
-अणु
+void vxge_hw_device_intr_enable(struct __vxge_hw_device *hldev)
+{
 	u32 i;
 	u64 val64;
 	u32 val32;
 
 	vxge_hw_device_mask_all(hldev);
 
-	क्रम (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) अणु
+	for (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) {
 
-		अगर (!(hldev->vpaths_deployed & vxge_mBIT(i)))
-			जारी;
+		if (!(hldev->vpaths_deployed & vxge_mBIT(i)))
+			continue;
 
-		vxge_hw_vpath_पूर्णांकr_enable(
-			VXGE_HW_VIRTUAL_PATH_HANDLE(&hldev->भव_paths[i]));
-	पूर्ण
+		vxge_hw_vpath_intr_enable(
+			VXGE_HW_VIRTUAL_PATH_HANDLE(&hldev->virtual_paths[i]));
+	}
 
-	अगर (hldev->config.पूर्णांकr_mode == VXGE_HW_INTR_MODE_IRQLINE) अणु
-		val64 = hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] |
-			hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX];
+	if (hldev->config.intr_mode == VXGE_HW_INTR_MODE_IRQLINE) {
+		val64 = hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_TX] |
+			hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_RX];
 
-		अगर (val64 != 0) अणु
-			ग_लिखोq(val64, &hldev->common_reg->tim_पूर्णांक_status0);
+		if (val64 != 0) {
+			writeq(val64, &hldev->common_reg->tim_int_status0);
 
-			ग_लिखोq(~val64, &hldev->common_reg->tim_पूर्णांक_mask0);
-		पूर्ण
+			writeq(~val64, &hldev->common_reg->tim_int_mask0);
+		}
 
-		val32 = hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] |
-			hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX];
+		val32 = hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_TX] |
+			hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_RX];
 
-		अगर (val32 != 0) अणु
-			__vxge_hw_pio_mem_ग_लिखो32_upper(val32,
-					&hldev->common_reg->tim_पूर्णांक_status1);
+		if (val32 != 0) {
+			__vxge_hw_pio_mem_write32_upper(val32,
+					&hldev->common_reg->tim_int_status1);
 
-			__vxge_hw_pio_mem_ग_लिखो32_upper(~val32,
-					&hldev->common_reg->tim_पूर्णांक_mask1);
-		पूर्ण
-	पूर्ण
+			__vxge_hw_pio_mem_write32_upper(~val32,
+					&hldev->common_reg->tim_int_mask1);
+		}
+	}
 
-	val64 = पढ़ोq(&hldev->common_reg->titan_general_पूर्णांक_status);
+	val64 = readq(&hldev->common_reg->titan_general_int_status);
 
 	vxge_hw_device_unmask_all(hldev);
-पूर्ण
+}
 
 /**
- * vxge_hw_device_पूर्णांकr_disable - Disable Titan पूर्णांकerrupts.
+ * vxge_hw_device_intr_disable - Disable Titan interrupts.
  * @hldev: HW device handle.
  *
- * Disable Titan पूर्णांकerrupts.
+ * Disable Titan interrupts.
  *
- * See also: vxge_hw_device_पूर्णांकr_enable()
+ * See also: vxge_hw_device_intr_enable()
  */
-व्योम vxge_hw_device_पूर्णांकr_disable(काष्ठा __vxge_hw_device *hldev)
-अणु
+void vxge_hw_device_intr_disable(struct __vxge_hw_device *hldev)
+{
 	u32 i;
 
 	vxge_hw_device_mask_all(hldev);
 
-	/* mask all the tim पूर्णांकerrupts */
-	ग_लिखोq(VXGE_HW_INTR_MASK_ALL, &hldev->common_reg->tim_पूर्णांक_mask0);
-	__vxge_hw_pio_mem_ग_लिखो32_upper(VXGE_HW_DEFAULT_32,
-		&hldev->common_reg->tim_पूर्णांक_mask1);
+	/* mask all the tim interrupts */
+	writeq(VXGE_HW_INTR_MASK_ALL, &hldev->common_reg->tim_int_mask0);
+	__vxge_hw_pio_mem_write32_upper(VXGE_HW_DEFAULT_32,
+		&hldev->common_reg->tim_int_mask1);
 
-	क्रम (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) अणु
+	for (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) {
 
-		अगर (!(hldev->vpaths_deployed & vxge_mBIT(i)))
-			जारी;
+		if (!(hldev->vpaths_deployed & vxge_mBIT(i)))
+			continue;
 
-		vxge_hw_vpath_पूर्णांकr_disable(
-			VXGE_HW_VIRTUAL_PATH_HANDLE(&hldev->भव_paths[i]));
-	पूर्ण
-पूर्ण
+		vxge_hw_vpath_intr_disable(
+			VXGE_HW_VIRTUAL_PATH_HANDLE(&hldev->virtual_paths[i]));
+	}
+}
 
 /**
- * vxge_hw_device_mask_all - Mask all device पूर्णांकerrupts.
+ * vxge_hw_device_mask_all - Mask all device interrupts.
  * @hldev: HW device handle.
  *
- * Mask	all device पूर्णांकerrupts.
+ * Mask	all device interrupts.
  *
  * See also: vxge_hw_device_unmask_all()
  */
-व्योम vxge_hw_device_mask_all(काष्ठा __vxge_hw_device *hldev)
-अणु
+void vxge_hw_device_mask_all(struct __vxge_hw_device *hldev)
+{
 	u64 val64;
 
 	val64 = VXGE_HW_TITAN_MASK_ALL_INT_ALARM |
 		VXGE_HW_TITAN_MASK_ALL_INT_TRAFFIC;
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn(val64, 0, 32),
-				&hldev->common_reg->titan_mask_all_पूर्णांक);
-पूर्ण
+	__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn(val64, 0, 32),
+				&hldev->common_reg->titan_mask_all_int);
+}
 
 /**
- * vxge_hw_device_unmask_all - Unmask all device पूर्णांकerrupts.
+ * vxge_hw_device_unmask_all - Unmask all device interrupts.
  * @hldev: HW device handle.
  *
- * Unmask all device पूर्णांकerrupts.
+ * Unmask all device interrupts.
  *
  * See also: vxge_hw_device_mask_all()
  */
-व्योम vxge_hw_device_unmask_all(काष्ठा __vxge_hw_device *hldev)
-अणु
+void vxge_hw_device_unmask_all(struct __vxge_hw_device *hldev)
+{
 	u64 val64 = 0;
 
-	अगर (hldev->config.पूर्णांकr_mode == VXGE_HW_INTR_MODE_IRQLINE)
+	if (hldev->config.intr_mode == VXGE_HW_INTR_MODE_IRQLINE)
 		val64 =  VXGE_HW_TITAN_MASK_ALL_INT_TRAFFIC;
 
-	__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn(val64, 0, 32),
-			&hldev->common_reg->titan_mask_all_पूर्णांक);
-पूर्ण
+	__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn(val64, 0, 32),
+			&hldev->common_reg->titan_mask_all_int);
+}
 
 /**
- * vxge_hw_device_flush_io - Flush io ग_लिखोs.
+ * vxge_hw_device_flush_io - Flush io writes.
  * @hldev: HW device handle.
  *
- * The function	perक्रमms a पढ़ो operation to flush io ग_लिखोs.
+ * The function	performs a read operation to flush io writes.
  *
- * Returns: व्योम
+ * Returns: void
  */
-व्योम vxge_hw_device_flush_io(काष्ठा __vxge_hw_device *hldev)
-अणु
-	पढ़ोl(&hldev->common_reg->titan_general_पूर्णांक_status);
-पूर्ण
+void vxge_hw_device_flush_io(struct __vxge_hw_device *hldev)
+{
+	readl(&hldev->common_reg->titan_general_int_status);
+}
 
 /**
  * __vxge_hw_device_handle_error - Handle error
  * @hldev: HW device
  * @vp_id: Vpath Id
- * @type: Error type. Please see क्रमागत vxge_hw_eventअणुपूर्ण
+ * @type: Error type. Please see enum vxge_hw_event{}
  *
  * Handle error.
  */
-अटल क्रमागत vxge_hw_status
-__vxge_hw_device_handle_error(काष्ठा __vxge_hw_device *hldev, u32 vp_id,
-			      क्रमागत vxge_hw_event type)
-अणु
-	चयन (type) अणु
-	हाल VXGE_HW_EVENT_UNKNOWN:
-		अवरोध;
-	हाल VXGE_HW_EVENT_RESET_START:
-	हाल VXGE_HW_EVENT_RESET_COMPLETE:
-	हाल VXGE_HW_EVENT_LINK_DOWN:
-	हाल VXGE_HW_EVENT_LINK_UP:
-		जाओ out;
-	हाल VXGE_HW_EVENT_ALARM_CLEARED:
-		जाओ out;
-	हाल VXGE_HW_EVENT_ECCERR:
-	हाल VXGE_HW_EVENT_MRPCIM_ECCERR:
-		जाओ out;
-	हाल VXGE_HW_EVENT_FIFO_ERR:
-	हाल VXGE_HW_EVENT_VPATH_ERR:
-	हाल VXGE_HW_EVENT_CRITICAL_ERR:
-	हाल VXGE_HW_EVENT_SERR:
-		अवरोध;
-	हाल VXGE_HW_EVENT_SRPCIM_SERR:
-	हाल VXGE_HW_EVENT_MRPCIM_SERR:
-		जाओ out;
-	हाल VXGE_HW_EVENT_SLOT_FREEZE:
-		अवरोध;
-	शेष:
-		vxge_निश्चित(0);
-		जाओ out;
-	पूर्ण
+static enum vxge_hw_status
+__vxge_hw_device_handle_error(struct __vxge_hw_device *hldev, u32 vp_id,
+			      enum vxge_hw_event type)
+{
+	switch (type) {
+	case VXGE_HW_EVENT_UNKNOWN:
+		break;
+	case VXGE_HW_EVENT_RESET_START:
+	case VXGE_HW_EVENT_RESET_COMPLETE:
+	case VXGE_HW_EVENT_LINK_DOWN:
+	case VXGE_HW_EVENT_LINK_UP:
+		goto out;
+	case VXGE_HW_EVENT_ALARM_CLEARED:
+		goto out;
+	case VXGE_HW_EVENT_ECCERR:
+	case VXGE_HW_EVENT_MRPCIM_ECCERR:
+		goto out;
+	case VXGE_HW_EVENT_FIFO_ERR:
+	case VXGE_HW_EVENT_VPATH_ERR:
+	case VXGE_HW_EVENT_CRITICAL_ERR:
+	case VXGE_HW_EVENT_SERR:
+		break;
+	case VXGE_HW_EVENT_SRPCIM_SERR:
+	case VXGE_HW_EVENT_MRPCIM_SERR:
+		goto out;
+	case VXGE_HW_EVENT_SLOT_FREEZE:
+		break;
+	default:
+		vxge_assert(0);
+		goto out;
+	}
 
-	/* notअगरy driver */
-	अगर (hldev->uld_callbacks->crit_err)
+	/* notify driver */
+	if (hldev->uld_callbacks->crit_err)
 		hldev->uld_callbacks->crit_err(hldev,
 			type, vp_id);
 out:
 
-	वापस VXGE_HW_OK;
-पूर्ण
+	return VXGE_HW_OK;
+}
 
 /*
- * __vxge_hw_device_handle_link_करोwn_ind
+ * __vxge_hw_device_handle_link_down_ind
  * @hldev: HW device handle.
  *
- * Link करोwn indication handler. The function is invoked by HW when
- * Titan indicates that the link is करोwn.
+ * Link down indication handler. The function is invoked by HW when
+ * Titan indicates that the link is down.
  */
-अटल क्रमागत vxge_hw_status
-__vxge_hw_device_handle_link_करोwn_ind(काष्ठा __vxge_hw_device *hldev)
-अणु
+static enum vxge_hw_status
+__vxge_hw_device_handle_link_down_ind(struct __vxge_hw_device *hldev)
+{
 	/*
-	 * If the previous link state is not करोwn, वापस.
+	 * If the previous link state is not down, return.
 	 */
-	अगर (hldev->link_state == VXGE_HW_LINK_DOWN)
-		जाओ निकास;
+	if (hldev->link_state == VXGE_HW_LINK_DOWN)
+		goto exit;
 
 	hldev->link_state = VXGE_HW_LINK_DOWN;
 
-	/* notअगरy driver */
-	अगर (hldev->uld_callbacks->link_करोwn)
-		hldev->uld_callbacks->link_करोwn(hldev);
-निकास:
-	वापस VXGE_HW_OK;
-पूर्ण
+	/* notify driver */
+	if (hldev->uld_callbacks->link_down)
+		hldev->uld_callbacks->link_down(hldev);
+exit:
+	return VXGE_HW_OK;
+}
 
 /*
  * __vxge_hw_device_handle_link_up_ind
  * @hldev: HW device handle.
  *
  * Link up indication handler. The function is invoked by HW when
- * Titan indicates that the link is up क्रम programmable amount of समय.
+ * Titan indicates that the link is up for programmable amount of time.
  */
-अटल क्रमागत vxge_hw_status
-__vxge_hw_device_handle_link_up_ind(काष्ठा __vxge_hw_device *hldev)
-अणु
+static enum vxge_hw_status
+__vxge_hw_device_handle_link_up_ind(struct __vxge_hw_device *hldev)
+{
 	/*
-	 * If the previous link state is not करोwn, वापस.
+	 * If the previous link state is not down, return.
 	 */
-	अगर (hldev->link_state == VXGE_HW_LINK_UP)
-		जाओ निकास;
+	if (hldev->link_state == VXGE_HW_LINK_UP)
+		goto exit;
 
 	hldev->link_state = VXGE_HW_LINK_UP;
 
-	/* notअगरy driver */
-	अगर (hldev->uld_callbacks->link_up)
+	/* notify driver */
+	if (hldev->uld_callbacks->link_up)
 		hldev->uld_callbacks->link_up(hldev);
-निकास:
-	वापस VXGE_HW_OK;
-पूर्ण
+exit:
+	return VXGE_HW_OK;
+}
 
 /*
  * __vxge_hw_vpath_alarm_process - Process Alarms.
@@ -588,59 +587,59 @@ __vxge_hw_device_handle_link_up_ind(काष्ठा __vxge_hw_device *hldev)
  * Process vpath alarms.
  *
  */
-अटल क्रमागत vxge_hw_status
-__vxge_hw_vpath_alarm_process(काष्ठा __vxge_hw_भवpath *vpath,
+static enum vxge_hw_status
+__vxge_hw_vpath_alarm_process(struct __vxge_hw_virtualpath *vpath,
 			      u32 skip_alarms)
-अणु
+{
 	u64 val64;
 	u64 alarm_status;
 	u64 pic_status;
-	काष्ठा __vxge_hw_device *hldev = शून्य;
-	क्रमागत vxge_hw_event alarm_event = VXGE_HW_EVENT_UNKNOWN;
+	struct __vxge_hw_device *hldev = NULL;
+	enum vxge_hw_event alarm_event = VXGE_HW_EVENT_UNKNOWN;
 	u64 mask64;
-	काष्ठा vxge_hw_vpath_stats_sw_info *sw_stats;
-	काष्ठा vxge_hw_vpath_reg __iomem *vp_reg;
+	struct vxge_hw_vpath_stats_sw_info *sw_stats;
+	struct vxge_hw_vpath_reg __iomem *vp_reg;
 
-	अगर (vpath == शून्य) अणु
+	if (vpath == NULL) {
 		alarm_event = VXGE_HW_SET_LEVEL(VXGE_HW_EVENT_UNKNOWN,
 			alarm_event);
-		जाओ out2;
-	पूर्ण
+		goto out2;
+	}
 
 	hldev = vpath->hldev;
 	vp_reg = vpath->vp_reg;
-	alarm_status = पढ़ोq(&vp_reg->vpath_general_पूर्णांक_status);
+	alarm_status = readq(&vp_reg->vpath_general_int_status);
 
-	अगर (alarm_status == VXGE_HW_ALL_FOXES) अणु
+	if (alarm_status == VXGE_HW_ALL_FOXES) {
 		alarm_event = VXGE_HW_SET_LEVEL(VXGE_HW_EVENT_SLOT_FREEZE,
 			alarm_event);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sw_stats = vpath->sw_stats;
 
-	अगर (alarm_status & ~(
+	if (alarm_status & ~(
 		VXGE_HW_VPATH_GENERAL_INT_STATUS_PIC_INT |
 		VXGE_HW_VPATH_GENERAL_INT_STATUS_PCI_INT |
 		VXGE_HW_VPATH_GENERAL_INT_STATUS_WRDMA_INT |
-		VXGE_HW_VPATH_GENERAL_INT_STATUS_XMAC_INT)) अणु
+		VXGE_HW_VPATH_GENERAL_INT_STATUS_XMAC_INT)) {
 		sw_stats->error_stats.unknown_alarms++;
 
 		alarm_event = VXGE_HW_SET_LEVEL(VXGE_HW_EVENT_UNKNOWN,
 			alarm_event);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_XMAC_INT) अणु
+	if (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_XMAC_INT) {
 
-		val64 = पढ़ोq(&vp_reg->xgmac_vp_पूर्णांक_status);
+		val64 = readq(&vp_reg->xgmac_vp_int_status);
 
-		अगर (val64 &
-		VXGE_HW_XGMAC_VP_INT_STATUS_ASIC_NTWK_VP_ERR_ASIC_NTWK_VP_INT) अणु
+		if (val64 &
+		VXGE_HW_XGMAC_VP_INT_STATUS_ASIC_NTWK_VP_ERR_ASIC_NTWK_VP_INT) {
 
-			val64 = पढ़ोq(&vp_reg->asic_ntwk_vp_err_reg);
+			val64 = readq(&vp_reg->asic_ntwk_vp_err_reg);
 
-			अगर (((val64 &
+			if (((val64 &
 			      VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_FLT) &&
 			     (!(val64 &
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_OK))) ||
@@ -648,19 +647,19 @@ __vxge_hw_vpath_alarm_process(काष्ठा __vxge_hw_भवpath *vpath,
 			     VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_FLT_OCCURR) &&
 			     (!(val64 &
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_OK_OCCURR)
-				     ))) अणु
+				     ))) {
 				sw_stats->error_stats.network_sustained_fault++;
 
-				ग_लिखोq(
+				writeq(
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_FLT,
 					&vp_reg->asic_ntwk_vp_err_mask);
 
-				__vxge_hw_device_handle_link_करोwn_ind(hldev);
+				__vxge_hw_device_handle_link_down_ind(hldev);
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_LINK_DOWN, alarm_event);
-			पूर्ण
+			}
 
-			अगर (((val64 &
+			if (((val64 &
 			      VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_OK) &&
 			     (!(val64 &
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_FLT))) ||
@@ -668,398 +667,398 @@ __vxge_hw_vpath_alarm_process(काष्ठा __vxge_hw_भवpath *vpath,
 			      VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_OK_OCCURR) &&
 			     (!(val64 &
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_FLT_OCCURR)
-				     ))) अणु
+				     ))) {
 
 				sw_stats->error_stats.network_sustained_ok++;
 
-				ग_लिखोq(
+				writeq(
 				VXGE_HW_ASIC_NW_VP_ERR_REG_XMACJ_STN_OK,
 					&vp_reg->asic_ntwk_vp_err_mask);
 
 				__vxge_hw_device_handle_link_up_ind(hldev);
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_LINK_UP, alarm_event);
-			पूर्ण
+			}
 
-			ग_लिखोq(VXGE_HW_INTR_MASK_ALL,
+			writeq(VXGE_HW_INTR_MASK_ALL,
 				&vp_reg->asic_ntwk_vp_err_reg);
 
 			alarm_event = VXGE_HW_SET_LEVEL(
 				VXGE_HW_EVENT_ALARM_CLEARED, alarm_event);
 
-			अगर (skip_alarms)
-				वापस VXGE_HW_OK;
-		पूर्ण
-	पूर्ण
+			if (skip_alarms)
+				return VXGE_HW_OK;
+		}
+	}
 
-	अगर (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_PIC_INT) अणु
+	if (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_PIC_INT) {
 
-		pic_status = पढ़ोq(&vp_reg->vpath_ppअगर_पूर्णांक_status);
+		pic_status = readq(&vp_reg->vpath_ppif_int_status);
 
-		अगर (pic_status &
-		    VXGE_HW_VPATH_PPIF_INT_STATUS_GENERAL_ERRORS_GENERAL_INT) अणु
+		if (pic_status &
+		    VXGE_HW_VPATH_PPIF_INT_STATUS_GENERAL_ERRORS_GENERAL_INT) {
 
-			val64 = पढ़ोq(&vp_reg->general_errors_reg);
-			mask64 = पढ़ोq(&vp_reg->general_errors_mask);
+			val64 = readq(&vp_reg->general_errors_reg);
+			mask64 = readq(&vp_reg->general_errors_mask);
 
-			अगर ((val64 &
+			if ((val64 &
 				VXGE_HW_GENERAL_ERRORS_REG_INI_SERR_DET) &
-				~mask64) अणु
+				~mask64) {
 				sw_stats->error_stats.ini_serr_det++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_SERR, alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 &
+			if ((val64 &
 			    VXGE_HW_GENERAL_ERRORS_REG_DBLGEN_FIFO0_OVRFLOW) &
-				~mask64) अणु
-				sw_stats->error_stats.dblgen_fअगरo0_overflow++;
+				~mask64) {
+				sw_stats->error_stats.dblgen_fifo0_overflow++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_FIFO_ERR, alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 &
+			if ((val64 &
 			    VXGE_HW_GENERAL_ERRORS_REG_STATSB_PIF_CHAIN_ERR) &
 				~mask64)
-				sw_stats->error_stats.statsb_pअगर_chain_error++;
+				sw_stats->error_stats.statsb_pif_chain_error++;
 
-			अगर ((val64 &
+			if ((val64 &
 			   VXGE_HW_GENERAL_ERRORS_REG_STATSB_DROP_TIMEOUT_REQ) &
 				~mask64)
-				sw_stats->error_stats.statsb_drop_समयout++;
+				sw_stats->error_stats.statsb_drop_timeout++;
 
-			अगर ((val64 &
+			if ((val64 &
 				VXGE_HW_GENERAL_ERRORS_REG_TGT_ILLEGAL_ACCESS) &
 				~mask64)
 				sw_stats->error_stats.target_illegal_access++;
 
-			अगर (!skip_alarms) अणु
-				ग_लिखोq(VXGE_HW_INTR_MASK_ALL,
+			if (!skip_alarms) {
+				writeq(VXGE_HW_INTR_MASK_ALL,
 					&vp_reg->general_errors_reg);
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_ALARM_CLEARED,
 					alarm_event);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (pic_status &
-		    VXGE_HW_VPATH_PPIF_INT_STATUS_KDFCCTL_ERRORS_KDFCCTL_INT) अणु
+		if (pic_status &
+		    VXGE_HW_VPATH_PPIF_INT_STATUS_KDFCCTL_ERRORS_KDFCCTL_INT) {
 
-			val64 = पढ़ोq(&vp_reg->kdfcctl_errors_reg);
-			mask64 = पढ़ोq(&vp_reg->kdfcctl_errors_mask);
+			val64 = readq(&vp_reg->kdfcctl_errors_reg);
+			mask64 = readq(&vp_reg->kdfcctl_errors_mask);
 
-			अगर ((val64 &
+			if ((val64 &
 			    VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO0_OVRWR) &
-				~mask64) अणु
-				sw_stats->error_stats.kdfcctl_fअगरo0_overग_लिखो++;
+				~mask64) {
+				sw_stats->error_stats.kdfcctl_fifo0_overwrite++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_FIFO_ERR,
 					alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 &
+			if ((val64 &
 			    VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO0_POISON) &
-				~mask64) अणु
-				sw_stats->error_stats.kdfcctl_fअगरo0_poison++;
+				~mask64) {
+				sw_stats->error_stats.kdfcctl_fifo0_poison++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_FIFO_ERR,
 					alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 &
+			if ((val64 &
 			    VXGE_HW_KDFCCTL_ERRORS_REG_KDFCCTL_FIFO0_DMA_ERR) &
-				~mask64) अणु
-				sw_stats->error_stats.kdfcctl_fअगरo0_dma_error++;
+				~mask64) {
+				sw_stats->error_stats.kdfcctl_fifo0_dma_error++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_FIFO_ERR,
 					alarm_event);
-			पूर्ण
+			}
 
-			अगर (!skip_alarms) अणु
-				ग_लिखोq(VXGE_HW_INTR_MASK_ALL,
+			if (!skip_alarms) {
+				writeq(VXGE_HW_INTR_MASK_ALL,
 					&vp_reg->kdfcctl_errors_reg);
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_ALARM_CLEARED,
 					alarm_event);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
+	}
 
-	अगर (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_WRDMA_INT) अणु
+	if (alarm_status & VXGE_HW_VPATH_GENERAL_INT_STATUS_WRDMA_INT) {
 
-		val64 = पढ़ोq(&vp_reg->wrdma_alarm_status);
+		val64 = readq(&vp_reg->wrdma_alarm_status);
 
-		अगर (val64 & VXGE_HW_WRDMA_ALARM_STATUS_PRC_ALARM_PRC_INT) अणु
+		if (val64 & VXGE_HW_WRDMA_ALARM_STATUS_PRC_ALARM_PRC_INT) {
 
-			val64 = पढ़ोq(&vp_reg->prc_alarm_reg);
-			mask64 = पढ़ोq(&vp_reg->prc_alarm_mask);
+			val64 = readq(&vp_reg->prc_alarm_reg);
+			mask64 = readq(&vp_reg->prc_alarm_mask);
 
-			अगर ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RING_BUMP)&
+			if ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RING_BUMP)&
 				~mask64)
 				sw_stats->error_stats.prc_ring_bumps++;
 
-			अगर ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RXDCM_SC_ERR) &
-				~mask64) अणु
+			if ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RXDCM_SC_ERR) &
+				~mask64) {
 				sw_stats->error_stats.prc_rxdcm_sc_err++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_VPATH_ERR,
 					alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RXDCM_SC_ABORT)
-				& ~mask64) अणु
-				sw_stats->error_stats.prc_rxdcm_sc_पात++;
+			if ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_RXDCM_SC_ABORT)
+				& ~mask64) {
+				sw_stats->error_stats.prc_rxdcm_sc_abort++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 						VXGE_HW_EVENT_VPATH_ERR,
 						alarm_event);
-			पूर्ण
+			}
 
-			अगर ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_QUANTA_SIZE_ERR)
-				 & ~mask64) अणु
+			if ((val64 & VXGE_HW_PRC_ALARM_REG_PRC_QUANTA_SIZE_ERR)
+				 & ~mask64) {
 				sw_stats->error_stats.prc_quanta_size_err++;
 
 				alarm_event = VXGE_HW_SET_LEVEL(
 					VXGE_HW_EVENT_VPATH_ERR,
 					alarm_event);
-			पूर्ण
+			}
 
-			अगर (!skip_alarms) अणु
-				ग_लिखोq(VXGE_HW_INTR_MASK_ALL,
+			if (!skip_alarms) {
+				writeq(VXGE_HW_INTR_MASK_ALL,
 					&vp_reg->prc_alarm_reg);
 				alarm_event = VXGE_HW_SET_LEVEL(
 						VXGE_HW_EVENT_ALARM_CLEARED,
 						alarm_event);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 out:
 	hldev->stats.sw_dev_err_stats.vpath_alarms++;
 out2:
-	अगर ((alarm_event == VXGE_HW_EVENT_ALARM_CLEARED) ||
+	if ((alarm_event == VXGE_HW_EVENT_ALARM_CLEARED) ||
 		(alarm_event == VXGE_HW_EVENT_UNKNOWN))
-		वापस VXGE_HW_OK;
+		return VXGE_HW_OK;
 
 	__vxge_hw_device_handle_error(hldev, vpath->vp_id, alarm_event);
 
-	अगर (alarm_event == VXGE_HW_EVENT_SERR)
-		वापस VXGE_HW_ERR_CRITICAL;
+	if (alarm_event == VXGE_HW_EVENT_SERR)
+		return VXGE_HW_ERR_CRITICAL;
 
-	वापस (alarm_event == VXGE_HW_EVENT_SLOT_FREEZE) ?
+	return (alarm_event == VXGE_HW_EVENT_SLOT_FREEZE) ?
 		VXGE_HW_ERR_SLOT_FREEZE :
 		(alarm_event == VXGE_HW_EVENT_FIFO_ERR) ? VXGE_HW_ERR_FIFO :
 		VXGE_HW_ERR_VPATH;
-पूर्ण
+}
 
 /**
  * vxge_hw_device_begin_irq - Begin IRQ processing.
  * @hldev: HW device handle.
  * @skip_alarms: Do not clear the alarms
- * @reason: "Reason" क्रम the पूर्णांकerrupt, the value of Titan's
- *	general_पूर्णांक_status रेजिस्टर.
+ * @reason: "Reason" for the interrupt, the value of Titan's
+ *	general_int_status register.
  *
- * The function	perक्रमms two actions, It first checks whether (shared IRQ) the
- * पूर्णांकerrupt was उठाओd	by the device. Next, it	masks the device पूर्णांकerrupts.
+ * The function	performs two actions, It first checks whether (shared IRQ) the
+ * interrupt was raised	by the device. Next, it	masks the device interrupts.
  *
  * Note:
- * vxge_hw_device_begin_irq() करोes not flush MMIO ग_लिखोs through the
- * bridge. Thereक्रमe, two back-to-back पूर्णांकerrupts are potentially possible.
+ * vxge_hw_device_begin_irq() does not flush MMIO writes through the
+ * bridge. Therefore, two back-to-back interrupts are potentially possible.
  *
- * Returns: 0, अगर the पूर्णांकerrupt	is not "ours" (note that in this हाल the
- * device reमुख्य enabled).
- * Otherwise, vxge_hw_device_begin_irq() वापसs 64bit general adapter
+ * Returns: 0, if the interrupt	is not "ours" (note that in this case the
+ * device remain enabled).
+ * Otherwise, vxge_hw_device_begin_irq() returns 64bit general adapter
  * status.
  */
-क्रमागत vxge_hw_status vxge_hw_device_begin_irq(काष्ठा __vxge_hw_device *hldev,
+enum vxge_hw_status vxge_hw_device_begin_irq(struct __vxge_hw_device *hldev,
 					     u32 skip_alarms, u64 *reason)
-अणु
+{
 	u32 i;
 	u64 val64;
 	u64 adapter_status;
 	u64 vpath_mask;
-	क्रमागत vxge_hw_status ret = VXGE_HW_OK;
+	enum vxge_hw_status ret = VXGE_HW_OK;
 
-	val64 = पढ़ोq(&hldev->common_reg->titan_general_पूर्णांक_status);
+	val64 = readq(&hldev->common_reg->titan_general_int_status);
 
-	अगर (unlikely(!val64)) अणु
-		/* not Titan पूर्णांकerrupt	*/
+	if (unlikely(!val64)) {
+		/* not Titan interrupt	*/
 		*reason	= 0;
 		ret = VXGE_HW_ERR_WRONG_IRQ;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (unlikely(val64 == VXGE_HW_ALL_FOXES)) अणु
+	if (unlikely(val64 == VXGE_HW_ALL_FOXES)) {
 
-		adapter_status = पढ़ोq(&hldev->common_reg->adapter_status);
+		adapter_status = readq(&hldev->common_reg->adapter_status);
 
-		अगर (adapter_status == VXGE_HW_ALL_FOXES) अणु
+		if (adapter_status == VXGE_HW_ALL_FOXES) {
 
 			__vxge_hw_device_handle_error(hldev,
-				शून्य_VPID, VXGE_HW_EVENT_SLOT_FREEZE);
+				NULL_VPID, VXGE_HW_EVENT_SLOT_FREEZE);
 			*reason	= 0;
 			ret = VXGE_HW_ERR_SLOT_FREEZE;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	hldev->stats.sw_dev_info_stats.total_पूर्णांकr_cnt++;
+	hldev->stats.sw_dev_info_stats.total_intr_cnt++;
 
 	*reason	= val64;
 
 	vpath_mask = hldev->vpaths_deployed >>
 				(64 - VXGE_HW_MAX_VIRTUAL_PATHS);
 
-	अगर (val64 &
-	    VXGE_HW_TITAN_GENERAL_INT_STATUS_VPATH_TRAFFIC_INT(vpath_mask)) अणु
-		hldev->stats.sw_dev_info_stats.traffic_पूर्णांकr_cnt++;
+	if (val64 &
+	    VXGE_HW_TITAN_GENERAL_INT_STATUS_VPATH_TRAFFIC_INT(vpath_mask)) {
+		hldev->stats.sw_dev_info_stats.traffic_intr_cnt++;
 
-		वापस VXGE_HW_OK;
-	पूर्ण
+		return VXGE_HW_OK;
+	}
 
-	hldev->stats.sw_dev_info_stats.not_traffic_पूर्णांकr_cnt++;
+	hldev->stats.sw_dev_info_stats.not_traffic_intr_cnt++;
 
-	अगर (unlikely(val64 &
-			VXGE_HW_TITAN_GENERAL_INT_STATUS_VPATH_ALARM_INT)) अणु
+	if (unlikely(val64 &
+			VXGE_HW_TITAN_GENERAL_INT_STATUS_VPATH_ALARM_INT)) {
 
-		क्रमागत vxge_hw_status error_level = VXGE_HW_OK;
+		enum vxge_hw_status error_level = VXGE_HW_OK;
 
 		hldev->stats.sw_dev_err_stats.vpath_alarms++;
 
-		क्रम (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) अणु
+		for (i = 0; i < VXGE_HW_MAX_VIRTUAL_PATHS; i++) {
 
-			अगर (!(hldev->vpaths_deployed & vxge_mBIT(i)))
-				जारी;
+			if (!(hldev->vpaths_deployed & vxge_mBIT(i)))
+				continue;
 
 			ret = __vxge_hw_vpath_alarm_process(
-				&hldev->भव_paths[i], skip_alarms);
+				&hldev->virtual_paths[i], skip_alarms);
 
 			error_level = VXGE_HW_SET_LEVEL(ret, error_level);
 
-			अगर (unlikely((ret == VXGE_HW_ERR_CRITICAL) ||
+			if (unlikely((ret == VXGE_HW_ERR_CRITICAL) ||
 				(ret == VXGE_HW_ERR_SLOT_FREEZE)))
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
 		ret = error_level;
-	पूर्ण
-निकास:
-	वापस ret;
-पूर्ण
+	}
+exit:
+	return ret;
+}
 
 /**
  * vxge_hw_device_clear_tx_rx - Acknowledge (that is, clear) the
- * condition that has caused the Tx and RX पूर्णांकerrupt.
+ * condition that has caused the Tx and RX interrupt.
  * @hldev: HW device.
  *
  * Acknowledge (that is, clear) the condition that has caused
- * the Tx and Rx पूर्णांकerrupt.
+ * the Tx and Rx interrupt.
  * See also: vxge_hw_device_begin_irq(),
  * vxge_hw_device_mask_tx_rx(), vxge_hw_device_unmask_tx_rx().
  */
-व्योम vxge_hw_device_clear_tx_rx(काष्ठा __vxge_hw_device *hldev)
-अणु
+void vxge_hw_device_clear_tx_rx(struct __vxge_hw_device *hldev)
+{
 
-	अगर ((hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
-	   (hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		ग_लिखोq((hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] |
-				 hldev->tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX]),
-				&hldev->common_reg->tim_पूर्णांक_status0);
-	पूर्ण
+	if ((hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
+	   (hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		writeq((hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_TX] |
+				 hldev->tim_int_mask0[VXGE_HW_VPATH_INTR_RX]),
+				&hldev->common_reg->tim_int_status0);
+	}
 
-	अगर ((hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
-	   (hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		__vxge_hw_pio_mem_ग_लिखो32_upper(
-				(hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] |
-				 hldev->tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX]),
-				&hldev->common_reg->tim_पूर्णांक_status1);
-	पूर्ण
-पूर्ण
+	if ((hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
+	   (hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		__vxge_hw_pio_mem_write32_upper(
+				(hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_TX] |
+				 hldev->tim_int_mask1[VXGE_HW_VPATH_INTR_RX]),
+				&hldev->common_reg->tim_int_status1);
+	}
+}
 
 /*
  * vxge_hw_channel_dtr_alloc - Allocate a dtr from the channel
  * @channel: Channel
- * @dtrh: Buffer to वापस the DTR poपूर्णांकer
+ * @dtrh: Buffer to return the DTR pointer
  *
  * Allocates a dtr from the reserve array. If the reserve array is empty,
- * it swaps the reserve and मुक्त arrays.
+ * it swaps the reserve and free arrays.
  *
  */
-अटल क्रमागत vxge_hw_status
-vxge_hw_channel_dtr_alloc(काष्ठा __vxge_hw_channel *channel, व्योम **dtrh)
-अणु
-	अगर (channel->reserve_ptr - channel->reserve_top > 0) अणु
+static enum vxge_hw_status
+vxge_hw_channel_dtr_alloc(struct __vxge_hw_channel *channel, void **dtrh)
+{
+	if (channel->reserve_ptr - channel->reserve_top > 0) {
 _alloc_after_swap:
 		*dtrh =	channel->reserve_arr[--channel->reserve_ptr];
 
-		वापस VXGE_HW_OK;
-	पूर्ण
+		return VXGE_HW_OK;
+	}
 
-	/* चयन between empty	and full arrays	*/
+	/* switch between empty	and full arrays	*/
 
-	/* the idea behind such	a design is that by having मुक्त	and reserved
+	/* the idea behind such	a design is that by having free	and reserved
 	 * arrays separated we basically separated irq and non-irq parts.
-	 * i.e.	no additional lock need	to be करोne when	we मुक्त	a resource */
+	 * i.e.	no additional lock need	to be done when	we free	a resource */
 
-	अगर (channel->length - channel->मुक्त_ptr > 0) अणु
-		swap(channel->reserve_arr, channel->मुक्त_arr);
+	if (channel->length - channel->free_ptr > 0) {
+		swap(channel->reserve_arr, channel->free_arr);
 		channel->reserve_ptr = channel->length;
-		channel->reserve_top = channel->मुक्त_ptr;
-		channel->मुक्त_ptr = channel->length;
+		channel->reserve_top = channel->free_ptr;
+		channel->free_ptr = channel->length;
 
-		channel->stats->reserve_मुक्त_swaps_cnt++;
+		channel->stats->reserve_free_swaps_cnt++;
 
-		जाओ _alloc_after_swap;
-	पूर्ण
+		goto _alloc_after_swap;
+	}
 
 	channel->stats->full_cnt++;
 
-	*dtrh =	शून्य;
-	वापस VXGE_HW_INF_OUT_OF_DESCRIPTORS;
-पूर्ण
+	*dtrh =	NULL;
+	return VXGE_HW_INF_OUT_OF_DESCRIPTORS;
+}
 
 /*
  * vxge_hw_channel_dtr_post - Post a dtr to the channel
  * @channelh: Channel
- * @dtrh: DTR poपूर्णांकer
+ * @dtrh: DTR pointer
  *
  * Posts a dtr to work array.
  *
  */
-अटल व्योम
-vxge_hw_channel_dtr_post(काष्ठा __vxge_hw_channel *channel, व्योम *dtrh)
-अणु
-	vxge_निश्चित(channel->work_arr[channel->post_index] == शून्य);
+static void
+vxge_hw_channel_dtr_post(struct __vxge_hw_channel *channel, void *dtrh)
+{
+	vxge_assert(channel->work_arr[channel->post_index] == NULL);
 
 	channel->work_arr[channel->post_index++] = dtrh;
 
 	/* wrap-around */
-	अगर (channel->post_index	== channel->length)
+	if (channel->post_index	== channel->length)
 		channel->post_index = 0;
-पूर्ण
+}
 
 /*
  * vxge_hw_channel_dtr_try_complete - Returns next completed dtr
  * @channel: Channel
- * @dtr: Buffer to वापस the next completed DTR poपूर्णांकer
+ * @dtr: Buffer to return the next completed DTR pointer
  *
  * Returns the next completed dtr with out removing it from work array
  *
  */
-व्योम
-vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, व्योम **dtrh)
-अणु
-	vxge_निश्चित(channel->compl_index < channel->length);
+void
+vxge_hw_channel_dtr_try_complete(struct __vxge_hw_channel *channel, void **dtrh)
+{
+	vxge_assert(channel->compl_index < channel->length);
 
 	*dtrh =	channel->work_arr[channel->compl_index];
 	prefetch(*dtrh);
-पूर्ण
+}
 
 /*
  * vxge_hw_channel_dtr_complete - Removes next completed dtr from the work array
@@ -1068,50 +1067,50 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
  * Removes the next completed dtr from work array
  *
  */
-व्योम vxge_hw_channel_dtr_complete(काष्ठा __vxge_hw_channel *channel)
-अणु
-	channel->work_arr[channel->compl_index]	= शून्य;
+void vxge_hw_channel_dtr_complete(struct __vxge_hw_channel *channel)
+{
+	channel->work_arr[channel->compl_index]	= NULL;
 
 	/* wrap-around */
-	अगर (++channel->compl_index == channel->length)
+	if (++channel->compl_index == channel->length)
 		channel->compl_index = 0;
 
 	channel->stats->total_compl_cnt++;
-पूर्ण
+}
 
 /*
- * vxge_hw_channel_dtr_मुक्त - Frees a dtr
+ * vxge_hw_channel_dtr_free - Frees a dtr
  * @channel: Channel handle
- * @dtr:  DTR poपूर्णांकer
+ * @dtr:  DTR pointer
  *
- * Returns the dtr to मुक्त array
+ * Returns the dtr to free array
  *
  */
-व्योम vxge_hw_channel_dtr_मुक्त(काष्ठा __vxge_hw_channel *channel, व्योम *dtrh)
-अणु
-	channel->मुक्त_arr[--channel->मुक्त_ptr] = dtrh;
-पूर्ण
+void vxge_hw_channel_dtr_free(struct __vxge_hw_channel *channel, void *dtrh)
+{
+	channel->free_arr[--channel->free_ptr] = dtrh;
+}
 
 /*
  * vxge_hw_channel_dtr_count
- * @channel: Channel handle. Obtained via vxge_hw_channel_खोलो().
+ * @channel: Channel handle. Obtained via vxge_hw_channel_open().
  *
  * Retrieve number of DTRs available. This function can not be called
  * from data path. ring_initial_replenishi() is the only user.
  */
-पूर्णांक vxge_hw_channel_dtr_count(काष्ठा __vxge_hw_channel *channel)
-अणु
-	वापस (channel->reserve_ptr - channel->reserve_top) +
-		(channel->length - channel->मुक्त_ptr);
-पूर्ण
+int vxge_hw_channel_dtr_count(struct __vxge_hw_channel *channel)
+{
+	return (channel->reserve_ptr - channel->reserve_top) +
+		(channel->length - channel->free_ptr);
+}
 
 /**
  * vxge_hw_ring_rxd_reserve	- Reserve ring descriptor.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Reserved descriptor. On success HW fills this "out" parameter
  * with a valid handle.
  *
- * Reserve Rx descriptor क्रम the subsequent filling-in driver
+ * Reserve Rx descriptor for the subsequent filling-in driver
  * and posting on the corresponding channel (@channelh)
  * via vxge_hw_ring_rxd_post().
  *
@@ -1119,36 +1118,36 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
  * VXGE_HW_INF_OUT_OF_DESCRIPTORS - Currently no descriptors available.
  *
  */
-क्रमागत vxge_hw_status vxge_hw_ring_rxd_reserve(काष्ठा __vxge_hw_ring *ring,
-	व्योम **rxdh)
-अणु
-	क्रमागत vxge_hw_status status;
-	काष्ठा __vxge_hw_channel *channel;
+enum vxge_hw_status vxge_hw_ring_rxd_reserve(struct __vxge_hw_ring *ring,
+	void **rxdh)
+{
+	enum vxge_hw_status status;
+	struct __vxge_hw_channel *channel;
 
 	channel = &ring->channel;
 
 	status = vxge_hw_channel_dtr_alloc(channel, rxdh);
 
-	अगर (status == VXGE_HW_OK) अणु
-		काष्ठा vxge_hw_ring_rxd_1 *rxdp =
-			(काष्ठा vxge_hw_ring_rxd_1 *)*rxdh;
+	if (status == VXGE_HW_OK) {
+		struct vxge_hw_ring_rxd_1 *rxdp =
+			(struct vxge_hw_ring_rxd_1 *)*rxdh;
 
 		rxdp->control_0	= rxdp->control_1 = 0;
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * vxge_hw_ring_rxd_मुक्त - Free descriptor.
- * @ring: Handle to the ring object used क्रम receive
+ * vxge_hw_ring_rxd_free - Free descriptor.
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle.
  *
  * Free	the reserved descriptor. This operation is "symmetrical" to
  * vxge_hw_ring_rxd_reserve. The "free-ing" completes the descriptor's
- * lअगरecycle.
+ * lifecycle.
  *
- * After मुक्त-ing (see vxge_hw_ring_rxd_मुक्त()) the descriptor again can
+ * After free-ing (see vxge_hw_ring_rxd_free()) the descriptor again can
  * be:
  *
  * - reserved (vxge_hw_ring_rxd_reserve);
@@ -1157,69 +1156,69 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
  *
  * - completed (vxge_hw_ring_rxd_next_completed);
  *
- * - and recycled again	(vxge_hw_ring_rxd_मुक्त).
+ * - and recycled again	(vxge_hw_ring_rxd_free).
  *
  * For alternative state transitions and more details please refer to
- * the design करोc.
+ * the design doc.
  *
  */
-व्योम vxge_hw_ring_rxd_मुक्त(काष्ठा __vxge_hw_ring *ring, व्योम *rxdh)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
+void vxge_hw_ring_rxd_free(struct __vxge_hw_ring *ring, void *rxdh)
+{
+	struct __vxge_hw_channel *channel;
 
 	channel = &ring->channel;
 
-	vxge_hw_channel_dtr_मुक्त(channel, rxdh);
+	vxge_hw_channel_dtr_free(channel, rxdh);
 
-पूर्ण
+}
 
 /**
  * vxge_hw_ring_rxd_pre_post - Prepare rxd and post
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle.
  *
  * This routine prepares a rxd and posts
  */
-व्योम vxge_hw_ring_rxd_pre_post(काष्ठा __vxge_hw_ring *ring, व्योम *rxdh)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
+void vxge_hw_ring_rxd_pre_post(struct __vxge_hw_ring *ring, void *rxdh)
+{
+	struct __vxge_hw_channel *channel;
 
 	channel = &ring->channel;
 
 	vxge_hw_channel_dtr_post(channel, rxdh);
-पूर्ण
+}
 
 /**
  * vxge_hw_ring_rxd_post_post - Process rxd after post.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle.
  *
  * Processes rxd after post
  */
-व्योम vxge_hw_ring_rxd_post_post(काष्ठा __vxge_hw_ring *ring, व्योम *rxdh)
-अणु
-	काष्ठा vxge_hw_ring_rxd_1 *rxdp = (काष्ठा vxge_hw_ring_rxd_1 *)rxdh;
+void vxge_hw_ring_rxd_post_post(struct __vxge_hw_ring *ring, void *rxdh)
+{
+	struct vxge_hw_ring_rxd_1 *rxdp = (struct vxge_hw_ring_rxd_1 *)rxdh;
 
 	rxdp->control_0	= VXGE_HW_RING_RXD_LIST_OWN_ADAPTER;
 
-	अगर (ring->stats->common_stats.usage_cnt > 0)
+	if (ring->stats->common_stats.usage_cnt > 0)
 		ring->stats->common_stats.usage_cnt--;
-पूर्ण
+}
 
 /**
  * vxge_hw_ring_rxd_post - Post descriptor on the ring.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor obtained via vxge_hw_ring_rxd_reserve().
  *
  * Post	descriptor on the ring.
  * Prior to posting the	descriptor should be filled in accordance with
- * Host/Titan पूर्णांकerface specअगरication क्रम a given service (LL, etc.).
+ * Host/Titan interface specification for a given service (LL, etc.).
  *
  */
-व्योम vxge_hw_ring_rxd_post(काष्ठा __vxge_hw_ring *ring, व्योम *rxdh)
-अणु
-	काष्ठा vxge_hw_ring_rxd_1 *rxdp = (काष्ठा vxge_hw_ring_rxd_1 *)rxdh;
-	काष्ठा __vxge_hw_channel *channel;
+void vxge_hw_ring_rxd_post(struct __vxge_hw_ring *ring, void *rxdh)
+{
+	struct vxge_hw_ring_rxd_1 *rxdp = (struct vxge_hw_ring_rxd_1 *)rxdh;
+	struct __vxge_hw_channel *channel;
 
 	channel = &ring->channel;
 
@@ -1228,38 +1227,38 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
 
 	vxge_hw_channel_dtr_post(channel, rxdh);
 
-	अगर (ring->stats->common_stats.usage_cnt > 0)
+	if (ring->stats->common_stats.usage_cnt > 0)
 		ring->stats->common_stats.usage_cnt--;
-पूर्ण
+}
 
 /**
  * vxge_hw_ring_rxd_post_post_wmb - Process rxd after post with memory barrier.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle.
  *
  * Processes rxd after post with memory barrier.
  */
-व्योम vxge_hw_ring_rxd_post_post_wmb(काष्ठा __vxge_hw_ring *ring, व्योम *rxdh)
-अणु
+void vxge_hw_ring_rxd_post_post_wmb(struct __vxge_hw_ring *ring, void *rxdh)
+{
 	wmb();
 	vxge_hw_ring_rxd_post_post(ring, rxdh);
-पूर्ण
+}
 
 /**
  * vxge_hw_ring_rxd_next_completed - Get the _next_ completed descriptor.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle. Returned by HW.
  * @t_code:	Transfer code, as per Titan User Guide,
  *	 Receive Descriptor Format. Returned by HW.
  *
  * Retrieve the	_next_ completed descriptor.
- * HW uses ring callback (*vxge_hw_ring_callback_f) to notअगरiy
+ * HW uses ring callback (*vxge_hw_ring_callback_f) to notifiy
  * driver of new completed descriptors. After that
  * the driver can use vxge_hw_ring_rxd_next_completed to retrieve the rest
  * completions (the very first completion is passed by HW via
  * vxge_hw_ring_callback_f).
  *
- * Implementation-wise, the driver is मुक्त to call
+ * Implementation-wise, the driver is free to call
  * vxge_hw_ring_rxd_next_completed either immediately from inside the
  * ring callback, or in a deferred fashion and separate (from HW)
  * context.
@@ -1267,23 +1266,23 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
  * Non-zero @t_code means failure to fill-in receive buffer(s)
  * of the descriptor.
  * For instance, parity	error detected during the data transfer.
- * In this हाल	Titan will complete the descriptor and indicate
- * क्रम the host	that the received data is not to be used.
+ * In this case	Titan will complete the descriptor and indicate
+ * for the host	that the received data is not to be used.
  * For details please refer to Titan User Guide.
  *
  * Returns: VXGE_HW_OK - success.
  * VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS - No completed descriptors
- * are currently available क्रम processing.
+ * are currently available for processing.
  *
- * See also: vxge_hw_ring_callback_fअणुपूर्ण,
- * vxge_hw_fअगरo_rxd_next_completed(), क्रमागत vxge_hw_statusअणुपूर्ण.
+ * See also: vxge_hw_ring_callback_f{},
+ * vxge_hw_fifo_rxd_next_completed(), enum vxge_hw_status{}.
  */
-क्रमागत vxge_hw_status vxge_hw_ring_rxd_next_completed(
-	काष्ठा __vxge_hw_ring *ring, व्योम **rxdh, u8 *t_code)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
-	काष्ठा vxge_hw_ring_rxd_1 *rxdp;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status vxge_hw_ring_rxd_next_completed(
+	struct __vxge_hw_ring *ring, void **rxdh, u8 *t_code)
+{
+	struct __vxge_hw_channel *channel;
+	struct vxge_hw_ring_rxd_1 *rxdp;
+	enum vxge_hw_status status = VXGE_HW_OK;
 	u64 control_0, own;
 
 	channel = &ring->channel;
@@ -1291,453 +1290,453 @@ vxge_hw_channel_dtr_try_complete(काष्ठा __vxge_hw_channel *channel, 
 	vxge_hw_channel_dtr_try_complete(channel, rxdh);
 
 	rxdp = *rxdh;
-	अगर (rxdp == शून्य) अणु
+	if (rxdp == NULL) {
 		status = VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	control_0 = rxdp->control_0;
 	own = control_0 & VXGE_HW_RING_RXD_LIST_OWN_ADAPTER;
 	*t_code	= (u8)VXGE_HW_RING_RXD_T_CODE_GET(control_0);
 
 	/* check whether it is not the end */
-	अगर (!own || *t_code == VXGE_HW_RING_T_CODE_FRM_DROP) अणु
+	if (!own || *t_code == VXGE_HW_RING_T_CODE_FRM_DROP) {
 
-		vxge_निश्चित((rxdp)->host_control !=
+		vxge_assert((rxdp)->host_control !=
 				0);
 
 		++ring->cmpl_cnt;
 		vxge_hw_channel_dtr_complete(channel);
 
-		vxge_निश्चित(*t_code != VXGE_HW_RING_RXD_T_CODE_UNUSED);
+		vxge_assert(*t_code != VXGE_HW_RING_RXD_T_CODE_UNUSED);
 
 		ring->stats->common_stats.usage_cnt++;
-		अगर (ring->stats->common_stats.usage_max <
+		if (ring->stats->common_stats.usage_max <
 				ring->stats->common_stats.usage_cnt)
 			ring->stats->common_stats.usage_max =
 				ring->stats->common_stats.usage_cnt;
 
 		status = VXGE_HW_OK;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* reset it. since we करोn't want to वापस
+	/* reset it. since we don't want to return
 	 * garbage to the driver */
-	*rxdh =	शून्य;
+	*rxdh =	NULL;
 	status = VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS;
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_ring_handle_tcode - Handle transfer code.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  * @rxdh: Descriptor handle.
- * @t_code: One of the क्रमागतerated (and करोcumented in the Titan user guide)
+ * @t_code: One of the enumerated (and documented in the Titan user guide)
  * "transfer codes".
  *
  * Handle descriptor's transfer code. The latter comes with each completed
  * descriptor.
  *
- * Returns: one of the क्रमागत vxge_hw_statusअणुपूर्ण क्रमागतerated types.
- * VXGE_HW_OK			- क्रम success.
+ * Returns: one of the enum vxge_hw_status{} enumerated types.
+ * VXGE_HW_OK			- for success.
  * VXGE_HW_ERR_CRITICAL         - when encounters critical error.
  */
-क्रमागत vxge_hw_status vxge_hw_ring_handle_tcode(
-	काष्ठा __vxge_hw_ring *ring, व्योम *rxdh, u8 t_code)
-अणु
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status vxge_hw_ring_handle_tcode(
+	struct __vxge_hw_ring *ring, void *rxdh, u8 t_code)
+{
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	/* If the t_code is not supported and अगर the
+	/* If the t_code is not supported and if the
 	 * t_code is other than 0x5 (unparseable packet
 	 * such as unknown UPV6 header), Drop it !!!
 	 */
 
-	अगर (t_code ==  VXGE_HW_RING_T_CODE_OK ||
-		t_code == VXGE_HW_RING_T_CODE_L3_PKT_ERR) अणु
+	if (t_code ==  VXGE_HW_RING_T_CODE_OK ||
+		t_code == VXGE_HW_RING_T_CODE_L3_PKT_ERR) {
 		status = VXGE_HW_OK;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (t_code > VXGE_HW_RING_T_CODE_MULTI_ERR) अणु
+	if (t_code > VXGE_HW_RING_T_CODE_MULTI_ERR) {
 		status = VXGE_HW_ERR_INVALID_TCODE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	ring->stats->rxd_t_code_err_cnt[t_code]++;
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * __vxge_hw_non_offload_db_post - Post non offload करोorbell
+ * __vxge_hw_non_offload_db_post - Post non offload doorbell
  *
- * @fअगरo: fअगरohandle
+ * @fifo: fifohandle
  * @txdl_ptr: The starting location of the TxDL in host memory
  * @num_txds: The highest TxD in this TxDL (0 to 255 means 1 to 256)
  * @no_snoop: No snoop flags
  *
- * This function posts a non-offload करोorbell to करोorbell FIFO
+ * This function posts a non-offload doorbell to doorbell FIFO
  *
  */
-अटल व्योम __vxge_hw_non_offload_db_post(काष्ठा __vxge_hw_fअगरo *fअगरo,
+static void __vxge_hw_non_offload_db_post(struct __vxge_hw_fifo *fifo,
 	u64 txdl_ptr, u32 num_txds, u32 no_snoop)
-अणु
-	ग_लिखोq(VXGE_HW_NODBW_TYPE(VXGE_HW_NODBW_TYPE_NODBW) |
+{
+	writeq(VXGE_HW_NODBW_TYPE(VXGE_HW_NODBW_TYPE_NODBW) |
 		VXGE_HW_NODBW_LAST_TXD_NUMBER(num_txds) |
 		VXGE_HW_NODBW_GET_NO_SNOOP(no_snoop),
-		&fअगरo->nofl_db->control_0);
+		&fifo->nofl_db->control_0);
 
-	ग_लिखोq(txdl_ptr, &fअगरo->nofl_db->txdl_ptr);
-पूर्ण
+	writeq(txdl_ptr, &fifo->nofl_db->txdl_ptr);
+}
 
 /**
- * vxge_hw_fअगरo_मुक्त_txdl_count_get - वापसs the number of txdls available in
- * the fअगरo
- * @fअगरoh: Handle to the fअगरo object used क्रम non offload send
+ * vxge_hw_fifo_free_txdl_count_get - returns the number of txdls available in
+ * the fifo
+ * @fifoh: Handle to the fifo object used for non offload send
  */
-u32 vxge_hw_fअगरo_मुक्त_txdl_count_get(काष्ठा __vxge_hw_fअगरo *fअगरoh)
-अणु
-	वापस vxge_hw_channel_dtr_count(&fअगरoh->channel);
-पूर्ण
+u32 vxge_hw_fifo_free_txdl_count_get(struct __vxge_hw_fifo *fifoh)
+{
+	return vxge_hw_channel_dtr_count(&fifoh->channel);
+}
 
 /**
- * vxge_hw_fअगरo_txdl_reserve - Reserve fअगरo descriptor.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
+ * vxge_hw_fifo_txdl_reserve - Reserve fifo descriptor.
+ * @fifo: Handle to the fifo object used for non offload send
  * @txdlh: Reserved descriptor. On success HW fills this "out" parameter
  *        with a valid handle.
- * @txdl_priv: Buffer to वापस the poपूर्णांकer to per txdl space
+ * @txdl_priv: Buffer to return the pointer to per txdl space
  *
- * Reserve a single TxDL (that is, fअगरo descriptor)
- * क्रम the subsequent filling-in by driver)
+ * Reserve a single TxDL (that is, fifo descriptor)
+ * for the subsequent filling-in by driver)
  * and posting on the corresponding channel (@channelh)
- * via vxge_hw_fअगरo_txdl_post().
+ * via vxge_hw_fifo_txdl_post().
  *
  * Note: it is the responsibility of driver to reserve multiple descriptors
- * क्रम lengthy (e.g., LSO) transmit operation. A single fअगरo descriptor
- * carries up to configured number (fअगरo.max_frags) of contiguous buffers.
+ * for lengthy (e.g., LSO) transmit operation. A single fifo descriptor
+ * carries up to configured number (fifo.max_frags) of contiguous buffers.
  *
  * Returns: VXGE_HW_OK - success;
  * VXGE_HW_INF_OUT_OF_DESCRIPTORS - Currently no descriptors available
  *
  */
-क्रमागत vxge_hw_status vxge_hw_fअगरo_txdl_reserve(
-	काष्ठा __vxge_hw_fअगरo *fअगरo,
-	व्योम **txdlh, व्योम **txdl_priv)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
-	क्रमागत vxge_hw_status status;
-	पूर्णांक i;
+enum vxge_hw_status vxge_hw_fifo_txdl_reserve(
+	struct __vxge_hw_fifo *fifo,
+	void **txdlh, void **txdl_priv)
+{
+	struct __vxge_hw_channel *channel;
+	enum vxge_hw_status status;
+	int i;
 
-	channel = &fअगरo->channel;
+	channel = &fifo->channel;
 
 	status = vxge_hw_channel_dtr_alloc(channel, txdlh);
 
-	अगर (status == VXGE_HW_OK) अणु
-		काष्ठा vxge_hw_fअगरo_txd *txdp =
-			(काष्ठा vxge_hw_fअगरo_txd *)*txdlh;
-		काष्ठा __vxge_hw_fअगरo_txdl_priv *priv;
+	if (status == VXGE_HW_OK) {
+		struct vxge_hw_fifo_txd *txdp =
+			(struct vxge_hw_fifo_txd *)*txdlh;
+		struct __vxge_hw_fifo_txdl_priv *priv;
 
-		priv = __vxge_hw_fअगरo_txdl_priv(fअगरo, txdp);
+		priv = __vxge_hw_fifo_txdl_priv(fifo, txdp);
 
-		/* reset the TxDL's निजी */
+		/* reset the TxDL's private */
 		priv->align_dma_offset = 0;
 		priv->align_vaddr_start = priv->align_vaddr;
 		priv->align_used_frags = 0;
 		priv->frags = 0;
-		priv->alloc_frags = fअगरo->config->max_frags;
-		priv->next_txdl_priv = शून्य;
+		priv->alloc_frags = fifo->config->max_frags;
+		priv->next_txdl_priv = NULL;
 
-		*txdl_priv = (व्योम *)(माप_प्रकार)txdp->host_control;
+		*txdl_priv = (void *)(size_t)txdp->host_control;
 
-		क्रम (i = 0; i < fअगरo->config->max_frags; i++) अणु
-			txdp = ((काष्ठा vxge_hw_fअगरo_txd *)*txdlh) + i;
+		for (i = 0; i < fifo->config->max_frags; i++) {
+			txdp = ((struct vxge_hw_fifo_txd *)*txdlh) + i;
 			txdp->control_0 = txdp->control_1 = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * vxge_hw_fअगरo_txdl_buffer_set - Set transmit buffer poपूर्णांकer in the
+ * vxge_hw_fifo_txdl_buffer_set - Set transmit buffer pointer in the
  * descriptor.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
+ * @fifo: Handle to the fifo object used for non offload send
  * @txdlh: Descriptor handle.
  * @frag_idx: Index of the data buffer in the caller's scatter-gather list
  *            (of buffers).
- * @dma_poपूर्णांकer: DMA address of the data buffer referenced by @frag_idx.
+ * @dma_pointer: DMA address of the data buffer referenced by @frag_idx.
  * @size: Size of the data buffer (in bytes).
  *
- * This API is part of the preparation of the transmit descriptor क्रम posting
- * (via vxge_hw_fअगरo_txdl_post()). The related "preparation" APIs include
- * vxge_hw_fअगरo_txdl_mss_set() and vxge_hw_fअगरo_txdl_cksum_set_bits().
- * All three APIs fill in the fields of the fअगरo descriptor,
- * in accordance with the Titan specअगरication.
+ * This API is part of the preparation of the transmit descriptor for posting
+ * (via vxge_hw_fifo_txdl_post()). The related "preparation" APIs include
+ * vxge_hw_fifo_txdl_mss_set() and vxge_hw_fifo_txdl_cksum_set_bits().
+ * All three APIs fill in the fields of the fifo descriptor,
+ * in accordance with the Titan specification.
  *
  */
-व्योम vxge_hw_fअगरo_txdl_buffer_set(काष्ठा __vxge_hw_fअगरo *fअगरo,
-				  व्योम *txdlh, u32 frag_idx,
-				  dma_addr_t dma_poपूर्णांकer, u32 size)
-अणु
-	काष्ठा __vxge_hw_fअगरo_txdl_priv *txdl_priv;
-	काष्ठा vxge_hw_fअगरo_txd *txdp, *txdp_last;
+void vxge_hw_fifo_txdl_buffer_set(struct __vxge_hw_fifo *fifo,
+				  void *txdlh, u32 frag_idx,
+				  dma_addr_t dma_pointer, u32 size)
+{
+	struct __vxge_hw_fifo_txdl_priv *txdl_priv;
+	struct vxge_hw_fifo_txd *txdp, *txdp_last;
 
-	txdl_priv = __vxge_hw_fअगरo_txdl_priv(fअगरo, txdlh);
-	txdp = (काष्ठा vxge_hw_fअगरo_txd *)txdlh  +  txdl_priv->frags;
+	txdl_priv = __vxge_hw_fifo_txdl_priv(fifo, txdlh);
+	txdp = (struct vxge_hw_fifo_txd *)txdlh  +  txdl_priv->frags;
 
-	अगर (frag_idx != 0)
+	if (frag_idx != 0)
 		txdp->control_0 = txdp->control_1 = 0;
-	अन्यथा अणु
+	else {
 		txdp->control_0 |= VXGE_HW_FIFO_TXD_GATHER_CODE(
 			VXGE_HW_FIFO_TXD_GATHER_CODE_FIRST);
-		txdp->control_1 |= fअगरo->पूर्णांकerrupt_type;
+		txdp->control_1 |= fifo->interrupt_type;
 		txdp->control_1 |= VXGE_HW_FIFO_TXD_INT_NUMBER(
-			fअगरo->tx_पूर्णांकr_num);
-		अगर (txdl_priv->frags) अणु
-			txdp_last = (काष्ठा vxge_hw_fअगरo_txd *)txdlh  +
+			fifo->tx_intr_num);
+		if (txdl_priv->frags) {
+			txdp_last = (struct vxge_hw_fifo_txd *)txdlh  +
 			(txdl_priv->frags - 1);
 			txdp_last->control_0 |= VXGE_HW_FIFO_TXD_GATHER_CODE(
 				VXGE_HW_FIFO_TXD_GATHER_CODE_LAST);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	vxge_निश्चित(frag_idx < txdl_priv->alloc_frags);
+	vxge_assert(frag_idx < txdl_priv->alloc_frags);
 
-	txdp->buffer_poपूर्णांकer = (u64)dma_poपूर्णांकer;
+	txdp->buffer_pointer = (u64)dma_pointer;
 	txdp->control_0 |= VXGE_HW_FIFO_TXD_BUFFER_SIZE(size);
-	fअगरo->stats->total_buffers++;
+	fifo->stats->total_buffers++;
 	txdl_priv->frags++;
-पूर्ण
+}
 
 /**
- * vxge_hw_fअगरo_txdl_post - Post descriptor on the fअगरo channel.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
- * @txdlh: Descriptor obtained via vxge_hw_fअगरo_txdl_reserve()
+ * vxge_hw_fifo_txdl_post - Post descriptor on the fifo channel.
+ * @fifo: Handle to the fifo object used for non offload send
+ * @txdlh: Descriptor obtained via vxge_hw_fifo_txdl_reserve()
  *
- * Post descriptor on the 'fifo' type channel क्रम transmission.
+ * Post descriptor on the 'fifo' type channel for transmission.
  * Prior to posting the descriptor should be filled in accordance with
- * Host/Titan पूर्णांकerface specअगरication क्रम a given service (LL, etc.).
+ * Host/Titan interface specification for a given service (LL, etc.).
  *
  */
-व्योम vxge_hw_fअगरo_txdl_post(काष्ठा __vxge_hw_fअगरo *fअगरo, व्योम *txdlh)
-अणु
-	काष्ठा __vxge_hw_fअगरo_txdl_priv *txdl_priv;
-	काष्ठा vxge_hw_fअगरo_txd *txdp_last;
-	काष्ठा vxge_hw_fअगरo_txd *txdp_first;
+void vxge_hw_fifo_txdl_post(struct __vxge_hw_fifo *fifo, void *txdlh)
+{
+	struct __vxge_hw_fifo_txdl_priv *txdl_priv;
+	struct vxge_hw_fifo_txd *txdp_last;
+	struct vxge_hw_fifo_txd *txdp_first;
 
-	txdl_priv = __vxge_hw_fअगरo_txdl_priv(fअगरo, txdlh);
+	txdl_priv = __vxge_hw_fifo_txdl_priv(fifo, txdlh);
 	txdp_first = txdlh;
 
-	txdp_last = (काष्ठा vxge_hw_fअगरo_txd *)txdlh  +  (txdl_priv->frags - 1);
+	txdp_last = (struct vxge_hw_fifo_txd *)txdlh  +  (txdl_priv->frags - 1);
 	txdp_last->control_0 |=
 	      VXGE_HW_FIFO_TXD_GATHER_CODE(VXGE_HW_FIFO_TXD_GATHER_CODE_LAST);
 	txdp_first->control_0 |= VXGE_HW_FIFO_TXD_LIST_OWN_ADAPTER;
 
-	vxge_hw_channel_dtr_post(&fअगरo->channel, txdlh);
+	vxge_hw_channel_dtr_post(&fifo->channel, txdlh);
 
-	__vxge_hw_non_offload_db_post(fअगरo,
+	__vxge_hw_non_offload_db_post(fifo,
 		(u64)txdl_priv->dma_addr,
 		txdl_priv->frags - 1,
-		fअगरo->no_snoop_bits);
+		fifo->no_snoop_bits);
 
-	fअगरo->stats->total_posts++;
-	fअगरo->stats->common_stats.usage_cnt++;
-	अगर (fअगरo->stats->common_stats.usage_max <
-		fअगरo->stats->common_stats.usage_cnt)
-		fअगरo->stats->common_stats.usage_max =
-			fअगरo->stats->common_stats.usage_cnt;
-पूर्ण
+	fifo->stats->total_posts++;
+	fifo->stats->common_stats.usage_cnt++;
+	if (fifo->stats->common_stats.usage_max <
+		fifo->stats->common_stats.usage_cnt)
+		fifo->stats->common_stats.usage_max =
+			fifo->stats->common_stats.usage_cnt;
+}
 
 /**
- * vxge_hw_fअगरo_txdl_next_completed - Retrieve next completed descriptor.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
+ * vxge_hw_fifo_txdl_next_completed - Retrieve next completed descriptor.
+ * @fifo: Handle to the fifo object used for non offload send
  * @txdlh: Descriptor handle. Returned by HW.
  * @t_code: Transfer code, as per Titan User Guide,
  *          Transmit Descriptor Format.
  *          Returned by HW.
  *
  * Retrieve the _next_ completed descriptor.
- * HW uses channel callback (*vxge_hw_channel_callback_f) to notअगरiy
+ * HW uses channel callback (*vxge_hw_channel_callback_f) to notifiy
  * driver of new completed descriptors. After that
- * the driver can use vxge_hw_fअगरo_txdl_next_completed to retrieve the rest
+ * the driver can use vxge_hw_fifo_txdl_next_completed to retrieve the rest
  * completions (the very first completion is passed by HW via
  * vxge_hw_channel_callback_f).
  *
- * Implementation-wise, the driver is मुक्त to call
- * vxge_hw_fअगरo_txdl_next_completed either immediately from inside the
+ * Implementation-wise, the driver is free to call
+ * vxge_hw_fifo_txdl_next_completed either immediately from inside the
  * channel callback, or in a deferred fashion and separate (from HW)
  * context.
  *
  * Non-zero @t_code means failure to process the descriptor.
- * The failure could happen, क्रम instance, when the link is
- * करोwn, in which हाल Titan completes the descriptor because it
+ * The failure could happen, for instance, when the link is
+ * down, in which case Titan completes the descriptor because it
  * is not able to send the data out.
  *
  * For details please refer to Titan User Guide.
  *
  * Returns: VXGE_HW_OK - success.
  * VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS - No completed descriptors
- * are currently available क्रम processing.
+ * are currently available for processing.
  *
  */
-क्रमागत vxge_hw_status vxge_hw_fअगरo_txdl_next_completed(
-	काष्ठा __vxge_hw_fअगरo *fअगरo, व्योम **txdlh,
-	क्रमागत vxge_hw_fअगरo_tcode *t_code)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
-	काष्ठा vxge_hw_fअगरo_txd *txdp;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status vxge_hw_fifo_txdl_next_completed(
+	struct __vxge_hw_fifo *fifo, void **txdlh,
+	enum vxge_hw_fifo_tcode *t_code)
+{
+	struct __vxge_hw_channel *channel;
+	struct vxge_hw_fifo_txd *txdp;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	channel = &fअगरo->channel;
+	channel = &fifo->channel;
 
 	vxge_hw_channel_dtr_try_complete(channel, txdlh);
 
 	txdp = *txdlh;
-	अगर (txdp == शून्य) अणु
+	if (txdp == NULL) {
 		status = VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* check whether host owns it */
-	अगर (!(txdp->control_0 & VXGE_HW_FIFO_TXD_LIST_OWN_ADAPTER)) अणु
+	if (!(txdp->control_0 & VXGE_HW_FIFO_TXD_LIST_OWN_ADAPTER)) {
 
-		vxge_निश्चित(txdp->host_control != 0);
+		vxge_assert(txdp->host_control != 0);
 
 		vxge_hw_channel_dtr_complete(channel);
 
 		*t_code = (u8)VXGE_HW_FIFO_TXD_T_CODE_GET(txdp->control_0);
 
-		अगर (fअगरo->stats->common_stats.usage_cnt > 0)
-			fअगरo->stats->common_stats.usage_cnt--;
+		if (fifo->stats->common_stats.usage_cnt > 0)
+			fifo->stats->common_stats.usage_cnt--;
 
 		status = VXGE_HW_OK;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* no more completions */
-	*txdlh = शून्य;
+	*txdlh = NULL;
 	status = VXGE_HW_INF_NO_MORE_COMPLETED_DESCRIPTORS;
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_fअगरo_handle_tcode - Handle transfer code.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
+ * vxge_hw_fifo_handle_tcode - Handle transfer code.
+ * @fifo: Handle to the fifo object used for non offload send
  * @txdlh: Descriptor handle.
- * @t_code: One of the क्रमागतerated (and करोcumented in the Titan user guide)
+ * @t_code: One of the enumerated (and documented in the Titan user guide)
  *          "transfer codes".
  *
  * Handle descriptor's transfer code. The latter comes with each completed
  * descriptor.
  *
- * Returns: one of the क्रमागत vxge_hw_statusअणुपूर्ण क्रमागतerated types.
- * VXGE_HW_OK - क्रम success.
+ * Returns: one of the enum vxge_hw_status{} enumerated types.
+ * VXGE_HW_OK - for success.
  * VXGE_HW_ERR_CRITICAL - when encounters critical error.
  */
-क्रमागत vxge_hw_status vxge_hw_fअगरo_handle_tcode(काष्ठा __vxge_hw_fअगरo *fअगरo,
-					      व्योम *txdlh,
-					      क्रमागत vxge_hw_fअगरo_tcode t_code)
-अणु
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status vxge_hw_fifo_handle_tcode(struct __vxge_hw_fifo *fifo,
+					      void *txdlh,
+					      enum vxge_hw_fifo_tcode t_code)
+{
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (((t_code & 0x7) < 0) || ((t_code & 0x7) > 0x4)) अणु
+	if (((t_code & 0x7) < 0) || ((t_code & 0x7) > 0x4)) {
 		status = VXGE_HW_ERR_INVALID_TCODE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	fअगरo->stats->txd_t_code_err_cnt[t_code]++;
-निकास:
-	वापस status;
-पूर्ण
+	fifo->stats->txd_t_code_err_cnt[t_code]++;
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_fअगरo_txdl_मुक्त - Free descriptor.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
+ * vxge_hw_fifo_txdl_free - Free descriptor.
+ * @fifo: Handle to the fifo object used for non offload send
  * @txdlh: Descriptor handle.
  *
  * Free the reserved descriptor. This operation is "symmetrical" to
- * vxge_hw_fअगरo_txdl_reserve. The "free-ing" completes the descriptor's
- * lअगरecycle.
+ * vxge_hw_fifo_txdl_reserve. The "free-ing" completes the descriptor's
+ * lifecycle.
  *
- * After मुक्त-ing (see vxge_hw_fअगरo_txdl_मुक्त()) the descriptor again can
+ * After free-ing (see vxge_hw_fifo_txdl_free()) the descriptor again can
  * be:
  *
- * - reserved (vxge_hw_fअगरo_txdl_reserve);
+ * - reserved (vxge_hw_fifo_txdl_reserve);
  *
- * - posted (vxge_hw_fअगरo_txdl_post);
+ * - posted (vxge_hw_fifo_txdl_post);
  *
- * - completed (vxge_hw_fअगरo_txdl_next_completed);
+ * - completed (vxge_hw_fifo_txdl_next_completed);
  *
- * - and recycled again (vxge_hw_fअगरo_txdl_मुक्त).
+ * - and recycled again (vxge_hw_fifo_txdl_free).
  *
  * For alternative state transitions and more details please refer to
- * the design करोc.
+ * the design doc.
  *
  */
-व्योम vxge_hw_fअगरo_txdl_मुक्त(काष्ठा __vxge_hw_fअगरo *fअगरo, व्योम *txdlh)
-अणु
-	काष्ठा __vxge_hw_channel *channel;
+void vxge_hw_fifo_txdl_free(struct __vxge_hw_fifo *fifo, void *txdlh)
+{
+	struct __vxge_hw_channel *channel;
 
-	channel = &fअगरo->channel;
+	channel = &fifo->channel;
 
-	vxge_hw_channel_dtr_मुक्त(channel, txdlh);
-पूर्ण
+	vxge_hw_channel_dtr_free(channel, txdlh);
+}
 
 /**
- * vxge_hw_vpath_mac_addr_add - Add the mac address entry क्रम this vpath to MAC address table.
+ * vxge_hw_vpath_mac_addr_add - Add the mac address entry for this vpath to MAC address table.
  * @vp: Vpath handle.
- * @macaddr: MAC address to be added क्रम this vpath पूर्णांकo the list
- * @macaddr_mask: MAC address mask क्रम macaddr
+ * @macaddr: MAC address to be added for this vpath into the list
+ * @macaddr_mask: MAC address mask for macaddr
  * @duplicate_mode: Duplicate MAC address add mode. Please see
- *             क्रमागत vxge_hw_vpath_mac_addr_add_modeअणुपूर्ण
+ *             enum vxge_hw_vpath_mac_addr_add_mode{}
  *
- * Adds the given mac address and mac address mask पूर्णांकo the list क्रम this
+ * Adds the given mac address and mac address mask into the list for this
  * vpath.
  * see also: vxge_hw_vpath_mac_addr_delete, vxge_hw_vpath_mac_addr_get and
  * vxge_hw_vpath_mac_addr_get_next
  *
  */
-क्रमागत vxge_hw_status
+enum vxge_hw_status
 vxge_hw_vpath_mac_addr_add(
-	काष्ठा __vxge_hw_vpath_handle *vp,
+	struct __vxge_hw_vpath_handle *vp,
 	u8 *macaddr,
 	u8 *macaddr_mask,
-	क्रमागत vxge_hw_vpath_mac_addr_add_mode duplicate_mode)
-अणु
+	enum vxge_hw_vpath_mac_addr_add_mode duplicate_mode)
+{
 	u32 i;
 	u64 data1 = 0ULL;
 	u64 data2 = 0ULL;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+	for (i = 0; i < ETH_ALEN; i++) {
 		data1 <<= 8;
 		data1 |= (u8)macaddr[i];
 
 		data2 <<= 8;
 		data2 |= (u8)macaddr_mask[i];
-	पूर्ण
+	}
 
-	चयन (duplicate_mode) अणु
-	हाल VXGE_HW_VPATH_MAC_ADDR_ADD_DUPLICATE:
+	switch (duplicate_mode) {
+	case VXGE_HW_VPATH_MAC_ADDR_ADD_DUPLICATE:
 		i = 0;
-		अवरोध;
-	हाल VXGE_HW_VPATH_MAC_ADDR_DISCARD_DUPLICATE:
+		break;
+	case VXGE_HW_VPATH_MAC_ADDR_DISCARD_DUPLICATE:
 		i = 1;
-		अवरोध;
-	हाल VXGE_HW_VPATH_MAC_ADDR_REPLACE_DUPLICATE:
+		break;
+	case VXGE_HW_VPATH_MAC_ADDR_REPLACE_DUPLICATE:
 		i = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		i = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	status = __vxge_hw_vpath_rts_table_set(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_ADD_ENTRY,
@@ -1746,148 +1745,148 @@ vxge_hw_vpath_mac_addr_add(
 			VXGE_HW_RTS_ACCESS_STEER_DATA0_DA_MAC_ADDR(data1),
 			VXGE_HW_RTS_ACCESS_STEER_DATA1_DA_MAC_ADDR_MASK(data2)|
 			VXGE_HW_RTS_ACCESS_STEER_DATA1_DA_MAC_ADDR_MODE(i));
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_mac_addr_get - Get the first mac address entry
  * @vp: Vpath handle.
- * @macaddr: First MAC address entry क्रम this vpath in the list
- * @macaddr_mask: MAC address mask क्रम macaddr
+ * @macaddr: First MAC address entry for this vpath in the list
+ * @macaddr_mask: MAC address mask for macaddr
  *
- * Get the first mac address entry क्रम this vpath from MAC address table.
- * Return: the first mac address and mac address mask in the list क्रम this
+ * Get the first mac address entry for this vpath from MAC address table.
+ * Return: the first mac address and mac address mask in the list for this
  * vpath.
  * see also: vxge_hw_vpath_mac_addr_get_next
  *
  */
-क्रमागत vxge_hw_status
+enum vxge_hw_status
 vxge_hw_vpath_mac_addr_get(
-	काष्ठा __vxge_hw_vpath_handle *vp,
+	struct __vxge_hw_vpath_handle *vp,
 	u8 *macaddr,
 	u8 *macaddr_mask)
-अणु
+{
 	u32 i;
 	u64 data1 = 0ULL;
 	u64 data2 = 0ULL;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = __vxge_hw_vpath_rts_table_get(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_LIST_FIRST_ENTRY,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_DATA_STRUCT_SEL_DA,
 			0, &data1, &data2);
 
-	अगर (status != VXGE_HW_OK)
-		जाओ निकास;
+	if (status != VXGE_HW_OK)
+		goto exit;
 
 	data1 = VXGE_HW_RTS_ACCESS_STEER_DATA0_GET_DA_MAC_ADDR(data1);
 
 	data2 = VXGE_HW_RTS_ACCESS_STEER_DATA1_GET_DA_MAC_ADDR_MASK(data2);
 
-	क्रम (i = ETH_ALEN; i > 0; i--) अणु
+	for (i = ETH_ALEN; i > 0; i--) {
 		macaddr[i-1] = (u8)(data1 & 0xFF);
 		data1 >>= 8;
 
 		macaddr_mask[i-1] = (u8)(data2 & 0xFF);
 		data2 >>= 8;
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+	}
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_mac_addr_get_next - Get the next mac address entry
  * @vp: Vpath handle.
- * @macaddr: Next MAC address entry क्रम this vpath in the list
- * @macaddr_mask: MAC address mask क्रम macaddr
+ * @macaddr: Next MAC address entry for this vpath in the list
+ * @macaddr_mask: MAC address mask for macaddr
  *
- * Get the next mac address entry क्रम this vpath from MAC address table.
- * Return: the next mac address and mac address mask in the list क्रम this
+ * Get the next mac address entry for this vpath from MAC address table.
+ * Return: the next mac address and mac address mask in the list for this
  * vpath.
  * see also: vxge_hw_vpath_mac_addr_get
  *
  */
-क्रमागत vxge_hw_status
+enum vxge_hw_status
 vxge_hw_vpath_mac_addr_get_next(
-	काष्ठा __vxge_hw_vpath_handle *vp,
+	struct __vxge_hw_vpath_handle *vp,
 	u8 *macaddr,
 	u8 *macaddr_mask)
-अणु
+{
 	u32 i;
 	u64 data1 = 0ULL;
 	u64 data2 = 0ULL;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = __vxge_hw_vpath_rts_table_get(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_LIST_NEXT_ENTRY,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_DATA_STRUCT_SEL_DA,
 			0, &data1, &data2);
 
-	अगर (status != VXGE_HW_OK)
-		जाओ निकास;
+	if (status != VXGE_HW_OK)
+		goto exit;
 
 	data1 = VXGE_HW_RTS_ACCESS_STEER_DATA0_GET_DA_MAC_ADDR(data1);
 
 	data2 = VXGE_HW_RTS_ACCESS_STEER_DATA1_GET_DA_MAC_ADDR_MASK(data2);
 
-	क्रम (i = ETH_ALEN; i > 0; i--) अणु
+	for (i = ETH_ALEN; i > 0; i--) {
 		macaddr[i-1] = (u8)(data1 & 0xFF);
 		data1 >>= 8;
 
 		macaddr_mask[i-1] = (u8)(data2 & 0xFF);
 		data2 >>= 8;
-	पूर्ण
+	}
 
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_vpath_mac_addr_delete - Delete the mac address entry क्रम this vpath to MAC address table.
+ * vxge_hw_vpath_mac_addr_delete - Delete the mac address entry for this vpath to MAC address table.
  * @vp: Vpath handle.
- * @macaddr: MAC address to be added क्रम this vpath पूर्णांकo the list
- * @macaddr_mask: MAC address mask क्रम macaddr
+ * @macaddr: MAC address to be added for this vpath into the list
+ * @macaddr_mask: MAC address mask for macaddr
  *
- * Delete the given mac address and mac address mask पूर्णांकo the list क्रम this
+ * Delete the given mac address and mac address mask into the list for this
  * vpath.
  * see also: vxge_hw_vpath_mac_addr_add, vxge_hw_vpath_mac_addr_get and
  * vxge_hw_vpath_mac_addr_get_next
  *
  */
-क्रमागत vxge_hw_status
+enum vxge_hw_status
 vxge_hw_vpath_mac_addr_delete(
-	काष्ठा __vxge_hw_vpath_handle *vp,
+	struct __vxge_hw_vpath_handle *vp,
 	u8 *macaddr,
 	u8 *macaddr_mask)
-अणु
+{
 	u32 i;
 	u64 data1 = 0ULL;
 	u64 data2 = 0ULL;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+	for (i = 0; i < ETH_ALEN; i++) {
 		data1 <<= 8;
 		data1 |= (u8)macaddr[i];
 
 		data2 <<= 8;
 		data2 |= (u8)macaddr_mask[i];
-	पूर्ण
+	}
 
 	status = __vxge_hw_vpath_rts_table_set(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_DELETE_ENTRY,
@@ -1895,64 +1894,64 @@ vxge_hw_vpath_mac_addr_delete(
 			0,
 			VXGE_HW_RTS_ACCESS_STEER_DATA0_DA_MAC_ADDR(data1),
 			VXGE_HW_RTS_ACCESS_STEER_DATA1_DA_MAC_ADDR_MASK(data2));
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_vpath_vid_add - Add the vlan id entry क्रम this vpath to vlan id table.
+ * vxge_hw_vpath_vid_add - Add the vlan id entry for this vpath to vlan id table.
  * @vp: Vpath handle.
- * @vid: vlan id to be added क्रम this vpath पूर्णांकo the list
+ * @vid: vlan id to be added for this vpath into the list
  *
- * Adds the given vlan id पूर्णांकo the list क्रम this  vpath.
+ * Adds the given vlan id into the list for this  vpath.
  * see also: vxge_hw_vpath_vid_delete
  *
  */
-क्रमागत vxge_hw_status
-vxge_hw_vpath_vid_add(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
-अणु
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status
+vxge_hw_vpath_vid_add(struct __vxge_hw_vpath_handle *vp, u64 vid)
+{
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = __vxge_hw_vpath_rts_table_set(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_ADD_ENTRY,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_DATA_STRUCT_SEL_VID,
 			0, VXGE_HW_RTS_ACCESS_STEER_DATA0_VLAN_ID(vid), 0);
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_vpath_vid_delete - Delete the vlan id entry क्रम this vpath
+ * vxge_hw_vpath_vid_delete - Delete the vlan id entry for this vpath
  *               to vlan id table.
  * @vp: Vpath handle.
- * @vid: vlan id to be added क्रम this vpath पूर्णांकo the list
+ * @vid: vlan id to be added for this vpath into the list
  *
- * Adds the given vlan id पूर्णांकo the list क्रम this  vpath.
+ * Adds the given vlan id into the list for this  vpath.
  * see also: vxge_hw_vpath_vid_add
  *
  */
-क्रमागत vxge_hw_status
-vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
-अणु
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+enum vxge_hw_status
+vxge_hw_vpath_vid_delete(struct __vxge_hw_vpath_handle *vp, u64 vid)
+{
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = __vxge_hw_vpath_rts_table_set(vp,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_ACTION_DELETE_ENTRY,
 			VXGE_HW_RTS_ACCESS_STEER_CTRL_DATA_STRUCT_SEL_VID,
 			0, VXGE_HW_RTS_ACCESS_STEER_DATA0_VLAN_ID(vid), 0);
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_promisc_enable - Enable promiscuous mode.
@@ -1962,39 +1961,39 @@ vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
  *
  * See also: vxge_hw_vpath_promisc_disable().
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_promisc_enable(
-			काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
+enum vxge_hw_status vxge_hw_vpath_promisc_enable(
+			struct __vxge_hw_vpath_handle *vp)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर ((vp == शून्य) || (vp->vpath->ringh == शून्य)) अणु
+	if ((vp == NULL) || (vp->vpath->ringh == NULL)) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	/* Enable promiscuous mode क्रम function 0 only */
-	अगर (!(vpath->hldev->access_rights &
+	/* Enable promiscuous mode for function 0 only */
+	if (!(vpath->hldev->access_rights &
 		VXGE_HW_DEVICE_ACCESS_RIGHT_MRPCIM))
-		वापस VXGE_HW_OK;
+		return VXGE_HW_OK;
 
-	val64 = पढ़ोq(&vpath->vp_reg->rxmac_vcfg0);
+	val64 = readq(&vpath->vp_reg->rxmac_vcfg0);
 
-	अगर (!(val64 & VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN)) अणु
+	if (!(val64 & VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN)) {
 
 		val64 |= VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN |
 			 VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN |
 			 VXGE_HW_RXMAC_VCFG0_BCAST_EN |
 			 VXGE_HW_RXMAC_VCFG0_ALL_VID_EN;
 
-		ग_लिखोq(val64, &vpath->vp_reg->rxmac_vcfg0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		writeq(val64, &vpath->vp_reg->rxmac_vcfg0);
+	}
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_promisc_disable - Disable promiscuous mode.
@@ -2004,33 +2003,33 @@ vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
  *
  * See also: vxge_hw_vpath_promisc_enable().
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_promisc_disable(
-			काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
+enum vxge_hw_status vxge_hw_vpath_promisc_disable(
+			struct __vxge_hw_vpath_handle *vp)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर ((vp == शून्य) || (vp->vpath->ringh == शून्य)) अणु
+	if ((vp == NULL) || (vp->vpath->ringh == NULL)) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	val64 = पढ़ोq(&vpath->vp_reg->rxmac_vcfg0);
+	val64 = readq(&vpath->vp_reg->rxmac_vcfg0);
 
-	अगर (val64 & VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN) अणु
+	if (val64 & VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN) {
 
 		val64 &= ~(VXGE_HW_RXMAC_VCFG0_UCAST_ALL_ADDR_EN |
 			   VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN |
 			   VXGE_HW_RXMAC_VCFG0_ALL_VID_EN);
 
-		ग_लिखोq(val64, &vpath->vp_reg->rxmac_vcfg0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		writeq(val64, &vpath->vp_reg->rxmac_vcfg0);
+	}
+exit:
+	return status;
+}
 
 /*
  * vxge_hw_vpath_bcast_enable - Enable broadcast
@@ -2038,29 +2037,29 @@ vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
  *
  * Enable receiving broadcasts.
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_bcast_enable(
-			काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
+enum vxge_hw_status vxge_hw_vpath_bcast_enable(
+			struct __vxge_hw_vpath_handle *vp)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर ((vp == शून्य) || (vp->vpath->ringh == शून्य)) अणु
+	if ((vp == NULL) || (vp->vpath->ringh == NULL)) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	val64 = पढ़ोq(&vpath->vp_reg->rxmac_vcfg0);
+	val64 = readq(&vpath->vp_reg->rxmac_vcfg0);
 
-	अगर (!(val64 & VXGE_HW_RXMAC_VCFG0_BCAST_EN)) अणु
+	if (!(val64 & VXGE_HW_RXMAC_VCFG0_BCAST_EN)) {
 		val64 |= VXGE_HW_RXMAC_VCFG0_BCAST_EN;
-		ग_लिखोq(val64, &vpath->vp_reg->rxmac_vcfg0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		writeq(val64, &vpath->vp_reg->rxmac_vcfg0);
+	}
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_mcast_enable - Enable multicast addresses.
@@ -2070,29 +2069,29 @@ vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
  * Returns: VXGE_HW_OK on success.
  *
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_mcast_enable(
-			काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
+enum vxge_hw_status vxge_hw_vpath_mcast_enable(
+			struct __vxge_hw_vpath_handle *vp)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर ((vp == शून्य) || (vp->vpath->ringh == शून्य)) अणु
+	if ((vp == NULL) || (vp->vpath->ringh == NULL)) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	val64 = पढ़ोq(&vpath->vp_reg->rxmac_vcfg0);
+	val64 = readq(&vpath->vp_reg->rxmac_vcfg0);
 
-	अगर (!(val64 & VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN)) अणु
+	if (!(val64 & VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN)) {
 		val64 |= VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN;
-		ग_लिखोq(val64, &vpath->vp_reg->rxmac_vcfg0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		writeq(val64, &vpath->vp_reg->rxmac_vcfg0);
+	}
+exit:
+	return status;
+}
 
 /**
  * vxge_hw_vpath_mcast_disable - Disable  multicast addresses.
@@ -2103,29 +2102,29 @@ vxge_hw_vpath_vid_delete(काष्ठा __vxge_hw_vpath_handle *vp, u64 vid)
  * VXGE_HW_ERR_INVALID_HANDLE - Invalid handle
  *
  */
-क्रमागत vxge_hw_status
-vxge_hw_vpath_mcast_disable(काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
+enum vxge_hw_status
+vxge_hw_vpath_mcast_disable(struct __vxge_hw_vpath_handle *vp)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_virtualpath *vpath;
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर ((vp == शून्य) || (vp->vpath->ringh == शून्य)) अणु
+	if ((vp == NULL) || (vp->vpath->ringh == NULL)) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	vpath = vp->vpath;
 
-	val64 = पढ़ोq(&vpath->vp_reg->rxmac_vcfg0);
+	val64 = readq(&vpath->vp_reg->rxmac_vcfg0);
 
-	अगर (val64 & VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN) अणु
+	if (val64 & VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN) {
 		val64 &= ~VXGE_HW_RXMAC_VCFG0_MCAST_ALL_ADDR_EN;
-		ग_लिखोq(val64, &vpath->vp_reg->rxmac_vcfg0);
-	पूर्ण
-निकास:
-	वापस status;
-पूर्ण
+		writeq(val64, &vpath->vp_reg->rxmac_vcfg0);
+	}
+exit:
+	return status;
+}
 
 /*
  * vxge_hw_vpath_alarm_process - Process Alarms.
@@ -2135,41 +2134,41 @@ vxge_hw_vpath_mcast_disable(काष्ठा __vxge_hw_vpath_handle *vp)
  * Process vpath alarms.
  *
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_alarm_process(
-			काष्ठा __vxge_hw_vpath_handle *vp,
+enum vxge_hw_status vxge_hw_vpath_alarm_process(
+			struct __vxge_hw_vpath_handle *vp,
 			u32 skip_alarms)
-अणु
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
+{
+	enum vxge_hw_status status = VXGE_HW_OK;
 
-	अगर (vp == शून्य) अणु
+	if (vp == NULL) {
 		status = VXGE_HW_ERR_INVALID_HANDLE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	status = __vxge_hw_vpath_alarm_process(vp->vpath, skip_alarms);
-निकास:
-	वापस status;
-पूर्ण
+exit:
+	return status;
+}
 
 /**
- * vxge_hw_vpath_msix_set - Associate MSIX vectors with TIM पूर्णांकerrupts and
+ * vxge_hw_vpath_msix_set - Associate MSIX vectors with TIM interrupts and
  *                            alrms
  * @vp: Virtual Path handle.
  * @tim_msix_id: MSIX vectors associated with VXGE_HW_MAX_INTR_PER_VP number of
- *             पूर्णांकerrupts(Can be repeated). If fअगरo or ring are not enabled
- *             the MSIX vector क्रम that should be set to 0
- * @alarm_msix_id: MSIX vector क्रम alarm.
+ *             interrupts(Can be repeated). If fifo or ring are not enabled
+ *             the MSIX vector for that should be set to 0
+ * @alarm_msix_id: MSIX vector for alarm.
  *
  * This API will associate a given MSIX vector numbers with the four TIM
- * पूर्णांकerrupts and alarm पूर्णांकerrupt.
+ * interrupts and alarm interrupt.
  */
-व्योम
-vxge_hw_vpath_msix_set(काष्ठा __vxge_hw_vpath_handle *vp, पूर्णांक *tim_msix_id,
-		       पूर्णांक alarm_msix_id)
-अणु
+void
+vxge_hw_vpath_msix_set(struct __vxge_hw_vpath_handle *vp, int *tim_msix_id,
+		       int alarm_msix_id)
+{
 	u64 val64;
-	काष्ठा __vxge_hw_भवpath *vpath = vp->vpath;
-	काष्ठा vxge_hw_vpath_reg __iomem *vp_reg = vpath->vp_reg;
+	struct __vxge_hw_virtualpath *vpath = vp->vpath;
+	struct vxge_hw_vpath_reg __iomem *vp_reg = vpath->vp_reg;
 	u32 vp_id = vp->vpath->vp_id;
 
 	val64 =  VXGE_HW_INTERRUPT_CFG0_GROUP0_MSIX_FOR_TXTI(
@@ -2177,253 +2176,253 @@ vxge_hw_vpath_msix_set(काष्ठा __vxge_hw_vpath_handle *vp, पूर�
 		 VXGE_HW_INTERRUPT_CFG0_GROUP1_MSIX_FOR_TXTI(
 		  (vp_id * 4) + tim_msix_id[1]);
 
-	ग_लिखोq(val64, &vp_reg->पूर्णांकerrupt_cfg0);
+	writeq(val64, &vp_reg->interrupt_cfg0);
 
-	ग_लिखोq(VXGE_HW_INTERRUPT_CFG2_ALARM_MAP_TO_MSG(
+	writeq(VXGE_HW_INTERRUPT_CFG2_ALARM_MAP_TO_MSG(
 			(vpath->hldev->first_vp_id * 4) + alarm_msix_id),
-			&vp_reg->पूर्णांकerrupt_cfg2);
+			&vp_reg->interrupt_cfg2);
 
-	अगर (vpath->hldev->config.पूर्णांकr_mode ==
-					VXGE_HW_INTR_MODE_MSIX_ONE_SHOT) अणु
-		__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn(
+	if (vpath->hldev->config.intr_mode ==
+					VXGE_HW_INTR_MODE_MSIX_ONE_SHOT) {
+		__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn(
 				VXGE_HW_ONE_SHOT_VECT0_EN_ONE_SHOT_VECT0_EN,
 				0, 32), &vp_reg->one_shot_vect0_en);
-		__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn(
+		__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn(
 				VXGE_HW_ONE_SHOT_VECT1_EN_ONE_SHOT_VECT1_EN,
 				0, 32), &vp_reg->one_shot_vect1_en);
-		__vxge_hw_pio_mem_ग_लिखो32_upper((u32)vxge_bVALn(
+		__vxge_hw_pio_mem_write32_upper((u32)vxge_bVALn(
 				VXGE_HW_ONE_SHOT_VECT2_EN_ONE_SHOT_VECT2_EN,
 				0, 32), &vp_reg->one_shot_vect2_en);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vxge_hw_vpath_msix_mask - Mask MSIX Vector.
  * @vp: Virtual Path handle.
  * @msix_id:  MSIX ID
  *
- * The function masks the msix पूर्णांकerrupt क्रम the given msix_id
+ * The function masks the msix interrupt for the given msix_id
  *
  * Returns: 0,
- * Otherwise, VXGE_HW_ERR_WRONG_IRQ अगर the msix index is out of range
+ * Otherwise, VXGE_HW_ERR_WRONG_IRQ if the msix index is out of range
  * status.
  * See also:
  */
-व्योम
-vxge_hw_vpath_msix_mask(काष्ठा __vxge_hw_vpath_handle *vp, पूर्णांक msix_id)
-अणु
-	काष्ठा __vxge_hw_device *hldev = vp->vpath->hldev;
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+void
+vxge_hw_vpath_msix_mask(struct __vxge_hw_vpath_handle *vp, int msix_id)
+{
+	struct __vxge_hw_device *hldev = vp->vpath->hldev;
+	__vxge_hw_pio_mem_write32_upper(
 		(u32) vxge_bVALn(vxge_mBIT(msix_id  >> 2), 0, 32),
 		&hldev->common_reg->set_msix_mask_vect[msix_id % 4]);
-पूर्ण
+}
 
 /**
  * vxge_hw_vpath_msix_clear - Clear MSIX Vector.
  * @vp: Virtual Path handle.
  * @msix_id:  MSI ID
  *
- * The function clears the msix पूर्णांकerrupt क्रम the given msix_id
+ * The function clears the msix interrupt for the given msix_id
  *
  * Returns: 0,
- * Otherwise, VXGE_HW_ERR_WRONG_IRQ अगर the msix index is out of range
+ * Otherwise, VXGE_HW_ERR_WRONG_IRQ if the msix index is out of range
  * status.
  * See also:
  */
-व्योम vxge_hw_vpath_msix_clear(काष्ठा __vxge_hw_vpath_handle *vp, पूर्णांक msix_id)
-अणु
-	काष्ठा __vxge_hw_device *hldev = vp->vpath->hldev;
+void vxge_hw_vpath_msix_clear(struct __vxge_hw_vpath_handle *vp, int msix_id)
+{
+	struct __vxge_hw_device *hldev = vp->vpath->hldev;
 
-	अगर (hldev->config.पूर्णांकr_mode == VXGE_HW_INTR_MODE_MSIX_ONE_SHOT)
-		__vxge_hw_pio_mem_ग_लिखो32_upper(
+	if (hldev->config.intr_mode == VXGE_HW_INTR_MODE_MSIX_ONE_SHOT)
+		__vxge_hw_pio_mem_write32_upper(
 			(u32) vxge_bVALn(vxge_mBIT((msix_id >> 2)), 0, 32),
 			&hldev->common_reg->clr_msix_one_shot_vec[msix_id % 4]);
-	अन्यथा
-		__vxge_hw_pio_mem_ग_लिखो32_upper(
+	else
+		__vxge_hw_pio_mem_write32_upper(
 			(u32) vxge_bVALn(vxge_mBIT((msix_id >> 2)), 0, 32),
 			&hldev->common_reg->clear_msix_mask_vect[msix_id % 4]);
-पूर्ण
+}
 
 /**
  * vxge_hw_vpath_msix_unmask - Unmask the MSIX Vector.
  * @vp: Virtual Path handle.
  * @msix_id:  MSI ID
  *
- * The function unmasks the msix पूर्णांकerrupt क्रम the given msix_id
+ * The function unmasks the msix interrupt for the given msix_id
  *
  * Returns: 0,
- * Otherwise, VXGE_HW_ERR_WRONG_IRQ अगर the msix index is out of range
+ * Otherwise, VXGE_HW_ERR_WRONG_IRQ if the msix index is out of range
  * status.
  * See also:
  */
-व्योम
-vxge_hw_vpath_msix_unmask(काष्ठा __vxge_hw_vpath_handle *vp, पूर्णांक msix_id)
-अणु
-	काष्ठा __vxge_hw_device *hldev = vp->vpath->hldev;
-	__vxge_hw_pio_mem_ग_लिखो32_upper(
+void
+vxge_hw_vpath_msix_unmask(struct __vxge_hw_vpath_handle *vp, int msix_id)
+{
+	struct __vxge_hw_device *hldev = vp->vpath->hldev;
+	__vxge_hw_pio_mem_write32_upper(
 			(u32)vxge_bVALn(vxge_mBIT(msix_id >> 2), 0, 32),
 			&hldev->common_reg->clear_msix_mask_vect[msix_id%4]);
-पूर्ण
+}
 
 /**
- * vxge_hw_vpath_पूर्णांकa_mask_tx_rx - Mask Tx and Rx पूर्णांकerrupts.
+ * vxge_hw_vpath_inta_mask_tx_rx - Mask Tx and Rx interrupts.
  * @vp: Virtual Path handle.
  *
- * Mask Tx and Rx vpath पूर्णांकerrupts.
+ * Mask Tx and Rx vpath interrupts.
  *
- * See also: vxge_hw_vpath_पूर्णांकa_mask_tx_rx()
+ * See also: vxge_hw_vpath_inta_mask_tx_rx()
  */
-व्योम vxge_hw_vpath_पूर्णांकa_mask_tx_rx(काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
-	u64	tim_पूर्णांक_mask0[4] = अणु[0 ...3] = 0पूर्ण;
-	u32	tim_पूर्णांक_mask1[4] = अणु[0 ...3] = 0पूर्ण;
+void vxge_hw_vpath_inta_mask_tx_rx(struct __vxge_hw_vpath_handle *vp)
+{
+	u64	tim_int_mask0[4] = {[0 ...3] = 0};
+	u32	tim_int_mask1[4] = {[0 ...3] = 0};
 	u64	val64;
-	काष्ठा __vxge_hw_device *hldev = vp->vpath->hldev;
+	struct __vxge_hw_device *hldev = vp->vpath->hldev;
 
-	VXGE_HW_DEVICE_TIM_INT_MASK_SET(tim_पूर्णांक_mask0,
-		tim_पूर्णांक_mask1, vp->vpath->vp_id);
+	VXGE_HW_DEVICE_TIM_INT_MASK_SET(tim_int_mask0,
+		tim_int_mask1, vp->vpath->vp_id);
 
-	val64 = पढ़ोq(&hldev->common_reg->tim_पूर्णांक_mask0);
+	val64 = readq(&hldev->common_reg->tim_int_mask0);
 
-	अगर ((tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
-		(tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		ग_लिखोq((tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] |
-			tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX] | val64),
-			&hldev->common_reg->tim_पूर्णांक_mask0);
-	पूर्ण
+	if ((tim_int_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
+		(tim_int_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		writeq((tim_int_mask0[VXGE_HW_VPATH_INTR_TX] |
+			tim_int_mask0[VXGE_HW_VPATH_INTR_RX] | val64),
+			&hldev->common_reg->tim_int_mask0);
+	}
 
-	val64 = पढ़ोl(&hldev->common_reg->tim_पूर्णांक_mask1);
+	val64 = readl(&hldev->common_reg->tim_int_mask1);
 
-	अगर ((tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
-		(tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		__vxge_hw_pio_mem_ग_लिखो32_upper(
-			(tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] |
-			tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX] | val64),
-			&hldev->common_reg->tim_पूर्णांक_mask1);
-	पूर्ण
-पूर्ण
+	if ((tim_int_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
+		(tim_int_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		__vxge_hw_pio_mem_write32_upper(
+			(tim_int_mask1[VXGE_HW_VPATH_INTR_TX] |
+			tim_int_mask1[VXGE_HW_VPATH_INTR_RX] | val64),
+			&hldev->common_reg->tim_int_mask1);
+	}
+}
 
 /**
- * vxge_hw_vpath_पूर्णांकa_unmask_tx_rx - Unmask Tx and Rx पूर्णांकerrupts.
+ * vxge_hw_vpath_inta_unmask_tx_rx - Unmask Tx and Rx interrupts.
  * @vp: Virtual Path handle.
  *
- * Unmask Tx and Rx vpath पूर्णांकerrupts.
+ * Unmask Tx and Rx vpath interrupts.
  *
- * See also: vxge_hw_vpath_पूर्णांकa_mask_tx_rx()
+ * See also: vxge_hw_vpath_inta_mask_tx_rx()
  */
-व्योम vxge_hw_vpath_पूर्णांकa_unmask_tx_rx(काष्ठा __vxge_hw_vpath_handle *vp)
-अणु
-	u64	tim_पूर्णांक_mask0[4] = अणु[0 ...3] = 0पूर्ण;
-	u32	tim_पूर्णांक_mask1[4] = अणु[0 ...3] = 0पूर्ण;
+void vxge_hw_vpath_inta_unmask_tx_rx(struct __vxge_hw_vpath_handle *vp)
+{
+	u64	tim_int_mask0[4] = {[0 ...3] = 0};
+	u32	tim_int_mask1[4] = {[0 ...3] = 0};
 	u64	val64;
-	काष्ठा __vxge_hw_device *hldev = vp->vpath->hldev;
+	struct __vxge_hw_device *hldev = vp->vpath->hldev;
 
-	VXGE_HW_DEVICE_TIM_INT_MASK_SET(tim_पूर्णांक_mask0,
-		tim_पूर्णांक_mask1, vp->vpath->vp_id);
+	VXGE_HW_DEVICE_TIM_INT_MASK_SET(tim_int_mask0,
+		tim_int_mask1, vp->vpath->vp_id);
 
-	val64 = पढ़ोq(&hldev->common_reg->tim_पूर्णांक_mask0);
+	val64 = readq(&hldev->common_reg->tim_int_mask0);
 
-	अगर ((tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
-	   (tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		ग_लिखोq((~(tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_TX] |
-			tim_पूर्णांक_mask0[VXGE_HW_VPATH_INTR_RX])) & val64,
-			&hldev->common_reg->tim_पूर्णांक_mask0);
-	पूर्ण
+	if ((tim_int_mask0[VXGE_HW_VPATH_INTR_TX] != 0) ||
+	   (tim_int_mask0[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		writeq((~(tim_int_mask0[VXGE_HW_VPATH_INTR_TX] |
+			tim_int_mask0[VXGE_HW_VPATH_INTR_RX])) & val64,
+			&hldev->common_reg->tim_int_mask0);
+	}
 
-	अगर ((tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
-	   (tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) अणु
-		__vxge_hw_pio_mem_ग_लिखो32_upper(
-			(~(tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_TX] |
-			  tim_पूर्णांक_mask1[VXGE_HW_VPATH_INTR_RX])) & val64,
-			&hldev->common_reg->tim_पूर्णांक_mask1);
-	पूर्ण
-पूर्ण
+	if ((tim_int_mask1[VXGE_HW_VPATH_INTR_TX] != 0) ||
+	   (tim_int_mask1[VXGE_HW_VPATH_INTR_RX] != 0)) {
+		__vxge_hw_pio_mem_write32_upper(
+			(~(tim_int_mask1[VXGE_HW_VPATH_INTR_TX] |
+			  tim_int_mask1[VXGE_HW_VPATH_INTR_RX])) & val64,
+			&hldev->common_reg->tim_int_mask1);
+	}
+}
 
 /**
- * vxge_hw_vpath_poll_rx - Poll Rx Virtual Path क्रम completed
+ * vxge_hw_vpath_poll_rx - Poll Rx Virtual Path for completed
  * descriptors and process the same.
- * @ring: Handle to the ring object used क्रम receive
+ * @ring: Handle to the ring object used for receive
  *
- * The function	polls the Rx क्रम the completed	descriptors and	calls
+ * The function	polls the Rx for the completed	descriptors and	calls
  * the driver via supplied completion	callback.
  *
- * Returns: VXGE_HW_OK, अगर the polling is completed successful.
+ * Returns: VXGE_HW_OK, if the polling is completed successful.
  * VXGE_HW_COMPLETIONS_REMAIN: There are still more completed
  * descriptors available which are yet to be processed.
  *
  * See also: vxge_hw_vpath_poll_rx()
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_poll_rx(काष्ठा __vxge_hw_ring *ring)
-अणु
+enum vxge_hw_status vxge_hw_vpath_poll_rx(struct __vxge_hw_ring *ring)
+{
 	u8 t_code;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
-	व्योम *first_rxdh;
-	पूर्णांक new_count = 0;
+	enum vxge_hw_status status = VXGE_HW_OK;
+	void *first_rxdh;
+	int new_count = 0;
 
 	ring->cmpl_cnt = 0;
 
 	status = vxge_hw_ring_rxd_next_completed(ring, &first_rxdh, &t_code);
-	अगर (status == VXGE_HW_OK)
+	if (status == VXGE_HW_OK)
 		ring->callback(ring, first_rxdh,
 			t_code, ring->channel.userdata);
 
-	अगर (ring->cmpl_cnt != 0) अणु
-		ring->करोorbell_cnt += ring->cmpl_cnt;
-		अगर (ring->करोorbell_cnt >= ring->rxds_limit) अणु
+	if (ring->cmpl_cnt != 0) {
+		ring->doorbell_cnt += ring->cmpl_cnt;
+		if (ring->doorbell_cnt >= ring->rxds_limit) {
 			/*
 			 * Each RxD is of 4 qwords, update the number of
 			 * qwords replenished
 			 */
-			new_count = (ring->करोorbell_cnt * 4);
+			new_count = (ring->doorbell_cnt * 4);
 
 			/* For each block add 4 more qwords */
-			ring->total_db_cnt += ring->करोorbell_cnt;
-			अगर (ring->total_db_cnt >= ring->rxds_per_block) अणु
+			ring->total_db_cnt += ring->doorbell_cnt;
+			if (ring->total_db_cnt >= ring->rxds_per_block) {
 				new_count += 4;
 				/* Reset total count */
 				ring->total_db_cnt %= ring->rxds_per_block;
-			पूर्ण
-			ग_लिखोq(VXGE_HW_PRC_RXD_DOORBELL_NEW_QW_CNT(new_count),
-				&ring->vp_reg->prc_rxd_करोorbell);
-			पढ़ोl(&ring->common_reg->titan_general_पूर्णांक_status);
-			ring->करोorbell_cnt = 0;
-		पूर्ण
-	पूर्ण
+			}
+			writeq(VXGE_HW_PRC_RXD_DOORBELL_NEW_QW_CNT(new_count),
+				&ring->vp_reg->prc_rxd_doorbell);
+			readl(&ring->common_reg->titan_general_int_status);
+			ring->doorbell_cnt = 0;
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * vxge_hw_vpath_poll_tx - Poll Tx क्रम completed descriptors and process the same.
- * @fअगरo: Handle to the fअगरo object used क्रम non offload send
- * @skb_ptr: poपूर्णांकer to skb
+ * vxge_hw_vpath_poll_tx - Poll Tx for completed descriptors and process the same.
+ * @fifo: Handle to the fifo object used for non offload send
+ * @skb_ptr: pointer to skb
  * @nr_skb: number of skbs
  * @more: more is coming
  *
- * The function polls the Tx क्रम the completed descriptors and calls
+ * The function polls the Tx for the completed descriptors and calls
  * the driver via supplied completion callback.
  *
- * Returns: VXGE_HW_OK, अगर the polling is completed successful.
+ * Returns: VXGE_HW_OK, if the polling is completed successful.
  * VXGE_HW_COMPLETIONS_REMAIN: There are still more completed
  * descriptors available which are yet to be processed.
  */
-क्रमागत vxge_hw_status vxge_hw_vpath_poll_tx(काष्ठा __vxge_hw_fअगरo *fअगरo,
-					काष्ठा sk_buff ***skb_ptr, पूर्णांक nr_skb,
-					पूर्णांक *more)
-अणु
-	क्रमागत vxge_hw_fअगरo_tcode t_code;
-	व्योम *first_txdlh;
-	क्रमागत vxge_hw_status status = VXGE_HW_OK;
-	काष्ठा __vxge_hw_channel *channel;
+enum vxge_hw_status vxge_hw_vpath_poll_tx(struct __vxge_hw_fifo *fifo,
+					struct sk_buff ***skb_ptr, int nr_skb,
+					int *more)
+{
+	enum vxge_hw_fifo_tcode t_code;
+	void *first_txdlh;
+	enum vxge_hw_status status = VXGE_HW_OK;
+	struct __vxge_hw_channel *channel;
 
-	channel = &fअगरo->channel;
+	channel = &fifo->channel;
 
-	status = vxge_hw_fअगरo_txdl_next_completed(fअगरo,
+	status = vxge_hw_fifo_txdl_next_completed(fifo,
 				&first_txdlh, &t_code);
-	अगर (status == VXGE_HW_OK)
-		अगर (fअगरo->callback(fअगरo, first_txdlh, t_code,
+	if (status == VXGE_HW_OK)
+		if (fifo->callback(fifo, first_txdlh, t_code,
 			channel->userdata, skb_ptr, nr_skb, more) != VXGE_HW_OK)
 			status = VXGE_HW_COMPLETIONS_REMAIN;
 
-	वापस status;
-पूर्ण
+	return status;
+}

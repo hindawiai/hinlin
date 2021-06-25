@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <त्रुटिसं.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश "evsel.h"
-#समावेश "counts.h"
-#समावेश <linux/zभाग.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include "evsel.h"
+#include "counts.h"
+#include <linux/zalloc.h>
 
-काष्ठा perf_counts *perf_counts__new(पूर्णांक ncpus, पूर्णांक nthपढ़ोs)
-अणु
-	काष्ठा perf_counts *counts = zalloc(माप(*counts));
+struct perf_counts *perf_counts__new(int ncpus, int nthreads)
+{
+	struct perf_counts *counts = zalloc(sizeof(*counts));
 
-	अगर (counts) अणु
-		काष्ठा xyarray *values;
+	if (counts) {
+		struct xyarray *values;
 
-		values = xyarray__new(ncpus, nthपढ़ोs, माप(काष्ठा perf_counts_values));
-		अगर (!values) अणु
-			मुक्त(counts);
-			वापस शून्य;
-		पूर्ण
+		values = xyarray__new(ncpus, nthreads, sizeof(struct perf_counts_values));
+		if (!values) {
+			free(counts);
+			return NULL;
+		}
 
 		counts->values = values;
 
-		values = xyarray__new(ncpus, nthपढ़ोs, माप(bool));
-		अगर (!values) अणु
+		values = xyarray__new(ncpus, nthreads, sizeof(bool));
+		if (!values) {
 			xyarray__delete(counts->values);
-			मुक्त(counts);
-			वापस शून्य;
-		पूर्ण
+			free(counts);
+			return NULL;
+		}
 
 		counts->loaded = values;
-	पूर्ण
+	}
 
-	वापस counts;
-पूर्ण
+	return counts;
+}
 
-व्योम perf_counts__delete(काष्ठा perf_counts *counts)
-अणु
-	अगर (counts) अणु
+void perf_counts__delete(struct perf_counts *counts)
+{
+	if (counts) {
 		xyarray__delete(counts->loaded);
 		xyarray__delete(counts->values);
-		मुक्त(counts);
-	पूर्ण
-पूर्ण
+		free(counts);
+	}
+}
 
-व्योम perf_counts__reset(काष्ठा perf_counts *counts)
-अणु
+void perf_counts__reset(struct perf_counts *counts)
+{
 	xyarray__reset(counts->loaded);
 	xyarray__reset(counts->values);
-	स_रखो(&counts->aggr, 0, माप(काष्ठा perf_counts_values));
-पूर्ण
+	memset(&counts->aggr, 0, sizeof(struct perf_counts_values));
+}
 
-व्योम evsel__reset_counts(काष्ठा evsel *evsel)
-अणु
+void evsel__reset_counts(struct evsel *evsel)
+{
 	perf_counts__reset(evsel->counts);
-पूर्ण
+}
 
-पूर्णांक evsel__alloc_counts(काष्ठा evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs)
-अणु
-	evsel->counts = perf_counts__new(ncpus, nthपढ़ोs);
-	वापस evsel->counts != शून्य ? 0 : -ENOMEM;
-पूर्ण
+int evsel__alloc_counts(struct evsel *evsel, int ncpus, int nthreads)
+{
+	evsel->counts = perf_counts__new(ncpus, nthreads);
+	return evsel->counts != NULL ? 0 : -ENOMEM;
+}
 
-व्योम evsel__मुक्त_counts(काष्ठा evsel *evsel)
-अणु
+void evsel__free_counts(struct evsel *evsel)
+{
 	perf_counts__delete(evsel->counts);
-	evsel->counts = शून्य;
-पूर्ण
+	evsel->counts = NULL;
+}

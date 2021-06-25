@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,125 +30,125 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/vport.h>
-#समावेश <linux/mlx5/eचयन.h>
+#include <linux/mutex.h>
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/vport.h>
+#include <linux/mlx5/eswitch.h>
 
-#समावेश "mlx5_core.h"
-#समावेश "fs_core.h"
-#समावेश "fs_cmd.h"
-#समावेश "diag/fs_tracepoint.h"
-#समावेश "accel/ipsec.h"
-#समावेश "fpga/ipsec.h"
+#include "mlx5_core.h"
+#include "fs_core.h"
+#include "fs_cmd.h"
+#include "diag/fs_tracepoint.h"
+#include "accel/ipsec.h"
+#include "fpga/ipsec.h"
 
-#घोषणा INIT_TREE_NODE_ARRAY_SIZE(...)	(माप((काष्ठा init_tree_node[])अणु__VA_ARGS__पूर्ण) /\
-					 माप(काष्ठा init_tree_node))
+#define INIT_TREE_NODE_ARRAY_SIZE(...)	(sizeof((struct init_tree_node[]){__VA_ARGS__}) /\
+					 sizeof(struct init_tree_node))
 
-#घोषणा ADD_PRIO(num_prios_val, min_level_val, num_levels_val, caps_val,\
-		 ...) अणु.type = FS_TYPE_PRIO,\
+#define ADD_PRIO(num_prios_val, min_level_val, num_levels_val, caps_val,\
+		 ...) {.type = FS_TYPE_PRIO,\
 	.min_ft_level = min_level_val,\
 	.num_levels = num_levels_val,\
 	.num_leaf_prios = num_prios_val,\
 	.caps = caps_val,\
-	.children = (काष्ठा init_tree_node[]) अणु__VA_ARGS__पूर्ण,\
+	.children = (struct init_tree_node[]) {__VA_ARGS__},\
 	.ar_size = INIT_TREE_NODE_ARRAY_SIZE(__VA_ARGS__) \
-पूर्ण
+}
 
-#घोषणा ADD_MULTIPLE_PRIO(num_prios_val, num_levels_val, ...)\
-	ADD_PRIO(num_prios_val, 0, num_levels_val, अणुपूर्ण,\
+#define ADD_MULTIPLE_PRIO(num_prios_val, num_levels_val, ...)\
+	ADD_PRIO(num_prios_val, 0, num_levels_val, {},\
 		 __VA_ARGS__)\
 
-#घोषणा ADD_NS(def_miss_act, ...) अणु.type = FS_TYPE_NAMESPACE,	\
+#define ADD_NS(def_miss_act, ...) {.type = FS_TYPE_NAMESPACE,	\
 	.def_miss_action = def_miss_act,\
-	.children = (काष्ठा init_tree_node[]) अणु__VA_ARGS__पूर्ण,\
+	.children = (struct init_tree_node[]) {__VA_ARGS__},\
 	.ar_size = INIT_TREE_NODE_ARRAY_SIZE(__VA_ARGS__) \
-पूर्ण
+}
 
-#घोषणा INIT_CAPS_ARRAY_SIZE(...) (माप((दीर्घ[])अणु__VA_ARGS__पूर्ण) /\
-				   माप(दीर्घ))
+#define INIT_CAPS_ARRAY_SIZE(...) (sizeof((long[]){__VA_ARGS__}) /\
+				   sizeof(long))
 
-#घोषणा FS_CAP(cap) (__mlx5_bit_off(flow_table_nic_cap, cap))
+#define FS_CAP(cap) (__mlx5_bit_off(flow_table_nic_cap, cap))
 
-#घोषणा FS_REQUIRED_CAPS(...) अणु.arr_sz = INIT_CAPS_ARRAY_SIZE(__VA_ARGS__), \
-			       .caps = (दीर्घ[]) अणु__VA_ARGS__पूर्ण पूर्ण
+#define FS_REQUIRED_CAPS(...) {.arr_sz = INIT_CAPS_ARRAY_SIZE(__VA_ARGS__), \
+			       .caps = (long[]) {__VA_ARGS__} }
 
-#घोषणा FS_CHAINING_CAPS  FS_REQUIRED_CAPS(FS_CAP(flow_table_properties_nic_receive.flow_modअगरy_en), \
-					   FS_CAP(flow_table_properties_nic_receive.modअगरy_root), \
-					   FS_CAP(flow_table_properties_nic_receive.identअगरied_miss_table_mode), \
-					   FS_CAP(flow_table_properties_nic_receive.flow_table_modअगरy))
+#define FS_CHAINING_CAPS  FS_REQUIRED_CAPS(FS_CAP(flow_table_properties_nic_receive.flow_modify_en), \
+					   FS_CAP(flow_table_properties_nic_receive.modify_root), \
+					   FS_CAP(flow_table_properties_nic_receive.identified_miss_table_mode), \
+					   FS_CAP(flow_table_properties_nic_receive.flow_table_modify))
 
-#घोषणा FS_CHAINING_CAPS_EGRESS                                                \
+#define FS_CHAINING_CAPS_EGRESS                                                \
 	FS_REQUIRED_CAPS(                                                      \
-		FS_CAP(flow_table_properties_nic_transmit.flow_modअगरy_en),     \
-		FS_CAP(flow_table_properties_nic_transmit.modअगरy_root),        \
+		FS_CAP(flow_table_properties_nic_transmit.flow_modify_en),     \
+		FS_CAP(flow_table_properties_nic_transmit.modify_root),        \
 		FS_CAP(flow_table_properties_nic_transmit                      \
-			       .identअगरied_miss_table_mode),                   \
-		FS_CAP(flow_table_properties_nic_transmit.flow_table_modअगरy))
+			       .identified_miss_table_mode),                   \
+		FS_CAP(flow_table_properties_nic_transmit.flow_table_modify))
 
-#घोषणा FS_CHAINING_CAPS_RDMA_TX                                                \
+#define FS_CHAINING_CAPS_RDMA_TX                                                \
 	FS_REQUIRED_CAPS(                                                       \
-		FS_CAP(flow_table_properties_nic_transmit_rdma.flow_modअगरy_en), \
-		FS_CAP(flow_table_properties_nic_transmit_rdma.modअगरy_root),    \
+		FS_CAP(flow_table_properties_nic_transmit_rdma.flow_modify_en), \
+		FS_CAP(flow_table_properties_nic_transmit_rdma.modify_root),    \
 		FS_CAP(flow_table_properties_nic_transmit_rdma                  \
-			       .identअगरied_miss_table_mode),                    \
+			       .identified_miss_table_mode),                    \
 		FS_CAP(flow_table_properties_nic_transmit_rdma                  \
-			       .flow_table_modअगरy))
+			       .flow_table_modify))
 
-#घोषणा LEFTOVERS_NUM_LEVELS 1
-#घोषणा LEFTOVERS_NUM_PRIOS 1
+#define LEFTOVERS_NUM_LEVELS 1
+#define LEFTOVERS_NUM_PRIOS 1
 
-#घोषणा BY_PASS_PRIO_NUM_LEVELS 1
-#घोषणा BY_PASS_MIN_LEVEL (ETHTOOL_MIN_LEVEL + MLX5_BY_PASS_NUM_PRIOS +\
+#define BY_PASS_PRIO_NUM_LEVELS 1
+#define BY_PASS_MIN_LEVEL (ETHTOOL_MIN_LEVEL + MLX5_BY_PASS_NUM_PRIOS +\
 			   LEFTOVERS_NUM_PRIOS)
 
-#घोषणा ETHTOOL_PRIO_NUM_LEVELS 1
-#घोषणा ETHTOOL_NUM_PRIOS 11
-#घोषणा ETHTOOL_MIN_LEVEL (KERNEL_MIN_LEVEL + ETHTOOL_NUM_PRIOS)
-/* Promiscuous, Vlan, mac, ttc, inner ttc, अणुUDP/ANY/aRFS/accel/अणुesp, esp_errपूर्णपूर्ण */
-#घोषणा KERNEL_NIC_PRIO_NUM_LEVELS 7
-#घोषणा KERNEL_NIC_NUM_PRIOS 1
-/* One more level क्रम tc */
-#घोषणा KERNEL_MIN_LEVEL (KERNEL_NIC_PRIO_NUM_LEVELS + 1)
+#define ETHTOOL_PRIO_NUM_LEVELS 1
+#define ETHTOOL_NUM_PRIOS 11
+#define ETHTOOL_MIN_LEVEL (KERNEL_MIN_LEVEL + ETHTOOL_NUM_PRIOS)
+/* Promiscuous, Vlan, mac, ttc, inner ttc, {UDP/ANY/aRFS/accel/{esp, esp_err}} */
+#define KERNEL_NIC_PRIO_NUM_LEVELS 7
+#define KERNEL_NIC_NUM_PRIOS 1
+/* One more level for tc */
+#define KERNEL_MIN_LEVEL (KERNEL_NIC_PRIO_NUM_LEVELS + 1)
 
-#घोषणा KERNEL_NIC_TC_NUM_PRIOS  1
-#घोषणा KERNEL_NIC_TC_NUM_LEVELS 2
+#define KERNEL_NIC_TC_NUM_PRIOS  1
+#define KERNEL_NIC_TC_NUM_LEVELS 2
 
-#घोषणा ANCHOR_NUM_LEVELS 1
-#घोषणा ANCHOR_NUM_PRIOS 1
-#घोषणा ANCHOR_MIN_LEVEL (BY_PASS_MIN_LEVEL + 1)
+#define ANCHOR_NUM_LEVELS 1
+#define ANCHOR_NUM_PRIOS 1
+#define ANCHOR_MIN_LEVEL (BY_PASS_MIN_LEVEL + 1)
 
-#घोषणा OFFLOADS_MAX_FT 2
-#घोषणा OFFLOADS_NUM_PRIOS 2
-#घोषणा OFFLOADS_MIN_LEVEL (ANCHOR_MIN_LEVEL + OFFLOADS_NUM_PRIOS)
+#define OFFLOADS_MAX_FT 2
+#define OFFLOADS_NUM_PRIOS 2
+#define OFFLOADS_MIN_LEVEL (ANCHOR_MIN_LEVEL + OFFLOADS_NUM_PRIOS)
 
-#घोषणा LAG_PRIO_NUM_LEVELS 1
-#घोषणा LAG_NUM_PRIOS 1
-#घोषणा LAG_MIN_LEVEL (OFFLOADS_MIN_LEVEL + 1)
+#define LAG_PRIO_NUM_LEVELS 1
+#define LAG_NUM_PRIOS 1
+#define LAG_MIN_LEVEL (OFFLOADS_MIN_LEVEL + 1)
 
-#घोषणा KERNEL_TX_IPSEC_NUM_PRIOS  1
-#घोषणा KERNEL_TX_IPSEC_NUM_LEVELS 1
-#घोषणा KERNEL_TX_MIN_LEVEL        (KERNEL_TX_IPSEC_NUM_LEVELS)
+#define KERNEL_TX_IPSEC_NUM_PRIOS  1
+#define KERNEL_TX_IPSEC_NUM_LEVELS 1
+#define KERNEL_TX_MIN_LEVEL        (KERNEL_TX_IPSEC_NUM_LEVELS)
 
-काष्ठा node_caps अणु
-	माप_प्रकार	arr_sz;
-	दीर्घ	*caps;
-पूर्ण;
+struct node_caps {
+	size_t	arr_sz;
+	long	*caps;
+};
 
-अटल काष्ठा init_tree_node अणु
-	क्रमागत fs_node_type	type;
-	काष्ठा init_tree_node *children;
-	पूर्णांक ar_size;
-	काष्ठा node_caps caps;
-	पूर्णांक min_ft_level;
-	पूर्णांक num_leaf_prios;
-	पूर्णांक prio;
-	पूर्णांक num_levels;
-	क्रमागत mlx5_flow_table_miss_action def_miss_action;
-पूर्ण root_fs = अणु
+static struct init_tree_node {
+	enum fs_node_type	type;
+	struct init_tree_node *children;
+	int ar_size;
+	struct node_caps caps;
+	int min_ft_level;
+	int num_leaf_prios;
+	int prio;
+	int num_levels;
+	enum mlx5_flow_table_miss_action def_miss_action;
+} root_fs = {
 	.type = FS_TYPE_NAMESPACE,
 	.ar_size = 7,
-	  .children = (काष्ठा init_tree_node[])अणु
+	  .children = (struct init_tree_node[]){
 		  ADD_PRIO(0, BY_PASS_MIN_LEVEL, 0, FS_CHAINING_CAPS,
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(MLX5_BY_PASS_NUM_PRIOS,
@@ -166,7 +165,7 @@
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(ETHTOOL_NUM_PRIOS,
 						    ETHTOOL_PRIO_NUM_LEVELS))),
-		  ADD_PRIO(0, KERNEL_MIN_LEVEL, 0, अणुपूर्ण,
+		  ADD_PRIO(0, KERNEL_MIN_LEVEL, 0, {},
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(KERNEL_NIC_TC_NUM_PRIOS,
 						    KERNEL_NIC_TC_NUM_LEVELS),
@@ -176,42 +175,42 @@
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(LEFTOVERS_NUM_PRIOS,
 						    LEFTOVERS_NUM_LEVELS))),
-		  ADD_PRIO(0, ANCHOR_MIN_LEVEL, 0, अणुपूर्ण,
+		  ADD_PRIO(0, ANCHOR_MIN_LEVEL, 0, {},
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(ANCHOR_NUM_PRIOS,
 						    ANCHOR_NUM_LEVELS))),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा init_tree_node egress_root_fs = अणु
+static struct init_tree_node egress_root_fs = {
 	.type = FS_TYPE_NAMESPACE,
-#अगर_घोषित CONFIG_MLX5_IPSEC
+#ifdef CONFIG_MLX5_IPSEC
 	.ar_size = 2,
-#अन्यथा
+#else
 	.ar_size = 1,
-#पूर्ण_अगर
-	.children = (काष्ठा init_tree_node[]) अणु
+#endif
+	.children = (struct init_tree_node[]) {
 		ADD_PRIO(0, MLX5_BY_PASS_NUM_PRIOS, 0,
 			 FS_CHAINING_CAPS_EGRESS,
 			 ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				ADD_MULTIPLE_PRIO(MLX5_BY_PASS_NUM_PRIOS,
 						  BY_PASS_PRIO_NUM_LEVELS))),
-#अगर_घोषित CONFIG_MLX5_IPSEC
+#ifdef CONFIG_MLX5_IPSEC
 		ADD_PRIO(0, KERNEL_TX_MIN_LEVEL, 0,
 			 FS_CHAINING_CAPS_EGRESS,
 			 ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				ADD_MULTIPLE_PRIO(KERNEL_TX_IPSEC_NUM_PRIOS,
 						  KERNEL_TX_IPSEC_NUM_LEVELS))),
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण;
+#endif
+	}
+};
 
-#घोषणा RDMA_RX_BYPASS_PRIO 0
-#घोषणा RDMA_RX_KERNEL_PRIO 1
-अटल काष्ठा init_tree_node rdma_rx_root_fs = अणु
+#define RDMA_RX_BYPASS_PRIO 0
+#define RDMA_RX_KERNEL_PRIO 1
+static struct init_tree_node rdma_rx_root_fs = {
 	.type = FS_TYPE_NAMESPACE,
 	.ar_size = 2,
-	.children = (काष्ठा init_tree_node[]) अणु
+	.children = (struct init_tree_node[]) {
 		[RDMA_RX_BYPASS_PRIO] =
 		ADD_PRIO(0, MLX5_BY_PASS_NUM_REGULAR_PRIOS, 0,
 			 FS_CHAINING_CAPS,
@@ -223,67 +222,67 @@
 			 FS_CHAINING_CAPS,
 			 ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_SWITCH_DOMAIN,
 				ADD_MULTIPLE_PRIO(1, 1))),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा init_tree_node rdma_tx_root_fs = अणु
+static struct init_tree_node rdma_tx_root_fs = {
 	.type = FS_TYPE_NAMESPACE,
 	.ar_size = 1,
-	.children = (काष्ठा init_tree_node[]) अणु
+	.children = (struct init_tree_node[]) {
 		ADD_PRIO(0, MLX5_BY_PASS_NUM_PRIOS, 0,
 			 FS_CHAINING_CAPS_RDMA_TX,
 			 ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				ADD_MULTIPLE_PRIO(MLX5_BY_PASS_NUM_PRIOS,
 						  BY_PASS_PRIO_NUM_LEVELS))),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-क्रमागत fs_i_lock_class अणु
+enum fs_i_lock_class {
 	FS_LOCK_GRANDPARENT,
 	FS_LOCK_PARENT,
 	FS_LOCK_CHILD
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rhashtable_params rhash_fte = अणु
-	.key_len = माप_field(काष्ठा fs_fte, val),
-	.key_offset = दुरत्व(काष्ठा fs_fte, val),
-	.head_offset = दुरत्व(काष्ठा fs_fte, hash),
-	.स्वतःmatic_shrinking = true,
+static const struct rhashtable_params rhash_fte = {
+	.key_len = sizeof_field(struct fs_fte, val),
+	.key_offset = offsetof(struct fs_fte, val),
+	.head_offset = offsetof(struct fs_fte, hash),
+	.automatic_shrinking = true,
 	.min_size = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rhashtable_params rhash_fg = अणु
-	.key_len = माप_field(काष्ठा mlx5_flow_group, mask),
-	.key_offset = दुरत्व(काष्ठा mlx5_flow_group, mask),
-	.head_offset = दुरत्व(काष्ठा mlx5_flow_group, hash),
-	.स्वतःmatic_shrinking = true,
+static const struct rhashtable_params rhash_fg = {
+	.key_len = sizeof_field(struct mlx5_flow_group, mask),
+	.key_offset = offsetof(struct mlx5_flow_group, mask),
+	.head_offset = offsetof(struct mlx5_flow_group, hash),
+	.automatic_shrinking = true,
 	.min_size = 1,
 
-पूर्ण;
+};
 
-अटल व्योम del_hw_flow_table(काष्ठा fs_node *node);
-अटल व्योम del_hw_flow_group(काष्ठा fs_node *node);
-अटल व्योम del_hw_fte(काष्ठा fs_node *node);
-अटल व्योम del_sw_flow_table(काष्ठा fs_node *node);
-अटल व्योम del_sw_flow_group(काष्ठा fs_node *node);
-अटल व्योम del_sw_fte(काष्ठा fs_node *node);
-अटल व्योम del_sw_prio(काष्ठा fs_node *node);
-अटल व्योम del_sw_ns(काष्ठा fs_node *node);
-/* Delete rule (destination) is special हाल that
- * requires to lock the FTE क्रम all the deletion process.
+static void del_hw_flow_table(struct fs_node *node);
+static void del_hw_flow_group(struct fs_node *node);
+static void del_hw_fte(struct fs_node *node);
+static void del_sw_flow_table(struct fs_node *node);
+static void del_sw_flow_group(struct fs_node *node);
+static void del_sw_fte(struct fs_node *node);
+static void del_sw_prio(struct fs_node *node);
+static void del_sw_ns(struct fs_node *node);
+/* Delete rule (destination) is special case that
+ * requires to lock the FTE for all the deletion process.
  */
-अटल व्योम del_sw_hw_rule(काष्ठा fs_node *node);
-अटल bool mlx5_flow_dests_cmp(काष्ठा mlx5_flow_destination *d1,
-				काष्ठा mlx5_flow_destination *d2);
-अटल व्योम cleanup_root_ns(काष्ठा mlx5_flow_root_namespace *root_ns);
-अटल काष्ठा mlx5_flow_rule *
-find_flow_rule(काष्ठा fs_fte *fte,
-	       काष्ठा mlx5_flow_destination *dest);
+static void del_sw_hw_rule(struct fs_node *node);
+static bool mlx5_flow_dests_cmp(struct mlx5_flow_destination *d1,
+				struct mlx5_flow_destination *d2);
+static void cleanup_root_ns(struct mlx5_flow_root_namespace *root_ns);
+static struct mlx5_flow_rule *
+find_flow_rule(struct fs_fte *fte,
+	       struct mlx5_flow_destination *dest);
 
-अटल व्योम tree_init_node(काष्ठा fs_node *node,
-			   व्योम (*del_hw_func)(काष्ठा fs_node *),
-			   व्योम (*del_sw_func)(काष्ठा fs_node *))
-अणु
+static void tree_init_node(struct fs_node *node,
+			   void (*del_hw_func)(struct fs_node *),
+			   void (*del_sw_func)(struct fs_node *))
+{
 	refcount_set(&node->refcount, 1);
 	INIT_LIST_HEAD(&node->list);
 	INIT_LIST_HEAD(&node->children);
@@ -291,274 +290,274 @@ find_flow_rule(काष्ठा fs_fte *fte,
 	node->del_hw_func = del_hw_func;
 	node->del_sw_func = del_sw_func;
 	node->active = false;
-पूर्ण
+}
 
-अटल व्योम tree_add_node(काष्ठा fs_node *node, काष्ठा fs_node *parent)
-अणु
-	अगर (parent)
+static void tree_add_node(struct fs_node *node, struct fs_node *parent)
+{
+	if (parent)
 		refcount_inc(&parent->refcount);
 	node->parent = parent;
 
 	/* Parent is the root */
-	अगर (!parent)
+	if (!parent)
 		node->root = node;
-	अन्यथा
+	else
 		node->root = parent->root;
-पूर्ण
+}
 
-अटल पूर्णांक tree_get_node(काष्ठा fs_node *node)
-अणु
-	वापस refcount_inc_not_zero(&node->refcount);
-पूर्ण
+static int tree_get_node(struct fs_node *node)
+{
+	return refcount_inc_not_zero(&node->refcount);
+}
 
-अटल व्योम nested_करोwn_पढ़ो_ref_node(काष्ठा fs_node *node,
-				      क्रमागत fs_i_lock_class class)
-अणु
-	अगर (node) अणु
-		करोwn_पढ़ो_nested(&node->lock, class);
+static void nested_down_read_ref_node(struct fs_node *node,
+				      enum fs_i_lock_class class)
+{
+	if (node) {
+		down_read_nested(&node->lock, class);
 		refcount_inc(&node->refcount);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nested_करोwn_ग_लिखो_ref_node(काष्ठा fs_node *node,
-				       क्रमागत fs_i_lock_class class)
-अणु
-	अगर (node) अणु
-		करोwn_ग_लिखो_nested(&node->lock, class);
+static void nested_down_write_ref_node(struct fs_node *node,
+				       enum fs_i_lock_class class)
+{
+	if (node) {
+		down_write_nested(&node->lock, class);
 		refcount_inc(&node->refcount);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम करोwn_ग_लिखो_ref_node(काष्ठा fs_node *node, bool locked)
-अणु
-	अगर (node) अणु
-		अगर (!locked)
-			करोwn_ग_लिखो(&node->lock);
+static void down_write_ref_node(struct fs_node *node, bool locked)
+{
+	if (node) {
+		if (!locked)
+			down_write(&node->lock);
 		refcount_inc(&node->refcount);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम up_पढ़ो_ref_node(काष्ठा fs_node *node)
-अणु
+static void up_read_ref_node(struct fs_node *node)
+{
 	refcount_dec(&node->refcount);
-	up_पढ़ो(&node->lock);
-पूर्ण
+	up_read(&node->lock);
+}
 
-अटल व्योम up_ग_लिखो_ref_node(काष्ठा fs_node *node, bool locked)
-अणु
+static void up_write_ref_node(struct fs_node *node, bool locked)
+{
 	refcount_dec(&node->refcount);
-	अगर (!locked)
-		up_ग_लिखो(&node->lock);
-पूर्ण
+	if (!locked)
+		up_write(&node->lock);
+}
 
-अटल व्योम tree_put_node(काष्ठा fs_node *node, bool locked)
-अणु
-	काष्ठा fs_node *parent_node = node->parent;
+static void tree_put_node(struct fs_node *node, bool locked)
+{
+	struct fs_node *parent_node = node->parent;
 
-	अगर (refcount_dec_and_test(&node->refcount)) अणु
-		अगर (node->del_hw_func)
+	if (refcount_dec_and_test(&node->refcount)) {
+		if (node->del_hw_func)
 			node->del_hw_func(node);
-		अगर (parent_node) अणु
-			करोwn_ग_लिखो_ref_node(parent_node, locked);
+		if (parent_node) {
+			down_write_ref_node(parent_node, locked);
 			list_del_init(&node->list);
-		पूर्ण
+		}
 		node->del_sw_func(node);
-		अगर (parent_node)
-			up_ग_लिखो_ref_node(parent_node, locked);
-		node = शून्य;
-	पूर्ण
-	अगर (!node && parent_node)
+		if (parent_node)
+			up_write_ref_node(parent_node, locked);
+		node = NULL;
+	}
+	if (!node && parent_node)
 		tree_put_node(parent_node, locked);
-पूर्ण
+}
 
-अटल पूर्णांक tree_हटाओ_node(काष्ठा fs_node *node, bool locked)
-अणु
-	अगर (refcount_पढ़ो(&node->refcount) > 1) अणु
+static int tree_remove_node(struct fs_node *node, bool locked)
+{
+	if (refcount_read(&node->refcount) > 1) {
 		refcount_dec(&node->refcount);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 	tree_put_node(node, locked);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fs_prio *find_prio(काष्ठा mlx5_flow_namespace *ns,
-				 अचिन्हित पूर्णांक prio)
-अणु
-	काष्ठा fs_prio *iter_prio;
+static struct fs_prio *find_prio(struct mlx5_flow_namespace *ns,
+				 unsigned int prio)
+{
+	struct fs_prio *iter_prio;
 
-	fs_क्रम_each_prio(iter_prio, ns) अणु
-		अगर (iter_prio->prio == prio)
-			वापस iter_prio;
-	पूर्ण
+	fs_for_each_prio(iter_prio, ns) {
+		if (iter_prio->prio == prio)
+			return iter_prio;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool is_fwd_next_action(u32 action)
-अणु
-	वापस action & (MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_PRIO |
+static bool is_fwd_next_action(u32 action)
+{
+	return action & (MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_PRIO |
 			 MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS);
-पूर्ण
+}
 
-अटल bool check_valid_spec(स्थिर काष्ठा mlx5_flow_spec *spec)
-अणु
-	पूर्णांक i;
+static bool check_valid_spec(const struct mlx5_flow_spec *spec)
+{
+	int i;
 
-	क्रम (i = 0; i < MLX5_ST_SZ_DW_MATCH_PARAM; i++)
-		अगर (spec->match_value[i] & ~spec->match_criteria[i]) अणु
+	for (i = 0; i < MLX5_ST_SZ_DW_MATCH_PARAM; i++)
+		if (spec->match_value[i] & ~spec->match_criteria[i]) {
 			pr_warn("mlx5_core: match_value differs from match_criteria\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा mlx5_flow_root_namespace *find_root(काष्ठा fs_node *node)
-अणु
-	काष्ठा fs_node *root;
-	काष्ठा mlx5_flow_namespace *ns;
+static struct mlx5_flow_root_namespace *find_root(struct fs_node *node)
+{
+	struct fs_node *root;
+	struct mlx5_flow_namespace *ns;
 
 	root = node->root;
 
-	अगर (WARN_ON(root->type != FS_TYPE_NAMESPACE)) अणु
+	if (WARN_ON(root->type != FS_TYPE_NAMESPACE)) {
 		pr_warn("mlx5: flow steering node is not in tree or garbaged\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	ns = container_of(root, काष्ठा mlx5_flow_namespace, node);
-	वापस container_of(ns, काष्ठा mlx5_flow_root_namespace, ns);
-पूर्ण
+	ns = container_of(root, struct mlx5_flow_namespace, node);
+	return container_of(ns, struct mlx5_flow_root_namespace, ns);
+}
 
-अटल अंतरभूत काष्ठा mlx5_flow_steering *get_steering(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(node);
+static inline struct mlx5_flow_steering *get_steering(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root = find_root(node);
 
-	अगर (root)
-		वापस root->dev->priv.steering;
-	वापस शून्य;
-पूर्ण
+	if (root)
+		return root->dev->priv.steering;
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा mlx5_core_dev *get_dev(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(node);
+static inline struct mlx5_core_dev *get_dev(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root = find_root(node);
 
-	अगर (root)
-		वापस root->dev;
-	वापस शून्य;
-पूर्ण
+	if (root)
+		return root->dev;
+	return NULL;
+}
 
-अटल व्योम del_sw_ns(काष्ठा fs_node *node)
-अणु
-	kमुक्त(node);
-पूर्ण
+static void del_sw_ns(struct fs_node *node)
+{
+	kfree(node);
+}
 
-अटल व्योम del_sw_prio(काष्ठा fs_node *node)
-अणु
-	kमुक्त(node);
-पूर्ण
+static void del_sw_prio(struct fs_node *node)
+{
+	kfree(node);
+}
 
-अटल व्योम del_hw_flow_table(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा mlx5_core_dev *dev;
-	पूर्णांक err;
+static void del_hw_flow_table(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_table *ft;
+	struct mlx5_core_dev *dev;
+	int err;
 
 	fs_get_obj(ft, node);
 	dev = get_dev(&ft->node);
 	root = find_root(&ft->node);
 	trace_mlx5_fs_del_ft(ft);
 
-	अगर (node->active) अणु
+	if (node->active) {
 		err = root->cmds->destroy_flow_table(root, ft);
-		अगर (err)
+		if (err)
 			mlx5_core_warn(dev, "flow steering can't destroy ft\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम del_sw_flow_table(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा fs_prio *prio;
+static void del_sw_flow_table(struct fs_node *node)
+{
+	struct mlx5_flow_table *ft;
+	struct fs_prio *prio;
 
 	fs_get_obj(ft, node);
 
 	rhltable_destroy(&ft->fgs_hash);
-	अगर (ft->node.parent) अणु
+	if (ft->node.parent) {
 		fs_get_obj(prio, ft->node.parent);
 		prio->num_ft--;
-	पूर्ण
-	kमुक्त(ft);
-पूर्ण
+	}
+	kfree(ft);
+}
 
-अटल व्योम modअगरy_fte(काष्ठा fs_fte *fte)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा mlx5_core_dev *dev;
-	पूर्णांक err;
+static void modify_fte(struct fs_fte *fte)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_table *ft;
+	struct mlx5_flow_group *fg;
+	struct mlx5_core_dev *dev;
+	int err;
 
 	fs_get_obj(fg, fte->node.parent);
 	fs_get_obj(ft, fg->node.parent);
 	dev = get_dev(&fte->node);
 
 	root = find_root(&ft->node);
-	err = root->cmds->update_fte(root, ft, fg, fte->modअगरy_mask, fte);
-	अगर (err)
+	err = root->cmds->update_fte(root, ft, fg, fte->modify_mask, fte);
+	if (err)
 		mlx5_core_warn(dev,
 			       "%s can't del rule fg id=%d fte_index=%d\n",
 			       __func__, fg->id, fte->index);
-	fte->modअगरy_mask = 0;
-पूर्ण
+	fte->modify_mask = 0;
+}
 
-अटल व्योम del_sw_hw_rule(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_rule *rule;
-	काष्ठा fs_fte *fte;
+static void del_sw_hw_rule(struct fs_node *node)
+{
+	struct mlx5_flow_rule *rule;
+	struct fs_fte *fte;
 
 	fs_get_obj(rule, node);
 	fs_get_obj(fte, rule->node.parent);
 	trace_mlx5_fs_del_rule(rule);
-	अगर (is_fwd_next_action(rule->sw_action)) अणु
+	if (is_fwd_next_action(rule->sw_action)) {
 		mutex_lock(&rule->dest_attr.ft->lock);
 		list_del(&rule->next_ft);
 		mutex_unlock(&rule->dest_attr.ft->lock);
-	पूर्ण
+	}
 
-	अगर (rule->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_COUNTER  &&
-	    --fte->dests_size) अणु
-		fte->modअगरy_mask |=
+	if (rule->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_COUNTER  &&
+	    --fte->dests_size) {
+		fte->modify_mask |=
 			BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION) |
 			BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_FLOW_COUNTERS);
 		fte->action.action &= ~MLX5_FLOW_CONTEXT_ACTION_COUNT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (rule->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_PORT &&
-	    --fte->dests_size) अणु
-		fte->modअगरy_mask |= BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION);
+	if (rule->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_PORT &&
+	    --fte->dests_size) {
+		fte->modify_mask |= BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION);
 		fte->action.action &= ~MLX5_FLOW_CONTEXT_ACTION_ALLOW;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) &&
-	    --fte->dests_size) अणु
-		fte->modअगरy_mask |=
+	if ((fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) &&
+	    --fte->dests_size) {
+		fte->modify_mask |=
 			BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
-	पूर्ण
+	}
 out:
-	kमुक्त(rule);
-पूर्ण
+	kfree(rule);
+}
 
-अटल व्योम del_hw_fte(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा mlx5_core_dev *dev;
-	काष्ठा fs_fte *fte;
-	पूर्णांक err;
+static void del_hw_fte(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_table *ft;
+	struct mlx5_flow_group *fg;
+	struct mlx5_core_dev *dev;
+	struct fs_fte *fte;
+	int err;
 
 	fs_get_obj(fte, node);
 	fs_get_obj(fg, fte->node.parent);
@@ -567,40 +566,40 @@ out:
 	trace_mlx5_fs_del_fte(fte);
 	dev = get_dev(&ft->node);
 	root = find_root(&ft->node);
-	अगर (node->active) अणु
+	if (node->active) {
 		err = root->cmds->delete_fte(root, ft, fte);
-		अगर (err)
+		if (err)
 			mlx5_core_warn(dev,
 				       "flow steering can't delete fte in index %d of flow group id %d\n",
 				       fte->index, fg->id);
 		node->active = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम del_sw_fte(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(node);
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा fs_fte *fte;
-	पूर्णांक err;
+static void del_sw_fte(struct fs_node *node)
+{
+	struct mlx5_flow_steering *steering = get_steering(node);
+	struct mlx5_flow_group *fg;
+	struct fs_fte *fte;
+	int err;
 
 	fs_get_obj(fte, node);
 	fs_get_obj(fg, fte->node.parent);
 
-	err = rhashtable_हटाओ_fast(&fg->ftes_hash,
+	err = rhashtable_remove_fast(&fg->ftes_hash,
 				     &fte->hash,
 				     rhash_fte);
 	WARN_ON(err);
-	ida_मुक्त(&fg->fte_allocator, fte->index - fg->start_index);
-	kmem_cache_मुक्त(steering->ftes_cache, fte);
-पूर्ण
+	ida_free(&fg->fte_allocator, fte->index - fg->start_index);
+	kmem_cache_free(steering->ftes_cache, fte);
+}
 
-अटल व्योम del_hw_flow_group(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा mlx5_core_dev *dev;
+static void del_hw_flow_group(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_group *fg;
+	struct mlx5_flow_table *ft;
+	struct mlx5_core_dev *dev;
 
 	fs_get_obj(fg, node);
 	fs_get_obj(ft, fg->node.parent);
@@ -608,141 +607,141 @@ out:
 	trace_mlx5_fs_del_fg(fg);
 
 	root = find_root(&ft->node);
-	अगर (fg->node.active && root->cmds->destroy_flow_group(root, ft, fg))
+	if (fg->node.active && root->cmds->destroy_flow_group(root, ft, fg))
 		mlx5_core_warn(dev, "flow steering can't destroy fg %d of ft %d\n",
 			       fg->id, ft->id);
-पूर्ण
+}
 
-अटल व्योम del_sw_flow_group(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(node);
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा mlx5_flow_table *ft;
-	पूर्णांक err;
+static void del_sw_flow_group(struct fs_node *node)
+{
+	struct mlx5_flow_steering *steering = get_steering(node);
+	struct mlx5_flow_group *fg;
+	struct mlx5_flow_table *ft;
+	int err;
 
 	fs_get_obj(fg, node);
 	fs_get_obj(ft, fg->node.parent);
 
 	rhashtable_destroy(&fg->ftes_hash);
 	ida_destroy(&fg->fte_allocator);
-	अगर (ft->स्वतःgroup.active &&
-	    fg->max_ftes == ft->स्वतःgroup.group_size &&
-	    fg->start_index < ft->स्वतःgroup.max_fte)
-		ft->स्वतःgroup.num_groups--;
-	err = rhltable_हटाओ(&ft->fgs_hash,
+	if (ft->autogroup.active &&
+	    fg->max_ftes == ft->autogroup.group_size &&
+	    fg->start_index < ft->autogroup.max_fte)
+		ft->autogroup.num_groups--;
+	err = rhltable_remove(&ft->fgs_hash,
 			      &fg->hash,
 			      rhash_fg);
 	WARN_ON(err);
-	kmem_cache_मुक्त(steering->fgs_cache, fg);
-पूर्ण
+	kmem_cache_free(steering->fgs_cache, fg);
+}
 
-अटल पूर्णांक insert_fte(काष्ठा mlx5_flow_group *fg, काष्ठा fs_fte *fte)
-अणु
-	पूर्णांक index;
-	पूर्णांक ret;
+static int insert_fte(struct mlx5_flow_group *fg, struct fs_fte *fte)
+{
+	int index;
+	int ret;
 
 	index = ida_alloc_max(&fg->fte_allocator, fg->max_ftes - 1, GFP_KERNEL);
-	अगर (index < 0)
-		वापस index;
+	if (index < 0)
+		return index;
 
 	fte->index = index + fg->start_index;
 	ret = rhashtable_insert_fast(&fg->ftes_hash,
 				     &fte->hash,
 				     rhash_fte);
-	अगर (ret)
-		जाओ err_ida_हटाओ;
+	if (ret)
+		goto err_ida_remove;
 
 	tree_add_node(&fte->node, &fg->node);
 	list_add_tail(&fte->node.list, &fg->node.children);
-	वापस 0;
+	return 0;
 
-err_ida_हटाओ:
-	ida_मुक्त(&fg->fte_allocator, index);
-	वापस ret;
-पूर्ण
+err_ida_remove:
+	ida_free(&fg->fte_allocator, index);
+	return ret;
+}
 
-अटल काष्ठा fs_fte *alloc_fte(काष्ठा mlx5_flow_table *ft,
-				स्थिर काष्ठा mlx5_flow_spec *spec,
-				काष्ठा mlx5_flow_act *flow_act)
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(&ft->node);
-	काष्ठा fs_fte *fte;
+static struct fs_fte *alloc_fte(struct mlx5_flow_table *ft,
+				const struct mlx5_flow_spec *spec,
+				struct mlx5_flow_act *flow_act)
+{
+	struct mlx5_flow_steering *steering = get_steering(&ft->node);
+	struct fs_fte *fte;
 
 	fte = kmem_cache_zalloc(steering->ftes_cache, GFP_KERNEL);
-	अगर (!fte)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fte)
+		return ERR_PTR(-ENOMEM);
 
-	स_नकल(fte->val, &spec->match_value, माप(fte->val));
+	memcpy(fte->val, &spec->match_value, sizeof(fte->val));
 	fte->node.type =  FS_TYPE_FLOW_ENTRY;
 	fte->action = *flow_act;
 	fte->flow_context = spec->flow_context;
 
 	tree_init_node(&fte->node, del_hw_fte, del_sw_fte);
 
-	वापस fte;
-पूर्ण
+	return fte;
+}
 
-अटल व्योम dealloc_flow_group(काष्ठा mlx5_flow_steering *steering,
-			       काष्ठा mlx5_flow_group *fg)
-अणु
+static void dealloc_flow_group(struct mlx5_flow_steering *steering,
+			       struct mlx5_flow_group *fg)
+{
 	rhashtable_destroy(&fg->ftes_hash);
-	kmem_cache_मुक्त(steering->fgs_cache, fg);
-पूर्ण
+	kmem_cache_free(steering->fgs_cache, fg);
+}
 
-अटल काष्ठा mlx5_flow_group *alloc_flow_group(काष्ठा mlx5_flow_steering *steering,
+static struct mlx5_flow_group *alloc_flow_group(struct mlx5_flow_steering *steering,
 						u8 match_criteria_enable,
-						स्थिर व्योम *match_criteria,
-						पूर्णांक start_index,
-						पूर्णांक end_index)
-अणु
-	काष्ठा mlx5_flow_group *fg;
-	पूर्णांक ret;
+						const void *match_criteria,
+						int start_index,
+						int end_index)
+{
+	struct mlx5_flow_group *fg;
+	int ret;
 
 	fg = kmem_cache_zalloc(steering->fgs_cache, GFP_KERNEL);
-	अगर (!fg)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fg)
+		return ERR_PTR(-ENOMEM);
 
 	ret = rhashtable_init(&fg->ftes_hash, &rhash_fte);
-	अगर (ret) अणु
-		kmem_cache_मुक्त(steering->fgs_cache, fg);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kmem_cache_free(steering->fgs_cache, fg);
+		return ERR_PTR(ret);
+	}
 
 	ida_init(&fg->fte_allocator);
 	fg->mask.match_criteria_enable = match_criteria_enable;
-	स_नकल(&fg->mask.match_criteria, match_criteria,
-	       माप(fg->mask.match_criteria));
+	memcpy(&fg->mask.match_criteria, match_criteria,
+	       sizeof(fg->mask.match_criteria));
 	fg->node.type =  FS_TYPE_FLOW_GROUP;
 	fg->start_index = start_index;
 	fg->max_ftes = end_index - start_index + 1;
 
-	वापस fg;
-पूर्ण
+	return fg;
+}
 
-अटल काष्ठा mlx5_flow_group *alloc_insert_flow_group(काष्ठा mlx5_flow_table *ft,
+static struct mlx5_flow_group *alloc_insert_flow_group(struct mlx5_flow_table *ft,
 						       u8 match_criteria_enable,
-						       स्थिर व्योम *match_criteria,
-						       पूर्णांक start_index,
-						       पूर्णांक end_index,
-						       काष्ठा list_head *prev)
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(&ft->node);
-	काष्ठा mlx5_flow_group *fg;
-	पूर्णांक ret;
+						       const void *match_criteria,
+						       int start_index,
+						       int end_index,
+						       struct list_head *prev)
+{
+	struct mlx5_flow_steering *steering = get_steering(&ft->node);
+	struct mlx5_flow_group *fg;
+	int ret;
 
 	fg = alloc_flow_group(steering, match_criteria_enable, match_criteria,
 			      start_index, end_index);
-	अगर (IS_ERR(fg))
-		वापस fg;
+	if (IS_ERR(fg))
+		return fg;
 
 	/* initialize refcnt, add to parent list */
 	ret = rhltable_insert(&ft->fgs_hash,
 			      &fg->hash,
 			      rhash_fg);
-	अगर (ret) अणु
+	if (ret) {
 		dealloc_flow_group(steering, fg);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	tree_init_node(&fg->node, del_hw_flow_group, del_sw_flow_group);
 	tree_add_node(&fg->node, &ft->node);
@@ -750,26 +749,26 @@ err_ida_हटाओ:
 	list_add(&fg->node.list, prev);
 	atomic_inc(&ft->node.version);
 
-	वापस fg;
-पूर्ण
+	return fg;
+}
 
-अटल काष्ठा mlx5_flow_table *alloc_flow_table(पूर्णांक level, u16 vport, पूर्णांक max_fte,
-						क्रमागत fs_flow_table_type table_type,
-						क्रमागत fs_flow_table_op_mod op_mod,
+static struct mlx5_flow_table *alloc_flow_table(int level, u16 vport, int max_fte,
+						enum fs_flow_table_type table_type,
+						enum fs_flow_table_op_mod op_mod,
 						u32 flags)
-अणु
-	काष्ठा mlx5_flow_table *ft;
-	पूर्णांक ret;
+{
+	struct mlx5_flow_table *ft;
+	int ret;
 
-	ft  = kzalloc(माप(*ft), GFP_KERNEL);
-	अगर (!ft)
-		वापस ERR_PTR(-ENOMEM);
+	ft  = kzalloc(sizeof(*ft), GFP_KERNEL);
+	if (!ft)
+		return ERR_PTR(-ENOMEM);
 
 	ret = rhltable_init(&ft->fgs_hash, &rhash_fg);
-	अगर (ret) अणु
-		kमुक्त(ft);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kfree(ft);
+		return ERR_PTR(ret);
+	}
 
 	ft->level = level;
 	ft->node.type = FS_TYPE_FLOW_TABLE;
@@ -781,227 +780,227 @@ err_ida_हटाओ:
 	INIT_LIST_HEAD(&ft->fwd_rules);
 	mutex_init(&ft->lock);
 
-	वापस ft;
-पूर्ण
+	return ft;
+}
 
-/* If reverse is false, then we search क्रम the first flow table in the
- * root sub-tree from start(बंदst from right), अन्यथा we search क्रम the
- * last flow table in the root sub-tree till start(बंदst from left).
+/* If reverse is false, then we search for the first flow table in the
+ * root sub-tree from start(closest from right), else we search for the
+ * last flow table in the root sub-tree till start(closest from left).
  */
-अटल काष्ठा mlx5_flow_table *find_बंदst_ft_recursive(काष्ठा fs_node  *root,
-							 काष्ठा list_head *start,
+static struct mlx5_flow_table *find_closest_ft_recursive(struct fs_node  *root,
+							 struct list_head *start,
 							 bool reverse)
-अणु
-#घोषणा list_advance_entry(pos, reverse)		\
+{
+#define list_advance_entry(pos, reverse)		\
 	((reverse) ? list_prev_entry(pos, list) : list_next_entry(pos, list))
 
-#घोषणा list_क्रम_each_advance_जारी(pos, head, reverse)	\
-	क्रम (pos = list_advance_entry(pos, reverse);		\
+#define list_for_each_advance_continue(pos, head, reverse)	\
+	for (pos = list_advance_entry(pos, reverse);		\
 	     &pos->list != (head);				\
 	     pos = list_advance_entry(pos, reverse))
 
-	काष्ठा fs_node *iter = list_entry(start, काष्ठा fs_node, list);
-	काष्ठा mlx5_flow_table *ft = शून्य;
+	struct fs_node *iter = list_entry(start, struct fs_node, list);
+	struct mlx5_flow_table *ft = NULL;
 
-	अगर (!root || root->type == FS_TYPE_PRIO_CHAINS)
-		वापस शून्य;
+	if (!root || root->type == FS_TYPE_PRIO_CHAINS)
+		return NULL;
 
-	list_क्रम_each_advance_जारी(iter, &root->children, reverse) अणु
-		अगर (iter->type == FS_TYPE_FLOW_TABLE) अणु
+	list_for_each_advance_continue(iter, &root->children, reverse) {
+		if (iter->type == FS_TYPE_FLOW_TABLE) {
 			fs_get_obj(ft, iter);
-			वापस ft;
-		पूर्ण
-		ft = find_बंदst_ft_recursive(iter, &iter->children, reverse);
-		अगर (ft)
-			वापस ft;
-	पूर्ण
+			return ft;
+		}
+		ft = find_closest_ft_recursive(iter, &iter->children, reverse);
+		if (ft)
+			return ft;
+	}
 
-	वापस ft;
-पूर्ण
+	return ft;
+}
 
-/* If reverse is false then वापस the first flow table in next priority of
- * prio in the tree, अन्यथा वापस the last flow table in the previous priority
+/* If reverse is false then return the first flow table in next priority of
+ * prio in the tree, else return the last flow table in the previous priority
  * of prio in the tree.
  */
-अटल काष्ठा mlx5_flow_table *find_बंदst_ft(काष्ठा fs_prio *prio, bool reverse)
-अणु
-	काष्ठा mlx5_flow_table *ft = शून्य;
-	काष्ठा fs_node *curr_node;
-	काष्ठा fs_node *parent;
+static struct mlx5_flow_table *find_closest_ft(struct fs_prio *prio, bool reverse)
+{
+	struct mlx5_flow_table *ft = NULL;
+	struct fs_node *curr_node;
+	struct fs_node *parent;
 
 	parent = prio->node.parent;
 	curr_node = &prio->node;
-	जबतक (!ft && parent) अणु
-		ft = find_बंदst_ft_recursive(parent, &curr_node->list, reverse);
+	while (!ft && parent) {
+		ft = find_closest_ft_recursive(parent, &curr_node->list, reverse);
 		curr_node = parent;
 		parent = curr_node->parent;
-	पूर्ण
-	वापस ft;
-पूर्ण
+	}
+	return ft;
+}
 
 /* Assuming all the tree is locked by mutex chain lock */
-अटल काष्ठा mlx5_flow_table *find_next_chained_ft(काष्ठा fs_prio *prio)
-अणु
-	वापस find_बंदst_ft(prio, false);
-पूर्ण
+static struct mlx5_flow_table *find_next_chained_ft(struct fs_prio *prio)
+{
+	return find_closest_ft(prio, false);
+}
 
 /* Assuming all the tree is locked by mutex chain lock */
-अटल काष्ठा mlx5_flow_table *find_prev_chained_ft(काष्ठा fs_prio *prio)
-अणु
-	वापस find_बंदst_ft(prio, true);
-पूर्ण
+static struct mlx5_flow_table *find_prev_chained_ft(struct fs_prio *prio)
+{
+	return find_closest_ft(prio, true);
+}
 
-अटल काष्ठा mlx5_flow_table *find_next_fwd_ft(काष्ठा mlx5_flow_table *ft,
-						काष्ठा mlx5_flow_act *flow_act)
-अणु
-	काष्ठा fs_prio *prio;
+static struct mlx5_flow_table *find_next_fwd_ft(struct mlx5_flow_table *ft,
+						struct mlx5_flow_act *flow_act)
+{
+	struct fs_prio *prio;
 	bool next_ns;
 
 	next_ns = flow_act->action & MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS;
 	fs_get_obj(prio, next_ns ? ft->ns->node.parent : ft->node.parent);
 
-	वापस find_next_chained_ft(prio);
-पूर्ण
+	return find_next_chained_ft(prio);
+}
 
-अटल पूर्णांक connect_fts_in_prio(काष्ठा mlx5_core_dev *dev,
-			       काष्ठा fs_prio *prio,
-			       काष्ठा mlx5_flow_table *ft)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&prio->node);
-	काष्ठा mlx5_flow_table *iter;
-	पूर्णांक err;
+static int connect_fts_in_prio(struct mlx5_core_dev *dev,
+			       struct fs_prio *prio,
+			       struct mlx5_flow_table *ft)
+{
+	struct mlx5_flow_root_namespace *root = find_root(&prio->node);
+	struct mlx5_flow_table *iter;
+	int err;
 
-	fs_क्रम_each_ft(iter, prio) अणु
-		err = root->cmds->modअगरy_flow_table(root, iter, ft);
-		अगर (err) अणु
+	fs_for_each_ft(iter, prio) {
+		err = root->cmds->modify_flow_table(root, iter, ft);
+		if (err) {
 			mlx5_core_err(dev,
 				      "Failed to modify flow table id %d, type %d, err %d\n",
 				      iter->id, iter->type, err);
 			/* The driver is out of sync with the FW */
-			वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return err;
+		}
+	}
+	return 0;
+}
 
 /* Connect flow tables from previous priority of prio to ft */
-अटल पूर्णांक connect_prev_fts(काष्ठा mlx5_core_dev *dev,
-			    काष्ठा mlx5_flow_table *ft,
-			    काष्ठा fs_prio *prio)
-अणु
-	काष्ठा mlx5_flow_table *prev_ft;
+static int connect_prev_fts(struct mlx5_core_dev *dev,
+			    struct mlx5_flow_table *ft,
+			    struct fs_prio *prio)
+{
+	struct mlx5_flow_table *prev_ft;
 
 	prev_ft = find_prev_chained_ft(prio);
-	अगर (prev_ft) अणु
-		काष्ठा fs_prio *prev_prio;
+	if (prev_ft) {
+		struct fs_prio *prev_prio;
 
 		fs_get_obj(prev_prio, prev_ft->node.parent);
-		वापस connect_fts_in_prio(dev, prev_prio, ft);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return connect_fts_in_prio(dev, prev_prio, ft);
+	}
+	return 0;
+}
 
-अटल पूर्णांक update_root_ft_create(काष्ठा mlx5_flow_table *ft, काष्ठा fs_prio
+static int update_root_ft_create(struct mlx5_flow_table *ft, struct fs_prio
 				 *prio)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&prio->node);
-	काष्ठा mlx5_ft_underlay_qp *uqp;
-	पूर्णांक min_level = पूर्णांक_उच्च;
-	पूर्णांक err = 0;
+{
+	struct mlx5_flow_root_namespace *root = find_root(&prio->node);
+	struct mlx5_ft_underlay_qp *uqp;
+	int min_level = INT_MAX;
+	int err = 0;
 	u32 qpn;
 
-	अगर (root->root_ft)
+	if (root->root_ft)
 		min_level = root->root_ft->level;
 
-	अगर (ft->level >= min_level)
-		वापस 0;
+	if (ft->level >= min_level)
+		return 0;
 
-	अगर (list_empty(&root->underlay_qpns)) अणु
-		/* Don't set any QPN (zero) in हाल QPN list is empty */
+	if (list_empty(&root->underlay_qpns)) {
+		/* Don't set any QPN (zero) in case QPN list is empty */
 		qpn = 0;
 		err = root->cmds->update_root_ft(root, ft, qpn, false);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(uqp, &root->underlay_qpns, list) अणु
+	} else {
+		list_for_each_entry(uqp, &root->underlay_qpns, list) {
 			qpn = uqp->qpn;
 			err = root->cmds->update_root_ft(root, ft,
 							 qpn, false);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (err)
+				break;
+		}
+	}
 
-	अगर (err)
+	if (err)
 		mlx5_core_warn(root->dev,
 			       "Update root flow table of id(%u) qpn(%d) failed\n",
 			       ft->id, qpn);
-	अन्यथा
+	else
 		root->root_ft = ft;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक _mlx5_modअगरy_rule_destination(काष्ठा mlx5_flow_rule *rule,
-					 काष्ठा mlx5_flow_destination *dest)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_table *ft;
-	काष्ठा mlx5_flow_group *fg;
-	काष्ठा fs_fte *fte;
-	पूर्णांक modअगरy_mask = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
-	पूर्णांक err = 0;
+static int _mlx5_modify_rule_destination(struct mlx5_flow_rule *rule,
+					 struct mlx5_flow_destination *dest)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_table *ft;
+	struct mlx5_flow_group *fg;
+	struct fs_fte *fte;
+	int modify_mask = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
+	int err = 0;
 
 	fs_get_obj(fte, rule->node.parent);
-	अगर (!(fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST))
-		वापस -EINVAL;
-	करोwn_ग_लिखो_ref_node(&fte->node, false);
+	if (!(fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST))
+		return -EINVAL;
+	down_write_ref_node(&fte->node, false);
 	fs_get_obj(fg, fte->node.parent);
 	fs_get_obj(ft, fg->node.parent);
 
-	स_नकल(&rule->dest_attr, dest, माप(*dest));
+	memcpy(&rule->dest_attr, dest, sizeof(*dest));
 	root = find_root(&ft->node);
 	err = root->cmds->update_fte(root, ft, fg,
-				     modअगरy_mask, fte);
-	up_ग_लिखो_ref_node(&fte->node, false);
+				     modify_mask, fte);
+	up_write_ref_node(&fte->node, false);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5_modअगरy_rule_destination(काष्ठा mlx5_flow_handle *handle,
-				 काष्ठा mlx5_flow_destination *new_dest,
-				 काष्ठा mlx5_flow_destination *old_dest)
-अणु
-	पूर्णांक i;
+int mlx5_modify_rule_destination(struct mlx5_flow_handle *handle,
+				 struct mlx5_flow_destination *new_dest,
+				 struct mlx5_flow_destination *old_dest)
+{
+	int i;
 
-	अगर (!old_dest) अणु
-		अगर (handle->num_rules != 1)
-			वापस -EINVAL;
-		वापस _mlx5_modअगरy_rule_destination(handle->rule[0],
+	if (!old_dest) {
+		if (handle->num_rules != 1)
+			return -EINVAL;
+		return _mlx5_modify_rule_destination(handle->rule[0],
 						     new_dest);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < handle->num_rules; i++) अणु
-		अगर (mlx5_flow_dests_cmp(new_dest, &handle->rule[i]->dest_attr))
-			वापस _mlx5_modअगरy_rule_destination(handle->rule[i],
+	for (i = 0; i < handle->num_rules; i++) {
+		if (mlx5_flow_dests_cmp(new_dest, &handle->rule[i]->dest_attr))
+			return _mlx5_modify_rule_destination(handle->rule[i],
 							     new_dest);
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-/* Modअगरy/set FWD rules that poपूर्णांक on old_next_ft to poपूर्णांक on new_next_ft  */
-अटल पूर्णांक connect_fwd_rules(काष्ठा mlx5_core_dev *dev,
-			     काष्ठा mlx5_flow_table *new_next_ft,
-			     काष्ठा mlx5_flow_table *old_next_ft)
-अणु
-	काष्ठा mlx5_flow_destination dest = अणुपूर्ण;
-	काष्ठा mlx5_flow_rule *iter;
-	पूर्णांक err = 0;
+/* Modify/set FWD rules that point on old_next_ft to point on new_next_ft  */
+static int connect_fwd_rules(struct mlx5_core_dev *dev,
+			     struct mlx5_flow_table *new_next_ft,
+			     struct mlx5_flow_table *old_next_ft)
+{
+	struct mlx5_flow_destination dest = {};
+	struct mlx5_flow_rule *iter;
+	int err = 0;
 
-	/* new_next_ft and old_next_ft could be शून्य only
+	/* new_next_ft and old_next_ft could be NULL only
 	 * when we create/destroy the anchor flow table.
 	 */
-	अगर (!new_next_ft || !old_next_ft)
-		वापस 0;
+	if (!new_next_ft || !old_next_ft)
+		return 0;
 
 	dest.type = MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE;
 	dest.ft = new_next_ft;
@@ -1009,106 +1008,106 @@ err_ida_हटाओ:
 	mutex_lock(&old_next_ft->lock);
 	list_splice_init(&old_next_ft->fwd_rules, &new_next_ft->fwd_rules);
 	mutex_unlock(&old_next_ft->lock);
-	list_क्रम_each_entry(iter, &new_next_ft->fwd_rules, next_ft) अणु
-		अगर ((iter->sw_action & MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS) &&
+	list_for_each_entry(iter, &new_next_ft->fwd_rules, next_ft) {
+		if ((iter->sw_action & MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS) &&
 		    iter->ft->ns == new_next_ft->ns)
-			जारी;
+			continue;
 
-		err = _mlx5_modअगरy_rule_destination(iter, &dest);
-		अगर (err)
+		err = _mlx5_modify_rule_destination(iter, &dest);
+		if (err)
 			pr_err("mlx5_core: failed to modify rule to point on flow table %d\n",
 			       new_next_ft->id);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक connect_flow_table(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_flow_table *ft,
-			      काष्ठा fs_prio *prio)
-अणु
-	काष्ठा mlx5_flow_table *next_ft;
-	पूर्णांक err = 0;
+static int connect_flow_table(struct mlx5_core_dev *dev, struct mlx5_flow_table *ft,
+			      struct fs_prio *prio)
+{
+	struct mlx5_flow_table *next_ft;
+	int err = 0;
 
 	/* Connect_prev_fts and update_root_ft_create are mutually exclusive */
 
-	अगर (list_empty(&prio->node.children)) अणु
+	if (list_empty(&prio->node.children)) {
 		err = connect_prev_fts(dev, ft, prio);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		next_ft = find_next_chained_ft(prio);
 		err = connect_fwd_rules(dev, ft, next_ft);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (MLX5_CAP_FLOWTABLE(dev,
-			       flow_table_properties_nic_receive.modअगरy_root))
+	if (MLX5_CAP_FLOWTABLE(dev,
+			       flow_table_properties_nic_receive.modify_root))
 		err = update_root_ft_create(ft, prio);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम list_add_flow_table(काष्ठा mlx5_flow_table *ft,
-				काष्ठा fs_prio *prio)
-अणु
-	काष्ठा list_head *prev = &prio->node.children;
-	काष्ठा mlx5_flow_table *iter;
+static void list_add_flow_table(struct mlx5_flow_table *ft,
+				struct fs_prio *prio)
+{
+	struct list_head *prev = &prio->node.children;
+	struct mlx5_flow_table *iter;
 
-	fs_क्रम_each_ft(iter, prio) अणु
-		अगर (iter->level > ft->level)
-			अवरोध;
+	fs_for_each_ft(iter, prio) {
+		if (iter->level > ft->level)
+			break;
 		prev = &iter->node.list;
-	पूर्ण
+	}
 	list_add(&ft->node.list, prev);
-पूर्ण
+}
 
-अटल काष्ठा mlx5_flow_table *__mlx5_create_flow_table(काष्ठा mlx5_flow_namespace *ns,
-							काष्ठा mlx5_flow_table_attr *ft_attr,
-							क्रमागत fs_flow_table_op_mod op_mod,
+static struct mlx5_flow_table *__mlx5_create_flow_table(struct mlx5_flow_namespace *ns,
+							struct mlx5_flow_table_attr *ft_attr,
+							enum fs_flow_table_op_mod op_mod,
 							u16 vport)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ns->node);
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ns->node);
 	bool unmanaged = ft_attr->flags & MLX5_FLOW_TABLE_UNMANAGED;
-	काष्ठा mlx5_flow_table *next_ft;
-	काष्ठा fs_prio *fs_prio = शून्य;
-	काष्ठा mlx5_flow_table *ft;
-	पूर्णांक log_table_sz;
-	पूर्णांक err;
+	struct mlx5_flow_table *next_ft;
+	struct fs_prio *fs_prio = NULL;
+	struct mlx5_flow_table *ft;
+	int log_table_sz;
+	int err;
 
-	अगर (!root) अणु
+	if (!root) {
 		pr_err("mlx5: flow steering failed to find root of namespace\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
 	mutex_lock(&root->chain_lock);
 	fs_prio = find_prio(ns, ft_attr->prio);
-	अगर (!fs_prio) अणु
+	if (!fs_prio) {
 		err = -EINVAL;
-		जाओ unlock_root;
-	पूर्ण
-	अगर (!unmanaged) अणु
+		goto unlock_root;
+	}
+	if (!unmanaged) {
 		/* The level is related to the
 		 * priority level range.
 		 */
-		अगर (ft_attr->level >= fs_prio->num_levels) अणु
+		if (ft_attr->level >= fs_prio->num_levels) {
 			err = -ENOSPC;
-			जाओ unlock_root;
-		पूर्ण
+			goto unlock_root;
+		}
 
 		ft_attr->level += fs_prio->start_level;
-	पूर्ण
+	}
 
 	/* The level is related to the
 	 * priority level range.
 	 */
 	ft = alloc_flow_table(ft_attr->level,
 			      vport,
-			      ft_attr->max_fte ? roundup_घात_of_two(ft_attr->max_fte) : 0,
+			      ft_attr->max_fte ? roundup_pow_of_two(ft_attr->max_fte) : 0,
 			      root->table_type,
 			      op_mod, ft_attr->flags);
-	अगर (IS_ERR(ft)) अणु
+	if (IS_ERR(ft)) {
 		err = PTR_ERR(ft);
-		जाओ unlock_root;
-	पूर्ण
+		goto unlock_root;
+	}
 
 	tree_init_node(&ft->node, del_hw_flow_table, del_sw_flow_table);
 	log_table_sz = ft->max_fte ? ilog2(ft->max_fte) : 0;
@@ -1117,308 +1116,308 @@ err_ida_हटाओ:
 	ft->def_miss_action = ns->def_miss_action;
 	ft->ns = ns;
 	err = root->cmds->create_flow_table(root, ft, log_table_sz, next_ft);
-	अगर (err)
-		जाओ मुक्त_ft;
+	if (err)
+		goto free_ft;
 
-	अगर (!unmanaged) अणु
+	if (!unmanaged) {
 		err = connect_flow_table(root->dev, ft, fs_prio);
-		अगर (err)
-			जाओ destroy_ft;
-	पूर्ण
+		if (err)
+			goto destroy_ft;
+	}
 
 	ft->node.active = true;
-	करोwn_ग_लिखो_ref_node(&fs_prio->node, false);
-	अगर (!unmanaged) अणु
+	down_write_ref_node(&fs_prio->node, false);
+	if (!unmanaged) {
 		tree_add_node(&ft->node, &fs_prio->node);
 		list_add_flow_table(ft, fs_prio);
-	पूर्ण अन्यथा अणु
+	} else {
 		ft->node.root = fs_prio->node.root;
-	पूर्ण
+	}
 	fs_prio->num_ft++;
-	up_ग_लिखो_ref_node(&fs_prio->node, false);
+	up_write_ref_node(&fs_prio->node, false);
 	mutex_unlock(&root->chain_lock);
 	trace_mlx5_fs_add_ft(ft);
-	वापस ft;
+	return ft;
 destroy_ft:
 	root->cmds->destroy_flow_table(root, ft);
-मुक्त_ft:
+free_ft:
 	rhltable_destroy(&ft->fgs_hash);
-	kमुक्त(ft);
+	kfree(ft);
 unlock_root:
 	mutex_unlock(&root->chain_lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा mlx5_flow_table *mlx5_create_flow_table(काष्ठा mlx5_flow_namespace *ns,
-					       काष्ठा mlx5_flow_table_attr *ft_attr)
-अणु
-	वापस __mlx5_create_flow_table(ns, ft_attr, FS_FT_OP_MOD_NORMAL, 0);
-पूर्ण
+struct mlx5_flow_table *mlx5_create_flow_table(struct mlx5_flow_namespace *ns,
+					       struct mlx5_flow_table_attr *ft_attr)
+{
+	return __mlx5_create_flow_table(ns, ft_attr, FS_FT_OP_MOD_NORMAL, 0);
+}
 EXPORT_SYMBOL(mlx5_create_flow_table);
 
-काष्ठा mlx5_flow_table *
-mlx5_create_vport_flow_table(काष्ठा mlx5_flow_namespace *ns,
-			     काष्ठा mlx5_flow_table_attr *ft_attr, u16 vport)
-अणु
-	वापस __mlx5_create_flow_table(ns, ft_attr, FS_FT_OP_MOD_NORMAL, vport);
-पूर्ण
+struct mlx5_flow_table *
+mlx5_create_vport_flow_table(struct mlx5_flow_namespace *ns,
+			     struct mlx5_flow_table_attr *ft_attr, u16 vport)
+{
+	return __mlx5_create_flow_table(ns, ft_attr, FS_FT_OP_MOD_NORMAL, vport);
+}
 
-काष्ठा mlx5_flow_table*
-mlx5_create_lag_demux_flow_table(काष्ठा mlx5_flow_namespace *ns,
-				 पूर्णांक prio, u32 level)
-अणु
-	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
+struct mlx5_flow_table*
+mlx5_create_lag_demux_flow_table(struct mlx5_flow_namespace *ns,
+				 int prio, u32 level)
+{
+	struct mlx5_flow_table_attr ft_attr = {};
 
 	ft_attr.level = level;
 	ft_attr.prio  = prio;
-	वापस __mlx5_create_flow_table(ns, &ft_attr, FS_FT_OP_MOD_LAG_DEMUX, 0);
-पूर्ण
+	return __mlx5_create_flow_table(ns, &ft_attr, FS_FT_OP_MOD_LAG_DEMUX, 0);
+}
 EXPORT_SYMBOL(mlx5_create_lag_demux_flow_table);
 
-काष्ठा mlx5_flow_table*
-mlx5_create_स्वतः_grouped_flow_table(काष्ठा mlx5_flow_namespace *ns,
-				    काष्ठा mlx5_flow_table_attr *ft_attr)
-अणु
-	पूर्णांक num_reserved_entries = ft_attr->स्वतःgroup.num_reserved_entries;
-	पूर्णांक स्वतःgroups_max_fte = ft_attr->max_fte - num_reserved_entries;
-	पूर्णांक max_num_groups = ft_attr->स्वतःgroup.max_num_groups;
-	काष्ठा mlx5_flow_table *ft;
+struct mlx5_flow_table*
+mlx5_create_auto_grouped_flow_table(struct mlx5_flow_namespace *ns,
+				    struct mlx5_flow_table_attr *ft_attr)
+{
+	int num_reserved_entries = ft_attr->autogroup.num_reserved_entries;
+	int autogroups_max_fte = ft_attr->max_fte - num_reserved_entries;
+	int max_num_groups = ft_attr->autogroup.max_num_groups;
+	struct mlx5_flow_table *ft;
 
-	अगर (max_num_groups > स्वतःgroups_max_fte)
-		वापस ERR_PTR(-EINVAL);
-	अगर (num_reserved_entries > ft_attr->max_fte)
-		वापस ERR_PTR(-EINVAL);
+	if (max_num_groups > autogroups_max_fte)
+		return ERR_PTR(-EINVAL);
+	if (num_reserved_entries > ft_attr->max_fte)
+		return ERR_PTR(-EINVAL);
 
 	ft = mlx5_create_flow_table(ns, ft_attr);
-	अगर (IS_ERR(ft))
-		वापस ft;
+	if (IS_ERR(ft))
+		return ft;
 
-	ft->स्वतःgroup.active = true;
-	ft->स्वतःgroup.required_groups = max_num_groups;
-	ft->स्वतःgroup.max_fte = स्वतःgroups_max_fte;
-	/* We save place क्रम flow groups in addition to max types */
-	ft->स्वतःgroup.group_size = स्वतःgroups_max_fte / (max_num_groups + 1);
+	ft->autogroup.active = true;
+	ft->autogroup.required_groups = max_num_groups;
+	ft->autogroup.max_fte = autogroups_max_fte;
+	/* We save place for flow groups in addition to max types */
+	ft->autogroup.group_size = autogroups_max_fte / (max_num_groups + 1);
 
-	वापस ft;
-पूर्ण
-EXPORT_SYMBOL(mlx5_create_स्वतः_grouped_flow_table);
+	return ft;
+}
+EXPORT_SYMBOL(mlx5_create_auto_grouped_flow_table);
 
-काष्ठा mlx5_flow_group *mlx5_create_flow_group(काष्ठा mlx5_flow_table *ft,
+struct mlx5_flow_group *mlx5_create_flow_group(struct mlx5_flow_table *ft,
 					       u32 *fg_in)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ft->node);
-	व्योम *match_criteria = MLX5_ADDR_OF(create_flow_group_in,
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ft->node);
+	void *match_criteria = MLX5_ADDR_OF(create_flow_group_in,
 					    fg_in, match_criteria);
 	u8 match_criteria_enable = MLX5_GET(create_flow_group_in,
 					    fg_in,
 					    match_criteria_enable);
-	पूर्णांक start_index = MLX5_GET(create_flow_group_in, fg_in,
+	int start_index = MLX5_GET(create_flow_group_in, fg_in,
 				   start_flow_index);
-	पूर्णांक end_index = MLX5_GET(create_flow_group_in, fg_in,
+	int end_index = MLX5_GET(create_flow_group_in, fg_in,
 				 end_flow_index);
-	काष्ठा mlx5_flow_group *fg;
-	पूर्णांक err;
+	struct mlx5_flow_group *fg;
+	int err;
 
-	अगर (ft->स्वतःgroup.active && start_index < ft->स्वतःgroup.max_fte)
-		वापस ERR_PTR(-EPERM);
+	if (ft->autogroup.active && start_index < ft->autogroup.max_fte)
+		return ERR_PTR(-EPERM);
 
-	करोwn_ग_लिखो_ref_node(&ft->node, false);
+	down_write_ref_node(&ft->node, false);
 	fg = alloc_insert_flow_group(ft, match_criteria_enable, match_criteria,
 				     start_index, end_index,
 				     ft->node.children.prev);
-	up_ग_लिखो_ref_node(&ft->node, false);
-	अगर (IS_ERR(fg))
-		वापस fg;
+	up_write_ref_node(&ft->node, false);
+	if (IS_ERR(fg))
+		return fg;
 
 	err = root->cmds->create_flow_group(root, ft, fg_in, fg);
-	अगर (err) अणु
+	if (err) {
 		tree_put_node(&fg->node, false);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 	trace_mlx5_fs_add_fg(fg);
 	fg->node.active = true;
 
-	वापस fg;
-पूर्ण
+	return fg;
+}
 EXPORT_SYMBOL(mlx5_create_flow_group);
 
-अटल काष्ठा mlx5_flow_rule *alloc_rule(काष्ठा mlx5_flow_destination *dest)
-अणु
-	काष्ठा mlx5_flow_rule *rule;
+static struct mlx5_flow_rule *alloc_rule(struct mlx5_flow_destination *dest)
+{
+	struct mlx5_flow_rule *rule;
 
-	rule = kzalloc(माप(*rule), GFP_KERNEL);
-	अगर (!rule)
-		वापस शून्य;
+	rule = kzalloc(sizeof(*rule), GFP_KERNEL);
+	if (!rule)
+		return NULL;
 
 	INIT_LIST_HEAD(&rule->next_ft);
 	rule->node.type = FS_TYPE_FLOW_DEST;
-	अगर (dest)
-		स_नकल(&rule->dest_attr, dest, माप(*dest));
+	if (dest)
+		memcpy(&rule->dest_attr, dest, sizeof(*dest));
 
-	वापस rule;
-पूर्ण
+	return rule;
+}
 
-अटल काष्ठा mlx5_flow_handle *alloc_handle(पूर्णांक num_rules)
-अणु
-	काष्ठा mlx5_flow_handle *handle;
+static struct mlx5_flow_handle *alloc_handle(int num_rules)
+{
+	struct mlx5_flow_handle *handle;
 
-	handle = kzalloc(काष्ठा_size(handle, rule, num_rules), GFP_KERNEL);
-	अगर (!handle)
-		वापस शून्य;
+	handle = kzalloc(struct_size(handle, rule, num_rules), GFP_KERNEL);
+	if (!handle)
+		return NULL;
 
 	handle->num_rules = num_rules;
 
-	वापस handle;
-पूर्ण
+	return handle;
+}
 
-अटल व्योम destroy_flow_handle(काष्ठा fs_fte *fte,
-				काष्ठा mlx5_flow_handle *handle,
-				काष्ठा mlx5_flow_destination *dest,
-				पूर्णांक i)
-अणु
-	क्रम (; --i >= 0;) अणु
-		अगर (refcount_dec_and_test(&handle->rule[i]->node.refcount)) अणु
+static void destroy_flow_handle(struct fs_fte *fte,
+				struct mlx5_flow_handle *handle,
+				struct mlx5_flow_destination *dest,
+				int i)
+{
+	for (; --i >= 0;) {
+		if (refcount_dec_and_test(&handle->rule[i]->node.refcount)) {
 			fte->dests_size--;
 			list_del(&handle->rule[i]->node.list);
-			kमुक्त(handle->rule[i]);
-		पूर्ण
-	पूर्ण
-	kमुक्त(handle);
-पूर्ण
+			kfree(handle->rule[i]);
+		}
+	}
+	kfree(handle);
+}
 
-अटल काष्ठा mlx5_flow_handle *
-create_flow_handle(काष्ठा fs_fte *fte,
-		   काष्ठा mlx5_flow_destination *dest,
-		   पूर्णांक dest_num,
-		   पूर्णांक *modअगरy_mask,
+static struct mlx5_flow_handle *
+create_flow_handle(struct fs_fte *fte,
+		   struct mlx5_flow_destination *dest,
+		   int dest_num,
+		   int *modify_mask,
 		   bool *new_rule)
-अणु
-	काष्ठा mlx5_flow_handle *handle;
-	काष्ठा mlx5_flow_rule *rule = शून्य;
-	अटल पूर्णांक count = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_FLOW_COUNTERS);
-	अटल पूर्णांक dst = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
-	पूर्णांक type;
-	पूर्णांक i = 0;
+{
+	struct mlx5_flow_handle *handle;
+	struct mlx5_flow_rule *rule = NULL;
+	static int count = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_FLOW_COUNTERS);
+	static int dst = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
+	int type;
+	int i = 0;
 
 	handle = alloc_handle((dest_num) ? dest_num : 1);
-	अगर (!handle)
-		वापस ERR_PTR(-ENOMEM);
+	if (!handle)
+		return ERR_PTR(-ENOMEM);
 
-	करो अणु
-		अगर (dest) अणु
+	do {
+		if (dest) {
 			rule = find_flow_rule(fte, dest + i);
-			अगर (rule) अणु
+			if (rule) {
 				refcount_inc(&rule->node.refcount);
-				जाओ rule_found;
-			पूर्ण
-		पूर्ण
+				goto rule_found;
+			}
+		}
 
 		*new_rule = true;
 		rule = alloc_rule(dest + i);
-		अगर (!rule)
-			जाओ मुक्त_rules;
+		if (!rule)
+			goto free_rules;
 
 		/* Add dest to dests list- we need flow tables to be in the
-		 * end of the list क्रम क्रमward to next prio rules.
+		 * end of the list for forward to next prio rules.
 		 */
-		tree_init_node(&rule->node, शून्य, del_sw_hw_rule);
-		अगर (dest &&
+		tree_init_node(&rule->node, NULL, del_sw_hw_rule);
+		if (dest &&
 		    dest[i].type != MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE)
 			list_add(&rule->node.list, &fte->node.children);
-		अन्यथा
+		else
 			list_add_tail(&rule->node.list, &fte->node.children);
-		अगर (dest) अणु
+		if (dest) {
 			fte->dests_size++;
 
 			type = dest[i].type ==
 				MLX5_FLOW_DESTINATION_TYPE_COUNTER;
-			*modअगरy_mask |= type ? count : dst;
-		पूर्ण
+			*modify_mask |= type ? count : dst;
+		}
 rule_found:
 		handle->rule[i] = rule;
-	पूर्ण जबतक (++i < dest_num);
+	} while (++i < dest_num);
 
-	वापस handle;
+	return handle;
 
-मुक्त_rules:
+free_rules:
 	destroy_flow_handle(fte, handle, dest, i);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
-/* fte should not be deleted जबतक calling this function */
-अटल काष्ठा mlx5_flow_handle *
-add_rule_fte(काष्ठा fs_fte *fte,
-	     काष्ठा mlx5_flow_group *fg,
-	     काष्ठा mlx5_flow_destination *dest,
-	     पूर्णांक dest_num,
+/* fte should not be deleted while calling this function */
+static struct mlx5_flow_handle *
+add_rule_fte(struct fs_fte *fte,
+	     struct mlx5_flow_group *fg,
+	     struct mlx5_flow_destination *dest,
+	     int dest_num,
 	     bool update_action)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_flow_handle *handle;
-	काष्ठा mlx5_flow_table *ft;
-	पूर्णांक modअगरy_mask = 0;
-	पूर्णांक err;
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_flow_handle *handle;
+	struct mlx5_flow_table *ft;
+	int modify_mask = 0;
+	int err;
 	bool new_rule = false;
 
-	handle = create_flow_handle(fte, dest, dest_num, &modअगरy_mask,
+	handle = create_flow_handle(fte, dest, dest_num, &modify_mask,
 				    &new_rule);
-	अगर (IS_ERR(handle) || !new_rule)
-		जाओ out;
+	if (IS_ERR(handle) || !new_rule)
+		goto out;
 
-	अगर (update_action)
-		modअगरy_mask |= BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION);
+	if (update_action)
+		modify_mask |= BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION);
 
 	fs_get_obj(ft, fg->node.parent);
 	root = find_root(&fg->node);
-	अगर (!(fte->status & FS_FTE_STATUS_EXISTING))
+	if (!(fte->status & FS_FTE_STATUS_EXISTING))
 		err = root->cmds->create_fte(root, ft, fg, fte);
-	अन्यथा
-		err = root->cmds->update_fte(root, ft, fg, modअगरy_mask, fte);
-	अगर (err)
-		जाओ मुक्त_handle;
+	else
+		err = root->cmds->update_fte(root, ft, fg, modify_mask, fte);
+	if (err)
+		goto free_handle;
 
 	fte->node.active = true;
 	fte->status |= FS_FTE_STATUS_EXISTING;
 	atomic_inc(&fg->node.version);
 
 out:
-	वापस handle;
+	return handle;
 
-मुक्त_handle:
+free_handle:
 	destroy_flow_handle(fte, handle, dest, handle->num_rules);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा mlx5_flow_group *alloc_स्वतः_flow_group(काष्ठा mlx5_flow_table  *ft,
-						     स्थिर काष्ठा mlx5_flow_spec *spec)
-अणु
-	काष्ठा list_head *prev = &ft->node.children;
-	u32 max_fte = ft->स्वतःgroup.max_fte;
-	अचिन्हित पूर्णांक candidate_index = 0;
-	अचिन्हित पूर्णांक group_size = 0;
-	काष्ठा mlx5_flow_group *fg;
+static struct mlx5_flow_group *alloc_auto_flow_group(struct mlx5_flow_table  *ft,
+						     const struct mlx5_flow_spec *spec)
+{
+	struct list_head *prev = &ft->node.children;
+	u32 max_fte = ft->autogroup.max_fte;
+	unsigned int candidate_index = 0;
+	unsigned int group_size = 0;
+	struct mlx5_flow_group *fg;
 
-	अगर (!ft->स्वतःgroup.active)
-		वापस ERR_PTR(-ENOENT);
+	if (!ft->autogroup.active)
+		return ERR_PTR(-ENOENT);
 
-	अगर (ft->स्वतःgroup.num_groups < ft->स्वतःgroup.required_groups)
-		group_size = ft->स्वतःgroup.group_size;
+	if (ft->autogroup.num_groups < ft->autogroup.required_groups)
+		group_size = ft->autogroup.group_size;
 
-	/*  max_fte == ft->स्वतःgroup.max_types */
-	अगर (group_size == 0)
+	/*  max_fte == ft->autogroup.max_types */
+	if (group_size == 0)
 		group_size = 1;
 
 	/* sorted by start_index */
-	fs_क्रम_each_fg(fg, ft) अणु
-		अगर (candidate_index + group_size > fg->start_index)
+	fs_for_each_fg(fg, ft) {
+		if (candidate_index + group_size > fg->start_index)
 			candidate_index = fg->start_index + fg->max_ftes;
-		अन्यथा
-			अवरोध;
+		else
+			break;
 		prev = &fg->node.list;
-	पूर्ण
+	}
 
-	अगर (candidate_index + group_size > max_fte)
-		वापस ERR_PTR(-ENOSPC);
+	if (candidate_index + group_size > max_fte)
+		return ERR_PTR(-ENOSPC);
 
 	fg = alloc_insert_flow_group(ft,
 				     spec->match_criteria_enable,
@@ -1426,30 +1425,30 @@ out:
 				     candidate_index,
 				     candidate_index + group_size - 1,
 				     prev);
-	अगर (IS_ERR(fg))
-		जाओ out;
+	if (IS_ERR(fg))
+		goto out;
 
-	अगर (group_size == ft->स्वतःgroup.group_size)
-		ft->स्वतःgroup.num_groups++;
+	if (group_size == ft->autogroup.group_size)
+		ft->autogroup.num_groups++;
 
 out:
-	वापस fg;
-पूर्ण
+	return fg;
+}
 
-अटल पूर्णांक create_स्वतः_flow_group(काष्ठा mlx5_flow_table *ft,
-				  काष्ठा mlx5_flow_group *fg)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ft->node);
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
-	व्योम *match_criteria_addr;
+static int create_auto_flow_group(struct mlx5_flow_table *ft,
+				  struct mlx5_flow_group *fg)
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ft->node);
+	int inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
+	void *match_criteria_addr;
 	u8 src_esw_owner_mask_on;
-	व्योम *misc;
-	पूर्णांक err;
+	void *misc;
+	int err;
 	u32 *in;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
 	MLX5_SET(create_flow_group_in, in, match_criteria_enable,
 		 fg->mask.match_criteria_enable);
@@ -1460,71 +1459,71 @@ out:
 	misc = MLX5_ADDR_OF(fte_match_param, fg->mask.match_criteria,
 			    misc_parameters);
 	src_esw_owner_mask_on = !!MLX5_GET(fte_match_set_misc, misc,
-					 source_eचयन_owner_vhca_id);
+					 source_eswitch_owner_vhca_id);
 	MLX5_SET(create_flow_group_in, in,
-		 source_eचयन_owner_vhca_id_valid, src_esw_owner_mask_on);
+		 source_eswitch_owner_vhca_id_valid, src_esw_owner_mask_on);
 
 	match_criteria_addr = MLX5_ADDR_OF(create_flow_group_in,
 					   in, match_criteria);
-	स_नकल(match_criteria_addr, fg->mask.match_criteria,
-	       माप(fg->mask.match_criteria));
+	memcpy(match_criteria_addr, fg->mask.match_criteria,
+	       sizeof(fg->mask.match_criteria));
 
 	err = root->cmds->create_flow_group(root, ft, in, fg);
-	अगर (!err) अणु
+	if (!err) {
 		fg->node.active = true;
 		trace_mlx5_fs_add_fg(fg);
-	पूर्ण
+	}
 
-	kvमुक्त(in);
-	वापस err;
-पूर्ण
+	kvfree(in);
+	return err;
+}
 
-अटल bool mlx5_flow_dests_cmp(काष्ठा mlx5_flow_destination *d1,
-				काष्ठा mlx5_flow_destination *d2)
-अणु
-	अगर (d1->type == d2->type) अणु
-		अगर ((d1->type == MLX5_FLOW_DESTINATION_TYPE_VPORT &&
+static bool mlx5_flow_dests_cmp(struct mlx5_flow_destination *d1,
+				struct mlx5_flow_destination *d2)
+{
+	if (d1->type == d2->type) {
+		if ((d1->type == MLX5_FLOW_DESTINATION_TYPE_VPORT &&
 		     d1->vport.num == d2->vport.num &&
 		     d1->vport.flags == d2->vport.flags &&
 		     ((d1->vport.flags & MLX5_FLOW_DEST_VPORT_VHCA_ID) ?
 		      (d1->vport.vhca_id == d2->vport.vhca_id) : true) &&
 		     ((d1->vport.flags & MLX5_FLOW_DEST_VPORT_REFORMAT_ID) ?
-		      (d1->vport.pkt_reक्रमmat->id ==
-		       d2->vport.pkt_reक्रमmat->id) : true)) ||
+		      (d1->vport.pkt_reformat->id ==
+		       d2->vport.pkt_reformat->id) : true)) ||
 		    (d1->type == MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE &&
 		     d1->ft == d2->ft) ||
 		    (d1->type == MLX5_FLOW_DESTINATION_TYPE_TIR &&
 		     d1->tir_num == d2->tir_num) ||
 		    (d1->type == MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE_NUM &&
 		     d1->ft_num == d2->ft_num))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा mlx5_flow_rule *find_flow_rule(काष्ठा fs_fte *fte,
-					     काष्ठा mlx5_flow_destination *dest)
-अणु
-	काष्ठा mlx5_flow_rule *rule;
+static struct mlx5_flow_rule *find_flow_rule(struct fs_fte *fte,
+					     struct mlx5_flow_destination *dest)
+{
+	struct mlx5_flow_rule *rule;
 
-	list_क्रम_each_entry(rule, &fte->node.children, node.list) अणु
-		अगर (mlx5_flow_dests_cmp(&rule->dest_attr, dest))
-			वापस rule;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(rule, &fte->node.children, node.list) {
+		if (mlx5_flow_dests_cmp(&rule->dest_attr, dest))
+			return rule;
+	}
+	return NULL;
+}
 
-अटल bool check_conflicting_actions(u32 action1, u32 action2)
-अणु
+static bool check_conflicting_actions(u32 action1, u32 action2)
+{
 	u32 xored_actions = action1 ^ action2;
 
-	/* अगर one rule only wants to count, it's ok */
-	अगर (action1 == MLX5_FLOW_CONTEXT_ACTION_COUNT ||
+	/* if one rule only wants to count, it's ok */
+	if (action1 == MLX5_FLOW_CONTEXT_ACTION_COUNT ||
 	    action2 == MLX5_FLOW_CONTEXT_ACTION_COUNT)
-		वापस false;
+		return false;
 
-	अगर (xored_actions & (MLX5_FLOW_CONTEXT_ACTION_DROP  |
+	if (xored_actions & (MLX5_FLOW_CONTEXT_ACTION_DROP  |
 			     MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT |
 			     MLX5_FLOW_CONTEXT_ACTION_DECAP |
 			     MLX5_FLOW_CONTEXT_ACTION_MOD_HDR  |
@@ -1532,445 +1531,445 @@ out:
 			     MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH |
 			     MLX5_FLOW_CONTEXT_ACTION_VLAN_POP_2 |
 			     MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक check_conflicting_ftes(काष्ठा fs_fte *fte,
-				  स्थिर काष्ठा mlx5_flow_context *flow_context,
-				  स्थिर काष्ठा mlx5_flow_act *flow_act)
-अणु
-	अगर (check_conflicting_actions(flow_act->action, fte->action.action)) अणु
+static int check_conflicting_ftes(struct fs_fte *fte,
+				  const struct mlx5_flow_context *flow_context,
+				  const struct mlx5_flow_act *flow_act)
+{
+	if (check_conflicting_actions(flow_act->action, fte->action.action)) {
 		mlx5_core_warn(get_dev(&fte->node),
 			       "Found two FTEs with conflicting actions\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	अगर ((flow_context->flags & FLOW_CONTEXT_HAS_TAG) &&
-	    fte->flow_context.flow_tag != flow_context->flow_tag) अणु
+	if ((flow_context->flags & FLOW_CONTEXT_HAS_TAG) &&
+	    fte->flow_context.flow_tag != flow_context->flow_tag) {
 		mlx5_core_warn(get_dev(&fte->node),
 			       "FTE flow tag %u already exists with different flow tag %u\n",
 			       fte->flow_context.flow_tag,
 			       flow_context->flow_tag);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mlx5_flow_handle *add_rule_fg(काष्ठा mlx5_flow_group *fg,
-					    स्थिर काष्ठा mlx5_flow_spec *spec,
-					    काष्ठा mlx5_flow_act *flow_act,
-					    काष्ठा mlx5_flow_destination *dest,
-					    पूर्णांक dest_num,
-					    काष्ठा fs_fte *fte)
-अणु
-	काष्ठा mlx5_flow_handle *handle;
-	पूर्णांक old_action;
-	पूर्णांक i;
-	पूर्णांक ret;
+static struct mlx5_flow_handle *add_rule_fg(struct mlx5_flow_group *fg,
+					    const struct mlx5_flow_spec *spec,
+					    struct mlx5_flow_act *flow_act,
+					    struct mlx5_flow_destination *dest,
+					    int dest_num,
+					    struct fs_fte *fte)
+{
+	struct mlx5_flow_handle *handle;
+	int old_action;
+	int i;
+	int ret;
 
 	ret = check_conflicting_ftes(fte, &spec->flow_context, flow_act);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	old_action = fte->action.action;
 	fte->action.action |= flow_act->action;
 	handle = add_rule_fte(fte, fg, dest, dest_num,
 			      old_action != flow_act->action);
-	अगर (IS_ERR(handle)) अणु
+	if (IS_ERR(handle)) {
 		fte->action.action = old_action;
-		वापस handle;
-	पूर्ण
+		return handle;
+	}
 	trace_mlx5_fs_set_fte(fte, false);
 
-	क्रम (i = 0; i < handle->num_rules; i++) अणु
-		अगर (refcount_पढ़ो(&handle->rule[i]->node.refcount) == 1) अणु
+	for (i = 0; i < handle->num_rules; i++) {
+		if (refcount_read(&handle->rule[i]->node.refcount) == 1) {
 			tree_add_node(&handle->rule[i]->node, &fte->node);
 			trace_mlx5_fs_add_rule(handle->rule[i]);
-		पूर्ण
-	पूर्ण
-	वापस handle;
-पूर्ण
+		}
+	}
+	return handle;
+}
 
-अटल bool counter_is_valid(u32 action)
-अणु
-	वापस (action & (MLX5_FLOW_CONTEXT_ACTION_DROP |
+static bool counter_is_valid(u32 action)
+{
+	return (action & (MLX5_FLOW_CONTEXT_ACTION_DROP |
 			  MLX5_FLOW_CONTEXT_ACTION_ALLOW |
 			  MLX5_FLOW_CONTEXT_ACTION_FWD_DEST));
-पूर्ण
+}
 
-अटल bool dest_is_valid(काष्ठा mlx5_flow_destination *dest,
-			  काष्ठा mlx5_flow_act *flow_act,
-			  काष्ठा mlx5_flow_table *ft)
-अणु
+static bool dest_is_valid(struct mlx5_flow_destination *dest,
+			  struct mlx5_flow_act *flow_act,
+			  struct mlx5_flow_table *ft)
+{
 	bool ignore_level = flow_act->flags & FLOW_ACT_IGNORE_FLOW_LEVEL;
 	u32 action = flow_act->action;
 
-	अगर (dest && (dest->type == MLX5_FLOW_DESTINATION_TYPE_COUNTER))
-		वापस counter_is_valid(action);
+	if (dest && (dest->type == MLX5_FLOW_DESTINATION_TYPE_COUNTER))
+		return counter_is_valid(action);
 
-	अगर (!(action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST))
-		वापस true;
+	if (!(action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST))
+		return true;
 
-	अगर (ignore_level) अणु
-		अगर (ft->type != FS_FT_FDB &&
+	if (ignore_level) {
+		if (ft->type != FS_FT_FDB &&
 		    ft->type != FS_FT_NIC_RX)
-			वापस false;
+			return false;
 
-		अगर (dest->type == MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE &&
+		if (dest->type == MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE &&
 		    ft->type != dest->ft->type)
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	अगर (!dest || ((dest->type ==
+	if (!dest || ((dest->type ==
 	    MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE) &&
 	    (dest->ft->level <= ft->level && !ignore_level)))
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-काष्ठा match_list अणु
-	काष्ठा list_head	list;
-	काष्ठा mlx5_flow_group *g;
-पूर्ण;
+struct match_list {
+	struct list_head	list;
+	struct mlx5_flow_group *g;
+};
 
-अटल व्योम मुक्त_match_list(काष्ठा match_list *head, bool ft_locked)
-अणु
-	काष्ठा match_list *iter, *match_पंचांगp;
+static void free_match_list(struct match_list *head, bool ft_locked)
+{
+	struct match_list *iter, *match_tmp;
 
-	list_क्रम_each_entry_safe(iter, match_पंचांगp, &head->list,
-				 list) अणु
+	list_for_each_entry_safe(iter, match_tmp, &head->list,
+				 list) {
 		tree_put_node(&iter->g->node, ft_locked);
 		list_del(&iter->list);
-		kमुक्त(iter);
-	पूर्ण
-पूर्ण
+		kfree(iter);
+	}
+}
 
-अटल पूर्णांक build_match_list(काष्ठा match_list *match_head,
-			    काष्ठा mlx5_flow_table *ft,
-			    स्थिर काष्ठा mlx5_flow_spec *spec,
+static int build_match_list(struct match_list *match_head,
+			    struct mlx5_flow_table *ft,
+			    const struct mlx5_flow_spec *spec,
 			    bool ft_locked)
-अणु
-	काष्ठा rhlist_head *पंचांगp, *list;
-	काष्ठा mlx5_flow_group *g;
-	पूर्णांक err = 0;
+{
+	struct rhlist_head *tmp, *list;
+	struct mlx5_flow_group *g;
+	int err = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	INIT_LIST_HEAD(&match_head->list);
 	/* Collect all fgs which has a matching match_criteria */
 	list = rhltable_lookup(&ft->fgs_hash, spec, rhash_fg);
 	/* RCU is atomic, we can't execute FW commands here */
-	rhl_क्रम_each_entry_rcu(g, पंचांगp, list, hash) अणु
-		काष्ठा match_list *curr_match;
+	rhl_for_each_entry_rcu(g, tmp, list, hash) {
+		struct match_list *curr_match;
 
-		अगर (unlikely(!tree_get_node(&g->node)))
-			जारी;
+		if (unlikely(!tree_get_node(&g->node)))
+			continue;
 
-		curr_match = kदो_स्मृति(माप(*curr_match), GFP_ATOMIC);
-		अगर (!curr_match) अणु
-			मुक्त_match_list(match_head, ft_locked);
+		curr_match = kmalloc(sizeof(*curr_match), GFP_ATOMIC);
+		if (!curr_match) {
+			free_match_list(match_head, ft_locked);
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		curr_match->g = g;
 		list_add_tail(&curr_match->list, &match_head->list);
-	पूर्ण
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल u64 matched_fgs_get_version(काष्ठा list_head *match_head)
-अणु
-	काष्ठा match_list *iter;
+static u64 matched_fgs_get_version(struct list_head *match_head)
+{
+	struct match_list *iter;
 	u64 version = 0;
 
-	list_क्रम_each_entry(iter, match_head, list)
-		version += (u64)atomic_पढ़ो(&iter->g->node.version);
-	वापस version;
-पूर्ण
+	list_for_each_entry(iter, match_head, list)
+		version += (u64)atomic_read(&iter->g->node.version);
+	return version;
+}
 
-अटल काष्ठा fs_fte *
-lookup_fte_locked(काष्ठा mlx5_flow_group *g,
-		  स्थिर u32 *match_value,
-		  bool take_ग_लिखो)
-अणु
-	काष्ठा fs_fte *fte_पंचांगp;
+static struct fs_fte *
+lookup_fte_locked(struct mlx5_flow_group *g,
+		  const u32 *match_value,
+		  bool take_write)
+{
+	struct fs_fte *fte_tmp;
 
-	अगर (take_ग_लिखो)
-		nested_करोwn_ग_लिखो_ref_node(&g->node, FS_LOCK_PARENT);
-	अन्यथा
-		nested_करोwn_पढ़ो_ref_node(&g->node, FS_LOCK_PARENT);
-	fte_पंचांगp = rhashtable_lookup_fast(&g->ftes_hash, match_value,
+	if (take_write)
+		nested_down_write_ref_node(&g->node, FS_LOCK_PARENT);
+	else
+		nested_down_read_ref_node(&g->node, FS_LOCK_PARENT);
+	fte_tmp = rhashtable_lookup_fast(&g->ftes_hash, match_value,
 					 rhash_fte);
-	अगर (!fte_पंचांगp || !tree_get_node(&fte_पंचांगp->node)) अणु
-		fte_पंचांगp = शून्य;
-		जाओ out;
-	पूर्ण
-	अगर (!fte_पंचांगp->node.active) अणु
-		tree_put_node(&fte_पंचांगp->node, false);
-		fte_पंचांगp = शून्य;
-		जाओ out;
-	पूर्ण
+	if (!fte_tmp || !tree_get_node(&fte_tmp->node)) {
+		fte_tmp = NULL;
+		goto out;
+	}
+	if (!fte_tmp->node.active) {
+		tree_put_node(&fte_tmp->node, false);
+		fte_tmp = NULL;
+		goto out;
+	}
 
-	nested_करोwn_ग_लिखो_ref_node(&fte_पंचांगp->node, FS_LOCK_CHILD);
+	nested_down_write_ref_node(&fte_tmp->node, FS_LOCK_CHILD);
 out:
-	अगर (take_ग_लिखो)
-		up_ग_लिखो_ref_node(&g->node, false);
-	अन्यथा
-		up_पढ़ो_ref_node(&g->node);
-	वापस fte_पंचांगp;
-पूर्ण
+	if (take_write)
+		up_write_ref_node(&g->node, false);
+	else
+		up_read_ref_node(&g->node);
+	return fte_tmp;
+}
 
-अटल काष्ठा mlx5_flow_handle *
-try_add_to_existing_fg(काष्ठा mlx5_flow_table *ft,
-		       काष्ठा list_head *match_head,
-		       स्थिर काष्ठा mlx5_flow_spec *spec,
-		       काष्ठा mlx5_flow_act *flow_act,
-		       काष्ठा mlx5_flow_destination *dest,
-		       पूर्णांक dest_num,
-		       पूर्णांक ft_version)
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(&ft->node);
-	काष्ठा mlx5_flow_group *g;
-	काष्ठा mlx5_flow_handle *rule;
-	काष्ठा match_list *iter;
-	bool take_ग_लिखो = false;
-	काष्ठा fs_fte *fte;
+static struct mlx5_flow_handle *
+try_add_to_existing_fg(struct mlx5_flow_table *ft,
+		       struct list_head *match_head,
+		       const struct mlx5_flow_spec *spec,
+		       struct mlx5_flow_act *flow_act,
+		       struct mlx5_flow_destination *dest,
+		       int dest_num,
+		       int ft_version)
+{
+	struct mlx5_flow_steering *steering = get_steering(&ft->node);
+	struct mlx5_flow_group *g;
+	struct mlx5_flow_handle *rule;
+	struct match_list *iter;
+	bool take_write = false;
+	struct fs_fte *fte;
 	u64  version = 0;
-	पूर्णांक err;
+	int err;
 
 	fte = alloc_fte(ft, spec, flow_act);
-	अगर (IS_ERR(fte))
-		वापस  ERR_PTR(-ENOMEM);
+	if (IS_ERR(fte))
+		return  ERR_PTR(-ENOMEM);
 
 search_again_locked:
-	अगर (flow_act->flags & FLOW_ACT_NO_APPEND)
-		जाओ skip_search;
+	if (flow_act->flags & FLOW_ACT_NO_APPEND)
+		goto skip_search;
 	version = matched_fgs_get_version(match_head);
 	/* Try to find an fte with identical match value and attempt update its
 	 * action.
 	 */
-	list_क्रम_each_entry(iter, match_head, list) अणु
-		काष्ठा fs_fte *fte_पंचांगp;
+	list_for_each_entry(iter, match_head, list) {
+		struct fs_fte *fte_tmp;
 
 		g = iter->g;
-		fte_पंचांगp = lookup_fte_locked(g, spec->match_value, take_ग_लिखो);
-		अगर (!fte_पंचांगp)
-			जारी;
-		rule = add_rule_fg(g, spec, flow_act, dest, dest_num, fte_पंचांगp);
+		fte_tmp = lookup_fte_locked(g, spec->match_value, take_write);
+		if (!fte_tmp)
+			continue;
+		rule = add_rule_fg(g, spec, flow_act, dest, dest_num, fte_tmp);
 		/* No error check needed here, because insert_fte() is not called */
-		up_ग_लिखो_ref_node(&fte_पंचांगp->node, false);
-		tree_put_node(&fte_पंचांगp->node, false);
-		kmem_cache_मुक्त(steering->ftes_cache, fte);
-		वापस rule;
-	पूर्ण
+		up_write_ref_node(&fte_tmp->node, false);
+		tree_put_node(&fte_tmp->node, false);
+		kmem_cache_free(steering->ftes_cache, fte);
+		return rule;
+	}
 
 skip_search:
 	/* No group with matching fte found, or we skipped the search.
 	 * Try to add a new fte to any matching fg.
 	 */
 
-	/* Check the ft version, क्रम हाल that new flow group
-	 * was added जबतक the fgs weren't locked
+	/* Check the ft version, for case that new flow group
+	 * was added while the fgs weren't locked
 	 */
-	अगर (atomic_पढ़ो(&ft->node.version) != ft_version) अणु
+	if (atomic_read(&ft->node.version) != ft_version) {
 		rule = ERR_PTR(-EAGAIN);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Check the fgs version. If version have changed it could be that an
-	 * FTE with the same match value was added जबतक the fgs weren't
+	 * FTE with the same match value was added while the fgs weren't
 	 * locked.
 	 */
-	अगर (!(flow_act->flags & FLOW_ACT_NO_APPEND) &&
-	    version != matched_fgs_get_version(match_head)) अणु
-		take_ग_लिखो = true;
-		जाओ search_again_locked;
-	पूर्ण
+	if (!(flow_act->flags & FLOW_ACT_NO_APPEND) &&
+	    version != matched_fgs_get_version(match_head)) {
+		take_write = true;
+		goto search_again_locked;
+	}
 
-	list_क्रम_each_entry(iter, match_head, list) अणु
+	list_for_each_entry(iter, match_head, list) {
 		g = iter->g;
 
-		nested_करोwn_ग_लिखो_ref_node(&g->node, FS_LOCK_PARENT);
+		nested_down_write_ref_node(&g->node, FS_LOCK_PARENT);
 
-		अगर (!g->node.active) अणु
-			up_ग_लिखो_ref_node(&g->node, false);
-			जारी;
-		पूर्ण
+		if (!g->node.active) {
+			up_write_ref_node(&g->node, false);
+			continue;
+		}
 
 		err = insert_fte(g, fte);
-		अगर (err) अणु
-			up_ग_लिखो_ref_node(&g->node, false);
-			अगर (err == -ENOSPC)
-				जारी;
-			kmem_cache_मुक्त(steering->ftes_cache, fte);
-			वापस ERR_PTR(err);
-		पूर्ण
+		if (err) {
+			up_write_ref_node(&g->node, false);
+			if (err == -ENOSPC)
+				continue;
+			kmem_cache_free(steering->ftes_cache, fte);
+			return ERR_PTR(err);
+		}
 
-		nested_करोwn_ग_लिखो_ref_node(&fte->node, FS_LOCK_CHILD);
-		up_ग_लिखो_ref_node(&g->node, false);
+		nested_down_write_ref_node(&fte->node, FS_LOCK_CHILD);
+		up_write_ref_node(&g->node, false);
 		rule = add_rule_fg(g, spec, flow_act, dest, dest_num, fte);
-		up_ग_लिखो_ref_node(&fte->node, false);
-		अगर (IS_ERR(rule))
+		up_write_ref_node(&fte->node, false);
+		if (IS_ERR(rule))
 			tree_put_node(&fte->node, false);
-		वापस rule;
-	पूर्ण
+		return rule;
+	}
 	rule = ERR_PTR(-ENOENT);
 out:
-	kmem_cache_मुक्त(steering->ftes_cache, fte);
-	वापस rule;
-पूर्ण
+	kmem_cache_free(steering->ftes_cache, fte);
+	return rule;
+}
 
-अटल काष्ठा mlx5_flow_handle *
-_mlx5_add_flow_rules(काष्ठा mlx5_flow_table *ft,
-		     स्थिर काष्ठा mlx5_flow_spec *spec,
-		     काष्ठा mlx5_flow_act *flow_act,
-		     काष्ठा mlx5_flow_destination *dest,
-		     पूर्णांक dest_num)
+static struct mlx5_flow_handle *
+_mlx5_add_flow_rules(struct mlx5_flow_table *ft,
+		     const struct mlx5_flow_spec *spec,
+		     struct mlx5_flow_act *flow_act,
+		     struct mlx5_flow_destination *dest,
+		     int dest_num)
 
-अणु
-	काष्ठा mlx5_flow_steering *steering = get_steering(&ft->node);
-	काष्ठा mlx5_flow_handle *rule;
-	काष्ठा match_list match_head;
-	काष्ठा mlx5_flow_group *g;
-	bool take_ग_लिखो = false;
-	काष्ठा fs_fte *fte;
-	पूर्णांक version;
-	पूर्णांक err;
-	पूर्णांक i;
+{
+	struct mlx5_flow_steering *steering = get_steering(&ft->node);
+	struct mlx5_flow_handle *rule;
+	struct match_list match_head;
+	struct mlx5_flow_group *g;
+	bool take_write = false;
+	struct fs_fte *fte;
+	int version;
+	int err;
+	int i;
 
-	अगर (!check_valid_spec(spec))
-		वापस ERR_PTR(-EINVAL);
+	if (!check_valid_spec(spec))
+		return ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < dest_num; i++) अणु
-		अगर (!dest_is_valid(&dest[i], flow_act, ft))
-			वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	nested_करोwn_पढ़ो_ref_node(&ft->node, FS_LOCK_GRANDPARENT);
+	for (i = 0; i < dest_num; i++) {
+		if (!dest_is_valid(&dest[i], flow_act, ft))
+			return ERR_PTR(-EINVAL);
+	}
+	nested_down_read_ref_node(&ft->node, FS_LOCK_GRANDPARENT);
 search_again_locked:
-	version = atomic_पढ़ो(&ft->node.version);
+	version = atomic_read(&ft->node.version);
 
 	/* Collect all fgs which has a matching match_criteria */
-	err = build_match_list(&match_head, ft, spec, take_ग_लिखो);
-	अगर (err) अणु
-		अगर (take_ग_लिखो)
-			up_ग_लिखो_ref_node(&ft->node, false);
-		अन्यथा
-			up_पढ़ो_ref_node(&ft->node);
-		वापस ERR_PTR(err);
-	पूर्ण
+	err = build_match_list(&match_head, ft, spec, take_write);
+	if (err) {
+		if (take_write)
+			up_write_ref_node(&ft->node, false);
+		else
+			up_read_ref_node(&ft->node);
+		return ERR_PTR(err);
+	}
 
-	अगर (!take_ग_लिखो)
-		up_पढ़ो_ref_node(&ft->node);
+	if (!take_write)
+		up_read_ref_node(&ft->node);
 
 	rule = try_add_to_existing_fg(ft, &match_head.list, spec, flow_act, dest,
 				      dest_num, version);
-	मुक्त_match_list(&match_head, take_ग_लिखो);
-	अगर (!IS_ERR(rule) ||
-	    (PTR_ERR(rule) != -ENOENT && PTR_ERR(rule) != -EAGAIN)) अणु
-		अगर (take_ग_लिखो)
-			up_ग_लिखो_ref_node(&ft->node, false);
-		वापस rule;
-	पूर्ण
+	free_match_list(&match_head, take_write);
+	if (!IS_ERR(rule) ||
+	    (PTR_ERR(rule) != -ENOENT && PTR_ERR(rule) != -EAGAIN)) {
+		if (take_write)
+			up_write_ref_node(&ft->node, false);
+		return rule;
+	}
 
-	अगर (!take_ग_लिखो) अणु
-		nested_करोwn_ग_लिखो_ref_node(&ft->node, FS_LOCK_GRANDPARENT);
-		take_ग_लिखो = true;
-	पूर्ण
+	if (!take_write) {
+		nested_down_write_ref_node(&ft->node, FS_LOCK_GRANDPARENT);
+		take_write = true;
+	}
 
-	अगर (PTR_ERR(rule) == -EAGAIN ||
-	    version != atomic_पढ़ो(&ft->node.version))
-		जाओ search_again_locked;
+	if (PTR_ERR(rule) == -EAGAIN ||
+	    version != atomic_read(&ft->node.version))
+		goto search_again_locked;
 
-	g = alloc_स्वतः_flow_group(ft, spec);
-	अगर (IS_ERR(g)) अणु
+	g = alloc_auto_flow_group(ft, spec);
+	if (IS_ERR(g)) {
 		rule = ERR_CAST(g);
-		up_ग_लिखो_ref_node(&ft->node, false);
-		वापस rule;
-	पूर्ण
+		up_write_ref_node(&ft->node, false);
+		return rule;
+	}
 
 	fte = alloc_fte(ft, spec, flow_act);
-	अगर (IS_ERR(fte)) अणु
-		up_ग_लिखो_ref_node(&ft->node, false);
+	if (IS_ERR(fte)) {
+		up_write_ref_node(&ft->node, false);
 		err = PTR_ERR(fte);
-		जाओ err_alloc_fte;
-	पूर्ण
+		goto err_alloc_fte;
+	}
 
-	nested_करोwn_ग_लिखो_ref_node(&g->node, FS_LOCK_PARENT);
-	up_ग_लिखो_ref_node(&ft->node, false);
+	nested_down_write_ref_node(&g->node, FS_LOCK_PARENT);
+	up_write_ref_node(&ft->node, false);
 
-	err = create_स्वतः_flow_group(ft, g);
-	अगर (err)
-		जाओ err_release_fg;
+	err = create_auto_flow_group(ft, g);
+	if (err)
+		goto err_release_fg;
 
 	err = insert_fte(g, fte);
-	अगर (err)
-		जाओ err_release_fg;
+	if (err)
+		goto err_release_fg;
 
-	nested_करोwn_ग_लिखो_ref_node(&fte->node, FS_LOCK_CHILD);
-	up_ग_लिखो_ref_node(&g->node, false);
+	nested_down_write_ref_node(&fte->node, FS_LOCK_CHILD);
+	up_write_ref_node(&g->node, false);
 	rule = add_rule_fg(g, spec, flow_act, dest, dest_num, fte);
-	up_ग_लिखो_ref_node(&fte->node, false);
-	अगर (IS_ERR(rule))
+	up_write_ref_node(&fte->node, false);
+	if (IS_ERR(rule))
 		tree_put_node(&fte->node, false);
 	tree_put_node(&g->node, false);
-	वापस rule;
+	return rule;
 
 err_release_fg:
-	up_ग_लिखो_ref_node(&g->node, false);
-	kmem_cache_मुक्त(steering->ftes_cache, fte);
+	up_write_ref_node(&g->node, false);
+	kmem_cache_free(steering->ftes_cache, fte);
 err_alloc_fte:
 	tree_put_node(&g->node, false);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल bool fwd_next_prio_supported(काष्ठा mlx5_flow_table *ft)
-अणु
-	वापस ((ft->type == FS_FT_NIC_RX) &&
+static bool fwd_next_prio_supported(struct mlx5_flow_table *ft)
+{
+	return ((ft->type == FS_FT_NIC_RX) &&
 		(MLX5_CAP_FLOWTABLE(get_dev(&ft->node), nic_rx_multi_path_tirs)));
-पूर्ण
+}
 
-काष्ठा mlx5_flow_handle *
-mlx5_add_flow_rules(काष्ठा mlx5_flow_table *ft,
-		    स्थिर काष्ठा mlx5_flow_spec *spec,
-		    काष्ठा mlx5_flow_act *flow_act,
-		    काष्ठा mlx5_flow_destination *dest,
-		    पूर्णांक num_dest)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ft->node);
-	अटल स्थिर काष्ठा mlx5_flow_spec zero_spec = अणुपूर्ण;
-	काष्ठा mlx5_flow_destination *gen_dest = शून्य;
-	काष्ठा mlx5_flow_table *next_ft = शून्य;
-	काष्ठा mlx5_flow_handle *handle = शून्य;
+struct mlx5_flow_handle *
+mlx5_add_flow_rules(struct mlx5_flow_table *ft,
+		    const struct mlx5_flow_spec *spec,
+		    struct mlx5_flow_act *flow_act,
+		    struct mlx5_flow_destination *dest,
+		    int num_dest)
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ft->node);
+	static const struct mlx5_flow_spec zero_spec = {};
+	struct mlx5_flow_destination *gen_dest = NULL;
+	struct mlx5_flow_table *next_ft = NULL;
+	struct mlx5_flow_handle *handle = NULL;
 	u32 sw_action = flow_act->action;
-	पूर्णांक i;
+	int i;
 
-	अगर (!spec)
+	if (!spec)
 		spec = &zero_spec;
 
-	अगर (!is_fwd_next_action(sw_action))
-		वापस _mlx5_add_flow_rules(ft, spec, flow_act, dest, num_dest);
+	if (!is_fwd_next_action(sw_action))
+		return _mlx5_add_flow_rules(ft, spec, flow_act, dest, num_dest);
 
-	अगर (!fwd_next_prio_supported(ft))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!fwd_next_prio_supported(ft))
+		return ERR_PTR(-EOPNOTSUPP);
 
 	mutex_lock(&root->chain_lock);
 	next_ft = find_next_fwd_ft(ft, flow_act);
-	अगर (!next_ft) अणु
+	if (!next_ft) {
 		handle = ERR_PTR(-EOPNOTSUPP);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	gen_dest = kसुस्मृति(num_dest + 1, माप(*dest),
+	gen_dest = kcalloc(num_dest + 1, sizeof(*dest),
 			   GFP_KERNEL);
-	अगर (!gen_dest) अणु
+	if (!gen_dest) {
 		handle = ERR_PTR(-ENOMEM);
-		जाओ unlock;
-	पूर्ण
-	क्रम (i = 0; i < num_dest; i++)
+		goto unlock;
+	}
+	for (i = 0; i < num_dest; i++)
 		gen_dest[i] = dest[i];
 	gen_dest[i].type =
 		MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE;
@@ -1981,465 +1980,465 @@ mlx5_add_flow_rules(काष्ठा mlx5_flow_table *ft,
 			      MLX5_FLOW_CONTEXT_ACTION_FWD_NEXT_NS);
 	flow_act->action |= MLX5_FLOW_CONTEXT_ACTION_FWD_DEST;
 	handle = _mlx5_add_flow_rules(ft, spec, flow_act, dest, num_dest);
-	अगर (IS_ERR(handle))
-		जाओ unlock;
+	if (IS_ERR(handle))
+		goto unlock;
 
-	अगर (list_empty(&handle->rule[num_dest - 1]->next_ft)) अणु
+	if (list_empty(&handle->rule[num_dest - 1]->next_ft)) {
 		mutex_lock(&next_ft->lock);
 		list_add(&handle->rule[num_dest - 1]->next_ft,
 			 &next_ft->fwd_rules);
 		mutex_unlock(&next_ft->lock);
 		handle->rule[num_dest - 1]->sw_action = sw_action;
 		handle->rule[num_dest - 1]->ft = ft;
-	पूर्ण
+	}
 unlock:
 	mutex_unlock(&root->chain_lock);
-	kमुक्त(gen_dest);
-	वापस handle;
-पूर्ण
+	kfree(gen_dest);
+	return handle;
+}
 EXPORT_SYMBOL(mlx5_add_flow_rules);
 
-व्योम mlx5_del_flow_rules(काष्ठा mlx5_flow_handle *handle)
-अणु
-	काष्ठा fs_fte *fte;
-	पूर्णांक i;
+void mlx5_del_flow_rules(struct mlx5_flow_handle *handle)
+{
+	struct fs_fte *fte;
+	int i;
 
-	/* In order to consolidate the HW changes we lock the FTE क्रम other
-	 * changes, and increase its refcount, in order not to perक्रमm the
+	/* In order to consolidate the HW changes we lock the FTE for other
+	 * changes, and increase its refcount, in order not to perform the
 	 * "del" functions of the FTE. Will handle them here.
-	 * The removal of the rules is करोne under locked FTE.
-	 * After removing all the handle's rules, अगर there are reमुख्यing
-	 * rules, it means we just need to modअगरy the FTE in FW, and
-	 * unlock/decrease the refcount we increased beक्रमe.
+	 * The removal of the rules is done under locked FTE.
+	 * After removing all the handle's rules, if there are remaining
+	 * rules, it means we just need to modify the FTE in FW, and
+	 * unlock/decrease the refcount we increased before.
 	 * Otherwise, it means the FTE should be deleted. First delete the
 	 * FTE in FW. Then, unlock the FTE, and proceed the tree_put_node of
 	 * the FTE, which will handle the last decrease of the refcount, as
 	 * well as required handling of its parent.
 	 */
 	fs_get_obj(fte, handle->rule[0]->node.parent);
-	करोwn_ग_लिखो_ref_node(&fte->node, false);
-	क्रम (i = handle->num_rules - 1; i >= 0; i--)
-		tree_हटाओ_node(&handle->rule[i]->node, true);
-	अगर (fte->dests_size) अणु
-		अगर (fte->modअगरy_mask)
-			modअगरy_fte(fte);
-		up_ग_लिखो_ref_node(&fte->node, false);
-	पूर्ण अन्यथा अगर (list_empty(&fte->node.children)) अणु
+	down_write_ref_node(&fte->node, false);
+	for (i = handle->num_rules - 1; i >= 0; i--)
+		tree_remove_node(&handle->rule[i]->node, true);
+	if (fte->dests_size) {
+		if (fte->modify_mask)
+			modify_fte(fte);
+		up_write_ref_node(&fte->node, false);
+	} else if (list_empty(&fte->node.children)) {
 		del_hw_fte(&fte->node);
-		/* Aव्योम द्विगुन call to del_hw_fte */
-		fte->node.del_hw_func = शून्य;
-		up_ग_लिखो_ref_node(&fte->node, false);
+		/* Avoid double call to del_hw_fte */
+		fte->node.del_hw_func = NULL;
+		up_write_ref_node(&fte->node, false);
 		tree_put_node(&fte->node, false);
-	पूर्ण
-	kमुक्त(handle);
-पूर्ण
+	}
+	kfree(handle);
+}
 EXPORT_SYMBOL(mlx5_del_flow_rules);
 
 /* Assuming prio->node.children(flow tables) is sorted by level */
-अटल काष्ठा mlx5_flow_table *find_next_ft(काष्ठा mlx5_flow_table *ft)
-अणु
-	काष्ठा fs_prio *prio;
+static struct mlx5_flow_table *find_next_ft(struct mlx5_flow_table *ft)
+{
+	struct fs_prio *prio;
 
 	fs_get_obj(prio, ft->node.parent);
 
-	अगर (!list_is_last(&ft->node.list, &prio->node.children))
-		वापस list_next_entry(ft, node.list);
-	वापस find_next_chained_ft(prio);
-पूर्ण
+	if (!list_is_last(&ft->node.list, &prio->node.children))
+		return list_next_entry(ft, node.list);
+	return find_next_chained_ft(prio);
+}
 
-अटल पूर्णांक update_root_ft_destroy(काष्ठा mlx5_flow_table *ft)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ft->node);
-	काष्ठा mlx5_ft_underlay_qp *uqp;
-	काष्ठा mlx5_flow_table *new_root_ft = शून्य;
-	पूर्णांक err = 0;
+static int update_root_ft_destroy(struct mlx5_flow_table *ft)
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ft->node);
+	struct mlx5_ft_underlay_qp *uqp;
+	struct mlx5_flow_table *new_root_ft = NULL;
+	int err = 0;
 	u32 qpn;
 
-	अगर (root->root_ft != ft)
-		वापस 0;
+	if (root->root_ft != ft)
+		return 0;
 
 	new_root_ft = find_next_ft(ft);
-	अगर (!new_root_ft) अणु
-		root->root_ft = शून्य;
-		वापस 0;
-	पूर्ण
+	if (!new_root_ft) {
+		root->root_ft = NULL;
+		return 0;
+	}
 
-	अगर (list_empty(&root->underlay_qpns)) अणु
-		/* Don't set any QPN (zero) in हाल QPN list is empty */
+	if (list_empty(&root->underlay_qpns)) {
+		/* Don't set any QPN (zero) in case QPN list is empty */
 		qpn = 0;
 		err = root->cmds->update_root_ft(root, new_root_ft,
 						 qpn, false);
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry(uqp, &root->underlay_qpns, list) अणु
+	} else {
+		list_for_each_entry(uqp, &root->underlay_qpns, list) {
 			qpn = uqp->qpn;
 			err = root->cmds->update_root_ft(root,
 							 new_root_ft, qpn,
 							 false);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (err)
+				break;
+		}
+	}
 
-	अगर (err)
+	if (err)
 		mlx5_core_warn(root->dev,
 			       "Update root flow table of id(%u) qpn(%d) failed\n",
 			       ft->id, qpn);
-	अन्यथा
+	else
 		root->root_ft = new_root_ft;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Connect flow table from previous priority to
  * the next flow table.
  */
-अटल पूर्णांक disconnect_flow_table(काष्ठा mlx5_flow_table *ft)
-अणु
-	काष्ठा mlx5_core_dev *dev = get_dev(&ft->node);
-	काष्ठा mlx5_flow_table *next_ft;
-	काष्ठा fs_prio *prio;
-	पूर्णांक err = 0;
+static int disconnect_flow_table(struct mlx5_flow_table *ft)
+{
+	struct mlx5_core_dev *dev = get_dev(&ft->node);
+	struct mlx5_flow_table *next_ft;
+	struct fs_prio *prio;
+	int err = 0;
 
 	err = update_root_ft_destroy(ft);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	fs_get_obj(prio, ft->node.parent);
-	अगर  (!(list_first_entry(&prio->node.children,
-				काष्ठा mlx5_flow_table,
+	if  (!(list_first_entry(&prio->node.children,
+				struct mlx5_flow_table,
 				node.list) == ft))
-		वापस 0;
+		return 0;
 
 	next_ft = find_next_chained_ft(prio);
 	err = connect_fwd_rules(dev, next_ft, ft);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = connect_prev_fts(dev, next_ft, prio);
-	अगर (err)
+	if (err)
 		mlx5_core_warn(dev, "Failed to disconnect flow table %d\n",
 			       ft->id);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5_destroy_flow_table(काष्ठा mlx5_flow_table *ft)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = find_root(&ft->node);
-	पूर्णांक err = 0;
+int mlx5_destroy_flow_table(struct mlx5_flow_table *ft)
+{
+	struct mlx5_flow_root_namespace *root = find_root(&ft->node);
+	int err = 0;
 
 	mutex_lock(&root->chain_lock);
-	अगर (!(ft->flags & MLX5_FLOW_TABLE_UNMANAGED))
+	if (!(ft->flags & MLX5_FLOW_TABLE_UNMANAGED))
 		err = disconnect_flow_table(ft);
-	अगर (err) अणु
+	if (err) {
 		mutex_unlock(&root->chain_lock);
-		वापस err;
-	पूर्ण
-	अगर (tree_हटाओ_node(&ft->node, false))
+		return err;
+	}
+	if (tree_remove_node(&ft->node, false))
 		mlx5_core_warn(get_dev(&ft->node), "Flow table %d wasn't destroyed, refcount > 1\n",
 			       ft->id);
 	mutex_unlock(&root->chain_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(mlx5_destroy_flow_table);
 
-व्योम mlx5_destroy_flow_group(काष्ठा mlx5_flow_group *fg)
-अणु
-	अगर (tree_हटाओ_node(&fg->node, false))
+void mlx5_destroy_flow_group(struct mlx5_flow_group *fg)
+{
+	if (tree_remove_node(&fg->node, false))
 		mlx5_core_warn(get_dev(&fg->node), "Flow group %d wasn't destroyed, refcount > 1\n",
 			       fg->id);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx5_destroy_flow_group);
 
-काष्ठा mlx5_flow_namespace *mlx5_get_fdb_sub_ns(काष्ठा mlx5_core_dev *dev,
-						पूर्णांक n)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
+struct mlx5_flow_namespace *mlx5_get_fdb_sub_ns(struct mlx5_core_dev *dev,
+						int n)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
 
-	अगर (!steering || !steering->fdb_sub_ns)
-		वापस शून्य;
+	if (!steering || !steering->fdb_sub_ns)
+		return NULL;
 
-	वापस steering->fdb_sub_ns[n];
-पूर्ण
+	return steering->fdb_sub_ns[n];
+}
 EXPORT_SYMBOL(mlx5_get_fdb_sub_ns);
 
-काष्ठा mlx5_flow_namespace *mlx5_get_flow_namespace(काष्ठा mlx5_core_dev *dev,
-						    क्रमागत mlx5_flow_namespace_type type)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
-	काष्ठा mlx5_flow_root_namespace *root_ns;
-	पूर्णांक prio = 0;
-	काष्ठा fs_prio *fs_prio;
-	काष्ठा mlx5_flow_namespace *ns;
+struct mlx5_flow_namespace *mlx5_get_flow_namespace(struct mlx5_core_dev *dev,
+						    enum mlx5_flow_namespace_type type)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	struct mlx5_flow_root_namespace *root_ns;
+	int prio = 0;
+	struct fs_prio *fs_prio;
+	struct mlx5_flow_namespace *ns;
 
-	अगर (!steering)
-		वापस शून्य;
+	if (!steering)
+		return NULL;
 
-	चयन (type) अणु
-	हाल MLX5_FLOW_NAMESPACE_FDB:
-		अगर (steering->fdb_root_ns)
-			वापस &steering->fdb_root_ns->ns;
-		वापस शून्य;
-	हाल MLX5_FLOW_NAMESPACE_SNIFFER_RX:
-		अगर (steering->snअगरfer_rx_root_ns)
-			वापस &steering->snअगरfer_rx_root_ns->ns;
-		वापस शून्य;
-	हाल MLX5_FLOW_NAMESPACE_SNIFFER_TX:
-		अगर (steering->snअगरfer_tx_root_ns)
-			वापस &steering->snअगरfer_tx_root_ns->ns;
-		वापस शून्य;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (type) {
+	case MLX5_FLOW_NAMESPACE_FDB:
+		if (steering->fdb_root_ns)
+			return &steering->fdb_root_ns->ns;
+		return NULL;
+	case MLX5_FLOW_NAMESPACE_SNIFFER_RX:
+		if (steering->sniffer_rx_root_ns)
+			return &steering->sniffer_rx_root_ns->ns;
+		return NULL;
+	case MLX5_FLOW_NAMESPACE_SNIFFER_TX:
+		if (steering->sniffer_tx_root_ns)
+			return &steering->sniffer_tx_root_ns->ns;
+		return NULL;
+	default:
+		break;
+	}
 
-	अगर (type == MLX5_FLOW_NAMESPACE_EGRESS ||
-	    type == MLX5_FLOW_NAMESPACE_EGRESS_KERNEL) अणु
+	if (type == MLX5_FLOW_NAMESPACE_EGRESS ||
+	    type == MLX5_FLOW_NAMESPACE_EGRESS_KERNEL) {
 		root_ns = steering->egress_root_ns;
 		prio = type - MLX5_FLOW_NAMESPACE_EGRESS;
-	पूर्ण अन्यथा अगर (type == MLX5_FLOW_NAMESPACE_RDMA_RX) अणु
+	} else if (type == MLX5_FLOW_NAMESPACE_RDMA_RX) {
 		root_ns = steering->rdma_rx_root_ns;
 		prio = RDMA_RX_BYPASS_PRIO;
-	पूर्ण अन्यथा अगर (type == MLX5_FLOW_NAMESPACE_RDMA_RX_KERNEL) अणु
+	} else if (type == MLX5_FLOW_NAMESPACE_RDMA_RX_KERNEL) {
 		root_ns = steering->rdma_rx_root_ns;
 		prio = RDMA_RX_KERNEL_PRIO;
-	पूर्ण अन्यथा अगर (type == MLX5_FLOW_NAMESPACE_RDMA_TX) अणु
+	} else if (type == MLX5_FLOW_NAMESPACE_RDMA_TX) {
 		root_ns = steering->rdma_tx_root_ns;
-	पूर्ण अन्यथा अणु /* Must be NIC RX */
+	} else { /* Must be NIC RX */
 		root_ns = steering->root_ns;
 		prio = type;
-	पूर्ण
+	}
 
-	अगर (!root_ns)
-		वापस शून्य;
+	if (!root_ns)
+		return NULL;
 
 	fs_prio = find_prio(&root_ns->ns, prio);
-	अगर (!fs_prio)
-		वापस शून्य;
+	if (!fs_prio)
+		return NULL;
 
 	ns = list_first_entry(&fs_prio->node.children,
 			      typeof(*ns),
 			      node.list);
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 EXPORT_SYMBOL(mlx5_get_flow_namespace);
 
-काष्ठा mlx5_flow_namespace *mlx5_get_flow_vport_acl_namespace(काष्ठा mlx5_core_dev *dev,
-							      क्रमागत mlx5_flow_namespace_type type,
-							      पूर्णांक vport)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
+struct mlx5_flow_namespace *mlx5_get_flow_vport_acl_namespace(struct mlx5_core_dev *dev,
+							      enum mlx5_flow_namespace_type type,
+							      int vport)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
 
-	अगर (!steering)
-		वापस शून्य;
+	if (!steering)
+		return NULL;
 
-	चयन (type) अणु
-	हाल MLX5_FLOW_NAMESPACE_ESW_EGRESS:
-		अगर (vport >= steering->esw_egress_acl_vports)
-			वापस शून्य;
-		अगर (steering->esw_egress_root_ns &&
+	switch (type) {
+	case MLX5_FLOW_NAMESPACE_ESW_EGRESS:
+		if (vport >= steering->esw_egress_acl_vports)
+			return NULL;
+		if (steering->esw_egress_root_ns &&
 		    steering->esw_egress_root_ns[vport])
-			वापस &steering->esw_egress_root_ns[vport]->ns;
-		अन्यथा
-			वापस शून्य;
-	हाल MLX5_FLOW_NAMESPACE_ESW_INGRESS:
-		अगर (vport >= steering->esw_ingress_acl_vports)
-			वापस शून्य;
-		अगर (steering->esw_ingress_root_ns &&
+			return &steering->esw_egress_root_ns[vport]->ns;
+		else
+			return NULL;
+	case MLX5_FLOW_NAMESPACE_ESW_INGRESS:
+		if (vport >= steering->esw_ingress_acl_vports)
+			return NULL;
+		if (steering->esw_ingress_root_ns &&
 		    steering->esw_ingress_root_ns[vport])
-			वापस &steering->esw_ingress_root_ns[vport]->ns;
-		अन्यथा
-			वापस शून्य;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+			return &steering->esw_ingress_root_ns[vport]->ns;
+		else
+			return NULL;
+	default:
+		return NULL;
+	}
+}
 
-अटल काष्ठा fs_prio *_fs_create_prio(काष्ठा mlx5_flow_namespace *ns,
-				       अचिन्हित पूर्णांक prio,
-				       पूर्णांक num_levels,
-				       क्रमागत fs_node_type type)
-अणु
-	काष्ठा fs_prio *fs_prio;
+static struct fs_prio *_fs_create_prio(struct mlx5_flow_namespace *ns,
+				       unsigned int prio,
+				       int num_levels,
+				       enum fs_node_type type)
+{
+	struct fs_prio *fs_prio;
 
-	fs_prio = kzalloc(माप(*fs_prio), GFP_KERNEL);
-	अगर (!fs_prio)
-		वापस ERR_PTR(-ENOMEM);
+	fs_prio = kzalloc(sizeof(*fs_prio), GFP_KERNEL);
+	if (!fs_prio)
+		return ERR_PTR(-ENOMEM);
 
 	fs_prio->node.type = type;
-	tree_init_node(&fs_prio->node, शून्य, del_sw_prio);
+	tree_init_node(&fs_prio->node, NULL, del_sw_prio);
 	tree_add_node(&fs_prio->node, &ns->node);
 	fs_prio->num_levels = num_levels;
 	fs_prio->prio = prio;
 	list_add_tail(&fs_prio->node.list, &ns->node.children);
 
-	वापस fs_prio;
-पूर्ण
+	return fs_prio;
+}
 
-अटल काष्ठा fs_prio *fs_create_prio_chained(काष्ठा mlx5_flow_namespace *ns,
-					      अचिन्हित पूर्णांक prio,
-					      पूर्णांक num_levels)
-अणु
-	वापस _fs_create_prio(ns, prio, num_levels, FS_TYPE_PRIO_CHAINS);
-पूर्ण
+static struct fs_prio *fs_create_prio_chained(struct mlx5_flow_namespace *ns,
+					      unsigned int prio,
+					      int num_levels)
+{
+	return _fs_create_prio(ns, prio, num_levels, FS_TYPE_PRIO_CHAINS);
+}
 
-अटल काष्ठा fs_prio *fs_create_prio(काष्ठा mlx5_flow_namespace *ns,
-				      अचिन्हित पूर्णांक prio, पूर्णांक num_levels)
-अणु
-	वापस _fs_create_prio(ns, prio, num_levels, FS_TYPE_PRIO);
-पूर्ण
+static struct fs_prio *fs_create_prio(struct mlx5_flow_namespace *ns,
+				      unsigned int prio, int num_levels)
+{
+	return _fs_create_prio(ns, prio, num_levels, FS_TYPE_PRIO);
+}
 
-अटल काष्ठा mlx5_flow_namespace *fs_init_namespace(काष्ठा mlx5_flow_namespace
+static struct mlx5_flow_namespace *fs_init_namespace(struct mlx5_flow_namespace
 						     *ns)
-अणु
+{
 	ns->node.type = FS_TYPE_NAMESPACE;
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल काष्ठा mlx5_flow_namespace *fs_create_namespace(काष्ठा fs_prio *prio,
-						       पूर्णांक def_miss_act)
-अणु
-	काष्ठा mlx5_flow_namespace	*ns;
+static struct mlx5_flow_namespace *fs_create_namespace(struct fs_prio *prio,
+						       int def_miss_act)
+{
+	struct mlx5_flow_namespace	*ns;
 
-	ns = kzalloc(माप(*ns), GFP_KERNEL);
-	अगर (!ns)
-		वापस ERR_PTR(-ENOMEM);
+	ns = kzalloc(sizeof(*ns), GFP_KERNEL);
+	if (!ns)
+		return ERR_PTR(-ENOMEM);
 
 	fs_init_namespace(ns);
 	ns->def_miss_action = def_miss_act;
-	tree_init_node(&ns->node, शून्य, del_sw_ns);
+	tree_init_node(&ns->node, NULL, del_sw_ns);
 	tree_add_node(&ns->node, &prio->node);
 	list_add_tail(&ns->node.list, &prio->node.children);
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल पूर्णांक create_leaf_prios(काष्ठा mlx5_flow_namespace *ns, पूर्णांक prio,
-			     काष्ठा init_tree_node *prio_metadata)
-अणु
-	काष्ठा fs_prio *fs_prio;
-	पूर्णांक i;
+static int create_leaf_prios(struct mlx5_flow_namespace *ns, int prio,
+			     struct init_tree_node *prio_metadata)
+{
+	struct fs_prio *fs_prio;
+	int i;
 
-	क्रम (i = 0; i < prio_metadata->num_leaf_prios; i++) अणु
+	for (i = 0; i < prio_metadata->num_leaf_prios; i++) {
 		fs_prio = fs_create_prio(ns, prio++, prio_metadata->num_levels);
-		अगर (IS_ERR(fs_prio))
-			वापस PTR_ERR(fs_prio);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (IS_ERR(fs_prio))
+			return PTR_ERR(fs_prio);
+	}
+	return 0;
+}
 
-#घोषणा FLOW_TABLE_BIT_SZ 1
-#घोषणा GET_FLOW_TABLE_CAP(dev, offset) \
+#define FLOW_TABLE_BIT_SZ 1
+#define GET_FLOW_TABLE_CAP(dev, offset) \
 	((be32_to_cpu(*((__be32 *)(dev->caps.hca_cur[MLX5_CAP_FLOW_TABLE]) +	\
 			offset / 32)) >>					\
 	  (32 - FLOW_TABLE_BIT_SZ - (offset & 0x1f))) & FLOW_TABLE_BIT_SZ)
-अटल bool has_required_caps(काष्ठा mlx5_core_dev *dev, काष्ठा node_caps *caps)
-अणु
-	पूर्णांक i;
+static bool has_required_caps(struct mlx5_core_dev *dev, struct node_caps *caps)
+{
+	int i;
 
-	क्रम (i = 0; i < caps->arr_sz; i++) अणु
-		अगर (!GET_FLOW_TABLE_CAP(dev, caps->caps[i]))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	for (i = 0; i < caps->arr_sz; i++) {
+		if (!GET_FLOW_TABLE_CAP(dev, caps->caps[i]))
+			return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक init_root_tree_recursive(काष्ठा mlx5_flow_steering *steering,
-				    काष्ठा init_tree_node *init_node,
-				    काष्ठा fs_node *fs_parent_node,
-				    काष्ठा init_tree_node *init_parent_node,
-				    पूर्णांक prio)
-अणु
-	पूर्णांक max_ft_level = MLX5_CAP_FLOWTABLE(steering->dev,
+static int init_root_tree_recursive(struct mlx5_flow_steering *steering,
+				    struct init_tree_node *init_node,
+				    struct fs_node *fs_parent_node,
+				    struct init_tree_node *init_parent_node,
+				    int prio)
+{
+	int max_ft_level = MLX5_CAP_FLOWTABLE(steering->dev,
 					      flow_table_properties_nic_receive.
 					      max_ft_level);
-	काष्ठा mlx5_flow_namespace *fs_ns;
-	काष्ठा fs_prio *fs_prio;
-	काष्ठा fs_node *base;
-	पूर्णांक i;
-	पूर्णांक err;
+	struct mlx5_flow_namespace *fs_ns;
+	struct fs_prio *fs_prio;
+	struct fs_node *base;
+	int i;
+	int err;
 
-	अगर (init_node->type == FS_TYPE_PRIO) अणु
-		अगर ((init_node->min_ft_level > max_ft_level) ||
+	if (init_node->type == FS_TYPE_PRIO) {
+		if ((init_node->min_ft_level > max_ft_level) ||
 		    !has_required_caps(steering->dev, &init_node->caps))
-			वापस 0;
+			return 0;
 
 		fs_get_obj(fs_ns, fs_parent_node);
-		अगर (init_node->num_leaf_prios)
-			वापस create_leaf_prios(fs_ns, prio, init_node);
+		if (init_node->num_leaf_prios)
+			return create_leaf_prios(fs_ns, prio, init_node);
 		fs_prio = fs_create_prio(fs_ns, prio, init_node->num_levels);
-		अगर (IS_ERR(fs_prio))
-			वापस PTR_ERR(fs_prio);
+		if (IS_ERR(fs_prio))
+			return PTR_ERR(fs_prio);
 		base = &fs_prio->node;
-	पूर्ण अन्यथा अगर (init_node->type == FS_TYPE_NAMESPACE) अणु
+	} else if (init_node->type == FS_TYPE_NAMESPACE) {
 		fs_get_obj(fs_prio, fs_parent_node);
 		fs_ns = fs_create_namespace(fs_prio, init_node->def_miss_action);
-		अगर (IS_ERR(fs_ns))
-			वापस PTR_ERR(fs_ns);
+		if (IS_ERR(fs_ns))
+			return PTR_ERR(fs_ns);
 		base = &fs_ns->node;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 	prio = 0;
-	क्रम (i = 0; i < init_node->ar_size; i++) अणु
+	for (i = 0; i < init_node->ar_size; i++) {
 		err = init_root_tree_recursive(steering, &init_node->children[i],
 					       base, init_node, prio);
-		अगर (err)
-			वापस err;
-		अगर (init_node->children[i].type == FS_TYPE_PRIO &&
-		    init_node->children[i].num_leaf_prios) अणु
+		if (err)
+			return err;
+		if (init_node->children[i].type == FS_TYPE_PRIO &&
+		    init_node->children[i].num_leaf_prios) {
 			prio += init_node->children[i].num_leaf_prios;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_root_tree(काष्ठा mlx5_flow_steering *steering,
-			  काष्ठा init_tree_node *init_node,
-			  काष्ठा fs_node *fs_parent_node)
-अणु
-	पूर्णांक err;
-	पूर्णांक i;
+static int init_root_tree(struct mlx5_flow_steering *steering,
+			  struct init_tree_node *init_node,
+			  struct fs_node *fs_parent_node)
+{
+	int err;
+	int i;
 
-	क्रम (i = 0; i < init_node->ar_size; i++) अणु
+	for (i = 0; i < init_node->ar_size; i++) {
 		err = init_root_tree_recursive(steering, &init_node->children[i],
 					       fs_parent_node,
 					       init_node, i);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम del_sw_root_ns(काष्ठा fs_node *node)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root_ns;
-	काष्ठा mlx5_flow_namespace *ns;
+static void del_sw_root_ns(struct fs_node *node)
+{
+	struct mlx5_flow_root_namespace *root_ns;
+	struct mlx5_flow_namespace *ns;
 
 	fs_get_obj(ns, node);
-	root_ns = container_of(ns, काष्ठा mlx5_flow_root_namespace, ns);
+	root_ns = container_of(ns, struct mlx5_flow_root_namespace, ns);
 	mutex_destroy(&root_ns->chain_lock);
-	kमुक्त(node);
-पूर्ण
+	kfree(node);
+}
 
-अटल काष्ठा mlx5_flow_root_namespace
-*create_root_ns(काष्ठा mlx5_flow_steering *steering,
-		क्रमागत fs_flow_table_type table_type)
-अणु
-	स्थिर काष्ठा mlx5_flow_cmds *cmds = mlx5_fs_cmd_get_शेष(table_type);
-	काष्ठा mlx5_flow_root_namespace *root_ns;
-	काष्ठा mlx5_flow_namespace *ns;
+static struct mlx5_flow_root_namespace
+*create_root_ns(struct mlx5_flow_steering *steering,
+		enum fs_flow_table_type table_type)
+{
+	const struct mlx5_flow_cmds *cmds = mlx5_fs_cmd_get_default(table_type);
+	struct mlx5_flow_root_namespace *root_ns;
+	struct mlx5_flow_namespace *ns;
 
-	अगर (mlx5_fpga_ipsec_device_caps(steering->dev) & MLX5_ACCEL_IPSEC_CAP_DEVICE &&
+	if (mlx5_fpga_ipsec_device_caps(steering->dev) & MLX5_ACCEL_IPSEC_CAP_DEVICE &&
 	    (table_type == FS_FT_NIC_RX || table_type == FS_FT_NIC_TX))
-		cmds = mlx5_fs_cmd_get_शेष_ipsec_fpga_cmds(table_type);
+		cmds = mlx5_fs_cmd_get_default_ipsec_fpga_cmds(table_type);
 
 	/* Create the root namespace */
-	root_ns = kzalloc(माप(*root_ns), GFP_KERNEL);
-	अगर (!root_ns)
-		वापस शून्य;
+	root_ns = kzalloc(sizeof(*root_ns), GFP_KERNEL);
+	if (!root_ns)
+		return NULL;
 
 	root_ns->dev = steering->dev;
 	root_ns->table_type = table_type;
@@ -2450,803 +2449,803 @@ EXPORT_SYMBOL(mlx5_get_flow_namespace);
 	ns = &root_ns->ns;
 	fs_init_namespace(ns);
 	mutex_init(&root_ns->chain_lock);
-	tree_init_node(&ns->node, शून्य, del_sw_root_ns);
-	tree_add_node(&ns->node, शून्य);
+	tree_init_node(&ns->node, NULL, del_sw_root_ns);
+	tree_add_node(&ns->node, NULL);
 
-	वापस root_ns;
-पूर्ण
+	return root_ns;
+}
 
-अटल व्योम set_prio_attrs_in_prio(काष्ठा fs_prio *prio, पूर्णांक acc_level);
+static void set_prio_attrs_in_prio(struct fs_prio *prio, int acc_level);
 
-अटल पूर्णांक set_prio_attrs_in_ns(काष्ठा mlx5_flow_namespace *ns, पूर्णांक acc_level)
-अणु
-	काष्ठा fs_prio *prio;
+static int set_prio_attrs_in_ns(struct mlx5_flow_namespace *ns, int acc_level)
+{
+	struct fs_prio *prio;
 
-	fs_क्रम_each_prio(prio, ns) अणु
+	fs_for_each_prio(prio, ns) {
 		 /* This updates prio start_level and num_levels */
 		set_prio_attrs_in_prio(prio, acc_level);
 		acc_level += prio->num_levels;
-	पूर्ण
-	वापस acc_level;
-पूर्ण
+	}
+	return acc_level;
+}
 
-अटल व्योम set_prio_attrs_in_prio(काष्ठा fs_prio *prio, पूर्णांक acc_level)
-अणु
-	काष्ठा mlx5_flow_namespace *ns;
-	पूर्णांक acc_level_ns = acc_level;
+static void set_prio_attrs_in_prio(struct fs_prio *prio, int acc_level)
+{
+	struct mlx5_flow_namespace *ns;
+	int acc_level_ns = acc_level;
 
 	prio->start_level = acc_level;
-	fs_क्रम_each_ns(ns, prio) अणु
+	fs_for_each_ns(ns, prio) {
 		/* This updates start_level and num_levels of ns's priority descendants */
 		acc_level_ns = set_prio_attrs_in_ns(ns, acc_level);
 
 		/* If this a prio with chains, and we can jump from one chain
 		 * (namepsace) to another, so we accumulate the levels
 		 */
-		अगर (prio->node.type == FS_TYPE_PRIO_CHAINS)
+		if (prio->node.type == FS_TYPE_PRIO_CHAINS)
 			acc_level = acc_level_ns;
-	पूर्ण
+	}
 
-	अगर (!prio->num_levels)
+	if (!prio->num_levels)
 		prio->num_levels = acc_level_ns - prio->start_level;
 	WARN_ON(prio->num_levels < acc_level_ns - prio->start_level);
-पूर्ण
+}
 
-अटल व्योम set_prio_attrs(काष्ठा mlx5_flow_root_namespace *root_ns)
-अणु
-	काष्ठा mlx5_flow_namespace *ns = &root_ns->ns;
-	काष्ठा fs_prio *prio;
-	पूर्णांक start_level = 0;
+static void set_prio_attrs(struct mlx5_flow_root_namespace *root_ns)
+{
+	struct mlx5_flow_namespace *ns = &root_ns->ns;
+	struct fs_prio *prio;
+	int start_level = 0;
 
-	fs_क्रम_each_prio(prio, ns) अणु
+	fs_for_each_prio(prio, ns) {
 		set_prio_attrs_in_prio(prio, start_level);
 		start_level += prio->num_levels;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा ANCHOR_PRIO 0
-#घोषणा ANCHOR_SIZE 1
-#घोषणा ANCHOR_LEVEL 0
-अटल पूर्णांक create_anchor_flow_table(काष्ठा mlx5_flow_steering *steering)
-अणु
-	काष्ठा mlx5_flow_namespace *ns = शून्य;
-	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
-	काष्ठा mlx5_flow_table *ft;
+#define ANCHOR_PRIO 0
+#define ANCHOR_SIZE 1
+#define ANCHOR_LEVEL 0
+static int create_anchor_flow_table(struct mlx5_flow_steering *steering)
+{
+	struct mlx5_flow_namespace *ns = NULL;
+	struct mlx5_flow_table_attr ft_attr = {};
+	struct mlx5_flow_table *ft;
 
 	ns = mlx5_get_flow_namespace(steering->dev, MLX5_FLOW_NAMESPACE_ANCHOR);
-	अगर (WARN_ON(!ns))
-		वापस -EINVAL;
+	if (WARN_ON(!ns))
+		return -EINVAL;
 
 	ft_attr.max_fte = ANCHOR_SIZE;
 	ft_attr.level   = ANCHOR_LEVEL;
 	ft_attr.prio    = ANCHOR_PRIO;
 
 	ft = mlx5_create_flow_table(ns, &ft_attr);
-	अगर (IS_ERR(ft)) अणु
+	if (IS_ERR(ft)) {
 		mlx5_core_err(steering->dev, "Failed to create last anchor flow table");
-		वापस PTR_ERR(ft);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return PTR_ERR(ft);
+	}
+	return 0;
+}
 
-अटल पूर्णांक init_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	पूर्णांक err;
+static int init_root_ns(struct mlx5_flow_steering *steering)
+{
+	int err;
 
 	steering->root_ns = create_root_ns(steering, FS_FT_NIC_RX);
-	अगर (!steering->root_ns)
-		वापस -ENOMEM;
+	if (!steering->root_ns)
+		return -ENOMEM;
 
 	err = init_root_tree(steering, &root_fs, &steering->root_ns->ns.node);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	set_prio_attrs(steering->root_ns);
 	err = create_anchor_flow_table(steering);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
-	वापस 0;
+	return 0;
 
 out_err:
 	cleanup_root_ns(steering->root_ns);
-	steering->root_ns = शून्य;
-	वापस err;
-पूर्ण
+	steering->root_ns = NULL;
+	return err;
+}
 
-अटल व्योम clean_tree(काष्ठा fs_node *node)
-अणु
-	अगर (node) अणु
-		काष्ठा fs_node *iter;
-		काष्ठा fs_node *temp;
+static void clean_tree(struct fs_node *node)
+{
+	if (node) {
+		struct fs_node *iter;
+		struct fs_node *temp;
 
 		tree_get_node(node);
-		list_क्रम_each_entry_safe(iter, temp, &node->children, list)
+		list_for_each_entry_safe(iter, temp, &node->children, list)
 			clean_tree(iter);
 		tree_put_node(node, false);
-		tree_हटाओ_node(node, false);
-	पूर्ण
-पूर्ण
+		tree_remove_node(node, false);
+	}
+}
 
-अटल व्योम cleanup_root_ns(काष्ठा mlx5_flow_root_namespace *root_ns)
-अणु
-	अगर (!root_ns)
-		वापस;
+static void cleanup_root_ns(struct mlx5_flow_root_namespace *root_ns)
+{
+	if (!root_ns)
+		return;
 
 	clean_tree(&root_ns->ns.node);
-पूर्ण
+}
 
-व्योम mlx5_cleanup_fs(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
+void mlx5_cleanup_fs(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
 
 	cleanup_root_ns(steering->root_ns);
 	cleanup_root_ns(steering->fdb_root_ns);
-	steering->fdb_root_ns = शून्य;
-	kमुक्त(steering->fdb_sub_ns);
-	steering->fdb_sub_ns = शून्य;
-	cleanup_root_ns(steering->snअगरfer_rx_root_ns);
-	cleanup_root_ns(steering->snअगरfer_tx_root_ns);
+	steering->fdb_root_ns = NULL;
+	kfree(steering->fdb_sub_ns);
+	steering->fdb_sub_ns = NULL;
+	cleanup_root_ns(steering->sniffer_rx_root_ns);
+	cleanup_root_ns(steering->sniffer_tx_root_ns);
 	cleanup_root_ns(steering->rdma_rx_root_ns);
 	cleanup_root_ns(steering->rdma_tx_root_ns);
 	cleanup_root_ns(steering->egress_root_ns);
 	mlx5_cleanup_fc_stats(dev);
 	kmem_cache_destroy(steering->ftes_cache);
 	kmem_cache_destroy(steering->fgs_cache);
-	kमुक्त(steering);
-पूर्ण
+	kfree(steering);
+}
 
-अटल पूर्णांक init_snअगरfer_tx_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	काष्ठा fs_prio *prio;
+static int init_sniffer_tx_root_ns(struct mlx5_flow_steering *steering)
+{
+	struct fs_prio *prio;
 
-	steering->snअगरfer_tx_root_ns = create_root_ns(steering, FS_FT_SNIFFER_TX);
-	अगर (!steering->snअगरfer_tx_root_ns)
-		वापस -ENOMEM;
-
-	/* Create single prio */
-	prio = fs_create_prio(&steering->snअगरfer_tx_root_ns->ns, 0, 1);
-	वापस PTR_ERR_OR_ZERO(prio);
-पूर्ण
-
-अटल पूर्णांक init_snअगरfer_rx_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	काष्ठा fs_prio *prio;
-
-	steering->snअगरfer_rx_root_ns = create_root_ns(steering, FS_FT_SNIFFER_RX);
-	अगर (!steering->snअगरfer_rx_root_ns)
-		वापस -ENOMEM;
+	steering->sniffer_tx_root_ns = create_root_ns(steering, FS_FT_SNIFFER_TX);
+	if (!steering->sniffer_tx_root_ns)
+		return -ENOMEM;
 
 	/* Create single prio */
-	prio = fs_create_prio(&steering->snअगरfer_rx_root_ns->ns, 0, 1);
-	वापस PTR_ERR_OR_ZERO(prio);
-पूर्ण
+	prio = fs_create_prio(&steering->sniffer_tx_root_ns->ns, 0, 1);
+	return PTR_ERR_OR_ZERO(prio);
+}
 
-अटल पूर्णांक init_rdma_rx_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	पूर्णांक err;
+static int init_sniffer_rx_root_ns(struct mlx5_flow_steering *steering)
+{
+	struct fs_prio *prio;
+
+	steering->sniffer_rx_root_ns = create_root_ns(steering, FS_FT_SNIFFER_RX);
+	if (!steering->sniffer_rx_root_ns)
+		return -ENOMEM;
+
+	/* Create single prio */
+	prio = fs_create_prio(&steering->sniffer_rx_root_ns->ns, 0, 1);
+	return PTR_ERR_OR_ZERO(prio);
+}
+
+static int init_rdma_rx_root_ns(struct mlx5_flow_steering *steering)
+{
+	int err;
 
 	steering->rdma_rx_root_ns = create_root_ns(steering, FS_FT_RDMA_RX);
-	अगर (!steering->rdma_rx_root_ns)
-		वापस -ENOMEM;
+	if (!steering->rdma_rx_root_ns)
+		return -ENOMEM;
 
 	err = init_root_tree(steering, &rdma_rx_root_fs,
 			     &steering->rdma_rx_root_ns->ns.node);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	set_prio_attrs(steering->rdma_rx_root_ns);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	cleanup_root_ns(steering->rdma_rx_root_ns);
-	steering->rdma_rx_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	steering->rdma_rx_root_ns = NULL;
+	return err;
+}
 
-अटल पूर्णांक init_rdma_tx_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	पूर्णांक err;
+static int init_rdma_tx_root_ns(struct mlx5_flow_steering *steering)
+{
+	int err;
 
 	steering->rdma_tx_root_ns = create_root_ns(steering, FS_FT_RDMA_TX);
-	अगर (!steering->rdma_tx_root_ns)
-		वापस -ENOMEM;
+	if (!steering->rdma_tx_root_ns)
+		return -ENOMEM;
 
 	err = init_root_tree(steering, &rdma_tx_root_fs,
 			     &steering->rdma_tx_root_ns->ns.node);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	set_prio_attrs(steering->rdma_tx_root_ns);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	cleanup_root_ns(steering->rdma_tx_root_ns);
-	steering->rdma_tx_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	steering->rdma_tx_root_ns = NULL;
+	return err;
+}
 
 /* FT and tc chains are stored in the same array so we can re-use the
- * mlx5_get_fdb_sub_ns() and tc api क्रम FT chains.
- * When creating a new ns क्रम each chain store it in the first available slot.
+ * mlx5_get_fdb_sub_ns() and tc api for FT chains.
+ * When creating a new ns for each chain store it in the first available slot.
  * Assume tc chains are created and stored first and only then the FT chain.
  */
-अटल व्योम store_fdb_sub_ns_prio_chain(काष्ठा mlx5_flow_steering *steering,
-					काष्ठा mlx5_flow_namespace *ns)
-अणु
-	पूर्णांक chain = 0;
+static void store_fdb_sub_ns_prio_chain(struct mlx5_flow_steering *steering,
+					struct mlx5_flow_namespace *ns)
+{
+	int chain = 0;
 
-	जबतक (steering->fdb_sub_ns[chain])
+	while (steering->fdb_sub_ns[chain])
 		++chain;
 
 	steering->fdb_sub_ns[chain] = ns;
-पूर्ण
+}
 
-अटल पूर्णांक create_fdb_sub_ns_prio_chain(काष्ठा mlx5_flow_steering *steering,
-					काष्ठा fs_prio *maj_prio)
-अणु
-	काष्ठा mlx5_flow_namespace *ns;
-	काष्ठा fs_prio *min_prio;
-	पूर्णांक prio;
+static int create_fdb_sub_ns_prio_chain(struct mlx5_flow_steering *steering,
+					struct fs_prio *maj_prio)
+{
+	struct mlx5_flow_namespace *ns;
+	struct fs_prio *min_prio;
+	int prio;
 
 	ns = fs_create_namespace(maj_prio, MLX5_FLOW_TABLE_MISS_ACTION_DEF);
-	अगर (IS_ERR(ns))
-		वापस PTR_ERR(ns);
+	if (IS_ERR(ns))
+		return PTR_ERR(ns);
 
-	क्रम (prio = 0; prio < FDB_TC_MAX_PRIO; prio++) अणु
+	for (prio = 0; prio < FDB_TC_MAX_PRIO; prio++) {
 		min_prio = fs_create_prio(ns, prio, FDB_TC_LEVELS_PER_PRIO);
-		अगर (IS_ERR(min_prio))
-			वापस PTR_ERR(min_prio);
-	पूर्ण
+		if (IS_ERR(min_prio))
+			return PTR_ERR(min_prio);
+	}
 
 	store_fdb_sub_ns_prio_chain(steering, ns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_fdb_chains(काष्ठा mlx5_flow_steering *steering,
-			     पूर्णांक fs_prio,
-			     पूर्णांक chains)
-अणु
-	काष्ठा fs_prio *maj_prio;
-	पूर्णांक levels;
-	पूर्णांक chain;
-	पूर्णांक err;
+static int create_fdb_chains(struct mlx5_flow_steering *steering,
+			     int fs_prio,
+			     int chains)
+{
+	struct fs_prio *maj_prio;
+	int levels;
+	int chain;
+	int err;
 
 	levels = FDB_TC_LEVELS_PER_PRIO * FDB_TC_MAX_PRIO * chains;
 	maj_prio = fs_create_prio_chained(&steering->fdb_root_ns->ns,
 					  fs_prio,
 					  levels);
-	अगर (IS_ERR(maj_prio))
-		वापस PTR_ERR(maj_prio);
+	if (IS_ERR(maj_prio))
+		return PTR_ERR(maj_prio);
 
-	क्रम (chain = 0; chain < chains; chain++) अणु
+	for (chain = 0; chain < chains; chain++) {
 		err = create_fdb_sub_ns_prio_chain(steering, maj_prio);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_fdb_fast_path(काष्ठा mlx5_flow_steering *steering)
-अणु
-	पूर्णांक err;
+static int create_fdb_fast_path(struct mlx5_flow_steering *steering)
+{
+	int err;
 
-	steering->fdb_sub_ns = kसुस्मृति(FDB_NUM_CHAINS,
-				       माप(*steering->fdb_sub_ns),
+	steering->fdb_sub_ns = kcalloc(FDB_NUM_CHAINS,
+				       sizeof(*steering->fdb_sub_ns),
 				       GFP_KERNEL);
-	अगर (!steering->fdb_sub_ns)
-		वापस -ENOMEM;
+	if (!steering->fdb_sub_ns)
+		return -ENOMEM;
 
 	err = create_fdb_chains(steering, FDB_TC_OFFLOAD, FDB_TC_MAX_CHAIN + 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = create_fdb_chains(steering, FDB_FT_OFFLOAD, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_fdb_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	काष्ठा fs_prio *maj_prio;
-	पूर्णांक err;
+static int init_fdb_root_ns(struct mlx5_flow_steering *steering)
+{
+	struct fs_prio *maj_prio;
+	int err;
 
 	steering->fdb_root_ns = create_root_ns(steering, FS_FT_FDB);
-	अगर (!steering->fdb_root_ns)
-		वापस -ENOMEM;
+	if (!steering->fdb_root_ns)
+		return -ENOMEM;
 
 	maj_prio = fs_create_prio(&steering->fdb_root_ns->ns, FDB_BYPASS_PATH,
 				  1);
-	अगर (IS_ERR(maj_prio)) अणु
+	if (IS_ERR(maj_prio)) {
 		err = PTR_ERR(maj_prio);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	err = create_fdb_fast_path(steering);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	maj_prio = fs_create_prio(&steering->fdb_root_ns->ns, FDB_SLOW_PATH, 1);
-	अगर (IS_ERR(maj_prio)) अणु
+	if (IS_ERR(maj_prio)) {
 		err = PTR_ERR(maj_prio);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	/* We put this priority last, knowing that nothing will get here
-	 * unless explicitly क्रमwarded to. This is possible because the
-	 * slow path tables have catch all rules and nothing माला_लो passed
+	 * unless explicitly forwarded to. This is possible because the
+	 * slow path tables have catch all rules and nothing gets passed
 	 * those tables.
 	 */
 	maj_prio = fs_create_prio(&steering->fdb_root_ns->ns, FDB_PER_VPORT, 1);
-	अगर (IS_ERR(maj_prio)) अणु
+	if (IS_ERR(maj_prio)) {
 		err = PTR_ERR(maj_prio);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	set_prio_attrs(steering->fdb_root_ns);
-	वापस 0;
+	return 0;
 
 out_err:
 	cleanup_root_ns(steering->fdb_root_ns);
-	kमुक्त(steering->fdb_sub_ns);
-	steering->fdb_sub_ns = शून्य;
-	steering->fdb_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	kfree(steering->fdb_sub_ns);
+	steering->fdb_sub_ns = NULL;
+	steering->fdb_root_ns = NULL;
+	return err;
+}
 
-अटल पूर्णांक init_egress_acl_root_ns(काष्ठा mlx5_flow_steering *steering, पूर्णांक vport)
-अणु
-	काष्ठा fs_prio *prio;
+static int init_egress_acl_root_ns(struct mlx5_flow_steering *steering, int vport)
+{
+	struct fs_prio *prio;
 
 	steering->esw_egress_root_ns[vport] = create_root_ns(steering, FS_FT_ESW_EGRESS_ACL);
-	अगर (!steering->esw_egress_root_ns[vport])
-		वापस -ENOMEM;
+	if (!steering->esw_egress_root_ns[vport])
+		return -ENOMEM;
 
 	/* create 1 prio*/
 	prio = fs_create_prio(&steering->esw_egress_root_ns[vport]->ns, 0, 1);
-	वापस PTR_ERR_OR_ZERO(prio);
-पूर्ण
+	return PTR_ERR_OR_ZERO(prio);
+}
 
-अटल पूर्णांक init_ingress_acl_root_ns(काष्ठा mlx5_flow_steering *steering, पूर्णांक vport)
-अणु
-	काष्ठा fs_prio *prio;
+static int init_ingress_acl_root_ns(struct mlx5_flow_steering *steering, int vport)
+{
+	struct fs_prio *prio;
 
 	steering->esw_ingress_root_ns[vport] = create_root_ns(steering, FS_FT_ESW_INGRESS_ACL);
-	अगर (!steering->esw_ingress_root_ns[vport])
-		वापस -ENOMEM;
+	if (!steering->esw_ingress_root_ns[vport])
+		return -ENOMEM;
 
 	/* create 1 prio*/
 	prio = fs_create_prio(&steering->esw_ingress_root_ns[vport]->ns, 0, 1);
-	वापस PTR_ERR_OR_ZERO(prio);
-पूर्ण
+	return PTR_ERR_OR_ZERO(prio);
+}
 
-पूर्णांक mlx5_fs_egress_acls_init(काष्ठा mlx5_core_dev *dev, पूर्णांक total_vports)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
-	पूर्णांक err;
-	पूर्णांक i;
+int mlx5_fs_egress_acls_init(struct mlx5_core_dev *dev, int total_vports)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int err;
+	int i;
 
 	steering->esw_egress_root_ns =
-			kसुस्मृति(total_vports,
-				माप(*steering->esw_egress_root_ns),
+			kcalloc(total_vports,
+				sizeof(*steering->esw_egress_root_ns),
 				GFP_KERNEL);
-	अगर (!steering->esw_egress_root_ns)
-		वापस -ENOMEM;
+	if (!steering->esw_egress_root_ns)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < total_vports; i++) अणु
+	for (i = 0; i < total_vports; i++) {
 		err = init_egress_acl_root_ns(steering, i);
-		अगर (err)
-			जाओ cleanup_root_ns;
-	पूर्ण
+		if (err)
+			goto cleanup_root_ns;
+	}
 	steering->esw_egress_acl_vports = total_vports;
-	वापस 0;
+	return 0;
 
 cleanup_root_ns:
-	क्रम (i--; i >= 0; i--)
+	for (i--; i >= 0; i--)
 		cleanup_root_ns(steering->esw_egress_root_ns[i]);
-	kमुक्त(steering->esw_egress_root_ns);
-	steering->esw_egress_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	kfree(steering->esw_egress_root_ns);
+	steering->esw_egress_root_ns = NULL;
+	return err;
+}
 
-व्योम mlx5_fs_egress_acls_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
-	पूर्णांक i;
+void mlx5_fs_egress_acls_cleanup(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int i;
 
-	अगर (!steering->esw_egress_root_ns)
-		वापस;
+	if (!steering->esw_egress_root_ns)
+		return;
 
-	क्रम (i = 0; i < steering->esw_egress_acl_vports; i++)
+	for (i = 0; i < steering->esw_egress_acl_vports; i++)
 		cleanup_root_ns(steering->esw_egress_root_ns[i]);
 
-	kमुक्त(steering->esw_egress_root_ns);
-	steering->esw_egress_root_ns = शून्य;
-पूर्ण
+	kfree(steering->esw_egress_root_ns);
+	steering->esw_egress_root_ns = NULL;
+}
 
-पूर्णांक mlx5_fs_ingress_acls_init(काष्ठा mlx5_core_dev *dev, पूर्णांक total_vports)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
-	पूर्णांक err;
-	पूर्णांक i;
+int mlx5_fs_ingress_acls_init(struct mlx5_core_dev *dev, int total_vports)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int err;
+	int i;
 
 	steering->esw_ingress_root_ns =
-			kसुस्मृति(total_vports,
-				माप(*steering->esw_ingress_root_ns),
+			kcalloc(total_vports,
+				sizeof(*steering->esw_ingress_root_ns),
 				GFP_KERNEL);
-	अगर (!steering->esw_ingress_root_ns)
-		वापस -ENOMEM;
+	if (!steering->esw_ingress_root_ns)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < total_vports; i++) अणु
+	for (i = 0; i < total_vports; i++) {
 		err = init_ingress_acl_root_ns(steering, i);
-		अगर (err)
-			जाओ cleanup_root_ns;
-	पूर्ण
+		if (err)
+			goto cleanup_root_ns;
+	}
 	steering->esw_ingress_acl_vports = total_vports;
-	वापस 0;
+	return 0;
 
 cleanup_root_ns:
-	क्रम (i--; i >= 0; i--)
+	for (i--; i >= 0; i--)
 		cleanup_root_ns(steering->esw_ingress_root_ns[i]);
-	kमुक्त(steering->esw_ingress_root_ns);
-	steering->esw_ingress_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	kfree(steering->esw_ingress_root_ns);
+	steering->esw_ingress_root_ns = NULL;
+	return err;
+}
 
-व्योम mlx5_fs_ingress_acls_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_flow_steering *steering = dev->priv.steering;
-	पूर्णांक i;
+void mlx5_fs_ingress_acls_cleanup(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int i;
 
-	अगर (!steering->esw_ingress_root_ns)
-		वापस;
+	if (!steering->esw_ingress_root_ns)
+		return;
 
-	क्रम (i = 0; i < steering->esw_ingress_acl_vports; i++)
+	for (i = 0; i < steering->esw_ingress_acl_vports; i++)
 		cleanup_root_ns(steering->esw_ingress_root_ns[i]);
 
-	kमुक्त(steering->esw_ingress_root_ns);
-	steering->esw_ingress_root_ns = शून्य;
-पूर्ण
+	kfree(steering->esw_ingress_root_ns);
+	steering->esw_ingress_root_ns = NULL;
+}
 
-अटल पूर्णांक init_egress_root_ns(काष्ठा mlx5_flow_steering *steering)
-अणु
-	पूर्णांक err;
+static int init_egress_root_ns(struct mlx5_flow_steering *steering)
+{
+	int err;
 
 	steering->egress_root_ns = create_root_ns(steering,
 						  FS_FT_NIC_TX);
-	अगर (!steering->egress_root_ns)
-		वापस -ENOMEM;
+	if (!steering->egress_root_ns)
+		return -ENOMEM;
 
 	err = init_root_tree(steering, &egress_root_fs,
 			     &steering->egress_root_ns->ns.node);
-	अगर (err)
-		जाओ cleanup;
+	if (err)
+		goto cleanup;
 	set_prio_attrs(steering->egress_root_ns);
-	वापस 0;
+	return 0;
 cleanup:
 	cleanup_root_ns(steering->egress_root_ns);
-	steering->egress_root_ns = शून्य;
-	वापस err;
-पूर्ण
+	steering->egress_root_ns = NULL;
+	return err;
+}
 
-पूर्णांक mlx5_init_fs(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_flow_steering *steering;
-	पूर्णांक err = 0;
+int mlx5_init_fs(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering;
+	int err = 0;
 
 	err = mlx5_init_fc_stats(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	steering = kzalloc(माप(*steering), GFP_KERNEL);
-	अगर (!steering)
-		वापस -ENOMEM;
+	steering = kzalloc(sizeof(*steering), GFP_KERNEL);
+	if (!steering)
+		return -ENOMEM;
 	steering->dev = dev;
 	dev->priv.steering = steering;
 
 	steering->fgs_cache = kmem_cache_create("mlx5_fs_fgs",
-						माप(काष्ठा mlx5_flow_group), 0,
-						0, शून्य);
-	steering->ftes_cache = kmem_cache_create("mlx5_fs_ftes", माप(काष्ठा fs_fte), 0,
-						 0, शून्य);
-	अगर (!steering->ftes_cache || !steering->fgs_cache) अणु
+						sizeof(struct mlx5_flow_group), 0,
+						0, NULL);
+	steering->ftes_cache = kmem_cache_create("mlx5_fs_ftes", sizeof(struct fs_fte), 0,
+						 0, NULL);
+	if (!steering->ftes_cache || !steering->fgs_cache) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर ((((MLX5_CAP_GEN(dev, port_type) == MLX5_CAP_PORT_TYPE_ETH) &&
+	if ((((MLX5_CAP_GEN(dev, port_type) == MLX5_CAP_PORT_TYPE_ETH) &&
 	      (MLX5_CAP_GEN(dev, nic_flow_table))) ||
 	     ((MLX5_CAP_GEN(dev, port_type) == MLX5_CAP_PORT_TYPE_IB) &&
 	      MLX5_CAP_GEN(dev, ipoib_enhanced_offloads))) &&
-	    MLX5_CAP_FLOWTABLE_NIC_RX(dev, ft_support)) अणु
+	    MLX5_CAP_FLOWTABLE_NIC_RX(dev, ft_support)) {
 		err = init_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (MLX5_ESWITCH_MANAGER(dev)) अणु
-		अगर (MLX5_CAP_ESW_FLOWTABLE_FDB(dev, ft_support)) अणु
+	if (MLX5_ESWITCH_MANAGER(dev)) {
+		if (MLX5_CAP_ESW_FLOWTABLE_FDB(dev, ft_support)) {
 			err = init_fdb_root_ns(steering);
-			अगर (err)
-				जाओ err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto err;
+		}
+	}
 
-	अगर (MLX5_CAP_FLOWTABLE_SNIFFER_RX(dev, ft_support)) अणु
-		err = init_snअगरfer_rx_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+	if (MLX5_CAP_FLOWTABLE_SNIFFER_RX(dev, ft_support)) {
+		err = init_sniffer_rx_root_ns(steering);
+		if (err)
+			goto err;
+	}
 
-	अगर (MLX5_CAP_FLOWTABLE_SNIFFER_TX(dev, ft_support)) अणु
-		err = init_snअगरfer_tx_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+	if (MLX5_CAP_FLOWTABLE_SNIFFER_TX(dev, ft_support)) {
+		err = init_sniffer_tx_root_ns(steering);
+		if (err)
+			goto err;
+	}
 
-	अगर (MLX5_CAP_FLOWTABLE_RDMA_RX(dev, ft_support) &&
-	    MLX5_CAP_FLOWTABLE_RDMA_RX(dev, table_miss_action_करोमुख्य)) अणु
+	if (MLX5_CAP_FLOWTABLE_RDMA_RX(dev, ft_support) &&
+	    MLX5_CAP_FLOWTABLE_RDMA_RX(dev, table_miss_action_domain)) {
 		err = init_rdma_rx_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (MLX5_CAP_FLOWTABLE_RDMA_TX(dev, ft_support)) अणु
+	if (MLX5_CAP_FLOWTABLE_RDMA_TX(dev, ft_support)) {
 		err = init_rdma_tx_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (mlx5_fpga_ipsec_device_caps(steering->dev) & MLX5_ACCEL_IPSEC_CAP_DEVICE ||
-	    MLX5_CAP_FLOWTABLE_NIC_TX(dev, ft_support)) अणु
+	if (mlx5_fpga_ipsec_device_caps(steering->dev) & MLX5_ACCEL_IPSEC_CAP_DEVICE ||
+	    MLX5_CAP_FLOWTABLE_NIC_TX(dev, ft_support)) {
 		err = init_egress_root_ns(steering);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
 	mlx5_cleanup_fs(dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5_fs_add_rx_underlay_qpn(काष्ठा mlx5_core_dev *dev, u32 underlay_qpn)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = dev->priv.steering->root_ns;
-	काष्ठा mlx5_ft_underlay_qp *new_uqp;
-	पूर्णांक err = 0;
+int mlx5_fs_add_rx_underlay_qpn(struct mlx5_core_dev *dev, u32 underlay_qpn)
+{
+	struct mlx5_flow_root_namespace *root = dev->priv.steering->root_ns;
+	struct mlx5_ft_underlay_qp *new_uqp;
+	int err = 0;
 
-	new_uqp = kzalloc(माप(*new_uqp), GFP_KERNEL);
-	अगर (!new_uqp)
-		वापस -ENOMEM;
+	new_uqp = kzalloc(sizeof(*new_uqp), GFP_KERNEL);
+	if (!new_uqp)
+		return -ENOMEM;
 
 	mutex_lock(&root->chain_lock);
 
-	अगर (!root->root_ft) अणु
+	if (!root->root_ft) {
 		err = -EINVAL;
-		जाओ update_ft_fail;
-	पूर्ण
+		goto update_ft_fail;
+	}
 
 	err = root->cmds->update_root_ft(root, root->root_ft, underlay_qpn,
 					 false);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(dev, "Failed adding underlay QPN (%u) to root FT err(%d)\n",
 			       underlay_qpn, err);
-		जाओ update_ft_fail;
-	पूर्ण
+		goto update_ft_fail;
+	}
 
 	new_uqp->qpn = underlay_qpn;
 	list_add_tail(&new_uqp->list, &root->underlay_qpns);
 
 	mutex_unlock(&root->chain_lock);
 
-	वापस 0;
+	return 0;
 
 update_ft_fail:
 	mutex_unlock(&root->chain_lock);
-	kमुक्त(new_uqp);
-	वापस err;
-पूर्ण
+	kfree(new_uqp);
+	return err;
+}
 EXPORT_SYMBOL(mlx5_fs_add_rx_underlay_qpn);
 
-पूर्णांक mlx5_fs_हटाओ_rx_underlay_qpn(काष्ठा mlx5_core_dev *dev, u32 underlay_qpn)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root = dev->priv.steering->root_ns;
-	काष्ठा mlx5_ft_underlay_qp *uqp;
+int mlx5_fs_remove_rx_underlay_qpn(struct mlx5_core_dev *dev, u32 underlay_qpn)
+{
+	struct mlx5_flow_root_namespace *root = dev->priv.steering->root_ns;
+	struct mlx5_ft_underlay_qp *uqp;
 	bool found = false;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	mutex_lock(&root->chain_lock);
-	list_क्रम_each_entry(uqp, &root->underlay_qpns, list) अणु
-		अगर (uqp->qpn == underlay_qpn) अणु
+	list_for_each_entry(uqp, &root->underlay_qpns, list) {
+		if (uqp->qpn == underlay_qpn) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		mlx5_core_warn(dev, "Failed finding underlay qp (%u) in qpn list\n",
 			       underlay_qpn);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = root->cmds->update_root_ft(root, root->root_ft, underlay_qpn,
 					 true);
-	अगर (err)
+	if (err)
 		mlx5_core_warn(dev, "Failed removing underlay QPN (%u) from root FT err(%d)\n",
 			       underlay_qpn, err);
 
 	list_del(&uqp->list);
 	mutex_unlock(&root->chain_lock);
-	kमुक्त(uqp);
+	kfree(uqp);
 
-	वापस 0;
+	return 0;
 
 out:
 	mutex_unlock(&root->chain_lock);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(mlx5_fs_हटाओ_rx_underlay_qpn);
+	return err;
+}
+EXPORT_SYMBOL(mlx5_fs_remove_rx_underlay_qpn);
 
-अटल काष्ठा mlx5_flow_root_namespace
-*get_root_namespace(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_flow_namespace_type ns_type)
-अणु
-	काष्ठा mlx5_flow_namespace *ns;
+static struct mlx5_flow_root_namespace
+*get_root_namespace(struct mlx5_core_dev *dev, enum mlx5_flow_namespace_type ns_type)
+{
+	struct mlx5_flow_namespace *ns;
 
-	अगर (ns_type == MLX5_FLOW_NAMESPACE_ESW_EGRESS ||
+	if (ns_type == MLX5_FLOW_NAMESPACE_ESW_EGRESS ||
 	    ns_type == MLX5_FLOW_NAMESPACE_ESW_INGRESS)
 		ns = mlx5_get_flow_vport_acl_namespace(dev, ns_type, 0);
-	अन्यथा
+	else
 		ns = mlx5_get_flow_namespace(dev, ns_type);
-	अगर (!ns)
-		वापस शून्य;
+	if (!ns)
+		return NULL;
 
-	वापस find_root(&ns->node);
-पूर्ण
+	return find_root(&ns->node);
+}
 
-काष्ठा mlx5_modअगरy_hdr *mlx5_modअगरy_header_alloc(काष्ठा mlx5_core_dev *dev,
+struct mlx5_modify_hdr *mlx5_modify_header_alloc(struct mlx5_core_dev *dev,
 						 u8 ns_type, u8 num_actions,
-						 व्योम *modअगरy_actions)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr;
-	पूर्णांक err;
+						 void *modify_actions)
+{
+	struct mlx5_flow_root_namespace *root;
+	struct mlx5_modify_hdr *modify_hdr;
+	int err;
 
 	root = get_root_namespace(dev, ns_type);
-	अगर (!root)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!root)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	modअगरy_hdr = kzalloc(माप(*modअगरy_hdr), GFP_KERNEL);
-	अगर (!modअगरy_hdr)
-		वापस ERR_PTR(-ENOMEM);
+	modify_hdr = kzalloc(sizeof(*modify_hdr), GFP_KERNEL);
+	if (!modify_hdr)
+		return ERR_PTR(-ENOMEM);
 
-	modअगरy_hdr->ns_type = ns_type;
-	err = root->cmds->modअगरy_header_alloc(root, ns_type, num_actions,
-					      modअगरy_actions, modअगरy_hdr);
-	अगर (err) अणु
-		kमुक्त(modअगरy_hdr);
-		वापस ERR_PTR(err);
-	पूर्ण
+	modify_hdr->ns_type = ns_type;
+	err = root->cmds->modify_header_alloc(root, ns_type, num_actions,
+					      modify_actions, modify_hdr);
+	if (err) {
+		kfree(modify_hdr);
+		return ERR_PTR(err);
+	}
 
-	वापस modअगरy_hdr;
-पूर्ण
-EXPORT_SYMBOL(mlx5_modअगरy_header_alloc);
+	return modify_hdr;
+}
+EXPORT_SYMBOL(mlx5_modify_header_alloc);
 
-व्योम mlx5_modअगरy_header_dealloc(काष्ठा mlx5_core_dev *dev,
-				काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
+void mlx5_modify_header_dealloc(struct mlx5_core_dev *dev,
+				struct mlx5_modify_hdr *modify_hdr)
+{
+	struct mlx5_flow_root_namespace *root;
 
-	root = get_root_namespace(dev, modअगरy_hdr->ns_type);
-	अगर (WARN_ON(!root))
-		वापस;
-	root->cmds->modअगरy_header_dealloc(root, modअगरy_hdr);
-	kमुक्त(modअगरy_hdr);
-पूर्ण
-EXPORT_SYMBOL(mlx5_modअगरy_header_dealloc);
+	root = get_root_namespace(dev, modify_hdr->ns_type);
+	if (WARN_ON(!root))
+		return;
+	root->cmds->modify_header_dealloc(root, modify_hdr);
+	kfree(modify_hdr);
+}
+EXPORT_SYMBOL(mlx5_modify_header_dealloc);
 
-काष्ठा mlx5_pkt_reक्रमmat *mlx5_packet_reक्रमmat_alloc(काष्ठा mlx5_core_dev *dev,
-						     पूर्णांक reक्रमmat_type,
-						     माप_प्रकार size,
-						     व्योम *reक्रमmat_data,
-						     क्रमागत mlx5_flow_namespace_type ns_type)
-अणु
-	काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat;
-	काष्ठा mlx5_flow_root_namespace *root;
-	पूर्णांक err;
+struct mlx5_pkt_reformat *mlx5_packet_reformat_alloc(struct mlx5_core_dev *dev,
+						     int reformat_type,
+						     size_t size,
+						     void *reformat_data,
+						     enum mlx5_flow_namespace_type ns_type)
+{
+	struct mlx5_pkt_reformat *pkt_reformat;
+	struct mlx5_flow_root_namespace *root;
+	int err;
 
 	root = get_root_namespace(dev, ns_type);
-	अगर (!root)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (!root)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	pkt_reक्रमmat = kzalloc(माप(*pkt_reक्रमmat), GFP_KERNEL);
-	अगर (!pkt_reक्रमmat)
-		वापस ERR_PTR(-ENOMEM);
+	pkt_reformat = kzalloc(sizeof(*pkt_reformat), GFP_KERNEL);
+	if (!pkt_reformat)
+		return ERR_PTR(-ENOMEM);
 
-	pkt_reक्रमmat->ns_type = ns_type;
-	pkt_reक्रमmat->reक्रमmat_type = reक्रमmat_type;
-	err = root->cmds->packet_reक्रमmat_alloc(root, reक्रमmat_type, size,
-						reक्रमmat_data, ns_type,
-						pkt_reक्रमmat);
-	अगर (err) अणु
-		kमुक्त(pkt_reक्रमmat);
-		वापस ERR_PTR(err);
-	पूर्ण
+	pkt_reformat->ns_type = ns_type;
+	pkt_reformat->reformat_type = reformat_type;
+	err = root->cmds->packet_reformat_alloc(root, reformat_type, size,
+						reformat_data, ns_type,
+						pkt_reformat);
+	if (err) {
+		kfree(pkt_reformat);
+		return ERR_PTR(err);
+	}
 
-	वापस pkt_reक्रमmat;
-पूर्ण
-EXPORT_SYMBOL(mlx5_packet_reक्रमmat_alloc);
+	return pkt_reformat;
+}
+EXPORT_SYMBOL(mlx5_packet_reformat_alloc);
 
-व्योम mlx5_packet_reक्रमmat_dealloc(काष्ठा mlx5_core_dev *dev,
-				  काष्ठा mlx5_pkt_reक्रमmat *pkt_reक्रमmat)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
+void mlx5_packet_reformat_dealloc(struct mlx5_core_dev *dev,
+				  struct mlx5_pkt_reformat *pkt_reformat)
+{
+	struct mlx5_flow_root_namespace *root;
 
-	root = get_root_namespace(dev, pkt_reक्रमmat->ns_type);
-	अगर (WARN_ON(!root))
-		वापस;
-	root->cmds->packet_reक्रमmat_dealloc(root, pkt_reक्रमmat);
-	kमुक्त(pkt_reक्रमmat);
-पूर्ण
-EXPORT_SYMBOL(mlx5_packet_reक्रमmat_dealloc);
+	root = get_root_namespace(dev, pkt_reformat->ns_type);
+	if (WARN_ON(!root))
+		return;
+	root->cmds->packet_reformat_dealloc(root, pkt_reformat);
+	kfree(pkt_reformat);
+}
+EXPORT_SYMBOL(mlx5_packet_reformat_dealloc);
 
-पूर्णांक mlx5_flow_namespace_set_peer(काष्ठा mlx5_flow_root_namespace *ns,
-				 काष्ठा mlx5_flow_root_namespace *peer_ns)
-अणु
-	अगर (peer_ns && ns->mode != peer_ns->mode) अणु
+int mlx5_flow_namespace_set_peer(struct mlx5_flow_root_namespace *ns,
+				 struct mlx5_flow_root_namespace *peer_ns)
+{
+	if (peer_ns && ns->mode != peer_ns->mode) {
 		mlx5_core_err(ns->dev,
 			      "Can't peer namespace of different steering mode\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ns->cmds->set_peer(ns, peer_ns);
-पूर्ण
+	return ns->cmds->set_peer(ns, peer_ns);
+}
 
 /* This function should be called only at init stage of the namespace.
- * It is not safe to call this function जबतक steering operations
+ * It is not safe to call this function while steering operations
  * are executed in the namespace.
  */
-पूर्णांक mlx5_flow_namespace_set_mode(काष्ठा mlx5_flow_namespace *ns,
-				 क्रमागत mlx5_flow_steering_mode mode)
-अणु
-	काष्ठा mlx5_flow_root_namespace *root;
-	स्थिर काष्ठा mlx5_flow_cmds *cmds;
-	पूर्णांक err;
+int mlx5_flow_namespace_set_mode(struct mlx5_flow_namespace *ns,
+				 enum mlx5_flow_steering_mode mode)
+{
+	struct mlx5_flow_root_namespace *root;
+	const struct mlx5_flow_cmds *cmds;
+	int err;
 
 	root = find_root(&ns->node);
-	अगर (&root->ns != ns)
+	if (&root->ns != ns)
 	/* Can't set cmds to non root namespace */
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (root->table_type != FS_FT_FDB)
-		वापस -EOPNOTSUPP;
+	if (root->table_type != FS_FT_FDB)
+		return -EOPNOTSUPP;
 
-	अगर (root->mode == mode)
-		वापस 0;
+	if (root->mode == mode)
+		return 0;
 
-	अगर (mode == MLX5_FLOW_STEERING_MODE_SMFS)
+	if (mode == MLX5_FLOW_STEERING_MODE_SMFS)
 		cmds = mlx5_fs_cmd_get_dr_cmds();
-	अन्यथा
+	else
 		cmds = mlx5_fs_cmd_get_fw_cmds();
-	अगर (!cmds)
-		वापस -EOPNOTSUPP;
+	if (!cmds)
+		return -EOPNOTSUPP;
 
 	err = cmds->create_ns(root);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_err(root->dev, "Failed to create flow namespace (%d)\n",
 			      err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	root->cmds->destroy_ns(root);
 	root->cmds = cmds;
 	root->mode = mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

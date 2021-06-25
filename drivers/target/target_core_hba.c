@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*******************************************************************************
  * Filename:  target_core_hba.c
  *
@@ -11,112 +10,112 @@
  *
  ******************************************************************************/
 
-#समावेश <linux/net.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/in.h>
-#समावेश <linux/module.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
+#include <linux/net.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/in.h>
+#include <linux/module.h>
+#include <net/sock.h>
+#include <net/tcp.h>
 
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_backend.h>
-#समावेश <target/target_core_fabric.h>
+#include <target/target_core_base.h>
+#include <target/target_core_backend.h>
+#include <target/target_core_fabric.h>
 
-#समावेश "target_core_internal.h"
+#include "target_core_internal.h"
 
-अटल LIST_HEAD(backend_list);
-अटल DEFINE_MUTEX(backend_mutex);
+static LIST_HEAD(backend_list);
+static DEFINE_MUTEX(backend_mutex);
 
-अटल u32 hba_id_counter;
+static u32 hba_id_counter;
 
-अटल DEFINE_SPINLOCK(hba_lock);
-अटल LIST_HEAD(hba_list);
+static DEFINE_SPINLOCK(hba_lock);
+static LIST_HEAD(hba_list);
 
 
-पूर्णांक transport_backend_रेजिस्टर(स्थिर काष्ठा target_backend_ops *ops)
-अणु
-	काष्ठा target_backend *tb, *old;
+int transport_backend_register(const struct target_backend_ops *ops)
+{
+	struct target_backend *tb, *old;
 
-	tb = kzalloc(माप(*tb), GFP_KERNEL);
-	अगर (!tb)
-		वापस -ENOMEM;
+	tb = kzalloc(sizeof(*tb), GFP_KERNEL);
+	if (!tb)
+		return -ENOMEM;
 	tb->ops = ops;
 
 	mutex_lock(&backend_mutex);
-	list_क्रम_each_entry(old, &backend_list, list) अणु
-		अगर (!म_भेद(old->ops->name, ops->name)) अणु
+	list_for_each_entry(old, &backend_list, list) {
+		if (!strcmp(old->ops->name, ops->name)) {
 			pr_err("backend %s already registered.\n", ops->name);
 			mutex_unlock(&backend_mutex);
-			kमुक्त(tb);
-			वापस -EEXIST;
-		पूर्ण
-	पूर्ण
+			kfree(tb);
+			return -EEXIST;
+		}
+	}
 	target_setup_backend_cits(tb);
 	list_add_tail(&tb->list, &backend_list);
 	mutex_unlock(&backend_mutex);
 
 	pr_debug("TCM: Registered subsystem plugin: %s struct module: %p\n",
 			ops->name, ops->owner);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(transport_backend_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(transport_backend_register);
 
-व्योम target_backend_unरेजिस्टर(स्थिर काष्ठा target_backend_ops *ops)
-अणु
-	काष्ठा target_backend *tb;
+void target_backend_unregister(const struct target_backend_ops *ops)
+{
+	struct target_backend *tb;
 
 	mutex_lock(&backend_mutex);
-	list_क्रम_each_entry(tb, &backend_list, list) अणु
-		अगर (tb->ops == ops) अणु
+	list_for_each_entry(tb, &backend_list, list) {
+		if (tb->ops == ops) {
 			list_del(&tb->list);
 			mutex_unlock(&backend_mutex);
 			/*
-			 * Wait क्रम any outstanding backend driver ->rcu_head
-			 * callbacks to complete post TBO->मुक्त_device() ->
-			 * call_rcu(), beक्रमe allowing backend driver module
+			 * Wait for any outstanding backend driver ->rcu_head
+			 * callbacks to complete post TBO->free_device() ->
+			 * call_rcu(), before allowing backend driver module
 			 * unload of target_backend_ops->owner to proceed.
 			 */
 			rcu_barrier();
-			kमुक्त(tb);
-			वापस;
-		पूर्ण
-	पूर्ण
+			kfree(tb);
+			return;
+		}
+	}
 	mutex_unlock(&backend_mutex);
-पूर्ण
-EXPORT_SYMBOL(target_backend_unरेजिस्टर);
+}
+EXPORT_SYMBOL(target_backend_unregister);
 
-अटल काष्ठा target_backend *core_get_backend(स्थिर अक्षर *name)
-अणु
-	काष्ठा target_backend *tb;
+static struct target_backend *core_get_backend(const char *name)
+{
+	struct target_backend *tb;
 
 	mutex_lock(&backend_mutex);
-	list_क्रम_each_entry(tb, &backend_list, list) अणु
-		अगर (!म_भेद(tb->ops->name, name))
-			जाओ found;
-	पूर्ण
+	list_for_each_entry(tb, &backend_list, list) {
+		if (!strcmp(tb->ops->name, name))
+			goto found;
+	}
 	mutex_unlock(&backend_mutex);
-	वापस शून्य;
+	return NULL;
 found:
-	अगर (tb->ops->owner && !try_module_get(tb->ops->owner))
-		tb = शून्य;
+	if (tb->ops->owner && !try_module_get(tb->ops->owner))
+		tb = NULL;
 	mutex_unlock(&backend_mutex);
-	वापस tb;
-पूर्ण
+	return tb;
+}
 
-काष्ठा se_hba *
-core_alloc_hba(स्थिर अक्षर *plugin_name, u32 plugin_dep_id, u32 hba_flags)
-अणु
-	काष्ठा se_hba *hba;
-	पूर्णांक ret = 0;
+struct se_hba *
+core_alloc_hba(const char *plugin_name, u32 plugin_dep_id, u32 hba_flags)
+{
+	struct se_hba *hba;
+	int ret = 0;
 
-	hba = kzalloc(माप(*hba), GFP_KERNEL);
-	अगर (!hba) अणु
+	hba = kzalloc(sizeof(*hba), GFP_KERNEL);
+	if (!hba) {
 		pr_err("Unable to allocate struct se_hba\n");
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	spin_lock_init(&hba->device_lock);
 	mutex_init(&hba->hba_access_mutex);
@@ -125,14 +124,14 @@ core_alloc_hba(स्थिर अक्षर *plugin_name, u32 plugin_dep_id, 
 	hba->hba_flags |= hba_flags;
 
 	hba->backend = core_get_backend(plugin_name);
-	अगर (!hba->backend) अणु
+	if (!hba->backend) {
 		ret = -EINVAL;
-		जाओ out_मुक्त_hba;
-	पूर्ण
+		goto out_free_hba;
+	}
 
 	ret = hba->backend->ops->attach_hba(hba, plugin_dep_id);
-	अगर (ret < 0)
-		जाओ out_module_put;
+	if (ret < 0)
+		goto out_module_put;
 
 	spin_lock(&hba_lock);
 	hba->hba_id = hba_id_counter++;
@@ -142,19 +141,19 @@ core_alloc_hba(स्थिर अक्षर *plugin_name, u32 plugin_dep_id, 
 	pr_debug("CORE_HBA[%d] - Attached HBA to Generic Target"
 			" Core\n", hba->hba_id);
 
-	वापस hba;
+	return hba;
 
 out_module_put:
 	module_put(hba->backend->ops->owner);
-	hba->backend = शून्य;
-out_मुक्त_hba:
-	kमुक्त(hba);
-	वापस ERR_PTR(ret);
-पूर्ण
+	hba->backend = NULL;
+out_free_hba:
+	kfree(hba);
+	return ERR_PTR(ret);
+}
 
-पूर्णांक
-core_delete_hba(काष्ठा se_hba *hba)
-अणु
+int
+core_delete_hba(struct se_hba *hba)
+{
 	WARN_ON(hba->dev_count);
 
 	hba->backend->ops->detach_hba(hba);
@@ -168,12 +167,12 @@ core_delete_hba(काष्ठा se_hba *hba)
 
 	module_put(hba->backend->ops->owner);
 
-	hba->backend = शून्य;
-	kमुक्त(hba);
-	वापस 0;
-पूर्ण
+	hba->backend = NULL;
+	kfree(hba);
+	return 0;
+}
 
-bool target_sense_desc_क्रमmat(काष्ठा se_device *dev)
-अणु
-	वापस (dev) ? dev->transport->get_blocks(dev) > U32_MAX : false;
-पूर्ण
+bool target_sense_desc_format(struct se_device *dev)
+{
+	return (dev) ? dev->transport->get_blocks(dev) > U32_MAX : false;
+}

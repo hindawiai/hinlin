@@ -1,35 +1,34 @@
-<शैली गुरु>
 /*
- * Perक्रमmance events - AMD IBS
+ * Performance events - AMD IBS
  *
  *  Copyright (C) 2011 Advanced Micro Devices, Inc., Robert Richter
  *
  *  For licencing details see kernel-base/COPYING
  */
 
-#समावेश <linux/perf_event.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/sched/घड़ी.h>
+#include <linux/perf_event.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/ptrace.h>
+#include <linux/syscore_ops.h>
+#include <linux/sched/clock.h>
 
-#समावेश <यंत्र/apic.h>
+#include <asm/apic.h>
 
-#समावेश "../perf_event.h"
+#include "../perf_event.h"
 
-अटल u32 ibs_caps;
+static u32 ibs_caps;
 
-#अगर defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_AMD)
+#if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_AMD)
 
-#समावेश <linux/kprobes.h>
-#समावेश <linux/hardirq.h>
+#include <linux/kprobes.h>
+#include <linux/hardirq.h>
 
-#समावेश <यंत्र/nmi.h>
+#include <asm/nmi.h>
 
-#घोषणा IBS_FETCH_CONFIG_MASK	(IBS_FETCH_RAND_EN | IBS_FETCH_MAX_CNT)
-#घोषणा IBS_OP_CONFIG_MASK	IBS_OP_MAX_CNT
+#define IBS_FETCH_CONFIG_MASK	(IBS_FETCH_RAND_EN | IBS_FETCH_MAX_CNT)
+#define IBS_OP_CONFIG_MASK	IBS_OP_MAX_CNT
 
 
 /*
@@ -45,12 +44,12 @@
  * In order to consume these late NMIs we have the STOPPED state, any NMI that
  * happens after we've cleared the EN state will clear this bit and report the
  * NMI handled (this is fundamentally racy in the face or multiple NMI sources,
- * someone अन्यथा can consume our BIT and our NMI will go unhandled).
+ * someone else can consume our BIT and our NMI will go unhandled).
  *
  * And since we cannot set/clear this separate bit together with the EN bit,
- * there are races; अगर we cleared STARTED early, an NMI could land in
+ * there are races; if we cleared STARTED early, an NMI could land in
  * between clearing STARTED and clearing the EN bit (in fact multiple NMIs
- * could happen अगर the period is small enough), and consume our STOPPED bit
+ * could happen if the period is small enough), and consume our STOPPED bit
  * and trigger streams of unhandled NMIs.
  *
  * If, however, we clear STARTED late, an NMI can hit between clearing the
@@ -59,150 +58,150 @@
  * is not a given. With VALID set we can end up calling pmu::stop() again
  * (the throttle logic) and trigger the WARNs in there.
  *
- * So what we करो is set STOPPING beक्रमe clearing EN to aव्योम the pmu::stop()
+ * So what we do is set STOPPING before clearing EN to avoid the pmu::stop()
  * nesting, and clear STARTED late, so that we have a well defined state over
  * the clearing of the EN bit.
  *
- * XXX: we could probably be using !atomic bitops क्रम all this.
+ * XXX: we could probably be using !atomic bitops for all this.
  */
 
-क्रमागत ibs_states अणु
+enum ibs_states {
 	IBS_ENABLED	= 0,
 	IBS_STARTED	= 1,
 	IBS_STOPPING	= 2,
 	IBS_STOPPED	= 3,
 
 	IBS_MAX_STATES,
-पूर्ण;
+};
 
-काष्ठा cpu_perf_ibs अणु
-	काष्ठा perf_event	*event;
-	अचिन्हित दीर्घ		state[BITS_TO_LONGS(IBS_MAX_STATES)];
-पूर्ण;
+struct cpu_perf_ibs {
+	struct perf_event	*event;
+	unsigned long		state[BITS_TO_LONGS(IBS_MAX_STATES)];
+};
 
-काष्ठा perf_ibs अणु
-	काष्ठा pmu			pmu;
-	अचिन्हित पूर्णांक			msr;
+struct perf_ibs {
+	struct pmu			pmu;
+	unsigned int			msr;
 	u64				config_mask;
 	u64				cnt_mask;
 	u64				enable_mask;
 	u64				valid_mask;
 	u64				max_period;
-	अचिन्हित दीर्घ			offset_mask[1];
-	पूर्णांक				offset_max;
-	अचिन्हित पूर्णांक			fetch_count_reset_broken : 1;
-	काष्ठा cpu_perf_ibs __percpu	*pcpu;
+	unsigned long			offset_mask[1];
+	int				offset_max;
+	unsigned int			fetch_count_reset_broken : 1;
+	struct cpu_perf_ibs __percpu	*pcpu;
 
-	काष्ठा attribute		**क्रमmat_attrs;
-	काष्ठा attribute_group		क्रमmat_group;
-	स्थिर काष्ठा attribute_group	*attr_groups[2];
+	struct attribute		**format_attrs;
+	struct attribute_group		format_group;
+	const struct attribute_group	*attr_groups[2];
 
 	u64				(*get_count)(u64 config);
-पूर्ण;
+};
 
-काष्ठा perf_ibs_data अणु
+struct perf_ibs_data {
 	u32		size;
-	जोड़ अणु
+	union {
 		u32	data[0];	/* data buffer starts here */
 		u32	caps;
-	पूर्ण;
+	};
 	u64		regs[MSR_AMD64_IBS_REG_COUNT_MAX];
-पूर्ण;
+};
 
-अटल पूर्णांक
-perf_event_set_period(काष्ठा hw_perf_event *hwc, u64 min, u64 max, u64 *hw_period)
-अणु
-	s64 left = local64_पढ़ो(&hwc->period_left);
+static int
+perf_event_set_period(struct hw_perf_event *hwc, u64 min, u64 max, u64 *hw_period)
+{
+	s64 left = local64_read(&hwc->period_left);
 	s64 period = hwc->sample_period;
-	पूर्णांक overflow = 0;
+	int overflow = 0;
 
 	/*
-	 * If we are way outside a reasonable range then just skip क्रमward:
+	 * If we are way outside a reasonable range then just skip forward:
 	 */
-	अगर (unlikely(left <= -period)) अणु
+	if (unlikely(left <= -period)) {
 		left = period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		overflow = 1;
-	पूर्ण
+	}
 
-	अगर (unlikely(left < (s64)min)) अणु
+	if (unlikely(left < (s64)min)) {
 		left += period;
 		local64_set(&hwc->period_left, left);
 		hwc->last_period = period;
 		overflow = 1;
-	पूर्ण
+	}
 
 	/*
-	 * If the hw period that triggers the sw overflow is too लघु
+	 * If the hw period that triggers the sw overflow is too short
 	 * we might hit the irq handler. This biases the results.
-	 * Thus we लघुen the next-to-last period and set the last
+	 * Thus we shorten the next-to-last period and set the last
 	 * period to the max period.
 	 */
-	अगर (left > max) अणु
+	if (left > max) {
 		left -= max;
-		अगर (left > max)
+		if (left > max)
 			left = max;
-		अन्यथा अगर (left < min)
+		else if (left < min)
 			left = min;
-	पूर्ण
+	}
 
 	*hw_period = (u64)left;
 
-	वापस overflow;
-पूर्ण
+	return overflow;
+}
 
-अटल  पूर्णांक
-perf_event_try_update(काष्ठा perf_event *event, u64 new_raw_count, पूर्णांक width)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक shअगरt = 64 - width;
+static  int
+perf_event_try_update(struct perf_event *event, u64 new_raw_count, int width)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	int shift = 64 - width;
 	u64 prev_raw_count;
 	u64 delta;
 
 	/*
-	 * Careful: an NMI might modअगरy the previous event value.
+	 * Careful: an NMI might modify the previous event value.
 	 *
-	 * Our tactic to handle this is to first atomically पढ़ो and
+	 * Our tactic to handle this is to first atomically read and
 	 * exchange a new raw count - then add that new-prev delta
 	 * count to the generic event atomically:
 	 */
-	prev_raw_count = local64_पढ़ो(&hwc->prev_count);
-	अगर (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+	prev_raw_count = local64_read(&hwc->prev_count);
+	if (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
 					new_raw_count) != prev_raw_count)
-		वापस 0;
+		return 0;
 
 	/*
 	 * Now we have the new raw value and have updated the prev
-	 * बारtamp alपढ़ोy. We can now calculate the elapsed delta
-	 * (event-)समय and add that to the generic event.
+	 * timestamp already. We can now calculate the elapsed delta
+	 * (event-)time and add that to the generic event.
 	 *
 	 * Careful, not all hw sign-extends above the physical width
 	 * of the count.
 	 */
-	delta = (new_raw_count << shअगरt) - (prev_raw_count << shअगरt);
-	delta >>= shअगरt;
+	delta = (new_raw_count << shift) - (prev_raw_count << shift);
+	delta >>= shift;
 
 	local64_add(delta, &event->count);
 	local64_sub(delta, &hwc->period_left);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा perf_ibs perf_ibs_fetch;
-अटल काष्ठा perf_ibs perf_ibs_op;
+static struct perf_ibs perf_ibs_fetch;
+static struct perf_ibs perf_ibs_op;
 
-अटल काष्ठा perf_ibs *get_ibs_pmu(पूर्णांक type)
-अणु
-	अगर (perf_ibs_fetch.pmu.type == type)
-		वापस &perf_ibs_fetch;
-	अगर (perf_ibs_op.pmu.type == type)
-		वापस &perf_ibs_op;
-	वापस शून्य;
-पूर्ण
+static struct perf_ibs *get_ibs_pmu(int type)
+{
+	if (perf_ibs_fetch.pmu.type == type)
+		return &perf_ibs_fetch;
+	if (perf_ibs_op.pmu.type == type)
+		return &perf_ibs_op;
+	return NULL;
+}
 
 /*
- * Use IBS क्रम precise event sampling:
+ * Use IBS for precise event sampling:
  *
  *  perf record -a -e cpu-cycles:p ...    # use ibs op counting cycle count
  *  perf record -a -e r076:p ...          # same as -e cpu-cycles:p
@@ -213,97 +212,97 @@ perf_event_try_update(काष्ठा perf_event *event, u64 new_raw_count, �
  * mode.
  *
  * The rip of IBS samples has skid 0. Thus, IBS supports precise
- * levels 1 and 2 and the PERF_EFLAGS_EXACT is set. In rare हालs the
+ * levels 1 and 2 and the PERF_EFLAGS_EXACT is set. In rare cases the
  * rip is invalid when IBS was not able to record the rip correctly.
  * We clear PERF_EFLAGS_EXACT and take the rip from pt_regs then.
  *
  */
-अटल पूर्णांक perf_ibs_precise_event(काष्ठा perf_event *event, u64 *config)
-अणु
-	चयन (event->attr.precise_ip) अणु
-	हाल 0:
-		वापस -ENOENT;
-	हाल 1:
-	हाल 2:
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+static int perf_ibs_precise_event(struct perf_event *event, u64 *config)
+{
+	switch (event->attr.precise_ip) {
+	case 0:
+		return -ENOENT;
+	case 1:
+	case 2:
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	चयन (event->attr.type) अणु
-	हाल PERF_TYPE_HARDWARE:
-		चयन (event->attr.config) अणु
-		हाल PERF_COUNT_HW_CPU_CYCLES:
+	switch (event->attr.type) {
+	case PERF_TYPE_HARDWARE:
+		switch (event->attr.config) {
+		case PERF_COUNT_HW_CPU_CYCLES:
 			*config = 0;
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल PERF_TYPE_RAW:
-		चयन (event->attr.config) अणु
-		हाल 0x0076:
+			return 0;
+		}
+		break;
+	case PERF_TYPE_RAW:
+		switch (event->attr.config) {
+		case 0x0076:
 			*config = 0;
-			वापस 0;
-		हाल 0x00C1:
+			return 0;
+		case 0x00C1:
 			*config = IBS_OP_CNT_CTL;
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -ENOENT;
-	पूर्ण
+			return 0;
+		}
+		break;
+	default:
+		return -ENOENT;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक perf_ibs_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा perf_ibs *perf_ibs;
+static int perf_ibs_init(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct perf_ibs *perf_ibs;
 	u64 max_cnt, config;
-	पूर्णांक ret;
+	int ret;
 
 	perf_ibs = get_ibs_pmu(event->attr.type);
-	अगर (perf_ibs) अणु
+	if (perf_ibs) {
 		config = event->attr.config;
-	पूर्ण अन्यथा अणु
+	} else {
 		perf_ibs = &perf_ibs_op;
 		ret = perf_ibs_precise_event(event, &config);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (event->pmu != &perf_ibs->pmu)
-		वापस -ENOENT;
+	if (event->pmu != &perf_ibs->pmu)
+		return -ENOENT;
 
-	अगर (config & ~perf_ibs->config_mask)
-		वापस -EINVAL;
+	if (config & ~perf_ibs->config_mask)
+		return -EINVAL;
 
-	अगर (hwc->sample_period) अणु
-		अगर (config & perf_ibs->cnt_mask)
+	if (hwc->sample_period) {
+		if (config & perf_ibs->cnt_mask)
 			/* raw max_cnt may not be set */
-			वापस -EINVAL;
-		अगर (!event->attr.sample_freq && hwc->sample_period & 0x0f)
+			return -EINVAL;
+		if (!event->attr.sample_freq && hwc->sample_period & 0x0f)
 			/*
 			 * lower 4 bits can not be set in ibs max cnt,
-			 * but allowing it in हाल we adjust the
+			 * but allowing it in case we adjust the
 			 * sample period to set a frequency.
 			 */
-			वापस -EINVAL;
+			return -EINVAL;
 		hwc->sample_period &= ~0x0FULL;
-		अगर (!hwc->sample_period)
+		if (!hwc->sample_period)
 			hwc->sample_period = 0x10;
-	पूर्ण अन्यथा अणु
+	} else {
 		max_cnt = config & perf_ibs->cnt_mask;
 		config &= ~perf_ibs->cnt_mask;
 		event->attr.sample_period = max_cnt << 4;
 		hwc->sample_period = event->attr.sample_period;
-	पूर्ण
+	}
 
-	अगर (!hwc->sample_period)
-		वापस -EINVAL;
+	if (!hwc->sample_period)
+		return -EINVAL;
 
 	/*
-	 * If we modअगरy hwc->sample_period, we also need to update
+	 * If we modify hwc->sample_period, we also need to update
 	 * hwc->last_period and hwc->period_left.
 	 */
 	hwc->last_period = hwc->sample_period;
@@ -312,119 +311,119 @@ perf_event_try_update(काष्ठा perf_event *event, u64 new_raw_count, �
 	hwc->config_base = perf_ibs->msr;
 	hwc->config = config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_ibs_set_period(काष्ठा perf_ibs *perf_ibs,
-			       काष्ठा hw_perf_event *hwc, u64 *period)
-अणु
-	पूर्णांक overflow;
+static int perf_ibs_set_period(struct perf_ibs *perf_ibs,
+			       struct hw_perf_event *hwc, u64 *period)
+{
+	int overflow;
 
 	/* ignore lower 4 bits in min count: */
 	overflow = perf_event_set_period(hwc, 1<<4, perf_ibs->max_period, period);
 	local64_set(&hwc->prev_count, 0);
 
-	वापस overflow;
-पूर्ण
+	return overflow;
+}
 
-अटल u64 get_ibs_fetch_count(u64 config)
-अणु
-	वापस (config & IBS_FETCH_CNT) >> 12;
-पूर्ण
+static u64 get_ibs_fetch_count(u64 config)
+{
+	return (config & IBS_FETCH_CNT) >> 12;
+}
 
-अटल u64 get_ibs_op_count(u64 config)
-अणु
+static u64 get_ibs_op_count(u64 config)
+{
 	u64 count = 0;
 
 	/*
-	 * If the पूर्णांकernal 27-bit counter rolled over, the count is MaxCnt
-	 * and the lower 7 bits of CurCnt are अक्रमomized.
+	 * If the internal 27-bit counter rolled over, the count is MaxCnt
+	 * and the lower 7 bits of CurCnt are randomized.
 	 * Otherwise CurCnt has the full 27-bit current counter value.
 	 */
-	अगर (config & IBS_OP_VAL) अणु
+	if (config & IBS_OP_VAL) {
 		count = (config & IBS_OP_MAX_CNT) << 4;
-		अगर (ibs_caps & IBS_CAPS_OPCNTEXT)
+		if (ibs_caps & IBS_CAPS_OPCNTEXT)
 			count += config & IBS_OP_MAX_CNT_EXT_MASK;
-	पूर्ण अन्यथा अगर (ibs_caps & IBS_CAPS_RDWROPCNT) अणु
+	} else if (ibs_caps & IBS_CAPS_RDWROPCNT) {
 		count = (config & IBS_OP_CUR_CNT) >> 32;
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल व्योम
-perf_ibs_event_update(काष्ठा perf_ibs *perf_ibs, काष्ठा perf_event *event,
+static void
+perf_ibs_event_update(struct perf_ibs *perf_ibs, struct perf_event *event,
 		      u64 *config)
-अणु
+{
 	u64 count = perf_ibs->get_count(*config);
 
 	/*
-	 * Set width to 64 since we करो not overflow on max width but
+	 * Set width to 64 since we do not overflow on max width but
 	 * instead on max count. In perf_ibs_set_period() we clear
 	 * prev count manually on overflow.
 	 */
-	जबतक (!perf_event_try_update(event, count, 64)) अणु
+	while (!perf_event_try_update(event, count, 64)) {
 		rdmsrl(event->hw.config_base, *config);
 		count = perf_ibs->get_count(*config);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम perf_ibs_enable_event(काष्ठा perf_ibs *perf_ibs,
-					 काष्ठा hw_perf_event *hwc, u64 config)
-अणु
-	u64 पंचांगp = hwc->config | config;
+static inline void perf_ibs_enable_event(struct perf_ibs *perf_ibs,
+					 struct hw_perf_event *hwc, u64 config)
+{
+	u64 tmp = hwc->config | config;
 
-	अगर (perf_ibs->fetch_count_reset_broken)
-		wrmsrl(hwc->config_base, पंचांगp & ~perf_ibs->enable_mask);
+	if (perf_ibs->fetch_count_reset_broken)
+		wrmsrl(hwc->config_base, tmp & ~perf_ibs->enable_mask);
 
-	wrmsrl(hwc->config_base, पंचांगp | perf_ibs->enable_mask);
-पूर्ण
+	wrmsrl(hwc->config_base, tmp | perf_ibs->enable_mask);
+}
 
 /*
- * Erratum #420 Inकाष्ठाion-Based Sampling Engine May Generate
+ * Erratum #420 Instruction-Based Sampling Engine May Generate
  * Interrupt that Cannot Be Cleared:
  *
  * Must clear counter mask first, then clear the enable bit. See
- * Revision Guide क्रम AMD Family 10h Processors, Publication #41322.
+ * Revision Guide for AMD Family 10h Processors, Publication #41322.
  */
-अटल अंतरभूत व्योम perf_ibs_disable_event(काष्ठा perf_ibs *perf_ibs,
-					  काष्ठा hw_perf_event *hwc, u64 config)
-अणु
+static inline void perf_ibs_disable_event(struct perf_ibs *perf_ibs,
+					  struct hw_perf_event *hwc, u64 config)
+{
 	config &= ~perf_ibs->cnt_mask;
-	अगर (boot_cpu_data.x86 == 0x10)
+	if (boot_cpu_data.x86 == 0x10)
 		wrmsrl(hwc->config_base, config);
 	config &= ~perf_ibs->enable_mask;
 	wrmsrl(hwc->config_base, config);
-पूर्ण
+}
 
 /*
  * We cannot restore the ibs pmu state, so we always needs to update
- * the event जबतक stopping it and then reset the state when starting
+ * the event while stopping it and then reset the state when starting
  * again. Thus, ignoring PERF_EF_RELOAD and PERF_EF_UPDATE flags in
- * perf_ibs_start()/perf_ibs_stop() and instead always करो it.
+ * perf_ibs_start()/perf_ibs_stop() and instead always do it.
  */
-अटल व्योम perf_ibs_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा perf_ibs *perf_ibs = container_of(event->pmu, काष्ठा perf_ibs, pmu);
-	काष्ठा cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
+static void perf_ibs_start(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct perf_ibs *perf_ibs = container_of(event->pmu, struct perf_ibs, pmu);
+	struct cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
 	u64 period, config = 0;
 
-	अगर (WARN_ON_ONCE(!(hwc->state & PERF_HES_STOPPED)))
-		वापस;
+	if (WARN_ON_ONCE(!(hwc->state & PERF_HES_STOPPED)))
+		return;
 
 	WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 	hwc->state = 0;
 
 	perf_ibs_set_period(perf_ibs, hwc, &period);
-	अगर (perf_ibs == &perf_ibs_op && (ibs_caps & IBS_CAPS_OPCNTEXT)) अणु
+	if (perf_ibs == &perf_ibs_op && (ibs_caps & IBS_CAPS_OPCNTEXT)) {
 		config |= period & IBS_OP_MAX_CNT_EXT_MASK;
 		period &= ~IBS_OP_MAX_CNT_EXT_MASK;
-	पूर्ण
+	}
 	config |= period >> 4;
 
 	/*
-	 * Set STARTED beक्रमe enabling the hardware, such that a subsequent NMI
+	 * Set STARTED before enabling the hardware, such that a subsequent NMI
 	 * must observe it.
 	 */
 	set_bit(IBS_STARTED,    pcpu->state);
@@ -432,38 +431,38 @@ perf_ibs_event_update(काष्ठा perf_ibs *perf_ibs, काष्ठा 
 	perf_ibs_enable_event(perf_ibs, hwc, config);
 
 	perf_event_update_userpage(event);
-पूर्ण
+}
 
-अटल व्योम perf_ibs_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा perf_ibs *perf_ibs = container_of(event->pmu, काष्ठा perf_ibs, pmu);
-	काष्ठा cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
+static void perf_ibs_stop(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct perf_ibs *perf_ibs = container_of(event->pmu, struct perf_ibs, pmu);
+	struct cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
 	u64 config;
-	पूर्णांक stopping;
+	int stopping;
 
-	अगर (test_and_set_bit(IBS_STOPPING, pcpu->state))
-		वापस;
+	if (test_and_set_bit(IBS_STOPPING, pcpu->state))
+		return;
 
 	stopping = test_bit(IBS_STARTED, pcpu->state);
 
-	अगर (!stopping && (hwc->state & PERF_HES_UPTODATE))
-		वापस;
+	if (!stopping && (hwc->state & PERF_HES_UPTODATE))
+		return;
 
 	rdmsrl(hwc->config_base, config);
 
-	अगर (stopping) अणु
+	if (stopping) {
 		/*
-		 * Set STOPPED beक्रमe disabling the hardware, such that it
+		 * Set STOPPED before disabling the hardware, such that it
 		 * must be visible to NMIs the moment we clear the EN bit,
-		 * at which poपूर्णांक we can generate an !VALID sample which
+		 * at which point we can generate an !VALID sample which
 		 * we need to consume.
 		 */
 		set_bit(IBS_STOPPED, pcpu->state);
 		perf_ibs_disable_event(perf_ibs, hwc, config);
 		/*
-		 * Clear STARTED after disabling the hardware; अगर it were
-		 * cleared beक्रमe an NMI hitting after the clear but beक्रमe
+		 * Clear STARTED after disabling the hardware; if it were
+		 * cleared before an NMI hitting after the clear but before
 		 * clearing the EN bit might think it a spurious NMI and not
 		 * handle it.
 		 *
@@ -473,10 +472,10 @@ perf_ibs_event_update(काष्ठा perf_ibs *perf_ibs, काष्ठा 
 		clear_bit(IBS_STARTED, pcpu->state);
 		WARN_ON_ONCE(hwc->state & PERF_HES_STOPPED);
 		hwc->state |= PERF_HES_STOPPED;
-	पूर्ण
+	}
 
-	अगर (hwc->state & PERF_HES_UPTODATE)
-		वापस;
+	if (hwc->state & PERF_HES_UPTODATE)
+		return;
 
 	/*
 	 * Clear valid bit to not count rollovers on update, rollovers
@@ -486,58 +485,58 @@ perf_ibs_event_update(काष्ठा perf_ibs *perf_ibs, काष्ठा 
 
 	perf_ibs_event_update(perf_ibs, event, &config);
 	hwc->state |= PERF_HES_UPTODATE;
-पूर्ण
+}
 
-अटल पूर्णांक perf_ibs_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा perf_ibs *perf_ibs = container_of(event->pmu, काष्ठा perf_ibs, pmu);
-	काष्ठा cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
+static int perf_ibs_add(struct perf_event *event, int flags)
+{
+	struct perf_ibs *perf_ibs = container_of(event->pmu, struct perf_ibs, pmu);
+	struct cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
 
-	अगर (test_and_set_bit(IBS_ENABLED, pcpu->state))
-		वापस -ENOSPC;
+	if (test_and_set_bit(IBS_ENABLED, pcpu->state))
+		return -ENOSPC;
 
 	event->hw.state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
 
 	pcpu->event = event;
 
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		perf_ibs_start(event, PERF_EF_RELOAD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम perf_ibs_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा perf_ibs *perf_ibs = container_of(event->pmu, काष्ठा perf_ibs, pmu);
-	काष्ठा cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
+static void perf_ibs_del(struct perf_event *event, int flags)
+{
+	struct perf_ibs *perf_ibs = container_of(event->pmu, struct perf_ibs, pmu);
+	struct cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
 
-	अगर (!test_and_clear_bit(IBS_ENABLED, pcpu->state))
-		वापस;
+	if (!test_and_clear_bit(IBS_ENABLED, pcpu->state))
+		return;
 
 	perf_ibs_stop(event, PERF_EF_UPDATE);
 
-	pcpu->event = शून्य;
+	pcpu->event = NULL;
 
 	perf_event_update_userpage(event);
-पूर्ण
+}
 
-अटल व्योम perf_ibs_पढ़ो(काष्ठा perf_event *event) अणु पूर्ण
+static void perf_ibs_read(struct perf_event *event) { }
 
-PMU_FORMAT_ATTR(अक्रम_en,	"config:57");
+PMU_FORMAT_ATTR(rand_en,	"config:57");
 PMU_FORMAT_ATTR(cnt_ctl,	"config:19");
 
-अटल काष्ठा attribute *ibs_fetch_क्रमmat_attrs[] = अणु
-	&क्रमmat_attr_अक्रम_en.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *ibs_fetch_format_attrs[] = {
+	&format_attr_rand_en.attr,
+	NULL,
+};
 
-अटल काष्ठा attribute *ibs_op_क्रमmat_attrs[] = अणु
-	शून्य,	/* &क्रमmat_attr_cnt_ctl.attr अगर IBS_CAPS_OPCNT */
-	शून्य,
-पूर्ण;
+static struct attribute *ibs_op_format_attrs[] = {
+	NULL,	/* &format_attr_cnt_ctl.attr if IBS_CAPS_OPCNT */
+	NULL,
+};
 
-अटल काष्ठा perf_ibs perf_ibs_fetch = अणु
-	.pmu = अणु
+static struct perf_ibs perf_ibs_fetch = {
+	.pmu = {
 		.task_ctx_nr	= perf_invalid_context,
 
 		.event_init	= perf_ibs_init,
@@ -545,24 +544,24 @@ PMU_FORMAT_ATTR(cnt_ctl,	"config:19");
 		.del		= perf_ibs_del,
 		.start		= perf_ibs_start,
 		.stop		= perf_ibs_stop,
-		.पढ़ो		= perf_ibs_पढ़ो,
+		.read		= perf_ibs_read,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	पूर्ण,
+	},
 	.msr			= MSR_AMD64_IBSFETCHCTL,
 	.config_mask		= IBS_FETCH_CONFIG_MASK,
 	.cnt_mask		= IBS_FETCH_MAX_CNT,
 	.enable_mask		= IBS_FETCH_ENABLE,
 	.valid_mask		= IBS_FETCH_VAL,
 	.max_period		= IBS_FETCH_MAX_CNT << 4,
-	.offset_mask		= अणु MSR_AMD64_IBSFETCH_REG_MASK पूर्ण,
+	.offset_mask		= { MSR_AMD64_IBSFETCH_REG_MASK },
 	.offset_max		= MSR_AMD64_IBSFETCH_REG_COUNT,
-	.क्रमmat_attrs		= ibs_fetch_क्रमmat_attrs,
+	.format_attrs		= ibs_fetch_format_attrs,
 
 	.get_count		= get_ibs_fetch_count,
-पूर्ण;
+};
 
-अटल काष्ठा perf_ibs perf_ibs_op = अणु
-	.pmu = अणु
+static struct perf_ibs perf_ibs_op = {
+	.pmu = {
 		.task_ctx_nr	= perf_invalid_context,
 
 		.event_init	= perf_ibs_init,
@@ -570,8 +569,8 @@ PMU_FORMAT_ATTR(cnt_ctl,	"config:19");
 		.del		= perf_ibs_del,
 		.start		= perf_ibs_start,
 		.stop		= perf_ibs_stop,
-		.पढ़ो		= perf_ibs_पढ़ो,
-	पूर्ण,
+		.read		= perf_ibs_read,
+	},
 	.msr			= MSR_AMD64_IBSOPCTL,
 	.config_mask		= IBS_OP_CONFIG_MASK,
 	.cnt_mask		= IBS_OP_MAX_CNT | IBS_OP_CUR_CNT |
@@ -579,473 +578,473 @@ PMU_FORMAT_ATTR(cnt_ctl,	"config:19");
 	.enable_mask		= IBS_OP_ENABLE,
 	.valid_mask		= IBS_OP_VAL,
 	.max_period		= IBS_OP_MAX_CNT << 4,
-	.offset_mask		= अणु MSR_AMD64_IBSOP_REG_MASK पूर्ण,
+	.offset_mask		= { MSR_AMD64_IBSOP_REG_MASK },
 	.offset_max		= MSR_AMD64_IBSOP_REG_COUNT,
-	.क्रमmat_attrs		= ibs_op_क्रमmat_attrs,
+	.format_attrs		= ibs_op_format_attrs,
 
 	.get_count		= get_ibs_op_count,
-पूर्ण;
+};
 
-अटल पूर्णांक perf_ibs_handle_irq(काष्ठा perf_ibs *perf_ibs, काष्ठा pt_regs *iregs)
-अणु
-	काष्ठा cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
-	काष्ठा perf_event *event = pcpu->event;
-	काष्ठा hw_perf_event *hwc;
-	काष्ठा perf_sample_data data;
-	काष्ठा perf_raw_record raw;
-	काष्ठा pt_regs regs;
-	काष्ठा perf_ibs_data ibs_data;
-	पूर्णांक offset, size, check_rip, offset_max, throttle = 0;
-	अचिन्हित पूर्णांक msr;
+static int perf_ibs_handle_irq(struct perf_ibs *perf_ibs, struct pt_regs *iregs)
+{
+	struct cpu_perf_ibs *pcpu = this_cpu_ptr(perf_ibs->pcpu);
+	struct perf_event *event = pcpu->event;
+	struct hw_perf_event *hwc;
+	struct perf_sample_data data;
+	struct perf_raw_record raw;
+	struct pt_regs regs;
+	struct perf_ibs_data ibs_data;
+	int offset, size, check_rip, offset_max, throttle = 0;
+	unsigned int msr;
 	u64 *buf, *config, period, new_config = 0;
 
-	अगर (!test_bit(IBS_STARTED, pcpu->state)) अणु
+	if (!test_bit(IBS_STARTED, pcpu->state)) {
 fail:
 		/*
-		 * Catch spurious पूर्णांकerrupts after stopping IBS: After
+		 * Catch spurious interrupts after stopping IBS: After
 		 * disabling IBS there could be still incoming NMIs
 		 * with samples that even have the valid bit cleared.
 		 * Mark all this NMIs as handled.
 		 */
-		अगर (test_and_clear_bit(IBS_STOPPED, pcpu->state))
-			वापस 1;
+		if (test_and_clear_bit(IBS_STOPPED, pcpu->state))
+			return 1;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (WARN_ON_ONCE(!event))
-		जाओ fail;
+	if (WARN_ON_ONCE(!event))
+		goto fail;
 
 	hwc = &event->hw;
 	msr = hwc->config_base;
 	buf = ibs_data.regs;
 	rdmsrl(msr, *buf);
-	अगर (!(*buf++ & perf_ibs->valid_mask))
-		जाओ fail;
+	if (!(*buf++ & perf_ibs->valid_mask))
+		goto fail;
 
 	config = &ibs_data.regs[0];
 	perf_ibs_event_update(perf_ibs, event, config);
 	perf_sample_data_init(&data, 0, hwc->last_period);
-	अगर (!perf_ibs_set_period(perf_ibs, hwc, &period))
-		जाओ out;	/* no sw counter overflow */
+	if (!perf_ibs_set_period(perf_ibs, hwc, &period))
+		goto out;	/* no sw counter overflow */
 
 	ibs_data.caps = ibs_caps;
 	size = 1;
 	offset = 1;
 	check_rip = (perf_ibs == &perf_ibs_op && (ibs_caps & IBS_CAPS_RIPINVALIDCHK));
-	अगर (event->attr.sample_type & PERF_SAMPLE_RAW)
+	if (event->attr.sample_type & PERF_SAMPLE_RAW)
 		offset_max = perf_ibs->offset_max;
-	अन्यथा अगर (check_rip)
+	else if (check_rip)
 		offset_max = 3;
-	अन्यथा
+	else
 		offset_max = 1;
-	करो अणु
+	do {
 		rdmsrl(msr + offset, *buf++);
 		size++;
 		offset = find_next_bit(perf_ibs->offset_mask,
 				       perf_ibs->offset_max,
 				       offset + 1);
-	पूर्ण जबतक (offset < offset_max);
+	} while (offset < offset_max);
 	/*
 	 * Read IbsBrTarget, IbsOpData4, and IbsExtdCtl separately
 	 * depending on their availability.
 	 * Can't add to offset_max as they are staggered
 	 */
-	अगर (event->attr.sample_type & PERF_SAMPLE_RAW) अणु
-		अगर (perf_ibs == &perf_ibs_op) अणु
-			अगर (ibs_caps & IBS_CAPS_BRNTRGT) अणु
+	if (event->attr.sample_type & PERF_SAMPLE_RAW) {
+		if (perf_ibs == &perf_ibs_op) {
+			if (ibs_caps & IBS_CAPS_BRNTRGT) {
 				rdmsrl(MSR_AMD64_IBSBRTARGET, *buf++);
 				size++;
-			पूर्ण
-			अगर (ibs_caps & IBS_CAPS_OPDATA4) अणु
+			}
+			if (ibs_caps & IBS_CAPS_OPDATA4) {
 				rdmsrl(MSR_AMD64_IBSOPDATA4, *buf++);
 				size++;
-			पूर्ण
-		पूर्ण
-		अगर (perf_ibs == &perf_ibs_fetch && (ibs_caps & IBS_CAPS_FETCHCTLEXTD)) अणु
+			}
+		}
+		if (perf_ibs == &perf_ibs_fetch && (ibs_caps & IBS_CAPS_FETCHCTLEXTD)) {
 			rdmsrl(MSR_AMD64_ICIBSEXTDCTL, *buf++);
 			size++;
-		पूर्ण
-	पूर्ण
-	ibs_data.size = माप(u64) * size;
+		}
+	}
+	ibs_data.size = sizeof(u64) * size;
 
 	regs = *iregs;
-	अगर (check_rip && (ibs_data.regs[2] & IBS_RIP_INVALID)) अणु
+	if (check_rip && (ibs_data.regs[2] & IBS_RIP_INVALID)) {
 		regs.flags &= ~PERF_EFLAGS_EXACT;
-	पूर्ण अन्यथा अणु
+	} else {
 		set_linear_ip(&regs, ibs_data.regs[1]);
 		regs.flags |= PERF_EFLAGS_EXACT;
-	पूर्ण
+	}
 
-	अगर (event->attr.sample_type & PERF_SAMPLE_RAW) अणु
-		raw = (काष्ठा perf_raw_record)अणु
-			.frag = अणु
-				.size = माप(u32) + ibs_data.size,
+	if (event->attr.sample_type & PERF_SAMPLE_RAW) {
+		raw = (struct perf_raw_record){
+			.frag = {
+				.size = sizeof(u32) + ibs_data.size,
 				.data = ibs_data.data,
-			पूर्ण,
-		पूर्ण;
+			},
+		};
 		data.raw = &raw;
-	पूर्ण
+	}
 
 	throttle = perf_event_overflow(event, &data, &regs);
 out:
-	अगर (throttle) अणु
+	if (throttle) {
 		perf_ibs_stop(event, 0);
-	पूर्ण अन्यथा अणु
-		अगर (perf_ibs == &perf_ibs_op) अणु
-			अगर (ibs_caps & IBS_CAPS_OPCNTEXT) अणु
+	} else {
+		if (perf_ibs == &perf_ibs_op) {
+			if (ibs_caps & IBS_CAPS_OPCNTEXT) {
 				new_config = period & IBS_OP_MAX_CNT_EXT_MASK;
 				period &= ~IBS_OP_MAX_CNT_EXT_MASK;
-			पूर्ण
-			अगर ((ibs_caps & IBS_CAPS_RDWROPCNT) && (*config & IBS_OP_CNT_CTL))
+			}
+			if ((ibs_caps & IBS_CAPS_RDWROPCNT) && (*config & IBS_OP_CNT_CTL))
 				new_config |= *config & IBS_OP_CUR_CNT_RAND;
-		पूर्ण
+		}
 		new_config |= period >> 4;
 
 		perf_ibs_enable_event(perf_ibs, hwc, new_config);
-	पूर्ण
+	}
 
 	perf_event_update_userpage(event);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक
-perf_ibs_nmi_handler(अचिन्हित पूर्णांक cmd, काष्ठा pt_regs *regs)
-अणु
-	u64 stamp = sched_घड़ी();
-	पूर्णांक handled = 0;
+static int
+perf_ibs_nmi_handler(unsigned int cmd, struct pt_regs *regs)
+{
+	u64 stamp = sched_clock();
+	int handled = 0;
 
 	handled += perf_ibs_handle_irq(&perf_ibs_fetch, regs);
 	handled += perf_ibs_handle_irq(&perf_ibs_op, regs);
 
-	अगर (handled)
+	if (handled)
 		inc_irq_stat(apic_perf_irqs);
 
-	perf_sample_event_took(sched_घड़ी() - stamp);
+	perf_sample_event_took(sched_clock() - stamp);
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 NOKPROBE_SYMBOL(perf_ibs_nmi_handler);
 
-अटल __init पूर्णांक perf_ibs_pmu_init(काष्ठा perf_ibs *perf_ibs, अक्षर *name)
-अणु
-	काष्ठा cpu_perf_ibs __percpu *pcpu;
-	पूर्णांक ret;
+static __init int perf_ibs_pmu_init(struct perf_ibs *perf_ibs, char *name)
+{
+	struct cpu_perf_ibs __percpu *pcpu;
+	int ret;
 
-	pcpu = alloc_percpu(काष्ठा cpu_perf_ibs);
-	अगर (!pcpu)
-		वापस -ENOMEM;
+	pcpu = alloc_percpu(struct cpu_perf_ibs);
+	if (!pcpu)
+		return -ENOMEM;
 
 	perf_ibs->pcpu = pcpu;
 
-	/* रेजिस्टर attributes */
-	अगर (perf_ibs->क्रमmat_attrs[0]) अणु
-		स_रखो(&perf_ibs->क्रमmat_group, 0, माप(perf_ibs->क्रमmat_group));
-		perf_ibs->क्रमmat_group.name	= "format";
-		perf_ibs->क्रमmat_group.attrs	= perf_ibs->क्रमmat_attrs;
+	/* register attributes */
+	if (perf_ibs->format_attrs[0]) {
+		memset(&perf_ibs->format_group, 0, sizeof(perf_ibs->format_group));
+		perf_ibs->format_group.name	= "format";
+		perf_ibs->format_group.attrs	= perf_ibs->format_attrs;
 
-		स_रखो(&perf_ibs->attr_groups, 0, माप(perf_ibs->attr_groups));
-		perf_ibs->attr_groups[0]	= &perf_ibs->क्रमmat_group;
+		memset(&perf_ibs->attr_groups, 0, sizeof(perf_ibs->attr_groups));
+		perf_ibs->attr_groups[0]	= &perf_ibs->format_group;
 		perf_ibs->pmu.attr_groups	= perf_ibs->attr_groups;
-	पूर्ण
+	}
 
-	ret = perf_pmu_रेजिस्टर(&perf_ibs->pmu, name, -1);
-	अगर (ret) अणु
-		perf_ibs->pcpu = शून्य;
-		मुक्त_percpu(pcpu);
-	पूर्ण
+	ret = perf_pmu_register(&perf_ibs->pmu, name, -1);
+	if (ret) {
+		perf_ibs->pcpu = NULL;
+		free_percpu(pcpu);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __init व्योम perf_event_ibs_init(व्योम)
-अणु
-	काष्ठा attribute **attr = ibs_op_क्रमmat_attrs;
+static __init void perf_event_ibs_init(void)
+{
+	struct attribute **attr = ibs_op_format_attrs;
 
 	/*
 	 * Some chips fail to reset the fetch count when it is written; instead
 	 * they need a 0-1 transition of IbsFetchEn.
 	 */
-	अगर (boot_cpu_data.x86 >= 0x16 && boot_cpu_data.x86 <= 0x18)
+	if (boot_cpu_data.x86 >= 0x16 && boot_cpu_data.x86 <= 0x18)
 		perf_ibs_fetch.fetch_count_reset_broken = 1;
 
 	perf_ibs_pmu_init(&perf_ibs_fetch, "ibs_fetch");
 
-	अगर (ibs_caps & IBS_CAPS_OPCNT) अणु
+	if (ibs_caps & IBS_CAPS_OPCNT) {
 		perf_ibs_op.config_mask |= IBS_OP_CNT_CTL;
-		*attr++ = &क्रमmat_attr_cnt_ctl.attr;
-	पूर्ण
+		*attr++ = &format_attr_cnt_ctl.attr;
+	}
 
-	अगर (ibs_caps & IBS_CAPS_OPCNTEXT) अणु
+	if (ibs_caps & IBS_CAPS_OPCNTEXT) {
 		perf_ibs_op.max_period  |= IBS_OP_MAX_CNT_EXT_MASK;
 		perf_ibs_op.config_mask	|= IBS_OP_MAX_CNT_EXT_MASK;
 		perf_ibs_op.cnt_mask    |= IBS_OP_MAX_CNT_EXT_MASK;
-	पूर्ण
+	}
 
 	perf_ibs_pmu_init(&perf_ibs_op, "ibs_op");
 
-	रेजिस्टर_nmi_handler(NMI_LOCAL, perf_ibs_nmi_handler, 0, "perf_ibs");
+	register_nmi_handler(NMI_LOCAL, perf_ibs_nmi_handler, 0, "perf_ibs");
 	pr_info("perf: AMD IBS detected (0x%08x)\n", ibs_caps);
-पूर्ण
+}
 
-#अन्यथा /* defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_AMD) */
+#else /* defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_AMD) */
 
-अटल __init व्योम perf_event_ibs_init(व्योम) अणु पूर्ण
+static __init void perf_event_ibs_init(void) { }
 
-#पूर्ण_अगर
+#endif
 
-/* IBS - apic initialization, क्रम perf and oprofile */
+/* IBS - apic initialization, for perf and oprofile */
 
-अटल __init u32 __get_ibs_caps(व्योम)
-अणु
+static __init u32 __get_ibs_caps(void)
+{
 	u32 caps;
-	अचिन्हित पूर्णांक max_level;
+	unsigned int max_level;
 
-	अगर (!boot_cpu_has(X86_FEATURE_IBS))
-		वापस 0;
+	if (!boot_cpu_has(X86_FEATURE_IBS))
+		return 0;
 
 	/* check IBS cpuid feature flags */
 	max_level = cpuid_eax(0x80000000);
-	अगर (max_level < IBS_CPUID_FEATURES)
-		वापस IBS_CAPS_DEFAULT;
+	if (max_level < IBS_CPUID_FEATURES)
+		return IBS_CAPS_DEFAULT;
 
 	caps = cpuid_eax(IBS_CPUID_FEATURES);
-	अगर (!(caps & IBS_CAPS_AVAIL))
+	if (!(caps & IBS_CAPS_AVAIL))
 		/* cpuid flags not valid */
-		वापस IBS_CAPS_DEFAULT;
+		return IBS_CAPS_DEFAULT;
 
-	वापस caps;
-पूर्ण
+	return caps;
+}
 
-u32 get_ibs_caps(व्योम)
-अणु
-	वापस ibs_caps;
-पूर्ण
+u32 get_ibs_caps(void)
+{
+	return ibs_caps;
+}
 
 EXPORT_SYMBOL(get_ibs_caps);
 
-अटल अंतरभूत पूर्णांक get_eilvt(पूर्णांक offset)
-अणु
-	वापस !setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_NMI, 1);
-पूर्ण
+static inline int get_eilvt(int offset)
+{
+	return !setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_NMI, 1);
+}
 
-अटल अंतरभूत पूर्णांक put_eilvt(पूर्णांक offset)
-अणु
-	वापस !setup_APIC_eilvt(offset, 0, 0, 1);
-पूर्ण
+static inline int put_eilvt(int offset)
+{
+	return !setup_APIC_eilvt(offset, 0, 0, 1);
+}
 
 /*
- * Check and reserve APIC extended पूर्णांकerrupt LVT offset क्रम IBS अगर available.
+ * Check and reserve APIC extended interrupt LVT offset for IBS if available.
  */
-अटल अंतरभूत पूर्णांक ibs_eilvt_valid(व्योम)
-अणु
-	पूर्णांक offset;
+static inline int ibs_eilvt_valid(void)
+{
+	int offset;
 	u64 val;
-	पूर्णांक valid = 0;
+	int valid = 0;
 
 	preempt_disable();
 
 	rdmsrl(MSR_AMD64_IBSCTL, val);
 	offset = val & IBSCTL_LVT_OFFSET_MASK;
 
-	अगर (!(val & IBSCTL_LVT_OFFSET_VALID)) अणु
+	if (!(val & IBSCTL_LVT_OFFSET_VALID)) {
 		pr_err(FW_BUG "cpu %d, invalid IBS interrupt offset %d (MSR%08X=0x%016llx)\n",
 		       smp_processor_id(), offset, MSR_AMD64_IBSCTL, val);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!get_eilvt(offset)) अणु
+	if (!get_eilvt(offset)) {
 		pr_err(FW_BUG "cpu %d, IBS interrupt offset %d not available (MSR%08X=0x%016llx)\n",
 		       smp_processor_id(), offset, MSR_AMD64_IBSCTL, val);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	valid = 1;
 out:
 	preempt_enable();
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-अटल पूर्णांक setup_ibs_ctl(पूर्णांक ibs_eilvt_off)
-अणु
-	काष्ठा pci_dev *cpu_cfg;
-	पूर्णांक nodes;
+static int setup_ibs_ctl(int ibs_eilvt_off)
+{
+	struct pci_dev *cpu_cfg;
+	int nodes;
 	u32 value = 0;
 
 	nodes = 0;
-	cpu_cfg = शून्य;
-	करो अणु
+	cpu_cfg = NULL;
+	do {
 		cpu_cfg = pci_get_device(PCI_VENDOR_ID_AMD,
 					 PCI_DEVICE_ID_AMD_10H_NB_MISC,
 					 cpu_cfg);
-		अगर (!cpu_cfg)
-			अवरोध;
+		if (!cpu_cfg)
+			break;
 		++nodes;
-		pci_ग_लिखो_config_dword(cpu_cfg, IBSCTL, ibs_eilvt_off
+		pci_write_config_dword(cpu_cfg, IBSCTL, ibs_eilvt_off
 				       | IBSCTL_LVT_OFFSET_VALID);
-		pci_पढ़ो_config_dword(cpu_cfg, IBSCTL, &value);
-		अगर (value != (ibs_eilvt_off | IBSCTL_LVT_OFFSET_VALID)) अणु
+		pci_read_config_dword(cpu_cfg, IBSCTL, &value);
+		if (value != (ibs_eilvt_off | IBSCTL_LVT_OFFSET_VALID)) {
 			pci_dev_put(cpu_cfg);
 			pr_debug("Failed to setup IBS LVT offset, IBSCTL = 0x%08x\n",
 				 value);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण जबतक (1);
+			return -EINVAL;
+		}
+	} while (1);
 
-	अगर (!nodes) अणु
+	if (!nodes) {
 		pr_debug("No CPU node configured for IBS\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This runs only on the current cpu. We try to find an LVT offset and
  * setup the local APIC. For this we must disable preemption. On
  * success we initialize all nodes with this offset. This updates then
  * the offset in the IBS_CTL per-node msr. The per-core APIC setup of
- * the IBS पूर्णांकerrupt vector is handled by perf_ibs_cpu_notअगरier that
+ * the IBS interrupt vector is handled by perf_ibs_cpu_notifier that
  * is using the new offset.
  */
-अटल व्योम क्रमce_ibs_eilvt_setup(व्योम)
-अणु
-	पूर्णांक offset;
-	पूर्णांक ret;
+static void force_ibs_eilvt_setup(void)
+{
+	int offset;
+	int ret;
 
 	preempt_disable();
-	/* find the next मुक्त available EILVT entry, skip offset 0 */
-	क्रम (offset = 1; offset < APIC_EILVT_NR_MAX; offset++) अणु
-		अगर (get_eilvt(offset))
-			अवरोध;
-	पूर्ण
+	/* find the next free available EILVT entry, skip offset 0 */
+	for (offset = 1; offset < APIC_EILVT_NR_MAX; offset++) {
+		if (get_eilvt(offset))
+			break;
+	}
 	preempt_enable();
 
-	अगर (offset == APIC_EILVT_NR_MAX) अणु
+	if (offset == APIC_EILVT_NR_MAX) {
 		pr_debug("No EILVT entry available\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = setup_ibs_ctl(offset);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (!ibs_eilvt_valid())
-		जाओ out;
+	if (!ibs_eilvt_valid())
+		goto out;
 
 	pr_info("LVT offset %d assigned\n", offset);
 
-	वापस;
+	return;
 out:
 	preempt_disable();
 	put_eilvt(offset);
 	preempt_enable();
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम ibs_eilvt_setup(व्योम)
-अणु
+static void ibs_eilvt_setup(void)
+{
 	/*
-	 * Force LVT offset assignment क्रम family 10h: The offsets are
-	 * not asचिन्हित by the BIOS क्रम this family, so the OS is
-	 * responsible क्रम करोing it. If the OS assignment fails, fall
+	 * Force LVT offset assignment for family 10h: The offsets are
+	 * not assigned by the BIOS for this family, so the OS is
+	 * responsible for doing it. If the OS assignment fails, fall
 	 * back to BIOS settings and try to setup this.
 	 */
-	अगर (boot_cpu_data.x86 == 0x10)
-		क्रमce_ibs_eilvt_setup();
-पूर्ण
+	if (boot_cpu_data.x86 == 0x10)
+		force_ibs_eilvt_setup();
+}
 
-अटल अंतरभूत पूर्णांक get_ibs_lvt_offset(व्योम)
-अणु
+static inline int get_ibs_lvt_offset(void)
+{
 	u64 val;
 
 	rdmsrl(MSR_AMD64_IBSCTL, val);
-	अगर (!(val & IBSCTL_LVT_OFFSET_VALID))
-		वापस -EINVAL;
+	if (!(val & IBSCTL_LVT_OFFSET_VALID))
+		return -EINVAL;
 
-	वापस val & IBSCTL_LVT_OFFSET_MASK;
-पूर्ण
+	return val & IBSCTL_LVT_OFFSET_MASK;
+}
 
-अटल व्योम setup_APIC_ibs(व्योम)
-अणु
-	पूर्णांक offset;
+static void setup_APIC_ibs(void)
+{
+	int offset;
 
 	offset = get_ibs_lvt_offset();
-	अगर (offset < 0)
-		जाओ failed;
+	if (offset < 0)
+		goto failed;
 
-	अगर (!setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_NMI, 0))
-		वापस;
+	if (!setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_NMI, 0))
+		return;
 failed:
 	pr_warn("perf: IBS APIC setup failed on cpu #%d\n",
 		smp_processor_id());
-पूर्ण
+}
 
-अटल व्योम clear_APIC_ibs(व्योम)
-अणु
-	पूर्णांक offset;
+static void clear_APIC_ibs(void)
+{
+	int offset;
 
 	offset = get_ibs_lvt_offset();
-	अगर (offset >= 0)
+	if (offset >= 0)
 		setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_FIX, 1);
-पूर्ण
+}
 
-अटल पूर्णांक x86_pmu_amd_ibs_starting_cpu(अचिन्हित पूर्णांक cpu)
-अणु
+static int x86_pmu_amd_ibs_starting_cpu(unsigned int cpu)
+{
 	setup_APIC_ibs();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक perf_ibs_suspend(व्योम)
-अणु
+static int perf_ibs_suspend(void)
+{
 	clear_APIC_ibs();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम perf_ibs_resume(व्योम)
-अणु
+static void perf_ibs_resume(void)
+{
 	ibs_eilvt_setup();
 	setup_APIC_ibs();
-पूर्ण
+}
 
-अटल काष्ठा syscore_ops perf_ibs_syscore_ops = अणु
+static struct syscore_ops perf_ibs_syscore_ops = {
 	.resume		= perf_ibs_resume,
 	.suspend	= perf_ibs_suspend,
-पूर्ण;
+};
 
-अटल व्योम perf_ibs_pm_init(व्योम)
-अणु
-	रेजिस्टर_syscore_ops(&perf_ibs_syscore_ops);
-पूर्ण
+static void perf_ibs_pm_init(void)
+{
+	register_syscore_ops(&perf_ibs_syscore_ops);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम perf_ibs_pm_init(व्योम) अणु पूर्ण
+static inline void perf_ibs_pm_init(void) { }
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक x86_pmu_amd_ibs_dying_cpu(अचिन्हित पूर्णांक cpu)
-अणु
+static int x86_pmu_amd_ibs_dying_cpu(unsigned int cpu)
+{
 	clear_APIC_ibs();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init पूर्णांक amd_ibs_init(व्योम)
-अणु
+static __init int amd_ibs_init(void)
+{
 	u32 caps;
 
 	caps = __get_ibs_caps();
-	अगर (!caps)
-		वापस -ENODEV;	/* ibs not supported by the cpu */
+	if (!caps)
+		return -ENODEV;	/* ibs not supported by the cpu */
 
 	ibs_eilvt_setup();
 
-	अगर (!ibs_eilvt_valid())
-		वापस -EINVAL;
+	if (!ibs_eilvt_valid())
+		return -EINVAL;
 
 	perf_ibs_pm_init();
 
@@ -1063,8 +1062,8 @@ failed:
 
 	perf_event_ibs_init();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Since we need the pci subप्रणाली to init ibs we can't करो this earlier: */
+/* Since we need the pci subsystem to init ibs we can't do this earlier: */
 device_initcall(amd_ibs_init);

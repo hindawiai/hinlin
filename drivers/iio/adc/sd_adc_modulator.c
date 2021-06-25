@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Generic sigma delta modulator driver
  *
@@ -7,32 +6,32 @@
  * Author: Arnaud Pouliquen <arnaud.pouliquen@st.com>.
  */
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
 
-अटल स्थिर काष्ठा iio_info iio_sd_mod_iio_info;
+static const struct iio_info iio_sd_mod_iio_info;
 
-अटल स्थिर काष्ठा iio_chan_spec iio_sd_mod_ch = अणु
+static const struct iio_chan_spec iio_sd_mod_ch = {
 	.type = IIO_VOLTAGE,
 	.indexed = 1,
-	.scan_type = अणु
+	.scan_type = {
 		.sign = 'u',
 		.realbits = 1,
-		.shअगरt = 0,
-	पूर्ण,
-पूर्ण;
+		.shift = 0,
+	},
+};
 
-अटल पूर्णांक iio_sd_mod_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा iio_dev *iio;
+static int iio_sd_mod_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct iio_dev *iio;
 
 	iio = devm_iio_device_alloc(dev, 0);
-	अगर (!iio)
-		वापस -ENOMEM;
+	if (!iio)
+		return -ENOMEM;
 
 	iio->name = dev_name(dev);
 	iio->info = &iio_sd_mod_iio_info;
@@ -41,27 +40,27 @@
 	iio->num_channels = 1;
 	iio->channels = &iio_sd_mod_ch;
 
-	platक्रमm_set_drvdata(pdev, iio);
+	platform_set_drvdata(pdev, iio);
 
-	वापस devm_iio_device_रेजिस्टर(&pdev->dev, iio);
-पूर्ण
+	return devm_iio_device_register(&pdev->dev, iio);
+}
 
-अटल स्थिर काष्ठा of_device_id sd_adc_of_match[] = अणु
-	अणु .compatible = "sd-modulator" पूर्ण,
-	अणु .compatible = "ads1201" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id sd_adc_of_match[] = {
+	{ .compatible = "sd-modulator" },
+	{ .compatible = "ads1201" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, sd_adc_of_match);
 
-अटल काष्ठा platक्रमm_driver iio_sd_mod_adc = अणु
-	.driver = अणु
+static struct platform_driver iio_sd_mod_adc = {
+	.driver = {
 		.name = "iio_sd_adc_mod",
 		.of_match_table = sd_adc_of_match,
-	पूर्ण,
+	},
 	.probe = iio_sd_mod_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(iio_sd_mod_adc);
+module_platform_driver(iio_sd_mod_adc);
 
 MODULE_DESCRIPTION("Basic sigma delta modulator");
 MODULE_AUTHOR("Arnaud Pouliquen <arnaud.pouliquen@st.com>");

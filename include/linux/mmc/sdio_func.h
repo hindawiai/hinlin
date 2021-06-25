@@ -1,179 +1,178 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  include/linux/mmc/sdio_func.h
  *
  *  Copyright 2007-2008 Pierre Ossman
  */
 
-#अगर_अघोषित LINUX_MMC_SDIO_FUNC_H
-#घोषणा LINUX_MMC_SDIO_FUNC_H
+#ifndef LINUX_MMC_SDIO_FUNC_H
+#define LINUX_MMC_SDIO_FUNC_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/device.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश <linux/mmc/pm.h>
+#include <linux/mmc/pm.h>
 
-काष्ठा mmc_card;
-काष्ठा sdio_func;
+struct mmc_card;
+struct sdio_func;
 
-प्रकार व्योम (sdio_irq_handler_t)(काष्ठा sdio_func *);
+typedef void (sdio_irq_handler_t)(struct sdio_func *);
 
 /*
  * SDIO function CIS tuple (unknown to the core)
  */
-काष्ठा sdio_func_tuple अणु
-	काष्ठा sdio_func_tuple *next;
-	अचिन्हित अक्षर code;
-	अचिन्हित अक्षर size;
-	अचिन्हित अक्षर data[];
-पूर्ण;
+struct sdio_func_tuple {
+	struct sdio_func_tuple *next;
+	unsigned char code;
+	unsigned char size;
+	unsigned char data[];
+};
 
 /*
  * SDIO function devices
  */
-काष्ठा sdio_func अणु
-	काष्ठा mmc_card		*card;		/* the card this device beदीर्घs to */
-	काष्ठा device		dev;		/* the device */
+struct sdio_func {
+	struct mmc_card		*card;		/* the card this device belongs to */
+	struct device		dev;		/* the device */
 	sdio_irq_handler_t	*irq_handler;	/* IRQ callback */
-	अचिन्हित पूर्णांक		num;		/* function number */
+	unsigned int		num;		/* function number */
 
-	अचिन्हित अक्षर		class;		/* standard पूर्णांकerface class */
-	अचिन्हित लघु		venकरोr;		/* venकरोr id */
-	अचिन्हित लघु		device;		/* device id */
+	unsigned char		class;		/* standard interface class */
+	unsigned short		vendor;		/* vendor id */
+	unsigned short		device;		/* device id */
 
-	अचिन्हित		max_blksize;	/* maximum block size */
-	अचिन्हित		cur_blksize;	/* current block size */
+	unsigned		max_blksize;	/* maximum block size */
+	unsigned		cur_blksize;	/* current block size */
 
-	अचिन्हित		enable_समयout;	/* max enable समयout in msec */
+	unsigned		enable_timeout;	/* max enable timeout in msec */
 
-	अचिन्हित पूर्णांक		state;		/* function state */
-#घोषणा SDIO_STATE_PRESENT	(1<<0)		/* present in sysfs */
+	unsigned int		state;		/* function state */
+#define SDIO_STATE_PRESENT	(1<<0)		/* present in sysfs */
 
-	u8			*पंचांगpbuf;	/* DMA:able scratch buffer */
+	u8			*tmpbuf;	/* DMA:able scratch buffer */
 
 	u8			major_rev;	/* major revision number */
 	u8			minor_rev;	/* minor revision number */
-	अचिन्हित		num_info;	/* number of info strings */
-	स्थिर अक्षर		**info;		/* info strings */
+	unsigned		num_info;	/* number of info strings */
+	const char		**info;		/* info strings */
 
-	काष्ठा sdio_func_tuple *tuples;
-पूर्ण;
+	struct sdio_func_tuple *tuples;
+};
 
-#घोषणा sdio_func_present(f)	((f)->state & SDIO_STATE_PRESENT)
+#define sdio_func_present(f)	((f)->state & SDIO_STATE_PRESENT)
 
-#घोषणा sdio_func_set_present(f) ((f)->state |= SDIO_STATE_PRESENT)
+#define sdio_func_set_present(f) ((f)->state |= SDIO_STATE_PRESENT)
 
-#घोषणा sdio_func_id(f)		(dev_name(&(f)->dev))
+#define sdio_func_id(f)		(dev_name(&(f)->dev))
 
-#घोषणा sdio_get_drvdata(f)	dev_get_drvdata(&(f)->dev)
-#घोषणा sdio_set_drvdata(f,d)	dev_set_drvdata(&(f)->dev, d)
-#घोषणा dev_to_sdio_func(d)	container_of(d, काष्ठा sdio_func, dev)
+#define sdio_get_drvdata(f)	dev_get_drvdata(&(f)->dev)
+#define sdio_set_drvdata(f,d)	dev_set_drvdata(&(f)->dev, d)
+#define dev_to_sdio_func(d)	container_of(d, struct sdio_func, dev)
 
 /*
  * SDIO function device driver
  */
-काष्ठा sdio_driver अणु
-	अक्षर *name;
-	स्थिर काष्ठा sdio_device_id *id_table;
+struct sdio_driver {
+	char *name;
+	const struct sdio_device_id *id_table;
 
-	पूर्णांक (*probe)(काष्ठा sdio_func *, स्थिर काष्ठा sdio_device_id *);
-	व्योम (*हटाओ)(काष्ठा sdio_func *);
+	int (*probe)(struct sdio_func *, const struct sdio_device_id *);
+	void (*remove)(struct sdio_func *);
 
-	काष्ठा device_driver drv;
-पूर्ण;
+	struct device_driver drv;
+};
 
 /**
- * SDIO_DEVICE - macro used to describe a specअगरic SDIO device
+ * SDIO_DEVICE - macro used to describe a specific SDIO device
  * @vend: the 16 bit manufacturer code
  * @dev: the 16 bit function id
  *
- * This macro is used to create a काष्ठा sdio_device_id that matches a
- * specअगरic device. The class field will be set to SDIO_ANY_ID.
+ * This macro is used to create a struct sdio_device_id that matches a
+ * specific device. The class field will be set to SDIO_ANY_ID.
  */
-#घोषणा SDIO_DEVICE(vend,dev) \
+#define SDIO_DEVICE(vend,dev) \
 	.class = SDIO_ANY_ID, \
-	.venकरोr = (vend), .device = (dev)
+	.vendor = (vend), .device = (dev)
 
 /**
- * SDIO_DEVICE_CLASS - macro used to describe a specअगरic SDIO device class
- * @dev_class: the 8 bit standard पूर्णांकerface code
+ * SDIO_DEVICE_CLASS - macro used to describe a specific SDIO device class
+ * @dev_class: the 8 bit standard interface code
  *
- * This macro is used to create a काष्ठा sdio_device_id that matches a
- * specअगरic standard SDIO function type.  The venकरोr and device fields will
+ * This macro is used to create a struct sdio_device_id that matches a
+ * specific standard SDIO function type.  The vendor and device fields will
  * be set to SDIO_ANY_ID.
  */
-#घोषणा SDIO_DEVICE_CLASS(dev_class) \
+#define SDIO_DEVICE_CLASS(dev_class) \
 	.class = (dev_class), \
-	.venकरोr = SDIO_ANY_ID, .device = SDIO_ANY_ID
+	.vendor = SDIO_ANY_ID, .device = SDIO_ANY_ID
 
-बाह्य पूर्णांक sdio_रेजिस्टर_driver(काष्ठा sdio_driver *);
-बाह्य व्योम sdio_unरेजिस्टर_driver(काष्ठा sdio_driver *);
+extern int sdio_register_driver(struct sdio_driver *);
+extern void sdio_unregister_driver(struct sdio_driver *);
 
 /**
- * module_sdio_driver() - Helper macro क्रम रेजिस्टरing a SDIO driver
- * @__sdio_driver: sdio_driver काष्ठा
+ * module_sdio_driver() - Helper macro for registering a SDIO driver
+ * @__sdio_driver: sdio_driver struct
  *
- * Helper macro क्रम SDIO drivers which करो not करो anything special in module
- * init/निकास. This eliminates a lot of boilerplate. Each module may only
- * use this macro once, and calling it replaces module_init() and module_निकास()
+ * Helper macro for SDIO drivers which do not do anything special in module
+ * init/exit. This eliminates a lot of boilerplate. Each module may only
+ * use this macro once, and calling it replaces module_init() and module_exit()
  */
-#घोषणा module_sdio_driver(__sdio_driver) \
-	module_driver(__sdio_driver, sdio_रेजिस्टर_driver, \
-		      sdio_unरेजिस्टर_driver)
+#define module_sdio_driver(__sdio_driver) \
+	module_driver(__sdio_driver, sdio_register_driver, \
+		      sdio_unregister_driver)
 
 /*
  * SDIO I/O operations
  */
-बाह्य व्योम sdio_claim_host(काष्ठा sdio_func *func);
-बाह्य व्योम sdio_release_host(काष्ठा sdio_func *func);
+extern void sdio_claim_host(struct sdio_func *func);
+extern void sdio_release_host(struct sdio_func *func);
 
-बाह्य पूर्णांक sdio_enable_func(काष्ठा sdio_func *func);
-बाह्य पूर्णांक sdio_disable_func(काष्ठा sdio_func *func);
+extern int sdio_enable_func(struct sdio_func *func);
+extern int sdio_disable_func(struct sdio_func *func);
 
-बाह्य पूर्णांक sdio_set_block_size(काष्ठा sdio_func *func, अचिन्हित blksz);
+extern int sdio_set_block_size(struct sdio_func *func, unsigned blksz);
 
-बाह्य पूर्णांक sdio_claim_irq(काष्ठा sdio_func *func, sdio_irq_handler_t *handler);
-बाह्य पूर्णांक sdio_release_irq(काष्ठा sdio_func *func);
+extern int sdio_claim_irq(struct sdio_func *func, sdio_irq_handler_t *handler);
+extern int sdio_release_irq(struct sdio_func *func);
 
-बाह्य अचिन्हित पूर्णांक sdio_align_size(काष्ठा sdio_func *func, अचिन्हित पूर्णांक sz);
+extern unsigned int sdio_align_size(struct sdio_func *func, unsigned int sz);
 
-बाह्य u8 sdio_पढ़ोb(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
-बाह्य u16 sdio_पढ़ोw(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
-बाह्य u32 sdio_पढ़ोl(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
+extern u8 sdio_readb(struct sdio_func *func, unsigned int addr, int *err_ret);
+extern u16 sdio_readw(struct sdio_func *func, unsigned int addr, int *err_ret);
+extern u32 sdio_readl(struct sdio_func *func, unsigned int addr, int *err_ret);
 
-बाह्य पूर्णांक sdio_स_नकल_fromio(काष्ठा sdio_func *func, व्योम *dst,
-	अचिन्हित पूर्णांक addr, पूर्णांक count);
-बाह्य पूर्णांक sdio_पढ़ोsb(काष्ठा sdio_func *func, व्योम *dst,
-	अचिन्हित पूर्णांक addr, पूर्णांक count);
+extern int sdio_memcpy_fromio(struct sdio_func *func, void *dst,
+	unsigned int addr, int count);
+extern int sdio_readsb(struct sdio_func *func, void *dst,
+	unsigned int addr, int count);
 
-बाह्य व्योम sdio_ग_लिखोb(काष्ठा sdio_func *func, u8 b,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
-बाह्य व्योम sdio_ग_लिखोw(काष्ठा sdio_func *func, u16 b,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
-बाह्य व्योम sdio_ग_लिखोl(काष्ठा sdio_func *func, u32 b,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
+extern void sdio_writeb(struct sdio_func *func, u8 b,
+	unsigned int addr, int *err_ret);
+extern void sdio_writew(struct sdio_func *func, u16 b,
+	unsigned int addr, int *err_ret);
+extern void sdio_writel(struct sdio_func *func, u32 b,
+	unsigned int addr, int *err_ret);
 
-बाह्य u8 sdio_ग_लिखोb_पढ़ोb(काष्ठा sdio_func *func, u8 ग_लिखो_byte,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
+extern u8 sdio_writeb_readb(struct sdio_func *func, u8 write_byte,
+	unsigned int addr, int *err_ret);
 
-बाह्य पूर्णांक sdio_स_नकल_toio(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr,
-	व्योम *src, पूर्णांक count);
-बाह्य पूर्णांक sdio_ग_लिखोsb(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr,
-	व्योम *src, पूर्णांक count);
+extern int sdio_memcpy_toio(struct sdio_func *func, unsigned int addr,
+	void *src, int count);
+extern int sdio_writesb(struct sdio_func *func, unsigned int addr,
+	void *src, int count);
 
-बाह्य अचिन्हित अक्षर sdio_f0_पढ़ोb(काष्ठा sdio_func *func,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
-बाह्य व्योम sdio_f0_ग_लिखोb(काष्ठा sdio_func *func, अचिन्हित अक्षर b,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret);
+extern unsigned char sdio_f0_readb(struct sdio_func *func,
+	unsigned int addr, int *err_ret);
+extern void sdio_f0_writeb(struct sdio_func *func, unsigned char b,
+	unsigned int addr, int *err_ret);
 
-बाह्य mmc_pm_flag_t sdio_get_host_pm_caps(काष्ठा sdio_func *func);
-बाह्य पूर्णांक sdio_set_host_pm_flags(काष्ठा sdio_func *func, mmc_pm_flag_t flags);
+extern mmc_pm_flag_t sdio_get_host_pm_caps(struct sdio_func *func);
+extern int sdio_set_host_pm_flags(struct sdio_func *func, mmc_pm_flag_t flags);
 
-बाह्य व्योम sdio_retune_crc_disable(काष्ठा sdio_func *func);
-बाह्य व्योम sdio_retune_crc_enable(काष्ठा sdio_func *func);
+extern void sdio_retune_crc_disable(struct sdio_func *func);
+extern void sdio_retune_crc_enable(struct sdio_func *func);
 
-बाह्य व्योम sdio_retune_hold_now(काष्ठा sdio_func *func);
-बाह्य व्योम sdio_retune_release(काष्ठा sdio_func *func);
+extern void sdio_retune_hold_now(struct sdio_func *func);
+extern void sdio_retune_release(struct sdio_func *func);
 
-#पूर्ण_अगर /* LINUX_MMC_SDIO_FUNC_H */
+#endif /* LINUX_MMC_SDIO_FUNC_H */

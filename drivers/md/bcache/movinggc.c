@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Moving/copying garbage collector
  *
  * Copyright 2012 Google, Inc.
  */
 
-#समावेश "bcache.h"
-#समावेश "btree.h"
-#समावेश "debug.h"
-#समावेश "request.h"
+#include "bcache.h"
+#include "btree.h"
+#include "debug.h"
+#include "request.h"
 
-#समावेश <trace/events/bcache.h>
+#include <trace/events/bcache.h>
 
-काष्ठा moving_io अणु
-	काष्ठा closure		cl;
-	काष्ठा keybuf_key	*w;
-	काष्ठा data_insert_op	op;
-	काष्ठा bbio		bio;
-पूर्ण;
+struct moving_io {
+	struct closure		cl;
+	struct keybuf_key	*w;
+	struct data_insert_op	op;
+	struct bbio		bio;
+};
 
-अटल bool moving_pred(काष्ठा keybuf *buf, काष्ठा bkey *k)
-अणु
-	काष्ठा cache_set *c = container_of(buf, काष्ठा cache_set,
+static bool moving_pred(struct keybuf *buf, struct bkey *k)
+{
+	struct cache_set *c = container_of(buf, struct cache_set,
 					   moving_gc_keys);
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++)
-		अगर (ptr_available(c, k, i) &&
+	for (i = 0; i < KEY_PTRS(k); i++)
+		if (ptr_available(c, k, i) &&
 		    GC_MOVE(PTR_BUCKET(c, k, i)))
-			वापस true;
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Moving GC - IO loop */
 
-अटल व्योम moving_io_deकाष्ठाor(काष्ठा closure *cl)
-अणु
-	काष्ठा moving_io *io = container_of(cl, काष्ठा moving_io, cl);
+static void moving_io_destructor(struct closure *cl)
+{
+	struct moving_io *io = container_of(cl, struct moving_io, cl);
 
-	kमुक्त(io);
-पूर्ण
+	kfree(io);
+}
 
-अटल व्योम ग_लिखो_moving_finish(काष्ठा closure *cl)
-अणु
-	काष्ठा moving_io *io = container_of(cl, काष्ठा moving_io, cl);
-	काष्ठा bio *bio = &io->bio.bio;
+static void write_moving_finish(struct closure *cl)
+{
+	struct moving_io *io = container_of(cl, struct moving_io, cl);
+	struct bio *bio = &io->bio.bio;
 
-	bio_मुक्त_pages(bio);
+	bio_free_pages(bio);
 
-	अगर (io->op.replace_collision)
+	if (io->op.replace_collision)
 		trace_bcache_gc_copy_collision(&io->w->key);
 
 	bch_keybuf_del(&io->op.c->moving_gc_keys, io->w);
 
 	up(&io->op.c->moving_in_flight);
 
-	closure_वापस_with_deकाष्ठाor(cl, moving_io_deकाष्ठाor);
-पूर्ण
+	closure_return_with_destructor(cl, moving_io_destructor);
+}
 
-अटल व्योम पढ़ो_moving_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा bbio *b = container_of(bio, काष्ठा bbio, bio);
-	काष्ठा moving_io *io = container_of(bio->bi_निजी,
-					    काष्ठा moving_io, cl);
+static void read_moving_endio(struct bio *bio)
+{
+	struct bbio *b = container_of(bio, struct bbio, bio);
+	struct moving_io *io = container_of(bio->bi_private,
+					    struct moving_io, cl);
 
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		io->op.status = bio->bi_status;
-	अन्यथा अगर (!KEY_सूचीTY(&b->key) &&
-		 ptr_stale(io->op.c, &b->key, 0)) अणु
+	else if (!KEY_DIRTY(&b->key) &&
+		 ptr_stale(io->op.c, &b->key, 0)) {
 		io->op.status = BLK_STS_IOERR;
-	पूर्ण
+	}
 
 	bch_bbio_endio(io->op.c, bio, bio->bi_status, "reading data to move");
-पूर्ण
+}
 
-अटल व्योम moving_init(काष्ठा moving_io *io)
-अणु
-	काष्ठा bio *bio = &io->bio.bio;
+static void moving_init(struct moving_io *io)
+{
+	struct bio *bio = &io->bio.bio;
 
-	bio_init(bio, bio->bi_अंतरभूत_vecs,
+	bio_init(bio, bio->bi_inline_vecs,
 		 DIV_ROUND_UP(KEY_SIZE(&io->w->key), PAGE_SECTORS));
 	bio_get(bio);
 	bio_set_prio(bio, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
 
 	bio->bi_iter.bi_size	= KEY_SIZE(&io->w->key) << 9;
-	bio->bi_निजी		= &io->cl;
-	bch_bio_map(bio, शून्य);
-पूर्ण
+	bio->bi_private		= &io->cl;
+	bch_bio_map(bio, NULL);
+}
 
-अटल व्योम ग_लिखो_moving(काष्ठा closure *cl)
-अणु
-	काष्ठा moving_io *io = container_of(cl, काष्ठा moving_io, cl);
-	काष्ठा data_insert_op *op = &io->op;
+static void write_moving(struct closure *cl)
+{
+	struct moving_io *io = container_of(cl, struct moving_io, cl);
+	struct data_insert_op *op = &io->op;
 
-	अगर (!op->status) अणु
+	if (!op->status) {
 		moving_init(io);
 
 		io->bio.bio.bi_iter.bi_sector = KEY_START(&io->w->key);
-		op->ग_लिखो_prio		= 1;
+		op->write_prio		= 1;
 		op->bio			= &io->bio.bio;
 
-		op->ग_लिखोback		= KEY_सूचीTY(&io->w->key);
+		op->writeback		= KEY_DIRTY(&io->w->key);
 		op->csum		= KEY_CSUM(&io->w->key);
 
 		bkey_copy(&op->replace_key, &io->w->key);
 		op->replace		= true;
 
-		closure_call(&op->cl, bch_data_insert, शून्य, cl);
-	पूर्ण
+		closure_call(&op->cl, bch_data_insert, NULL, cl);
+	}
 
-	जारी_at(cl, ग_लिखो_moving_finish, op->wq);
-पूर्ण
+	continue_at(cl, write_moving_finish, op->wq);
+}
 
-अटल व्योम पढ़ो_moving_submit(काष्ठा closure *cl)
-अणु
-	काष्ठा moving_io *io = container_of(cl, काष्ठा moving_io, cl);
-	काष्ठा bio *bio = &io->bio.bio;
+static void read_moving_submit(struct closure *cl)
+{
+	struct moving_io *io = container_of(cl, struct moving_io, cl);
+	struct bio *bio = &io->bio.bio;
 
 	bch_submit_bbio(bio, io->op.c, &io->w->key, 0);
 
-	जारी_at(cl, ग_लिखो_moving, io->op.wq);
-पूर्ण
+	continue_at(cl, write_moving, io->op.wq);
+}
 
-अटल व्योम पढ़ो_moving(काष्ठा cache_set *c)
-अणु
-	काष्ठा keybuf_key *w;
-	काष्ठा moving_io *io;
-	काष्ठा bio *bio;
-	काष्ठा closure cl;
+static void read_moving(struct cache_set *c)
+{
+	struct keybuf_key *w;
+	struct moving_io *io;
+	struct bio *bio;
+	struct closure cl;
 
 	closure_init_stack(&cl);
 
-	/* XXX: अगर we error, background ग_लिखोback could stall indefinitely */
+	/* XXX: if we error, background writeback could stall indefinitely */
 
-	जबतक (!test_bit(CACHE_SET_STOPPING, &c->flags)) अणु
+	while (!test_bit(CACHE_SET_STOPPING, &c->flags)) {
 		w = bch_keybuf_next_rescan(c, &c->moving_gc_keys,
 					   &MAX_KEY, moving_pred);
-		अगर (!w)
-			अवरोध;
+		if (!w)
+			break;
 
-		अगर (ptr_stale(c, &w->key, 0)) अणु
+		if (ptr_stale(c, &w->key, 0)) {
 			bch_keybuf_del(&c->moving_gc_keys, w);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		io = kzalloc(काष्ठा_size(io, bio.bio.bi_अंतरभूत_vecs,
+		io = kzalloc(struct_size(io, bio.bio.bi_inline_vecs,
 					 DIV_ROUND_UP(KEY_SIZE(&w->key), PAGE_SECTORS)),
 			     GFP_KERNEL);
-		अगर (!io)
-			जाओ err;
+		if (!io)
+			goto err;
 
-		w->निजी	= io;
+		w->private	= io;
 		io->w		= w;
 		io->op.inode	= KEY_INODE(&w->key);
 		io->op.c	= c;
@@ -162,92 +161,92 @@
 		bio = &io->bio.bio;
 
 		bio_set_op_attrs(bio, REQ_OP_READ, 0);
-		bio->bi_end_io	= पढ़ो_moving_endio;
+		bio->bi_end_io	= read_moving_endio;
 
-		अगर (bch_bio_alloc_pages(bio, GFP_KERNEL))
-			जाओ err;
+		if (bch_bio_alloc_pages(bio, GFP_KERNEL))
+			goto err;
 
 		trace_bcache_gc_copy(&w->key);
 
-		करोwn(&c->moving_in_flight);
-		closure_call(&io->cl, पढ़ो_moving_submit, शून्य, &cl);
-	पूर्ण
+		down(&c->moving_in_flight);
+		closure_call(&io->cl, read_moving_submit, NULL, &cl);
+	}
 
-	अगर (0) अणु
-err:		अगर (!IS_ERR_OR_शून्य(w->निजी))
-			kमुक्त(w->निजी);
+	if (0) {
+err:		if (!IS_ERR_OR_NULL(w->private))
+			kfree(w->private);
 
 		bch_keybuf_del(&c->moving_gc_keys, w);
-	पूर्ण
+	}
 
 	closure_sync(&cl);
-पूर्ण
+}
 
-अटल bool bucket_cmp(काष्ठा bucket *l, काष्ठा bucket *r)
-अणु
-	वापस GC_SECTORS_USED(l) < GC_SECTORS_USED(r);
-पूर्ण
+static bool bucket_cmp(struct bucket *l, struct bucket *r)
+{
+	return GC_SECTORS_USED(l) < GC_SECTORS_USED(r);
+}
 
-अटल अचिन्हित पूर्णांक bucket_heap_top(काष्ठा cache *ca)
-अणु
-	काष्ठा bucket *b;
+static unsigned int bucket_heap_top(struct cache *ca)
+{
+	struct bucket *b;
 
-	वापस (b = heap_peek(&ca->heap)) ? GC_SECTORS_USED(b) : 0;
-पूर्ण
+	return (b = heap_peek(&ca->heap)) ? GC_SECTORS_USED(b) : 0;
+}
 
-व्योम bch_moving_gc(काष्ठा cache_set *c)
-अणु
-	काष्ठा cache *ca = c->cache;
-	काष्ठा bucket *b;
-	अचिन्हित दीर्घ sectors_to_move, reserve_sectors;
+void bch_moving_gc(struct cache_set *c)
+{
+	struct cache *ca = c->cache;
+	struct bucket *b;
+	unsigned long sectors_to_move, reserve_sectors;
 
-	अगर (!c->copy_gc_enabled)
-		वापस;
+	if (!c->copy_gc_enabled)
+		return;
 
 	mutex_lock(&c->bucket_lock);
 
 	sectors_to_move = 0;
 	reserve_sectors = ca->sb.bucket_size *
-			     fअगरo_used(&ca->मुक्त[RESERVE_MOVINGGC]);
+			     fifo_used(&ca->free[RESERVE_MOVINGGC]);
 
 	ca->heap.used = 0;
 
-	क्रम_each_bucket(b, ca) अणु
-		अगर (GC_MARK(b) == GC_MARK_METADATA ||
+	for_each_bucket(b, ca) {
+		if (GC_MARK(b) == GC_MARK_METADATA ||
 		    !GC_SECTORS_USED(b) ||
 		    GC_SECTORS_USED(b) == ca->sb.bucket_size ||
-		    atomic_पढ़ो(&b->pin))
-			जारी;
+		    atomic_read(&b->pin))
+			continue;
 
-		अगर (!heap_full(&ca->heap)) अणु
+		if (!heap_full(&ca->heap)) {
 			sectors_to_move += GC_SECTORS_USED(b);
 			heap_add(&ca->heap, b, bucket_cmp);
-		पूर्ण अन्यथा अगर (bucket_cmp(b, heap_peek(&ca->heap))) अणु
+		} else if (bucket_cmp(b, heap_peek(&ca->heap))) {
 			sectors_to_move -= bucket_heap_top(ca);
 			sectors_to_move += GC_SECTORS_USED(b);
 
 			ca->heap.data[0] = b;
-			heap_sअगरt(&ca->heap, 0, bucket_cmp);
-		पूर्ण
-	पूर्ण
+			heap_sift(&ca->heap, 0, bucket_cmp);
+		}
+	}
 
-	जबतक (sectors_to_move > reserve_sectors) अणु
+	while (sectors_to_move > reserve_sectors) {
 		heap_pop(&ca->heap, b, bucket_cmp);
 		sectors_to_move -= GC_SECTORS_USED(b);
-	पूर्ण
+	}
 
-	जबतक (heap_pop(&ca->heap, b, bucket_cmp))
+	while (heap_pop(&ca->heap, b, bucket_cmp))
 		SET_GC_MOVE(b, 1);
 
 	mutex_unlock(&c->bucket_lock);
 
 	c->moving_gc_keys.last_scanned = ZERO_KEY;
 
-	पढ़ो_moving(c);
-पूर्ण
+	read_moving(c);
+}
 
-व्योम bch_moving_init_cache_set(काष्ठा cache_set *c)
-अणु
+void bch_moving_init_cache_set(struct cache_set *c)
+{
 	bch_keybuf_init(&c->moving_gc_keys);
 	sema_init(&c->moving_in_flight, 64);
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *    Copyright IBM Corp. 1999, 2010
  *    Author(s): Cornelia Huck (cornelia.huck@de.ibm.com)
@@ -7,463 +6,463 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/chpid.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश <यंत्र/crw.h>
+#include <linux/bug.h>
+#include <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/wait.h>
+#include <linux/mutex.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <asm/chpid.h>
+#include <asm/sclp.h>
+#include <asm/crw.h>
 
-#समावेश "cio.h"
-#समावेश "css.h"
-#समावेश "ioasm.h"
-#समावेश "cio_debug.h"
-#समावेश "chp.h"
+#include "cio.h"
+#include "css.h"
+#include "ioasm.h"
+#include "cio_debug.h"
+#include "chp.h"
 
-#घोषणा to_channelpath(device) container_of(device, काष्ठा channel_path, dev)
-#घोषणा CHP_INFO_UPDATE_INTERVAL	1*HZ
+#define to_channelpath(device) container_of(device, struct channel_path, dev)
+#define CHP_INFO_UPDATE_INTERVAL	1*HZ
 
-क्रमागत cfg_task_t अणु
+enum cfg_task_t {
 	cfg_none,
 	cfg_configure,
 	cfg_deconfigure
-पूर्ण;
+};
 
-/* Map क्रम pending configure tasks. */
-अटल क्रमागत cfg_task_t chp_cfg_task[__MAX_CSSID + 1][__MAX_CHPID + 1];
-अटल DEFINE_SPINLOCK(cfg_lock);
+/* Map for pending configure tasks. */
+static enum cfg_task_t chp_cfg_task[__MAX_CSSID + 1][__MAX_CHPID + 1];
+static DEFINE_SPINLOCK(cfg_lock);
 
-/* Map क्रम channel-path status. */
-अटल काष्ठा sclp_chp_info chp_info;
-अटल DEFINE_MUTEX(info_lock);
+/* Map for channel-path status. */
+static struct sclp_chp_info chp_info;
+static DEFINE_MUTEX(info_lock);
 
 /* Time after which channel-path status may be outdated. */
-अटल अचिन्हित दीर्घ chp_info_expires;
+static unsigned long chp_info_expires;
 
-अटल काष्ठा work_काष्ठा cfg_work;
+static struct work_struct cfg_work;
 
-/* Wait queue क्रम configure completion events. */
-अटल DECLARE_WAIT_QUEUE_HEAD(cfg_रुको_queue);
+/* Wait queue for configure completion events. */
+static DECLARE_WAIT_QUEUE_HEAD(cfg_wait_queue);
 
-/* Set vary state क्रम given chpid. */
-अटल व्योम set_chp_logically_online(काष्ठा chp_id chpid, पूर्णांक onoff)
-अणु
+/* Set vary state for given chpid. */
+static void set_chp_logically_online(struct chp_id chpid, int onoff)
+{
 	chpid_to_chp(chpid)->state = onoff;
-पूर्ण
+}
 
-/* On success वापस 0 अगर channel-path is varied offline, 1 अगर it is varied
- * online. Return -ENODEV अगर channel-path is not रेजिस्टरed. */
-पूर्णांक chp_get_status(काष्ठा chp_id chpid)
-अणु
-	वापस (chpid_to_chp(chpid) ? chpid_to_chp(chpid)->state : -ENODEV);
-पूर्ण
+/* On success return 0 if channel-path is varied offline, 1 if it is varied
+ * online. Return -ENODEV if channel-path is not registered. */
+int chp_get_status(struct chp_id chpid)
+{
+	return (chpid_to_chp(chpid) ? chpid_to_chp(chpid)->state : -ENODEV);
+}
 
 /**
- * chp_get_sch_opm - वापस opm क्रम subchannel
+ * chp_get_sch_opm - return opm for subchannel
  * @sch: subchannel
  *
- * Calculate and वापस the operational path mask (opm) based on the chpids
+ * Calculate and return the operational path mask (opm) based on the chpids
  * used by the subchannel and the status of the associated channel-paths.
  */
-u8 chp_get_sch_opm(काष्ठा subchannel *sch)
-अणु
-	काष्ठा chp_id chpid;
-	पूर्णांक opm;
-	पूर्णांक i;
+u8 chp_get_sch_opm(struct subchannel *sch)
+{
+	struct chp_id chpid;
+	int opm;
+	int i;
 
 	opm = 0;
 	chp_id_init(&chpid);
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		opm <<= 1;
 		chpid.id = sch->schib.pmcw.chpid[i];
-		अगर (chp_get_status(chpid) != 0)
+		if (chp_get_status(chpid) != 0)
 			opm |= 1;
-	पूर्ण
-	वापस opm;
-पूर्ण
+	}
+	return opm;
+}
 EXPORT_SYMBOL_GPL(chp_get_sch_opm);
 
 /**
- * chp_is_रेजिस्टरed - check अगर a channel-path is रेजिस्टरed
+ * chp_is_registered - check if a channel-path is registered
  * @chpid: channel-path ID
  *
- * Return non-zero अगर a channel-path with the given chpid is रेजिस्टरed,
+ * Return non-zero if a channel-path with the given chpid is registered,
  * zero otherwise.
  */
-पूर्णांक chp_is_रेजिस्टरed(काष्ठा chp_id chpid)
-अणु
-	वापस chpid_to_chp(chpid) != शून्य;
-पूर्ण
+int chp_is_registered(struct chp_id chpid)
+{
+	return chpid_to_chp(chpid) != NULL;
+}
 
 /*
  * Function: s390_vary_chpid
- * Varies the specअगरied chpid online or offline
+ * Varies the specified chpid online or offline
  */
-अटल पूर्णांक s390_vary_chpid(काष्ठा chp_id chpid, पूर्णांक on)
-अणु
-	अक्षर dbf_text[15];
-	पूर्णांक status;
+static int s390_vary_chpid(struct chp_id chpid, int on)
+{
+	char dbf_text[15];
+	int status;
 
-	प्र_लिखो(dbf_text, on?"varyon%x.%02x":"varyoff%x.%02x", chpid.cssid,
+	sprintf(dbf_text, on?"varyon%x.%02x":"varyoff%x.%02x", chpid.cssid,
 		chpid.id);
 	CIO_TRACE_EVENT(2, dbf_text);
 
 	status = chp_get_status(chpid);
-	अगर (!on && !status)
-		वापस 0;
+	if (!on && !status)
+		return 0;
 
 	set_chp_logically_online(chpid, on);
 	chsc_chp_vary(chpid, on);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Channel measurement related functions
  */
-अटल sमाप_प्रकार chp_measurement_अक्षरs_पढ़ो(काष्ठा file *filp,
-					  काष्ठा kobject *kobj,
-					  काष्ठा bin_attribute *bin_attr,
-					  अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा channel_path *chp;
-	काष्ठा device *device;
+static ssize_t chp_measurement_chars_read(struct file *filp,
+					  struct kobject *kobj,
+					  struct bin_attribute *bin_attr,
+					  char *buf, loff_t off, size_t count)
+{
+	struct channel_path *chp;
+	struct device *device;
 
 	device = kobj_to_dev(kobj);
 	chp = to_channelpath(device);
-	अगर (chp->cmg == -1)
-		वापस 0;
+	if (chp->cmg == -1)
+		return 0;
 
-	वापस memory_पढ़ो_from_buffer(buf, count, &off, &chp->cmg_अक्षरs,
-				       माप(chp->cmg_अक्षरs));
-पूर्ण
+	return memory_read_from_buffer(buf, count, &off, &chp->cmg_chars,
+				       sizeof(chp->cmg_chars));
+}
 
-अटल स्थिर काष्ठा bin_attribute chp_measurement_अक्षरs_attr = अणु
-	.attr = अणु
+static const struct bin_attribute chp_measurement_chars_attr = {
+	.attr = {
 		.name = "measurement_chars",
 		.mode = S_IRUSR,
-	पूर्ण,
-	.size = माप(काष्ठा cmg_अक्षरs),
-	.पढ़ो = chp_measurement_अक्षरs_पढ़ो,
-पूर्ण;
+	},
+	.size = sizeof(struct cmg_chars),
+	.read = chp_measurement_chars_read,
+};
 
-अटल व्योम chp_measurement_copy_block(काष्ठा cmg_entry *buf,
-				       काष्ठा channel_subप्रणाली *css,
-				       काष्ठा chp_id chpid)
-अणु
-	व्योम *area;
-	काष्ठा cmg_entry *entry, reference_buf;
-	पूर्णांक idx;
+static void chp_measurement_copy_block(struct cmg_entry *buf,
+				       struct channel_subsystem *css,
+				       struct chp_id chpid)
+{
+	void *area;
+	struct cmg_entry *entry, reference_buf;
+	int idx;
 
-	अगर (chpid.id < 128) अणु
+	if (chpid.id < 128) {
 		area = css->cub_addr1;
 		idx = chpid.id;
-	पूर्ण अन्यथा अणु
+	} else {
 		area = css->cub_addr2;
 		idx = chpid.id - 128;
-	पूर्ण
-	entry = area + (idx * माप(काष्ठा cmg_entry));
-	करो अणु
-		स_नकल(buf, entry, माप(*entry));
-		स_नकल(&reference_buf, entry, माप(*entry));
-	पूर्ण जबतक (reference_buf.values[0] != buf->values[0]);
-पूर्ण
+	}
+	entry = area + (idx * sizeof(struct cmg_entry));
+	do {
+		memcpy(buf, entry, sizeof(*entry));
+		memcpy(&reference_buf, entry, sizeof(*entry));
+	} while (reference_buf.values[0] != buf->values[0]);
+}
 
-अटल sमाप_प्रकार chp_measurement_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				    काष्ठा bin_attribute *bin_attr,
-				    अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा channel_path *chp;
-	काष्ठा channel_subप्रणाली *css;
-	काष्ठा device *device;
-	अचिन्हित पूर्णांक size;
+static ssize_t chp_measurement_read(struct file *filp, struct kobject *kobj,
+				    struct bin_attribute *bin_attr,
+				    char *buf, loff_t off, size_t count)
+{
+	struct channel_path *chp;
+	struct channel_subsystem *css;
+	struct device *device;
+	unsigned int size;
 
 	device = kobj_to_dev(kobj);
 	chp = to_channelpath(device);
 	css = to_css(chp->dev.parent);
 
-	size = माप(काष्ठा cmg_entry);
+	size = sizeof(struct cmg_entry);
 
-	/* Only allow single पढ़ोs. */
-	अगर (off || count < size)
-		वापस 0;
-	chp_measurement_copy_block((काष्ठा cmg_entry *)buf, css, chp->chpid);
+	/* Only allow single reads. */
+	if (off || count < size)
+		return 0;
+	chp_measurement_copy_block((struct cmg_entry *)buf, css, chp->chpid);
 	count = size;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute chp_measurement_attr = अणु
-	.attr = अणु
+static const struct bin_attribute chp_measurement_attr = {
+	.attr = {
 		.name = "measurement",
 		.mode = S_IRUSR,
-	पूर्ण,
-	.size = माप(काष्ठा cmg_entry),
-	.पढ़ो = chp_measurement_पढ़ो,
-पूर्ण;
+	},
+	.size = sizeof(struct cmg_entry),
+	.read = chp_measurement_read,
+};
 
-व्योम chp_हटाओ_cmg_attr(काष्ठा channel_path *chp)
-अणु
-	device_हटाओ_bin_file(&chp->dev, &chp_measurement_अक्षरs_attr);
-	device_हटाओ_bin_file(&chp->dev, &chp_measurement_attr);
-पूर्ण
+void chp_remove_cmg_attr(struct channel_path *chp)
+{
+	device_remove_bin_file(&chp->dev, &chp_measurement_chars_attr);
+	device_remove_bin_file(&chp->dev, &chp_measurement_attr);
+}
 
-पूर्णांक chp_add_cmg_attr(काष्ठा channel_path *chp)
-अणु
-	पूर्णांक ret;
+int chp_add_cmg_attr(struct channel_path *chp)
+{
+	int ret;
 
-	ret = device_create_bin_file(&chp->dev, &chp_measurement_अक्षरs_attr);
-	अगर (ret)
-		वापस ret;
+	ret = device_create_bin_file(&chp->dev, &chp_measurement_chars_attr);
+	if (ret)
+		return ret;
 	ret = device_create_bin_file(&chp->dev, &chp_measurement_attr);
-	अगर (ret)
-		device_हटाओ_bin_file(&chp->dev, &chp_measurement_अक्षरs_attr);
-	वापस ret;
-पूर्ण
+	if (ret)
+		device_remove_bin_file(&chp->dev, &chp_measurement_chars_attr);
+	return ret;
+}
 
 /*
- * Files क्रम the channel path entries.
+ * Files for the channel path entries.
  */
-अटल sमाप_प्रकार chp_status_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
-	पूर्णांक status;
+static ssize_t chp_status_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
+	int status;
 
 	mutex_lock(&chp->lock);
 	status = chp->state;
 	mutex_unlock(&chp->lock);
 
-	वापस status ? प्र_लिखो(buf, "online\n") : प्र_लिखो(buf, "offline\n");
-पूर्ण
+	return status ? sprintf(buf, "online\n") : sprintf(buf, "offline\n");
+}
 
-अटल sमाप_प्रकार chp_status_ग_लिखो(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा channel_path *cp = to_channelpath(dev);
-	अक्षर cmd[10];
-	पूर्णांक num_args;
-	पूर्णांक error;
+static ssize_t chp_status_write(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct channel_path *cp = to_channelpath(dev);
+	char cmd[10];
+	int num_args;
+	int error;
 
-	num_args = माला_पूछो(buf, "%5s", cmd);
-	अगर (!num_args)
-		वापस count;
+	num_args = sscanf(buf, "%5s", cmd);
+	if (!num_args)
+		return count;
 
-	अगर (!strnहालcmp(cmd, "on", 2) || !म_भेद(cmd, "1")) अणु
+	if (!strncasecmp(cmd, "on", 2) || !strcmp(cmd, "1")) {
 		mutex_lock(&cp->lock);
 		error = s390_vary_chpid(cp->chpid, 1);
 		mutex_unlock(&cp->lock);
-	पूर्ण अन्यथा अगर (!strnहालcmp(cmd, "off", 3) || !म_भेद(cmd, "0")) अणु
+	} else if (!strncasecmp(cmd, "off", 3) || !strcmp(cmd, "0")) {
 		mutex_lock(&cp->lock);
 		error = s390_vary_chpid(cp->chpid, 0);
 		mutex_unlock(&cp->lock);
-	पूर्ण अन्यथा
+	} else
 		error = -EINVAL;
 
-	वापस error < 0 ? error : count;
-पूर्ण
+	return error < 0 ? error : count;
+}
 
-अटल DEVICE_ATTR(status, 0644, chp_status_show, chp_status_ग_लिखो);
+static DEVICE_ATTR(status, 0644, chp_status_show, chp_status_write);
 
-अटल sमाप_प्रकार chp_configure_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा channel_path *cp;
-	पूर्णांक status;
+static ssize_t chp_configure_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct channel_path *cp;
+	int status;
 
 	cp = to_channelpath(dev);
 	status = chp_info_get_status(cp->chpid);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", status);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", status);
+}
 
-अटल पूर्णांक cfg_रुको_idle(व्योम);
+static int cfg_wait_idle(void);
 
-अटल sमाप_प्रकार chp_configure_ग_लिखो(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा channel_path *cp;
-	पूर्णांक val;
-	अक्षर delim;
+static ssize_t chp_configure_write(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct channel_path *cp;
+	int val;
+	char delim;
 
-	अगर (माला_पूछो(buf, "%d %c", &val, &delim) != 1)
-		वापस -EINVAL;
-	अगर (val != 0 && val != 1)
-		वापस -EINVAL;
+	if (sscanf(buf, "%d %c", &val, &delim) != 1)
+		return -EINVAL;
+	if (val != 0 && val != 1)
+		return -EINVAL;
 	cp = to_channelpath(dev);
 	chp_cfg_schedule(cp->chpid, val);
-	cfg_रुको_idle();
+	cfg_wait_idle();
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(configure, 0644, chp_configure_show, chp_configure_ग_लिखो);
+static DEVICE_ATTR(configure, 0644, chp_configure_show, chp_configure_write);
 
-अटल sमाप_प्रकार chp_type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
+static ssize_t chp_type_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
 	u8 type;
 
 	mutex_lock(&chp->lock);
 	type = chp->desc.desc;
 	mutex_unlock(&chp->lock);
-	वापस प्र_लिखो(buf, "%x\n", type);
-पूर्ण
+	return sprintf(buf, "%x\n", type);
+}
 
-अटल DEVICE_ATTR(type, 0444, chp_type_show, शून्य);
+static DEVICE_ATTR(type, 0444, chp_type_show, NULL);
 
-अटल sमाप_प्रकार chp_cmg_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
+static ssize_t chp_cmg_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
 
-	अगर (!chp)
-		वापस 0;
-	अगर (chp->cmg == -1) /* channel measurements not available */
-		वापस प्र_लिखो(buf, "unknown\n");
-	वापस प्र_लिखो(buf, "%x\n", chp->cmg);
-पूर्ण
+	if (!chp)
+		return 0;
+	if (chp->cmg == -1) /* channel measurements not available */
+		return sprintf(buf, "unknown\n");
+	return sprintf(buf, "%x\n", chp->cmg);
+}
 
-अटल DEVICE_ATTR(cmg, 0444, chp_cmg_show, शून्य);
+static DEVICE_ATTR(cmg, 0444, chp_cmg_show, NULL);
 
-अटल sमाप_प्रकार chp_shared_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
+static ssize_t chp_shared_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
 
-	अगर (!chp)
-		वापस 0;
-	अगर (chp->shared == -1) /* channel measurements not available */
-		वापस प्र_लिखो(buf, "unknown\n");
-	वापस प्र_लिखो(buf, "%x\n", chp->shared);
-पूर्ण
+	if (!chp)
+		return 0;
+	if (chp->shared == -1) /* channel measurements not available */
+		return sprintf(buf, "unknown\n");
+	return sprintf(buf, "%x\n", chp->shared);
+}
 
-अटल DEVICE_ATTR(shared, 0444, chp_shared_show, शून्य);
+static DEVICE_ATTR(shared, 0444, chp_shared_show, NULL);
 
-अटल sमाप_प्रकार chp_chid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
-	sमाप_प्रकार rc;
+static ssize_t chp_chid_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
+	ssize_t rc;
 
 	mutex_lock(&chp->lock);
-	अगर (chp->desc_fmt1.flags & 0x10)
-		rc = प्र_लिखो(buf, "%04x\n", chp->desc_fmt1.chid);
-	अन्यथा
+	if (chp->desc_fmt1.flags & 0x10)
+		rc = sprintf(buf, "%04x\n", chp->desc_fmt1.chid);
+	else
 		rc = 0;
 	mutex_unlock(&chp->lock);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(chid, 0444, chp_chid_show, शून्य);
+	return rc;
+}
+static DEVICE_ATTR(chid, 0444, chp_chid_show, NULL);
 
-अटल sमाप_प्रकार chp_chid_बाह्यal_show(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
-	sमाप_प्रकार rc;
+static ssize_t chp_chid_external_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
+	ssize_t rc;
 
 	mutex_lock(&chp->lock);
-	अगर (chp->desc_fmt1.flags & 0x10)
-		rc = प्र_लिखो(buf, "%x\n", chp->desc_fmt1.flags & 0x8 ? 1 : 0);
-	अन्यथा
+	if (chp->desc_fmt1.flags & 0x10)
+		rc = sprintf(buf, "%x\n", chp->desc_fmt1.flags & 0x8 ? 1 : 0);
+	else
 		rc = 0;
 	mutex_unlock(&chp->lock);
 
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(chid_बाह्यal, 0444, chp_chid_बाह्यal_show, शून्य);
+	return rc;
+}
+static DEVICE_ATTR(chid_external, 0444, chp_chid_external_show, NULL);
 
-अटल sमाप_प्रकार chp_esc_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(dev);
-	sमाप_प्रकार rc;
-
-	mutex_lock(&chp->lock);
-	rc = प्र_लिखो(buf, "%x\n", chp->desc_fmt1.esc);
-	mutex_unlock(&chp->lock);
-
-	वापस rc;
-पूर्ण
-अटल DEVICE_ATTR(esc, 0444, chp_esc_show, शून्य);
-
-अटल sमाप_प्रकार util_string_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *attr, अक्षर *buf,
-				loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा channel_path *chp = to_channelpath(kobj_to_dev(kobj));
-	sमाप_प्रकार rc;
+static ssize_t chp_esc_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct channel_path *chp = to_channelpath(dev);
+	ssize_t rc;
 
 	mutex_lock(&chp->lock);
-	rc = memory_पढ़ो_from_buffer(buf, count, &off, chp->desc_fmt3.util_str,
-				     माप(chp->desc_fmt3.util_str));
+	rc = sprintf(buf, "%x\n", chp->desc_fmt1.esc);
 	mutex_unlock(&chp->lock);
 
-	वापस rc;
-पूर्ण
-अटल BIN_ATTR_RO(util_string,
-		   माप(((काष्ठा channel_path_desc_fmt3 *)0)->util_str));
+	return rc;
+}
+static DEVICE_ATTR(esc, 0444, chp_esc_show, NULL);
 
-अटल काष्ठा bin_attribute *chp_bin_attrs[] = अणु
+static ssize_t util_string_read(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *attr, char *buf,
+				loff_t off, size_t count)
+{
+	struct channel_path *chp = to_channelpath(kobj_to_dev(kobj));
+	ssize_t rc;
+
+	mutex_lock(&chp->lock);
+	rc = memory_read_from_buffer(buf, count, &off, chp->desc_fmt3.util_str,
+				     sizeof(chp->desc_fmt3.util_str));
+	mutex_unlock(&chp->lock);
+
+	return rc;
+}
+static BIN_ATTR_RO(util_string,
+		   sizeof(((struct channel_path_desc_fmt3 *)0)->util_str));
+
+static struct bin_attribute *chp_bin_attrs[] = {
 	&bin_attr_util_string,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *chp_attrs[] = अणु
+static struct attribute *chp_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_configure.attr,
 	&dev_attr_type.attr,
 	&dev_attr_cmg.attr,
 	&dev_attr_shared.attr,
 	&dev_attr_chid.attr,
-	&dev_attr_chid_बाह्यal.attr,
+	&dev_attr_chid_external.attr,
 	&dev_attr_esc.attr,
-	शून्य,
-पूर्ण;
-अटल काष्ठा attribute_group chp_attr_group = अणु
+	NULL,
+};
+static struct attribute_group chp_attr_group = {
 	.attrs = chp_attrs,
 	.bin_attrs = chp_bin_attrs,
-पूर्ण;
-अटल स्थिर काष्ठा attribute_group *chp_attr_groups[] = अणु
+};
+static const struct attribute_group *chp_attr_groups[] = {
 	&chp_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल व्योम chp_release(काष्ठा device *dev)
-अणु
-	काष्ठा channel_path *cp;
+static void chp_release(struct device *dev)
+{
+	struct channel_path *cp;
 
 	cp = to_channelpath(dev);
-	kमुक्त(cp);
-पूर्ण
+	kfree(cp);
+}
 
 /**
  * chp_update_desc - update channel-path description
  * @chp: channel-path
  *
- * Update the channel-path description of the specअगरied channel-path
- * including channel measurement related inक्रमmation.
+ * Update the channel-path description of the specified channel-path
+ * including channel measurement related information.
  * Return zero on success, non-zero otherwise.
  */
-पूर्णांक chp_update_desc(काष्ठा channel_path *chp)
-अणु
-	पूर्णांक rc;
+int chp_update_desc(struct channel_path *chp)
+{
+	int rc;
 
 	rc = chsc_determine_fmt0_channel_path_desc(chp->chpid, &chp->desc);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
 	 * Fetching the following data is optional. Not all machines or
@@ -471,33 +470,33 @@ EXPORT_SYMBOL_GPL(chp_get_sch_opm);
 	 */
 	chsc_determine_fmt1_channel_path_desc(chp->chpid, &chp->desc_fmt1);
 	chsc_determine_fmt3_channel_path_desc(chp->chpid, &chp->desc_fmt3);
-	chsc_get_channel_measurement_अक्षरs(chp);
+	chsc_get_channel_measurement_chars(chp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * chp_new - रेजिस्टर a new channel-path
+ * chp_new - register a new channel-path
  * @chpid: channel-path ID
  *
- * Create and रेजिस्टर data काष्ठाure representing new channel-path. Return
+ * Create and register data structure representing new channel-path. Return
  * zero on success, non-zero otherwise.
  */
-पूर्णांक chp_new(काष्ठा chp_id chpid)
-अणु
-	काष्ठा channel_subप्रणाली *css = css_by_id(chpid.cssid);
-	काष्ठा channel_path *chp;
-	पूर्णांक ret = 0;
+int chp_new(struct chp_id chpid)
+{
+	struct channel_subsystem *css = css_by_id(chpid.cssid);
+	struct channel_path *chp;
+	int ret = 0;
 
 	mutex_lock(&css->mutex);
-	अगर (chp_is_रेजिस्टरed(chpid))
-		जाओ out;
+	if (chp_is_registered(chpid))
+		goto out;
 
-	chp = kzalloc(माप(काष्ठा channel_path), GFP_KERNEL);
-	अगर (!chp) अणु
+	chp = kzalloc(sizeof(struct channel_path), GFP_KERNEL);
+	if (!chp) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* fill in status, etc. */
 	chp->chpid = chpid;
 	chp->state = 1;
@@ -508,339 +507,339 @@ EXPORT_SYMBOL_GPL(chp_get_sch_opm);
 
 	/* Obtain channel path description and fill it in. */
 	ret = chp_update_desc(chp);
-	अगर (ret)
-		जाओ out_मुक्त;
-	अगर ((chp->desc.flags & 0x80) == 0) अणु
+	if (ret)
+		goto out_free;
+	if ((chp->desc.flags & 0x80) == 0) {
 		ret = -ENODEV;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	dev_set_name(&chp->dev, "chp%x.%02x", chpid.cssid, chpid.id);
 
-	/* make it known to the प्रणाली */
-	ret = device_रेजिस्टर(&chp->dev);
-	अगर (ret) अणु
+	/* make it known to the system */
+	ret = device_register(&chp->dev);
+	if (ret) {
 		CIO_MSG_EVENT(0, "Could not register chp%x.%02x: %d\n",
 			      chpid.cssid, chpid.id, ret);
 		put_device(&chp->dev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (css->cm_enabled) अणु
+	if (css->cm_enabled) {
 		ret = chp_add_cmg_attr(chp);
-		अगर (ret) अणु
-			device_unरेजिस्टर(&chp->dev);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			device_unregister(&chp->dev);
+			goto out;
+		}
+	}
 	css->chps[chpid.id] = chp;
-	जाओ out;
-out_मुक्त:
-	kमुक्त(chp);
+	goto out;
+out_free:
+	kfree(chp);
 out:
 	mutex_unlock(&css->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * chp_get_chp_desc - वापस newly allocated channel-path description
+ * chp_get_chp_desc - return newly allocated channel-path description
  * @chpid: channel-path ID
  *
- * On success वापस a newly allocated copy of the channel-path description
- * data associated with the given channel-path ID. Return %शून्य on error.
+ * On success return a newly allocated copy of the channel-path description
+ * data associated with the given channel-path ID. Return %NULL on error.
  */
-काष्ठा channel_path_desc_fmt0 *chp_get_chp_desc(काष्ठा chp_id chpid)
-अणु
-	काष्ठा channel_path *chp;
-	काष्ठा channel_path_desc_fmt0 *desc;
+struct channel_path_desc_fmt0 *chp_get_chp_desc(struct chp_id chpid)
+{
+	struct channel_path *chp;
+	struct channel_path_desc_fmt0 *desc;
 
 	chp = chpid_to_chp(chpid);
-	अगर (!chp)
-		वापस शून्य;
-	desc = kदो_स्मृति(माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		वापस शून्य;
+	if (!chp)
+		return NULL;
+	desc = kmalloc(sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		return NULL;
 
 	mutex_lock(&chp->lock);
-	स_नकल(desc, &chp->desc, माप(*desc));
+	memcpy(desc, &chp->desc, sizeof(*desc));
 	mutex_unlock(&chp->lock);
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
 /**
  * chp_process_crw - process channel-path status change
  * @crw0: channel report-word to handler
- * @crw1: second channel-report word (always शून्य)
+ * @crw1: second channel-report word (always NULL)
  * @overflow: crw overflow indication
  *
  * Handle channel-report-words indicating that the status of a channel-path
  * has changed.
  */
-अटल व्योम chp_process_crw(काष्ठा crw *crw0, काष्ठा crw *crw1,
-			    पूर्णांक overflow)
-अणु
-	काष्ठा chp_id chpid;
+static void chp_process_crw(struct crw *crw0, struct crw *crw1,
+			    int overflow)
+{
+	struct chp_id chpid;
 
-	अगर (overflow) अणु
+	if (overflow) {
 		css_schedule_eval_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 	CIO_CRW_EVENT(2, "CRW reports slct=%d, oflw=%d, "
 		      "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
 		      crw0->slct, crw0->oflw, crw0->chn, crw0->rsc, crw0->anc,
 		      crw0->erc, crw0->rsid);
 	/*
-	 * Check क्रम solicited machine checks. These are
+	 * Check for solicited machine checks. These are
 	 * created by reset channel path and need not be
 	 * handled here.
 	 */
-	अगर (crw0->slct) अणु
+	if (crw0->slct) {
 		CIO_CRW_EVENT(2, "solicited machine check for "
 			      "channel path %02X\n", crw0->rsid);
-		वापस;
-	पूर्ण
+		return;
+	}
 	chp_id_init(&chpid);
 	chpid.id = crw0->rsid;
-	चयन (crw0->erc) अणु
-	हाल CRW_ERC_IPARM: /* Path has come. */
-	हाल CRW_ERC_INIT:
+	switch (crw0->erc) {
+	case CRW_ERC_IPARM: /* Path has come. */
+	case CRW_ERC_INIT:
 		chp_new(chpid);
 		chsc_chp_online(chpid);
-		अवरोध;
-	हाल CRW_ERC_PERRI: /* Path has gone. */
-	हाल CRW_ERC_PERRN:
+		break;
+	case CRW_ERC_PERRI: /* Path has gone. */
+	case CRW_ERC_PERRN:
 		chsc_chp_offline(chpid);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		CIO_CRW_EVENT(2, "Don't know how to handle erc=%x\n",
 			      crw0->erc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक chp_ssd_get_mask(काष्ठा chsc_ssd_info *ssd, काष्ठा chp_link *link)
-अणु
-	पूर्णांक i;
-	पूर्णांक mask;
+int chp_ssd_get_mask(struct chsc_ssd_info *ssd, struct chp_link *link)
+{
+	int i;
+	int mask;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		mask = 0x80 >> i;
-		अगर (!(ssd->path_mask & mask))
-			जारी;
-		अगर (!chp_id_is_equal(&ssd->chpid[i], &link->chpid))
-			जारी;
-		अगर ((ssd->fla_valid_mask & mask) &&
+		if (!(ssd->path_mask & mask))
+			continue;
+		if (!chp_id_is_equal(&ssd->chpid[i], &link->chpid))
+			continue;
+		if ((ssd->fla_valid_mask & mask) &&
 		    ((ssd->fla[i] & link->fla_mask) != link->fla))
-			जारी;
-		वापस mask;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			continue;
+		return mask;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(chp_ssd_get_mask);
 
-अटल अंतरभूत पूर्णांक info_bit_num(काष्ठा chp_id id)
-अणु
-	वापस id.id + id.cssid * (__MAX_CHPID + 1);
-पूर्ण
+static inline int info_bit_num(struct chp_id id)
+{
+	return id.id + id.cssid * (__MAX_CHPID + 1);
+}
 
 /* Force chp_info refresh on next call to info_validate(). */
-अटल व्योम info_expire(व्योम)
-अणु
+static void info_expire(void)
+{
 	mutex_lock(&info_lock);
-	chp_info_expires = jअगरfies - 1;
+	chp_info_expires = jiffies - 1;
 	mutex_unlock(&info_lock);
-पूर्ण
+}
 
 /* Ensure that chp_info is up-to-date. */
-अटल पूर्णांक info_update(व्योम)
-अणु
-	पूर्णांक rc;
+static int info_update(void)
+{
+	int rc;
 
 	mutex_lock(&info_lock);
 	rc = 0;
-	अगर (समय_after(jअगरfies, chp_info_expires)) अणु
+	if (time_after(jiffies, chp_info_expires)) {
 		/* Data is too old, update. */
-		rc = sclp_chp_पढ़ो_info(&chp_info);
-		chp_info_expires = jअगरfies + CHP_INFO_UPDATE_INTERVAL ;
-	पूर्ण
+		rc = sclp_chp_read_info(&chp_info);
+		chp_info_expires = jiffies + CHP_INFO_UPDATE_INTERVAL ;
+	}
 	mutex_unlock(&info_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * chp_info_get_status - retrieve configure status of a channel-path
  * @chpid: channel-path ID
  *
- * On success, वापस 0 क्रम standby, 1 क्रम configured, 2 क्रम reserved,
- * 3 क्रम not recognized. Return negative error code on error.
+ * On success, return 0 for standby, 1 for configured, 2 for reserved,
+ * 3 for not recognized. Return negative error code on error.
  */
-पूर्णांक chp_info_get_status(काष्ठा chp_id chpid)
-अणु
-	पूर्णांक rc;
-	पूर्णांक bit;
+int chp_info_get_status(struct chp_id chpid)
+{
+	int rc;
+	int bit;
 
 	rc = info_update();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	bit = info_bit_num(chpid);
 	mutex_lock(&info_lock);
-	अगर (!chp_test_bit(chp_info.recognized, bit))
+	if (!chp_test_bit(chp_info.recognized, bit))
 		rc = CHP_STATUS_NOT_RECOGNIZED;
-	अन्यथा अगर (chp_test_bit(chp_info.configured, bit))
+	else if (chp_test_bit(chp_info.configured, bit))
 		rc = CHP_STATUS_CONFIGURED;
-	अन्यथा अगर (chp_test_bit(chp_info.standby, bit))
+	else if (chp_test_bit(chp_info.standby, bit))
 		rc = CHP_STATUS_STANDBY;
-	अन्यथा
+	else
 		rc = CHP_STATUS_RESERVED;
 	mutex_unlock(&info_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* Return configure task क्रम chpid. */
-अटल क्रमागत cfg_task_t cfg_get_task(काष्ठा chp_id chpid)
-अणु
-	वापस chp_cfg_task[chpid.cssid][chpid.id];
-पूर्ण
+/* Return configure task for chpid. */
+static enum cfg_task_t cfg_get_task(struct chp_id chpid)
+{
+	return chp_cfg_task[chpid.cssid][chpid.id];
+}
 
-/* Set configure task क्रम chpid. */
-अटल व्योम cfg_set_task(काष्ठा chp_id chpid, क्रमागत cfg_task_t cfg)
-अणु
+/* Set configure task for chpid. */
+static void cfg_set_task(struct chp_id chpid, enum cfg_task_t cfg)
+{
 	chp_cfg_task[chpid.cssid][chpid.id] = cfg;
-पूर्ण
+}
 
 /* Fetch the first configure task. Set chpid accordingly. */
-अटल क्रमागत cfg_task_t chp_cfg_fetch_task(काष्ठा chp_id *chpid)
-अणु
-	क्रमागत cfg_task_t t = cfg_none;
+static enum cfg_task_t chp_cfg_fetch_task(struct chp_id *chpid)
+{
+	enum cfg_task_t t = cfg_none;
 
-	chp_id_क्रम_each(chpid) अणु
+	chp_id_for_each(chpid) {
 		t = cfg_get_task(*chpid);
-		अगर (t != cfg_none)
-			अवरोध;
-	पूर्ण
+		if (t != cfg_none)
+			break;
+	}
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-/* Perक्रमm one configure/deconfigure request. Reschedule work function until
+/* Perform one configure/deconfigure request. Reschedule work function until
  * last request. */
-अटल व्योम cfg_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा chp_id chpid;
-	क्रमागत cfg_task_t t;
-	पूर्णांक rc;
+static void cfg_func(struct work_struct *work)
+{
+	struct chp_id chpid;
+	enum cfg_task_t t;
+	int rc;
 
 	spin_lock(&cfg_lock);
 	t = chp_cfg_fetch_task(&chpid);
 	spin_unlock(&cfg_lock);
 
-	चयन (t) अणु
-	हाल cfg_configure:
+	switch (t) {
+	case cfg_configure:
 		rc = sclp_chp_configure(chpid);
-		अगर (rc)
+		if (rc)
 			CIO_MSG_EVENT(2, "chp: sclp_chp_configure(%x.%02x)="
 				      "%d\n", chpid.cssid, chpid.id, rc);
-		अन्यथा अणु
+		else {
 			info_expire();
 			chsc_chp_online(chpid);
-		पूर्ण
-		अवरोध;
-	हाल cfg_deconfigure:
+		}
+		break;
+	case cfg_deconfigure:
 		rc = sclp_chp_deconfigure(chpid);
-		अगर (rc)
+		if (rc)
 			CIO_MSG_EVENT(2, "chp: sclp_chp_deconfigure(%x.%02x)="
 				      "%d\n", chpid.cssid, chpid.id, rc);
-		अन्यथा अणु
+		else {
 			info_expire();
 			chsc_chp_offline(chpid);
-		पूर्ण
-		अवरोध;
-	हाल cfg_none:
-		/* Get updated inक्रमmation after last change. */
+		}
+		break;
+	case cfg_none:
+		/* Get updated information after last change. */
 		info_update();
-		wake_up_पूर्णांकerruptible(&cfg_रुको_queue);
-		वापस;
-	पूर्ण
+		wake_up_interruptible(&cfg_wait_queue);
+		return;
+	}
 	spin_lock(&cfg_lock);
-	अगर (t == cfg_get_task(chpid))
+	if (t == cfg_get_task(chpid))
 		cfg_set_task(chpid, cfg_none);
 	spin_unlock(&cfg_lock);
 	schedule_work(&cfg_work);
-पूर्ण
+}
 
 /**
  * chp_cfg_schedule - schedule chpid configuration request
  * @chpid: channel-path ID
- * @configure: Non-zero क्रम configure, zero क्रम deconfigure
+ * @configure: Non-zero for configure, zero for deconfigure
  *
  * Schedule a channel-path configuration/deconfiguration request.
  */
-व्योम chp_cfg_schedule(काष्ठा chp_id chpid, पूर्णांक configure)
-अणु
+void chp_cfg_schedule(struct chp_id chpid, int configure)
+{
 	CIO_MSG_EVENT(2, "chp_cfg_sched%x.%02x=%d\n", chpid.cssid, chpid.id,
 		      configure);
 	spin_lock(&cfg_lock);
 	cfg_set_task(chpid, configure ? cfg_configure : cfg_deconfigure);
 	spin_unlock(&cfg_lock);
 	schedule_work(&cfg_work);
-पूर्ण
+}
 
 /**
  * chp_cfg_cancel_deconfigure - cancel chpid deconfiguration request
  * @chpid: channel-path ID
  *
- * Cancel an active channel-path deconfiguration request अगर it has not yet
- * been perक्रमmed.
+ * Cancel an active channel-path deconfiguration request if it has not yet
+ * been performed.
  */
-व्योम chp_cfg_cancel_deconfigure(काष्ठा chp_id chpid)
-अणु
+void chp_cfg_cancel_deconfigure(struct chp_id chpid)
+{
 	CIO_MSG_EVENT(2, "chp_cfg_cancel:%x.%02x\n", chpid.cssid, chpid.id);
 	spin_lock(&cfg_lock);
-	अगर (cfg_get_task(chpid) == cfg_deconfigure)
+	if (cfg_get_task(chpid) == cfg_deconfigure)
 		cfg_set_task(chpid, cfg_none);
 	spin_unlock(&cfg_lock);
-पूर्ण
+}
 
-अटल bool cfg_idle(व्योम)
-अणु
-	काष्ठा chp_id chpid;
-	क्रमागत cfg_task_t t;
+static bool cfg_idle(void)
+{
+	struct chp_id chpid;
+	enum cfg_task_t t;
 
 	spin_lock(&cfg_lock);
 	t = chp_cfg_fetch_task(&chpid);
 	spin_unlock(&cfg_lock);
 
-	वापस t == cfg_none;
-पूर्ण
+	return t == cfg_none;
+}
 
-अटल पूर्णांक cfg_रुको_idle(व्योम)
-अणु
-	अगर (रुको_event_पूर्णांकerruptible(cfg_रुको_queue, cfg_idle()))
-		वापस -ERESTARTSYS;
-	वापस 0;
-पूर्ण
+static int cfg_wait_idle(void)
+{
+	if (wait_event_interruptible(cfg_wait_queue, cfg_idle()))
+		return -ERESTARTSYS;
+	return 0;
+}
 
-अटल पूर्णांक __init chp_init(व्योम)
-अणु
-	काष्ठा chp_id chpid;
-	पूर्णांक state, ret;
+static int __init chp_init(void)
+{
+	struct chp_id chpid;
+	int state, ret;
 
-	ret = crw_रेजिस्टर_handler(CRW_RSC_CPATH, chp_process_crw);
-	अगर (ret)
-		वापस ret;
+	ret = crw_register_handler(CRW_RSC_CPATH, chp_process_crw);
+	if (ret)
+		return ret;
 	INIT_WORK(&cfg_work, cfg_func);
-	अगर (info_update())
-		वापस 0;
+	if (info_update())
+		return 0;
 	/* Register available channel-paths. */
-	chp_id_क्रम_each(&chpid) अणु
+	chp_id_for_each(&chpid) {
 		state = chp_info_get_status(chpid);
-		अगर (state == CHP_STATUS_CONFIGURED ||
+		if (state == CHP_STATUS_CONFIGURED ||
 		    state == CHP_STATUS_STANDBY)
 			chp_new(chpid);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(chp_init);

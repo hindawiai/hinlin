@@ -1,188 +1,187 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश "ath9k.h"
+#include "ath9k.h"
 
 /*
- * TX polling - checks अगर the TX engine is stuck somewhere
- * and issues a chip reset अगर so.
+ * TX polling - checks if the TX engine is stuck somewhere
+ * and issues a chip reset if so.
  */
-अटल bool ath_tx_complete_check(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_txq *txq;
-	पूर्णांक i;
+static bool ath_tx_complete_check(struct ath_softc *sc)
+{
+	struct ath_txq *txq;
+	int i;
 
-	अगर (sc->tx99_state)
-		वापस true;
+	if (sc->tx99_state)
+		return true;
 
-	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		txq = sc->tx.txq_map[i];
 
 		ath_txq_lock(sc, txq);
-		अगर (txq->axq_depth) अणु
-			अगर (txq->axq_tx_inprogress) अणु
+		if (txq->axq_depth) {
+			if (txq->axq_tx_inprogress) {
 				ath_txq_unlock(sc, txq);
-				जाओ reset;
-			पूर्ण
+				goto reset;
+			}
 
 			txq->axq_tx_inprogress = true;
-		पूर्ण
+		}
 		ath_txq_unlock(sc, txq);
-	पूर्ण
+	}
 
-	वापस true;
+	return true;
 
 reset:
 	ath_dbg(ath9k_hw_common(sc->sc_ah), RESET,
 		"tx hung, resetting the chip\n");
 	ath9k_queue_reset(sc, RESET_TYPE_TX_HANG);
-	वापस false;
+	return false;
 
-पूर्ण
+}
 
-व्योम ath_hw_check_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath_softc *sc = container_of(work, काष्ठा ath_softc,
+void ath_hw_check_work(struct work_struct *work)
+{
+	struct ath_softc *sc = container_of(work, struct ath_softc,
 					    hw_check_work.work);
 
-	अगर (!ath_hw_check(sc) ||
+	if (!ath_hw_check(sc) ||
 	    !ath_tx_complete_check(sc))
-		वापस;
+		return;
 
 	ieee80211_queue_delayed_work(sc->hw, &sc->hw_check_work,
-				     msecs_to_jअगरfies(ATH_HW_CHECK_POLL_INT));
-पूर्ण
+				     msecs_to_jiffies(ATH_HW_CHECK_POLL_INT));
+}
 
 /*
- * Checks अगर the BB/MAC is hung.
+ * Checks if the BB/MAC is hung.
  */
-bool ath_hw_check(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	क्रमागत ath_reset_type type;
+bool ath_hw_check(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	enum ath_reset_type type;
 	bool is_alive;
 
 	ath9k_ps_wakeup(sc);
 
 	is_alive = ath9k_hw_check_alive(sc->sc_ah);
 
-	अगर (!is_alive) अणु
+	if (!is_alive) {
 		ath_dbg(common, RESET,
 			"HW hang detected, schedule chip reset\n");
 		type = RESET_TYPE_MAC_HANG;
 		ath9k_queue_reset(sc, type);
-	पूर्ण
+	}
 
 	ath9k_ps_restore(sc);
 
-	वापस is_alive;
-पूर्ण
+	return is_alive;
+}
 
 /*
- * PLL-WAR क्रम AR9485/AR9340
+ * PLL-WAR for AR9485/AR9340
  */
-अटल bool ath_hw_pll_rx_hang_check(काष्ठा ath_softc *sc, u32 pll_sqsum)
-अणु
-	अटल पूर्णांक count;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static bool ath_hw_pll_rx_hang_check(struct ath_softc *sc, u32 pll_sqsum)
+{
+	static int count;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
-	अगर (pll_sqsum >= 0x40000) अणु
+	if (pll_sqsum >= 0x40000) {
 		count++;
-		अगर (count == 3) अणु
+		if (count == 3) {
 			ath_dbg(common, RESET, "PLL WAR, resetting the chip\n");
 			ath9k_queue_reset(sc, RESET_TYPE_PLL_HANG);
 			count = 0;
-			वापस true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return true;
+		}
+	} else {
 		count = 0;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम ath_hw_pll_work(काष्ठा work_काष्ठा *work)
-अणु
+void ath_hw_pll_work(struct work_struct *work)
+{
 	u32 pll_sqsum;
-	काष्ठा ath_softc *sc = container_of(work, काष्ठा ath_softc,
+	struct ath_softc *sc = container_of(work, struct ath_softc,
 					    hw_pll_work.work);
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	/*
 	 * ensure that the PLL WAR is executed only
-	 * after the STA is associated (or) अगर the
-	 * beaconing had started in पूर्णांकerfaces that
+	 * after the STA is associated (or) if the
+	 * beaconing had started in interfaces that
 	 * uses beacons.
 	 */
-	अगर (!test_bit(ATH_OP_BEACONS, &common->op_flags))
-		वापस;
+	if (!test_bit(ATH_OP_BEACONS, &common->op_flags))
+		return;
 
-	अगर (sc->tx99_state)
-		वापस;
+	if (sc->tx99_state)
+		return;
 
 	ath9k_ps_wakeup(sc);
 	pll_sqsum = ar9003_get_pll_sqsum_dvc(sc->sc_ah);
 	ath9k_ps_restore(sc);
-	अगर (ath_hw_pll_rx_hang_check(sc, pll_sqsum))
-		वापस;
+	if (ath_hw_pll_rx_hang_check(sc, pll_sqsum))
+		return;
 
 	ieee80211_queue_delayed_work(sc->hw, &sc->hw_pll_work,
-				     msecs_to_jअगरfies(ATH_PLL_WORK_INTERVAL));
-पूर्ण
+				     msecs_to_jiffies(ATH_PLL_WORK_INTERVAL));
+}
 
 /*
  * PA Pre-distortion.
  */
-अटल व्योम ath_paprd_activate(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath9k_hw_cal_data *caldata = ah->caldata;
-	पूर्णांक chain;
+static void ath_paprd_activate(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath9k_hw_cal_data *caldata = ah->caldata;
+	int chain;
 
-	अगर (!caldata || !test_bit(PAPRD_DONE, &caldata->cal_flags)) अणु
+	if (!caldata || !test_bit(PAPRD_DONE, &caldata->cal_flags)) {
 		ath_dbg(common, CALIBRATE, "Failed to activate PAPRD\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ar9003_paprd_enable(ah, false);
-	क्रम (chain = 0; chain < AR9300_MAX_CHAINS; chain++) अणु
-		अगर (!(ah->txchainmask & BIT(chain)))
-			जारी;
+	for (chain = 0; chain < AR9300_MAX_CHAINS; chain++) {
+		if (!(ah->txchainmask & BIT(chain)))
+			continue;
 
 		ar9003_paprd_populate_single_table(ah, caldata, chain);
-	पूर्ण
+	}
 
 	ath_dbg(common, CALIBRATE, "Activating PAPRD\n");
 	ar9003_paprd_enable(ah, true);
-पूर्ण
+}
 
-अटल bool ath_paprd_send_frame(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb, पूर्णांक chain)
-अणु
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath_tx_control txctl;
-	अचिन्हित दीर्घ समय_left;
+static bool ath_paprd_send_frame(struct ath_softc *sc, struct sk_buff *skb, int chain)
+{
+	struct ieee80211_hw *hw = sc->hw;
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath_tx_control txctl;
+	unsigned long time_left;
 
-	स_रखो(&txctl, 0, माप(txctl));
+	memset(&txctl, 0, sizeof(txctl));
 	txctl.txq = sc->tx.txq_map[IEEE80211_AC_BE];
 
-	स_रखो(tx_info, 0, माप(*tx_info));
+	memset(tx_info, 0, sizeof(*tx_info));
 	tx_info->band = sc->cur_chandef.chan->band;
 	tx_info->flags |= IEEE80211_TX_CTL_NO_ACK;
 	tx_info->control.rates[0].idx = 0;
@@ -193,144 +192,144 @@ bool ath_hw_check(काष्ठा ath_softc *sc)
 	init_completion(&sc->paprd_complete);
 	txctl.paprd = BIT(chain);
 
-	अगर (ath_tx_start(hw, skb, &txctl) != 0) अणु
+	if (ath_tx_start(hw, skb, &txctl) != 0) {
 		ath_dbg(common, CALIBRATE, "PAPRD TX failed\n");
-		dev_kमुक्त_skb_any(skb);
-		वापस false;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return false;
+	}
 
-	समय_left = रुको_क्रम_completion_समयout(&sc->paprd_complete,
-			msecs_to_jअगरfies(ATH_PAPRD_TIMEOUT));
+	time_left = wait_for_completion_timeout(&sc->paprd_complete,
+			msecs_to_jiffies(ATH_PAPRD_TIMEOUT));
 
-	अगर (!समय_left)
+	if (!time_left)
 		ath_dbg(common, CALIBRATE,
 			"Timeout waiting for paprd training on TX chain %d\n",
 			chain);
 
-	वापस !!समय_left;
-पूर्ण
+	return !!time_left;
+}
 
-व्योम ath_paprd_calibrate(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath_softc *sc = container_of(work, काष्ठा ath_softc, paprd_work);
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ieee80211_hdr *hdr;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा ath9k_hw_cal_data *caldata = ah->caldata;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	पूर्णांक ftype;
-	पूर्णांक chain_ok = 0;
-	पूर्णांक chain;
-	पूर्णांक len = 1800;
-	पूर्णांक ret;
+void ath_paprd_calibrate(struct work_struct *work)
+{
+	struct ath_softc *sc = container_of(work, struct ath_softc, paprd_work);
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath_hw *ah = sc->sc_ah;
+	struct ieee80211_hdr *hdr;
+	struct sk_buff *skb = NULL;
+	struct ath9k_hw_cal_data *caldata = ah->caldata;
+	struct ath_common *common = ath9k_hw_common(ah);
+	int ftype;
+	int chain_ok = 0;
+	int chain;
+	int len = 1800;
+	int ret;
 
-	अगर (!caldata ||
+	if (!caldata ||
 	    !test_bit(PAPRD_PACKET_SENT, &caldata->cal_flags) ||
-	    test_bit(PAPRD_DONE, &caldata->cal_flags)) अणु
+	    test_bit(PAPRD_DONE, &caldata->cal_flags)) {
 		ath_dbg(common, CALIBRATE, "Skipping PAPRD calibration\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath9k_ps_wakeup(sc);
 
-	अगर (ar9003_paprd_init_table(ah) < 0)
-		जाओ fail_paprd;
+	if (ar9003_paprd_init_table(ah) < 0)
+		goto fail_paprd;
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	अगर (!skb)
-		जाओ fail_paprd;
+	if (!skb)
+		goto fail_paprd;
 
 	skb_put(skb, len);
-	स_रखो(skb->data, 0, len);
-	hdr = (काष्ठा ieee80211_hdr *)skb->data;
-	ftype = IEEE80211_FTYPE_DATA | IEEE80211_STYPE_शून्यFUNC;
+	memset(skb->data, 0, len);
+	hdr = (struct ieee80211_hdr *)skb->data;
+	ftype = IEEE80211_FTYPE_DATA | IEEE80211_STYPE_NULLFUNC;
 	hdr->frame_control = cpu_to_le16(ftype);
 	hdr->duration_id = cpu_to_le16(10);
-	स_नकल(hdr->addr1, hw->wiphy->perm_addr, ETH_ALEN);
-	स_नकल(hdr->addr2, hw->wiphy->perm_addr, ETH_ALEN);
-	स_नकल(hdr->addr3, hw->wiphy->perm_addr, ETH_ALEN);
+	memcpy(hdr->addr1, hw->wiphy->perm_addr, ETH_ALEN);
+	memcpy(hdr->addr2, hw->wiphy->perm_addr, ETH_ALEN);
+	memcpy(hdr->addr3, hw->wiphy->perm_addr, ETH_ALEN);
 
-	क्रम (chain = 0; chain < AR9300_MAX_CHAINS; chain++) अणु
-		अगर (!(ah->txchainmask & BIT(chain)))
-			जारी;
+	for (chain = 0; chain < AR9300_MAX_CHAINS; chain++) {
+		if (!(ah->txchainmask & BIT(chain)))
+			continue;
 
 		chain_ok = 0;
 		ar9003_paprd_setup_gain_table(ah, chain);
 
 		ath_dbg(common, CALIBRATE,
 			"Sending PAPRD training frame on chain %d\n", chain);
-		अगर (!ath_paprd_send_frame(sc, skb, chain))
-			जाओ fail_paprd;
+		if (!ath_paprd_send_frame(sc, skb, chain))
+			goto fail_paprd;
 
-		अगर (!ar9003_paprd_is_करोne(ah)) अणु
+		if (!ar9003_paprd_is_done(ah)) {
 			ath_dbg(common, CALIBRATE,
 				"PAPRD not yet done on chain %d\n", chain);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = ar9003_paprd_create_curve(ah, caldata, chain);
-		अगर (ret == -EINPROGRESS) अणु
+		if (ret == -EINPROGRESS) {
 			ath_dbg(common, CALIBRATE,
 				"PAPRD curve on chain %d needs to be re-trained\n",
 				chain);
-			अवरोध;
-		पूर्ण अन्यथा अगर (ret) अणु
+			break;
+		} else if (ret) {
 			ath_dbg(common, CALIBRATE,
 				"PAPRD create curve failed on chain %d\n",
 				chain);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		chain_ok = 1;
-	पूर्ण
-	kमुक्त_skb(skb);
+	}
+	kfree_skb(skb);
 
-	अगर (chain_ok) अणु
+	if (chain_ok) {
 		set_bit(PAPRD_DONE, &caldata->cal_flags);
 		ath_paprd_activate(sc);
-	पूर्ण
+	}
 
 fail_paprd:
 	ath9k_ps_restore(sc);
-पूर्ण
+}
 
 /*
- *  ANI perक्रमms periodic noise न्यूनमान calibration
- *  that is used to adjust and optimize the chip perक्रमmance.  This
- *  takes environmental changes (location, temperature) पूर्णांकo account.
+ *  ANI performs periodic noise floor calibration
+ *  that is used to adjust and optimize the chip performance.  This
+ *  takes environmental changes (location, temperature) into account.
  *  When the task is complete, it reschedules itself depending on the
- *  appropriate पूर्णांकerval that was calculated.
+ *  appropriate interval that was calculated.
  */
-व्योम ath_ani_calibrate(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ath_common *common = from_समयr(common, t, ani.समयr);
-	काष्ठा ath_softc *sc = (काष्ठा ath_softc *)common->priv;
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	bool दीर्घcal = false;
-	bool लघुcal = false;
-	bool anअगरlag = false;
-	अचिन्हित पूर्णांक बारtamp = jअगरfies_to_msecs(jअगरfies);
-	u32 cal_पूर्णांकerval, लघु_cal_पूर्णांकerval, दीर्घ_cal_पूर्णांकerval;
-	अचिन्हित दीर्घ flags;
+void ath_ani_calibrate(struct timer_list *t)
+{
+	struct ath_common *common = from_timer(common, t, ani.timer);
+	struct ath_softc *sc = (struct ath_softc *)common->priv;
+	struct ath_hw *ah = sc->sc_ah;
+	bool longcal = false;
+	bool shortcal = false;
+	bool aniflag = false;
+	unsigned int timestamp = jiffies_to_msecs(jiffies);
+	u32 cal_interval, short_cal_interval, long_cal_interval;
+	unsigned long flags;
 
-	अगर (ah->caldata && test_bit(NFCAL_INTF, &ah->caldata->cal_flags))
-		दीर्घ_cal_पूर्णांकerval = ATH_LONG_CALINTERVAL_INT;
-	अन्यथा
-		दीर्घ_cal_पूर्णांकerval = ATH_LONG_CALINTERVAL;
+	if (ah->caldata && test_bit(NFCAL_INTF, &ah->caldata->cal_flags))
+		long_cal_interval = ATH_LONG_CALINTERVAL_INT;
+	else
+		long_cal_interval = ATH_LONG_CALINTERVAL;
 
-	लघु_cal_पूर्णांकerval = (ah->opmode == NL80211_IFTYPE_AP) ?
+	short_cal_interval = (ah->opmode == NL80211_IFTYPE_AP) ?
 		ATH_AP_SHORT_CALINTERVAL : ATH_STA_SHORT_CALINTERVAL;
 
-	/* Only calibrate अगर awake */
-	अगर (sc->sc_ah->घातer_mode != ATH9K_PM_AWAKE) अणु
-		अगर (++ah->ani_skip_count >= ATH_ANI_MAX_SKIP_COUNT) अणु
+	/* Only calibrate if awake */
+	if (sc->sc_ah->power_mode != ATH9K_PM_AWAKE) {
+		if (++ah->ani_skip_count >= ATH_ANI_MAX_SKIP_COUNT) {
 			spin_lock_irqsave(&sc->sc_pm_lock, flags);
 			sc->ps_flags |= PS_WAIT_FOR_ANI;
 			spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
-		पूर्ण
-		जाओ set_समयr;
-	पूर्ण
+		}
+		goto set_timer;
+	}
 	ah->ani_skip_count = 0;
 	spin_lock_irqsave(&sc->sc_pm_lock, flags);
 	sc->ps_flags &= ~PS_WAIT_FOR_ANI;
@@ -338,208 +337,208 @@ fail_paprd:
 
 	ath9k_ps_wakeup(sc);
 
-	/* Long calibration runs independently of लघु calibration. */
-	अगर ((बारtamp - common->ani.दीर्घcal_समयr) >= दीर्घ_cal_पूर्णांकerval) अणु
-		दीर्घcal = true;
-		common->ani.दीर्घcal_समयr = बारtamp;
-	पूर्ण
+	/* Long calibration runs independently of short calibration. */
+	if ((timestamp - common->ani.longcal_timer) >= long_cal_interval) {
+		longcal = true;
+		common->ani.longcal_timer = timestamp;
+	}
 
-	/* Short calibration applies only जबतक calकरोne is false */
-	अगर (!common->ani.calकरोne) अणु
-		अगर ((बारtamp - common->ani.लघुcal_समयr) >= लघु_cal_पूर्णांकerval) अणु
-			लघुcal = true;
-			common->ani.लघुcal_समयr = बारtamp;
-			common->ani.resetcal_समयr = बारtamp;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर ((बारtamp - common->ani.resetcal_समयr) >=
-		    ATH_RESTART_CALINTERVAL) अणु
-			common->ani.calकरोne = ath9k_hw_reset_calvalid(ah);
-			अगर (common->ani.calकरोne)
-				common->ani.resetcal_समयr = बारtamp;
-		पूर्ण
-	पूर्ण
+	/* Short calibration applies only while caldone is false */
+	if (!common->ani.caldone) {
+		if ((timestamp - common->ani.shortcal_timer) >= short_cal_interval) {
+			shortcal = true;
+			common->ani.shortcal_timer = timestamp;
+			common->ani.resetcal_timer = timestamp;
+		}
+	} else {
+		if ((timestamp - common->ani.resetcal_timer) >=
+		    ATH_RESTART_CALINTERVAL) {
+			common->ani.caldone = ath9k_hw_reset_calvalid(ah);
+			if (common->ani.caldone)
+				common->ani.resetcal_timer = timestamp;
+		}
+	}
 
-	/* Verअगरy whether we must check ANI */
-	अगर ((बारtamp - common->ani.checkani_समयr) >= ah->config.ani_poll_पूर्णांकerval) अणु
-		anअगरlag = true;
-		common->ani.checkani_समयr = बारtamp;
-	पूर्ण
+	/* Verify whether we must check ANI */
+	if ((timestamp - common->ani.checkani_timer) >= ah->config.ani_poll_interval) {
+		aniflag = true;
+		common->ani.checkani_timer = timestamp;
+	}
 
-	/* Call ANI routine अगर necessary */
-	अगर (anअगरlag) अणु
+	/* Call ANI routine if necessary */
+	if (aniflag) {
 		spin_lock_irqsave(&common->cc_lock, flags);
 		ath9k_hw_ani_monitor(ah, ah->curchan);
 		ath_update_survey_stats(sc);
 		spin_unlock_irqrestore(&common->cc_lock, flags);
-	पूर्ण
+	}
 
-	/* Perक्रमm calibration अगर necessary */
-	अगर (दीर्घcal || लघुcal) अणु
-		पूर्णांक ret = ath9k_hw_calibrate(ah, ah->curchan, ah->rxchainmask,
-					     दीर्घcal);
-		अगर (ret < 0) अणु
-			common->ani.calकरोne = 0;
+	/* Perform calibration if necessary */
+	if (longcal || shortcal) {
+		int ret = ath9k_hw_calibrate(ah, ah->curchan, ah->rxchainmask,
+					     longcal);
+		if (ret < 0) {
+			common->ani.caldone = 0;
 			ath9k_queue_reset(sc, RESET_TYPE_CALIBRATION);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		common->ani.calकरोne = ret;
-	पूर्ण
+		common->ani.caldone = ret;
+	}
 
 	ath_dbg(common, ANI,
 		"Calibration @%lu finished: %s %s %s, caldone: %s\n",
-		jअगरfies,
-		दीर्घcal ? "long" : "", लघुcal ? "short" : "",
-		anअगरlag ? "ani" : "", common->ani.calकरोne ? "true" : "false");
+		jiffies,
+		longcal ? "long" : "", shortcal ? "short" : "",
+		aniflag ? "ani" : "", common->ani.caldone ? "true" : "false");
 
 	ath9k_ps_restore(sc);
 
-set_समयr:
+set_timer:
 	/*
-	* Set समयr पूर्णांकerval based on previous results.
-	* The पूर्णांकerval must be the लघुest necessary to satisfy ANI,
-	* लघु calibration and दीर्घ calibration.
+	* Set timer interval based on previous results.
+	* The interval must be the shortest necessary to satisfy ANI,
+	* short calibration and long calibration.
 	*/
-	cal_पूर्णांकerval = ATH_LONG_CALINTERVAL;
-	cal_पूर्णांकerval = min(cal_पूर्णांकerval, (u32)ah->config.ani_poll_पूर्णांकerval);
-	अगर (!common->ani.calकरोne)
-		cal_पूर्णांकerval = min(cal_पूर्णांकerval, (u32)लघु_cal_पूर्णांकerval);
+	cal_interval = ATH_LONG_CALINTERVAL;
+	cal_interval = min(cal_interval, (u32)ah->config.ani_poll_interval);
+	if (!common->ani.caldone)
+		cal_interval = min(cal_interval, (u32)short_cal_interval);
 
-	mod_समयr(&common->ani.समयr, jअगरfies + msecs_to_jअगरfies(cal_पूर्णांकerval));
+	mod_timer(&common->ani.timer, jiffies + msecs_to_jiffies(cal_interval));
 
-	अगर (ar9003_is_paprd_enabled(ah) && ah->caldata) अणु
-		अगर (!test_bit(PAPRD_DONE, &ah->caldata->cal_flags)) अणु
+	if (ar9003_is_paprd_enabled(ah) && ah->caldata) {
+		if (!test_bit(PAPRD_DONE, &ah->caldata->cal_flags)) {
 			ieee80211_queue_work(sc->hw, &sc->paprd_work);
-		पूर्ण अन्यथा अगर (!ah->paprd_table_ग_लिखो_करोne) अणु
+		} else if (!ah->paprd_table_write_done) {
 			ath9k_ps_wakeup(sc);
 			ath_paprd_activate(sc);
 			ath9k_ps_restore(sc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम ath_start_ani(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	अचिन्हित दीर्घ बारtamp = jअगरfies_to_msecs(jअगरfies);
+void ath_start_ani(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	unsigned long timestamp = jiffies_to_msecs(jiffies);
 
-	अगर (common->disable_ani ||
+	if (common->disable_ani ||
 	    !test_bit(ATH_OP_ANI_RUN, &common->op_flags) ||
 	    sc->cur_chan->offchannel)
-		वापस;
+		return;
 
-	common->ani.दीर्घcal_समयr = बारtamp;
-	common->ani.लघुcal_समयr = बारtamp;
-	common->ani.checkani_समयr = बारtamp;
+	common->ani.longcal_timer = timestamp;
+	common->ani.shortcal_timer = timestamp;
+	common->ani.checkani_timer = timestamp;
 
 	ath_dbg(common, ANI, "Starting ANI\n");
-	mod_समयr(&common->ani.समयr,
-		  jअगरfies + msecs_to_jअगरfies((u32)ah->config.ani_poll_पूर्णांकerval));
-पूर्ण
+	mod_timer(&common->ani.timer,
+		  jiffies + msecs_to_jiffies((u32)ah->config.ani_poll_interval));
+}
 
-व्योम ath_stop_ani(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+void ath_stop_ani(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	ath_dbg(common, ANI, "Stopping ANI\n");
-	del_समयr_sync(&common->ani.समयr);
-पूर्ण
+	del_timer_sync(&common->ani.timer);
+}
 
-व्योम ath_check_ani(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
+void ath_check_ani(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
 
 	/*
-	 * Check क्रम the various conditions in which ANI has to
+	 * Check for the various conditions in which ANI has to
 	 * be stopped.
 	 */
-	अगर (ah->opmode == NL80211_IFTYPE_ADHOC) अणु
-		अगर (!cur_conf->enable_beacon)
-			जाओ stop_ani;
-	पूर्ण अन्यथा अगर (ah->opmode == NL80211_IFTYPE_AP) अणु
-		अगर (!cur_conf->enable_beacon) अणु
+	if (ah->opmode == NL80211_IFTYPE_ADHOC) {
+		if (!cur_conf->enable_beacon)
+			goto stop_ani;
+	} else if (ah->opmode == NL80211_IFTYPE_AP) {
+		if (!cur_conf->enable_beacon) {
 			/*
 			 * Disable ANI only when there are no
 			 * associated stations.
 			 */
-			अगर (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags))
-				जाओ stop_ani;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ah->opmode == NL80211_IFTYPE_STATION) अणु
-		अगर (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags))
-			जाओ stop_ani;
-	पूर्ण
+			if (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags))
+				goto stop_ani;
+		}
+	} else if (ah->opmode == NL80211_IFTYPE_STATION) {
+		if (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags))
+			goto stop_ani;
+	}
 
-	अगर (!test_bit(ATH_OP_ANI_RUN, &common->op_flags)) अणु
+	if (!test_bit(ATH_OP_ANI_RUN, &common->op_flags)) {
 		set_bit(ATH_OP_ANI_RUN, &common->op_flags);
 		ath_start_ani(sc);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 stop_ani:
 	clear_bit(ATH_OP_ANI_RUN, &common->op_flags);
 	ath_stop_ani(sc);
-पूर्ण
+}
 
-व्योम ath_update_survey_nf(काष्ठा ath_softc *sc, पूर्णांक channel)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath9k_channel *chan = &ah->channels[channel];
-	काष्ठा survey_info *survey = &sc->survey[channel];
+void ath_update_survey_nf(struct ath_softc *sc, int channel)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath9k_channel *chan = &ah->channels[channel];
+	struct survey_info *survey = &sc->survey[channel];
 
-	अगर (chan->noiseन्यूनमान) अणु
+	if (chan->noisefloor) {
 		survey->filled |= SURVEY_INFO_NOISE_DBM;
-		survey->noise = ath9k_hw_अ_लोhan_noise(ah, chan,
-						       chan->noiseन्यूनमान);
-	पूर्ण
-पूर्ण
+		survey->noise = ath9k_hw_getchan_noise(ah, chan,
+						       chan->noisefloor);
+	}
+}
 
 /*
- * Updates the survey statistics and वापसs the busy समय since last
- * update in %, अगर the measurement duration was दीर्घ enough क्रम the
+ * Updates the survey statistics and returns the busy time since last
+ * update in %, if the measurement duration was long enough for the
  * result to be useful, -1 otherwise.
  */
-पूर्णांक ath_update_survey_stats(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	पूर्णांक pos = ah->curchan - &ah->channels[0];
-	काष्ठा survey_info *survey = &sc->survey[pos];
-	काष्ठा ath_cycle_counters *cc = &common->cc_survey;
-	अचिन्हित पूर्णांक भाग = common->घड़ीrate * 1000;
-	पूर्णांक ret = 0;
+int ath_update_survey_stats(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	int pos = ah->curchan - &ah->channels[0];
+	struct survey_info *survey = &sc->survey[pos];
+	struct ath_cycle_counters *cc = &common->cc_survey;
+	unsigned int div = common->clockrate * 1000;
+	int ret = 0;
 
-	अगर (!ah->curchan)
-		वापस -1;
+	if (!ah->curchan)
+		return -1;
 
-	अगर (ah->घातer_mode == ATH9K_PM_AWAKE)
+	if (ah->power_mode == ATH9K_PM_AWAKE)
 		ath_hw_cycle_counters_update(common);
 
-	अगर (cc->cycles > 0) अणु
+	if (cc->cycles > 0) {
 		survey->filled |= SURVEY_INFO_TIME |
 			SURVEY_INFO_TIME_BUSY |
 			SURVEY_INFO_TIME_RX |
 			SURVEY_INFO_TIME_TX;
-		survey->समय += cc->cycles / भाग;
-		survey->समय_busy += cc->rx_busy / भाग;
-		survey->समय_rx += cc->rx_frame / भाग;
-		survey->समय_प्रकारx += cc->tx_frame / भाग;
-	पूर्ण
+		survey->time += cc->cycles / div;
+		survey->time_busy += cc->rx_busy / div;
+		survey->time_rx += cc->rx_frame / div;
+		survey->time_tx += cc->tx_frame / div;
+	}
 
-	अगर (cc->cycles < भाग)
-		वापस -1;
+	if (cc->cycles < div)
+		return -1;
 
-	अगर (cc->cycles > 0)
+	if (cc->cycles > 0)
 		ret = cc->rx_busy * 100 / cc->cycles;
 
-	स_रखो(cc, 0, माप(*cc));
+	memset(cc, 0, sizeof(*cc));
 
 	ath_update_survey_nf(sc, pos);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

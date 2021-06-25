@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // SPI init/core code
 //
 // Copyright (C) 2005 David Brownell
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/clk/clk-conf.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/spi-स्मृति.स>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/property.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched/rt.h>
-#समावेश <uapi/linux/sched/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/idr.h>
-#समावेश <linux/platक्रमm_data/x86/apple.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/cache.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/mutex.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/clk/clk-conf.h>
+#include <linux/slab.h>
+#include <linux/mod_devicetable.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/spi-mem.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_domain.h>
+#include <linux/property.h>
+#include <linux/export.h>
+#include <linux/sched/rt.h>
+#include <uapi/linux/sched/types.h>
+#include <linux/delay.h>
+#include <linux/kthread.h>
+#include <linux/ioport.h>
+#include <linux/acpi.h>
+#include <linux/highmem.h>
+#include <linux/idr.h>
+#include <linux/platform_data/x86/apple.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/spi.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/spi.h>
 EXPORT_TRACEPOINT_SYMBOL(spi_transfer_start);
 EXPORT_TRACEPOINT_SYMBOL(spi_transfer_stop);
 
-#समावेश "internals.h"
+#include "internals.h"
 
-अटल DEFINE_IDR(spi_master_idr);
+static DEFINE_IDR(spi_master_idr);
 
-अटल व्योम spidev_release(काष्ठा device *dev)
-अणु
-	काष्ठा spi_device	*spi = to_spi_device(dev);
+static void spidev_release(struct device *dev)
+{
+	struct spi_device	*spi = to_spi_device(dev);
 
 	spi_controller_put(spi->controller);
-	kमुक्त(spi->driver_override);
-	kमुक्त(spi);
-पूर्ण
+	kfree(spi->driver_override);
+	kfree(spi);
+}
 
-अटल sमाप_प्रकार
-modalias_show(काष्ठा device *dev, काष्ठा device_attribute *a, अक्षर *buf)
-अणु
-	स्थिर काष्ठा spi_device	*spi = to_spi_device(dev);
-	पूर्णांक len;
+static ssize_t
+modalias_show(struct device *dev, struct device_attribute *a, char *buf)
+{
+	const struct spi_device	*spi = to_spi_device(dev);
+	int len;
 
 	len = acpi_device_modalias(dev, buf, PAGE_SIZE - 1);
-	अगर (len != -ENODEV)
-		वापस len;
+	if (len != -ENODEV)
+		return len;
 
-	वापस प्र_लिखो(buf, "%s%s\n", SPI_MODULE_PREFIX, spi->modalias);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return sprintf(buf, "%s%s\n", SPI_MODULE_PREFIX, spi->modalias);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार driver_override_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *a,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	स्थिर अक्षर *end = स_प्रथम(buf, '\n', count);
-	स्थिर माप_प्रकार len = end ? end - buf : count;
-	स्थिर अक्षर *driver_override, *old;
+static ssize_t driver_override_store(struct device *dev,
+				     struct device_attribute *a,
+				     const char *buf, size_t count)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	const char *end = memchr(buf, '\n', count);
+	const size_t len = end ? end - buf : count;
+	const char *driver_override, *old;
 
-	/* We need to keep extra room क्रम a newline when displaying value */
-	अगर (len >= (PAGE_SIZE - 1))
-		वापस -EINVAL;
+	/* We need to keep extra room for a newline when displaying value */
+	if (len >= (PAGE_SIZE - 1))
+		return -EINVAL;
 
 	driver_override = kstrndup(buf, len, GFP_KERNEL);
-	अगर (!driver_override)
-		वापस -ENOMEM;
+	if (!driver_override)
+		return -ENOMEM;
 
 	device_lock(dev);
 	old = spi->driver_override;
-	अगर (len) अणु
+	if (len) {
 		spi->driver_override = driver_override;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Empty string, disable driver override */
-		spi->driver_override = शून्य;
-		kमुक्त(driver_override);
-	पूर्ण
+		spi->driver_override = NULL;
+		kfree(driver_override);
+	}
 	device_unlock(dev);
-	kमुक्त(old);
+	kfree(old);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार driver_override_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *a, अक्षर *buf)
-अणु
-	स्थिर काष्ठा spi_device *spi = to_spi_device(dev);
-	sमाप_प्रकार len;
+static ssize_t driver_override_show(struct device *dev,
+				    struct device_attribute *a, char *buf)
+{
+	const struct spi_device *spi = to_spi_device(dev);
+	ssize_t len;
 
 	device_lock(dev);
-	len = snम_लिखो(buf, PAGE_SIZE, "%s\n", spi->driver_override ? : "");
+	len = snprintf(buf, PAGE_SIZE, "%s\n", spi->driver_override ? : "");
 	device_unlock(dev);
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RW(driver_override);
+	return len;
+}
+static DEVICE_ATTR_RW(driver_override);
 
-#घोषणा SPI_STATISTICS_ATTRS(field, file)				\
-अटल sमाप_प्रकार spi_controller_##field##_show(काष्ठा device *dev,	\
-					     काष्ठा device_attribute *attr, \
-					     अक्षर *buf)			\
-अणु									\
-	काष्ठा spi_controller *ctlr = container_of(dev,			\
-					 काष्ठा spi_controller, dev);	\
-	वापस spi_statistics_##field##_show(&ctlr->statistics, buf);	\
-पूर्ण									\
-अटल काष्ठा device_attribute dev_attr_spi_controller_##field = अणु	\
-	.attr = अणु .name = file, .mode = 0444 पूर्ण,				\
+#define SPI_STATISTICS_ATTRS(field, file)				\
+static ssize_t spi_controller_##field##_show(struct device *dev,	\
+					     struct device_attribute *attr, \
+					     char *buf)			\
+{									\
+	struct spi_controller *ctlr = container_of(dev,			\
+					 struct spi_controller, dev);	\
+	return spi_statistics_##field##_show(&ctlr->statistics, buf);	\
+}									\
+static struct device_attribute dev_attr_spi_controller_##field = {	\
+	.attr = { .name = file, .mode = 0444 },				\
 	.show = spi_controller_##field##_show,				\
-पूर्ण;									\
-अटल sमाप_प्रकार spi_device_##field##_show(काष्ठा device *dev,		\
-					 काष्ठा device_attribute *attr,	\
-					अक्षर *buf)			\
-अणु									\
-	काष्ठा spi_device *spi = to_spi_device(dev);			\
-	वापस spi_statistics_##field##_show(&spi->statistics, buf);	\
-पूर्ण									\
-अटल काष्ठा device_attribute dev_attr_spi_device_##field = अणु		\
-	.attr = अणु .name = file, .mode = 0444 पूर्ण,				\
+};									\
+static ssize_t spi_device_##field##_show(struct device *dev,		\
+					 struct device_attribute *attr,	\
+					char *buf)			\
+{									\
+	struct spi_device *spi = to_spi_device(dev);			\
+	return spi_statistics_##field##_show(&spi->statistics, buf);	\
+}									\
+static struct device_attribute dev_attr_spi_device_##field = {		\
+	.attr = { .name = file, .mode = 0444 },				\
 	.show = spi_device_##field##_show,				\
-पूर्ण
+}
 
-#घोषणा SPI_STATISTICS_SHOW_NAME(name, file, field, क्रमmat_string)	\
-अटल sमाप_प्रकार spi_statistics_##name##_show(काष्ठा spi_statistics *stat, \
-					    अक्षर *buf)			\
-अणु									\
-	अचिन्हित दीर्घ flags;						\
-	sमाप_प्रकार len;							\
+#define SPI_STATISTICS_SHOW_NAME(name, file, field, format_string)	\
+static ssize_t spi_statistics_##name##_show(struct spi_statistics *stat, \
+					    char *buf)			\
+{									\
+	unsigned long flags;						\
+	ssize_t len;							\
 	spin_lock_irqsave(&stat->lock, flags);				\
-	len = प्र_लिखो(buf, क्रमmat_string, stat->field);			\
+	len = sprintf(buf, format_string, stat->field);			\
 	spin_unlock_irqrestore(&stat->lock, flags);			\
-	वापस len;							\
-पूर्ण									\
+	return len;							\
+}									\
 SPI_STATISTICS_ATTRS(name, file)
 
-#घोषणा SPI_STATISTICS_SHOW(field, क्रमmat_string)			\
-	SPI_STATISTICS_SHOW_NAME(field, __stringअगरy(field),		\
-				 field, क्रमmat_string)
+#define SPI_STATISTICS_SHOW(field, format_string)			\
+	SPI_STATISTICS_SHOW_NAME(field, __stringify(field),		\
+				 field, format_string)
 
 SPI_STATISTICS_SHOW(messages, "%lu");
 SPI_STATISTICS_SHOW(transfers, "%lu");
 SPI_STATISTICS_SHOW(errors, "%lu");
-SPI_STATISTICS_SHOW(समयकरोut, "%lu");
+SPI_STATISTICS_SHOW(timedout, "%lu");
 
 SPI_STATISTICS_SHOW(spi_sync, "%lu");
 SPI_STATISTICS_SHOW(spi_sync_immediate, "%lu");
@@ -167,7 +166,7 @@ SPI_STATISTICS_SHOW(bytes, "%llu");
 SPI_STATISTICS_SHOW(bytes_rx, "%llu");
 SPI_STATISTICS_SHOW(bytes_tx, "%llu");
 
-#घोषणा SPI_STATISTICS_TRANSFER_BYTES_HISTO(index, number)		\
+#define SPI_STATISTICS_TRANSFER_BYTES_HISTO(index, number)		\
 	SPI_STATISTICS_SHOW_NAME(transfer_bytes_histo##index,		\
 				 "transfer_bytes_histo_" number,	\
 				 transfer_bytes_histo[index],  "%lu")
@@ -191,21 +190,21 @@ SPI_STATISTICS_TRANSFER_BYTES_HISTO(16, "65536+");
 
 SPI_STATISTICS_SHOW(transfers_split_maxsize, "%lu");
 
-अटल काष्ठा attribute *spi_dev_attrs[] = अणु
+static struct attribute *spi_dev_attrs[] = {
 	&dev_attr_modalias.attr,
 	&dev_attr_driver_override.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group spi_dev_group = अणु
+static const struct attribute_group spi_dev_group = {
 	.attrs  = spi_dev_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *spi_device_statistics_attrs[] = अणु
+static struct attribute *spi_device_statistics_attrs[] = {
 	&dev_attr_spi_device_messages.attr,
 	&dev_attr_spi_device_transfers.attr,
 	&dev_attr_spi_device_errors.attr,
-	&dev_attr_spi_device_समयकरोut.attr,
+	&dev_attr_spi_device_timedout.attr,
 	&dev_attr_spi_device_spi_sync.attr,
 	&dev_attr_spi_device_spi_sync_immediate.attr,
 	&dev_attr_spi_device_spi_async.attr,
@@ -230,25 +229,25 @@ SPI_STATISTICS_SHOW(transfers_split_maxsize, "%lu");
 	&dev_attr_spi_device_transfer_bytes_histo15.attr,
 	&dev_attr_spi_device_transfer_bytes_histo16.attr,
 	&dev_attr_spi_device_transfers_split_maxsize.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group spi_device_statistics_group = अणु
+static const struct attribute_group spi_device_statistics_group = {
 	.name  = "statistics",
 	.attrs  = spi_device_statistics_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *spi_dev_groups[] = अणु
+static const struct attribute_group *spi_dev_groups[] = {
 	&spi_dev_group,
 	&spi_device_statistics_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *spi_controller_statistics_attrs[] = अणु
+static struct attribute *spi_controller_statistics_attrs[] = {
 	&dev_attr_spi_controller_messages.attr,
 	&dev_attr_spi_controller_transfers.attr,
 	&dev_attr_spi_controller_errors.attr,
-	&dev_attr_spi_controller_समयकरोut.attr,
+	&dev_attr_spi_controller_timedout.attr,
 	&dev_attr_spi_controller_spi_sync.attr,
 	&dev_attr_spi_controller_spi_sync_immediate.attr,
 	&dev_attr_spi_controller_spi_async.attr,
@@ -273,27 +272,27 @@ SPI_STATISTICS_SHOW(transfers_split_maxsize, "%lu");
 	&dev_attr_spi_controller_transfer_bytes_histo15.attr,
 	&dev_attr_spi_controller_transfer_bytes_histo16.attr,
 	&dev_attr_spi_controller_transfers_split_maxsize.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group spi_controller_statistics_group = अणु
+static const struct attribute_group spi_controller_statistics_group = {
 	.name  = "statistics",
 	.attrs  = spi_controller_statistics_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *spi_master_groups[] = अणु
+static const struct attribute_group *spi_master_groups[] = {
 	&spi_controller_statistics_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-व्योम spi_statistics_add_transfer_stats(काष्ठा spi_statistics *stats,
-				       काष्ठा spi_transfer *xfer,
-				       काष्ठा spi_controller *ctlr)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक l2len = min(fls(xfer->len), SPI_STATISTICS_HISTO_SIZE) - 1;
+void spi_statistics_add_transfer_stats(struct spi_statistics *stats,
+				       struct spi_transfer *xfer,
+				       struct spi_controller *ctlr)
+{
+	unsigned long flags;
+	int l2len = min(fls(xfer->len), SPI_STATISTICS_HISTO_SIZE) - 1;
 
-	अगर (l2len < 0)
+	if (l2len < 0)
 		l2len = 0;
 
 	spin_lock_irqsave(&stats->lock, flags);
@@ -302,190 +301,190 @@ SPI_STATISTICS_SHOW(transfers_split_maxsize, "%lu");
 	stats->transfer_bytes_histo[l2len]++;
 
 	stats->bytes += xfer->len;
-	अगर ((xfer->tx_buf) &&
+	if ((xfer->tx_buf) &&
 	    (xfer->tx_buf != ctlr->dummy_tx))
 		stats->bytes_tx += xfer->len;
-	अगर ((xfer->rx_buf) &&
+	if ((xfer->rx_buf) &&
 	    (xfer->rx_buf != ctlr->dummy_rx))
 		stats->bytes_rx += xfer->len;
 
 	spin_unlock_irqrestore(&stats->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spi_statistics_add_transfer_stats);
 
 /* modalias support makes "modprobe $MODALIAS" new-style hotplug work,
  * and the sysfs version makes coldplug work too.
  */
 
-अटल स्थिर काष्ठा spi_device_id *spi_match_id(स्थिर काष्ठा spi_device_id *id,
-						स्थिर काष्ठा spi_device *sdev)
-अणु
-	जबतक (id->name[0]) अणु
-		अगर (!म_भेद(sdev->modalias, id->name))
-			वापस id;
+static const struct spi_device_id *spi_match_id(const struct spi_device_id *id,
+						const struct spi_device *sdev)
+{
+	while (id->name[0]) {
+		if (!strcmp(sdev->modalias, id->name))
+			return id;
 		id++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-स्थिर काष्ठा spi_device_id *spi_get_device_id(स्थिर काष्ठा spi_device *sdev)
-अणु
-	स्थिर काष्ठा spi_driver *sdrv = to_spi_driver(sdev->dev.driver);
+const struct spi_device_id *spi_get_device_id(const struct spi_device *sdev)
+{
+	const struct spi_driver *sdrv = to_spi_driver(sdev->dev.driver);
 
-	वापस spi_match_id(sdrv->id_table, sdev);
-पूर्ण
+	return spi_match_id(sdrv->id_table, sdev);
+}
 EXPORT_SYMBOL_GPL(spi_get_device_id);
 
-अटल पूर्णांक spi_match_device(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	स्थिर काष्ठा spi_device	*spi = to_spi_device(dev);
-	स्थिर काष्ठा spi_driver	*sdrv = to_spi_driver(drv);
+static int spi_match_device(struct device *dev, struct device_driver *drv)
+{
+	const struct spi_device	*spi = to_spi_device(dev);
+	const struct spi_driver	*sdrv = to_spi_driver(drv);
 
-	/* Check override first, and अगर set, only use the named driver */
-	अगर (spi->driver_override)
-		वापस म_भेद(spi->driver_override, drv->name) == 0;
+	/* Check override first, and if set, only use the named driver */
+	if (spi->driver_override)
+		return strcmp(spi->driver_override, drv->name) == 0;
 
 	/* Attempt an OF style match */
-	अगर (of_driver_match_device(dev, drv))
-		वापस 1;
+	if (of_driver_match_device(dev, drv))
+		return 1;
 
 	/* Then try ACPI */
-	अगर (acpi_driver_match_device(dev, drv))
-		वापस 1;
+	if (acpi_driver_match_device(dev, drv))
+		return 1;
 
-	अगर (sdrv->id_table)
-		वापस !!spi_match_id(sdrv->id_table, spi);
+	if (sdrv->id_table)
+		return !!spi_match_id(sdrv->id_table, spi);
 
-	वापस म_भेद(spi->modalias, drv->name) == 0;
-पूर्ण
+	return strcmp(spi->modalias, drv->name) == 0;
+}
 
-अटल पूर्णांक spi_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	स्थिर काष्ठा spi_device		*spi = to_spi_device(dev);
-	पूर्णांक rc;
+static int spi_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	const struct spi_device		*spi = to_spi_device(dev);
+	int rc;
 
 	rc = acpi_device_uevent_modalias(dev, env);
-	अगर (rc != -ENODEV)
-		वापस rc;
+	if (rc != -ENODEV)
+		return rc;
 
-	वापस add_uevent_var(env, "MODALIAS=%s%s", SPI_MODULE_PREFIX, spi->modalias);
-पूर्ण
+	return add_uevent_var(env, "MODALIAS=%s%s", SPI_MODULE_PREFIX, spi->modalias);
+}
 
-अटल पूर्णांक spi_probe(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा spi_driver		*sdrv = to_spi_driver(dev->driver);
-	काष्ठा spi_device		*spi = to_spi_device(dev);
-	पूर्णांक ret;
+static int spi_probe(struct device *dev)
+{
+	const struct spi_driver		*sdrv = to_spi_driver(dev->driver);
+	struct spi_device		*spi = to_spi_device(dev);
+	int ret;
 
-	ret = of_clk_set_शेषs(dev->of_node, false);
-	अगर (ret)
-		वापस ret;
+	ret = of_clk_set_defaults(dev->of_node, false);
+	if (ret)
+		return ret;
 
-	अगर (dev->of_node) अणु
+	if (dev->of_node) {
 		spi->irq = of_irq_get(dev->of_node, 0);
-		अगर (spi->irq == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
-		अगर (spi->irq < 0)
+		if (spi->irq == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		if (spi->irq < 0)
 			spi->irq = 0;
-	पूर्ण
+	}
 
-	ret = dev_pm_करोमुख्य_attach(dev, true);
-	अगर (ret)
-		वापस ret;
+	ret = dev_pm_domain_attach(dev, true);
+	if (ret)
+		return ret;
 
-	अगर (sdrv->probe) अणु
+	if (sdrv->probe) {
 		ret = sdrv->probe(spi);
-		अगर (ret)
-			dev_pm_करोमुख्य_detach(dev, true);
-	पूर्ण
+		if (ret)
+			dev_pm_domain_detach(dev, true);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spi_हटाओ(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा spi_driver		*sdrv = to_spi_driver(dev->driver);
+static int spi_remove(struct device *dev)
+{
+	const struct spi_driver		*sdrv = to_spi_driver(dev->driver);
 
-	अगर (sdrv->हटाओ) अणु
-		पूर्णांक ret;
+	if (sdrv->remove) {
+		int ret;
 
-		ret = sdrv->हटाओ(to_spi_device(dev));
-		अगर (ret)
+		ret = sdrv->remove(to_spi_device(dev));
+		if (ret)
 			dev_warn(dev,
 				 "Failed to unbind driver (%pe), ignoring\n",
 				 ERR_PTR(ret));
-	पूर्ण
+	}
 
-	dev_pm_करोमुख्य_detach(dev, true);
+	dev_pm_domain_detach(dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम spi_shutकरोwn(काष्ठा device *dev)
-अणु
-	अगर (dev->driver) अणु
-		स्थिर काष्ठा spi_driver	*sdrv = to_spi_driver(dev->driver);
+static void spi_shutdown(struct device *dev)
+{
+	if (dev->driver) {
+		const struct spi_driver	*sdrv = to_spi_driver(dev->driver);
 
-		अगर (sdrv->shutकरोwn)
-			sdrv->shutकरोwn(to_spi_device(dev));
-	पूर्ण
-पूर्ण
+		if (sdrv->shutdown)
+			sdrv->shutdown(to_spi_device(dev));
+	}
+}
 
-काष्ठा bus_type spi_bus_type = अणु
+struct bus_type spi_bus_type = {
 	.name		= "spi",
 	.dev_groups	= spi_dev_groups,
 	.match		= spi_match_device,
 	.uevent		= spi_uevent,
 	.probe		= spi_probe,
-	.हटाओ		= spi_हटाओ,
-	.shutकरोwn	= spi_shutकरोwn,
-पूर्ण;
+	.remove		= spi_remove,
+	.shutdown	= spi_shutdown,
+};
 EXPORT_SYMBOL_GPL(spi_bus_type);
 
 /**
- * __spi_रेजिस्टर_driver - रेजिस्टर a SPI driver
- * @owner: owner module of the driver to रेजिस्टर
- * @sdrv: the driver to रेजिस्टर
+ * __spi_register_driver - register a SPI driver
+ * @owner: owner module of the driver to register
+ * @sdrv: the driver to register
  * Context: can sleep
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक __spi_रेजिस्टर_driver(काष्ठा module *owner, काष्ठा spi_driver *sdrv)
-अणु
+int __spi_register_driver(struct module *owner, struct spi_driver *sdrv)
+{
 	sdrv->driver.owner = owner;
 	sdrv->driver.bus = &spi_bus_type;
-	वापस driver_रेजिस्टर(&sdrv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(__spi_रेजिस्टर_driver);
+	return driver_register(&sdrv->driver);
+}
+EXPORT_SYMBOL_GPL(__spi_register_driver);
 
 /*-------------------------------------------------------------------------*/
 
 /* SPI devices should normally not be created by SPI device drivers; that
- * would make them board-specअगरic.  Similarly with SPI controller drivers.
- * Device registration normally goes पूर्णांकo like arch/.../mach.../board-YYY.c
- * with other पढ़ोonly (flashable) inक्रमmation about मुख्यboard devices.
+ * would make them board-specific.  Similarly with SPI controller drivers.
+ * Device registration normally goes into like arch/.../mach.../board-YYY.c
+ * with other readonly (flashable) information about mainboard devices.
  */
 
-काष्ठा boardinfo अणु
-	काष्ठा list_head	list;
-	काष्ठा spi_board_info	board_info;
-पूर्ण;
+struct boardinfo {
+	struct list_head	list;
+	struct spi_board_info	board_info;
+};
 
-अटल LIST_HEAD(board_list);
-अटल LIST_HEAD(spi_controller_list);
+static LIST_HEAD(board_list);
+static LIST_HEAD(spi_controller_list);
 
 /*
- * Used to protect add/del operation क्रम board_info list and
+ * Used to protect add/del operation for board_info list and
  * spi_controller list, and their matching process
- * also used to protect object of type काष्ठा idr
+ * also used to protect object of type struct idr
  */
-अटल DEFINE_MUTEX(board_lock);
+static DEFINE_MUTEX(board_lock);
 
 /*
  * Prevents addition of devices with same chip select and
- * addition of devices below an unरेजिस्टरing controller.
+ * addition of devices below an unregistering controller.
  */
-अटल DEFINE_MUTEX(spi_add_lock);
+static DEFINE_MUTEX(spi_add_lock);
 
 /**
  * spi_alloc_device - Allocate a new SPI device
@@ -493,29 +492,29 @@ EXPORT_SYMBOL_GPL(__spi_रेजिस्टर_driver);
  * Context: can sleep
  *
  * Allows a driver to allocate and initialize a spi_device without
- * रेजिस्टरing it immediately.  This allows a driver to directly
- * fill the spi_device with device parameters beक्रमe calling
+ * registering it immediately.  This allows a driver to directly
+ * fill the spi_device with device parameters before calling
  * spi_add_device() on it.
  *
- * Caller is responsible to call spi_add_device() on the वापसed
- * spi_device काष्ठाure to add it to the SPI controller.  If the caller
+ * Caller is responsible to call spi_add_device() on the returned
+ * spi_device structure to add it to the SPI controller.  If the caller
  * needs to discard the spi_device without adding it, then it should
  * call spi_dev_put() on it.
  *
- * Return: a poपूर्णांकer to the new device, or शून्य.
+ * Return: a pointer to the new device, or NULL.
  */
-काष्ठा spi_device *spi_alloc_device(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा spi_device	*spi;
+struct spi_device *spi_alloc_device(struct spi_controller *ctlr)
+{
+	struct spi_device	*spi;
 
-	अगर (!spi_controller_get(ctlr))
-		वापस शून्य;
+	if (!spi_controller_get(ctlr))
+		return NULL;
 
-	spi = kzalloc(माप(*spi), GFP_KERNEL);
-	अगर (!spi) अणु
+	spi = kzalloc(sizeof(*spi), GFP_KERNEL);
+	if (!spi) {
 		spi_controller_put(ctlr);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	spi->master = spi->controller = ctlr;
 	spi->dev.parent = &ctlr->dev;
@@ -527,116 +526,116 @@ EXPORT_SYMBOL_GPL(__spi_रेजिस्टर_driver);
 	spin_lock_init(&spi->statistics.lock);
 
 	device_initialize(&spi->dev);
-	वापस spi;
-पूर्ण
+	return spi;
+}
 EXPORT_SYMBOL_GPL(spi_alloc_device);
 
-अटल व्योम spi_dev_set_name(काष्ठा spi_device *spi)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&spi->dev);
+static void spi_dev_set_name(struct spi_device *spi)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&spi->dev);
 
-	अगर (adev) अणु
+	if (adev) {
 		dev_set_name(&spi->dev, "spi-%s", acpi_dev_name(adev));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_set_name(&spi->dev, "%s.%u", dev_name(&spi->controller->dev),
 		     spi->chip_select);
-पूर्ण
+}
 
-अटल पूर्णांक spi_dev_check(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा spi_device *spi = to_spi_device(dev);
-	काष्ठा spi_device *new_spi = data;
+static int spi_dev_check(struct device *dev, void *data)
+{
+	struct spi_device *spi = to_spi_device(dev);
+	struct spi_device *new_spi = data;
 
-	अगर (spi->controller == new_spi->controller &&
+	if (spi->controller == new_spi->controller &&
 	    spi->chip_select == new_spi->chip_select)
-		वापस -EBUSY;
-	वापस 0;
-पूर्ण
+		return -EBUSY;
+	return 0;
+}
 
-अटल व्योम spi_cleanup(काष्ठा spi_device *spi)
-अणु
-	अगर (spi->controller->cleanup)
+static void spi_cleanup(struct spi_device *spi)
+{
+	if (spi->controller->cleanup)
 		spi->controller->cleanup(spi);
-पूर्ण
+}
 
 /**
  * spi_add_device - Add spi_device allocated with spi_alloc_device
- * @spi: spi_device to रेजिस्टर
+ * @spi: spi_device to register
  *
  * Companion function to spi_alloc_device.  Devices allocated with
  * spi_alloc_device can be added onto the spi bus with this function.
  *
- * Return: 0 on success; negative त्रुटि_सं on failure
+ * Return: 0 on success; negative errno on failure
  */
-पूर्णांक spi_add_device(काष्ठा spi_device *spi)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	काष्ठा device *dev = ctlr->dev.parent;
-	पूर्णांक status;
+int spi_add_device(struct spi_device *spi)
+{
+	struct spi_controller *ctlr = spi->controller;
+	struct device *dev = ctlr->dev.parent;
+	int status;
 
 	/* Chipselects are numbered 0..max; validate. */
-	अगर (spi->chip_select >= ctlr->num_chipselect) अणु
+	if (spi->chip_select >= ctlr->num_chipselect) {
 		dev_err(dev, "cs%d >= max %d\n", spi->chip_select,
 			ctlr->num_chipselect);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Set the bus ID string */
 	spi_dev_set_name(spi);
 
 	/* We need to make sure there's no other device with this
-	 * chipselect **BEFORE** we call setup(), अन्यथा we'll trash
+	 * chipselect **BEFORE** we call setup(), else we'll trash
 	 * its configuration.  Lock against concurrent add() calls.
 	 */
 	mutex_lock(&spi_add_lock);
 
-	status = bus_क्रम_each_dev(&spi_bus_type, शून्य, spi, spi_dev_check);
-	अगर (status) अणु
+	status = bus_for_each_dev(&spi_bus_type, NULL, spi, spi_dev_check);
+	if (status) {
 		dev_err(dev, "chipselect %d already in use\n",
 				spi->chip_select);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Controller may unरेजिस्टर concurrently */
-	अगर (IS_ENABLED(CONFIG_SPI_DYNAMIC) &&
-	    !device_is_रेजिस्टरed(&ctlr->dev)) अणु
+	/* Controller may unregister concurrently */
+	if (IS_ENABLED(CONFIG_SPI_DYNAMIC) &&
+	    !device_is_registered(&ctlr->dev)) {
 		status = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Descriptors take precedence */
-	अगर (ctlr->cs_gpiods)
+	if (ctlr->cs_gpiods)
 		spi->cs_gpiod = ctlr->cs_gpiods[spi->chip_select];
-	अन्यथा अगर (ctlr->cs_gpios)
+	else if (ctlr->cs_gpios)
 		spi->cs_gpio = ctlr->cs_gpios[spi->chip_select];
 
-	/* Drivers may modअगरy this initial i/o setup, but will
+	/* Drivers may modify this initial i/o setup, but will
 	 * normally rely on the device being setup.  Devices
 	 * using SPI_CS_HIGH can't coexist well otherwise...
 	 */
 	status = spi_setup(spi);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		dev_err(dev, "can't setup %s, status %d\n",
 				dev_name(&spi->dev), status);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Device may be bound to an active driver when this वापसs */
+	/* Device may be bound to an active driver when this returns */
 	status = device_add(&spi->dev);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		dev_err(dev, "can't add %s, status %d\n",
 				dev_name(&spi->dev), status);
 		spi_cleanup(spi);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(dev, "registered child %s\n", dev_name(&spi->dev));
-	पूर्ण
+	}
 
-करोne:
+done:
 	mutex_unlock(&spi_add_lock);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(spi_add_device);
 
 /**
@@ -645,1576 +644,1576 @@ EXPORT_SYMBOL_GPL(spi_add_device);
  * @chip: Describes the SPI device
  * Context: can sleep
  *
- * On typical मुख्यboards, this is purely पूर्णांकernal; and it's not needed
+ * On typical mainboards, this is purely internal; and it's not needed
  * after board init creates the hard-wired devices.  Some development
- * platक्रमms may not be able to use spi_रेजिस्टर_board_info though, and
- * this is exported so that क्रम example a USB or parport based adapter
+ * platforms may not be able to use spi_register_board_info though, and
+ * this is exported so that for example a USB or parport based adapter
  * driver could add devices (which it would learn about out-of-band).
  *
- * Return: the new device, or शून्य.
+ * Return: the new device, or NULL.
  */
-काष्ठा spi_device *spi_new_device(काष्ठा spi_controller *ctlr,
-				  काष्ठा spi_board_info *chip)
-अणु
-	काष्ठा spi_device	*proxy;
-	पूर्णांक			status;
+struct spi_device *spi_new_device(struct spi_controller *ctlr,
+				  struct spi_board_info *chip)
+{
+	struct spi_device	*proxy;
+	int			status;
 
 	/* NOTE:  caller did any chip->bus_num checks necessary.
 	 *
-	 * Also, unless we change the वापस value convention to use
-	 * error-or-poपूर्णांकer (not शून्य-or-poपूर्णांकer), troubleshootability
+	 * Also, unless we change the return value convention to use
+	 * error-or-pointer (not NULL-or-pointer), troubleshootability
 	 * suggests syslogged diagnostics are best here (ugh).
 	 */
 
 	proxy = spi_alloc_device(ctlr);
-	अगर (!proxy)
-		वापस शून्य;
+	if (!proxy)
+		return NULL;
 
-	WARN_ON(म_माप(chip->modalias) >= माप(proxy->modalias));
+	WARN_ON(strlen(chip->modalias) >= sizeof(proxy->modalias));
 
 	proxy->chip_select = chip->chip_select;
 	proxy->max_speed_hz = chip->max_speed_hz;
 	proxy->mode = chip->mode;
 	proxy->irq = chip->irq;
-	strlcpy(proxy->modalias, chip->modalias, माप(proxy->modalias));
-	proxy->dev.platक्रमm_data = (व्योम *) chip->platक्रमm_data;
+	strlcpy(proxy->modalias, chip->modalias, sizeof(proxy->modalias));
+	proxy->dev.platform_data = (void *) chip->platform_data;
 	proxy->controller_data = chip->controller_data;
-	proxy->controller_state = शून्य;
+	proxy->controller_state = NULL;
 
-	अगर (chip->swnode) अणु
+	if (chip->swnode) {
 		status = device_add_software_node(&proxy->dev, chip->swnode);
-		अगर (status) अणु
+		if (status) {
 			dev_err(&ctlr->dev, "failed to add software node to '%s': %d\n",
 				chip->modalias, status);
-			जाओ err_dev_put;
-		पूर्ण
-	पूर्ण
+			goto err_dev_put;
+		}
+	}
 
 	status = spi_add_device(proxy);
-	अगर (status < 0)
-		जाओ err_dev_put;
+	if (status < 0)
+		goto err_dev_put;
 
-	वापस proxy;
+	return proxy;
 
 err_dev_put:
-	device_हटाओ_software_node(&proxy->dev);
+	device_remove_software_node(&proxy->dev);
 	spi_dev_put(proxy);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(spi_new_device);
 
 /**
- * spi_unरेजिस्टर_device - unरेजिस्टर a single SPI device
- * @spi: spi_device to unरेजिस्टर
+ * spi_unregister_device - unregister a single SPI device
+ * @spi: spi_device to unregister
  *
  * Start making the passed SPI device vanish. Normally this would be handled
- * by spi_unरेजिस्टर_controller().
+ * by spi_unregister_controller().
  */
-व्योम spi_unरेजिस्टर_device(काष्ठा spi_device *spi)
-अणु
-	अगर (!spi)
-		वापस;
+void spi_unregister_device(struct spi_device *spi)
+{
+	if (!spi)
+		return;
 
-	अगर (spi->dev.of_node) अणु
+	if (spi->dev.of_node) {
 		of_node_clear_flag(spi->dev.of_node, OF_POPULATED);
 		of_node_put(spi->dev.of_node);
-	पूर्ण
-	अगर (ACPI_COMPANION(&spi->dev))
-		acpi_device_clear_क्रमागतerated(ACPI_COMPANION(&spi->dev));
-	device_हटाओ_software_node(&spi->dev);
+	}
+	if (ACPI_COMPANION(&spi->dev))
+		acpi_device_clear_enumerated(ACPI_COMPANION(&spi->dev));
+	device_remove_software_node(&spi->dev);
 	device_del(&spi->dev);
 	spi_cleanup(spi);
 	put_device(&spi->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_unरेजिस्टर_device);
+}
+EXPORT_SYMBOL_GPL(spi_unregister_device);
 
-अटल व्योम spi_match_controller_to_boardinfo(काष्ठा spi_controller *ctlr,
-					      काष्ठा spi_board_info *bi)
-अणु
-	काष्ठा spi_device *dev;
+static void spi_match_controller_to_boardinfo(struct spi_controller *ctlr,
+					      struct spi_board_info *bi)
+{
+	struct spi_device *dev;
 
-	अगर (ctlr->bus_num != bi->bus_num)
-		वापस;
+	if (ctlr->bus_num != bi->bus_num)
+		return;
 
 	dev = spi_new_device(ctlr, bi);
-	अगर (!dev)
+	if (!dev)
 		dev_err(ctlr->dev.parent, "can't create new device for %s\n",
 			bi->modalias);
-पूर्ण
+}
 
 /**
- * spi_रेजिस्टर_board_info - रेजिस्टर SPI devices क्रम a given board
+ * spi_register_board_info - register SPI devices for a given board
  * @info: array of chip descriptors
  * @n: how many descriptors are provided
  * Context: can sleep
  *
- * Board-specअगरic early init code calls this (probably during arch_initcall)
+ * Board-specific early init code calls this (probably during arch_initcall)
  * with segments of the SPI device table.  Any device nodes are created later,
  * after the relevant parent SPI controller (bus_num) is defined.  We keep
- * this table of devices क्रमever, so that reloading a controller driver will
- * not make Linux क्रमget about these hard-wired devices.
+ * this table of devices forever, so that reloading a controller driver will
+ * not make Linux forget about these hard-wired devices.
  *
  * Other code can also call this, e.g. a particular add-on board might provide
  * SPI devices through its expansion connector, so code initializing that board
  * would naturally declare its SPI devices.
  *
  * The board info passed can safely be __initdata ... but be careful of
- * any embedded poपूर्णांकers (platक्रमm_data, etc), they're copied as-is.
+ * any embedded pointers (platform_data, etc), they're copied as-is.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_रेजिस्टर_board_info(काष्ठा spi_board_info स्थिर *info, अचिन्हित n)
-अणु
-	काष्ठा boardinfo *bi;
-	पूर्णांक i;
+int spi_register_board_info(struct spi_board_info const *info, unsigned n)
+{
+	struct boardinfo *bi;
+	int i;
 
-	अगर (!n)
-		वापस 0;
+	if (!n)
+		return 0;
 
-	bi = kसुस्मृति(n, माप(*bi), GFP_KERNEL);
-	अगर (!bi)
-		वापस -ENOMEM;
+	bi = kcalloc(n, sizeof(*bi), GFP_KERNEL);
+	if (!bi)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < n; i++, bi++, info++) अणु
-		काष्ठा spi_controller *ctlr;
+	for (i = 0; i < n; i++, bi++, info++) {
+		struct spi_controller *ctlr;
 
-		स_नकल(&bi->board_info, info, माप(*info));
+		memcpy(&bi->board_info, info, sizeof(*info));
 
 		mutex_lock(&board_lock);
 		list_add_tail(&bi->list, &board_list);
-		list_क्रम_each_entry(ctlr, &spi_controller_list, list)
+		list_for_each_entry(ctlr, &spi_controller_list, list)
 			spi_match_controller_to_boardinfo(ctlr,
 							  &bi->board_info);
 		mutex_unlock(&board_lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम spi_set_cs(काष्ठा spi_device *spi, bool enable, bool क्रमce)
-अणु
+static void spi_set_cs(struct spi_device *spi, bool enable, bool force)
+{
 	bool activate = enable;
 
 	/*
-	 * Aव्योम calling पूर्णांकo the driver (or करोing delays) अगर the chip select
-	 * isn't actually changing from the last समय this was called.
+	 * Avoid calling into the driver (or doing delays) if the chip select
+	 * isn't actually changing from the last time this was called.
 	 */
-	अगर (!क्रमce && (spi->controller->last_cs_enable == enable) &&
+	if (!force && (spi->controller->last_cs_enable == enable) &&
 	    (spi->controller->last_cs_mode_high == (spi->mode & SPI_CS_HIGH)))
-		वापस;
+		return;
 
 	spi->controller->last_cs_enable = enable;
 	spi->controller->last_cs_mode_high = spi->mode & SPI_CS_HIGH;
 
-	अगर (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio) ||
-	    !spi->controller->set_cs_timing) अणु
-		अगर (activate)
-			spi_delay_exec(&spi->controller->cs_setup, शून्य);
-		अन्यथा
-			spi_delay_exec(&spi->controller->cs_hold, शून्य);
-	पूर्ण
+	if (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio) ||
+	    !spi->controller->set_cs_timing) {
+		if (activate)
+			spi_delay_exec(&spi->controller->cs_setup, NULL);
+		else
+			spi_delay_exec(&spi->controller->cs_hold, NULL);
+	}
 
-	अगर (spi->mode & SPI_CS_HIGH)
+	if (spi->mode & SPI_CS_HIGH)
 		enable = !enable;
 
-	अगर (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio)) अणु
-		अगर (!(spi->mode & SPI_NO_CS)) अणु
-			अगर (spi->cs_gpiod) अणु
+	if (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio)) {
+		if (!(spi->mode & SPI_NO_CS)) {
+			if (spi->cs_gpiod) {
 				/*
 				 * Historically ACPI has no means of the GPIO polarity and
 				 * thus the SPISerialBus() resource defines it on the per-chip
-				 * basis. In order to aव्योम a chain of negations, the GPIO
-				 * polarity is considered being Active High. Even क्रम the हालs
+				 * basis. In order to avoid a chain of negations, the GPIO
+				 * polarity is considered being Active High. Even for the cases
 				 * when _DSD() is involved (in the updated versions of ACPI)
-				 * the GPIO CS polarity must be defined Active High to aव्योम
+				 * the GPIO CS polarity must be defined Active High to avoid
 				 * ambiguity. That's why we use enable, that takes SPI_CS_HIGH
-				 * पूर्णांकo account.
+				 * into account.
 				 */
-				अगर (has_acpi_companion(&spi->dev))
+				if (has_acpi_companion(&spi->dev))
 					gpiod_set_value_cansleep(spi->cs_gpiod, !enable);
-				अन्यथा
+				else
 					/* Polarity handled by GPIO library */
 					gpiod_set_value_cansleep(spi->cs_gpiod, activate);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * invert the enable line, as active low is
-				 * शेष क्रम SPI.
+				 * default for SPI.
 				 */
 				gpio_set_value_cansleep(spi->cs_gpio, !enable);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		/* Some SPI masters need both GPIO CS & slave_select */
-		अगर ((spi->controller->flags & SPI_MASTER_GPIO_SS) &&
+		if ((spi->controller->flags & SPI_MASTER_GPIO_SS) &&
 		    spi->controller->set_cs)
 			spi->controller->set_cs(spi, !enable);
-	पूर्ण अन्यथा अगर (spi->controller->set_cs) अणु
+	} else if (spi->controller->set_cs) {
 		spi->controller->set_cs(spi, !enable);
-	पूर्ण
+	}
 
-	अगर (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio) ||
-	    !spi->controller->set_cs_timing) अणु
-		अगर (!activate)
-			spi_delay_exec(&spi->controller->cs_inactive, शून्य);
-	पूर्ण
-पूर्ण
+	if (spi->cs_gpiod || gpio_is_valid(spi->cs_gpio) ||
+	    !spi->controller->set_cs_timing) {
+		if (!activate)
+			spi_delay_exec(&spi->controller->cs_inactive, NULL);
+	}
+}
 
-#अगर_घोषित CONFIG_HAS_DMA
-पूर्णांक spi_map_buf(काष्ठा spi_controller *ctlr, काष्ठा device *dev,
-		काष्ठा sg_table *sgt, व्योम *buf, माप_प्रकार len,
-		क्रमागत dma_data_direction dir)
-अणु
-	स्थिर bool vदो_स्मृतिed_buf = is_vदो_स्मृति_addr(buf);
-	अचिन्हित पूर्णांक max_seg_size = dma_get_max_seg_size(dev);
-#अगर_घोषित CONFIG_HIGHMEM
-	स्थिर bool kmap_buf = ((अचिन्हित दीर्घ)buf >= PKMAP_BASE &&
-				(अचिन्हित दीर्घ)buf < (PKMAP_BASE +
+#ifdef CONFIG_HAS_DMA
+int spi_map_buf(struct spi_controller *ctlr, struct device *dev,
+		struct sg_table *sgt, void *buf, size_t len,
+		enum dma_data_direction dir)
+{
+	const bool vmalloced_buf = is_vmalloc_addr(buf);
+	unsigned int max_seg_size = dma_get_max_seg_size(dev);
+#ifdef CONFIG_HIGHMEM
+	const bool kmap_buf = ((unsigned long)buf >= PKMAP_BASE &&
+				(unsigned long)buf < (PKMAP_BASE +
 					(LAST_PKMAP * PAGE_SIZE)));
-#अन्यथा
-	स्थिर bool kmap_buf = false;
-#पूर्ण_अगर
-	पूर्णांक desc_len;
-	पूर्णांक sgs;
-	काष्ठा page *vm_page;
-	काष्ठा scatterlist *sg;
-	व्योम *sg_buf;
-	माप_प्रकार min;
-	पूर्णांक i, ret;
+#else
+	const bool kmap_buf = false;
+#endif
+	int desc_len;
+	int sgs;
+	struct page *vm_page;
+	struct scatterlist *sg;
+	void *sg_buf;
+	size_t min;
+	int i, ret;
 
-	अगर (vदो_स्मृतिed_buf || kmap_buf) अणु
-		desc_len = min_t(पूर्णांक, max_seg_size, PAGE_SIZE);
+	if (vmalloced_buf || kmap_buf) {
+		desc_len = min_t(int, max_seg_size, PAGE_SIZE);
 		sgs = DIV_ROUND_UP(len + offset_in_page(buf), desc_len);
-	पूर्ण अन्यथा अगर (virt_addr_valid(buf)) अणु
-		desc_len = min_t(पूर्णांक, max_seg_size, ctlr->max_dma_len);
+	} else if (virt_addr_valid(buf)) {
+		desc_len = min_t(int, max_seg_size, ctlr->max_dma_len);
 		sgs = DIV_ROUND_UP(len, desc_len);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
 	ret = sg_alloc_table(sgt, sgs, GFP_KERNEL);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	sg = &sgt->sgl[0];
-	क्रम (i = 0; i < sgs; i++) अणु
+	for (i = 0; i < sgs; i++) {
 
-		अगर (vदो_स्मृतिed_buf || kmap_buf) अणु
+		if (vmalloced_buf || kmap_buf) {
 			/*
 			 * Next scatterlist entry size is the minimum between
-			 * the desc_len and the reमुख्यing buffer length that
+			 * the desc_len and the remaining buffer length that
 			 * fits in a page.
 			 */
-			min = min_t(माप_प्रकार, desc_len,
-				    min_t(माप_प्रकार, len,
+			min = min_t(size_t, desc_len,
+				    min_t(size_t, len,
 					  PAGE_SIZE - offset_in_page(buf)));
-			अगर (vदो_स्मृतिed_buf)
-				vm_page = vदो_स्मृति_to_page(buf);
-			अन्यथा
+			if (vmalloced_buf)
+				vm_page = vmalloc_to_page(buf);
+			else
 				vm_page = kmap_to_page(buf);
-			अगर (!vm_page) अणु
-				sg_मुक्त_table(sgt);
-				वापस -ENOMEM;
-			पूर्ण
+			if (!vm_page) {
+				sg_free_table(sgt);
+				return -ENOMEM;
+			}
 			sg_set_page(sg, vm_page,
 				    min, offset_in_page(buf));
-		पूर्ण अन्यथा अणु
-			min = min_t(माप_प्रकार, len, desc_len);
+		} else {
+			min = min_t(size_t, len, desc_len);
 			sg_buf = buf;
 			sg_set_buf(sg, sg_buf, min);
-		पूर्ण
+		}
 
 		buf += min;
 		len -= min;
 		sg = sg_next(sg);
-	पूर्ण
+	}
 
 	ret = dma_map_sg(dev, sgt->sgl, sgt->nents, dir);
-	अगर (!ret)
+	if (!ret)
 		ret = -ENOMEM;
-	अगर (ret < 0) अणु
-		sg_मुक्त_table(sgt);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		sg_free_table(sgt);
+		return ret;
+	}
 
 	sgt->nents = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम spi_unmap_buf(काष्ठा spi_controller *ctlr, काष्ठा device *dev,
-		   काष्ठा sg_table *sgt, क्रमागत dma_data_direction dir)
-अणु
-	अगर (sgt->orig_nents) अणु
+void spi_unmap_buf(struct spi_controller *ctlr, struct device *dev,
+		   struct sg_table *sgt, enum dma_data_direction dir)
+{
+	if (sgt->orig_nents) {
 		dma_unmap_sg(dev, sgt->sgl, sgt->orig_nents, dir);
-		sg_मुक्त_table(sgt);
-	पूर्ण
-पूर्ण
+		sg_free_table(sgt);
+	}
+}
 
-अटल पूर्णांक __spi_map_msg(काष्ठा spi_controller *ctlr, काष्ठा spi_message *msg)
-अणु
-	काष्ठा device *tx_dev, *rx_dev;
-	काष्ठा spi_transfer *xfer;
-	पूर्णांक ret;
+static int __spi_map_msg(struct spi_controller *ctlr, struct spi_message *msg)
+{
+	struct device *tx_dev, *rx_dev;
+	struct spi_transfer *xfer;
+	int ret;
 
-	अगर (!ctlr->can_dma)
-		वापस 0;
+	if (!ctlr->can_dma)
+		return 0;
 
-	अगर (ctlr->dma_tx)
+	if (ctlr->dma_tx)
 		tx_dev = ctlr->dma_tx->device->dev;
-	अन्यथा
+	else
 		tx_dev = ctlr->dev.parent;
 
-	अगर (ctlr->dma_rx)
+	if (ctlr->dma_rx)
 		rx_dev = ctlr->dma_rx->device->dev;
-	अन्यथा
+	else
 		rx_dev = ctlr->dev.parent;
 
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
-		अगर (!ctlr->can_dma(ctlr, msg->spi, xfer))
-			जारी;
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+		if (!ctlr->can_dma(ctlr, msg->spi, xfer))
+			continue;
 
-		अगर (xfer->tx_buf != शून्य) अणु
+		if (xfer->tx_buf != NULL) {
 			ret = spi_map_buf(ctlr, tx_dev, &xfer->tx_sg,
-					  (व्योम *)xfer->tx_buf, xfer->len,
+					  (void *)xfer->tx_buf, xfer->len,
 					  DMA_TO_DEVICE);
-			अगर (ret != 0)
-				वापस ret;
-		पूर्ण
+			if (ret != 0)
+				return ret;
+		}
 
-		अगर (xfer->rx_buf != शून्य) अणु
+		if (xfer->rx_buf != NULL) {
 			ret = spi_map_buf(ctlr, rx_dev, &xfer->rx_sg,
 					  xfer->rx_buf, xfer->len,
 					  DMA_FROM_DEVICE);
-			अगर (ret != 0) अणु
+			if (ret != 0) {
 				spi_unmap_buf(ctlr, tx_dev, &xfer->tx_sg,
 					      DMA_TO_DEVICE);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 
 	ctlr->cur_msg_mapped = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __spi_unmap_msg(काष्ठा spi_controller *ctlr, काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_transfer *xfer;
-	काष्ठा device *tx_dev, *rx_dev;
+static int __spi_unmap_msg(struct spi_controller *ctlr, struct spi_message *msg)
+{
+	struct spi_transfer *xfer;
+	struct device *tx_dev, *rx_dev;
 
-	अगर (!ctlr->cur_msg_mapped || !ctlr->can_dma)
-		वापस 0;
+	if (!ctlr->cur_msg_mapped || !ctlr->can_dma)
+		return 0;
 
-	अगर (ctlr->dma_tx)
+	if (ctlr->dma_tx)
 		tx_dev = ctlr->dma_tx->device->dev;
-	अन्यथा
+	else
 		tx_dev = ctlr->dev.parent;
 
-	अगर (ctlr->dma_rx)
+	if (ctlr->dma_rx)
 		rx_dev = ctlr->dma_rx->device->dev;
-	अन्यथा
+	else
 		rx_dev = ctlr->dev.parent;
 
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
-		अगर (!ctlr->can_dma(ctlr, msg->spi, xfer))
-			जारी;
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+		if (!ctlr->can_dma(ctlr, msg->spi, xfer))
+			continue;
 
 		spi_unmap_buf(ctlr, rx_dev, &xfer->rx_sg, DMA_FROM_DEVICE);
 		spi_unmap_buf(ctlr, tx_dev, &xfer->tx_sg, DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	ctlr->cur_msg_mapped = false;
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* !CONFIG_HAS_DMA */
-अटल अंतरभूत पूर्णांक __spi_map_msg(काष्ठा spi_controller *ctlr,
-				काष्ठा spi_message *msg)
-अणु
-	वापस 0;
-पूर्ण
+	return 0;
+}
+#else /* !CONFIG_HAS_DMA */
+static inline int __spi_map_msg(struct spi_controller *ctlr,
+				struct spi_message *msg)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __spi_unmap_msg(काष्ठा spi_controller *ctlr,
-				  काष्ठा spi_message *msg)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* !CONFIG_HAS_DMA */
+static inline int __spi_unmap_msg(struct spi_controller *ctlr,
+				  struct spi_message *msg)
+{
+	return 0;
+}
+#endif /* !CONFIG_HAS_DMA */
 
-अटल अंतरभूत पूर्णांक spi_unmap_msg(काष्ठा spi_controller *ctlr,
-				काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_transfer *xfer;
+static inline int spi_unmap_msg(struct spi_controller *ctlr,
+				struct spi_message *msg)
+{
+	struct spi_transfer *xfer;
 
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
 		/*
-		 * Restore the original value of tx_buf or rx_buf अगर they are
-		 * शून्य.
+		 * Restore the original value of tx_buf or rx_buf if they are
+		 * NULL.
 		 */
-		अगर (xfer->tx_buf == ctlr->dummy_tx)
-			xfer->tx_buf = शून्य;
-		अगर (xfer->rx_buf == ctlr->dummy_rx)
-			xfer->rx_buf = शून्य;
-	पूर्ण
+		if (xfer->tx_buf == ctlr->dummy_tx)
+			xfer->tx_buf = NULL;
+		if (xfer->rx_buf == ctlr->dummy_rx)
+			xfer->rx_buf = NULL;
+	}
 
-	वापस __spi_unmap_msg(ctlr, msg);
-पूर्ण
+	return __spi_unmap_msg(ctlr, msg);
+}
 
-अटल पूर्णांक spi_map_msg(काष्ठा spi_controller *ctlr, काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_transfer *xfer;
-	व्योम *पंचांगp;
-	अचिन्हित पूर्णांक max_tx, max_rx;
+static int spi_map_msg(struct spi_controller *ctlr, struct spi_message *msg)
+{
+	struct spi_transfer *xfer;
+	void *tmp;
+	unsigned int max_tx, max_rx;
 
-	अगर ((ctlr->flags & (SPI_CONTROLLER_MUST_RX | SPI_CONTROLLER_MUST_TX))
-		&& !(msg->spi->mode & SPI_3WIRE)) अणु
+	if ((ctlr->flags & (SPI_CONTROLLER_MUST_RX | SPI_CONTROLLER_MUST_TX))
+		&& !(msg->spi->mode & SPI_3WIRE)) {
 		max_tx = 0;
 		max_rx = 0;
 
-		list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
-			अगर ((ctlr->flags & SPI_CONTROLLER_MUST_TX) &&
+		list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+			if ((ctlr->flags & SPI_CONTROLLER_MUST_TX) &&
 			    !xfer->tx_buf)
 				max_tx = max(xfer->len, max_tx);
-			अगर ((ctlr->flags & SPI_CONTROLLER_MUST_RX) &&
+			if ((ctlr->flags & SPI_CONTROLLER_MUST_RX) &&
 			    !xfer->rx_buf)
 				max_rx = max(xfer->len, max_rx);
-		पूर्ण
+		}
 
-		अगर (max_tx) अणु
-			पंचांगp = kपुनः_स्मृति(ctlr->dummy_tx, max_tx,
+		if (max_tx) {
+			tmp = krealloc(ctlr->dummy_tx, max_tx,
 				       GFP_KERNEL | GFP_DMA);
-			अगर (!पंचांगp)
-				वापस -ENOMEM;
-			ctlr->dummy_tx = पंचांगp;
-			स_रखो(पंचांगp, 0, max_tx);
-		पूर्ण
+			if (!tmp)
+				return -ENOMEM;
+			ctlr->dummy_tx = tmp;
+			memset(tmp, 0, max_tx);
+		}
 
-		अगर (max_rx) अणु
-			पंचांगp = kपुनः_स्मृति(ctlr->dummy_rx, max_rx,
+		if (max_rx) {
+			tmp = krealloc(ctlr->dummy_rx, max_rx,
 				       GFP_KERNEL | GFP_DMA);
-			अगर (!पंचांगp)
-				वापस -ENOMEM;
-			ctlr->dummy_rx = पंचांगp;
-		पूर्ण
+			if (!tmp)
+				return -ENOMEM;
+			ctlr->dummy_rx = tmp;
+		}
 
-		अगर (max_tx || max_rx) अणु
-			list_क्रम_each_entry(xfer, &msg->transfers,
-					    transfer_list) अणु
-				अगर (!xfer->len)
-					जारी;
-				अगर (!xfer->tx_buf)
+		if (max_tx || max_rx) {
+			list_for_each_entry(xfer, &msg->transfers,
+					    transfer_list) {
+				if (!xfer->len)
+					continue;
+				if (!xfer->tx_buf)
 					xfer->tx_buf = ctlr->dummy_tx;
-				अगर (!xfer->rx_buf)
+				if (!xfer->rx_buf)
 					xfer->rx_buf = ctlr->dummy_rx;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस __spi_map_msg(ctlr, msg);
-पूर्ण
+	return __spi_map_msg(ctlr, msg);
+}
 
-अटल पूर्णांक spi_transfer_रुको(काष्ठा spi_controller *ctlr,
-			     काष्ठा spi_message *msg,
-			     काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा spi_statistics *staपंचांग = &ctlr->statistics;
-	काष्ठा spi_statistics *stats = &msg->spi->statistics;
+static int spi_transfer_wait(struct spi_controller *ctlr,
+			     struct spi_message *msg,
+			     struct spi_transfer *xfer)
+{
+	struct spi_statistics *statm = &ctlr->statistics;
+	struct spi_statistics *stats = &msg->spi->statistics;
 	u32 speed_hz = xfer->speed_hz;
-	अचिन्हित दीर्घ दीर्घ ms;
+	unsigned long long ms;
 
-	अगर (spi_controller_is_slave(ctlr)) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&ctlr->xfer_completion)) अणु
+	if (spi_controller_is_slave(ctlr)) {
+		if (wait_for_completion_interruptible(&ctlr->xfer_completion)) {
 			dev_dbg(&msg->spi->dev, "SPI transfer interrupted\n");
-			वापस -EINTR;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!speed_hz)
+			return -EINTR;
+		}
+	} else {
+		if (!speed_hz)
 			speed_hz = 100000;
 
 		ms = 8LL * 1000LL * xfer->len;
-		करो_भाग(ms, speed_hz);
+		do_div(ms, speed_hz);
 		ms += ms + 200; /* some tolerance */
 
-		अगर (ms > अच_पूर्णांक_उच्च)
-			ms = अच_पूर्णांक_उच्च;
+		if (ms > UINT_MAX)
+			ms = UINT_MAX;
 
-		ms = रुको_क्रम_completion_समयout(&ctlr->xfer_completion,
-						 msecs_to_jअगरfies(ms));
+		ms = wait_for_completion_timeout(&ctlr->xfer_completion,
+						 msecs_to_jiffies(ms));
 
-		अगर (ms == 0) अणु
-			SPI_STATISTICS_INCREMENT_FIELD(staपंचांग, समयकरोut);
-			SPI_STATISTICS_INCREMENT_FIELD(stats, समयकरोut);
+		if (ms == 0) {
+			SPI_STATISTICS_INCREMENT_FIELD(statm, timedout);
+			SPI_STATISTICS_INCREMENT_FIELD(stats, timedout);
 			dev_err(&msg->spi->dev,
 				"SPI transfer timed out\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम _spi_transfer_delay_ns(u32 ns)
-अणु
-	अगर (!ns)
-		वापस;
-	अगर (ns <= 1000) अणु
+static void _spi_transfer_delay_ns(u32 ns)
+{
+	if (!ns)
+		return;
+	if (ns <= 1000) {
 		ndelay(ns);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 us = DIV_ROUND_UP(ns, 1000);
 
-		अगर (us <= 10)
+		if (us <= 10)
 			udelay(us);
-		अन्यथा
+		else
 			usleep_range(us, us + DIV_ROUND_UP(us, 10));
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक spi_delay_to_ns(काष्ठा spi_delay *_delay, काष्ठा spi_transfer *xfer)
-अणु
+int spi_delay_to_ns(struct spi_delay *_delay, struct spi_transfer *xfer)
+{
 	u32 delay = _delay->value;
 	u32 unit = _delay->unit;
 	u32 hz;
 
-	अगर (!delay)
-		वापस 0;
+	if (!delay)
+		return 0;
 
-	चयन (unit) अणु
-	हाल SPI_DELAY_UNIT_USECS:
+	switch (unit) {
+	case SPI_DELAY_UNIT_USECS:
 		delay *= 1000;
-		अवरोध;
-	हाल SPI_DELAY_UNIT_NSECS: /* nothing to करो here */
-		अवरोध;
-	हाल SPI_DELAY_UNIT_SCK:
-		/* घड़ी cycles need to be obtained from spi_transfer */
-		अगर (!xfer)
-			वापस -EINVAL;
-		/* अगर there is no effective speed know, then approximate
+		break;
+	case SPI_DELAY_UNIT_NSECS: /* nothing to do here */
+		break;
+	case SPI_DELAY_UNIT_SCK:
+		/* clock cycles need to be obtained from spi_transfer */
+		if (!xfer)
+			return -EINVAL;
+		/* if there is no effective speed know, then approximate
 		 * by underestimating with half the requested hz
 		 */
 		hz = xfer->effective_speed_hz ?: xfer->speed_hz / 2;
-		अगर (!hz)
-			वापस -EINVAL;
+		if (!hz)
+			return -EINVAL;
 		delay *= DIV_ROUND_UP(1000000000, hz);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस delay;
-पूर्ण
+	return delay;
+}
 EXPORT_SYMBOL_GPL(spi_delay_to_ns);
 
-पूर्णांक spi_delay_exec(काष्ठा spi_delay *_delay, काष्ठा spi_transfer *xfer)
-अणु
-	पूर्णांक delay;
+int spi_delay_exec(struct spi_delay *_delay, struct spi_transfer *xfer)
+{
+	int delay;
 
 	might_sleep();
 
-	अगर (!_delay)
-		वापस -EINVAL;
+	if (!_delay)
+		return -EINVAL;
 
 	delay = spi_delay_to_ns(_delay, xfer);
-	अगर (delay < 0)
-		वापस delay;
+	if (delay < 0)
+		return delay;
 
 	_spi_transfer_delay_ns(delay);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spi_delay_exec);
 
-अटल व्योम _spi_transfer_cs_change_delay(काष्ठा spi_message *msg,
-					  काष्ठा spi_transfer *xfer)
-अणु
+static void _spi_transfer_cs_change_delay(struct spi_message *msg,
+					  struct spi_transfer *xfer)
+{
 	u32 delay = xfer->cs_change_delay.value;
 	u32 unit = xfer->cs_change_delay.unit;
-	पूर्णांक ret;
+	int ret;
 
-	/* वापस early on "fast" mode - क्रम everything but USECS */
-	अगर (!delay) अणु
-		अगर (unit == SPI_DELAY_UNIT_USECS)
+	/* return early on "fast" mode - for everything but USECS */
+	if (!delay) {
+		if (unit == SPI_DELAY_UNIT_USECS)
 			_spi_transfer_delay_ns(10000);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = spi_delay_exec(&xfer->cs_change_delay, xfer);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err_once(&msg->spi->dev,
 			     "Use of unsupported delay unit %i, using default of 10us\n",
 			     unit);
 		_spi_transfer_delay_ns(10000);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * spi_transfer_one_message - Default implementation of transfer_one_message()
  *
- * This is a standard implementation of transfer_one_message() क्रम
+ * This is a standard implementation of transfer_one_message() for
  * drivers which implement a transfer_one() operation.  It provides
  * standard handling of delays and chip select management.
  */
-अटल पूर्णांक spi_transfer_one_message(काष्ठा spi_controller *ctlr,
-				    काष्ठा spi_message *msg)
-अणु
-	काष्ठा spi_transfer *xfer;
+static int spi_transfer_one_message(struct spi_controller *ctlr,
+				    struct spi_message *msg)
+{
+	struct spi_transfer *xfer;
 	bool keep_cs = false;
-	पूर्णांक ret = 0;
-	काष्ठा spi_statistics *staपंचांग = &ctlr->statistics;
-	काष्ठा spi_statistics *stats = &msg->spi->statistics;
+	int ret = 0;
+	struct spi_statistics *statm = &ctlr->statistics;
+	struct spi_statistics *stats = &msg->spi->statistics;
 
 	spi_set_cs(msg->spi, true, false);
 
-	SPI_STATISTICS_INCREMENT_FIELD(staपंचांग, messages);
+	SPI_STATISTICS_INCREMENT_FIELD(statm, messages);
 	SPI_STATISTICS_INCREMENT_FIELD(stats, messages);
 
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
 		trace_spi_transfer_start(msg, xfer);
 
-		spi_statistics_add_transfer_stats(staपंचांग, xfer, ctlr);
+		spi_statistics_add_transfer_stats(statm, xfer, ctlr);
 		spi_statistics_add_transfer_stats(stats, xfer, ctlr);
 
-		अगर (!ctlr->ptp_sts_supported) अणु
+		if (!ctlr->ptp_sts_supported) {
 			xfer->ptp_sts_word_pre = 0;
-			ptp_पढ़ो_प्रणाली_prets(xfer->ptp_sts);
-		पूर्ण
+			ptp_read_system_prets(xfer->ptp_sts);
+		}
 
-		अगर ((xfer->tx_buf || xfer->rx_buf) && xfer->len) अणु
+		if ((xfer->tx_buf || xfer->rx_buf) && xfer->len) {
 			reinit_completion(&ctlr->xfer_completion);
 
 fallback_pio:
 			ret = ctlr->transfer_one(ctlr, msg->spi, xfer);
-			अगर (ret < 0) अणु
-				अगर (ctlr->cur_msg_mapped &&
-				   (xfer->error & SPI_TRANS_FAIL_NO_START)) अणु
+			if (ret < 0) {
+				if (ctlr->cur_msg_mapped &&
+				   (xfer->error & SPI_TRANS_FAIL_NO_START)) {
 					__spi_unmap_msg(ctlr, msg);
 					ctlr->fallback = true;
 					xfer->error &= ~SPI_TRANS_FAIL_NO_START;
-					जाओ fallback_pio;
-				पूर्ण
+					goto fallback_pio;
+				}
 
-				SPI_STATISTICS_INCREMENT_FIELD(staपंचांग,
+				SPI_STATISTICS_INCREMENT_FIELD(statm,
 							       errors);
 				SPI_STATISTICS_INCREMENT_FIELD(stats,
 							       errors);
 				dev_err(&msg->spi->dev,
 					"SPI transfer failed: %d\n", ret);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (ret > 0) अणु
-				ret = spi_transfer_रुको(ctlr, msg, xfer);
-				अगर (ret < 0)
+			if (ret > 0) {
+				ret = spi_transfer_wait(ctlr, msg, xfer);
+				if (ret < 0)
 					msg->status = ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (xfer->len)
+			}
+		} else {
+			if (xfer->len)
 				dev_err(&msg->spi->dev,
 					"Bufferless transfer has length %u\n",
 					xfer->len);
-		पूर्ण
+		}
 
-		अगर (!ctlr->ptp_sts_supported) अणु
-			ptp_पढ़ो_प्रणाली_postts(xfer->ptp_sts);
+		if (!ctlr->ptp_sts_supported) {
+			ptp_read_system_postts(xfer->ptp_sts);
 			xfer->ptp_sts_word_post = xfer->len;
-		पूर्ण
+		}
 
 		trace_spi_transfer_stop(msg, xfer);
 
-		अगर (msg->status != -EINPROGRESS)
-			जाओ out;
+		if (msg->status != -EINPROGRESS)
+			goto out;
 
 		spi_transfer_delay_exec(xfer);
 
-		अगर (xfer->cs_change) अणु
-			अगर (list_is_last(&xfer->transfer_list,
-					 &msg->transfers)) अणु
+		if (xfer->cs_change) {
+			if (list_is_last(&xfer->transfer_list,
+					 &msg->transfers)) {
 				keep_cs = true;
-			पूर्ण अन्यथा अणु
+			} else {
 				spi_set_cs(msg->spi, false, false);
 				_spi_transfer_cs_change_delay(msg, xfer);
 				spi_set_cs(msg->spi, true, false);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		msg->actual_length += xfer->len;
-	पूर्ण
+	}
 
 out:
-	अगर (ret != 0 || !keep_cs)
+	if (ret != 0 || !keep_cs)
 		spi_set_cs(msg->spi, false, false);
 
-	अगर (msg->status == -EINPROGRESS)
+	if (msg->status == -EINPROGRESS)
 		msg->status = ret;
 
-	अगर (msg->status && ctlr->handle_err)
+	if (msg->status && ctlr->handle_err)
 		ctlr->handle_err(ctlr, msg);
 
 	spi_finalize_current_message(ctlr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * spi_finalize_current_transfer - report completion of a transfer
  * @ctlr: the controller reporting completion
  *
  * Called by SPI drivers using the core transfer_one_message()
- * implementation to notअगरy it that the current पूर्णांकerrupt driven
+ * implementation to notify it that the current interrupt driven
  * transfer has finished and the next one may be scheduled.
  */
-व्योम spi_finalize_current_transfer(काष्ठा spi_controller *ctlr)
-अणु
+void spi_finalize_current_transfer(struct spi_controller *ctlr)
+{
 	complete(&ctlr->xfer_completion);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spi_finalize_current_transfer);
 
-अटल व्योम spi_idle_runसमय_pm(काष्ठा spi_controller *ctlr)
-अणु
-	अगर (ctlr->स्वतः_runसमय_pm) अणु
-		pm_runसमय_mark_last_busy(ctlr->dev.parent);
-		pm_runसमय_put_स्वतःsuspend(ctlr->dev.parent);
-	पूर्ण
-पूर्ण
+static void spi_idle_runtime_pm(struct spi_controller *ctlr)
+{
+	if (ctlr->auto_runtime_pm) {
+		pm_runtime_mark_last_busy(ctlr->dev.parent);
+		pm_runtime_put_autosuspend(ctlr->dev.parent);
+	}
+}
 
 /**
  * __spi_pump_messages - function which processes spi message queue
- * @ctlr: controller to process queue क्रम
- * @in_kthपढ़ो: true अगर we are in the context of the message pump thपढ़ो
+ * @ctlr: controller to process queue for
+ * @in_kthread: true if we are in the context of the message pump thread
  *
- * This function checks अगर there is any spi message in the queue that
- * needs processing and अगर so call out to the driver to initialize hardware
+ * This function checks if there is any spi message in the queue that
+ * needs processing and if so call out to the driver to initialize hardware
  * and transfer each message.
  *
- * Note that it is called both from the kthपढ़ो itself and also from
+ * Note that it is called both from the kthread itself and also from
  * inside spi_sync(); the queue extraction handling at the top of the
  * function should deal with this safely.
  */
-अटल व्योम __spi_pump_messages(काष्ठा spi_controller *ctlr, bool in_kthपढ़ो)
-अणु
-	काष्ठा spi_transfer *xfer;
-	काष्ठा spi_message *msg;
+static void __spi_pump_messages(struct spi_controller *ctlr, bool in_kthread)
+{
+	struct spi_transfer *xfer;
+	struct spi_message *msg;
 	bool was_busy = false;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	unsigned long flags;
+	int ret;
 
 	/* Lock queue */
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
 
-	/* Make sure we are not alपढ़ोy running a message */
-	अगर (ctlr->cur_msg) अणु
+	/* Make sure we are not already running a message */
+	if (ctlr->cur_msg) {
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* If another context is idling the device then defer */
-	अगर (ctlr->idling) अणु
-		kthपढ़ो_queue_work(ctlr->kworker, &ctlr->pump_messages);
+	if (ctlr->idling) {
+		kthread_queue_work(ctlr->kworker, &ctlr->pump_messages);
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Check अगर the queue is idle */
-	अगर (list_empty(&ctlr->queue) || !ctlr->running) अणु
-		अगर (!ctlr->busy) अणु
+	/* Check if the queue is idle */
+	if (list_empty(&ctlr->queue) || !ctlr->running) {
+		if (!ctlr->busy) {
 			spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* Defer any non-atomic tearकरोwn to the thपढ़ो */
-		अगर (!in_kthपढ़ो) अणु
-			अगर (!ctlr->dummy_rx && !ctlr->dummy_tx &&
-			    !ctlr->unprepare_transfer_hardware) अणु
-				spi_idle_runसमय_pm(ctlr);
+		/* Defer any non-atomic teardown to the thread */
+		if (!in_kthread) {
+			if (!ctlr->dummy_rx && !ctlr->dummy_tx &&
+			    !ctlr->unprepare_transfer_hardware) {
+				spi_idle_runtime_pm(ctlr);
 				ctlr->busy = false;
 				trace_spi_controller_idle(ctlr);
-			पूर्ण अन्यथा अणु
-				kthपढ़ो_queue_work(ctlr->kworker,
+			} else {
+				kthread_queue_work(ctlr->kworker,
 						   &ctlr->pump_messages);
-			पूर्ण
+			}
 			spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ctlr->busy = false;
 		ctlr->idling = true;
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-		kमुक्त(ctlr->dummy_rx);
-		ctlr->dummy_rx = शून्य;
-		kमुक्त(ctlr->dummy_tx);
-		ctlr->dummy_tx = शून्य;
-		अगर (ctlr->unprepare_transfer_hardware &&
+		kfree(ctlr->dummy_rx);
+		ctlr->dummy_rx = NULL;
+		kfree(ctlr->dummy_tx);
+		ctlr->dummy_tx = NULL;
+		if (ctlr->unprepare_transfer_hardware &&
 		    ctlr->unprepare_transfer_hardware(ctlr))
 			dev_err(&ctlr->dev,
 				"failed to unprepare transfer hardware\n");
-		spi_idle_runसमय_pm(ctlr);
+		spi_idle_runtime_pm(ctlr);
 		trace_spi_controller_idle(ctlr);
 
 		spin_lock_irqsave(&ctlr->queue_lock, flags);
 		ctlr->idling = false;
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Extract head of queue */
-	msg = list_first_entry(&ctlr->queue, काष्ठा spi_message, queue);
+	msg = list_first_entry(&ctlr->queue, struct spi_message, queue);
 	ctlr->cur_msg = msg;
 
 	list_del_init(&msg->queue);
-	अगर (ctlr->busy)
+	if (ctlr->busy)
 		was_busy = true;
-	अन्यथा
+	else
 		ctlr->busy = true;
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
 	mutex_lock(&ctlr->io_mutex);
 
-	अगर (!was_busy && ctlr->स्वतः_runसमय_pm) अणु
-		ret = pm_runसमय_get_sync(ctlr->dev.parent);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_noidle(ctlr->dev.parent);
+	if (!was_busy && ctlr->auto_runtime_pm) {
+		ret = pm_runtime_get_sync(ctlr->dev.parent);
+		if (ret < 0) {
+			pm_runtime_put_noidle(ctlr->dev.parent);
 			dev_err(&ctlr->dev, "Failed to power device: %d\n",
 				ret);
 			mutex_unlock(&ctlr->io_mutex);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (!was_busy)
+	if (!was_busy)
 		trace_spi_controller_busy(ctlr);
 
-	अगर (!was_busy && ctlr->prepare_transfer_hardware) अणु
+	if (!was_busy && ctlr->prepare_transfer_hardware) {
 		ret = ctlr->prepare_transfer_hardware(ctlr);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&ctlr->dev,
 				"failed to prepare transfer hardware: %d\n",
 				ret);
 
-			अगर (ctlr->स्वतः_runसमय_pm)
-				pm_runसमय_put(ctlr->dev.parent);
+			if (ctlr->auto_runtime_pm)
+				pm_runtime_put(ctlr->dev.parent);
 
 			msg->status = ret;
 			spi_finalize_current_message(ctlr);
 
 			mutex_unlock(&ctlr->io_mutex);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	trace_spi_message_start(msg);
 
-	अगर (ctlr->prepare_message) अणु
+	if (ctlr->prepare_message) {
 		ret = ctlr->prepare_message(ctlr, msg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&ctlr->dev, "failed to prepare message: %d\n",
 				ret);
 			msg->status = ret;
 			spi_finalize_current_message(ctlr);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ctlr->cur_msg_prepared = true;
-	पूर्ण
+	}
 
 	ret = spi_map_msg(ctlr, msg);
-	अगर (ret) अणु
+	if (ret) {
 		msg->status = ret;
 		spi_finalize_current_message(ctlr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!ctlr->ptp_sts_supported && !ctlr->transfer_one) अणु
-		list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
+	if (!ctlr->ptp_sts_supported && !ctlr->transfer_one) {
+		list_for_each_entry(xfer, &msg->transfers, transfer_list) {
 			xfer->ptp_sts_word_pre = 0;
-			ptp_पढ़ो_प्रणाली_prets(xfer->ptp_sts);
-		पूर्ण
-	पूर्ण
+			ptp_read_system_prets(xfer->ptp_sts);
+		}
+	}
 
 	ret = ctlr->transfer_one_message(ctlr, msg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&ctlr->dev,
 			"failed to transfer one message from queue\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mutex_unlock(&ctlr->io_mutex);
 
-	/* Prod the scheduler in हाल transfer_one() was busy रुकोing */
-	अगर (!ret)
+	/* Prod the scheduler in case transfer_one() was busy waiting */
+	if (!ret)
 		cond_resched();
-पूर्ण
+}
 
 /**
- * spi_pump_messages - kthपढ़ो work function which processes spi message queue
- * @work: poपूर्णांकer to kthपढ़ो work काष्ठा contained in the controller काष्ठा
+ * spi_pump_messages - kthread work function which processes spi message queue
+ * @work: pointer to kthread work struct contained in the controller struct
  */
-अटल व्योम spi_pump_messages(काष्ठा kthपढ़ो_work *work)
-अणु
-	काष्ठा spi_controller *ctlr =
-		container_of(work, काष्ठा spi_controller, pump_messages);
+static void spi_pump_messages(struct kthread_work *work)
+{
+	struct spi_controller *ctlr =
+		container_of(work, struct spi_controller, pump_messages);
 
 	__spi_pump_messages(ctlr, true);
-पूर्ण
+}
 
 /**
- * spi_take_बारtamp_pre - helper क्रम drivers to collect the beginning of the
- *			    TX बारtamp क्रम the requested byte from the SPI
+ * spi_take_timestamp_pre - helper for drivers to collect the beginning of the
+ *			    TX timestamp for the requested byte from the SPI
  *			    transfer. The frequency with which this function
- *			    must be called (once per word, once क्रम the whole
+ *			    must be called (once per word, once for the whole
  *			    transfer, once per batch of words etc) is arbitrary
- *			    as दीर्घ as the @tx buffer offset is greater than or
- *			    equal to the requested byte at the समय of the
- *			    call. The बारtamp is only taken once, at the
+ *			    as long as the @tx buffer offset is greater than or
+ *			    equal to the requested byte at the time of the
+ *			    call. The timestamp is only taken once, at the
  *			    first such call. It is assumed that the driver
- *			    advances its @tx buffer poपूर्णांकer monotonically.
- * @ctlr: Poपूर्णांकer to the spi_controller काष्ठाure of the driver
- * @xfer: Poपूर्णांकer to the transfer being बारtamped
+ *			    advances its @tx buffer pointer monotonically.
+ * @ctlr: Pointer to the spi_controller structure of the driver
+ * @xfer: Pointer to the transfer being timestamped
  * @progress: How many words (not bytes) have been transferred so far
- * @irqs_off: If true, will disable IRQs and preemption क्रम the duration of the
- *	      transfer, क्रम less jitter in समय measurement. Only compatible
+ * @irqs_off: If true, will disable IRQs and preemption for the duration of the
+ *	      transfer, for less jitter in time measurement. Only compatible
  *	      with PIO drivers. If true, must follow up with
- *	      spi_take_बारtamp_post or otherwise प्रणाली will crash.
- *	      WARNING: क्रम fully predictable results, the CPU frequency must
+ *	      spi_take_timestamp_post or otherwise system will crash.
+ *	      WARNING: for fully predictable results, the CPU frequency must
  *	      also be under control (governor).
  */
-व्योम spi_take_बारtamp_pre(काष्ठा spi_controller *ctlr,
-			    काष्ठा spi_transfer *xfer,
-			    माप_प्रकार progress, bool irqs_off)
-अणु
-	अगर (!xfer->ptp_sts)
-		वापस;
+void spi_take_timestamp_pre(struct spi_controller *ctlr,
+			    struct spi_transfer *xfer,
+			    size_t progress, bool irqs_off)
+{
+	if (!xfer->ptp_sts)
+		return;
 
-	अगर (xfer->बारtamped)
-		वापस;
+	if (xfer->timestamped)
+		return;
 
-	अगर (progress > xfer->ptp_sts_word_pre)
-		वापस;
+	if (progress > xfer->ptp_sts_word_pre)
+		return;
 
-	/* Capture the resolution of the बारtamp */
+	/* Capture the resolution of the timestamp */
 	xfer->ptp_sts_word_pre = progress;
 
-	अगर (irqs_off) अणु
+	if (irqs_off) {
 		local_irq_save(ctlr->irq_flags);
 		preempt_disable();
-	पूर्ण
+	}
 
-	ptp_पढ़ो_प्रणाली_prets(xfer->ptp_sts);
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_take_बारtamp_pre);
+	ptp_read_system_prets(xfer->ptp_sts);
+}
+EXPORT_SYMBOL_GPL(spi_take_timestamp_pre);
 
 /**
- * spi_take_बारtamp_post - helper क्रम drivers to collect the end of the
- *			     TX बारtamp क्रम the requested byte from the SPI
+ * spi_take_timestamp_post - helper for drivers to collect the end of the
+ *			     TX timestamp for the requested byte from the SPI
  *			     transfer. Can be called with an arbitrary
  *			     frequency: only the first call where @tx exceeds
  *			     or is equal to the requested word will be
- *			     बारtamped.
- * @ctlr: Poपूर्णांकer to the spi_controller काष्ठाure of the driver
- * @xfer: Poपूर्णांकer to the transfer being बारtamped
+ *			     timestamped.
+ * @ctlr: Pointer to the spi_controller structure of the driver
+ * @xfer: Pointer to the transfer being timestamped
  * @progress: How many words (not bytes) have been transferred so far
- * @irqs_off: If true, will re-enable IRQs and preemption क्रम the local CPU.
+ * @irqs_off: If true, will re-enable IRQs and preemption for the local CPU.
  */
-व्योम spi_take_बारtamp_post(काष्ठा spi_controller *ctlr,
-			     काष्ठा spi_transfer *xfer,
-			     माप_प्रकार progress, bool irqs_off)
-अणु
-	अगर (!xfer->ptp_sts)
-		वापस;
+void spi_take_timestamp_post(struct spi_controller *ctlr,
+			     struct spi_transfer *xfer,
+			     size_t progress, bool irqs_off)
+{
+	if (!xfer->ptp_sts)
+		return;
 
-	अगर (xfer->बारtamped)
-		वापस;
+	if (xfer->timestamped)
+		return;
 
-	अगर (progress < xfer->ptp_sts_word_post)
-		वापस;
+	if (progress < xfer->ptp_sts_word_post)
+		return;
 
-	ptp_पढ़ो_प्रणाली_postts(xfer->ptp_sts);
+	ptp_read_system_postts(xfer->ptp_sts);
 
-	अगर (irqs_off) अणु
+	if (irqs_off) {
 		local_irq_restore(ctlr->irq_flags);
 		preempt_enable();
-	पूर्ण
+	}
 
-	/* Capture the resolution of the बारtamp */
+	/* Capture the resolution of the timestamp */
 	xfer->ptp_sts_word_post = progress;
 
-	xfer->बारtamped = true;
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_take_बारtamp_post);
+	xfer->timestamped = true;
+}
+EXPORT_SYMBOL_GPL(spi_take_timestamp_post);
 
 /**
- * spi_set_thपढ़ो_rt - set the controller to pump at realसमय priority
+ * spi_set_thread_rt - set the controller to pump at realtime priority
  * @ctlr: controller to boost priority of
  *
- * This can be called because the controller requested realसमय priority
- * (by setting the ->rt value beक्रमe calling spi_रेजिस्टर_controller()) or
- * because a device on the bus said that its transfers needed realसमय
+ * This can be called because the controller requested realtime priority
+ * (by setting the ->rt value before calling spi_register_controller()) or
+ * because a device on the bus said that its transfers needed realtime
  * priority.
  *
- * NOTE: at the moment अगर any device on a bus says it needs realसमय then
- * the thपढ़ो will be at realसमय priority क्रम all transfers on that
- * controller.  If this eventually becomes a problem we may see अगर we can
+ * NOTE: at the moment if any device on a bus says it needs realtime then
+ * the thread will be at realtime priority for all transfers on that
+ * controller.  If this eventually becomes a problem we may see if we can
  * find a way to boost the priority only temporarily during relevant
  * transfers.
  */
-अटल व्योम spi_set_thपढ़ो_rt(काष्ठा spi_controller *ctlr)
-अणु
+static void spi_set_thread_rt(struct spi_controller *ctlr)
+{
 	dev_info(&ctlr->dev,
 		"will run message pump with realtime priority\n");
-	sched_set_fअगरo(ctlr->kworker->task);
-पूर्ण
+	sched_set_fifo(ctlr->kworker->task);
+}
 
-अटल पूर्णांक spi_init_queue(काष्ठा spi_controller *ctlr)
-अणु
+static int spi_init_queue(struct spi_controller *ctlr)
+{
 	ctlr->running = false;
 	ctlr->busy = false;
 
-	ctlr->kworker = kthपढ़ो_create_worker(0, dev_name(&ctlr->dev));
-	अगर (IS_ERR(ctlr->kworker)) अणु
+	ctlr->kworker = kthread_create_worker(0, dev_name(&ctlr->dev));
+	if (IS_ERR(ctlr->kworker)) {
 		dev_err(&ctlr->dev, "failed to create message pump kworker\n");
-		वापस PTR_ERR(ctlr->kworker);
-	पूर्ण
+		return PTR_ERR(ctlr->kworker);
+	}
 
-	kthपढ़ो_init_work(&ctlr->pump_messages, spi_pump_messages);
+	kthread_init_work(&ctlr->pump_messages, spi_pump_messages);
 
 	/*
-	 * Controller config will indicate अगर this controller should run the
-	 * message pump with high (realसमय) priority to reduce the transfer
+	 * Controller config will indicate if this controller should run the
+	 * message pump with high (realtime) priority to reduce the transfer
 	 * latency on the bus by minimising the delay between a transfer
-	 * request and the scheduling of the message pump thपढ़ो. Without this
-	 * setting the message pump thपढ़ो will reमुख्य at शेष priority.
+	 * request and the scheduling of the message pump thread. Without this
+	 * setting the message pump thread will remain at default priority.
 	 */
-	अगर (ctlr->rt)
-		spi_set_thपढ़ो_rt(ctlr);
+	if (ctlr->rt)
+		spi_set_thread_rt(ctlr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * spi_get_next_queued_message() - called by driver to check क्रम queued
+ * spi_get_next_queued_message() - called by driver to check for queued
  * messages
- * @ctlr: the controller to check क्रम queued messages
+ * @ctlr: the controller to check for queued messages
  *
- * If there are more messages in the queue, the next message is वापसed from
+ * If there are more messages in the queue, the next message is returned from
  * this call.
  *
- * Return: the next message in the queue, अन्यथा शून्य अगर the queue is empty.
+ * Return: the next message in the queue, else NULL if the queue is empty.
  */
-काष्ठा spi_message *spi_get_next_queued_message(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा spi_message *next;
-	अचिन्हित दीर्घ flags;
+struct spi_message *spi_get_next_queued_message(struct spi_controller *ctlr)
+{
+	struct spi_message *next;
+	unsigned long flags;
 
-	/* get a poपूर्णांकer to the next message, अगर any */
+	/* get a pointer to the next message, if any */
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
-	next = list_first_entry_or_null(&ctlr->queue, काष्ठा spi_message,
+	next = list_first_entry_or_null(&ctlr->queue, struct spi_message,
 					queue);
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-	वापस next;
-पूर्ण
+	return next;
+}
 EXPORT_SYMBOL_GPL(spi_get_next_queued_message);
 
 /**
  * spi_finalize_current_message() - the current message is complete
- * @ctlr: the controller to वापस the message to
+ * @ctlr: the controller to return the message to
  *
- * Called by the driver to notअगरy the core that the message in the front of the
- * queue is complete and can be हटाओd from the queue.
+ * Called by the driver to notify the core that the message in the front of the
+ * queue is complete and can be removed from the queue.
  */
-व्योम spi_finalize_current_message(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा spi_transfer *xfer;
-	काष्ठा spi_message *mesg;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+void spi_finalize_current_message(struct spi_controller *ctlr)
+{
+	struct spi_transfer *xfer;
+	struct spi_message *mesg;
+	unsigned long flags;
+	int ret;
 
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
 	mesg = ctlr->cur_msg;
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-	अगर (!ctlr->ptp_sts_supported && !ctlr->transfer_one) अणु
-		list_क्रम_each_entry(xfer, &mesg->transfers, transfer_list) अणु
-			ptp_पढ़ो_प्रणाली_postts(xfer->ptp_sts);
+	if (!ctlr->ptp_sts_supported && !ctlr->transfer_one) {
+		list_for_each_entry(xfer, &mesg->transfers, transfer_list) {
+			ptp_read_system_postts(xfer->ptp_sts);
 			xfer->ptp_sts_word_post = xfer->len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (unlikely(ctlr->ptp_sts_supported))
-		list_क्रम_each_entry(xfer, &mesg->transfers, transfer_list)
-			WARN_ON_ONCE(xfer->ptp_sts && !xfer->बारtamped);
+	if (unlikely(ctlr->ptp_sts_supported))
+		list_for_each_entry(xfer, &mesg->transfers, transfer_list)
+			WARN_ON_ONCE(xfer->ptp_sts && !xfer->timestamped);
 
 	spi_unmap_msg(ctlr, mesg);
 
 	/* In the prepare_messages callback the spi bus has the opportunity to
 	 * split a transfer to smaller chunks.
-	 * Release splited transfers here since spi_map_msg is करोne on the
+	 * Release splited transfers here since spi_map_msg is done on the
 	 * splited transfers.
 	 */
 	spi_res_release(ctlr, mesg);
 
-	अगर (ctlr->cur_msg_prepared && ctlr->unprepare_message) अणु
+	if (ctlr->cur_msg_prepared && ctlr->unprepare_message) {
 		ret = ctlr->unprepare_message(ctlr, mesg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&ctlr->dev, "failed to unprepare message: %d\n",
 				ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
-	ctlr->cur_msg = शून्य;
+	ctlr->cur_msg = NULL;
 	ctlr->cur_msg_prepared = false;
 	ctlr->fallback = false;
-	kthपढ़ो_queue_work(ctlr->kworker, &ctlr->pump_messages);
+	kthread_queue_work(ctlr->kworker, &ctlr->pump_messages);
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-	trace_spi_message_करोne(mesg);
+	trace_spi_message_done(mesg);
 
-	mesg->state = शून्य;
-	अगर (mesg->complete)
+	mesg->state = NULL;
+	if (mesg->complete)
 		mesg->complete(mesg->context);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spi_finalize_current_message);
 
-अटल पूर्णांक spi_start_queue(काष्ठा spi_controller *ctlr)
-अणु
-	अचिन्हित दीर्घ flags;
+static int spi_start_queue(struct spi_controller *ctlr)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
 
-	अगर (ctlr->running || ctlr->busy) अणु
+	if (ctlr->running || ctlr->busy) {
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ctlr->running = true;
-	ctlr->cur_msg = शून्य;
+	ctlr->cur_msg = NULL;
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-	kthपढ़ो_queue_work(ctlr->kworker, &ctlr->pump_messages);
+	kthread_queue_work(ctlr->kworker, &ctlr->pump_messages);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spi_stop_queue(काष्ठा spi_controller *ctlr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित limit = 500;
-	पूर्णांक ret = 0;
+static int spi_stop_queue(struct spi_controller *ctlr)
+{
+	unsigned long flags;
+	unsigned limit = 500;
+	int ret = 0;
 
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
 
 	/*
-	 * This is a bit lame, but is optimized क्रम the common execution path.
-	 * A रुको_queue on the ctlr->busy could be used, but then the common
+	 * This is a bit lame, but is optimized for the common execution path.
+	 * A wait_queue on the ctlr->busy could be used, but then the common
 	 * execution path (pump_messages) would be required to call wake_up or
-	 * मित्रs on every SPI message. Do this instead.
+	 * friends on every SPI message. Do this instead.
 	 */
-	जबतक ((!list_empty(&ctlr->queue) || ctlr->busy) && limit--) अणु
+	while ((!list_empty(&ctlr->queue) || ctlr->busy) && limit--) {
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 		usleep_range(10000, 11000);
 		spin_lock_irqsave(&ctlr->queue_lock, flags);
-	पूर्ण
+	}
 
-	अगर (!list_empty(&ctlr->queue) || ctlr->busy)
+	if (!list_empty(&ctlr->queue) || ctlr->busy)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		ctlr->running = false;
 
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(&ctlr->dev, "could not stop message queue\n");
-		वापस ret;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		return ret;
+	}
+	return ret;
+}
 
-अटल पूर्णांक spi_destroy_queue(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक ret;
+static int spi_destroy_queue(struct spi_controller *ctlr)
+{
+	int ret;
 
 	ret = spi_stop_queue(ctlr);
 
 	/*
-	 * kthपढ़ो_flush_worker will block until all work is करोne.
-	 * If the reason that stop_queue समयd out is that the work will never
-	 * finish, then it करोes no good to call flush/stop thपढ़ो, so
-	 * वापस anyway.
+	 * kthread_flush_worker will block until all work is done.
+	 * If the reason that stop_queue timed out is that the work will never
+	 * finish, then it does no good to call flush/stop thread, so
+	 * return anyway.
 	 */
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&ctlr->dev, "problem destroying queue\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	kthपढ़ो_destroy_worker(ctlr->kworker);
+	kthread_destroy_worker(ctlr->kworker);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __spi_queued_transfer(काष्ठा spi_device *spi,
-				 काष्ठा spi_message *msg,
+static int __spi_queued_transfer(struct spi_device *spi,
+				 struct spi_message *msg,
 				 bool need_pump)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	अचिन्हित दीर्घ flags;
+{
+	struct spi_controller *ctlr = spi->controller;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctlr->queue_lock, flags);
 
-	अगर (!ctlr->running) अणु
+	if (!ctlr->running) {
 		spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 	msg->actual_length = 0;
 	msg->status = -EINPROGRESS;
 
 	list_add_tail(&msg->queue, &ctlr->queue);
-	अगर (!ctlr->busy && need_pump)
-		kthपढ़ो_queue_work(ctlr->kworker, &ctlr->pump_messages);
+	if (!ctlr->busy && need_pump)
+		kthread_queue_work(ctlr->kworker, &ctlr->pump_messages);
 
 	spin_unlock_irqrestore(&ctlr->queue_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * spi_queued_transfer - transfer function क्रम queued transfers
+ * spi_queued_transfer - transfer function for queued transfers
  * @spi: spi device which is requesting transfer
  * @msg: spi message which is to handled is queued to driver queue
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-अटल पूर्णांक spi_queued_transfer(काष्ठा spi_device *spi, काष्ठा spi_message *msg)
-अणु
-	वापस __spi_queued_transfer(spi, msg, true);
-पूर्ण
+static int spi_queued_transfer(struct spi_device *spi, struct spi_message *msg)
+{
+	return __spi_queued_transfer(spi, msg, true);
+}
 
-अटल पूर्णांक spi_controller_initialize_queue(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक ret;
+static int spi_controller_initialize_queue(struct spi_controller *ctlr)
+{
+	int ret;
 
 	ctlr->transfer = spi_queued_transfer;
-	अगर (!ctlr->transfer_one_message)
+	if (!ctlr->transfer_one_message)
 		ctlr->transfer_one_message = spi_transfer_one_message;
 
 	/* Initialize and start queue */
 	ret = spi_init_queue(ctlr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&ctlr->dev, "problem initializing queue\n");
-		जाओ err_init_queue;
-	पूर्ण
+		goto err_init_queue;
+	}
 	ctlr->queued = true;
 	ret = spi_start_queue(ctlr);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&ctlr->dev, "problem starting queue\n");
-		जाओ err_start_queue;
-	पूर्ण
+		goto err_start_queue;
+	}
 
-	वापस 0;
+	return 0;
 
 err_start_queue:
 	spi_destroy_queue(ctlr);
 err_init_queue:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * spi_flush_queue - Send all pending messages in the queue from the callers'
  *		     context
- * @ctlr: controller to process queue क्रम
+ * @ctlr: controller to process queue for
  *
  * This should be used when one wants to ensure all pending messages have been
- * sent beक्रमe करोing something. Is used by the spi-mem code to make sure SPI
- * memory operations करो not preempt regular SPI transfers that have been queued
- * beक्रमe the spi-mem operation.
+ * sent before doing something. Is used by the spi-mem code to make sure SPI
+ * memory operations do not preempt regular SPI transfers that have been queued
+ * before the spi-mem operation.
  */
-व्योम spi_flush_queue(काष्ठा spi_controller *ctlr)
-अणु
-	अगर (ctlr->transfer == spi_queued_transfer)
+void spi_flush_queue(struct spi_controller *ctlr)
+{
+	if (ctlr->transfer == spi_queued_transfer)
 		__spi_pump_messages(ctlr, false);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
-#अगर defined(CONFIG_OF)
-अटल पूर्णांक of_spi_parse_dt(काष्ठा spi_controller *ctlr, काष्ठा spi_device *spi,
-			   काष्ठा device_node *nc)
-अणु
+#if defined(CONFIG_OF)
+static int of_spi_parse_dt(struct spi_controller *ctlr, struct spi_device *spi,
+			   struct device_node *nc)
+{
 	u32 value;
-	पूर्णांक rc;
+	int rc;
 
-	/* Mode (घड़ी phase/polarity/etc.) */
-	अगर (of_property_पढ़ो_bool(nc, "spi-cpha"))
+	/* Mode (clock phase/polarity/etc.) */
+	if (of_property_read_bool(nc, "spi-cpha"))
 		spi->mode |= SPI_CPHA;
-	अगर (of_property_पढ़ो_bool(nc, "spi-cpol"))
+	if (of_property_read_bool(nc, "spi-cpol"))
 		spi->mode |= SPI_CPOL;
-	अगर (of_property_पढ़ो_bool(nc, "spi-3wire"))
+	if (of_property_read_bool(nc, "spi-3wire"))
 		spi->mode |= SPI_3WIRE;
-	अगर (of_property_पढ़ो_bool(nc, "spi-lsb-first"))
+	if (of_property_read_bool(nc, "spi-lsb-first"))
 		spi->mode |= SPI_LSB_FIRST;
-	अगर (of_property_पढ़ो_bool(nc, "spi-cs-high"))
+	if (of_property_read_bool(nc, "spi-cs-high"))
 		spi->mode |= SPI_CS_HIGH;
 
 	/* Device DUAL/QUAD mode */
-	अगर (!of_property_पढ़ो_u32(nc, "spi-tx-bus-width", &value)) अणु
-		चयन (value) अणु
-		हाल 0:
+	if (!of_property_read_u32(nc, "spi-tx-bus-width", &value)) {
+		switch (value) {
+		case 0:
 			spi->mode |= SPI_NO_TX;
-			अवरोध;
-		हाल 1:
-			अवरोध;
-		हाल 2:
+			break;
+		case 1:
+			break;
+		case 2:
 			spi->mode |= SPI_TX_DUAL;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			spi->mode |= SPI_TX_QUAD;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			spi->mode |= SPI_TX_OCTAL;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&ctlr->dev,
 				"spi-tx-bus-width %d not supported\n",
 				value);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!of_property_पढ़ो_u32(nc, "spi-rx-bus-width", &value)) अणु
-		चयन (value) अणु
-		हाल 0:
+	if (!of_property_read_u32(nc, "spi-rx-bus-width", &value)) {
+		switch (value) {
+		case 0:
 			spi->mode |= SPI_NO_RX;
-			अवरोध;
-		हाल 1:
-			अवरोध;
-		हाल 2:
+			break;
+		case 1:
+			break;
+		case 2:
 			spi->mode |= SPI_RX_DUAL;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			spi->mode |= SPI_RX_QUAD;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			spi->mode |= SPI_RX_OCTAL;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_warn(&ctlr->dev,
 				"spi-rx-bus-width %d not supported\n",
 				value);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (spi_controller_is_slave(ctlr)) अणु
-		अगर (!of_node_name_eq(nc, "slave")) अणु
+	if (spi_controller_is_slave(ctlr)) {
+		if (!of_node_name_eq(nc, "slave")) {
 			dev_err(&ctlr->dev, "%pOF is not called 'slave'\n",
 				nc);
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		}
+		return 0;
+	}
 
 	/* Device address */
-	rc = of_property_पढ़ो_u32(nc, "reg", &value);
-	अगर (rc) अणु
+	rc = of_property_read_u32(nc, "reg", &value);
+	if (rc) {
 		dev_err(&ctlr->dev, "%pOF has no valid 'reg' property (%d)\n",
 			nc, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	spi->chip_select = value;
 
 	/* Device speed */
-	अगर (!of_property_पढ़ो_u32(nc, "spi-max-frequency", &value))
+	if (!of_property_read_u32(nc, "spi-max-frequency", &value))
 		spi->max_speed_hz = value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा spi_device *
-of_रेजिस्टर_spi_device(काष्ठा spi_controller *ctlr, काष्ठा device_node *nc)
-अणु
-	काष्ठा spi_device *spi;
-	पूर्णांक rc;
+static struct spi_device *
+of_register_spi_device(struct spi_controller *ctlr, struct device_node *nc)
+{
+	struct spi_device *spi;
+	int rc;
 
 	/* Alloc an spi_device */
 	spi = spi_alloc_device(ctlr);
-	अगर (!spi) अणु
+	if (!spi) {
 		dev_err(&ctlr->dev, "spi_device alloc error for %pOF\n", nc);
 		rc = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	/* Select device driver */
 	rc = of_modalias_node(nc, spi->modalias,
-				माप(spi->modalias));
-	अगर (rc < 0) अणु
+				sizeof(spi->modalias));
+	if (rc < 0) {
 		dev_err(&ctlr->dev, "cannot find modalias for %pOF\n", nc);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	rc = of_spi_parse_dt(ctlr, spi, nc);
-	अगर (rc)
-		जाओ err_out;
+	if (rc)
+		goto err_out;
 
-	/* Store a poपूर्णांकer to the node in the device काष्ठाure */
+	/* Store a pointer to the node in the device structure */
 	of_node_get(nc);
 	spi->dev.of_node = nc;
 
 	/* Register the new device */
 	rc = spi_add_device(spi);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&ctlr->dev, "spi_device register error %pOF\n", nc);
-		जाओ err_of_node_put;
-	पूर्ण
+		goto err_of_node_put;
+	}
 
-	वापस spi;
+	return spi;
 
 err_of_node_put:
 	of_node_put(nc);
 err_out:
 	spi_dev_put(spi);
-	वापस ERR_PTR(rc);
-पूर्ण
+	return ERR_PTR(rc);
+}
 
 /**
- * of_रेजिस्टर_spi_devices() - Register child devices onto the SPI bus
- * @ctlr:	Poपूर्णांकer to spi_controller device
+ * of_register_spi_devices() - Register child devices onto the SPI bus
+ * @ctlr:	Pointer to spi_controller device
  *
- * Registers an spi_device क्रम each child node of controller node which
+ * Registers an spi_device for each child node of controller node which
  * represents a valid SPI slave.
  */
-अटल व्योम of_रेजिस्टर_spi_devices(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा spi_device *spi;
-	काष्ठा device_node *nc;
+static void of_register_spi_devices(struct spi_controller *ctlr)
+{
+	struct spi_device *spi;
+	struct device_node *nc;
 
-	अगर (!ctlr->dev.of_node)
-		वापस;
+	if (!ctlr->dev.of_node)
+		return;
 
-	क्रम_each_available_child_of_node(ctlr->dev.of_node, nc) अणु
-		अगर (of_node_test_and_set_flag(nc, OF_POPULATED))
-			जारी;
-		spi = of_रेजिस्टर_spi_device(ctlr, nc);
-		अगर (IS_ERR(spi)) अणु
+	for_each_available_child_of_node(ctlr->dev.of_node, nc) {
+		if (of_node_test_and_set_flag(nc, OF_POPULATED))
+			continue;
+		spi = of_register_spi_device(ctlr, nc);
+		if (IS_ERR(spi)) {
 			dev_warn(&ctlr->dev,
 				 "Failed to create SPI device for %pOF\n", nc);
 			of_node_clear_flag(nc, OF_POPULATED);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम of_रेजिस्टर_spi_devices(काष्ठा spi_controller *ctlr) अणु पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#else
+static void of_register_spi_devices(struct spi_controller *ctlr) { }
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-काष्ठा acpi_spi_lookup अणु
-	काष्ठा spi_controller 	*ctlr;
+#ifdef CONFIG_ACPI
+struct acpi_spi_lookup {
+	struct spi_controller 	*ctlr;
 	u32			max_speed_hz;
 	u32			mode;
-	पूर्णांक			irq;
+	int			irq;
 	u8			bits_per_word;
 	u8			chip_select;
-पूर्ण;
+};
 
-अटल व्योम acpi_spi_parse_apple_properties(काष्ठा acpi_device *dev,
-					    काष्ठा acpi_spi_lookup *lookup)
-अणु
-	स्थिर जोड़ acpi_object *obj;
+static void acpi_spi_parse_apple_properties(struct acpi_device *dev,
+					    struct acpi_spi_lookup *lookup)
+{
+	const union acpi_object *obj;
 
-	अगर (!x86_apple_machine)
-		वापस;
+	if (!x86_apple_machine)
+		return;
 
-	अगर (!acpi_dev_get_property(dev, "spiSclkPeriod", ACPI_TYPE_BUFFER, &obj)
+	if (!acpi_dev_get_property(dev, "spiSclkPeriod", ACPI_TYPE_BUFFER, &obj)
 	    && obj->buffer.length >= 4)
-		lookup->max_speed_hz  = NSEC_PER_SEC / *(u32 *)obj->buffer.poपूर्णांकer;
+		lookup->max_speed_hz  = NSEC_PER_SEC / *(u32 *)obj->buffer.pointer;
 
-	अगर (!acpi_dev_get_property(dev, "spiWordSize", ACPI_TYPE_BUFFER, &obj)
+	if (!acpi_dev_get_property(dev, "spiWordSize", ACPI_TYPE_BUFFER, &obj)
 	    && obj->buffer.length == 8)
-		lookup->bits_per_word = *(u64 *)obj->buffer.poपूर्णांकer;
+		lookup->bits_per_word = *(u64 *)obj->buffer.pointer;
 
-	अगर (!acpi_dev_get_property(dev, "spiBitOrder", ACPI_TYPE_BUFFER, &obj)
-	    && obj->buffer.length == 8 && !*(u64 *)obj->buffer.poपूर्णांकer)
+	if (!acpi_dev_get_property(dev, "spiBitOrder", ACPI_TYPE_BUFFER, &obj)
+	    && obj->buffer.length == 8 && !*(u64 *)obj->buffer.pointer)
 		lookup->mode |= SPI_LSB_FIRST;
 
-	अगर (!acpi_dev_get_property(dev, "spiSPO", ACPI_TYPE_BUFFER, &obj)
-	    && obj->buffer.length == 8 &&  *(u64 *)obj->buffer.poपूर्णांकer)
+	if (!acpi_dev_get_property(dev, "spiSPO", ACPI_TYPE_BUFFER, &obj)
+	    && obj->buffer.length == 8 &&  *(u64 *)obj->buffer.pointer)
 		lookup->mode |= SPI_CPOL;
 
-	अगर (!acpi_dev_get_property(dev, "spiSPH", ACPI_TYPE_BUFFER, &obj)
-	    && obj->buffer.length == 8 &&  *(u64 *)obj->buffer.poपूर्णांकer)
+	if (!acpi_dev_get_property(dev, "spiSPH", ACPI_TYPE_BUFFER, &obj)
+	    && obj->buffer.length == 8 &&  *(u64 *)obj->buffer.pointer)
 		lookup->mode |= SPI_CPHA;
-पूर्ण
+}
 
-अटल पूर्णांक acpi_spi_add_resource(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	काष्ठा acpi_spi_lookup *lookup = data;
-	काष्ठा spi_controller *ctlr = lookup->ctlr;
+static int acpi_spi_add_resource(struct acpi_resource *ares, void *data)
+{
+	struct acpi_spi_lookup *lookup = data;
+	struct spi_controller *ctlr = lookup->ctlr;
 
-	अगर (ares->type == ACPI_RESOURCE_TYPE_SERIAL_BUS) अणु
-		काष्ठा acpi_resource_spi_serialbus *sb;
+	if (ares->type == ACPI_RESOURCE_TYPE_SERIAL_BUS) {
+		struct acpi_resource_spi_serialbus *sb;
 		acpi_handle parent_handle;
 		acpi_status status;
 
 		sb = &ares->data.spi_serial_bus;
-		अगर (sb->type == ACPI_RESOURCE_SERIAL_TYPE_SPI) अणु
+		if (sb->type == ACPI_RESOURCE_SERIAL_TYPE_SPI) {
 
-			status = acpi_get_handle(शून्य,
+			status = acpi_get_handle(NULL,
 						 sb->resource_source.string_ptr,
 						 &parent_handle);
 
-			अगर (ACPI_FAILURE(status) ||
+			if (ACPI_FAILURE(status) ||
 			    ACPI_HANDLE(ctlr->dev.parent) != parent_handle)
-				वापस -ENODEV;
+				return -ENODEV;
 
 			/*
 			 * ACPI DeviceSelection numbering is handled by the
-			 * host controller driver in Winकरोws and can vary
+			 * host controller driver in Windows and can vary
 			 * from driver to driver. In Linux we always expect
 			 * 0 .. max - 1 so we need to ask the driver to
 			 * translate between the two schemes.
 			 */
-			अगर (ctlr->fw_translate_cs) अणु
-				पूर्णांक cs = ctlr->fw_translate_cs(ctlr,
+			if (ctlr->fw_translate_cs) {
+				int cs = ctlr->fw_translate_cs(ctlr,
 						sb->device_selection);
-				अगर (cs < 0)
-					वापस cs;
+				if (cs < 0)
+					return cs;
 				lookup->chip_select = cs;
-			पूर्ण अन्यथा अणु
+			} else {
 				lookup->chip_select = sb->device_selection;
-			पूर्ण
+			}
 
 			lookup->max_speed_hz = sb->connection_speed;
 			lookup->bits_per_word = sb->data_bit_length;
 
-			अगर (sb->घड़ी_phase == ACPI_SPI_SECOND_PHASE)
+			if (sb->clock_phase == ACPI_SPI_SECOND_PHASE)
 				lookup->mode |= SPI_CPHA;
-			अगर (sb->घड़ी_polarity == ACPI_SPI_START_HIGH)
+			if (sb->clock_polarity == ACPI_SPI_START_HIGH)
 				lookup->mode |= SPI_CPOL;
-			अगर (sb->device_polarity == ACPI_SPI_ACTIVE_HIGH)
+			if (sb->device_polarity == ACPI_SPI_ACTIVE_HIGH)
 				lookup->mode |= SPI_CS_HIGH;
-		पूर्ण
-	पूर्ण अन्यथा अगर (lookup->irq < 0) अणु
-		काष्ठा resource r;
+		}
+	} else if (lookup->irq < 0) {
+		struct resource r;
 
-		अगर (acpi_dev_resource_पूर्णांकerrupt(ares, 0, &r))
+		if (acpi_dev_resource_interrupt(ares, 0, &r))
 			lookup->irq = r.start;
-	पूर्ण
+	}
 
 	/* Always tell the ACPI core to skip this resource */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल acpi_status acpi_रेजिस्टर_spi_device(काष्ठा spi_controller *ctlr,
-					    काष्ठा acpi_device *adev)
-अणु
-	acpi_handle parent_handle = शून्य;
-	काष्ठा list_head resource_list;
-	काष्ठा acpi_spi_lookup lookup = अणुपूर्ण;
-	काष्ठा spi_device *spi;
-	पूर्णांक ret;
+static acpi_status acpi_register_spi_device(struct spi_controller *ctlr,
+					    struct acpi_device *adev)
+{
+	acpi_handle parent_handle = NULL;
+	struct list_head resource_list;
+	struct acpi_spi_lookup lookup = {};
+	struct spi_device *spi;
+	int ret;
 
-	अगर (acpi_bus_get_status(adev) || !adev->status.present ||
-	    acpi_device_क्रमागतerated(adev))
-		वापस AE_OK;
+	if (acpi_bus_get_status(adev) || !adev->status.present ||
+	    acpi_device_enumerated(adev))
+		return AE_OK;
 
 	lookup.ctlr		= ctlr;
 	lookup.irq		= -1;
@@ -2222,28 +2221,28 @@ err_out:
 	INIT_LIST_HEAD(&resource_list);
 	ret = acpi_dev_get_resources(adev, &resource_list,
 				     acpi_spi_add_resource, &lookup);
-	acpi_dev_मुक्त_resource_list(&resource_list);
+	acpi_dev_free_resource_list(&resource_list);
 
-	अगर (ret < 0)
-		/* found SPI in _CRS but it poपूर्णांकs to another controller */
-		वापस AE_OK;
+	if (ret < 0)
+		/* found SPI in _CRS but it points to another controller */
+		return AE_OK;
 
-	अगर (!lookup.max_speed_hz &&
+	if (!lookup.max_speed_hz &&
 	    ACPI_SUCCESS(acpi_get_parent(adev->handle, &parent_handle)) &&
-	    ACPI_HANDLE(ctlr->dev.parent) == parent_handle) अणु
-		/* Apple करोes not use _CRS but nested devices क्रम SPI slaves */
+	    ACPI_HANDLE(ctlr->dev.parent) == parent_handle) {
+		/* Apple does not use _CRS but nested devices for SPI slaves */
 		acpi_spi_parse_apple_properties(adev, &lookup);
-	पूर्ण
+	}
 
-	अगर (!lookup.max_speed_hz)
-		वापस AE_OK;
+	if (!lookup.max_speed_hz)
+		return AE_OK;
 
 	spi = spi_alloc_device(ctlr);
-	अगर (!spi) अणु
+	if (!spi) {
 		dev_err(&ctlr->dev, "failed to allocate SPI device for %s\n",
 			dev_name(&adev->dev));
-		वापस AE_NO_MEMORY;
-	पूर्ण
+		return AE_NO_MEMORY;
+	}
 
 
 	ACPI_COMPANION_SET(&spi->dev, adev);
@@ -2254,482 +2253,482 @@ err_out:
 	spi->chip_select	= lookup.chip_select;
 
 	acpi_set_modalias(adev, acpi_device_hid(adev), spi->modalias,
-			  माप(spi->modalias));
+			  sizeof(spi->modalias));
 
-	अगर (spi->irq < 0)
+	if (spi->irq < 0)
 		spi->irq = acpi_dev_gpio_irq_get(adev, 0);
 
-	acpi_device_set_क्रमागतerated(adev);
+	acpi_device_set_enumerated(adev);
 
-	adev->घातer.flags.ignore_parent = true;
-	अगर (spi_add_device(spi)) अणु
-		adev->घातer.flags.ignore_parent = false;
+	adev->power.flags.ignore_parent = true;
+	if (spi_add_device(spi)) {
+		adev->power.flags.ignore_parent = false;
 		dev_err(&ctlr->dev, "failed to add SPI device %s from ACPI\n",
 			dev_name(&adev->dev));
 		spi_dev_put(spi);
-	पूर्ण
+	}
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल acpi_status acpi_spi_add_device(acpi_handle handle, u32 level,
-				       व्योम *data, व्योम **वापस_value)
-अणु
-	काष्ठा spi_controller *ctlr = data;
-	काष्ठा acpi_device *adev;
+static acpi_status acpi_spi_add_device(acpi_handle handle, u32 level,
+				       void *data, void **return_value)
+{
+	struct spi_controller *ctlr = data;
+	struct acpi_device *adev;
 
-	अगर (acpi_bus_get_device(handle, &adev))
-		वापस AE_OK;
+	if (acpi_bus_get_device(handle, &adev))
+		return AE_OK;
 
-	वापस acpi_रेजिस्टर_spi_device(ctlr, adev);
-पूर्ण
+	return acpi_register_spi_device(ctlr, adev);
+}
 
-#घोषणा SPI_ACPI_ENUMERATE_MAX_DEPTH		32
+#define SPI_ACPI_ENUMERATE_MAX_DEPTH		32
 
-अटल व्योम acpi_रेजिस्टर_spi_devices(काष्ठा spi_controller *ctlr)
-अणु
+static void acpi_register_spi_devices(struct spi_controller *ctlr)
+{
 	acpi_status status;
 	acpi_handle handle;
 
 	handle = ACPI_HANDLE(ctlr->dev.parent);
-	अगर (!handle)
-		वापस;
+	if (!handle)
+		return;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
 				     SPI_ACPI_ENUMERATE_MAX_DEPTH,
-				     acpi_spi_add_device, शून्य, ctlr, शून्य);
-	अगर (ACPI_FAILURE(status))
+				     acpi_spi_add_device, NULL, ctlr, NULL);
+	if (ACPI_FAILURE(status))
 		dev_warn(&ctlr->dev, "failed to enumerate SPI slaves\n");
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम acpi_रेजिस्टर_spi_devices(काष्ठा spi_controller *ctlr) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI */
+}
+#else
+static inline void acpi_register_spi_devices(struct spi_controller *ctlr) {}
+#endif /* CONFIG_ACPI */
 
-अटल व्योम spi_controller_release(काष्ठा device *dev)
-अणु
-	काष्ठा spi_controller *ctlr;
+static void spi_controller_release(struct device *dev)
+{
+	struct spi_controller *ctlr;
 
-	ctlr = container_of(dev, काष्ठा spi_controller, dev);
-	kमुक्त(ctlr);
-पूर्ण
+	ctlr = container_of(dev, struct spi_controller, dev);
+	kfree(ctlr);
+}
 
-अटल काष्ठा class spi_master_class = अणु
+static struct class spi_master_class = {
 	.name		= "spi_master",
 	.owner		= THIS_MODULE,
 	.dev_release	= spi_controller_release,
 	.dev_groups	= spi_master_groups,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SPI_SLAVE
+#ifdef CONFIG_SPI_SLAVE
 /**
- * spi_slave_पात - पात the ongoing transfer request on an SPI slave
+ * spi_slave_abort - abort the ongoing transfer request on an SPI slave
  *		     controller
- * @spi: device used क्रम the current transfer
+ * @spi: device used for the current transfer
  */
-पूर्णांक spi_slave_पात(काष्ठा spi_device *spi)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
+int spi_slave_abort(struct spi_device *spi)
+{
+	struct spi_controller *ctlr = spi->controller;
 
-	अगर (spi_controller_is_slave(ctlr) && ctlr->slave_पात)
-		वापस ctlr->slave_पात(ctlr);
+	if (spi_controller_is_slave(ctlr) && ctlr->slave_abort)
+		return ctlr->slave_abort(ctlr);
 
-	वापस -ENOTSUPP;
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_slave_पात);
+	return -ENOTSUPP;
+}
+EXPORT_SYMBOL_GPL(spi_slave_abort);
 
-अटल पूर्णांक match_true(काष्ठा device *dev, व्योम *data)
-अणु
-	वापस 1;
-पूर्ण
+static int match_true(struct device *dev, void *data)
+{
+	return 1;
+}
 
-अटल sमाप_प्रकार slave_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा spi_controller *ctlr = container_of(dev, काष्ठा spi_controller,
+static ssize_t slave_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct spi_controller *ctlr = container_of(dev, struct spi_controller,
 						   dev);
-	काष्ठा device *child;
+	struct device *child;
 
-	child = device_find_child(&ctlr->dev, शून्य, match_true);
-	वापस प्र_लिखो(buf, "%s\n",
-		       child ? to_spi_device(child)->modalias : शून्य);
-पूर्ण
+	child = device_find_child(&ctlr->dev, NULL, match_true);
+	return sprintf(buf, "%s\n",
+		       child ? to_spi_device(child)->modalias : NULL);
+}
 
-अटल sमाप_प्रकार slave_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा spi_controller *ctlr = container_of(dev, काष्ठा spi_controller,
+static ssize_t slave_store(struct device *dev, struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct spi_controller *ctlr = container_of(dev, struct spi_controller,
 						   dev);
-	काष्ठा spi_device *spi;
-	काष्ठा device *child;
-	अक्षर name[32];
-	पूर्णांक rc;
+	struct spi_device *spi;
+	struct device *child;
+	char name[32];
+	int rc;
 
-	rc = माला_पूछो(buf, "%31s", name);
-	अगर (rc != 1 || !name[0])
-		वापस -EINVAL;
+	rc = sscanf(buf, "%31s", name);
+	if (rc != 1 || !name[0])
+		return -EINVAL;
 
-	child = device_find_child(&ctlr->dev, शून्य, match_true);
-	अगर (child) अणु
-		/* Remove रेजिस्टरed slave */
-		device_unरेजिस्टर(child);
+	child = device_find_child(&ctlr->dev, NULL, match_true);
+	if (child) {
+		/* Remove registered slave */
+		device_unregister(child);
 		put_device(child);
-	पूर्ण
+	}
 
-	अगर (म_भेद(name, "(null)")) अणु
+	if (strcmp(name, "(null)")) {
 		/* Register new slave */
 		spi = spi_alloc_device(ctlr);
-		अगर (!spi)
-			वापस -ENOMEM;
+		if (!spi)
+			return -ENOMEM;
 
-		strlcpy(spi->modalias, name, माप(spi->modalias));
+		strlcpy(spi->modalias, name, sizeof(spi->modalias));
 
 		rc = spi_add_device(spi);
-		अगर (rc) अणु
+		if (rc) {
 			spi_dev_put(spi);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RW(slave);
+static DEVICE_ATTR_RW(slave);
 
-अटल काष्ठा attribute *spi_slave_attrs[] = अणु
+static struct attribute *spi_slave_attrs[] = {
 	&dev_attr_slave.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group spi_slave_group = अणु
+static const struct attribute_group spi_slave_group = {
 	.attrs = spi_slave_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *spi_slave_groups[] = अणु
+static const struct attribute_group *spi_slave_groups[] = {
 	&spi_controller_statistics_group,
 	&spi_slave_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा class spi_slave_class = अणु
+static struct class spi_slave_class = {
 	.name		= "spi_slave",
 	.owner		= THIS_MODULE,
 	.dev_release	= spi_controller_release,
 	.dev_groups	= spi_slave_groups,
-पूर्ण;
-#अन्यथा
-बाह्य काष्ठा class spi_slave_class;	/* dummy */
-#पूर्ण_अगर
+};
+#else
+extern struct class spi_slave_class;	/* dummy */
+#endif
 
 /**
  * __spi_alloc_controller - allocate an SPI master or slave controller
- * @dev: the controller, possibly using the platक्रमm_bus
- * @size: how much zeroed driver-निजी data to allocate; the poपूर्णांकer to this
- *	memory is in the driver_data field of the वापसed device, accessible
+ * @dev: the controller, possibly using the platform_bus
+ * @size: how much zeroed driver-private data to allocate; the pointer to this
+ *	memory is in the driver_data field of the returned device, accessible
  *	with spi_controller_get_devdata(); the memory is cacheline aligned;
- *	drivers granting DMA access to portions of their निजी data need to
+ *	drivers granting DMA access to portions of their private data need to
  *	round up @size using ALIGN(size, dma_get_cache_alignment()).
  * @slave: flag indicating whether to allocate an SPI master (false) or SPI
  *	slave (true) controller
  * Context: can sleep
  *
  * This call is used only by SPI controller drivers, which are the
- * only ones directly touching chip रेजिस्टरs.  It's how they allocate
- * an spi_controller काष्ठाure, prior to calling spi_रेजिस्टर_controller().
+ * only ones directly touching chip registers.  It's how they allocate
+ * an spi_controller structure, prior to calling spi_register_controller().
  *
  * This must be called from context that can sleep.
  *
- * The caller is responsible क्रम assigning the bus number and initializing the
- * controller's methods beक्रमe calling spi_रेजिस्टर_controller(); and (after
+ * The caller is responsible for assigning the bus number and initializing the
+ * controller's methods before calling spi_register_controller(); and (after
  * errors adding the device) calling spi_controller_put() to prevent a memory
  * leak.
  *
- * Return: the SPI controller काष्ठाure on success, अन्यथा शून्य.
+ * Return: the SPI controller structure on success, else NULL.
  */
-काष्ठा spi_controller *__spi_alloc_controller(काष्ठा device *dev,
-					      अचिन्हित पूर्णांक size, bool slave)
-अणु
-	काष्ठा spi_controller	*ctlr;
-	माप_प्रकार ctlr_size = ALIGN(माप(*ctlr), dma_get_cache_alignment());
+struct spi_controller *__spi_alloc_controller(struct device *dev,
+					      unsigned int size, bool slave)
+{
+	struct spi_controller	*ctlr;
+	size_t ctlr_size = ALIGN(sizeof(*ctlr), dma_get_cache_alignment());
 
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
 	ctlr = kzalloc(size + ctlr_size, GFP_KERNEL);
-	अगर (!ctlr)
-		वापस शून्य;
+	if (!ctlr)
+		return NULL;
 
 	device_initialize(&ctlr->dev);
 	ctlr->bus_num = -1;
 	ctlr->num_chipselect = 1;
 	ctlr->slave = slave;
-	अगर (IS_ENABLED(CONFIG_SPI_SLAVE) && slave)
+	if (IS_ENABLED(CONFIG_SPI_SLAVE) && slave)
 		ctlr->dev.class = &spi_slave_class;
-	अन्यथा
+	else
 		ctlr->dev.class = &spi_master_class;
 	ctlr->dev.parent = dev;
 	pm_suspend_ignore_children(&ctlr->dev, true);
-	spi_controller_set_devdata(ctlr, (व्योम *)ctlr + ctlr_size);
+	spi_controller_set_devdata(ctlr, (void *)ctlr + ctlr_size);
 
-	वापस ctlr;
-पूर्ण
+	return ctlr;
+}
 EXPORT_SYMBOL_GPL(__spi_alloc_controller);
 
-अटल व्योम devm_spi_release_controller(काष्ठा device *dev, व्योम *ctlr)
-अणु
-	spi_controller_put(*(काष्ठा spi_controller **)ctlr);
-पूर्ण
+static void devm_spi_release_controller(struct device *dev, void *ctlr)
+{
+	spi_controller_put(*(struct spi_controller **)ctlr);
+}
 
 /**
  * __devm_spi_alloc_controller - resource-managed __spi_alloc_controller()
  * @dev: physical device of SPI controller
- * @size: how much zeroed driver-निजी data to allocate
+ * @size: how much zeroed driver-private data to allocate
  * @slave: whether to allocate an SPI master (false) or SPI slave (true)
  * Context: can sleep
  *
- * Allocate an SPI controller and स्वतःmatically release a reference on it
+ * Allocate an SPI controller and automatically release a reference on it
  * when @dev is unbound from its driver.  Drivers are thus relieved from
  * having to call spi_controller_put().
  *
  * The arguments to this function are identical to __spi_alloc_controller().
  *
- * Return: the SPI controller काष्ठाure on success, अन्यथा शून्य.
+ * Return: the SPI controller structure on success, else NULL.
  */
-काष्ठा spi_controller *__devm_spi_alloc_controller(काष्ठा device *dev,
-						   अचिन्हित पूर्णांक size,
+struct spi_controller *__devm_spi_alloc_controller(struct device *dev,
+						   unsigned int size,
 						   bool slave)
-अणु
-	काष्ठा spi_controller **ptr, *ctlr;
+{
+	struct spi_controller **ptr, *ctlr;
 
-	ptr = devres_alloc(devm_spi_release_controller, माप(*ptr),
+	ptr = devres_alloc(devm_spi_release_controller, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	if (!ptr)
+		return NULL;
 
 	ctlr = __spi_alloc_controller(dev, size, slave);
-	अगर (ctlr) अणु
+	if (ctlr) {
 		ctlr->devm_allocated = true;
 		*ptr = ctlr;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस ctlr;
-पूर्ण
+	return ctlr;
+}
 EXPORT_SYMBOL_GPL(__devm_spi_alloc_controller);
 
-#अगर_घोषित CONFIG_OF
-अटल पूर्णांक of_spi_get_gpio_numbers(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक nb, i, *cs;
-	काष्ठा device_node *np = ctlr->dev.of_node;
+#ifdef CONFIG_OF
+static int of_spi_get_gpio_numbers(struct spi_controller *ctlr)
+{
+	int nb, i, *cs;
+	struct device_node *np = ctlr->dev.of_node;
 
-	अगर (!np)
-		वापस 0;
+	if (!np)
+		return 0;
 
 	nb = of_gpio_named_count(np, "cs-gpios");
-	ctlr->num_chipselect = max_t(पूर्णांक, nb, ctlr->num_chipselect);
+	ctlr->num_chipselect = max_t(int, nb, ctlr->num_chipselect);
 
-	/* Return error only क्रम an incorrectly क्रमmed cs-gpios property */
-	अगर (nb == 0 || nb == -ENOENT)
-		वापस 0;
-	अन्यथा अगर (nb < 0)
-		वापस nb;
+	/* Return error only for an incorrectly formed cs-gpios property */
+	if (nb == 0 || nb == -ENOENT)
+		return 0;
+	else if (nb < 0)
+		return nb;
 
-	cs = devm_kसुस्मृति(&ctlr->dev, ctlr->num_chipselect, माप(पूर्णांक),
+	cs = devm_kcalloc(&ctlr->dev, ctlr->num_chipselect, sizeof(int),
 			  GFP_KERNEL);
 	ctlr->cs_gpios = cs;
 
-	अगर (!ctlr->cs_gpios)
-		वापस -ENOMEM;
+	if (!ctlr->cs_gpios)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ctlr->num_chipselect; i++)
+	for (i = 0; i < ctlr->num_chipselect; i++)
 		cs[i] = -ENOENT;
 
-	क्रम (i = 0; i < nb; i++)
+	for (i = 0; i < nb; i++)
 		cs[i] = of_get_named_gpio(np, "cs-gpios", i);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक of_spi_get_gpio_numbers(काष्ठा spi_controller *ctlr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static int of_spi_get_gpio_numbers(struct spi_controller *ctlr)
+{
+	return 0;
+}
+#endif
 
 /**
- * spi_get_gpio_descs() - grab chip select GPIOs क्रम the master
- * @ctlr: The SPI master to grab GPIO descriptors क्रम
+ * spi_get_gpio_descs() - grab chip select GPIOs for the master
+ * @ctlr: The SPI master to grab GPIO descriptors for
  */
-अटल पूर्णांक spi_get_gpio_descs(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक nb, i;
-	काष्ठा gpio_desc **cs;
-	काष्ठा device *dev = &ctlr->dev;
-	अचिन्हित दीर्घ native_cs_mask = 0;
-	अचिन्हित पूर्णांक num_cs_gpios = 0;
+static int spi_get_gpio_descs(struct spi_controller *ctlr)
+{
+	int nb, i;
+	struct gpio_desc **cs;
+	struct device *dev = &ctlr->dev;
+	unsigned long native_cs_mask = 0;
+	unsigned int num_cs_gpios = 0;
 
 	nb = gpiod_count(dev, "cs");
-	अगर (nb < 0) अणु
-		/* No GPIOs at all is fine, अन्यथा वापस the error */
-		अगर (nb == -ENOENT)
-			वापस 0;
-		वापस nb;
-	पूर्ण
+	if (nb < 0) {
+		/* No GPIOs at all is fine, else return the error */
+		if (nb == -ENOENT)
+			return 0;
+		return nb;
+	}
 
-	ctlr->num_chipselect = max_t(पूर्णांक, nb, ctlr->num_chipselect);
+	ctlr->num_chipselect = max_t(int, nb, ctlr->num_chipselect);
 
-	cs = devm_kसुस्मृति(dev, ctlr->num_chipselect, माप(*cs),
+	cs = devm_kcalloc(dev, ctlr->num_chipselect, sizeof(*cs),
 			  GFP_KERNEL);
-	अगर (!cs)
-		वापस -ENOMEM;
+	if (!cs)
+		return -ENOMEM;
 	ctlr->cs_gpiods = cs;
 
-	क्रम (i = 0; i < nb; i++) अणु
+	for (i = 0; i < nb; i++) {
 		/*
 		 * Most chipselects are active low, the inverted
 		 * semantics are handled by special quirks in gpiolib,
 		 * so initializing them GPIOD_OUT_LOW here means
-		 * "unasserted", in most हालs this will drive the physical
+		 * "unasserted", in most cases this will drive the physical
 		 * line high.
 		 */
 		cs[i] = devm_gpiod_get_index_optional(dev, "cs", i,
 						      GPIOD_OUT_LOW);
-		अगर (IS_ERR(cs[i]))
-			वापस PTR_ERR(cs[i]);
+		if (IS_ERR(cs[i]))
+			return PTR_ERR(cs[i]);
 
-		अगर (cs[i]) अणु
+		if (cs[i]) {
 			/*
 			 * If we find a CS GPIO, name it after the device and
 			 * chip select line.
 			 */
-			अक्षर *gpioname;
+			char *gpioname;
 
-			gpioname = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s CS%d",
+			gpioname = devm_kasprintf(dev, GFP_KERNEL, "%s CS%d",
 						  dev_name(dev), i);
-			अगर (!gpioname)
-				वापस -ENOMEM;
+			if (!gpioname)
+				return -ENOMEM;
 			gpiod_set_consumer_name(cs[i], gpioname);
 			num_cs_gpios++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ctlr->max_native_cs && i >= ctlr->max_native_cs) अणु
+		if (ctlr->max_native_cs && i >= ctlr->max_native_cs) {
 			dev_err(dev, "Invalid native chip select %d\n", i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		native_cs_mask |= BIT(i);
-	पूर्ण
+	}
 
 	ctlr->unused_native_cs = ffz(native_cs_mask);
-	अगर (num_cs_gpios && ctlr->max_native_cs &&
-	    ctlr->unused_native_cs >= ctlr->max_native_cs) अणु
+	if (num_cs_gpios && ctlr->max_native_cs &&
+	    ctlr->unused_native_cs >= ctlr->max_native_cs) {
 		dev_err(dev, "No unused native chip select available\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spi_controller_check_ops(काष्ठा spi_controller *ctlr)
-अणु
+static int spi_controller_check_ops(struct spi_controller *ctlr)
+{
 	/*
 	 * The controller may implement only the high-level SPI-memory like
-	 * operations अगर it करोes not support regular SPI transfers, and this is
-	 * valid use हाल.
-	 * If ->mem_ops is शून्य, we request that at least one of the
+	 * operations if it does not support regular SPI transfers, and this is
+	 * valid use case.
+	 * If ->mem_ops is NULL, we request that at least one of the
 	 * ->transfer_xxx() method be implemented.
 	 */
-	अगर (ctlr->mem_ops) अणु
-		अगर (!ctlr->mem_ops->exec_op)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (!ctlr->transfer && !ctlr->transfer_one &&
-		   !ctlr->transfer_one_message) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (ctlr->mem_ops) {
+		if (!ctlr->mem_ops->exec_op)
+			return -EINVAL;
+	} else if (!ctlr->transfer && !ctlr->transfer_one &&
+		   !ctlr->transfer_one_message) {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * spi_रेजिस्टर_controller - रेजिस्टर SPI master or slave controller
+ * spi_register_controller - register SPI master or slave controller
  * @ctlr: initialized master, originally from spi_alloc_master() or
  *	spi_alloc_slave()
  * Context: can sleep
  *
  * SPI controllers connect to their drivers using some non-SPI bus,
- * such as the platक्रमm bus.  The final stage of probe() in that code
- * includes calling spi_रेजिस्टर_controller() to hook up to this SPI bus glue.
+ * such as the platform bus.  The final stage of probe() in that code
+ * includes calling spi_register_controller() to hook up to this SPI bus glue.
  *
- * SPI controllers use board specअगरic (often SOC specअगरic) bus numbers,
- * and board-specअगरic addressing क्रम SPI devices combines those numbers
- * with chip select numbers.  Since SPI करोes not directly support dynamic
- * device identअगरication, boards need configuration tables telling which
+ * SPI controllers use board specific (often SOC specific) bus numbers,
+ * and board-specific addressing for SPI devices combines those numbers
+ * with chip select numbers.  Since SPI does not directly support dynamic
+ * device identification, boards need configuration tables telling which
  * chip is at which address.
  *
- * This must be called from context that can sleep.  It वापसs zero on
- * success, अन्यथा a negative error code (dropping the controller's refcount).
- * After a successful वापस, the caller is responsible क्रम calling
- * spi_unरेजिस्टर_controller().
+ * This must be called from context that can sleep.  It returns zero on
+ * success, else a negative error code (dropping the controller's refcount).
+ * After a successful return, the caller is responsible for calling
+ * spi_unregister_controller().
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_रेजिस्टर_controller(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा device		*dev = ctlr->dev.parent;
-	काष्ठा boardinfo	*bi;
-	पूर्णांक			status;
-	पूर्णांक			id, first_dynamic;
+int spi_register_controller(struct spi_controller *ctlr)
+{
+	struct device		*dev = ctlr->dev.parent;
+	struct boardinfo	*bi;
+	int			status;
+	int			id, first_dynamic;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	/*
-	 * Make sure all necessary hooks are implemented beक्रमe रेजिस्टरing
+	 * Make sure all necessary hooks are implemented before registering
 	 * the SPI controller.
 	 */
 	status = spi_controller_check_ops(ctlr);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर (ctlr->bus_num >= 0) अणु
+	if (ctlr->bus_num >= 0) {
 		/* devices with a fixed bus num must check-in with the num */
 		mutex_lock(&board_lock);
 		id = idr_alloc(&spi_master_idr, ctlr, ctlr->bus_num,
 			ctlr->bus_num + 1, GFP_KERNEL);
 		mutex_unlock(&board_lock);
-		अगर (WARN(id < 0, "couldn't get idr"))
-			वापस id == -ENOSPC ? -EBUSY : id;
+		if (WARN(id < 0, "couldn't get idr"))
+			return id == -ENOSPC ? -EBUSY : id;
 		ctlr->bus_num = id;
-	पूर्ण अन्यथा अगर (ctlr->dev.of_node) अणु
+	} else if (ctlr->dev.of_node) {
 		/* allocate dynamic bus number using Linux idr */
 		id = of_alias_get_id(ctlr->dev.of_node, "spi");
-		अगर (id >= 0) अणु
+		if (id >= 0) {
 			ctlr->bus_num = id;
 			mutex_lock(&board_lock);
 			id = idr_alloc(&spi_master_idr, ctlr, ctlr->bus_num,
 				       ctlr->bus_num + 1, GFP_KERNEL);
 			mutex_unlock(&board_lock);
-			अगर (WARN(id < 0, "couldn't get idr"))
-				वापस id == -ENOSPC ? -EBUSY : id;
-		पूर्ण
-	पूर्ण
-	अगर (ctlr->bus_num < 0) अणु
+			if (WARN(id < 0, "couldn't get idr"))
+				return id == -ENOSPC ? -EBUSY : id;
+		}
+	}
+	if (ctlr->bus_num < 0) {
 		first_dynamic = of_alias_get_highest_id("spi");
-		अगर (first_dynamic < 0)
+		if (first_dynamic < 0)
 			first_dynamic = 0;
-		अन्यथा
+		else
 			first_dynamic++;
 
 		mutex_lock(&board_lock);
 		id = idr_alloc(&spi_master_idr, ctlr, first_dynamic,
 			       0, GFP_KERNEL);
 		mutex_unlock(&board_lock);
-		अगर (WARN(id < 0, "couldn't get idr"))
-			वापस id;
+		if (WARN(id < 0, "couldn't get idr"))
+			return id;
 		ctlr->bus_num = id;
-	पूर्ण
+	}
 	INIT_LIST_HEAD(&ctlr->queue);
 	spin_lock_init(&ctlr->queue_lock);
 	spin_lock_init(&ctlr->bus_lock_spinlock);
@@ -2737,391 +2736,391 @@ EXPORT_SYMBOL_GPL(__devm_spi_alloc_controller);
 	mutex_init(&ctlr->io_mutex);
 	ctlr->bus_lock_flag = 0;
 	init_completion(&ctlr->xfer_completion);
-	अगर (!ctlr->max_dma_len)
-		ctlr->max_dma_len = पूर्णांक_उच्च;
+	if (!ctlr->max_dma_len)
+		ctlr->max_dma_len = INT_MAX;
 
-	/* रेजिस्टर the device, then userspace will see it.
-	 * registration fails अगर the bus ID is in use.
+	/* register the device, then userspace will see it.
+	 * registration fails if the bus ID is in use.
 	 */
 	dev_set_name(&ctlr->dev, "spi%u", ctlr->bus_num);
 
-	अगर (!spi_controller_is_slave(ctlr)) अणु
-		अगर (ctlr->use_gpio_descriptors) अणु
+	if (!spi_controller_is_slave(ctlr)) {
+		if (ctlr->use_gpio_descriptors) {
 			status = spi_get_gpio_descs(ctlr);
-			अगर (status)
-				जाओ मुक्त_bus_id;
+			if (status)
+				goto free_bus_id;
 			/*
 			 * A controller using GPIO descriptors always
-			 * supports SPI_CS_HIGH अगर need be.
+			 * supports SPI_CS_HIGH if need be.
 			 */
 			ctlr->mode_bits |= SPI_CS_HIGH;
-		पूर्ण अन्यथा अणु
-			/* Legacy code path क्रम GPIOs from DT */
+		} else {
+			/* Legacy code path for GPIOs from DT */
 			status = of_spi_get_gpio_numbers(ctlr);
-			अगर (status)
-				जाओ मुक्त_bus_id;
-		पूर्ण
-	पूर्ण
+			if (status)
+				goto free_bus_id;
+		}
+	}
 
 	/*
-	 * Even अगर it's just one always-selected device, there must
+	 * Even if it's just one always-selected device, there must
 	 * be at least one chipselect.
 	 */
-	अगर (!ctlr->num_chipselect) अणु
+	if (!ctlr->num_chipselect) {
 		status = -EINVAL;
-		जाओ मुक्त_bus_id;
-	पूर्ण
+		goto free_bus_id;
+	}
 
 	status = device_add(&ctlr->dev);
-	अगर (status < 0)
-		जाओ मुक्त_bus_id;
+	if (status < 0)
+		goto free_bus_id;
 	dev_dbg(dev, "registered %s %s\n",
 			spi_controller_is_slave(ctlr) ? "slave" : "master",
 			dev_name(&ctlr->dev));
 
 	/*
 	 * If we're using a queued driver, start the queue. Note that we don't
-	 * need the queueing logic अगर the driver is only supporting high-level
+	 * need the queueing logic if the driver is only supporting high-level
 	 * memory operations.
 	 */
-	अगर (ctlr->transfer) अणु
+	if (ctlr->transfer) {
 		dev_info(dev, "controller is unqueued, this is deprecated\n");
-	पूर्ण अन्यथा अगर (ctlr->transfer_one || ctlr->transfer_one_message) अणु
+	} else if (ctlr->transfer_one || ctlr->transfer_one_message) {
 		status = spi_controller_initialize_queue(ctlr);
-		अगर (status) अणु
+		if (status) {
 			device_del(&ctlr->dev);
-			जाओ मुक्त_bus_id;
-		पूर्ण
-	पूर्ण
+			goto free_bus_id;
+		}
+	}
 	/* add statistics */
 	spin_lock_init(&ctlr->statistics.lock);
 
 	mutex_lock(&board_lock);
 	list_add_tail(&ctlr->list, &spi_controller_list);
-	list_क्रम_each_entry(bi, &board_list, list)
+	list_for_each_entry(bi, &board_list, list)
 		spi_match_controller_to_boardinfo(ctlr, &bi->board_info);
 	mutex_unlock(&board_lock);
 
 	/* Register devices from the device tree and ACPI */
-	of_रेजिस्टर_spi_devices(ctlr);
-	acpi_रेजिस्टर_spi_devices(ctlr);
-	वापस status;
+	of_register_spi_devices(ctlr);
+	acpi_register_spi_devices(ctlr);
+	return status;
 
-मुक्त_bus_id:
+free_bus_id:
 	mutex_lock(&board_lock);
-	idr_हटाओ(&spi_master_idr, ctlr->bus_num);
+	idr_remove(&spi_master_idr, ctlr->bus_num);
 	mutex_unlock(&board_lock);
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_रेजिस्टर_controller);
+	return status;
+}
+EXPORT_SYMBOL_GPL(spi_register_controller);
 
-अटल व्योम devm_spi_unरेजिस्टर(व्योम *ctlr)
-अणु
-	spi_unरेजिस्टर_controller(ctlr);
-पूर्ण
+static void devm_spi_unregister(void *ctlr)
+{
+	spi_unregister_controller(ctlr);
+}
 
 /**
- * devm_spi_रेजिस्टर_controller - रेजिस्टर managed SPI master or slave
+ * devm_spi_register_controller - register managed SPI master or slave
  *	controller
  * @dev:    device managing SPI controller
  * @ctlr: initialized controller, originally from spi_alloc_master() or
  *	spi_alloc_slave()
  * Context: can sleep
  *
- * Register a SPI device as with spi_रेजिस्टर_controller() which will
- * स्वतःmatically be unरेजिस्टरed and मुक्तd.
+ * Register a SPI device as with spi_register_controller() which will
+ * automatically be unregistered and freed.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक devm_spi_रेजिस्टर_controller(काष्ठा device *dev,
-				 काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक ret;
+int devm_spi_register_controller(struct device *dev,
+				 struct spi_controller *ctlr)
+{
+	int ret;
 
-	ret = spi_रेजिस्टर_controller(ctlr);
-	अगर (ret)
-		वापस ret;
+	ret = spi_register_controller(ctlr);
+	if (ret)
+		return ret;
 
-	वापस devm_add_action_or_reset(dev, devm_spi_unरेजिस्टर, ctlr);
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_spi_रेजिस्टर_controller);
+	return devm_add_action_or_reset(dev, devm_spi_unregister, ctlr);
+}
+EXPORT_SYMBOL_GPL(devm_spi_register_controller);
 
-अटल पूर्णांक __unरेजिस्टर(काष्ठा device *dev, व्योम *null)
-अणु
-	spi_unरेजिस्टर_device(to_spi_device(dev));
-	वापस 0;
-पूर्ण
+static int __unregister(struct device *dev, void *null)
+{
+	spi_unregister_device(to_spi_device(dev));
+	return 0;
+}
 
 /**
- * spi_unरेजिस्टर_controller - unरेजिस्टर SPI master or slave controller
- * @ctlr: the controller being unरेजिस्टरed
+ * spi_unregister_controller - unregister SPI master or slave controller
+ * @ctlr: the controller being unregistered
  * Context: can sleep
  *
  * This call is used only by SPI controller drivers, which are the
- * only ones directly touching chip रेजिस्टरs.
+ * only ones directly touching chip registers.
  *
  * This must be called from context that can sleep.
  *
  * Note that this function also drops a reference to the controller.
  */
-व्योम spi_unरेजिस्टर_controller(काष्ठा spi_controller *ctlr)
-अणु
-	काष्ठा spi_controller *found;
-	पूर्णांक id = ctlr->bus_num;
+void spi_unregister_controller(struct spi_controller *ctlr)
+{
+	struct spi_controller *found;
+	int id = ctlr->bus_num;
 
-	/* Prevent addition of new devices, unरेजिस्टर existing ones */
-	अगर (IS_ENABLED(CONFIG_SPI_DYNAMIC))
+	/* Prevent addition of new devices, unregister existing ones */
+	if (IS_ENABLED(CONFIG_SPI_DYNAMIC))
 		mutex_lock(&spi_add_lock);
 
-	device_क्रम_each_child(&ctlr->dev, शून्य, __unरेजिस्टर);
+	device_for_each_child(&ctlr->dev, NULL, __unregister);
 
 	/* First make sure that this controller was ever added */
 	mutex_lock(&board_lock);
 	found = idr_find(&spi_master_idr, id);
 	mutex_unlock(&board_lock);
-	अगर (ctlr->queued) अणु
-		अगर (spi_destroy_queue(ctlr))
+	if (ctlr->queued) {
+		if (spi_destroy_queue(ctlr))
 			dev_err(&ctlr->dev, "queue remove failed\n");
-	पूर्ण
+	}
 	mutex_lock(&board_lock);
 	list_del(&ctlr->list);
 	mutex_unlock(&board_lock);
 
 	device_del(&ctlr->dev);
 
-	/* Release the last reference on the controller अगर its driver
+	/* Release the last reference on the controller if its driver
 	 * has not yet been converted to devm_spi_alloc_master/slave().
 	 */
-	अगर (!ctlr->devm_allocated)
+	if (!ctlr->devm_allocated)
 		put_device(&ctlr->dev);
 
-	/* मुक्त bus id */
+	/* free bus id */
 	mutex_lock(&board_lock);
-	अगर (found == ctlr)
-		idr_हटाओ(&spi_master_idr, id);
+	if (found == ctlr)
+		idr_remove(&spi_master_idr, id);
 	mutex_unlock(&board_lock);
 
-	अगर (IS_ENABLED(CONFIG_SPI_DYNAMIC))
+	if (IS_ENABLED(CONFIG_SPI_DYNAMIC))
 		mutex_unlock(&spi_add_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_unरेजिस्टर_controller);
+}
+EXPORT_SYMBOL_GPL(spi_unregister_controller);
 
-पूर्णांक spi_controller_suspend(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक ret;
+int spi_controller_suspend(struct spi_controller *ctlr)
+{
+	int ret;
 
-	/* Basically no-ops क्रम non-queued controllers */
-	अगर (!ctlr->queued)
-		वापस 0;
+	/* Basically no-ops for non-queued controllers */
+	if (!ctlr->queued)
+		return 0;
 
 	ret = spi_stop_queue(ctlr);
-	अगर (ret)
+	if (ret)
 		dev_err(&ctlr->dev, "queue stop failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(spi_controller_suspend);
 
-पूर्णांक spi_controller_resume(काष्ठा spi_controller *ctlr)
-अणु
-	पूर्णांक ret;
+int spi_controller_resume(struct spi_controller *ctlr)
+{
+	int ret;
 
-	अगर (!ctlr->queued)
-		वापस 0;
+	if (!ctlr->queued)
+		return 0;
 
 	ret = spi_start_queue(ctlr);
-	अगर (ret)
+	if (ret)
 		dev_err(&ctlr->dev, "queue restart failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(spi_controller_resume);
 
-अटल पूर्णांक __spi_controller_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा spi_controller *ctlr;
-	स्थिर u16 *bus_num = data;
+static int __spi_controller_match(struct device *dev, const void *data)
+{
+	struct spi_controller *ctlr;
+	const u16 *bus_num = data;
 
-	ctlr = container_of(dev, काष्ठा spi_controller, dev);
-	वापस ctlr->bus_num == *bus_num;
-पूर्ण
+	ctlr = container_of(dev, struct spi_controller, dev);
+	return ctlr->bus_num == *bus_num;
+}
 
 /**
  * spi_busnum_to_master - look up master associated with bus_num
  * @bus_num: the master's bus number
  * Context: can sleep
  *
- * This call may be used with devices that are रेजिस्टरed after
- * arch init समय.  It वापसs a refcounted poपूर्णांकer to the relevant
- * spi_controller (which the caller must release), or शून्य अगर there is
- * no such master रेजिस्टरed.
+ * This call may be used with devices that are registered after
+ * arch init time.  It returns a refcounted pointer to the relevant
+ * spi_controller (which the caller must release), or NULL if there is
+ * no such master registered.
  *
- * Return: the SPI master काष्ठाure on success, अन्यथा शून्य.
+ * Return: the SPI master structure on success, else NULL.
  */
-काष्ठा spi_controller *spi_busnum_to_master(u16 bus_num)
-अणु
-	काष्ठा device		*dev;
-	काष्ठा spi_controller	*ctlr = शून्य;
+struct spi_controller *spi_busnum_to_master(u16 bus_num)
+{
+	struct device		*dev;
+	struct spi_controller	*ctlr = NULL;
 
-	dev = class_find_device(&spi_master_class, शून्य, &bus_num,
+	dev = class_find_device(&spi_master_class, NULL, &bus_num,
 				__spi_controller_match);
-	अगर (dev)
-		ctlr = container_of(dev, काष्ठा spi_controller, dev);
+	if (dev)
+		ctlr = container_of(dev, struct spi_controller, dev);
 	/* reference got in class_find_device */
-	वापस ctlr;
-पूर्ण
+	return ctlr;
+}
 EXPORT_SYMBOL_GPL(spi_busnum_to_master);
 
 /*-------------------------------------------------------------------------*/
 
-/* Core methods क्रम SPI resource management */
+/* Core methods for SPI resource management */
 
 /**
- * spi_res_alloc - allocate a spi resource that is lअगरe-cycle managed
- *                 during the processing of a spi_message जबतक using
+ * spi_res_alloc - allocate a spi resource that is life-cycle managed
+ *                 during the processing of a spi_message while using
  *                 spi_transfer_one
- * @spi:     the spi device क्रम which we allocate memory
- * @release: the release code to execute क्रम this resource
- * @size:    size to alloc and वापस
+ * @spi:     the spi device for which we allocate memory
+ * @release: the release code to execute for this resource
+ * @size:    size to alloc and return
  * @gfp:     GFP allocation flags
  *
- * Return: the poपूर्णांकer to the allocated data
+ * Return: the pointer to the allocated data
  *
  * This may get enhanced in the future to allocate from a memory pool
- * of the @spi_device or @spi_controller to aव्योम repeated allocations.
+ * of the @spi_device or @spi_controller to avoid repeated allocations.
  */
-व्योम *spi_res_alloc(काष्ठा spi_device *spi,
+void *spi_res_alloc(struct spi_device *spi,
 		    spi_res_release_t release,
-		    माप_प्रकार size, gfp_t gfp)
-अणु
-	काष्ठा spi_res *sres;
+		    size_t size, gfp_t gfp)
+{
+	struct spi_res *sres;
 
-	sres = kzalloc(माप(*sres) + size, gfp);
-	अगर (!sres)
-		वापस शून्य;
+	sres = kzalloc(sizeof(*sres) + size, gfp);
+	if (!sres)
+		return NULL;
 
 	INIT_LIST_HEAD(&sres->entry);
 	sres->release = release;
 
-	वापस sres->data;
-पूर्ण
+	return sres->data;
+}
 EXPORT_SYMBOL_GPL(spi_res_alloc);
 
 /**
- * spi_res_मुक्त - मुक्त an spi resource
- * @res: poपूर्णांकer to the custom data of a resource
+ * spi_res_free - free an spi resource
+ * @res: pointer to the custom data of a resource
  *
  */
-व्योम spi_res_मुक्त(व्योम *res)
-अणु
-	काष्ठा spi_res *sres = container_of(res, काष्ठा spi_res, data);
+void spi_res_free(void *res)
+{
+	struct spi_res *sres = container_of(res, struct spi_res, data);
 
-	अगर (!res)
-		वापस;
+	if (!res)
+		return;
 
 	WARN_ON(!list_empty(&sres->entry));
-	kमुक्त(sres);
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_res_मुक्त);
+	kfree(sres);
+}
+EXPORT_SYMBOL_GPL(spi_res_free);
 
 /**
  * spi_res_add - add a spi_res to the spi_message
  * @message: the spi message
  * @res:     the spi_resource
  */
-व्योम spi_res_add(काष्ठा spi_message *message, व्योम *res)
-अणु
-	काष्ठा spi_res *sres = container_of(res, काष्ठा spi_res, data);
+void spi_res_add(struct spi_message *message, void *res)
+{
+	struct spi_res *sres = container_of(res, struct spi_res, data);
 
 	WARN_ON(!list_empty(&sres->entry));
 	list_add_tail(&sres->entry, &message->resources);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spi_res_add);
 
 /**
- * spi_res_release - release all spi resources क्रम this message
+ * spi_res_release - release all spi resources for this message
  * @ctlr:  the @spi_controller
  * @message: the @spi_message
  */
-व्योम spi_res_release(काष्ठा spi_controller *ctlr, काष्ठा spi_message *message)
-अणु
-	काष्ठा spi_res *res, *पंचांगp;
+void spi_res_release(struct spi_controller *ctlr, struct spi_message *message)
+{
+	struct spi_res *res, *tmp;
 
-	list_क्रम_each_entry_safe_reverse(res, पंचांगp, &message->resources, entry) अणु
-		अगर (res->release)
+	list_for_each_entry_safe_reverse(res, tmp, &message->resources, entry) {
+		if (res->release)
 			res->release(ctlr, message, res->data);
 
 		list_del(&res->entry);
 
-		kमुक्त(res);
-	पूर्ण
-पूर्ण
+		kfree(res);
+	}
+}
 EXPORT_SYMBOL_GPL(spi_res_release);
 
 /*-------------------------------------------------------------------------*/
 
-/* Core methods क्रम spi_message alterations */
+/* Core methods for spi_message alterations */
 
-अटल व्योम __spi_replace_transfers_release(काष्ठा spi_controller *ctlr,
-					    काष्ठा spi_message *msg,
-					    व्योम *res)
-अणु
-	काष्ठा spi_replaced_transfers *rxfer = res;
-	माप_प्रकार i;
+static void __spi_replace_transfers_release(struct spi_controller *ctlr,
+					    struct spi_message *msg,
+					    void *res)
+{
+	struct spi_replaced_transfers *rxfer = res;
+	size_t i;
 
-	/* call extra callback अगर requested */
-	अगर (rxfer->release)
+	/* call extra callback if requested */
+	if (rxfer->release)
 		rxfer->release(ctlr, msg, res);
 
-	/* insert replaced transfers back पूर्णांकo the message */
+	/* insert replaced transfers back into the message */
 	list_splice(&rxfer->replaced_transfers, rxfer->replaced_after);
 
-	/* हटाओ the क्रमmerly inserted entries */
-	क्रम (i = 0; i < rxfer->inserted; i++)
+	/* remove the formerly inserted entries */
+	for (i = 0; i < rxfer->inserted; i++)
 		list_del(&rxfer->inserted_transfers[i].transfer_list);
-पूर्ण
+}
 
 /**
  * spi_replace_transfers - replace transfers with several transfers
- *                         and रेजिस्टर change with spi_message.resources
+ *                         and register change with spi_message.resources
  * @msg:           the spi_message we work upon
  * @xfer_first:    the first spi_transfer we want to replace
- * @हटाओ:        number of transfers to हटाओ
+ * @remove:        number of transfers to remove
  * @insert:        the number of transfers we want to insert instead
  * @release:       extra release code necessary in some circumstances
  * @extradatasize: extra data to allocate (with alignment guarantees
- *                 of काष्ठा @spi_transfer)
+ *                 of struct @spi_transfer)
  * @gfp:           gfp flags
  *
- * Returns: poपूर्णांकer to @spi_replaced_transfers,
- *          PTR_ERR(...) in हाल of errors.
+ * Returns: pointer to @spi_replaced_transfers,
+ *          PTR_ERR(...) in case of errors.
  */
-काष्ठा spi_replaced_transfers *spi_replace_transfers(
-	काष्ठा spi_message *msg,
-	काष्ठा spi_transfer *xfer_first,
-	माप_प्रकार हटाओ,
-	माप_प्रकार insert,
+struct spi_replaced_transfers *spi_replace_transfers(
+	struct spi_message *msg,
+	struct spi_transfer *xfer_first,
+	size_t remove,
+	size_t insert,
 	spi_replaced_release_t release,
-	माप_प्रकार extradatasize,
+	size_t extradatasize,
 	gfp_t gfp)
-अणु
-	काष्ठा spi_replaced_transfers *rxfer;
-	काष्ठा spi_transfer *xfer;
-	माप_प्रकार i;
+{
+	struct spi_replaced_transfers *rxfer;
+	struct spi_transfer *xfer;
+	size_t i;
 
-	/* allocate the काष्ठाure using spi_res */
+	/* allocate the structure using spi_res */
 	rxfer = spi_res_alloc(msg->spi, __spi_replace_transfers_release,
-			      काष्ठा_size(rxfer, inserted_transfers, insert)
+			      struct_size(rxfer, inserted_transfers, insert)
 			      + extradatasize,
 			      gfp);
-	अगर (!rxfer)
-		वापस ERR_PTR(-ENOMEM);
+	if (!rxfer)
+		return ERR_PTR(-ENOMEM);
 
-	/* the release code to invoke beक्रमe running the generic release */
+	/* the release code to invoke before running the generic release */
 	rxfer->release = release;
 
 	/* assign extradata */
-	अगर (extradatasize)
+	if (extradatasize)
 		rxfer->extradata =
 			&rxfer->inserted_transfers[insert];
 
@@ -3133,116 +3132,116 @@ EXPORT_SYMBOL_GPL(spi_res_release);
 	 */
 	rxfer->replaced_after = xfer_first->transfer_list.prev;
 
-	/* हटाओ the requested number of transfers */
-	क्रम (i = 0; i < हटाओ; i++) अणु
-		/* अगर the entry after replaced_after it is msg->transfers
-		 * then we have been requested to हटाओ more transfers
+	/* remove the requested number of transfers */
+	for (i = 0; i < remove; i++) {
+		/* if the entry after replaced_after it is msg->transfers
+		 * then we have been requested to remove more transfers
 		 * than are in the list
 		 */
-		अगर (rxfer->replaced_after->next == &msg->transfers) अणु
+		if (rxfer->replaced_after->next == &msg->transfers) {
 			dev_err(&msg->spi->dev,
 				"requested to remove more spi_transfers than are available\n");
-			/* insert replaced transfers back पूर्णांकo the message */
+			/* insert replaced transfers back into the message */
 			list_splice(&rxfer->replaced_transfers,
 				    rxfer->replaced_after);
 
-			/* मुक्त the spi_replace_transfer काष्ठाure */
-			spi_res_मुक्त(rxfer);
+			/* free the spi_replace_transfer structure */
+			spi_res_free(rxfer);
 
-			/* and वापस with an error */
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
+			/* and return with an error */
+			return ERR_PTR(-EINVAL);
+		}
 
-		/* हटाओ the entry after replaced_after from list of
+		/* remove the entry after replaced_after from list of
 		 * transfers and add it to list of replaced_transfers
 		 */
 		list_move_tail(rxfer->replaced_after->next,
 			       &rxfer->replaced_transfers);
-	पूर्ण
+	}
 
 	/* create copy of the given xfer with identical settings
-	 * based on the first transfer to get हटाओd
+	 * based on the first transfer to get removed
 	 */
-	क्रम (i = 0; i < insert; i++) अणु
+	for (i = 0; i < insert; i++) {
 		/* we need to run in reverse order */
 		xfer = &rxfer->inserted_transfers[insert - 1 - i];
 
 		/* copy all spi_transfer data */
-		स_नकल(xfer, xfer_first, माप(*xfer));
+		memcpy(xfer, xfer_first, sizeof(*xfer));
 
 		/* add to list */
 		list_add(&xfer->transfer_list, rxfer->replaced_after);
 
-		/* clear cs_change and delay क्रम all but the last */
-		अगर (i) अणु
+		/* clear cs_change and delay for all but the last */
+		if (i) {
 			xfer->cs_change = false;
 			xfer->delay.value = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* set up inserted */
 	rxfer->inserted = insert;
 
-	/* and रेजिस्टर it with spi_res/spi_message */
+	/* and register it with spi_res/spi_message */
 	spi_res_add(msg, rxfer);
 
-	वापस rxfer;
-पूर्ण
+	return rxfer;
+}
 EXPORT_SYMBOL_GPL(spi_replace_transfers);
 
-अटल पूर्णांक __spi_split_transfer_maxsize(काष्ठा spi_controller *ctlr,
-					काष्ठा spi_message *msg,
-					काष्ठा spi_transfer **xferp,
-					माप_प्रकार maxsize,
+static int __spi_split_transfer_maxsize(struct spi_controller *ctlr,
+					struct spi_message *msg,
+					struct spi_transfer **xferp,
+					size_t maxsize,
 					gfp_t gfp)
-अणु
-	काष्ठा spi_transfer *xfer = *xferp, *xfers;
-	काष्ठा spi_replaced_transfers *srt;
-	माप_प्रकार offset;
-	माप_प्रकार count, i;
+{
+	struct spi_transfer *xfer = *xferp, *xfers;
+	struct spi_replaced_transfers *srt;
+	size_t offset;
+	size_t count, i;
 
 	/* calculate how many we have to replace */
 	count = DIV_ROUND_UP(xfer->len, maxsize);
 
 	/* create replacement */
-	srt = spi_replace_transfers(msg, xfer, 1, count, शून्य, 0, gfp);
-	अगर (IS_ERR(srt))
-		वापस PTR_ERR(srt);
+	srt = spi_replace_transfers(msg, xfer, 1, count, NULL, 0, gfp);
+	if (IS_ERR(srt))
+		return PTR_ERR(srt);
 	xfers = srt->inserted_transfers;
 
 	/* now handle each of those newly inserted spi_transfers
 	 * note that the replacements spi_transfers all are preset
 	 * to the same values as *xferp, so tx_buf, rx_buf and len
 	 * are all identical (as well as most others)
-	 * so we just have to fix up len and the poपूर्णांकers.
+	 * so we just have to fix up len and the pointers.
 	 *
-	 * this also includes support क्रम the depreciated
-	 * spi_message.is_dma_mapped पूर्णांकerface
+	 * this also includes support for the depreciated
+	 * spi_message.is_dma_mapped interface
 	 */
 
-	/* the first transfer just needs the length modअगरied, so we
+	/* the first transfer just needs the length modified, so we
 	 * run it outside the loop
 	 */
-	xfers[0].len = min_t(माप_प्रकार, maxsize, xfer[0].len);
+	xfers[0].len = min_t(size_t, maxsize, xfer[0].len);
 
 	/* all the others need rx_buf/tx_buf also set */
-	क्रम (i = 1, offset = maxsize; i < count; offset += maxsize, i++) अणु
+	for (i = 1, offset = maxsize; i < count; offset += maxsize, i++) {
 		/* update rx_buf, tx_buf and dma */
-		अगर (xfers[i].rx_buf)
+		if (xfers[i].rx_buf)
 			xfers[i].rx_buf += offset;
-		अगर (xfers[i].rx_dma)
+		if (xfers[i].rx_dma)
 			xfers[i].rx_dma += offset;
-		अगर (xfers[i].tx_buf)
+		if (xfers[i].tx_buf)
 			xfers[i].tx_buf += offset;
-		अगर (xfers[i].tx_dma)
+		if (xfers[i].tx_dma)
 			xfers[i].tx_dma += offset;
 
 		/* update length */
 		xfers[i].len = min(maxsize, xfers[i].len - offset);
-	पूर्ण
+	}
 
 	/* we set up xferp to the last entry we have inserted,
-	 * so that we skip those alपढ़ोy split transfers
+	 * so that we skip those already split transfers
 	 */
 	*xferp = &xfers[count - 1];
 
@@ -3252,110 +3251,110 @@ EXPORT_SYMBOL_GPL(spi_replace_transfers);
 	SPI_STATISTICS_INCREMENT_FIELD(&msg->spi->statistics,
 				       transfers_split_maxsize);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * spi_split_transfers_maxsize - split spi transfers पूर्णांकo multiple transfers
- *                               when an inभागidual transfer exceeds a
+ * spi_split_transfers_maxsize - split spi transfers into multiple transfers
+ *                               when an individual transfer exceeds a
  *                               certain size
- * @ctlr:    the @spi_controller क्रम this transfer
- * @msg:   the @spi_message to transक्रमm
+ * @ctlr:    the @spi_controller for this transfer
+ * @msg:   the @spi_message to transform
  * @maxsize:  the maximum when to apply this
  * @gfp: GFP allocation flags
  *
- * Return: status of transक्रमmation
+ * Return: status of transformation
  */
-पूर्णांक spi_split_transfers_maxsize(काष्ठा spi_controller *ctlr,
-				काष्ठा spi_message *msg,
-				माप_प्रकार maxsize,
+int spi_split_transfers_maxsize(struct spi_controller *ctlr,
+				struct spi_message *msg,
+				size_t maxsize,
 				gfp_t gfp)
-अणु
-	काष्ठा spi_transfer *xfer;
-	पूर्णांक ret;
+{
+	struct spi_transfer *xfer;
+	int ret;
 
 	/* iterate over the transfer_list,
 	 * but note that xfer is advanced to the last transfer inserted
-	 * to aव्योम checking sizes again unnecessarily (also xfer करोes
-	 * potentiall beदीर्घ to a dअगरferent list by the समय the
+	 * to avoid checking sizes again unnecessarily (also xfer does
+	 * potentiall belong to a different list by the time the
 	 * replacement has happened
 	 */
-	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
-		अगर (xfer->len > maxsize) अणु
+	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+		if (xfer->len > maxsize) {
 			ret = __spi_split_transfer_maxsize(ctlr, msg, &xfer,
 							   maxsize, gfp);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spi_split_transfers_maxsize);
 
 /*-------------------------------------------------------------------------*/
 
-/* Core methods क्रम SPI controller protocol drivers.  Some of the
- * other core methods are currently defined as अंतरभूत functions.
+/* Core methods for SPI controller protocol drivers.  Some of the
+ * other core methods are currently defined as inline functions.
  */
 
-अटल पूर्णांक __spi_validate_bits_per_word(काष्ठा spi_controller *ctlr,
+static int __spi_validate_bits_per_word(struct spi_controller *ctlr,
 					u8 bits_per_word)
-अणु
-	अगर (ctlr->bits_per_word_mask) अणु
+{
+	if (ctlr->bits_per_word_mask) {
 		/* Only 32 bits fit in the mask */
-		अगर (bits_per_word > 32)
-			वापस -EINVAL;
-		अगर (!(ctlr->bits_per_word_mask & SPI_BPW_MASK(bits_per_word)))
-			वापस -EINVAL;
-	पूर्ण
+		if (bits_per_word > 32)
+			return -EINVAL;
+		if (!(ctlr->bits_per_word_mask & SPI_BPW_MASK(bits_per_word)))
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * spi_setup - setup SPI mode and घड़ी rate
- * @spi: the device whose settings are being modअगरied
+ * spi_setup - setup SPI mode and clock rate
+ * @spi: the device whose settings are being modified
  * Context: can sleep, and no requests are queued to the device
  *
- * SPI protocol drivers may need to update the transfer mode अगर the
- * device करोesn't work with its शेष.  They may likewise need
- * to update घड़ी rates or word sizes from initial values.  This function
+ * SPI protocol drivers may need to update the transfer mode if the
+ * device doesn't work with its default.  They may likewise need
+ * to update clock rates or word sizes from initial values.  This function
  * changes those settings, and must be called from a context that can sleep.
- * Except क्रम SPI_CS_HIGH, which takes effect immediately, the changes take
- * effect the next समय the device is selected and data is transferred to
- * or from it.  When this function वापसs, the spi device is deselected.
+ * Except for SPI_CS_HIGH, which takes effect immediately, the changes take
+ * effect the next time the device is selected and data is transferred to
+ * or from it.  When this function returns, the spi device is deselected.
  *
- * Note that this call will fail अगर the protocol driver specअगरies an option
- * that the underlying controller or its driver करोes not support.  For
+ * Note that this call will fail if the protocol driver specifies an option
+ * that the underlying controller or its driver does not support.  For
  * example, not all hardware supports wire transfers using nine bit words,
  * LSB-first wire encoding, or active-high chipselects.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_setup(काष्ठा spi_device *spi)
-अणु
-	अचिन्हित	bad_bits, ugly_bits;
-	पूर्णांक		status;
+int spi_setup(struct spi_device *spi)
+{
+	unsigned	bad_bits, ugly_bits;
+	int		status;
 
 	/*
 	 * check mode to prevent that any two of DUAL, QUAD and NO_MOSI/MISO
-	 * are set at the same समय
+	 * are set at the same time
 	 */
-	अगर ((hweight_दीर्घ(spi->mode &
+	if ((hweight_long(spi->mode &
 		(SPI_TX_DUAL | SPI_TX_QUAD | SPI_NO_TX)) > 1) ||
-	    (hweight_दीर्घ(spi->mode &
-		(SPI_RX_DUAL | SPI_RX_QUAD | SPI_NO_RX)) > 1)) अणु
+	    (hweight_long(spi->mode &
+		(SPI_RX_DUAL | SPI_RX_QUAD | SPI_NO_RX)) > 1)) {
 		dev_err(&spi->dev,
 		"setup: can not select any two of dual, quad and no-rx/tx at the same time\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* अगर it is SPI_3WIRE mode, DUAL and QUAD should be क्रमbidden
+		return -EINVAL;
+	}
+	/* if it is SPI_3WIRE mode, DUAL and QUAD should be forbidden
 	 */
-	अगर ((spi->mode & SPI_3WIRE) && (spi->mode &
+	if ((spi->mode & SPI_3WIRE) && (spi->mode &
 		(SPI_TX_DUAL | SPI_TX_QUAD | SPI_TX_OCTAL |
 		 SPI_RX_DUAL | SPI_RX_QUAD | SPI_RX_OCTAL)))
-		वापस -EINVAL;
+		return -EINVAL;
 	/* help drivers fail *cleanly* when they need options
 	 * that aren't supported with their current controller
 	 * SPI_CS_WORD has a fallback software implementation,
@@ -3363,86 +3362,86 @@ EXPORT_SYMBOL_GPL(spi_split_transfers_maxsize);
 	 */
 	bad_bits = spi->mode & ~(spi->controller->mode_bits | SPI_CS_WORD |
 				 SPI_NO_TX | SPI_NO_RX);
-	/* nothing prevents from working with active-high CS in हाल अगर it
+	/* nothing prevents from working with active-high CS in case if it
 	 * is driven by GPIO.
 	 */
-	अगर (gpio_is_valid(spi->cs_gpio))
+	if (gpio_is_valid(spi->cs_gpio))
 		bad_bits &= ~SPI_CS_HIGH;
 	ugly_bits = bad_bits &
 		    (SPI_TX_DUAL | SPI_TX_QUAD | SPI_TX_OCTAL |
 		     SPI_RX_DUAL | SPI_RX_QUAD | SPI_RX_OCTAL);
-	अगर (ugly_bits) अणु
+	if (ugly_bits) {
 		dev_warn(&spi->dev,
 			 "setup: ignoring unsupported mode bits %x\n",
 			 ugly_bits);
 		spi->mode &= ~ugly_bits;
 		bad_bits &= ~ugly_bits;
-	पूर्ण
-	अगर (bad_bits) अणु
+	}
+	if (bad_bits) {
 		dev_err(&spi->dev, "setup: unsupported mode bits %x\n",
 			bad_bits);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!spi->bits_per_word)
+	if (!spi->bits_per_word)
 		spi->bits_per_word = 8;
 
 	status = __spi_validate_bits_per_word(spi->controller,
 					      spi->bits_per_word);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	अगर (spi->controller->max_speed_hz &&
+	if (spi->controller->max_speed_hz &&
 	    (!spi->max_speed_hz ||
 	     spi->max_speed_hz > spi->controller->max_speed_hz))
 		spi->max_speed_hz = spi->controller->max_speed_hz;
 
 	mutex_lock(&spi->controller->io_mutex);
 
-	अगर (spi->controller->setup) अणु
+	if (spi->controller->setup) {
 		status = spi->controller->setup(spi);
-		अगर (status) अणु
+		if (status) {
 			mutex_unlock(&spi->controller->io_mutex);
 			dev_err(&spi->controller->dev, "Failed to setup device: %d\n",
 				status);
-			वापस status;
-		पूर्ण
-	पूर्ण
+			return status;
+		}
+	}
 
-	अगर (spi->controller->स्वतः_runसमय_pm && spi->controller->set_cs) अणु
-		status = pm_runसमय_get_sync(spi->controller->dev.parent);
-		अगर (status < 0) अणु
+	if (spi->controller->auto_runtime_pm && spi->controller->set_cs) {
+		status = pm_runtime_get_sync(spi->controller->dev.parent);
+		if (status < 0) {
 			mutex_unlock(&spi->controller->io_mutex);
-			pm_runसमय_put_noidle(spi->controller->dev.parent);
+			pm_runtime_put_noidle(spi->controller->dev.parent);
 			dev_err(&spi->controller->dev, "Failed to power device: %d\n",
 				status);
-			वापस status;
-		पूर्ण
+			return status;
+		}
 
 		/*
-		 * We करो not want to वापस positive value from pm_runसमय_get,
+		 * We do not want to return positive value from pm_runtime_get,
 		 * there are many instances of devices calling spi_setup() and
-		 * checking क्रम a non-zero वापस value instead of a negative
-		 * वापस value.
+		 * checking for a non-zero return value instead of a negative
+		 * return value.
 		 */
 		status = 0;
 
 		spi_set_cs(spi, false, true);
-		pm_runसमय_mark_last_busy(spi->controller->dev.parent);
-		pm_runसमय_put_स्वतःsuspend(spi->controller->dev.parent);
-	पूर्ण अन्यथा अणु
+		pm_runtime_mark_last_busy(spi->controller->dev.parent);
+		pm_runtime_put_autosuspend(spi->controller->dev.parent);
+	} else {
 		spi_set_cs(spi, false, true);
-	पूर्ण
+	}
 
 	mutex_unlock(&spi->controller->io_mutex);
 
-	अगर (spi->rt && !spi->controller->rt) अणु
+	if (spi->rt && !spi->controller->rt) {
 		spi->controller->rt = true;
-		spi_set_thपढ़ो_rt(spi->controller);
-	पूर्ण
+		spi_set_thread_rt(spi->controller);
+	}
 
 	dev_dbg(&spi->dev, "setup mode %d, %s%s%s%s%u bits/w, %u Hz max --> %d\n",
-			(पूर्णांक) (spi->mode & (SPI_CPOL | SPI_CPHA)),
+			(int) (spi->mode & (SPI_CPOL | SPI_CPHA)),
 			(spi->mode & SPI_CS_HIGH) ? "cs_high, " : "",
 			(spi->mode & SPI_LSB_FIRST) ? "lsb, " : "",
 			(spi->mode & SPI_3WIRE) ? "3wire, " : "",
@@ -3450,123 +3449,123 @@ EXPORT_SYMBOL_GPL(spi_split_transfers_maxsize);
 			spi->bits_per_word, spi->max_speed_hz,
 			status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(spi_setup);
 
 /**
  * spi_set_cs_timing - configure CS setup, hold, and inactive delays
- * @spi: the device that requires specअगरic CS timing configuration
- * @setup: CS setup समय specअगरied via @spi_delay
- * @hold: CS hold समय specअगरied via @spi_delay
- * @inactive: CS inactive delay between transfers specअगरied via @spi_delay
+ * @spi: the device that requires specific CS timing configuration
+ * @setup: CS setup time specified via @spi_delay
+ * @hold: CS hold time specified via @spi_delay
+ * @inactive: CS inactive delay between transfers specified via @spi_delay
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_set_cs_timing(काष्ठा spi_device *spi, काष्ठा spi_delay *setup,
-		      काष्ठा spi_delay *hold, काष्ठा spi_delay *inactive)
-अणु
-	काष्ठा device *parent = spi->controller->dev.parent;
-	माप_प्रकार len;
-	पूर्णांक status;
+int spi_set_cs_timing(struct spi_device *spi, struct spi_delay *setup,
+		      struct spi_delay *hold, struct spi_delay *inactive)
+{
+	struct device *parent = spi->controller->dev.parent;
+	size_t len;
+	int status;
 
-	अगर (spi->controller->set_cs_timing &&
-	    !(spi->cs_gpiod || gpio_is_valid(spi->cs_gpio))) अणु
+	if (spi->controller->set_cs_timing &&
+	    !(spi->cs_gpiod || gpio_is_valid(spi->cs_gpio))) {
 		mutex_lock(&spi->controller->io_mutex);
 
-		अगर (spi->controller->स्वतः_runसमय_pm) अणु
-			status = pm_runसमय_get_sync(parent);
-			अगर (status < 0) अणु
+		if (spi->controller->auto_runtime_pm) {
+			status = pm_runtime_get_sync(parent);
+			if (status < 0) {
 				mutex_unlock(&spi->controller->io_mutex);
-				pm_runसमय_put_noidle(parent);
+				pm_runtime_put_noidle(parent);
 				dev_err(&spi->controller->dev, "Failed to power device: %d\n",
 					status);
-				वापस status;
-			पूर्ण
+				return status;
+			}
 
 			status = spi->controller->set_cs_timing(spi, setup,
 								hold, inactive);
-			pm_runसमय_mark_last_busy(parent);
-			pm_runसमय_put_स्वतःsuspend(parent);
-		पूर्ण अन्यथा अणु
+			pm_runtime_mark_last_busy(parent);
+			pm_runtime_put_autosuspend(parent);
+		} else {
 			status = spi->controller->set_cs_timing(spi, setup, hold,
 							      inactive);
-		पूर्ण
+		}
 
 		mutex_unlock(&spi->controller->io_mutex);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर ((setup && setup->unit == SPI_DELAY_UNIT_SCK) ||
+	if ((setup && setup->unit == SPI_DELAY_UNIT_SCK) ||
 	    (hold && hold->unit == SPI_DELAY_UNIT_SCK) ||
-	    (inactive && inactive->unit == SPI_DELAY_UNIT_SCK)) अणु
+	    (inactive && inactive->unit == SPI_DELAY_UNIT_SCK)) {
 		dev_err(&spi->dev,
 			"Clock-cycle delays for CS not supported in SW mode\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	len = माप(काष्ठा spi_delay);
+	len = sizeof(struct spi_delay);
 
 	/* copy delays to controller */
-	अगर (setup)
-		स_नकल(&spi->controller->cs_setup, setup, len);
-	अन्यथा
-		स_रखो(&spi->controller->cs_setup, 0, len);
+	if (setup)
+		memcpy(&spi->controller->cs_setup, setup, len);
+	else
+		memset(&spi->controller->cs_setup, 0, len);
 
-	अगर (hold)
-		स_नकल(&spi->controller->cs_hold, hold, len);
-	अन्यथा
-		स_रखो(&spi->controller->cs_hold, 0, len);
+	if (hold)
+		memcpy(&spi->controller->cs_hold, hold, len);
+	else
+		memset(&spi->controller->cs_hold, 0, len);
 
-	अगर (inactive)
-		स_नकल(&spi->controller->cs_inactive, inactive, len);
-	अन्यथा
-		स_रखो(&spi->controller->cs_inactive, 0, len);
+	if (inactive)
+		memcpy(&spi->controller->cs_inactive, inactive, len);
+	else
+		memset(&spi->controller->cs_inactive, 0, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spi_set_cs_timing);
 
-अटल पूर्णांक _spi_xfer_word_delay_update(काष्ठा spi_transfer *xfer,
-				       काष्ठा spi_device *spi)
-अणु
-	पूर्णांक delay1, delay2;
+static int _spi_xfer_word_delay_update(struct spi_transfer *xfer,
+				       struct spi_device *spi)
+{
+	int delay1, delay2;
 
 	delay1 = spi_delay_to_ns(&xfer->word_delay, xfer);
-	अगर (delay1 < 0)
-		वापस delay1;
+	if (delay1 < 0)
+		return delay1;
 
 	delay2 = spi_delay_to_ns(&spi->word_delay, xfer);
-	अगर (delay2 < 0)
-		वापस delay2;
+	if (delay2 < 0)
+		return delay2;
 
-	अगर (delay1 < delay2)
-		स_नकल(&xfer->word_delay, &spi->word_delay,
-		       माप(xfer->word_delay));
+	if (delay1 < delay2)
+		memcpy(&xfer->word_delay, &spi->word_delay,
+		       sizeof(xfer->word_delay));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __spi_validate(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	काष्ठा spi_transfer *xfer;
-	पूर्णांक w_size;
+static int __spi_validate(struct spi_device *spi, struct spi_message *message)
+{
+	struct spi_controller *ctlr = spi->controller;
+	struct spi_transfer *xfer;
+	int w_size;
 
-	अगर (list_empty(&message->transfers))
-		वापस -EINVAL;
+	if (list_empty(&message->transfers))
+		return -EINVAL;
 
-	/* If an SPI controller करोes not support toggling the CS line on each
+	/* If an SPI controller does not support toggling the CS line on each
 	 * transfer (indicated by the SPI_CS_WORD flag) or we are using a GPIO
-	 * क्रम the CS line, we can emulate the CS-per-word hardware function by
-	 * splitting transfers पूर्णांकo one-word transfers and ensuring that
-	 * cs_change is set क्रम each transfer.
+	 * for the CS line, we can emulate the CS-per-word hardware function by
+	 * splitting transfers into one-word transfers and ensuring that
+	 * cs_change is set for each transfer.
 	 */
-	अगर ((spi->mode & SPI_CS_WORD) && (!(ctlr->mode_bits & SPI_CS_WORD) ||
+	if ((spi->mode & SPI_CS_WORD) && (!(ctlr->mode_bits & SPI_CS_WORD) ||
 					  spi->cs_gpiod ||
-					  gpio_is_valid(spi->cs_gpio))) अणु
-		माप_प्रकार maxsize;
-		पूर्णांक ret;
+					  gpio_is_valid(spi->cs_gpio))) {
+		size_t maxsize;
+		int ret;
 
 		maxsize = (spi->bits_per_word + 7) / 8;
 
@@ -3575,137 +3574,137 @@ EXPORT_SYMBOL_GPL(spi_set_cs_timing);
 
 		ret = spi_split_transfers_maxsize(ctlr, message, maxsize,
 						  GFP_KERNEL);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		list_क्रम_each_entry(xfer, &message->transfers, transfer_list) अणु
-			/* करोn't change cs_change on the last entry in the list */
-			अगर (list_is_last(&xfer->transfer_list, &message->transfers))
-				अवरोध;
+		list_for_each_entry(xfer, &message->transfers, transfer_list) {
+			/* don't change cs_change on the last entry in the list */
+			if (list_is_last(&xfer->transfer_list, &message->transfers))
+				break;
 			xfer->cs_change = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Half-duplex links include original MicroWire, and ones with
-	 * only one data pin like SPI_3WIRE (चयनes direction) or where
+	 * only one data pin like SPI_3WIRE (switches direction) or where
 	 * either MOSI or MISO is missing.  They can also be caused by
 	 * software limitations.
 	 */
-	अगर ((ctlr->flags & SPI_CONTROLLER_HALF_DUPLEX) ||
-	    (spi->mode & SPI_3WIRE)) अणु
-		अचिन्हित flags = ctlr->flags;
+	if ((ctlr->flags & SPI_CONTROLLER_HALF_DUPLEX) ||
+	    (spi->mode & SPI_3WIRE)) {
+		unsigned flags = ctlr->flags;
 
-		list_क्रम_each_entry(xfer, &message->transfers, transfer_list) अणु
-			अगर (xfer->rx_buf && xfer->tx_buf)
-				वापस -EINVAL;
-			अगर ((flags & SPI_CONTROLLER_NO_TX) && xfer->tx_buf)
-				वापस -EINVAL;
-			अगर ((flags & SPI_CONTROLLER_NO_RX) && xfer->rx_buf)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		list_for_each_entry(xfer, &message->transfers, transfer_list) {
+			if (xfer->rx_buf && xfer->tx_buf)
+				return -EINVAL;
+			if ((flags & SPI_CONTROLLER_NO_TX) && xfer->tx_buf)
+				return -EINVAL;
+			if ((flags & SPI_CONTROLLER_NO_RX) && xfer->rx_buf)
+				return -EINVAL;
+		}
+	}
 
 	/**
-	 * Set transfer bits_per_word and max speed as spi device शेष अगर
-	 * it is not set क्रम this transfer.
-	 * Set transfer tx_nbits and rx_nbits as single transfer शेष
-	 * (SPI_NBITS_SINGLE) अगर it is not set क्रम this transfer.
-	 * Ensure transfer word_delay is at least as दीर्घ as that required by
+	 * Set transfer bits_per_word and max speed as spi device default if
+	 * it is not set for this transfer.
+	 * Set transfer tx_nbits and rx_nbits as single transfer default
+	 * (SPI_NBITS_SINGLE) if it is not set for this transfer.
+	 * Ensure transfer word_delay is at least as long as that required by
 	 * device itself.
 	 */
 	message->frame_length = 0;
-	list_क्रम_each_entry(xfer, &message->transfers, transfer_list) अणु
+	list_for_each_entry(xfer, &message->transfers, transfer_list) {
 		xfer->effective_speed_hz = 0;
 		message->frame_length += xfer->len;
-		अगर (!xfer->bits_per_word)
+		if (!xfer->bits_per_word)
 			xfer->bits_per_word = spi->bits_per_word;
 
-		अगर (!xfer->speed_hz)
+		if (!xfer->speed_hz)
 			xfer->speed_hz = spi->max_speed_hz;
 
-		अगर (ctlr->max_speed_hz && xfer->speed_hz > ctlr->max_speed_hz)
+		if (ctlr->max_speed_hz && xfer->speed_hz > ctlr->max_speed_hz)
 			xfer->speed_hz = ctlr->max_speed_hz;
 
-		अगर (__spi_validate_bits_per_word(ctlr, xfer->bits_per_word))
-			वापस -EINVAL;
+		if (__spi_validate_bits_per_word(ctlr, xfer->bits_per_word))
+			return -EINVAL;
 
 		/*
 		 * SPI transfer length should be multiple of SPI word size
-		 * where SPI word size should be घातer-of-two multiple
+		 * where SPI word size should be power-of-two multiple
 		 */
-		अगर (xfer->bits_per_word <= 8)
+		if (xfer->bits_per_word <= 8)
 			w_size = 1;
-		अन्यथा अगर (xfer->bits_per_word <= 16)
+		else if (xfer->bits_per_word <= 16)
 			w_size = 2;
-		अन्यथा
+		else
 			w_size = 4;
 
 		/* No partial transfers accepted */
-		अगर (xfer->len % w_size)
-			वापस -EINVAL;
+		if (xfer->len % w_size)
+			return -EINVAL;
 
-		अगर (xfer->speed_hz && ctlr->min_speed_hz &&
+		if (xfer->speed_hz && ctlr->min_speed_hz &&
 		    xfer->speed_hz < ctlr->min_speed_hz)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (xfer->tx_buf && !xfer->tx_nbits)
+		if (xfer->tx_buf && !xfer->tx_nbits)
 			xfer->tx_nbits = SPI_NBITS_SINGLE;
-		अगर (xfer->rx_buf && !xfer->rx_nbits)
+		if (xfer->rx_buf && !xfer->rx_nbits)
 			xfer->rx_nbits = SPI_NBITS_SINGLE;
 		/* check transfer tx/rx_nbits:
 		 * 1. check the value matches one of single, dual and quad
 		 * 2. check tx/rx_nbits match the mode in spi_device
 		 */
-		अगर (xfer->tx_buf) अणु
-			अगर (spi->mode & SPI_NO_TX)
-				वापस -EINVAL;
-			अगर (xfer->tx_nbits != SPI_NBITS_SINGLE &&
+		if (xfer->tx_buf) {
+			if (spi->mode & SPI_NO_TX)
+				return -EINVAL;
+			if (xfer->tx_nbits != SPI_NBITS_SINGLE &&
 				xfer->tx_nbits != SPI_NBITS_DUAL &&
 				xfer->tx_nbits != SPI_NBITS_QUAD)
-				वापस -EINVAL;
-			अगर ((xfer->tx_nbits == SPI_NBITS_DUAL) &&
+				return -EINVAL;
+			if ((xfer->tx_nbits == SPI_NBITS_DUAL) &&
 				!(spi->mode & (SPI_TX_DUAL | SPI_TX_QUAD)))
-				वापस -EINVAL;
-			अगर ((xfer->tx_nbits == SPI_NBITS_QUAD) &&
+				return -EINVAL;
+			if ((xfer->tx_nbits == SPI_NBITS_QUAD) &&
 				!(spi->mode & SPI_TX_QUAD))
-				वापस -EINVAL;
-		पूर्ण
+				return -EINVAL;
+		}
 		/* check transfer rx_nbits */
-		अगर (xfer->rx_buf) अणु
-			अगर (spi->mode & SPI_NO_RX)
-				वापस -EINVAL;
-			अगर (xfer->rx_nbits != SPI_NBITS_SINGLE &&
+		if (xfer->rx_buf) {
+			if (spi->mode & SPI_NO_RX)
+				return -EINVAL;
+			if (xfer->rx_nbits != SPI_NBITS_SINGLE &&
 				xfer->rx_nbits != SPI_NBITS_DUAL &&
 				xfer->rx_nbits != SPI_NBITS_QUAD)
-				वापस -EINVAL;
-			अगर ((xfer->rx_nbits == SPI_NBITS_DUAL) &&
+				return -EINVAL;
+			if ((xfer->rx_nbits == SPI_NBITS_DUAL) &&
 				!(spi->mode & (SPI_RX_DUAL | SPI_RX_QUAD)))
-				वापस -EINVAL;
-			अगर ((xfer->rx_nbits == SPI_NBITS_QUAD) &&
+				return -EINVAL;
+			if ((xfer->rx_nbits == SPI_NBITS_QUAD) &&
 				!(spi->mode & SPI_RX_QUAD))
-				वापस -EINVAL;
-		पूर्ण
+				return -EINVAL;
+		}
 
-		अगर (_spi_xfer_word_delay_update(xfer, spi))
-			वापस -EINVAL;
-	पूर्ण
+		if (_spi_xfer_word_delay_update(xfer, spi))
+			return -EINVAL;
+	}
 
 	message->status = -EINPROGRESS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __spi_async(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	काष्ठा spi_transfer *xfer;
+static int __spi_async(struct spi_device *spi, struct spi_message *message)
+{
+	struct spi_controller *ctlr = spi->controller;
+	struct spi_transfer *xfer;
 
 	/*
-	 * Some controllers करो not support करोing regular SPI transfers. Return
-	 * ENOTSUPP when this is the हाल.
+	 * Some controllers do not support doing regular SPI transfers. Return
+	 * ENOTSUPP when this is the case.
 	 */
-	अगर (!ctlr->transfer)
-		वापस -ENOTSUPP;
+	if (!ctlr->transfer)
+		return -ENOTSUPP;
 
 	message->spi = spi;
 
@@ -3714,15 +3713,15 @@ EXPORT_SYMBOL_GPL(spi_set_cs_timing);
 
 	trace_spi_message_submit(message);
 
-	अगर (!ctlr->ptp_sts_supported) अणु
-		list_क्रम_each_entry(xfer, &message->transfers, transfer_list) अणु
+	if (!ctlr->ptp_sts_supported) {
+		list_for_each_entry(xfer, &message->transfers, transfer_list) {
 			xfer->ptp_sts_word_pre = 0;
-			ptp_पढ़ो_प्रणाली_prets(xfer->ptp_sts);
-		पूर्ण
-	पूर्ण
+			ptp_read_system_prets(xfer->ptp_sts);
+		}
+	}
 
-	वापस ctlr->transfer(spi, message);
-पूर्ण
+	return ctlr->transfer(spi, message);
+}
 
 /**
  * spi_async - asynchronous SPI transfer
@@ -3734,48 +3733,48 @@ EXPORT_SYMBOL_GPL(spi_set_cs_timing);
  * as well as from task contexts which can sleep.
  *
  * The completion callback is invoked in a context which can't sleep.
- * Beक्रमe that invocation, the value of message->status is undefined.
+ * Before that invocation, the value of message->status is undefined.
  * When the callback is issued, message->status holds either zero (to
  * indicate complete success) or a negative error code.  After that
- * callback वापसs, the driver which issued the transfer request may
- * deallocate the associated memory; it's no दीर्घer in use by any SPI
+ * callback returns, the driver which issued the transfer request may
+ * deallocate the associated memory; it's no longer in use by any SPI
  * core or controller driver code.
  *
  * Note that although all messages to a spi_device are handled in
- * FIFO order, messages may go to dअगरferent devices in other orders.
+ * FIFO order, messages may go to different devices in other orders.
  * Some device might be higher priority, or have various "hard" access
- * समय requirements, क्रम example.
+ * time requirements, for example.
  *
  * On detection of any fault during the transfer, processing of
- * the entire message is पातed, and the device is deselected.
- * Until वापसing from the associated message completion callback,
+ * the entire message is aborted, and the device is deselected.
+ * Until returning from the associated message completion callback,
  * no other spi_message queued to that device will be processed.
  * (This rule applies equally to all the synchronous transfer calls,
  * which are wrappers around this core asynchronous primitive.)
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_async(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+int spi_async(struct spi_device *spi, struct spi_message *message)
+{
+	struct spi_controller *ctlr = spi->controller;
+	int ret;
+	unsigned long flags;
 
 	ret = __spi_validate(spi, message);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	spin_lock_irqsave(&ctlr->bus_lock_spinlock, flags);
 
-	अगर (ctlr->bus_lock_flag)
+	if (ctlr->bus_lock_flag)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		ret = __spi_async(spi, message);
 
 	spin_unlock_irqrestore(&ctlr->bus_lock_spinlock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(spi_async);
 
 /**
@@ -3788,36 +3787,36 @@ EXPORT_SYMBOL_GPL(spi_async);
  * as well as from task contexts which can sleep.
  *
  * The completion callback is invoked in a context which can't sleep.
- * Beक्रमe that invocation, the value of message->status is undefined.
+ * Before that invocation, the value of message->status is undefined.
  * When the callback is issued, message->status holds either zero (to
  * indicate complete success) or a negative error code.  After that
- * callback वापसs, the driver which issued the transfer request may
- * deallocate the associated memory; it's no दीर्घer in use by any SPI
+ * callback returns, the driver which issued the transfer request may
+ * deallocate the associated memory; it's no longer in use by any SPI
  * core or controller driver code.
  *
  * Note that although all messages to a spi_device are handled in
- * FIFO order, messages may go to dअगरferent devices in other orders.
+ * FIFO order, messages may go to different devices in other orders.
  * Some device might be higher priority, or have various "hard" access
- * समय requirements, क्रम example.
+ * time requirements, for example.
  *
  * On detection of any fault during the transfer, processing of
- * the entire message is पातed, and the device is deselected.
- * Until वापसing from the associated message completion callback,
+ * the entire message is aborted, and the device is deselected.
+ * Until returning from the associated message completion callback,
  * no other spi_message queued to that device will be processed.
  * (This rule applies equally to all the synchronous transfer calls,
  * which are wrappers around this core asynchronous primitive.)
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_async_locked(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	काष्ठा spi_controller *ctlr = spi->controller;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+int spi_async_locked(struct spi_device *spi, struct spi_message *message)
+{
+	struct spi_controller *ctlr = spi->controller;
+	int ret;
+	unsigned long flags;
 
 	ret = __spi_validate(spi, message);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	spin_lock_irqsave(&ctlr->bus_lock_spinlock, flags);
 
@@ -3825,47 +3824,47 @@ EXPORT_SYMBOL_GPL(spi_async);
 
 	spin_unlock_irqrestore(&ctlr->bus_lock_spinlock, flags);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(spi_async_locked);
 
 /*-------------------------------------------------------------------------*/
 
-/* Utility methods क्रम SPI protocol drivers, layered on
+/* Utility methods for SPI protocol drivers, layered on
  * top of the core.  Some other utility methods are defined as
- * अंतरभूत functions.
+ * inline functions.
  */
 
-अटल व्योम spi_complete(व्योम *arg)
-अणु
+static void spi_complete(void *arg)
+{
 	complete(arg);
-पूर्ण
+}
 
-अटल पूर्णांक __spi_sync(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	DECLARE_COMPLETION_ONSTACK(करोne);
-	पूर्णांक status;
-	काष्ठा spi_controller *ctlr = spi->controller;
-	अचिन्हित दीर्घ flags;
+static int __spi_sync(struct spi_device *spi, struct spi_message *message)
+{
+	DECLARE_COMPLETION_ONSTACK(done);
+	int status;
+	struct spi_controller *ctlr = spi->controller;
+	unsigned long flags;
 
 	status = __spi_validate(spi, message);
-	अगर (status != 0)
-		वापस status;
+	if (status != 0)
+		return status;
 
 	message->complete = spi_complete;
-	message->context = &करोne;
+	message->context = &done;
 	message->spi = spi;
 
 	SPI_STATISTICS_INCREMENT_FIELD(&ctlr->statistics, spi_sync);
 	SPI_STATISTICS_INCREMENT_FIELD(&spi->statistics, spi_sync);
 
 	/* If we're not using the legacy transfer method then we will
-	 * try to transfer in the calling context so special हाल.
-	 * This code would be less tricky अगर we could हटाओ the
-	 * support क्रम driver implemented message queues.
+	 * try to transfer in the calling context so special case.
+	 * This code would be less tricky if we could remove the
+	 * support for driver implemented message queues.
 	 */
-	अगर (ctlr->transfer == spi_queued_transfer) अणु
+	if (ctlr->transfer == spi_queued_transfer) {
 		spin_lock_irqsave(&ctlr->bus_lock_spinlock, flags);
 
 		trace_spi_message_submit(message);
@@ -3873,28 +3872,28 @@ EXPORT_SYMBOL_GPL(spi_async_locked);
 		status = __spi_queued_transfer(spi, message, false);
 
 		spin_unlock_irqrestore(&ctlr->bus_lock_spinlock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		status = spi_async_locked(spi, message);
-	पूर्ण
+	}
 
-	अगर (status == 0) अणु
-		/* Push out the messages in the calling context अगर we
+	if (status == 0) {
+		/* Push out the messages in the calling context if we
 		 * can.
 		 */
-		अगर (ctlr->transfer == spi_queued_transfer) अणु
+		if (ctlr->transfer == spi_queued_transfer) {
 			SPI_STATISTICS_INCREMENT_FIELD(&ctlr->statistics,
 						       spi_sync_immediate);
 			SPI_STATISTICS_INCREMENT_FIELD(&spi->statistics,
 						       spi_sync_immediate);
 			__spi_pump_messages(ctlr, false);
-		पूर्ण
+		}
 
-		रुको_क्रम_completion(&करोne);
+		wait_for_completion(&done);
 		status = message->status;
-	पूर्ण
-	message->context = शून्य;
-	वापस status;
-पूर्ण
+	}
+	message->context = NULL;
+	return status;
+}
 
 /**
  * spi_sync - blocking/synchronous SPI data transfers
@@ -3903,30 +3902,30 @@ EXPORT_SYMBOL_GPL(spi_async_locked);
  * Context: can sleep
  *
  * This call may only be used from a context that may sleep.  The sleep
- * is non-पूर्णांकerruptible, and has no समयout.  Low-overhead controller
- * drivers may DMA directly पूर्णांकo and out of the message buffers.
+ * is non-interruptible, and has no timeout.  Low-overhead controller
+ * drivers may DMA directly into and out of the message buffers.
  *
  * Note that the SPI device's chip select is active during the message,
- * and then is normally disabled between messages.  Drivers क्रम some
+ * and then is normally disabled between messages.  Drivers for some
  * frequently-used devices may want to minimize costs of selecting a chip,
  * by leaving it selected in anticipation that the next message will go
- * to the same chip.  (That may increase घातer usage.)
+ * to the same chip.  (That may increase power usage.)
  *
  * Also, the caller is guaranteeing that the memory associated with the
- * message will not be मुक्तd beक्रमe this call वापसs.
+ * message will not be freed before this call returns.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_sync(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	पूर्णांक ret;
+int spi_sync(struct spi_device *spi, struct spi_message *message)
+{
+	int ret;
 
 	mutex_lock(&spi->controller->bus_lock_mutex);
 	ret = __spi_sync(spi, message);
 	mutex_unlock(&spi->controller->bus_lock_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(spi_sync);
 
 /**
@@ -3936,39 +3935,39 @@ EXPORT_SYMBOL_GPL(spi_sync);
  * Context: can sleep
  *
  * This call may only be used from a context that may sleep.  The sleep
- * is non-पूर्णांकerruptible, and has no समयout.  Low-overhead controller
- * drivers may DMA directly पूर्णांकo and out of the message buffers.
+ * is non-interruptible, and has no timeout.  Low-overhead controller
+ * drivers may DMA directly into and out of the message buffers.
  *
  * This call should be used by drivers that require exclusive access to the
  * SPI bus. It has to be preceded by a spi_bus_lock call. The SPI bus must
  * be released by a spi_bus_unlock call when the exclusive access is over.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_sync_locked(काष्ठा spi_device *spi, काष्ठा spi_message *message)
-अणु
-	वापस __spi_sync(spi, message);
-पूर्ण
+int spi_sync_locked(struct spi_device *spi, struct spi_message *message)
+{
+	return __spi_sync(spi, message);
+}
 EXPORT_SYMBOL_GPL(spi_sync_locked);
 
 /**
- * spi_bus_lock - obtain a lock क्रम exclusive SPI bus usage
- * @ctlr: SPI bus master that should be locked क्रम exclusive bus access
+ * spi_bus_lock - obtain a lock for exclusive SPI bus usage
+ * @ctlr: SPI bus master that should be locked for exclusive bus access
  * Context: can sleep
  *
  * This call may only be used from a context that may sleep.  The sleep
- * is non-पूर्णांकerruptible, and has no समयout.
+ * is non-interruptible, and has no timeout.
  *
  * This call should be used by drivers that require exclusive access to the
  * SPI bus. The SPI bus must be released by a spi_bus_unlock call when the
- * exclusive access is over. Data transfer must be करोne by spi_sync_locked
+ * exclusive access is over. Data transfer must be done by spi_sync_locked
  * and spi_async_locked calls when the SPI bus lock is held.
  *
  * Return: always zero.
  */
-पूर्णांक spi_bus_lock(काष्ठा spi_controller *ctlr)
-अणु
-	अचिन्हित दीर्घ flags;
+int spi_bus_lock(struct spi_controller *ctlr)
+{
+	unsigned long flags;
 
 	mutex_lock(&ctlr->bus_lock_mutex);
 
@@ -3976,315 +3975,315 @@ EXPORT_SYMBOL_GPL(spi_sync_locked);
 	ctlr->bus_lock_flag = 1;
 	spin_unlock_irqrestore(&ctlr->bus_lock_spinlock, flags);
 
-	/* mutex reमुख्यs locked until spi_bus_unlock is called */
+	/* mutex remains locked until spi_bus_unlock is called */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spi_bus_lock);
 
 /**
- * spi_bus_unlock - release the lock क्रम exclusive SPI bus usage
- * @ctlr: SPI bus master that was locked क्रम exclusive bus access
+ * spi_bus_unlock - release the lock for exclusive SPI bus usage
+ * @ctlr: SPI bus master that was locked for exclusive bus access
  * Context: can sleep
  *
  * This call may only be used from a context that may sleep.  The sleep
- * is non-पूर्णांकerruptible, and has no समयout.
+ * is non-interruptible, and has no timeout.
  *
  * This call releases an SPI bus lock previously obtained by an spi_bus_lock
  * call.
  *
  * Return: always zero.
  */
-पूर्णांक spi_bus_unlock(काष्ठा spi_controller *ctlr)
-अणु
+int spi_bus_unlock(struct spi_controller *ctlr)
+{
 	ctlr->bus_lock_flag = 0;
 
 	mutex_unlock(&ctlr->bus_lock_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(spi_bus_unlock);
 
 /* portable code must never pass more than 32 bytes */
-#घोषणा	SPI_बफ_मान	max(32, SMP_CACHE_BYTES)
+#define	SPI_BUFSIZ	max(32, SMP_CACHE_BYTES)
 
-अटल u8	*buf;
+static u8	*buf;
 
 /**
- * spi_ग_लिखो_then_पढ़ो - SPI synchronous ग_लिखो followed by पढ़ो
+ * spi_write_then_read - SPI synchronous write followed by read
  * @spi: device with which data will be exchanged
  * @txbuf: data to be written (need not be dma-safe)
  * @n_tx: size of txbuf, in bytes
- * @rxbuf: buffer पूर्णांकo which data will be पढ़ो (need not be dma-safe)
+ * @rxbuf: buffer into which data will be read (need not be dma-safe)
  * @n_rx: size of rxbuf, in bytes
  * Context: can sleep
  *
- * This perक्रमms a half duplex MicroWire style transaction with the
- * device, sending txbuf and then पढ़ोing rxbuf.  The वापस value
- * is zero क्रम success, अन्यथा a negative त्रुटि_सं status code.
+ * This performs a half duplex MicroWire style transaction with the
+ * device, sending txbuf and then reading rxbuf.  The return value
+ * is zero for success, else a negative errno status code.
  * This call may only be used from a context that may sleep.
  *
  * Parameters to this routine are always copied using a small buffer.
- * Perक्रमmance-sensitive or bulk transfer code should instead use
- * spi_अणुasync,syncपूर्ण() calls with dma-safe buffers.
+ * Performance-sensitive or bulk transfer code should instead use
+ * spi_{async,sync}() calls with dma-safe buffers.
  *
- * Return: zero on success, अन्यथा a negative error code.
+ * Return: zero on success, else a negative error code.
  */
-पूर्णांक spi_ग_लिखो_then_पढ़ो(काष्ठा spi_device *spi,
-		स्थिर व्योम *txbuf, अचिन्हित n_tx,
-		व्योम *rxbuf, अचिन्हित n_rx)
-अणु
-	अटल DEFINE_MUTEX(lock);
+int spi_write_then_read(struct spi_device *spi,
+		const void *txbuf, unsigned n_tx,
+		void *rxbuf, unsigned n_rx)
+{
+	static DEFINE_MUTEX(lock);
 
-	पूर्णांक			status;
-	काष्ठा spi_message	message;
-	काष्ठा spi_transfer	x[2];
+	int			status;
+	struct spi_message	message;
+	struct spi_transfer	x[2];
 	u8			*local_buf;
 
-	/* Use pपुनः_स्मृतिated DMA-safe buffer अगर we can.  We can't aव्योम
+	/* Use preallocated DMA-safe buffer if we can.  We can't avoid
 	 * copying here, (as a pure convenience thing), but we can
-	 * keep heap costs out of the hot path unless someone अन्यथा is
+	 * keep heap costs out of the hot path unless someone else is
 	 * using the pre-allocated buffer or the transfer is too large.
 	 */
-	अगर ((n_tx + n_rx) > SPI_बफ_मान || !mutex_trylock(&lock)) अणु
-		local_buf = kदो_स्मृति(max((अचिन्हित)SPI_बफ_मान, n_tx + n_rx),
+	if ((n_tx + n_rx) > SPI_BUFSIZ || !mutex_trylock(&lock)) {
+		local_buf = kmalloc(max((unsigned)SPI_BUFSIZ, n_tx + n_rx),
 				    GFP_KERNEL | GFP_DMA);
-		अगर (!local_buf)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+		if (!local_buf)
+			return -ENOMEM;
+	} else {
 		local_buf = buf;
-	पूर्ण
+	}
 
 	spi_message_init(&message);
-	स_रखो(x, 0, माप(x));
-	अगर (n_tx) अणु
+	memset(x, 0, sizeof(x));
+	if (n_tx) {
 		x[0].len = n_tx;
 		spi_message_add_tail(&x[0], &message);
-	पूर्ण
-	अगर (n_rx) अणु
+	}
+	if (n_rx) {
 		x[1].len = n_rx;
 		spi_message_add_tail(&x[1], &message);
-	पूर्ण
+	}
 
-	स_नकल(local_buf, txbuf, n_tx);
+	memcpy(local_buf, txbuf, n_tx);
 	x[0].tx_buf = local_buf;
 	x[1].rx_buf = local_buf + n_tx;
 
-	/* करो the i/o */
+	/* do the i/o */
 	status = spi_sync(spi, &message);
-	अगर (status == 0)
-		स_नकल(rxbuf, x[1].rx_buf, n_rx);
+	if (status == 0)
+		memcpy(rxbuf, x[1].rx_buf, n_rx);
 
-	अगर (x[0].tx_buf == buf)
+	if (x[0].tx_buf == buf)
 		mutex_unlock(&lock);
-	अन्यथा
-		kमुक्त(local_buf);
+	else
+		kfree(local_buf);
 
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(spi_ग_लिखो_then_पढ़ो);
+	return status;
+}
+EXPORT_SYMBOL_GPL(spi_write_then_read);
 
 /*-------------------------------------------------------------------------*/
 
-#अगर IS_ENABLED(CONFIG_OF)
-/* must call put_device() when करोne with वापसed spi_device device */
-काष्ठा spi_device *of_find_spi_device_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev = bus_find_device_by_of_node(&spi_bus_type, node);
+#if IS_ENABLED(CONFIG_OF)
+/* must call put_device() when done with returned spi_device device */
+struct spi_device *of_find_spi_device_by_node(struct device_node *node)
+{
+	struct device *dev = bus_find_device_by_of_node(&spi_bus_type, node);
 
-	वापस dev ? to_spi_device(dev) : शून्य;
-पूर्ण
+	return dev ? to_spi_device(dev) : NULL;
+}
 EXPORT_SYMBOL_GPL(of_find_spi_device_by_node);
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_OF) */
+#endif /* IS_ENABLED(CONFIG_OF) */
 
-#अगर IS_ENABLED(CONFIG_OF_DYNAMIC)
+#if IS_ENABLED(CONFIG_OF_DYNAMIC)
 /* the spi controllers are not using spi_bus, so we find it with another way */
-अटल काष्ठा spi_controller *of_find_spi_controller_by_node(काष्ठा device_node *node)
-अणु
-	काष्ठा device *dev;
+static struct spi_controller *of_find_spi_controller_by_node(struct device_node *node)
+{
+	struct device *dev;
 
 	dev = class_find_device_by_of_node(&spi_master_class, node);
-	अगर (!dev && IS_ENABLED(CONFIG_SPI_SLAVE))
+	if (!dev && IS_ENABLED(CONFIG_SPI_SLAVE))
 		dev = class_find_device_by_of_node(&spi_slave_class, node);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
 	/* reference got in class_find_device */
-	वापस container_of(dev, काष्ठा spi_controller, dev);
-पूर्ण
+	return container_of(dev, struct spi_controller, dev);
+}
 
-अटल पूर्णांक of_spi_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-			 व्योम *arg)
-अणु
-	काष्ठा of_reconfig_data *rd = arg;
-	काष्ठा spi_controller *ctlr;
-	काष्ठा spi_device *spi;
+static int of_spi_notify(struct notifier_block *nb, unsigned long action,
+			 void *arg)
+{
+	struct of_reconfig_data *rd = arg;
+	struct spi_controller *ctlr;
+	struct spi_device *spi;
 
-	चयन (of_reconfig_get_state_change(action, arg)) अणु
-	हाल OF_RECONFIG_CHANGE_ADD:
+	switch (of_reconfig_get_state_change(action, arg)) {
+	case OF_RECONFIG_CHANGE_ADD:
 		ctlr = of_find_spi_controller_by_node(rd->dn->parent);
-		अगर (ctlr == शून्य)
-			वापस NOTIFY_OK;	/* not क्रम us */
+		if (ctlr == NULL)
+			return NOTIFY_OK;	/* not for us */
 
-		अगर (of_node_test_and_set_flag(rd->dn, OF_POPULATED)) अणु
+		if (of_node_test_and_set_flag(rd->dn, OF_POPULATED)) {
 			put_device(&ctlr->dev);
-			वापस NOTIFY_OK;
-		पूर्ण
+			return NOTIFY_OK;
+		}
 
-		spi = of_रेजिस्टर_spi_device(ctlr, rd->dn);
+		spi = of_register_spi_device(ctlr, rd->dn);
 		put_device(&ctlr->dev);
 
-		अगर (IS_ERR(spi)) अणु
+		if (IS_ERR(spi)) {
 			pr_err("%s: failed to create for '%pOF'\n",
 					__func__, rd->dn);
 			of_node_clear_flag(rd->dn, OF_POPULATED);
-			वापस notअगरier_from_त्रुटि_सं(PTR_ERR(spi));
-		पूर्ण
-		अवरोध;
+			return notifier_from_errno(PTR_ERR(spi));
+		}
+		break;
 
-	हाल OF_RECONFIG_CHANGE_REMOVE:
-		/* alपढ़ोy depopulated? */
-		अगर (!of_node_check_flag(rd->dn, OF_POPULATED))
-			वापस NOTIFY_OK;
+	case OF_RECONFIG_CHANGE_REMOVE:
+		/* already depopulated? */
+		if (!of_node_check_flag(rd->dn, OF_POPULATED))
+			return NOTIFY_OK;
 
 		/* find our device by node */
 		spi = of_find_spi_device_by_node(rd->dn);
-		अगर (spi == शून्य)
-			वापस NOTIFY_OK;	/* no? not meant क्रम us */
+		if (spi == NULL)
+			return NOTIFY_OK;	/* no? not meant for us */
 
-		/* unरेजिस्टर takes one ref away */
-		spi_unरेजिस्टर_device(spi);
+		/* unregister takes one ref away */
+		spi_unregister_device(spi);
 
 		/* and put the reference of the find */
 		put_device(&spi->dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block spi_of_notअगरier = अणु
-	.notअगरier_call = of_spi_notअगरy,
-पूर्ण;
-#अन्यथा /* IS_ENABLED(CONFIG_OF_DYNAMIC) */
-बाह्य काष्ठा notअगरier_block spi_of_notअगरier;
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_OF_DYNAMIC) */
+static struct notifier_block spi_of_notifier = {
+	.notifier_call = of_spi_notify,
+};
+#else /* IS_ENABLED(CONFIG_OF_DYNAMIC) */
+extern struct notifier_block spi_of_notifier;
+#endif /* IS_ENABLED(CONFIG_OF_DYNAMIC) */
 
-#अगर IS_ENABLED(CONFIG_ACPI)
-अटल पूर्णांक spi_acpi_controller_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	वापस ACPI_COMPANION(dev->parent) == data;
-पूर्ण
+#if IS_ENABLED(CONFIG_ACPI)
+static int spi_acpi_controller_match(struct device *dev, const void *data)
+{
+	return ACPI_COMPANION(dev->parent) == data;
+}
 
-अटल काष्ठा spi_controller *acpi_spi_find_controller_by_adev(काष्ठा acpi_device *adev)
-अणु
-	काष्ठा device *dev;
+static struct spi_controller *acpi_spi_find_controller_by_adev(struct acpi_device *adev)
+{
+	struct device *dev;
 
-	dev = class_find_device(&spi_master_class, शून्य, adev,
+	dev = class_find_device(&spi_master_class, NULL, adev,
 				spi_acpi_controller_match);
-	अगर (!dev && IS_ENABLED(CONFIG_SPI_SLAVE))
-		dev = class_find_device(&spi_slave_class, शून्य, adev,
+	if (!dev && IS_ENABLED(CONFIG_SPI_SLAVE))
+		dev = class_find_device(&spi_slave_class, NULL, adev,
 					spi_acpi_controller_match);
-	अगर (!dev)
-		वापस शून्य;
+	if (!dev)
+		return NULL;
 
-	वापस container_of(dev, काष्ठा spi_controller, dev);
-पूर्ण
+	return container_of(dev, struct spi_controller, dev);
+}
 
-अटल काष्ठा spi_device *acpi_spi_find_device_by_adev(काष्ठा acpi_device *adev)
-अणु
-	काष्ठा device *dev;
+static struct spi_device *acpi_spi_find_device_by_adev(struct acpi_device *adev)
+{
+	struct device *dev;
 
 	dev = bus_find_device_by_acpi_dev(&spi_bus_type, adev);
-	वापस to_spi_device(dev);
-पूर्ण
+	return to_spi_device(dev);
+}
 
-अटल पूर्णांक acpi_spi_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ value,
-			   व्योम *arg)
-अणु
-	काष्ठा acpi_device *adev = arg;
-	काष्ठा spi_controller *ctlr;
-	काष्ठा spi_device *spi;
+static int acpi_spi_notify(struct notifier_block *nb, unsigned long value,
+			   void *arg)
+{
+	struct acpi_device *adev = arg;
+	struct spi_controller *ctlr;
+	struct spi_device *spi;
 
-	चयन (value) अणु
-	हाल ACPI_RECONFIG_DEVICE_ADD:
+	switch (value) {
+	case ACPI_RECONFIG_DEVICE_ADD:
 		ctlr = acpi_spi_find_controller_by_adev(adev->parent);
-		अगर (!ctlr)
-			अवरोध;
+		if (!ctlr)
+			break;
 
-		acpi_रेजिस्टर_spi_device(ctlr, adev);
+		acpi_register_spi_device(ctlr, adev);
 		put_device(&ctlr->dev);
-		अवरोध;
-	हाल ACPI_RECONFIG_DEVICE_REMOVE:
-		अगर (!acpi_device_क्रमागतerated(adev))
-			अवरोध;
+		break;
+	case ACPI_RECONFIG_DEVICE_REMOVE:
+		if (!acpi_device_enumerated(adev))
+			break;
 
 		spi = acpi_spi_find_device_by_adev(adev);
-		अगर (!spi)
-			अवरोध;
+		if (!spi)
+			break;
 
-		spi_unरेजिस्टर_device(spi);
+		spi_unregister_device(spi);
 		put_device(&spi->dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block spi_acpi_notअगरier = अणु
-	.notअगरier_call = acpi_spi_notअगरy,
-पूर्ण;
-#अन्यथा
-बाह्य काष्ठा notअगरier_block spi_acpi_notअगरier;
-#पूर्ण_अगर
+static struct notifier_block spi_acpi_notifier = {
+	.notifier_call = acpi_spi_notify,
+};
+#else
+extern struct notifier_block spi_acpi_notifier;
+#endif
 
-अटल पूर्णांक __init spi_init(व्योम)
-अणु
-	पूर्णांक	status;
+static int __init spi_init(void)
+{
+	int	status;
 
-	buf = kदो_स्मृति(SPI_बफ_मान, GFP_KERNEL);
-	अगर (!buf) अणु
+	buf = kmalloc(SPI_BUFSIZ, GFP_KERNEL);
+	if (!buf) {
 		status = -ENOMEM;
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
-	status = bus_रेजिस्टर(&spi_bus_type);
-	अगर (status < 0)
-		जाओ err1;
+	status = bus_register(&spi_bus_type);
+	if (status < 0)
+		goto err1;
 
-	status = class_रेजिस्टर(&spi_master_class);
-	अगर (status < 0)
-		जाओ err2;
+	status = class_register(&spi_master_class);
+	if (status < 0)
+		goto err2;
 
-	अगर (IS_ENABLED(CONFIG_SPI_SLAVE)) अणु
-		status = class_रेजिस्टर(&spi_slave_class);
-		अगर (status < 0)
-			जाओ err3;
-	पूर्ण
+	if (IS_ENABLED(CONFIG_SPI_SLAVE)) {
+		status = class_register(&spi_slave_class);
+		if (status < 0)
+			goto err3;
+	}
 
-	अगर (IS_ENABLED(CONFIG_OF_DYNAMIC))
-		WARN_ON(of_reconfig_notअगरier_रेजिस्टर(&spi_of_notअगरier));
-	अगर (IS_ENABLED(CONFIG_ACPI))
-		WARN_ON(acpi_reconfig_notअगरier_रेजिस्टर(&spi_acpi_notअगरier));
+	if (IS_ENABLED(CONFIG_OF_DYNAMIC))
+		WARN_ON(of_reconfig_notifier_register(&spi_of_notifier));
+	if (IS_ENABLED(CONFIG_ACPI))
+		WARN_ON(acpi_reconfig_notifier_register(&spi_acpi_notifier));
 
-	वापस 0;
+	return 0;
 
 err3:
-	class_unरेजिस्टर(&spi_master_class);
+	class_unregister(&spi_master_class);
 err2:
-	bus_unरेजिस्टर(&spi_bus_type);
+	bus_unregister(&spi_bus_type);
 err1:
-	kमुक्त(buf);
-	buf = शून्य;
+	kfree(buf);
+	buf = NULL;
 err0:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* board_info is normally रेजिस्टरed in arch_initcall(),
- * but even essential drivers रुको till later
+/* board_info is normally registered in arch_initcall(),
+ * but even essential drivers wait till later
  *
- * REVISIT only boardinfo really needs अटल linking. the rest (device and
+ * REVISIT only boardinfo really needs static linking. the rest (device and
  * driver registration) _could_ be dynamically linked (modular) ... costs
- * include needing to have boardinfo data काष्ठाures be much more खुला.
+ * include needing to have boardinfo data structures be much more public.
  */
 postcore_initcall(spi_init);

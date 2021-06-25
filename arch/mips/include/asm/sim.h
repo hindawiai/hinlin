@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1999, 2000, 2003 Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
-#अगर_अघोषित _ASM_SIM_H
-#घोषणा _ASM_SIM_H
+#ifndef _ASM_SIM_H
+#define _ASM_SIM_H
 
 
-#समावेश <यंत्र/यंत्र-offsets.h>
+#include <asm/asm-offsets.h>
 
-#घोषणा __str2(x) #x
-#घोषणा __str(x) __str2(x)
+#define __str2(x) #x
+#define __str(x) __str2(x)
 
-#अगर_घोषित CONFIG_32BIT
+#ifdef CONFIG_32BIT
 
-#घोषणा save_अटल_function(symbol)					\
-__यंत्र__(								\
+#define save_static_function(symbol)					\
+__asm__(								\
 	".text\n\t"							\
 	".globl\t__" #symbol "\n\t"					\
 	".align\t2\n\t"							\
@@ -40,12 +39,12 @@ __यंत्र__(								\
 	".end\t__" #symbol "\n\t"					\
 	".size\t__" #symbol",. - __" #symbol)
 
-#पूर्ण_अगर /* CONFIG_32BIT */
+#endif /* CONFIG_32BIT */
 
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 
-#घोषणा save_अटल_function(symbol)					\
-__यंत्र__(								\
+#define save_static_function(symbol)					\
+__asm__(								\
 	".text\n\t"							\
 	".globl\t__" #symbol "\n\t"					\
 	".align\t2\n\t"							\
@@ -66,6 +65,6 @@ __यंत्र__(								\
 	".end\t__" #symbol "\n\t"					\
 	".size\t__" #symbol",. - __" #symbol)
 
-#पूर्ण_अगर /* CONFIG_64BIT */
+#endif /* CONFIG_64BIT */
 
-#पूर्ण_अगर /* _ASM_SIM_H */
+#endif /* _ASM_SIM_H */

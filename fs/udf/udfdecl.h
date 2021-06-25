@@ -1,259 +1,258 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __UDF_DECL_H
-#घोषणा __UDF_DECL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __UDF_DECL_H
+#define __UDF_DECL_H
 
-#घोषणा pr_fmt(fmt) "UDF-fs: " fmt
+#define pr_fmt(fmt) "UDF-fs: " fmt
 
-#समावेश "ecma_167.h"
-#समावेश "osta_udf.h"
+#include "ecma_167.h"
+#include "osta_udf.h"
 
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/udf_fs_i.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include <linux/udf_fs_i.h>
 
-#समावेश "udf_sb.h"
-#समावेश "udfend.h"
-#समावेश "udf_i.h"
+#include "udf_sb.h"
+#include "udfend.h"
+#include "udf_i.h"
 
-#घोषणा UDF_DEFAULT_PREALLOC_BLOCKS	8
+#define UDF_DEFAULT_PREALLOC_BLOCKS	8
 
-बाह्य __म_लिखो(3, 4) व्योम _udf_err(काष्ठा super_block *sb,
-		स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...);
-#घोषणा udf_err(sb, fmt, ...)					\
+extern __printf(3, 4) void _udf_err(struct super_block *sb,
+		const char *function, const char *fmt, ...);
+#define udf_err(sb, fmt, ...)					\
 	_udf_err(sb, __func__, fmt, ##__VA_ARGS__)
 
-बाह्य __म_लिखो(3, 4) व्योम _udf_warn(काष्ठा super_block *sb,
-		स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...);
-#घोषणा udf_warn(sb, fmt, ...)					\
+extern __printf(3, 4) void _udf_warn(struct super_block *sb,
+		const char *function, const char *fmt, ...);
+#define udf_warn(sb, fmt, ...)					\
 	_udf_warn(sb, __func__, fmt, ##__VA_ARGS__)
 
-#घोषणा udf_info(fmt, ...)					\
+#define udf_info(fmt, ...)					\
 	pr_info("INFO " fmt, ##__VA_ARGS__)
 
-#घोषणा udf_debug(fmt, ...)					\
-	pr_debug("%s:%d:%s: " fmt, __खाता__, __LINE__, __func__, ##__VA_ARGS__)
+#define udf_debug(fmt, ...)					\
+	pr_debug("%s:%d:%s: " fmt, __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-#घोषणा udf_fixed_to_variable(x) ( ( ( (x) >> 5 ) * 39 ) + ( (x) & 0x0000001F ) )
-#घोषणा udf_variable_to_fixed(x) ( ( ( (x) / 39 ) << 5 ) + ( (x) % 39 ) )
+#define udf_fixed_to_variable(x) ( ( ( (x) >> 5 ) * 39 ) + ( (x) & 0x0000001F ) )
+#define udf_variable_to_fixed(x) ( ( ( (x) / 39 ) << 5 ) + ( (x) % 39 ) )
 
-#घोषणा UDF_EXTENT_LENGTH_MASK	0x3FFFFFFF
-#घोषणा UDF_EXTENT_FLAG_MASK	0xC0000000
+#define UDF_EXTENT_LENGTH_MASK	0x3FFFFFFF
+#define UDF_EXTENT_FLAG_MASK	0xC0000000
 
-#घोषणा UDF_INVALID_ID ((uपूर्णांक32_t)-1)
+#define UDF_INVALID_ID ((uint32_t)-1)
 
-#घोषणा UDF_NAME_PAD		4
-#घोषणा UDF_NAME_LEN		254
-#घोषणा UDF_NAME_LEN_CS0	255
+#define UDF_NAME_PAD		4
+#define UDF_NAME_LEN		254
+#define UDF_NAME_LEN_CS0	255
 
-अटल अंतरभूत माप_प्रकार udf_file_entry_alloc_offset(काष्ठा inode *inode)
-अणु
-	काष्ठा udf_inode_info *iinfo = UDF_I(inode);
-	अगर (iinfo->i_use)
-		वापस माप(काष्ठा unallocSpaceEntry);
-	अन्यथा अगर (iinfo->i_efe)
-		वापस माप(काष्ठा extendedFileEntry) + iinfo->i_lenEAttr;
-	अन्यथा
-		वापस माप(काष्ठा fileEntry) + iinfo->i_lenEAttr;
-पूर्ण
+static inline size_t udf_file_entry_alloc_offset(struct inode *inode)
+{
+	struct udf_inode_info *iinfo = UDF_I(inode);
+	if (iinfo->i_use)
+		return sizeof(struct unallocSpaceEntry);
+	else if (iinfo->i_efe)
+		return sizeof(struct extendedFileEntry) + iinfo->i_lenEAttr;
+	else
+		return sizeof(struct fileEntry) + iinfo->i_lenEAttr;
+}
 
-अटल अंतरभूत माप_प्रकार udf_ext0_offset(काष्ठा inode *inode)
-अणु
-	अगर (UDF_I(inode)->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB)
-		वापस udf_file_entry_alloc_offset(inode);
-	अन्यथा
-		वापस 0;
-पूर्ण
+static inline size_t udf_ext0_offset(struct inode *inode)
+{
+	if (UDF_I(inode)->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB)
+		return udf_file_entry_alloc_offset(inode);
+	else
+		return 0;
+}
 
 /* computes tag checksum */
-u8 udf_tag_checksum(स्थिर काष्ठा tag *t);
+u8 udf_tag_checksum(const struct tag *t);
 
-प्रकार uपूर्णांक32_t udf_pblk_t;
+typedef uint32_t udf_pblk_t;
 
-काष्ठा dentry;
-काष्ठा inode;
-काष्ठा task_काष्ठा;
-काष्ठा buffer_head;
-काष्ठा super_block;
+struct dentry;
+struct inode;
+struct task_struct;
+struct buffer_head;
+struct super_block;
 
-बाह्य स्थिर काष्ठा export_operations udf_export_ops;
-बाह्य स्थिर काष्ठा inode_operations udf_dir_inode_operations;
-बाह्य स्थिर काष्ठा file_operations udf_dir_operations;
-बाह्य स्थिर काष्ठा inode_operations udf_file_inode_operations;
-बाह्य स्थिर काष्ठा file_operations udf_file_operations;
-बाह्य स्थिर काष्ठा inode_operations udf_symlink_inode_operations;
-बाह्य स्थिर काष्ठा address_space_operations udf_aops;
-बाह्य स्थिर काष्ठा address_space_operations udf_adinicb_aops;
-बाह्य स्थिर काष्ठा address_space_operations udf_symlink_aops;
+extern const struct export_operations udf_export_ops;
+extern const struct inode_operations udf_dir_inode_operations;
+extern const struct file_operations udf_dir_operations;
+extern const struct inode_operations udf_file_inode_operations;
+extern const struct file_operations udf_file_operations;
+extern const struct inode_operations udf_symlink_inode_operations;
+extern const struct address_space_operations udf_aops;
+extern const struct address_space_operations udf_adinicb_aops;
+extern const struct address_space_operations udf_symlink_aops;
 
-काष्ठा udf_fileident_bh अणु
-	काष्ठा buffer_head *sbh;
-	काष्ठा buffer_head *ebh;
-	पूर्णांक soffset;
-	पूर्णांक eoffset;
-पूर्ण;
+struct udf_fileident_bh {
+	struct buffer_head *sbh;
+	struct buffer_head *ebh;
+	int soffset;
+	int eoffset;
+};
 
-काष्ठा udf_vds_record अणु
-	uपूर्णांक32_t block;
-	uपूर्णांक32_t volDescSeqNum;
-पूर्ण;
+struct udf_vds_record {
+	uint32_t block;
+	uint32_t volDescSeqNum;
+};
 
-काष्ठा generic_desc अणु
-	काष्ठा tag	descTag;
+struct generic_desc {
+	struct tag	descTag;
 	__le32		volDescSeqNum;
-पूर्ण;
+};
 
 
 /* super.c */
 
-अटल अंतरभूत व्योम udf_updated_lvid(काष्ठा super_block *sb)
-अणु
-	काष्ठा buffer_head *bh = UDF_SB(sb)->s_lvid_bh;
+static inline void udf_updated_lvid(struct super_block *sb)
+{
+	struct buffer_head *bh = UDF_SB(sb)->s_lvid_bh;
 
 	BUG_ON(!bh);
-	WARN_ON_ONCE(((काष्ठा logicalVolIntegrityDesc *)
-		     bh->b_data)->पूर्णांकegrityType !=
+	WARN_ON_ONCE(((struct logicalVolIntegrityDesc *)
+		     bh->b_data)->integrityType !=
 		     cpu_to_le32(LVID_INTEGRITY_TYPE_OPEN));
 	UDF_SB(sb)->s_lvid_dirty = 1;
-पूर्ण
-बाह्य u64 lvid_get_unique_id(काष्ठा super_block *sb);
-काष्ठा inode *udf_find_metadata_inode_efe(काष्ठा super_block *sb,
+}
+extern u64 lvid_get_unique_id(struct super_block *sb);
+struct inode *udf_find_metadata_inode_efe(struct super_block *sb,
 					u32 meta_file_loc, u32 partition_num);
 
 /* namei.c */
-बाह्य पूर्णांक udf_ग_लिखो_fi(काष्ठा inode *inode, काष्ठा fileIdentDesc *,
-			काष्ठा fileIdentDesc *, काष्ठा udf_fileident_bh *,
-			uपूर्णांक8_t *, uपूर्णांक8_t *);
-अटल अंतरभूत अचिन्हित पूर्णांक udf_dir_entry_len(काष्ठा fileIdentDesc *cfi)
-अणु
-	वापस ALIGN(माप(काष्ठा fileIdentDesc) +
+extern int udf_write_fi(struct inode *inode, struct fileIdentDesc *,
+			struct fileIdentDesc *, struct udf_fileident_bh *,
+			uint8_t *, uint8_t *);
+static inline unsigned int udf_dir_entry_len(struct fileIdentDesc *cfi)
+{
+	return ALIGN(sizeof(struct fileIdentDesc) +
 		le16_to_cpu(cfi->lengthOfImpUse) + cfi->lengthFileIdent,
 		UDF_NAME_PAD);
-पूर्ण
+}
 
 /* file.c */
-बाह्य दीर्घ udf_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+extern long udf_ioctl(struct file *, unsigned int, unsigned long);
 /* inode.c */
-बाह्य काष्ठा inode *__udf_iget(काष्ठा super_block *, काष्ठा kernel_lb_addr *,
+extern struct inode *__udf_iget(struct super_block *, struct kernel_lb_addr *,
 				bool hidden_inode);
-अटल अंतरभूत काष्ठा inode *udf_iget_special(काष्ठा super_block *sb,
-					     काष्ठा kernel_lb_addr *ino)
-अणु
-	वापस __udf_iget(sb, ino, true);
-पूर्ण
-अटल अंतरभूत काष्ठा inode *udf_iget(काष्ठा super_block *sb,
-				     काष्ठा kernel_lb_addr *ino)
-अणु
-	वापस __udf_iget(sb, ino, false);
-पूर्ण
-बाह्य पूर्णांक udf_expand_file_adinicb(काष्ठा inode *);
-बाह्य काष्ठा buffer_head *udf_expand_dir_adinicb(काष्ठा inode *inode,
-						  udf_pblk_t *block, पूर्णांक *err);
-बाह्य काष्ठा buffer_head *udf_bपढ़ो(काष्ठा inode *inode, udf_pblk_t block,
-				      पूर्णांक create, पूर्णांक *err);
-बाह्य पूर्णांक udf_setsize(काष्ठा inode *, loff_t);
-बाह्य व्योम udf_evict_inode(काष्ठा inode *);
-बाह्य पूर्णांक udf_ग_लिखो_inode(काष्ठा inode *, काष्ठा ग_लिखोback_control *wbc);
-बाह्य udf_pblk_t udf_block_map(काष्ठा inode *inode, sector_t block);
-बाह्य पूर्णांक8_t inode_bmap(काष्ठा inode *, sector_t, काष्ठा extent_position *,
-			 काष्ठा kernel_lb_addr *, uपूर्णांक32_t *, sector_t *);
-बाह्य पूर्णांक udf_setup_indirect_aext(काष्ठा inode *inode, udf_pblk_t block,
-				   काष्ठा extent_position *epos);
-बाह्य पूर्णांक __udf_add_aext(काष्ठा inode *inode, काष्ठा extent_position *epos,
-			  काष्ठा kernel_lb_addr *eloc, uपूर्णांक32_t elen, पूर्णांक inc);
-बाह्य पूर्णांक udf_add_aext(काष्ठा inode *, काष्ठा extent_position *,
-			काष्ठा kernel_lb_addr *, uपूर्णांक32_t, पूर्णांक);
-बाह्य व्योम udf_ग_लिखो_aext(काष्ठा inode *, काष्ठा extent_position *,
-			   काष्ठा kernel_lb_addr *, uपूर्णांक32_t, पूर्णांक);
-बाह्य पूर्णांक8_t udf_delete_aext(काष्ठा inode *, काष्ठा extent_position);
-बाह्य पूर्णांक8_t udf_next_aext(काष्ठा inode *, काष्ठा extent_position *,
-			    काष्ठा kernel_lb_addr *, uपूर्णांक32_t *, पूर्णांक);
-बाह्य पूर्णांक8_t udf_current_aext(काष्ठा inode *, काष्ठा extent_position *,
-			       काष्ठा kernel_lb_addr *, uपूर्णांक32_t *, पूर्णांक);
-बाह्य व्योम udf_update_extra_perms(काष्ठा inode *inode, umode_t mode);
+static inline struct inode *udf_iget_special(struct super_block *sb,
+					     struct kernel_lb_addr *ino)
+{
+	return __udf_iget(sb, ino, true);
+}
+static inline struct inode *udf_iget(struct super_block *sb,
+				     struct kernel_lb_addr *ino)
+{
+	return __udf_iget(sb, ino, false);
+}
+extern int udf_expand_file_adinicb(struct inode *);
+extern struct buffer_head *udf_expand_dir_adinicb(struct inode *inode,
+						  udf_pblk_t *block, int *err);
+extern struct buffer_head *udf_bread(struct inode *inode, udf_pblk_t block,
+				      int create, int *err);
+extern int udf_setsize(struct inode *, loff_t);
+extern void udf_evict_inode(struct inode *);
+extern int udf_write_inode(struct inode *, struct writeback_control *wbc);
+extern udf_pblk_t udf_block_map(struct inode *inode, sector_t block);
+extern int8_t inode_bmap(struct inode *, sector_t, struct extent_position *,
+			 struct kernel_lb_addr *, uint32_t *, sector_t *);
+extern int udf_setup_indirect_aext(struct inode *inode, udf_pblk_t block,
+				   struct extent_position *epos);
+extern int __udf_add_aext(struct inode *inode, struct extent_position *epos,
+			  struct kernel_lb_addr *eloc, uint32_t elen, int inc);
+extern int udf_add_aext(struct inode *, struct extent_position *,
+			struct kernel_lb_addr *, uint32_t, int);
+extern void udf_write_aext(struct inode *, struct extent_position *,
+			   struct kernel_lb_addr *, uint32_t, int);
+extern int8_t udf_delete_aext(struct inode *, struct extent_position);
+extern int8_t udf_next_aext(struct inode *, struct extent_position *,
+			    struct kernel_lb_addr *, uint32_t *, int);
+extern int8_t udf_current_aext(struct inode *, struct extent_position *,
+			       struct kernel_lb_addr *, uint32_t *, int);
+extern void udf_update_extra_perms(struct inode *inode, umode_t mode);
 
 /* misc.c */
-बाह्य काष्ठा buffer_head *udf_tgetblk(काष्ठा super_block *sb,
+extern struct buffer_head *udf_tgetblk(struct super_block *sb,
 					udf_pblk_t block);
-बाह्य काष्ठा buffer_head *udf_tपढ़ो(काष्ठा super_block *sb, udf_pblk_t block);
-बाह्य काष्ठा genericFormat *udf_add_extendedattr(काष्ठा inode *, uपूर्णांक32_t,
-						  uपूर्णांक32_t, uपूर्णांक8_t);
-बाह्य काष्ठा genericFormat *udf_get_extendedattr(काष्ठा inode *, uपूर्णांक32_t,
-						  uपूर्णांक8_t);
-बाह्य काष्ठा buffer_head *udf_पढ़ो_tagged(काष्ठा super_block *, uपूर्णांक32_t,
-					   uपूर्णांक32_t, uपूर्णांक16_t *);
-बाह्य काष्ठा buffer_head *udf_पढ़ो_ptagged(काष्ठा super_block *,
-					    काष्ठा kernel_lb_addr *, uपूर्णांक32_t,
-					    uपूर्णांक16_t *);
-बाह्य व्योम udf_update_tag(अक्षर *, पूर्णांक);
-बाह्य व्योम udf_new_tag(अक्षर *, uपूर्णांक16_t, uपूर्णांक16_t, uपूर्णांक16_t, uपूर्णांक32_t, पूर्णांक);
+extern struct buffer_head *udf_tread(struct super_block *sb, udf_pblk_t block);
+extern struct genericFormat *udf_add_extendedattr(struct inode *, uint32_t,
+						  uint32_t, uint8_t);
+extern struct genericFormat *udf_get_extendedattr(struct inode *, uint32_t,
+						  uint8_t);
+extern struct buffer_head *udf_read_tagged(struct super_block *, uint32_t,
+					   uint32_t, uint16_t *);
+extern struct buffer_head *udf_read_ptagged(struct super_block *,
+					    struct kernel_lb_addr *, uint32_t,
+					    uint16_t *);
+extern void udf_update_tag(char *, int);
+extern void udf_new_tag(char *, uint16_t, uint16_t, uint16_t, uint32_t, int);
 
 /* lowlevel.c */
-बाह्य अचिन्हित पूर्णांक udf_get_last_session(काष्ठा super_block *);
-बाह्य अचिन्हित दीर्घ udf_get_last_block(काष्ठा super_block *);
+extern unsigned int udf_get_last_session(struct super_block *);
+extern unsigned long udf_get_last_block(struct super_block *);
 
 /* partition.c */
-बाह्य uपूर्णांक32_t udf_get_pblock(काष्ठा super_block *, uपूर्णांक32_t, uपूर्णांक16_t,
-			       uपूर्णांक32_t);
-बाह्य uपूर्णांक32_t udf_get_pblock_virt15(काष्ठा super_block *, uपूर्णांक32_t, uपूर्णांक16_t,
-				      uपूर्णांक32_t);
-बाह्य uपूर्णांक32_t udf_get_pblock_virt20(काष्ठा super_block *, uपूर्णांक32_t, uपूर्णांक16_t,
-				      uपूर्णांक32_t);
-बाह्य uपूर्णांक32_t udf_get_pblock_spar15(काष्ठा super_block *, uपूर्णांक32_t, uपूर्णांक16_t,
-				      uपूर्णांक32_t);
-बाह्य uपूर्णांक32_t udf_get_pblock_meta25(काष्ठा super_block *, uपूर्णांक32_t, uपूर्णांक16_t,
-					  uपूर्णांक32_t);
-बाह्य पूर्णांक udf_relocate_blocks(काष्ठा super_block *, दीर्घ, दीर्घ *);
+extern uint32_t udf_get_pblock(struct super_block *, uint32_t, uint16_t,
+			       uint32_t);
+extern uint32_t udf_get_pblock_virt15(struct super_block *, uint32_t, uint16_t,
+				      uint32_t);
+extern uint32_t udf_get_pblock_virt20(struct super_block *, uint32_t, uint16_t,
+				      uint32_t);
+extern uint32_t udf_get_pblock_spar15(struct super_block *, uint32_t, uint16_t,
+				      uint32_t);
+extern uint32_t udf_get_pblock_meta25(struct super_block *, uint32_t, uint16_t,
+					  uint32_t);
+extern int udf_relocate_blocks(struct super_block *, long, long *);
 
-अटल अंतरभूत uपूर्णांक32_t
-udf_get_lb_pblock(काष्ठा super_block *sb, काष्ठा kernel_lb_addr *loc,
-		  uपूर्णांक32_t offset)
-अणु
-	वापस udf_get_pblock(sb, loc->logicalBlockNum,
+static inline uint32_t
+udf_get_lb_pblock(struct super_block *sb, struct kernel_lb_addr *loc,
+		  uint32_t offset)
+{
+	return udf_get_pblock(sb, loc->logicalBlockNum,
 			loc->partitionReferenceNum, offset);
-पूर्ण
+}
 
 /* unicode.c */
-बाह्य पूर्णांक udf_get_filename(काष्ठा super_block *, स्थिर uपूर्णांक8_t *, पूर्णांक,
-			    uपूर्णांक8_t *, पूर्णांक);
-बाह्य पूर्णांक udf_put_filename(काष्ठा super_block *, स्थिर uपूर्णांक8_t *, पूर्णांक,
-			    uपूर्णांक8_t *, पूर्णांक);
-बाह्य पूर्णांक udf_dstrCS0toChar(काष्ठा super_block *, uपूर्णांक8_t *, पूर्णांक,
-			     स्थिर uपूर्णांक8_t *, पूर्णांक);
+extern int udf_get_filename(struct super_block *, const uint8_t *, int,
+			    uint8_t *, int);
+extern int udf_put_filename(struct super_block *, const uint8_t *, int,
+			    uint8_t *, int);
+extern int udf_dstrCS0toChar(struct super_block *, uint8_t *, int,
+			     const uint8_t *, int);
 
 /* ialloc.c */
-बाह्य व्योम udf_मुक्त_inode(काष्ठा inode *);
-बाह्य काष्ठा inode *udf_new_inode(काष्ठा inode *, umode_t);
+extern void udf_free_inode(struct inode *);
+extern struct inode *udf_new_inode(struct inode *, umode_t);
 
 /* truncate.c */
-बाह्य व्योम udf_truncate_tail_extent(काष्ठा inode *);
-बाह्य व्योम udf_discard_pपुनः_स्मृति(काष्ठा inode *);
-बाह्य पूर्णांक udf_truncate_extents(काष्ठा inode *);
+extern void udf_truncate_tail_extent(struct inode *);
+extern void udf_discard_prealloc(struct inode *);
+extern int udf_truncate_extents(struct inode *);
 
 /* balloc.c */
-बाह्य व्योम udf_मुक्त_blocks(काष्ठा super_block *, काष्ठा inode *,
-			    काष्ठा kernel_lb_addr *, uपूर्णांक32_t, uपूर्णांक32_t);
-बाह्य पूर्णांक udf_pपुनः_स्मृति_blocks(काष्ठा super_block *, काष्ठा inode *, uपूर्णांक16_t,
-			       uपूर्णांक32_t, uपूर्णांक32_t);
-बाह्य udf_pblk_t udf_new_block(काष्ठा super_block *sb, काष्ठा inode *inode,
-				 uपूर्णांक16_t partition, uपूर्णांक32_t goal, पूर्णांक *err);
+extern void udf_free_blocks(struct super_block *, struct inode *,
+			    struct kernel_lb_addr *, uint32_t, uint32_t);
+extern int udf_prealloc_blocks(struct super_block *, struct inode *, uint16_t,
+			       uint32_t, uint32_t);
+extern udf_pblk_t udf_new_block(struct super_block *sb, struct inode *inode,
+				 uint16_t partition, uint32_t goal, int *err);
 
 /* directory.c */
-बाह्य काष्ठा fileIdentDesc *udf_fileident_पढ़ो(काष्ठा inode *, loff_t *,
-						काष्ठा udf_fileident_bh *,
-						काष्ठा fileIdentDesc *,
-						काष्ठा extent_position *,
-						काष्ठा kernel_lb_addr *, uपूर्णांक32_t *,
+extern struct fileIdentDesc *udf_fileident_read(struct inode *, loff_t *,
+						struct udf_fileident_bh *,
+						struct fileIdentDesc *,
+						struct extent_position *,
+						struct kernel_lb_addr *, uint32_t *,
 						sector_t *);
-बाह्य काष्ठा fileIdentDesc *udf_get_fileident(व्योम *buffer, पूर्णांक bufsize,
-					       पूर्णांक *offset);
-बाह्य काष्ठा दीर्घ_ad *udf_get_fileदीर्घad(uपूर्णांक8_t *, पूर्णांक, uपूर्णांक32_t *, पूर्णांक);
-बाह्य काष्ठा लघु_ad *udf_get_fileलघुad(uपूर्णांक8_t *, पूर्णांक, uपूर्णांक32_t *, पूर्णांक);
+extern struct fileIdentDesc *udf_get_fileident(void *buffer, int bufsize,
+					       int *offset);
+extern struct long_ad *udf_get_filelongad(uint8_t *, int, uint32_t *, int);
+extern struct short_ad *udf_get_fileshortad(uint8_t *, int, uint32_t *, int);
 
-/* udfसमय.c */
-बाह्य व्योम udf_disk_stamp_to_समय(काष्ठा बारpec64 *dest,
-						काष्ठा बारtamp src);
-बाह्य व्योम udf_समय_प्रकारo_disk_stamp(काष्ठा बारtamp *dest, काष्ठा बारpec64 src);
+/* udftime.c */
+extern void udf_disk_stamp_to_time(struct timespec64 *dest,
+						struct timestamp src);
+extern void udf_time_to_disk_stamp(struct timestamp *dest, struct timespec64 src);
 
-#पूर्ण_अगर				/* __UDF_DECL_H */
+#endif				/* __UDF_DECL_H */

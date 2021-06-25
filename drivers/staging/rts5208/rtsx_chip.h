@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Driver क्रम Realtek PCI-Express card पढ़ोer
+ * Driver for Realtek PCI-Express card reader
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -10,474 +9,474 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#अगर_अघोषित __REALTEK_RTSX_CHIP_H
-#घोषणा __REALTEK_RTSX_CHIP_H
+#ifndef __REALTEK_RTSX_CHIP_H
+#define __REALTEK_RTSX_CHIP_H
 
-#समावेश "rtsx.h"
+#include "rtsx.h"
 
-#घोषणा SUPPORT_CPRM
-#घोषणा SUPPORT_OCP
-#घोषणा SUPPORT_SDIO_ASPM
-#घोषणा SUPPORT_MAGIC_GATE
-#घोषणा SUPPORT_MSXC
-#घोषणा SUPPORT_SD_LOCK
-/* Hardware चयन bus_ctl and cd_ctl स्वतःmatically */
-#घोषणा HW_AUTO_SWITCH_SD_BUS
-/* Enable hardware पूर्णांकerrupt ग_लिखो clear */
-#घोषणा HW_INT_WRITE_CLR
-/* #घोषणा LED_AUTO_BLINK */
-/* #घोषणा DISABLE_CARD_INT */
+#define SUPPORT_CPRM
+#define SUPPORT_OCP
+#define SUPPORT_SDIO_ASPM
+#define SUPPORT_MAGIC_GATE
+#define SUPPORT_MSXC
+#define SUPPORT_SD_LOCK
+/* Hardware switch bus_ctl and cd_ctl automatically */
+#define HW_AUTO_SWITCH_SD_BUS
+/* Enable hardware interrupt write clear */
+#define HW_INT_WRITE_CLR
+/* #define LED_AUTO_BLINK */
+/* #define DISABLE_CARD_INT */
 
-#अगर_घोषित SUPPORT_MAGIC_GATE
+#ifdef SUPPORT_MAGIC_GATE
 	/* Using NORMAL_WRITE instead of AUTO_WRITE to set ICV */
-	#घोषणा MG_SET_ICV_SLOW
-	/* HW may miss ERR/CMDNK संकेत when sampling INT status. */
-	#घोषणा MS_SAMPLE_INT_ERR
+	#define MG_SET_ICV_SLOW
+	/* HW may miss ERR/CMDNK signal when sampling INT status. */
+	#define MS_SAMPLE_INT_ERR
 	/*
 	 * HW DO NOT support Wait_INT function
 	 * during READ_BYTES transfer mode
 	 */
-	#घोषणा READ_BYTES_WAIT_INT
-#पूर्ण_अगर
+	#define READ_BYTES_WAIT_INT
+#endif
 
-#अगर_घोषित SUPPORT_MSXC
-#घोषणा XC_POWERCLASS
-#घोषणा SUPPORT_PCGL_1P18
-#पूर्ण_अगर
+#ifdef SUPPORT_MSXC
+#define XC_POWERCLASS
+#define SUPPORT_PCGL_1P18
+#endif
 
-#अगर_अघोषित LED_AUTO_BLINK
-#घोषणा REGULAR_BLINK
-#पूर्ण_अगर
+#ifndef LED_AUTO_BLINK
+#define REGULAR_BLINK
+#endif
 
-#घोषणा LED_BLINK_SPEED		5
-#घोषणा LED_TOGGLE_INTERVAL	6
-#घोषणा	GPIO_TOGGLE_THRESHOLD   1024
-#घोषणा LED_GPIO		0
+#define LED_BLINK_SPEED		5
+#define LED_TOGGLE_INTERVAL	6
+#define	GPIO_TOGGLE_THRESHOLD   1024
+#define LED_GPIO		0
 
-#घोषणा POLLING_INTERVAL	30
+#define POLLING_INTERVAL	30
 
-#घोषणा TRACE_ITEM_CNT		64
+#define TRACE_ITEM_CNT		64
 
-#अगर_अघोषित STATUS_SUCCESS
-#घोषणा STATUS_SUCCESS		0
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_FAIL
-#घोषणा STATUS_FAIL		1
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_TIMEDOUT
-#घोषणा STATUS_TIMEDOUT		2
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_NOMEM
-#घोषणा STATUS_NOMEM		3
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_READ_FAIL
-#घोषणा STATUS_READ_FAIL	4
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_WRITE_FAIL
-#घोषणा STATUS_WRITE_FAIL	5
-#पूर्ण_अगर
-#अगर_अघोषित STATUS_ERROR
-#घोषणा STATUS_ERROR		10
-#पूर्ण_अगर
+#ifndef STATUS_SUCCESS
+#define STATUS_SUCCESS		0
+#endif
+#ifndef STATUS_FAIL
+#define STATUS_FAIL		1
+#endif
+#ifndef STATUS_TIMEDOUT
+#define STATUS_TIMEDOUT		2
+#endif
+#ifndef STATUS_NOMEM
+#define STATUS_NOMEM		3
+#endif
+#ifndef STATUS_READ_FAIL
+#define STATUS_READ_FAIL	4
+#endif
+#ifndef STATUS_WRITE_FAIL
+#define STATUS_WRITE_FAIL	5
+#endif
+#ifndef STATUS_ERROR
+#define STATUS_ERROR		10
+#endif
 
-#घोषणा PM_S1			1
-#घोषणा PM_S3			3
+#define PM_S1			1
+#define PM_S3			3
 
 /*
- * Transport वापस codes
+ * Transport return codes
  */
 
-#घोषणा TRANSPORT_GOOD		0   /* Transport good, command good	   */
-#घोषणा TRANSPORT_FAILED	1   /* Transport good, command failed   */
-#घोषणा TRANSPORT_NO_SENSE	2  /* Command failed, no स्वतः-sense    */
-#घोषणा TRANSPORT_ERROR		3   /* Transport bad (i.e. device dead) */
+#define TRANSPORT_GOOD		0   /* Transport good, command good	   */
+#define TRANSPORT_FAILED	1   /* Transport good, command failed   */
+#define TRANSPORT_NO_SENSE	2  /* Command failed, no auto-sense    */
+#define TRANSPORT_ERROR		3   /* Transport bad (i.e. device dead) */
 
 /*
  * Start-Stop-Unit
  */
-#घोषणा STOP_MEDIUM			0x00    /* access disable         */
-#घोषणा MAKE_MEDIUM_READY		0x01    /* access enable          */
-#घोषणा UNLOAD_MEDIUM			0x02    /* unload                 */
-#घोषणा LOAD_MEDIUM			0x03    /* load                   */
+#define STOP_MEDIUM			0x00    /* access disable         */
+#define MAKE_MEDIUM_READY		0x01    /* access enable          */
+#define UNLOAD_MEDIUM			0x02    /* unload                 */
+#define LOAD_MEDIUM			0x03    /* load                   */
 
 /*
  * STANDARD_INQUIRY
  */
-#घोषणा QULIFIRE                0x00
-#घोषणा AENC_FNC                0x00
-#घोषणा TRML_IOP                0x00
-#घोषणा REL_ADR                 0x00
-#घोषणा WBUS_32                 0x00
-#घोषणा WBUS_16                 0x00
-#घोषणा SYNC                    0x00
-#घोषणा LINKED                  0x00
-#घोषणा CMD_QUE                 0x00
-#घोषणा SFT_RE                  0x00
+#define QULIFIRE                0x00
+#define AENC_FNC                0x00
+#define TRML_IOP                0x00
+#define REL_ADR                 0x00
+#define WBUS_32                 0x00
+#define WBUS_16                 0x00
+#define SYNC                    0x00
+#define LINKED                  0x00
+#define CMD_QUE                 0x00
+#define SFT_RE                  0x00
 
-#घोषणा VEN_ID_LEN              8               /* Venकरोr ID Length         */
-#घोषणा PRDCT_ID_LEN            16              /* Product ID Length        */
-#घोषणा PRDCT_REV_LEN           4               /* Product LOT Length       */
+#define VEN_ID_LEN              8               /* Vendor ID Length         */
+#define PRDCT_ID_LEN            16              /* Product ID Length        */
+#define PRDCT_REV_LEN           4               /* Product LOT Length       */
 
 /* Dynamic flag definitions: used in set_bit() etc. */
 /* 0x00040000 transfer is active */
-#घोषणा RTSX_FLIDX_TRANS_ACTIVE		18
-/* 0x00100000 पात is in progress */
-#घोषणा RTSX_FLIDX_ABORTING		20
+#define RTSX_FLIDX_TRANS_ACTIVE		18
+/* 0x00100000 abort is in progress */
+#define RTSX_FLIDX_ABORTING		20
 /* 0x00200000 disconnect in progress */
-#घोषणा RTSX_FLIDX_DISCONNECTING	21
+#define RTSX_FLIDX_DISCONNECTING	21
 
-#घोषणा ABORTING_OR_DISCONNECTING	((1UL << US_FLIDX_ABORTING) | \
+#define ABORTING_OR_DISCONNECTING	((1UL << US_FLIDX_ABORTING) | \
 					 (1UL << US_FLIDX_DISCONNECTING))
 
 /* 0x00400000 device reset in progress */
-#घोषणा RTSX_FLIDX_RESETTING		22
-/* 0x00800000 SCSI midlayer समयd out  */
-#घोषणा RTSX_FLIDX_TIMED_OUT		23
-#घोषणा DRCT_ACCESS_DEV         0x00    /* Direct Access Device      */
-#घोषणा RMB_DISC                0x80    /* The Device is Removable   */
-#घोषणा ANSI_SCSI2              0x02    /* Based on ANSI-SCSI2       */
+#define RTSX_FLIDX_RESETTING		22
+/* 0x00800000 SCSI midlayer timed out  */
+#define RTSX_FLIDX_TIMED_OUT		23
+#define DRCT_ACCESS_DEV         0x00    /* Direct Access Device      */
+#define RMB_DISC                0x80    /* The Device is Removable   */
+#define ANSI_SCSI2              0x02    /* Based on ANSI-SCSI2       */
 
-#घोषणा SCSI                    0x00    /* Interface ID              */
+#define SCSI                    0x00    /* Interface ID              */
 
-#घोषणा	WRITE_PROTECTED_MEDIA 0x07
+#define	WRITE_PROTECTED_MEDIA 0x07
 
 /*---- sense key ----*/
-#घोषणा ILI                     0x20    /* ILI bit is on                    */
+#define ILI                     0x20    /* ILI bit is on                    */
 
-#घोषणा NO_SENSE                0x00    /* not exist sense key              */
-#घोषणा RECOVER_ERR             0x01    /* Target/Logical unit is recoverd  */
-#घोषणा NOT_READY               0x02    /* Logical unit is not पढ़ोy        */
-#घोषणा MEDIA_ERR               0x03    /* medium/data error                */
-#घोषणा HARDWARE_ERR            0x04    /* hardware error                   */
-#घोषणा ILGAL_REQ               0x05    /* CDB/parameter/identअगरy msg error */
-#घोषणा UNIT_ATTENTION          0x06    /* unit attention condition occur   */
-#घोषणा DAT_PRTCT               0x07    /* पढ़ो/ग_लिखो is desable            */
-#घोषणा BLNC_CHK                0x08    /* find blank/DOF in पढ़ो           */
-					/* ग_लिखो to unblank area            */
-#घोषणा CPY_ABRT                0x0a    /* Copy/Compare/Copy&Verअगरy illegal */
-#घोषणा ABRT_CMD                0x0b    /* Target make the command in error */
-#घोषणा EQUAL                   0x0c    /* Search Data end with Equal       */
-#घोषणा VLM_OVRFLW              0x0d    /* Some data are left in buffer     */
-#घोषणा MISCMP                  0x0e    /* find inequality                  */
+#define NO_SENSE                0x00    /* not exist sense key              */
+#define RECOVER_ERR             0x01    /* Target/Logical unit is recoverd  */
+#define NOT_READY               0x02    /* Logical unit is not ready        */
+#define MEDIA_ERR               0x03    /* medium/data error                */
+#define HARDWARE_ERR            0x04    /* hardware error                   */
+#define ILGAL_REQ               0x05    /* CDB/parameter/identify msg error */
+#define UNIT_ATTENTION          0x06    /* unit attention condition occur   */
+#define DAT_PRTCT               0x07    /* read/write is desable            */
+#define BLNC_CHK                0x08    /* find blank/DOF in read           */
+					/* write to unblank area            */
+#define CPY_ABRT                0x0a    /* Copy/Compare/Copy&Verify illegal */
+#define ABRT_CMD                0x0b    /* Target make the command in error */
+#define EQUAL                   0x0c    /* Search Data end with Equal       */
+#define VLM_OVRFLW              0x0d    /* Some data are left in buffer     */
+#define MISCMP                  0x0e    /* find inequality                  */
 
-#घोषणा READ_ERR                -1
-#घोषणा WRITE_ERR               -2
+#define READ_ERR                -1
+#define WRITE_ERR               -2
 
-#घोषणा	FIRST_RESET		0x01
-#घोषणा	USED_EXIST		0x02
+#define	FIRST_RESET		0x01
+#define	USED_EXIST		0x02
 
 /*
  * SENSE_DATA
  */
 /*---- valid ----*/
-#घोषणा SENSE_VALID             0x80    /* Sense data is valid as SCSI2     */
-#घोषणा SENSE_INVALID           0x00    /* Sense data is invalid as SCSI2   */
+#define SENSE_VALID             0x80    /* Sense data is valid as SCSI2     */
+#define SENSE_INVALID           0x00    /* Sense data is invalid as SCSI2   */
 
 /*---- error code ----*/
-#घोषणा CUR_ERR                 0x70    /* current error                    */
-#घोषणा DEF_ERR                 0x71    /* specअगरic command error           */
+#define CUR_ERR                 0x70    /* current error                    */
+#define DEF_ERR                 0x71    /* specific command error           */
 
-/*---- sense key Inक्रमmation ----*/
-#घोषणा SNSKEYINFO_LEN          3       /* length of sense key inक्रमmation   */
+/*---- sense key Information ----*/
+#define SNSKEYINFO_LEN          3       /* length of sense key information   */
 
-#घोषणा SKSV                    0x80
-#घोषणा CDB_ILLEGAL             0x40
-#घोषणा DAT_ILLEGAL             0x00
-#घोषणा BPV                     0x08
-#घोषणा BIT_ILLEGAL0            0       /* bit0 is illegal                  */
-#घोषणा BIT_ILLEGAL1            1       /* bit1 is illegal                  */
-#घोषणा BIT_ILLEGAL2            2       /* bit2 is illegal                  */
-#घोषणा BIT_ILLEGAL3            3       /* bit3 is illegal                  */
-#घोषणा BIT_ILLEGAL4            4       /* bit4 is illegal                  */
-#घोषणा BIT_ILLEGAL5            5       /* bit5 is illegal                  */
-#घोषणा BIT_ILLEGAL6            6       /* bit6 is illegal                  */
-#घोषणा BIT_ILLEGAL7            7       /* bit7 is illegal                  */
+#define SKSV                    0x80
+#define CDB_ILLEGAL             0x40
+#define DAT_ILLEGAL             0x00
+#define BPV                     0x08
+#define BIT_ILLEGAL0            0       /* bit0 is illegal                  */
+#define BIT_ILLEGAL1            1       /* bit1 is illegal                  */
+#define BIT_ILLEGAL2            2       /* bit2 is illegal                  */
+#define BIT_ILLEGAL3            3       /* bit3 is illegal                  */
+#define BIT_ILLEGAL4            4       /* bit4 is illegal                  */
+#define BIT_ILLEGAL5            5       /* bit5 is illegal                  */
+#define BIT_ILLEGAL6            6       /* bit6 is illegal                  */
+#define BIT_ILLEGAL7            7       /* bit7 is illegal                  */
 
 /*---- ASC ----*/
-#घोषणा ASC_NO_INFO             0x00
-#घोषणा ASC_MISCMP              0x1d
-#घोषणा ASC_INVLD_CDB           0x24
-#घोषणा ASC_INVLD_PARA          0x26
-#घोषणा ASC_LU_NOT_READY	0x04
-#घोषणा ASC_WRITE_ERR           0x0c
-#घोषणा ASC_READ_ERR            0x11
-#घोषणा ASC_LOAD_EJCT_ERR       0x53
-#घोषणा	ASC_MEDIA_NOT_PRESENT	0x3A
-#घोषणा	ASC_MEDIA_CHANGED	0x28
-#घोषणा	ASC_MEDIA_IN_PROCESS	0x04
-#घोषणा	ASC_WRITE_PROTECT	0x27
-#घोषणा ASC_LUN_NOT_SUPPORTED	0x25
+#define ASC_NO_INFO             0x00
+#define ASC_MISCMP              0x1d
+#define ASC_INVLD_CDB           0x24
+#define ASC_INVLD_PARA          0x26
+#define ASC_LU_NOT_READY	0x04
+#define ASC_WRITE_ERR           0x0c
+#define ASC_READ_ERR            0x11
+#define ASC_LOAD_EJCT_ERR       0x53
+#define	ASC_MEDIA_NOT_PRESENT	0x3A
+#define	ASC_MEDIA_CHANGED	0x28
+#define	ASC_MEDIA_IN_PROCESS	0x04
+#define	ASC_WRITE_PROTECT	0x27
+#define ASC_LUN_NOT_SUPPORTED	0x25
 
 /*---- ASQC ----*/
-#घोषणा ASCQ_NO_INFO            0x00
-#घोषणा	ASCQ_MEDIA_IN_PROCESS	0x01
-#घोषणा ASCQ_MISCMP             0x00
-#घोषणा ASCQ_INVLD_CDB          0x00
-#घोषणा ASCQ_INVLD_PARA         0x02
-#घोषणा ASCQ_LU_NOT_READY	0x02
-#घोषणा ASCQ_WRITE_ERR          0x02
-#घोषणा ASCQ_READ_ERR           0x00
-#घोषणा ASCQ_LOAD_EJCT_ERR      0x00
-#घोषणा	ASCQ_WRITE_PROTECT	0x00
+#define ASCQ_NO_INFO            0x00
+#define	ASCQ_MEDIA_IN_PROCESS	0x01
+#define ASCQ_MISCMP             0x00
+#define ASCQ_INVLD_CDB          0x00
+#define ASCQ_INVLD_PARA         0x02
+#define ASCQ_LU_NOT_READY	0x02
+#define ASCQ_WRITE_ERR          0x02
+#define ASCQ_READ_ERR           0x00
+#define ASCQ_LOAD_EJCT_ERR      0x00
+#define	ASCQ_WRITE_PROTECT	0x00
 
-काष्ठा sense_data_t अणु
-	अचिन्हित अक्षर   err_code;	/* error code */
+struct sense_data_t {
+	unsigned char   err_code;	/* error code */
 	/* bit7 : valid */
 	/*   (1 : SCSI2) */
-	/*   (0 : Venकरोr * specअगरic) */
+	/*   (0 : Vendor * specific) */
 	/* bit6-0 : error * code */
 	/*  (0x70 : current * error) */
-	/*  (0x71 : specअगरic command error) */
-	अचिन्हित अक्षर   seg_no;		/* segment No.                      */
-	अचिन्हित अक्षर   sense_key;	/* byte5 : ILI                      */
+	/*  (0x71 : specific command error) */
+	unsigned char   seg_no;		/* segment No.                      */
+	unsigned char   sense_key;	/* byte5 : ILI                      */
 	/* bit3-0 : sense key              */
-	अचिन्हित अक्षर   info[4];	/* inक्रमmation                       */
-	अचिन्हित अक्षर   ad_sense_len;	/* additional sense data length     */
-	अचिन्हित अक्षर   cmd_info[4];	/* command specअगरic inक्रमmation      */
-	अचिन्हित अक्षर   asc;		/* ASC                              */
-	अचिन्हित अक्षर   ascq;		/* ASCQ                             */
-	अचिन्हित अक्षर   rfu;		/* FRU                              */
-	अचिन्हित अक्षर   sns_key_info[3];/* sense key specअगरic inक्रमmation    */
-पूर्ण;
+	unsigned char   info[4];	/* information                       */
+	unsigned char   ad_sense_len;	/* additional sense data length     */
+	unsigned char   cmd_info[4];	/* command specific information      */
+	unsigned char   asc;		/* ASC                              */
+	unsigned char   ascq;		/* ASCQ                             */
+	unsigned char   rfu;		/* FRU                              */
+	unsigned char   sns_key_info[3];/* sense key specific information    */
+};
 
 /* PCI Operation Register Address */
-#घोषणा RTSX_HCBAR		0x00
-#घोषणा RTSX_HCBCTLR		0x04
-#घोषणा RTSX_HDBAR		0x08
-#घोषणा RTSX_HDBCTLR		0x0C
-#घोषणा RTSX_HAIMR		0x10
-#घोषणा RTSX_BIPR		0x14
-#घोषणा RTSX_BIER		0x18
+#define RTSX_HCBAR		0x00
+#define RTSX_HCBCTLR		0x04
+#define RTSX_HDBAR		0x08
+#define RTSX_HDBCTLR		0x0C
+#define RTSX_HAIMR		0x10
+#define RTSX_BIPR		0x14
+#define RTSX_BIER		0x18
 
-/* Host command buffer control रेजिस्टर */
-#घोषणा STOP_CMD		(0x01 << 28)
+/* Host command buffer control register */
+#define STOP_CMD		(0x01 << 28)
 
-/* Host data buffer control रेजिस्टर */
-#घोषणा SDMA_MODE		0x00
-#घोषणा ADMA_MODE		(0x02 << 26)
-#घोषणा STOP_DMA		(0x01 << 28)
-#घोषणा TRIG_DMA		(0x01 << 31)
+/* Host data buffer control register */
+#define SDMA_MODE		0x00
+#define ADMA_MODE		(0x02 << 26)
+#define STOP_DMA		(0x01 << 28)
+#define TRIG_DMA		(0x01 << 31)
 
-/* Bus पूर्णांकerrupt pending रेजिस्टर */
-#घोषणा CMD_DONE_INT		BIT(31)
-#घोषणा DATA_DONE_INT		BIT(30)
-#घोषणा TRANS_OK_INT		BIT(29)
-#घोषणा TRANS_FAIL_INT		BIT(28)
-#घोषणा XD_INT			BIT(27)
-#घोषणा MS_INT			BIT(26)
-#घोषणा SD_INT			BIT(25)
-#घोषणा GPIO0_INT		BIT(24)
-#घोषणा OC_INT			BIT(23)
-#घोषणा SD_WRITE_PROTECT	BIT(19)
-#घोषणा XD_EXIST		BIT(18)
-#घोषणा MS_EXIST		BIT(17)
-#घोषणा SD_EXIST		BIT(16)
-#घोषणा DELINK_INT		GPIO0_INT
-#घोषणा MS_OC_INT		BIT(23)
-#घोषणा SD_OC_INT		BIT(22)
+/* Bus interrupt pending register */
+#define CMD_DONE_INT		BIT(31)
+#define DATA_DONE_INT		BIT(30)
+#define TRANS_OK_INT		BIT(29)
+#define TRANS_FAIL_INT		BIT(28)
+#define XD_INT			BIT(27)
+#define MS_INT			BIT(26)
+#define SD_INT			BIT(25)
+#define GPIO0_INT		BIT(24)
+#define OC_INT			BIT(23)
+#define SD_WRITE_PROTECT	BIT(19)
+#define XD_EXIST		BIT(18)
+#define MS_EXIST		BIT(17)
+#define SD_EXIST		BIT(16)
+#define DELINK_INT		GPIO0_INT
+#define MS_OC_INT		BIT(23)
+#define SD_OC_INT		BIT(22)
 
-#घोषणा CARD_INT		(XD_INT | MS_INT | SD_INT)
-#घोषणा NEED_COMPLETE_INT	(DATA_DONE_INT | TRANS_OK_INT | TRANS_FAIL_INT)
-#घोषणा RTSX_INT		(CMD_DONE_INT | NEED_COMPLETE_INT | CARD_INT | \
+#define CARD_INT		(XD_INT | MS_INT | SD_INT)
+#define NEED_COMPLETE_INT	(DATA_DONE_INT | TRANS_OK_INT | TRANS_FAIL_INT)
+#define RTSX_INT		(CMD_DONE_INT | NEED_COMPLETE_INT | CARD_INT | \
 				 GPIO0_INT | OC_INT)
 
-#घोषणा CARD_EXIST		(XD_EXIST | MS_EXIST | SD_EXIST)
+#define CARD_EXIST		(XD_EXIST | MS_EXIST | SD_EXIST)
 
-/* Bus पूर्णांकerrupt enable रेजिस्टर */
-#घोषणा CMD_DONE_INT_EN		BIT(31)
-#घोषणा DATA_DONE_INT_EN	BIT(30)
-#घोषणा TRANS_OK_INT_EN		BIT(29)
-#घोषणा TRANS_FAIL_INT_EN	BIT(28)
-#घोषणा XD_INT_EN		BIT(27)
-#घोषणा MS_INT_EN		BIT(26)
-#घोषणा SD_INT_EN		BIT(25)
-#घोषणा GPIO0_INT_EN		BIT(24)
-#घोषणा OC_INT_EN		BIT(23)
-#घोषणा DELINK_INT_EN		GPIO0_INT_EN
-#घोषणा MS_OC_INT_EN		BIT(23)
-#घोषणा SD_OC_INT_EN		BIT(22)
+/* Bus interrupt enable register */
+#define CMD_DONE_INT_EN		BIT(31)
+#define DATA_DONE_INT_EN	BIT(30)
+#define TRANS_OK_INT_EN		BIT(29)
+#define TRANS_FAIL_INT_EN	BIT(28)
+#define XD_INT_EN		BIT(27)
+#define MS_INT_EN		BIT(26)
+#define SD_INT_EN		BIT(25)
+#define GPIO0_INT_EN		BIT(24)
+#define OC_INT_EN		BIT(23)
+#define DELINK_INT_EN		GPIO0_INT_EN
+#define MS_OC_INT_EN		BIT(23)
+#define SD_OC_INT_EN		BIT(22)
 
-#घोषणा READ_REG_CMD		0
-#घोषणा WRITE_REG_CMD		1
-#घोषणा CHECK_REG_CMD		2
+#define READ_REG_CMD		0
+#define WRITE_REG_CMD		1
+#define CHECK_REG_CMD		2
 
-#घोषणा HOST_TO_DEVICE		0
-#घोषणा DEVICE_TO_HOST		1
+#define HOST_TO_DEVICE		0
+#define DEVICE_TO_HOST		1
 
-#घोषणा RTSX_RESV_BUF_LEN	4096
-#घोषणा HOST_CMDS_BUF_LEN	1024
-#घोषणा HOST_SG_TBL_BUF_LEN	(RTSX_RESV_BUF_LEN - HOST_CMDS_BUF_LEN)
+#define RTSX_RESV_BUF_LEN	4096
+#define HOST_CMDS_BUF_LEN	1024
+#define HOST_SG_TBL_BUF_LEN	(RTSX_RESV_BUF_LEN - HOST_CMDS_BUF_LEN)
 
-#घोषणा SD_NR		2
-#घोषणा MS_NR		3
-#घोषणा XD_NR		4
-#घोषणा SPI_NR		7
-#घोषणा SD_CARD		BIT(SD_NR)
-#घोषणा MS_CARD		BIT(MS_NR)
-#घोषणा XD_CARD		BIT(XD_NR)
-#घोषणा SPI_CARD	BIT(SPI_NR)
+#define SD_NR		2
+#define MS_NR		3
+#define XD_NR		4
+#define SPI_NR		7
+#define SD_CARD		BIT(SD_NR)
+#define MS_CARD		BIT(MS_NR)
+#define XD_CARD		BIT(XD_NR)
+#define SPI_CARD	BIT(SPI_NR)
 
-#घोषणा MAX_ALLOWED_LUN_CNT	8
+#define MAX_ALLOWED_LUN_CNT	8
 
-#घोषणा XD_FREE_TABLE_CNT	1200
-#घोषणा MS_FREE_TABLE_CNT	512
+#define XD_FREE_TABLE_CNT	1200
+#define MS_FREE_TABLE_CNT	512
 
 /* Bit Operation */
-#घोषणा SET_BIT(data, idx)	((data) |= 1 << (idx))
-#घोषणा CLR_BIT(data, idx)	((data) &= ~(1 << (idx)))
-#घोषणा CHK_BIT(data, idx)	((data) & (1 << (idx)))
+#define SET_BIT(data, idx)	((data) |= 1 << (idx))
+#define CLR_BIT(data, idx)	((data) &= ~(1 << (idx)))
+#define CHK_BIT(data, idx)	((data) & (1 << (idx)))
 
 /* SG descriptor */
-#घोषणा RTSX_SG_INT		0x04
-#घोषणा RTSX_SG_END		0x02
-#घोषणा RTSX_SG_VALID		0x01
+#define RTSX_SG_INT		0x04
+#define RTSX_SG_END		0x02
+#define RTSX_SG_VALID		0x01
 
-#घोषणा RTSX_SG_NO_OP		0x00
-#घोषणा RTSX_SG_TRANS_DATA	(0x02 << 4)
-#घोषणा RTSX_SG_LINK_DESC	(0x03 << 4)
+#define RTSX_SG_NO_OP		0x00
+#define RTSX_SG_TRANS_DATA	(0x02 << 4)
+#define RTSX_SG_LINK_DESC	(0x03 << 4)
 
-काष्ठा rtsx_chip;
+struct rtsx_chip;
 
-प्रकार पूर्णांक (*card_rw_func)(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip,
+typedef int (*card_rw_func)(struct scsi_cmnd *srb, struct rtsx_chip *chip,
 			u32 sec_addr, u16 sec_cnt);
 
 /* Supported Clock */
-क्रमागत card_घड़ी	अणुCLK_20 = 1, CLK_30, CLK_40, CLK_50, CLK_60,
-		 CLK_80, CLK_100, CLK_120, CLK_150, CLK_200पूर्ण;
+enum card_clock	{CLK_20 = 1, CLK_30, CLK_40, CLK_50, CLK_60,
+		 CLK_80, CLK_100, CLK_120, CLK_150, CLK_200};
 
-क्रमागत RTSX_STAT	अणुRTSX_STAT_INIT, RTSX_STAT_IDLE, RTSX_STAT_RUN, RTSX_STAT_SS,
+enum RTSX_STAT	{RTSX_STAT_INIT, RTSX_STAT_IDLE, RTSX_STAT_RUN, RTSX_STAT_SS,
 		 RTSX_STAT_DELINK, RTSX_STAT_SUSPEND,
-		 RTSX_STAT_ABORT, RTSX_STAT_DISCONNECTपूर्ण;
-क्रमागत IC_VER	अणुIC_VER_AB, IC_VER_C = 2, IC_VER_D = 3पूर्ण;
+		 RTSX_STAT_ABORT, RTSX_STAT_DISCONNECT};
+enum IC_VER	{IC_VER_AB, IC_VER_C = 2, IC_VER_D = 3};
 
-#घोषणा MAX_RESET_CNT		3
+#define MAX_RESET_CNT		3
 
 /* For MS Card */
-#घोषणा MAX_DEFECTIVE_BLOCK     10
+#define MAX_DEFECTIVE_BLOCK     10
 
-काष्ठा zone_entry अणु
+struct zone_entry {
 	u16 *l2p_table;
-	u16 *मुक्त_table;
+	u16 *free_table;
 	u16 defect_list[MAX_DEFECTIVE_BLOCK];  /* For MS card only */
-	पूर्णांक set_index;
-	पूर्णांक get_index;
-	पूर्णांक unused_blk_cnt;
-	पूर्णांक disable_count;
+	int set_index;
+	int get_index;
+	int unused_blk_cnt;
+	int disable_count;
 	/* To indicate whether the L2P table of this zone has been built. */
-	पूर्णांक build_flag;
-पूर्ण;
+	int build_flag;
+};
 
-#घोषणा TYPE_SD			0x0000
-#घोषणा TYPE_MMC		0x0001
+#define TYPE_SD			0x0000
+#define TYPE_MMC		0x0001
 
 /* TYPE_SD */
-#घोषणा SD_HS			0x0100
-#घोषणा SD_SDR50		0x0200
-#घोषणा SD_DDR50		0x0400
-#घोषणा SD_SDR104		0x0800
-#घोषणा SD_HCXC			0x1000
+#define SD_HS			0x0100
+#define SD_SDR50		0x0200
+#define SD_DDR50		0x0400
+#define SD_SDR104		0x0800
+#define SD_HCXC			0x1000
 
 /* TYPE_MMC */
-#घोषणा MMC_26M			0x0100
-#घोषणा MMC_52M			0x0200
-#घोषणा MMC_4BIT		0x0400
-#घोषणा MMC_8BIT		0x0800
-#घोषणा MMC_SECTOR_MODE		0x1000
-#घोषणा MMC_DDR52		0x2000
+#define MMC_26M			0x0100
+#define MMC_52M			0x0200
+#define MMC_4BIT		0x0400
+#define MMC_8BIT		0x0800
+#define MMC_SECTOR_MODE		0x1000
+#define MMC_DDR52		0x2000
 
 /* SD card */
-#घोषणा CHK_SD(sd_card)			(((sd_card)->sd_type & 0xFF) == TYPE_SD)
-#घोषणा CHK_SD_HS(sd_card)		(CHK_SD(sd_card) && \
+#define CHK_SD(sd_card)			(((sd_card)->sd_type & 0xFF) == TYPE_SD)
+#define CHK_SD_HS(sd_card)		(CHK_SD(sd_card) && \
 					 ((sd_card)->sd_type & SD_HS))
-#घोषणा CHK_SD_SDR50(sd_card)		(CHK_SD(sd_card) && \
+#define CHK_SD_SDR50(sd_card)		(CHK_SD(sd_card) && \
 					 ((sd_card)->sd_type & SD_SDR50))
-#घोषणा CHK_SD_DDR50(sd_card)		(CHK_SD(sd_card) && \
+#define CHK_SD_DDR50(sd_card)		(CHK_SD(sd_card) && \
 					 ((sd_card)->sd_type & SD_DDR50))
-#घोषणा CHK_SD_SDR104(sd_card)		(CHK_SD(sd_card) && \
+#define CHK_SD_SDR104(sd_card)		(CHK_SD(sd_card) && \
 					 ((sd_card)->sd_type & SD_SDR104))
-#घोषणा CHK_SD_HCXC(sd_card)		(CHK_SD(sd_card) && \
+#define CHK_SD_HCXC(sd_card)		(CHK_SD(sd_card) && \
 					 ((sd_card)->sd_type & SD_HCXC))
-#घोषणा CHK_SD_HC(sd_card)		(CHK_SD_HCXC(sd_card) && \
+#define CHK_SD_HC(sd_card)		(CHK_SD_HCXC(sd_card) && \
 					 ((sd_card)->capacity <= 0x4000000))
-#घोषणा CHK_SD_XC(sd_card)		(CHK_SD_HCXC(sd_card) && \
+#define CHK_SD_XC(sd_card)		(CHK_SD_HCXC(sd_card) && \
 					 ((sd_card)->capacity > 0x4000000))
-#घोषणा CHK_SD30_SPEED(sd_card)		(CHK_SD_SDR50(sd_card) || \
+#define CHK_SD30_SPEED(sd_card)		(CHK_SD_SDR50(sd_card) || \
 					 CHK_SD_DDR50(sd_card) || \
 					 CHK_SD_SDR104(sd_card))
 
-#घोषणा SET_SD(sd_card)			((sd_card)->sd_type = TYPE_SD)
-#घोषणा SET_SD_HS(sd_card)		((sd_card)->sd_type |= SD_HS)
-#घोषणा SET_SD_SDR50(sd_card)		((sd_card)->sd_type |= SD_SDR50)
-#घोषणा SET_SD_DDR50(sd_card)		((sd_card)->sd_type |= SD_DDR50)
-#घोषणा SET_SD_SDR104(sd_card)		((sd_card)->sd_type |= SD_SDR104)
-#घोषणा SET_SD_HCXC(sd_card)		((sd_card)->sd_type |= SD_HCXC)
+#define SET_SD(sd_card)			((sd_card)->sd_type = TYPE_SD)
+#define SET_SD_HS(sd_card)		((sd_card)->sd_type |= SD_HS)
+#define SET_SD_SDR50(sd_card)		((sd_card)->sd_type |= SD_SDR50)
+#define SET_SD_DDR50(sd_card)		((sd_card)->sd_type |= SD_DDR50)
+#define SET_SD_SDR104(sd_card)		((sd_card)->sd_type |= SD_SDR104)
+#define SET_SD_HCXC(sd_card)		((sd_card)->sd_type |= SD_HCXC)
 
-#घोषणा CLR_SD_HS(sd_card)		((sd_card)->sd_type &= ~SD_HS)
-#घोषणा CLR_SD_SDR50(sd_card)		((sd_card)->sd_type &= ~SD_SDR50)
-#घोषणा CLR_SD_DDR50(sd_card)		((sd_card)->sd_type &= ~SD_DDR50)
-#घोषणा CLR_SD_SDR104(sd_card)		((sd_card)->sd_type &= ~SD_SDR104)
-#घोषणा CLR_SD_HCXC(sd_card)		((sd_card)->sd_type &= ~SD_HCXC)
+#define CLR_SD_HS(sd_card)		((sd_card)->sd_type &= ~SD_HS)
+#define CLR_SD_SDR50(sd_card)		((sd_card)->sd_type &= ~SD_SDR50)
+#define CLR_SD_DDR50(sd_card)		((sd_card)->sd_type &= ~SD_DDR50)
+#define CLR_SD_SDR104(sd_card)		((sd_card)->sd_type &= ~SD_SDR104)
+#define CLR_SD_HCXC(sd_card)		((sd_card)->sd_type &= ~SD_HCXC)
 
 /* MMC card */
-#घोषणा CHK_MMC(sd_card)		(((sd_card)->sd_type & 0xFF) == \
+#define CHK_MMC(sd_card)		(((sd_card)->sd_type & 0xFF) == \
 					 TYPE_MMC)
-#घोषणा CHK_MMC_26M(sd_card)		(CHK_MMC(sd_card) && \
+#define CHK_MMC_26M(sd_card)		(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_26M))
-#घोषणा CHK_MMC_52M(sd_card)		(CHK_MMC(sd_card) && \
+#define CHK_MMC_52M(sd_card)		(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_52M))
-#घोषणा CHK_MMC_4BIT(sd_card)		(CHK_MMC(sd_card) && \
+#define CHK_MMC_4BIT(sd_card)		(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_4BIT))
-#घोषणा CHK_MMC_8BIT(sd_card)		(CHK_MMC(sd_card) && \
+#define CHK_MMC_8BIT(sd_card)		(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_8BIT))
-#घोषणा CHK_MMC_SECTOR_MODE(sd_card)	(CHK_MMC(sd_card) && \
+#define CHK_MMC_SECTOR_MODE(sd_card)	(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_SECTOR_MODE))
-#घोषणा CHK_MMC_DDR52(sd_card)		(CHK_MMC(sd_card) && \
+#define CHK_MMC_DDR52(sd_card)		(CHK_MMC(sd_card) && \
 					 ((sd_card)->sd_type & MMC_DDR52))
 
-#घोषणा SET_MMC(sd_card)		((sd_card)->sd_type = TYPE_MMC)
-#घोषणा SET_MMC_26M(sd_card)		((sd_card)->sd_type |= MMC_26M)
-#घोषणा SET_MMC_52M(sd_card)		((sd_card)->sd_type |= MMC_52M)
-#घोषणा SET_MMC_4BIT(sd_card)		((sd_card)->sd_type |= MMC_4BIT)
-#घोषणा SET_MMC_8BIT(sd_card)		((sd_card)->sd_type |= MMC_8BIT)
-#घोषणा SET_MMC_SECTOR_MODE(sd_card)	((sd_card)->sd_type |= MMC_SECTOR_MODE)
-#घोषणा SET_MMC_DDR52(sd_card)		((sd_card)->sd_type |= MMC_DDR52)
+#define SET_MMC(sd_card)		((sd_card)->sd_type = TYPE_MMC)
+#define SET_MMC_26M(sd_card)		((sd_card)->sd_type |= MMC_26M)
+#define SET_MMC_52M(sd_card)		((sd_card)->sd_type |= MMC_52M)
+#define SET_MMC_4BIT(sd_card)		((sd_card)->sd_type |= MMC_4BIT)
+#define SET_MMC_8BIT(sd_card)		((sd_card)->sd_type |= MMC_8BIT)
+#define SET_MMC_SECTOR_MODE(sd_card)	((sd_card)->sd_type |= MMC_SECTOR_MODE)
+#define SET_MMC_DDR52(sd_card)		((sd_card)->sd_type |= MMC_DDR52)
 
-#घोषणा CLR_MMC_26M(sd_card)		((sd_card)->sd_type &= ~MMC_26M)
-#घोषणा CLR_MMC_52M(sd_card)		((sd_card)->sd_type &= ~MMC_52M)
-#घोषणा CLR_MMC_4BIT(sd_card)		((sd_card)->sd_type &= ~MMC_4BIT)
-#घोषणा CLR_MMC_8BIT(sd_card)		((sd_card)->sd_type &= ~MMC_8BIT)
-#घोषणा CLR_MMC_SECTOR_MODE(sd_card)	((sd_card)->sd_type &= ~MMC_SECTOR_MODE)
-#घोषणा CLR_MMC_DDR52(sd_card)		((sd_card)->sd_type &= ~MMC_DDR52)
+#define CLR_MMC_26M(sd_card)		((sd_card)->sd_type &= ~MMC_26M)
+#define CLR_MMC_52M(sd_card)		((sd_card)->sd_type &= ~MMC_52M)
+#define CLR_MMC_4BIT(sd_card)		((sd_card)->sd_type &= ~MMC_4BIT)
+#define CLR_MMC_8BIT(sd_card)		((sd_card)->sd_type &= ~MMC_8BIT)
+#define CLR_MMC_SECTOR_MODE(sd_card)	((sd_card)->sd_type &= ~MMC_SECTOR_MODE)
+#define CLR_MMC_DDR52(sd_card)		((sd_card)->sd_type &= ~MMC_DDR52)
 
-#घोषणा CHK_MMC_HS(sd_card)		(CHK_MMC_52M(sd_card) && \
+#define CHK_MMC_HS(sd_card)		(CHK_MMC_52M(sd_card) && \
 					 CHK_MMC_26M(sd_card))
-#घोषणा CLR_MMC_HS(sd_card)			\
-करो अणु						\
+#define CLR_MMC_HS(sd_card)			\
+do {						\
 	CLR_MMC_DDR52(sd_card);			\
 	CLR_MMC_52M(sd_card);			\
 	CLR_MMC_26M(sd_card);			\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा SD_SUPPORT_CLASS_TEN		0x01
-#घोषणा SD_SUPPORT_1V8			0x02
+#define SD_SUPPORT_CLASS_TEN		0x01
+#define SD_SUPPORT_1V8			0x02
 
-#घोषणा SD_SET_CLASS_TEN(sd_card)	((sd_card)->sd_setting |= \
+#define SD_SET_CLASS_TEN(sd_card)	((sd_card)->sd_setting |= \
 					 SD_SUPPORT_CLASS_TEN)
-#घोषणा SD_CHK_CLASS_TEN(sd_card)	((sd_card)->sd_setting & \
+#define SD_CHK_CLASS_TEN(sd_card)	((sd_card)->sd_setting & \
 					 SD_SUPPORT_CLASS_TEN)
-#घोषणा SD_CLR_CLASS_TEN(sd_card)	((sd_card)->sd_setting &= \
+#define SD_CLR_CLASS_TEN(sd_card)	((sd_card)->sd_setting &= \
 					 ~SD_SUPPORT_CLASS_TEN)
-#घोषणा SD_SET_1V8(sd_card)		((sd_card)->sd_setting |= \
+#define SD_SET_1V8(sd_card)		((sd_card)->sd_setting |= \
 					 SD_SUPPORT_1V8)
-#घोषणा SD_CHK_1V8(sd_card)		((sd_card)->sd_setting & \
+#define SD_CHK_1V8(sd_card)		((sd_card)->sd_setting & \
 					 SD_SUPPORT_1V8)
-#घोषणा SD_CLR_1V8(sd_card)		((sd_card)->sd_setting &= \
+#define SD_CLR_1V8(sd_card)		((sd_card)->sd_setting &= \
 					 ~SD_SUPPORT_1V8)
 
-काष्ठा sd_info अणु
+struct sd_info {
 	u16 sd_type;
 	u8 err_code;
-	u8 sd_data_buf_पढ़ोy;
+	u8 sd_data_buf_ready;
 	u32 sd_addr;
 	u32 capacity;
 
@@ -485,52 +484,52 @@
 	u8 raw_scr[8];
 
 	/* Sequential RW */
-	पूर्णांक seq_mode;
-	क्रमागत dma_data_direction pre_dir;
+	int seq_mode;
+	enum dma_data_direction pre_dir;
 	u32 pre_sec_addr;
 	u16 pre_sec_cnt;
 
-	पूर्णांक cleanup_counter;
+	int cleanup_counter;
 
-	पूर्णांक sd_घड़ी;
+	int sd_clock;
 
-	पूर्णांक mmc_करोnt_चयन_bus;
+	int mmc_dont_switch_bus;
 
-#अगर_घोषित SUPPORT_CPRM
-	पूर्णांक sd_pass_thru_en;
-	पूर्णांक pre_cmd_err;
+#ifdef SUPPORT_CPRM
+	int sd_pass_thru_en;
+	int pre_cmd_err;
 	u8 last_rsp_type;
 	u8 rsp[17];
-#पूर्ण_अगर
+#endif
 
 	u8 func_group1_mask;
 	u8 func_group2_mask;
 	u8 func_group3_mask;
 	u8 func_group4_mask;
 
-	u8 sd_चयन_fail;
-	u8 sd_पढ़ो_phase;
+	u8 sd_switch_fail;
+	u8 sd_read_phase;
 
-#अगर_घोषित SUPPORT_SD_LOCK
+#ifdef SUPPORT_SD_LOCK
 	u8 sd_lock_status;
 	u8 sd_erase_status;
-	u8 sd_lock_notअगरy;
-#पूर्ण_अगर
-	पूर्णांक need_retune;
-पूर्ण;
+	u8 sd_lock_notify;
+#endif
+	int need_retune;
+};
 
-काष्ठा xd_delay_ग_लिखो_tag अणु
+struct xd_delay_write_tag {
 	u32 old_phyblock;
 	u32 new_phyblock;
 	u32 logblock;
 	u8 pageoff;
-	u8 delay_ग_लिखो_flag;
-पूर्ण;
+	u8 delay_write_flag;
+};
 
-काष्ठा xd_info अणु
+struct xd_info {
 	u8 maker_code;
 	u8 device_code;
-	u8 block_shअगरt;
+	u8 block_shift;
 	u8 page_off;
 	u8 addr_cycle;
 	u16 cis_block;
@@ -538,327 +537,327 @@
 	u8 err_code;
 	u32 capacity;
 
-	काष्ठा zone_entry *zone;
-	पूर्णांक zone_cnt;
+	struct zone_entry *zone;
+	int zone_cnt;
 
-	काष्ठा xd_delay_ग_लिखो_tag delay_ग_लिखो;
-	पूर्णांक cleanup_counter;
+	struct xd_delay_write_tag delay_write;
+	int cleanup_counter;
 
-	पूर्णांक xd_घड़ी;
-पूर्ण;
+	int xd_clock;
+};
 
-#घोषणा MODE_512_SEQ		0x01
-#घोषणा MODE_2K_SEQ		0x02
+#define MODE_512_SEQ		0x01
+#define MODE_2K_SEQ		0x02
 
-#घोषणा TYPE_MS			0x0000
-#घोषणा TYPE_MSPRO		0x0001
+#define TYPE_MS			0x0000
+#define TYPE_MSPRO		0x0001
 
-#घोषणा MS_4BIT			0x0100
-#घोषणा MS_8BIT			0x0200
-#घोषणा MS_HG			0x0400
-#घोषणा MS_XC			0x0800
+#define MS_4BIT			0x0100
+#define MS_8BIT			0x0200
+#define MS_HG			0x0400
+#define MS_XC			0x0800
 
-#घोषणा HG8BIT			(MS_HG | MS_8BIT)
+#define HG8BIT			(MS_HG | MS_8BIT)
 
-#घोषणा CHK_MSPRO(ms_card)	(((ms_card)->ms_type & 0xFF) == TYPE_MSPRO)
-#घोषणा CHK_HG8BIT(ms_card)	(CHK_MSPRO(ms_card) && \
+#define CHK_MSPRO(ms_card)	(((ms_card)->ms_type & 0xFF) == TYPE_MSPRO)
+#define CHK_HG8BIT(ms_card)	(CHK_MSPRO(ms_card) && \
 				 (((ms_card)->ms_type & HG8BIT) == HG8BIT))
-#घोषणा CHK_MSXC(ms_card)	(CHK_MSPRO(ms_card) && \
+#define CHK_MSXC(ms_card)	(CHK_MSPRO(ms_card) && \
 				 ((ms_card)->ms_type & MS_XC))
-#घोषणा CHK_MSHG(ms_card)	(CHK_MSPRO(ms_card) && \
+#define CHK_MSHG(ms_card)	(CHK_MSPRO(ms_card) && \
 				 ((ms_card)->ms_type & MS_HG))
 
-#घोषणा CHK_MS8BIT(ms_card)	(((ms_card)->ms_type & MS_8BIT))
-#घोषणा CHK_MS4BIT(ms_card)	(((ms_card)->ms_type & MS_4BIT))
+#define CHK_MS8BIT(ms_card)	(((ms_card)->ms_type & MS_8BIT))
+#define CHK_MS4BIT(ms_card)	(((ms_card)->ms_type & MS_4BIT))
 
-काष्ठा ms_delay_ग_लिखो_tag अणु
+struct ms_delay_write_tag {
 	u16 old_phyblock;
 	u16 new_phyblock;
 	u16 logblock;
 	u8 pageoff;
-	u8 delay_ग_लिखो_flag;
-पूर्ण;
+	u8 delay_write_flag;
+};
 
-काष्ठा ms_info अणु
+struct ms_info {
 	u16 ms_type;
-	u8 block_shअगरt;
+	u8 block_shift;
 	u8 page_off;
 	u16 total_block;
 	u16 boot_block;
 	u32 capacity;
 
 	u8 check_ms_flow;
-	u8 चयन_8bit_fail;
+	u8 switch_8bit_fail;
 	u8 err_code;
 
-	काष्ठा zone_entry *segment;
-	पूर्णांक segment_cnt;
+	struct zone_entry *segment;
+	int segment_cnt;
 
-	पूर्णांक pro_under_क्रमmatting;
-	पूर्णांक क्रमmat_status;
+	int pro_under_formatting;
+	int format_status;
 	u16 progress;
 	u8 raw_sys_info[96];
-#अगर_घोषित SUPPORT_PCGL_1P18
+#ifdef SUPPORT_PCGL_1P18
 	u8 raw_model_name[48];
-#पूर्ण_अगर
+#endif
 
 	u8 multi_flag;
 
 	/* Sequential RW */
 	u8 seq_mode;
-	क्रमागत dma_data_direction pre_dir;
+	enum dma_data_direction pre_dir;
 	u32 pre_sec_addr;
 	u16 pre_sec_cnt;
 	u32 total_sec_cnt;
 
-	काष्ठा ms_delay_ग_लिखो_tag delay_ग_लिखो;
+	struct ms_delay_write_tag delay_write;
 
-	पूर्णांक cleanup_counter;
+	int cleanup_counter;
 
-	पूर्णांक ms_घड़ी;
+	int ms_clock;
 
-#अगर_घोषित SUPPORT_MAGIC_GATE
+#ifdef SUPPORT_MAGIC_GATE
 	u8 magic_gate_id[16];
 	u8 mg_entry_num;
-	पूर्णांक mg_auth;    /* flag to indicate authentication process */
-#पूर्ण_अगर
-पूर्ण;
+	int mg_auth;    /* flag to indicate authentication process */
+#endif
+};
 
-काष्ठा spi_info अणु
+struct spi_info {
 	u8 use_clk;
-	u8 ग_लिखो_en;
-	u16 clk_भाग;
+	u8 write_en;
+	u16 clk_div;
 	u8 err_code;
 
-	पूर्णांक spi_घड़ी;
-पूर्ण;
+	int spi_clock;
+};
 
 /************/
 /* LUN mode */
 /************/
 /* Single LUN, support xD/SD/MS */
-#घोषणा DEFAULT_SINGLE		0
+#define DEFAULT_SINGLE		0
 /* 2 LUN mode, support SD/MS */
-#घोषणा SD_MS_2LUN		1
-/* Single LUN, but only support SD/MS, क्रम Barossa LQFP */
-#घोषणा SD_MS_1LUN		2
+#define SD_MS_2LUN		1
+/* Single LUN, but only support SD/MS, for Barossa LQFP */
+#define SD_MS_1LUN		2
 
-#घोषणा LAST_LUN_MODE		2
+#define LAST_LUN_MODE		2
 
 /* Barossa package */
-#घोषणा QFN		0
-#घोषणा LQFP		1
+#define QFN		0
+#define LQFP		1
 
 /******************/
 /* sd_ctl bit map */
 /******************/
-/* SD push poपूर्णांक control, bit 0, 1 */
-#घोषणा SD_PUSH_POINT_CTL_MASK		0x03
-#घोषणा SD_PUSH_POINT_DELAY		0x01
-#घोषणा SD_PUSH_POINT_AUTO		0x02
-/* SD sample poपूर्णांक control, bit 2, 3 */
-#घोषणा SD_SAMPLE_POINT_CTL_MASK	0x0C
-#घोषणा SD_SAMPLE_POINT_DELAY		0x04
-#घोषणा SD_SAMPLE_POINT_AUTO		0x08
+/* SD push point control, bit 0, 1 */
+#define SD_PUSH_POINT_CTL_MASK		0x03
+#define SD_PUSH_POINT_DELAY		0x01
+#define SD_PUSH_POINT_AUTO		0x02
+/* SD sample point control, bit 2, 3 */
+#define SD_SAMPLE_POINT_CTL_MASK	0x0C
+#define SD_SAMPLE_POINT_DELAY		0x04
+#define SD_SAMPLE_POINT_AUTO		0x08
 /* SD DDR Tx phase set by user, bit 4 */
-#घोषणा SD_DDR_TX_PHASE_SET_BY_USER	0x10
+#define SD_DDR_TX_PHASE_SET_BY_USER	0x10
 /* MMC DDR Tx phase set by user, bit 5 */
-#घोषणा MMC_DDR_TX_PHASE_SET_BY_USER	0x20
+#define MMC_DDR_TX_PHASE_SET_BY_USER	0x20
 /* Support MMC DDR mode, bit 6 */
-#घोषणा SUPPORT_MMC_DDR_MODE		0x40
+#define SUPPORT_MMC_DDR_MODE		0x40
 /* Reset MMC at first */
-#घोषणा RESET_MMC_FIRST			0x80
+#define RESET_MMC_FIRST			0x80
 
-#घोषणा SEQ_START_CRITERIA		0x20
+#define SEQ_START_CRITERIA		0x20
 
 /* MS Power Class En */
-#घोषणा POWER_CLASS_2_EN		0x02
-#घोषणा POWER_CLASS_1_EN		0x01
+#define POWER_CLASS_2_EN		0x02
+#define POWER_CLASS_1_EN		0x01
 
-#घोषणा MAX_SHOW_CNT			10
-#घोषणा MAX_RESET_CNT			3
+#define MAX_SHOW_CNT			10
+#define MAX_RESET_CNT			3
 
-#घोषणा SDIO_EXIST			0x01
-#घोषणा SDIO_IGNORED			0x02
+#define SDIO_EXIST			0x01
+#define SDIO_IGNORED			0x02
 
-#घोषणा CHK_SDIO_EXIST(chip)		((chip)->sdio_func_exist & SDIO_EXIST)
-#घोषणा SET_SDIO_EXIST(chip)		((chip)->sdio_func_exist |= SDIO_EXIST)
-#घोषणा CLR_SDIO_EXIST(chip)		((chip)->sdio_func_exist &= ~SDIO_EXIST)
+#define CHK_SDIO_EXIST(chip)		((chip)->sdio_func_exist & SDIO_EXIST)
+#define SET_SDIO_EXIST(chip)		((chip)->sdio_func_exist |= SDIO_EXIST)
+#define CLR_SDIO_EXIST(chip)		((chip)->sdio_func_exist &= ~SDIO_EXIST)
 
-#घोषणा CHK_SDIO_IGNORED(chip)		((chip)->sdio_func_exist & SDIO_IGNORED)
-#घोषणा SET_SDIO_IGNORED(chip)		((chip)->sdio_func_exist |= \
+#define CHK_SDIO_IGNORED(chip)		((chip)->sdio_func_exist & SDIO_IGNORED)
+#define SET_SDIO_IGNORED(chip)		((chip)->sdio_func_exist |= \
 					 SDIO_IGNORED)
-#घोषणा CLR_SDIO_IGNORED(chip)		((chip)->sdio_func_exist &= \
+#define CLR_SDIO_IGNORED(chip)		((chip)->sdio_func_exist &= \
 					 ~SDIO_IGNORED)
 
-काष्ठा rtsx_chip अणु
-	काष्ठा rtsx_dev	*rtsx;
+struct rtsx_chip {
+	struct rtsx_dev	*rtsx;
 
-	u32		पूर्णांक_reg; /* Bus पूर्णांकerrupt pending रेजिस्टर */
-	अक्षर		max_lun;
-	व्योम		*context;
+	u32		int_reg; /* Bus interrupt pending register */
+	char		max_lun;
+	void		*context;
 
-	व्योम		*host_cmds_ptr;	/* host commands buffer poपूर्णांकer */
+	void		*host_cmds_ptr;	/* host commands buffer pointer */
 	dma_addr_t	host_cmds_addr;
-	पूर्णांक		ci;			/* Command Index */
+	int		ci;			/* Command Index */
 
-	व्योम		*host_sg_tbl_ptr;	/* SG descriptor table */
+	void		*host_sg_tbl_ptr;	/* SG descriptor table */
 	dma_addr_t	host_sg_tbl_addr;
-	पूर्णांक		sgi;			/* SG entry index */
+	int		sgi;			/* SG entry index */
 
-	काष्ठा scsi_cmnd	*srb;			/* current srb */
-	काष्ठा sense_data_t	sense_buffer[MAX_ALLOWED_LUN_CNT];
+	struct scsi_cmnd	*srb;			/* current srb */
+	struct sense_data_t	sense_buffer[MAX_ALLOWED_LUN_CNT];
 
-	पूर्णांक			cur_clk;		/* current card घड़ी */
+	int			cur_clk;		/* current card clock */
 
 	/* Current accessed card */
-	पूर्णांक			cur_card;
+	int			cur_card;
 
-	अचिन्हित दीर्घ	need_release;		/* need release bit map */
-	अचिन्हित दीर्घ	need_reset;		/* need reset bit map */
+	unsigned long	need_release;		/* need release bit map */
+	unsigned long	need_reset;		/* need reset bit map */
 	/*
 	 * Flag to indicate that this card is just resumed from SS state,
-	 * and need released beक्रमe being resetted
+	 * and need released before being resetted
 	 */
-	अचिन्हित दीर्घ		need_reinit;
+	unsigned long		need_reinit;
 
-	पूर्णांक			rw_need_retry;
+	int			rw_need_retry;
 
-#अगर_घोषित SUPPORT_OCP
-	u32			ocp_पूर्णांक;
+#ifdef SUPPORT_OCP
+	u32			ocp_int;
 	u8			ocp_stat;
-#पूर्ण_अगर
+#endif
 
 	u8	card_exist;	/* card exist bit map (physical exist) */
-	u8	card_पढ़ोy;	/* card पढ़ोy bit map (reset successfully) */
+	u8	card_ready;	/* card ready bit map (reset successfully) */
 	u8	card_fail;	/* card reset fail bit map */
 	u8	card_ejected;	/* card ejected bit map */
-	u8	card_wp;	/* card ग_लिखो रक्षित bit map */
+	u8	card_wp;	/* card write protected bit map */
 
 	u8	lun_mc;		/*
 				 * flag to indicate whether to answer
 				 * MediaChange
 				 */
 
-#अगर_अघोषित LED_AUTO_BLINK
-	पूर्णांक			led_toggle_counter;
-#पूर्ण_अगर
+#ifndef LED_AUTO_BLINK
+	int			led_toggle_counter;
+#endif
 
-	पूर्णांक			sd_reset_counter;
-	पूर्णांक			xd_reset_counter;
-	पूर्णांक			ms_reset_counter;
+	int			sd_reset_counter;
+	int			xd_reset_counter;
+	int			ms_reset_counter;
 
 	/* card bus width */
 	u8			card_bus_width[MAX_ALLOWED_LUN_CNT];
 	/* card capacity */
 	u32			capacity[MAX_ALLOWED_LUN_CNT];
-	/* पढ़ो/ग_लिखो card function poपूर्णांकer */
+	/* read/write card function pointer */
 	card_rw_func		rw_card[MAX_ALLOWED_LUN_CNT];
-	/* पढ़ो/ग_लिखो capacity, used क्रम GPIO Toggle */
+	/* read/write capacity, used for GPIO Toggle */
 	u32			rw_cap[MAX_ALLOWED_LUN_CNT];
 	/* card to lun mapping table */
 	u8			card2lun[32];
 	/* lun to card mapping table */
 	u8			lun2card[MAX_ALLOWED_LUN_CNT];
 
-	पूर्णांक			rw_fail_cnt[MAX_ALLOWED_LUN_CNT];
+	int			rw_fail_cnt[MAX_ALLOWED_LUN_CNT];
 
-	पूर्णांक			sd_show_cnt;
-	पूर्णांक			xd_show_cnt;
-	पूर्णांक			ms_show_cnt;
+	int			sd_show_cnt;
+	int			xd_show_cnt;
+	int			ms_show_cnt;
 
-	/* card inक्रमmation */
-	काष्ठा sd_info		sd_card;
-	काष्ठा xd_info		xd_card;
-	काष्ठा ms_info		ms_card;
+	/* card information */
+	struct sd_info		sd_card;
+	struct xd_info		xd_card;
+	struct ms_info		ms_card;
 
-	काष्ठा spi_info		spi;
+	struct spi_info		spi;
 
-	पूर्णांक			स्वतः_delink_cnt;
-	पूर्णांक			स्वतः_delink_allowed;
+	int			auto_delink_cnt;
+	int			auto_delink_allowed;
 
-	पूर्णांक			aspm_enabled;
+	int			aspm_enabled;
 
-	पूर्णांक			sdio_aspm;
-	पूर्णांक			sdio_idle;
-	पूर्णांक			sdio_counter;
+	int			sdio_aspm;
+	int			sdio_idle;
+	int			sdio_counter;
 	u8			sdio_raw_data[12];
 
 	u8			sd_io;
-	u8			sd_पूर्णांक;
+	u8			sd_int;
 
 	u8			rtsx_flag;
 
-	पूर्णांक			ss_counter;
-	पूर्णांक			idle_counter;
-	क्रमागत RTSX_STAT		rtsx_stat;
+	int			ss_counter;
+	int			idle_counter;
+	enum RTSX_STAT		rtsx_stat;
 
-	u16			venकरोr_id;
+	u16			vendor_id;
 	u16			product_id;
 	u8			ic_version;
 
-	पूर्णांक			driver_first_load;
+	int			driver_first_load;
 
-#अगर_घोषित HW_AUTO_SWITCH_SD_BUS
-	पूर्णांक			sdio_in_अक्षरge;
-#पूर्ण_अगर
+#ifdef HW_AUTO_SWITCH_SD_BUS
+	int			sdio_in_charge;
+#endif
 
 	u8			aspm_level[2];
 
-	पूर्णांक			chip_insert_with_sdio;
+	int			chip_insert_with_sdio;
 
 	/* Options */
 
-	पूर्णांक adma_mode;
+	int adma_mode;
 
-	पूर्णांक स्वतः_delink_en;
-	पूर्णांक ss_en;
+	int auto_delink_en;
+	int ss_en;
 	u8 lun_mode;
 	u8 aspm_l0s_l1_en;
 
-	पूर्णांक घातer_करोwn_in_ss;
+	int power_down_in_ss;
 
-	पूर्णांक sdr104_en;
-	पूर्णांक ddr50_en;
-	पूर्णांक sdr50_en;
+	int sdr104_en;
+	int ddr50_en;
+	int sdr50_en;
 
-	पूर्णांक baro_pkg;
+	int baro_pkg;
 
-	पूर्णांक asic_code;
-	पूर्णांक phy_debug_mode;
-	पूर्णांक hw_bypass_sd;
-	पूर्णांक sdio_func_exist;
-	पूर्णांक aux_pwr_exist;
-	u8 ms_घातer_class_en;
+	int asic_code;
+	int phy_debug_mode;
+	int hw_bypass_sd;
+	int sdio_func_exist;
+	int aux_pwr_exist;
+	u8 ms_power_class_en;
 
-	पूर्णांक mspro_क्रमmatter_enable;
+	int mspro_formatter_enable;
 
-	पूर्णांक remote_wakeup_en;
+	int remote_wakeup_en;
 
-	पूर्णांक ignore_sd;
-	पूर्णांक use_hw_setting;
+	int ignore_sd;
+	int use_hw_setting;
 
-	पूर्णांक ss_idle_period;
+	int ss_idle_period;
 
-	पूर्णांक dynamic_aspm;
+	int dynamic_aspm;
 
-	पूर्णांक fpga_sd_sdr104_clk;
-	पूर्णांक fpga_sd_ddr50_clk;
-	पूर्णांक fpga_sd_sdr50_clk;
-	पूर्णांक fpga_sd_hs_clk;
-	पूर्णांक fpga_mmc_52m_clk;
-	पूर्णांक fpga_ms_hg_clk;
-	पूर्णांक fpga_ms_4bit_clk;
-	पूर्णांक fpga_ms_1bit_clk;
+	int fpga_sd_sdr104_clk;
+	int fpga_sd_ddr50_clk;
+	int fpga_sd_sdr50_clk;
+	int fpga_sd_hs_clk;
+	int fpga_mmc_52m_clk;
+	int fpga_ms_hg_clk;
+	int fpga_ms_4bit_clk;
+	int fpga_ms_1bit_clk;
 
-	पूर्णांक asic_sd_sdr104_clk;
-	पूर्णांक asic_sd_ddr50_clk;
-	पूर्णांक asic_sd_sdr50_clk;
-	पूर्णांक asic_sd_hs_clk;
-	पूर्णांक asic_mmc_52m_clk;
-	पूर्णांक asic_ms_hg_clk;
-	पूर्णांक asic_ms_4bit_clk;
-	पूर्णांक asic_ms_1bit_clk;
+	int asic_sd_sdr104_clk;
+	int asic_sd_ddr50_clk;
+	int asic_sd_sdr50_clk;
+	int asic_sd_hs_clk;
+	int asic_mmc_52m_clk;
+	int asic_ms_hg_clk;
+	int asic_ms_4bit_clk;
+	int asic_ms_1bit_clk;
 
 	u8 ssc_depth_sd_sdr104;
 	u8 ssc_depth_sd_ddr50;
@@ -877,39 +876,39 @@
 	u8 sd_800mA_ocp_thd;
 	u8 ms_ocp_thd;
 
-	पूर्णांक ssc_en;
-	पूर्णांक msi_en;
+	int ssc_en;
+	int msi_en;
 
-	पूर्णांक xd_समयout;
-	पूर्णांक sd_समयout;
-	पूर्णांक ms_समयout;
-	पूर्णांक mspro_समयout;
+	int xd_timeout;
+	int sd_timeout;
+	int ms_timeout;
+	int mspro_timeout;
 
-	पूर्णांक स्वतः_घातer_करोwn;
+	int auto_power_down;
 
-	पूर्णांक sd_ddr_tx_phase;
-	पूर्णांक mmc_ddr_tx_phase;
-	पूर्णांक sd_शेष_tx_phase;
-	पूर्णांक sd_शेष_rx_phase;
+	int sd_ddr_tx_phase;
+	int mmc_ddr_tx_phase;
+	int sd_default_tx_phase;
+	int sd_default_rx_phase;
 
-	पूर्णांक pmos_pwr_on_पूर्णांकerval;
-	पूर्णांक sd_voltage_चयन_delay;
-	पूर्णांक s3_pwr_off_delay;
+	int pmos_pwr_on_interval;
+	int sd_voltage_switch_delay;
+	int s3_pwr_off_delay;
 
-	पूर्णांक क्रमce_clkreq_0;
-	पूर्णांक ft2_fast_mode;
+	int force_clkreq_0;
+	int ft2_fast_mode;
 
-	पूर्णांक करो_delink_beक्रमe_घातer_करोwn;
-	पूर्णांक polling_config;
-	पूर्णांक sdio_retry_cnt;
+	int do_delink_before_power_down;
+	int polling_config;
+	int sdio_retry_cnt;
 
-	पूर्णांक delink_stage1_step;
-	पूर्णांक delink_stage2_step;
-	पूर्णांक delink_stage3_step;
+	int delink_stage1_step;
+	int delink_stage2_step;
+	int delink_stage3_step;
 
-	पूर्णांक स्वतः_delink_in_L1;
-	पूर्णांक hp_watch_bios_hotplug;
-	पूर्णांक support_ms_8bit;
+	int auto_delink_in_L1;
+	int hp_watch_bios_hotplug;
+	int support_ms_8bit;
 
 	u8 blink_led;
 	u8 phy_voltage;
@@ -918,71 +917,71 @@
 	u32 sd_speed_prior;
 	u32 sd_current_prior;
 	u32 sd_ctl;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा device *rtsx_dev(स्थिर काष्ठा rtsx_chip *chip)
-अणु
-	वापस &chip->rtsx->pci->dev;
-पूर्ण
+static inline struct device *rtsx_dev(const struct rtsx_chip *chip)
+{
+	return &chip->rtsx->pci->dev;
+}
 
-#घोषणा rtsx_set_stat(chip, stat)				\
-करो अणु								\
-	अगर ((stat) != RTSX_STAT_IDLE) अणु				\
+#define rtsx_set_stat(chip, stat)				\
+do {								\
+	if ((stat) != RTSX_STAT_IDLE) {				\
 		(chip)->idle_counter = 0;			\
-	पूर्ण							\
-	(chip)->rtsx_stat = (क्रमागत RTSX_STAT)(stat);		\
-पूर्ण जबतक (0)
-#घोषणा rtsx_get_stat(chip)		((chip)->rtsx_stat)
-#घोषणा rtsx_chk_stat(chip, stat)	((chip)->rtsx_stat == (stat))
+	}							\
+	(chip)->rtsx_stat = (enum RTSX_STAT)(stat);		\
+} while (0)
+#define rtsx_get_stat(chip)		((chip)->rtsx_stat)
+#define rtsx_chk_stat(chip, stat)	((chip)->rtsx_stat == (stat))
 
-#घोषणा RTSX_SET_DELINK(chip)	((chip)->rtsx_flag |= 0x01)
-#घोषणा RTSX_CLR_DELINK(chip)	((chip)->rtsx_flag &= 0xFE)
-#घोषणा RTSX_TST_DELINK(chip)	((chip)->rtsx_flag & 0x01)
+#define RTSX_SET_DELINK(chip)	((chip)->rtsx_flag |= 0x01)
+#define RTSX_CLR_DELINK(chip)	((chip)->rtsx_flag &= 0xFE)
+#define RTSX_TST_DELINK(chip)	((chip)->rtsx_flag & 0x01)
 
-#घोषणा CHECK_PID(chip, pid)		((chip)->product_id == (pid))
-#घोषणा CHECK_BARO_PKG(chip, pkg)	((chip)->baro_pkg == (pkg))
-#घोषणा CHECK_LUN_MODE(chip, mode)	((chip)->lun_mode == (mode))
+#define CHECK_PID(chip, pid)		((chip)->product_id == (pid))
+#define CHECK_BARO_PKG(chip, pkg)	((chip)->baro_pkg == (pkg))
+#define CHECK_LUN_MODE(chip, mode)	((chip)->lun_mode == (mode))
 
-/* Power करोwn control */
-#घोषणा SSC_PDCTL		0x01
-#घोषणा OC_PDCTL		0x02
+/* Power down control */
+#define SSC_PDCTL		0x01
+#define OC_PDCTL		0x02
 
-पूर्णांक rtsx_क्रमce_घातer_on(काष्ठा rtsx_chip *chip, u8 ctl);
-पूर्णांक rtsx_क्रमce_घातer_करोwn(काष्ठा rtsx_chip *chip, u8 ctl);
+int rtsx_force_power_on(struct rtsx_chip *chip, u8 ctl);
+int rtsx_force_power_down(struct rtsx_chip *chip, u8 ctl);
 
-व्योम rtsx_enable_card_पूर्णांक(काष्ठा rtsx_chip *chip);
-व्योम rtsx_enable_bus_पूर्णांक(काष्ठा rtsx_chip *chip);
-व्योम rtsx_disable_bus_पूर्णांक(काष्ठा rtsx_chip *chip);
-पूर्णांक rtsx_reset_chip(काष्ठा rtsx_chip *chip);
-पूर्णांक rtsx_init_chip(काष्ठा rtsx_chip *chip);
-व्योम rtsx_release_chip(काष्ठा rtsx_chip *chip);
-व्योम rtsx_polling_func(काष्ठा rtsx_chip *chip);
-व्योम rtsx_stop_cmd(काष्ठा rtsx_chip *chip, पूर्णांक card);
-पूर्णांक rtsx_ग_लिखो_रेजिस्टर(काष्ठा rtsx_chip *chip, u16 addr, u8 mask, u8 data);
-पूर्णांक rtsx_पढ़ो_रेजिस्टर(काष्ठा rtsx_chip *chip, u16 addr, u8 *data);
-पूर्णांक rtsx_ग_लिखो_cfg_dw(काष्ठा rtsx_chip *chip,
+void rtsx_enable_card_int(struct rtsx_chip *chip);
+void rtsx_enable_bus_int(struct rtsx_chip *chip);
+void rtsx_disable_bus_int(struct rtsx_chip *chip);
+int rtsx_reset_chip(struct rtsx_chip *chip);
+int rtsx_init_chip(struct rtsx_chip *chip);
+void rtsx_release_chip(struct rtsx_chip *chip);
+void rtsx_polling_func(struct rtsx_chip *chip);
+void rtsx_stop_cmd(struct rtsx_chip *chip, int card);
+int rtsx_write_register(struct rtsx_chip *chip, u16 addr, u8 mask, u8 data);
+int rtsx_read_register(struct rtsx_chip *chip, u16 addr, u8 *data);
+int rtsx_write_cfg_dw(struct rtsx_chip *chip,
 		      u8 func_no, u16 addr, u32 mask, u32 val);
-पूर्णांक rtsx_पढ़ो_cfg_dw(काष्ठा rtsx_chip *chip, u8 func_no, u16 addr, u32 *val);
-पूर्णांक rtsx_ग_लिखो_cfg_seq(काष्ठा rtsx_chip *chip,
-		       u8 func, u16 addr, u8 *buf, पूर्णांक len);
-पूर्णांक rtsx_पढ़ो_cfg_seq(काष्ठा rtsx_chip *chip,
-		      u8 func, u16 addr, u8 *buf, पूर्णांक len);
-पूर्णांक rtsx_ग_लिखो_phy_रेजिस्टर(काष्ठा rtsx_chip *chip, u8 addr, u16 val);
-पूर्णांक rtsx_पढ़ो_phy_रेजिस्टर(काष्ठा rtsx_chip *chip, u8 addr, u16 *val);
-पूर्णांक rtsx_पढ़ो_efuse(काष्ठा rtsx_chip *chip, u8 addr, u8 *val);
-पूर्णांक rtsx_ग_लिखो_efuse(काष्ठा rtsx_chip *chip, u8 addr, u8 val);
-पूर्णांक rtsx_clr_phy_reg_bit(काष्ठा rtsx_chip *chip, u8 reg, u8 bit);
-पूर्णांक rtsx_set_phy_reg_bit(काष्ठा rtsx_chip *chip, u8 reg, u8 bit);
-व्योम rtsx_enter_ss(काष्ठा rtsx_chip *chip);
-व्योम rtsx_निकास_ss(काष्ठा rtsx_chip *chip);
-पूर्णांक rtsx_pre_handle_पूर्णांकerrupt(काष्ठा rtsx_chip *chip);
-व्योम rtsx_enter_L1(काष्ठा rtsx_chip *chip);
-व्योम rtsx_निकास_L1(काष्ठा rtsx_chip *chip);
-व्योम rtsx_करो_beक्रमe_घातer_करोwn(काष्ठा rtsx_chip *chip, पूर्णांक pm_stat);
-व्योम rtsx_enable_aspm(काष्ठा rtsx_chip *chip);
-व्योम rtsx_disable_aspm(काष्ठा rtsx_chip *chip);
-पूर्णांक rtsx_पढ़ो_ppbuf(काष्ठा rtsx_chip *chip, u8 *buf, पूर्णांक buf_len);
-पूर्णांक rtsx_ग_लिखो_ppbuf(काष्ठा rtsx_chip *chip, u8 *buf, पूर्णांक buf_len);
-पूर्णांक rtsx_check_chip_exist(काष्ठा rtsx_chip *chip);
+int rtsx_read_cfg_dw(struct rtsx_chip *chip, u8 func_no, u16 addr, u32 *val);
+int rtsx_write_cfg_seq(struct rtsx_chip *chip,
+		       u8 func, u16 addr, u8 *buf, int len);
+int rtsx_read_cfg_seq(struct rtsx_chip *chip,
+		      u8 func, u16 addr, u8 *buf, int len);
+int rtsx_write_phy_register(struct rtsx_chip *chip, u8 addr, u16 val);
+int rtsx_read_phy_register(struct rtsx_chip *chip, u8 addr, u16 *val);
+int rtsx_read_efuse(struct rtsx_chip *chip, u8 addr, u8 *val);
+int rtsx_write_efuse(struct rtsx_chip *chip, u8 addr, u8 val);
+int rtsx_clr_phy_reg_bit(struct rtsx_chip *chip, u8 reg, u8 bit);
+int rtsx_set_phy_reg_bit(struct rtsx_chip *chip, u8 reg, u8 bit);
+void rtsx_enter_ss(struct rtsx_chip *chip);
+void rtsx_exit_ss(struct rtsx_chip *chip);
+int rtsx_pre_handle_interrupt(struct rtsx_chip *chip);
+void rtsx_enter_L1(struct rtsx_chip *chip);
+void rtsx_exit_L1(struct rtsx_chip *chip);
+void rtsx_do_before_power_down(struct rtsx_chip *chip, int pm_stat);
+void rtsx_enable_aspm(struct rtsx_chip *chip);
+void rtsx_disable_aspm(struct rtsx_chip *chip);
+int rtsx_read_ppbuf(struct rtsx_chip *chip, u8 *buf, int buf_len);
+int rtsx_write_ppbuf(struct rtsx_chip *chip, u8 *buf, int buf_len);
+int rtsx_check_chip_exist(struct rtsx_chip *chip);
 
-#पूर्ण_अगर  /* __REALTEK_RTSX_CHIP_H */
+#endif  /* __REALTEK_RTSX_CHIP_H */

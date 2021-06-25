@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * drivers/input/keyboard/hpps2atkbd.h
  *
@@ -10,27 +9,27 @@
  * HP PS/2 AT-compatible Keyboard, found in PA/RISC Workstations & Laptops
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
 
 /* Is the keyboard an RDI PrecisionBook? */
-#अगर_अघोषित CONFIG_KEYBOARD_ATKBD_RDI_KEYCODES
+#ifndef CONFIG_KEYBOARD_ATKBD_RDI_KEYCODES
 # define CONFLICT(x,y) x
-#अन्यथा
+#else
 # define CONFLICT(x,y) y
-#पूर्ण_अगर
+#endif
 
-/* sadly RDI (Tadpole) decided to ship a dअगरferent keyboard layout
-   than HP क्रम their PS/2 laptop keyboard which leads to conflicting
+/* sadly RDI (Tadpole) decided to ship a different keyboard layout
+   than HP for their PS/2 laptop keyboard which leads to conflicting
    keycodes between a normal HP PS/2 keyboard and a RDI Precisionbook.
                                 HP:		RDI:            */
-#घोषणा C_07	CONFLICT(	KEY_F12,	KEY_F1		)
-#घोषणा C_11	CONFLICT(	KEY_LEFTALT,	KEY_LEFTCTRL	)
-#घोषणा C_14	CONFLICT(	KEY_LEFTCTRL,	KEY_CAPSLOCK	)
-#घोषणा C_58	CONFLICT(	KEY_CAPSLOCK,	KEY_RIGHTCTRL	)
-#घोषणा C_61	CONFLICT(	KEY_102ND,	KEY_LEFT	)
+#define C_07	CONFLICT(	KEY_F12,	KEY_F1		)
+#define C_11	CONFLICT(	KEY_LEFTALT,	KEY_LEFTCTRL	)
+#define C_14	CONFLICT(	KEY_LEFTCTRL,	KEY_CAPSLOCK	)
+#define C_58	CONFLICT(	KEY_CAPSLOCK,	KEY_RIGHTCTRL	)
+#define C_61	CONFLICT(	KEY_102ND,	KEY_LEFT	)
 
 /* Raw SET 2 scancode table */
 
@@ -67,7 +66,7 @@
 /* f0 */  KEY_INSERT,   KEY_DELETE,    KEY_DOWN,      KEY_RESERVED,  KEY_RIGHT,     KEY_UP,       KEY_RESERVED,  KEY_PAUSE,
 /* f8 */  KEY_RESERVED, KEY_RESERVED,  KEY_PAGEDOWN,  KEY_RESERVED,  KEY_SYSRQ,     KEY_PAGEUP,   KEY_RESERVED,  KEY_RESERVED,
 
-/* These are offset क्रम escaped keycodes: */
+/* These are offset for escaped keycodes: */
 
 /* 00 */  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,  KEY_F7,        KEY_RESERVED,  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,
 /* 08 */  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,  KEY_LEFTMETA,  KEY_RIGHTMETA, KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,
@@ -102,10 +101,10 @@
 /* f0 */  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,
 /* f8 */  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED,  KEY_RESERVED, KEY_RESERVED,  KEY_RESERVED
 
-#अघोषित CONFLICT
-#अघोषित C_07
-#अघोषित C_11
-#अघोषित C_14
-#अघोषित C_58
-#अघोषित C_61
+#undef CONFLICT
+#undef C_07
+#undef C_11
+#undef C_14
+#undef C_58
+#undef C_61
 

@@ -1,249 +1,248 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/extable.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <xen/xen.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/extable.h>
+#include <linux/uaccess.h>
+#include <linux/sched/debug.h>
+#include <xen/xen.h>
 
-#समावेश <यंत्र/fpu/पूर्णांकernal.h>
-#समावेश <यंत्र/sev.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/kdebug.h>
+#include <asm/fpu/internal.h>
+#include <asm/sev.h>
+#include <asm/traps.h>
+#include <asm/kdebug.h>
 
-प्रकार bool (*ex_handler_t)(स्थिर काष्ठा exception_table_entry *,
-			    काष्ठा pt_regs *, पूर्णांक, अचिन्हित दीर्घ,
-			    अचिन्हित दीर्घ);
+typedef bool (*ex_handler_t)(const struct exception_table_entry *,
+			    struct pt_regs *, int, unsigned long,
+			    unsigned long);
 
-अटल अंतरभूत अचिन्हित दीर्घ
-ex_fixup_addr(स्थिर काष्ठा exception_table_entry *x)
-अणु
-	वापस (अचिन्हित दीर्घ)&x->fixup + x->fixup;
-पूर्ण
-अटल अंतरभूत ex_handler_t
-ex_fixup_handler(स्थिर काष्ठा exception_table_entry *x)
-अणु
-	वापस (ex_handler_t)((अचिन्हित दीर्घ)&x->handler + x->handler);
-पूर्ण
+static inline unsigned long
+ex_fixup_addr(const struct exception_table_entry *x)
+{
+	return (unsigned long)&x->fixup + x->fixup;
+}
+static inline ex_handler_t
+ex_fixup_handler(const struct exception_table_entry *x)
+{
+	return (ex_handler_t)((unsigned long)&x->handler + x->handler);
+}
 
-__visible bool ex_handler_शेष(स्थिर काष्ठा exception_table_entry *fixup,
-				  काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				  अचिन्हित दीर्घ error_code,
-				  अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_default(const struct exception_table_entry *fixup,
+				  struct pt_regs *regs, int trapnr,
+				  unsigned long error_code,
+				  unsigned long fault_addr)
+{
 	regs->ip = ex_fixup_addr(fixup);
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(ex_handler_शेष);
+	return true;
+}
+EXPORT_SYMBOL(ex_handler_default);
 
-__visible bool ex_handler_fault(स्थिर काष्ठा exception_table_entry *fixup,
-				काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				अचिन्हित दीर्घ error_code,
-				अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_fault(const struct exception_table_entry *fixup,
+				struct pt_regs *regs, int trapnr,
+				unsigned long error_code,
+				unsigned long fault_addr)
+{
 	regs->ip = ex_fixup_addr(fixup);
 	regs->ax = trapnr;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(ex_handler_fault);
 
 /*
- * Handler क्रम when we fail to restore a task's FPU state.  We should never get
- * here because the FPU state of a task using the FPU (task->thपढ़ो.fpu.state)
+ * Handler for when we fail to restore a task's FPU state.  We should never get
+ * here because the FPU state of a task using the FPU (task->thread.fpu.state)
  * should always be valid.  However, past bugs have allowed userspace to set
- * reserved bits in the XSAVE area using PTRACE_SETREGSET or sys_rt_sigवापस().
- * These caused XRSTOR to fail when चयनing to the task, leaking the FPU
- * रेजिस्टरs of the task previously executing on the CPU.  Mitigate this class
+ * reserved bits in the XSAVE area using PTRACE_SETREGSET or sys_rt_sigreturn().
+ * These caused XRSTOR to fail when switching to the task, leaking the FPU
+ * registers of the task previously executing on the CPU.  Mitigate this class
  * of vulnerability by restoring from the initial state (essentially, zeroing
- * out all the FPU रेजिस्टरs) अगर we can't restore from the task's FPU state.
+ * out all the FPU registers) if we can't restore from the task's FPU state.
  */
-__visible bool ex_handler_fprestore(स्थिर काष्ठा exception_table_entry *fixup,
-				    काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				    अचिन्हित दीर्घ error_code,
-				    अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_fprestore(const struct exception_table_entry *fixup,
+				    struct pt_regs *regs, int trapnr,
+				    unsigned long error_code,
+				    unsigned long fault_addr)
+{
 	regs->ip = ex_fixup_addr(fixup);
 
 	WARN_ONCE(1, "Bad FPU state detected at %pB, reinitializing FPU registers.",
-		  (व्योम *)inकाष्ठाion_poपूर्णांकer(regs));
+		  (void *)instruction_pointer(regs));
 
 	__copy_kernel_to_fpregs(&init_fpstate, -1);
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(ex_handler_fprestore);
 
-__visible bool ex_handler_uaccess(स्थिर काष्ठा exception_table_entry *fixup,
-				  काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				  अचिन्हित दीर्घ error_code,
-				  अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_uaccess(const struct exception_table_entry *fixup,
+				  struct pt_regs *regs, int trapnr,
+				  unsigned long error_code,
+				  unsigned long fault_addr)
+{
 	WARN_ONCE(trapnr == X86_TRAP_GP, "General protection fault in user access. Non-canonical address?");
 	regs->ip = ex_fixup_addr(fixup);
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ex_handler_uaccess);
 
-__visible bool ex_handler_copy(स्थिर काष्ठा exception_table_entry *fixup,
-			       काष्ठा pt_regs *regs, पूर्णांक trapnr,
-			       अचिन्हित दीर्घ error_code,
-			       अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_copy(const struct exception_table_entry *fixup,
+			       struct pt_regs *regs, int trapnr,
+			       unsigned long error_code,
+			       unsigned long fault_addr)
+{
 	WARN_ONCE(trapnr == X86_TRAP_GP, "General protection fault in user access. Non-canonical address?");
 	regs->ip = ex_fixup_addr(fixup);
 	regs->ax = trapnr;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ex_handler_copy);
 
-__visible bool ex_handler_rdmsr_unsafe(स्थिर काष्ठा exception_table_entry *fixup,
-				       काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				       अचिन्हित दीर्घ error_code,
-				       अचिन्हित दीर्घ fault_addr)
-अणु
-	अगर (pr_warn_once("unchecked MSR access error: RDMSR from 0x%x at rIP: 0x%lx (%pS)\n",
-			 (अचिन्हित पूर्णांक)regs->cx, regs->ip, (व्योम *)regs->ip))
+__visible bool ex_handler_rdmsr_unsafe(const struct exception_table_entry *fixup,
+				       struct pt_regs *regs, int trapnr,
+				       unsigned long error_code,
+				       unsigned long fault_addr)
+{
+	if (pr_warn_once("unchecked MSR access error: RDMSR from 0x%x at rIP: 0x%lx (%pS)\n",
+			 (unsigned int)regs->cx, regs->ip, (void *)regs->ip))
 		show_stack_regs(regs);
 
-	/* Pretend that the पढ़ो succeeded and वापसed 0. */
+	/* Pretend that the read succeeded and returned 0. */
 	regs->ip = ex_fixup_addr(fixup);
 	regs->ax = 0;
 	regs->dx = 0;
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ex_handler_rdmsr_unsafe);
 
-__visible bool ex_handler_wrmsr_unsafe(स्थिर काष्ठा exception_table_entry *fixup,
-				       काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				       अचिन्हित दीर्घ error_code,
-				       अचिन्हित दीर्घ fault_addr)
-अणु
-	अगर (pr_warn_once("unchecked MSR access error: WRMSR to 0x%x (tried to write 0x%08x%08x) at rIP: 0x%lx (%pS)\n",
-			 (अचिन्हित पूर्णांक)regs->cx, (अचिन्हित पूर्णांक)regs->dx,
-			 (अचिन्हित पूर्णांक)regs->ax,  regs->ip, (व्योम *)regs->ip))
+__visible bool ex_handler_wrmsr_unsafe(const struct exception_table_entry *fixup,
+				       struct pt_regs *regs, int trapnr,
+				       unsigned long error_code,
+				       unsigned long fault_addr)
+{
+	if (pr_warn_once("unchecked MSR access error: WRMSR to 0x%x (tried to write 0x%08x%08x) at rIP: 0x%lx (%pS)\n",
+			 (unsigned int)regs->cx, (unsigned int)regs->dx,
+			 (unsigned int)regs->ax,  regs->ip, (void *)regs->ip))
 		show_stack_regs(regs);
 
-	/* Pretend that the ग_लिखो succeeded. */
+	/* Pretend that the write succeeded. */
 	regs->ip = ex_fixup_addr(fixup);
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ex_handler_wrmsr_unsafe);
 
-__visible bool ex_handler_clear_fs(स्थिर काष्ठा exception_table_entry *fixup,
-				   काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				   अचिन्हित दीर्घ error_code,
-				   अचिन्हित दीर्घ fault_addr)
-अणु
-	अगर (अटल_cpu_has(X86_BUG_शून्य_SEG))
-		यंत्र अस्थिर ("mov %0, %%fs" : : "rm" (__USER_DS));
-	यंत्र अस्थिर ("mov %0, %%fs" : : "rm" (0));
-	वापस ex_handler_शेष(fixup, regs, trapnr, error_code, fault_addr);
-पूर्ण
+__visible bool ex_handler_clear_fs(const struct exception_table_entry *fixup,
+				   struct pt_regs *regs, int trapnr,
+				   unsigned long error_code,
+				   unsigned long fault_addr)
+{
+	if (static_cpu_has(X86_BUG_NULL_SEG))
+		asm volatile ("mov %0, %%fs" : : "rm" (__USER_DS));
+	asm volatile ("mov %0, %%fs" : : "rm" (0));
+	return ex_handler_default(fixup, regs, trapnr, error_code, fault_addr);
+}
 EXPORT_SYMBOL(ex_handler_clear_fs);
 
-क्रमागत handler_type ex_get_fault_handler_type(अचिन्हित दीर्घ ip)
-अणु
-	स्थिर काष्ठा exception_table_entry *e;
+enum handler_type ex_get_fault_handler_type(unsigned long ip)
+{
+	const struct exception_table_entry *e;
 	ex_handler_t handler;
 
 	e = search_exception_tables(ip);
-	अगर (!e)
-		वापस EX_HANDLER_NONE;
+	if (!e)
+		return EX_HANDLER_NONE;
 	handler = ex_fixup_handler(e);
-	अगर (handler == ex_handler_fault)
-		वापस EX_HANDLER_FAULT;
-	अन्यथा अगर (handler == ex_handler_uaccess || handler == ex_handler_copy)
-		वापस EX_HANDLER_UACCESS;
-	अन्यथा
-		वापस EX_HANDLER_OTHER;
-पूर्ण
+	if (handler == ex_handler_fault)
+		return EX_HANDLER_FAULT;
+	else if (handler == ex_handler_uaccess || handler == ex_handler_copy)
+		return EX_HANDLER_UACCESS;
+	else
+		return EX_HANDLER_OTHER;
+}
 
-पूर्णांक fixup_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr, अचिन्हित दीर्घ error_code,
-		    अचिन्हित दीर्घ fault_addr)
-अणु
-	स्थिर काष्ठा exception_table_entry *e;
+int fixup_exception(struct pt_regs *regs, int trapnr, unsigned long error_code,
+		    unsigned long fault_addr)
+{
+	const struct exception_table_entry *e;
 	ex_handler_t handler;
 
-#अगर_घोषित CONFIG_PNPBIOS
-	अगर (unlikely(SEGMENT_IS_PNP_CODE(regs->cs))) अणु
-		बाह्य u32 pnp_bios_fault_eip, pnp_bios_fault_esp;
-		बाह्य u32 pnp_bios_is_utter_crap;
+#ifdef CONFIG_PNPBIOS
+	if (unlikely(SEGMENT_IS_PNP_CODE(regs->cs))) {
+		extern u32 pnp_bios_fault_eip, pnp_bios_fault_esp;
+		extern u32 pnp_bios_is_utter_crap;
 		pnp_bios_is_utter_crap = 1;
-		prपूर्णांकk(KERN_CRIT "PNPBIOS fault.. attempting recovery.\n");
-		__यंत्र__ अस्थिर(
+		printk(KERN_CRIT "PNPBIOS fault.. attempting recovery.\n");
+		__asm__ volatile(
 			"movl %0, %%esp\n\t"
 			"jmp *%1\n\t"
 			: : "g" (pnp_bios_fault_esp), "g" (pnp_bios_fault_eip));
 		panic("do_trap: can't hit this");
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
 	e = search_exception_tables(regs->ip);
-	अगर (!e)
-		वापस 0;
+	if (!e)
+		return 0;
 
 	handler = ex_fixup_handler(e);
-	वापस handler(e, regs, trapnr, error_code, fault_addr);
-पूर्ण
+	return handler(e, regs, trapnr, error_code, fault_addr);
+}
 
-बाह्य अचिन्हित पूर्णांक early_recursion_flag;
+extern unsigned int early_recursion_flag;
 
 /* Restricted version used during very early boot */
-व्योम __init early_fixup_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr)
-अणु
+void __init early_fixup_exception(struct pt_regs *regs, int trapnr)
+{
 	/* Ignore early NMIs. */
-	अगर (trapnr == X86_TRAP_NMI)
-		वापस;
+	if (trapnr == X86_TRAP_NMI)
+		return;
 
-	अगर (early_recursion_flag > 2)
-		जाओ halt_loop;
+	if (early_recursion_flag > 2)
+		goto halt_loop;
 
 	/*
 	 * Old CPUs leave the high bits of CS on the stack
-	 * undefined.  I'm not sure which CPUs करो this, but at least
+	 * undefined.  I'm not sure which CPUs do this, but at least
 	 * the 486 DX works this way.
-	 * Xen pv करोमुख्यs are not using the शेष __KERNEL_CS.
+	 * Xen pv domains are not using the default __KERNEL_CS.
 	 */
-	अगर (!xen_pv_करोमुख्य() && regs->cs != __KERNEL_CS)
-		जाओ fail;
+	if (!xen_pv_domain() && regs->cs != __KERNEL_CS)
+		goto fail;
 
 	/*
 	 * The full exception fixup machinery is available as soon as
 	 * the early IDT is loaded.  This means that it is the
 	 * responsibility of extable users to either function correctly
-	 * when handlers are invoked early or to simply aव्योम causing
-	 * exceptions beक्रमe they're पढ़ोy to handle them.
+	 * when handlers are invoked early or to simply avoid causing
+	 * exceptions before they're ready to handle them.
 	 *
 	 * This is better than filtering which handlers can be used,
 	 * because refusing to call a handler here is guaranteed to
 	 * result in a hard-to-debug panic.
 	 *
 	 * Keep in mind that not all vectors actually get here.  Early
-	 * page faults, क्रम example, are special.
+	 * page faults, for example, are special.
 	 */
-	अगर (fixup_exception(regs, trapnr, regs->orig_ax, 0))
-		वापस;
+	if (fixup_exception(regs, trapnr, regs->orig_ax, 0))
+		return;
 
-	अगर (trapnr == X86_TRAP_UD) अणु
-		अगर (report_bug(regs->ip, regs) == BUG_TRAP_TYPE_WARN) अणु
+	if (trapnr == X86_TRAP_UD) {
+		if (report_bug(regs->ip, regs) == BUG_TRAP_TYPE_WARN) {
 			/* Skip the ud2. */
 			regs->ip += LEN_UD2;
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
-		 * If this was a BUG and report_bug वापसs or अगर this
-		 * was just a normal #UD, we want to जारी onward and
+		 * If this was a BUG and report_bug returns or if this
+		 * was just a normal #UD, we want to continue onward and
 		 * crash.
 		 */
-	पूर्ण
+	}
 
 fail:
-	early_prपूर्णांकk("PANIC: early exception 0x%02x IP %lx:%lx error %lx cr2 0x%lx\n",
-		     (अचिन्हित)trapnr, (अचिन्हित दीर्घ)regs->cs, regs->ip,
-		     regs->orig_ax, पढ़ो_cr2());
+	early_printk("PANIC: early exception 0x%02x IP %lx:%lx error %lx cr2 0x%lx\n",
+		     (unsigned)trapnr, (unsigned long)regs->cs, regs->ip,
+		     regs->orig_ax, read_cr2());
 
 	show_regs(regs);
 
 halt_loop:
-	जबतक (true)
+	while (true)
 		halt();
-पूर्ण
+}

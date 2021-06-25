@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  SRAM Memory Management
  *
  *  Copyright (c) 2011 Marvell Semiconductors Inc.
  */
 
-#अगर_अघोषित __DMA_MMP_TDMA_H
-#घोषणा __DMA_MMP_TDMA_H
+#ifndef __DMA_MMP_TDMA_H
+#define __DMA_MMP_TDMA_H
 
-#समावेश <linux/genभाग.स>
+#include <linux/genalloc.h>
 
 /* ARBITRARY:  SRAM allocations are multiples of this 2^N size */
-#घोषणा SRAM_GRANULARITY	512
+#define SRAM_GRANULARITY	512
 
-क्रमागत sram_type अणु
+enum sram_type {
 	MMP_SRAM_UNDEFINED = 0,
 	MMP_ASRAM,
 	MMP_ISRAM,
-पूर्ण;
+};
 
-काष्ठा sram_platdata अणु
-	अक्षर *pool_name;
-	पूर्णांक granularity;
-पूर्ण;
+struct sram_platdata {
+	char *pool_name;
+	int granularity;
+};
 
-#अगर_घोषित CONFIG_MMP_SRAM
-बाह्य काष्ठा gen_pool *sram_get_gpool(अक्षर *pool_name);
-#अन्यथा
-अटल अंतरभूत काष्ठा gen_pool *sram_get_gpool(अक्षर *pool_name)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MMP_SRAM
+extern struct gen_pool *sram_get_gpool(char *pool_name);
+#else
+static inline struct gen_pool *sram_get_gpool(char *pool_name)
+{
+	return NULL;
+}
+#endif
 
-#पूर्ण_अगर /* __DMA_MMP_TDMA_H */
+#endif /* __DMA_MMP_TDMA_H */

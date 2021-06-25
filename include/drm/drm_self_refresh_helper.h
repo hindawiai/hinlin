@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
  * Copyright (C) 2019 Google, Inc.
  *
  * Authors:
  * Sean Paul <seanpaul@chromium.org>
  */
-#अगर_अघोषित DRM_SELF_REFRESH_HELPER_H_
-#घोषणा DRM_SELF_REFRESH_HELPER_H_
+#ifndef DRM_SELF_REFRESH_HELPER_H_
+#define DRM_SELF_REFRESH_HELPER_H_
 
-काष्ठा drm_atomic_state;
-काष्ठा drm_crtc;
+struct drm_atomic_state;
+struct drm_crtc;
 
-व्योम drm_self_refresh_helper_alter_state(काष्ठा drm_atomic_state *state);
-व्योम drm_self_refresh_helper_update_avg_बार(काष्ठा drm_atomic_state *state,
-					अचिन्हित पूर्णांक commit_समय_ms,
-					अचिन्हित पूर्णांक new_self_refresh_mask);
+void drm_self_refresh_helper_alter_state(struct drm_atomic_state *state);
+void drm_self_refresh_helper_update_avg_times(struct drm_atomic_state *state,
+					unsigned int commit_time_ms,
+					unsigned int new_self_refresh_mask);
 
-पूर्णांक drm_self_refresh_helper_init(काष्ठा drm_crtc *crtc);
-व्योम drm_self_refresh_helper_cleanup(काष्ठा drm_crtc *crtc);
-#पूर्ण_अगर
+int drm_self_refresh_helper_init(struct drm_crtc *crtc);
+void drm_self_refresh_helper_cleanup(struct drm_crtc *crtc);
+#endif

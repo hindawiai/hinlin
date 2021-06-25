@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2013-2015 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2015 BMW Car IT GmbH
  */
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <bpf/libbpf.h>
-#समावेश <bpf/bpf.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <bpf/libbpf.h>
+#include <bpf/bpf.h>
 
-#घोषणा MAX_ENTRIES	20
-#घोषणा MAX_CPU		4
-#घोषणा MAX_STARS	40
+#define MAX_ENTRIES	20
+#define MAX_CPU		4
+#define MAX_STARS	40
 
-काष्ठा cpu_hist अणु
-	दीर्घ data[MAX_ENTRIES];
-	दीर्घ max;
-पूर्ण;
+struct cpu_hist {
+	long data[MAX_ENTRIES];
+	long max;
+};
 
-अटल काष्ठा cpu_hist cpu_hist[MAX_CPU];
+static struct cpu_hist cpu_hist[MAX_CPU];
 
-अटल व्योम stars(अक्षर *str, दीर्घ val, दीर्घ max, पूर्णांक width)
-अणु
-	पूर्णांक i;
+static void stars(char *str, long val, long max, int width)
+{
+	int i;
 
-	क्रम (i = 0; i < (width * val / max) - 1 && i < width - 1; i++)
+	for (i = 0; i < (width * val / max) - 1 && i < width - 1; i++)
 		str[i] = '*';
-	अगर (val > max)
+	if (val > max)
 		str[i - 1] = '+';
 	str[i] = '\0';
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_hist(व्योम)
-अणु
-	अक्षर starstr[MAX_STARS];
-	काष्ठा cpu_hist *hist;
-	पूर्णांक i, j;
+static void print_hist(void)
+{
+	char starstr[MAX_STARS];
+	struct cpu_hist *hist;
+	int i, j;
 
 	/* clear screen */
-	म_लिखो("\033[2J");
+	printf("\033[2J");
 
-	क्रम (j = 0; j < MAX_CPU; j++) अणु
+	for (j = 0; j < MAX_CPU; j++) {
 		hist = &cpu_hist[j];
 
 		/* ignore CPUs without data (maybe offline?) */
-		अगर (hist->max == 0)
-			जारी;
+		if (hist->max == 0)
+			continue;
 
-		म_लिखो("CPU %d\n", j);
-		म_लिखो("      latency        : count     distribution\n");
-		क्रम (i = 1; i <= MAX_ENTRIES; i++) अणु
+		printf("CPU %d\n", j);
+		printf("      latency        : count     distribution\n");
+		for (i = 1; i <= MAX_ENTRIES; i++) {
 			stars(starstr, hist->data[i - 1], hist->max, MAX_STARS);
-			म_लिखो("%8ld -> %-8ld : %-8ld |%-*s|\n",
+			printf("%8ld -> %-8ld : %-8ld |%-*s|\n",
 				(1l << i) >> 1, (1l << i) - 1,
 				hist->data[i - 1], MAX_STARS, starstr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम get_data(पूर्णांक fd)
-अणु
-	दीर्घ key, value;
-	पूर्णांक c, i;
+static void get_data(int fd)
+{
+	long key, value;
+	int c, i;
 
-	क्रम (i = 0; i < MAX_CPU; i++)
+	for (i = 0; i < MAX_CPU; i++)
 		cpu_hist[i].max = 0;
 
-	क्रम (c = 0; c < MAX_CPU; c++) अणु
-		क्रम (i = 0; i < MAX_ENTRIES; i++) अणु
+	for (c = 0; c < MAX_CPU; c++) {
+		for (i = 0; i < MAX_ENTRIES; i++) {
 			key = c * MAX_ENTRIES + i;
 			bpf_map_lookup_elem(fd, &key, &value);
 
 			cpu_hist[c].data[i] = value;
-			अगर (value > cpu_hist[c].max)
+			if (value > cpu_hist[c].max)
 				cpu_hist[c].max = value;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा bpf_link *links[2];
-	काष्ठा bpf_program *prog;
-	काष्ठा bpf_object *obj;
-	अक्षर filename[256];
-	पूर्णांक map_fd, i = 0;
+int main(int argc, char **argv)
+{
+	struct bpf_link *links[2];
+	struct bpf_program *prog;
+	struct bpf_object *obj;
+	char filename[256];
+	int map_fd, i = 0;
 
-	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__खोलो_file(filename, शून्य);
-	अगर (libbpf_get_error(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
-		वापस 0;
-	पूर्ण
+	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__open_file(filename, NULL);
+	if (libbpf_get_error(obj)) {
+		fprintf(stderr, "ERROR: opening BPF object file failed\n");
+		return 0;
+	}
 
 	/* load BPF program */
-	अगर (bpf_object__load(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (bpf_object__load(obj)) {
+		fprintf(stderr, "ERROR: loading BPF object file failed\n");
+		goto cleanup;
+	}
 
 	map_fd = bpf_object__find_map_fd_by_name(obj, "my_lat");
-	अगर (map_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: finding a map in obj file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (map_fd < 0) {
+		fprintf(stderr, "ERROR: finding a map in obj file failed\n");
+		goto cleanup;
+	}
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
+	bpf_object__for_each_program(prog, obj) {
 		links[i] = bpf_program__attach(prog);
-		अगर (libbpf_get_error(links[i])) अणु
-			ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
-			links[i] = शून्य;
-			जाओ cleanup;
-		पूर्ण
+		if (libbpf_get_error(links[i])) {
+			fprintf(stderr, "ERROR: bpf_program__attach failed\n");
+			links[i] = NULL;
+			goto cleanup;
+		}
 		i++;
-	पूर्ण
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		get_data(map_fd);
-		prपूर्णांक_hist();
+		print_hist();
 		sleep(5);
-	पूर्ण
+	}
 
 cleanup:
-	क्रम (i--; i >= 0; i--)
+	for (i--; i >= 0; i--)
 		bpf_link__destroy(links[i]);
 
-	bpf_object__बंद(obj);
-	वापस 0;
-पूर्ण
+	bpf_object__close(obj);
+	return 0;
+}

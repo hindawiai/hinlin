@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * dlmconvert.h
  *
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित DLMCONVERT_H
-#घोषणा DLMCONVERT_H
+#ifndef DLMCONVERT_H
+#define DLMCONVERT_H
 
-क्रमागत dlm_status dlmconvert_master(काष्ठा dlm_ctxt *dlm,
-				  काष्ठा dlm_lock_resource *res,
-				  काष्ठा dlm_lock *lock, पूर्णांक flags, पूर्णांक type);
-क्रमागत dlm_status dlmconvert_remote(काष्ठा dlm_ctxt *dlm,
-				  काष्ठा dlm_lock_resource *res,
-				  काष्ठा dlm_lock *lock, पूर्णांक flags, पूर्णांक type);
+enum dlm_status dlmconvert_master(struct dlm_ctxt *dlm,
+				  struct dlm_lock_resource *res,
+				  struct dlm_lock *lock, int flags, int type);
+enum dlm_status dlmconvert_remote(struct dlm_ctxt *dlm,
+				  struct dlm_lock_resource *res,
+				  struct dlm_lock *lock, int flags, int type);
 
-#पूर्ण_अगर
+#endif

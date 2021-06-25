@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#अगर_अघोषित _I40E_STATUS_H_
-#घोषणा _I40E_STATUS_H_
+#ifndef _I40E_STATUS_H_
+#define _I40E_STATUS_H_
 
 /* Error Codes */
-क्रमागत i40e_status_code अणु
+enum i40e_status_code {
 	I40E_SUCCESS				= 0,
 	I40E_ERR_NVM				= -1,
 	I40E_ERR_NVM_CHECKSUM			= -2,
@@ -74,6 +73,6 @@
 	I40E_NOT_SUPPORTED			= -64,
 	I40E_ERR_FIRMWARE_API_VERSION		= -65,
 	I40E_ERR_ADMIN_QUEUE_CRITICAL_ERROR	= -66,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _I40E_STATUS_H_ */
+#endif /* _I40E_STATUS_H_ */

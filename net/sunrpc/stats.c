@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/net/sunrpc/stats.c
  *
  * procfs-based user access to generic RPC statistics. The stats files
  * reside in /proc/net/rpc.
  *
- * The पढ़ो routines assume that the buffer passed in is just big enough.
+ * The read routines assume that the buffer passed in is just big enough.
  * If you implement an RPC service that has its own stats routine which
- * appends the generic RPC stats, make sure you करोn't exceed the PAGE_SIZE
+ * appends the generic RPC stats, make sure you don't exceed the PAGE_SIZE
  * limit.
  *
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/metrics.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/metrics.h>
+#include <linux/rcupdate.h>
 
-#समावेश <trace/events/sunrpc.h>
+#include <trace/events/sunrpc.h>
 
-#समावेश "netns.h"
+#include "netns.h"
 
-#घोषणा RPCDBG_FACILITY	RPCDBG_MISC
+#define RPCDBG_FACILITY	RPCDBG_MISC
 
 /*
  * Get RPC client stats
  */
-अटल पूर्णांक rpc_proc_show(काष्ठा seq_file *seq, व्योम *v) अणु
-	स्थिर काष्ठा rpc_stat	*statp = seq->निजी;
-	स्थिर काष्ठा rpc_program *prog = statp->program;
-	अचिन्हित पूर्णांक i, j;
+static int rpc_proc_show(struct seq_file *seq, void *v) {
+	const struct rpc_stat	*statp = seq->private;
+	const struct rpc_program *prog = statp->program;
+	unsigned int i, j;
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		"net %u %u %u %u\n",
 			statp->netcnt,
 			statp->netudpcnt,
 			statp->nettcpcnt,
 			statp->nettcpconn);
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		"rpc %u %u %u\n",
 			statp->rpccnt,
 			statp->rpcretrans,
 			statp->rpcauthrefresh);
 
-	क्रम (i = 0; i < prog->nrvers; i++) अणु
-		स्थिर काष्ठा rpc_version *vers = prog->version[i];
-		अगर (!vers)
-			जारी;
-		seq_म_लिखो(seq, "proc%u %u",
+	for (i = 0; i < prog->nrvers; i++) {
+		const struct rpc_version *vers = prog->version[i];
+		if (!vers)
+			continue;
+		seq_printf(seq, "proc%u %u",
 					vers->number, vers->nrprocs);
-		क्रम (j = 0; j < vers->nrprocs; j++)
-			seq_म_लिखो(seq, " %u", vers->counts[j]);
-		seq_अ_दो(seq, '\n');
-	पूर्ण
-	वापस 0;
-पूर्ण
+		for (j = 0; j < vers->nrprocs; j++)
+			seq_printf(seq, " %u", vers->counts[j]);
+		seq_putc(seq, '\n');
+	}
+	return 0;
+}
 
-अटल पूर्णांक rpc_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, rpc_proc_show, PDE_DATA(inode));
-पूर्ण
+static int rpc_proc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, rpc_proc_show, PDE_DATA(inode));
+}
 
-अटल स्थिर काष्ठा proc_ops rpc_proc_ops = अणु
-	.proc_खोलो	= rpc_proc_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops rpc_proc_ops = {
+	.proc_open	= rpc_proc_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-पूर्ण;
+};
 
 /*
  * Get RPC server stats
  */
-व्योम svc_seq_show(काष्ठा seq_file *seq, स्थिर काष्ठा svc_stat *statp)
-अणु
-	स्थिर काष्ठा svc_program *prog = statp->program;
-	स्थिर काष्ठा svc_version *vers;
-	अचिन्हित पूर्णांक i, j;
+void svc_seq_show(struct seq_file *seq, const struct svc_stat *statp)
+{
+	const struct svc_program *prog = statp->program;
+	const struct svc_version *vers;
+	unsigned int i, j;
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		"net %u %u %u %u\n",
 			statp->netcnt,
 			statp->netudpcnt,
 			statp->nettcpcnt,
 			statp->nettcpconn);
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		"rpc %u %u %u %u %u\n",
 			statp->rpccnt,
 			statp->rpcbadfmt+statp->rpcbadauth+statp->rpcbadclnt,
@@ -100,245 +99,245 @@
 			statp->rpcbadauth,
 			statp->rpcbadclnt);
 
-	क्रम (i = 0; i < prog->pg_nvers; i++) अणु
+	for (i = 0; i < prog->pg_nvers; i++) {
 		vers = prog->pg_vers[i];
-		अगर (!vers)
-			जारी;
-		seq_म_लिखो(seq, "proc%d %u", i, vers->vs_nproc);
-		क्रम (j = 0; j < vers->vs_nproc; j++)
-			seq_म_लिखो(seq, " %u", vers->vs_count[j]);
-		seq_अ_दो(seq, '\n');
-	पूर्ण
-पूर्ण
+		if (!vers)
+			continue;
+		seq_printf(seq, "proc%d %u", i, vers->vs_nproc);
+		for (j = 0; j < vers->vs_nproc; j++)
+			seq_printf(seq, " %u", vers->vs_count[j]);
+		seq_putc(seq, '\n');
+	}
+}
 EXPORT_SYMBOL_GPL(svc_seq_show);
 
 /**
- * rpc_alloc_iostats - allocate an rpc_iostats काष्ठाure
+ * rpc_alloc_iostats - allocate an rpc_iostats structure
  * @clnt: RPC program, version, and xprt
  *
  */
-काष्ठा rpc_iostats *rpc_alloc_iostats(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_iostats *stats;
-	पूर्णांक i;
+struct rpc_iostats *rpc_alloc_iostats(struct rpc_clnt *clnt)
+{
+	struct rpc_iostats *stats;
+	int i;
 
-	stats = kसुस्मृति(clnt->cl_maxproc, माप(*stats), GFP_KERNEL);
-	अगर (stats) अणु
-		क्रम (i = 0; i < clnt->cl_maxproc; i++)
+	stats = kcalloc(clnt->cl_maxproc, sizeof(*stats), GFP_KERNEL);
+	if (stats) {
+		for (i = 0; i < clnt->cl_maxproc; i++)
 			spin_lock_init(&stats[i].om_lock);
-	पूर्ण
-	वापस stats;
-पूर्ण
+	}
+	return stats;
+}
 EXPORT_SYMBOL_GPL(rpc_alloc_iostats);
 
 /**
- * rpc_मुक्त_iostats - release an rpc_iostats काष्ठाure
- * @stats: करोomed rpc_iostats काष्ठाure
+ * rpc_free_iostats - release an rpc_iostats structure
+ * @stats: doomed rpc_iostats structure
  *
  */
-व्योम rpc_मुक्त_iostats(काष्ठा rpc_iostats *stats)
-अणु
-	kमुक्त(stats);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_मुक्त_iostats);
+void rpc_free_iostats(struct rpc_iostats *stats)
+{
+	kfree(stats);
+}
+EXPORT_SYMBOL_GPL(rpc_free_iostats);
 
 /**
  * rpc_count_iostats_metrics - tally up per-task stats
  * @task: completed rpc_task
- * @op_metrics: stat काष्ठाure क्रम OP that will accumulate stats from @task
+ * @op_metrics: stat structure for OP that will accumulate stats from @task
  */
-व्योम rpc_count_iostats_metrics(स्थिर काष्ठा rpc_task *task,
-			       काष्ठा rpc_iostats *op_metrics)
-अणु
-	काष्ठा rpc_rqst *req = task->tk_rqstp;
-	kसमय_प्रकार backlog, execute, now;
+void rpc_count_iostats_metrics(const struct rpc_task *task,
+			       struct rpc_iostats *op_metrics)
+{
+	struct rpc_rqst *req = task->tk_rqstp;
+	ktime_t backlog, execute, now;
 
-	अगर (!op_metrics || !req)
-		वापस;
+	if (!op_metrics || !req)
+		return;
 
-	now = kसमय_get();
+	now = ktime_get();
 	spin_lock(&op_metrics->om_lock);
 
 	op_metrics->om_ops++;
 	/* kernel API: om_ops must never become larger than om_ntrans */
 	op_metrics->om_ntrans += max(req->rq_ntrans, 1);
-	op_metrics->om_समयouts += task->tk_समयouts;
+	op_metrics->om_timeouts += task->tk_timeouts;
 
 	op_metrics->om_bytes_sent += req->rq_xmit_bytes_sent;
 	op_metrics->om_bytes_recv += req->rq_reply_bytes_recvd;
 
 	backlog = 0;
-	अगर (kसमय_प्रकारo_ns(req->rq_xसमय)) अणु
-		backlog = kसमय_sub(req->rq_xसमय, task->tk_start);
-		op_metrics->om_queue = kसमय_add(op_metrics->om_queue, backlog);
-	पूर्ण
+	if (ktime_to_ns(req->rq_xtime)) {
+		backlog = ktime_sub(req->rq_xtime, task->tk_start);
+		op_metrics->om_queue = ktime_add(op_metrics->om_queue, backlog);
+	}
 
-	op_metrics->om_rtt = kसमय_add(op_metrics->om_rtt, req->rq_rtt);
+	op_metrics->om_rtt = ktime_add(op_metrics->om_rtt, req->rq_rtt);
 
-	execute = kसमय_sub(now, task->tk_start);
-	op_metrics->om_execute = kसमय_add(op_metrics->om_execute, execute);
-	अगर (task->tk_status < 0)
+	execute = ktime_sub(now, task->tk_start);
+	op_metrics->om_execute = ktime_add(op_metrics->om_execute, execute);
+	if (task->tk_status < 0)
 		op_metrics->om_error_status++;
 
 	spin_unlock(&op_metrics->om_lock);
 
 	trace_rpc_stats_latency(req->rq_task, backlog, req->rq_rtt, execute);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rpc_count_iostats_metrics);
 
 /**
  * rpc_count_iostats - tally up per-task stats
  * @task: completed rpc_task
- * @stats: array of stat काष्ठाures
+ * @stats: array of stat structures
  *
  * Uses the statidx from @task
  */
-व्योम rpc_count_iostats(स्थिर काष्ठा rpc_task *task, काष्ठा rpc_iostats *stats)
-अणु
+void rpc_count_iostats(const struct rpc_task *task, struct rpc_iostats *stats)
+{
 	rpc_count_iostats_metrics(task,
 				  &stats[task->tk_msg.rpc_proc->p_statidx]);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rpc_count_iostats);
 
-अटल व्योम _prपूर्णांक_name(काष्ठा seq_file *seq, अचिन्हित पूर्णांक op,
-			स्थिर काष्ठा rpc_procinfo *procs)
-अणु
-	अगर (procs[op].p_name)
-		seq_म_लिखो(seq, "\t%12s: ", procs[op].p_name);
-	अन्यथा अगर (op == 0)
-		seq_म_लिखो(seq, "\t        NULL: ");
-	अन्यथा
-		seq_म_लिखो(seq, "\t%12u: ", op);
-पूर्ण
+static void _print_name(struct seq_file *seq, unsigned int op,
+			const struct rpc_procinfo *procs)
+{
+	if (procs[op].p_name)
+		seq_printf(seq, "\t%12s: ", procs[op].p_name);
+	else if (op == 0)
+		seq_printf(seq, "\t        NULL: ");
+	else
+		seq_printf(seq, "\t%12u: ", op);
+}
 
-अटल व्योम _add_rpc_iostats(काष्ठा rpc_iostats *a, काष्ठा rpc_iostats *b)
-अणु
+static void _add_rpc_iostats(struct rpc_iostats *a, struct rpc_iostats *b)
+{
 	a->om_ops += b->om_ops;
 	a->om_ntrans += b->om_ntrans;
-	a->om_समयouts += b->om_समयouts;
+	a->om_timeouts += b->om_timeouts;
 	a->om_bytes_sent += b->om_bytes_sent;
 	a->om_bytes_recv += b->om_bytes_recv;
-	a->om_queue = kसमय_add(a->om_queue, b->om_queue);
-	a->om_rtt = kसमय_add(a->om_rtt, b->om_rtt);
-	a->om_execute = kसमय_add(a->om_execute, b->om_execute);
+	a->om_queue = ktime_add(a->om_queue, b->om_queue);
+	a->om_rtt = ktime_add(a->om_rtt, b->om_rtt);
+	a->om_execute = ktime_add(a->om_execute, b->om_execute);
 	a->om_error_status += b->om_error_status;
-पूर्ण
+}
 
-अटल व्योम _prपूर्णांक_rpc_iostats(काष्ठा seq_file *seq, काष्ठा rpc_iostats *stats,
-			       पूर्णांक op, स्थिर काष्ठा rpc_procinfo *procs)
-अणु
-	_prपूर्णांक_name(seq, op, procs);
-	seq_म_लिखो(seq, "%lu %lu %lu %llu %llu %llu %llu %llu %lu\n",
+static void _print_rpc_iostats(struct seq_file *seq, struct rpc_iostats *stats,
+			       int op, const struct rpc_procinfo *procs)
+{
+	_print_name(seq, op, procs);
+	seq_printf(seq, "%lu %lu %lu %llu %llu %llu %llu %llu %lu\n",
 		   stats->om_ops,
 		   stats->om_ntrans,
-		   stats->om_समयouts,
+		   stats->om_timeouts,
 		   stats->om_bytes_sent,
 		   stats->om_bytes_recv,
-		   kसमय_प्रकारo_ms(stats->om_queue),
-		   kसमय_प्रकारo_ms(stats->om_rtt),
-		   kसमय_प्रकारo_ms(stats->om_execute),
+		   ktime_to_ms(stats->om_queue),
+		   ktime_to_ms(stats->om_rtt),
+		   ktime_to_ms(stats->om_execute),
 		   stats->om_error_status);
-पूर्ण
+}
 
-अटल पूर्णांक करो_prपूर्णांक_stats(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt *xprt, व्योम *seqv)
-अणु
-	काष्ठा seq_file *seq = seqv;
+static int do_print_stats(struct rpc_clnt *clnt, struct rpc_xprt *xprt, void *seqv)
+{
+	struct seq_file *seq = seqv;
 
-	xprt->ops->prपूर्णांक_stats(xprt, seq);
-	वापस 0;
-पूर्ण
+	xprt->ops->print_stats(xprt, seq);
+	return 0;
+}
 
-व्योम rpc_clnt_show_stats(काष्ठा seq_file *seq, काष्ठा rpc_clnt *clnt)
-अणु
-	अचिन्हित पूर्णांक op, maxproc = clnt->cl_maxproc;
+void rpc_clnt_show_stats(struct seq_file *seq, struct rpc_clnt *clnt)
+{
+	unsigned int op, maxproc = clnt->cl_maxproc;
 
-	अगर (!clnt->cl_metrics)
-		वापस;
+	if (!clnt->cl_metrics)
+		return;
 
-	seq_म_लिखो(seq, "\tRPC iostats version: %s  ", RPC_IOSTATS_VERS);
-	seq_म_लिखो(seq, "p/v: %u/%u (%s)\n",
+	seq_printf(seq, "\tRPC iostats version: %s  ", RPC_IOSTATS_VERS);
+	seq_printf(seq, "p/v: %u/%u (%s)\n",
 			clnt->cl_prog, clnt->cl_vers, clnt->cl_program->name);
 
-	rpc_clnt_iterate_क्रम_each_xprt(clnt, करो_prपूर्णांक_stats, seq);
+	rpc_clnt_iterate_for_each_xprt(clnt, do_print_stats, seq);
 
-	seq_म_लिखो(seq, "\tper-op statistics\n");
-	क्रम (op = 0; op < maxproc; op++) अणु
-		काष्ठा rpc_iostats stats = अणुपूर्ण;
-		काष्ठा rpc_clnt *next = clnt;
-		करो अणु
+	seq_printf(seq, "\tper-op statistics\n");
+	for (op = 0; op < maxproc; op++) {
+		struct rpc_iostats stats = {};
+		struct rpc_clnt *next = clnt;
+		do {
 			_add_rpc_iostats(&stats, &next->cl_metrics[op]);
-			अगर (next == next->cl_parent)
-				अवरोध;
+			if (next == next->cl_parent)
+				break;
 			next = next->cl_parent;
-		पूर्ण जबतक (next);
-		_prपूर्णांक_rpc_iostats(seq, &stats, op, clnt->cl_procinfo);
-	पूर्ण
-पूर्ण
+		} while (next);
+		_print_rpc_iostats(seq, &stats, op, clnt->cl_procinfo);
+	}
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_show_stats);
 
 /*
- * Register/unरेजिस्टर RPC proc files
+ * Register/unregister RPC proc files
  */
-अटल अंतरभूत काष्ठा proc_dir_entry *
-करो_रेजिस्टर(काष्ठा net *net, स्थिर अक्षर *name, व्योम *data,
-	    स्थिर काष्ठा proc_ops *proc_ops)
-अणु
-	काष्ठा sunrpc_net *sn;
+static inline struct proc_dir_entry *
+do_register(struct net *net, const char *name, void *data,
+	    const struct proc_ops *proc_ops)
+{
+	struct sunrpc_net *sn;
 
-	dprपूर्णांकk("RPC:       registering /proc/net/rpc/%s\n", name);
+	dprintk("RPC:       registering /proc/net/rpc/%s\n", name);
 	sn = net_generic(net, sunrpc_net_id);
-	वापस proc_create_data(name, 0, sn->proc_net_rpc, proc_ops, data);
-पूर्ण
+	return proc_create_data(name, 0, sn->proc_net_rpc, proc_ops, data);
+}
 
-काष्ठा proc_dir_entry *
-rpc_proc_रेजिस्टर(काष्ठा net *net, काष्ठा rpc_stat *statp)
-अणु
-	वापस करो_रेजिस्टर(net, statp->program->name, statp, &rpc_proc_ops);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_proc_रेजिस्टर);
+struct proc_dir_entry *
+rpc_proc_register(struct net *net, struct rpc_stat *statp)
+{
+	return do_register(net, statp->program->name, statp, &rpc_proc_ops);
+}
+EXPORT_SYMBOL_GPL(rpc_proc_register);
 
-व्योम
-rpc_proc_unरेजिस्टर(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा sunrpc_net *sn;
-
-	sn = net_generic(net, sunrpc_net_id);
-	हटाओ_proc_entry(name, sn->proc_net_rpc);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_proc_unरेजिस्टर);
-
-काष्ठा proc_dir_entry *
-svc_proc_रेजिस्टर(काष्ठा net *net, काष्ठा svc_stat *statp, स्थिर काष्ठा proc_ops *proc_ops)
-अणु
-	वापस करो_रेजिस्टर(net, statp->program->pg_name, statp, proc_ops);
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_proc_रेजिस्टर);
-
-व्योम
-svc_proc_unरेजिस्टर(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा sunrpc_net *sn;
+void
+rpc_proc_unregister(struct net *net, const char *name)
+{
+	struct sunrpc_net *sn;
 
 	sn = net_generic(net, sunrpc_net_id);
-	हटाओ_proc_entry(name, sn->proc_net_rpc);
-पूर्ण
-EXPORT_SYMBOL_GPL(svc_proc_unरेजिस्टर);
+	remove_proc_entry(name, sn->proc_net_rpc);
+}
+EXPORT_SYMBOL_GPL(rpc_proc_unregister);
 
-पूर्णांक rpc_proc_init(काष्ठा net *net)
-अणु
-	काष्ठा sunrpc_net *sn;
+struct proc_dir_entry *
+svc_proc_register(struct net *net, struct svc_stat *statp, const struct proc_ops *proc_ops)
+{
+	return do_register(net, statp->program->pg_name, statp, proc_ops);
+}
+EXPORT_SYMBOL_GPL(svc_proc_register);
 
-	dprपूर्णांकk("RPC:       registering /proc/net/rpc\n");
+void
+svc_proc_unregister(struct net *net, const char *name)
+{
+	struct sunrpc_net *sn;
+
 	sn = net_generic(net, sunrpc_net_id);
-	sn->proc_net_rpc = proc_सूची_गढ़ो("rpc", net->proc_net);
-	अगर (sn->proc_net_rpc == शून्य)
-		वापस -ENOMEM;
+	remove_proc_entry(name, sn->proc_net_rpc);
+}
+EXPORT_SYMBOL_GPL(svc_proc_unregister);
 
-	वापस 0;
-पूर्ण
+int rpc_proc_init(struct net *net)
+{
+	struct sunrpc_net *sn;
 
-व्योम rpc_proc_निकास(काष्ठा net *net)
-अणु
-	dprपूर्णांकk("RPC:       unregistering /proc/net/rpc\n");
-	हटाओ_proc_entry("rpc", net->proc_net);
-पूर्ण
+	dprintk("RPC:       registering /proc/net/rpc\n");
+	sn = net_generic(net, sunrpc_net_id);
+	sn->proc_net_rpc = proc_mkdir("rpc", net->proc_net);
+	if (sn->proc_net_rpc == NULL)
+		return -ENOMEM;
+
+	return 0;
+}
+
+void rpc_proc_exit(struct net *net)
+{
+	dprintk("RPC:       unregistering /proc/net/rpc\n");
+	remove_proc_entry("rpc", net->proc_net);
+}

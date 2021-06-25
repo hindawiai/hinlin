@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *  Base port operations क्रम 8250/16550-type serial ports
+ *  Base port operations for 8250/16550-type serial ports
  *
- *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
+ *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  *  Split from 8250_core.c, Copyright (C) 2001 Russell King.
  *
  * A note about mapbase / membase
@@ -12,320 +11,320 @@
  *  membase is an 'ioremapped' cookie.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/console.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_8250.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/kसमय.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/console.h>
+#include <linux/gpio/consumer.h>
+#include <linux/sysrq.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/tty.h>
+#include <linux/ratelimit.h>
+#include <linux/tty_flip.h>
+#include <linux/serial.h>
+#include <linux/serial_8250.h>
+#include <linux/nmi.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/pm_runtime.h>
+#include <linux/ktime.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
-#समावेश "8250.h"
+#include "8250.h"
 
-/* Nuvoton NPCM समयout रेजिस्टर */
-#घोषणा UART_NPCM_TOR          7
-#घोषणा UART_NPCM_TOIE         BIT(7)  /* Timeout Interrupt Enable */
+/* Nuvoton NPCM timeout register */
+#define UART_NPCM_TOR          7
+#define UART_NPCM_TOIE         BIT(7)  /* Timeout Interrupt Enable */
 
 /*
  * Debugging.
  */
-#अगर 0
-#घोषणा DEBUG_AUTOCONF(fmt...)	prपूर्णांकk(fmt)
-#अन्यथा
-#घोषणा DEBUG_AUTOCONF(fmt...)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#if 0
+#define DEBUG_AUTOCONF(fmt...)	printk(fmt)
+#else
+#define DEBUG_AUTOCONF(fmt...)	do { } while (0)
+#endif
 
-#घोषणा BOTH_EMPTY	(UART_LSR_TEMT | UART_LSR_THRE)
+#define BOTH_EMPTY	(UART_LSR_TEMT | UART_LSR_THRE)
 
 /*
- * Here we define the शेष xmit fअगरo size used क्रम each type of UART.
+ * Here we define the default xmit fifo size used for each type of UART.
  */
-अटल स्थिर काष्ठा serial8250_config uart_config[] = अणु
-	[PORT_UNKNOWN] = अणु
+static const struct serial8250_config uart_config[] = {
+	[PORT_UNKNOWN] = {
 		.name		= "unknown",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_8250] = अणु
+	},
+	[PORT_8250] = {
 		.name		= "8250",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_16450] = अणु
+	},
+	[PORT_16450] = {
 		.name		= "16450",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_16550] = अणु
+	},
+	[PORT_16550] = {
 		.name		= "16550",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_16550A] = अणु
+	},
+	[PORT_16550A] = {
 		.name		= "16550A",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 4, 8, 14पूर्ण,
+		.rxtrig_bytes	= {1, 4, 8, 14},
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_CIRRUS] = अणु
+	},
+	[PORT_CIRRUS] = {
 		.name		= "Cirrus",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_16650] = अणु
+	},
+	[PORT_16650] = {
 		.name		= "ST16650",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
 		.flags		= UART_CAP_FIFO | UART_CAP_EFR | UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_16650V2] = अणु
+	},
+	[PORT_16650V2] = {
 		.name		= "ST16650V2",
-		.fअगरo_size	= 32,
+		.fifo_size	= 32,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_01 |
 				  UART_FCR_T_TRIG_00,
-		.rxtrig_bytes	= अणु8, 16, 24, 28पूर्ण,
+		.rxtrig_bytes	= {8, 16, 24, 28},
 		.flags		= UART_CAP_FIFO | UART_CAP_EFR | UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_16750] = अणु
+	},
+	[PORT_16750] = {
 		.name		= "TI16750",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 64,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10 |
 				  UART_FCR7_64BYTE,
-		.rxtrig_bytes	= अणु1, 16, 32, 56पूर्ण,
+		.rxtrig_bytes	= {1, 16, 32, 56},
 		.flags		= UART_CAP_FIFO | UART_CAP_SLEEP | UART_CAP_AFE,
-	पूर्ण,
-	[PORT_STARTECH] = अणु
+	},
+	[PORT_STARTECH] = {
 		.name		= "Startech",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1,
-	पूर्ण,
-	[PORT_16C950] = अणु
+	},
+	[PORT_16C950] = {
 		.name		= "16C950/954",
-		.fअगरo_size	= 128,
+		.fifo_size	= 128,
 		.tx_loadsz	= 128,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		/* UART_CAP_EFR अवरोधs billionon CF bluetooth card. */
+		/* UART_CAP_EFR breaks billionon CF bluetooth card. */
 		.flags		= UART_CAP_FIFO | UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_16654] = अणु
+	},
+	[PORT_16654] = {
 		.name		= "ST16654",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 32,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_01 |
 				  UART_FCR_T_TRIG_10,
-		.rxtrig_bytes	= अणु8, 16, 56, 60पूर्ण,
+		.rxtrig_bytes	= {8, 16, 56, 60},
 		.flags		= UART_CAP_FIFO | UART_CAP_EFR | UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_16850] = अणु
+	},
+	[PORT_16850] = {
 		.name		= "XR16850",
-		.fअगरo_size	= 128,
+		.fifo_size	= 128,
 		.tx_loadsz	= 128,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO | UART_CAP_EFR | UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_RSA] = अणु
+	},
+	[PORT_RSA] = {
 		.name		= "RSA",
-		.fअगरo_size	= 2048,
+		.fifo_size	= 2048,
 		.tx_loadsz	= 2048,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_11,
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_NS16550A] = अणु
+	},
+	[PORT_NS16550A] = {
 		.name		= "NS16550A",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO | UART_NATSEMI,
-	पूर्ण,
-	[PORT_XSCALE] = अणु
+	},
+	[PORT_XSCALE] = {
 		.name		= "XScale",
-		.fअगरo_size	= 32,
+		.fifo_size	= 32,
 		.tx_loadsz	= 32,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO | UART_CAP_UUE | UART_CAP_RTOIE,
-	पूर्ण,
-	[PORT_OCTEON] = अणु
+	},
+	[PORT_OCTEON] = {
 		.name		= "OCTEON",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 64,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_AR7] = अणु
+	},
+	[PORT_AR7] = {
 		.name		= "AR7",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_00,
 		.flags		= UART_CAP_FIFO /* | UART_CAP_AFE */,
-	पूर्ण,
-	[PORT_U6_16550A] = अणु
+	},
+	[PORT_U6_16550A] = {
 		.name		= "U6_16550A",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 64,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE,
-	पूर्ण,
-	[PORT_TEGRA] = अणु
+	},
+	[PORT_TEGRA] = {
 		.name		= "Tegra",
-		.fअगरo_size	= 32,
+		.fifo_size	= 32,
 		.tx_loadsz	= 8,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_01 |
 				  UART_FCR_T_TRIG_01,
-		.rxtrig_bytes	= अणु1, 4, 8, 14पूर्ण,
+		.rxtrig_bytes	= {1, 4, 8, 14},
 		.flags		= UART_CAP_FIFO | UART_CAP_RTOIE,
-	पूर्ण,
-	[PORT_XR17D15X] = अणु
+	},
+	[PORT_XR17D15X] = {
 		.name		= "XR17D15X",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 64,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE | UART_CAP_EFR |
 				  UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_XR17V35X] = अणु
+	},
+	[PORT_XR17V35X] = {
 		.name		= "XR17V35X",
-		.fअगरo_size	= 256,
+		.fifo_size	= 256,
 		.tx_loadsz	= 256,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_11 |
 				  UART_FCR_T_TRIG_11,
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE | UART_CAP_EFR |
 				  UART_CAP_SLEEP,
-	पूर्ण,
-	[PORT_LPC3220] = अणु
+	},
+	[PORT_LPC3220] = {
 		.name		= "LPC3220",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 32,
 		.fcr		= UART_FCR_DMA_SELECT | UART_FCR_ENABLE_FIFO |
 				  UART_FCR_R_TRIG_00 | UART_FCR_T_TRIG_00,
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_BRCM_TRUMANAGE] = अणु
+	},
+	[PORT_BRCM_TRUMANAGE] = {
 		.name		= "TruManage",
-		.fअगरo_size	= 1,
+		.fifo_size	= 1,
 		.tx_loadsz	= 1024,
 		.flags		= UART_CAP_HFIFO,
-	पूर्ण,
-	[PORT_8250_CIR] = अणु
+	},
+	[PORT_8250_CIR] = {
 		.name		= "CIR port"
-	पूर्ण,
-	[PORT_ALTR_16550_F32] = अणु
+	},
+	[PORT_ALTR_16550_F32] = {
 		.name		= "Altera 16550 FIFO32",
-		.fअगरo_size	= 32,
+		.fifo_size	= 32,
 		.tx_loadsz	= 32,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 8, 16, 30पूर्ण,
+		.rxtrig_bytes	= {1, 8, 16, 30},
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE,
-	पूर्ण,
-	[PORT_ALTR_16550_F64] = अणु
+	},
+	[PORT_ALTR_16550_F64] = {
 		.name		= "Altera 16550 FIFO64",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 64,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 16, 32, 62पूर्ण,
+		.rxtrig_bytes	= {1, 16, 32, 62},
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE,
-	पूर्ण,
-	[PORT_ALTR_16550_F128] = अणु
+	},
+	[PORT_ALTR_16550_F128] = {
 		.name		= "Altera 16550 FIFO128",
-		.fअगरo_size	= 128,
+		.fifo_size	= 128,
 		.tx_loadsz	= 128,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 32, 64, 126पूर्ण,
+		.rxtrig_bytes	= {1, 32, 64, 126},
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE,
-	पूर्ण,
+	},
 	/*
 	 * tx_loadsz is set to 63-bytes instead of 64-bytes to implement
 	 * workaround of errata A-008006 which states that tx_loadsz should
-	 * be configured less than Maximum supported fअगरo bytes.
+	 * be configured less than Maximum supported fifo bytes.
 	 */
-	[PORT_16550A_FSL64] = अणु
+	[PORT_16550A_FSL64] = {
 		.name		= "16550A_FSL64",
-		.fअगरo_size	= 64,
+		.fifo_size	= 64,
 		.tx_loadsz	= 63,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10 |
 				  UART_FCR7_64BYTE,
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_RT2880] = अणु
+	},
+	[PORT_RT2880] = {
 		.name		= "Palmchip BK-3103",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 4, 8, 14पूर्ण,
+		.rxtrig_bytes	= {1, 4, 8, 14},
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_DA830] = अणु
+	},
+	[PORT_DA830] = {
 		.name		= "TI DA8xx/66AK2x",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_DMA_SELECT | UART_FCR_ENABLE_FIFO |
 				  UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 4, 8, 14पूर्ण,
+		.rxtrig_bytes	= {1, 4, 8, 14},
 		.flags		= UART_CAP_FIFO | UART_CAP_AFE,
-	पूर्ण,
-	[PORT_MTK_BTIF] = अणु
+	},
+	[PORT_MTK_BTIF] = {
 		.name		= "MediaTek BTIF",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO |
 				  UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT,
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_NPCM] = अणु
+	},
+	[PORT_NPCM] = {
 		.name		= "Nuvoton 16550",
-		.fअगरo_size	= 16,
+		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10 |
 				  UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT,
-		.rxtrig_bytes	= अणु1, 4, 8, 14पूर्ण,
+		.rxtrig_bytes	= {1, 4, 8, 14},
 		.flags		= UART_CAP_FIFO,
-	पूर्ण,
-	[PORT_SUNIX] = अणु
+	},
+	[PORT_SUNIX] = {
 		.name		= "Sunix",
-		.fअगरo_size	= 128,
+		.fifo_size	= 128,
 		.tx_loadsz	= 128,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
-		.rxtrig_bytes	= अणु1, 32, 64, 112पूर्ण,
+		.rxtrig_bytes	= {1, 32, 64, 112},
 		.flags		= UART_CAP_FIFO | UART_CAP_SLEEP,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Uart भागisor latch पढ़ो */
-अटल पूर्णांक शेष_serial_dl_पढ़ो(काष्ठा uart_8250_port *up)
-अणु
-	वापस serial_in(up, UART_DLL) | serial_in(up, UART_DLM) << 8;
-पूर्ण
+/* Uart divisor latch read */
+static int default_serial_dl_read(struct uart_8250_port *up)
+{
+	return serial_in(up, UART_DLL) | serial_in(up, UART_DLM) << 8;
+}
 
-/* Uart भागisor latch ग_लिखो */
-अटल व्योम शेष_serial_dl_ग_लिखो(काष्ठा uart_8250_port *up, पूर्णांक value)
-अणु
+/* Uart divisor latch write */
+static void default_serial_dl_write(struct uart_8250_port *up, int value)
+{
 	serial_out(up, UART_DLL, value & 0xff);
 	serial_out(up, UART_DLM, value >> 8 & 0xff);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SERIAL_8250_RT288X
+#ifdef CONFIG_SERIAL_8250_RT288X
 
-/* Au1x00/RT288x UART hardware has a weird रेजिस्टर layout */
-अटल स्थिर s8 au_io_in_map[8] = अणु
+/* Au1x00/RT288x UART hardware has a weird register layout */
+static const s8 au_io_in_map[8] = {
 	 0,	/* UART_RX  */
 	 2,	/* UART_IER */
 	 3,	/* UART_IIR */
@@ -334,9 +333,9 @@
 	 7,	/* UART_LSR */
 	 8,	/* UART_MSR */
 	-1,	/* UART_SCR (unmapped) */
-पूर्ण;
+};
 
-अटल स्थिर s8 au_io_out_map[8] = अणु
+static const s8 au_io_out_map[8] = {
 	 1,	/* UART_TX  */
 	 2,	/* UART_IER */
 	 4,	/* UART_FCR */
@@ -345,315 +344,315 @@
 	-1,	/* UART_LSR (unmapped) */
 	-1,	/* UART_MSR (unmapped) */
 	-1,	/* UART_SCR (unmapped) */
-पूर्ण;
+};
 
-अचिन्हित पूर्णांक au_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	अगर (offset >= ARRAY_SIZE(au_io_in_map))
-		वापस अच_पूर्णांक_उच्च;
+unsigned int au_serial_in(struct uart_port *p, int offset)
+{
+	if (offset >= ARRAY_SIZE(au_io_in_map))
+		return UINT_MAX;
 	offset = au_io_in_map[offset];
-	अगर (offset < 0)
-		वापस अच_पूर्णांक_उच्च;
-	वापस __raw_पढ़ोl(p->membase + (offset << p->regshअगरt));
-पूर्ण
+	if (offset < 0)
+		return UINT_MAX;
+	return __raw_readl(p->membase + (offset << p->regshift));
+}
 
-व्योम au_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	अगर (offset >= ARRAY_SIZE(au_io_out_map))
-		वापस;
+void au_serial_out(struct uart_port *p, int offset, int value)
+{
+	if (offset >= ARRAY_SIZE(au_io_out_map))
+		return;
 	offset = au_io_out_map[offset];
-	अगर (offset < 0)
-		वापस;
-	__raw_ग_लिखोl(value, p->membase + (offset << p->regshअगरt));
-पूर्ण
+	if (offset < 0)
+		return;
+	__raw_writel(value, p->membase + (offset << p->regshift));
+}
 
-/* Au1x00 haven't got a standard भागisor latch */
-अटल पूर्णांक au_serial_dl_पढ़ो(काष्ठा uart_8250_port *up)
-अणु
-	वापस __raw_पढ़ोl(up->port.membase + 0x28);
-पूर्ण
+/* Au1x00 haven't got a standard divisor latch */
+static int au_serial_dl_read(struct uart_8250_port *up)
+{
+	return __raw_readl(up->port.membase + 0x28);
+}
 
-अटल व्योम au_serial_dl_ग_लिखो(काष्ठा uart_8250_port *up, पूर्णांक value)
-अणु
-	__raw_ग_लिखोl(value, up->port.membase + 0x28);
-पूर्ण
+static void au_serial_dl_write(struct uart_8250_port *up, int value)
+{
+	__raw_writel(value, up->port.membase + 0x28);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल अचिन्हित पूर्णांक hub6_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
+static unsigned int hub6_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
 	outb(p->hub6 - 1 + offset, p->iobase);
-	वापस inb(p->iobase + 1);
-पूर्ण
+	return inb(p->iobase + 1);
+}
 
-अटल व्योम hub6_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
+static void hub6_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
 	outb(p->hub6 - 1 + offset, p->iobase);
 	outb(value, p->iobase + 1);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक mem_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
-	वापस पढ़ोb(p->membase + offset);
-पूर्ण
+static unsigned int mem_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
+	return readb(p->membase + offset);
+}
 
-अटल व्योम mem_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
-	ग_लिखोb(value, p->membase + offset);
-पूर्ण
+static void mem_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
+	writeb(value, p->membase + offset);
+}
 
-अटल व्योम mem16_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
-	ग_लिखोw(value, p->membase + offset);
-पूर्ण
+static void mem16_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
+	writew(value, p->membase + offset);
+}
 
-अटल अचिन्हित पूर्णांक mem16_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
-	वापस पढ़ोw(p->membase + offset);
-पूर्ण
+static unsigned int mem16_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
+	return readw(p->membase + offset);
+}
 
-अटल व्योम mem32_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
-	ग_लिखोl(value, p->membase + offset);
-पूर्ण
+static void mem32_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
+	writel(value, p->membase + offset);
+}
 
-अटल अचिन्हित पूर्णांक mem32_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
-	वापस पढ़ोl(p->membase + offset);
-पूर्ण
+static unsigned int mem32_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
+	return readl(p->membase + offset);
+}
 
-अटल व्योम mem32be_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
-	ioग_लिखो32be(value, p->membase + offset);
-पूर्ण
+static void mem32be_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
+	iowrite32be(value, p->membase + offset);
+}
 
-अटल अचिन्हित पूर्णांक mem32be_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
-	वापस ioपढ़ो32be(p->membase + offset);
-पूर्ण
+static unsigned int mem32be_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
+	return ioread32be(p->membase + offset);
+}
 
-अटल अचिन्हित पूर्णांक io_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
-अणु
-	offset = offset << p->regshअगरt;
-	वापस inb(p->iobase + offset);
-पूर्ण
+static unsigned int io_serial_in(struct uart_port *p, int offset)
+{
+	offset = offset << p->regshift;
+	return inb(p->iobase + offset);
+}
 
-अटल व्योम io_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	offset = offset << p->regshअगरt;
+static void io_serial_out(struct uart_port *p, int offset, int value)
+{
+	offset = offset << p->regshift;
 	outb(value, p->iobase + offset);
-पूर्ण
+}
 
-अटल पूर्णांक serial8250_शेष_handle_irq(काष्ठा uart_port *port);
+static int serial8250_default_handle_irq(struct uart_port *port);
 
-अटल व्योम set_io_from_upio(काष्ठा uart_port *p)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(p);
+static void set_io_from_upio(struct uart_port *p)
+{
+	struct uart_8250_port *up = up_to_u8250p(p);
 
-	up->dl_पढ़ो = शेष_serial_dl_पढ़ो;
-	up->dl_ग_लिखो = शेष_serial_dl_ग_लिखो;
+	up->dl_read = default_serial_dl_read;
+	up->dl_write = default_serial_dl_write;
 
-	चयन (p->iotype) अणु
-	हाल UPIO_HUB6:
+	switch (p->iotype) {
+	case UPIO_HUB6:
 		p->serial_in = hub6_serial_in;
 		p->serial_out = hub6_serial_out;
-		अवरोध;
+		break;
 
-	हाल UPIO_MEM:
+	case UPIO_MEM:
 		p->serial_in = mem_serial_in;
 		p->serial_out = mem_serial_out;
-		अवरोध;
+		break;
 
-	हाल UPIO_MEM16:
+	case UPIO_MEM16:
 		p->serial_in = mem16_serial_in;
 		p->serial_out = mem16_serial_out;
-		अवरोध;
+		break;
 
-	हाल UPIO_MEM32:
+	case UPIO_MEM32:
 		p->serial_in = mem32_serial_in;
 		p->serial_out = mem32_serial_out;
-		अवरोध;
+		break;
 
-	हाल UPIO_MEM32BE:
+	case UPIO_MEM32BE:
 		p->serial_in = mem32be_serial_in;
 		p->serial_out = mem32be_serial_out;
-		अवरोध;
+		break;
 
-#अगर_घोषित CONFIG_SERIAL_8250_RT288X
-	हाल UPIO_AU:
+#ifdef CONFIG_SERIAL_8250_RT288X
+	case UPIO_AU:
 		p->serial_in = au_serial_in;
 		p->serial_out = au_serial_out;
-		up->dl_पढ़ो = au_serial_dl_पढ़ो;
-		up->dl_ग_लिखो = au_serial_dl_ग_लिखो;
-		अवरोध;
-#पूर्ण_अगर
+		up->dl_read = au_serial_dl_read;
+		up->dl_write = au_serial_dl_write;
+		break;
+#endif
 
-	शेष:
+	default:
 		p->serial_in = io_serial_in;
 		p->serial_out = io_serial_out;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/* Remember loaded iotype */
 	up->cur_iotype = p->iotype;
-	p->handle_irq = serial8250_शेष_handle_irq;
-पूर्ण
+	p->handle_irq = serial8250_default_handle_irq;
+}
 
-अटल व्योम
-serial_port_out_sync(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
-अणु
-	चयन (p->iotype) अणु
-	हाल UPIO_MEM:
-	हाल UPIO_MEM16:
-	हाल UPIO_MEM32:
-	हाल UPIO_MEM32BE:
-	हाल UPIO_AU:
+static void
+serial_port_out_sync(struct uart_port *p, int offset, int value)
+{
+	switch (p->iotype) {
+	case UPIO_MEM:
+	case UPIO_MEM16:
+	case UPIO_MEM32:
+	case UPIO_MEM32BE:
+	case UPIO_AU:
 		p->serial_out(p, offset, value);
 		p->serial_in(p, UART_LCR);	/* safe, no side-effects */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		p->serial_out(p, offset, value);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * For the 16C950
  */
-अटल व्योम serial_icr_ग_लिखो(काष्ठा uart_8250_port *up, पूर्णांक offset, पूर्णांक value)
-अणु
+static void serial_icr_write(struct uart_8250_port *up, int offset, int value)
+{
 	serial_out(up, UART_SCR, offset);
 	serial_out(up, UART_ICR, value);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक serial_icr_पढ़ो(काष्ठा uart_8250_port *up, पूर्णांक offset)
-अणु
-	अचिन्हित पूर्णांक value;
+static unsigned int serial_icr_read(struct uart_8250_port *up, int offset)
+{
+	unsigned int value;
 
-	serial_icr_ग_लिखो(up, UART_ACR, up->acr | UART_ACR_ICRRD);
+	serial_icr_write(up, UART_ACR, up->acr | UART_ACR_ICRRD);
 	serial_out(up, UART_SCR, offset);
 	value = serial_in(up, UART_ICR);
-	serial_icr_ग_लिखो(up, UART_ACR, up->acr);
+	serial_icr_write(up, UART_ACR, up->acr);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
 /*
  * FIFO support.
  */
-अटल व्योम serial8250_clear_fअगरos(काष्ठा uart_8250_port *p)
-अणु
-	अगर (p->capabilities & UART_CAP_FIFO) अणु
+static void serial8250_clear_fifos(struct uart_8250_port *p)
+{
+	if (p->capabilities & UART_CAP_FIFO) {
 		serial_out(p, UART_FCR, UART_FCR_ENABLE_FIFO);
 		serial_out(p, UART_FCR, UART_FCR_ENABLE_FIFO |
 			       UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT);
 		serial_out(p, UART_FCR, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत hrसमयr_restart serial8250_em485_handle_start_tx(काष्ठा hrसमयr *t);
-अटल क्रमागत hrसमयr_restart serial8250_em485_handle_stop_tx(काष्ठा hrसमयr *t);
+static enum hrtimer_restart serial8250_em485_handle_start_tx(struct hrtimer *t);
+static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t);
 
-व्योम serial8250_clear_and_reinit_fअगरos(काष्ठा uart_8250_port *p)
-अणु
-	serial8250_clear_fअगरos(p);
+void serial8250_clear_and_reinit_fifos(struct uart_8250_port *p)
+{
+	serial8250_clear_fifos(p);
 	serial_out(p, UART_FCR, p->fcr);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_clear_and_reinit_fअगरos);
+}
+EXPORT_SYMBOL_GPL(serial8250_clear_and_reinit_fifos);
 
-व्योम serial8250_rpm_get(काष्ठा uart_8250_port *p)
-अणु
-	अगर (!(p->capabilities & UART_CAP_RPM))
-		वापस;
-	pm_runसमय_get_sync(p->port.dev);
-पूर्ण
+void serial8250_rpm_get(struct uart_8250_port *p)
+{
+	if (!(p->capabilities & UART_CAP_RPM))
+		return;
+	pm_runtime_get_sync(p->port.dev);
+}
 EXPORT_SYMBOL_GPL(serial8250_rpm_get);
 
-व्योम serial8250_rpm_put(काष्ठा uart_8250_port *p)
-अणु
-	अगर (!(p->capabilities & UART_CAP_RPM))
-		वापस;
-	pm_runसमय_mark_last_busy(p->port.dev);
-	pm_runसमय_put_स्वतःsuspend(p->port.dev);
-पूर्ण
+void serial8250_rpm_put(struct uart_8250_port *p)
+{
+	if (!(p->capabilities & UART_CAP_RPM))
+		return;
+	pm_runtime_mark_last_busy(p->port.dev);
+	pm_runtime_put_autosuspend(p->port.dev);
+}
 EXPORT_SYMBOL_GPL(serial8250_rpm_put);
 
 /**
- *	serial8250_em485_init() - put uart_8250_port पूर्णांकo rs485 emulating
+ *	serial8250_em485_init() - put uart_8250_port into rs485 emulating
  *	@p:	uart_8250_port port instance
  *
  *	The function is used to start rs485 software emulating on the
- *	&काष्ठा uart_8250_port* @p. Namely, RTS is चयनed beक्रमe/after
+ *	&struct uart_8250_port* @p. Namely, RTS is switched before/after
  *	transmission. The function is idempotent, so it is safe to call it
- *	multiple बार.
+ *	multiple times.
  *
- *	The caller MUST enable पूर्णांकerrupt on empty shअगरt रेजिस्टर beक्रमe
- *	calling serial8250_em485_init(). This पूर्णांकerrupt is not a part of
+ *	The caller MUST enable interrupt on empty shift register before
+ *	calling serial8250_em485_init(). This interrupt is not a part of
  *	8250 standard, but implementation defined.
  *
  *	The function is supposed to be called from .rs485_config callback
- *	or from any other callback रक्षित with p->port.lock spinlock.
+ *	or from any other callback protected with p->port.lock spinlock.
  *
  *	See also serial8250_em485_destroy()
  *
- *	Return 0 - success, -त्रुटि_सं - otherwise
+ *	Return 0 - success, -errno - otherwise
  */
-अटल पूर्णांक serial8250_em485_init(काष्ठा uart_8250_port *p)
-अणु
-	अगर (p->em485)
-		वापस 0;
+static int serial8250_em485_init(struct uart_8250_port *p)
+{
+	if (p->em485)
+		return 0;
 
-	p->em485 = kदो_स्मृति(माप(काष्ठा uart_8250_em485), GFP_ATOMIC);
-	अगर (!p->em485)
-		वापस -ENOMEM;
+	p->em485 = kmalloc(sizeof(struct uart_8250_em485), GFP_ATOMIC);
+	if (!p->em485)
+		return -ENOMEM;
 
-	hrसमयr_init(&p->em485->stop_tx_समयr, CLOCK_MONOTONIC,
+	hrtimer_init(&p->em485->stop_tx_timer, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL);
-	hrसमयr_init(&p->em485->start_tx_समयr, CLOCK_MONOTONIC,
+	hrtimer_init(&p->em485->start_tx_timer, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL);
-	p->em485->stop_tx_समयr.function = &serial8250_em485_handle_stop_tx;
-	p->em485->start_tx_समयr.function = &serial8250_em485_handle_start_tx;
+	p->em485->stop_tx_timer.function = &serial8250_em485_handle_stop_tx;
+	p->em485->start_tx_timer.function = &serial8250_em485_handle_start_tx;
 	p->em485->port = p;
-	p->em485->active_समयr = शून्य;
+	p->em485->active_timer = NULL;
 	p->em485->tx_stopped = true;
 
 	p->rs485_stop_tx(p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	serial8250_em485_destroy() - put uart_8250_port पूर्णांकo normal state
+ *	serial8250_em485_destroy() - put uart_8250_port into normal state
  *	@p:	uart_8250_port port instance
  *
  *	The function is used to stop rs485 software emulating on the
- *	&काष्ठा uart_8250_port* @p. The function is idempotent, so it is safe to
- *	call it multiple बार.
+ *	&struct uart_8250_port* @p. The function is idempotent, so it is safe to
+ *	call it multiple times.
  *
  *	The function is supposed to be called from .rs485_config callback
- *	or from any other callback रक्षित with p->port.lock spinlock.
+ *	or from any other callback protected with p->port.lock spinlock.
  *
  *	See also serial8250_em485_init()
  */
-व्योम serial8250_em485_destroy(काष्ठा uart_8250_port *p)
-अणु
-	अगर (!p->em485)
-		वापस;
+void serial8250_em485_destroy(struct uart_8250_port *p)
+{
+	if (!p->em485)
+		return;
 
-	hrसमयr_cancel(&p->em485->start_tx_समयr);
-	hrसमयr_cancel(&p->em485->stop_tx_समयr);
+	hrtimer_cancel(&p->em485->start_tx_timer);
+	hrtimer_cancel(&p->em485->stop_tx_timer);
 
-	kमुक्त(p->em485);
-	p->em485 = शून्य;
-पूर्ण
+	kfree(p->em485);
+	p->em485 = NULL;
+}
 EXPORT_SYMBOL_GPL(serial8250_em485_destroy);
 
 /**
@@ -662,25 +661,25 @@ EXPORT_SYMBOL_GPL(serial8250_em485_destroy);
  * @rs485: rs485 settings
  *
  * Generic callback usable by 8250 uart drivers to activate rs485 settings
- * अगर the uart is incapable of driving RTS as a Transmit Enable संकेत in
+ * if the uart is incapable of driving RTS as a Transmit Enable signal in
  * hardware, relying on software emulation instead.
  */
-पूर्णांक serial8250_em485_config(काष्ठा uart_port *port, काष्ठा serial_rs485 *rs485)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+int serial8250_em485_config(struct uart_port *port, struct serial_rs485 *rs485)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
-	/* pick sane settings अगर the user hasn't */
-	अगर (!!(rs485->flags & SER_RS485_RTS_ON_SEND) ==
-	    !!(rs485->flags & SER_RS485_RTS_AFTER_SEND)) अणु
+	/* pick sane settings if the user hasn't */
+	if (!!(rs485->flags & SER_RS485_RTS_ON_SEND) ==
+	    !!(rs485->flags & SER_RS485_RTS_AFTER_SEND)) {
 		rs485->flags |= SER_RS485_RTS_ON_SEND;
 		rs485->flags &= ~SER_RS485_RTS_AFTER_SEND;
-	पूर्ण
+	}
 
 	/* clamp the delays to [0, 100ms] */
-	rs485->delay_rts_beक्रमe_send = min(rs485->delay_rts_beक्रमe_send, 100U);
+	rs485->delay_rts_before_send = min(rs485->delay_rts_before_send, 100U);
 	rs485->delay_rts_after_send  = min(rs485->delay_rts_after_send, 100U);
 
-	स_रखो(rs485->padding, 0, माप(rs485->padding));
+	memset(rs485->padding, 0, sizeof(rs485->padding));
 	port->rs485 = *rs485;
 
 	gpiod_set_value(port->rs485_term_gpio,
@@ -690,163 +689,163 @@ EXPORT_SYMBOL_GPL(serial8250_em485_destroy);
 	 * Both serial8250_em485_init() and serial8250_em485_destroy()
 	 * are idempotent.
 	 */
-	अगर (rs485->flags & SER_RS485_ENABLED) अणु
-		पूर्णांक ret = serial8250_em485_init(up);
+	if (rs485->flags & SER_RS485_ENABLED) {
+		int ret = serial8250_em485_init(up);
 
-		अगर (ret) अणु
+		if (ret) {
 			rs485->flags &= ~SER_RS485_ENABLED;
 			port->rs485.flags &= ~SER_RS485_ENABLED;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 
 	serial8250_em485_destroy(up);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(serial8250_em485_config);
 
 /*
- * These two wrappers ensure that enable_runसमय_pm_tx() can be called more than
- * once and disable_runसमय_pm_tx() will still disable RPM because the fअगरo is
+ * These two wrappers ensure that enable_runtime_pm_tx() can be called more than
+ * once and disable_runtime_pm_tx() will still disable RPM because the fifo is
  * empty and the HW can idle again.
  */
-व्योम serial8250_rpm_get_tx(काष्ठा uart_8250_port *p)
-अणु
-	अचिन्हित अक्षर rpm_active;
+void serial8250_rpm_get_tx(struct uart_8250_port *p)
+{
+	unsigned char rpm_active;
 
-	अगर (!(p->capabilities & UART_CAP_RPM))
-		वापस;
+	if (!(p->capabilities & UART_CAP_RPM))
+		return;
 
 	rpm_active = xchg(&p->rpm_tx_active, 1);
-	अगर (rpm_active)
-		वापस;
-	pm_runसमय_get_sync(p->port.dev);
-पूर्ण
+	if (rpm_active)
+		return;
+	pm_runtime_get_sync(p->port.dev);
+}
 EXPORT_SYMBOL_GPL(serial8250_rpm_get_tx);
 
-व्योम serial8250_rpm_put_tx(काष्ठा uart_8250_port *p)
-अणु
-	अचिन्हित अक्षर rpm_active;
+void serial8250_rpm_put_tx(struct uart_8250_port *p)
+{
+	unsigned char rpm_active;
 
-	अगर (!(p->capabilities & UART_CAP_RPM))
-		वापस;
+	if (!(p->capabilities & UART_CAP_RPM))
+		return;
 
 	rpm_active = xchg(&p->rpm_tx_active, 0);
-	अगर (!rpm_active)
-		वापस;
-	pm_runसमय_mark_last_busy(p->port.dev);
-	pm_runसमय_put_स्वतःsuspend(p->port.dev);
-पूर्ण
+	if (!rpm_active)
+		return;
+	pm_runtime_mark_last_busy(p->port.dev);
+	pm_runtime_put_autosuspend(p->port.dev);
+}
 EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 
 /*
  * IER sleep support.  UARTs which have EFRs need the "extended
  * capability" bit enabled.  Note that on XR16C850s, we need to
- * reset LCR to ग_लिखो to IER.
+ * reset LCR to write to IER.
  */
-अटल व्योम serial8250_set_sleep(काष्ठा uart_8250_port *p, पूर्णांक sleep)
-अणु
-	अचिन्हित अक्षर lcr = 0, efr = 0;
+static void serial8250_set_sleep(struct uart_8250_port *p, int sleep)
+{
+	unsigned char lcr = 0, efr = 0;
 
 	serial8250_rpm_get(p);
 
-	अगर (p->capabilities & UART_CAP_SLEEP) अणु
-		अगर (p->capabilities & UART_CAP_EFR) अणु
+	if (p->capabilities & UART_CAP_SLEEP) {
+		if (p->capabilities & UART_CAP_EFR) {
 			lcr = serial_in(p, UART_LCR);
 			efr = serial_in(p, UART_EFR);
 			serial_out(p, UART_LCR, UART_LCR_CONF_MODE_B);
 			serial_out(p, UART_EFR, UART_EFR_ECB);
 			serial_out(p, UART_LCR, 0);
-		पूर्ण
+		}
 		serial_out(p, UART_IER, sleep ? UART_IERX_SLEEP : 0);
-		अगर (p->capabilities & UART_CAP_EFR) अणु
+		if (p->capabilities & UART_CAP_EFR) {
 			serial_out(p, UART_LCR, UART_LCR_CONF_MODE_B);
 			serial_out(p, UART_EFR, efr);
 			serial_out(p, UART_LCR, lcr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	serial8250_rpm_put(p);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_SERIAL_8250_RSA
+#ifdef CONFIG_SERIAL_8250_RSA
 /*
  * Attempts to turn on the RSA FIFO.  Returns zero on failure.
- * We set the port uart घड़ी rate अगर we succeed.
+ * We set the port uart clock rate if we succeed.
  */
-अटल पूर्णांक __enable_rsa(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर mode;
-	पूर्णांक result;
+static int __enable_rsa(struct uart_8250_port *up)
+{
+	unsigned char mode;
+	int result;
 
 	mode = serial_in(up, UART_RSA_MSR);
 	result = mode & UART_RSA_MSR_FIFO;
 
-	अगर (!result) अणु
+	if (!result) {
 		serial_out(up, UART_RSA_MSR, mode | UART_RSA_MSR_FIFO);
 		mode = serial_in(up, UART_RSA_MSR);
 		result = mode & UART_RSA_MSR_FIFO;
-	पूर्ण
+	}
 
-	अगर (result)
+	if (result)
 		up->port.uartclk = SERIAL_RSA_BAUD_BASE * 16;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम enable_rsa(काष्ठा uart_8250_port *up)
-अणु
-	अगर (up->port.type == PORT_RSA) अणु
-		अगर (up->port.uartclk != SERIAL_RSA_BAUD_BASE * 16) अणु
+static void enable_rsa(struct uart_8250_port *up)
+{
+	if (up->port.type == PORT_RSA) {
+		if (up->port.uartclk != SERIAL_RSA_BAUD_BASE * 16) {
 			spin_lock_irq(&up->port.lock);
 			__enable_rsa(up);
 			spin_unlock_irq(&up->port.lock);
-		पूर्ण
-		अगर (up->port.uartclk == SERIAL_RSA_BAUD_BASE * 16)
+		}
+		if (up->port.uartclk == SERIAL_RSA_BAUD_BASE * 16)
 			serial_out(up, UART_RSA_FRR, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Attempts to turn off the RSA FIFO.  Returns zero on failure.
- * It is unknown why पूर्णांकerrupts were disabled in here.  However,
+ * It is unknown why interrupts were disabled in here.  However,
  * the caller is expected to preserve this behaviour by grabbing
- * the spinlock beक्रमe calling this function.
+ * the spinlock before calling this function.
  */
-अटल व्योम disable_rsa(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर mode;
-	पूर्णांक result;
+static void disable_rsa(struct uart_8250_port *up)
+{
+	unsigned char mode;
+	int result;
 
-	अगर (up->port.type == PORT_RSA &&
-	    up->port.uartclk == SERIAL_RSA_BAUD_BASE * 16) अणु
+	if (up->port.type == PORT_RSA &&
+	    up->port.uartclk == SERIAL_RSA_BAUD_BASE * 16) {
 		spin_lock_irq(&up->port.lock);
 
 		mode = serial_in(up, UART_RSA_MSR);
 		result = !(mode & UART_RSA_MSR_FIFO);
 
-		अगर (!result) अणु
+		if (!result) {
 			serial_out(up, UART_RSA_MSR, mode & ~UART_RSA_MSR_FIFO);
 			mode = serial_in(up, UART_RSA_MSR);
 			result = !(mode & UART_RSA_MSR_FIFO);
-		पूर्ण
+		}
 
-		अगर (result)
+		if (result)
 			up->port.uartclk = SERIAL_RSA_BAUD_BASE_LO * 16;
 		spin_unlock_irq(&up->port.lock);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SERIAL_8250_RSA */
+	}
+}
+#endif /* CONFIG_SERIAL_8250_RSA */
 
 /*
  * This is a quickie test to see how big the FIFO is.
- * It करोesn't work at all the time, more's the pity.
+ * It doesn't work at all the time, more's the pity.
  */
-अटल पूर्णांक size_fअगरo(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर old_fcr, old_mcr, old_lcr;
-	अचिन्हित लघु old_dl;
-	पूर्णांक count;
+static int size_fifo(struct uart_8250_port *up)
+{
+	unsigned char old_fcr, old_mcr, old_lcr;
+	unsigned short old_dl;
+	int count;
 
 	old_lcr = serial_in(up, UART_LCR);
 	serial_out(up, UART_LCR, 0);
@@ -856,59 +855,59 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 		    UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT);
 	serial8250_out_MCR(up, UART_MCR_LOOP);
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_A);
-	old_dl = serial_dl_पढ़ो(up);
-	serial_dl_ग_लिखो(up, 0x0001);
+	old_dl = serial_dl_read(up);
+	serial_dl_write(up, 0x0001);
 	serial_out(up, UART_LCR, 0x03);
-	क्रम (count = 0; count < 256; count++)
+	for (count = 0; count < 256; count++)
 		serial_out(up, UART_TX, count);
-	mdelay(20);/* FIXME - schedule_समयout */
-	क्रम (count = 0; (serial_in(up, UART_LSR) & UART_LSR_DR) &&
+	mdelay(20);/* FIXME - schedule_timeout */
+	for (count = 0; (serial_in(up, UART_LSR) & UART_LSR_DR) &&
 	     (count < 256); count++)
 		serial_in(up, UART_RX);
 	serial_out(up, UART_FCR, old_fcr);
 	serial8250_out_MCR(up, old_mcr);
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_A);
-	serial_dl_ग_लिखो(up, old_dl);
+	serial_dl_write(up, old_dl);
 	serial_out(up, UART_LCR, old_lcr);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
- * Read UART ID using the भागisor method - set DLL and DLM to zero
+ * Read UART ID using the divisor method - set DLL and DLM to zero
  * and the revision will be in DLL and device type in DLM.  We
  * preserve the device state across this.
  */
-अटल अचिन्हित पूर्णांक स्वतःconfig_पढ़ो_भागisor_id(काष्ठा uart_8250_port *p)
-अणु
-	अचिन्हित अक्षर old_lcr;
-	अचिन्हित पूर्णांक id, old_dl;
+static unsigned int autoconfig_read_divisor_id(struct uart_8250_port *p)
+{
+	unsigned char old_lcr;
+	unsigned int id, old_dl;
 
 	old_lcr = serial_in(p, UART_LCR);
 	serial_out(p, UART_LCR, UART_LCR_CONF_MODE_A);
-	old_dl = serial_dl_पढ़ो(p);
-	serial_dl_ग_लिखो(p, 0);
-	id = serial_dl_पढ़ो(p);
-	serial_dl_ग_लिखो(p, old_dl);
+	old_dl = serial_dl_read(p);
+	serial_dl_write(p, 0);
+	id = serial_dl_read(p);
+	serial_dl_write(p, old_dl);
 
 	serial_out(p, UART_LCR, old_lcr);
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
 /*
- * This is a helper routine to स्वतःdetect StarTech/Exar/Oxsemi UART's.
+ * This is a helper routine to autodetect StarTech/Exar/Oxsemi UART's.
  * When this function is called we know it is at least a StarTech
  * 16650 V2, but it might be one of several StarTech UARTs, or one of
  * its clones.  (We treat the broken original StarTech 16650 V1 as a
- * 16550, and why not?  Startech करोesn't seem to even acknowledge its
+ * 16550, and why not?  Startech doesn't seem to even acknowledge its
  * existence.)
  *
  * What evil have men's minds wrought...
  */
-अटल व्योम स्वतःconfig_has_efr(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित पूर्णांक id1, id2, id3, rev;
+static void autoconfig_has_efr(struct uart_8250_port *up)
+{
+	unsigned int id1, id2, id3, rev;
 
 	/*
 	 * Everything with an EFR has SLEEP
@@ -916,87 +915,87 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 	up->capabilities |= UART_CAP_EFR | UART_CAP_SLEEP;
 
 	/*
-	 * First we check to see अगर it's an Oxक्रमd Semiconductor UART.
+	 * First we check to see if it's an Oxford Semiconductor UART.
 	 *
-	 * If we have to करो this here because some non-National
-	 * Semiconductor clone chips lock up अगर you try writing to the
-	 * LSR रेजिस्टर (which serial_icr_पढ़ो करोes)
+	 * If we have to do this here because some non-National
+	 * Semiconductor clone chips lock up if you try writing to the
+	 * LSR register (which serial_icr_read does)
 	 */
 
 	/*
-	 * Check क्रम Oxक्रमd Semiconductor 16C950.
+	 * Check for Oxford Semiconductor 16C950.
 	 *
-	 * EFR [4] must be set अन्यथा this test fails.
+	 * EFR [4] must be set else this test fails.
 	 *
 	 * This shouldn't be necessary, but Mike Hudson (Exoray@isys.ca)
 	 * claims that it's needed for 952 dual UART's (which are not
-	 * recommended क्रम new designs).
+	 * recommended for new designs).
 	 */
 	up->acr = 0;
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
 	serial_out(up, UART_EFR, UART_EFR_ECB);
 	serial_out(up, UART_LCR, 0x00);
-	id1 = serial_icr_पढ़ो(up, UART_ID1);
-	id2 = serial_icr_पढ़ो(up, UART_ID2);
-	id3 = serial_icr_पढ़ो(up, UART_ID3);
-	rev = serial_icr_पढ़ो(up, UART_REV);
+	id1 = serial_icr_read(up, UART_ID1);
+	id2 = serial_icr_read(up, UART_ID2);
+	id3 = serial_icr_read(up, UART_ID3);
+	rev = serial_icr_read(up, UART_REV);
 
 	DEBUG_AUTOCONF("950id=%02x:%02x:%02x:%02x ", id1, id2, id3, rev);
 
-	अगर (id1 == 0x16 && id2 == 0xC9 &&
-	    (id3 == 0x50 || id3 == 0x52 || id3 == 0x54)) अणु
+	if (id1 == 0x16 && id2 == 0xC9 &&
+	    (id3 == 0x50 || id3 == 0x52 || id3 == 0x54)) {
 		up->port.type = PORT_16C950;
 
 		/*
-		 * Enable work around क्रम the Oxक्रमd Semiconductor 952 rev B
+		 * Enable work around for the Oxford Semiconductor 952 rev B
 		 * chip which causes it to seriously miscalculate baud rates
 		 * when DLL is 0.
 		 */
-		अगर (id3 == 0x52 && rev == 0x01)
+		if (id3 == 0x52 && rev == 0x01)
 			up->bugs |= UART_BUG_QUOT;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * We check क्रम a XR16C850 by setting DLL and DLM to 0, and then
-	 * पढ़ोing back DLL and DLM.  The chip type depends on the DLM
-	 * value पढ़ो back:
+	 * We check for a XR16C850 by setting DLL and DLM to 0, and then
+	 * reading back DLL and DLM.  The chip type depends on the DLM
+	 * value read back:
 	 *  0x10 - XR16C850 and the DLL contains the chip revision.
 	 *  0x12 - XR16C2850.
 	 *  0x14 - XR16C854.
 	 */
-	id1 = स्वतःconfig_पढ़ो_भागisor_id(up);
+	id1 = autoconfig_read_divisor_id(up);
 	DEBUG_AUTOCONF("850id=%04x ", id1);
 
 	id2 = id1 >> 8;
-	अगर (id2 == 0x10 || id2 == 0x12 || id2 == 0x14) अणु
+	if (id2 == 0x10 || id2 == 0x12 || id2 == 0x14) {
 		up->port.type = PORT_16850;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * It wasn't an XR16C850.
 	 *
 	 * We distinguish between the '654 and the '650 by counting
-	 * how many bytes are in the FIFO.  I'm using this क्रम now,
+	 * how many bytes are in the FIFO.  I'm using this for now,
 	 * since that's the technique that was sent to me in the
 	 * serial driver update, but I'm not convinced this works.
-	 * I've had problems करोing this in the past.  -TYT
+	 * I've had problems doing this in the past.  -TYT
 	 */
-	अगर (size_fअगरo(up) == 64)
+	if (size_fifo(up) == 64)
 		up->port.type = PORT_16654;
-	अन्यथा
+	else
 		up->port.type = PORT_16650V2;
-पूर्ण
+}
 
 /*
- * We detected a chip without a FIFO.  Only two fall पूर्णांकo
+ * We detected a chip without a FIFO.  Only two fall into
  * this category - the original 8250 and the 16450.  The
- * 16450 has a scratch रेजिस्टर (accessible with LCR=0)
+ * 16450 has a scratch register (accessible with LCR=0)
  */
-अटल व्योम स्वतःconfig_8250(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर scratch, status1, status2;
+static void autoconfig_8250(struct uart_8250_port *up)
+{
+	unsigned char scratch, status1, status2;
 
 	up->port.type = PORT_8250;
 
@@ -1007,52 +1006,52 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 	status2 = serial_in(up, UART_SCR);
 	serial_out(up, UART_SCR, scratch);
 
-	अगर (status1 == 0xa5 && status2 == 0x5a)
+	if (status1 == 0xa5 && status2 == 0x5a)
 		up->port.type = PORT_16450;
-पूर्ण
+}
 
-अटल पूर्णांक broken_efr(काष्ठा uart_8250_port *up)
-अणु
+static int broken_efr(struct uart_8250_port *up)
+{
 	/*
 	 * Exar ST16C2550 "A2" devices incorrectly detect as
 	 * having an EFR, and report an ID of 0x0201.  See
-	 * http://linux.derkeiler.com/Mailing-Lists/Kernel/2004-11/4812.hपंचांगl
+	 * http://linux.derkeiler.com/Mailing-Lists/Kernel/2004-11/4812.html
 	 */
-	अगर (स्वतःconfig_पढ़ो_भागisor_id(up) == 0x0201 && size_fअगरo(up) == 16)
-		वापस 1;
+	if (autoconfig_read_divisor_id(up) == 0x0201 && size_fifo(up) == 16)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * We know that the chip has FIFOs.  Does it have an EFR?  The
- * EFR is located in the same रेजिस्टर position as the IIR and
+ * EFR is located in the same register position as the IIR and
  * we know the top two bits of the IIR are currently set.  The
- * EFR should contain zero.  Try to पढ़ो the EFR.
+ * EFR should contain zero.  Try to read the EFR.
  */
-अटल व्योम स्वतःconfig_16550a(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर status1, status2;
-	अचिन्हित पूर्णांक iersave;
+static void autoconfig_16550a(struct uart_8250_port *up)
+{
+	unsigned char status1, status2;
+	unsigned int iersave;
 
 	up->port.type = PORT_16550A;
 	up->capabilities |= UART_CAP_FIFO;
 
-	अगर (!IS_ENABLED(CONFIG_SERIAL_8250_16550A_VARIANTS))
-		वापस;
+	if (!IS_ENABLED(CONFIG_SERIAL_8250_16550A_VARIANTS))
+		return;
 
 	/*
-	 * Check क्रम presence of the EFR when DLAB is set.
+	 * Check for presence of the EFR when DLAB is set.
 	 * Only ST16C650V1 UARTs pass this test.
 	 */
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_A);
-	अगर (serial_in(up, UART_EFR) == 0) अणु
+	if (serial_in(up, UART_EFR) == 0) {
 		serial_out(up, UART_EFR, 0xA8);
-		अगर (serial_in(up, UART_EFR) != 0) अणु
+		if (serial_in(up, UART_EFR) != 0) {
 			DEBUG_AUTOCONF("EFRv1 ");
 			up->port.type = PORT_16650;
 			up->capabilities |= UART_CAP_EFR | UART_CAP_SLEEP;
-		पूर्ण अन्यथा अणु
+		} else {
 			serial_out(up, UART_LCR, 0);
 			serial_out(up, UART_FCR, UART_FCR_ENABLE_FIFO |
 				   UART_FCR7_64BYTE);
@@ -1060,31 +1059,31 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 			serial_out(up, UART_FCR, 0);
 			serial_out(up, UART_LCR, 0);
 
-			अगर (status1 == 7)
+			if (status1 == 7)
 				up->port.type = PORT_16550A_FSL64;
-			अन्यथा
+			else
 				DEBUG_AUTOCONF("Motorola 8xxx DUART ");
-		पूर्ण
+		}
 		serial_out(up, UART_EFR, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Maybe it requires 0xbf to be written to the LCR.
 	 * (other ST16C650V2 UARTs, TI16C752A, etc)
 	 */
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
-	अगर (serial_in(up, UART_EFR) == 0 && !broken_efr(up)) अणु
+	if (serial_in(up, UART_EFR) == 0 && !broken_efr(up)) {
 		DEBUG_AUTOCONF("EFRv2 ");
-		स्वतःconfig_has_efr(up);
-		वापस;
-	पूर्ण
+		autoconfig_has_efr(up);
+		return;
+	}
 
 	/*
-	 * Check क्रम a National Semiconductor SuperIO chip.
-	 * Attempt to चयन to bank 2, पढ़ो the value of the LOOP bit
+	 * Check for a National Semiconductor SuperIO chip.
+	 * Attempt to switch to bank 2, read the value of the LOOP bit
 	 * from EXCR1. Switch back to bank 0, change it in MCR. Then
-	 * चयन back to bank 2, पढ़ो it from EXCR1 again and check
+	 * switch back to bank 2, read it from EXCR1 again and check
 	 * it's changed. If so, set baud_base in EXCR2 to 921600. -- dwmw2
 	 */
 	serial_out(up, UART_LCR, 0);
@@ -1092,7 +1091,7 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 	serial_out(up, UART_LCR, 0xE0);
 	status2 = serial_in(up, 0x02); /* EXCR1 */
 
-	अगर (!((status2 ^ status1) & UART_MCR_LOOP)) अणु
+	if (!((status2 ^ status1) & UART_MCR_LOOP)) {
 		serial_out(up, UART_LCR, 0);
 		serial8250_out_MCR(up, status1 ^ UART_MCR_LOOP);
 		serial_out(up, UART_LCR, 0xE0);
@@ -1100,25 +1099,25 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 		serial_out(up, UART_LCR, 0);
 		serial8250_out_MCR(up, status1);
 
-		अगर ((status2 ^ status1) & UART_MCR_LOOP) अणु
-			अचिन्हित लघु quot;
+		if ((status2 ^ status1) & UART_MCR_LOOP) {
+			unsigned short quot;
 
 			serial_out(up, UART_LCR, 0xE0);
 
-			quot = serial_dl_पढ़ो(up);
+			quot = serial_dl_read(up);
 			quot <<= 3;
 
-			अगर (ns16550a_जाओ_highspeed(up))
-				serial_dl_ग_लिखो(up, quot);
+			if (ns16550a_goto_highspeed(up))
+				serial_dl_write(up, quot);
 
 			serial_out(up, UART_LCR, 0);
 
 			up->port.uartclk = 921600*16;
 			up->port.type = PORT_NS16550A;
 			up->capabilities |= UART_NATSEMI;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	/*
 	 * No EFR.  Try to detect a TI16750, which only sets bit 5 of
@@ -1138,29 +1137,29 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 
 	DEBUG_AUTOCONF("iir1=%d iir2=%d ", status1, status2);
 
-	अगर (status1 == 6 && status2 == 7) अणु
+	if (status1 == 6 && status2 == 7) {
 		up->port.type = PORT_16750;
 		up->capabilities |= UART_CAP_AFE | UART_CAP_SLEEP;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Try writing and पढ़ोing the UART_IER_UUE bit (b6).
-	 * If it works, this is probably one of the Xscale platक्रमm's
-	 * पूर्णांकernal UARTs.
-	 * We're going to explicitly set the UUE bit to 0 beक्रमe
-	 * trying to ग_लिखो and पढ़ो a 1 just to make sure it's not
-	 * alपढ़ोy a 1 and maybe locked there beक्रमe we even start start.
+	 * Try writing and reading the UART_IER_UUE bit (b6).
+	 * If it works, this is probably one of the Xscale platform's
+	 * internal UARTs.
+	 * We're going to explicitly set the UUE bit to 0 before
+	 * trying to write and read a 1 just to make sure it's not
+	 * already a 1 and maybe locked there before we even start start.
 	 */
 	iersave = serial_in(up, UART_IER);
 	serial_out(up, UART_IER, iersave & ~UART_IER_UUE);
-	अगर (!(serial_in(up, UART_IER) & UART_IER_UUE)) अणु
+	if (!(serial_in(up, UART_IER) & UART_IER_UUE)) {
 		/*
-		 * OK it's in a known zero state, try writing and पढ़ोing
+		 * OK it's in a known zero state, try writing and reading
 		 * without disturbing the current state of the other bits.
 		 */
 		serial_out(up, UART_IER, iersave | UART_IER_UUE);
-		अगर (serial_in(up, UART_IER) & UART_IER_UUE) अणु
+		if (serial_in(up, UART_IER) & UART_IER_UUE) {
 			/*
 			 * It's an Xscale.
 			 * We'll leave the UART_IER_UUE bit set to 1 (enabled).
@@ -1168,130 +1167,130 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 			DEBUG_AUTOCONF("Xscale ");
 			up->port.type = PORT_XSCALE;
 			up->capabilities |= UART_CAP_UUE | UART_CAP_RTOIE;
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		/*
-		 * If we got here we couldn't क्रमce the IER_UUE bit to 0.
-		 * Log it and जारी.
+		 * If we got here we couldn't force the IER_UUE bit to 0.
+		 * Log it and continue.
 		 */
 		DEBUG_AUTOCONF("Couldn't force IER_UUE to 0 ");
-	पूर्ण
+	}
 	serial_out(up, UART_IER, iersave);
 
 	/*
 	 * We distinguish between 16550A and U6 16550A by counting
 	 * how many bytes are in the FIFO.
 	 */
-	अगर (up->port.type == PORT_16550A && size_fअगरo(up) == 64) अणु
+	if (up->port.type == PORT_16550A && size_fifo(up) == 64) {
 		up->port.type = PORT_U6_16550A;
 		up->capabilities |= UART_CAP_AFE;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This routine is called by rs_init() to initialize a specअगरic serial
+ * This routine is called by rs_init() to initialize a specific serial
  * port.  It determines what type of UART chip this serial port is
  * using: 8250, 16450, 16550, 16550A.  The important question is
  * whether or not this UART is a 16550A or not, since this will
  * determine whether or not we can use its FIFO features or not.
  */
-अटल व्योम स्वतःconfig(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर status1, scratch, scratch2, scratch3;
-	अचिन्हित अक्षर save_lcr, save_mcr;
-	काष्ठा uart_port *port = &up->port;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक old_capabilities;
+static void autoconfig(struct uart_8250_port *up)
+{
+	unsigned char status1, scratch, scratch2, scratch3;
+	unsigned char save_lcr, save_mcr;
+	struct uart_port *port = &up->port;
+	unsigned long flags;
+	unsigned int old_capabilities;
 
-	अगर (!port->iobase && !port->mapbase && !port->membase)
-		वापस;
+	if (!port->iobase && !port->mapbase && !port->membase)
+		return;
 
 	DEBUG_AUTOCONF("%s: autoconf (0x%04lx, 0x%p): ",
 		       port->name, port->iobase, port->membase);
 
 	/*
-	 * We really करो need global IRQs disabled here - we're going to
-	 * be frobbing the chips IRQ enable रेजिस्टर to see अगर it exists.
+	 * We really do need global IRQs disabled here - we're going to
+	 * be frobbing the chips IRQ enable register to see if it exists.
 	 */
 	spin_lock_irqsave(&port->lock, flags);
 
 	up->capabilities = 0;
 	up->bugs = 0;
 
-	अगर (!(port->flags & UPF_BUGGY_UART)) अणु
+	if (!(port->flags & UPF_BUGGY_UART)) {
 		/*
-		 * Do a simple existence test first; अगर we fail this,
-		 * there's no poपूर्णांक trying anything अन्यथा.
+		 * Do a simple existence test first; if we fail this,
+		 * there's no point trying anything else.
 		 *
 		 * 0x80 is used as a nonsense port to prevent against
-		 * false positives due to ISA bus भग्न.  The
+		 * false positives due to ISA bus float.  The
 		 * assumption is that 0x80 is a non-existent port;
-		 * which should be safe since include/यंत्र/पन.स also
+		 * which should be safe since include/asm/io.h also
 		 * makes this assumption.
 		 *
-		 * Note: this is safe as दीर्घ as MCR bit 4 is clear
+		 * Note: this is safe as long as MCR bit 4 is clear
 		 * and the device is in "PC" mode.
 		 */
 		scratch = serial_in(up, UART_IER);
 		serial_out(up, UART_IER, 0);
-#अगर_घोषित __i386__
+#ifdef __i386__
 		outb(0xff, 0x080);
-#पूर्ण_अगर
+#endif
 		/*
-		 * Mask out IER[7:4] bits क्रम test as some UARTs (e.g. TL
-		 * 16C754B) allow only to modअगरy them अगर an EFR bit is set.
+		 * Mask out IER[7:4] bits for test as some UARTs (e.g. TL
+		 * 16C754B) allow only to modify them if an EFR bit is set.
 		 */
 		scratch2 = serial_in(up, UART_IER) & 0x0f;
 		serial_out(up, UART_IER, 0x0F);
-#अगर_घोषित __i386__
+#ifdef __i386__
 		outb(0, 0x080);
-#पूर्ण_अगर
+#endif
 		scratch3 = serial_in(up, UART_IER) & 0x0f;
 		serial_out(up, UART_IER, scratch);
-		अगर (scratch2 != 0 || scratch3 != 0x0F) अणु
+		if (scratch2 != 0 || scratch3 != 0x0F) {
 			/*
 			 * We failed; there's nothing here
 			 */
 			spin_unlock_irqrestore(&port->lock, flags);
 			DEBUG_AUTOCONF("IER test failed (%02x, %02x) ",
 				       scratch2, scratch3);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	save_mcr = serial8250_in_MCR(up);
 	save_lcr = serial_in(up, UART_LCR);
 
 	/*
-	 * Check to see अगर a UART is really there.  Certain broken
-	 * पूर्णांकernal modems based on the Rockwell chipset fail this
-	 * test, because they apparently करोn't implement the loopback
+	 * Check to see if a UART is really there.  Certain broken
+	 * internal modems based on the Rockwell chipset fail this
+	 * test, because they apparently don't implement the loopback
 	 * test mode.  So this test is skipped on the COM 1 through
 	 * COM 4 ports.  This *should* be safe, since no board
 	 * manufacturer would be stupid enough to design a board
 	 * that conflicts with COM 1-4 --- we hope!
 	 */
-	अगर (!(port->flags & UPF_SKIP_TEST)) अणु
+	if (!(port->flags & UPF_SKIP_TEST)) {
 		serial8250_out_MCR(up, UART_MCR_LOOP | 0x0A);
 		status1 = serial_in(up, UART_MSR) & 0xF0;
 		serial8250_out_MCR(up, save_mcr);
-		अगर (status1 != 0x90) अणु
+		if (status1 != 0x90) {
 			spin_unlock_irqrestore(&port->lock, flags);
 			DEBUG_AUTOCONF("LOOP test failed (%02x) ",
 				       status1);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * We're pretty sure there's a port here.  Lets find out what
 	 * type of port it is.  The IIR top two bits allows us to find
-	 * out अगर it's 8250 or 16450, 16550, 16550A or later.  This
-	 * determines what we test क्रम next.
+	 * out if it's 8250 or 16450, 16550, 16550A or later.  This
+	 * determines what we test for next.
 	 *
-	 * We also initialise the EFR (अगर any) to zero क्रम later.  The
-	 * EFR occupies the same रेजिस्टर location as the FCR and IIR.
+	 * We also initialise the EFR (if any) to zero for later.  The
+	 * EFR occupies the same register location as the FCR and IIR.
 	 */
 	serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
 	serial_out(up, UART_EFR, 0);
@@ -1300,93 +1299,93 @@ EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 	serial_out(up, UART_FCR, UART_FCR_ENABLE_FIFO);
 	scratch = serial_in(up, UART_IIR) >> 6;
 
-	चयन (scratch) अणु
-	हाल 0:
-		स्वतःconfig_8250(up);
-		अवरोध;
-	हाल 1:
+	switch (scratch) {
+	case 0:
+		autoconfig_8250(up);
+		break;
+	case 1:
 		port->type = PORT_UNKNOWN;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		port->type = PORT_16550;
-		अवरोध;
-	हाल 3:
-		स्वतःconfig_16550a(up);
-		अवरोध;
-	पूर्ण
+		break;
+	case 3:
+		autoconfig_16550a(up);
+		break;
+	}
 
-#अगर_घोषित CONFIG_SERIAL_8250_RSA
+#ifdef CONFIG_SERIAL_8250_RSA
 	/*
-	 * Only probe क्रम RSA ports अगर we got the region.
+	 * Only probe for RSA ports if we got the region.
 	 */
-	अगर (port->type == PORT_16550A && up->probe & UART_PROBE_RSA &&
+	if (port->type == PORT_16550A && up->probe & UART_PROBE_RSA &&
 	    __enable_rsa(up))
 		port->type = PORT_RSA;
-#पूर्ण_अगर
+#endif
 
 	serial_out(up, UART_LCR, save_lcr);
 
-	port->fअगरosize = uart_config[up->port.type].fअगरo_size;
+	port->fifosize = uart_config[up->port.type].fifo_size;
 	old_capabilities = up->capabilities;
 	up->capabilities = uart_config[port->type].flags;
 	up->tx_loadsz = uart_config[port->type].tx_loadsz;
 
-	अगर (port->type == PORT_UNKNOWN)
-		जाओ out_lock;
+	if (port->type == PORT_UNKNOWN)
+		goto out_lock;
 
 	/*
 	 * Reset the UART.
 	 */
-#अगर_घोषित CONFIG_SERIAL_8250_RSA
-	अगर (port->type == PORT_RSA)
+#ifdef CONFIG_SERIAL_8250_RSA
+	if (port->type == PORT_RSA)
 		serial_out(up, UART_RSA_FRR, 0);
-#पूर्ण_अगर
+#endif
 	serial8250_out_MCR(up, save_mcr);
-	serial8250_clear_fअगरos(up);
+	serial8250_clear_fifos(up);
 	serial_in(up, UART_RX);
-	अगर (up->capabilities & UART_CAP_UUE)
+	if (up->capabilities & UART_CAP_UUE)
 		serial_out(up, UART_IER, UART_IER_UUE);
-	अन्यथा
+	else
 		serial_out(up, UART_IER, 0);
 
 out_lock:
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	/*
-	 * Check अगर the device is a Fपूर्णांकek F81216A
+	 * Check if the device is a Fintek F81216A
 	 */
-	अगर (port->type == PORT_16550A && port->iotype == UPIO_PORT)
-		fपूर्णांकek_8250_probe(up);
+	if (port->type == PORT_16550A && port->iotype == UPIO_PORT)
+		fintek_8250_probe(up);
 
-	अगर (up->capabilities != old_capabilities) अणु
+	if (up->capabilities != old_capabilities) {
 		dev_warn(port->dev, "detected caps %08x should be %08x\n",
 			 old_capabilities, up->capabilities);
-	पूर्ण
+	}
 out:
 	DEBUG_AUTOCONF("iir=%d ", scratch);
 	DEBUG_AUTOCONF("type=%s\n", uart_config[port->type].name);
-पूर्ण
+}
 
-अटल व्योम स्वतःconfig_irq(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	अचिन्हित अक्षर save_mcr, save_ier;
-	अचिन्हित अक्षर save_ICP = 0;
-	अचिन्हित पूर्णांक ICP = 0;
-	अचिन्हित दीर्घ irqs;
-	पूर्णांक irq;
+static void autoconfig_irq(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
+	unsigned char save_mcr, save_ier;
+	unsigned char save_ICP = 0;
+	unsigned int ICP = 0;
+	unsigned long irqs;
+	int irq;
 
-	अगर (port->flags & UPF_FOURPORT) अणु
+	if (port->flags & UPF_FOURPORT) {
 		ICP = (port->iobase & 0xfe0) | 0x1f;
 		save_ICP = inb_p(ICP);
 		outb_p(0x80, ICP);
 		inb_p(ICP);
-	पूर्ण
+	}
 
-	अगर (uart_console(port))
+	if (uart_console(port))
 		console_lock();
 
-	/* क्रमget possible initially masked and pending IRQ */
+	/* forget possible initially masked and pending IRQ */
 	probe_irq_off(probe_irq_on());
 	save_mcr = serial8250_in_MCR(up);
 	save_ier = serial_in(up, UART_IER);
@@ -1395,13 +1394,13 @@ out:
 	irqs = probe_irq_on();
 	serial8250_out_MCR(up, 0);
 	udelay(10);
-	अगर (port->flags & UPF_FOURPORT) अणु
+	if (port->flags & UPF_FOURPORT) {
 		serial8250_out_MCR(up, UART_MCR_DTR | UART_MCR_RTS);
-	पूर्ण अन्यथा अणु
+	} else {
 		serial8250_out_MCR(up,
 			UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2);
-	पूर्ण
-	serial_out(up, UART_IER, 0x0f);	/* enable all पूर्णांकrs */
+	}
+	serial_out(up, UART_IER, 0x0f);	/* enable all intrs */
 	serial_in(up, UART_LSR);
 	serial_in(up, UART_RX);
 	serial_in(up, UART_IIR);
@@ -1413,27 +1412,27 @@ out:
 	serial8250_out_MCR(up, save_mcr);
 	serial_out(up, UART_IER, save_ier);
 
-	अगर (port->flags & UPF_FOURPORT)
+	if (port->flags & UPF_FOURPORT)
 		outb_p(save_ICP, ICP);
 
-	अगर (uart_console(port))
+	if (uart_console(port))
 		console_unlock();
 
 	port->irq = (irq > 0) ? irq : 0;
-पूर्ण
+}
 
-अटल व्योम serial8250_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_stop_rx(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	serial8250_rpm_get(up);
 
 	up->ier &= ~(UART_IER_RLSI | UART_IER_RDI);
-	up->port.पढ़ो_status_mask &= ~UART_LSR_DR;
+	up->port.read_status_mask &= ~UART_LSR_DR;
 	serial_port_out(port, UART_IER, up->ier);
 
 	serial8250_rpm_put(up);
-पूर्ण
+}
 
 /**
  * serial8250_em485_stop_tx() - generic ->rs485_stop_tx() callback
@@ -1441,103 +1440,103 @@ out:
  *
  * Generic callback usable by 8250 uart drivers to stop rs485 transmission.
  */
-व्योम serial8250_em485_stop_tx(काष्ठा uart_8250_port *p)
-अणु
-	अचिन्हित अक्षर mcr = serial8250_in_MCR(p);
+void serial8250_em485_stop_tx(struct uart_8250_port *p)
+{
+	unsigned char mcr = serial8250_in_MCR(p);
 
-	अगर (p->port.rs485.flags & SER_RS485_RTS_AFTER_SEND)
+	if (p->port.rs485.flags & SER_RS485_RTS_AFTER_SEND)
 		mcr |= UART_MCR_RTS;
-	अन्यथा
+	else
 		mcr &= ~UART_MCR_RTS;
 	serial8250_out_MCR(p, mcr);
 
 	/*
-	 * Empty the RX FIFO, we are not पूर्णांकerested in anything
+	 * Empty the RX FIFO, we are not interested in anything
 	 * received during the half-duplex transmission.
-	 * Enable previously disabled RX पूर्णांकerrupts.
+	 * Enable previously disabled RX interrupts.
 	 */
-	अगर (!(p->port.rs485.flags & SER_RS485_RX_DURING_TX)) अणु
-		serial8250_clear_and_reinit_fअगरos(p);
+	if (!(p->port.rs485.flags & SER_RS485_RX_DURING_TX)) {
+		serial8250_clear_and_reinit_fifos(p);
 
 		p->ier |= UART_IER_RLSI | UART_IER_RDI;
 		serial_port_out(&p->port, UART_IER, p->ier);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(serial8250_em485_stop_tx);
 
-अटल क्रमागत hrसमयr_restart serial8250_em485_handle_stop_tx(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा uart_8250_em485 *em485 = container_of(t, काष्ठा uart_8250_em485,
-			stop_tx_समयr);
-	काष्ठा uart_8250_port *p = em485->port;
-	अचिन्हित दीर्घ flags;
+static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t)
+{
+	struct uart_8250_em485 *em485 = container_of(t, struct uart_8250_em485,
+			stop_tx_timer);
+	struct uart_8250_port *p = em485->port;
+	unsigned long flags;
 
 	serial8250_rpm_get(p);
 	spin_lock_irqsave(&p->port.lock, flags);
-	अगर (em485->active_समयr == &em485->stop_tx_समयr) अणु
+	if (em485->active_timer == &em485->stop_tx_timer) {
 		p->rs485_stop_tx(p);
-		em485->active_समयr = शून्य;
+		em485->active_timer = NULL;
 		em485->tx_stopped = true;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&p->port.lock, flags);
 	serial8250_rpm_put(p);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम start_hrसमयr_ms(काष्ठा hrसमयr *hrt, अचिन्हित दीर्घ msec)
-अणु
-	hrसमयr_start(hrt, ms_to_kसमय(msec), HRTIMER_MODE_REL);
-पूर्ण
+static void start_hrtimer_ms(struct hrtimer *hrt, unsigned long msec)
+{
+	hrtimer_start(hrt, ms_to_ktime(msec), HRTIMER_MODE_REL);
+}
 
-अटल व्योम __stop_tx_rs485(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_em485 *em485 = p->em485;
+static void __stop_tx_rs485(struct uart_8250_port *p)
+{
+	struct uart_8250_em485 *em485 = p->em485;
 
 	/*
 	 * rs485_stop_tx() is going to set RTS according to config
-	 * AND flush RX FIFO अगर required.
+	 * AND flush RX FIFO if required.
 	 */
-	अगर (p->port.rs485.delay_rts_after_send > 0) अणु
-		em485->active_समयr = &em485->stop_tx_समयr;
-		start_hrसमयr_ms(&em485->stop_tx_समयr,
+	if (p->port.rs485.delay_rts_after_send > 0) {
+		em485->active_timer = &em485->stop_tx_timer;
+		start_hrtimer_ms(&em485->stop_tx_timer,
 				   p->port.rs485.delay_rts_after_send);
-	पूर्ण अन्यथा अणु
+	} else {
 		p->rs485_stop_tx(p);
-		em485->active_समयr = शून्य;
+		em485->active_timer = NULL;
 		em485->tx_stopped = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम __करो_stop_tx(काष्ठा uart_8250_port *p)
-अणु
-	अगर (serial8250_clear_THRI(p))
+static inline void __do_stop_tx(struct uart_8250_port *p)
+{
+	if (serial8250_clear_THRI(p))
 		serial8250_rpm_put_tx(p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __stop_tx(काष्ठा uart_8250_port *p)
-अणु
-	काष्ठा uart_8250_em485 *em485 = p->em485;
+static inline void __stop_tx(struct uart_8250_port *p)
+{
+	struct uart_8250_em485 *em485 = p->em485;
 
-	अगर (em485) अणु
-		अचिन्हित अक्षर lsr = serial_in(p, UART_LSR);
+	if (em485) {
+		unsigned char lsr = serial_in(p, UART_LSR);
 		/*
-		 * To provide required समयing and allow FIFO transfer,
+		 * To provide required timeing and allow FIFO transfer,
 		 * __stop_tx_rs485() must be called only when both FIFO and
-		 * shअगरt रेजिस्टर are empty. It is क्रम device driver to enable
-		 * पूर्णांकerrupt on TEMT.
+		 * shift register are empty. It is for device driver to enable
+		 * interrupt on TEMT.
 		 */
-		अगर ((lsr & BOTH_EMPTY) != BOTH_EMPTY)
-			वापस;
+		if ((lsr & BOTH_EMPTY) != BOTH_EMPTY)
+			return;
 
 		__stop_tx_rs485(p);
-	पूर्ण
-	__करो_stop_tx(p);
-पूर्ण
+	}
+	__do_stop_tx(p);
+}
 
-अटल व्योम serial8250_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_stop_tx(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	serial8250_rpm_get(up);
 	__stop_tx(up);
@@ -1545,153 +1544,153 @@ EXPORT_SYMBOL_GPL(serial8250_em485_stop_tx);
 	/*
 	 * We really want to stop the transmitter from sending.
 	 */
-	अगर (port->type == PORT_16C950) अणु
+	if (port->type == PORT_16C950) {
 		up->acr |= UART_ACR_TXDIS;
-		serial_icr_ग_लिखो(up, UART_ACR, up->acr);
-	पूर्ण
+		serial_icr_write(up, UART_ACR, up->acr);
+	}
 	serial8250_rpm_put(up);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static inline void __start_tx(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
-	अगर (up->dma && !up->dma->tx_dma(up))
-		वापस;
+	if (up->dma && !up->dma->tx_dma(up))
+		return;
 
-	अगर (serial8250_set_THRI(up)) अणु
-		अगर (up->bugs & UART_BUG_TXEN) अणु
-			अचिन्हित अक्षर lsr;
+	if (serial8250_set_THRI(up)) {
+		if (up->bugs & UART_BUG_TXEN) {
+			unsigned char lsr;
 
 			lsr = serial_in(up, UART_LSR);
 			up->lsr_saved_flags |= lsr & LSR_SAVE_FLAGS;
-			अगर (lsr & UART_LSR_THRE)
-				serial8250_tx_अक्षरs(up);
-		पूर्ण
-	पूर्ण
+			if (lsr & UART_LSR_THRE)
+				serial8250_tx_chars(up);
+		}
+	}
 
 	/*
-	 * Re-enable the transmitter अगर we disabled it.
+	 * Re-enable the transmitter if we disabled it.
 	 */
-	अगर (port->type == PORT_16C950 && up->acr & UART_ACR_TXDIS) अणु
+	if (port->type == PORT_16C950 && up->acr & UART_ACR_TXDIS) {
 		up->acr &= ~UART_ACR_TXDIS;
-		serial_icr_ग_लिखो(up, UART_ACR, up->acr);
-	पूर्ण
-पूर्ण
+		serial_icr_write(up, UART_ACR, up->acr);
+	}
+}
 
 /**
  * serial8250_em485_start_tx() - generic ->rs485_start_tx() callback
  * @up: uart 8250 port
  *
  * Generic callback usable by 8250 uart drivers to start rs485 transmission.
- * Assumes that setting the RTS bit in the MCR रेजिस्टर means RTS is high.
+ * Assumes that setting the RTS bit in the MCR register means RTS is high.
  * (Some chips use inverse semantics.)  Further assumes that reception is
- * stoppable by disabling the UART_IER_RDI पूर्णांकerrupt.  (Some chips set the
+ * stoppable by disabling the UART_IER_RDI interrupt.  (Some chips set the
  * UART_LSR_DR bit even when UART_IER_RDI is disabled, foiling this approach.)
  */
-व्योम serial8250_em485_start_tx(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित अक्षर mcr = serial8250_in_MCR(up);
+void serial8250_em485_start_tx(struct uart_8250_port *up)
+{
+	unsigned char mcr = serial8250_in_MCR(up);
 
-	अगर (!(up->port.rs485.flags & SER_RS485_RX_DURING_TX))
+	if (!(up->port.rs485.flags & SER_RS485_RX_DURING_TX))
 		serial8250_stop_rx(&up->port);
 
-	अगर (up->port.rs485.flags & SER_RS485_RTS_ON_SEND)
+	if (up->port.rs485.flags & SER_RS485_RTS_ON_SEND)
 		mcr |= UART_MCR_RTS;
-	अन्यथा
+	else
 		mcr &= ~UART_MCR_RTS;
 	serial8250_out_MCR(up, mcr);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(serial8250_em485_start_tx);
 
-अटल अंतरभूत व्योम start_tx_rs485(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	काष्ठा uart_8250_em485 *em485 = up->em485;
+static inline void start_tx_rs485(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	struct uart_8250_em485 *em485 = up->em485;
 
-	em485->active_समयr = शून्य;
+	em485->active_timer = NULL;
 
-	अगर (em485->tx_stopped) अणु
+	if (em485->tx_stopped) {
 		em485->tx_stopped = false;
 
 		up->rs485_start_tx(up);
 
-		अगर (up->port.rs485.delay_rts_beक्रमe_send > 0) अणु
-			em485->active_समयr = &em485->start_tx_समयr;
-			start_hrसमयr_ms(&em485->start_tx_समयr,
-					 up->port.rs485.delay_rts_beक्रमe_send);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (up->port.rs485.delay_rts_before_send > 0) {
+			em485->active_timer = &em485->start_tx_timer;
+			start_hrtimer_ms(&em485->start_tx_timer,
+					 up->port.rs485.delay_rts_before_send);
+			return;
+		}
+	}
 
 	__start_tx(port);
-पूर्ण
+}
 
-अटल क्रमागत hrसमयr_restart serial8250_em485_handle_start_tx(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा uart_8250_em485 *em485 = container_of(t, काष्ठा uart_8250_em485,
-			start_tx_समयr);
-	काष्ठा uart_8250_port *p = em485->port;
-	अचिन्हित दीर्घ flags;
+static enum hrtimer_restart serial8250_em485_handle_start_tx(struct hrtimer *t)
+{
+	struct uart_8250_em485 *em485 = container_of(t, struct uart_8250_em485,
+			start_tx_timer);
+	struct uart_8250_port *p = em485->port;
+	unsigned long flags;
 
 	spin_lock_irqsave(&p->port.lock, flags);
-	अगर (em485->active_समयr == &em485->start_tx_समयr) अणु
+	if (em485->active_timer == &em485->start_tx_timer) {
 		__start_tx(&p->port);
-		em485->active_समयr = शून्य;
-	पूर्ण
+		em485->active_timer = NULL;
+	}
 	spin_unlock_irqrestore(&p->port.lock, flags);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम serial8250_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	काष्ठा uart_8250_em485 *em485 = up->em485;
+static void serial8250_start_tx(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	struct uart_8250_em485 *em485 = up->em485;
 
 	serial8250_rpm_get_tx(up);
 
-	अगर (em485 &&
-	    em485->active_समयr == &em485->start_tx_समयr)
-		वापस;
+	if (em485 &&
+	    em485->active_timer == &em485->start_tx_timer)
+		return;
 
-	अगर (em485)
+	if (em485)
 		start_tx_rs485(port);
-	अन्यथा
+	else
 		__start_tx(port);
-पूर्ण
+}
 
-अटल व्योम serial8250_throttle(काष्ठा uart_port *port)
-अणु
+static void serial8250_throttle(struct uart_port *port)
+{
 	port->throttle(port);
-पूर्ण
+}
 
-अटल व्योम serial8250_unthrottle(काष्ठा uart_port *port)
-अणु
+static void serial8250_unthrottle(struct uart_port *port)
+{
 	port->unthrottle(port);
-पूर्ण
+}
 
-अटल व्योम serial8250_disable_ms(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_disable_ms(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	/* no MSR capabilities */
-	अगर (up->bugs & UART_BUG_NOMSR)
-		वापस;
+	if (up->bugs & UART_BUG_NOMSR)
+		return;
 
 	mctrl_gpio_disable_ms(up->gpios);
 
 	up->ier &= ~UART_IER_MSI;
 	serial_port_out(port, UART_IER, up->ier);
-पूर्ण
+}
 
-अटल व्योम serial8250_enable_ms(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_enable_ms(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	/* no MSR capabilities */
-	अगर (up->bugs & UART_BUG_NOMSR)
-		वापस;
+	if (up->bugs & UART_BUG_NOMSR)
+		return;
 
 	mctrl_gpio_enable_ms(up->gpios);
 
@@ -1700,23 +1699,23 @@ EXPORT_SYMBOL_GPL(serial8250_em485_start_tx);
 	serial8250_rpm_get(up);
 	serial_port_out(port, UART_IER, up->ier);
 	serial8250_rpm_put(up);
-पूर्ण
+}
 
-व्योम serial8250_पढ़ो_अक्षर(काष्ठा uart_8250_port *up, अचिन्हित अक्षर lsr)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	अचिन्हित अक्षर ch;
-	अक्षर flag = TTY_NORMAL;
+void serial8250_read_char(struct uart_8250_port *up, unsigned char lsr)
+{
+	struct uart_port *port = &up->port;
+	unsigned char ch;
+	char flag = TTY_NORMAL;
 
-	अगर (likely(lsr & UART_LSR_DR))
+	if (likely(lsr & UART_LSR_DR))
 		ch = serial_in(up, UART_RX);
-	अन्यथा
+	else
 		/*
 		 * Intel 82571 has a Serial Over Lan device that will
 		 * set UART_LSR_BI without setting UART_LSR_DR when
-		 * it receives a अवरोध. To aव्योम पढ़ोing from the
+		 * it receives a break. To avoid reading from the
 		 * receive buffer without UART_LSR_DR bit set, we
-		 * just क्रमce the पढ़ो अक्षरacter to be 0
+		 * just force the read character to be 0
 		 */
 		ch = 0;
 
@@ -1725,178 +1724,178 @@ EXPORT_SYMBOL_GPL(serial8250_em485_start_tx);
 	lsr |= up->lsr_saved_flags;
 	up->lsr_saved_flags = 0;
 
-	अगर (unlikely(lsr & UART_LSR_BRK_ERROR_BITS)) अणु
-		अगर (lsr & UART_LSR_BI) अणु
+	if (unlikely(lsr & UART_LSR_BRK_ERROR_BITS)) {
+		if (lsr & UART_LSR_BI) {
 			lsr &= ~(UART_LSR_FE | UART_LSR_PE);
 			port->icount.brk++;
 			/*
-			 * We करो the SysRQ and SAK checking
-			 * here because otherwise the अवरोध
+			 * We do the SysRQ and SAK checking
+			 * here because otherwise the break
 			 * may get masked by ignore_status_mask
-			 * or पढ़ो_status_mask.
+			 * or read_status_mask.
 			 */
-			अगर (uart_handle_अवरोध(port))
-				वापस;
-		पूर्ण अन्यथा अगर (lsr & UART_LSR_PE)
+			if (uart_handle_break(port))
+				return;
+		} else if (lsr & UART_LSR_PE)
 			port->icount.parity++;
-		अन्यथा अगर (lsr & UART_LSR_FE)
+		else if (lsr & UART_LSR_FE)
 			port->icount.frame++;
-		अगर (lsr & UART_LSR_OE)
+		if (lsr & UART_LSR_OE)
 			port->icount.overrun++;
 
 		/*
 		 * Mask off conditions which should be ignored.
 		 */
-		lsr &= port->पढ़ो_status_mask;
+		lsr &= port->read_status_mask;
 
-		अगर (lsr & UART_LSR_BI) अणु
+		if (lsr & UART_LSR_BI) {
 			dev_dbg(port->dev, "handling break\n");
 			flag = TTY_BREAK;
-		पूर्ण अन्यथा अगर (lsr & UART_LSR_PE)
+		} else if (lsr & UART_LSR_PE)
 			flag = TTY_PARITY;
-		अन्यथा अगर (lsr & UART_LSR_FE)
+		else if (lsr & UART_LSR_FE)
 			flag = TTY_FRAME;
-	पूर्ण
-	अगर (uart_prepare_sysrq_अक्षर(port, ch))
-		वापस;
+	}
+	if (uart_prepare_sysrq_char(port, ch))
+		return;
 
-	uart_insert_अक्षर(port, lsr, UART_LSR_OE, ch, flag);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_पढ़ो_अक्षर);
+	uart_insert_char(port, lsr, UART_LSR_OE, ch, flag);
+}
+EXPORT_SYMBOL_GPL(serial8250_read_char);
 
 /*
- * serial8250_rx_अक्षरs: processes according to the passed in LSR
- * value, and वापसs the reमुख्यing LSR bits not handled
+ * serial8250_rx_chars: processes according to the passed in LSR
+ * value, and returns the remaining LSR bits not handled
  * by this Rx routine.
  */
-अचिन्हित अक्षर serial8250_rx_अक्षरs(काष्ठा uart_8250_port *up, अचिन्हित अक्षर lsr)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	पूर्णांक max_count = 256;
+unsigned char serial8250_rx_chars(struct uart_8250_port *up, unsigned char lsr)
+{
+	struct uart_port *port = &up->port;
+	int max_count = 256;
 
-	करो अणु
-		serial8250_पढ़ो_अक्षर(up, lsr);
-		अगर (--max_count == 0)
-			अवरोध;
+	do {
+		serial8250_read_char(up, lsr);
+		if (--max_count == 0)
+			break;
 		lsr = serial_in(up, UART_LSR);
-	पूर्ण जबतक (lsr & (UART_LSR_DR | UART_LSR_BI));
+	} while (lsr & (UART_LSR_DR | UART_LSR_BI));
 
 	tty_flip_buffer_push(&port->state->port);
-	वापस lsr;
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_rx_अक्षरs);
+	return lsr;
+}
+EXPORT_SYMBOL_GPL(serial8250_rx_chars);
 
-व्योम serial8250_tx_अक्षरs(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	पूर्णांक count;
+void serial8250_tx_chars(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
+	struct circ_buf *xmit = &port->state->xmit;
+	int count;
 
-	अगर (port->x_अक्षर) अणु
-		serial_out(up, UART_TX, port->x_अक्षर);
+	if (port->x_char) {
+		serial_out(up, UART_TX, port->x_char);
 		port->icount.tx++;
-		port->x_अक्षर = 0;
-		वापस;
-	पूर्ण
-	अगर (uart_tx_stopped(port)) अणु
+		port->x_char = 0;
+		return;
+	}
+	if (uart_tx_stopped(port)) {
 		serial8250_stop_tx(port);
-		वापस;
-	पूर्ण
-	अगर (uart_circ_empty(xmit)) अणु
+		return;
+	}
+	if (uart_circ_empty(xmit)) {
 		__stop_tx(up);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	count = up->tx_loadsz;
-	करो अणु
+	do {
 		serial_out(up, UART_TX, xmit->buf[xmit->tail]);
-		अगर (up->bugs & UART_BUG_TXRACE) अणु
+		if (up->bugs & UART_BUG_TXRACE) {
 			/*
-			 * The Aspeed BMC भव UARTs have a bug where data
+			 * The Aspeed BMC virtual UARTs have a bug where data
 			 * may get stuck in the BMC's Tx FIFO from bursts of
-			 * ग_लिखोs on the APB पूर्णांकerface.
+			 * writes on the APB interface.
 			 *
-			 * Delay back-to-back ग_लिखोs by a पढ़ो cycle to aव्योम
-			 * stalling the VUART. Read a रेजिस्टर that won't have
+			 * Delay back-to-back writes by a read cycle to avoid
+			 * stalling the VUART. Read a register that won't have
 			 * side-effects and discard the result.
 			 */
 			serial_in(up, UART_SCR);
-		पूर्ण
+		}
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		अगर (uart_circ_empty(xmit))
-			अवरोध;
-		अगर ((up->capabilities & UART_CAP_HFIFO) &&
+		if (uart_circ_empty(xmit))
+			break;
+		if ((up->capabilities & UART_CAP_HFIFO) &&
 		    (serial_in(up, UART_LSR) & BOTH_EMPTY) != BOTH_EMPTY)
-			अवरोध;
+			break;
 		/* The BCM2835 MINI UART THRE bit is really a not-full bit. */
-		अगर ((up->capabilities & UART_CAP_MINI) &&
+		if ((up->capabilities & UART_CAP_MINI) &&
 		    !(serial_in(up, UART_LSR) & UART_LSR_THRE))
-			अवरोध;
-	पूर्ण जबतक (--count > 0);
+			break;
+	} while (--count > 0);
 
-	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
-		uart_ग_लिखो_wakeup(port);
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
 
 	/*
-	 * With RPM enabled, we have to रुको until the FIFO is empty beक्रमe the
+	 * With RPM enabled, we have to wait until the FIFO is empty before the
 	 * HW can go idle. So we get here once again with empty FIFO and disable
-	 * the पूर्णांकerrupt and RPM in __stop_tx()
+	 * the interrupt and RPM in __stop_tx()
 	 */
-	अगर (uart_circ_empty(xmit) && !(up->capabilities & UART_CAP_RPM))
+	if (uart_circ_empty(xmit) && !(up->capabilities & UART_CAP_RPM))
 		__stop_tx(up);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_tx_अक्षरs);
+}
+EXPORT_SYMBOL_GPL(serial8250_tx_chars);
 
 /* Caller holds uart port lock */
-अचिन्हित पूर्णांक serial8250_modem_status(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	अचिन्हित पूर्णांक status = serial_in(up, UART_MSR);
+unsigned int serial8250_modem_status(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
+	unsigned int status = serial_in(up, UART_MSR);
 
 	status |= up->msr_saved_flags;
 	up->msr_saved_flags = 0;
-	अगर (status & UART_MSR_ANY_DELTA && up->ier & UART_IER_MSI &&
-	    port->state != शून्य) अणु
-		अगर (status & UART_MSR_TERI)
+	if (status & UART_MSR_ANY_DELTA && up->ier & UART_IER_MSI &&
+	    port->state != NULL) {
+		if (status & UART_MSR_TERI)
 			port->icount.rng++;
-		अगर (status & UART_MSR_DDSR)
+		if (status & UART_MSR_DDSR)
 			port->icount.dsr++;
-		अगर (status & UART_MSR_DDCD)
+		if (status & UART_MSR_DDCD)
 			uart_handle_dcd_change(port, status & UART_MSR_DCD);
-		अगर (status & UART_MSR_DCTS)
+		if (status & UART_MSR_DCTS)
 			uart_handle_cts_change(port, status & UART_MSR_CTS);
 
-		wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
-	पूर्ण
+		wake_up_interruptible(&port->state->port.delta_msr_wait);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(serial8250_modem_status);
 
-अटल bool handle_rx_dma(काष्ठा uart_8250_port *up, अचिन्हित पूर्णांक iir)
-अणु
-	चयन (iir & 0x3f) अणु
-	हाल UART_IIR_RX_TIMEOUT:
+static bool handle_rx_dma(struct uart_8250_port *up, unsigned int iir)
+{
+	switch (iir & 0x3f) {
+	case UART_IIR_RX_TIMEOUT:
 		serial8250_rx_dma_flush(up);
 		fallthrough;
-	हाल UART_IIR_RLSI:
-		वापस true;
-	पूर्ण
-	वापस up->dma->rx_dma(up);
-पूर्ण
+	case UART_IIR_RLSI:
+		return true;
+	}
+	return up->dma->rx_dma(up);
+}
 
 /*
- * This handles the पूर्णांकerrupt from one port.
+ * This handles the interrupt from one port.
  */
-पूर्णांक serial8250_handle_irq(काष्ठा uart_port *port, अचिन्हित पूर्णांक iir)
-अणु
-	अचिन्हित अक्षर status;
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
+{
+	unsigned char status;
+	struct uart_8250_port *up = up_to_u8250p(port);
 	bool skip_rx = false;
 
-	अगर (iir & UART_IIR_NO_INT)
-		वापस 0;
+	if (iir & UART_IIR_NO_INT)
+		return 0;
 
 	spin_lock(&port->lock);
 
@@ -1904,37 +1903,37 @@ EXPORT_SYMBOL_GPL(serial8250_modem_status);
 
 	/*
 	 * If port is stopped and there are no error conditions in the
-	 * FIFO, then करोn't drain the FIFO, as this may lead to TTY buffer
-	 * overflow. Not servicing, RX FIFO would trigger स्वतः HW flow
+	 * FIFO, then don't drain the FIFO, as this may lead to TTY buffer
+	 * overflow. Not servicing, RX FIFO would trigger auto HW flow
 	 * control when FIFO occupancy reaches preset threshold, thus
-	 * halting RX. This only works when स्वतः HW flow control is
+	 * halting RX. This only works when auto HW flow control is
 	 * available.
 	 */
-	अगर (!(status & (UART_LSR_FIFOE | UART_LSR_BRK_ERROR_BITS)) &&
+	if (!(status & (UART_LSR_FIFOE | UART_LSR_BRK_ERROR_BITS)) &&
 	    (port->status & (UPSTAT_AUTOCTS | UPSTAT_AUTORTS)) &&
-	    !(port->पढ़ो_status_mask & UART_LSR_DR))
+	    !(port->read_status_mask & UART_LSR_DR))
 		skip_rx = true;
 
-	अगर (status & (UART_LSR_DR | UART_LSR_BI) && !skip_rx) अणु
-		अगर (!up->dma || handle_rx_dma(up, iir))
-			status = serial8250_rx_अक्षरs(up, status);
-	पूर्ण
+	if (status & (UART_LSR_DR | UART_LSR_BI) && !skip_rx) {
+		if (!up->dma || handle_rx_dma(up, iir))
+			status = serial8250_rx_chars(up, status);
+	}
 	serial8250_modem_status(up);
-	अगर ((!up->dma || up->dma->tx_err) && (status & UART_LSR_THRE) &&
+	if ((!up->dma || up->dma->tx_err) && (status & UART_LSR_THRE) &&
 		(up->ier & UART_IER_THRI))
-		serial8250_tx_अक्षरs(up);
+		serial8250_tx_chars(up);
 
 	uart_unlock_and_check_sysrq(port);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(serial8250_handle_irq);
 
-अटल पूर्णांक serial8250_शेष_handle_irq(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित पूर्णांक iir;
-	पूर्णांक ret;
+static int serial8250_default_handle_irq(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned int iir;
+	int ret;
 
 	serial8250_rpm_get(up);
 
@@ -1942,38 +1941,38 @@ EXPORT_SYMBOL_GPL(serial8250_handle_irq);
 	ret = serial8250_handle_irq(port, iir);
 
 	serial8250_rpm_put(up);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Newer 16550 compatible parts such as the SC16C650 & Altera 16550 Soft IP
- * have a programmable TX threshold that triggers the THRE पूर्णांकerrupt in
- * the IIR रेजिस्टर. In this हाल, the THRE पूर्णांकerrupt indicates the FIFO
+ * have a programmable TX threshold that triggers the THRE interrupt in
+ * the IIR register. In this case, the THRE interrupt indicates the FIFO
  * has space available. Load it up with tx_loadsz bytes.
  */
-अटल पूर्णांक serial8250_tx_threshold_handle_irq(काष्ठा uart_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक iir = serial_port_in(port, UART_IIR);
+static int serial8250_tx_threshold_handle_irq(struct uart_port *port)
+{
+	unsigned long flags;
+	unsigned int iir = serial_port_in(port, UART_IIR);
 
 	/* TX Threshold IRQ triggered so load up FIFO */
-	अगर ((iir & UART_IIR_ID) == UART_IIR_THRI) अणु
-		काष्ठा uart_8250_port *up = up_to_u8250p(port);
+	if ((iir & UART_IIR_ID) == UART_IIR_THRI) {
+		struct uart_8250_port *up = up_to_u8250p(port);
 
 		spin_lock_irqsave(&port->lock, flags);
-		serial8250_tx_अक्षरs(up);
+		serial8250_tx_chars(up);
 		spin_unlock_irqrestore(&port->lock, flags);
-	पूर्ण
+	}
 
 	iir = serial_port_in(port, UART_IIR);
-	वापस serial8250_handle_irq(port, iir);
-पूर्ण
+	return serial8250_handle_irq(port, iir);
+}
 
-अटल अचिन्हित पूर्णांक serial8250_tx_empty(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक lsr;
+static unsigned int serial8250_tx_empty(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned long flags;
+	unsigned int lsr;
 
 	serial8250_rpm_get(up);
 
@@ -1984,243 +1983,243 @@ EXPORT_SYMBOL_GPL(serial8250_handle_irq);
 
 	serial8250_rpm_put(up);
 
-	वापस (lsr & BOTH_EMPTY) == BOTH_EMPTY ? TIOCSER_TEMT : 0;
-पूर्ण
+	return (lsr & BOTH_EMPTY) == BOTH_EMPTY ? TIOCSER_TEMT : 0;
+}
 
-अचिन्हित पूर्णांक serial8250_करो_get_mctrl(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित पूर्णांक status;
-	अचिन्हित पूर्णांक val;
+unsigned int serial8250_do_get_mctrl(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned int status;
+	unsigned int val;
 
 	serial8250_rpm_get(up);
 	status = serial8250_modem_status(up);
 	serial8250_rpm_put(up);
 
 	val = serial8250_MSR_to_TIOCM(status);
-	अगर (up->gpios)
-		वापस mctrl_gpio_get(up->gpios, &val);
+	if (up->gpios)
+		return mctrl_gpio_get(up->gpios, &val);
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_get_mctrl);
+	return val;
+}
+EXPORT_SYMBOL_GPL(serial8250_do_get_mctrl);
 
-अटल अचिन्हित पूर्णांक serial8250_get_mctrl(काष्ठा uart_port *port)
-अणु
-	अगर (port->get_mctrl)
-		वापस port->get_mctrl(port);
-	वापस serial8250_करो_get_mctrl(port);
-पूर्ण
+static unsigned int serial8250_get_mctrl(struct uart_port *port)
+{
+	if (port->get_mctrl)
+		return port->get_mctrl(port);
+	return serial8250_do_get_mctrl(port);
+}
 
-व्योम serial8250_करो_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित अक्षर mcr;
+void serial8250_do_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned char mcr;
 
-	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
-		अगर (serial8250_in_MCR(up) & UART_MCR_RTS)
+	if (port->rs485.flags & SER_RS485_ENABLED) {
+		if (serial8250_in_MCR(up) & UART_MCR_RTS)
 			mctrl |= TIOCM_RTS;
-		अन्यथा
+		else
 			mctrl &= ~TIOCM_RTS;
-	पूर्ण
+	}
 
 	mcr = serial8250_TIOCM_to_MCR(mctrl);
 
-	mcr = (mcr & up->mcr_mask) | up->mcr_क्रमce | up->mcr;
+	mcr = (mcr & up->mcr_mask) | up->mcr_force | up->mcr;
 
 	serial8250_out_MCR(up, mcr);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_set_mctrl);
+}
+EXPORT_SYMBOL_GPL(serial8250_do_set_mctrl);
 
-अटल व्योम serial8250_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
-अणु
-	अगर (port->set_mctrl)
+static void serial8250_set_mctrl(struct uart_port *port, unsigned int mctrl)
+{
+	if (port->set_mctrl)
 		port->set_mctrl(port, mctrl);
-	अन्यथा
-		serial8250_करो_set_mctrl(port, mctrl);
-पूर्ण
+	else
+		serial8250_do_set_mctrl(port, mctrl);
+}
 
-अटल व्योम serial8250_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित दीर्घ flags;
+static void serial8250_break_ctl(struct uart_port *port, int break_state)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned long flags;
 
 	serial8250_rpm_get(up);
 	spin_lock_irqsave(&port->lock, flags);
-	अगर (अवरोध_state == -1)
+	if (break_state == -1)
 		up->lcr |= UART_LCR_SBC;
-	अन्यथा
+	else
 		up->lcr &= ~UART_LCR_SBC;
 	serial_port_out(port, UART_LCR, up->lcr);
 	spin_unlock_irqrestore(&port->lock, flags);
 	serial8250_rpm_put(up);
-पूर्ण
+}
 
 /*
- *	Wait क्रम transmitter & holding रेजिस्टर to empty
+ *	Wait for transmitter & holding register to empty
  */
-अटल व्योम रुको_क्रम_xmitr(काष्ठा uart_8250_port *up, पूर्णांक bits)
-अणु
-	अचिन्हित पूर्णांक status, पंचांगout = 10000;
+static void wait_for_xmitr(struct uart_8250_port *up, int bits)
+{
+	unsigned int status, tmout = 10000;
 
-	/* Wait up to 10ms क्रम the अक्षरacter(s) to be sent. */
-	क्रम (;;) अणु
+	/* Wait up to 10ms for the character(s) to be sent. */
+	for (;;) {
 		status = serial_in(up, UART_LSR);
 
 		up->lsr_saved_flags |= status & LSR_SAVE_FLAGS;
 
-		अगर ((status & bits) == bits)
-			अवरोध;
-		अगर (--पंचांगout == 0)
-			अवरोध;
+		if ((status & bits) == bits)
+			break;
+		if (--tmout == 0)
+			break;
 		udelay(1);
-		touch_nmi_watchकरोg();
-	पूर्ण
+		touch_nmi_watchdog();
+	}
 
-	/* Wait up to 1s क्रम flow control अगर necessary */
-	अगर (up->port.flags & UPF_CONS_FLOW) अणु
-		क्रम (पंचांगout = 1000000; पंचांगout; पंचांगout--) अणु
-			अचिन्हित पूर्णांक msr = serial_in(up, UART_MSR);
+	/* Wait up to 1s for flow control if necessary */
+	if (up->port.flags & UPF_CONS_FLOW) {
+		for (tmout = 1000000; tmout; tmout--) {
+			unsigned int msr = serial_in(up, UART_MSR);
 			up->msr_saved_flags |= msr & MSR_SAVE_FLAGS;
-			अगर (msr & UART_MSR_CTS)
-				अवरोध;
+			if (msr & UART_MSR_CTS)
+				break;
 			udelay(1);
-			touch_nmi_watchकरोg();
-		पूर्ण
-	पूर्ण
-पूर्ण
+			touch_nmi_watchdog();
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_CONSOLE_POLL
+#ifdef CONFIG_CONSOLE_POLL
 /*
- * Console polling routines क्रम writing and पढ़ोing from the uart जबतक
- * in an पूर्णांकerrupt or debug context.
+ * Console polling routines for writing and reading from the uart while
+ * in an interrupt or debug context.
  */
 
-अटल पूर्णांक serial8250_get_poll_अक्षर(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित अक्षर lsr;
-	पूर्णांक status;
+static int serial8250_get_poll_char(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned char lsr;
+	int status;
 
 	serial8250_rpm_get(up);
 
 	lsr = serial_port_in(port, UART_LSR);
 
-	अगर (!(lsr & UART_LSR_DR)) अणु
+	if (!(lsr & UART_LSR_DR)) {
 		status = NO_POLL_CHAR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	status = serial_port_in(port, UART_RX);
 out:
 	serial8250_rpm_put(up);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
-अटल व्योम serial8250_put_poll_अक्षर(काष्ठा uart_port *port,
-			 अचिन्हित अक्षर c)
-अणु
-	अचिन्हित पूर्णांक ier;
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_put_poll_char(struct uart_port *port,
+			 unsigned char c)
+{
+	unsigned int ier;
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	serial8250_rpm_get(up);
 	/*
-	 *	First save the IER then disable the पूर्णांकerrupts
+	 *	First save the IER then disable the interrupts
 	 */
 	ier = serial_port_in(port, UART_IER);
-	अगर (up->capabilities & UART_CAP_UUE)
+	if (up->capabilities & UART_CAP_UUE)
 		serial_port_out(port, UART_IER, UART_IER_UUE);
-	अन्यथा
+	else
 		serial_port_out(port, UART_IER, 0);
 
-	रुको_क्रम_xmitr(up, BOTH_EMPTY);
+	wait_for_xmitr(up, BOTH_EMPTY);
 	/*
-	 *	Send the अक्षरacter out.
+	 *	Send the character out.
 	 */
 	serial_port_out(port, UART_TX, c);
 
 	/*
-	 *	Finally, रुको क्रम transmitter to become empty
+	 *	Finally, wait for transmitter to become empty
 	 *	and restore the IER
 	 */
-	रुको_क्रम_xmitr(up, BOTH_EMPTY);
+	wait_for_xmitr(up, BOTH_EMPTY);
 	serial_port_out(port, UART_IER, ier);
 	serial8250_rpm_put(up);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
+#endif /* CONFIG_CONSOLE_POLL */
 
-पूर्णांक serial8250_करो_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर lsr, iir;
-	पूर्णांक retval;
+int serial8250_do_startup(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned long flags;
+	unsigned char lsr, iir;
+	int retval;
 
-	अगर (!port->fअगरosize)
-		port->fअगरosize = uart_config[port->type].fअगरo_size;
-	अगर (!up->tx_loadsz)
+	if (!port->fifosize)
+		port->fifosize = uart_config[port->type].fifo_size;
+	if (!up->tx_loadsz)
 		up->tx_loadsz = uart_config[port->type].tx_loadsz;
-	अगर (!up->capabilities)
+	if (!up->capabilities)
 		up->capabilities = uart_config[port->type].flags;
 	up->mcr = 0;
 
-	अगर (port->iotype != up->cur_iotype)
+	if (port->iotype != up->cur_iotype)
 		set_io_from_upio(port);
 
 	serial8250_rpm_get(up);
-	अगर (port->type == PORT_16C950) अणु
+	if (port->type == PORT_16C950) {
 		/* Wake up and initialize UART */
 		up->acr = 0;
 		serial_port_out(port, UART_LCR, UART_LCR_CONF_MODE_B);
 		serial_port_out(port, UART_EFR, UART_EFR_ECB);
 		serial_port_out(port, UART_IER, 0);
 		serial_port_out(port, UART_LCR, 0);
-		serial_icr_ग_लिखो(up, UART_CSR, 0); /* Reset the UART */
+		serial_icr_write(up, UART_CSR, 0); /* Reset the UART */
 		serial_port_out(port, UART_LCR, UART_LCR_CONF_MODE_B);
 		serial_port_out(port, UART_EFR, UART_EFR_ECB);
 		serial_port_out(port, UART_LCR, 0);
-	पूर्ण
+	}
 
-	अगर (port->type == PORT_DA830) अणु
+	if (port->type == PORT_DA830) {
 		/* Reset the port */
 		serial_port_out(port, UART_IER, 0);
 		serial_port_out(port, UART_DA830_PWREMU_MGMT, 0);
 		mdelay(10);
 
-		/* Enable Tx, Rx and मुक्त run mode */
+		/* Enable Tx, Rx and free run mode */
 		serial_port_out(port, UART_DA830_PWREMU_MGMT,
 				UART_DA830_PWREMU_MGMT_UTRST |
 				UART_DA830_PWREMU_MGMT_URRST |
 				UART_DA830_PWREMU_MGMT_FREE);
-	पूर्ण
+	}
 
-	अगर (port->type == PORT_NPCM) अणु
+	if (port->type == PORT_NPCM) {
 		/*
-		 * Nuvoton calls the scratch रेजिस्टर 'UART_TOR' (समयout
-		 * रेजिस्टर). Enable it, and set TIOC (समयout पूर्णांकerrupt
-		 * comparator) to be 0x20 क्रम correct operation.
+		 * Nuvoton calls the scratch register 'UART_TOR' (timeout
+		 * register). Enable it, and set TIOC (timeout interrupt
+		 * comparator) to be 0x20 for correct operation.
 		 */
 		serial_port_out(port, UART_NPCM_TOR, UART_NPCM_TOIE | 0x20);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_SERIAL_8250_RSA
+#ifdef CONFIG_SERIAL_8250_RSA
 	/*
-	 * If this is an RSA port, see अगर we can kick it up to the
-	 * higher speed घड़ी.
+	 * If this is an RSA port, see if we can kick it up to the
+	 * higher speed clock.
 	 */
 	enable_rsa(up);
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * Clear the FIFO buffers and disable them.
 	 * (they will be reenabled in set_termios())
 	 */
-	serial8250_clear_fअगरos(up);
+	serial8250_clear_fifos(up);
 
 	/*
-	 * Clear the पूर्णांकerrupt रेजिस्टरs.
+	 * Clear the interrupt registers.
 	 */
 	serial_port_in(port, UART_LSR);
 	serial_port_in(port, UART_RX);
@@ -2228,22 +2227,22 @@ out:
 	serial_port_in(port, UART_MSR);
 
 	/*
-	 * At this poपूर्णांक, there's no way the LSR could still be 0xff;
-	 * अगर it is, then bail out, because there's likely no UART
+	 * At this point, there's no way the LSR could still be 0xff;
+	 * if it is, then bail out, because there's likely no UART
 	 * here.
 	 */
-	अगर (!(port->flags & UPF_BUGGY_UART) &&
-	    (serial_port_in(port, UART_LSR) == 0xff)) अणु
+	if (!(port->flags & UPF_BUGGY_UART) &&
+	    (serial_port_in(port, UART_LSR) == 0xff)) {
 		dev_info_ratelimited(port->dev, "LSR safety check engaged!\n");
 		retval = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * For a XR16C850, we need to set the trigger levels
 	 */
-	अगर (port->type == PORT_16850) अणु
-		अचिन्हित अक्षर fctr;
+	if (port->type == PORT_16850) {
+		unsigned char fctr;
 
 		serial_out(up, UART_LCR, UART_LCR_CONF_MODE_B);
 
@@ -2256,75 +2255,75 @@ out:
 		serial_port_out(port, UART_TRG, UART_TRG_96);
 
 		serial_port_out(port, UART_LCR, 0);
-	पूर्ण
+	}
 
 	/*
 	 * For the Altera 16550 variants, set TX threshold trigger level.
 	 */
-	अगर (((port->type == PORT_ALTR_16550_F32) ||
+	if (((port->type == PORT_ALTR_16550_F32) ||
 	     (port->type == PORT_ALTR_16550_F64) ||
-	     (port->type == PORT_ALTR_16550_F128)) && (port->fअगरosize > 1)) अणु
-		/* Bounds checking of TX threshold (valid 0 to fअगरosize-2) */
-		अगर ((up->tx_loadsz < 2) || (up->tx_loadsz > port->fअगरosize)) अणु
+	     (port->type == PORT_ALTR_16550_F128)) && (port->fifosize > 1)) {
+		/* Bounds checking of TX threshold (valid 0 to fifosize-2) */
+		if ((up->tx_loadsz < 2) || (up->tx_loadsz > port->fifosize)) {
 			dev_err(port->dev, "TX FIFO Threshold errors, skipping\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			serial_port_out(port, UART_ALTR_AFR,
 					UART_ALTR_EN_TXFIFO_LW);
 			serial_port_out(port, UART_ALTR_TX_LOW,
-					port->fअगरosize - up->tx_loadsz);
+					port->fifosize - up->tx_loadsz);
 			port->handle_irq = serial8250_tx_threshold_handle_irq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Check अगर we need to have shared IRQs */
-	अगर (port->irq && (up->port.flags & UPF_SHARE_IRQ))
+	/* Check if we need to have shared IRQs */
+	if (port->irq && (up->port.flags & UPF_SHARE_IRQ))
 		up->port.irqflags |= IRQF_SHARED;
 
-	अगर (port->irq && !(up->port.flags & UPF_NO_THRE_TEST)) अणु
-		अचिन्हित अक्षर iir1;
+	if (port->irq && !(up->port.flags & UPF_NO_THRE_TEST)) {
+		unsigned char iir1;
 
-		अगर (port->irqflags & IRQF_SHARED)
+		if (port->irqflags & IRQF_SHARED)
 			disable_irq_nosync(port->irq);
 
 		/*
-		 * Test क्रम UARTs that करो not reनिश्चित THRE when the
-		 * transmitter is idle and the पूर्णांकerrupt has alपढ़ोy
-		 * been cleared.  Real 16550s should always reनिश्चित
-		 * this पूर्णांकerrupt whenever the transmitter is idle and
-		 * the पूर्णांकerrupt is enabled.  Delays are necessary to
-		 * allow रेजिस्टर changes to become visible.
+		 * Test for UARTs that do not reassert THRE when the
+		 * transmitter is idle and the interrupt has already
+		 * been cleared.  Real 16550s should always reassert
+		 * this interrupt whenever the transmitter is idle and
+		 * the interrupt is enabled.  Delays are necessary to
+		 * allow register changes to become visible.
 		 */
 		spin_lock_irqsave(&port->lock, flags);
 
-		रुको_क्रम_xmitr(up, UART_LSR_THRE);
+		wait_for_xmitr(up, UART_LSR_THRE);
 		serial_port_out_sync(port, UART_IER, UART_IER_THRI);
 		udelay(1); /* allow THRE to set */
 		iir1 = serial_port_in(port, UART_IIR);
 		serial_port_out(port, UART_IER, 0);
 		serial_port_out_sync(port, UART_IER, UART_IER_THRI);
-		udelay(1); /* allow a working UART समय to re-निश्चित THRE */
+		udelay(1); /* allow a working UART time to re-assert THRE */
 		iir = serial_port_in(port, UART_IIR);
 		serial_port_out(port, UART_IER, 0);
 
 		spin_unlock_irqrestore(&port->lock, flags);
 
-		अगर (port->irqflags & IRQF_SHARED)
+		if (port->irqflags & IRQF_SHARED)
 			enable_irq(port->irq);
 
 		/*
-		 * If the पूर्णांकerrupt is not reनिश्चितed, or we otherwise
-		 * करोn't trust the iir, setup a समयr to kick the UART
+		 * If the interrupt is not reasserted, or we otherwise
+		 * don't trust the iir, setup a timer to kick the UART
 		 * on a regular basis.
 		 */
-		अगर ((!(iir1 & UART_IIR_NO_INT) && (iir & UART_IIR_NO_INT)) ||
-		    up->port.flags & UPF_BUG_THRE) अणु
+		if ((!(iir1 & UART_IIR_NO_INT) && (iir & UART_IIR_NO_INT)) ||
+		    up->port.flags & UPF_BUG_THRE) {
 			up->bugs |= UART_BUG_THRE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	retval = up->ops->setup_irq(up);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
 	/*
 	 * Now, initialize the UART
@@ -2332,14 +2331,14 @@ out:
 	serial_port_out(port, UART_LCR, UART_LCR_WLEN8);
 
 	spin_lock_irqsave(&port->lock, flags);
-	अगर (up->port.flags & UPF_FOURPORT) अणु
-		अगर (!up->port.irq)
+	if (up->port.flags & UPF_FOURPORT) {
+		if (!up->port.irq)
 			up->port.mctrl |= TIOCM_OUT1;
-	पूर्ण अन्यथा
+	} else
 		/*
-		 * Most PC uarts need OUT2 उठाओd to enable पूर्णांकerrupts.
+		 * Most PC uarts need OUT2 raised to enable interrupts.
 		 */
-		अगर (port->irq)
+		if (port->irq)
 			up->port.mctrl |= TIOCM_OUT2;
 
 	serial8250_set_mctrl(port, port->mctrl);
@@ -2347,19 +2346,19 @@ out:
 	/*
 	 * Serial over Lan (SoL) hack:
 	 * Intel 8257x Gigabit ethernet chips have a 16550 emulation, to be
-	 * used क्रम Serial Over Lan.  Those chips take a दीर्घer समय than a
-	 * normal serial device to संकेतize that a transmission data was
+	 * used for Serial Over Lan.  Those chips take a longer time than a
+	 * normal serial device to signalize that a transmission data was
 	 * queued. Due to that, the above test generally fails. One solution
-	 * would be to delay the पढ़ोing of iir. However, this is not
-	 * reliable, since the समयout is variable. So, let's just don't
-	 * test अगर we receive TX irq.  This way, we'll never enable
+	 * would be to delay the reading of iir. However, this is not
+	 * reliable, since the timeout is variable. So, let's just don't
+	 * test if we receive TX irq.  This way, we'll never enable
 	 * UART_BUG_TXEN.
 	 */
-	अगर (up->port.quirks & UPQ_NO_TXEN_TEST)
-		जाओ करोnt_test_tx_en;
+	if (up->port.quirks & UPQ_NO_TXEN_TEST)
+		goto dont_test_tx_en;
 
 	/*
-	 * Do a quick test to see अगर we receive an पूर्णांकerrupt when we enable
+	 * Do a quick test to see if we receive an interrupt when we enable
 	 * the TX irq.
 	 */
 	serial_port_out(port, UART_IER, UART_IER_THRI);
@@ -2367,21 +2366,21 @@ out:
 	iir = serial_port_in(port, UART_IIR);
 	serial_port_out(port, UART_IER, 0);
 
-	अगर (lsr & UART_LSR_TEMT && iir & UART_IIR_NO_INT) अणु
-		अगर (!(up->bugs & UART_BUG_TXEN)) अणु
+	if (lsr & UART_LSR_TEMT && iir & UART_IIR_NO_INT) {
+		if (!(up->bugs & UART_BUG_TXEN)) {
 			up->bugs |= UART_BUG_TXEN;
 			dev_dbg(port->dev, "enabling bad tx status workarounds\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		up->bugs &= ~UART_BUG_TXEN;
-	पूर्ण
+	}
 
-करोnt_test_tx_en:
+dont_test_tx_en:
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	/*
-	 * Clear the पूर्णांकerrupt रेजिस्टरs again क्रम luck, and clear the
-	 * saved flags to aव्योम getting false values from polling
+	 * Clear the interrupt registers again for luck, and clear the
+	 * saved flags to avoid getting false values from polling
 	 * routines or the previous session.
 	 */
 	serial_port_in(port, UART_LSR);
@@ -2392,59 +2391,59 @@ out:
 	up->msr_saved_flags = 0;
 
 	/*
-	 * Request DMA channels क्रम both RX and TX.
+	 * Request DMA channels for both RX and TX.
 	 */
-	अगर (up->dma) अणु
-		स्थिर अक्षर *msg = शून्य;
+	if (up->dma) {
+		const char *msg = NULL;
 
-		अगर (uart_console(port))
+		if (uart_console(port))
 			msg = "forbid DMA for kernel console";
-		अन्यथा अगर (serial8250_request_dma(up))
+		else if (serial8250_request_dma(up))
 			msg = "failed to request DMA";
-		अगर (msg) अणु
+		if (msg) {
 			dev_warn_ratelimited(port->dev, "%s\n", msg);
-			up->dma = शून्य;
-		पूर्ण
-	पूर्ण
+			up->dma = NULL;
+		}
+	}
 
 	/*
-	 * Set the IER shaकरोw क्रम rx पूर्णांकerrupts but defer actual पूर्णांकerrupt
-	 * enable until after the FIFOs are enabled; otherwise, an alपढ़ोy-
-	 * active sender can swamp the पूर्णांकerrupt handler with "too much work".
+	 * Set the IER shadow for rx interrupts but defer actual interrupt
+	 * enable until after the FIFOs are enabled; otherwise, an already-
+	 * active sender can swamp the interrupt handler with "too much work".
 	 */
 	up->ier = UART_IER_RLSI | UART_IER_RDI;
 
-	अगर (port->flags & UPF_FOURPORT) अणु
-		अचिन्हित पूर्णांक icp;
+	if (port->flags & UPF_FOURPORT) {
+		unsigned int icp;
 		/*
-		 * Enable पूर्णांकerrupts on the AST Fourport board
+		 * Enable interrupts on the AST Fourport board
 		 */
 		icp = (port->iobase & 0xfe0) | 0x01f;
 		outb_p(0x80, icp);
 		inb_p(icp);
-	पूर्ण
+	}
 	retval = 0;
 out:
 	serial8250_rpm_put(up);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_startup);
+	return retval;
+}
+EXPORT_SYMBOL_GPL(serial8250_do_startup);
 
-अटल पूर्णांक serial8250_startup(काष्ठा uart_port *port)
-अणु
-	अगर (port->startup)
-		वापस port->startup(port);
-	वापस serial8250_करो_startup(port);
-पूर्ण
+static int serial8250_startup(struct uart_port *port)
+{
+	if (port->startup)
+		return port->startup(port);
+	return serial8250_do_startup(port);
+}
 
-व्योम serial8250_करो_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित दीर्घ flags;
+void serial8250_do_shutdown(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned long flags;
 
 	serial8250_rpm_get(up);
 	/*
-	 * Disable पूर्णांकerrupts from this port
+	 * Disable interrupts from this port
 	 */
 	spin_lock_irqsave(&port->lock, flags);
 	up->ier = 0;
@@ -2453,33 +2452,33 @@ EXPORT_SYMBOL_GPL(serial8250_करो_startup);
 
 	synchronize_irq(port->irq);
 
-	अगर (up->dma)
+	if (up->dma)
 		serial8250_release_dma(up);
 
 	spin_lock_irqsave(&port->lock, flags);
-	अगर (port->flags & UPF_FOURPORT) अणु
-		/* reset पूर्णांकerrupts on the AST Fourport board */
+	if (port->flags & UPF_FOURPORT) {
+		/* reset interrupts on the AST Fourport board */
 		inb((port->iobase & 0xfe0) | 0x1f);
 		port->mctrl |= TIOCM_OUT1;
-	पूर्ण अन्यथा
+	} else
 		port->mctrl &= ~TIOCM_OUT2;
 
 	serial8250_set_mctrl(port, port->mctrl);
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	/*
-	 * Disable अवरोध condition and FIFOs
+	 * Disable break condition and FIFOs
 	 */
 	serial_port_out(port, UART_LCR,
 			serial_port_in(port, UART_LCR) & ~UART_LCR_SBC);
-	serial8250_clear_fअगरos(up);
+	serial8250_clear_fifos(up);
 
-#अगर_घोषित CONFIG_SERIAL_8250_RSA
+#ifdef CONFIG_SERIAL_8250_RSA
 	/*
 	 * Reset the RSA board back to 115kbps compat mode.
 	 */
 	disable_rsa(up);
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * Read data port to reset things, and then unlink from
@@ -2489,192 +2488,192 @@ EXPORT_SYMBOL_GPL(serial8250_करो_startup);
 	serial8250_rpm_put(up);
 
 	up->ops->release_irq(up);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_shutकरोwn);
+}
+EXPORT_SYMBOL_GPL(serial8250_do_shutdown);
 
-अटल व्योम serial8250_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	अगर (port->shutकरोwn)
-		port->shutकरोwn(port);
-	अन्यथा
-		serial8250_करो_shutकरोwn(port);
-पूर्ण
+static void serial8250_shutdown(struct uart_port *port)
+{
+	if (port->shutdown)
+		port->shutdown(port);
+	else
+		serial8250_do_shutdown(port);
+}
 
-/* Nuvoton NPCM UARTs have a custom भागisor calculation */
-अटल अचिन्हित पूर्णांक npcm_get_भागisor(काष्ठा uart_8250_port *up,
-		अचिन्हित पूर्णांक baud)
-अणु
-	काष्ठा uart_port *port = &up->port;
+/* Nuvoton NPCM UARTs have a custom divisor calculation */
+static unsigned int npcm_get_divisor(struct uart_8250_port *up,
+		unsigned int baud)
+{
+	struct uart_port *port = &up->port;
 
-	वापस DIV_ROUND_CLOSEST(port->uartclk, 16 * baud + 2) - 2;
-पूर्ण
+	return DIV_ROUND_CLOSEST(port->uartclk, 16 * baud + 2) - 2;
+}
 
-अटल अचिन्हित पूर्णांक serial8250_करो_get_भागisor(काष्ठा uart_port *port,
-					      अचिन्हित पूर्णांक baud,
-					      अचिन्हित पूर्णांक *frac)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित पूर्णांक quot;
+static unsigned int serial8250_do_get_divisor(struct uart_port *port,
+					      unsigned int baud,
+					      unsigned int *frac)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned int quot;
 
 	/*
-	 * Handle magic भागisors क्रम baud rates above baud_base on
+	 * Handle magic divisors for baud rates above baud_base on
 	 * SMSC SuperIO chips.
 	 *
 	 */
-	अगर ((port->flags & UPF_MAGIC_MULTIPLIER) &&
+	if ((port->flags & UPF_MAGIC_MULTIPLIER) &&
 	    baud == (port->uartclk/4))
 		quot = 0x8001;
-	अन्यथा अगर ((port->flags & UPF_MAGIC_MULTIPLIER) &&
+	else if ((port->flags & UPF_MAGIC_MULTIPLIER) &&
 		 baud == (port->uartclk/8))
 		quot = 0x8002;
-	अन्यथा अगर (up->port.type == PORT_NPCM)
-		quot = npcm_get_भागisor(up, baud);
-	अन्यथा
-		quot = uart_get_भागisor(port, baud);
+	else if (up->port.type == PORT_NPCM)
+		quot = npcm_get_divisor(up, baud);
+	else
+		quot = uart_get_divisor(port, baud);
 
 	/*
-	 * Oxक्रमd Semi 952 rev B workaround
+	 * Oxford Semi 952 rev B workaround
 	 */
-	अगर (up->bugs & UART_BUG_QUOT && (quot & 0xff) == 0)
+	if (up->bugs & UART_BUG_QUOT && (quot & 0xff) == 0)
 		quot++;
 
-	वापस quot;
-पूर्ण
+	return quot;
+}
 
-अटल अचिन्हित पूर्णांक serial8250_get_भागisor(काष्ठा uart_port *port,
-					   अचिन्हित पूर्णांक baud,
-					   अचिन्हित पूर्णांक *frac)
-अणु
-	अगर (port->get_भागisor)
-		वापस port->get_भागisor(port, baud, frac);
+static unsigned int serial8250_get_divisor(struct uart_port *port,
+					   unsigned int baud,
+					   unsigned int *frac)
+{
+	if (port->get_divisor)
+		return port->get_divisor(port, baud, frac);
 
-	वापस serial8250_करो_get_भागisor(port, baud, frac);
-पूर्ण
+	return serial8250_do_get_divisor(port, baud, frac);
+}
 
-अटल अचिन्हित अक्षर serial8250_compute_lcr(काष्ठा uart_8250_port *up,
+static unsigned char serial8250_compute_lcr(struct uart_8250_port *up,
 					    tcflag_t c_cflag)
-अणु
-	अचिन्हित अक्षर cval;
+{
+	unsigned char cval;
 
-	चयन (c_cflag & CSIZE) अणु
-	हाल CS5:
+	switch (c_cflag & CSIZE) {
+	case CS5:
 		cval = UART_LCR_WLEN5;
-		अवरोध;
-	हाल CS6:
+		break;
+	case CS6:
 		cval = UART_LCR_WLEN6;
-		अवरोध;
-	हाल CS7:
+		break;
+	case CS7:
 		cval = UART_LCR_WLEN7;
-		अवरोध;
-	शेष:
-	हाल CS8:
+		break;
+	default:
+	case CS8:
 		cval = UART_LCR_WLEN8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (c_cflag & CSTOPB)
+	if (c_cflag & CSTOPB)
 		cval |= UART_LCR_STOP;
-	अगर (c_cflag & PARENB) अणु
+	if (c_cflag & PARENB) {
 		cval |= UART_LCR_PARITY;
-		अगर (up->bugs & UART_BUG_PARITY)
-			up->fअगरo_bug = true;
-	पूर्ण
-	अगर (!(c_cflag & PARODD))
+		if (up->bugs & UART_BUG_PARITY)
+			up->fifo_bug = true;
+	}
+	if (!(c_cflag & PARODD))
 		cval |= UART_LCR_EPAR;
-#अगर_घोषित CMSPAR
-	अगर (c_cflag & CMSPAR)
+#ifdef CMSPAR
+	if (c_cflag & CMSPAR)
 		cval |= UART_LCR_SPAR;
-#पूर्ण_अगर
+#endif
 
-	वापस cval;
-पूर्ण
+	return cval;
+}
 
-व्योम serial8250_करो_set_भागisor(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud,
-			       अचिन्हित पूर्णांक quot, अचिन्हित पूर्णांक quot_frac)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+void serial8250_do_set_divisor(struct uart_port *port, unsigned int baud,
+			       unsigned int quot, unsigned int quot_frac)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
-	/* Workaround to enable 115200 baud on OMAP1510 पूर्णांकernal ports */
-	अगर (is_omap1510_8250(up)) अणु
-		अगर (baud == 115200) अणु
+	/* Workaround to enable 115200 baud on OMAP1510 internal ports */
+	if (is_omap1510_8250(up)) {
+		if (baud == 115200) {
 			quot = 1;
 			serial_port_out(port, UART_OMAP_OSC_12M_SEL, 1);
-		पूर्ण अन्यथा
+		} else
 			serial_port_out(port, UART_OMAP_OSC_12M_SEL, 0);
-	पूर्ण
+	}
 
 	/*
-	 * For NatSemi, चयन to bank 2 not bank 1, to aव्योम resetting EXCR2,
+	 * For NatSemi, switch to bank 2 not bank 1, to avoid resetting EXCR2,
 	 * otherwise just set DLAB
 	 */
-	अगर (up->capabilities & UART_NATSEMI)
+	if (up->capabilities & UART_NATSEMI)
 		serial_port_out(port, UART_LCR, 0xe0);
-	अन्यथा
+	else
 		serial_port_out(port, UART_LCR, up->lcr | UART_LCR_DLAB);
 
-	serial_dl_ग_लिखो(up, quot);
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_set_भागisor);
+	serial_dl_write(up, quot);
+}
+EXPORT_SYMBOL_GPL(serial8250_do_set_divisor);
 
-अटल व्योम serial8250_set_भागisor(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud,
-				   अचिन्हित पूर्णांक quot, अचिन्हित पूर्णांक quot_frac)
-अणु
-	अगर (port->set_भागisor)
-		port->set_भागisor(port, baud, quot, quot_frac);
-	अन्यथा
-		serial8250_करो_set_भागisor(port, baud, quot, quot_frac);
-पूर्ण
+static void serial8250_set_divisor(struct uart_port *port, unsigned int baud,
+				   unsigned int quot, unsigned int quot_frac)
+{
+	if (port->set_divisor)
+		port->set_divisor(port, baud, quot, quot_frac);
+	else
+		serial8250_do_set_divisor(port, baud, quot, quot_frac);
+}
 
-अटल अचिन्हित पूर्णांक serial8250_get_baud_rate(काष्ठा uart_port *port,
-					     काष्ठा ktermios *termios,
-					     काष्ठा ktermios *old)
-अणु
-	अचिन्हित पूर्णांक tolerance = port->uartclk / 100;
+static unsigned int serial8250_get_baud_rate(struct uart_port *port,
+					     struct ktermios *termios,
+					     struct ktermios *old)
+{
+	unsigned int tolerance = port->uartclk / 100;
 
 	/*
-	 * Ask the core to calculate the भागisor क्रम us.
+	 * Ask the core to calculate the divisor for us.
 	 * Allow 1% tolerance at the upper limit so uart clks marginally
 	 * slower than nominal still match standard baud rates without
 	 * causing transmission errors.
 	 */
-	वापस uart_get_baud_rate(port, termios, old,
+	return uart_get_baud_rate(port, termios, old,
 				  port->uartclk / 16 / UART_DIV_MAX,
 				  (port->uartclk + tolerance) / 16);
-पूर्ण
+}
 
 /*
- * Note in order to aव्योम the tty port mutex deadlock करोn't use the next method
+ * Note in order to avoid the tty port mutex deadlock don't use the next method
  * within the uart port callbacks. Primarily it's supposed to be utilized to
- * handle a sudden reference घड़ी rate change.
+ * handle a sudden reference clock rate change.
  */
-व्योम serial8250_update_uartclk(काष्ठा uart_port *port, अचिन्हित पूर्णांक uartclk)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित पूर्णांक baud, quot, frac = 0;
-	काष्ठा ktermios *termios;
-	अचिन्हित दीर्घ flags;
+void serial8250_update_uartclk(struct uart_port *port, unsigned int uartclk)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned int baud, quot, frac = 0;
+	struct ktermios *termios;
+	unsigned long flags;
 
 	mutex_lock(&port->state->port.mutex);
 
-	अगर (port->uartclk == uartclk)
-		जाओ out_lock;
+	if (port->uartclk == uartclk)
+		goto out_lock;
 
 	port->uartclk = uartclk;
 
-	अगर (!tty_port_initialized(&port->state->port))
-		जाओ out_lock;
+	if (!tty_port_initialized(&port->state->port))
+		goto out_lock;
 
 	termios = &port->state->port.tty->termios;
 
-	baud = serial8250_get_baud_rate(port, termios, शून्य);
-	quot = serial8250_get_भागisor(port, baud, &frac);
+	baud = serial8250_get_baud_rate(port, termios, NULL);
+	quot = serial8250_get_divisor(port, baud, &frac);
 
 	serial8250_rpm_get(up);
 	spin_lock_irqsave(&port->lock, flags);
 
-	uart_update_समयout(port, termios->c_cflag, baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
 
-	serial8250_set_भागisor(port, baud, quot, frac);
+	serial8250_set_divisor(port, baud, quot, frac);
 	serial_port_out(port, UART_LCR, up->lcr);
 
 	spin_unlock_irqrestore(&port->lock, flags);
@@ -2682,501 +2681,501 @@ EXPORT_SYMBOL_GPL(serial8250_करो_set_भागisor);
 
 out_lock:
 	mutex_unlock(&port->state->port.mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(serial8250_update_uartclk);
 
-व्योम
-serial8250_करो_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-			  काष्ठा ktermios *old)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	अचिन्हित अक्षर cval;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक baud, quot, frac = 0;
+void
+serial8250_do_set_termios(struct uart_port *port, struct ktermios *termios,
+			  struct ktermios *old)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	unsigned char cval;
+	unsigned long flags;
+	unsigned int baud, quot, frac = 0;
 
-	अगर (up->capabilities & UART_CAP_MINI) अणु
+	if (up->capabilities & UART_CAP_MINI) {
 		termios->c_cflag &= ~(CSTOPB | PARENB | PARODD | CMSPAR);
-		अगर ((termios->c_cflag & CSIZE) == CS5 ||
+		if ((termios->c_cflag & CSIZE) == CS5 ||
 		    (termios->c_cflag & CSIZE) == CS6)
 			termios->c_cflag = (termios->c_cflag & ~CSIZE) | CS7;
-	पूर्ण
+	}
 	cval = serial8250_compute_lcr(up, termios->c_cflag);
 
 	baud = serial8250_get_baud_rate(port, termios, old);
-	quot = serial8250_get_भागisor(port, baud, &frac);
+	quot = serial8250_get_divisor(port, baud, &frac);
 
 	/*
 	 * Ok, we're now changing the port state.  Do it with
-	 * पूर्णांकerrupts disabled.
+	 * interrupts disabled.
 	 */
 	serial8250_rpm_get(up);
 	spin_lock_irqsave(&port->lock, flags);
 
 	up->lcr = cval;					/* Save computed LCR */
 
-	अगर (up->capabilities & UART_CAP_FIFO && port->fअगरosize > 1) अणु
-		/* NOTE: If fअगरo_bug is not set, a user can set RX_trigger. */
-		अगर ((baud < 2400 && !up->dma) || up->fअगरo_bug) अणु
+	if (up->capabilities & UART_CAP_FIFO && port->fifosize > 1) {
+		/* NOTE: If fifo_bug is not set, a user can set RX_trigger. */
+		if ((baud < 2400 && !up->dma) || up->fifo_bug) {
 			up->fcr &= ~UART_FCR_TRIGGER_MASK;
 			up->fcr |= UART_FCR_TRIGGER_1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * MCR-based स्वतः flow control.  When AFE is enabled, RTS will be
-	 * deनिश्चितed when the receive FIFO contains more अक्षरacters than
+	 * MCR-based auto flow control.  When AFE is enabled, RTS will be
+	 * deasserted when the receive FIFO contains more characters than
 	 * the trigger, or the MCR RTS bit is cleared.
 	 */
-	अगर (up->capabilities & UART_CAP_AFE) अणु
+	if (up->capabilities & UART_CAP_AFE) {
 		up->mcr &= ~UART_MCR_AFE;
-		अगर (termios->c_cflag & CRTSCTS)
+		if (termios->c_cflag & CRTSCTS)
 			up->mcr |= UART_MCR_AFE;
-	पूर्ण
+	}
 
 	/*
-	 * Update the per-port समयout.
+	 * Update the per-port timeout.
 	 */
-	uart_update_समयout(port, termios->c_cflag, baud);
+	uart_update_timeout(port, termios->c_cflag, baud);
 
-	port->पढ़ो_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
-	अगर (termios->c_अगरlag & INPCK)
-		port->पढ़ो_status_mask |= UART_LSR_FE | UART_LSR_PE;
-	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
-		port->पढ़ो_status_mask |= UART_LSR_BI;
+	port->read_status_mask = UART_LSR_OE | UART_LSR_THRE | UART_LSR_DR;
+	if (termios->c_iflag & INPCK)
+		port->read_status_mask |= UART_LSR_FE | UART_LSR_PE;
+	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
+		port->read_status_mask |= UART_LSR_BI;
 
 	/*
 	 * Characteres to ignore
 	 */
 	port->ignore_status_mask = 0;
-	अगर (termios->c_अगरlag & IGNPAR)
+	if (termios->c_iflag & IGNPAR)
 		port->ignore_status_mask |= UART_LSR_PE | UART_LSR_FE;
-	अगर (termios->c_अगरlag & IGNBRK) अणु
+	if (termios->c_iflag & IGNBRK) {
 		port->ignore_status_mask |= UART_LSR_BI;
 		/*
-		 * If we're ignoring parity and अवरोध indicators,
-		 * ignore overruns too (क्रम real raw support).
+		 * If we're ignoring parity and break indicators,
+		 * ignore overruns too (for real raw support).
 		 */
-		अगर (termios->c_अगरlag & IGNPAR)
+		if (termios->c_iflag & IGNPAR)
 			port->ignore_status_mask |= UART_LSR_OE;
-	पूर्ण
+	}
 
 	/*
-	 * ignore all अक्षरacters अगर CREAD is not set
+	 * ignore all characters if CREAD is not set
 	 */
-	अगर ((termios->c_cflag & CREAD) == 0)
+	if ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= UART_LSR_DR;
 
 	/*
-	 * CTS flow control flag and modem status पूर्णांकerrupts
+	 * CTS flow control flag and modem status interrupts
 	 */
 	up->ier &= ~UART_IER_MSI;
-	अगर (!(up->bugs & UART_BUG_NOMSR) &&
+	if (!(up->bugs & UART_BUG_NOMSR) &&
 			UART_ENABLE_MS(&up->port, termios->c_cflag))
 		up->ier |= UART_IER_MSI;
-	अगर (up->capabilities & UART_CAP_UUE)
+	if (up->capabilities & UART_CAP_UUE)
 		up->ier |= UART_IER_UUE;
-	अगर (up->capabilities & UART_CAP_RTOIE)
+	if (up->capabilities & UART_CAP_RTOIE)
 		up->ier |= UART_IER_RTOIE;
 
 	serial_port_out(port, UART_IER, up->ier);
 
-	अगर (up->capabilities & UART_CAP_EFR) अणु
-		अचिन्हित अक्षर efr = 0;
+	if (up->capabilities & UART_CAP_EFR) {
+		unsigned char efr = 0;
 		/*
 		 * TI16C752/Startech hardware flow control.  FIXME:
 		 * - TI16C752 requires control thresholds to be set.
-		 * - UART_MCR_RTS is ineffective अगर स्वतः-RTS mode is enabled.
+		 * - UART_MCR_RTS is ineffective if auto-RTS mode is enabled.
 		 */
-		अगर (termios->c_cflag & CRTSCTS)
+		if (termios->c_cflag & CRTSCTS)
 			efr |= UART_EFR_CTS;
 
 		serial_port_out(port, UART_LCR, UART_LCR_CONF_MODE_B);
-		अगर (port->flags & UPF_EXAR_EFR)
+		if (port->flags & UPF_EXAR_EFR)
 			serial_port_out(port, UART_XR_EFR, efr);
-		अन्यथा
+		else
 			serial_port_out(port, UART_EFR, efr);
-	पूर्ण
+	}
 
-	serial8250_set_भागisor(port, baud, quot, frac);
+	serial8250_set_divisor(port, baud, quot, frac);
 
 	/*
 	 * LCR DLAB must be set to enable 64-byte FIFO mode. If the FCR
 	 * is written without DLAB set, this mode will be disabled.
 	 */
-	अगर (port->type == PORT_16750)
+	if (port->type == PORT_16750)
 		serial_port_out(port, UART_FCR, up->fcr);
 
 	serial_port_out(port, UART_LCR, up->lcr);	/* reset DLAB */
-	अगर (port->type != PORT_16750) अणु
+	if (port->type != PORT_16750) {
 		/* emulated UARTs (Lucent Venus 167x) need two steps */
-		अगर (up->fcr & UART_FCR_ENABLE_FIFO)
+		if (up->fcr & UART_FCR_ENABLE_FIFO)
 			serial_port_out(port, UART_FCR, UART_FCR_ENABLE_FIFO);
 		serial_port_out(port, UART_FCR, up->fcr);	/* set fcr */
-	पूर्ण
+	}
 	serial8250_set_mctrl(port, port->mctrl);
 	spin_unlock_irqrestore(&port->lock, flags);
 	serial8250_rpm_put(up);
 
-	/* Don't reग_लिखो B0 */
-	अगर (tty_termios_baud_rate(termios))
+	/* Don't rewrite B0 */
+	if (tty_termios_baud_rate(termios))
 		tty_termios_encode_baud_rate(termios, baud, baud);
-पूर्ण
-EXPORT_SYMBOL(serial8250_करो_set_termios);
+}
+EXPORT_SYMBOL(serial8250_do_set_termios);
 
-अटल व्योम
-serial8250_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
-		       काष्ठा ktermios *old)
-अणु
-	अगर (port->set_termios)
+static void
+serial8250_set_termios(struct uart_port *port, struct ktermios *termios,
+		       struct ktermios *old)
+{
+	if (port->set_termios)
 		port->set_termios(port, termios, old);
-	अन्यथा
-		serial8250_करो_set_termios(port, termios, old);
-पूर्ण
+	else
+		serial8250_do_set_termios(port, termios, old);
+}
 
-व्योम serial8250_करो_set_ldisc(काष्ठा uart_port *port, काष्ठा ktermios *termios)
-अणु
-	अगर (termios->c_line == N_PPS) अणु
+void serial8250_do_set_ldisc(struct uart_port *port, struct ktermios *termios)
+{
+	if (termios->c_line == N_PPS) {
 		port->flags |= UPF_HARDPPS_CD;
 		spin_lock_irq(&port->lock);
 		serial8250_enable_ms(port);
 		spin_unlock_irq(&port->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		port->flags &= ~UPF_HARDPPS_CD;
-		अगर (!UART_ENABLE_MS(port, termios->c_cflag)) अणु
+		if (!UART_ENABLE_MS(port, termios->c_cflag)) {
 			spin_lock_irq(&port->lock);
 			serial8250_disable_ms(port);
 			spin_unlock_irq(&port->lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_करो_set_ldisc);
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(serial8250_do_set_ldisc);
 
-अटल व्योम
-serial8250_set_ldisc(काष्ठा uart_port *port, काष्ठा ktermios *termios)
-अणु
-	अगर (port->set_ldisc)
+static void
+serial8250_set_ldisc(struct uart_port *port, struct ktermios *termios)
+{
+	if (port->set_ldisc)
 		port->set_ldisc(port, termios);
-	अन्यथा
-		serial8250_करो_set_ldisc(port, termios);
-पूर्ण
+	else
+		serial8250_do_set_ldisc(port, termios);
+}
 
-व्योम serial8250_करो_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
-		      अचिन्हित पूर्णांक oldstate)
-अणु
-	काष्ठा uart_8250_port *p = up_to_u8250p(port);
+void serial8250_do_pm(struct uart_port *port, unsigned int state,
+		      unsigned int oldstate)
+{
+	struct uart_8250_port *p = up_to_u8250p(port);
 
 	serial8250_set_sleep(p, state != 0);
-पूर्ण
-EXPORT_SYMBOL(serial8250_करो_pm);
+}
+EXPORT_SYMBOL(serial8250_do_pm);
 
-अटल व्योम
-serial8250_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
-	      अचिन्हित पूर्णांक oldstate)
-अणु
-	अगर (port->pm)
+static void
+serial8250_pm(struct uart_port *port, unsigned int state,
+	      unsigned int oldstate)
+{
+	if (port->pm)
 		port->pm(port, state, oldstate);
-	अन्यथा
-		serial8250_करो_pm(port, state, oldstate);
-पूर्ण
+	else
+		serial8250_do_pm(port, state, oldstate);
+}
 
-अटल अचिन्हित पूर्णांक serial8250_port_size(काष्ठा uart_8250_port *pt)
-अणु
-	अगर (pt->port.mapsize)
-		वापस pt->port.mapsize;
-	अगर (pt->port.iotype == UPIO_AU) अणु
-		अगर (pt->port.type == PORT_RT2880)
-			वापस 0x100;
-		वापस 0x1000;
-	पूर्ण
-	अगर (is_omap1_8250(pt))
-		वापस 0x16 << pt->port.regshअगरt;
+static unsigned int serial8250_port_size(struct uart_8250_port *pt)
+{
+	if (pt->port.mapsize)
+		return pt->port.mapsize;
+	if (pt->port.iotype == UPIO_AU) {
+		if (pt->port.type == PORT_RT2880)
+			return 0x100;
+		return 0x1000;
+	}
+	if (is_omap1_8250(pt))
+		return 0x16 << pt->port.regshift;
 
-	वापस 8 << pt->port.regshअगरt;
-पूर्ण
+	return 8 << pt->port.regshift;
+}
 
 /*
  * Resource handling.
  */
-अटल पूर्णांक serial8250_request_std_resource(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित पूर्णांक size = serial8250_port_size(up);
-	काष्ठा uart_port *port = &up->port;
-	पूर्णांक ret = 0;
+static int serial8250_request_std_resource(struct uart_8250_port *up)
+{
+	unsigned int size = serial8250_port_size(up);
+	struct uart_port *port = &up->port;
+	int ret = 0;
 
-	चयन (port->iotype) अणु
-	हाल UPIO_AU:
-	हाल UPIO_TSI:
-	हाल UPIO_MEM32:
-	हाल UPIO_MEM32BE:
-	हाल UPIO_MEM16:
-	हाल UPIO_MEM:
-		अगर (!port->mapbase)
-			अवरोध;
+	switch (port->iotype) {
+	case UPIO_AU:
+	case UPIO_TSI:
+	case UPIO_MEM32:
+	case UPIO_MEM32BE:
+	case UPIO_MEM16:
+	case UPIO_MEM:
+		if (!port->mapbase)
+			break;
 
-		अगर (!request_mem_region(port->mapbase, size, "serial")) अणु
+		if (!request_mem_region(port->mapbase, size, "serial")) {
 			ret = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (port->flags & UPF_IOREMAP) अणु
+		if (port->flags & UPF_IOREMAP) {
 			port->membase = ioremap(port->mapbase, size);
-			अगर (!port->membase) अणु
+			if (!port->membase) {
 				release_mem_region(port->mapbase, size);
 				ret = -ENOMEM;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल UPIO_HUB6:
-	हाल UPIO_PORT:
-		अगर (!request_region(port->iobase, size, "serial"))
+	case UPIO_HUB6:
+	case UPIO_PORT:
+		if (!request_region(port->iobase, size, "serial"))
 			ret = -EBUSY;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल व्योम serial8250_release_std_resource(काष्ठा uart_8250_port *up)
-अणु
-	अचिन्हित पूर्णांक size = serial8250_port_size(up);
-	काष्ठा uart_port *port = &up->port;
+static void serial8250_release_std_resource(struct uart_8250_port *up)
+{
+	unsigned int size = serial8250_port_size(up);
+	struct uart_port *port = &up->port;
 
-	चयन (port->iotype) अणु
-	हाल UPIO_AU:
-	हाल UPIO_TSI:
-	हाल UPIO_MEM32:
-	हाल UPIO_MEM32BE:
-	हाल UPIO_MEM16:
-	हाल UPIO_MEM:
-		अगर (!port->mapbase)
-			अवरोध;
+	switch (port->iotype) {
+	case UPIO_AU:
+	case UPIO_TSI:
+	case UPIO_MEM32:
+	case UPIO_MEM32BE:
+	case UPIO_MEM16:
+	case UPIO_MEM:
+		if (!port->mapbase)
+			break;
 
-		अगर (port->flags & UPF_IOREMAP) अणु
+		if (port->flags & UPF_IOREMAP) {
 			iounmap(port->membase);
-			port->membase = शून्य;
-		पूर्ण
+			port->membase = NULL;
+		}
 
 		release_mem_region(port->mapbase, size);
-		अवरोध;
+		break;
 
-	हाल UPIO_HUB6:
-	हाल UPIO_PORT:
+	case UPIO_HUB6:
+	case UPIO_PORT:
 		release_region(port->iobase, size);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम serial8250_release_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_release_port(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
 	serial8250_release_std_resource(up);
-पूर्ण
+}
 
-अटल पूर्णांक serial8250_request_port(काष्ठा uart_port *port)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static int serial8250_request_port(struct uart_port *port)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
-	वापस serial8250_request_std_resource(up);
-पूर्ण
+	return serial8250_request_std_resource(up);
+}
 
-अटल पूर्णांक fcr_get_rxtrig_bytes(काष्ठा uart_8250_port *up)
-अणु
-	स्थिर काष्ठा serial8250_config *conf_type = &uart_config[up->port.type];
-	अचिन्हित अक्षर bytes;
+static int fcr_get_rxtrig_bytes(struct uart_8250_port *up)
+{
+	const struct serial8250_config *conf_type = &uart_config[up->port.type];
+	unsigned char bytes;
 
 	bytes = conf_type->rxtrig_bytes[UART_FCR_R_TRIG_BITS(up->fcr)];
 
-	वापस bytes ? bytes : -EOPNOTSUPP;
-पूर्ण
+	return bytes ? bytes : -EOPNOTSUPP;
+}
 
-अटल पूर्णांक bytes_to_fcr_rxtrig(काष्ठा uart_8250_port *up, अचिन्हित अक्षर bytes)
-अणु
-	स्थिर काष्ठा serial8250_config *conf_type = &uart_config[up->port.type];
-	पूर्णांक i;
+static int bytes_to_fcr_rxtrig(struct uart_8250_port *up, unsigned char bytes)
+{
+	const struct serial8250_config *conf_type = &uart_config[up->port.type];
+	int i;
 
-	अगर (!conf_type->rxtrig_bytes[UART_FCR_R_TRIG_BITS(UART_FCR_R_TRIG_00)])
-		वापस -EOPNOTSUPP;
+	if (!conf_type->rxtrig_bytes[UART_FCR_R_TRIG_BITS(UART_FCR_R_TRIG_00)])
+		return -EOPNOTSUPP;
 
-	क्रम (i = 1; i < UART_FCR_R_TRIG_MAX_STATE; i++) अणु
-		अगर (bytes < conf_type->rxtrig_bytes[i])
+	for (i = 1; i < UART_FCR_R_TRIG_MAX_STATE; i++) {
+		if (bytes < conf_type->rxtrig_bytes[i])
 			/* Use the nearest lower value */
-			वापस (--i) << UART_FCR_R_TRIG_SHIFT;
-	पूर्ण
+			return (--i) << UART_FCR_R_TRIG_SHIFT;
+	}
 
-	वापस UART_FCR_R_TRIG_11;
-पूर्ण
+	return UART_FCR_R_TRIG_11;
+}
 
-अटल पूर्णांक करो_get_rxtrig(काष्ठा tty_port *port)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport = state->uart_port;
-	काष्ठा uart_8250_port *up = up_to_u8250p(uport);
+static int do_get_rxtrig(struct tty_port *port)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport = state->uart_port;
+	struct uart_8250_port *up = up_to_u8250p(uport);
 
-	अगर (!(up->capabilities & UART_CAP_FIFO) || uport->fअगरosize <= 1)
-		वापस -EINVAL;
+	if (!(up->capabilities & UART_CAP_FIFO) || uport->fifosize <= 1)
+		return -EINVAL;
 
-	वापस fcr_get_rxtrig_bytes(up);
-पूर्ण
+	return fcr_get_rxtrig_bytes(up);
+}
 
-अटल पूर्णांक करो_serial8250_get_rxtrig(काष्ठा tty_port *port)
-अणु
-	पूर्णांक rxtrig_bytes;
+static int do_serial8250_get_rxtrig(struct tty_port *port)
+{
+	int rxtrig_bytes;
 
 	mutex_lock(&port->mutex);
-	rxtrig_bytes = करो_get_rxtrig(port);
+	rxtrig_bytes = do_get_rxtrig(port);
 	mutex_unlock(&port->mutex);
 
-	वापस rxtrig_bytes;
-पूर्ण
+	return rxtrig_bytes;
+}
 
-अटल sमाप_प्रकार rx_trig_bytes_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
-	पूर्णांक rxtrig_bytes;
+static ssize_t rx_trig_bytes_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct tty_port *port = dev_get_drvdata(dev);
+	int rxtrig_bytes;
 
-	rxtrig_bytes = करो_serial8250_get_rxtrig(port);
-	अगर (rxtrig_bytes < 0)
-		वापस rxtrig_bytes;
+	rxtrig_bytes = do_serial8250_get_rxtrig(port);
+	if (rxtrig_bytes < 0)
+		return rxtrig_bytes;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", rxtrig_bytes);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", rxtrig_bytes);
+}
 
-अटल पूर्णांक करो_set_rxtrig(काष्ठा tty_port *port, अचिन्हित अक्षर bytes)
-अणु
-	काष्ठा uart_state *state = container_of(port, काष्ठा uart_state, port);
-	काष्ठा uart_port *uport = state->uart_port;
-	काष्ठा uart_8250_port *up = up_to_u8250p(uport);
-	पूर्णांक rxtrig;
+static int do_set_rxtrig(struct tty_port *port, unsigned char bytes)
+{
+	struct uart_state *state = container_of(port, struct uart_state, port);
+	struct uart_port *uport = state->uart_port;
+	struct uart_8250_port *up = up_to_u8250p(uport);
+	int rxtrig;
 
-	अगर (!(up->capabilities & UART_CAP_FIFO) || uport->fअगरosize <= 1 ||
-	    up->fअगरo_bug)
-		वापस -EINVAL;
+	if (!(up->capabilities & UART_CAP_FIFO) || uport->fifosize <= 1 ||
+	    up->fifo_bug)
+		return -EINVAL;
 
 	rxtrig = bytes_to_fcr_rxtrig(up, bytes);
-	अगर (rxtrig < 0)
-		वापस rxtrig;
+	if (rxtrig < 0)
+		return rxtrig;
 
-	serial8250_clear_fअगरos(up);
+	serial8250_clear_fifos(up);
 	up->fcr &= ~UART_FCR_TRIGGER_MASK;
-	up->fcr |= (अचिन्हित अक्षर)rxtrig;
+	up->fcr |= (unsigned char)rxtrig;
 	serial_out(up, UART_FCR, up->fcr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_serial8250_set_rxtrig(काष्ठा tty_port *port, अचिन्हित अक्षर bytes)
-अणु
-	पूर्णांक ret;
+static int do_serial8250_set_rxtrig(struct tty_port *port, unsigned char bytes)
+{
+	int ret;
 
 	mutex_lock(&port->mutex);
-	ret = करो_set_rxtrig(port, bytes);
+	ret = do_set_rxtrig(port, bytes);
 	mutex_unlock(&port->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार rx_trig_bytes_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा tty_port *port = dev_get_drvdata(dev);
-	अचिन्हित अक्षर bytes;
-	पूर्णांक ret;
+static ssize_t rx_trig_bytes_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct tty_port *port = dev_get_drvdata(dev);
+	unsigned char bytes;
+	int ret;
 
-	अगर (!count)
-		वापस -EINVAL;
+	if (!count)
+		return -EINVAL;
 
 	ret = kstrtou8(buf, 10, &bytes);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = करो_serial8250_set_rxtrig(port, bytes);
-	अगर (ret < 0)
-		वापस ret;
+	ret = do_serial8250_set_rxtrig(port, bytes);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RW(rx_trig_bytes);
+static DEVICE_ATTR_RW(rx_trig_bytes);
 
-अटल काष्ठा attribute *serial8250_dev_attrs[] = अणु
+static struct attribute *serial8250_dev_attrs[] = {
 	&dev_attr_rx_trig_bytes.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा attribute_group serial8250_dev_attr_group = अणु
+static struct attribute_group serial8250_dev_attr_group = {
 	.attrs = serial8250_dev_attrs,
-पूर्ण;
+};
 
-अटल व्योम रेजिस्टर_dev_spec_attr_grp(काष्ठा uart_8250_port *up)
-अणु
-	स्थिर काष्ठा serial8250_config *conf_type = &uart_config[up->port.type];
+static void register_dev_spec_attr_grp(struct uart_8250_port *up)
+{
+	const struct serial8250_config *conf_type = &uart_config[up->port.type];
 
-	अगर (conf_type->rxtrig_bytes[0])
+	if (conf_type->rxtrig_bytes[0])
 		up->port.attr_group = &serial8250_dev_attr_group;
-पूर्ण
+}
 
-अटल व्योम serial8250_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
-	पूर्णांक ret;
+static void serial8250_config_port(struct uart_port *port, int flags)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
+	int ret;
 
 	/*
-	 * Find the region that we can probe क्रम.  This in turn
-	 * tells us whether we can probe क्रम the type of port.
+	 * Find the region that we can probe for.  This in turn
+	 * tells us whether we can probe for the type of port.
 	 */
 	ret = serial8250_request_std_resource(up);
-	अगर (ret < 0)
-		वापस;
+	if (ret < 0)
+		return;
 
-	अगर (port->iotype != up->cur_iotype)
+	if (port->iotype != up->cur_iotype)
 		set_io_from_upio(port);
 
-	अगर (flags & UART_CONFIG_TYPE)
-		स्वतःconfig(up);
+	if (flags & UART_CONFIG_TYPE)
+		autoconfig(up);
 
-	अगर (port->rs485.flags & SER_RS485_ENABLED)
+	if (port->rs485.flags & SER_RS485_ENABLED)
 		port->rs485_config(port, &port->rs485);
 
-	/* अगर access method is AU, it is a 16550 with a quirk */
-	अगर (port->type == PORT_16550A && port->iotype == UPIO_AU)
+	/* if access method is AU, it is a 16550 with a quirk */
+	if (port->type == PORT_16550A && port->iotype == UPIO_AU)
 		up->bugs |= UART_BUG_NOMSR;
 
-	/* HW bugs may trigger IRQ जबतक IIR == NO_INT */
-	अगर (port->type == PORT_TEGRA)
+	/* HW bugs may trigger IRQ while IIR == NO_INT */
+	if (port->type == PORT_TEGRA)
 		up->bugs |= UART_BUG_NOMSR;
 
-	अगर (port->type != PORT_UNKNOWN && flags & UART_CONFIG_IRQ)
-		स्वतःconfig_irq(up);
+	if (port->type != PORT_UNKNOWN && flags & UART_CONFIG_IRQ)
+		autoconfig_irq(up);
 
-	अगर (port->type == PORT_UNKNOWN)
+	if (port->type == PORT_UNKNOWN)
 		serial8250_release_std_resource(up);
 
-	रेजिस्टर_dev_spec_attr_grp(up);
+	register_dev_spec_attr_grp(up);
 	up->fcr = uart_config[up->port.type].fcr;
-पूर्ण
+}
 
-अटल पूर्णांक
-serial8250_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
-अणु
-	अगर (ser->irq >= nr_irqs || ser->irq < 0 ||
+static int
+serial8250_verify_port(struct uart_port *port, struct serial_struct *ser)
+{
+	if (ser->irq >= nr_irqs || ser->irq < 0 ||
 	    ser->baud_base < 9600 || ser->type < PORT_UNKNOWN ||
 	    ser->type >= ARRAY_SIZE(uart_config) || ser->type == PORT_CIRRUS ||
 	    ser->type == PORT_STARTECH)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	return 0;
+}
 
-अटल स्थिर अक्षर *serial8250_type(काष्ठा uart_port *port)
-अणु
-	पूर्णांक type = port->type;
+static const char *serial8250_type(struct uart_port *port)
+{
+	int type = port->type;
 
-	अगर (type >= ARRAY_SIZE(uart_config))
+	if (type >= ARRAY_SIZE(uart_config))
 		type = 0;
-	वापस uart_config[type].name;
-पूर्ण
+	return uart_config[type].name;
+}
 
-अटल स्थिर काष्ठा uart_ops serial8250_pops = अणु
+static const struct uart_ops serial8250_pops = {
 	.tx_empty	= serial8250_tx_empty,
 	.set_mctrl	= serial8250_set_mctrl,
 	.get_mctrl	= serial8250_get_mctrl,
@@ -3186,9 +3185,9 @@ serial8250_verअगरy_port(काष्ठा uart_port *port, काष्�
 	.unthrottle	= serial8250_unthrottle,
 	.stop_rx	= serial8250_stop_rx,
 	.enable_ms	= serial8250_enable_ms,
-	.अवरोध_ctl	= serial8250_अवरोध_ctl,
+	.break_ctl	= serial8250_break_ctl,
 	.startup	= serial8250_startup,
-	.shutकरोwn	= serial8250_shutकरोwn,
+	.shutdown	= serial8250_shutdown,
 	.set_termios	= serial8250_set_termios,
 	.set_ldisc	= serial8250_set_ldisc,
 	.pm		= serial8250_pm,
@@ -3196,164 +3195,164 @@ serial8250_verअगरy_port(काष्ठा uart_port *port, काष्�
 	.release_port	= serial8250_release_port,
 	.request_port	= serial8250_request_port,
 	.config_port	= serial8250_config_port,
-	.verअगरy_port	= serial8250_verअगरy_port,
-#अगर_घोषित CONFIG_CONSOLE_POLL
-	.poll_get_अक्षर = serial8250_get_poll_अक्षर,
-	.poll_put_अक्षर = serial8250_put_poll_अक्षर,
-#पूर्ण_अगर
-पूर्ण;
+	.verify_port	= serial8250_verify_port,
+#ifdef CONFIG_CONSOLE_POLL
+	.poll_get_char = serial8250_get_poll_char,
+	.poll_put_char = serial8250_put_poll_char,
+#endif
+};
 
-व्योम serial8250_init_port(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
+void serial8250_init_port(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
 
 	spin_lock_init(&port->lock);
 	port->ops = &serial8250_pops;
 	port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_8250_CONSOLE);
 
 	up->cur_iotype = 0xFF;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(serial8250_init_port);
 
-व्योम serial8250_set_शेषs(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
+void serial8250_set_defaults(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
 
-	अगर (up->port.flags & UPF_FIXED_TYPE) अणु
-		अचिन्हित पूर्णांक type = up->port.type;
+	if (up->port.flags & UPF_FIXED_TYPE) {
+		unsigned int type = up->port.type;
 
-		अगर (!up->port.fअगरosize)
-			up->port.fअगरosize = uart_config[type].fअगरo_size;
-		अगर (!up->tx_loadsz)
+		if (!up->port.fifosize)
+			up->port.fifosize = uart_config[type].fifo_size;
+		if (!up->tx_loadsz)
 			up->tx_loadsz = uart_config[type].tx_loadsz;
-		अगर (!up->capabilities)
+		if (!up->capabilities)
 			up->capabilities = uart_config[type].flags;
-	पूर्ण
+	}
 
 	set_io_from_upio(port);
 
-	/* शेष dma handlers */
-	अगर (up->dma) अणु
-		अगर (!up->dma->tx_dma)
+	/* default dma handlers */
+	if (up->dma) {
+		if (!up->dma->tx_dma)
 			up->dma->tx_dma = serial8250_tx_dma;
-		अगर (!up->dma->rx_dma)
+		if (!up->dma->rx_dma)
 			up->dma->rx_dma = serial8250_rx_dma;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(serial8250_set_शेषs);
+	}
+}
+EXPORT_SYMBOL_GPL(serial8250_set_defaults);
 
-#अगर_घोषित CONFIG_SERIAL_8250_CONSOLE
+#ifdef CONFIG_SERIAL_8250_CONSOLE
 
-अटल व्योम serial8250_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
-अणु
-	काष्ठा uart_8250_port *up = up_to_u8250p(port);
+static void serial8250_console_putchar(struct uart_port *port, int ch)
+{
+	struct uart_8250_port *up = up_to_u8250p(port);
 
-	रुको_क्रम_xmitr(up, UART_LSR_THRE);
+	wait_for_xmitr(up, UART_LSR_THRE);
 	serial_port_out(port, UART_TX, ch);
-पूर्ण
+}
 
 /*
- *	Restore serial console when h/w घातer-off detected
+ *	Restore serial console when h/w power-off detected
  */
-अटल व्योम serial8250_console_restore(काष्ठा uart_8250_port *up)
-अणु
-	काष्ठा uart_port *port = &up->port;
-	काष्ठा ktermios termios;
-	अचिन्हित पूर्णांक baud, quot, frac = 0;
+static void serial8250_console_restore(struct uart_8250_port *up)
+{
+	struct uart_port *port = &up->port;
+	struct ktermios termios;
+	unsigned int baud, quot, frac = 0;
 
 	termios.c_cflag = port->cons->cflag;
-	अगर (port->state->port.tty && termios.c_cflag == 0)
+	if (port->state->port.tty && termios.c_cflag == 0)
 		termios.c_cflag = port->state->port.tty->termios.c_cflag;
 
-	baud = serial8250_get_baud_rate(port, &termios, शून्य);
-	quot = serial8250_get_भागisor(port, baud, &frac);
+	baud = serial8250_get_baud_rate(port, &termios, NULL);
+	quot = serial8250_get_divisor(port, baud, &frac);
 
-	serial8250_set_भागisor(port, baud, quot, frac);
+	serial8250_set_divisor(port, baud, quot, frac);
 	serial_port_out(port, UART_LCR, up->lcr);
 	serial8250_out_MCR(up, UART_MCR_DTR | UART_MCR_RTS);
-पूर्ण
+}
 
 /*
- *	Prपूर्णांक a string to the serial port trying not to disturb
+ *	Print a string to the serial port trying not to disturb
  *	any possible real use of the port...
  *
  *	The console_lock must be held when we get here.
  *
- *	Doing runसमय PM is really a bad idea क्रम the kernel console.
- *	Thus, we assume the function is called when device is घातered up.
+ *	Doing runtime PM is really a bad idea for the kernel console.
+ *	Thus, we assume the function is called when device is powered up.
  */
-व्योम serial8250_console_ग_लिखो(काष्ठा uart_8250_port *up, स्थिर अक्षर *s,
-			      अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_8250_em485 *em485 = up->em485;
-	काष्ठा uart_port *port = &up->port;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक ier;
-	पूर्णांक locked = 1;
+void serial8250_console_write(struct uart_8250_port *up, const char *s,
+			      unsigned int count)
+{
+	struct uart_8250_em485 *em485 = up->em485;
+	struct uart_port *port = &up->port;
+	unsigned long flags;
+	unsigned int ier;
+	int locked = 1;
 
-	touch_nmi_watchकरोg();
+	touch_nmi_watchdog();
 
-	अगर (oops_in_progress)
+	if (oops_in_progress)
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	अन्यथा
+	else
 		spin_lock_irqsave(&port->lock, flags);
 
 	/*
-	 *	First save the IER then disable the पूर्णांकerrupts
+	 *	First save the IER then disable the interrupts
 	 */
 	ier = serial_port_in(port, UART_IER);
 
-	अगर (up->capabilities & UART_CAP_UUE)
+	if (up->capabilities & UART_CAP_UUE)
 		serial_port_out(port, UART_IER, UART_IER_UUE);
-	अन्यथा
+	else
 		serial_port_out(port, UART_IER, 0);
 
-	/* check scratch reg to see अगर port घातered off during प्रणाली sleep */
-	अगर (up->canary && (up->canary != serial_port_in(port, UART_SCR))) अणु
+	/* check scratch reg to see if port powered off during system sleep */
+	if (up->canary && (up->canary != serial_port_in(port, UART_SCR))) {
 		serial8250_console_restore(up);
 		up->canary = 0;
-	पूर्ण
+	}
 
-	अगर (em485) अणु
-		अगर (em485->tx_stopped)
+	if (em485) {
+		if (em485->tx_stopped)
 			up->rs485_start_tx(up);
-		mdelay(port->rs485.delay_rts_beक्रमe_send);
-	पूर्ण
+		mdelay(port->rs485.delay_rts_before_send);
+	}
 
-	uart_console_ग_लिखो(port, s, count, serial8250_console_अक्षर_दो);
+	uart_console_write(port, s, count, serial8250_console_putchar);
 
 	/*
-	 *	Finally, रुको क्रम transmitter to become empty
+	 *	Finally, wait for transmitter to become empty
 	 *	and restore the IER
 	 */
-	रुको_क्रम_xmitr(up, BOTH_EMPTY);
+	wait_for_xmitr(up, BOTH_EMPTY);
 
-	अगर (em485) अणु
+	if (em485) {
 		mdelay(port->rs485.delay_rts_after_send);
-		अगर (em485->tx_stopped)
+		if (em485->tx_stopped)
 			up->rs485_stop_tx(up);
-	पूर्ण
+	}
 
 	serial_port_out(port, UART_IER, ier);
 
 	/*
 	 *	The receive handling will happen properly because the
-	 *	receive पढ़ोy bit will still be set; it is not cleared
-	 *	on पढ़ो.  However, modem control will not, we must
-	 *	call it अगर we have saved something in the saved flags
-	 *	जबतक processing with पूर्णांकerrupts off.
+	 *	receive ready bit will still be set; it is not cleared
+	 *	on read.  However, modem control will not, we must
+	 *	call it if we have saved something in the saved flags
+	 *	while processing with interrupts off.
 	 */
-	अगर (up->msr_saved_flags)
+	if (up->msr_saved_flags)
 		serial8250_modem_status(up);
 
-	अगर (locked)
+	if (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक probe_baud(काष्ठा uart_port *port)
-अणु
-	अचिन्हित अक्षर lcr, dll, dlm;
-	अचिन्हित पूर्णांक quot;
+static unsigned int probe_baud(struct uart_port *port)
+{
+	unsigned char lcr, dll, dlm;
+	unsigned int quot;
 
 	lcr = serial_port_in(port, UART_LCR);
 	serial_port_out(port, UART_LCR, lcr | UART_LCR_DLAB);
@@ -3362,43 +3361,43 @@ EXPORT_SYMBOL_GPL(serial8250_set_शेषs);
 	serial_port_out(port, UART_LCR, lcr);
 
 	quot = (dlm << 8) | dll;
-	वापस (port->uartclk / 16) / quot;
-पूर्ण
+	return (port->uartclk / 16) / quot;
+}
 
-पूर्णांक serial8250_console_setup(काष्ठा uart_port *port, अक्षर *options, bool probe)
-अणु
-	पूर्णांक baud = 9600;
-	पूर्णांक bits = 8;
-	पूर्णांक parity = 'n';
-	पूर्णांक flow = 'n';
-	पूर्णांक ret;
+int serial8250_console_setup(struct uart_port *port, char *options, bool probe)
+{
+	int baud = 9600;
+	int bits = 8;
+	int parity = 'n';
+	int flow = 'n';
+	int ret;
 
-	अगर (!port->iobase && !port->membase)
-		वापस -ENODEV;
+	if (!port->iobase && !port->membase)
+		return -ENODEV;
 
-	अगर (options)
+	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	अन्यथा अगर (probe)
+	else if (probe)
 		baud = probe_baud(port);
 
 	ret = uart_set_options(port, port->cons, baud, parity, bits, flow);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (port->dev)
-		pm_runसमय_get_sync(port->dev);
+	if (port->dev)
+		pm_runtime_get_sync(port->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक serial8250_console_निकास(काष्ठा uart_port *port)
-अणु
-	अगर (port->dev)
-		pm_runसमय_put_sync(port->dev);
+int serial8250_console_exit(struct uart_port *port)
+{
+	if (port->dev)
+		pm_runtime_put_sync(port->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_SERIAL_8250_CONSOLE */
+#endif /* CONFIG_SERIAL_8250_CONSOLE */
 
 MODULE_LICENSE("GPL");

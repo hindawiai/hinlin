@@ -1,113 +1,112 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC64_HYPERVISOR_H
-#घोषणा _SPARC64_HYPERVISOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC64_HYPERVISOR_H
+#define _SPARC64_HYPERVISOR_H
 
-/* Sun4v hypervisor पूर्णांकerfaces and defines.
+/* Sun4v hypervisor interfaces and defines.
  *
  * Hypervisor calls are made via traps to software traps number 0x80
  * and above.  Registers %o0 to %o5 serve as argument, status, and
- * वापस value रेजिस्टरs.
+ * return value registers.
  *
  * There are two kinds of these traps.  First there are the normal
  * "fast traps" which use software trap 0x80 and encode the function
- * to invoke by number in रेजिस्टर %o5.  Argument and वापस value
+ * to invoke by number in register %o5.  Argument and return value
  * handling is as follows:
  *
  * -----------------------------------------------
  * |  %o5  | function number |     undefined     |
- * |  %o0  |   argument 0    |   वापस status   |
- * |  %o1  |   argument 1    |   वापस value 1  |
- * |  %o2  |   argument 2    |   वापस value 2  |
- * |  %o3  |   argument 3    |   वापस value 3  |
- * |  %o4  |   argument 4    |   वापस value 4  |
+ * |  %o0  |   argument 0    |   return status   |
+ * |  %o1  |   argument 1    |   return value 1  |
+ * |  %o2  |   argument 2    |   return value 2  |
+ * |  %o3  |   argument 3    |   return value 3  |
+ * |  %o4  |   argument 4    |   return value 4  |
  * -----------------------------------------------
  *
  * The second type are "hyper-fast traps" which encode the function
  * number in the software trap number itself.  So these use trap
- * numbers > 0x80.  The रेजिस्टर usage क्रम hyper-fast traps is as
+ * numbers > 0x80.  The register usage for hyper-fast traps is as
  * follows:
  *
  * -----------------------------------------------
- * |  %o0  |   argument 0    |   वापस status   |
- * |  %o1  |   argument 1    |   वापस value 1  |
- * |  %o2  |   argument 2    |   वापस value 2  |
- * |  %o3  |   argument 3    |   वापस value 3  |
- * |  %o4  |   argument 4    |   वापस value 4  |
+ * |  %o0  |   argument 0    |   return status   |
+ * |  %o1  |   argument 1    |   return value 1  |
+ * |  %o2  |   argument 2    |   return value 2  |
+ * |  %o3  |   argument 3    |   return value 3  |
+ * |  %o4  |   argument 4    |   return value 4  |
  * -----------------------------------------------
  *
  * Registers providing explicit arguments to the hypervisor calls
- * are अस्थिर across the call.  Upon वापस their values are
- * undefined unless explicitly specअगरied as containing a particular
- * वापस value by the specअगरic call.  The वापस status is always
- * वापसed in रेजिस्टर %o0, zero indicates a successful execution of
+ * are volatile across the call.  Upon return their values are
+ * undefined unless explicitly specified as containing a particular
+ * return value by the specific call.  The return status is always
+ * returned in register %o0, zero indicates a successful execution of
  * the hypervisor call and other values indicate an error status as
- * defined below.  So, क्रम example, अगर a hyper-fast trap takes
- * arguments 0, 1, and 2, then %o0, %o1, and %o2 are अस्थिर across
+ * defined below.  So, for example, if a hyper-fast trap takes
+ * arguments 0, 1, and 2, then %o0, %o1, and %o2 are volatile across
  * the call and %o3, %o4, and %o5 would be preserved.
  *
  * If the hypervisor trap is invalid, or the fast trap function number
- * is invalid, HV_EBADTRAP will be वापसed in %o0.  Also, all 64-bits
- * of the argument and वापस values are signअगरicant.
+ * is invalid, HV_EBADTRAP will be returned in %o0.  Also, all 64-bits
+ * of the argument and return values are significant.
  */
 
 /* Trap numbers.  */
-#घोषणा HV_FAST_TRAP		0x80
-#घोषणा HV_MMU_MAP_ADDR_TRAP	0x83
-#घोषणा HV_MMU_UNMAP_ADDR_TRAP	0x84
-#घोषणा HV_TTRACE_ADDENTRY_TRAP	0x85
-#घोषणा HV_CORE_TRAP		0xff
+#define HV_FAST_TRAP		0x80
+#define HV_MMU_MAP_ADDR_TRAP	0x83
+#define HV_MMU_UNMAP_ADDR_TRAP	0x84
+#define HV_TTRACE_ADDENTRY_TRAP	0x85
+#define HV_CORE_TRAP		0xff
 
 /* Error codes.  */
-#घोषणा HV_EOK				0  /* Successful वापस            */
-#घोषणा HV_ENOCPU			1  /* Invalid CPU id               */
-#घोषणा HV_ENORADDR			2  /* Invalid real address         */
-#घोषणा HV_ENOINTR			3  /* Invalid पूर्णांकerrupt id         */
-#घोषणा HV_EBADPGSZ			4  /* Invalid pagesize encoding    */
-#घोषणा HV_EBADTSB			5  /* Invalid TSB description      */
-#घोषणा HV_EINVAL			6  /* Invalid argument             */
-#घोषणा HV_EBADTRAP			7  /* Invalid function number      */
-#घोषणा HV_EBADALIGN			8  /* Invalid address alignment    */
-#घोषणा HV_EWOULDBLOCK			9  /* Cannot complete w/o blocking */
-#घोषणा HV_ENOACCESS			10 /* No access to resource        */
-#घोषणा HV_EIO				11 /* I/O error                    */
-#घोषणा HV_ECPUERROR			12 /* CPU in error state           */
-#घोषणा HV_ENOTSUPPORTED		13 /* Function not supported       */
-#घोषणा HV_ENOMAP			14 /* No mapping found             */
-#घोषणा HV_ETOOMANY			15 /* Too many items specअगरied     */
-#घोषणा HV_ECHANNEL			16 /* Invalid LDC channel          */
-#घोषणा HV_EBUSY			17 /* Resource busy                */
-#घोषणा HV_EUNAVAILABLE			23 /* Resource or operation not
+#define HV_EOK				0  /* Successful return            */
+#define HV_ENOCPU			1  /* Invalid CPU id               */
+#define HV_ENORADDR			2  /* Invalid real address         */
+#define HV_ENOINTR			3  /* Invalid interrupt id         */
+#define HV_EBADPGSZ			4  /* Invalid pagesize encoding    */
+#define HV_EBADTSB			5  /* Invalid TSB description      */
+#define HV_EINVAL			6  /* Invalid argument             */
+#define HV_EBADTRAP			7  /* Invalid function number      */
+#define HV_EBADALIGN			8  /* Invalid address alignment    */
+#define HV_EWOULDBLOCK			9  /* Cannot complete w/o blocking */
+#define HV_ENOACCESS			10 /* No access to resource        */
+#define HV_EIO				11 /* I/O error                    */
+#define HV_ECPUERROR			12 /* CPU in error state           */
+#define HV_ENOTSUPPORTED		13 /* Function not supported       */
+#define HV_ENOMAP			14 /* No mapping found             */
+#define HV_ETOOMANY			15 /* Too many items specified     */
+#define HV_ECHANNEL			16 /* Invalid LDC channel          */
+#define HV_EBUSY			17 /* Resource busy                */
+#define HV_EUNAVAILABLE			23 /* Resource or operation not
 					    * currently available, but may
 					    * become available in the future
 					    */
 
-/* mach_निकास()
+/* mach_exit()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MACH_EXIT
- * ARG0:	निकास code
- * ERRORS:	This service करोes not वापस.
+ * ARG0:	exit code
+ * ERRORS:	This service does not return.
  *
- * Stop all CPUs in the भव करोमुख्य and place them पूर्णांकo the stopped
- * state.  The 64-bit निकास code may be passed to a service entity as
- * the करोमुख्य's निकास status.  On प्रणालीs without a service entity, the
- * करोमुख्य will undergo a reset, and the boot firmware will be
+ * Stop all CPUs in the virtual domain and place them into the stopped
+ * state.  The 64-bit exit code may be passed to a service entity as
+ * the domain's exit status.  On systems without a service entity, the
+ * domain will undergo a reset, and the boot firmware will be
  * reloaded.
  *
- * This function will never वापस to the guest that invokes it.
+ * This function will never return to the guest that invokes it.
  *
- * Note: By convention an निकास code of zero denotes a successful निकास by
- *       the guest code.  A non-zero निकास code denotes a guest specअगरic
+ * Note: By convention an exit code of zero denotes a successful exit by
+ *       the guest code.  A non-zero exit code denotes a guest specific
  *       error indication.
  *
  */
-#घोषणा HV_FAST_MACH_EXIT		0x00
+#define HV_FAST_MACH_EXIT		0x00
 
-#अगर_अघोषित __ASSEMBLY__
-व्योम sun4v_mach_निकास(अचिन्हित दीर्घ निकास_code);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+void sun4v_mach_exit(unsigned long exit_code);
+#endif
 
-/* Doमुख्य services.  */
+/* Domain services.  */
 
 /* mach_desc()
  * TRAP:	HV_FAST_TRAP
@@ -118,118 +117,118 @@
  * RET1:	length
  * ERRORS:	HV_EBADALIGN	Buffer is badly aligned
  *		HV_ENORADDR	Buffer is to an illegal real address.
- *		HV_EINVAL	Buffer length is too small क्रम complete
+ *		HV_EINVAL	Buffer length is too small for complete
  *				machine description.
  *
- * Copy the most current machine description पूर्णांकo the buffer indicated
+ * Copy the most current machine description into the buffer indicated
  * by the real address in ARG0.  The buffer provided must be 16 byte
- * aligned.  Upon success or HV_EINVAL, this service वापसs the
- * actual size of the machine description in the RET1 वापस value.
+ * aligned.  Upon success or HV_EINVAL, this service returns the
+ * actual size of the machine description in the RET1 return value.
  *
- * Note: A method of determining the appropriate buffer size क्रम the
+ * Note: A method of determining the appropriate buffer size for the
  *       machine description is to first call this service with a buffer
  *       length of 0 bytes.
  */
-#घोषणा HV_FAST_MACH_DESC		0x01
+#define HV_FAST_MACH_DESC		0x01
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mach_desc(अचिन्हित दीर्घ buffer_pa,
-			      अचिन्हित दीर्घ buf_len,
-			      अचिन्हित दीर्घ *real_buf_len);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mach_desc(unsigned long buffer_pa,
+			      unsigned long buf_len,
+			      unsigned long *real_buf_len);
+#endif
 
 /* mach_sir()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MACH_SIR
- * ERRORS:	This service करोes not वापस.
+ * ERRORS:	This service does not return.
  *
- * Perक्रमm a software initiated reset of the भव machine करोमुख्य.
+ * Perform a software initiated reset of the virtual machine domain.
  * All CPUs are captured as soon as possible, all hardware devices are
- * वापसed to the entry शेष state, and the करोमुख्य is restarted at
- * the SIR (trap type 0x04) real trap table (RTBA) entry poपूर्णांक on one
+ * returned to the entry default state, and the domain is restarted at
+ * the SIR (trap type 0x04) real trap table (RTBA) entry point on one
  * of the CPUs.  The single CPU restarted is selected as determined by
- * platक्रमm specअगरic policy.  Memory is preserved across this
+ * platform specific policy.  Memory is preserved across this
  * operation.
  */
-#घोषणा HV_FAST_MACH_SIR		0x02
+#define HV_FAST_MACH_SIR		0x02
 
-#अगर_अघोषित __ASSEMBLY__
-व्योम sun4v_mach_sir(व्योम);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+void sun4v_mach_sir(void);
+#endif
 
-/* mach_set_watchकरोg()
+/* mach_set_watchdog()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MACH_SET_WATCHDOG
- * ARG0:	समयout in milliseconds
+ * ARG0:	timeout in milliseconds
  * RET0:	status
- * RET1:	समय reमुख्यing in milliseconds
+ * RET1:	time remaining in milliseconds
  *
- * A guest uses this API to set a watchकरोg समयr.  Once the gues has set
- * the समयr, it must call the समयr service again either to disable or
- * postpone the expiration.  If the समयr expires beक्रमe being reset or
- * disabled, then the hypervisor take a platक्रमm specअगरic action leading
- * to guest termination within a bounded समय period.  The platक्रमm action
+ * A guest uses this API to set a watchdog timer.  Once the gues has set
+ * the timer, it must call the timer service again either to disable or
+ * postpone the expiration.  If the timer expires before being reset or
+ * disabled, then the hypervisor take a platform specific action leading
+ * to guest termination within a bounded time period.  The platform action
  * may include recovery actions such as reporting the expiration to a
- * Service Processor, and/or स्वतःmatically restarting the gues.
+ * Service Processor, and/or automatically restarting the gues.
  *
- * The 'timeout' parameter is specअगरied in milliseconds, however the
+ * The 'timeout' parameter is specified in milliseconds, however the
  * implementated granularity is given by the 'watchdog-resolution'
  * property in the 'platform' node of the guest's machine description.
- * The largest allowed समयout value is specअगरied by the
+ * The largest allowed timeout value is specified by the
  * 'watchdog-max-timeout' property of the 'platform' node.
  *
- * If the 'timeout' argument is not zero, the watchकरोg समयr is set to
+ * If the 'timeout' argument is not zero, the watchdog timer is set to
  * expire after a minimum of 'timeout' milliseconds.
  *
- * If the 'timeout' argument is zero, the watchकरोg समयr is disabled.
+ * If the 'timeout' argument is zero, the watchdog timer is disabled.
  *
  * If the 'timeout' value exceeds the value of the 'max-watchdog-timeout'
- * property, the hypervisor leaves the watchकरोg समयr state unchanged,
- * and वापसs a status of EINVAL.
+ * property, the hypervisor leaves the watchdog timer state unchanged,
+ * and returns a status of EINVAL.
  *
- * The 'time remaining' वापस value is valid regardless of whether the
- * वापस status is EOK or EINVAL.  A non-zero वापस value indicates the
- * number of milliseconds that were reमुख्यing until the समयr was to expire.
- * If less than one millisecond reमुख्यs, the वापस value is '1'.  If the
- * watchकरोg समयr was disabled at the समय of the call, the वापस value is
+ * The 'time remaining' return value is valid regardless of whether the
+ * return status is EOK or EINVAL.  A non-zero return value indicates the
+ * number of milliseconds that were remaining until the timer was to expire.
+ * If less than one millisecond remains, the return value is '1'.  If the
+ * watchdog timer was disabled at the time of the call, the return value is
  * zero.
  *
- * If the hypervisor cannot support the exact समयout value requested, but
- * can support a larger समयout value, the hypervisor may round the actual
- * समयout to a value larger than the requested समयout, consequently the
- * 'time remaining' वापस value may be larger than the previously requested
- * समयout value.
+ * If the hypervisor cannot support the exact timeout value requested, but
+ * can support a larger timeout value, the hypervisor may round the actual
+ * timeout to a value larger than the requested timeout, consequently the
+ * 'time remaining' return value may be larger than the previously requested
+ * timeout value.
  *
- * Any guest OS debugger should be aware that the watchकरोg service may be in
- * use.  Consequently, it is recommended that the watchकरोg service is
- * disabled upon debugger entry (e.g. reaching a अवरोधpoपूर्णांक), and then
- * re-enabled upon वापसing to normal execution.  The API has been deचिन्हित
+ * Any guest OS debugger should be aware that the watchdog service may be in
+ * use.  Consequently, it is recommended that the watchdog service is
+ * disabled upon debugger entry (e.g. reaching a breakpoint), and then
+ * re-enabled upon returning to normal execution.  The API has been designed
  * with this in mind, and the 'time remaining' result of the disable call may
- * be used directly as the समयout argument of the re-enable call.
+ * be used directly as the timeout argument of the re-enable call.
  */
-#घोषणा HV_FAST_MACH_SET_WATCHDOG	0x05
+#define HV_FAST_MACH_SET_WATCHDOG	0x05
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mach_set_watchकरोg(अचिन्हित दीर्घ समयout,
-				      अचिन्हित दीर्घ *orig_समयout);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mach_set_watchdog(unsigned long timeout,
+				      unsigned long *orig_timeout);
+#endif
 
 /* CPU services.
  *
- * CPUs represent devices that can execute software thपढ़ोs.  A single
- * chip that contains multiple cores or stअक्रमs is represented as
- * multiple CPUs with unique CPU identअगरiers.  CPUs are exported to
+ * CPUs represent devices that can execute software threads.  A single
+ * chip that contains multiple cores or strands is represented as
+ * multiple CPUs with unique CPU identifiers.  CPUs are exported to
  * OBP via the machine description (and to the OS via the OBP device
  * tree).  CPUs are always in one of three states: stopped, running,
  * or error.
  *
- * A CPU ID is a pre-asचिन्हित 16-bit value that uniquely identअगरies a
- * CPU within a logical करोमुख्य.  Operations that are to be perक्रमmed
- * on multiple CPUs specअगरy them via a CPU list.  A CPU list is an
+ * A CPU ID is a pre-assigned 16-bit value that uniquely identifies a
+ * CPU within a logical domain.  Operations that are to be performed
+ * on multiple CPUs specify them via a CPU list.  A CPU list is an
  * array in real memory, of which each 16-bit word is a CPU ID.  CPU
  * lists are passed through the API as two arguments.  The first is
  * the number of entries (16-bit words) in the CPU list, and the
- * second is the (real address) poपूर्णांकer to the CPU ID list.
+ * second is the (real address) pointer to the CPU ID list.
  */
 
 /* cpu_start()
@@ -249,18 +248,18 @@
  * Start CPU with given CPU ID with PC in %pc and with a real trap
  * base address value of RTBA.  The indicated CPU must be in the
  * stopped state.  The supplied RTBA must be aligned on a 256 byte
- * boundary.  On successful completion, the specअगरied CPU will be in
+ * boundary.  On successful completion, the specified CPU will be in
  * the running state and will be supplied with "target ARG0" in %o0
  * and RTBA in %tba.
  */
-#घोषणा HV_FAST_CPU_START		0x10
+#define HV_FAST_CPU_START		0x10
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_start(अचिन्हित दीर्घ cpuid,
-			      अचिन्हित दीर्घ pc,
-			      अचिन्हित दीर्घ rtba,
-			      अचिन्हित दीर्घ arg0);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_start(unsigned long cpuid,
+			      unsigned long pc,
+			      unsigned long rtba,
+			      unsigned long arg0);
+#endif
 
 /* cpu_stop()
  * TRAP:	HV_FAST_TRAP
@@ -271,21 +270,21 @@
  *		EINVAL		Target CPU ID is the current cpu
  *		EINVAL		Target CPU ID is not in the running state
  *		EWOULDBLOCK	Stopping resources are not available
- *		ENOTSUPPORTED	Not supported on this platक्रमm
+ *		ENOTSUPPORTED	Not supported on this platform
  *
- * The specअगरied CPU is stopped.  The indicated CPU must be in the
+ * The specified CPU is stopped.  The indicated CPU must be in the
  * running state.  On completion, it will be in the stopped state.  It
  * is not legal to stop the current CPU.
  *
  * Note: As this service cannot be used to stop the current cpu, this service
- *       may not be used to stop the last running CPU in a करोमुख्य.  To stop
- *       and निकास a running करोमुख्य, a guest must use the mach_निकास() service.
+ *       may not be used to stop the last running CPU in a domain.  To stop
+ *       and exit a running domain, a guest must use the mach_exit() service.
  */
-#घोषणा HV_FAST_CPU_STOP		0x11
+#define HV_FAST_CPU_STOP		0x11
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_stop(अचिन्हित दीर्घ cpuid);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_stop(unsigned long cpuid);
+#endif
 
 /* cpu_yield()
  * TRAP:	HV_FAST_TRAP
@@ -294,33 +293,33 @@
  * ERRORS:	No possible error.
  *
  * Suspend execution on the current CPU.  Execution will resume when
- * an पूर्णांकerrupt (device, %stick_compare, or cross-call) is targeted to
+ * an interrupt (device, %stick_compare, or cross-call) is targeted to
  * the CPU.  On some CPUs, this API may be used by the hypervisor to
- * save घातer by disabling hardware stअक्रमs.
+ * save power by disabling hardware strands.
  */
-#घोषणा HV_FAST_CPU_YIELD		0x12
+#define HV_FAST_CPU_YIELD		0x12
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_yield(व्योम);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_yield(void);
+#endif
 
 /* cpu_poke()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CPU_POKE
  * RET0:	status
- * ERRORS:	ENOCPU		cpuid refers to a CPU that करोes not exist
+ * ERRORS:	ENOCPU		cpuid refers to a CPU that does not exist
  *		EINVAL		cpuid is current CPU
  *
  * Poke CPU cpuid. If the target CPU is currently suspended having
  * invoked the cpu-yield service, that vCPU will be resumed.
- * Poke पूर्णांकerrupts may only be sent to valid, non-local CPUs.
+ * Poke interrupts may only be sent to valid, non-local CPUs.
  * It is not legal to poke the current vCPU.
  */
-#घोषणा HV_FAST_CPU_POKE                0x13
+#define HV_FAST_CPU_POKE                0x13
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_poke(अचिन्हित दीर्घ cpuid);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_poke(unsigned long cpuid);
+#endif
 
 /* cpu_qconf()
  * TRAP:	HV_FAST_TRAP
@@ -333,16 +332,16 @@
  *		EINVAL		Invalid queue or number of entries is less
  *				than 2 or too large.
  *		EBADALIGN	Base real address is not correctly aligned
- *				क्रम size.
+ *				for size.
  *
  * Configure the given queue to be placed at the given base real
  * address, with the given number of entries.  The number of entries
- * must be a घातer of 2.  The base real address must be aligned
+ * must be a power of 2.  The base real address must be aligned
  * exactly to match the queue size.  Each queue entry is 64 bytes
- * दीर्घ, so क्रम example a 32 entry queue must be aligned on a 2048
+ * long, so for example a 32 entry queue must be aligned on a 2048
  * byte real address boundary.
  *
- * The specअगरied queue is unconfigured अगर the number of entries is given
+ * The specified queue is unconfigured if the number of entries is given
  * as zero.
  *
  * For the current version of this API service, the argument queue is defined
@@ -350,25 +349,25 @@
  *
  *	queue		description
  *	-----		-------------------------
- *	0x3c		cpu monकरो queue
- *	0x3d		device monकरो queue
+ *	0x3c		cpu mondo queue
+ *	0x3d		device mondo queue
  *	0x3e		resumable error queue
  *	0x3f		non-resumable error queue
  *
- * Note: The maximum number of entries क्रम each queue क्रम a specअगरic cpu may
+ * Note: The maximum number of entries for each queue for a specific cpu may
  *       be determined from the machine description.
  */
-#घोषणा HV_FAST_CPU_QCONF		0x14
-#घोषणा  HV_CPU_QUEUE_CPU_MONDO		 0x3c
-#घोषणा  HV_CPU_QUEUE_DEVICE_MONDO	 0x3d
-#घोषणा  HV_CPU_QUEUE_RES_ERROR		 0x3e
-#घोषणा  HV_CPU_QUEUE_NONRES_ERROR	 0x3f
+#define HV_FAST_CPU_QCONF		0x14
+#define  HV_CPU_QUEUE_CPU_MONDO		 0x3c
+#define  HV_CPU_QUEUE_DEVICE_MONDO	 0x3d
+#define  HV_CPU_QUEUE_RES_ERROR		 0x3e
+#define  HV_CPU_QUEUE_NONRES_ERROR	 0x3f
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_qconf(अचिन्हित दीर्घ type,
-			      अचिन्हित दीर्घ queue_paddr,
-			      अचिन्हित दीर्घ num_queue_entries);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_qconf(unsigned long type,
+			      unsigned long queue_paddr,
+			      unsigned long num_queue_entries);
+#endif
 
 /* cpu_qinfo()
  * TRAP:	HV_FAST_TRAP
@@ -379,49 +378,49 @@
  * RET1:	number of entries
  * ERRORS:	EINVAL		Invalid queue
  *
- * Return the configuration info क्रम the given queue.  The base real
- * address and number of entries of the defined queue are वापसed.
- * The queue argument values are the same as क्रम cpu_qconf() above.
+ * Return the configuration info for the given queue.  The base real
+ * address and number of entries of the defined queue are returned.
+ * The queue argument values are the same as for cpu_qconf() above.
  *
- * If the specअगरied queue is a valid queue number, but no queue has
+ * If the specified queue is a valid queue number, but no queue has
  * been defined, the number of entries will be set to zero and the
- * base real address वापसed is undefined.
+ * base real address returned is undefined.
  */
-#घोषणा HV_FAST_CPU_QINFO		0x15
+#define HV_FAST_CPU_QINFO		0x15
 
-/* cpu_monकरो_send()
+/* cpu_mondo_send()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CPU_MONDO_SEND
  * ARG0-1:	CPU list
  * ARG2:	data real address
  * RET0:	status
- * ERRORS:	EBADALIGN	Monकरो data is not 64-byte aligned or CPU list
+ * ERRORS:	EBADALIGN	Mondo data is not 64-byte aligned or CPU list
  *				is not 2-byte aligned.
- *		ENORADDR	Invalid data monकरो address, or invalid cpu list
+ *		ENORADDR	Invalid data mondo address, or invalid cpu list
  *				address.
  *		ENOCPU		Invalid cpu in CPU list
  *		EWOULDBLOCK	Some or all of the listed CPUs did not receive
- *				the monकरो
+ *				the mondo
  *		ECPUERROR	One or more of the listed CPUs are in error
  *				state, use HV_FAST_CPU_STATE to see which ones
  *		EINVAL		CPU list includes caller's CPU ID
  *
- * Send a monकरो पूर्णांकerrupt to the CPUs in the given CPU list with the
+ * Send a mondo interrupt to the CPUs in the given CPU list with the
  * 64-bytes at the given data real address.  The data must be 64-byte
- * aligned.  The monकरो data will be delivered to the cpu_monकरो queues
+ * aligned.  The mondo data will be delivered to the cpu_mondo queues
  * of the recipient CPUs.
  *
- * In all हालs, error or not, the CPUs in the CPU list to which the
- * monकरो has been successfully delivered will be indicated by having
+ * In all cases, error or not, the CPUs in the CPU list to which the
+ * mondo has been successfully delivered will be indicated by having
  * their entry in CPU list updated with the value 0xffff.
  */
-#घोषणा HV_FAST_CPU_MONDO_SEND		0x42
+#define HV_FAST_CPU_MONDO_SEND		0x42
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_cpu_monकरो_send(अचिन्हित दीर्घ cpu_count,
-				   अचिन्हित दीर्घ cpu_list_pa,
-				   अचिन्हित दीर्घ monकरो_block_pa);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_cpu_mondo_send(unsigned long cpu_count,
+				   unsigned long cpu_list_pa,
+				   unsigned long mondo_block_pa);
+#endif
 
 /* cpu_myid()
  * TRAP:	HV_FAST_TRAP
@@ -430,10 +429,10 @@
  * RET1:	CPU ID
  * ERRORS:	No errors defined.
  *
- * Return the hypervisor ID handle क्रम the current CPU.  Use by a
- * भव CPU to discover it's own identity.
+ * Return the hypervisor ID handle for the current CPU.  Use by a
+ * virtual CPU to discover it's own identity.
  */
-#घोषणा HV_FAST_CPU_MYID		0x16
+#define HV_FAST_CPU_MYID		0x16
 
 /* cpu_state()
  * TRAP:	HV_FAST_TRAP
@@ -445,14 +444,14 @@
  *
  * Retrieve the current state of the CPU with the given CPU ID.
  */
-#घोषणा HV_FAST_CPU_STATE		0x17
-#घोषणा  HV_CPU_STATE_STOPPED		 0x01
-#घोषणा  HV_CPU_STATE_RUNNING		 0x02
-#घोषणा  HV_CPU_STATE_ERROR		 0x03
+#define HV_FAST_CPU_STATE		0x17
+#define  HV_CPU_STATE_STOPPED		 0x01
+#define  HV_CPU_STATE_RUNNING		 0x02
+#define  HV_CPU_STATE_ERROR		 0x03
 
-#अगर_अघोषित __ASSEMBLY__
-दीर्घ sun4v_cpu_state(अचिन्हित दीर्घ cpuid);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+long sun4v_cpu_state(unsigned long cpuid);
+#endif
 
 /* cpu_set_rtba()
  * TRAP:	HV_FAST_TRAP
@@ -461,15 +460,15 @@
  * RET0:	status
  * RET1:	previous RTBA
  * ERRORS:	ENORADDR	Invalid RTBA real address
- *		EBADALIGN	RTBA is incorrectly aligned क्रम a trap table
+ *		EBADALIGN	RTBA is incorrectly aligned for a trap table
  *
  * Set the real trap base address of the local cpu to the given RTBA.
  * The supplied RTBA must be aligned on a 256 byte boundary.  Upon
- * success the previous value of the RTBA is वापसed in RET1.
+ * success the previous value of the RTBA is returned in RET1.
  *
- * Note: This service करोes not affect %tba
+ * Note: This service does not affect %tba
  */
-#घोषणा HV_FAST_CPU_SET_RTBA		0x18
+#define HV_FAST_CPU_SET_RTBA		0x18
 
 /* cpu_set_rtba()
  * TRAP:	HV_FAST_TRAP
@@ -480,144 +479,144 @@
  *
  * Returns the current value of RTBA in RET1.
  */
-#घोषणा HV_FAST_CPU_GET_RTBA		0x19
+#define HV_FAST_CPU_GET_RTBA		0x19
 
 /* MMU services.
  *
- * Layout of a TSB description क्रम mmu_tsb_ctxअणु,nonपूर्ण0() calls.
+ * Layout of a TSB description for mmu_tsb_ctx{,non}0() calls.
  */
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_tsb_descr अणु
-	अचिन्हित लघु		pgsz_idx;
-	अचिन्हित लघु		assoc;
-	अचिन्हित पूर्णांक		num_ttes;	/* in TTEs */
-	अचिन्हित पूर्णांक		ctx_idx;
-	अचिन्हित पूर्णांक		pgsz_mask;
-	अचिन्हित दीर्घ		tsb_base;
-	अचिन्हित दीर्घ		resv;
-पूर्ण;
-#पूर्ण_अगर
-#घोषणा HV_TSB_DESCR_PGSZ_IDX_OFFSET	0x00
-#घोषणा HV_TSB_DESCR_ASSOC_OFFSET	0x02
-#घोषणा HV_TSB_DESCR_NUM_TTES_OFFSET	0x04
-#घोषणा HV_TSB_DESCR_CTX_IDX_OFFSET	0x08
-#घोषणा HV_TSB_DESCR_PGSZ_MASK_OFFSET	0x0c
-#घोषणा HV_TSB_DESCR_TSB_BASE_OFFSET	0x10
-#घोषणा HV_TSB_DESCR_RESV_OFFSET	0x18
+#ifndef __ASSEMBLY__
+struct hv_tsb_descr {
+	unsigned short		pgsz_idx;
+	unsigned short		assoc;
+	unsigned int		num_ttes;	/* in TTEs */
+	unsigned int		ctx_idx;
+	unsigned int		pgsz_mask;
+	unsigned long		tsb_base;
+	unsigned long		resv;
+};
+#endif
+#define HV_TSB_DESCR_PGSZ_IDX_OFFSET	0x00
+#define HV_TSB_DESCR_ASSOC_OFFSET	0x02
+#define HV_TSB_DESCR_NUM_TTES_OFFSET	0x04
+#define HV_TSB_DESCR_CTX_IDX_OFFSET	0x08
+#define HV_TSB_DESCR_PGSZ_MASK_OFFSET	0x0c
+#define HV_TSB_DESCR_TSB_BASE_OFFSET	0x10
+#define HV_TSB_DESCR_RESV_OFFSET	0x18
 
-/* Page size biपंचांगask.  */
-#घोषणा HV_PGSZ_MASK_8K			(1 << 0)
-#घोषणा HV_PGSZ_MASK_64K		(1 << 1)
-#घोषणा HV_PGSZ_MASK_512K		(1 << 2)
-#घोषणा HV_PGSZ_MASK_4MB		(1 << 3)
-#घोषणा HV_PGSZ_MASK_32MB		(1 << 4)
-#घोषणा HV_PGSZ_MASK_256MB		(1 << 5)
-#घोषणा HV_PGSZ_MASK_2GB		(1 << 6)
-#घोषणा HV_PGSZ_MASK_16GB		(1 << 7)
+/* Page size bitmask.  */
+#define HV_PGSZ_MASK_8K			(1 << 0)
+#define HV_PGSZ_MASK_64K		(1 << 1)
+#define HV_PGSZ_MASK_512K		(1 << 2)
+#define HV_PGSZ_MASK_4MB		(1 << 3)
+#define HV_PGSZ_MASK_32MB		(1 << 4)
+#define HV_PGSZ_MASK_256MB		(1 << 5)
+#define HV_PGSZ_MASK_2GB		(1 << 6)
+#define HV_PGSZ_MASK_16GB		(1 << 7)
 
 /* Page size index.  The value given in the TSB descriptor must correspond
- * to the smallest page size specअगरied in the pgsz_mask page size biपंचांगask.
+ * to the smallest page size specified in the pgsz_mask page size bitmask.
  */
-#घोषणा HV_PGSZ_IDX_8K			0
-#घोषणा HV_PGSZ_IDX_64K			1
-#घोषणा HV_PGSZ_IDX_512K		2
-#घोषणा HV_PGSZ_IDX_4MB			3
-#घोषणा HV_PGSZ_IDX_32MB		4
-#घोषणा HV_PGSZ_IDX_256MB		5
-#घोषणा HV_PGSZ_IDX_2GB			6
-#घोषणा HV_PGSZ_IDX_16GB		7
+#define HV_PGSZ_IDX_8K			0
+#define HV_PGSZ_IDX_64K			1
+#define HV_PGSZ_IDX_512K		2
+#define HV_PGSZ_IDX_4MB			3
+#define HV_PGSZ_IDX_32MB		4
+#define HV_PGSZ_IDX_256MB		5
+#define HV_PGSZ_IDX_2GB			6
+#define HV_PGSZ_IDX_16GB		7
 
 /* MMU fault status area.
  *
- * MMU related faults have their status and fault address inक्रमmation
- * placed पूर्णांकo a memory region made available by privileged code.  Each
- * भव processor must make a mmu_fault_area_conf() call to tell the
+ * MMU related faults have their status and fault address information
+ * placed into a memory region made available by privileged code.  Each
+ * virtual processor must make a mmu_fault_area_conf() call to tell the
  * hypervisor where that processor's fault status should be stored.
  *
  * The fault status block is a multiple of 64-bytes and must be aligned
  * on a 64-byte boundary.
  */
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_fault_status अणु
-	अचिन्हित दीर्घ		i_fault_type;
-	अचिन्हित दीर्घ		i_fault_addr;
-	अचिन्हित दीर्घ		i_fault_ctx;
-	अचिन्हित दीर्घ		i_reserved[5];
-	अचिन्हित दीर्घ		d_fault_type;
-	अचिन्हित दीर्घ		d_fault_addr;
-	अचिन्हित दीर्घ		d_fault_ctx;
-	अचिन्हित दीर्घ		d_reserved[5];
-पूर्ण;
-#पूर्ण_अगर
-#घोषणा HV_FAULT_I_TYPE_OFFSET	0x00
-#घोषणा HV_FAULT_I_ADDR_OFFSET	0x08
-#घोषणा HV_FAULT_I_CTX_OFFSET	0x10
-#घोषणा HV_FAULT_D_TYPE_OFFSET	0x40
-#घोषणा HV_FAULT_D_ADDR_OFFSET	0x48
-#घोषणा HV_FAULT_D_CTX_OFFSET	0x50
+#ifndef __ASSEMBLY__
+struct hv_fault_status {
+	unsigned long		i_fault_type;
+	unsigned long		i_fault_addr;
+	unsigned long		i_fault_ctx;
+	unsigned long		i_reserved[5];
+	unsigned long		d_fault_type;
+	unsigned long		d_fault_addr;
+	unsigned long		d_fault_ctx;
+	unsigned long		d_reserved[5];
+};
+#endif
+#define HV_FAULT_I_TYPE_OFFSET	0x00
+#define HV_FAULT_I_ADDR_OFFSET	0x08
+#define HV_FAULT_I_CTX_OFFSET	0x10
+#define HV_FAULT_D_TYPE_OFFSET	0x40
+#define HV_FAULT_D_ADDR_OFFSET	0x48
+#define HV_FAULT_D_CTX_OFFSET	0x50
 
-#घोषणा HV_FAULT_TYPE_FAST_MISS	1
-#घोषणा HV_FAULT_TYPE_FAST_PROT	2
-#घोषणा HV_FAULT_TYPE_MMU_MISS	3
-#घोषणा HV_FAULT_TYPE_INV_RA	4
-#घोषणा HV_FAULT_TYPE_PRIV_VIOL	5
-#घोषणा HV_FAULT_TYPE_PROT_VIOL	6
-#घोषणा HV_FAULT_TYPE_NFO	7
-#घोषणा HV_FAULT_TYPE_NFO_SEFF	8
-#घोषणा HV_FAULT_TYPE_INV_VA	9
-#घोषणा HV_FAULT_TYPE_INV_ASI	10
-#घोषणा HV_FAULT_TYPE_NC_ATOMIC	11
-#घोषणा HV_FAULT_TYPE_PRIV_ACT	12
-#घोषणा HV_FAULT_TYPE_RESV1	13
-#घोषणा HV_FAULT_TYPE_UNALIGNED	14
-#घोषणा HV_FAULT_TYPE_INV_PGSZ	15
-#घोषणा HV_FAULT_TYPE_MCD	17
-#घोषणा HV_FAULT_TYPE_MCD_DIS	18
+#define HV_FAULT_TYPE_FAST_MISS	1
+#define HV_FAULT_TYPE_FAST_PROT	2
+#define HV_FAULT_TYPE_MMU_MISS	3
+#define HV_FAULT_TYPE_INV_RA	4
+#define HV_FAULT_TYPE_PRIV_VIOL	5
+#define HV_FAULT_TYPE_PROT_VIOL	6
+#define HV_FAULT_TYPE_NFO	7
+#define HV_FAULT_TYPE_NFO_SEFF	8
+#define HV_FAULT_TYPE_INV_VA	9
+#define HV_FAULT_TYPE_INV_ASI	10
+#define HV_FAULT_TYPE_NC_ATOMIC	11
+#define HV_FAULT_TYPE_PRIV_ACT	12
+#define HV_FAULT_TYPE_RESV1	13
+#define HV_FAULT_TYPE_UNALIGNED	14
+#define HV_FAULT_TYPE_INV_PGSZ	15
+#define HV_FAULT_TYPE_MCD	17
+#define HV_FAULT_TYPE_MCD_DIS	18
 /* Values 16 --> -2 are reserved.  */
-#घोषणा HV_FAULT_TYPE_MULTIPLE	-1
+#define HV_FAULT_TYPE_MULTIPLE	-1
 
-/* Flags argument क्रम mmu_अणुmap,unmapपूर्ण_addr(), mmu_demap_अणुpage,context,allपूर्ण(),
- * and mmu_अणुmap,unmapपूर्ण_perm_addr().
+/* Flags argument for mmu_{map,unmap}_addr(), mmu_demap_{page,context,all}(),
+ * and mmu_{map,unmap}_perm_addr().
  */
-#घोषणा HV_MMU_DMMU			0x01
-#घोषणा HV_MMU_IMMU			0x02
-#घोषणा HV_MMU_ALL			(HV_MMU_DMMU | HV_MMU_IMMU)
+#define HV_MMU_DMMU			0x01
+#define HV_MMU_IMMU			0x02
+#define HV_MMU_ALL			(HV_MMU_DMMU | HV_MMU_IMMU)
 
 /* mmu_map_addr()
  * TRAP:	HV_MMU_MAP_ADDR_TRAP
- * ARG0:	भव address
+ * ARG0:	virtual address
  * ARG1:	mmu context
  * ARG2:	TTE
- * ARG3:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
- * ERRORS:	EINVAL		Invalid भव address, mmu context, or flags
+ * ARG3:	flags (HV_MMU_{IMMU,DMMU})
+ * ERRORS:	EINVAL		Invalid virtual address, mmu context, or flags
  *		EBADPGSZ	Invalid page size value
  *		ENORADDR	Invalid real address in TTE
  *
- * Create a non-permanent mapping using the given TTE, भव
+ * Create a non-permanent mapping using the given TTE, virtual
  * address, and mmu context.  The flags argument determines which
- * (data, or inकाष्ठाion, or both) TLB the mapping माला_लो loaded पूर्णांकo.
+ * (data, or instruction, or both) TLB the mapping gets loaded into.
  *
- * The behavior is undefined अगर the valid bit is clear in the TTE.
+ * The behavior is undefined if the valid bit is clear in the TTE.
  *
- * Note: This API call is क्रम privileged code to specअगरy temporary translation
+ * Note: This API call is for privileged code to specify temporary translation
  *       mappings without the need to create and manage a TSB.
  */
 
 /* mmu_unmap_addr()
  * TRAP:	HV_MMU_UNMAP_ADDR_TRAP
- * ARG0:	भव address
+ * ARG0:	virtual address
  * ARG1:	mmu context
- * ARG2:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
- * ERRORS:	EINVAL		Invalid भव address, mmu context, or flags
+ * ARG2:	flags (HV_MMU_{IMMU,DMMU})
+ * ERRORS:	EINVAL		Invalid virtual address, mmu context, or flags
  *
- * Demaps the given भव address in the given mmu context on this
- * CPU.  This function is पूर्णांकended to be used to demap pages mapped
+ * Demaps the given virtual address in the given mmu context on this
+ * CPU.  This function is intended to be used to demap pages mapped
  * with mmu_map_addr.  This service is equivalent to invoking
  * mmu_demap_page() with only the current CPU in the CPU list. The
- * flags argument determines which (data, or inकाष्ठाion, or both) TLB
- * the mapping माला_लो unmapped from.
+ * flags argument determines which (data, or instruction, or both) TLB
+ * the mapping gets unmapped from.
  *
- * Attempting to perक्रमm an unmap operation क्रम a previously defined
+ * Attempting to perform an unmap operation for a previously defined
  * permanent mapping will have undefined results.
  */
 
@@ -625,13 +624,13 @@
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_TSB_CTX0
  * ARG0:	number of TSB descriptions
- * ARG1:	TSB descriptions poपूर्णांकer
+ * ARG1:	TSB descriptions pointer
  * RET0:	status
- * ERRORS:	ENORADDR		Invalid TSB descriptions poपूर्णांकer or
+ * ERRORS:	ENORADDR		Invalid TSB descriptions pointer or
  *					TSB base within a descriptor
- *		EBADALIGN		TSB descriptions poपूर्णांकer is not aligned
+ *		EBADALIGN		TSB descriptions pointer is not aligned
  *					to an 8-byte boundary, or TSB base
- *					within a descriptor is not aligned क्रम
+ *					within a descriptor is not aligned for
  *					the given TSB size
  *		EBADPGSZ		Invalid page size in a TSB descriptor
  *		EBADTSB			Invalid associativity or size in a TSB
@@ -640,61 +639,61 @@
  *					invalid context index in a TSB
  *					descriptor, or index page size not
  *					equal to smallest page size in page
- *					size biपंचांगask field.
+ *					size bitmask field.
  *
- * Configures the TSBs क्रम the current CPU क्रम भव addresses with
- * context zero.  The TSB descriptions poपूर्णांकer is a poपूर्णांकer to an
+ * Configures the TSBs for the current CPU for virtual addresses with
+ * context zero.  The TSB descriptions pointer is a pointer to an
  * array of the given number of TSB descriptions.
  *
- * Note: The maximum number of TSBs available to a भव CPU is given by the
+ * Note: The maximum number of TSBs available to a virtual CPU is given by the
  *       mmu-max-#tsbs property of the cpu's corresponding "cpu" node in the
  *       machine description.
  */
-#घोषणा HV_FAST_MMU_TSB_CTX0		0x20
+#define HV_FAST_MMU_TSB_CTX0		0x20
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mmu_tsb_ctx0(अचिन्हित दीर्घ num_descriptions,
-				 अचिन्हित दीर्घ tsb_desc_ra);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mmu_tsb_ctx0(unsigned long num_descriptions,
+				 unsigned long tsb_desc_ra);
+#endif
 
 /* mmu_tsb_ctxnon0()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_TSB_CTXNON0
  * ARG0:	number of TSB descriptions
- * ARG1:	TSB descriptions poपूर्णांकer
+ * ARG1:	TSB descriptions pointer
  * RET0:	status
- * ERRORS:	Same as क्रम mmu_tsb_ctx0() above.
+ * ERRORS:	Same as for mmu_tsb_ctx0() above.
  *
- * Configures the TSBs क्रम the current CPU क्रम भव addresses with
- * non-zero contexts.  The TSB descriptions poपूर्णांकer is a poपूर्णांकer to an
+ * Configures the TSBs for the current CPU for virtual addresses with
+ * non-zero contexts.  The TSB descriptions pointer is a pointer to an
  * array of the given number of TSB descriptions.
  *
- * Note: A maximum of 16 TSBs may be specअगरied in the TSB description list.
+ * Note: A maximum of 16 TSBs may be specified in the TSB description list.
  */
-#घोषणा HV_FAST_MMU_TSB_CTXNON0		0x21
+#define HV_FAST_MMU_TSB_CTXNON0		0x21
 
 /* mmu_demap_page()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_DEMAP_PAGE
  * ARG0:	reserved, must be zero
  * ARG1:	reserved, must be zero
- * ARG2:	भव address
+ * ARG2:	virtual address
  * ARG3:	mmu context
- * ARG4:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
+ * ARG4:	flags (HV_MMU_{IMMU,DMMU})
  * RET0:	status
- * ERRORS:	EINVAL			Invalid भव address, context, or
+ * ERRORS:	EINVAL			Invalid virtual address, context, or
  *					flags value
  *		ENOTSUPPORTED		ARG0 or ARG1 is non-zero
  *
- * Demaps any page mapping of the given भव address in the given
- * mmu context क्रम the current भव CPU.  Any भवly tagged
+ * Demaps any page mapping of the given virtual address in the given
+ * mmu context for the current virtual CPU.  Any virtually tagged
  * caches are guaranteed to be kept consistent.  The flags argument
- * determines which TLB (inकाष्ठाion, or data, or both) participate in
+ * determines which TLB (instruction, or data, or both) participate in
  * the operation.
  *
  * ARG0 and ARG1 are both reserved and must be set to zero.
  */
-#घोषणा HV_FAST_MMU_DEMAP_PAGE		0x22
+#define HV_FAST_MMU_DEMAP_PAGE		0x22
 
 /* mmu_demap_ctx()
  * TRAP:	HV_FAST_TRAP
@@ -702,77 +701,77 @@
  * ARG0:	reserved, must be zero
  * ARG1:	reserved, must be zero
  * ARG2:	mmu context
- * ARG3:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
+ * ARG3:	flags (HV_MMU_{IMMU,DMMU})
  * RET0:	status
  * ERRORS:	EINVAL			Invalid context or flags value
  *		ENOTSUPPORTED		ARG0 or ARG1 is non-zero
  *
- * Demaps all non-permanent भव page mappings previously specअगरied
- * क्रम the given context क्रम the current भव CPU.  Any भव
+ * Demaps all non-permanent virtual page mappings previously specified
+ * for the given context for the current virtual CPU.  Any virtual
  * tagged caches are guaranteed to be kept consistent.  The flags
- * argument determines which TLB (inकाष्ठाion, or data, or both)
+ * argument determines which TLB (instruction, or data, or both)
  * participate in the operation.
  *
  * ARG0 and ARG1 are both reserved and must be set to zero.
  */
-#घोषणा HV_FAST_MMU_DEMAP_CTX		0x23
+#define HV_FAST_MMU_DEMAP_CTX		0x23
 
 /* mmu_demap_all()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_DEMAP_ALL
  * ARG0:	reserved, must be zero
  * ARG1:	reserved, must be zero
- * ARG2:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
+ * ARG2:	flags (HV_MMU_{IMMU,DMMU})
  * RET0:	status
  * ERRORS:	EINVAL			Invalid flags value
  *		ENOTSUPPORTED		ARG0 or ARG1 is non-zero
  *
- * Demaps all non-permanent भव page mappings previously specअगरied
- * क्रम the current भव CPU.  Any भव tagged caches are
+ * Demaps all non-permanent virtual page mappings previously specified
+ * for the current virtual CPU.  Any virtual tagged caches are
  * guaranteed to be kept consistent.  The flags argument determines
- * which TLB (inकाष्ठाion, or data, or both) participate in the
+ * which TLB (instruction, or data, or both) participate in the
  * operation.
  *
  * ARG0 and ARG1 are both reserved and must be set to zero.
  */
-#घोषणा HV_FAST_MMU_DEMAP_ALL		0x24
+#define HV_FAST_MMU_DEMAP_ALL		0x24
 
-#अगर_अघोषित __ASSEMBLY__
-व्योम sun4v_mmu_demap_all(व्योम);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+void sun4v_mmu_demap_all(void);
+#endif
 
 /* mmu_map_perm_addr()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_MAP_PERM_ADDR
- * ARG0:	भव address
+ * ARG0:	virtual address
  * ARG1:	reserved, must be zero
  * ARG2:	TTE
- * ARG3:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
+ * ARG3:	flags (HV_MMU_{IMMU,DMMU})
  * RET0:	status
- * ERRORS:	EINVAL			Invalid भव address or flags value
+ * ERRORS:	EINVAL			Invalid virtual address or flags value
  *		EBADPGSZ		Invalid page size value
  *		ENORADDR		Invalid real address in TTE
  *		ETOOMANY		Too many mappings (max of 8 reached)
  *
- * Create a permanent mapping using the given TTE and भव address
- * क्रम context 0 on the calling भव CPU.  A maximum of 8 such
- * permanent mappings may be specअगरied by privileged code.  Mappings
- * may be हटाओd with mmu_unmap_perm_addr().
+ * Create a permanent mapping using the given TTE and virtual address
+ * for context 0 on the calling virtual CPU.  A maximum of 8 such
+ * permanent mappings may be specified by privileged code.  Mappings
+ * may be removed with mmu_unmap_perm_addr().
  *
- * The behavior is undefined अगर a TTE with the valid bit clear is given.
+ * The behavior is undefined if a TTE with the valid bit clear is given.
  *
- * Note: This call is used to specअगरy address space mappings क्रम which
- *       privileged code करोes not expect to receive misses.  For example,
+ * Note: This call is used to specify address space mappings for which
+ *       privileged code does not expect to receive misses.  For example,
  *       this mechanism can be used to map kernel nucleus code and data.
  */
-#घोषणा HV_FAST_MMU_MAP_PERM_ADDR	0x25
+#define HV_FAST_MMU_MAP_PERM_ADDR	0x25
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mmu_map_perm_addr(अचिन्हित दीर्घ vaddr,
-				      अचिन्हित दीर्घ set_to_zero,
-				      अचिन्हित दीर्घ tte,
-				      अचिन्हित दीर्घ flags);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mmu_map_perm_addr(unsigned long vaddr,
+				      unsigned long set_to_zero,
+				      unsigned long tte,
+				      unsigned long flags);
+#endif
 
 /* mmu_fault_area_conf()
  * TRAP:	HV_FAST_TRAP
@@ -781,104 +780,104 @@
  * RET0:	status
  * RET1:	previous mmu fault area real address
  * ERRORS:	ENORADDR		Invalid real address
- *		EBADALIGN		Invalid alignment क्रम fault area
+ *		EBADALIGN		Invalid alignment for fault area
  *
- * Configure the MMU fault status area क्रम the calling CPU.  A 64-byte
- * aligned real address specअगरies where MMU fault status inक्रमmation
- * is placed.  The वापस value is the previously specअगरied area, or 0
- * क्रम the first invocation.  Specअगरying a fault area at real address
+ * Configure the MMU fault status area for the calling CPU.  A 64-byte
+ * aligned real address specifies where MMU fault status information
+ * is placed.  The return value is the previously specified area, or 0
+ * for the first invocation.  Specifying a fault area at real address
  * 0 is not allowed.
  */
-#घोषणा HV_FAST_MMU_FAULT_AREA_CONF	0x26
+#define HV_FAST_MMU_FAULT_AREA_CONF	0x26
 
 /* mmu_enable()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_ENABLE
  * ARG0:	enable flag
- * ARG1:	वापस target address
+ * ARG1:	return target address
  * RET0:	status
  * ERRORS:	ENORADDR		Invalid real address when disabling
  *					translation.
- *		EBADALIGN		The वापस target address is not
- *					aligned to an inकाष्ठाion.
+ *		EBADALIGN		The return target address is not
+ *					aligned to an instruction.
  *		EINVAL			The enable flag request the current
- *					operating mode (e.g. disable अगर alपढ़ोy
+ *					operating mode (e.g. disable if already
  *					disabled)
  *
- * Enable or disable भव address translation क्रम the calling CPU
- * within the भव machine करोमुख्य.  If the enable flag is zero,
+ * Enable or disable virtual address translation for the calling CPU
+ * within the virtual machine domain.  If the enable flag is zero,
  * translation is disabled, any non-zero value will enable
  * translation.
  *
- * When this function वापसs, the newly selected translation mode
- * will be active.  If the mmu is being enabled, then the वापस
- * target address is a भव address अन्यथा it is a real address.
+ * When this function returns, the newly selected translation mode
+ * will be active.  If the mmu is being enabled, then the return
+ * target address is a virtual address else it is a real address.
  *
- * Upon successful completion, control will be वापसed to the given
- * वापस target address (ie. the cpu will jump to that address).  On
- * failure, the previous mmu mode reमुख्यs and the trap simply वापसs
+ * Upon successful completion, control will be returned to the given
+ * return target address (ie. the cpu will jump to that address).  On
+ * failure, the previous mmu mode remains and the trap simply returns
  * as normal with the appropriate error code in RET0.
  */
-#घोषणा HV_FAST_MMU_ENABLE		0x27
+#define HV_FAST_MMU_ENABLE		0x27
 
 /* mmu_unmap_perm_addr()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_UNMAP_PERM_ADDR
- * ARG0:	भव address
+ * ARG0:	virtual address
  * ARG1:	reserved, must be zero
- * ARG2:	flags (HV_MMU_अणुIMMU,DMMUपूर्ण)
+ * ARG2:	flags (HV_MMU_{IMMU,DMMU})
  * RET0:	status
- * ERRORS:	EINVAL			Invalid भव address or flags value
- *		ENOMAP			Specअगरied mapping was not found
+ * ERRORS:	EINVAL			Invalid virtual address or flags value
+ *		ENOMAP			Specified mapping was not found
  *
  * Demaps any permanent page mapping (established via
- * mmu_map_perm_addr()) at the given भव address क्रम context 0 on
- * the current भव CPU.  Any भव tagged caches are guaranteed
+ * mmu_map_perm_addr()) at the given virtual address for context 0 on
+ * the current virtual CPU.  Any virtual tagged caches are guaranteed
  * to be kept consistent.
  */
-#घोषणा HV_FAST_MMU_UNMAP_PERM_ADDR	0x28
+#define HV_FAST_MMU_UNMAP_PERM_ADDR	0x28
 
 /* mmu_tsb_ctx0_info()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_TSB_CTX0_INFO
  * ARG0:	max TSBs
- * ARG1:	buffer poपूर्णांकer
+ * ARG1:	buffer pointer
  * RET0:	status
  * RET1:	number of TSBs
  * ERRORS:	EINVAL			Supplied buffer is too small
- *		EBADALIGN		The buffer poपूर्णांकer is badly aligned
- *		ENORADDR		Invalid real address क्रम buffer poपूर्णांकer
+ *		EBADALIGN		The buffer pointer is badly aligned
+ *		ENORADDR		Invalid real address for buffer pointer
  *
  * Return the TSB configuration as previous defined by mmu_tsb_ctx0()
- * पूर्णांकo the provided buffer.  The size of the buffer is given in ARG1
+ * into the provided buffer.  The size of the buffer is given in ARG1
  * in terms of the number of TSB description entries.
  *
- * Upon वापस, RET1 always contains the number of TSB descriptions
+ * Upon return, RET1 always contains the number of TSB descriptions
  * previously configured.  If zero TSBs were configured, EOK is
- * वापसed with RET1 containing 0.
+ * returned with RET1 containing 0.
  */
-#घोषणा HV_FAST_MMU_TSB_CTX0_INFO	0x29
+#define HV_FAST_MMU_TSB_CTX0_INFO	0x29
 
 /* mmu_tsb_ctxnon0_info()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MMU_TSB_CTXNON0_INFO
  * ARG0:	max TSBs
- * ARG1:	buffer poपूर्णांकer
+ * ARG1:	buffer pointer
  * RET0:	status
  * RET1:	number of TSBs
  * ERRORS:	EINVAL			Supplied buffer is too small
- *		EBADALIGN		The buffer poपूर्णांकer is badly aligned
- *		ENORADDR		Invalid real address क्रम buffer poपूर्णांकer
+ *		EBADALIGN		The buffer pointer is badly aligned
+ *		ENORADDR		Invalid real address for buffer pointer
  *
  * Return the TSB configuration as previous defined by
- * mmu_tsb_ctxnon0() पूर्णांकo the provided buffer.  The size of the buffer
+ * mmu_tsb_ctxnon0() into the provided buffer.  The size of the buffer
  * is given in ARG1 in terms of the number of TSB description entries.
  *
- * Upon वापस, RET1 always contains the number of TSB descriptions
+ * Upon return, RET1 always contains the number of TSB descriptions
  * previously configured.  If zero TSBs were configured, EOK is
- * वापसed with RET1 containing 0.
+ * returned with RET1 containing 0.
  */
-#घोषणा HV_FAST_MMU_TSB_CTXNON0_INFO	0x2a
+#define HV_FAST_MMU_TSB_CTXNON0_INFO	0x2a
 
 /* mmu_fault_area_info()
  * TRAP:	HV_FAST_TRAP
@@ -887,15 +886,15 @@
  * RET1:	fault area real address
  * ERRORS:	No errors defined.
  *
- * Return the currently defined MMU fault status area क्रम the current
- * CPU.  The real address of the fault status area is वापसed in
- * RET1, or 0 is वापसed in RET1 अगर no fault status area is defined.
+ * Return the currently defined MMU fault status area for the current
+ * CPU.  The real address of the fault status area is returned in
+ * RET1, or 0 is returned in RET1 if no fault status area is defined.
  *
- * Note: mmu_fault_area_conf() may be called with the वापस value (RET1)
- *       from this service अगर there is a need to save and restore the fault
- *	 area क्रम a cpu.
+ * Note: mmu_fault_area_conf() may be called with the return value (RET1)
+ *       from this service if there is a need to save and restore the fault
+ *	 area for a cpu.
  */
-#घोषणा HV_FAST_MMU_FAULT_AREA_INFO	0x2b
+#define HV_FAST_MMU_FAULT_AREA_INFO	0x2b
 
 /* Cache and Memory services. */
 
@@ -912,21 +911,21 @@
  *		EINVAL		Length is zero
  *
  * Zero the memory contents in the range real address to real address
- * plus length minus 1.  Also, valid ECC will be generated क्रम that
+ * plus length minus 1.  Also, valid ECC will be generated for that
  * memory address range.  Scrubbing is started at the given real
  * address, but may not scrub the entire given length.  The actual
- * length scrubbed will be वापसed in RET1.
+ * length scrubbed will be returned in RET1.
  *
  * The real address and length must be aligned on an 8K boundary, or
  * contain the start address and length from a sun4v error report.
  *
- * Note: There are two uses क्रम this function.  The first use is to block clear
+ * Note: There are two uses for this function.  The first use is to block clear
  *       and initialize memory and the second is to scrub an u ncorrectable
  *       error reported via a resumable or non-resumable trap.  The second
  *       use requires the arguments to be equal to the real address and length
  *       provided in a sun4v memory error report.
  */
-#घोषणा HV_FAST_MEM_SCRUB		0x31
+#define HV_FAST_MEM_SCRUB		0x31
 
 /* mem_sync()
  * TRAP:	HV_FAST_TRAP
@@ -941,17 +940,17 @@
  *		EINVAL		Length is zero
  *
  * Force the next access within the real address to real address plus
- * length minus 1 to be fetches from मुख्य प्रणाली memory.  Less than
+ * length minus 1 to be fetches from main system memory.  Less than
  * the given length may be synced, the actual amount synced is
- * वापसed in RET1.  The real address and length must be aligned on
+ * returned in RET1.  The real address and length must be aligned on
  * an 8K boundary.
  */
-#घोषणा HV_FAST_MEM_SYNC		0x32
+#define HV_FAST_MEM_SYNC		0x32
 
 /* Coprocessor services
  *
  * M7 and later processors provide an on-chip coprocessor which
- * accelerates database operations, and is known पूर्णांकernally as
+ * accelerates database operations, and is known internally as
  * DAX.
  */
 
@@ -966,22 +965,22 @@
  * RET1:	size (in bytes) of CCB array that was accepted (might be less
  *		than arg1)
  * RET2:	status data
- *		अगर status == ENOMAP or ENOACCESS, identअगरies the VA in question
- *		अगर status == EUNAVAILBLE, unavailable code
+ *		if status == ENOMAP or ENOACCESS, identifies the VA in question
+ *		if status == EUNAVAILBLE, unavailable code
  * RET3:	reserved
  *
  * ERRORS:	EOK		successful submission (check size)
  *		EWOULDBLOCK	could not finish submissions, try again
  *		EBADALIGN	array not 64B aligned or size not 64B multiple
- *		ENORADDR	invalid RA क्रम array or in CCB
+ *		ENORADDR	invalid RA for array or in CCB
  *		ENOMAP		could not translate address (see status data)
  *		EINVAL		invalid ccb or arguments
  *		ETOOMANY	too many ccbs with all-or-nothing flag
  *		ENOACCESS	guest has no access to submit ccbs or address
- *				in CCB करोes not have correct permissions (check
+ *				in CCB does not have correct permissions (check
  *				status data)
- *		EUNAVAILABLE	ccb operation could not be perक्रमmed at this
- *				समय (check status data)
+ *		EUNAVAILABLE	ccb operation could not be performed at this
+ *				time (check status data)
  *				Status data codes:
  *					0 - exact CCB could not be executed
  *					1 - CCB opcode cannot be executed
@@ -990,30 +989,30 @@
  *					4 - no CCBs can be executed
  */
 
-#घोषणा HV_CCB_SUBMIT               0x34
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_ccb_submit(अचिन्हित दीर्घ ccb_buf,
-			       अचिन्हित दीर्घ len,
-			       अचिन्हित दीर्घ flags,
-			       अचिन्हित दीर्घ reserved,
-			       व्योम *submitted_len,
-			       व्योम *status_data);
-#पूर्ण_अगर
+#define HV_CCB_SUBMIT               0x34
+#ifndef __ASSEMBLY__
+unsigned long sun4v_ccb_submit(unsigned long ccb_buf,
+			       unsigned long len,
+			       unsigned long flags,
+			       unsigned long reserved,
+			       void *submitted_len,
+			       void *status_data);
+#endif
 
 /* flags (ARG2) */
-#घोषणा HV_CCB_QUERY_CMD		BIT(1)
-#घोषणा HV_CCB_ARG0_TYPE_REAL		0UL
-#घोषणा HV_CCB_ARG0_TYPE_PRIMARY	BIT(4)
-#घोषणा HV_CCB_ARG0_TYPE_SECONDARY	BIT(5)
-#घोषणा HV_CCB_ARG0_TYPE_NUCLEUS	GENMASK(5, 4)
-#घोषणा HV_CCB_ARG0_PRIVILEGED		BIT(6)
-#घोषणा HV_CCB_ALL_OR_NOTHING		BIT(7)
-#घोषणा HV_CCB_QUEUE_INFO		BIT(8)
-#घोषणा HV_CCB_VA_REJECT		0UL
-#घोषणा HV_CCB_VA_SECONDARY		BIT(13)
-#घोषणा HV_CCB_VA_NUCLEUS		GENMASK(13, 12)
-#घोषणा HV_CCB_VA_PRIVILEGED		BIT(14)
-#घोषणा HV_CCB_VA_READ_ADI_DISABLE	BIT(15)	/* DAX2 only */
+#define HV_CCB_QUERY_CMD		BIT(1)
+#define HV_CCB_ARG0_TYPE_REAL		0UL
+#define HV_CCB_ARG0_TYPE_PRIMARY	BIT(4)
+#define HV_CCB_ARG0_TYPE_SECONDARY	BIT(5)
+#define HV_CCB_ARG0_TYPE_NUCLEUS	GENMASK(5, 4)
+#define HV_CCB_ARG0_PRIVILEGED		BIT(6)
+#define HV_CCB_ALL_OR_NOTHING		BIT(7)
+#define HV_CCB_QUEUE_INFO		BIT(8)
+#define HV_CCB_VA_REJECT		0UL
+#define HV_CCB_VA_SECONDARY		BIT(13)
+#define HV_CCB_VA_NUCLEUS		GENMASK(13, 12)
+#define HV_CCB_VA_PRIVILEGED		BIT(14)
+#define HV_CCB_VA_READ_ADI_DISABLE	BIT(15)	/* DAX2 only */
 
 /* ccb_info()
  * TRAP:	HV_FAST_TRAP
@@ -1030,64 +1029,64 @@
  *		EBADALIGN	address not 64B aligned
  *		ENORADDR	RA in address not valid
  *		EINVAL		CA not valid
- *		EWOULDBLOCK	info not available क्रम this CCB currently, try
+ *		EWOULDBLOCK	info not available for this CCB currently, try
  *				again
  *		ENOACCESS	guest cannot use dax
  */
 
-#घोषणा HV_CCB_INFO                 0x35
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_ccb_info(अचिन्हित दीर्घ ca,
-			     व्योम *info_arr);
-#पूर्ण_अगर
+#define HV_CCB_INFO                 0x35
+#ifndef __ASSEMBLY__
+unsigned long sun4v_ccb_info(unsigned long ca,
+			     void *info_arr);
+#endif
 
 /* info array byte offsets (RET1) */
-#घोषणा CCB_INFO_OFFSET_CCB_STATE	0
-#घोषणा CCB_INFO_OFFSET_DAX_UNIT	2
-#घोषणा CCB_INFO_OFFSET_QUEUE_NUM	4
-#घोषणा CCB_INFO_OFFSET_QUEUE_POS	6
+#define CCB_INFO_OFFSET_CCB_STATE	0
+#define CCB_INFO_OFFSET_DAX_UNIT	2
+#define CCB_INFO_OFFSET_QUEUE_NUM	4
+#define CCB_INFO_OFFSET_QUEUE_POS	6
 
 /* CCB state (RET1[0]) */
-#घोषणा HV_CCB_STATE_COMPLETED      0
-#घोषणा HV_CCB_STATE_ENQUEUED       1
-#घोषणा HV_CCB_STATE_INPROGRESS     2
-#घोषणा HV_CCB_STATE_NOTFOUND       3
+#define HV_CCB_STATE_COMPLETED      0
+#define HV_CCB_STATE_ENQUEUED       1
+#define HV_CCB_STATE_INPROGRESS     2
+#define HV_CCB_STATE_NOTFOUND       3
 
-/* ccb_समाप्त()
+/* ccb_kill()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_CCB_KILL
  * ARG0:	real address of CCB completion area
  * RET0:	status (success or error code)
- * RET1:	CCB समाप्त status
+ * RET1:	CCB kill status
  *
  * ERRORS:	EOK		operation successful
  *		EBADALIGN	address not 64B aligned
  *		ENORADDR	RA in address not valid
  *		EINVAL		CA not valid
- *		EWOULDBLOCK	समाप्त not available क्रम this CCB currently, try
+ *		EWOULDBLOCK	kill not available for this CCB currently, try
  *				again
  *		ENOACCESS	guest cannot use dax
  */
 
-#घोषणा HV_CCB_KILL                 0x36
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_ccb_समाप्त(अचिन्हित दीर्घ ca,
-			     व्योम *समाप्त_status);
-#पूर्ण_अगर
+#define HV_CCB_KILL                 0x36
+#ifndef __ASSEMBLY__
+unsigned long sun4v_ccb_kill(unsigned long ca,
+			     void *kill_status);
+#endif
 
-/* CCB समाप्त status (RET1) */
-#घोषणा HV_CCB_KILL_COMPLETED       0
-#घोषणा HV_CCB_KILL_DEQUEUED        1
-#घोषणा HV_CCB_KILL_KILLED          2
-#घोषणा HV_CCB_KILL_NOTFOUND        3
+/* CCB kill status (RET1) */
+#define HV_CCB_KILL_COMPLETED       0
+#define HV_CCB_KILL_DEQUEUED        1
+#define HV_CCB_KILL_KILLED          2
+#define HV_CCB_KILL_NOTFOUND        3
 
 /* Time of day services.
  *
- * The hypervisor मुख्यtains the समय of day on a per-करोमुख्य basis.
- * Changing the समय of day in one करोमुख्य करोes not affect the समय of
- * day on any other करोमुख्य.
+ * The hypervisor maintains the time of day on a per-domain basis.
+ * Changing the time of day in one domain does not affect the time of
+ * day on any other domain.
  *
- * Time is described by a single अचिन्हित 64-bit word which is the
+ * Time is described by a single unsigned 64-bit word which is the
  * number of seconds since the UNIX Epoch (00:00:00 UTC, January 1,
  * 1970).
  */
@@ -1098,16 +1097,16 @@
  * RET0:	status
  * RET1:	TOD
  * ERRORS:	EWOULDBLOCK	TOD resource is temporarily unavailable
- *		ENOTSUPPORTED	If TOD not supported on this platक्रमm
+ *		ENOTSUPPORTED	If TOD not supported on this platform
  *
- * Return the current समय of day.  May block अगर TOD access is
+ * Return the current time of day.  May block if TOD access is
  * temporarily not possible.
  */
-#घोषणा HV_FAST_TOD_GET			0x50
+#define HV_FAST_TOD_GET			0x50
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_tod_get(अचिन्हित दीर्घ *समय);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_tod_get(unsigned long *time);
+#endif
 
 /* tod_set()
  * TRAP:	HV_FAST_TRAP
@@ -1115,76 +1114,76 @@
  * ARG0:	TOD
  * RET0:	status
  * ERRORS:	EWOULDBLOCK	TOD resource is temporarily unavailable
- *		ENOTSUPPORTED	If TOD not supported on this platक्रमm
+ *		ENOTSUPPORTED	If TOD not supported on this platform
  *
- * The current समय of day is set to the value specअगरied in ARG0.  May
- * block अगर TOD access is temporarily not possible.
+ * The current time of day is set to the value specified in ARG0.  May
+ * block if TOD access is temporarily not possible.
  */
-#घोषणा HV_FAST_TOD_SET			0x51
+#define HV_FAST_TOD_SET			0x51
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_tod_set(अचिन्हित दीर्घ समय);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_tod_set(unsigned long time);
+#endif
 
 /* Console services */
 
-/* con_अक्षर_लो()
+/* con_getchar()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CONS_GETCHAR
  * RET0:	status
- * RET1:	अक्षरacter
- * ERRORS:	EWOULDBLOCK	No अक्षरacter available.
+ * RET1:	character
+ * ERRORS:	EWOULDBLOCK	No character available.
  *
- * Returns a अक्षरacter from the console device.  If no अक्षरacter is
- * available then an EWOULDBLOCK error is वापसed.  If a अक्षरacter is
- * available, then the वापसed status is EOK and the अक्षरacter value
+ * Returns a character from the console device.  If no character is
+ * available then an EWOULDBLOCK error is returned.  If a character is
+ * available, then the returned status is EOK and the character value
  * is in RET1.
  *
- * A भव BREAK is represented by the 64-bit value -1.
+ * A virtual BREAK is represented by the 64-bit value -1.
  *
- * A भव HUP संकेत is represented by the 64-bit value -2.
+ * A virtual HUP signal is represented by the 64-bit value -2.
  */
-#घोषणा HV_FAST_CONS_GETCHAR		0x60
+#define HV_FAST_CONS_GETCHAR		0x60
 
-/* con_अक्षर_दो()
+/* con_putchar()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CONS_PUTCHAR
- * ARG0:	अक्षरacter
+ * ARG0:	character
  * RET0:	status
- * ERRORS:	EINVAL		Illegal अक्षरacter
+ * ERRORS:	EINVAL		Illegal character
  *		EWOULDBLOCK	Output buffer currently full, would block
  *
- * Send a अक्षरacter to the console device.  Only अक्षरacter values
+ * Send a character to the console device.  Only character values
  * between 0 and 255 may be used.  Values outside this range are
- * invalid except क्रम the 64-bit value -1 which is used to send a
- * भव BREAK.
+ * invalid except for the 64-bit value -1 which is used to send a
+ * virtual BREAK.
  */
-#घोषणा HV_FAST_CONS_PUTCHAR		0x61
+#define HV_FAST_CONS_PUTCHAR		0x61
 
-/* con_पढ़ो()
+/* con_read()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CONS_READ
  * ARG0:	buffer real address
  * ARG1:	buffer size in bytes
  * RET0:	status
- * RET1:	bytes पढ़ो or BREAK or HUP
- * ERRORS:	EWOULDBLOCK	No अक्षरacter available.
+ * RET1:	bytes read or BREAK or HUP
+ * ERRORS:	EWOULDBLOCK	No character available.
  *
- * Reads अक्षरacters पूर्णांकo a buffer from the console device.  If no
- * अक्षरacter is available then an EWOULDBLOCK error is वापसed.
- * If a अक्षरacter is available, then the वापसed status is EOK
- * and the number of bytes पढ़ो पूर्णांकo the given buffer is provided
+ * Reads characters into a buffer from the console device.  If no
+ * character is available then an EWOULDBLOCK error is returned.
+ * If a character is available, then the returned status is EOK
+ * and the number of bytes read into the given buffer is provided
  * in RET1.
  *
- * A भव BREAK is represented by the 64-bit RET1 value -1.
+ * A virtual BREAK is represented by the 64-bit RET1 value -1.
  *
- * A भव HUP संकेत is represented by the 64-bit RET1 value -2.
+ * A virtual HUP signal is represented by the 64-bit RET1 value -2.
  *
- * If BREAK or HUP are indicated, no bytes were पढ़ो पूर्णांकo buffer.
+ * If BREAK or HUP are indicated, no bytes were read into buffer.
  */
-#घोषणा HV_FAST_CONS_READ		0x62
+#define HV_FAST_CONS_READ		0x62
 
-/* con_ग_लिखो()
+/* con_write()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_CONS_WRITE
  * ARG0:	buffer real address
@@ -1193,74 +1192,74 @@
  * RET1:	bytes written
  * ERRORS:	EWOULDBLOCK	Output buffer currently full, would block
  *
- * Send a अक्षरacters in buffer to the console device.  Breaks must be
- * sent using con_अक्षर_दो().
+ * Send a characters in buffer to the console device.  Breaks must be
+ * sent using con_putchar().
  */
-#घोषणा HV_FAST_CONS_WRITE		0x63
+#define HV_FAST_CONS_WRITE		0x63
 
-#अगर_अघोषित __ASSEMBLY__
-दीर्घ sun4v_con_अक्षर_लो(दीर्घ *status);
-दीर्घ sun4v_con_अक्षर_दो(दीर्घ c);
-दीर्घ sun4v_con_पढ़ो(अचिन्हित दीर्घ buffer,
-		    अचिन्हित दीर्घ size,
-		    अचिन्हित दीर्घ *bytes_पढ़ो);
-अचिन्हित दीर्घ sun4v_con_ग_लिखो(अचिन्हित दीर्घ buffer,
-			      अचिन्हित दीर्घ size,
-			      अचिन्हित दीर्घ *bytes_written);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+long sun4v_con_getchar(long *status);
+long sun4v_con_putchar(long c);
+long sun4v_con_read(unsigned long buffer,
+		    unsigned long size,
+		    unsigned long *bytes_read);
+unsigned long sun4v_con_write(unsigned long buffer,
+			      unsigned long size,
+			      unsigned long *bytes_written);
+#endif
 
 /* mach_set_soft_state()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MACH_SET_SOFT_STATE
  * ARG0:	software state
- * ARG1:	software state description poपूर्णांकer
+ * ARG1:	software state description pointer
  * RET0:	status
  * ERRORS:	EINVAL		software state not valid or software state
- *				description is not शून्य terminated
- *		ENORADDR	software state description poपूर्णांकer is not a
+ *				description is not NULL terminated
+ *		ENORADDR	software state description pointer is not a
  *				valid real address
  *		EBADALIGNED	software state description is not correctly
  *				aligned
  *
  * This allows the guest to report it's soft state to the hypervisor.  There
  * are two primary components to this state.  The first part states whether
- * the guest software is running or not.  The second contaपूर्णांकs optional
- * details specअगरic to the software.
+ * the guest software is running or not.  The second containts optional
+ * details specific to the software.
  *
  * The software state argument is defined below in HV_SOFT_STATE_*, and
  * indicates whether the guest is operating normally or in a transitional
  * state.
  *
  * The software state description argument is a real address of a data buffer
- * of size 32-bytes aligned on a 32-byte boundary.  It is treated as a शून्य
- * terminated 7-bit ASCII string of up to 31 अक्षरacters not including the
- * शून्य termination.
+ * of size 32-bytes aligned on a 32-byte boundary.  It is treated as a NULL
+ * terminated 7-bit ASCII string of up to 31 characters not including the
+ * NULL termination.
  */
-#घोषणा HV_FAST_MACH_SET_SOFT_STATE	0x70
-#घोषणा  HV_SOFT_STATE_NORMAL		 0x01
-#घोषणा  HV_SOFT_STATE_TRANSITION	 0x02
+#define HV_FAST_MACH_SET_SOFT_STATE	0x70
+#define  HV_SOFT_STATE_NORMAL		 0x01
+#define  HV_SOFT_STATE_TRANSITION	 0x02
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mach_set_soft_state(अचिन्हित दीर्घ soft_state,
-				        अचिन्हित दीर्घ msg_string_ra);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mach_set_soft_state(unsigned long soft_state,
+				        unsigned long msg_string_ra);
+#endif
 
 /* mach_get_soft_state()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_MACH_GET_SOFT_STATE
- * ARG0:	software state description poपूर्णांकer
+ * ARG0:	software state description pointer
  * RET0:	status
  * RET1:	software state
- * ERRORS:	ENORADDR	software state description poपूर्णांकer is not a
+ * ERRORS:	ENORADDR	software state description pointer is not a
  *				valid real address
  *		EBADALIGNED	software state description is not correctly
  *				aligned
  *
  * Retrieve the current value of the guest's software state.  The rules
- * क्रम the software state poपूर्णांकer are the same as क्रम mach_set_soft_state()
+ * for the software state pointer are the same as for mach_set_soft_state()
  * above.
  */
-#घोषणा HV_FAST_MACH_GET_SOFT_STATE	0x71
+#define HV_FAST_MACH_GET_SOFT_STATE	0x71
 
 /* svc_send()
  * TRAP:	HV_FAST_TRAP
@@ -1271,11 +1270,11 @@
  * RET0:	STATUS
  * RET1:	sent_bytes
  *
- * Be careful, all output रेजिस्टरs are clobbered by this operation,
- * so क्रम example it is not possible to save away a value in %o4
+ * Be careful, all output registers are clobbered by this operation,
+ * so for example it is not possible to save away a value in %o4
  * across the trap.
  */
-#घोषणा HV_FAST_SVC_SEND		0x80
+#define HV_FAST_SVC_SEND		0x80
 
 /* svc_recv()
  * TRAP:	HV_FAST_TRAP
@@ -1286,20 +1285,20 @@
  * RET0:	STATUS
  * RET1:	recv_bytes
  *
- * Be careful, all output रेजिस्टरs are clobbered by this operation,
- * so क्रम example it is not possible to save away a value in %o4
+ * Be careful, all output registers are clobbered by this operation,
+ * so for example it is not possible to save away a value in %o4
  * across the trap.
  */
-#घोषणा HV_FAST_SVC_RECV		0x81
+#define HV_FAST_SVC_RECV		0x81
 
-/* svc_माला_लोtatus()
+/* svc_getstatus()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_SVC_GETSTATUS
  * ARG0:	service ID
  * RET0:	STATUS
  * RET1:	status bits
  */
-#घोषणा HV_FAST_SVC_GETSTATUS		0x82
+#define HV_FAST_SVC_GETSTATUS		0x82
 
 /* svc_setstatus()
  * TRAP:	HV_FAST_TRAP
@@ -1308,7 +1307,7 @@
  * ARG1:	bits to set
  * RET0:	STATUS
  */
-#घोषणा HV_FAST_SVC_SETSTATUS		0x83
+#define HV_FAST_SVC_SETSTATUS		0x83
 
 /* svc_clrstatus()
  * TRAP:	HV_FAST_TRAP
@@ -1317,92 +1316,92 @@
  * ARG1:	bits to clear
  * RET0:	STATUS
  */
-#घोषणा HV_FAST_SVC_CLRSTATUS		0x84
+#define HV_FAST_SVC_CLRSTATUS		0x84
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_svc_send(अचिन्हित दीर्घ svc_id,
-			     अचिन्हित दीर्घ buffer,
-			     अचिन्हित दीर्घ buffer_size,
-			     अचिन्हित दीर्घ *sent_bytes);
-अचिन्हित दीर्घ sun4v_svc_recv(अचिन्हित दीर्घ svc_id,
-			     अचिन्हित दीर्घ buffer,
-			     अचिन्हित दीर्घ buffer_size,
-			     अचिन्हित दीर्घ *recv_bytes);
-अचिन्हित दीर्घ sun4v_svc_माला_लोtatus(अचिन्हित दीर्घ svc_id,
-				  अचिन्हित दीर्घ *status_bits);
-अचिन्हित दीर्घ sun4v_svc_setstatus(अचिन्हित दीर्घ svc_id,
-				  अचिन्हित दीर्घ status_bits);
-अचिन्हित दीर्घ sun4v_svc_clrstatus(अचिन्हित दीर्घ svc_id,
-				  अचिन्हित दीर्घ status_bits);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_svc_send(unsigned long svc_id,
+			     unsigned long buffer,
+			     unsigned long buffer_size,
+			     unsigned long *sent_bytes);
+unsigned long sun4v_svc_recv(unsigned long svc_id,
+			     unsigned long buffer,
+			     unsigned long buffer_size,
+			     unsigned long *recv_bytes);
+unsigned long sun4v_svc_getstatus(unsigned long svc_id,
+				  unsigned long *status_bits);
+unsigned long sun4v_svc_setstatus(unsigned long svc_id,
+				  unsigned long status_bits);
+unsigned long sun4v_svc_clrstatus(unsigned long svc_id,
+				  unsigned long status_bits);
+#endif
 
 /* Trap trace services.
  *
- * The hypervisor provides a trap tracing capability क्रम privileged
- * code running on each भव CPU.  Privileged code provides a
- * round-robin trap trace queue within which the hypervisor ग_लिखोs
+ * The hypervisor provides a trap tracing capability for privileged
+ * code running on each virtual CPU.  Privileged code provides a
+ * round-robin trap trace queue within which the hypervisor writes
  * 64-byte entries detailing hyperprivileged traps taken n behalf of
- * privileged code.  This is provided as a debugging capability क्रम
+ * privileged code.  This is provided as a debugging capability for
  * privileged code.
  *
- * The trap trace control काष्ठाure is 64-bytes दीर्घ and placed at the
+ * The trap trace control structure is 64-bytes long and placed at the
  * start (offset 0) of the trap trace buffer, and is described as
  * follows:
  */
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_trap_trace_control अणु
-	अचिन्हित दीर्घ		head_offset;
-	अचिन्हित दीर्घ		tail_offset;
-	अचिन्हित दीर्घ		__reserved[0x30 / माप(अचिन्हित दीर्घ)];
-पूर्ण;
-#पूर्ण_अगर
-#घोषणा HV_TRAP_TRACE_CTRL_HEAD_OFFSET	0x00
-#घोषणा HV_TRAP_TRACE_CTRL_TAIL_OFFSET	0x08
+#ifndef __ASSEMBLY__
+struct hv_trap_trace_control {
+	unsigned long		head_offset;
+	unsigned long		tail_offset;
+	unsigned long		__reserved[0x30 / sizeof(unsigned long)];
+};
+#endif
+#define HV_TRAP_TRACE_CTRL_HEAD_OFFSET	0x00
+#define HV_TRAP_TRACE_CTRL_TAIL_OFFSET	0x08
 
 /* The head offset is the offset of the most recently completed entry
  * in the trap-trace buffer.  The tail offset is the offset of the
- * next entry to be written.  The control काष्ठाure is owned and
- * modअगरied by the hypervisor.  A guest may not modअगरy the control
- * काष्ठाure contents.  Attempts to करो so will result in undefined
- * behavior क्रम the guest.
+ * next entry to be written.  The control structure is owned and
+ * modified by the hypervisor.  A guest may not modify the control
+ * structure contents.  Attempts to do so will result in undefined
+ * behavior for the guest.
  *
  * Each trap trace buffer entry is laid out as follows:
  */
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_trap_trace_entry अणु
-	अचिन्हित अक्षर	type;		/* Hypervisor or guest entry?	*/
-	अचिन्हित अक्षर	hpstate;	/* Hyper-privileged state	*/
-	अचिन्हित अक्षर	tl;		/* Trap level			*/
-	अचिन्हित अक्षर	gl;		/* Global रेजिस्टर level	*/
-	अचिन्हित लघु	tt;		/* Trap type			*/
-	अचिन्हित लघु	tag;		/* Extended trap identअगरier	*/
-	अचिन्हित दीर्घ	tstate;		/* Trap state			*/
-	अचिन्हित दीर्घ	tick;		/* Tick				*/
-	अचिन्हित दीर्घ	tpc;		/* Trap PC			*/
-	अचिन्हित दीर्घ	f1;		/* Entry specअगरic		*/
-	अचिन्हित दीर्घ	f2;		/* Entry specअगरic		*/
-	अचिन्हित दीर्घ	f3;		/* Entry specअगरic		*/
-	अचिन्हित दीर्घ	f4;		/* Entry specअगरic		*/
-पूर्ण;
-#पूर्ण_अगर
-#घोषणा HV_TRAP_TRACE_ENTRY_TYPE	0x00
-#घोषणा HV_TRAP_TRACE_ENTRY_HPSTATE	0x01
-#घोषणा HV_TRAP_TRACE_ENTRY_TL		0x02
-#घोषणा HV_TRAP_TRACE_ENTRY_GL		0x03
-#घोषणा HV_TRAP_TRACE_ENTRY_TT		0x04
-#घोषणा HV_TRAP_TRACE_ENTRY_TAG		0x06
-#घोषणा HV_TRAP_TRACE_ENTRY_TSTATE	0x08
-#घोषणा HV_TRAP_TRACE_ENTRY_TICK	0x10
-#घोषणा HV_TRAP_TRACE_ENTRY_TPC		0x18
-#घोषणा HV_TRAP_TRACE_ENTRY_F1		0x20
-#घोषणा HV_TRAP_TRACE_ENTRY_F2		0x28
-#घोषणा HV_TRAP_TRACE_ENTRY_F3		0x30
-#घोषणा HV_TRAP_TRACE_ENTRY_F4		0x38
+#ifndef __ASSEMBLY__
+struct hv_trap_trace_entry {
+	unsigned char	type;		/* Hypervisor or guest entry?	*/
+	unsigned char	hpstate;	/* Hyper-privileged state	*/
+	unsigned char	tl;		/* Trap level			*/
+	unsigned char	gl;		/* Global register level	*/
+	unsigned short	tt;		/* Trap type			*/
+	unsigned short	tag;		/* Extended trap identifier	*/
+	unsigned long	tstate;		/* Trap state			*/
+	unsigned long	tick;		/* Tick				*/
+	unsigned long	tpc;		/* Trap PC			*/
+	unsigned long	f1;		/* Entry specific		*/
+	unsigned long	f2;		/* Entry specific		*/
+	unsigned long	f3;		/* Entry specific		*/
+	unsigned long	f4;		/* Entry specific		*/
+};
+#endif
+#define HV_TRAP_TRACE_ENTRY_TYPE	0x00
+#define HV_TRAP_TRACE_ENTRY_HPSTATE	0x01
+#define HV_TRAP_TRACE_ENTRY_TL		0x02
+#define HV_TRAP_TRACE_ENTRY_GL		0x03
+#define HV_TRAP_TRACE_ENTRY_TT		0x04
+#define HV_TRAP_TRACE_ENTRY_TAG		0x06
+#define HV_TRAP_TRACE_ENTRY_TSTATE	0x08
+#define HV_TRAP_TRACE_ENTRY_TICK	0x10
+#define HV_TRAP_TRACE_ENTRY_TPC		0x18
+#define HV_TRAP_TRACE_ENTRY_F1		0x20
+#define HV_TRAP_TRACE_ENTRY_F2		0x28
+#define HV_TRAP_TRACE_ENTRY_F3		0x30
+#define HV_TRAP_TRACE_ENTRY_F4		0x38
 
 /* The type field is encoded as follows.  */
-#घोषणा HV_TRAP_TYPE_UNDEF		0x00 /* Entry content undefined     */
-#घोषणा HV_TRAP_TYPE_HV			0x01 /* Hypervisor trap entry       */
-#घोषणा HV_TRAP_TYPE_GUEST		0xff /* Added via ttrace_addentry() */
+#define HV_TRAP_TYPE_UNDEF		0x00 /* Entry content undefined     */
+#define HV_TRAP_TYPE_HV			0x01 /* Hypervisor trap entry       */
+#define HV_TRAP_TYPE_GUEST		0xff /* Added via ttrace_addentry() */
 
 /* ttrace_buf_conf()
  * TRAP:	HV_FAST_TRAP
@@ -1415,25 +1414,25 @@
  *		EINVAL		Size is too small
  *		EBADALIGN	Real address not aligned on 64-byte boundary
  *
- * Requests hypervisor trap tracing and declares a भव CPU's trap
+ * Requests hypervisor trap tracing and declares a virtual CPU's trap
  * trace buffer to the hypervisor.  The real address supplies the real
  * base address of the trap trace queue and must be 64-byte aligned.
- * Specअगरying a value of 0 क्रम the number of entries disables trap
- * tracing क्रम the calling भव CPU.  The buffer allocated must be
- * sized क्रम a घातer of two number of 64-byte trap trace entries plus
- * an initial 64-byte control काष्ठाure.
+ * Specifying a value of 0 for the number of entries disables trap
+ * tracing for the calling virtual CPU.  The buffer allocated must be
+ * sized for a power of two number of 64-byte trap trace entries plus
+ * an initial 64-byte control structure.
  *
- * This may be invoked any number of बार so that a भव CPU may
- * relocate a trap trace buffer or create "snapshots" of inक्रमmation.
+ * This may be invoked any number of times so that a virtual CPU may
+ * relocate a trap trace buffer or create "snapshots" of information.
  *
  * If the real address is illegal or badly aligned, then trap tracing
- * is disabled and an error is वापसed.
+ * is disabled and an error is returned.
  *
- * Upon failure with EINVAL, this service call वापसs in RET1 the
+ * Upon failure with EINVAL, this service call returns in RET1 the
  * minimum number of buffer entries required.  Upon other failures
  * RET1 is undefined.
  */
-#घोषणा HV_FAST_TTRACE_BUF_CONF		0x90
+#define HV_FAST_TTRACE_BUF_CONF		0x90
 
 /* ttrace_buf_info()
  * TRAP:	HV_FAST_TRAP
@@ -1445,9 +1444,9 @@
  *
  * Returns the size and location of the previously declared trap-trace
  * buffer.  In the event that no buffer was previously defined, or the
- * buffer is disabled, this call will वापस a size of zero bytes.
+ * buffer is disabled, this call will return a size of zero bytes.
  */
-#घोषणा HV_FAST_TTRACE_BUF_INFO		0x91
+#define HV_FAST_TTRACE_BUF_INFO		0x91
 
 /* ttrace_enable()
  * TRAP:	HV_FAST_TRAP
@@ -1457,28 +1456,28 @@
  * RET1:	previous enable state
  * ERRORS:	EINVAL		No trap trace buffer currently defined
  *
- * Enable or disable trap tracing, and वापस the previous enabled
- * state in RET1.  Future प्रणालीs may define various flags क्रम the
- * enable argument (ARG0), क्रम the moment a guest should pass
+ * Enable or disable trap tracing, and return the previous enabled
+ * state in RET1.  Future systems may define various flags for the
+ * enable argument (ARG0), for the moment a guest should pass
  * "(uint64_t) -1" to enable, and "(uint64_t) 0" to disable all
  * tracing - which will ensure future compatibility.
  */
-#घोषणा HV_FAST_TTRACE_ENABLE		0x92
+#define HV_FAST_TTRACE_ENABLE		0x92
 
-/* ttrace_मुक्तze()
+/* ttrace_freeze()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_TTRACE_FREEZE
- * ARG0:	मुक्तze
+ * ARG0:	freeze
  * RET0:	status
- * RET1:	previous मुक्तze state
+ * RET1:	previous freeze state
  * ERRORS:	EINVAL		No trap trace buffer currently defined
  *
- * Freeze or unमुक्तze trap tracing, वापसing the previous मुक्तze
- * state in RET1.  A guest should pass a non-zero value to मुक्तze and
- * a zero value to unमुक्तze all tracing.  The वापसed previous state
- * is 0 क्रम not frozen and 1 क्रम frozen.
+ * Freeze or unfreeze trap tracing, returning the previous freeze
+ * state in RET1.  A guest should pass a non-zero value to freeze and
+ * a zero value to unfreeze all tracing.  The returned previous state
+ * is 0 for not frozen and 1 for frozen.
  */
-#घोषणा HV_FAST_TTRACE_FREEZE		0x93
+#define HV_FAST_TTRACE_FREEZE		0x93
 
 /* ttrace_addentry()
  * TRAP:	HV_TTRACE_ADDENTRY_TRAP
@@ -1490,25 +1489,25 @@
  * RET0:	status
  * ERRORS:	EINVAL		No trap trace buffer currently defined
  *
- * Add an entry to the trap trace buffer.  Upon वापस only ARG0/RET0
- * is modअगरied - none of the other रेजिस्टरs holding arguments are
- * अस्थिर across this hypervisor service.
+ * Add an entry to the trap trace buffer.  Upon return only ARG0/RET0
+ * is modified - none of the other registers holding arguments are
+ * volatile across this hypervisor service.
  */
 
 /* Core dump services.
  *
  * Since the hypervisor viraulizes and thus obscures a lot of the
  * physical machine layout and state, traditional OS crash dumps can
- * be dअगरficult to diagnose especially when the problem is a
+ * be difficult to diagnose especially when the problem is a
  * configuration error of some sort.
  *
- * The dump services provide an opaque buffer पूर्णांकo which the
- * hypervisor can place it's पूर्णांकernal state in order to assist in
+ * The dump services provide an opaque buffer into which the
+ * hypervisor can place it's internal state in order to assist in
  * debugging such situations.  The contents are opaque and extremely
- * platक्रमm and hypervisor implementation specअगरic.  The guest, during
- * a core dump, requests that the hypervisor update any inक्रमmation in
+ * platform and hypervisor implementation specific.  The guest, during
+ * a core dump, requests that the hypervisor update any information in
  * the dump buffer in preparation to being dumped as part of the
- * करोमुख्य's memory image.
+ * domain's memory image.
  */
 
 /* dump_buf_update()
@@ -1524,29 +1523,29 @@
  *		EINVAL		Size is non-zero but less than minimum size
  *				required
  *		ENOTSUPPORTED	Operation not supported on current logical
- *				करोमुख्य
+ *				domain
  *
- * Declare a करोमुख्य dump buffer to the hypervisor.  The real address
- * provided क्रम the करोमुख्य dump buffer must be 64-byte aligned.  The
- * size specअगरies the size of the dump buffer and may be larger than
- * the minimum size specअगरied in the machine description.  The
+ * Declare a domain dump buffer to the hypervisor.  The real address
+ * provided for the domain dump buffer must be 64-byte aligned.  The
+ * size specifies the size of the dump buffer and may be larger than
+ * the minimum size specified in the machine description.  The
  * hypervisor will fill the dump buffer with opaque data.
  *
  * Note: A guest may elect to include dump buffer contents as part of a crash
  *       dump to assist with debugging.  This function may be called any number
- *       of बार so that a guest may relocate a dump buffer, or create
- *       "snapshots" of any dump-buffer inक्रमmation.  Each call to
+ *       of times so that a guest may relocate a dump buffer, or create
+ *       "snapshots" of any dump-buffer information.  Each call to
  *       dump_buf_update() atomically declares the new dump buffer to the
  *       hypervisor.
  *
- * A specअगरied size of 0 unconfigures the dump buffer.  If the real
+ * A specified size of 0 unconfigures the dump buffer.  If the real
  * address is illegal or badly aligned, then any currently active dump
- * buffer is disabled and an error is वापसed.
+ * buffer is disabled and an error is returned.
  *
  * In the event that the call fails with EINVAL, RET1 contains the
- * minimum size requires by the hypervisor क्रम a valid dump buffer.
+ * minimum size requires by the hypervisor for a valid dump buffer.
  */
-#घोषणा HV_FAST_DUMP_BUF_UPDATE		0x94
+#define HV_FAST_DUMP_BUF_UPDATE		0x94
 
 /* dump_buf_info()
  * TRAP:	HV_FAST_TRAP
@@ -1557,54 +1556,54 @@
  * ERRORS:	No errors defined.
  *
  * Return the currently configures dump buffer description.  A
- * वापसed size of 0 bytes indicates an undefined dump buffer.  In
- * this हाल the वापस address in RET1 is undefined.
+ * returned size of 0 bytes indicates an undefined dump buffer.  In
+ * this case the return address in RET1 is undefined.
  */
-#घोषणा HV_FAST_DUMP_BUF_INFO		0x95
+#define HV_FAST_DUMP_BUF_INFO		0x95
 
-/* Device पूर्णांकerrupt services.
+/* Device interrupt services.
  *
- * Device पूर्णांकerrupts are allocated to प्रणाली bus bridges by the hypervisor,
+ * Device interrupts are allocated to system bus bridges by the hypervisor,
  * and described to OBP in the machine description.  OBP then describes
- * these पूर्णांकerrupts to the OS via properties in the device tree.
+ * these interrupts to the OS via properties in the device tree.
  *
  * Terminology:
  *
  *	cpuid		Unique opaque value which represents a target cpu.
  *
- *	devhandle	Device handle.  It uniquely identअगरies a device, and
+ *	devhandle	Device handle.  It uniquely identifies a device, and
  *			consistes of the lower 28-bits of the hi-cell of the
  *			first entry of the device's "reg" property in the
  *			OBP device tree.
  *
- *	devino		Device पूर्णांकerrupt number.  Specअगरies the relative
- *			पूर्णांकerrupt number within the device.  The unique
+ *	devino		Device interrupt number.  Specifies the relative
+ *			interrupt number within the device.  The unique
  *			combination of devhandle and devino are used to
- *			identअगरy a specअगरic device पूर्णांकerrupt.
+ *			identify a specific device interrupt.
  *
  *			Note: The devino value is the same as the values in the
  *			      "interrupts" property or "interrupt-map" property
- *			      in the OBP device tree क्रम that device.
+ *			      in the OBP device tree for that device.
  *
- *	sysino		System पूर्णांकerrupt number.  A 64-bit अचिन्हित पूर्णांकerger
- *			representing a unique पूर्णांकerrupt within a भव
+ *	sysino		System interrupt number.  A 64-bit unsigned interger
+ *			representing a unique interrupt within a virtual
  *			machine.
  *
- *	पूर्णांकr_state	A flag representing the पूर्णांकerrupt state क्रम a given
+ *	intr_state	A flag representing the interrupt state for a given
  *			sysino.  The state values are defined below.
  *
- *	पूर्णांकr_enabled	A flag representing the 'enabled' state क्रम a given
+ *	intr_enabled	A flag representing the 'enabled' state for a given
  *			sysino.  The enable values are defined below.
  */
 
-#घोषणा HV_INTR_STATE_IDLE		0 /* Nothing pending */
-#घोषणा HV_INTR_STATE_RECEIVED		1 /* Interrupt received by hardware */
-#घोषणा HV_INTR_STATE_DELIVERED		2 /* Interrupt delivered to queue */
+#define HV_INTR_STATE_IDLE		0 /* Nothing pending */
+#define HV_INTR_STATE_RECEIVED		1 /* Interrupt received by hardware */
+#define HV_INTR_STATE_DELIVERED		2 /* Interrupt delivered to queue */
 
-#घोषणा HV_INTR_DISABLED		0 /* sysino not enabled */
-#घोषणा HV_INTR_ENABLED			1 /* sysino enabled */
+#define HV_INTR_DISABLED		0 /* sysino not enabled */
+#define HV_INTR_ENABLED			1 /* sysino enabled */
 
-/* पूर्णांकr_devino_to_sysino()
+/* intr_devino_to_sysino()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_DEVINO2SYSINO
  * ARG0:	devhandle
@@ -1613,87 +1612,87 @@
  * RET1:	sysino
  * ERRORS:	EINVAL		Invalid devhandle/devino
  *
- * Converts a device specअगरic पूर्णांकerrupt number of the given
- * devhandle/devino पूर्णांकo a प्रणाली specअगरic ino (sysino).
+ * Converts a device specific interrupt number of the given
+ * devhandle/devino into a system specific ino (sysino).
  */
-#घोषणा HV_FAST_INTR_DEVINO2SYSINO	0xa0
+#define HV_FAST_INTR_DEVINO2SYSINO	0xa0
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_devino_to_sysino(अचिन्हित दीर्घ devhandle,
-				     अचिन्हित दीर्घ devino);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_devino_to_sysino(unsigned long devhandle,
+				     unsigned long devino);
+#endif
 
-/* पूर्णांकr_getenabled()
+/* intr_getenabled()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_GETENABLED
  * ARG0:	sysino
  * RET0:	status
- * RET1:	पूर्णांकr_enabled (HV_INTR_अणुDISABLED,ENABLEDपूर्ण)
+ * RET1:	intr_enabled (HV_INTR_{DISABLED,ENABLED})
  * ERRORS:	EINVAL		Invalid sysino
  *
- * Returns पूर्णांकerrupt enabled state in RET1 क्रम the पूर्णांकerrupt defined
+ * Returns interrupt enabled state in RET1 for the interrupt defined
  * by the given sysino.
  */
-#घोषणा HV_FAST_INTR_GETENABLED		0xa1
+#define HV_FAST_INTR_GETENABLED		0xa1
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_getenabled(अचिन्हित दीर्घ sysino);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_getenabled(unsigned long sysino);
+#endif
 
-/* पूर्णांकr_setenabled()
+/* intr_setenabled()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_SETENABLED
  * ARG0:	sysino
- * ARG1:	पूर्णांकr_enabled (HV_INTR_अणुDISABLED,ENABLEDपूर्ण)
+ * ARG1:	intr_enabled (HV_INTR_{DISABLED,ENABLED})
  * RET0:	status
- * ERRORS:	EINVAL		Invalid sysino or पूर्णांकr_enabled value
+ * ERRORS:	EINVAL		Invalid sysino or intr_enabled value
  *
- * Set the 'enabled' state of the पूर्णांकerrupt sysino.
+ * Set the 'enabled' state of the interrupt sysino.
  */
-#घोषणा HV_FAST_INTR_SETENABLED		0xa2
+#define HV_FAST_INTR_SETENABLED		0xa2
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_setenabled(अचिन्हित दीर्घ sysino,
-				    अचिन्हित दीर्घ पूर्णांकr_enabled);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_setenabled(unsigned long sysino,
+				    unsigned long intr_enabled);
+#endif
 
-/* पूर्णांकr_माला_लोtate()
+/* intr_getstate()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_GETSTATE
  * ARG0:	sysino
  * RET0:	status
- * RET1:	पूर्णांकr_state (HV_INTR_STATE_*)
+ * RET1:	intr_state (HV_INTR_STATE_*)
  * ERRORS:	EINVAL		Invalid sysino
  *
- * Returns current state of the पूर्णांकerrupt defined by the given sysino.
+ * Returns current state of the interrupt defined by the given sysino.
  */
-#घोषणा HV_FAST_INTR_GETSTATE		0xa3
+#define HV_FAST_INTR_GETSTATE		0xa3
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_माला_लोtate(अचिन्हित दीर्घ sysino);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_getstate(unsigned long sysino);
+#endif
 
-/* पूर्णांकr_setstate()
+/* intr_setstate()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_SETSTATE
  * ARG0:	sysino
- * ARG1:	पूर्णांकr_state (HV_INTR_STATE_*)
+ * ARG1:	intr_state (HV_INTR_STATE_*)
  * RET0:	status
- * ERRORS:	EINVAL		Invalid sysino or पूर्णांकr_state value
+ * ERRORS:	EINVAL		Invalid sysino or intr_state value
  *
- * Sets the current state of the पूर्णांकerrupt described by the given sysino
+ * Sets the current state of the interrupt described by the given sysino
  * value.
  *
  * Note: Setting the state to HV_INTR_STATE_IDLE clears any pending
- *       पूर्णांकerrupt क्रम sysino.
+ *       interrupt for sysino.
  */
-#घोषणा HV_FAST_INTR_SETSTATE		0xa4
+#define HV_FAST_INTR_SETSTATE		0xa4
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_setstate(अचिन्हित दीर्घ sysino, अचिन्हित दीर्घ पूर्णांकr_state);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_setstate(unsigned long sysino, unsigned long intr_state);
+#endif
 
-/* पूर्णांकr_gettarget()
+/* intr_gettarget()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_GETTARGET
  * ARG0:	sysino
@@ -1701,17 +1700,17 @@
  * RET1:	cpuid
  * ERRORS:	EINVAL		Invalid sysino
  *
- * Returns CPU that is the current target of the पूर्णांकerrupt defined by
- * the given sysino.  The CPU value वापसed is undefined अगर the target
- * has not been set via पूर्णांकr_settarget().
+ * Returns CPU that is the current target of the interrupt defined by
+ * the given sysino.  The CPU value returned is undefined if the target
+ * has not been set via intr_settarget().
  */
-#घोषणा HV_FAST_INTR_GETTARGET		0xa5
+#define HV_FAST_INTR_GETTARGET		0xa5
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_gettarget(अचिन्हित दीर्घ sysino);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_gettarget(unsigned long sysino);
+#endif
 
-/* पूर्णांकr_settarget()
+/* intr_settarget()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_INTR_SETTARGET
  * ARG0:	sysino
@@ -1720,15 +1719,15 @@
  * ERRORS:	EINVAL		Invalid sysino
  *		ENOCPU		Invalid cpuid
  *
- * Set the target CPU क्रम the पूर्णांकerrupt defined by the given sysino.
+ * Set the target CPU for the interrupt defined by the given sysino.
  */
-#घोषणा HV_FAST_INTR_SETTARGET		0xa6
+#define HV_FAST_INTR_SETTARGET		0xa6
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_पूर्णांकr_settarget(अचिन्हित दीर्घ sysino, अचिन्हित दीर्घ cpuid);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_intr_settarget(unsigned long sysino, unsigned long cpuid);
+#endif
 
-/* vपूर्णांकr_get_cookie()
+/* vintr_get_cookie()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_GET_COOKIE
  * ARG0:	device handle
@@ -1736,9 +1735,9 @@
  * RET0:	status
  * RET1:	cookie
  */
-#घोषणा HV_FAST_VINTR_GET_COOKIE	0xa7
+#define HV_FAST_VINTR_GET_COOKIE	0xa7
 
-/* vपूर्णांकr_set_cookie()
+/* vintr_set_cookie()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_SET_COOKIE
  * ARG0:	device handle
@@ -1746,9 +1745,9 @@
  * ARG2:	cookie
  * RET0:	status
  */
-#घोषणा HV_FAST_VINTR_SET_COOKIE	0xa8
+#define HV_FAST_VINTR_SET_COOKIE	0xa8
 
-/* vपूर्णांकr_get_valid()
+/* vintr_get_valid()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_GET_VALID
  * ARG0:	device handle
@@ -1756,9 +1755,9 @@
  * RET0:	status
  * RET1:	valid state
  */
-#घोषणा HV_FAST_VINTR_GET_VALID		0xa9
+#define HV_FAST_VINTR_GET_VALID		0xa9
 
-/* vपूर्णांकr_set_valid()
+/* vintr_set_valid()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_SET_VALID
  * ARG0:	device handle
@@ -1766,9 +1765,9 @@
  * ARG2:	valid state
  * RET0:	status
  */
-#घोषणा HV_FAST_VINTR_SET_VALID		0xaa
+#define HV_FAST_VINTR_SET_VALID		0xaa
 
-/* vपूर्णांकr_get_state()
+/* vintr_get_state()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_GET_STATE
  * ARG0:	device handle
@@ -1776,9 +1775,9 @@
  * RET0:	status
  * RET1:	state
  */
-#घोषणा HV_FAST_VINTR_GET_STATE		0xab
+#define HV_FAST_VINTR_GET_STATE		0xab
 
-/* vपूर्णांकr_set_state()
+/* vintr_set_state()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_SET_STATE
  * ARG0:	device handle
@@ -1786,9 +1785,9 @@
  * ARG2:	state
  * RET0:	status
  */
-#घोषणा HV_FAST_VINTR_SET_STATE		0xac
+#define HV_FAST_VINTR_SET_STATE		0xac
 
-/* vपूर्णांकr_get_target()
+/* vintr_get_target()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_GET_TARGET
  * ARG0:	device handle
@@ -1796,9 +1795,9 @@
  * RET0:	status
  * RET1:	cpuid
  */
-#घोषणा HV_FAST_VINTR_GET_TARGET	0xad
+#define HV_FAST_VINTR_GET_TARGET	0xad
 
-/* vपूर्णांकr_set_target()
+/* vintr_set_target()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_VINTR_SET_TARGET
  * ARG0:	device handle
@@ -1806,69 +1805,69 @@
  * ARG2:	cpuid
  * RET0:	status
  */
-#घोषणा HV_FAST_VINTR_SET_TARGET	0xae
+#define HV_FAST_VINTR_SET_TARGET	0xae
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_get_cookie(अचिन्हित दीर्घ dev_handle,
-				     अचिन्हित दीर्घ dev_ino,
-				     अचिन्हित दीर्घ *cookie);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_set_cookie(अचिन्हित दीर्घ dev_handle,
-				     अचिन्हित दीर्घ dev_ino,
-				     अचिन्हित दीर्घ cookie);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_get_valid(अचिन्हित दीर्घ dev_handle,
-				    अचिन्हित दीर्घ dev_ino,
-				    अचिन्हित दीर्घ *valid);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_set_valid(अचिन्हित दीर्घ dev_handle,
-				    अचिन्हित दीर्घ dev_ino,
-				    अचिन्हित दीर्घ valid);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_get_state(अचिन्हित दीर्घ dev_handle,
-				    अचिन्हित दीर्घ dev_ino,
-				    अचिन्हित दीर्घ *state);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_set_state(अचिन्हित दीर्घ dev_handle,
-				    अचिन्हित दीर्घ dev_ino,
-				    अचिन्हित दीर्घ state);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_get_target(अचिन्हित दीर्घ dev_handle,
-				     अचिन्हित दीर्घ dev_ino,
-				     अचिन्हित दीर्घ *cpuid);
-अचिन्हित दीर्घ sun4v_vपूर्णांकr_set_target(अचिन्हित दीर्घ dev_handle,
-				     अचिन्हित दीर्घ dev_ino,
-				     अचिन्हित दीर्घ cpuid);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_vintr_get_cookie(unsigned long dev_handle,
+				     unsigned long dev_ino,
+				     unsigned long *cookie);
+unsigned long sun4v_vintr_set_cookie(unsigned long dev_handle,
+				     unsigned long dev_ino,
+				     unsigned long cookie);
+unsigned long sun4v_vintr_get_valid(unsigned long dev_handle,
+				    unsigned long dev_ino,
+				    unsigned long *valid);
+unsigned long sun4v_vintr_set_valid(unsigned long dev_handle,
+				    unsigned long dev_ino,
+				    unsigned long valid);
+unsigned long sun4v_vintr_get_state(unsigned long dev_handle,
+				    unsigned long dev_ino,
+				    unsigned long *state);
+unsigned long sun4v_vintr_set_state(unsigned long dev_handle,
+				    unsigned long dev_ino,
+				    unsigned long state);
+unsigned long sun4v_vintr_get_target(unsigned long dev_handle,
+				     unsigned long dev_ino,
+				     unsigned long *cpuid);
+unsigned long sun4v_vintr_set_target(unsigned long dev_handle,
+				     unsigned long dev_ino,
+				     unsigned long cpuid);
+#endif
 
 /* PCI IO services.
  *
- * See the terminology descriptions in the device पूर्णांकerrupt services
+ * See the terminology descriptions in the device interrupt services
  * section above as those apply here too.  Here are terminology
- * definitions specअगरic to these PCI IO services:
+ * definitions specific to these PCI IO services:
  *
- *	tsbnum		TSB number.  Indentअगरies which io-tsb is used.
- *			For this version of the specअगरication, tsbnum
+ *	tsbnum		TSB number.  Indentifies which io-tsb is used.
+ *			For this version of the specification, tsbnum
  *			must be zero.
  *
- *	tsbindex	TSB index.  Identअगरies which entry in the TSB
+ *	tsbindex	TSB index.  Identifies which entry in the TSB
  *			is used.  The first entry is zero.
  *
- *	tsbid		A 64-bit aligned data काष्ठाure which contains
+ *	tsbid		A 64-bit aligned data structure which contains
  *			a tsbnum and a tsbindex.  Bits 63:32 contain the
  *			tsbnum and bits 31:00 contain the tsbindex.
  *
- *			Use the HV_PCI_TSBID() macro to स्थिरruct such
+ *			Use the HV_PCI_TSBID() macro to construct such
  * 			values.
  *
- *	io_attributes	IO attributes क्रम IOMMU mappings.  One of more
+ *	io_attributes	IO attributes for IOMMU mappings.  One of more
  *			of the attritbute bits are stores in a 64-bit
  *			value.  The values are defined below.
  *
  *	r_addr		64-bit real address
  *
- *	pci_device	PCI device address.  A PCI device address identअगरies
- *			a specअगरic device on a specअगरic PCI bus segment.
- *			A PCI device address ia a 32-bit अचिन्हित पूर्णांकeger
- *			with the following क्रमmat:
+ *	pci_device	PCI device address.  A PCI device address identifies
+ *			a specific device on a specific PCI bus segment.
+ *			A PCI device address ia a 32-bit unsigned integer
+ *			with the following format:
  *
  *				00000000.bbbbbbbb.dddddfff.00000000
  *
- *			Use the HV_PCI_DEVICE_BUILD() macro to स्थिरruct
+ *			Use the HV_PCI_DEVICE_BUILD() macro to construct
  *			such values.
  *
  *	pci_config_offset
@@ -1879,42 +1878,42 @@
  *			Note: For PCI configuration space accesses, the offset
  *			      must be aligned to the access size.
  *
- *	error_flag	A वापस value which specअगरies अगर the action succeeded
+ *	error_flag	A return value which specifies if the action succeeded
  *			or failed.  0 means no error, non-0 means some error
- *			occurred जबतक perक्रमming the service.
+ *			occurred while performing the service.
  *
  *	io_sync_direction
- *			Direction definition क्रम pci_dma_sync(), defined
+ *			Direction definition for pci_dma_sync(), defined
  *			below in HV_PCI_SYNC_*.
  *
  *	io_page_list	A list of io_page_addresses, an io_page_address is
  *			a real address.
  *
- *	io_page_list_p	A poपूर्णांकer to an io_page_list.
+ *	io_page_list_p	A pointer to an io_page_list.
  *
- *	"size based byte swap" - Some functions करो size based byte swapping
- *				 which allows sw to access poपूर्णांकers and
- *				 counters in native क्रमm when the processor
- *				 operates in a dअगरferent endianness than the
+ *	"size based byte swap" - Some functions do size based byte swapping
+ *				 which allows sw to access pointers and
+ *				 counters in native form when the processor
+ *				 operates in a different endianness than the
  *				 IO bus.  Size-based byte swapping converts a
  *				 multi-byte field between big-endian and
- *				 little-endian क्रमmat.
+ *				 little-endian format.
  */
 
-#घोषणा HV_PCI_MAP_ATTR_READ		0x01
-#घोषणा HV_PCI_MAP_ATTR_WRITE		0x02
-#घोषणा HV_PCI_MAP_ATTR_RELAXED_ORDER	0x04
+#define HV_PCI_MAP_ATTR_READ		0x01
+#define HV_PCI_MAP_ATTR_WRITE		0x02
+#define HV_PCI_MAP_ATTR_RELAXED_ORDER	0x04
 
-#घोषणा HV_PCI_DEVICE_BUILD(b,d,f)	\
+#define HV_PCI_DEVICE_BUILD(b,d,f)	\
 	((((b) & 0xff) << 16) | \
 	 (((d) & 0x1f) << 11) | \
 	 (((f) & 0x07) <<  8))
 
-#घोषणा HV_PCI_TSBID(__tsb_num, __tsb_index) \
+#define HV_PCI_TSBID(__tsb_num, __tsb_index) \
 	((((u64)(__tsb_num)) << 32UL) | ((u64)(__tsb_index)))
 
-#घोषणा HV_PCI_SYNC_FOR_DEVICE		0x01
-#घोषणा HV_PCI_SYNC_FOR_CPU		0x02
+#define HV_PCI_SYNC_FOR_DEVICE		0x01
+#define HV_PCI_SYNC_FOR_CPU		0x02
 
 /* pci_iommu_map()
  * TRAP:	HV_FAST_TRAP
@@ -1939,24 +1938,24 @@
  *
  * All mappings are created with the attributes defined by the io_attributes
  * argument.  The page mapping addresses are described in the io_page_list
- * defined by the given io_page_list_p, which is a poपूर्णांकer to the io_page_list.
- * The first entry in the io_page_list is the address क्रम the first iotte, the
- * 2nd क्रम the 2nd iotte, and so on.
+ * defined by the given io_page_list_p, which is a pointer to the io_page_list.
+ * The first entry in the io_page_list is the address for the first iotte, the
+ * 2nd for the 2nd iotte, and so on.
  *
  * Each io_page_address in the io_page_list must be appropriately aligned.
  * #ttes must be greater than zero.  For this version of the spec, the tsbnum
  * component of the given tsbid must be zero.
  *
  * Returns the actual number of mappings creates, which may be less than
- * or equal to the argument #ttes.  If the function वापसs a value which
+ * or equal to the argument #ttes.  If the function returns a value which
  * is less than the #ttes, the caller may continus to call the function with
  * an updated tsbid, #ttes, io_page_list_p arguments until all pages are
  * mapped.
  *
- * Note: This function करोes not imply an iotte cache flush.  The guest must
- *       demap an entry beक्रमe re-mapping it.
+ * Note: This function does not imply an iotte cache flush.  The guest must
+ *       demap an entry before re-mapping it.
  */
-#घोषणा HV_FAST_PCI_IOMMU_MAP		0xb0
+#define HV_FAST_PCI_IOMMU_MAP		0xb0
 
 /* pci_iommu_demap()
  * TRAP:	HV_FAST_TRAP
@@ -1978,15 +1977,15 @@
  *
  * Returns the actual number of ttes demapped, which may be less than or equal
  * to the argument #ttes.  If #ttes demapped is less than #ttes, the caller
- * may जारी to call this function with updated tsbid and #ttes arguments
+ * may continue to call this function with updated tsbid and #ttes arguments
  * until all pages are demapped.
  *
- * Note: Entries करो not have to be mapped to be demapped.  A demap of an
+ * Note: Entries do not have to be mapped to be demapped.  A demap of an
  *       unmapped page will flush the entry from the tte cache.
  */
-#घोषणा HV_FAST_PCI_IOMMU_DEMAP		0xb1
+#define HV_FAST_PCI_IOMMU_DEMAP		0xb1
 
-/* pci_iommu_geपंचांगap()
+/* pci_iommu_getmap()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_IOMMU_GETMAP
  * ARG0:	devhandle
@@ -1997,14 +1996,14 @@
  * ERRORS:	EINVAL		Invalid devhandle/tsbnum/tsbindex
  *		ENOMAP		Mapping is not valid, no translation exists
  *
- * Read and वापस the mapping in the device described by the given devhandle
- * and tsbid.  If successful, the io_attributes shall be वापसed in RET1
- * and the page address of the mapping shall be वापसed in RET2.
+ * Read and return the mapping in the device described by the given devhandle
+ * and tsbid.  If successful, the io_attributes shall be returned in RET1
+ * and the page address of the mapping shall be returned in RET2.
  *
  * For this version of the spec, the tsbnum component of the given tsbid
  * must be zero.
  */
-#घोषणा HV_FAST_PCI_IOMMU_GETMAP	0xb2
+#define HV_FAST_PCI_IOMMU_GETMAP	0xb2
 
 /* pci_iommu_getbypass()
  * TRAP:	HV_FAST_TRAP
@@ -2019,10 +2018,10 @@
  *		ENOTSUPPORTED	Function not supported in this implementation.
  *
  * Create a "special" mapping in the device described by the given devhandle,
- * क्रम the given real address and attributes.  Return the IO address in RET1
- * अगर successful.
+ * for the given real address and attributes.  Return the IO address in RET1
+ * if successful.
  */
-#घोषणा HV_FAST_PCI_IOMMU_GETBYPASS	0xb3
+#define HV_FAST_PCI_IOMMU_GETBYPASS	0xb3
 
 /* pci_config_get()
  * TRAP:	HV_FAST_TRAP
@@ -2038,19 +2037,19 @@
  *		EBADALIGN	pci_config_offset not size aligned
  *		ENOACCESS	Access to this offset is not permitted
  *
- * Read PCI configuration space क्रम the adapter described by the given
+ * Read PCI configuration space for the adapter described by the given
  * devhandle.  Read size (1, 2, or 4) bytes of data from the given
  * pci_device, at pci_config_offset from the beginning of the device's
  * configuration space.  If there was no error, RET1 is set to zero and
- * RET2 is set to the data पढ़ो.  Insignअगरicant bits in RET2 are not
- * guaranteed to have any specअगरic value and thereक्रमe must be ignored.
+ * RET2 is set to the data read.  Insignificant bits in RET2 are not
+ * guaranteed to have any specific value and therefore must be ignored.
  *
- * The data वापसed in RET2 is size based byte swapped.
+ * The data returned in RET2 is size based byte swapped.
  *
- * If an error occurs during the पढ़ो, set RET1 to a non-zero value.  The
+ * If an error occurs during the read, set RET1 to a non-zero value.  The
  * given pci_config_offset must be 'size' aligned.
  */
-#घोषणा HV_FAST_PCI_CONFIG_GET		0xb4
+#define HV_FAST_PCI_CONFIG_GET		0xb4
 
 /* pci_config_put()
  * TRAP:	HV_FAST_TRAP
@@ -2066,21 +2065,21 @@
  *		EBADALIGN	pci_config_offset not size aligned
  *		ENOACCESS	Access to this offset is not permitted
  *
- * Write PCI configuration space क्रम the adapter described by the given
+ * Write PCI configuration space for the adapter described by the given
  * devhandle.  Write size (1, 2, or 4) bytes of data in a single operation,
  * at pci_config_offset from the beginning of the device's configuration
  * space.  The data argument contains the data to be written to configuration
  * space.  Prior to writing, the data is size based byte swapped.
  *
- * If an error occurs during the ग_लिखो access, करो not generate an error
- * report, करो set RET1 to a non-zero value.  Otherwise RET1 is zero.
+ * If an error occurs during the write access, do not generate an error
+ * report, do set RET1 to a non-zero value.  Otherwise RET1 is zero.
  * The given pci_config_offset must be 'size' aligned.
  *
- * This function is permitted to पढ़ो from offset zero in the configuration
- * space described by the given pci_device अगर necessary to ensure that the
- * ग_लिखो access to config space completes.
+ * This function is permitted to read from offset zero in the configuration
+ * space described by the given pci_device if necessary to ensure that the
+ * write access to config space completes.
  */
-#घोषणा HV_FAST_PCI_CONFIG_PUT		0xb5
+#define HV_FAST_PCI_CONFIG_PUT		0xb5
 
 /* pci_peek()
  * TRAP:	HV_FAST_TRAP
@@ -2096,26 +2095,26 @@
  *		ENORADDR	Bad real address
  *		ENOACCESS	Guest access prohibited
  *
- * Attempt to पढ़ो the IO address given by the given devhandle, real address,
- * and size.  Size must be 1, 2, 4, or 8.  The पढ़ो is perक्रमmed as a single
- * access operation using the given size.  If an error occurs when पढ़ोing
- * from the given location, करो not generate an error report, but वापस a
- * non-zero value in RET1.  If the पढ़ो was successful, वापस zero in RET1
- * and वापस the actual data पढ़ो in RET2.  The data वापसed is size based
+ * Attempt to read the IO address given by the given devhandle, real address,
+ * and size.  Size must be 1, 2, 4, or 8.  The read is performed as a single
+ * access operation using the given size.  If an error occurs when reading
+ * from the given location, do not generate an error report, but return a
+ * non-zero value in RET1.  If the read was successful, return zero in RET1
+ * and return the actual data read in RET2.  The data returned is size based
  * byte swapped.
  *
- * Non-signअगरicant bits in RET2 are not guaranteed to have any specअगरic value
- * and thereक्रमe must be ignored.  If RET1 is वापसed as non-zero, the data
- * value is not guaranteed to have any specअगरic value and should be ignored.
+ * Non-significant bits in RET2 are not guaranteed to have any specific value
+ * and therefore must be ignored.  If RET1 is returned as non-zero, the data
+ * value is not guaranteed to have any specific value and should be ignored.
  *
- * The caller must have permission to पढ़ो from the given devhandle, real
+ * The caller must have permission to read from the given devhandle, real
  * address, which must be an IO address.  The argument real address must be a
  * size aligned address.
  *
  * The hypervisor implementation of this function must block access to any
- * IO address that the guest करोes not have explicit permission to access.
+ * IO address that the guest does not have explicit permission to access.
  */
-#घोषणा HV_FAST_PCI_PEEK		0xb6
+#define HV_FAST_PCI_PEEK		0xb6
 
 /* pci_poke()
  * TRAP:	HV_FAST_TRAP
@@ -2133,33 +2132,33 @@
  *		ENOACCESS	Guest access prohibited
  *		ENOTSUPPORTED	Function is not supported by implementation
  *
- * Attempt to ग_लिखो data to the IO address given by the given devhandle,
- * real address, and size.  Size must be 1, 2, 4, or 8.  The ग_लिखो is
- * perक्रमmed as a single access operation using the given size. Prior to
+ * Attempt to write data to the IO address given by the given devhandle,
+ * real address, and size.  Size must be 1, 2, 4, or 8.  The write is
+ * performed as a single access operation using the given size. Prior to
  * writing the data is size based swapped.
  *
- * If an error occurs when writing to the given location, करो not generate an
- * error report, but वापस a non-zero value in RET1.  If the ग_लिखो was
- * successful, वापस zero in RET1.
+ * If an error occurs when writing to the given location, do not generate an
+ * error report, but return a non-zero value in RET1.  If the write was
+ * successful, return zero in RET1.
  *
  * pci_device describes the configuration address of the device being
- * written to.  The implementation may safely पढ़ो from offset 0 with
+ * written to.  The implementation may safely read from offset 0 with
  * the configuration space of the device described by devhandle and
- * pci_device in order to guarantee that the ग_लिखो portion of the operation
+ * pci_device in order to guarantee that the write portion of the operation
  * completes
  *
- * Any error that occurs due to the पढ़ो shall be reported using the normal
- * error reporting mechanisms .. the पढ़ो error is not suppressed.
+ * Any error that occurs due to the read shall be reported using the normal
+ * error reporting mechanisms .. the read error is not suppressed.
  *
- * The caller must have permission to ग_लिखो to the given devhandle, real
+ * The caller must have permission to write to the given devhandle, real
  * address, which must be an IO address.  The argument real address must be a
- * size aligned address.  The caller must have permission to पढ़ो from
+ * size aligned address.  The caller must have permission to read from
  * the given devhandle, pci_device cofiguration space offset 0.
  *
  * The hypervisor implementation of this function must block access to any
- * IO address that the guest करोes not have explicit permission to access.
+ * IO address that the guest does not have explicit permission to access.
  */
-#घोषणा HV_FAST_PCI_POKE		0xb7
+#define HV_FAST_PCI_POKE		0xb7
 
 /* pci_dma_sync()
  * TRAP:	HV_FAST_TRAP
@@ -2174,43 +2173,43 @@
  *		ENORADDR	Bad real address
  *
  * Synchronize a memory region described by the given real address and size,
- * क्रम the device defined by the given devhandle using the direction(s)
+ * for the device defined by the given devhandle using the direction(s)
  * defined by the given io_sync_direction.  The argument size is the size of
  * the memory region in bytes.
  *
- * Return the actual number of bytes synchronized in the वापस value #synced,
- * which may be less than or equal to the argument size.  If the वापस
- * value #synced is less than size, the caller must जारी to call this
+ * Return the actual number of bytes synchronized in the return value #synced,
+ * which may be less than or equal to the argument size.  If the return
+ * value #synced is less than size, the caller must continue to call this
  * function with updated real address and size arguments until the entire
  * memory region is synchronized.
  */
-#घोषणा HV_FAST_PCI_DMA_SYNC		0xb8
+#define HV_FAST_PCI_DMA_SYNC		0xb8
 
 /* PCI MSI services.  */
 
-#घोषणा HV_MSITYPE_MSI32		0x00
-#घोषणा HV_MSITYPE_MSI64		0x01
+#define HV_MSITYPE_MSI32		0x00
+#define HV_MSITYPE_MSI64		0x01
 
-#घोषणा HV_MSIQSTATE_IDLE		0x00
-#घोषणा HV_MSIQSTATE_ERROR		0x01
+#define HV_MSIQSTATE_IDLE		0x00
+#define HV_MSIQSTATE_ERROR		0x01
 
-#घोषणा HV_MSIQ_INVALID			0x00
-#घोषणा HV_MSIQ_VALID			0x01
+#define HV_MSIQ_INVALID			0x00
+#define HV_MSIQ_VALID			0x01
 
-#घोषणा HV_MSISTATE_IDLE		0x00
-#घोषणा HV_MSISTATE_DELIVERED		0x01
+#define HV_MSISTATE_IDLE		0x00
+#define HV_MSISTATE_DELIVERED		0x01
 
-#घोषणा HV_MSIVALID_INVALID		0x00
-#घोषणा HV_MSIVALID_VALID		0x01
+#define HV_MSIVALID_INVALID		0x00
+#define HV_MSIVALID_VALID		0x01
 
-#घोषणा HV_PCIE_MSGTYPE_PME_MSG		0x18
-#घोषणा HV_PCIE_MSGTYPE_PME_ACK_MSG	0x1b
-#घोषणा HV_PCIE_MSGTYPE_CORR_MSG	0x30
-#घोषणा HV_PCIE_MSGTYPE_NONFATAL_MSG	0x31
-#घोषणा HV_PCIE_MSGTYPE_FATAL_MSG	0x33
+#define HV_PCIE_MSGTYPE_PME_MSG		0x18
+#define HV_PCIE_MSGTYPE_PME_ACK_MSG	0x1b
+#define HV_PCIE_MSGTYPE_CORR_MSG	0x30
+#define HV_PCIE_MSGTYPE_NONFATAL_MSG	0x31
+#define HV_PCIE_MSGTYPE_FATAL_MSG	0x33
 
-#घोषणा HV_MSG_INVALID			0x00
-#घोषणा HV_MSG_VALID			0x01
+#define HV_MSG_INVALID			0x00
+#define HV_MSG_VALID			0x01
 
 /* pci_msiq_conf()
  * TRAP:	HV_FAST_TRAP
@@ -2227,15 +2226,15 @@
  * Configure the MSI queue given by the devhandle and msiqid arguments,
  * and to be placed at the given real address and be of the given
  * number of entries.  The real address must be aligned exactly to match
- * the queue size.  Each queue entry is 64-bytes दीर्घ, so f.e. a 32 entry
+ * the queue size.  Each queue entry is 64-bytes long, so f.e. a 32 entry
  * queue must be aligned on a 2048 byte real address boundary.  The MSI-EQ
  * Head and Tail are initialized so that the MSI-EQ is 'empty'.
  *
  * Implementation Note: Certain implementations have fixed sized queues.  In
- *                      that हाल, number of entries must contain the correct
+ *                      that case, number of entries must contain the correct
  *                      value.
  */
-#घोषणा HV_FAST_PCI_MSIQ_CONF		0xc0
+#define HV_FAST_PCI_MSIQ_CONF		0xc0
 
 /* pci_msiq_info()
  * TRAP:	HV_FAST_TRAP
@@ -2247,13 +2246,13 @@
  * RET2:	number of entries
  * ERRORS:	EINVAL		Invalid devhandle or msiqid
  *
- * Return the configuration inक्रमmation क्रम the MSI queue described
+ * Return the configuration information for the MSI queue described
  * by the given devhandle and msiqid.  The base address of the queue
- * is वापसed in ARG1 and the number of entries is वापसed in ARG2.
+ * is returned in ARG1 and the number of entries is returned in ARG2.
  * If the queue is unconfigured, the real address is undefined and the
- * number of entries will be वापसed as zero.
+ * number of entries will be returned as zero.
  */
-#घोषणा HV_FAST_PCI_MSIQ_INFO		0xc1
+#define HV_FAST_PCI_MSIQ_INFO		0xc1
 
 /* pci_msiq_getvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2267,7 +2266,7 @@
  * Get the valid state of the MSI-EQ described by the given devhandle and
  * msiqid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_GETVALID	0xc2
+#define HV_FAST_PCI_MSIQ_GETVALID	0xc2
 
 /* pci_msiq_setvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2282,9 +2281,9 @@
  * Set the valid state of the MSI-EQ described by the given devhandle and
  * msiqid to the given msiqvalid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_SETVALID	0xc3
+#define HV_FAST_PCI_MSIQ_SETVALID	0xc3
 
-/* pci_msiq_माला_लोtate()
+/* pci_msiq_getstate()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSIQ_GETSTATE
  * ARG0:	devhandle
@@ -2296,7 +2295,7 @@
  * Get the state of the MSI-EQ described by the given devhandle and
  * msiqid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_GETSTATE	0xc4
+#define HV_FAST_PCI_MSIQ_GETSTATE	0xc4
 
 /* pci_msiq_getvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2311,7 +2310,7 @@
  * Set the state of the MSI-EQ described by the given devhandle and
  * msiqid to the given msiqvalid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_SETSTATE	0xc5
+#define HV_FAST_PCI_MSIQ_SETSTATE	0xc5
 
 /* pci_msiq_gethead()
  * TRAP:	HV_FAST_TRAP
@@ -2322,10 +2321,10 @@
  * RET1:	msiqhead
  * ERRORS:	EINVAL		Invalid devhandle or msiqid
  *
- * Get the current MSI EQ queue head क्रम the MSI-EQ described by the
+ * Get the current MSI EQ queue head for the MSI-EQ described by the
  * given devhandle and msiqid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_GETHEAD	0xc6
+#define HV_FAST_PCI_MSIQ_GETHEAD	0xc6
 
 /* pci_msiq_sethead()
  * TRAP:	HV_FAST_TRAP
@@ -2337,10 +2336,10 @@
  * ERRORS:	EINVAL		Invalid devhandle or msiqid or msiqhead,
  *				or MSI EQ is uninitialized
  *
- * Set the current MSI EQ queue head क्रम the MSI-EQ described by the
+ * Set the current MSI EQ queue head for the MSI-EQ described by the
  * given devhandle and msiqid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_SETHEAD	0xc7
+#define HV_FAST_PCI_MSIQ_SETHEAD	0xc7
 
 /* pci_msiq_gettail()
  * TRAP:	HV_FAST_TRAP
@@ -2351,10 +2350,10 @@
  * RET1:	msiqtail
  * ERRORS:	EINVAL		Invalid devhandle or msiqid
  *
- * Get the current MSI EQ queue tail क्रम the MSI-EQ described by the
+ * Get the current MSI EQ queue tail for the MSI-EQ described by the
  * given devhandle and msiqid.
  */
-#घोषणा HV_FAST_PCI_MSIQ_GETTAIL	0xc8
+#define HV_FAST_PCI_MSIQ_GETTAIL	0xc8
 
 /* pci_msi_getvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2365,10 +2364,10 @@
  * RET1:	msivalidstate
  * ERRORS:	EINVAL		Invalid devhandle or msinum
  *
- * Get the current valid/enabled state क्रम the MSI defined by the
+ * Get the current valid/enabled state for the MSI defined by the
  * given devhandle and msinum.
  */
-#घोषणा HV_FAST_PCI_MSI_GETVALID	0xc9
+#define HV_FAST_PCI_MSI_GETVALID	0xc9
 
 /* pci_msi_setvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2379,12 +2378,12 @@
  * RET0:	status
  * ERRORS:	EINVAL		Invalid devhandle or msinum or msivalidstate
  *
- * Set the current valid/enabled state क्रम the MSI defined by the
+ * Set the current valid/enabled state for the MSI defined by the
  * given devhandle and msinum.
  */
-#घोषणा HV_FAST_PCI_MSI_SETVALID	0xca
+#define HV_FAST_PCI_MSI_SETVALID	0xca
 
-/* pci_msi_geपंचांगsiq()
+/* pci_msi_getmsiq()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSI_GETMSIQ
  * ARG0:	devhandle
@@ -2396,9 +2395,9 @@
  * Get the MSI EQ that the MSI defined by the given devhandle and
  * msinum is bound to.
  */
-#घोषणा HV_FAST_PCI_MSI_GETMSIQ		0xcb
+#define HV_FAST_PCI_MSI_GETMSIQ		0xcb
 
-/* pci_msi_seपंचांगsiq()
+/* pci_msi_setmsiq()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSI_SETMSIQ
  * ARG0:	devhandle
@@ -2411,9 +2410,9 @@
  * Set the MSI EQ that the MSI defined by the given devhandle and
  * msinum is bound to.
  */
-#घोषणा HV_FAST_PCI_MSI_SETMSIQ		0xcc
+#define HV_FAST_PCI_MSI_SETMSIQ		0xcc
 
-/* pci_msi_माला_लोtate()
+/* pci_msi_getstate()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSI_GETSTATE
  * ARG0:	devhandle
@@ -2423,9 +2422,9 @@
  * ERRORS:	EINVAL		Invalid devhandle or msinum
  *
  * Get the state of the MSI defined by the given devhandle and msinum.
- * If not initialized, वापस HV_MSISTATE_IDLE.
+ * If not initialized, return HV_MSISTATE_IDLE.
  */
-#घोषणा HV_FAST_PCI_MSI_GETSTATE	0xcd
+#define HV_FAST_PCI_MSI_GETSTATE	0xcd
 
 /* pci_msi_setstate()
  * TRAP:	HV_FAST_TRAP
@@ -2438,9 +2437,9 @@
  *
  * Set the state of the MSI defined by the given devhandle and msinum.
  */
-#घोषणा HV_FAST_PCI_MSI_SETSTATE	0xce
+#define HV_FAST_PCI_MSI_SETSTATE	0xce
 
-/* pci_msg_geपंचांगsiq()
+/* pci_msg_getmsiq()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSG_GETMSIQ
  * ARG0:	devhandle
@@ -2451,9 +2450,9 @@
  *
  * Get the MSI EQ of the MSG defined by the given devhandle and msgtype.
  */
-#घोषणा HV_FAST_PCI_MSG_GETMSIQ		0xd0
+#define HV_FAST_PCI_MSG_GETMSIQ		0xd0
 
-/* pci_msg_seपंचांगsiq()
+/* pci_msg_setmsiq()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_MSG_SETMSIQ
  * ARG0:	devhandle
@@ -2464,7 +2463,7 @@
  *
  * Set the MSI EQ of the MSG defined by the given devhandle and msgtype.
  */
-#घोषणा HV_FAST_PCI_MSG_SETMSIQ		0xd1
+#define HV_FAST_PCI_MSG_SETMSIQ		0xd1
 
 /* pci_msg_getvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2478,7 +2477,7 @@
  * Get the valid/enabled state of the MSG defined by the given
  * devhandle and msgtype.
  */
-#घोषणा HV_FAST_PCI_MSG_GETVALID	0xd2
+#define HV_FAST_PCI_MSG_GETVALID	0xd2
 
 /* pci_msg_setvalid()
  * TRAP:	HV_FAST_TRAP
@@ -2492,7 +2491,7 @@
  * Set the valid/enabled state of the MSG defined by the given
  * devhandle and msgtype.
  */
-#घोषणा HV_FAST_PCI_MSG_SETVALID	0xd3
+#define HV_FAST_PCI_MSG_SETVALID	0xd3
 
 /* PCI IOMMU v2 definitions and services
  *
@@ -2510,8 +2509,8 @@
  *	iotte		IOMMU translation table entry.
  *
  *	iotte_attributes
- *			IO Attributes क्रम IOMMU v2 mappings. In addition to
- *			पढ़ो, ग_लिखो IOMMU v2 supports relax ordering
+ *			IO Attributes for IOMMU v2 mappings. In addition to
+ *			read, write IOMMU v2 supports relax ordering
  *
  *	io_page_list	A 64-bit aligned list of real addresses. Each real
  *			address in an io_page_list must be properly aligned
@@ -2521,15 +2520,15 @@
  *
  *	IOTSB		IO Translation Storage Buffer. An aligned table of
  *			IOTTEs. Each IOTSB has a pagesize, table size, and
- *			भव address associated with it that must match
+ *			virtual address associated with it that must match
  *			a pagesize and table size supported by the un-derlying
  *			hardware implementation. The alignment requirements
- *			क्रम an IOTSB depend on the pagesize used क्रम that IOTSB.
+ *			for an IOTSB depend on the pagesize used for that IOTSB.
  *			Each IOTTE in an IOTSB maps one pagesize-sized page.
- *			The size of the IOTSB dictates how large of a भव
+ *			The size of the IOTSB dictates how large of a virtual
  *			address space the IOTSB is capable of mapping.
  *
- *	iotsb_handle	An opaque identअगरier क्रम an IOTSB. A devhandle plus
+ *	iotsb_handle	An opaque identifier for an IOTSB. A devhandle plus
  *			iotsb_handle represents a binding of an IOTSB to a
  *			PCI root complex.
  *
@@ -2539,7 +2538,7 @@
 /* The index_count argument consists of two fields:
  * bits 63:48 #iottes and bits 47:0 iotsb_index
  */
-#घोषणा HV_PCI_IOTSB_INDEX_COUNT(__iottes, __iotsb_index) \
+#define HV_PCI_IOTSB_INDEX_COUNT(__iottes, __iotsb_index) \
 	(((u64)(__iottes) << 48UL) | ((u64)(__iotsb_index)))
 
 /* pci_iotsb_conf()
@@ -2558,8 +2557,8 @@
  *		ETOOMANY	No further IOTSBs may be configured
  *		EBUSY		Duplicate devhandle, raddir, iova combination
  *
- * Create an IOTSB suitable क्रम the PCI root complex identअगरied by devhandle,
- * क्रम the DMA भव address defined by the argument iova.
+ * Create an IOTSB suitable for the PCI root complex identified by devhandle,
+ * for the DMA virtual address defined by the argument iova.
  *
  * r_addr is the properly aligned base address of the IOTSB and size is the
  * IOTSB (table) size in bytes.The IOTSB is required to be zeroed prior to
@@ -2569,14 +2568,14 @@
  * pagesize is the size of each page in the IOTSB. Note that the combination of
  * size (table size) and pagesize must be valid.
  *
- * virt is the DMA भव address this IOTSB will map.
+ * virt is the DMA virtual address this IOTSB will map.
  *
- * If successful, the opaque 64-bit handle iotsb_handle is वापसed in ret1.
+ * If successful, the opaque 64-bit handle iotsb_handle is returned in ret1.
  * Once configured, privileged access to the IOTSB memory is prohibited and
  * creates undefined behavior. The only permitted access is indirect via these
  * services.
  */
-#घोषणा HV_FAST_PCI_IOTSB_CONF		0x190
+#define HV_FAST_PCI_IOTSB_CONF		0x190
 
 /* pci_iotsb_info()
  * TRAP:	HV_FAST_TRAP
@@ -2591,19 +2590,19 @@
  * RET5:	#bound
  * ERRORS:	EINVAL	Invalid devhandle or iotsb_handle
  *
- * This service वापसs configuration inक्रमmation about an IOTSB previously
+ * This service returns configuration information about an IOTSB previously
  * created with pci_iotsb_conf.
  *
  * iotsb_handle value 0 may be used with this service to inquire about the
- * legacy IOTSB that may or may not exist. If the service succeeds, the वापस
- * values describe the legacy IOTSB and I/O भव addresses mapped by that
+ * legacy IOTSB that may or may not exist. If the service succeeds, the return
+ * values describe the legacy IOTSB and I/O virtual addresses mapped by that
  * table. However, the table base address r_addr may contain the value -1 which
  * indicates a memory range that cannot be accessed or be reclaimed.
  *
- * The वापस value #bound contains the number of PCI devices that iotsb_handle
+ * The return value #bound contains the number of PCI devices that iotsb_handle
  * is currently bound to.
  */
-#घोषणा HV_FAST_PCI_IOTSB_INFO		0x191
+#define HV_FAST_PCI_IOTSB_INFO		0x191
 
 /* pci_iotsb_unconf()
  * TRAP:	HV_FAST_TRAP
@@ -2614,13 +2613,13 @@
  * ERRORS:	EINVAL	Invalid devhandle or iotsb_handle
  *		EBUSY	The IOTSB is bound and may not be unconfigured
  *
- * This service unconfigures the IOTSB identअगरied by the devhandle and
+ * This service unconfigures the IOTSB identified by the devhandle and
  * iotsb_handle arguments, previously created with pci_iotsb_conf.
  * The IOTSB must not be currently bound to any device or the service will fail
  *
- * If the call succeeds, iotsb_handle is no दीर्घer valid.
+ * If the call succeeds, iotsb_handle is no longer valid.
  */
-#घोषणा HV_FAST_PCI_IOTSB_UNCONF	0x192
+#define HV_FAST_PCI_IOTSB_UNCONF	0x192
 
 /* pci_iotsb_bind()
  * TRAP:	HV_FAST_TRAP
@@ -2630,17 +2629,17 @@
  * ARG2:	pci_device
  * RET0:	status
  * ERRORS:	EINVAL	Invalid devhandle, iotsb_handle, or pci_device
- *		EBUSY	A PCI function is alपढ़ोy bound to an IOTSB at the same
- *			address range as specअगरied by devhandle, iotsb_handle.
+ *		EBUSY	A PCI function is already bound to an IOTSB at the same
+ *			address range as specified by devhandle, iotsb_handle.
  *
- * This service binds the PCI function specअगरied by the argument pci_device to
- * the IOTSB specअगरied by the arguments devhandle and iotsb_handle.
+ * This service binds the PCI function specified by the argument pci_device to
+ * the IOTSB specified by the arguments devhandle and iotsb_handle.
  *
- * The PCI device function is bound to the specअगरied IOTSB with the IOVA range
- * specअगरied when the IOTSB was configured via pci_iotsb_conf. If the function
- * is alपढ़ोy bound then it is unbound first.
+ * The PCI device function is bound to the specified IOTSB with the IOVA range
+ * specified when the IOTSB was configured via pci_iotsb_conf. If the function
+ * is already bound then it is unbound first.
  */
-#घोषणा HV_FAST_PCI_IOTSB_BIND		0x193
+#define HV_FAST_PCI_IOTSB_BIND		0x193
 
 /* pci_iotsb_unbind()
  * TRAP:	HV_FAST_TRAP
@@ -2650,15 +2649,15 @@
  * ARG2:	pci_device
  * RET0:	status
  * ERRORS:	EINVAL	Invalid devhandle, iotsb_handle, or pci_device
- *		ENOMAP	The PCI function was not bound to the specअगरied IOTSB
+ *		ENOMAP	The PCI function was not bound to the specified IOTSB
  *
- * This service unbinds the PCI device specअगरied by the argument pci_device
- * from the IOTSB identअगरied  * by the arguments devhandle and iotsb_handle.
+ * This service unbinds the PCI device specified by the argument pci_device
+ * from the IOTSB identified  * by the arguments devhandle and iotsb_handle.
  *
- * If the PCI device is not bound to the specअगरied IOTSB then this service will
+ * If the PCI device is not bound to the specified IOTSB then this service will
  * fail with status ENOMAP
  */
-#घोषणा HV_FAST_PCI_IOTSB_UNBIND	0x194
+#define HV_FAST_PCI_IOTSB_UNBIND	0x194
 
 /* pci_iotsb_get_binding()
  * TRAP:	HV_FAST_TRAP
@@ -2671,14 +2670,14 @@
  * ERRORS:	EINVAL	Invalid devhandle, pci_device, or iova
  *		ENOMAP	The PCI function is not bound to an IOTSB at iova
  *
- * This service वापसs the IOTSB binding, iotsb_handle, क्रम a given pci_device
- * and DMA भव address, iova.
+ * This service returns the IOTSB binding, iotsb_handle, for a given pci_device
+ * and DMA virtual address, iova.
  *
- * iova must be the base address of a DMA भव address range as defined by
+ * iova must be the base address of a DMA virtual address range as defined by
  * the iommu-address-ranges property in the root complex device node defined
  * by the argument devhandle.
  */
-#घोषणा HV_FAST_PCI_IOTSB_GET_BINDING	0x195
+#define HV_FAST_PCI_IOTSB_GET_BINDING	0x195
 
 /* pci_iotsb_map()
  * TRAP:	HV_FAST_TRAP
@@ -2703,23 +2702,23 @@
  * The index_count argument consists of two fields. Bits 63:48 contain #iotte
  * and bits 47:0 contain iotsb_index
  *
- * The first mapping is created in the IOTSB index specअगरied by iotsb_index.
+ * The first mapping is created in the IOTSB index specified by iotsb_index.
  * Subsequent mappings are  created at iotsb_index+1 and so on.
  *
  * The attributes of each mapping are defined by the argument iotte_attributes.
  *
- * The io_page_list_p specअगरies the real address of the 64-bit-aligned list of
+ * The io_page_list_p specifies the real address of the 64-bit-aligned list of
  * #iottes I/O page addresses. Each page address must be a properly aligned
  * real address of a page to be mapped in the IOTSB. The first entry in the I/O
- * page list contains the real address of the first page, the 2nd entry क्रम the
+ * page list contains the real address of the first page, the 2nd entry for the
  * 2nd page, and so on.
  *
  * #iottes must be greater than zero.
  *
- * The वापस value #mapped is the actual number of mappings created, which may
- * be less than or equal to the argument #iottes. If the function वापसs
+ * The return value #mapped is the actual number of mappings created, which may
+ * be less than or equal to the argument #iottes. If the function returns
  * successfully with a #mapped value less than the requested #iottes then the
- * caller should जारी to invoke the service with updated iotsb_index,
+ * caller should continue to invoke the service with updated iotsb_index,
  * #iottes, and io_page_list_p arguments until all pages are mapped.
  *
  * This service must not be used to demap a mapping. In other words, all
@@ -2727,10 +2726,10 @@
  *
  * Note:
  * It is implementation-defined whether I/O page real address validity checking
- * is करोne at समय mappings are established or deferred until they are
+ * is done at time mappings are established or deferred until they are
  * accessed.
  */
-#घोषणा HV_FAST_PCI_IOTSB_MAP		0x196
+#define HV_FAST_PCI_IOTSB_MAP		0x196
 
 /* pci_iotsb_map_one()
  * TRAP:	HV_FAST_TRAP
@@ -2749,7 +2748,7 @@
  * This service creates and flushes a single mapping in the IOTSB defined by the
  * arguments devhandle, iotsb.
  *
- * The mapping क्रम the page at r_addr is created at the IOTSB index specअगरied by
+ * The mapping for the page at r_addr is created at the IOTSB index specified by
  * iotsb_index with  the attributes iotte_attributes.
  *
  * This service must not be used to demap a mapping. In other words, the mapping
@@ -2757,10 +2756,10 @@
  *
  * Note:
  * It is implementation-defined whether I/O page real address validity checking
- * is करोne at समय mappings are established or deferred until they are
+ * is done at time mappings are established or deferred until they are
  * accessed.
  */
-#घोषणा HV_FAST_PCI_IOTSB_MAP_ONE	0x197
+#define HV_FAST_PCI_IOTSB_MAP_ONE	0x197
 
 /* pci_iotsb_demap()
  * TRAP:	HV_FAST_TRAP
@@ -2778,16 +2777,16 @@
  *
  * #iottes must be greater than zero.
  *
- * The actual number of IOTTEs unmapped is वापसed in #unmapped and may be less
+ * The actual number of IOTTEs unmapped is returned in #unmapped and may be less
  * than or equal to the requested number of IOTTEs, #iottes.
  *
- * If #unmapped is less than #iottes, the caller should जारी to invoke this
+ * If #unmapped is less than #iottes, the caller should continue to invoke this
  * service with updated iotsb_index and #iottes arguments until all pages are
  * demapped.
  */
-#घोषणा HV_FAST_PCI_IOTSB_DEMAP		0x198
+#define HV_FAST_PCI_IOTSB_DEMAP		0x198
 
-/* pci_iotsb_geपंचांगap()
+/* pci_iotsb_getmap()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_PCI_IOTSB_GETMAP
  * ARG0:	devhandle
@@ -2799,17 +2798,17 @@
  * ERRORS:	EINVAL	Invalid devhandle, iotsb_handle, or iotsb_index
  *		ENOMAP	No mapping was found
  *
- * This service वापसs the mapping specअगरied by index iotsb_index from the
+ * This service returns the mapping specified by index iotsb_index from the
  * IOTSB defined by the arguments devhandle, iotsb.
  *
- * Upon success, the real address of the mapping shall be वापसed in
- * r_addr and thethe IOTTE mapping attributes shall be वापसed in
+ * Upon success, the real address of the mapping shall be returned in
+ * r_addr and thethe IOTTE mapping attributes shall be returned in
  * iotte_attributes.
  *
- * The वापस value iotte_attributes may not include optional features used in
+ * The return value iotte_attributes may not include optional features used in
  * the call to create the  mapping.
  */
-#घोषणा HV_FAST_PCI_IOTSB_GETMAP	0x199
+#define HV_FAST_PCI_IOTSB_GETMAP	0x199
 
 /* pci_iotsb_sync_mappings()
  * TRAP:	HV_FAST_TRAP
@@ -2827,20 +2826,20 @@
  *
  * #iottes must be greater than zero.
  *
- * The actual number of IOTTEs synchronized is वापसed in #synced, which may
+ * The actual number of IOTTEs synchronized is returned in #synced, which may
  * be less than or equal to the requested number, #iottes.
  *
- * Upon a successful वापस, #synced is less than #iottes, the caller should
- * जारी to invoke this service with updated iotsb_index and #iottes
+ * Upon a successful return, #synced is less than #iottes, the caller should
+ * continue to invoke this service with updated iotsb_index and #iottes
  * arguments until all pages are synchronized.
  */
-#घोषणा HV_FAST_PCI_IOTSB_SYNC_MAPPINGS	0x19a
+#define HV_FAST_PCI_IOTSB_SYNC_MAPPINGS	0x19a
 
-/* Logical Doमुख्य Channel services.  */
+/* Logical Domain Channel services.  */
 
-#घोषणा LDC_CHANNEL_DOWN		0
-#घोषणा LDC_CHANNEL_UP			1
-#घोषणा LDC_CHANNEL_RESETTING		2
+#define LDC_CHANNEL_DOWN		0
+#define LDC_CHANNEL_UP			1
+#define LDC_CHANNEL_RESETTING		2
 
 /* ldc_tx_qconf()
  * TRAP:	HV_FAST_TRAP
@@ -2850,35 +2849,35 @@
  * ARG2:	num entries in queue
  * RET0:	status
  *
- * Configure transmit queue क्रम the LDC endpoपूर्णांक specअगरied by the
+ * Configure transmit queue for the LDC endpoint specified by the
  * given channel ID, to be placed at the given real address, and
- * be of the given num entries.  Num entries must be a घातer of two.
+ * be of the given num entries.  Num entries must be a power of two.
  * The real address base of the queue must be aligned on the queue
- * size.  Each queue entry is 64-bytes, so क्रम example, a 32 entry
+ * size.  Each queue entry is 64-bytes, so for example, a 32 entry
  * queue must be aligned on a 2048 byte real address boundary.
  *
  * Upon configuration of a valid transmit queue the head and tail
- * poपूर्णांकers are set to a hypervisor specअगरic identical value indicating
+ * pointers are set to a hypervisor specific identical value indicating
  * that the queue initially is empty.
  *
- * The endpoपूर्णांक's transmit queue is un-configured अगर num entries is zero.
+ * The endpoint's transmit queue is un-configured if num entries is zero.
  *
- * The maximum number of entries क्रम each queue क्रम a specअगरic cpu may be
+ * The maximum number of entries for each queue for a specific cpu may be
  * determined from the machine description.  A transmit queue may be
- * specअगरied even in the event that the LDC is करोwn (peer endpoपूर्णांक has no
- * receive queue specअगरied).  Transmission will begin as soon as the peer
- * endpoपूर्णांक defines a receive queue.
+ * specified even in the event that the LDC is down (peer endpoint has no
+ * receive queue specified).  Transmission will begin as soon as the peer
+ * endpoint defines a receive queue.
  *
- * It is recommended that a guest रुको क्रम a transmit queue to empty prior
+ * It is recommended that a guest wait for a transmit queue to empty prior
  * to reconfiguring it, or un-configuring it.  Re or un-configuring of a
  * non-empty transmit queue behaves exactly as defined above, however it
  * is undefined as to how many of the pending entries in the original queue
  * will be delivered prior to the re-configuration taking effect.
  * Furthermore, as the queue configuration causes a reset of the head and
- * tail poपूर्णांकers there is no way क्रम a guest to determine how many entries
+ * tail pointers there is no way for a guest to determine how many entries
  * have been sent after the configuration operation.
  */
-#घोषणा HV_FAST_LDC_TX_QCONF		0xe0
+#define HV_FAST_LDC_TX_QCONF		0xe0
 
 /* ldc_tx_qinfo()
  * TRAP:	HV_FAST_TRAP
@@ -2888,16 +2887,16 @@
  * RET1:	real address base of queue
  * RET2:	num entries in queue
  *
- * Return the configuration info क्रम the transmit queue of LDC endpoपूर्णांक
+ * Return the configuration info for the transmit queue of LDC endpoint
  * defined by the given channel ID.  The real address is the currently
  * defined real address base of the defined queue, and num entries is the
  * size of the queue in terms of number of entries.
  *
- * If the specअगरied channel ID is a valid endpoपूर्णांक number, but no transmit
- * queue has been defined this service will वापस success, but with num
+ * If the specified channel ID is a valid endpoint number, but no transmit
+ * queue has been defined this service will return success, but with num
  * entries set to zero and the real address will have an undefined value.
  */
-#घोषणा HV_FAST_LDC_TX_QINFO		0xe1
+#define HV_FAST_LDC_TX_QINFO		0xe1
 
 /* ldc_tx_get_state()
  * TRAP:	HV_FAST_TRAP
@@ -2908,12 +2907,12 @@
  * RET2:	tail offset
  * RET3:	channel state
  *
- * Return the transmit state, and the head and tail queue poपूर्णांकers, क्रम
- * the transmit queue of the LDC endpoपूर्णांक defined by the given channel ID.
+ * Return the transmit state, and the head and tail queue pointers, for
+ * the transmit queue of the LDC endpoint defined by the given channel ID.
  * The head and tail values are the byte offset of the head and tail
- * positions of the transmit queue क्रम the specअगरied endpoपूर्णांक.
+ * positions of the transmit queue for the specified endpoint.
  */
-#घोषणा HV_FAST_LDC_TX_GET_STATE	0xe2
+#define HV_FAST_LDC_TX_GET_STATE	0xe2
 
 /* ldc_tx_set_qtail()
  * TRAP:	HV_FAST_TRAP
@@ -2922,8 +2921,8 @@
  * ARG1:	tail offset
  * RET0:	status
  *
- * Update the tail poपूर्णांकer क्रम the transmit queue associated with the LDC
- * endpoपूर्णांक defined by the given channel ID.  The tail offset specअगरied
+ * Update the tail pointer for the transmit queue associated with the LDC
+ * endpoint defined by the given channel ID.  The tail offset specified
  * must be aligned on a 64 byte boundary, and calculated so as to increase
  * the number of pending entries on the transmit queue.  Any attempt to
  * decrease the number of pending transmit queue entires is considered
@@ -2932,9 +2931,9 @@
  * Since the tail of the transmit queue may not be moved backwards, the
  * transmit queue may be flushed by configuring a new transmit queue,
  * whereupon the hypervisor will configure the initial transmit head and
- * tail poपूर्णांकers to be equal.
+ * tail pointers to be equal.
  */
-#घोषणा HV_FAST_LDC_TX_SET_QTAIL	0xe3
+#define HV_FAST_LDC_TX_SET_QTAIL	0xe3
 
 /* ldc_rx_qconf()
  * TRAP:	HV_FAST_TRAP
@@ -2944,33 +2943,33 @@
  * ARG2:	num entries in queue
  * RET0:	status
  *
- * Configure receive queue क्रम the LDC endpoपूर्णांक specअगरied by the
+ * Configure receive queue for the LDC endpoint specified by the
  * given channel ID, to be placed at the given real address, and
- * be of the given num entries.  Num entries must be a घातer of two.
+ * be of the given num entries.  Num entries must be a power of two.
  * The real address base of the queue must be aligned on the queue
- * size.  Each queue entry is 64-bytes, so क्रम example, a 32 entry
+ * size.  Each queue entry is 64-bytes, so for example, a 32 entry
  * queue must be aligned on a 2048 byte real address boundary.
  *
- * The endpoपूर्णांक's transmit queue is un-configured अगर num entries is zero.
+ * The endpoint's transmit queue is un-configured if num entries is zero.
  *
- * If a valid receive queue is specअगरied क्रम a local endpoपूर्णांक the LDC is
- * in the up state क्रम the purpose of transmission to this endpoपूर्णांक.
+ * If a valid receive queue is specified for a local endpoint the LDC is
+ * in the up state for the purpose of transmission to this endpoint.
  *
- * The maximum number of entries क्रम each queue क्रम a specअगरic cpu may be
+ * The maximum number of entries for each queue for a specific cpu may be
  * determined from the machine description.
  *
  * As receive queue configuration causes a reset of the queue's head and
- * tail poपूर्णांकers there is no way क्रम a gues to determine how many entries
+ * tail pointers there is no way for a gues to determine how many entries
  * have been received between a preceding ldc_get_rx_state() API call
  * and the completion of the configuration operation.  It should be noted
- * that datagram delivery is not guaranteed via करोमुख्य channels anyway,
- * and thereक्रमe any higher protocol should be resilient to datagram
- * loss अगर necessary.  However, to overcome this specअगरic race potential
- * it is recommended, क्रम example, that a higher level protocol be employed
+ * that datagram delivery is not guaranteed via domain channels anyway,
+ * and therefore any higher protocol should be resilient to datagram
+ * loss if necessary.  However, to overcome this specific race potential
+ * it is recommended, for example, that a higher level protocol be employed
  * to ensure either retransmission, or ensure that no datagrams are pending
- * on the peer endpoपूर्णांक's transmit queue prior to the configuration process.
+ * on the peer endpoint's transmit queue prior to the configuration process.
  */
-#घोषणा HV_FAST_LDC_RX_QCONF		0xe4
+#define HV_FAST_LDC_RX_QCONF		0xe4
 
 /* ldc_rx_qinfo()
  * TRAP:	HV_FAST_TRAP
@@ -2980,16 +2979,16 @@
  * RET1:	real address base of queue
  * RET2:	num entries in queue
  *
- * Return the configuration info क्रम the receive queue of LDC endpoपूर्णांक
+ * Return the configuration info for the receive queue of LDC endpoint
  * defined by the given channel ID.  The real address is the currently
  * defined real address base of the defined queue, and num entries is the
  * size of the queue in terms of number of entries.
  *
- * If the specअगरied channel ID is a valid endpoपूर्णांक number, but no receive
- * queue has been defined this service will वापस success, but with num
+ * If the specified channel ID is a valid endpoint number, but no receive
+ * queue has been defined this service will return success, but with num
  * entries set to zero and the real address will have an undefined value.
  */
-#घोषणा HV_FAST_LDC_RX_QINFO		0xe5
+#define HV_FAST_LDC_RX_QINFO		0xe5
 
 /* ldc_rx_get_state()
  * TRAP:	HV_FAST_TRAP
@@ -3000,12 +2999,12 @@
  * RET2:	tail offset
  * RET3:	channel state
  *
- * Return the receive state, and the head and tail queue poपूर्णांकers, क्रम
- * the receive queue of the LDC endpoपूर्णांक defined by the given channel ID.
+ * Return the receive state, and the head and tail queue pointers, for
+ * the receive queue of the LDC endpoint defined by the given channel ID.
  * The head and tail values are the byte offset of the head and tail
- * positions of the receive queue क्रम the specअगरied endpoपूर्णांक.
+ * positions of the receive queue for the specified endpoint.
  */
-#घोषणा HV_FAST_LDC_RX_GET_STATE	0xe6
+#define HV_FAST_LDC_RX_GET_STATE	0xe6
 
 /* ldc_rx_set_qhead()
  * TRAP:	HV_FAST_TRAP
@@ -3014,8 +3013,8 @@
  * ARG1:	head offset
  * RET0:	status
  *
- * Update the head poपूर्णांकer क्रम the receive queue associated with the LDC
- * endpoपूर्णांक defined by the given channel ID.  The head offset specअगरied
+ * Update the head pointer for the receive queue associated with the LDC
+ * endpoint defined by the given channel ID.  The head offset specified
  * must be aligned on a 64 byte boundary, and calculated so as to decrease
  * the number of pending entries on the receive queue.  Any attempt to
  * increase the number of pending receive queue entires is considered
@@ -3024,36 +3023,36 @@
  * The receive queue may be flushed by setting the head offset equal
  * to the current tail offset.
  */
-#घोषणा HV_FAST_LDC_RX_SET_QHEAD	0xe7
+#define HV_FAST_LDC_RX_SET_QHEAD	0xe7
 
 /* LDC Map Table Entry.  Each slot is defined by a translation table
- * entry, as specअगरied by the LDC_MTE_* bits below, and a 64-bit
+ * entry, as specified by the LDC_MTE_* bits below, and a 64-bit
  * hypervisor invalidation cookie.
  */
-#घोषणा LDC_MTE_PADDR	0x0fffffffffffe000 /* pa[55:13]          */
-#घोषणा LDC_MTE_COPY_W	0x0000000000000400 /* copy ग_लिखो access  */
-#घोषणा LDC_MTE_COPY_R	0x0000000000000200 /* copy पढ़ो access   */
-#घोषणा LDC_MTE_IOMMU_W	0x0000000000000100 /* IOMMU ग_लिखो access */
-#घोषणा LDC_MTE_IOMMU_R	0x0000000000000080 /* IOMMU पढ़ो access  */
-#घोषणा LDC_MTE_EXEC	0x0000000000000040 /* execute            */
-#घोषणा LDC_MTE_WRITE	0x0000000000000020 /* पढ़ो               */
-#घोषणा LDC_MTE_READ	0x0000000000000010 /* ग_लिखो              */
-#घोषणा LDC_MTE_SZALL	0x000000000000000f /* page size bits     */
-#घोषणा LDC_MTE_SZ16GB	0x0000000000000007 /* 16GB page          */
-#घोषणा LDC_MTE_SZ2GB	0x0000000000000006 /* 2GB page           */
-#घोषणा LDC_MTE_SZ256MB	0x0000000000000005 /* 256MB page         */
-#घोषणा LDC_MTE_SZ32MB	0x0000000000000004 /* 32MB page          */
-#घोषणा LDC_MTE_SZ4MB	0x0000000000000003 /* 4MB page           */
-#घोषणा LDC_MTE_SZ512K	0x0000000000000002 /* 512K page          */
-#घोषणा LDC_MTE_SZ64K	0x0000000000000001 /* 64K page           */
-#घोषणा LDC_MTE_SZ8K	0x0000000000000000 /* 8K page            */
+#define LDC_MTE_PADDR	0x0fffffffffffe000 /* pa[55:13]          */
+#define LDC_MTE_COPY_W	0x0000000000000400 /* copy write access  */
+#define LDC_MTE_COPY_R	0x0000000000000200 /* copy read access   */
+#define LDC_MTE_IOMMU_W	0x0000000000000100 /* IOMMU write access */
+#define LDC_MTE_IOMMU_R	0x0000000000000080 /* IOMMU read access  */
+#define LDC_MTE_EXEC	0x0000000000000040 /* execute            */
+#define LDC_MTE_WRITE	0x0000000000000020 /* read               */
+#define LDC_MTE_READ	0x0000000000000010 /* write              */
+#define LDC_MTE_SZALL	0x000000000000000f /* page size bits     */
+#define LDC_MTE_SZ16GB	0x0000000000000007 /* 16GB page          */
+#define LDC_MTE_SZ2GB	0x0000000000000006 /* 2GB page           */
+#define LDC_MTE_SZ256MB	0x0000000000000005 /* 256MB page         */
+#define LDC_MTE_SZ32MB	0x0000000000000004 /* 32MB page          */
+#define LDC_MTE_SZ4MB	0x0000000000000003 /* 4MB page           */
+#define LDC_MTE_SZ512K	0x0000000000000002 /* 512K page          */
+#define LDC_MTE_SZ64K	0x0000000000000001 /* 64K page           */
+#define LDC_MTE_SZ8K	0x0000000000000000 /* 8K page            */
 
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा ldc_mtable_entry अणु
-	अचिन्हित दीर्घ	mte;
-	अचिन्हित दीर्घ	cookie;
-पूर्ण;
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+struct ldc_mtable_entry {
+	unsigned long	mte;
+	unsigned long	cookie;
+};
+#endif
 
 /* ldc_set_map_table()
  * TRAP:	HV_FAST_TRAP
@@ -3064,10 +3063,10 @@
  * RET0:	status
  *
  * Register the MTE table at the given table real address, with the
- * specअगरied num entries, क्रम the LDC indicated by the given channel
+ * specified num entries, for the LDC indicated by the given channel
  * ID.
  */
-#घोषणा HV_FAST_LDC_SET_MAP_TABLE	0xea
+#define HV_FAST_LDC_SET_MAP_TABLE	0xea
 
 /* ldc_get_map_table()
  * TRAP:	HV_FAST_TRAP
@@ -3077,13 +3076,13 @@
  * RET1:	table real address
  * RET2:	num entries
  *
- * Return the configuration of the current mapping table रेजिस्टरed
- * क्रम the given channel ID.
+ * Return the configuration of the current mapping table registered
+ * for the given channel ID.
  */
-#घोषणा HV_FAST_LDC_GET_MAP_TABLE	0xeb
+#define HV_FAST_LDC_GET_MAP_TABLE	0xeb
 
-#घोषणा LDC_COPY_IN	0
-#घोषणा LDC_COPY_OUT	1
+#define LDC_COPY_IN	0
+#define LDC_COPY_OUT	1
 
 /* ldc_copy()
  * TRAP:	HV_FAST_TRAP
@@ -3096,11 +3095,11 @@
  * RET0:	status
  * RET1:	actual length in bytes
  */
-#घोषणा HV_FAST_LDC_COPY		0xec
+#define HV_FAST_LDC_COPY		0xec
 
-#घोषणा LDC_MEM_READ	1
-#घोषणा LDC_MEM_WRITE	2
-#घोषणा LDC_MEM_EXEC	4
+#define LDC_MEM_READ	1
+#define LDC_MEM_WRITE	2
+#define LDC_MEM_EXEC	4
 
 /* ldc_mapin()
  * TRAP:	HV_FAST_TRAP
@@ -3111,7 +3110,7 @@
  * RET1:	real address
  * RET2:	LDC_MEM_* permissions
  */
-#घोषणा HV_FAST_LDC_MAPIN		0xed
+#define HV_FAST_LDC_MAPIN		0xed
 
 /* ldc_unmap()
  * TRAP:	HV_FAST_TRAP
@@ -3119,7 +3118,7 @@
  * ARG0:	real address
  * RET0:	status
  */
-#घोषणा HV_FAST_LDC_UNMAP		0xee
+#define HV_FAST_LDC_UNMAP		0xee
 
 /* ldc_revoke()
  * TRAP:	HV_FAST_TRAP
@@ -3129,173 +3128,173 @@
  * ARG2:	ldc_mtable_entry cookie
  * RET0:	status
  */
-#घोषणा HV_FAST_LDC_REVOKE		0xef
+#define HV_FAST_LDC_REVOKE		0xef
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_ldc_tx_qconf(अचिन्हित दीर्घ channel,
-				 अचिन्हित दीर्घ ra,
-				 अचिन्हित दीर्घ num_entries);
-अचिन्हित दीर्घ sun4v_ldc_tx_qinfo(अचिन्हित दीर्घ channel,
-				 अचिन्हित दीर्घ *ra,
-				 अचिन्हित दीर्घ *num_entries);
-अचिन्हित दीर्घ sun4v_ldc_tx_get_state(अचिन्हित दीर्घ channel,
-				     अचिन्हित दीर्घ *head_off,
-				     अचिन्हित दीर्घ *tail_off,
-				     अचिन्हित दीर्घ *chan_state);
-अचिन्हित दीर्घ sun4v_ldc_tx_set_qtail(अचिन्हित दीर्घ channel,
-				     अचिन्हित दीर्घ tail_off);
-अचिन्हित दीर्घ sun4v_ldc_rx_qconf(अचिन्हित दीर्घ channel,
-				 अचिन्हित दीर्घ ra,
-				 अचिन्हित दीर्घ num_entries);
-अचिन्हित दीर्घ sun4v_ldc_rx_qinfo(अचिन्हित दीर्घ channel,
-				 अचिन्हित दीर्घ *ra,
-				 अचिन्हित दीर्घ *num_entries);
-अचिन्हित दीर्घ sun4v_ldc_rx_get_state(अचिन्हित दीर्घ channel,
-				     अचिन्हित दीर्घ *head_off,
-				     अचिन्हित दीर्घ *tail_off,
-				     अचिन्हित दीर्घ *chan_state);
-अचिन्हित दीर्घ sun4v_ldc_rx_set_qhead(अचिन्हित दीर्घ channel,
-				     अचिन्हित दीर्घ head_off);
-अचिन्हित दीर्घ sun4v_ldc_set_map_table(अचिन्हित दीर्घ channel,
-				      अचिन्हित दीर्घ ra,
-				      अचिन्हित दीर्घ num_entries);
-अचिन्हित दीर्घ sun4v_ldc_get_map_table(अचिन्हित दीर्घ channel,
-				      अचिन्हित दीर्घ *ra,
-				      अचिन्हित दीर्घ *num_entries);
-अचिन्हित दीर्घ sun4v_ldc_copy(अचिन्हित दीर्घ channel,
-			     अचिन्हित दीर्घ dir_code,
-			     अचिन्हित दीर्घ tgt_raddr,
-			     अचिन्हित दीर्घ lcl_raddr,
-			     अचिन्हित दीर्घ len,
-			     अचिन्हित दीर्घ *actual_len);
-अचिन्हित दीर्घ sun4v_ldc_mapin(अचिन्हित दीर्घ channel,
-			      अचिन्हित दीर्घ cookie,
-			      अचिन्हित दीर्घ *ra,
-			      अचिन्हित दीर्घ *perm);
-अचिन्हित दीर्घ sun4v_ldc_unmap(अचिन्हित दीर्घ ra);
-अचिन्हित दीर्घ sun4v_ldc_revoke(अचिन्हित दीर्घ channel,
-			       अचिन्हित दीर्घ cookie,
-			       अचिन्हित दीर्घ mte_cookie);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_ldc_tx_qconf(unsigned long channel,
+				 unsigned long ra,
+				 unsigned long num_entries);
+unsigned long sun4v_ldc_tx_qinfo(unsigned long channel,
+				 unsigned long *ra,
+				 unsigned long *num_entries);
+unsigned long sun4v_ldc_tx_get_state(unsigned long channel,
+				     unsigned long *head_off,
+				     unsigned long *tail_off,
+				     unsigned long *chan_state);
+unsigned long sun4v_ldc_tx_set_qtail(unsigned long channel,
+				     unsigned long tail_off);
+unsigned long sun4v_ldc_rx_qconf(unsigned long channel,
+				 unsigned long ra,
+				 unsigned long num_entries);
+unsigned long sun4v_ldc_rx_qinfo(unsigned long channel,
+				 unsigned long *ra,
+				 unsigned long *num_entries);
+unsigned long sun4v_ldc_rx_get_state(unsigned long channel,
+				     unsigned long *head_off,
+				     unsigned long *tail_off,
+				     unsigned long *chan_state);
+unsigned long sun4v_ldc_rx_set_qhead(unsigned long channel,
+				     unsigned long head_off);
+unsigned long sun4v_ldc_set_map_table(unsigned long channel,
+				      unsigned long ra,
+				      unsigned long num_entries);
+unsigned long sun4v_ldc_get_map_table(unsigned long channel,
+				      unsigned long *ra,
+				      unsigned long *num_entries);
+unsigned long sun4v_ldc_copy(unsigned long channel,
+			     unsigned long dir_code,
+			     unsigned long tgt_raddr,
+			     unsigned long lcl_raddr,
+			     unsigned long len,
+			     unsigned long *actual_len);
+unsigned long sun4v_ldc_mapin(unsigned long channel,
+			      unsigned long cookie,
+			      unsigned long *ra,
+			      unsigned long *perm);
+unsigned long sun4v_ldc_unmap(unsigned long ra);
+unsigned long sun4v_ldc_revoke(unsigned long channel,
+			       unsigned long cookie,
+			       unsigned long mte_cookie);
+#endif
 
-/* Perक्रमmance counter services.  */
+/* Performance counter services.  */
 
-#घोषणा HV_PERF_JBUS_PERF_CTRL_REG	0x00
-#घोषणा HV_PERF_JBUS_PERF_CNT_REG	0x01
-#घोषणा HV_PERF_DRAM_PERF_CTRL_REG_0	0x02
-#घोषणा HV_PERF_DRAM_PERF_CNT_REG_0	0x03
-#घोषणा HV_PERF_DRAM_PERF_CTRL_REG_1	0x04
-#घोषणा HV_PERF_DRAM_PERF_CNT_REG_1	0x05
-#घोषणा HV_PERF_DRAM_PERF_CTRL_REG_2	0x06
-#घोषणा HV_PERF_DRAM_PERF_CNT_REG_2	0x07
-#घोषणा HV_PERF_DRAM_PERF_CTRL_REG_3	0x08
-#घोषणा HV_PERF_DRAM_PERF_CNT_REG_3	0x09
+#define HV_PERF_JBUS_PERF_CTRL_REG	0x00
+#define HV_PERF_JBUS_PERF_CNT_REG	0x01
+#define HV_PERF_DRAM_PERF_CTRL_REG_0	0x02
+#define HV_PERF_DRAM_PERF_CNT_REG_0	0x03
+#define HV_PERF_DRAM_PERF_CTRL_REG_1	0x04
+#define HV_PERF_DRAM_PERF_CNT_REG_1	0x05
+#define HV_PERF_DRAM_PERF_CTRL_REG_2	0x06
+#define HV_PERF_DRAM_PERF_CNT_REG_2	0x07
+#define HV_PERF_DRAM_PERF_CTRL_REG_3	0x08
+#define HV_PERF_DRAM_PERF_CNT_REG_3	0x09
 
 /* get_perfreg()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_GET_PERFREG
- * ARG0:	perक्रमmance reg number
+ * ARG0:	performance reg number
  * RET0:	status
- * RET1:	perक्रमmance reg value
- * ERRORS:	EINVAL		Invalid perक्रमmance रेजिस्टर number
- *		ENOACCESS	No access allowed to perक्रमmance counters
+ * RET1:	performance reg value
+ * ERRORS:	EINVAL		Invalid performance register number
+ *		ENOACCESS	No access allowed to performance counters
  *
- * Read the value of the given DRAM/JBUS perक्रमmance counter/control रेजिस्टर.
+ * Read the value of the given DRAM/JBUS performance counter/control register.
  */
-#घोषणा HV_FAST_GET_PERFREG		0x100
+#define HV_FAST_GET_PERFREG		0x100
 
 /* set_perfreg()
  * TRAP:	HV_FAST_TRAP
  * FUNCTION:	HV_FAST_SET_PERFREG
- * ARG0:	perक्रमmance reg number
- * ARG1:	perक्रमmance reg value
+ * ARG0:	performance reg number
+ * ARG1:	performance reg value
  * RET0:	status
- * ERRORS:	EINVAL		Invalid perक्रमmance रेजिस्टर number
- *		ENOACCESS	No access allowed to perक्रमmance counters
+ * ERRORS:	EINVAL		Invalid performance register number
+ *		ENOACCESS	No access allowed to performance counters
  *
- * Write the given perक्रमmance reg value to the given DRAM/JBUS
- * perक्रमmance counter/control रेजिस्टर.
+ * Write the given performance reg value to the given DRAM/JBUS
+ * performance counter/control register.
  */
-#घोषणा HV_FAST_SET_PERFREG		0x101
+#define HV_FAST_SET_PERFREG		0x101
 
-#घोषणा HV_N2_PERF_SPARC_CTL		0x0
-#घोषणा HV_N2_PERF_DRAM_CTL0		0x1
-#घोषणा HV_N2_PERF_DRAM_CNT0		0x2
-#घोषणा HV_N2_PERF_DRAM_CTL1		0x3
-#घोषणा HV_N2_PERF_DRAM_CNT1		0x4
-#घोषणा HV_N2_PERF_DRAM_CTL2		0x5
-#घोषणा HV_N2_PERF_DRAM_CNT2		0x6
-#घोषणा HV_N2_PERF_DRAM_CTL3		0x7
-#घोषणा HV_N2_PERF_DRAM_CNT3		0x8
+#define HV_N2_PERF_SPARC_CTL		0x0
+#define HV_N2_PERF_DRAM_CTL0		0x1
+#define HV_N2_PERF_DRAM_CNT0		0x2
+#define HV_N2_PERF_DRAM_CTL1		0x3
+#define HV_N2_PERF_DRAM_CNT1		0x4
+#define HV_N2_PERF_DRAM_CTL2		0x5
+#define HV_N2_PERF_DRAM_CNT2		0x6
+#define HV_N2_PERF_DRAM_CTL3		0x7
+#define HV_N2_PERF_DRAM_CNT3		0x8
 
-#घोषणा HV_FAST_N2_GET_PERFREG		0x104
-#घोषणा HV_FAST_N2_SET_PERFREG		0x105
+#define HV_FAST_N2_GET_PERFREG		0x104
+#define HV_FAST_N2_SET_PERFREG		0x105
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_niagara_getperf(अचिन्हित दीर्घ reg,
-				    अचिन्हित दीर्घ *val);
-अचिन्हित दीर्घ sun4v_niagara_setperf(अचिन्हित दीर्घ reg,
-				    अचिन्हित दीर्घ val);
-अचिन्हित दीर्घ sun4v_niagara2_getperf(अचिन्हित दीर्घ reg,
-				     अचिन्हित दीर्घ *val);
-अचिन्हित दीर्घ sun4v_niagara2_setperf(अचिन्हित दीर्घ reg,
-				     अचिन्हित दीर्घ val);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_niagara_getperf(unsigned long reg,
+				    unsigned long *val);
+unsigned long sun4v_niagara_setperf(unsigned long reg,
+				    unsigned long val);
+unsigned long sun4v_niagara2_getperf(unsigned long reg,
+				     unsigned long *val);
+unsigned long sun4v_niagara2_setperf(unsigned long reg,
+				     unsigned long val);
+#endif
 
 /* MMU statistics services.
  *
- * The hypervisor मुख्यtains MMU statistics and privileged code provides
+ * The hypervisor maintains MMU statistics and privileged code provides
  * a buffer where these statistics can be collected.  It is continually
  * updated once configured.  The layout is as follows:
  */
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_mmu_statistics अणु
-	अचिन्हित दीर्घ immu_tsb_hits_ctx0_8k_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctx0_8k_tte;
-	अचिन्हित दीर्घ immu_tsb_hits_ctx0_64k_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctx0_64k_tte;
-	अचिन्हित दीर्घ __reserved1[2];
-	अचिन्हित दीर्घ immu_tsb_hits_ctx0_4mb_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctx0_4mb_tte;
-	अचिन्हित दीर्घ __reserved2[2];
-	अचिन्हित दीर्घ immu_tsb_hits_ctx0_256mb_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctx0_256mb_tte;
-	अचिन्हित दीर्घ __reserved3[4];
-	अचिन्हित दीर्घ immu_tsb_hits_ctxnon0_8k_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctxnon0_8k_tte;
-	अचिन्हित दीर्घ immu_tsb_hits_ctxnon0_64k_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctxnon0_64k_tte;
-	अचिन्हित दीर्घ __reserved4[2];
-	अचिन्हित दीर्घ immu_tsb_hits_ctxnon0_4mb_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctxnon0_4mb_tte;
-	अचिन्हित दीर्घ __reserved5[2];
-	अचिन्हित दीर्घ immu_tsb_hits_ctxnon0_256mb_tte;
-	अचिन्हित दीर्घ immu_tsb_ticks_ctxnon0_256mb_tte;
-	अचिन्हित दीर्घ __reserved6[4];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctx0_8k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctx0_8k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctx0_64k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctx0_64k_tte;
-	अचिन्हित दीर्घ __reserved7[2];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctx0_4mb_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctx0_4mb_tte;
-	अचिन्हित दीर्घ __reserved8[2];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctx0_256mb_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctx0_256mb_tte;
-	अचिन्हित दीर्घ __reserved9[4];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctxnon0_8k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctxnon0_8k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctxnon0_64k_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctxnon0_64k_tte;
-	अचिन्हित दीर्घ __reserved10[2];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctxnon0_4mb_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctxnon0_4mb_tte;
-	अचिन्हित दीर्घ __reserved11[2];
-	अचिन्हित दीर्घ dmmu_tsb_hits_ctxnon0_256mb_tte;
-	अचिन्हित दीर्घ dmmu_tsb_ticks_ctxnon0_256mb_tte;
-	अचिन्हित दीर्घ __reserved12[4];
-पूर्ण;
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+struct hv_mmu_statistics {
+	unsigned long immu_tsb_hits_ctx0_8k_tte;
+	unsigned long immu_tsb_ticks_ctx0_8k_tte;
+	unsigned long immu_tsb_hits_ctx0_64k_tte;
+	unsigned long immu_tsb_ticks_ctx0_64k_tte;
+	unsigned long __reserved1[2];
+	unsigned long immu_tsb_hits_ctx0_4mb_tte;
+	unsigned long immu_tsb_ticks_ctx0_4mb_tte;
+	unsigned long __reserved2[2];
+	unsigned long immu_tsb_hits_ctx0_256mb_tte;
+	unsigned long immu_tsb_ticks_ctx0_256mb_tte;
+	unsigned long __reserved3[4];
+	unsigned long immu_tsb_hits_ctxnon0_8k_tte;
+	unsigned long immu_tsb_ticks_ctxnon0_8k_tte;
+	unsigned long immu_tsb_hits_ctxnon0_64k_tte;
+	unsigned long immu_tsb_ticks_ctxnon0_64k_tte;
+	unsigned long __reserved4[2];
+	unsigned long immu_tsb_hits_ctxnon0_4mb_tte;
+	unsigned long immu_tsb_ticks_ctxnon0_4mb_tte;
+	unsigned long __reserved5[2];
+	unsigned long immu_tsb_hits_ctxnon0_256mb_tte;
+	unsigned long immu_tsb_ticks_ctxnon0_256mb_tte;
+	unsigned long __reserved6[4];
+	unsigned long dmmu_tsb_hits_ctx0_8k_tte;
+	unsigned long dmmu_tsb_ticks_ctx0_8k_tte;
+	unsigned long dmmu_tsb_hits_ctx0_64k_tte;
+	unsigned long dmmu_tsb_ticks_ctx0_64k_tte;
+	unsigned long __reserved7[2];
+	unsigned long dmmu_tsb_hits_ctx0_4mb_tte;
+	unsigned long dmmu_tsb_ticks_ctx0_4mb_tte;
+	unsigned long __reserved8[2];
+	unsigned long dmmu_tsb_hits_ctx0_256mb_tte;
+	unsigned long dmmu_tsb_ticks_ctx0_256mb_tte;
+	unsigned long __reserved9[4];
+	unsigned long dmmu_tsb_hits_ctxnon0_8k_tte;
+	unsigned long dmmu_tsb_ticks_ctxnon0_8k_tte;
+	unsigned long dmmu_tsb_hits_ctxnon0_64k_tte;
+	unsigned long dmmu_tsb_ticks_ctxnon0_64k_tte;
+	unsigned long __reserved10[2];
+	unsigned long dmmu_tsb_hits_ctxnon0_4mb_tte;
+	unsigned long dmmu_tsb_ticks_ctxnon0_4mb_tte;
+	unsigned long __reserved11[2];
+	unsigned long dmmu_tsb_hits_ctxnon0_256mb_tte;
+	unsigned long dmmu_tsb_ticks_ctxnon0_256mb_tte;
+	unsigned long __reserved12[4];
+};
+#endif
 
 /* mmustat_conf()
  * TRAP:	HV_FAST_TRAP
@@ -3308,18 +3307,18 @@
  *		EBADTRAP	API not supported on this processor
  *
  * Enable MMU statistic gathering using the buffer at the given real
- * address on the current भव CPU.  The new buffer real address
- * is given in ARG1, and the previously specअगरied buffer real address
- * is वापसed in RET1, or is वापसed as zero क्रम the first invocation.
+ * address on the current virtual CPU.  The new buffer real address
+ * is given in ARG1, and the previously specified buffer real address
+ * is returned in RET1, or is returned as zero for the first invocation.
  *
  * If the passed in real address argument is zero, this will disable
- * MMU statistic collection on the current भव CPU.  If an error is
- * वापसed then no statistics are collected.
+ * MMU statistic collection on the current virtual CPU.  If an error is
+ * returned then no statistics are collected.
  *
- * The buffer contents should be initialized to all zeros beक्रमe being
- * given to the hypervisor or अन्यथा the statistics will be meaningless.
+ * The buffer contents should be initialized to all zeros before being
+ * given to the hypervisor or else the statistics will be meaningless.
  */
-#घोषणा HV_FAST_MMUSTAT_CONF		0x102
+#define HV_FAST_MMUSTAT_CONF		0x102
 
 /* mmustat_info()
  * TRAP:	HV_FAST_TRAP
@@ -3329,66 +3328,66 @@
  * ERRORS:	EBADTRAP	API not supported on this processor
  *
  * Return the current state and real address of the currently configured
- * MMU statistics buffer on the current भव CPU.
+ * MMU statistics buffer on the current virtual CPU.
  */
-#घोषणा HV_FAST_MMUSTAT_INFO		0x103
+#define HV_FAST_MMUSTAT_INFO		0x103
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_mmustat_conf(अचिन्हित दीर्घ ra, अचिन्हित दीर्घ *orig_ra);
-अचिन्हित दीर्घ sun4v_mmustat_info(अचिन्हित दीर्घ *ra);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_mmustat_conf(unsigned long ra, unsigned long *orig_ra);
+unsigned long sun4v_mmustat_info(unsigned long *ra);
+#endif
 
 /* NCS crypto services  */
 
 /* ncs_request() sub-function numbers */
-#घोषणा HV_NCS_QCONF			0x01
-#घोषणा HV_NCS_QTAIL_UPDATE		0x02
+#define HV_NCS_QCONF			0x01
+#define HV_NCS_QTAIL_UPDATE		0x02
 
-#अगर_अघोषित __ASSEMBLY__
-काष्ठा hv_ncs_queue_entry अणु
+#ifndef __ASSEMBLY__
+struct hv_ncs_queue_entry {
 	/* MAU Control Register */
-	अचिन्हित दीर्घ	mau_control;
-#घोषणा MAU_CONTROL_INV_PARITY	0x0000000000002000
-#घोषणा MAU_CONTROL_STRAND	0x0000000000001800
-#घोषणा MAU_CONTROL_BUSY	0x0000000000000400
-#घोषणा MAU_CONTROL_INT		0x0000000000000200
-#घोषणा MAU_CONTROL_OP		0x00000000000001c0
-#घोषणा MAU_CONTROL_OP_SHIFT	6
-#घोषणा MAU_OP_LOAD_MA_MEMORY	0x0
-#घोषणा MAU_OP_STORE_MA_MEMORY	0x1
-#घोषणा MAU_OP_MODULAR_MULT	0x2
-#घोषणा MAU_OP_MODULAR_REDUCE	0x3
-#घोषणा MAU_OP_MODULAR_EXP_LOOP	0x4
-#घोषणा MAU_CONTROL_LEN		0x000000000000003f
-#घोषणा MAU_CONTROL_LEN_SHIFT	0
+	unsigned long	mau_control;
+#define MAU_CONTROL_INV_PARITY	0x0000000000002000
+#define MAU_CONTROL_STRAND	0x0000000000001800
+#define MAU_CONTROL_BUSY	0x0000000000000400
+#define MAU_CONTROL_INT		0x0000000000000200
+#define MAU_CONTROL_OP		0x00000000000001c0
+#define MAU_CONTROL_OP_SHIFT	6
+#define MAU_OP_LOAD_MA_MEMORY	0x0
+#define MAU_OP_STORE_MA_MEMORY	0x1
+#define MAU_OP_MODULAR_MULT	0x2
+#define MAU_OP_MODULAR_REDUCE	0x3
+#define MAU_OP_MODULAR_EXP_LOOP	0x4
+#define MAU_CONTROL_LEN		0x000000000000003f
+#define MAU_CONTROL_LEN_SHIFT	0
 
 	/* Real address of bytes to load or store bytes
-	 * पूर्णांकo/out-of the MAU.
+	 * into/out-of the MAU.
 	 */
-	अचिन्हित दीर्घ	mau_mpa;
+	unsigned long	mau_mpa;
 
 	/* Modular Arithmetic MA Offset Register.  */
-	अचिन्हित दीर्घ	mau_ma;
+	unsigned long	mau_ma;
 
 	/* Modular Arithmetic N Prime Register.  */
-	अचिन्हित दीर्घ	mau_np;
-पूर्ण;
+	unsigned long	mau_np;
+};
 
-काष्ठा hv_ncs_qconf_arg अणु
-	अचिन्हित दीर्घ	mid;      /* MAU ID, 1 per core on Niagara */
-	अचिन्हित दीर्घ	base;     /* Real address base of queue */
-	अचिन्हित दीर्घ	end;	  /* Real address end of queue */
-	अचिन्हित दीर्घ	num_ents; /* Number of entries in queue */
-पूर्ण;
+struct hv_ncs_qconf_arg {
+	unsigned long	mid;      /* MAU ID, 1 per core on Niagara */
+	unsigned long	base;     /* Real address base of queue */
+	unsigned long	end;	  /* Real address end of queue */
+	unsigned long	num_ents; /* Number of entries in queue */
+};
 
-काष्ठा hv_ncs_qtail_update_arg अणु
-	अचिन्हित दीर्घ	mid;      /* MAU ID, 1 per core on Niagara */
-	अचिन्हित दीर्घ	tail;     /* New tail index to use */
-	अचिन्हित दीर्घ	syncflag; /* only SYNCFLAG_SYNC is implemented */
-#घोषणा HV_NCS_SYNCFLAG_SYNC	0x00
-#घोषणा HV_NCS_SYNCFLAG_ASYNC	0x01
-पूर्ण;
-#पूर्ण_अगर
+struct hv_ncs_qtail_update_arg {
+	unsigned long	mid;      /* MAU ID, 1 per core on Niagara */
+	unsigned long	tail;     /* New tail index to use */
+	unsigned long	syncflag; /* only SYNCFLAG_SYNC is implemented */
+#define HV_NCS_SYNCFLAG_SYNC	0x00
+#define HV_NCS_SYNCFLAG_ASYNC	0x01
+};
+#endif
 
 /* ncs_request()
  * TRAP:	HV_FAST_TRAP
@@ -3402,127 +3401,127 @@
  * to privileged code, instead it is programmed indirectly via this
  * hypervisor API.
  *
- * The पूर्णांकerfaces defines a queue of MAU operations to perक्रमm.
- * Privileged code रेजिस्टरs a queue with the hypervisor by invoking
+ * The interfaces defines a queue of MAU operations to perform.
+ * Privileged code registers a queue with the hypervisor by invoking
  * this HVAPI with the HV_NCS_QCONF sub-function, which defines the
  * base, end, and number of entries of the queue.  Each queue entry
- * contains a MAU रेजिस्टर काष्ठा block.
+ * contains a MAU register struct block.
  *
  * The privileged code then proceeds to add entries to the queue and
  * then invoke the HV_NCS_QTAIL_UPDATE sub-function.  Since only
  * synchronous operations are supported by the current hypervisor,
  * HV_NCS_QTAIL_UPDATE will run all the pending queue entries to
- * completion and वापस HV_EOK, or वापस an error code.
+ * completion and return HV_EOK, or return an error code.
  *
  * The real address of the sub-function argument must be aligned on at
  * least an 8-byte boundary.
  *
  * The tail argument of HV_NCS_QTAIL_UPDATE is an index, not a byte
- * offset, पूर्णांकo the queue and must be less than or equal the 'num_ents'
+ * offset, into the queue and must be less than or equal the 'num_ents'
  * argument given in the HV_NCS_QCONF call.
  */
-#घोषणा HV_FAST_NCS_REQUEST		0x110
+#define HV_FAST_NCS_REQUEST		0x110
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_ncs_request(अचिन्हित दीर्घ request,
-			        अचिन्हित दीर्घ arg_ra,
-			        अचिन्हित दीर्घ arg_size);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_ncs_request(unsigned long request,
+			        unsigned long arg_ra,
+			        unsigned long arg_size);
+#endif
 
-#घोषणा HV_FAST_FIRE_GET_PERFREG	0x120
-#घोषणा HV_FAST_FIRE_SET_PERFREG	0x121
+#define HV_FAST_FIRE_GET_PERFREG	0x120
+#define HV_FAST_FIRE_SET_PERFREG	0x121
 
-#घोषणा HV_FAST_REBOOT_DATA_SET		0x172
+#define HV_FAST_REBOOT_DATA_SET		0x172
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_reboot_data_set(अचिन्हित दीर्घ ra,
-				    अचिन्हित दीर्घ len);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_reboot_data_set(unsigned long ra,
+				    unsigned long len);
+#endif
 
-#घोषणा HV_FAST_VT_GET_PERFREG		0x184
-#घोषणा HV_FAST_VT_SET_PERFREG		0x185
+#define HV_FAST_VT_GET_PERFREG		0x184
+#define HV_FAST_VT_SET_PERFREG		0x185
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_vt_get_perfreg(अचिन्हित दीर्घ reg_num,
-				   अचिन्हित दीर्घ *reg_val);
-अचिन्हित दीर्घ sun4v_vt_set_perfreg(अचिन्हित दीर्घ reg_num,
-				   अचिन्हित दीर्घ reg_val);
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+unsigned long sun4v_vt_get_perfreg(unsigned long reg_num,
+				   unsigned long *reg_val);
+unsigned long sun4v_vt_set_perfreg(unsigned long reg_num,
+				   unsigned long reg_val);
+#endif
 
-#घोषणा	HV_FAST_T5_GET_PERFREG		0x1a8
-#घोषणा	HV_FAST_T5_SET_PERFREG		0x1a9
+#define	HV_FAST_T5_GET_PERFREG		0x1a8
+#define	HV_FAST_T5_SET_PERFREG		0x1a9
 
-#अगर_अघोषित	__ASSEMBLY__
-अचिन्हित दीर्घ sun4v_t5_get_perfreg(अचिन्हित दीर्घ reg_num,
-				   अचिन्हित दीर्घ *reg_val);
-अचिन्हित दीर्घ sun4v_t5_set_perfreg(अचिन्हित दीर्घ reg_num,
-				   अचिन्हित दीर्घ reg_val);
-#पूर्ण_अगर
+#ifndef	__ASSEMBLY__
+unsigned long sun4v_t5_get_perfreg(unsigned long reg_num,
+				   unsigned long *reg_val);
+unsigned long sun4v_t5_set_perfreg(unsigned long reg_num,
+				   unsigned long reg_val);
+#endif
 
 
-#घोषणा HV_FAST_M7_GET_PERFREG	0x43
-#घोषणा HV_FAST_M7_SET_PERFREG	0x44
+#define HV_FAST_M7_GET_PERFREG	0x43
+#define HV_FAST_M7_SET_PERFREG	0x44
 
-#अगर_अघोषित	__ASSEMBLY__
-अचिन्हित दीर्घ sun4v_m7_get_perfreg(अचिन्हित दीर्घ reg_num,
-				      अचिन्हित दीर्घ *reg_val);
-अचिन्हित दीर्घ sun4v_m7_set_perfreg(अचिन्हित दीर्घ reg_num,
-				      अचिन्हित दीर्घ reg_val);
-#पूर्ण_अगर
+#ifndef	__ASSEMBLY__
+unsigned long sun4v_m7_get_perfreg(unsigned long reg_num,
+				      unsigned long *reg_val);
+unsigned long sun4v_m7_set_perfreg(unsigned long reg_num,
+				      unsigned long reg_val);
+#endif
 
-/* Function numbers क्रम HV_CORE_TRAP.  */
-#घोषणा HV_CORE_SET_VER			0x00
-#घोषणा HV_CORE_PUTCHAR			0x01
-#घोषणा HV_CORE_EXIT			0x02
-#घोषणा HV_CORE_GET_VER			0x03
+/* Function numbers for HV_CORE_TRAP.  */
+#define HV_CORE_SET_VER			0x00
+#define HV_CORE_PUTCHAR			0x01
+#define HV_CORE_EXIT			0x02
+#define HV_CORE_GET_VER			0x03
 
-/* Hypervisor API groups क्रम use with HV_CORE_SET_VER and
+/* Hypervisor API groups for use with HV_CORE_SET_VER and
  * HV_CORE_GET_VER.
  */
-#घोषणा HV_GRP_SUN4V			0x0000
-#घोषणा HV_GRP_CORE			0x0001
-#घोषणा HV_GRP_INTR			0x0002
-#घोषणा HV_GRP_SOFT_STATE		0x0003
-#घोषणा HV_GRP_TM			0x0080
-#घोषणा HV_GRP_PCI			0x0100
-#घोषणा HV_GRP_LDOM			0x0101
-#घोषणा HV_GRP_SVC_CHAN			0x0102
-#घोषणा HV_GRP_NCS			0x0103
-#घोषणा HV_GRP_RNG			0x0104
-#घोषणा HV_GRP_PBOOT			0x0105
-#घोषणा HV_GRP_TPM			0x0107
-#घोषणा HV_GRP_SDIO			0x0108
-#घोषणा HV_GRP_SDIO_ERR			0x0109
-#घोषणा HV_GRP_REBOOT_DATA		0x0110
-#घोषणा HV_GRP_ATU			0x0111
-#घोषणा HV_GRP_DAX			0x0113
-#घोषणा HV_GRP_M7_PERF			0x0114
-#घोषणा HV_GRP_NIAG_PERF		0x0200
-#घोषणा HV_GRP_FIRE_PERF		0x0201
-#घोषणा HV_GRP_N2_CPU			0x0202
-#घोषणा HV_GRP_NIU			0x0204
-#घोषणा HV_GRP_VF_CPU			0x0205
-#घोषणा HV_GRP_KT_CPU			0x0209
-#घोषणा HV_GRP_VT_CPU			0x020c
-#घोषणा HV_GRP_T5_CPU			0x0211
-#घोषणा HV_GRP_DIAG			0x0300
+#define HV_GRP_SUN4V			0x0000
+#define HV_GRP_CORE			0x0001
+#define HV_GRP_INTR			0x0002
+#define HV_GRP_SOFT_STATE		0x0003
+#define HV_GRP_TM			0x0080
+#define HV_GRP_PCI			0x0100
+#define HV_GRP_LDOM			0x0101
+#define HV_GRP_SVC_CHAN			0x0102
+#define HV_GRP_NCS			0x0103
+#define HV_GRP_RNG			0x0104
+#define HV_GRP_PBOOT			0x0105
+#define HV_GRP_TPM			0x0107
+#define HV_GRP_SDIO			0x0108
+#define HV_GRP_SDIO_ERR			0x0109
+#define HV_GRP_REBOOT_DATA		0x0110
+#define HV_GRP_ATU			0x0111
+#define HV_GRP_DAX			0x0113
+#define HV_GRP_M7_PERF			0x0114
+#define HV_GRP_NIAG_PERF		0x0200
+#define HV_GRP_FIRE_PERF		0x0201
+#define HV_GRP_N2_CPU			0x0202
+#define HV_GRP_NIU			0x0204
+#define HV_GRP_VF_CPU			0x0205
+#define HV_GRP_KT_CPU			0x0209
+#define HV_GRP_VT_CPU			0x020c
+#define HV_GRP_T5_CPU			0x0211
+#define HV_GRP_DIAG			0x0300
 
-#अगर_अघोषित __ASSEMBLY__
-अचिन्हित दीर्घ sun4v_get_version(अचिन्हित दीर्घ group,
-			        अचिन्हित दीर्घ *major,
-			        अचिन्हित दीर्घ *minor);
-अचिन्हित दीर्घ sun4v_set_version(अचिन्हित दीर्घ group,
-			        अचिन्हित दीर्घ major,
-			        अचिन्हित दीर्घ minor,
-			        अचिन्हित दीर्घ *actual_minor);
+#ifndef __ASSEMBLY__
+unsigned long sun4v_get_version(unsigned long group,
+			        unsigned long *major,
+			        unsigned long *minor);
+unsigned long sun4v_set_version(unsigned long group,
+			        unsigned long major,
+			        unsigned long minor,
+			        unsigned long *actual_minor);
 
-पूर्णांक sun4v_hvapi_रेजिस्टर(अचिन्हित दीर्घ group, अचिन्हित दीर्घ major,
-			 अचिन्हित दीर्घ *minor);
-व्योम sun4v_hvapi_unरेजिस्टर(अचिन्हित दीर्घ group);
-पूर्णांक sun4v_hvapi_get(अचिन्हित दीर्घ group,
-		    अचिन्हित दीर्घ *major,
-		    अचिन्हित दीर्घ *minor);
-व्योम sun4v_hvapi_init(व्योम);
-#पूर्ण_अगर
+int sun4v_hvapi_register(unsigned long group, unsigned long major,
+			 unsigned long *minor);
+void sun4v_hvapi_unregister(unsigned long group);
+int sun4v_hvapi_get(unsigned long group,
+		    unsigned long *major,
+		    unsigned long *minor);
+void sun4v_hvapi_init(void);
+#endif
 
-#पूर्ण_अगर /* !(_SPARC64_HYPERVISOR_H) */
+#endif /* !(_SPARC64_HYPERVISOR_H) */

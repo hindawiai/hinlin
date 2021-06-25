@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Common CPM code
  *
- * Author: Scott Wood <scottwood@मुक्तscale.com>
+ * Author: Scott Wood <scottwood@freescale.com>
  *
  * Copyright 2007-2008,2010 Freescale Semiconductor, Inc.
  *
@@ -15,137 +14,137 @@
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/of_device.h>
+#include <linux/spinlock.h>
+#include <linux/export.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/cpm.h>
-#समावेश <यंत्र/fixmap.h>
-#समावेश <soc/fsl/qe/qe.h>
+#include <asm/udbg.h>
+#include <asm/io.h>
+#include <asm/cpm.h>
+#include <asm/fixmap.h>
+#include <soc/fsl/qe/qe.h>
 
-#समावेश <mm/mmu_decl.h>
+#include <mm/mmu_decl.h>
 
-#अगर defined(CONFIG_CPM2) || defined(CONFIG_8xx_GPIO)
-#समावेश <linux/of_gpपन.स>
-#पूर्ण_अगर
+#if defined(CONFIG_CPM2) || defined(CONFIG_8xx_GPIO)
+#include <linux/of_gpio.h>
+#endif
 
-अटल पूर्णांक __init cpm_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+static int __init cpm_init(void)
+{
+	struct device_node *np;
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,cpm1");
-	अगर (!np)
-		np = of_find_compatible_node(शून्य, शून्य, "fsl,cpm2");
-	अगर (!np)
-		वापस -ENODEV;
+	np = of_find_compatible_node(NULL, NULL, "fsl,cpm1");
+	if (!np)
+		np = of_find_compatible_node(NULL, NULL, "fsl,cpm2");
+	if (!np)
+		return -ENODEV;
 	cpm_muram_init();
 	of_node_put(np);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(cpm_init);
 
-#अगर_घोषित CONFIG_PPC_EARLY_DEBUG_CPM
-अटल u32 __iomem *cpm_udbg_txdesc;
-अटल u8 __iomem *cpm_udbg_txbuf;
+#ifdef CONFIG_PPC_EARLY_DEBUG_CPM
+static u32 __iomem *cpm_udbg_txdesc;
+static u8 __iomem *cpm_udbg_txbuf;
 
-अटल व्योम udbg_अ_दो_cpm(अक्षर c)
-अणु
-	अगर (c == '\n')
-		udbg_अ_दो_cpm('\r');
+static void udbg_putc_cpm(char c)
+{
+	if (c == '\n')
+		udbg_putc_cpm('\r');
 
-	जबतक (in_be32(&cpm_udbg_txdesc[0]) & 0x80000000)
+	while (in_be32(&cpm_udbg_txdesc[0]) & 0x80000000)
 		;
 
 	out_8(cpm_udbg_txbuf, c);
 	out_be32(&cpm_udbg_txdesc[0], 0xa0000001);
-पूर्ण
+}
 
-व्योम __init udbg_init_cpm(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC_8xx
+void __init udbg_init_cpm(void)
+{
+#ifdef CONFIG_PPC_8xx
 	mmu_mapin_immr();
 
-	cpm_udbg_txdesc = (u32 __iomem __क्रमce *)
+	cpm_udbg_txdesc = (u32 __iomem __force *)
 			  (CONFIG_PPC_EARLY_DEBUG_CPM_ADDR - PHYS_IMMR_BASE +
 			   VIRT_IMMR_BASE);
-	cpm_udbg_txbuf = (u8 __iomem __क्रमce *)
+	cpm_udbg_txbuf = (u8 __iomem __force *)
 			 (in_be32(&cpm_udbg_txdesc[1]) - PHYS_IMMR_BASE +
 			  VIRT_IMMR_BASE);
-#अन्यथा
-	cpm_udbg_txdesc = (u32 __iomem __क्रमce *)
+#else
+	cpm_udbg_txdesc = (u32 __iomem __force *)
 			  CONFIG_PPC_EARLY_DEBUG_CPM_ADDR;
-	cpm_udbg_txbuf = (u8 __iomem __क्रमce *)in_be32(&cpm_udbg_txdesc[1]);
-#पूर्ण_अगर
+	cpm_udbg_txbuf = (u8 __iomem __force *)in_be32(&cpm_udbg_txdesc[1]);
+#endif
 
-	अगर (cpm_udbg_txdesc) अणु
-#अगर_घोषित CONFIG_CPM2
+	if (cpm_udbg_txdesc) {
+#ifdef CONFIG_CPM2
 		setbat(1, 0xf0000000, 0xf0000000, 1024*1024, PAGE_KERNEL_NCG);
-#पूर्ण_अगर
-		udbg_अ_दो = udbg_अ_दो_cpm;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+#endif
+		udbg_putc = udbg_putc_cpm;
+	}
+}
+#endif
 
-#अगर defined(CONFIG_CPM2) || defined(CONFIG_8xx_GPIO)
+#if defined(CONFIG_CPM2) || defined(CONFIG_8xx_GPIO)
 
-काष्ठा cpm2_ioports अणु
+struct cpm2_ioports {
 	u32 dir, par, sor, odr, dat;
 	u32 res[3];
-पूर्ण;
+};
 
-काष्ठा cpm2_gpio32_chip अणु
-	काष्ठा of_mm_gpio_chip mm_gc;
+struct cpm2_gpio32_chip {
+	struct of_mm_gpio_chip mm_gc;
 	spinlock_t lock;
 
-	/* shaकरोwed data रेजिस्टर to clear/set bits safely */
+	/* shadowed data register to clear/set bits safely */
 	u32 cpdata;
-पूर्ण;
+};
 
-अटल व्योम cpm2_gpio32_save_regs(काष्ठा of_mm_gpio_chip *mm_gc)
-अणु
-	काष्ठा cpm2_gpio32_chip *cpm2_gc =
-		container_of(mm_gc, काष्ठा cpm2_gpio32_chip, mm_gc);
-	काष्ठा cpm2_ioports __iomem *iop = mm_gc->regs;
+static void cpm2_gpio32_save_regs(struct of_mm_gpio_chip *mm_gc)
+{
+	struct cpm2_gpio32_chip *cpm2_gc =
+		container_of(mm_gc, struct cpm2_gpio32_chip, mm_gc);
+	struct cpm2_ioports __iomem *iop = mm_gc->regs;
 
 	cpm2_gc->cpdata = in_be32(&iop->dat);
-पूर्ण
+}
 
-अटल पूर्णांक cpm2_gpio32_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा cpm2_ioports __iomem *iop = mm_gc->regs;
+static int cpm2_gpio32_get(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct cpm2_ioports __iomem *iop = mm_gc->regs;
 	u32 pin_mask;
 
 	pin_mask = 1 << (31 - gpio);
 
-	वापस !!(in_be32(&iop->dat) & pin_mask);
-पूर्ण
+	return !!(in_be32(&iop->dat) & pin_mask);
+}
 
-अटल व्योम __cpm2_gpio32_set(काष्ठा of_mm_gpio_chip *mm_gc, u32 pin_mask,
-	पूर्णांक value)
-अणु
-	काष्ठा cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(&mm_gc->gc);
-	काष्ठा cpm2_ioports __iomem *iop = mm_gc->regs;
+static void __cpm2_gpio32_set(struct of_mm_gpio_chip *mm_gc, u32 pin_mask,
+	int value)
+{
+	struct cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(&mm_gc->gc);
+	struct cpm2_ioports __iomem *iop = mm_gc->regs;
 
-	अगर (value)
+	if (value)
 		cpm2_gc->cpdata |= pin_mask;
-	अन्यथा
+	else
 		cpm2_gc->cpdata &= ~pin_mask;
 
 	out_be32(&iop->dat, cpm2_gc->cpdata);
-पूर्ण
+}
 
-अटल व्योम cpm2_gpio32_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक value)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
+static void cpm2_gpio32_set(struct gpio_chip *gc, unsigned int gpio, int value)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
+	unsigned long flags;
 	u32 pin_mask = 1 << (31 - gpio);
 
 	spin_lock_irqsave(&cpm2_gc->lock, flags);
@@ -153,14 +152,14 @@ subsys_initcall(cpm_init);
 	__cpm2_gpio32_set(mm_gc, pin_mask, value);
 
 	spin_unlock_irqrestore(&cpm2_gc->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक cpm2_gpio32_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
-	काष्ठा cpm2_ioports __iomem *iop = mm_gc->regs;
-	अचिन्हित दीर्घ flags;
+static int cpm2_gpio32_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
+	struct cpm2_ioports __iomem *iop = mm_gc->regs;
+	unsigned long flags;
 	u32 pin_mask = 1 << (31 - gpio);
 
 	spin_lock_irqsave(&cpm2_gc->lock, flags);
@@ -170,15 +169,15 @@ subsys_initcall(cpm_init);
 
 	spin_unlock_irqrestore(&cpm2_gc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpm2_gpio32_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
-अणु
-	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	काष्ठा cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
-	काष्ठा cpm2_ioports __iomem *iop = mm_gc->regs;
-	अचिन्हित दीर्घ flags;
+static int cpm2_gpio32_dir_in(struct gpio_chip *gc, unsigned int gpio)
+{
+	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	struct cpm2_gpio32_chip *cpm2_gc = gpiochip_get_data(gc);
+	struct cpm2_ioports __iomem *iop = mm_gc->regs;
+	unsigned long flags;
 	u32 pin_mask = 1 << (31 - gpio);
 
 	spin_lock_irqsave(&cpm2_gc->lock, flags);
@@ -187,19 +186,19 @@ subsys_initcall(cpm_init);
 
 	spin_unlock_irqrestore(&cpm2_gc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cpm2_gpiochip_add32(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा cpm2_gpio32_chip *cpm2_gc;
-	काष्ठा of_mm_gpio_chip *mm_gc;
-	काष्ठा gpio_chip *gc;
+int cpm2_gpiochip_add32(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct cpm2_gpio32_chip *cpm2_gc;
+	struct of_mm_gpio_chip *mm_gc;
+	struct gpio_chip *gc;
 
-	cpm2_gc = kzalloc(माप(*cpm2_gc), GFP_KERNEL);
-	अगर (!cpm2_gc)
-		वापस -ENOMEM;
+	cpm2_gc = kzalloc(sizeof(*cpm2_gc), GFP_KERNEL);
+	if (!cpm2_gc)
+		return -ENOMEM;
 
 	spin_lock_init(&cpm2_gc->lock);
 
@@ -215,6 +214,6 @@ subsys_initcall(cpm_init);
 	gc->parent = dev;
 	gc->owner = THIS_MODULE;
 
-	वापस of_mm_gpiochip_add_data(np, mm_gc, cpm2_gc);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CPM2 || CONFIG_8xx_GPIO */
+	return of_mm_gpiochip_add_data(np, mm_gc, cpm2_gc);
+}
+#endif /* CONFIG_CPM2 || CONFIG_8xx_GPIO */

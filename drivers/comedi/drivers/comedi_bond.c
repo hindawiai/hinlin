@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * comedi_bond.c
  * A Comedi driver to 'bond' or merge multiple drivers and devices as one.
@@ -19,214 +18,214 @@
  * Status: works
  *
  * This driver allows you to 'bond' (merge) multiple comedi subdevices
- * (coming from possibly dअगरference boards and/or drivers) together.  For
- * example, अगर you had a board with 2 dअगरferent DIO subdevices, and
+ * (coming from possibly difference boards and/or drivers) together.  For
+ * example, if you had a board with 2 different DIO subdevices, and
  * another with 1 DIO subdevice, you could 'bond' them with this driver
  * so that they look like one big fat DIO subdevice.  This makes writing
- * applications slightly easier as you करोn't have to worry about managing
- * dअगरferent subdevices in the application -- you just worry about
+ * applications slightly easier as you don't have to worry about managing
+ * different subdevices in the application -- you just worry about
  * indexing one linear array of channel id's.
  *
  * Right now only DIO subdevices are supported as that's the personal itch
- * I am scratching with this driver.  If you want to add support क्रम AI and AO
- * subdevs, go right on ahead and करो so!
+ * I am scratching with this driver.  If you want to add support for AI and AO
+ * subdevs, go right on ahead and do so!
  *
- * Commands aren't supported -- although it would be cool अगर they were.
+ * Commands aren't supported -- although it would be cool if they were.
  *
  * Configuration Options:
  *   List of comedi-minors to bond.  All subdevices of the same type
  *   within each minor will be concatenated together in the order given here.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश "../comedi.h"
-#समावेश "../comedilib.h"
-#समावेश "../comedidev.h"
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include "../comedi.h"
+#include "../comedilib.h"
+#include "../comedidev.h"
 
-काष्ठा bonded_device अणु
-	काष्ठा comedi_device *dev;
-	अचिन्हित पूर्णांक minor;
-	अचिन्हित पूर्णांक subdev;
-	अचिन्हित पूर्णांक nchans;
-पूर्ण;
+struct bonded_device {
+	struct comedi_device *dev;
+	unsigned int minor;
+	unsigned int subdev;
+	unsigned int nchans;
+};
 
-काष्ठा comedi_bond_निजी अणु
-	अक्षर name[256];
-	काष्ठा bonded_device **devs;
-	अचिन्हित पूर्णांक ndevs;
-	अचिन्हित पूर्णांक nchans;
-पूर्ण;
+struct comedi_bond_private {
+	char name[256];
+	struct bonded_device **devs;
+	unsigned int ndevs;
+	unsigned int nchans;
+};
 
-अटल पूर्णांक bonding_dio_insn_bits(काष्ठा comedi_device *dev,
-				 काष्ठा comedi_subdevice *s,
-				 काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा comedi_bond_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक n_left, n_करोne, base_chan;
-	अचिन्हित पूर्णांक ग_लिखो_mask, data_bits;
-	काष्ठा bonded_device **devs;
+static int bonding_dio_insn_bits(struct comedi_device *dev,
+				 struct comedi_subdevice *s,
+				 struct comedi_insn *insn, unsigned int *data)
+{
+	struct comedi_bond_private *devpriv = dev->private;
+	unsigned int n_left, n_done, base_chan;
+	unsigned int write_mask, data_bits;
+	struct bonded_device **devs;
 
-	ग_लिखो_mask = data[0];
+	write_mask = data[0];
 	data_bits = data[1];
 	base_chan = CR_CHAN(insn->chanspec);
-	/* करो a maximum of 32 channels, starting from base_chan. */
+	/* do a maximum of 32 channels, starting from base_chan. */
 	n_left = devpriv->nchans - base_chan;
-	अगर (n_left > 32)
+	if (n_left > 32)
 		n_left = 32;
 
-	n_करोne = 0;
+	n_done = 0;
 	devs = devpriv->devs;
-	करो अणु
-		काष्ठा bonded_device *bdev = *devs++;
+	do {
+		struct bonded_device *bdev = *devs++;
 
-		अगर (base_chan < bdev->nchans) अणु
+		if (base_chan < bdev->nchans) {
 			/* base channel falls within bonded device */
-			अचिन्हित पूर्णांक b_chans, b_mask, b_ग_लिखो_mask, b_data_bits;
-			पूर्णांक ret;
+			unsigned int b_chans, b_mask, b_write_mask, b_data_bits;
+			int ret;
 
 			/*
-			 * Get num channels to करो क्रम bonded device and set
-			 * up mask and data bits क्रम bonded device.
+			 * Get num channels to do for bonded device and set
+			 * up mask and data bits for bonded device.
 			 */
 			b_chans = bdev->nchans - base_chan;
-			अगर (b_chans > n_left)
+			if (b_chans > n_left)
 				b_chans = n_left;
 			b_mask = (b_chans < 32) ? ((1 << b_chans) - 1)
 						: 0xffffffff;
-			b_ग_लिखो_mask = (ग_लिखो_mask >> n_करोne) & b_mask;
-			b_data_bits = (data_bits >> n_करोne) & b_mask;
+			b_write_mask = (write_mask >> n_done) & b_mask;
+			b_data_bits = (data_bits >> n_done) & b_mask;
 			/* Read/Write the new digital lines. */
 			ret = comedi_dio_bitfield2(bdev->dev, bdev->subdev,
-						   b_ग_लिखो_mask, &b_data_bits,
+						   b_write_mask, &b_data_bits,
 						   base_chan);
-			अगर (ret < 0)
-				वापस ret;
-			/* Place पढ़ो bits पूर्णांकo data[1]. */
-			data[1] &= ~(b_mask << n_करोne);
-			data[1] |= (b_data_bits & b_mask) << n_करोne;
+			if (ret < 0)
+				return ret;
+			/* Place read bits into data[1]. */
+			data[1] &= ~(b_mask << n_done);
+			data[1] |= (b_data_bits & b_mask) << n_done;
 			/*
-			 * Set up क्रम following bonded device (अगर still have
-			 * channels to पढ़ो/ग_लिखो).
+			 * Set up for following bonded device (if still have
+			 * channels to read/write).
 			 */
 			base_chan = 0;
-			n_करोne += b_chans;
+			n_done += b_chans;
 			n_left -= b_chans;
-		पूर्ण अन्यथा अणु
-			/* Skip bonded devices beक्रमe base channel. */
+		} else {
+			/* Skip bonded devices before base channel. */
 			base_chan -= bdev->nchans;
-		पूर्ण
-	पूर्ण जबतक (n_left);
+		}
+	} while (n_left);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक bonding_dio_insn_config(काष्ठा comedi_device *dev,
-				   काष्ठा comedi_subdevice *s,
-				   काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा comedi_bond_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	पूर्णांक ret;
-	काष्ठा bonded_device *bdev;
-	काष्ठा bonded_device **devs;
+static int bonding_dio_insn_config(struct comedi_device *dev,
+				   struct comedi_subdevice *s,
+				   struct comedi_insn *insn, unsigned int *data)
+{
+	struct comedi_bond_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	int ret;
+	struct bonded_device *bdev;
+	struct bonded_device **devs;
 
 	/*
 	 * Locate bonded subdevice and adjust channel.
 	 */
 	devs = devpriv->devs;
-	क्रम (bdev = *devs++; chan >= bdev->nchans; bdev = *devs++)
+	for (bdev = *devs++; chan >= bdev->nchans; bdev = *devs++)
 		chan -= bdev->nchans;
 
 	/*
 	 * The input or output configuration of each digital line is
-	 * configured by a special insn_config inकाष्ठाion.  chanspec
+	 * configured by a special insn_config instruction.  chanspec
 	 * contains the channel to be changed, and data[0] contains the
-	 * configuration inकाष्ठाion INSN_CONFIG_DIO_OUTPUT,
+	 * configuration instruction INSN_CONFIG_DIO_OUTPUT,
 	 * INSN_CONFIG_DIO_INPUT or INSN_CONFIG_DIO_QUERY.
 	 *
 	 * Note that INSN_CONFIG_DIO_OUTPUT == COMEDI_OUTPUT,
 	 * and INSN_CONFIG_DIO_INPUT == COMEDI_INPUT.  This is deliberate ;)
 	 */
-	चयन (data[0]) अणु
-	हाल INSN_CONFIG_DIO_OUTPUT:
-	हाल INSN_CONFIG_DIO_INPUT:
+	switch (data[0]) {
+	case INSN_CONFIG_DIO_OUTPUT:
+	case INSN_CONFIG_DIO_INPUT:
 		ret = comedi_dio_config(bdev->dev, bdev->subdev, chan, data[0]);
-		अवरोध;
-	हाल INSN_CONFIG_DIO_QUERY:
+		break;
+	case INSN_CONFIG_DIO_QUERY:
 		ret = comedi_dio_get_config(bdev->dev, bdev->subdev, chan,
 					    &data[1]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	अगर (ret >= 0)
+		break;
+	}
+	if (ret >= 0)
 		ret = insn->n;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_dev_config(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
-अणु
-	काष्ठा comedi_bond_निजी *devpriv = dev->निजी;
-	DECLARE_BITMAP(devs_खोलोed, COMEDI_NUM_BOARD_MINORS);
-	पूर्णांक i;
+static int do_dev_config(struct comedi_device *dev, struct comedi_devconfig *it)
+{
+	struct comedi_bond_private *devpriv = dev->private;
+	DECLARE_BITMAP(devs_opened, COMEDI_NUM_BOARD_MINORS);
+	int i;
 
-	स_रखो(&devs_खोलोed, 0, माप(devs_खोलोed));
+	memset(&devs_opened, 0, sizeof(devs_opened));
 	devpriv->name[0] = 0;
 	/*
-	 * Loop through all comedi devices specअगरied on the command-line,
+	 * Loop through all comedi devices specified on the command-line,
 	 * building our device list.
 	 */
-	क्रम (i = 0; i < COMEDI_NDEVCONFOPTS && (!i || it->options[i]); ++i) अणु
-		अक्षर file[माप("/dev/comediXXXXXX")];
-		पूर्णांक minor = it->options[i];
-		काष्ठा comedi_device *d;
-		पूर्णांक sdev = -1, nchans;
-		काष्ठा bonded_device *bdev;
-		काष्ठा bonded_device **devs;
+	for (i = 0; i < COMEDI_NDEVCONFOPTS && (!i || it->options[i]); ++i) {
+		char file[sizeof("/dev/comediXXXXXX")];
+		int minor = it->options[i];
+		struct comedi_device *d;
+		int sdev = -1, nchans;
+		struct bonded_device *bdev;
+		struct bonded_device **devs;
 
-		अगर (minor < 0 || minor >= COMEDI_NUM_BOARD_MINORS) अणु
+		if (minor < 0 || minor >= COMEDI_NUM_BOARD_MINORS) {
 			dev_err(dev->class_dev,
 				"Minor %d is invalid!\n", minor);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (minor == dev->minor) अणु
+			return -EINVAL;
+		}
+		if (minor == dev->minor) {
 			dev_err(dev->class_dev,
 				"Cannot bond this driver to itself!\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (test_and_set_bit(minor, devs_खोलोed)) अणु
+			return -EINVAL;
+		}
+		if (test_and_set_bit(minor, devs_opened)) {
 			dev_err(dev->class_dev,
 				"Minor %d specified more than once!\n", minor);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		snम_लिखो(file, माप(file), "/dev/comedi%d", minor);
-		file[माप(file) - 1] = 0;
+		snprintf(file, sizeof(file), "/dev/comedi%d", minor);
+		file[sizeof(file) - 1] = 0;
 
-		d = comedi_खोलो(file);
+		d = comedi_open(file);
 
-		अगर (!d) अणु
+		if (!d) {
 			dev_err(dev->class_dev,
 				"Minor %u could not be opened\n", minor);
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		/* Do DIO, as that's all we support now.. */
-		जबतक ((sdev = comedi_find_subdevice_by_type(d, COMEDI_SUBD_DIO,
-							     sdev + 1)) > -1) अणु
+		while ((sdev = comedi_find_subdevice_by_type(d, COMEDI_SUBD_DIO,
+							     sdev + 1)) > -1) {
 			nchans = comedi_get_n_channels(d, sdev);
-			अगर (nchans <= 0) अणु
+			if (nchans <= 0) {
 				dev_err(dev->class_dev,
 					"comedi_get_n_channels() returned %d on minor %u subdev %d!\n",
 					nchans, minor, sdev);
-				वापस -EINVAL;
-			पूर्ण
-			bdev = kदो_स्मृति(माप(*bdev), GFP_KERNEL);
-			अगर (!bdev)
-				वापस -ENOMEM;
+				return -EINVAL;
+			}
+			bdev = kmalloc(sizeof(*bdev), GFP_KERNEL);
+			if (!bdev)
+				return -ENOMEM;
 
 			bdev->dev = d;
 			bdev->minor = minor;
@@ -235,65 +234,65 @@
 			devpriv->nchans += nchans;
 
 			/*
-			 * Now put bdev poपूर्णांकer at end of devpriv->devs array
+			 * Now put bdev pointer at end of devpriv->devs array
 			 * list..
 			 */
 
-			/* ergh.. ugly.. we need to पुनः_स्मृति :(  */
-			devs = kपुनः_स्मृति(devpriv->devs,
-					(devpriv->ndevs + 1) * माप(*devs),
+			/* ergh.. ugly.. we need to realloc :(  */
+			devs = krealloc(devpriv->devs,
+					(devpriv->ndevs + 1) * sizeof(*devs),
 					GFP_KERNEL);
-			अगर (!devs) अणु
+			if (!devs) {
 				dev_err(dev->class_dev,
 					"Could not allocate memory. Out of memory?\n");
-				kमुक्त(bdev);
-				वापस -ENOMEM;
-			पूर्ण
+				kfree(bdev);
+				return -ENOMEM;
+			}
 			devpriv->devs = devs;
 			devpriv->devs[devpriv->ndevs++] = bdev;
-			अणु
+			{
 				/* Append dev:subdev to devpriv->name */
-				अक्षर buf[20];
+				char buf[20];
 
-				snम_लिखो(buf, माप(buf), "%u:%u ",
+				snprintf(buf, sizeof(buf), "%u:%u ",
 					 bdev->minor, bdev->subdev);
 				strlcat(devpriv->name, buf,
-					माप(devpriv->name));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					sizeof(devpriv->name));
+			}
+		}
+	}
 
-	अगर (!devpriv->nchans) अणु
+	if (!devpriv->nchans) {
 		dev_err(dev->class_dev, "No channels found!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bonding_attach(काष्ठा comedi_device *dev,
-			  काष्ठा comedi_devconfig *it)
-अणु
-	काष्ठा comedi_bond_निजी *devpriv;
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int bonding_attach(struct comedi_device *dev,
+			  struct comedi_devconfig *it)
+{
+	struct comedi_bond_private *devpriv;
+	struct comedi_subdevice *s;
+	int ret;
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
 
 	/*
-	 * Setup our bonding from config params.. sets up our निजी काष्ठा..
+	 * Setup our bonding from config params.. sets up our private struct..
 	 */
-	ret = करो_dev_config(dev, it);
-	अगर (ret)
-		वापस ret;
+	ret = do_dev_config(dev, it);
+	if (ret)
+		return ret;
 
 	dev->board_name = devpriv->name;
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	s = &dev->subdevices[0];
 	s->type = COMEDI_SUBD_DIO;
@@ -309,38 +308,38 @@
 		 dev->driver->driver_name, dev->board_name,
 		 devpriv->nchans, devpriv->ndevs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bonding_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा comedi_bond_निजी *devpriv = dev->निजी;
+static void bonding_detach(struct comedi_device *dev)
+{
+	struct comedi_bond_private *devpriv = dev->private;
 
-	अगर (devpriv && devpriv->devs) अणु
-		DECLARE_BITMAP(devs_बंदd, COMEDI_NUM_BOARD_MINORS);
+	if (devpriv && devpriv->devs) {
+		DECLARE_BITMAP(devs_closed, COMEDI_NUM_BOARD_MINORS);
 
-		स_रखो(&devs_बंदd, 0, माप(devs_बंदd));
-		जबतक (devpriv->ndevs--) अणु
-			काष्ठा bonded_device *bdev;
+		memset(&devs_closed, 0, sizeof(devs_closed));
+		while (devpriv->ndevs--) {
+			struct bonded_device *bdev;
 
 			bdev = devpriv->devs[devpriv->ndevs];
-			अगर (!bdev)
-				जारी;
-			अगर (!test_and_set_bit(bdev->minor, devs_बंदd))
-				comedi_बंद(bdev->dev);
-			kमुक्त(bdev);
-		पूर्ण
-		kमुक्त(devpriv->devs);
-		devpriv->devs = शून्य;
-	पूर्ण
-पूर्ण
+			if (!bdev)
+				continue;
+			if (!test_and_set_bit(bdev->minor, devs_closed))
+				comedi_close(bdev->dev);
+			kfree(bdev);
+		}
+		kfree(devpriv->devs);
+		devpriv->devs = NULL;
+	}
+}
 
-अटल काष्ठा comedi_driver bonding_driver = अणु
+static struct comedi_driver bonding_driver = {
 	.driver_name	= "comedi_bond",
 	.module		= THIS_MODULE,
 	.attach		= bonding_attach,
 	.detach		= bonding_detach,
-पूर्ण;
+};
 module_comedi_driver(bonding_driver);
 
 MODULE_AUTHOR("Calin A. Culianu");

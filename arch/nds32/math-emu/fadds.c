@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/sfp-machine.h>
-#समावेश <math-emu/soft-fp.h>
-#समावेश <math-emu/single.h>
-व्योम fadds(व्योम *ft, व्योम *fa, व्योम *fb)
-अणु
+#include <asm/sfp-machine.h>
+#include <math-emu/soft-fp.h>
+#include <math-emu/single.h>
+void fadds(void *ft, void *fa, void *fb)
+{
 	FP_DECL_S(A);
 	FP_DECL_S(B);
 	FP_DECL_S(R);
@@ -22,4 +21,4 @@
 
 	__FPU_FPCSR |= FP_CUR_EXCEPTIONS;
 
-पूर्ण
+}

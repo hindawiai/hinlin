@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*  cpufreq-bench CPUFreq microbenchmark
  *
  *  Copyright (C) 2008 Christian Kornacker <ckornacker@suse.de>
  */
 
-#समावेश "parse.h"
+#include "parse.h"
 
-दीर्घ दीर्घ get_समय();
+long long get_time();
 
-पूर्णांक set_cpufreq_governor(अक्षर *governor, अचिन्हित पूर्णांक cpu);
-पूर्णांक set_cpu_affinity(अचिन्हित पूर्णांक cpu);
-पूर्णांक set_process_priority(पूर्णांक priority);
+int set_cpufreq_governor(char *governor, unsigned int cpu);
+int set_cpu_affinity(unsigned int cpu);
+int set_process_priority(int priority);
 
-व्योम prepare_user(स्थिर काष्ठा config *config);
-व्योम prepare_प्रणाली(स्थिर काष्ठा config *config);
+void prepare_user(const struct config *config);
+void prepare_system(const struct config *config);

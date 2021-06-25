@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: evhandler - Support क्रम Address Space handlers
+ * Module Name: evhandler - Support for Address Space handlers
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acevents.h"
-#समावेश "acnamesp.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acevents.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_EVENTS
+#define _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evhandler")
 
 /* Local prototypes */
-अटल acpi_status
+static acpi_status
 acpi_ev_install_handler(acpi_handle obj_handle,
-			u32 level, व्योम *context, व्योम **वापस_value);
+			u32 level, void *context, void **return_value);
 
-/* These are the address spaces that will get शेष handlers */
+/* These are the address spaces that will get default handlers */
 
-u8 acpi_gbl_शेष_address_spaces[ACPI_NUM_DEFAULT_SPACES] = अणु
+u8 acpi_gbl_default_address_spaces[ACPI_NUM_DEFAULT_SPACES] = {
 	ACPI_ADR_SPACE_SYSTEM_MEMORY,
 	ACPI_ADR_SPACE_SYSTEM_IO,
 	ACPI_ADR_SPACE_PCI_CONFIG,
 	ACPI_ADR_SPACE_DATA_TABLE
-पूर्ण;
+};
 
 /*******************************************************************************
  *
@@ -39,111 +38,111 @@ u8 acpi_gbl_शेष_address_spaces[ACPI_NUM_DEFAULT_SPACES] = अणु
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Installs the core subप्रणाली शेष address space handlers.
+ * DESCRIPTION: Installs the core subsystem default address space handlers.
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_install_region_handlers(व्योम)
-अणु
+acpi_status acpi_ev_install_region_handlers(void)
+{
 	acpi_status status;
 	u32 i;
 
 	ACPI_FUNCTION_TRACE(ev_install_region_handlers);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * All address spaces (PCI Config, EC, SMBus) are scope dependent and
-	 * registration must occur क्रम a specअगरic device.
+	 * registration must occur for a specific device.
 	 *
-	 * In the हाल of the प्रणाली memory and IO address spaces there is
+	 * In the case of the system memory and IO address spaces there is
 	 * currently no device associated with the address space. For these we
 	 * use the root.
 	 *
-	 * We install the शेष PCI config space handler at the root so that
+	 * We install the default PCI config space handler at the root so that
 	 * this space is immediately available even though the we have not
-	 * क्रमागतerated all the PCI Root Buses yet. This is to conक्रमm to the ACPI
-	 * specअगरication which states that the PCI config space must be always
-	 * available -- even though we are nowhere near पढ़ोy to find the PCI root
-	 * buses at this poपूर्णांक.
+	 * enumerated all the PCI Root Buses yet. This is to conform to the ACPI
+	 * specification which states that the PCI config space must be always
+	 * available -- even though we are nowhere near ready to find the PCI root
+	 * buses at this point.
 	 *
 	 * NOTE: We ignore AE_ALREADY_EXISTS because this means that a handler
-	 * has alपढ़ोy been installed (via acpi_install_address_space_handler).
-	 * Similar क्रम AE_SAME_HANDLER.
+	 * has already been installed (via acpi_install_address_space_handler).
+	 * Similar for AE_SAME_HANDLER.
 	 */
-	क्रम (i = 0; i < ACPI_NUM_DEFAULT_SPACES; i++) अणु
+	for (i = 0; i < ACPI_NUM_DEFAULT_SPACES; i++) {
 		status = acpi_ev_install_space_handler(acpi_gbl_root_node,
-						       acpi_gbl_शेष_address_spaces
+						       acpi_gbl_default_address_spaces
 						       [i],
 						       ACPI_DEFAULT_HANDLER,
-						       शून्य, शून्य);
-		चयन (status) अणु
-		हाल AE_OK:
-		हाल AE_SAME_HANDLER:
-		हाल AE_ALREADY_EXISTS:
+						       NULL, NULL);
+		switch (status) {
+		case AE_OK:
+		case AE_SAME_HANDLER:
+		case AE_ALREADY_EXISTS:
 
 			/* These exceptions are all OK */
 
 			status = AE_OK;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण
+			goto unlock_and_exit;
+		}
+	}
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ev_has_शेष_handler
+ * FUNCTION:    acpi_ev_has_default_handler
  *
- * PARAMETERS:  node                - Namespace node क्रम the device
+ * PARAMETERS:  node                - Namespace node for the device
  *              space_id            - The address space ID
  *
- * RETURN:      TRUE अगर शेष handler is installed, FALSE otherwise
+ * RETURN:      TRUE if default handler is installed, FALSE otherwise
  *
- * DESCRIPTION: Check अगर the शेष handler is installed क्रम the requested
+ * DESCRIPTION: Check if the default handler is installed for the requested
  *              space ID.
  *
  ******************************************************************************/
 
 u8
-acpi_ev_has_शेष_handler(काष्ठा acpi_namespace_node *node,
+acpi_ev_has_default_handler(struct acpi_namespace_node *node,
 			    acpi_adr_space_type space_id)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_opeअक्रम_object *handler_obj;
+{
+	union acpi_operand_object *obj_desc;
+	union acpi_operand_object *handler_obj;
 
-	/* Must have an existing पूर्णांकernal object */
+	/* Must have an existing internal object */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	अगर (obj_desc) अणु
-		handler_obj = obj_desc->common_notअगरy.handler;
+	if (obj_desc) {
+		handler_obj = obj_desc->common_notify.handler;
 
-		/* Walk the linked list of handlers क्रम this object */
+		/* Walk the linked list of handlers for this object */
 
-		जबतक (handler_obj) अणु
-			अगर (handler_obj->address_space.space_id == space_id) अणु
-				अगर (handler_obj->address_space.handler_flags &
-				    ACPI_ADDR_HANDLER_DEFAULT_INSTALLED) अणु
-					वापस (TRUE);
-				पूर्ण
-			पूर्ण
+		while (handler_obj) {
+			if (handler_obj->address_space.space_id == space_id) {
+				if (handler_obj->address_space.handler_flags &
+				    ACPI_ADDR_HANDLER_DEFAULT_INSTALLED) {
+					return (TRUE);
+				}
+			}
 
 			handler_obj = handler_obj->address_space.next;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (FALSE);
-पूर्ण
+	return (FALSE);
+}
 
 /*******************************************************************************
  *
@@ -151,77 +150,77 @@ acpi_ev_has_शेष_handler(काष्ठा acpi_namespace_node *node,
  *
  * PARAMETERS:  walk_namespace callback
  *
- * DESCRIPTION: This routine installs an address handler पूर्णांकo objects that are
+ * DESCRIPTION: This routine installs an address handler into objects that are
  *              of type Region or Device.
  *
  *              If the Object is a Device, and the device has a handler of
  *              the same type then the search is terminated in that branch.
  *
- *              This is because the existing handler is बंदr in proximity
+ *              This is because the existing handler is closer in proximity
  *              to any more regions than the one we are trying to install.
  *
  ******************************************************************************/
 
-अटल acpi_status
+static acpi_status
 acpi_ev_install_handler(acpi_handle obj_handle,
-			u32 level, व्योम *context, व्योम **वापस_value)
-अणु
-	जोड़ acpi_opeअक्रम_object *handler_obj;
-	जोड़ acpi_opeअक्रम_object *next_handler_obj;
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	काष्ठा acpi_namespace_node *node;
+			u32 level, void *context, void **return_value)
+{
+	union acpi_operand_object *handler_obj;
+	union acpi_operand_object *next_handler_obj;
+	union acpi_operand_object *obj_desc;
+	struct acpi_namespace_node *node;
 	acpi_status status;
 
 	ACPI_FUNCTION_NAME(ev_install_handler);
 
-	handler_obj = (जोड़ acpi_opeअक्रम_object *)context;
+	handler_obj = (union acpi_operand_object *)context;
 
 	/* Parameter validation */
 
-	अगर (!handler_obj) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if (!handler_obj) {
+		return (AE_OK);
+	}
 
 	/* Convert and validate the device handle */
 
 	node = acpi_ns_validate_handle(obj_handle);
-	अगर (!node) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!node) {
+		return (AE_BAD_PARAMETER);
+	}
 
 	/*
 	 * We only care about regions and objects that are allowed to have
 	 * address space handlers
 	 */
-	अगर ((node->type != ACPI_TYPE_DEVICE) &&
-	    (node->type != ACPI_TYPE_REGION) && (node != acpi_gbl_root_node)) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if ((node->type != ACPI_TYPE_DEVICE) &&
+	    (node->type != ACPI_TYPE_REGION) && (node != acpi_gbl_root_node)) {
+		return (AE_OK);
+	}
 
-	/* Check क्रम an existing पूर्णांकernal object */
+	/* Check for an existing internal object */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	अगर (!obj_desc) अणु
+	if (!obj_desc) {
 
-		/* No object, just निकास */
+		/* No object, just exit */
 
-		वापस (AE_OK);
-	पूर्ण
+		return (AE_OK);
+	}
 
-	/* Devices are handled dअगरferent than regions */
+	/* Devices are handled different than regions */
 
-	अगर (obj_desc->common.type == ACPI_TYPE_DEVICE) अणु
+	if (obj_desc->common.type == ACPI_TYPE_DEVICE) {
 
-		/* Check अगर this Device alपढ़ोy has a handler क्रम this address space */
+		/* Check if this Device already has a handler for this address space */
 
 		next_handler_obj =
 		    acpi_ev_find_region_handler(handler_obj->address_space.
 						space_id,
-						obj_desc->common_notअगरy.
+						obj_desc->common_notify.
 						handler);
-		अगर (next_handler_obj) अणु
+		if (next_handler_obj) {
 
-			/* Found a handler, is it क्रम the same address space? */
+			/* Found a handler, is it for the same address space? */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 					  "Found handler for region [%s] in device %p(%p) handler %p\n",
@@ -233,42 +232,42 @@ acpi_ev_install_handler(acpi_handle obj_handle,
 
 			/*
 			 * Since the object we found it on was a device, then it means
-			 * that someone has alपढ़ोy installed a handler क्रम the branch
+			 * that someone has already installed a handler for the branch
 			 * of the namespace from this device on. Just bail out telling
 			 * the walk routine to not traverse this branch. This preserves
-			 * the scoping rule क्रम handlers.
+			 * the scoping rule for handlers.
 			 */
-			वापस (AE_CTRL_DEPTH);
-		पूर्ण
+			return (AE_CTRL_DEPTH);
+		}
 
 		/*
-		 * As दीर्घ as the device didn't have a handler क्रम this space we
-		 * करोn't care about it. We just ignore it and proceed.
+		 * As long as the device didn't have a handler for this space we
+		 * don't care about it. We just ignore it and proceed.
 		 */
-		वापस (AE_OK);
-	पूर्ण
+		return (AE_OK);
+	}
 
 	/* Object is a Region */
 
-	अगर (obj_desc->region.space_id != handler_obj->address_space.space_id) अणु
+	if (obj_desc->region.space_id != handler_obj->address_space.space_id) {
 
-		/* This region is क्रम a dअगरferent address space, just ignore it */
+		/* This region is for a different address space, just ignore it */
 
-		वापस (AE_OK);
-	पूर्ण
+		return (AE_OK);
+	}
 
 	/*
-	 * Now we have a region and it is क्रम the handler's address space type.
+	 * Now we have a region and it is for the handler's address space type.
 	 *
-	 * First disconnect region क्रम any previous handler (अगर any)
+	 * First disconnect region for any previous handler (if any)
 	 */
 	acpi_ev_detach_region(obj_desc, FALSE);
 
 	/* Connect the region to the new handler */
 
 	status = acpi_ev_attach_region(handler_obj, obj_desc, FALSE);
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /*******************************************************************************
  *
@@ -277,42 +276,42 @@ acpi_ev_install_handler(acpi_handle obj_handle,
  * PARAMETERS:  space_id        - The address space ID
  *              handler_obj     - Head of the handler object list
  *
- * RETURN:      Matching handler object. शून्य अगर space ID not matched
+ * RETURN:      Matching handler object. NULL if space ID not matched
  *
- * DESCRIPTION: Search a handler object list क्रम a match on the address
+ * DESCRIPTION: Search a handler object list for a match on the address
  *              space ID.
  *
  ******************************************************************************/
 
-जोड़ acpi_opeअक्रम_object *acpi_ev_find_region_handler(acpi_adr_space_type
+union acpi_operand_object *acpi_ev_find_region_handler(acpi_adr_space_type
 						       space_id,
-						       जोड़ acpi_opeअक्रम_object
+						       union acpi_operand_object
 						       *handler_obj)
-अणु
+{
 
-	/* Walk the handler list क्रम this device */
+	/* Walk the handler list for this device */
 
-	जबतक (handler_obj) अणु
+	while (handler_obj) {
 
 		/* Same space_id indicates a handler is installed */
 
-		अगर (handler_obj->address_space.space_id == space_id) अणु
-			वापस (handler_obj);
-		पूर्ण
+		if (handler_obj->address_space.space_id == space_id) {
+			return (handler_obj);
+		}
 
 		/* Next handler object */
 
 		handler_obj = handler_obj->address_space.next;
-	पूर्ण
+	}
 
-	वापस (शून्य);
-पूर्ण
+	return (NULL);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_install_space_handler
  *
- * PARAMETERS:  node            - Namespace node क्रम the device
+ * PARAMETERS:  node            - Namespace node for the device
  *              space_id        - The address space ID
  *              handler         - Address of the handler
  *              setup           - Address of the setup function
@@ -320,19 +319,19 @@ acpi_ev_install_handler(acpi_handle obj_handle,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler क्रम all op_regions of a given space_id.
+ * DESCRIPTION: Install a handler for all op_regions of a given space_id.
  *              Assumes namespace is locked
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
+acpi_ev_install_space_handler(struct acpi_namespace_node *node,
 			      acpi_adr_space_type space_id,
 			      acpi_adr_space_handler handler,
-			      acpi_adr_space_setup setup, व्योम *context)
-अणु
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_opeअक्रम_object *handler_obj;
+			      acpi_adr_space_setup setup, void *context)
+{
+	union acpi_operand_object *obj_desc;
+	union acpi_operand_object *handler_obj;
 	acpi_status status = AE_OK;
 	acpi_object_type type;
 	u8 flags = 0;
@@ -340,117 +339,117 @@ acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
 	ACPI_FUNCTION_TRACE(ev_install_space_handler);
 
 	/*
-	 * This registration is valid क्रम only the types below and the root.
-	 * The root node is where the शेष handlers get installed.
+	 * This registration is valid for only the types below and the root.
+	 * The root node is where the default handlers get installed.
 	 */
-	अगर ((node->type != ACPI_TYPE_DEVICE) &&
+	if ((node->type != ACPI_TYPE_DEVICE) &&
 	    (node->type != ACPI_TYPE_PROCESSOR) &&
-	    (node->type != ACPI_TYPE_THERMAL) && (node != acpi_gbl_root_node)) अणु
+	    (node->type != ACPI_TYPE_THERMAL) && (node != acpi_gbl_root_node)) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
-	अगर (handler == ACPI_DEFAULT_HANDLER) अणु
+	if (handler == ACPI_DEFAULT_HANDLER) {
 		flags = ACPI_ADDR_HANDLER_DEFAULT_INSTALLED;
 
-		चयन (space_id) अणु
-		हाल ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		switch (space_id) {
+		case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 
-			handler = acpi_ex_प्रणाली_memory_space_handler;
-			setup = acpi_ev_प्रणाली_memory_region_setup;
-			अवरोध;
+			handler = acpi_ex_system_memory_space_handler;
+			setup = acpi_ev_system_memory_region_setup;
+			break;
 
-		हाल ACPI_ADR_SPACE_SYSTEM_IO:
+		case ACPI_ADR_SPACE_SYSTEM_IO:
 
-			handler = acpi_ex_प्रणाली_io_space_handler;
+			handler = acpi_ex_system_io_space_handler;
 			setup = acpi_ev_io_space_region_setup;
-			अवरोध;
-#अगर_घोषित ACPI_PCI_CONFIGURED
-		हाल ACPI_ADR_SPACE_PCI_CONFIG:
+			break;
+#ifdef ACPI_PCI_CONFIGURED
+		case ACPI_ADR_SPACE_PCI_CONFIG:
 
 			handler = acpi_ex_pci_config_space_handler;
 			setup = acpi_ev_pci_config_region_setup;
-			अवरोध;
-#पूर्ण_अगर
-		हाल ACPI_ADR_SPACE_CMOS:
+			break;
+#endif
+		case ACPI_ADR_SPACE_CMOS:
 
 			handler = acpi_ex_cmos_space_handler;
 			setup = acpi_ev_cmos_region_setup;
-			अवरोध;
-#अगर_घोषित ACPI_PCI_CONFIGURED
-		हाल ACPI_ADR_SPACE_PCI_BAR_TARGET:
+			break;
+#ifdef ACPI_PCI_CONFIGURED
+		case ACPI_ADR_SPACE_PCI_BAR_TARGET:
 
 			handler = acpi_ex_pci_bar_space_handler;
 			setup = acpi_ev_pci_bar_region_setup;
-			अवरोध;
-#पूर्ण_अगर
-		हाल ACPI_ADR_SPACE_DATA_TABLE:
+			break;
+#endif
+		case ACPI_ADR_SPACE_DATA_TABLE:
 
 			handler = acpi_ex_data_table_space_handler;
-			setup = शून्य;
-			अवरोध;
+			setup = NULL;
+			break;
 
-		शेष:
+		default:
 
 			status = AE_BAD_PARAMETER;
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण
+			goto unlock_and_exit;
+		}
+	}
 
-	/* If the caller hasn't specअगरied a setup routine, use the शेष */
+	/* If the caller hasn't specified a setup routine, use the default */
 
-	अगर (!setup) अणु
-		setup = acpi_ev_शेष_region_setup;
-	पूर्ण
+	if (!setup) {
+		setup = acpi_ev_default_region_setup;
+	}
 
-	/* Check क्रम an existing पूर्णांकernal object */
+	/* Check for an existing internal object */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	अगर (obj_desc) अणु
+	if (obj_desc) {
 		/*
-		 * The attached device object alपढ़ोy exists. Now make sure
-		 * the handler is not alपढ़ोy installed.
+		 * The attached device object already exists. Now make sure
+		 * the handler is not already installed.
 		 */
 		handler_obj = acpi_ev_find_region_handler(space_id,
 							  obj_desc->
-							  common_notअगरy.
+							  common_notify.
 							  handler);
 
-		अगर (handler_obj) अणु
-			अगर (handler_obj->address_space.handler == handler) अणु
+		if (handler_obj) {
+			if (handler_obj->address_space.handler == handler) {
 				/*
 				 * It is (relatively) OK to attempt to install the SAME
 				 * handler twice. This can easily happen with the
 				 * PCI_Config space.
 				 */
 				status = AE_SAME_HANDLER;
-				जाओ unlock_and_निकास;
-			पूर्ण अन्यथा अणु
-				/* A handler is alपढ़ोy installed */
+				goto unlock_and_exit;
+			} else {
+				/* A handler is already installed */
 
 				status = AE_ALREADY_EXISTS;
-			पूर्ण
+			}
 
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto unlock_and_exit;
+		}
+	} else {
 		ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 				  "Creating object on Device %p while installing handler\n",
 				  node));
 
-		/* obj_desc करोes not exist, create one */
+		/* obj_desc does not exist, create one */
 
-		अगर (node->type == ACPI_TYPE_ANY) अणु
+		if (node->type == ACPI_TYPE_ANY) {
 			type = ACPI_TYPE_DEVICE;
-		पूर्ण अन्यथा अणु
+		} else {
 			type = node->type;
-		पूर्ण
+		}
 
-		obj_desc = acpi_ut_create_पूर्णांकernal_object(type);
-		अगर (!obj_desc) अणु
+		obj_desc = acpi_ut_create_internal_object(type);
+		if (!obj_desc) {
 			status = AE_NO_MEMORY;
-			जाओ unlock_and_निकास;
-		पूर्ण
+			goto unlock_and_exit;
+		}
 
 		/* Init new descriptor */
 
@@ -462,12 +461,12 @@ acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
 
 		/* Remove local reference to the object */
 
-		acpi_ut_हटाओ_reference(obj_desc);
+		acpi_ut_remove_reference(obj_desc);
 
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			goto unlock_and_exit;
+		}
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 			  "Installing address handler for region %s(%X) "
@@ -478,28 +477,28 @@ acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
 	/*
 	 * Install the handler
 	 *
-	 * At this poपूर्णांक there is no existing handler. Just allocate the object
-	 * क्रम the handler and link it पूर्णांकo the list.
+	 * At this point there is no existing handler. Just allocate the object
+	 * for the handler and link it into the list.
 	 */
 	handler_obj =
-	    acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_ADDRESS_HANDLER);
-	अगर (!handler_obj) अणु
+	    acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_ADDRESS_HANDLER);
+	if (!handler_obj) {
 		status = AE_NO_MEMORY;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	/* Init handler obj */
 
 	status =
 	    acpi_os_create_mutex(&handler_obj->address_space.context_mutex);
-	अगर (ACPI_FAILURE(status)) अणु
-		acpi_ut_हटाओ_reference(handler_obj);
-		जाओ unlock_and_निकास;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		acpi_ut_remove_reference(handler_obj);
+		goto unlock_and_exit;
+	}
 
 	handler_obj->address_space.space_id = (u8)space_id;
 	handler_obj->address_space.handler_flags = flags;
-	handler_obj->address_space.region_list = शून्य;
+	handler_obj->address_space.region_list = NULL;
 	handler_obj->address_space.node = node;
 	handler_obj->address_space.handler = handler;
 	handler_obj->address_space.context = context;
@@ -507,13 +506,13 @@ acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
 
 	/* Install at head of Device.address_space list */
 
-	handler_obj->address_space.next = obj_desc->common_notअगरy.handler;
+	handler_obj->address_space.next = obj_desc->common_notify.handler;
 
 	/*
 	 * The Device object is the first reference on the handler_obj.
 	 * Each region that uses the handler adds a reference.
 	 */
-	obj_desc->common_notअगरy.handler = handler_obj;
+	obj_desc->common_notify.handler = handler_obj;
 
 	/*
 	 * Walk the namespace finding all of the regions this handler will
@@ -523,13 +522,13 @@ acpi_ev_install_space_handler(काष्ठा acpi_namespace_node *node,
 	 * until either the leaf is encountered or a device is detected that
 	 * has an address handler of the same type.
 	 *
-	 * In either हाल, back up and search करोwn the reमुख्यder of the branch
+	 * In either case, back up and search down the remainder of the branch
 	 */
 	status = acpi_ns_walk_namespace(ACPI_TYPE_ANY, node,
 					ACPI_UINT32_MAX, ACPI_NS_WALK_UNLOCK,
-					acpi_ev_install_handler, शून्य,
-					handler_obj, शून्य);
+					acpi_ev_install_handler, NULL,
+					handler_obj, NULL);
 
-unlock_and_निकास:
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	return_ACPI_STATUS(status);
+}

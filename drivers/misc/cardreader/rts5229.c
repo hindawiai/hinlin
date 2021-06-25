@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Driver क्रम Realtek PCI-Express card पढ़ोer
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Driver for Realtek PCI-Express card reader
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -8,30 +7,30 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rtsx_pci.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/rtsx_pci.h>
 
-#समावेश "rtsx_pcr.h"
+#include "rtsx_pcr.h"
 
-अटल u8 rts5229_get_ic_version(काष्ठा rtsx_pcr *pcr)
-अणु
+static u8 rts5229_get_ic_version(struct rtsx_pcr *pcr)
+{
 	u8 val;
 
-	rtsx_pci_पढ़ो_रेजिस्टर(pcr, DUMMY_REG_RESET_0, &val);
-	वापस val & 0x0F;
-पूर्ण
+	rtsx_pci_read_register(pcr, DUMMY_REG_RESET_0, &val);
+	return val & 0x0F;
+}
 
-अटल व्योम rts5229_fetch_venकरोr_settings(काष्ठा rtsx_pcr *pcr)
-अणु
-	काष्ठा pci_dev *pdev = pcr->pci;
+static void rts5229_fetch_vendor_settings(struct rtsx_pcr *pcr)
+{
+	struct pci_dev *pdev = pcr->pci;
 	u32 reg;
 
-	pci_पढ़ो_config_dword(pdev, PCR_SETTING_REG1, &reg);
+	pci_read_config_dword(pdev, PCR_SETTING_REG1, &reg);
 	pcr_dbg(pcr, "Cfg 0x%x: 0x%x\n", PCR_SETTING_REG1, reg);
 
-	अगर (!rtsx_venकरोr_setting_valid(reg))
-		वापस;
+	if (!rtsx_vendor_setting_valid(reg))
+		return;
 
 	pcr->aspm_en = rtsx_reg_to_aspm(reg);
 	pcr->sd30_drive_sel_1v8 =
@@ -39,26 +38,26 @@
 	pcr->card_drive_sel &= 0x3F;
 	pcr->card_drive_sel |= rtsx_reg_to_card_drive_sel(reg);
 
-	pci_पढ़ो_config_dword(pdev, PCR_SETTING_REG2, &reg);
+	pci_read_config_dword(pdev, PCR_SETTING_REG2, &reg);
 	pcr_dbg(pcr, "Cfg 0x%x: 0x%x\n", PCR_SETTING_REG2, reg);
 	pcr->sd30_drive_sel_3v3 =
 		map_sd_drive(rtsx_reg_to_sd30_drive_sel_3v3(reg));
-पूर्ण
+}
 
-अटल व्योम rts5229_क्रमce_घातer_करोwn(काष्ठा rtsx_pcr *pcr, u8 pm_state)
-अणु
-	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, FPDCTL, 0x03, 0x03);
-पूर्ण
+static void rts5229_force_power_down(struct rtsx_pcr *pcr, u8 pm_state)
+{
+	rtsx_pci_write_register(pcr, FPDCTL, 0x03, 0x03);
+}
 
-अटल पूर्णांक rts5229_extra_init_hw(काष्ठा rtsx_pcr *pcr)
-अणु
+static int rts5229_extra_init_hw(struct rtsx_pcr *pcr)
+{
 	rtsx_pci_init_cmd(pcr);
 
 	/* Configure GPIO as output */
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, GPIO_CTL, 0x02, 0x02);
-	/* Reset ASPM state to शेष value */
+	/* Reset ASPM state to default value */
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, ASPM_FORCE_CTL, 0x3F, 0);
-	/* Force CLKREQ# PIN to drive 0 to request घड़ी */
+	/* Force CLKREQ# PIN to drive 0 to request clock */
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, PETXCFG, 0x08, 0x08);
 	/* Switch LDO3318 source from DV33 to card_3v3 */
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, LDO_PWR_SEL, 0x03, 0x00);
@@ -69,38 +68,38 @@
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SD30_DRIVE_SEL,
 			0xFF, pcr->sd30_drive_sel_3v3);
 
-	वापस rtsx_pci_send_cmd(pcr, 100);
-पूर्ण
+	return rtsx_pci_send_cmd(pcr, 100);
+}
 
-अटल पूर्णांक rts5229_optimize_phy(काष्ठा rtsx_pcr *pcr)
-अणु
+static int rts5229_optimize_phy(struct rtsx_pcr *pcr)
+{
 	/* Optimize RX sensitivity */
-	वापस rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, 0x00, 0xBA42);
-पूर्ण
+	return rtsx_pci_write_phy_register(pcr, 0x00, 0xBA42);
+}
 
-अटल पूर्णांक rts5229_turn_on_led(काष्ठा rtsx_pcr *pcr)
-अणु
-	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, GPIO_CTL, 0x02, 0x02);
-पूर्ण
+static int rts5229_turn_on_led(struct rtsx_pcr *pcr)
+{
+	return rtsx_pci_write_register(pcr, GPIO_CTL, 0x02, 0x02);
+}
 
-अटल पूर्णांक rts5229_turn_off_led(काष्ठा rtsx_pcr *pcr)
-अणु
-	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, GPIO_CTL, 0x02, 0x00);
-पूर्ण
+static int rts5229_turn_off_led(struct rtsx_pcr *pcr)
+{
+	return rtsx_pci_write_register(pcr, GPIO_CTL, 0x02, 0x00);
+}
 
-अटल पूर्णांक rts5229_enable_स्वतः_blink(काष्ठा rtsx_pcr *pcr)
-अणु
-	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, OLT_LED_CTL, 0x08, 0x08);
-पूर्ण
+static int rts5229_enable_auto_blink(struct rtsx_pcr *pcr)
+{
+	return rtsx_pci_write_register(pcr, OLT_LED_CTL, 0x08, 0x08);
+}
 
-अटल पूर्णांक rts5229_disable_स्वतः_blink(काष्ठा rtsx_pcr *pcr)
-अणु
-	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, OLT_LED_CTL, 0x08, 0x00);
-पूर्ण
+static int rts5229_disable_auto_blink(struct rtsx_pcr *pcr)
+{
+	return rtsx_pci_write_register(pcr, OLT_LED_CTL, 0x08, 0x00);
+}
 
-अटल पूर्णांक rts5229_card_घातer_on(काष्ठा rtsx_pcr *pcr, पूर्णांक card)
-अणु
-	पूर्णांक err;
+static int rts5229_card_power_on(struct rtsx_pcr *pcr, int card)
+{
+	int err;
 
 	rtsx_pci_init_cmd(pcr);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CARD_PWR_CTL,
@@ -108,10 +107,10 @@
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, PWR_GATE_CTRL,
 			LDO3318_PWR_MASK, 0x02);
 	err = rtsx_pci_send_cmd(pcr, 100);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* To aव्योम too large in-rush current */
+	/* To avoid too large in-rush current */
 	udelay(150);
 
 	rtsx_pci_init_cmd(pcr);
@@ -119,125 +118,125 @@
 			SD_POWER_MASK, SD_POWER_ON);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, PWR_GATE_CTRL,
 			LDO3318_PWR_MASK, 0x06);
-	वापस rtsx_pci_send_cmd(pcr, 100);
-पूर्ण
+	return rtsx_pci_send_cmd(pcr, 100);
+}
 
-अटल पूर्णांक rts5229_card_घातer_off(काष्ठा rtsx_pcr *pcr, पूर्णांक card)
-अणु
+static int rts5229_card_power_off(struct rtsx_pcr *pcr, int card)
+{
 	rtsx_pci_init_cmd(pcr);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CARD_PWR_CTL,
 			SD_POWER_MASK | PMOS_STRG_MASK,
 			SD_POWER_OFF | PMOS_STRG_400mA);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, PWR_GATE_CTRL,
 			LDO3318_PWR_MASK, 0x00);
-	वापस rtsx_pci_send_cmd(pcr, 100);
-पूर्ण
+	return rtsx_pci_send_cmd(pcr, 100);
+}
 
-अटल पूर्णांक rts5229_चयन_output_voltage(काष्ठा rtsx_pcr *pcr, u8 voltage)
-अणु
-	पूर्णांक err;
+static int rts5229_switch_output_voltage(struct rtsx_pcr *pcr, u8 voltage)
+{
+	int err;
 
-	अगर (voltage == OUTPUT_3V3) अणु
-		err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr,
+	if (voltage == OUTPUT_3V3) {
+		err = rtsx_pci_write_register(pcr,
 				SD30_DRIVE_SEL, 0x07, pcr->sd30_drive_sel_3v3);
-		अगर (err < 0)
-			वापस err;
-		err = rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, 0x08, 0x4FC0 | 0x24);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अगर (voltage == OUTPUT_1V8) अणु
-		err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr,
+		if (err < 0)
+			return err;
+		err = rtsx_pci_write_phy_register(pcr, 0x08, 0x4FC0 | 0x24);
+		if (err < 0)
+			return err;
+	} else if (voltage == OUTPUT_1V8) {
+		err = rtsx_pci_write_register(pcr,
 				SD30_DRIVE_SEL, 0x07, pcr->sd30_drive_sel_1v8);
-		अगर (err < 0)
-			वापस err;
-		err = rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, 0x08, 0x4C40 | 0x24);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		if (err < 0)
+			return err;
+		err = rtsx_pci_write_phy_register(pcr, 0x08, 0x4C40 | 0x24);
+		if (err < 0)
+			return err;
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pcr_ops rts5229_pcr_ops = अणु
-	.fetch_venकरोr_settings = rts5229_fetch_venकरोr_settings,
+static const struct pcr_ops rts5229_pcr_ops = {
+	.fetch_vendor_settings = rts5229_fetch_vendor_settings,
 	.extra_init_hw = rts5229_extra_init_hw,
 	.optimize_phy = rts5229_optimize_phy,
 	.turn_on_led = rts5229_turn_on_led,
 	.turn_off_led = rts5229_turn_off_led,
-	.enable_स्वतः_blink = rts5229_enable_स्वतः_blink,
-	.disable_स्वतः_blink = rts5229_disable_स्वतः_blink,
-	.card_घातer_on = rts5229_card_घातer_on,
-	.card_घातer_off = rts5229_card_घातer_off,
-	.चयन_output_voltage = rts5229_चयन_output_voltage,
-	.cd_deglitch = शून्य,
-	.conv_clk_and_भाग_n = शून्य,
-	.क्रमce_घातer_करोwn = rts5229_क्रमce_घातer_करोwn,
-पूर्ण;
+	.enable_auto_blink = rts5229_enable_auto_blink,
+	.disable_auto_blink = rts5229_disable_auto_blink,
+	.card_power_on = rts5229_card_power_on,
+	.card_power_off = rts5229_card_power_off,
+	.switch_output_voltage = rts5229_switch_output_voltage,
+	.cd_deglitch = NULL,
+	.conv_clk_and_div_n = NULL,
+	.force_power_down = rts5229_force_power_down,
+};
 
 /* SD Pull Control Enable:
  *     SD_DAT[3:0] ==> pull up
  *     SD_CD       ==> pull up
  *     SD_WP       ==> pull up
  *     SD_CMD      ==> pull up
- *     SD_CLK      ==> pull करोwn
+ *     SD_CLK      ==> pull down
  */
-अटल स्थिर u32 rts5229_sd_pull_ctl_enable_tbl1[] = अणु
+static const u32 rts5229_sd_pull_ctl_enable_tbl1[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0xAA),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xE9),
 	0,
-पूर्ण;
+};
 
 /* For RTS5229 version C */
-अटल स्थिर u32 rts5229_sd_pull_ctl_enable_tbl2[] = अणु
+static const u32 rts5229_sd_pull_ctl_enable_tbl2[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0xAA),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xD9),
 	0,
-पूर्ण;
+};
 
 /* SD Pull Control Disable:
- *     SD_DAT[3:0] ==> pull करोwn
+ *     SD_DAT[3:0] ==> pull down
  *     SD_CD       ==> pull up
- *     SD_WP       ==> pull करोwn
- *     SD_CMD      ==> pull करोwn
- *     SD_CLK      ==> pull करोwn
+ *     SD_WP       ==> pull down
+ *     SD_CMD      ==> pull down
+ *     SD_CLK      ==> pull down
  */
-अटल स्थिर u32 rts5229_sd_pull_ctl_disable_tbl1[] = अणु
+static const u32 rts5229_sd_pull_ctl_disable_tbl1[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0x55),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xD5),
 	0,
-पूर्ण;
+};
 
 /* For RTS5229 version C */
-अटल स्थिर u32 rts5229_sd_pull_ctl_disable_tbl2[] = अणु
+static const u32 rts5229_sd_pull_ctl_disable_tbl2[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0x55),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xE5),
 	0,
-पूर्ण;
+};
 
 /* MS Pull Control Enable:
  *     MS CD       ==> pull up
- *     others      ==> pull करोwn
+ *     others      ==> pull down
  */
-अटल स्थिर u32 rts5229_ms_pull_ctl_enable_tbl[] = अणु
+static const u32 rts5229_ms_pull_ctl_enable_tbl[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL5, 0x55),
 	RTSX_REG_PAIR(CARD_PULL_CTL6, 0x15),
 	0,
-पूर्ण;
+};
 
 /* MS Pull Control Disable:
  *     MS CD       ==> pull up
- *     others      ==> pull करोwn
+ *     others      ==> pull down
  */
-अटल स्थिर u32 rts5229_ms_pull_ctl_disable_tbl[] = अणु
+static const u32 rts5229_ms_pull_ctl_disable_tbl[] = {
 	RTSX_REG_PAIR(CARD_PULL_CTL5, 0x55),
 	RTSX_REG_PAIR(CARD_PULL_CTL6, 0x15),
 	0,
-पूर्ण;
+};
 
-व्योम rts5229_init_params(काष्ठा rtsx_pcr *pcr)
-अणु
+void rts5229_init_params(struct rtsx_pcr *pcr)
+{
 	pcr->extra_caps = EXTRA_CAPS_SD_SDR50 | EXTRA_CAPS_SD_SDR104;
 	pcr->num_slots = 2;
 	pcr->ops = &rts5229_pcr_ops;
@@ -252,13 +251,13 @@
 	pcr->rx_initial_phase = SET_CLOCK_PHASE(30, 6, 6);
 
 	pcr->ic_version = rts5229_get_ic_version(pcr);
-	अगर (pcr->ic_version == IC_VER_C) अणु
+	if (pcr->ic_version == IC_VER_C) {
 		pcr->sd_pull_ctl_enable_tbl = rts5229_sd_pull_ctl_enable_tbl2;
 		pcr->sd_pull_ctl_disable_tbl = rts5229_sd_pull_ctl_disable_tbl2;
-	पूर्ण अन्यथा अणु
+	} else {
 		pcr->sd_pull_ctl_enable_tbl = rts5229_sd_pull_ctl_enable_tbl1;
 		pcr->sd_pull_ctl_disable_tbl = rts5229_sd_pull_ctl_disable_tbl1;
-	पूर्ण
+	}
 	pcr->ms_pull_ctl_enable_tbl = rts5229_ms_pull_ctl_enable_tbl;
 	pcr->ms_pull_ctl_disable_tbl = rts5229_ms_pull_ctl_disable_tbl;
-पूर्ण
+}

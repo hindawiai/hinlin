@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकपन.स>
-#समावेश "util/pmu.h"
-#समावेश "util/evlist.h"
-#समावेश "util/parse-events.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <stdio.h>
+#include "util/pmu.h"
+#include "util/evlist.h"
+#include "util/parse-events.h"
 
-#घोषणा TOPDOWN_L1_EVENTS	"{slots,topdown-retiring,topdown-bad-spec,topdown-fe-bound,topdown-be-bound}"
+#define TOPDOWN_L1_EVENTS	"{slots,topdown-retiring,topdown-bad-spec,topdown-fe-bound,topdown-be-bound}"
 
-पूर्णांक arch_evlist__add_शेष_attrs(काष्ठा evlist *evlist)
-अणु
-	अगर (!pmu_have_event("cpu", "slots"))
-		वापस 0;
+int arch_evlist__add_default_attrs(struct evlist *evlist)
+{
+	if (!pmu_have_event("cpu", "slots"))
+		return 0;
 
-	वापस parse_events(evlist, TOPDOWN_L1_EVENTS, शून्य);
-पूर्ण
+	return parse_events(evlist, TOPDOWN_L1_EVENTS, NULL);
+}

@@ -1,179 +1,178 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
  * File: wcmd.c
  *
- * Purpose: Handles the management command पूर्णांकerface functions
+ * Purpose: Handles the management command interface functions
  *
- * Author: Lynकरोn Chen
+ * Author: Lyndon Chen
  *
  * Date: May 8, 2003
  *
  * Functions:
  *	vnt_cmd_complete - Command Complete function
- *	vnt_schedule_command - Push Command and रुको Command Scheduler to करो
- *	vnt_cmd_समयr_रुको- Call back समयr
+ *	vnt_schedule_command - Push Command and wait Command Scheduler to do
+ *	vnt_cmd_timer_wait- Call back timer
  *
  * Revision History:
  *
  */
 
-#समावेश "device.h"
-#समावेश "mac.h"
-#समावेश "wcmd.h"
-#समावेश "power.h"
-#समावेश "usbpipe.h"
-#समावेश "rxtx.h"
-#समावेश "rf.h"
+#include "device.h"
+#include "mac.h"
+#include "wcmd.h"
+#include "power.h"
+#include "usbpipe.h"
+#include "rxtx.h"
+#include "rf.h"
 
-अटल व्योम vnt_cmd_समयr_रुको(काष्ठा vnt_निजी *priv, अचिन्हित दीर्घ msecs)
-अणु
-	schedule_delayed_work(&priv->run_command_work, msecs_to_jअगरfies(msecs));
-पूर्ण
+static void vnt_cmd_timer_wait(struct vnt_private *priv, unsigned long msecs)
+{
+	schedule_delayed_work(&priv->run_command_work, msecs_to_jiffies(msecs));
+}
 
-अटल पूर्णांक vnt_cmd_complete(काष्ठा vnt_निजी *priv)
-अणु
+static int vnt_cmd_complete(struct vnt_private *priv)
+{
 	priv->command_state = WLAN_CMD_IDLE;
-	अगर (priv->मुक्त_cmd_queue == CMD_Q_SIZE) अणु
+	if (priv->free_cmd_queue == CMD_Q_SIZE) {
 		/* Command Queue Empty */
 		priv->cmd_running = false;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	priv->command = priv->cmd_queue[priv->cmd_dequeue_idx];
 
 	ADD_ONE_WITH_WRAP_AROUND(priv->cmd_dequeue_idx, CMD_Q_SIZE);
-	priv->मुक्त_cmd_queue++;
+	priv->free_cmd_queue++;
 	priv->cmd_running = true;
 
-	चयन (priv->command) अणु
-	हाल WLAN_CMD_INIT_MAC80211:
+	switch (priv->command) {
+	case WLAN_CMD_INIT_MAC80211:
 		priv->command_state = WLAN_CMD_INIT_MAC80211_START;
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_TBTT_WAKEUP:
+	case WLAN_CMD_TBTT_WAKEUP:
 		priv->command_state = WLAN_CMD_TBTT_WAKEUP_START;
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_BECON_SEND:
+	case WLAN_CMD_BECON_SEND:
 		priv->command_state = WLAN_CMD_BECON_SEND_START;
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_SETPOWER:
+	case WLAN_CMD_SETPOWER:
 		priv->command_state = WLAN_CMD_SETPOWER_START;
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_CHANGE_ANTENNA:
+	case WLAN_CMD_CHANGE_ANTENNA:
 		priv->command_state = WLAN_CMD_CHANGE_ANTENNA_START;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	vnt_cmd_समयr_रुको(priv, 0);
+	vnt_cmd_timer_wait(priv, 0);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम vnt_run_command(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vnt_निजी *priv =
-		container_of(work, काष्ठा vnt_निजी, run_command_work.work);
+void vnt_run_command(struct work_struct *work)
+{
+	struct vnt_private *priv =
+		container_of(work, struct vnt_private, run_command_work.work);
 
-	अगर (test_bit(DEVICE_FLAGS_DISCONNECTED, &priv->flags))
-		वापस;
+	if (test_bit(DEVICE_FLAGS_DISCONNECTED, &priv->flags))
+		return;
 
-	अगर (!priv->cmd_running)
-		वापस;
+	if (!priv->cmd_running)
+		return;
 
-	चयन (priv->command_state) अणु
-	हाल WLAN_CMD_INIT_MAC80211_START:
-		अगर (priv->mac_hw)
-			अवरोध;
+	switch (priv->command_state) {
+	case WLAN_CMD_INIT_MAC80211_START:
+		if (priv->mac_hw)
+			break;
 
 		dev_info(&priv->usb->dev, "Starting mac80211\n");
 
-		अगर (vnt_init(priv)) अणु
+		if (vnt_init(priv)) {
 			/* If fail all ends TODO retry */
 			dev_err(&priv->usb->dev, "failed to start\n");
-			usb_set_पूर्णांकfdata(priv->पूर्णांकf, शून्य);
-			ieee80211_मुक्त_hw(priv->hw);
-			वापस;
-		पूर्ण
+			usb_set_intfdata(priv->intf, NULL);
+			ieee80211_free_hw(priv->hw);
+			return;
+		}
 
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_TBTT_WAKEUP_START:
+	case WLAN_CMD_TBTT_WAKEUP_START:
 		vnt_next_tbtt_wakeup(priv);
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_BECON_SEND_START:
-		अगर (!priv->vअगर)
-			अवरोध;
+	case WLAN_CMD_BECON_SEND_START:
+		if (!priv->vif)
+			break;
 
-		vnt_beacon_make(priv, priv->vअगर);
+		vnt_beacon_make(priv, priv->vif);
 
 		vnt_mac_reg_bits_on(priv, MAC_REG_TCR, TCR_AUTOBCNTX);
 
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_SETPOWER_START:
+	case WLAN_CMD_SETPOWER_START:
 
-		vnt_rf_setघातer(priv, priv->hw->conf.chandef.chan);
+		vnt_rf_setpower(priv, priv->hw->conf.chandef.chan);
 
-		अवरोध;
+		break;
 
-	हाल WLAN_CMD_CHANGE_ANTENNA_START:
+	case WLAN_CMD_CHANGE_ANTENNA_START:
 		dev_dbg(&priv->usb->dev, "Change from Antenna%d to",
 			priv->rx_antenna_sel);
 
-		अगर (priv->rx_antenna_sel == 0) अणु
+		if (priv->rx_antenna_sel == 0) {
 			priv->rx_antenna_sel = 1;
-			अगर (priv->tx_rx_ant_inv)
+			if (priv->tx_rx_ant_inv)
 				vnt_set_antenna_mode(priv, ANT_RXA);
-			अन्यथा
+			else
 				vnt_set_antenna_mode(priv, ANT_RXB);
-		पूर्ण अन्यथा अणु
+		} else {
 			priv->rx_antenna_sel = 0;
-			अगर (priv->tx_rx_ant_inv)
+			if (priv->tx_rx_ant_inv)
 				vnt_set_antenna_mode(priv, ANT_RXB);
-			अन्यथा
+			else
 				vnt_set_antenna_mode(priv, ANT_RXA);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	vnt_cmd_complete(priv);
-पूर्ण
+}
 
-पूर्णांक vnt_schedule_command(काष्ठा vnt_निजी *priv, क्रमागत vnt_cmd command)
-अणु
-	अगर (priv->मुक्त_cmd_queue == 0)
-		वापस false;
+int vnt_schedule_command(struct vnt_private *priv, enum vnt_cmd command)
+{
+	if (priv->free_cmd_queue == 0)
+		return false;
 
 	priv->cmd_queue[priv->cmd_enqueue_idx] = command;
 
 	ADD_ONE_WITH_WRAP_AROUND(priv->cmd_enqueue_idx, CMD_Q_SIZE);
-	priv->मुक्त_cmd_queue--;
+	priv->free_cmd_queue--;
 
-	अगर (!priv->cmd_running)
+	if (!priv->cmd_running)
 		vnt_cmd_complete(priv);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम vnt_reset_command_समयr(काष्ठा vnt_निजी *priv)
-अणु
-	priv->मुक्त_cmd_queue = CMD_Q_SIZE;
+void vnt_reset_command_timer(struct vnt_private *priv)
+{
+	priv->free_cmd_queue = CMD_Q_SIZE;
 	priv->cmd_dequeue_idx = 0;
 	priv->cmd_enqueue_idx = 0;
 	priv->command_state = WLAN_CMD_IDLE;
 	priv->cmd_running = false;
-पूर्ण
+}

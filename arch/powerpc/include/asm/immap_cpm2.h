@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * CPM2 Internal Memory Map
  * Copyright (c) 1999 Dan Malek (dmalek@jlc.net)
  *
- * The Internal Memory Map क्रम devices with CPM2 on them.  This
+ * The Internal Memory Map for devices with CPM2 on them.  This
  * is the superset of all CPM2 devices (8260, 8266, 8280, 8272,
  * 8560).
  */
-#अगर_घोषित __KERNEL__
-#अगर_अघोषित __IMMAP_CPM2__
-#घोषणा __IMMAP_CPM2__
+#ifdef __KERNEL__
+#ifndef __IMMAP_CPM2__
+#define __IMMAP_CPM2__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-/* System configuration रेजिस्टरs.
+/* System configuration registers.
 */
-प्रकार	काष्ठा sys_82xx_conf अणु
+typedef	struct sys_82xx_conf {
 	u32	sc_siumcr;
 	u32	sc_sypcr;
 	u8	res1[6];
@@ -41,9 +40,9 @@
 	u32	sc_ldtea;
 	u8	sc_ldtem;
 	u8	res6[163];
-पूर्ण sysconf_82xx_cpm2_t;
+} sysconf_82xx_cpm2_t;
 
-प्रकार	काष्ठा sys_85xx_conf अणु
+typedef	struct sys_85xx_conf {
 	u32	sc_cear;
 	u16	sc_ceer;
 	u16	sc_cemr;
@@ -57,18 +56,18 @@
 	u32	sc_lmevr;
 	u32	sc_lmctr;
 	u8	res4[144];
-पूर्ण sysconf_85xx_cpm2_t;
+} sysconf_85xx_cpm2_t;
 
-प्रकार जोड़ sys_conf अणु
+typedef union sys_conf {
 	sysconf_82xx_cpm2_t	siu_82xx;
 	sysconf_85xx_cpm2_t	siu_85xx;
-पूर्ण sysconf_cpm2_t;
+} sysconf_cpm2_t;
 
 
 
-/* Memory controller रेजिस्टरs.
+/* Memory controller registers.
 */
-प्रकार काष्ठा	mem_ctlr अणु
+typedef struct	mem_ctlr {
 	u32	memc_br0;
 	u32	memc_or0;
 	u32	memc_br1;
@@ -121,17 +120,17 @@
 	u32	memc_pcimsk0;
 	u32	memc_pcimsk1;
 	u8	res11[52];
-पूर्ण memctl_cpm2_t;
+} memctl_cpm2_t;
 
 /* System Integration Timers.
 */
-प्रकार काष्ठा	sys_पूर्णांक_समयrs अणु
+typedef struct	sys_int_timers {
 	u8	res1[32];
-	u16	sit_पंचांगcntsc;
+	u16	sit_tmcntsc;
 	u8	res2[2];
-	u32	sit_पंचांगcnt;
+	u32	sit_tmcnt;
 	u8	res3[4];
-	u32	sit_पंचांगcntal;
+	u32	sit_tmcntal;
 	u8	res4[16];
 	u16	sit_piscr;
 	u8	res5[2];
@@ -139,21 +138,21 @@
 	u32	sit_pitr;
 	u8      res6[94];
 	u8	res7[390];
-पूर्ण sit_cpm2_t;
+} sit_cpm2_t;
 
-#घोषणा PISCR_PIRQ_MASK		((u16)0xff00)
-#घोषणा PISCR_PS		((u16)0x0080)
-#घोषणा PISCR_PIE		((u16)0x0004)
-#घोषणा PISCR_PTF		((u16)0x0002)
-#घोषणा PISCR_PTE		((u16)0x0001)
+#define PISCR_PIRQ_MASK		((u16)0xff00)
+#define PISCR_PS		((u16)0x0080)
+#define PISCR_PIE		((u16)0x0004)
+#define PISCR_PTF		((u16)0x0002)
+#define PISCR_PTE		((u16)0x0001)
 
 /* PCI Controller.
 */
-प्रकार काष्ठा pci_ctlr अणु
+typedef struct pci_ctlr {
 	u32	pci_omisr;
 	u32	pci_omimr;
 	u8	res1[8];
-	u32	pci_अगरqpr;
+	u32	pci_ifqpr;
 	u32	pci_ofqpr;
 	u8	res2[8];
 	u32	pci_imr0;
@@ -167,9 +166,9 @@
 	u32	pci_imisr;
 	u32	pci_imimr;
 	u8	res5[24];
-	u32	pci_अगरhpr;
+	u32	pci_ifhpr;
 	u8	res6[4];
-	u32	pci_अगरtpr;
+	u32	pci_iftpr;
 	u8	res7[4];
 	u32	pci_iphpr;
 	u8	res8[4];
@@ -275,13 +274,13 @@
 	u8	res49[4];
 	u32	pci_cfg_addr;
 	u32	pci_cfg_data;
-	u32	pci_पूर्णांक_ack;
+	u32	pci_int_ack;
 	u8	res50[756];
-पूर्ण pci_cpm2_t;
+} pci_cpm2_t;
 
 /* Interrupt Controller.
 */
-प्रकार काष्ठा पूर्णांकerrupt_controller अणु
+typedef struct interrupt_controller {
 	u16	ic_sicr;
 	u8	res1[2];
 	u32	ic_sivec;
@@ -294,11 +293,11 @@
 	u32	ic_simrl;
 	u32	ic_siexr;
 	u8	res2[88];
-पूर्ण पूर्णांकctl_cpm2_t;
+} intctl_cpm2_t;
 
 /* Clocks and Reset.
 */
-प्रकार काष्ठा clk_and_reset अणु
+typedef struct clk_and_reset {
 	u32	car_sccr;
 	u8	res1[4];
 	u32	car_scmr;
@@ -306,13 +305,13 @@
 	u32	car_rsr;
 	u32	car_rmr;
 	u8	res[104];
-पूर्ण car_cpm2_t;
+} car_cpm2_t;
 
-/* Input/Output Port control/status रेजिस्टरs.
- * Names consistent with processor manual, although they are dअगरferent
+/* Input/Output Port control/status registers.
+ * Names consistent with processor manual, although they are different
  * from the original 8xx names.......
  */
-प्रकार काष्ठा io_port अणु
+typedef struct io_port {
 	u32	iop_pdira;
 	u32	iop_ppara;
 	u32	iop_psora;
@@ -337,25 +336,25 @@
 	u32	iop_podrd;
 	u32	iop_pdatd;
 	u8	res4[12];
-पूर्ण iop_cpm2_t;
+} iop_cpm2_t;
 
 /* Communication Processor Module Timers
 */
-प्रकार काष्ठा cpm_समयrs अणु
+typedef struct cpm_timers {
 	u8	cpmt_tgcr1;
 	u8	res1[3];
 	u8	cpmt_tgcr2;
 	u8	res2[11];
-	u16	cpmt_पंचांगr1;
-	u16	cpmt_पंचांगr2;
+	u16	cpmt_tmr1;
+	u16	cpmt_tmr2;
 	u16	cpmt_trr1;
 	u16	cpmt_trr2;
 	u16	cpmt_tcr1;
 	u16	cpmt_tcr2;
 	u16	cpmt_tcn1;
 	u16	cpmt_tcn2;
-	u16	cpmt_पंचांगr3;
-	u16	cpmt_पंचांगr4;
+	u16	cpmt_tmr3;
+	u16	cpmt_tmr4;
 	u16	cpmt_trr3;
 	u16	cpmt_trr4;
 	u16	cpmt_tcr3;
@@ -367,11 +366,11 @@
 	u16	cpmt_ter3;
 	u16	cpmt_ter4;
 	u8	res3[584];
-पूर्ण cpmसमयr_cpm2_t;
+} cpmtimer_cpm2_t;
 
-/* DMA control/status रेजिस्टरs.
+/* DMA control/status registers.
 */
-प्रकार काष्ठा sdma_csr अणु
+typedef struct sdma_csr {
 	u8	res0[24];
 	u8	sdma_sdsr;
 	u8	res1[3];
@@ -393,11 +392,11 @@
 	u8	res9[3];
 	u8	sdma_idmr4;
 	u8	res10[707];
-पूर्ण sdma_cpm2_t;
+} sdma_cpm2_t;
 
 /* Fast controllers
 */
-प्रकार काष्ठा fcc अणु
+typedef struct fcc {
 	u32	fcc_gfmr;
 	u32	fcc_fpsmr;
 	u16	fcc_ftodr;
@@ -411,22 +410,22 @@
 	u8	fcc_fccs;
 	u8	res5[3];
 	u8	fcc_ftirr_phy[4];
-पूर्ण fcc_t;
+} fcc_t;
 
-/* Fast controllers जारीd
+/* Fast controllers continued
  */
-प्रकार काष्ठा fcc_c अणु
+typedef struct fcc_c {
 	u32	fcc_firper;
 	u32	fcc_firer;
 	u32	fcc_firsr_hi;
 	u32	fcc_firsr_lo;
 	u8	fcc_gfemr;
 	u8	res1[15];
-पूर्ण fcc_c_t;
+} fcc_c_t;
 
 /* TC Layer
  */
-प्रकार काष्ठा tclayer अणु
+typedef struct tclayer {
 	u16	tc_tcmode;
 	u16	tc_cdsmr;
 	u16	tc_tcer;
@@ -438,12 +437,12 @@
 	u16	tc_tcc;
 	u16	tc_ecc;
 	u8	res1[12];
-पूर्ण tclayer_t;
+} tclayer_t;
 
 
 /* I2C
 */
-प्रकार काष्ठा i2c अणु
+typedef struct i2c {
 	u8	i2c_i2mod;
 	u8	res1[3];
 	u8	i2c_i2add;
@@ -456,9 +455,9 @@
 	u8	res5[3];
 	u8	i2c_i2cmr;
 	u8	res6[331];
-पूर्ण i2c_cpm2_t;
+} i2c_cpm2_t;
 
-प्रकार काष्ठा scc अणु		/* Serial communication channels */
+typedef struct scc {		/* Serial communication channels */
 	u32	scc_gsmrl;
 	u32	scc_gsmrh;
 	u16	scc_psmr;
@@ -471,9 +470,9 @@
 	u8	res3;
 	u8	scc_sccs;
 	u8	res4[8];
-पूर्ण scc_t;
+} scc_t;
 
-प्रकार काष्ठा smc अणु		/* Serial management channels */
+typedef struct smc {		/* Serial management channels */
 	u8	res1[2];
 	u16	smc_smcmr;
 	u8	res2[2];
@@ -481,11 +480,11 @@
 	u8	res3[3];
 	u8	smc_smcm;
 	u8	res4[5];
-पूर्ण smc_t;
+} smc_t;
 
 /* Serial Peripheral Interface.
 */
-प्रकार काष्ठा spi_ctrl अणु
+typedef struct spi_ctrl {
 	u16	spi_spmode;
 	u8	res1[4];
 	u8	spi_spie;
@@ -494,11 +493,11 @@
 	u8	res3[2];
 	u8	spi_spcom;
 	u8	res4[82];
-पूर्ण spictl_cpm2_t;
+} spictl_cpm2_t;
 
 /* CPM Mux.
 */
-प्रकार काष्ठा cpmux अणु
+typedef struct cpmux {
 	u8	cmx_si1cr;
 	u8	res1;
 	u8	cmx_si2cr;
@@ -509,11 +508,11 @@
 	u8	res3;
 	u16	cmx_uar;
 	u8	res4[16];
-पूर्ण cpmux_t;
+} cpmux_t;
 
 /* SIRAM control
 */
-प्रकार काष्ठा siram अणु
+typedef struct siram {
 	u16	si_amr;
 	u16	si_bmr;
 	u16	si_cmr;
@@ -525,33 +524,33 @@
 	u8	si_str;
 	u8	res3;
 	u16	si_rsr;
-पूर्ण siramctl_t;
+} siramctl_t;
 
-प्रकार काष्ठा mcc अणु
+typedef struct mcc {
 	u16	mcc_mcce;
 	u8	res1[2];
 	u16	mcc_mccm;
 	u8	res2[2];
 	u8	mcc_mccf;
 	u8	res3[7];
-पूर्ण mcc_t;
+} mcc_t;
 
-प्रकार काष्ठा comm_proc अणु
+typedef struct comm_proc {
 	u32	cp_cpcr;
 	u32	cp_rccr;
 	u8	res1[14];
 	u16	cp_rter;
 	u8	res2[2];
-	u16	cp_rपंचांगr;
+	u16	cp_rtmr;
 	u16	cp_rtscr;
 	u8	res3[2];
 	u32	cp_rtsr;
 	u8	res4[12];
-पूर्ण cpm_cpm2_t;
+} cpm_cpm2_t;
 
 /* USB Controller.
 */
-प्रकार काष्ठा cpm_usb_ctlr अणु
+typedef struct cpm_usb_ctlr {
 	u8	usb_usmod;
 	u8	usb_usadr;
 	u8	usb_uscom;
@@ -563,16 +562,16 @@
 	__be16  usb_usbmr;
 	u8	usb_usbs;
 	u8	res4[7];
-पूर्ण usb_cpm2_t;
+} usb_cpm2_t;
 
 /* ...and the whole thing wrapped up....
 */
 
-प्रकार काष्ठा immap अणु
-	/* Some references are पूर्णांकo the unique and known dpram spaces,
+typedef struct immap {
+	/* Some references are into the unique and known dpram spaces,
 	 * others are from the generic base.
 	 */
-#घोषणा im_dprambase	im_dpram1
+#define im_dprambase	im_dpram1
 	u8		im_dpram1[16*1024];
 	u8		res1[16*1024];
 	u8		im_dpram2[4*1024];
@@ -584,10 +583,10 @@
 	memctl_cpm2_t	im_memctl;	/* Memory Controller */
 	sit_cpm2_t	im_sit;		/* System Integration Timers */
 	pci_cpm2_t	im_pci;		/* PCI Controller */
-	पूर्णांकctl_cpm2_t	im_पूर्णांकctl;	/* Interrupt Controller */
+	intctl_cpm2_t	im_intctl;	/* Interrupt Controller */
 	car_cpm2_t	im_clkrst;	/* Clocks and reset */
 	iop_cpm2_t	im_ioport;	/* IO Port control/status */
-	cpmसमयr_cpm2_t	im_cpmसमयr;	/* CPM समयrs */
+	cpmtimer_cpm2_t	im_cpmtimer;	/* CPM timers */
 	sdma_cpm2_t	im_sdma;	/* SDMA control/status */
 
 	fcc_t		im_fcc[3];	/* Three FCCs */
@@ -623,7 +622,7 @@
 	scc_t		im_scc[4];	/* Four SCCs */
 	smc_t		im_smc[2];	/* Couple of SMCs */
 	spictl_cpm2_t	im_spi;		/* A SPI */
-	cpmux_t		im_cpmux;	/* CPM घड़ी route mux */
+	cpmux_t		im_cpmux;	/* CPM clock route mux */
 	siramctl_t	im_siramctl1;	/* First SI RAM Control */
 	mcc_t		im_mcc1;	/* First MCC */
 	siramctl_t	im_siramctl2;	/* Second SI RAM Control */
@@ -641,9 +640,9 @@
 	u16		im_si2rxram[256];
 	u8		res10[512];
 	u8		res11[4096];
-पूर्ण cpm2_map_t;
+} cpm2_map_t;
 
-बाह्य cpm2_map_t __iomem *cpm2_immr;
+extern cpm2_map_t __iomem *cpm2_immr;
 
-#पूर्ण_अगर /* __IMMAP_CPM2__ */
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __IMMAP_CPM2__ */
+#endif /* __KERNEL__ */

@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Industrial I/O software trigger पूर्णांकerface
+ * Industrial I/O software trigger interface
  *
  * Copyright (c) 2015 Intel Corporation
  */
 
-#अगर_अघोषित __IIO_SW_TRIGGER
-#घोषणा __IIO_SW_TRIGGER
+#ifndef __IIO_SW_TRIGGER
+#define __IIO_SW_TRIGGER
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/configfs.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/iio/iio.h>
+#include <linux/configfs.h>
 
-#घोषणा module_iio_sw_trigger_driver(__iio_sw_trigger_type) \
-	module_driver(__iio_sw_trigger_type, iio_रेजिस्टर_sw_trigger_type, \
-		      iio_unरेजिस्टर_sw_trigger_type)
+#define module_iio_sw_trigger_driver(__iio_sw_trigger_type) \
+	module_driver(__iio_sw_trigger_type, iio_register_sw_trigger_type, \
+		      iio_unregister_sw_trigger_type)
 
-काष्ठा iio_sw_trigger_ops;
+struct iio_sw_trigger_ops;
 
-काष्ठा iio_sw_trigger_type अणु
-	स्थिर अक्षर *name;
-	काष्ठा module *owner;
-	स्थिर काष्ठा iio_sw_trigger_ops *ops;
-	काष्ठा list_head list;
-	काष्ठा config_group *group;
-पूर्ण;
+struct iio_sw_trigger_type {
+	const char *name;
+	struct module *owner;
+	const struct iio_sw_trigger_ops *ops;
+	struct list_head list;
+	struct config_group *group;
+};
 
-काष्ठा iio_sw_trigger अणु
-	काष्ठा iio_trigger *trigger;
-	काष्ठा iio_sw_trigger_type *trigger_type;
-	काष्ठा config_group group;
-पूर्ण;
+struct iio_sw_trigger {
+	struct iio_trigger *trigger;
+	struct iio_sw_trigger_type *trigger_type;
+	struct config_group group;
+};
 
-काष्ठा iio_sw_trigger_ops अणु
-	काष्ठा iio_sw_trigger* (*probe)(स्थिर अक्षर *);
-	पूर्णांक (*हटाओ)(काष्ठा iio_sw_trigger *);
-पूर्ण;
+struct iio_sw_trigger_ops {
+	struct iio_sw_trigger* (*probe)(const char *);
+	int (*remove)(struct iio_sw_trigger *);
+};
 
-अटल अंतरभूत
-काष्ठा iio_sw_trigger *to_iio_sw_trigger(काष्ठा config_item *item)
-अणु
-	वापस container_of(to_config_group(item), काष्ठा iio_sw_trigger,
+static inline
+struct iio_sw_trigger *to_iio_sw_trigger(struct config_item *item)
+{
+	return container_of(to_config_group(item), struct iio_sw_trigger,
 			    group);
-पूर्ण
+}
 
-पूर्णांक iio_रेजिस्टर_sw_trigger_type(काष्ठा iio_sw_trigger_type *tt);
-व्योम iio_unरेजिस्टर_sw_trigger_type(काष्ठा iio_sw_trigger_type *tt);
+int iio_register_sw_trigger_type(struct iio_sw_trigger_type *tt);
+void iio_unregister_sw_trigger_type(struct iio_sw_trigger_type *tt);
 
-काष्ठा iio_sw_trigger *iio_sw_trigger_create(स्थिर अक्षर *, स्थिर अक्षर *);
-व्योम iio_sw_trigger_destroy(काष्ठा iio_sw_trigger *);
+struct iio_sw_trigger *iio_sw_trigger_create(const char *, const char *);
+void iio_sw_trigger_destroy(struct iio_sw_trigger *);
 
-पूर्णांक iio_sw_trigger_type_configfs_रेजिस्टर(काष्ठा iio_sw_trigger_type *tt);
-व्योम iio_sw_trigger_type_configfs_unरेजिस्टर(काष्ठा iio_sw_trigger_type *tt);
+int iio_sw_trigger_type_configfs_register(struct iio_sw_trigger_type *tt);
+void iio_sw_trigger_type_configfs_unregister(struct iio_sw_trigger_type *tt);
 
-अटल अंतरभूत
-व्योम iio_swt_group_init_type_name(काष्ठा iio_sw_trigger *t,
-				  स्थिर अक्षर *name,
-				  स्थिर काष्ठा config_item_type *type)
-अणु
-#अगर IS_ENABLED(CONFIG_CONFIGFS_FS)
+static inline
+void iio_swt_group_init_type_name(struct iio_sw_trigger *t,
+				  const char *name,
+				  const struct config_item_type *type)
+{
+#if IS_ENABLED(CONFIG_CONFIGFS_FS)
 	config_group_init_type_name(&t->group, name, type);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#पूर्ण_अगर /* __IIO_SW_TRIGGER */
+#endif /* __IIO_SW_TRIGGER */

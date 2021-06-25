@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2007 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
+ * Copyright (C) 2007 Wolfgang Grandegger <wg@grandegger.com>
  * Copyright (C) 2008 Markus Plessing <plessing@ems-wuensche.com>
  * Copyright (C) 2008 Sebastian Haas <haas@ems-wuensche.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/can/dev.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/netdevice.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/can/dev.h>
+#include <linux/io.h>
 
-#समावेश "sja1000.h"
+#include "sja1000.h"
 
-#घोषणा DRV_NAME  "ems_pci"
+#define DRV_NAME  "ems_pci"
 
 MODULE_AUTHOR("Sebastian Haas <haas@ems-wuenche.com>");
 MODULE_DESCRIPTION("Socket-CAN driver for EMS CPC-PCI/PCIe/104P CAN cards");
 MODULE_LICENSE("GPL v2");
 
-#घोषणा EMS_PCI_V1_MAX_CHAN 2
-#घोषणा EMS_PCI_V2_MAX_CHAN 4
-#घोषणा EMS_PCI_MAX_CHAN    EMS_PCI_V2_MAX_CHAN
+#define EMS_PCI_V1_MAX_CHAN 2
+#define EMS_PCI_V2_MAX_CHAN 4
+#define EMS_PCI_MAX_CHAN    EMS_PCI_V2_MAX_CHAN
 
-काष्ठा ems_pci_card अणु
-	पूर्णांक version;
-	पूर्णांक channels;
+struct ems_pci_card {
+	int version;
+	int channels;
 
-	काष्ठा pci_dev *pci_dev;
-	काष्ठा net_device *net_dev[EMS_PCI_MAX_CHAN];
+	struct pci_dev *pci_dev;
+	struct net_device *net_dev[EMS_PCI_MAX_CHAN];
 
-	व्योम __iomem *conf_addr;
-	व्योम __iomem *base_addr;
-पूर्ण;
+	void __iomem *conf_addr;
+	void __iomem *base_addr;
+};
 
-#घोषणा EMS_PCI_CAN_CLOCK (16000000 / 2)
+#define EMS_PCI_CAN_CLOCK (16000000 / 2)
 
 /*
  * Register definitions and descriptions are from LinCAN 0.3.3.
  *
- * PSB4610 PITA-2 bridge control रेजिस्टरs
+ * PSB4610 PITA-2 bridge control registers
  */
-#घोषणा PITA2_ICR           0x00	/* Interrupt Control Register */
-#घोषणा PITA2_ICR_INT0      0x00000002	/* [RC] INT0 Active/Clear */
-#घोषणा PITA2_ICR_INT0_EN   0x00020000	/* [RW] Enable INT0 */
+#define PITA2_ICR           0x00	/* Interrupt Control Register */
+#define PITA2_ICR_INT0      0x00000002	/* [RC] INT0 Active/Clear */
+#define PITA2_ICR_INT0_EN   0x00020000	/* [RW] Enable INT0 */
 
-#घोषणा PITA2_MISC          0x1c	/* Miscellaneous Register */
-#घोषणा PITA2_MISC_CONFIG   0x04000000	/* Multiplexed parallel पूर्णांकerface */
+#define PITA2_MISC          0x1c	/* Miscellaneous Register */
+#define PITA2_MISC_CONFIG   0x04000000	/* Multiplexed parallel interface */
 
 /*
- * Register definitions क्रम the PLX 9030
+ * Register definitions for the PLX 9030
  */
-#घोषणा PLX_ICSR            0x4c   /* Interrupt Control/Status रेजिस्टर */
-#घोषणा PLX_ICSR_LINTI1_ENA 0x0001 /* LINTi1 Enable */
-#घोषणा PLX_ICSR_PCIINT_ENA 0x0040 /* PCI Interrupt Enable */
-#घोषणा PLX_ICSR_LINTI1_CLR 0x0400 /* Local Edge Triggerable Interrupt Clear */
-#घोषणा PLX_ICSR_ENA_CLR    (PLX_ICSR_LINTI1_ENA | PLX_ICSR_PCIINT_ENA | \
+#define PLX_ICSR            0x4c   /* Interrupt Control/Status register */
+#define PLX_ICSR_LINTI1_ENA 0x0001 /* LINTi1 Enable */
+#define PLX_ICSR_PCIINT_ENA 0x0040 /* PCI Interrupt Enable */
+#define PLX_ICSR_LINTI1_CLR 0x0400 /* Local Edge Triggerable Interrupt Clear */
+#define PLX_ICSR_ENA_CLR    (PLX_ICSR_LINTI1_ENA | PLX_ICSR_PCIINT_ENA | \
 			     PLX_ICSR_LINTI1_CLR)
 
 /*
@@ -68,166 +67,166 @@ MODULE_LICENSE("GPL v2");
  * RX1 is connected to ground.
  * TX1 is not connected.
  * CLKO is not connected.
- * Setting the OCR रेजिस्टर to 0xDA is a good idea.
+ * Setting the OCR register to 0xDA is a good idea.
  * This means normal output mode, push-pull and the correct polarity.
  */
-#घोषणा EMS_PCI_OCR         (OCR_TX0_PUSHPULL | OCR_TX1_PUSHPULL)
+#define EMS_PCI_OCR         (OCR_TX0_PUSHPULL | OCR_TX1_PUSHPULL)
 
 /*
- * In the CDR रेजिस्टर, you should set CBP to 1.
- * You will probably also want to set the घड़ी भागider value to 7
+ * In the CDR register, you should set CBP to 1.
+ * You will probably also want to set the clock divider value to 7
  * (meaning direct oscillator output) because the second SJA1000 chip
  * is driven by the first one CLKOUT output.
  */
-#घोषणा EMS_PCI_CDR             (CDR_CBP | CDR_CLKOUT_MASK)
+#define EMS_PCI_CDR             (CDR_CBP | CDR_CLKOUT_MASK)
 
-#घोषणा EMS_PCI_V1_BASE_BAR     1
-#घोषणा EMS_PCI_V1_CONF_SIZE    4096 /* size of PITA control area */
-#घोषणा EMS_PCI_V2_BASE_BAR     2
-#घोषणा EMS_PCI_V2_CONF_SIZE    128 /* size of PLX control area */
-#घोषणा EMS_PCI_CAN_BASE_OFFSET 0x400 /* offset where the controllers starts */
-#घोषणा EMS_PCI_CAN_CTRL_SIZE   0x200 /* memory size क्रम each controller */
+#define EMS_PCI_V1_BASE_BAR     1
+#define EMS_PCI_V1_CONF_SIZE    4096 /* size of PITA control area */
+#define EMS_PCI_V2_BASE_BAR     2
+#define EMS_PCI_V2_CONF_SIZE    128 /* size of PLX control area */
+#define EMS_PCI_CAN_BASE_OFFSET 0x400 /* offset where the controllers starts */
+#define EMS_PCI_CAN_CTRL_SIZE   0x200 /* memory size for each controller */
 
-#घोषणा EMS_PCI_BASE_SIZE  4096 /* size of controller area */
+#define EMS_PCI_BASE_SIZE  4096 /* size of controller area */
 
-अटल स्थिर काष्ठा pci_device_id ems_pci_tbl[] = अणु
+static const struct pci_device_id ems_pci_tbl[] = {
 	/* CPC-PCI v1 */
-	अणुPCI_VENDOR_ID_SIEMENS, 0x2104, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
+	{PCI_VENDOR_ID_SIEMENS, 0x2104, PCI_ANY_ID, PCI_ANY_ID,},
 	/* CPC-PCI v2 */
-	अणुPCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_PLX, 0x4000पूर्ण,
+	{PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_PLX, 0x4000},
 	/* CPC-104P v2 */
-	अणुPCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_PLX, 0x4002पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+	{PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9030, PCI_VENDOR_ID_PLX, 0x4002},
+	{0,}
+};
 MODULE_DEVICE_TABLE(pci, ems_pci_tbl);
 
 /*
- * Helper to पढ़ो पूर्णांकernal रेजिस्टरs from card logic (not CAN)
+ * Helper to read internal registers from card logic (not CAN)
  */
-अटल u8 ems_pci_v1_पढ़ोb(काष्ठा ems_pci_card *card, अचिन्हित पूर्णांक port)
-अणु
-	वापस पढ़ोb(card->base_addr + (port * 4));
-पूर्ण
+static u8 ems_pci_v1_readb(struct ems_pci_card *card, unsigned int port)
+{
+	return readb(card->base_addr + (port * 4));
+}
 
-अटल u8 ems_pci_v1_पढ़ो_reg(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक port)
-अणु
-	वापस पढ़ोb(priv->reg_base + (port * 4));
-पूर्ण
+static u8 ems_pci_v1_read_reg(const struct sja1000_priv *priv, int port)
+{
+	return readb(priv->reg_base + (port * 4));
+}
 
-अटल व्योम ems_pci_v1_ग_लिखो_reg(स्थिर काष्ठा sja1000_priv *priv,
-				 पूर्णांक port, u8 val)
-अणु
-	ग_लिखोb(val, priv->reg_base + (port * 4));
-पूर्ण
+static void ems_pci_v1_write_reg(const struct sja1000_priv *priv,
+				 int port, u8 val)
+{
+	writeb(val, priv->reg_base + (port * 4));
+}
 
-अटल व्योम ems_pci_v1_post_irq(स्थिर काष्ठा sja1000_priv *priv)
-अणु
-	काष्ठा ems_pci_card *card = (काष्ठा ems_pci_card *)priv->priv;
+static void ems_pci_v1_post_irq(const struct sja1000_priv *priv)
+{
+	struct ems_pci_card *card = (struct ems_pci_card *)priv->priv;
 
-	/* reset पूर्णांक flag of pita */
-	ग_लिखोl(PITA2_ICR_INT0_EN | PITA2_ICR_INT0,
+	/* reset int flag of pita */
+	writel(PITA2_ICR_INT0_EN | PITA2_ICR_INT0,
 	       card->conf_addr + PITA2_ICR);
-पूर्ण
+}
 
-अटल u8 ems_pci_v2_पढ़ो_reg(स्थिर काष्ठा sja1000_priv *priv, पूर्णांक port)
-अणु
-	वापस पढ़ोb(priv->reg_base + port);
-पूर्ण
+static u8 ems_pci_v2_read_reg(const struct sja1000_priv *priv, int port)
+{
+	return readb(priv->reg_base + port);
+}
 
-अटल व्योम ems_pci_v2_ग_लिखो_reg(स्थिर काष्ठा sja1000_priv *priv,
-				 पूर्णांक port, u8 val)
-अणु
-	ग_लिखोb(val, priv->reg_base + port);
-पूर्ण
+static void ems_pci_v2_write_reg(const struct sja1000_priv *priv,
+				 int port, u8 val)
+{
+	writeb(val, priv->reg_base + port);
+}
 
-अटल व्योम ems_pci_v2_post_irq(स्थिर काष्ठा sja1000_priv *priv)
-अणु
-	काष्ठा ems_pci_card *card = (काष्ठा ems_pci_card *)priv->priv;
+static void ems_pci_v2_post_irq(const struct sja1000_priv *priv)
+{
+	struct ems_pci_card *card = (struct ems_pci_card *)priv->priv;
 
-	ग_लिखोl(PLX_ICSR_ENA_CLR, card->conf_addr + PLX_ICSR);
-पूर्ण
+	writel(PLX_ICSR_ENA_CLR, card->conf_addr + PLX_ICSR);
+}
 
 /*
- * Check अगर a CAN controller is present at the specअगरied location
- * by trying to set 'em पूर्णांकo the PeliCAN mode
+ * Check if a CAN controller is present at the specified location
+ * by trying to set 'em into the PeliCAN mode
  */
-अटल अंतरभूत पूर्णांक ems_pci_check_chan(स्थिर काष्ठा sja1000_priv *priv)
-अणु
-	अचिन्हित अक्षर res;
+static inline int ems_pci_check_chan(const struct sja1000_priv *priv)
+{
+	unsigned char res;
 
 	/* Make sure SJA1000 is in reset mode */
-	priv->ग_लिखो_reg(priv, SJA1000_MOD, 1);
+	priv->write_reg(priv, SJA1000_MOD, 1);
 
-	priv->ग_लिखो_reg(priv, SJA1000_CDR, CDR_PELICAN);
+	priv->write_reg(priv, SJA1000_CDR, CDR_PELICAN);
 
-	/* पढ़ो reset-values */
-	res = priv->पढ़ो_reg(priv, SJA1000_CDR);
+	/* read reset-values */
+	res = priv->read_reg(priv, SJA1000_CDR);
 
-	अगर (res == CDR_PELICAN)
-		वापस 1;
+	if (res == CDR_PELICAN)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ems_pci_del_card(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ems_pci_card *card = pci_get_drvdata(pdev);
-	काष्ठा net_device *dev;
-	पूर्णांक i = 0;
+static void ems_pci_del_card(struct pci_dev *pdev)
+{
+	struct ems_pci_card *card = pci_get_drvdata(pdev);
+	struct net_device *dev;
+	int i = 0;
 
-	क्रम (i = 0; i < card->channels; i++) अणु
+	for (i = 0; i < card->channels; i++) {
 		dev = card->net_dev[i];
 
-		अगर (!dev)
-			जारी;
+		if (!dev)
+			continue;
 
 		dev_info(&pdev->dev, "Removing %s.\n", dev->name);
-		unरेजिस्टर_sja1000dev(dev);
-		मुक्त_sja1000dev(dev);
-	पूर्ण
+		unregister_sja1000dev(dev);
+		free_sja1000dev(dev);
+	}
 
-	अगर (card->base_addr != शून्य)
+	if (card->base_addr != NULL)
 		pci_iounmap(card->pci_dev, card->base_addr);
 
-	अगर (card->conf_addr != शून्य)
+	if (card->conf_addr != NULL)
 		pci_iounmap(card->pci_dev, card->conf_addr);
 
-	kमुक्त(card);
+	kfree(card);
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल व्योम ems_pci_card_reset(काष्ठा ems_pci_card *card)
-अणु
+static void ems_pci_card_reset(struct ems_pci_card *card)
+{
 	/* Request board reset */
-	ग_लिखोb(0, card->base_addr);
-पूर्ण
+	writeb(0, card->base_addr);
+}
 
 /*
- * Probe PCI device क्रम EMS CAN signature and रेजिस्टर each available
- * CAN channel to SJA1000 Socket-CAN subप्रणाली.
+ * Probe PCI device for EMS CAN signature and register each available
+ * CAN channel to SJA1000 Socket-CAN subsystem.
  */
-अटल पूर्णांक ems_pci_add_card(काष्ठा pci_dev *pdev,
-			    स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा sja1000_priv *priv;
-	काष्ठा net_device *dev;
-	काष्ठा ems_pci_card *card;
-	पूर्णांक max_chan, conf_size, base_bar;
-	पूर्णांक err, i;
+static int ems_pci_add_card(struct pci_dev *pdev,
+			    const struct pci_device_id *ent)
+{
+	struct sja1000_priv *priv;
+	struct net_device *dev;
+	struct ems_pci_card *card;
+	int max_chan, conf_size, base_bar;
+	int err, i;
 
 	/* Enabling PCI device */
-	अगर (pci_enable_device(pdev) < 0) अणु
+	if (pci_enable_device(pdev) < 0) {
 		dev_err(&pdev->dev, "Enabling PCI device failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Allocating card काष्ठाures to hold addresses, ... */
-	card = kzalloc(माप(काष्ठा ems_pci_card), GFP_KERNEL);
-	अगर (card == शून्य) अणु
+	/* Allocating card structures to hold addresses, ... */
+	card = kzalloc(sizeof(struct ems_pci_card), GFP_KERNEL);
+	if (card == NULL) {
 		pci_disable_device(pdev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pci_set_drvdata(pdev, card);
 
@@ -235,57 +234,57 @@ MODULE_DEVICE_TABLE(pci, ems_pci_tbl);
 
 	card->channels = 0;
 
-	अगर (pdev->venकरोr == PCI_VENDOR_ID_PLX) अणु
+	if (pdev->vendor == PCI_VENDOR_ID_PLX) {
 		card->version = 2; /* CPC-PCI v2 */
 		max_chan = EMS_PCI_V2_MAX_CHAN;
 		base_bar = EMS_PCI_V2_BASE_BAR;
 		conf_size = EMS_PCI_V2_CONF_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		card->version = 1; /* CPC-PCI v1 */
 		max_chan = EMS_PCI_V1_MAX_CHAN;
 		base_bar = EMS_PCI_V1_BASE_BAR;
 		conf_size = EMS_PCI_V1_CONF_SIZE;
-	पूर्ण
+	}
 
 	/* Remap configuration space and controller memory area */
 	card->conf_addr = pci_iomap(pdev, 0, conf_size);
-	अगर (card->conf_addr == शून्य) अणु
+	if (card->conf_addr == NULL) {
 		err = -ENOMEM;
-		जाओ failure_cleanup;
-	पूर्ण
+		goto failure_cleanup;
+	}
 
 	card->base_addr = pci_iomap(pdev, base_bar, EMS_PCI_BASE_SIZE);
-	अगर (card->base_addr == शून्य) अणु
+	if (card->base_addr == NULL) {
 		err = -ENOMEM;
-		जाओ failure_cleanup;
-	पूर्ण
+		goto failure_cleanup;
+	}
 
-	अगर (card->version == 1) अणु
-		/* Configure PITA-2 parallel पूर्णांकerface (enable MUX) */
-		ग_लिखोl(PITA2_MISC_CONFIG, card->conf_addr + PITA2_MISC);
+	if (card->version == 1) {
+		/* Configure PITA-2 parallel interface (enable MUX) */
+		writel(PITA2_MISC_CONFIG, card->conf_addr + PITA2_MISC);
 
-		/* Check क्रम unique EMS CAN signature */
-		अगर (ems_pci_v1_पढ़ोb(card, 0) != 0x55 ||
-		    ems_pci_v1_पढ़ोb(card, 1) != 0xAA ||
-		    ems_pci_v1_पढ़ोb(card, 2) != 0x01 ||
-		    ems_pci_v1_पढ़ोb(card, 3) != 0xCB ||
-		    ems_pci_v1_पढ़ोb(card, 4) != 0x11) अणु
+		/* Check for unique EMS CAN signature */
+		if (ems_pci_v1_readb(card, 0) != 0x55 ||
+		    ems_pci_v1_readb(card, 1) != 0xAA ||
+		    ems_pci_v1_readb(card, 2) != 0x01 ||
+		    ems_pci_v1_readb(card, 3) != 0xCB ||
+		    ems_pci_v1_readb(card, 4) != 0x11) {
 			dev_err(&pdev->dev,
 				"Not EMS Dr. Thomas Wuensche interface\n");
 			err = -ENODEV;
-			जाओ failure_cleanup;
-		पूर्ण
-	पूर्ण
+			goto failure_cleanup;
+		}
+	}
 
 	ems_pci_card_reset(card);
 
 	/* Detect available channels */
-	क्रम (i = 0; i < max_chan; i++) अणु
+	for (i = 0; i < max_chan; i++) {
 		dev = alloc_sja1000dev(0);
-		अगर (dev == शून्य) अणु
+		if (dev == NULL) {
 			err = -ENOMEM;
-			जाओ failure_cleanup;
-		पूर्ण
+			goto failure_cleanup;
+		}
 
 		card->net_dev[i] = dev;
 		priv = netdev_priv(dev);
@@ -295,67 +294,67 @@ MODULE_DEVICE_TABLE(pci, ems_pci_tbl);
 		dev->irq = pdev->irq;
 		priv->reg_base = card->base_addr + EMS_PCI_CAN_BASE_OFFSET
 					+ (i * EMS_PCI_CAN_CTRL_SIZE);
-		अगर (card->version == 1) अणु
-			priv->पढ़ो_reg  = ems_pci_v1_पढ़ो_reg;
-			priv->ग_लिखो_reg = ems_pci_v1_ग_लिखो_reg;
+		if (card->version == 1) {
+			priv->read_reg  = ems_pci_v1_read_reg;
+			priv->write_reg = ems_pci_v1_write_reg;
 			priv->post_irq  = ems_pci_v1_post_irq;
-		पूर्ण अन्यथा अणु
-			priv->पढ़ो_reg  = ems_pci_v2_पढ़ो_reg;
-			priv->ग_लिखो_reg = ems_pci_v2_ग_लिखो_reg;
+		} else {
+			priv->read_reg  = ems_pci_v2_read_reg;
+			priv->write_reg = ems_pci_v2_write_reg;
 			priv->post_irq  = ems_pci_v2_post_irq;
-		पूर्ण
+		}
 
-		/* Check अगर channel is present */
-		अगर (ems_pci_check_chan(priv)) अणु
-			priv->can.घड़ी.freq = EMS_PCI_CAN_CLOCK;
+		/* Check if channel is present */
+		if (ems_pci_check_chan(priv)) {
+			priv->can.clock.freq = EMS_PCI_CAN_CLOCK;
 			priv->ocr = EMS_PCI_OCR;
 			priv->cdr = EMS_PCI_CDR;
 
 			SET_NETDEV_DEV(dev, &pdev->dev);
 			dev->dev_id = i;
 
-			अगर (card->version == 1)
-				/* reset पूर्णांक flag of pita */
-				ग_लिखोl(PITA2_ICR_INT0_EN | PITA2_ICR_INT0,
+			if (card->version == 1)
+				/* reset int flag of pita */
+				writel(PITA2_ICR_INT0_EN | PITA2_ICR_INT0,
 				       card->conf_addr + PITA2_ICR);
-			अन्यथा
+			else
 				/* enable IRQ in PLX 9030 */
-				ग_लिखोl(PLX_ICSR_ENA_CLR,
+				writel(PLX_ICSR_ENA_CLR,
 				       card->conf_addr + PLX_ICSR);
 
 			/* Register SJA1000 device */
-			err = रेजिस्टर_sja1000dev(dev);
-			अगर (err) अणु
+			err = register_sja1000dev(dev);
+			if (err) {
 				dev_err(&pdev->dev, "Registering device failed "
 							"(err=%d)\n", err);
-				मुक्त_sja1000dev(dev);
-				जाओ failure_cleanup;
-			पूर्ण
+				free_sja1000dev(dev);
+				goto failure_cleanup;
+			}
 
 			card->channels++;
 
 			dev_info(&pdev->dev, "Channel #%d at 0x%p, irq %d\n",
 					i + 1, priv->reg_base, dev->irq);
-		पूर्ण अन्यथा अणु
-			मुक्त_sja1000dev(dev);
-		पूर्ण
-	पूर्ण
+		} else {
+			free_sja1000dev(dev);
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 failure_cleanup:
 	dev_err(&pdev->dev, "Error: %d. Cleaning Up.\n", err);
 
 	ems_pci_del_card(pdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा pci_driver ems_pci_driver = अणु
+static struct pci_driver ems_pci_driver = {
 	.name = DRV_NAME,
 	.id_table = ems_pci_tbl,
 	.probe = ems_pci_add_card,
-	.हटाओ = ems_pci_del_card,
-पूर्ण;
+	.remove = ems_pci_del_card,
+};
 
 module_pci_driver(ems_pci_driver);

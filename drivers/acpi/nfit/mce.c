@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * NFIT - Machine Check Handler
  *
  * Copyright(c) 2013-2016 Intel Corporation. All rights reserved.
  */
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/nd.h>
-#समावेश <यंत्र/mce.h>
-#समावेश "nfit.h"
+#include <linux/notifier.h>
+#include <linux/acpi.h>
+#include <linux/nd.h>
+#include <asm/mce.h>
+#include "nfit.h"
 
-अटल पूर्णांक nfit_handle_mce(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-			व्योम *data)
-अणु
-	काष्ठा mce *mce = (काष्ठा mce *)data;
-	काष्ठा acpi_nfit_desc *acpi_desc;
-	काष्ठा nfit_spa *nfit_spa;
+static int nfit_handle_mce(struct notifier_block *nb, unsigned long val,
+			void *data)
+{
+	struct mce *mce = (struct mce *)data;
+	struct acpi_nfit_desc *acpi_desc;
+	struct nfit_spa *nfit_spa;
 
 	/* We only care about uncorrectable memory errors */
-	अगर (!mce_is_memory_error(mce) || mce_is_correctable(mce))
-		वापस NOTIFY_DONE;
+	if (!mce_is_memory_error(mce) || mce_is_correctable(mce))
+		return NOTIFY_DONE;
 
-	/* Verअगरy the address reported in the MCE is valid. */
-	अगर (!mce_usable_address(mce))
-		वापस NOTIFY_DONE;
+	/* Verify the address reported in the MCE is valid. */
+	if (!mce_usable_address(mce))
+		return NOTIFY_DONE;
 
 	/*
 	 * mce->addr contains the physical addr accessed that caused the
 	 * machine check. We need to walk through the list of NFITs, and see
-	 * अगर any of them matches that address, and only then start a scrub.
+	 * if any of them matches that address, and only then start a scrub.
 	 */
 	mutex_lock(&acpi_desc_lock);
-	list_क्रम_each_entry(acpi_desc, &acpi_descs, list) अणु
-		काष्ठा device *dev = acpi_desc->dev;
-		पूर्णांक found_match = 0;
+	list_for_each_entry(acpi_desc, &acpi_descs, list) {
+		struct device *dev = acpi_desc->dev;
+		int found_match = 0;
 
 		mutex_lock(&acpi_desc->init_mutex);
-		list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
-			काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+		list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
+			struct acpi_nfit_system_address *spa = nfit_spa->spa;
 
-			अगर (nfit_spa_type(spa) != NFIT_SPA_PM)
-				जारी;
+			if (nfit_spa_type(spa) != NFIT_SPA_PM)
+				continue;
 			/* find the spa that covers the mce addr */
-			अगर (spa->address > mce->addr)
-				जारी;
-			अगर ((spa->address + spa->length - 1) < mce->addr)
-				जारी;
+			if (spa->address > mce->addr)
+				continue;
+			if ((spa->address + spa->length - 1) < mce->addr)
+				continue;
 			found_match = 1;
 			dev_dbg(dev, "addr in SPA %d (0x%llx, 0x%llx)\n",
 				spa->range_index, spa->address, spa->length);
 			/*
-			 * We can अवरोध at the first match because we're going
+			 * We can break at the first match because we're going
 			 * to rescan all the SPA ranges. There shouldn't be any
 			 * aliasing anyway.
 			 */
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mutex_unlock(&acpi_desc->init_mutex);
 
-		अगर (!found_match)
-			जारी;
+		if (!found_match)
+			continue;
 
-		/* If this fails due to an -ENOMEM, there is little we can करो */
+		/* If this fails due to an -ENOMEM, there is little we can do */
 		nvdimm_bus_add_badrange(acpi_desc->nvdimm_bus,
 				ALIGN(mce->addr, L1_CACHE_BYTES),
 				L1_CACHE_BYTES);
-		nvdimm_region_notअगरy(nfit_spa->nd_region,
+		nvdimm_region_notify(nfit_spa->nd_region,
 				NVDIMM_REVALIDATE_POISON);
 
-		अगर (acpi_desc->scrub_mode == HW_ERROR_SCRUB_ON) अणु
+		if (acpi_desc->scrub_mode == HW_ERROR_SCRUB_ON) {
 			/*
-			 * We can ignore an -EBUSY here because अगर an ARS is
-			 * alपढ़ोy in progress, just let that be the last
+			 * We can ignore an -EBUSY here because if an ARS is
+			 * already in progress, just let that be the last
 			 * authoritative one
 			 */
 			acpi_nfit_ars_rescan(acpi_desc, 0);
-		पूर्ण
+		}
 		mce->kflags |= MCE_HANDLED_NFIT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&acpi_desc_lock);
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block nfit_mce_dec = अणु
-	.notअगरier_call	= nfit_handle_mce,
+static struct notifier_block nfit_mce_dec = {
+	.notifier_call	= nfit_handle_mce,
 	.priority	= MCE_PRIO_NFIT,
-पूर्ण;
+};
 
-व्योम nfit_mce_रेजिस्टर(व्योम)
-अणु
-	mce_रेजिस्टर_decode_chain(&nfit_mce_dec);
-पूर्ण
+void nfit_mce_register(void)
+{
+	mce_register_decode_chain(&nfit_mce_dec);
+}
 
-व्योम nfit_mce_unरेजिस्टर(व्योम)
-अणु
-	mce_unरेजिस्टर_decode_chain(&nfit_mce_dec);
-पूर्ण
+void nfit_mce_unregister(void)
+{
+	mce_unregister_decode_chain(&nfit_mce_dec);
+}

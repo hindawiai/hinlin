@@ -1,64 +1,63 @@
-<शैली गुरु>
-#अगर_अघोषित _CRYPTO_GCM_H
-#घोषणा _CRYPTO_GCM_H
+#ifndef _CRYPTO_GCM_H
+#define _CRYPTO_GCM_H
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
-#घोषणा GCM_AES_IV_SIZE 12
-#घोषणा GCM_RFC4106_IV_SIZE 8
-#घोषणा GCM_RFC4543_IV_SIZE 8
-
-/*
- * validate authentication tag क्रम GCM
- */
-अटल अंतरभूत पूर्णांक crypto_gcm_check_authsize(अचिन्हित पूर्णांक authsize)
-अणु
-	चयन (authsize) अणु
-	हाल 4:
-	हाल 8:
-	हाल 12:
-	हाल 13:
-	हाल 14:
-	हाल 15:
-	हाल 16:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-
-	वापस 0;
-पूर्ण
+#define GCM_AES_IV_SIZE 12
+#define GCM_RFC4106_IV_SIZE 8
+#define GCM_RFC4543_IV_SIZE 8
 
 /*
- * validate authentication tag क्रम RFC4106
+ * validate authentication tag for GCM
  */
-अटल अंतरभूत पूर्णांक crypto_rfc4106_check_authsize(अचिन्हित पूर्णांक authsize)
-अणु
-	चयन (authsize) अणु
-	हाल 8:
-	हाल 12:
-	हाल 16:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static inline int crypto_gcm_check_authsize(unsigned int authsize)
+{
+	switch (authsize) {
+	case 4:
+	case 8:
+	case 12:
+	case 13:
+	case 14:
+	case 15:
+	case 16:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * validate assoclen क्रम RFC4106/RFC4543
+ * validate authentication tag for RFC4106
  */
-अटल अंतरभूत पूर्णांक crypto_ipsec_check_assoclen(अचिन्हित पूर्णांक assoclen)
-अणु
-	चयन (assoclen) अणु
-	हाल 16:
-	हाल 20:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static inline int crypto_rfc4106_check_authsize(unsigned int authsize)
+{
+	switch (authsize) {
+	case 8:
+	case 12:
+	case 16:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+
+/*
+ * validate assoclen for RFC4106/RFC4543
+ */
+static inline int crypto_ipsec_check_assoclen(unsigned int assoclen)
+{
+	switch (assoclen) {
+	case 16:
+	case 20:
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#endif

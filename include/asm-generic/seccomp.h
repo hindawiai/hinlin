@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * include/यंत्र-generic/seccomp.h
+ * include/asm-generic/seccomp.h
  *
  * Copyright (C) 2014 Linaro Limited
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
  */
-#अगर_अघोषित _ASM_GENERIC_SECCOMP_H
-#घोषणा _ASM_GENERIC_SECCOMP_H
+#ifndef _ASM_GENERIC_SECCOMP_H
+#define _ASM_GENERIC_SECCOMP_H
 
-#समावेश <linux/unistd.h>
+#include <linux/unistd.h>
 
-#अगर defined(CONFIG_COMPAT) && !defined(__NR_seccomp_पढ़ो_32)
-#घोषणा __NR_seccomp_पढ़ो_32		__NR_पढ़ो
-#घोषणा __NR_seccomp_ग_लिखो_32		__NR_ग_लिखो
-#घोषणा __NR_seccomp_निकास_32		__NR_निकास
-#अगर_अघोषित __NR_seccomp_sigवापस_32
-#घोषणा __NR_seccomp_sigवापस_32	__NR_rt_sigवापस
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_COMPAT && ! alपढ़ोy defined */
+#if defined(CONFIG_COMPAT) && !defined(__NR_seccomp_read_32)
+#define __NR_seccomp_read_32		__NR_read
+#define __NR_seccomp_write_32		__NR_write
+#define __NR_seccomp_exit_32		__NR_exit
+#ifndef __NR_seccomp_sigreturn_32
+#define __NR_seccomp_sigreturn_32	__NR_rt_sigreturn
+#endif
+#endif /* CONFIG_COMPAT && ! already defined */
 
-#घोषणा __NR_seccomp_पढ़ो		__NR_पढ़ो
-#घोषणा __NR_seccomp_ग_लिखो		__NR_ग_लिखो
-#घोषणा __NR_seccomp_निकास		__NR_निकास
-#अगर_अघोषित __NR_seccomp_sigवापस
-#घोषणा __NR_seccomp_sigवापस		__NR_rt_sigवापस
-#पूर्ण_अगर
+#define __NR_seccomp_read		__NR_read
+#define __NR_seccomp_write		__NR_write
+#define __NR_seccomp_exit		__NR_exit
+#ifndef __NR_seccomp_sigreturn
+#define __NR_seccomp_sigreturn		__NR_rt_sigreturn
+#endif
 
-#अगर_घोषित CONFIG_COMPAT
-#अगर_अघोषित get_compat_mode1_syscalls
-अटल अंतरभूत स्थिर पूर्णांक *get_compat_mode1_syscalls(व्योम)
-अणु
-	अटल स्थिर पूर्णांक mode1_syscalls_32[] = अणु
-		__NR_seccomp_पढ़ो_32, __NR_seccomp_ग_लिखो_32,
-		__NR_seccomp_निकास_32, __NR_seccomp_sigवापस_32,
+#ifdef CONFIG_COMPAT
+#ifndef get_compat_mode1_syscalls
+static inline const int *get_compat_mode1_syscalls(void)
+{
+	static const int mode1_syscalls_32[] = {
+		__NR_seccomp_read_32, __NR_seccomp_write_32,
+		__NR_seccomp_exit_32, __NR_seccomp_sigreturn_32,
 		-1, /* negative terminated */
-	पूर्ण;
-	वापस mode1_syscalls_32;
-पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_COMPAT */
+	};
+	return mode1_syscalls_32;
+}
+#endif
+#endif /* CONFIG_COMPAT */
 
-#पूर्ण_अगर /* _ASM_GENERIC_SECCOMP_H */
+#endif /* _ASM_GENERIC_SECCOMP_H */

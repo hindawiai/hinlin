@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Routines क्रम Gravis UltraSound soundcards - Timers
+ *  Routines for Gravis UltraSound soundcards - Timers
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
- *  GUS have similar समयrs as AdLib (OPL2/OPL3 chips).
+ *  GUS have similar timers as AdLib (OPL2/OPL3 chips).
  */
 
-#समावेश <linux/समय.स>
-#समावेश <sound/core.h>
-#समावेश <sound/gus.h>
+#include <linux/time.h>
+#include <sound/core.h>
+#include <sound/gus.h>
 
 /*
  *  Timer 1 - 80us
  */
 
-अटल पूर्णांक snd_gf1_समयr1_start(काष्ठा snd_समयr * समयr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर पंचांगp;
-	अचिन्हित पूर्णांक ticks;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_timer1_start(struct snd_timer * timer)
+{
+	unsigned long flags;
+	unsigned char tmp;
+	unsigned int ticks;
+	struct snd_gus_card *gus;
 
-	gus = snd_समयr_chip(समयr);
+	gus = snd_timer_chip(timer);
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	ticks = समयr->sticks;
-	पंचांगp = (gus->gf1.समयr_enabled |= 4);
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_ADLIB_TIMER_1, 256 - ticks);	/* समयr 1 count */
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, पंचांगp);	/* enable समयr 1 IRQ */
-	snd_gf1_adlib_ग_लिखो(gus, 0x04, पंचांगp >> 2);	/* समयr 2 start */
+	ticks = timer->sticks;
+	tmp = (gus->gf1.timer_enabled |= 4);
+	snd_gf1_write8(gus, SNDRV_GF1_GB_ADLIB_TIMER_1, 256 - ticks);	/* timer 1 count */
+	snd_gf1_write8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, tmp);	/* enable timer 1 IRQ */
+	snd_gf1_adlib_write(gus, 0x04, tmp >> 2);	/* timer 2 start */
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_समयr1_stop(काष्ठा snd_समयr * समयr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर पंचांगp;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_timer1_stop(struct snd_timer * timer)
+{
+	unsigned long flags;
+	unsigned char tmp;
+	struct snd_gus_card *gus;
 
-	gus = snd_समयr_chip(समयr);
+	gus = snd_timer_chip(timer);
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	पंचांगp = (gus->gf1.समयr_enabled &= ~4);
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, पंचांगp);	/* disable समयr #1 */
+	tmp = (gus->gf1.timer_enabled &= ~4);
+	snd_gf1_write8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, tmp);	/* disable timer #1 */
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *  Timer 2 - 320us
  */
 
-अटल पूर्णांक snd_gf1_समयr2_start(काष्ठा snd_समयr * समयr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर पंचांगp;
-	अचिन्हित पूर्णांक ticks;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_timer2_start(struct snd_timer * timer)
+{
+	unsigned long flags;
+	unsigned char tmp;
+	unsigned int ticks;
+	struct snd_gus_card *gus;
 
-	gus = snd_समयr_chip(समयr);
+	gus = snd_timer_chip(timer);
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	ticks = समयr->sticks;
-	पंचांगp = (gus->gf1.समयr_enabled |= 8);
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_ADLIB_TIMER_2, 256 - ticks);	/* समयr 2 count */
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, पंचांगp);	/* enable समयr 2 IRQ */
-	snd_gf1_adlib_ग_लिखो(gus, 0x04, पंचांगp >> 2);	/* समयr 2 start */
+	ticks = timer->sticks;
+	tmp = (gus->gf1.timer_enabled |= 8);
+	snd_gf1_write8(gus, SNDRV_GF1_GB_ADLIB_TIMER_2, 256 - ticks);	/* timer 2 count */
+	snd_gf1_write8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, tmp);	/* enable timer 2 IRQ */
+	snd_gf1_adlib_write(gus, 0x04, tmp >> 2);	/* timer 2 start */
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_gf1_समयr2_stop(काष्ठा snd_समयr * समयr)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर पंचांगp;
-	काष्ठा snd_gus_card *gus;
+static int snd_gf1_timer2_stop(struct snd_timer * timer)
+{
+	unsigned long flags;
+	unsigned char tmp;
+	struct snd_gus_card *gus;
 
-	gus = snd_समयr_chip(समयr);
+	gus = snd_timer_chip(timer);
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	पंचांगp = (gus->gf1.समयr_enabled &= ~8);
-	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, पंचांगp);	/* disable समयr #1 */
+	tmp = (gus->gf1.timer_enabled &= ~8);
+	snd_gf1_write8(gus, SNDRV_GF1_GB_SOUND_BLASTER_CONTROL, tmp);	/* disable timer #1 */
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
 
  */
 
-अटल व्योम snd_gf1_पूर्णांकerrupt_समयr1(काष्ठा snd_gus_card * gus)
-अणु
-	काष्ठा snd_समयr *समयr = gus->gf1.समयr1;
+static void snd_gf1_interrupt_timer1(struct snd_gus_card * gus)
+{
+	struct snd_timer *timer = gus->gf1.timer1;
 
-	अगर (समयr == शून्य)
-		वापस;
-	snd_समयr_पूर्णांकerrupt(समयr, समयr->sticks);
-पूर्ण
+	if (timer == NULL)
+		return;
+	snd_timer_interrupt(timer, timer->sticks);
+}
 
-अटल व्योम snd_gf1_पूर्णांकerrupt_समयr2(काष्ठा snd_gus_card * gus)
-अणु
-	काष्ठा snd_समयr *समयr = gus->gf1.समयr2;
+static void snd_gf1_interrupt_timer2(struct snd_gus_card * gus)
+{
+	struct snd_timer *timer = gus->gf1.timer2;
 
-	अगर (समयr == शून्य)
-		वापस;
-	snd_समयr_पूर्णांकerrupt(समयr, समयr->sticks);
-पूर्ण
+	if (timer == NULL)
+		return;
+	snd_timer_interrupt(timer, timer->sticks);
+}
 
 /*
 
  */
 
-अटल स्थिर काष्ठा snd_समयr_hardware snd_gf1_समयr1 =
-अणु
+static const struct snd_timer_hardware snd_gf1_timer1 =
+{
 	.flags =	SNDRV_TIMER_HW_STOP,
 	.resolution =	80000,
 	.ticks =	256,
-	.start =	snd_gf1_समयr1_start,
-	.stop =		snd_gf1_समयr1_stop,
-पूर्ण;
+	.start =	snd_gf1_timer1_start,
+	.stop =		snd_gf1_timer1_stop,
+};
 
-अटल स्थिर काष्ठा snd_समयr_hardware snd_gf1_समयr2 =
-अणु
+static const struct snd_timer_hardware snd_gf1_timer2 =
+{
 	.flags =	SNDRV_TIMER_HW_STOP,
 	.resolution =	320000,
 	.ticks =	256,
-	.start =	snd_gf1_समयr2_start,
-	.stop =		snd_gf1_समयr2_stop,
-पूर्ण;
+	.start =	snd_gf1_timer2_start,
+	.stop =		snd_gf1_timer2_stop,
+};
 
-अटल व्योम snd_gf1_समयr1_मुक्त(काष्ठा snd_समयr *समयr)
-अणु
-	काष्ठा snd_gus_card *gus = समयr->निजी_data;
-	gus->gf1.समयr1 = शून्य;
-पूर्ण
+static void snd_gf1_timer1_free(struct snd_timer *timer)
+{
+	struct snd_gus_card *gus = timer->private_data;
+	gus->gf1.timer1 = NULL;
+}
 
-अटल व्योम snd_gf1_समयr2_मुक्त(काष्ठा snd_समयr *समयr)
-अणु
-	काष्ठा snd_gus_card *gus = समयr->निजी_data;
-	gus->gf1.समयr2 = शून्य;
-पूर्ण
+static void snd_gf1_timer2_free(struct snd_timer *timer)
+{
+	struct snd_gus_card *gus = timer->private_data;
+	gus->gf1.timer2 = NULL;
+}
 
-व्योम snd_gf1_समयrs_init(काष्ठा snd_gus_card * gus)
-अणु
-	काष्ठा snd_समयr *समयr;
-	काष्ठा snd_समयr_id tid;
+void snd_gf1_timers_init(struct snd_gus_card * gus)
+{
+	struct snd_timer *timer;
+	struct snd_timer_id tid;
 
-	अगर (gus->gf1.समयr1 != शून्य || gus->gf1.समयr2 != शून्य)
-		वापस;
+	if (gus->gf1.timer1 != NULL || gus->gf1.timer2 != NULL)
+		return;
 
-	gus->gf1.पूर्णांकerrupt_handler_समयr1 = snd_gf1_पूर्णांकerrupt_समयr1;
-	gus->gf1.पूर्णांकerrupt_handler_समयr2 = snd_gf1_पूर्णांकerrupt_समयr2;
+	gus->gf1.interrupt_handler_timer1 = snd_gf1_interrupt_timer1;
+	gus->gf1.interrupt_handler_timer2 = snd_gf1_interrupt_timer2;
 
 	tid.dev_class = SNDRV_TIMER_CLASS_CARD;
 	tid.dev_sclass = SNDRV_TIMER_SCLASS_NONE;
 	tid.card = gus->card->number;
-	tid.device = gus->समयr_dev;
+	tid.device = gus->timer_dev;
 	tid.subdevice = 0;
 
-	अगर (snd_समयr_new(gus->card, "GF1 timer", &tid, &समयr) >= 0) अणु
-		म_नकल(समयr->name, "GF1 timer #1");
-		समयr->निजी_data = gus;
-		समयr->निजी_मुक्त = snd_gf1_समयr1_मुक्त;
-		समयr->hw = snd_gf1_समयr1;
-	पूर्ण
-	gus->gf1.समयr1 = समयr;
+	if (snd_timer_new(gus->card, "GF1 timer", &tid, &timer) >= 0) {
+		strcpy(timer->name, "GF1 timer #1");
+		timer->private_data = gus;
+		timer->private_free = snd_gf1_timer1_free;
+		timer->hw = snd_gf1_timer1;
+	}
+	gus->gf1.timer1 = timer;
 
 	tid.device++;
 
-	अगर (snd_समयr_new(gus->card, "GF1 timer", &tid, &समयr) >= 0) अणु
-		म_नकल(समयr->name, "GF1 timer #2");
-		समयr->निजी_data = gus;
-		समयr->निजी_मुक्त = snd_gf1_समयr2_मुक्त;
-		समयr->hw = snd_gf1_समयr2;
-	पूर्ण
-	gus->gf1.समयr2 = समयr;
-पूर्ण
+	if (snd_timer_new(gus->card, "GF1 timer", &tid, &timer) >= 0) {
+		strcpy(timer->name, "GF1 timer #2");
+		timer->private_data = gus;
+		timer->private_free = snd_gf1_timer2_free;
+		timer->hw = snd_gf1_timer2;
+	}
+	gus->gf1.timer2 = timer;
+}
 
-व्योम snd_gf1_समयrs_करोne(काष्ठा snd_gus_card * gus)
-अणु
-	snd_gf1_set_शेष_handlers(gus, SNDRV_GF1_HANDLER_TIMER1 | SNDRV_GF1_HANDLER_TIMER2);
-	अगर (gus->gf1.समयr1) अणु
-		snd_device_मुक्त(gus->card, gus->gf1.समयr1);
-		gus->gf1.समयr1 = शून्य;
-	पूर्ण
-	अगर (gus->gf1.समयr2) अणु
-		snd_device_मुक्त(gus->card, gus->gf1.समयr2);
-		gus->gf1.समयr2 = शून्य;
-	पूर्ण
-पूर्ण
+void snd_gf1_timers_done(struct snd_gus_card * gus)
+{
+	snd_gf1_set_default_handlers(gus, SNDRV_GF1_HANDLER_TIMER1 | SNDRV_GF1_HANDLER_TIMER2);
+	if (gus->gf1.timer1) {
+		snd_device_free(gus->card, gus->gf1.timer1);
+		gus->gf1.timer1 = NULL;
+	}
+	if (gus->gf1.timer2) {
+		snd_device_free(gus->card, gus->gf1.timer2);
+		gus->gf1.timer2 = NULL;
+	}
+}

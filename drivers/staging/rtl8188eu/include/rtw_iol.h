@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTW_IOL_H_
-#घोषणा __RTW_IOL_H_
+#ifndef __RTW_IOL_H_
+#define __RTW_IOL_H_
 
-#समावेश <drv_types.h>
+#include <drv_types.h>
 
-bool rtw_iol_applied(काष्ठा adapter *adapter);
+bool rtw_iol_applied(struct adapter *adapter);
 
-#पूर्ण_अगर /* __RTW_IOL_H_ */
+#endif /* __RTW_IOL_H_ */

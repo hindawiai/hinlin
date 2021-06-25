@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * This is the driver क्रम the STA2x11 Video Input Port.
+ * This is the driver for the STA2x11 Video Input Port.
  *
  * Copyright (C) 2012       ST Microelectronics
  *     author: Federico Vaga <federico.vaga@gmail.com>
@@ -10,93 +9,93 @@
  *              Vlad Lungu   <vlad.lungu@windriver.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/videodev2.h>
+#include <linux/kmod.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-event.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश "sta2x11_vip.h"
+#include "sta2x11_vip.h"
 
-#घोषणा DRV_VERSION "1.3"
+#define DRV_VERSION "1.3"
 
-#अगर_अघोषित PCI_DEVICE_ID_STMICRO_VIP
-#घोषणा PCI_DEVICE_ID_STMICRO_VIP 0xCC0D
-#पूर्ण_अगर
+#ifndef PCI_DEVICE_ID_STMICRO_VIP
+#define PCI_DEVICE_ID_STMICRO_VIP 0xCC0D
+#endif
 
-#घोषणा MAX_FRAMES 4
+#define MAX_FRAMES 4
 
 /*Register offsets*/
-#घोषणा DVP_CTL		0x00
-#घोषणा DVP_TFO		0x04
-#घोषणा DVP_TFS		0x08
-#घोषणा DVP_BFO		0x0C
-#घोषणा DVP_BFS		0x10
-#घोषणा DVP_VTP		0x14
-#घोषणा DVP_VBP		0x18
-#घोषणा DVP_VMP		0x1C
-#घोषणा DVP_ITM		0x98
-#घोषणा DVP_ITS		0x9C
-#घोषणा DVP_STA		0xA0
-#घोषणा DVP_HLFLN	0xA8
-#घोषणा DVP_RGB		0xC0
-#घोषणा DVP_PKZ		0xF0
+#define DVP_CTL		0x00
+#define DVP_TFO		0x04
+#define DVP_TFS		0x08
+#define DVP_BFO		0x0C
+#define DVP_BFS		0x10
+#define DVP_VTP		0x14
+#define DVP_VBP		0x18
+#define DVP_VMP		0x1C
+#define DVP_ITM		0x98
+#define DVP_ITS		0x9C
+#define DVP_STA		0xA0
+#define DVP_HLFLN	0xA8
+#define DVP_RGB		0xC0
+#define DVP_PKZ		0xF0
 
 /*Register fields*/
-#घोषणा DVP_CTL_ENA	0x00000001
-#घोषणा DVP_CTL_RST	0x80000000
-#घोषणा DVP_CTL_DIS	(~0x00040001)
+#define DVP_CTL_ENA	0x00000001
+#define DVP_CTL_RST	0x80000000
+#define DVP_CTL_DIS	(~0x00040001)
 
-#घोषणा DVP_IT_VSB	0x00000008
-#घोषणा DVP_IT_VST	0x00000010
-#घोषणा DVP_IT_FIFO	0x00000020
+#define DVP_IT_VSB	0x00000008
+#define DVP_IT_VST	0x00000010
+#define DVP_IT_FIFO	0x00000020
 
-#घोषणा DVP_HLFLN_SD	0x00000001
+#define DVP_HLFLN_SD	0x00000001
 
-#घोषणा SAVE_COUNT 8
-#घोषणा AUX_COUNT 3
-#घोषणा IRQ_COUNT 1
+#define SAVE_COUNT 8
+#define AUX_COUNT 3
+#define IRQ_COUNT 1
 
 
-काष्ठा vip_buffer अणु
-	काष्ठा vb2_v4l2_buffer vb;
-	काष्ठा list_head	list;
+struct vip_buffer {
+	struct vb2_v4l2_buffer vb;
+	struct list_head	list;
 	dma_addr_t		dma;
-पूर्ण;
-अटल अंतरभूत काष्ठा vip_buffer *to_vip_buffer(काष्ठा vb2_v4l2_buffer *vb2)
-अणु
-	वापस container_of(vb2, काष्ठा vip_buffer, vb);
-पूर्ण
+};
+static inline struct vip_buffer *to_vip_buffer(struct vb2_v4l2_buffer *vb2)
+{
+	return container_of(vb2, struct vip_buffer, vb);
+}
 
 /**
- * काष्ठा sta2x11_vip - All पूर्णांकernal data क्रम one instance of device
- * @v4l2_dev: device रेजिस्टरed in v4l layer
+ * struct sta2x11_vip - All internal data for one instance of device
+ * @v4l2_dev: device registered in v4l layer
  * @video_dev: properties of our device
  * @pdev: PCI device
- * @adapter: contains I2C adapter inक्रमmation
- * @रेजिस्टर_save_area: All relevant रेजिस्टर are saved here during suspend
- * @decoder: contains inक्रमmation about video DAC
- * @ctrl_hdl: handler क्रम control framework
- * @क्रमmat: pixel क्रमmat, fixed UYVY
+ * @adapter: contains I2C adapter information
+ * @register_save_area: All relevant register are saved here during suspend
+ * @decoder: contains information about video DAC
+ * @ctrl_hdl: handler for control framework
+ * @format: pixel format, fixed UYVY
  * @std: video standard (e.g. PAL/NTSC)
- * @input: input line क्रम video संकेत ( 0 or 1 )
- * @disabled: Device is in घातer करोwn state
- * @slock: क्रम excluse access of रेजिस्टरs
- * @vb_vidq: queue मुख्यtained by videobuf2 layer
+ * @input: input line for video signal ( 0 or 1 )
+ * @disabled: Device is in power down state
+ * @slock: for excluse access of registers
+ * @vb_vidq: queue maintained by videobuf2 layer
  * @buffer_list: list of buffer in use
  * @sequence: sequence number of acquired buffer
  * @active: current active buffer
@@ -106,265 +105,265 @@
  * @bcount: Number of bottom frames
  * @overflow: Number of FIFO overflows
  * @iomem: hardware base address
- * @config: I2C and gpio config from platक्रमm
+ * @config: I2C and gpio config from platform
  *
- * All non-local data is accessed via this काष्ठाure.
+ * All non-local data is accessed via this structure.
  */
-काष्ठा sta2x11_vip अणु
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा video_device video_dev;
-	काष्ठा pci_dev *pdev;
-	काष्ठा i2c_adapter *adapter;
-	अचिन्हित पूर्णांक रेजिस्टर_save_area[IRQ_COUNT + SAVE_COUNT + AUX_COUNT];
-	काष्ठा v4l2_subdev *decoder;
-	काष्ठा v4l2_ctrl_handler ctrl_hdl;
+struct sta2x11_vip {
+	struct v4l2_device v4l2_dev;
+	struct video_device video_dev;
+	struct pci_dev *pdev;
+	struct i2c_adapter *adapter;
+	unsigned int register_save_area[IRQ_COUNT + SAVE_COUNT + AUX_COUNT];
+	struct v4l2_subdev *decoder;
+	struct v4l2_ctrl_handler ctrl_hdl;
 
 
-	काष्ठा v4l2_pix_क्रमmat क्रमmat;
+	struct v4l2_pix_format format;
 	v4l2_std_id std;
-	अचिन्हित पूर्णांक input;
-	पूर्णांक disabled;
+	unsigned int input;
+	int disabled;
 	spinlock_t slock;
 
-	काष्ठा vb2_queue vb_vidq;
-	काष्ठा list_head buffer_list;
-	अचिन्हित पूर्णांक sequence;
-	काष्ठा vip_buffer *active; /* current active buffer */
+	struct vb2_queue vb_vidq;
+	struct list_head buffer_list;
+	unsigned int sequence;
+	struct vip_buffer *active; /* current active buffer */
 	spinlock_t lock; /* Used in videobuf2 callback */
-	काष्ठा mutex v4l_lock;
+	struct mutex v4l_lock;
 
 	/* Interrupt counters */
-	पूर्णांक tcount, bcount;
-	पूर्णांक overflow;
+	int tcount, bcount;
+	int overflow;
 
-	व्योम __iomem *iomem;	/* I/O Memory */
-	काष्ठा vip_config *config;
-पूर्ण;
+	void __iomem *iomem;	/* I/O Memory */
+	struct vip_config *config;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक रेजिस्टरs_to_save[AUX_COUNT] = अणु
+static const unsigned int registers_to_save[AUX_COUNT] = {
 	DVP_HLFLN, DVP_RGB, DVP_PKZ
-पूर्ण;
+};
 
-अटल काष्ठा v4l2_pix_क्रमmat क्रमmats_50[] = अणु
-	अणु			/*PAL पूर्णांकerlaced */
+static struct v4l2_pix_format formats_50[] = {
+	{			/*PAL interlaced */
 	 .width = 720,
 	 .height = 576,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_INTERLACED,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 576,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
-	अणु			/*PAL top */
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
+	{			/*PAL top */
 	 .width = 720,
 	 .height = 288,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_TOP,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 288,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
-	अणु			/*PAL bottom */
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
+	{			/*PAL bottom */
 	 .width = 720,
 	 .height = 288,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_BOTTOM,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 288,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
 
-पूर्ण;
+};
 
-अटल काष्ठा v4l2_pix_क्रमmat क्रमmats_60[] = अणु
-	अणु			/*NTSC पूर्णांकerlaced */
+static struct v4l2_pix_format formats_60[] = {
+	{			/*NTSC interlaced */
 	 .width = 720,
 	 .height = 480,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_INTERLACED,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 480,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
-	अणु			/*NTSC top */
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
+	{			/*NTSC top */
 	 .width = 720,
 	 .height = 240,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_TOP,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 240,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
-	अणु			/*NTSC bottom */
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
+	{			/*NTSC bottom */
 	 .width = 720,
 	 .height = 240,
-	 .pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	 .pixelformat = V4L2_PIX_FMT_UYVY,
 	 .field = V4L2_FIELD_BOTTOM,
 	 .bytesperline = 720 * 2,
 	 .sizeimage = 720 * 2 * 240,
-	 .colorspace = V4L2_COLORSPACE_SMPTE170Mपूर्ण,
-पूर्ण;
+	 .colorspace = V4L2_COLORSPACE_SMPTE170M},
+};
 
-/* Write VIP रेजिस्टर */
-अटल अंतरभूत व्योम reg_ग_लिखो(काष्ठा sta2x11_vip *vip, अचिन्हित पूर्णांक reg, u32 val)
-अणु
-	ioग_लिखो32((val), (vip->iomem)+(reg));
-पूर्ण
-/* Read VIP रेजिस्टर */
-अटल अंतरभूत u32 reg_पढ़ो(काष्ठा sta2x11_vip *vip, अचिन्हित पूर्णांक reg)
-अणु
-	वापस  ioपढ़ो32((vip->iomem)+(reg));
-पूर्ण
+/* Write VIP register */
+static inline void reg_write(struct sta2x11_vip *vip, unsigned int reg, u32 val)
+{
+	iowrite32((val), (vip->iomem)+(reg));
+}
+/* Read VIP register */
+static inline u32 reg_read(struct sta2x11_vip *vip, unsigned int reg)
+{
+	return  ioread32((vip->iomem)+(reg));
+}
 /* Start DMA acquisition */
-अटल व्योम start_dma(काष्ठा sta2x11_vip *vip, काष्ठा vip_buffer *vip_buf)
-अणु
-	अचिन्हित दीर्घ offset = 0;
+static void start_dma(struct sta2x11_vip *vip, struct vip_buffer *vip_buf)
+{
+	unsigned long offset = 0;
 
-	अगर (vip->क्रमmat.field == V4L2_FIELD_INTERLACED)
-		offset = vip->क्रमmat.width * 2;
+	if (vip->format.field == V4L2_FIELD_INTERLACED)
+		offset = vip->format.width * 2;
 
 	spin_lock_irq(&vip->slock);
 	/* Enable acquisition */
-	reg_ग_लिखो(vip, DVP_CTL, reg_पढ़ो(vip, DVP_CTL) | DVP_CTL_ENA);
+	reg_write(vip, DVP_CTL, reg_read(vip, DVP_CTL) | DVP_CTL_ENA);
 	/* Set Top and Bottom Field memory address */
-	reg_ग_लिखो(vip, DVP_VTP, (u32)vip_buf->dma);
-	reg_ग_लिखो(vip, DVP_VBP, (u32)vip_buf->dma + offset);
+	reg_write(vip, DVP_VTP, (u32)vip_buf->dma);
+	reg_write(vip, DVP_VBP, (u32)vip_buf->dma + offset);
 	spin_unlock_irq(&vip->slock);
-पूर्ण
+}
 
 /* Fetch the next buffer to activate */
-अटल व्योम vip_active_buf_next(काष्ठा sta2x11_vip *vip)
-अणु
+static void vip_active_buf_next(struct sta2x11_vip *vip)
+{
 	/* Get the next buffer */
 	spin_lock(&vip->lock);
-	अगर (list_empty(&vip->buffer_list)) अणु/* No available buffer */
+	if (list_empty(&vip->buffer_list)) {/* No available buffer */
 		spin_unlock(&vip->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	vip->active = list_first_entry(&vip->buffer_list,
-				       काष्ठा vip_buffer,
+				       struct vip_buffer,
 				       list);
 	/* Reset Top and Bottom counter */
 	vip->tcount = 0;
 	vip->bcount = 0;
 	spin_unlock(&vip->lock);
-	अगर (vb2_is_streaming(&vip->vb_vidq)) अणु	/* streaming is on */
+	if (vb2_is_streaming(&vip->vb_vidq)) {	/* streaming is on */
 		start_dma(vip, vip->active);	/* start dma capture */
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /* Videobuf2 Operations */
-अटल पूर्णांक queue_setup(काष्ठा vb2_queue *vq,
-		       अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-		       अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vq);
+static int queue_setup(struct vb2_queue *vq,
+		       unsigned int *nbuffers, unsigned int *nplanes,
+		       unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vq);
 
-	अगर (!(*nbuffers) || *nbuffers < MAX_FRAMES)
+	if (!(*nbuffers) || *nbuffers < MAX_FRAMES)
 		*nbuffers = MAX_FRAMES;
 
 	*nplanes = 1;
-	sizes[0] = vip->क्रमmat.sizeimage;
+	sizes[0] = vip->format.sizeimage;
 
 	vip->sequence = 0;
-	vip->active = शून्य;
+	vip->active = NULL;
 	vip->tcount = 0;
 	vip->bcount = 0;
 
-	वापस 0;
-पूर्ण;
-अटल पूर्णांक buffer_init(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vip_buffer *vip_buf = to_vip_buffer(vbuf);
+	return 0;
+};
+static int buffer_init(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vip_buffer *vip_buf = to_vip_buffer(vbuf);
 
 	vip_buf->dma = vb2_dma_contig_plane_dma_addr(vb, 0);
 	INIT_LIST_HEAD(&vip_buf->list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vip_buffer *vip_buf = to_vip_buffer(vbuf);
-	अचिन्हित दीर्घ size;
+static int buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
+	struct vip_buffer *vip_buf = to_vip_buffer(vbuf);
+	unsigned long size;
 
-	size = vip->क्रमmat.sizeimage;
-	अगर (vb2_plane_size(vb, 0) < size) अणु
+	size = vip->format.sizeimage;
+	if (vb2_plane_size(vb, 0) < size) {
 		v4l2_err(&vip->v4l2_dev, "buffer too small (%lu < %lu)\n",
 			 vb2_plane_size(vb, 0), size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vb2_set_plane_payload(&vip_buf->vb.vb2_buf, 0, size);
 
-	वापस 0;
-पूर्ण
-अटल व्योम buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vip_buffer *vip_buf = to_vip_buffer(vbuf);
+	return 0;
+}
+static void buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
+	struct vip_buffer *vip_buf = to_vip_buffer(vbuf);
 
 	spin_lock(&vip->lock);
 	list_add_tail(&vip_buf->list, &vip->buffer_list);
-	अगर (!vip->active) अणु	/* No active buffer, active the first one */
+	if (!vip->active) {	/* No active buffer, active the first one */
 		vip->active = list_first_entry(&vip->buffer_list,
-					       काष्ठा vip_buffer,
+					       struct vip_buffer,
 					       list);
-		अगर (vb2_is_streaming(&vip->vb_vidq))	/* streaming is on */
+		if (vb2_is_streaming(&vip->vb_vidq))	/* streaming is on */
 			start_dma(vip, vip_buf);	/* start dma capture */
-	पूर्ण
+	}
 	spin_unlock(&vip->lock);
-पूर्ण
-अटल व्योम buffer_finish(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vip_buffer *vip_buf = to_vip_buffer(vbuf);
+}
+static void buffer_finish(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vb->vb2_queue);
+	struct vip_buffer *vip_buf = to_vip_buffer(vbuf);
 
-	/* Buffer handled, हटाओ it from the list */
+	/* Buffer handled, remove it from the list */
 	spin_lock(&vip->lock);
 	list_del_init(&vip_buf->list);
 	spin_unlock(&vip->lock);
 
-	अगर (vb2_is_streaming(vb->vb2_queue))
+	if (vb2_is_streaming(vb->vb2_queue))
 		vip_active_buf_next(vip);
-पूर्ण
+}
 
-अटल पूर्णांक start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vq);
+static int start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vq);
 
 	spin_lock_irq(&vip->slock);
-	/* Enable पूर्णांकerrupt VSYNC Top and Bottom*/
-	reg_ग_लिखो(vip, DVP_ITM, DVP_IT_VSB | DVP_IT_VST);
+	/* Enable interrupt VSYNC Top and Bottom*/
+	reg_write(vip, DVP_ITM, DVP_IT_VSB | DVP_IT_VST);
 	spin_unlock_irq(&vip->slock);
 
-	अगर (count)
+	if (count)
 		start_dma(vip, vip->active);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* पात streaming and रुको क्रम last buffer */
-अटल व्योम stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा sta2x11_vip *vip = vb2_get_drv_priv(vq);
-	काष्ठा vip_buffer *vip_buf, *node;
+/* abort streaming and wait for last buffer */
+static void stop_streaming(struct vb2_queue *vq)
+{
+	struct sta2x11_vip *vip = vb2_get_drv_priv(vq);
+	struct vip_buffer *vip_buf, *node;
 
 	/* Disable acquisition */
-	reg_ग_लिखो(vip, DVP_CTL, reg_पढ़ो(vip, DVP_CTL) & ~DVP_CTL_ENA);
-	/* Disable all पूर्णांकerrupts */
-	reg_ग_लिखो(vip, DVP_ITM, 0);
+	reg_write(vip, DVP_CTL, reg_read(vip, DVP_CTL) & ~DVP_CTL_ENA);
+	/* Disable all interrupts */
+	reg_write(vip, DVP_ITM, 0);
 
 	/* Release all active buffers */
 	spin_lock(&vip->lock);
-	list_क्रम_each_entry_safe(vip_buf, node, &vip->buffer_list, list) अणु
-		vb2_buffer_करोne(&vip_buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	list_for_each_entry_safe(vip_buf, node, &vip->buffer_list, list) {
+		vb2_buffer_done(&vip_buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
 		list_del(&vip_buf->list);
-	पूर्ण
+	}
 	spin_unlock(&vip->lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops vip_video_qops = अणु
+static const struct vb2_ops vip_video_qops = {
 	.queue_setup		= queue_setup,
 	.buf_init		= buffer_init,
 	.buf_prepare		= buffer_prepare,
@@ -372,44 +371,44 @@
 	.buf_queue		= buffer_queue,
 	.start_streaming	= start_streaming,
 	.stop_streaming		= stop_streaming,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-पूर्ण;
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+};
 
 
 /* File Operations */
-अटल स्थिर काष्ठा v4l2_file_operations vip_fops = अणु
+static const struct v4l2_file_operations vip_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = v4l2_fh_खोलो,
+	.open = v4l2_fh_open,
 	.release = vb2_fop_release,
 	.unlocked_ioctl = video_ioctl2,
-	.पढ़ो = vb2_fop_पढ़ो,
+	.read = vb2_fop_read,
 	.mmap = vb2_fop_mmap,
 	.poll = vb2_fop_poll
-पूर्ण;
+};
 
 
 /**
- * vidioc_querycap - वापस capabilities of device
+ * vidioc_querycap - return capabilities of device
  * @file: descriptor of device
- * @cap: contains वापस values
+ * @cap: contains return values
  * @priv: unused
  *
- * the capabilities of the device are वापसed
+ * the capabilities of the device are returned
  *
- * वापस value: 0, no error.
+ * return value: 0, no error.
  */
-अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
-			   काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_querycap(struct file *file, void *priv,
+			   struct v4l2_capability *cap)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
-	strscpy(cap->driver, KBUILD_MODNAME, माप(cap->driver));
-	strscpy(cap->card, KBUILD_MODNAME, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "PCI:%s",
+	strscpy(cap->driver, KBUILD_MODNAME, sizeof(cap->driver));
+	strscpy(cap->card, KBUILD_MODNAME, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "PCI:%s",
 		 pci_name(vip->pdev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vidioc_s_std - set video standard
@@ -419,84 +418,84 @@
  *
  * the video standard is set
  *
- * वापस value: 0, no error.
+ * return value: 0, no error.
  *
- * -EIO, no input संकेत detected
+ * -EIO, no input signal detected
  *
- * other, वापसed from video DAC.
+ * other, returned from video DAC.
  */
-अटल पूर्णांक vidioc_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id std)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_s_std(struct file *file, void *priv, v4l2_std_id std)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
 	/*
-	 * This is here क्रम backwards compatibility only.
+	 * This is here for backwards compatibility only.
 	 * The use of V4L2_STD_ALL to trigger a querystd is non-standard.
 	 */
-	अगर (std == V4L2_STD_ALL) अणु
+	if (std == V4L2_STD_ALL) {
 		v4l2_subdev_call(vip->decoder, video, querystd, &std);
-		अगर (std == V4L2_STD_UNKNOWN)
-			वापस -EIO;
-	पूर्ण
+		if (std == V4L2_STD_UNKNOWN)
+			return -EIO;
+	}
 
-	अगर (vip->std != std) अणु
+	if (vip->std != std) {
 		vip->std = std;
-		अगर (V4L2_STD_525_60 & std)
-			vip->क्रमmat = क्रमmats_60[0];
-		अन्यथा
-			vip->क्रमmat = क्रमmats_50[0];
-	पूर्ण
+		if (V4L2_STD_525_60 & std)
+			vip->format = formats_60[0];
+		else
+			vip->format = formats_50[0];
+	}
 
-	वापस v4l2_subdev_call(vip->decoder, video, s_std, std);
-पूर्ण
+	return v4l2_subdev_call(vip->decoder, video, s_std, std);
+}
 
 /**
  * vidioc_g_std - get video standard
  * @file: descriptor of device
  * @priv: unused
- * @std: contains वापस values
+ * @std: contains return values
  *
- * the current video standard is वापसed
+ * the current video standard is returned
  *
- * वापस value: 0, no error.
+ * return value: 0, no error.
  */
-अटल पूर्णांक vidioc_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *std)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_g_std(struct file *file, void *priv, v4l2_std_id *std)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
 	*std = vip->std;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vidioc_querystd - get possible video standards
  * @file: descriptor of device
  * @priv: unused
- * @std: contains वापस values
+ * @std: contains return values
  *
- * all possible video standards are वापसed
+ * all possible video standards are returned
  *
- * वापस value: delivered by video DAC routine.
+ * return value: delivered by video DAC routine.
  */
-अटल पूर्णांक vidioc_querystd(काष्ठा file *file, व्योम *priv, v4l2_std_id *std)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_querystd(struct file *file, void *priv, v4l2_std_id *std)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
-	वापस v4l2_subdev_call(vip->decoder, video, querystd, std);
-पूर्ण
+	return v4l2_subdev_call(vip->decoder, video, querystd, std);
+}
 
-अटल पूर्णांक vidioc_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-			     काष्ठा v4l2_input *inp)
-अणु
-	अगर (inp->index > 1)
-		वापस -EINVAL;
+static int vidioc_enum_input(struct file *file, void *priv,
+			     struct v4l2_input *inp)
+{
+	if (inp->index > 1)
+		return -EINVAL;
 
 	inp->type = V4L2_INPUT_TYPE_CAMERA;
 	inp->std = V4L2_STD_ALL;
-	प्र_लिखो(inp->name, "Camera %u", inp->index);
+	sprintf(inp->name, "Camera %u", inp->index);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vidioc_s_input - set input line
@@ -506,220 +505,220 @@
  *
  * the current active input line is set
  *
- * वापस value: 0, no error.
+ * return value: 0, no error.
  *
  * -EINVAL, line number out of range
  */
-अटल पूर्णांक vidioc_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
-	पूर्णांक ret;
+static int vidioc_s_input(struct file *file, void *priv, unsigned int i)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
+	int ret;
 
-	अगर (i > 1)
-		वापस -EINVAL;
+	if (i > 1)
+		return -EINVAL;
 	ret = v4l2_subdev_call(vip->decoder, video, s_routing, i, 0, 0);
 
-	अगर (!ret)
+	if (!ret)
 		vip->input = i;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vidioc_g_input - वापस input line
+ * vidioc_g_input - return input line
  * @file: descriptor of device
  * @priv: unused
- * @i: वापसed input line number
+ * @i: returned input line number
  *
- * the current active input line is वापसed
+ * the current active input line is returned
  *
- * वापस value: always 0.
+ * return value: always 0.
  */
-अटल पूर्णांक vidioc_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_g_input(struct file *file, void *priv, unsigned int *i)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
 	*i = vip->input;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vidioc_क्रमागत_fmt_vid_cap - वापस video capture क्रमmat
+ * vidioc_enum_fmt_vid_cap - return video capture format
  * @file: descriptor of device
  * @priv: unused
- * @f: वापसed क्रमmat inक्रमmation
+ * @f: returned format information
  *
- * वापसs name and क्रमmat of video capture
+ * returns name and format of video capture
  * Only UYVY is supported by hardware.
  *
- * वापस value: always 0.
+ * return value: always 0.
  */
-अटल पूर्णांक vidioc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				   काष्ठा v4l2_fmtdesc *f)
-अणु
+static int vidioc_enum_fmt_vid_cap(struct file *file, void *priv,
+				   struct v4l2_fmtdesc *f)
+{
 
-	अगर (f->index != 0)
-		वापस -EINVAL;
+	if (f->index != 0)
+		return -EINVAL;
 
-	f->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
-	वापस 0;
-पूर्ण
+	f->pixelformat = V4L2_PIX_FMT_UYVY;
+	return 0;
+}
 
 /**
- * vidioc_try_fmt_vid_cap - set video capture क्रमmat
+ * vidioc_try_fmt_vid_cap - set video capture format
  * @file: descriptor of device
  * @priv: unused
- * @f: new क्रमmat
+ * @f: new format
  *
- * new video क्रमmat is set which includes width and
+ * new video format is set which includes width and
  * field type. width is fixed to 720, no scaling.
  * Only UYVY is supported by this hardware.
  * the minimum height is 200, the maximum is 576 (PAL)
  *
- * वापस value: 0, no error
+ * return value: 0, no error
  *
- * -EINVAL, pixel or field क्रमmat not supported
+ * -EINVAL, pixel or field format not supported
  *
  */
-अटल पूर्णांक vidioc_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				  काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
-	पूर्णांक पूर्णांकerlace_lim;
+static int vidioc_try_fmt_vid_cap(struct file *file, void *priv,
+				  struct v4l2_format *f)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
+	int interlace_lim;
 
-	अगर (V4L2_PIX_FMT_UYVY != f->fmt.pix.pixelक्रमmat) अणु
+	if (V4L2_PIX_FMT_UYVY != f->fmt.pix.pixelformat) {
 		v4l2_warn(&vip->v4l2_dev, "Invalid format, only UYVY supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (V4L2_STD_525_60 & vip->std)
-		पूर्णांकerlace_lim = 240;
-	अन्यथा
-		पूर्णांकerlace_lim = 288;
+	if (V4L2_STD_525_60 & vip->std)
+		interlace_lim = 240;
+	else
+		interlace_lim = 288;
 
-	चयन (f->fmt.pix.field) अणु
-	शेष:
-	हाल V4L2_FIELD_ANY:
-		अगर (पूर्णांकerlace_lim < f->fmt.pix.height)
+	switch (f->fmt.pix.field) {
+	default:
+	case V4L2_FIELD_ANY:
+		if (interlace_lim < f->fmt.pix.height)
 			f->fmt.pix.field = V4L2_FIELD_INTERLACED;
-		अन्यथा
+		else
 			f->fmt.pix.field = V4L2_FIELD_BOTTOM;
-		अवरोध;
-	हाल V4L2_FIELD_TOP:
-	हाल V4L2_FIELD_BOTTOM:
-		अगर (पूर्णांकerlace_lim < f->fmt.pix.height)
-			f->fmt.pix.height = पूर्णांकerlace_lim;
-		अवरोध;
-	हाल V4L2_FIELD_INTERLACED:
-		अवरोध;
-	पूर्ण
+		break;
+	case V4L2_FIELD_TOP:
+	case V4L2_FIELD_BOTTOM:
+		if (interlace_lim < f->fmt.pix.height)
+			f->fmt.pix.height = interlace_lim;
+		break;
+	case V4L2_FIELD_INTERLACED:
+		break;
+	}
 
-	/* It is the only supported क्रमmat */
-	f->fmt.pix.pixelक्रमmat = V4L2_PIX_FMT_UYVY;
+	/* It is the only supported format */
+	f->fmt.pix.pixelformat = V4L2_PIX_FMT_UYVY;
 	f->fmt.pix.height &= ~1;
-	अगर (2 * पूर्णांकerlace_lim < f->fmt.pix.height)
-		f->fmt.pix.height = 2 * पूर्णांकerlace_lim;
-	अगर (200 > f->fmt.pix.height)
+	if (2 * interlace_lim < f->fmt.pix.height)
+		f->fmt.pix.height = 2 * interlace_lim;
+	if (200 > f->fmt.pix.height)
 		f->fmt.pix.height = 200;
 	f->fmt.pix.width = 720;
 	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
 	f->fmt.pix.sizeimage = f->fmt.pix.width * 2 * f->fmt.pix.height;
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vidioc_s_fmt_vid_cap - set current video क्रमmat parameters
+ * vidioc_s_fmt_vid_cap - set current video format parameters
  * @file: descriptor of device
  * @priv: unused
- * @f: वापसed क्रमmat inक्रमmation
+ * @f: returned format information
  *
- * set new capture क्रमmat
- * वापस value: 0, no error
+ * set new capture format
+ * return value: 0, no error
  *
  * other, delivered by video DAC routine.
  */
-अटल पूर्णांक vidioc_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
-	अचिन्हित पूर्णांक t_stop, b_stop, pitch;
-	पूर्णांक ret;
+static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
+				struct v4l2_format *f)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
+	unsigned int t_stop, b_stop, pitch;
+	int ret;
 
 	ret = vidioc_try_fmt_vid_cap(file, priv, f);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (vb2_is_busy(&vip->vb_vidq)) अणु
-		/* Can't change क्रमmat during acquisition */
+	if (vb2_is_busy(&vip->vb_vidq)) {
+		/* Can't change format during acquisition */
 		v4l2_err(&vip->v4l2_dev, "device busy\n");
-		वापस -EBUSY;
-	पूर्ण
-	vip->क्रमmat = f->fmt.pix;
-	चयन (vip->क्रमmat.field) अणु
-	हाल V4L2_FIELD_INTERLACED:
-		t_stop = ((vip->क्रमmat.height / 2 - 1) << 16) |
-			 (2 * vip->क्रमmat.width - 1);
+		return -EBUSY;
+	}
+	vip->format = f->fmt.pix;
+	switch (vip->format.field) {
+	case V4L2_FIELD_INTERLACED:
+		t_stop = ((vip->format.height / 2 - 1) << 16) |
+			 (2 * vip->format.width - 1);
 		b_stop = t_stop;
-		pitch = 4 * vip->क्रमmat.width;
-		अवरोध;
-	हाल V4L2_FIELD_TOP:
-		t_stop = ((vip->क्रमmat.height - 1) << 16) |
-			 (2 * vip->क्रमmat.width - 1);
-		b_stop = (0 << 16) | (2 * vip->क्रमmat.width - 1);
-		pitch = 2 * vip->क्रमmat.width;
-		अवरोध;
-	हाल V4L2_FIELD_BOTTOM:
-		t_stop = (0 << 16) | (2 * vip->क्रमmat.width - 1);
-		b_stop = (vip->क्रमmat.height << 16) |
-			 (2 * vip->क्रमmat.width - 1);
-		pitch = 2 * vip->क्रमmat.width;
-		अवरोध;
-	शेष:
+		pitch = 4 * vip->format.width;
+		break;
+	case V4L2_FIELD_TOP:
+		t_stop = ((vip->format.height - 1) << 16) |
+			 (2 * vip->format.width - 1);
+		b_stop = (0 << 16) | (2 * vip->format.width - 1);
+		pitch = 2 * vip->format.width;
+		break;
+	case V4L2_FIELD_BOTTOM:
+		t_stop = (0 << 16) | (2 * vip->format.width - 1);
+		b_stop = (vip->format.height << 16) |
+			 (2 * vip->format.width - 1);
+		pitch = 2 * vip->format.width;
+		break;
+	default:
 		v4l2_err(&vip->v4l2_dev, "unknown field format\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irq(&vip->slock);
 	/* Y-X Top Field Offset */
-	reg_ग_लिखो(vip, DVP_TFO, 0);
+	reg_write(vip, DVP_TFO, 0);
 	/* Y-X Bottom Field Offset */
-	reg_ग_लिखो(vip, DVP_BFO, 0);
+	reg_write(vip, DVP_BFO, 0);
 	/* Y-X Top Field Stop*/
-	reg_ग_लिखो(vip, DVP_TFS, t_stop);
+	reg_write(vip, DVP_TFS, t_stop);
 	/* Y-X Bottom Field Stop */
-	reg_ग_लिखो(vip, DVP_BFS, b_stop);
+	reg_write(vip, DVP_BFS, b_stop);
 	/* Video Memory Pitch */
-	reg_ग_लिखो(vip, DVP_VMP, pitch);
+	reg_write(vip, DVP_VMP, pitch);
 	spin_unlock_irq(&vip->slock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vidioc_g_fmt_vid_cap - get current video क्रमmat parameters
+ * vidioc_g_fmt_vid_cap - get current video format parameters
  * @file: descriptor of device
  * @priv: unused
- * @f: contains क्रमmat inक्रमmation
+ * @f: contains format information
  *
- * वापसs current video क्रमmat parameters
+ * returns current video format parameters
  *
- * वापस value: 0, always successful
+ * return value: 0, always successful
  */
-अटल पूर्णांक vidioc_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा sta2x11_vip *vip = video_drvdata(file);
+static int vidioc_g_fmt_vid_cap(struct file *file, void *priv,
+				struct v4l2_format *f)
+{
+	struct sta2x11_vip *vip = video_drvdata(file);
 
-	f->fmt.pix = vip->क्रमmat;
+	f->fmt.pix = vip->format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops vip_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops vip_ioctl_ops = {
 	.vidioc_querycap = vidioc_querycap,
 	/* FMT handling */
-	.vidioc_क्रमागत_fmt_vid_cap = vidioc_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap = vidioc_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap = vidioc_s_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap = vidioc_try_fmt_vid_cap,
@@ -738,7 +737,7 @@
 	.vidioc_s_std = vidioc_s_std,
 	.vidioc_querystd = vidioc_querystd,
 	/* Input handling */
-	.vidioc_क्रमागत_input = vidioc_क्रमागत_input,
+	.vidioc_enum_input = vidioc_enum_input,
 	.vidioc_g_input = vidioc_g_input,
 	.vidioc_s_input = vidioc_s_input,
 	/* Log status ioctl */
@@ -746,9 +745,9 @@
 	/* Event handling */
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा video_device video_dev_ढाँचा = अणु
+static const struct video_device video_dev_template = {
 	.name = KBUILD_MODNAME,
 	.release = video_device_release_empty,
 	.fops = &vip_fops,
@@ -756,116 +755,116 @@
 	.tvnorms = V4L2_STD_ALL,
 	.device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 		       V4L2_CAP_STREAMING,
-पूर्ण;
+};
 
 /**
- * vip_irq - पूर्णांकerrupt routine
- * @irq: Number of पूर्णांकerrupt ( not used, correct number is assumed )
- * @vip: local data काष्ठाure containing all inक्रमmation
+ * vip_irq - interrupt routine
+ * @irq: Number of interrupt ( not used, correct number is assumed )
+ * @vip: local data structure containing all information
  *
- * check क्रम both frame पूर्णांकerrupts set ( top and bottom ).
- * check FIFO overflow, but limit number of log messages after खोलो.
- * संकेत a complete buffer अगर करोne
+ * check for both frame interrupts set ( top and bottom ).
+ * check FIFO overflow, but limit number of log messages after open.
+ * signal a complete buffer if done
  *
- * वापस value: IRQ_NONE, पूर्णांकerrupt was not generated by VIP
+ * return value: IRQ_NONE, interrupt was not generated by VIP
  *
- * IRQ_HANDLED, पूर्णांकerrupt करोne.
+ * IRQ_HANDLED, interrupt done.
  */
-अटल irqवापस_t vip_irq(पूर्णांक irq, काष्ठा sta2x11_vip *vip)
-अणु
-	अचिन्हित पूर्णांक status;
+static irqreturn_t vip_irq(int irq, struct sta2x11_vip *vip)
+{
+	unsigned int status;
 
-	status = reg_पढ़ो(vip, DVP_ITS);
+	status = reg_read(vip, DVP_ITS);
 
-	अगर (!status)		/* No पूर्णांकerrupt to handle */
-		वापस IRQ_NONE;
+	if (!status)		/* No interrupt to handle */
+		return IRQ_NONE;
 
-	अगर (status & DVP_IT_FIFO)
-		अगर (vip->overflow++ > 5)
+	if (status & DVP_IT_FIFO)
+		if (vip->overflow++ > 5)
 			pr_info("VIP: fifo overflow\n");
 
-	अगर ((status & DVP_IT_VST) && (status & DVP_IT_VSB)) अणु
+	if ((status & DVP_IT_VST) && (status & DVP_IT_VSB)) {
 		/* this is bad, we are too slow, hope the condition is gone
 		 * on the next frame */
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (status & DVP_IT_VST)
-		अगर ((++vip->tcount) < 2)
-			वापस IRQ_HANDLED;
-	अगर (status & DVP_IT_VSB) अणु
+	if (status & DVP_IT_VST)
+		if ((++vip->tcount) < 2)
+			return IRQ_HANDLED;
+	if (status & DVP_IT_VSB) {
 		vip->bcount++;
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	अगर (vip->active) अणु /* Acquisition is over on this buffer */
+	if (vip->active) { /* Acquisition is over on this buffer */
 		/* Disable acquisition */
-		reg_ग_लिखो(vip, DVP_CTL, reg_पढ़ो(vip, DVP_CTL) & ~DVP_CTL_ENA);
+		reg_write(vip, DVP_CTL, reg_read(vip, DVP_CTL) & ~DVP_CTL_ENA);
 		/* Remove the active buffer from the list */
-		vip->active->vb.vb2_buf.बारtamp = kसमय_get_ns();
+		vip->active->vb.vb2_buf.timestamp = ktime_get_ns();
 		vip->active->vb.sequence = vip->sequence++;
-		vb2_buffer_करोne(&vip->active->vb.vb2_buf, VB2_BUF_STATE_DONE);
-	पूर्ण
+		vb2_buffer_done(&vip->active->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम sta2x11_vip_init_रेजिस्टर(काष्ठा sta2x11_vip *vip)
-अणु
+static void sta2x11_vip_init_register(struct sta2x11_vip *vip)
+{
 	/* Register initialization */
 	spin_lock_irq(&vip->slock);
-	/* Clean पूर्णांकerrupt */
-	reg_पढ़ो(vip, DVP_ITS);
+	/* Clean interrupt */
+	reg_read(vip, DVP_ITS);
 	/* Enable Half Line per vertical */
-	reg_ग_लिखो(vip, DVP_HLFLN, DVP_HLFLN_SD);
+	reg_write(vip, DVP_HLFLN, DVP_HLFLN_SD);
 	/* Reset VIP control */
-	reg_ग_लिखो(vip, DVP_CTL, DVP_CTL_RST);
+	reg_write(vip, DVP_CTL, DVP_CTL_RST);
 	/* Clear VIP control */
-	reg_ग_लिखो(vip, DVP_CTL, 0);
+	reg_write(vip, DVP_CTL, 0);
 	spin_unlock_irq(&vip->slock);
-पूर्ण
-अटल व्योम sta2x11_vip_clear_रेजिस्टर(काष्ठा sta2x11_vip *vip)
-अणु
+}
+static void sta2x11_vip_clear_register(struct sta2x11_vip *vip)
+{
 	spin_lock_irq(&vip->slock);
-	/* Disable पूर्णांकerrupt */
-	reg_ग_लिखो(vip, DVP_ITM, 0);
+	/* Disable interrupt */
+	reg_write(vip, DVP_ITM, 0);
 	/* Reset VIP Control */
-	reg_ग_लिखो(vip, DVP_CTL, DVP_CTL_RST);
+	reg_write(vip, DVP_CTL, DVP_CTL_RST);
 	/* Clear VIP Control */
-	reg_ग_लिखो(vip, DVP_CTL, 0);
+	reg_write(vip, DVP_CTL, 0);
 	/* Clean VIP Interrupt */
-	reg_पढ़ो(vip, DVP_ITS);
+	reg_read(vip, DVP_ITS);
 	spin_unlock_irq(&vip->slock);
-पूर्ण
-अटल पूर्णांक sta2x11_vip_init_buffer(काष्ठा sta2x11_vip *vip)
-अणु
-	पूर्णांक err;
+}
+static int sta2x11_vip_init_buffer(struct sta2x11_vip *vip)
+{
+	int err;
 
 	err = dma_set_coherent_mask(&vip->pdev->dev, DMA_BIT_MASK(29));
-	अगर (err) अणु
+	if (err) {
 		v4l2_err(&vip->v4l2_dev, "Cannot configure coherent mask");
-		वापस err;
-	पूर्ण
-	स_रखो(&vip->vb_vidq, 0, माप(काष्ठा vb2_queue));
+		return err;
+	}
+	memset(&vip->vb_vidq, 0, sizeof(struct vb2_queue));
 	vip->vb_vidq.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	vip->vb_vidq.io_modes = VB2_MMAP | VB2_READ;
 	vip->vb_vidq.drv_priv = vip;
-	vip->vb_vidq.buf_काष्ठा_size = माप(काष्ठा vip_buffer);
+	vip->vb_vidq.buf_struct_size = sizeof(struct vip_buffer);
 	vip->vb_vidq.ops = &vip_video_qops;
 	vip->vb_vidq.mem_ops = &vb2_dma_contig_memops;
-	vip->vb_vidq.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	vip->vb_vidq.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	vip->vb_vidq.dev = &vip->pdev->dev;
 	vip->vb_vidq.lock = &vip->v4l_lock;
 	err = vb2_queue_init(&vip->vb_vidq);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	INIT_LIST_HEAD(&vip->buffer_list);
 	spin_lock_init(&vip->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sta2x11_vip_init_controls(काष्ठा sta2x11_vip *vip)
-अणु
+static int sta2x11_vip_init_controls(struct sta2x11_vip *vip)
+{
 	/*
 	 * Inititialize an empty control so VIP can inerithing controls
 	 * from ADV7180
@@ -873,15 +872,15 @@
 	v4l2_ctrl_handler_init(&vip->ctrl_hdl, 0);
 
 	vip->v4l2_dev.ctrl_handler = &vip->ctrl_hdl;
-	अगर (vip->ctrl_hdl.error) अणु
-		पूर्णांक err = vip->ctrl_hdl.error;
+	if (vip->ctrl_hdl.error) {
+		int err = vip->ctrl_hdl.error;
 
-		v4l2_ctrl_handler_मुक्त(&vip->ctrl_hdl);
-		वापस err;
-	पूर्ण
+		v4l2_ctrl_handler_free(&vip->ctrl_hdl);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vip_gpio_reserve - reserve gpio pin
@@ -891,37 +890,37 @@
  * @name: GPIO pin name
  *
  */
-अटल पूर्णांक vip_gpio_reserve(काष्ठा device *dev, पूर्णांक pin, पूर्णांक dir,
-			    स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret = -ENODEV;
+static int vip_gpio_reserve(struct device *dev, int pin, int dir,
+			    const char *name)
+{
+	int ret = -ENODEV;
 
-	अगर (!gpio_is_valid(pin))
-		वापस ret;
+	if (!gpio_is_valid(pin))
+		return ret;
 
 	ret = gpio_request(pin, name);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to allocate pin %d (%s)\n", pin, name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = gpio_direction_output(pin, dir);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set direction for pin %d (%s)\n",
 			pin, name);
-		gpio_मुक्त(pin);
-		वापस ret;
-	पूर्ण
+		gpio_free(pin);
+		return ret;
+	}
 
 	ret = gpio_export(pin, false);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to export pin %d (%s)\n", pin, name);
-		gpio_मुक्त(pin);
-		वापस ret;
-	पूर्ण
+		gpio_free(pin);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vip_gpio_release - release gpio pin
@@ -930,180 +929,180 @@
  * @name: GPIO pin name
  *
  */
-अटल व्योम vip_gpio_release(काष्ठा device *dev, पूर्णांक pin, स्थिर अक्षर *name)
-अणु
-	अगर (gpio_is_valid(pin)) अणु
+static void vip_gpio_release(struct device *dev, int pin, const char *name)
+{
+	if (gpio_is_valid(pin)) {
 		dev_dbg(dev, "releasing pin %d (%s)\n",	pin, name);
 		gpio_unexport(pin);
-		gpio_मुक्त(pin);
-	पूर्ण
-पूर्ण
+		gpio_free(pin);
+	}
+}
 
 /**
  * sta2x11_vip_init_one - init one instance of video device
  * @pdev: PCI device
  * @ent: (not used)
  *
- * allocate reset pins क्रम DAC.
- * Reset video DAC, this is करोne via reset line.
- * allocate memory क्रम managing device
- * request पूर्णांकerrupt
+ * allocate reset pins for DAC.
+ * Reset video DAC, this is done via reset line.
+ * allocate memory for managing device
+ * request interrupt
  * map IO region
- * रेजिस्टर device
+ * register device
  * find and initialize video DAC
  *
- * वापस value: 0, no error
+ * return value: 0, no error
  *
  * -ENOMEM, no memory
  *
- * -ENODEV, device could not be detected or रेजिस्टरed
+ * -ENODEV, device could not be detected or registered
  */
-अटल पूर्णांक sta2x11_vip_init_one(काष्ठा pci_dev *pdev,
-				स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक ret;
-	काष्ठा sta2x11_vip *vip;
-	काष्ठा vip_config *config;
+static int sta2x11_vip_init_one(struct pci_dev *pdev,
+				const struct pci_device_id *ent)
+{
+	int ret;
+	struct sta2x11_vip *vip;
+	struct vip_config *config;
 
-	/* Check अगर hardware support 26-bit DMA */
-	अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(26))) अणु
+	/* Check if hardware support 26-bit DMA */
+	if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(26))) {
 		dev_err(&pdev->dev, "26-bit DMA addressing not available\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* Enable PCI */
 	ret = pci_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Get VIP platक्रमm data */
+	/* Get VIP platform data */
 	config = dev_get_platdata(&pdev->dev);
-	अगर (!config) अणु
+	if (!config) {
 		dev_info(&pdev->dev, "VIP slot disabled\n");
 		ret = -EINVAL;
-		जाओ disable;
-	पूर्ण
+		goto disable;
+	}
 
 	/* Power configuration */
 	ret = vip_gpio_reserve(&pdev->dev, config->pwr_pin, 0,
 			       config->pwr_name);
-	अगर (ret)
-		जाओ disable;
+	if (ret)
+		goto disable;
 
 	ret = vip_gpio_reserve(&pdev->dev, config->reset_pin, 0,
 			       config->reset_name);
-	अगर (ret) अणु
+	if (ret) {
 		vip_gpio_release(&pdev->dev, config->pwr_pin,
 				 config->pwr_name);
-		जाओ disable;
-	पूर्ण
+		goto disable;
+	}
 
-	अगर (gpio_is_valid(config->pwr_pin)) अणु
+	if (gpio_is_valid(config->pwr_pin)) {
 		/* Datasheet says 5ms between PWR and RST */
 		usleep_range(5000, 25000);
 		gpio_direction_output(config->pwr_pin, 1);
-	पूर्ण
+	}
 
-	अगर (gpio_is_valid(config->reset_pin)) अणु
+	if (gpio_is_valid(config->reset_pin)) {
 		/* Datasheet says 5ms between PWR and RST */
 		usleep_range(5000, 25000);
 		gpio_direction_output(config->reset_pin, 1);
-	पूर्ण
+	}
 	usleep_range(5000, 25000);
 
 	/* Allocate a new VIP instance */
-	vip = kzalloc(माप(काष्ठा sta2x11_vip), GFP_KERNEL);
-	अगर (!vip) अणु
+	vip = kzalloc(sizeof(struct sta2x11_vip), GFP_KERNEL);
+	if (!vip) {
 		ret = -ENOMEM;
-		जाओ release_gpios;
-	पूर्ण
+		goto release_gpios;
+	}
 	vip->pdev = pdev;
 	vip->std = V4L2_STD_PAL;
-	vip->क्रमmat = क्रमmats_50[0];
+	vip->format = formats_50[0];
 	vip->config = config;
 	mutex_init(&vip->v4l_lock);
 
 	ret = sta2x11_vip_init_controls(vip);
-	अगर (ret)
-		जाओ मुक्त_mem;
-	ret = v4l2_device_रेजिस्टर(&pdev->dev, &vip->v4l2_dev);
-	अगर (ret)
-		जाओ मुक्त_mem;
+	if (ret)
+		goto free_mem;
+	ret = v4l2_device_register(&pdev->dev, &vip->v4l2_dev);
+	if (ret)
+		goto free_mem;
 
 	dev_dbg(&pdev->dev, "BAR #0 at 0x%lx 0x%lx irq %d\n",
-		(अचिन्हित दीर्घ)pci_resource_start(pdev, 0),
-		(अचिन्हित दीर्घ)pci_resource_len(pdev, 0), pdev->irq);
+		(unsigned long)pci_resource_start(pdev, 0),
+		(unsigned long)pci_resource_len(pdev, 0), pdev->irq);
 
 	pci_set_master(pdev);
 
 	ret = pci_request_regions(pdev, KBUILD_MODNAME);
-	अगर (ret)
-		जाओ unreg;
+	if (ret)
+		goto unreg;
 
 	vip->iomem = pci_iomap(pdev, 0, 0x100);
-	अगर (!vip->iomem) अणु
+	if (!vip->iomem) {
 		ret = -ENOMEM;
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
 	pci_enable_msi(pdev);
 
 	/* Initialize buffer */
 	ret = sta2x11_vip_init_buffer(vip);
-	अगर (ret)
-		जाओ unmap;
+	if (ret)
+		goto unmap;
 
 	spin_lock_init(&vip->slock);
 
 	ret = request_irq(pdev->irq,
 			  (irq_handler_t) vip_irq,
 			  IRQF_SHARED, KBUILD_MODNAME, vip);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "request_irq failed\n");
 		ret = -ENODEV;
-		जाओ release_buf;
-	पूर्ण
+		goto release_buf;
+	}
 
-	/* Initialize and रेजिस्टर video device */
-	vip->video_dev = video_dev_ढाँचा;
+	/* Initialize and register video device */
+	vip->video_dev = video_dev_template;
 	vip->video_dev.v4l2_dev = &vip->v4l2_dev;
 	vip->video_dev.queue = &vip->vb_vidq;
 	vip->video_dev.lock = &vip->v4l_lock;
 	video_set_drvdata(&vip->video_dev, vip);
 
-	ret = video_रेजिस्टर_device(&vip->video_dev, VFL_TYPE_VIDEO, -1);
-	अगर (ret)
-		जाओ vrelease;
+	ret = video_register_device(&vip->video_dev, VFL_TYPE_VIDEO, -1);
+	if (ret)
+		goto vrelease;
 
 	/* Get ADV7180 subdevice */
 	vip->adapter = i2c_get_adapter(vip->config->i2c_id);
-	अगर (!vip->adapter) अणु
+	if (!vip->adapter) {
 		ret = -ENODEV;
 		dev_err(&pdev->dev, "no I2C adapter found\n");
-		जाओ vunreg;
-	पूर्ण
+		goto vunreg;
+	}
 
 	vip->decoder = v4l2_i2c_new_subdev(&vip->v4l2_dev, vip->adapter,
 					   "adv7180", vip->config->i2c_addr,
-					   शून्य);
-	अगर (!vip->decoder) अणु
+					   NULL);
+	if (!vip->decoder) {
 		ret = -ENODEV;
 		dev_err(&pdev->dev, "no decoder found\n");
-		जाओ vunreg;
-	पूर्ण
+		goto vunreg;
+	}
 
 	i2c_put_adapter(vip->adapter);
 	v4l2_subdev_call(vip->decoder, core, init, 0);
 
-	sta2x11_vip_init_रेजिस्टर(vip);
+	sta2x11_vip_init_register(vip);
 
 	dev_info(&pdev->dev, "STA2X11 Video Input Port (VIP) loaded\n");
-	वापस 0;
+	return 0;
 
 vunreg:
-	video_set_drvdata(&vip->video_dev, शून्य);
+	video_set_drvdata(&vip->video_dev, NULL);
 vrelease:
-	vb2_video_unरेजिस्टर_device(&vip->video_dev);
-	मुक्त_irq(pdev->irq, vip);
+	vb2_video_unregister_device(&vip->video_dev);
+	free_irq(pdev->irq, vip);
 release_buf:
 	pci_disable_msi(pdev);
 unmap:
@@ -1111,161 +1110,161 @@ unmap:
 release:
 	pci_release_regions(pdev);
 unreg:
-	v4l2_device_unरेजिस्टर(&vip->v4l2_dev);
-मुक्त_mem:
-	kमुक्त(vip);
+	v4l2_device_unregister(&vip->v4l2_dev);
+free_mem:
+	kfree(vip);
 release_gpios:
 	vip_gpio_release(&pdev->dev, config->reset_pin, config->reset_name);
 	vip_gpio_release(&pdev->dev, config->pwr_pin, config->pwr_name);
 disable:
 	/*
-	 * करो not call pci_disable_device on sta2x11 because it अवरोध all
+	 * do not call pci_disable_device on sta2x11 because it break all
 	 * other Bus masters on this EP
 	 */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * sta2x11_vip_हटाओ_one - release device
+ * sta2x11_vip_remove_one - release device
  * @pdev: PCI device
  *
- * Unकरो everything करोne in .._init_one
+ * Undo everything done in .._init_one
  *
- * unरेजिस्टर video device
- * मुक्त पूर्णांकerrupt
+ * unregister video device
+ * free interrupt
  * unmap ioadresses
- * मुक्त memory
- * मुक्त GPIO pins
+ * free memory
+ * free GPIO pins
  */
-अटल व्योम sta2x11_vip_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
-	काष्ठा sta2x11_vip *vip =
-	    container_of(v4l2_dev, काष्ठा sta2x11_vip, v4l2_dev);
+static void sta2x11_vip_remove_one(struct pci_dev *pdev)
+{
+	struct v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
+	struct sta2x11_vip *vip =
+	    container_of(v4l2_dev, struct sta2x11_vip, v4l2_dev);
 
-	sta2x11_vip_clear_रेजिस्टर(vip);
+	sta2x11_vip_clear_register(vip);
 
-	video_set_drvdata(&vip->video_dev, शून्य);
-	vb2_video_unरेजिस्टर_device(&vip->video_dev);
-	मुक्त_irq(pdev->irq, vip);
+	video_set_drvdata(&vip->video_dev, NULL);
+	vb2_video_unregister_device(&vip->video_dev);
+	free_irq(pdev->irq, vip);
 	pci_disable_msi(pdev);
 	pci_iounmap(pdev, vip->iomem);
 	pci_release_regions(pdev);
 
-	v4l2_device_unरेजिस्टर(&vip->v4l2_dev);
+	v4l2_device_unregister(&vip->v4l2_dev);
 
 	vip_gpio_release(&pdev->dev, vip->config->pwr_pin,
 			 vip->config->pwr_name);
 	vip_gpio_release(&pdev->dev, vip->config->reset_pin,
 			 vip->config->reset_name);
 
-	kमुक्त(vip);
+	kfree(vip);
 	/*
-	 * करो not call pci_disable_device on sta2x11 because it अवरोध all
+	 * do not call pci_disable_device on sta2x11 because it break all
 	 * other Bus masters on this EP
 	 */
-पूर्ण
+}
 
 /**
- * sta2x11_vip_suspend - set device पूर्णांकo घातer save mode
+ * sta2x11_vip_suspend - set device into power save mode
  * @dev_d: PCI device
  *
- * all relevant रेजिस्टरs are saved and an attempt to set a new state is made.
+ * all relevant registers are saved and an attempt to set a new state is made.
  *
- * वापस value: 0 always indicate success,
- * even अगर device could not be disabled. (workaround क्रम hardware problem)
+ * return value: 0 always indicate success,
+ * even if device could not be disabled. (workaround for hardware problem)
  */
-अटल पूर्णांक __maybe_unused sta2x11_vip_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = dev_get_drvdata(dev_d);
-	काष्ठा sta2x11_vip *vip =
-	    container_of(v4l2_dev, काष्ठा sta2x11_vip, v4l2_dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int __maybe_unused sta2x11_vip_suspend(struct device *dev_d)
+{
+	struct v4l2_device *v4l2_dev = dev_get_drvdata(dev_d);
+	struct sta2x11_vip *vip =
+	    container_of(v4l2_dev, struct sta2x11_vip, v4l2_dev);
+	unsigned long flags;
+	int i;
 
 	spin_lock_irqsave(&vip->slock, flags);
-	vip->रेजिस्टर_save_area[0] = reg_पढ़ो(vip, DVP_CTL);
-	reg_ग_लिखो(vip, DVP_CTL, vip->रेजिस्टर_save_area[0] & DVP_CTL_DIS);
-	vip->रेजिस्टर_save_area[SAVE_COUNT] = reg_पढ़ो(vip, DVP_ITM);
-	reg_ग_लिखो(vip, DVP_ITM, 0);
-	क्रम (i = 1; i < SAVE_COUNT; i++)
-		vip->रेजिस्टर_save_area[i] = reg_पढ़ो(vip, 4 * i);
-	क्रम (i = 0; i < AUX_COUNT; i++)
-		vip->रेजिस्टर_save_area[SAVE_COUNT + IRQ_COUNT + i] =
-		    reg_पढ़ो(vip, रेजिस्टरs_to_save[i]);
+	vip->register_save_area[0] = reg_read(vip, DVP_CTL);
+	reg_write(vip, DVP_CTL, vip->register_save_area[0] & DVP_CTL_DIS);
+	vip->register_save_area[SAVE_COUNT] = reg_read(vip, DVP_ITM);
+	reg_write(vip, DVP_ITM, 0);
+	for (i = 1; i < SAVE_COUNT; i++)
+		vip->register_save_area[i] = reg_read(vip, 4 * i);
+	for (i = 0; i < AUX_COUNT; i++)
+		vip->register_save_area[SAVE_COUNT + IRQ_COUNT + i] =
+		    reg_read(vip, registers_to_save[i]);
 	spin_unlock_irqrestore(&vip->slock, flags);
 
 	vip->disabled = 1;
 
 	pr_info("VIP: suspend\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * sta2x11_vip_resume - resume device operation
  * @dev_d : PCI device
  *
- * वापस value: 0, no error.
+ * return value: 0, no error.
  *
- * other, could not set device to घातer on state.
+ * other, could not set device to power on state.
  */
-अटल पूर्णांक __maybe_unused sta2x11_vip_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = dev_get_drvdata(dev_d);
-	काष्ठा sta2x11_vip *vip =
-	    container_of(v4l2_dev, काष्ठा sta2x11_vip, v4l2_dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+static int __maybe_unused sta2x11_vip_resume(struct device *dev_d)
+{
+	struct v4l2_device *v4l2_dev = dev_get_drvdata(dev_d);
+	struct sta2x11_vip *vip =
+	    container_of(v4l2_dev, struct sta2x11_vip, v4l2_dev);
+	unsigned long flags;
+	int i;
 
 	pr_info("VIP: resume\n");
 
 	vip->disabled = 0;
 
 	spin_lock_irqsave(&vip->slock, flags);
-	क्रम (i = 1; i < SAVE_COUNT; i++)
-		reg_ग_लिखो(vip, 4 * i, vip->रेजिस्टर_save_area[i]);
-	क्रम (i = 0; i < AUX_COUNT; i++)
-		reg_ग_लिखो(vip, रेजिस्टरs_to_save[i],
-			  vip->रेजिस्टर_save_area[SAVE_COUNT + IRQ_COUNT + i]);
-	reg_ग_लिखो(vip, DVP_CTL, vip->रेजिस्टर_save_area[0]);
-	reg_ग_लिखो(vip, DVP_ITM, vip->रेजिस्टर_save_area[SAVE_COUNT]);
+	for (i = 1; i < SAVE_COUNT; i++)
+		reg_write(vip, 4 * i, vip->register_save_area[i]);
+	for (i = 0; i < AUX_COUNT; i++)
+		reg_write(vip, registers_to_save[i],
+			  vip->register_save_area[SAVE_COUNT + IRQ_COUNT + i]);
+	reg_write(vip, DVP_CTL, vip->register_save_area[0]);
+	reg_write(vip, DVP_ITM, vip->register_save_area[SAVE_COUNT]);
 	spin_unlock_irqrestore(&vip->slock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pci_device_id sta2x11_vip_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_STMICRO, PCI_DEVICE_ID_STMICRO_VIP)पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id sta2x11_vip_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_STMICRO, PCI_DEVICE_ID_STMICRO_VIP)},
+	{0,}
+};
 
-अटल SIMPLE_DEV_PM_OPS(sta2x11_vip_pm_ops,
+static SIMPLE_DEV_PM_OPS(sta2x11_vip_pm_ops,
 			 sta2x11_vip_suspend,
 			 sta2x11_vip_resume);
 
-अटल काष्ठा pci_driver sta2x11_vip_driver = अणु
+static struct pci_driver sta2x11_vip_driver = {
 	.name = KBUILD_MODNAME,
 	.probe = sta2x11_vip_init_one,
-	.हटाओ = sta2x11_vip_हटाओ_one,
+	.remove = sta2x11_vip_remove_one,
 	.id_table = sta2x11_vip_pci_tbl,
 	.driver.pm = &sta2x11_vip_pm_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sta2x11_vip_init_module(व्योम)
-अणु
-	वापस pci_रेजिस्टर_driver(&sta2x11_vip_driver);
-पूर्ण
+static int __init sta2x11_vip_init_module(void)
+{
+	return pci_register_driver(&sta2x11_vip_driver);
+}
 
-अटल व्योम __निकास sta2x11_vip_निकास_module(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&sta2x11_vip_driver);
-पूर्ण
+static void __exit sta2x11_vip_exit_module(void)
+{
+	pci_unregister_driver(&sta2x11_vip_driver);
+}
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 module_init(sta2x11_vip_init_module);
-module_निकास(sta2x11_vip_निकास_module);
-#अन्यथा
+module_exit(sta2x11_vip_exit_module);
+#else
 late_initcall_sync(sta2x11_vip_init_module);
-#पूर्ण_अगर
+#endif
 
 MODULE_DESCRIPTION("STA2X11 Video Input Port driver");
 MODULE_AUTHOR("Wind River");

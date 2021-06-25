@@ -1,200 +1,199 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * File: drivers/input/keyboard/adp5588_keys.c
- * Description:  keypad driver क्रम ADP5588 and ADP5587
+ * Description:  keypad driver for ADP5588 and ADP5587
  *		 I2C QWERTY Keypad and IO Expander
  * Bugs: Enter bugs at http://blackfin.uclinux.org/
  *
  * Copyright (C) 2008-2010 Analog Devices Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/workqueue.h>
+#include <linux/errno.h>
+#include <linux/pm.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/i2c.h>
+#include <linux/gpio.h>
+#include <linux/slab.h>
 
-#समावेश <linux/platक्रमm_data/adp5588.h>
+#include <linux/platform_data/adp5588.h>
 
 /* Key Event Register xy */
-#घोषणा KEY_EV_PRESSED		(1 << 7)
-#घोषणा KEY_EV_MASK		(0x7F)
+#define KEY_EV_PRESSED		(1 << 7)
+#define KEY_EV_MASK		(0x7F)
 
-#घोषणा KP_SEL(x)		(0xFFFF >> (16 - x))	/* 2^x-1 */
+#define KP_SEL(x)		(0xFFFF >> (16 - x))	/* 2^x-1 */
 
-#घोषणा KEYP_MAX_EVENT		10
+#define KEYP_MAX_EVENT		10
 
 /*
- * Early pre 4.0 Silicon required to delay पढ़ोout by at least 25ms,
- * since the Event Counter Register updated 25ms after the पूर्णांकerrupt
- * निश्चितed.
+ * Early pre 4.0 Silicon required to delay readout by at least 25ms,
+ * since the Event Counter Register updated 25ms after the interrupt
+ * asserted.
  */
-#घोषणा WA_DELAYED_READOUT_REVID(rev)		((rev) < 4)
+#define WA_DELAYED_READOUT_REVID(rev)		((rev) < 4)
 
-काष्ठा adp5588_kpad अणु
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input;
-	काष्ठा delayed_work work;
-	अचिन्हित दीर्घ delay;
-	अचिन्हित लघु keycode[ADP5588_KEYMAPSIZE];
-	स्थिर काष्ठा adp5588_gpi_map *gpimap;
-	अचिन्हित लघु gpimapsize;
-#अगर_घोषित CONFIG_GPIOLIB
-	अचिन्हित अक्षर gpiomap[ADP5588_MAXGPIO];
+struct adp5588_kpad {
+	struct i2c_client *client;
+	struct input_dev *input;
+	struct delayed_work work;
+	unsigned long delay;
+	unsigned short keycode[ADP5588_KEYMAPSIZE];
+	const struct adp5588_gpi_map *gpimap;
+	unsigned short gpimapsize;
+#ifdef CONFIG_GPIOLIB
+	unsigned char gpiomap[ADP5588_MAXGPIO];
 	bool export_gpio;
-	काष्ठा gpio_chip gc;
-	काष्ठा mutex gpio_lock;	/* Protect cached dir, dat_out */
+	struct gpio_chip gc;
+	struct mutex gpio_lock;	/* Protect cached dir, dat_out */
 	u8 dat_out[3];
 	u8 dir[3];
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक adp5588_पढ़ो(काष्ठा i2c_client *client, u8 reg)
-अणु
-	पूर्णांक ret = i2c_smbus_पढ़ो_byte_data(client, reg);
+static int adp5588_read(struct i2c_client *client, u8 reg)
+{
+	int ret = i2c_smbus_read_byte_data(client, reg);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(&client->dev, "Read Error\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp5588_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 val)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-पूर्ण
+static int adp5588_write(struct i2c_client *client, u8 reg, u8 val)
+{
+	return i2c_smbus_write_byte_data(client, reg, val);
+}
 
-#अगर_घोषित CONFIG_GPIOLIB
-अटल पूर्णांक adp5588_gpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित off)
-अणु
-	काष्ठा adp5588_kpad *kpad = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक bank = ADP5588_BANK(kpad->gpiomap[off]);
-	अचिन्हित पूर्णांक bit = ADP5588_BIT(kpad->gpiomap[off]);
-	पूर्णांक val;
+#ifdef CONFIG_GPIOLIB
+static int adp5588_gpio_get_value(struct gpio_chip *chip, unsigned off)
+{
+	struct adp5588_kpad *kpad = gpiochip_get_data(chip);
+	unsigned int bank = ADP5588_BANK(kpad->gpiomap[off]);
+	unsigned int bit = ADP5588_BIT(kpad->gpiomap[off]);
+	int val;
 
 	mutex_lock(&kpad->gpio_lock);
 
-	अगर (kpad->dir[bank] & bit)
+	if (kpad->dir[bank] & bit)
 		val = kpad->dat_out[bank];
-	अन्यथा
-		val = adp5588_पढ़ो(kpad->client, GPIO_DAT_STAT1 + bank);
+	else
+		val = adp5588_read(kpad->client, GPIO_DAT_STAT1 + bank);
 
 	mutex_unlock(&kpad->gpio_lock);
 
-	वापस !!(val & bit);
-पूर्ण
+	return !!(val & bit);
+}
 
-अटल व्योम adp5588_gpio_set_value(काष्ठा gpio_chip *chip,
-				   अचिन्हित off, पूर्णांक val)
-अणु
-	काष्ठा adp5588_kpad *kpad = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक bank = ADP5588_BANK(kpad->gpiomap[off]);
-	अचिन्हित पूर्णांक bit = ADP5588_BIT(kpad->gpiomap[off]);
+static void adp5588_gpio_set_value(struct gpio_chip *chip,
+				   unsigned off, int val)
+{
+	struct adp5588_kpad *kpad = gpiochip_get_data(chip);
+	unsigned int bank = ADP5588_BANK(kpad->gpiomap[off]);
+	unsigned int bit = ADP5588_BIT(kpad->gpiomap[off]);
 
 	mutex_lock(&kpad->gpio_lock);
 
-	अगर (val)
+	if (val)
 		kpad->dat_out[bank] |= bit;
-	अन्यथा
+	else
 		kpad->dat_out[bank] &= ~bit;
 
-	adp5588_ग_लिखो(kpad->client, GPIO_DAT_OUT1 + bank,
+	adp5588_write(kpad->client, GPIO_DAT_OUT1 + bank,
 			   kpad->dat_out[bank]);
 
 	mutex_unlock(&kpad->gpio_lock);
-पूर्ण
+}
 
-अटल पूर्णांक adp5588_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित off)
-अणु
-	काष्ठा adp5588_kpad *kpad = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक bank = ADP5588_BANK(kpad->gpiomap[off]);
-	अचिन्हित पूर्णांक bit = ADP5588_BIT(kpad->gpiomap[off]);
-	पूर्णांक ret;
+static int adp5588_gpio_direction_input(struct gpio_chip *chip, unsigned off)
+{
+	struct adp5588_kpad *kpad = gpiochip_get_data(chip);
+	unsigned int bank = ADP5588_BANK(kpad->gpiomap[off]);
+	unsigned int bit = ADP5588_BIT(kpad->gpiomap[off]);
+	int ret;
 
 	mutex_lock(&kpad->gpio_lock);
 
 	kpad->dir[bank] &= ~bit;
-	ret = adp5588_ग_लिखो(kpad->client, GPIO_सूची1 + bank, kpad->dir[bank]);
+	ret = adp5588_write(kpad->client, GPIO_DIR1 + bank, kpad->dir[bank]);
 
 	mutex_unlock(&kpad->gpio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp5588_gpio_direction_output(काष्ठा gpio_chip *chip,
-					 अचिन्हित off, पूर्णांक val)
-अणु
-	काष्ठा adp5588_kpad *kpad = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक bank = ADP5588_BANK(kpad->gpiomap[off]);
-	अचिन्हित पूर्णांक bit = ADP5588_BIT(kpad->gpiomap[off]);
-	पूर्णांक ret;
+static int adp5588_gpio_direction_output(struct gpio_chip *chip,
+					 unsigned off, int val)
+{
+	struct adp5588_kpad *kpad = gpiochip_get_data(chip);
+	unsigned int bank = ADP5588_BANK(kpad->gpiomap[off]);
+	unsigned int bit = ADP5588_BIT(kpad->gpiomap[off]);
+	int ret;
 
 	mutex_lock(&kpad->gpio_lock);
 
 	kpad->dir[bank] |= bit;
 
-	अगर (val)
+	if (val)
 		kpad->dat_out[bank] |= bit;
-	अन्यथा
+	else
 		kpad->dat_out[bank] &= ~bit;
 
-	ret = adp5588_ग_लिखो(kpad->client, GPIO_DAT_OUT1 + bank,
+	ret = adp5588_write(kpad->client, GPIO_DAT_OUT1 + bank,
 				 kpad->dat_out[bank]);
-	ret |= adp5588_ग_लिखो(kpad->client, GPIO_सूची1 + bank,
+	ret |= adp5588_write(kpad->client, GPIO_DIR1 + bank,
 				 kpad->dir[bank]);
 
 	mutex_unlock(&kpad->gpio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp5588_build_gpiomap(काष्ठा adp5588_kpad *kpad,
-				स्थिर काष्ठा adp5588_kpad_platक्रमm_data *pdata)
-अणु
+static int adp5588_build_gpiomap(struct adp5588_kpad *kpad,
+				const struct adp5588_kpad_platform_data *pdata)
+{
 	bool pin_used[ADP5588_MAXGPIO];
-	पूर्णांक n_unused = 0;
-	पूर्णांक i;
+	int n_unused = 0;
+	int i;
 
-	स_रखो(pin_used, 0, माप(pin_used));
+	memset(pin_used, 0, sizeof(pin_used));
 
-	क्रम (i = 0; i < pdata->rows; i++)
+	for (i = 0; i < pdata->rows; i++)
 		pin_used[i] = true;
 
-	क्रम (i = 0; i < pdata->cols; i++)
+	for (i = 0; i < pdata->cols; i++)
 		pin_used[i + GPI_PIN_COL_BASE - GPI_PIN_BASE] = true;
 
-	क्रम (i = 0; i < kpad->gpimapsize; i++)
+	for (i = 0; i < kpad->gpimapsize; i++)
 		pin_used[kpad->gpimap[i].pin - GPI_PIN_BASE] = true;
 
-	क्रम (i = 0; i < ADP5588_MAXGPIO; i++)
-		अगर (!pin_used[i])
+	for (i = 0; i < ADP5588_MAXGPIO; i++)
+		if (!pin_used[i])
 			kpad->gpiomap[n_unused++] = i;
 
-	वापस n_unused;
-पूर्ण
+	return n_unused;
+}
 
-अटल पूर्णांक adp5588_gpio_add(काष्ठा adp5588_kpad *kpad)
-अणु
-	काष्ठा device *dev = &kpad->client->dev;
-	स्थिर काष्ठा adp5588_kpad_platक्रमm_data *pdata = dev_get_platdata(dev);
-	स्थिर काष्ठा adp5588_gpio_platक्रमm_data *gpio_data = pdata->gpio_data;
-	पूर्णांक i, error;
+static int adp5588_gpio_add(struct adp5588_kpad *kpad)
+{
+	struct device *dev = &kpad->client->dev;
+	const struct adp5588_kpad_platform_data *pdata = dev_get_platdata(dev);
+	const struct adp5588_gpio_platform_data *gpio_data = pdata->gpio_data;
+	int i, error;
 
-	अगर (!gpio_data)
-		वापस 0;
+	if (!gpio_data)
+		return 0;
 
 	kpad->gc.ngpio = adp5588_build_gpiomap(kpad, pdata);
-	अगर (kpad->gc.ngpio == 0) अणु
+	if (kpad->gc.ngpio == 0) {
 		dev_info(dev, "No unused gpios left to export\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	kpad->export_gpio = true;
 
@@ -212,311 +211,311 @@
 	mutex_init(&kpad->gpio_lock);
 
 	error = gpiochip_add_data(&kpad->gc, kpad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "gpiochip_add failed, err: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	क्रम (i = 0; i <= ADP5588_BANK(ADP5588_MAXGPIO); i++) अणु
-		kpad->dat_out[i] = adp5588_पढ़ो(kpad->client,
+	for (i = 0; i <= ADP5588_BANK(ADP5588_MAXGPIO); i++) {
+		kpad->dat_out[i] = adp5588_read(kpad->client,
 						GPIO_DAT_OUT1 + i);
-		kpad->dir[i] = adp5588_पढ़ो(kpad->client, GPIO_सूची1 + i);
-	पूर्ण
+		kpad->dir[i] = adp5588_read(kpad->client, GPIO_DIR1 + i);
+	}
 
-	अगर (gpio_data->setup) अणु
+	if (gpio_data->setup) {
 		error = gpio_data->setup(kpad->client,
 					 kpad->gc.base, kpad->gc.ngpio,
 					 gpio_data->context);
-		अगर (error)
+		if (error)
 			dev_warn(dev, "setup failed, %d\n", error);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adp5588_gpio_हटाओ(काष्ठा adp5588_kpad *kpad)
-अणु
-	काष्ठा device *dev = &kpad->client->dev;
-	स्थिर काष्ठा adp5588_kpad_platक्रमm_data *pdata = dev_get_platdata(dev);
-	स्थिर काष्ठा adp5588_gpio_platक्रमm_data *gpio_data = pdata->gpio_data;
-	पूर्णांक error;
+static void adp5588_gpio_remove(struct adp5588_kpad *kpad)
+{
+	struct device *dev = &kpad->client->dev;
+	const struct adp5588_kpad_platform_data *pdata = dev_get_platdata(dev);
+	const struct adp5588_gpio_platform_data *gpio_data = pdata->gpio_data;
+	int error;
 
-	अगर (!kpad->export_gpio)
-		वापस;
+	if (!kpad->export_gpio)
+		return;
 
-	अगर (gpio_data->tearकरोwn) अणु
-		error = gpio_data->tearकरोwn(kpad->client,
+	if (gpio_data->teardown) {
+		error = gpio_data->teardown(kpad->client,
 					    kpad->gc.base, kpad->gc.ngpio,
 					    gpio_data->context);
-		अगर (error)
+		if (error)
 			dev_warn(dev, "teardown failed %d\n", error);
-	पूर्ण
+	}
 
-	gpiochip_हटाओ(&kpad->gc);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक adp5588_gpio_add(काष्ठा adp5588_kpad *kpad)
-अणु
-	वापस 0;
-पूर्ण
+	gpiochip_remove(&kpad->gc);
+}
+#else
+static inline int adp5588_gpio_add(struct adp5588_kpad *kpad)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम adp5588_gpio_हटाओ(काष्ठा adp5588_kpad *kpad)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void adp5588_gpio_remove(struct adp5588_kpad *kpad)
+{
+}
+#endif
 
-अटल व्योम adp5588_report_events(काष्ठा adp5588_kpad *kpad, पूर्णांक ev_cnt)
-अणु
-	पूर्णांक i, j;
+static void adp5588_report_events(struct adp5588_kpad *kpad, int ev_cnt)
+{
+	int i, j;
 
-	क्रम (i = 0; i < ev_cnt; i++) अणु
-		पूर्णांक key = adp5588_पढ़ो(kpad->client, Key_EVENTA + i);
-		पूर्णांक key_val = key & KEY_EV_MASK;
+	for (i = 0; i < ev_cnt; i++) {
+		int key = adp5588_read(kpad->client, Key_EVENTA + i);
+		int key_val = key & KEY_EV_MASK;
 
-		अगर (key_val >= GPI_PIN_BASE && key_val <= GPI_PIN_END) अणु
-			क्रम (j = 0; j < kpad->gpimapsize; j++) अणु
-				अगर (key_val == kpad->gpimap[j].pin) अणु
-					input_report_चयन(kpad->input,
+		if (key_val >= GPI_PIN_BASE && key_val <= GPI_PIN_END) {
+			for (j = 0; j < kpad->gpimapsize; j++) {
+				if (key_val == kpad->gpimap[j].pin) {
+					input_report_switch(kpad->input,
 							kpad->gpimap[j].sw_evt,
 							key & KEY_EV_PRESSED);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					break;
+				}
+			}
+		} else {
 			input_report_key(kpad->input,
 					 kpad->keycode[key_val - 1],
 					 key & KEY_EV_PRESSED);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम adp5588_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा adp5588_kpad *kpad = container_of(work,
-						काष्ठा adp5588_kpad, work.work);
-	काष्ठा i2c_client *client = kpad->client;
-	पूर्णांक status, ev_cnt;
+static void adp5588_work(struct work_struct *work)
+{
+	struct adp5588_kpad *kpad = container_of(work,
+						struct adp5588_kpad, work.work);
+	struct i2c_client *client = kpad->client;
+	int status, ev_cnt;
 
-	status = adp5588_पढ़ो(client, INT_STAT);
+	status = adp5588_read(client, INT_STAT);
 
-	अगर (status & ADP5588_OVR_FLOW_INT)	/* Unlikely and should never happen */
+	if (status & ADP5588_OVR_FLOW_INT)	/* Unlikely and should never happen */
 		dev_err(&client->dev, "Event Overflow Error\n");
 
-	अगर (status & ADP5588_KE_INT) अणु
-		ev_cnt = adp5588_पढ़ो(client, KEY_LCK_EC_STAT) & ADP5588_KEC;
-		अगर (ev_cnt) अणु
+	if (status & ADP5588_KE_INT) {
+		ev_cnt = adp5588_read(client, KEY_LCK_EC_STAT) & ADP5588_KEC;
+		if (ev_cnt) {
 			adp5588_report_events(kpad, ev_cnt);
 			input_sync(kpad->input);
-		पूर्ण
-	पूर्ण
-	adp5588_ग_लिखो(client, INT_STAT, status); /* Status is W1C */
-पूर्ण
+		}
+	}
+	adp5588_write(client, INT_STAT, status); /* Status is W1C */
+}
 
-अटल irqवापस_t adp5588_irq(पूर्णांक irq, व्योम *handle)
-अणु
-	काष्ठा adp5588_kpad *kpad = handle;
+static irqreturn_t adp5588_irq(int irq, void *handle)
+{
+	struct adp5588_kpad *kpad = handle;
 
 	/*
-	 * use keventd context to पढ़ो the event fअगरo रेजिस्टरs
-	 * Schedule पढ़ोout at least 25ms after notअगरication क्रम
+	 * use keventd context to read the event fifo registers
+	 * Schedule readout at least 25ms after notification for
 	 * REVID < 4
 	 */
 
 	schedule_delayed_work(&kpad->work, kpad->delay);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक adp5588_setup(काष्ठा i2c_client *client)
-अणु
-	स्थिर काष्ठा adp5588_kpad_platक्रमm_data *pdata =
+static int adp5588_setup(struct i2c_client *client)
+{
+	const struct adp5588_kpad_platform_data *pdata =
 			dev_get_platdata(&client->dev);
-	स्थिर काष्ठा adp5588_gpio_platक्रमm_data *gpio_data = pdata->gpio_data;
-	पूर्णांक i, ret;
-	अचिन्हित अक्षर evt_mode1 = 0, evt_mode2 = 0, evt_mode3 = 0;
+	const struct adp5588_gpio_platform_data *gpio_data = pdata->gpio_data;
+	int i, ret;
+	unsigned char evt_mode1 = 0, evt_mode2 = 0, evt_mode3 = 0;
 
-	ret = adp5588_ग_लिखो(client, KP_GPIO1, KP_SEL(pdata->rows));
-	ret |= adp5588_ग_लिखो(client, KP_GPIO2, KP_SEL(pdata->cols) & 0xFF);
-	ret |= adp5588_ग_लिखो(client, KP_GPIO3, KP_SEL(pdata->cols) >> 8);
+	ret = adp5588_write(client, KP_GPIO1, KP_SEL(pdata->rows));
+	ret |= adp5588_write(client, KP_GPIO2, KP_SEL(pdata->cols) & 0xFF);
+	ret |= adp5588_write(client, KP_GPIO3, KP_SEL(pdata->cols) >> 8);
 
-	अगर (pdata->en_keylock) अणु
-		ret |= adp5588_ग_लिखो(client, UNLOCK1, pdata->unlock_key1);
-		ret |= adp5588_ग_लिखो(client, UNLOCK2, pdata->unlock_key2);
-		ret |= adp5588_ग_लिखो(client, KEY_LCK_EC_STAT, ADP5588_K_LCK_EN);
-	पूर्ण
+	if (pdata->en_keylock) {
+		ret |= adp5588_write(client, UNLOCK1, pdata->unlock_key1);
+		ret |= adp5588_write(client, UNLOCK2, pdata->unlock_key2);
+		ret |= adp5588_write(client, KEY_LCK_EC_STAT, ADP5588_K_LCK_EN);
+	}
 
-	क्रम (i = 0; i < KEYP_MAX_EVENT; i++)
-		ret |= adp5588_पढ़ो(client, Key_EVENTA);
+	for (i = 0; i < KEYP_MAX_EVENT; i++)
+		ret |= adp5588_read(client, Key_EVENTA);
 
-	क्रम (i = 0; i < pdata->gpimapsize; i++) अणु
-		अचिन्हित लघु pin = pdata->gpimap[i].pin;
+	for (i = 0; i < pdata->gpimapsize; i++) {
+		unsigned short pin = pdata->gpimap[i].pin;
 
-		अगर (pin <= GPI_PIN_ROW_END) अणु
+		if (pin <= GPI_PIN_ROW_END) {
 			evt_mode1 |= (1 << (pin - GPI_PIN_ROW_BASE));
-		पूर्ण अन्यथा अणु
+		} else {
 			evt_mode2 |= ((1 << (pin - GPI_PIN_COL_BASE)) & 0xFF);
 			evt_mode3 |= ((1 << (pin - GPI_PIN_COL_BASE)) >> 8);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pdata->gpimapsize) अणु
-		ret |= adp5588_ग_लिखो(client, GPI_EM1, evt_mode1);
-		ret |= adp5588_ग_लिखो(client, GPI_EM2, evt_mode2);
-		ret |= adp5588_ग_लिखो(client, GPI_EM3, evt_mode3);
-	पूर्ण
+	if (pdata->gpimapsize) {
+		ret |= adp5588_write(client, GPI_EM1, evt_mode1);
+		ret |= adp5588_write(client, GPI_EM2, evt_mode2);
+		ret |= adp5588_write(client, GPI_EM3, evt_mode3);
+	}
 
-	अगर (gpio_data) अणु
-		क्रम (i = 0; i <= ADP5588_BANK(ADP5588_MAXGPIO); i++) अणु
-			पूर्णांक pull_mask = gpio_data->pullup_dis_mask;
+	if (gpio_data) {
+		for (i = 0; i <= ADP5588_BANK(ADP5588_MAXGPIO); i++) {
+			int pull_mask = gpio_data->pullup_dis_mask;
 
-			ret |= adp5588_ग_लिखो(client, GPIO_PULL1 + i,
+			ret |= adp5588_write(client, GPIO_PULL1 + i,
 				(pull_mask >> (8 * i)) & 0xFF);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret |= adp5588_ग_लिखो(client, INT_STAT,
+	ret |= adp5588_write(client, INT_STAT,
 				ADP5588_CMP2_INT | ADP5588_CMP1_INT |
 				ADP5588_OVR_FLOW_INT | ADP5588_K_LCK_INT |
 				ADP5588_GPI_INT | ADP5588_KE_INT); /* Status is W1C */
 
-	ret |= adp5588_ग_लिखो(client, CFG, ADP5588_INT_CFG |
+	ret |= adp5588_write(client, CFG, ADP5588_INT_CFG |
 					  ADP5588_OVR_FLOW_IEN |
 					  ADP5588_KE_IEN);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "Write Error\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम adp5588_report_चयन_state(काष्ठा adp5588_kpad *kpad)
-अणु
-	पूर्णांक gpi_stat1 = adp5588_पढ़ो(kpad->client, GPIO_DAT_STAT1);
-	पूर्णांक gpi_stat2 = adp5588_पढ़ो(kpad->client, GPIO_DAT_STAT2);
-	पूर्णांक gpi_stat3 = adp5588_पढ़ो(kpad->client, GPIO_DAT_STAT3);
-	पूर्णांक gpi_stat_पंचांगp, pin_loc;
-	पूर्णांक i;
+static void adp5588_report_switch_state(struct adp5588_kpad *kpad)
+{
+	int gpi_stat1 = adp5588_read(kpad->client, GPIO_DAT_STAT1);
+	int gpi_stat2 = adp5588_read(kpad->client, GPIO_DAT_STAT2);
+	int gpi_stat3 = adp5588_read(kpad->client, GPIO_DAT_STAT3);
+	int gpi_stat_tmp, pin_loc;
+	int i;
 
-	क्रम (i = 0; i < kpad->gpimapsize; i++) अणु
-		अचिन्हित लघु pin = kpad->gpimap[i].pin;
+	for (i = 0; i < kpad->gpimapsize; i++) {
+		unsigned short pin = kpad->gpimap[i].pin;
 
-		अगर (pin <= GPI_PIN_ROW_END) अणु
-			gpi_stat_पंचांगp = gpi_stat1;
+		if (pin <= GPI_PIN_ROW_END) {
+			gpi_stat_tmp = gpi_stat1;
 			pin_loc = pin - GPI_PIN_ROW_BASE;
-		पूर्ण अन्यथा अगर ((pin - GPI_PIN_COL_BASE) < 8) अणु
-			gpi_stat_पंचांगp = gpi_stat2;
+		} else if ((pin - GPI_PIN_COL_BASE) < 8) {
+			gpi_stat_tmp = gpi_stat2;
 			pin_loc = pin - GPI_PIN_COL_BASE;
-		पूर्ण अन्यथा अणु
-			gpi_stat_पंचांगp = gpi_stat3;
+		} else {
+			gpi_stat_tmp = gpi_stat3;
 			pin_loc = pin - GPI_PIN_COL_BASE - 8;
-		पूर्ण
+		}
 
-		अगर (gpi_stat_पंचांगp < 0) अणु
+		if (gpi_stat_tmp < 0) {
 			dev_err(&kpad->client->dev,
 				"Can't read GPIO_DAT_STAT switch %d default to OFF\n",
 				pin);
-			gpi_stat_पंचांगp = 0;
-		पूर्ण
+			gpi_stat_tmp = 0;
+		}
 
-		input_report_चयन(kpad->input,
+		input_report_switch(kpad->input,
 				    kpad->gpimap[i].sw_evt,
-				    !(gpi_stat_पंचांगp & (1 << pin_loc)));
-	पूर्ण
+				    !(gpi_stat_tmp & (1 << pin_loc)));
+	}
 
 	input_sync(kpad->input);
-पूर्ण
+}
 
 
-अटल पूर्णांक adp5588_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा adp5588_kpad *kpad;
-	स्थिर काष्ठा adp5588_kpad_platक्रमm_data *pdata =
+static int adp5588_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct adp5588_kpad *kpad;
+	const struct adp5588_kpad_platform_data *pdata =
 			dev_get_platdata(&client->dev);
-	काष्ठा input_dev *input;
-	अचिन्हित पूर्णांक revid;
-	पूर्णांक ret, i;
-	पूर्णांक error;
+	struct input_dev *input;
+	unsigned int revid;
+	int ret, i;
+	int error;
 
-	अगर (!i2c_check_functionality(client->adapter,
-					I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(client->adapter,
+					I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&client->dev, "no platform data?\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pdata->rows || !pdata->cols || !pdata->keymap) अणु
+	if (!pdata->rows || !pdata->cols || !pdata->keymap) {
 		dev_err(&client->dev, "no rows, cols or keymap from pdata\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdata->keymapsize != ADP5588_KEYMAPSIZE) अणु
+	if (pdata->keymapsize != ADP5588_KEYMAPSIZE) {
 		dev_err(&client->dev, "invalid keymapsize\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pdata->gpimap && pdata->gpimapsize) अणु
+	if (!pdata->gpimap && pdata->gpimapsize) {
 		dev_err(&client->dev, "invalid gpimap from pdata\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pdata->gpimapsize > ADP5588_GPIMAPSIZE_MAX) अणु
+	if (pdata->gpimapsize > ADP5588_GPIMAPSIZE_MAX) {
 		dev_err(&client->dev, "invalid gpimapsize\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < pdata->gpimapsize; i++) अणु
-		अचिन्हित लघु pin = pdata->gpimap[i].pin;
+	for (i = 0; i < pdata->gpimapsize; i++) {
+		unsigned short pin = pdata->gpimap[i].pin;
 
-		अगर (pin < GPI_PIN_BASE || pin > GPI_PIN_END) अणु
+		if (pin < GPI_PIN_BASE || pin > GPI_PIN_END) {
 			dev_err(&client->dev, "invalid gpi pin data\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (pin <= GPI_PIN_ROW_END) अणु
-			अगर (pin - GPI_PIN_ROW_BASE + 1 <= pdata->rows) अणु
+		if (pin <= GPI_PIN_ROW_END) {
+			if (pin - GPI_PIN_ROW_BASE + 1 <= pdata->rows) {
 				dev_err(&client->dev, "invalid gpi row data\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (pin - GPI_PIN_COL_BASE + 1 <= pdata->cols) अणु
+				return -EINVAL;
+			}
+		} else {
+			if (pin - GPI_PIN_COL_BASE + 1 <= pdata->cols) {
 				dev_err(&client->dev, "invalid gpi col data\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	अगर (!client->irq) अणु
+	if (!client->irq) {
 		dev_err(&client->dev, "no IRQ?\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	kpad = kzalloc(माप(*kpad), GFP_KERNEL);
+	kpad = kzalloc(sizeof(*kpad), GFP_KERNEL);
 	input = input_allocate_device();
-	अगर (!kpad || !input) अणु
+	if (!kpad || !input) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	kpad->client = client;
 	kpad->input = input;
 	INIT_DELAYED_WORK(&kpad->work, adp5588_work);
 
-	ret = adp5588_पढ़ो(client, DEV_ID);
-	अगर (ret < 0) अणु
+	ret = adp5588_read(client, DEV_ID);
+	if (ret < 0) {
 		error = ret;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	revid = (u8) ret & ADP5588_DEVICE_ID_MASK;
-	अगर (WA_DELAYED_READOUT_REVID(revid))
-		kpad->delay = msecs_to_jअगरfies(30);
+	if (WA_DELAYED_READOUT_REVID(revid))
+		kpad->delay = msecs_to_jiffies(30);
 
 	input->name = client->name;
 	input->phys = "adp5588-keys/input0";
@@ -525,15 +524,15 @@
 	input_set_drvdata(input, kpad);
 
 	input->id.bustype = BUS_I2C;
-	input->id.venकरोr = 0x0001;
+	input->id.vendor = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = revid;
 
-	input->keycodesize = माप(kpad->keycode[0]);
+	input->keycodesize = sizeof(kpad->keycode[0]);
 	input->keycodemax = pdata->keymapsize;
 	input->keycode = kpad->keycode;
 
-	स_नकल(kpad->keycode, pdata->keymap,
+	memcpy(kpad->keycode, pdata->keymap,
 		pdata->keymapsize * input->keycodesize);
 
 	kpad->gpimap = pdata->gpimap;
@@ -542,129 +541,129 @@
 	/* setup input device */
 	__set_bit(EV_KEY, input->evbit);
 
-	अगर (pdata->repeat)
+	if (pdata->repeat)
 		__set_bit(EV_REP, input->evbit);
 
-	क्रम (i = 0; i < input->keycodemax; i++)
-		अगर (kpad->keycode[i] <= KEY_MAX)
+	for (i = 0; i < input->keycodemax; i++)
+		if (kpad->keycode[i] <= KEY_MAX)
 			__set_bit(kpad->keycode[i], input->keybit);
 	__clear_bit(KEY_RESERVED, input->keybit);
 
-	अगर (kpad->gpimapsize)
+	if (kpad->gpimapsize)
 		__set_bit(EV_SW, input->evbit);
-	क्रम (i = 0; i < kpad->gpimapsize; i++)
+	for (i = 0; i < kpad->gpimapsize; i++)
 		__set_bit(kpad->gpimap[i].sw_evt, input->swbit);
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(&client->dev, "unable to register input device\n");
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	error = request_irq(client->irq, adp5588_irq,
 			    IRQF_TRIGGER_FALLING,
 			    client->dev.driver->name, kpad);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&client->dev, "irq %d busy?\n", client->irq);
-		जाओ err_unreg_dev;
-	पूर्ण
+		goto err_unreg_dev;
+	}
 
 	error = adp5588_setup(client);
-	अगर (error)
-		जाओ err_मुक्त_irq;
+	if (error)
+		goto err_free_irq;
 
-	अगर (kpad->gpimapsize)
-		adp5588_report_चयन_state(kpad);
+	if (kpad->gpimapsize)
+		adp5588_report_switch_state(kpad);
 
 	error = adp5588_gpio_add(kpad);
-	अगर (error)
-		जाओ err_मुक्त_irq;
+	if (error)
+		goto err_free_irq;
 
 	device_init_wakeup(&client->dev, 1);
 	i2c_set_clientdata(client, kpad);
 
 	dev_info(&client->dev, "Rev.%d keypad, irq %d\n", revid, client->irq);
-	वापस 0;
+	return 0;
 
- err_मुक्त_irq:
-	मुक्त_irq(client->irq, kpad);
+ err_free_irq:
+	free_irq(client->irq, kpad);
 	cancel_delayed_work_sync(&kpad->work);
  err_unreg_dev:
-	input_unरेजिस्टर_device(input);
-	input = शून्य;
- err_मुक्त_mem:
-	input_मुक्त_device(input);
-	kमुक्त(kpad);
+	input_unregister_device(input);
+	input = NULL;
+ err_free_mem:
+	input_free_device(input);
+	kfree(kpad);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक adp5588_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा adp5588_kpad *kpad = i2c_get_clientdata(client);
+static int adp5588_remove(struct i2c_client *client)
+{
+	struct adp5588_kpad *kpad = i2c_get_clientdata(client);
 
-	adp5588_ग_लिखो(client, CFG, 0);
-	मुक्त_irq(client->irq, kpad);
+	adp5588_write(client, CFG, 0);
+	free_irq(client->irq, kpad);
 	cancel_delayed_work_sync(&kpad->work);
-	input_unरेजिस्टर_device(kpad->input);
-	adp5588_gpio_हटाओ(kpad);
-	kमुक्त(kpad);
+	input_unregister_device(kpad->input);
+	adp5588_gpio_remove(kpad);
+	kfree(kpad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक adp5588_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा adp5588_kpad *kpad = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = kpad->client;
+#ifdef CONFIG_PM
+static int adp5588_suspend(struct device *dev)
+{
+	struct adp5588_kpad *kpad = dev_get_drvdata(dev);
+	struct i2c_client *client = kpad->client;
 
 	disable_irq(client->irq);
 	cancel_delayed_work_sync(&kpad->work);
 
-	अगर (device_may_wakeup(&client->dev))
+	if (device_may_wakeup(&client->dev))
 		enable_irq_wake(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adp5588_resume(काष्ठा device *dev)
-अणु
-	काष्ठा adp5588_kpad *kpad = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = kpad->client;
+static int adp5588_resume(struct device *dev)
+{
+	struct adp5588_kpad *kpad = dev_get_drvdata(dev);
+	struct i2c_client *client = kpad->client;
 
-	अगर (device_may_wakeup(&client->dev))
+	if (device_may_wakeup(&client->dev))
 		disable_irq_wake(client->irq);
 
 	enable_irq(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops adp5588_dev_pm_ops = अणु
+static const struct dev_pm_ops adp5588_dev_pm_ops = {
 	.suspend = adp5588_suspend,
 	.resume  = adp5588_resume,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id adp5588_id[] = अणु
-	अणु "adp5588-keys", 0 पूर्ण,
-	अणु "adp5587-keys", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adp5588_id[] = {
+	{ "adp5588-keys", 0 },
+	{ "adp5587-keys", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adp5588_id);
 
-अटल काष्ठा i2c_driver adp5588_driver = अणु
-	.driver = अणु
+static struct i2c_driver adp5588_driver = {
+	.driver = {
 		.name = KBUILD_MODNAME,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 		.pm   = &adp5588_dev_pm_ops,
-#पूर्ण_अगर
-	पूर्ण,
+#endif
+	},
 	.probe    = adp5588_probe,
-	.हटाओ   = adp5588_हटाओ,
+	.remove   = adp5588_remove,
 	.id_table = adp5588_id,
-पूर्ण;
+};
 
 module_i2c_driver(adp5588_driver);
 

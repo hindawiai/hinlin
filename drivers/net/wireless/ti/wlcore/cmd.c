@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -8,52 +7,52 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ieee80211.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/spi/spi.h>
+#include <linux/etherdevice.h>
+#include <linux/ieee80211.h>
+#include <linux/slab.h>
 
-#समावेश "wlcore.h"
-#समावेश "debug.h"
-#समावेश "io.h"
-#समावेश "acx.h"
-#समावेश "wl12xx_80211.h"
-#समावेश "cmd.h"
-#समावेश "event.h"
-#समावेश "tx.h"
-#समावेश "hw_ops.h"
+#include "wlcore.h"
+#include "debug.h"
+#include "io.h"
+#include "acx.h"
+#include "wl12xx_80211.h"
+#include "cmd.h"
+#include "event.h"
+#include "tx.h"
+#include "hw_ops.h"
 
-#घोषणा WL1271_CMD_FAST_POLL_COUNT       50
-#घोषणा WL1271_WAIT_EVENT_FAST_POLL_COUNT 20
+#define WL1271_CMD_FAST_POLL_COUNT       50
+#define WL1271_WAIT_EVENT_FAST_POLL_COUNT 20
 
 /*
  * send command to firmware
  *
- * @wl: wl काष्ठा
+ * @wl: wl struct
  * @id: command id
  * @buf: buffer containing the command, must work with dma
  * @len: length of the buffer
- * वापस the cmd status code on success.
+ * return the cmd status code on success.
  */
-अटल पूर्णांक __wlcore_cmd_send(काष्ठा wl1271 *wl, u16 id, व्योम *buf,
-			     माप_प्रकार len, माप_प्रकार res_len)
-अणु
-	काष्ठा wl1271_cmd_header *cmd;
-	अचिन्हित दीर्घ समयout;
-	u32 पूर्णांकr;
-	पूर्णांक ret;
+static int __wlcore_cmd_send(struct wl1271 *wl, u16 id, void *buf,
+			     size_t len, size_t res_len)
+{
+	struct wl1271_cmd_header *cmd;
+	unsigned long timeout;
+	u32 intr;
+	int ret;
 	u16 status;
 	u16 poll_count = 0;
 
-	अगर (unlikely(wl->state == WLCORE_STATE_RESTARTING &&
+	if (unlikely(wl->state == WLCORE_STATE_RESTARTING &&
 		     id != CMD_STOP_FWLOGGER))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (WARN_ON_ONCE(len < माप(*cmd)))
-		वापस -EIO;
+	if (WARN_ON_ONCE(len < sizeof(*cmd)))
+		return -EIO;
 
 	cmd = buf;
 	cmd->id = cpu_to_le16(id);
@@ -62,629 +61,629 @@
 	WARN_ON(len % 4 != 0);
 	WARN_ON(test_bit(WL1271_FLAG_IN_ELP, &wl->flags));
 
-	ret = wlcore_ग_लिखो(wl, wl->cmd_box_addr, buf, len, false);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wlcore_write(wl, wl->cmd_box_addr, buf, len, false);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * TODO: we just need this because one bit is in a dअगरferent
+	 * TODO: we just need this because one bit is in a different
 	 * place.  Is there any better way?
 	 */
 	ret = wl->ops->trigger_cmd(wl, wl->cmd_box_addr, buf, len);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(WL1271_COMMAND_TIMEOUT);
+	timeout = jiffies + msecs_to_jiffies(WL1271_COMMAND_TIMEOUT);
 
-	ret = wlcore_पढ़ो_reg(wl, REG_INTERRUPT_NO_CLEAR, &पूर्णांकr);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wlcore_read_reg(wl, REG_INTERRUPT_NO_CLEAR, &intr);
+	if (ret < 0)
+		return ret;
 
-	जबतक (!(पूर्णांकr & WL1271_ACX_INTR_CMD_COMPLETE)) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	while (!(intr & WL1271_ACX_INTR_CMD_COMPLETE)) {
+		if (time_after(jiffies, timeout)) {
 			wl1271_error("command complete timeout");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 
 		poll_count++;
-		अगर (poll_count < WL1271_CMD_FAST_POLL_COUNT)
+		if (poll_count < WL1271_CMD_FAST_POLL_COUNT)
 			udelay(10);
-		अन्यथा
+		else
 			msleep(1);
 
-		ret = wlcore_पढ़ो_reg(wl, REG_INTERRUPT_NO_CLEAR, &पूर्णांकr);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = wlcore_read_reg(wl, REG_INTERRUPT_NO_CLEAR, &intr);
+		if (ret < 0)
+			return ret;
+	}
 
-	/* पढ़ो back the status code of the command */
-	अगर (res_len == 0)
-		res_len = माप(काष्ठा wl1271_cmd_header);
+	/* read back the status code of the command */
+	if (res_len == 0)
+		res_len = sizeof(struct wl1271_cmd_header);
 
-	ret = wlcore_पढ़ो(wl, wl->cmd_box_addr, cmd, res_len, false);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wlcore_read(wl, wl->cmd_box_addr, cmd, res_len, false);
+	if (ret < 0)
+		return ret;
 
 	status = le16_to_cpu(cmd->status);
 
-	ret = wlcore_ग_लिखो_reg(wl, REG_INTERRUPT_ACK,
+	ret = wlcore_write_reg(wl, REG_INTERRUPT_ACK,
 			       WL1271_ACX_INTR_CMD_COMPLETE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
- * send command to fw and वापस cmd status on success
- * valid_rets contains a biपंचांगap of allowed error codes
+ * send command to fw and return cmd status on success
+ * valid_rets contains a bitmap of allowed error codes
  */
-अटल पूर्णांक wlcore_cmd_send_failsafe(काष्ठा wl1271 *wl, u16 id, व्योम *buf,
-				    माप_प्रकार len, माप_प्रकार res_len,
-				    अचिन्हित दीर्घ valid_rets)
-अणु
-	पूर्णांक ret = __wlcore_cmd_send(wl, id, buf, len, res_len);
+static int wlcore_cmd_send_failsafe(struct wl1271 *wl, u16 id, void *buf,
+				    size_t len, size_t res_len,
+				    unsigned long valid_rets)
+{
+	int ret = __wlcore_cmd_send(wl, id, buf, len, res_len);
 
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	/* success is always a valid status */
 	valid_rets |= BIT(CMD_STATUS_SUCCESS);
 
-	अगर (ret >= MAX_COMMAND_STATUS ||
-	    !test_bit(ret, &valid_rets)) अणु
+	if (ret >= MAX_COMMAND_STATUS ||
+	    !test_bit(ret, &valid_rets)) {
 		wl1271_error("command execute failure %d", ret);
 		ret = -EIO;
-		जाओ fail;
-	पूर्ण
-	वापस ret;
+		goto fail;
+	}
+	return ret;
 fail:
 	wl12xx_queue_recovery_work(wl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * wrapper क्रम wlcore_cmd_send that accept only CMD_STATUS_SUCCESS
- * वापस 0 on success.
+ * wrapper for wlcore_cmd_send that accept only CMD_STATUS_SUCCESS
+ * return 0 on success.
  */
-पूर्णांक wl1271_cmd_send(काष्ठा wl1271 *wl, u16 id, व्योम *buf, माप_प्रकार len,
-		    माप_प्रकार res_len)
-अणु
-	पूर्णांक ret = wlcore_cmd_send_failsafe(wl, id, buf, len, res_len, 0);
+int wl1271_cmd_send(struct wl1271 *wl, u16 id, void *buf, size_t len,
+		    size_t res_len)
+{
+	int ret = wlcore_cmd_send_failsafe(wl, id, buf, len, res_len, 0);
 
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wl1271_cmd_send);
 
 /*
  * Poll the mailbox event field until any of the bits in the mask is set or a
- * समयout occurs (WL1271_EVENT_TIMEOUT in msecs)
+ * timeout occurs (WL1271_EVENT_TIMEOUT in msecs)
  */
-पूर्णांक wlcore_cmd_रुको_क्रम_event_or_समयout(काष्ठा wl1271 *wl,
-					 u32 mask, bool *समयout)
-अणु
+int wlcore_cmd_wait_for_event_or_timeout(struct wl1271 *wl,
+					 u32 mask, bool *timeout)
+{
 	u32 *events_vector;
 	u32 event;
-	अचिन्हित दीर्घ समयout_समय;
+	unsigned long timeout_time;
 	u16 poll_count = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	*समयout = false;
+	*timeout = false;
 
-	events_vector = kदो_स्मृति(माप(*events_vector), GFP_KERNEL | GFP_DMA);
-	अगर (!events_vector)
-		वापस -ENOMEM;
+	events_vector = kmalloc(sizeof(*events_vector), GFP_KERNEL | GFP_DMA);
+	if (!events_vector)
+		return -ENOMEM;
 
-	समयout_समय = jअगरfies + msecs_to_jअगरfies(WL1271_EVENT_TIMEOUT);
+	timeout_time = jiffies + msecs_to_jiffies(WL1271_EVENT_TIMEOUT);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ मुक्त_vector;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto free_vector;
+	}
 
-	करो अणु
-		अगर (समय_after(jअगरfies, समयout_समय)) अणु
+	do {
+		if (time_after(jiffies, timeout_time)) {
 			wl1271_debug(DEBUG_CMD, "timeout waiting for event %d",
-				     (पूर्णांक)mask);
-			*समयout = true;
-			जाओ out;
-		पूर्ण
+				     (int)mask);
+			*timeout = true;
+			goto out;
+		}
 
 		poll_count++;
-		अगर (poll_count < WL1271_WAIT_EVENT_FAST_POLL_COUNT)
+		if (poll_count < WL1271_WAIT_EVENT_FAST_POLL_COUNT)
 			usleep_range(50, 51);
-		अन्यथा
+		else
 			usleep_range(1000, 5000);
 
-		/* पढ़ो from both event fields */
-		ret = wlcore_पढ़ो(wl, wl->mbox_ptr[0], events_vector,
-				  माप(*events_vector), false);
-		अगर (ret < 0)
-			जाओ out;
+		/* read from both event fields */
+		ret = wlcore_read(wl, wl->mbox_ptr[0], events_vector,
+				  sizeof(*events_vector), false);
+		if (ret < 0)
+			goto out;
 
 		event = *events_vector & mask;
 
-		ret = wlcore_पढ़ो(wl, wl->mbox_ptr[1], events_vector,
-				  माप(*events_vector), false);
-		अगर (ret < 0)
-			जाओ out;
+		ret = wlcore_read(wl, wl->mbox_ptr[1], events_vector,
+				  sizeof(*events_vector), false);
+		if (ret < 0)
+			goto out;
 
 		event |= *events_vector & mask;
-	पूर्ण जबतक (!event);
+	} while (!event);
 
 out:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
-मुक्त_vector:
-	kमुक्त(events_vector);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_cmd_रुको_क्रम_event_or_समयout);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
+free_vector:
+	kfree(events_vector);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(wlcore_cmd_wait_for_event_or_timeout);
 
-पूर्णांक wl12xx_cmd_role_enable(काष्ठा wl1271 *wl, u8 *addr, u8 role_type,
+int wl12xx_cmd_role_enable(struct wl1271 *wl, u8 *addr, u8 role_type,
 			   u8 *role_id)
-अणु
-	काष्ठा wl12xx_cmd_role_enable *cmd;
-	पूर्णांक ret;
+{
+	struct wl12xx_cmd_role_enable *cmd;
+	int ret;
 
 	wl1271_debug(DEBUG_CMD, "cmd role enable");
 
-	अगर (WARN_ON(*role_id != WL12XX_INVALID_ROLE_ID))
-		वापस -EBUSY;
+	if (WARN_ON(*role_id != WL12XX_INVALID_ROLE_ID))
+		return -EBUSY;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* get role id */
 	cmd->role_id = find_first_zero_bit(wl->roles_map, WL12XX_MAX_ROLES);
-	अगर (cmd->role_id >= WL12XX_MAX_ROLES) अणु
+	if (cmd->role_id >= WL12XX_MAX_ROLES) {
 		ret = -EBUSY;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	स_नकल(cmd->mac_address, addr, ETH_ALEN);
+	memcpy(cmd->mac_address, addr, ETH_ALEN);
 	cmd->role_type = role_type;
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_ENABLE, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_ENABLE, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role enable");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	__set_bit(cmd->role_id, wl->roles_map);
 	*role_id = cmd->role_id;
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_role_disable(काष्ठा wl1271 *wl, u8 *role_id)
-अणु
-	काष्ठा wl12xx_cmd_role_disable *cmd;
-	पूर्णांक ret;
+int wl12xx_cmd_role_disable(struct wl1271 *wl, u8 *role_id)
+{
+	struct wl12xx_cmd_role_disable *cmd;
+	int ret;
 
 	wl1271_debug(DEBUG_CMD, "cmd role disable");
 
-	अगर (WARN_ON(*role_id == WL12XX_INVALID_ROLE_ID))
-		वापस -ENOENT;
+	if (WARN_ON(*role_id == WL12XX_INVALID_ROLE_ID))
+		return -ENOENT;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	cmd->role_id = *role_id;
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_DISABLE, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_DISABLE, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role disable");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	__clear_bit(*role_id, wl->roles_map);
 	*role_id = WL12XX_INVALID_ROLE_ID;
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wlcore_get_new_session_id(काष्ठा wl1271 *wl, u8 hlid)
-अणु
-	अगर (wl->session_ids[hlid] >= SESSION_COUNTER_MAX)
+static int wlcore_get_new_session_id(struct wl1271 *wl, u8 hlid)
+{
+	if (wl->session_ids[hlid] >= SESSION_COUNTER_MAX)
 		wl->session_ids[hlid] = 0;
 
 	wl->session_ids[hlid]++;
 
-	वापस wl->session_ids[hlid];
-पूर्ण
+	return wl->session_ids[hlid];
+}
 
-पूर्णांक wl12xx_allocate_link(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 *hlid)
-अणु
-	अचिन्हित दीर्घ flags;
+int wl12xx_allocate_link(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 *hlid)
+{
+	unsigned long flags;
 	u8 link = find_first_zero_bit(wl->links_map, wl->num_links);
-	अगर (link >= wl->num_links)
-		वापस -EBUSY;
+	if (link >= wl->num_links)
+		return -EBUSY;
 
 	wl->session_ids[link] = wlcore_get_new_session_id(wl, link);
 
 	/* these bits are used by op_tx */
 	spin_lock_irqsave(&wl->wl_lock, flags);
 	__set_bit(link, wl->links_map);
-	__set_bit(link, wlvअगर->links_map);
+	__set_bit(link, wlvif->links_map);
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
 	/*
 	 * take the last "freed packets" value from the current FW status.
 	 * on recovery, we might not have fw_status yet, and
-	 * tx_lnk_मुक्त_pkts will be शून्य. check क्रम it.
+	 * tx_lnk_free_pkts will be NULL. check for it.
 	 */
-	अगर (wl->fw_status->counters.tx_lnk_मुक्त_pkts)
-		wl->links[link].prev_मुक्तd_pkts =
-			wl->fw_status->counters.tx_lnk_मुक्त_pkts[link];
-	wl->links[link].wlvअगर = wlvअगर;
+	if (wl->fw_status->counters.tx_lnk_free_pkts)
+		wl->links[link].prev_freed_pkts =
+			wl->fw_status->counters.tx_lnk_free_pkts[link];
+	wl->links[link].wlvif = wlvif;
 
 	/*
-	 * Take saved value क्रम total मुक्तd packets from wlvअगर, in हाल this is
+	 * Take saved value for total freed packets from wlvif, in case this is
 	 * recovery/resume
 	 */
-	अगर (wlvअगर->bss_type != BSS_TYPE_AP_BSS)
-		wl->links[link].total_मुक्तd_pkts = wlvअगर->total_मुक्तd_pkts;
+	if (wlvif->bss_type != BSS_TYPE_AP_BSS)
+		wl->links[link].total_freed_pkts = wlvif->total_freed_pkts;
 
 	*hlid = link;
 
 	wl->active_link_count++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम wl12xx_मुक्त_link(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 *hlid)
-अणु
-	अचिन्हित दीर्घ flags;
+void wl12xx_free_link(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 *hlid)
+{
+	unsigned long flags;
 
-	अगर (*hlid == WL12XX_INVALID_LINK_ID)
-		वापस;
+	if (*hlid == WL12XX_INVALID_LINK_ID)
+		return;
 
 	/* these bits are used by op_tx */
 	spin_lock_irqsave(&wl->wl_lock, flags);
 	__clear_bit(*hlid, wl->links_map);
-	__clear_bit(*hlid, wlvअगर->links_map);
+	__clear_bit(*hlid, wlvif->links_map);
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
 	wl->links[*hlid].allocated_pkts = 0;
-	wl->links[*hlid].prev_मुक्तd_pkts = 0;
-	wl->links[*hlid].ba_biपंचांगap = 0;
+	wl->links[*hlid].prev_freed_pkts = 0;
+	wl->links[*hlid].ba_bitmap = 0;
 	eth_zero_addr(wl->links[*hlid].addr);
 
 	/*
-	 * At this poपूर्णांक op_tx() will not add more packets to the queues. We
+	 * At this point op_tx() will not add more packets to the queues. We
 	 * can purge them.
 	 */
 	wl1271_tx_reset_link_queues(wl, *hlid);
-	wl->links[*hlid].wlvअगर = शून्य;
+	wl->links[*hlid].wlvif = NULL;
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS &&
-	    *hlid == wlvअगर->ap.bcast_hlid) अणु
+	if (wlvif->bss_type == BSS_TYPE_AP_BSS &&
+	    *hlid == wlvif->ap.bcast_hlid) {
 		u32 sqn_padding = WL1271_TX_SQN_POST_RECOVERY_PADDING;
 		/*
-		 * save the total मुक्तd packets in the wlvअगर, in हाल this is
+		 * save the total freed packets in the wlvif, in case this is
 		 * recovery or suspend
 		 */
-		wlvअगर->total_मुक्तd_pkts = wl->links[*hlid].total_मुक्तd_pkts;
+		wlvif->total_freed_pkts = wl->links[*hlid].total_freed_pkts;
 
 		/*
-		 * increment the initial seq number on recovery to account क्रम
+		 * increment the initial seq number on recovery to account for
 		 * transmitted packets that we haven't yet got in the FW status
 		 */
-		अगर (wlvअगर->encryption_type == KEY_GEM)
+		if (wlvif->encryption_type == KEY_GEM)
 			sqn_padding = WL1271_TX_SQN_POST_RECOVERY_PADDING_GEM;
 
-		अगर (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
-			wlvअगर->total_मुक्तd_pkts += sqn_padding;
-	पूर्ण
+		if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
+			wlvif->total_freed_pkts += sqn_padding;
+	}
 
-	wl->links[*hlid].total_मुक्तd_pkts = 0;
+	wl->links[*hlid].total_freed_pkts = 0;
 
 	*hlid = WL12XX_INVALID_LINK_ID;
 	wl->active_link_count--;
 	WARN_ON_ONCE(wl->active_link_count < 0);
-पूर्ण
+}
 
 u8 wlcore_get_native_channel_type(u8 nl_channel_type)
-अणु
-	चयन (nl_channel_type) अणु
-	हाल NL80211_CHAN_NO_HT:
-		वापस WLCORE_CHAN_NO_HT;
-	हाल NL80211_CHAN_HT20:
-		वापस WLCORE_CHAN_HT20;
-	हाल NL80211_CHAN_HT40MINUS:
-		वापस WLCORE_CHAN_HT40MINUS;
-	हाल NL80211_CHAN_HT40PLUS:
-		वापस WLCORE_CHAN_HT40PLUS;
-	शेष:
+{
+	switch (nl_channel_type) {
+	case NL80211_CHAN_NO_HT:
+		return WLCORE_CHAN_NO_HT;
+	case NL80211_CHAN_HT20:
+		return WLCORE_CHAN_HT20;
+	case NL80211_CHAN_HT40MINUS:
+		return WLCORE_CHAN_HT40MINUS;
+	case NL80211_CHAN_HT40PLUS:
+		return WLCORE_CHAN_HT40PLUS;
+	default:
 		WARN_ON(1);
-		वापस WLCORE_CHAN_NO_HT;
-	पूर्ण
-पूर्ण
+		return WLCORE_CHAN_NO_HT;
+	}
+}
 EXPORT_SYMBOL_GPL(wlcore_get_native_channel_type);
 
-अटल पूर्णांक wl12xx_cmd_role_start_dev(काष्ठा wl1271 *wl,
-				     काष्ठा wl12xx_vअगर *wlvअगर,
-				     क्रमागत nl80211_band band,
-				     पूर्णांक channel)
-अणु
-	काष्ठा wl12xx_cmd_role_start *cmd;
-	पूर्णांक ret;
+static int wl12xx_cmd_role_start_dev(struct wl1271 *wl,
+				     struct wl12xx_vif *wlvif,
+				     enum nl80211_band band,
+				     int channel)
+{
+	struct wl12xx_cmd_role_start *cmd;
+	int ret;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl1271_debug(DEBUG_CMD, "cmd role start dev %d", wlvअगर->dev_role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role start dev %d", wlvif->dev_role_id);
 
-	cmd->role_id = wlvअगर->dev_role_id;
-	अगर (band == NL80211_BAND_5GHZ)
+	cmd->role_id = wlvif->dev_role_id;
+	if (band == NL80211_BAND_5GHZ)
 		cmd->band = WLCORE_BAND_5GHZ;
 	cmd->channel = channel;
 
-	अगर (wlvअगर->dev_hlid == WL12XX_INVALID_LINK_ID) अणु
-		ret = wl12xx_allocate_link(wl, wlvअगर, &wlvअगर->dev_hlid);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
-	cmd->device.hlid = wlvअगर->dev_hlid;
-	cmd->device.session = wl->session_ids[wlvअगर->dev_hlid];
+	if (wlvif->dev_hlid == WL12XX_INVALID_LINK_ID) {
+		ret = wl12xx_allocate_link(wl, wlvif, &wlvif->dev_hlid);
+		if (ret)
+			goto out_free;
+	}
+	cmd->device.hlid = wlvif->dev_hlid;
+	cmd->device.session = wl->session_ids[wlvif->dev_hlid];
 
 	wl1271_debug(DEBUG_CMD, "role start: roleid=%d, hlid=%d, session=%d",
 		     cmd->role_id, cmd->device.hlid, cmd->device.session);
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role enable");
-		जाओ err_hlid;
-	पूर्ण
+		goto err_hlid;
+	}
 
-	जाओ out_मुक्त;
+	goto out_free;
 
 err_hlid:
 	/* clear links on error */
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->dev_hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->dev_hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_cmd_role_stop_dev(काष्ठा wl1271 *wl,
-				    काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा wl12xx_cmd_role_stop *cmd;
-	पूर्णांक ret;
+static int wl12xx_cmd_role_stop_dev(struct wl1271 *wl,
+				    struct wl12xx_vif *wlvif)
+{
+	struct wl12xx_cmd_role_stop *cmd;
+	int ret;
 
-	अगर (WARN_ON(wlvअगर->dev_hlid == WL12XX_INVALID_LINK_ID))
-		वापस -EINVAL;
+	if (WARN_ON(wlvif->dev_hlid == WL12XX_INVALID_LINK_ID))
+		return -EINVAL;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_CMD, "cmd role stop dev");
 
-	cmd->role_id = wlvअगर->dev_role_id;
+	cmd->role_id = wlvif->dev_role_id;
 	cmd->disc_type = DISCONNECT_IMMEDIATE;
 	cmd->reason = cpu_to_le16(WLAN_REASON_UNSPECIFIED);
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role stop");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->dev_hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->dev_hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_role_start_sta(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा wl12xx_cmd_role_start *cmd;
+int wl12xx_cmd_role_start_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct wl12xx_cmd_role_start *cmd;
 	u32 supported_rates;
-	पूर्णांक ret;
+	int ret;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl1271_debug(DEBUG_CMD, "cmd role start sta %d", wlvअगर->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role start sta %d", wlvif->role_id);
 
-	cmd->role_id = wlvअगर->role_id;
-	अगर (wlvअगर->band == NL80211_BAND_5GHZ)
+	cmd->role_id = wlvif->role_id;
+	if (wlvif->band == NL80211_BAND_5GHZ)
 		cmd->band = WLCORE_BAND_5GHZ;
-	cmd->channel = wlvअगर->channel;
-	cmd->sta.basic_rate_set = cpu_to_le32(wlvअगर->basic_rate_set);
-	cmd->sta.beacon_पूर्णांकerval = cpu_to_le16(wlvअगर->beacon_पूर्णांक);
+	cmd->channel = wlvif->channel;
+	cmd->sta.basic_rate_set = cpu_to_le32(wlvif->basic_rate_set);
+	cmd->sta.beacon_interval = cpu_to_le16(wlvif->beacon_int);
 	cmd->sta.ssid_type = WL12XX_SSID_TYPE_ANY;
-	cmd->sta.ssid_len = wlvअगर->ssid_len;
-	स_नकल(cmd->sta.ssid, wlvअगर->ssid, wlvअगर->ssid_len);
-	स_नकल(cmd->sta.bssid, vअगर->bss_conf.bssid, ETH_ALEN);
+	cmd->sta.ssid_len = wlvif->ssid_len;
+	memcpy(cmd->sta.ssid, wlvif->ssid, wlvif->ssid_len);
+	memcpy(cmd->sta.bssid, vif->bss_conf.bssid, ETH_ALEN);
 
 	supported_rates = CONF_TX_ENABLED_RATES | CONF_TX_MCS_RATES |
-			  wlcore_hw_sta_get_ap_rate_mask(wl, wlvअगर);
-	अगर (wlvअगर->p2p)
+			  wlcore_hw_sta_get_ap_rate_mask(wl, wlvif);
+	if (wlvif->p2p)
 		supported_rates &= ~CONF_TX_CCK_RATES;
 
 	cmd->sta.local_rates = cpu_to_le32(supported_rates);
 
-	cmd->channel_type = wlcore_get_native_channel_type(wlvअगर->channel_type);
+	cmd->channel_type = wlcore_get_native_channel_type(wlvif->channel_type);
 
-	अगर (wlvअगर->sta.hlid == WL12XX_INVALID_LINK_ID) अणु
-		ret = wl12xx_allocate_link(wl, wlvअगर, &wlvअगर->sta.hlid);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
-	cmd->sta.hlid = wlvअगर->sta.hlid;
-	cmd->sta.session = wl->session_ids[wlvअगर->sta.hlid];
+	if (wlvif->sta.hlid == WL12XX_INVALID_LINK_ID) {
+		ret = wl12xx_allocate_link(wl, wlvif, &wlvif->sta.hlid);
+		if (ret)
+			goto out_free;
+	}
+	cmd->sta.hlid = wlvif->sta.hlid;
+	cmd->sta.session = wl->session_ids[wlvif->sta.hlid];
 	/*
-	 * We करोn't have the correct remote rates in this stage.  The
-	 * rates will be reconfigured later, after association, अगर the
+	 * We don't have the correct remote rates in this stage.  The
+	 * rates will be reconfigured later, after association, if the
 	 * firmware supports ACX_PEER_CAP.  Otherwise, there's nothing
-	 * we can करो, so use all supported_rates here.
+	 * we can do, so use all supported_rates here.
 	 */
 	cmd->sta.remote_rates = cpu_to_le32(supported_rates);
 
 	wl1271_debug(DEBUG_CMD, "role start: roleid=%d, hlid=%d, session=%d "
 		     "basic_rate_set: 0x%x, remote_rates: 0x%x",
-		     wlvअगर->role_id, cmd->sta.hlid, cmd->sta.session,
-		     wlvअगर->basic_rate_set, wlvअगर->rate_set);
+		     wlvif->role_id, cmd->sta.hlid, cmd->sta.session,
+		     wlvif->basic_rate_set, wlvif->rate_set);
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role start sta");
-		जाओ err_hlid;
-	पूर्ण
+		goto err_hlid;
+	}
 
-	wlvअगर->sta.role_chan_type = wlvअगर->channel_type;
-	जाओ out_मुक्त;
+	wlvif->sta.role_chan_type = wlvif->channel_type;
+	goto out_free;
 
 err_hlid:
 	/* clear links on error. */
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->sta.hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->sta.hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* use this function to stop ibss as well */
-पूर्णांक wl12xx_cmd_role_stop_sta(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा wl12xx_cmd_role_stop *cmd;
-	पूर्णांक ret;
+int wl12xx_cmd_role_stop_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct wl12xx_cmd_role_stop *cmd;
+	int ret;
 
-	अगर (WARN_ON(wlvअगर->sta.hlid == WL12XX_INVALID_LINK_ID))
-		वापस -EINVAL;
+	if (WARN_ON(wlvif->sta.hlid == WL12XX_INVALID_LINK_ID))
+		return -EINVAL;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl1271_debug(DEBUG_CMD, "cmd role stop sta %d", wlvअगर->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role stop sta %d", wlvif->role_id);
 
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 	cmd->disc_type = DISCONNECT_IMMEDIATE;
 	cmd->reason = cpu_to_le16(WLAN_REASON_UNSPECIFIED);
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role stop sta");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->sta.hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->sta.hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_role_start_ap(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा wl12xx_cmd_role_start *cmd;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा ieee80211_bss_conf *bss_conf = &vअगर->bss_conf;
+int wl12xx_cmd_role_start_ap(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct wl12xx_cmd_role_start *cmd;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct ieee80211_bss_conf *bss_conf = &vif->bss_conf;
 	u32 supported_rates;
-	पूर्णांक ret;
+	int ret;
 
-	wl1271_debug(DEBUG_CMD, "cmd role start ap %d", wlvअगर->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role start ap %d", wlvif->role_id);
 
 	/* If MESH --> ssid_len is always 0 */
-	अगर (!ieee80211_vअगर_is_mesh(vअगर)) अणु
+	if (!ieee80211_vif_is_mesh(vif)) {
 		/* trying to use hidden SSID with an old hostapd version */
-		अगर (wlvअगर->ssid_len == 0 && !bss_conf->hidden_ssid) अणु
+		if (wlvif->ssid_len == 0 && !bss_conf->hidden_ssid) {
 			wl1271_error("got a null SSID from beacon/bss");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = wl12xx_allocate_link(wl, wlvअगर, &wlvअगर->ap.global_hlid);
-	अगर (ret < 0)
-		जाओ out_मुक्त;
+	ret = wl12xx_allocate_link(wl, wlvif, &wlvif->ap.global_hlid);
+	if (ret < 0)
+		goto out_free;
 
-	ret = wl12xx_allocate_link(wl, wlvअगर, &wlvअगर->ap.bcast_hlid);
-	अगर (ret < 0)
-		जाओ out_मुक्त_global;
+	ret = wl12xx_allocate_link(wl, wlvif, &wlvif->ap.bcast_hlid);
+	if (ret < 0)
+		goto out_free_global;
 
-	/* use the previous security seq, अगर this is a recovery/resume */
-	wl->links[wlvअगर->ap.bcast_hlid].total_मुक्तd_pkts =
-						wlvअगर->total_मुक्तd_pkts;
+	/* use the previous security seq, if this is a recovery/resume */
+	wl->links[wlvif->ap.bcast_hlid].total_freed_pkts =
+						wlvif->total_freed_pkts;
 
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 	cmd->ap.aging_period = cpu_to_le16(wl->conf.tx.ap_aging_period);
 	cmd->ap.bss_index = WL1271_AP_BSS_INDEX;
-	cmd->ap.global_hlid = wlvअगर->ap.global_hlid;
-	cmd->ap.broadcast_hlid = wlvअगर->ap.bcast_hlid;
-	cmd->ap.global_session_id = wl->session_ids[wlvअगर->ap.global_hlid];
-	cmd->ap.bcast_session_id = wl->session_ids[wlvअगर->ap.bcast_hlid];
-	cmd->ap.basic_rate_set = cpu_to_le32(wlvअगर->basic_rate_set);
-	cmd->ap.beacon_पूर्णांकerval = cpu_to_le16(wlvअगर->beacon_पूर्णांक);
-	cmd->ap.dtim_पूर्णांकerval = bss_conf->dtim_period;
+	cmd->ap.global_hlid = wlvif->ap.global_hlid;
+	cmd->ap.broadcast_hlid = wlvif->ap.bcast_hlid;
+	cmd->ap.global_session_id = wl->session_ids[wlvif->ap.global_hlid];
+	cmd->ap.bcast_session_id = wl->session_ids[wlvif->ap.bcast_hlid];
+	cmd->ap.basic_rate_set = cpu_to_le32(wlvif->basic_rate_set);
+	cmd->ap.beacon_interval = cpu_to_le16(wlvif->beacon_int);
+	cmd->ap.dtim_interval = bss_conf->dtim_period;
 	cmd->ap.beacon_expiry = WL1271_AP_DEF_BEACON_EXP;
 	/* FIXME: Change when adding DFS */
-	cmd->ap.reset_tsf = 1;  /* By शेष reset AP TSF */
-	cmd->ap.wmm = wlvअगर->wmm_enabled;
-	cmd->channel = wlvअगर->channel;
-	cmd->channel_type = wlcore_get_native_channel_type(wlvअगर->channel_type);
+	cmd->ap.reset_tsf = 1;  /* By default reset AP TSF */
+	cmd->ap.wmm = wlvif->wmm_enabled;
+	cmd->channel = wlvif->channel;
+	cmd->channel_type = wlcore_get_native_channel_type(wlvif->channel_type);
 
-	अगर (!bss_conf->hidden_ssid) अणु
-		/* take the SSID from the beacon क्रम backward compatibility */
+	if (!bss_conf->hidden_ssid) {
+		/* take the SSID from the beacon for backward compatibility */
 		cmd->ap.ssid_type = WL12XX_SSID_TYPE_PUBLIC;
-		cmd->ap.ssid_len = wlvअगर->ssid_len;
-		स_नकल(cmd->ap.ssid, wlvअगर->ssid, wlvअगर->ssid_len);
-	पूर्ण अन्यथा अणु
+		cmd->ap.ssid_len = wlvif->ssid_len;
+		memcpy(cmd->ap.ssid, wlvif->ssid, wlvif->ssid_len);
+	} else {
 		cmd->ap.ssid_type = WL12XX_SSID_TYPE_HIDDEN;
 		cmd->ap.ssid_len = bss_conf->ssid_len;
-		स_नकल(cmd->ap.ssid, bss_conf->ssid, bss_conf->ssid_len);
-	पूर्ण
+		memcpy(cmd->ap.ssid, bss_conf->ssid, bss_conf->ssid_len);
+	}
 
 	supported_rates = CONF_TX_ENABLED_RATES | CONF_TX_MCS_RATES |
-		wlcore_hw_ap_get_mimo_wide_rate_mask(wl, wlvअगर);
-	अगर (wlvअगर->p2p)
+		wlcore_hw_ap_get_mimo_wide_rate_mask(wl, wlvif);
+	if (wlvif->p2p)
 		supported_rates &= ~CONF_TX_CCK_RATES;
 
 	wl1271_debug(DEBUG_CMD, "cmd role start ap with supported_rates 0x%08x",
@@ -692,554 +691,554 @@ out:
 
 	cmd->ap.local_rates = cpu_to_le32(supported_rates);
 
-	चयन (wlvअगर->band) अणु
-	हाल NL80211_BAND_2GHZ:
+	switch (wlvif->band) {
+	case NL80211_BAND_2GHZ:
 		cmd->band = WLCORE_BAND_2_4GHZ;
-		अवरोध;
-	हाल NL80211_BAND_5GHZ:
+		break;
+	case NL80211_BAND_5GHZ:
 		cmd->band = WLCORE_BAND_5GHZ;
-		अवरोध;
-	शेष:
-		wl1271_warning("ap start - unknown band: %d", (पूर्णांक)wlvअगर->band);
+		break;
+	default:
+		wl1271_warning("ap start - unknown band: %d", (int)wlvif->band);
 		cmd->band = WLCORE_BAND_2_4GHZ;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role start ap");
-		जाओ out_मुक्त_bcast;
-	पूर्ण
+		goto out_free_bcast;
+	}
 
-	जाओ out_मुक्त;
+	goto out_free;
 
-out_मुक्त_bcast:
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->ap.bcast_hlid);
+out_free_bcast:
+	wl12xx_free_link(wl, wlvif, &wlvif->ap.bcast_hlid);
 
-out_मुक्त_global:
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->ap.global_hlid);
+out_free_global:
+	wl12xx_free_link(wl, wlvif, &wlvif->ap.global_hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_role_stop_ap(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा wl12xx_cmd_role_stop *cmd;
-	पूर्णांक ret;
+int wl12xx_cmd_role_stop_ap(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct wl12xx_cmd_role_stop *cmd;
+	int ret;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl1271_debug(DEBUG_CMD, "cmd role stop ap %d", wlvअगर->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role stop ap %d", wlvif->role_id);
 
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_STOP, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role stop ap");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->ap.bcast_hlid);
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->ap.global_hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->ap.bcast_hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->ap.global_hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_role_start_ibss(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा wl12xx_cmd_role_start *cmd;
-	काष्ठा ieee80211_bss_conf *bss_conf = &vअगर->bss_conf;
-	पूर्णांक ret;
+int wl12xx_cmd_role_start_ibss(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct wl12xx_cmd_role_start *cmd;
+	struct ieee80211_bss_conf *bss_conf = &vif->bss_conf;
+	int ret;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl1271_debug(DEBUG_CMD, "cmd role start ibss %d", wlvअगर->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role start ibss %d", wlvif->role_id);
 
-	cmd->role_id = wlvअगर->role_id;
-	अगर (wlvअगर->band == NL80211_BAND_5GHZ)
+	cmd->role_id = wlvif->role_id;
+	if (wlvif->band == NL80211_BAND_5GHZ)
 		cmd->band = WLCORE_BAND_5GHZ;
-	cmd->channel = wlvअगर->channel;
-	cmd->ibss.basic_rate_set = cpu_to_le32(wlvअगर->basic_rate_set);
-	cmd->ibss.beacon_पूर्णांकerval = cpu_to_le16(wlvअगर->beacon_पूर्णांक);
-	cmd->ibss.dtim_पूर्णांकerval = bss_conf->dtim_period;
+	cmd->channel = wlvif->channel;
+	cmd->ibss.basic_rate_set = cpu_to_le32(wlvif->basic_rate_set);
+	cmd->ibss.beacon_interval = cpu_to_le16(wlvif->beacon_int);
+	cmd->ibss.dtim_interval = bss_conf->dtim_period;
 	cmd->ibss.ssid_type = WL12XX_SSID_TYPE_ANY;
-	cmd->ibss.ssid_len = wlvअगर->ssid_len;
-	स_नकल(cmd->ibss.ssid, wlvअगर->ssid, wlvअगर->ssid_len);
-	स_नकल(cmd->ibss.bssid, vअगर->bss_conf.bssid, ETH_ALEN);
-	cmd->sta.local_rates = cpu_to_le32(wlvअगर->rate_set);
+	cmd->ibss.ssid_len = wlvif->ssid_len;
+	memcpy(cmd->ibss.ssid, wlvif->ssid, wlvif->ssid_len);
+	memcpy(cmd->ibss.bssid, vif->bss_conf.bssid, ETH_ALEN);
+	cmd->sta.local_rates = cpu_to_le32(wlvif->rate_set);
 
-	अगर (wlvअगर->sta.hlid == WL12XX_INVALID_LINK_ID) अणु
-		ret = wl12xx_allocate_link(wl, wlvअगर, &wlvअगर->sta.hlid);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
-	cmd->ibss.hlid = wlvअगर->sta.hlid;
-	cmd->ibss.remote_rates = cpu_to_le32(wlvअगर->rate_set);
+	if (wlvif->sta.hlid == WL12XX_INVALID_LINK_ID) {
+		ret = wl12xx_allocate_link(wl, wlvif, &wlvif->sta.hlid);
+		if (ret)
+			goto out_free;
+	}
+	cmd->ibss.hlid = wlvif->sta.hlid;
+	cmd->ibss.remote_rates = cpu_to_le32(wlvif->rate_set);
 
 	wl1271_debug(DEBUG_CMD, "role start: roleid=%d, hlid=%d, session=%d "
 		     "basic_rate_set: 0x%x, remote_rates: 0x%x",
-		     wlvअगर->role_id, cmd->sta.hlid, cmd->sta.session,
-		     wlvअगर->basic_rate_set, wlvअगर->rate_set);
+		     wlvif->role_id, cmd->sta.hlid, cmd->sta.session,
+		     wlvif->basic_rate_set, wlvif->rate_set);
 
 	wl1271_debug(DEBUG_CMD, "vif->bss_conf.bssid = %pM",
-		     vअगर->bss_conf.bssid);
+		     vif->bss_conf.bssid);
 
-	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ROLE_START, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd role enable");
-		जाओ err_hlid;
-	पूर्ण
+		goto err_hlid;
+	}
 
-	जाओ out_मुक्त;
+	goto out_free;
 
 err_hlid:
 	/* clear links on error. */
-	wl12xx_मुक्त_link(wl, wlvअगर, &wlvअगर->sta.hlid);
+	wl12xx_free_link(wl, wlvif, &wlvif->sta.hlid);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
  * send test command to firmware
  *
- * @wl: wl काष्ठा
+ * @wl: wl struct
  * @buf: buffer containing the command, with all headers, must work with dma
  * @buf_len: length of the buffer
  * @answer: is answer needed
  */
-पूर्णांक wl1271_cmd_test(काष्ठा wl1271 *wl, व्योम *buf, माप_प्रकार buf_len, u8 answer)
-अणु
-	पूर्णांक ret;
-	माप_प्रकार res_len = 0;
+int wl1271_cmd_test(struct wl1271 *wl, void *buf, size_t buf_len, u8 answer)
+{
+	int ret;
+	size_t res_len = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd test");
 
-	अगर (answer)
+	if (answer)
 		res_len = buf_len;
 
 	ret = wl1271_cmd_send(wl, CMD_TEST, buf, buf_len, res_len);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_warning("TEST command failed");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wl1271_cmd_test);
 
 /**
- * पढ़ो acx from firmware
+ * read acx from firmware
  *
- * @wl: wl काष्ठा
+ * @wl: wl struct
  * @id: acx id
- * @buf: buffer क्रम the response, including all headers, must work with dma
+ * @buf: buffer for the response, including all headers, must work with dma
  * @cmd_len: length of command
  * @res_len: length of payload
  */
-पूर्णांक wl1271_cmd_पूर्णांकerrogate(काष्ठा wl1271 *wl, u16 id, व्योम *buf,
-			   माप_प्रकार cmd_len, माप_प्रकार res_len)
-अणु
-	काष्ठा acx_header *acx = buf;
-	पूर्णांक ret;
+int wl1271_cmd_interrogate(struct wl1271 *wl, u16 id, void *buf,
+			   size_t cmd_len, size_t res_len)
+{
+	struct acx_header *acx = buf;
+	int ret;
 
 	wl1271_debug(DEBUG_CMD, "cmd interrogate");
 
 	acx->id = cpu_to_le16(id);
 
-	/* response payload length, करोes not include any headers */
-	acx->len = cpu_to_le16(res_len - माप(*acx));
+	/* response payload length, does not include any headers */
+	acx->len = cpu_to_le16(res_len - sizeof(*acx));
 
 	ret = wl1271_cmd_send(wl, CMD_INTERROGATE, acx, cmd_len, res_len);
-	अगर (ret < 0)
+	if (ret < 0)
 		wl1271_error("INTERROGATE command failed");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ग_लिखो acx value to firmware
+ * write acx value to firmware
  *
- * @wl: wl काष्ठा
+ * @wl: wl struct
  * @id: acx id
  * @buf: buffer containing acx, including all headers, must work with dma
  * @len: length of buf
- * @valid_rets: biपंचांगap of valid cmd status codes (i.e. वापस values).
- * वापस the cmd status on success.
+ * @valid_rets: bitmap of valid cmd status codes (i.e. return values).
+ * return the cmd status on success.
  */
-पूर्णांक wlcore_cmd_configure_failsafe(काष्ठा wl1271 *wl, u16 id, व्योम *buf,
-				  माप_प्रकार len, अचिन्हित दीर्घ valid_rets)
-अणु
-	काष्ठा acx_header *acx = buf;
-	पूर्णांक ret;
+int wlcore_cmd_configure_failsafe(struct wl1271 *wl, u16 id, void *buf,
+				  size_t len, unsigned long valid_rets)
+{
+	struct acx_header *acx = buf;
+	int ret;
 
 	wl1271_debug(DEBUG_CMD, "cmd configure (%d)", id);
 
-	अगर (WARN_ON_ONCE(len < माप(*acx)))
-		वापस -EIO;
+	if (WARN_ON_ONCE(len < sizeof(*acx)))
+		return -EIO;
 
 	acx->id = cpu_to_le16(id);
 
-	/* payload length, करोes not include any headers */
-	acx->len = cpu_to_le16(len - माप(*acx));
+	/* payload length, does not include any headers */
+	acx->len = cpu_to_le16(len - sizeof(*acx));
 
 	ret = wlcore_cmd_send_failsafe(wl, CMD_CONFIGURE, acx, len, 0,
 				       valid_rets);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_warning("CONFIGURE command NOK");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * wrapper क्रम wlcore_cmd_configure that accepts only success status.
- * वापस 0 on success
+ * wrapper for wlcore_cmd_configure that accepts only success status.
+ * return 0 on success
  */
-पूर्णांक wl1271_cmd_configure(काष्ठा wl1271 *wl, u16 id, व्योम *buf, माप_प्रकार len)
-अणु
-	पूर्णांक ret = wlcore_cmd_configure_failsafe(wl, id, buf, len, 0);
+int wl1271_cmd_configure(struct wl1271 *wl, u16 id, void *buf, size_t len)
+{
+	int ret = wlcore_cmd_configure_failsafe(wl, id, buf, len, 0);
 
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wl1271_cmd_configure);
 
-पूर्णांक wl1271_cmd_data_path(काष्ठा wl1271 *wl, bool enable)
-अणु
-	काष्ठा cmd_enabledisable_path *cmd;
-	पूर्णांक ret;
+int wl1271_cmd_data_path(struct wl1271 *wl, bool enable)
+{
+	struct cmd_enabledisable_path *cmd;
+	int ret;
 	u16 cmd_rx, cmd_tx;
 
 	wl1271_debug(DEBUG_CMD, "cmd data path");
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* the channel here is only used क्रम calibration, so hardcoded to 1 */
+	/* the channel here is only used for calibration, so hardcoded to 1 */
 	cmd->channel = 1;
 
-	अगर (enable) अणु
+	if (enable) {
 		cmd_rx = CMD_ENABLE_RX;
 		cmd_tx = CMD_ENABLE_TX;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd_rx = CMD_DISABLE_RX;
 		cmd_tx = CMD_DISABLE_TX;
-	पूर्ण
+	}
 
-	ret = wl1271_cmd_send(wl, cmd_rx, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, cmd_rx, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("rx %s cmd for channel %d failed",
 			     enable ? "start" : "stop", cmd->channel);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_BOOT, "rx %s cmd channel %d",
 		     enable ? "start" : "stop", cmd->channel);
 
-	ret = wl1271_cmd_send(wl, cmd_tx, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, cmd_tx, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("tx %s cmd for channel %d failed",
 			     enable ? "start" : "stop", cmd->channel);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_BOOT, "tx %s cmd channel %d",
 		     enable ? "start" : "stop", cmd->channel);
 
 out:
-	kमुक्त(cmd);
-	वापस ret;
-पूर्ण
+	kfree(cmd);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wl1271_cmd_data_path);
 
-पूर्णांक wl1271_cmd_ps_mode(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		       u8 ps_mode, u16 स्वतः_ps_समयout)
-अणु
-	काष्ठा wl1271_cmd_ps_params *ps_params = शून्य;
-	पूर्णांक ret = 0;
+int wl1271_cmd_ps_mode(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		       u8 ps_mode, u16 auto_ps_timeout)
+{
+	struct wl1271_cmd_ps_params *ps_params = NULL;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd set ps mode");
 
-	ps_params = kzalloc(माप(*ps_params), GFP_KERNEL);
-	अगर (!ps_params) अणु
+	ps_params = kzalloc(sizeof(*ps_params), GFP_KERNEL);
+	if (!ps_params) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ps_params->role_id = wlvअगर->role_id;
+	ps_params->role_id = wlvif->role_id;
 	ps_params->ps_mode = ps_mode;
-	ps_params->स्वतः_ps_समयout = स्वतः_ps_समयout;
+	ps_params->auto_ps_timeout = auto_ps_timeout;
 
 	ret = wl1271_cmd_send(wl, CMD_SET_PS_MODE, ps_params,
-			      माप(*ps_params), 0);
-	अगर (ret < 0) अणु
+			      sizeof(*ps_params), 0);
+	if (ret < 0) {
 		wl1271_error("cmd set_ps_mode failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	kमुक्त(ps_params);
-	वापस ret;
-पूर्ण
+	kfree(ps_params);
+	return ret;
+}
 
-पूर्णांक wl1271_cmd_ढाँचा_set(काष्ठा wl1271 *wl, u8 role_id,
-			    u16 ढाँचा_id, व्योम *buf, माप_प्रकार buf_len,
-			    पूर्णांक index, u32 rates)
-अणु
-	काष्ठा wl1271_cmd_ढाँचा_set *cmd;
-	पूर्णांक ret = 0;
+int wl1271_cmd_template_set(struct wl1271 *wl, u8 role_id,
+			    u16 template_id, void *buf, size_t buf_len,
+			    int index, u32 rates)
+{
+	struct wl1271_cmd_template_set *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd template_set %d (role %d)",
-		     ढाँचा_id, role_id);
+		     template_id, role_id);
 
 	WARN_ON(buf_len > WL1271_CMD_TEMPL_MAX_SIZE);
-	buf_len = min_t(माप_प्रकार, buf_len, WL1271_CMD_TEMPL_MAX_SIZE);
+	buf_len = min_t(size_t, buf_len, WL1271_CMD_TEMPL_MAX_SIZE);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* during initialization wlvअगर is शून्य */
+	/* during initialization wlvif is NULL */
 	cmd->role_id = role_id;
 	cmd->len = cpu_to_le16(buf_len);
-	cmd->ढाँचा_type = ढाँचा_id;
+	cmd->template_type = template_id;
 	cmd->enabled_rates = cpu_to_le32(rates);
-	cmd->लघु_retry_limit = wl->conf.tx.पंचांगpl_लघु_retry_limit;
-	cmd->दीर्घ_retry_limit = wl->conf.tx.पंचांगpl_दीर्घ_retry_limit;
+	cmd->short_retry_limit = wl->conf.tx.tmpl_short_retry_limit;
+	cmd->long_retry_limit = wl->conf.tx.tmpl_long_retry_limit;
 	cmd->index = index;
 
-	अगर (buf)
-		स_नकल(cmd->ढाँचा_data, buf, buf_len);
+	if (buf)
+		memcpy(cmd->template_data, buf, buf_len);
 
-	ret = wl1271_cmd_send(wl, CMD_SET_TEMPLATE, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_SET_TEMPLATE, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_warning("cmd set_template failed: %d", ret);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_build_null_data(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक size;
-	व्योम *ptr;
-	पूर्णांक ret = -ENOMEM;
+int wl12xx_cmd_build_null_data(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct sk_buff *skb = NULL;
+	int size;
+	void *ptr;
+	int ret = -ENOMEM;
 
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_IBSS) अणु
-		size = माप(काष्ठा wl12xx_null_data_ढाँचा);
-		ptr = शून्य;
-	पूर्ण अन्यथा अणु
+	if (wlvif->bss_type == BSS_TYPE_IBSS) {
+		size = sizeof(struct wl12xx_null_data_template);
+		ptr = NULL;
+	} else {
 		skb = ieee80211_nullfunc_get(wl->hw,
-					     wl12xx_wlvअगर_to_vअगर(wlvअगर),
+					     wl12xx_wlvif_to_vif(wlvif),
 					     false);
-		अगर (!skb)
-			जाओ out;
+		if (!skb)
+			goto out;
 		size = skb->len;
 		ptr = skb->data;
-	पूर्ण
+	}
 
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
-				      CMD_TEMPL_शून्य_DATA, ptr, size, 0,
-				      wlvअगर->basic_rate);
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id,
+				      CMD_TEMPL_NULL_DATA, ptr, size, 0,
+				      wlvif->basic_rate);
 
 out:
-	dev_kमुक्त_skb(skb);
-	अगर (ret)
+	dev_kfree_skb(skb);
+	if (ret)
 		wl1271_warning("cmd build null data failed %d", ret);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-पूर्णांक wl12xx_cmd_build_klv_null_data(काष्ठा wl1271 *wl,
-				   काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक ret = -ENOMEM;
+int wl12xx_cmd_build_klv_null_data(struct wl1271 *wl,
+				   struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct sk_buff *skb = NULL;
+	int ret = -ENOMEM;
 
-	skb = ieee80211_nullfunc_get(wl->hw, vअगर, false);
-	अगर (!skb)
-		जाओ out;
+	skb = ieee80211_nullfunc_get(wl->hw, vif, false);
+	if (!skb)
+		goto out;
 
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id, CMD_TEMPL_KLV,
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id, CMD_TEMPL_KLV,
 				      skb->data, skb->len,
-				      wlvअगर->sta.klv_ढाँचा_id,
-				      wlvअगर->basic_rate);
+				      wlvif->sta.klv_template_id,
+				      wlvif->basic_rate);
 
 out:
-	dev_kमुक्त_skb(skb);
-	अगर (ret)
+	dev_kfree_skb(skb);
+	if (ret)
 		wl1271_warning("cmd build klv null data failed %d", ret);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-पूर्णांक wl1271_cmd_build_ps_poll(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_cmd_build_ps_poll(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			     u16 aid)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret = 0;
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct sk_buff *skb;
+	int ret = 0;
 
-	skb = ieee80211_pspoll_get(wl->hw, vअगर);
-	अगर (!skb)
-		जाओ out;
+	skb = ieee80211_pspoll_get(wl->hw, vif);
+	if (!skb)
+		goto out;
 
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id,
 				      CMD_TEMPL_PS_POLL, skb->data,
-				      skb->len, 0, wlvअगर->basic_rate_set);
+				      skb->len, 0, wlvif->basic_rate_set);
 
 out:
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	dev_kfree_skb(skb);
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_build_probe_req(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl12xx_cmd_build_probe_req(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			       u8 role_id, u8 band,
-			       स्थिर u8 *ssid, माप_प्रकार ssid_len,
-			       स्थिर u8 *ie0, माप_प्रकार ie0_len, स्थिर u8 *ie1,
-			       माप_प्रकार ie1_len, bool sched_scan)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret;
+			       const u8 *ssid, size_t ssid_len,
+			       const u8 *ie0, size_t ie0_len, const u8 *ie1,
+			       size_t ie1_len, bool sched_scan)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct sk_buff *skb;
+	int ret;
 	u32 rate;
-	u16 ढाँचा_id_2_4 = wl->scan_templ_id_2_4;
-	u16 ढाँचा_id_5 = wl->scan_templ_id_5;
+	u16 template_id_2_4 = wl->scan_templ_id_2_4;
+	u16 template_id_5 = wl->scan_templ_id_5;
 
 	wl1271_debug(DEBUG_SCAN, "build probe request band %d", band);
 
-	skb = ieee80211_probereq_get(wl->hw, vअगर->addr, ssid, ssid_len,
+	skb = ieee80211_probereq_get(wl->hw, vif->addr, ssid, ssid_len,
 				     ie0_len + ie1_len);
-	अगर (!skb) अणु
+	if (!skb) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	अगर (ie0_len)
+		goto out;
+	}
+	if (ie0_len)
 		skb_put_data(skb, ie0, ie0_len);
-	अगर (ie1_len)
+	if (ie1_len)
 		skb_put_data(skb, ie1, ie1_len);
 
-	अगर (sched_scan &&
-	    (wl->quirks & WLCORE_QUIRK_DUAL_PROBE_TMPL)) अणु
-		ढाँचा_id_2_4 = wl->sched_scan_templ_id_2_4;
-		ढाँचा_id_5 = wl->sched_scan_templ_id_5;
-	पूर्ण
+	if (sched_scan &&
+	    (wl->quirks & WLCORE_QUIRK_DUAL_PROBE_TMPL)) {
+		template_id_2_4 = wl->sched_scan_templ_id_2_4;
+		template_id_5 = wl->sched_scan_templ_id_5;
+	}
 
-	rate = wl1271_tx_min_rate_get(wl, wlvअगर->bitrate_masks[band]);
-	अगर (band == NL80211_BAND_2GHZ)
-		ret = wl1271_cmd_ढाँचा_set(wl, role_id,
-					      ढाँचा_id_2_4,
+	rate = wl1271_tx_min_rate_get(wl, wlvif->bitrate_masks[band]);
+	if (band == NL80211_BAND_2GHZ)
+		ret = wl1271_cmd_template_set(wl, role_id,
+					      template_id_2_4,
 					      skb->data, skb->len, 0, rate);
-	अन्यथा
-		ret = wl1271_cmd_ढाँचा_set(wl, role_id,
-					      ढाँचा_id_5,
+	else
+		ret = wl1271_cmd_template_set(wl, role_id,
+					      template_id_5,
 					      skb->data, skb->len, 0, rate);
 
 out:
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	dev_kfree_skb(skb);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wl12xx_cmd_build_probe_req);
 
-काष्ठा sk_buff *wl1271_cmd_build_ap_probe_req(काष्ठा wl1271 *wl,
-					      काष्ठा wl12xx_vअगर *wlvअगर,
-					      काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	पूर्णांक ret;
+struct sk_buff *wl1271_cmd_build_ap_probe_req(struct wl1271 *wl,
+					      struct wl12xx_vif *wlvif,
+					      struct sk_buff *skb)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	int ret;
 	u32 rate;
 
-	अगर (!skb)
-		skb = ieee80211_ap_probereq_get(wl->hw, vअगर);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		skb = ieee80211_ap_probereq_get(wl->hw, vif);
+	if (!skb)
+		goto out;
 
 	wl1271_debug(DEBUG_SCAN, "set ap probe request template");
 
-	rate = wl1271_tx_min_rate_get(wl, wlvअगर->bitrate_masks[wlvअगर->band]);
-	अगर (wlvअगर->band == NL80211_BAND_2GHZ)
-		ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	rate = wl1271_tx_min_rate_get(wl, wlvif->bitrate_masks[wlvif->band]);
+	if (wlvif->band == NL80211_BAND_2GHZ)
+		ret = wl1271_cmd_template_set(wl, wlvif->role_id,
 					      CMD_TEMPL_CFG_PROBE_REQ_2_4,
 					      skb->data, skb->len, 0, rate);
-	अन्यथा
-		ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	else
+		ret = wl1271_cmd_template_set(wl, wlvif->role_id,
 					      CMD_TEMPL_CFG_PROBE_REQ_5,
 					      skb->data, skb->len, 0, rate);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		wl1271_error("Unable to set ap probe request template.");
 
 out:
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-पूर्णांक wl1271_cmd_build_arp_rsp(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret, extra = 0;
+int wl1271_cmd_build_arp_rsp(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret, extra = 0;
 	u16 fc;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा sk_buff *skb;
-	काष्ठा wl12xx_arp_rsp_ढाँचा *पंचांगpl;
-	काष्ठा ieee80211_hdr_3addr *hdr;
-	काष्ठा arphdr *arp_hdr;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct sk_buff *skb;
+	struct wl12xx_arp_rsp_template *tmpl;
+	struct ieee80211_hdr_3addr *hdr;
+	struct arphdr *arp_hdr;
 
-	skb = dev_alloc_skb(माप(*hdr) + माप(__le16) + माप(*पंचांगpl) +
+	skb = dev_alloc_skb(sizeof(*hdr) + sizeof(__le16) + sizeof(*tmpl) +
 			    WL1271_EXTRA_SPACE_MAX);
-	अगर (!skb) अणु
+	if (!skb) {
 		wl1271_error("failed to allocate buffer for arp rsp template");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	skb_reserve(skb, माप(*hdr) + WL1271_EXTRA_SPACE_MAX);
+	skb_reserve(skb, sizeof(*hdr) + WL1271_EXTRA_SPACE_MAX);
 
-	पंचांगpl = skb_put_zero(skb, माप(*पंचांगpl));
+	tmpl = skb_put_zero(skb, sizeof(*tmpl));
 
 	/* llc layer */
-	स_नकल(पंचांगpl->llc_hdr, rfc1042_header, माप(rfc1042_header));
-	पंचांगpl->llc_type = cpu_to_be16(ETH_P_ARP);
+	memcpy(tmpl->llc_hdr, rfc1042_header, sizeof(rfc1042_header));
+	tmpl->llc_type = cpu_to_be16(ETH_P_ARP);
 
 	/* arp header */
-	arp_hdr = &पंचांगpl->arp_hdr;
+	arp_hdr = &tmpl->arp_hdr;
 	arp_hdr->ar_hrd = cpu_to_be16(ARPHRD_ETHER);
 	arp_hdr->ar_pro = cpu_to_be16(ETH_P_IP);
 	arp_hdr->ar_hln = ETH_ALEN;
@@ -1247,99 +1246,99 @@ out:
 	arp_hdr->ar_op = cpu_to_be16(ARPOP_REPLY);
 
 	/* arp payload */
-	स_नकल(पंचांगpl->sender_hw, vअगर->addr, ETH_ALEN);
-	पंचांगpl->sender_ip = wlvअगर->ip_addr;
+	memcpy(tmpl->sender_hw, vif->addr, ETH_ALEN);
+	tmpl->sender_ip = wlvif->ip_addr;
 
 	/* encryption space */
-	चयन (wlvअगर->encryption_type) अणु
-	हाल KEY_TKIP:
-		अगर (wl->quirks & WLCORE_QUIRK_TKIP_HEADER_SPACE)
+	switch (wlvif->encryption_type) {
+	case KEY_TKIP:
+		if (wl->quirks & WLCORE_QUIRK_TKIP_HEADER_SPACE)
 			extra = WL1271_EXTRA_SPACE_TKIP;
-		अवरोध;
-	हाल KEY_AES:
+		break;
+	case KEY_AES:
 		extra = WL1271_EXTRA_SPACE_AES;
-		अवरोध;
-	हाल KEY_NONE:
-	हाल KEY_WEP:
-	हाल KEY_GEM:
+		break;
+	case KEY_NONE:
+	case KEY_WEP:
+	case KEY_GEM:
 		extra = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		wl1271_warning("Unknown encryption type: %d",
-			       wlvअगर->encryption_type);
+			       wlvif->encryption_type);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (extra) अणु
+	if (extra) {
 		u8 *space = skb_push(skb, extra);
-		स_रखो(space, 0, extra);
-	पूर्ण
+		memset(space, 0, extra);
+	}
 
 	/* QoS header - BE */
-	अगर (wlvअगर->sta.qos)
-		स_रखो(skb_push(skb, माप(__le16)), 0, माप(__le16));
+	if (wlvif->sta.qos)
+		memset(skb_push(skb, sizeof(__le16)), 0, sizeof(__le16));
 
 	/* mac80211 header */
-	hdr = skb_push(skb, माप(*hdr));
-	स_रखो(hdr, 0, माप(*hdr));
+	hdr = skb_push(skb, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	fc = IEEE80211_FTYPE_DATA | IEEE80211_FCTL_TODS;
-	अगर (wlvअगर->sta.qos)
+	if (wlvif->sta.qos)
 		fc |= IEEE80211_STYPE_QOS_DATA;
-	अन्यथा
+	else
 		fc |= IEEE80211_STYPE_DATA;
-	अगर (wlvअगर->encryption_type != KEY_NONE)
+	if (wlvif->encryption_type != KEY_NONE)
 		fc |= IEEE80211_FCTL_PROTECTED;
 
 	hdr->frame_control = cpu_to_le16(fc);
-	स_नकल(hdr->addr1, vअगर->bss_conf.bssid, ETH_ALEN);
-	स_नकल(hdr->addr2, vअगर->addr, ETH_ALEN);
+	memcpy(hdr->addr1, vif->bss_conf.bssid, ETH_ALEN);
+	memcpy(hdr->addr2, vif->addr, ETH_ALEN);
 	eth_broadcast_addr(hdr->addr3);
 
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id, CMD_TEMPL_ARP_RSP,
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id, CMD_TEMPL_ARP_RSP,
 				      skb->data, skb->len, 0,
-				      wlvअगर->basic_rate);
+				      wlvif->basic_rate);
 out:
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	dev_kfree_skb(skb);
+	return ret;
+}
 
-पूर्णांक wl1271_build_qos_null_data(काष्ठा wl1271 *wl, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा ieee80211_qos_hdr ढाँचा;
+int wl1271_build_qos_null_data(struct wl1271 *wl, struct ieee80211_vif *vif)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct ieee80211_qos_hdr template;
 
-	स_रखो(&ढाँचा, 0, माप(ढाँचा));
+	memset(&template, 0, sizeof(template));
 
-	स_नकल(ढाँचा.addr1, vअगर->bss_conf.bssid, ETH_ALEN);
-	स_नकल(ढाँचा.addr2, vअगर->addr, ETH_ALEN);
-	स_नकल(ढाँचा.addr3, vअगर->bss_conf.bssid, ETH_ALEN);
+	memcpy(template.addr1, vif->bss_conf.bssid, ETH_ALEN);
+	memcpy(template.addr2, vif->addr, ETH_ALEN);
+	memcpy(template.addr3, vif->bss_conf.bssid, ETH_ALEN);
 
-	ढाँचा.frame_control = cpu_to_le16(IEEE80211_FTYPE_DATA |
-					     IEEE80211_STYPE_QOS_शून्यFUNC |
+	template.frame_control = cpu_to_le16(IEEE80211_FTYPE_DATA |
+					     IEEE80211_STYPE_QOS_NULLFUNC |
 					     IEEE80211_FCTL_TODS);
 
 	/* FIXME: not sure what priority to use here */
-	ढाँचा.qos_ctrl = cpu_to_le16(0);
+	template.qos_ctrl = cpu_to_le16(0);
 
-	वापस wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
-				       CMD_TEMPL_QOS_शून्य_DATA, &ढाँचा,
-				       माप(ढाँचा), 0,
-				       wlvअगर->basic_rate);
-पूर्ण
+	return wl1271_cmd_template_set(wl, wlvif->role_id,
+				       CMD_TEMPL_QOS_NULL_DATA, &template,
+				       sizeof(template), 0,
+				       wlvif->basic_rate);
+}
 
-पूर्णांक wl12xx_cmd_set_शेष_wep_key(काष्ठा wl1271 *wl, u8 id, u8 hlid)
-अणु
-	काष्ठा wl1271_cmd_set_keys *cmd;
-	पूर्णांक ret = 0;
+int wl12xx_cmd_set_default_wep_key(struct wl1271 *wl, u8 id, u8 hlid)
+{
+	struct wl1271_cmd_set_keys *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd set_default_wep_key %d", id);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd->hlid = hlid;
 	cmd->key_id = id;
@@ -1347,43 +1346,43 @@ out:
 	cmd->key_action = cpu_to_le16(KEY_SET_ID);
 	cmd->key_type = KEY_WEP;
 
-	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_warning("cmd set_default_wep_key failed: %d", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl1271_cmd_set_sta_key(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_cmd_set_sta_key(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 		       u16 action, u8 id, u8 key_type,
-		       u8 key_size, स्थिर u8 *key, स्थिर u8 *addr,
+		       u8 key_size, const u8 *key, const u8 *addr,
 		       u32 tx_seq_32, u16 tx_seq_16)
-अणु
-	काष्ठा wl1271_cmd_set_keys *cmd;
-	पूर्णांक ret = 0;
+{
+	struct wl1271_cmd_set_keys *cmd;
+	int ret = 0;
 
-	/* hlid might have alपढ़ोy been deleted */
-	अगर (wlvअगर->sta.hlid == WL12XX_INVALID_LINK_ID)
-		वापस 0;
+	/* hlid might have already been deleted */
+	if (wlvif->sta.hlid == WL12XX_INVALID_LINK_ID)
+		return 0;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cmd->hlid = wlvअगर->sta.hlid;
+	cmd->hlid = wlvif->sta.hlid;
 
-	अगर (key_type == KEY_WEP)
+	if (key_type == KEY_WEP)
 		cmd->lid_key_type = WEP_DEFAULT_LID_TYPE;
-	अन्यथा अगर (is_broadcast_ether_addr(addr))
+	else if (is_broadcast_ether_addr(addr))
 		cmd->lid_key_type = BROADCAST_LID_TYPE;
-	अन्यथा
+	else
 		cmd->lid_key_type = UNICAST_LID_TYPE;
 
 	cmd->key_action = cpu_to_le16(action);
@@ -1395,66 +1394,66 @@ out:
 
 	cmd->key_id = id;
 
-	अगर (key_type == KEY_TKIP) अणु
+	if (key_type == KEY_TKIP) {
 		/*
-		 * We get the key in the following क्रमm:
+		 * We get the key in the following form:
 		 * TKIP (16 bytes) - TX MIC (8 bytes) - RX MIC (8 bytes)
 		 * but the target is expecting:
 		 * TKIP - RX MIC - TX MIC
 		 */
-		स_नकल(cmd->key, key, 16);
-		स_नकल(cmd->key + 16, key + 24, 8);
-		स_नकल(cmd->key + 24, key + 16, 8);
+		memcpy(cmd->key, key, 16);
+		memcpy(cmd->key + 16, key + 24, 8);
+		memcpy(cmd->key + 24, key + 16, 8);
 
-	पूर्ण अन्यथा अणु
-		स_नकल(cmd->key, key, key_size);
-	पूर्ण
+	} else {
+		memcpy(cmd->key, key, key_size);
+	}
 
-	wl1271_dump(DEBUG_CRYPT, "TARGET KEY: ", cmd, माप(*cmd));
+	wl1271_dump(DEBUG_CRYPT, "TARGET KEY: ", cmd, sizeof(*cmd));
 
-	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_warning("could not set keys");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	kमुक्त(cmd);
+	kfree(cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * TODO: merge with sta/ibss पूर्णांकo 1 set_key function.
- * note there are slight dअगरfs
+ * TODO: merge with sta/ibss into 1 set_key function.
+ * note there are slight diffs
  */
-पूर्णांक wl1271_cmd_set_ap_key(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_cmd_set_ap_key(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			  u16 action, u8 id, u8 key_type,
-			  u8 key_size, स्थिर u8 *key, u8 hlid, u32 tx_seq_32,
+			  u8 key_size, const u8 *key, u8 hlid, u32 tx_seq_32,
 			  u16 tx_seq_16, bool is_pairwise)
-अणु
-	काष्ठा wl1271_cmd_set_keys *cmd;
-	पूर्णांक ret = 0;
+{
+	struct wl1271_cmd_set_keys *cmd;
+	int ret = 0;
 	u8 lid_type;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd)
+		return -ENOMEM;
 
-	अगर (hlid == wlvअगर->ap.bcast_hlid) अणु
-		अगर (key_type == KEY_WEP)
+	if (hlid == wlvif->ap.bcast_hlid) {
+		if (key_type == KEY_WEP)
 			lid_type = WEP_DEFAULT_LID_TYPE;
-		अन्यथा
+		else
 			lid_type = BROADCAST_LID_TYPE;
-	पूर्ण अन्यथा अगर (is_pairwise) अणु
+	} else if (is_pairwise) {
 		lid_type = UNICAST_LID_TYPE;
-	पूर्ण अन्यथा अणु
+	} else {
 		lid_type = BROADCAST_LID_TYPE;
-	पूर्ण
+	}
 
 	wl1271_debug(DEBUG_CRYPT, "ap key action: %d id: %d lid: %d type: %d"
-		     " hlid: %d", (पूर्णांक)action, (पूर्णांक)id, (पूर्णांक)lid_type,
-		     (पूर्णांक)key_type, (पूर्णांक)hlid);
+		     " hlid: %d", (int)action, (int)id, (int)lid_type,
+		     (int)key_type, (int)hlid);
 
 	cmd->lid_key_type = lid_type;
 	cmd->hlid = hlid;
@@ -1465,640 +1464,640 @@ out:
 	cmd->ac_seq_num16[0] = cpu_to_le16(tx_seq_16);
 	cmd->ac_seq_num32[0] = cpu_to_le32(tx_seq_32);
 
-	अगर (key_type == KEY_TKIP) अणु
+	if (key_type == KEY_TKIP) {
 		/*
-		 * We get the key in the following क्रमm:
+		 * We get the key in the following form:
 		 * TKIP (16 bytes) - TX MIC (8 bytes) - RX MIC (8 bytes)
 		 * but the target is expecting:
 		 * TKIP - RX MIC - TX MIC
 		 */
-		स_नकल(cmd->key, key, 16);
-		स_नकल(cmd->key + 16, key + 24, 8);
-		स_नकल(cmd->key + 24, key + 16, 8);
-	पूर्ण अन्यथा अणु
-		स_नकल(cmd->key, key, key_size);
-	पूर्ण
+		memcpy(cmd->key, key, 16);
+		memcpy(cmd->key + 16, key + 24, 8);
+		memcpy(cmd->key + 24, key + 16, 8);
+	} else {
+		memcpy(cmd->key, key, key_size);
+	}
 
-	wl1271_dump(DEBUG_CRYPT, "TARGET AP KEY: ", cmd, माप(*cmd));
+	wl1271_dump(DEBUG_CRYPT, "TARGET AP KEY: ", cmd, sizeof(*cmd));
 
-	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_SET_KEYS, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_warning("could not set ap keys");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	kमुक्त(cmd);
-	वापस ret;
-पूर्ण
+	kfree(cmd);
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_set_peer_state(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl12xx_cmd_set_peer_state(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			      u8 hlid)
-अणु
-	काष्ठा wl12xx_cmd_set_peer_state *cmd;
-	पूर्णांक ret = 0;
+{
+	struct wl12xx_cmd_set_peer_state *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd set peer state (hlid=%d)", hlid);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd->hlid = hlid;
 	cmd->state = WL1271_CMD_STA_STATE_CONNECTED;
 
-	/* wmm param is valid only क्रम station role */
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS)
-		cmd->wmm = wlvअगर->wmm_enabled;
+	/* wmm param is valid only for station role */
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS)
+		cmd->wmm = wlvif->wmm_enabled;
 
-	ret = wl1271_cmd_send(wl, CMD_SET_PEER_STATE, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_SET_PEER_STATE, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send set peer state command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_add_peer(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			काष्ठा ieee80211_sta *sta, u8 hlid)
-अणु
-	काष्ठा wl12xx_cmd_add_peer *cmd;
-	पूर्णांक i, ret;
+int wl12xx_cmd_add_peer(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			struct ieee80211_sta *sta, u8 hlid)
+{
+	struct wl12xx_cmd_add_peer *cmd;
+	int i, ret;
 	u32 sta_rates;
 
-	wl1271_debug(DEBUG_CMD, "cmd add peer %d", (पूर्णांक)hlid);
+	wl1271_debug(DEBUG_CMD, "cmd add peer %d", (int)hlid);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(cmd->addr, sta->addr, ETH_ALEN);
+	memcpy(cmd->addr, sta->addr, ETH_ALEN);
 	cmd->bss_index = WL1271_AP_BSS_INDEX;
 	cmd->aid = sta->aid;
 	cmd->hlid = hlid;
 	cmd->sp_len = sta->max_sp;
 	cmd->wmm = sta->wme ? 1 : 0;
 	cmd->session_id = wl->session_ids[hlid];
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 
-	क्रम (i = 0; i < NUM_ACCESS_CATEGORIES_COPY; i++)
-		अगर (sta->wme && (sta->uapsd_queues & BIT(i)))
+	for (i = 0; i < NUM_ACCESS_CATEGORIES_COPY; i++)
+		if (sta->wme && (sta->uapsd_queues & BIT(i)))
 			cmd->psd_type[NUM_ACCESS_CATEGORIES_COPY-1-i] =
 					WL1271_PSD_UPSD_TRIGGER;
-		अन्यथा
+		else
 			cmd->psd_type[NUM_ACCESS_CATEGORIES_COPY-1-i] =
 					WL1271_PSD_LEGACY;
 
 
-	sta_rates = sta->supp_rates[wlvअगर->band];
-	अगर (sta->ht_cap.ht_supported)
+	sta_rates = sta->supp_rates[wlvif->band];
+	if (sta->ht_cap.ht_supported)
 		sta_rates |=
 			(sta->ht_cap.mcs.rx_mask[0] << HW_HT_RATES_OFFSET) |
 			(sta->ht_cap.mcs.rx_mask[1] << HW_MIMO_RATES_OFFSET);
 
 	cmd->supported_rates =
 		cpu_to_le32(wl1271_tx_enabled_rates_get(wl, sta_rates,
-							wlvअगर->band));
+							wlvif->band));
 
-	अगर (!cmd->supported_rates) अणु
+	if (!cmd->supported_rates) {
 		wl1271_debug(DEBUG_CMD,
 			     "peer has no supported rates yet, configuring basic rates: 0x%x",
-			     wlvअगर->basic_rate_set);
-		cmd->supported_rates = cpu_to_le32(wlvअगर->basic_rate_set);
-	पूर्ण
+			     wlvif->basic_rate_set);
+		cmd->supported_rates = cpu_to_le32(wlvif->basic_rate_set);
+	}
 
 	wl1271_debug(DEBUG_CMD, "new peer rates=0x%x queues=0x%x",
 		     cmd->supported_rates, sta->uapsd_queues);
 
-	ret = wl1271_cmd_send(wl, CMD_ADD_PEER, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_ADD_PEER, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd add peer");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_हटाओ_peer(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl12xx_cmd_remove_peer(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			   u8 hlid)
-अणु
-	काष्ठा wl12xx_cmd_हटाओ_peer *cmd;
-	पूर्णांक ret;
-	bool समयout = false;
+{
+	struct wl12xx_cmd_remove_peer *cmd;
+	int ret;
+	bool timeout = false;
 
-	wl1271_debug(DEBUG_CMD, "cmd remove peer %d", (पूर्णांक)hlid);
+	wl1271_debug(DEBUG_CMD, "cmd remove peer %d", (int)hlid);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd->hlid = hlid;
-	/* We never send a deauth, mac80211 is in अक्षरge of this */
+	/* We never send a deauth, mac80211 is in charge of this */
 	cmd->reason_opcode = 0;
 	cmd->send_deauth_flag = 0;
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 
-	ret = wl1271_cmd_send(wl, CMD_REMOVE_PEER, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_REMOVE_PEER, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to initiate cmd remove peer");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	ret = wl->ops->रुको_क्रम_event(wl,
+	ret = wl->ops->wait_for_event(wl,
 				      WLCORE_EVENT_PEER_REMOVE_COMPLETE,
-				      &समयout);
+				      &timeout);
 
 	/*
-	 * We are ok with a समयout here. The event is someबार not sent
-	 * due to a firmware bug. In हाल of another error (like SDIO समयout)
+	 * We are ok with a timeout here. The event is sometimes not sent
+	 * due to a firmware bug. In case of another error (like SDIO timeout)
 	 * queue a recovery.
 	 */
-	अगर (ret)
+	if (ret)
 		wl12xx_queue_recovery_work(wl);
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wlcore_get_reg_conf_ch_idx(क्रमागत nl80211_band band, u16 ch)
-अणु
+static int wlcore_get_reg_conf_ch_idx(enum nl80211_band band, u16 ch)
+{
 	/*
 	 * map the given band/channel to the respective predefined
 	 * bit expected by the fw
 	 */
-	चयन (band) अणु
-	हाल NL80211_BAND_2GHZ:
+	switch (band) {
+	case NL80211_BAND_2GHZ:
 		/* channels 1..14 are mapped to 0..13 */
-		अगर (ch >= 1 && ch <= 14)
-			वापस ch - 1;
-		अवरोध;
-	हाल NL80211_BAND_5GHZ:
-		चयन (ch) अणु
-		हाल 8 ... 16:
+		if (ch >= 1 && ch <= 14)
+			return ch - 1;
+		break;
+	case NL80211_BAND_5GHZ:
+		switch (ch) {
+		case 8 ... 16:
 			/* channels 8,12,16 are mapped to 18,19,20 */
-			वापस 18 + (ch-8)/4;
-		हाल 34 ... 48:
+			return 18 + (ch-8)/4;
+		case 34 ... 48:
 			/* channels 34,36..48 are mapped to 21..28 */
-			वापस 21 + (ch-34)/2;
-		हाल 52 ... 64:
+			return 21 + (ch-34)/2;
+		case 52 ... 64:
 			/* channels 52,56..64 are mapped to 29..32 */
-			वापस 29 + (ch-52)/4;
-		हाल 100 ... 140:
+			return 29 + (ch-52)/4;
+		case 100 ... 140:
 			/* channels 100,104..140 are mapped to 33..43 */
-			वापस 33 + (ch-100)/4;
-		हाल 149 ... 165:
+			return 33 + (ch-100)/4;
+		case 149 ... 165:
 			/* channels 149,153..165 are mapped to 44..48 */
-			वापस 44 + (ch-149)/4;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return 44 + (ch-149)/4;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
 	wl1271_error("%s: unknown band/channel: %d/%d", __func__, band, ch);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-व्योम wlcore_set_pending_regकरोमुख्य_ch(काष्ठा wl1271 *wl, u16 channel,
-				     क्रमागत nl80211_band band)
-अणु
-	पूर्णांक ch_bit_idx = 0;
+void wlcore_set_pending_regdomain_ch(struct wl1271 *wl, u16 channel,
+				     enum nl80211_band band)
+{
+	int ch_bit_idx = 0;
 
-	अगर (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
-		वापस;
+	if (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
+		return;
 
 	ch_bit_idx = wlcore_get_reg_conf_ch_idx(band, channel);
 
-	अगर (ch_bit_idx >= 0 && ch_bit_idx <= WL1271_MAX_CHANNELS)
-		__set_bit_le(ch_bit_idx, (दीर्घ *)wl->reg_ch_conf_pending);
-पूर्ण
+	if (ch_bit_idx >= 0 && ch_bit_idx <= WL1271_MAX_CHANNELS)
+		__set_bit_le(ch_bit_idx, (long *)wl->reg_ch_conf_pending);
+}
 
-पूर्णांक wlcore_cmd_regकरोमुख्य_config_locked(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_cmd_regकरोमुख्य_dfs_config *cmd = शून्य;
-	पूर्णांक ret = 0, i, b, ch_bit_idx;
-	__le32 पंचांगp_ch_biपंचांगap[2] __aligned(माप(अचिन्हित दीर्घ));
-	काष्ठा wiphy *wiphy = wl->hw->wiphy;
-	काष्ठा ieee80211_supported_band *band;
-	bool समयout = false;
+int wlcore_cmd_regdomain_config_locked(struct wl1271 *wl)
+{
+	struct wl12xx_cmd_regdomain_dfs_config *cmd = NULL;
+	int ret = 0, i, b, ch_bit_idx;
+	__le32 tmp_ch_bitmap[2] __aligned(sizeof(unsigned long));
+	struct wiphy *wiphy = wl->hw->wiphy;
+	struct ieee80211_supported_band *band;
+	bool timeout = false;
 
-	अगर (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
-		वापस 0;
+	if (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
+		return 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd reg domain config");
 
-	स_नकल(पंचांगp_ch_biपंचांगap, wl->reg_ch_conf_pending, माप(पंचांगp_ch_biपंचांगap));
+	memcpy(tmp_ch_bitmap, wl->reg_ch_conf_pending, sizeof(tmp_ch_bitmap));
 
-	क्रम (b = NL80211_BAND_2GHZ; b <= NL80211_BAND_5GHZ; b++) अणु
+	for (b = NL80211_BAND_2GHZ; b <= NL80211_BAND_5GHZ; b++) {
 		band = wiphy->bands[b];
-		क्रम (i = 0; i < band->n_channels; i++) अणु
-			काष्ठा ieee80211_channel *channel = &band->channels[i];
+		for (i = 0; i < band->n_channels; i++) {
+			struct ieee80211_channel *channel = &band->channels[i];
 			u16 ch = channel->hw_value;
 			u32 flags = channel->flags;
 
-			अगर (flags & (IEEE80211_CHAN_DISABLED |
+			if (flags & (IEEE80211_CHAN_DISABLED |
 				     IEEE80211_CHAN_NO_IR))
-				जारी;
+				continue;
 
-			अगर ((flags & IEEE80211_CHAN_RADAR) &&
+			if ((flags & IEEE80211_CHAN_RADAR) &&
 			    channel->dfs_state != NL80211_DFS_AVAILABLE)
-				जारी;
+				continue;
 
 			ch_bit_idx = wlcore_get_reg_conf_ch_idx(b, ch);
-			अगर (ch_bit_idx < 0)
-				जारी;
+			if (ch_bit_idx < 0)
+				continue;
 
-			__set_bit_le(ch_bit_idx, (दीर्घ *)पंचांगp_ch_biपंचांगap);
-		पूर्ण
-	पूर्ण
+			__set_bit_le(ch_bit_idx, (long *)tmp_ch_bitmap);
+		}
+	}
 
-	अगर (!स_भेद(पंचांगp_ch_biपंचांगap, wl->reg_ch_conf_last, माप(पंचांगp_ch_biपंचांगap)))
-		जाओ out;
+	if (!memcmp(tmp_ch_bitmap, wl->reg_ch_conf_last, sizeof(tmp_ch_bitmap)))
+		goto out;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cmd->ch_bit_map1 = पंचांगp_ch_biपंचांगap[0];
-	cmd->ch_bit_map2 = पंचांगp_ch_biपंचांगap[1];
+	cmd->ch_bit_map1 = tmp_ch_bitmap[0];
+	cmd->ch_bit_map2 = tmp_ch_bitmap[1];
 	cmd->dfs_region = wl->dfs_region;
 
 	wl1271_debug(DEBUG_CMD,
 		     "cmd reg domain bitmap1: 0x%08x, bitmap2: 0x%08x",
 		     cmd->ch_bit_map1, cmd->ch_bit_map2);
 
-	ret = wl1271_cmd_send(wl, CMD_DFS_CHANNEL_CONFIG, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_DFS_CHANNEL_CONFIG, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send reg domain dfs config");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = wl->ops->रुको_क्रम_event(wl,
+	ret = wl->ops->wait_for_event(wl,
 				      WLCORE_EVENT_DFS_CONFIG_COMPLETE,
-				      &समयout);
-	अगर (ret < 0 || समयout) अणु
+				      &timeout);
+	if (ret < 0 || timeout) {
 		wl1271_error("reg domain conf %serror",
-			     समयout ? "completion " : "");
-		ret = समयout ? -ETIMEDOUT : ret;
-		जाओ out;
-	पूर्ण
+			     timeout ? "completion " : "");
+		ret = timeout ? -ETIMEDOUT : ret;
+		goto out;
+	}
 
-	स_नकल(wl->reg_ch_conf_last, पंचांगp_ch_biपंचांगap, माप(पंचांगp_ch_biपंचांगap));
-	स_रखो(wl->reg_ch_conf_pending, 0, माप(wl->reg_ch_conf_pending));
+	memcpy(wl->reg_ch_conf_last, tmp_ch_bitmap, sizeof(tmp_ch_bitmap));
+	memset(wl->reg_ch_conf_pending, 0, sizeof(wl->reg_ch_conf_pending));
 
 out:
-	kमुक्त(cmd);
-	वापस ret;
-पूर्ण
+	kfree(cmd);
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_config_fwlog(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_cmd_config_fwlog *cmd;
-	पूर्णांक ret = 0;
+int wl12xx_cmd_config_fwlog(struct wl1271 *wl)
+{
+	struct wl12xx_cmd_config_fwlog *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd config firmware logger");
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd->logger_mode = wl->conf.fwlog.mode;
 	cmd->log_severity = wl->conf.fwlog.severity;
-	cmd->बारtamp = wl->conf.fwlog.बारtamp;
+	cmd->timestamp = wl->conf.fwlog.timestamp;
 	cmd->output = wl->conf.fwlog.output;
 	cmd->threshold = wl->conf.fwlog.threshold;
 
-	ret = wl1271_cmd_send(wl, CMD_CONFIG_FWLOGGER, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_CONFIG_FWLOGGER, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send config firmware logger command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_start_fwlog(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_cmd_start_fwlog *cmd;
-	पूर्णांक ret = 0;
+int wl12xx_cmd_start_fwlog(struct wl1271 *wl)
+{
+	struct wl12xx_cmd_start_fwlog *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd start firmware logger");
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = wl1271_cmd_send(wl, CMD_START_FWLOGGER, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_START_FWLOGGER, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send start firmware logger command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_stop_fwlog(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_cmd_stop_fwlog *cmd;
-	पूर्णांक ret = 0;
+int wl12xx_cmd_stop_fwlog(struct wl1271 *wl)
+{
+	struct wl12xx_cmd_stop_fwlog *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd stop firmware logger");
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = wl1271_cmd_send(wl, CMD_STOP_FWLOGGER, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_STOP_FWLOGGER, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send stop firmware logger command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_cmd_roc(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			  u8 role_id, क्रमागत nl80211_band band, u8 channel)
-अणु
-	काष्ठा wl12xx_cmd_roc *cmd;
-	पूर्णांक ret = 0;
+static int wl12xx_cmd_roc(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			  u8 role_id, enum nl80211_band band, u8 channel)
+{
+	struct wl12xx_cmd_roc *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd roc %d (%d)", channel, role_id);
 
-	अगर (WARN_ON(role_id == WL12XX_INVALID_ROLE_ID))
-		वापस -EINVAL;
+	if (WARN_ON(role_id == WL12XX_INVALID_ROLE_ID))
+		return -EINVAL;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd->role_id = role_id;
 	cmd->channel = channel;
-	चयन (band) अणु
-	हाल NL80211_BAND_2GHZ:
+	switch (band) {
+	case NL80211_BAND_2GHZ:
 		cmd->band = WLCORE_BAND_2_4GHZ;
-		अवरोध;
-	हाल NL80211_BAND_5GHZ:
+		break;
+	case NL80211_BAND_5GHZ:
 		cmd->band = WLCORE_BAND_5GHZ;
-		अवरोध;
-	शेष:
-		wl1271_error("roc - unknown band: %d", (पूर्णांक)wlvअगर->band);
+		break;
+	default:
+		wl1271_error("roc - unknown band: %d", (int)wlvif->band);
 		ret = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 
-	ret = wl1271_cmd_send(wl, CMD_REMAIN_ON_CHANNEL, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_REMAIN_ON_CHANNEL, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send ROC command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_cmd_croc(काष्ठा wl1271 *wl, u8 role_id)
-अणु
-	काष्ठा wl12xx_cmd_croc *cmd;
-	पूर्णांक ret = 0;
+static int wl12xx_cmd_croc(struct wl1271 *wl, u8 role_id)
+{
+	struct wl12xx_cmd_croc *cmd;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_CMD, "cmd croc (%d)", role_id);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	cmd->role_id = role_id;
 
 	ret = wl1271_cmd_send(wl, CMD_CANCEL_REMAIN_ON_CHANNEL, cmd,
-			      माप(*cmd), 0);
-	अगर (ret < 0) अणु
+			      sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send ROC command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_roc(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 role_id,
-	       क्रमागत nl80211_band band, u8 channel)
-अणु
-	पूर्णांक ret = 0;
+int wl12xx_roc(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 role_id,
+	       enum nl80211_band band, u8 channel)
+{
+	int ret = 0;
 
-	अगर (WARN_ON(test_bit(role_id, wl->roc_map)))
-		वापस 0;
+	if (WARN_ON(test_bit(role_id, wl->roc_map)))
+		return 0;
 
-	ret = wl12xx_cmd_roc(wl, wlvअगर, role_id, band, channel);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl12xx_cmd_roc(wl, wlvif, role_id, band, channel);
+	if (ret < 0)
+		goto out;
 
 	__set_bit(role_id, wl->roc_map);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_croc(काष्ठा wl1271 *wl, u8 role_id)
-अणु
-	पूर्णांक ret = 0;
+int wl12xx_croc(struct wl1271 *wl, u8 role_id)
+{
+	int ret = 0;
 
-	अगर (WARN_ON(!test_bit(role_id, wl->roc_map)))
-		वापस 0;
+	if (WARN_ON(!test_bit(role_id, wl->roc_map)))
+		return 0;
 
 	ret = wl12xx_cmd_croc(wl, role_id);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	__clear_bit(role_id, wl->roc_map);
 
 	/*
-	 * Rearm the tx watchकरोg when removing the last ROC. This prevents
+	 * Rearm the tx watchdog when removing the last ROC. This prevents
 	 * recoveries due to just finished ROCs - when Tx hasn't yet had
 	 * a chance to get out.
 	 */
-	अगर (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) >= WL12XX_MAX_ROLES)
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
+	if (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) >= WL12XX_MAX_ROLES)
+		wl12xx_rearm_tx_watchdog_locked(wl);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl12xx_cmd_stop_channel_चयन(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा wl12xx_cmd_stop_channel_चयन *cmd;
-	पूर्णांक ret;
+int wl12xx_cmd_stop_channel_switch(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct wl12xx_cmd_stop_channel_switch *cmd;
+	int ret;
 
 	wl1271_debug(DEBUG_ACX, "cmd stop channel switch");
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd) अणु
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 
-	ret = wl1271_cmd_send(wl, CMD_STOP_CHANNEL_SWICTH, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_STOP_CHANNEL_SWICTH, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to stop channel switch command");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kमुक्त(cmd);
+out_free:
+	kfree(cmd);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* start dev role and roc on its channel */
-पूर्णांक wl12xx_start_dev(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		     क्रमागत nl80211_band band, पूर्णांक channel)
-अणु
-	पूर्णांक ret;
+int wl12xx_start_dev(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		     enum nl80211_band band, int channel)
+{
+	int ret;
 
-	अगर (WARN_ON(!(wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-		      wlvअगर->bss_type == BSS_TYPE_IBSS)))
-		वापस -EINVAL;
+	if (WARN_ON(!(wlvif->bss_type == BSS_TYPE_STA_BSS ||
+		      wlvif->bss_type == BSS_TYPE_IBSS)))
+		return -EINVAL;
 
-	/* the dev role is alपढ़ोy started क्रम p2p mgmt पूर्णांकerfaces */
-	अगर (!wlcore_is_p2p_mgmt(wlvअगर)) अणु
+	/* the dev role is already started for p2p mgmt interfaces */
+	if (!wlcore_is_p2p_mgmt(wlvif)) {
 		ret = wl12xx_cmd_role_enable(wl,
-					     wl12xx_wlvअगर_to_vअगर(wlvअगर)->addr,
+					     wl12xx_wlvif_to_vif(wlvif)->addr,
 					     WL1271_ROLE_DEVICE,
-					     &wlvअगर->dev_role_id);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+					     &wlvif->dev_role_id);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = wl12xx_cmd_role_start_dev(wl, wlvअगर, band, channel);
-	अगर (ret < 0)
-		जाओ out_disable;
+	ret = wl12xx_cmd_role_start_dev(wl, wlvif, band, channel);
+	if (ret < 0)
+		goto out_disable;
 
-	ret = wl12xx_roc(wl, wlvअगर, wlvअगर->dev_role_id, band, channel);
-	अगर (ret < 0)
-		जाओ out_stop;
+	ret = wl12xx_roc(wl, wlvif, wlvif->dev_role_id, band, channel);
+	if (ret < 0)
+		goto out_stop;
 
-	वापस 0;
+	return 0;
 
 out_stop:
-	wl12xx_cmd_role_stop_dev(wl, wlvअगर);
+	wl12xx_cmd_role_stop_dev(wl, wlvif);
 out_disable:
-	अगर (!wlcore_is_p2p_mgmt(wlvअगर))
-		wl12xx_cmd_role_disable(wl, &wlvअगर->dev_role_id);
+	if (!wlcore_is_p2p_mgmt(wlvif))
+		wl12xx_cmd_role_disable(wl, &wlvif->dev_role_id);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* croc dev hlid, and stop the role */
-पूर्णांक wl12xx_stop_dev(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret;
+int wl12xx_stop_dev(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret;
 
-	अगर (WARN_ON(!(wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-		      wlvअगर->bss_type == BSS_TYPE_IBSS)))
-		वापस -EINVAL;
+	if (WARN_ON(!(wlvif->bss_type == BSS_TYPE_STA_BSS ||
+		      wlvif->bss_type == BSS_TYPE_IBSS)))
+		return -EINVAL;
 
 	/* flush all pending packets */
 	ret = wlcore_tx_work_locked(wl);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (test_bit(wlvअगर->dev_role_id, wl->roc_map)) अणु
-		ret = wl12xx_croc(wl, wlvअगर->dev_role_id);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+	if (test_bit(wlvif->dev_role_id, wl->roc_map)) {
+		ret = wl12xx_croc(wl, wlvif->dev_role_id);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = wl12xx_cmd_role_stop_dev(wl, wlvअगर);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl12xx_cmd_role_stop_dev(wl, wlvif);
+	if (ret < 0)
+		goto out;
 
-	अगर (!wlcore_is_p2p_mgmt(wlvअगर)) अणु
-		ret = wl12xx_cmd_role_disable(wl, &wlvअगर->dev_role_id);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+	if (!wlcore_is_p2p_mgmt(wlvif)) {
+		ret = wl12xx_cmd_role_disable(wl, &wlvif->dev_role_id);
+		if (ret < 0)
+			goto out;
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wlcore_cmd_generic_cfg(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wlcore_cmd_generic_cfg(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			   u8 feature, u8 enable, u8 value)
-अणु
-	काष्ठा wlcore_cmd_generic_cfg *cmd;
-	पूर्णांक ret;
+{
+	struct wlcore_cmd_generic_cfg *cmd;
+	int ret;
 
 	wl1271_debug(DEBUG_CMD,
 		     "cmd generic cfg (role %d feature %d enable %d value %d)",
-		     wlvअगर->role_id, feature, enable, value);
+		     wlvif->role_id, feature, enable, value);
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd)
+		return -ENOMEM;
 
-	cmd->role_id = wlvअगर->role_id;
+	cmd->role_id = wlvif->role_id;
 	cmd->feature = feature;
 	cmd->enable = enable;
 	cmd->value = value;
 
-	ret = wl1271_cmd_send(wl, CMD_GENERIC_CFG, cmd, माप(*cmd), 0);
-	अगर (ret < 0) अणु
+	ret = wl1271_cmd_send(wl, CMD_GENERIC_CFG, cmd, sizeof(*cmd), 0);
+	if (ret < 0) {
 		wl1271_error("failed to send generic cfg command");
-		जाओ out_मुक्त;
-	पूर्ण
-out_मुक्त:
-	kमुक्त(cmd);
-	वापस ret;
-पूर्ण
+		goto out_free;
+	}
+out_free:
+	kfree(cmd);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wlcore_cmd_generic_cfg);

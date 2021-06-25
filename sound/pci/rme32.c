@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   ALSA driver क्रम RME Digi32, Digi32/8 and Digi32 PRO audio पूर्णांकerfaces
+ *   ALSA driver for RME Digi32, Digi32/8 and Digi32 PRO audio interfaces
  *
  *      Copyright (c) 2002-2004 Martin Langer <martin-langer@gmx.de>,
- *                              Pilo Chambert <pilo.c@wanaकरोo.fr>
+ *                              Pilo Chambert <pilo.c@wanadoo.fr>
  *
  *      Thanks to :        Anders Torger <torger@ludd.luth.se>,
  *                         Henk Hesselink <henk@anda.nl>
- *                         क्रम writing the digi96-driver 
- *                         and RME क्रम all inक्रमmations.
+ *                         for writing the digi96-driver 
+ *                         and RME for all informations.
  * 
  * ****************************************************************************
  * 
  * Note #1 "Sek'd models" ................................... martin 2002-12-07
  * 
  * Identical soundcards by Sek'd were labeled:
- * RME Digi 32     = Sek'd Prodअगर 32
- * RME Digi 32 Pro = Sek'd Prodअगर 96
- * RME Digi 32/8   = Sek'd Prodअगर Gold
+ * RME Digi 32     = Sek'd Prodif 32
+ * RME Digi 32 Pro = Sek'd Prodif 96
+ * RME Digi 32/8   = Sek'd Prodif Gold
  * 
  * ****************************************************************************
  * 
  * Note #2 "full duplex mode" ............................... martin 2002-12-07
  * 
- * Full duplex करोesn't work. All cards (32, 32/8, 32Pro) are working identical
- * in this mode. Rec data and play data are using the same buffer thereक्रमe. At
+ * Full duplex doesn't work. All cards (32, 32/8, 32Pro) are working identical
+ * in this mode. Rec data and play data are using the same buffer therefore. At
  * first you have got the playing bits in the buffer and then (after playing
  * them) they were overwitten by the captured sound of the CS8412/14. Both 
  * modes (play/record) are running harmonically hand in hand in the same buffer
- * and you have only one start bit plus one पूर्णांकerrupt bit to control this 
+ * and you have only one start bit plus one interrupt bit to control this 
  * paired action.
  * This is opposite to the latter rme96 where playing and capturing is totally
  * separated and so their full duplex mode is supported by alsa (using two 
- * start bits and two पूर्णांकerrupts क्रम two dअगरferent buffers). 
+ * start bits and two interrupts for two different buffers). 
  * But due to the wrong sequence of playing and capturing ALSA shows no solved
- * full duplex support क्रम the rme32 at the moment. That's bad, but I'm not
+ * full duplex support for the rme32 at the moment. That's bad, but I'm not
  * able to solve it. Are you motivated enough to solve this problem now? Your
  * patch would be welcome!
  * 
@@ -45,269 +44,269 @@
  *
  * Ok, the situation regarding the full duplex is now improved a bit.
  * In the fullduplex mode (given by the module parameter), the hardware buffer
- * is split to halves क्रम पढ़ो and ग_लिखो directions at the DMA poपूर्णांकer.
- * That is, the half above the current DMA poपूर्णांकer is used क्रम ग_लिखो, and
- * the half below is used क्रम पढ़ो.  To mangle this strange behavior, an
- * software पूर्णांकermediate buffer is पूर्णांकroduced.  This is, of course, not good
- * from the viewpoपूर्णांक of the data transfer efficiency.  However, this allows
+ * is split to halves for read and write directions at the DMA pointer.
+ * That is, the half above the current DMA pointer is used for write, and
+ * the half below is used for read.  To mangle this strange behavior, an
+ * software intermediate buffer is introduced.  This is, of course, not good
+ * from the viewpoint of the data transfer efficiency.  However, this allows
  * you to use arbitrary buffer sizes, instead of the fixed I/O buffer size.
  *
  * ****************************************************************************
  */
 
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
+#include <linux/delay.h>
+#include <linux/gfp.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <linux/io.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/pcm-indirect.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/initval.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/pcm-indirect.h>
+#include <sound/asoundef.h>
+#include <sound/initval.h>
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
-अटल bool fullduplex[SNDRV_CARDS]; // = अणु[0 ... (SNDRV_CARDS - 1)] = 1पूर्ण;
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
+static bool fullduplex[SNDRV_CARDS]; // = {[0 ... (SNDRV_CARDS - 1)] = 1};
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for RME Digi32 soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for RME Digi32 soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable RME Digi32 soundcard.");
-module_param_array(fullduplex, bool, शून्य, 0444);
+module_param_array(fullduplex, bool, NULL, 0444);
 MODULE_PARM_DESC(fullduplex, "Support full-duplex mode.");
 MODULE_AUTHOR("Martin Langer <martin-langer@gmx.de>, Pilo Chambert <pilo.c@wanadoo.fr>");
 MODULE_DESCRIPTION("RME Digi32, Digi32/8, Digi32 PRO");
 MODULE_LICENSE("GPL");
 
-/* Defines क्रम RME Digi32 series */
-#घोषणा RME32_SPDIF_NCHANNELS 2
+/* Defines for RME Digi32 series */
+#define RME32_SPDIF_NCHANNELS 2
 
 /* Playback and capture buffer size */
-#घोषणा RME32_BUFFER_SIZE 0x20000
+#define RME32_BUFFER_SIZE 0x20000
 
 /* IO area size */
-#घोषणा RME32_IO_SIZE 0x30000
+#define RME32_IO_SIZE 0x30000
 
 /* IO area offsets */
-#घोषणा RME32_IO_DATA_BUFFER        0x0
-#घोषणा RME32_IO_CONTROL_REGISTER   0x20000
-#घोषणा RME32_IO_GET_POS            0x20000
-#घोषणा RME32_IO_CONFIRM_ACTION_IRQ 0x20004
-#घोषणा RME32_IO_RESET_POS          0x20100
+#define RME32_IO_DATA_BUFFER        0x0
+#define RME32_IO_CONTROL_REGISTER   0x20000
+#define RME32_IO_GET_POS            0x20000
+#define RME32_IO_CONFIRM_ACTION_IRQ 0x20004
+#define RME32_IO_RESET_POS          0x20100
 
-/* Write control रेजिस्टर bits */
-#घोषणा RME32_WCR_START     (1 << 0)    /* startbit */
-#घोषणा RME32_WCR_MONO      (1 << 1)    /* 0=stereo, 1=mono
+/* Write control register bits */
+#define RME32_WCR_START     (1 << 0)    /* startbit */
+#define RME32_WCR_MONO      (1 << 1)    /* 0=stereo, 1=mono
                                            Setting the whole card to mono
-                                           करोesn't seem to be very useful.
+                                           doesn't seem to be very useful.
                                            A software-solution can handle 
                                            full-duplex with one direction in
                                            stereo and the other way in mono. 
                                            So, the hardware should work all 
-                                           the समय in stereo! */
-#घोषणा RME32_WCR_MODE24    (1 << 2)    /* 0=16bit, 1=32bit */
-#घोषणा RME32_WCR_SEL       (1 << 3)    /* 0=input on output, 1=normal playback/capture */
-#घोषणा RME32_WCR_FREQ_0    (1 << 4)    /* frequency (play) */
-#घोषणा RME32_WCR_FREQ_1    (1 << 5)
-#घोषणा RME32_WCR_INP_0     (1 << 6)    /* input चयन */
-#घोषणा RME32_WCR_INP_1     (1 << 7)
-#घोषणा RME32_WCR_RESET     (1 << 8)    /* Reset address */
-#घोषणा RME32_WCR_MUTE      (1 << 9)    /* digital mute क्रम output */
-#घोषणा RME32_WCR_PRO       (1 << 10)   /* 1=professional, 0=consumer */
-#घोषणा RME32_WCR_DS_BM     (1 << 11)	/* 1=DoubleSpeed (only PRO-Version); 1=BlockMode (only Adat-Version) */
-#घोषणा RME32_WCR_ADAT      (1 << 12)	/* Adat Mode (only Adat-Version) */
-#घोषणा RME32_WCR_AUTOSYNC  (1 << 13)   /* AutoSync */
-#घोषणा RME32_WCR_PD        (1 << 14)	/* DAC Reset (only PRO-Version) */
-#घोषणा RME32_WCR_EMP       (1 << 15)	/* 1=Emphasis on (only PRO-Version) */
+                                           the time in stereo! */
+#define RME32_WCR_MODE24    (1 << 2)    /* 0=16bit, 1=32bit */
+#define RME32_WCR_SEL       (1 << 3)    /* 0=input on output, 1=normal playback/capture */
+#define RME32_WCR_FREQ_0    (1 << 4)    /* frequency (play) */
+#define RME32_WCR_FREQ_1    (1 << 5)
+#define RME32_WCR_INP_0     (1 << 6)    /* input switch */
+#define RME32_WCR_INP_1     (1 << 7)
+#define RME32_WCR_RESET     (1 << 8)    /* Reset address */
+#define RME32_WCR_MUTE      (1 << 9)    /* digital mute for output */
+#define RME32_WCR_PRO       (1 << 10)   /* 1=professional, 0=consumer */
+#define RME32_WCR_DS_BM     (1 << 11)	/* 1=DoubleSpeed (only PRO-Version); 1=BlockMode (only Adat-Version) */
+#define RME32_WCR_ADAT      (1 << 12)	/* Adat Mode (only Adat-Version) */
+#define RME32_WCR_AUTOSYNC  (1 << 13)   /* AutoSync */
+#define RME32_WCR_PD        (1 << 14)	/* DAC Reset (only PRO-Version) */
+#define RME32_WCR_EMP       (1 << 15)	/* 1=Emphasis on (only PRO-Version) */
 
-#घोषणा RME32_WCR_BITPOS_FREQ_0 4
-#घोषणा RME32_WCR_BITPOS_FREQ_1 5
-#घोषणा RME32_WCR_BITPOS_INP_0 6
-#घोषणा RME32_WCR_BITPOS_INP_1 7
+#define RME32_WCR_BITPOS_FREQ_0 4
+#define RME32_WCR_BITPOS_FREQ_1 5
+#define RME32_WCR_BITPOS_INP_0 6
+#define RME32_WCR_BITPOS_INP_1 7
 
-/* Read control रेजिस्टर bits */
-#घोषणा RME32_RCR_AUDIO_ADDR_MASK 0x1ffff
-#घोषणा RME32_RCR_LOCK      (1 << 23)   /* 1=locked, 0=not locked */
-#घोषणा RME32_RCR_ERF       (1 << 26)   /* 1=Error, 0=no Error */
-#घोषणा RME32_RCR_FREQ_0    (1 << 27)   /* CS841x frequency (record) */
-#घोषणा RME32_RCR_FREQ_1    (1 << 28)
-#घोषणा RME32_RCR_FREQ_2    (1 << 29)
-#घोषणा RME32_RCR_KMODE     (1 << 30)   /* card mode: 1=PLL, 0=quartz */
-#घोषणा RME32_RCR_IRQ       (1 << 31)   /* पूर्णांकerrupt */
+/* Read control register bits */
+#define RME32_RCR_AUDIO_ADDR_MASK 0x1ffff
+#define RME32_RCR_LOCK      (1 << 23)   /* 1=locked, 0=not locked */
+#define RME32_RCR_ERF       (1 << 26)   /* 1=Error, 0=no Error */
+#define RME32_RCR_FREQ_0    (1 << 27)   /* CS841x frequency (record) */
+#define RME32_RCR_FREQ_1    (1 << 28)
+#define RME32_RCR_FREQ_2    (1 << 29)
+#define RME32_RCR_KMODE     (1 << 30)   /* card mode: 1=PLL, 0=quartz */
+#define RME32_RCR_IRQ       (1 << 31)   /* interrupt */
 
-#घोषणा RME32_RCR_BITPOS_F0 27
-#घोषणा RME32_RCR_BITPOS_F1 28
-#घोषणा RME32_RCR_BITPOS_F2 29
+#define RME32_RCR_BITPOS_F0 27
+#define RME32_RCR_BITPOS_F1 28
+#define RME32_RCR_BITPOS_F2 29
 
 /* Input types */
-#घोषणा RME32_INPUT_OPTICAL 0
-#घोषणा RME32_INPUT_COAXIAL 1
-#घोषणा RME32_INPUT_INTERNAL 2
-#घोषणा RME32_INPUT_XLR 3
+#define RME32_INPUT_OPTICAL 0
+#define RME32_INPUT_COAXIAL 1
+#define RME32_INPUT_INTERNAL 2
+#define RME32_INPUT_XLR 3
 
 /* Clock modes */
-#घोषणा RME32_CLOCKMODE_SLAVE 0
-#घोषणा RME32_CLOCKMODE_MASTER_32 1
-#घोषणा RME32_CLOCKMODE_MASTER_44 2
-#घोषणा RME32_CLOCKMODE_MASTER_48 3
+#define RME32_CLOCKMODE_SLAVE 0
+#define RME32_CLOCKMODE_MASTER_32 1
+#define RME32_CLOCKMODE_MASTER_44 2
+#define RME32_CLOCKMODE_MASTER_48 3
 
 /* Block sizes in bytes */
-#घोषणा RME32_BLOCK_SIZE 8192
+#define RME32_BLOCK_SIZE 8192
 
-/* Software पूर्णांकermediate buffer (max) size */
-#घोषणा RME32_MID_BUFFER_SIZE (1024*1024)
+/* Software intermediate buffer (max) size */
+#define RME32_MID_BUFFER_SIZE (1024*1024)
 
 /* Hardware revisions */
-#घोषणा RME32_32_REVISION 192
-#घोषणा RME32_328_REVISION_OLD 100
-#घोषणा RME32_328_REVISION_NEW 101
-#घोषणा RME32_PRO_REVISION_WITH_8412 192
-#घोषणा RME32_PRO_REVISION_WITH_8414 150
+#define RME32_32_REVISION 192
+#define RME32_328_REVISION_OLD 100
+#define RME32_328_REVISION_NEW 101
+#define RME32_PRO_REVISION_WITH_8412 192
+#define RME32_PRO_REVISION_WITH_8414 150
 
 
-काष्ठा rme32 अणु
+struct rme32 {
 	spinlock_t lock;
-	पूर्णांक irq;
-	अचिन्हित दीर्घ port;
-	व्योम __iomem *iobase;
+	int irq;
+	unsigned long port;
+	void __iomem *iobase;
 
-	u32 wcreg;		/* cached ग_लिखो control रेजिस्टर value */
-	u32 wcreg_spdअगर;	/* S/PDIF setup */
-	u32 wcreg_spdअगर_stream;	/* S/PDIF setup (temporary) */
-	u32 rcreg;		/* cached पढ़ो control रेजिस्टर value */
+	u32 wcreg;		/* cached write control register value */
+	u32 wcreg_spdif;	/* S/PDIF setup */
+	u32 wcreg_spdif_stream;	/* S/PDIF setup (temporary) */
+	u32 rcreg;		/* cached read control register value */
 
 	u8 rev;			/* card revision number */
 
-	काष्ठा snd_pcm_substream *playback_substream;
-	काष्ठा snd_pcm_substream *capture_substream;
+	struct snd_pcm_substream *playback_substream;
+	struct snd_pcm_substream *capture_substream;
 
-	पूर्णांक playback_frlog;	/* log2 of framesize */
-	पूर्णांक capture_frlog;
+	int playback_frlog;	/* log2 of framesize */
+	int capture_frlog;
 
-	माप_प्रकार playback_periodsize;	/* in bytes, zero अगर not used */
-	माप_प्रकार capture_periodsize;	/* in bytes, zero अगर not used */
+	size_t playback_periodsize;	/* in bytes, zero if not used */
+	size_t capture_periodsize;	/* in bytes, zero if not used */
 
-	अचिन्हित पूर्णांक fullduplex_mode;
-	पूर्णांक running;
+	unsigned int fullduplex_mode;
+	int running;
 
-	काष्ठा snd_pcm_indirect playback_pcm;
-	काष्ठा snd_pcm_indirect capture_pcm;
+	struct snd_pcm_indirect playback_pcm;
+	struct snd_pcm_indirect capture_pcm;
 
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *spdअगर_pcm;
-	काष्ठा snd_pcm *adat_pcm;
-	काष्ठा pci_dev *pci;
-	काष्ठा snd_kcontrol *spdअगर_ctl;
-पूर्ण;
+	struct snd_card *card;
+	struct snd_pcm *spdif_pcm;
+	struct snd_pcm *adat_pcm;
+	struct pci_dev *pci;
+	struct snd_kcontrol *spdif_ctl;
+};
 
-अटल स्थिर काष्ठा pci_device_id snd_rme32_ids[] = अणु
-	अणुPCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32), 0,पूर्ण,
-	अणुPCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32_8), 0,पूर्ण,
-	अणुPCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32_PRO), 0,पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id snd_rme32_ids[] = {
+	{PCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32), 0,},
+	{PCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32_8), 0,},
+	{PCI_VDEVICE(XILINX_RME, PCI_DEVICE_ID_RME_DIGI32_PRO), 0,},
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci, snd_rme32_ids);
 
-#घोषणा RME32_ISWORKING(rme32) ((rme32)->wcreg & RME32_WCR_START)
-#घोषणा RME32_PRO_WITH_8414(rme32) ((rme32)->pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO && (rme32)->rev == RME32_PRO_REVISION_WITH_8414)
+#define RME32_ISWORKING(rme32) ((rme32)->wcreg & RME32_WCR_START)
+#define RME32_PRO_WITH_8414(rme32) ((rme32)->pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO && (rme32)->rev == RME32_PRO_REVISION_WITH_8414)
 
-अटल पूर्णांक snd_rme32_playback_prepare(काष्ठा snd_pcm_substream *substream);
+static int snd_rme32_playback_prepare(struct snd_pcm_substream *substream);
 
-अटल पूर्णांक snd_rme32_capture_prepare(काष्ठा snd_pcm_substream *substream);
+static int snd_rme32_capture_prepare(struct snd_pcm_substream *substream);
 
-अटल पूर्णांक snd_rme32_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd);
+static int snd_rme32_pcm_trigger(struct snd_pcm_substream *substream, int cmd);
 
-अटल व्योम snd_rme32_proc_init(काष्ठा rme32 * rme32);
+static void snd_rme32_proc_init(struct rme32 * rme32);
 
-अटल पूर्णांक snd_rme32_create_चयनes(काष्ठा snd_card *card, काष्ठा rme32 * rme32);
+static int snd_rme32_create_switches(struct snd_card *card, struct rme32 * rme32);
 
-अटल अंतरभूत अचिन्हित पूर्णांक snd_rme32_pcm_byteptr(काष्ठा rme32 * rme32)
-अणु
-	वापस (पढ़ोl(rme32->iobase + RME32_IO_GET_POS)
+static inline unsigned int snd_rme32_pcm_byteptr(struct rme32 * rme32)
+{
+	return (readl(rme32->iobase + RME32_IO_GET_POS)
 		& RME32_RCR_AUDIO_ADDR_MASK);
-पूर्ण
+}
 
-/* silence callback क्रम halfduplex mode */
-अटल पूर्णांक snd_rme32_playback_silence(काष्ठा snd_pcm_substream *substream,
-				      पूर्णांक channel, अचिन्हित दीर्घ pos,
-				      अचिन्हित दीर्घ count)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+/* silence callback for halfduplex mode */
+static int snd_rme32_playback_silence(struct snd_pcm_substream *substream,
+				      int channel, unsigned long pos,
+				      unsigned long count)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
-	स_रखो_io(rme32->iobase + RME32_IO_DATA_BUFFER + pos, 0, count);
-	वापस 0;
-पूर्ण
+	memset_io(rme32->iobase + RME32_IO_DATA_BUFFER + pos, 0, count);
+	return 0;
+}
 
-/* copy callback क्रम halfduplex mode */
-अटल पूर्णांक snd_rme32_playback_copy(काष्ठा snd_pcm_substream *substream,
-				   पूर्णांक channel, अचिन्हित दीर्घ pos,
-				   व्योम __user *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+/* copy callback for halfduplex mode */
+static int snd_rme32_playback_copy(struct snd_pcm_substream *substream,
+				   int channel, unsigned long pos,
+				   void __user *src, unsigned long count)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
-	अगर (copy_from_user_toio(rme32->iobase + RME32_IO_DATA_BUFFER + pos,
+	if (copy_from_user_toio(rme32->iobase + RME32_IO_DATA_BUFFER + pos,
 				src, count))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_playback_copy_kernel(काष्ठा snd_pcm_substream *substream,
-					  पूर्णांक channel, अचिन्हित दीर्घ pos,
-					  व्योम *src, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+static int snd_rme32_playback_copy_kernel(struct snd_pcm_substream *substream,
+					  int channel, unsigned long pos,
+					  void *src, unsigned long count)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
-	स_नकल_toio(rme32->iobase + RME32_IO_DATA_BUFFER + pos, src, count);
-	वापस 0;
-पूर्ण
+	memcpy_toio(rme32->iobase + RME32_IO_DATA_BUFFER + pos, src, count);
+	return 0;
+}
 
-/* copy callback क्रम halfduplex mode */
-अटल पूर्णांक snd_rme32_capture_copy(काष्ठा snd_pcm_substream *substream,
-				  पूर्णांक channel, अचिन्हित दीर्घ pos,
-				  व्योम __user *dst, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+/* copy callback for halfduplex mode */
+static int snd_rme32_capture_copy(struct snd_pcm_substream *substream,
+				  int channel, unsigned long pos,
+				  void __user *dst, unsigned long count)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
-	अगर (copy_to_user_fromio(dst,
+	if (copy_to_user_fromio(dst,
 			    rme32->iobase + RME32_IO_DATA_BUFFER + pos,
 			    count))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_capture_copy_kernel(काष्ठा snd_pcm_substream *substream,
-					 पूर्णांक channel, अचिन्हित दीर्घ pos,
-					 व्योम *dst, अचिन्हित दीर्घ count)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+static int snd_rme32_capture_copy_kernel(struct snd_pcm_substream *substream,
+					 int channel, unsigned long pos,
+					 void *dst, unsigned long count)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
-	स_नकल_fromio(dst, rme32->iobase + RME32_IO_DATA_BUFFER + pos, count);
-	वापस 0;
-पूर्ण
+	memcpy_fromio(dst, rme32->iobase + RME32_IO_DATA_BUFFER + pos, count);
+	return 0;
+}
 
 /*
  * SPDIF I/O capabilities (half-duplex mode)
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_rme32_spdअगर_info = अणु
+static const struct snd_pcm_hardware snd_rme32_spdif_info = {
 	.info =		(SNDRV_PCM_INFO_MMAP_IOMEM |
 			 SNDRV_PCM_INFO_MMAP_VALID |
 			 SNDRV_PCM_INFO_INTERLEAVED | 
 			 SNDRV_PCM_INFO_PAUSE |
 			 SNDRV_PCM_INFO_SYNC_START |
 			 SNDRV_PCM_INFO_SYNC_APPLPTR),
-	.क्रमmats =	(SNDRV_PCM_FMTBIT_S16_LE | 
+	.formats =	(SNDRV_PCM_FMTBIT_S16_LE | 
 			 SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =	(SNDRV_PCM_RATE_32000 |
 			 SNDRV_PCM_RATE_44100 | 
@@ -321,21 +320,21 @@ MODULE_DEVICE_TABLE(pci, snd_rme32_ids);
 	.period_bytes_max = RME32_BLOCK_SIZE,
 	.periods_min =	RME32_BUFFER_SIZE / RME32_BLOCK_SIZE,
 	.periods_max =	RME32_BUFFER_SIZE / RME32_BLOCK_SIZE,
-	.fअगरo_size =	0,
-पूर्ण;
+	.fifo_size =	0,
+};
 
 /*
  * ADAT I/O capabilities (half-duplex mode)
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_rme32_adat_info =
-अणु
+static const struct snd_pcm_hardware snd_rme32_adat_info =
+{
 	.info =		     (SNDRV_PCM_INFO_MMAP_IOMEM |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_SYNC_APPLPTR),
-	.क्रमmats=            SNDRV_PCM_FMTBIT_S16_LE,
+	.formats=            SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =             (SNDRV_PCM_RATE_44100 | 
 			      SNDRV_PCM_RATE_48000),
 	.rate_min =          44100,
@@ -347,20 +346,20 @@ MODULE_DEVICE_TABLE(pci, snd_rme32_ids);
 	.period_bytes_max =  RME32_BLOCK_SIZE,
 	.periods_min =	    RME32_BUFFER_SIZE / RME32_BLOCK_SIZE,
 	.periods_max =	    RME32_BUFFER_SIZE / RME32_BLOCK_SIZE,
-	.fअगरo_size =	    0,
-पूर्ण;
+	.fifo_size =	    0,
+};
 
 /*
  * SPDIF I/O capabilities (full-duplex mode)
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_rme32_spdअगर_fd_info = अणु
+static const struct snd_pcm_hardware snd_rme32_spdif_fd_info = {
 	.info =		(SNDRV_PCM_INFO_MMAP |
 			 SNDRV_PCM_INFO_MMAP_VALID |
 			 SNDRV_PCM_INFO_INTERLEAVED | 
 			 SNDRV_PCM_INFO_PAUSE |
 			 SNDRV_PCM_INFO_SYNC_START |
 			 SNDRV_PCM_INFO_SYNC_APPLPTR),
-	.क्रमmats =	(SNDRV_PCM_FMTBIT_S16_LE | 
+	.formats =	(SNDRV_PCM_FMTBIT_S16_LE | 
 			 SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =	(SNDRV_PCM_RATE_32000 |
 			 SNDRV_PCM_RATE_44100 | 
@@ -374,21 +373,21 @@ MODULE_DEVICE_TABLE(pci, snd_rme32_ids);
 	.period_bytes_max = RME32_BLOCK_SIZE,
 	.periods_min =	2,
 	.periods_max =	RME32_MID_BUFFER_SIZE / RME32_BLOCK_SIZE,
-	.fअगरo_size =	0,
-पूर्ण;
+	.fifo_size =	0,
+};
 
 /*
  * ADAT I/O capabilities (full-duplex mode)
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_rme32_adat_fd_info =
-अणु
+static const struct snd_pcm_hardware snd_rme32_adat_fd_info =
+{
 	.info =		     (SNDRV_PCM_INFO_MMAP |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_SYNC_APPLPTR),
-	.क्रमmats=            SNDRV_PCM_FMTBIT_S16_LE,
+	.formats=            SNDRV_PCM_FMTBIT_S16_LE,
 	.rates =             (SNDRV_PCM_RATE_44100 | 
 			      SNDRV_PCM_RATE_48000),
 	.rate_min =          44100,
@@ -400,1545 +399,1545 @@ MODULE_DEVICE_TABLE(pci, snd_rme32_ids);
 	.period_bytes_max =  RME32_BLOCK_SIZE,
 	.periods_min =	    2,
 	.periods_max =	    RME32_MID_BUFFER_SIZE / RME32_BLOCK_SIZE,
-	.fअगरo_size =	    0,
-पूर्ण;
+	.fifo_size =	    0,
+};
 
-अटल व्योम snd_rme32_reset_dac(काष्ठा rme32 *rme32)
-अणु
-        ग_लिखोl(rme32->wcreg | RME32_WCR_PD,
+static void snd_rme32_reset_dac(struct rme32 *rme32)
+{
+        writel(rme32->wcreg | RME32_WCR_PD,
                rme32->iobase + RME32_IO_CONTROL_REGISTER);
-        ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-पूर्ण
+        writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+}
 
-अटल पूर्णांक snd_rme32_playback_getrate(काष्ठा rme32 * rme32)
-अणु
-	पूर्णांक rate;
+static int snd_rme32_playback_getrate(struct rme32 * rme32)
+{
+	int rate;
 
 	rate = ((rme32->wcreg >> RME32_WCR_BITPOS_FREQ_0) & 1) +
 	       (((rme32->wcreg >> RME32_WCR_BITPOS_FREQ_1) & 1) << 1);
-	चयन (rate) अणु
-	हाल 1:
+	switch (rate) {
+	case 1:
 		rate = 32000;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		rate = 44100;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		rate = 48000;
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
-	वापस (rme32->wcreg & RME32_WCR_DS_BM) ? rate << 1 : rate;
-पूर्ण
+		break;
+	default:
+		return -1;
+	}
+	return (rme32->wcreg & RME32_WCR_DS_BM) ? rate << 1 : rate;
+}
 
-अटल पूर्णांक snd_rme32_capture_getrate(काष्ठा rme32 * rme32, पूर्णांक *is_adat)
-अणु
-	पूर्णांक n;
+static int snd_rme32_capture_getrate(struct rme32 * rme32, int *is_adat)
+{
+	int n;
 
 	*is_adat = 0;
-	अगर (rme32->rcreg & RME32_RCR_LOCK) अणु 
+	if (rme32->rcreg & RME32_RCR_LOCK) { 
                 /* ADAT rate */
                 *is_adat = 1;
-	पूर्ण
-	अगर (rme32->rcreg & RME32_RCR_ERF) अणु
-		वापस -1;
-	पूर्ण
+	}
+	if (rme32->rcreg & RME32_RCR_ERF) {
+		return -1;
+	}
 
         /* S/PDIF rate */
 	n = ((rme32->rcreg >> RME32_RCR_BITPOS_F0) & 1) +
 		(((rme32->rcreg >> RME32_RCR_BITPOS_F1) & 1) << 1) +
 		(((rme32->rcreg >> RME32_RCR_BITPOS_F2) & 1) << 2);
 
-	अगर (RME32_PRO_WITH_8414(rme32))
-		चयन (n) अणु	/* supporting the CS8414 */
-		हाल 0:
-		हाल 1:
-		हाल 2:
-			वापस -1;
-		हाल 3:
-			वापस 96000;
-		हाल 4:
-			वापस 88200;
-		हाल 5:
-			वापस 48000;
-		हाल 6:
-			वापस 44100;
-		हाल 7:
-			वापस 32000;
-		शेष:
-			वापस -1;
-		पूर्ण 
-	अन्यथा
-		चयन (n) अणु	/* supporting the CS8412 */
-		हाल 0:
-			वापस -1;
-		हाल 1:
-			वापस 48000;
-		हाल 2:
-			वापस 44100;
-		हाल 3:
-			वापस 32000;
-		हाल 4:
-			वापस 48000;
-		हाल 5:
-			वापस 44100;
-		हाल 6:
-			वापस 44056;
-		हाल 7:
-			वापस 32000;
-		शेष:
-			अवरोध;
-		पूर्ण
-	वापस -1;
-पूर्ण
+	if (RME32_PRO_WITH_8414(rme32))
+		switch (n) {	/* supporting the CS8414 */
+		case 0:
+		case 1:
+		case 2:
+			return -1;
+		case 3:
+			return 96000;
+		case 4:
+			return 88200;
+		case 5:
+			return 48000;
+		case 6:
+			return 44100;
+		case 7:
+			return 32000;
+		default:
+			return -1;
+		} 
+	else
+		switch (n) {	/* supporting the CS8412 */
+		case 0:
+			return -1;
+		case 1:
+			return 48000;
+		case 2:
+			return 44100;
+		case 3:
+			return 32000;
+		case 4:
+			return 48000;
+		case 5:
+			return 44100;
+		case 6:
+			return 44056;
+		case 7:
+			return 32000;
+		default:
+			break;
+		}
+	return -1;
+}
 
-अटल पूर्णांक snd_rme32_playback_setrate(काष्ठा rme32 * rme32, पूर्णांक rate)
-अणु
-        पूर्णांक ds;
+static int snd_rme32_playback_setrate(struct rme32 * rme32, int rate)
+{
+        int ds;
 
         ds = rme32->wcreg & RME32_WCR_DS_BM;
-	चयन (rate) अणु
-	हाल 32000:
+	switch (rate) {
+	case 32000:
 		rme32->wcreg &= ~RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) & 
 			~RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		rme32->wcreg &= ~RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_1) & 
 			~RME32_WCR_FREQ_0;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		rme32->wcreg &= ~RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) | 
 			RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल 64000:
-		अगर (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			वापस -EINVAL;
+		break;
+	case 64000:
+		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
+			return -EINVAL;
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) & 
 			~RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल 88200:
-		अगर (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			वापस -EINVAL;
+		break;
+	case 88200:
+		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
+			return -EINVAL;
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_1) & 
 			~RME32_WCR_FREQ_0;
-		अवरोध;
-	हाल 96000:
-		अगर (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			वापस -EINVAL;
+		break;
+	case 96000:
+		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
+			return -EINVAL;
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) | 
 			RME32_WCR_FREQ_1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-        अगर ((!ds && rme32->wcreg & RME32_WCR_DS_BM) ||
+		break;
+	default:
+		return -EINVAL;
+	}
+        if ((!ds && rme32->wcreg & RME32_WCR_DS_BM) ||
             (ds && !(rme32->wcreg & RME32_WCR_DS_BM)))
-        अणु
-                /* change to/from द्विगुन-speed: reset the DAC (अगर available) */
+        {
+                /* change to/from double-speed: reset the DAC (if available) */
                 snd_rme32_reset_dac(rme32);
-        पूर्ण अन्यथा अणु
-                ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	पूर्ण
-	वापस 0;
-पूर्ण
+        } else {
+                writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_setघड़ीmode(काष्ठा rme32 * rme32, पूर्णांक mode)
-अणु
-	चयन (mode) अणु
-	हाल RME32_CLOCKMODE_SLAVE:
+static int snd_rme32_setclockmode(struct rme32 * rme32, int mode)
+{
+	switch (mode) {
+	case RME32_CLOCKMODE_SLAVE:
 		/* AutoSync */
 		rme32->wcreg = (rme32->wcreg & ~RME32_WCR_FREQ_0) & 
 			~RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल RME32_CLOCKMODE_MASTER_32:
+		break;
+	case RME32_CLOCKMODE_MASTER_32:
 		/* Internal 32.0kHz */
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) & 
 			~RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल RME32_CLOCKMODE_MASTER_44:
+		break;
+	case RME32_CLOCKMODE_MASTER_44:
 		/* Internal 44.1kHz */
 		rme32->wcreg = (rme32->wcreg & ~RME32_WCR_FREQ_0) | 
 			RME32_WCR_FREQ_1;
-		अवरोध;
-	हाल RME32_CLOCKMODE_MASTER_48:
+		break;
+	case RME32_CLOCKMODE_MASTER_48:
 		/* Internal 48.0kHz */
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) | 
 			RME32_WCR_FREQ_1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_अ_लोlockmode(काष्ठा rme32 * rme32)
-अणु
-	वापस ((rme32->wcreg >> RME32_WCR_BITPOS_FREQ_0) & 1) +
+static int snd_rme32_getclockmode(struct rme32 * rme32)
+{
+	return ((rme32->wcreg >> RME32_WCR_BITPOS_FREQ_0) & 1) +
 	    (((rme32->wcreg >> RME32_WCR_BITPOS_FREQ_1) & 1) << 1);
-पूर्ण
+}
 
-अटल पूर्णांक snd_rme32_setinputtype(काष्ठा rme32 * rme32, पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल RME32_INPUT_OPTICAL:
+static int snd_rme32_setinputtype(struct rme32 * rme32, int type)
+{
+	switch (type) {
+	case RME32_INPUT_OPTICAL:
 		rme32->wcreg = (rme32->wcreg & ~RME32_WCR_INP_0) & 
 			~RME32_WCR_INP_1;
-		अवरोध;
-	हाल RME32_INPUT_COAXIAL:
+		break;
+	case RME32_INPUT_COAXIAL:
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_INP_0) & 
 			~RME32_WCR_INP_1;
-		अवरोध;
-	हाल RME32_INPUT_INTERNAL:
+		break;
+	case RME32_INPUT_INTERNAL:
 		rme32->wcreg = (rme32->wcreg & ~RME32_WCR_INP_0) | 
 			RME32_WCR_INP_1;
-		अवरोध;
-	हाल RME32_INPUT_XLR:
+		break;
+	case RME32_INPUT_XLR:
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_INP_0) | 
 			RME32_WCR_INP_1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_getinputtype(काष्ठा rme32 * rme32)
-अणु
-	वापस ((rme32->wcreg >> RME32_WCR_BITPOS_INP_0) & 1) +
+static int snd_rme32_getinputtype(struct rme32 * rme32)
+{
+	return ((rme32->wcreg >> RME32_WCR_BITPOS_INP_0) & 1) +
 	    (((rme32->wcreg >> RME32_WCR_BITPOS_INP_1) & 1) << 1);
-पूर्ण
+}
 
-अटल व्योम
-snd_rme32_setframelog(काष्ठा rme32 * rme32, पूर्णांक n_channels, पूर्णांक is_playback)
-अणु
-	पूर्णांक frlog;
+static void
+snd_rme32_setframelog(struct rme32 * rme32, int n_channels, int is_playback)
+{
+	int frlog;
 
-	अगर (n_channels == 2) अणु
+	if (n_channels == 2) {
 		frlog = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* assume 8 channels */
 		frlog = 3;
-	पूर्ण
-	अगर (is_playback) अणु
+	}
+	if (is_playback) {
 		frlog += (rme32->wcreg & RME32_WCR_MODE24) ? 2 : 1;
 		rme32->playback_frlog = frlog;
-	पूर्ण अन्यथा अणु
+	} else {
 		frlog += (rme32->wcreg & RME32_WCR_MODE24) ? 2 : 1;
 		rme32->capture_frlog = frlog;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक snd_rme32_setक्रमmat(काष्ठा rme32 *rme32, snd_pcm_क्रमmat_t क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+static int snd_rme32_setformat(struct rme32 *rme32, snd_pcm_format_t format)
+{
+	switch (format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		rme32->wcreg &= ~RME32_WCR_MODE24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
 		rme32->wcreg |= RME32_WCR_MODE24;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	return 0;
+}
 
-अटल पूर्णांक
-snd_rme32_playback_hw_params(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_pcm_hw_params *params)
-अणु
-	पूर्णांक err, rate, dummy;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int
+snd_rme32_playback_hw_params(struct snd_pcm_substream *substream,
+			     struct snd_pcm_hw_params *params)
+{
+	int err, rate, dummy;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	अगर (!rme32->fullduplex_mode) अणु
-		runसमय->dma_area = (व्योम __क्रमce *)(rme32->iobase +
+	if (!rme32->fullduplex_mode) {
+		runtime->dma_area = (void __force *)(rme32->iobase +
 						     RME32_IO_DATA_BUFFER);
-		runसमय->dma_addr = rme32->port + RME32_IO_DATA_BUFFER;
-		runसमय->dma_bytes = RME32_BUFFER_SIZE;
-	पूर्ण
+		runtime->dma_addr = rme32->port + RME32_IO_DATA_BUFFER;
+		runtime->dma_bytes = RME32_BUFFER_SIZE;
+	}
 
 	spin_lock_irq(&rme32->lock);
-	अगर ((rme32->rcreg & RME32_RCR_KMODE) &&
-	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) अणु
+	if ((rme32->rcreg & RME32_RCR_KMODE) &&
+	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) {
 		/* AutoSync */
-		अगर ((पूर्णांक)params_rate(params) != rate) अणु
+		if ((int)params_rate(params) != rate) {
 			spin_unlock_irq(&rme32->lock);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण अन्यथा अगर ((err = snd_rme32_playback_setrate(rme32, params_rate(params))) < 0) अणु
+			return -EIO;
+		}
+	} else if ((err = snd_rme32_playback_setrate(rme32, params_rate(params))) < 0) {
 		spin_unlock_irq(&rme32->lock);
-		वापस err;
-	पूर्ण
-	अगर ((err = snd_rme32_setक्रमmat(rme32, params_क्रमmat(params))) < 0) अणु
+		return err;
+	}
+	if ((err = snd_rme32_setformat(rme32, params_format(params))) < 0) {
 		spin_unlock_irq(&rme32->lock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	snd_rme32_setframelog(rme32, params_channels(params), 1);
-	अगर (rme32->capture_periodsize != 0) अणु
-		अगर (params_period_size(params) << rme32->playback_frlog != rme32->capture_periodsize) अणु
+	if (rme32->capture_periodsize != 0) {
+		if (params_period_size(params) << rme32->playback_frlog != rme32->capture_periodsize) {
 			spin_unlock_irq(&rme32->lock);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 	rme32->playback_periodsize = params_period_size(params) << rme32->playback_frlog;
 	/* S/PDIF setup */
-	अगर ((rme32->wcreg & RME32_WCR_ADAT) == 0) अणु
+	if ((rme32->wcreg & RME32_WCR_ADAT) == 0) {
 		rme32->wcreg &= ~(RME32_WCR_PRO | RME32_WCR_EMP);
-		rme32->wcreg |= rme32->wcreg_spdअगर_stream;
-		ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	पूर्ण
+		rme32->wcreg |= rme32->wcreg_spdif_stream;
+		writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	}
 	spin_unlock_irq(&rme32->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snd_rme32_capture_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params)
-अणु
-	पूर्णांक err, isadat, rate;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int
+snd_rme32_capture_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params)
+{
+	int err, isadat, rate;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	अगर (!rme32->fullduplex_mode) अणु
-		runसमय->dma_area = (व्योम __क्रमce *)rme32->iobase +
+	if (!rme32->fullduplex_mode) {
+		runtime->dma_area = (void __force *)rme32->iobase +
 					RME32_IO_DATA_BUFFER;
-		runसमय->dma_addr = rme32->port + RME32_IO_DATA_BUFFER;
-		runसमय->dma_bytes = RME32_BUFFER_SIZE;
-	पूर्ण
+		runtime->dma_addr = rme32->port + RME32_IO_DATA_BUFFER;
+		runtime->dma_bytes = RME32_BUFFER_SIZE;
+	}
 
 	spin_lock_irq(&rme32->lock);
-	/* enable AutoSync क्रम record-preparing */
+	/* enable AutoSync for record-preparing */
 	rme32->wcreg |= RME32_WCR_AUTOSYNC;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 
-	अगर ((err = snd_rme32_setक्रमmat(rme32, params_क्रमmat(params))) < 0) अणु
+	if ((err = snd_rme32_setformat(rme32, params_format(params))) < 0) {
 		spin_unlock_irq(&rme32->lock);
-		वापस err;
-	पूर्ण
-	अगर ((err = snd_rme32_playback_setrate(rme32, params_rate(params))) < 0) अणु
+		return err;
+	}
+	if ((err = snd_rme32_playback_setrate(rme32, params_rate(params))) < 0) {
 		spin_unlock_irq(&rme32->lock);
-		वापस err;
-	पूर्ण
-	अगर ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) अणु
-                अगर ((पूर्णांक)params_rate(params) != rate) अणु
+		return err;
+	}
+	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
+                if ((int)params_rate(params) != rate) {
 			spin_unlock_irq(&rme32->lock);
-                        वापस -EIO;                    
-                पूर्ण
-                अगर ((isadat && runसमय->hw.channels_min == 2) ||
-                    (!isadat && runसमय->hw.channels_min == 8)) अणु
+                        return -EIO;                    
+                }
+                if ((isadat && runtime->hw.channels_min == 2) ||
+                    (!isadat && runtime->hw.channels_min == 8)) {
 			spin_unlock_irq(&rme32->lock);
-                        वापस -EIO;
-                पूर्ण
-	पूर्ण
-	/* AutoSync off क्रम recording */
+                        return -EIO;
+                }
+	}
+	/* AutoSync off for recording */
 	rme32->wcreg &= ~RME32_WCR_AUTOSYNC;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 
 	snd_rme32_setframelog(rme32, params_channels(params), 0);
-	अगर (rme32->playback_periodsize != 0) अणु
-		अगर (params_period_size(params) << rme32->capture_frlog !=
-		    rme32->playback_periodsize) अणु
+	if (rme32->playback_periodsize != 0) {
+		if (params_period_size(params) << rme32->capture_frlog !=
+		    rme32->playback_periodsize) {
 			spin_unlock_irq(&rme32->lock);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 	rme32->capture_periodsize =
 	    params_period_size(params) << rme32->capture_frlog;
 	spin_unlock_irq(&rme32->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_rme32_pcm_start(काष्ठा rme32 * rme32, पूर्णांक from_छोड़ो)
-अणु
-	अगर (!from_छोड़ो) अणु
-		ग_लिखोl(0, rme32->iobase + RME32_IO_RESET_POS);
-	पूर्ण
+static void snd_rme32_pcm_start(struct rme32 * rme32, int from_pause)
+{
+	if (!from_pause) {
+		writel(0, rme32->iobase + RME32_IO_RESET_POS);
+	}
 
 	rme32->wcreg |= RME32_WCR_START;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-पूर्ण
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+}
 
-अटल व्योम snd_rme32_pcm_stop(काष्ठा rme32 * rme32, पूर्णांक to_छोड़ो)
-अणु
+static void snd_rme32_pcm_stop(struct rme32 * rme32, int to_pause)
+{
 	/*
-	 * Check अगर there is an unconfirmed IRQ, अगर so confirm it, or अन्यथा
-	 * the hardware will not stop generating पूर्णांकerrupts
+	 * Check if there is an unconfirmed IRQ, if so confirm it, or else
+	 * the hardware will not stop generating interrupts
 	 */
-	rme32->rcreg = पढ़ोl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	अगर (rme32->rcreg & RME32_RCR_IRQ) अणु
-		ग_लिखोl(0, rme32->iobase + RME32_IO_CONFIRM_ACTION_IRQ);
-	पूर्ण
+	rme32->rcreg = readl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	if (rme32->rcreg & RME32_RCR_IRQ) {
+		writel(0, rme32->iobase + RME32_IO_CONFIRM_ACTION_IRQ);
+	}
 	rme32->wcreg &= ~RME32_WCR_START;
-	अगर (rme32->wcreg & RME32_WCR_SEL)
+	if (rme32->wcreg & RME32_WCR_SEL)
 		rme32->wcreg |= RME32_WCR_MUTE;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	अगर (! to_छोड़ो)
-		ग_लिखोl(0, rme32->iobase + RME32_IO_RESET_POS);
-पूर्ण
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	if (! to_pause)
+		writel(0, rme32->iobase + RME32_IO_RESET_POS);
+}
 
-अटल irqवापस_t snd_rme32_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rme32 *rme32 = (काष्ठा rme32 *) dev_id;
+static irqreturn_t snd_rme32_interrupt(int irq, void *dev_id)
+{
+	struct rme32 *rme32 = (struct rme32 *) dev_id;
 
-	rme32->rcreg = पढ़ोl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
-	अगर (!(rme32->rcreg & RME32_RCR_IRQ)) अणु
-		वापस IRQ_NONE;
-	पूर्ण अन्यथा अणु
-		अगर (rme32->capture_substream) अणु
+	rme32->rcreg = readl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	if (!(rme32->rcreg & RME32_RCR_IRQ)) {
+		return IRQ_NONE;
+	} else {
+		if (rme32->capture_substream) {
 			snd_pcm_period_elapsed(rme32->capture_substream);
-		पूर्ण
-		अगर (rme32->playback_substream) अणु
+		}
+		if (rme32->playback_substream) {
 			snd_pcm_period_elapsed(rme32->playback_substream);
-		पूर्ण
-		ग_लिखोl(0, rme32->iobase + RME32_IO_CONFIRM_ACTION_IRQ);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+		}
+		writel(0, rme32->iobase + RME32_IO_CONFIRM_ACTION_IRQ);
+	}
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर अचिन्हित पूर्णांक period_bytes[] = अणु RME32_BLOCK_SIZE पूर्ण;
+static const unsigned int period_bytes[] = { RME32_BLOCK_SIZE };
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hw_स्थिरraपूर्णांकs_period_bytes = अणु
+static const struct snd_pcm_hw_constraint_list hw_constraints_period_bytes = {
 	.count = ARRAY_SIZE(period_bytes),
 	.list = period_bytes,
 	.mask = 0
-पूर्ण;
+};
 
-अटल व्योम snd_rme32_set_buffer_स्थिरraपूर्णांक(काष्ठा rme32 *rme32, काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	अगर (! rme32->fullduplex_mode) अणु
-		snd_pcm_hw_स्थिरraपूर्णांक_single(runसमय,
+static void snd_rme32_set_buffer_constraint(struct rme32 *rme32, struct snd_pcm_runtime *runtime)
+{
+	if (! rme32->fullduplex_mode) {
+		snd_pcm_hw_constraint_single(runtime,
 					     SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 					     RME32_BUFFER_SIZE);
-		snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
+		snd_pcm_hw_constraint_list(runtime, 0,
 					   SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
-					   &hw_स्थिरraपूर्णांकs_period_bytes);
-	पूर्ण
-पूर्ण
+					   &hw_constraints_period_bytes);
+	}
+}
 
-अटल पूर्णांक snd_rme32_playback_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक rate, dummy;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_rme32_playback_spdif_open(struct snd_pcm_substream *substream)
+{
+	int rate, dummy;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	snd_pcm_set_sync(substream);
 
 	spin_lock_irq(&rme32->lock);
-	अगर (rme32->playback_substream != शून्य) अणु
+	if (rme32->playback_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	rme32->wcreg &= ~RME32_WCR_ADAT;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	rme32->playback_substream = substream;
 	spin_unlock_irq(&rme32->lock);
 
-	अगर (rme32->fullduplex_mode)
-		runसमय->hw = snd_rme32_spdअगर_fd_info;
-	अन्यथा
-		runसमय->hw = snd_rme32_spdअगर_info;
-	अगर (rme32->pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO) अणु
-		runसमय->hw.rates |= SNDRV_PCM_RATE_64000 | SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000;
-		runसमय->hw.rate_max = 96000;
-	पूर्ण
-	अगर ((rme32->rcreg & RME32_RCR_KMODE) &&
-	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) अणु
+	if (rme32->fullduplex_mode)
+		runtime->hw = snd_rme32_spdif_fd_info;
+	else
+		runtime->hw = snd_rme32_spdif_info;
+	if (rme32->pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO) {
+		runtime->hw.rates |= SNDRV_PCM_RATE_64000 | SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000;
+		runtime->hw.rate_max = 96000;
+	}
+	if ((rme32->rcreg & RME32_RCR_KMODE) &&
+	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) {
 		/* AutoSync */
-		runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-		runसमय->hw.rate_min = rate;
-		runसमय->hw.rate_max = rate;
-	पूर्ण       
+		runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+		runtime->hw.rate_min = rate;
+		runtime->hw.rate_max = rate;
+	}       
 
-	snd_rme32_set_buffer_स्थिरraपूर्णांक(rme32, runसमय);
+	snd_rme32_set_buffer_constraint(rme32, runtime);
 
-	rme32->wcreg_spdअगर_stream = rme32->wcreg_spdअगर;
-	rme32->spdअगर_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notअगरy(rme32->card, SNDRV_CTL_EVENT_MASK_VALUE |
-		       SNDRV_CTL_EVENT_MASK_INFO, &rme32->spdअगर_ctl->id);
-	वापस 0;
-पूर्ण
+	rme32->wcreg_spdif_stream = rme32->wcreg_spdif;
+	rme32->spdif_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+	snd_ctl_notify(rme32->card, SNDRV_CTL_EVENT_MASK_VALUE |
+		       SNDRV_CTL_EVENT_MASK_INFO, &rme32->spdif_ctl->id);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_capture_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक isadat, rate;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_rme32_capture_spdif_open(struct snd_pcm_substream *substream)
+{
+	int isadat, rate;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	snd_pcm_set_sync(substream);
 
 	spin_lock_irq(&rme32->lock);
-        अगर (rme32->capture_substream != शून्य) अणु
+        if (rme32->capture_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-                वापस -EBUSY;
-        पूर्ण
+                return -EBUSY;
+        }
 	rme32->capture_substream = substream;
 	spin_unlock_irq(&rme32->lock);
 
-	अगर (rme32->fullduplex_mode)
-		runसमय->hw = snd_rme32_spdअगर_fd_info;
-	अन्यथा
-		runसमय->hw = snd_rme32_spdअगर_info;
-	अगर (RME32_PRO_WITH_8414(rme32)) अणु
-		runसमय->hw.rates |= SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000;
-		runसमय->hw.rate_max = 96000;
-	पूर्ण
-	अगर ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) अणु
-		अगर (isadat) अणु
-			वापस -EIO;
-		पूर्ण
-		runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-		runसमय->hw.rate_min = rate;
-		runसमय->hw.rate_max = rate;
-	पूर्ण
+	if (rme32->fullduplex_mode)
+		runtime->hw = snd_rme32_spdif_fd_info;
+	else
+		runtime->hw = snd_rme32_spdif_info;
+	if (RME32_PRO_WITH_8414(rme32)) {
+		runtime->hw.rates |= SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000;
+		runtime->hw.rate_max = 96000;
+	}
+	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
+		if (isadat) {
+			return -EIO;
+		}
+		runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+		runtime->hw.rate_min = rate;
+		runtime->hw.rate_max = rate;
+	}
 
-	snd_rme32_set_buffer_स्थिरraपूर्णांक(rme32, runसमय);
+	snd_rme32_set_buffer_constraint(rme32, runtime);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snd_rme32_playback_adat_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक rate, dummy;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int
+snd_rme32_playback_adat_open(struct snd_pcm_substream *substream)
+{
+	int rate, dummy;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 	
 	snd_pcm_set_sync(substream);
 
 	spin_lock_irq(&rme32->lock);	
-        अगर (rme32->playback_substream != शून्य) अणु
+        if (rme32->playback_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-                वापस -EBUSY;
-        पूर्ण
+                return -EBUSY;
+        }
 	rme32->wcreg |= RME32_WCR_ADAT;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	rme32->playback_substream = substream;
 	spin_unlock_irq(&rme32->lock);
 	
-	अगर (rme32->fullduplex_mode)
-		runसमय->hw = snd_rme32_adat_fd_info;
-	अन्यथा
-		runसमय->hw = snd_rme32_adat_info;
-	अगर ((rme32->rcreg & RME32_RCR_KMODE) &&
-	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) अणु
+	if (rme32->fullduplex_mode)
+		runtime->hw = snd_rme32_adat_fd_info;
+	else
+		runtime->hw = snd_rme32_adat_info;
+	if ((rme32->rcreg & RME32_RCR_KMODE) &&
+	    (rate = snd_rme32_capture_getrate(rme32, &dummy)) > 0) {
                 /* AutoSync */
-                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runसमय->hw.rate_min = rate;
-                runसमय->hw.rate_max = rate;
-	पूर्ण        
+                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runtime->hw.rate_min = rate;
+                runtime->hw.rate_max = rate;
+	}        
 
-	snd_rme32_set_buffer_स्थिरraपूर्णांक(rme32, runसमय);
-	वापस 0;
-पूर्ण
+	snd_rme32_set_buffer_constraint(rme32, runtime);
+	return 0;
+}
 
-अटल पूर्णांक
-snd_rme32_capture_adat_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक isadat, rate;
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int
+snd_rme32_capture_adat_open(struct snd_pcm_substream *substream)
+{
+	int isadat, rate;
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	अगर (rme32->fullduplex_mode)
-		runसमय->hw = snd_rme32_adat_fd_info;
-	अन्यथा
-		runसमय->hw = snd_rme32_adat_info;
-	अगर ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) अणु
-		अगर (!isadat) अणु
-			वापस -EIO;
-		पूर्ण
-                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runसमय->hw.rate_min = rate;
-                runसमय->hw.rate_max = rate;
-        पूर्ण
+	if (rme32->fullduplex_mode)
+		runtime->hw = snd_rme32_adat_fd_info;
+	else
+		runtime->hw = snd_rme32_adat_info;
+	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
+		if (!isadat) {
+			return -EIO;
+		}
+                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runtime->hw.rate_min = rate;
+                runtime->hw.rate_max = rate;
+        }
 
 	snd_pcm_set_sync(substream);
         
 	spin_lock_irq(&rme32->lock);	
-	अगर (rme32->capture_substream != शून्य) अणु
+	if (rme32->capture_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-		वापस -EBUSY;
-        पूर्ण
+		return -EBUSY;
+        }
 	rme32->capture_substream = substream;
 	spin_unlock_irq(&rme32->lock);
 
-	snd_rme32_set_buffer_स्थिरraपूर्णांक(rme32, runसमय);
-	वापस 0;
-पूर्ण
+	snd_rme32_set_buffer_constraint(rme32, runtime);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	पूर्णांक spdअगर = 0;
+static int snd_rme32_playback_close(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	int spdif = 0;
 
 	spin_lock_irq(&rme32->lock);
-	rme32->playback_substream = शून्य;
+	rme32->playback_substream = NULL;
 	rme32->playback_periodsize = 0;
-	spdअगर = (rme32->wcreg & RME32_WCR_ADAT) == 0;
+	spdif = (rme32->wcreg & RME32_WCR_ADAT) == 0;
 	spin_unlock_irq(&rme32->lock);
-	अगर (spdअगर) अणु
-		rme32->spdअगर_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-		snd_ctl_notअगरy(rme32->card, SNDRV_CTL_EVENT_MASK_VALUE |
+	if (spdif) {
+		rme32->spdif_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+		snd_ctl_notify(rme32->card, SNDRV_CTL_EVENT_MASK_VALUE |
 			       SNDRV_CTL_EVENT_MASK_INFO,
-			       &rme32->spdअगर_ctl->id);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			       &rme32->spdif_ctl->id);
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+static int snd_rme32_capture_close(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
 	spin_lock_irq(&rme32->lock);
-	rme32->capture_substream = शून्य;
+	rme32->capture_substream = NULL;
 	rme32->capture_periodsize = 0;
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+static int snd_rme32_playback_prepare(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
 	spin_lock_irq(&rme32->lock);
-	अगर (rme32->fullduplex_mode) अणु
-		स_रखो(&rme32->playback_pcm, 0, माप(rme32->playback_pcm));
+	if (rme32->fullduplex_mode) {
+		memset(&rme32->playback_pcm, 0, sizeof(rme32->playback_pcm));
 		rme32->playback_pcm.hw_buffer_size = RME32_BUFFER_SIZE;
 		rme32->playback_pcm.sw_buffer_size = snd_pcm_lib_buffer_bytes(substream);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(0, rme32->iobase + RME32_IO_RESET_POS);
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_SEL)
+	} else {
+		writel(0, rme32->iobase + RME32_IO_RESET_POS);
+	}
+	if (rme32->wcreg & RME32_WCR_SEL)
 		rme32->wcreg &= ~RME32_WCR_MUTE;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
+static int snd_rme32_capture_prepare(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
 
 	spin_lock_irq(&rme32->lock);
-	अगर (rme32->fullduplex_mode) अणु
-		स_रखो(&rme32->capture_pcm, 0, माप(rme32->capture_pcm));
+	if (rme32->fullduplex_mode) {
+		memset(&rme32->capture_pcm, 0, sizeof(rme32->capture_pcm));
 		rme32->capture_pcm.hw_buffer_size = RME32_BUFFER_SIZE;
 		rme32->capture_pcm.hw_queue_size = RME32_BUFFER_SIZE / 2;
 		rme32->capture_pcm.sw_buffer_size = snd_pcm_lib_buffer_bytes(substream);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(0, rme32->iobase + RME32_IO_RESET_POS);
-	पूर्ण
+	} else {
+		writel(0, rme32->iobase + RME32_IO_RESET_POS);
+	}
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snd_rme32_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_substream *s;
+static int
+snd_rme32_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_substream *s;
 
 	spin_lock(&rme32->lock);
-	snd_pcm_group_क्रम_each_entry(s, substream) अणु
-		अगर (s != rme32->playback_substream &&
+	snd_pcm_group_for_each_entry(s, substream) {
+		if (s != rme32->playback_substream &&
 		    s != rme32->capture_substream)
-			जारी;
-		चयन (cmd) अणु
-		हाल SNDRV_PCM_TRIGGER_START:
+			continue;
+		switch (cmd) {
+		case SNDRV_PCM_TRIGGER_START:
 			rme32->running |= (1 << s->stream);
-			अगर (rme32->fullduplex_mode) अणु
+			if (rme32->fullduplex_mode) {
 				/* remember the current DMA position */
-				अगर (s == rme32->playback_substream) अणु
+				if (s == rme32->playback_substream) {
 					rme32->playback_pcm.hw_io =
 					rme32->playback_pcm.hw_data = snd_rme32_pcm_byteptr(rme32);
-				पूर्ण अन्यथा अणु
+				} else {
 					rme32->capture_pcm.hw_io =
 					rme32->capture_pcm.hw_data = snd_rme32_pcm_byteptr(rme32);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल SNDRV_PCM_TRIGGER_STOP:
+				}
+			}
+			break;
+		case SNDRV_PCM_TRIGGER_STOP:
 			rme32->running &= ~(1 << s->stream);
-			अवरोध;
-		पूर्ण
-		snd_pcm_trigger_करोne(s, substream);
-	पूर्ण
+			break;
+		}
+		snd_pcm_trigger_done(s, substream);
+	}
 	
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		अगर (rme32->running && ! RME32_ISWORKING(rme32))
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		if (rme32->running && ! RME32_ISWORKING(rme32))
 			snd_rme32_pcm_start(rme32, 0);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		अगर (! rme32->running && RME32_ISWORKING(rme32))
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		if (! rme32->running && RME32_ISWORKING(rme32))
 			snd_rme32_pcm_stop(rme32, 0);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		अगर (rme32->running && RME32_ISWORKING(rme32))
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		if (rme32->running && RME32_ISWORKING(rme32))
 			snd_rme32_pcm_stop(rme32, 1);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		अगर (rme32->running && ! RME32_ISWORKING(rme32))
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		if (rme32->running && ! RME32_ISWORKING(rme32))
 			snd_rme32_pcm_start(rme32, 1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock(&rme32->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* poपूर्णांकer callback क्रम halfduplex mode */
-अटल snd_pcm_uframes_t
-snd_rme32_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	वापस snd_rme32_pcm_byteptr(rme32) >> rme32->playback_frlog;
-पूर्ण
+/* pointer callback for halfduplex mode */
+static snd_pcm_uframes_t
+snd_rme32_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	return snd_rme32_pcm_byteptr(rme32) >> rme32->playback_frlog;
+}
 
-अटल snd_pcm_uframes_t
-snd_rme32_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	वापस snd_rme32_pcm_byteptr(rme32) >> rme32->capture_frlog;
-पूर्ण
+static snd_pcm_uframes_t
+snd_rme32_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	return snd_rme32_pcm_byteptr(rme32) >> rme32->capture_frlog;
+}
 
 
-/* ack and poपूर्णांकer callbacks क्रम fullduplex mode */
-अटल व्योम snd_rme32_pb_trans_copy(काष्ठा snd_pcm_substream *substream,
-				    काष्ठा snd_pcm_indirect *rec, माप_प्रकार bytes)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	स_नकल_toio(rme32->iobase + RME32_IO_DATA_BUFFER + rec->hw_data,
-		    substream->runसमय->dma_area + rec->sw_data, bytes);
-पूर्ण
+/* ack and pointer callbacks for fullduplex mode */
+static void snd_rme32_pb_trans_copy(struct snd_pcm_substream *substream,
+				    struct snd_pcm_indirect *rec, size_t bytes)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	memcpy_toio(rme32->iobase + RME32_IO_DATA_BUFFER + rec->hw_data,
+		    substream->runtime->dma_area + rec->sw_data, bytes);
+}
 
-अटल पूर्णांक snd_rme32_playback_fd_ack(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_indirect *rec, *cprec;
+static int snd_rme32_playback_fd_ack(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	struct snd_pcm_indirect *rec, *cprec;
 
 	rec = &rme32->playback_pcm;
 	cprec = &rme32->capture_pcm;
 	spin_lock(&rme32->lock);
 	rec->hw_queue_size = RME32_BUFFER_SIZE;
-	अगर (rme32->running & (1 << SNDRV_PCM_STREAM_CAPTURE))
-		rec->hw_queue_size -= cprec->hw_पढ़ोy;
+	if (rme32->running & (1 << SNDRV_PCM_STREAM_CAPTURE))
+		rec->hw_queue_size -= cprec->hw_ready;
 	spin_unlock(&rme32->lock);
-	वापस snd_pcm_indirect_playback_transfer(substream, rec,
+	return snd_pcm_indirect_playback_transfer(substream, rec,
 						  snd_rme32_pb_trans_copy);
-पूर्ण
+}
 
-अटल व्योम snd_rme32_cp_trans_copy(काष्ठा snd_pcm_substream *substream,
-				    काष्ठा snd_pcm_indirect *rec, माप_प्रकार bytes)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	स_नकल_fromio(substream->runसमय->dma_area + rec->sw_data,
+static void snd_rme32_cp_trans_copy(struct snd_pcm_substream *substream,
+				    struct snd_pcm_indirect *rec, size_t bytes)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	memcpy_fromio(substream->runtime->dma_area + rec->sw_data,
 		      rme32->iobase + RME32_IO_DATA_BUFFER + rec->hw_data,
 		      bytes);
-पूर्ण
+}
 
-अटल पूर्णांक snd_rme32_capture_fd_ack(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	वापस snd_pcm_indirect_capture_transfer(substream, &rme32->capture_pcm,
+static int snd_rme32_capture_fd_ack(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	return snd_pcm_indirect_capture_transfer(substream, &rme32->capture_pcm,
 						 snd_rme32_cp_trans_copy);
-पूर्ण
+}
 
-अटल snd_pcm_uframes_t
-snd_rme32_playback_fd_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	वापस snd_pcm_indirect_playback_poपूर्णांकer(substream, &rme32->playback_pcm,
+static snd_pcm_uframes_t
+snd_rme32_playback_fd_pointer(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	return snd_pcm_indirect_playback_pointer(substream, &rme32->playback_pcm,
 						 snd_rme32_pcm_byteptr(rme32));
-पूर्ण
+}
 
-अटल snd_pcm_uframes_t
-snd_rme32_capture_fd_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा rme32 *rme32 = snd_pcm_substream_chip(substream);
-	वापस snd_pcm_indirect_capture_poपूर्णांकer(substream, &rme32->capture_pcm,
+static snd_pcm_uframes_t
+snd_rme32_capture_fd_pointer(struct snd_pcm_substream *substream)
+{
+	struct rme32 *rme32 = snd_pcm_substream_chip(substream);
+	return snd_pcm_indirect_capture_pointer(substream, &rme32->capture_pcm,
 						snd_rme32_pcm_byteptr(rme32));
-पूर्ण
+}
 
-/* क्रम halfduplex mode */
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_playback_spdअगर_ops = अणु
-	.खोलो =		snd_rme32_playback_spdअगर_खोलो,
-	.बंद =	snd_rme32_playback_बंद,
+/* for halfduplex mode */
+static const struct snd_pcm_ops snd_rme32_playback_spdif_ops = {
+	.open =		snd_rme32_playback_spdif_open,
+	.close =	snd_rme32_playback_close,
 	.hw_params =	snd_rme32_playback_hw_params,
 	.prepare =	snd_rme32_playback_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_playback_poपूर्णांकer,
+	.pointer =	snd_rme32_playback_pointer,
 	.copy_user =	snd_rme32_playback_copy,
 	.copy_kernel =	snd_rme32_playback_copy_kernel,
 	.fill_silence =	snd_rme32_playback_silence,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_capture_spdअगर_ops = अणु
-	.खोलो =		snd_rme32_capture_spdअगर_खोलो,
-	.बंद =	snd_rme32_capture_बंद,
+static const struct snd_pcm_ops snd_rme32_capture_spdif_ops = {
+	.open =		snd_rme32_capture_spdif_open,
+	.close =	snd_rme32_capture_close,
 	.hw_params =	snd_rme32_capture_hw_params,
 	.prepare =	snd_rme32_capture_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_capture_poपूर्णांकer,
+	.pointer =	snd_rme32_capture_pointer,
 	.copy_user =	snd_rme32_capture_copy,
 	.copy_kernel =	snd_rme32_capture_copy_kernel,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_playback_adat_ops = अणु
-	.खोलो =		snd_rme32_playback_adat_खोलो,
-	.बंद =	snd_rme32_playback_बंद,
+static const struct snd_pcm_ops snd_rme32_playback_adat_ops = {
+	.open =		snd_rme32_playback_adat_open,
+	.close =	snd_rme32_playback_close,
 	.hw_params =	snd_rme32_playback_hw_params,
 	.prepare =	snd_rme32_playback_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_playback_poपूर्णांकer,
+	.pointer =	snd_rme32_playback_pointer,
 	.copy_user =	snd_rme32_playback_copy,
 	.copy_kernel =	snd_rme32_playback_copy_kernel,
 	.fill_silence =	snd_rme32_playback_silence,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_capture_adat_ops = अणु
-	.खोलो =		snd_rme32_capture_adat_खोलो,
-	.बंद =	snd_rme32_capture_बंद,
+static const struct snd_pcm_ops snd_rme32_capture_adat_ops = {
+	.open =		snd_rme32_capture_adat_open,
+	.close =	snd_rme32_capture_close,
 	.hw_params =	snd_rme32_capture_hw_params,
 	.prepare =	snd_rme32_capture_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_capture_poपूर्णांकer,
+	.pointer =	snd_rme32_capture_pointer,
 	.copy_user =	snd_rme32_capture_copy,
 	.copy_kernel =	snd_rme32_capture_copy_kernel,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-पूर्ण;
+};
 
-/* क्रम fullduplex mode */
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_playback_spdअगर_fd_ops = अणु
-	.खोलो =		snd_rme32_playback_spdअगर_खोलो,
-	.बंद =	snd_rme32_playback_बंद,
+/* for fullduplex mode */
+static const struct snd_pcm_ops snd_rme32_playback_spdif_fd_ops = {
+	.open =		snd_rme32_playback_spdif_open,
+	.close =	snd_rme32_playback_close,
 	.hw_params =	snd_rme32_playback_hw_params,
 	.prepare =	snd_rme32_playback_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_playback_fd_poपूर्णांकer,
+	.pointer =	snd_rme32_playback_fd_pointer,
 	.ack =		snd_rme32_playback_fd_ack,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_capture_spdअगर_fd_ops = अणु
-	.खोलो =		snd_rme32_capture_spdअगर_खोलो,
-	.बंद =	snd_rme32_capture_बंद,
+static const struct snd_pcm_ops snd_rme32_capture_spdif_fd_ops = {
+	.open =		snd_rme32_capture_spdif_open,
+	.close =	snd_rme32_capture_close,
 	.hw_params =	snd_rme32_capture_hw_params,
 	.prepare =	snd_rme32_capture_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_capture_fd_poपूर्णांकer,
+	.pointer =	snd_rme32_capture_fd_pointer,
 	.ack =		snd_rme32_capture_fd_ack,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_playback_adat_fd_ops = अणु
-	.खोलो =		snd_rme32_playback_adat_खोलो,
-	.बंद =	snd_rme32_playback_बंद,
+static const struct snd_pcm_ops snd_rme32_playback_adat_fd_ops = {
+	.open =		snd_rme32_playback_adat_open,
+	.close =	snd_rme32_playback_close,
 	.hw_params =	snd_rme32_playback_hw_params,
 	.prepare =	snd_rme32_playback_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_playback_fd_poपूर्णांकer,
+	.pointer =	snd_rme32_playback_fd_pointer,
 	.ack =		snd_rme32_playback_fd_ack,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_rme32_capture_adat_fd_ops = अणु
-	.खोलो =		snd_rme32_capture_adat_खोलो,
-	.बंद =	snd_rme32_capture_बंद,
+static const struct snd_pcm_ops snd_rme32_capture_adat_fd_ops = {
+	.open =		snd_rme32_capture_adat_open,
+	.close =	snd_rme32_capture_close,
 	.hw_params =	snd_rme32_capture_hw_params,
 	.prepare =	snd_rme32_capture_prepare,
 	.trigger =	snd_rme32_pcm_trigger,
-	.poपूर्णांकer =	snd_rme32_capture_fd_poपूर्णांकer,
+	.pointer =	snd_rme32_capture_fd_pointer,
 	.ack =		snd_rme32_capture_fd_ack,
-पूर्ण;
+};
 
-अटल व्योम snd_rme32_मुक्त(व्योम *निजी_data)
-अणु
-	काष्ठा rme32 *rme32 = (काष्ठा rme32 *) निजी_data;
+static void snd_rme32_free(void *private_data)
+{
+	struct rme32 *rme32 = (struct rme32 *) private_data;
 
-	अगर (rme32 == शून्य) अणु
-		वापस;
-	पूर्ण
-	अगर (rme32->irq >= 0) अणु
+	if (rme32 == NULL) {
+		return;
+	}
+	if (rme32->irq >= 0) {
 		snd_rme32_pcm_stop(rme32, 0);
-		मुक्त_irq(rme32->irq, (व्योम *) rme32);
+		free_irq(rme32->irq, (void *) rme32);
 		rme32->irq = -1;
-	पूर्ण
-	अगर (rme32->iobase) अणु
+	}
+	if (rme32->iobase) {
 		iounmap(rme32->iobase);
-		rme32->iobase = शून्य;
-	पूर्ण
-	अगर (rme32->port) अणु
+		rme32->iobase = NULL;
+	}
+	if (rme32->port) {
 		pci_release_regions(rme32->pci);
 		rme32->port = 0;
-	पूर्ण
+	}
 	pci_disable_device(rme32->pci);
-पूर्ण
+}
 
-अटल व्योम snd_rme32_मुक्त_spdअगर_pcm(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा rme32 *rme32 = (काष्ठा rme32 *) pcm->निजी_data;
-	rme32->spdअगर_pcm = शून्य;
-पूर्ण
+static void snd_rme32_free_spdif_pcm(struct snd_pcm *pcm)
+{
+	struct rme32 *rme32 = (struct rme32 *) pcm->private_data;
+	rme32->spdif_pcm = NULL;
+}
 
-अटल व्योम
-snd_rme32_मुक्त_adat_pcm(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा rme32 *rme32 = (काष्ठा rme32 *) pcm->निजी_data;
-	rme32->adat_pcm = शून्य;
-पूर्ण
+static void
+snd_rme32_free_adat_pcm(struct snd_pcm *pcm)
+{
+	struct rme32 *rme32 = (struct rme32 *) pcm->private_data;
+	rme32->adat_pcm = NULL;
+}
 
-अटल पूर्णांक snd_rme32_create(काष्ठा rme32 *rme32)
-अणु
-	काष्ठा pci_dev *pci = rme32->pci;
-	पूर्णांक err;
+static int snd_rme32_create(struct rme32 *rme32)
+{
+	struct pci_dev *pci = rme32->pci;
+	int err;
 
 	rme32->irq = -1;
 	spin_lock_init(&rme32->lock);
 
-	अगर ((err = pci_enable_device(pci)) < 0)
-		वापस err;
+	if ((err = pci_enable_device(pci)) < 0)
+		return err;
 
-	अगर ((err = pci_request_regions(pci, "RME32")) < 0)
-		वापस err;
+	if ((err = pci_request_regions(pci, "RME32")) < 0)
+		return err;
 	rme32->port = pci_resource_start(rme32->pci, 0);
 
 	rme32->iobase = ioremap(rme32->port, RME32_IO_SIZE);
-	अगर (!rme32->iobase) अणु
+	if (!rme32->iobase) {
 		dev_err(rme32->card->dev,
 			"unable to remap memory region 0x%lx-0x%lx\n",
 			   rme32->port, rme32->port + RME32_IO_SIZE - 1);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (request_irq(pci->irq, snd_rme32_पूर्णांकerrupt, IRQF_SHARED,
-			KBUILD_MODNAME, rme32)) अणु
+	if (request_irq(pci->irq, snd_rme32_interrupt, IRQF_SHARED,
+			KBUILD_MODNAME, rme32)) {
 		dev_err(rme32->card->dev, "unable to grab IRQ %d\n", pci->irq);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	rme32->irq = pci->irq;
 	rme32->card->sync_irq = rme32->irq;
 
-	/* पढ़ो the card's revision number */
-	pci_पढ़ो_config_byte(pci, 8, &rme32->rev);
+	/* read the card's revision number */
+	pci_read_config_byte(pci, 8, &rme32->rev);
 
-	/* set up ALSA pcm device क्रम S/PDIF */
-	अगर ((err = snd_pcm_new(rme32->card, "Digi32 IEC958", 0, 1, 1, &rme32->spdअगर_pcm)) < 0) अणु
-		वापस err;
-	पूर्ण
-	rme32->spdअगर_pcm->निजी_data = rme32;
-	rme32->spdअगर_pcm->निजी_मुक्त = snd_rme32_मुक्त_spdअगर_pcm;
-	म_नकल(rme32->spdअगर_pcm->name, "Digi32 IEC958");
-	अगर (rme32->fullduplex_mode) अणु
-		snd_pcm_set_ops(rme32->spdअगर_pcm, SNDRV_PCM_STREAM_PLAYBACK,
-				&snd_rme32_playback_spdअगर_fd_ops);
-		snd_pcm_set_ops(rme32->spdअगर_pcm, SNDRV_PCM_STREAM_CAPTURE,
-				&snd_rme32_capture_spdअगर_fd_ops);
-		snd_pcm_set_managed_buffer_all(rme32->spdअगर_pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-					       शून्य, 0, RME32_MID_BUFFER_SIZE);
-		rme32->spdअगर_pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
-	पूर्ण अन्यथा अणु
-		snd_pcm_set_ops(rme32->spdअगर_pcm, SNDRV_PCM_STREAM_PLAYBACK,
-				&snd_rme32_playback_spdअगर_ops);
-		snd_pcm_set_ops(rme32->spdअगर_pcm, SNDRV_PCM_STREAM_CAPTURE,
-				&snd_rme32_capture_spdअगर_ops);
-		rme32->spdअगर_pcm->info_flags = SNDRV_PCM_INFO_HALF_DUPLEX;
-	पूर्ण
+	/* set up ALSA pcm device for S/PDIF */
+	if ((err = snd_pcm_new(rme32->card, "Digi32 IEC958", 0, 1, 1, &rme32->spdif_pcm)) < 0) {
+		return err;
+	}
+	rme32->spdif_pcm->private_data = rme32;
+	rme32->spdif_pcm->private_free = snd_rme32_free_spdif_pcm;
+	strcpy(rme32->spdif_pcm->name, "Digi32 IEC958");
+	if (rme32->fullduplex_mode) {
+		snd_pcm_set_ops(rme32->spdif_pcm, SNDRV_PCM_STREAM_PLAYBACK,
+				&snd_rme32_playback_spdif_fd_ops);
+		snd_pcm_set_ops(rme32->spdif_pcm, SNDRV_PCM_STREAM_CAPTURE,
+				&snd_rme32_capture_spdif_fd_ops);
+		snd_pcm_set_managed_buffer_all(rme32->spdif_pcm, SNDRV_DMA_TYPE_CONTINUOUS,
+					       NULL, 0, RME32_MID_BUFFER_SIZE);
+		rme32->spdif_pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
+	} else {
+		snd_pcm_set_ops(rme32->spdif_pcm, SNDRV_PCM_STREAM_PLAYBACK,
+				&snd_rme32_playback_spdif_ops);
+		snd_pcm_set_ops(rme32->spdif_pcm, SNDRV_PCM_STREAM_CAPTURE,
+				&snd_rme32_capture_spdif_ops);
+		rme32->spdif_pcm->info_flags = SNDRV_PCM_INFO_HALF_DUPLEX;
+	}
 
-	/* set up ALSA pcm device क्रम ADAT */
-	अगर ((pci->device == PCI_DEVICE_ID_RME_DIGI32) ||
-	    (pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO)) अणु
+	/* set up ALSA pcm device for ADAT */
+	if ((pci->device == PCI_DEVICE_ID_RME_DIGI32) ||
+	    (pci->device == PCI_DEVICE_ID_RME_DIGI32_PRO)) {
 		/* ADAT is not available on DIGI32 and DIGI32 Pro */
-		rme32->adat_pcm = शून्य;
-	पूर्ण
-	अन्यथा अणु
-		अगर ((err = snd_pcm_new(rme32->card, "Digi32 ADAT", 1,
+		rme32->adat_pcm = NULL;
+	}
+	else {
+		if ((err = snd_pcm_new(rme32->card, "Digi32 ADAT", 1,
 				       1, 1, &rme32->adat_pcm)) < 0)
-		अणु
-			वापस err;
-		पूर्ण		
-		rme32->adat_pcm->निजी_data = rme32;
-		rme32->adat_pcm->निजी_मुक्त = snd_rme32_मुक्त_adat_pcm;
-		म_नकल(rme32->adat_pcm->name, "Digi32 ADAT");
-		अगर (rme32->fullduplex_mode) अणु
+		{
+			return err;
+		}		
+		rme32->adat_pcm->private_data = rme32;
+		rme32->adat_pcm->private_free = snd_rme32_free_adat_pcm;
+		strcpy(rme32->adat_pcm->name, "Digi32 ADAT");
+		if (rme32->fullduplex_mode) {
 			snd_pcm_set_ops(rme32->adat_pcm, SNDRV_PCM_STREAM_PLAYBACK, 
 					&snd_rme32_playback_adat_fd_ops);
 			snd_pcm_set_ops(rme32->adat_pcm, SNDRV_PCM_STREAM_CAPTURE, 
 					&snd_rme32_capture_adat_fd_ops);
 			snd_pcm_set_managed_buffer_all(rme32->adat_pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-						       शून्य,
+						       NULL,
 						       0, RME32_MID_BUFFER_SIZE);
 			rme32->adat_pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_pcm_set_ops(rme32->adat_pcm, SNDRV_PCM_STREAM_PLAYBACK, 
 					&snd_rme32_playback_adat_ops);
 			snd_pcm_set_ops(rme32->adat_pcm, SNDRV_PCM_STREAM_CAPTURE, 
 					&snd_rme32_capture_adat_ops);
 			rme32->adat_pcm->info_flags = SNDRV_PCM_INFO_HALF_DUPLEX;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 
 	rme32->playback_periodsize = 0;
 	rme32->capture_periodsize = 0;
 
-	/* make sure playback/capture is stopped, अगर by some reason active */
+	/* make sure playback/capture is stopped, if by some reason active */
 	snd_rme32_pcm_stop(rme32, 0);
 
         /* reset DAC */
         snd_rme32_reset_dac(rme32);
 
-	/* reset buffer poपूर्णांकer */
-	ग_लिखोl(0, rme32->iobase + RME32_IO_RESET_POS);
+	/* reset buffer pointer */
+	writel(0, rme32->iobase + RME32_IO_RESET_POS);
 
-	/* set शेष values in रेजिस्टरs */
+	/* set default values in registers */
 	rme32->wcreg = RME32_WCR_SEL |	 /* normal playback */
 		RME32_WCR_INP_0 | /* input select */
 		RME32_WCR_MUTE;	 /* muting on */
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 
 
-	/* init चयन पूर्णांकerface */
-	अगर ((err = snd_rme32_create_चयनes(rme32->card, rme32)) < 0) अणु
-		वापस err;
-	पूर्ण
+	/* init switch interface */
+	if ((err = snd_rme32_create_switches(rme32->card, rme32)) < 0) {
+		return err;
+	}
 
-	/* init proc पूर्णांकerface */
+	/* init proc interface */
 	snd_rme32_proc_init(rme32);
 
-	rme32->capture_substream = शून्य;
-	rme32->playback_substream = शून्य;
+	rme32->capture_substream = NULL;
+	rme32->playback_substream = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * proc पूर्णांकerface
+ * proc interface
  */
 
-अटल व्योम
-snd_rme32_proc_पढ़ो(काष्ठा snd_info_entry * entry, काष्ठा snd_info_buffer *buffer)
-अणु
-	पूर्णांक n;
-	काष्ठा rme32 *rme32 = (काष्ठा rme32 *) entry->निजी_data;
+static void
+snd_rme32_proc_read(struct snd_info_entry * entry, struct snd_info_buffer *buffer)
+{
+	int n;
+	struct rme32 *rme32 = (struct rme32 *) entry->private_data;
 
-	rme32->rcreg = पढ़ोl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	rme32->rcreg = readl(rme32->iobase + RME32_IO_CONTROL_REGISTER);
 
-	snd_iम_लिखो(buffer, rme32->card->दीर्घname);
-	snd_iम_लिखो(buffer, " (index #%d)\n", rme32->card->number + 1);
+	snd_iprintf(buffer, rme32->card->longname);
+	snd_iprintf(buffer, " (index #%d)\n", rme32->card->number + 1);
 
-	snd_iम_लिखो(buffer, "\nGeneral settings\n");
-	अगर (rme32->fullduplex_mode)
-		snd_iम_लिखो(buffer, "  Full-duplex mode\n");
-	अन्यथा
-		snd_iम_लिखो(buffer, "  Half-duplex mode\n");
-	अगर (RME32_PRO_WITH_8414(rme32)) अणु
-		snd_iम_लिखो(buffer, "  receiver: CS8414\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  receiver: CS8412\n");
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_MODE24) अणु
-		snd_iम_लिखो(buffer, "  format: 24 bit");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  format: 16 bit");
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_MONO) अणु
-		snd_iम_लिखो(buffer, ", Mono\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, ", Stereo\n");
-	पूर्ण
+	snd_iprintf(buffer, "\nGeneral settings\n");
+	if (rme32->fullduplex_mode)
+		snd_iprintf(buffer, "  Full-duplex mode\n");
+	else
+		snd_iprintf(buffer, "  Half-duplex mode\n");
+	if (RME32_PRO_WITH_8414(rme32)) {
+		snd_iprintf(buffer, "  receiver: CS8414\n");
+	} else {
+		snd_iprintf(buffer, "  receiver: CS8412\n");
+	}
+	if (rme32->wcreg & RME32_WCR_MODE24) {
+		snd_iprintf(buffer, "  format: 24 bit");
+	} else {
+		snd_iprintf(buffer, "  format: 16 bit");
+	}
+	if (rme32->wcreg & RME32_WCR_MONO) {
+		snd_iprintf(buffer, ", Mono\n");
+	} else {
+		snd_iprintf(buffer, ", Stereo\n");
+	}
 
-	snd_iम_लिखो(buffer, "\nInput settings\n");
-	चयन (snd_rme32_getinputtype(rme32)) अणु
-	हाल RME32_INPUT_OPTICAL:
-		snd_iम_लिखो(buffer, "  input: optical");
-		अवरोध;
-	हाल RME32_INPUT_COAXIAL:
-		snd_iम_लिखो(buffer, "  input: coaxial");
-		अवरोध;
-	हाल RME32_INPUT_INTERNAL:
-		snd_iम_लिखो(buffer, "  input: internal");
-		अवरोध;
-	हाल RME32_INPUT_XLR:
-		snd_iम_लिखो(buffer, "  input: XLR");
-		अवरोध;
-	पूर्ण
-	अगर (snd_rme32_capture_getrate(rme32, &n) < 0) अणु
-		snd_iम_लिखो(buffer, "\n  sample rate: no valid signal\n");
-	पूर्ण अन्यथा अणु
-		अगर (n) अणु
-			snd_iम_लिखो(buffer, " (8 channels)\n");
-		पूर्ण अन्यथा अणु
-			snd_iम_लिखो(buffer, " (2 channels)\n");
-		पूर्ण
-		snd_iम_लिखो(buffer, "  sample rate: %d Hz\n",
+	snd_iprintf(buffer, "\nInput settings\n");
+	switch (snd_rme32_getinputtype(rme32)) {
+	case RME32_INPUT_OPTICAL:
+		snd_iprintf(buffer, "  input: optical");
+		break;
+	case RME32_INPUT_COAXIAL:
+		snd_iprintf(buffer, "  input: coaxial");
+		break;
+	case RME32_INPUT_INTERNAL:
+		snd_iprintf(buffer, "  input: internal");
+		break;
+	case RME32_INPUT_XLR:
+		snd_iprintf(buffer, "  input: XLR");
+		break;
+	}
+	if (snd_rme32_capture_getrate(rme32, &n) < 0) {
+		snd_iprintf(buffer, "\n  sample rate: no valid signal\n");
+	} else {
+		if (n) {
+			snd_iprintf(buffer, " (8 channels)\n");
+		} else {
+			snd_iprintf(buffer, " (2 channels)\n");
+		}
+		snd_iprintf(buffer, "  sample rate: %d Hz\n",
 			    snd_rme32_capture_getrate(rme32, &n));
-	पूर्ण
+	}
 
-	snd_iम_लिखो(buffer, "\nOutput settings\n");
-	अगर (rme32->wcreg & RME32_WCR_SEL) अणु
-		snd_iम_लिखो(buffer, "  output signal: normal playback");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  output signal: same as input");
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_MUTE) अणु
-		snd_iम_लिखो(buffer, " (muted)\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "\n");
-	पूर्ण
+	snd_iprintf(buffer, "\nOutput settings\n");
+	if (rme32->wcreg & RME32_WCR_SEL) {
+		snd_iprintf(buffer, "  output signal: normal playback");
+	} else {
+		snd_iprintf(buffer, "  output signal: same as input");
+	}
+	if (rme32->wcreg & RME32_WCR_MUTE) {
+		snd_iprintf(buffer, " (muted)\n");
+	} else {
+		snd_iprintf(buffer, "\n");
+	}
 
 	/* master output frequency */
-	अगर (!
+	if (!
 	    ((!(rme32->wcreg & RME32_WCR_FREQ_0))
-	     && (!(rme32->wcreg & RME32_WCR_FREQ_1)))) अणु
-		snd_iम_लिखो(buffer, "  sample rate: %d Hz\n",
+	     && (!(rme32->wcreg & RME32_WCR_FREQ_1)))) {
+		snd_iprintf(buffer, "  sample rate: %d Hz\n",
 			    snd_rme32_playback_getrate(rme32));
-	पूर्ण
-	अगर (rme32->rcreg & RME32_RCR_KMODE) अणु
-		snd_iम_लिखो(buffer, "  sample clock source: AutoSync\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  sample clock source: Internal\n");
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_PRO) अणु
-		snd_iम_लिखो(buffer, "  format: AES/EBU (professional)\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  format: IEC958 (consumer)\n");
-	पूर्ण
-	अगर (rme32->wcreg & RME32_WCR_EMP) अणु
-		snd_iम_लिखो(buffer, "  emphasis: on\n");
-	पूर्ण अन्यथा अणु
-		snd_iम_लिखो(buffer, "  emphasis: off\n");
-	पूर्ण
-पूर्ण
+	}
+	if (rme32->rcreg & RME32_RCR_KMODE) {
+		snd_iprintf(buffer, "  sample clock source: AutoSync\n");
+	} else {
+		snd_iprintf(buffer, "  sample clock source: Internal\n");
+	}
+	if (rme32->wcreg & RME32_WCR_PRO) {
+		snd_iprintf(buffer, "  format: AES/EBU (professional)\n");
+	} else {
+		snd_iprintf(buffer, "  format: IEC958 (consumer)\n");
+	}
+	if (rme32->wcreg & RME32_WCR_EMP) {
+		snd_iprintf(buffer, "  emphasis: on\n");
+	} else {
+		snd_iprintf(buffer, "  emphasis: off\n");
+	}
+}
 
-अटल व्योम snd_rme32_proc_init(काष्ठा rme32 *rme32)
-अणु
-	snd_card_ro_proc_new(rme32->card, "rme32", rme32, snd_rme32_proc_पढ़ो);
-पूर्ण
+static void snd_rme32_proc_init(struct rme32 *rme32)
+{
+	snd_card_ro_proc_new(rme32->card, "rme32", rme32, snd_rme32_proc_read);
+}
 
 /*
- * control पूर्णांकerface
+ * control interface
  */
 
-#घोषणा snd_rme32_info_loopback_control		snd_ctl_boolean_mono_info
+#define snd_rme32_info_loopback_control		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक
-snd_rme32_get_loopback_control(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+static int
+snd_rme32_get_loopback_control(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&rme32->lock);
-	ucontrol->value.पूर्णांकeger.value[0] =
+	ucontrol->value.integer.value[0] =
 	    rme32->wcreg & RME32_WCR_SEL ? 0 : 1;
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
-अटल पूर्णांक
-snd_rme32_put_loopback_control(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change;
+	return 0;
+}
+static int
+snd_rme32_put_loopback_control(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change;
 
-	val = ucontrol->value.पूर्णांकeger.value[0] ? 0 : RME32_WCR_SEL;
+	val = ucontrol->value.integer.value[0] ? 0 : RME32_WCR_SEL;
 	spin_lock_irq(&rme32->lock);
 	val = (rme32->wcreg & ~RME32_WCR_SEL) | val;
 	change = val != rme32->wcreg;
-	अगर (ucontrol->value.पूर्णांकeger.value[0])
+	if (ucontrol->value.integer.value[0])
 		val &= ~RME32_WCR_MUTE;
-	अन्यथा
+	else
 		val |= RME32_WCR_MUTE;
 	rme32->wcreg = val;
-	ग_लिखोl(val, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(val, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	spin_unlock_irq(&rme32->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक
-snd_rme32_info_inputtype_control(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
+static int
+snd_rme32_info_inputtype_control(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	static const char * const texts[4] = {
 		"Optical", "Coaxial", "Internal", "XLR"
-	पूर्ण;
-	पूर्णांक num_items;
+	};
+	int num_items;
 
-	चयन (rme32->pci->device) अणु
-	हाल PCI_DEVICE_ID_RME_DIGI32:
-	हाल PCI_DEVICE_ID_RME_DIGI32_8:
+	switch (rme32->pci->device) {
+	case PCI_DEVICE_ID_RME_DIGI32:
+	case PCI_DEVICE_ID_RME_DIGI32_8:
 		num_items = 3;
-		अवरोध;
-	हाल PCI_DEVICE_ID_RME_DIGI32_PRO:
+		break;
+	case PCI_DEVICE_ID_RME_DIGI32_PRO:
 		num_items = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		वापस -EINVAL;
-	पूर्ण
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, num_items, texts);
-पूर्ण
-अटल पूर्णांक
-snd_rme32_get_inputtype_control(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक items = 3;
+		return -EINVAL;
+	}
+	return snd_ctl_enum_info(uinfo, 1, num_items, texts);
+}
+static int
+snd_rme32_get_inputtype_control(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	unsigned int items = 3;
 
 	spin_lock_irq(&rme32->lock);
-	ucontrol->value.क्रमागतerated.item[0] = snd_rme32_getinputtype(rme32);
+	ucontrol->value.enumerated.item[0] = snd_rme32_getinputtype(rme32);
 
-	चयन (rme32->pci->device) अणु
-	हाल PCI_DEVICE_ID_RME_DIGI32:
-	हाल PCI_DEVICE_ID_RME_DIGI32_8:
+	switch (rme32->pci->device) {
+	case PCI_DEVICE_ID_RME_DIGI32:
+	case PCI_DEVICE_ID_RME_DIGI32_8:
 		items = 3;
-		अवरोध;
-	हाल PCI_DEVICE_ID_RME_DIGI32_PRO:
+		break;
+	case PCI_DEVICE_ID_RME_DIGI32_PRO:
 		items = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		अवरोध;
-	पूर्ण
-	अगर (ucontrol->value.क्रमागतerated.item[0] >= items) अणु
-		ucontrol->value.क्रमागतerated.item[0] = items - 1;
-	पूर्ण
+		break;
+	}
+	if (ucontrol->value.enumerated.item[0] >= items) {
+		ucontrol->value.enumerated.item[0] = items - 1;
+	}
 
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
-अटल पूर्णांक
-snd_rme32_put_inputtype_control(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change, items = 3;
+	return 0;
+}
+static int
+snd_rme32_put_inputtype_control(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change, items = 3;
 
-	चयन (rme32->pci->device) अणु
-	हाल PCI_DEVICE_ID_RME_DIGI32:
-	हाल PCI_DEVICE_ID_RME_DIGI32_8:
+	switch (rme32->pci->device) {
+	case PCI_DEVICE_ID_RME_DIGI32:
+	case PCI_DEVICE_ID_RME_DIGI32_8:
 		items = 3;
-		अवरोध;
-	हाल PCI_DEVICE_ID_RME_DIGI32_PRO:
+		break;
+	case PCI_DEVICE_ID_RME_DIGI32_PRO:
 		items = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		snd_BUG();
-		अवरोध;
-	पूर्ण
-	val = ucontrol->value.क्रमागतerated.item[0] % items;
+		break;
+	}
+	val = ucontrol->value.enumerated.item[0] % items;
 
 	spin_lock_irq(&rme32->lock);
-	change = val != (अचिन्हित पूर्णांक)snd_rme32_getinputtype(rme32);
+	change = val != (unsigned int)snd_rme32_getinputtype(rme32);
 	snd_rme32_setinputtype(rme32, val);
 	spin_unlock_irq(&rme32->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक
-snd_rme32_info_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[4] = अणु "AutoSync",
+static int
+snd_rme32_info_clockmode_control(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[4] = { "AutoSync",
 				  "Internal 32.0kHz", 
 				  "Internal 44.1kHz", 
-				  "Internal 48.0kHz" पूर्ण;
+				  "Internal 48.0kHz" };
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 4, texts);
-पूर्ण
-अटल पूर्णांक
-snd_rme32_get_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	return snd_ctl_enum_info(uinfo, 1, 4, texts);
+}
+static int
+snd_rme32_get_clockmode_control(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&rme32->lock);
-	ucontrol->value.क्रमागतerated.item[0] = snd_rme32_अ_लोlockmode(rme32);
+	ucontrol->value.enumerated.item[0] = snd_rme32_getclockmode(rme32);
 	spin_unlock_irq(&rme32->lock);
-	वापस 0;
-पूर्ण
-अटल पूर्णांक
-snd_rme32_put_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक change;
+	return 0;
+}
+static int
+snd_rme32_put_clockmode_control(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	unsigned int val;
+	int change;
 
-	val = ucontrol->value.क्रमागतerated.item[0] % 3;
+	val = ucontrol->value.enumerated.item[0] % 3;
 	spin_lock_irq(&rme32->lock);
-	change = val != (अचिन्हित पूर्णांक)snd_rme32_अ_लोlockmode(rme32);
-	snd_rme32_setघड़ीmode(rme32, val);
+	change = val != (unsigned int)snd_rme32_getclockmode(rme32);
+	snd_rme32_setclockmode(rme32, val);
 	spin_unlock_irq(&rme32->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल u32 snd_rme32_convert_from_aes(काष्ठा snd_aes_iec958 * aes)
-अणु
+static u32 snd_rme32_convert_from_aes(struct snd_aes_iec958 * aes)
+{
 	u32 val = 0;
 	val |= (aes->status[0] & IEC958_AES0_PROFESSIONAL) ? RME32_WCR_PRO : 0;
-	अगर (val & RME32_WCR_PRO)
+	if (val & RME32_WCR_PRO)
 		val |= (aes->status[0] & IEC958_AES0_PRO_EMPHASIS_5015) ? RME32_WCR_EMP : 0;
-	अन्यथा
+	else
 		val |= (aes->status[0] & IEC958_AES0_CON_EMPHASIS_5015) ? RME32_WCR_EMP : 0;
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम snd_rme32_convert_to_aes(काष्ठा snd_aes_iec958 * aes, u32 val)
-अणु
+static void snd_rme32_convert_to_aes(struct snd_aes_iec958 * aes, u32 val)
+{
 	aes->status[0] = ((val & RME32_WCR_PRO) ? IEC958_AES0_PROFESSIONAL : 0);
-	अगर (val & RME32_WCR_PRO)
+	if (val & RME32_WCR_PRO)
 		aes->status[0] |= (val & RME32_WCR_EMP) ? IEC958_AES0_PRO_EMPHASIS_5015 : 0;
-	अन्यथा
+	else
 		aes->status[0] |= (val & RME32_WCR_EMP) ? IEC958_AES0_CON_EMPHASIS_5015 : 0;
-पूर्ण
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_info(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_rme32_control_spdif_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+static int snd_rme32_control_spdif_get(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
 
 	snd_rme32_convert_to_aes(&ucontrol->value.iec958,
-				 rme32->wcreg_spdअगर);
-	वापस 0;
-पूर्ण
+				 rme32->wcreg_spdif);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_put(काष्ठा snd_kcontrol *kcontrol,
-				       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change;
+static int snd_rme32_control_spdif_put(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	int change;
 	u32 val;
 
 	val = snd_rme32_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&rme32->lock);
-	change = val != rme32->wcreg_spdअगर;
-	rme32->wcreg_spdअगर = val;
+	change = val != rme32->wcreg_spdif;
+	rme32->wcreg_spdif = val;
 	spin_unlock_irq(&rme32->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_stream_info(काष्ठा snd_kcontrol *kcontrol,
-					       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_rme32_control_spdif_stream_info(struct snd_kcontrol *kcontrol,
+					       struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_stream_get(काष्ठा snd_kcontrol *kcontrol,
-					      काष्ठा snd_ctl_elem_value *
+static int snd_rme32_control_spdif_stream_get(struct snd_kcontrol *kcontrol,
+					      struct snd_ctl_elem_value *
 					      ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
 
 	snd_rme32_convert_to_aes(&ucontrol->value.iec958,
-				 rme32->wcreg_spdअगर_stream);
-	वापस 0;
-पूर्ण
+				 rme32->wcreg_spdif_stream);
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_stream_put(काष्ठा snd_kcontrol *kcontrol,
-					      काष्ठा snd_ctl_elem_value *
+static int snd_rme32_control_spdif_stream_put(struct snd_kcontrol *kcontrol,
+					      struct snd_ctl_elem_value *
 					      ucontrol)
-अणु
-	काष्ठा rme32 *rme32 = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change;
+{
+	struct rme32 *rme32 = snd_kcontrol_chip(kcontrol);
+	int change;
 	u32 val;
 
 	val = snd_rme32_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&rme32->lock);
-	change = val != rme32->wcreg_spdअगर_stream;
-	rme32->wcreg_spdअगर_stream = val;
+	change = val != rme32->wcreg_spdif_stream;
+	rme32->wcreg_spdif_stream = val;
 	rme32->wcreg &= ~(RME32_WCR_PRO | RME32_WCR_EMP);
 	rme32->wcreg |= val;
-	ग_लिखोl(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
+	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	spin_unlock_irq(&rme32->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol,
-					     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_rme32_control_spdif_mask_info(struct snd_kcontrol *kcontrol,
+					     struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_rme32_control_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
-					    काष्ठा snd_ctl_elem_value *
+static int snd_rme32_control_spdif_mask_get(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *
 					    ucontrol)
-अणु
-	ucontrol->value.iec958.status[0] = kcontrol->निजी_value;
-	वापस 0;
-पूर्ण
+{
+	ucontrol->value.iec958.status[0] = kcontrol->private_value;
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_rme32_controls[] = अणु
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+static const struct snd_kcontrol_new snd_rme32_controls[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =	SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
-		.info =	snd_rme32_control_spdअगर_info,
-		.get =	snd_rme32_control_spdअगर_get,
-		.put =	snd_rme32_control_spdअगर_put
-	पूर्ण,
-	अणु
+		.info =	snd_rme32_control_spdif_info,
+		.get =	snd_rme32_control_spdif_get,
+		.put =	snd_rme32_control_spdif_put
+	},
+	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =	SNDRV_CTL_NAME_IEC958("", PLAYBACK, PCM_STREAM),
-		.info =	snd_rme32_control_spdअगर_stream_info,
-		.get =	snd_rme32_control_spdअगर_stream_get,
-		.put =	snd_rme32_control_spdअगर_stream_put
-	पूर्ण,
-	अणु
+		.info =	snd_rme32_control_spdif_stream_info,
+		.get =	snd_rme32_control_spdif_stream_get,
+		.put =	snd_rme32_control_spdif_stream_put
+	},
+	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =	SNDRV_CTL_NAME_IEC958("", PLAYBACK, CON_MASK),
-		.info =	snd_rme32_control_spdअगर_mask_info,
-		.get =	snd_rme32_control_spdअगर_mask_get,
-		.निजी_value = IEC958_AES0_PROFESSIONAL | IEC958_AES0_CON_EMPHASIS
-	पूर्ण,
-	अणु
+		.info =	snd_rme32_control_spdif_mask_info,
+		.get =	snd_rme32_control_spdif_mask_get,
+		.private_value = IEC958_AES0_PROFESSIONAL | IEC958_AES0_CON_EMPHASIS
+	},
+	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name =	SNDRV_CTL_NAME_IEC958("", PLAYBACK, PRO_MASK),
-		.info =	snd_rme32_control_spdअगर_mask_info,
-		.get =	snd_rme32_control_spdअगर_mask_get,
-		.निजी_value = IEC958_AES0_PROFESSIONAL | IEC958_AES0_PRO_EMPHASIS
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info =	snd_rme32_control_spdif_mask_info,
+		.get =	snd_rme32_control_spdif_mask_get,
+		.private_value = IEC958_AES0_PROFESSIONAL | IEC958_AES0_PRO_EMPHASIS
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name =	"Input Connector",
 		.info =	snd_rme32_info_inputtype_control,
 		.get =	snd_rme32_get_inputtype_control,
 		.put =	snd_rme32_put_inputtype_control
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name =	"Loopback Input",
 		.info =	snd_rme32_info_loopback_control,
 		.get =	snd_rme32_get_loopback_control,
 		.put =	snd_rme32_put_loopback_control
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name =	"Sample Clock Source",
-		.info =	snd_rme32_info_घड़ीmode_control,
-		.get =	snd_rme32_get_घड़ीmode_control,
-		.put =	snd_rme32_put_घड़ीmode_control
-	पूर्ण
-पूर्ण;
+		.info =	snd_rme32_info_clockmode_control,
+		.get =	snd_rme32_get_clockmode_control,
+		.put =	snd_rme32_put_clockmode_control
+	}
+};
 
-अटल पूर्णांक snd_rme32_create_चयनes(काष्ठा snd_card *card, काष्ठा rme32 * rme32)
-अणु
-	पूर्णांक idx, err;
-	काष्ठा snd_kcontrol *kctl;
+static int snd_rme32_create_switches(struct snd_card *card, struct rme32 * rme32)
+{
+	int idx, err;
+	struct snd_kcontrol *kctl;
 
-	क्रम (idx = 0; idx < (पूर्णांक)ARRAY_SIZE(snd_rme32_controls); idx++) अणु
-		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_rme32_controls[idx], rme32))) < 0)
-			वापस err;
-		अगर (idx == 1)	/* IEC958 (S/PDIF) Stream */
-			rme32->spdअगर_ctl = kctl;
-	पूर्ण
+	for (idx = 0; idx < (int)ARRAY_SIZE(snd_rme32_controls); idx++) {
+		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_rme32_controls[idx], rme32))) < 0)
+			return err;
+		if (idx == 1)	/* IEC958 (S/PDIF) Stream */
+			rme32->spdif_ctl = kctl;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Card initialisation
  */
 
-अटल व्योम snd_rme32_card_मुक्त(काष्ठा snd_card *card)
-अणु
-	snd_rme32_मुक्त(card->निजी_data);
-पूर्ण
+static void snd_rme32_card_free(struct snd_card *card)
+{
+	snd_rme32_free(card->private_data);
+}
 
-अटल पूर्णांक
-snd_rme32_probe(काष्ठा pci_dev *pci, स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	अटल पूर्णांक dev;
-	काष्ठा rme32 *rme32;
-	काष्ठा snd_card *card;
-	पूर्णांक err;
+static int
+snd_rme32_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
+{
+	static int dev;
+	struct rme32 *rme32;
+	struct snd_card *card;
+	int err;
 
-	अगर (dev >= SNDRV_CARDS) अणु
-		वापस -ENODEV;
-	पूर्ण
-	अगर (!enable[dev]) अणु
+	if (dev >= SNDRV_CARDS) {
+		return -ENODEV;
+	}
+	if (!enable[dev]) {
 		dev++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
-			   माप(काष्ठा rme32), &card);
-	अगर (err < 0)
-		वापस err;
-	card->निजी_मुक्त = snd_rme32_card_मुक्त;
-	rme32 = (काष्ठा rme32 *) card->निजी_data;
+			   sizeof(struct rme32), &card);
+	if (err < 0)
+		return err;
+	card->private_free = snd_rme32_card_free;
+	rme32 = (struct rme32 *) card->private_data;
 	rme32->card = card;
 	rme32->pci = pci;
-        अगर (fullduplex[dev])
+        if (fullduplex[dev])
 		rme32->fullduplex_mode = 1;
-	अगर ((err = snd_rme32_create(rme32)) < 0) अणु
-		snd_card_मुक्त(card);
-		वापस err;
-	पूर्ण
+	if ((err = snd_rme32_create(rme32)) < 0) {
+		snd_card_free(card);
+		return err;
+	}
 
-	म_नकल(card->driver, "Digi32");
-	चयन (rme32->pci->device) अणु
-	हाल PCI_DEVICE_ID_RME_DIGI32:
-		म_नकल(card->लघुname, "RME Digi32");
-		अवरोध;
-	हाल PCI_DEVICE_ID_RME_DIGI32_8:
-		म_नकल(card->लघुname, "RME Digi32/8");
-		अवरोध;
-	हाल PCI_DEVICE_ID_RME_DIGI32_PRO:
-		म_नकल(card->लघुname, "RME Digi32 PRO");
-		अवरोध;
-	पूर्ण
-	प्र_लिखो(card->दीर्घname, "%s (Rev. %d) at 0x%lx, irq %d",
-		card->लघुname, rme32->rev, rme32->port, rme32->irq);
+	strcpy(card->driver, "Digi32");
+	switch (rme32->pci->device) {
+	case PCI_DEVICE_ID_RME_DIGI32:
+		strcpy(card->shortname, "RME Digi32");
+		break;
+	case PCI_DEVICE_ID_RME_DIGI32_8:
+		strcpy(card->shortname, "RME Digi32/8");
+		break;
+	case PCI_DEVICE_ID_RME_DIGI32_PRO:
+		strcpy(card->shortname, "RME Digi32 PRO");
+		break;
+	}
+	sprintf(card->longname, "%s (Rev. %d) at 0x%lx, irq %d",
+		card->shortname, rme32->rev, rme32->port, rme32->irq);
 
-	अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
-		snd_card_मुक्त(card);
-		वापस err;
-	पूर्ण
+	if ((err = snd_card_register(card)) < 0) {
+		snd_card_free(card);
+		return err;
+	}
 	pci_set_drvdata(pci, card);
 	dev++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_rme32_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	snd_card_मुक्त(pci_get_drvdata(pci));
-पूर्ण
+static void snd_rme32_remove(struct pci_dev *pci)
+{
+	snd_card_free(pci_get_drvdata(pci));
+}
 
-अटल काष्ठा pci_driver rme32_driver = अणु
+static struct pci_driver rme32_driver = {
 	.name =		KBUILD_MODNAME,
 	.id_table =	snd_rme32_ids,
 	.probe =	snd_rme32_probe,
-	.हटाओ =	snd_rme32_हटाओ,
-पूर्ण;
+	.remove =	snd_rme32_remove,
+};
 
 module_pci_driver(rme32_driver);

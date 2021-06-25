@@ -1,335 +1,334 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Perक्रमmance event support - घातerpc architecture code
+ * Performance event support - powerpc architecture code
  *
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/reg.h>
-#समावेश <यंत्र/pmc.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/पूर्णांकerrupt.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/perf_event.h>
+#include <linux/percpu.h>
+#include <linux/hardirq.h>
+#include <linux/uaccess.h>
+#include <asm/reg.h>
+#include <asm/pmc.h>
+#include <asm/machdep.h>
+#include <asm/firmware.h>
+#include <asm/ptrace.h>
+#include <asm/code-patching.h>
+#include <asm/interrupt.h>
 
-#अगर_घोषित CONFIG_PPC64
-#समावेश "internal.h"
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#include "internal.h"
+#endif
 
-#घोषणा BHRB_MAX_ENTRIES	32
-#घोषणा BHRB_TARGET		0x0000000000000002
-#घोषणा BHRB_PREDICTION		0x0000000000000001
-#घोषणा BHRB_EA			0xFFFFFFFFFFFFFFFCUL
+#define BHRB_MAX_ENTRIES	32
+#define BHRB_TARGET		0x0000000000000002
+#define BHRB_PREDICTION		0x0000000000000001
+#define BHRB_EA			0xFFFFFFFFFFFFFFFCUL
 
-काष्ठा cpu_hw_events अणु
-	पूर्णांक n_events;
-	पूर्णांक n_percpu;
-	पूर्णांक disabled;
-	पूर्णांक n_added;
-	पूर्णांक n_limited;
+struct cpu_hw_events {
+	int n_events;
+	int n_percpu;
+	int disabled;
+	int n_added;
+	int n_limited;
 	u8  pmcs_enabled;
-	काष्ठा perf_event *event[MAX_HWEVENTS];
+	struct perf_event *event[MAX_HWEVENTS];
 	u64 events[MAX_HWEVENTS];
-	अचिन्हित पूर्णांक flags[MAX_HWEVENTS];
-	काष्ठा mmcr_regs mmcr;
-	काष्ठा perf_event *limited_counter[MAX_LIMITED_HWCOUNTERS];
+	unsigned int flags[MAX_HWEVENTS];
+	struct mmcr_regs mmcr;
+	struct perf_event *limited_counter[MAX_LIMITED_HWCOUNTERS];
 	u8  limited_hwidx[MAX_LIMITED_HWCOUNTERS];
 	u64 alternatives[MAX_HWEVENTS][MAX_EVENT_ALTERNATIVES];
-	अचिन्हित दीर्घ amasks[MAX_HWEVENTS][MAX_EVENT_ALTERNATIVES];
-	अचिन्हित दीर्घ avalues[MAX_HWEVENTS][MAX_EVENT_ALTERNATIVES];
+	unsigned long amasks[MAX_HWEVENTS][MAX_EVENT_ALTERNATIVES];
+	unsigned long avalues[MAX_HWEVENTS][MAX_EVENT_ALTERNATIVES];
 
-	अचिन्हित पूर्णांक txn_flags;
-	पूर्णांक n_txn_start;
+	unsigned int txn_flags;
+	int n_txn_start;
 
 	/* BHRB bits */
 	u64				bhrb_filter;	/* BHRB HW branch filter */
-	अचिन्हित पूर्णांक			bhrb_users;
-	व्योम				*bhrb_context;
-	काष्ठा	perf_branch_stack	bhrb_stack;
-	काष्ठा	perf_branch_entry	bhrb_entries[BHRB_MAX_ENTRIES];
+	unsigned int			bhrb_users;
+	void				*bhrb_context;
+	struct	perf_branch_stack	bhrb_stack;
+	struct	perf_branch_entry	bhrb_entries[BHRB_MAX_ENTRIES];
 	u64				ic_init;
 
 	/* Store the PMC values */
-	अचिन्हित दीर्घ pmcs[MAX_HWEVENTS];
-पूर्ण;
+	unsigned long pmcs[MAX_HWEVENTS];
+};
 
-अटल DEFINE_PER_CPU(काष्ठा cpu_hw_events, cpu_hw_events);
+static DEFINE_PER_CPU(struct cpu_hw_events, cpu_hw_events);
 
-अटल काष्ठा घातer_pmu *ppmu;
+static struct power_pmu *ppmu;
 
 /*
- * Normally, to ignore kernel events we set the FCS (मुक्तze counters
- * in supervisor mode) bit in MMCR0, but अगर the kernel runs with the
- * hypervisor bit set in the MSR, or अगर we are running on a processor
- * where the hypervisor bit is क्रमced to 1 (as on Apple G5 processors),
+ * Normally, to ignore kernel events we set the FCS (freeze counters
+ * in supervisor mode) bit in MMCR0, but if the kernel runs with the
+ * hypervisor bit set in the MSR, or if we are running on a processor
+ * where the hypervisor bit is forced to 1 (as on Apple G5 processors),
  * then we need to use the FCHV bit to ignore kernel events.
  */
-अटल अचिन्हित पूर्णांक मुक्तze_events_kernel = MMCR0_FCS;
+static unsigned int freeze_events_kernel = MMCR0_FCS;
 
 /*
- * 32-bit करोesn't have MMCRA but करोes have an MMCR2,
- * and a few other names are dअगरferent.
- * Also 32-bit करोesn't have MMCR3, SIER2 and SIER3.
+ * 32-bit doesn't have MMCRA but does have an MMCR2,
+ * and a few other names are different.
+ * Also 32-bit doesn't have MMCR3, SIER2 and SIER3.
  * Define them as zero knowing that any code path accessing
- * these रेजिस्टरs (via mtspr/mfspr) are करोne under ppmu flag
- * check क्रम PPMU_ARCH_31 and we will not enter that code path
- * क्रम 32-bit.
+ * these registers (via mtspr/mfspr) are done under ppmu flag
+ * check for PPMU_ARCH_31 and we will not enter that code path
+ * for 32-bit.
  */
-#अगर_घोषित CONFIG_PPC32
+#ifdef CONFIG_PPC32
 
-#घोषणा MMCR0_FCHV		0
-#घोषणा MMCR0_PMCjCE		MMCR0_PMCnCE
-#घोषणा MMCR0_FC56		0
-#घोषणा MMCR0_PMAO		0
-#घोषणा MMCR0_EBE		0
-#घोषणा MMCR0_BHRBA		0
-#घोषणा MMCR0_PMCC		0
-#घोषणा MMCR0_PMCC_U6		0
+#define MMCR0_FCHV		0
+#define MMCR0_PMCjCE		MMCR0_PMCnCE
+#define MMCR0_FC56		0
+#define MMCR0_PMAO		0
+#define MMCR0_EBE		0
+#define MMCR0_BHRBA		0
+#define MMCR0_PMCC		0
+#define MMCR0_PMCC_U6		0
 
-#घोषणा SPRN_MMCRA		SPRN_MMCR2
-#घोषणा SPRN_MMCR3		0
-#घोषणा SPRN_SIER2		0
-#घोषणा SPRN_SIER3		0
-#घोषणा MMCRA_SAMPLE_ENABLE	0
-#घोषणा MMCRA_BHRB_DISABLE     0
-#घोषणा MMCR0_PMCCEXT		0
+#define SPRN_MMCRA		SPRN_MMCR2
+#define SPRN_MMCR3		0
+#define SPRN_SIER2		0
+#define SPRN_SIER3		0
+#define MMCRA_SAMPLE_ENABLE	0
+#define MMCRA_BHRB_DISABLE     0
+#define MMCR0_PMCCEXT		0
 
-अटल अंतरभूत अचिन्हित दीर्घ perf_ip_adjust(काष्ठा pt_regs *regs)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम perf_get_data_addr(काष्ठा perf_event *event, काष्ठा pt_regs *regs, u64 *addrp) अणु पूर्ण
-अटल अंतरभूत u32 perf_get_misc_flags(काष्ठा pt_regs *regs)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम perf_पढ़ो_regs(काष्ठा pt_regs *regs)
-अणु
+static inline unsigned long perf_ip_adjust(struct pt_regs *regs)
+{
+	return 0;
+}
+static inline void perf_get_data_addr(struct perf_event *event, struct pt_regs *regs, u64 *addrp) { }
+static inline u32 perf_get_misc_flags(struct pt_regs *regs)
+{
+	return 0;
+}
+static inline void perf_read_regs(struct pt_regs *regs)
+{
 	regs->result = 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक siar_valid(काष्ठा pt_regs *regs)
-अणु
-	वापस 1;
-पूर्ण
+static inline int siar_valid(struct pt_regs *regs)
+{
+	return 1;
+}
 
-अटल bool is_ebb_event(काष्ठा perf_event *event) अणु वापस false; पूर्ण
-अटल पूर्णांक ebb_event_check(काष्ठा perf_event *event) अणु वापस 0; पूर्ण
-अटल व्योम ebb_event_add(काष्ठा perf_event *event) अणु पूर्ण
-अटल व्योम ebb_चयन_out(अचिन्हित दीर्घ mmcr0) अणु पूर्ण
-अटल अचिन्हित दीर्घ ebb_चयन_in(bool ebb, काष्ठा cpu_hw_events *cpuhw)
-अणु
-	वापस cpuhw->mmcr.mmcr0;
-पूर्ण
+static bool is_ebb_event(struct perf_event *event) { return false; }
+static int ebb_event_check(struct perf_event *event) { return 0; }
+static void ebb_event_add(struct perf_event *event) { }
+static void ebb_switch_out(unsigned long mmcr0) { }
+static unsigned long ebb_switch_in(bool ebb, struct cpu_hw_events *cpuhw)
+{
+	return cpuhw->mmcr.mmcr0;
+}
 
-अटल अंतरभूत व्योम घातer_pmu_bhrb_enable(काष्ठा perf_event *event) अणुपूर्ण
-अटल अंतरभूत व्योम घातer_pmu_bhrb_disable(काष्ठा perf_event *event) अणुपूर्ण
-अटल व्योम घातer_pmu_sched_task(काष्ठा perf_event_context *ctx, bool sched_in) अणुपूर्ण
-अटल अंतरभूत व्योम घातer_pmu_bhrb_पढ़ो(काष्ठा perf_event *event, काष्ठा cpu_hw_events *cpuhw) अणुपूर्ण
-अटल व्योम pmao_restore_workaround(bool ebb) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC32 */
+static inline void power_pmu_bhrb_enable(struct perf_event *event) {}
+static inline void power_pmu_bhrb_disable(struct perf_event *event) {}
+static void power_pmu_sched_task(struct perf_event_context *ctx, bool sched_in) {}
+static inline void power_pmu_bhrb_read(struct perf_event *event, struct cpu_hw_events *cpuhw) {}
+static void pmao_restore_workaround(bool ebb) { }
+#endif /* CONFIG_PPC32 */
 
-bool is_sier_available(व्योम)
-अणु
-	अगर (!ppmu)
-		वापस false;
+bool is_sier_available(void)
+{
+	if (!ppmu)
+		return false;
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
-		वापस true;
+	if (ppmu->flags & PPMU_HAS_SIER)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * Return PMC value corresponding to the
  * index passed.
  */
-अचिन्हित दीर्घ get_pmcs_ext_regs(पूर्णांक idx)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+unsigned long get_pmcs_ext_regs(int idx)
+{
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	वापस cpuhw->pmcs[idx];
-पूर्ण
+	return cpuhw->pmcs[idx];
+}
 
-अटल bool regs_use_siar(काष्ठा pt_regs *regs)
-अणु
+static bool regs_use_siar(struct pt_regs *regs)
+{
 	/*
-	 * When we take a perक्रमmance monitor exception the regs are setup
-	 * using perf_पढ़ो_regs() which overloads some fields, in particular
+	 * When we take a performance monitor exception the regs are setup
+	 * using perf_read_regs() which overloads some fields, in particular
 	 * regs->result to tell us whether to use SIAR.
 	 *
-	 * However अगर the regs are from another exception, eg. a syscall, then
-	 * they have not been setup using perf_पढ़ो_regs() and so regs->result
-	 * is something अक्रमom.
+	 * However if the regs are from another exception, eg. a syscall, then
+	 * they have not been setup using perf_read_regs() and so regs->result
+	 * is something random.
 	 */
-	वापस ((TRAP(regs) == INTERRUPT_PERFMON) && regs->result);
-पूर्ण
+	return ((TRAP(regs) == INTERRUPT_PERFMON) && regs->result);
+}
 
 /*
- * Things that are specअगरic to 64-bit implementations.
+ * Things that are specific to 64-bit implementations.
  */
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 
-अटल अंतरभूत अचिन्हित दीर्घ perf_ip_adjust(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ mmcra = regs->dsisr;
+static inline unsigned long perf_ip_adjust(struct pt_regs *regs)
+{
+	unsigned long mmcra = regs->dsisr;
 
-	अगर ((ppmu->flags & PPMU_HAS_SSLOT) && (mmcra & MMCRA_SAMPLE_ENABLE)) अणु
-		अचिन्हित दीर्घ slot = (mmcra & MMCRA_SLOT) >> MMCRA_SLOT_SHIFT;
-		अगर (slot > 1)
-			वापस 4 * (slot - 1);
-	पूर्ण
+	if ((ppmu->flags & PPMU_HAS_SSLOT) && (mmcra & MMCRA_SAMPLE_ENABLE)) {
+		unsigned long slot = (mmcra & MMCRA_SLOT) >> MMCRA_SLOT_SHIFT;
+		if (slot > 1)
+			return 4 * (slot - 1);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The user wants a data address recorded.
- * If we're not करोing inकाष्ठाion sampling, give them the SDAR
- * (sampled data address).  If we are करोing inकाष्ठाion sampling, then
- * only give them the SDAR अगर it corresponds to the inकाष्ठाion
- * poपूर्णांकed to by SIAR; this is indicated by the [POWER6_]MMCRA_SDSYNC, the
+ * If we're not doing instruction sampling, give them the SDAR
+ * (sampled data address).  If we are doing instruction sampling, then
+ * only give them the SDAR if it corresponds to the instruction
+ * pointed to by SIAR; this is indicated by the [POWER6_]MMCRA_SDSYNC, the
  * [POWER7P_]MMCRA_SDAR_VALID bit in MMCRA, or the SDAR_VALID bit in SIER.
  */
-अटल अंतरभूत व्योम perf_get_data_addr(काष्ठा perf_event *event, काष्ठा pt_regs *regs, u64 *addrp)
-अणु
-	अचिन्हित दीर्घ mmcra = regs->dsisr;
+static inline void perf_get_data_addr(struct perf_event *event, struct pt_regs *regs, u64 *addrp)
+{
+	unsigned long mmcra = regs->dsisr;
 	bool sdar_valid;
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
+	if (ppmu->flags & PPMU_HAS_SIER)
 		sdar_valid = regs->dar & SIER_SDAR_VALID;
-	अन्यथा अणु
-		अचिन्हित दीर्घ sdsync;
+	else {
+		unsigned long sdsync;
 
-		अगर (ppmu->flags & PPMU_SIAR_VALID)
+		if (ppmu->flags & PPMU_SIAR_VALID)
 			sdsync = POWER7P_MMCRA_SDAR_VALID;
-		अन्यथा अगर (ppmu->flags & PPMU_ALT_SIPR)
+		else if (ppmu->flags & PPMU_ALT_SIPR)
 			sdsync = POWER6_MMCRA_SDSYNC;
-		अन्यथा अगर (ppmu->flags & PPMU_NO_SIAR)
+		else if (ppmu->flags & PPMU_NO_SIAR)
 			sdsync = MMCRA_SAMPLE_ENABLE;
-		अन्यथा
+		else
 			sdsync = MMCRA_SDSYNC;
 
 		sdar_valid = mmcra & sdsync;
-	पूर्ण
+	}
 
-	अगर (!(mmcra & MMCRA_SAMPLE_ENABLE) || sdar_valid)
+	if (!(mmcra & MMCRA_SAMPLE_ENABLE) || sdar_valid)
 		*addrp = mfspr(SPRN_SDAR);
 
-	अगर (is_kernel_addr(mfspr(SPRN_SDAR)) && event->attr.exclude_kernel)
+	if (is_kernel_addr(mfspr(SPRN_SDAR)) && event->attr.exclude_kernel)
 		*addrp = 0;
-पूर्ण
+}
 
-अटल bool regs_sihv(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ sihv = MMCRA_SIHV;
+static bool regs_sihv(struct pt_regs *regs)
+{
+	unsigned long sihv = MMCRA_SIHV;
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
-		वापस !!(regs->dar & SIER_SIHV);
+	if (ppmu->flags & PPMU_HAS_SIER)
+		return !!(regs->dar & SIER_SIHV);
 
-	अगर (ppmu->flags & PPMU_ALT_SIPR)
+	if (ppmu->flags & PPMU_ALT_SIPR)
 		sihv = POWER6_MMCRA_SIHV;
 
-	वापस !!(regs->dsisr & sihv);
-पूर्ण
+	return !!(regs->dsisr & sihv);
+}
 
-अटल bool regs_sipr(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ sipr = MMCRA_SIPR;
+static bool regs_sipr(struct pt_regs *regs)
+{
+	unsigned long sipr = MMCRA_SIPR;
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
-		वापस !!(regs->dar & SIER_SIPR);
+	if (ppmu->flags & PPMU_HAS_SIER)
+		return !!(regs->dar & SIER_SIPR);
 
-	अगर (ppmu->flags & PPMU_ALT_SIPR)
+	if (ppmu->flags & PPMU_ALT_SIPR)
 		sipr = POWER6_MMCRA_SIPR;
 
-	वापस !!(regs->dsisr & sipr);
-पूर्ण
+	return !!(regs->dsisr & sipr);
+}
 
-अटल अंतरभूत u32 perf_flags_from_msr(काष्ठा pt_regs *regs)
-अणु
-	अगर (regs->msr & MSR_PR)
-		वापस PERF_RECORD_MISC_USER;
-	अगर ((regs->msr & MSR_HV) && मुक्तze_events_kernel != MMCR0_FCHV)
-		वापस PERF_RECORD_MISC_HYPERVISOR;
-	वापस PERF_RECORD_MISC_KERNEL;
-पूर्ण
+static inline u32 perf_flags_from_msr(struct pt_regs *regs)
+{
+	if (regs->msr & MSR_PR)
+		return PERF_RECORD_MISC_USER;
+	if ((regs->msr & MSR_HV) && freeze_events_kernel != MMCR0_FCHV)
+		return PERF_RECORD_MISC_HYPERVISOR;
+	return PERF_RECORD_MISC_KERNEL;
+}
 
-अटल अंतरभूत u32 perf_get_misc_flags(काष्ठा pt_regs *regs)
-अणु
+static inline u32 perf_get_misc_flags(struct pt_regs *regs)
+{
 	bool use_siar = regs_use_siar(regs);
-	अचिन्हित दीर्घ mmcra = regs->dsisr;
-	पूर्णांक marked = mmcra & MMCRA_SAMPLE_ENABLE;
+	unsigned long mmcra = regs->dsisr;
+	int marked = mmcra & MMCRA_SAMPLE_ENABLE;
 
-	अगर (!use_siar)
-		वापस perf_flags_from_msr(regs);
+	if (!use_siar)
+		return perf_flags_from_msr(regs);
 
 	/*
-	 * Check the address in SIAR to identअगरy the
+	 * Check the address in SIAR to identify the
 	 * privilege levels since the SIER[MSR_HV, MSR_PR]
-	 * bits are not set क्रम marked events in घातer10
+	 * bits are not set for marked events in power10
 	 * DD1.
 	 */
-	अगर (marked && (ppmu->flags & PPMU_P10_DD1)) अणु
-		अचिन्हित दीर्घ siar = mfspr(SPRN_SIAR);
-		अगर (siar) अणु
-			अगर (is_kernel_addr(siar))
-				वापस PERF_RECORD_MISC_KERNEL;
-			वापस PERF_RECORD_MISC_USER;
-		पूर्ण अन्यथा अणु
-			अगर (is_kernel_addr(regs->nip))
-				वापस PERF_RECORD_MISC_KERNEL;
-			वापस PERF_RECORD_MISC_USER;
-		पूर्ण
-	पूर्ण
+	if (marked && (ppmu->flags & PPMU_P10_DD1)) {
+		unsigned long siar = mfspr(SPRN_SIAR);
+		if (siar) {
+			if (is_kernel_addr(siar))
+				return PERF_RECORD_MISC_KERNEL;
+			return PERF_RECORD_MISC_USER;
+		} else {
+			if (is_kernel_addr(regs->nip))
+				return PERF_RECORD_MISC_KERNEL;
+			return PERF_RECORD_MISC_USER;
+		}
+	}
 
 	/*
-	 * If we करोn't have flags in MMCRA, rather than using
-	 * the MSR, we पूर्णांकuit the flags from the address in
+	 * If we don't have flags in MMCRA, rather than using
+	 * the MSR, we intuit the flags from the address in
 	 * SIAR which should give slightly more reliable
 	 * results
 	 */
-	अगर (ppmu->flags & PPMU_NO_SIPR) अणु
-		अचिन्हित दीर्घ siar = mfspr(SPRN_SIAR);
-		अगर (is_kernel_addr(siar))
-			वापस PERF_RECORD_MISC_KERNEL;
-		वापस PERF_RECORD_MISC_USER;
-	पूर्ण
+	if (ppmu->flags & PPMU_NO_SIPR) {
+		unsigned long siar = mfspr(SPRN_SIAR);
+		if (is_kernel_addr(siar))
+			return PERF_RECORD_MISC_KERNEL;
+		return PERF_RECORD_MISC_USER;
+	}
 
 	/* PR has priority over HV, so order below is important */
-	अगर (regs_sipr(regs))
-		वापस PERF_RECORD_MISC_USER;
+	if (regs_sipr(regs))
+		return PERF_RECORD_MISC_USER;
 
-	अगर (regs_sihv(regs) && (मुक्तze_events_kernel != MMCR0_FCHV))
-		वापस PERF_RECORD_MISC_HYPERVISOR;
+	if (regs_sihv(regs) && (freeze_events_kernel != MMCR0_FCHV))
+		return PERF_RECORD_MISC_HYPERVISOR;
 
-	वापस PERF_RECORD_MISC_KERNEL;
-पूर्ण
+	return PERF_RECORD_MISC_KERNEL;
+}
 
 /*
- * Overload regs->dsisr to store MMCRA so we only need to पढ़ो it once
- * on each पूर्णांकerrupt.
- * Overload regs->dar to store SIER अगर we have it.
- * Overload regs->result to specअगरy whether we should use the MSR (result
+ * Overload regs->dsisr to store MMCRA so we only need to read it once
+ * on each interrupt.
+ * Overload regs->dar to store SIER if we have it.
+ * Overload regs->result to specify whether we should use the MSR (result
  * is zero) or the SIAR (result is non zero).
  */
-अटल अंतरभूत व्योम perf_पढ़ो_regs(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ mmcra = mfspr(SPRN_MMCRA);
-	पूर्णांक marked = mmcra & MMCRA_SAMPLE_ENABLE;
-	पूर्णांक use_siar;
+static inline void perf_read_regs(struct pt_regs *regs)
+{
+	unsigned long mmcra = mfspr(SPRN_MMCRA);
+	int marked = mmcra & MMCRA_SAMPLE_ENABLE;
+	int use_siar;
 
 	regs->dsisr = mmcra;
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
+	if (ppmu->flags & PPMU_HAS_SIER)
 		regs->dar = mfspr(SPRN_SIER);
 
 	/*
@@ -338,311 +337,311 @@ bool is_sier_available(व्योम)
 	 *
 	 * If it is a marked event use the SIAR.
 	 *
-	 * If the PMU करोesn't update the SIAR क्रम non marked events use
+	 * If the PMU doesn't update the SIAR for non marked events use
 	 * pt_regs.
 	 *
-	 * If the PMU has HV/PR flags then check to see अगर they
+	 * If the PMU has HV/PR flags then check to see if they
 	 * place the exception in userspace. If so, use pt_regs. In
 	 * continuous sampling mode the SIAR and the PMU exception are
-	 * not synchronised, so they may be many inकाष्ठाions apart.
+	 * not synchronised, so they may be many instructions apart.
 	 * This can result in confusing backtraces. We still want
 	 * hypervisor samples as well as samples in the kernel with
-	 * पूर्णांकerrupts off hence the userspace check.
+	 * interrupts off hence the userspace check.
 	 */
-	अगर (TRAP(regs) != INTERRUPT_PERFMON)
+	if (TRAP(regs) != INTERRUPT_PERFMON)
 		use_siar = 0;
-	अन्यथा अगर ((ppmu->flags & PPMU_NO_SIAR))
+	else if ((ppmu->flags & PPMU_NO_SIAR))
 		use_siar = 0;
-	अन्यथा अगर (marked)
+	else if (marked)
 		use_siar = 1;
-	अन्यथा अगर ((ppmu->flags & PPMU_NO_CONT_SAMPLING))
+	else if ((ppmu->flags & PPMU_NO_CONT_SAMPLING))
 		use_siar = 0;
-	अन्यथा अगर (!(ppmu->flags & PPMU_NO_SIPR) && regs_sipr(regs))
+	else if (!(ppmu->flags & PPMU_NO_SIPR) && regs_sipr(regs))
 		use_siar = 0;
-	अन्यथा
+	else
 		use_siar = 1;
 
 	regs->result = use_siar;
-पूर्ण
+}
 
 /*
- * On processors like P7+ that have the SIAR-Valid bit, marked inकाष्ठाions
- * must be sampled only अगर the SIAR-valid bit is set.
+ * On processors like P7+ that have the SIAR-Valid bit, marked instructions
+ * must be sampled only if the SIAR-valid bit is set.
  *
- * For unmarked inकाष्ठाions and क्रम processors that करोn't have the SIAR-Valid
+ * For unmarked instructions and for processors that don't have the SIAR-Valid
  * bit, assume that SIAR is valid.
  */
-अटल अंतरभूत पूर्णांक siar_valid(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ mmcra = regs->dsisr;
-	पूर्णांक marked = mmcra & MMCRA_SAMPLE_ENABLE;
+static inline int siar_valid(struct pt_regs *regs)
+{
+	unsigned long mmcra = regs->dsisr;
+	int marked = mmcra & MMCRA_SAMPLE_ENABLE;
 
-	अगर (marked) अणु
+	if (marked) {
 		/*
-		 * SIER[SIAR_VALID] is not set क्रम some
-		 * marked events on घातer10 DD1, so drop
-		 * the check क्रम SIER[SIAR_VALID] and वापस true.
+		 * SIER[SIAR_VALID] is not set for some
+		 * marked events on power10 DD1, so drop
+		 * the check for SIER[SIAR_VALID] and return true.
 		 */
-		अगर (ppmu->flags & PPMU_P10_DD1)
-			वापस 0x1;
-		अन्यथा अगर (ppmu->flags & PPMU_HAS_SIER)
-			वापस regs->dar & SIER_SIAR_VALID;
+		if (ppmu->flags & PPMU_P10_DD1)
+			return 0x1;
+		else if (ppmu->flags & PPMU_HAS_SIER)
+			return regs->dar & SIER_SIAR_VALID;
 
-		अगर (ppmu->flags & PPMU_SIAR_VALID)
-			वापस mmcra & POWER7P_MMCRA_SIAR_VALID;
-	पूर्ण
+		if (ppmu->flags & PPMU_SIAR_VALID)
+			return mmcra & POWER7P_MMCRA_SIAR_VALID;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
 /* Reset all possible BHRB entries */
-अटल व्योम घातer_pmu_bhrb_reset(व्योम)
-अणु
-	यंत्र अस्थिर(PPC_CLRBHRB);
-पूर्ण
+static void power_pmu_bhrb_reset(void)
+{
+	asm volatile(PPC_CLRBHRB);
+}
 
-अटल व्योम घातer_pmu_bhrb_enable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+static void power_pmu_bhrb_enable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (!ppmu->bhrb_nr)
-		वापस;
+	if (!ppmu->bhrb_nr)
+		return;
 
-	/* Clear BHRB अगर we changed task context to aव्योम data leaks */
-	अगर (event->ctx->task && cpuhw->bhrb_context != event->ctx) अणु
-		घातer_pmu_bhrb_reset();
+	/* Clear BHRB if we changed task context to avoid data leaks */
+	if (event->ctx->task && cpuhw->bhrb_context != event->ctx) {
+		power_pmu_bhrb_reset();
 		cpuhw->bhrb_context = event->ctx;
-	पूर्ण
+	}
 	cpuhw->bhrb_users++;
 	perf_sched_cb_inc(event->ctx->pmu);
-पूर्ण
+}
 
-अटल व्योम घातer_pmu_bhrb_disable(काष्ठा perf_event *event)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+static void power_pmu_bhrb_disable(struct perf_event *event)
+{
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (!ppmu->bhrb_nr)
-		वापस;
+	if (!ppmu->bhrb_nr)
+		return;
 
 	WARN_ON_ONCE(!cpuhw->bhrb_users);
 	cpuhw->bhrb_users--;
 	perf_sched_cb_dec(event->ctx->pmu);
 
-	अगर (!cpuhw->disabled && !cpuhw->bhrb_users) अणु
+	if (!cpuhw->disabled && !cpuhw->bhrb_users) {
 		/* BHRB cannot be turned off when other
 		 * events are active on the PMU.
 		 */
 
-		/* aव्योम stale poपूर्णांकer */
-		cpuhw->bhrb_context = शून्य;
-	पूर्ण
-पूर्ण
+		/* avoid stale pointer */
+		cpuhw->bhrb_context = NULL;
+	}
+}
 
 /* Called from ctxsw to prevent one process's branch entries to
- * mingle with the other process's entries during context चयन.
+ * mingle with the other process's entries during context switch.
  */
-अटल व्योम घातer_pmu_sched_task(काष्ठा perf_event_context *ctx, bool sched_in)
-अणु
-	अगर (!ppmu->bhrb_nr)
-		वापस;
+static void power_pmu_sched_task(struct perf_event_context *ctx, bool sched_in)
+{
+	if (!ppmu->bhrb_nr)
+		return;
 
-	अगर (sched_in)
-		घातer_pmu_bhrb_reset();
-पूर्ण
-/* Calculate the to address क्रम a branch */
-अटल __u64 घातer_pmu_bhrb_to(u64 addr)
-अणु
-	अचिन्हित पूर्णांक instr;
+	if (sched_in)
+		power_pmu_bhrb_reset();
+}
+/* Calculate the to address for a branch */
+static __u64 power_pmu_bhrb_to(u64 addr)
+{
+	unsigned int instr;
 	__u64 target;
 
-	अगर (is_kernel_addr(addr)) अणु
-		अगर (copy_from_kernel_nofault(&instr, (व्योम *)addr,
-				माप(instr)))
-			वापस 0;
+	if (is_kernel_addr(addr)) {
+		if (copy_from_kernel_nofault(&instr, (void *)addr,
+				sizeof(instr)))
+			return 0;
 
-		वापस branch_target((काष्ठा ppc_inst *)&instr);
-	पूर्ण
+		return branch_target((struct ppc_inst *)&instr);
+	}
 
-	/* Userspace: need copy inकाष्ठाion here then translate it */
-	अगर (copy_from_user_nofault(&instr, (अचिन्हित पूर्णांक __user *)addr,
-			माप(instr)))
-		वापस 0;
+	/* Userspace: need copy instruction here then translate it */
+	if (copy_from_user_nofault(&instr, (unsigned int __user *)addr,
+			sizeof(instr)))
+		return 0;
 
-	target = branch_target((काष्ठा ppc_inst *)&instr);
-	अगर ((!target) || (instr & BRANCH_ABSOLUTE))
-		वापस target;
+	target = branch_target((struct ppc_inst *)&instr);
+	if ((!target) || (instr & BRANCH_ABSOLUTE))
+		return target;
 
 	/* Translate relative branch target from kernel to user address */
-	वापस target - (अचिन्हित दीर्घ)&instr + addr;
-पूर्ण
+	return target - (unsigned long)&instr + addr;
+}
 
 /* Processing BHRB entries */
-अटल व्योम घातer_pmu_bhrb_पढ़ो(काष्ठा perf_event *event, काष्ठा cpu_hw_events *cpuhw)
-अणु
+static void power_pmu_bhrb_read(struct perf_event *event, struct cpu_hw_events *cpuhw)
+{
 	u64 val;
 	u64 addr;
-	पूर्णांक r_index, u_index, pred;
+	int r_index, u_index, pred;
 
 	r_index = 0;
 	u_index = 0;
-	जबतक (r_index < ppmu->bhrb_nr) अणु
-		/* Assembly पढ़ो function */
-		val = पढ़ो_bhrb(r_index++);
-		अगर (!val)
+	while (r_index < ppmu->bhrb_nr) {
+		/* Assembly read function */
+		val = read_bhrb(r_index++);
+		if (!val)
 			/* Terminal marker: End of valid BHRB entries */
-			अवरोध;
-		अन्यथा अणु
+			break;
+		else {
 			addr = val & BHRB_EA;
 			pred = val & BHRB_PREDICTION;
 
-			अगर (!addr)
+			if (!addr)
 				/* invalid entry */
-				जारी;
+				continue;
 
 			/*
 			 * BHRB rolling buffer could very much contain the kernel
-			 * addresses at this poपूर्णांक. Check the privileges beक्रमe
-			 * exporting it to userspace (aव्योम exposure of regions
+			 * addresses at this point. Check the privileges before
+			 * exporting it to userspace (avoid exposure of regions
 			 * where we could have speculative execution)
-			 * Inहाल of ISA v3.1, BHRB will capture only user-space
-			 * addresses, hence include a check beक्रमe filtering code
+			 * Incase of ISA v3.1, BHRB will capture only user-space
+			 * addresses, hence include a check before filtering code
 			 */
-			अगर (!(ppmu->flags & PPMU_ARCH_31) &&
+			if (!(ppmu->flags & PPMU_ARCH_31) &&
 			    is_kernel_addr(addr) && event->attr.exclude_kernel)
-				जारी;
+				continue;
 
-			/* Branches are पढ़ो most recent first (ie. mfbhrb 0 is
+			/* Branches are read most recent first (ie. mfbhrb 0 is
 			 * the most recent branch).
 			 * There are two types of valid entries:
 			 * 1) a target entry which is the to address of a
-			 *    computed जाओ like a blr,bctr,btar.  The next
-			 *    entry पढ़ो from the bhrb will be branch
+			 *    computed goto like a blr,bctr,btar.  The next
+			 *    entry read from the bhrb will be branch
 			 *    corresponding to this target (ie. the actual
-			 *    blr/bctr/btar inकाष्ठाion).
+			 *    blr/bctr/btar instruction).
 			 * 2) a from address which is an actual branch.  If a
 			 *    target entry proceeds this, then this is the
-			 *    matching branch क्रम that target.  If this is not
+			 *    matching branch for that target.  If this is not
 			 *    following a target entry, then this is a branch
 			 *    where the target is given as an immediate field
-			 *    in the inकाष्ठाion (ie. an i or b क्रमm branch).
-			 *    In this हाल we need to पढ़ो the inकाष्ठाion from
+			 *    in the instruction (ie. an i or b form branch).
+			 *    In this case we need to read the instruction from
 			 *    memory to determine the target/to address.
 			 */
 
-			अगर (val & BHRB_TARGET) अणु
+			if (val & BHRB_TARGET) {
 				/* Target branches use two entries
-				 * (ie. computed जाओs/XL क्रमm)
+				 * (ie. computed gotos/XL form)
 				 */
 				cpuhw->bhrb_entries[u_index].to = addr;
 				cpuhw->bhrb_entries[u_index].mispred = pred;
 				cpuhw->bhrb_entries[u_index].predicted = ~pred;
 
 				/* Get from address in next entry */
-				val = पढ़ो_bhrb(r_index++);
+				val = read_bhrb(r_index++);
 				addr = val & BHRB_EA;
-				अगर (val & BHRB_TARGET) अणु
-					/* Shouldn't have two tarमाला_लो in a
+				if (val & BHRB_TARGET) {
+					/* Shouldn't have two targets in a
 					   row.. Reset index and try again */
 					r_index--;
 					addr = 0;
-				पूर्ण
+				}
 				cpuhw->bhrb_entries[u_index].from = addr;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Branches to immediate field 
-				   (ie I or B क्रमm) */
+				   (ie I or B form) */
 				cpuhw->bhrb_entries[u_index].from = addr;
 				cpuhw->bhrb_entries[u_index].to =
-					घातer_pmu_bhrb_to(addr);
+					power_pmu_bhrb_to(addr);
 				cpuhw->bhrb_entries[u_index].mispred = pred;
 				cpuhw->bhrb_entries[u_index].predicted = ~pred;
-			पूर्ण
+			}
 			u_index++;
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 	cpuhw->bhrb_stack.nr = u_index;
 	cpuhw->bhrb_stack.hw_idx = -1ULL;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल bool is_ebb_event(काष्ठा perf_event *event)
-अणु
+static bool is_ebb_event(struct perf_event *event)
+{
 	/*
-	 * This could be a per-PMU callback, but we'd rather aव्योम the cost. We
-	 * check that the PMU supports EBB, meaning those that करोn't can still
-	 * use bit 63 of the event code क्रम something अन्यथा अगर they wish.
+	 * This could be a per-PMU callback, but we'd rather avoid the cost. We
+	 * check that the PMU supports EBB, meaning those that don't can still
+	 * use bit 63 of the event code for something else if they wish.
 	 */
-	वापस (ppmu->flags & PPMU_ARCH_207S) &&
+	return (ppmu->flags & PPMU_ARCH_207S) &&
 	       ((event->attr.config >> PERF_EVENT_CONFIG_EBB_SHIFT) & 1);
-पूर्ण
+}
 
-अटल पूर्णांक ebb_event_check(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event *leader = event->group_leader;
+static int ebb_event_check(struct perf_event *event)
+{
+	struct perf_event *leader = event->group_leader;
 
 	/* Event and group leader must agree on EBB */
-	अगर (is_ebb_event(leader) != is_ebb_event(event))
-		वापस -EINVAL;
+	if (is_ebb_event(leader) != is_ebb_event(event))
+		return -EINVAL;
 
-	अगर (is_ebb_event(event)) अणु
-		अगर (!(event->attach_state & PERF_ATTACH_TASK))
-			वापस -EINVAL;
+	if (is_ebb_event(event)) {
+		if (!(event->attach_state & PERF_ATTACH_TASK))
+			return -EINVAL;
 
-		अगर (!leader->attr.pinned || !leader->attr.exclusive)
-			वापस -EINVAL;
+		if (!leader->attr.pinned || !leader->attr.exclusive)
+			return -EINVAL;
 
-		अगर (event->attr.freq ||
+		if (event->attr.freq ||
 		    event->attr.inherit ||
 		    event->attr.sample_type ||
 		    event->attr.sample_period ||
 		    event->attr.enable_on_exec)
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ebb_event_add(काष्ठा perf_event *event)
-अणु
-	अगर (!is_ebb_event(event) || current->thपढ़ो.used_ebb)
-		वापस;
+static void ebb_event_add(struct perf_event *event)
+{
+	if (!is_ebb_event(event) || current->thread.used_ebb)
+		return;
 
 	/*
-	 * IFF this is the first समय we've added an EBB event, set
+	 * IFF this is the first time we've added an EBB event, set
 	 * PMXE in the user MMCR0 so we can detect when it's cleared by
-	 * userspace. We need this so that we can context चयन जबतक
+	 * userspace. We need this so that we can context switch while
 	 * userspace is in the EBB handler (where PMXE is 0).
 	 */
-	current->thपढ़ो.used_ebb = 1;
-	current->thपढ़ो.mmcr0 |= MMCR0_PMXE;
-पूर्ण
+	current->thread.used_ebb = 1;
+	current->thread.mmcr0 |= MMCR0_PMXE;
+}
 
-अटल व्योम ebb_चयन_out(अचिन्हित दीर्घ mmcr0)
-अणु
-	अगर (!(mmcr0 & MMCR0_EBE))
-		वापस;
+static void ebb_switch_out(unsigned long mmcr0)
+{
+	if (!(mmcr0 & MMCR0_EBE))
+		return;
 
-	current->thपढ़ो.siar  = mfspr(SPRN_SIAR);
-	current->thपढ़ो.sier  = mfspr(SPRN_SIER);
-	current->thपढ़ो.sdar  = mfspr(SPRN_SDAR);
-	current->thपढ़ो.mmcr0 = mmcr0 & MMCR0_USER_MASK;
-	current->thपढ़ो.mmcr2 = mfspr(SPRN_MMCR2) & MMCR2_USER_MASK;
-	अगर (ppmu->flags & PPMU_ARCH_31) अणु
-		current->thपढ़ो.mmcr3 = mfspr(SPRN_MMCR3);
-		current->thपढ़ो.sier2 = mfspr(SPRN_SIER2);
-		current->thपढ़ो.sier3 = mfspr(SPRN_SIER3);
-	पूर्ण
-पूर्ण
+	current->thread.siar  = mfspr(SPRN_SIAR);
+	current->thread.sier  = mfspr(SPRN_SIER);
+	current->thread.sdar  = mfspr(SPRN_SDAR);
+	current->thread.mmcr0 = mmcr0 & MMCR0_USER_MASK;
+	current->thread.mmcr2 = mfspr(SPRN_MMCR2) & MMCR2_USER_MASK;
+	if (ppmu->flags & PPMU_ARCH_31) {
+		current->thread.mmcr3 = mfspr(SPRN_MMCR3);
+		current->thread.sier2 = mfspr(SPRN_SIER2);
+		current->thread.sier3 = mfspr(SPRN_SIER3);
+	}
+}
 
-अटल अचिन्हित दीर्घ ebb_चयन_in(bool ebb, काष्ठा cpu_hw_events *cpuhw)
-अणु
-	अचिन्हित दीर्घ mmcr0 = cpuhw->mmcr.mmcr0;
+static unsigned long ebb_switch_in(bool ebb, struct cpu_hw_events *cpuhw)
+{
+	unsigned long mmcr0 = cpuhw->mmcr.mmcr0;
 
-	अगर (!ebb)
-		जाओ out;
+	if (!ebb)
+		goto out;
 
-	/* Enable EBB and पढ़ो/ग_लिखो to all 6 PMCs and BHRB क्रम userspace */
+	/* Enable EBB and read/write to all 6 PMCs and BHRB for userspace */
 	mmcr0 |= MMCR0_EBE | MMCR0_BHRBA | MMCR0_PMCC_U6;
 
 	/*
@@ -650,95 +649,95 @@ bool is_sier_available(व्योम)
 	 * with pmao_restore_workaround() because we may add PMAO but we never
 	 * clear it here.
 	 */
-	mmcr0 |= current->thपढ़ो.mmcr0;
+	mmcr0 |= current->thread.mmcr0;
 
 	/*
-	 * Be careful not to set PMXE अगर userspace had it cleared. This is also
-	 * compatible with pmao_restore_workaround() because it has alपढ़ोy
+	 * Be careful not to set PMXE if userspace had it cleared. This is also
+	 * compatible with pmao_restore_workaround() because it has already
 	 * cleared PMXE and we leave PMAO alone.
 	 */
-	अगर (!(current->thपढ़ो.mmcr0 & MMCR0_PMXE))
+	if (!(current->thread.mmcr0 & MMCR0_PMXE))
 		mmcr0 &= ~MMCR0_PMXE;
 
-	mtspr(SPRN_SIAR, current->thपढ़ो.siar);
-	mtspr(SPRN_SIER, current->thपढ़ो.sier);
-	mtspr(SPRN_SDAR, current->thपढ़ो.sdar);
+	mtspr(SPRN_SIAR, current->thread.siar);
+	mtspr(SPRN_SIER, current->thread.sier);
+	mtspr(SPRN_SDAR, current->thread.sdar);
 
 	/*
 	 * Merge the kernel & user values of MMCR2. The semantics we implement
-	 * are that the user MMCR2 can set bits, ie. cause counters to मुक्तze,
+	 * are that the user MMCR2 can set bits, ie. cause counters to freeze,
 	 * but not clear bits. If a task wants to be able to clear bits, ie.
-	 * unमुक्तze counters, it should not set exclude_xxx in its events and
+	 * unfreeze counters, it should not set exclude_xxx in its events and
 	 * instead manage the MMCR2 entirely by itself.
 	 */
-	mtspr(SPRN_MMCR2, cpuhw->mmcr.mmcr2 | current->thपढ़ो.mmcr2);
+	mtspr(SPRN_MMCR2, cpuhw->mmcr.mmcr2 | current->thread.mmcr2);
 
-	अगर (ppmu->flags & PPMU_ARCH_31) अणु
-		mtspr(SPRN_MMCR3, current->thपढ़ो.mmcr3);
-		mtspr(SPRN_SIER2, current->thपढ़ो.sier2);
-		mtspr(SPRN_SIER3, current->thपढ़ो.sier3);
-	पूर्ण
+	if (ppmu->flags & PPMU_ARCH_31) {
+		mtspr(SPRN_MMCR3, current->thread.mmcr3);
+		mtspr(SPRN_SIER2, current->thread.sier2);
+		mtspr(SPRN_SIER3, current->thread.sier3);
+	}
 out:
-	वापस mmcr0;
-पूर्ण
+	return mmcr0;
+}
 
-अटल व्योम pmao_restore_workaround(bool ebb)
-अणु
-	अचिन्हित pmcs[6];
+static void pmao_restore_workaround(bool ebb)
+{
+	unsigned pmcs[6];
 
-	अगर (!cpu_has_feature(CPU_FTR_PMAO_BUG))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_PMAO_BUG))
+		return;
 
 	/*
 	 * On POWER8E there is a hardware defect which affects the PMU context
-	 * चयन logic, ie. घातer_pmu_disable/enable().
+	 * switch logic, ie. power_pmu_disable/enable().
 	 *
 	 * When a counter overflows PMXE is cleared and FC/PMAO is set in MMCR0
-	 * by the hardware. Someसमय later the actual PMU exception is
+	 * by the hardware. Sometime later the actual PMU exception is
 	 * delivered.
 	 *
-	 * If we context चयन, or simply disable/enable, the PMU prior to the
+	 * If we context switch, or simply disable/enable, the PMU prior to the
 	 * exception arriving, the exception will be lost when we clear PMAO.
 	 *
-	 * When we reenable the PMU, we will ग_लिखो the saved MMCR0 with PMAO
+	 * When we reenable the PMU, we will write the saved MMCR0 with PMAO
 	 * set, and this _should_ generate an exception. However because of the
-	 * defect no exception is generated when we ग_लिखो PMAO, and we get
+	 * defect no exception is generated when we write PMAO, and we get
 	 * stuck with no counters counting but no exception delivered.
 	 *
-	 * The workaround is to detect this हाल and tweak the hardware to
+	 * The workaround is to detect this case and tweak the hardware to
 	 * create another pending PMU exception.
 	 *
-	 * We करो that by setting up PMC6 (cycles) क्रम an imminent overflow and
+	 * We do that by setting up PMC6 (cycles) for an imminent overflow and
 	 * enabling the PMU. That causes a new exception to be generated in the
-	 * chip, but we करोn't take it yet because we have पूर्णांकerrupts hard
-	 * disabled. We then ग_लिखो back the PMU state as we want it to be seen
-	 * by the exception handler. When we reenable पूर्णांकerrupts the exception
+	 * chip, but we don't take it yet because we have interrupts hard
+	 * disabled. We then write back the PMU state as we want it to be seen
+	 * by the exception handler. When we reenable interrupts the exception
 	 * handler will be called and see the correct state.
 	 *
-	 * The logic is the same क्रम EBB, except that the exception is gated by
-	 * us having पूर्णांकerrupts hard disabled as well as the fact that we are
-	 * not in userspace. The exception is finally delivered when we वापस
+	 * The logic is the same for EBB, except that the exception is gated by
+	 * us having interrupts hard disabled as well as the fact that we are
+	 * not in userspace. The exception is finally delivered when we return
 	 * to userspace.
 	 */
 
-	/* Only अगर PMAO is set and PMAO_SYNC is clear */
-	अगर ((current->thपढ़ो.mmcr0 & (MMCR0_PMAO | MMCR0_PMAO_SYNC)) != MMCR0_PMAO)
-		वापस;
+	/* Only if PMAO is set and PMAO_SYNC is clear */
+	if ((current->thread.mmcr0 & (MMCR0_PMAO | MMCR0_PMAO_SYNC)) != MMCR0_PMAO)
+		return;
 
-	/* If we're करोing EBB, only अगर BESCR[GE] is set */
-	अगर (ebb && !(current->thपढ़ो.bescr & BESCR_GE))
-		वापस;
+	/* If we're doing EBB, only if BESCR[GE] is set */
+	if (ebb && !(current->thread.bescr & BESCR_GE))
+		return;
 
 	/*
-	 * We are alपढ़ोy soft-disabled in घातer_pmu_enable(). We need to hard
+	 * We are already soft-disabled in power_pmu_enable(). We need to hard
 	 * disable to actually prevent the PMU exception from firing.
 	 */
 	hard_irq_disable();
 
 	/*
 	 * This is a bit gross, but we know we're on POWER8E and have 6 PMCs.
-	 * Using पढ़ो/ग_लिखो_pmc() in a क्रम loop adds 12 function calls and
-	 * almost द्विगुनs our code size.
+	 * Using read/write_pmc() in a for loop adds 12 function calls and
+	 * almost doubles our code size.
 	 */
 	pmcs[0] = mfspr(SPRN_PMC1);
 	pmcs[1] = mfspr(SPRN_PMC2);
@@ -747,16 +746,16 @@ out:
 	pmcs[4] = mfspr(SPRN_PMC5);
 	pmcs[5] = mfspr(SPRN_PMC6);
 
-	/* Ensure all मुक्तze bits are unset */
+	/* Ensure all freeze bits are unset */
 	mtspr(SPRN_MMCR2, 0);
 
 	/* Set up PMC6 to overflow in one cycle */
 	mtspr(SPRN_PMC6, 0x7FFFFFFE);
 
-	/* Enable exceptions and unमुक्तze PMC6 */
+	/* Enable exceptions and unfreeze PMC6 */
 	mtspr(SPRN_MMCR0, MMCR0_PMXE | MMCR0_PMCjCE | MMCR0_PMAO);
 
-	/* Now we need to reमुक्तze and restore the PMCs */
+	/* Now we need to refreeze and restore the PMCs */
 	mtspr(SPRN_MMCR0, MMCR0_FC | MMCR0_PMAO);
 
 	mtspr(SPRN_PMC1, pmcs[0]);
@@ -765,120 +764,120 @@ out:
 	mtspr(SPRN_PMC4, pmcs[3]);
 	mtspr(SPRN_PMC5, pmcs[4]);
 	mtspr(SPRN_PMC6, pmcs[5]);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_PPC64 */
+#endif /* CONFIG_PPC64 */
 
-अटल व्योम perf_event_पूर्णांकerrupt(काष्ठा pt_regs *regs);
+static void perf_event_interrupt(struct pt_regs *regs);
 
 /*
- * Read one perक्रमmance monitor counter (PMC).
+ * Read one performance monitor counter (PMC).
  */
-अटल अचिन्हित दीर्घ पढ़ो_pmc(पूर्णांक idx)
-अणु
-	अचिन्हित दीर्घ val;
+static unsigned long read_pmc(int idx)
+{
+	unsigned long val;
 
-	चयन (idx) अणु
-	हाल 1:
+	switch (idx) {
+	case 1:
 		val = mfspr(SPRN_PMC1);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		val = mfspr(SPRN_PMC2);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		val = mfspr(SPRN_PMC3);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		val = mfspr(SPRN_PMC4);
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		val = mfspr(SPRN_PMC5);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		val = mfspr(SPRN_PMC6);
-		अवरोध;
-#अगर_घोषित CONFIG_PPC64
-	हाल 7:
+		break;
+#ifdef CONFIG_PPC64
+	case 7:
 		val = mfspr(SPRN_PMC7);
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		val = mfspr(SPRN_PMC8);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_PPC64 */
-	शेष:
-		prपूर्णांकk(KERN_ERR "oops trying to read PMC%d\n", idx);
+		break;
+#endif /* CONFIG_PPC64 */
+	default:
+		printk(KERN_ERR "oops trying to read PMC%d\n", idx);
 		val = 0;
-	पूर्ण
-	वापस val;
-पूर्ण
+	}
+	return val;
+}
 
 /*
  * Write one PMC.
  */
-अटल व्योम ग_लिखो_pmc(पूर्णांक idx, अचिन्हित दीर्घ val)
-अणु
-	चयन (idx) अणु
-	हाल 1:
+static void write_pmc(int idx, unsigned long val)
+{
+	switch (idx) {
+	case 1:
 		mtspr(SPRN_PMC1, val);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mtspr(SPRN_PMC2, val);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		mtspr(SPRN_PMC3, val);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		mtspr(SPRN_PMC4, val);
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		mtspr(SPRN_PMC5, val);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		mtspr(SPRN_PMC6, val);
-		अवरोध;
-#अगर_घोषित CONFIG_PPC64
-	हाल 7:
+		break;
+#ifdef CONFIG_PPC64
+	case 7:
 		mtspr(SPRN_PMC7, val);
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		mtspr(SPRN_PMC8, val);
-		अवरोध;
-#पूर्ण_अगर /* CONFIG_PPC64 */
-	शेष:
-		prपूर्णांकk(KERN_ERR "oops trying to write PMC%d\n", idx);
-	पूर्ण
-पूर्ण
+		break;
+#endif /* CONFIG_PPC64 */
+	default:
+		printk(KERN_ERR "oops trying to write PMC%d\n", idx);
+	}
+}
 
 /* Called from sysrq_handle_showregs() */
-व्योम perf_event_prपूर्णांक_debug(व्योम)
-अणु
-	अचिन्हित दीर्घ sdar, sier, flags;
+void perf_event_print_debug(void)
+{
+	unsigned long sdar, sier, flags;
 	u32 pmcs[MAX_HWEVENTS];
-	पूर्णांक i;
+	int i;
 
-	अगर (!ppmu) अणु
+	if (!ppmu) {
 		pr_info("Performance monitor hardware not registered.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!ppmu->n_counter)
-		वापस;
+	if (!ppmu->n_counter)
+		return;
 
 	local_irq_save(flags);
 
 	pr_info("CPU: %d PMU registers, ppmu = %s n_counters = %d",
 		 smp_processor_id(), ppmu->name, ppmu->n_counter);
 
-	क्रम (i = 0; i < ppmu->n_counter; i++)
-		pmcs[i] = पढ़ो_pmc(i + 1);
+	for (i = 0; i < ppmu->n_counter; i++)
+		pmcs[i] = read_pmc(i + 1);
 
-	क्रम (; i < MAX_HWEVENTS; i++)
+	for (; i < MAX_HWEVENTS; i++)
 		pmcs[i] = 0xdeadbeef;
 
 	pr_info("PMC1:  %08x PMC2: %08x PMC3: %08x PMC4: %08x\n",
 		 pmcs[0], pmcs[1], pmcs[2], pmcs[3]);
 
-	अगर (ppmu->n_counter > 4)
+	if (ppmu->n_counter > 4)
 		pr_info("PMC5:  %08x PMC6: %08x PMC7: %08x PMC8: %08x\n",
 			 pmcs[4], pmcs[5], pmcs[6], pmcs[7]);
 
@@ -886,137 +885,137 @@ out:
 		mfspr(SPRN_MMCR0), mfspr(SPRN_MMCR1), mfspr(SPRN_MMCRA));
 
 	sdar = sier = 0;
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 	sdar = mfspr(SPRN_SDAR);
 
-	अगर (ppmu->flags & PPMU_HAS_SIER)
+	if (ppmu->flags & PPMU_HAS_SIER)
 		sier = mfspr(SPRN_SIER);
 
-	अगर (ppmu->flags & PPMU_ARCH_207S) अणु
+	if (ppmu->flags & PPMU_ARCH_207S) {
 		pr_info("MMCR2: %016lx EBBHR: %016lx\n",
 			mfspr(SPRN_MMCR2), mfspr(SPRN_EBBHR));
 		pr_info("EBBRR: %016lx BESCR: %016lx\n",
 			mfspr(SPRN_EBBRR), mfspr(SPRN_BESCR));
-	पूर्ण
+	}
 
-	अगर (ppmu->flags & PPMU_ARCH_31) अणु
+	if (ppmu->flags & PPMU_ARCH_31) {
 		pr_info("MMCR3: %016lx SIER2: %016lx SIER3: %016lx\n",
 			mfspr(SPRN_MMCR3), mfspr(SPRN_SIER2), mfspr(SPRN_SIER3));
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	pr_info("SIAR:  %016lx SDAR:  %016lx SIER:  %016lx\n",
 		mfspr(SPRN_SIAR), sdar, sier);
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
- * Check अगर a set of events can all go on the PMU at once.
- * If they can't, this will look at alternative codes क्रम the events
- * and see अगर any combination of alternative codes is feasible.
- * The feasible set is वापसed in event_id[].
+ * Check if a set of events can all go on the PMU at once.
+ * If they can't, this will look at alternative codes for the events
+ * and see if any combination of alternative codes is feasible.
+ * The feasible set is returned in event_id[].
  */
-अटल पूर्णांक घातer_check_स्थिरraपूर्णांकs(काष्ठा cpu_hw_events *cpuhw,
-				   u64 event_id[], अचिन्हित पूर्णांक cflags[],
-				   पूर्णांक n_ev, काष्ठा perf_event **event)
-अणु
-	अचिन्हित दीर्घ mask, value, nv;
-	अचिन्हित दीर्घ smasks[MAX_HWEVENTS], svalues[MAX_HWEVENTS];
-	पूर्णांक n_alt[MAX_HWEVENTS], choice[MAX_HWEVENTS];
-	पूर्णांक i, j;
-	अचिन्हित दीर्घ addf = ppmu->add_fields;
-	अचिन्हित दीर्घ tadd = ppmu->test_adder;
-	अचिन्हित दीर्घ grp_mask = ppmu->group_स्थिरraपूर्णांक_mask;
-	अचिन्हित दीर्घ grp_val = ppmu->group_स्थिरraपूर्णांक_val;
+static int power_check_constraints(struct cpu_hw_events *cpuhw,
+				   u64 event_id[], unsigned int cflags[],
+				   int n_ev, struct perf_event **event)
+{
+	unsigned long mask, value, nv;
+	unsigned long smasks[MAX_HWEVENTS], svalues[MAX_HWEVENTS];
+	int n_alt[MAX_HWEVENTS], choice[MAX_HWEVENTS];
+	int i, j;
+	unsigned long addf = ppmu->add_fields;
+	unsigned long tadd = ppmu->test_adder;
+	unsigned long grp_mask = ppmu->group_constraint_mask;
+	unsigned long grp_val = ppmu->group_constraint_val;
 
-	अगर (n_ev > ppmu->n_counter)
-		वापस -1;
+	if (n_ev > ppmu->n_counter)
+		return -1;
 
-	/* First see अगर the events will go on as-is */
-	क्रम (i = 0; i < n_ev; ++i) अणु
-		अगर ((cflags[i] & PPMU_LIMITED_PMC_REQD)
-		    && !ppmu->limited_pmc_event(event_id[i])) अणु
+	/* First see if the events will go on as-is */
+	for (i = 0; i < n_ev; ++i) {
+		if ((cflags[i] & PPMU_LIMITED_PMC_REQD)
+		    && !ppmu->limited_pmc_event(event_id[i])) {
 			ppmu->get_alternatives(event_id[i], cflags[i],
 					       cpuhw->alternatives[i]);
 			event_id[i] = cpuhw->alternatives[i][0];
-		पूर्ण
-		अगर (ppmu->get_स्थिरraपूर्णांक(event_id[i], &cpuhw->amasks[i][0],
+		}
+		if (ppmu->get_constraint(event_id[i], &cpuhw->amasks[i][0],
 					 &cpuhw->avalues[i][0], event[i]->attr.config1))
-			वापस -1;
-	पूर्ण
+			return -1;
+	}
 	value = mask = 0;
-	क्रम (i = 0; i < n_ev; ++i) अणु
+	for (i = 0; i < n_ev; ++i) {
 		nv = (value | cpuhw->avalues[i][0]) +
 			(value & cpuhw->avalues[i][0] & addf);
 
-		अगर (((((nv + tadd) ^ value) & mask) & (~grp_mask)) != 0)
-			अवरोध;
+		if (((((nv + tadd) ^ value) & mask) & (~grp_mask)) != 0)
+			break;
 
-		अगर (((((nv + tadd) ^ cpuhw->avalues[i][0]) & cpuhw->amasks[i][0])
+		if (((((nv + tadd) ^ cpuhw->avalues[i][0]) & cpuhw->amasks[i][0])
 			& (~grp_mask)) != 0)
-			अवरोध;
+			break;
 
 		value = nv;
 		mask |= cpuhw->amasks[i][0];
-	पूर्ण
-	अगर (i == n_ev) अणु
-		अगर ((value & mask & grp_mask) != (mask & grp_val))
-			वापस -1;
-		अन्यथा
-			वापस 0;	/* all OK */
-	पूर्ण
+	}
+	if (i == n_ev) {
+		if ((value & mask & grp_mask) != (mask & grp_val))
+			return -1;
+		else
+			return 0;	/* all OK */
+	}
 
-	/* करोesn't work, gather alternatives... */
-	अगर (!ppmu->get_alternatives)
-		वापस -1;
-	क्रम (i = 0; i < n_ev; ++i) अणु
+	/* doesn't work, gather alternatives... */
+	if (!ppmu->get_alternatives)
+		return -1;
+	for (i = 0; i < n_ev; ++i) {
 		choice[i] = 0;
 		n_alt[i] = ppmu->get_alternatives(event_id[i], cflags[i],
 						  cpuhw->alternatives[i]);
-		क्रम (j = 1; j < n_alt[i]; ++j)
-			ppmu->get_स्थिरraपूर्णांक(cpuhw->alternatives[i][j],
+		for (j = 1; j < n_alt[i]; ++j)
+			ppmu->get_constraint(cpuhw->alternatives[i][j],
 					     &cpuhw->amasks[i][j],
 					     &cpuhw->avalues[i][j],
 					     event[i]->attr.config1);
-	पूर्ण
+	}
 
-	/* क्रमागतerate all possibilities and see अगर any will work */
+	/* enumerate all possibilities and see if any will work */
 	i = 0;
 	j = -1;
 	value = mask = nv = 0;
-	जबतक (i < n_ev) अणु
-		अगर (j >= 0) अणु
+	while (i < n_ev) {
+		if (j >= 0) {
 			/* we're backtracking, restore context */
 			value = svalues[i];
 			mask = smasks[i];
 			j = choice[i];
-		पूर्ण
+		}
 		/*
-		 * See अगर any alternative k क्रम event_id i,
-		 * where k > j, will satisfy the स्थिरraपूर्णांकs.
+		 * See if any alternative k for event_id i,
+		 * where k > j, will satisfy the constraints.
 		 */
-		जबतक (++j < n_alt[i]) अणु
+		while (++j < n_alt[i]) {
 			nv = (value | cpuhw->avalues[i][j]) +
 				(value & cpuhw->avalues[i][j] & addf);
-			अगर ((((nv + tadd) ^ value) & mask) == 0 &&
+			if ((((nv + tadd) ^ value) & mask) == 0 &&
 			    (((nv + tadd) ^ cpuhw->avalues[i][j])
 			     & cpuhw->amasks[i][j]) == 0)
-				अवरोध;
-		पूर्ण
-		अगर (j >= n_alt[i]) अणु
+				break;
+		}
+		if (j >= n_alt[i]) {
 			/*
 			 * No feasible alternative, backtrack
-			 * to event_id i-1 and जारी क्रमागतerating its
+			 * to event_id i-1 and continue enumerating its
 			 * alternatives from where we got up to.
 			 */
-			अगर (--i < 0)
-				वापस -1;
-		पूर्ण अन्यथा अणु
+			if (--i < 0)
+				return -1;
+		} else {
 			/*
-			 * Found a feasible alternative क्रम event_id i,
+			 * Found a feasible alternative for event_id i,
 			 * remember where we got up to with this event_id,
 			 * go on to the next event_id, and start with
-			 * the first alternative क्रम it.
+			 * the first alternative for it.
 			 */
 			choice[i] = j;
 			svalues[i] = value;
@@ -1025,114 +1024,114 @@ out:
 			mask |= cpuhw->amasks[i][j];
 			++i;
 			j = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* OK, we have a feasible combination, tell the caller the solution */
-	क्रम (i = 0; i < n_ev; ++i)
+	for (i = 0; i < n_ev; ++i)
 		event_id[i] = cpuhw->alternatives[i][choice[i]];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Check अगर newly-added events have consistent settings क्रम
- * exclude_अणुuser,kernel,hvपूर्ण with each other and any previously
+ * Check if newly-added events have consistent settings for
+ * exclude_{user,kernel,hv} with each other and any previously
  * added events.
  */
-अटल पूर्णांक check_excludes(काष्ठा perf_event **ctrs, अचिन्हित पूर्णांक cflags[],
-			  पूर्णांक n_prev, पूर्णांक n_new)
-अणु
-	पूर्णांक eu = 0, ek = 0, eh = 0;
-	पूर्णांक i, n, first;
-	काष्ठा perf_event *event;
+static int check_excludes(struct perf_event **ctrs, unsigned int cflags[],
+			  int n_prev, int n_new)
+{
+	int eu = 0, ek = 0, eh = 0;
+	int i, n, first;
+	struct perf_event *event;
 
 	/*
 	 * If the PMU we're on supports per event exclude settings then we
-	 * करोn't need to करो any of this logic. NB. This assumes no PMU has both
+	 * don't need to do any of this logic. NB. This assumes no PMU has both
 	 * per event exclude and limited PMCs.
 	 */
-	अगर (ppmu->flags & PPMU_ARCH_207S)
-		वापस 0;
+	if (ppmu->flags & PPMU_ARCH_207S)
+		return 0;
 
 	n = n_prev + n_new;
-	अगर (n <= 1)
-		वापस 0;
+	if (n <= 1)
+		return 0;
 
 	first = 1;
-	क्रम (i = 0; i < n; ++i) अणु
-		अगर (cflags[i] & PPMU_LIMITED_PMC_OK) अणु
+	for (i = 0; i < n; ++i) {
+		if (cflags[i] & PPMU_LIMITED_PMC_OK) {
 			cflags[i] &= ~PPMU_LIMITED_PMC_REQD;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		event = ctrs[i];
-		अगर (first) अणु
+		if (first) {
 			eu = event->attr.exclude_user;
 			ek = event->attr.exclude_kernel;
 			eh = event->attr.exclude_hv;
 			first = 0;
-		पूर्ण अन्यथा अगर (event->attr.exclude_user != eu ||
+		} else if (event->attr.exclude_user != eu ||
 			   event->attr.exclude_kernel != ek ||
-			   event->attr.exclude_hv != eh) अणु
-			वापस -EAGAIN;
-		पूर्ण
-	पूर्ण
+			   event->attr.exclude_hv != eh) {
+			return -EAGAIN;
+		}
+	}
 
-	अगर (eu || ek || eh)
-		क्रम (i = 0; i < n; ++i)
-			अगर (cflags[i] & PPMU_LIMITED_PMC_OK)
+	if (eu || ek || eh)
+		for (i = 0; i < n; ++i)
+			if (cflags[i] & PPMU_LIMITED_PMC_OK)
 				cflags[i] |= PPMU_LIMITED_PMC_REQD;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 check_and_compute_delta(u64 prev, u64 val)
-अणु
+static u64 check_and_compute_delta(u64 prev, u64 val)
+{
 	u64 delta = (val - prev) & 0xfffffffful;
 
 	/*
-	 * POWER7 can roll back counter values, अगर the new value is smaller
+	 * POWER7 can roll back counter values, if the new value is smaller
 	 * than the previous value it will cause the delta and the counter to
 	 * have bogus values unless we rolled a counter over.  If a coutner is
 	 * rolled back, it will be smaller, but within 256, which is the maximum
 	 * number of events to rollback at once.  If we detect a rollback
-	 * वापस 0.  This can lead to a small lack of precision in the
+	 * return 0.  This can lead to a small lack of precision in the
 	 * counters.
 	 */
-	अगर (prev > val && (prev - val) < 256)
+	if (prev > val && (prev - val) < 256)
 		delta = 0;
 
-	वापस delta;
-पूर्ण
+	return delta;
+}
 
-अटल व्योम घातer_pmu_पढ़ो(काष्ठा perf_event *event)
-अणु
+static void power_pmu_read(struct perf_event *event)
+{
 	s64 val, delta, prev;
 
-	अगर (event->hw.state & PERF_HES_STOPPED)
-		वापस;
+	if (event->hw.state & PERF_HES_STOPPED)
+		return;
 
-	अगर (!event->hw.idx)
-		वापस;
+	if (!event->hw.idx)
+		return;
 
-	अगर (is_ebb_event(event)) अणु
-		val = पढ़ो_pmc(event->hw.idx);
+	if (is_ebb_event(event)) {
+		val = read_pmc(event->hw.idx);
 		local64_set(&event->hw.prev_count, val);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Perक्रमmance monitor पूर्णांकerrupts come even when पूर्णांकerrupts
-	 * are soft-disabled, as दीर्घ as पूर्णांकerrupts are hard-enabled.
-	 * Thereक्रमe we treat them like NMIs.
+	 * Performance monitor interrupts come even when interrupts
+	 * are soft-disabled, as long as interrupts are hard-enabled.
+	 * Therefore we treat them like NMIs.
 	 */
-	करो अणु
-		prev = local64_पढ़ो(&event->hw.prev_count);
+	do {
+		prev = local64_read(&event->hw.prev_count);
 		barrier();
-		val = पढ़ो_pmc(event->hw.idx);
+		val = read_pmc(event->hw.idx);
 		delta = check_and_compute_delta(prev, val);
-		अगर (!delta)
-			वापस;
-	पूर्ण जबतक (local64_cmpxchg(&event->hw.prev_count, prev, val) != prev);
+		if (!delta)
+			return;
+	} while (local64_cmpxchg(&event->hw.prev_count, prev, val) != prev);
 
 	local64_add(delta, &event->count);
 
@@ -1140,136 +1139,136 @@ out:
 	 * A number of places program the PMC with (0x80000000 - period_left).
 	 * We never want period_left to be less than 1 because we will program
 	 * the PMC with a value >= 0x800000000 and an edge detected PMC will
-	 * roll around to 0 beक्रमe taking an exception. We have seen this
+	 * roll around to 0 before taking an exception. We have seen this
 	 * on POWER8.
 	 *
 	 * To fix this, clamp the minimum value of period_left to 1.
 	 */
-	करो अणु
-		prev = local64_पढ़ो(&event->hw.period_left);
+	do {
+		prev = local64_read(&event->hw.period_left);
 		val = prev - delta;
-		अगर (val < 1)
+		if (val < 1)
 			val = 1;
-	पूर्ण जबतक (local64_cmpxchg(&event->hw.period_left, prev, val) != prev);
-पूर्ण
+	} while (local64_cmpxchg(&event->hw.period_left, prev, val) != prev);
+}
 
 /*
  * On some machines, PMC5 and PMC6 can't be written, don't respect
- * the मुक्तze conditions, and करोn't generate पूर्णांकerrupts.  This tells
- * us अगर `event' is using such a PMC.
+ * the freeze conditions, and don't generate interrupts.  This tells
+ * us if `event' is using such a PMC.
  */
-अटल पूर्णांक is_limited_pmc(पूर्णांक pmcnum)
-अणु
-	वापस (ppmu->flags & PPMU_LIMITED_PMC5_6)
+static int is_limited_pmc(int pmcnum)
+{
+	return (ppmu->flags & PPMU_LIMITED_PMC5_6)
 		&& (pmcnum == 5 || pmcnum == 6);
-पूर्ण
+}
 
-अटल व्योम मुक्तze_limited_counters(काष्ठा cpu_hw_events *cpuhw,
-				    अचिन्हित दीर्घ pmc5, अचिन्हित दीर्घ pmc6)
-अणु
-	काष्ठा perf_event *event;
+static void freeze_limited_counters(struct cpu_hw_events *cpuhw,
+				    unsigned long pmc5, unsigned long pmc6)
+{
+	struct perf_event *event;
 	u64 val, prev, delta;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < cpuhw->n_limited; ++i) अणु
+	for (i = 0; i < cpuhw->n_limited; ++i) {
 		event = cpuhw->limited_counter[i];
-		अगर (!event->hw.idx)
-			जारी;
+		if (!event->hw.idx)
+			continue;
 		val = (event->hw.idx == 5) ? pmc5 : pmc6;
-		prev = local64_पढ़ो(&event->hw.prev_count);
+		prev = local64_read(&event->hw.prev_count);
 		event->hw.idx = 0;
 		delta = check_and_compute_delta(prev, val);
-		अगर (delta)
+		if (delta)
 			local64_add(delta, &event->count);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम thaw_limited_counters(काष्ठा cpu_hw_events *cpuhw,
-				  अचिन्हित दीर्घ pmc5, अचिन्हित दीर्घ pmc6)
-अणु
-	काष्ठा perf_event *event;
+static void thaw_limited_counters(struct cpu_hw_events *cpuhw,
+				  unsigned long pmc5, unsigned long pmc6)
+{
+	struct perf_event *event;
 	u64 val, prev;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < cpuhw->n_limited; ++i) अणु
+	for (i = 0; i < cpuhw->n_limited; ++i) {
 		event = cpuhw->limited_counter[i];
 		event->hw.idx = cpuhw->limited_hwidx[i];
 		val = (event->hw.idx == 5) ? pmc5 : pmc6;
-		prev = local64_पढ़ो(&event->hw.prev_count);
-		अगर (check_and_compute_delta(prev, val))
+		prev = local64_read(&event->hw.prev_count);
+		if (check_and_compute_delta(prev, val))
 			local64_set(&event->hw.prev_count, val);
 		perf_event_update_userpage(event);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Since limited events करोn't respect the मुक्तze conditions, we
- * have to पढ़ो them immediately after मुक्तzing or unमुक्तzing the
+ * Since limited events don't respect the freeze conditions, we
+ * have to read them immediately after freezing or unfreezing the
  * other events.  We try to keep the values from the limited
  * events as consistent as possible by keeping the delay (in
- * cycles and inकाष्ठाions) between मुक्तzing/unमुक्तzing and पढ़ोing
+ * cycles and instructions) between freezing/unfreezing and reading
  * the limited events as small and consistent as possible.
- * Thereक्रमe, अगर any limited events are in use, we पढ़ो them
+ * Therefore, if any limited events are in use, we read them
  * both, and always in the same order, to minimize variability,
- * and करो it inside the same यंत्र that ग_लिखोs MMCR0.
+ * and do it inside the same asm that writes MMCR0.
  */
-अटल व्योम ग_लिखो_mmcr0(काष्ठा cpu_hw_events *cpuhw, अचिन्हित दीर्घ mmcr0)
-अणु
-	अचिन्हित दीर्घ pmc5, pmc6;
+static void write_mmcr0(struct cpu_hw_events *cpuhw, unsigned long mmcr0)
+{
+	unsigned long pmc5, pmc6;
 
-	अगर (!cpuhw->n_limited) अणु
+	if (!cpuhw->n_limited) {
 		mtspr(SPRN_MMCR0, mmcr0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Write MMCR0, then पढ़ो PMC5 and PMC6 immediately.
-	 * To ensure we करोn't get a perक्रमmance monitor पूर्णांकerrupt
-	 * between writing MMCR0 and मुक्तzing/thawing the limited
-	 * events, we first ग_लिखो MMCR0 with the event overflow
-	 * पूर्णांकerrupt enable bits turned off.
+	 * Write MMCR0, then read PMC5 and PMC6 immediately.
+	 * To ensure we don't get a performance monitor interrupt
+	 * between writing MMCR0 and freezing/thawing the limited
+	 * events, we first write MMCR0 with the event overflow
+	 * interrupt enable bits turned off.
 	 */
-	यंत्र अस्थिर("mtspr %3,%2; mfspr %0,%4; mfspr %1,%5"
+	asm volatile("mtspr %3,%2; mfspr %0,%4; mfspr %1,%5"
 		     : "=&r" (pmc5), "=&r" (pmc6)
 		     : "r" (mmcr0 & ~(MMCR0_PMC1CE | MMCR0_PMCjCE)),
 		       "i" (SPRN_MMCR0),
 		       "i" (SPRN_PMC5), "i" (SPRN_PMC6));
 
-	अगर (mmcr0 & MMCR0_FC)
-		मुक्तze_limited_counters(cpuhw, pmc5, pmc6);
-	अन्यथा
+	if (mmcr0 & MMCR0_FC)
+		freeze_limited_counters(cpuhw, pmc5, pmc6);
+	else
 		thaw_limited_counters(cpuhw, pmc5, pmc6);
 
 	/*
-	 * Write the full MMCR0 including the event overflow पूर्णांकerrupt
-	 * enable bits, अगर necessary.
+	 * Write the full MMCR0 including the event overflow interrupt
+	 * enable bits, if necessary.
 	 */
-	अगर (mmcr0 & (MMCR0_PMC1CE | MMCR0_PMCjCE))
+	if (mmcr0 & (MMCR0_PMC1CE | MMCR0_PMCjCE))
 		mtspr(SPRN_MMCR0, mmcr0);
-पूर्ण
+}
 
 /*
- * Disable all events to prevent PMU पूर्णांकerrupts and to allow
- * events to be added or हटाओd.
+ * Disable all events to prevent PMU interrupts and to allow
+ * events to be added or removed.
  */
-अटल व्योम घातer_pmu_disable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा cpu_hw_events *cpuhw;
-	अचिन्हित दीर्घ flags, mmcr0, val, mmcra;
+static void power_pmu_disable(struct pmu *pmu)
+{
+	struct cpu_hw_events *cpuhw;
+	unsigned long flags, mmcr0, val, mmcra;
 
-	अगर (!ppmu)
-		वापस;
+	if (!ppmu)
+		return;
 	local_irq_save(flags);
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	अगर (!cpuhw->disabled) अणु
+	if (!cpuhw->disabled) {
 		/*
-		 * Check अगर we ever enabled the PMU on this cpu.
+		 * Check if we ever enabled the PMU on this cpu.
 		 */
-		अगर (!cpuhw->pmcs_enabled) अणु
+		if (!cpuhw->pmcs_enabled) {
 			ppc_enable_pmcs();
 			cpuhw->pmcs_enabled = 1;
-		पूर्ण
+		}
 
 		/*
 		 * Set the 'freeze counters' bit, clear EBE/BHRBA/PMCC/PMAO/FC56
@@ -1278,93 +1277,93 @@ out:
 		val |= MMCR0_FC;
 		val &= ~(MMCR0_EBE | MMCR0_BHRBA | MMCR0_PMCC | MMCR0_PMAO |
 			 MMCR0_FC56);
-		/* Set mmcr0 PMCCEXT क्रम p10 */
-		अगर (ppmu->flags & PPMU_ARCH_31)
+		/* Set mmcr0 PMCCEXT for p10 */
+		if (ppmu->flags & PPMU_ARCH_31)
 			val |= MMCR0_PMCCEXT;
 
 		/*
 		 * The barrier is to make sure the mtspr has been
 		 * executed and the PMU has frozen the events etc.
-		 * beक्रमe we वापस.
+		 * before we return.
 		 */
-		ग_लिखो_mmcr0(cpuhw, val);
+		write_mmcr0(cpuhw, val);
 		mb();
 		isync();
 
 		val = mmcra = cpuhw->mmcr.mmcra;
 
 		/*
-		 * Disable inकाष्ठाion sampling अगर it was enabled
+		 * Disable instruction sampling if it was enabled
 		 */
-		अगर (cpuhw->mmcr.mmcra & MMCRA_SAMPLE_ENABLE)
+		if (cpuhw->mmcr.mmcra & MMCRA_SAMPLE_ENABLE)
 			val &= ~MMCRA_SAMPLE_ENABLE;
 
-		/* Disable BHRB via mmcra (BHRBRD) क्रम p10 */
-		अगर (ppmu->flags & PPMU_ARCH_31)
+		/* Disable BHRB via mmcra (BHRBRD) for p10 */
+		if (ppmu->flags & PPMU_ARCH_31)
 			val |= MMCRA_BHRB_DISABLE;
 
 		/*
-		 * Write SPRN_MMCRA अगर mmcra has either disabled
-		 * inकाष्ठाion sampling or BHRB.
+		 * Write SPRN_MMCRA if mmcra has either disabled
+		 * instruction sampling or BHRB.
 		 */
-		अगर (val != mmcra) अणु
+		if (val != mmcra) {
 			mtspr(SPRN_MMCRA, mmcra);
 			mb();
 			isync();
-		पूर्ण
+		}
 
 		cpuhw->disabled = 1;
 		cpuhw->n_added = 0;
 
-		ebb_चयन_out(mmcr0);
+		ebb_switch_out(mmcr0);
 
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 		/*
-		 * These are पढ़ोable by userspace, may contain kernel
-		 * addresses and are not चयनed by context चयन, so clear
-		 * them now to aव्योम leaking anything to userspace in general
+		 * These are readable by userspace, may contain kernel
+		 * addresses and are not switched by context switch, so clear
+		 * them now to avoid leaking anything to userspace in general
 		 * including to another process.
 		 */
-		अगर (ppmu->flags & PPMU_ARCH_207S) अणु
+		if (ppmu->flags & PPMU_ARCH_207S) {
 			mtspr(SPRN_SDAR, 0);
 			mtspr(SPRN_SIAR, 0);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण
+		}
+#endif
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
- * Re-enable all events अगर disable == 0.
+ * Re-enable all events if disable == 0.
  * If we were previously disabled and events were added, then
  * put the new config on the PMU.
  */
-अटल व्योम घातer_pmu_enable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा perf_event *event;
-	काष्ठा cpu_hw_events *cpuhw;
-	अचिन्हित दीर्घ flags;
-	दीर्घ i;
-	अचिन्हित दीर्घ val, mmcr0;
+static void power_pmu_enable(struct pmu *pmu)
+{
+	struct perf_event *event;
+	struct cpu_hw_events *cpuhw;
+	unsigned long flags;
+	long i;
+	unsigned long val, mmcr0;
 	s64 left;
-	अचिन्हित पूर्णांक hwc_index[MAX_HWEVENTS];
-	पूर्णांक n_lim;
-	पूर्णांक idx;
+	unsigned int hwc_index[MAX_HWEVENTS];
+	int n_lim;
+	int idx;
 	bool ebb;
 
-	अगर (!ppmu)
-		वापस;
+	if (!ppmu)
+		return;
 	local_irq_save(flags);
 
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
-	अगर (!cpuhw->disabled)
-		जाओ out;
+	if (!cpuhw->disabled)
+		goto out;
 
-	अगर (cpuhw->n_events == 0) अणु
+	if (cpuhw->n_events == 0) {
 		ppc_set_pmu_inuse(0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cpuhw->disabled = 0;
 
@@ -1376,188 +1375,188 @@ out:
 	ebb = is_ebb_event(cpuhw->event[0]);
 
 	/*
-	 * If we didn't change anything, or only हटाओd events,
+	 * If we didn't change anything, or only removed events,
 	 * no need to recalculate MMCR* settings and reset the PMCs.
 	 * Just reenable the PMU with the current MMCR* settings
-	 * (possibly updated क्रम removal of events).
+	 * (possibly updated for removal of events).
 	 */
-	अगर (!cpuhw->n_added) अणु
+	if (!cpuhw->n_added) {
 		mtspr(SPRN_MMCRA, cpuhw->mmcr.mmcra & ~MMCRA_SAMPLE_ENABLE);
 		mtspr(SPRN_MMCR1, cpuhw->mmcr.mmcr1);
-		अगर (ppmu->flags & PPMU_ARCH_31)
+		if (ppmu->flags & PPMU_ARCH_31)
 			mtspr(SPRN_MMCR3, cpuhw->mmcr.mmcr3);
-		जाओ out_enable;
-	पूर्ण
+		goto out_enable;
+	}
 
 	/*
-	 * Clear all MMCR settings and recompute them क्रम the new set of events.
+	 * Clear all MMCR settings and recompute them for the new set of events.
 	 */
-	स_रखो(&cpuhw->mmcr, 0, माप(cpuhw->mmcr));
+	memset(&cpuhw->mmcr, 0, sizeof(cpuhw->mmcr));
 
-	अगर (ppmu->compute_mmcr(cpuhw->events, cpuhw->n_events, hwc_index,
-			       &cpuhw->mmcr, cpuhw->event, ppmu->flags)) अणु
+	if (ppmu->compute_mmcr(cpuhw->events, cpuhw->n_events, hwc_index,
+			       &cpuhw->mmcr, cpuhw->event, ppmu->flags)) {
 		/* shouldn't ever get here */
-		prपूर्णांकk(KERN_ERR "oops compute_mmcr failed\n");
-		जाओ out;
-	पूर्ण
+		printk(KERN_ERR "oops compute_mmcr failed\n");
+		goto out;
+	}
 
-	अगर (!(ppmu->flags & PPMU_ARCH_207S)) अणु
+	if (!(ppmu->flags & PPMU_ARCH_207S)) {
 		/*
-		 * Add in MMCR0 मुक्तze bits corresponding to the attr.exclude_*
-		 * bits क्रम the first event. We have alपढ़ोy checked that all
-		 * events have the same value क्रम these bits as the first event.
+		 * Add in MMCR0 freeze bits corresponding to the attr.exclude_*
+		 * bits for the first event. We have already checked that all
+		 * events have the same value for these bits as the first event.
 		 */
 		event = cpuhw->event[0];
-		अगर (event->attr.exclude_user)
+		if (event->attr.exclude_user)
 			cpuhw->mmcr.mmcr0 |= MMCR0_FCP;
-		अगर (event->attr.exclude_kernel)
-			cpuhw->mmcr.mmcr0 |= मुक्तze_events_kernel;
-		अगर (event->attr.exclude_hv)
+		if (event->attr.exclude_kernel)
+			cpuhw->mmcr.mmcr0 |= freeze_events_kernel;
+		if (event->attr.exclude_hv)
 			cpuhw->mmcr.mmcr0 |= MMCR0_FCHV;
-	पूर्ण
+	}
 
 	/*
-	 * Write the new configuration to MMCR* with the मुक्तze
+	 * Write the new configuration to MMCR* with the freeze
 	 * bit set and set the hardware events to their initial values.
-	 * Then unमुक्तze the events.
+	 * Then unfreeze the events.
 	 */
 	ppc_set_pmu_inuse(1);
 	mtspr(SPRN_MMCRA, cpuhw->mmcr.mmcra & ~MMCRA_SAMPLE_ENABLE);
 	mtspr(SPRN_MMCR1, cpuhw->mmcr.mmcr1);
 	mtspr(SPRN_MMCR0, (cpuhw->mmcr.mmcr0 & ~(MMCR0_PMC1CE | MMCR0_PMCjCE))
 				| MMCR0_FC);
-	अगर (ppmu->flags & PPMU_ARCH_207S)
+	if (ppmu->flags & PPMU_ARCH_207S)
 		mtspr(SPRN_MMCR2, cpuhw->mmcr.mmcr2);
 
-	अगर (ppmu->flags & PPMU_ARCH_31)
+	if (ppmu->flags & PPMU_ARCH_31)
 		mtspr(SPRN_MMCR3, cpuhw->mmcr.mmcr3);
 
 	/*
 	 * Read off any pre-existing events that need to move
 	 * to another PMC.
 	 */
-	क्रम (i = 0; i < cpuhw->n_events; ++i) अणु
+	for (i = 0; i < cpuhw->n_events; ++i) {
 		event = cpuhw->event[i];
-		अगर (event->hw.idx && event->hw.idx != hwc_index[i] + 1) अणु
-			घातer_pmu_पढ़ो(event);
-			ग_लिखो_pmc(event->hw.idx, 0);
+		if (event->hw.idx && event->hw.idx != hwc_index[i] + 1) {
+			power_pmu_read(event);
+			write_pmc(event->hw.idx, 0);
 			event->hw.idx = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Initialize the PMCs क्रम all the new and moved events.
+	 * Initialize the PMCs for all the new and moved events.
 	 */
 	cpuhw->n_limited = n_lim = 0;
-	क्रम (i = 0; i < cpuhw->n_events; ++i) अणु
+	for (i = 0; i < cpuhw->n_events; ++i) {
 		event = cpuhw->event[i];
-		अगर (event->hw.idx)
-			जारी;
+		if (event->hw.idx)
+			continue;
 		idx = hwc_index[i] + 1;
-		अगर (is_limited_pmc(idx)) अणु
+		if (is_limited_pmc(idx)) {
 			cpuhw->limited_counter[n_lim] = event;
 			cpuhw->limited_hwidx[n_lim] = idx;
 			++n_lim;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ebb)
-			val = local64_पढ़ो(&event->hw.prev_count);
-		अन्यथा अणु
+		if (ebb)
+			val = local64_read(&event->hw.prev_count);
+		else {
 			val = 0;
-			अगर (event->hw.sample_period) अणु
-				left = local64_पढ़ो(&event->hw.period_left);
-				अगर (left < 0x80000000L)
+			if (event->hw.sample_period) {
+				left = local64_read(&event->hw.period_left);
+				if (left < 0x80000000L)
 					val = 0x80000000L - left;
-			पूर्ण
+			}
 			local64_set(&event->hw.prev_count, val);
-		पूर्ण
+		}
 
 		event->hw.idx = idx;
-		अगर (event->hw.state & PERF_HES_STOPPED)
+		if (event->hw.state & PERF_HES_STOPPED)
 			val = 0;
-		ग_लिखो_pmc(idx, val);
+		write_pmc(idx, val);
 
 		perf_event_update_userpage(event);
-	पूर्ण
+	}
 	cpuhw->n_limited = n_lim;
 	cpuhw->mmcr.mmcr0 |= MMCR0_PMXE | MMCR0_FCECE;
 
  out_enable:
 	pmao_restore_workaround(ebb);
 
-	mmcr0 = ebb_चयन_in(ebb, cpuhw);
+	mmcr0 = ebb_switch_in(ebb, cpuhw);
 
 	mb();
-	अगर (cpuhw->bhrb_users)
+	if (cpuhw->bhrb_users)
 		ppmu->config_bhrb(cpuhw->bhrb_filter);
 
-	ग_लिखो_mmcr0(cpuhw, mmcr0);
+	write_mmcr0(cpuhw, mmcr0);
 
 	/*
-	 * Enable inकाष्ठाion sampling अगर necessary
+	 * Enable instruction sampling if necessary
 	 */
-	अगर (cpuhw->mmcr.mmcra & MMCRA_SAMPLE_ENABLE) अणु
+	if (cpuhw->mmcr.mmcra & MMCRA_SAMPLE_ENABLE) {
 		mb();
 		mtspr(SPRN_MMCRA, cpuhw->mmcr.mmcra);
-	पूर्ण
+	}
 
  out:
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल पूर्णांक collect_events(काष्ठा perf_event *group, पूर्णांक max_count,
-			  काष्ठा perf_event *ctrs[], u64 *events,
-			  अचिन्हित पूर्णांक *flags)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा perf_event *event;
+static int collect_events(struct perf_event *group, int max_count,
+			  struct perf_event *ctrs[], u64 *events,
+			  unsigned int *flags)
+{
+	int n = 0;
+	struct perf_event *event;
 
-	अगर (group->pmu->task_ctx_nr == perf_hw_context) अणु
-		अगर (n >= max_count)
-			वापस -1;
+	if (group->pmu->task_ctx_nr == perf_hw_context) {
+		if (n >= max_count)
+			return -1;
 		ctrs[n] = group;
 		flags[n] = group->hw.event_base;
 		events[n++] = group->hw.config;
-	पूर्ण
-	क्रम_each_sibling_event(event, group) अणु
-		अगर (event->pmu->task_ctx_nr == perf_hw_context &&
-		    event->state != PERF_EVENT_STATE_OFF) अणु
-			अगर (n >= max_count)
-				वापस -1;
+	}
+	for_each_sibling_event(event, group) {
+		if (event->pmu->task_ctx_nr == perf_hw_context &&
+		    event->state != PERF_EVENT_STATE_OFF) {
+			if (n >= max_count)
+				return -1;
 			ctrs[n] = event;
 			flags[n] = event->hw.event_base;
 			events[n++] = event->hw.config;
-		पूर्ण
-	पूर्ण
-	वापस n;
-पूर्ण
+		}
+	}
+	return n;
+}
 
 /*
  * Add an event to the PMU.
- * If all events are not alपढ़ोy frozen, then we disable and
- * re-enable the PMU in order to get hw_perf_enable to करो the
+ * If all events are not already frozen, then we disable and
+ * re-enable the PMU in order to get hw_perf_enable to do the
  * actual work of reconfiguring the PMU.
  */
-अटल पूर्णांक घातer_pmu_add(काष्ठा perf_event *event, पूर्णांक ef_flags)
-अणु
-	काष्ठा cpu_hw_events *cpuhw;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक n0;
-	पूर्णांक ret = -EAGAIN;
+static int power_pmu_add(struct perf_event *event, int ef_flags)
+{
+	struct cpu_hw_events *cpuhw;
+	unsigned long flags;
+	int n0;
+	int ret = -EAGAIN;
 
 	local_irq_save(flags);
 	perf_pmu_disable(event->pmu);
 
 	/*
-	 * Add the event to the list (अगर there is room)
+	 * Add the event to the list (if there is room)
 	 * and check whether the total set is still feasible.
 	 */
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
 	n0 = cpuhw->n_events;
-	अगर (n0 >= ppmu->n_counter)
-		जाओ out;
+	if (n0 >= ppmu->n_counter)
+		goto out;
 	cpuhw->event[n0] = event;
 	cpuhw->events[n0] = event->hw.config;
 	cpuhw->flags[n0] = event->hw.event_base;
@@ -1566,25 +1565,25 @@ out:
 	 * This event may have been disabled/stopped in record_and_restart()
 	 * because we exceeded the ->event_limit. If re-starting the event,
 	 * clear the ->hw.state (STOPPED and UPTODATE flags), so the user
-	 * notअगरication is re-enabled.
+	 * notification is re-enabled.
 	 */
-	अगर (!(ef_flags & PERF_EF_START))
+	if (!(ef_flags & PERF_EF_START))
 		event->hw.state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	अन्यथा
+	else
 		event->hw.state = 0;
 
 	/*
 	 * If group events scheduling transaction was started,
-	 * skip the schedulability test here, it will be perक्रमmed
-	 * at commit समय(->commit_txn) as a whole
+	 * skip the schedulability test here, it will be performed
+	 * at commit time(->commit_txn) as a whole
 	 */
-	अगर (cpuhw->txn_flags & PERF_PMU_TXN_ADD)
-		जाओ nocheck;
+	if (cpuhw->txn_flags & PERF_PMU_TXN_ADD)
+		goto nocheck;
 
-	अगर (check_excludes(cpuhw->event, cpuhw->flags, n0, 1))
-		जाओ out;
-	अगर (घातer_check_स्थिरraपूर्णांकs(cpuhw, cpuhw->events, cpuhw->flags, n0 + 1, cpuhw->event))
-		जाओ out;
+	if (check_excludes(cpuhw->event, cpuhw->flags, n0, 1))
+		goto out;
+	if (power_check_constraints(cpuhw, cpuhw->events, cpuhw->flags, n0 + 1, cpuhw->event))
+		goto out;
 	event->hw.config = cpuhw->events[n0];
 
 nocheck:
@@ -1595,472 +1594,472 @@ nocheck:
 
 	ret = 0;
  out:
-	अगर (has_branch_stack(event)) अणु
+	if (has_branch_stack(event)) {
 		u64 bhrb_filter = -1;
 
-		अगर (ppmu->bhrb_filter_map)
+		if (ppmu->bhrb_filter_map)
 			bhrb_filter = ppmu->bhrb_filter_map(
 				event->attr.branch_sample_type);
 
-		अगर (bhrb_filter != -1) अणु
+		if (bhrb_filter != -1) {
 			cpuhw->bhrb_filter = bhrb_filter;
-			घातer_pmu_bhrb_enable(event);
-		पूर्ण
-	पूर्ण
+			power_pmu_bhrb_enable(event);
+		}
+	}
 
 	perf_pmu_enable(event->pmu);
 	local_irq_restore(flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Remove an event from the PMU.
  */
-अटल व्योम घातer_pmu_del(काष्ठा perf_event *event, पूर्णांक ef_flags)
-अणु
-	काष्ठा cpu_hw_events *cpuhw;
-	दीर्घ i;
-	अचिन्हित दीर्घ flags;
+static void power_pmu_del(struct perf_event *event, int ef_flags)
+{
+	struct cpu_hw_events *cpuhw;
+	long i;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	perf_pmu_disable(event->pmu);
 
-	घातer_pmu_पढ़ो(event);
+	power_pmu_read(event);
 
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
-	क्रम (i = 0; i < cpuhw->n_events; ++i) अणु
-		अगर (event == cpuhw->event[i]) अणु
-			जबतक (++i < cpuhw->n_events) अणु
+	for (i = 0; i < cpuhw->n_events; ++i) {
+		if (event == cpuhw->event[i]) {
+			while (++i < cpuhw->n_events) {
 				cpuhw->event[i-1] = cpuhw->event[i];
 				cpuhw->events[i-1] = cpuhw->events[i];
 				cpuhw->flags[i-1] = cpuhw->flags[i];
-			पूर्ण
+			}
 			--cpuhw->n_events;
 			ppmu->disable_pmc(event->hw.idx - 1, &cpuhw->mmcr);
-			अगर (event->hw.idx) अणु
-				ग_लिखो_pmc(event->hw.idx, 0);
+			if (event->hw.idx) {
+				write_pmc(event->hw.idx, 0);
 				event->hw.idx = 0;
-			पूर्ण
+			}
 			perf_event_update_userpage(event);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < cpuhw->n_limited; ++i)
-		अगर (event == cpuhw->limited_counter[i])
-			अवरोध;
-	अगर (i < cpuhw->n_limited) अणु
-		जबतक (++i < cpuhw->n_limited) अणु
+			break;
+		}
+	}
+	for (i = 0; i < cpuhw->n_limited; ++i)
+		if (event == cpuhw->limited_counter[i])
+			break;
+	if (i < cpuhw->n_limited) {
+		while (++i < cpuhw->n_limited) {
 			cpuhw->limited_counter[i-1] = cpuhw->limited_counter[i];
 			cpuhw->limited_hwidx[i-1] = cpuhw->limited_hwidx[i];
-		पूर्ण
+		}
 		--cpuhw->n_limited;
-	पूर्ण
-	अगर (cpuhw->n_events == 0) अणु
-		/* disable exceptions अगर no events are running */
+	}
+	if (cpuhw->n_events == 0) {
+		/* disable exceptions if no events are running */
 		cpuhw->mmcr.mmcr0 &= ~(MMCR0_PMXE | MMCR0_FCECE);
-	पूर्ण
+	}
 
-	अगर (has_branch_stack(event))
-		घातer_pmu_bhrb_disable(event);
+	if (has_branch_stack(event))
+		power_pmu_bhrb_disable(event);
 
 	perf_pmu_enable(event->pmu);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
- * POWER-PMU करोes not support disabling inभागidual counters, hence
- * program their cycle counter to their max value and ignore the पूर्णांकerrupts.
+ * POWER-PMU does not support disabling individual counters, hence
+ * program their cycle counter to their max value and ignore the interrupts.
  */
 
-अटल व्योम घातer_pmu_start(काष्ठा perf_event *event, पूर्णांक ef_flags)
-अणु
-	अचिन्हित दीर्घ flags;
+static void power_pmu_start(struct perf_event *event, int ef_flags)
+{
+	unsigned long flags;
 	s64 left;
-	अचिन्हित दीर्घ val;
+	unsigned long val;
 
-	अगर (!event->hw.idx || !event->hw.sample_period)
-		वापस;
+	if (!event->hw.idx || !event->hw.sample_period)
+		return;
 
-	अगर (!(event->hw.state & PERF_HES_STOPPED))
-		वापस;
+	if (!(event->hw.state & PERF_HES_STOPPED))
+		return;
 
-	अगर (ef_flags & PERF_EF_RELOAD)
+	if (ef_flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(event->hw.state & PERF_HES_UPTODATE));
 
 	local_irq_save(flags);
 	perf_pmu_disable(event->pmu);
 
 	event->hw.state = 0;
-	left = local64_पढ़ो(&event->hw.period_left);
+	left = local64_read(&event->hw.period_left);
 
 	val = 0;
-	अगर (left < 0x80000000L)
+	if (left < 0x80000000L)
 		val = 0x80000000L - left;
 
-	ग_लिखो_pmc(event->hw.idx, val);
+	write_pmc(event->hw.idx, val);
 
 	perf_event_update_userpage(event);
 	perf_pmu_enable(event->pmu);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम घातer_pmu_stop(काष्ठा perf_event *event, पूर्णांक ef_flags)
-अणु
-	अचिन्हित दीर्घ flags;
+static void power_pmu_stop(struct perf_event *event, int ef_flags)
+{
+	unsigned long flags;
 
-	अगर (!event->hw.idx || !event->hw.sample_period)
-		वापस;
+	if (!event->hw.idx || !event->hw.sample_period)
+		return;
 
-	अगर (event->hw.state & PERF_HES_STOPPED)
-		वापस;
+	if (event->hw.state & PERF_HES_STOPPED)
+		return;
 
 	local_irq_save(flags);
 	perf_pmu_disable(event->pmu);
 
-	घातer_pmu_पढ़ो(event);
+	power_pmu_read(event);
 	event->hw.state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-	ग_लिखो_pmc(event->hw.idx, 0);
+	write_pmc(event->hw.idx, 0);
 
 	perf_event_update_userpage(event);
 	perf_pmu_enable(event->pmu);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /*
  * Start group events scheduling transaction
- * Set the flag to make pmu::enable() not perक्रमm the
- * schedulability test, it will be perक्रमmed at commit समय
+ * Set the flag to make pmu::enable() not perform the
+ * schedulability test, it will be performed at commit time
  *
  * We only support PERF_PMU_TXN_ADD transactions. Save the
  * transaction flags but otherwise ignore non-PERF_PMU_TXN_ADD
  * transactions.
  */
-अटल व्योम घातer_pmu_start_txn(काष्ठा pmu *pmu, अचिन्हित पूर्णांक txn_flags)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+static void power_pmu_start_txn(struct pmu *pmu, unsigned int txn_flags)
+{
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	WARN_ON_ONCE(cpuhw->txn_flags);		/* txn alपढ़ोy in flight */
+	WARN_ON_ONCE(cpuhw->txn_flags);		/* txn already in flight */
 
 	cpuhw->txn_flags = txn_flags;
-	अगर (txn_flags & ~PERF_PMU_TXN_ADD)
-		वापस;
+	if (txn_flags & ~PERF_PMU_TXN_ADD)
+		return;
 
 	perf_pmu_disable(pmu);
 	cpuhw->n_txn_start = cpuhw->n_events;
-पूर्ण
+}
 
 /*
  * Stop group events scheduling transaction
- * Clear the flag and pmu::enable() will perक्रमm the
+ * Clear the flag and pmu::enable() will perform the
  * schedulability test.
  */
-अटल व्योम घातer_pmu_cancel_txn(काष्ठा pmu *pmu)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
-	अचिन्हित पूर्णांक txn_flags;
+static void power_pmu_cancel_txn(struct pmu *pmu)
+{
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+	unsigned int txn_flags;
 
 	WARN_ON_ONCE(!cpuhw->txn_flags);	/* no txn in flight */
 
 	txn_flags = cpuhw->txn_flags;
 	cpuhw->txn_flags = 0;
-	अगर (txn_flags & ~PERF_PMU_TXN_ADD)
-		वापस;
+	if (txn_flags & ~PERF_PMU_TXN_ADD)
+		return;
 
 	perf_pmu_enable(pmu);
-पूर्ण
+}
 
 /*
  * Commit group events scheduling transaction
- * Perक्रमm the group schedulability test as a whole
- * Return 0 अगर success
+ * Perform the group schedulability test as a whole
+ * Return 0 if success
  */
-अटल पूर्णांक घातer_pmu_commit_txn(काष्ठा pmu *pmu)
-अणु
-	काष्ठा cpu_hw_events *cpuhw;
-	दीर्घ i, n;
+static int power_pmu_commit_txn(struct pmu *pmu)
+{
+	struct cpu_hw_events *cpuhw;
+	long i, n;
 
-	अगर (!ppmu)
-		वापस -EAGAIN;
+	if (!ppmu)
+		return -EAGAIN;
 
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
 	WARN_ON_ONCE(!cpuhw->txn_flags);	/* no txn in flight */
 
-	अगर (cpuhw->txn_flags & ~PERF_PMU_TXN_ADD) अणु
+	if (cpuhw->txn_flags & ~PERF_PMU_TXN_ADD) {
 		cpuhw->txn_flags = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	n = cpuhw->n_events;
-	अगर (check_excludes(cpuhw->event, cpuhw->flags, 0, n))
-		वापस -EAGAIN;
-	i = घातer_check_स्थिरraपूर्णांकs(cpuhw, cpuhw->events, cpuhw->flags, n, cpuhw->event);
-	अगर (i < 0)
-		वापस -EAGAIN;
+	if (check_excludes(cpuhw->event, cpuhw->flags, 0, n))
+		return -EAGAIN;
+	i = power_check_constraints(cpuhw, cpuhw->events, cpuhw->flags, n, cpuhw->event);
+	if (i < 0)
+		return -EAGAIN;
 
-	क्रम (i = cpuhw->n_txn_start; i < n; ++i)
+	for (i = cpuhw->n_txn_start; i < n; ++i)
 		cpuhw->event[i]->hw.config = cpuhw->events[i];
 
 	cpuhw->txn_flags = 0;
 	perf_pmu_enable(pmu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return 1 अगर we might be able to put event on a limited PMC,
- * or 0 अगर not.
- * An event can only go on a limited PMC अगर it counts something
- * that a limited PMC can count, करोesn't require पूर्णांकerrupts, and
- * करोesn't exclude any processor mode.
+ * Return 1 if we might be able to put event on a limited PMC,
+ * or 0 if not.
+ * An event can only go on a limited PMC if it counts something
+ * that a limited PMC can count, doesn't require interrupts, and
+ * doesn't exclude any processor mode.
  */
-अटल पूर्णांक can_go_on_limited_pmc(काष्ठा perf_event *event, u64 ev,
-				 अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक n;
+static int can_go_on_limited_pmc(struct perf_event *event, u64 ev,
+				 unsigned int flags)
+{
+	int n;
 	u64 alt[MAX_EVENT_ALTERNATIVES];
 
-	अगर (event->attr.exclude_user
+	if (event->attr.exclude_user
 	    || event->attr.exclude_kernel
 	    || event->attr.exclude_hv
 	    || event->attr.sample_period)
-		वापस 0;
+		return 0;
 
-	अगर (ppmu->limited_pmc_event(ev))
-		वापस 1;
+	if (ppmu->limited_pmc_event(ev))
+		return 1;
 
 	/*
-	 * The requested event_id isn't on a limited PMC alपढ़ोy;
-	 * see अगर any alternative code goes on a limited PMC.
+	 * The requested event_id isn't on a limited PMC already;
+	 * see if any alternative code goes on a limited PMC.
 	 */
-	अगर (!ppmu->get_alternatives)
-		वापस 0;
+	if (!ppmu->get_alternatives)
+		return 0;
 
 	flags |= PPMU_LIMITED_PMC_OK | PPMU_LIMITED_PMC_REQD;
 	n = ppmu->get_alternatives(ev, flags, alt);
 
-	वापस n > 0;
-पूर्ण
+	return n > 0;
+}
 
 /*
- * Find an alternative event_id that goes on a normal PMC, अगर possible,
- * and वापस the event_id code, or 0 अगर there is no such alternative.
+ * Find an alternative event_id that goes on a normal PMC, if possible,
+ * and return the event_id code, or 0 if there is no such alternative.
  * (Note: event_id code 0 is "don't count" on all machines.)
  */
-अटल u64 normal_pmc_alternative(u64 ev, अचिन्हित दीर्घ flags)
-अणु
+static u64 normal_pmc_alternative(u64 ev, unsigned long flags)
+{
 	u64 alt[MAX_EVENT_ALTERNATIVES];
-	पूर्णांक n;
+	int n;
 
 	flags &= ~(PPMU_LIMITED_PMC_OK | PPMU_LIMITED_PMC_REQD);
 	n = ppmu->get_alternatives(ev, flags, alt);
-	अगर (!n)
-		वापस 0;
-	वापस alt[0];
-पूर्ण
+	if (!n)
+		return 0;
+	return alt[0];
+}
 
 /* Number of perf_events counting hardware events */
-अटल atomic_t num_events;
-/* Used to aव्योम races in calling reserve/release_pmc_hardware */
-अटल DEFINE_MUTEX(pmc_reserve_mutex);
+static atomic_t num_events;
+/* Used to avoid races in calling reserve/release_pmc_hardware */
+static DEFINE_MUTEX(pmc_reserve_mutex);
 
 /*
- * Release the PMU अगर this is the last perf_event.
+ * Release the PMU if this is the last perf_event.
  */
-अटल व्योम hw_perf_event_destroy(काष्ठा perf_event *event)
-अणु
-	अगर (!atomic_add_unless(&num_events, -1, 1)) अणु
+static void hw_perf_event_destroy(struct perf_event *event)
+{
+	if (!atomic_add_unless(&num_events, -1, 1)) {
 		mutex_lock(&pmc_reserve_mutex);
-		अगर (atomic_dec_वापस(&num_events) == 0)
+		if (atomic_dec_return(&num_events) == 0)
 			release_pmc_hardware();
 		mutex_unlock(&pmc_reserve_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Translate a generic cache event_id config to a raw event_id code.
  */
-अटल पूर्णांक hw_perf_cache_event(u64 config, u64 *eventp)
-अणु
-	अचिन्हित दीर्घ type, op, result;
+static int hw_perf_cache_event(u64 config, u64 *eventp)
+{
+	unsigned long type, op, result;
 	u64 ev;
 
-	अगर (!ppmu->cache_events)
-		वापस -EINVAL;
+	if (!ppmu->cache_events)
+		return -EINVAL;
 
 	/* unpack config */
 	type = config & 0xff;
 	op = (config >> 8) & 0xff;
 	result = (config >> 16) & 0xff;
 
-	अगर (type >= PERF_COUNT_HW_CACHE_MAX ||
+	if (type >= PERF_COUNT_HW_CACHE_MAX ||
 	    op >= PERF_COUNT_HW_CACHE_OP_MAX ||
 	    result >= PERF_COUNT_HW_CACHE_RESULT_MAX)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ev = (*ppmu->cache_events)[type][op][result];
-	अगर (ev == 0)
-		वापस -EOPNOTSUPP;
-	अगर (ev == -1)
-		वापस -EINVAL;
+	if (ev == 0)
+		return -EOPNOTSUPP;
+	if (ev == -1)
+		return -EINVAL;
 	*eventp = ev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool is_event_blacklisted(u64 ev)
-अणु
-	पूर्णांक i;
+static bool is_event_blacklisted(u64 ev)
+{
+	int i;
 
-	क्रम (i=0; i < ppmu->n_blacklist_ev; i++) अणु
-		अगर (ppmu->blacklist_ev[i] == ev)
-			वापस true;
-	पूर्ण
+	for (i=0; i < ppmu->n_blacklist_ev; i++) {
+		if (ppmu->blacklist_ev[i] == ev)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक घातer_pmu_event_init(काष्ठा perf_event *event)
-अणु
+static int power_pmu_event_init(struct perf_event *event)
+{
 	u64 ev;
-	अचिन्हित दीर्घ flags, irq_flags;
-	काष्ठा perf_event *ctrs[MAX_HWEVENTS];
+	unsigned long flags, irq_flags;
+	struct perf_event *ctrs[MAX_HWEVENTS];
 	u64 events[MAX_HWEVENTS];
-	अचिन्हित पूर्णांक cflags[MAX_HWEVENTS];
-	पूर्णांक n;
-	पूर्णांक err;
-	काष्ठा cpu_hw_events *cpuhw;
+	unsigned int cflags[MAX_HWEVENTS];
+	int n;
+	int err;
+	struct cpu_hw_events *cpuhw;
 
-	अगर (!ppmu)
-		वापस -ENOENT;
+	if (!ppmu)
+		return -ENOENT;
 
-	अगर (has_branch_stack(event)) अणु
+	if (has_branch_stack(event)) {
 	        /* PMU has BHRB enabled */
-		अगर (!(ppmu->flags & PPMU_ARCH_207S))
-			वापस -EOPNOTSUPP;
-	पूर्ण
+		if (!(ppmu->flags & PPMU_ARCH_207S))
+			return -EOPNOTSUPP;
+	}
 
-	चयन (event->attr.type) अणु
-	हाल PERF_TYPE_HARDWARE:
+	switch (event->attr.type) {
+	case PERF_TYPE_HARDWARE:
 		ev = event->attr.config;
-		अगर (ev >= ppmu->n_generic || ppmu->generic_events[ev] == 0)
-			वापस -EOPNOTSUPP;
+		if (ev >= ppmu->n_generic || ppmu->generic_events[ev] == 0)
+			return -EOPNOTSUPP;
 
-		अगर (ppmu->blacklist_ev && is_event_blacklisted(ev))
-			वापस -EINVAL;
+		if (ppmu->blacklist_ev && is_event_blacklisted(ev))
+			return -EINVAL;
 		ev = ppmu->generic_events[ev];
-		अवरोध;
-	हाल PERF_TYPE_HW_CACHE:
+		break;
+	case PERF_TYPE_HW_CACHE:
 		err = hw_perf_cache_event(event->attr.config, &ev);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (ppmu->blacklist_ev && is_event_blacklisted(ev))
-			वापस -EINVAL;
-		अवरोध;
-	हाल PERF_TYPE_RAW:
+		if (ppmu->blacklist_ev && is_event_blacklisted(ev))
+			return -EINVAL;
+		break;
+	case PERF_TYPE_RAW:
 		ev = event->attr.config;
 
-		अगर (ppmu->blacklist_ev && is_event_blacklisted(ev))
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -ENOENT;
-	पूर्ण
+		if (ppmu->blacklist_ev && is_event_blacklisted(ev))
+			return -EINVAL;
+		break;
+	default:
+		return -ENOENT;
+	}
 
 	/*
-	 * PMU config रेजिस्टरs have fields that are
-	 * reserved and some specअगरic values क्रम bit fields are reserved.
-	 * For ex., MMCRA[61:62] is Ranकरोme Sampling Mode (SM)
+	 * PMU config registers have fields that are
+	 * reserved and some specific values for bit fields are reserved.
+	 * For ex., MMCRA[61:62] is Randome Sampling Mode (SM)
 	 * and value of 0b11 to this field is reserved.
-	 * Check क्रम invalid values in attr.config.
+	 * Check for invalid values in attr.config.
 	 */
-	अगर (ppmu->check_attr_config &&
+	if (ppmu->check_attr_config &&
 	    ppmu->check_attr_config(event))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	event->hw.config_base = ev;
 	event->hw.idx = 0;
 
 	/*
-	 * If we are not running on a hypervisor, क्रमce the
-	 * exclude_hv bit to 0 so that we करोn't care what
+	 * If we are not running on a hypervisor, force the
+	 * exclude_hv bit to 0 so that we don't care what
 	 * the user set it to.
 	 */
-	अगर (!firmware_has_feature(FW_FEATURE_LPAR))
+	if (!firmware_has_feature(FW_FEATURE_LPAR))
 		event->attr.exclude_hv = 0;
 
 	/*
 	 * If this is a per-task event, then we can use
-	 * PM_RUN_* events पूर्णांकerchangeably with their non RUN_*
+	 * PM_RUN_* events interchangeably with their non RUN_*
 	 * equivalents, e.g. PM_RUN_CYC instead of PM_CYC.
-	 * XXX we should check अगर the task is an idle task.
+	 * XXX we should check if the task is an idle task.
 	 */
 	flags = 0;
-	अगर (event->attach_state & PERF_ATTACH_TASK)
+	if (event->attach_state & PERF_ATTACH_TASK)
 		flags |= PPMU_ONLY_COUNT_RUN;
 
 	/*
 	 * If this machine has limited events, check whether this
 	 * event_id could go on a limited event.
 	 */
-	अगर (ppmu->flags & PPMU_LIMITED_PMC5_6) अणु
-		अगर (can_go_on_limited_pmc(event, ev, flags)) अणु
+	if (ppmu->flags & PPMU_LIMITED_PMC5_6) {
+		if (can_go_on_limited_pmc(event, ev, flags)) {
 			flags |= PPMU_LIMITED_PMC_OK;
-		पूर्ण अन्यथा अगर (ppmu->limited_pmc_event(ev)) अणु
+		} else if (ppmu->limited_pmc_event(ev)) {
 			/*
 			 * The requested event_id is on a limited PMC,
-			 * but we can't use a limited PMC; see अगर any
+			 * but we can't use a limited PMC; see if any
 			 * alternative goes on a normal PMC.
 			 */
 			ev = normal_pmc_alternative(ev, flags);
-			अगर (!ev)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			if (!ev)
+				return -EINVAL;
+		}
+	}
 
-	/* Extra checks क्रम EBB */
+	/* Extra checks for EBB */
 	err = ebb_event_check(event);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
-	 * If this is in a group, check अगर it can go on with all the
+	 * If this is in a group, check if it can go on with all the
 	 * other hardware events in the group.  We assume the event
-	 * hasn't been linked into its leader's sibling list at this poपूर्णांक.
+	 * hasn't been linked into its leader's sibling list at this point.
 	 */
 	n = 0;
-	अगर (event->group_leader != event) अणु
+	if (event->group_leader != event) {
 		n = collect_events(event->group_leader, ppmu->n_counter - 1,
 				   ctrs, events, cflags);
-		अगर (n < 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (n < 0)
+			return -EINVAL;
+	}
 	events[n] = ev;
 	ctrs[n] = event;
 	cflags[n] = flags;
-	अगर (check_excludes(ctrs, cflags, n, 1))
-		वापस -EINVAL;
+	if (check_excludes(ctrs, cflags, n, 1))
+		return -EINVAL;
 
 	local_irq_save(irq_flags);
 	cpuhw = this_cpu_ptr(&cpu_hw_events);
 
-	err = घातer_check_स्थिरraपूर्णांकs(cpuhw, events, cflags, n + 1, ctrs);
+	err = power_check_constraints(cpuhw, events, cflags, n + 1, ctrs);
 
-	अगर (has_branch_stack(event)) अणु
+	if (has_branch_stack(event)) {
 		u64 bhrb_filter = -1;
 
-		अगर (ppmu->bhrb_filter_map)
+		if (ppmu->bhrb_filter_map)
 			bhrb_filter = ppmu->bhrb_filter_map(
 					event->attr.branch_sample_type);
 
-		अगर (bhrb_filter == -1) अणु
+		if (bhrb_filter == -1) {
 			local_irq_restore(irq_flags);
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 		cpuhw->bhrb_filter = bhrb_filter;
-	पूर्ण
+	}
 
 	local_irq_restore(irq_flags);
-	अगर (err)
-		वापस -EINVAL;
+	if (err)
+		return -EINVAL;
 
 	event->hw.config = events[n];
 	event->hw.event_base = cflags[n];
@@ -2068,101 +2067,101 @@ nocheck:
 	local64_set(&event->hw.period_left, event->hw.last_period);
 
 	/*
-	 * For EBB events we just context चयन the PMC value, we करोn't करो any
-	 * of the sample_period logic. We use hw.prev_count क्रम this.
+	 * For EBB events we just context switch the PMC value, we don't do any
+	 * of the sample_period logic. We use hw.prev_count for this.
 	 */
-	अगर (is_ebb_event(event))
+	if (is_ebb_event(event))
 		local64_set(&event->hw.prev_count, 0);
 
 	/*
-	 * See अगर we need to reserve the PMU.
+	 * See if we need to reserve the PMU.
 	 * If no events are currently in use, then we have to take a
-	 * mutex to ensure that we करोn't race with another task करोing
+	 * mutex to ensure that we don't race with another task doing
 	 * reserve_pmc_hardware or release_pmc_hardware.
 	 */
 	err = 0;
-	अगर (!atomic_inc_not_zero(&num_events)) अणु
+	if (!atomic_inc_not_zero(&num_events)) {
 		mutex_lock(&pmc_reserve_mutex);
-		अगर (atomic_पढ़ो(&num_events) == 0 &&
-		    reserve_pmc_hardware(perf_event_पूर्णांकerrupt))
+		if (atomic_read(&num_events) == 0 &&
+		    reserve_pmc_hardware(perf_event_interrupt))
 			err = -EBUSY;
-		अन्यथा
+		else
 			atomic_inc(&num_events);
 		mutex_unlock(&pmc_reserve_mutex);
-	पूर्ण
+	}
 	event->destroy = hw_perf_event_destroy;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक घातer_pmu_event_idx(काष्ठा perf_event *event)
-अणु
-	वापस event->hw.idx;
-पूर्ण
+static int power_pmu_event_idx(struct perf_event *event)
+{
+	return event->hw.idx;
+}
 
-sमाप_प्रकार घातer_events_sysfs_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *page)
-अणु
-	काष्ठा perf_pmu_events_attr *pmu_attr;
+ssize_t power_events_sysfs_show(struct device *dev,
+				struct device_attribute *attr, char *page)
+{
+	struct perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr);
+	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr);
 
-	वापस प्र_लिखो(page, "event=0x%02llx\n", pmu_attr->id);
-पूर्ण
+	return sprintf(page, "event=0x%02llx\n", pmu_attr->id);
+}
 
-अटल काष्ठा pmu घातer_pmu = अणु
-	.pmu_enable	= घातer_pmu_enable,
-	.pmu_disable	= घातer_pmu_disable,
-	.event_init	= घातer_pmu_event_init,
-	.add		= घातer_pmu_add,
-	.del		= घातer_pmu_del,
-	.start		= घातer_pmu_start,
-	.stop		= घातer_pmu_stop,
-	.पढ़ो		= घातer_pmu_पढ़ो,
-	.start_txn	= घातer_pmu_start_txn,
-	.cancel_txn	= घातer_pmu_cancel_txn,
-	.commit_txn	= घातer_pmu_commit_txn,
-	.event_idx	= घातer_pmu_event_idx,
-	.sched_task	= घातer_pmu_sched_task,
-पूर्ण;
+static struct pmu power_pmu = {
+	.pmu_enable	= power_pmu_enable,
+	.pmu_disable	= power_pmu_disable,
+	.event_init	= power_pmu_event_init,
+	.add		= power_pmu_add,
+	.del		= power_pmu_del,
+	.start		= power_pmu_start,
+	.stop		= power_pmu_stop,
+	.read		= power_pmu_read,
+	.start_txn	= power_pmu_start_txn,
+	.cancel_txn	= power_pmu_cancel_txn,
+	.commit_txn	= power_pmu_commit_txn,
+	.event_idx	= power_pmu_event_idx,
+	.sched_task	= power_pmu_sched_task,
+};
 
-#घोषणा PERF_SAMPLE_ADDR_TYPE  (PERF_SAMPLE_ADDR |		\
+#define PERF_SAMPLE_ADDR_TYPE  (PERF_SAMPLE_ADDR |		\
 				PERF_SAMPLE_PHYS_ADDR |		\
 				PERF_SAMPLE_DATA_PAGE_SIZE)
 /*
  * A counter has overflowed; update its count and record
- * things अगर requested.  Note that पूर्णांकerrupts are hard-disabled
- * here so there is no possibility of being पूर्णांकerrupted.
+ * things if requested.  Note that interrupts are hard-disabled
+ * here so there is no possibility of being interrupted.
  */
-अटल व्योम record_and_restart(काष्ठा perf_event *event, अचिन्हित दीर्घ val,
-			       काष्ठा pt_regs *regs)
-अणु
+static void record_and_restart(struct perf_event *event, unsigned long val,
+			       struct pt_regs *regs)
+{
 	u64 period = event->hw.sample_period;
 	s64 prev, delta, left;
-	पूर्णांक record = 0;
+	int record = 0;
 
-	अगर (event->hw.state & PERF_HES_STOPPED) अणु
-		ग_लिखो_pmc(event->hw.idx, 0);
-		वापस;
-	पूर्ण
+	if (event->hw.state & PERF_HES_STOPPED) {
+		write_pmc(event->hw.idx, 0);
+		return;
+	}
 
-	/* we करोn't have to worry about पूर्णांकerrupts here */
-	prev = local64_पढ़ो(&event->hw.prev_count);
+	/* we don't have to worry about interrupts here */
+	prev = local64_read(&event->hw.prev_count);
 	delta = check_and_compute_delta(prev, val);
 	local64_add(delta, &event->count);
 
 	/*
-	 * See अगर the total period क्रम this event has expired,
-	 * and update क्रम the next period.
+	 * See if the total period for this event has expired,
+	 * and update for the next period.
 	 */
 	val = 0;
-	left = local64_पढ़ो(&event->hw.period_left) - delta;
-	अगर (delta == 0)
+	left = local64_read(&event->hw.period_left) - delta;
+	if (delta == 0)
 		left++;
-	अगर (period) अणु
-		अगर (left <= 0) अणु
+	if (period) {
+		if (left <= 0) {
 			left += period;
-			अगर (left <= 0)
+			if (left <= 0)
 				left = period;
 
 			/*
@@ -2170,158 +2169,158 @@ sमाप_प्रकार घातer_events_sysfs_show(काष्ठा d
 			 * PERF_SAMPLE_IP, just record that sample irrespective
 			 * of SIAR valid check.
 			 */
-			अगर (event->attr.sample_type & PERF_SAMPLE_IP)
+			if (event->attr.sample_type & PERF_SAMPLE_IP)
 				record = siar_valid(regs);
-			अन्यथा
+			else
 				record = 1;
 
 			event->hw.last_period = event->hw.sample_period;
-		पूर्ण
-		अगर (left < 0x80000000LL)
+		}
+		if (left < 0x80000000LL)
 			val = 0x80000000LL - left;
-	पूर्ण
+	}
 
-	ग_लिखो_pmc(event->hw.idx, val);
+	write_pmc(event->hw.idx, val);
 	local64_set(&event->hw.prev_count, val);
 	local64_set(&event->hw.period_left, left);
 	perf_event_update_userpage(event);
 
 	/*
-	 * Due to hardware limitation, someबार SIAR could sample a kernel
-	 * address even when मुक्तze on supervisor state (kernel) is set in
+	 * Due to hardware limitation, sometimes SIAR could sample a kernel
+	 * address even when freeze on supervisor state (kernel) is set in
 	 * MMCR2. Check attr.exclude_kernel and address to drop the sample in
-	 * these हालs.
+	 * these cases.
 	 */
-	अगर (event->attr.exclude_kernel &&
+	if (event->attr.exclude_kernel &&
 	    (event->attr.sample_type & PERF_SAMPLE_IP) &&
 	    is_kernel_addr(mfspr(SPRN_SIAR)))
 		record = 0;
 
 	/*
-	 * Finally record data अगर requested.
+	 * Finally record data if requested.
 	 */
-	अगर (record) अणु
-		काष्ठा perf_sample_data data;
+	if (record) {
+		struct perf_sample_data data;
 
 		perf_sample_data_init(&data, ~0ULL, event->hw.last_period);
 
-		अगर (event->attr.sample_type & PERF_SAMPLE_ADDR_TYPE)
+		if (event->attr.sample_type & PERF_SAMPLE_ADDR_TYPE)
 			perf_get_data_addr(event, regs, &data.addr);
 
-		अगर (event->attr.sample_type & PERF_SAMPLE_BRANCH_STACK) अणु
-			काष्ठा cpu_hw_events *cpuhw;
+		if (event->attr.sample_type & PERF_SAMPLE_BRANCH_STACK) {
+			struct cpu_hw_events *cpuhw;
 			cpuhw = this_cpu_ptr(&cpu_hw_events);
-			घातer_pmu_bhrb_पढ़ो(event, cpuhw);
+			power_pmu_bhrb_read(event, cpuhw);
 			data.br_stack = &cpuhw->bhrb_stack;
-		पूर्ण
+		}
 
-		अगर (event->attr.sample_type & PERF_SAMPLE_DATA_SRC &&
+		if (event->attr.sample_type & PERF_SAMPLE_DATA_SRC &&
 						ppmu->get_mem_data_src)
 			ppmu->get_mem_data_src(&data.data_src, ppmu->flags, regs);
 
-		अगर (event->attr.sample_type & PERF_SAMPLE_WEIGHT_TYPE &&
+		if (event->attr.sample_type & PERF_SAMPLE_WEIGHT_TYPE &&
 						ppmu->get_mem_weight)
 			ppmu->get_mem_weight(&data.weight.full, event->attr.sample_type);
 
-		अगर (perf_event_overflow(event, &data, regs))
-			घातer_pmu_stop(event, 0);
-	पूर्ण अन्यथा अगर (period) अणु
-		/* Account क्रम पूर्णांकerrupt in हाल of invalid SIAR */
-		अगर (perf_event_account_पूर्णांकerrupt(event))
-			घातer_pmu_stop(event, 0);
-	पूर्ण
-पूर्ण
+		if (perf_event_overflow(event, &data, regs))
+			power_pmu_stop(event, 0);
+	} else if (period) {
+		/* Account for interrupt in case of invalid SIAR */
+		if (perf_event_account_interrupt(event))
+			power_pmu_stop(event, 0);
+	}
+}
 
 /*
  * Called from generic code to get the misc flags (i.e. processor mode)
- * क्रम an event_id.
+ * for an event_id.
  */
-अचिन्हित दीर्घ perf_misc_flags(काष्ठा pt_regs *regs)
-अणु
+unsigned long perf_misc_flags(struct pt_regs *regs)
+{
 	u32 flags = perf_get_misc_flags(regs);
 
-	अगर (flags)
-		वापस flags;
-	वापस user_mode(regs) ? PERF_RECORD_MISC_USER :
+	if (flags)
+		return flags;
+	return user_mode(regs) ? PERF_RECORD_MISC_USER :
 		PERF_RECORD_MISC_KERNEL;
-पूर्ण
+}
 
 /*
- * Called from generic code to get the inकाष्ठाion poपूर्णांकer
- * क्रम an event_id.
+ * Called from generic code to get the instruction pointer
+ * for an event_id.
  */
-अचिन्हित दीर्घ perf_inकाष्ठाion_poपूर्णांकer(काष्ठा pt_regs *regs)
-अणु
+unsigned long perf_instruction_pointer(struct pt_regs *regs)
+{
 	bool use_siar = regs_use_siar(regs);
-	अचिन्हित दीर्घ siar = mfspr(SPRN_SIAR);
+	unsigned long siar = mfspr(SPRN_SIAR);
 
-	अगर (ppmu && (ppmu->flags & PPMU_P10_DD1)) अणु
-		अगर (siar)
-			वापस siar;
-		अन्यथा
-			वापस regs->nip;
-	पूर्ण अन्यथा अगर (use_siar && siar_valid(regs))
-		वापस mfspr(SPRN_SIAR) + perf_ip_adjust(regs);
-	अन्यथा अगर (use_siar)
-		वापस 0;		// no valid inकाष्ठाion poपूर्णांकer
-	अन्यथा
-		वापस regs->nip;
-पूर्ण
+	if (ppmu && (ppmu->flags & PPMU_P10_DD1)) {
+		if (siar)
+			return siar;
+		else
+			return regs->nip;
+	} else if (use_siar && siar_valid(regs))
+		return mfspr(SPRN_SIAR) + perf_ip_adjust(regs);
+	else if (use_siar)
+		return 0;		// no valid instruction pointer
+	else
+		return regs->nip;
+}
 
-अटल bool pmc_overflow_घातer7(अचिन्हित दीर्घ val)
-अणु
+static bool pmc_overflow_power7(unsigned long val)
+{
 	/*
-	 * Events on POWER7 can roll back अगर a speculative event करोesn't
-	 * eventually complete. Unक्रमtunately in some rare हालs they will
-	 * उठाओ a perक्रमmance monitor exception. We need to catch this to
-	 * ensure we reset the PMC. In all हालs the PMC will be 256 or less
+	 * Events on POWER7 can roll back if a speculative event doesn't
+	 * eventually complete. Unfortunately in some rare cases they will
+	 * raise a performance monitor exception. We need to catch this to
+	 * ensure we reset the PMC. In all cases the PMC will be 256 or less
 	 * cycles from overflow.
 	 *
-	 * We only करो this अगर the first pass fails to find any overflowing
+	 * We only do this if the first pass fails to find any overflowing
 	 * PMCs because a user might set a period of less than 256 and we
-	 * करोn't want to mistakenly reset them.
+	 * don't want to mistakenly reset them.
 	 */
-	अगर ((0x80000000 - val) <= 256)
-		वापस true;
+	if ((0x80000000 - val) <= 256)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool pmc_overflow(अचिन्हित दीर्घ val)
-अणु
-	अगर ((पूर्णांक)val < 0)
-		वापस true;
+static bool pmc_overflow(unsigned long val)
+{
+	if ((int)val < 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Perक्रमmance monitor पूर्णांकerrupt stuff
+ * Performance monitor interrupt stuff
  */
-अटल व्योम __perf_event_पूर्णांकerrupt(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i, j;
-	काष्ठा cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
-	काष्ठा perf_event *event;
-	पूर्णांक found, active;
+static void __perf_event_interrupt(struct pt_regs *regs)
+{
+	int i, j;
+	struct cpu_hw_events *cpuhw = this_cpu_ptr(&cpu_hw_events);
+	struct perf_event *event;
+	int found, active;
 
-	अगर (cpuhw->n_limited)
-		मुक्तze_limited_counters(cpuhw, mfspr(SPRN_PMC5),
+	if (cpuhw->n_limited)
+		freeze_limited_counters(cpuhw, mfspr(SPRN_PMC5),
 					mfspr(SPRN_PMC6));
 
-	perf_पढ़ो_regs(regs);
+	perf_read_regs(regs);
 
-	/* Read all the PMCs since we'll need them a bunch of बार */
-	क्रम (i = 0; i < ppmu->n_counter; ++i)
-		cpuhw->pmcs[i] = पढ़ो_pmc(i + 1);
+	/* Read all the PMCs since we'll need them a bunch of times */
+	for (i = 0; i < ppmu->n_counter; ++i)
+		cpuhw->pmcs[i] = read_pmc(i + 1);
 
 	/* Try to find what caused the IRQ */
 	found = 0;
-	क्रम (i = 0; i < ppmu->n_counter; ++i) अणु
-		अगर (!pmc_overflow(cpuhw->pmcs[i]))
-			जारी;
-		अगर (is_limited_pmc(i + 1))
-			जारी; /* these won't generate IRQs */
+	for (i = 0; i < ppmu->n_counter; ++i) {
+		if (!pmc_overflow(cpuhw->pmcs[i]))
+			continue;
+		if (is_limited_pmc(i + 1))
+			continue; /* these won't generate IRQs */
 		/*
 		 * We've found one that's overflowed.  For active
 		 * counters we need to log this.  For inactive
@@ -2329,117 +2328,117 @@ sमाप_प्रकार घातer_events_sysfs_show(काष्ठा d
 		 */
 		found = 1;
 		active = 0;
-		क्रम (j = 0; j < cpuhw->n_events; ++j) अणु
+		for (j = 0; j < cpuhw->n_events; ++j) {
 			event = cpuhw->event[j];
-			अगर (event->hw.idx == (i + 1)) अणु
+			if (event->hw.idx == (i + 1)) {
 				active = 1;
 				record_and_restart(event, cpuhw->pmcs[i], regs);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!active)
+				break;
+			}
+		}
+		if (!active)
 			/* reset non active counters that have overflowed */
-			ग_लिखो_pmc(i + 1, 0);
-	पूर्ण
-	अगर (!found && pvr_version_is(PVR_POWER7)) अणु
-		/* check active counters क्रम special buggy p7 overflow */
-		क्रम (i = 0; i < cpuhw->n_events; ++i) अणु
+			write_pmc(i + 1, 0);
+	}
+	if (!found && pvr_version_is(PVR_POWER7)) {
+		/* check active counters for special buggy p7 overflow */
+		for (i = 0; i < cpuhw->n_events; ++i) {
 			event = cpuhw->event[i];
-			अगर (!event->hw.idx || is_limited_pmc(event->hw.idx))
-				जारी;
-			अगर (pmc_overflow_घातer7(cpuhw->pmcs[event->hw.idx - 1])) अणु
+			if (!event->hw.idx || is_limited_pmc(event->hw.idx))
+				continue;
+			if (pmc_overflow_power7(cpuhw->pmcs[event->hw.idx - 1])) {
 				/* event has overflowed in a buggy way*/
 				found = 1;
 				record_and_restart(event,
 						   cpuhw->pmcs[event->hw.idx - 1],
 						   regs);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (unlikely(!found) && !arch_irq_disabled_regs(regs))
-		prपूर्णांकk_ratelimited(KERN_WARNING "Can't find PMC that caused IRQ\n");
+			}
+		}
+	}
+	if (unlikely(!found) && !arch_irq_disabled_regs(regs))
+		printk_ratelimited(KERN_WARNING "Can't find PMC that caused IRQ\n");
 
 	/*
 	 * Reset MMCR0 to its normal value.  This will set PMXE and
-	 * clear FC (मुक्तze counters) and PMAO (perf mon alert occurred)
-	 * and thus allow पूर्णांकerrupts to occur again.
+	 * clear FC (freeze counters) and PMAO (perf mon alert occurred)
+	 * and thus allow interrupts to occur again.
 	 * XXX might want to use MSR.PM to keep the events frozen until
-	 * we get back out of this पूर्णांकerrupt.
+	 * we get back out of this interrupt.
 	 */
-	ग_लिखो_mmcr0(cpuhw, cpuhw->mmcr.mmcr0);
+	write_mmcr0(cpuhw, cpuhw->mmcr.mmcr0);
 
 	/* Clear the cpuhw->pmcs */
-	स_रखो(&cpuhw->pmcs, 0, माप(cpuhw->pmcs));
+	memset(&cpuhw->pmcs, 0, sizeof(cpuhw->pmcs));
 
-पूर्ण
+}
 
-अटल व्योम perf_event_पूर्णांकerrupt(काष्ठा pt_regs *regs)
-अणु
-	u64 start_घड़ी = sched_घड़ी();
+static void perf_event_interrupt(struct pt_regs *regs)
+{
+	u64 start_clock = sched_clock();
 
-	__perf_event_पूर्णांकerrupt(regs);
-	perf_sample_event_took(sched_घड़ी() - start_घड़ी);
-पूर्ण
+	__perf_event_interrupt(regs);
+	perf_sample_event_took(sched_clock() - start_clock);
+}
 
-अटल पूर्णांक घातer_pmu_prepare_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpu_hw_events *cpuhw = &per_cpu(cpu_hw_events, cpu);
+static int power_pmu_prepare_cpu(unsigned int cpu)
+{
+	struct cpu_hw_events *cpuhw = &per_cpu(cpu_hw_events, cpu);
 
-	अगर (ppmu) अणु
-		स_रखो(cpuhw, 0, माप(*cpuhw));
+	if (ppmu) {
+		memset(cpuhw, 0, sizeof(*cpuhw));
 		cpuhw->mmcr.mmcr0 = MMCR0_FC;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक रेजिस्टर_घातer_pmu(काष्ठा घातer_pmu *pmu)
-अणु
-	अगर (ppmu)
-		वापस -EBUSY;		/* something's alपढ़ोy रेजिस्टरed */
+int register_power_pmu(struct power_pmu *pmu)
+{
+	if (ppmu)
+		return -EBUSY;		/* something's already registered */
 
 	ppmu = pmu;
 	pr_info("%s performance monitor hardware support registered\n",
 		pmu->name);
 
-	घातer_pmu.attr_groups = ppmu->attr_groups;
-	घातer_pmu.capabilities |= (ppmu->capabilities & PERF_PMU_CAP_EXTENDED_REGS);
+	power_pmu.attr_groups = ppmu->attr_groups;
+	power_pmu.capabilities |= (ppmu->capabilities & PERF_PMU_CAP_EXTENDED_REGS);
 
-#अगर_घोषित MSR_HV
+#ifdef MSR_HV
 	/*
-	 * Use FCHV to ignore kernel events अगर MSR.HV is set.
+	 * Use FCHV to ignore kernel events if MSR.HV is set.
 	 */
-	अगर (mfmsr() & MSR_HV)
-		मुक्तze_events_kernel = MMCR0_FCHV;
-#पूर्ण_अगर /* CONFIG_PPC64 */
+	if (mfmsr() & MSR_HV)
+		freeze_events_kernel = MMCR0_FCHV;
+#endif /* CONFIG_PPC64 */
 
-	perf_pmu_रेजिस्टर(&घातer_pmu, "cpu", PERF_TYPE_RAW);
+	perf_pmu_register(&power_pmu, "cpu", PERF_TYPE_RAW);
 	cpuhp_setup_state(CPUHP_PERF_POWER, "perf/powerpc:prepare",
-			  घातer_pmu_prepare_cpu, शून्य);
-	वापस 0;
-पूर्ण
+			  power_pmu_prepare_cpu, NULL);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PPC64
-अटल पूर्णांक __init init_ppc64_pmu(व्योम)
-अणु
-	/* run through all the pmu drivers one at a समय */
-	अगर (!init_घातer5_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer5p_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer6_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer7_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer8_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer9_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_घातer10_pmu())
-		वापस 0;
-	अन्यथा अगर (!init_ppc970_pmu())
-		वापस 0;
-	अन्यथा
-		वापस init_generic_compat_pmu();
-पूर्ण
+#ifdef CONFIG_PPC64
+static int __init init_ppc64_pmu(void)
+{
+	/* run through all the pmu drivers one at a time */
+	if (!init_power5_pmu())
+		return 0;
+	else if (!init_power5p_pmu())
+		return 0;
+	else if (!init_power6_pmu())
+		return 0;
+	else if (!init_power7_pmu())
+		return 0;
+	else if (!init_power8_pmu())
+		return 0;
+	else if (!init_power9_pmu())
+		return 0;
+	else if (!init_power10_pmu())
+		return 0;
+	else if (!init_ppc970_pmu())
+		return 0;
+	else
+		return init_generic_compat_pmu();
+}
 early_initcall(init_ppc64_pmu);
-#पूर्ण_अगर
+#endif

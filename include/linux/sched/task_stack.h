@@ -1,123 +1,122 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_TASK_STACK_H
-#घोषणा _LINUX_SCHED_TASK_STACK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_TASK_STACK_H
+#define _LINUX_SCHED_TASK_STACK_H
 
 /*
- * task->stack (kernel stack) handling पूर्णांकerfaces:
+ * task->stack (kernel stack) handling interfaces:
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/magic.h>
+#include <linux/sched.h>
+#include <linux/magic.h>
 
-#अगर_घोषित CONFIG_THREAD_INFO_IN_TASK
+#ifdef CONFIG_THREAD_INFO_IN_TASK
 
 /*
- * When accessing the stack of a non-current task that might निकास, use
- * try_get_task_stack() instead.  task_stack_page will वापस a poपूर्णांकer
- * that could get मुक्तd out from under you.
+ * When accessing the stack of a non-current task that might exit, use
+ * try_get_task_stack() instead.  task_stack_page will return a pointer
+ * that could get freed out from under you.
  */
-अटल अंतरभूत व्योम *task_stack_page(स्थिर काष्ठा task_काष्ठा *task)
-अणु
-	वापस task->stack;
-पूर्ण
+static inline void *task_stack_page(const struct task_struct *task)
+{
+	return task->stack;
+}
 
-#घोषणा setup_thपढ़ो_stack(new,old)	करो अणु पूर्ण जबतक(0)
+#define setup_thread_stack(new,old)	do { } while(0)
 
-अटल अंतरभूत अचिन्हित दीर्घ *end_of_stack(स्थिर काष्ठा task_काष्ठा *task)
-अणु
-	वापस task->stack;
-पूर्ण
+static inline unsigned long *end_of_stack(const struct task_struct *task)
+{
+	return task->stack;
+}
 
-#या_अगर !defined(__HAVE_THREAD_FUNCTIONS)
+#elif !defined(__HAVE_THREAD_FUNCTIONS)
 
-#घोषणा task_stack_page(task)	((व्योम *)(task)->stack)
+#define task_stack_page(task)	((void *)(task)->stack)
 
-अटल अंतरभूत व्योम setup_thपढ़ो_stack(काष्ठा task_काष्ठा *p, काष्ठा task_काष्ठा *org)
-अणु
-	*task_thपढ़ो_info(p) = *task_thपढ़ो_info(org);
-	task_thपढ़ो_info(p)->task = p;
-पूर्ण
+static inline void setup_thread_stack(struct task_struct *p, struct task_struct *org)
+{
+	*task_thread_info(p) = *task_thread_info(org);
+	task_thread_info(p)->task = p;
+}
 
 /*
- * Return the address of the last usable दीर्घ on the stack.
+ * Return the address of the last usable long on the stack.
  *
- * When the stack grows करोwn, this is just above the thपढ़ो
- * info काष्ठा. Going any lower will corrupt the thपढ़ोinfo.
+ * When the stack grows down, this is just above the thread
+ * info struct. Going any lower will corrupt the threadinfo.
  *
  * When the stack grows up, this is the highest address.
  * Beyond that position, we corrupt data on the next page.
  */
-अटल अंतरभूत अचिन्हित दीर्घ *end_of_stack(काष्ठा task_काष्ठा *p)
-अणु
-#अगर_घोषित CONFIG_STACK_GROWSUP
-	वापस (अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)task_thपढ़ो_info(p) + THREAD_SIZE) - 1;
-#अन्यथा
-	वापस (अचिन्हित दीर्घ *)(task_thपढ़ो_info(p) + 1);
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned long *end_of_stack(struct task_struct *p)
+{
+#ifdef CONFIG_STACK_GROWSUP
+	return (unsigned long *)((unsigned long)task_thread_info(p) + THREAD_SIZE) - 1;
+#else
+	return (unsigned long *)(task_thread_info(p) + 1);
+#endif
+}
 
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_THREAD_INFO_IN_TASK
-अटल अंतरभूत व्योम *try_get_task_stack(काष्ठा task_काष्ठा *tsk)
-अणु
-	वापस refcount_inc_not_zero(&tsk->stack_refcount) ?
-		task_stack_page(tsk) : शून्य;
-पूर्ण
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+static inline void *try_get_task_stack(struct task_struct *tsk)
+{
+	return refcount_inc_not_zero(&tsk->stack_refcount) ?
+		task_stack_page(tsk) : NULL;
+}
 
-बाह्य व्योम put_task_stack(काष्ठा task_काष्ठा *tsk);
-#अन्यथा
-अटल अंतरभूत व्योम *try_get_task_stack(काष्ठा task_काष्ठा *tsk)
-अणु
-	वापस task_stack_page(tsk);
-पूर्ण
+extern void put_task_stack(struct task_struct *tsk);
+#else
+static inline void *try_get_task_stack(struct task_struct *tsk)
+{
+	return task_stack_page(tsk);
+}
 
-अटल अंतरभूत व्योम put_task_stack(काष्ठा task_काष्ठा *tsk) अणुपूर्ण
-#पूर्ण_अगर
+static inline void put_task_stack(struct task_struct *tsk) {}
+#endif
 
-#घोषणा task_stack_end_corrupted(task) \
+#define task_stack_end_corrupted(task) \
 		(*(end_of_stack(task)) != STACK_END_MAGIC)
 
-अटल अंतरभूत पूर्णांक object_is_on_stack(स्थिर व्योम *obj)
-अणु
-	व्योम *stack = task_stack_page(current);
+static inline int object_is_on_stack(const void *obj)
+{
+	void *stack = task_stack_page(current);
 
-	वापस (obj >= stack) && (obj < (stack + THREAD_SIZE));
-पूर्ण
+	return (obj >= stack) && (obj < (stack + THREAD_SIZE));
+}
 
-बाह्य व्योम thपढ़ो_stack_cache_init(व्योम);
+extern void thread_stack_cache_init(void);
 
-#अगर_घोषित CONFIG_DEBUG_STACK_USAGE
-अटल अंतरभूत अचिन्हित दीर्घ stack_not_used(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ *n = end_of_stack(p);
+#ifdef CONFIG_DEBUG_STACK_USAGE
+static inline unsigned long stack_not_used(struct task_struct *p)
+{
+	unsigned long *n = end_of_stack(p);
 
-	करो अणु 	/* Skip over canary */
-# अगरdef CONFIG_STACK_GROWSUP
+	do { 	/* Skip over canary */
+# ifdef CONFIG_STACK_GROWSUP
 		n--;
-# अन्यथा
+# else
 		n++;
-# endअगर
-	पूर्ण जबतक (!*n);
+# endif
+	} while (!*n);
 
-# अगरdef CONFIG_STACK_GROWSUP
-	वापस (अचिन्हित दीर्घ)end_of_stack(p) - (अचिन्हित दीर्घ)n;
-# अन्यथा
-	वापस (अचिन्हित दीर्घ)n - (अचिन्हित दीर्घ)end_of_stack(p);
-# endअगर
-पूर्ण
-#पूर्ण_अगर
-बाह्य व्योम set_task_stack_end_magic(काष्ठा task_काष्ठा *tsk);
+# ifdef CONFIG_STACK_GROWSUP
+	return (unsigned long)end_of_stack(p) - (unsigned long)n;
+# else
+	return (unsigned long)n - (unsigned long)end_of_stack(p);
+# endif
+}
+#endif
+extern void set_task_stack_end_magic(struct task_struct *tsk);
 
-#अगर_अघोषित __HAVE_ARCH_KSTACK_END
-अटल अंतरभूत पूर्णांक kstack_end(व्योम *addr)
-अणु
+#ifndef __HAVE_ARCH_KSTACK_END
+static inline int kstack_end(void *addr)
+{
 	/* Reliable end of stack detection:
 	 * Some APM bios versions misalign the stack
 	 */
-	वापस !(((अचिन्हित दीर्घ)addr+माप(व्योम*)-1) & (THREAD_SIZE-माप(व्योम*)));
-पूर्ण
-#पूर्ण_अगर
+	return !(((unsigned long)addr+sizeof(void*)-1) & (THREAD_SIZE-sizeof(void*)));
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_SCHED_TASK_STACK_H */
+#endif /* _LINUX_SCHED_TASK_STACK_H */

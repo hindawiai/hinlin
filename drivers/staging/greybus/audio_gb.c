@@ -1,223 +1,222 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus Audio Device Class Protocol helpers
  *
  * Copyright 2015-2016 Google Inc.
  */
 
-#समावेश <linux/greybus.h>
-#समावेश "audio_codec.h"
+#include <linux/greybus.h>
+#include "audio_codec.h"
 
-/* TODO: Split पूर्णांकo separate calls */
-पूर्णांक gb_audio_gb_get_topology(काष्ठा gb_connection *connection,
-			     काष्ठा gb_audio_topology **topology)
-अणु
-	काष्ठा gb_audio_get_topology_size_response size_resp;
-	काष्ठा gb_audio_topology *topo;
+/* TODO: Split into separate calls */
+int gb_audio_gb_get_topology(struct gb_connection *connection,
+			     struct gb_audio_topology **topology)
+{
+	struct gb_audio_get_topology_size_response size_resp;
+	struct gb_audio_topology *topo;
 	u16 size;
-	पूर्णांक ret;
+	int ret;
 
 	ret = gb_operation_sync(connection, GB_AUDIO_TYPE_GET_TOPOLOGY_SIZE,
-				शून्य, 0, &size_resp, माप(size_resp));
-	अगर (ret)
-		वापस ret;
+				NULL, 0, &size_resp, sizeof(size_resp));
+	if (ret)
+		return ret;
 
 	size = le16_to_cpu(size_resp.size);
-	अगर (size < माप(*topo))
-		वापस -ENODATA;
+	if (size < sizeof(*topo))
+		return -ENODATA;
 
 	topo = kzalloc(size, GFP_KERNEL);
-	अगर (!topo)
-		वापस -ENOMEM;
+	if (!topo)
+		return -ENOMEM;
 
-	ret = gb_operation_sync(connection, GB_AUDIO_TYPE_GET_TOPOLOGY, शून्य, 0,
+	ret = gb_operation_sync(connection, GB_AUDIO_TYPE_GET_TOPOLOGY, NULL, 0,
 				topo, size);
-	अगर (ret) अणु
-		kमुक्त(topo);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(topo);
+		return ret;
+	}
 
 	*topology = topo;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_get_topology);
 
-पूर्णांक gb_audio_gb_get_control(काष्ठा gb_connection *connection,
+int gb_audio_gb_get_control(struct gb_connection *connection,
 			    u8 control_id, u8 index,
-			    काष्ठा gb_audio_ctl_elem_value *value)
-अणु
-	काष्ठा gb_audio_get_control_request req;
-	काष्ठा gb_audio_get_control_response resp;
-	पूर्णांक ret;
+			    struct gb_audio_ctl_elem_value *value)
+{
+	struct gb_audio_get_control_request req;
+	struct gb_audio_get_control_response resp;
+	int ret;
 
 	req.control_id = control_id;
 	req.index = index;
 
 	ret = gb_operation_sync(connection, GB_AUDIO_TYPE_GET_CONTROL,
-				&req, माप(req), &resp, माप(resp));
-	अगर (ret)
-		वापस ret;
+				&req, sizeof(req), &resp, sizeof(resp));
+	if (ret)
+		return ret;
 
-	स_नकल(value, &resp.value, माप(*value));
+	memcpy(value, &resp.value, sizeof(*value));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_get_control);
 
-पूर्णांक gb_audio_gb_set_control(काष्ठा gb_connection *connection,
+int gb_audio_gb_set_control(struct gb_connection *connection,
 			    u8 control_id, u8 index,
-			    काष्ठा gb_audio_ctl_elem_value *value)
-अणु
-	काष्ठा gb_audio_set_control_request req;
+			    struct gb_audio_ctl_elem_value *value)
+{
+	struct gb_audio_set_control_request req;
 
 	req.control_id = control_id;
 	req.index = index;
-	स_नकल(&req.value, value, माप(req.value));
+	memcpy(&req.value, value, sizeof(req.value));
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_SET_CONTROL,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_SET_CONTROL,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_set_control);
 
-पूर्णांक gb_audio_gb_enable_widget(काष्ठा gb_connection *connection,
+int gb_audio_gb_enable_widget(struct gb_connection *connection,
 			      u8 widget_id)
-अणु
-	काष्ठा gb_audio_enable_widget_request req;
+{
+	struct gb_audio_enable_widget_request req;
 
 	req.widget_id = widget_id;
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_ENABLE_WIDGET,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_ENABLE_WIDGET,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_enable_widget);
 
-पूर्णांक gb_audio_gb_disable_widget(काष्ठा gb_connection *connection,
+int gb_audio_gb_disable_widget(struct gb_connection *connection,
 			       u8 widget_id)
-अणु
-	काष्ठा gb_audio_disable_widget_request req;
+{
+	struct gb_audio_disable_widget_request req;
 
 	req.widget_id = widget_id;
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_DISABLE_WIDGET,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_DISABLE_WIDGET,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_disable_widget);
 
-पूर्णांक gb_audio_gb_get_pcm(काष्ठा gb_connection *connection, u16 data_cport,
-			u32 *क्रमmat, u32 *rate, u8 *channels,
+int gb_audio_gb_get_pcm(struct gb_connection *connection, u16 data_cport,
+			u32 *format, u32 *rate, u8 *channels,
 			u8 *sig_bits)
-अणु
-	काष्ठा gb_audio_get_pcm_request req;
-	काष्ठा gb_audio_get_pcm_response resp;
-	पूर्णांक ret;
+{
+	struct gb_audio_get_pcm_request req;
+	struct gb_audio_get_pcm_response resp;
+	int ret;
 
 	req.data_cport = cpu_to_le16(data_cport);
 
 	ret = gb_operation_sync(connection, GB_AUDIO_TYPE_GET_PCM,
-				&req, माप(req), &resp, माप(resp));
-	अगर (ret)
-		वापस ret;
+				&req, sizeof(req), &resp, sizeof(resp));
+	if (ret)
+		return ret;
 
-	*क्रमmat = le32_to_cpu(resp.क्रमmat);
+	*format = le32_to_cpu(resp.format);
 	*rate = le32_to_cpu(resp.rate);
 	*channels = resp.channels;
 	*sig_bits = resp.sig_bits;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_get_pcm);
 
-पूर्णांक gb_audio_gb_set_pcm(काष्ठा gb_connection *connection, u16 data_cport,
-			u32 क्रमmat, u32 rate, u8 channels,
+int gb_audio_gb_set_pcm(struct gb_connection *connection, u16 data_cport,
+			u32 format, u32 rate, u8 channels,
 			u8 sig_bits)
-अणु
-	काष्ठा gb_audio_set_pcm_request req;
+{
+	struct gb_audio_set_pcm_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
-	req.क्रमmat = cpu_to_le32(क्रमmat);
+	req.format = cpu_to_le32(format);
 	req.rate = cpu_to_le32(rate);
 	req.channels = channels;
 	req.sig_bits = sig_bits;
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_SET_PCM,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_SET_PCM,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_set_pcm);
 
-पूर्णांक gb_audio_gb_set_tx_data_size(काष्ठा gb_connection *connection,
+int gb_audio_gb_set_tx_data_size(struct gb_connection *connection,
 				 u16 data_cport, u16 size)
-अणु
-	काष्ठा gb_audio_set_tx_data_size_request req;
+{
+	struct gb_audio_set_tx_data_size_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 	req.size = cpu_to_le16(size);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_SET_TX_DATA_SIZE,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_SET_TX_DATA_SIZE,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_set_tx_data_size);
 
-पूर्णांक gb_audio_gb_activate_tx(काष्ठा gb_connection *connection,
+int gb_audio_gb_activate_tx(struct gb_connection *connection,
 			    u16 data_cport)
-अणु
-	काष्ठा gb_audio_activate_tx_request req;
+{
+	struct gb_audio_activate_tx_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_ACTIVATE_TX,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_ACTIVATE_TX,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_activate_tx);
 
-पूर्णांक gb_audio_gb_deactivate_tx(काष्ठा gb_connection *connection,
+int gb_audio_gb_deactivate_tx(struct gb_connection *connection,
 			      u16 data_cport)
-अणु
-	काष्ठा gb_audio_deactivate_tx_request req;
+{
+	struct gb_audio_deactivate_tx_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_DEACTIVATE_TX,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_DEACTIVATE_TX,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_deactivate_tx);
 
-पूर्णांक gb_audio_gb_set_rx_data_size(काष्ठा gb_connection *connection,
+int gb_audio_gb_set_rx_data_size(struct gb_connection *connection,
 				 u16 data_cport, u16 size)
-अणु
-	काष्ठा gb_audio_set_rx_data_size_request req;
+{
+	struct gb_audio_set_rx_data_size_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 	req.size = cpu_to_le16(size);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_SET_RX_DATA_SIZE,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_SET_RX_DATA_SIZE,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_set_rx_data_size);
 
-पूर्णांक gb_audio_gb_activate_rx(काष्ठा gb_connection *connection,
+int gb_audio_gb_activate_rx(struct gb_connection *connection,
 			    u16 data_cport)
-अणु
-	काष्ठा gb_audio_activate_rx_request req;
+{
+	struct gb_audio_activate_rx_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_ACTIVATE_RX,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_ACTIVATE_RX,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_activate_rx);
 
-पूर्णांक gb_audio_gb_deactivate_rx(काष्ठा gb_connection *connection,
+int gb_audio_gb_deactivate_rx(struct gb_connection *connection,
 			      u16 data_cport)
-अणु
-	काष्ठा gb_audio_deactivate_rx_request req;
+{
+	struct gb_audio_deactivate_rx_request req;
 
 	req.data_cport = cpu_to_le16(data_cport);
 
-	वापस gb_operation_sync(connection, GB_AUDIO_TYPE_DEACTIVATE_RX,
-				 &req, माप(req), शून्य, 0);
-पूर्ण
+	return gb_operation_sync(connection, GB_AUDIO_TYPE_DEACTIVATE_RX,
+				 &req, sizeof(req), NULL, 0);
+}
 EXPORT_SYMBOL_GPL(gb_audio_gb_deactivate_rx);
 
 MODULE_LICENSE("GPL v2");

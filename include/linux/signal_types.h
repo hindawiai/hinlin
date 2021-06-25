@@ -1,84 +1,83 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SIGNAL_TYPES_H
-#घोषणा _LINUX_SIGNAL_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SIGNAL_TYPES_H
+#define _LINUX_SIGNAL_TYPES_H
 
 /*
- * Basic संकेत handling related data type definitions:
+ * Basic signal handling related data type definitions:
  */
 
-#समावेश <linux/list.h>
-#समावेश <uapi/linux/संकेत.स>
+#include <linux/list.h>
+#include <uapi/linux/signal.h>
 
-प्रकार काष्ठा kernel_siginfo अणु
+typedef struct kernel_siginfo {
 	__SIGINFO;
-पूर्ण kernel_siginfo_t;
+} kernel_siginfo_t;
 
 /*
- * Real Time संकेतs may be queued.
+ * Real Time signals may be queued.
  */
 
-काष्ठा sigqueue अणु
-	काष्ठा list_head list;
-	पूर्णांक flags;
+struct sigqueue {
+	struct list_head list;
+	int flags;
 	kernel_siginfo_t info;
-	काष्ठा user_काष्ठा *user;
-पूर्ण;
+	struct user_struct *user;
+};
 
 /* flags values. */
-#घोषणा SIGQUEUE_PREALLOC	1
+#define SIGQUEUE_PREALLOC	1
 
-काष्ठा संक_बाकी अणु
-	काष्ठा list_head list;
-	sigset_t संकेत;
-पूर्ण;
+struct sigpending {
+	struct list_head list;
+	sigset_t signal;
+};
 
-काष्ठा sigaction अणु
-#अगर_अघोषित __ARCH_HAS_IRIX_SIGACTION
+struct sigaction {
+#ifndef __ARCH_HAS_IRIX_SIGACTION
 	__sighandler_t	sa_handler;
-	अचिन्हित दीर्घ	sa_flags;
-#अन्यथा
-	अचिन्हित पूर्णांक	sa_flags;
+	unsigned long	sa_flags;
+#else
+	unsigned int	sa_flags;
 	__sighandler_t	sa_handler;
-#पूर्ण_अगर
-#अगर_घोषित __ARCH_HAS_SA_RESTORER
+#endif
+#ifdef __ARCH_HAS_SA_RESTORER
 	__sigrestore_t sa_restorer;
-#पूर्ण_अगर
-	sigset_t	sa_mask;	/* mask last क्रम extensibility */
-पूर्ण;
+#endif
+	sigset_t	sa_mask;	/* mask last for extensibility */
+};
 
-काष्ठा k_sigaction अणु
-	काष्ठा sigaction sa;
-#अगर_घोषित __ARCH_HAS_KA_RESTORER
+struct k_sigaction {
+	struct sigaction sa;
+#ifdef __ARCH_HAS_KA_RESTORER
 	__sigrestore_t ka_restorer;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_OLD_SIGACTION
-काष्ठा old_sigaction अणु
+#ifdef CONFIG_OLD_SIGACTION
+struct old_sigaction {
 	__sighandler_t sa_handler;
 	old_sigset_t sa_mask;
-	अचिन्हित दीर्घ sa_flags;
+	unsigned long sa_flags;
 	__sigrestore_t sa_restorer;
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-काष्ठा kसंकेत अणु
-	काष्ठा k_sigaction ka;
+struct ksignal {
+	struct k_sigaction ka;
 	kernel_siginfo_t info;
-	पूर्णांक sig;
-पूर्ण;
+	int sig;
+};
 
-#अगर_अघोषित __ARCH_UAPI_SA_FLAGS
-#अगर_घोषित SA_RESTORER
-#घोषणा __ARCH_UAPI_SA_FLAGS	SA_RESTORER
-#अन्यथा
-#घोषणा __ARCH_UAPI_SA_FLAGS	0
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef __ARCH_UAPI_SA_FLAGS
+#ifdef SA_RESTORER
+#define __ARCH_UAPI_SA_FLAGS	SA_RESTORER
+#else
+#define __ARCH_UAPI_SA_FLAGS	0
+#endif
+#endif
 
-#घोषणा UAPI_SA_FLAGS                                                          \
+#define UAPI_SA_FLAGS                                                          \
 	(SA_NOCLDSTOP | SA_NOCLDWAIT | SA_SIGINFO | SA_ONSTACK | SA_RESTART |  \
 	 SA_NODEFER | SA_RESETHAND | SA_EXPOSE_TAGBITS | __ARCH_UAPI_SA_FLAGS)
 
-#पूर्ण_अगर /* _LINUX_SIGNAL_TYPES_H */
+#endif /* _LINUX_SIGNAL_TYPES_H */

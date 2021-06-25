@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#समावेश <linux/fs.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <linux/fs.h>
+#include <drm/drm_print.h>
 
-#समावेश "gt/debugfs_gt.h"
-#समावेश "intel_guc.h"
-#समावेश "intel_guc_log.h"
-#समावेश "intel_guc_log_debugfs.h"
+#include "gt/debugfs_gt.h"
+#include "intel_guc.h"
+#include "intel_guc_log.h"
+#include "intel_guc_log_debugfs.h"
 
-अटल पूर्णांक guc_log_dump_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+static int guc_log_dump_show(struct seq_file *m, void *data)
+{
+	struct drm_printer p = drm_seq_file_printer(m);
 
-	वापस पूर्णांकel_guc_log_dump(m->निजी, &p, false);
-पूर्ण
+	return intel_guc_log_dump(m->private, &p, false);
+}
 DEFINE_GT_DEBUGFS_ATTRIBUTE(guc_log_dump);
 
-अटल पूर्णांक guc_load_err_log_dump_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_prपूर्णांकer p = drm_seq_file_prपूर्णांकer(m);
+static int guc_load_err_log_dump_show(struct seq_file *m, void *data)
+{
+	struct drm_printer p = drm_seq_file_printer(m);
 
-	वापस पूर्णांकel_guc_log_dump(m->निजी, &p, true);
-पूर्ण
+	return intel_guc_log_dump(m->private, &p, true);
+}
 DEFINE_GT_DEBUGFS_ATTRIBUTE(guc_load_err_log_dump);
 
-अटल पूर्णांक guc_log_level_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log = data;
+static int guc_log_level_get(void *data, u64 *val)
+{
+	struct intel_guc_log *log = data;
 
-	अगर (!पूर्णांकel_guc_is_used(log_to_guc(log)))
-		वापस -ENODEV;
+	if (!intel_guc_is_used(log_to_guc(log)))
+		return -ENODEV;
 
-	*val = पूर्णांकel_guc_log_get_level(log);
+	*val = intel_guc_log_get_level(log);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक guc_log_level_set(व्योम *data, u64 val)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log = data;
+static int guc_log_level_set(void *data, u64 val)
+{
+	struct intel_guc_log *log = data;
 
-	अगर (!पूर्णांकel_guc_is_used(log_to_guc(log)))
-		वापस -ENODEV;
+	if (!intel_guc_is_used(log_to_guc(log)))
+		return -ENODEV;
 
-	वापस पूर्णांकel_guc_log_set_level(log, val);
-पूर्ण
+	return intel_guc_log_set_level(log, val);
+}
 
 DEFINE_SIMPLE_ATTRIBUTE(guc_log_level_fops,
 			guc_log_level_get, guc_log_level_set,
 			"%lld\n");
 
-अटल पूर्णांक guc_log_relay_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log = inode->i_निजी;
+static int guc_log_relay_open(struct inode *inode, struct file *file)
+{
+	struct intel_guc_log *log = inode->i_private;
 
-	अगर (!पूर्णांकel_guc_is_पढ़ोy(log_to_guc(log)))
-		वापस -ENODEV;
+	if (!intel_guc_is_ready(log_to_guc(log)))
+		return -ENODEV;
 
-	file->निजी_data = log;
+	file->private_data = log;
 
-	वापस पूर्णांकel_guc_log_relay_खोलो(log);
-पूर्ण
+	return intel_guc_log_relay_open(log);
+}
 
-अटल sमाप_प्रकार
-guc_log_relay_ग_लिखो(काष्ठा file *filp,
-		    स्थिर अक्षर __user *ubuf,
-		    माप_प्रकार cnt,
+static ssize_t
+guc_log_relay_write(struct file *filp,
+		    const char __user *ubuf,
+		    size_t cnt,
 		    loff_t *ppos)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log = filp->निजी_data;
-	पूर्णांक val;
-	पूर्णांक ret;
+{
+	struct intel_guc_log *log = filp->private_data;
+	int val;
+	int ret;
 
-	ret = kstrtoपूर्णांक_from_user(ubuf, cnt, 0, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtoint_from_user(ubuf, cnt, 0, &val);
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Enable and start the guc log relay on value of 1.
-	 * Flush log relay क्रम any other value.
+	 * Flush log relay for any other value.
 	 */
-	अगर (val == 1)
-		ret = पूर्णांकel_guc_log_relay_start(log);
-	अन्यथा
-		पूर्णांकel_guc_log_relay_flush(log);
+	if (val == 1)
+		ret = intel_guc_log_relay_start(log);
+	else
+		intel_guc_log_relay_flush(log);
 
-	वापस ret ?: cnt;
-पूर्ण
+	return ret ?: cnt;
+}
 
-अटल पूर्णांक guc_log_relay_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log = inode->i_निजी;
+static int guc_log_relay_release(struct inode *inode, struct file *file)
+{
+	struct intel_guc_log *log = inode->i_private;
 
-	पूर्णांकel_guc_log_relay_बंद(log);
-	वापस 0;
-पूर्ण
+	intel_guc_log_relay_close(log);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations guc_log_relay_fops = अणु
+static const struct file_operations guc_log_relay_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = guc_log_relay_खोलो,
-	.ग_लिखो = guc_log_relay_ग_लिखो,
+	.open = guc_log_relay_open,
+	.write = guc_log_relay_write,
 	.release = guc_log_relay_release,
-पूर्ण;
+};
 
-व्योम पूर्णांकel_guc_log_debugfs_रेजिस्टर(काष्ठा पूर्णांकel_guc_log *log,
-				    काष्ठा dentry *root)
-अणु
-	अटल स्थिर काष्ठा debugfs_gt_file files[] = अणु
-		अणु "guc_log_dump", &guc_log_dump_fops, शून्य पूर्ण,
-		अणु "guc_load_err_log_dump", &guc_load_err_log_dump_fops, शून्य पूर्ण,
-		अणु "guc_log_level", &guc_log_level_fops, शून्य पूर्ण,
-		अणु "guc_log_relay", &guc_log_relay_fops, शून्य पूर्ण,
-	पूर्ण;
+void intel_guc_log_debugfs_register(struct intel_guc_log *log,
+				    struct dentry *root)
+{
+	static const struct debugfs_gt_file files[] = {
+		{ "guc_log_dump", &guc_log_dump_fops, NULL },
+		{ "guc_load_err_log_dump", &guc_load_err_log_dump_fops, NULL },
+		{ "guc_log_level", &guc_log_level_fops, NULL },
+		{ "guc_log_relay", &guc_log_relay_fops, NULL },
+	};
 
-	अगर (!पूर्णांकel_guc_is_supported(log_to_guc(log)))
-		वापस;
+	if (!intel_guc_is_supported(log_to_guc(log)))
+		return;
 
-	पूर्णांकel_gt_debugfs_रेजिस्टर_files(root, files, ARRAY_SIZE(files), log);
-पूर्ण
+	intel_gt_debugfs_register_files(root, files, ARRAY_SIZE(files), log);
+}
 

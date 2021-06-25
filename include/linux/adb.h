@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Definitions क्रम ADB (Apple Desktop Bus) support.
+ * Definitions for ADB (Apple Desktop Bus) support.
  */
-#अगर_अघोषित __ADB_H
-#घोषणा __ADB_H
+#ifndef __ADB_H
+#define __ADB_H
 
-#समावेश <uapi/linux/adb.h>
+#include <uapi/linux/adb.h>
 
 
-काष्ठा adb_request अणु
-	अचिन्हित अक्षर data[32];
-	पूर्णांक nbytes;
-	अचिन्हित अक्षर reply[32];
-	पूर्णांक reply_len;
-	अचिन्हित अक्षर reply_expected;
-	अचिन्हित अक्षर sent;
-	अचिन्हित अक्षर complete;
-	व्योम (*करोne)(काष्ठा adb_request *);
-	व्योम *arg;
-	काष्ठा adb_request *next;
-पूर्ण;
+struct adb_request {
+	unsigned char data[32];
+	int nbytes;
+	unsigned char reply[32];
+	int reply_len;
+	unsigned char reply_expected;
+	unsigned char sent;
+	unsigned char complete;
+	void (*done)(struct adb_request *);
+	void *arg;
+	struct adb_request *next;
+};
 
-काष्ठा adb_ids अणु
-	पूर्णांक nids;
-	अचिन्हित अक्षर id[16];
-पूर्ण;
+struct adb_ids {
+	int nids;
+	unsigned char id[16];
+};
 
 /* Structure which encapsulates a low-level ADB driver */
 
-काष्ठा adb_driver अणु
-	अक्षर name[16];
-	पूर्णांक (*probe)(व्योम);
-	पूर्णांक (*init)(व्योम);
-	पूर्णांक (*send_request)(काष्ठा adb_request *req, पूर्णांक sync);
-	पूर्णांक (*स्वतःpoll)(पूर्णांक devs);
-	व्योम (*poll)(व्योम);
-	पूर्णांक (*reset_bus)(व्योम);
-पूर्ण;
+struct adb_driver {
+	char name[16];
+	int (*probe)(void);
+	int (*init)(void);
+	int (*send_request)(struct adb_request *req, int sync);
+	int (*autopoll)(int devs);
+	void (*poll)(void);
+	int (*reset_bus)(void);
+};
 
-/* Values क्रम adb_request flags */
-#घोषणा ADBREQ_REPLY	1	/* expect reply */
-#घोषणा ADBREQ_SYNC	2	/* poll until करोne */
-#घोषणा ADBREQ_NOSEND	4	/* build the request, but करोn't send it */
+/* Values for adb_request flags */
+#define ADBREQ_REPLY	1	/* expect reply */
+#define ADBREQ_SYNC	2	/* poll until done */
+#define ADBREQ_NOSEND	4	/* build the request, but don't send it */
 
-/* Messages sent thru the client_list notअगरier. You should NOT stop
+/* Messages sent thru the client_list notifier. You should NOT stop
    the operation, at least not with this version */
-क्रमागत adb_message अणु
-    ADB_MSG_POWERDOWN,	/* Currently called beक्रमe sleep only */
-    ADB_MSG_PRE_RESET,	/* Called beक्रमe resetting the bus */
-    ADB_MSG_POST_RESET	/* Called after resetting the bus (re-करो init & रेजिस्टर) */
-पूर्ण;
-बाह्य काष्ठा blocking_notअगरier_head adb_client_list;
+enum adb_message {
+    ADB_MSG_POWERDOWN,	/* Currently called before sleep only */
+    ADB_MSG_PRE_RESET,	/* Called before resetting the bus */
+    ADB_MSG_POST_RESET	/* Called after resetting the bus (re-do init & register) */
+};
+extern struct blocking_notifier_head adb_client_list;
 
-पूर्णांक adb_request(काष्ठा adb_request *req, व्योम (*करोne)(काष्ठा adb_request *),
-		पूर्णांक flags, पूर्णांक nbytes, ...);
-पूर्णांक adb_रेजिस्टर(पूर्णांक शेष_id,पूर्णांक handler_id,काष्ठा adb_ids *ids,
-		 व्योम (*handler)(अचिन्हित अक्षर *, पूर्णांक, पूर्णांक));
-पूर्णांक adb_unरेजिस्टर(पूर्णांक index);
-व्योम adb_poll(व्योम);
-व्योम adb_input(अचिन्हित अक्षर *, पूर्णांक, पूर्णांक);
-पूर्णांक adb_reset_bus(व्योम);
+int adb_request(struct adb_request *req, void (*done)(struct adb_request *),
+		int flags, int nbytes, ...);
+int adb_register(int default_id,int handler_id,struct adb_ids *ids,
+		 void (*handler)(unsigned char *, int, int));
+int adb_unregister(int index);
+void adb_poll(void);
+void adb_input(unsigned char *, int, int);
+int adb_reset_bus(void);
 
-पूर्णांक adb_try_handler_change(पूर्णांक address, पूर्णांक new_id);
-पूर्णांक adb_get_infos(पूर्णांक address, पूर्णांक *original_address, पूर्णांक *handler_id);
+int adb_try_handler_change(int address, int new_id);
+int adb_get_infos(int address, int *original_address, int *handler_id);
 
-#पूर्ण_अगर /* __ADB_H */
+#endif /* __ADB_H */

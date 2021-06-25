@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2019, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
-#घोषणा _GNU_SOURCE
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2019, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+#define _GNU_SOURCE
+#include <unistd.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस gettid();
-पूर्ण
+int main(void)
+{
+	return gettid();
+}
 
-#अघोषित _GNU_SOURCE
+#undef _GNU_SOURCE

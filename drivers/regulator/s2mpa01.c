@@ -1,211 +1,210 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // Copyright (c) 2013 Samsung Electronics Co., Ltd
 //		http://www.samsung.com
 
-#समावेश <linux/bug.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/mfd/samsung/core.h>
-#समावेश <linux/mfd/samsung/s2mpa01.h>
+#include <linux/bug.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/mfd/samsung/core.h>
+#include <linux/mfd/samsung/s2mpa01.h>
 
-काष्ठा s2mpa01_info अणु
-	पूर्णांक ramp_delay24;
-	पूर्णांक ramp_delay3;
-	पूर्णांक ramp_delay5;
-	पूर्णांक ramp_delay16;
-	पूर्णांक ramp_delay7;
-	पूर्णांक ramp_delay8910;
-पूर्ण;
+struct s2mpa01_info {
+	int ramp_delay24;
+	int ramp_delay3;
+	int ramp_delay5;
+	int ramp_delay16;
+	int ramp_delay7;
+	int ramp_delay8910;
+};
 
-अटल पूर्णांक get_ramp_delay(पूर्णांक ramp_delay)
-अणु
-	अचिन्हित अक्षर cnt = 0;
+static int get_ramp_delay(int ramp_delay)
+{
+	unsigned char cnt = 0;
 
 	ramp_delay /= 6250;
 
-	जबतक (true) अणु
+	while (true) {
 		ramp_delay = ramp_delay >> 1;
-		अगर (ramp_delay == 0)
-			अवरोध;
+		if (ramp_delay == 0)
+			break;
 		cnt++;
-	पूर्ण
+	}
 
-	अगर (cnt > 3)
+	if (cnt > 3)
 		cnt = 3;
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल पूर्णांक s2mpa01_regulator_set_voltage_समय_sel(काष्ठा regulator_dev *rdev,
-				   अचिन्हित पूर्णांक old_selector,
-				   अचिन्हित पूर्णांक new_selector)
-अणु
-	काष्ठा s2mpa01_info *s2mpa01 = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक ramp_delay = 0;
-	पूर्णांक old_volt, new_volt;
+static int s2mpa01_regulator_set_voltage_time_sel(struct regulator_dev *rdev,
+				   unsigned int old_selector,
+				   unsigned int new_selector)
+{
+	struct s2mpa01_info *s2mpa01 = rdev_get_drvdata(rdev);
+	unsigned int ramp_delay = 0;
+	int old_volt, new_volt;
 
-	चयन (rdev_get_id(rdev)) अणु
-	हाल S2MPA01_BUCK2:
-	हाल S2MPA01_BUCK4:
+	switch (rdev_get_id(rdev)) {
+	case S2MPA01_BUCK2:
+	case S2MPA01_BUCK4:
 		ramp_delay = s2mpa01->ramp_delay24;
-		अवरोध;
-	हाल S2MPA01_BUCK3:
+		break;
+	case S2MPA01_BUCK3:
 		ramp_delay = s2mpa01->ramp_delay3;
-		अवरोध;
-	हाल S2MPA01_BUCK5:
+		break;
+	case S2MPA01_BUCK5:
 		ramp_delay = s2mpa01->ramp_delay5;
-		अवरोध;
-	हाल S2MPA01_BUCK1:
-	हाल S2MPA01_BUCK6:
+		break;
+	case S2MPA01_BUCK1:
+	case S2MPA01_BUCK6:
 		ramp_delay = s2mpa01->ramp_delay16;
-		अवरोध;
-	हाल S2MPA01_BUCK7:
+		break;
+	case S2MPA01_BUCK7:
 		ramp_delay = s2mpa01->ramp_delay7;
-		अवरोध;
-	हाल S2MPA01_BUCK8:
-	हाल S2MPA01_BUCK9:
-	हाल S2MPA01_BUCK10:
+		break;
+	case S2MPA01_BUCK8:
+	case S2MPA01_BUCK9:
+	case S2MPA01_BUCK10:
 		ramp_delay = s2mpa01->ramp_delay8910;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ramp_delay == 0)
+	if (ramp_delay == 0)
 		ramp_delay = rdev->desc->ramp_delay;
 
 	old_volt = rdev->desc->min_uV + (rdev->desc->uV_step * old_selector);
 	new_volt = rdev->desc->min_uV + (rdev->desc->uV_step * new_selector);
 
-	वापस DIV_ROUND_UP(असल(new_volt - old_volt), ramp_delay);
-पूर्ण
+	return DIV_ROUND_UP(abs(new_volt - old_volt), ramp_delay);
+}
 
-अटल पूर्णांक s2mpa01_set_ramp_delay(काष्ठा regulator_dev *rdev, पूर्णांक ramp_delay)
-अणु
-	काष्ठा s2mpa01_info *s2mpa01 = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक ramp_val, ramp_shअगरt, ramp_reg = S2MPA01_REG_RAMP2;
-	अचिन्हित पूर्णांक ramp_enable = 1, enable_shअगरt = 0;
-	पूर्णांक ret;
+static int s2mpa01_set_ramp_delay(struct regulator_dev *rdev, int ramp_delay)
+{
+	struct s2mpa01_info *s2mpa01 = rdev_get_drvdata(rdev);
+	unsigned int ramp_val, ramp_shift, ramp_reg = S2MPA01_REG_RAMP2;
+	unsigned int ramp_enable = 1, enable_shift = 0;
+	int ret;
 
-	चयन (rdev_get_id(rdev)) अणु
-	हाल S2MPA01_BUCK1:
-		enable_shअगरt = S2MPA01_BUCK1_RAMP_EN_SHIFT;
-		अगर (!ramp_delay) अणु
+	switch (rdev_get_id(rdev)) {
+	case S2MPA01_BUCK1:
+		enable_shift = S2MPA01_BUCK1_RAMP_EN_SHIFT;
+		if (!ramp_delay) {
 			ramp_enable = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ramp_delay > s2mpa01->ramp_delay16)
+		if (ramp_delay > s2mpa01->ramp_delay16)
 			s2mpa01->ramp_delay16 = ramp_delay;
-		अन्यथा
+		else
 			ramp_delay = s2mpa01->ramp_delay16;
 
-		ramp_shअगरt = S2MPA01_BUCK16_RAMP_SHIFT;
-		अवरोध;
-	हाल S2MPA01_BUCK2:
-		enable_shअगरt = S2MPA01_BUCK2_RAMP_EN_SHIFT;
-		अगर (!ramp_delay) अणु
+		ramp_shift = S2MPA01_BUCK16_RAMP_SHIFT;
+		break;
+	case S2MPA01_BUCK2:
+		enable_shift = S2MPA01_BUCK2_RAMP_EN_SHIFT;
+		if (!ramp_delay) {
 			ramp_enable = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ramp_delay > s2mpa01->ramp_delay24)
+		if (ramp_delay > s2mpa01->ramp_delay24)
 			s2mpa01->ramp_delay24 = ramp_delay;
-		अन्यथा
+		else
 			ramp_delay = s2mpa01->ramp_delay24;
 
-		ramp_shअगरt = S2MPA01_BUCK24_RAMP_SHIFT;
+		ramp_shift = S2MPA01_BUCK24_RAMP_SHIFT;
 		ramp_reg = S2MPA01_REG_RAMP1;
-		अवरोध;
-	हाल S2MPA01_BUCK3:
-		enable_shअगरt = S2MPA01_BUCK3_RAMP_EN_SHIFT;
-		अगर (!ramp_delay) अणु
+		break;
+	case S2MPA01_BUCK3:
+		enable_shift = S2MPA01_BUCK3_RAMP_EN_SHIFT;
+		if (!ramp_delay) {
 			ramp_enable = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		s2mpa01->ramp_delay3 = ramp_delay;
-		ramp_shअगरt = S2MPA01_BUCK3_RAMP_SHIFT;
+		ramp_shift = S2MPA01_BUCK3_RAMP_SHIFT;
 		ramp_reg = S2MPA01_REG_RAMP1;
-		अवरोध;
-	हाल S2MPA01_BUCK4:
-		enable_shअगरt = S2MPA01_BUCK4_RAMP_EN_SHIFT;
-		अगर (!ramp_delay) अणु
+		break;
+	case S2MPA01_BUCK4:
+		enable_shift = S2MPA01_BUCK4_RAMP_EN_SHIFT;
+		if (!ramp_delay) {
 			ramp_enable = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ramp_delay > s2mpa01->ramp_delay24)
+		if (ramp_delay > s2mpa01->ramp_delay24)
 			s2mpa01->ramp_delay24 = ramp_delay;
-		अन्यथा
+		else
 			ramp_delay = s2mpa01->ramp_delay24;
 
-		ramp_shअगरt = S2MPA01_BUCK24_RAMP_SHIFT;
+		ramp_shift = S2MPA01_BUCK24_RAMP_SHIFT;
 		ramp_reg = S2MPA01_REG_RAMP1;
-		अवरोध;
-	हाल S2MPA01_BUCK5:
+		break;
+	case S2MPA01_BUCK5:
 		s2mpa01->ramp_delay5 = ramp_delay;
-		ramp_shअगरt = S2MPA01_BUCK5_RAMP_SHIFT;
-		अवरोध;
-	हाल S2MPA01_BUCK6:
-		अगर (ramp_delay > s2mpa01->ramp_delay16)
+		ramp_shift = S2MPA01_BUCK5_RAMP_SHIFT;
+		break;
+	case S2MPA01_BUCK6:
+		if (ramp_delay > s2mpa01->ramp_delay16)
 			s2mpa01->ramp_delay16 = ramp_delay;
-		अन्यथा
+		else
 			ramp_delay = s2mpa01->ramp_delay16;
 
-		ramp_shअगरt = S2MPA01_BUCK16_RAMP_SHIFT;
-		अवरोध;
-	हाल S2MPA01_BUCK7:
+		ramp_shift = S2MPA01_BUCK16_RAMP_SHIFT;
+		break;
+	case S2MPA01_BUCK7:
 		s2mpa01->ramp_delay7 = ramp_delay;
-		ramp_shअगरt = S2MPA01_BUCK7_RAMP_SHIFT;
-		अवरोध;
-	हाल S2MPA01_BUCK8:
-	हाल S2MPA01_BUCK9:
-	हाल S2MPA01_BUCK10:
-		अगर (ramp_delay > s2mpa01->ramp_delay8910)
+		ramp_shift = S2MPA01_BUCK7_RAMP_SHIFT;
+		break;
+	case S2MPA01_BUCK8:
+	case S2MPA01_BUCK9:
+	case S2MPA01_BUCK10:
+		if (ramp_delay > s2mpa01->ramp_delay8910)
 			s2mpa01->ramp_delay8910 = ramp_delay;
-		अन्यथा
+		else
 			ramp_delay = s2mpa01->ramp_delay8910;
 
-		ramp_shअगरt = S2MPA01_BUCK8910_RAMP_SHIFT;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		ramp_shift = S2MPA01_BUCK8910_RAMP_SHIFT;
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (!ramp_enable)
-		जाओ ramp_disable;
+	if (!ramp_enable)
+		goto ramp_disable;
 
-	/* Ramp delay can be enabled/disabled only क्रम buck[1234] */
-	अगर (rdev_get_id(rdev) >= S2MPA01_BUCK1 &&
-			rdev_get_id(rdev) <= S2MPA01_BUCK4) अणु
+	/* Ramp delay can be enabled/disabled only for buck[1234] */
+	if (rdev_get_id(rdev) >= S2MPA01_BUCK1 &&
+			rdev_get_id(rdev) <= S2MPA01_BUCK4) {
 		ret = regmap_update_bits(rdev->regmap, S2MPA01_REG_RAMP1,
-					 1 << enable_shअगरt, 1 << enable_shअगरt);
-		अगर (ret) अणु
+					 1 << enable_shift, 1 << enable_shift);
+		if (ret) {
 			dev_err(&rdev->dev, "failed to enable ramp rate\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ramp_val = get_ramp_delay(ramp_delay);
 
-	वापस regmap_update_bits(rdev->regmap, ramp_reg, 0x3 << ramp_shअगरt,
-				  ramp_val << ramp_shअगरt);
+	return regmap_update_bits(rdev->regmap, ramp_reg, 0x3 << ramp_shift,
+				  ramp_val << ramp_shift);
 
 ramp_disable:
-	वापस regmap_update_bits(rdev->regmap, S2MPA01_REG_RAMP1,
-				  1 << enable_shअगरt, 0);
-पूर्ण
+	return regmap_update_bits(rdev->regmap, S2MPA01_REG_RAMP1,
+				  1 << enable_shift, 0);
+}
 
-अटल स्थिर काष्ठा regulator_ops s2mpa01_lकरो_ops = अणु
+static const struct regulator_ops s2mpa01_ldo_ops = {
 	.list_voltage		= regulator_list_voltage_linear,
 	.map_voltage		= regulator_map_voltage_linear,
 	.is_enabled		= regulator_is_enabled_regmap,
@@ -213,10 +212,10 @@ ramp_disable:
 	.disable		= regulator_disable_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
-	.set_voltage_समय_sel	= regulator_set_voltage_समय_sel,
-पूर्ण;
+	.set_voltage_time_sel	= regulator_set_voltage_time_sel,
+};
 
-अटल स्थिर काष्ठा regulator_ops s2mpa01_buck_ops = अणु
+static const struct regulator_ops s2mpa01_buck_ops = {
 	.list_voltage		= regulator_list_voltage_linear,
 	.map_voltage		= regulator_map_voltage_linear,
 	.is_enabled		= regulator_is_enabled_regmap,
@@ -224,16 +223,16 @@ ramp_disable:
 	.disable		= regulator_disable_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
-	.set_voltage_समय_sel	= s2mpa01_regulator_set_voltage_समय_sel,
+	.set_voltage_time_sel	= s2mpa01_regulator_set_voltage_time_sel,
 	.set_ramp_delay		= s2mpa01_set_ramp_delay,
-पूर्ण;
+};
 
-#घोषणा regulator_desc_lकरो(num, step) अणु			\
+#define regulator_desc_ldo(num, step) {			\
 	.name		= "LDO"#num,			\
 	.of_match	= of_match_ptr("LDO"#num),	\
 	.regulators_node = of_match_ptr("regulators"),	\
 	.id		= S2MPA01_LDO##num,		\
-	.ops		= &s2mpa01_lकरो_ops,		\
+	.ops		= &s2mpa01_ldo_ops,		\
 	.type		= REGULATOR_VOLTAGE,		\
 	.owner		= THIS_MODULE,			\
 	.min_uV		= MIN_800_MV,			\
@@ -243,9 +242,9 @@ ramp_disable:
 	.vsel_mask	= S2MPA01_LDO_VSEL_MASK,	\
 	.enable_reg	= S2MPA01_REG_L1CTRL + num - 1,	\
 	.enable_mask	= S2MPA01_ENABLE_MASK		\
-पूर्ण
+}
 
-#घोषणा regulator_desc_buck1_4(num)	अणु			\
+#define regulator_desc_buck1_4(num)	{			\
 	.name		= "BUCK"#num,				\
 	.of_match	= of_match_ptr("BUCK"#num),		\
 	.regulators_node = of_match_ptr("regulators"),		\
@@ -261,9 +260,9 @@ ramp_disable:
 	.vsel_mask	= S2MPA01_BUCK_VSEL_MASK,		\
 	.enable_reg	= S2MPA01_REG_B1CTRL1 + (num - 1) * 2,	\
 	.enable_mask	= S2MPA01_ENABLE_MASK			\
-पूर्ण
+}
 
-#घोषणा regulator_desc_buck5	अणु				\
+#define regulator_desc_buck5	{				\
 	.name		= "BUCK5",				\
 	.of_match	= of_match_ptr("BUCK5"),		\
 	.regulators_node = of_match_ptr("regulators"),		\
@@ -279,9 +278,9 @@ ramp_disable:
 	.vsel_mask	= S2MPA01_BUCK_VSEL_MASK,		\
 	.enable_reg	= S2MPA01_REG_B5CTRL1,			\
 	.enable_mask	= S2MPA01_ENABLE_MASK			\
-पूर्ण
+}
 
-#घोषणा regulator_desc_buck6_10(num, min, step) अणु			\
+#define regulator_desc_buck6_10(num, min, step) {			\
 	.name		= "BUCK"#num,				\
 	.of_match	= of_match_ptr("BUCK"#num),		\
 	.regulators_node = of_match_ptr("regulators"),		\
@@ -297,35 +296,35 @@ ramp_disable:
 	.vsel_mask	= S2MPA01_BUCK_VSEL_MASK,		\
 	.enable_reg	= S2MPA01_REG_B6CTRL1 + (num - 6) * 2,	\
 	.enable_mask	= S2MPA01_ENABLE_MASK			\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_desc regulators[] = अणु
-	regulator_desc_lकरो(1, STEP_25_MV),
-	regulator_desc_lकरो(2, STEP_50_MV),
-	regulator_desc_lकरो(3, STEP_50_MV),
-	regulator_desc_lकरो(4, STEP_50_MV),
-	regulator_desc_lकरो(5, STEP_25_MV),
-	regulator_desc_lकरो(6, STEP_25_MV),
-	regulator_desc_lकरो(7, STEP_50_MV),
-	regulator_desc_lकरो(8, STEP_50_MV),
-	regulator_desc_lकरो(9, STEP_50_MV),
-	regulator_desc_lकरो(10, STEP_50_MV),
-	regulator_desc_lकरो(11, STEP_50_MV),
-	regulator_desc_lकरो(12, STEP_50_MV),
-	regulator_desc_lकरो(13, STEP_50_MV),
-	regulator_desc_lकरो(14, STEP_50_MV),
-	regulator_desc_lकरो(15, STEP_50_MV),
-	regulator_desc_lकरो(16, STEP_50_MV),
-	regulator_desc_lकरो(17, STEP_50_MV),
-	regulator_desc_lकरो(18, STEP_50_MV),
-	regulator_desc_lकरो(19, STEP_50_MV),
-	regulator_desc_lकरो(20, STEP_50_MV),
-	regulator_desc_lकरो(21, STEP_50_MV),
-	regulator_desc_lकरो(22, STEP_50_MV),
-	regulator_desc_lकरो(23, STEP_50_MV),
-	regulator_desc_lकरो(24, STEP_50_MV),
-	regulator_desc_lकरो(25, STEP_50_MV),
-	regulator_desc_lकरो(26, STEP_25_MV),
+static const struct regulator_desc regulators[] = {
+	regulator_desc_ldo(1, STEP_25_MV),
+	regulator_desc_ldo(2, STEP_50_MV),
+	regulator_desc_ldo(3, STEP_50_MV),
+	regulator_desc_ldo(4, STEP_50_MV),
+	regulator_desc_ldo(5, STEP_25_MV),
+	regulator_desc_ldo(6, STEP_25_MV),
+	regulator_desc_ldo(7, STEP_50_MV),
+	regulator_desc_ldo(8, STEP_50_MV),
+	regulator_desc_ldo(9, STEP_50_MV),
+	regulator_desc_ldo(10, STEP_50_MV),
+	regulator_desc_ldo(11, STEP_50_MV),
+	regulator_desc_ldo(12, STEP_50_MV),
+	regulator_desc_ldo(13, STEP_50_MV),
+	regulator_desc_ldo(14, STEP_50_MV),
+	regulator_desc_ldo(15, STEP_50_MV),
+	regulator_desc_ldo(16, STEP_50_MV),
+	regulator_desc_ldo(17, STEP_50_MV),
+	regulator_desc_ldo(18, STEP_50_MV),
+	regulator_desc_ldo(19, STEP_50_MV),
+	regulator_desc_ldo(20, STEP_50_MV),
+	regulator_desc_ldo(21, STEP_50_MV),
+	regulator_desc_ldo(22, STEP_50_MV),
+	regulator_desc_ldo(23, STEP_50_MV),
+	regulator_desc_ldo(24, STEP_50_MV),
+	regulator_desc_ldo(25, STEP_50_MV),
+	regulator_desc_ldo(26, STEP_25_MV),
 	regulator_desc_buck1_4(1),
 	regulator_desc_buck1_4(2),
 	regulator_desc_buck1_4(3),
@@ -336,55 +335,55 @@ ramp_disable:
 	regulator_desc_buck6_10(8, MIN_800_MV, STEP_12_5_MV),
 	regulator_desc_buck6_10(9, MIN_1500_MV, STEP_12_5_MV),
 	regulator_desc_buck6_10(10, MIN_1000_MV, STEP_12_5_MV),
-पूर्ण;
+};
 
-अटल पूर्णांक s2mpa01_pmic_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा s2mpa01_info *s2mpa01;
-	पूर्णांक i;
+static int s2mpa01_pmic_probe(struct platform_device *pdev)
+{
+	struct sec_pmic_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	struct regulator_config config = { };
+	struct s2mpa01_info *s2mpa01;
+	int i;
 
-	s2mpa01 = devm_kzalloc(&pdev->dev, माप(*s2mpa01), GFP_KERNEL);
-	अगर (!s2mpa01)
-		वापस -ENOMEM;
+	s2mpa01 = devm_kzalloc(&pdev->dev, sizeof(*s2mpa01), GFP_KERNEL);
+	if (!s2mpa01)
+		return -ENOMEM;
 
 	config.dev = iodev->dev;
 	config.regmap = iodev->regmap_pmic;
 	config.driver_data = s2mpa01;
 
-	क्रम (i = 0; i < S2MPA01_REGULATOR_MAX; i++) अणु
-		काष्ठा regulator_dev *rdev;
+	for (i = 0; i < S2MPA01_REGULATOR_MAX; i++) {
+		struct regulator_dev *rdev;
 
-		rdev = devm_regulator_रेजिस्टर(&pdev->dev,
+		rdev = devm_regulator_register(&pdev->dev,
 						&regulators[i], &config);
-		अगर (IS_ERR(rdev)) अणु
+		if (IS_ERR(rdev)) {
 			dev_err(&pdev->dev, "regulator init failed for %d\n",
 				i);
-			वापस PTR_ERR(rdev);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(rdev);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id s2mpa01_pmic_id[] = अणु
-	अणु "s2mpa01-pmic", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, s2mpa01_pmic_id);
+static const struct platform_device_id s2mpa01_pmic_id[] = {
+	{ "s2mpa01-pmic", 0},
+	{ },
+};
+MODULE_DEVICE_TABLE(platform, s2mpa01_pmic_id);
 
-अटल काष्ठा platक्रमm_driver s2mpa01_pmic_driver = अणु
-	.driver = अणु
+static struct platform_driver s2mpa01_pmic_driver = {
+	.driver = {
 		.name = "s2mpa01-pmic",
-	पूर्ण,
+	},
 	.probe = s2mpa01_pmic_probe,
 	.id_table = s2mpa01_pmic_id,
-पूर्ण;
+};
 
-module_platक्रमm_driver(s2mpa01_pmic_driver);
+module_platform_driver(s2mpa01_pmic_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Sangbeom Kim <sbkim73@samsung.com>");
 MODULE_AUTHOR("Sachin Kamat <sachin.kamat@samsung.com>");
 MODULE_DESCRIPTION("Samsung S2MPA01 Regulator Driver");

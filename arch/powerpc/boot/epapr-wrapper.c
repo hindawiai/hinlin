@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-बाह्य व्योम epapr_platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4,
-				अचिन्हित दीर्घ r5, अचिन्हित दीर्घ r6,
-				अचिन्हित दीर्घ r7);
+// SPDX-License-Identifier: GPL-2.0
+extern void epapr_platform_init(unsigned long r3, unsigned long r4,
+				unsigned long r5, unsigned long r6,
+				unsigned long r7);
 
-व्योम platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,
-		   अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7)
-अणु
-	epapr_platक्रमm_init(r3, r4, r5, r6, r7);
-पूर्ण
+void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
+		   unsigned long r6, unsigned long r7)
+{
+	epapr_platform_init(r3, r4, r5, r6, r7);
+}

@@ -1,232 +1,231 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Free Electrons
  * Copyright (C) 2017 NextThing Co
  *
- * Author: Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
+ * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
  */
 
-#समावेश "internals.h"
+#include "internals.h"
 
-/* Bit क्रम detecting BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_ID4_IS_BEन_अंकD		BIT(7)
+/* Bit for detecting BENAND */
+#define TOSHIBA_NAND_ID4_IS_BENAND		BIT(7)
 
-/* Recommended to reग_लिखो क्रम BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_STATUS_REWRITE_RECOMMENDED	BIT(3)
+/* Recommended to rewrite for BENAND */
+#define TOSHIBA_NAND_STATUS_REWRITE_RECOMMENDED	BIT(3)
 
-/* ECC Status Read Command क्रम BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_CMD_ECC_STATUS_READ	0x7A
+/* ECC Status Read Command for BENAND */
+#define TOSHIBA_NAND_CMD_ECC_STATUS_READ	0x7A
 
-/* ECC Status Mask क्रम BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_ECC_STATUS_MASK		0x0F
+/* ECC Status Mask for BENAND */
+#define TOSHIBA_NAND_ECC_STATUS_MASK		0x0F
 
-/* Uncorrectable Error क्रम BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_ECC_STATUS_UNCORR		0x0F
+/* Uncorrectable Error for BENAND */
+#define TOSHIBA_NAND_ECC_STATUS_UNCORR		0x0F
 
-/* Max ECC Steps क्रम BEन_अंकD */
-#घोषणा TOSHIBA_न_अंकD_MAX_ECC_STEPS		8
+/* Max ECC Steps for BENAND */
+#define TOSHIBA_NAND_MAX_ECC_STEPS		8
 
-अटल पूर्णांक toshiba_nand_benand_पढ़ो_eccstatus_op(काष्ठा nand_chip *chip,
+static int toshiba_nand_benand_read_eccstatus_op(struct nand_chip *chip,
 						 u8 *buf)
-अणु
+{
 	u8 *ecc_status = buf;
 
-	अगर (nand_has_exec_op(chip)) अणु
-		स्थिर काष्ठा nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
-		काष्ठा nand_op_instr instrs[] = अणु
-			न_अंकD_OP_CMD(TOSHIBA_न_अंकD_CMD_ECC_STATUS_READ,
+	if (nand_has_exec_op(chip)) {
+		const struct nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_interface_config(chip));
+		struct nand_op_instr instrs[] = {
+			NAND_OP_CMD(TOSHIBA_NAND_CMD_ECC_STATUS_READ,
 				    PSEC_TO_NSEC(sdr->tADL_min)),
-			न_अंकD_OP_8BIT_DATA_IN(chip->ecc.steps, ecc_status, 0),
-		पूर्ण;
-		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+			NAND_OP_8BIT_DATA_IN(chip->ecc.steps, ecc_status, 0),
+		};
+		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
 
-		वापस nand_exec_op(chip, &op);
-	पूर्ण
+		return nand_exec_op(chip, &op);
+	}
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक toshiba_nand_benand_eccstatus(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक max_bitflips = 0;
-	u8 status, ecc_status[TOSHIBA_न_अंकD_MAX_ECC_STEPS];
+static int toshiba_nand_benand_eccstatus(struct nand_chip *chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	int ret;
+	unsigned int max_bitflips = 0;
+	u8 status, ecc_status[TOSHIBA_NAND_MAX_ECC_STEPS];
 
 	/* Check Status */
-	ret = toshiba_nand_benand_पढ़ो_eccstatus_op(chip, ecc_status);
-	अगर (!ret) अणु
-		अचिन्हित पूर्णांक i, bitflips = 0;
+	ret = toshiba_nand_benand_read_eccstatus_op(chip, ecc_status);
+	if (!ret) {
+		unsigned int i, bitflips = 0;
 
-		क्रम (i = 0; i < chip->ecc.steps; i++) अणु
-			bitflips = ecc_status[i] & TOSHIBA_न_अंकD_ECC_STATUS_MASK;
-			अगर (bitflips == TOSHIBA_न_अंकD_ECC_STATUS_UNCORR) अणु
+		for (i = 0; i < chip->ecc.steps; i++) {
+			bitflips = ecc_status[i] & TOSHIBA_NAND_ECC_STATUS_MASK;
+			if (bitflips == TOSHIBA_NAND_ECC_STATUS_UNCORR) {
 				mtd->ecc_stats.failed++;
-			पूर्ण अन्यथा अणु
+			} else {
 				mtd->ecc_stats.corrected += bitflips;
 				max_bitflips = max(max_bitflips, bitflips);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		वापस max_bitflips;
-	पूर्ण
+		return max_bitflips;
+	}
 
 	/*
-	 * Fallback to regular status check अगर
-	 * toshiba_nand_benand_पढ़ो_eccstatus_op() failed.
+	 * Fallback to regular status check if
+	 * toshiba_nand_benand_read_eccstatus_op() failed.
 	 */
 	ret = nand_status_op(chip, &status);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (status & न_अंकD_STATUS_FAIL) अणु
+	if (status & NAND_STATUS_FAIL) {
 		/* uncorrected */
 		mtd->ecc_stats.failed++;
-	पूर्ण अन्यथा अगर (status & TOSHIBA_न_अंकD_STATUS_REWRITE_RECOMMENDED) अणु
+	} else if (status & TOSHIBA_NAND_STATUS_REWRITE_RECOMMENDED) {
 		/* corrected */
 		max_bitflips = mtd->bitflip_threshold;
 		mtd->ecc_stats.corrected += max_bitflips;
-	पूर्ण
+	}
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-अटल पूर्णांक
-toshiba_nand_पढ़ो_page_benand(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
-			      पूर्णांक oob_required, पूर्णांक page)
-अणु
-	पूर्णांक ret;
+static int
+toshiba_nand_read_page_benand(struct nand_chip *chip, uint8_t *buf,
+			      int oob_required, int page)
+{
+	int ret;
 
-	ret = nand_पढ़ो_page_raw(chip, buf, oob_required, page);
-	अगर (ret)
-		वापस ret;
+	ret = nand_read_page_raw(chip, buf, oob_required, page);
+	if (ret)
+		return ret;
 
-	वापस toshiba_nand_benand_eccstatus(chip);
-पूर्ण
+	return toshiba_nand_benand_eccstatus(chip);
+}
 
-अटल पूर्णांक
-toshiba_nand_पढ़ो_subpage_benand(काष्ठा nand_chip *chip, uपूर्णांक32_t data_offs,
-				 uपूर्णांक32_t पढ़ोlen, uपूर्णांक8_t *bufpoi, पूर्णांक page)
-अणु
-	पूर्णांक ret;
+static int
+toshiba_nand_read_subpage_benand(struct nand_chip *chip, uint32_t data_offs,
+				 uint32_t readlen, uint8_t *bufpoi, int page)
+{
+	int ret;
 
-	ret = nand_पढ़ो_page_op(chip, page, data_offs,
-				bufpoi + data_offs, पढ़ोlen);
-	अगर (ret)
-		वापस ret;
+	ret = nand_read_page_op(chip, page, data_offs,
+				bufpoi + data_offs, readlen);
+	if (ret)
+		return ret;
 
-	वापस toshiba_nand_benand_eccstatus(chip);
-पूर्ण
+	return toshiba_nand_benand_eccstatus(chip);
+}
 
-अटल व्योम toshiba_nand_benand_init(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static void toshiba_nand_benand_init(struct nand_chip *chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
 	/*
-	 * On BEन_अंकD, the entire OOB region can be used by the MTD user.
-	 * The calculated ECC bytes are stored पूर्णांकo other isolated
+	 * On BENAND, the entire OOB region can be used by the MTD user.
+	 * The calculated ECC bytes are stored into other isolated
 	 * area which is not accessible to users.
 	 * This is why chip->ecc.bytes = 0.
 	 */
 	chip->ecc.bytes = 0;
 	chip->ecc.size = 512;
 	chip->ecc.strength = 8;
-	chip->ecc.पढ़ो_page = toshiba_nand_पढ़ो_page_benand;
-	chip->ecc.पढ़ो_subpage = toshiba_nand_पढ़ो_subpage_benand;
-	chip->ecc.ग_लिखो_page = nand_ग_लिखो_page_raw;
-	chip->ecc.पढ़ो_page_raw = nand_पढ़ो_page_raw_notsupp;
-	chip->ecc.ग_लिखो_page_raw = nand_ग_लिखो_page_raw_notsupp;
+	chip->ecc.read_page = toshiba_nand_read_page_benand;
+	chip->ecc.read_subpage = toshiba_nand_read_subpage_benand;
+	chip->ecc.write_page = nand_write_page_raw;
+	chip->ecc.read_page_raw = nand_read_page_raw_notsupp;
+	chip->ecc.write_page_raw = nand_write_page_raw_notsupp;
 
-	chip->options |= न_अंकD_SUBPAGE_READ;
+	chip->options |= NAND_SUBPAGE_READ;
 
 	mtd_set_ooblayout(mtd, nand_get_large_page_ooblayout());
-पूर्ण
+}
 
-अटल व्योम toshiba_nand_decode_id(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा nand_device *base = &chip->base;
-	काष्ठा nand_ecc_props requirements = अणुपूर्ण;
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा nand_memory_organization *memorg;
+static void toshiba_nand_decode_id(struct nand_chip *chip)
+{
+	struct nand_device *base = &chip->base;
+	struct nand_ecc_props requirements = {};
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct nand_memory_organization *memorg;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
 	nand_decode_ext_id(chip);
 
 	/*
-	 * Toshiba 24nm raw SLC (i.e., not BEन_अंकD) have 32B OOB per
+	 * Toshiba 24nm raw SLC (i.e., not BENAND) have 32B OOB per
 	 * 512B page. For Toshiba SLC, we decode the 5th/6th byte as
 	 * follows:
 	 * - ID byte 6, bits[2:0]: 100b -> 43nm, 101b -> 32nm,
 	 *                         110b -> 24nm
-	 * - ID byte 5, bit[7]:    1 -> BEन_अंकD, 0 -> raw SLC
+	 * - ID byte 5, bit[7]:    1 -> BENAND, 0 -> raw SLC
 	 */
-	अगर (chip->id.len >= 6 && nand_is_slc(chip) &&
+	if (chip->id.len >= 6 && nand_is_slc(chip) &&
 	    (chip->id.data[5] & 0x7) == 0x6 /* 24nm */ &&
-	    !(chip->id.data[4] & TOSHIBA_न_अंकD_ID4_IS_BEन_अंकD) /* !BEन_अंकD */) अणु
+	    !(chip->id.data[4] & TOSHIBA_NAND_ID4_IS_BENAND) /* !BENAND */) {
 		memorg->oobsize = 32 * memorg->pagesize >> 9;
 		mtd->oobsize = memorg->oobsize;
-	पूर्ण
+	}
 
 	/*
 	 * Extract ECC requirements from 6th id byte.
 	 * For Toshiba SLC, ecc requrements are as follows:
-	 *  - 43nm: 1 bit ECC क्रम each 512Byte is required.
-	 *  - 32nm: 4 bit ECC क्रम each 512Byte is required.
-	 *  - 24nm: 8 bit ECC क्रम each 512Byte is required.
+	 *  - 43nm: 1 bit ECC for each 512Byte is required.
+	 *  - 32nm: 4 bit ECC for each 512Byte is required.
+	 *  - 24nm: 8 bit ECC for each 512Byte is required.
 	 */
-	अगर (chip->id.len >= 6 && nand_is_slc(chip)) अणु
+	if (chip->id.len >= 6 && nand_is_slc(chip)) {
 		requirements.step_size = 512;
-		चयन (chip->id.data[5] & 0x7) अणु
-		हाल 0x4:
+		switch (chip->id.data[5] & 0x7) {
+		case 0x4:
 			requirements.strength = 1;
-			अवरोध;
-		हाल 0x5:
+			break;
+		case 0x5:
 			requirements.strength = 4;
-			अवरोध;
-		हाल 0x6:
+			break;
+		case 0x6:
 			requirements.strength = 8;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			WARN(1, "Could not get ECC info");
 			requirements.step_size = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	nanddev_set_ecc_requirements(base, &requirements);
-पूर्ण
+}
 
-अटल पूर्णांक
-tc58teg5dclta00_choose_पूर्णांकerface_config(काष्ठा nand_chip *chip,
-					काष्ठा nand_पूर्णांकerface_config *अगरace)
-अणु
-	onfi_fill_पूर्णांकerface_config(chip, अगरace, न_अंकD_SDR_IFACE, 5);
+static int
+tc58teg5dclta00_choose_interface_config(struct nand_chip *chip,
+					struct nand_interface_config *iface)
+{
+	onfi_fill_interface_config(chip, iface, NAND_SDR_IFACE, 5);
 
-	वापस nand_choose_best_sdr_timings(chip, अगरace, शून्य);
-पूर्ण
+	return nand_choose_best_sdr_timings(chip, iface, NULL);
+}
 
-अटल पूर्णांक
-tc58nvg0s3e_choose_पूर्णांकerface_config(काष्ठा nand_chip *chip,
-				    काष्ठा nand_पूर्णांकerface_config *अगरace)
-अणु
-	onfi_fill_पूर्णांकerface_config(chip, अगरace, न_अंकD_SDR_IFACE, 2);
+static int
+tc58nvg0s3e_choose_interface_config(struct nand_chip *chip,
+				    struct nand_interface_config *iface)
+{
+	onfi_fill_interface_config(chip, iface, NAND_SDR_IFACE, 2);
 
-	वापस nand_choose_best_sdr_timings(chip, अगरace, शून्य);
-पूर्ण
+	return nand_choose_best_sdr_timings(chip, iface, NULL);
+}
 
-अटल पूर्णांक
-th58nvg2s3hbai4_choose_पूर्णांकerface_config(काष्ठा nand_chip *chip,
-					काष्ठा nand_पूर्णांकerface_config *अगरace)
-अणु
-	काष्ठा nand_sdr_timings *sdr = &अगरace->timings.sdr;
+static int
+th58nvg2s3hbai4_choose_interface_config(struct nand_chip *chip,
+					struct nand_interface_config *iface)
+{
+	struct nand_sdr_timings *sdr = &iface->timings.sdr;
 
-	/* Start with timings from the बंदst timing mode, mode 4. */
-	onfi_fill_पूर्णांकerface_config(chip, अगरace, न_अंकD_SDR_IFACE, 4);
+	/* Start with timings from the closest timing mode, mode 4. */
+	onfi_fill_interface_config(chip, iface, NAND_SDR_IFACE, 4);
 
-	/* Patch timings that dअगरfer from mode 4. */
+	/* Patch timings that differ from mode 4. */
 	sdr->tALS_min = 12000;
 	sdr->tCHZ_max = 20000;
 	sdr->tCLS_min = 12000;
@@ -241,61 +240,61 @@ th58nvg2s3hbai4_choose_पूर्णांकerface_config(काष्ठा 
 	sdr->tPROG_max = 700000000;
 	sdr->tBERS_max = 5000000000;
 
-	वापस nand_choose_best_sdr_timings(chip, अगरace, sdr);
-पूर्ण
+	return nand_choose_best_sdr_timings(chip, iface, sdr);
+}
 
-अटल पूर्णांक tc58teg5dclta00_init(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+static int tc58teg5dclta00_init(struct nand_chip *chip)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
 
-	chip->ops.choose_पूर्णांकerface_config =
-		&tc58teg5dclta00_choose_पूर्णांकerface_config;
-	chip->options |= न_अंकD_NEED_SCRAMBLING;
+	chip->ops.choose_interface_config =
+		&tc58teg5dclta00_choose_interface_config;
+	chip->options |= NAND_NEED_SCRAMBLING;
 	mtd_set_pairing_scheme(mtd, &dist3_pairing_scheme);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tc58nvg0s3e_init(काष्ठा nand_chip *chip)
-अणु
-	chip->ops.choose_पूर्णांकerface_config =
-		&tc58nvg0s3e_choose_पूर्णांकerface_config;
+static int tc58nvg0s3e_init(struct nand_chip *chip)
+{
+	chip->ops.choose_interface_config =
+		&tc58nvg0s3e_choose_interface_config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक th58nvg2s3hbai4_init(काष्ठा nand_chip *chip)
-अणु
-	chip->ops.choose_पूर्णांकerface_config =
-		&th58nvg2s3hbai4_choose_पूर्णांकerface_config;
+static int th58nvg2s3hbai4_init(struct nand_chip *chip)
+{
+	chip->ops.choose_interface_config =
+		&th58nvg2s3hbai4_choose_interface_config;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक toshiba_nand_init(काष्ठा nand_chip *chip)
-अणु
-	अगर (nand_is_slc(chip))
-		chip->options |= न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE;
+static int toshiba_nand_init(struct nand_chip *chip)
+{
+	if (nand_is_slc(chip))
+		chip->options |= NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE;
 
-	/* Check that chip is BEन_अंकD and ECC mode is on-die */
-	अगर (nand_is_slc(chip) &&
-	    chip->ecc.engine_type == न_अंकD_ECC_ENGINE_TYPE_ON_DIE &&
-	    chip->id.data[4] & TOSHIBA_न_अंकD_ID4_IS_BEन_अंकD)
+	/* Check that chip is BENAND and ECC mode is on-die */
+	if (nand_is_slc(chip) &&
+	    chip->ecc.engine_type == NAND_ECC_ENGINE_TYPE_ON_DIE &&
+	    chip->id.data[4] & TOSHIBA_NAND_ID4_IS_BENAND)
 		toshiba_nand_benand_init(chip);
 
-	अगर (!म_भेद("TC58TEG5DCLTA00", chip->parameters.model))
+	if (!strcmp("TC58TEG5DCLTA00", chip->parameters.model))
 		tc58teg5dclta00_init(chip);
-	अगर (!म_भेदन("TC58NVG0S3E", chip->parameters.model,
-		     माप("TC58NVG0S3E") - 1))
+	if (!strncmp("TC58NVG0S3E", chip->parameters.model,
+		     sizeof("TC58NVG0S3E") - 1))
 		tc58nvg0s3e_init(chip);
-	अगर (!म_भेदन("TH58NVG2S3HBAI4", chip->parameters.model,
-		     माप("TH58NVG2S3HBAI4") - 1))
+	if (!strncmp("TH58NVG2S3HBAI4", chip->parameters.model,
+		     sizeof("TH58NVG2S3HBAI4") - 1))
 		th58nvg2s3hbai4_init(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nand_manufacturer_ops toshiba_nand_manuf_ops = अणु
+const struct nand_manufacturer_ops toshiba_nand_manuf_ops = {
 	.detect = toshiba_nand_decode_id,
 	.init = toshiba_nand_init,
-पूर्ण;
+};

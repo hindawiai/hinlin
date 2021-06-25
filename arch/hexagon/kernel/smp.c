@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SMP support क्रम Hexagon
+ * SMP support for Hexagon
  *
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/mm_types.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/percpu.h>
+#include <linux/sched/mm.h>
+#include <linux/smp.h>
+#include <linux/spinlock.h>
+#include <linux/cpu.h>
+#include <linux/mm_types.h>
 
-#समावेश <यंत्र/समय.स>    /*  समयr_पूर्णांकerrupt  */
-#समावेश <यंत्र/hexagon_vm.h>
+#include <asm/time.h>    /*  timer_interrupt  */
+#include <asm/hexagon_vm.h>
 
-#घोषणा BASE_IPI_IRQ 26
+#define BASE_IPI_IRQ 26
 
 /*
  * cpu_possible_mask needs to be filled out prior to setup_per_cpu_areas
@@ -30,176 +29,176 @@
  * up the...  per_cpu areas.
  */
 
-काष्ठा ipi_data अणु
-	अचिन्हित दीर्घ bits;
-पूर्ण;
+struct ipi_data {
+	unsigned long bits;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा ipi_data, ipi_data);
+static DEFINE_PER_CPU(struct ipi_data, ipi_data);
 
-अटल अंतरभूत व्योम __handle_ipi(अचिन्हित दीर्घ *ops, काष्ठा ipi_data *ipi,
-				पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ msg = 0;
-	करो अणु
+static inline void __handle_ipi(unsigned long *ops, struct ipi_data *ipi,
+				int cpu)
+{
+	unsigned long msg = 0;
+	do {
 		msg = find_next_bit(ops, BITS_PER_LONG, msg+1);
 
-		चयन (msg) अणु
+		switch (msg) {
 
-		हाल IPI_TIMER:
-			ipi_समयr();
-			अवरोध;
+		case IPI_TIMER:
+			ipi_timer();
+			break;
 
-		हाल IPI_CALL_FUNC:
-			generic_smp_call_function_पूर्णांकerrupt();
-			अवरोध;
+		case IPI_CALL_FUNC:
+			generic_smp_call_function_interrupt();
+			break;
 
-		हाल IPI_CPU_STOP:
+		case IPI_CPU_STOP:
 			/*
 			 * call vmstop()
 			 */
 			__vmstop();
-			अवरोध;
+			break;
 
-		हाल IPI_RESCHEDULE:
+		case IPI_RESCHEDULE:
 			scheduler_ipi();
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (msg < BITS_PER_LONG);
-पूर्ण
+			break;
+		}
+	} while (msg < BITS_PER_LONG);
+}
 
-/*  Used क्रम IPI call from other CPU's to unmask पूर्णांक  */
-व्योम smp_vm_unmask_irq(व्योम *info)
-अणु
-	__vmपूर्णांकop_locen((दीर्घ) info);
-पूर्ण
+/*  Used for IPI call from other CPU's to unmask int  */
+void smp_vm_unmask_irq(void *info)
+{
+	__vmintop_locen((long) info);
+}
 
 
 /*
  * This is based on Alpha's IPI stuff.
- * Supposed to take (पूर्णांक, व्योम*) as args now.
- * Specअगरically, first arg is irq, second is the irq_desc.
+ * Supposed to take (int, void*) as args now.
+ * Specifically, first arg is irq, second is the irq_desc.
  */
 
-irqवापस_t handle_ipi(पूर्णांक irq, व्योम *desc)
-अणु
-	पूर्णांक cpu = smp_processor_id();
-	काष्ठा ipi_data *ipi = &per_cpu(ipi_data, cpu);
-	अचिन्हित दीर्घ ops;
+irqreturn_t handle_ipi(int irq, void *desc)
+{
+	int cpu = smp_processor_id();
+	struct ipi_data *ipi = &per_cpu(ipi_data, cpu);
+	unsigned long ops;
 
-	जबतक ((ops = xchg(&ipi->bits, 0)) != 0)
+	while ((ops = xchg(&ipi->bits, 0)) != 0)
 		__handle_ipi(&ops, ipi, cpu);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम send_ipi(स्थिर काष्ठा cpumask *cpumask, क्रमागत ipi_message_type msg)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ cpu;
-	अचिन्हित दीर्घ retval;
+void send_ipi(const struct cpumask *cpumask, enum ipi_message_type msg)
+{
+	unsigned long flags;
+	unsigned long cpu;
+	unsigned long retval;
 
 	local_irq_save(flags);
 
-	क्रम_each_cpu(cpu, cpumask) अणु
-		काष्ठा ipi_data *ipi = &per_cpu(ipi_data, cpu);
+	for_each_cpu(cpu, cpumask) {
+		struct ipi_data *ipi = &per_cpu(ipi_data, cpu);
 
 		set_bit(msg, &ipi->bits);
 		/*  Possible barrier here  */
-		retval = __vmपूर्णांकop_post(BASE_IPI_IRQ+cpu);
+		retval = __vmintop_post(BASE_IPI_IRQ+cpu);
 
-		अगर (retval != 0) अणु
-			prपूर्णांकk(KERN_ERR "interrupt %ld not configured?\n",
+		if (retval != 0) {
+			printk(KERN_ERR "interrupt %ld not configured?\n",
 				BASE_IPI_IRQ+cpu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम __init smp_prepare_boot_cpu(व्योम)
-अणु
-पूर्ण
+void __init smp_prepare_boot_cpu(void)
+{
+}
 
 /*
- * पूर्णांकerrupts should alपढ़ोy be disabled from the VM
- * SP should alपढ़ोy be correct; need to set THREADINFO_REG
- * to poपूर्णांक to current thपढ़ो info
+ * interrupts should already be disabled from the VM
+ * SP should already be correct; need to set THREADINFO_REG
+ * to point to current thread info
  */
 
-व्योम start_secondary(व्योम)
-अणु
-	अचिन्हित दीर्घ thपढ़ो_ptr;
-	अचिन्हित पूर्णांक cpu, irq;
+void start_secondary(void)
+{
+	unsigned long thread_ptr;
+	unsigned int cpu, irq;
 
-	/*  Calculate thपढ़ो_info poपूर्णांकer from stack poपूर्णांकer  */
-	__यंत्र__ __अस्थिर__(
+	/*  Calculate thread_info pointer from stack pointer  */
+	__asm__ __volatile__(
 		"%0 = SP;\n"
-		: "=r" (thपढ़ो_ptr)
+		: "=r" (thread_ptr)
 	);
 
-	thपढ़ो_ptr = thपढ़ो_ptr & ~(THREAD_SIZE-1);
+	thread_ptr = thread_ptr & ~(THREAD_SIZE-1);
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 		QUOTED_THREADINFO_REG " = %0;\n"
 		:
-		: "r" (thपढ़ो_ptr)
+		: "r" (thread_ptr)
 	);
 
-	/*  Set the memory काष्ठा  */
+	/*  Set the memory struct  */
 	mmgrab(&init_mm);
 	current->active_mm = &init_mm;
 
 	cpu = smp_processor_id();
 
 	irq = BASE_IPI_IRQ + cpu;
-	अगर (request_irq(irq, handle_ipi, IRQF_TRIGGER_RISING, "ipi_handler",
-			शून्य))
+	if (request_irq(irq, handle_ipi, IRQF_TRIGGER_RISING, "ipi_handler",
+			NULL))
 		pr_err("Failed to request irq %u (ipi_handler)\n", irq);
 
-	/*  Register the घड़ी_event dummy  */
-	setup_percpu_घड़ीdev();
+	/*  Register the clock_event dummy  */
+	setup_percpu_clockdev();
 
-	prपूर्णांकk(KERN_INFO "%s cpu %d\n", __func__, current_thपढ़ो_info()->cpu);
+	printk(KERN_INFO "%s cpu %d\n", __func__, current_thread_info()->cpu);
 
-	notअगरy_cpu_starting(cpu);
+	notify_cpu_starting(cpu);
 
 	set_cpu_online(cpu, true);
 
 	local_irq_enable();
 
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-पूर्ण
+}
 
 
 /*
- * called once क्रम each present cpu
+ * called once for each present cpu
  * apparently starts up the CPU and then
- * मुख्यtains control until "cpu_online(cpu)" is set.
+ * maintains control until "cpu_online(cpu)" is set.
  */
 
-पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	काष्ठा thपढ़ो_info *thपढ़ो = (काष्ठा thपढ़ो_info *)idle->stack;
-	व्योम *stack_start;
+int __cpu_up(unsigned int cpu, struct task_struct *idle)
+{
+	struct thread_info *thread = (struct thread_info *)idle->stack;
+	void *stack_start;
 
-	thपढ़ो->cpu = cpu;
+	thread->cpu = cpu;
 
 	/*  Boot to the head.  */
-	stack_start =  ((व्योम *) thपढ़ो) + THREAD_SIZE;
+	stack_start =  ((void *) thread) + THREAD_SIZE;
 	__vmstart(start_secondary, stack_start);
 
-	जबतक (!cpu_online(cpu))
+	while (!cpu_online(cpu))
 		barrier();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
-अणु
-पूर्ण
+void __init smp_cpus_done(unsigned int max_cpus)
+{
+}
 
-व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	पूर्णांक i, irq = BASE_IPI_IRQ;
+void __init smp_prepare_cpus(unsigned int max_cpus)
+{
+	int i, irq = BASE_IPI_IRQ;
 
 	/*
 	 * should eventually have some sort of machine
@@ -207,49 +206,49 @@ irqवापस_t handle_ipi(पूर्णांक irq, व्योम *desc
 	 */
 
 	/*  Right now, let's just fake it. */
-	क्रम (i = 0; i < max_cpus; i++)
+	for (i = 0; i < max_cpus; i++)
 		set_cpu_present(i, true);
 
-	/*  Also need to रेजिस्टर the पूर्णांकerrupts क्रम IPI  */
-	अगर (max_cpus > 1) अणु
-		अगर (request_irq(irq, handle_ipi, IRQF_TRIGGER_RISING,
-				"ipi_handler", शून्य))
+	/*  Also need to register the interrupts for IPI  */
+	if (max_cpus > 1) {
+		if (request_irq(irq, handle_ipi, IRQF_TRIGGER_RISING,
+				"ipi_handler", NULL))
 			pr_err("Failed to request irq %d (ipi_handler)\n", irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम smp_send_reschedule(पूर्णांक cpu)
-अणु
+void smp_send_reschedule(int cpu)
+{
 	send_ipi(cpumask_of(cpu), IPI_RESCHEDULE);
-पूर्ण
+}
 
-व्योम smp_send_stop(व्योम)
-अणु
-	काष्ठा cpumask tarमाला_लो;
-	cpumask_copy(&tarमाला_लो, cpu_online_mask);
-	cpumask_clear_cpu(smp_processor_id(), &tarमाला_लो);
-	send_ipi(&tarमाला_लो, IPI_CPU_STOP);
-पूर्ण
+void smp_send_stop(void)
+{
+	struct cpumask targets;
+	cpumask_copy(&targets, cpu_online_mask);
+	cpumask_clear_cpu(smp_processor_id(), &targets);
+	send_ipi(&targets, IPI_CPU_STOP);
+}
 
-व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
-अणु
+void arch_send_call_function_single_ipi(int cpu)
+{
 	send_ipi(cpumask_of(cpu), IPI_CALL_FUNC);
-पूर्ण
+}
 
-व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
-अणु
+void arch_send_call_function_ipi_mask(const struct cpumask *mask)
+{
 	send_ipi(mask, IPI_CALL_FUNC);
-पूर्ण
+}
 
-पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int setup_profiling_timer(unsigned int multiplier)
+{
+	return -EINVAL;
+}
 
-व्योम smp_start_cpus(व्योम)
-अणु
-	पूर्णांक i;
+void smp_start_cpus(void)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_CPUS; i++)
+	for (i = 0; i < NR_CPUS; i++)
 		set_cpu_possible(i, true);
-पूर्ण
+}

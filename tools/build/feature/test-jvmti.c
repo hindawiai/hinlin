@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <jvmti.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <jvmti.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
+int main(void)
+{
 	JavaVM			jvm	__attribute__((unused));
 	jvmtiEventCallbacks	cb	__attribute__((unused));
 	jvmtiCapabilities	caps	__attribute__((unused));
-	jvmtiJlocationFormat	क्रमmat	__attribute__((unused));
+	jvmtiJlocationFormat	format	__attribute__((unused));
 	jvmtiEnv		jvmti	__attribute__((unused));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

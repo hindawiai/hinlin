@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_ENUM_H__
-#घोषणा __NVKM_ENUM_H__
-#समावेश <core/os.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_ENUM_H__
+#define __NVKM_ENUM_H__
+#include <core/os.h>
 
-काष्ठा nvkm_क्रमागत अणु
+struct nvkm_enum {
 	u32 value;
-	स्थिर अक्षर *name;
-	स्थिर व्योम *data;
+	const char *name;
+	const void *data;
 	u32 data2;
-	पूर्णांक inst;
-पूर्ण;
+	int inst;
+};
 
-स्थिर काष्ठा nvkm_क्रमागत *nvkm_क्रमागत_find(स्थिर काष्ठा nvkm_क्रमागत *, u32 value);
+const struct nvkm_enum *nvkm_enum_find(const struct nvkm_enum *, u32 value);
 
-काष्ठा nvkm_bitfield अणु
+struct nvkm_bitfield {
 	u32 mask;
-	स्थिर अक्षर *name;
-पूर्ण;
+	const char *name;
+};
 
-व्योम nvkm_snprपूर्णांकbf(अक्षर *, पूर्णांक, स्थिर काष्ठा nvkm_bitfield *, u32 value);
-#पूर्ण_अगर
+void nvkm_snprintbf(char *, int, const struct nvkm_bitfield *, u32 value);
+#endif

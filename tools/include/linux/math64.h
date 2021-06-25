@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_MATH64_H
-#घोषणा _LINUX_MATH64_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_MATH64_H
+#define _LINUX_MATH64_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#अगर_घोषित __x86_64__
-अटल अंतरभूत u64 mul_u64_u64_भाग64(u64 a, u64 b, u64 c)
-अणु
+#ifdef __x86_64__
+static inline u64 mul_u64_u64_div64(u64 a, u64 b, u64 c)
+{
 	u64 q;
 
-	यंत्र ("mulq %2; divq %3" : "=a" (q)
+	asm ("mulq %2; divq %3" : "=a" (q)
 				: "a" (a), "rm" (b), "rm" (c)
 				: "rdx");
 
-	वापस q;
-पूर्ण
-#घोषणा mul_u64_u64_भाग64 mul_u64_u64_भाग64
-#पूर्ण_अगर
+	return q;
+}
+#define mul_u64_u64_div64 mul_u64_u64_div64
+#endif
 
-#अगर_घोषित __SIZखातापूर्ण_INT128__
-अटल अंतरभूत u64 mul_u64_u32_shr(u64 a, u32 b, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (u64)(((अचिन्हित __पूर्णांक128)a * b) >> shअगरt);
-पूर्ण
+#ifdef __SIZEOF_INT128__
+static inline u64 mul_u64_u32_shr(u64 a, u32 b, unsigned int shift)
+{
+	return (u64)(((unsigned __int128)a * b) >> shift);
+}
 
-#अन्यथा
+#else
 
-#अगर_घोषित __i386__
-अटल अंतरभूत u64 mul_u32_u32(u32 a, u32 b)
-अणु
+#ifdef __i386__
+static inline u64 mul_u32_u32(u32 a, u32 b)
+{
 	u32 high, low;
 
-	यंत्र ("mull %[b]" : "=a" (low), "=d" (high)
+	asm ("mull %[b]" : "=a" (low), "=d" (high)
 			 : [a] "a" (a), [b] "rm" (b) );
 
-	वापस low | ((u64)high) << 32;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत u64 mul_u32_u32(u32 a, u32 b)
-अणु
-	वापस (u64)a * b;
-पूर्ण
-#पूर्ण_अगर
+	return low | ((u64)high) << 32;
+}
+#else
+static inline u64 mul_u32_u32(u32 a, u32 b)
+{
+	return (u64)a * b;
+}
+#endif
 
-अटल अंतरभूत u64 mul_u64_u32_shr(u64 a, u32 b, अचिन्हित पूर्णांक shअगरt)
-अणु
+static inline u64 mul_u64_u32_shr(u64 a, u32 b, unsigned int shift)
+{
 	u32 ah, al;
 	u64 ret;
 
 	al = a;
 	ah = a >> 32;
 
-	ret = mul_u32_u32(al, b) >> shअगरt;
-	अगर (ah)
-		ret += mul_u32_u32(ah, b) << (32 - shअगरt);
+	ret = mul_u32_u32(al, b) >> shift;
+	if (ah)
+		ret += mul_u32_u32(ah, b) << (32 - shift);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर	/* __SIZखातापूर्ण_INT128__ */
+#endif	/* __SIZEOF_INT128__ */
 
-#अगर_अघोषित mul_u64_u64_भाग64
-अटल अंतरभूत u64 mul_u64_u64_भाग64(u64 a, u64 b, u64 c)
-अणु
+#ifndef mul_u64_u64_div64
+static inline u64 mul_u64_u64_div64(u64 a, u64 b, u64 c)
+{
 	u64 quot, rem;
 
 	quot = a / c;
 	rem = a % c;
 
-	वापस quot * b + (rem * b) / c;
-पूर्ण
-#पूर्ण_अगर
+	return quot * b + (rem * b) / c;
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_MATH64_H */
+#endif /* _LINUX_MATH64_H */

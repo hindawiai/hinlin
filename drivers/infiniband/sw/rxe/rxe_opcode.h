@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#अगर_अघोषित RXE_OPCODE_H
-#घोषणा RXE_OPCODE_H
+#ifndef RXE_OPCODE_H
+#define RXE_OPCODE_H
 
 /*
  * contains header bit mask definitions and header lengths
- * declaration of the rxe_opcode_info काष्ठा and
- * rxe_wr_opcode_info काष्ठा
+ * declaration of the rxe_opcode_info struct and
+ * rxe_wr_opcode_info struct
  */
 
-क्रमागत rxe_wr_mask अणु
+enum rxe_wr_mask {
 	WR_INLINE_MASK			= BIT(0),
 	WR_ATOMIC_MASK			= BIT(1),
 	WR_SEND_MASK			= BIT(2),
@@ -27,18 +26,18 @@
 	WR_READ_WRITE_OR_SEND_MASK	= WR_READ_OR_WRITE_MASK | WR_SEND_MASK,
 	WR_WRITE_OR_SEND_MASK		= WR_WRITE_MASK | WR_SEND_MASK,
 	WR_ATOMIC_OR_READ_MASK		= WR_ATOMIC_MASK | WR_READ_MASK,
-पूर्ण;
+};
 
-#घोषणा WR_MAX_QPT		(8)
+#define WR_MAX_QPT		(8)
 
-काष्ठा rxe_wr_opcode_info अणु
-	अक्षर			*name;
-	क्रमागत rxe_wr_mask	mask[WR_MAX_QPT];
-पूर्ण;
+struct rxe_wr_opcode_info {
+	char			*name;
+	enum rxe_wr_mask	mask[WR_MAX_QPT];
+};
 
-बाह्य काष्ठा rxe_wr_opcode_info rxe_wr_opcode_info[];
+extern struct rxe_wr_opcode_info rxe_wr_opcode_info[];
 
-क्रमागत rxe_hdr_type अणु
+enum rxe_hdr_type {
 	RXE_LRH,
 	RXE_GRH,
 	RXE_BTH,
@@ -52,9 +51,9 @@
 	RXE_IMMDT,
 	RXE_PAYLOAD,
 	NUM_HDR_TYPES
-पूर्ण;
+};
 
-क्रमागत rxe_hdr_mask अणु
+enum rxe_hdr_mask {
 	RXE_LRH_MASK		= BIT(RXE_LRH),
 	RXE_GRH_MASK		= BIT(RXE_GRH),
 	RXE_BTH_MASK		= BIT(RXE_BTH),
@@ -86,18 +85,18 @@
 
 	RXE_READ_OR_ATOMIC	= (RXE_READ_MASK | RXE_ATOMIC_MASK),
 	RXE_WRITE_OR_SEND	= (RXE_WRITE_MASK | RXE_SEND_MASK),
-पूर्ण;
+};
 
-#घोषणा OPCODE_NONE		(-1)
-#घोषणा RXE_NUM_OPCODE		256
+#define OPCODE_NONE		(-1)
+#define RXE_NUM_OPCODE		256
 
-काष्ठा rxe_opcode_info अणु
-	अक्षर			*name;
-	क्रमागत rxe_hdr_mask	mask;
-	पूर्णांक			length;
-	पूर्णांक			offset[NUM_HDR_TYPES];
-पूर्ण;
+struct rxe_opcode_info {
+	char			*name;
+	enum rxe_hdr_mask	mask;
+	int			length;
+	int			offset[NUM_HDR_TYPES];
+};
 
-बाह्य काष्ठा rxe_opcode_info rxe_opcode[RXE_NUM_OPCODE];
+extern struct rxe_opcode_info rxe_opcode[RXE_NUM_OPCODE];
 
-#पूर्ण_अगर /* RXE_OPCODE_H */
+#endif /* RXE_OPCODE_H */

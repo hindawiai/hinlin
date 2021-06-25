@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * xen-acpi-pad.c - Xen pad पूर्णांकerface
+ * xen-acpi-pad.c - Xen pad interface
  *
  * Copyright (c) 2012, Intel Corporation.
- *    Author: Liu, Jinsong <jinsong.liu@पूर्णांकel.com>
+ *    Author: Liu, Jinsong <jinsong.liu@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/acpi.h>
-#समावेश <xen/xen.h>
-#समावेश <xen/पूर्णांकerface/version.h>
-#समावेश <xen/xen-ops.h>
-#समावेश <यंत्र/xen/hypercall.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/acpi.h>
+#include <xen/xen.h>
+#include <xen/interface/version.h>
+#include <xen/xen-ops.h>
+#include <asm/xen/hypercall.h>
 
-#घोषणा ACPI_PROCESSOR_AGGREGATOR_CLASS	"acpi_pad"
-#घोषणा ACPI_PROCESSOR_AGGREGATOR_DEVICE_NAME "Processor Aggregator"
-#घोषणा ACPI_PROCESSOR_AGGREGATOR_NOTIFY 0x80
-अटल DEFINE_MUTEX(xen_cpu_lock);
+#define ACPI_PROCESSOR_AGGREGATOR_CLASS	"acpi_pad"
+#define ACPI_PROCESSOR_AGGREGATOR_DEVICE_NAME "Processor Aggregator"
+#define ACPI_PROCESSOR_AGGREGATOR_NOTIFY 0x80
+static DEFINE_MUTEX(xen_cpu_lock);
 
-अटल पूर्णांक xen_acpi_pad_idle_cpus(अचिन्हित पूर्णांक idle_nums)
-अणु
-	काष्ठा xen_platक्रमm_op op;
+static int xen_acpi_pad_idle_cpus(unsigned int idle_nums)
+{
+	struct xen_platform_op op;
 
 	op.cmd = XENPF_core_parking;
 	op.u.core_parking.type = XEN_CORE_PARKING_SET;
 	op.u.core_parking.idle_nums = idle_nums;
 
-	वापस HYPERVISOR_platक्रमm_op(&op);
-पूर्ण
+	return HYPERVISOR_platform_op(&op);
+}
 
-अटल पूर्णांक xen_acpi_pad_idle_cpus_num(व्योम)
-अणु
-	काष्ठा xen_platक्रमm_op op;
+static int xen_acpi_pad_idle_cpus_num(void)
+{
+	struct xen_platform_op op;
 
 	op.cmd = XENPF_core_parking;
 	op.u.core_parking.type = XEN_CORE_PARKING_GET;
 
-	वापस HYPERVISOR_platक्रमm_op(&op)
+	return HYPERVISOR_platform_op(&op)
 	       ?: op.u.core_parking.idle_nums;
-पूर्ण
+}
 
 /*
  * Query firmware how many CPUs should be idle
- * वापस -1 on failure
+ * return -1 on failure
  */
-अटल पूर्णांक acpi_pad_pur(acpi_handle handle)
-अणु
-	काष्ठा acpi_buffer buffer = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	जोड़ acpi_object *package;
-	पूर्णांक num = -1;
+static int acpi_pad_pur(acpi_handle handle)
+{
+	struct acpi_buffer buffer = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object *package;
+	int num = -1;
 
-	अगर (ACPI_FAILURE(acpi_evaluate_object(handle, "_PUR", शून्य, &buffer)))
-		वापस num;
+	if (ACPI_FAILURE(acpi_evaluate_object(handle, "_PUR", NULL, &buffer)))
+		return num;
 
-	अगर (!buffer.length || !buffer.poपूर्णांकer)
-		वापस num;
+	if (!buffer.length || !buffer.pointer)
+		return num;
 
-	package = buffer.poपूर्णांकer;
+	package = buffer.pointer;
 
-	अगर (package->type == ACPI_TYPE_PACKAGE &&
+	if (package->type == ACPI_TYPE_PACKAGE &&
 		package->package.count == 2 &&
-		package->package.elements[0].पूर्णांकeger.value == 1) /* rev 1 */
-		num = package->package.elements[1].पूर्णांकeger.value;
+		package->package.elements[0].integer.value == 1) /* rev 1 */
+		num = package->package.elements[1].integer.value;
 
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस num;
-पूर्ण
+	kfree(buffer.pointer);
+	return num;
+}
 
-अटल व्योम acpi_pad_handle_notअगरy(acpi_handle handle)
-अणु
-	पूर्णांक idle_nums;
-	काष्ठा acpi_buffer param = अणु
+static void acpi_pad_handle_notify(acpi_handle handle)
+{
+	int idle_nums;
+	struct acpi_buffer param = {
 		.length = 4,
-		.poपूर्णांकer = (व्योम *)&idle_nums,
-	पूर्ण;
+		.pointer = (void *)&idle_nums,
+	};
 
 
 	mutex_lock(&xen_cpu_lock);
 	idle_nums = acpi_pad_pur(handle);
-	अगर (idle_nums < 0) अणु
+	if (idle_nums < 0) {
 		mutex_unlock(&xen_cpu_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	idle_nums = xen_acpi_pad_idle_cpus(idle_nums)
 		    ?: xen_acpi_pad_idle_cpus_num();
-	अगर (idle_nums >= 0)
+	if (idle_nums >= 0)
 		acpi_evaluate_ost(handle, ACPI_PROCESSOR_AGGREGATOR_NOTIFY,
 				  0, &param);
 	mutex_unlock(&xen_cpu_lock);
-पूर्ण
+}
 
-अटल व्योम acpi_pad_notअगरy(acpi_handle handle, u32 event,
-	व्योम *data)
-अणु
-	चयन (event) अणु
-	हाल ACPI_PROCESSOR_AGGREGATOR_NOTIFY:
-		acpi_pad_handle_notअगरy(handle);
-		अवरोध;
-	शेष:
+static void acpi_pad_notify(acpi_handle handle, u32 event,
+	void *data)
+{
+	switch (event) {
+	case ACPI_PROCESSOR_AGGREGATOR_NOTIFY:
+		acpi_pad_handle_notify(handle);
+		break;
+	default:
 		pr_warn("Unsupported event [0x%x]\n", event);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक acpi_pad_add(काष्ठा acpi_device *device)
-अणु
+static int acpi_pad_add(struct acpi_device *device)
+{
 	acpi_status status;
 
-	म_नकल(acpi_device_name(device), ACPI_PROCESSOR_AGGREGATOR_DEVICE_NAME);
-	म_नकल(acpi_device_class(device), ACPI_PROCESSOR_AGGREGATOR_CLASS);
+	strcpy(acpi_device_name(device), ACPI_PROCESSOR_AGGREGATOR_DEVICE_NAME);
+	strcpy(acpi_device_class(device), ACPI_PROCESSOR_AGGREGATOR_CLASS);
 
-	status = acpi_install_notअगरy_handler(device->handle,
-		ACPI_DEVICE_NOTIFY, acpi_pad_notअगरy, device);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_install_notify_handler(device->handle,
+		ACPI_DEVICE_NOTIFY, acpi_pad_notify, device);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_pad_हटाओ(काष्ठा acpi_device *device)
-अणु
+static int acpi_pad_remove(struct acpi_device *device)
+{
 	mutex_lock(&xen_cpu_lock);
 	xen_acpi_pad_idle_cpus(0);
 	mutex_unlock(&xen_cpu_lock);
 
-	acpi_हटाओ_notअगरy_handler(device->handle,
-		ACPI_DEVICE_NOTIFY, acpi_pad_notअगरy);
-	वापस 0;
-पूर्ण
+	acpi_remove_notify_handler(device->handle,
+		ACPI_DEVICE_NOTIFY, acpi_pad_notify);
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id pad_device_ids[] = अणु
-	अणु"ACPI000C", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id pad_device_ids[] = {
+	{"ACPI000C", 0},
+	{"", 0},
+};
 
-अटल काष्ठा acpi_driver acpi_pad_driver = अणु
+static struct acpi_driver acpi_pad_driver = {
 	.name = "processor_aggregator",
 	.class = ACPI_PROCESSOR_AGGREGATOR_CLASS,
 	.ids = pad_device_ids,
-	.ops = अणु
+	.ops = {
 		.add = acpi_pad_add,
-		.हटाओ = acpi_pad_हटाओ,
-	पूर्ण,
-पूर्ण;
+		.remove = acpi_pad_remove,
+	},
+};
 
-अटल पूर्णांक __init xen_acpi_pad_init(व्योम)
-अणु
-	/* Only DOM0 is responsible क्रम Xen acpi pad */
-	अगर (!xen_initial_करोमुख्य())
-		वापस -ENODEV;
+static int __init xen_acpi_pad_init(void)
+{
+	/* Only DOM0 is responsible for Xen acpi pad */
+	if (!xen_initial_domain())
+		return -ENODEV;
 
 	/* Only Xen4.2 or later support Xen acpi pad */
-	अगर (!xen_running_on_version_or_later(4, 2))
-		वापस -ENODEV;
+	if (!xen_running_on_version_or_later(4, 2))
+		return -ENODEV;
 
-	वापस acpi_bus_रेजिस्टर_driver(&acpi_pad_driver);
-पूर्ण
+	return acpi_bus_register_driver(&acpi_pad_driver);
+}
 subsys_initcall(xen_acpi_pad_init);

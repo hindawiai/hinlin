@@ -1,135 +1,134 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright IBM Corp. 2007
  *
- * Authors: Hollis Blanअक्षरd <hollisb@us.ibm.com>
+ * Authors: Hollis Blanchard <hollisb@us.ibm.com>
  */
 
-#अगर_अघोषित __POWERPC_KVM_HOST_H__
-#घोषणा __POWERPC_KVM_HOST_H__
+#ifndef __POWERPC_KVM_HOST_H__
+#define __POWERPC_KVM_HOST_H__
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kvm_types.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kvm_para.h>
-#समावेश <linux/list.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/kvm_यंत्र.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/mce.h>
+#include <linux/mutex.h>
+#include <linux/hrtimer.h>
+#include <linux/interrupt.h>
+#include <linux/types.h>
+#include <linux/kvm_types.h>
+#include <linux/threads.h>
+#include <linux/spinlock.h>
+#include <linux/kvm_para.h>
+#include <linux/list.h>
+#include <linux/atomic.h>
+#include <asm/kvm_asm.h>
+#include <asm/processor.h>
+#include <asm/page.h>
+#include <asm/cacheflush.h>
+#include <asm/hvcall.h>
+#include <asm/mce.h>
 
-#घोषणा KVM_MAX_VCPUS		NR_CPUS
-#घोषणा KVM_MAX_VCORES		NR_CPUS
+#define KVM_MAX_VCPUS		NR_CPUS
+#define KVM_MAX_VCORES		NR_CPUS
 
-#समावेश <यंत्र/cputhपढ़ोs.h>
+#include <asm/cputhreads.h>
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-#समावेश <यंत्र/kvm_book3s_यंत्र.h>		/* क्रम MAX_SMT_THREADS */
-#घोषणा KVM_MAX_VCPU_ID		(MAX_SMT_THREADS * KVM_MAX_VCORES)
-#घोषणा KVM_MAX_NESTED_GUESTS	KVMPPC_NR_LPIDS
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#include <asm/kvm_book3s_asm.h>		/* for MAX_SMT_THREADS */
+#define KVM_MAX_VCPU_ID		(MAX_SMT_THREADS * KVM_MAX_VCORES)
+#define KVM_MAX_NESTED_GUESTS	KVMPPC_NR_LPIDS
 
-#अन्यथा
-#घोषणा KVM_MAX_VCPU_ID		KVM_MAX_VCPUS
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+#else
+#define KVM_MAX_VCPU_ID		KVM_MAX_VCPUS
+#endif /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
 
-#घोषणा __KVM_HAVE_ARCH_INTC_INITIALIZED
+#define __KVM_HAVE_ARCH_INTC_INITIALIZED
 
-#घोषणा KVM_HALT_POLL_NS_DEFAULT 10000	/* 10 us */
+#define KVM_HALT_POLL_NS_DEFAULT 10000	/* 10 us */
 
-/* These values are पूर्णांकernal and can be increased later */
-#घोषणा KVM_NR_IRQCHIPS          1
-#घोषणा KVM_IRQCHIP_NUM_PINS     256
+/* These values are internal and can be increased later */
+#define KVM_NR_IRQCHIPS          1
+#define KVM_IRQCHIP_NUM_PINS     256
 
-/* PPC-specअगरic vcpu->requests bit members */
-#घोषणा KVM_REQ_WATCHDOG	KVM_ARCH_REQ(0)
-#घोषणा KVM_REQ_EPR_EXIT	KVM_ARCH_REQ(1)
-#घोषणा KVM_REQ_PENDING_TIMER	KVM_ARCH_REQ(2)
+/* PPC-specific vcpu->requests bit members */
+#define KVM_REQ_WATCHDOG	KVM_ARCH_REQ(0)
+#define KVM_REQ_EPR_EXIT	KVM_ARCH_REQ(1)
+#define KVM_REQ_PENDING_TIMER	KVM_ARCH_REQ(2)
 
-#समावेश <linux/mmu_notअगरier.h>
+#include <linux/mmu_notifier.h>
 
-#घोषणा KVM_ARCH_WANT_MMU_NOTIFIER
+#define KVM_ARCH_WANT_MMU_NOTIFIER
 
-#घोषणा HPTEG_CACHE_NUM			(1 << 15)
-#घोषणा HPTEG_HASH_BITS_PTE		13
-#घोषणा HPTEG_HASH_BITS_PTE_LONG	12
-#घोषणा HPTEG_HASH_BITS_VPTE		13
-#घोषणा HPTEG_HASH_BITS_VPTE_LONG	5
-#घोषणा HPTEG_HASH_BITS_VPTE_64K	11
-#घोषणा HPTEG_HASH_NUM_PTE		(1 << HPTEG_HASH_BITS_PTE)
-#घोषणा HPTEG_HASH_NUM_PTE_LONG		(1 << HPTEG_HASH_BITS_PTE_LONG)
-#घोषणा HPTEG_HASH_NUM_VPTE		(1 << HPTEG_HASH_BITS_VPTE)
-#घोषणा HPTEG_HASH_NUM_VPTE_LONG	(1 << HPTEG_HASH_BITS_VPTE_LONG)
-#घोषणा HPTEG_HASH_NUM_VPTE_64K		(1 << HPTEG_HASH_BITS_VPTE_64K)
+#define HPTEG_CACHE_NUM			(1 << 15)
+#define HPTEG_HASH_BITS_PTE		13
+#define HPTEG_HASH_BITS_PTE_LONG	12
+#define HPTEG_HASH_BITS_VPTE		13
+#define HPTEG_HASH_BITS_VPTE_LONG	5
+#define HPTEG_HASH_BITS_VPTE_64K	11
+#define HPTEG_HASH_NUM_PTE		(1 << HPTEG_HASH_BITS_PTE)
+#define HPTEG_HASH_NUM_PTE_LONG		(1 << HPTEG_HASH_BITS_PTE_LONG)
+#define HPTEG_HASH_NUM_VPTE		(1 << HPTEG_HASH_BITS_VPTE)
+#define HPTEG_HASH_NUM_VPTE_LONG	(1 << HPTEG_HASH_BITS_VPTE_LONG)
+#define HPTEG_HASH_NUM_VPTE_64K		(1 << HPTEG_HASH_BITS_VPTE_64K)
 
 /* Physical Address Mask - allowed range of real mode RAM access */
-#घोषणा KVM_PAM			0x0fffffffffffffffULL
+#define KVM_PAM			0x0fffffffffffffffULL
 
-काष्ठा lppaca;
-काष्ठा slb_shaकरोw;
-काष्ठा dtl_entry;
+struct lppaca;
+struct slb_shadow;
+struct dtl_entry;
 
-काष्ठा kvmppc_vcpu_book3s;
-काष्ठा kvmppc_book3s_shaकरोw_vcpu;
-काष्ठा kvm_nested_guest;
+struct kvmppc_vcpu_book3s;
+struct kvmppc_book3s_shadow_vcpu;
+struct kvm_nested_guest;
 
-काष्ठा kvm_vm_stat अणु
-	uदीर्घ remote_tlb_flush;
-	uदीर्घ num_2M_pages;
-	uदीर्घ num_1G_pages;
-पूर्ण;
+struct kvm_vm_stat {
+	ulong remote_tlb_flush;
+	ulong num_2M_pages;
+	ulong num_1G_pages;
+};
 
-काष्ठा kvm_vcpu_stat अणु
-	u64 sum_निकासs;
-	u64 mmio_निकासs;
-	u64 संकेत_निकासs;
-	u64 light_निकासs;
-	/* Account क्रम special types of light निकासs: */
-	u64 itlb_real_miss_निकासs;
-	u64 itlb_virt_miss_निकासs;
-	u64 dtlb_real_miss_निकासs;
-	u64 dtlb_virt_miss_निकासs;
-	u64 syscall_निकासs;
-	u64 isi_निकासs;
-	u64 dsi_निकासs;
-	u64 emulated_inst_निकासs;
-	u64 dec_निकासs;
-	u64 ext_पूर्णांकr_निकासs;
+struct kvm_vcpu_stat {
+	u64 sum_exits;
+	u64 mmio_exits;
+	u64 signal_exits;
+	u64 light_exits;
+	/* Account for special types of light exits: */
+	u64 itlb_real_miss_exits;
+	u64 itlb_virt_miss_exits;
+	u64 dtlb_real_miss_exits;
+	u64 dtlb_virt_miss_exits;
+	u64 syscall_exits;
+	u64 isi_exits;
+	u64 dsi_exits;
+	u64 emulated_inst_exits;
+	u64 dec_exits;
+	u64 ext_intr_exits;
 	u64 halt_poll_success_ns;
 	u64 halt_poll_fail_ns;
-	u64 halt_रुको_ns;
+	u64 halt_wait_ns;
 	u64 halt_successful_poll;
 	u64 halt_attempted_poll;
-	u64 halt_successful_रुको;
+	u64 halt_successful_wait;
 	u64 halt_poll_invalid;
 	u64 halt_wakeup;
-	u64 dbell_निकासs;
-	u64 gdbell_निकासs;
+	u64 dbell_exits;
+	u64 gdbell_exits;
 	u64 ld;
 	u64 st;
-#अगर_घोषित CONFIG_PPC_BOOK3S
+#ifdef CONFIG_PPC_BOOK3S
 	u64 pf_storage;
 	u64 pf_instruc;
 	u64 sp_storage;
 	u64 sp_instruc;
-	u64 queue_पूर्णांकr;
+	u64 queue_intr;
 	u64 ld_slow;
 	u64 st_slow;
-#पूर्ण_अगर
+#endif
 	u64 pthru_all;
 	u64 pthru_host;
 	u64 pthru_bad_aff;
-पूर्ण;
+};
 
-क्रमागत kvm_निकास_types अणु
+enum kvm_exit_types {
 	MMIO_EXITS,
 	SIGNAL_EXITS,
 	ITLB_REAL_MISS_EXITS,
@@ -161,256 +160,256 @@
 	DBELL_EXITS,
 	GDBELL_EXITS,
 	__NUMBER_OF_KVM_EXIT_TYPES
-पूर्ण;
+};
 
 /* allow access to big endian 32bit upper/lower parts and 64bit var */
-काष्ठा kvmppc_निकास_timing अणु
-	जोड़ अणु
+struct kvmppc_exit_timing {
+	union {
 		u64 tv64;
-		काष्ठा अणु
+		struct {
 			u32 tbu, tbl;
-		पूर्ण tv32;
-	पूर्ण;
-पूर्ण;
+		} tv32;
+	};
+};
 
-काष्ठा kvmppc_pginfo अणु
-	अचिन्हित दीर्घ pfn;
+struct kvmppc_pginfo {
+	unsigned long pfn;
 	atomic_t refcnt;
-पूर्ण;
+};
 
-काष्ठा kvmppc_spapr_tce_iommu_table अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head next;
-	काष्ठा iommu_table *tbl;
-	काष्ठा kref kref;
-पूर्ण;
+struct kvmppc_spapr_tce_iommu_table {
+	struct rcu_head rcu;
+	struct list_head next;
+	struct iommu_table *tbl;
+	struct kref kref;
+};
 
-#घोषणा TCES_PER_PAGE	(PAGE_SIZE / माप(u64))
+#define TCES_PER_PAGE	(PAGE_SIZE / sizeof(u64))
 
-काष्ठा kvmppc_spapr_tce_table अणु
-	काष्ठा list_head list;
-	काष्ठा kvm *kvm;
+struct kvmppc_spapr_tce_table {
+	struct list_head list;
+	struct kvm *kvm;
 	u64 liobn;
-	काष्ठा rcu_head rcu;
-	u32 page_shअगरt;
+	struct rcu_head rcu;
+	u32 page_shift;
 	u64 offset;		/* in pages */
-	u64 size;		/* winकरोw size in pages */
-	काष्ठा list_head iommu_tables;
-	काष्ठा mutex alloc_lock;
-	काष्ठा page *pages[0];
-पूर्ण;
+	u64 size;		/* window size in pages */
+	struct list_head iommu_tables;
+	struct mutex alloc_lock;
+	struct page *pages[0];
+};
 
 /* XICS components, defined in book3s_xics.c */
-काष्ठा kvmppc_xics;
-काष्ठा kvmppc_icp;
-बाह्य काष्ठा kvm_device_ops kvm_xics_ops;
+struct kvmppc_xics;
+struct kvmppc_icp;
+extern struct kvm_device_ops kvm_xics_ops;
 
 /* XIVE components, defined in book3s_xive.c */
-काष्ठा kvmppc_xive;
-काष्ठा kvmppc_xive_vcpu;
-बाह्य काष्ठा kvm_device_ops kvm_xive_ops;
-बाह्य काष्ठा kvm_device_ops kvm_xive_native_ops;
+struct kvmppc_xive;
+struct kvmppc_xive_vcpu;
+extern struct kvm_device_ops kvm_xive_ops;
+extern struct kvm_device_ops kvm_xive_native_ops;
 
-काष्ठा kvmppc_passthru_irqmap;
+struct kvmppc_passthru_irqmap;
 
 /*
- * The reverse mapping array has one entry क्रम each HPTE,
+ * The reverse mapping array has one entry for each HPTE,
  * which stores the guest's view of the second word of the HPTE
  * (including the guest physical address of the mapping),
- * plus क्रमward and backward poपूर्णांकers in a करोubly-linked ring
- * of HPTEs that map the same host page.  The poपूर्णांकers in this
+ * plus forward and backward pointers in a doubly-linked ring
+ * of HPTEs that map the same host page.  The pointers in this
  * ring are 32-bit HPTE indexes, to save space.
  */
-काष्ठा revmap_entry अणु
-	अचिन्हित दीर्घ guest_rpte;
-	अचिन्हित पूर्णांक क्रमw, back;
-पूर्ण;
+struct revmap_entry {
+	unsigned long guest_rpte;
+	unsigned int forw, back;
+};
 
 /*
- * The rmap array of size number of guest pages is allocated क्रम each memslot.
- * This array is used to store usage specअगरic inक्रमmation about the guest page.
+ * The rmap array of size number of guest pages is allocated for each memslot.
+ * This array is used to store usage specific information about the guest page.
  * Below are the encodings of the various possible usage types.
  */
 /* Free bits which can be used to define a new usage */
-#घोषणा KVMPPC_RMAP_TYPE_MASK	0xff00000000000000
-#घोषणा KVMPPC_RMAP_NESTED	0xc000000000000000	/* Nested rmap array */
-#घोषणा KVMPPC_RMAP_HPT		0x0100000000000000	/* HPT guest */
+#define KVMPPC_RMAP_TYPE_MASK	0xff00000000000000
+#define KVMPPC_RMAP_NESTED	0xc000000000000000	/* Nested rmap array */
+#define KVMPPC_RMAP_HPT		0x0100000000000000	/* HPT guest */
 
 /*
- * rmap usage definition क्रम a hash page table (hpt) guest:
+ * rmap usage definition for a hash page table (hpt) guest:
  * 0x0000080000000000	Lock bit
  * 0x0000018000000000	RC bits
  * 0x0000000100000000	Present bit
  * 0x00000000ffffffff	HPT index bits
- * The bottom 32 bits are the index in the guest HPT of a HPTE that poपूर्णांकs to
+ * The bottom 32 bits are the index in the guest HPT of a HPTE that points to
  * the page.
  */
-#घोषणा KVMPPC_RMAP_LOCK_BIT	43
-#घोषणा KVMPPC_RMAP_RC_SHIFT	32
-#घोषणा KVMPPC_RMAP_REFERENCED	(HPTE_R_R << KVMPPC_RMAP_RC_SHIFT)
-#घोषणा KVMPPC_RMAP_PRESENT	0x100000000ul
-#घोषणा KVMPPC_RMAP_INDEX	0xfffffffful
+#define KVMPPC_RMAP_LOCK_BIT	43
+#define KVMPPC_RMAP_RC_SHIFT	32
+#define KVMPPC_RMAP_REFERENCED	(HPTE_R_R << KVMPPC_RMAP_RC_SHIFT)
+#define KVMPPC_RMAP_PRESENT	0x100000000ul
+#define KVMPPC_RMAP_INDEX	0xfffffffful
 
-काष्ठा kvm_arch_memory_slot अणु
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	अचिन्हित दीर्घ *rmap;
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
-पूर्ण;
+struct kvm_arch_memory_slot {
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	unsigned long *rmap;
+#endif /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+};
 
-काष्ठा kvm_hpt_info अणु
-	/* Host भव (linear mapping) address of guest HPT */
-	अचिन्हित दीर्घ virt;
-	/* Array of reverse mapping entries क्रम each guest HPTE */
-	काष्ठा revmap_entry *rev;
+struct kvm_hpt_info {
+	/* Host virtual (linear mapping) address of guest HPT */
+	unsigned long virt;
+	/* Array of reverse mapping entries for each guest HPTE */
+	struct revmap_entry *rev;
 	/* Guest HPT size is 2**(order) bytes */
 	u32 order;
-	/* 1 अगर HPT allocated with CMA, 0 otherwise */
-	पूर्णांक cma;
-पूर्ण;
+	/* 1 if HPT allocated with CMA, 0 otherwise */
+	int cma;
+};
 
-काष्ठा kvm_resize_hpt;
+struct kvm_resize_hpt;
 
-/* Flag values क्रम kvm_arch.secure_guest */
-#घोषणा KVMPPC_SECURE_INIT_START 0x1 /* H_SVM_INIT_START has been called */
-#घोषणा KVMPPC_SECURE_INIT_DONE  0x2 /* H_SVM_INIT_DONE completed */
-#घोषणा KVMPPC_SECURE_INIT_ABORT 0x4 /* H_SVM_INIT_ABORT issued */
+/* Flag values for kvm_arch.secure_guest */
+#define KVMPPC_SECURE_INIT_START 0x1 /* H_SVM_INIT_START has been called */
+#define KVMPPC_SECURE_INIT_DONE  0x2 /* H_SVM_INIT_DONE completed */
+#define KVMPPC_SECURE_INIT_ABORT 0x4 /* H_SVM_INIT_ABORT issued */
 
-काष्ठा kvm_arch अणु
-	अचिन्हित पूर्णांक lpid;
-	अचिन्हित पूर्णांक smt_mode;		/* # vcpus per भव core */
-	अचिन्हित पूर्णांक emul_smt_mode;	/* emualted SMT mode, on P9 */
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	अचिन्हित पूर्णांक tlb_sets;
-	काष्ठा kvm_hpt_info hpt;
+struct kvm_arch {
+	unsigned int lpid;
+	unsigned int smt_mode;		/* # vcpus per virtual core */
+	unsigned int emul_smt_mode;	/* emualted SMT mode, on P9 */
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	unsigned int tlb_sets;
+	struct kvm_hpt_info hpt;
 	atomic64_t mmio_update;
-	अचिन्हित पूर्णांक host_lpid;
-	अचिन्हित दीर्घ host_lpcr;
-	अचिन्हित दीर्घ sdr1;
-	अचिन्हित दीर्घ host_sdr1;
-	अचिन्हित दीर्घ lpcr;
-	अचिन्हित दीर्घ vrma_slb_v;
-	पूर्णांक mmu_पढ़ोy;
+	unsigned int host_lpid;
+	unsigned long host_lpcr;
+	unsigned long sdr1;
+	unsigned long host_sdr1;
+	unsigned long lpcr;
+	unsigned long vrma_slb_v;
+	int mmu_ready;
 	atomic_t vcpus_running;
 	u32 online_vcores;
-	atomic_t hpte_mod_पूर्णांकerest;
+	atomic_t hpte_mod_interest;
 	cpumask_t need_tlb_flush;
 	cpumask_t cpu_in_guest;
 	u8 radix;
 	u8 fwnmi_enabled;
 	u8 secure_guest;
 	u8 svm_enabled;
-	bool thपढ़ोs_indep;
+	bool threads_indep;
 	bool nested_enable;
 	bool dawr1_enabled;
 	pgd_t *pgtable;
 	u64 process_table;
-	काष्ठा dentry *debugfs_dir;
-	काष्ठा kvm_resize_hpt *resize_hpt; /* रक्षित by kvm->lock */
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
-#अगर_घोषित CONFIG_KVM_BOOK3S_PR_POSSIBLE
-	काष्ठा mutex hpt_mutex;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	काष्ठा list_head spapr_tce_tables;
-	काष्ठा list_head rtas_tokens;
-	काष्ठा mutex rtas_token_lock;
+	struct dentry *debugfs_dir;
+	struct kvm_resize_hpt *resize_hpt; /* protected by kvm->lock */
+#endif /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+#ifdef CONFIG_KVM_BOOK3S_PR_POSSIBLE
+	struct mutex hpt_mutex;
+#endif
+#ifdef CONFIG_PPC_BOOK3S_64
+	struct list_head spapr_tce_tables;
+	struct list_head rtas_tokens;
+	struct mutex rtas_token_lock;
 	DECLARE_BITMAP(enabled_hcalls, MAX_HCALL_OPCODE/4 + 1);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_KVM_MPIC
-	काष्ठा खोलोpic *mpic;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_KVM_XICS
-	काष्ठा kvmppc_xics *xics;
-	काष्ठा kvmppc_xics *xics_device;
-	काष्ठा kvmppc_xive *xive;    /* Current XIVE device in use */
-	काष्ठा अणु
-		काष्ठा kvmppc_xive *native;
-		काष्ठा kvmppc_xive *xics_on_xive;
-	पूर्ण xive_devices;
-	काष्ठा kvmppc_passthru_irqmap *pimap;
-#पूर्ण_अगर
-	काष्ठा kvmppc_ops *kvm_ops;
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	काष्ठा mutex uvmem_lock;
-	काष्ठा list_head uvmem_pfns;
-	काष्ठा mutex mmu_setup_lock;	/* nests inside vcpu mutexes */
+#endif
+#ifdef CONFIG_KVM_MPIC
+	struct openpic *mpic;
+#endif
+#ifdef CONFIG_KVM_XICS
+	struct kvmppc_xics *xics;
+	struct kvmppc_xics *xics_device;
+	struct kvmppc_xive *xive;    /* Current XIVE device in use */
+	struct {
+		struct kvmppc_xive *native;
+		struct kvmppc_xive *xics_on_xive;
+	} xive_devices;
+	struct kvmppc_passthru_irqmap *pimap;
+#endif
+	struct kvmppc_ops *kvm_ops;
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	struct mutex uvmem_lock;
+	struct list_head uvmem_pfns;
+	struct mutex mmu_setup_lock;	/* nests inside vcpu mutexes */
 	u64 l1_ptcr;
-	पूर्णांक max_nested_lpid;
-	काष्ठा kvm_nested_guest *nested_guests[KVM_MAX_NESTED_GUESTS];
+	int max_nested_lpid;
+	struct kvm_nested_guest *nested_guests[KVM_MAX_NESTED_GUESTS];
 	/* This array can grow quite large, keep it at the end */
-	काष्ठा kvmppc_vcore *vcores[KVM_MAX_VCORES];
-#पूर्ण_अगर
-पूर्ण;
+	struct kvmppc_vcore *vcores[KVM_MAX_VCORES];
+#endif
+};
 
-#घोषणा VCORE_ENTRY_MAP(vc)	((vc)->entry_निकास_map & 0xff)
-#घोषणा VCORE_EXIT_MAP(vc)	((vc)->entry_निकास_map >> 8)
-#घोषणा VCORE_IS_EXITING(vc)	(VCORE_EXIT_MAP(vc) != 0)
+#define VCORE_ENTRY_MAP(vc)	((vc)->entry_exit_map & 0xff)
+#define VCORE_EXIT_MAP(vc)	((vc)->entry_exit_map >> 8)
+#define VCORE_IS_EXITING(vc)	(VCORE_EXIT_MAP(vc) != 0)
 
-/* This bit is used when a vcore निकास is triggered from outside the vcore */
-#घोषणा VCORE_EXIT_REQ		0x10000
+/* This bit is used when a vcore exit is triggered from outside the vcore */
+#define VCORE_EXIT_REQ		0x10000
 
 /*
- * Values क्रम vcore_state.
+ * Values for vcore_state.
  * Note that these are arranged such that lower values
- * (< VCORE_SLEEPING) करोn't require stolen समय accounting
- * on load/unload, and higher values करो.
+ * (< VCORE_SLEEPING) don't require stolen time accounting
+ * on load/unload, and higher values do.
  */
-#घोषणा VCORE_INACTIVE	0
-#घोषणा VCORE_PREEMPT	1
-#घोषणा VCORE_PIGGYBACK	2
-#घोषणा VCORE_SLEEPING	3
-#घोषणा VCORE_RUNNING	4
-#घोषणा VCORE_EXITING	5
-#घोषणा VCORE_POLLING	6
+#define VCORE_INACTIVE	0
+#define VCORE_PREEMPT	1
+#define VCORE_PIGGYBACK	2
+#define VCORE_SLEEPING	3
+#define VCORE_RUNNING	4
+#define VCORE_EXITING	5
+#define VCORE_POLLING	6
 
 /*
- * Struct used to manage memory क्रम a भव processor area
- * रेजिस्टरed by a PAPR guest.  There are three types of area
- * that a guest can रेजिस्टर.
+ * Struct used to manage memory for a virtual processor area
+ * registered by a PAPR guest.  There are three types of area
+ * that a guest can register.
  */
-काष्ठा kvmppc_vpa अणु
-	अचिन्हित दीर्घ gpa;	/* Current guest phys addr */
-	व्योम *pinned_addr;	/* Address in kernel linear mapping */
-	व्योम *pinned_end;	/* End of region */
-	अचिन्हित दीर्घ next_gpa;	/* Guest phys addr क्रम update */
-	अचिन्हित दीर्घ len;	/* Number of bytes required */
+struct kvmppc_vpa {
+	unsigned long gpa;	/* Current guest phys addr */
+	void *pinned_addr;	/* Address in kernel linear mapping */
+	void *pinned_end;	/* End of region */
+	unsigned long next_gpa;	/* Guest phys addr for update */
+	unsigned long len;	/* Number of bytes required */
 	u8 update_pending;	/* 1 => update pinned_addr from next_gpa */
-	bool dirty;		/* true => area has been modअगरied by kernel */
-पूर्ण;
+	bool dirty;		/* true => area has been modified by kernel */
+};
 
-काष्ठा kvmppc_pte अणु
-	uदीर्घ eaddr;
+struct kvmppc_pte {
+	ulong eaddr;
 	u64 vpage;
-	uदीर्घ raddr;
-	bool may_पढ़ो		: 1;
-	bool may_ग_लिखो		: 1;
+	ulong raddr;
+	bool may_read		: 1;
+	bool may_write		: 1;
 	bool may_execute	: 1;
-	अचिन्हित दीर्घ wimg;
-	अचिन्हित दीर्घ rc;
+	unsigned long wimg;
+	unsigned long rc;
 	u8 page_size;		/* MMU_PAGE_xxx */
-	u8 page_shअगरt;
-पूर्ण;
+	u8 page_shift;
+};
 
-काष्ठा kvmppc_mmu अणु
+struct kvmppc_mmu {
 	/* book3s_64 only */
-	व्योम (*slbmte)(काष्ठा kvm_vcpu *vcpu, u64 rb, u64 rs);
-	u64  (*slbmfee)(काष्ठा kvm_vcpu *vcpu, u64 slb_nr);
-	u64  (*slbmfev)(काष्ठा kvm_vcpu *vcpu, u64 slb_nr);
-	पूर्णांक  (*slbfee)(काष्ठा kvm_vcpu *vcpu, gva_t eaddr, uदीर्घ *ret_slb);
-	व्योम (*slbie)(काष्ठा kvm_vcpu *vcpu, u64 slb_nr);
-	व्योम (*slbia)(काष्ठा kvm_vcpu *vcpu);
+	void (*slbmte)(struct kvm_vcpu *vcpu, u64 rb, u64 rs);
+	u64  (*slbmfee)(struct kvm_vcpu *vcpu, u64 slb_nr);
+	u64  (*slbmfev)(struct kvm_vcpu *vcpu, u64 slb_nr);
+	int  (*slbfee)(struct kvm_vcpu *vcpu, gva_t eaddr, ulong *ret_slb);
+	void (*slbie)(struct kvm_vcpu *vcpu, u64 slb_nr);
+	void (*slbia)(struct kvm_vcpu *vcpu);
 	/* book3s */
-	व्योम (*mtsrin)(काष्ठा kvm_vcpu *vcpu, u32 srnum, uदीर्घ value);
-	u32  (*mfsrin)(काष्ठा kvm_vcpu *vcpu, u32 srnum);
-	पूर्णांक  (*xlate)(काष्ठा kvm_vcpu *vcpu, gva_t eaddr,
-		      काष्ठा kvmppc_pte *pte, bool data, bool isग_लिखो);
-	व्योम (*tlbie)(काष्ठा kvm_vcpu *vcpu, uदीर्घ addr, bool large);
-	पूर्णांक  (*esid_to_vsid)(काष्ठा kvm_vcpu *vcpu, uदीर्घ esid, u64 *vsid);
-	u64  (*ea_to_vp)(काष्ठा kvm_vcpu *vcpu, gva_t eaddr, bool data);
-	bool (*is_dcbz32)(काष्ठा kvm_vcpu *vcpu);
-पूर्ण;
+	void (*mtsrin)(struct kvm_vcpu *vcpu, u32 srnum, ulong value);
+	u32  (*mfsrin)(struct kvm_vcpu *vcpu, u32 srnum);
+	int  (*xlate)(struct kvm_vcpu *vcpu, gva_t eaddr,
+		      struct kvmppc_pte *pte, bool data, bool iswrite);
+	void (*tlbie)(struct kvm_vcpu *vcpu, ulong addr, bool large);
+	int  (*esid_to_vsid)(struct kvm_vcpu *vcpu, ulong esid, u64 *vsid);
+	u64  (*ea_to_vp)(struct kvm_vcpu *vcpu, gva_t eaddr, bool data);
+	bool (*is_dcbz32)(struct kvm_vcpu *vcpu);
+};
 
-काष्ठा kvmppc_slb अणु
+struct kvmppc_slb {
 	u64 esid;
 	u64 vsid;
 	u64 orige;
@@ -423,84 +422,84 @@
 	bool tb		: 1;	/* 1TB segment */
 	bool class	: 1;
 	u8 base_page_size;	/* MMU_PAGE_xxx */
-पूर्ण;
+};
 
-/* Struct used to accumulate timing inक्रमmation in HV real mode code */
-काष्ठा kvmhv_tb_accumulator अणु
+/* Struct used to accumulate timing information in HV real mode code */
+struct kvmhv_tb_accumulator {
 	u64	seqcount;	/* used to synchronize access, also count * 2 */
-	u64	tb_total;	/* total समय in समयbase ticks */
-	u64	tb_min;		/* min समय */
-	u64	tb_max;		/* max समय */
-पूर्ण;
+	u64	tb_total;	/* total time in timebase ticks */
+	u64	tb_min;		/* min time */
+	u64	tb_max;		/* max time */
+};
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-काष्ठा kvmppc_irq_map अणु
+#ifdef CONFIG_PPC_BOOK3S_64
+struct kvmppc_irq_map {
 	u32	r_hwirq;
 	u32	v_hwirq;
-	काष्ठा irq_desc *desc;
-पूर्ण;
+	struct irq_desc *desc;
+};
 
-#घोषणा	KVMPPC_PIRQ_MAPPED	1024
-काष्ठा kvmppc_passthru_irqmap अणु
-	पूर्णांक n_mapped;
-	काष्ठा kvmppc_irq_map mapped[KVMPPC_PIRQ_MAPPED];
-पूर्ण;
-#पूर्ण_अगर
+#define	KVMPPC_PIRQ_MAPPED	1024
+struct kvmppc_passthru_irqmap {
+	int n_mapped;
+	struct kvmppc_irq_map mapped[KVMPPC_PIRQ_MAPPED];
+};
+#endif
 
-# अगरdef CONFIG_PPC_FSL_BOOK3E
-#घोषणा KVMPPC_BOOKE_IAC_NUM	2
-#घोषणा KVMPPC_BOOKE_DAC_NUM	2
-# अन्यथा
-#घोषणा KVMPPC_BOOKE_IAC_NUM	4
-#घोषणा KVMPPC_BOOKE_DAC_NUM	2
-# endअगर
-#घोषणा KVMPPC_BOOKE_MAX_IAC	4
-#घोषणा KVMPPC_BOOKE_MAX_DAC	2
+# ifdef CONFIG_PPC_FSL_BOOK3E
+#define KVMPPC_BOOKE_IAC_NUM	2
+#define KVMPPC_BOOKE_DAC_NUM	2
+# else
+#define KVMPPC_BOOKE_IAC_NUM	4
+#define KVMPPC_BOOKE_DAC_NUM	2
+# endif
+#define KVMPPC_BOOKE_MAX_IAC	4
+#define KVMPPC_BOOKE_MAX_DAC	2
 
 /* KVMPPC_EPR_USER takes precedence over KVMPPC_EPR_KERNEL */
-#घोषणा KVMPPC_EPR_NONE		0 /* EPR not supported */
-#घोषणा KVMPPC_EPR_USER		1 /* निकास to userspace to fill EPR */
-#घोषणा KVMPPC_EPR_KERNEL	2 /* in-kernel irqchip */
+#define KVMPPC_EPR_NONE		0 /* EPR not supported */
+#define KVMPPC_EPR_USER		1 /* exit to userspace to fill EPR */
+#define KVMPPC_EPR_KERNEL	2 /* in-kernel irqchip */
 
-#घोषणा KVMPPC_IRQ_DEFAULT	0
-#घोषणा KVMPPC_IRQ_MPIC		1
-#घोषणा KVMPPC_IRQ_XICS		2 /* Includes a XIVE option */
-#घोषणा KVMPPC_IRQ_XIVE		3 /* XIVE native exploitation mode */
+#define KVMPPC_IRQ_DEFAULT	0
+#define KVMPPC_IRQ_MPIC		1
+#define KVMPPC_IRQ_XICS		2 /* Includes a XIVE option */
+#define KVMPPC_IRQ_XIVE		3 /* XIVE native exploitation mode */
 
-#घोषणा MMIO_HPTE_CACHE_SIZE	4
+#define MMIO_HPTE_CACHE_SIZE	4
 
-काष्ठा mmio_hpte_cache_entry अणु
-	अचिन्हित दीर्घ hpte_v;
-	अचिन्हित दीर्घ hpte_r;
-	अचिन्हित दीर्घ rpte;
-	अचिन्हित दीर्घ pte_index;
-	अचिन्हित दीर्घ eaddr;
-	अचिन्हित दीर्घ slb_v;
-	दीर्घ mmio_update;
-	अचिन्हित पूर्णांक slb_base_pshअगरt;
-पूर्ण;
+struct mmio_hpte_cache_entry {
+	unsigned long hpte_v;
+	unsigned long hpte_r;
+	unsigned long rpte;
+	unsigned long pte_index;
+	unsigned long eaddr;
+	unsigned long slb_v;
+	long mmio_update;
+	unsigned int slb_base_pshift;
+};
 
-काष्ठा mmio_hpte_cache अणु
-	काष्ठा mmio_hpte_cache_entry entry[MMIO_HPTE_CACHE_SIZE];
-	अचिन्हित पूर्णांक index;
-पूर्ण;
+struct mmio_hpte_cache {
+	struct mmio_hpte_cache_entry entry[MMIO_HPTE_CACHE_SIZE];
+	unsigned int index;
+};
 
-#घोषणा KVMPPC_VSX_COPY_NONE		0
-#घोषणा KVMPPC_VSX_COPY_WORD		1
-#घोषणा KVMPPC_VSX_COPY_DWORD		2
-#घोषणा KVMPPC_VSX_COPY_DWORD_LOAD_DUMP	3
-#घोषणा KVMPPC_VSX_COPY_WORD_LOAD_DUMP	4
+#define KVMPPC_VSX_COPY_NONE		0
+#define KVMPPC_VSX_COPY_WORD		1
+#define KVMPPC_VSX_COPY_DWORD		2
+#define KVMPPC_VSX_COPY_DWORD_LOAD_DUMP	3
+#define KVMPPC_VSX_COPY_WORD_LOAD_DUMP	4
 
-#घोषणा KVMPPC_VMX_COPY_BYTE		8
-#घोषणा KVMPPC_VMX_COPY_HWORD		9
-#घोषणा KVMPPC_VMX_COPY_WORD		10
-#घोषणा KVMPPC_VMX_COPY_DWORD		11
+#define KVMPPC_VMX_COPY_BYTE		8
+#define KVMPPC_VMX_COPY_HWORD		9
+#define KVMPPC_VMX_COPY_WORD		10
+#define KVMPPC_VMX_COPY_DWORD		11
 
-काष्ठा खोलोpic;
+struct openpic;
 
-/* W0 and W1 of a XIVE thपढ़ो management context */
-जोड़ xive_पंचांगa_w01 अणु
-	काष्ठा अणु
+/* W0 and W1 of a XIVE thread management context */
+union xive_tma_w01 {
+	struct {
 		u8	nsr;
 		u8	cppr;
 		u8	ipb;
@@ -509,126 +508,126 @@
 		u8	inc;
 		u8	age;
 		u8	pipr;
-	पूर्ण;
+	};
 	__be64 w01;
-पूर्ण;
+};
 
-काष्ठा kvm_vcpu_arch अणु
-	uदीर्घ host_stack;
+struct kvm_vcpu_arch {
+	ulong host_stack;
 	u32 host_pid;
-#अगर_घोषित CONFIG_PPC_BOOK3S
-	काष्ठा kvmppc_slb slb[64];
-	पूर्णांक slb_max;		/* 1 + index of last valid entry in slb[] */
-	पूर्णांक slb_nr;		/* total number of entries in SLB */
-	काष्ठा kvmppc_mmu mmu;
-	काष्ठा kvmppc_vcpu_book3s *book3s;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3S_32
-	काष्ठा kvmppc_book3s_shaकरोw_vcpu *shaकरोw_vcpu;
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_BOOK3S
+	struct kvmppc_slb slb[64];
+	int slb_max;		/* 1 + index of last valid entry in slb[] */
+	int slb_nr;		/* total number of entries in SLB */
+	struct kvmppc_mmu mmu;
+	struct kvmppc_vcpu_book3s *book3s;
+#endif
+#ifdef CONFIG_PPC_BOOK3S_32
+	struct kvmppc_book3s_shadow_vcpu *shadow_vcpu;
+#endif
 
-	काष्ठा pt_regs regs;
+	struct pt_regs regs;
 
-	काष्ठा thपढ़ो_fp_state fp;
+	struct thread_fp_state fp;
 
-#अगर_घोषित CONFIG_SPE
-	uदीर्घ evr[32];
-	uदीर्घ spefscr;
-	uदीर्घ host_spefscr;
+#ifdef CONFIG_SPE
+	ulong evr[32];
+	ulong spefscr;
+	ulong host_spefscr;
 	u64 acc;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ALTIVEC
-	काष्ठा thपढ़ो_vr_state vr;
-#पूर्ण_अगर
+#endif
+#ifdef CONFIG_ALTIVEC
+	struct thread_vr_state vr;
+#endif
 
-#अगर_घोषित CONFIG_KVM_BOOKE_HV
+#ifdef CONFIG_KVM_BOOKE_HV
 	u32 host_mas4;
 	u32 host_mas6;
-	u32 shaकरोw_epcr;
-	u32 shaकरोw_msrp;
+	u32 shadow_epcr;
+	u32 shadow_msrp;
 	u32 eplc;
 	u32 epsc;
 	u32 oldpir;
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_BOOKE)
-#अगर defined(CONFIG_KVM_BOOKE_HV) || defined(CONFIG_64BIT)
+#if defined(CONFIG_BOOKE)
+#if defined(CONFIG_KVM_BOOKE_HV) || defined(CONFIG_64BIT)
 	u32 epcr;
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S
+#ifdef CONFIG_PPC_BOOK3S
 	/* For Gekko paired singles */
 	u32 qpr[32];
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S
-	uदीर्घ tar;
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_BOOK3S
+	ulong tar;
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S
-	uदीर्घ hflags;
-	uदीर्घ guest_owned_ext;
-	uदीर्घ purr;
-	uदीर्घ spurr;
-	uदीर्घ ic;
-	uदीर्घ dscr;
-	uदीर्घ amr;
-	uदीर्घ uamor;
-	uदीर्घ iamr;
+#ifdef CONFIG_PPC_BOOK3S
+	ulong hflags;
+	ulong guest_owned_ext;
+	ulong purr;
+	ulong spurr;
+	ulong ic;
+	ulong dscr;
+	ulong amr;
+	ulong uamor;
+	ulong iamr;
 	u32 ctrl;
 	u32 dabrx;
-	uदीर्घ dabr;
-	uदीर्घ dawr0;
-	uदीर्घ dawrx0;
-	uदीर्घ dawr1;
-	uदीर्घ dawrx1;
-	uदीर्घ ciabr;
-	uदीर्घ cfar;
-	uदीर्घ ppr;
+	ulong dabr;
+	ulong dawr0;
+	ulong dawrx0;
+	ulong dawr1;
+	ulong dawrx1;
+	ulong ciabr;
+	ulong cfar;
+	ulong ppr;
 	u32 pspb;
-	uदीर्घ fscr;
-	uदीर्घ shaकरोw_fscr;
-	uदीर्घ ebbhr;
-	uदीर्घ ebbrr;
-	uदीर्घ bescr;
-	uदीर्घ csigr;
-	uदीर्घ tacr;
-	uदीर्घ tcscr;
-	uदीर्घ acop;
-	uदीर्घ wort;
-	uदीर्घ tid;
-	uदीर्घ psscr;
-	uदीर्घ hfscr;
-	uदीर्घ shaकरोw_srr1;
-#पूर्ण_अगर
+	ulong fscr;
+	ulong shadow_fscr;
+	ulong ebbhr;
+	ulong ebbrr;
+	ulong bescr;
+	ulong csigr;
+	ulong tacr;
+	ulong tcscr;
+	ulong acop;
+	ulong wort;
+	ulong tid;
+	ulong psscr;
+	ulong hfscr;
+	ulong shadow_srr1;
+#endif
 	u32 vrsave; /* also USPRG0 */
 	u32 mmucr;
-	/* shaकरोw_msr is unused क्रम BookE HV */
-	uदीर्घ shaकरोw_msr;
-	uदीर्घ csrr0;
-	uदीर्घ csrr1;
-	uदीर्घ dsrr0;
-	uदीर्घ dsrr1;
-	uदीर्घ mcsrr0;
-	uदीर्घ mcsrr1;
-	uदीर्घ mcsr;
-	uदीर्घ dec;
-#अगर_घोषित CONFIG_BOOKE
+	/* shadow_msr is unused for BookE HV */
+	ulong shadow_msr;
+	ulong csrr0;
+	ulong csrr1;
+	ulong dsrr0;
+	ulong dsrr1;
+	ulong mcsrr0;
+	ulong mcsrr1;
+	ulong mcsr;
+	ulong dec;
+#ifdef CONFIG_BOOKE
 	u32 decar;
-#पूर्ण_अगर
+#endif
 	/* Time base value when we entered the guest */
 	u64 entry_tb;
 	u64 entry_vtb;
 	u64 entry_ic;
 	u32 tcr;
-	uदीर्घ tsr; /* we need to perक्रमm set/clr_bits() which requires uदीर्घ */
+	ulong tsr; /* we need to perform set/clr_bits() which requires ulong */
 	u32 ivor[64];
-	uदीर्घ ivpr;
+	ulong ivpr;
 	u32 pvr;
 
-	u32 shaकरोw_pid;
-	u32 shaकरोw_pid1;
+	u32 shadow_pid;
+	u32 shadow_pid1;
 	u32 pid;
 	u32 swap_pid;
 
@@ -644,57 +643,57 @@
 	u64 siar;
 	u64 sdar;
 	u64 sier[3];
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
 	u64 tfhar;
 	u64 texasr;
 	u64 tfiar;
 	u64 orig_texasr;
 
-	u32 cr_पंचांग;
-	u64 xer_पंचांग;
-	u64 lr_पंचांग;
-	u64 ctr_पंचांग;
-	u64 amr_पंचांग;
-	u64 ppr_पंचांग;
-	u64 dscr_पंचांग;
-	u64 tar_पंचांग;
+	u32 cr_tm;
+	u64 xer_tm;
+	u64 lr_tm;
+	u64 ctr_tm;
+	u64 amr_tm;
+	u64 ppr_tm;
+	u64 dscr_tm;
+	u64 tar_tm;
 
-	uदीर्घ gpr_पंचांग[32];
+	ulong gpr_tm[32];
 
-	काष्ठा thपढ़ो_fp_state fp_पंचांग;
+	struct thread_fp_state fp_tm;
 
-	काष्ठा thपढ़ो_vr_state vr_पंचांग;
-	u32 vrsave_पंचांग; /* also USPRG0 */
-#पूर्ण_अगर
+	struct thread_vr_state vr_tm;
+	u32 vrsave_tm; /* also USPRG0 */
+#endif
 
-#अगर_घोषित CONFIG_KVM_EXIT_TIMING
-	काष्ठा mutex निकास_timing_lock;
-	काष्ठा kvmppc_निकास_timing timing_निकास;
-	काष्ठा kvmppc_निकास_timing timing_last_enter;
-	u32 last_निकास_type;
+#ifdef CONFIG_KVM_EXIT_TIMING
+	struct mutex exit_timing_lock;
+	struct kvmppc_exit_timing timing_exit;
+	struct kvmppc_exit_timing timing_last_enter;
+	u32 last_exit_type;
 	u32 timing_count_type[__NUMBER_OF_KVM_EXIT_TYPES];
 	u64 timing_sum_duration[__NUMBER_OF_KVM_EXIT_TYPES];
 	u64 timing_sum_quad_duration[__NUMBER_OF_KVM_EXIT_TYPES];
 	u64 timing_min_duration[__NUMBER_OF_KVM_EXIT_TYPES];
 	u64 timing_max_duration[__NUMBER_OF_KVM_EXIT_TYPES];
-	u64 timing_last_निकास;
-	काष्ठा dentry *debugfs_निकास_timing;
-#पूर्ण_अगर
+	u64 timing_last_exit;
+	struct dentry *debugfs_exit_timing;
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S
-	uदीर्घ fault_dar;
+#ifdef CONFIG_PPC_BOOK3S
+	ulong fault_dar;
 	u32 fault_dsisr;
-	अचिन्हित दीर्घ पूर्णांकr_msr;
-	uदीर्घ fault_gpa;	/* guest real address of page fault (POWER9) */
-#पूर्ण_अगर
+	unsigned long intr_msr;
+	ulong fault_gpa;	/* guest real address of page fault (POWER9) */
+#endif
 
-#अगर_घोषित CONFIG_BOOKE
-	uदीर्घ fault_dear;
-	uदीर्घ fault_esr;
-	uदीर्घ queued_dear;
-	uदीर्घ queued_esr;
+#ifdef CONFIG_BOOKE
+	ulong fault_dear;
+	ulong fault_esr;
+	ulong queued_dear;
+	ulong queued_esr;
 	spinlock_t wdt_lock;
-	काष्ठा समयr_list wdt_समयr;
+	struct timer_list wdt_timer;
 	u32 tlbcfg[4];
 	u32 tlbps[4];
 	u32 mmucfg;
@@ -703,9 +702,9 @@
 	u64 sprg9;
 	u32 pwrmgtcr0;
 	u32 crit_save;
-	/* guest debug रेजिस्टरs*/
-	काष्ठा debug_reg dbg_reg;
-#पूर्ण_अगर
+	/* guest debug registers*/
+	struct debug_reg dbg_reg;
+#endif
 	gpa_t paddr_accessed;
 	gva_t vaddr_accessed;
 	pgd_t *pgdir;
@@ -713,10 +712,10 @@
 	u16 io_gpr; /* GPR used as IO source/target */
 	u8 mmio_host_swabbed;
 	u8 mmio_sign_extend;
-	/* conversion between single and द्विगुन precision */
+	/* conversion between single and double precision */
 	u8 mmio_sp64_extend;
 	/*
-	 * Number of simulations क्रम vsx.
+	 * Number of simulations for vsx.
 	 * If we use 2*8bytes to simulate 1*16bytes,
 	 * then the number should be 2 and
 	 * mmio_copy_type=KVMPPC_VSX_COPY_DWORD.
@@ -732,78 +731,78 @@
 	u8 osi_needed;
 	u8 osi_enabled;
 	u8 papr_enabled;
-	u8 watchकरोg_enabled;
+	u8 watchdog_enabled;
 	u8 sane;
 	u8 cpu_type;
 	u8 hcall_needed;
 	u8 epr_flags; /* KVMPPC_EPR_xxx */
 	u8 epr_needed;
-	u8 बाह्यal_oneshot;	/* clear बाह्यal irq after delivery */
+	u8 external_oneshot;	/* clear external irq after delivery */
 
 	u32 cpr0_cfgaddr; /* holds the last set cpr0_cfgaddr */
 
-	काष्ठा hrसमयr dec_समयr;
-	u64 dec_jअगरfies;
+	struct hrtimer dec_timer;
+	u64 dec_jiffies;
 	u64 dec_expires;
-	अचिन्हित दीर्घ pending_exceptions;
+	unsigned long pending_exceptions;
 	u8 ceded;
 	u8 prodded;
-	u8 करोorbell_request;
-	u8 irq_pending; /* Used by XIVE to संकेत pending guest irqs */
+	u8 doorbell_request;
+	u8 irq_pending; /* Used by XIVE to signal pending guest irqs */
 	u32 last_inst;
 
-	काष्ठा rcuरुको *रुकोp;
-	काष्ठा kvmppc_vcore *vcore;
-	पूर्णांक ret;
-	पूर्णांक trap;
-	पूर्णांक state;
-	पूर्णांक ptid;
-	पूर्णांक thपढ़ो_cpu;
-	पूर्णांक prev_cpu;
-	bool समयr_running;
-	रुको_queue_head_t cpu_run;
-	काष्ठा machine_check_event mce_evt; /* Valid अगर trap == 0x200 */
+	struct rcuwait *waitp;
+	struct kvmppc_vcore *vcore;
+	int ret;
+	int trap;
+	int state;
+	int ptid;
+	int thread_cpu;
+	int prev_cpu;
+	bool timer_running;
+	wait_queue_head_t cpu_run;
+	struct machine_check_event mce_evt; /* Valid if trap == 0x200 */
 
-	काष्ठा kvm_vcpu_arch_shared *shared;
-#अगर defined(CONFIG_PPC_BOOK3S_64) && defined(CONFIG_KVM_BOOK3S_PR_POSSIBLE)
+	struct kvm_vcpu_arch_shared *shared;
+#if defined(CONFIG_PPC_BOOK3S_64) && defined(CONFIG_KVM_BOOK3S_PR_POSSIBLE)
 	bool shared_big_endian;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ magic_page_pa; /* phys addr to map the magic page to */
-	अचिन्हित दीर्घ magic_page_ea; /* effect. addr to map the magic page to */
+#endif
+	unsigned long magic_page_pa; /* phys addr to map the magic page to */
+	unsigned long magic_page_ea; /* effect. addr to map the magic page to */
 	bool disable_kernel_nx;
 
-	पूर्णांक irq_type;		/* one of KVM_IRQ_* */
-	पूर्णांक irq_cpu_id;
-	काष्ठा खोलोpic *mpic;	/* KVM_IRQ_MPIC */
-#अगर_घोषित CONFIG_KVM_XICS
-	काष्ठा kvmppc_icp *icp; /* XICS presentation controller */
-	काष्ठा kvmppc_xive_vcpu *xive_vcpu; /* XIVE भव CPU data */
+	int irq_type;		/* one of KVM_IRQ_* */
+	int irq_cpu_id;
+	struct openpic *mpic;	/* KVM_IRQ_MPIC */
+#ifdef CONFIG_KVM_XICS
+	struct kvmppc_icp *icp; /* XICS presentation controller */
+	struct kvmppc_xive_vcpu *xive_vcpu; /* XIVE virtual CPU data */
 	__be32 xive_cam_word;    /* Cooked W2 in proper endian with valid bit */
 	u8 xive_pushed;		 /* Is the VP pushed on the physical CPU ? */
 	u8 xive_esc_on;		 /* Is the escalation irq enabled ? */
-	जोड़ xive_पंचांगa_w01 xive_saved_state; /* W0..1 of XIVE thपढ़ो state */
-	u64 xive_esc_raddr;	 /* Escalation पूर्णांकerrupt ESB real addr */
-	u64 xive_esc_vaddr;	 /* Escalation पूर्णांकerrupt ESB virt addr */
-#पूर्ण_अगर
+	union xive_tma_w01 xive_saved_state; /* W0..1 of XIVE thread state */
+	u64 xive_esc_raddr;	 /* Escalation interrupt ESB real addr */
+	u64 xive_esc_vaddr;	 /* Escalation interrupt ESB virt addr */
+#endif
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	काष्ठा kvm_vcpu_arch_shared shregs;
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	struct kvm_vcpu_arch_shared shregs;
 
-	काष्ठा mmio_hpte_cache mmio_cache;
-	अचिन्हित दीर्घ pgfault_addr;
-	दीर्घ pgfault_index;
-	अचिन्हित दीर्घ pgfault_hpte[2];
-	काष्ठा mmio_hpte_cache_entry *pgfault_cache;
+	struct mmio_hpte_cache mmio_cache;
+	unsigned long pgfault_addr;
+	long pgfault_index;
+	unsigned long pgfault_hpte[2];
+	struct mmio_hpte_cache_entry *pgfault_cache;
 
-	काष्ठा task_काष्ठा *run_task;
+	struct task_struct *run_task;
 
 	spinlock_t vpa_update_lock;
-	काष्ठा kvmppc_vpa vpa;
-	काष्ठा kvmppc_vpa dtl;
-	काष्ठा dtl_entry *dtl_ptr;
-	अचिन्हित दीर्घ dtl_index;
+	struct kvmppc_vpa vpa;
+	struct kvmppc_vpa dtl;
+	struct dtl_entry *dtl_ptr;
+	unsigned long dtl_index;
 	u64 stolen_logged;
-	काष्ठा kvmppc_vpa slb_shaकरोw;
+	struct kvmppc_vpa slb_shadow;
 
 	spinlock_t tbacct_lock;
 	u64 busy_stolen;
@@ -814,57 +813,57 @@
 	u32 online;
 
 	/* For support of nested guests */
-	काष्ठा kvm_nested_guest *nested;
+	struct kvm_nested_guest *nested;
 	u32 nested_vcpu_id;
 	gpa_t nested_io_gpr;
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_EXIT_TIMING
-	काष्ठा kvmhv_tb_accumulator *cur_activity;	/* What we're timing */
+#ifdef CONFIG_KVM_BOOK3S_HV_EXIT_TIMING
+	struct kvmhv_tb_accumulator *cur_activity;	/* What we're timing */
 	u64	cur_tb_start;			/* when it started */
-	काष्ठा kvmhv_tb_accumulator rm_entry;	/* real-mode entry code */
-	काष्ठा kvmhv_tb_accumulator rm_पूर्णांकr;	/* real-mode पूर्णांकr handling */
-	काष्ठा kvmhv_tb_accumulator rm_निकास;	/* real-mode निकास code */
-	काष्ठा kvmhv_tb_accumulator guest_समय;	/* guest execution */
-	काष्ठा kvmhv_tb_accumulator cede_समय;	/* समय napping inside guest */
+	struct kvmhv_tb_accumulator rm_entry;	/* real-mode entry code */
+	struct kvmhv_tb_accumulator rm_intr;	/* real-mode intr handling */
+	struct kvmhv_tb_accumulator rm_exit;	/* real-mode exit code */
+	struct kvmhv_tb_accumulator guest_time;	/* guest execution */
+	struct kvmhv_tb_accumulator cede_time;	/* time napping inside guest */
 
-	काष्ठा dentry *debugfs_dir;
-#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_EXIT_TIMING */
-पूर्ण;
+	struct dentry *debugfs_dir;
+#endif /* CONFIG_KVM_BOOK3S_HV_EXIT_TIMING */
+};
 
-#घोषणा VCPU_FPR(vcpu, i)	(vcpu)->arch.fp.fpr[i][TS_FPROFFSET]
-#घोषणा VCPU_VSX_FPR(vcpu, i, j)	((vcpu)->arch.fp.fpr[i][j])
-#घोषणा VCPU_VSX_VR(vcpu, i)		((vcpu)->arch.vr.vr[i])
+#define VCPU_FPR(vcpu, i)	(vcpu)->arch.fp.fpr[i][TS_FPROFFSET]
+#define VCPU_VSX_FPR(vcpu, i, j)	((vcpu)->arch.fp.fpr[i][j])
+#define VCPU_VSX_VR(vcpu, i)		((vcpu)->arch.vr.vr[i])
 
-/* Values क्रम vcpu->arch.state */
-#घोषणा KVMPPC_VCPU_NOTREADY		0
-#घोषणा KVMPPC_VCPU_RUNNABLE		1
-#घोषणा KVMPPC_VCPU_BUSY_IN_HOST	2
+/* Values for vcpu->arch.state */
+#define KVMPPC_VCPU_NOTREADY		0
+#define KVMPPC_VCPU_RUNNABLE		1
+#define KVMPPC_VCPU_BUSY_IN_HOST	2
 
-/* Values क्रम vcpu->arch.io_gpr */
-#घोषणा KVM_MMIO_REG_MASK	0x003f
-#घोषणा KVM_MMIO_REG_EXT_MASK	0xffc0
-#घोषणा KVM_MMIO_REG_GPR	0x0000
-#घोषणा KVM_MMIO_REG_FPR	0x0040
-#घोषणा KVM_MMIO_REG_QPR	0x0080
-#घोषणा KVM_MMIO_REG_FQPR	0x00c0
-#घोषणा KVM_MMIO_REG_VSX	0x0100
-#घोषणा KVM_MMIO_REG_VMX	0x0180
-#घोषणा KVM_MMIO_REG_NESTED_GPR	0xffc0
+/* Values for vcpu->arch.io_gpr */
+#define KVM_MMIO_REG_MASK	0x003f
+#define KVM_MMIO_REG_EXT_MASK	0xffc0
+#define KVM_MMIO_REG_GPR	0x0000
+#define KVM_MMIO_REG_FPR	0x0040
+#define KVM_MMIO_REG_QPR	0x0080
+#define KVM_MMIO_REG_FQPR	0x00c0
+#define KVM_MMIO_REG_VSX	0x0100
+#define KVM_MMIO_REG_VMX	0x0180
+#define KVM_MMIO_REG_NESTED_GPR	0xffc0
 
 
-#घोषणा __KVM_HAVE_ARCH_WQP
-#घोषणा __KVM_HAVE_CREATE_DEVICE
+#define __KVM_HAVE_ARCH_WQP
+#define __KVM_HAVE_CREATE_DEVICE
 
-अटल अंतरभूत व्योम kvm_arch_hardware_disable(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_hardware_unsetup(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_sync_events(काष्ठा kvm *kvm) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_memslots_updated(काष्ठा kvm *kvm, u64 gen) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_flush_shaकरोw_all(काष्ठा kvm *kvm) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_sched_in(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_निकास(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_vcpu_blocking(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_vcpu_unblocking(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
-अटल अंतरभूत व्योम kvm_arch_vcpu_block_finish(काष्ठा kvm_vcpu *vcpu) अणुपूर्ण
+static inline void kvm_arch_hardware_disable(void) {}
+static inline void kvm_arch_hardware_unsetup(void) {}
+static inline void kvm_arch_sync_events(struct kvm *kvm) {}
+static inline void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen) {}
+static inline void kvm_arch_flush_shadow_all(struct kvm *kvm) {}
+static inline void kvm_arch_sched_in(struct kvm_vcpu *vcpu, int cpu) {}
+static inline void kvm_arch_exit(void) {}
+static inline void kvm_arch_vcpu_blocking(struct kvm_vcpu *vcpu) {}
+static inline void kvm_arch_vcpu_unblocking(struct kvm_vcpu *vcpu) {}
+static inline void kvm_arch_vcpu_block_finish(struct kvm_vcpu *vcpu) {}
 
-#पूर्ण_अगर /* __POWERPC_KVM_HOST_H__ */
+#endif /* __POWERPC_KVM_HOST_H__ */

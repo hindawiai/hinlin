@@ -1,108 +1,107 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (C) 2003 Herbert Valerio Riedel <hvr@gnu.org>
  *  Copyright (C) 2004 Luis R. Rodriguez <mcgrof@ruslug.rutgers.edu>
- *  Copyright (C) 2004 Aurelien Alleaume <slts@मुक्त.fr>
+ *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
-#अगर !defined(_ISL_OID_H)
-#घोषणा _ISL_OID_H
+#if !defined(_ISL_OID_H)
+#define _ISL_OID_H
 
 /*
- * MIB related स्थिरant and काष्ठाure definitions क्रम communicating
+ * MIB related constant and structure definitions for communicating
  * with the device firmware
  */
 
-काष्ठा obj_ssid अणु
+struct obj_ssid {
 	u8 length;
-	अक्षर octets[33];
-पूर्ण __packed;
+	char octets[33];
+} __packed;
 
-काष्ठा obj_key अणु
-	u8 type;		/* करोt11_priv_t */
+struct obj_key {
+	u8 type;		/* dot11_priv_t */
 	u8 length;
-	अक्षर key[32];
-पूर्ण __packed;
+	char key[32];
+} __packed;
 
-काष्ठा obj_mlme अणु
+struct obj_mlme {
 	u8 address[6];
 	u16 id;
 	u16 state;
 	u16 code;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा obj_mlmeex अणु
+struct obj_mlmeex {
 	u8 address[6];
 	u16 id;
 	u16 state;
 	u16 code;
 	u16 size;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा obj_buffer अणु
+struct obj_buffer {
 	u32 size;
 	u32 addr;		/* 32bit bus address */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा obj_bss अणु
+struct obj_bss {
 	u8 address[6];
-	पूर्णांक:16;			/* padding */
+	int:16;			/* padding */
 
-	अक्षर state;
-	अक्षर reserved;
-	लघु age;
+	char state;
+	char reserved;
+	short age;
 
-	अक्षर quality;
-	अक्षर rssi;
+	char quality;
+	char rssi;
 
-	काष्ठा obj_ssid ssid;
-	लघु channel;
-	अक्षर beacon_period;
-	अक्षर dtim_period;
-	लघु capinfo;
-	लघु rates;
-	लघु basic_rates;
-	पूर्णांक:16;			/* padding */
-पूर्ण __packed;
+	struct obj_ssid ssid;
+	short channel;
+	char beacon_period;
+	char dtim_period;
+	short capinfo;
+	short rates;
+	short basic_rates;
+	int:16;			/* padding */
+} __packed;
 
-काष्ठा obj_bsslist अणु
+struct obj_bsslist {
 	u32 nr;
-	काष्ठा obj_bss bsslist[];
-पूर्ण __packed;
+	struct obj_bss bsslist[];
+} __packed;
 
-काष्ठा obj_frequencies अणु
+struct obj_frequencies {
 	u16 nr;
 	u16 mhz[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा obj_attachment अणु
-	अक्षर type;
-	अक्षर reserved;
-	लघु id;
-	लघु size;
-	अक्षर data[];
-पूर्ण __packed;
+struct obj_attachment {
+	char type;
+	char reserved;
+	short id;
+	short size;
+	char data[];
+} __packed;
 
 /*
- * in हाल everything's ok, the अंतरभूतd function below will be
+ * in case everything's ok, the inlined function below will be
  * optimized away by the compiler...
  */
-अटल अंतरभूत व्योम
-__bug_on_wrong_काष्ठा_sizes(व्योम)
-अणु
-	BUILD_BUG_ON(माप (काष्ठा obj_ssid) != 34);
-	BUILD_BUG_ON(माप (काष्ठा obj_key) != 34);
-	BUILD_BUG_ON(माप (काष्ठा obj_mlme) != 12);
-	BUILD_BUG_ON(माप (काष्ठा obj_mlmeex) != 14);
-	BUILD_BUG_ON(माप (काष्ठा obj_buffer) != 8);
-	BUILD_BUG_ON(माप (काष्ठा obj_bss) != 60);
-	BUILD_BUG_ON(माप (काष्ठा obj_bsslist) != 4);
-	BUILD_BUG_ON(माप (काष्ठा obj_frequencies) != 2);
-पूर्ण
+static inline void
+__bug_on_wrong_struct_sizes(void)
+{
+	BUILD_BUG_ON(sizeof (struct obj_ssid) != 34);
+	BUILD_BUG_ON(sizeof (struct obj_key) != 34);
+	BUILD_BUG_ON(sizeof (struct obj_mlme) != 12);
+	BUILD_BUG_ON(sizeof (struct obj_mlmeex) != 14);
+	BUILD_BUG_ON(sizeof (struct obj_buffer) != 8);
+	BUILD_BUG_ON(sizeof (struct obj_bss) != 60);
+	BUILD_BUG_ON(sizeof (struct obj_bsslist) != 4);
+	BUILD_BUG_ON(sizeof (struct obj_frequencies) != 2);
+}
 
-क्रमागत करोt11_state_t अणु
+enum dot11_state_t {
 	DOT11_STATE_NONE = 0,
 	DOT11_STATE_AUTHING = 1,
 	DOT11_STATE_AUTH = 2,
@@ -111,185 +110,185 @@ __bug_on_wrong_काष्ठा_sizes(व्योम)
 	DOT11_STATE_ASSOC = 5,
 	DOT11_STATE_IBSS = 6,
 	DOT11_STATE_WDS = 7
-पूर्ण;
+};
 
-क्रमागत करोt11_bsstype_t अणु
+enum dot11_bsstype_t {
 	DOT11_BSSTYPE_NONE = 0,
 	DOT11_BSSTYPE_INFRA = 1,
 	DOT11_BSSTYPE_IBSS = 2,
 	DOT11_BSSTYPE_ANY = 3
-पूर्ण;
+};
 
-क्रमागत करोt11_auth_t अणु
+enum dot11_auth_t {
 	DOT11_AUTH_NONE = 0,
 	DOT11_AUTH_OS = 1,
 	DOT11_AUTH_SK = 2,
 	DOT11_AUTH_BOTH = 3
-पूर्ण;
+};
 
-क्रमागत करोt11_mlme_t अणु
+enum dot11_mlme_t {
 	DOT11_MLME_AUTO = 0,
 	DOT11_MLME_INTERMEDIATE = 1,
 	DOT11_MLME_EXTENDED = 2
-पूर्ण;
+};
 
-क्रमागत करोt11_priv_t अणु
+enum dot11_priv_t {
 	DOT11_PRIV_WEP = 0,
 	DOT11_PRIV_TKIP = 1
-पूर्ण;
+};
 
 /* Prism "Nitro" / Frameburst / "Packet Frame Grouping"
  * Value is in microseconds. Represents the # microseconds
- * the firmware will take to group frames beक्रमe sending out then out
+ * the firmware will take to group frames before sending out then out
  * together with a CSMA contention. Without this all frames are
  * sent with a CSMA contention.
  * Bibliography:
- * https://www.hpl.hp.com/personal/Jean_Tourrilhes/Papers/Packet.Frame.Grouping.hपंचांगl
+ * https://www.hpl.hp.com/personal/Jean_Tourrilhes/Papers/Packet.Frame.Grouping.html
  */
-क्रमागत करोt11_maxframeburst_t अणु
-	/* Values क्रम DOT11_OID_MAXFRAMEBURST */
-	DOT11_MAXFRAMEBURST_OFF = 0, /* Card firmware शेष */
+enum dot11_maxframeburst_t {
+	/* Values for DOT11_OID_MAXFRAMEBURST */
+	DOT11_MAXFRAMEBURST_OFF = 0, /* Card firmware default */
 	DOT11_MAXFRAMEBURST_MIXED_SAFE = 650, /* 802.11 a,b,g safe */
 	DOT11_MAXFRAMEBURST_IDEAL = 1300, /* Theoretical ideal level */
 	DOT11_MAXFRAMEBURST_MAX = 5000, /* Use this as max,
-		* Note: firmware allows क्रम greater values. This is a
+		* Note: firmware allows for greater values. This is a
 		* recommended max. I'll update this as I find
-		* out what the real MAX is. Also note that you करोn't necessarily
+		* out what the real MAX is. Also note that you don't necessarily
 		* get better results with a greater value here.
 		*/
-पूर्ण;
+};
 
-/* Support क्रम 802.11 दीर्घ and लघु frame preambles.
+/* Support for 802.11 long and short frame preambles.
  * Long	 preamble uses 128-bit sync field, 8-bit  CRC
  * Short preamble uses 56-bit  sync field, 16-bit CRC
  *
  * 802.11a -- not sure, both optionally ?
- * 802.11b supports दीर्घ and optionally लघु
+ * 802.11b supports long and optionally short
  * 802.11g supports both */
-क्रमागत करोt11_preamblesettings_t अणु
+enum dot11_preamblesettings_t {
 	DOT11_PREAMBLESETTING_LONG = 0,
-		/* Allows *only* दीर्घ 802.11 preambles */
+		/* Allows *only* long 802.11 preambles */
 	DOT11_PREAMBLESETTING_SHORT = 1,
-		/* Allows *only* लघु 802.11 preambles */
+		/* Allows *only* short 802.11 preambles */
 	DOT11_PREAMBLESETTING_DYNAMIC = 2
 		/* AutomatiGically set */
-पूर्ण;
+};
 
-/* Support क्रम 802.11 slot timing (समय between packets).
+/* Support for 802.11 slot timing (time between packets).
  *
  * Long uses 802.11a slot timing  (9 usec ?)
  * Short uses 802.11b slot timing (20 use ?) */
-क्रमागत करोt11_slotsettings_t अणु
+enum dot11_slotsettings_t {
 	DOT11_SLOTSETTINGS_LONG = 0,
-		/* Allows *only* दीर्घ 802.11b slot timing */
+		/* Allows *only* long 802.11b slot timing */
 	DOT11_SLOTSETTINGS_SHORT = 1,
-		/* Allows *only* दीर्घ 802.11a slot timing */
+		/* Allows *only* long 802.11a slot timing */
 	DOT11_SLOTSETTINGS_DYNAMIC = 2
 		/* AutomatiGically set */
-पूर्ण;
+};
 
 /* All you need to know, ERP is "Extended Rate PHY".
- * An Extended Rate PHY (ERP) STA or AP shall support three dअगरferent
- * preamble and header क्रमmats:
+ * An Extended Rate PHY (ERP) STA or AP shall support three different
+ * preamble and header formats:
  * Long  preamble (refer to above)
  * Short preamble (refer to above)
  * OFDM  preamble ( ? )
  *
  * I'm assuming here Protection tells the AP
- * to be careful, a STA which cannot handle the दीर्घ pre-amble
+ * to be careful, a STA which cannot handle the long pre-amble
  * has joined.
  */
-क्रमागत करो11_nonerpstatus_t अणु
+enum do11_nonerpstatus_t {
 	DOT11_ERPSTAT_NONEPRESENT = 0,
 	DOT11_ERPSTAT_USEPROTECTION = 1
-पूर्ण;
+};
 
-/* (ERP is "Extended Rate PHY") Way to पढ़ो NONERP is NON-ERP-*
+/* (ERP is "Extended Rate PHY") Way to read NONERP is NON-ERP-*
  * The key here is DOT11 NON ERP NEVER protects against
  * NON ERP STA's. You *don't* want this unless
- * you know what you are करोing. It means you will only
+ * you know what you are doing. It means you will only
  * get Extended Rate capabilities */
-क्रमागत करोt11_nonerpprotection_t अणु
+enum dot11_nonerpprotection_t {
 	DOT11_NONERP_NEVER = 0,
 	DOT11_NONERP_ALWAYS = 1,
 	DOT11_NONERP_DYNAMIC = 2
-पूर्ण;
+};
 
-/* Preset OID configuration क्रम 802.11 modes
+/* Preset OID configuration for 802.11 modes
  * Note: DOT11_OID_CW[MIN|MAX] hold the values of the
  * DCS MIN|MAX backoff used */
-क्रमागत करोt11_profile_t अणु /* And set/allowed values */
-	/* Allowed values क्रम DOT11_OID_PROखाताS */
-	DOT11_PROखाता_B_ONLY = 0,
+enum dot11_profile_t { /* And set/allowed values */
+	/* Allowed values for DOT11_OID_PROFILES */
+	DOT11_PROFILE_B_ONLY = 0,
 		/* DOT11_OID_RATES: 1, 2, 5.5, 11Mbps
 		 * DOT11_OID_PREAMBLESETTINGS: DOT11_PREAMBLESETTING_DYNAMIC
 		 * DOT11_OID_CWMIN: 31
 		 * DOT11_OID_NONEPROTECTION: DOT11_NOERP_DYNAMIC
 		 * DOT11_OID_SLOTSETTINGS: DOT11_SLOTSETTINGS_LONG
 		 */
-	DOT11_PROखाता_MIXED_G_WIFI = 1,
+	DOT11_PROFILE_MIXED_G_WIFI = 1,
 		/* DOT11_OID_RATES: 1, 2, 5.5, 11, 6, 9, 12, 18, 24, 36, 48, 54Mbs
 		 * DOT11_OID_PREAMBLESETTINGS: DOT11_PREAMBLESETTING_DYNAMIC
 		 * DOT11_OID_CWMIN: 15
 		 * DOT11_OID_NONEPROTECTION: DOT11_NOERP_DYNAMIC
 		 * DOT11_OID_SLOTSETTINGS: DOT11_SLOTSETTINGS_DYNAMIC
 		 */
-	DOT11_PROखाता_MIXED_LONG = 2, /* "Long range" */
+	DOT11_PROFILE_MIXED_LONG = 2, /* "Long range" */
 		/* Same as Profile MIXED_G_WIFI */
-	DOT11_PROखाता_G_ONLY = 3,
+	DOT11_PROFILE_G_ONLY = 3,
 		/* Same as Profile MIXED_G_WIFI */
-	DOT11_PROखाता_TEST = 4,
+	DOT11_PROFILE_TEST = 4,
 		/* Same as Profile MIXED_G_WIFI except:
 		 * DOT11_OID_PREAMBLESETTINGS: DOT11_PREAMBLESETTING_SHORT
 		 * DOT11_OID_NONEPROTECTION: DOT11_NOERP_NEVER
 		 * DOT11_OID_SLOTSETTINGS: DOT11_SLOTSETTINGS_SHORT
 		 */
-	DOT11_PROखाता_B_WIFI = 5,
+	DOT11_PROFILE_B_WIFI = 5,
 		/* Same as Profile B_ONLY */
-	DOT11_PROखाता_A_ONLY = 6,
+	DOT11_PROFILE_A_ONLY = 6,
 		/* Same as Profile MIXED_G_WIFI except:
 		 * DOT11_OID_RATES: 6, 9, 12, 18, 24, 36, 48, 54Mbs
 		 */
-	DOT11_PROखाता_MIXED_SHORT = 7
+	DOT11_PROFILE_MIXED_SHORT = 7
 		/* Same as MIXED_G_WIFI */
-पूर्ण;
+};
 
 
-/* The करोt11d conक्रमmance level configures the 802.11d conक्रमmance levels.
- * The following conक्रमmance levels exist:*/
-क्रमागत oid_inl_conक्रमmance_t अणु
-	OID_INL_CONFORMANCE_NONE = 0,	/* Perक्रमm active scanning */
+/* The dot11d conformance level configures the 802.11d conformance levels.
+ * The following conformance levels exist:*/
+enum oid_inl_conformance_t {
+	OID_INL_CONFORMANCE_NONE = 0,	/* Perform active scanning */
 	OID_INL_CONFORMANCE_STRICT = 1,	/* Strictly adhere to 802.11d */
 	OID_INL_CONFORMANCE_FLEXIBLE = 2,	/* Use passed 802.11d info to
 		* determine channel AND/OR just make assumption that active
 		* channels are valid  channels */
-पूर्ण;
+};
 
-क्रमागत oid_inl_mode_t अणु
+enum oid_inl_mode_t {
 	INL_MODE_NONE = -1,
 	INL_MODE_PROMISCUOUS = 0,
 	INL_MODE_CLIENT = 1,
 	INL_MODE_AP = 2,
 	INL_MODE_SNIFFER = 3
-पूर्ण;
+};
 
-क्रमागत oid_inl_config_t अणु
+enum oid_inl_config_t {
 	INL_CONFIG_NOTHING = 0x00,
 	INL_CONFIG_MANUALRUN = 0x01,
 	INL_CONFIG_FRAMETRAP = 0x02,
 	INL_CONFIG_RXANNEX = 0x04,
 	INL_CONFIG_TXANNEX = 0x08,
 	INL_CONFIG_WDS = 0x10
-पूर्ण;
+};
 
-क्रमागत oid_inl_phycap_t अणु
+enum oid_inl_phycap_t {
 	INL_PHYCAP_2400MHZ = 1,
 	INL_PHYCAP_5000MHZ = 2,
-	INL_PHYCAP_FAA = 0x80000000,	/* Means card supports the FAA चयन */
-पूर्ण;
+	INL_PHYCAP_FAA = 0x80000000,	/* Means card supports the FAA switch */
+};
 
 
-क्रमागत oid_num_t अणु
+enum oid_num_t {
 	GEN_OID_MACADDRESS = 0,
 	GEN_OID_LINKSTATE,
 	GEN_OID_WATCHDOG,
@@ -406,7 +405,7 @@ __bug_on_wrong_काष्ठा_sizes(व्योम)
 	DOT11_OID_NONERPPROTECTION,
 	DOT11_OID_SLOTSETTINGS,
 	DOT11_OID_NONERPTIMEOUT,
-	DOT11_OID_PROखाताS,
+	DOT11_OID_PROFILES,
 	DOT11_OID_EXTENDEDRATES,
 
 	DOT11_OID_DEAUTHENTICATE,
@@ -450,44 +449,44 @@ __bug_on_wrong_काष्ठा_sizes(व्योम)
 	OID_INL_OUTPUTPOWER,
 
 	OID_NUM_LAST
-पूर्ण;
+};
 
-#घोषणा OID_FLAG_CACHED		0x80
-#घोषणा OID_FLAG_TYPE		0x7f
+#define OID_FLAG_CACHED		0x80
+#define OID_FLAG_TYPE		0x7f
 
-#घोषणा OID_TYPE_U32		0x01
-#घोषणा OID_TYPE_SSID		0x02
-#घोषणा OID_TYPE_KEY		0x03
-#घोषणा OID_TYPE_BUFFER		0x04
-#घोषणा OID_TYPE_BSS		0x05
-#घोषणा OID_TYPE_BSSLIST	0x06
-#घोषणा OID_TYPE_FREQUENCIES	0x07
-#घोषणा OID_TYPE_MLME		0x08
-#घोषणा OID_TYPE_MLMEEX		0x09
-#घोषणा OID_TYPE_ADDR		0x0A
-#घोषणा OID_TYPE_RAW		0x0B
-#घोषणा OID_TYPE_ATTACH		0x0C
+#define OID_TYPE_U32		0x01
+#define OID_TYPE_SSID		0x02
+#define OID_TYPE_KEY		0x03
+#define OID_TYPE_BUFFER		0x04
+#define OID_TYPE_BSS		0x05
+#define OID_TYPE_BSSLIST	0x06
+#define OID_TYPE_FREQUENCIES	0x07
+#define OID_TYPE_MLME		0x08
+#define OID_TYPE_MLMEEX		0x09
+#define OID_TYPE_ADDR		0x0A
+#define OID_TYPE_RAW		0x0B
+#define OID_TYPE_ATTACH		0x0C
 
 /* OID_TYPE_MLMEEX is special because of a variable size field when sending.
  * Not yet implemented (not used in driver anyway).
  */
 
-काष्ठा oid_t अणु
-	क्रमागत oid_num_t oid;
-	लघु range;		/* to define a range of oid */
-	लघु size;		/* max size of the associated data */
-	अक्षर flags;
-पूर्ण;
+struct oid_t {
+	enum oid_num_t oid;
+	short range;		/* to define a range of oid */
+	short size;		/* max size of the associated data */
+	char flags;
+};
 
-जोड़ oid_res_t अणु
-	व्योम *ptr;
+union oid_res_t {
+	void *ptr;
 	u32 u;
-पूर्ण;
+};
 
-#घोषणा	IWMAX_BITRATES	20
-#घोषणा	IWMAX_BSS	24
-#घोषणा IWMAX_FREQ	30
-#घोषणा PRIV_STR_SIZE	1024
+#define	IWMAX_BITRATES	20
+#define	IWMAX_BSS	24
+#define IWMAX_FREQ	30
+#define PRIV_STR_SIZE	1024
 
-#पूर्ण_अगर				/* !defined(_ISL_OID_H) */
-/* खातापूर्ण */
+#endif				/* !defined(_ISL_OID_H) */
+/* EOF */

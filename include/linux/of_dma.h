@@ -1,94 +1,93 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * OF helpers क्रम DMA request / controller
+ * OF helpers for DMA request / controller
  *
- * Based on of_gpपन.स
+ * Based on of_gpio.h
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
  */
 
-#अगर_अघोषित __LINUX_OF_DMA_H
-#घोषणा __LINUX_OF_DMA_H
+#ifndef __LINUX_OF_DMA_H
+#define __LINUX_OF_DMA_H
 
-#समावेश <linux/of.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/of.h>
+#include <linux/dmaengine.h>
 
-काष्ठा device_node;
+struct device_node;
 
-काष्ठा of_dma अणु
-	काष्ठा list_head	of_dma_controllers;
-	काष्ठा device_node	*of_node;
-	काष्ठा dma_chan		*(*of_dma_xlate)
-				(काष्ठा of_phandle_args *, काष्ठा of_dma *);
-	व्योम			*(*of_dma_route_allocate)
-				(काष्ठा of_phandle_args *, काष्ठा of_dma *);
-	काष्ठा dma_router	*dma_router;
-	व्योम			*of_dma_data;
-पूर्ण;
+struct of_dma {
+	struct list_head	of_dma_controllers;
+	struct device_node	*of_node;
+	struct dma_chan		*(*of_dma_xlate)
+				(struct of_phandle_args *, struct of_dma *);
+	void			*(*of_dma_route_allocate)
+				(struct of_phandle_args *, struct of_dma *);
+	struct dma_router	*dma_router;
+	void			*of_dma_data;
+};
 
-काष्ठा of_dma_filter_info अणु
+struct of_dma_filter_info {
 	dma_cap_mask_t	dma_cap;
 	dma_filter_fn	filter_fn;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DMA_OF
-बाह्य पूर्णांक of_dma_controller_रेजिस्टर(काष्ठा device_node *np,
-		काष्ठा dma_chan *(*of_dma_xlate)
-		(काष्ठा of_phandle_args *, काष्ठा of_dma *),
-		व्योम *data);
-बाह्य व्योम of_dma_controller_मुक्त(काष्ठा device_node *np);
+#ifdef CONFIG_DMA_OF
+extern int of_dma_controller_register(struct device_node *np,
+		struct dma_chan *(*of_dma_xlate)
+		(struct of_phandle_args *, struct of_dma *),
+		void *data);
+extern void of_dma_controller_free(struct device_node *np);
 
-बाह्य पूर्णांक of_dma_router_रेजिस्टर(काष्ठा device_node *np,
-		व्योम *(*of_dma_route_allocate)
-		(काष्ठा of_phandle_args *, काष्ठा of_dma *),
-		काष्ठा dma_router *dma_router);
-#घोषणा of_dma_router_मुक्त of_dma_controller_मुक्त
+extern int of_dma_router_register(struct device_node *np,
+		void *(*of_dma_route_allocate)
+		(struct of_phandle_args *, struct of_dma *),
+		struct dma_router *dma_router);
+#define of_dma_router_free of_dma_controller_free
 
-बाह्य काष्ठा dma_chan *of_dma_request_slave_channel(काष्ठा device_node *np,
-						     स्थिर अक्षर *name);
-बाह्य काष्ठा dma_chan *of_dma_simple_xlate(काष्ठा of_phandle_args *dma_spec,
-		काष्ठा of_dma *ofdma);
-बाह्य काष्ठा dma_chan *of_dma_xlate_by_chan_id(काष्ठा of_phandle_args *dma_spec,
-		काष्ठा of_dma *ofdma);
+extern struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
+						     const char *name);
+extern struct dma_chan *of_dma_simple_xlate(struct of_phandle_args *dma_spec,
+		struct of_dma *ofdma);
+extern struct dma_chan *of_dma_xlate_by_chan_id(struct of_phandle_args *dma_spec,
+		struct of_dma *ofdma);
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक of_dma_controller_रेजिस्टर(काष्ठा device_node *np,
-		काष्ठा dma_chan *(*of_dma_xlate)
-		(काष्ठा of_phandle_args *, काष्ठा of_dma *),
-		व्योम *data)
-अणु
-	वापस -ENODEV;
-पूर्ण
+#else
+static inline int of_dma_controller_register(struct device_node *np,
+		struct dma_chan *(*of_dma_xlate)
+		(struct of_phandle_args *, struct of_dma *),
+		void *data)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत व्योम of_dma_controller_मुक्त(काष्ठा device_node *np)
-अणु
-पूर्ण
+static inline void of_dma_controller_free(struct device_node *np)
+{
+}
 
-अटल अंतरभूत पूर्णांक of_dma_router_रेजिस्टर(काष्ठा device_node *np,
-		व्योम *(*of_dma_route_allocate)
-		(काष्ठा of_phandle_args *, काष्ठा of_dma *),
-		काष्ठा dma_router *dma_router)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int of_dma_router_register(struct device_node *np,
+		void *(*of_dma_route_allocate)
+		(struct of_phandle_args *, struct of_dma *),
+		struct dma_router *dma_router)
+{
+	return -ENODEV;
+}
 
-#घोषणा of_dma_router_मुक्त of_dma_controller_मुक्त
+#define of_dma_router_free of_dma_controller_free
 
-अटल अंतरभूत काष्ठा dma_chan *of_dma_request_slave_channel(काष्ठा device_node *np,
-						     स्थिर अक्षर *name)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+static inline struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
+						     const char *name)
+{
+	return ERR_PTR(-ENODEV);
+}
 
-अटल अंतरभूत काष्ठा dma_chan *of_dma_simple_xlate(काष्ठा of_phandle_args *dma_spec,
-		काष्ठा of_dma *ofdma)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct dma_chan *of_dma_simple_xlate(struct of_phandle_args *dma_spec,
+		struct of_dma *ofdma)
+{
+	return NULL;
+}
 
-#घोषणा of_dma_xlate_by_chan_id शून्य
+#define of_dma_xlate_by_chan_id NULL
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __LINUX_OF_DMA_H */
+#endif /* __LINUX_OF_DMA_H */

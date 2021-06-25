@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/uaccess.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/uaccess.h>
 
-पूर्णांक
+int
 fmr(u32 *frD, u32 *frB)
-अणु
+{
 	frD[0] = frB[0];
 	frD[1] = frB[1];
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk("%s: D %p, B %p: ", __func__, frD, frB);
-	dump_द्विगुन(frD);
-	prपूर्णांकk("\n");
-#पूर्ण_अगर
+#ifdef DEBUG
+	printk("%s: D %p, B %p: ", __func__, frD, frB);
+	dump_double(frD);
+	printk("\n");
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

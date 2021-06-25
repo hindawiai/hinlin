@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* IEEE754 भग्नing poपूर्णांक arithmetic
- * द्विगुन precision: common utilities
+// SPDX-License-Identifier: GPL-2.0-only
+/* IEEE754 floating point arithmetic
+ * double precision: common utilities
  */
 /*
- * MIPS भग्नing poपूर्णांक support
+ * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  * Copyright (C) 2017 Imagination Technologies, Ltd.
  * Author: Aleksandar Markovic <aleksandar.markovic@imgtec.com>
  */
 
-#समावेश "ieee754dp.h"
+#include "ieee754dp.h"
 
-जोड़ ieee754dp ieee754dp_rपूर्णांक(जोड़ ieee754dp x)
-अणु
-	जोड़ ieee754dp ret;
+union ieee754dp ieee754dp_rint(union ieee754dp x)
+{
+	union ieee754dp ret;
 	u64 residue;
-	पूर्णांक sticky;
-	पूर्णांक round;
-	पूर्णांक odd;
+	int sticky;
+	int round;
+	int odd;
 
 	COMPXDP;
 
@@ -27,53 +26,53 @@
 	EXPLODEXDP;
 	FLUSHXDP;
 
-	अगर (xc == IEEE754_CLASS_Sन_अंक)
-		वापस ieee754dp_nanxcpt(x);
+	if (xc == IEEE754_CLASS_SNAN)
+		return ieee754dp_nanxcpt(x);
 
-	अगर ((xc == IEEE754_CLASS_Qन_अंक) ||
+	if ((xc == IEEE754_CLASS_QNAN) ||
 	    (xc == IEEE754_CLASS_INF) ||
 	    (xc == IEEE754_CLASS_ZERO))
-		वापस x;
+		return x;
 
-	अगर (xe >= DP_FBITS)
-		वापस x;
+	if (xe >= DP_FBITS)
+		return x;
 
-	अगर (xe < -1) अणु
+	if (xe < -1) {
 		residue = xm;
 		round = 0;
 		sticky = residue != 0;
 		xm = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		residue = xm << (64 - DP_FBITS + xe);
 		round = (residue >> 63) != 0;
 		sticky = (residue << 1) != 0;
 		xm >>= DP_FBITS - xe;
-	पूर्ण
+	}
 
 	odd = (xm & 0x1) != 0x0;
 
-	चयन (ieee754_csr.rm) अणु
-	हाल FPU_CSR_RN:	/* toward nearest */
-		अगर (round && (sticky || odd))
+	switch (ieee754_csr.rm) {
+	case FPU_CSR_RN:	/* toward nearest */
+		if (round && (sticky || odd))
 			xm++;
-		अवरोध;
-	हाल FPU_CSR_RZ:	/* toward zero */
-		अवरोध;
-	हाल FPU_CSR_RU:	/* toward +infinity */
-		अगर ((round || sticky) && !xs)
+		break;
+	case FPU_CSR_RZ:	/* toward zero */
+		break;
+	case FPU_CSR_RU:	/* toward +infinity */
+		if ((round || sticky) && !xs)
 			xm++;
-		अवरोध;
-	हाल FPU_CSR_RD:	/* toward -infinity */
-		अगर ((round || sticky) && xs)
+		break;
+	case FPU_CSR_RD:	/* toward -infinity */
+		if ((round || sticky) && xs)
 			xm++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (round || sticky)
+	if (round || sticky)
 		ieee754_setcx(IEEE754_INEXACT);
 
-	ret = ieee754dp_fदीर्घ(xm);
+	ret = ieee754dp_flong(xm);
 	DPSIGN(ret) = xs;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

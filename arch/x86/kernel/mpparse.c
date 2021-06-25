@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	Intel Multiprocessor Specअगरication 1.1 and 1.4
+ *	Intel Multiprocessor Specification 1.1 and 1.4
  *	compliant MP-table parsing routines.
  *
  *	(c) 1995 Alan Cox, Building #3 <alan@lxorguk.ukuu.org.uk>
@@ -9,356 +8,356 @@
  *      (c) 2008 Alexey Starikovskiy <astarikovskiy@suse.de>
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/mc146818rtc.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/pci.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/memblock.h>
+#include <linux/kernel_stat.h>
+#include <linux/mc146818rtc.h>
+#include <linux/bitops.h>
+#include <linux/acpi.h>
+#include <linux/smp.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/acpi.h>
-#समावेश <यंत्र/irqकरोमुख्य.h>
-#समावेश <यंत्र/mtrr.h>
-#समावेश <यंत्र/mpspec.h>
-#समावेश <यंत्र/proto.h>
-#समावेश <यंत्र/bios_ebda.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/io_apic.h>
+#include <asm/acpi.h>
+#include <asm/irqdomain.h>
+#include <asm/mtrr.h>
+#include <asm/mpspec.h>
+#include <asm/proto.h>
+#include <asm/bios_ebda.h>
+#include <asm/e820/api.h>
+#include <asm/setup.h>
+#include <asm/smp.h>
 
-#समावेश <यंत्र/apic.h>
+#include <asm/apic.h>
 /*
  * Checksum an MP configuration block.
  */
 
-अटल पूर्णांक __init mpf_checksum(अचिन्हित अक्षर *mp, पूर्णांक len)
-अणु
-	पूर्णांक sum = 0;
+static int __init mpf_checksum(unsigned char *mp, int len)
+{
+	int sum = 0;
 
-	जबतक (len--)
+	while (len--)
 		sum += *mp++;
 
-	वापस sum & 0xFF;
-पूर्ण
+	return sum & 0xFF;
+}
 
-अटल व्योम __init MP_processor_info(काष्ठा mpc_cpu *m)
-अणु
-	पूर्णांक apicid;
-	अक्षर *bootup_cpu = "";
+static void __init MP_processor_info(struct mpc_cpu *m)
+{
+	int apicid;
+	char *bootup_cpu = "";
 
-	अगर (!(m->cpuflag & CPU_ENABLED)) अणु
+	if (!(m->cpuflag & CPU_ENABLED)) {
 		disabled_cpus++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	apicid = m->apicid;
 
-	अगर (m->cpuflag & CPU_BOOTPROCESSOR) अणु
+	if (m->cpuflag & CPU_BOOTPROCESSOR) {
 		bootup_cpu = " (Bootup-CPU)";
 		boot_cpu_physical_apicid = m->apicid;
-	पूर्ण
+	}
 
 	pr_info("Processor #%d%s\n", m->apicid, bootup_cpu);
 	generic_processor_info(apicid, m->apicver);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_X86_IO_APIC
-अटल व्योम __init mpc_oem_bus_info(काष्ठा mpc_bus *m, अक्षर *str)
-अणु
-	स_नकल(str, m->bustype, 6);
+#ifdef CONFIG_X86_IO_APIC
+static void __init mpc_oem_bus_info(struct mpc_bus *m, char *str)
+{
+	memcpy(str, m->bustype, 6);
 	str[6] = 0;
-	apic_prपूर्णांकk(APIC_VERBOSE, "Bus #%d is %s\n", m->busid, str);
-पूर्ण
+	apic_printk(APIC_VERBOSE, "Bus #%d is %s\n", m->busid, str);
+}
 
-अटल व्योम __init MP_bus_info(काष्ठा mpc_bus *m)
-अणु
-	अक्षर str[7];
+static void __init MP_bus_info(struct mpc_bus *m)
+{
+	char str[7];
 
 	mpc_oem_bus_info(m, str);
 
-#अगर MAX_MP_BUSSES < 256
-	अगर (m->busid >= MAX_MP_BUSSES) अणु
+#if MAX_MP_BUSSES < 256
+	if (m->busid >= MAX_MP_BUSSES) {
 		pr_warn("MP table busid value (%d) for bustype %s is too large, max. supported is %d\n",
 			m->busid, str, MAX_MP_BUSSES - 1);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
 	set_bit(m->busid, mp_bus_not_pci);
-	अगर (म_भेदन(str, BUSTYPE_ISA, माप(BUSTYPE_ISA) - 1) == 0) अणु
-#अगर_घोषित CONFIG_EISA
+	if (strncmp(str, BUSTYPE_ISA, sizeof(BUSTYPE_ISA) - 1) == 0) {
+#ifdef CONFIG_EISA
 		mp_bus_id_to_type[m->busid] = MP_BUS_ISA;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (म_भेदन(str, BUSTYPE_PCI, माप(BUSTYPE_PCI) - 1) == 0) अणु
+#endif
+	} else if (strncmp(str, BUSTYPE_PCI, sizeof(BUSTYPE_PCI) - 1) == 0) {
 		clear_bit(m->busid, mp_bus_not_pci);
-#अगर_घोषित CONFIG_EISA
+#ifdef CONFIG_EISA
 		mp_bus_id_to_type[m->busid] = MP_BUS_PCI;
-	पूर्ण अन्यथा अगर (म_भेदन(str, BUSTYPE_EISA, माप(BUSTYPE_EISA) - 1) == 0) अणु
+	} else if (strncmp(str, BUSTYPE_EISA, sizeof(BUSTYPE_EISA) - 1) == 0) {
 		mp_bus_id_to_type[m->busid] = MP_BUS_EISA;
-#पूर्ण_अगर
-	पूर्ण अन्यथा
+#endif
+	} else
 		pr_warn("Unknown bustype %s - ignoring\n", str);
-पूर्ण
+}
 
-अटल व्योम __init MP_ioapic_info(काष्ठा mpc_ioapic *m)
-अणु
-	काष्ठा ioapic_करोमुख्य_cfg cfg = अणु
+static void __init MP_ioapic_info(struct mpc_ioapic *m)
+{
+	struct ioapic_domain_cfg cfg = {
 		.type = IOAPIC_DOMAIN_LEGACY,
-		.ops = &mp_ioapic_irqकरोमुख्य_ops,
-	पूर्ण;
+		.ops = &mp_ioapic_irqdomain_ops,
+	};
 
-	अगर (m->flags & MPC_APIC_USABLE)
-		mp_रेजिस्टर_ioapic(m->apicid, m->apicaddr, gsi_top, &cfg);
-पूर्ण
+	if (m->flags & MPC_APIC_USABLE)
+		mp_register_ioapic(m->apicid, m->apicaddr, gsi_top, &cfg);
+}
 
-अटल व्योम __init prपूर्णांक_mp_irq_info(काष्ठा mpc_पूर्णांकsrc *mp_irq)
-अणु
-	apic_prपूर्णांकk(APIC_VERBOSE,
+static void __init print_mp_irq_info(struct mpc_intsrc *mp_irq)
+{
+	apic_printk(APIC_VERBOSE,
 		"Int: type %d, pol %d, trig %d, bus %02x, IRQ %02x, APIC ID %x, APIC INT %02x\n",
 		mp_irq->irqtype, mp_irq->irqflag & 3,
 		(mp_irq->irqflag >> 2) & 3, mp_irq->srcbus,
 		mp_irq->srcbusirq, mp_irq->dstapic, mp_irq->dstirq);
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_X86_IO_APIC */
-अटल अंतरभूत व्योम __init MP_bus_info(काष्ठा mpc_bus *m) अणुपूर्ण
-अटल अंतरभूत व्योम __init MP_ioapic_info(काष्ठा mpc_ioapic *m) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_X86_IO_APIC */
+#else /* CONFIG_X86_IO_APIC */
+static inline void __init MP_bus_info(struct mpc_bus *m) {}
+static inline void __init MP_ioapic_info(struct mpc_ioapic *m) {}
+#endif /* CONFIG_X86_IO_APIC */
 
-अटल व्योम __init MP_lपूर्णांकsrc_info(काष्ठा mpc_lपूर्णांकsrc *m)
-अणु
-	apic_prपूर्णांकk(APIC_VERBOSE,
+static void __init MP_lintsrc_info(struct mpc_lintsrc *m)
+{
+	apic_printk(APIC_VERBOSE,
 		"Lint: type %d, pol %d, trig %d, bus %02x, IRQ %02x, APIC ID %x, APIC LINT %02x\n",
 		m->irqtype, m->irqflag & 3, (m->irqflag >> 2) & 3, m->srcbusid,
-		m->srcbusirq, m->destapic, m->destapiclपूर्णांक);
-पूर्ण
+		m->srcbusirq, m->destapic, m->destapiclint);
+}
 
 /*
  * Read/parse the MPC
  */
-अटल पूर्णांक __init smp_check_mpc(काष्ठा mpc_table *mpc, अक्षर *oem, अक्षर *str)
-अणु
+static int __init smp_check_mpc(struct mpc_table *mpc, char *oem, char *str)
+{
 
-	अगर (स_भेद(mpc->signature, MPC_SIGNATURE, 4)) अणु
+	if (memcmp(mpc->signature, MPC_SIGNATURE, 4)) {
 		pr_err("MPTABLE: bad signature [%c%c%c%c]!\n",
 		       mpc->signature[0], mpc->signature[1],
 		       mpc->signature[2], mpc->signature[3]);
-		वापस 0;
-	पूर्ण
-	अगर (mpf_checksum((अचिन्हित अक्षर *)mpc, mpc->length)) अणु
+		return 0;
+	}
+	if (mpf_checksum((unsigned char *)mpc, mpc->length)) {
 		pr_err("MPTABLE: checksum error!\n");
-		वापस 0;
-	पूर्ण
-	अगर (mpc->spec != 0x01 && mpc->spec != 0x04) अणु
+		return 0;
+	}
+	if (mpc->spec != 0x01 && mpc->spec != 0x04) {
 		pr_err("MPTABLE: bad table version (%d)!!\n", mpc->spec);
-		वापस 0;
-	पूर्ण
-	अगर (!mpc->lapic) अणु
+		return 0;
+	}
+	if (!mpc->lapic) {
 		pr_err("MPTABLE: null local APIC address!\n");
-		वापस 0;
-	पूर्ण
-	स_नकल(oem, mpc->oem, 8);
+		return 0;
+	}
+	memcpy(oem, mpc->oem, 8);
 	oem[8] = 0;
 	pr_info("MPTABLE: OEM ID: %s\n", oem);
 
-	स_नकल(str, mpc->productid, 12);
+	memcpy(str, mpc->productid, 12);
 	str[12] = 0;
 
 	pr_info("MPTABLE: Product ID: %s\n", str);
 
 	pr_info("MPTABLE: APIC at: 0x%X\n", mpc->lapic);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम skip_entry(अचिन्हित अक्षर **ptr, पूर्णांक *count, पूर्णांक size)
-अणु
+static void skip_entry(unsigned char **ptr, int *count, int size)
+{
 	*ptr += size;
 	*count += size;
-पूर्ण
+}
 
-अटल व्योम __init smp_dump_mptable(काष्ठा mpc_table *mpc, अचिन्हित अक्षर *mpt)
-अणु
+static void __init smp_dump_mptable(struct mpc_table *mpc, unsigned char *mpt)
+{
 	pr_err("Your mptable is wrong, contact your HW vendor!\n");
 	pr_cont("type %x\n", *mpt);
-	prपूर्णांक_hex_dump(KERN_ERR, "  ", DUMP_PREFIX_ADDRESS, 16,
+	print_hex_dump(KERN_ERR, "  ", DUMP_PREFIX_ADDRESS, 16,
 			1, mpc, mpc->length, 1);
-पूर्ण
+}
 
-अटल पूर्णांक __init smp_पढ़ो_mpc(काष्ठा mpc_table *mpc, अचिन्हित early)
-अणु
-	अक्षर str[16];
-	अक्षर oem[10];
+static int __init smp_read_mpc(struct mpc_table *mpc, unsigned early)
+{
+	char str[16];
+	char oem[10];
 
-	पूर्णांक count = माप(*mpc);
-	अचिन्हित अक्षर *mpt = ((अचिन्हित अक्षर *)mpc) + count;
+	int count = sizeof(*mpc);
+	unsigned char *mpt = ((unsigned char *)mpc) + count;
 
-	अगर (!smp_check_mpc(mpc, oem, str))
-		वापस 0;
+	if (!smp_check_mpc(mpc, oem, str))
+		return 0;
 
 	/* Initialize the lapic mapping */
-	अगर (!acpi_lapic)
-		रेजिस्टर_lapic_address(mpc->lapic);
+	if (!acpi_lapic)
+		register_lapic_address(mpc->lapic);
 
-	अगर (early)
-		वापस 1;
+	if (early)
+		return 1;
 
 	/* Now process the configuration blocks. */
-	जबतक (count < mpc->length) अणु
-		चयन (*mpt) अणु
-		हाल MP_PROCESSOR:
-			/* ACPI may have alपढ़ोy provided this data */
-			अगर (!acpi_lapic)
-				MP_processor_info((काष्ठा mpc_cpu *)mpt);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_cpu));
-			अवरोध;
-		हाल MP_BUS:
-			MP_bus_info((काष्ठा mpc_bus *)mpt);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_bus));
-			अवरोध;
-		हाल MP_IOAPIC:
-			MP_ioapic_info((काष्ठा mpc_ioapic *)mpt);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_ioapic));
-			अवरोध;
-		हाल MP_INTSRC:
-			mp_save_irq((काष्ठा mpc_पूर्णांकsrc *)mpt);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_पूर्णांकsrc));
-			अवरोध;
-		हाल MP_LINTSRC:
-			MP_lपूर्णांकsrc_info((काष्ठा mpc_lपूर्णांकsrc *)mpt);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_lपूर्णांकsrc));
-			अवरोध;
-		शेष:
+	while (count < mpc->length) {
+		switch (*mpt) {
+		case MP_PROCESSOR:
+			/* ACPI may have already provided this data */
+			if (!acpi_lapic)
+				MP_processor_info((struct mpc_cpu *)mpt);
+			skip_entry(&mpt, &count, sizeof(struct mpc_cpu));
+			break;
+		case MP_BUS:
+			MP_bus_info((struct mpc_bus *)mpt);
+			skip_entry(&mpt, &count, sizeof(struct mpc_bus));
+			break;
+		case MP_IOAPIC:
+			MP_ioapic_info((struct mpc_ioapic *)mpt);
+			skip_entry(&mpt, &count, sizeof(struct mpc_ioapic));
+			break;
+		case MP_INTSRC:
+			mp_save_irq((struct mpc_intsrc *)mpt);
+			skip_entry(&mpt, &count, sizeof(struct mpc_intsrc));
+			break;
+		case MP_LINTSRC:
+			MP_lintsrc_info((struct mpc_lintsrc *)mpt);
+			skip_entry(&mpt, &count, sizeof(struct mpc_lintsrc));
+			break;
+		default:
 			/* wrong mptable */
 			smp_dump_mptable(mpc, mpt);
 			count = mpc->length;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!num_processors)
+	if (!num_processors)
 		pr_err("MPTABLE: no processors registered!\n");
-	वापस num_processors;
-पूर्ण
+	return num_processors;
+}
 
-#अगर_घोषित CONFIG_X86_IO_APIC
+#ifdef CONFIG_X86_IO_APIC
 
-अटल पूर्णांक __init ELCR_trigger(अचिन्हित पूर्णांक irq)
-अणु
-	अचिन्हित पूर्णांक port;
+static int __init ELCR_trigger(unsigned int irq)
+{
+	unsigned int port;
 
 	port = 0x4d0 + (irq >> 3);
-	वापस (inb(port) >> (irq & 7)) & 1;
-पूर्ण
+	return (inb(port) >> (irq & 7)) & 1;
+}
 
-अटल व्योम __init स्थिरruct_शेष_ioirq_mptable(पूर्णांक mpc_शेष_type)
-अणु
-	काष्ठा mpc_पूर्णांकsrc पूर्णांकsrc;
-	पूर्णांक i;
-	पूर्णांक ELCR_fallback = 0;
+static void __init construct_default_ioirq_mptable(int mpc_default_type)
+{
+	struct mpc_intsrc intsrc;
+	int i;
+	int ELCR_fallback = 0;
 
-	पूर्णांकsrc.type = MP_INTSRC;
-	पूर्णांकsrc.irqflag = MP_IRQTRIG_DEFAULT | MP_IRQPOL_DEFAULT;
-	पूर्णांकsrc.srcbus = 0;
-	पूर्णांकsrc.dstapic = mpc_ioapic_id(0);
+	intsrc.type = MP_INTSRC;
+	intsrc.irqflag = MP_IRQTRIG_DEFAULT | MP_IRQPOL_DEFAULT;
+	intsrc.srcbus = 0;
+	intsrc.dstapic = mpc_ioapic_id(0);
 
-	पूर्णांकsrc.irqtype = mp_INT;
+	intsrc.irqtype = mp_INT;
 
 	/*
-	 *  If true, we have an ISA/PCI प्रणाली with no IRQ entries
-	 *  in the MP table. To prevent the PCI पूर्णांकerrupts from being set up
-	 *  incorrectly, we try to use the ELCR. The sanity check to see अगर
+	 *  If true, we have an ISA/PCI system with no IRQ entries
+	 *  in the MP table. To prevent the PCI interrupts from being set up
+	 *  incorrectly, we try to use the ELCR. The sanity check to see if
 	 *  there is good ELCR data is very simple - IRQ0, 1, 2 and 13 can
-	 *  never be level sensitive, so we simply see अगर the ELCR agrees.
-	 *  If it करोes, we assume it's valid.
+	 *  never be level sensitive, so we simply see if the ELCR agrees.
+	 *  If it does, we assume it's valid.
 	 */
-	अगर (mpc_शेष_type == 5) अणु
+	if (mpc_default_type == 5) {
 		pr_info("ISA/PCI bus type with no IRQ information... falling back to ELCR\n");
 
-		अगर (ELCR_trigger(0) || ELCR_trigger(1) || ELCR_trigger(2) ||
+		if (ELCR_trigger(0) || ELCR_trigger(1) || ELCR_trigger(2) ||
 		    ELCR_trigger(13))
 			pr_err("ELCR contains invalid data... not using ELCR\n");
-		अन्यथा अणु
+		else {
 			pr_info("Using ELCR to identify PCI interrupts\n");
 			ELCR_fallback = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < 16; i++) अणु
-		चयन (mpc_शेष_type) अणु
-		हाल 2:
-			अगर (i == 0 || i == 13)
-				जारी;	/* IRQ0 & IRQ13 not connected */
+	for (i = 0; i < 16; i++) {
+		switch (mpc_default_type) {
+		case 2:
+			if (i == 0 || i == 13)
+				continue;	/* IRQ0 & IRQ13 not connected */
 			fallthrough;
-		शेष:
-			अगर (i == 2)
-				जारी;	/* IRQ2 is never connected */
-		पूर्ण
+		default:
+			if (i == 2)
+				continue;	/* IRQ2 is never connected */
+		}
 
-		अगर (ELCR_fallback) अणु
+		if (ELCR_fallback) {
 			/*
-			 *  If the ELCR indicates a level-sensitive पूर्णांकerrupt, we
-			 *  copy that inक्रमmation over to the MP table in the
+			 *  If the ELCR indicates a level-sensitive interrupt, we
+			 *  copy that information over to the MP table in the
 			 *  irqflag field (level sensitive, active high polarity).
 			 */
-			अगर (ELCR_trigger(i)) अणु
-				पूर्णांकsrc.irqflag = MP_IRQTRIG_LEVEL |
+			if (ELCR_trigger(i)) {
+				intsrc.irqflag = MP_IRQTRIG_LEVEL |
 						 MP_IRQPOL_ACTIVE_HIGH;
-			पूर्ण अन्यथा अणु
-				पूर्णांकsrc.irqflag = MP_IRQTRIG_DEFAULT |
+			} else {
+				intsrc.irqflag = MP_IRQTRIG_DEFAULT |
 						 MP_IRQPOL_DEFAULT;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		पूर्णांकsrc.srcbusirq = i;
-		पूर्णांकsrc.dstirq = i ? i : 2;	/* IRQ0 to INTIN2 */
-		mp_save_irq(&पूर्णांकsrc);
-	पूर्ण
+		intsrc.srcbusirq = i;
+		intsrc.dstirq = i ? i : 2;	/* IRQ0 to INTIN2 */
+		mp_save_irq(&intsrc);
+	}
 
-	पूर्णांकsrc.irqtype = mp_ExtINT;
-	पूर्णांकsrc.srcbusirq = 0;
-	पूर्णांकsrc.dstirq = 0;	/* 8259A to INTIN0 */
-	mp_save_irq(&पूर्णांकsrc);
-पूर्ण
+	intsrc.irqtype = mp_ExtINT;
+	intsrc.srcbusirq = 0;
+	intsrc.dstirq = 0;	/* 8259A to INTIN0 */
+	mp_save_irq(&intsrc);
+}
 
 
-अटल व्योम __init स्थिरruct_ioapic_table(पूर्णांक mpc_शेष_type)
-अणु
-	काष्ठा mpc_ioapic ioapic;
-	काष्ठा mpc_bus bus;
+static void __init construct_ioapic_table(int mpc_default_type)
+{
+	struct mpc_ioapic ioapic;
+	struct mpc_bus bus;
 
 	bus.type = MP_BUS;
 	bus.busid = 0;
-	चयन (mpc_शेष_type) अणु
-	शेष:
+	switch (mpc_default_type) {
+	default:
 		pr_err("???\nUnknown standard configuration %d\n",
-		       mpc_शेष_type);
+		       mpc_default_type);
 		fallthrough;
-	हाल 1:
-	हाल 5:
-		स_नकल(bus.bustype, "ISA   ", 6);
-		अवरोध;
-	हाल 2:
-	हाल 6:
-	हाल 3:
-		स_नकल(bus.bustype, "EISA  ", 6);
-		अवरोध;
-	पूर्ण
+	case 1:
+	case 5:
+		memcpy(bus.bustype, "ISA   ", 6);
+		break;
+	case 2:
+	case 6:
+	case 3:
+		memcpy(bus.bustype, "EISA  ", 6);
+		break;
+	}
 	MP_bus_info(&bus);
-	अगर (mpc_शेष_type > 4) अणु
+	if (mpc_default_type > 4) {
 		bus.busid = 1;
-		स_नकल(bus.bustype, "PCI   ", 6);
+		memcpy(bus.bustype, "PCI   ", 6);
 		MP_bus_info(&bus);
-	पूर्ण
+	}
 
 	ioapic.type	= MP_IOAPIC;
 	ioapic.apicid	= 2;
-	ioapic.apicver	= mpc_शेष_type > 4 ? 0x10 : 0x01;
+	ioapic.apicver	= mpc_default_type > 4 ? 0x10 : 0x01;
 	ioapic.flags	= MPC_APIC_USABLE;
 	ioapic.apicaddr	= IO_APIC_DEFAULT_PHYS_BASE;
 	MP_ioapic_info(&ioapic);
@@ -366,21 +365,21 @@
 	/*
 	 * We set up most of the low 16 IO-APIC pins according to MPS rules.
 	 */
-	स्थिरruct_शेष_ioirq_mptable(mpc_शेष_type);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम __init स्थिरruct_ioapic_table(पूर्णांक mpc_शेष_type) अणु पूर्ण
-#पूर्ण_अगर
+	construct_default_ioirq_mptable(mpc_default_type);
+}
+#else
+static inline void __init construct_ioapic_table(int mpc_default_type) { }
+#endif
 
-अटल अंतरभूत व्योम __init स्थिरruct_शेष_ISA_mptable(पूर्णांक mpc_शेष_type)
-अणु
-	काष्ठा mpc_cpu processor;
-	काष्ठा mpc_lपूर्णांकsrc lपूर्णांकsrc;
-	पूर्णांक lपूर्णांकtypes[2] = अणु mp_ExtINT, mp_NMI पूर्ण;
-	पूर्णांक i;
+static inline void __init construct_default_ISA_mptable(int mpc_default_type)
+{
+	struct mpc_cpu processor;
+	struct mpc_lintsrc lintsrc;
+	int linttypes[2] = { mp_ExtINT, mp_NMI };
+	int i;
 
 	/*
-	 * local APIC has शेष address
+	 * local APIC has default address
 	 */
 	mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
 
@@ -388,239 +387,239 @@
 	 * 2 CPUs, numbered 0 & 1.
 	 */
 	processor.type = MP_PROCESSOR;
-	/* Either an पूर्णांकegrated APIC or a discrete 82489DX. */
-	processor.apicver = mpc_शेष_type > 4 ? 0x10 : 0x01;
+	/* Either an integrated APIC or a discrete 82489DX. */
+	processor.apicver = mpc_default_type > 4 ? 0x10 : 0x01;
 	processor.cpuflag = CPU_ENABLED;
 	processor.cpufeature = (boot_cpu_data.x86 << 8) |
 	    (boot_cpu_data.x86_model << 4) | boot_cpu_data.x86_stepping;
 	processor.featureflag = boot_cpu_data.x86_capability[CPUID_1_EDX];
 	processor.reserved[0] = 0;
 	processor.reserved[1] = 0;
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		processor.apicid = i;
 		MP_processor_info(&processor);
-	पूर्ण
+	}
 
-	स्थिरruct_ioapic_table(mpc_शेष_type);
+	construct_ioapic_table(mpc_default_type);
 
-	lपूर्णांकsrc.type = MP_LINTSRC;
-	lपूर्णांकsrc.irqflag = MP_IRQTRIG_DEFAULT | MP_IRQPOL_DEFAULT;
-	lपूर्णांकsrc.srcbusid = 0;
-	lपूर्णांकsrc.srcbusirq = 0;
-	lपूर्णांकsrc.destapic = MP_APIC_ALL;
-	क्रम (i = 0; i < 2; i++) अणु
-		lपूर्णांकsrc.irqtype = lपूर्णांकtypes[i];
-		lपूर्णांकsrc.destapiclपूर्णांक = i;
-		MP_lपूर्णांकsrc_info(&lपूर्णांकsrc);
-	पूर्ण
-पूर्ण
+	lintsrc.type = MP_LINTSRC;
+	lintsrc.irqflag = MP_IRQTRIG_DEFAULT | MP_IRQPOL_DEFAULT;
+	lintsrc.srcbusid = 0;
+	lintsrc.srcbusirq = 0;
+	lintsrc.destapic = MP_APIC_ALL;
+	for (i = 0; i < 2; i++) {
+		lintsrc.irqtype = linttypes[i];
+		lintsrc.destapiclint = i;
+		MP_lintsrc_info(&lintsrc);
+	}
+}
 
-अटल अचिन्हित दीर्घ mpf_base;
-अटल bool mpf_found;
+static unsigned long mpf_base;
+static bool mpf_found;
 
-अटल अचिन्हित दीर्घ __init get_mpc_size(अचिन्हित दीर्घ physptr)
-अणु
-	काष्ठा mpc_table *mpc;
-	अचिन्हित दीर्घ size;
+static unsigned long __init get_mpc_size(unsigned long physptr)
+{
+	struct mpc_table *mpc;
+	unsigned long size;
 
 	mpc = early_memremap(physptr, PAGE_SIZE);
 	size = mpc->length;
 	early_memunmap(mpc, PAGE_SIZE);
-	apic_prपूर्णांकk(APIC_VERBOSE, "  mpc: %lx-%lx\n", physptr, physptr + size);
+	apic_printk(APIC_VERBOSE, "  mpc: %lx-%lx\n", physptr, physptr + size);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक __init check_physptr(काष्ठा mpf_पूर्णांकel *mpf, अचिन्हित पूर्णांक early)
-अणु
-	काष्ठा mpc_table *mpc;
-	अचिन्हित दीर्घ size;
+static int __init check_physptr(struct mpf_intel *mpf, unsigned int early)
+{
+	struct mpc_table *mpc;
+	unsigned long size;
 
 	size = get_mpc_size(mpf->physptr);
 	mpc = early_memremap(mpf->physptr, size);
 
 	/*
 	 * Read the physical hardware table.  Anything here will
-	 * override the शेषs.
+	 * override the defaults.
 	 */
-	अगर (!smp_पढ़ो_mpc(mpc, early)) अणु
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+	if (!smp_read_mpc(mpc, early)) {
+#ifdef CONFIG_X86_LOCAL_APIC
 		smp_found_config = 0;
-#पूर्ण_अगर
+#endif
 		pr_err("BIOS bug, MP table errors detected!...\n");
 		pr_cont("... disabling SMP support. (tell your hw vendor)\n");
 		early_memunmap(mpc, size);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	early_memunmap(mpc, size);
 
-	अगर (early)
-		वापस -1;
+	if (early)
+		return -1;
 
-#अगर_घोषित CONFIG_X86_IO_APIC
+#ifdef CONFIG_X86_IO_APIC
 	/*
 	 * If there are no explicit MP IRQ entries, then we are
 	 * broken.  We set up most of the low 16 IO-APIC pins to
-	 * ISA शेषs and hope it will work.
+	 * ISA defaults and hope it will work.
 	 */
-	अगर (!mp_irq_entries) अणु
-		काष्ठा mpc_bus bus;
+	if (!mp_irq_entries) {
+		struct mpc_bus bus;
 
 		pr_err("BIOS bug, no explicit IRQ entries, using default mptable. (tell your hw vendor)\n");
 
 		bus.type = MP_BUS;
 		bus.busid = 0;
-		स_नकल(bus.bustype, "ISA   ", 6);
+		memcpy(bus.bustype, "ISA   ", 6);
 		MP_bus_info(&bus);
 
-		स्थिरruct_शेष_ioirq_mptable(0);
-	पूर्ण
-#पूर्ण_अगर
+		construct_default_ioirq_mptable(0);
+	}
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Scan the memory blocks क्रम an SMP configuration block.
+ * Scan the memory blocks for an SMP configuration block.
  */
-व्योम __init शेष_get_smp_config(अचिन्हित पूर्णांक early)
-अणु
-	काष्ठा mpf_पूर्णांकel *mpf;
+void __init default_get_smp_config(unsigned int early)
+{
+	struct mpf_intel *mpf;
 
-	अगर (!smp_found_config)
-		वापस;
+	if (!smp_found_config)
+		return;
 
-	अगर (!mpf_found)
-		वापस;
+	if (!mpf_found)
+		return;
 
-	अगर (acpi_lapic && early)
-		वापस;
+	if (acpi_lapic && early)
+		return;
 
 	/*
-	 * MPS करोesn't support hyperthपढ़ोing, aka only have
-	 * thपढ़ो 0 apic id in MPS table
+	 * MPS doesn't support hyperthreading, aka only have
+	 * thread 0 apic id in MPS table
 	 */
-	अगर (acpi_lapic && acpi_ioapic)
-		वापस;
+	if (acpi_lapic && acpi_ioapic)
+		return;
 
-	mpf = early_memremap(mpf_base, माप(*mpf));
-	अगर (!mpf) अणु
+	mpf = early_memremap(mpf_base, sizeof(*mpf));
+	if (!mpf) {
 		pr_err("MPTABLE: error mapping MP table\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_info("Intel MultiProcessor Specification v1.%d\n",
-		mpf->specअगरication);
-#अगर defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_X86_32)
-	अगर (mpf->feature2 & (1 << 7)) अणु
+		mpf->specification);
+#if defined(CONFIG_X86_LOCAL_APIC) && defined(CONFIG_X86_32)
+	if (mpf->feature2 & (1 << 7)) {
 		pr_info("    IMCR and PIC compatibility mode.\n");
 		pic_mode = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("    Virtual Wire compatibility mode.\n");
 		pic_mode = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	/*
-	 * Now see अगर we need to पढ़ो further.
+	 * Now see if we need to read further.
 	 */
-	अगर (mpf->feature1) अणु
-		अगर (early) अणु
+	if (mpf->feature1) {
+		if (early) {
 			/*
-			 * local APIC has शेष address
+			 * local APIC has default address
 			 */
 			mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		pr_info("Default MP configuration #%d\n", mpf->feature1);
-		स्थिरruct_शेष_ISA_mptable(mpf->feature1);
+		construct_default_ISA_mptable(mpf->feature1);
 
-	पूर्ण अन्यथा अगर (mpf->physptr) अणु
-		अगर (check_physptr(mpf, early))
-			जाओ out;
-	पूर्ण अन्यथा
+	} else if (mpf->physptr) {
+		if (check_physptr(mpf, early))
+			goto out;
+	} else
 		BUG();
 
-	अगर (!early)
+	if (!early)
 		pr_info("Processors: %d\n", num_processors);
 	/*
 	 * Only use the first configuration found.
 	 */
 out:
-	early_memunmap(mpf, माप(*mpf));
-पूर्ण
+	early_memunmap(mpf, sizeof(*mpf));
+}
 
-अटल व्योम __init smp_reserve_memory(काष्ठा mpf_पूर्णांकel *mpf)
-अणु
+static void __init smp_reserve_memory(struct mpf_intel *mpf)
+{
 	memblock_reserve(mpf->physptr, get_mpc_size(mpf->physptr));
-पूर्ण
+}
 
-अटल पूर्णांक __init smp_scan_config(अचिन्हित दीर्घ base, अचिन्हित दीर्घ length)
-अणु
-	अचिन्हित पूर्णांक *bp;
-	काष्ठा mpf_पूर्णांकel *mpf;
-	पूर्णांक ret = 0;
+static int __init smp_scan_config(unsigned long base, unsigned long length)
+{
+	unsigned int *bp;
+	struct mpf_intel *mpf;
+	int ret = 0;
 
-	apic_prपूर्णांकk(APIC_VERBOSE, "Scan for SMP in [mem %#010lx-%#010lx]\n",
+	apic_printk(APIC_VERBOSE, "Scan for SMP in [mem %#010lx-%#010lx]\n",
 		    base, base + length - 1);
-	BUILD_BUG_ON(माप(*mpf) != 16);
+	BUILD_BUG_ON(sizeof(*mpf) != 16);
 
-	जबतक (length > 0) अणु
+	while (length > 0) {
 		bp = early_memremap(base, length);
-		mpf = (काष्ठा mpf_पूर्णांकel *)bp;
-		अगर ((*bp == SMP_MAGIC_IDENT) &&
+		mpf = (struct mpf_intel *)bp;
+		if ((*bp == SMP_MAGIC_IDENT) &&
 		    (mpf->length == 1) &&
-		    !mpf_checksum((अचिन्हित अक्षर *)bp, 16) &&
-		    ((mpf->specअगरication == 1)
-		     || (mpf->specअगरication == 4))) अणु
-#अगर_घोषित CONFIG_X86_LOCAL_APIC
+		    !mpf_checksum((unsigned char *)bp, 16) &&
+		    ((mpf->specification == 1)
+		     || (mpf->specification == 4))) {
+#ifdef CONFIG_X86_LOCAL_APIC
 			smp_found_config = 1;
-#पूर्ण_अगर
+#endif
 			mpf_base = base;
 			mpf_found = true;
 
 			pr_info("found SMP MP-table at [mem %#010lx-%#010lx]\n",
-				base, base + माप(*mpf) - 1);
+				base, base + sizeof(*mpf) - 1);
 
-			memblock_reserve(base, माप(*mpf));
-			अगर (mpf->physptr)
+			memblock_reserve(base, sizeof(*mpf));
+			if (mpf->physptr)
 				smp_reserve_memory(mpf);
 
 			ret = 1;
-		पूर्ण
+		}
 		early_memunmap(bp, length);
 
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		base += 16;
 		length -= 16;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-व्योम __init शेष_find_smp_config(व्योम)
-अणु
-	अचिन्हित पूर्णांक address;
+void __init default_find_smp_config(void)
+{
+	unsigned int address;
 
 	/*
 	 * FIXME: Linux assumes you have 640K of base ram..
-	 * this जारीs the error...
+	 * this continues the error...
 	 *
-	 * 1) Scan the bottom 1K क्रम a signature
+	 * 1) Scan the bottom 1K for a signature
 	 * 2) Scan the top 1K of base RAM
 	 * 3) Scan the 64K of bios
 	 */
-	अगर (smp_scan_config(0x0, 0x400) ||
+	if (smp_scan_config(0x0, 0x400) ||
 	    smp_scan_config(639 * 0x400, 0x400) ||
 	    smp_scan_config(0xF0000, 0x10000))
-		वापस;
+		return;
 	/*
 	 * If it is an SMP machine we should know now, unless the
 	 * configuration is in an EISA bus machine with an
 	 * extended bios data area.
 	 *
-	 * there is a real-mode segmented poपूर्णांकer poपूर्णांकing to the
+	 * there is a real-mode segmented pointer pointing to the
 	 * 4K EBDA area at 0x40E, calculate and scan it here.
 	 *
 	 * NOTE! There are Linux loaders that will corrupt the EBDA
@@ -633,313 +632,313 @@ out:
 	 */
 
 	address = get_bios_ebda();
-	अगर (address)
+	if (address)
 		smp_scan_config(address, 0x400);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_X86_IO_APIC
-अटल u8 __initdata irq_used[MAX_IRQ_SOURCES];
+#ifdef CONFIG_X86_IO_APIC
+static u8 __initdata irq_used[MAX_IRQ_SOURCES];
 
-अटल पूर्णांक  __init get_MP_पूर्णांकsrc_index(काष्ठा mpc_पूर्णांकsrc *m)
-अणु
-	पूर्णांक i;
+static int  __init get_MP_intsrc_index(struct mpc_intsrc *m)
+{
+	int i;
 
-	अगर (m->irqtype != mp_INT)
-		वापस 0;
+	if (m->irqtype != mp_INT)
+		return 0;
 
-	अगर (m->irqflag != (MP_IRQTRIG_LEVEL | MP_IRQPOL_ACTIVE_LOW))
-		वापस 0;
+	if (m->irqflag != (MP_IRQTRIG_LEVEL | MP_IRQPOL_ACTIVE_LOW))
+		return 0;
 
 	/* not legacy */
 
-	क्रम (i = 0; i < mp_irq_entries; i++) अणु
-		अगर (mp_irqs[i].irqtype != mp_INT)
-			जारी;
+	for (i = 0; i < mp_irq_entries; i++) {
+		if (mp_irqs[i].irqtype != mp_INT)
+			continue;
 
-		अगर (mp_irqs[i].irqflag != (MP_IRQTRIG_LEVEL |
+		if (mp_irqs[i].irqflag != (MP_IRQTRIG_LEVEL |
 					   MP_IRQPOL_ACTIVE_LOW))
-			जारी;
+			continue;
 
-		अगर (mp_irqs[i].srcbus != m->srcbus)
-			जारी;
-		अगर (mp_irqs[i].srcbusirq != m->srcbusirq)
-			जारी;
-		अगर (irq_used[i]) अणु
-			/* alपढ़ोy claimed */
-			वापस -2;
-		पूर्ण
+		if (mp_irqs[i].srcbus != m->srcbus)
+			continue;
+		if (mp_irqs[i].srcbusirq != m->srcbusirq)
+			continue;
+		if (irq_used[i]) {
+			/* already claimed */
+			return -2;
+		}
 		irq_used[i] = 1;
-		वापस i;
-	पूर्ण
+		return i;
+	}
 
 	/* not found */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-#घोषणा SPARE_SLOT_NUM 20
+#define SPARE_SLOT_NUM 20
 
-अटल काष्ठा mpc_पूर्णांकsrc __initdata *m_spare[SPARE_SLOT_NUM];
+static struct mpc_intsrc __initdata *m_spare[SPARE_SLOT_NUM];
 
-अटल व्योम __init check_irq_src(काष्ठा mpc_पूर्णांकsrc *m, पूर्णांक *nr_m_spare)
-अणु
-	पूर्णांक i;
+static void __init check_irq_src(struct mpc_intsrc *m, int *nr_m_spare)
+{
+	int i;
 
-	apic_prपूर्णांकk(APIC_VERBOSE, "OLD ");
-	prपूर्णांक_mp_irq_info(m);
+	apic_printk(APIC_VERBOSE, "OLD ");
+	print_mp_irq_info(m);
 
-	i = get_MP_पूर्णांकsrc_index(m);
-	अगर (i > 0) अणु
-		स_नकल(m, &mp_irqs[i], माप(*m));
-		apic_prपूर्णांकk(APIC_VERBOSE, "NEW ");
-		prपूर्णांक_mp_irq_info(&mp_irqs[i]);
-		वापस;
-	पूर्ण
-	अगर (!i) अणु
-		/* legacy, करो nothing */
-		वापस;
-	पूर्ण
-	अगर (*nr_m_spare < SPARE_SLOT_NUM) अणु
+	i = get_MP_intsrc_index(m);
+	if (i > 0) {
+		memcpy(m, &mp_irqs[i], sizeof(*m));
+		apic_printk(APIC_VERBOSE, "NEW ");
+		print_mp_irq_info(&mp_irqs[i]);
+		return;
+	}
+	if (!i) {
+		/* legacy, do nothing */
+		return;
+	}
+	if (*nr_m_spare < SPARE_SLOT_NUM) {
 		/*
 		 * not found (-1), or duplicated (-2) are invalid entries,
 		 * we need to use the slot later
 		 */
 		m_spare[*nr_m_spare] = m;
 		*nr_m_spare += 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __init
-check_slot(अचिन्हित दीर्घ mpc_new_phys, अचिन्हित दीर्घ mpc_new_length, पूर्णांक count)
-अणु
-	अगर (!mpc_new_phys || count <= mpc_new_length) अणु
+static int __init
+check_slot(unsigned long mpc_new_phys, unsigned long mpc_new_length, int count)
+{
+	if (!mpc_new_phys || count <= mpc_new_length) {
 		WARN(1, "update_mptable: No spare slots (length: %x)\n", count);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* CONFIG_X86_IO_APIC */
-अटल
-अंतरभूत व्योम __init check_irq_src(काष्ठा mpc_पूर्णांकsrc *m, पूर्णांक *nr_m_spare) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_X86_IO_APIC */
+	return 0;
+}
+#else /* CONFIG_X86_IO_APIC */
+static
+inline void __init check_irq_src(struct mpc_intsrc *m, int *nr_m_spare) {}
+#endif /* CONFIG_X86_IO_APIC */
 
-अटल पूर्णांक  __init replace_पूर्णांकsrc_all(काष्ठा mpc_table *mpc,
-					अचिन्हित दीर्घ mpc_new_phys,
-					अचिन्हित दीर्घ mpc_new_length)
-अणु
-#अगर_घोषित CONFIG_X86_IO_APIC
-	पूर्णांक i;
-#पूर्ण_अगर
-	पूर्णांक count = माप(*mpc);
-	पूर्णांक nr_m_spare = 0;
-	अचिन्हित अक्षर *mpt = ((अचिन्हित अक्षर *)mpc) + count;
+static int  __init replace_intsrc_all(struct mpc_table *mpc,
+					unsigned long mpc_new_phys,
+					unsigned long mpc_new_length)
+{
+#ifdef CONFIG_X86_IO_APIC
+	int i;
+#endif
+	int count = sizeof(*mpc);
+	int nr_m_spare = 0;
+	unsigned char *mpt = ((unsigned char *)mpc) + count;
 
 	pr_info("mpc_length %x\n", mpc->length);
-	जबतक (count < mpc->length) अणु
-		चयन (*mpt) अणु
-		हाल MP_PROCESSOR:
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_cpu));
-			अवरोध;
-		हाल MP_BUS:
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_bus));
-			अवरोध;
-		हाल MP_IOAPIC:
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_ioapic));
-			अवरोध;
-		हाल MP_INTSRC:
-			check_irq_src((काष्ठा mpc_पूर्णांकsrc *)mpt, &nr_m_spare);
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_पूर्णांकsrc));
-			अवरोध;
-		हाल MP_LINTSRC:
-			skip_entry(&mpt, &count, माप(काष्ठा mpc_lपूर्णांकsrc));
-			अवरोध;
-		शेष:
+	while (count < mpc->length) {
+		switch (*mpt) {
+		case MP_PROCESSOR:
+			skip_entry(&mpt, &count, sizeof(struct mpc_cpu));
+			break;
+		case MP_BUS:
+			skip_entry(&mpt, &count, sizeof(struct mpc_bus));
+			break;
+		case MP_IOAPIC:
+			skip_entry(&mpt, &count, sizeof(struct mpc_ioapic));
+			break;
+		case MP_INTSRC:
+			check_irq_src((struct mpc_intsrc *)mpt, &nr_m_spare);
+			skip_entry(&mpt, &count, sizeof(struct mpc_intsrc));
+			break;
+		case MP_LINTSRC:
+			skip_entry(&mpt, &count, sizeof(struct mpc_lintsrc));
+			break;
+		default:
 			/* wrong mptable */
 			smp_dump_mptable(mpc, mpt);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-#अगर_घोषित CONFIG_X86_IO_APIC
-	क्रम (i = 0; i < mp_irq_entries; i++) अणु
-		अगर (irq_used[i])
-			जारी;
+#ifdef CONFIG_X86_IO_APIC
+	for (i = 0; i < mp_irq_entries; i++) {
+		if (irq_used[i])
+			continue;
 
-		अगर (mp_irqs[i].irqtype != mp_INT)
-			जारी;
+		if (mp_irqs[i].irqtype != mp_INT)
+			continue;
 
-		अगर (mp_irqs[i].irqflag != (MP_IRQTRIG_LEVEL |
+		if (mp_irqs[i].irqflag != (MP_IRQTRIG_LEVEL |
 					   MP_IRQPOL_ACTIVE_LOW))
-			जारी;
+			continue;
 
-		अगर (nr_m_spare > 0) अणु
-			apic_prपूर्णांकk(APIC_VERBOSE, "*NEW* found\n");
+		if (nr_m_spare > 0) {
+			apic_printk(APIC_VERBOSE, "*NEW* found\n");
 			nr_m_spare--;
-			स_नकल(m_spare[nr_m_spare], &mp_irqs[i], माप(mp_irqs[i]));
-			m_spare[nr_m_spare] = शून्य;
-		पूर्ण अन्यथा अणु
-			काष्ठा mpc_पूर्णांकsrc *m = (काष्ठा mpc_पूर्णांकsrc *)mpt;
-			count += माप(काष्ठा mpc_पूर्णांकsrc);
-			अगर (check_slot(mpc_new_phys, mpc_new_length, count) < 0)
-				जाओ out;
-			स_नकल(m, &mp_irqs[i], माप(*m));
+			memcpy(m_spare[nr_m_spare], &mp_irqs[i], sizeof(mp_irqs[i]));
+			m_spare[nr_m_spare] = NULL;
+		} else {
+			struct mpc_intsrc *m = (struct mpc_intsrc *)mpt;
+			count += sizeof(struct mpc_intsrc);
+			if (check_slot(mpc_new_phys, mpc_new_length, count) < 0)
+				goto out;
+			memcpy(m, &mp_irqs[i], sizeof(*m));
 			mpc->length = count;
-			mpt += माप(काष्ठा mpc_पूर्णांकsrc);
-		पूर्ण
-		prपूर्णांक_mp_irq_info(&mp_irqs[i]);
-	पूर्ण
-#पूर्ण_अगर
+			mpt += sizeof(struct mpc_intsrc);
+		}
+		print_mp_irq_info(&mp_irqs[i]);
+	}
+#endif
 out:
 	/* update checksum */
 	mpc->checksum = 0;
-	mpc->checksum -= mpf_checksum((अचिन्हित अक्षर *)mpc, mpc->length);
+	mpc->checksum -= mpf_checksum((unsigned char *)mpc, mpc->length);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक enable_update_mptable;
+int enable_update_mptable;
 
-अटल पूर्णांक __init update_mptable_setup(अक्षर *str)
-अणु
+static int __init update_mptable_setup(char *str)
+{
 	enable_update_mptable = 1;
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	pci_routeirq = 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 early_param("update_mptable", update_mptable_setup);
 
-अटल अचिन्हित दीर्घ __initdata mpc_new_phys;
-अटल अचिन्हित दीर्घ mpc_new_length __initdata = 4096;
+static unsigned long __initdata mpc_new_phys;
+static unsigned long mpc_new_length __initdata = 4096;
 
 /* alloc_mptable or alloc_mptable=4k */
-अटल पूर्णांक __initdata alloc_mptable;
-अटल पूर्णांक __init parse_alloc_mptable_opt(अक्षर *p)
-अणु
+static int __initdata alloc_mptable;
+static int __init parse_alloc_mptable_opt(char *p)
+{
 	enable_update_mptable = 1;
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	pci_routeirq = 1;
-#पूर्ण_अगर
+#endif
 	alloc_mptable = 1;
-	अगर (!p)
-		वापस 0;
+	if (!p)
+		return 0;
 	mpc_new_length = memparse(p, &p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("alloc_mptable", parse_alloc_mptable_opt);
 
-व्योम __init e820__memblock_alloc_reserved_mpc_new(व्योम)
-अणु
-	अगर (enable_update_mptable && alloc_mptable)
+void __init e820__memblock_alloc_reserved_mpc_new(void)
+{
+	if (enable_update_mptable && alloc_mptable)
 		mpc_new_phys = e820__memblock_alloc_reserved(mpc_new_length, 4);
-पूर्ण
+}
 
-अटल पूर्णांक __init update_mp_table(व्योम)
-अणु
-	अक्षर str[16];
-	अक्षर oem[10];
-	काष्ठा mpf_पूर्णांकel *mpf;
-	काष्ठा mpc_table *mpc, *mpc_new;
-	अचिन्हित दीर्घ size;
+static int __init update_mp_table(void)
+{
+	char str[16];
+	char oem[10];
+	struct mpf_intel *mpf;
+	struct mpc_table *mpc, *mpc_new;
+	unsigned long size;
 
-	अगर (!enable_update_mptable)
-		वापस 0;
+	if (!enable_update_mptable)
+		return 0;
 
-	अगर (!mpf_found)
-		वापस 0;
+	if (!mpf_found)
+		return 0;
 
-	mpf = early_memremap(mpf_base, माप(*mpf));
-	अगर (!mpf) अणु
+	mpf = early_memremap(mpf_base, sizeof(*mpf));
+	if (!mpf) {
 		pr_err("MPTABLE: mpf early_memremap() failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Now see अगर we need to go further.
+	 * Now see if we need to go further.
 	 */
-	अगर (mpf->feature1)
-		जाओ करो_unmap_mpf;
+	if (mpf->feature1)
+		goto do_unmap_mpf;
 
-	अगर (!mpf->physptr)
-		जाओ करो_unmap_mpf;
+	if (!mpf->physptr)
+		goto do_unmap_mpf;
 
 	size = get_mpc_size(mpf->physptr);
 	mpc = early_memremap(mpf->physptr, size);
-	अगर (!mpc) अणु
+	if (!mpc) {
 		pr_err("MPTABLE: mpc early_memremap() failed\n");
-		जाओ करो_unmap_mpf;
-	पूर्ण
+		goto do_unmap_mpf;
+	}
 
-	अगर (!smp_check_mpc(mpc, oem, str))
-		जाओ करो_unmap_mpc;
+	if (!smp_check_mpc(mpc, oem, str))
+		goto do_unmap_mpc;
 
 	pr_info("mpf: %llx\n", (u64)mpf_base);
 	pr_info("physptr: %x\n", mpf->physptr);
 
-	अगर (mpc_new_phys && mpc->length > mpc_new_length) अणु
+	if (mpc_new_phys && mpc->length > mpc_new_length) {
 		mpc_new_phys = 0;
 		pr_info("mpc_new_length is %ld, please use alloc_mptable=8k\n",
 			mpc_new_length);
-	पूर्ण
+	}
 
-	अगर (!mpc_new_phys) अणु
-		अचिन्हित अक्षर old, new;
-		/* check अगर we can change the position */
+	if (!mpc_new_phys) {
+		unsigned char old, new;
+		/* check if we can change the position */
 		mpc->checksum = 0;
-		old = mpf_checksum((अचिन्हित अक्षर *)mpc, mpc->length);
+		old = mpf_checksum((unsigned char *)mpc, mpc->length);
 		mpc->checksum = 0xff;
-		new = mpf_checksum((अचिन्हित अक्षर *)mpc, mpc->length);
-		अगर (old == new) अणु
+		new = mpf_checksum((unsigned char *)mpc, mpc->length);
+		if (old == new) {
 			pr_info("mpc is readonly, please try alloc_mptable instead\n");
-			जाओ करो_unmap_mpc;
-		पूर्ण
+			goto do_unmap_mpc;
+		}
 		pr_info("use in-position replacing\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		mpc_new = early_memremap(mpc_new_phys, mpc_new_length);
-		अगर (!mpc_new) अणु
+		if (!mpc_new) {
 			pr_err("MPTABLE: new mpc early_memremap() failed\n");
-			जाओ करो_unmap_mpc;
-		पूर्ण
+			goto do_unmap_mpc;
+		}
 		mpf->physptr = mpc_new_phys;
-		स_नकल(mpc_new, mpc, mpc->length);
+		memcpy(mpc_new, mpc, mpc->length);
 		early_memunmap(mpc, size);
 		mpc = mpc_new;
 		size = mpc_new_length;
-		/* check अगर we can modअगरy that */
-		अगर (mpc_new_phys - mpf->physptr) अणु
-			काष्ठा mpf_पूर्णांकel *mpf_new;
+		/* check if we can modify that */
+		if (mpc_new_phys - mpf->physptr) {
+			struct mpf_intel *mpf_new;
 			/* steal 16 bytes from [0, 1k) */
-			mpf_new = early_memremap(0x400 - 16, माप(*mpf_new));
-			अगर (!mpf_new) अणु
+			mpf_new = early_memremap(0x400 - 16, sizeof(*mpf_new));
+			if (!mpf_new) {
 				pr_err("MPTABLE: new mpf early_memremap() failed\n");
-				जाओ करो_unmap_mpc;
-			पूर्ण
+				goto do_unmap_mpc;
+			}
 			pr_info("mpf new: %x\n", 0x400 - 16);
-			स_नकल(mpf_new, mpf, 16);
-			early_memunmap(mpf, माप(*mpf));
+			memcpy(mpf_new, mpf, 16);
+			early_memunmap(mpf, sizeof(*mpf));
 			mpf = mpf_new;
 			mpf->physptr = mpc_new_phys;
-		पूर्ण
+		}
 		mpf->checksum = 0;
-		mpf->checksum -= mpf_checksum((अचिन्हित अक्षर *)mpf, 16);
+		mpf->checksum -= mpf_checksum((unsigned char *)mpf, 16);
 		pr_info("physptr new: %x\n", mpf->physptr);
-	पूर्ण
+	}
 
 	/*
 	 * only replace the one with mp_INT and
 	 *	 MP_IRQ_TRIGGER_LEVEL|MP_IRQ_POLARITY_LOW,
-	 * alपढ़ोy in mp_irqs , stored by ... and mp_config_acpi_gsi,
-	 * may need pci=routeirq क्रम all coverage
+	 * already in mp_irqs , stored by ... and mp_config_acpi_gsi,
+	 * may need pci=routeirq for all coverage
 	 */
-	replace_पूर्णांकsrc_all(mpc, mpc_new_phys, mpc_new_length);
+	replace_intsrc_all(mpc, mpc_new_phys, mpc_new_length);
 
-करो_unmap_mpc:
+do_unmap_mpc:
 	early_memunmap(mpc, size);
 
-करो_unmap_mpf:
-	early_memunmap(mpf, माप(*mpf));
+do_unmap_mpf:
+	early_memunmap(mpf, sizeof(*mpf));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(update_mp_table);

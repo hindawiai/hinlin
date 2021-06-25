@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_DELAY_H
-#घोषणा _ASM_IA64_DELAY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_DELAY_H
+#define _ASM_IA64_DELAY_H
 
 /*
  * Delay routines using a pre-computed "cycles/usec" value.
@@ -10,81 +9,81 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
- * Copyright (C) 1999 Asit Mallick <asit.k.mallick@पूर्णांकel.com>
- * Copyright (C) 1999 Don Dugger <करोn.dugger@पूर्णांकel.com>
+ * Copyright (C) 1999 Asit Mallick <asit.k.mallick@intel.com>
+ * Copyright (C) 1999 Don Dugger <don.dugger@intel.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/compiler.h>
 
-#समावेश <यंत्र/पूर्णांकrinsics.h>
-#समावेश <यंत्र/processor.h>
+#include <asm/intrinsics.h>
+#include <asm/processor.h>
 
-अटल __अंतरभूत__ व्योम
-ia64_set_iपंचांग (अचिन्हित दीर्घ val)
-अणु
+static __inline__ void
+ia64_set_itm (unsigned long val)
+{
 	ia64_setreg(_IA64_REG_CR_ITM, val);
 	ia64_srlz_d();
-पूर्ण
+}
 
-अटल __अंतरभूत__ अचिन्हित दीर्घ
-ia64_get_iपंचांग (व्योम)
-अणु
-	अचिन्हित दीर्घ result;
+static __inline__ unsigned long
+ia64_get_itm (void)
+{
+	unsigned long result;
 
 	result = ia64_getreg(_IA64_REG_CR_ITM);
 	ia64_srlz_d();
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल __अंतरभूत__ व्योम
-ia64_set_itv (अचिन्हित दीर्घ val)
-अणु
+static __inline__ void
+ia64_set_itv (unsigned long val)
+{
 	ia64_setreg(_IA64_REG_CR_ITV, val);
 	ia64_srlz_d();
-पूर्ण
+}
 
-अटल __अंतरभूत__ अचिन्हित दीर्घ
-ia64_get_itv (व्योम)
-अणु
-	वापस ia64_getreg(_IA64_REG_CR_ITV);
-पूर्ण
+static __inline__ unsigned long
+ia64_get_itv (void)
+{
+	return ia64_getreg(_IA64_REG_CR_ITV);
+}
 
-अटल __अंतरभूत__ व्योम
-ia64_set_itc (अचिन्हित दीर्घ val)
-अणु
+static __inline__ void
+ia64_set_itc (unsigned long val)
+{
 	ia64_setreg(_IA64_REG_AR_ITC, val);
 	ia64_srlz_d();
-पूर्ण
+}
 
-अटल __अंतरभूत__ अचिन्हित दीर्घ
-ia64_get_itc (व्योम)
-अणु
-	अचिन्हित दीर्घ result;
+static __inline__ unsigned long
+ia64_get_itc (void)
+{
+	unsigned long result;
 
 	result = ia64_getreg(_IA64_REG_AR_ITC);
 	ia64_barrier();
-#अगर_घोषित CONFIG_ITANIUM
-	जबतक (unlikely((__s32) result == -1)) अणु
+#ifdef CONFIG_ITANIUM
+	while (unlikely((__s32) result == -1)) {
 		result = ia64_getreg(_IA64_REG_AR_ITC);
 		ia64_barrier();
-	पूर्ण
-#पूर्ण_अगर
-	वापस result;
-पूर्ण
+	}
+#endif
+	return result;
+}
 
-बाह्य व्योम ia64_delay_loop (अचिन्हित दीर्घ loops);
+extern void ia64_delay_loop (unsigned long loops);
 
-अटल __अंतरभूत__ व्योम
-__delay (अचिन्हित दीर्घ loops)
-अणु
-	अगर (unlikely(loops < 1))
-		वापस;
+static __inline__ void
+__delay (unsigned long loops)
+{
+	if (unlikely(loops < 1))
+		return;
 
 	ia64_delay_loop (loops - 1);
-पूर्ण
+}
 
-बाह्य व्योम udelay (अचिन्हित दीर्घ usecs);
+extern void udelay (unsigned long usecs);
 
-#पूर्ण_अगर /* _ASM_IA64_DELAY_H */
+#endif /* _ASM_IA64_DELAY_H */

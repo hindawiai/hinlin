@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH_REBOOT_H
-#घोषणा __ASM_SH_REBOOT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH_REBOOT_H
+#define __ASM_SH_REBOOT_H
 
-#समावेश <linux/kdebug.h>
+#include <linux/kdebug.h>
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-काष्ठा machine_ops अणु
-	व्योम (*restart)(अक्षर *cmd);
-	व्योम (*halt)(व्योम);
-	व्योम (*घातer_off)(व्योम);
-	व्योम (*shutकरोwn)(व्योम);
-	व्योम (*crash_shutकरोwn)(काष्ठा pt_regs *);
-पूर्ण;
+struct machine_ops {
+	void (*restart)(char *cmd);
+	void (*halt)(void);
+	void (*power_off)(void);
+	void (*shutdown)(void);
+	void (*crash_shutdown)(struct pt_regs *);
+};
 
-बाह्य काष्ठा machine_ops machine_ops;
+extern struct machine_ops machine_ops;
 
 /* arch/sh/kernel/machine_kexec.c */
-व्योम native_machine_crash_shutकरोwn(काष्ठा pt_regs *regs);
+void native_machine_crash_shutdown(struct pt_regs *regs);
 
-#पूर्ण_अगर /* __ASM_SH_REBOOT_H */
+#endif /* __ASM_SH_REBOOT_H */

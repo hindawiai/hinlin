@@ -1,122 +1,121 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ChromeOS Wilco Embedded Controller
  *
  * Copyright 2018 Google LLC
  */
 
-#अगर_अघोषित WILCO_EC_H
-#घोषणा WILCO_EC_H
+#ifndef WILCO_EC_H
+#define WILCO_EC_H
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/types.h>
 
-/* Message flags क्रम using the mailbox() पूर्णांकerface */
-#घोषणा WILCO_EC_FLAG_NO_RESPONSE	BIT(0) /* EC करोes not respond */
+/* Message flags for using the mailbox() interface */
+#define WILCO_EC_FLAG_NO_RESPONSE	BIT(0) /* EC does not respond */
 
 /* Normal commands have a maximum 32 bytes of data */
-#घोषणा EC_MAILBOX_DATA_SIZE		32
+#define EC_MAILBOX_DATA_SIZE		32
 
-काष्ठा device;
-काष्ठा resource;
-काष्ठा platक्रमm_device;
+struct device;
+struct resource;
+struct platform_device;
 
 /**
- * काष्ठा wilco_ec_device - Wilco Embedded Controller handle.
+ * struct wilco_ec_device - Wilco Embedded Controller handle.
  * @dev: Device handle.
- * @mailbox_lock: Mutex to ensure one mailbox command at a समय.
- * @io_command: I/O port क्रम mailbox command.  Provided by ACPI.
- * @io_data: I/O port क्रम mailbox data.  Provided by ACPI.
- * @io_packet: I/O port क्रम mailbox packet data.  Provided by ACPI.
- * @data_buffer: Buffer used क्रम EC communication.  The same buffer
+ * @mailbox_lock: Mutex to ensure one mailbox command at a time.
+ * @io_command: I/O port for mailbox command.  Provided by ACPI.
+ * @io_data: I/O port for mailbox data.  Provided by ACPI.
+ * @io_packet: I/O port for mailbox packet data.  Provided by ACPI.
+ * @data_buffer: Buffer used for EC communication.  The same buffer
  *               is used to hold the request and the response.
- * @data_size: Size of the data buffer used क्रम EC communication.
- * @debugfs_pdev: The child platक्रमm_device used by the debugfs sub-driver.
- * @rtc_pdev: The child platक्रमm_device used by the RTC sub-driver.
- * @अक्षरger_pdev: Child platक्रमm_device used by the अक्षरger config sub-driver.
- * @telem_pdev: The child platक्रमm_device used by the telemetry sub-driver.
+ * @data_size: Size of the data buffer used for EC communication.
+ * @debugfs_pdev: The child platform_device used by the debugfs sub-driver.
+ * @rtc_pdev: The child platform_device used by the RTC sub-driver.
+ * @charger_pdev: Child platform_device used by the charger config sub-driver.
+ * @telem_pdev: The child platform_device used by the telemetry sub-driver.
  */
-काष्ठा wilco_ec_device अणु
-	काष्ठा device *dev;
-	काष्ठा mutex mailbox_lock;
-	काष्ठा resource *io_command;
-	काष्ठा resource *io_data;
-	काष्ठा resource *io_packet;
-	व्योम *data_buffer;
-	माप_प्रकार data_size;
-	काष्ठा platक्रमm_device *debugfs_pdev;
-	काष्ठा platक्रमm_device *rtc_pdev;
-	काष्ठा platक्रमm_device *अक्षरger_pdev;
-	काष्ठा platक्रमm_device *telem_pdev;
-पूर्ण;
+struct wilco_ec_device {
+	struct device *dev;
+	struct mutex mailbox_lock;
+	struct resource *io_command;
+	struct resource *io_data;
+	struct resource *io_packet;
+	void *data_buffer;
+	size_t data_size;
+	struct platform_device *debugfs_pdev;
+	struct platform_device *rtc_pdev;
+	struct platform_device *charger_pdev;
+	struct platform_device *telem_pdev;
+};
 
 /**
- * काष्ठा wilco_ec_request - Mailbox request message क्रमmat.
- * @काष्ठा_version: Should be %EC_MAILBOX_PROTO_VERSION
+ * struct wilco_ec_request - Mailbox request message format.
+ * @struct_version: Should be %EC_MAILBOX_PROTO_VERSION
  * @checksum: Sum of all bytes must be 0.
- * @mailbox_id: Mailbox identअगरier, specअगरies the command set.
- * @mailbox_version: Mailbox पूर्णांकerface version %EC_MAILBOX_VERSION
+ * @mailbox_id: Mailbox identifier, specifies the command set.
+ * @mailbox_version: Mailbox interface version %EC_MAILBOX_VERSION
  * @reserved: Set to zero.
  * @data_size: Length of following data.
  */
-काष्ठा wilco_ec_request अणु
-	u8 काष्ठा_version;
+struct wilco_ec_request {
+	u8 struct_version;
 	u8 checksum;
 	u16 mailbox_id;
 	u8 mailbox_version;
 	u8 reserved;
 	u16 data_size;
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा wilco_ec_response - Mailbox response message क्रमmat.
- * @काष्ठा_version: Should be %EC_MAILBOX_PROTO_VERSION
+ * struct wilco_ec_response - Mailbox response message format.
+ * @struct_version: Should be %EC_MAILBOX_PROTO_VERSION
  * @checksum: Sum of all bytes must be 0.
  * @result: Result code from the EC.  Non-zero indicates an error.
  * @data_size: Length of the response data buffer.
  * @reserved: Set to zero.
  * @data: Response data buffer.  Max size is %EC_MAILBOX_DATA_SIZE_EXTENDED.
  */
-काष्ठा wilco_ec_response अणु
-	u8 काष्ठा_version;
+struct wilco_ec_response {
+	u8 struct_version;
 	u8 checksum;
 	u16 result;
 	u16 data_size;
 	u8 reserved[2];
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
 /**
- * क्रमागत wilco_ec_msg_type - Message type to select a set of command codes.
- * @WILCO_EC_MSG_LEGACY: Legacy EC messages क्रम standard EC behavior.
+ * enum wilco_ec_msg_type - Message type to select a set of command codes.
+ * @WILCO_EC_MSG_LEGACY: Legacy EC messages for standard EC behavior.
  * @WILCO_EC_MSG_PROPERTY: Get/Set/Sync EC controlled NVRAM property.
  * @WILCO_EC_MSG_TELEMETRY: Request telemetry data from the EC.
  */
-क्रमागत wilco_ec_msg_type अणु
+enum wilco_ec_msg_type {
 	WILCO_EC_MSG_LEGACY = 0x00f0,
 	WILCO_EC_MSG_PROPERTY = 0x00f2,
 	WILCO_EC_MSG_TELEMETRY = 0x00f5,
-पूर्ण;
+};
 
 /**
- * काष्ठा wilco_ec_message - Request and response message.
+ * struct wilco_ec_message - Request and response message.
  * @type: Mailbox message type.
  * @flags: Message flags, e.g. %WILCO_EC_FLAG_NO_RESPONSE.
  * @request_size: Number of bytes to send to the EC.
  * @request_data: Buffer containing the request data.
- * @response_size: Number of bytes to पढ़ो from EC.
+ * @response_size: Number of bytes to read from EC.
  * @response_data: Buffer containing the response data, should be
  *                 response_size bytes and allocated by caller.
  */
-काष्ठा wilco_ec_message अणु
-	क्रमागत wilco_ec_msg_type type;
+struct wilco_ec_message {
+	enum wilco_ec_msg_type type;
 	u8 flags;
-	माप_प्रकार request_size;
-	व्योम *request_data;
-	माप_प्रकार response_size;
-	व्योम *response_data;
-पूर्ण;
+	size_t request_size;
+	void *request_data;
+	size_t response_size;
+	void *response_data;
+};
 
 /**
  * wilco_ec_mailbox() - Send request to the EC and receive the response.
@@ -125,7 +124,7 @@
  *
  * Return: Number of bytes received or negative error code on failure.
  */
-पूर्णांक wilco_ec_mailbox(काष्ठा wilco_ec_device *ec, काष्ठा wilco_ec_message *msg);
+int wilco_ec_mailbox(struct wilco_ec_device *ec, struct wilco_ec_message *msg);
 
 /**
  * wilco_keyboard_leds_init() - Set up the keyboard backlight LEDs.
@@ -138,56 +137,56 @@
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक wilco_keyboard_leds_init(काष्ठा wilco_ec_device *ec);
+int wilco_keyboard_leds_init(struct wilco_ec_device *ec);
 
 /*
  * A Property is typically a data item that is stored to NVRAM
  * by the EC. Each of these data items has an index associated
  * with it, known as the Property ID (PID). Properties may have
  * variable lengths, up to a max of WILCO_EC_PROPERTY_MAX_SIZE
- * bytes. Properties can be simple पूर्णांकegers, or they may be more
+ * bytes. Properties can be simple integers, or they may be more
  * complex binary data.
  */
 
-#घोषणा WILCO_EC_PROPERTY_MAX_SIZE	4
+#define WILCO_EC_PROPERTY_MAX_SIZE	4
 
 /**
- * काष्ठा ec_property_set_msg - Message to get or set a property.
+ * struct ec_property_set_msg - Message to get or set a property.
  * @property_id: Which property to get or set.
  * @length: Number of bytes of |data| that are used.
  * @data: Actual property data.
  */
-काष्ठा wilco_ec_property_msg अणु
+struct wilco_ec_property_msg {
 	u32 property_id;
-	पूर्णांक length;
+	int length;
 	u8 data[WILCO_EC_PROPERTY_MAX_SIZE];
-पूर्ण;
+};
 
 /**
  * wilco_ec_get_property() - Retrieve a property from the EC.
  * @ec: Embedded Controller device.
- * @prop_msg: Message क्रम request and response.
+ * @prop_msg: Message for request and response.
  *
- * The property_id field of |prop_msg| should be filled beक्रमe calling this
+ * The property_id field of |prop_msg| should be filled before calling this
  * function. The result will be stored in the data and length fields.
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक wilco_ec_get_property(काष्ठा wilco_ec_device *ec,
-			  काष्ठा wilco_ec_property_msg *prop_msg);
+int wilco_ec_get_property(struct wilco_ec_device *ec,
+			  struct wilco_ec_property_msg *prop_msg);
 
 /**
  * wilco_ec_set_property() - Store a property on the EC.
  * @ec: Embedded Controller device.
- * @prop_msg: Message क्रम request and response.
+ * @prop_msg: Message for request and response.
  *
  * The property_id, length, and data fields of |prop_msg| should be
- * filled beक्रमe calling this function.
+ * filled before calling this function.
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक wilco_ec_set_property(काष्ठा wilco_ec_device *ec,
-			  काष्ठा wilco_ec_property_msg *prop_msg);
+int wilco_ec_set_property(struct wilco_ec_device *ec,
+			  struct wilco_ec_property_msg *prop_msg);
 
 /**
  * wilco_ec_get_byte_property() - Retrieve a byte-size property from the EC.
@@ -197,7 +196,7 @@
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक wilco_ec_get_byte_property(काष्ठा wilco_ec_device *ec, u32 property_id,
+int wilco_ec_get_byte_property(struct wilco_ec_device *ec, u32 property_id,
 			       u8 *val);
 
 /**
@@ -208,19 +207,19 @@
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक wilco_ec_set_byte_property(काष्ठा wilco_ec_device *ec, u32 property_id,
+int wilco_ec_set_byte_property(struct wilco_ec_device *ec, u32 property_id,
 			       u8 val);
 
 /**
  * wilco_ec_add_sysfs() - Create sysfs entries
  * @ec: Wilco EC device
  *
- * wilco_ec_हटाओ_sysfs() needs to be called afterwards
- * to perक्रमm the necessary cleanup.
+ * wilco_ec_remove_sysfs() needs to be called afterwards
+ * to perform the necessary cleanup.
  *
  * Return: 0 on success or negative error code on failure.
  */
-पूर्णांक wilco_ec_add_sysfs(काष्ठा wilco_ec_device *ec);
-व्योम wilco_ec_हटाओ_sysfs(काष्ठा wilco_ec_device *ec);
+int wilco_ec_add_sysfs(struct wilco_ec_device *ec);
+void wilco_ec_remove_sysfs(struct wilco_ec_device *ec);
 
-#पूर्ण_अगर /* WILCO_EC_H */
+#endif /* WILCO_EC_H */

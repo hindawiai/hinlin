@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *	linux/arch/alpha/kernel/err_impl.h
  *
@@ -9,81 +8,81 @@
  * 	implementations.
  */
 
-#समावेश <यंत्र/mce.h>
+#include <asm/mce.h>
 
-जोड़ el_बारtamp;
-काष्ठा el_subpacket;
-काष्ठा ev7_lf_subpackets;
+union el_timestamp;
+struct el_subpacket;
+struct ev7_lf_subpackets;
 
-काष्ठा el_subpacket_annotation अणु
-	काष्ठा el_subpacket_annotation *next;
+struct el_subpacket_annotation {
+	struct el_subpacket_annotation *next;
 	u16 class;
 	u16 type;
 	u16 revision;
-	अक्षर *description;
-	अक्षर **annotation;
-पूर्ण;
-#घोषणा SUBPACKET_ANNOTATION(c, t, r, d, a) अणुशून्य, (c), (t), (r), (d), (a)पूर्ण
+	char *description;
+	char **annotation;
+};
+#define SUBPACKET_ANNOTATION(c, t, r, d, a) {NULL, (c), (t), (r), (d), (a)}
 
-काष्ठा el_subpacket_handler अणु
-	काष्ठा el_subpacket_handler *next;
+struct el_subpacket_handler {
+	struct el_subpacket_handler *next;
 	u16 class;
-	काष्ठा el_subpacket *(*handler)(काष्ठा el_subpacket *);
-पूर्ण;
-#घोषणा SUBPACKET_HANDLER_INIT(c, h) अणुशून्य, (c), (h)पूर्ण
+	struct el_subpacket *(*handler)(struct el_subpacket *);
+};
+#define SUBPACKET_HANDLER_INIT(c, h) {NULL, (c), (h)}
 
 /*
- * Manipulate a field from a रेजिस्टर given it's name. defines
- * क्रम the LSB (__S - shअगरt count) and biपंचांगask (__M) are required
+ * Manipulate a field from a register given it's name. defines
+ * for the LSB (__S - shift count) and bitmask (__M) are required
  *
  * EXTRACT(u, f) - extracts the field and places it at bit position 0
- * GEN_MASK(f) - creates an in-position mask क्रम the field
+ * GEN_MASK(f) - creates an in-position mask for the field
  */
-#घोषणा EXTRACT(u, f) (((u) >> f##__S) & f##__M)
-#घोषणा GEN_MASK(f) ((u64)f##__M << f##__S)
+#define EXTRACT(u, f) (((u) >> f##__S) & f##__M)
+#define GEN_MASK(f) ((u64)f##__M << f##__S)
 
 /*
  * err_common.c
  */
-बाह्य अक्षर *err_prपूर्णांक_prefix;
+extern char *err_print_prefix;
 
-बाह्य व्योम mchk_dump_mem(व्योम *, माप_प्रकार, अक्षर **);
-बाह्य व्योम mchk_dump_logout_frame(काष्ठा el_common *);
-बाह्य व्योम el_prपूर्णांक_बारtamp(जोड़ el_बारtamp *);
-बाह्य व्योम el_process_subpackets(काष्ठा el_subpacket *, पूर्णांक);
-बाह्य काष्ठा el_subpacket *el_process_subpacket(काष्ठा el_subpacket *);
-बाह्य व्योम el_annotate_subpacket(काष्ठा el_subpacket *);
-बाह्य व्योम cdl_check_console_data_log(व्योम);
-बाह्य पूर्णांक cdl_रेजिस्टर_subpacket_annotation(काष्ठा el_subpacket_annotation *);
-बाह्य पूर्णांक cdl_रेजिस्टर_subpacket_handler(काष्ठा el_subpacket_handler *);
+extern void mchk_dump_mem(void *, size_t, char **);
+extern void mchk_dump_logout_frame(struct el_common *);
+extern void el_print_timestamp(union el_timestamp *);
+extern void el_process_subpackets(struct el_subpacket *, int);
+extern struct el_subpacket *el_process_subpacket(struct el_subpacket *);
+extern void el_annotate_subpacket(struct el_subpacket *);
+extern void cdl_check_console_data_log(void);
+extern int cdl_register_subpacket_annotation(struct el_subpacket_annotation *);
+extern int cdl_register_subpacket_handler(struct el_subpacket_handler *);
 
 /*
  * err_ev7.c
  */
-बाह्य काष्ठा ev7_lf_subpackets *
-ev7_collect_logout_frame_subpackets(काष्ठा el_subpacket *,
-				    काष्ठा ev7_lf_subpackets *);
-बाह्य व्योम ev7_रेजिस्टर_error_handlers(व्योम);
-बाह्य व्योम ev7_machine_check(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+extern struct ev7_lf_subpackets *
+ev7_collect_logout_frame_subpackets(struct el_subpacket *,
+				    struct ev7_lf_subpackets *);
+extern void ev7_register_error_handlers(void);
+extern void ev7_machine_check(unsigned long, unsigned long);
 
 /*
  * err_ev6.c
  */
-बाह्य व्योम ev6_रेजिस्टर_error_handlers(व्योम);
-बाह्य पूर्णांक ev6_process_logout_frame(काष्ठा el_common *, पूर्णांक);
-बाह्य व्योम ev6_machine_check(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+extern void ev6_register_error_handlers(void);
+extern int ev6_process_logout_frame(struct el_common *, int);
+extern void ev6_machine_check(unsigned long, unsigned long);
 
 /*
  * err_marvel.c
  */
-बाह्य व्योम marvel_machine_check(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-बाह्य व्योम marvel_रेजिस्टर_error_handlers(व्योम);
+extern void marvel_machine_check(unsigned long, unsigned long);
+extern void marvel_register_error_handlers(void);
 
 /*
  * err_titan.c
  */
-बाह्य पूर्णांक titan_process_logout_frame(काष्ठा el_common *, पूर्णांक);
-बाह्य व्योम titan_machine_check(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
-बाह्य व्योम titan_रेजिस्टर_error_handlers(व्योम);
-बाह्य पूर्णांक निजीer_process_logout_frame(काष्ठा el_common *, पूर्णांक);
-बाह्य व्योम निजीer_machine_check(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+extern int titan_process_logout_frame(struct el_common *, int);
+extern void titan_machine_check(unsigned long, unsigned long);
+extern void titan_register_error_handlers(void);
+extern int privateer_process_logout_frame(struct el_common *, int);
+extern void privateer_machine_check(unsigned long, unsigned long);

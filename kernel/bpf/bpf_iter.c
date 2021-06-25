@@ -1,568 +1,567 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/bpf.h>
+#include <linux/fs.h>
+#include <linux/anon_inodes.h>
+#include <linux/filter.h>
+#include <linux/bpf.h>
 
-काष्ठा bpf_iter_target_info अणु
-	काष्ठा list_head list;
-	स्थिर काष्ठा bpf_iter_reg *reg_info;
+struct bpf_iter_target_info {
+	struct list_head list;
+	const struct bpf_iter_reg *reg_info;
 	u32 btf_id;	/* cached value */
-पूर्ण;
+};
 
-काष्ठा bpf_iter_link अणु
-	काष्ठा bpf_link link;
-	काष्ठा bpf_iter_aux_info aux;
-	काष्ठा bpf_iter_target_info *tinfo;
-पूर्ण;
+struct bpf_iter_link {
+	struct bpf_link link;
+	struct bpf_iter_aux_info aux;
+	struct bpf_iter_target_info *tinfo;
+};
 
-काष्ठा bpf_iter_priv_data अणु
-	काष्ठा bpf_iter_target_info *tinfo;
-	स्थिर काष्ठा bpf_iter_seq_info *seq_info;
-	काष्ठा bpf_prog *prog;
+struct bpf_iter_priv_data {
+	struct bpf_iter_target_info *tinfo;
+	const struct bpf_iter_seq_info *seq_info;
+	struct bpf_prog *prog;
 	u64 session_id;
 	u64 seq_num;
-	bool करोne_stop;
-	u8 target_निजी[] __aligned(8);
-पूर्ण;
+	bool done_stop;
+	u8 target_private[] __aligned(8);
+};
 
-अटल काष्ठा list_head tarमाला_लो = LIST_HEAD_INIT(tarमाला_लो);
-अटल DEFINE_MUTEX(tarमाला_लो_mutex);
+static struct list_head targets = LIST_HEAD_INIT(targets);
+static DEFINE_MUTEX(targets_mutex);
 
 /* protect bpf_iter_link changes */
-अटल DEFINE_MUTEX(link_mutex);
+static DEFINE_MUTEX(link_mutex);
 
-/* incremented on every खोलोed seq_file */
-अटल atomic64_t session_id;
+/* incremented on every opened seq_file */
+static atomic64_t session_id;
 
-अटल पूर्णांक prepare_seq_file(काष्ठा file *file, काष्ठा bpf_iter_link *link,
-			    स्थिर काष्ठा bpf_iter_seq_info *seq_info);
+static int prepare_seq_file(struct file *file, struct bpf_iter_link *link,
+			    const struct bpf_iter_seq_info *seq_info);
 
-अटल व्योम bpf_iter_inc_seq_num(काष्ठा seq_file *seq)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
+static void bpf_iter_inc_seq_num(struct seq_file *seq)
+{
+	struct bpf_iter_priv_data *iter_priv;
 
-	iter_priv = container_of(seq->निजी, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
+	iter_priv = container_of(seq->private, struct bpf_iter_priv_data,
+				 target_private);
 	iter_priv->seq_num++;
-पूर्ण
+}
 
-अटल व्योम bpf_iter_dec_seq_num(काष्ठा seq_file *seq)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
+static void bpf_iter_dec_seq_num(struct seq_file *seq)
+{
+	struct bpf_iter_priv_data *iter_priv;
 
-	iter_priv = container_of(seq->निजी, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
+	iter_priv = container_of(seq->private, struct bpf_iter_priv_data,
+				 target_private);
 	iter_priv->seq_num--;
-पूर्ण
+}
 
-अटल व्योम bpf_iter_करोne_stop(काष्ठा seq_file *seq)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
+static void bpf_iter_done_stop(struct seq_file *seq)
+{
+	struct bpf_iter_priv_data *iter_priv;
 
-	iter_priv = container_of(seq->निजी, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
-	iter_priv->करोne_stop = true;
-पूर्ण
+	iter_priv = container_of(seq->private, struct bpf_iter_priv_data,
+				 target_private);
+	iter_priv->done_stop = true;
+}
 
-अटल bool bpf_iter_support_resched(काष्ठा seq_file *seq)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
+static bool bpf_iter_support_resched(struct seq_file *seq)
+{
+	struct bpf_iter_priv_data *iter_priv;
 
-	iter_priv = container_of(seq->निजी, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
-	वापस iter_priv->tinfo->reg_info->feature & BPF_ITER_RESCHED;
-पूर्ण
+	iter_priv = container_of(seq->private, struct bpf_iter_priv_data,
+				 target_private);
+	return iter_priv->tinfo->reg_info->feature & BPF_ITER_RESCHED;
+}
 
-/* maximum visited objects beक्रमe bailing out */
-#घोषणा MAX_ITER_OBJECTS	1000000
+/* maximum visited objects before bailing out */
+#define MAX_ITER_OBJECTS	1000000
 
-/* bpf_seq_पढ़ो, a customized and simpler version क्रम bpf iterator.
- * no_llseek is assumed क्रम this file.
- * The following are dअगरferences from seq_पढ़ो():
+/* bpf_seq_read, a customized and simpler version for bpf iterator.
+ * no_llseek is assumed for this file.
+ * The following are differences from seq_read():
  *  . fixed buffer size (PAGE_SIZE)
  *  . assuming no_llseek
  *  . stop() may call bpf program, handling potential overflow there
  */
-अटल sमाप_प्रकार bpf_seq_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
+static ssize_t bpf_seq_read(struct file *file, char __user *buf, size_t size,
 			    loff_t *ppos)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
-	माप_प्रकार n, offs, copied = 0;
-	पूर्णांक err = 0, num_objs = 0;
+{
+	struct seq_file *seq = file->private_data;
+	size_t n, offs, copied = 0;
+	int err = 0, num_objs = 0;
 	bool can_resched;
-	व्योम *p;
+	void *p;
 
 	mutex_lock(&seq->lock);
 
-	अगर (!seq->buf) अणु
+	if (!seq->buf) {
 		seq->size = PAGE_SIZE << 3;
-		seq->buf = kvदो_स्मृति(seq->size, GFP_KERNEL);
-		अगर (!seq->buf) अणु
+		seq->buf = kvmalloc(seq->size, GFP_KERNEL);
+		if (!seq->buf) {
 			err = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	अगर (seq->count) अणु
+	if (seq->count) {
 		n = min(seq->count, size);
 		err = copy_to_user(buf, seq->buf + seq->from, n);
-		अगर (err) अणु
+		if (err) {
 			err = -EFAULT;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		seq->count -= n;
 		seq->from += n;
 		copied = n;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	seq->from = 0;
 	p = seq->op->start(seq, &seq->index);
-	अगर (!p)
-		जाओ stop;
-	अगर (IS_ERR(p)) अणु
+	if (!p)
+		goto stop;
+	if (IS_ERR(p)) {
 		err = PTR_ERR(p);
 		seq->op->stop(seq, p);
 		seq->count = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	err = seq->op->show(seq, p);
-	अगर (err > 0) अणु
+	if (err > 0) {
 		/* object is skipped, decrease seq_num, so next
 		 * valid object can reuse the same seq_num.
 		 */
 		bpf_iter_dec_seq_num(seq);
 		seq->count = 0;
-	पूर्ण अन्यथा अगर (err < 0 || seq_has_overflowed(seq)) अणु
-		अगर (!err)
+	} else if (err < 0 || seq_has_overflowed(seq)) {
+		if (!err)
 			err = -E2BIG;
 		seq->op->stop(seq, p);
 		seq->count = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	can_resched = bpf_iter_support_resched(seq);
-	जबतक (1) अणु
+	while (1) {
 		loff_t pos = seq->index;
 
 		num_objs++;
 		offs = seq->count;
 		p = seq->op->next(seq, p, &seq->index);
-		अगर (pos == seq->index) अणु
+		if (pos == seq->index) {
 			pr_info_ratelimited("buggy seq_file .next function %ps "
 				"did not updated position index\n",
 				seq->op->next);
 			seq->index++;
-		पूर्ण
+		}
 
-		अगर (IS_ERR_OR_शून्य(p))
-			अवरोध;
+		if (IS_ERR_OR_NULL(p))
+			break;
 
 		/* got a valid next object, increase seq_num */
 		bpf_iter_inc_seq_num(seq);
 
-		अगर (seq->count >= size)
-			अवरोध;
+		if (seq->count >= size)
+			break;
 
-		अगर (num_objs >= MAX_ITER_OBJECTS) अणु
-			अगर (offs == 0) अणु
+		if (num_objs >= MAX_ITER_OBJECTS) {
+			if (offs == 0) {
 				err = -EAGAIN;
 				seq->op->stop(seq, p);
-				जाओ करोne;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				goto done;
+			}
+			break;
+		}
 
 		err = seq->op->show(seq, p);
-		अगर (err > 0) अणु
+		if (err > 0) {
 			bpf_iter_dec_seq_num(seq);
 			seq->count = offs;
-		पूर्ण अन्यथा अगर (err < 0 || seq_has_overflowed(seq)) अणु
+		} else if (err < 0 || seq_has_overflowed(seq)) {
 			seq->count = offs;
-			अगर (offs == 0) अणु
-				अगर (!err)
+			if (offs == 0) {
+				if (!err)
 					err = -E2BIG;
 				seq->op->stop(seq, p);
-				जाओ करोne;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				goto done;
+			}
+			break;
+		}
 
-		अगर (can_resched)
+		if (can_resched)
 			cond_resched();
-	पूर्ण
+	}
 stop:
 	offs = seq->count;
-	/* bpf program called अगर !p */
+	/* bpf program called if !p */
 	seq->op->stop(seq, p);
-	अगर (!p) अणु
-		अगर (!seq_has_overflowed(seq)) अणु
-			bpf_iter_करोne_stop(seq);
-		पूर्ण अन्यथा अणु
+	if (!p) {
+		if (!seq_has_overflowed(seq)) {
+			bpf_iter_done_stop(seq);
+		} else {
 			seq->count = offs;
-			अगर (offs == 0) अणु
+			if (offs == 0) {
 				err = -E2BIG;
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto done;
+			}
+		}
+	}
 
 	n = min(seq->count, size);
 	err = copy_to_user(buf, seq->buf, n);
-	अगर (err) अणु
+	if (err) {
 		err = -EFAULT;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	copied = n;
 	seq->count -= n;
 	seq->from = n;
-करोne:
-	अगर (!copied)
+done:
+	if (!copied)
 		copied = err;
-	अन्यथा
+	else
 		*ppos += copied;
 	mutex_unlock(&seq->lock);
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल स्थिर काष्ठा bpf_iter_seq_info *
-__get_seq_info(काष्ठा bpf_iter_link *link)
-अणु
-	स्थिर काष्ठा bpf_iter_seq_info *seq_info;
+static const struct bpf_iter_seq_info *
+__get_seq_info(struct bpf_iter_link *link)
+{
+	const struct bpf_iter_seq_info *seq_info;
 
-	अगर (link->aux.map) अणु
+	if (link->aux.map) {
 		seq_info = link->aux.map->ops->iter_seq_info;
-		अगर (seq_info)
-			वापस seq_info;
-	पूर्ण
+		if (seq_info)
+			return seq_info;
+	}
 
-	वापस link->tinfo->reg_info->seq_info;
-पूर्ण
+	return link->tinfo->reg_info->seq_info;
+}
 
-अटल पूर्णांक iter_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा bpf_iter_link *link = inode->i_निजी;
+static int iter_open(struct inode *inode, struct file *file)
+{
+	struct bpf_iter_link *link = inode->i_private;
 
-	वापस prepare_seq_file(file, link, __get_seq_info(link));
-पूर्ण
+	return prepare_seq_file(file, link, __get_seq_info(link));
+}
 
-अटल पूर्णांक iter_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
-	काष्ठा seq_file *seq;
+static int iter_release(struct inode *inode, struct file *file)
+{
+	struct bpf_iter_priv_data *iter_priv;
+	struct seq_file *seq;
 
-	seq = file->निजी_data;
-	अगर (!seq)
-		वापस 0;
+	seq = file->private_data;
+	if (!seq)
+		return 0;
 
-	iter_priv = container_of(seq->निजी, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
+	iter_priv = container_of(seq->private, struct bpf_iter_priv_data,
+				 target_private);
 
-	अगर (iter_priv->seq_info->fini_seq_निजी)
-		iter_priv->seq_info->fini_seq_निजी(seq->निजी);
+	if (iter_priv->seq_info->fini_seq_private)
+		iter_priv->seq_info->fini_seq_private(seq->private);
 
 	bpf_prog_put(iter_priv->prog);
-	seq->निजी = iter_priv;
+	seq->private = iter_priv;
 
-	वापस seq_release_निजी(inode, file);
-पूर्ण
+	return seq_release_private(inode, file);
+}
 
-स्थिर काष्ठा file_operations bpf_iter_fops = अणु
-	.खोलो		= iter_खोलो,
+const struct file_operations bpf_iter_fops = {
+	.open		= iter_open,
 	.llseek		= no_llseek,
-	.पढ़ो		= bpf_seq_पढ़ो,
+	.read		= bpf_seq_read,
 	.release	= iter_release,
-पूर्ण;
+};
 
 /* The argument reg_info will be cached in bpf_iter_target_info.
  * The common practice is to declare target reg_info as
- * a स्थिर अटल variable and passed as an argument to
+ * a const static variable and passed as an argument to
  * bpf_iter_reg_target().
  */
-पूर्णांक bpf_iter_reg_target(स्थिर काष्ठा bpf_iter_reg *reg_info)
-अणु
-	काष्ठा bpf_iter_target_info *tinfo;
+int bpf_iter_reg_target(const struct bpf_iter_reg *reg_info)
+{
+	struct bpf_iter_target_info *tinfo;
 
-	tinfo = kzalloc(माप(*tinfo), GFP_KERNEL);
-	अगर (!tinfo)
-		वापस -ENOMEM;
+	tinfo = kzalloc(sizeof(*tinfo), GFP_KERNEL);
+	if (!tinfo)
+		return -ENOMEM;
 
 	tinfo->reg_info = reg_info;
 	INIT_LIST_HEAD(&tinfo->list);
 
-	mutex_lock(&tarमाला_लो_mutex);
-	list_add(&tinfo->list, &tarमाला_लो);
-	mutex_unlock(&tarमाला_लो_mutex);
+	mutex_lock(&targets_mutex);
+	list_add(&tinfo->list, &targets);
+	mutex_unlock(&targets_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bpf_iter_unreg_target(स्थिर काष्ठा bpf_iter_reg *reg_info)
-अणु
-	काष्ठा bpf_iter_target_info *tinfo;
+void bpf_iter_unreg_target(const struct bpf_iter_reg *reg_info)
+{
+	struct bpf_iter_target_info *tinfo;
 	bool found = false;
 
-	mutex_lock(&tarमाला_लो_mutex);
-	list_क्रम_each_entry(tinfo, &tarमाला_लो, list) अणु
-		अगर (reg_info == tinfo->reg_info) अणु
+	mutex_lock(&targets_mutex);
+	list_for_each_entry(tinfo, &targets, list) {
+		if (reg_info == tinfo->reg_info) {
 			list_del(&tinfo->list);
-			kमुक्त(tinfo);
+			kfree(tinfo);
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&tarमाला_लो_mutex);
+			break;
+		}
+	}
+	mutex_unlock(&targets_mutex);
 
 	WARN_ON(found == false);
-पूर्ण
+}
 
-अटल व्योम cache_btf_id(काष्ठा bpf_iter_target_info *tinfo,
-			 काष्ठा bpf_prog *prog)
-अणु
+static void cache_btf_id(struct bpf_iter_target_info *tinfo,
+			 struct bpf_prog *prog)
+{
 	tinfo->btf_id = prog->aux->attach_btf_id;
-पूर्ण
+}
 
-bool bpf_iter_prog_supported(काष्ठा bpf_prog *prog)
-अणु
-	स्थिर अक्षर *attach_fname = prog->aux->attach_func_name;
+bool bpf_iter_prog_supported(struct bpf_prog *prog)
+{
+	const char *attach_fname = prog->aux->attach_func_name;
 	u32 prog_btf_id = prog->aux->attach_btf_id;
-	स्थिर अक्षर *prefix = BPF_ITER_FUNC_PREFIX;
-	काष्ठा bpf_iter_target_info *tinfo;
-	पूर्णांक prefix_len = म_माप(prefix);
+	const char *prefix = BPF_ITER_FUNC_PREFIX;
+	struct bpf_iter_target_info *tinfo;
+	int prefix_len = strlen(prefix);
 	bool supported = false;
 
-	अगर (म_भेदन(attach_fname, prefix, prefix_len))
-		वापस false;
+	if (strncmp(attach_fname, prefix, prefix_len))
+		return false;
 
-	mutex_lock(&tarमाला_लो_mutex);
-	list_क्रम_each_entry(tinfo, &tarमाला_लो, list) अणु
-		अगर (tinfo->btf_id && tinfo->btf_id == prog_btf_id) अणु
+	mutex_lock(&targets_mutex);
+	list_for_each_entry(tinfo, &targets, list) {
+		if (tinfo->btf_id && tinfo->btf_id == prog_btf_id) {
 			supported = true;
-			अवरोध;
-		पूर्ण
-		अगर (!म_भेद(attach_fname + prefix_len, tinfo->reg_info->target)) अणु
+			break;
+		}
+		if (!strcmp(attach_fname + prefix_len, tinfo->reg_info->target)) {
 			cache_btf_id(tinfo, prog);
 			supported = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&tarमाला_लो_mutex);
+			break;
+		}
+	}
+	mutex_unlock(&targets_mutex);
 
-	अगर (supported) अणु
+	if (supported) {
 		prog->aux->ctx_arg_info_size = tinfo->reg_info->ctx_arg_info_size;
 		prog->aux->ctx_arg_info = tinfo->reg_info->ctx_arg_info;
-	पूर्ण
+	}
 
-	वापस supported;
-पूर्ण
+	return supported;
+}
 
-अटल व्योम bpf_iter_link_release(काष्ठा bpf_link *link)
-अणु
-	काष्ठा bpf_iter_link *iter_link =
-		container_of(link, काष्ठा bpf_iter_link, link);
+static void bpf_iter_link_release(struct bpf_link *link)
+{
+	struct bpf_iter_link *iter_link =
+		container_of(link, struct bpf_iter_link, link);
 
-	अगर (iter_link->tinfo->reg_info->detach_target)
+	if (iter_link->tinfo->reg_info->detach_target)
 		iter_link->tinfo->reg_info->detach_target(&iter_link->aux);
-पूर्ण
+}
 
-अटल व्योम bpf_iter_link_dealloc(काष्ठा bpf_link *link)
-अणु
-	काष्ठा bpf_iter_link *iter_link =
-		container_of(link, काष्ठा bpf_iter_link, link);
+static void bpf_iter_link_dealloc(struct bpf_link *link)
+{
+	struct bpf_iter_link *iter_link =
+		container_of(link, struct bpf_iter_link, link);
 
-	kमुक्त(iter_link);
-पूर्ण
+	kfree(iter_link);
+}
 
-अटल पूर्णांक bpf_iter_link_replace(काष्ठा bpf_link *link,
-				 काष्ठा bpf_prog *new_prog,
-				 काष्ठा bpf_prog *old_prog)
-अणु
-	पूर्णांक ret = 0;
+static int bpf_iter_link_replace(struct bpf_link *link,
+				 struct bpf_prog *new_prog,
+				 struct bpf_prog *old_prog)
+{
+	int ret = 0;
 
 	mutex_lock(&link_mutex);
-	अगर (old_prog && link->prog != old_prog) अणु
+	if (old_prog && link->prog != old_prog) {
 		ret = -EPERM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (link->prog->type != new_prog->type ||
+	if (link->prog->type != new_prog->type ||
 	    link->prog->expected_attach_type != new_prog->expected_attach_type ||
-	    link->prog->aux->attach_btf_id != new_prog->aux->attach_btf_id) अणु
+	    link->prog->aux->attach_btf_id != new_prog->aux->attach_btf_id) {
 		ret = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	old_prog = xchg(&link->prog, new_prog);
 	bpf_prog_put(old_prog);
 
 out_unlock:
 	mutex_unlock(&link_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bpf_iter_link_show_fdinfo(स्थिर काष्ठा bpf_link *link,
-				      काष्ठा seq_file *seq)
-अणु
-	काष्ठा bpf_iter_link *iter_link =
-		container_of(link, काष्ठा bpf_iter_link, link);
+static void bpf_iter_link_show_fdinfo(const struct bpf_link *link,
+				      struct seq_file *seq)
+{
+	struct bpf_iter_link *iter_link =
+		container_of(link, struct bpf_iter_link, link);
 	bpf_iter_show_fdinfo_t show_fdinfo;
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "target_name:\t%s\n",
 		   iter_link->tinfo->reg_info->target);
 
 	show_fdinfo = iter_link->tinfo->reg_info->show_fdinfo;
-	अगर (show_fdinfo)
+	if (show_fdinfo)
 		show_fdinfo(&iter_link->aux, seq);
-पूर्ण
+}
 
-अटल पूर्णांक bpf_iter_link_fill_link_info(स्थिर काष्ठा bpf_link *link,
-					काष्ठा bpf_link_info *info)
-अणु
-	काष्ठा bpf_iter_link *iter_link =
-		container_of(link, काष्ठा bpf_iter_link, link);
-	अक्षर __user *ubuf = u64_to_user_ptr(info->iter.target_name);
+static int bpf_iter_link_fill_link_info(const struct bpf_link *link,
+					struct bpf_link_info *info)
+{
+	struct bpf_iter_link *iter_link =
+		container_of(link, struct bpf_iter_link, link);
+	char __user *ubuf = u64_to_user_ptr(info->iter.target_name);
 	bpf_iter_fill_link_info_t fill_link_info;
 	u32 ulen = info->iter.target_name_len;
-	स्थिर अक्षर *target_name;
+	const char *target_name;
 	u32 target_len;
 
-	अगर (!ulen ^ !ubuf)
-		वापस -EINVAL;
+	if (!ulen ^ !ubuf)
+		return -EINVAL;
 
 	target_name = iter_link->tinfo->reg_info->target;
-	target_len =  म_माप(target_name);
+	target_len =  strlen(target_name);
 	info->iter.target_name_len = target_len + 1;
 
-	अगर (ubuf) अणु
-		अगर (ulen >= target_len + 1) अणु
-			अगर (copy_to_user(ubuf, target_name, target_len + 1))
-				वापस -EFAULT;
-		पूर्ण अन्यथा अणु
-			अक्षर zero = '\0';
+	if (ubuf) {
+		if (ulen >= target_len + 1) {
+			if (copy_to_user(ubuf, target_name, target_len + 1))
+				return -EFAULT;
+		} else {
+			char zero = '\0';
 
-			अगर (copy_to_user(ubuf, target_name, ulen - 1))
-				वापस -EFAULT;
-			अगर (put_user(zero, ubuf + ulen - 1))
-				वापस -EFAULT;
-			वापस -ENOSPC;
-		पूर्ण
-	पूर्ण
+			if (copy_to_user(ubuf, target_name, ulen - 1))
+				return -EFAULT;
+			if (put_user(zero, ubuf + ulen - 1))
+				return -EFAULT;
+			return -ENOSPC;
+		}
+	}
 
 	fill_link_info = iter_link->tinfo->reg_info->fill_link_info;
-	अगर (fill_link_info)
-		वापस fill_link_info(&iter_link->aux, info);
+	if (fill_link_info)
+		return fill_link_info(&iter_link->aux, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा bpf_link_ops bpf_iter_link_lops = अणु
+static const struct bpf_link_ops bpf_iter_link_lops = {
 	.release = bpf_iter_link_release,
 	.dealloc = bpf_iter_link_dealloc,
 	.update_prog = bpf_iter_link_replace,
 	.show_fdinfo = bpf_iter_link_show_fdinfo,
 	.fill_link_info = bpf_iter_link_fill_link_info,
-पूर्ण;
+};
 
-bool bpf_link_is_iter(काष्ठा bpf_link *link)
-अणु
-	वापस link->ops == &bpf_iter_link_lops;
-पूर्ण
+bool bpf_link_is_iter(struct bpf_link *link)
+{
+	return link->ops == &bpf_iter_link_lops;
+}
 
-पूर्णांक bpf_iter_link_attach(स्थिर जोड़ bpf_attr *attr, काष्ठा bpf_prog *prog)
-अणु
-	जोड़ bpf_iter_link_info __user *ulinfo;
-	काष्ठा bpf_link_primer link_primer;
-	काष्ठा bpf_iter_target_info *tinfo;
-	जोड़ bpf_iter_link_info linfo;
-	काष्ठा bpf_iter_link *link;
+int bpf_iter_link_attach(const union bpf_attr *attr, struct bpf_prog *prog)
+{
+	union bpf_iter_link_info __user *ulinfo;
+	struct bpf_link_primer link_primer;
+	struct bpf_iter_target_info *tinfo;
+	union bpf_iter_link_info linfo;
+	struct bpf_iter_link *link;
 	u32 prog_btf_id, linfo_len;
 	bool existed = false;
-	पूर्णांक err;
+	int err;
 
-	अगर (attr->link_create.target_fd || attr->link_create.flags)
-		वापस -EINVAL;
+	if (attr->link_create.target_fd || attr->link_create.flags)
+		return -EINVAL;
 
-	स_रखो(&linfo, 0, माप(जोड़ bpf_iter_link_info));
+	memset(&linfo, 0, sizeof(union bpf_iter_link_info));
 
 	ulinfo = u64_to_user_ptr(attr->link_create.iter_info);
 	linfo_len = attr->link_create.iter_info_len;
-	अगर (!ulinfo ^ !linfo_len)
-		वापस -EINVAL;
+	if (!ulinfo ^ !linfo_len)
+		return -EINVAL;
 
-	अगर (ulinfo) अणु
-		err = bpf_check_uarg_tail_zero(ulinfo, माप(linfo),
+	if (ulinfo) {
+		err = bpf_check_uarg_tail_zero(ulinfo, sizeof(linfo),
 					       linfo_len);
-		अगर (err)
-			वापस err;
-		linfo_len = min_t(u32, linfo_len, माप(linfo));
-		अगर (copy_from_user(&linfo, ulinfo, linfo_len))
-			वापस -EFAULT;
-	पूर्ण
+		if (err)
+			return err;
+		linfo_len = min_t(u32, linfo_len, sizeof(linfo));
+		if (copy_from_user(&linfo, ulinfo, linfo_len))
+			return -EFAULT;
+	}
 
 	prog_btf_id = prog->aux->attach_btf_id;
-	mutex_lock(&tarमाला_लो_mutex);
-	list_क्रम_each_entry(tinfo, &tarमाला_लो, list) अणु
-		अगर (tinfo->btf_id == prog_btf_id) अणु
+	mutex_lock(&targets_mutex);
+	list_for_each_entry(tinfo, &targets, list) {
+		if (tinfo->btf_id == prog_btf_id) {
 			existed = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&tarमाला_लो_mutex);
-	अगर (!existed)
-		वापस -ENOENT;
+			break;
+		}
+	}
+	mutex_unlock(&targets_mutex);
+	if (!existed)
+		return -ENOENT;
 
-	link = kzalloc(माप(*link), GFP_USER | __GFP_NOWARN);
-	अगर (!link)
-		वापस -ENOMEM;
+	link = kzalloc(sizeof(*link), GFP_USER | __GFP_NOWARN);
+	if (!link)
+		return -ENOMEM;
 
 	bpf_link_init(&link->link, BPF_LINK_TYPE_ITER, &bpf_iter_link_lops, prog);
 	link->tinfo = tinfo;
 
 	err  = bpf_link_prime(&link->link, &link_primer);
-	अगर (err) अणु
-		kमुक्त(link);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(link);
+		return err;
+	}
 
-	अगर (tinfo->reg_info->attach_target) अणु
+	if (tinfo->reg_info->attach_target) {
 		err = tinfo->reg_info->attach_target(prog, &linfo, &link->aux);
-		अगर (err) अणु
+		if (err) {
 			bpf_link_cleanup(&link_primer);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस bpf_link_settle(&link_primer);
-पूर्ण
+	return bpf_link_settle(&link_primer);
+}
 
-अटल व्योम init_seq_meta(काष्ठा bpf_iter_priv_data *priv_data,
-			  काष्ठा bpf_iter_target_info *tinfo,
-			  स्थिर काष्ठा bpf_iter_seq_info *seq_info,
-			  काष्ठा bpf_prog *prog)
-अणु
+static void init_seq_meta(struct bpf_iter_priv_data *priv_data,
+			  struct bpf_iter_target_info *tinfo,
+			  const struct bpf_iter_seq_info *seq_info,
+			  struct bpf_prog *prog)
+{
 	priv_data->tinfo = tinfo;
 	priv_data->seq_info = seq_info;
 	priv_data->prog = prog;
-	priv_data->session_id = atomic64_inc_वापस(&session_id);
+	priv_data->session_id = atomic64_inc_return(&session_id);
 	priv_data->seq_num = 0;
-	priv_data->करोne_stop = false;
-पूर्ण
+	priv_data->done_stop = false;
+}
 
-अटल पूर्णांक prepare_seq_file(काष्ठा file *file, काष्ठा bpf_iter_link *link,
-			    स्थिर काष्ठा bpf_iter_seq_info *seq_info)
-अणु
-	काष्ठा bpf_iter_priv_data *priv_data;
-	काष्ठा bpf_iter_target_info *tinfo;
-	काष्ठा bpf_prog *prog;
+static int prepare_seq_file(struct file *file, struct bpf_iter_link *link,
+			    const struct bpf_iter_seq_info *seq_info)
+{
+	struct bpf_iter_priv_data *priv_data;
+	struct bpf_iter_target_info *tinfo;
+	struct bpf_prog *prog;
 	u32 total_priv_dsize;
-	काष्ठा seq_file *seq;
-	पूर्णांक err = 0;
+	struct seq_file *seq;
+	int err = 0;
 
 	mutex_lock(&link_mutex);
 	prog = link->link.prog;
@@ -570,125 +569,125 @@ bool bpf_link_is_iter(काष्ठा bpf_link *link)
 	mutex_unlock(&link_mutex);
 
 	tinfo = link->tinfo;
-	total_priv_dsize = दुरत्व(काष्ठा bpf_iter_priv_data, target_निजी) +
+	total_priv_dsize = offsetof(struct bpf_iter_priv_data, target_private) +
 			   seq_info->seq_priv_size;
-	priv_data = __seq_खोलो_निजी(file, seq_info->seq_ops,
+	priv_data = __seq_open_private(file, seq_info->seq_ops,
 				       total_priv_dsize);
-	अगर (!priv_data) अणु
+	if (!priv_data) {
 		err = -ENOMEM;
-		जाओ release_prog;
-	पूर्ण
+		goto release_prog;
+	}
 
-	अगर (seq_info->init_seq_निजी) अणु
-		err = seq_info->init_seq_निजी(priv_data->target_निजी, &link->aux);
-		अगर (err)
-			जाओ release_seq_file;
-	पूर्ण
+	if (seq_info->init_seq_private) {
+		err = seq_info->init_seq_private(priv_data->target_private, &link->aux);
+		if (err)
+			goto release_seq_file;
+	}
 
 	init_seq_meta(priv_data, tinfo, seq_info, prog);
-	seq = file->निजी_data;
-	seq->निजी = priv_data->target_निजी;
+	seq = file->private_data;
+	seq->private = priv_data->target_private;
 
-	वापस 0;
+	return 0;
 
 release_seq_file:
-	seq_release_निजी(file->f_inode, file);
-	file->निजी_data = शून्य;
+	seq_release_private(file->f_inode, file);
+	file->private_data = NULL;
 release_prog:
 	bpf_prog_put(prog);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_iter_new_fd(काष्ठा bpf_link *link)
-अणु
-	काष्ठा bpf_iter_link *iter_link;
-	काष्ठा file *file;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक err, fd;
+int bpf_iter_new_fd(struct bpf_link *link)
+{
+	struct bpf_iter_link *iter_link;
+	struct file *file;
+	unsigned int flags;
+	int err, fd;
 
-	अगर (link->ops != &bpf_iter_link_lops)
-		वापस -EINVAL;
+	if (link->ops != &bpf_iter_link_lops)
+		return -EINVAL;
 
 	flags = O_RDONLY | O_CLOEXEC;
 	fd = get_unused_fd_flags(flags);
-	अगर (fd < 0)
-		वापस fd;
+	if (fd < 0)
+		return fd;
 
-	file = anon_inode_getfile("bpf_iter", &bpf_iter_fops, शून्य, flags);
-	अगर (IS_ERR(file)) अणु
+	file = anon_inode_getfile("bpf_iter", &bpf_iter_fops, NULL, flags);
+	if (IS_ERR(file)) {
 		err = PTR_ERR(file);
-		जाओ मुक्त_fd;
-	पूर्ण
+		goto free_fd;
+	}
 
-	iter_link = container_of(link, काष्ठा bpf_iter_link, link);
+	iter_link = container_of(link, struct bpf_iter_link, link);
 	err = prepare_seq_file(file, iter_link, __get_seq_info(iter_link));
-	अगर (err)
-		जाओ मुक्त_file;
+	if (err)
+		goto free_file;
 
 	fd_install(fd, file);
-	वापस fd;
+	return fd;
 
-मुक्त_file:
+free_file:
 	fput(file);
-मुक्त_fd:
+free_fd:
 	put_unused_fd(fd);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा bpf_prog *bpf_iter_get_info(काष्ठा bpf_iter_meta *meta, bool in_stop)
-अणु
-	काष्ठा bpf_iter_priv_data *iter_priv;
-	काष्ठा seq_file *seq;
-	व्योम *seq_priv;
+struct bpf_prog *bpf_iter_get_info(struct bpf_iter_meta *meta, bool in_stop)
+{
+	struct bpf_iter_priv_data *iter_priv;
+	struct seq_file *seq;
+	void *seq_priv;
 
 	seq = meta->seq;
-	अगर (seq->file->f_op != &bpf_iter_fops)
-		वापस शून्य;
+	if (seq->file->f_op != &bpf_iter_fops)
+		return NULL;
 
-	seq_priv = seq->निजी;
-	iter_priv = container_of(seq_priv, काष्ठा bpf_iter_priv_data,
-				 target_निजी);
+	seq_priv = seq->private;
+	iter_priv = container_of(seq_priv, struct bpf_iter_priv_data,
+				 target_private);
 
-	अगर (in_stop && iter_priv->करोne_stop)
-		वापस शून्य;
+	if (in_stop && iter_priv->done_stop)
+		return NULL;
 
 	meta->session_id = iter_priv->session_id;
 	meta->seq_num = iter_priv->seq_num;
 
-	वापस iter_priv->prog;
-पूर्ण
+	return iter_priv->prog;
+}
 
-पूर्णांक bpf_iter_run_prog(काष्ठा bpf_prog *prog, व्योम *ctx)
-अणु
-	पूर्णांक ret;
+int bpf_iter_run_prog(struct bpf_prog *prog, void *ctx)
+{
+	int ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	migrate_disable();
 	ret = BPF_PROG_RUN(prog, ctx);
 	migrate_enable();
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* bpf program can only वापस 0 or 1:
+	/* bpf program can only return 0 or 1:
 	 *  0 : okay
 	 *  1 : retry the same object
-	 * The bpf_iter_run_prog() वापस value
-	 * will be seq_ops->show() वापस value.
+	 * The bpf_iter_run_prog() return value
+	 * will be seq_ops->show() return value.
 	 */
-	वापस ret == 0 ? 0 : -EAGAIN;
-पूर्ण
+	return ret == 0 ? 0 : -EAGAIN;
+}
 
-BPF_CALL_4(bpf_क्रम_each_map_elem, काष्ठा bpf_map *, map, व्योम *, callback_fn,
-	   व्योम *, callback_ctx, u64, flags)
-अणु
-	वापस map->ops->map_क्रम_each_callback(map, callback_fn, callback_ctx, flags);
-पूर्ण
+BPF_CALL_4(bpf_for_each_map_elem, struct bpf_map *, map, void *, callback_fn,
+	   void *, callback_ctx, u64, flags)
+{
+	return map->ops->map_for_each_callback(map, callback_fn, callback_ctx, flags);
+}
 
-स्थिर काष्ठा bpf_func_proto bpf_क्रम_each_map_elem_proto = अणु
-	.func		= bpf_क्रम_each_map_elem,
+const struct bpf_func_proto bpf_for_each_map_elem_proto = {
+	.func		= bpf_for_each_map_elem,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_FUNC,
-	.arg3_type	= ARG_PTR_TO_STACK_OR_शून्य,
+	.arg3_type	= ARG_PTR_TO_STACK_OR_NULL,
 	.arg4_type	= ARG_ANYTHING,
-पूर्ण;
+};

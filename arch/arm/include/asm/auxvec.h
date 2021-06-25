@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <uapi/यंत्र/auxvec.h>
+#include <uapi/asm/auxvec.h>

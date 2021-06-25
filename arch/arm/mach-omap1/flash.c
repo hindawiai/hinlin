@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Flash support क्रम OMAP1
+ * Flash support for OMAP1
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/map.h>
+#include <linux/io.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/map.h>
 
-#समावेश <mach/tc.h>
-#समावेश "flash.h"
+#include <mach/tc.h>
+#include "flash.h"
 
-#समावेश <mach/hardware.h>
+#include <mach/hardware.h>
 
-व्योम omap1_set_vpp(काष्ठा platक्रमm_device *pdev, पूर्णांक enable)
-अणु
+void omap1_set_vpp(struct platform_device *pdev, int enable)
+{
 	u32 l;
 
-	l = omap_पढ़ोl(EMIFS_CONFIG);
-	अगर (enable)
+	l = omap_readl(EMIFS_CONFIG);
+	if (enable)
 		l |= OMAP_EMIFS_CONFIG_WP;
-	अन्यथा
+	else
 		l &= ~OMAP_EMIFS_CONFIG_WP;
-	omap_ग_लिखोl(l, EMIFS_CONFIG);
-पूर्ण
+	omap_writel(l, EMIFS_CONFIG);
+}

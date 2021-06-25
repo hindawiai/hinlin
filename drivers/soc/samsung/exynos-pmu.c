@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2011-2014 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com/
 //
 // Exynos - CPU PMU(Power Management Unit) support
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/syscon.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
 
-#समावेश <linux/soc/samsung/exynos-regs-pmu.h>
-#समावेश <linux/soc/samsung/exynos-pmu.h>
+#include <linux/soc/samsung/exynos-regs-pmu.h>
+#include <linux/soc/samsung/exynos-pmu.h>
 
-#समावेश "exynos-pmu.h"
+#include "exynos-pmu.h"
 
-काष्ठा exynos_pmu_context अणु
-	काष्ठा device *dev;
-	स्थिर काष्ठा exynos_pmu_data *pmu_data;
-पूर्ण;
+struct exynos_pmu_context {
+	struct device *dev;
+	const struct exynos_pmu_data *pmu_data;
+};
 
-व्योम __iomem *pmu_base_addr;
-अटल काष्ठा exynos_pmu_context *pmu_context;
+void __iomem *pmu_base_addr;
+static struct exynos_pmu_context *pmu_context;
 
-व्योम pmu_raw_ग_लिखोl(u32 val, u32 offset)
-अणु
-	ग_लिखोl_relaxed(val, pmu_base_addr + offset);
-पूर्ण
+void pmu_raw_writel(u32 val, u32 offset)
+{
+	writel_relaxed(val, pmu_base_addr + offset);
+}
 
-u32 pmu_raw_पढ़ोl(u32 offset)
-अणु
-	वापस पढ़ोl_relaxed(pmu_base_addr + offset);
-पूर्ण
+u32 pmu_raw_readl(u32 offset)
+{
+	return readl_relaxed(pmu_base_addr + offset);
+}
 
-व्योम exynos_sys_घातerकरोwn_conf(क्रमागत sys_घातerकरोwn mode)
-अणु
-	अचिन्हित पूर्णांक i;
-	स्थिर काष्ठा exynos_pmu_data *pmu_data;
+void exynos_sys_powerdown_conf(enum sys_powerdown mode)
+{
+	unsigned int i;
+	const struct exynos_pmu_data *pmu_data;
 
-	अगर (!pmu_context || !pmu_context->pmu_data)
-		वापस;
+	if (!pmu_context || !pmu_context->pmu_data)
+		return;
 
 	pmu_data = pmu_context->pmu_data;
 
-	अगर (pmu_data->घातerकरोwn_conf)
-		pmu_data->घातerकरोwn_conf(mode);
+	if (pmu_data->powerdown_conf)
+		pmu_data->powerdown_conf(mode);
 
-	अगर (pmu_data->pmu_config) अणु
-		क्रम (i = 0; (pmu_data->pmu_config[i].offset != PMU_TABLE_END); i++)
-			pmu_raw_ग_लिखोl(pmu_data->pmu_config[i].val[mode],
+	if (pmu_data->pmu_config) {
+		for (i = 0; (pmu_data->pmu_config[i].offset != PMU_TABLE_END); i++)
+			pmu_raw_writel(pmu_data->pmu_config[i].val[mode],
 					pmu_data->pmu_config[i].offset);
-	पूर्ण
+	}
 
-	अगर (pmu_data->घातerकरोwn_conf_extra)
-		pmu_data->घातerकरोwn_conf_extra(mode);
-पूर्ण
+	if (pmu_data->powerdown_conf_extra)
+		pmu_data->powerdown_conf_extra(mode);
+}
 
 /*
  * Split the data between ARM architectures because it is relatively big
  * and useless on other arch.
  */
-#अगर_घोषित CONFIG_EXYNOS_PMU_ARM_DRIVERS
-#घोषणा exynos_pmu_data_arm_ptr(data)	(&data)
-#अन्यथा
-#घोषणा exynos_pmu_data_arm_ptr(data)	शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_EXYNOS_PMU_ARM_DRIVERS
+#define exynos_pmu_data_arm_ptr(data)	(&data)
+#else
+#define exynos_pmu_data_arm_ptr(data)	NULL
+#endif
 
 /*
- * PMU platक्रमm driver and devicetree bindings.
+ * PMU platform driver and devicetree bindings.
  */
-अटल स्थिर काष्ठा of_device_id exynos_pmu_of_device_ids[] = अणु
-	अणु
+static const struct of_device_id exynos_pmu_of_device_ids[] = {
+	{
 		.compatible = "samsung,exynos3250-pmu",
 		.data = exynos_pmu_data_arm_ptr(exynos3250_pmu_data),
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4210-pmu",
 		.data = exynos_pmu_data_arm_ptr(exynos4210_pmu_data),
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos4412-pmu",
 		.data = exynos_pmu_data_arm_ptr(exynos4412_pmu_data),
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5250-pmu",
 		.data = exynos_pmu_data_arm_ptr(exynos5250_pmu_data),
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5410-pmu",
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5420-pmu",
 		.data = exynos_pmu_data_arm_ptr(exynos5420_pmu_data),
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos5433-pmu",
-	पूर्ण, अणु
+	}, {
 		.compatible = "samsung,exynos7-pmu",
-	पूर्ण,
-	अणु /*sentinel*/ पूर्ण,
-पूर्ण;
+	},
+	{ /*sentinel*/ },
+};
 
-अटल स्थिर काष्ठा mfd_cell exynos_pmu_devs[] = अणु
-	अणु .name = "exynos-clkout", पूर्ण,
-पूर्ण;
+static const struct mfd_cell exynos_pmu_devs[] = {
+	{ .name = "exynos-clkout", },
+};
 
-काष्ठा regmap *exynos_get_pmu_regmap(व्योम)
-अणु
-	काष्ठा device_node *np = of_find_matching_node(शून्य,
+struct regmap *exynos_get_pmu_regmap(void)
+{
+	struct device_node *np = of_find_matching_node(NULL,
 						      exynos_pmu_of_device_ids);
-	अगर (np)
-		वापस syscon_node_to_regmap(np);
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
+	if (np)
+		return syscon_node_to_regmap(np);
+	return ERR_PTR(-ENODEV);
+}
 EXPORT_SYMBOL_GPL(exynos_get_pmu_regmap);
 
-अटल पूर्णांक exynos_pmu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int exynos_pmu_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	pmu_base_addr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(pmu_base_addr))
-		वापस PTR_ERR(pmu_base_addr);
+	pmu_base_addr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(pmu_base_addr))
+		return PTR_ERR(pmu_base_addr);
 
 	pmu_context = devm_kzalloc(&pdev->dev,
-			माप(काष्ठा exynos_pmu_context),
+			sizeof(struct exynos_pmu_context),
 			GFP_KERNEL);
-	अगर (!pmu_context)
-		वापस -ENOMEM;
+	if (!pmu_context)
+		return -ENOMEM;
 	pmu_context->dev = dev;
 	pmu_context->pmu_data = of_device_get_match_data(dev);
 
-	अगर (pmu_context->pmu_data && pmu_context->pmu_data->pmu_init)
+	if (pmu_context->pmu_data && pmu_context->pmu_data->pmu_init)
 		pmu_context->pmu_data->pmu_init();
 
-	platक्रमm_set_drvdata(pdev, pmu_context);
+	platform_set_drvdata(pdev, pmu_context);
 
 	ret = devm_mfd_add_devices(dev, PLATFORM_DEVID_NONE, exynos_pmu_devs,
-				   ARRAY_SIZE(exynos_pmu_devs), शून्य, 0, शून्य);
-	अगर (ret)
-		वापस ret;
+				   ARRAY_SIZE(exynos_pmu_devs), NULL, 0, NULL);
+	if (ret)
+		return ret;
 
-	अगर (devm_of_platक्रमm_populate(dev))
+	if (devm_of_platform_populate(dev))
 		dev_err(dev, "Error populating children, reboot and poweroff might not work properly\n");
 
 	dev_dbg(dev, "Exynos PMU Driver probe done\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver exynos_pmu_driver = अणु
-	.driver  = अणु
+static struct platform_driver exynos_pmu_driver = {
+	.driver  = {
 		.name   = "exynos-pmu",
 		.of_match_table = exynos_pmu_of_device_ids,
-	पूर्ण,
+	},
 	.probe = exynos_pmu_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init exynos_pmu_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&exynos_pmu_driver);
+static int __init exynos_pmu_init(void)
+{
+	return platform_driver_register(&exynos_pmu_driver);
 
-पूर्ण
+}
 postcore_initcall(exynos_pmu_init);

@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ACPI configfs support
  *
  * Copyright (c) 2016 Intel Corporation
  */
 
-#घोषणा pr_fmt(fmt) "ACPI configfs: " fmt
+#define pr_fmt(fmt) "ACPI configfs: " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/configfs.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/security.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/configfs.h>
+#include <linux/acpi.h>
+#include <linux/security.h>
 
-#समावेश "acpica/accommon.h"
-#समावेश "acpica/actables.h"
+#include "acpica/accommon.h"
+#include "acpica/actables.h"
 
-अटल काष्ठा config_group *acpi_table_group;
+static struct config_group *acpi_table_group;
 
-काष्ठा acpi_table अणु
-	काष्ठा config_item cfg;
-	काष्ठा acpi_table_header *header;
+struct acpi_table {
+	struct config_item cfg;
+	struct acpi_table_header *header;
 	u32 index;
-पूर्ण;
+};
 
-अटल sमाप_प्रकार acpi_table_aml_ग_लिखो(काष्ठा config_item *cfg,
-				    स्थिर व्योम *data, माप_प्रकार size)
-अणु
-	स्थिर काष्ठा acpi_table_header *header = data;
-	काष्ठा acpi_table *table;
-	पूर्णांक ret = security_locked_करोwn(LOCKDOWN_ACPI_TABLES);
+static ssize_t acpi_table_aml_write(struct config_item *cfg,
+				    const void *data, size_t size)
+{
+	const struct acpi_table_header *header = data;
+	struct acpi_table *table;
+	int ret = security_locked_down(LOCKDOWN_ACPI_TABLES);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	table = container_of(cfg, काष्ठा acpi_table, cfg);
+	table = container_of(cfg, struct acpi_table, cfg);
 
-	अगर (table->header) अणु
+	if (table->header) {
 		pr_err("table already loaded\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (header->length != size) अणु
+	if (header->length != size) {
 		pr_err("invalid table length\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (स_भेद(header->signature, ACPI_SIG_SSDT, 4)) अणु
+	if (memcmp(header->signature, ACPI_SIG_SSDT, 4)) {
 		pr_err("invalid table signature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	table = container_of(cfg, काष्ठा acpi_table, cfg);
+	table = container_of(cfg, struct acpi_table, cfg);
 
 	table->header = kmemdup(header, header->length, GFP_KERNEL);
-	अगर (!table->header)
-		वापस -ENOMEM;
+	if (!table->header)
+		return -ENOMEM;
 
 	ret = acpi_load_table(table->header, &table->index);
-	अगर (ret) अणु
-		kमुक्त(table->header);
-		table->header = शून्य;
-	पूर्ण
+	if (ret) {
+		kfree(table->header);
+		table->header = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा acpi_table_header *get_header(काष्ठा config_item *cfg)
-अणु
-	काष्ठा acpi_table *table = container_of(cfg, काष्ठा acpi_table, cfg);
+static inline struct acpi_table_header *get_header(struct config_item *cfg)
+{
+	struct acpi_table *table = container_of(cfg, struct acpi_table, cfg);
 
-	अगर (!table->header)
+	if (!table->header)
 		pr_err("table not loaded\n");
 
-	वापस table->header;
-पूर्ण
+	return table->header;
+}
 
-अटल sमाप_प्रकार acpi_table_aml_पढ़ो(काष्ठा config_item *cfg,
-				   व्योम *data, माप_प्रकार size)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_aml_read(struct config_item *cfg,
+				   void *data, size_t size)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	अगर (data)
-		स_नकल(data, h, h->length);
+	if (data)
+		memcpy(data, h, h->length);
 
-	वापस h->length;
-पूर्ण
+	return h->length;
+}
 
-#घोषणा MAX_ACPI_TABLE_SIZE (128 * 1024)
+#define MAX_ACPI_TABLE_SIZE (128 * 1024)
 
-CONFIGFS_BIN_ATTR(acpi_table_, aml, शून्य, MAX_ACPI_TABLE_SIZE);
+CONFIGFS_BIN_ATTR(acpi_table_, aml, NULL, MAX_ACPI_TABLE_SIZE);
 
-अटल काष्ठा configfs_bin_attribute *acpi_table_bin_attrs[] = अणु
+static struct configfs_bin_attribute *acpi_table_bin_attrs[] = {
 	&acpi_table_attr_aml,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार acpi_table_signature_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_signature_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%.*s\n", ACPI_NAMESEG_SIZE, h->signature);
-पूर्ण
+	return sprintf(str, "%.*s\n", ACPI_NAMESEG_SIZE, h->signature);
+}
 
-अटल sमाप_प्रकार acpi_table_length_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_length_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%d\n", h->length);
-पूर्ण
+	return sprintf(str, "%d\n", h->length);
+}
 
-अटल sमाप_प्रकार acpi_table_revision_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_revision_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%d\n", h->revision);
-पूर्ण
+	return sprintf(str, "%d\n", h->revision);
+}
 
-अटल sमाप_प्रकार acpi_table_oem_id_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_oem_id_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%.*s\n", ACPI_OEM_ID_SIZE, h->oem_id);
-पूर्ण
+	return sprintf(str, "%.*s\n", ACPI_OEM_ID_SIZE, h->oem_id);
+}
 
-अटल sमाप_प्रकार acpi_table_oem_table_id_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_oem_table_id_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%.*s\n", ACPI_OEM_TABLE_ID_SIZE, h->oem_table_id);
-पूर्ण
+	return sprintf(str, "%.*s\n", ACPI_OEM_TABLE_ID_SIZE, h->oem_table_id);
+}
 
-अटल sमाप_प्रकार acpi_table_oem_revision_show(काष्ठा config_item *cfg, अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_oem_revision_show(struct config_item *cfg, char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%d\n", h->oem_revision);
-पूर्ण
+	return sprintf(str, "%d\n", h->oem_revision);
+}
 
-अटल sमाप_प्रकार acpi_table_asl_compiler_id_show(काष्ठा config_item *cfg,
-					       अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_asl_compiler_id_show(struct config_item *cfg,
+					       char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%.*s\n", ACPI_NAMESEG_SIZE, h->asl_compiler_id);
-पूर्ण
+	return sprintf(str, "%.*s\n", ACPI_NAMESEG_SIZE, h->asl_compiler_id);
+}
 
-अटल sमाप_प्रकार acpi_table_asl_compiler_revision_show(काष्ठा config_item *cfg,
-						     अक्षर *str)
-अणु
-	काष्ठा acpi_table_header *h = get_header(cfg);
+static ssize_t acpi_table_asl_compiler_revision_show(struct config_item *cfg,
+						     char *str)
+{
+	struct acpi_table_header *h = get_header(cfg);
 
-	अगर (!h)
-		वापस -EINVAL;
+	if (!h)
+		return -EINVAL;
 
-	वापस प्र_लिखो(str, "%d\n", h->asl_compiler_revision);
-पूर्ण
+	return sprintf(str, "%d\n", h->asl_compiler_revision);
+}
 
 CONFIGFS_ATTR_RO(acpi_table_, signature);
 CONFIGFS_ATTR_RO(acpi_table_, length);
@@ -191,7 +190,7 @@ CONFIGFS_ATTR_RO(acpi_table_, oem_revision);
 CONFIGFS_ATTR_RO(acpi_table_, asl_compiler_id);
 CONFIGFS_ATTR_RO(acpi_table_, asl_compiler_revision);
 
-अटल काष्ठा configfs_attribute *acpi_table_attrs[] = अणु
+static struct configfs_attribute *acpi_table_attrs[] = {
 	&acpi_table_attr_signature,
 	&acpi_table_attr_length,
 	&acpi_table_attr_revision,
@@ -200,90 +199,90 @@ CONFIGFS_ATTR_RO(acpi_table_, asl_compiler_revision);
 	&acpi_table_attr_oem_revision,
 	&acpi_table_attr_asl_compiler_id,
 	&acpi_table_attr_asl_compiler_revision,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा config_item_type acpi_table_type = अणु
+static const struct config_item_type acpi_table_type = {
 	.ct_owner = THIS_MODULE,
 	.ct_bin_attrs = acpi_table_bin_attrs,
 	.ct_attrs = acpi_table_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा config_item *acpi_table_make_item(काष्ठा config_group *group,
-						स्थिर अक्षर *name)
-अणु
-	काष्ठा acpi_table *table;
+static struct config_item *acpi_table_make_item(struct config_group *group,
+						const char *name)
+{
+	struct acpi_table *table;
 
-	table = kzalloc(माप(*table), GFP_KERNEL);
-	अगर (!table)
-		वापस ERR_PTR(-ENOMEM);
+	table = kzalloc(sizeof(*table), GFP_KERNEL);
+	if (!table)
+		return ERR_PTR(-ENOMEM);
 
 	config_item_init_type_name(&table->cfg, name, &acpi_table_type);
-	वापस &table->cfg;
-पूर्ण
+	return &table->cfg;
+}
 
-अटल व्योम acpi_table_drop_item(काष्ठा config_group *group,
-				 काष्ठा config_item *cfg)
-अणु
-	काष्ठा acpi_table *table = container_of(cfg, काष्ठा acpi_table, cfg);
+static void acpi_table_drop_item(struct config_group *group,
+				 struct config_item *cfg)
+{
+	struct acpi_table *table = container_of(cfg, struct acpi_table, cfg);
 
 	ACPI_INFO(("Host-directed Dynamic ACPI Table Unload"));
 	acpi_unload_table(table->index);
 	config_item_put(cfg);
-पूर्ण
+}
 
-अटल काष्ठा configfs_group_operations acpi_table_group_ops = अणु
+static struct configfs_group_operations acpi_table_group_ops = {
 	.make_item = acpi_table_make_item,
 	.drop_item = acpi_table_drop_item,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type acpi_tables_type = अणु
+static const struct config_item_type acpi_tables_type = {
 	.ct_owner = THIS_MODULE,
 	.ct_group_ops = &acpi_table_group_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा config_item_type acpi_root_group_type = अणु
+static const struct config_item_type acpi_root_group_type = {
 	.ct_owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा configfs_subप्रणाली acpi_configfs = अणु
-	.su_group = अणु
-		.cg_item = अणु
+static struct configfs_subsystem acpi_configfs = {
+	.su_group = {
+		.cg_item = {
 			.ci_namebuf = "acpi",
 			.ci_type = &acpi_root_group_type,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	.su_mutex = __MUTEX_INITIALIZER(acpi_configfs.su_mutex),
-पूर्ण;
+};
 
-अटल पूर्णांक __init acpi_configfs_init(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा config_group *root = &acpi_configfs.su_group;
+static int __init acpi_configfs_init(void)
+{
+	int ret;
+	struct config_group *root = &acpi_configfs.su_group;
 
 	config_group_init(root);
 
-	ret = configfs_रेजिस्टर_subप्रणाली(&acpi_configfs);
-	अगर (ret)
-		वापस ret;
+	ret = configfs_register_subsystem(&acpi_configfs);
+	if (ret)
+		return ret;
 
-	acpi_table_group = configfs_रेजिस्टर_शेष_group(root, "table",
+	acpi_table_group = configfs_register_default_group(root, "table",
 							   &acpi_tables_type);
-	अगर (IS_ERR(acpi_table_group)) अणु
-		configfs_unरेजिस्टर_subप्रणाली(&acpi_configfs);
-		वापस PTR_ERR(acpi_table_group);
-	पूर्ण
+	if (IS_ERR(acpi_table_group)) {
+		configfs_unregister_subsystem(&acpi_configfs);
+		return PTR_ERR(acpi_table_group);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(acpi_configfs_init);
 
-अटल व्योम __निकास acpi_configfs_निकास(व्योम)
-अणु
-	configfs_unरेजिस्टर_शेष_group(acpi_table_group);
-	configfs_unरेजिस्टर_subप्रणाली(&acpi_configfs);
-पूर्ण
-module_निकास(acpi_configfs_निकास);
+static void __exit acpi_configfs_exit(void)
+{
+	configfs_unregister_default_group(acpi_table_group);
+	configfs_unregister_subsystem(&acpi_configfs);
+}
+module_exit(acpi_configfs_exit);
 
 MODULE_AUTHOR("Octavian Purdila <octavian.purdila@intel.com>");
 MODULE_DESCRIPTION("ACPI configfs support");

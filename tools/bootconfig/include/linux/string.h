@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SKC_LINUX_STRING_H
-#घोषणा _SKC_LINUX_STRING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SKC_LINUX_STRING_H
+#define _SKC_LINUX_STRING_H
 
-#समावेश <माला.स>
+#include <string.h>
 
 /* Copied from lib/string.c */
-अटल अंतरभूत अक्षर *skip_spaces(स्थिर अक्षर *str)
-अणु
-	जबतक (है_खाली(*str))
+static inline char *skip_spaces(const char *str)
+{
+	while (isspace(*str))
 		++str;
-	वापस (अक्षर *)str;
-पूर्ण
+	return (char *)str;
+}
 
-अटल अंतरभूत अक्षर *strim(अक्षर *s)
-अणु
-	माप_प्रकार size;
-	अक्षर *end;
+static inline char *strim(char *s)
+{
+	size_t size;
+	char *end;
 
-	size = म_माप(s);
-	अगर (!size)
-		वापस s;
+	size = strlen(s);
+	if (!size)
+		return s;
 
 	end = s + size - 1;
-	जबतक (end >= s && है_खाली(*end))
+	while (end >= s && isspace(*end))
 		end--;
 	*(end + 1) = '\0';
 
-	वापस skip_spaces(s);
-पूर्ण
+	return skip_spaces(s);
+}
 
-#पूर्ण_अगर
+#endif

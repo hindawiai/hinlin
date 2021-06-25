@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 NVIDIA Corporation
  */
 
-#अगर_अघोषित __SOC_TEGRA_PM_H__
-#घोषणा __SOC_TEGRA_PM_H__
+#ifndef __SOC_TEGRA_PM_H__
+#define __SOC_TEGRA_PM_H__
 
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/errno.h>
 
-क्रमागत tegra_suspend_mode अणु
+enum tegra_suspend_mode {
 	TEGRA_SUSPEND_NONE = 0,
 	TEGRA_SUSPEND_LP2, /* CPU voltage off */
 	TEGRA_SUSPEND_LP1, /* CPU voltage off, DRAM self-refresh */
 	TEGRA_SUSPEND_LP0, /* CPU + core voltage off, DRAM self-refresh */
 	TEGRA_MAX_SUSPEND_MODE,
-पूर्ण;
+};
 
-#अगर defined(CONFIG_PM_SLEEP) && defined(CONFIG_ARM)
-क्रमागत tegra_suspend_mode
-tegra_pm_validate_suspend_mode(क्रमागत tegra_suspend_mode mode);
+#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_ARM)
+enum tegra_suspend_mode
+tegra_pm_validate_suspend_mode(enum tegra_suspend_mode mode);
 
-/* low-level resume entry poपूर्णांक */
-व्योम tegra_resume(व्योम);
+/* low-level resume entry point */
+void tegra_resume(void);
 
-पूर्णांक tegra30_pm_secondary_cpu_suspend(अचिन्हित दीर्घ arg);
-व्योम tegra_pm_clear_cpu_in_lp2(व्योम);
-व्योम tegra_pm_set_cpu_in_lp2(व्योम);
-पूर्णांक tegra_pm_enter_lp2(व्योम);
-पूर्णांक tegra_pm_park_secondary_cpu(अचिन्हित दीर्घ cpu);
-#अन्यथा
-अटल अंतरभूत क्रमागत tegra_suspend_mode
-tegra_pm_validate_suspend_mode(क्रमागत tegra_suspend_mode mode)
-अणु
-	वापस TEGRA_SUSPEND_NONE;
-पूर्ण
+int tegra30_pm_secondary_cpu_suspend(unsigned long arg);
+void tegra_pm_clear_cpu_in_lp2(void);
+void tegra_pm_set_cpu_in_lp2(void);
+int tegra_pm_enter_lp2(void);
+int tegra_pm_park_secondary_cpu(unsigned long cpu);
+#else
+static inline enum tegra_suspend_mode
+tegra_pm_validate_suspend_mode(enum tegra_suspend_mode mode)
+{
+	return TEGRA_SUSPEND_NONE;
+}
 
-अटल अंतरभूत व्योम tegra_resume(व्योम)
-अणु
-पूर्ण
+static inline void tegra_resume(void)
+{
+}
 
-अटल अंतरभूत पूर्णांक tegra30_pm_secondary_cpu_suspend(अचिन्हित दीर्घ arg)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int tegra30_pm_secondary_cpu_suspend(unsigned long arg)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत व्योम tegra_pm_clear_cpu_in_lp2(व्योम)
-अणु
-पूर्ण
+static inline void tegra_pm_clear_cpu_in_lp2(void)
+{
+}
 
-अटल अंतरभूत व्योम tegra_pm_set_cpu_in_lp2(व्योम)
-अणु
-पूर्ण
+static inline void tegra_pm_set_cpu_in_lp2(void)
+{
+}
 
-अटल अंतरभूत पूर्णांक tegra_pm_enter_lp2(व्योम)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int tegra_pm_enter_lp2(void)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक tegra_pm_park_secondary_cpu(अचिन्हित दीर्घ cpu)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+static inline int tegra_pm_park_secondary_cpu(unsigned long cpu)
+{
+	return -ENOTSUPP;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-#पूर्ण_अगर /* __SOC_TEGRA_PM_H__ */
+#endif /* __SOC_TEGRA_PM_H__ */

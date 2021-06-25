@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  * 
  *  Misc memory accessors
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <sound/core.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
+#include <sound/core.h>
 
 /**
  * copy_to_user_fromio - copy data from mmio-space to user-space
- * @dst: the destination poपूर्णांकer on user-space
- * @src: the source poपूर्णांकer on mmio
+ * @dst: the destination pointer on user-space
+ * @src: the source pointer on mmio
  * @count: the data size to copy in bytes
  *
  * Copies the data from mmio-space to user-space.
  *
- * Return: Zero अगर successful, or non-zero on failure.
+ * Return: Zero if successful, or non-zero on failure.
  */
-पूर्णांक copy_to_user_fromio(व्योम __user *dst, स्थिर अस्थिर व्योम __iomem *src, माप_प्रकार count)
-अणु
-#अगर defined(__i386__) || defined(CONFIG_SPARC32)
-	वापस copy_to_user(dst, (स्थिर व्योम __क्रमce*)src, count) ? -EFAULT : 0;
-#अन्यथा
-	अक्षर buf[256];
-	जबतक (count) अणु
-		माप_प्रकार c = count;
-		अगर (c > माप(buf))
-			c = माप(buf);
-		स_नकल_fromio(buf, (व्योम __iomem *)src, c);
-		अगर (copy_to_user(dst, buf, c))
-			वापस -EFAULT;
+int copy_to_user_fromio(void __user *dst, const volatile void __iomem *src, size_t count)
+{
+#if defined(__i386__) || defined(CONFIG_SPARC32)
+	return copy_to_user(dst, (const void __force*)src, count) ? -EFAULT : 0;
+#else
+	char buf[256];
+	while (count) {
+		size_t c = count;
+		if (c > sizeof(buf))
+			c = sizeof(buf);
+		memcpy_fromio(buf, (void __iomem *)src, c);
+		if (copy_to_user(dst, buf, c))
+			return -EFAULT;
 		count -= c;
 		dst += c;
 		src += c;
-	पूर्ण
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	}
+	return 0;
+#endif
+}
 EXPORT_SYMBOL(copy_to_user_fromio);
 
 /**
  * copy_from_user_toio - copy data from user-space to mmio-space
- * @dst: the destination poपूर्णांकer on mmio-space
- * @src: the source poपूर्णांकer on user-space
+ * @dst: the destination pointer on mmio-space
+ * @src: the source pointer on user-space
  * @count: the data size to copy in bytes
  *
  * Copies the data from user-space to mmio-space.
  *
- * Return: Zero अगर successful, or non-zero on failure.
+ * Return: Zero if successful, or non-zero on failure.
  */
-पूर्णांक copy_from_user_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम __user *src, माप_प्रकार count)
-अणु
-#अगर defined(__i386__) || defined(CONFIG_SPARC32)
-	वापस copy_from_user((व्योम __क्रमce *)dst, src, count) ? -EFAULT : 0;
-#अन्यथा
-	अक्षर buf[256];
-	जबतक (count) अणु
-		माप_प्रकार c = count;
-		अगर (c > माप(buf))
-			c = माप(buf);
-		अगर (copy_from_user(buf, src, c))
-			वापस -EFAULT;
-		स_नकल_toio(dst, buf, c);
+int copy_from_user_toio(volatile void __iomem *dst, const void __user *src, size_t count)
+{
+#if defined(__i386__) || defined(CONFIG_SPARC32)
+	return copy_from_user((void __force *)dst, src, count) ? -EFAULT : 0;
+#else
+	char buf[256];
+	while (count) {
+		size_t c = count;
+		if (c > sizeof(buf))
+			c = sizeof(buf);
+		if (copy_from_user(buf, src, c))
+			return -EFAULT;
+		memcpy_toio(dst, buf, c);
 		count -= c;
 		dst += c;
 		src += c;
-	पूर्ण
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	}
+	return 0;
+#endif
+}
 EXPORT_SYMBOL(copy_from_user_toio);

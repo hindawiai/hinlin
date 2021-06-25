@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // PCM3060 I2C driver
 //
 // Copyright (C) 2018 Kirill Marinushkin <kmarinushkin@birdec.com>
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <sound/soc.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <sound/soc.h>
 
-#समावेश "pcm3060.h"
+#include "pcm3060.h"
 
-अटल पूर्णांक pcm3060_i2c_probe(काष्ठा i2c_client *i2c,
-			     स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा pcm3060_priv *priv;
+static int pcm3060_i2c_probe(struct i2c_client *i2c,
+			     const struct i2c_device_id *id)
+{
+	struct pcm3060_priv *priv;
 
-	priv = devm_kzalloc(&i2c->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&i2c->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	i2c_set_clientdata(i2c, priv);
 
 	priv->regmap = devm_regmap_init_i2c(i2c, &pcm3060_regmap);
-	अगर (IS_ERR(priv->regmap))
-		वापस PTR_ERR(priv->regmap);
+	if (IS_ERR(priv->regmap))
+		return PTR_ERR(priv->regmap);
 
-	वापस pcm3060_probe(&i2c->dev);
-पूर्ण
+	return pcm3060_probe(&i2c->dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id pcm3060_i2c_id[] = अणु
-	अणु .name = "pcm3060" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id pcm3060_i2c_id[] = {
+	{ .name = "pcm3060" },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, pcm3060_i2c_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pcm3060_of_match[] = अणु
-	अणु .compatible = "ti,pcm3060" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pcm3060_of_match[] = {
+	{ .compatible = "ti,pcm3060" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, pcm3060_of_match);
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
-अटल काष्ठा i2c_driver pcm3060_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver pcm3060_i2c_driver = {
+	.driver = {
 		.name = "pcm3060",
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 		.of_match_table = pcm3060_of_match,
-#पूर्ण_अगर /* CONFIG_OF */
-	पूर्ण,
+#endif /* CONFIG_OF */
+	},
 	.id_table = pcm3060_i2c_id,
 	.probe = pcm3060_i2c_probe,
-पूर्ण;
+};
 
 module_i2c_driver(pcm3060_i2c_driver);
 

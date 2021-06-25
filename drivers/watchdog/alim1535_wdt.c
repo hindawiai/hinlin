@@ -1,451 +1,450 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	Watchकरोg क्रम the 7101 PMU version found in the ALi M1535 chipsets
+ *	Watchdog for the 7101 PMU version found in the ALi M1535 chipsets
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/ioport.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/pci.h>
+#include <linux/uaccess.h>
+#include <linux/io.h>
 
-#घोषणा WATCHDOG_NAME "ALi_M1535"
-#घोषणा WATCHDOG_TIMEOUT 60	/* 60 sec शेष समयout */
+#define WATCHDOG_NAME "ALi_M1535"
+#define WATCHDOG_TIMEOUT 60	/* 60 sec default timeout */
 
-/* पूर्णांकernal variables */
-अटल अचिन्हित दीर्घ ali_is_खोलो;
-अटल अक्षर ali_expect_release;
-अटल काष्ठा pci_dev *ali_pci;
-अटल u32 ali_समयout_bits;		/* stores the computed समयout */
-अटल DEFINE_SPINLOCK(ali_lock);	/* Guards the hardware */
+/* internal variables */
+static unsigned long ali_is_open;
+static char ali_expect_release;
+static struct pci_dev *ali_pci;
+static u32 ali_timeout_bits;		/* stores the computed timeout */
+static DEFINE_SPINLOCK(ali_lock);	/* Guards the hardware */
 
 /* module parameters */
-अटल पूर्णांक समयout = WATCHDOG_TIMEOUT;
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout,
+static int timeout = WATCHDOG_TIMEOUT;
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout,
 		"Watchdog timeout in seconds. (0 < timeout < 18000, default="
 				__MODULE_STRING(WATCHDOG_TIMEOUT) ")");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /*
- *	ali_start	-	start watchकरोg countकरोwn
+ *	ali_start	-	start watchdog countdown
  *
- *	Starts the समयr running providing the समयr has a counter
+ *	Starts the timer running providing the timer has a counter
  *	configuration set.
  */
 
-अटल व्योम ali_start(व्योम)
-अणु
+static void ali_start(void)
+{
 	u32 val;
 
 	spin_lock(&ali_lock);
 
-	pci_पढ़ो_config_dword(ali_pci, 0xCC, &val);
+	pci_read_config_dword(ali_pci, 0xCC, &val);
 	val &= ~0x3F;	/* Mask count */
-	val |= (1 << 25) | ali_समयout_bits;
-	pci_ग_लिखो_config_dword(ali_pci, 0xCC, val);
+	val |= (1 << 25) | ali_timeout_bits;
+	pci_write_config_dword(ali_pci, 0xCC, val);
 
 	spin_unlock(&ali_lock);
-पूर्ण
+}
 
 /*
- *	ali_stop	-	stop the समयr countकरोwn
+ *	ali_stop	-	stop the timer countdown
  *
- *	Stop the ALi watchकरोg countकरोwn
+ *	Stop the ALi watchdog countdown
  */
 
-अटल व्योम ali_stop(व्योम)
-अणु
+static void ali_stop(void)
+{
 	u32 val;
 
 	spin_lock(&ali_lock);
 
-	pci_पढ़ो_config_dword(ali_pci, 0xCC, &val);
+	pci_read_config_dword(ali_pci, 0xCC, &val);
 	val &= ~0x3F;		/* Mask count to zero (disabled) */
-	val &= ~(1 << 25);	/* and क्रम safety mask the reset enable */
-	pci_ग_लिखो_config_dword(ali_pci, 0xCC, val);
+	val &= ~(1 << 25);	/* and for safety mask the reset enable */
+	pci_write_config_dword(ali_pci, 0xCC, val);
 
 	spin_unlock(&ali_lock);
-पूर्ण
+}
 
 /*
- *	ali_keepalive	-	send a keepalive to the watchकरोg
+ *	ali_keepalive	-	send a keepalive to the watchdog
  *
- *	Send a keepalive to the समयr (actually we restart the समयr).
+ *	Send a keepalive to the timer (actually we restart the timer).
  */
 
-अटल व्योम ali_keepalive(व्योम)
-अणु
+static void ali_keepalive(void)
+{
 	ali_start();
-पूर्ण
+}
 
 /*
- *	ali_समय_रखोr	-	compute the समयr reload value
- *	@t: समय in seconds
+ *	ali_settimer	-	compute the timer reload value
+ *	@t: time in seconds
  *
- *	Computes the समयout values needed
+ *	Computes the timeout values needed
  */
 
-अटल पूर्णांक ali_समय_रखोr(पूर्णांक t)
-अणु
-	अगर (t < 0)
-		वापस -EINVAL;
-	अन्यथा अगर (t < 60)
-		ali_समयout_bits = t|(1 << 6);
-	अन्यथा अगर (t < 3600)
-		ali_समयout_bits = (t / 60)|(1 << 7);
-	अन्यथा अगर (t < 18000)
-		ali_समयout_bits = (t / 300)|(1 << 6)|(1 << 7);
-	अन्यथा
-		वापस -EINVAL;
+static int ali_settimer(int t)
+{
+	if (t < 0)
+		return -EINVAL;
+	else if (t < 60)
+		ali_timeout_bits = t|(1 << 6);
+	else if (t < 3600)
+		ali_timeout_bits = (t / 60)|(1 << 7);
+	else if (t < 18000)
+		ali_timeout_bits = (t / 300)|(1 << 6)|(1 << 7);
+	else
+		return -EINVAL;
 
-	समयout = t;
-	वापस 0;
-पूर्ण
+	timeout = t;
+	return 0;
+}
 
 /*
- *	/dev/watchकरोg handling
+ *	/dev/watchdog handling
  */
 
 /*
- *	ali_ग_लिखो	-	ग_लिखोs to ALi watchकरोg
+ *	ali_write	-	writes to ALi watchdog
  *	@file: file from VFS
  *	@data: user address of data
  *	@len: length of data
- *	@ppos: poपूर्णांकer to the file offset
+ *	@ppos: pointer to the file offset
  *
- *	Handle a ग_लिखो to the ALi watchकरोg. Writing to the file pings
- *	the watchकरोg and resets it. Writing the magic 'V' sequence allows
- *	the next बंद to turn off the watchकरोg.
+ *	Handle a write to the ALi watchdog. Writing to the file pings
+ *	the watchdog and resets it. Writing the magic 'V' sequence allows
+ *	the next close to turn off the watchdog.
  */
 
-अटल sमाप_प्रकार ali_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-						माप_प्रकार len, loff_t *ppos)
-अणु
-	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
-	अगर (len) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t ali_write(struct file *file, const char __user *data,
+						size_t len, loff_t *ppos)
+{
+	/* See if we got the magic character 'V' and reload the timer */
+	if (len) {
+		if (!nowayout) {
+			size_t i;
 
-			/* note: just in हाल someone wrote the
-			   magic अक्षरacter five months ago... */
+			/* note: just in case someone wrote the
+			   magic character five months ago... */
 			ali_expect_release = 0;
 
 			/* scan to see whether or not we got
-			   the magic अक्षरacter */
-			क्रम (i = 0; i != len; i++) अणु
-				अक्षर c;
-				अगर (get_user(c, data + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
+			   the magic character */
+			for (i = 0; i != len; i++) {
+				char c;
+				if (get_user(c, data + i))
+					return -EFAULT;
+				if (c == 'V')
 					ali_expect_release = 42;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* someone wrote to us, we should reload the समयr */
+		/* someone wrote to us, we should reload the timer */
 		ali_start();
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
 /*
- *	ali_ioctl	-	handle watchकरोg ioctls
- *	@file: VFS file poपूर्णांकer
+ *	ali_ioctl	-	handle watchdog ioctls
+ *	@file: VFS file pointer
  *	@cmd: ioctl number
  *	@arg: arguments to the ioctl
  *
- *	Handle the watchकरोg ioctls supported by the ALi driver. Really
+ *	Handle the watchdog ioctls supported by the ALi driver. Really
  *	we want an extension to enable irq ack monitoring and the like
  */
 
-अटल दीर्घ ali_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static long ali_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	static const struct watchdog_info ident = {
 		.options =		WDIOF_KEEPALIVEPING |
 					WDIOF_SETTIMEOUT |
 					WDIOF_MAGICCLOSE,
 		.firmware_version =	0,
 		.identity =		"ALi M1535 WatchDog Timer",
-	पूर्ण;
+	};
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
 
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, p);
-	हाल WDIOC_SETOPTIONS:
-	अणु
-		पूर्णांक new_options, retval = -EINVAL;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, p);
+	case WDIOC_SETOPTIONS:
+	{
+		int new_options, retval = -EINVAL;
 
-		अगर (get_user(new_options, p))
-			वापस -EFAULT;
-		अगर (new_options & WDIOS_DISABLECARD) अणु
+		if (get_user(new_options, p))
+			return -EFAULT;
+		if (new_options & WDIOS_DISABLECARD) {
 			ali_stop();
 			retval = 0;
-		पूर्ण
-		अगर (new_options & WDIOS_ENABLECARD) अणु
+		}
+		if (new_options & WDIOS_ENABLECARD) {
 			ali_start();
 			retval = 0;
-		पूर्ण
-		वापस retval;
-	पूर्ण
-	हाल WDIOC_KEEPALIVE:
+		}
+		return retval;
+	}
+	case WDIOC_KEEPALIVE:
 		ali_keepalive();
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-	अणु
-		पूर्णांक new_समयout;
-		अगर (get_user(new_समयout, p))
-			वापस -EFAULT;
-		अगर (ali_समय_रखोr(new_समयout))
-			वापस -EINVAL;
+		return 0;
+	case WDIOC_SETTIMEOUT:
+	{
+		int new_timeout;
+		if (get_user(new_timeout, p))
+			return -EFAULT;
+		if (ali_settimer(new_timeout))
+			return -EINVAL;
 		ali_keepalive();
-	पूर्ण
+	}
 		fallthrough;
-	हाल WDIOC_GETTIMEOUT:
-		वापस put_user(समयout, p);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	case WDIOC_GETTIMEOUT:
+		return put_user(timeout, p);
+	default:
+		return -ENOTTY;
+	}
+}
 
 /*
- *	ali_खोलो	-	handle खोलो of ali watchकरोg
+ *	ali_open	-	handle open of ali watchdog
  *	@inode: inode from VFS
  *	@file: file from VFS
  *
- *	Open the ALi watchकरोg device. Ensure only one person खोलोs it
- *	at a समय. Also start the watchकरोg running.
+ *	Open the ALi watchdog device. Ensure only one person opens it
+ *	at a time. Also start the watchdog running.
  */
 
-अटल पूर्णांक ali_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* /dev/watchकरोg can only be खोलोed once */
-	अगर (test_and_set_bit(0, &ali_is_खोलो))
-		वापस -EBUSY;
+static int ali_open(struct inode *inode, struct file *file)
+{
+	/* /dev/watchdog can only be opened once */
+	if (test_and_set_bit(0, &ali_is_open))
+		return -EBUSY;
 
 	/* Activate */
 	ali_start();
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
 /*
- *	ali_release	-	बंद an ALi watchकरोg
+ *	ali_release	-	close an ALi watchdog
  *	@inode: inode from VFS
  *	@file: file from VFS
  *
- *	Close the ALi watchकरोg device. Actual shutकरोwn of the समयr
- *	only occurs अगर the magic sequence has been set.
+ *	Close the ALi watchdog device. Actual shutdown of the timer
+ *	only occurs if the magic sequence has been set.
  */
 
-अटल पूर्णांक ali_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int ali_release(struct inode *inode, struct file *file)
+{
 	/*
-	 *      Shut off the समयr.
+	 *      Shut off the timer.
 	 */
-	अगर (ali_expect_release == 42)
+	if (ali_expect_release == 42)
 		ali_stop();
-	अन्यथा अणु
+	else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		ali_keepalive();
-	पूर्ण
-	clear_bit(0, &ali_is_खोलो);
+	}
+	clear_bit(0, &ali_is_open);
 	ali_expect_release = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	ali_notअगरy_sys	-	System करोwn notअगरier
+ *	ali_notify_sys	-	System down notifier
  *
- *	Notअगरier क्रम प्रणाली करोwn
+ *	Notifier for system down
  */
 
 
-अटल पूर्णांक ali_notअगरy_sys(काष्ठा notअगरier_block *this,
-					अचिन्हित दीर्घ code, व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
+static int ali_notify_sys(struct notifier_block *this,
+					unsigned long code, void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
 		ali_stop();		/* Turn the WDT off */
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
- *	Data क्रम PCI driver पूर्णांकerface
+ *	Data for PCI driver interface
  *
- *	This data only exists क्रम exporting the supported
- *	PCI ids via MODULE_DEVICE_TABLE.  We करो not actually
- *	रेजिस्टर a pci_driver, because someone अन्यथा might one day
- *	want to रेजिस्टर another driver on the same PCI id.
+ *	This data only exists for exporting the supported
+ *	PCI ids via MODULE_DEVICE_TABLE.  We do not actually
+ *	register a pci_driver, because someone else might one day
+ *	want to register another driver on the same PCI id.
  */
 
-अटल स्थिर काष्ठा pci_device_id ali_pci_tbl[] __used = अणु
-	अणु PCI_VENDOR_ID_AL, 0x1533, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
-	अणु PCI_VENDOR_ID_AL, 0x1535, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id ali_pci_tbl[] __used = {
+	{ PCI_VENDOR_ID_AL, 0x1533, PCI_ANY_ID, PCI_ANY_ID,},
+	{ PCI_VENDOR_ID_AL, 0x1535, PCI_ANY_ID, PCI_ANY_ID,},
+	{ 0, },
+};
 MODULE_DEVICE_TABLE(pci, ali_pci_tbl);
 
 /*
- *	ali_find_watchकरोg	-	find a 1535 and 7101
+ *	ali_find_watchdog	-	find a 1535 and 7101
  *
- *	Scans the PCI hardware क्रम a 1535 series bridge and matching 7101
- *	watchकरोg device. This may be overtight but it is better to be safe
+ *	Scans the PCI hardware for a 1535 series bridge and matching 7101
+ *	watchdog device. This may be overtight but it is better to be safe
  */
 
-अटल पूर्णांक __init ali_find_watchकरोg(व्योम)
-अणु
-	काष्ठा pci_dev *pdev;
-	u32 wकरोg;
+static int __init ali_find_watchdog(void)
+{
+	struct pci_dev *pdev;
+	u32 wdog;
 
-	/* Check क्रम a 1533/1535 series bridge */
-	pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x1535, शून्य);
-	अगर (pdev == शून्य)
-		pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x1533, शून्य);
-	अगर (pdev == शून्य)
-		वापस -ENODEV;
+	/* Check for a 1533/1535 series bridge */
+	pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x1535, NULL);
+	if (pdev == NULL)
+		pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x1533, NULL);
+	if (pdev == NULL)
+		return -ENODEV;
 	pci_dev_put(pdev);
 
-	/* Check क्रम the a 7101 PMU */
-	pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x7101, शून्य);
-	अगर (pdev == शून्य)
-		वापस -ENODEV;
+	/* Check for the a 7101 PMU */
+	pdev = pci_get_device(PCI_VENDOR_ID_AL, 0x7101, NULL);
+	if (pdev == NULL)
+		return -ENODEV;
 
-	अगर (pci_enable_device(pdev)) अणु
+	if (pci_enable_device(pdev)) {
 		pci_dev_put(pdev);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ali_pci = pdev;
 
 	/*
-	 *	Initialize the समयr bits
+	 *	Initialize the timer bits
 	 */
-	pci_पढ़ो_config_dword(pdev, 0xCC, &wकरोg);
+	pci_read_config_dword(pdev, 0xCC, &wdog);
 
 	/* Timer bits */
-	wकरोg &= ~0x3F;
+	wdog &= ~0x3F;
 	/* Issued events */
-	wकरोg &= ~((1 << 27)|(1 << 26)|(1 << 25)|(1 << 24));
+	wdog &= ~((1 << 27)|(1 << 26)|(1 << 25)|(1 << 24));
 	/* No monitor bits */
-	wकरोg &= ~((1 << 16)|(1 << 13)|(1 << 12)|(1 << 11)|(1 << 10)|(1 << 9));
+	wdog &= ~((1 << 16)|(1 << 13)|(1 << 12)|(1 << 11)|(1 << 10)|(1 << 9));
 
-	pci_ग_लिखो_config_dword(pdev, 0xCC, wकरोg);
+	pci_write_config_dword(pdev, 0xCC, wdog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Kernel Interfaces
  */
 
-अटल स्थिर काष्ठा file_operations ali_fops = अणु
+static const struct file_operations ali_fops = {
 	.owner		=	THIS_MODULE,
 	.llseek		=	no_llseek,
-	.ग_लिखो		=	ali_ग_लिखो,
+	.write		=	ali_write,
 	.unlocked_ioctl =	ali_ioctl,
 	.compat_ioctl	= 	compat_ptr_ioctl,
-	.खोलो		=	ali_खोलो,
+	.open		=	ali_open,
 	.release	=	ali_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice ali_miscdev = अणु
+static struct miscdevice ali_miscdev = {
 	.minor =	WATCHDOG_MINOR,
 	.name =		"watchdog",
 	.fops =		&ali_fops,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block ali_notअगरier = अणु
-	.notअगरier_call =	ali_notअगरy_sys,
-पूर्ण;
+static struct notifier_block ali_notifier = {
+	.notifier_call =	ali_notify_sys,
+};
 
 /*
- *	watchकरोg_init	-	module initialiser
+ *	watchdog_init	-	module initialiser
  *
- *	Scan क्रम a suitable watchकरोg and अगर so initialize it. Return an error
- *	अगर we cannot, the error causes the module to unload
+ *	Scan for a suitable watchdog and if so initialize it. Return an error
+ *	if we cannot, the error causes the module to unload
  */
 
-अटल पूर्णांक __init watchकरोg_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init watchdog_init(void)
+{
+	int ret;
 
-	/* Check whether or not the hardware watchकरोg is there */
-	अगर (ali_find_watchकरोg() != 0)
-		वापस -ENODEV;
+	/* Check whether or not the hardware watchdog is there */
+	if (ali_find_watchdog() != 0)
+		return -ENODEV;
 
-	/* Check that the समयout value is within it's range;
-	   अगर not reset to the शेष */
-	अगर (समयout < 1 || समयout >= 18000) अणु
-		समयout = WATCHDOG_TIMEOUT;
+	/* Check that the timeout value is within it's range;
+	   if not reset to the default */
+	if (timeout < 1 || timeout >= 18000) {
+		timeout = WATCHDOG_TIMEOUT;
 		pr_info("timeout value must be 0 < timeout < 18000, using %d\n",
-			समयout);
-	पूर्ण
+			timeout);
+	}
 
-	/* Calculate the watchकरोg's समयout */
-	ali_समय_रखोr(समयout);
+	/* Calculate the watchdog's timeout */
+	ali_settimer(timeout);
 
-	ret = रेजिस्टर_reboot_notअगरier(&ali_notअगरier);
-	अगर (ret != 0) अणु
+	ret = register_reboot_notifier(&ali_notifier);
+	if (ret != 0) {
 		pr_err("cannot register reboot notifier (err=%d)\n", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = misc_रेजिस्टर(&ali_miscdev);
-	अगर (ret != 0) अणु
+	ret = misc_register(&ali_miscdev);
+	if (ret != 0) {
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		जाओ unreg_reboot;
-	पूर्ण
+		goto unreg_reboot;
+	}
 
 	pr_info("initialized. timeout=%d sec (nowayout=%d)\n",
-		समयout, nowayout);
+		timeout, nowayout);
 
 out:
-	वापस ret;
+	return ret;
 unreg_reboot:
-	unरेजिस्टर_reboot_notअगरier(&ali_notअगरier);
-	जाओ out;
-पूर्ण
+	unregister_reboot_notifier(&ali_notifier);
+	goto out;
+}
 
 /*
- *	watchकरोg_निकास	-	module de-initialiser
+ *	watchdog_exit	-	module de-initialiser
  *
- *	Called जबतक unloading a successfully installed watchकरोg module.
+ *	Called while unloading a successfully installed watchdog module.
  */
 
-अटल व्योम __निकास watchकरोg_निकास(व्योम)
-अणु
-	/* Stop the समयr beक्रमe we leave */
+static void __exit watchdog_exit(void)
+{
+	/* Stop the timer before we leave */
 	ali_stop();
 
-	/* Deरेजिस्टर */
-	misc_deरेजिस्टर(&ali_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&ali_notअगरier);
+	/* Deregister */
+	misc_deregister(&ali_miscdev);
+	unregister_reboot_notifier(&ali_notifier);
 	pci_dev_put(ali_pci);
-पूर्ण
+}
 
-module_init(watchकरोg_init);
-module_निकास(watchकरोg_निकास);
+module_init(watchdog_init);
+module_exit(watchdog_exit);
 
 MODULE_AUTHOR("Alan Cox");
 MODULE_DESCRIPTION("ALi M1535 PMU Watchdog Timer driver");

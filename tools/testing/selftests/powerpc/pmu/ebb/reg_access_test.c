@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
+#include <stdio.h>
+#include <stdlib.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
  * Test basic access to the EBB regs, they should be user accessible with no
- * kernel पूर्णांकeraction required.
+ * kernel interaction required.
  */
-पूर्णांक reg_access(व्योम)
-अणु
-	uपूर्णांक64_t val, expected;
+int reg_access(void)
+{
+	uint64_t val, expected;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -32,10 +31,10 @@
 
 	FAIL_IF(val != expected);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(reg_access, "reg_access");
-पूर्ण
+int main(void)
+{
+	return test_harness(reg_access, "reg_access");
+}

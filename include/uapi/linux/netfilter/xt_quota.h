@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_QUOTA_H
-#घोषणा _XT_QUOTA_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_QUOTA_H
+#define _XT_QUOTA_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत xt_quota_flags अणु
+enum xt_quota_flags {
 	XT_QUOTA_INVERT		= 0x1,
-पूर्ण;
-#घोषणा XT_QUOTA_MASK		0x1
+};
+#define XT_QUOTA_MASK		0x1
 
-काष्ठा xt_quota_priv;
+struct xt_quota_priv;
 
-काष्ठा xt_quota_info अणु
+struct xt_quota_info {
 	__u32 flags;
 	__u32 pad;
 	__aligned_u64 quota;
 
-	/* Used पूर्णांकernally by the kernel */
-	काष्ठा xt_quota_priv	*master;
-पूर्ण;
+	/* Used internally by the kernel */
+	struct xt_quota_priv	*master;
+};
 
-#पूर्ण_अगर /* _XT_QUOTA_H */
+#endif /* _XT_QUOTA_H */

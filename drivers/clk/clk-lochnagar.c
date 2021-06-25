@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Lochnagar घड़ी control
+ * Lochnagar clock control
  *
  * Copyright (c) 2017-2018 Cirrus Logic, Inc. and
  *                         Cirrus Logic International Semiconductor Ltd.
  *
- * Author: Charles Keepax <ckeepax@खोलोsource.cirrus.com>
+ * Author: Charles Keepax <ckeepax@opensource.cirrus.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#समावेश <linux/mfd/lochnagar1_regs.h>
-#समावेश <linux/mfd/lochnagar2_regs.h>
+#include <linux/mfd/lochnagar1_regs.h>
+#include <linux/mfd/lochnagar2_regs.h>
 
-#समावेश <dt-bindings/clk/lochnagar.h>
+#include <dt-bindings/clk/lochnagar.h>
 
-#घोषणा LOCHNAGAR_NUM_CLOCKS	(LOCHNAGAR_SPDIF_CLKOUT + 1)
+#define LOCHNAGAR_NUM_CLOCKS	(LOCHNAGAR_SPDIF_CLKOUT + 1)
 
-काष्ठा lochnagar_clk अणु
-	स्थिर अक्षर * स्थिर name;
-	काष्ठा clk_hw hw;
+struct lochnagar_clk {
+	const char * const name;
+	struct clk_hw hw;
 
-	काष्ठा lochnagar_clk_priv *priv;
+	struct lochnagar_clk_priv *priv;
 
 	u16 cfg_reg;
 	u16 ena_mask;
 
 	u16 src_reg;
 	u16 src_mask;
-पूर्ण;
+};
 
-काष्ठा lochnagar_clk_priv अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
+struct lochnagar_clk_priv {
+	struct device *dev;
+	struct regmap *regmap;
 
-	काष्ठा lochnagar_clk lclks[LOCHNAGAR_NUM_CLOCKS];
-पूर्ण;
+	struct lochnagar_clk lclks[LOCHNAGAR_NUM_CLOCKS];
+};
 
-#घोषणा LN_PARENT(NAME) अणु .name = NAME, .fw_name = NAME पूर्ण
+#define LN_PARENT(NAME) { .name = NAME, .fw_name = NAME }
 
-अटल स्थिर काष्ठा clk_parent_data lochnagar1_clk_parents[] = अणु
+static const struct clk_parent_data lochnagar1_clk_parents[] = {
 	LN_PARENT("ln-none"),
 	LN_PARENT("ln-spdif-mclk"),
 	LN_PARENT("ln-psia1-mclk"),
@@ -58,9 +57,9 @@
 	LN_PARENT("ln-gf-mclk3"),
 	LN_PARENT("ln-gf-mclk2"),
 	LN_PARENT("ln-gf-mclk4"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_parent_data lochnagar2_clk_parents[] = अणु
+static const struct clk_parent_data lochnagar2_clk_parents[] = {
 	LN_PARENT("ln-none"),
 	LN_PARENT("ln-cdc-clkout"),
 	LN_PARENT("ln-dsp-clkout"),
@@ -80,34 +79,34 @@
 	LN_PARENT("ln-spdif-clkout"),
 	LN_PARENT("ln-adat-mclk"),
 	LN_PARENT("ln-usb-clk-12m"),
-पूर्ण;
+};
 
-#घोषणा LN1_CLK(ID, NAME, REG) \
-	[LOCHNAGAR_##ID] = अणु \
+#define LN1_CLK(ID, NAME, REG) \
+	[LOCHNAGAR_##ID] = { \
 		.name = NAME, \
 		.cfg_reg = LOCHNAGAR1_##REG, \
 		.ena_mask = LOCHNAGAR1_##ID##_ENA_MASK, \
 		.src_reg = LOCHNAGAR1_##ID##_SEL, \
 		.src_mask = LOCHNAGAR1_SRC_MASK, \
-	पूर्ण
+	}
 
-#घोषणा LN2_CLK(ID, NAME) \
-	[LOCHNAGAR_##ID] = अणु \
+#define LN2_CLK(ID, NAME) \
+	[LOCHNAGAR_##ID] = { \
 		.name = NAME, \
 		.cfg_reg = LOCHNAGAR2_##ID##_CTRL, \
 		.src_reg = LOCHNAGAR2_##ID##_CTRL, \
 		.ena_mask = LOCHNAGAR2_CLK_ENA_MASK, \
 		.src_mask = LOCHNAGAR2_CLK_SRC_MASK, \
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा lochnagar_clk lochnagar1_clks[LOCHNAGAR_NUM_CLOCKS] = अणु
+static const struct lochnagar_clk lochnagar1_clks[LOCHNAGAR_NUM_CLOCKS] = {
 	LN1_CLK(CDC_MCLK1,      "ln-cdc-mclk1",  CDC_AIF_CTRL2),
 	LN1_CLK(CDC_MCLK2,      "ln-cdc-mclk2",  CDC_AIF_CTRL2),
 	LN1_CLK(DSP_CLKIN,      "ln-dsp-clkin",  DSP_AIF),
 	LN1_CLK(GF_CLKOUT1,     "ln-gf-clkout1", GF_AIF1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lochnagar_clk lochnagar2_clks[LOCHNAGAR_NUM_CLOCKS] = अणु
+static const struct lochnagar_clk lochnagar2_clks[LOCHNAGAR_NUM_CLOCKS] = {
 	LN2_CLK(CDC_MCLK1,      "ln-cdc-mclk1"),
 	LN2_CLK(CDC_MCLK2,      "ln-cdc-mclk2"),
 	LN2_CLK(DSP_CLKIN,      "ln-dsp-clkin"),
@@ -118,186 +117,186 @@
 	LN2_CLK(SPDIF_MCLK,     "ln-spdif-mclk"),
 	LN2_CLK(ADAT_MCLK,      "ln-adat-mclk"),
 	LN2_CLK(SOUNDCARD_MCLK, "ln-soundcard-mclk"),
-पूर्ण;
+};
 
-काष्ठा lochnagar_config अणु
-	स्थिर काष्ठा clk_parent_data *parents;
-	पूर्णांक nparents;
-	स्थिर काष्ठा lochnagar_clk *clks;
-पूर्ण;
+struct lochnagar_config {
+	const struct clk_parent_data *parents;
+	int nparents;
+	const struct lochnagar_clk *clks;
+};
 
-अटल स्थिर काष्ठा lochnagar_config lochnagar1_conf = अणु
+static const struct lochnagar_config lochnagar1_conf = {
 	.parents = lochnagar1_clk_parents,
 	.nparents = ARRAY_SIZE(lochnagar1_clk_parents),
 	.clks = lochnagar1_clks,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lochnagar_config lochnagar2_conf = अणु
+static const struct lochnagar_config lochnagar2_conf = {
 	.parents = lochnagar2_clk_parents,
 	.nparents = ARRAY_SIZE(lochnagar2_clk_parents),
 	.clks = lochnagar2_clks,
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा lochnagar_clk *lochnagar_hw_to_lclk(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा lochnagar_clk, hw);
-पूर्ण
+static inline struct lochnagar_clk *lochnagar_hw_to_lclk(struct clk_hw *hw)
+{
+	return container_of(hw, struct lochnagar_clk, hw);
+}
 
-अटल पूर्णांक lochnagar_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
-	काष्ठा lochnagar_clk_priv *priv = lclk->priv;
-	काष्ठा regmap *regmap = priv->regmap;
-	पूर्णांक ret;
+static int lochnagar_clk_prepare(struct clk_hw *hw)
+{
+	struct lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
+	struct lochnagar_clk_priv *priv = lclk->priv;
+	struct regmap *regmap = priv->regmap;
+	int ret;
 
 	ret = regmap_update_bits(regmap, lclk->cfg_reg,
 				 lclk->ena_mask, lclk->ena_mask);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_dbg(priv->dev, "Failed to prepare %s: %d\n",
 			lclk->name, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम lochnagar_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
-	काष्ठा lochnagar_clk_priv *priv = lclk->priv;
-	काष्ठा regmap *regmap = priv->regmap;
-	पूर्णांक ret;
+static void lochnagar_clk_unprepare(struct clk_hw *hw)
+{
+	struct lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
+	struct lochnagar_clk_priv *priv = lclk->priv;
+	struct regmap *regmap = priv->regmap;
+	int ret;
 
 	ret = regmap_update_bits(regmap, lclk->cfg_reg, lclk->ena_mask, 0);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_dbg(priv->dev, "Failed to unprepare %s: %d\n",
 			lclk->name, ret);
-पूर्ण
+}
 
-अटल पूर्णांक lochnagar_clk_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
-	काष्ठा lochnagar_clk_priv *priv = lclk->priv;
-	काष्ठा regmap *regmap = priv->regmap;
-	पूर्णांक ret;
+static int lochnagar_clk_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
+	struct lochnagar_clk_priv *priv = lclk->priv;
+	struct regmap *regmap = priv->regmap;
+	int ret;
 
 	ret = regmap_update_bits(regmap, lclk->src_reg, lclk->src_mask, index);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_dbg(priv->dev, "Failed to reparent %s: %d\n",
 			lclk->name, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 lochnagar_clk_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
-	काष्ठा lochnagar_clk_priv *priv = lclk->priv;
-	काष्ठा regmap *regmap = priv->regmap;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static u8 lochnagar_clk_get_parent(struct clk_hw *hw)
+{
+	struct lochnagar_clk *lclk = lochnagar_hw_to_lclk(hw);
+	struct lochnagar_clk_priv *priv = lclk->priv;
+	struct regmap *regmap = priv->regmap;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, lclk->src_reg, &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(regmap, lclk->src_reg, &val);
+	if (ret < 0) {
 		dev_dbg(priv->dev, "Failed to read parent of %s: %d\n",
 			lclk->name, ret);
-		वापस clk_hw_get_num_parents(hw);
-	पूर्ण
+		return clk_hw_get_num_parents(hw);
+	}
 
 	val &= lclk->src_mask;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल स्थिर काष्ठा clk_ops lochnagar_clk_ops = अणु
+static const struct clk_ops lochnagar_clk_ops = {
 	.prepare = lochnagar_clk_prepare,
 	.unprepare = lochnagar_clk_unprepare,
 	.set_parent = lochnagar_clk_set_parent,
 	.get_parent = lochnagar_clk_get_parent,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *
-lochnagar_of_clk_hw_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा lochnagar_clk_priv *priv = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+lochnagar_of_clk_hw_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct lochnagar_clk_priv *priv = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= ARRAY_SIZE(priv->lclks)) अणु
+	if (idx >= ARRAY_SIZE(priv->lclks)) {
 		dev_err(priv->dev, "Invalid index %u\n", idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &priv->lclks[idx].hw;
-पूर्ण
+	return &priv->lclks[idx].hw;
+}
 
-अटल स्थिर काष्ठा of_device_id lochnagar_of_match[] = अणु
-	अणु .compatible = "cirrus,lochnagar1-clk", .data = &lochnagar1_conf पूर्ण,
-	अणु .compatible = "cirrus,lochnagar2-clk", .data = &lochnagar2_conf पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id lochnagar_of_match[] = {
+	{ .compatible = "cirrus,lochnagar1-clk", .data = &lochnagar1_conf },
+	{ .compatible = "cirrus,lochnagar2-clk", .data = &lochnagar2_conf },
+	{}
+};
 MODULE_DEVICE_TABLE(of, lochnagar_of_match);
 
-अटल पूर्णांक lochnagar_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा clk_init_data clk_init = अणु
+static int lochnagar_clk_probe(struct platform_device *pdev)
+{
+	struct clk_init_data clk_init = {
 		.ops = &lochnagar_clk_ops,
-	पूर्ण;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा lochnagar_clk_priv *priv;
-	स्थिर काष्ठा of_device_id *of_id;
-	काष्ठा lochnagar_clk *lclk;
-	काष्ठा lochnagar_config *conf;
-	पूर्णांक ret, i;
+	};
+	struct device *dev = &pdev->dev;
+	struct lochnagar_clk_priv *priv;
+	const struct of_device_id *of_id;
+	struct lochnagar_clk *lclk;
+	struct lochnagar_config *conf;
+	int ret, i;
 
 	of_id = of_match_device(lochnagar_of_match, dev);
-	अगर (!of_id)
-		वापस -EINVAL;
+	if (!of_id)
+		return -EINVAL;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
-	priv->regmap = dev_get_regmap(dev->parent, शून्य);
-	conf = (काष्ठा lochnagar_config *)of_id->data;
+	priv->regmap = dev_get_regmap(dev->parent, NULL);
+	conf = (struct lochnagar_config *)of_id->data;
 
-	स_नकल(priv->lclks, conf->clks, माप(priv->lclks));
+	memcpy(priv->lclks, conf->clks, sizeof(priv->lclks));
 
 	clk_init.parent_data = conf->parents;
 	clk_init.num_parents = conf->nparents;
 
-	क्रम (i = 0; i < ARRAY_SIZE(priv->lclks); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(priv->lclks); i++) {
 		lclk = &priv->lclks[i];
 
-		अगर (!lclk->name)
-			जारी;
+		if (!lclk->name)
+			continue;
 
 		clk_init.name = lclk->name;
 
 		lclk->priv = priv;
 		lclk->hw.init = &clk_init;
 
-		ret = devm_clk_hw_रेजिस्टर(dev, &lclk->hw);
-		अगर (ret) अणु
+		ret = devm_clk_hw_register(dev, &lclk->hw);
+		if (ret) {
 			dev_err(dev, "Failed to register %s: %d\n",
 				lclk->name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ret = devm_of_clk_add_hw_provider(dev, lochnagar_of_clk_hw_get, priv);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "Failed to register provider: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver lochnagar_clk_driver = अणु
-	.driver = अणु
+static struct platform_driver lochnagar_clk_driver = {
+	.driver = {
 		.name = "lochnagar-clk",
 		.of_match_table = lochnagar_of_match,
-	पूर्ण,
+	},
 	.probe = lochnagar_clk_probe,
-पूर्ण;
-module_platक्रमm_driver(lochnagar_clk_driver);
+};
+module_platform_driver(lochnagar_clk_driver);
 
 MODULE_AUTHOR("Charles Keepax <ckeepax@opensource.cirrus.com>");
 MODULE_DESCRIPTION("Clock driver for Cirrus Logic Lochnagar Board");

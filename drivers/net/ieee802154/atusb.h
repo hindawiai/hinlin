@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * atusb.h - Definitions shared between kernel and ATUSB firmware
  *
@@ -7,23 +6,23 @@
  *
  * (at your option) any later version.
  *
- * This file should be identical क्रम kernel and firmware.
+ * This file should be identical for kernel and firmware.
  * Kernel: drivers/net/ieee802154/atusb.h
  * Firmware: ben-wpan/atusb/fw/include/atusb/atusb.h
  */
 
-#अगर_अघोषित	_ATUSB_H
-#घोषणा	_ATUSB_H
+#ifndef	_ATUSB_H
+#define	_ATUSB_H
 
-#घोषणा ATUSB_VENDOR_ID	0x20b7	/* Qi Hardware*/
-#घोषणा ATUSB_PRODUCT_ID 0x1540	/* 802.15.4, device 0 */
+#define ATUSB_VENDOR_ID	0x20b7	/* Qi Hardware*/
+#define ATUSB_PRODUCT_ID 0x1540	/* 802.15.4, device 0 */
 				/*     -- -         - */
 
-#घोषणा ATUSB_BUILD_SIZE 256	/* maximum build version/date message length */
+#define ATUSB_BUILD_SIZE 256	/* maximum build version/date message length */
 
 /* Commands to our device. Make sure this is synced with the firmware */
-क्रमागत atusb_requests अणु
-	ATUSB_ID			= 0x00,	/* प्रणाली status/control grp */
+enum atusb_requests {
+	ATUSB_ID			= 0x00,	/* system status/control grp */
 	ATUSB_BUILD,
 	ATUSB_RESET,
 	ATUSB_RF_RESET			= 0x10,	/* debug/test group */
@@ -47,15 +46,15 @@
 	ATUSB_TX,
 	ATUSB_EUI64_WRITE		= 0x50, /* Parameter in EEPROM grp */
 	ATUSB_EUI64_READ,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ATUSB_HW_TYPE_100813,	/* 2010-08-13 */
 	ATUSB_HW_TYPE_101216,	/* 2010-12-16 */
 	ATUSB_HW_TYPE_110131,	/* 2011-01-31, ATmega32U2-based */
-	ATUSB_HW_TYPE_RZUSB,	/* Aपंचांगel Raven USB करोngle with at86rf230 */
-	ATUSB_HW_TYPE_HULUSB,	/* Busware HUL USB करोngle with at86rf212 */
-पूर्ण;
+	ATUSB_HW_TYPE_RZUSB,	/* Atmel Raven USB dongle with at86rf230 */
+	ATUSB_HW_TYPE_HULUSB,	/* Busware HUL USB dongle with at86rf212 */
+};
 
 /*
  * Direction	bRequest		wValue		wIndex	wLength
@@ -90,7 +89,7 @@
  * ->host	ATUSB_EUI64_READ	-		-	#bytes (8)
  */
 
-#घोषणा ATUSB_REQ_FROM_DEV	(USB_TYPE_VENDOR | USB_सूची_IN)
-#घोषणा ATUSB_REQ_TO_DEV	(USB_TYPE_VENDOR | USB_सूची_OUT)
+#define ATUSB_REQ_FROM_DEV	(USB_TYPE_VENDOR | USB_DIR_IN)
+#define ATUSB_REQ_TO_DEV	(USB_TYPE_VENDOR | USB_DIR_OUT)
 
-#पूर्ण_अगर /* !_ATUSB_H */
+#endif /* !_ATUSB_H */

@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2001-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_ACL_H__
-#घोषणा __XFS_ACL_H__
+#ifndef __XFS_ACL_H__
+#define __XFS_ACL_H__
 
-काष्ठा inode;
-काष्ठा posix_acl;
+struct inode;
+struct posix_acl;
 
-#अगर_घोषित CONFIG_XFS_POSIX_ACL
-बाह्य काष्ठा posix_acl *xfs_get_acl(काष्ठा inode *inode, पूर्णांक type);
-बाह्य पूर्णांक xfs_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		       काष्ठा posix_acl *acl, पूर्णांक type);
-बाह्य पूर्णांक __xfs_set_acl(काष्ठा inode *inode, काष्ठा posix_acl *acl, पूर्णांक type);
-व्योम xfs_क्रमget_acl(काष्ठा inode *inode, स्थिर अक्षर *name);
-#अन्यथा
-अटल अंतरभूत काष्ठा posix_acl *xfs_get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	वापस शून्य;
-पूर्ण
-# define xfs_set_acl					शून्य
-अटल अंतरभूत व्योम xfs_क्रमget_acl(काष्ठा inode *inode, स्थिर अक्षर *name)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_XFS_POSIX_ACL */
+#ifdef CONFIG_XFS_POSIX_ACL
+extern struct posix_acl *xfs_get_acl(struct inode *inode, int type);
+extern int xfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+		       struct posix_acl *acl, int type);
+extern int __xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type);
+void xfs_forget_acl(struct inode *inode, const char *name);
+#else
+static inline struct posix_acl *xfs_get_acl(struct inode *inode, int type)
+{
+	return NULL;
+}
+# define xfs_set_acl					NULL
+static inline void xfs_forget_acl(struct inode *inode, const char *name)
+{
+}
+#endif /* CONFIG_XFS_POSIX_ACL */
 
-#पूर्ण_अगर	/* __XFS_ACL_H__ */
+#endif	/* __XFS_ACL_H__ */

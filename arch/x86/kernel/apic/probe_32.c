@@ -1,210 +1,209 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Default generic APIC driver. This handles up to 8 CPUs.
  *
- * Copyright 2003 Andi Kleen, SuSE Lअसल.
+ * Copyright 2003 Andi Kleen, SuSE Labs.
  *
  * Generic x86 APIC driver probe layer.
  */
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/smp.h>
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/acpi.h>
+#include <asm/io_apic.h>
+#include <asm/apic.h>
+#include <asm/acpi.h>
 
-#समावेश "local.h"
+#include "local.h"
 
-अटल पूर्णांक शेष_x86_32_early_logical_apicid(पूर्णांक cpu)
-अणु
-	वापस 1 << cpu;
-पूर्ण
+static int default_x86_32_early_logical_apicid(int cpu)
+{
+	return 1 << cpu;
+}
 
-अटल व्योम setup_apic_flat_routing(व्योम)
-अणु
-#अगर_घोषित CONFIG_X86_IO_APIC
-	prपूर्णांकk(KERN_INFO
+static void setup_apic_flat_routing(void)
+{
+#ifdef CONFIG_X86_IO_APIC
+	printk(KERN_INFO
 		"Enabling APIC mode:  Flat.  Using %d I/O APICs\n",
 		nr_ioapics);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक शेष_apic_id_रेजिस्टरed(व्योम)
-अणु
-	वापस physid_isset(पढ़ो_apic_id(), phys_cpu_present_map);
-पूर्ण
+static int default_apic_id_registered(void)
+{
+	return physid_isset(read_apic_id(), phys_cpu_present_map);
+}
 
 /*
  * Set up the logical destination ID.  Intel recommends to set DFR, LDR and
- * TPR beक्रमe enabling an APIC.  See e.g. "AP-388 82489DX User's Manual"
- * (Intel करोcument number 292116).
+ * TPR before enabling an APIC.  See e.g. "AP-388 82489DX User's Manual"
+ * (Intel document number 292116).
  */
-अटल व्योम शेष_init_apic_ldr(व्योम)
-अणु
-	अचिन्हित दीर्घ val;
+static void default_init_apic_ldr(void)
+{
+	unsigned long val;
 
-	apic_ग_लिखो(APIC_DFR, APIC_DFR_VALUE);
-	val = apic_पढ़ो(APIC_LDR) & ~APIC_LDR_MASK;
+	apic_write(APIC_DFR, APIC_DFR_VALUE);
+	val = apic_read(APIC_LDR) & ~APIC_LDR_MASK;
 	val |= SET_APIC_LOGICAL_ID(1UL << smp_processor_id());
-	apic_ग_लिखो(APIC_LDR, val);
-पूर्ण
+	apic_write(APIC_LDR, val);
+}
 
-अटल पूर्णांक शेष_phys_pkg_id(पूर्णांक cpuid_apic, पूर्णांक index_msb)
-अणु
-	वापस cpuid_apic >> index_msb;
-पूर्ण
+static int default_phys_pkg_id(int cpuid_apic, int index_msb)
+{
+	return cpuid_apic >> index_msb;
+}
 
 /* should be called last. */
-अटल पूर्णांक probe_शेष(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+static int probe_default(void)
+{
+	return 1;
+}
 
-अटल काष्ठा apic apic_शेष __ro_after_init = अणु
+static struct apic apic_default __ro_after_init = {
 
 	.name				= "default",
-	.probe				= probe_शेष,
-	.acpi_madt_oem_check		= शून्य,
-	.apic_id_valid			= शेष_apic_id_valid,
-	.apic_id_रेजिस्टरed		= शेष_apic_id_रेजिस्टरed,
+	.probe				= probe_default,
+	.acpi_madt_oem_check		= NULL,
+	.apic_id_valid			= default_apic_id_valid,
+	.apic_id_registered		= default_apic_id_registered,
 
 	.delivery_mode			= APIC_DELIVERY_MODE_FIXED,
 	.dest_mode_logical		= true,
 
 	.disable_esr			= 0,
 
-	.check_apicid_used		= शेष_check_apicid_used,
-	.init_apic_ldr			= शेष_init_apic_ldr,
-	.ioapic_phys_id_map		= शेष_ioapic_phys_id_map,
+	.check_apicid_used		= default_check_apicid_used,
+	.init_apic_ldr			= default_init_apic_ldr,
+	.ioapic_phys_id_map		= default_ioapic_phys_id_map,
 	.setup_apic_routing		= setup_apic_flat_routing,
-	.cpu_present_to_apicid		= शेष_cpu_present_to_apicid,
+	.cpu_present_to_apicid		= default_cpu_present_to_apicid,
 	.apicid_to_cpu_present		= physid_set_mask_of_physid,
-	.check_phys_apicid_present	= शेष_check_phys_apicid_present,
-	.phys_pkg_id			= शेष_phys_pkg_id,
+	.check_phys_apicid_present	= default_check_phys_apicid_present,
+	.phys_pkg_id			= default_phys_pkg_id,
 
-	.get_apic_id			= शेष_get_apic_id,
-	.set_apic_id			= शून्य,
+	.get_apic_id			= default_get_apic_id,
+	.set_apic_id			= NULL,
 
 	.calc_dest_apicid		= apic_flat_calc_apicid,
 
-	.send_IPI			= शेष_send_IPI_single,
-	.send_IPI_mask			= शेष_send_IPI_mask_logical,
-	.send_IPI_mask_allbutself	= शेष_send_IPI_mask_allbutself_logical,
-	.send_IPI_allbutself		= शेष_send_IPI_allbutself,
-	.send_IPI_all			= शेष_send_IPI_all,
-	.send_IPI_self			= शेष_send_IPI_self,
+	.send_IPI			= default_send_IPI_single,
+	.send_IPI_mask			= default_send_IPI_mask_logical,
+	.send_IPI_mask_allbutself	= default_send_IPI_mask_allbutself_logical,
+	.send_IPI_allbutself		= default_send_IPI_allbutself,
+	.send_IPI_all			= default_send_IPI_all,
+	.send_IPI_self			= default_send_IPI_self,
 
-	.inquire_remote_apic		= शेष_inquire_remote_apic,
+	.inquire_remote_apic		= default_inquire_remote_apic,
 
-	.पढ़ो				= native_apic_mem_पढ़ो,
-	.ग_लिखो				= native_apic_mem_ग_लिखो,
-	.eoi_ग_लिखो			= native_apic_mem_ग_लिखो,
-	.icr_पढ़ो			= native_apic_icr_पढ़ो,
-	.icr_ग_लिखो			= native_apic_icr_ग_लिखो,
-	.रुको_icr_idle			= native_apic_रुको_icr_idle,
-	.safe_रुको_icr_idle		= native_safe_apic_रुको_icr_idle,
+	.read				= native_apic_mem_read,
+	.write				= native_apic_mem_write,
+	.eoi_write			= native_apic_mem_write,
+	.icr_read			= native_apic_icr_read,
+	.icr_write			= native_apic_icr_write,
+	.wait_icr_idle			= native_apic_wait_icr_idle,
+	.safe_wait_icr_idle		= native_safe_apic_wait_icr_idle,
 
-	.x86_32_early_logical_apicid	= शेष_x86_32_early_logical_apicid,
-पूर्ण;
+	.x86_32_early_logical_apicid	= default_x86_32_early_logical_apicid,
+};
 
-apic_driver(apic_शेष);
+apic_driver(apic_default);
 
-काष्ठा apic *apic __ro_after_init = &apic_शेष;
+struct apic *apic __ro_after_init = &apic_default;
 EXPORT_SYMBOL_GPL(apic);
 
-अटल पूर्णांक cmdline_apic __initdata;
-अटल पूर्णांक __init parse_apic(अक्षर *arg)
-अणु
-	काष्ठा apic **drv;
+static int cmdline_apic __initdata;
+static int __init parse_apic(char *arg)
+{
+	struct apic **drv;
 
-	अगर (!arg)
-		वापस -EINVAL;
+	if (!arg)
+		return -EINVAL;
 
-	क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
-		अगर (!म_भेद((*drv)->name, arg)) अणु
+	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
+		if (!strcmp((*drv)->name, arg)) {
 			apic = *drv;
 			cmdline_apic = 1;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	/* Parsed again by __setup क्रम debug/verbose */
-	वापस 0;
-पूर्ण
+	/* Parsed again by __setup for debug/verbose */
+	return 0;
+}
 early_param("apic", parse_apic);
 
-व्योम __init शेष_setup_apic_routing(व्योम)
-अणु
-	पूर्णांक version = boot_cpu_apic_version;
+void __init default_setup_apic_routing(void)
+{
+	int version = boot_cpu_apic_version;
 
-	अगर (num_possible_cpus() > 8) अणु
-		चयन (boot_cpu_data.x86_venकरोr) अणु
-		हाल X86_VENDOR_INTEL:
-			अगर (!APIC_XAPIC(version)) अणु
+	if (num_possible_cpus() > 8) {
+		switch (boot_cpu_data.x86_vendor) {
+		case X86_VENDOR_INTEL:
+			if (!APIC_XAPIC(version)) {
 				def_to_bigsmp = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* P4 and above */
 			fallthrough;
-		हाल X86_VENDOR_HYGON:
-		हाल X86_VENDOR_AMD:
+		case X86_VENDOR_HYGON:
+		case X86_VENDOR_AMD:
 			def_to_bigsmp = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अगर_घोषित CONFIG_X86_BIGSMP
+#ifdef CONFIG_X86_BIGSMP
 	/*
-	 * This is used to चयन to bigsmp mode when
-	 * - There is no apic= option specअगरied by the user
-	 * - generic_apic_probe() has chosen apic_शेष as the sub_arch
+	 * This is used to switch to bigsmp mode when
+	 * - There is no apic= option specified by the user
+	 * - generic_apic_probe() has chosen apic_default as the sub_arch
 	 * - we find more than 8 CPUs in acpi LAPIC listing with xAPIC support
 	 */
 
-	अगर (!cmdline_apic && apic == &apic_शेष)
+	if (!cmdline_apic && apic == &apic_default)
 		generic_bigsmp_probe();
-#पूर्ण_अगर
+#endif
 
-	अगर (apic->setup_apic_routing)
+	if (apic->setup_apic_routing)
 		apic->setup_apic_routing();
-पूर्ण
+}
 
-व्योम __init generic_apic_probe(व्योम)
-अणु
-	अगर (!cmdline_apic) अणु
-		काष्ठा apic **drv;
+void __init generic_apic_probe(void)
+{
+	if (!cmdline_apic) {
+		struct apic **drv;
 
-		क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
-			अगर ((*drv)->probe()) अणु
+		for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
+			if ((*drv)->probe()) {
 				apic = *drv;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		/* Not visible without early console */
-		अगर (drv == __apicdrivers_end)
+		if (drv == __apicdrivers_end)
 			panic("Didn't find an APIC driver");
-	पूर्ण
-	prपूर्णांकk(KERN_INFO "Using APIC driver %s\n", apic->name);
-पूर्ण
+	}
+	printk(KERN_INFO "Using APIC driver %s\n", apic->name);
+}
 
-/* This function can चयन the APIC even after the initial ->probe() */
-पूर्णांक __init शेष_acpi_madt_oem_check(अक्षर *oem_id, अक्षर *oem_table_id)
-अणु
-	काष्ठा apic **drv;
+/* This function can switch the APIC even after the initial ->probe() */
+int __init default_acpi_madt_oem_check(char *oem_id, char *oem_table_id)
+{
+	struct apic **drv;
 
-	क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
-		अगर (!(*drv)->acpi_madt_oem_check)
-			जारी;
-		अगर (!(*drv)->acpi_madt_oem_check(oem_id, oem_table_id))
-			जारी;
+	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
+		if (!(*drv)->acpi_madt_oem_check)
+			continue;
+		if (!(*drv)->acpi_madt_oem_check(oem_id, oem_table_id))
+			continue;
 
-		अगर (!cmdline_apic) अणु
+		if (!cmdline_apic) {
 			apic = *drv;
-			prपूर्णांकk(KERN_INFO "Switched to APIC driver `%s'.\n",
+			printk(KERN_INFO "Switched to APIC driver `%s'.\n",
 			       apic->name);
-		पूर्ण
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return 1;
+	}
+	return 0;
+}

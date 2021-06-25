@@ -1,58 +1,57 @@
-<शैली गुरु>
 /*
- * Nios2-specअगरic parts of प्रणाली setup
+ * Nios2-specific parts of system setup
  *
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd.
  * Copyright (C) 2001 Vic Phillips <vic@microtronix.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License. See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/console.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/screen_info.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
+#include <linux/sched/task.h>
+#include <linux/console.h>
+#include <linux/memblock.h>
+#include <linux/initrd.h>
+#include <linux/of_fdt.h>
+#include <linux/screen_info.h>
 
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/cpuinfo.h>
+#include <asm/mmu_context.h>
+#include <asm/sections.h>
+#include <asm/setup.h>
+#include <asm/cpuinfo.h>
 
-अचिन्हित दीर्घ memory_start;
+unsigned long memory_start;
 EXPORT_SYMBOL(memory_start);
 
-अचिन्हित दीर्घ memory_end;
+unsigned long memory_end;
 EXPORT_SYMBOL(memory_end);
 
-अटल काष्ठा pt_regs fake_regs = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+static struct pt_regs fake_regs = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0,
-					0पूर्ण;
+					0};
 
-#अगर_घोषित CONFIG_VT
-काष्ठा screen_info screen_info;
-#पूर्ण_अगर
+#ifdef CONFIG_VT
+struct screen_info screen_info;
+#endif
 
-/* Copy a लघु hook inकाष्ठाion sequence to the exception address */
-अटल अंतरभूत व्योम copy_exception_handler(अचिन्हित पूर्णांक addr)
-अणु
-	अचिन्हित पूर्णांक start = (अचिन्हित पूर्णांक) exception_handler_hook;
-	अस्थिर अचिन्हित पूर्णांक पंचांगp = 0;
+/* Copy a short hook instruction sequence to the exception address */
+static inline void copy_exception_handler(unsigned int addr)
+{
+	unsigned int start = (unsigned int) exception_handler_hook;
+	volatile unsigned int tmp = 0;
 
-	अगर (start == addr) अणु
-		/* The CPU exception address alपढ़ोy poपूर्णांकs to the handler. */
-		वापस;
-	पूर्ण
+	if (start == addr) {
+		/* The CPU exception address already points to the handler. */
+		return;
+	}
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"ldw	%2,0(%0)\n"
 		"stw	%2,0(%1)\n"
 		"ldw	%2,4(%0)\n"
@@ -68,20 +67,20 @@ EXPORT_SYMBOL(memory_end);
 		"addi	%1,%1,4\n"
 		"flushi %1\n"
 		"flushp\n"
-		: /* no output रेजिस्टरs */
-		: "r" (start), "r" (addr), "r" (पंचांगp)
+		: /* no output registers */
+		: "r" (start), "r" (addr), "r" (tmp)
 		: "memory"
 	);
-पूर्ण
+}
 
 /* Copy the fast TLB miss handler */
-अटल अंतरभूत व्योम copy_fast_tlb_miss_handler(अचिन्हित पूर्णांक addr)
-अणु
-	अचिन्हित पूर्णांक start = (अचिन्हित पूर्णांक) fast_handler;
-	अचिन्हित पूर्णांक end = (अचिन्हित पूर्णांक) fast_handler_end;
-	अस्थिर अचिन्हित पूर्णांक पंचांगp = 0;
+static inline void copy_fast_tlb_miss_handler(unsigned int addr)
+{
+	unsigned int start = (unsigned int) fast_handler;
+	unsigned int end = (unsigned int) fast_handler_end;
+	volatile unsigned int tmp = 0;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"1:\n"
 		"	ldw	%3,0(%0)\n"
 		"	stw	%3,0(%1)\n"
@@ -91,11 +90,11 @@ EXPORT_SYMBOL(memory_end);
 		"	addi	%0,%0,4\n"
 		"	addi	%1,%1,4\n"
 		"	bne	%0,%2,1b\n"
-		: /* no output रेजिस्टरs */
-		: "r" (start), "r" (addr), "r" (end), "r" (पंचांगp)
+		: /* no output registers */
+		: "r" (start), "r" (addr), "r" (end), "r" (tmp)
 		: "memory"
 	);
-पूर्ण
+}
 
 /*
  * save args passed from u-boot, called from head.S
@@ -105,63 +104,63 @@ EXPORT_SYMBOL(memory_end);
  * @r6: initrd end or fdt
  * @r7: kernel command line
  */
-यंत्रlinkage व्योम __init nios2_boot_init(अचिन्हित r4, अचिन्हित r5, अचिन्हित r6,
-				       अचिन्हित r7)
-अणु
-	अचिन्हित dtb_passed = 0;
-	अक्षर cmdline_passed[COMMAND_LINE_SIZE] __maybe_unused = अणु 0, पूर्ण;
+asmlinkage void __init nios2_boot_init(unsigned r4, unsigned r5, unsigned r6,
+				       unsigned r7)
+{
+	unsigned dtb_passed = 0;
+	char cmdline_passed[COMMAND_LINE_SIZE] __maybe_unused = { 0, };
 
-#अगर defined(CONFIG_NIOS2_PASS_CMDLINE)
-	अगर (r4 == 0x534f494e) अणु /* r4 is magic NIOS */
-#अगर defined(CONFIG_BLK_DEV_INITRD)
-		अगर (r5) अणु /* initramfs */
+#if defined(CONFIG_NIOS2_PASS_CMDLINE)
+	if (r4 == 0x534f494e) { /* r4 is magic NIOS */
+#if defined(CONFIG_BLK_DEV_INITRD)
+		if (r5) { /* initramfs */
 			initrd_start = r5;
 			initrd_end = r6;
-		पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
+		}
+#endif /* CONFIG_BLK_DEV_INITRD */
 		dtb_passed = r6;
 
-		अगर (r7)
-			strlcpy(cmdline_passed, (अक्षर *)r7, COMMAND_LINE_SIZE);
-	पूर्ण
-#पूर्ण_अगर
+		if (r7)
+			strlcpy(cmdline_passed, (char *)r7, COMMAND_LINE_SIZE);
+	}
+#endif
 
-	early_init_devtree((व्योम *)dtb_passed);
+	early_init_devtree((void *)dtb_passed);
 
-#अगर_अघोषित CONFIG_CMDLINE_FORCE
-	अगर (cmdline_passed[0])
+#ifndef CONFIG_CMDLINE_FORCE
+	if (cmdline_passed[0])
 		strlcpy(boot_command_line, cmdline_passed, COMMAND_LINE_SIZE);
-#अगर_घोषित CONFIG_NIOS2_CMDLINE_IGNORE_DTB
-	अन्यथा
+#ifdef CONFIG_NIOS2_CMDLINE_IGNORE_DTB
+	else
 		strlcpy(boot_command_line, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
 	parse_early_param();
-पूर्ण
+}
 
-अटल व्योम __init find_limits(अचिन्हित दीर्घ *min, अचिन्हित दीर्घ *max_low,
-			       अचिन्हित दीर्घ *max_high)
-अणु
+static void __init find_limits(unsigned long *min, unsigned long *max_low,
+			       unsigned long *max_high)
+{
 	*max_low = PFN_DOWN(memblock_get_current_limit());
 	*min = PFN_UP(memblock_start_of_DRAM());
 	*max_high = PFN_DOWN(memblock_end_of_DRAM());
-पूर्ण
+}
 
-व्योम __init setup_arch(अक्षर **cmdline_p)
-अणु
-	पूर्णांक dram_start;
+void __init setup_arch(char **cmdline_p)
+{
+	int dram_start;
 
 	console_verbose();
 
 	memory_start = memblock_start_of_DRAM();
 	memory_end = memblock_end_of_DRAM();
 
-	init_mm.start_code = (अचिन्हित दीर्घ) _stext;
-	init_mm.end_code = (अचिन्हित दीर्घ) _etext;
-	init_mm.end_data = (अचिन्हित दीर्घ) _edata;
-	init_mm.brk = (अचिन्हित दीर्घ) _end;
-	init_task.thपढ़ो.kregs = &fake_regs;
+	init_mm.start_code = (unsigned long) _stext;
+	init_mm.end_code = (unsigned long) _etext;
+	init_mm.end_data = (unsigned long) _edata;
+	init_mm.brk = (unsigned long) _end;
+	init_task.thread.kregs = &fake_regs;
 
 	/* Keep a copy of command line */
 	*cmdline_p = boot_command_line;
@@ -170,12 +169,12 @@ EXPORT_SYMBOL(memory_end);
 	max_mapnr = max_low_pfn;
 
 	memblock_reserve(__pa_symbol(_stext), _end - _stext);
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (initrd_start) अणु
-		memblock_reserve(virt_to_phys((व्योम *)initrd_start),
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (initrd_start) {
+		memblock_reserve(virt_to_phys((void *)initrd_start),
 				initrd_end - initrd_start);
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
+	}
+#endif /* CONFIG_BLK_DEV_INITRD */
 
 	early_init_fdt_reserve_self();
 	early_init_fdt_scan_reserved_mem();
@@ -192,12 +191,12 @@ EXPORT_SYMBOL(memory_end);
 
 	/*
 	 * Initialize MMU context handling here because data from cpuinfo is
-	 * needed क्रम this.
+	 * needed for this.
 	 */
 	mmu_context_init();
 
 	/*
-	 * get kदो_स्मृति पूर्णांकo gear
+	 * get kmalloc into gear
 	 */
 	paging_init();
-पूर्ण
+}

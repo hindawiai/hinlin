@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ARCH_MIPS_LOCAL_H
-#घोषणा _ARCH_MIPS_LOCAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ARCH_MIPS_LOCAL_H
+#define _ARCH_MIPS_LOCAL_H
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/cmpxchg.h>
-#समावेश <यंत्र/compiler.h>
-#समावेश <यंत्र/war.h>
+#include <linux/percpu.h>
+#include <linux/bitops.h>
+#include <linux/atomic.h>
+#include <asm/cmpxchg.h>
+#include <asm/compiler.h>
+#include <asm/war.h>
 
-प्रकार काष्ठा
-अणु
-	atomic_दीर्घ_t a;
-पूर्ण local_t;
+typedef struct
+{
+	atomic_long_t a;
+} local_t;
 
-#घोषणा LOCAL_INIT(i)	अणु ATOMIC_LONG_INIT(i) पूर्ण
+#define LOCAL_INIT(i)	{ ATOMIC_LONG_INIT(i) }
 
-#घोषणा local_पढ़ो(l)	atomic_दीर्घ_पढ़ो(&(l)->a)
-#घोषणा local_set(l, i) atomic_दीर्घ_set(&(l)->a, (i))
+#define local_read(l)	atomic_long_read(&(l)->a)
+#define local_set(l, i) atomic_long_set(&(l)->a, (i))
 
-#घोषणा local_add(i, l) atomic_दीर्घ_add((i), (&(l)->a))
-#घोषणा local_sub(i, l) atomic_दीर्घ_sub((i), (&(l)->a))
-#घोषणा local_inc(l)	atomic_दीर्घ_inc(&(l)->a)
-#घोषणा local_dec(l)	atomic_दीर्घ_dec(&(l)->a)
+#define local_add(i, l) atomic_long_add((i), (&(l)->a))
+#define local_sub(i, l) atomic_long_sub((i), (&(l)->a))
+#define local_inc(l)	atomic_long_inc(&(l)->a)
+#define local_dec(l)	atomic_long_dec(&(l)->a)
 
 /*
- * Same as above, but वापस the result value
+ * Same as above, but return the result value
  */
-अटल __अंतरभूत__ दीर्घ local_add_वापस(दीर्घ i, local_t * l)
-अणु
-	अचिन्हित दीर्घ result;
+static __inline__ long local_add_return(long i, local_t * l)
+{
+	unsigned long result;
 
-	अगर (kernel_uses_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) अणु
-		अचिन्हित दीर्घ temp;
+	if (kernel_uses_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) {
+		unsigned long temp;
 
-		__यंत्र__ __अस्थिर__(
+		__asm__ __volatile__(
 		"	.set	push					\n"
 		"	.set	arch=r4000				\n"
 			__SYNC(full, loongson3_war) "			\n"
@@ -48,10 +47,10 @@
 		: "=&r" (result), "=&r" (temp), "=m" (l->a.counter)
 		: "Ir" (i), "m" (l->a.counter)
 		: "memory");
-	पूर्ण अन्यथा अगर (kernel_uses_llsc) अणु
-		अचिन्हित दीर्घ temp;
+	} else if (kernel_uses_llsc) {
+		unsigned long temp;
 
-		__यंत्र__ __अस्थिर__(
+		__asm__ __volatile__(
 		"	.set	push					\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"			\n"
 			__SYNC(full, loongson3_war) "			\n"
@@ -64,27 +63,27 @@
 		: "=&r" (result), "=&r" (temp), "=m" (l->a.counter)
 		: "Ir" (i), "m" (l->a.counter)
 		: "memory");
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+	} else {
+		unsigned long flags;
 
 		local_irq_save(flags);
 		result = l->a.counter;
 		result += i;
 		l->a.counter = result;
 		local_irq_restore(flags);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल __अंतरभूत__ दीर्घ local_sub_वापस(दीर्घ i, local_t * l)
-अणु
-	अचिन्हित दीर्घ result;
+static __inline__ long local_sub_return(long i, local_t * l)
+{
+	unsigned long result;
 
-	अगर (kernel_uses_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) अणु
-		अचिन्हित दीर्घ temp;
+	if (kernel_uses_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) {
+		unsigned long temp;
 
-		__यंत्र__ __अस्थिर__(
+		__asm__ __volatile__(
 		"	.set	push					\n"
 		"	.set	arch=r4000				\n"
 			__SYNC(full, loongson3_war) "			\n"
@@ -97,10 +96,10 @@
 		: "=&r" (result), "=&r" (temp), "=m" (l->a.counter)
 		: "Ir" (i), "m" (l->a.counter)
 		: "memory");
-	पूर्ण अन्यथा अगर (kernel_uses_llsc) अणु
-		अचिन्हित दीर्घ temp;
+	} else if (kernel_uses_llsc) {
+		unsigned long temp;
 
-		__यंत्र__ __अस्थिर__(
+		__asm__ __volatile__(
 		"	.set	push					\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"			\n"
 			__SYNC(full, loongson3_war) "			\n"
@@ -113,95 +112,95 @@
 		: "=&r" (result), "=&r" (temp), "=m" (l->a.counter)
 		: "Ir" (i), "m" (l->a.counter)
 		: "memory");
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+	} else {
+		unsigned long flags;
 
 		local_irq_save(flags);
 		result = l->a.counter;
 		result -= i;
 		l->a.counter = result;
 		local_irq_restore(flags);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#घोषणा local_cmpxchg(l, o, n) \
-	((दीर्घ)cmpxchg_local(&((l)->a.counter), (o), (n)))
-#घोषणा local_xchg(l, n) (atomic_दीर्घ_xchg((&(l)->a), (n)))
+#define local_cmpxchg(l, o, n) \
+	((long)cmpxchg_local(&((l)->a.counter), (o), (n)))
+#define local_xchg(l, n) (atomic_long_xchg((&(l)->a), (n)))
 
 /**
  * local_add_unless - add unless the number is a given value
- * @l: poपूर्णांकer of type local_t
+ * @l: pointer of type local_t
  * @a: the amount to add to l...
  * @u: ...unless l is equal to u.
  *
- * Atomically adds @a to @l, so दीर्घ as it was not @u.
- * Returns non-zero अगर @l was not @u, and zero otherwise.
+ * Atomically adds @a to @l, so long as it was not @u.
+ * Returns non-zero if @l was not @u, and zero otherwise.
  */
-#घोषणा local_add_unless(l, a, u)				\
-(अणु								\
-	दीर्घ c, old;						\
-	c = local_पढ़ो(l);					\
-	जबतक (c != (u) && (old = local_cmpxchg((l), c, c + (a))) != c) \
+#define local_add_unless(l, a, u)				\
+({								\
+	long c, old;						\
+	c = local_read(l);					\
+	while (c != (u) && (old = local_cmpxchg((l), c, c + (a))) != c) \
 		c = old;					\
 	c != (u);						\
-पूर्ण)
-#घोषणा local_inc_not_zero(l) local_add_unless((l), 1, 0)
+})
+#define local_inc_not_zero(l) local_add_unless((l), 1, 0)
 
-#घोषणा local_dec_वापस(l) local_sub_वापस(1, (l))
-#घोषणा local_inc_वापस(l) local_add_वापस(1, (l))
+#define local_dec_return(l) local_sub_return(1, (l))
+#define local_inc_return(l) local_add_return(1, (l))
 
 /*
  * local_sub_and_test - subtract value from variable and test result
- * @i: पूर्णांकeger value to subtract
- * @l: poपूर्णांकer of type local_t
+ * @i: integer value to subtract
+ * @l: pointer of type local_t
  *
- * Atomically subtracts @i from @l and वापसs
- * true अगर the result is zero, or false क्रम all
- * other हालs.
+ * Atomically subtracts @i from @l and returns
+ * true if the result is zero, or false for all
+ * other cases.
  */
-#घोषणा local_sub_and_test(i, l) (local_sub_वापस((i), (l)) == 0)
+#define local_sub_and_test(i, l) (local_sub_return((i), (l)) == 0)
 
 /*
  * local_inc_and_test - increment and test
- * @l: poपूर्णांकer of type local_t
+ * @l: pointer of type local_t
  *
  * Atomically increments @l by 1
- * and वापसs true अगर the result is zero, or false क्रम all
- * other हालs.
+ * and returns true if the result is zero, or false for all
+ * other cases.
  */
-#घोषणा local_inc_and_test(l) (local_inc_वापस(l) == 0)
+#define local_inc_and_test(l) (local_inc_return(l) == 0)
 
 /*
  * local_dec_and_test - decrement by 1 and test
- * @l: poपूर्णांकer of type local_t
+ * @l: pointer of type local_t
  *
  * Atomically decrements @l by 1 and
- * वापसs true अगर the result is 0, or false क्रम all other
- * हालs.
+ * returns true if the result is 0, or false for all other
+ * cases.
  */
-#घोषणा local_dec_and_test(l) (local_sub_वापस(1, (l)) == 0)
+#define local_dec_and_test(l) (local_sub_return(1, (l)) == 0)
 
 /*
- * local_add_negative - add and test अगर negative
- * @l: poपूर्णांकer of type local_t
- * @i: पूर्णांकeger value to add
+ * local_add_negative - add and test if negative
+ * @l: pointer of type local_t
+ * @i: integer value to add
  *
- * Atomically adds @i to @l and वापसs true
- * अगर the result is negative, or false when
+ * Atomically adds @i to @l and returns true
+ * if the result is negative, or false when
  * result is greater than or equal to zero.
  */
-#घोषणा local_add_negative(i, l) (local_add_वापस(i, (l)) < 0)
+#define local_add_negative(i, l) (local_add_return(i, (l)) < 0)
 
-/* Use these क्रम per-cpu local_t variables: on some archs they are
+/* Use these for per-cpu local_t variables: on some archs they are
  * much more efficient than these naive implementations.  Note they take
  * a variable, not an address.
  */
 
-#घोषणा __local_inc(l)		((l)->a.counter++)
-#घोषणा __local_dec(l)		((l)->a.counter++)
-#घोषणा __local_add(i, l)	((l)->a.counter+=(i))
-#घोषणा __local_sub(i, l)	((l)->a.counter-=(i))
+#define __local_inc(l)		((l)->a.counter++)
+#define __local_dec(l)		((l)->a.counter++)
+#define __local_add(i, l)	((l)->a.counter+=(i))
+#define __local_sub(i, l)	((l)->a.counter-=(i))
 
-#पूर्ण_अगर /* _ARCH_MIPS_LOCAL_H */
+#endif /* _ARCH_MIPS_LOCAL_H */

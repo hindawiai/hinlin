@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * The काष्ठा perf_event_attr test support.
+ * The struct perf_event_attr test support.
  *
- * This test is embedded inside पूर्णांकo perf directly and is governed
+ * This test is embedded inside into perf directly and is governed
  * by the PERF_TEST_ATTR environment variable and hook inside
- * sys_perf_event_खोलो function.
+ * sys_perf_event_open function.
  *
- * The general idea is to store 'struct perf_event_attr' details क्रम
+ * The general idea is to store 'struct perf_event_attr' details for
  * each event created within single perf command. Each event details
- * are stored पूर्णांकo separate text file. Once perf command is finished
- * these files can be checked क्रम values we expect क्रम command.
+ * are stored into separate text file. Once perf command is finished
+ * these files can be checked for values we expect for command.
  *
  * Besides 'struct perf_event_attr' values we also store 'fd' and
- * 'group_fd' values to allow checking क्रम groups created.
+ * 'group_fd' values to allow checking for groups created.
  *
  * This all is triggered by setting PERF_TEST_ATTR environment variable.
- * It must contain name of existing directory with access and ग_लिखो
+ * It must contain name of existing directory with access and write
  * permissions. All the event text files are stored there.
  */
 
-#समावेश <debug.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <sys/param.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश <subcmd/exec-cmd.h>
-#समावेश "event.h"
-#समावेश "util.h"
-#समावेश "tests.h"
-#समावेश "pmu.h"
+#include <debug.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <subcmd/exec-cmd.h>
+#include "event.h"
+#include "util.h"
+#include "tests.h"
+#include "pmu.h"
 
-#घोषणा ENV "PERF_TEST_ATTR"
+#define ENV "PERF_TEST_ATTR"
 
-अटल अक्षर *dir;
-अटल bool पढ़ोy;
+static char *dir;
+static bool ready;
 
-व्योम test_attr__init(व्योम)
-अणु
-	dir = दो_पर्या(ENV);
-	test_attr__enabled = (dir != शून्य);
-पूर्ण
+void test_attr__init(void)
+{
+	dir = getenv(ENV);
+	test_attr__enabled = (dir != NULL);
+}
 
-#घोषणा बफ_मानE 1024
+#define BUFSIZE 1024
 
-#घोषणा __WRITE_ASS(str, fmt, data)					\
-करो अणु									\
-	अक्षर buf[बफ_मानE];						\
-	माप_प्रकार size;							\
+#define __WRITE_ASS(str, fmt, data)					\
+do {									\
+	char buf[BUFSIZE];						\
+	size_t size;							\
 									\
-	size = snम_लिखो(buf, बफ_मानE, #str "=%"fmt "\n", data);		\
-	अगर (1 != ख_डालो(buf, size, 1, file)) अणु				\
-		लिखो_त्रुटि("test attr - failed to write event file");	\
-		ख_बंद(file);						\
-		वापस -1;						\
-	पूर्ण								\
+	size = snprintf(buf, BUFSIZE, #str "=%"fmt "\n", data);		\
+	if (1 != fwrite(buf, size, 1, file)) {				\
+		perror("test attr - failed to write event file");	\
+		fclose(file);						\
+		return -1;						\
+	}								\
 									\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा WRITE_ASS(field, fmt) __WRITE_ASS(field, fmt, attr->field)
+#define WRITE_ASS(field, fmt) __WRITE_ASS(field, fmt, attr->field)
 
-अटल पूर्णांक store_event(काष्ठा perf_event_attr *attr, pid_t pid, पूर्णांक cpu,
-		       पूर्णांक fd, पूर्णांक group_fd, अचिन्हित दीर्घ flags)
-अणु
-	खाता *file;
-	अक्षर path[PATH_MAX];
+static int store_event(struct perf_event_attr *attr, pid_t pid, int cpu,
+		       int fd, int group_fd, unsigned long flags)
+{
+	FILE *file;
+	char path[PATH_MAX];
 
-	अगर (!पढ़ोy)
-		वापस 0;
+	if (!ready)
+		return 0;
 
-	snम_लिखो(path, PATH_MAX, "%s/event-%d-%llu-%d", dir,
+	snprintf(path, PATH_MAX, "%s/event-%d-%llu-%d", dir,
 		 attr->type, attr->config, fd);
 
-	file = ख_खोलो(path, "w+");
-	अगर (!file) अणु
-		लिखो_त्रुटि("test attr - failed to open event file");
-		वापस -1;
-	पूर्ण
+	file = fopen(path, "w+");
+	if (!file) {
+		perror("test attr - failed to open event file");
+		return -1;
+	}
 
-	अगर (ख_लिखो(file, "[event-%d-%llu-%d]\n",
-		    attr->type, attr->config, fd) < 0) अणु
-		लिखो_त्रुटि("test attr - failed to write event file");
-		ख_बंद(file);
-		वापस -1;
-	पूर्ण
+	if (fprintf(file, "[event-%d-%llu-%d]\n",
+		    attr->type, attr->config, fd) < 0) {
+		perror("test attr - failed to write event file");
+		fclose(file);
+		return -1;
+	}
 
 	/* syscall arguments */
 	__WRITE_ASS(fd,       "d", fd);
@@ -98,13 +97,13 @@
 	__WRITE_ASS(pid,      "d", pid);
 	__WRITE_ASS(flags,   "lu", flags);
 
-	/* काष्ठा perf_event_attr */
+	/* struct perf_event_attr */
 	WRITE_ASS(type,   PRIu32);
 	WRITE_ASS(size,   PRIu32);
 	WRITE_ASS(config,  "llu");
 	WRITE_ASS(sample_period, "llu");
 	WRITE_ASS(sample_type,   "llu");
-	WRITE_ASS(पढ़ो_क्रमmat,   "llu");
+	WRITE_ASS(read_format,   "llu");
 	WRITE_ASS(disabled,       "d");
 	WRITE_ASS(inherit,        "d");
 	WRITE_ASS(pinned,         "d");
@@ -129,10 +128,10 @@
 	WRITE_ASS(exclude_callchain_user, "d");
 	WRITE_ASS(mmap2,	  "d");
 	WRITE_ASS(comm_exec,	  "d");
-	WRITE_ASS(context_चयन, "d");
-	WRITE_ASS(ग_लिखो_backward, "d");
+	WRITE_ASS(context_switch, "d");
+	WRITE_ASS(write_backward, "d");
 	WRITE_ASS(namespaces,	  "d");
-	WRITE_ASS(use_घड़ीid,    "d");
+	WRITE_ASS(use_clockid,    "d");
 	WRITE_ASS(wakeup_events, PRIu32);
 	WRITE_ASS(bp_type, PRIu32);
 	WRITE_ASS(config1, "llu");
@@ -141,70 +140,70 @@
 	WRITE_ASS(sample_regs_user,   "llu");
 	WRITE_ASS(sample_stack_user,  PRIu32);
 
-	ख_बंद(file);
-	वापस 0;
-पूर्ण
+	fclose(file);
+	return 0;
+}
 
-व्योम test_attr__खोलो(काष्ठा perf_event_attr *attr, pid_t pid, पूर्णांक cpu,
-		     पूर्णांक fd, पूर्णांक group_fd, अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक त्रुटि_सं_saved = त्रुटि_सं;
+void test_attr__open(struct perf_event_attr *attr, pid_t pid, int cpu,
+		     int fd, int group_fd, unsigned long flags)
+{
+	int errno_saved = errno;
 
-	अगर ((fd != -1) && store_event(attr, pid, cpu, fd, group_fd, flags)) अणु
+	if ((fd != -1) && store_event(attr, pid, cpu, fd, group_fd, flags)) {
 		pr_err("test attr FAILED");
-		निकास(128);
-	पूर्ण
+		exit(128);
+	}
 
-	त्रुटि_सं = त्रुटि_सं_saved;
-पूर्ण
+	errno = errno_saved;
+}
 
-व्योम test_attr__पढ़ोy(व्योम)
-अणु
-	अगर (unlikely(test_attr__enabled) && !पढ़ोy)
-		पढ़ोy = true;
-पूर्ण
+void test_attr__ready(void)
+{
+	if (unlikely(test_attr__enabled) && !ready)
+		ready = true;
+}
 
-अटल पूर्णांक run_dir(स्थिर अक्षर *d, स्थिर अक्षर *perf)
-अणु
-	अक्षर v[] = "-vvvvv";
-	पूर्णांक vcnt = min(verbose, (पूर्णांक) माप(v) - 1);
-	अक्षर cmd[3*PATH_MAX];
+static int run_dir(const char *d, const char *perf)
+{
+	char v[] = "-vvvvv";
+	int vcnt = min(verbose, (int) sizeof(v) - 1);
+	char cmd[3*PATH_MAX];
 
-	अगर (verbose > 0)
+	if (verbose > 0)
 		vcnt++;
 
-	scnम_लिखो(cmd, 3*PATH_MAX, PYTHON " %s/attr.py -d %s/attr/ -p %s %.*s",
+	scnprintf(cmd, 3*PATH_MAX, PYTHON " %s/attr.py -d %s/attr/ -p %s %.*s",
 		  d, d, perf, vcnt, v);
 
-	वापस प्रणाली(cmd) ? TEST_FAIL : TEST_OK;
-पूर्ण
+	return system(cmd) ? TEST_FAIL : TEST_OK;
+}
 
-पूर्णांक test__attr(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा stat st;
-	अक्षर path_perf[PATH_MAX];
-	अक्षर path_dir[PATH_MAX];
-	अक्षर *exec_path;
+int test__attr(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct stat st;
+	char path_perf[PATH_MAX];
+	char path_dir[PATH_MAX];
+	char *exec_path;
 
-	अगर (perf_pmu__has_hybrid())
-		वापस TEST_SKIP;
+	if (perf_pmu__has_hybrid())
+		return TEST_SKIP;
 
 	/* First try development tree tests. */
-	अगर (!lstat("./tests", &st))
-		वापस run_dir("./tests", "./perf");
+	if (!lstat("./tests", &st))
+		return run_dir("./tests", "./perf");
 
 	exec_path = get_argv_exec_path();
-	अगर (exec_path == शून्य)
-		वापस -1;
+	if (exec_path == NULL)
+		return -1;
 
 	/* Then installed path. */
-	snम_लिखो(path_dir,  PATH_MAX, "%s/tests", exec_path);
-	snम_लिखो(path_perf, PATH_MAX, "%s/perf", BINसूची);
-	मुक्त(exec_path);
+	snprintf(path_dir,  PATH_MAX, "%s/tests", exec_path);
+	snprintf(path_perf, PATH_MAX, "%s/perf", BINDIR);
+	free(exec_path);
 
-	अगर (!lstat(path_dir, &st) &&
+	if (!lstat(path_dir, &st) &&
 	    !lstat(path_perf, &st))
-		वापस run_dir(path_dir, path_perf);
+		return run_dir(path_dir, path_perf);
 
-	वापस TEST_SKIP;
-पूर्ण
+	return TEST_SKIP;
+}

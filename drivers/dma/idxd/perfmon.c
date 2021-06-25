@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2020 Intel Corporation. All rights rsvd. */
 
-#समावेश <linux/sched/task.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश "idxd.h"
-#समावेश "perfmon.h"
+#include <linux/sched/task.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include "idxd.h"
+#include "perfmon.h"
 
-अटल sमाप_प्रकार cpumask_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf);
+static ssize_t cpumask_show(struct device *dev, struct device_attribute *attr,
+			    char *buf);
 
-अटल cpumask_t		perfmon_dsa_cpu_mask;
-अटल bool			cpuhp_set_up;
-अटल क्रमागत cpuhp_state		cpuhp_slot;
+static cpumask_t		perfmon_dsa_cpu_mask;
+static bool			cpuhp_set_up;
+static enum cpuhp_state		cpuhp_slot;
 
 /*
- * perf userspace पढ़ोs this attribute to determine which cpus to खोलो
+ * perf userspace reads this attribute to determine which cpus to open
  * counters on.  It's connected to perfmon_dsa_cpu_mask, which is
- * मुख्यtained by the cpu hotplug handlers.
+ * maintained by the cpu hotplug handlers.
  */
-अटल DEVICE_ATTR_RO(cpumask);
+static DEVICE_ATTR_RO(cpumask);
 
-अटल काष्ठा attribute *perfmon_cpumask_attrs[] = अणु
+static struct attribute *perfmon_cpumask_attrs[] = {
 	&dev_attr_cpumask.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group cpumask_attr_group = अणु
+static struct attribute_group cpumask_attr_group = {
 	.attrs = perfmon_cpumask_attrs,
-पूर्ण;
+};
 
 /*
- * These attributes specअगरy the bits in the config word that the perf
+ * These attributes specify the bits in the config word that the perf
  * syscall uses to pass the event ids and categories to perfmon.
  */
 DEFINE_PERFMON_FORMAT_ATTR(event_category, "config:0-3");
 DEFINE_PERFMON_FORMAT_ATTR(event, "config:4-31");
 
 /*
- * These attributes specअगरy the bits in the config1 word that the perf
+ * These attributes specify the bits in the config1 word that the perf
  * syscall uses to pass filter data to perfmon.
  */
 DEFINE_PERFMON_FORMAT_ATTR(filter_wq, "config1:0-31");
@@ -47,287 +46,287 @@ DEFINE_PERFMON_FORMAT_ATTR(filter_pgsz, "config1:40-43");
 DEFINE_PERFMON_FORMAT_ATTR(filter_sz, "config1:44-51");
 DEFINE_PERFMON_FORMAT_ATTR(filter_eng, "config1:52-59");
 
-#घोषणा PERFMON_FILTERS_START	2
-#घोषणा PERFMON_FILTERS_MAX	5
+#define PERFMON_FILTERS_START	2
+#define PERFMON_FILTERS_MAX	5
 
-अटल काष्ठा attribute *perfmon_क्रमmat_attrs[] = अणु
-	&क्रमmat_attr_idxd_event_category.attr,
-	&क्रमmat_attr_idxd_event.attr,
-	&क्रमmat_attr_idxd_filter_wq.attr,
-	&क्रमmat_attr_idxd_filter_tc.attr,
-	&क्रमmat_attr_idxd_filter_pgsz.attr,
-	&क्रमmat_attr_idxd_filter_sz.attr,
-	&क्रमmat_attr_idxd_filter_eng.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *perfmon_format_attrs[] = {
+	&format_attr_idxd_event_category.attr,
+	&format_attr_idxd_event.attr,
+	&format_attr_idxd_filter_wq.attr,
+	&format_attr_idxd_filter_tc.attr,
+	&format_attr_idxd_filter_pgsz.attr,
+	&format_attr_idxd_filter_sz.attr,
+	&format_attr_idxd_filter_eng.attr,
+	NULL,
+};
 
-अटल काष्ठा attribute_group perfmon_क्रमmat_attr_group = अणु
+static struct attribute_group perfmon_format_attr_group = {
 	.name = "format",
-	.attrs = perfmon_क्रमmat_attrs,
-पूर्ण;
+	.attrs = perfmon_format_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group *perfmon_attr_groups[] = अणु
-	&perfmon_क्रमmat_attr_group,
+static const struct attribute_group *perfmon_attr_groups[] = {
+	&perfmon_format_attr_group,
 	&cpumask_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार cpumask_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &perfmon_dsa_cpu_mask);
-पूर्ण
+static ssize_t cpumask_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	return cpumap_print_to_pagebuf(true, buf, &perfmon_dsa_cpu_mask);
+}
 
-अटल bool is_idxd_event(काष्ठा idxd_pmu *idxd_pmu, काष्ठा perf_event *event)
-अणु
-	वापस &idxd_pmu->pmu == event->pmu;
-पूर्ण
+static bool is_idxd_event(struct idxd_pmu *idxd_pmu, struct perf_event *event)
+{
+	return &idxd_pmu->pmu == event->pmu;
+}
 
-अटल पूर्णांक perfmon_collect_events(काष्ठा idxd_pmu *idxd_pmu,
-				  काष्ठा perf_event *leader,
-				  bool करो_grp)
-अणु
-	काष्ठा perf_event *event;
-	पूर्णांक n, max_count;
+static int perfmon_collect_events(struct idxd_pmu *idxd_pmu,
+				  struct perf_event *leader,
+				  bool do_grp)
+{
+	struct perf_event *event;
+	int n, max_count;
 
 	max_count = idxd_pmu->n_counters;
 	n = idxd_pmu->n_events;
 
-	अगर (n >= max_count)
-		वापस -EINVAL;
+	if (n >= max_count)
+		return -EINVAL;
 
-	अगर (is_idxd_event(idxd_pmu, leader)) अणु
+	if (is_idxd_event(idxd_pmu, leader)) {
 		idxd_pmu->event_list[n] = leader;
 		idxd_pmu->event_list[n]->hw.idx = n;
 		n++;
-	पूर्ण
+	}
 
-	अगर (!करो_grp)
-		वापस n;
+	if (!do_grp)
+		return n;
 
-	क्रम_each_sibling_event(event, leader) अणु
-		अगर (!is_idxd_event(idxd_pmu, event) ||
+	for_each_sibling_event(event, leader) {
+		if (!is_idxd_event(idxd_pmu, event) ||
 		    event->state <= PERF_EVENT_STATE_OFF)
-			जारी;
+			continue;
 
-		अगर (n >= max_count)
-			वापस -EINVAL;
+		if (n >= max_count)
+			return -EINVAL;
 
 		idxd_pmu->event_list[n] = event;
 		idxd_pmu->event_list[n]->hw.idx = n;
 		n++;
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम perfmon_assign_hw_event(काष्ठा idxd_pmu *idxd_pmu,
-				    काष्ठा perf_event *event, पूर्णांक idx)
-अणु
-	काष्ठा idxd_device *idxd = idxd_pmu->idxd;
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void perfmon_assign_hw_event(struct idxd_pmu *idxd_pmu,
+				    struct perf_event *event, int idx)
+{
+	struct idxd_device *idxd = idxd_pmu->idxd;
+	struct hw_perf_event *hwc = &event->hw;
 
 	hwc->idx = idx;
-	hwc->config_base = ioपढ़ो64(CNTRCFG_REG(idxd, idx));
-	hwc->event_base = ioपढ़ो64(CNTRCFG_REG(idxd, idx));
-पूर्ण
+	hwc->config_base = ioread64(CNTRCFG_REG(idxd, idx));
+	hwc->event_base = ioread64(CNTRCFG_REG(idxd, idx));
+}
 
-अटल पूर्णांक perfmon_assign_event(काष्ठा idxd_pmu *idxd_pmu,
-				काष्ठा perf_event *event)
-अणु
-	पूर्णांक i;
+static int perfmon_assign_event(struct idxd_pmu *idxd_pmu,
+				struct perf_event *event)
+{
+	int i;
 
-	क्रम (i = 0; i < IDXD_PMU_EVENT_MAX; i++)
-		अगर (!test_and_set_bit(i, idxd_pmu->used_mask))
-			वापस i;
+	for (i = 0; i < IDXD_PMU_EVENT_MAX; i++)
+		if (!test_and_set_bit(i, idxd_pmu->used_mask))
+			return i;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Check whether there are enough counters to satisfy that all the
- * events in the group can actually be scheduled at the same समय.
+ * events in the group can actually be scheduled at the same time.
  *
- * To करो this, create a fake idxd_pmu object so the event collection
- * and assignment functions can be used without affecting the पूर्णांकernal
+ * To do this, create a fake idxd_pmu object so the event collection
+ * and assignment functions can be used without affecting the internal
  * state of the real idxd_pmu object.
  */
-अटल पूर्णांक perfmon_validate_group(काष्ठा idxd_pmu *pmu,
-				  काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event *leader = event->group_leader;
-	काष्ठा idxd_pmu *fake_pmu;
-	पूर्णांक i, ret = 0, n, idx;
+static int perfmon_validate_group(struct idxd_pmu *pmu,
+				  struct perf_event *event)
+{
+	struct perf_event *leader = event->group_leader;
+	struct idxd_pmu *fake_pmu;
+	int i, ret = 0, n, idx;
 
-	fake_pmu = kzalloc(माप(*fake_pmu), GFP_KERNEL);
-	अगर (!fake_pmu)
-		वापस -ENOMEM;
+	fake_pmu = kzalloc(sizeof(*fake_pmu), GFP_KERNEL);
+	if (!fake_pmu)
+		return -ENOMEM;
 
 	fake_pmu->pmu.name = pmu->pmu.name;
 	fake_pmu->n_counters = pmu->n_counters;
 
 	n = perfmon_collect_events(fake_pmu, leader, true);
-	अगर (n < 0) अणु
+	if (n < 0) {
 		ret = n;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fake_pmu->n_events = n;
 	n = perfmon_collect_events(fake_pmu, event, false);
-	अगर (n < 0) अणु
+	if (n < 0) {
 		ret = n;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fake_pmu->n_events = n;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		event = fake_pmu->event_list[i];
 
 		idx = perfmon_assign_event(fake_pmu, event);
-		अगर (idx < 0) अणु
+		if (idx < 0) {
 			ret = idx;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	kमुक्त(fake_pmu);
+	kfree(fake_pmu);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक perfmon_pmu_event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा idxd_device *idxd;
-	पूर्णांक ret = 0;
+static int perfmon_pmu_event_init(struct perf_event *event)
+{
+	struct idxd_device *idxd;
+	int ret = 0;
 
 	idxd = event_to_idxd(event);
 	event->hw.idx = -1;
 
-	अगर (event->attr.type != event->pmu->type)
-		वापस -ENOENT;
+	if (event->attr.type != event->pmu->type)
+		return -ENOENT;
 
 	/* sampling not supported */
-	अगर (event->attr.sample_period)
-		वापस -EINVAL;
+	if (event->attr.sample_period)
+		return -EINVAL;
 
-	अगर (event->cpu < 0)
-		वापस -EINVAL;
+	if (event->cpu < 0)
+		return -EINVAL;
 
-	अगर (event->pmu != &idxd->idxd_pmu->pmu)
-		वापस -EINVAL;
+	if (event->pmu != &idxd->idxd_pmu->pmu)
+		return -EINVAL;
 
-	event->hw.event_base = ioपढ़ो64(PERFMON_TABLE_OFFSET(idxd));
+	event->hw.event_base = ioread64(PERFMON_TABLE_OFFSET(idxd));
 	event->cpu = idxd->idxd_pmu->cpu;
 	event->hw.config = event->attr.config;
 
-	अगर (event->group_leader != event)
+	if (event->group_leader != event)
 		 /* non-group events have themselves as leader */
 		ret = perfmon_validate_group(idxd->idxd_pmu, event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत u64 perfmon_pmu_पढ़ो_counter(काष्ठा perf_event *event)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा idxd_device *idxd;
-	पूर्णांक cntr = hwc->idx;
+static inline u64 perfmon_pmu_read_counter(struct perf_event *event)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct idxd_device *idxd;
+	int cntr = hwc->idx;
 
 	idxd = event_to_idxd(event);
 
-	वापस ioपढ़ो64(CNTRDATA_REG(idxd, cntr));
-पूर्ण
+	return ioread64(CNTRDATA_REG(idxd, cntr));
+}
 
-अटल व्योम perfmon_pmu_event_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा idxd_device *idxd = event_to_idxd(event);
+static void perfmon_pmu_event_update(struct perf_event *event)
+{
+	struct idxd_device *idxd = event_to_idxd(event);
 	u64 prev_raw_count, new_raw_count, delta, p, n;
-	पूर्णांक shअगरt = 64 - idxd->idxd_pmu->counter_width;
-	काष्ठा hw_perf_event *hwc = &event->hw;
+	int shift = 64 - idxd->idxd_pmu->counter_width;
+	struct hw_perf_event *hwc = &event->hw;
 
-	करो अणु
-		prev_raw_count = local64_पढ़ो(&hwc->prev_count);
-		new_raw_count = perfmon_pmu_पढ़ो_counter(event);
-	पूर्ण जबतक (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+	do {
+		prev_raw_count = local64_read(&hwc->prev_count);
+		new_raw_count = perfmon_pmu_read_counter(event);
+	} while (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
 			new_raw_count) != prev_raw_count);
 
-	n = (new_raw_count << shअगरt);
-	p = (prev_raw_count << shअगरt);
+	n = (new_raw_count << shift);
+	p = (prev_raw_count << shift);
 
-	delta = ((n - p) >> shअगरt);
+	delta = ((n - p) >> shift);
 
 	local64_add(delta, &event->count);
-पूर्ण
+}
 
-व्योम perfmon_counter_overflow(काष्ठा idxd_device *idxd)
-अणु
-	पूर्णांक i, n_counters, max_loop = OVERFLOW_SIZE;
-	काष्ठा perf_event *event;
-	अचिन्हित दीर्घ ovख_स्थितिus;
+void perfmon_counter_overflow(struct idxd_device *idxd)
+{
+	int i, n_counters, max_loop = OVERFLOW_SIZE;
+	struct perf_event *event;
+	unsigned long ovfstatus;
 
 	n_counters = min(idxd->idxd_pmu->n_counters, OVERFLOW_SIZE);
 
-	ovख_स्थितिus = ioपढ़ो32(OVFSTATUS_REG(idxd));
+	ovfstatus = ioread32(OVFSTATUS_REG(idxd));
 
 	/*
 	 * While updating overflowed counters, other counters behind
 	 * them could overflow and be missed in a given pass.
-	 * Normally this could happen at most n_counters बार, but in
+	 * Normally this could happen at most n_counters times, but in
 	 * theory a tiny counter width could result in continual
 	 * overflows and endless looping.  max_loop provides a
-	 * failsafe in that highly unlikely हाल.
+	 * failsafe in that highly unlikely case.
 	 */
-	जबतक (ovख_स्थितिus && max_loop--) अणु
+	while (ovfstatus && max_loop--) {
 		/* Figure out which counter(s) overflowed */
-		क्रम_each_set_bit(i, &ovख_स्थितिus, n_counters) अणु
-			अचिन्हित दीर्घ ovख_स्थितिus_clear = 0;
+		for_each_set_bit(i, &ovfstatus, n_counters) {
+			unsigned long ovfstatus_clear = 0;
 
-			/* Update event->count क्रम overflowed counter */
+			/* Update event->count for overflowed counter */
 			event = idxd->idxd_pmu->event_list[i];
 			perfmon_pmu_event_update(event);
 			/* Writing 1 to OVFSTATUS bit clears it */
-			set_bit(i, &ovख_स्थितिus_clear);
-			ioग_लिखो32(ovख_स्थितिus_clear, OVFSTATUS_REG(idxd));
-		पूर्ण
+			set_bit(i, &ovfstatus_clear);
+			iowrite32(ovfstatus_clear, OVFSTATUS_REG(idxd));
+		}
 
-		ovख_स्थितिus = ioपढ़ो32(OVFSTATUS_REG(idxd));
-	पूर्ण
+		ovfstatus = ioread32(OVFSTATUS_REG(idxd));
+	}
 
 	/*
 	 * Should never happen.  If so, it means a counter(s) looped
-	 * around twice जबतक this handler was running.
+	 * around twice while this handler was running.
 	 */
-	WARN_ON_ONCE(ovख_स्थितिus);
-पूर्ण
+	WARN_ON_ONCE(ovfstatus);
+}
 
-अटल अंतरभूत व्योम perfmon_reset_config(काष्ठा idxd_device *idxd)
-अणु
-	ioग_लिखो32(CONFIG_RESET, PERFRST_REG(idxd));
-	ioग_लिखो32(0, OVFSTATUS_REG(idxd));
-	ioग_लिखो32(0, PERFFRZ_REG(idxd));
-पूर्ण
+static inline void perfmon_reset_config(struct idxd_device *idxd)
+{
+	iowrite32(CONFIG_RESET, PERFRST_REG(idxd));
+	iowrite32(0, OVFSTATUS_REG(idxd));
+	iowrite32(0, PERFFRZ_REG(idxd));
+}
 
-अटल अंतरभूत व्योम perfmon_reset_counters(काष्ठा idxd_device *idxd)
-अणु
-	ioग_लिखो32(CNTR_RESET, PERFRST_REG(idxd));
-पूर्ण
+static inline void perfmon_reset_counters(struct idxd_device *idxd)
+{
+	iowrite32(CNTR_RESET, PERFRST_REG(idxd));
+}
 
-अटल अंतरभूत व्योम perfmon_reset(काष्ठा idxd_device *idxd)
-अणु
+static inline void perfmon_reset(struct idxd_device *idxd)
+{
 	perfmon_reset_config(idxd);
 	perfmon_reset_counters(idxd);
-पूर्ण
+}
 
-अटल व्योम perfmon_pmu_event_start(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
+static void perfmon_pmu_event_start(struct perf_event *event, int mode)
+{
 	u32 flt_wq, flt_tc, flt_pg_sz, flt_xfer_sz, flt_eng = 0;
 	u64 cntr_cfg, cntrdata, event_enc, event_cat = 0;
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	जोड़ filter_cfg flt_cfg;
-	जोड़ event_cfg event_cfg;
-	काष्ठा idxd_device *idxd;
-	पूर्णांक cntr;
+	struct hw_perf_event *hwc = &event->hw;
+	union filter_cfg flt_cfg;
+	union event_cfg event_cfg;
+	struct idxd_device *idxd;
+	int cntr;
 
 	idxd = event_to_idxd(event);
 
@@ -347,136 +346,136 @@ out:
 	flt_xfer_sz = flt_cfg.xfer_sz;
 	flt_eng = flt_cfg.eng;
 
-	अगर (flt_wq && test_bit(FLT_WQ, &idxd->idxd_pmu->supported_filters))
-		ioग_लिखो32(flt_wq, FLTCFG_REG(idxd, cntr, FLT_WQ));
-	अगर (flt_tc && test_bit(FLT_TC, &idxd->idxd_pmu->supported_filters))
-		ioग_लिखो32(flt_tc, FLTCFG_REG(idxd, cntr, FLT_TC));
-	अगर (flt_pg_sz && test_bit(FLT_PG_SZ, &idxd->idxd_pmu->supported_filters))
-		ioग_लिखो32(flt_pg_sz, FLTCFG_REG(idxd, cntr, FLT_PG_SZ));
-	अगर (flt_xfer_sz && test_bit(FLT_XFER_SZ, &idxd->idxd_pmu->supported_filters))
-		ioग_लिखो32(flt_xfer_sz, FLTCFG_REG(idxd, cntr, FLT_XFER_SZ));
-	अगर (flt_eng && test_bit(FLT_ENG, &idxd->idxd_pmu->supported_filters))
-		ioग_लिखो32(flt_eng, FLTCFG_REG(idxd, cntr, FLT_ENG));
+	if (flt_wq && test_bit(FLT_WQ, &idxd->idxd_pmu->supported_filters))
+		iowrite32(flt_wq, FLTCFG_REG(idxd, cntr, FLT_WQ));
+	if (flt_tc && test_bit(FLT_TC, &idxd->idxd_pmu->supported_filters))
+		iowrite32(flt_tc, FLTCFG_REG(idxd, cntr, FLT_TC));
+	if (flt_pg_sz && test_bit(FLT_PG_SZ, &idxd->idxd_pmu->supported_filters))
+		iowrite32(flt_pg_sz, FLTCFG_REG(idxd, cntr, FLT_PG_SZ));
+	if (flt_xfer_sz && test_bit(FLT_XFER_SZ, &idxd->idxd_pmu->supported_filters))
+		iowrite32(flt_xfer_sz, FLTCFG_REG(idxd, cntr, FLT_XFER_SZ));
+	if (flt_eng && test_bit(FLT_ENG, &idxd->idxd_pmu->supported_filters))
+		iowrite32(flt_eng, FLTCFG_REG(idxd, cntr, FLT_ENG));
 
 	/* Read the start value */
-	cntrdata = ioपढ़ो64(CNTRDATA_REG(idxd, cntr));
+	cntrdata = ioread64(CNTRDATA_REG(idxd, cntr));
 	local64_set(&event->hw.prev_count, cntrdata);
 
 	/* Set counter to event/category */
 	cntr_cfg = event_cat << CNTRCFG_CATEGORY_SHIFT;
 	cntr_cfg |= event_enc << CNTRCFG_EVENT_SHIFT;
-	/* Set पूर्णांकerrupt on overflow and counter enable bits */
+	/* Set interrupt on overflow and counter enable bits */
 	cntr_cfg |= (CNTRCFG_IRQ_OVERFLOW | CNTRCFG_ENABLE);
 
-	ioग_लिखो64(cntr_cfg, CNTRCFG_REG(idxd, cntr));
-पूर्ण
+	iowrite64(cntr_cfg, CNTRCFG_REG(idxd, cntr));
+}
 
-अटल व्योम perfmon_pmu_event_stop(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा idxd_device *idxd;
-	पूर्णांक i, cntr = hwc->idx;
+static void perfmon_pmu_event_stop(struct perf_event *event, int mode)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	struct idxd_device *idxd;
+	int i, cntr = hwc->idx;
 	u64 cntr_cfg;
 
 	idxd = event_to_idxd(event);
 
-	/* हटाओ this event from event list */
-	क्रम (i = 0; i < idxd->idxd_pmu->n_events; i++) अणु
-		अगर (event != idxd->idxd_pmu->event_list[i])
-			जारी;
+	/* remove this event from event list */
+	for (i = 0; i < idxd->idxd_pmu->n_events; i++) {
+		if (event != idxd->idxd_pmu->event_list[i])
+			continue;
 
-		क्रम (++i; i < idxd->idxd_pmu->n_events; i++)
+		for (++i; i < idxd->idxd_pmu->n_events; i++)
 			idxd->idxd_pmu->event_list[i - 1] = idxd->idxd_pmu->event_list[i];
 		--idxd->idxd_pmu->n_events;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	cntr_cfg = ioपढ़ो64(CNTRCFG_REG(idxd, cntr));
+	cntr_cfg = ioread64(CNTRCFG_REG(idxd, cntr));
 	cntr_cfg &= ~CNTRCFG_ENABLE;
-	ioग_लिखो64(cntr_cfg, CNTRCFG_REG(idxd, cntr));
+	iowrite64(cntr_cfg, CNTRCFG_REG(idxd, cntr));
 
-	अगर (mode == PERF_EF_UPDATE)
+	if (mode == PERF_EF_UPDATE)
 		perfmon_pmu_event_update(event);
 
 	event->hw.idx = -1;
 	clear_bit(cntr, idxd->idxd_pmu->used_mask);
-पूर्ण
+}
 
-अटल व्योम perfmon_pmu_event_del(काष्ठा perf_event *event, पूर्णांक mode)
-अणु
+static void perfmon_pmu_event_del(struct perf_event *event, int mode)
+{
 	perfmon_pmu_event_stop(event, PERF_EF_UPDATE);
-पूर्ण
+}
 
-अटल पूर्णांक perfmon_pmu_event_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा idxd_device *idxd = event_to_idxd(event);
-	काष्ठा idxd_pmu *idxd_pmu = idxd->idxd_pmu;
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक idx, n;
+static int perfmon_pmu_event_add(struct perf_event *event, int flags)
+{
+	struct idxd_device *idxd = event_to_idxd(event);
+	struct idxd_pmu *idxd_pmu = idxd->idxd_pmu;
+	struct hw_perf_event *hwc = &event->hw;
+	int idx, n;
 
 	n = perfmon_collect_events(idxd_pmu, event, false);
-	अगर (n < 0)
-		वापस n;
+	if (n < 0)
+		return n;
 
 	hwc->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
-	अगर (!(flags & PERF_EF_START))
+	if (!(flags & PERF_EF_START))
 		hwc->state |= PERF_HES_ARCH;
 
 	idx = perfmon_assign_event(idxd_pmu, event);
-	अगर (idx < 0)
-		वापस idx;
+	if (idx < 0)
+		return idx;
 
 	perfmon_assign_hw_event(idxd_pmu, event, idx);
 
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		perfmon_pmu_event_start(event, 0);
 
 	idxd_pmu->n_events = n;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम enable_perfmon_pmu(काष्ठा idxd_device *idxd)
-अणु
-	ioग_लिखो32(COUNTER_UNFREEZE, PERFFRZ_REG(idxd));
-पूर्ण
+static void enable_perfmon_pmu(struct idxd_device *idxd)
+{
+	iowrite32(COUNTER_UNFREEZE, PERFFRZ_REG(idxd));
+}
 
-अटल व्योम disable_perfmon_pmu(काष्ठा idxd_device *idxd)
-अणु
-	ioग_लिखो32(COUNTER_FREEZE, PERFFRZ_REG(idxd));
-पूर्ण
+static void disable_perfmon_pmu(struct idxd_device *idxd)
+{
+	iowrite32(COUNTER_FREEZE, PERFFRZ_REG(idxd));
+}
 
-अटल व्योम perfmon_pmu_enable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा idxd_device *idxd = pmu_to_idxd(pmu);
+static void perfmon_pmu_enable(struct pmu *pmu)
+{
+	struct idxd_device *idxd = pmu_to_idxd(pmu);
 
 	enable_perfmon_pmu(idxd);
-पूर्ण
+}
 
-अटल व्योम perfmon_pmu_disable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा idxd_device *idxd = pmu_to_idxd(pmu);
+static void perfmon_pmu_disable(struct pmu *pmu)
+{
+	struct idxd_device *idxd = pmu_to_idxd(pmu);
 
 	disable_perfmon_pmu(idxd);
-पूर्ण
+}
 
-अटल व्योम skip_filter(पूर्णांक i)
-अणु
-	पूर्णांक j;
+static void skip_filter(int i)
+{
+	int j;
 
-	क्रम (j = i; j < PERFMON_FILTERS_MAX; j++)
-		perfmon_क्रमmat_attrs[PERFMON_FILTERS_START + j] =
-			perfmon_क्रमmat_attrs[PERFMON_FILTERS_START + j + 1];
-पूर्ण
+	for (j = i; j < PERFMON_FILTERS_MAX; j++)
+		perfmon_format_attrs[PERFMON_FILTERS_START + j] =
+			perfmon_format_attrs[PERFMON_FILTERS_START + j + 1];
+}
 
-अटल व्योम idxd_pmu_init(काष्ठा idxd_pmu *idxd_pmu)
-अणु
-	पूर्णांक i;
+static void idxd_pmu_init(struct idxd_pmu *idxd_pmu)
+{
+	int i;
 
-	क्रम (i = 0 ; i < PERFMON_FILTERS_MAX; i++) अणु
-		अगर (!test_bit(i, &idxd_pmu->supported_filters))
+	for (i = 0 ; i < PERFMON_FILTERS_MAX; i++) {
+		if (!test_bit(i, &idxd_pmu->supported_filters))
 			skip_filter(i);
-	पूर्ण
+	}
 
 	idxd_pmu->pmu.name		= idxd_pmu->name;
 	idxd_pmu->pmu.attr_groups	= perfmon_attr_groups;
@@ -488,127 +487,127 @@ out:
 	idxd_pmu->pmu.del		= perfmon_pmu_event_del;
 	idxd_pmu->pmu.start		= perfmon_pmu_event_start;
 	idxd_pmu->pmu.stop		= perfmon_pmu_event_stop;
-	idxd_pmu->pmu.पढ़ो		= perfmon_pmu_event_update;
+	idxd_pmu->pmu.read		= perfmon_pmu_event_update;
 	idxd_pmu->pmu.capabilities	= PERF_PMU_CAP_NO_EXCLUDE;
 	idxd_pmu->pmu.module		= THIS_MODULE;
-पूर्ण
+}
 
-व्योम perfmon_pmu_हटाओ(काष्ठा idxd_device *idxd)
-अणु
-	अगर (!idxd->idxd_pmu)
-		वापस;
+void perfmon_pmu_remove(struct idxd_device *idxd)
+{
+	if (!idxd->idxd_pmu)
+		return;
 
-	cpuhp_state_हटाओ_instance(cpuhp_slot, &idxd->idxd_pmu->cpuhp_node);
-	perf_pmu_unरेजिस्टर(&idxd->idxd_pmu->pmu);
-	kमुक्त(idxd->idxd_pmu);
-	idxd->idxd_pmu = शून्य;
-पूर्ण
+	cpuhp_state_remove_instance(cpuhp_slot, &idxd->idxd_pmu->cpuhp_node);
+	perf_pmu_unregister(&idxd->idxd_pmu->pmu);
+	kfree(idxd->idxd_pmu);
+	idxd->idxd_pmu = NULL;
+}
 
-अटल पूर्णांक perf_event_cpu_online(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा idxd_pmu *idxd_pmu;
+static int perf_event_cpu_online(unsigned int cpu, struct hlist_node *node)
+{
+	struct idxd_pmu *idxd_pmu;
 
 	idxd_pmu = hlist_entry_safe(node, typeof(*idxd_pmu), cpuhp_node);
 
-	/* select the first online CPU as the designated पढ़ोer */
-	अगर (cpumask_empty(&perfmon_dsa_cpu_mask)) अणु
+	/* select the first online CPU as the designated reader */
+	if (cpumask_empty(&perfmon_dsa_cpu_mask)) {
 		cpumask_set_cpu(cpu, &perfmon_dsa_cpu_mask);
 		idxd_pmu->cpu = cpu;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_event_cpu_offline(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा idxd_pmu *idxd_pmu;
-	अचिन्हित पूर्णांक target;
+static int perf_event_cpu_offline(unsigned int cpu, struct hlist_node *node)
+{
+	struct idxd_pmu *idxd_pmu;
+	unsigned int target;
 
 	idxd_pmu = hlist_entry_safe(node, typeof(*idxd_pmu), cpuhp_node);
 
-	अगर (!cpumask_test_and_clear_cpu(cpu, &perfmon_dsa_cpu_mask))
-		वापस 0;
+	if (!cpumask_test_and_clear_cpu(cpu, &perfmon_dsa_cpu_mask))
+		return 0;
 
 	target = cpumask_any_but(cpu_online_mask, cpu);
 
-	/* migrate events अगर there is a valid target */
-	अगर (target < nr_cpu_ids)
+	/* migrate events if there is a valid target */
+	if (target < nr_cpu_ids)
 		cpumask_set_cpu(target, &perfmon_dsa_cpu_mask);
-	अन्यथा
+	else
 		target = -1;
 
 	perf_pmu_migrate_context(&idxd_pmu->pmu, cpu, target);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perfmon_pmu_init(काष्ठा idxd_device *idxd)
-अणु
-	जोड़ idxd_perfcap perfcap;
-	काष्ठा idxd_pmu *idxd_pmu;
-	पूर्णांक rc = -ENODEV;
+int perfmon_pmu_init(struct idxd_device *idxd)
+{
+	union idxd_perfcap perfcap;
+	struct idxd_pmu *idxd_pmu;
+	int rc = -ENODEV;
 
 	/*
-	 * perfmon module initialization failed, nothing to करो
+	 * perfmon module initialization failed, nothing to do
 	 */
-	अगर (!cpuhp_set_up)
-		वापस -ENODEV;
+	if (!cpuhp_set_up)
+		return -ENODEV;
 
 	/*
 	 * If perfmon_offset or num_counters is 0, it means perfmon is
 	 * not supported on this hardware.
 	 */
-	अगर (idxd->perfmon_offset == 0)
-		वापस -ENODEV;
+	if (idxd->perfmon_offset == 0)
+		return -ENODEV;
 
-	idxd_pmu = kzalloc(माप(*idxd_pmu), GFP_KERNEL);
-	अगर (!idxd_pmu)
-		वापस -ENOMEM;
+	idxd_pmu = kzalloc(sizeof(*idxd_pmu), GFP_KERNEL);
+	if (!idxd_pmu)
+		return -ENOMEM;
 
 	idxd_pmu->idxd = idxd;
 	idxd->idxd_pmu = idxd_pmu;
 
-	अगर (idxd->data->type == IDXD_TYPE_DSA) अणु
-		rc = प्र_लिखो(idxd_pmu->name, "dsa%d", idxd->id);
-		अगर (rc < 0)
-			जाओ मुक्त;
-	पूर्ण अन्यथा अगर (idxd->data->type == IDXD_TYPE_IAX) अणु
-		rc = प्र_लिखो(idxd_pmu->name, "iax%d", idxd->id);
-		अगर (rc < 0)
-			जाओ मुक्त;
-	पूर्ण अन्यथा अणु
-		जाओ मुक्त;
-	पूर्ण
+	if (idxd->data->type == IDXD_TYPE_DSA) {
+		rc = sprintf(idxd_pmu->name, "dsa%d", idxd->id);
+		if (rc < 0)
+			goto free;
+	} else if (idxd->data->type == IDXD_TYPE_IAX) {
+		rc = sprintf(idxd_pmu->name, "iax%d", idxd->id);
+		if (rc < 0)
+			goto free;
+	} else {
+		goto free;
+	}
 
 	perfmon_reset(idxd);
 
-	perfcap.bits = ioपढ़ो64(PERFCAP_REG(idxd));
+	perfcap.bits = ioread64(PERFCAP_REG(idxd));
 
 	/*
 	 * If total perf counter is 0, stop further registration.
 	 * This is necessary in order to support driver running on
-	 * guest which करोes not have pmon support.
+	 * guest which does not have pmon support.
 	 */
-	अगर (perfcap.num_perf_counter == 0)
-		जाओ मुक्त;
+	if (perfcap.num_perf_counter == 0)
+		goto free;
 
 	/* A counter width of 0 means it can't count */
-	अगर (perfcap.counter_width == 0)
-		जाओ मुक्त;
+	if (perfcap.counter_width == 0)
+		goto free;
 
-	/* Overflow पूर्णांकerrupt and counter मुक्तze support must be available */
-	अगर (!perfcap.overflow_पूर्णांकerrupt || !perfcap.counter_मुक्तze)
-		जाओ मुक्त;
+	/* Overflow interrupt and counter freeze support must be available */
+	if (!perfcap.overflow_interrupt || !perfcap.counter_freeze)
+		goto free;
 
 	/* Number of event categories cannot be 0 */
-	अगर (perfcap.num_event_category == 0)
-		जाओ मुक्त;
+	if (perfcap.num_event_category == 0)
+		goto free;
 
 	/*
-	 * We करोn't support per-counter capabilities क्रम now.
+	 * We don't support per-counter capabilities for now.
 	 */
-	अगर (perfcap.cap_per_counter)
-		जाओ मुक्त;
+	if (perfcap.cap_per_counter)
+		goto free;
 
 	idxd_pmu->n_event_categories = perfcap.num_event_category;
 	idxd_pmu->supported_event_categories = perfcap.global_event_category;
@@ -616,7 +615,7 @@ out:
 
 	/* check filter capability.  If 0, then filters are not supported */
 	idxd_pmu->supported_filters = perfcap.filter;
-	अगर (perfcap.filter)
+	if (perfcap.filter)
 		idxd_pmu->n_filters = hweight8(perfcap.filter);
 
 	/* Store the total number of counters categories, and counter width */
@@ -625,39 +624,39 @@ out:
 
 	idxd_pmu_init(idxd_pmu);
 
-	rc = perf_pmu_रेजिस्टर(&idxd_pmu->pmu, idxd_pmu->name, -1);
-	अगर (rc)
-		जाओ मुक्त;
+	rc = perf_pmu_register(&idxd_pmu->pmu, idxd_pmu->name, -1);
+	if (rc)
+		goto free;
 
 	rc = cpuhp_state_add_instance(cpuhp_slot, &idxd_pmu->cpuhp_node);
-	अगर (rc) अणु
-		perf_pmu_unरेजिस्टर(&idxd->idxd_pmu->pmu);
-		जाओ मुक्त;
-	पूर्ण
+	if (rc) {
+		perf_pmu_unregister(&idxd->idxd_pmu->pmu);
+		goto free;
+	}
 out:
-	वापस rc;
-मुक्त:
-	kमुक्त(idxd_pmu);
-	idxd->idxd_pmu = शून्य;
+	return rc;
+free:
+	kfree(idxd_pmu);
+	idxd->idxd_pmu = NULL;
 
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-व्योम __init perfmon_init(व्योम)
-अणु
-	पूर्णांक rc = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
+void __init perfmon_init(void)
+{
+	int rc = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
 					 "driver/dma/idxd/perf:online",
 					 perf_event_cpu_online,
 					 perf_event_cpu_offline);
-	अगर (WARN_ON(rc < 0))
-		वापस;
+	if (WARN_ON(rc < 0))
+		return;
 
 	cpuhp_slot = rc;
 	cpuhp_set_up = true;
-पूर्ण
+}
 
-व्योम __निकास perfmon_निकास(व्योम)
-अणु
-	अगर (cpuhp_set_up)
-		cpuhp_हटाओ_multi_state(cpuhp_slot);
-पूर्ण
+void __exit perfmon_exit(void)
+{
+	if (cpuhp_set_up)
+		cpuhp_remove_multi_state(cpuhp_slot);
+}

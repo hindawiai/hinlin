@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,56 +24,56 @@
  *
  */
 
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_gmc.h"
-#समावेश "amdgpu_ras.h"
-#समावेश "amdgpu_xgmi.h"
+#include "amdgpu.h"
+#include "amdgpu_gmc.h"
+#include "amdgpu_ras.h"
+#include "amdgpu_xgmi.h"
 
 /**
- * amdgpu_gmc_pdb0_alloc - allocate vram क्रम pdb0
+ * amdgpu_gmc_pdb0_alloc - allocate vram for pdb0
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
- * Allocate video memory क्रम pdb0 and map it क्रम CPU access
- * Returns 0 क्रम success, error क्रम failure.
+ * Allocate video memory for pdb0 and map it for CPU access
+ * Returns 0 for success, error for failure.
  */
-पूर्णांक amdgpu_gmc_pdb0_alloc(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक r;
-	काष्ठा amdgpu_bo_param bp;
+int amdgpu_gmc_pdb0_alloc(struct amdgpu_device *adev)
+{
+	int r;
+	struct amdgpu_bo_param bp;
 	u64 vram_size = adev->gmc.xgmi.node_segment_size * adev->gmc.xgmi.num_physical_nodes;
-	uपूर्णांक32_t pde0_page_shअगरt = adev->gmc.vmid0_page_table_block_size + 21;
-	uपूर्णांक32_t npdes = (vram_size + (1ULL << pde0_page_shअगरt) -1) >> pde0_page_shअगरt;
+	uint32_t pde0_page_shift = adev->gmc.vmid0_page_table_block_size + 21;
+	uint32_t npdes = (vram_size + (1ULL << pde0_page_shift) -1) >> pde0_page_shift;
 
-	स_रखो(&bp, 0, माप(bp));
+	memset(&bp, 0, sizeof(bp));
 	bp.size = PAGE_ALIGN((npdes + 1) * 8);
 	bp.byte_align = PAGE_SIZE;
-	bp.करोमुख्य = AMDGPU_GEM_DOMAIN_VRAM;
+	bp.domain = AMDGPU_GEM_DOMAIN_VRAM;
 	bp.flags = AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED |
 		AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS;
-	bp.type = tपंचांग_bo_type_kernel;
-	bp.resv = शून्य;
-	bp.bo_ptr_size = माप(काष्ठा amdgpu_bo);
+	bp.type = ttm_bo_type_kernel;
+	bp.resv = NULL;
+	bp.bo_ptr_size = sizeof(struct amdgpu_bo);
 
 	r = amdgpu_bo_create(adev, &bp, &adev->gmc.pdb0_bo);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = amdgpu_bo_reserve(adev->gmc.pdb0_bo, false);
-	अगर (unlikely(r != 0))
-		जाओ bo_reserve_failure;
+	if (unlikely(r != 0))
+		goto bo_reserve_failure;
 
 	r = amdgpu_bo_pin(adev->gmc.pdb0_bo, AMDGPU_GEM_DOMAIN_VRAM);
-	अगर (r)
-		जाओ bo_pin_failure;
+	if (r)
+		goto bo_pin_failure;
 	r = amdgpu_bo_kmap(adev->gmc.pdb0_bo, &adev->gmc.ptr_pdb0);
-	अगर (r)
-		जाओ bo_kmap_failure;
+	if (r)
+		goto bo_kmap_failure;
 
 	amdgpu_bo_unreserve(adev->gmc.pdb0_bo);
-	वापस 0;
+	return 0;
 
 bo_kmap_failure:
 	amdgpu_bo_unpin(adev->gmc.pdb0_bo);
@@ -82,154 +81,154 @@ bo_pin_failure:
 	amdgpu_bo_unreserve(adev->gmc.pdb0_bo);
 bo_reserve_failure:
 	amdgpu_bo_unref(&adev->gmc.pdb0_bo);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * amdgpu_gmc_get_pde_क्रम_bo - get the PDE क्रम a BO
+ * amdgpu_gmc_get_pde_for_bo - get the PDE for a BO
  *
- * @bo: the BO to get the PDE क्रम
+ * @bo: the BO to get the PDE for
  * @level: the level in the PD hirarchy
  * @addr: resulting addr
  * @flags: resulting flags
  *
- * Get the address and flags to be used क्रम a PDE (Page Directory Entry).
+ * Get the address and flags to be used for a PDE (Page Directory Entry).
  */
-व्योम amdgpu_gmc_get_pde_क्रम_bo(काष्ठा amdgpu_bo *bo, पूर्णांक level,
-			       uपूर्णांक64_t *addr, uपूर्णांक64_t *flags)
-अणु
-	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
+void amdgpu_gmc_get_pde_for_bo(struct amdgpu_bo *bo, int level,
+			       uint64_t *addr, uint64_t *flags)
+{
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 
-	चयन (bo->tbo.mem.mem_type) अणु
-	हाल TTM_PL_TT:
-		*addr = bo->tbo.tपंचांग->dma_address[0];
-		अवरोध;
-	हाल TTM_PL_VRAM:
+	switch (bo->tbo.mem.mem_type) {
+	case TTM_PL_TT:
+		*addr = bo->tbo.ttm->dma_address[0];
+		break;
+	case TTM_PL_VRAM:
 		*addr = amdgpu_bo_gpu_offset(bo);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*addr = 0;
-		अवरोध;
-	पूर्ण
-	*flags = amdgpu_tपंचांग_tt_pde_flags(bo->tbo.tपंचांग, &bo->tbo.mem);
+		break;
+	}
+	*flags = amdgpu_ttm_tt_pde_flags(bo->tbo.ttm, &bo->tbo.mem);
 	amdgpu_gmc_get_vm_pde(adev, level, addr, flags);
-पूर्ण
+}
 
 /*
- * amdgpu_gmc_pd_addr - वापस the address of the root directory
+ * amdgpu_gmc_pd_addr - return the address of the root directory
  */
-uपूर्णांक64_t amdgpu_gmc_pd_addr(काष्ठा amdgpu_bo *bo)
-अणु
-	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
-	uपूर्णांक64_t pd_addr;
+uint64_t amdgpu_gmc_pd_addr(struct amdgpu_bo *bo)
+{
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
+	uint64_t pd_addr;
 
-	/* TODO: move that पूर्णांकo ASIC specअगरic code */
-	अगर (adev->asic_type >= CHIP_VEGA10) अणु
-		uपूर्णांक64_t flags = AMDGPU_PTE_VALID;
+	/* TODO: move that into ASIC specific code */
+	if (adev->asic_type >= CHIP_VEGA10) {
+		uint64_t flags = AMDGPU_PTE_VALID;
 
-		amdgpu_gmc_get_pde_क्रम_bo(bo, -1, &pd_addr, &flags);
+		amdgpu_gmc_get_pde_for_bo(bo, -1, &pd_addr, &flags);
 		pd_addr |= flags;
-	पूर्ण अन्यथा अणु
+	} else {
 		pd_addr = amdgpu_bo_gpu_offset(bo);
-	पूर्ण
-	वापस pd_addr;
-पूर्ण
+	}
+	return pd_addr;
+}
 
 /**
  * amdgpu_gmc_set_pte_pde - update the page tables using CPU
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @cpu_pt_addr: cpu address of the page table
  * @gpu_page_idx: entry in the page table to update
- * @addr: dst addr to ग_लिखो पूर्णांकo pte/pde
+ * @addr: dst addr to write into pte/pde
  * @flags: access flags
  *
  * Update the page tables using CPU.
  */
-पूर्णांक amdgpu_gmc_set_pte_pde(काष्ठा amdgpu_device *adev, व्योम *cpu_pt_addr,
-				uपूर्णांक32_t gpu_page_idx, uपूर्णांक64_t addr,
-				uपूर्णांक64_t flags)
-अणु
-	व्योम __iomem *ptr = (व्योम *)cpu_pt_addr;
-	uपूर्णांक64_t value;
+int amdgpu_gmc_set_pte_pde(struct amdgpu_device *adev, void *cpu_pt_addr,
+				uint32_t gpu_page_idx, uint64_t addr,
+				uint64_t flags)
+{
+	void __iomem *ptr = (void *)cpu_pt_addr;
+	uint64_t value;
 
 	/*
-	 * The following is क्रम PTE only. GART करोes not have PDEs.
+	 * The following is for PTE only. GART does not have PDEs.
 	*/
 	value = addr & 0x0000FFFFFFFFF000ULL;
 	value |= flags;
-	ग_लिखोq(value, ptr + (gpu_page_idx * 8));
-	वापस 0;
-पूर्ण
+	writeq(value, ptr + (gpu_page_idx * 8));
+	return 0;
+}
 
 /**
- * amdgpu_gmc_agp_addr - वापस the address in the AGP address space
+ * amdgpu_gmc_agp_addr - return the address in the AGP address space
  *
- * @bo: TTM BO which needs the address, must be in GTT करोमुख्य
+ * @bo: TTM BO which needs the address, must be in GTT domain
  *
  * Tries to figure out how to access the BO through the AGP aperture. Returns
- * AMDGPU_BO_INVALID_OFFSET अगर that is not possible.
+ * AMDGPU_BO_INVALID_OFFSET if that is not possible.
  */
-uपूर्णांक64_t amdgpu_gmc_agp_addr(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->bdev);
+uint64_t amdgpu_gmc_agp_addr(struct ttm_buffer_object *bo)
+{
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->bdev);
 
-	अगर (bo->tपंचांग->num_pages != 1 || bo->tपंचांग->caching == tपंचांग_cached)
-		वापस AMDGPU_BO_INVALID_OFFSET;
+	if (bo->ttm->num_pages != 1 || bo->ttm->caching == ttm_cached)
+		return AMDGPU_BO_INVALID_OFFSET;
 
-	अगर (bo->tपंचांग->dma_address[0] + PAGE_SIZE >= adev->gmc.agp_size)
-		वापस AMDGPU_BO_INVALID_OFFSET;
+	if (bo->ttm->dma_address[0] + PAGE_SIZE >= adev->gmc.agp_size)
+		return AMDGPU_BO_INVALID_OFFSET;
 
-	वापस adev->gmc.agp_start + bo->tपंचांग->dma_address[0];
-पूर्ण
+	return adev->gmc.agp_start + bo->ttm->dma_address[0];
+}
 
 /**
  * amdgpu_gmc_vram_location - try to find VRAM location
  *
- * @adev: amdgpu device काष्ठाure holding all necessary inक्रमmation
- * @mc: memory controller काष्ठाure holding memory inक्रमmation
+ * @adev: amdgpu device structure holding all necessary information
+ * @mc: memory controller structure holding memory information
  * @base: base address at which to put VRAM
  *
  * Function will try to place VRAM at base address provided
  * as parameter.
  */
-व्योम amdgpu_gmc_vram_location(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_gmc *mc,
+void amdgpu_gmc_vram_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc,
 			      u64 base)
-अणु
-	uपूर्णांक64_t limit = (uपूर्णांक64_t)amdgpu_vram_limit << 20;
+{
+	uint64_t limit = (uint64_t)amdgpu_vram_limit << 20;
 
 	mc->vram_start = base;
 	mc->vram_end = mc->vram_start + mc->mc_vram_size - 1;
-	अगर (limit && limit < mc->real_vram_size)
+	if (limit && limit < mc->real_vram_size)
 		mc->real_vram_size = limit;
 
-	अगर (mc->xgmi.num_physical_nodes == 0) अणु
+	if (mc->xgmi.num_physical_nodes == 0) {
 		mc->fb_start = mc->vram_start;
 		mc->fb_end = mc->vram_end;
-	पूर्ण
+	}
 	dev_info(adev->dev, "VRAM: %lluM 0x%016llX - 0x%016llX (%lluM used)\n",
 			mc->mc_vram_size >> 20, mc->vram_start,
 			mc->vram_end, mc->real_vram_size >> 20);
-पूर्ण
+}
 
 /** amdgpu_gmc_sysvm_location - place vram and gart in sysvm aperture
  *
- * @adev: amdgpu device काष्ठाure holding all necessary inक्रमmation
- * @mc: memory controller काष्ठाure holding memory inक्रमmation
+ * @adev: amdgpu device structure holding all necessary information
+ * @mc: memory controller structure holding memory information
  *
- * This function is only used अगर use GART क्रम FB translation. In such
- * हाल, we use sysvm aperture (vmid0 page tables) क्रम both vram
- * and gart (aka प्रणाली memory) access.
+ * This function is only used if use GART for FB translation. In such
+ * case, we use sysvm aperture (vmid0 page tables) for both vram
+ * and gart (aka system memory) access.
  *
  * GPUVM (and our organization of vmid0 page tables) require sysvm
- * aperture to be placed at a location aligned with 8 बार of native
- * page size. For example, अगर vm_context0_cntl.page_table_block_size
+ * aperture to be placed at a location aligned with 8 times of native
+ * page size. For example, if vm_context0_cntl.page_table_block_size
  * is 12, then native page size is 8G (2M*2^12), sysvm should start
  * with a 64G aligned address. For simplicity, we just put sysvm at
  * address 0. So vram start at address 0 and gart is right after vram.
  */
-व्योम amdgpu_gmc_sysvm_location(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_gmc *mc)
-अणु
+void amdgpu_gmc_sysvm_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
+{
 	u64 hive_vram_start = 0;
 	u64 hive_vram_end = mc->xgmi.node_segment_size * mc->xgmi.num_physical_nodes - 1;
 	mc->vram_start = mc->xgmi.node_segment_size * mc->xgmi.physical_node_id;
@@ -243,196 +242,196 @@ uपूर्णांक64_t amdgpu_gmc_agp_addr(काष्ठा tपंच�
 			mc->vram_end, mc->real_vram_size >> 20);
 	dev_info(adev->dev, "GART: %lluM 0x%016llX - 0x%016llX\n",
 			mc->gart_size >> 20, mc->gart_start, mc->gart_end);
-पूर्ण
+}
 
 /**
  * amdgpu_gmc_gart_location - try to find GART location
  *
- * @adev: amdgpu device काष्ठाure holding all necessary inक्रमmation
- * @mc: memory controller काष्ठाure holding memory inक्रमmation
+ * @adev: amdgpu device structure holding all necessary information
+ * @mc: memory controller structure holding memory information
  *
- * Function will place try to place GART beक्रमe or after VRAM.
+ * Function will place try to place GART before or after VRAM.
  * If GART size is bigger than space left then we ajust GART size.
  * Thus function will never fails.
  */
-व्योम amdgpu_gmc_gart_location(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_gmc *mc)
-अणु
-	स्थिर uपूर्णांक64_t four_gb = 0x100000000ULL;
+void amdgpu_gmc_gart_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
+{
+	const uint64_t four_gb = 0x100000000ULL;
 	u64 size_af, size_bf;
-	/*To aव्योम the hole, limit the max mc address to AMDGPU_GMC_HOLE_START*/
+	/*To avoid the hole, limit the max mc address to AMDGPU_GMC_HOLE_START*/
 	u64 max_mc_address = min(adev->gmc.mc_mask, AMDGPU_GMC_HOLE_START - 1);
 
-	/* VCE करोesn't like it when BOs cross a 4GB segment, so align
+	/* VCE doesn't like it when BOs cross a 4GB segment, so align
 	 * the GART base on a 4GB boundary as well.
 	 */
 	size_bf = mc->fb_start;
 	size_af = max_mc_address + 1 - ALIGN(mc->fb_end + 1, four_gb);
 
-	अगर (mc->gart_size > max(size_bf, size_af)) अणु
+	if (mc->gart_size > max(size_bf, size_af)) {
 		dev_warn(adev->dev, "limiting GART\n");
 		mc->gart_size = max(size_bf, size_af);
-	पूर्ण
+	}
 
-	अगर ((size_bf >= mc->gart_size && size_bf < size_af) ||
+	if ((size_bf >= mc->gart_size && size_bf < size_af) ||
 	    (size_af < mc->gart_size))
 		mc->gart_start = 0;
-	अन्यथा
+	else
 		mc->gart_start = max_mc_address - mc->gart_size + 1;
 
 	mc->gart_start &= ~(four_gb - 1);
 	mc->gart_end = mc->gart_start + mc->gart_size - 1;
 	dev_info(adev->dev, "GART: %lluM 0x%016llX - 0x%016llX\n",
 			mc->gart_size >> 20, mc->gart_start, mc->gart_end);
-पूर्ण
+}
 
 /**
  * amdgpu_gmc_agp_location - try to find AGP location
- * @adev: amdgpu device काष्ठाure holding all necessary inक्रमmation
- * @mc: memory controller काष्ठाure holding memory inक्रमmation
+ * @adev: amdgpu device structure holding all necessary information
+ * @mc: memory controller structure holding memory information
  *
- * Function will place try to find a place क्रम the AGP BAR in the MC address
+ * Function will place try to find a place for the AGP BAR in the MC address
  * space.
  *
- * AGP BAR will be asचिन्हित the largest available hole in the address space.
+ * AGP BAR will be assigned the largest available hole in the address space.
  * Should be called after VRAM and GART locations are setup.
  */
-व्योम amdgpu_gmc_agp_location(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_gmc *mc)
-अणु
-	स्थिर uपूर्णांक64_t sixteen_gb = 1ULL << 34;
-	स्थिर uपूर्णांक64_t sixteen_gb_mask = ~(sixteen_gb - 1);
+void amdgpu_gmc_agp_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
+{
+	const uint64_t sixteen_gb = 1ULL << 34;
+	const uint64_t sixteen_gb_mask = ~(sixteen_gb - 1);
 	u64 size_af, size_bf;
 
-	अगर (amdgpu_sriov_vf(adev)) अणु
+	if (amdgpu_sriov_vf(adev)) {
 		mc->agp_start = 0xffffffffffff;
 		mc->agp_end = 0x0;
 		mc->agp_size = 0;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mc->fb_start > mc->gart_start) अणु
+	if (mc->fb_start > mc->gart_start) {
 		size_bf = (mc->fb_start & sixteen_gb_mask) -
 			ALIGN(mc->gart_end + 1, sixteen_gb);
 		size_af = mc->mc_mask + 1 - ALIGN(mc->fb_end + 1, sixteen_gb);
-	पूर्ण अन्यथा अणु
+	} else {
 		size_bf = mc->fb_start & sixteen_gb_mask;
 		size_af = (mc->gart_start & sixteen_gb_mask) -
 			ALIGN(mc->fb_end + 1, sixteen_gb);
-	पूर्ण
+	}
 
-	अगर (size_bf > size_af) अणु
+	if (size_bf > size_af) {
 		mc->agp_start = (mc->fb_start - size_bf) & sixteen_gb_mask;
 		mc->agp_size = size_bf;
-	पूर्ण अन्यथा अणु
+	} else {
 		mc->agp_start = ALIGN(mc->fb_end + 1, sixteen_gb);
 		mc->agp_size = size_af;
-	पूर्ण
+	}
 
 	mc->agp_end = mc->agp_start + mc->agp_size - 1;
 	dev_info(adev->dev, "AGP: %lluM 0x%016llX - 0x%016llX\n",
 			mc->agp_size >> 20, mc->agp_start, mc->agp_end);
-पूर्ण
+}
 
 /**
  * amdgpu_gmc_filter_faults - filter VM faults
  *
- * @adev: amdgpu device काष्ठाure
+ * @adev: amdgpu device structure
  * @addr: address of the VM fault
  * @pasid: PASID of the process causing the fault
- * @बारtamp: बारtamp of the fault
+ * @timestamp: timestamp of the fault
  *
  * Returns:
- * True अगर the fault was filtered and should not be processed further.
- * False अगर the fault is a new one and needs to be handled.
+ * True if the fault was filtered and should not be processed further.
+ * False if the fault is a new one and needs to be handled.
  */
-bool amdgpu_gmc_filter_faults(काष्ठा amdgpu_device *adev, uपूर्णांक64_t addr,
-			      uपूर्णांक16_t pasid, uपूर्णांक64_t बारtamp)
-अणु
-	काष्ठा amdgpu_gmc *gmc = &adev->gmc;
+bool amdgpu_gmc_filter_faults(struct amdgpu_device *adev, uint64_t addr,
+			      uint16_t pasid, uint64_t timestamp)
+{
+	struct amdgpu_gmc *gmc = &adev->gmc;
 
-	uपूर्णांक64_t stamp, key = addr << 4 | pasid;
-	काष्ठा amdgpu_gmc_fault *fault;
-	uपूर्णांक32_t hash;
+	uint64_t stamp, key = addr << 4 | pasid;
+	struct amdgpu_gmc_fault *fault;
+	uint32_t hash;
 
-	/* If we करोn't have space left in the ring buffer वापस immediately */
-	stamp = max(बारtamp, AMDGPU_GMC_FAULT_TIMEOUT + 1) -
+	/* If we don't have space left in the ring buffer return immediately */
+	stamp = max(timestamp, AMDGPU_GMC_FAULT_TIMEOUT + 1) -
 		AMDGPU_GMC_FAULT_TIMEOUT;
-	अगर (gmc->fault_ring[gmc->last_fault].बारtamp >= stamp)
-		वापस true;
+	if (gmc->fault_ring[gmc->last_fault].timestamp >= stamp)
+		return true;
 
 	/* Try to find the fault in the hash */
 	hash = hash_64(key, AMDGPU_GMC_FAULT_HASH_ORDER);
 	fault = &gmc->fault_ring[gmc->fault_hash[hash].idx];
-	जबतक (fault->बारtamp >= stamp) अणु
-		uपूर्णांक64_t पंचांगp;
+	while (fault->timestamp >= stamp) {
+		uint64_t tmp;
 
-		अगर (fault->key == key)
-			वापस true;
+		if (fault->key == key)
+			return true;
 
-		पंचांगp = fault->बारtamp;
+		tmp = fault->timestamp;
 		fault = &gmc->fault_ring[fault->next];
 
-		/* Check अगर the entry was reused */
-		अगर (fault->बारtamp >= पंचांगp)
-			अवरोध;
-	पूर्ण
+		/* Check if the entry was reused */
+		if (fault->timestamp >= tmp)
+			break;
+	}
 
 	/* Add the fault to the ring */
 	fault = &gmc->fault_ring[gmc->last_fault];
 	fault->key = key;
-	fault->बारtamp = बारtamp;
+	fault->timestamp = timestamp;
 
 	/* And update the hash */
 	fault->next = gmc->fault_hash[hash].idx;
 	gmc->fault_hash[hash].idx = gmc->last_fault++;
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक amdgpu_gmc_ras_late_init(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक r;
+int amdgpu_gmc_ras_late_init(struct amdgpu_device *adev)
+{
+	int r;
 
-	अगर (adev->umc.ras_funcs &&
-	    adev->umc.ras_funcs->ras_late_init) अणु
+	if (adev->umc.ras_funcs &&
+	    adev->umc.ras_funcs->ras_late_init) {
 		r = adev->umc.ras_funcs->ras_late_init(adev);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	अगर (adev->mmhub.ras_funcs &&
-	    adev->mmhub.ras_funcs->ras_late_init) अणु
+	if (adev->mmhub.ras_funcs &&
+	    adev->mmhub.ras_funcs->ras_late_init) {
 		r = adev->mmhub.ras_funcs->ras_late_init(adev);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	अगर (!adev->gmc.xgmi.connected_to_cpu)
+	if (!adev->gmc.xgmi.connected_to_cpu)
 		adev->gmc.xgmi.ras_funcs = &xgmi_ras_funcs;
 
-	अगर (adev->gmc.xgmi.ras_funcs &&
-	    adev->gmc.xgmi.ras_funcs->ras_late_init) अणु
+	if (adev->gmc.xgmi.ras_funcs &&
+	    adev->gmc.xgmi.ras_funcs->ras_late_init) {
 		r = adev->gmc.xgmi.ras_funcs->ras_late_init(adev);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम amdgpu_gmc_ras_fini(काष्ठा amdgpu_device *adev)
-अणु
-	अगर (adev->umc.ras_funcs &&
+void amdgpu_gmc_ras_fini(struct amdgpu_device *adev)
+{
+	if (adev->umc.ras_funcs &&
 	    adev->umc.ras_funcs->ras_fini)
 		adev->umc.ras_funcs->ras_fini(adev);
 
-	अगर (adev->mmhub.ras_funcs &&
+	if (adev->mmhub.ras_funcs &&
 	    adev->mmhub.ras_funcs->ras_fini)
 		amdgpu_mmhub_ras_fini(adev);
 
-	अगर (adev->gmc.xgmi.ras_funcs &&
+	if (adev->gmc.xgmi.ras_funcs &&
 	    adev->gmc.xgmi.ras_funcs->ras_fini)
 		adev->gmc.xgmi.ras_funcs->ras_fini(adev);
-पूर्ण
+}
 
 	/*
 	 * The latest engine allocation on gfx9/10 is:
@@ -441,220 +440,220 @@ bool amdgpu_gmc_filter_faults(काष्ठा amdgpu_device *adev, uपूर
 	 *                    subject to change when ring number changes
 	 * Engine 17: Gart flushes
 	 */
-#घोषणा GFXHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
-#घोषणा MMHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
+#define GFXHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
+#define MMHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
 
-पूर्णांक amdgpu_gmc_allocate_vm_inv_eng(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_ring *ring;
-	अचिन्हित vm_inv_engs[AMDGPU_MAX_VMHUBS] =
-		अणुGFXHUB_FREE_VM_INV_ENGS_BITMAP, MMHUB_FREE_VM_INV_ENGS_BITMAP,
-		GFXHUB_FREE_VM_INV_ENGS_BITMAPपूर्ण;
-	अचिन्हित i;
-	अचिन्हित vmhub, inv_eng;
+int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
+{
+	struct amdgpu_ring *ring;
+	unsigned vm_inv_engs[AMDGPU_MAX_VMHUBS] =
+		{GFXHUB_FREE_VM_INV_ENGS_BITMAP, MMHUB_FREE_VM_INV_ENGS_BITMAP,
+		GFXHUB_FREE_VM_INV_ENGS_BITMAP};
+	unsigned i;
+	unsigned vmhub, inv_eng;
 
-	क्रम (i = 0; i < adev->num_rings; ++i) अणु
+	for (i = 0; i < adev->num_rings; ++i) {
 		ring = adev->rings[i];
 		vmhub = ring->funcs->vmhub;
 
-		अगर (ring == &adev->mes.ring)
-			जारी;
+		if (ring == &adev->mes.ring)
+			continue;
 
 		inv_eng = ffs(vm_inv_engs[vmhub]);
-		अगर (!inv_eng) अणु
+		if (!inv_eng) {
 			dev_err(adev->dev, "no VM inv eng for ring %s\n",
 				ring->name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ring->vm_inv_eng = inv_eng - 1;
 		vm_inv_engs[vmhub] &= ~(1 << ring->vm_inv_eng);
 
 		dev_info(adev->dev, "ring %s uses VM inv eng %u on hub %u\n",
 			 ring->name, ring->vm_inv_eng, ring->funcs->vmhub);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * amdgpu_पंचांगz_set -- check and set अगर a device supports TMZ
- * @adev: amdgpu_device poपूर्णांकer
+ * amdgpu_tmz_set -- check and set if a device supports TMZ
+ * @adev: amdgpu_device pointer
  *
- * Check and set अगर an the device @adev supports Trusted Memory
+ * Check and set if an the device @adev supports Trusted Memory
  * Zones (TMZ).
  */
-व्योम amdgpu_gmc_पंचांगz_set(काष्ठा amdgpu_device *adev)
-अणु
-	चयन (adev->asic_type) अणु
-	हाल CHIP_RAVEN:
-	हाल CHIP_RENOIR:
-		अगर (amdgpu_पंचांगz == 0) अणु
-			adev->gmc.पंचांगz_enabled = false;
+void amdgpu_gmc_tmz_set(struct amdgpu_device *adev)
+{
+	switch (adev->asic_type) {
+	case CHIP_RAVEN:
+	case CHIP_RENOIR:
+		if (amdgpu_tmz == 0) {
+			adev->gmc.tmz_enabled = false;
 			dev_info(adev->dev,
 				 "Trusted Memory Zone (TMZ) feature disabled (cmd line)\n");
-		पूर्ण अन्यथा अणु
-			adev->gmc.पंचांगz_enabled = true;
+		} else {
+			adev->gmc.tmz_enabled = true;
 			dev_info(adev->dev,
 				 "Trusted Memory Zone (TMZ) feature enabled\n");
-		पूर्ण
-		अवरोध;
-	हाल CHIP_NAVI10:
-	हाल CHIP_NAVI14:
-	हाल CHIP_NAVI12:
-	हाल CHIP_VANGOGH:
-		/* Don't enable it by शेष yet.
+		}
+		break;
+	case CHIP_NAVI10:
+	case CHIP_NAVI14:
+	case CHIP_NAVI12:
+	case CHIP_VANGOGH:
+		/* Don't enable it by default yet.
 		 */
-		अगर (amdgpu_पंचांगz < 1) अणु
-			adev->gmc.पंचांगz_enabled = false;
+		if (amdgpu_tmz < 1) {
+			adev->gmc.tmz_enabled = false;
 			dev_info(adev->dev,
 				 "Trusted Memory Zone (TMZ) feature disabled as experimental (default)\n");
-		पूर्ण अन्यथा अणु
-			adev->gmc.पंचांगz_enabled = true;
+		} else {
+			adev->gmc.tmz_enabled = true;
 			dev_info(adev->dev,
 				 "Trusted Memory Zone (TMZ) feature enabled as experimental (cmd line)\n");
-		पूर्ण
-		अवरोध;
-	शेष:
-		adev->gmc.पंचांगz_enabled = false;
+		}
+		break;
+	default:
+		adev->gmc.tmz_enabled = false;
 		dev_warn(adev->dev,
 			 "Trusted Memory Zone (TMZ) feature not supported\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /**
- * amdgpu_noretry_set -- set per asic noretry शेषs
- * @adev: amdgpu_device poपूर्णांकer
+ * amdgpu_noretry_set -- set per asic noretry defaults
+ * @adev: amdgpu_device pointer
  *
- * Set a per asic शेष क्रम the no-retry parameter.
+ * Set a per asic default for the no-retry parameter.
  *
  */
-व्योम amdgpu_gmc_noretry_set(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_gmc *gmc = &adev->gmc;
+void amdgpu_gmc_noretry_set(struct amdgpu_device *adev)
+{
+	struct amdgpu_gmc *gmc = &adev->gmc;
 
-	चयन (adev->asic_type) अणु
-	हाल CHIP_VEGA10:
-	हाल CHIP_VEGA20:
-	हाल CHIP_ARCTURUS:
-	हाल CHIP_ALDEBARAN:
+	switch (adev->asic_type) {
+	case CHIP_VEGA10:
+	case CHIP_VEGA20:
+	case CHIP_ARCTURUS:
+	case CHIP_ALDEBARAN:
 		/*
 		 * noretry = 0 will cause kfd page fault tests fail
-		 * क्रम some ASICs, so set शेष to 1 क्रम these ASICs.
+		 * for some ASICs, so set default to 1 for these ASICs.
 		 */
-		अगर (amdgpu_noretry == -1)
+		if (amdgpu_noretry == -1)
 			gmc->noretry = 1;
-		अन्यथा
+		else
 			gmc->noretry = amdgpu_noretry;
-		अवरोध;
-	हाल CHIP_RAVEN:
-	शेष:
+		break;
+	case CHIP_RAVEN:
+	default:
 		/* Raven currently has issues with noretry
-		 * regardless of what we decide क्रम other
+		 * regardless of what we decide for other
 		 * asics, we should leave raven with
 		 * noretry = 0 until we root cause the
 		 * issues.
 		 *
-		 * शेष this to 0 क्रम now, but we may want
-		 * to change this in the future क्रम certain
-		 * GPUs as it can increase perक्रमmance in
-		 * certain हालs.
+		 * default this to 0 for now, but we may want
+		 * to change this in the future for certain
+		 * GPUs as it can increase performance in
+		 * certain cases.
 		 */
-		अगर (amdgpu_noretry == -1)
+		if (amdgpu_noretry == -1)
 			gmc->noretry = 0;
-		अन्यथा
+		else
 			gmc->noretry = amdgpu_noretry;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम amdgpu_gmc_set_vm_fault_masks(काष्ठा amdgpu_device *adev, पूर्णांक hub_type,
+void amdgpu_gmc_set_vm_fault_masks(struct amdgpu_device *adev, int hub_type,
 				   bool enable)
-अणु
-	काष्ठा amdgpu_vmhub *hub;
-	u32 पंचांगp, reg, i;
+{
+	struct amdgpu_vmhub *hub;
+	u32 tmp, reg, i;
 
 	hub = &adev->vmhub[hub_type];
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		reg = hub->vm_context0_cntl + hub->ctx_distance * i;
 
-		पंचांगp = RREG32(reg);
-		अगर (enable)
-			पंचांगp |= hub->vm_cntx_cntl_vm_fault;
-		अन्यथा
-			पंचांगp &= ~hub->vm_cntx_cntl_vm_fault;
+		tmp = RREG32(reg);
+		if (enable)
+			tmp |= hub->vm_cntx_cntl_vm_fault;
+		else
+			tmp &= ~hub->vm_cntx_cntl_vm_fault;
 
-		WREG32(reg, पंचांगp);
-	पूर्ण
-पूर्ण
+		WREG32(reg, tmp);
+	}
+}
 
-व्योम amdgpu_gmc_get_vbios_allocations(काष्ठा amdgpu_device *adev)
-अणु
-	अचिन्हित size;
+void amdgpu_gmc_get_vbios_allocations(struct amdgpu_device *adev)
+{
+	unsigned size;
 
 	/*
 	 * TODO:
 	 * Currently there is a bug where some memory client outside
-	 * of the driver ग_लिखोs to first 8M of VRAM on S3 resume,
-	 * this overrides GART which by शेष माला_लो placed in first 8M and
+	 * of the driver writes to first 8M of VRAM on S3 resume,
+	 * this overrides GART which by default gets placed in first 8M and
 	 * causes VM_FAULTS once GTT is accessed.
-	 * Keep the stolen memory reservation until the जबतक this is not solved.
+	 * Keep the stolen memory reservation until the while this is not solved.
 	 */
-	चयन (adev->asic_type) अणु
-	हाल CHIP_VEGA10:
-	हाल CHIP_RAVEN:
-	हाल CHIP_RENOIR:
+	switch (adev->asic_type) {
+	case CHIP_VEGA10:
+	case CHIP_RAVEN:
+	case CHIP_RENOIR:
 		adev->mman.keep_stolen_vga_memory = true;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		adev->mman.keep_stolen_vga_memory = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (amdgpu_sriov_vf(adev) ||
-	    !amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_DCE)) अणु
+	if (amdgpu_sriov_vf(adev) ||
+	    !amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_DCE)) {
 		size = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		size = amdgpu_gmc_get_vbios_fb_size(adev);
 
-		अगर (adev->mman.keep_stolen_vga_memory)
-			size = max(size, (अचिन्हित)AMDGPU_VBIOS_VGA_ALLOCATION);
-	पूर्ण
+		if (adev->mman.keep_stolen_vga_memory)
+			size = max(size, (unsigned)AMDGPU_VBIOS_VGA_ALLOCATION);
+	}
 
-	/* set to 0 अगर the pre-OS buffer uses up most of vram */
-	अगर ((adev->gmc.real_vram_size - size) < (8 * 1024 * 1024))
+	/* set to 0 if the pre-OS buffer uses up most of vram */
+	if ((adev->gmc.real_vram_size - size) < (8 * 1024 * 1024))
 		size = 0;
 
-	अगर (size > AMDGPU_VBIOS_VGA_ALLOCATION) अणु
+	if (size > AMDGPU_VBIOS_VGA_ALLOCATION) {
 		adev->mman.stolen_vga_size = AMDGPU_VBIOS_VGA_ALLOCATION;
 		adev->mman.stolen_extended_size = size - adev->mman.stolen_vga_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		adev->mman.stolen_vga_size = size;
 		adev->mman.stolen_extended_size = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * amdgpu_gmc_init_pdb0 - initialize PDB0
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
  * This function is only used when GART page table is used
- * क्रम FB address translatioin. In such a हाल, we स्थिरruct
- * a 2-level प्रणाली VM page table: PDB0->PTB, to cover both
- * VRAM of the hive and प्रणाली memory.
+ * for FB address translatioin. In such a case, we construct
+ * a 2-level system VM page table: PDB0->PTB, to cover both
+ * VRAM of the hive and system memory.
  *
- * PDB0 is अटल, initialized once on driver initialization.
+ * PDB0 is static, initialized once on driver initialization.
  * The first n entries of PDB0 are used as PTE by setting
- * P bit to 1, poपूर्णांकing to VRAM. The n+1'th entry poपूर्णांकs
- * to a big PTB covering प्रणाली memory.
+ * P bit to 1, pointing to VRAM. The n+1'th entry points
+ * to a big PTB covering system memory.
  *
  */
-व्योम amdgpu_gmc_init_pdb0(काष्ठा amdgpu_device *adev)
-अणु
-	पूर्णांक i;
-	uपूर्णांक64_t flags = adev->gart.gart_pte_flags; //TODO it is UC. explore NC/RW?
+void amdgpu_gmc_init_pdb0(struct amdgpu_device *adev)
+{
+	int i;
+	uint64_t flags = adev->gart.gart_pte_flags; //TODO it is UC. explore NC/RW?
 	/* Each PDE0 (used as PTE) covers (2^vmid0_page_table_block_size)*2M
 	 */
 	u64 vram_size = adev->gmc.xgmi.node_segment_size * adev->gmc.xgmi.num_physical_nodes;
@@ -671,53 +670,53 @@ bool amdgpu_gmc_filter_faults(काष्ठा amdgpu_device *adev, uपूर
 	flags |= AMDGPU_PDE_PTE;
 
 	/* The first n PDE0 entries are used as PTE,
-	 * poपूर्णांकing to vram
+	 * pointing to vram
 	 */
-	क्रम (i = 0; vram_addr < vram_end; i++, vram_addr += pde0_page_size)
+	for (i = 0; vram_addr < vram_end; i++, vram_addr += pde0_page_size)
 		amdgpu_gmc_set_pte_pde(adev, adev->gmc.ptr_pdb0, i, vram_addr, flags);
 
-	/* The n+1'th PDE0 entry poपूर्णांकs to a huge
+	/* The n+1'th PDE0 entry points to a huge
 	 * PTB who has more than 512 entries each
-	 * poपूर्णांकing to a 4K प्रणाली page
+	 * pointing to a 4K system page
 	 */
 	flags = AMDGPU_PTE_VALID;
 	flags |= AMDGPU_PDE_BFS(0) | AMDGPU_PTE_SNOOPED;
 	/* Requires gart_ptb_gpu_pa to be 4K aligned */
 	amdgpu_gmc_set_pte_pde(adev, adev->gmc.ptr_pdb0, i, gart_ptb_gpu_pa, flags);
-पूर्ण
+}
 
 /**
  * amdgpu_gmc_vram_mc2pa - calculate vram buffer's physical address from MC
  * address
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @mc_addr: MC address of buffer
  */
-uपूर्णांक64_t amdgpu_gmc_vram_mc2pa(काष्ठा amdgpu_device *adev, uपूर्णांक64_t mc_addr)
-अणु
-	वापस mc_addr - adev->gmc.vram_start + adev->vm_manager.vram_base_offset;
-पूर्ण
+uint64_t amdgpu_gmc_vram_mc2pa(struct amdgpu_device *adev, uint64_t mc_addr)
+{
+	return mc_addr - adev->gmc.vram_start + adev->vm_manager.vram_base_offset;
+}
 
 /**
  * amdgpu_gmc_vram_pa - calculate vram buffer object's physical address from
  * GPU's view
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @bo: amdgpu buffer object
  */
-uपूर्णांक64_t amdgpu_gmc_vram_pa(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_bo *bo)
-अणु
-	वापस amdgpu_gmc_vram_mc2pa(adev, amdgpu_bo_gpu_offset(bo));
-पूर्ण
+uint64_t amdgpu_gmc_vram_pa(struct amdgpu_device *adev, struct amdgpu_bo *bo)
+{
+	return amdgpu_gmc_vram_mc2pa(adev, amdgpu_bo_gpu_offset(bo));
+}
 
 /**
  * amdgpu_gmc_vram_cpu_pa - calculate vram buffer object's physical address
  * from CPU's view
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @bo: amdgpu buffer object
  */
-uपूर्णांक64_t amdgpu_gmc_vram_cpu_pa(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_bo *bo)
-अणु
-	वापस amdgpu_bo_gpu_offset(bo) - adev->gmc.vram_start + adev->gmc.aper_base;
-पूर्ण
+uint64_t amdgpu_gmc_vram_cpu_pa(struct amdgpu_device *adev, struct amdgpu_bo *bo)
+{
+	return amdgpu_bo_gpu_offset(bo) - adev->gmc.vram_start + adev->gmc.aper_base;
+}

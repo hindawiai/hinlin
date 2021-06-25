@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/sched/sch_generic.c	Generic packet scheduler routines.
  *
@@ -8,571 +7,571 @@
  *              - Ingress support
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/skb_array.h>
-#समावेश <linux/अगर_macvlan.h>
-#समावेश <net/sch_generic.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/dst.h>
-#समावेश <trace/events/qdisc.h>
-#समावेश <trace/events/net.h>
-#समावेश <net/xfrm.h>
+#include <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/init.h>
+#include <linux/rcupdate.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/if_vlan.h>
+#include <linux/skb_array.h>
+#include <linux/if_macvlan.h>
+#include <net/sch_generic.h>
+#include <net/pkt_sched.h>
+#include <net/dst.h>
+#include <trace/events/qdisc.h>
+#include <trace/events/net.h>
+#include <net/xfrm.h>
 
-/* Qdisc to use by शेष */
-स्थिर काष्ठा Qdisc_ops *शेष_qdisc_ops = &pfअगरo_fast_ops;
-EXPORT_SYMBOL(शेष_qdisc_ops);
+/* Qdisc to use by default */
+const struct Qdisc_ops *default_qdisc_ops = &pfifo_fast_ops;
+EXPORT_SYMBOL(default_qdisc_ops);
 
-अटल व्योम qdisc_maybe_clear_missed(काष्ठा Qdisc *q,
-				     स्थिर काष्ठा netdev_queue *txq)
-अणु
+static void qdisc_maybe_clear_missed(struct Qdisc *q,
+				     const struct netdev_queue *txq)
+{
 	clear_bit(__QDISC_STATE_MISSED, &q->state);
 
-	/* Make sure the below netअगर_xmit_frozen_or_stopped()
+	/* Make sure the below netif_xmit_frozen_or_stopped()
 	 * checking happens after clearing STATE_MISSED.
 	 */
 	smp_mb__after_atomic();
 
-	/* Checking netअगर_xmit_frozen_or_stopped() again to
-	 * make sure STATE_MISSED is set अगर the STATE_MISSED
-	 * set by netअगर_tx_wake_queue()'s rescheduling of
+	/* Checking netif_xmit_frozen_or_stopped() again to
+	 * make sure STATE_MISSED is set if the STATE_MISSED
+	 * set by netif_tx_wake_queue()'s rescheduling of
 	 * net_tx_action() is cleared by the above clear_bit().
 	 */
-	अगर (!netअगर_xmit_frozen_or_stopped(txq))
+	if (!netif_xmit_frozen_or_stopped(txq))
 		set_bit(__QDISC_STATE_MISSED, &q->state);
-पूर्ण
+}
 
 /* Main transmission queue. */
 
-/* Modअगरications to data participating in scheduling must be रक्षित with
+/* Modifications to data participating in scheduling must be protected with
  * qdisc_lock(qdisc) spinlock.
  *
  * The idea is the following:
  * - enqueue, dequeue are serialized via qdisc root lock
  * - ingress filtering is also serialized via qdisc root lock
- * - updates to tree and tree walking are only करोne under the rtnl mutex.
+ * - updates to tree and tree walking are only done under the rtnl mutex.
  */
 
-#घोषणा SKB_XOFF_MAGIC ((काष्ठा sk_buff *)1UL)
+#define SKB_XOFF_MAGIC ((struct sk_buff *)1UL)
 
-अटल अंतरभूत काष्ठा sk_buff *__skb_dequeue_bad_txq(काष्ठा Qdisc *q)
-अणु
-	स्थिर काष्ठा netdev_queue *txq = q->dev_queue;
-	spinlock_t *lock = शून्य;
-	काष्ठा sk_buff *skb;
+static inline struct sk_buff *__skb_dequeue_bad_txq(struct Qdisc *q)
+{
+	const struct netdev_queue *txq = q->dev_queue;
+	spinlock_t *lock = NULL;
+	struct sk_buff *skb;
 
-	अगर (q->flags & TCQ_F_NOLOCK) अणु
+	if (q->flags & TCQ_F_NOLOCK) {
 		lock = qdisc_lock(q);
 		spin_lock(lock);
-	पूर्ण
+	}
 
 	skb = skb_peek(&q->skb_bad_txq);
-	अगर (skb) अणु
+	if (skb) {
 		/* check the reason of requeuing without tx lock first */
 		txq = skb_get_tx_queue(txq->dev, skb);
-		अगर (!netअगर_xmit_frozen_or_stopped(txq)) अणु
+		if (!netif_xmit_frozen_or_stopped(txq)) {
 			skb = __skb_dequeue(&q->skb_bad_txq);
-			अगर (qdisc_is_percpu_stats(q)) अणु
+			if (qdisc_is_percpu_stats(q)) {
 				qdisc_qstats_cpu_backlog_dec(q, skb);
 				qdisc_qstats_cpu_qlen_dec(q);
-			पूर्ण अन्यथा अणु
+			} else {
 				qdisc_qstats_backlog_dec(q, skb);
 				q->q.qlen--;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			skb = SKB_XOFF_MAGIC;
 			qdisc_maybe_clear_missed(q, txq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (lock)
+	if (lock)
 		spin_unlock(lock);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत काष्ठा sk_buff *qdisc_dequeue_skb_bad_txq(काष्ठा Qdisc *q)
-अणु
-	काष्ठा sk_buff *skb = skb_peek(&q->skb_bad_txq);
+static inline struct sk_buff *qdisc_dequeue_skb_bad_txq(struct Qdisc *q)
+{
+	struct sk_buff *skb = skb_peek(&q->skb_bad_txq);
 
-	अगर (unlikely(skb))
+	if (unlikely(skb))
 		skb = __skb_dequeue_bad_txq(q);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल अंतरभूत व्योम qdisc_enqueue_skb_bad_txq(काष्ठा Qdisc *q,
-					     काष्ठा sk_buff *skb)
-अणु
-	spinlock_t *lock = शून्य;
+static inline void qdisc_enqueue_skb_bad_txq(struct Qdisc *q,
+					     struct sk_buff *skb)
+{
+	spinlock_t *lock = NULL;
 
-	अगर (q->flags & TCQ_F_NOLOCK) अणु
+	if (q->flags & TCQ_F_NOLOCK) {
 		lock = qdisc_lock(q);
 		spin_lock(lock);
-	पूर्ण
+	}
 
 	__skb_queue_tail(&q->skb_bad_txq, skb);
 
-	अगर (qdisc_is_percpu_stats(q)) अणु
+	if (qdisc_is_percpu_stats(q)) {
 		qdisc_qstats_cpu_backlog_inc(q, skb);
 		qdisc_qstats_cpu_qlen_inc(q);
-	पूर्ण अन्यथा अणु
+	} else {
 		qdisc_qstats_backlog_inc(q, skb);
 		q->q.qlen++;
-	पूर्ण
+	}
 
-	अगर (lock)
+	if (lock)
 		spin_unlock(lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dev_requeue_skb(काष्ठा sk_buff *skb, काष्ठा Qdisc *q)
-अणु
-	spinlock_t *lock = शून्य;
+static inline void dev_requeue_skb(struct sk_buff *skb, struct Qdisc *q)
+{
+	spinlock_t *lock = NULL;
 
-	अगर (q->flags & TCQ_F_NOLOCK) अणु
+	if (q->flags & TCQ_F_NOLOCK) {
 		lock = qdisc_lock(q);
 		spin_lock(lock);
-	पूर्ण
+	}
 
-	जबतक (skb) अणु
-		काष्ठा sk_buff *next = skb->next;
+	while (skb) {
+		struct sk_buff *next = skb->next;
 
 		__skb_queue_tail(&q->gso_skb, skb);
 
 		/* it's still part of the queue */
-		अगर (qdisc_is_percpu_stats(q)) अणु
+		if (qdisc_is_percpu_stats(q)) {
 			qdisc_qstats_cpu_requeues_inc(q);
 			qdisc_qstats_cpu_backlog_inc(q, skb);
 			qdisc_qstats_cpu_qlen_inc(q);
-		पूर्ण अन्यथा अणु
+		} else {
 			q->qstats.requeues++;
 			qdisc_qstats_backlog_inc(q, skb);
 			q->q.qlen++;
-		पूर्ण
+		}
 
 		skb = next;
-	पूर्ण
-	अगर (lock)
+	}
+	if (lock)
 		spin_unlock(lock);
-	__netअगर_schedule(q);
-पूर्ण
+	__netif_schedule(q);
+}
 
-अटल व्योम try_bulk_dequeue_skb(काष्ठा Qdisc *q,
-				 काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा netdev_queue *txq,
-				 पूर्णांक *packets)
-अणु
-	पूर्णांक bytelimit = qdisc_avail_bulklimit(txq) - skb->len;
+static void try_bulk_dequeue_skb(struct Qdisc *q,
+				 struct sk_buff *skb,
+				 const struct netdev_queue *txq,
+				 int *packets)
+{
+	int bytelimit = qdisc_avail_bulklimit(txq) - skb->len;
 
-	जबतक (bytelimit > 0) अणु
-		काष्ठा sk_buff *nskb = q->dequeue(q);
+	while (bytelimit > 0) {
+		struct sk_buff *nskb = q->dequeue(q);
 
-		अगर (!nskb)
-			अवरोध;
+		if (!nskb)
+			break;
 
 		bytelimit -= nskb->len; /* covers GSO len */
 		skb->next = nskb;
 		skb = nskb;
 		(*packets)++; /* GSO counts as one pkt */
-	पूर्ण
+	}
 	skb_mark_not_on_list(skb);
-पूर्ण
+}
 
 /* This variant of try_bulk_dequeue_skb() makes sure
- * all skbs in the chain are क्रम the same txq
+ * all skbs in the chain are for the same txq
  */
-अटल व्योम try_bulk_dequeue_skb_slow(काष्ठा Qdisc *q,
-				      काष्ठा sk_buff *skb,
-				      पूर्णांक *packets)
-अणु
-	पूर्णांक mapping = skb_get_queue_mapping(skb);
-	काष्ठा sk_buff *nskb;
-	पूर्णांक cnt = 0;
+static void try_bulk_dequeue_skb_slow(struct Qdisc *q,
+				      struct sk_buff *skb,
+				      int *packets)
+{
+	int mapping = skb_get_queue_mapping(skb);
+	struct sk_buff *nskb;
+	int cnt = 0;
 
-	करो अणु
+	do {
 		nskb = q->dequeue(q);
-		अगर (!nskb)
-			अवरोध;
-		अगर (unlikely(skb_get_queue_mapping(nskb) != mapping)) अणु
+		if (!nskb)
+			break;
+		if (unlikely(skb_get_queue_mapping(nskb) != mapping)) {
 			qdisc_enqueue_skb_bad_txq(q, nskb);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		skb->next = nskb;
 		skb = nskb;
-	पूर्ण जबतक (++cnt < 8);
+	} while (++cnt < 8);
 	(*packets) += cnt;
 	skb_mark_not_on_list(skb);
-पूर्ण
+}
 
-/* Note that dequeue_skb can possibly वापस a SKB list (via skb->next).
+/* Note that dequeue_skb can possibly return a SKB list (via skb->next).
  * A requeued skb (via q->gso_skb) can also be a SKB list.
  */
-अटल काष्ठा sk_buff *dequeue_skb(काष्ठा Qdisc *q, bool *validate,
-				   पूर्णांक *packets)
-अणु
-	स्थिर काष्ठा netdev_queue *txq = q->dev_queue;
-	काष्ठा sk_buff *skb = शून्य;
+static struct sk_buff *dequeue_skb(struct Qdisc *q, bool *validate,
+				   int *packets)
+{
+	const struct netdev_queue *txq = q->dev_queue;
+	struct sk_buff *skb = NULL;
 
 	*packets = 1;
-	अगर (unlikely(!skb_queue_empty(&q->gso_skb))) अणु
-		spinlock_t *lock = शून्य;
+	if (unlikely(!skb_queue_empty(&q->gso_skb))) {
+		spinlock_t *lock = NULL;
 
-		अगर (q->flags & TCQ_F_NOLOCK) अणु
+		if (q->flags & TCQ_F_NOLOCK) {
 			lock = qdisc_lock(q);
 			spin_lock(lock);
-		पूर्ण
+		}
 
 		skb = skb_peek(&q->gso_skb);
 
-		/* skb may be null अगर another cpu pulls gso_skb off in between
+		/* skb may be null if another cpu pulls gso_skb off in between
 		 * empty check and lock.
 		 */
-		अगर (!skb) अणु
-			अगर (lock)
+		if (!skb) {
+			if (lock)
 				spin_unlock(lock);
-			जाओ validate;
-		पूर्ण
+			goto validate;
+		}
 
-		/* skb in gso_skb were alपढ़ोy validated */
+		/* skb in gso_skb were already validated */
 		*validate = false;
-		अगर (xfrm_offload(skb))
+		if (xfrm_offload(skb))
 			*validate = true;
 		/* check the reason of requeuing without tx lock first */
 		txq = skb_get_tx_queue(txq->dev, skb);
-		अगर (!netअगर_xmit_frozen_or_stopped(txq)) अणु
+		if (!netif_xmit_frozen_or_stopped(txq)) {
 			skb = __skb_dequeue(&q->gso_skb);
-			अगर (qdisc_is_percpu_stats(q)) अणु
+			if (qdisc_is_percpu_stats(q)) {
 				qdisc_qstats_cpu_backlog_dec(q, skb);
 				qdisc_qstats_cpu_qlen_dec(q);
-			पूर्ण अन्यथा अणु
+			} else {
 				qdisc_qstats_backlog_dec(q, skb);
 				q->q.qlen--;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			skb = शून्य;
+			}
+		} else {
+			skb = NULL;
 			qdisc_maybe_clear_missed(q, txq);
-		पूर्ण
-		अगर (lock)
+		}
+		if (lock)
 			spin_unlock(lock);
-		जाओ trace;
-	पूर्ण
+		goto trace;
+	}
 validate:
 	*validate = true;
 
-	अगर ((q->flags & TCQ_F_ONETXQUEUE) &&
-	    netअगर_xmit_frozen_or_stopped(txq)) अणु
+	if ((q->flags & TCQ_F_ONETXQUEUE) &&
+	    netif_xmit_frozen_or_stopped(txq)) {
 		qdisc_maybe_clear_missed(q, txq);
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
 	skb = qdisc_dequeue_skb_bad_txq(q);
-	अगर (unlikely(skb)) अणु
-		अगर (skb == SKB_XOFF_MAGIC)
-			वापस शून्य;
-		जाओ bulk;
-	पूर्ण
+	if (unlikely(skb)) {
+		if (skb == SKB_XOFF_MAGIC)
+			return NULL;
+		goto bulk;
+	}
 	skb = q->dequeue(q);
-	अगर (skb) अणु
+	if (skb) {
 bulk:
-		अगर (qdisc_may_bulk(q))
+		if (qdisc_may_bulk(q))
 			try_bulk_dequeue_skb(q, skb, txq, packets);
-		अन्यथा
+		else
 			try_bulk_dequeue_skb_slow(q, skb, packets);
-	पूर्ण
+	}
 trace:
 	trace_qdisc_dequeue(q, txq, *packets, skb);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /*
- * Transmit possibly several skbs, and handle the वापस status as
+ * Transmit possibly several skbs, and handle the return status as
  * required. Owning running seqcount bit guarantees that
  * only one CPU can execute this function.
  *
  * Returns to the caller:
  *				false  - hardware queue frozen backoff
- *				true   - feel मुक्त to send more pkts
+ *				true   - feel free to send more pkts
  */
-bool sch_direct_xmit(काष्ठा sk_buff *skb, काष्ठा Qdisc *q,
-		     काष्ठा net_device *dev, काष्ठा netdev_queue *txq,
+bool sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
+		     struct net_device *dev, struct netdev_queue *txq,
 		     spinlock_t *root_lock, bool validate)
-अणु
-	पूर्णांक ret = NETDEV_TX_BUSY;
+{
+	int ret = NETDEV_TX_BUSY;
 	bool again = false;
 
 	/* And release qdisc */
-	अगर (root_lock)
+	if (root_lock)
 		spin_unlock(root_lock);
 
 	/* Note that we validate skb (GSO, checksum, ...) outside of locks */
-	अगर (validate)
+	if (validate)
 		skb = validate_xmit_skb_list(skb, dev, &again);
 
-#अगर_घोषित CONFIG_XFRM_OFFLOAD
-	अगर (unlikely(again)) अणु
-		अगर (root_lock)
+#ifdef CONFIG_XFRM_OFFLOAD
+	if (unlikely(again)) {
+		if (root_lock)
 			spin_lock(root_lock);
 
 		dev_requeue_skb(skb, q);
-		वापस false;
-	पूर्ण
-#पूर्ण_अगर
+		return false;
+	}
+#endif
 
-	अगर (likely(skb)) अणु
+	if (likely(skb)) {
 		HARD_TX_LOCK(dev, txq, smp_processor_id());
-		अगर (!netअगर_xmit_frozen_or_stopped(txq))
+		if (!netif_xmit_frozen_or_stopped(txq))
 			skb = dev_hard_start_xmit(skb, dev, txq, &ret);
-		अन्यथा
+		else
 			qdisc_maybe_clear_missed(q, txq);
 
 		HARD_TX_UNLOCK(dev, txq);
-	पूर्ण अन्यथा अणु
-		अगर (root_lock)
+	} else {
+		if (root_lock)
 			spin_lock(root_lock);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (root_lock)
+	if (root_lock)
 		spin_lock(root_lock);
 
-	अगर (!dev_xmit_complete(ret)) अणु
-		/* Driver वापसed NETDEV_TX_BUSY - requeue skb */
-		अगर (unlikely(ret != NETDEV_TX_BUSY))
+	if (!dev_xmit_complete(ret)) {
+		/* Driver returned NETDEV_TX_BUSY - requeue skb */
+		if (unlikely(ret != NETDEV_TX_BUSY))
 			net_warn_ratelimited("BUG %s code %d qlen %d\n",
 					     dev->name, ret, q->q.qlen);
 
 		dev_requeue_skb(skb, q);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * NOTE: Called under qdisc_lock(q) with locally disabled BH.
  *
  * running seqcount guarantees only one CPU can process
- * this qdisc at a समय. qdisc_lock(q) serializes queue accesses क्रम
+ * this qdisc at a time. qdisc_lock(q) serializes queue accesses for
  * this queue.
  *
- *  netअगर_tx_lock serializes accesses to device driver.
+ *  netif_tx_lock serializes accesses to device driver.
  *
- *  qdisc_lock(q) and netअगर_tx_lock are mutually exclusive,
- *  अगर one is grabbed, another must be मुक्त.
+ *  qdisc_lock(q) and netif_tx_lock are mutually exclusive,
+ *  if one is grabbed, another must be free.
  *
- * Note, that this procedure can be called by a watchकरोg समयr
+ * Note, that this procedure can be called by a watchdog timer
  *
  * Returns to the caller:
  *				0  - queue is empty or throttled.
  *				>0 - queue is not empty.
  *
  */
-अटल अंतरभूत bool qdisc_restart(काष्ठा Qdisc *q, पूर्णांक *packets)
-अणु
-	spinlock_t *root_lock = शून्य;
-	काष्ठा netdev_queue *txq;
-	काष्ठा net_device *dev;
-	काष्ठा sk_buff *skb;
+static inline bool qdisc_restart(struct Qdisc *q, int *packets)
+{
+	spinlock_t *root_lock = NULL;
+	struct netdev_queue *txq;
+	struct net_device *dev;
+	struct sk_buff *skb;
 	bool validate;
 
 	/* Dequeue packet */
 	skb = dequeue_skb(q, &validate, packets);
-	अगर (unlikely(!skb))
-		वापस false;
+	if (unlikely(!skb))
+		return false;
 
-	अगर (!(q->flags & TCQ_F_NOLOCK))
+	if (!(q->flags & TCQ_F_NOLOCK))
 		root_lock = qdisc_lock(q);
 
 	dev = qdisc_dev(q);
 	txq = skb_get_tx_queue(dev, skb);
 
-	वापस sch_direct_xmit(skb, q, dev, txq, root_lock, validate);
-पूर्ण
+	return sch_direct_xmit(skb, q, dev, txq, root_lock, validate);
+}
 
-व्योम __qdisc_run(काष्ठा Qdisc *q)
-अणु
-	पूर्णांक quota = dev_tx_weight;
-	पूर्णांक packets;
+void __qdisc_run(struct Qdisc *q)
+{
+	int quota = dev_tx_weight;
+	int packets;
 
-	जबतक (qdisc_restart(q, &packets)) अणु
+	while (qdisc_restart(q, &packets)) {
 		quota -= packets;
-		अगर (quota <= 0) अणु
-			__netअगर_schedule(q);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (quota <= 0) {
+			__netif_schedule(q);
+			break;
+		}
+	}
+}
 
-अचिन्हित दीर्घ dev_trans_start(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ val, res;
-	अचिन्हित पूर्णांक i;
+unsigned long dev_trans_start(struct net_device *dev)
+{
+	unsigned long val, res;
+	unsigned int i;
 
-	अगर (is_vlan_dev(dev))
+	if (is_vlan_dev(dev))
 		dev = vlan_dev_real_dev(dev);
-	अन्यथा अगर (netअगर_is_macvlan(dev))
+	else if (netif_is_macvlan(dev))
 		dev = macvlan_dev_real_dev(dev);
 	res = netdev_get_tx_queue(dev, 0)->trans_start;
-	क्रम (i = 1; i < dev->num_tx_queues; i++) अणु
+	for (i = 1; i < dev->num_tx_queues; i++) {
 		val = netdev_get_tx_queue(dev, i)->trans_start;
-		अगर (val && समय_after(val, res))
+		if (val && time_after(val, res))
 			res = val;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(dev_trans_start);
 
-अटल व्योम dev_watchकरोg(काष्ठा समयr_list *t)
-अणु
-	काष्ठा net_device *dev = from_समयr(dev, t, watchकरोg_समयr);
+static void dev_watchdog(struct timer_list *t)
+{
+	struct net_device *dev = from_timer(dev, t, watchdog_timer);
 
-	netअगर_tx_lock(dev);
-	अगर (!qdisc_tx_is_noop(dev)) अणु
-		अगर (netअगर_device_present(dev) &&
-		    netअगर_running(dev) &&
-		    netअगर_carrier_ok(dev)) अणु
-			पूर्णांक some_queue_समयकरोut = 0;
-			अचिन्हित पूर्णांक i;
-			अचिन्हित दीर्घ trans_start;
+	netif_tx_lock(dev);
+	if (!qdisc_tx_is_noop(dev)) {
+		if (netif_device_present(dev) &&
+		    netif_running(dev) &&
+		    netif_carrier_ok(dev)) {
+			int some_queue_timedout = 0;
+			unsigned int i;
+			unsigned long trans_start;
 
-			क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-				काष्ठा netdev_queue *txq;
+			for (i = 0; i < dev->num_tx_queues; i++) {
+				struct netdev_queue *txq;
 
 				txq = netdev_get_tx_queue(dev, i);
 				trans_start = txq->trans_start;
-				अगर (netअगर_xmit_stopped(txq) &&
-				    समय_after(jअगरfies, (trans_start +
-							 dev->watchकरोg_समयo))) अणु
-					some_queue_समयकरोut = 1;
-					txq->trans_समयout++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+				if (netif_xmit_stopped(txq) &&
+				    time_after(jiffies, (trans_start +
+							 dev->watchdog_timeo))) {
+					some_queue_timedout = 1;
+					txq->trans_timeout++;
+					break;
+				}
+			}
 
-			अगर (some_queue_समयकरोut) अणु
-				trace_net_dev_xmit_समयout(dev, i);
+			if (some_queue_timedout) {
+				trace_net_dev_xmit_timeout(dev, i);
 				WARN_ONCE(1, KERN_INFO "NETDEV WATCHDOG: %s (%s): transmit queue %u timed out\n",
 				       dev->name, netdev_drivername(dev), i);
-				dev->netdev_ops->nकरो_tx_समयout(dev, i);
-			पूर्ण
-			अगर (!mod_समयr(&dev->watchकरोg_समयr,
-				       round_jअगरfies(jअगरfies +
-						     dev->watchकरोg_समयo)))
+				dev->netdev_ops->ndo_tx_timeout(dev, i);
+			}
+			if (!mod_timer(&dev->watchdog_timer,
+				       round_jiffies(jiffies +
+						     dev->watchdog_timeo)))
 				dev_hold(dev);
-		पूर्ण
-	पूर्ण
-	netअगर_tx_unlock(dev);
+		}
+	}
+	netif_tx_unlock(dev);
 
 	dev_put(dev);
-पूर्ण
+}
 
-व्योम __netdev_watchकरोg_up(काष्ठा net_device *dev)
-अणु
-	अगर (dev->netdev_ops->nकरो_tx_समयout) अणु
-		अगर (dev->watchकरोg_समयo <= 0)
-			dev->watchकरोg_समयo = 5*HZ;
-		अगर (!mod_समयr(&dev->watchकरोg_समयr,
-			       round_jअगरfies(jअगरfies + dev->watchकरोg_समयo)))
+void __netdev_watchdog_up(struct net_device *dev)
+{
+	if (dev->netdev_ops->ndo_tx_timeout) {
+		if (dev->watchdog_timeo <= 0)
+			dev->watchdog_timeo = 5*HZ;
+		if (!mod_timer(&dev->watchdog_timer,
+			       round_jiffies(jiffies + dev->watchdog_timeo)))
 			dev_hold(dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(__netdev_watchकरोg_up);
+	}
+}
+EXPORT_SYMBOL_GPL(__netdev_watchdog_up);
 
-अटल व्योम dev_watchकरोg_up(काष्ठा net_device *dev)
-अणु
-	__netdev_watchकरोg_up(dev);
-पूर्ण
+static void dev_watchdog_up(struct net_device *dev)
+{
+	__netdev_watchdog_up(dev);
+}
 
-अटल व्योम dev_watchकरोg_करोwn(काष्ठा net_device *dev)
-अणु
-	netअगर_tx_lock_bh(dev);
-	अगर (del_समयr(&dev->watchकरोg_समयr))
+static void dev_watchdog_down(struct net_device *dev)
+{
+	netif_tx_lock_bh(dev);
+	if (del_timer(&dev->watchdog_timer))
 		dev_put(dev);
-	netअगर_tx_unlock_bh(dev);
-पूर्ण
+	netif_tx_unlock_bh(dev);
+}
 
 /**
- *	netअगर_carrier_on - set carrier
+ *	netif_carrier_on - set carrier
  *	@dev: network device
  *
  * Device has detected acquisition of carrier.
  */
-व्योम netअगर_carrier_on(काष्ठा net_device *dev)
-अणु
-	अगर (test_and_clear_bit(__LINK_STATE_NOCARRIER, &dev->state)) अणु
-		अगर (dev->reg_state == NETREG_UNINITIALIZED)
-			वापस;
+void netif_carrier_on(struct net_device *dev)
+{
+	if (test_and_clear_bit(__LINK_STATE_NOCARRIER, &dev->state)) {
+		if (dev->reg_state == NETREG_UNINITIALIZED)
+			return;
 		atomic_inc(&dev->carrier_up_count);
 		linkwatch_fire_event(dev);
-		अगर (netअगर_running(dev))
-			__netdev_watchकरोg_up(dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(netअगर_carrier_on);
+		if (netif_running(dev))
+			__netdev_watchdog_up(dev);
+	}
+}
+EXPORT_SYMBOL(netif_carrier_on);
 
 /**
- *	netअगर_carrier_off - clear carrier
+ *	netif_carrier_off - clear carrier
  *	@dev: network device
  *
  * Device has detected loss of carrier.
  */
-व्योम netअगर_carrier_off(काष्ठा net_device *dev)
-अणु
-	अगर (!test_and_set_bit(__LINK_STATE_NOCARRIER, &dev->state)) अणु
-		अगर (dev->reg_state == NETREG_UNINITIALIZED)
-			वापस;
-		atomic_inc(&dev->carrier_करोwn_count);
+void netif_carrier_off(struct net_device *dev)
+{
+	if (!test_and_set_bit(__LINK_STATE_NOCARRIER, &dev->state)) {
+		if (dev->reg_state == NETREG_UNINITIALIZED)
+			return;
+		atomic_inc(&dev->carrier_down_count);
 		linkwatch_fire_event(dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(netअगर_carrier_off);
+	}
+}
+EXPORT_SYMBOL(netif_carrier_off);
 
-/* "NOOP" scheduler: the best scheduler, recommended क्रम all पूर्णांकerfaces
-   under all circumstances. It is dअगरficult to invent anything faster or
+/* "NOOP" scheduler: the best scheduler, recommended for all interfaces
+   under all circumstances. It is difficult to invent anything faster or
    cheaper.
  */
 
-अटल पूर्णांक noop_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *qdisc,
-			काष्ठा sk_buff **to_मुक्त)
-अणु
-	__qdisc_drop(skb, to_मुक्त);
-	वापस NET_XMIT_CN;
-पूर्ण
+static int noop_enqueue(struct sk_buff *skb, struct Qdisc *qdisc,
+			struct sk_buff **to_free)
+{
+	__qdisc_drop(skb, to_free);
+	return NET_XMIT_CN;
+}
 
-अटल काष्ठा sk_buff *noop_dequeue(काष्ठा Qdisc *qdisc)
-अणु
-	वापस शून्य;
-पूर्ण
+static struct sk_buff *noop_dequeue(struct Qdisc *qdisc)
+{
+	return NULL;
+}
 
-काष्ठा Qdisc_ops noop_qdisc_ops __पढ़ो_mostly = अणु
+struct Qdisc_ops noop_qdisc_ops __read_mostly = {
 	.id		=	"noop",
 	.priv_size	=	0,
 	.enqueue	=	noop_enqueue,
 	.dequeue	=	noop_dequeue,
 	.peek		=	noop_dequeue,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा netdev_queue noop_netdev_queue = अणु
+static struct netdev_queue noop_netdev_queue = {
 	RCU_POINTER_INITIALIZER(qdisc, &noop_qdisc),
 	.qdisc_sleeping	=	&noop_qdisc,
-पूर्ण;
+};
 
-काष्ठा Qdisc noop_qdisc = अणु
+struct Qdisc noop_qdisc = {
 	.enqueue	=	noop_enqueue,
 	.dequeue	=	noop_dequeue,
 	.flags		=	TCQ_F_BUILTIN,
@@ -581,32 +580,32 @@ EXPORT_SYMBOL(netअगर_carrier_off);
 	.dev_queue	=	&noop_netdev_queue,
 	.running	=	SEQCNT_ZERO(noop_qdisc.running),
 	.busylock	=	__SPIN_LOCK_UNLOCKED(noop_qdisc.busylock),
-	.gso_skb = अणु
-		.next = (काष्ठा sk_buff *)&noop_qdisc.gso_skb,
-		.prev = (काष्ठा sk_buff *)&noop_qdisc.gso_skb,
+	.gso_skb = {
+		.next = (struct sk_buff *)&noop_qdisc.gso_skb,
+		.prev = (struct sk_buff *)&noop_qdisc.gso_skb,
 		.qlen = 0,
 		.lock = __SPIN_LOCK_UNLOCKED(noop_qdisc.gso_skb.lock),
-	पूर्ण,
-	.skb_bad_txq = अणु
-		.next = (काष्ठा sk_buff *)&noop_qdisc.skb_bad_txq,
-		.prev = (काष्ठा sk_buff *)&noop_qdisc.skb_bad_txq,
+	},
+	.skb_bad_txq = {
+		.next = (struct sk_buff *)&noop_qdisc.skb_bad_txq,
+		.prev = (struct sk_buff *)&noop_qdisc.skb_bad_txq,
 		.qlen = 0,
 		.lock = __SPIN_LOCK_UNLOCKED(noop_qdisc.skb_bad_txq.lock),
-	पूर्ण,
-पूर्ण;
+	},
+};
 EXPORT_SYMBOL(noop_qdisc);
 
-अटल पूर्णांक noqueue_init(काष्ठा Qdisc *qdisc, काष्ठा nlattr *opt,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	/* रेजिस्टर_qdisc() assigns a शेष of noop_enqueue अगर unset,
+static int noqueue_init(struct Qdisc *qdisc, struct nlattr *opt,
+			struct netlink_ext_ack *extack)
+{
+	/* register_qdisc() assigns a default of noop_enqueue if unset,
 	 * but __dev_queue_xmit() treats noqueue only as such
-	 * अगर this is शून्य - so clear it here. */
-	qdisc->enqueue = शून्य;
-	वापस 0;
-पूर्ण
+	 * if this is NULL - so clear it here. */
+	qdisc->enqueue = NULL;
+	return 0;
+}
 
-काष्ठा Qdisc_ops noqueue_qdisc_ops __पढ़ो_mostly = अणु
+struct Qdisc_ops noqueue_qdisc_ops __read_mostly = {
 	.id		=	"noqueue",
 	.priv_size	=	0,
 	.init		=	noqueue_init,
@@ -614,77 +613,77 @@ EXPORT_SYMBOL(noop_qdisc);
 	.dequeue	=	noop_dequeue,
 	.peek		=	noop_dequeue,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर u8 prio2band[TC_PRIO_MAX + 1] = अणु
+static const u8 prio2band[TC_PRIO_MAX + 1] = {
 	1, 2, 2, 2, 1, 2, 0, 0 , 1, 1, 1, 1, 1, 1, 1, 1
-पूर्ण;
+};
 
 /* 3-band FIFO queue: old style, but should be a bit faster than
-   generic prio+fअगरo combination.
+   generic prio+fifo combination.
  */
 
-#घोषणा PFIFO_FAST_BANDS 3
+#define PFIFO_FAST_BANDS 3
 
 /*
- * Private data क्रम a pfअगरo_fast scheduler containing:
- *	- rings क्रम priority bands
+ * Private data for a pfifo_fast scheduler containing:
+ *	- rings for priority bands
  */
-काष्ठा pfअगरo_fast_priv अणु
-	काष्ठा skb_array q[PFIFO_FAST_BANDS];
-पूर्ण;
+struct pfifo_fast_priv {
+	struct skb_array q[PFIFO_FAST_BANDS];
+};
 
-अटल अंतरभूत काष्ठा skb_array *band2list(काष्ठा pfअगरo_fast_priv *priv,
-					  पूर्णांक band)
-अणु
-	वापस &priv->q[band];
-पूर्ण
+static inline struct skb_array *band2list(struct pfifo_fast_priv *priv,
+					  int band)
+{
+	return &priv->q[band];
+}
 
-अटल पूर्णांक pfअगरo_fast_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *qdisc,
-			      काष्ठा sk_buff **to_मुक्त)
-अणु
-	पूर्णांक band = prio2band[skb->priority & TC_PRIO_MAX];
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(qdisc);
-	काष्ठा skb_array *q = band2list(priv, band);
-	अचिन्हित पूर्णांक pkt_len = qdisc_pkt_len(skb);
-	पूर्णांक err;
+static int pfifo_fast_enqueue(struct sk_buff *skb, struct Qdisc *qdisc,
+			      struct sk_buff **to_free)
+{
+	int band = prio2band[skb->priority & TC_PRIO_MAX];
+	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
+	struct skb_array *q = band2list(priv, band);
+	unsigned int pkt_len = qdisc_pkt_len(skb);
+	int err;
 
 	err = skb_array_produce(q, skb);
 
-	अगर (unlikely(err)) अणु
-		अगर (qdisc_is_percpu_stats(qdisc))
-			वापस qdisc_drop_cpu(skb, qdisc, to_मुक्त);
-		अन्यथा
-			वापस qdisc_drop(skb, qdisc, to_मुक्त);
-	पूर्ण
+	if (unlikely(err)) {
+		if (qdisc_is_percpu_stats(qdisc))
+			return qdisc_drop_cpu(skb, qdisc, to_free);
+		else
+			return qdisc_drop(skb, qdisc, to_free);
+	}
 
 	qdisc_update_stats_at_enqueue(qdisc, pkt_len);
-	वापस NET_XMIT_SUCCESS;
-पूर्ण
+	return NET_XMIT_SUCCESS;
+}
 
-अटल काष्ठा sk_buff *pfअगरo_fast_dequeue(काष्ठा Qdisc *qdisc)
-अणु
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(qdisc);
-	काष्ठा sk_buff *skb = शून्य;
+static struct sk_buff *pfifo_fast_dequeue(struct Qdisc *qdisc)
+{
+	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
+	struct sk_buff *skb = NULL;
 	bool need_retry = true;
-	पूर्णांक band;
+	int band;
 
 retry:
-	क्रम (band = 0; band < PFIFO_FAST_BANDS && !skb; band++) अणु
-		काष्ठा skb_array *q = band2list(priv, band);
+	for (band = 0; band < PFIFO_FAST_BANDS && !skb; band++) {
+		struct skb_array *q = band2list(priv, band);
 
-		अगर (__skb_array_empty(q))
-			जारी;
+		if (__skb_array_empty(q))
+			continue;
 
 		skb = __skb_array_consume(q);
-	पूर्ण
-	अगर (likely(skb)) अणु
+	}
+	if (likely(skb)) {
 		qdisc_update_stats_at_dequeue(qdisc, skb);
-	पूर्ण अन्यथा अगर (need_retry &&
-		   test_bit(__QDISC_STATE_MISSED, &qdisc->state)) अणु
+	} else if (need_retry &&
+		   test_bit(__QDISC_STATE_MISSED, &qdisc->state)) {
 		/* Delay clearing the STATE_MISSED here to reduce
 		 * the overhead of the second spin_trylock() in
-		 * qdisc_run_begin() and __netअगर_schedule() calling
+		 * qdisc_run_begin() and __netif_schedule() calling
 		 * in qdisc_run_end().
 		 */
 		clear_bit(__QDISC_STATE_MISSED, &qdisc->state);
@@ -696,196 +695,196 @@ retry:
 
 		need_retry = false;
 
-		जाओ retry;
-	पूर्ण अन्यथा अणु
+		goto retry;
+	} else {
 		WRITE_ONCE(qdisc->empty, true);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *pfअगरo_fast_peek(काष्ठा Qdisc *qdisc)
-अणु
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(qdisc);
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक band;
+static struct sk_buff *pfifo_fast_peek(struct Qdisc *qdisc)
+{
+	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
+	struct sk_buff *skb = NULL;
+	int band;
 
-	क्रम (band = 0; band < PFIFO_FAST_BANDS && !skb; band++) अणु
-		काष्ठा skb_array *q = band2list(priv, band);
+	for (band = 0; band < PFIFO_FAST_BANDS && !skb; band++) {
+		struct skb_array *q = band2list(priv, band);
 
 		skb = __skb_array_peek(q);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम pfअगरo_fast_reset(काष्ठा Qdisc *qdisc)
-अणु
-	पूर्णांक i, band;
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(qdisc);
+static void pfifo_fast_reset(struct Qdisc *qdisc)
+{
+	int i, band;
+	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
 
-	क्रम (band = 0; band < PFIFO_FAST_BANDS; band++) अणु
-		काष्ठा skb_array *q = band2list(priv, band);
-		काष्ठा sk_buff *skb;
+	for (band = 0; band < PFIFO_FAST_BANDS; band++) {
+		struct skb_array *q = band2list(priv, band);
+		struct sk_buff *skb;
 
-		/* शून्य ring is possible अगर destroy path is due to a failed
-		 * skb_array_init() in pfअगरo_fast_init() हाल.
+		/* NULL ring is possible if destroy path is due to a failed
+		 * skb_array_init() in pfifo_fast_init() case.
 		 */
-		अगर (!q->ring.queue)
-			जारी;
+		if (!q->ring.queue)
+			continue;
 
-		जबतक ((skb = __skb_array_consume(q)) != शून्य)
-			kमुक्त_skb(skb);
-	पूर्ण
+		while ((skb = __skb_array_consume(q)) != NULL)
+			kfree_skb(skb);
+	}
 
-	अगर (qdisc_is_percpu_stats(qdisc)) अणु
-		क्रम_each_possible_cpu(i) अणु
-			काष्ठा gnet_stats_queue *q;
+	if (qdisc_is_percpu_stats(qdisc)) {
+		for_each_possible_cpu(i) {
+			struct gnet_stats_queue *q;
 
 			q = per_cpu_ptr(qdisc->cpu_qstats, i);
 			q->backlog = 0;
 			q->qlen = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक pfअगरo_fast_dump(काष्ठा Qdisc *qdisc, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tc_prio_qopt opt = अणु .bands = PFIFO_FAST_BANDS पूर्ण;
+static int pfifo_fast_dump(struct Qdisc *qdisc, struct sk_buff *skb)
+{
+	struct tc_prio_qopt opt = { .bands = PFIFO_FAST_BANDS };
 
-	स_नकल(&opt.priomap, prio2band, TC_PRIO_MAX + 1);
-	अगर (nla_put(skb, TCA_OPTIONS, माप(opt), &opt))
-		जाओ nla_put_failure;
-	वापस skb->len;
+	memcpy(&opt.priomap, prio2band, TC_PRIO_MAX + 1);
+	if (nla_put(skb, TCA_OPTIONS, sizeof(opt), &opt))
+		goto nla_put_failure;
+	return skb->len;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक pfअगरo_fast_init(काष्ठा Qdisc *qdisc, काष्ठा nlattr *opt,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित पूर्णांक qlen = qdisc_dev(qdisc)->tx_queue_len;
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(qdisc);
-	पूर्णांक prio;
+static int pfifo_fast_init(struct Qdisc *qdisc, struct nlattr *opt,
+			   struct netlink_ext_ack *extack)
+{
+	unsigned int qlen = qdisc_dev(qdisc)->tx_queue_len;
+	struct pfifo_fast_priv *priv = qdisc_priv(qdisc);
+	int prio;
 
 	/* guard against zero length rings */
-	अगर (!qlen)
-		वापस -EINVAL;
+	if (!qlen)
+		return -EINVAL;
 
-	क्रम (prio = 0; prio < PFIFO_FAST_BANDS; prio++) अणु
-		काष्ठा skb_array *q = band2list(priv, prio);
-		पूर्णांक err;
+	for (prio = 0; prio < PFIFO_FAST_BANDS; prio++) {
+		struct skb_array *q = band2list(priv, prio);
+		int err;
 
 		err = skb_array_init(q, qlen, GFP_KERNEL);
-		अगर (err)
-			वापस -ENOMEM;
-	पूर्ण
+		if (err)
+			return -ENOMEM;
+	}
 
 	/* Can by-pass the queue discipline */
 	qdisc->flags |= TCQ_F_CAN_BYPASS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pfअगरo_fast_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(sch);
-	पूर्णांक prio;
+static void pfifo_fast_destroy(struct Qdisc *sch)
+{
+	struct pfifo_fast_priv *priv = qdisc_priv(sch);
+	int prio;
 
-	क्रम (prio = 0; prio < PFIFO_FAST_BANDS; prio++) अणु
-		काष्ठा skb_array *q = band2list(priv, prio);
+	for (prio = 0; prio < PFIFO_FAST_BANDS; prio++) {
+		struct skb_array *q = band2list(priv, prio);
 
-		/* शून्य ring is possible अगर destroy path is due to a failed
-		 * skb_array_init() in pfअगरo_fast_init() हाल.
+		/* NULL ring is possible if destroy path is due to a failed
+		 * skb_array_init() in pfifo_fast_init() case.
 		 */
-		अगर (!q->ring.queue)
-			जारी;
-		/* Destroy ring but no need to kमुक्त_skb because a call to
-		 * pfअगरo_fast_reset() has alपढ़ोy करोne that work.
+		if (!q->ring.queue)
+			continue;
+		/* Destroy ring but no need to kfree_skb because a call to
+		 * pfifo_fast_reset() has already done that work.
 		 */
-		ptr_ring_cleanup(&q->ring, शून्य);
-	पूर्ण
-पूर्ण
+		ptr_ring_cleanup(&q->ring, NULL);
+	}
+}
 
-अटल पूर्णांक pfअगरo_fast_change_tx_queue_len(काष्ठा Qdisc *sch,
-					  अचिन्हित पूर्णांक new_len)
-अणु
-	काष्ठा pfअगरo_fast_priv *priv = qdisc_priv(sch);
-	काष्ठा skb_array *bands[PFIFO_FAST_BANDS];
-	पूर्णांक prio;
+static int pfifo_fast_change_tx_queue_len(struct Qdisc *sch,
+					  unsigned int new_len)
+{
+	struct pfifo_fast_priv *priv = qdisc_priv(sch);
+	struct skb_array *bands[PFIFO_FAST_BANDS];
+	int prio;
 
-	क्रम (prio = 0; prio < PFIFO_FAST_BANDS; prio++) अणु
-		काष्ठा skb_array *q = band2list(priv, prio);
+	for (prio = 0; prio < PFIFO_FAST_BANDS; prio++) {
+		struct skb_array *q = band2list(priv, prio);
 
 		bands[prio] = q;
-	पूर्ण
+	}
 
-	वापस skb_array_resize_multiple(bands, PFIFO_FAST_BANDS, new_len,
+	return skb_array_resize_multiple(bands, PFIFO_FAST_BANDS, new_len,
 					 GFP_KERNEL);
-पूर्ण
+}
 
-काष्ठा Qdisc_ops pfअगरo_fast_ops __पढ़ो_mostly = अणु
+struct Qdisc_ops pfifo_fast_ops __read_mostly = {
 	.id		=	"pfifo_fast",
-	.priv_size	=	माप(काष्ठा pfअगरo_fast_priv),
-	.enqueue	=	pfअगरo_fast_enqueue,
-	.dequeue	=	pfअगरo_fast_dequeue,
-	.peek		=	pfअगरo_fast_peek,
-	.init		=	pfअगरo_fast_init,
-	.destroy	=	pfअगरo_fast_destroy,
-	.reset		=	pfअगरo_fast_reset,
-	.dump		=	pfअगरo_fast_dump,
-	.change_tx_queue_len =  pfअगरo_fast_change_tx_queue_len,
+	.priv_size	=	sizeof(struct pfifo_fast_priv),
+	.enqueue	=	pfifo_fast_enqueue,
+	.dequeue	=	pfifo_fast_dequeue,
+	.peek		=	pfifo_fast_peek,
+	.init		=	pfifo_fast_init,
+	.destroy	=	pfifo_fast_destroy,
+	.reset		=	pfifo_fast_reset,
+	.dump		=	pfifo_fast_dump,
+	.change_tx_queue_len =  pfifo_fast_change_tx_queue_len,
 	.owner		=	THIS_MODULE,
-	.अटल_flags	=	TCQ_F_NOLOCK | TCQ_F_CPUSTATS,
-पूर्ण;
-EXPORT_SYMBOL(pfअगरo_fast_ops);
+	.static_flags	=	TCQ_F_NOLOCK | TCQ_F_CPUSTATS,
+};
+EXPORT_SYMBOL(pfifo_fast_ops);
 
-अटल काष्ठा lock_class_key qdisc_tx_busylock;
-अटल काष्ठा lock_class_key qdisc_running_key;
+static struct lock_class_key qdisc_tx_busylock;
+static struct lock_class_key qdisc_running_key;
 
-काष्ठा Qdisc *qdisc_alloc(काष्ठा netdev_queue *dev_queue,
-			  स्थिर काष्ठा Qdisc_ops *ops,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा Qdisc *sch;
-	अचिन्हित पूर्णांक size = माप(*sch) + ops->priv_size;
-	पूर्णांक err = -ENOBUFS;
-	काष्ठा net_device *dev;
+struct Qdisc *qdisc_alloc(struct netdev_queue *dev_queue,
+			  const struct Qdisc_ops *ops,
+			  struct netlink_ext_ack *extack)
+{
+	struct Qdisc *sch;
+	unsigned int size = sizeof(*sch) + ops->priv_size;
+	int err = -ENOBUFS;
+	struct net_device *dev;
 
-	अगर (!dev_queue) अणु
+	if (!dev_queue) {
 		NL_SET_ERR_MSG(extack, "No device queue given");
 		err = -EINVAL;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
 	dev = dev_queue->dev;
-	sch = kzalloc_node(size, GFP_KERNEL, netdev_queue_numa_node_पढ़ो(dev_queue));
+	sch = kzalloc_node(size, GFP_KERNEL, netdev_queue_numa_node_read(dev_queue));
 
-	अगर (!sch)
-		जाओ errout;
+	if (!sch)
+		goto errout;
 	__skb_queue_head_init(&sch->gso_skb);
 	__skb_queue_head_init(&sch->skb_bad_txq);
 	qdisc_skb_head_init(&sch->q);
 	spin_lock_init(&sch->q.lock);
 
-	अगर (ops->अटल_flags & TCQ_F_CPUSTATS) अणु
+	if (ops->static_flags & TCQ_F_CPUSTATS) {
 		sch->cpu_bstats =
-			netdev_alloc_pcpu_stats(काष्ठा gnet_stats_basic_cpu);
-		अगर (!sch->cpu_bstats)
-			जाओ errout1;
+			netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
+		if (!sch->cpu_bstats)
+			goto errout1;
 
-		sch->cpu_qstats = alloc_percpu(काष्ठा gnet_stats_queue);
-		अगर (!sch->cpu_qstats) अणु
-			मुक्त_percpu(sch->cpu_bstats);
-			जाओ errout1;
-		पूर्ण
-	पूर्ण
+		sch->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
+		if (!sch->cpu_qstats) {
+			free_percpu(sch->cpu_bstats);
+			goto errout1;
+		}
+	}
 
 	spin_lock_init(&sch->busylock);
 	lockdep_set_class(&sch->busylock,
 			  dev->qdisc_tx_busylock ?: &qdisc_tx_busylock);
 
-	/* seqlock has the same scope of busylock, क्रम NOLOCK qdisc */
+	/* seqlock has the same scope of busylock, for NOLOCK qdisc */
 	spin_lock_init(&sch->seqlock);
 	lockdep_set_class(&sch->busylock,
 			  dev->qdisc_tx_busylock ?: &qdisc_tx_busylock);
@@ -895,7 +894,7 @@ EXPORT_SYMBOL(pfअगरo_fast_ops);
 			  dev->qdisc_running_key ?: &qdisc_running_key);
 
 	sch->ops = ops;
-	sch->flags = ops->अटल_flags;
+	sch->flags = ops->static_flags;
 	sch->enqueue = ops->enqueue;
 	sch->dequeue = ops->dequeue;
 	sch->dev_queue = dev_queue;
@@ -903,100 +902,100 @@ EXPORT_SYMBOL(pfअगरo_fast_ops);
 	dev_hold(dev);
 	refcount_set(&sch->refcnt, 1);
 
-	वापस sch;
+	return sch;
 errout1:
-	kमुक्त(sch);
+	kfree(sch);
 errout:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा Qdisc *qdisc_create_dflt(काष्ठा netdev_queue *dev_queue,
-				स्थिर काष्ठा Qdisc_ops *ops,
-				अचिन्हित पूर्णांक parentid,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा Qdisc *sch;
+struct Qdisc *qdisc_create_dflt(struct netdev_queue *dev_queue,
+				const struct Qdisc_ops *ops,
+				unsigned int parentid,
+				struct netlink_ext_ack *extack)
+{
+	struct Qdisc *sch;
 
-	अगर (!try_module_get(ops->owner)) अणु
+	if (!try_module_get(ops->owner)) {
 		NL_SET_ERR_MSG(extack, "Failed to increase module reference counter");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	sch = qdisc_alloc(dev_queue, ops, extack);
-	अगर (IS_ERR(sch)) अणु
+	if (IS_ERR(sch)) {
 		module_put(ops->owner);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	sch->parent = parentid;
 
-	अगर (!ops->init || ops->init(sch, शून्य, extack) == 0) अणु
+	if (!ops->init || ops->init(sch, NULL, extack) == 0) {
 		trace_qdisc_create(ops, dev_queue->dev, parentid);
-		वापस sch;
-	पूर्ण
+		return sch;
+	}
 
 	qdisc_put(sch);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(qdisc_create_dflt);
 
 /* Under qdisc_lock(qdisc) and BH! */
 
-व्योम qdisc_reset(काष्ठा Qdisc *qdisc)
-अणु
-	स्थिर काष्ठा Qdisc_ops *ops = qdisc->ops;
-	काष्ठा sk_buff *skb, *पंचांगp;
+void qdisc_reset(struct Qdisc *qdisc)
+{
+	const struct Qdisc_ops *ops = qdisc->ops;
+	struct sk_buff *skb, *tmp;
 
 	trace_qdisc_reset(qdisc);
 
-	अगर (ops->reset)
+	if (ops->reset)
 		ops->reset(qdisc);
 
-	skb_queue_walk_safe(&qdisc->gso_skb, skb, पंचांगp) अणु
+	skb_queue_walk_safe(&qdisc->gso_skb, skb, tmp) {
 		__skb_unlink(skb, &qdisc->gso_skb);
-		kमुक्त_skb_list(skb);
-	पूर्ण
+		kfree_skb_list(skb);
+	}
 
-	skb_queue_walk_safe(&qdisc->skb_bad_txq, skb, पंचांगp) अणु
+	skb_queue_walk_safe(&qdisc->skb_bad_txq, skb, tmp) {
 		__skb_unlink(skb, &qdisc->skb_bad_txq);
-		kमुक्त_skb_list(skb);
-	पूर्ण
+		kfree_skb_list(skb);
+	}
 
 	qdisc->q.qlen = 0;
 	qdisc->qstats.backlog = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(qdisc_reset);
 
-व्योम qdisc_मुक्त(काष्ठा Qdisc *qdisc)
-अणु
-	अगर (qdisc_is_percpu_stats(qdisc)) अणु
-		मुक्त_percpu(qdisc->cpu_bstats);
-		मुक्त_percpu(qdisc->cpu_qstats);
-	पूर्ण
+void qdisc_free(struct Qdisc *qdisc)
+{
+	if (qdisc_is_percpu_stats(qdisc)) {
+		free_percpu(qdisc->cpu_bstats);
+		free_percpu(qdisc->cpu_qstats);
+	}
 
-	kमुक्त(qdisc);
-पूर्ण
+	kfree(qdisc);
+}
 
-अटल व्योम qdisc_मुक्त_cb(काष्ठा rcu_head *head)
-अणु
-	काष्ठा Qdisc *q = container_of(head, काष्ठा Qdisc, rcu);
+static void qdisc_free_cb(struct rcu_head *head)
+{
+	struct Qdisc *q = container_of(head, struct Qdisc, rcu);
 
-	qdisc_मुक्त(q);
-पूर्ण
+	qdisc_free(q);
+}
 
-अटल व्योम qdisc_destroy(काष्ठा Qdisc *qdisc)
-अणु
-	स्थिर काष्ठा Qdisc_ops  *ops = qdisc->ops;
+static void qdisc_destroy(struct Qdisc *qdisc)
+{
+	const struct Qdisc_ops  *ops = qdisc->ops;
 
-#अगर_घोषित CONFIG_NET_SCHED
+#ifdef CONFIG_NET_SCHED
 	qdisc_hash_del(qdisc);
 
 	qdisc_put_stab(rtnl_dereference(qdisc->stab));
-#पूर्ण_अगर
-	gen_समाप्त_estimator(&qdisc->rate_est);
+#endif
+	gen_kill_estimator(&qdisc->rate_est);
 
 	qdisc_reset(qdisc);
 
-	अगर (ops->destroy)
+	if (ops->destroy)
 		ops->destroy(qdisc);
 
 	module_put(ops->owner);
@@ -1004,220 +1003,220 @@ EXPORT_SYMBOL(qdisc_reset);
 
 	trace_qdisc_destroy(qdisc);
 
-	call_rcu(&qdisc->rcu, qdisc_मुक्त_cb);
-पूर्ण
+	call_rcu(&qdisc->rcu, qdisc_free_cb);
+}
 
-व्योम qdisc_put(काष्ठा Qdisc *qdisc)
-अणु
-	अगर (!qdisc)
-		वापस;
+void qdisc_put(struct Qdisc *qdisc)
+{
+	if (!qdisc)
+		return;
 
-	अगर (qdisc->flags & TCQ_F_BUILTIN ||
+	if (qdisc->flags & TCQ_F_BUILTIN ||
 	    !refcount_dec_and_test(&qdisc->refcnt))
-		वापस;
+		return;
 
 	qdisc_destroy(qdisc);
-पूर्ण
+}
 EXPORT_SYMBOL(qdisc_put);
 
 /* Version of qdisc_put() that is called with rtnl mutex unlocked.
- * Intended to be used as optimization, this function only takes rtnl lock अगर
+ * Intended to be used as optimization, this function only takes rtnl lock if
  * qdisc reference counter reached zero.
  */
 
-व्योम qdisc_put_unlocked(काष्ठा Qdisc *qdisc)
-अणु
-	अगर (qdisc->flags & TCQ_F_BUILTIN ||
+void qdisc_put_unlocked(struct Qdisc *qdisc)
+{
+	if (qdisc->flags & TCQ_F_BUILTIN ||
 	    !refcount_dec_and_rtnl_lock(&qdisc->refcnt))
-		वापस;
+		return;
 
 	qdisc_destroy(qdisc);
 	rtnl_unlock();
-पूर्ण
+}
 EXPORT_SYMBOL(qdisc_put_unlocked);
 
 /* Attach toplevel qdisc to device queue. */
-काष्ठा Qdisc *dev_graft_qdisc(काष्ठा netdev_queue *dev_queue,
-			      काष्ठा Qdisc *qdisc)
-अणु
-	काष्ठा Qdisc *oqdisc = dev_queue->qdisc_sleeping;
+struct Qdisc *dev_graft_qdisc(struct netdev_queue *dev_queue,
+			      struct Qdisc *qdisc)
+{
+	struct Qdisc *oqdisc = dev_queue->qdisc_sleeping;
 	spinlock_t *root_lock;
 
 	root_lock = qdisc_lock(oqdisc);
 	spin_lock_bh(root_lock);
 
 	/* ... and graft new one */
-	अगर (qdisc == शून्य)
+	if (qdisc == NULL)
 		qdisc = &noop_qdisc;
 	dev_queue->qdisc_sleeping = qdisc;
-	rcu_assign_poपूर्णांकer(dev_queue->qdisc, &noop_qdisc);
+	rcu_assign_pointer(dev_queue->qdisc, &noop_qdisc);
 
 	spin_unlock_bh(root_lock);
 
-	वापस oqdisc;
-पूर्ण
+	return oqdisc;
+}
 EXPORT_SYMBOL(dev_graft_qdisc);
 
-अटल व्योम attach_one_शेष_qdisc(काष्ठा net_device *dev,
-				     काष्ठा netdev_queue *dev_queue,
-				     व्योम *_unused)
-अणु
-	काष्ठा Qdisc *qdisc;
-	स्थिर काष्ठा Qdisc_ops *ops = शेष_qdisc_ops;
+static void attach_one_default_qdisc(struct net_device *dev,
+				     struct netdev_queue *dev_queue,
+				     void *_unused)
+{
+	struct Qdisc *qdisc;
+	const struct Qdisc_ops *ops = default_qdisc_ops;
 
-	अगर (dev->priv_flags & IFF_NO_QUEUE)
+	if (dev->priv_flags & IFF_NO_QUEUE)
 		ops = &noqueue_qdisc_ops;
-	अन्यथा अगर(dev->type == ARPHRD_CAN)
-		ops = &pfअगरo_fast_ops;
+	else if(dev->type == ARPHRD_CAN)
+		ops = &pfifo_fast_ops;
 
-	qdisc = qdisc_create_dflt(dev_queue, ops, TC_H_ROOT, शून्य);
-	अगर (!qdisc)
-		वापस;
+	qdisc = qdisc_create_dflt(dev_queue, ops, TC_H_ROOT, NULL);
+	if (!qdisc)
+		return;
 
-	अगर (!netअगर_is_multiqueue(dev))
+	if (!netif_is_multiqueue(dev))
 		qdisc->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
 	dev_queue->qdisc_sleeping = qdisc;
-पूर्ण
+}
 
-अटल व्योम attach_शेष_qdiscs(काष्ठा net_device *dev)
-अणु
-	काष्ठा netdev_queue *txq;
-	काष्ठा Qdisc *qdisc;
+static void attach_default_qdiscs(struct net_device *dev)
+{
+	struct netdev_queue *txq;
+	struct Qdisc *qdisc;
 
 	txq = netdev_get_tx_queue(dev, 0);
 
-	अगर (!netअगर_is_multiqueue(dev) ||
-	    dev->priv_flags & IFF_NO_QUEUE) अणु
-		netdev_क्रम_each_tx_queue(dev, attach_one_शेष_qdisc, शून्य);
+	if (!netif_is_multiqueue(dev) ||
+	    dev->priv_flags & IFF_NO_QUEUE) {
+		netdev_for_each_tx_queue(dev, attach_one_default_qdisc, NULL);
 		dev->qdisc = txq->qdisc_sleeping;
 		qdisc_refcount_inc(dev->qdisc);
-	पूर्ण अन्यथा अणु
-		qdisc = qdisc_create_dflt(txq, &mq_qdisc_ops, TC_H_ROOT, शून्य);
-		अगर (qdisc) अणु
+	} else {
+		qdisc = qdisc_create_dflt(txq, &mq_qdisc_ops, TC_H_ROOT, NULL);
+		if (qdisc) {
 			dev->qdisc = qdisc;
 			qdisc->ops->attach(qdisc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Detect शेष qdisc setup/init failed and fallback to "noqueue" */
-	अगर (dev->qdisc == &noop_qdisc) अणु
+	/* Detect default qdisc setup/init failed and fallback to "noqueue" */
+	if (dev->qdisc == &noop_qdisc) {
 		netdev_warn(dev, "default qdisc (%s) fail, fallback to %s\n",
-			    शेष_qdisc_ops->id, noqueue_qdisc_ops.id);
+			    default_qdisc_ops->id, noqueue_qdisc_ops.id);
 		dev->priv_flags |= IFF_NO_QUEUE;
-		netdev_क्रम_each_tx_queue(dev, attach_one_शेष_qdisc, शून्य);
+		netdev_for_each_tx_queue(dev, attach_one_default_qdisc, NULL);
 		dev->qdisc = txq->qdisc_sleeping;
 		qdisc_refcount_inc(dev->qdisc);
 		dev->priv_flags ^= IFF_NO_QUEUE;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_NET_SCHED
-	अगर (dev->qdisc != &noop_qdisc)
+#ifdef CONFIG_NET_SCHED
+	if (dev->qdisc != &noop_qdisc)
 		qdisc_hash_add(dev->qdisc, false);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम transition_one_qdisc(काष्ठा net_device *dev,
-				 काष्ठा netdev_queue *dev_queue,
-				 व्योम *_need_watchकरोg)
-अणु
-	काष्ठा Qdisc *new_qdisc = dev_queue->qdisc_sleeping;
-	पूर्णांक *need_watchकरोg_p = _need_watchकरोg;
+static void transition_one_qdisc(struct net_device *dev,
+				 struct netdev_queue *dev_queue,
+				 void *_need_watchdog)
+{
+	struct Qdisc *new_qdisc = dev_queue->qdisc_sleeping;
+	int *need_watchdog_p = _need_watchdog;
 
-	अगर (!(new_qdisc->flags & TCQ_F_BUILTIN))
+	if (!(new_qdisc->flags & TCQ_F_BUILTIN))
 		clear_bit(__QDISC_STATE_DEACTIVATED, &new_qdisc->state);
 
-	rcu_assign_poपूर्णांकer(dev_queue->qdisc, new_qdisc);
-	अगर (need_watchकरोg_p) अणु
+	rcu_assign_pointer(dev_queue->qdisc, new_qdisc);
+	if (need_watchdog_p) {
 		dev_queue->trans_start = 0;
-		*need_watchकरोg_p = 1;
-	पूर्ण
-पूर्ण
+		*need_watchdog_p = 1;
+	}
+}
 
-व्योम dev_activate(काष्ठा net_device *dev)
-अणु
-	पूर्णांक need_watchकरोg;
+void dev_activate(struct net_device *dev)
+{
+	int need_watchdog;
 
 	/* No queueing discipline is attached to device;
-	 * create शेष one क्रम devices, which need queueing
-	 * and noqueue_qdisc क्रम भव पूर्णांकerfaces
+	 * create default one for devices, which need queueing
+	 * and noqueue_qdisc for virtual interfaces
 	 */
 
-	अगर (dev->qdisc == &noop_qdisc)
-		attach_शेष_qdiscs(dev);
+	if (dev->qdisc == &noop_qdisc)
+		attach_default_qdiscs(dev);
 
-	अगर (!netअगर_carrier_ok(dev))
+	if (!netif_carrier_ok(dev))
 		/* Delay activation until next carrier-on event */
-		वापस;
+		return;
 
-	need_watchकरोg = 0;
-	netdev_क्रम_each_tx_queue(dev, transition_one_qdisc, &need_watchकरोg);
-	अगर (dev_ingress_queue(dev))
-		transition_one_qdisc(dev, dev_ingress_queue(dev), शून्य);
+	need_watchdog = 0;
+	netdev_for_each_tx_queue(dev, transition_one_qdisc, &need_watchdog);
+	if (dev_ingress_queue(dev))
+		transition_one_qdisc(dev, dev_ingress_queue(dev), NULL);
 
-	अगर (need_watchकरोg) अणु
-		netअगर_trans_update(dev);
-		dev_watchकरोg_up(dev);
-	पूर्ण
-पूर्ण
+	if (need_watchdog) {
+		netif_trans_update(dev);
+		dev_watchdog_up(dev);
+	}
+}
 EXPORT_SYMBOL(dev_activate);
 
-अटल व्योम qdisc_deactivate(काष्ठा Qdisc *qdisc)
-अणु
-	अगर (qdisc->flags & TCQ_F_BUILTIN)
-		वापस;
+static void qdisc_deactivate(struct Qdisc *qdisc)
+{
+	if (qdisc->flags & TCQ_F_BUILTIN)
+		return;
 
 	set_bit(__QDISC_STATE_DEACTIVATED, &qdisc->state);
-पूर्ण
+}
 
-अटल व्योम dev_deactivate_queue(काष्ठा net_device *dev,
-				 काष्ठा netdev_queue *dev_queue,
-				 व्योम *_qdisc_शेष)
-अणु
-	काष्ठा Qdisc *qdisc_शेष = _qdisc_शेष;
-	काष्ठा Qdisc *qdisc;
+static void dev_deactivate_queue(struct net_device *dev,
+				 struct netdev_queue *dev_queue,
+				 void *_qdisc_default)
+{
+	struct Qdisc *qdisc_default = _qdisc_default;
+	struct Qdisc *qdisc;
 
 	qdisc = rtnl_dereference(dev_queue->qdisc);
-	अगर (qdisc) अणु
+	if (qdisc) {
 		qdisc_deactivate(qdisc);
-		rcu_assign_poपूर्णांकer(dev_queue->qdisc, qdisc_शेष);
-	पूर्ण
-पूर्ण
+		rcu_assign_pointer(dev_queue->qdisc, qdisc_default);
+	}
+}
 
-अटल व्योम dev_reset_queue(काष्ठा net_device *dev,
-			    काष्ठा netdev_queue *dev_queue,
-			    व्योम *_unused)
-अणु
-	काष्ठा Qdisc *qdisc;
+static void dev_reset_queue(struct net_device *dev,
+			    struct netdev_queue *dev_queue,
+			    void *_unused)
+{
+	struct Qdisc *qdisc;
 	bool nolock;
 
 	qdisc = dev_queue->qdisc_sleeping;
-	अगर (!qdisc)
-		वापस;
+	if (!qdisc)
+		return;
 
 	nolock = qdisc->flags & TCQ_F_NOLOCK;
 
-	अगर (nolock)
+	if (nolock)
 		spin_lock_bh(&qdisc->seqlock);
 	spin_lock_bh(qdisc_lock(qdisc));
 
 	qdisc_reset(qdisc);
 
 	spin_unlock_bh(qdisc_lock(qdisc));
-	अगर (nolock) अणु
+	if (nolock) {
 		clear_bit(__QDISC_STATE_MISSED, &qdisc->state);
 		spin_unlock_bh(&qdisc->seqlock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool some_qdisc_is_busy(काष्ठा net_device *dev)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool some_qdisc_is_busy(struct net_device *dev)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा netdev_queue *dev_queue;
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct netdev_queue *dev_queue;
 		spinlock_t *root_lock;
-		काष्ठा Qdisc *q;
-		पूर्णांक val;
+		struct Qdisc *q;
+		int val;
 
 		dev_queue = netdev_get_tx_queue(dev, i);
 		q = dev_queue->qdisc_sleeping;
@@ -1230,265 +1229,265 @@ EXPORT_SYMBOL(dev_activate);
 
 		spin_unlock_bh(root_lock);
 
-		अगर (val)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (val)
+			return true;
+	}
+	return false;
+}
 
 /**
  * 	dev_deactivate_many - deactivate transmissions on several devices
  * 	@head: list of devices to deactivate
  *
- *	This function वापसs only when all outstanding transmissions
+ *	This function returns only when all outstanding transmissions
  *	have completed, unless all devices are in dismantle phase.
  */
-व्योम dev_deactivate_many(काष्ठा list_head *head)
-अणु
-	काष्ठा net_device *dev;
+void dev_deactivate_many(struct list_head *head)
+{
+	struct net_device *dev;
 
-	list_क्रम_each_entry(dev, head, बंद_list) अणु
-		netdev_क्रम_each_tx_queue(dev, dev_deactivate_queue,
+	list_for_each_entry(dev, head, close_list) {
+		netdev_for_each_tx_queue(dev, dev_deactivate_queue,
 					 &noop_qdisc);
-		अगर (dev_ingress_queue(dev))
+		if (dev_ingress_queue(dev))
 			dev_deactivate_queue(dev, dev_ingress_queue(dev),
 					     &noop_qdisc);
 
-		dev_watchकरोg_करोwn(dev);
-	पूर्ण
+		dev_watchdog_down(dev);
+	}
 
-	/* Wait क्रम outstanding qdisc-less dev_queue_xmit calls or
+	/* Wait for outstanding qdisc-less dev_queue_xmit calls or
 	 * outstanding qdisc enqueuing calls.
-	 * This is aव्योमed अगर all devices are in dismantle phase :
-	 * Caller will call synchronize_net() क्रम us
+	 * This is avoided if all devices are in dismantle phase :
+	 * Caller will call synchronize_net() for us
 	 */
 	synchronize_net();
 
-	list_क्रम_each_entry(dev, head, बंद_list) अणु
-		netdev_क्रम_each_tx_queue(dev, dev_reset_queue, शून्य);
+	list_for_each_entry(dev, head, close_list) {
+		netdev_for_each_tx_queue(dev, dev_reset_queue, NULL);
 
-		अगर (dev_ingress_queue(dev))
-			dev_reset_queue(dev, dev_ingress_queue(dev), शून्य);
-	पूर्ण
+		if (dev_ingress_queue(dev))
+			dev_reset_queue(dev, dev_ingress_queue(dev), NULL);
+	}
 
-	/* Wait क्रम outstanding qdisc_run calls. */
-	list_क्रम_each_entry(dev, head, बंद_list) अणु
-		जबतक (some_qdisc_is_busy(dev)) अणु
-			/* रुको_event() would aव्योम this sleep-loop but would
+	/* Wait for outstanding qdisc_run calls. */
+	list_for_each_entry(dev, head, close_list) {
+		while (some_qdisc_is_busy(dev)) {
+			/* wait_event() would avoid this sleep-loop but would
 			 * require expensive checks in the fast paths of packet
 			 * processing which isn't worth it.
 			 */
-			schedule_समयout_unपूर्णांकerruptible(1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			schedule_timeout_uninterruptible(1);
+		}
+	}
+}
 
-व्योम dev_deactivate(काष्ठा net_device *dev)
-अणु
+void dev_deactivate(struct net_device *dev)
+{
 	LIST_HEAD(single);
 
-	list_add(&dev->बंद_list, &single);
+	list_add(&dev->close_list, &single);
 	dev_deactivate_many(&single);
 	list_del(&single);
-पूर्ण
+}
 EXPORT_SYMBOL(dev_deactivate);
 
-अटल पूर्णांक qdisc_change_tx_queue_len(काष्ठा net_device *dev,
-				     काष्ठा netdev_queue *dev_queue)
-अणु
-	काष्ठा Qdisc *qdisc = dev_queue->qdisc_sleeping;
-	स्थिर काष्ठा Qdisc_ops *ops = qdisc->ops;
+static int qdisc_change_tx_queue_len(struct net_device *dev,
+				     struct netdev_queue *dev_queue)
+{
+	struct Qdisc *qdisc = dev_queue->qdisc_sleeping;
+	const struct Qdisc_ops *ops = qdisc->ops;
 
-	अगर (ops->change_tx_queue_len)
-		वापस ops->change_tx_queue_len(qdisc, dev->tx_queue_len);
-	वापस 0;
-पूर्ण
+	if (ops->change_tx_queue_len)
+		return ops->change_tx_queue_len(qdisc, dev->tx_queue_len);
+	return 0;
+}
 
-पूर्णांक dev_qdisc_change_tx_queue_len(काष्ठा net_device *dev)
-अणु
+int dev_qdisc_change_tx_queue_len(struct net_device *dev)
+{
 	bool up = dev->flags & IFF_UP;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = 0;
+	unsigned int i;
+	int ret = 0;
 
-	अगर (up)
+	if (up)
 		dev_deactivate(dev);
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
+	for (i = 0; i < dev->num_tx_queues; i++) {
 		ret = qdisc_change_tx_queue_len(dev, &dev->_tx[i]);
 
 		/* TODO: revert changes on a partial failure */
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	अगर (up)
+	if (up)
 		dev_activate(dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dev_init_scheduler_queue(काष्ठा net_device *dev,
-				     काष्ठा netdev_queue *dev_queue,
-				     व्योम *_qdisc)
-अणु
-	काष्ठा Qdisc *qdisc = _qdisc;
+static void dev_init_scheduler_queue(struct net_device *dev,
+				     struct netdev_queue *dev_queue,
+				     void *_qdisc)
+{
+	struct Qdisc *qdisc = _qdisc;
 
-	rcu_assign_poपूर्णांकer(dev_queue->qdisc, qdisc);
+	rcu_assign_pointer(dev_queue->qdisc, qdisc);
 	dev_queue->qdisc_sleeping = qdisc;
-पूर्ण
+}
 
-व्योम dev_init_scheduler(काष्ठा net_device *dev)
-अणु
+void dev_init_scheduler(struct net_device *dev)
+{
 	dev->qdisc = &noop_qdisc;
-	netdev_क्रम_each_tx_queue(dev, dev_init_scheduler_queue, &noop_qdisc);
-	अगर (dev_ingress_queue(dev))
+	netdev_for_each_tx_queue(dev, dev_init_scheduler_queue, &noop_qdisc);
+	if (dev_ingress_queue(dev))
 		dev_init_scheduler_queue(dev, dev_ingress_queue(dev), &noop_qdisc);
 
-	समयr_setup(&dev->watchकरोg_समयr, dev_watchकरोg, 0);
-पूर्ण
+	timer_setup(&dev->watchdog_timer, dev_watchdog, 0);
+}
 
-अटल व्योम shutकरोwn_scheduler_queue(काष्ठा net_device *dev,
-				     काष्ठा netdev_queue *dev_queue,
-				     व्योम *_qdisc_शेष)
-अणु
-	काष्ठा Qdisc *qdisc = dev_queue->qdisc_sleeping;
-	काष्ठा Qdisc *qdisc_शेष = _qdisc_शेष;
+static void shutdown_scheduler_queue(struct net_device *dev,
+				     struct netdev_queue *dev_queue,
+				     void *_qdisc_default)
+{
+	struct Qdisc *qdisc = dev_queue->qdisc_sleeping;
+	struct Qdisc *qdisc_default = _qdisc_default;
 
-	अगर (qdisc) अणु
-		rcu_assign_poपूर्णांकer(dev_queue->qdisc, qdisc_शेष);
-		dev_queue->qdisc_sleeping = qdisc_शेष;
+	if (qdisc) {
+		rcu_assign_pointer(dev_queue->qdisc, qdisc_default);
+		dev_queue->qdisc_sleeping = qdisc_default;
 
 		qdisc_put(qdisc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dev_shutकरोwn(काष्ठा net_device *dev)
-अणु
-	netdev_क्रम_each_tx_queue(dev, shutकरोwn_scheduler_queue, &noop_qdisc);
-	अगर (dev_ingress_queue(dev))
-		shutकरोwn_scheduler_queue(dev, dev_ingress_queue(dev), &noop_qdisc);
+void dev_shutdown(struct net_device *dev)
+{
+	netdev_for_each_tx_queue(dev, shutdown_scheduler_queue, &noop_qdisc);
+	if (dev_ingress_queue(dev))
+		shutdown_scheduler_queue(dev, dev_ingress_queue(dev), &noop_qdisc);
 	qdisc_put(dev->qdisc);
 	dev->qdisc = &noop_qdisc;
 
-	WARN_ON(समयr_pending(&dev->watchकरोg_समयr));
-पूर्ण
+	WARN_ON(timer_pending(&dev->watchdog_timer));
+}
 
 /**
- * psched_ratecfg_precompute__() - Pre-compute values क्रम reciprocal भागision
- * @rate:   Rate to compute reciprocal भागision values of
- * @mult:   Multiplier क्रम reciprocal भागision
- * @shअगरt:  Shअगरt क्रम reciprocal भागision
+ * psched_ratecfg_precompute__() - Pre-compute values for reciprocal division
+ * @rate:   Rate to compute reciprocal division values of
+ * @mult:   Multiplier for reciprocal division
+ * @shift:  Shift for reciprocal division
  *
- * The multiplier and shअगरt क्रम reciprocal भागision by rate are stored
- * in mult and shअगरt.
+ * The multiplier and shift for reciprocal division by rate are stored
+ * in mult and shift.
  *
- * The deal here is to replace a भागide by a reciprocal one
- * in fast path (a reciprocal भागide is a multiply and a shअगरt)
+ * The deal here is to replace a divide by a reciprocal one
+ * in fast path (a reciprocal divide is a multiply and a shift)
  *
- * Normal क्रमmula would be :
- *  समय_in_ns = (NSEC_PER_SEC * len) / rate_bps
+ * Normal formula would be :
+ *  time_in_ns = (NSEC_PER_SEC * len) / rate_bps
  *
- * We compute mult/shअगरt to use instead :
- *  समय_in_ns = (len * mult) >> shअगरt;
+ * We compute mult/shift to use instead :
+ *  time_in_ns = (len * mult) >> shift;
  *
- * We try to get the highest possible mult value क्रम accuracy,
+ * We try to get the highest possible mult value for accuracy,
  * but have to make sure no overflows will ever happen.
  *
- * reciprocal_value() is not used here it करोesn't handle 64-bit values.
+ * reciprocal_value() is not used here it doesn't handle 64-bit values.
  */
-अटल व्योम psched_ratecfg_precompute__(u64 rate, u32 *mult, u8 *shअगरt)
-अणु
+static void psched_ratecfg_precompute__(u64 rate, u32 *mult, u8 *shift)
+{
 	u64 factor = NSEC_PER_SEC;
 
 	*mult = 1;
-	*shअगरt = 0;
+	*shift = 0;
 
-	अगर (rate <= 0)
-		वापस;
+	if (rate <= 0)
+		return;
 
-	क्रम (;;) अणु
-		*mult = भाग64_u64(factor, rate);
-		अगर (*mult & (1U << 31) || factor & (1ULL << 63))
-			अवरोध;
+	for (;;) {
+		*mult = div64_u64(factor, rate);
+		if (*mult & (1U << 31) || factor & (1ULL << 63))
+			break;
 		factor <<= 1;
-		(*shअगरt)++;
-	पूर्ण
-पूर्ण
+		(*shift)++;
+	}
+}
 
-व्योम psched_ratecfg_precompute(काष्ठा psched_ratecfg *r,
-			       स्थिर काष्ठा tc_ratespec *conf,
+void psched_ratecfg_precompute(struct psched_ratecfg *r,
+			       const struct tc_ratespec *conf,
 			       u64 rate64)
-अणु
-	स_रखो(r, 0, माप(*r));
+{
+	memset(r, 0, sizeof(*r));
 	r->overhead = conf->overhead;
 	r->rate_bytes_ps = max_t(u64, conf->rate, rate64);
 	r->linklayer = (conf->linklayer & TC_LINKLAYER_MASK);
-	psched_ratecfg_precompute__(r->rate_bytes_ps, &r->mult, &r->shअगरt);
-पूर्ण
+	psched_ratecfg_precompute__(r->rate_bytes_ps, &r->mult, &r->shift);
+}
 EXPORT_SYMBOL(psched_ratecfg_precompute);
 
-व्योम psched_ppscfg_precompute(काष्ठा psched_pktrate *r, u64 pktrate64)
-अणु
+void psched_ppscfg_precompute(struct psched_pktrate *r, u64 pktrate64)
+{
 	r->rate_pkts_ps = pktrate64;
-	psched_ratecfg_precompute__(r->rate_pkts_ps, &r->mult, &r->shअगरt);
-पूर्ण
+	psched_ratecfg_precompute__(r->rate_pkts_ps, &r->mult, &r->shift);
+}
 EXPORT_SYMBOL(psched_ppscfg_precompute);
 
-अटल व्योम mini_qdisc_rcu_func(काष्ठा rcu_head *head)
-अणु
-पूर्ण
+static void mini_qdisc_rcu_func(struct rcu_head *head)
+{
+}
 
-व्योम mini_qdisc_pair_swap(काष्ठा mini_Qdisc_pair *miniqp,
-			  काष्ठा tcf_proto *tp_head)
-अणु
+void mini_qdisc_pair_swap(struct mini_Qdisc_pair *miniqp,
+			  struct tcf_proto *tp_head)
+{
 	/* Protected with chain0->filter_chain_lock.
-	 * Can't access chain directly because tp_head can be शून्य.
+	 * Can't access chain directly because tp_head can be NULL.
 	 */
-	काष्ठा mini_Qdisc *miniq_old =
-		rcu_dereference_रक्षित(*miniqp->p_miniq, 1);
-	काष्ठा mini_Qdisc *miniq;
+	struct mini_Qdisc *miniq_old =
+		rcu_dereference_protected(*miniqp->p_miniq, 1);
+	struct mini_Qdisc *miniq;
 
-	अगर (!tp_head) अणु
-		RCU_INIT_POINTER(*miniqp->p_miniq, शून्य);
-		/* Wait क्रम flying RCU callback beक्रमe it is मुक्तd. */
+	if (!tp_head) {
+		RCU_INIT_POINTER(*miniqp->p_miniq, NULL);
+		/* Wait for flying RCU callback before it is freed. */
 		rcu_barrier();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	miniq = !miniq_old || miniq_old == &miniqp->miniq2 ?
 		&miniqp->miniq1 : &miniqp->miniq2;
 
-	/* We need to make sure that पढ़ोers won't see the miniq
-	 * we are about to modअगरy. So रुको until previous call_rcu callback
-	 * is करोne.
+	/* We need to make sure that readers won't see the miniq
+	 * we are about to modify. So wait until previous call_rcu callback
+	 * is done.
 	 */
 	rcu_barrier();
 	miniq->filter_list = tp_head;
-	rcu_assign_poपूर्णांकer(*miniqp->p_miniq, miniq);
+	rcu_assign_pointer(*miniqp->p_miniq, miniq);
 
-	अगर (miniq_old)
+	if (miniq_old)
 		/* This is counterpart of the rcu barriers above. We need to
-		 * block potential new user of miniq_old until all पढ़ोers
+		 * block potential new user of miniq_old until all readers
 		 * are not seeing it.
 		 */
 		call_rcu(&miniq_old->rcu, mini_qdisc_rcu_func);
-पूर्ण
+}
 EXPORT_SYMBOL(mini_qdisc_pair_swap);
 
-व्योम mini_qdisc_pair_block_init(काष्ठा mini_Qdisc_pair *miniqp,
-				काष्ठा tcf_block *block)
-अणु
+void mini_qdisc_pair_block_init(struct mini_Qdisc_pair *miniqp,
+				struct tcf_block *block)
+{
 	miniqp->miniq1.block = block;
 	miniqp->miniq2.block = block;
-पूर्ण
+}
 EXPORT_SYMBOL(mini_qdisc_pair_block_init);
 
-व्योम mini_qdisc_pair_init(काष्ठा mini_Qdisc_pair *miniqp, काष्ठा Qdisc *qdisc,
-			  काष्ठा mini_Qdisc __rcu **p_miniq)
-अणु
+void mini_qdisc_pair_init(struct mini_Qdisc_pair *miniqp, struct Qdisc *qdisc,
+			  struct mini_Qdisc __rcu **p_miniq)
+{
 	miniqp->miniq1.cpu_bstats = qdisc->cpu_bstats;
 	miniqp->miniq1.cpu_qstats = qdisc->cpu_qstats;
 	miniqp->miniq2.cpu_bstats = qdisc->cpu_bstats;
 	miniqp->miniq2.cpu_qstats = qdisc->cpu_qstats;
 	miniqp->p_miniq = p_miniq;
-पूर्ण
+}
 EXPORT_SYMBOL(mini_qdisc_pair_init);

@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* net/sched/sch_ingress.c - Ingress and clsact qdisc
  *
  * Authors:     Jamal Hadi Salim 1999
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
 
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
 
-काष्ठा ingress_sched_data अणु
-	काष्ठा tcf_block *block;
-	काष्ठा tcf_block_ext_info block_info;
-	काष्ठा mini_Qdisc_pair miniqp;
-पूर्ण;
+struct ingress_sched_data {
+	struct tcf_block *block;
+	struct tcf_block_ext_info block_info;
+	struct mini_Qdisc_pair miniqp;
+};
 
-अटल काष्ठा Qdisc *ingress_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	वापस शून्य;
-पूर्ण
+static struct Qdisc *ingress_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	return NULL;
+}
 
-अटल अचिन्हित दीर्घ ingress_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	वापस TC_H_MIN(classid) + 1;
-पूर्ण
+static unsigned long ingress_find(struct Qdisc *sch, u32 classid)
+{
+	return TC_H_MIN(classid) + 1;
+}
 
-अटल अचिन्हित दीर्घ ingress_bind_filter(काष्ठा Qdisc *sch,
-					 अचिन्हित दीर्घ parent, u32 classid)
-अणु
-	वापस ingress_find(sch, classid);
-पूर्ण
+static unsigned long ingress_bind_filter(struct Qdisc *sch,
+					 unsigned long parent, u32 classid)
+{
+	return ingress_find(sch, classid);
+}
 
-अटल व्योम ingress_unbind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-पूर्ण
+static void ingress_unbind_filter(struct Qdisc *sch, unsigned long cl)
+{
+}
 
-अटल व्योम ingress_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *walker)
-अणु
-पूर्ण
+static void ingress_walk(struct Qdisc *sch, struct qdisc_walker *walker)
+{
+}
 
-अटल काष्ठा tcf_block *ingress_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-					   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ingress_sched_data *q = qdisc_priv(sch);
+static struct tcf_block *ingress_tcf_block(struct Qdisc *sch, unsigned long cl,
+					   struct netlink_ext_ack *extack)
+{
+	struct ingress_sched_data *q = qdisc_priv(sch);
 
-	वापस q->block;
-पूर्ण
+	return q->block;
+}
 
-अटल व्योम clsact_chain_head_change(काष्ठा tcf_proto *tp_head, व्योम *priv)
-अणु
-	काष्ठा mini_Qdisc_pair *miniqp = priv;
+static void clsact_chain_head_change(struct tcf_proto *tp_head, void *priv)
+{
+	struct mini_Qdisc_pair *miniqp = priv;
 
 	mini_qdisc_pair_swap(miniqp, tp_head);
-पूर्ण;
+};
 
-अटल व्योम ingress_ingress_block_set(काष्ठा Qdisc *sch, u32 block_index)
-अणु
-	काष्ठा ingress_sched_data *q = qdisc_priv(sch);
+static void ingress_ingress_block_set(struct Qdisc *sch, u32 block_index)
+{
+	struct ingress_sched_data *q = qdisc_priv(sch);
 
 	q->block_info.block_index = block_index;
-पूर्ण
+}
 
-अटल u32 ingress_ingress_block_get(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा ingress_sched_data *q = qdisc_priv(sch);
+static u32 ingress_ingress_block_get(struct Qdisc *sch)
+{
+	struct ingress_sched_data *q = qdisc_priv(sch);
 
-	वापस q->block_info.block_index;
-पूर्ण
+	return q->block_info.block_index;
+}
 
-अटल पूर्णांक ingress_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा ingress_sched_data *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	पूर्णांक err;
+static int ingress_init(struct Qdisc *sch, struct nlattr *opt,
+			struct netlink_ext_ack *extack)
+{
+	struct ingress_sched_data *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	int err;
 
 	net_inc_ingress_queue();
 
@@ -90,38 +89,38 @@
 	q->block_info.chain_head_change_priv = &q->miniqp;
 
 	err = tcf_block_get_ext(&q->block, sch, &q->block_info, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mini_qdisc_pair_block_init(&q->miniqp, q->block);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ingress_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा ingress_sched_data *q = qdisc_priv(sch);
+static void ingress_destroy(struct Qdisc *sch)
+{
+	struct ingress_sched_data *q = qdisc_priv(sch);
 
 	tcf_block_put_ext(q->block, sch, &q->block_info);
 	net_dec_ingress_queue();
-पूर्ण
+}
 
-अटल पूर्णांक ingress_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *nest;
+static int ingress_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
+	if (nest == NULL)
+		goto nla_put_failure;
 
-	वापस nla_nest_end(skb, nest);
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops ingress_class_ops = अणु
+static const struct Qdisc_class_ops ingress_class_ops = {
 	.flags		=	QDISC_CLASS_OPS_DOIT_UNLOCKED,
 	.leaf		=	ingress_leaf,
 	.find		=	ingress_find,
@@ -129,96 +128,96 @@ nla_put_failure:
 	.tcf_block	=	ingress_tcf_block,
 	.bind_tcf	=	ingress_bind_filter,
 	.unbind_tcf	=	ingress_unbind_filter,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops ingress_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops ingress_qdisc_ops __read_mostly = {
 	.cl_ops			=	&ingress_class_ops,
 	.id			=	"ingress",
-	.priv_size		=	माप(काष्ठा ingress_sched_data),
-	.अटल_flags		=	TCQ_F_CPUSTATS,
+	.priv_size		=	sizeof(struct ingress_sched_data),
+	.static_flags		=	TCQ_F_CPUSTATS,
 	.init			=	ingress_init,
 	.destroy		=	ingress_destroy,
 	.dump			=	ingress_dump,
 	.ingress_block_set	=	ingress_ingress_block_set,
 	.ingress_block_get	=	ingress_ingress_block_get,
 	.owner			=	THIS_MODULE,
-पूर्ण;
+};
 
-काष्ठा clsact_sched_data अणु
-	काष्ठा tcf_block *ingress_block;
-	काष्ठा tcf_block *egress_block;
-	काष्ठा tcf_block_ext_info ingress_block_info;
-	काष्ठा tcf_block_ext_info egress_block_info;
-	काष्ठा mini_Qdisc_pair miniqp_ingress;
-	काष्ठा mini_Qdisc_pair miniqp_egress;
-पूर्ण;
+struct clsact_sched_data {
+	struct tcf_block *ingress_block;
+	struct tcf_block *egress_block;
+	struct tcf_block_ext_info ingress_block_info;
+	struct tcf_block_ext_info egress_block_info;
+	struct mini_Qdisc_pair miniqp_ingress;
+	struct mini_Qdisc_pair miniqp_egress;
+};
 
-अटल अचिन्हित दीर्घ clsact_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	चयन (TC_H_MIN(classid)) अणु
-	हाल TC_H_MIN(TC_H_MIN_INGRESS):
-	हाल TC_H_MIN(TC_H_MIN_EGRESS):
-		वापस TC_H_MIN(classid);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static unsigned long clsact_find(struct Qdisc *sch, u32 classid)
+{
+	switch (TC_H_MIN(classid)) {
+	case TC_H_MIN(TC_H_MIN_INGRESS):
+	case TC_H_MIN(TC_H_MIN_EGRESS):
+		return TC_H_MIN(classid);
+	default:
+		return 0;
+	}
+}
 
-अटल अचिन्हित दीर्घ clsact_bind_filter(काष्ठा Qdisc *sch,
-					अचिन्हित दीर्घ parent, u32 classid)
-अणु
-	वापस clsact_find(sch, classid);
-पूर्ण
+static unsigned long clsact_bind_filter(struct Qdisc *sch,
+					unsigned long parent, u32 classid)
+{
+	return clsact_find(sch, classid);
+}
 
-अटल काष्ठा tcf_block *clsact_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-					  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static struct tcf_block *clsact_tcf_block(struct Qdisc *sch, unsigned long cl,
+					  struct netlink_ext_ack *extack)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
-	चयन (cl) अणु
-	हाल TC_H_MIN(TC_H_MIN_INGRESS):
-		वापस q->ingress_block;
-	हाल TC_H_MIN(TC_H_MIN_EGRESS):
-		वापस q->egress_block;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	switch (cl) {
+	case TC_H_MIN(TC_H_MIN_INGRESS):
+		return q->ingress_block;
+	case TC_H_MIN(TC_H_MIN_EGRESS):
+		return q->egress_block;
+	default:
+		return NULL;
+	}
+}
 
-अटल व्योम clsact_ingress_block_set(काष्ठा Qdisc *sch, u32 block_index)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static void clsact_ingress_block_set(struct Qdisc *sch, u32 block_index)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
 	q->ingress_block_info.block_index = block_index;
-पूर्ण
+}
 
-अटल व्योम clsact_egress_block_set(काष्ठा Qdisc *sch, u32 block_index)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static void clsact_egress_block_set(struct Qdisc *sch, u32 block_index)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
 	q->egress_block_info.block_index = block_index;
-पूर्ण
+}
 
-अटल u32 clsact_ingress_block_get(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static u32 clsact_ingress_block_get(struct Qdisc *sch)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
-	वापस q->ingress_block_info.block_index;
-पूर्ण
+	return q->ingress_block_info.block_index;
+}
 
-अटल u32 clsact_egress_block_get(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static u32 clsact_egress_block_get(struct Qdisc *sch)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
-	वापस q->egress_block_info.block_index;
-पूर्ण
+	return q->egress_block_info.block_index;
+}
 
-अटल पूर्णांक clsact_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	पूर्णांक err;
+static int clsact_init(struct Qdisc *sch, struct nlattr *opt,
+		       struct netlink_ext_ack *extack)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	int err;
 
 	net_inc_ingress_queue();
 	net_inc_egress_queue();
@@ -231,8 +230,8 @@ nla_put_failure:
 
 	err = tcf_block_get_ext(&q->ingress_block, sch, &q->ingress_block_info,
 				extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mini_qdisc_pair_block_init(&q->miniqp_ingress, q->ingress_block);
 
@@ -242,21 +241,21 @@ nla_put_failure:
 	q->egress_block_info.chain_head_change = clsact_chain_head_change;
 	q->egress_block_info.chain_head_change_priv = &q->miniqp_egress;
 
-	वापस tcf_block_get_ext(&q->egress_block, sch, &q->egress_block_info, extack);
-पूर्ण
+	return tcf_block_get_ext(&q->egress_block, sch, &q->egress_block_info, extack);
+}
 
-अटल व्योम clsact_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा clsact_sched_data *q = qdisc_priv(sch);
+static void clsact_destroy(struct Qdisc *sch)
+{
+	struct clsact_sched_data *q = qdisc_priv(sch);
 
 	tcf_block_put_ext(q->egress_block, sch, &q->egress_block_info);
 	tcf_block_put_ext(q->ingress_block, sch, &q->ingress_block_info);
 
 	net_dec_ingress_queue();
 	net_dec_egress_queue();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops clsact_class_ops = अणु
+static const struct Qdisc_class_ops clsact_class_ops = {
 	.flags		=	QDISC_CLASS_OPS_DOIT_UNLOCKED,
 	.leaf		=	ingress_leaf,
 	.find		=	clsact_find,
@@ -264,13 +263,13 @@ nla_put_failure:
 	.tcf_block	=	clsact_tcf_block,
 	.bind_tcf	=	clsact_bind_filter,
 	.unbind_tcf	=	ingress_unbind_filter,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops clsact_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops clsact_qdisc_ops __read_mostly = {
 	.cl_ops			=	&clsact_class_ops,
 	.id			=	"clsact",
-	.priv_size		=	माप(काष्ठा clsact_sched_data),
-	.अटल_flags		=	TCQ_F_CPUSTATS,
+	.priv_size		=	sizeof(struct clsact_sched_data),
+	.static_flags		=	TCQ_F_CPUSTATS,
 	.init			=	clsact_init,
 	.destroy		=	clsact_destroy,
 	.dump			=	ingress_dump,
@@ -279,30 +278,30 @@ nla_put_failure:
 	.ingress_block_get	=	clsact_ingress_block_get,
 	.egress_block_get	=	clsact_egress_block_get,
 	.owner			=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ingress_module_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ingress_module_init(void)
+{
+	int ret;
 
-	ret = रेजिस्टर_qdisc(&ingress_qdisc_ops);
-	अगर (!ret) अणु
-		ret = रेजिस्टर_qdisc(&clsact_qdisc_ops);
-		अगर (ret)
-			unरेजिस्टर_qdisc(&ingress_qdisc_ops);
-	पूर्ण
+	ret = register_qdisc(&ingress_qdisc_ops);
+	if (!ret) {
+		ret = register_qdisc(&clsact_qdisc_ops);
+		if (ret)
+			unregister_qdisc(&ingress_qdisc_ops);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास ingress_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&ingress_qdisc_ops);
-	unरेजिस्टर_qdisc(&clsact_qdisc_ops);
-पूर्ण
+static void __exit ingress_module_exit(void)
+{
+	unregister_qdisc(&ingress_qdisc_ops);
+	unregister_qdisc(&clsact_qdisc_ops);
+}
 
 module_init(ingress_module_init);
-module_निकास(ingress_module_निकास);
+module_exit(ingress_module_exit);
 
 MODULE_ALIAS("sch_clsact");
 MODULE_LICENSE("GPL");

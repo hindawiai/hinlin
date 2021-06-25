@@ -1,171 +1,170 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "cache.h"
-#समावेश "debug.h"
-#समावेश "strbuf.h"
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+#include "cache.h"
+#include "debug.h"
+#include "strbuf.h"
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /*
- * Used as the शेष ->buf value, so that people can always assume
- * buf is non शून्य and ->buf is NUL terminated even क्रम a freshly
+ * Used as the default ->buf value, so that people can always assume
+ * buf is non NULL and ->buf is NUL terminated even for a freshly
  * initialized strbuf.
  */
-अक्षर strbuf_slopbuf[1];
+char strbuf_slopbuf[1];
 
-पूर्णांक strbuf_init(काष्ठा strbuf *sb, sमाप_प्रकार hपूर्णांक)
-अणु
+int strbuf_init(struct strbuf *sb, ssize_t hint)
+{
 	sb->alloc = sb->len = 0;
 	sb->buf = strbuf_slopbuf;
-	अगर (hपूर्णांक)
-		वापस strbuf_grow(sb, hपूर्णांक);
-	वापस 0;
-पूर्ण
+	if (hint)
+		return strbuf_grow(sb, hint);
+	return 0;
+}
 
-व्योम strbuf_release(काष्ठा strbuf *sb)
-अणु
-	अगर (sb->alloc) अणु
-		zमुक्त(&sb->buf);
+void strbuf_release(struct strbuf *sb)
+{
+	if (sb->alloc) {
+		zfree(&sb->buf);
 		strbuf_init(sb, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अक्षर *strbuf_detach(काष्ठा strbuf *sb, माप_प्रकार *sz)
-अणु
-	अक्षर *res = sb->alloc ? sb->buf : शून्य;
-	अगर (sz)
+char *strbuf_detach(struct strbuf *sb, size_t *sz)
+{
+	char *res = sb->alloc ? sb->buf : NULL;
+	if (sz)
 		*sz = sb->len;
 	strbuf_init(sb, 0);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक strbuf_grow(काष्ठा strbuf *sb, माप_प्रकार extra)
-अणु
-	अक्षर *buf;
-	माप_प्रकार nr = sb->len + extra + 1;
+int strbuf_grow(struct strbuf *sb, size_t extra)
+{
+	char *buf;
+	size_t nr = sb->len + extra + 1;
 
-	अगर (nr < sb->alloc)
-		वापस 0;
+	if (nr < sb->alloc)
+		return 0;
 
-	अगर (nr <= sb->len)
-		वापस -E2BIG;
+	if (nr <= sb->len)
+		return -E2BIG;
 
-	अगर (alloc_nr(sb->alloc) > nr)
+	if (alloc_nr(sb->alloc) > nr)
 		nr = alloc_nr(sb->alloc);
 
 	/*
-	 * Note that sb->buf == strbuf_slopbuf अगर sb->alloc == 0, and it is
-	 * a अटल variable. Thus we have to aव्योम passing it to पुनः_स्मृति.
+	 * Note that sb->buf == strbuf_slopbuf if sb->alloc == 0, and it is
+	 * a static variable. Thus we have to avoid passing it to realloc.
 	 */
-	buf = पुनः_स्मृति(sb->alloc ? sb->buf : शून्य, nr * माप(*buf));
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = realloc(sb->alloc ? sb->buf : NULL, nr * sizeof(*buf));
+	if (!buf)
+		return -ENOMEM;
 
 	sb->buf = buf;
 	sb->alloc = nr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक strbuf_addch(काष्ठा strbuf *sb, पूर्णांक c)
-अणु
-	पूर्णांक ret = strbuf_grow(sb, 1);
-	अगर (ret)
-		वापस ret;
+int strbuf_addch(struct strbuf *sb, int c)
+{
+	int ret = strbuf_grow(sb, 1);
+	if (ret)
+		return ret;
 
 	sb->buf[sb->len++] = c;
 	sb->buf[sb->len] = '\0';
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक strbuf_add(काष्ठा strbuf *sb, स्थिर व्योम *data, माप_प्रकार len)
-अणु
-	पूर्णांक ret = strbuf_grow(sb, len);
-	अगर (ret)
-		वापस ret;
+int strbuf_add(struct strbuf *sb, const void *data, size_t len)
+{
+	int ret = strbuf_grow(sb, len);
+	if (ret)
+		return ret;
 
-	स_नकल(sb->buf + sb->len, data, len);
-	वापस strbuf_setlen(sb, sb->len + len);
-पूर्ण
+	memcpy(sb->buf + sb->len, data, len);
+	return strbuf_setlen(sb, sb->len + len);
+}
 
-अटल पूर्णांक strbuf_addv(काष्ठा strbuf *sb, स्थिर अक्षर *fmt, बहु_सूची ap)
-अणु
-	पूर्णांक len, ret;
-	बहु_सूची ap_saved;
+static int strbuf_addv(struct strbuf *sb, const char *fmt, va_list ap)
+{
+	int len, ret;
+	va_list ap_saved;
 
-	अगर (!strbuf_avail(sb)) अणु
+	if (!strbuf_avail(sb)) {
 		ret = strbuf_grow(sb, 64);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	va_copy(ap_saved, ap);
-	len = vsnम_लिखो(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
-	अगर (len < 0) अणु
-		बहु_पूर्ण(ap_saved);
-		वापस len;
-	पूर्ण
-	अगर (len > strbuf_avail(sb)) अणु
+	len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
+	if (len < 0) {
+		va_end(ap_saved);
+		return len;
+	}
+	if (len > strbuf_avail(sb)) {
 		ret = strbuf_grow(sb, len);
-		अगर (ret) अणु
-			बहु_पूर्ण(ap_saved);
-			वापस ret;
-		पूर्ण
-		len = vsnम_लिखो(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap_saved);
-		अगर (len > strbuf_avail(sb)) अणु
+		if (ret) {
+			va_end(ap_saved);
+			return ret;
+		}
+		len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap_saved);
+		if (len > strbuf_avail(sb)) {
 			pr_debug("this should not happen, your vsnprintf is broken");
-			बहु_पूर्ण(ap_saved);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	बहु_पूर्ण(ap_saved);
-	वापस strbuf_setlen(sb, sb->len + len);
-पूर्ण
+			va_end(ap_saved);
+			return -EINVAL;
+		}
+	}
+	va_end(ap_saved);
+	return strbuf_setlen(sb, sb->len + len);
+}
 
-पूर्णांक strbuf_addf(काष्ठा strbuf *sb, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	पूर्णांक ret;
+int strbuf_addf(struct strbuf *sb, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
 
-	बहु_शुरू(ap, fmt);
+	va_start(ap, fmt);
 	ret = strbuf_addv(sb, fmt, ap);
-	बहु_पूर्ण(ap);
-	वापस ret;
-पूर्ण
+	va_end(ap);
+	return ret;
+}
 
-sमाप_प्रकार strbuf_पढ़ो(काष्ठा strbuf *sb, पूर्णांक fd, sमाप_प्रकार hपूर्णांक)
-अणु
-	माप_प्रकार oldlen = sb->len;
-	माप_प्रकार oldalloc = sb->alloc;
-	पूर्णांक ret;
+ssize_t strbuf_read(struct strbuf *sb, int fd, ssize_t hint)
+{
+	size_t oldlen = sb->len;
+	size_t oldalloc = sb->alloc;
+	int ret;
 
-	ret = strbuf_grow(sb, hपूर्णांक ? hपूर्णांक : 8192);
-	अगर (ret)
-		वापस ret;
+	ret = strbuf_grow(sb, hint ? hint : 8192);
+	if (ret)
+		return ret;
 
-	क्रम (;;) अणु
-		sमाप_प्रकार cnt;
+	for (;;) {
+		ssize_t cnt;
 
-		cnt = पढ़ो(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
-		अगर (cnt < 0) अणु
-			अगर (oldalloc == 0)
+		cnt = read(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
+		if (cnt < 0) {
+			if (oldalloc == 0)
 				strbuf_release(sb);
-			अन्यथा
+			else
 				strbuf_setlen(sb, oldlen);
-			वापस cnt;
-		पूर्ण
-		अगर (!cnt)
-			अवरोध;
+			return cnt;
+		}
+		if (!cnt)
+			break;
 		sb->len += cnt;
 		ret = strbuf_grow(sb, 8192);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	sb->buf[sb->len] = '\0';
-	वापस sb->len - oldlen;
-पूर्ण
+	return sb->len - oldlen;
+}

@@ -1,300 +1,299 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  घातer_supply_hwmon.c - घातer supply hwmon support.
+ *  power_supply_hwmon.c - power supply hwmon support.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/hwmon.h>
+#include <linux/power_supply.h>
+#include <linux/slab.h>
 
-काष्ठा घातer_supply_hwmon अणु
-	काष्ठा घातer_supply *psy;
-	अचिन्हित दीर्घ *props;
-पूर्ण;
+struct power_supply_hwmon {
+	struct power_supply *psy;
+	unsigned long *props;
+};
 
-अटल स्थिर अक्षर *स्थिर ps_temp_label[] = अणु
+static const char *const ps_temp_label[] = {
 	"temp",
 	"ambient temp",
-पूर्ण;
+};
 
-अटल पूर्णांक घातer_supply_hwmon_in_to_property(u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_in_average:
-		वापस POWER_SUPPLY_PROP_VOLTAGE_AVG;
-	हाल hwmon_in_min:
-		वापस POWER_SUPPLY_PROP_VOLTAGE_MIN;
-	हाल hwmon_in_max:
-		वापस POWER_SUPPLY_PROP_VOLTAGE_MAX;
-	हाल hwmon_in_input:
-		वापस POWER_SUPPLY_PROP_VOLTAGE_NOW;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int power_supply_hwmon_in_to_property(u32 attr)
+{
+	switch (attr) {
+	case hwmon_in_average:
+		return POWER_SUPPLY_PROP_VOLTAGE_AVG;
+	case hwmon_in_min:
+		return POWER_SUPPLY_PROP_VOLTAGE_MIN;
+	case hwmon_in_max:
+		return POWER_SUPPLY_PROP_VOLTAGE_MAX;
+	case hwmon_in_input:
+		return POWER_SUPPLY_PROP_VOLTAGE_NOW;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक घातer_supply_hwmon_curr_to_property(u32 attr)
-अणु
-	चयन (attr) अणु
-	हाल hwmon_curr_average:
-		वापस POWER_SUPPLY_PROP_CURRENT_AVG;
-	हाल hwmon_curr_max:
-		वापस POWER_SUPPLY_PROP_CURRENT_MAX;
-	हाल hwmon_curr_input:
-		वापस POWER_SUPPLY_PROP_CURRENT_NOW;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int power_supply_hwmon_curr_to_property(u32 attr)
+{
+	switch (attr) {
+	case hwmon_curr_average:
+		return POWER_SUPPLY_PROP_CURRENT_AVG;
+	case hwmon_curr_max:
+		return POWER_SUPPLY_PROP_CURRENT_MAX;
+	case hwmon_curr_input:
+		return POWER_SUPPLY_PROP_CURRENT_NOW;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक घातer_supply_hwmon_temp_to_property(u32 attr, पूर्णांक channel)
-अणु
-	अगर (channel) अणु
-		चयन (attr) अणु
-		हाल hwmon_temp_input:
-			वापस POWER_SUPPLY_PROP_TEMP_AMBIENT;
-		हाल hwmon_temp_min_alarm:
-			वापस POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN;
-		हाल hwmon_temp_max_alarm:
-			वापस POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (attr) अणु
-		हाल hwmon_temp_input:
-			वापस POWER_SUPPLY_PROP_TEMP;
-		हाल hwmon_temp_max:
-			वापस POWER_SUPPLY_PROP_TEMP_MAX;
-		हाल hwmon_temp_min:
-			वापस POWER_SUPPLY_PROP_TEMP_MIN;
-		हाल hwmon_temp_min_alarm:
-			वापस POWER_SUPPLY_PROP_TEMP_ALERT_MIN;
-		हाल hwmon_temp_max_alarm:
-			वापस POWER_SUPPLY_PROP_TEMP_ALERT_MAX;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+static int power_supply_hwmon_temp_to_property(u32 attr, int channel)
+{
+	if (channel) {
+		switch (attr) {
+		case hwmon_temp_input:
+			return POWER_SUPPLY_PROP_TEMP_AMBIENT;
+		case hwmon_temp_min_alarm:
+			return POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN;
+		case hwmon_temp_max_alarm:
+			return POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX;
+		default:
+			break;
+		}
+	} else {
+		switch (attr) {
+		case hwmon_temp_input:
+			return POWER_SUPPLY_PROP_TEMP;
+		case hwmon_temp_max:
+			return POWER_SUPPLY_PROP_TEMP_MAX;
+		case hwmon_temp_min:
+			return POWER_SUPPLY_PROP_TEMP_MIN;
+		case hwmon_temp_min_alarm:
+			return POWER_SUPPLY_PROP_TEMP_ALERT_MIN;
+		case hwmon_temp_max_alarm:
+			return POWER_SUPPLY_PROP_TEMP_ALERT_MAX;
+		default:
+			break;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-घातer_supply_hwmon_to_property(क्रमागत hwmon_sensor_types type,
-			       u32 attr, पूर्णांक channel)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस घातer_supply_hwmon_in_to_property(attr);
-	हाल hwmon_curr:
-		वापस घातer_supply_hwmon_curr_to_property(attr);
-	हाल hwmon_temp:
-		वापस घातer_supply_hwmon_temp_to_property(attr, channel);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int
+power_supply_hwmon_to_property(enum hwmon_sensor_types type,
+			       u32 attr, int channel)
+{
+	switch (type) {
+	case hwmon_in:
+		return power_supply_hwmon_in_to_property(attr);
+	case hwmon_curr:
+		return power_supply_hwmon_curr_to_property(attr);
+	case hwmon_temp:
+		return power_supply_hwmon_temp_to_property(attr, channel);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल bool घातer_supply_hwmon_is_a_label(क्रमागत hwmon_sensor_types type,
+static bool power_supply_hwmon_is_a_label(enum hwmon_sensor_types type,
 					   u32 attr)
-अणु
-	वापस type == hwmon_temp && attr == hwmon_temp_label;
-पूर्ण
+{
+	return type == hwmon_temp && attr == hwmon_temp_label;
+}
 
-काष्ठा hwmon_type_attr_list अणु
-	स्थिर u32 *attrs;
-	माप_प्रकार n_attrs;
-पूर्ण;
+struct hwmon_type_attr_list {
+	const u32 *attrs;
+	size_t n_attrs;
+};
 
-अटल स्थिर u32 ps_temp_attrs[] = अणु
+static const u32 ps_temp_attrs[] = {
 	hwmon_temp_input,
 	hwmon_temp_min, hwmon_temp_max,
 	hwmon_temp_min_alarm, hwmon_temp_max_alarm,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hwmon_type_attr_list ps_type_attrs[hwmon_max] = अणु
-	[hwmon_temp] = अणु ps_temp_attrs, ARRAY_SIZE(ps_temp_attrs) पूर्ण,
-पूर्ण;
+static const struct hwmon_type_attr_list ps_type_attrs[hwmon_max] = {
+	[hwmon_temp] = { ps_temp_attrs, ARRAY_SIZE(ps_temp_attrs) },
+};
 
-अटल bool घातer_supply_hwmon_has_input(
-	स्थिर काष्ठा घातer_supply_hwmon *psyhw,
-	क्रमागत hwmon_sensor_types type, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा hwmon_type_attr_list *attr_list = &ps_type_attrs[type];
-	माप_प्रकार i;
+static bool power_supply_hwmon_has_input(
+	const struct power_supply_hwmon *psyhw,
+	enum hwmon_sensor_types type, int channel)
+{
+	const struct hwmon_type_attr_list *attr_list = &ps_type_attrs[type];
+	size_t i;
 
-	क्रम (i = 0; i < attr_list->n_attrs; ++i) अणु
-		पूर्णांक prop = घातer_supply_hwmon_to_property(type,
+	for (i = 0; i < attr_list->n_attrs; ++i) {
+		int prop = power_supply_hwmon_to_property(type,
 			attr_list->attrs[i], channel);
 
-		अगर (prop >= 0 && test_bit(prop, psyhw->props))
-			वापस true;
-	पूर्ण
+		if (prop >= 0 && test_bit(prop, psyhw->props))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool घातer_supply_hwmon_is_writable(क्रमागत hwmon_sensor_types type,
+static bool power_supply_hwmon_is_writable(enum hwmon_sensor_types type,
 					   u32 attr)
-अणु
-	चयन (type) अणु
-	हाल hwmon_in:
-		वापस attr == hwmon_in_min ||
+{
+	switch (type) {
+	case hwmon_in:
+		return attr == hwmon_in_min ||
 		       attr == hwmon_in_max;
-	हाल hwmon_curr:
-		वापस attr == hwmon_curr_max;
-	हाल hwmon_temp:
-		वापस attr == hwmon_temp_max ||
+	case hwmon_curr:
+		return attr == hwmon_curr_max;
+	case hwmon_temp:
+		return attr == hwmon_temp_max ||
 		       attr == hwmon_temp_min ||
 		       attr == hwmon_temp_min_alarm ||
 		       attr == hwmon_temp_max_alarm;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल umode_t घातer_supply_hwmon_is_visible(स्थिर व्योम *data,
-					     क्रमागत hwmon_sensor_types type,
-					     u32 attr, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा घातer_supply_hwmon *psyhw = data;
-	पूर्णांक prop;
+static umode_t power_supply_hwmon_is_visible(const void *data,
+					     enum hwmon_sensor_types type,
+					     u32 attr, int channel)
+{
+	const struct power_supply_hwmon *psyhw = data;
+	int prop;
 
-	अगर (घातer_supply_hwmon_is_a_label(type, attr)) अणु
-		अगर (घातer_supply_hwmon_has_input(psyhw, type, channel))
-			वापस 0444;
-		अन्यथा
-			वापस 0;
-	पूर्ण
+	if (power_supply_hwmon_is_a_label(type, attr)) {
+		if (power_supply_hwmon_has_input(psyhw, type, channel))
+			return 0444;
+		else
+			return 0;
+	}
 
-	prop = घातer_supply_hwmon_to_property(type, attr, channel);
-	अगर (prop < 0 || !test_bit(prop, psyhw->props))
-		वापस 0;
+	prop = power_supply_hwmon_to_property(type, attr, channel);
+	if (prop < 0 || !test_bit(prop, psyhw->props))
+		return 0;
 
-	अगर (घातer_supply_property_is_ग_लिखोable(psyhw->psy, prop) > 0 &&
-	    घातer_supply_hwmon_is_writable(type, attr))
-		वापस 0644;
+	if (power_supply_property_is_writeable(psyhw->psy, prop) > 0 &&
+	    power_supply_hwmon_is_writable(type, attr))
+		return 0644;
 
-	वापस 0444;
-पूर्ण
+	return 0444;
+}
 
-अटल पूर्णांक घातer_supply_hwmon_पढ़ो_string(काष्ठा device *dev,
-					  क्रमागत hwmon_sensor_types type,
-					  u32 attr, पूर्णांक channel,
-					  स्थिर अक्षर **str)
-अणु
-	चयन (type) अणु
-	हाल hwmon_temp:
+static int power_supply_hwmon_read_string(struct device *dev,
+					  enum hwmon_sensor_types type,
+					  u32 attr, int channel,
+					  const char **str)
+{
+	switch (type) {
+	case hwmon_temp:
 		*str = ps_temp_label[channel];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* unreachable, but see:
 		 * gcc bug #51513 [1] and clang bug #978 [2]
 		 *
 		 * [1] https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51513
 		 * [2] https://github.com/ClangBuiltLinux/linux/issues/978
 		 */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-घातer_supply_hwmon_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	काष्ठा घातer_supply_hwmon *psyhw = dev_get_drvdata(dev);
-	काष्ठा घातer_supply *psy = psyhw->psy;
-	जोड़ घातer_supply_propval pspval;
-	पूर्णांक ret, prop;
+static int
+power_supply_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
+			u32 attr, int channel, long *val)
+{
+	struct power_supply_hwmon *psyhw = dev_get_drvdata(dev);
+	struct power_supply *psy = psyhw->psy;
+	union power_supply_propval pspval;
+	int ret, prop;
 
-	prop = घातer_supply_hwmon_to_property(type, attr, channel);
-	अगर (prop < 0)
-		वापस prop;
+	prop = power_supply_hwmon_to_property(type, attr, channel);
+	if (prop < 0)
+		return prop;
 
-	ret  = घातer_supply_get_property(psy, prop, &pspval);
-	अगर (ret)
-		वापस ret;
+	ret  = power_supply_get_property(psy, prop, &pspval);
+	if (ret)
+		return ret;
 
-	चयन (type) अणु
+	switch (type) {
 	/*
 	 * Both voltage and current is reported in units of
 	 * microvolts/microamps, so we need to adjust it to
 	 * milliamps(volts)
 	 */
-	हाल hwmon_curr:
-	हाल hwmon_in:
-		pspval.पूर्णांकval = DIV_ROUND_CLOSEST(pspval.पूर्णांकval, 1000);
-		अवरोध;
+	case hwmon_curr:
+	case hwmon_in:
+		pspval.intval = DIV_ROUND_CLOSEST(pspval.intval, 1000);
+		break;
 	/*
 	 * Temp needs to be converted from 1/10 C to milli-C
 	 */
-	हाल hwmon_temp:
-		अगर (check_mul_overflow(pspval.पूर्णांकval, 100,
-				       &pspval.पूर्णांकval))
-			वापस -EOVERFLOW;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case hwmon_temp:
+		if (check_mul_overflow(pspval.intval, 100,
+				       &pspval.intval))
+			return -EOVERFLOW;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	*val = pspval.पूर्णांकval;
+	*val = pspval.intval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-घातer_supply_hwmon_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	काष्ठा घातer_supply_hwmon *psyhw = dev_get_drvdata(dev);
-	काष्ठा घातer_supply *psy = psyhw->psy;
-	जोड़ घातer_supply_propval pspval;
-	पूर्णांक prop;
+static int
+power_supply_hwmon_write(struct device *dev, enum hwmon_sensor_types type,
+			 u32 attr, int channel, long val)
+{
+	struct power_supply_hwmon *psyhw = dev_get_drvdata(dev);
+	struct power_supply *psy = psyhw->psy;
+	union power_supply_propval pspval;
+	int prop;
 
-	prop = घातer_supply_hwmon_to_property(type, attr, channel);
-	अगर (prop < 0)
-		वापस prop;
+	prop = power_supply_hwmon_to_property(type, attr, channel);
+	if (prop < 0)
+		return prop;
 
-	pspval.पूर्णांकval = val;
+	pspval.intval = val;
 
-	चयन (type) अणु
+	switch (type) {
 	/*
 	 * Both voltage and current is reported in units of
 	 * microvolts/microamps, so we need to adjust it to
 	 * milliamps(volts)
 	 */
-	हाल hwmon_curr:
-	हाल hwmon_in:
-		अगर (check_mul_overflow(pspval.पूर्णांकval, 1000,
-				       &pspval.पूर्णांकval))
-			वापस -EOVERFLOW;
-		अवरोध;
+	case hwmon_curr:
+	case hwmon_in:
+		if (check_mul_overflow(pspval.intval, 1000,
+				       &pspval.intval))
+			return -EOVERFLOW;
+		break;
 	/*
 	 * Temp needs to be converted from 1/10 C to milli-C
 	 */
-	हाल hwmon_temp:
-		pspval.पूर्णांकval = DIV_ROUND_CLOSEST(pspval.पूर्णांकval, 100);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case hwmon_temp:
+		pspval.intval = DIV_ROUND_CLOSEST(pspval.intval, 100);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस घातer_supply_set_property(psy, prop, &pspval);
-पूर्ण
+	return power_supply_set_property(psy, prop, &pspval);
+}
 
-अटल स्थिर काष्ठा hwmon_ops घातer_supply_hwmon_ops = अणु
-	.is_visible	= घातer_supply_hwmon_is_visible,
-	.पढ़ो		= घातer_supply_hwmon_पढ़ो,
-	.ग_लिखो		= घातer_supply_hwmon_ग_लिखो,
-	.पढ़ो_string	= घातer_supply_hwmon_पढ़ो_string,
-पूर्ण;
+static const struct hwmon_ops power_supply_hwmon_ops = {
+	.is_visible	= power_supply_hwmon_is_visible,
+	.read		= power_supply_hwmon_read,
+	.write		= power_supply_hwmon_write,
+	.read_string	= power_supply_hwmon_read_string,
+};
 
-अटल स्थिर काष्ठा hwmon_channel_info *घातer_supply_hwmon_info[] = अणु
+static const struct hwmon_channel_info *power_supply_hwmon_info[] = {
 	HWMON_CHANNEL_INFO(temp,
 			   HWMON_T_LABEL     |
 			   HWMON_T_INPUT     |
@@ -317,105 +316,105 @@
 			   HWMON_I_MIN     |
 			   HWMON_I_MAX     |
 			   HWMON_I_INPUT),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info घातer_supply_hwmon_chip_info = अणु
-	.ops = &घातer_supply_hwmon_ops,
-	.info = घातer_supply_hwmon_info,
-पूर्ण;
+static const struct hwmon_chip_info power_supply_hwmon_chip_info = {
+	.ops = &power_supply_hwmon_ops,
+	.info = power_supply_hwmon_info,
+};
 
-अटल व्योम घातer_supply_hwmon_biपंचांगap_मुक्त(व्योम *data)
-अणु
-	biपंचांगap_मुक्त(data);
-पूर्ण
+static void power_supply_hwmon_bitmap_free(void *data)
+{
+	bitmap_free(data);
+}
 
-पूर्णांक घातer_supply_add_hwmon_sysfs(काष्ठा घातer_supply *psy)
-अणु
-	स्थिर काष्ठा घातer_supply_desc *desc = psy->desc;
-	काष्ठा घातer_supply_hwmon *psyhw;
-	काष्ठा device *dev = &psy->dev;
-	काष्ठा device *hwmon;
-	पूर्णांक ret, i;
-	स्थिर अक्षर *name;
+int power_supply_add_hwmon_sysfs(struct power_supply *psy)
+{
+	const struct power_supply_desc *desc = psy->desc;
+	struct power_supply_hwmon *psyhw;
+	struct device *dev = &psy->dev;
+	struct device *hwmon;
+	int ret, i;
+	const char *name;
 
-	अगर (!devres_खोलो_group(dev, घातer_supply_add_hwmon_sysfs,
+	if (!devres_open_group(dev, power_supply_add_hwmon_sysfs,
 			       GFP_KERNEL))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	psyhw = devm_kzalloc(dev, माप(*psyhw), GFP_KERNEL);
-	अगर (!psyhw) अणु
+	psyhw = devm_kzalloc(dev, sizeof(*psyhw), GFP_KERNEL);
+	if (!psyhw) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	psyhw->psy = psy;
-	psyhw->props = biपंचांगap_zalloc(POWER_SUPPLY_PROP_TIME_TO_FULL_AVG + 1,
+	psyhw->props = bitmap_zalloc(POWER_SUPPLY_PROP_TIME_TO_FULL_AVG + 1,
 				     GFP_KERNEL);
-	अगर (!psyhw->props) अणु
+	if (!psyhw->props) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	ret = devm_add_action_or_reset(dev, घातer_supply_hwmon_biपंचांगap_मुक्त,
+	ret = devm_add_action_or_reset(dev, power_supply_hwmon_bitmap_free,
 			      psyhw->props);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	क्रम (i = 0; i < desc->num_properties; i++) अणु
-		स्थिर क्रमागत घातer_supply_property prop = desc->properties[i];
+	for (i = 0; i < desc->num_properties; i++) {
+		const enum power_supply_property prop = desc->properties[i];
 
-		चयन (prop) अणु
-		हाल POWER_SUPPLY_PROP_CURRENT_AVG:
-		हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-		हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		हाल POWER_SUPPLY_PROP_TEMP:
-		हाल POWER_SUPPLY_PROP_TEMP_MAX:
-		हाल POWER_SUPPLY_PROP_TEMP_MIN:
-		हाल POWER_SUPPLY_PROP_TEMP_ALERT_MIN:
-		हाल POWER_SUPPLY_PROP_TEMP_ALERT_MAX:
-		हाल POWER_SUPPLY_PROP_TEMP_AMBIENT:
-		हाल POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN:
-		हाल POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX:
-		हाल POWER_SUPPLY_PROP_VOLTAGE_AVG:
-		हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		switch (prop) {
+		case POWER_SUPPLY_PROP_CURRENT_AVG:
+		case POWER_SUPPLY_PROP_CURRENT_MAX:
+		case POWER_SUPPLY_PROP_CURRENT_NOW:
+		case POWER_SUPPLY_PROP_TEMP:
+		case POWER_SUPPLY_PROP_TEMP_MAX:
+		case POWER_SUPPLY_PROP_TEMP_MIN:
+		case POWER_SUPPLY_PROP_TEMP_ALERT_MIN:
+		case POWER_SUPPLY_PROP_TEMP_ALERT_MAX:
+		case POWER_SUPPLY_PROP_TEMP_AMBIENT:
+		case POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MIN:
+		case POWER_SUPPLY_PROP_TEMP_AMBIENT_ALERT_MAX:
+		case POWER_SUPPLY_PROP_VOLTAGE_AVG:
+		case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 			set_bit(prop, psyhw->props);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
 	name = psy->desc->name;
-	अगर (म_अक्षर(name, '-')) अणु
-		अक्षर *new_name;
+	if (strchr(name, '-')) {
+		char *new_name;
 
 		new_name = devm_kstrdup(dev, name, GFP_KERNEL);
-		अगर (!new_name) अणु
+		if (!new_name) {
 			ret = -ENOMEM;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		strreplace(new_name, '-', '_');
 		name = new_name;
-	पूर्ण
-	hwmon = devm_hwmon_device_रेजिस्टर_with_info(dev, name,
+	}
+	hwmon = devm_hwmon_device_register_with_info(dev, name,
 						psyhw,
-						&घातer_supply_hwmon_chip_info,
-						शून्य);
+						&power_supply_hwmon_chip_info,
+						NULL);
 	ret = PTR_ERR_OR_ZERO(hwmon);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
-	devres_बंद_group(dev, घातer_supply_add_hwmon_sysfs);
-	वापस 0;
+	devres_close_group(dev, power_supply_add_hwmon_sysfs);
+	return 0;
 error:
-	devres_release_group(dev, शून्य);
-	वापस ret;
-पूर्ण
+	devres_release_group(dev, NULL);
+	return ret;
+}
 
-व्योम घातer_supply_हटाओ_hwmon_sysfs(काष्ठा घातer_supply *psy)
-अणु
-	devres_release_group(&psy->dev, घातer_supply_add_hwmon_sysfs);
-पूर्ण
+void power_supply_remove_hwmon_sysfs(struct power_supply *psy)
+{
+	devres_release_group(&psy->dev, power_supply_add_hwmon_sysfs);
+}

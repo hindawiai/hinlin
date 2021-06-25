@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/netdevice.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/netdevice.h>
 
-#समावेश <net/bonding.h>
-#समावेश <net/bond_alb.h>
+#include <net/bonding.h>
+#include <net/bond_alb.h>
 
-#अगर defined(CONFIG_DEBUG_FS) && !defined(CONFIG_NET_NS)
+#if defined(CONFIG_DEBUG_FS) && !defined(CONFIG_NET_NS)
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-अटल काष्ठा dentry *bonding_debug_root;
+static struct dentry *bonding_debug_root;
 
 /* Show RLB hash table */
-अटल पूर्णांक bond_debug_rlb_hash_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा bonding *bond = m->निजी;
-	काष्ठा alb_bond_info *bond_info = &(BOND_ALB_INFO(bond));
-	काष्ठा rlb_client_info *client_info;
+static int bond_debug_rlb_hash_show(struct seq_file *m, void *v)
+{
+	struct bonding *bond = m->private;
+	struct alb_bond_info *bond_info = &(BOND_ALB_INFO(bond));
+	struct rlb_client_info *client_info;
 	u32 hash_index;
 
-	अगर (BOND_MODE(bond) != BOND_MODE_ALB)
-		वापस 0;
+	if (BOND_MODE(bond) != BOND_MODE_ALB)
+		return 0;
 
-	seq_म_लिखो(m, "SourceIP        DestinationIP   "
+	seq_printf(m, "SourceIP        DestinationIP   "
 			"Destination MAC   DEV\n");
 
 	spin_lock_bh(&bond->mode_lock);
 
 	hash_index = bond_info->rx_hashtbl_used_head;
-	क्रम (; hash_index != RLB_शून्य_INDEX;
-	     hash_index = client_info->used_next) अणु
+	for (; hash_index != RLB_NULL_INDEX;
+	     hash_index = client_info->used_next) {
 		client_info = &(bond_info->rx_hashtbl[hash_index]);
-		seq_म_लिखो(m, "%-15pI4 %-15pI4 %-17pM %s\n",
+		seq_printf(m, "%-15pI4 %-15pI4 %-17pM %s\n",
 			&client_info->ip_src,
 			&client_info->ip_dst,
 			&client_info->mac_dst,
 			client_info->slave->dev->name);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&bond->mode_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(bond_debug_rlb_hash);
 
-व्योम bond_debug_रेजिस्टर(काष्ठा bonding *bond)
-अणु
-	अगर (!bonding_debug_root)
-		वापस;
+void bond_debug_register(struct bonding *bond)
+{
+	if (!bonding_debug_root)
+		return;
 
 	bond->debug_dir =
 		debugfs_create_dir(bond->dev->name, bonding_debug_root);
 
 	debugfs_create_file("rlb_hash_table", 0400, bond->debug_dir,
 				bond, &bond_debug_rlb_hash_fops);
-पूर्ण
+}
 
-व्योम bond_debug_unरेजिस्टर(काष्ठा bonding *bond)
-अणु
-	अगर (!bonding_debug_root)
-		वापस;
+void bond_debug_unregister(struct bonding *bond)
+{
+	if (!bonding_debug_root)
+		return;
 
-	debugfs_हटाओ_recursive(bond->debug_dir);
-पूर्ण
+	debugfs_remove_recursive(bond->debug_dir);
+}
 
-व्योम bond_debug_reरेजिस्टर(काष्ठा bonding *bond)
-अणु
-	काष्ठा dentry *d;
+void bond_debug_reregister(struct bonding *bond)
+{
+	struct dentry *d;
 
-	अगर (!bonding_debug_root)
-		वापस;
+	if (!bonding_debug_root)
+		return;
 
-	d = debugfs_नाम(bonding_debug_root, bond->debug_dir,
+	d = debugfs_rename(bonding_debug_root, bond->debug_dir,
 			   bonding_debug_root, bond->dev->name);
-	अगर (d) अणु
+	if (d) {
 		bond->debug_dir = d;
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_warn(bond->dev, "failed to reregister, so just unregister old one\n");
-		bond_debug_unरेजिस्टर(bond);
-	पूर्ण
-पूर्ण
+		bond_debug_unregister(bond);
+	}
+}
 
-व्योम bond_create_debugfs(व्योम)
-अणु
-	bonding_debug_root = debugfs_create_dir("bonding", शून्य);
+void bond_create_debugfs(void)
+{
+	bonding_debug_root = debugfs_create_dir("bonding", NULL);
 
-	अगर (!bonding_debug_root) अणु
+	if (!bonding_debug_root) {
 		pr_warn("Warning: Cannot create bonding directory in debugfs\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम bond_destroy_debugfs(व्योम)
-अणु
-	debugfs_हटाओ_recursive(bonding_debug_root);
-	bonding_debug_root = शून्य;
-पूर्ण
+void bond_destroy_debugfs(void)
+{
+	debugfs_remove_recursive(bonding_debug_root);
+	bonding_debug_root = NULL;
+}
 
 
-#अन्यथा /* !CONFIG_DEBUG_FS */
+#else /* !CONFIG_DEBUG_FS */
 
-व्योम bond_debug_रेजिस्टर(काष्ठा bonding *bond)
-अणु
-पूर्ण
+void bond_debug_register(struct bonding *bond)
+{
+}
 
-व्योम bond_debug_unरेजिस्टर(काष्ठा bonding *bond)
-अणु
-पूर्ण
+void bond_debug_unregister(struct bonding *bond)
+{
+}
 
-व्योम bond_debug_reरेजिस्टर(काष्ठा bonding *bond)
-अणु
-पूर्ण
+void bond_debug_reregister(struct bonding *bond)
+{
+}
 
-व्योम bond_create_debugfs(व्योम)
-अणु
-पूर्ण
+void bond_create_debugfs(void)
+{
+}
 
-व्योम bond_destroy_debugfs(व्योम)
-अणु
-पूर्ण
+void bond_destroy_debugfs(void)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */

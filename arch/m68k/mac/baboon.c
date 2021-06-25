@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Baboon Custom IC Management
  *
  * The Baboon custom IC controls the IDE, PCMCIA and media bay on the
- * PowerBook 190. It multiplexes multiple पूर्णांकerrupt sources onto the
- * Nubus slot $C पूर्णांकerrupt.
+ * PowerBook 190. It multiplexes multiple interrupt sources onto the
+ * Nubus slot $C interrupt.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/irq.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/macपूर्णांकosh.h>
-#समावेश <यंत्र/macपूर्णांकs.h>
-#समावेश <यंत्र/mac_baboon.h>
+#include <asm/macintosh.h>
+#include <asm/macints.h>
+#include <asm/mac_baboon.h>
 
-पूर्णांक baboon_present;
-अटल अस्थिर काष्ठा baboon *baboon;
+int baboon_present;
+static volatile struct baboon *baboon;
 
 /*
  * Baboon initialization.
  */
 
-व्योम __init baboon_init(व्योम)
-अणु
-	अगर (macपूर्णांकosh_config->ident != MAC_MODEL_PB190) अणु
-		baboon = शून्य;
+void __init baboon_init(void)
+{
+	if (macintosh_config->ident != MAC_MODEL_PB190) {
+		baboon = NULL;
 		baboon_present = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	baboon = (काष्ठा baboon *) BABOON_BASE;
+	baboon = (struct baboon *) BABOON_BASE;
 	baboon_present = 1;
 
 	pr_debug("Baboon detected at %p\n", baboon);
-पूर्ण
+}
 
 /*
- * Baboon पूर्णांकerrupt handler.
- * XXX how करो you clear a pending IRQ? is it even necessary?
+ * Baboon interrupt handler.
+ * XXX how do you clear a pending IRQ? is it even necessary?
  */
 
-अटल व्योम baboon_irq(काष्ठा irq_desc *desc)
-अणु
-	लघु events, irq_bit;
-	पूर्णांक irq_num;
+static void baboon_irq(struct irq_desc *desc)
+{
+	short events, irq_bit;
+	int irq_num;
 
-	events = baboon->mb_अगरr & 0x07;
+	events = baboon->mb_ifr & 0x07;
 	irq_num = IRQ_BABOON_0;
 	irq_bit = 1;
-	करो अणु
-		अगर (events & irq_bit) अणु
+	do {
+		if (events & irq_bit) {
 			events &= ~irq_bit;
 			generic_handle_irq(irq_num);
-		पूर्ण
+		}
 		++irq_num;
 		irq_bit <<= 1;
-	पूर्ण जबतक (events);
-पूर्ण
+	} while (events);
+}
 
 /*
- * Register the Baboon पूर्णांकerrupt dispatcher on nubus slot $C.
+ * Register the Baboon interrupt dispatcher on nubus slot $C.
  */
 
-व्योम __init baboon_रेजिस्टर_पूर्णांकerrupts(व्योम)
-अणु
+void __init baboon_register_interrupts(void)
+{
 	irq_set_chained_handler(IRQ_NUBUS_C, baboon_irq);
-पूर्ण
+}
 
 /*
- * The means क्रम masking inभागidual Baboon पूर्णांकerrupts reमुख्यs a mystery.
+ * The means for masking individual Baboon interrupts remains a mystery.
  * However, since we only use the IDE IRQ, we can just enable/disable all
- * Baboon पूर्णांकerrupts. If/when we handle more than one Baboon IRQ, we must
- * either figure out how to mask them inभागidually or अन्यथा implement the
- * same workaround that's used क्रम NuBus slots (see nubus_disabled and
- * via_nubus_irq_shutकरोwn).
+ * Baboon interrupts. If/when we handle more than one Baboon IRQ, we must
+ * either figure out how to mask them individually or else implement the
+ * same workaround that's used for NuBus slots (see nubus_disabled and
+ * via_nubus_irq_shutdown).
  */
 
-व्योम baboon_irq_enable(पूर्णांक irq)
-अणु
+void baboon_irq_enable(int irq)
+{
 	mac_irq_enable(irq_get_irq_data(IRQ_NUBUS_C));
-पूर्ण
+}
 
-व्योम baboon_irq_disable(पूर्णांक irq)
-अणु
+void baboon_irq_disable(int irq)
+{
 	mac_irq_disable(irq_get_irq_data(IRQ_NUBUS_C));
-पूर्ण
+}

@@ -1,431 +1,430 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2008 Red Hat, Inc. All rights reserved.
  * Copyright 2008 Ian Kent <raven@themaw.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/magic.h>
-#समावेश <linux/nospec.h>
+#include <linux/module.h>
+#include <linux/miscdevice.h>
+#include <linux/compat.h>
+#include <linux/fdtable.h>
+#include <linux/magic.h>
+#include <linux/nospec.h>
 
-#समावेश "autofs_i.h"
+#include "autofs_i.h"
 
 /*
- * This module implements an पूर्णांकerface क्रम routing स्वतःfs ioctl control
+ * This module implements an interface for routing autofs ioctl control
  * commands via a miscellaneous device file.
  *
- * The alternate पूर्णांकerface is needed because we need to be able खोलो
- * an ioctl file descriptor on an स्वतःfs mount that may be covered by
- * another mount. This situation arises when starting स्वतःmount(8)
+ * The alternate interface is needed because we need to be able open
+ * an ioctl file descriptor on an autofs mount that may be covered by
+ * another mount. This situation arises when starting automount(8)
  * or other user space daemon which uses direct mounts or offset
- * mounts (used क्रम स्वतःfs lazy mount/umount of nested mount trees),
- * which have been left busy at service shutकरोwn.
+ * mounts (used for autofs lazy mount/umount of nested mount trees),
+ * which have been left busy at service shutdown.
  */
 
-प्रकार पूर्णांक (*ioctl_fn)(काष्ठा file *, काष्ठा स्वतःfs_sb_info *,
-			काष्ठा स्वतःfs_dev_ioctl *);
+typedef int (*ioctl_fn)(struct file *, struct autofs_sb_info *,
+			struct autofs_dev_ioctl *);
 
-अटल पूर्णांक check_name(स्थिर अक्षर *name)
-अणु
-	अगर (!म_अक्षर(name, '/'))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int check_name(const char *name)
+{
+	if (!strchr(name, '/'))
+		return -EINVAL;
+	return 0;
+}
 
 /*
- * Check a string करोesn't overrun the chunk of
+ * Check a string doesn't overrun the chunk of
  * memory we copied from user land.
  */
-अटल पूर्णांक invalid_str(अक्षर *str, माप_प्रकार size)
-अणु
-	अगर (स_प्रथम(str, 0, size))
-		वापस 0;
-	वापस -EINVAL;
-पूर्ण
+static int invalid_str(char *str, size_t size)
+{
+	if (memchr(str, 0, size))
+		return 0;
+	return -EINVAL;
+}
 
 /*
- * Check that the user compiled against correct version of स्वतःfs
+ * Check that the user compiled against correct version of autofs
  * misc device code.
  *
  * As well as checking the version compatibility this always copies
- * the kernel पूर्णांकerface version out.
+ * the kernel interface version out.
  */
-अटल पूर्णांक check_dev_ioctl_version(पूर्णांक cmd, काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	पूर्णांक err = 0;
+static int check_dev_ioctl_version(int cmd, struct autofs_dev_ioctl *param)
+{
+	int err = 0;
 
-	अगर ((param->ver_major != AUTOFS_DEV_IOCTL_VERSION_MAJOR) ||
-	    (param->ver_minor > AUTOFS_DEV_IOCTL_VERSION_MINOR)) अणु
+	if ((param->ver_major != AUTOFS_DEV_IOCTL_VERSION_MAJOR) ||
+	    (param->ver_minor > AUTOFS_DEV_IOCTL_VERSION_MINOR)) {
 		pr_warn("ioctl control interface version mismatch: "
 			"kernel(%u.%u), user(%u.%u), cmd(0x%08x)\n",
 			AUTOFS_DEV_IOCTL_VERSION_MAJOR,
 			AUTOFS_DEV_IOCTL_VERSION_MINOR,
 			param->ver_major, param->ver_minor, cmd);
 		err = -EINVAL;
-	पूर्ण
+	}
 
 	/* Fill in the kernel version. */
 	param->ver_major = AUTOFS_DEV_IOCTL_VERSION_MAJOR;
 	param->ver_minor = AUTOFS_DEV_IOCTL_VERSION_MINOR;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Copy parameter control काष्ठा, including a possible path allocated
- * at the end of the काष्ठा.
+ * Copy parameter control struct, including a possible path allocated
+ * at the end of the struct.
  */
-अटल काष्ठा स्वतःfs_dev_ioctl *
-copy_dev_ioctl(काष्ठा स्वतःfs_dev_ioctl __user *in)
-अणु
-	काष्ठा स्वतःfs_dev_ioctl पंचांगp, *res;
+static struct autofs_dev_ioctl *
+copy_dev_ioctl(struct autofs_dev_ioctl __user *in)
+{
+	struct autofs_dev_ioctl tmp, *res;
 
-	अगर (copy_from_user(&पंचांगp, in, AUTOFS_DEV_IOCTL_SIZE))
-		वापस ERR_PTR(-EFAULT);
+	if (copy_from_user(&tmp, in, AUTOFS_DEV_IOCTL_SIZE))
+		return ERR_PTR(-EFAULT);
 
-	अगर (पंचांगp.size < AUTOFS_DEV_IOCTL_SIZE)
-		वापस ERR_PTR(-EINVAL);
+	if (tmp.size < AUTOFS_DEV_IOCTL_SIZE)
+		return ERR_PTR(-EINVAL);
 
-	अगर (पंचांगp.size > AUTOFS_DEV_IOCTL_SIZE + PATH_MAX)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (tmp.size > AUTOFS_DEV_IOCTL_SIZE + PATH_MAX)
+		return ERR_PTR(-ENAMETOOLONG);
 
-	res = memdup_user(in, पंचांगp.size);
-	अगर (!IS_ERR(res))
-		res->size = पंचांगp.size;
+	res = memdup_user(in, tmp.size);
+	if (!IS_ERR(res))
+		res->size = tmp.size;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल अंतरभूत व्योम मुक्त_dev_ioctl(काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	kमुक्त(param);
-पूर्ण
+static inline void free_dev_ioctl(struct autofs_dev_ioctl *param)
+{
+	kfree(param);
+}
 
 /*
- * Check sanity of parameter control fields and अगर a path is present
+ * Check sanity of parameter control fields and if a path is present
  * check that it is terminated and contains at least one "/".
  */
-अटल पूर्णांक validate_dev_ioctl(पूर्णांक cmd, काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	पूर्णांक err;
+static int validate_dev_ioctl(int cmd, struct autofs_dev_ioctl *param)
+{
+	int err;
 
 	err = check_dev_ioctl_version(cmd, param);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("invalid device control module version "
 			"supplied for cmd(0x%08x)\n", cmd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (param->size > AUTOFS_DEV_IOCTL_SIZE) अणु
+	if (param->size > AUTOFS_DEV_IOCTL_SIZE) {
 		err = invalid_str(param->path, param->size - AUTOFS_DEV_IOCTL_SIZE);
-		अगर (err) अणु
+		if (err) {
 			pr_warn(
 			  "path string terminator missing for cmd(0x%08x)\n",
 			  cmd);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		err = check_name(param->path);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("invalid path supplied for cmd(0x%08x)\n",
 				cmd);
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक inr = _IOC_NR(cmd);
+			goto out;
+		}
+	} else {
+		unsigned int inr = _IOC_NR(cmd);
 
-		अगर (inr == AUTOFS_DEV_IOCTL_OPENMOUNT_CMD ||
+		if (inr == AUTOFS_DEV_IOCTL_OPENMOUNT_CMD ||
 		    inr == AUTOFS_DEV_IOCTL_REQUESTER_CMD ||
-		    inr == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD) अणु
+		    inr == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	err = 0;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Return स्वतःfs dev ioctl version */
-अटल पूर्णांक स्वतःfs_dev_ioctl_version(काष्ठा file *fp,
-				    काष्ठा स्वतःfs_sb_info *sbi,
-				    काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	/* This should have alपढ़ोy been set. */
+/* Return autofs dev ioctl version */
+static int autofs_dev_ioctl_version(struct file *fp,
+				    struct autofs_sb_info *sbi,
+				    struct autofs_dev_ioctl *param)
+{
+	/* This should have already been set. */
 	param->ver_major = AUTOFS_DEV_IOCTL_VERSION_MAJOR;
 	param->ver_minor = AUTOFS_DEV_IOCTL_VERSION_MINOR;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Return स्वतःfs module protocol version */
-अटल पूर्णांक स्वतःfs_dev_ioctl_protover(काष्ठा file *fp,
-				     काष्ठा स्वतःfs_sb_info *sbi,
-				     काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
+/* Return autofs module protocol version */
+static int autofs_dev_ioctl_protover(struct file *fp,
+				     struct autofs_sb_info *sbi,
+				     struct autofs_dev_ioctl *param)
+{
 	param->protover.version = sbi->version;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Return स्वतःfs module protocol sub version */
-अटल पूर्णांक स्वतःfs_dev_ioctl_protosubver(काष्ठा file *fp,
-					काष्ठा स्वतःfs_sb_info *sbi,
-					काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
+/* Return autofs module protocol sub version */
+static int autofs_dev_ioctl_protosubver(struct file *fp,
+					struct autofs_sb_info *sbi,
+					struct autofs_dev_ioctl *param)
+{
 	param->protosubver.sub_version = sbi->sub_version;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Find the topmost mount satisfying test() */
-अटल पूर्णांक find_स्वतःfs_mount(स्थिर अक्षर *pathname,
-			     काष्ठा path *res,
-			     पूर्णांक test(स्थिर काष्ठा path *path, व्योम *data),
-			     व्योम *data)
-अणु
-	काष्ठा path path;
-	पूर्णांक err;
+static int find_autofs_mount(const char *pathname,
+			     struct path *res,
+			     int test(const struct path *path, void *data),
+			     void *data)
+{
+	struct path path;
+	int err;
 
 	err = kern_path(pathname, LOOKUP_MOUNTPOINT, &path);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = -ENOENT;
-	जबतक (path.dentry == path.mnt->mnt_root) अणु
-		अगर (path.dentry->d_sb->s_magic == AUTOFS_SUPER_MAGIC) अणु
-			अगर (test(&path, data)) अणु
+	while (path.dentry == path.mnt->mnt_root) {
+		if (path.dentry->d_sb->s_magic == AUTOFS_SUPER_MAGIC) {
+			if (test(&path, data)) {
 				path_get(&path);
 				*res = path;
 				err = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!follow_up(&path))
-			अवरोध;
-	पूर्ण
+				break;
+			}
+		}
+		if (!follow_up(&path))
+			break;
+	}
 	path_put(&path);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_by_dev(स्थिर काष्ठा path *path, व्योम *p)
-अणु
-	वापस path->dentry->d_sb->s_dev == *(dev_t *)p;
-पूर्ण
+static int test_by_dev(const struct path *path, void *p)
+{
+	return path->dentry->d_sb->s_dev == *(dev_t *)p;
+}
 
-अटल पूर्णांक test_by_type(स्थिर काष्ठा path *path, व्योम *p)
-अणु
-	काष्ठा स्वतःfs_info *ino = स्वतःfs_dentry_ino(path->dentry);
+static int test_by_type(const struct path *path, void *p)
+{
+	struct autofs_info *ino = autofs_dentry_ino(path->dentry);
 
-	वापस ino && ino->sbi->type & *(अचिन्हित *)p;
-पूर्ण
+	return ino && ino->sbi->type & *(unsigned *)p;
+}
 
 /*
- * Open a file descriptor on the स्वतःfs mount poपूर्णांक corresponding
+ * Open a file descriptor on the autofs mount point corresponding
  * to the given path and device number (aka. new_encode_dev(sb->s_dev)).
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_खोलो_mountpoपूर्णांक(स्थिर अक्षर *name, dev_t devid)
-अणु
-	पूर्णांक err, fd;
+static int autofs_dev_ioctl_open_mountpoint(const char *name, dev_t devid)
+{
+	int err, fd;
 
 	fd = get_unused_fd_flags(O_CLOEXEC);
-	अगर (likely(fd >= 0)) अणु
-		काष्ठा file *filp;
-		काष्ठा path path;
+	if (likely(fd >= 0)) {
+		struct file *filp;
+		struct path path;
 
-		err = find_स्वतःfs_mount(name, &path, test_by_dev, &devid);
-		अगर (err)
-			जाओ out;
+		err = find_autofs_mount(name, &path, test_by_dev, &devid);
+		if (err)
+			goto out;
 
-		filp = dentry_खोलो(&path, O_RDONLY, current_cred());
+		filp = dentry_open(&path, O_RDONLY, current_cred());
 		path_put(&path);
-		अगर (IS_ERR(filp)) अणु
+		if (IS_ERR(filp)) {
 			err = PTR_ERR(filp);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		fd_install(fd, filp);
-	पूर्ण
+	}
 
-	वापस fd;
+	return fd;
 
 out:
 	put_unused_fd(fd);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Open a file descriptor on an स्वतःfs mount poपूर्णांक */
-अटल पूर्णांक स्वतःfs_dev_ioctl_खोलोmount(काष्ठा file *fp,
-				      काष्ठा स्वतःfs_sb_info *sbi,
-				      काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	स्थिर अक्षर *path;
+/* Open a file descriptor on an autofs mount point */
+static int autofs_dev_ioctl_openmount(struct file *fp,
+				      struct autofs_sb_info *sbi,
+				      struct autofs_dev_ioctl *param)
+{
+	const char *path;
 	dev_t devid;
-	पूर्णांक err, fd;
+	int err, fd;
 
 	/* param->path has been checked in validate_dev_ioctl() */
 
-	अगर (!param->खोलोmount.devid)
-		वापस -EINVAL;
+	if (!param->openmount.devid)
+		return -EINVAL;
 
 	param->ioctlfd = -1;
 
 	path = param->path;
-	devid = new_decode_dev(param->खोलोmount.devid);
+	devid = new_decode_dev(param->openmount.devid);
 
 	err = 0;
-	fd = स्वतःfs_dev_ioctl_खोलो_mountpoपूर्णांक(path, devid);
-	अगर (unlikely(fd < 0)) अणु
+	fd = autofs_dev_ioctl_open_mountpoint(path, devid);
+	if (unlikely(fd < 0)) {
 		err = fd;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	param->ioctlfd = fd;
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Close file descriptor allocated above (user can also use बंद(2)). */
-अटल पूर्णांक स्वतःfs_dev_ioctl_बंदmount(काष्ठा file *fp,
-				       काष्ठा स्वतःfs_sb_info *sbi,
-				       काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	वापस बंद_fd(param->ioctlfd);
-पूर्ण
-
-/*
- * Send "ready" status क्रम an existing रुको (either a mount or an expire
- * request).
- */
-अटल पूर्णांक स्वतःfs_dev_ioctl_पढ़ोy(काष्ठा file *fp,
-				  काष्ठा स्वतःfs_sb_info *sbi,
-				  काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	स्वतःfs_wqt_t token;
-
-	token = (स्वतःfs_wqt_t) param->पढ़ोy.token;
-	वापस स्वतःfs_रुको_release(sbi, token, 0);
-पूर्ण
+/* Close file descriptor allocated above (user can also use close(2)). */
+static int autofs_dev_ioctl_closemount(struct file *fp,
+				       struct autofs_sb_info *sbi,
+				       struct autofs_dev_ioctl *param)
+{
+	return close_fd(param->ioctlfd);
+}
 
 /*
- * Send "fail" status क्रम an existing रुको (either a mount or an expire
+ * Send "ready" status for an existing wait (either a mount or an expire
  * request).
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_fail(काष्ठा file *fp,
-				 काष्ठा स्वतःfs_sb_info *sbi,
-				 काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	स्वतःfs_wqt_t token;
-	पूर्णांक status;
+static int autofs_dev_ioctl_ready(struct file *fp,
+				  struct autofs_sb_info *sbi,
+				  struct autofs_dev_ioctl *param)
+{
+	autofs_wqt_t token;
 
-	token = (स्वतःfs_wqt_t) param->fail.token;
+	token = (autofs_wqt_t) param->ready.token;
+	return autofs_wait_release(sbi, token, 0);
+}
+
+/*
+ * Send "fail" status for an existing wait (either a mount or an expire
+ * request).
+ */
+static int autofs_dev_ioctl_fail(struct file *fp,
+				 struct autofs_sb_info *sbi,
+				 struct autofs_dev_ioctl *param)
+{
+	autofs_wqt_t token;
+	int status;
+
+	token = (autofs_wqt_t) param->fail.token;
 	status = param->fail.status < 0 ? param->fail.status : -ENOENT;
-	वापस स्वतःfs_रुको_release(sbi, token, status);
-पूर्ण
+	return autofs_wait_release(sbi, token, status);
+}
 
 /*
- * Set the pipe fd क्रम kernel communication to the daemon.
+ * Set the pipe fd for kernel communication to the daemon.
  *
- * Normally this is set at mount using an option but अगर we
+ * Normally this is set at mount using an option but if we
  * are reconnecting to a busy mount then we need to use this
- * to tell the स्वतःfs mount about the new kernel pipe fd. In
+ * to tell the autofs mount about the new kernel pipe fd. In
  * order to protect mounts against incorrectly setting the
- * pipefd we also require that the स्वतःfs mount be catatonic.
+ * pipefd we also require that the autofs mount be catatonic.
  *
- * This also sets the process group id used to identअगरy the
- * controlling process (eg. the owning स्वतःmount(8) daemon).
+ * This also sets the process group id used to identify the
+ * controlling process (eg. the owning automount(8) daemon).
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_setpipefd(काष्ठा file *fp,
-				      काष्ठा स्वतःfs_sb_info *sbi,
-				      काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	पूर्णांक pipefd;
-	पूर्णांक err = 0;
-	काष्ठा pid *new_pid = शून्य;
+static int autofs_dev_ioctl_setpipefd(struct file *fp,
+				      struct autofs_sb_info *sbi,
+				      struct autofs_dev_ioctl *param)
+{
+	int pipefd;
+	int err = 0;
+	struct pid *new_pid = NULL;
 
-	अगर (param->setpipefd.pipefd == -1)
-		वापस -EINVAL;
+	if (param->setpipefd.pipefd == -1)
+		return -EINVAL;
 
 	pipefd = param->setpipefd.pipefd;
 
 	mutex_lock(&sbi->wq_mutex);
-	अगर (!(sbi->flags & AUTOFS_SBI_CATATONIC)) अणु
+	if (!(sbi->flags & AUTOFS_SBI_CATATONIC)) {
 		mutex_unlock(&sbi->wq_mutex);
-		वापस -EBUSY;
-	पूर्ण अन्यथा अणु
-		काष्ठा file *pipe;
+		return -EBUSY;
+	} else {
+		struct file *pipe;
 
 		new_pid = get_task_pid(current, PIDTYPE_PGID);
 
-		अगर (ns_of_pid(new_pid) != ns_of_pid(sbi->oz_pgrp)) अणु
+		if (ns_of_pid(new_pid) != ns_of_pid(sbi->oz_pgrp)) {
 			pr_warn("not allowed to change PID namespace\n");
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		pipe = fget(pipefd);
-		अगर (!pipe) अणु
+		if (!pipe) {
 			err = -EBADF;
-			जाओ out;
-		पूर्ण
-		अगर (स्वतःfs_prepare_pipe(pipe) < 0) अणु
+			goto out;
+		}
+		if (autofs_prepare_pipe(pipe) < 0) {
 			err = -EPIPE;
 			fput(pipe);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		swap(sbi->oz_pgrp, new_pid);
 		sbi->pipefd = pipefd;
 		sbi->pipe = pipe;
 		sbi->flags &= ~AUTOFS_SBI_CATATONIC;
-	पूर्ण
+	}
 out:
 	put_pid(new_pid);
 	mutex_unlock(&sbi->wq_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Make the स्वतःfs mount poपूर्णांक catatonic, no दीर्घer responsive to
- * mount requests. Also बंदs the kernel pipe file descriptor.
+ * Make the autofs mount point catatonic, no longer responsive to
+ * mount requests. Also closes the kernel pipe file descriptor.
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_catatonic(काष्ठा file *fp,
-				      काष्ठा स्वतःfs_sb_info *sbi,
-				      काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	स्वतःfs_catatonic_mode(sbi);
-	वापस 0;
-पूर्ण
+static int autofs_dev_ioctl_catatonic(struct file *fp,
+				      struct autofs_sb_info *sbi,
+				      struct autofs_dev_ioctl *param)
+{
+	autofs_catatonic_mode(sbi);
+	return 0;
+}
 
-/* Set the स्वतःfs mount समयout */
-अटल पूर्णांक स्वतःfs_dev_ioctl_समयout(काष्ठा file *fp,
-				    काष्ठा स्वतःfs_sb_info *sbi,
-				    काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	अचिन्हित दीर्घ समयout;
+/* Set the autofs mount timeout */
+static int autofs_dev_ioctl_timeout(struct file *fp,
+				    struct autofs_sb_info *sbi,
+				    struct autofs_dev_ioctl *param)
+{
+	unsigned long timeout;
 
-	समयout = param->समयout.समयout;
-	param->समयout.समयout = sbi->exp_समयout / HZ;
-	sbi->exp_समयout = समयout * HZ;
-	वापस 0;
-पूर्ण
+	timeout = param->timeout.timeout;
+	param->timeout.timeout = sbi->exp_timeout / HZ;
+	sbi->exp_timeout = timeout * HZ;
+	return 0;
+}
 
 /*
- * Return the uid and gid of the last request क्रम the mount
+ * Return the uid and gid of the last request for the mount
  *
- * When reस्थिरructing an स्वतःfs mount tree with active mounts
+ * When reconstructing an autofs mount tree with active mounts
  * we need to re-connect to mounts that may have used the original
- * process uid and gid (or string variations of them) क्रम mount
+ * process uid and gid (or string variations of them) for mount
  * lookups within the map entry.
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_requester(काष्ठा file *fp,
-				      काष्ठा स्वतःfs_sb_info *sbi,
-				      काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	काष्ठा स्वतःfs_info *ino;
-	काष्ठा path path;
+static int autofs_dev_ioctl_requester(struct file *fp,
+				      struct autofs_sb_info *sbi,
+				      struct autofs_dev_ioctl *param)
+{
+	struct autofs_info *ino;
+	struct path path;
 	dev_t devid;
-	पूर्णांक err = -ENOENT;
+	int err = -ENOENT;
 
 	/* param->path has been checked in validate_dev_ioctl() */
 
@@ -433,310 +432,310 @@ out:
 
 	param->requester.uid = param->requester.gid = -1;
 
-	err = find_स्वतःfs_mount(param->path, &path, test_by_dev, &devid);
-	अगर (err)
-		जाओ out;
+	err = find_autofs_mount(param->path, &path, test_by_dev, &devid);
+	if (err)
+		goto out;
 
-	ino = स्वतःfs_dentry_ino(path.dentry);
-	अगर (ino) अणु
+	ino = autofs_dentry_ino(path.dentry);
+	if (ino) {
 		err = 0;
-		स्वतःfs_expire_रुको(&path, 0);
+		autofs_expire_wait(&path, 0);
 		spin_lock(&sbi->fs_lock);
 		param->requester.uid =
 			from_kuid_munged(current_user_ns(), ino->uid);
 		param->requester.gid =
 			from_kgid_munged(current_user_ns(), ino->gid);
 		spin_unlock(&sbi->fs_lock);
-	पूर्ण
+	}
 	path_put(&path);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Call repeatedly until it वापसs -EAGAIN, meaning there's nothing
- * more that can be करोne.
+ * Call repeatedly until it returns -EAGAIN, meaning there's nothing
+ * more that can be done.
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_expire(काष्ठा file *fp,
-				   काष्ठा स्वतःfs_sb_info *sbi,
-				   काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	काष्ठा vfsmount *mnt;
-	पूर्णांक how;
+static int autofs_dev_ioctl_expire(struct file *fp,
+				   struct autofs_sb_info *sbi,
+				   struct autofs_dev_ioctl *param)
+{
+	struct vfsmount *mnt;
+	int how;
 
 	how = param->expire.how;
 	mnt = fp->f_path.mnt;
 
-	वापस स्वतःfs_करो_expire_multi(sbi->sb, mnt, sbi, how);
-पूर्ण
+	return autofs_do_expire_multi(sbi->sb, mnt, sbi, how);
+}
 
-/* Check अगर स्वतःfs mount poपूर्णांक is in use */
-अटल पूर्णांक स्वतःfs_dev_ioctl_askumount(काष्ठा file *fp,
-				      काष्ठा स्वतःfs_sb_info *sbi,
-				      काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
+/* Check if autofs mount point is in use */
+static int autofs_dev_ioctl_askumount(struct file *fp,
+				      struct autofs_sb_info *sbi,
+				      struct autofs_dev_ioctl *param)
+{
 	param->askumount.may_umount = 0;
-	अगर (may_umount(fp->f_path.mnt))
+	if (may_umount(fp->f_path.mnt))
 		param->askumount.may_umount = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Check अगर the given path is a mountpoपूर्णांक.
+ * Check if the given path is a mountpoint.
  *
- * If we are supplied with the file descriptor of an स्वतःfs
- * mount we're looking क्रम a specअगरic mount. In this हाल
- * the path is considered a mountpoपूर्णांक अगर it is itself a
- * mountpoपूर्णांक or contains a mount, such as a multi-mount
- * without a root mount. In this हाल we वापस 1 अगर the
- * path is a mount poपूर्णांक and the super magic of the covering
- * mount अगर there is one or 0 अगर it isn't a mountpoपूर्णांक.
+ * If we are supplied with the file descriptor of an autofs
+ * mount we're looking for a specific mount. In this case
+ * the path is considered a mountpoint if it is itself a
+ * mountpoint or contains a mount, such as a multi-mount
+ * without a root mount. In this case we return 1 if the
+ * path is a mount point and the super magic of the covering
+ * mount if there is one or 0 if it isn't a mountpoint.
  *
  * If we aren't supplied with a file descriptor then we
- * lookup the path and check अगर it is the root of a mount.
- * If a type is given we are looking क्रम a particular स्वतःfs
- * mount and अगर we करोn't find a match we वापस fail. If the
- * located path is the root of a mount we वापस 1 aदीर्घ with
+ * lookup the path and check if it is the root of a mount.
+ * If a type is given we are looking for a particular autofs
+ * mount and if we don't find a match we return fail. If the
+ * located path is the root of a mount we return 1 along with
  * the super magic of the mount or 0 otherwise.
  *
- * In both हालs the device number (as वापसed by
- * new_encode_dev()) is also वापसed.
+ * In both cases the device number (as returned by
+ * new_encode_dev()) is also returned.
  */
-अटल पूर्णांक स्वतःfs_dev_ioctl_ismountpoपूर्णांक(काष्ठा file *fp,
-					 काष्ठा स्वतःfs_sb_info *sbi,
-					 काष्ठा स्वतःfs_dev_ioctl *param)
-अणु
-	काष्ठा path path;
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक type;
-	अचिन्हित पूर्णांक devid, magic;
-	पूर्णांक err = -ENOENT;
+static int autofs_dev_ioctl_ismountpoint(struct file *fp,
+					 struct autofs_sb_info *sbi,
+					 struct autofs_dev_ioctl *param)
+{
+	struct path path;
+	const char *name;
+	unsigned int type;
+	unsigned int devid, magic;
+	int err = -ENOENT;
 
 	/* param->path has been checked in validate_dev_ioctl() */
 
 	name = param->path;
-	type = param->ismountpoपूर्णांक.in.type;
+	type = param->ismountpoint.in.type;
 
-	param->ismountpoपूर्णांक.out.devid = devid = 0;
-	param->ismountpoपूर्णांक.out.magic = magic = 0;
+	param->ismountpoint.out.devid = devid = 0;
+	param->ismountpoint.out.magic = magic = 0;
 
-	अगर (!fp || param->ioctlfd == -1) अणु
-		अगर (स्वतःfs_type_any(type))
+	if (!fp || param->ioctlfd == -1) {
+		if (autofs_type_any(type))
 			err = kern_path(name, LOOKUP_FOLLOW | LOOKUP_MOUNTPOINT,
 					&path);
-		अन्यथा
-			err = find_स्वतःfs_mount(name, &path,
+		else
+			err = find_autofs_mount(name, &path,
 						test_by_type, &type);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 		devid = new_encode_dev(path.dentry->d_sb->s_dev);
 		err = 0;
-		अगर (path.mnt->mnt_root == path.dentry) अणु
+		if (path.mnt->mnt_root == path.dentry) {
 			err = 1;
 			magic = path.dentry->d_sb->s_magic;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dev_t dev = sbi->sb->s_dev;
 
-		err = find_स्वतःfs_mount(name, &path, test_by_dev, &dev);
-		अगर (err)
-			जाओ out;
+		err = find_autofs_mount(name, &path, test_by_dev, &dev);
+		if (err)
+			goto out;
 
 		devid = new_encode_dev(dev);
 
 		err = path_has_submounts(&path);
 
-		अगर (follow_करोwn_one(&path))
+		if (follow_down_one(&path))
 			magic = path.dentry->d_sb->s_magic;
-	पूर्ण
+	}
 
-	param->ismountpoपूर्णांक.out.devid = devid;
-	param->ismountpoपूर्णांक.out.magic = magic;
+	param->ismountpoint.out.devid = devid;
+	param->ismountpoint.out.magic = magic;
 	path_put(&path);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Our range of ioctl numbers isn't 0 based so we need to shअगरt
- * the array index by _IOC_NR(AUTOFS_CTL_IOC_FIRST) क्रम the table
+ * Our range of ioctl numbers isn't 0 based so we need to shift
+ * the array index by _IOC_NR(AUTOFS_CTL_IOC_FIRST) for the table
  * lookup.
  */
-#घोषणा cmd_idx(cmd)	(cmd - _IOC_NR(AUTOFS_DEV_IOCTL_IOC_FIRST))
+#define cmd_idx(cmd)	(cmd - _IOC_NR(AUTOFS_DEV_IOCTL_IOC_FIRST))
 
-अटल ioctl_fn lookup_dev_ioctl(अचिन्हित पूर्णांक cmd)
-अणु
-	अटल स्थिर ioctl_fn _ioctls[] = अणु
-		स्वतःfs_dev_ioctl_version,
-		स्वतःfs_dev_ioctl_protover,
-		स्वतःfs_dev_ioctl_protosubver,
-		स्वतःfs_dev_ioctl_खोलोmount,
-		स्वतःfs_dev_ioctl_बंदmount,
-		स्वतःfs_dev_ioctl_पढ़ोy,
-		स्वतःfs_dev_ioctl_fail,
-		स्वतःfs_dev_ioctl_setpipefd,
-		स्वतःfs_dev_ioctl_catatonic,
-		स्वतःfs_dev_ioctl_समयout,
-		स्वतःfs_dev_ioctl_requester,
-		स्वतःfs_dev_ioctl_expire,
-		स्वतःfs_dev_ioctl_askumount,
-		स्वतःfs_dev_ioctl_ismountpoपूर्णांक,
-	पूर्ण;
-	अचिन्हित पूर्णांक idx = cmd_idx(cmd);
+static ioctl_fn lookup_dev_ioctl(unsigned int cmd)
+{
+	static const ioctl_fn _ioctls[] = {
+		autofs_dev_ioctl_version,
+		autofs_dev_ioctl_protover,
+		autofs_dev_ioctl_protosubver,
+		autofs_dev_ioctl_openmount,
+		autofs_dev_ioctl_closemount,
+		autofs_dev_ioctl_ready,
+		autofs_dev_ioctl_fail,
+		autofs_dev_ioctl_setpipefd,
+		autofs_dev_ioctl_catatonic,
+		autofs_dev_ioctl_timeout,
+		autofs_dev_ioctl_requester,
+		autofs_dev_ioctl_expire,
+		autofs_dev_ioctl_askumount,
+		autofs_dev_ioctl_ismountpoint,
+	};
+	unsigned int idx = cmd_idx(cmd);
 
-	अगर (idx >= ARRAY_SIZE(_ioctls))
-		वापस शून्य;
+	if (idx >= ARRAY_SIZE(_ioctls))
+		return NULL;
 	idx = array_index_nospec(idx, ARRAY_SIZE(_ioctls));
-	वापस _ioctls[idx];
-पूर्ण
+	return _ioctls[idx];
+}
 
 /* ioctl dispatcher */
-अटल पूर्णांक _स्वतःfs_dev_ioctl(अचिन्हित पूर्णांक command,
-			     काष्ठा स्वतःfs_dev_ioctl __user *user)
-अणु
-	काष्ठा स्वतःfs_dev_ioctl *param;
-	काष्ठा file *fp;
-	काष्ठा स्वतःfs_sb_info *sbi;
-	अचिन्हित पूर्णांक cmd_first, cmd;
-	ioctl_fn fn = शून्य;
-	पूर्णांक err = 0;
+static int _autofs_dev_ioctl(unsigned int command,
+			     struct autofs_dev_ioctl __user *user)
+{
+	struct autofs_dev_ioctl *param;
+	struct file *fp;
+	struct autofs_sb_info *sbi;
+	unsigned int cmd_first, cmd;
+	ioctl_fn fn = NULL;
+	int err = 0;
 
 	cmd_first = _IOC_NR(AUTOFS_DEV_IOCTL_IOC_FIRST);
 	cmd = _IOC_NR(command);
 
-	अगर (_IOC_TYPE(command) != _IOC_TYPE(AUTOFS_DEV_IOCTL_IOC_FIRST) ||
-	    cmd - cmd_first > AUTOFS_DEV_IOCTL_IOC_COUNT) अणु
-		वापस -ENOTTY;
-	पूर्ण
+	if (_IOC_TYPE(command) != _IOC_TYPE(AUTOFS_DEV_IOCTL_IOC_FIRST) ||
+	    cmd - cmd_first > AUTOFS_DEV_IOCTL_IOC_COUNT) {
+		return -ENOTTY;
+	}
 
 	/* Only root can use ioctls other than AUTOFS_DEV_IOCTL_VERSION_CMD
 	 * and AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD
 	 */
-	अगर (cmd != AUTOFS_DEV_IOCTL_VERSION_CMD &&
+	if (cmd != AUTOFS_DEV_IOCTL_VERSION_CMD &&
 	    cmd != AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD &&
 	    !capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+		return -EPERM;
 
-	/* Copy the parameters पूर्णांकo kernel space. */
+	/* Copy the parameters into kernel space. */
 	param = copy_dev_ioctl(user);
-	अगर (IS_ERR(param))
-		वापस PTR_ERR(param);
+	if (IS_ERR(param))
+		return PTR_ERR(param);
 
 	err = validate_dev_ioctl(command, param);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	fn = lookup_dev_ioctl(cmd);
-	अगर (!fn) अणु
+	if (!fn) {
 		pr_warn("unknown command 0x%08x\n", command);
 		err = -ENOTTY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	fp = शून्य;
-	sbi = शून्य;
+	fp = NULL;
+	sbi = NULL;
 
 	/*
-	 * For obvious reasons the खोलोmount can't have a file
-	 * descriptor yet. We करोn't take a reference to the
-	 * file during बंद to allow क्रम immediate release,
-	 * and the same क्रम retrieving ioctl version.
+	 * For obvious reasons the openmount can't have a file
+	 * descriptor yet. We don't take a reference to the
+	 * file during close to allow for immediate release,
+	 * and the same for retrieving ioctl version.
 	 */
-	अगर (cmd != AUTOFS_DEV_IOCTL_VERSION_CMD &&
+	if (cmd != AUTOFS_DEV_IOCTL_VERSION_CMD &&
 	    cmd != AUTOFS_DEV_IOCTL_OPENMOUNT_CMD &&
-	    cmd != AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD) अणु
-		काष्ठा super_block *sb;
+	    cmd != AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD) {
+		struct super_block *sb;
 
 		fp = fget(param->ioctlfd);
-		अगर (!fp) अणु
-			अगर (cmd == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD)
-				जाओ cont;
+		if (!fp) {
+			if (cmd == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD)
+				goto cont;
 			err = -EBADF;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		sb = file_inode(fp)->i_sb;
-		अगर (sb->s_type != &स्वतःfs_fs_type) अणु
+		if (sb->s_type != &autofs_fs_type) {
 			err = -EINVAL;
 			fput(fp);
-			जाओ out;
-		पूर्ण
-		sbi = स्वतःfs_sbi(sb);
+			goto out;
+		}
+		sbi = autofs_sbi(sb);
 
 		/*
 		 * Admin needs to be able to set the mount catatonic in
-		 * order to be able to perक्रमm the re-खोलो.
+		 * order to be able to perform the re-open.
 		 */
-		अगर (!स्वतःfs_oz_mode(sbi) &&
-		    cmd != AUTOFS_DEV_IOCTL_CATATONIC_CMD) अणु
+		if (!autofs_oz_mode(sbi) &&
+		    cmd != AUTOFS_DEV_IOCTL_CATATONIC_CMD) {
 			err = -EACCES;
 			fput(fp);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 cont:
 	err = fn(fp, sbi, param);
 
-	अगर (fp)
+	if (fp)
 		fput(fp);
-	अगर (err >= 0 && copy_to_user(user, param, AUTOFS_DEV_IOCTL_SIZE))
+	if (err >= 0 && copy_to_user(user, param, AUTOFS_DEV_IOCTL_SIZE))
 		err = -EFAULT;
 out:
-	मुक्त_dev_ioctl(param);
-	वापस err;
-पूर्ण
+	free_dev_ioctl(param);
+	return err;
+}
 
-अटल दीर्घ स्वतःfs_dev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक command,
-			     अचिन्हित दीर्घ u)
-अणु
-	पूर्णांक err;
+static long autofs_dev_ioctl(struct file *file, unsigned int command,
+			     unsigned long u)
+{
+	int err;
 
-	err = _स्वतःfs_dev_ioctl(command, (काष्ठा स्वतःfs_dev_ioctl __user *) u);
-	वापस (दीर्घ) err;
-पूर्ण
+	err = _autofs_dev_ioctl(command, (struct autofs_dev_ioctl __user *) u);
+	return (long) err;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ स्वतःfs_dev_ioctl_compat(काष्ठा file *file, अचिन्हित पूर्णांक command,
-				    अचिन्हित दीर्घ u)
-अणु
-	वापस स्वतःfs_dev_ioctl(file, command, (अचिन्हित दीर्घ) compat_ptr(u));
-पूर्ण
-#अन्यथा
-#घोषणा स्वतःfs_dev_ioctl_compat शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static long autofs_dev_ioctl_compat(struct file *file, unsigned int command,
+				    unsigned long u)
+{
+	return autofs_dev_ioctl(file, command, (unsigned long) compat_ptr(u));
+}
+#else
+#define autofs_dev_ioctl_compat NULL
+#endif
 
-अटल स्थिर काष्ठा file_operations _dev_ioctl_fops = अणु
-	.unlocked_ioctl	 = स्वतःfs_dev_ioctl,
-	.compat_ioctl = स्वतःfs_dev_ioctl_compat,
+static const struct file_operations _dev_ioctl_fops = {
+	.unlocked_ioctl	 = autofs_dev_ioctl,
+	.compat_ioctl = autofs_dev_ioctl_compat,
 	.owner	 = THIS_MODULE,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice _स्वतःfs_dev_ioctl_misc = अणु
+static struct miscdevice _autofs_dev_ioctl_misc = {
 	.minor		= AUTOFS_MINOR,
 	.name		= AUTOFS_DEVICE_NAME,
 	.fops		= &_dev_ioctl_fops,
 	.mode           = 0644,
-पूर्ण;
+};
 
 MODULE_ALIAS_MISCDEV(AUTOFS_MINOR);
 MODULE_ALIAS("devname:autofs");
 
-/* Register/deरेजिस्टर misc अक्षरacter device */
-पूर्णांक __init स्वतःfs_dev_ioctl_init(व्योम)
-अणु
-	पूर्णांक r;
+/* Register/deregister misc character device */
+int __init autofs_dev_ioctl_init(void)
+{
+	int r;
 
-	r = misc_रेजिस्टर(&_स्वतःfs_dev_ioctl_misc);
-	अगर (r) अणु
+	r = misc_register(&_autofs_dev_ioctl_misc);
+	if (r) {
 		pr_err("misc_register failed for control device\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम स्वतःfs_dev_ioctl_निकास(व्योम)
-अणु
-	misc_deरेजिस्टर(&_स्वतःfs_dev_ioctl_misc);
-पूर्ण
+void autofs_dev_ioctl_exit(void)
+{
+	misc_deregister(&_autofs_dev_ioctl_misc);
+}

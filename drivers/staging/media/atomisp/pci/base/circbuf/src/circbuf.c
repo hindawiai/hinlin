@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "ia_css_circbuf.h"
+#include "ia_css_circbuf.h"
 
-#समावेश <निश्चित_support.h>
+#include <assert_support.h>
 
 /**********************************************************************
  *
@@ -27,104 +26,104 @@
  * @brief Read the oldest element from the circular buffer.
  * Read the oldest element WITHOUT checking whehter the
  * circular buffer is empty or not. The oldest element is
- * also हटाओd out from the circular buffer.
+ * also removed out from the circular buffer.
  *
- * @param cb The poपूर्णांकer to the circular buffer.
+ * @param cb The pointer to the circular buffer.
  *
- * @वापस the oldest element.
+ * @return the oldest element.
  */
-अटल अंतरभूत ia_css_circbuf_elem_t
-ia_css_circbuf_पढ़ो(ia_css_circbuf_t *cb);
+static inline ia_css_circbuf_elem_t
+ia_css_circbuf_read(ia_css_circbuf_t *cb);
 
 /*
- * @brief Shअगरt a chunk of elements in the circular buffer.
+ * @brief Shift a chunk of elements in the circular buffer.
  * A chunk of elements (i.e. the ones from the "start" position
- * to the "chunk_src" position) are shअगरted in the circular buffer,
- * aदीर्घ the direction of new elements coming.
+ * to the "chunk_src" position) are shifted in the circular buffer,
+ * along the direction of new elements coming.
  *
- * @param cb	     The poपूर्णांकer to the circular buffer.
+ * @param cb	     The pointer to the circular buffer.
  * @param chunk_src  The position at which the first element in the chunk is.
- * @param chunk_dest The position to which the first element in the chunk would be shअगरt.
+ * @param chunk_dest The position to which the first element in the chunk would be shift.
  */
-अटल अंतरभूत व्योम ia_css_circbuf_shअगरt_chunk(ia_css_circbuf_t *cb,
+static inline void ia_css_circbuf_shift_chunk(ia_css_circbuf_t *cb,
 	u32 chunk_src,
-	uपूर्णांक32_t chunk_dest);
+	uint32_t chunk_dest);
 
 /*
  * @brief Get the "val" field in the element.
  *
- * @param elem The poपूर्णांकer to the element.
+ * @param elem The pointer to the element.
  *
- * @वापस the "val" field.
+ * @return the "val" field.
  */
-अटल अंतरभूत uपूर्णांक32_t
+static inline uint32_t
 ia_css_circbuf_elem_get_val(ia_css_circbuf_elem_t *elem);
 
 /**********************************************************************
  *
- * Non-अंतरभूत functions.
+ * Non-inline functions.
  *
  **********************************************************************/
 /*
  * @brief Create the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-व्योम
+void
 ia_css_circbuf_create(ia_css_circbuf_t *cb,
 		      ia_css_circbuf_elem_t *elems,
 		      ia_css_circbuf_desc_t *desc)
-अणु
+{
 	u32 i;
 
-	OP___निश्चित(desc);
+	OP___assert(desc);
 
 	cb->desc = desc;
-	/* Initialize to शेषs */
+	/* Initialize to defaults */
 	cb->desc->start = 0;
 	cb->desc->end = 0;
 	cb->desc->step = 0;
 
-	क्रम (i = 0; i < cb->desc->size; i++)
+	for (i = 0; i < cb->desc->size; i++)
 		ia_css_circbuf_elem_init(&elems[i]);
 
 	cb->elems = elems;
-पूर्ण
+}
 
 /*
  * @brief Destroy the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-व्योम ia_css_circbuf_destroy(ia_css_circbuf_t *cb)
-अणु
-	cb->desc = शून्य;
+void ia_css_circbuf_destroy(ia_css_circbuf_t *cb)
+{
+	cb->desc = NULL;
 
-	cb->elems = शून्य;
-पूर्ण
+	cb->elems = NULL;
+}
 
 /*
  * @brief Pop a value out of the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-uपूर्णांक32_t ia_css_circbuf_pop(ia_css_circbuf_t *cb)
-अणु
+uint32_t ia_css_circbuf_pop(ia_css_circbuf_t *cb)
+{
 	u32 ret;
 	ia_css_circbuf_elem_t elem;
 
-	निश्चित(!ia_css_circbuf_is_empty(cb));
+	assert(!ia_css_circbuf_is_empty(cb));
 
-	/* पढ़ो an element from the buffer */
-	elem = ia_css_circbuf_पढ़ो(cb);
+	/* read an element from the buffer */
+	elem = ia_css_circbuf_read(cb);
 	ret = ia_css_circbuf_elem_get_val(&elem);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * @brief Extract a value out of the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-uपूर्णांक32_t ia_css_circbuf_extract(ia_css_circbuf_t *cb, पूर्णांक offset)
-अणु
-	पूर्णांक max_offset;
+uint32_t ia_css_circbuf_extract(ia_css_circbuf_t *cb, int offset)
+{
+	int max_offset;
 	u32 val;
 	u32 pos;
 	u32 src_pos;
@@ -137,18 +136,18 @@ uपूर्णांक32_t ia_css_circbuf_extract(ia_css_circbuf_t *cb, प�
 	/*
 	 * Step 1: When the target element is at the "start" position.
 	 */
-	अगर (offset == 0) अणु
+	if (offset == 0) {
 		val = ia_css_circbuf_pop(cb);
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
 	/*
 	 * Step 2: When the target element is out of the range.
 	 */
-	अगर (offset > max_offset) अणु
+	if (offset > max_offset) {
 		val = 0;
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
 	/*
 	 * Step 3: When the target element is between the "start" and
@@ -160,95 +159,95 @@ uपूर्णांक32_t ia_css_circbuf_extract(ia_css_circbuf_t *cb, प�
 	/* get the value from the target element */
 	val = ia_css_circbuf_elem_get_val(&cb->elems[pos]);
 
-	/* shअगरt the elements */
+	/* shift the elements */
 	src_pos = ia_css_circbuf_get_pos_at_offset(cb, pos, -1);
 	dest_pos = pos;
-	ia_css_circbuf_shअगरt_chunk(cb, src_pos, dest_pos);
+	ia_css_circbuf_shift_chunk(cb, src_pos, dest_pos);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
  * @brief Peek an element from the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-uपूर्णांक32_t ia_css_circbuf_peek(ia_css_circbuf_t *cb, पूर्णांक offset)
-अणु
-	पूर्णांक pos;
+uint32_t ia_css_circbuf_peek(ia_css_circbuf_t *cb, int offset)
+{
+	int pos;
 
 	pos = ia_css_circbuf_get_pos_at_offset(cb, cb->desc->end, offset);
 
 	/* get the value at the position */
-	वापस cb->elems[pos].val;
-पूर्ण
+	return cb->elems[pos].val;
+}
 
 /*
  * @brief Get the value of an element from the circular buffer.
- * Refer to "ia_css_circbuf.h" क्रम details.
+ * Refer to "ia_css_circbuf.h" for details.
  */
-uपूर्णांक32_t ia_css_circbuf_peek_from_start(ia_css_circbuf_t *cb, पूर्णांक offset)
-अणु
-	पूर्णांक pos;
+uint32_t ia_css_circbuf_peek_from_start(ia_css_circbuf_t *cb, int offset)
+{
+	int pos;
 
 	pos = ia_css_circbuf_get_pos_at_offset(cb, cb->desc->start, offset);
 
 	/* get the value at the position */
-	वापस cb->elems[pos].val;
-पूर्ण
+	return cb->elems[pos].val;
+}
 
 /* @brief increase size of a circular buffer.
- * Use 'CAUTION' beक्रमe using this function. This was added to
- * support / fix issue with increasing size क्रम tagger only
- * Please refer to "ia_css_circbuf.h" क्रम details.
+ * Use 'CAUTION' before using this function. This was added to
+ * support / fix issue with increasing size for tagger only
+ * Please refer to "ia_css_circbuf.h" for details.
  */
 bool ia_css_circbuf_increase_size(
     ia_css_circbuf_t *cb,
-    अचिन्हित पूर्णांक sz_delta,
+    unsigned int sz_delta,
     ia_css_circbuf_elem_t *elems)
-अणु
+{
 	u8 curr_size;
 	u8 curr_end;
-	अचिन्हित पूर्णांक i = 0;
+	unsigned int i = 0;
 
-	अगर (!cb || sz_delta == 0)
-		वापस false;
+	if (!cb || sz_delta == 0)
+		return false;
 
 	curr_size = cb->desc->size;
 	curr_end = cb->desc->end;
 	/* We assume cb was pre defined as global to allow
 	 * increase in size */
 	/* FM: are we sure this cannot cause size to become too big? */
-	अगर (((uपूर्णांक8_t)(cb->desc->size + (uपूर्णांक8_t)sz_delta) > cb->desc->size) &&
-	    ((uपूर्णांक8_t)sz_delta == sz_delta))
-		cb->desc->size += (uपूर्णांक8_t)sz_delta;
-	अन्यथा
-		वापस false; /* overflow in size */
+	if (((uint8_t)(cb->desc->size + (uint8_t)sz_delta) > cb->desc->size) &&
+	    ((uint8_t)sz_delta == sz_delta))
+		cb->desc->size += (uint8_t)sz_delta;
+	else
+		return false; /* overflow in size */
 
-	/* If elems are passed update them अन्यथा we assume its been taken
-	 * care beक्रमe calling this function */
-	अगर (elems) अणु
+	/* If elems are passed update them else we assume its been taken
+	 * care before calling this function */
+	if (elems) {
 		/* cb element array size will not be increased dynamically,
-		 * but poपूर्णांकers to new elements can be added at the end
+		 * but pointers to new elements can be added at the end
 		 * of existing pre defined cb element array of
-		 * size >= new size अगर not alपढ़ोy added */
-		क्रम (i = curr_size; i <  cb->desc->size; i++)
+		 * size >= new size if not already added */
+		for (i = curr_size; i <  cb->desc->size; i++)
 			cb->elems[i] = elems[i - curr_size];
-	पूर्ण
+	}
 	/* Fix Start / End */
-	अगर (curr_end < cb->desc->start) अणु
-		अगर (curr_end == 0) अणु
+	if (curr_end < cb->desc->start) {
+		if (curr_end == 0) {
 			/* Easily fix End */
 			cb->desc->end = curr_size;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Move elements and fix Start*/
-			ia_css_circbuf_shअगरt_chunk(cb,
+			ia_css_circbuf_shift_chunk(cb,
 						   curr_size - 1,
 						   curr_size + sz_delta - 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /****************************************************************
  *
@@ -257,21 +256,21 @@ bool ia_css_circbuf_increase_size(
  ****************************************************************/
 /*
  * @brief Get the "val" field in the element.
- * Refer to "Forward declarations" क्रम details.
+ * Refer to "Forward declarations" for details.
  */
-अटल अंतरभूत uपूर्णांक32_t
+static inline uint32_t
 ia_css_circbuf_elem_get_val(ia_css_circbuf_elem_t *elem)
-अणु
-	वापस elem->val;
-पूर्ण
+{
+	return elem->val;
+}
 
 /*
  * @brief Read the oldest element from the circular buffer.
- * Refer to "Forward declarations" क्रम details.
+ * Refer to "Forward declarations" for details.
  */
-अटल अंतरभूत ia_css_circbuf_elem_t
-ia_css_circbuf_पढ़ो(ia_css_circbuf_t *cb)
-अणु
+static inline ia_css_circbuf_elem_t
+ia_css_circbuf_read(ia_css_circbuf_t *cb)
+{
 	ia_css_circbuf_elem_t elem;
 
 	/* get the element from the target position */
@@ -282,28 +281,28 @@ ia_css_circbuf_पढ़ो(ia_css_circbuf_t *cb)
 
 	/* adjust the "start" position */
 	cb->desc->start = ia_css_circbuf_get_pos_at_offset(cb, cb->desc->start, 1);
-	वापस elem;
-पूर्ण
+	return elem;
+}
 
 /*
- * @brief Shअगरt a chunk of elements in the circular buffer.
- * Refer to "Forward declarations" क्रम details.
+ * @brief Shift a chunk of elements in the circular buffer.
+ * Refer to "Forward declarations" for details.
  */
-अटल अंतरभूत व्योम
-ia_css_circbuf_shअगरt_chunk(ia_css_circbuf_t *cb,
-			   u32 chunk_src, uपूर्णांक32_t chunk_dest)
-अणु
-	पूर्णांक chunk_offset;
-	पूर्णांक chunk_sz;
-	पूर्णांक i;
+static inline void
+ia_css_circbuf_shift_chunk(ia_css_circbuf_t *cb,
+			   u32 chunk_src, uint32_t chunk_dest)
+{
+	int chunk_offset;
+	int chunk_sz;
+	int i;
 
 	/* get the chunk offset and size */
 	chunk_offset = ia_css_circbuf_get_offset(cb,
 		       chunk_src, chunk_dest);
 	chunk_sz = ia_css_circbuf_get_offset(cb, cb->desc->start, chunk_src) + 1;
 
-	/* shअगरt each element to its terminal position */
-	क्रम (i = 0; i < chunk_sz; i++) अणु
+	/* shift each element to its terminal position */
+	for (i = 0; i < chunk_sz; i++) {
 		/* copy the element from the source to the destination */
 		ia_css_circbuf_elem_cpy(&cb->elems[chunk_src],
 					&cb->elems[chunk_dest]);
@@ -314,9 +313,9 @@ ia_css_circbuf_shअगरt_chunk(ia_css_circbuf_t *cb,
 		/* adjust the source/terminal positions */
 		chunk_src = ia_css_circbuf_get_pos_at_offset(cb, chunk_src, -1);
 		chunk_dest = ia_css_circbuf_get_pos_at_offset(cb, chunk_dest, -1);
-	पूर्ण
+	}
 
 	/* adjust the index "start" */
 	cb->desc->start = ia_css_circbuf_get_pos_at_offset(cb, cb->desc->start,
 			  chunk_offset);
-पूर्ण
+}

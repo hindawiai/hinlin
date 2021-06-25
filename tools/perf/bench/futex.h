@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Glibc independent futex library क्रम testing kernel functionality.
+ * Glibc independent futex library for testing kernel functionality.
  * Shamelessly stolen from Darren Hart <dvhltc@us.ibm.com>
  *    http://git.kernel.org/cgit/linux/kernel/git/dvhart/futextest.git/
  */
 
-#अगर_अघोषित _FUTEX_H
-#घोषणा _FUTEX_H
+#ifndef _FUTEX_H
+#define _FUTEX_H
 
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <linux/futex.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <linux/futex.h>
 
 /**
  * futex() - SYS_futex syscall wrapper
  * @uaddr:	address of first futex
  * @op:		futex op code
  * @val:	typically expected value of uaddr, but varies by op
- * @समयout:	typically an असलolute काष्ठा बारpec (except where noted
+ * @timeout:	typically an absolute struct timespec (except where noted
  *		otherwise). Overloaded by some ops
- * @uaddr2:	address of second futex क्रम some ops\
+ * @uaddr2:	address of second futex for some ops\
  * @val3:	varies by op
  * @opflags:	flags to be bitwise OR'd with op, such as FUTEX_PRIVATE_FLAG
  *
  * futex() is used by all the following futex op wrappers. It can also be
- * used क्रम misuse and abuse testing. Generally, the specअगरic op wrappers
- * should be used instead. It is a macro instead of an अटल अंतरभूत function as
- * some of the types over overloaded (समयout is used क्रम nr_requeue क्रम
+ * used for misuse and abuse testing. Generally, the specific op wrappers
+ * should be used instead. It is a macro instead of an static inline function as
+ * some of the types over overloaded (timeout is used for nr_requeue for
  * example).
  *
- * These argument descriptions are the शेषs क्रम all
+ * These argument descriptions are the defaults for all
  * like-named arguments in the following wrappers except where noted below.
  */
-#घोषणा futex(uaddr, op, val, समयout, uaddr2, val3, opflags) \
-	syscall(SYS_futex, uaddr, op | opflags, val, समयout, uaddr2, val3)
+#define futex(uaddr, op, val, timeout, uaddr2, val3, opflags) \
+	syscall(SYS_futex, uaddr, op | opflags, val, timeout, uaddr2, val3)
 
 /**
- * futex_रुको() - block on uaddr with optional समयout
- * @समयout:	relative समयout
+ * futex_wait() - block on uaddr with optional timeout
+ * @timeout:	relative timeout
  */
-अटल अंतरभूत पूर्णांक
-futex_रुको(u_पूर्णांक32_t *uaddr, u_पूर्णांक32_t val, काष्ठा बारpec *समयout, पूर्णांक opflags)
-अणु
-	वापस futex(uaddr, FUTEX_WAIT, val, समयout, शून्य, 0, opflags);
-पूर्ण
+static inline int
+futex_wait(u_int32_t *uaddr, u_int32_t val, struct timespec *timeout, int opflags)
+{
+	return futex(uaddr, FUTEX_WAIT, val, timeout, NULL, 0, opflags);
+}
 
 /**
  * futex_wake() - wake one or more tasks blocked on uaddr
  * @nr_wake:	wake up to this many tasks
  */
-अटल अंतरभूत पूर्णांक
-futex_wake(u_पूर्णांक32_t *uaddr, पूर्णांक nr_wake, पूर्णांक opflags)
-अणु
-	वापस futex(uaddr, FUTEX_WAKE, nr_wake, शून्य, शून्य, 0, opflags);
-पूर्ण
+static inline int
+futex_wake(u_int32_t *uaddr, int nr_wake, int opflags)
+{
+	return futex(uaddr, FUTEX_WAKE, nr_wake, NULL, NULL, 0, opflags);
+}
 
 /**
  * futex_lock_pi() - block on uaddr as a PI mutex
  */
-अटल अंतरभूत पूर्णांक
-futex_lock_pi(u_पूर्णांक32_t *uaddr, काष्ठा बारpec *समयout, पूर्णांक opflags)
-अणु
-	वापस futex(uaddr, FUTEX_LOCK_PI, 0, समयout, शून्य, 0, opflags);
-पूर्ण
+static inline int
+futex_lock_pi(u_int32_t *uaddr, struct timespec *timeout, int opflags)
+{
+	return futex(uaddr, FUTEX_LOCK_PI, 0, timeout, NULL, 0, opflags);
+}
 
 /**
- * futex_unlock_pi() - release uaddr as a PI mutex, waking the top रुकोer
+ * futex_unlock_pi() - release uaddr as a PI mutex, waking the top waiter
  */
-अटल अंतरभूत पूर्णांक
-futex_unlock_pi(u_पूर्णांक32_t *uaddr, पूर्णांक opflags)
-अणु
-	वापस futex(uaddr, FUTEX_UNLOCK_PI, 0, शून्य, शून्य, 0, opflags);
-पूर्ण
+static inline int
+futex_unlock_pi(u_int32_t *uaddr, int opflags)
+{
+	return futex(uaddr, FUTEX_UNLOCK_PI, 0, NULL, NULL, 0, opflags);
+}
 
 /**
 * futex_cmp_requeue() - requeue tasks from uaddr to uaddr2
 * @nr_wake:        wake up to this many tasks
 * @nr_requeue:        requeue up to this many tasks
 */
-अटल अंतरभूत पूर्णांक
-futex_cmp_requeue(u_पूर्णांक32_t *uaddr, u_पूर्णांक32_t val, u_पूर्णांक32_t *uaddr2, पूर्णांक nr_wake,
-		 पूर्णांक nr_requeue, पूर्णांक opflags)
-अणु
-	वापस futex(uaddr, FUTEX_CMP_REQUEUE, nr_wake, nr_requeue, uaddr2,
+static inline int
+futex_cmp_requeue(u_int32_t *uaddr, u_int32_t val, u_int32_t *uaddr2, int nr_wake,
+		 int nr_requeue, int opflags)
+{
+	return futex(uaddr, FUTEX_CMP_REQUEUE, nr_wake, nr_requeue, uaddr2,
 		 val, opflags);
-पूर्ण
-#पूर्ण_अगर /* _FUTEX_H */
+}
+#endif /* _FUTEX_H */

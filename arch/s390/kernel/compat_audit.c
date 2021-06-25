@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अघोषित __s390x__
-#समावेश <यंत्र/unistd.h>
-#समावेश "audit.h"
+// SPDX-License-Identifier: GPL-2.0
+#undef __s390x__
+#include <asm/unistd.h>
+#include "audit.h"
 
-अचिन्हित s390_dir_class[] = अणु
-#समावेश <यंत्र-generic/audit_dir_ग_लिखो.h>
+unsigned s390_dir_class[] = {
+#include <asm-generic/audit_dir_write.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित s390_chattr_class[] = अणु
-#समावेश <यंत्र-generic/audit_change_attr.h>
+unsigned s390_chattr_class[] = {
+#include <asm-generic/audit_change_attr.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित s390_ग_लिखो_class[] = अणु
-#समावेश <यंत्र-generic/audit_ग_लिखो.h>
+unsigned s390_write_class[] = {
+#include <asm-generic/audit_write.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित s390_पढ़ो_class[] = अणु
-#समावेश <यंत्र-generic/audit_पढ़ो.h>
+unsigned s390_read_class[] = {
+#include <asm-generic/audit_read.h>
 ~0U
-पूर्ण;
+};
 
-अचिन्हित s390_संकेत_class[] = अणु
-#समावेश <यंत्र-generic/audit_संकेत.स>
+unsigned s390_signal_class[] = {
+#include <asm-generic/audit_signal.h>
 ~0U
-पूर्ण;
+};
 
-पूर्णांक s390_classअगरy_syscall(अचिन्हित syscall)
-अणु
-	चयन(syscall) अणु
-	हाल __NR_खोलो:
-		वापस 2;
-	हाल __NR_खोलोat:
-		वापस 3;
-	हाल __NR_socketcall:
-		वापस 4;
-	हाल __NR_execve:
-		वापस 5;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+int s390_classify_syscall(unsigned syscall)
+{
+	switch(syscall) {
+	case __NR_open:
+		return 2;
+	case __NR_openat:
+		return 3;
+	case __NR_socketcall:
+		return 4;
+	case __NR_execve:
+		return 5;
+	default:
+		return 1;
+	}
+}

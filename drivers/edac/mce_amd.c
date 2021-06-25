@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/cpu.h>
+#include <asm/cpu.h>
 
-#समावेश "mce_amd.h"
+#include "mce_amd.h"
 
-अटल काष्ठा amd_decoder_ops fam_ops;
+static struct amd_decoder_ops fam_ops;
 
-अटल u8 xec_mask	 = 0xf;
+static u8 xec_mask	 = 0xf;
 
-अटल व्योम (*decode_dram_ecc)(पूर्णांक node_id, काष्ठा mce *m);
+static void (*decode_dram_ecc)(int node_id, struct mce *m);
 
-व्योम amd_रेजिस्टर_ecc_decoder(व्योम (*f)(पूर्णांक, काष्ठा mce *))
-अणु
+void amd_register_ecc_decoder(void (*f)(int, struct mce *))
+{
 	decode_dram_ecc = f;
-पूर्ण
-EXPORT_SYMBOL_GPL(amd_रेजिस्टर_ecc_decoder);
+}
+EXPORT_SYMBOL_GPL(amd_register_ecc_decoder);
 
-व्योम amd_unरेजिस्टर_ecc_decoder(व्योम (*f)(पूर्णांक, काष्ठा mce *))
-अणु
-	अगर (decode_dram_ecc) अणु
+void amd_unregister_ecc_decoder(void (*f)(int, struct mce *))
+{
+	if (decode_dram_ecc) {
 		WARN_ON(decode_dram_ecc != f);
 
-		decode_dram_ecc = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(amd_unरेजिस्टर_ecc_decoder);
+		decode_dram_ecc = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(amd_unregister_ecc_decoder);
 
 /*
- * string representation क्रम the dअगरferent MCA reported error types, see F3x48
+ * string representation for the different MCA reported error types, see F3x48
  * or MSR0000_0411.
  */
 
 /* transaction type */
-अटल स्थिर अक्षर * स्थिर tt_msgs[] = अणु "INSN", "DATA", "GEN", "RESV" पूर्ण;
+static const char * const tt_msgs[] = { "INSN", "DATA", "GEN", "RESV" };
 
 /* cache level */
-अटल स्थिर अक्षर * स्थिर ll_msgs[] = अणु "RESV", "L1", "L2", "L3/GEN" पूर्ण;
+static const char * const ll_msgs[] = { "RESV", "L1", "L2", "L3/GEN" };
 
 /* memory transaction type */
-अटल स्थिर अक्षर * स्थिर rrrr_msgs[] = अणु
+static const char * const rrrr_msgs[] = {
        "GEN", "RD", "WR", "DRD", "DWR", "IRD", "PRF", "EV", "SNP"
-पूर्ण;
+};
 
 /* participating processor */
-स्थिर अक्षर * स्थिर pp_msgs[] = अणु "SRC", "RES", "OBS", "GEN" पूर्ण;
+const char * const pp_msgs[] = { "SRC", "RES", "OBS", "GEN" };
 EXPORT_SYMBOL_GPL(pp_msgs);
 
-/* request समयout */
-अटल स्थिर अक्षर * स्थिर to_msgs[] = अणु "no timeout", "timed out" पूर्ण;
+/* request timeout */
+static const char * const to_msgs[] = { "no timeout", "timed out" };
 
 /* memory or i/o */
-अटल स्थिर अक्षर * स्थिर ii_msgs[] = अणु "MEM", "RESV", "IO", "GEN" पूर्ण;
+static const char * const ii_msgs[] = { "MEM", "RESV", "IO", "GEN" };
 
-/* पूर्णांकernal error type */
-अटल स्थिर अक्षर * स्थिर uu_msgs[] = अणु "RESV", "RESV", "HWA", "RESV" पूर्ण;
+/* internal error type */
+static const char * const uu_msgs[] = { "RESV", "RESV", "HWA", "RESV" };
 
-अटल स्थिर अक्षर * स्थिर f15h_mc1_mce_desc[] = अणु
+static const char * const f15h_mc1_mce_desc[] = {
 	"UC during a demand linefill from L2",
 	"Parity error during data load from IC",
 	"Parity error for IC valid bit",
@@ -77,9 +76,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"predecode buffer",
 	"fetch address FIFO",
 	"dispatch uop queue"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर f15h_mc2_mce_desc[] = अणु
+static const char * const f15h_mc2_mce_desc[] = {
 	"Fill ECC error on data fills",			/* xec = 0x4 */
 	"Fill parity error on insn fills",
 	"Prefetcher request FIFO parity error",
@@ -94,9 +93,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Multiple hits on L2 tag",
 	"XAB parity error",
 	"PRB address parity error"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mc4_mce_desc[] = अणु
+static const char * const mc4_mce_desc[] = {
 	"DRAM ECC error detected on the NB",
 	"CRC error detected on HT link",
 	"Link-defined sync error packets detected on HT link",
@@ -116,9 +115,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"L3 cache tag error",
 	"L3 LRU parity bits error",
 	"ECC Error in the Probe Filter directory"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mc5_mce_desc[] = अणु
+static const char * const mc5_mce_desc[] = {
 	"CPU Watchdog timer expire",
 	"Wakeup array dest tag",
 	"AG payload array",
@@ -133,19 +132,19 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Flag register file",
 	"DE error occurred",
 	"Retire status queue"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mc6_mce_desc[] = अणु
+static const char * const mc6_mce_desc[] = {
 	"Hardware Assertion",
 	"Free List",
 	"Physical Register File",
 	"Retire Queue",
 	"Scheduler table",
 	"Status Register File",
-पूर्ण;
+};
 
 /* Scalable MCA error strings */
-अटल स्थिर अक्षर * स्थिर smca_ls_mce_desc[] = अणु
+static const char * const smca_ls_mce_desc[] = {
 	"Load queue parity error",
 	"Store queue parity error",
 	"Miss address buffer payload parity error",
@@ -167,9 +166,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"DC Tag error type 3",
 	"DC Tag error type 5",
 	"L2 Fill Data error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_ls2_mce_desc[] = अणु
+static const char * const smca_ls2_mce_desc[] = {
 	"An ECC error was detected on a data cache read by a probe or victimization",
 	"An ECC error or L2 poison was detected on a data cache read by a load",
 	"An ECC error was detected on a data cache read-modify-write by a store",
@@ -194,9 +193,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"A SystemReadDataError error was reported on read data returned from L2 for a WCB store",
 	"A hardware assertion error was reported",
 	"A parity error was detected in an STLF, SCB EMEM entry or SRB store data by any access",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_अगर_mce_desc[] = अणु
+static const char * const smca_if_mce_desc[] = {
 	"Op Cache Microtag Probe Port Parity Error",
 	"IC Microtag or Full Tag Multi-hit Error",
 	"IC Full Tag Parity Error",
@@ -216,16 +215,16 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"L2-TLB Multi-Hit",
 	"BSR Parity Error",
 	"CT MCE",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_l2_mce_desc[] = अणु
+static const char * const smca_l2_mce_desc[] = {
 	"L2M Tag Multiple-Way-Hit error",
 	"L2M Tag or State Array ECC Error",
 	"L2M Data Array ECC Error",
 	"Hardware Assert Error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_de_mce_desc[] = अणु
+static const char * const smca_de_mce_desc[] = {
 	"Micro-op cache tag parity error",
 	"Micro-op cache data parity error",
 	"Instruction buffer parity error",
@@ -236,9 +235,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Patch RAM sequencer parity error",
 	"Micro-op buffer parity error",
 	"Hardware Assertion MCA Error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_ex_mce_desc[] = अणु
+static const char * const smca_ex_mce_desc[] = {
 	"Watchdog Timeout error",
 	"Physical register file parity error",
 	"Flag register file parity error",
@@ -253,9 +252,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Hardware Assertion error",
 	"Spec Map parity error",
 	"Retire Map parity error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_fp_mce_desc[] = अणु
+static const char * const smca_fp_mce_desc[] = {
 	"Physical register file (PRF) parity error",
 	"Freelist (FL) parity error",
 	"Schedule queue parity error",
@@ -263,9 +262,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Retire queue (RQ) parity error",
 	"Status register file (SRF) parity error",
 	"Hardware assertion",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_l3_mce_desc[] = अणु
+static const char * const smca_l3_mce_desc[] = {
 	"Shadow Tag Macro ECC Error",
 	"Shadow Tag Macro Multi-way-hit Error",
 	"L3M Tag ECC Error",
@@ -274,9 +273,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"SDP Parity Error or SystemReadDataError from XI",
 	"L3 Victim Queue Parity Error",
 	"L3 Hardware Assertion",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_cs_mce_desc[] = अणु
+static const char * const smca_cs_mce_desc[] = {
 	"Illegal Request",
 	"Address Violation",
 	"Security Violation",
@@ -286,9 +285,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Read Response Parity Error",
 	"Atomic Request Parity Error",
 	"Probe Filter ECC Error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_cs2_mce_desc[] = अणु
+static const char * const smca_cs2_mce_desc[] = {
 	"Illegal Request",
 	"Address Violation",
 	"Security Violation",
@@ -303,17 +302,17 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"SDP read response had an unexpected RETRY error",
 	"Counter overflow error",
 	"Counter underflow error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_pie_mce_desc[] = अणु
+static const char * const smca_pie_mce_desc[] = {
 	"Hardware Assert",
 	"Register security violation",
 	"Link Error",
 	"Poison data consumption",
 	"A deferred error was detected in the DF"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_umc_mce_desc[] = अणु
+static const char * const smca_umc_mce_desc[] = {
 	"DRAM ECC error",
 	"Data poison error",
 	"SDP parity error",
@@ -322,17 +321,17 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Write data CRC error",
 	"DCQ SRAM ECC error",
 	"AES SRAM ECC error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_pb_mce_desc[] = अणु
+static const char * const smca_pb_mce_desc[] = {
 	"An ECC error in the Parameter Block RAM array",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_psp_mce_desc[] = अणु
+static const char * const smca_psp_mce_desc[] = {
 	"An ECC or parity error in a PSP RAM instance",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_psp2_mce_desc[] = अणु
+static const char * const smca_psp2_mce_desc[] = {
 	"High SRAM ECC or parity error",
 	"Low SRAM ECC or parity error",
 	"Instruction Cache Bank 0 ECC or parity error",
@@ -351,13 +350,13 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"TLB Bank 0 parity error",
 	"TLB Bank 1 parity error",
 	"System Hub Read Buffer ECC or parity error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_smu_mce_desc[] = अणु
+static const char * const smca_smu_mce_desc[] = {
 	"An ECC or parity error in an SMU RAM instance",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_smu2_mce_desc[] = अणु
+static const char * const smca_smu2_mce_desc[] = {
 	"High SRAM ECC or parity error",
 	"Low SRAM ECC or parity error",
 	"Data Cache Bank A ECC or parity error",
@@ -370,9 +369,9 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Instruction Tag Cache Bank B ECC or parity error",
 	"System Hub Read Buffer ECC or parity error",
 	"PHY RAM ECC error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_mp5_mce_desc[] = अणु
+static const char * const smca_mp5_mce_desc[] = {
 	"High SRAM ECC or parity error",
 	"Low SRAM ECC or parity error",
 	"Data Cache Bank A ECC or parity error",
@@ -383,679 +382,679 @@ EXPORT_SYMBOL_GPL(pp_msgs);
 	"Instruction Cache Bank B ECC or parity error",
 	"Instruction Tag Cache Bank A ECC or parity error",
 	"Instruction Tag Cache Bank B ECC or parity error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_nbio_mce_desc[] = अणु
+static const char * const smca_nbio_mce_desc[] = {
 	"ECC or Parity error",
 	"PCIE error",
 	"SDP ErrEvent error",
 	"SDP Egress Poison Error",
 	"IOHC Internal Poison Error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर smca_pcie_mce_desc[] = अणु
+static const char * const smca_pcie_mce_desc[] = {
 	"CCIX PER Message logging",
 	"CCIX Read Response with Status: Non-Data Error",
 	"CCIX Write Response with Status: Non-Data Error",
 	"CCIX Read Response with Status: Data Error",
 	"CCIX Non-okay write response with data error",
-पूर्ण;
+};
 
-काष्ठा smca_mce_desc अणु
-	स्थिर अक्षर * स्थिर *descs;
-	अचिन्हित पूर्णांक num_descs;
-पूर्ण;
+struct smca_mce_desc {
+	const char * const *descs;
+	unsigned int num_descs;
+};
 
-अटल काष्ठा smca_mce_desc smca_mce_descs[] = अणु
-	[SMCA_LS]	= अणु smca_ls_mce_desc,	ARRAY_SIZE(smca_ls_mce_desc)	पूर्ण,
-	[SMCA_LS_V2]	= अणु smca_ls2_mce_desc,	ARRAY_SIZE(smca_ls2_mce_desc)	पूर्ण,
-	[SMCA_IF]	= अणु smca_अगर_mce_desc,	ARRAY_SIZE(smca_अगर_mce_desc)	पूर्ण,
-	[SMCA_L2_CACHE]	= अणु smca_l2_mce_desc,	ARRAY_SIZE(smca_l2_mce_desc)	पूर्ण,
-	[SMCA_DE]	= अणु smca_de_mce_desc,	ARRAY_SIZE(smca_de_mce_desc)	पूर्ण,
-	[SMCA_EX]	= अणु smca_ex_mce_desc,	ARRAY_SIZE(smca_ex_mce_desc)	पूर्ण,
-	[SMCA_FP]	= अणु smca_fp_mce_desc,	ARRAY_SIZE(smca_fp_mce_desc)	पूर्ण,
-	[SMCA_L3_CACHE]	= अणु smca_l3_mce_desc,	ARRAY_SIZE(smca_l3_mce_desc)	पूर्ण,
-	[SMCA_CS]	= अणु smca_cs_mce_desc,	ARRAY_SIZE(smca_cs_mce_desc)	पूर्ण,
-	[SMCA_CS_V2]	= अणु smca_cs2_mce_desc,	ARRAY_SIZE(smca_cs2_mce_desc)	पूर्ण,
-	[SMCA_PIE]	= अणु smca_pie_mce_desc,	ARRAY_SIZE(smca_pie_mce_desc)	पूर्ण,
-	[SMCA_UMC]	= अणु smca_umc_mce_desc,	ARRAY_SIZE(smca_umc_mce_desc)	पूर्ण,
-	[SMCA_PB]	= अणु smca_pb_mce_desc,	ARRAY_SIZE(smca_pb_mce_desc)	पूर्ण,
-	[SMCA_PSP]	= अणु smca_psp_mce_desc,	ARRAY_SIZE(smca_psp_mce_desc)	पूर्ण,
-	[SMCA_PSP_V2]	= अणु smca_psp2_mce_desc,	ARRAY_SIZE(smca_psp2_mce_desc)	पूर्ण,
-	[SMCA_SMU]	= अणु smca_smu_mce_desc,	ARRAY_SIZE(smca_smu_mce_desc)	पूर्ण,
-	[SMCA_SMU_V2]	= अणु smca_smu2_mce_desc,	ARRAY_SIZE(smca_smu2_mce_desc)	पूर्ण,
-	[SMCA_MP5]	= अणु smca_mp5_mce_desc,	ARRAY_SIZE(smca_mp5_mce_desc)	पूर्ण,
-	[SMCA_NBIO]	= अणु smca_nbio_mce_desc,	ARRAY_SIZE(smca_nbio_mce_desc)	पूर्ण,
-	[SMCA_PCIE]	= अणु smca_pcie_mce_desc,	ARRAY_SIZE(smca_pcie_mce_desc)	पूर्ण,
-पूर्ण;
+static struct smca_mce_desc smca_mce_descs[] = {
+	[SMCA_LS]	= { smca_ls_mce_desc,	ARRAY_SIZE(smca_ls_mce_desc)	},
+	[SMCA_LS_V2]	= { smca_ls2_mce_desc,	ARRAY_SIZE(smca_ls2_mce_desc)	},
+	[SMCA_IF]	= { smca_if_mce_desc,	ARRAY_SIZE(smca_if_mce_desc)	},
+	[SMCA_L2_CACHE]	= { smca_l2_mce_desc,	ARRAY_SIZE(smca_l2_mce_desc)	},
+	[SMCA_DE]	= { smca_de_mce_desc,	ARRAY_SIZE(smca_de_mce_desc)	},
+	[SMCA_EX]	= { smca_ex_mce_desc,	ARRAY_SIZE(smca_ex_mce_desc)	},
+	[SMCA_FP]	= { smca_fp_mce_desc,	ARRAY_SIZE(smca_fp_mce_desc)	},
+	[SMCA_L3_CACHE]	= { smca_l3_mce_desc,	ARRAY_SIZE(smca_l3_mce_desc)	},
+	[SMCA_CS]	= { smca_cs_mce_desc,	ARRAY_SIZE(smca_cs_mce_desc)	},
+	[SMCA_CS_V2]	= { smca_cs2_mce_desc,	ARRAY_SIZE(smca_cs2_mce_desc)	},
+	[SMCA_PIE]	= { smca_pie_mce_desc,	ARRAY_SIZE(smca_pie_mce_desc)	},
+	[SMCA_UMC]	= { smca_umc_mce_desc,	ARRAY_SIZE(smca_umc_mce_desc)	},
+	[SMCA_PB]	= { smca_pb_mce_desc,	ARRAY_SIZE(smca_pb_mce_desc)	},
+	[SMCA_PSP]	= { smca_psp_mce_desc,	ARRAY_SIZE(smca_psp_mce_desc)	},
+	[SMCA_PSP_V2]	= { smca_psp2_mce_desc,	ARRAY_SIZE(smca_psp2_mce_desc)	},
+	[SMCA_SMU]	= { smca_smu_mce_desc,	ARRAY_SIZE(smca_smu_mce_desc)	},
+	[SMCA_SMU_V2]	= { smca_smu2_mce_desc,	ARRAY_SIZE(smca_smu2_mce_desc)	},
+	[SMCA_MP5]	= { smca_mp5_mce_desc,	ARRAY_SIZE(smca_mp5_mce_desc)	},
+	[SMCA_NBIO]	= { smca_nbio_mce_desc,	ARRAY_SIZE(smca_nbio_mce_desc)	},
+	[SMCA_PCIE]	= { smca_pcie_mce_desc,	ARRAY_SIZE(smca_pcie_mce_desc)	},
+};
 
-अटल bool f12h_mc0_mce(u16 ec, u8 xec)
-अणु
+static bool f12h_mc0_mce(u16 ec, u8 xec)
+{
 	bool ret = false;
 
-	अगर (MEM_ERROR(ec)) अणु
+	if (MEM_ERROR(ec)) {
 		u8 ll = LL(ec);
 		ret = true;
 
-		अगर (ll == LL_L2)
+		if (ll == LL_L2)
 			pr_cont("during L1 linefill from L2.\n");
-		अन्यथा अगर (ll == LL_L1)
+		else if (ll == LL_L1)
 			pr_cont("Data/Tag %s error.\n", R4_MSG(ec));
-		अन्यथा
+		else
 			ret = false;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल bool f10h_mc0_mce(u16 ec, u8 xec)
-अणु
-	अगर (R4(ec) == R4_GEN && LL(ec) == LL_L1) अणु
+static bool f10h_mc0_mce(u16 ec, u8 xec)
+{
+	if (R4(ec) == R4_GEN && LL(ec) == LL_L1) {
 		pr_cont("during data scrub.\n");
-		वापस true;
-	पूर्ण
-	वापस f12h_mc0_mce(ec, xec);
-पूर्ण
+		return true;
+	}
+	return f12h_mc0_mce(ec, xec);
+}
 
-अटल bool k8_mc0_mce(u16 ec, u8 xec)
-अणु
-	अगर (BUS_ERROR(ec)) अणु
+static bool k8_mc0_mce(u16 ec, u8 xec)
+{
+	if (BUS_ERROR(ec)) {
 		pr_cont("during system linefill.\n");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस f10h_mc0_mce(ec, xec);
-पूर्ण
+	return f10h_mc0_mce(ec, xec);
+}
 
-अटल bool cat_mc0_mce(u16 ec, u8 xec)
-अणु
+static bool cat_mc0_mce(u16 ec, u8 xec)
+{
 	u8 r4	 = R4(ec);
 	bool ret = true;
 
-	अगर (MEM_ERROR(ec)) अणु
+	if (MEM_ERROR(ec)) {
 
-		अगर (TT(ec) != TT_DATA || LL(ec) != LL_L1)
-			वापस false;
+		if (TT(ec) != TT_DATA || LL(ec) != LL_L1)
+			return false;
 
-		चयन (r4) अणु
-		हाल R4_DRD:
-		हाल R4_DWR:
+		switch (r4) {
+		case R4_DRD:
+		case R4_DWR:
 			pr_cont("Data/Tag parity error due to %s.\n",
 				(r4 == R4_DRD ? "load/hw prf" : "store"));
-			अवरोध;
-		हाल R4_EVICT:
+			break;
+		case R4_EVICT:
 			pr_cont("Copyback parity error on a tag miss.\n");
-			अवरोध;
-		हाल R4_SNOOP:
+			break;
+		case R4_SNOOP:
 			pr_cont("Tag parity error during snoop.\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (BUS_ERROR(ec)) अणु
+		}
+	} else if (BUS_ERROR(ec)) {
 
-		अगर ((II(ec) != II_MEM && II(ec) != II_IO) || LL(ec) != LL_LG)
-			वापस false;
+		if ((II(ec) != II_MEM && II(ec) != II_IO) || LL(ec) != LL_LG)
+			return false;
 
 		pr_cont("System read data error on a ");
 
-		चयन (r4) अणु
-		हाल R4_RD:
+		switch (r4) {
+		case R4_RD:
 			pr_cont("TLB reload.\n");
-			अवरोध;
-		हाल R4_DWR:
+			break;
+		case R4_DWR:
 			pr_cont("store.\n");
-			अवरोध;
-		हाल R4_DRD:
+			break;
+		case R4_DRD:
 			pr_cont("load.\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool f15h_mc0_mce(u16 ec, u8 xec)
-अणु
+static bool f15h_mc0_mce(u16 ec, u8 xec)
+{
 	bool ret = true;
 
-	अगर (MEM_ERROR(ec)) अणु
+	if (MEM_ERROR(ec)) {
 
-		चयन (xec) अणु
-		हाल 0x0:
+		switch (xec) {
+		case 0x0:
 			pr_cont("Data Array access error.\n");
-			अवरोध;
+			break;
 
-		हाल 0x1:
+		case 0x1:
 			pr_cont("UC error during a linefill from L2/NB.\n");
-			अवरोध;
+			break;
 
-		हाल 0x2:
-		हाल 0x11:
+		case 0x2:
+		case 0x11:
 			pr_cont("STQ access error.\n");
-			अवरोध;
+			break;
 
-		हाल 0x3:
+		case 0x3:
 			pr_cont("SCB access error.\n");
-			अवरोध;
+			break;
 
-		हाल 0x10:
+		case 0x10:
 			pr_cont("Tag error.\n");
-			अवरोध;
+			break;
 
-		हाल 0x12:
+		case 0x12:
 			pr_cont("LDQ access error.\n");
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			ret = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (BUS_ERROR(ec)) अणु
+		}
+	} else if (BUS_ERROR(ec)) {
 
-		अगर (!xec)
+		if (!xec)
 			pr_cont("System Read Data Error.\n");
-		अन्यथा
+		else
 			pr_cont(" Internal error condition type %d.\n", xec);
-	पूर्ण अन्यथा अगर (INT_ERROR(ec)) अणु
-		अगर (xec <= 0x1f)
+	} else if (INT_ERROR(ec)) {
+		if (xec <= 0x1f)
 			pr_cont("Hardware Assert.\n");
-		अन्यथा
+		else
 			ret = false;
 
-	पूर्ण अन्यथा
+	} else
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम decode_mc0_mce(काष्ठा mce *m)
-अणु
+static void decode_mc0_mce(struct mce *m)
+{
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, xec_mask);
 
 	pr_emerg(HW_ERR "MC0 Error: ");
 
 	/* TLB error signatures are the same across families */
-	अगर (TLB_ERROR(ec)) अणु
-		अगर (TT(ec) == TT_DATA) अणु
+	if (TLB_ERROR(ec)) {
+		if (TT(ec) == TT_DATA) {
 			pr_cont("%s TLB %s.\n", LL_MSG(ec),
 				((xec == 2) ? "locked miss"
 					    : (xec ? "multimatch" : "parity")));
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अगर (fam_ops.mc0_mce(ec, xec))
+			return;
+		}
+	} else if (fam_ops.mc0_mce(ec, xec))
 		;
-	अन्यथा
+	else
 		pr_emerg(HW_ERR "Corrupted MC0 MCE info?\n");
-पूर्ण
+}
 
-अटल bool k8_mc1_mce(u16 ec, u8 xec)
-अणु
+static bool k8_mc1_mce(u16 ec, u8 xec)
+{
 	u8 ll	 = LL(ec);
 	bool ret = true;
 
-	अगर (!MEM_ERROR(ec))
-		वापस false;
+	if (!MEM_ERROR(ec))
+		return false;
 
-	अगर (ll == 0x2)
+	if (ll == 0x2)
 		pr_cont("during a linefill from L2.\n");
-	अन्यथा अगर (ll == 0x1) अणु
-		चयन (R4(ec)) अणु
-		हाल R4_IRD:
+	else if (ll == 0x1) {
+		switch (R4(ec)) {
+		case R4_IRD:
 			pr_cont("Parity error during data load.\n");
-			अवरोध;
+			break;
 
-		हाल R4_EVICT:
+		case R4_EVICT:
 			pr_cont("Copyback Parity/Victim error.\n");
-			अवरोध;
+			break;
 
-		हाल R4_SNOOP:
+		case R4_SNOOP:
 			pr_cont("Tag Snoop error.\n");
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			ret = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा
+			break;
+		}
+	} else
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool cat_mc1_mce(u16 ec, u8 xec)
-अणु
+static bool cat_mc1_mce(u16 ec, u8 xec)
+{
 	u8 r4    = R4(ec);
 	bool ret = true;
 
-	अगर (!MEM_ERROR(ec))
-		वापस false;
+	if (!MEM_ERROR(ec))
+		return false;
 
-	अगर (TT(ec) != TT_INSTR)
-		वापस false;
+	if (TT(ec) != TT_INSTR)
+		return false;
 
-	अगर (r4 == R4_IRD)
+	if (r4 == R4_IRD)
 		pr_cont("Data/tag array parity error for a tag hit.\n");
-	अन्यथा अगर (r4 == R4_SNOOP)
+	else if (r4 == R4_SNOOP)
 		pr_cont("Tag error during snoop/victimization.\n");
-	अन्यथा अगर (xec == 0x0)
+	else if (xec == 0x0)
 		pr_cont("Tag parity error from victim castout.\n");
-	अन्यथा अगर (xec == 0x2)
+	else if (xec == 0x2)
 		pr_cont("Microcode patch RAM parity error.\n");
-	अन्यथा
+	else
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool f15h_mc1_mce(u16 ec, u8 xec)
-अणु
+static bool f15h_mc1_mce(u16 ec, u8 xec)
+{
 	bool ret = true;
 
-	अगर (!MEM_ERROR(ec))
-		वापस false;
+	if (!MEM_ERROR(ec))
+		return false;
 
-	चयन (xec) अणु
-	हाल 0x0 ... 0xa:
+	switch (xec) {
+	case 0x0 ... 0xa:
 		pr_cont("%s.\n", f15h_mc1_mce_desc[xec]);
-		अवरोध;
+		break;
 
-	हाल 0xd:
+	case 0xd:
 		pr_cont("%s.\n", f15h_mc1_mce_desc[xec-2]);
-		अवरोध;
+		break;
 
-	हाल 0x10:
+	case 0x10:
 		pr_cont("%s.\n", f15h_mc1_mce_desc[xec-4]);
-		अवरोध;
+		break;
 
-	हाल 0x11 ... 0x15:
+	case 0x11 ... 0x15:
 		pr_cont("Decoder %s parity error.\n", f15h_mc1_mce_desc[xec-4]);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = false;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम decode_mc1_mce(काष्ठा mce *m)
-अणु
+static void decode_mc1_mce(struct mce *m)
+{
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, xec_mask);
 
 	pr_emerg(HW_ERR "MC1 Error: ");
 
-	अगर (TLB_ERROR(ec))
+	if (TLB_ERROR(ec))
 		pr_cont("%s TLB %s.\n", LL_MSG(ec),
 			(xec ? "multimatch" : "parity error"));
-	अन्यथा अगर (BUS_ERROR(ec)) अणु
+	else if (BUS_ERROR(ec)) {
 		bool k8 = (boot_cpu_data.x86 == 0xf && (m->status & BIT_64(58)));
 
 		pr_cont("during %s.\n", (k8 ? "system linefill" : "NB data read"));
-	पूर्ण अन्यथा अगर (INT_ERROR(ec)) अणु
-		अगर (xec <= 0x3f)
+	} else if (INT_ERROR(ec)) {
+		if (xec <= 0x3f)
 			pr_cont("Hardware Assert.\n");
-		अन्यथा
-			जाओ wrong_mc1_mce;
-	पूर्ण अन्यथा अगर (fam_ops.mc1_mce(ec, xec))
+		else
+			goto wrong_mc1_mce;
+	} else if (fam_ops.mc1_mce(ec, xec))
 		;
-	अन्यथा
-		जाओ wrong_mc1_mce;
+	else
+		goto wrong_mc1_mce;
 
-	वापस;
+	return;
 
 wrong_mc1_mce:
 	pr_emerg(HW_ERR "Corrupted MC1 MCE info?\n");
-पूर्ण
+}
 
-अटल bool k8_mc2_mce(u16 ec, u8 xec)
-अणु
+static bool k8_mc2_mce(u16 ec, u8 xec)
+{
 	bool ret = true;
 
-	अगर (xec == 0x1)
+	if (xec == 0x1)
 		pr_cont(" in the write data buffers.\n");
-	अन्यथा अगर (xec == 0x3)
+	else if (xec == 0x3)
 		pr_cont(" in the victim data buffers.\n");
-	अन्यथा अगर (xec == 0x2 && MEM_ERROR(ec))
+	else if (xec == 0x2 && MEM_ERROR(ec))
 		pr_cont(": %s error in the L2 cache tags.\n", R4_MSG(ec));
-	अन्यथा अगर (xec == 0x0) अणु
-		अगर (TLB_ERROR(ec))
+	else if (xec == 0x0) {
+		if (TLB_ERROR(ec))
 			pr_cont("%s error in a Page Descriptor Cache or Guest TLB.\n",
 				TT_MSG(ec));
-		अन्यथा अगर (BUS_ERROR(ec))
+		else if (BUS_ERROR(ec))
 			pr_cont(": %s/ECC error in data read from NB: %s.\n",
 				R4_MSG(ec), PP_MSG(ec));
-		अन्यथा अगर (MEM_ERROR(ec)) अणु
+		else if (MEM_ERROR(ec)) {
 			u8 r4 = R4(ec);
 
-			अगर (r4 >= 0x7)
+			if (r4 >= 0x7)
 				pr_cont(": %s error during data copyback.\n",
 					R4_MSG(ec));
-			अन्यथा अगर (r4 <= 0x1)
+			else if (r4 <= 0x1)
 				pr_cont(": %s parity/ECC error during data "
 					"access from L2.\n", R4_MSG(ec));
-			अन्यथा
+			else
 				ret = false;
-		पूर्ण अन्यथा
+		} else
 			ret = false;
-	पूर्ण अन्यथा
+	} else
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool f15h_mc2_mce(u16 ec, u8 xec)
-अणु
+static bool f15h_mc2_mce(u16 ec, u8 xec)
+{
 	bool ret = true;
 
-	अगर (TLB_ERROR(ec)) अणु
-		अगर (xec == 0x0)
+	if (TLB_ERROR(ec)) {
+		if (xec == 0x0)
 			pr_cont("Data parity TLB read error.\n");
-		अन्यथा अगर (xec == 0x1)
+		else if (xec == 0x1)
 			pr_cont("Poison data provided for TLB fill.\n");
-		अन्यथा
+		else
 			ret = false;
-	पूर्ण अन्यथा अगर (BUS_ERROR(ec)) अणु
-		अगर (xec > 2)
+	} else if (BUS_ERROR(ec)) {
+		if (xec > 2)
 			ret = false;
 
 		pr_cont("Error during attempted NB data read.\n");
-	पूर्ण अन्यथा अगर (MEM_ERROR(ec)) अणु
-		चयन (xec) अणु
-		हाल 0x4 ... 0xc:
+	} else if (MEM_ERROR(ec)) {
+		switch (xec) {
+		case 0x4 ... 0xc:
 			pr_cont("%s.\n", f15h_mc2_mce_desc[xec - 0x4]);
-			अवरोध;
+			break;
 
-		हाल 0x10 ... 0x14:
+		case 0x10 ... 0x14:
 			pr_cont("%s.\n", f15h_mc2_mce_desc[xec - 0x7]);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			ret = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर (INT_ERROR(ec)) अणु
-		अगर (xec <= 0x3f)
+		}
+	} else if (INT_ERROR(ec)) {
+		if (xec <= 0x3f)
 			pr_cont("Hardware Assert.\n");
-		अन्यथा
+		else
 			ret = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool f16h_mc2_mce(u16 ec, u8 xec)
-अणु
+static bool f16h_mc2_mce(u16 ec, u8 xec)
+{
 	u8 r4 = R4(ec);
 
-	अगर (!MEM_ERROR(ec))
-		वापस false;
+	if (!MEM_ERROR(ec))
+		return false;
 
-	चयन (xec) अणु
-	हाल 0x04 ... 0x05:
+	switch (xec) {
+	case 0x04 ... 0x05:
 		pr_cont("%cBUFF parity error.\n", (r4 == R4_RD) ? 'I' : 'O');
-		अवरोध;
+		break;
 
-	हाल 0x09 ... 0x0b:
-	हाल 0x0d ... 0x0f:
+	case 0x09 ... 0x0b:
+	case 0x0d ... 0x0f:
 		pr_cont("ECC error in L2 tag (%s).\n",
 			((r4 == R4_GEN)   ? "BankReq" :
 			((r4 == R4_SNOOP) ? "Prb"     : "Fill")));
-		अवरोध;
+		break;
 
-	हाल 0x10 ... 0x19:
-	हाल 0x1b:
+	case 0x10 ... 0x19:
+	case 0x1b:
 		pr_cont("ECC error in L2 data array (%s).\n",
 			(((r4 == R4_RD) && !(xec & 0x3)) ? "Hit"  :
 			((r4 == R4_GEN)   ? "Attr" :
 			((r4 == R4_EVICT) ? "Vict" : "Fill"))));
-		अवरोध;
+		break;
 
-	हाल 0x1c ... 0x1d:
-	हाल 0x1f:
+	case 0x1c ... 0x1d:
+	case 0x1f:
 		pr_cont("Parity error in L2 attribute bits (%s).\n",
 			((r4 == R4_RD)  ? "Hit"  :
 			((r4 == R4_GEN) ? "Attr" : "Fill")));
-		अवरोध;
+		break;
 
-	शेष:
-		वापस false;
-	पूर्ण
+	default:
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम decode_mc2_mce(काष्ठा mce *m)
-अणु
+static void decode_mc2_mce(struct mce *m)
+{
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, xec_mask);
 
 	pr_emerg(HW_ERR "MC2 Error: ");
 
-	अगर (!fam_ops.mc2_mce(ec, xec))
+	if (!fam_ops.mc2_mce(ec, xec))
 		pr_cont(HW_ERR "Corrupted MC2 MCE info?\n");
-पूर्ण
+}
 
-अटल व्योम decode_mc3_mce(काष्ठा mce *m)
-अणु
+static void decode_mc3_mce(struct mce *m)
+{
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, xec_mask);
 
-	अगर (boot_cpu_data.x86 >= 0x14) अणु
+	if (boot_cpu_data.x86 >= 0x14) {
 		pr_emerg("You shouldn't be seeing MC3 MCE on this cpu family,"
 			 " please report on LKML.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_emerg(HW_ERR "MC3 Error");
 
-	अगर (xec == 0x0) अणु
+	if (xec == 0x0) {
 		u8 r4 = R4(ec);
 
-		अगर (!BUS_ERROR(ec) || (r4 != R4_DRD && r4 != R4_DWR))
-			जाओ wrong_mc3_mce;
+		if (!BUS_ERROR(ec) || (r4 != R4_DRD && r4 != R4_DWR))
+			goto wrong_mc3_mce;
 
 		pr_cont(" during %s.\n", R4_MSG(ec));
-	पूर्ण अन्यथा
-		जाओ wrong_mc3_mce;
+	} else
+		goto wrong_mc3_mce;
 
-	वापस;
+	return;
 
  wrong_mc3_mce:
 	pr_emerg(HW_ERR "Corrupted MC3 MCE info?\n");
-पूर्ण
+}
 
-अटल व्योम decode_mc4_mce(काष्ठा mce *m)
-अणु
-	अचिन्हित पूर्णांक fam = x86_family(m->cpuid);
-	पूर्णांक node_id = topology_die_id(m->extcpu);
+static void decode_mc4_mce(struct mce *m)
+{
+	unsigned int fam = x86_family(m->cpuid);
+	int node_id = topology_die_id(m->extcpu);
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, 0x1f);
 	u8 offset = 0;
 
 	pr_emerg(HW_ERR "MC4 Error (node %d): ", node_id);
 
-	चयन (xec) अणु
-	हाल 0x0 ... 0xe:
+	switch (xec) {
+	case 0x0 ... 0xe:
 
-		/* special handling क्रम DRAM ECCs */
-		अगर (xec == 0x0 || xec == 0x8) अणु
+		/* special handling for DRAM ECCs */
+		if (xec == 0x0 || xec == 0x8) {
 			/* no ECCs on F11h */
-			अगर (fam == 0x11)
-				जाओ wrong_mc4_mce;
+			if (fam == 0x11)
+				goto wrong_mc4_mce;
 
 			pr_cont("%s.\n", mc4_mce_desc[xec]);
 
-			अगर (decode_dram_ecc)
+			if (decode_dram_ecc)
 				decode_dram_ecc(node_id, m);
-			वापस;
-		पूर्ण
-		अवरोध;
+			return;
+		}
+		break;
 
-	हाल 0xf:
-		अगर (TLB_ERROR(ec))
+	case 0xf:
+		if (TLB_ERROR(ec))
 			pr_cont("GART Table Walk data error.\n");
-		अन्यथा अगर (BUS_ERROR(ec))
+		else if (BUS_ERROR(ec))
 			pr_cont("DMA Exclusion Vector Table Walk error.\n");
-		अन्यथा
-			जाओ wrong_mc4_mce;
-		वापस;
+		else
+			goto wrong_mc4_mce;
+		return;
 
-	हाल 0x19:
-		अगर (fam == 0x15 || fam == 0x16)
+	case 0x19:
+		if (fam == 0x15 || fam == 0x16)
 			pr_cont("Compute Unit Data Error.\n");
-		अन्यथा
-			जाओ wrong_mc4_mce;
-		वापस;
+		else
+			goto wrong_mc4_mce;
+		return;
 
-	हाल 0x1c ... 0x1f:
+	case 0x1c ... 0x1f:
 		offset = 13;
-		अवरोध;
+		break;
 
-	शेष:
-		जाओ wrong_mc4_mce;
-	पूर्ण
+	default:
+		goto wrong_mc4_mce;
+	}
 
 	pr_cont("%s.\n", mc4_mce_desc[xec - offset]);
-	वापस;
+	return;
 
  wrong_mc4_mce:
 	pr_emerg(HW_ERR "Corrupted MC4 MCE info?\n");
-पूर्ण
+}
 
-अटल व्योम decode_mc5_mce(काष्ठा mce *m)
-अणु
-	अचिन्हित पूर्णांक fam = x86_family(m->cpuid);
+static void decode_mc5_mce(struct mce *m)
+{
+	unsigned int fam = x86_family(m->cpuid);
 	u16 ec = EC(m->status);
 	u8 xec = XEC(m->status, xec_mask);
 
-	अगर (fam == 0xf || fam == 0x11)
-		जाओ wrong_mc5_mce;
+	if (fam == 0xf || fam == 0x11)
+		goto wrong_mc5_mce;
 
 	pr_emerg(HW_ERR "MC5 Error: ");
 
-	अगर (INT_ERROR(ec)) अणु
-		अगर (xec <= 0x1f) अणु
+	if (INT_ERROR(ec)) {
+		if (xec <= 0x1f) {
 			pr_cont("Hardware Assert.\n");
-			वापस;
-		पूर्ण अन्यथा
-			जाओ wrong_mc5_mce;
-	पूर्ण
+			return;
+		} else
+			goto wrong_mc5_mce;
+	}
 
-	अगर (xec == 0x0 || xec == 0xc)
+	if (xec == 0x0 || xec == 0xc)
 		pr_cont("%s.\n", mc5_mce_desc[xec]);
-	अन्यथा अगर (xec <= 0xd)
+	else if (xec <= 0xd)
 		pr_cont("%s parity error.\n", mc5_mce_desc[xec]);
-	अन्यथा
-		जाओ wrong_mc5_mce;
+	else
+		goto wrong_mc5_mce;
 
-	वापस;
+	return;
 
  wrong_mc5_mce:
 	pr_emerg(HW_ERR "Corrupted MC5 MCE info?\n");
-पूर्ण
+}
 
-अटल व्योम decode_mc6_mce(काष्ठा mce *m)
-अणु
+static void decode_mc6_mce(struct mce *m)
+{
 	u8 xec = XEC(m->status, xec_mask);
 
 	pr_emerg(HW_ERR "MC6 Error: ");
 
-	अगर (xec > 0x5)
-		जाओ wrong_mc6_mce;
+	if (xec > 0x5)
+		goto wrong_mc6_mce;
 
 	pr_cont("%s parity error.\n", mc6_mce_desc[xec]);
-	वापस;
+	return;
 
  wrong_mc6_mce:
 	pr_emerg(HW_ERR "Corrupted MC6 MCE info?\n");
-पूर्ण
+}
 
-/* Decode errors according to Scalable MCA specअगरication */
-अटल व्योम decode_smca_error(काष्ठा mce *m)
-अणु
-	काष्ठा smca_hwid *hwid;
-	क्रमागत smca_bank_types bank_type;
-	स्थिर अक्षर *ip_name;
+/* Decode errors according to Scalable MCA specification */
+static void decode_smca_error(struct mce *m)
+{
+	struct smca_hwid *hwid;
+	enum smca_bank_types bank_type;
+	const char *ip_name;
 	u8 xec = XEC(m->status, xec_mask);
 
-	अगर (m->bank >= ARRAY_SIZE(smca_banks))
-		वापस;
+	if (m->bank >= ARRAY_SIZE(smca_banks))
+		return;
 
 	hwid = smca_banks[m->bank].hwid;
-	अगर (!hwid)
-		वापस;
+	if (!hwid)
+		return;
 
 	bank_type = hwid->bank_type;
 
-	अगर (bank_type == SMCA_RESERVED) अणु
+	if (bank_type == SMCA_RESERVED) {
 		pr_emerg(HW_ERR "Bank %d is reserved.\n", m->bank);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ip_name = smca_get_दीर्घ_name(bank_type);
+	ip_name = smca_get_long_name(bank_type);
 
 	pr_emerg(HW_ERR "%s Ext. Error Code: %d", ip_name, xec);
 
-	/* Only prपूर्णांक the decode of valid error codes */
-	अगर (xec < smca_mce_descs[bank_type].num_descs)
+	/* Only print the decode of valid error codes */
+	if (xec < smca_mce_descs[bank_type].num_descs)
 		pr_cont(", %s.\n", smca_mce_descs[bank_type].descs[xec]);
 
-	अगर (bank_type == SMCA_UMC && xec == 0 && decode_dram_ecc)
+	if (bank_type == SMCA_UMC && xec == 0 && decode_dram_ecc)
 		decode_dram_ecc(topology_die_id(m->extcpu), m);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम amd_decode_err_code(u16 ec)
-अणु
-	अगर (INT_ERROR(ec)) अणु
+static inline void amd_decode_err_code(u16 ec)
+{
+	if (INT_ERROR(ec)) {
 		pr_emerg(HW_ERR "internal: %s\n", UU_MSG(ec));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_emerg(HW_ERR "cache level: %s", LL_MSG(ec));
 
-	अगर (BUS_ERROR(ec))
+	if (BUS_ERROR(ec))
 		pr_cont(", mem/io: %s", II_MSG(ec));
-	अन्यथा
+	else
 		pr_cont(", tx: %s", TT_MSG(ec));
 
-	अगर (MEM_ERROR(ec) || BUS_ERROR(ec)) अणु
+	if (MEM_ERROR(ec) || BUS_ERROR(ec)) {
 		pr_cont(", mem-tx: %s", R4_MSG(ec));
 
-		अगर (BUS_ERROR(ec))
+		if (BUS_ERROR(ec))
 			pr_cont(", part-proc: %s (%s)", PP_MSG(ec), TO_MSG(ec));
-	पूर्ण
+	}
 
 	pr_cont("\n");
-पूर्ण
+}
 
-अटल स्थिर अक्षर *decode_error_status(काष्ठा mce *m)
-अणु
-	अगर (m->status & MCI_STATUS_UC) अणु
-		अगर (m->status & MCI_STATUS_PCC)
-			वापस "System Fatal error.";
-		अगर (m->mcgstatus & MCG_STATUS_RIPV)
-			वापस "Uncorrected, software restartable error.";
-		वापस "Uncorrected, software containable error.";
-	पूर्ण
+static const char *decode_error_status(struct mce *m)
+{
+	if (m->status & MCI_STATUS_UC) {
+		if (m->status & MCI_STATUS_PCC)
+			return "System Fatal error.";
+		if (m->mcgstatus & MCG_STATUS_RIPV)
+			return "Uncorrected, software restartable error.";
+		return "Uncorrected, software containable error.";
+	}
 
-	अगर (m->status & MCI_STATUS_DEFERRED)
-		वापस "Deferred error, no action required.";
+	if (m->status & MCI_STATUS_DEFERRED)
+		return "Deferred error, no action required.";
 
-	वापस "Corrected error, no action required.";
-पूर्ण
+	return "Corrected error, no action required.";
+}
 
-अटल पूर्णांक
-amd_decode_mce(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val, व्योम *data)
-अणु
-	काष्ठा mce *m = (काष्ठा mce *)data;
-	अचिन्हित पूर्णांक fam = x86_family(m->cpuid);
-	पूर्णांक ecc;
+static int
+amd_decode_mce(struct notifier_block *nb, unsigned long val, void *data)
+{
+	struct mce *m = (struct mce *)data;
+	unsigned int fam = x86_family(m->cpuid);
+	int ecc;
 
-	अगर (m->kflags & MCE_HANDLED_CEC)
-		वापस NOTIFY_DONE;
+	if (m->kflags & MCE_HANDLED_CEC)
+		return NOTIFY_DONE;
 
 	pr_emerg(HW_ERR "%s\n", decode_error_status(m));
 
@@ -1070,191 +1069,191 @@ amd_decode_mce(काष्ठा notअगरier_block *nb, अचिन्ह�
 		((m->status & MCI_STATUS_ADDRV)	? "AddrV" : "-"),
 		((m->status & MCI_STATUS_PCC)	? "PCC"	  : "-"));
 
-	अगर (boot_cpu_has(X86_FEATURE_SMCA)) अणु
+	if (boot_cpu_has(X86_FEATURE_SMCA)) {
 		u32 low, high;
 		u32 addr = MSR_AMD64_SMCA_MCx_CONFIG(m->bank);
 
-		अगर (!rdmsr_safe(addr, &low, &high) &&
+		if (!rdmsr_safe(addr, &low, &high) &&
 		    (low & MCI_CONFIG_MCAX))
 			pr_cont("|%s", ((m->status & MCI_STATUS_TCC) ? "TCC" : "-"));
 
 		pr_cont("|%s", ((m->status & MCI_STATUS_SYNDV) ? "SyndV" : "-"));
-	पूर्ण
+	}
 
-	/* करो the two bits[14:13] together */
+	/* do the two bits[14:13] together */
 	ecc = (m->status >> 45) & 0x3;
-	अगर (ecc)
+	if (ecc)
 		pr_cont("|%sECC", ((ecc == 2) ? "C" : "U"));
 
-	अगर (fam >= 0x15) अणु
+	if (fam >= 0x15) {
 		pr_cont("|%s", (m->status & MCI_STATUS_DEFERRED ? "Deferred" : "-"));
 
 		/* F15h, bank4, bit 43 is part of McaStatSubCache. */
-		अगर (fam != 0x15 || m->bank != 4)
+		if (fam != 0x15 || m->bank != 4)
 			pr_cont("|%s", (m->status & MCI_STATUS_POISON ? "Poison" : "-"));
-	पूर्ण
+	}
 
-	अगर (fam >= 0x17)
+	if (fam >= 0x17)
 		pr_cont("|%s", (m->status & MCI_STATUS_SCRUB ? "Scrub" : "-"));
 
 	pr_cont("]: 0x%016llx\n", m->status);
 
-	अगर (m->status & MCI_STATUS_ADDRV)
+	if (m->status & MCI_STATUS_ADDRV)
 		pr_emerg(HW_ERR "Error Addr: 0x%016llx\n", m->addr);
 
-	अगर (m->ppin)
+	if (m->ppin)
 		pr_emerg(HW_ERR "PPIN: 0x%016llx\n", m->ppin);
 
-	अगर (boot_cpu_has(X86_FEATURE_SMCA)) अणु
+	if (boot_cpu_has(X86_FEATURE_SMCA)) {
 		pr_emerg(HW_ERR "IPID: 0x%016llx", m->ipid);
 
-		अगर (m->status & MCI_STATUS_SYNDV)
+		if (m->status & MCI_STATUS_SYNDV)
 			pr_cont(", Syndrome: 0x%016llx", m->synd);
 
 		pr_cont("\n");
 
 		decode_smca_error(m);
-		जाओ err_code;
-	पूर्ण
+		goto err_code;
+	}
 
-	अगर (m->tsc)
+	if (m->tsc)
 		pr_emerg(HW_ERR "TSC: %llu\n", m->tsc);
 
 	/* Doesn't matter which member to test. */
-	अगर (!fam_ops.mc0_mce)
-		जाओ err_code;
+	if (!fam_ops.mc0_mce)
+		goto err_code;
 
-	चयन (m->bank) अणु
-	हाल 0:
+	switch (m->bank) {
+	case 0:
 		decode_mc0_mce(m);
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		decode_mc1_mce(m);
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		decode_mc2_mce(m);
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		decode_mc3_mce(m);
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		decode_mc4_mce(m);
-		अवरोध;
+		break;
 
-	हाल 5:
+	case 5:
 		decode_mc5_mce(m);
-		अवरोध;
+		break;
 
-	हाल 6:
+	case 6:
 		decode_mc6_mce(m);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
  err_code:
 	amd_decode_err_code(m->status & 0xffff);
 
 	m->kflags |= MCE_HANDLED_EDAC;
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block amd_mce_dec_nb = अणु
-	.notअगरier_call	= amd_decode_mce,
+static struct notifier_block amd_mce_dec_nb = {
+	.notifier_call	= amd_decode_mce,
 	.priority	= MCE_PRIO_EDAC,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mce_amd_init(व्योम)
-अणु
-	काष्ठा cpuinfo_x86 *c = &boot_cpu_data;
+static int __init mce_amd_init(void)
+{
+	struct cpuinfo_x86 *c = &boot_cpu_data;
 
-	अगर (c->x86_venकरोr != X86_VENDOR_AMD &&
-	    c->x86_venकरोr != X86_VENDOR_HYGON)
-		वापस -ENODEV;
+	if (c->x86_vendor != X86_VENDOR_AMD &&
+	    c->x86_vendor != X86_VENDOR_HYGON)
+		return -ENODEV;
 
-	अगर (boot_cpu_has(X86_FEATURE_SMCA)) अणु
+	if (boot_cpu_has(X86_FEATURE_SMCA)) {
 		xec_mask = 0x3f;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (c->x86) अणु
-	हाल 0xf:
+	switch (c->x86) {
+	case 0xf:
 		fam_ops.mc0_mce = k8_mc0_mce;
 		fam_ops.mc1_mce = k8_mc1_mce;
 		fam_ops.mc2_mce = k8_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x10:
+	case 0x10:
 		fam_ops.mc0_mce = f10h_mc0_mce;
 		fam_ops.mc1_mce = k8_mc1_mce;
 		fam_ops.mc2_mce = k8_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x11:
+	case 0x11:
 		fam_ops.mc0_mce = k8_mc0_mce;
 		fam_ops.mc1_mce = k8_mc1_mce;
 		fam_ops.mc2_mce = k8_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x12:
+	case 0x12:
 		fam_ops.mc0_mce = f12h_mc0_mce;
 		fam_ops.mc1_mce = k8_mc1_mce;
 		fam_ops.mc2_mce = k8_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x14:
+	case 0x14:
 		fam_ops.mc0_mce = cat_mc0_mce;
 		fam_ops.mc1_mce = cat_mc1_mce;
 		fam_ops.mc2_mce = k8_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x15:
+	case 0x15:
 		xec_mask = c->x86_model == 0x60 ? 0x3f : 0x1f;
 
 		fam_ops.mc0_mce = f15h_mc0_mce;
 		fam_ops.mc1_mce = f15h_mc1_mce;
 		fam_ops.mc2_mce = f15h_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x16:
+	case 0x16:
 		xec_mask = 0x1f;
 		fam_ops.mc0_mce = cat_mc0_mce;
 		fam_ops.mc1_mce = cat_mc1_mce;
 		fam_ops.mc2_mce = f16h_mc2_mce;
-		अवरोध;
+		break;
 
-	हाल 0x17:
-	हाल 0x18:
+	case 0x17:
+	case 0x18:
 		pr_warn_once("Decoding supported only on Scalable MCA processors.\n");
-		वापस -EINVAL;
+		return -EINVAL;
 
-	शेष:
-		prपूर्णांकk(KERN_WARNING "Huh? What family is it: 0x%x?!\n", c->x86);
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		printk(KERN_WARNING "Huh? What family is it: 0x%x?!\n", c->x86);
+		return -EINVAL;
+	}
 
 out:
 	pr_info("MCE: In-kernel MCE decoding enabled.\n");
 
-	mce_रेजिस्टर_decode_chain(&amd_mce_dec_nb);
+	mce_register_decode_chain(&amd_mce_dec_nb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(mce_amd_init);
 
-#अगर_घोषित MODULE
-अटल व्योम __निकास mce_amd_निकास(व्योम)
-अणु
-	mce_unरेजिस्टर_decode_chain(&amd_mce_dec_nb);
-पूर्ण
+#ifdef MODULE
+static void __exit mce_amd_exit(void)
+{
+	mce_unregister_decode_chain(&amd_mce_dec_nb);
+}
 
 MODULE_DESCRIPTION("AMD MCE decoder");
 MODULE_ALIAS("edac-mce-amd");
 MODULE_LICENSE("GPL");
-module_निकास(mce_amd_निकास);
-#पूर्ण_अगर
+module_exit(mce_amd_exit);
+#endif

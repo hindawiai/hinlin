@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  Copyright IBM Corp. 2008
  *
  *  Author: Jan Glauber (jang@linux.vnet.ibm.com)
  */
-#अगर_अघोषित QDIO_DEBUG_H
-#घोषणा QDIO_DEBUG_H
+#ifndef QDIO_DEBUG_H
+#define QDIO_DEBUG_H
 
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/qdपन.स>
-#समावेश "qdio.h"
+#include <asm/debug.h>
+#include <asm/qdio.h>
+#include "qdio.h"
 
-/* that gives us 15 अक्षरacters in the text event views */
-#घोषणा QDIO_DBF_LEN	32
+/* that gives us 15 characters in the text event views */
+#define QDIO_DBF_LEN	32
 
-बाह्य debug_info_t *qdio_dbf_setup;
-बाह्य debug_info_t *qdio_dbf_error;
+extern debug_info_t *qdio_dbf_setup;
+extern debug_info_t *qdio_dbf_error;
 
-#घोषणा DBF_ERR		3	/* error conditions	*/
-#घोषणा DBF_WARN	4	/* warning conditions	*/
-#घोषणा DBF_INFO	6	/* inक्रमmational	*/
+#define DBF_ERR		3	/* error conditions	*/
+#define DBF_WARN	4	/* warning conditions	*/
+#define DBF_INFO	6	/* informational	*/
 
-#अघोषित DBF_EVENT
-#अघोषित DBF_ERROR
-#अघोषित DBF_DEV_EVENT
+#undef DBF_EVENT
+#undef DBF_ERROR
+#undef DBF_DEV_EVENT
 
-#घोषणा DBF_EVENT(text...) \
-	करो अणु \
-		अक्षर debug_buffer[QDIO_DBF_LEN]; \
-		snम_लिखो(debug_buffer, QDIO_DBF_LEN, text); \
+#define DBF_EVENT(text...) \
+	do { \
+		char debug_buffer[QDIO_DBF_LEN]; \
+		snprintf(debug_buffer, QDIO_DBF_LEN, text); \
 		debug_text_event(qdio_dbf_setup, DBF_ERR, debug_buffer); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत व्योम DBF_HEX(व्योम *addr, पूर्णांक len)
-अणु
+static inline void DBF_HEX(void *addr, int len)
+{
 	debug_event(qdio_dbf_setup, DBF_ERR, addr, len);
-पूर्ण
+}
 
-#घोषणा DBF_ERROR(text...) \
-	करो अणु \
-		अक्षर debug_buffer[QDIO_DBF_LEN]; \
-		snम_लिखो(debug_buffer, QDIO_DBF_LEN, text); \
+#define DBF_ERROR(text...) \
+	do { \
+		char debug_buffer[QDIO_DBF_LEN]; \
+		snprintf(debug_buffer, QDIO_DBF_LEN, text); \
 		debug_text_event(qdio_dbf_error, DBF_ERR, debug_buffer); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत व्योम DBF_ERROR_HEX(व्योम *addr, पूर्णांक len)
-अणु
+static inline void DBF_ERROR_HEX(void *addr, int len)
+{
 	debug_event(qdio_dbf_error, DBF_ERR, addr, len);
-पूर्ण
+}
 
-#घोषणा DBF_DEV_EVENT(level, device, text...) \
-	करो अणु \
-		अक्षर debug_buffer[QDIO_DBF_LEN]; \
-		अगर (debug_level_enabled(device->debug_area, level)) अणु \
-			snम_लिखो(debug_buffer, QDIO_DBF_LEN, text); \
+#define DBF_DEV_EVENT(level, device, text...) \
+	do { \
+		char debug_buffer[QDIO_DBF_LEN]; \
+		if (debug_level_enabled(device->debug_area, level)) { \
+			snprintf(debug_buffer, QDIO_DBF_LEN, text); \
 			debug_text_event(device->debug_area, level, debug_buffer); \
-		पूर्ण \
-	पूर्ण जबतक (0)
+		} \
+	} while (0)
 
-अटल अंतरभूत व्योम DBF_DEV_HEX(काष्ठा qdio_irq *dev, व्योम *addr,
-			       पूर्णांक len, पूर्णांक level)
-अणु
+static inline void DBF_DEV_HEX(struct qdio_irq *dev, void *addr,
+			       int len, int level)
+{
 	debug_event(dev->debug_area, level, addr, len);
-पूर्ण
+}
 
-पूर्णांक qdio_allocate_dbf(काष्ठा qdio_irq *irq_ptr);
-व्योम qdio_setup_debug_entries(काष्ठा qdio_irq *irq_ptr);
-व्योम qdio_shutकरोwn_debug_entries(काष्ठा qdio_irq *irq_ptr);
-पूर्णांक qdio_debug_init(व्योम);
-व्योम qdio_debug_निकास(व्योम);
+int qdio_allocate_dbf(struct qdio_irq *irq_ptr);
+void qdio_setup_debug_entries(struct qdio_irq *irq_ptr);
+void qdio_shutdown_debug_entries(struct qdio_irq *irq_ptr);
+int qdio_debug_init(void);
+void qdio_debug_exit(void);
 
-#पूर्ण_अगर
+#endif

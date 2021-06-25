@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* cx25840 पूर्णांकernal API header
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* cx25840 internal API header
  *
  * Copyright (C) 2003-2004 Chris Kennedy
  */
 
-#अगर_अघोषित _CX25840_CORE_H_
-#घोषणा _CX25840_CORE_H_
+#ifndef _CX25840_CORE_H_
+#define _CX25840_CORE_H_
 
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <linux/i2c.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
+#include <linux/i2c.h>
 
-काष्ठा cx25840_ir_state;
+struct cx25840_ir_state;
 
-क्रमागत cx25840_model अणु
+enum cx25840_model {
 	CX23885_AV,
 	CX23887_AV,
 	CX23888_AV,
@@ -26,28 +25,28 @@
 	CX25843,
 	CX25836,
 	CX25837,
-पूर्ण;
+};
 
-क्रमागत cx25840_media_pads अणु
+enum cx25840_media_pads {
 	CX25840_PAD_INPUT,
 	CX25840_PAD_VID_OUT,
 
 	CX25840_NUM_PADS
-पूर्ण;
+};
 
 /**
- * काष्ठा cx25840_state - a device instance निजी data
- * @c:			i2c_client काष्ठा representing this device
+ * struct cx25840_state - a device instance private data
+ * @c:			i2c_client struct representing this device
  * @sd:		our V4L2 sub-device
  * @hdl:		our V4L2 control handler
  * @volume:		audio volume V4L2 control (non-cx2583x devices only)
  * @mute:		audio mute V4L2 control (non-cx2583x devices only)
- * @pvr150_workaround:	whether we enable workaround क्रम Hauppauge PVR150
+ * @pvr150_workaround:	whether we enable workaround for Hauppauge PVR150
  *			hardware bug (audio dropping out)
- * @generic_mode:	whether we disable ivtv-specअगरic hacks
- *			this mode माला_लो turned on when the bridge driver calls
+ * @generic_mode:	whether we disable ivtv-specific hacks
+ *			this mode gets turned on when the bridge driver calls
  *			cx25840 subdevice init core op
- * @radio:		set अगर we are currently in the radio mode, otherwise
+ * @radio:		set if we are currently in the radio mode, otherwise
  *			the current mode is non-radio (that is, video)
  * @std:		currently set video standard
  * @vid_input:		currently set video input
@@ -58,138 +57,138 @@
  * @audmode:		currently set audio mode (when in non-radio mode)
  * @vbi_line_offset:	vbi line number offset
  * @id:		exact device model
- * @rev:		raw device id पढ़ो from the chip
- * @is_initialized:	whether we have alपढ़ोy loaded firmware पूर्णांकo the chip
+ * @rev:		raw device id read from the chip
+ * @is_initialized:	whether we have already loaded firmware into the chip
  *			and initialized it
  * @vbi_regs_offset:	offset of vbi regs
- * @fw_रुको:		रुको queue to wake an initialization function up when
+ * @fw_wait:		wait queue to wake an initialization function up when
  *			firmware loading (on a separate workqueue) finishes
  * @fw_work:		a work that actually loads the firmware on a separate
  *			workqueue
- * @ir_state:		a poपूर्णांकer to chip IR controller निजी data
+ * @ir_state:		a pointer to chip IR controller private data
  * @pads:		array of supported chip pads (currently only a stub)
  */
-काष्ठा cx25840_state अणु
-	काष्ठा i2c_client *c;
-	काष्ठा v4l2_subdev sd;
-	काष्ठा v4l2_ctrl_handler hdl;
-	काष्ठा अणु
+struct cx25840_state {
+	struct i2c_client *c;
+	struct v4l2_subdev sd;
+	struct v4l2_ctrl_handler hdl;
+	struct {
 		/* volume cluster */
-		काष्ठा v4l2_ctrl *volume;
-		काष्ठा v4l2_ctrl *mute;
-	पूर्ण;
-	पूर्णांक pvr150_workaround;
+		struct v4l2_ctrl *volume;
+		struct v4l2_ctrl *mute;
+	};
+	int pvr150_workaround;
 	bool generic_mode;
-	पूर्णांक radio;
+	int radio;
 	v4l2_std_id std;
-	क्रमागत cx25840_video_input vid_input;
+	enum cx25840_video_input vid_input;
 	u32 vid_config;
-	क्रमागत cx25840_audio_input aud_input;
+	enum cx25840_audio_input aud_input;
 	u32 audclk_freq;
-	पूर्णांक audmode;
-	पूर्णांक vbi_line_offset;
-	क्रमागत cx25840_model id;
+	int audmode;
+	int vbi_line_offset;
+	enum cx25840_model id;
 	u32 rev;
-	पूर्णांक is_initialized;
-	अचिन्हित पूर्णांक vbi_regs_offset;
-	रुको_queue_head_t fw_रुको;
-	काष्ठा work_काष्ठा fw_work;
-	काष्ठा cx25840_ir_state *ir_state;
-#अगर defined(CONFIG_MEDIA_CONTROLLER)
-	काष्ठा media_pad	pads[CX25840_NUM_PADS];
-#पूर्ण_अगर
-पूर्ण;
+	int is_initialized;
+	unsigned int vbi_regs_offset;
+	wait_queue_head_t fw_wait;
+	struct work_struct fw_work;
+	struct cx25840_ir_state *ir_state;
+#if defined(CONFIG_MEDIA_CONTROLLER)
+	struct media_pad	pads[CX25840_NUM_PADS];
+#endif
+};
 
-अटल अंतरभूत काष्ठा cx25840_state *to_state(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा cx25840_state, sd);
-पूर्ण
+static inline struct cx25840_state *to_state(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct cx25840_state, sd);
+}
 
-अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस &container_of(ctrl->handler, काष्ठा cx25840_state, hdl)->sd;
-पूर्ण
+static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
+{
+	return &container_of(ctrl->handler, struct cx25840_state, hdl)->sd;
+}
 
-अटल अंतरभूत bool is_cx2583x(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX25836 ||
+static inline bool is_cx2583x(struct cx25840_state *state)
+{
+	return state->id == CX25836 ||
 	       state->id == CX25837;
-पूर्ण
+}
 
-अटल अंतरभूत bool is_cx2584x(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX25840 ||
+static inline bool is_cx2584x(struct cx25840_state *state)
+{
+	return state->id == CX25840 ||
 	       state->id == CX25841 ||
 	       state->id == CX25842 ||
 	       state->id == CX25843;
-पूर्ण
+}
 
-अटल अंतरभूत bool is_cx231xx(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX2310X_AV;
-पूर्ण
+static inline bool is_cx231xx(struct cx25840_state *state)
+{
+	return state->id == CX2310X_AV;
+}
 
-अटल अंतरभूत bool is_cx2388x(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX23885_AV ||
+static inline bool is_cx2388x(struct cx25840_state *state)
+{
+	return state->id == CX23885_AV ||
 	       state->id == CX23887_AV ||
 	       state->id == CX23888_AV;
-पूर्ण
+}
 
-अटल अंतरभूत bool is_cx23885(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX23885_AV;
-पूर्ण
+static inline bool is_cx23885(struct cx25840_state *state)
+{
+	return state->id == CX23885_AV;
+}
 
-अटल अंतरभूत bool is_cx23887(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX23887_AV;
-पूर्ण
+static inline bool is_cx23887(struct cx25840_state *state)
+{
+	return state->id == CX23887_AV;
+}
 
-अटल अंतरभूत bool is_cx23888(काष्ठा cx25840_state *state)
-अणु
-	वापस state->id == CX23888_AV;
-पूर्ण
+static inline bool is_cx23888(struct cx25840_state *state)
+{
+	return state->id == CX23888_AV;
+}
 
 /* ----------------------------------------------------------------------- */
 /* cx25850-core.c							   */
-पूर्णांक cx25840_ग_लिखो(काष्ठा i2c_client *client, u16 addr, u8 value);
-पूर्णांक cx25840_ग_लिखो4(काष्ठा i2c_client *client, u16 addr, u32 value);
-u8 cx25840_पढ़ो(काष्ठा i2c_client *client, u16 addr);
-u32 cx25840_पढ़ो4(काष्ठा i2c_client *client, u16 addr);
-पूर्णांक cx25840_and_or(काष्ठा i2c_client *client, u16 addr, अचिन्हित पूर्णांक mask,
+int cx25840_write(struct i2c_client *client, u16 addr, u8 value);
+int cx25840_write4(struct i2c_client *client, u16 addr, u32 value);
+u8 cx25840_read(struct i2c_client *client, u16 addr);
+u32 cx25840_read4(struct i2c_client *client, u16 addr);
+int cx25840_and_or(struct i2c_client *client, u16 addr, unsigned int mask,
 		   u8 value);
-पूर्णांक cx25840_and_or4(काष्ठा i2c_client *client, u16 addr, u32 and_mask,
+int cx25840_and_or4(struct i2c_client *client, u16 addr, u32 and_mask,
 		    u32 or_value);
-व्योम cx25840_std_setup(काष्ठा i2c_client *client);
+void cx25840_std_setup(struct i2c_client *client);
 
 /* ----------------------------------------------------------------------- */
 /* cx25850-firmware.c                                                      */
-पूर्णांक cx25840_loadfw(काष्ठा i2c_client *client);
+int cx25840_loadfw(struct i2c_client *client);
 
 /* ----------------------------------------------------------------------- */
 /* cx25850-audio.c                                                         */
-व्योम cx25840_audio_set_path(काष्ठा i2c_client *client);
-पूर्णांक cx25840_s_घड़ी_freq(काष्ठा v4l2_subdev *sd, u32 freq);
+void cx25840_audio_set_path(struct i2c_client *client);
+int cx25840_s_clock_freq(struct v4l2_subdev *sd, u32 freq);
 
-बाह्य स्थिर काष्ठा v4l2_ctrl_ops cx25840_audio_ctrl_ops;
+extern const struct v4l2_ctrl_ops cx25840_audio_ctrl_ops;
 
 /* ----------------------------------------------------------------------- */
 /* cx25850-vbi.c                                                           */
-पूर्णांक cx25840_s_raw_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_vbi_क्रमmat *fmt);
-पूर्णांक cx25840_s_sliced_fmt(काष्ठा v4l2_subdev *sd,
-			 काष्ठा v4l2_sliced_vbi_क्रमmat *fmt);
-पूर्णांक cx25840_g_sliced_fmt(काष्ठा v4l2_subdev *sd,
-			 काष्ठा v4l2_sliced_vbi_क्रमmat *fmt);
-पूर्णांक cx25840_decode_vbi_line(काष्ठा v4l2_subdev *sd,
-			    काष्ठा v4l2_decode_vbi_line *vbi);
+int cx25840_s_raw_fmt(struct v4l2_subdev *sd, struct v4l2_vbi_format *fmt);
+int cx25840_s_sliced_fmt(struct v4l2_subdev *sd,
+			 struct v4l2_sliced_vbi_format *fmt);
+int cx25840_g_sliced_fmt(struct v4l2_subdev *sd,
+			 struct v4l2_sliced_vbi_format *fmt);
+int cx25840_decode_vbi_line(struct v4l2_subdev *sd,
+			    struct v4l2_decode_vbi_line *vbi);
 
 /* ----------------------------------------------------------------------- */
 /* cx25850-ir.c                                                            */
-बाह्य स्थिर काष्ठा v4l2_subdev_ir_ops cx25840_ir_ops;
-पूर्णांक cx25840_ir_log_status(काष्ठा v4l2_subdev *sd);
-पूर्णांक cx25840_ir_irq_handler(काष्ठा v4l2_subdev *sd, u32 status, bool *handled);
-पूर्णांक cx25840_ir_probe(काष्ठा v4l2_subdev *sd);
-पूर्णांक cx25840_ir_हटाओ(काष्ठा v4l2_subdev *sd);
+extern const struct v4l2_subdev_ir_ops cx25840_ir_ops;
+int cx25840_ir_log_status(struct v4l2_subdev *sd);
+int cx25840_ir_irq_handler(struct v4l2_subdev *sd, u32 status, bool *handled);
+int cx25840_ir_probe(struct v4l2_subdev *sd);
+int cx25840_ir_remove(struct v4l2_subdev *sd);
 
-#पूर्ण_अगर
+#endif

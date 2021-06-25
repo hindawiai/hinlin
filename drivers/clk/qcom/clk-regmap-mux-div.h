@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2017, Linaro Limited
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#अगर_अघोषित __QCOM_CLK_REGMAP_MUX_DIV_H__
-#घोषणा __QCOM_CLK_REGMAP_MUX_DIV_H__
+#ifndef __QCOM_CLK_REGMAP_MUX_DIV_H__
+#define __QCOM_CLK_REGMAP_MUX_DIV_H__
 
-#समावेश <linux/clk-provider.h>
-#समावेश "clk-regmap.h"
+#include <linux/clk-provider.h>
+#include "clk-regmap.h"
 
 /**
- * काष्ठा mux_भाग_clk - combined mux/भागider घड़ी
- * @reg_offset: offset of the mux/भागider रेजिस्टर
- * @hid_width:	number of bits in half पूर्णांकeger भागider
- * @hid_shअगरt:	lowest bit of hid value field
+ * struct mux_div_clk - combined mux/divider clock
+ * @reg_offset: offset of the mux/divider register
+ * @hid_width:	number of bits in half integer divider
+ * @hid_shift:	lowest bit of hid value field
  * @src_width:	number of bits in source select
- * @src_shअगरt:	lowest bit of source select field
- * @भाग:	the भागider raw configuration value
- * @src:	the mux index which will be used अगर the घड़ी is enabled
+ * @src_shift:	lowest bit of source select field
+ * @div:	the divider raw configuration value
+ * @src:	the mux index which will be used if the clock is enabled
  * @parent_map: map from parent_names index to src_sel field
- * @clkr:	handle between common and hardware-specअगरic पूर्णांकerfaces
- * @pclk:	the input PLL घड़ी
- * @clk_nb:	घड़ी notअगरier क्रम rate changes of the input PLL
+ * @clkr:	handle between common and hardware-specific interfaces
+ * @pclk:	the input PLL clock
+ * @clk_nb:	clock notifier for rate changes of the input PLL
  */
-काष्ठा clk_regmap_mux_भाग अणु
+struct clk_regmap_mux_div {
 	u32				reg_offset;
 	u32				hid_width;
-	u32				hid_shअगरt;
+	u32				hid_shift;
 	u32				src_width;
-	u32				src_shअगरt;
-	u32				भाग;
+	u32				src_shift;
+	u32				div;
 	u32				src;
-	स्थिर u32			*parent_map;
-	काष्ठा clk_regmap		clkr;
-	काष्ठा clk			*pclk;
-	काष्ठा notअगरier_block		clk_nb;
-पूर्ण;
+	const u32			*parent_map;
+	struct clk_regmap		clkr;
+	struct clk			*pclk;
+	struct notifier_block		clk_nb;
+};
 
-बाह्य स्थिर काष्ठा clk_ops clk_regmap_mux_भाग_ops;
-बाह्य पूर्णांक mux_भाग_set_src_भाग(काष्ठा clk_regmap_mux_भाग *md, u32 src, u32 भाग);
+extern const struct clk_ops clk_regmap_mux_div_ops;
+extern int mux_div_set_src_div(struct clk_regmap_mux_div *md, u32 src, u32 div);
 
-#पूर्ण_अगर
+#endif

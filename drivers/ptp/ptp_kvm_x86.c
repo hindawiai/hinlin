@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Virtual PTP 1588 घड़ी क्रम use with KVM guests
+ * Virtual PTP 1588 clock for use with KVM guests
  *
  * Copyright (C) 2017 Red Hat Inc.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/pvघड़ी.h>
-#समावेश <यंत्र/kvmघड़ी.h>
-#समावेश <linux/module.h>
-#समावेश <uapi/यंत्र/kvm_para.h>
-#समावेश <uapi/linux/kvm_para.h>
-#समावेश <linux/ptp_घड़ी_kernel.h>
-#समावेश <linux/ptp_kvm.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <asm/pvclock.h>
+#include <asm/kvmclock.h>
+#include <linux/module.h>
+#include <uapi/asm/kvm_para.h>
+#include <uapi/linux/kvm_para.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/ptp_kvm.h>
 
-काष्ठा pvघड़ी_vsyscall_समय_info *hv_घड़ी;
+struct pvclock_vsyscall_time_info *hv_clock;
 
-अटल phys_addr_t घड़ी_pair_gpa;
-अटल काष्ठा kvm_घड़ी_pairing घड़ी_pair;
+static phys_addr_t clock_pair_gpa;
+static struct kvm_clock_pairing clock_pair;
 
-पूर्णांक kvm_arch_ptp_init(व्योम)
-अणु
-	दीर्घ ret;
+int kvm_arch_ptp_init(void)
+{
+	long ret;
 
-	अगर (!kvm_para_available())
-		वापस -ENODEV;
+	if (!kvm_para_available())
+		return -ENODEV;
 
-	घड़ी_pair_gpa = slow_virt_to_phys(&घड़ी_pair);
-	hv_घड़ी = pvघड़ी_get_pvti_cpu0_va();
-	अगर (!hv_घड़ी)
-		वापस -ENODEV;
+	clock_pair_gpa = slow_virt_to_phys(&clock_pair);
+	hv_clock = pvclock_get_pvti_cpu0_va();
+	if (!hv_clock)
+		return -ENODEV;
 
-	ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING, घड़ी_pair_gpa,
+	ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING, clock_pair_gpa,
 			     KVM_CLOCK_PAIRING_WALLCLOCK);
-	अगर (ret == -KVM_ENOSYS || ret == -KVM_EOPNOTSUPP)
-		वापस -ENODEV;
+	if (ret == -KVM_ENOSYS || ret == -KVM_EOPNOTSUPP)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvm_arch_ptp_get_घड़ी(काष्ठा बारpec64 *ts)
-अणु
-	दीर्घ ret;
+int kvm_arch_ptp_get_clock(struct timespec64 *ts)
+{
+	long ret;
 
 	ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING,
-			     घड़ी_pair_gpa,
+			     clock_pair_gpa,
 			     KVM_CLOCK_PAIRING_WALLCLOCK);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		pr_err_ratelimited("clock offset hypercall ret %lu\n", ret);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	ts->tv_sec = घड़ी_pair.sec;
-	ts->tv_nsec = घड़ी_pair.nsec;
+	ts->tv_sec = clock_pair.sec;
+	ts->tv_nsec = clock_pair.nsec;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kvm_arch_ptp_get_crosststamp(u64 *cycle, काष्ठा बारpec64 *tspec,
-			      काष्ठा घड़ीsource **cs)
-अणु
-	काष्ठा pvघड़ी_vcpu_समय_info *src;
-	अचिन्हित पूर्णांक version;
-	दीर्घ ret;
-	पूर्णांक cpu;
+int kvm_arch_ptp_get_crosststamp(u64 *cycle, struct timespec64 *tspec,
+			      struct clocksource **cs)
+{
+	struct pvclock_vcpu_time_info *src;
+	unsigned int version;
+	long ret;
+	int cpu;
 
 	cpu = smp_processor_id();
-	src = &hv_घड़ी[cpu].pvti;
+	src = &hv_clock[cpu].pvti;
 
-	करो अणु
+	do {
 		/*
-		 * We are using a TSC value पढ़ो in the hosts
-		 * kvm_hc_घड़ी_pairing handling.
-		 * So any changes to tsc_to_प्रणाली_mul
-		 * and tsc_shअगरt or any other pvघड़ी
+		 * We are using a TSC value read in the hosts
+		 * kvm_hc_clock_pairing handling.
+		 * So any changes to tsc_to_system_mul
+		 * and tsc_shift or any other pvclock
 		 * data invalidate that measurement.
 		 */
-		version = pvघड़ी_पढ़ो_begin(src);
+		version = pvclock_read_begin(src);
 
 		ret = kvm_hypercall2(KVM_HC_CLOCK_PAIRING,
-				     घड़ी_pair_gpa,
+				     clock_pair_gpa,
 				     KVM_CLOCK_PAIRING_WALLCLOCK);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			pr_err_ratelimited("clock pairing hypercall ret %lu\n", ret);
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		tspec->tv_sec = घड़ी_pair.sec;
-		tspec->tv_nsec = घड़ी_pair.nsec;
-		*cycle = __pvघड़ी_पढ़ो_cycles(src, घड़ी_pair.tsc);
-	पूर्ण जबतक (pvघड़ी_पढ़ो_retry(src, version));
+			return -EOPNOTSUPP;
+		}
+		tspec->tv_sec = clock_pair.sec;
+		tspec->tv_nsec = clock_pair.nsec;
+		*cycle = __pvclock_read_cycles(src, clock_pair.tsc);
+	} while (pvclock_read_retry(src, version));
 
-	*cs = &kvm_घड़ी;
+	*cs = &kvm_clock;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

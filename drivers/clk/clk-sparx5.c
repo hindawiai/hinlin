@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Microchip Sparx5 SoC Clock driver.
  *
@@ -8,289 +7,289 @@
  * Author: Lars Povlsen <lars.povlsen@microchip.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <dt-bindings/घड़ी/microchip,sparx5.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/clk-provider.h>
+#include <linux/bitfield.h>
+#include <linux/of.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <dt-bindings/clock/microchip,sparx5.h>
 
-#घोषणा PLL_DIV		GENMASK(7, 0)
-#घोषणा PLL_PRE_DIV	GENMASK(10, 8)
-#घोषणा PLL_ROT_सूची	BIT(11)
-#घोषणा PLL_ROT_SEL	GENMASK(13, 12)
-#घोषणा PLL_ROT_ENA	BIT(14)
-#घोषणा PLL_CLK_ENA	BIT(15)
+#define PLL_DIV		GENMASK(7, 0)
+#define PLL_PRE_DIV	GENMASK(10, 8)
+#define PLL_ROT_DIR	BIT(11)
+#define PLL_ROT_SEL	GENMASK(13, 12)
+#define PLL_ROT_ENA	BIT(14)
+#define PLL_CLK_ENA	BIT(15)
 
-#घोषणा MAX_SEL 4
-#घोषणा MAX_PRE BIT(3)
+#define MAX_SEL 4
+#define MAX_PRE BIT(3)
 
-अटल स्थिर u8 sel_rates[MAX_SEL] = अणु 0, 2*8, 2*4, 2*2 पूर्ण;
+static const u8 sel_rates[MAX_SEL] = { 0, 2*8, 2*4, 2*2 };
 
-अटल स्थिर अक्षर *clk_names[N_CLOCKS] = अणु
+static const char *clk_names[N_CLOCKS] = {
 	"core", "ddr", "cpu2", "arm2",
 	"aux1", "aux2", "aux3", "aux4",
 	"synce",
-पूर्ण;
+};
 
-काष्ठा s5_hw_clk अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
-पूर्ण;
+struct s5_hw_clk {
+	struct clk_hw hw;
+	void __iomem *reg;
+};
 
-काष्ठा s5_clk_data अणु
-	व्योम __iomem *base;
-	काष्ठा s5_hw_clk s5_hw[N_CLOCKS];
-पूर्ण;
+struct s5_clk_data {
+	void __iomem *base;
+	struct s5_hw_clk s5_hw[N_CLOCKS];
+};
 
-काष्ठा s5_pll_conf अणु
-	अचिन्हित दीर्घ freq;
-	u8 भाग;
+struct s5_pll_conf {
+	unsigned long freq;
+	u8 div;
 	bool rot_ena;
 	u8 rot_sel;
 	u8 rot_dir;
-	u8 pre_भाग;
-पूर्ण;
+	u8 pre_div;
+};
 
-#घोषणा to_s5_pll(hw) container_of(hw, काष्ठा s5_hw_clk, hw)
+#define to_s5_pll(hw) container_of(hw, struct s5_hw_clk, hw)
 
-अटल अचिन्हित दीर्घ s5_calc_freq(अचिन्हित दीर्घ parent_rate,
-				  स्थिर काष्ठा s5_pll_conf *conf)
-अणु
-	अचिन्हित दीर्घ rate = parent_rate / conf->भाग;
+static unsigned long s5_calc_freq(unsigned long parent_rate,
+				  const struct s5_pll_conf *conf)
+{
+	unsigned long rate = parent_rate / conf->div;
 
-	अगर (conf->rot_ena) अणु
-		पूर्णांक sign = conf->rot_dir ? -1 : 1;
-		पूर्णांक भागt = sel_rates[conf->rot_sel] * (1 + conf->pre_भाग);
-		पूर्णांक भागb = भागt + sign;
+	if (conf->rot_ena) {
+		int sign = conf->rot_dir ? -1 : 1;
+		int divt = sel_rates[conf->rot_sel] * (1 + conf->pre_div);
+		int divb = divt + sign;
 
-		rate = mult_frac(rate, भागt, भागb);
+		rate = mult_frac(rate, divt, divb);
 		rate = roundup(rate, 1000);
-	पूर्ण
+	}
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल व्योम s5_search_fractional(अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate,
-				 पूर्णांक भाग,
-				 काष्ठा s5_pll_conf *conf)
-अणु
-	काष्ठा s5_pll_conf best;
-	uदीर्घ cur_offset, best_offset = rate;
-	पूर्णांक d, i, j;
+static void s5_search_fractional(unsigned long rate,
+				 unsigned long parent_rate,
+				 int div,
+				 struct s5_pll_conf *conf)
+{
+	struct s5_pll_conf best;
+	ulong cur_offset, best_offset = rate;
+	int d, i, j;
 
-	स_रखो(conf, 0, माप(*conf));
-	conf->भाग = भाग;
+	memset(conf, 0, sizeof(*conf));
+	conf->div = div;
 	conf->rot_ena = 1;	/* Fractional rate */
 
-	क्रम (d = 0; best_offset > 0 && d <= 1 ; d++) अणु
+	for (d = 0; best_offset > 0 && d <= 1 ; d++) {
 		conf->rot_dir = !!d;
-		क्रम (i = 0; best_offset > 0 && i < MAX_PRE; i++) अणु
-			conf->pre_भाग = i;
-			क्रम (j = 1; best_offset > 0 && j < MAX_SEL; j++) अणु
+		for (i = 0; best_offset > 0 && i < MAX_PRE; i++) {
+			conf->pre_div = i;
+			for (j = 1; best_offset > 0 && j < MAX_SEL; j++) {
 				conf->rot_sel = j;
 				conf->freq = s5_calc_freq(parent_rate, conf);
-				cur_offset = असल(rate - conf->freq);
-				अगर (cur_offset < best_offset) अणु
+				cur_offset = abs(rate - conf->freq);
+				if (cur_offset < best_offset) {
 					best_offset = cur_offset;
 					best = *conf;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 	/* Best match */
 	*conf = best;
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ s5_calc_params(अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate,
-				    काष्ठा s5_pll_conf *conf)
-अणु
-	अगर (parent_rate % rate) अणु
-		काष्ठा s5_pll_conf alt1, alt2;
-		पूर्णांक भाग;
+static unsigned long s5_calc_params(unsigned long rate,
+				    unsigned long parent_rate,
+				    struct s5_pll_conf *conf)
+{
+	if (parent_rate % rate) {
+		struct s5_pll_conf alt1, alt2;
+		int div;
 
-		भाग = DIV_ROUND_CLOSEST_ULL(parent_rate, rate);
-		s5_search_fractional(rate, parent_rate, भाग, &alt1);
+		div = DIV_ROUND_CLOSEST_ULL(parent_rate, rate);
+		s5_search_fractional(rate, parent_rate, div, &alt1);
 
 		/* Straight match? */
-		अगर (alt1.freq == rate) अणु
+		if (alt1.freq == rate) {
 			*conf = alt1;
-		पूर्ण अन्यथा अणु
-			/* Try without rounding भागider */
-			भाग = parent_rate / rate;
-			अगर (भाग != alt1.भाग) अणु
-				s5_search_fractional(rate, parent_rate, भाग,
+		} else {
+			/* Try without rounding divider */
+			div = parent_rate / rate;
+			if (div != alt1.div) {
+				s5_search_fractional(rate, parent_rate, div,
 						     &alt2);
 				/* Select the better match */
-				अगर (असल(rate - alt1.freq) <
-				    असल(rate - alt2.freq))
+				if (abs(rate - alt1.freq) <
+				    abs(rate - alt2.freq))
 					*conf = alt1;
-				अन्यथा
+				else
 					*conf = alt2;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* Straight fit */
-		स_रखो(conf, 0, माप(*conf));
-		conf->भाग = parent_rate / rate;
-	पूर्ण
+		memset(conf, 0, sizeof(*conf));
+		conf->div = parent_rate / rate;
+	}
 
-	वापस conf->freq;
-पूर्ण
+	return conf->freq;
+}
 
-अटल पूर्णांक s5_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा s5_hw_clk *pll = to_s5_pll(hw);
-	u32 val = पढ़ोl(pll->reg);
+static int s5_pll_enable(struct clk_hw *hw)
+{
+	struct s5_hw_clk *pll = to_s5_pll(hw);
+	u32 val = readl(pll->reg);
 
 	val |= PLL_CLK_ENA;
-	ग_लिखोl(val, pll->reg);
+	writel(val, pll->reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s5_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा s5_hw_clk *pll = to_s5_pll(hw);
-	u32 val = पढ़ोl(pll->reg);
+static void s5_pll_disable(struct clk_hw *hw)
+{
+	struct s5_hw_clk *pll = to_s5_pll(hw);
+	u32 val = readl(pll->reg);
 
 	val &= ~PLL_CLK_ENA;
-	ग_लिखोl(val, pll->reg);
-पूर्ण
+	writel(val, pll->reg);
+}
 
-अटल पूर्णांक s5_pll_set_rate(काष्ठा clk_hw *hw,
-			   अचिन्हित दीर्घ rate,
-			   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा s5_hw_clk *pll = to_s5_pll(hw);
-	काष्ठा s5_pll_conf conf;
-	अचिन्हित दीर्घ eff_rate;
+static int s5_pll_set_rate(struct clk_hw *hw,
+			   unsigned long rate,
+			   unsigned long parent_rate)
+{
+	struct s5_hw_clk *pll = to_s5_pll(hw);
+	struct s5_pll_conf conf;
+	unsigned long eff_rate;
 	u32 val;
 
 	eff_rate = s5_calc_params(rate, parent_rate, &conf);
-	अगर (eff_rate != rate)
-		वापस -EOPNOTSUPP;
+	if (eff_rate != rate)
+		return -EOPNOTSUPP;
 
-	val = पढ़ोl(pll->reg) & PLL_CLK_ENA;
-	val |= FIELD_PREP(PLL_DIV, conf.भाग);
-	अगर (conf.rot_ena) अणु
+	val = readl(pll->reg) & PLL_CLK_ENA;
+	val |= FIELD_PREP(PLL_DIV, conf.div);
+	if (conf.rot_ena) {
 		val |= PLL_ROT_ENA;
 		val |= FIELD_PREP(PLL_ROT_SEL, conf.rot_sel);
-		val |= FIELD_PREP(PLL_PRE_DIV, conf.pre_भाग);
-		अगर (conf.rot_dir)
-			val |= PLL_ROT_सूची;
-	पूर्ण
-	ग_लिखोl(val, pll->reg);
+		val |= FIELD_PREP(PLL_PRE_DIV, conf.pre_div);
+		if (conf.rot_dir)
+			val |= PLL_ROT_DIR;
+	}
+	writel(val, pll->reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ s5_pll_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा s5_hw_clk *pll = to_s5_pll(hw);
-	काष्ठा s5_pll_conf conf;
+static unsigned long s5_pll_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct s5_hw_clk *pll = to_s5_pll(hw);
+	struct s5_pll_conf conf;
 	u32 val;
 
-	val = पढ़ोl(pll->reg);
+	val = readl(pll->reg);
 
-	अगर (val & PLL_CLK_ENA) अणु
-		conf.भाग     = FIELD_GET(PLL_DIV, val);
-		conf.pre_भाग = FIELD_GET(PLL_PRE_DIV, val);
+	if (val & PLL_CLK_ENA) {
+		conf.div     = FIELD_GET(PLL_DIV, val);
+		conf.pre_div = FIELD_GET(PLL_PRE_DIV, val);
 		conf.rot_ena = FIELD_GET(PLL_ROT_ENA, val);
-		conf.rot_dir = FIELD_GET(PLL_ROT_सूची, val);
+		conf.rot_dir = FIELD_GET(PLL_ROT_DIR, val);
 		conf.rot_sel = FIELD_GET(PLL_ROT_SEL, val);
 
 		conf.freq = s5_calc_freq(parent_rate, &conf);
-	पूर्ण अन्यथा अणु
+	} else {
 		conf.freq = 0;
-	पूर्ण
+	}
 
-	वापस conf.freq;
-पूर्ण
+	return conf.freq;
+}
 
-अटल दीर्घ s5_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा s5_pll_conf conf;
+static long s5_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long *parent_rate)
+{
+	struct s5_pll_conf conf;
 
-	वापस s5_calc_params(rate, *parent_rate, &conf);
-पूर्ण
+	return s5_calc_params(rate, *parent_rate, &conf);
+}
 
-अटल स्थिर काष्ठा clk_ops s5_pll_ops = अणु
+static const struct clk_ops s5_pll_ops = {
 	.enable		= s5_pll_enable,
 	.disable	= s5_pll_disable,
 	.set_rate	= s5_pll_set_rate,
 	.round_rate	= s5_pll_round_rate,
 	.recalc_rate	= s5_pll_recalc_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk_hw *s5_clk_hw_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा s5_clk_data *s5_clk = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *s5_clk_hw_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct s5_clk_data *s5_clk = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= N_CLOCKS) अणु
+	if (idx >= N_CLOCKS) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &s5_clk->s5_hw[idx].hw;
-पूर्ण
+	return &s5_clk->s5_hw[idx].hw;
+}
 
-अटल पूर्णांक s5_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i, ret;
-	काष्ठा s5_clk_data *s5_clk;
-	काष्ठा clk_parent_data pdata = अणु .index = 0 पूर्ण;
-	काष्ठा clk_init_data init = अणु
+static int s5_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int i, ret;
+	struct s5_clk_data *s5_clk;
+	struct clk_parent_data pdata = { .index = 0 };
+	struct clk_init_data init = {
 		.ops = &s5_pll_ops,
 		.num_parents = 1,
 		.parent_data = &pdata,
-	पूर्ण;
+	};
 
-	s5_clk = devm_kzalloc(dev, माप(*s5_clk), GFP_KERNEL);
-	अगर (!s5_clk)
-		वापस -ENOMEM;
+	s5_clk = devm_kzalloc(dev, sizeof(*s5_clk), GFP_KERNEL);
+	if (!s5_clk)
+		return -ENOMEM;
 
-	s5_clk->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(s5_clk->base))
-		वापस PTR_ERR(s5_clk->base);
+	s5_clk->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(s5_clk->base))
+		return PTR_ERR(s5_clk->base);
 
-	क्रम (i = 0; i < N_CLOCKS; i++) अणु
-		काष्ठा s5_hw_clk *s5_hw = &s5_clk->s5_hw[i];
+	for (i = 0; i < N_CLOCKS; i++) {
+		struct s5_hw_clk *s5_hw = &s5_clk->s5_hw[i];
 
 		init.name = clk_names[i];
 		s5_hw->reg = s5_clk->base + (i * 4);
 		s5_hw->hw.init = &init;
-		ret = devm_clk_hw_रेजिस्टर(dev, &s5_hw->hw);
-		अगर (ret) अणु
+		ret = devm_clk_hw_register(dev, &s5_hw->hw);
+		if (ret) {
 			dev_err(dev, "failed to register %s clock\n",
 				init.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस devm_of_clk_add_hw_provider(dev, s5_clk_hw_get, s5_clk);
-पूर्ण
+	return devm_of_clk_add_hw_provider(dev, s5_clk_hw_get, s5_clk);
+}
 
-अटल स्थिर काष्ठा of_device_id s5_clk_dt_ids[] = अणु
-	अणु .compatible = "microchip,sparx5-dpll", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id s5_clk_dt_ids[] = {
+	{ .compatible = "microchip,sparx5-dpll", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, s5_clk_dt_ids);
 
-अटल काष्ठा platक्रमm_driver s5_clk_driver = अणु
+static struct platform_driver s5_clk_driver = {
 	.probe  = s5_clk_probe,
-	.driver = अणु
+	.driver = {
 		.name = "sparx5-clk",
 		.of_match_table = s5_clk_dt_ids,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(s5_clk_driver);
+	},
+};
+builtin_platform_driver(s5_clk_driver);

@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_ARM_SYSTEM_MISC_H
-#घोषणा __ASM_ARM_SYSTEM_MISC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_ARM_SYSTEM_MISC_H
+#define __ASM_ARM_SYSTEM_MISC_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/percpu.h>
+#include <linux/compiler.h>
+#include <linux/linkage.h>
+#include <linux/irqflags.h>
+#include <linux/reboot.h>
+#include <linux/percpu.h>
 
-बाह्य व्योम cpu_init(व्योम);
+extern void cpu_init(void);
 
-व्योम soft_restart(अचिन्हित दीर्घ);
-बाह्य व्योम (*arm_pm_restart)(क्रमागत reboot_mode reboot_mode, स्थिर अक्षर *cmd);
-बाह्य व्योम (*arm_pm_idle)(व्योम);
+void soft_restart(unsigned long);
+extern void (*arm_pm_restart)(enum reboot_mode reboot_mode, const char *cmd);
+extern void (*arm_pm_idle)(void);
 
-#अगर_घोषित CONFIG_HARDEN_BRANCH_PREDICTOR
-प्रकार व्योम (*harden_branch_predictor_fn_t)(व्योम);
+#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+typedef void (*harden_branch_predictor_fn_t)(void);
 DECLARE_PER_CPU(harden_branch_predictor_fn_t, harden_branch_predictor_fn);
-अटल अंतरभूत व्योम harden_branch_predictor(व्योम)
-अणु
+static inline void harden_branch_predictor(void)
+{
 	harden_branch_predictor_fn_t fn = per_cpu(harden_branch_predictor_fn,
 						  smp_processor_id());
-	अगर (fn)
+	if (fn)
 		fn();
-पूर्ण
-#अन्यथा
-#घोषणा harden_branch_predictor() करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+}
+#else
+#define harden_branch_predictor() do { } while (0)
+#endif
 
-#घोषणा UDBG_UNDEFINED	(1 << 0)
-#घोषणा UDBG_SYSCALL	(1 << 1)
-#घोषणा UDBG_BADABORT	(1 << 2)
-#घोषणा UDBG_SEGV	(1 << 3)
-#घोषणा UDBG_BUS	(1 << 4)
+#define UDBG_UNDEFINED	(1 << 0)
+#define UDBG_SYSCALL	(1 << 1)
+#define UDBG_BADABORT	(1 << 2)
+#define UDBG_SEGV	(1 << 3)
+#define UDBG_BUS	(1 << 4)
 
-बाह्य अचिन्हित पूर्णांक user_debug;
+extern unsigned int user_debug;
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* __ASM_ARM_SYSTEM_MISC_H */
+#endif /* __ASM_ARM_SYSTEM_MISC_H */

@@ -1,384 +1,383 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* AFS cell alias detection
  *
  * Copyright (C) 2020 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/namei.h>
-#समावेश <keys/rxrpc-type.h>
-#समावेश "internal.h"
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/namei.h>
+#include <keys/rxrpc-type.h>
+#include "internal.h"
 
 /*
  * Sample a volume.
  */
-अटल काष्ठा afs_volume *afs_sample_volume(काष्ठा afs_cell *cell, काष्ठा key *key,
-					    स्थिर अक्षर *name, अचिन्हित पूर्णांक namelen)
-अणु
-	काष्ठा afs_volume *volume;
-	काष्ठा afs_fs_context fc = अणु
+static struct afs_volume *afs_sample_volume(struct afs_cell *cell, struct key *key,
+					    const char *name, unsigned int namelen)
+{
+	struct afs_volume *volume;
+	struct afs_fs_context fc = {
 		.type		= 0, /* Explicitly leave it to the VLDB */
 		.volnamesz	= namelen,
 		.volname	= name,
 		.net		= cell->net,
 		.cell		= cell,
 		.key		= key, /* This might need to be something */
-	पूर्ण;
+	};
 
 	volume = afs_create_volume(&fc);
 	_leave(" = %p", volume);
-	वापस volume;
-पूर्ण
+	return volume;
+}
 
 /*
  * Compare two addresses.
  */
-अटल पूर्णांक afs_compare_addrs(स्थिर काष्ठा sockaddr_rxrpc *srx_a,
-			     स्थिर काष्ठा sockaddr_rxrpc *srx_b)
-अणु
-	लघु port_a, port_b;
-	पूर्णांक addr_a, addr_b, dअगरf;
+static int afs_compare_addrs(const struct sockaddr_rxrpc *srx_a,
+			     const struct sockaddr_rxrpc *srx_b)
+{
+	short port_a, port_b;
+	int addr_a, addr_b, diff;
 
-	dअगरf = (लघु)srx_a->transport_type - (लघु)srx_b->transport_type;
-	अगर (dअगरf)
-		जाओ out;
+	diff = (short)srx_a->transport_type - (short)srx_b->transport_type;
+	if (diff)
+		goto out;
 
-	चयन (srx_a->transport_type) अणु
-	हाल AF_INET: अणु
-		स्थिर काष्ठा sockaddr_in *a = &srx_a->transport.sin;
-		स्थिर काष्ठा sockaddr_in *b = &srx_b->transport.sin;
+	switch (srx_a->transport_type) {
+	case AF_INET: {
+		const struct sockaddr_in *a = &srx_a->transport.sin;
+		const struct sockaddr_in *b = &srx_b->transport.sin;
 		addr_a = ntohl(a->sin_addr.s_addr);
 		addr_b = ntohl(b->sin_addr.s_addr);
-		dअगरf = addr_a - addr_b;
-		अगर (dअगरf == 0) अणु
+		diff = addr_a - addr_b;
+		if (diff == 0) {
 			port_a = ntohs(a->sin_port);
 			port_b = ntohs(b->sin_port);
-			dअगरf = port_a - port_b;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			diff = port_a - port_b;
+		}
+		break;
+	}
 
-	हाल AF_INET6: अणु
-		स्थिर काष्ठा sockaddr_in6 *a = &srx_a->transport.sin6;
-		स्थिर काष्ठा sockaddr_in6 *b = &srx_b->transport.sin6;
-		dअगरf = स_भेद(&a->sin6_addr, &b->sin6_addr, 16);
-		अगर (dअगरf == 0) अणु
+	case AF_INET6: {
+		const struct sockaddr_in6 *a = &srx_a->transport.sin6;
+		const struct sockaddr_in6 *b = &srx_b->transport.sin6;
+		diff = memcmp(&a->sin6_addr, &b->sin6_addr, 16);
+		if (diff == 0) {
 			port_a = ntohs(a->sin6_port);
 			port_b = ntohs(b->sin6_port);
-			dअगरf = port_a - port_b;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			diff = port_a - port_b;
+		}
+		break;
+	}
 
-	शेष:
+	default:
 		WARN_ON(1);
-		dअगरf = 1;
-	पूर्ण
+		diff = 1;
+	}
 
 out:
-	वापस dअगरf;
-पूर्ण
+	return diff;
+}
 
 /*
  * Compare the address lists of a pair of fileservers.
  */
-अटल पूर्णांक afs_compare_fs_alists(स्थिर काष्ठा afs_server *server_a,
-				 स्थिर काष्ठा afs_server *server_b)
-अणु
-	स्थिर काष्ठा afs_addr_list *la, *lb;
-	पूर्णांक a = 0, b = 0, addr_matches = 0;
+static int afs_compare_fs_alists(const struct afs_server *server_a,
+				 const struct afs_server *server_b)
+{
+	const struct afs_addr_list *la, *lb;
+	int a = 0, b = 0, addr_matches = 0;
 
 	la = rcu_dereference(server_a->addresses);
 	lb = rcu_dereference(server_b->addresses);
 
-	जबतक (a < la->nr_addrs && b < lb->nr_addrs) अणु
-		स्थिर काष्ठा sockaddr_rxrpc *srx_a = &la->addrs[a];
-		स्थिर काष्ठा sockaddr_rxrpc *srx_b = &lb->addrs[b];
-		पूर्णांक dअगरf = afs_compare_addrs(srx_a, srx_b);
+	while (a < la->nr_addrs && b < lb->nr_addrs) {
+		const struct sockaddr_rxrpc *srx_a = &la->addrs[a];
+		const struct sockaddr_rxrpc *srx_b = &lb->addrs[b];
+		int diff = afs_compare_addrs(srx_a, srx_b);
 
-		अगर (dअगरf < 0) अणु
+		if (diff < 0) {
 			a++;
-		पूर्ण अन्यथा अगर (dअगरf > 0) अणु
+		} else if (diff > 0) {
 			b++;
-		पूर्ण अन्यथा अणु
+		} else {
 			addr_matches++;
 			a++;
 			b++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस addr_matches;
-पूर्ण
+	return addr_matches;
+}
 
 /*
  * Compare the fileserver lists of two volumes.  The server lists are sorted in
  * order of ascending UUID.
  */
-अटल पूर्णांक afs_compare_volume_slists(स्थिर काष्ठा afs_volume *vol_a,
-				     स्थिर काष्ठा afs_volume *vol_b)
-अणु
-	स्थिर काष्ठा afs_server_list *la, *lb;
-	पूर्णांक i, a = 0, b = 0, uuid_matches = 0, addr_matches = 0;
+static int afs_compare_volume_slists(const struct afs_volume *vol_a,
+				     const struct afs_volume *vol_b)
+{
+	const struct afs_server_list *la, *lb;
+	int i, a = 0, b = 0, uuid_matches = 0, addr_matches = 0;
 
 	la = rcu_dereference(vol_a->servers);
 	lb = rcu_dereference(vol_b->servers);
 
-	क्रम (i = 0; i < AFS_MAXTYPES; i++)
-		अगर (la->vids[i] != lb->vids[i])
-			वापस 0;
+	for (i = 0; i < AFS_MAXTYPES; i++)
+		if (la->vids[i] != lb->vids[i])
+			return 0;
 
-	जबतक (a < la->nr_servers && b < lb->nr_servers) अणु
-		स्थिर काष्ठा afs_server *server_a = la->servers[a].server;
-		स्थिर काष्ठा afs_server *server_b = lb->servers[b].server;
-		पूर्णांक dअगरf = स_भेद(&server_a->uuid, &server_b->uuid, माप(uuid_t));
+	while (a < la->nr_servers && b < lb->nr_servers) {
+		const struct afs_server *server_a = la->servers[a].server;
+		const struct afs_server *server_b = lb->servers[b].server;
+		int diff = memcmp(&server_a->uuid, &server_b->uuid, sizeof(uuid_t));
 
-		अगर (dअगरf < 0) अणु
+		if (diff < 0) {
 			a++;
-		पूर्ण अन्यथा अगर (dअगरf > 0) अणु
+		} else if (diff > 0) {
 			b++;
-		पूर्ण अन्यथा अणु
+		} else {
 			uuid_matches++;
 			addr_matches += afs_compare_fs_alists(server_a, server_b);
 			a++;
 			b++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	_leave(" = %d [um %d]", addr_matches, uuid_matches);
-	वापस addr_matches;
-पूर्ण
+	return addr_matches;
+}
 
 /*
  * Compare root.cell volumes.
  */
-अटल पूर्णांक afs_compare_cell_roots(काष्ठा afs_cell *cell)
-अणु
-	काष्ठा afs_cell *p;
+static int afs_compare_cell_roots(struct afs_cell *cell)
+{
+	struct afs_cell *p;
 
 	_enter("");
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	hlist_क्रम_each_entry_rcu(p, &cell->net->proc_cells, proc_link) अणु
-		अगर (p == cell || p->alias_of)
-			जारी;
-		अगर (!p->root_volume)
-			जारी; /* Ignore cells that करोn't have a root.cell volume. */
+	hlist_for_each_entry_rcu(p, &cell->net->proc_cells, proc_link) {
+		if (p == cell || p->alias_of)
+			continue;
+		if (!p->root_volume)
+			continue; /* Ignore cells that don't have a root.cell volume. */
 
-		अगर (afs_compare_volume_slists(cell->root_volume, p->root_volume) != 0)
-			जाओ is_alias;
-	पूर्ण
+		if (afs_compare_volume_slists(cell->root_volume, p->root_volume) != 0)
+			goto is_alias;
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
 is_alias:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	cell->alias_of = afs_use_cell(p, afs_cell_trace_use_alias);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Query the new cell क्रम a volume from a cell we're alपढ़ोy using.
+ * Query the new cell for a volume from a cell we're already using.
  */
-अटल पूर्णांक afs_query_क्रम_alias_one(काष्ठा afs_cell *cell, काष्ठा key *key,
-				   काष्ठा afs_cell *p)
-अणु
-	काष्ठा afs_volume *volume, *pvol = शून्य;
-	पूर्णांक ret;
+static int afs_query_for_alias_one(struct afs_cell *cell, struct key *key,
+				   struct afs_cell *p)
+{
+	struct afs_volume *volume, *pvol = NULL;
+	int ret;
 
 	/* Arbitrarily pick a volume from the list. */
-	पढ़ो_seqlock_excl(&p->volume_lock);
-	अगर (!RB_EMPTY_ROOT(&p->volumes))
+	read_seqlock_excl(&p->volume_lock);
+	if (!RB_EMPTY_ROOT(&p->volumes))
 		pvol = afs_get_volume(rb_entry(p->volumes.rb_node,
-					       काष्ठा afs_volume, cell_node),
+					       struct afs_volume, cell_node),
 				      afs_volume_trace_get_query_alias);
-	पढ़ो_sequnlock_excl(&p->volume_lock);
-	अगर (!pvol)
-		वापस 0;
+	read_sequnlock_excl(&p->volume_lock);
+	if (!pvol)
+		return 0;
 
 	_enter("%s:%s", cell->name, pvol->name);
 
-	/* And see अगर it's in the new cell. */
+	/* And see if it's in the new cell. */
 	volume = afs_sample_volume(cell, key, pvol->name, pvol->name_len);
-	अगर (IS_ERR(volume)) अणु
+	if (IS_ERR(volume)) {
 		afs_put_volume(cell->net, pvol, afs_volume_trace_put_query_alias);
-		अगर (PTR_ERR(volume) != -ENOMEDIUM)
-			वापस PTR_ERR(volume);
+		if (PTR_ERR(volume) != -ENOMEDIUM)
+			return PTR_ERR(volume);
 		/* That volume is not in the new cell, so not an alias */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* The new cell has a like-named volume also - compare volume ID,
 	 * server and address lists.
 	 */
 	ret = 0;
-	अगर (pvol->vid == volume->vid) अणु
-		rcu_पढ़ो_lock();
-		अगर (afs_compare_volume_slists(volume, pvol))
+	if (pvol->vid == volume->vid) {
+		rcu_read_lock();
+		if (afs_compare_volume_slists(volume, pvol))
 			ret = 1;
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 
 	afs_put_volume(cell->net, volume, afs_volume_trace_put_query_alias);
 	afs_put_volume(cell->net, pvol, afs_volume_trace_put_query_alias);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Query the new cell क्रम volumes we know exist in cells we're alपढ़ोy using.
+ * Query the new cell for volumes we know exist in cells we're already using.
  */
-अटल पूर्णांक afs_query_क्रम_alias(काष्ठा afs_cell *cell, काष्ठा key *key)
-अणु
-	काष्ठा afs_cell *p;
+static int afs_query_for_alias(struct afs_cell *cell, struct key *key)
+{
+	struct afs_cell *p;
 
 	_enter("%s", cell->name);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&cell->net->proc_cells_lock) < 0)
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&cell->net->proc_cells_lock) < 0)
+		return -ERESTARTSYS;
 
-	hlist_क्रम_each_entry(p, &cell->net->proc_cells, proc_link) अणु
-		अगर (p == cell || p->alias_of)
-			जारी;
-		अगर (RB_EMPTY_ROOT(&p->volumes))
-			जारी;
-		अगर (p->root_volume)
-			जारी; /* Ignore cells that have a root.cell volume. */
+	hlist_for_each_entry(p, &cell->net->proc_cells, proc_link) {
+		if (p == cell || p->alias_of)
+			continue;
+		if (RB_EMPTY_ROOT(&p->volumes))
+			continue;
+		if (p->root_volume)
+			continue; /* Ignore cells that have a root.cell volume. */
 		afs_use_cell(p, afs_cell_trace_use_check_alias);
 		mutex_unlock(&cell->net->proc_cells_lock);
 
-		अगर (afs_query_क्रम_alias_one(cell, key, p) != 0)
-			जाओ is_alias;
+		if (afs_query_for_alias_one(cell, key, p) != 0)
+			goto is_alias;
 
-		अगर (mutex_lock_पूर्णांकerruptible(&cell->net->proc_cells_lock) < 0) अणु
+		if (mutex_lock_interruptible(&cell->net->proc_cells_lock) < 0) {
 			afs_unuse_cell(cell->net, p, afs_cell_trace_unuse_check_alias);
-			वापस -ERESTARTSYS;
-		पूर्ण
+			return -ERESTARTSYS;
+		}
 
 		afs_unuse_cell(cell->net, p, afs_cell_trace_unuse_check_alias);
-	पूर्ण
+	}
 
 	mutex_unlock(&cell->net->proc_cells_lock);
 	_leave(" = 0");
-	वापस 0;
+	return 0;
 
 is_alias:
 	cell->alias_of = p; /* Transfer our ref */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Look up a VLDB record क्रम a volume.
+ * Look up a VLDB record for a volume.
  */
-अटल अक्षर *afs_vl_get_cell_name(काष्ठा afs_cell *cell, काष्ठा key *key)
-अणु
-	काष्ठा afs_vl_cursor vc;
-	अक्षर *cell_name = ERR_PTR(-EDESTADDRREQ);
+static char *afs_vl_get_cell_name(struct afs_cell *cell, struct key *key)
+{
+	struct afs_vl_cursor vc;
+	char *cell_name = ERR_PTR(-EDESTADDRREQ);
 	bool skipped = false, not_skipped = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!afs_begin_vlserver_operation(&vc, cell, key))
-		वापस ERR_PTR(-ERESTARTSYS);
+	if (!afs_begin_vlserver_operation(&vc, cell, key))
+		return ERR_PTR(-ERESTARTSYS);
 
-	जबतक (afs_select_vlserver(&vc)) अणु
-		अगर (!test_bit(AFS_VLSERVER_FL_IS_YFS, &vc.server->flags)) अणु
+	while (afs_select_vlserver(&vc)) {
+		if (!test_bit(AFS_VLSERVER_FL_IS_YFS, &vc.server->flags)) {
 			vc.ac.error = -EOPNOTSUPP;
 			skipped = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		not_skipped = true;
 		cell_name = afs_yfsvl_get_cell_name(&vc);
-	पूर्ण
+	}
 
 	ret = afs_end_vlserver_operation(&vc);
-	अगर (skipped && !not_skipped)
+	if (skipped && !not_skipped)
 		ret = -EOPNOTSUPP;
-	वापस ret < 0 ? ERR_PTR(ret) : cell_name;
-पूर्ण
+	return ret < 0 ? ERR_PTR(ret) : cell_name;
+}
 
-अटल पूर्णांक yfs_check_canonical_cell_name(काष्ठा afs_cell *cell, काष्ठा key *key)
-अणु
-	काष्ठा afs_cell *master;
-	अक्षर *cell_name;
+static int yfs_check_canonical_cell_name(struct afs_cell *cell, struct key *key)
+{
+	struct afs_cell *master;
+	char *cell_name;
 
 	cell_name = afs_vl_get_cell_name(cell, key);
-	अगर (IS_ERR(cell_name))
-		वापस PTR_ERR(cell_name);
+	if (IS_ERR(cell_name))
+		return PTR_ERR(cell_name);
 
-	अगर (म_भेद(cell_name, cell->name) == 0) अणु
-		kमुक्त(cell_name);
-		वापस 0;
-	पूर्ण
+	if (strcmp(cell_name, cell->name) == 0) {
+		kfree(cell_name);
+		return 0;
+	}
 
-	master = afs_lookup_cell(cell->net, cell_name, म_माप(cell_name),
-				 शून्य, false);
-	kमुक्त(cell_name);
-	अगर (IS_ERR(master))
-		वापस PTR_ERR(master);
+	master = afs_lookup_cell(cell->net, cell_name, strlen(cell_name),
+				 NULL, false);
+	kfree(cell_name);
+	if (IS_ERR(master))
+		return PTR_ERR(master);
 
 	cell->alias_of = master; /* Transfer our ref */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक afs_करो_cell_detect_alias(काष्ठा afs_cell *cell, काष्ठा key *key)
-अणु
-	काष्ठा afs_volume *root_volume;
-	पूर्णांक ret;
+static int afs_do_cell_detect_alias(struct afs_cell *cell, struct key *key)
+{
+	struct afs_volume *root_volume;
+	int ret;
 
 	_enter("%s", cell->name);
 
 	ret = yfs_check_canonical_cell_name(cell, key);
-	अगर (ret != -EOPNOTSUPP)
-		वापस ret;
+	if (ret != -EOPNOTSUPP)
+		return ret;
 
-	/* Try and get the root.cell volume क्रम comparison with other cells */
+	/* Try and get the root.cell volume for comparison with other cells */
 	root_volume = afs_sample_volume(cell, key, "root.cell", 9);
-	अगर (!IS_ERR(root_volume)) अणु
+	if (!IS_ERR(root_volume)) {
 		cell->root_volume = root_volume;
-		वापस afs_compare_cell_roots(cell);
-	पूर्ण
+		return afs_compare_cell_roots(cell);
+	}
 
-	अगर (PTR_ERR(root_volume) != -ENOMEDIUM)
-		वापस PTR_ERR(root_volume);
+	if (PTR_ERR(root_volume) != -ENOMEDIUM)
+		return PTR_ERR(root_volume);
 
-	/* Okay, this cell करोesn't have an root.cell volume.  We need to
-	 * locate some other अक्रमom volume and use that to check.
+	/* Okay, this cell doesn't have an root.cell volume.  We need to
+	 * locate some other random volume and use that to check.
 	 */
-	वापस afs_query_क्रम_alias(cell, key);
-पूर्ण
+	return afs_query_for_alias(cell, key);
+}
 
 /*
- * Check to see अगर a new cell is an alias of a cell we alपढ़ोy have.  At this
- * poपूर्णांक we have the cell's volume server list.
+ * Check to see if a new cell is an alias of a cell we already have.  At this
+ * point we have the cell's volume server list.
  *
- * Returns 0 अगर we didn't detect an alias, 1 अगर we found an alias and an error
- * अगर we had problems gathering the data required.  In the हाल the we did
- * detect an alias, cell->alias_of is set to poपूर्णांक to the assumed master.
+ * Returns 0 if we didn't detect an alias, 1 if we found an alias and an error
+ * if we had problems gathering the data required.  In the case the we did
+ * detect an alias, cell->alias_of is set to point to the assumed master.
  */
-पूर्णांक afs_cell_detect_alias(काष्ठा afs_cell *cell, काष्ठा key *key)
-अणु
-	काष्ठा afs_net *net = cell->net;
-	पूर्णांक ret;
+int afs_cell_detect_alias(struct afs_cell *cell, struct key *key)
+{
+	struct afs_net *net = cell->net;
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&net->cells_alias_lock) < 0)
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&net->cells_alias_lock) < 0)
+		return -ERESTARTSYS;
 
-	अगर (test_bit(AFS_CELL_FL_CHECK_ALIAS, &cell->flags)) अणु
-		ret = afs_करो_cell_detect_alias(cell, key);
-		अगर (ret >= 0)
+	if (test_bit(AFS_CELL_FL_CHECK_ALIAS, &cell->flags)) {
+		ret = afs_do_cell_detect_alias(cell, key);
+		if (ret >= 0)
 			clear_bit_unlock(AFS_CELL_FL_CHECK_ALIAS, &cell->flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = cell->alias_of ? 1 : 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&net->cells_alias_lock);
 
-	अगर (ret == 1)
+	if (ret == 1)
 		pr_notice("kAFS: Cell %s is an alias of %s\n",
 			  cell->name, cell->alias_of->name);
-	वापस ret;
-पूर्ण
+	return ret;
+}

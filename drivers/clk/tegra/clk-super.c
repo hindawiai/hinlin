@@ -1,215 +1,214 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk-provider.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/clk-provider.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-#घोषणा SUPER_STATE_IDLE 0
-#घोषणा SUPER_STATE_RUN 1
-#घोषणा SUPER_STATE_IRQ 2
-#घोषणा SUPER_STATE_FIQ 3
+#define SUPER_STATE_IDLE 0
+#define SUPER_STATE_RUN 1
+#define SUPER_STATE_IRQ 2
+#define SUPER_STATE_FIQ 3
 
-#घोषणा SUPER_STATE_SHIFT 28
-#घोषणा SUPER_STATE_MASK ((BIT(SUPER_STATE_IDLE) | BIT(SUPER_STATE_RUN) | \
+#define SUPER_STATE_SHIFT 28
+#define SUPER_STATE_MASK ((BIT(SUPER_STATE_IDLE) | BIT(SUPER_STATE_RUN) | \
 			   BIT(SUPER_STATE_IRQ) | BIT(SUPER_STATE_FIQ))	\
 			  << SUPER_STATE_SHIFT)
 
-#घोषणा SUPER_LP_DIV2_BYPASS (1 << 16)
+#define SUPER_LP_DIV2_BYPASS (1 << 16)
 
-#घोषणा super_state(s) (BIT(s) << SUPER_STATE_SHIFT)
-#घोषणा super_state_to_src_shअगरt(m, s) ((m->width * s))
-#घोषणा super_state_to_src_mask(m) (((1 << m->width) - 1))
+#define super_state(s) (BIT(s) << SUPER_STATE_SHIFT)
+#define super_state_to_src_shift(m, s) ((m->width * s))
+#define super_state_to_src_mask(m) (((1 << m->width) - 1))
 
-#घोषणा CCLK_SRC_PLLP_OUT0 4
-#घोषणा CCLK_SRC_PLLP_OUT4 5
+#define CCLK_SRC_PLLP_OUT0 4
+#define CCLK_SRC_PLLP_OUT4 5
 
-अटल u8 clk_super_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_clk_super_mux *mux = to_clk_super_mux(hw);
+static u8 clk_super_get_parent(struct clk_hw *hw)
+{
+	struct tegra_clk_super_mux *mux = to_clk_super_mux(hw);
 	u32 val, state;
-	u8 source, shअगरt;
+	u8 source, shift;
 
-	val = पढ़ोl_relaxed(mux->reg);
+	val = readl_relaxed(mux->reg);
 
 	state = val & SUPER_STATE_MASK;
 
 	BUG_ON((state != super_state(SUPER_STATE_RUN)) &&
 	       (state != super_state(SUPER_STATE_IDLE)));
-	shअगरt = (state == super_state(SUPER_STATE_IDLE)) ?
-		super_state_to_src_shअगरt(mux, SUPER_STATE_IDLE) :
-		super_state_to_src_shअगरt(mux, SUPER_STATE_RUN);
+	shift = (state == super_state(SUPER_STATE_IDLE)) ?
+		super_state_to_src_shift(mux, SUPER_STATE_IDLE) :
+		super_state_to_src_shift(mux, SUPER_STATE_RUN);
 
-	source = (val >> shअगरt) & super_state_to_src_mask(mux);
+	source = (val >> shift) & super_state_to_src_mask(mux);
 
 	/*
 	 * If LP_DIV2_BYPASS is not set and PLLX is current parent then
 	 * PLLX/2 is the input source to CCLKLP.
 	 */
-	अगर ((mux->flags & TEGRA_DIVIDER_2) && !(val & SUPER_LP_DIV2_BYPASS) &&
+	if ((mux->flags & TEGRA_DIVIDER_2) && !(val & SUPER_LP_DIV2_BYPASS) &&
 	    (source == mux->pllx_index))
-		source = mux->भाग2_index;
+		source = mux->div2_index;
 
-	वापस source;
-पूर्ण
+	return source;
+}
 
-अटल पूर्णांक clk_super_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा tegra_clk_super_mux *mux = to_clk_super_mux(hw);
+static int clk_super_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct tegra_clk_super_mux *mux = to_clk_super_mux(hw);
 	u32 val, state;
-	पूर्णांक err = 0;
-	u8 parent_index, shअगरt;
-	अचिन्हित दीर्घ flags = 0;
+	int err = 0;
+	u8 parent_index, shift;
+	unsigned long flags = 0;
 
-	अगर (mux->lock)
+	if (mux->lock)
 		spin_lock_irqsave(mux->lock, flags);
 
-	val = पढ़ोl_relaxed(mux->reg);
+	val = readl_relaxed(mux->reg);
 	state = val & SUPER_STATE_MASK;
 	BUG_ON((state != super_state(SUPER_STATE_RUN)) &&
 	       (state != super_state(SUPER_STATE_IDLE)));
-	shअगरt = (state == super_state(SUPER_STATE_IDLE)) ?
-		super_state_to_src_shअगरt(mux, SUPER_STATE_IDLE) :
-		super_state_to_src_shअगरt(mux, SUPER_STATE_RUN);
+	shift = (state == super_state(SUPER_STATE_IDLE)) ?
+		super_state_to_src_shift(mux, SUPER_STATE_IDLE) :
+		super_state_to_src_shift(mux, SUPER_STATE_RUN);
 
 	/*
-	 * For LP mode super-घड़ी चयन between PLLX direct
-	 * and भागided-by-2 outमाला_दो is allowed only when other
-	 * than PLLX घड़ी source is current parent.
+	 * For LP mode super-clock switch between PLLX direct
+	 * and divided-by-2 outputs is allowed only when other
+	 * than PLLX clock source is current parent.
 	 */
-	अगर ((mux->flags & TEGRA_DIVIDER_2) && ((index == mux->भाग2_index) ||
-					       (index == mux->pllx_index))) अणु
+	if ((mux->flags & TEGRA_DIVIDER_2) && ((index == mux->div2_index) ||
+					       (index == mux->pllx_index))) {
 		parent_index = clk_super_get_parent(hw);
-		अगर ((parent_index == mux->भाग2_index) ||
-		    (parent_index == mux->pllx_index)) अणु
+		if ((parent_index == mux->div2_index) ||
+		    (parent_index == mux->pllx_index)) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		val ^= SUPER_LP_DIV2_BYPASS;
-		ग_लिखोl_relaxed(val, mux->reg);
+		writel_relaxed(val, mux->reg);
 		udelay(2);
 
-		अगर (index == mux->भाग2_index)
+		if (index == mux->div2_index)
 			index = mux->pllx_index;
-	पूर्ण
+	}
 
-	/* enable PLLP branches to CPU beक्रमe selecting PLLP source */
-	अगर ((mux->flags & TEGRA210_CPU_CLK) &&
+	/* enable PLLP branches to CPU before selecting PLLP source */
+	if ((mux->flags & TEGRA210_CPU_CLK) &&
 	    (index == CCLK_SRC_PLLP_OUT0 || index == CCLK_SRC_PLLP_OUT4))
 		tegra_clk_set_pllp_out_cpu(true);
 
-	val &= ~((super_state_to_src_mask(mux)) << shअगरt);
-	val |= (index & (super_state_to_src_mask(mux))) << shअगरt;
+	val &= ~((super_state_to_src_mask(mux)) << shift);
+	val |= (index & (super_state_to_src_mask(mux))) << shift;
 
-	ग_लिखोl_relaxed(val, mux->reg);
+	writel_relaxed(val, mux->reg);
 	udelay(2);
 
-	/* disable PLLP branches to CPU अगर not used */
-	अगर ((mux->flags & TEGRA210_CPU_CLK) &&
+	/* disable PLLP branches to CPU if not used */
+	if ((mux->flags & TEGRA210_CPU_CLK) &&
 	    index != CCLK_SRC_PLLP_OUT0 && index != CCLK_SRC_PLLP_OUT4)
 		tegra_clk_set_pllp_out_cpu(false);
 
 out:
-	अगर (mux->lock)
+	if (mux->lock)
 		spin_unlock_irqrestore(mux->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम clk_super_mux_restore_context(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक parent_id;
+static void clk_super_mux_restore_context(struct clk_hw *hw)
+{
+	int parent_id;
 
 	parent_id = clk_hw_get_parent_index(hw);
-	अगर (WARN_ON(parent_id < 0))
-		वापस;
+	if (WARN_ON(parent_id < 0))
+		return;
 
 	clk_super_set_parent(hw, parent_id);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops tegra_clk_super_mux_ops = अणु
+static const struct clk_ops tegra_clk_super_mux_ops = {
 	.get_parent = clk_super_get_parent,
 	.set_parent = clk_super_set_parent,
 	.restore_context = clk_super_mux_restore_context,
-पूर्ण;
+};
 
-अटल दीर्घ clk_super_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा tegra_clk_super_mux *super = to_clk_super_mux(hw);
-	काष्ठा clk_hw *भाग_hw = &super->frac_भाग.hw;
+static long clk_super_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *parent_rate)
+{
+	struct tegra_clk_super_mux *super = to_clk_super_mux(hw);
+	struct clk_hw *div_hw = &super->frac_div.hw;
 
-	__clk_hw_set_clk(भाग_hw, hw);
+	__clk_hw_set_clk(div_hw, hw);
 
-	वापस super->भाग_ops->round_rate(भाग_hw, rate, parent_rate);
-पूर्ण
+	return super->div_ops->round_rate(div_hw, rate, parent_rate);
+}
 
-अटल अचिन्हित दीर्घ clk_super_recalc_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_clk_super_mux *super = to_clk_super_mux(hw);
-	काष्ठा clk_hw *भाग_hw = &super->frac_भाग.hw;
+static unsigned long clk_super_recalc_rate(struct clk_hw *hw,
+					   unsigned long parent_rate)
+{
+	struct tegra_clk_super_mux *super = to_clk_super_mux(hw);
+	struct clk_hw *div_hw = &super->frac_div.hw;
 
-	__clk_hw_set_clk(भाग_hw, hw);
+	__clk_hw_set_clk(div_hw, hw);
 
-	वापस super->भाग_ops->recalc_rate(भाग_hw, parent_rate);
-पूर्ण
+	return super->div_ops->recalc_rate(div_hw, parent_rate);
+}
 
-अटल पूर्णांक clk_super_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_clk_super_mux *super = to_clk_super_mux(hw);
-	काष्ठा clk_hw *भाग_hw = &super->frac_भाग.hw;
+static int clk_super_set_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct tegra_clk_super_mux *super = to_clk_super_mux(hw);
+	struct clk_hw *div_hw = &super->frac_div.hw;
 
-	__clk_hw_set_clk(भाग_hw, hw);
+	__clk_hw_set_clk(div_hw, hw);
 
-	वापस super->भाग_ops->set_rate(भाग_hw, rate, parent_rate);
-पूर्ण
+	return super->div_ops->set_rate(div_hw, rate, parent_rate);
+}
 
-अटल व्योम clk_super_restore_context(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा tegra_clk_super_mux *super = to_clk_super_mux(hw);
-	काष्ठा clk_hw *भाग_hw = &super->frac_भाग.hw;
-	पूर्णांक parent_id;
+static void clk_super_restore_context(struct clk_hw *hw)
+{
+	struct tegra_clk_super_mux *super = to_clk_super_mux(hw);
+	struct clk_hw *div_hw = &super->frac_div.hw;
+	int parent_id;
 
 	parent_id = clk_hw_get_parent_index(hw);
-	अगर (WARN_ON(parent_id < 0))
-		वापस;
+	if (WARN_ON(parent_id < 0))
+		return;
 
-	super->भाग_ops->restore_context(भाग_hw);
+	super->div_ops->restore_context(div_hw);
 	clk_super_set_parent(hw, parent_id);
-पूर्ण
+}
 
-स्थिर काष्ठा clk_ops tegra_clk_super_ops = अणु
+const struct clk_ops tegra_clk_super_ops = {
 	.get_parent = clk_super_get_parent,
 	.set_parent = clk_super_set_parent,
 	.set_rate = clk_super_set_rate,
 	.round_rate = clk_super_round_rate,
 	.recalc_rate = clk_super_recalc_rate,
 	.restore_context = clk_super_restore_context,
-पूर्ण;
+};
 
-काष्ठा clk *tegra_clk_रेजिस्टर_super_mux(स्थिर अक्षर *name,
-		स्थिर अक्षर **parent_names, u8 num_parents,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 clk_super_flags,
-		u8 width, u8 pllx_index, u8 भाग2_index, spinlock_t *lock)
-अणु
-	काष्ठा tegra_clk_super_mux *super;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+struct clk *tegra_clk_register_super_mux(const char *name,
+		const char **parent_names, u8 num_parents,
+		unsigned long flags, void __iomem *reg, u8 clk_super_flags,
+		u8 width, u8 pllx_index, u8 div2_index, spinlock_t *lock)
+{
+	struct tegra_clk_super_mux *super;
+	struct clk *clk;
+	struct clk_init_data init;
 
-	super = kzalloc(माप(*super), GFP_KERNEL);
-	अगर (!super)
-		वापस ERR_PTR(-ENOMEM);
+	super = kzalloc(sizeof(*super), GFP_KERNEL);
+	if (!super)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &tegra_clk_super_mux_ops;
@@ -219,33 +218,33 @@ out:
 
 	super->reg = reg;
 	super->pllx_index = pllx_index;
-	super->भाग2_index = भाग2_index;
+	super->div2_index = div2_index;
 	super->lock = lock;
 	super->width = width;
 	super->flags = clk_super_flags;
 
-	/* Data in .init is copied by clk_रेजिस्टर(), so stack variable OK */
+	/* Data in .init is copied by clk_register(), so stack variable OK */
 	super->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &super->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(super);
+	clk = clk_register(NULL, &super->hw);
+	if (IS_ERR(clk))
+		kfree(super);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-काष्ठा clk *tegra_clk_रेजिस्टर_super_clk(स्थिर अक्षर *name,
-		स्थिर अक्षर * स्थिर *parent_names, u8 num_parents,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 clk_super_flags,
+struct clk *tegra_clk_register_super_clk(const char *name,
+		const char * const *parent_names, u8 num_parents,
+		unsigned long flags, void __iomem *reg, u8 clk_super_flags,
 		spinlock_t *lock)
-अणु
-	काष्ठा tegra_clk_super_mux *super;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
+{
+	struct tegra_clk_super_mux *super;
+	struct clk *clk;
+	struct clk_init_data init;
 
-	super = kzalloc(माप(*super), GFP_KERNEL);
-	अगर (!super)
-		वापस ERR_PTR(-ENOMEM);
+	super = kzalloc(sizeof(*super), GFP_KERNEL);
+	if (!super)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &tegra_clk_super_ops;
@@ -257,19 +256,19 @@ out:
 	super->lock = lock;
 	super->width = 4;
 	super->flags = clk_super_flags;
-	super->frac_भाग.reg = reg + 4;
-	super->frac_भाग.shअगरt = 16;
-	super->frac_भाग.width = 8;
-	super->frac_भाग.frac_width = 1;
-	super->frac_भाग.lock = lock;
-	super->भाग_ops = &tegra_clk_frac_भाग_ops;
+	super->frac_div.reg = reg + 4;
+	super->frac_div.shift = 16;
+	super->frac_div.width = 8;
+	super->frac_div.frac_width = 1;
+	super->frac_div.lock = lock;
+	super->div_ops = &tegra_clk_frac_div_ops;
 
-	/* Data in .init is copied by clk_रेजिस्टर(), so stack variable OK */
+	/* Data in .init is copied by clk_register(), so stack variable OK */
 	super->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &super->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(super);
+	clk = clk_register(NULL, &super->hw);
+	if (IS_ERR(clk))
+		kfree(super);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

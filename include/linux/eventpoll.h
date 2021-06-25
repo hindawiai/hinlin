@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  include/linux/eventpoll.h ( Efficient event polling implementation )
  *  Copyright (C) 2001,...,2006	 Davide Libenzi
  *
  *  Davide Libenzi <davidel@xmailserver.org>
  */
-#अगर_अघोषित _LINUX_EVENTPOLL_H
-#घोषणा _LINUX_EVENTPOLL_H
+#ifndef _LINUX_EVENTPOLL_H
+#define _LINUX_EVENTPOLL_H
 
-#समावेश <uapi/linux/eventpoll.h>
-#समावेश <uapi/linux/kcmp.h>
-
-
-/* Forward declarations to aव्योम compiler errors */
-काष्ठा file;
+#include <uapi/linux/eventpoll.h>
+#include <uapi/linux/kcmp.h>
 
 
-#अगर_घोषित CONFIG_EPOLL
+/* Forward declarations to avoid compiler errors */
+struct file;
 
-#अगर_घोषित CONFIG_KCMP
-काष्ठा file *get_epoll_tfile_raw_ptr(काष्ठा file *file, पूर्णांक tfd, अचिन्हित दीर्घ toff);
-#पूर्ण_अगर
+
+#ifdef CONFIG_EPOLL
+
+#ifdef CONFIG_KCMP
+struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
+#endif
 
 /* Used to release the epoll bits inside the "struct file" */
-व्योम eventpoll_release_file(काष्ठा file *file);
+void eventpoll_release_file(struct file *file);
 
 /*
  * This is called from inside fs/file_table.c:__fput() to unlink files
- * from the eventpoll पूर्णांकerface. We need to have this facility to cleanup
- * correctly files that are बंदd without being हटाओd from the eventpoll
- * पूर्णांकerface.
+ * from the eventpoll interface. We need to have this facility to cleanup
+ * correctly files that are closed without being removed from the eventpoll
+ * interface.
  */
-अटल अंतरभूत व्योम eventpoll_release(काष्ठा file *file)
-अणु
+static inline void eventpoll_release(struct file *file)
+{
 
 	/*
-	 * Fast check to aव्योम the get/release of the semaphore. Since
-	 * we're करोing this outside the semaphore lock, it might वापस
-	 * false negatives, but we करोn't care. It'll help in 99.99% of हालs
-	 * to aव्योम the semaphore lock. False positives simply cannot happen
-	 * because the file in on the way to be हटाओd and nobody ( but
+	 * Fast check to avoid the get/release of the semaphore. Since
+	 * we're doing this outside the semaphore lock, it might return
+	 * false negatives, but we don't care. It'll help in 99.99% of cases
+	 * to avoid the semaphore lock. False positives simply cannot happen
+	 * because the file in on the way to be removed and nobody ( but
 	 * eventpoll ) has still a reference to this file.
 	 */
-	अगर (likely(!file->f_ep))
-		वापस;
+	if (likely(!file->f_ep))
+		return;
 
 	/*
-	 * The file is being बंदd जबतक it is still linked to an epoll
+	 * The file is being closed while it is still linked to an epoll
 	 * descriptor. We need to handle this by correctly unlinking it
 	 * from its containers.
 	 */
 	eventpoll_release_file(file);
-पूर्ण
+}
 
-पूर्णांक करो_epoll_ctl(पूर्णांक epfd, पूर्णांक op, पूर्णांक fd, काष्ठा epoll_event *epds,
+int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 		 bool nonblock);
 
-/* Tells अगर the epoll_ctl(2) operation needs an event copy from userspace */
-अटल अंतरभूत पूर्णांक ep_op_has_event(पूर्णांक op)
-अणु
-	वापस op != EPOLL_CTL_DEL;
-पूर्ण
+/* Tells if the epoll_ctl(2) operation needs an event copy from userspace */
+static inline int ep_op_has_event(int op)
+{
+	return op != EPOLL_CTL_DEL;
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम eventpoll_release(काष्ठा file *file) अणुपूर्ण
+static inline void eventpoll_release(struct file *file) {}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* #अगर_अघोषित _LINUX_EVENTPOLL_H */
+#endif /* #ifndef _LINUX_EVENTPOLL_H */

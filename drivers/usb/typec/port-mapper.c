@@ -1,213 +1,212 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB Type-C Connector Class Port Mapping Utility
  *
  * Copyright (C) 2021, Intel Corporation
- * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/typec.h>
+#include <linux/acpi.h>
+#include <linux/usb.h>
+#include <linux/usb/typec.h>
 
-#समावेश "class.h"
+#include "class.h"
 
-काष्ठा port_node अणु
-	काष्ठा list_head list;
-	काष्ठा device *dev;
-	व्योम *pld;
-पूर्ण;
+struct port_node {
+	struct list_head list;
+	struct device *dev;
+	void *pld;
+};
 
-अटल पूर्णांक acpi_pld_match(स्थिर काष्ठा acpi_pld_info *pld1,
-			  स्थिर काष्ठा acpi_pld_info *pld2)
-अणु
-	अगर (!pld1 || !pld2)
-		वापस 0;
+static int acpi_pld_match(const struct acpi_pld_info *pld1,
+			  const struct acpi_pld_info *pld2)
+{
+	if (!pld1 || !pld2)
+		return 0;
 
 	/*
 	 * To speed things up, first checking only the group_position. It seems
 	 * to often have the first unique value in the _PLD.
 	 */
-	अगर (pld1->group_position == pld2->group_position)
-		वापस !स_भेद(pld1, pld2, माप(काष्ठा acpi_pld_info));
+	if (pld1->group_position == pld2->group_position)
+		return !memcmp(pld1, pld2, sizeof(struct acpi_pld_info));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *get_pld(काष्ठा device *dev)
-अणु
-#अगर_घोषित CONFIG_ACPI
-	काष्ठा acpi_pld_info *pld;
+static void *get_pld(struct device *dev)
+{
+#ifdef CONFIG_ACPI
+	struct acpi_pld_info *pld;
 	acpi_status status;
 
-	अगर (!has_acpi_companion(dev))
-		वापस शून्य;
+	if (!has_acpi_companion(dev))
+		return NULL;
 
 	status = acpi_get_physical_device_location(ACPI_HANDLE(dev), &pld);
-	अगर (ACPI_FAILURE(status))
-		वापस शून्य;
+	if (ACPI_FAILURE(status))
+		return NULL;
 
-	वापस pld;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+	return pld;
+#else
+	return NULL;
+#endif
+}
 
-अटल व्योम मुक्त_pld(व्योम *pld)
-अणु
-#अगर_घोषित CONFIG_ACPI
+static void free_pld(void *pld)
+{
+#ifdef CONFIG_ACPI
 	ACPI_FREE(pld);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक __link_port(काष्ठा typec_port *con, काष्ठा port_node *node)
-अणु
-	पूर्णांक ret;
+static int __link_port(struct typec_port *con, struct port_node *node)
+{
+	int ret;
 
 	ret = sysfs_create_link(&node->dev->kobj, &con->dev.kobj, "connector");
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = sysfs_create_link(&con->dev.kobj, &node->dev->kobj,
 				dev_name(node->dev));
-	अगर (ret) अणु
-		sysfs_हटाओ_link(&node->dev->kobj, "connector");
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		sysfs_remove_link(&node->dev->kobj, "connector");
+		return ret;
+	}
 
 	list_add_tail(&node->list, &con->port_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक link_port(काष्ठा typec_port *con, काष्ठा port_node *node)
-अणु
-	पूर्णांक ret;
+static int link_port(struct typec_port *con, struct port_node *node)
+{
+	int ret;
 
 	mutex_lock(&con->port_list_lock);
 	ret = __link_port(con, node);
 	mutex_unlock(&con->port_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __unlink_port(काष्ठा typec_port *con, काष्ठा port_node *node)
-अणु
-	sysfs_हटाओ_link(&con->dev.kobj, dev_name(node->dev));
-	sysfs_हटाओ_link(&node->dev->kobj, "connector");
+static void __unlink_port(struct typec_port *con, struct port_node *node)
+{
+	sysfs_remove_link(&con->dev.kobj, dev_name(node->dev));
+	sysfs_remove_link(&node->dev->kobj, "connector");
 	list_del(&node->list);
-पूर्ण
+}
 
-अटल व्योम unlink_port(काष्ठा typec_port *con, काष्ठा port_node *node)
-अणु
+static void unlink_port(struct typec_port *con, struct port_node *node)
+{
 	mutex_lock(&con->port_list_lock);
 	__unlink_port(con, node);
 	mutex_unlock(&con->port_list_lock);
-पूर्ण
+}
 
-अटल काष्ठा port_node *create_port_node(काष्ठा device *port)
-अणु
-	काष्ठा port_node *node;
+static struct port_node *create_port_node(struct device *port)
+{
+	struct port_node *node;
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node)
-		वापस ERR_PTR(-ENOMEM);
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node)
+		return ERR_PTR(-ENOMEM);
 
 	node->dev = get_device(port);
 	node->pld = get_pld(port);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम हटाओ_port_node(काष्ठा port_node *node)
-अणु
+static void remove_port_node(struct port_node *node)
+{
 	put_device(node->dev);
-	मुक्त_pld(node->pld);
-	kमुक्त(node);
-पूर्ण
+	free_pld(node->pld);
+	kfree(node);
+}
 
-अटल पूर्णांक connector_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा port_node *node = data;
+static int connector_match(struct device *dev, const void *data)
+{
+	const struct port_node *node = data;
 
-	अगर (!is_typec_port(dev))
-		वापस 0;
+	if (!is_typec_port(dev))
+		return 0;
 
-	वापस acpi_pld_match(to_typec_port(dev)->pld, node->pld);
-पूर्ण
+	return acpi_pld_match(to_typec_port(dev)->pld, node->pld);
+}
 
-अटल काष्ठा device *find_connector(काष्ठा port_node *node)
-अणु
-	अगर (!node->pld)
-		वापस शून्य;
+static struct device *find_connector(struct port_node *node)
+{
+	if (!node->pld)
+		return NULL;
 
-	वापस class_find_device(&typec_class, शून्य, node, connector_match);
-पूर्ण
+	return class_find_device(&typec_class, NULL, node, connector_match);
+}
 
 /**
  * typec_link_port - Link a port to its connector
  * @port: The port device
  *
- * Find the connector of @port and create symlink named "connector" क्रम it.
- * Returns 0 on success, or त्रुटि_सं in हाल of a failure.
+ * Find the connector of @port and create symlink named "connector" for it.
+ * Returns 0 on success, or errno in case of a failure.
  *
  * NOTE. The function increments the reference count of @port on success.
  */
-पूर्णांक typec_link_port(काष्ठा device *port)
-अणु
-	काष्ठा device *connector;
-	काष्ठा port_node *node;
-	पूर्णांक ret;
+int typec_link_port(struct device *port)
+{
+	struct device *connector;
+	struct port_node *node;
+	int ret;
 
 	node = create_port_node(port);
-	अगर (IS_ERR(node))
-		वापस PTR_ERR(node);
+	if (IS_ERR(node))
+		return PTR_ERR(node);
 
 	connector = find_connector(node);
-	अगर (!connector) अणु
+	if (!connector) {
 		ret = 0;
-		जाओ हटाओ_node;
-	पूर्ण
+		goto remove_node;
+	}
 
 	ret = link_port(to_typec_port(connector), node);
-	अगर (ret)
-		जाओ put_connector;
+	if (ret)
+		goto put_connector;
 
-	वापस 0;
+	return 0;
 
 put_connector:
 	put_device(connector);
-हटाओ_node:
-	हटाओ_port_node(node);
+remove_node:
+	remove_port_node(node);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(typec_link_port);
 
-अटल पूर्णांक port_match_and_unlink(काष्ठा device *connector, व्योम *port)
-अणु
-	काष्ठा port_node *node;
-	काष्ठा port_node *पंचांगp;
-	पूर्णांक ret = 0;
+static int port_match_and_unlink(struct device *connector, void *port)
+{
+	struct port_node *node;
+	struct port_node *tmp;
+	int ret = 0;
 
-	अगर (!is_typec_port(connector))
-		वापस 0;
+	if (!is_typec_port(connector))
+		return 0;
 
 	mutex_lock(&to_typec_port(connector)->port_list_lock);
-	list_क्रम_each_entry_safe(node, पंचांगp, &to_typec_port(connector)->port_list, list) अणु
+	list_for_each_entry_safe(node, tmp, &to_typec_port(connector)->port_list, list) {
 		ret = node->dev == port;
-		अगर (ret) अणु
+		if (ret) {
 			unlink_port(to_typec_port(connector), node);
-			हटाओ_port_node(node);
+			remove_port_node(node);
 			put_device(connector);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&to_typec_port(connector)->port_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * typec_unlink_port - Unlink port from its connector
@@ -215,66 +214,66 @@ EXPORT_SYMBOL_GPL(typec_link_port);
  *
  * Removes the symlink "connector" and decrements the reference count of @port.
  */
-व्योम typec_unlink_port(काष्ठा device *port)
-अणु
-	class_क्रम_each_device(&typec_class, शून्य, port, port_match_and_unlink);
-पूर्ण
+void typec_unlink_port(struct device *port)
+{
+	class_for_each_device(&typec_class, NULL, port, port_match_and_unlink);
+}
 EXPORT_SYMBOL_GPL(typec_unlink_port);
 
-अटल पूर्णांक each_port(काष्ठा device *port, व्योम *connector)
-अणु
-	काष्ठा port_node *node;
-	पूर्णांक ret;
+static int each_port(struct device *port, void *connector)
+{
+	struct port_node *node;
+	int ret;
 
 	node = create_port_node(port);
-	अगर (IS_ERR(node))
-		वापस PTR_ERR(node);
+	if (IS_ERR(node))
+		return PTR_ERR(node);
 
-	अगर (!connector_match(connector, node)) अणु
-		हटाओ_port_node(node);
-		वापस 0;
-	पूर्ण
+	if (!connector_match(connector, node)) {
+		remove_port_node(node);
+		return 0;
+	}
 
 	ret = link_port(to_typec_port(connector), node);
-	अगर (ret) अणु
-		हटाओ_port_node(node->pld);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		remove_port_node(node->pld);
+		return ret;
+	}
 
 	get_device(connector);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक typec_link_ports(काष्ठा typec_port *con)
-अणु
-	पूर्णांक ret = 0;
+int typec_link_ports(struct typec_port *con)
+{
+	int ret = 0;
 
 	con->pld = get_pld(&con->dev);
-	अगर (!con->pld)
-		वापस 0;
+	if (!con->pld)
+		return 0;
 
-	ret = usb_क्रम_each_port(&con->dev, each_port);
-	अगर (ret)
+	ret = usb_for_each_port(&con->dev, each_port);
+	if (ret)
 		typec_unlink_ports(con);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम typec_unlink_ports(काष्ठा typec_port *con)
-अणु
-	काष्ठा port_node *node;
-	काष्ठा port_node *पंचांगp;
+void typec_unlink_ports(struct typec_port *con)
+{
+	struct port_node *node;
+	struct port_node *tmp;
 
 	mutex_lock(&con->port_list_lock);
 
-	list_क्रम_each_entry_safe(node, पंचांगp, &con->port_list, list) अणु
+	list_for_each_entry_safe(node, tmp, &con->port_list, list) {
 		__unlink_port(con, node);
-		हटाओ_port_node(node);
+		remove_port_node(node);
 		put_device(&con->dev);
-	पूर्ण
+	}
 
 	mutex_unlock(&con->port_list_lock);
 
-	मुक्त_pld(con->pld);
-पूर्ण
+	free_pld(con->pld);
+}

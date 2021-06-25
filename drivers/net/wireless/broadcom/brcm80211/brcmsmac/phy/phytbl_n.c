@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <types.h>
-#समावेश "phytbl_n.h"
+#include <linux/kernel.h>
+#include <types.h>
+#include "phytbl_n.h"
 
-अटल स्थिर u32 frame_काष्ठा_rev0[] = अणु
+static const u32 frame_struct_rev0[] = {
 	0x08004a04,
 	0x00100000,
 	0x01000a05,
@@ -841,9 +840,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u8 frame_lut_rev0[] = अणु
+static const u8 frame_lut_rev0[] = {
 	0x02,
 	0x04,
 	0x14,
@@ -876,9 +875,9 @@
 	0x11,
 	0x22,
 	0x2a,
-पूर्ण;
+};
 
-अटल स्थिर u32 पंचांगap_tbl_rev0[] = अणु
+static const u32 tmap_tbl_rev0[] = {
 	0x8a88aa80,
 	0x8aaaaa8a,
 	0x8a8a8aa8,
@@ -1327,9 +1326,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdtrn_tbl_rev0[] = अणु
+static const u32 tdtrn_tbl_rev0[] = {
 	0x061c061c,
 	0x0050ee68,
 	0xf592fe36,
@@ -2034,9 +2033,9 @@
 	0x0b64fc7e,
 	0x0800f7b6,
 	0x00f006be,
-पूर्ण;
+};
 
-अटल स्थिर u32 पूर्णांकlv_tbl_rev0[] = अणु
+static const u32 intlv_tbl_rev0[] = {
 	0x00802070,
 	0x0671188d,
 	0x0a60192c,
@@ -2044,9 +2043,9 @@
 	0x00c1188d,
 	0x080024d2,
 	0x00000070,
-पूर्ण;
+};
 
-अटल स्थिर u16 pilot_tbl_rev0[] = अणु
+static const u16 pilot_tbl_rev0[] = {
 	0xff08,
 	0xff08,
 	0xff08,
@@ -2135,18 +2134,18 @@
 	0xf028,
 	0xffff,
 	0xffff,
-पूर्ण;
+};
 
-अटल स्थिर u32 pltlut_tbl_rev0[] = अणु
+static const u32 pltlut_tbl_rev0[] = {
 	0x76540123,
 	0x62407351,
 	0x76543201,
 	0x76540213,
 	0x76540123,
 	0x76430521,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl20_ant0_rev0[] = अणु
+static const u32 tdi_tbl20_ant0_rev0[] = {
 	0x00091226,
 	0x000a1429,
 	0x000b56ad,
@@ -2202,9 +2201,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl20_ant1_rev0[] = अणु
+static const u32 tdi_tbl20_ant1_rev0[] = {
 	0x00014b26,
 	0x00028d29,
 	0x000393ad,
@@ -2260,9 +2259,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl40_ant0_rev0[] = अणु
+static const u32 tdi_tbl40_ant0_rev0[] = {
 	0x0011a346,
 	0x00136ccf,
 	0x0014f5d9,
@@ -2373,9 +2372,9 @@
 	0x000e9d3a,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl40_ant1_rev0[] = अणु
+static const u32 tdi_tbl40_ant1_rev0[] = {
 	0x001edb36,
 	0x000129ca,
 	0x0002b353,
@@ -2486,18 +2485,18 @@
 	0x001e9ab5,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u16 bdi_tbl_rev0[] = अणु
+static const u16 bdi_tbl_rev0[] = {
 	0x0070,
 	0x0126,
 	0x012c,
 	0x0246,
 	0x048d,
 	0x04d2,
-पूर्ण;
+};
 
-अटल स्थिर u32 chanest_tbl_rev0[] = अणु
+static const u32 chanest_tbl_rev0[] = {
 	0x44444444,
 	0x44444444,
 	0x44444444,
@@ -2594,9 +2593,9 @@
 	0x10101010,
 	0x10101010,
 	0x10101010,
-पूर्ण;
+};
 
-अटल स्थिर u8 mcs_tbl_rev0[] = अणु
+static const u8 mcs_tbl_rev0[] = {
 	0x00,
 	0x08,
 	0x0a,
@@ -2725,9 +2724,9 @@
 	0x00,
 	0x00,
 	0x00,
-पूर्ण;
+};
 
-अटल स्थिर u32 noise_var_tbl0_rev0[] = अणु
+static const u32 noise_var_tbl0_rev0[] = {
 	0x020c020c,
 	0x0000014d,
 	0x020c020c,
@@ -2984,9 +2983,9 @@
 	0x0000014d,
 	0x020c020c,
 	0x0000014d,
-पूर्ण;
+};
 
-अटल स्थिर u32 noise_var_tbl1_rev0[] = अणु
+static const u32 noise_var_tbl1_rev0[] = {
 	0x020c020c,
 	0x0000014d,
 	0x020c020c,
@@ -3243,9 +3242,9 @@
 	0x0000014d,
 	0x020c020c,
 	0x0000014d,
-पूर्ण;
+};
 
-अटल स्थिर u8 est_pwr_lut_core0_rev0[] = अणु
+static const u8 est_pwr_lut_core0_rev0[] = {
 	0x50,
 	0x4f,
 	0x4e,
@@ -3310,9 +3309,9 @@
 	0x13,
 	0x12,
 	0x11,
-पूर्ण;
+};
 
-अटल स्थिर u8 est_pwr_lut_core1_rev0[] = अणु
+static const u8 est_pwr_lut_core1_rev0[] = {
 	0x50,
 	0x4f,
 	0x4e,
@@ -3377,9 +3376,9 @@
 	0x13,
 	0x12,
 	0x11,
-पूर्ण;
+};
 
-अटल स्थिर u8 adj_pwr_lut_core0_rev0[] = अणु
+static const u8 adj_pwr_lut_core0_rev0[] = {
 	0x00,
 	0x00,
 	0x00,
@@ -3508,9 +3507,9 @@
 	0x00,
 	0x00,
 	0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 adj_pwr_lut_core1_rev0[] = अणु
+static const u8 adj_pwr_lut_core1_rev0[] = {
 	0x00,
 	0x00,
 	0x00,
@@ -3639,9 +3638,9 @@
 	0x00,
 	0x00,
 	0x00,
-पूर्ण;
+};
 
-अटल स्थिर u32 gainctrl_lut_core0_rev0[] = अणु
+static const u32 gainctrl_lut_core0_rev0[] = {
 	0x03cc2b44,
 	0x03cc2b42,
 	0x03cc2b40,
@@ -3770,9 +3769,9 @@
 	0x03802b18,
 	0x03802b18,
 	0x00002b00,
-पूर्ण;
+};
 
-अटल स्थिर u32 gainctrl_lut_core1_rev0[] = अणु
+static const u32 gainctrl_lut_core1_rev0[] = {
 	0x03cc2b44,
 	0x03cc2b42,
 	0x03cc2b40,
@@ -3901,9 +3900,9 @@
 	0x03802b18,
 	0x03802b18,
 	0x00002b00,
-पूर्ण;
+};
 
-अटल स्थिर u32 iq_lut_core0_rev0[] = अणु
+static const u32 iq_lut_core0_rev0[] = {
 	0x0000007f,
 	0x0000007f,
 	0x0000007f,
@@ -4032,9 +4031,9 @@
 	0x0000007f,
 	0x0000007f,
 	0x0000007f,
-पूर्ण;
+};
 
-अटल स्थिर u32 iq_lut_core1_rev0[] = अणु
+static const u32 iq_lut_core1_rev0[] = {
 	0x0000007f,
 	0x0000007f,
 	0x0000007f,
@@ -4163,9 +4162,9 @@
 	0x0000007f,
 	0x0000007f,
 	0x0000007f,
-पूर्ण;
+};
 
-अटल स्थिर u16 loft_lut_core0_rev0[] = अणु
+static const u16 loft_lut_core0_rev0[] = {
 	0x0000,
 	0x0101,
 	0x0002,
@@ -4294,9 +4293,9 @@
 	0x0101,
 	0x0002,
 	0x0103,
-पूर्ण;
+};
 
-अटल स्थिर u16 loft_lut_core1_rev0[] = अणु
+static const u16 loft_lut_core1_rev0[] = {
 	0x0000,
 	0x0101,
 	0x0002,
@@ -4425,44 +4424,44 @@
 	0x0101,
 	0x0002,
 	0x0103,
-पूर्ण;
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev0_अस्थिर[] = अणु
-	अणु&bdi_tbl_rev0, ARRAY_SIZE(bdi_tbl_rev0), 21, 0, 16पूर्ण,
-	अणु&pltlut_tbl_rev0, ARRAY_SIZE(pltlut_tbl_rev0), 20, 0, 32पूर्ण,
-	अणु&gainctrl_lut_core0_rev0, ARRAY_SIZE(gainctrl_lut_core0_rev0), 26, 192, 32पूर्ण,
-	अणु&gainctrl_lut_core1_rev0, ARRAY_SIZE(gainctrl_lut_core1_rev0), 27, 192, 32पूर्ण,
-	अणु&est_pwr_lut_core0_rev0, ARRAY_SIZE(est_pwr_lut_core0_rev0), 26, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core1_rev0, ARRAY_SIZE(est_pwr_lut_core1_rev0), 27, 0, 8पूर्ण,
-	अणु&adj_pwr_lut_core0_rev0, ARRAY_SIZE(adj_pwr_lut_core0_rev0), 26, 64, 8पूर्ण,
-	अणु&adj_pwr_lut_core1_rev0, ARRAY_SIZE(adj_pwr_lut_core1_rev0), 27, 64, 8पूर्ण,
-	अणु&iq_lut_core0_rev0, ARRAY_SIZE(iq_lut_core0_rev0), 26, 320, 32पूर्ण,
-	अणु&iq_lut_core1_rev0, ARRAY_SIZE(iq_lut_core1_rev0), 27, 320, 32पूर्ण,
-	अणु&loft_lut_core0_rev0, ARRAY_SIZE(loft_lut_core0_rev0), 26, 448, 16पूर्ण,
-	अणु&loft_lut_core1_rev0, ARRAY_SIZE(loft_lut_core1_rev0), 27, 448, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev0_volatile[] = {
+	{&bdi_tbl_rev0, ARRAY_SIZE(bdi_tbl_rev0), 21, 0, 16},
+	{&pltlut_tbl_rev0, ARRAY_SIZE(pltlut_tbl_rev0), 20, 0, 32},
+	{&gainctrl_lut_core0_rev0, ARRAY_SIZE(gainctrl_lut_core0_rev0), 26, 192, 32},
+	{&gainctrl_lut_core1_rev0, ARRAY_SIZE(gainctrl_lut_core1_rev0), 27, 192, 32},
+	{&est_pwr_lut_core0_rev0, ARRAY_SIZE(est_pwr_lut_core0_rev0), 26, 0, 8},
+	{&est_pwr_lut_core1_rev0, ARRAY_SIZE(est_pwr_lut_core1_rev0), 27, 0, 8},
+	{&adj_pwr_lut_core0_rev0, ARRAY_SIZE(adj_pwr_lut_core0_rev0), 26, 64, 8},
+	{&adj_pwr_lut_core1_rev0, ARRAY_SIZE(adj_pwr_lut_core1_rev0), 27, 64, 8},
+	{&iq_lut_core0_rev0, ARRAY_SIZE(iq_lut_core0_rev0), 26, 320, 32},
+	{&iq_lut_core1_rev0, ARRAY_SIZE(iq_lut_core1_rev0), 27, 320, 32},
+	{&loft_lut_core0_rev0, ARRAY_SIZE(loft_lut_core0_rev0), 26, 448, 16},
+	{&loft_lut_core1_rev0, ARRAY_SIZE(loft_lut_core1_rev0), 27, 448, 16},
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev0[] = अणु
-	अणु&frame_काष्ठा_rev0, ARRAY_SIZE(frame_काष्ठा_rev0), 10, 0, 32पूर्ण,
-	अणु&frame_lut_rev0, ARRAY_SIZE(frame_lut_rev0), 24, 0, 8पूर्ण,
-	अणु&पंचांगap_tbl_rev0, ARRAY_SIZE(पंचांगap_tbl_rev0), 12, 0, 32पूर्ण,
-	अणु&tdtrn_tbl_rev0, ARRAY_SIZE(tdtrn_tbl_rev0), 14, 0, 32पूर्ण,
-	अणु&पूर्णांकlv_tbl_rev0, ARRAY_SIZE(पूर्णांकlv_tbl_rev0), 13, 0, 32पूर्ण,
-	अणु&pilot_tbl_rev0, ARRAY_SIZE(pilot_tbl_rev0), 11, 0, 16पूर्ण,
-	अणु&tdi_tbl20_ant0_rev0, ARRAY_SIZE(tdi_tbl20_ant0_rev0), 19, 128, 32पूर्ण,
-	अणु&tdi_tbl20_ant1_rev0, ARRAY_SIZE(tdi_tbl20_ant1_rev0), 19, 256, 32पूर्ण,
-	अणु&tdi_tbl40_ant0_rev0, ARRAY_SIZE(tdi_tbl40_ant0_rev0), 19, 640, 32पूर्ण,
-	अणु&tdi_tbl40_ant1_rev0, ARRAY_SIZE(tdi_tbl40_ant1_rev0), 19, 768, 32पूर्ण,
-	अणु&chanest_tbl_rev0, ARRAY_SIZE(chanest_tbl_rev0), 22, 0, 32पूर्ण,
-	अणु&mcs_tbl_rev0, ARRAY_SIZE(mcs_tbl_rev0), 18, 0, 8पूर्ण,
-	अणु&noise_var_tbl0_rev0, ARRAY_SIZE(noise_var_tbl0_rev0), 16, 0, 32पूर्ण,
-	अणु&noise_var_tbl1_rev0, ARRAY_SIZE(noise_var_tbl1_rev0), 16, 128, 32पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev0[] = {
+	{&frame_struct_rev0, ARRAY_SIZE(frame_struct_rev0), 10, 0, 32},
+	{&frame_lut_rev0, ARRAY_SIZE(frame_lut_rev0), 24, 0, 8},
+	{&tmap_tbl_rev0, ARRAY_SIZE(tmap_tbl_rev0), 12, 0, 32},
+	{&tdtrn_tbl_rev0, ARRAY_SIZE(tdtrn_tbl_rev0), 14, 0, 32},
+	{&intlv_tbl_rev0, ARRAY_SIZE(intlv_tbl_rev0), 13, 0, 32},
+	{&pilot_tbl_rev0, ARRAY_SIZE(pilot_tbl_rev0), 11, 0, 16},
+	{&tdi_tbl20_ant0_rev0, ARRAY_SIZE(tdi_tbl20_ant0_rev0), 19, 128, 32},
+	{&tdi_tbl20_ant1_rev0, ARRAY_SIZE(tdi_tbl20_ant1_rev0), 19, 256, 32},
+	{&tdi_tbl40_ant0_rev0, ARRAY_SIZE(tdi_tbl40_ant0_rev0), 19, 640, 32},
+	{&tdi_tbl40_ant1_rev0, ARRAY_SIZE(tdi_tbl40_ant1_rev0), 19, 768, 32},
+	{&chanest_tbl_rev0, ARRAY_SIZE(chanest_tbl_rev0), 22, 0, 32},
+	{&mcs_tbl_rev0, ARRAY_SIZE(mcs_tbl_rev0), 18, 0, 8},
+	{&noise_var_tbl0_rev0, ARRAY_SIZE(noise_var_tbl0_rev0), 16, 0, 32},
+	{&noise_var_tbl1_rev0, ARRAY_SIZE(noise_var_tbl1_rev0), 16, 128, 32},
+};
 
-स्थिर u32 mimophytbl_info_sz_rev0 = ARRAY_SIZE(mimophytbl_info_rev0);
-स्थिर u32 mimophytbl_info_sz_rev0_अस्थिर = ARRAY_SIZE(mimophytbl_info_rev0_अस्थिर);
+const u32 mimophytbl_info_sz_rev0 = ARRAY_SIZE(mimophytbl_info_rev0);
+const u32 mimophytbl_info_sz_rev0_volatile = ARRAY_SIZE(mimophytbl_info_rev0_volatile);
 
-अटल स्थिर u16 ant_swctrl_tbl_rev3[] = अणु
+static const u16 ant_swctrl_tbl_rev3[] = {
 	0x0082,
 	0x0082,
 	0x0211,
@@ -4495,9 +4494,9 @@
 	0x0000,
 	0x0000,
 	0x0000,
-पूर्ण;
+};
 
-अटल स्थिर u16 ant_swctrl_tbl_rev3_1[] = अणु
+static const u16 ant_swctrl_tbl_rev3_1[] = {
 	0x0022,
 	0x0022,
 	0x0011,
@@ -4530,9 +4529,9 @@
 	0x0000,
 	0x0000,
 	0x0000,
-पूर्ण;
+};
 
-अटल स्थिर u16 ant_swctrl_tbl_rev3_2[] = अणु
+static const u16 ant_swctrl_tbl_rev3_2[] = {
 	0x0088,
 	0x0088,
 	0x0044,
@@ -4565,9 +4564,9 @@
 	0x0000,
 	0x0000,
 	0x0000,
-पूर्ण;
+};
 
-अटल स्थिर u16 ant_swctrl_tbl_rev3_3[] = अणु
+static const u16 ant_swctrl_tbl_rev3_3[] = {
 	0x022,
 	0x022,
 	0x011,
@@ -4600,9 +4599,9 @@
 	0x000,
 	0x000,
 	0x3cc
-पूर्ण;
+};
 
-अटल स्थिर u32 frame_काष्ठा_rev3[] = अणु
+static const u32 frame_struct_rev3[] = {
 	0x08004a04,
 	0x00100000,
 	0x01000a05,
@@ -5435,9 +5434,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u16 pilot_tbl_rev3[] = अणु
+static const u16 pilot_tbl_rev3[] = {
 	0xff08,
 	0xff08,
 	0xff08,
@@ -5526,9 +5525,9 @@
 	0xf028,
 	0xffff,
 	0xffff,
-पूर्ण;
+};
 
-अटल स्थिर u32 पंचांगap_tbl_rev3[] = अणु
+static const u32 tmap_tbl_rev3[] = {
 	0x8a88aa80,
 	0x8aaaaa8a,
 	0x8a8a8aa8,
@@ -5977,9 +5976,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 पूर्णांकlv_tbl_rev3[] = अणु
+static const u32 intlv_tbl_rev3[] = {
 	0x00802070,
 	0x0671188d,
 	0x0a60192c,
@@ -5987,9 +5986,9 @@
 	0x00c1188d,
 	0x080024d2,
 	0x00000070,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdtrn_tbl_rev3[] = अणु
+static const u32 tdtrn_tbl_rev3[] = {
 	0x061c061c,
 	0x0050ee68,
 	0xf592fe36,
@@ -6694,9 +6693,9 @@
 	0x0b64fc7e,
 	0x0800f7b6,
 	0x00f006be,
-पूर्ण;
+};
 
-स्थिर u32 noise_var_tbl_rev3[] = अणु
+const u32 noise_var_tbl_rev3[] = {
 	0x02110211,
 	0x0000014d,
 	0x02110211,
@@ -6953,9 +6952,9 @@
 	0x0000014d,
 	0x02110211,
 	0x0000014d,
-पूर्ण;
+};
 
-अटल स्थिर u16 mcs_tbl_rev3[] = अणु
+static const u16 mcs_tbl_rev3[] = {
 	0x0000,
 	0x0008,
 	0x000a,
@@ -7084,9 +7083,9 @@
 	0x0007,
 	0x0007,
 	0x0007,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl20_ant0_rev3[] = अणु
+static const u32 tdi_tbl20_ant0_rev3[] = {
 	0x00091226,
 	0x000a1429,
 	0x000b56ad,
@@ -7142,9 +7141,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl20_ant1_rev3[] = अणु
+static const u32 tdi_tbl20_ant1_rev3[] = {
 	0x00014b26,
 	0x00028d29,
 	0x000393ad,
@@ -7200,9 +7199,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl40_ant0_rev3[] = अणु
+static const u32 tdi_tbl40_ant0_rev3[] = {
 	0x0011a346,
 	0x00136ccf,
 	0x0014f5d9,
@@ -7313,9 +7312,9 @@
 	0x000e9d3a,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 tdi_tbl40_ant1_rev3[] = अणु
+static const u32 tdi_tbl40_ant1_rev3[] = {
 	0x001edb36,
 	0x000129ca,
 	0x0002b353,
@@ -7426,18 +7425,18 @@
 	0x001e9ab5,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 pltlut_tbl_rev3[] = अणु
+static const u32 pltlut_tbl_rev3[] = {
 	0x76540213,
 	0x62407351,
 	0x76543210,
 	0x76540213,
 	0x76540213,
 	0x76430521,
-पूर्ण;
+};
 
-अटल स्थिर u32 chanest_tbl_rev3[] = अणु
+static const u32 chanest_tbl_rev3[] = {
 	0x44444444,
 	0x44444444,
 	0x44444444,
@@ -7534,9 +7533,9 @@
 	0x10101010,
 	0x10101010,
 	0x10101010,
-पूर्ण;
+};
 
-अटल स्थिर u8 frame_lut_rev3[] = अणु
+static const u8 frame_lut_rev3[] = {
 	0x02,
 	0x04,
 	0x14,
@@ -7569,9 +7568,9 @@
 	0x11,
 	0x22,
 	0x2a,
-पूर्ण;
+};
 
-अटल स्थिर u8 est_pwr_lut_core0_rev3[] = अणु
+static const u8 est_pwr_lut_core0_rev3[] = {
 	0x55,
 	0x54,
 	0x54,
@@ -7636,9 +7635,9 @@
 	0x07,
 	0x02,
 	0xfd,
-पूर्ण;
+};
 
-अटल स्थिर u8 est_pwr_lut_core1_rev3[] = अणु
+static const u8 est_pwr_lut_core1_rev3[] = {
 	0x55,
 	0x54,
 	0x54,
@@ -7703,9 +7702,9 @@
 	0x07,
 	0x02,
 	0xfd,
-पूर्ण;
+};
 
-अटल स्थिर u8 adj_pwr_lut_core0_rev3[] = अणु
+static const u8 adj_pwr_lut_core0_rev3[] = {
 	0x00,
 	0x00,
 	0x00,
@@ -7834,9 +7833,9 @@
 	0x00,
 	0x00,
 	0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 adj_pwr_lut_core1_rev3[] = अणु
+static const u8 adj_pwr_lut_core1_rev3[] = {
 	0x00,
 	0x00,
 	0x00,
@@ -7965,9 +7964,9 @@
 	0x00,
 	0x00,
 	0x00,
-पूर्ण;
+};
 
-अटल स्थिर u32 gainctrl_lut_core0_rev3[] = अणु
+static const u32 gainctrl_lut_core0_rev3[] = {
 	0x5bf70044,
 	0x5bf70042,
 	0x5bf70040,
@@ -8096,9 +8095,9 @@
 	0x5b07001d,
 	0x5b07001d,
 	0x5b07001c,
-पूर्ण;
+};
 
-अटल स्थिर u32 gainctrl_lut_core1_rev3[] = अणु
+static const u32 gainctrl_lut_core1_rev3[] = {
 	0x5bf70044,
 	0x5bf70042,
 	0x5bf70040,
@@ -8227,9 +8226,9 @@
 	0x5b07001d,
 	0x5b07001d,
 	0x5b07001c,
-पूर्ण;
+};
 
-अटल स्थिर u32 iq_lut_core0_rev3[] = अणु
+static const u32 iq_lut_core0_rev3[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -8358,9 +8357,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u32 iq_lut_core1_rev3[] = अणु
+static const u32 iq_lut_core1_rev3[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -8489,9 +8488,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-अटल स्थिर u16 loft_lut_core0_rev3[] = अणु
+static const u16 loft_lut_core0_rev3[] = {
 	0x0000,
 	0x0000,
 	0x0000,
@@ -8620,9 +8619,9 @@
 	0x0000,
 	0x0000,
 	0x0000,
-पूर्ण;
+};
 
-अटल स्थिर u16 loft_lut_core1_rev3[] = अणु
+static const u16 loft_lut_core1_rev3[] = {
 	0x0000,
 	0x0000,
 	0x0000,
@@ -8751,9 +8750,9 @@
 	0x0000,
 	0x0000,
 	0x0000,
-पूर्ण;
+};
 
-अटल स्थिर u16 papd_comp_rfpwr_tbl_core0_rev3[] = अणु
+static const u16 papd_comp_rfpwr_tbl_core0_rev3[] = {
 	0x0036,
 	0x0036,
 	0x0036,
@@ -8882,9 +8881,9 @@
 	0x01d6,
 	0x01d6,
 	0x01d6,
-पूर्ण;
+};
 
-अटल स्थिर u16 papd_comp_rfpwr_tbl_core1_rev3[] = अणु
+static const u16 papd_comp_rfpwr_tbl_core1_rev3[] = {
 	0x0036,
 	0x0036,
 	0x0036,
@@ -9013,58 +9012,58 @@
 	0x01d6,
 	0x01d6,
 	0x01d6,
-पूर्ण;
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev3_अस्थिर[] = अणु
-	अणु&ant_swctrl_tbl_rev3, ARRAY_SIZE(ant_swctrl_tbl_rev3), 9, 0, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev3_volatile[] = {
+	{&ant_swctrl_tbl_rev3, ARRAY_SIZE(ant_swctrl_tbl_rev3), 9, 0, 16},
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev3_अस्थिर1[] = अणु
-	अणु&ant_swctrl_tbl_rev3_1, ARRAY_SIZE(ant_swctrl_tbl_rev3_1), 9, 0, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev3_volatile1[] = {
+	{&ant_swctrl_tbl_rev3_1, ARRAY_SIZE(ant_swctrl_tbl_rev3_1), 9, 0, 16},
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev3_अस्थिर2[] = अणु
-	अणु&ant_swctrl_tbl_rev3_2, ARRAY_SIZE(ant_swctrl_tbl_rev3_2), 9, 0, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev3_volatile2[] = {
+	{&ant_swctrl_tbl_rev3_2, ARRAY_SIZE(ant_swctrl_tbl_rev3_2), 9, 0, 16},
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev3_अस्थिर3[] = अणु
-	अणु&ant_swctrl_tbl_rev3_3, ARRAY_SIZE(ant_swctrl_tbl_rev3_3), 9, 0, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev3_volatile3[] = {
+	{&ant_swctrl_tbl_rev3_3, ARRAY_SIZE(ant_swctrl_tbl_rev3_3), 9, 0, 16},
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev3[] = अणु
-	अणु&frame_काष्ठा_rev3, ARRAY_SIZE(frame_काष्ठा_rev3), 10, 0, 32पूर्ण,
-	अणु&pilot_tbl_rev3, ARRAY_SIZE(pilot_tbl_rev3), 11, 0, 16पूर्ण,
-	अणु&पंचांगap_tbl_rev3, ARRAY_SIZE(पंचांगap_tbl_rev3), 12, 0, 32पूर्ण,
-	अणु&पूर्णांकlv_tbl_rev3, ARRAY_SIZE(पूर्णांकlv_tbl_rev3), 13, 0, 32पूर्ण,
-	अणु&tdtrn_tbl_rev3, ARRAY_SIZE(tdtrn_tbl_rev3), 14, 0, 32पूर्ण,
-	अणु&noise_var_tbl_rev3, ARRAY_SIZE(noise_var_tbl_rev3), 16, 0, 32पूर्ण,
-	अणु&mcs_tbl_rev3, ARRAY_SIZE(mcs_tbl_rev3), 18, 0, 16पूर्ण,
-	अणु&tdi_tbl20_ant0_rev3, ARRAY_SIZE(tdi_tbl20_ant0_rev3), 19, 128, 32पूर्ण,
-	अणु&tdi_tbl20_ant1_rev3, ARRAY_SIZE(tdi_tbl20_ant1_rev3), 19, 256, 32पूर्ण,
-	अणु&tdi_tbl40_ant0_rev3, ARRAY_SIZE(tdi_tbl40_ant0_rev3), 19, 640, 32पूर्ण,
-	अणु&tdi_tbl40_ant1_rev3, ARRAY_SIZE(tdi_tbl40_ant1_rev3), 19, 768, 32पूर्ण,
-	अणु&pltlut_tbl_rev3, ARRAY_SIZE(pltlut_tbl_rev3), 20, 0, 32पूर्ण,
-	अणु&chanest_tbl_rev3, ARRAY_SIZE(chanest_tbl_rev3), 22, 0, 32पूर्ण,
-	अणु&frame_lut_rev3, ARRAY_SIZE(frame_lut_rev3), 24, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8पूर्ण,
-	अणु&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8पूर्ण,
-	अणु&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8पूर्ण,
-	अणु&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32पूर्ण,
-	अणु&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32पूर्ण,
-	अणु&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32पूर्ण,
-	अणु&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32पूर्ण,
-	अणु&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16पूर्ण,
-	अणु&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16पूर्ण
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev3[] = {
+	{&frame_struct_rev3, ARRAY_SIZE(frame_struct_rev3), 10, 0, 32},
+	{&pilot_tbl_rev3, ARRAY_SIZE(pilot_tbl_rev3), 11, 0, 16},
+	{&tmap_tbl_rev3, ARRAY_SIZE(tmap_tbl_rev3), 12, 0, 32},
+	{&intlv_tbl_rev3, ARRAY_SIZE(intlv_tbl_rev3), 13, 0, 32},
+	{&tdtrn_tbl_rev3, ARRAY_SIZE(tdtrn_tbl_rev3), 14, 0, 32},
+	{&noise_var_tbl_rev3, ARRAY_SIZE(noise_var_tbl_rev3), 16, 0, 32},
+	{&mcs_tbl_rev3, ARRAY_SIZE(mcs_tbl_rev3), 18, 0, 16},
+	{&tdi_tbl20_ant0_rev3, ARRAY_SIZE(tdi_tbl20_ant0_rev3), 19, 128, 32},
+	{&tdi_tbl20_ant1_rev3, ARRAY_SIZE(tdi_tbl20_ant1_rev3), 19, 256, 32},
+	{&tdi_tbl40_ant0_rev3, ARRAY_SIZE(tdi_tbl40_ant0_rev3), 19, 640, 32},
+	{&tdi_tbl40_ant1_rev3, ARRAY_SIZE(tdi_tbl40_ant1_rev3), 19, 768, 32},
+	{&pltlut_tbl_rev3, ARRAY_SIZE(pltlut_tbl_rev3), 20, 0, 32},
+	{&chanest_tbl_rev3, ARRAY_SIZE(chanest_tbl_rev3), 22, 0, 32},
+	{&frame_lut_rev3, ARRAY_SIZE(frame_lut_rev3), 24, 0, 8},
+	{&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8},
+	{&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8},
+	{&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8},
+	{&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8},
+	{&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32},
+	{&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32},
+	{&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32},
+	{&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32},
+	{&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16},
+	{&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16}
+};
 
-स्थिर u32 mimophytbl_info_sz_rev3 = ARRAY_SIZE(mimophytbl_info_rev3);
-स्थिर u32 mimophytbl_info_sz_rev3_अस्थिर = ARRAY_SIZE(mimophytbl_info_rev3_अस्थिर);
-स्थिर u32 mimophytbl_info_sz_rev3_अस्थिर1 = ARRAY_SIZE(mimophytbl_info_rev3_अस्थिर1);
-स्थिर u32 mimophytbl_info_sz_rev3_अस्थिर2 = ARRAY_SIZE(mimophytbl_info_rev3_अस्थिर2);
-स्थिर u32 mimophytbl_info_sz_rev3_अस्थिर3 = ARRAY_SIZE(mimophytbl_info_rev3_अस्थिर3);
+const u32 mimophytbl_info_sz_rev3 = ARRAY_SIZE(mimophytbl_info_rev3);
+const u32 mimophytbl_info_sz_rev3_volatile = ARRAY_SIZE(mimophytbl_info_rev3_volatile);
+const u32 mimophytbl_info_sz_rev3_volatile1 = ARRAY_SIZE(mimophytbl_info_rev3_volatile1);
+const u32 mimophytbl_info_sz_rev3_volatile2 = ARRAY_SIZE(mimophytbl_info_rev3_volatile2);
+const u32 mimophytbl_info_sz_rev3_volatile3 = ARRAY_SIZE(mimophytbl_info_rev3_volatile3);
 
-अटल स्थिर u32 पंचांगap_tbl_rev7[] = अणु
+static const u32 tmap_tbl_rev7[] = {
 	0x8a88aa80,
 	0x8aaaaa8a,
 	0x8a8a8aa8,
@@ -9513,9 +9512,9 @@
 	0x00000000,
 	0x00000000,
 	0x00000000,
-पूर्ण;
+};
 
-स्थिर u32 noise_var_tbl_rev7[] = अणु
+const u32 noise_var_tbl_rev7[] = {
 	0x020c020c,
 	0x0000014d,
 	0x020c020c,
@@ -9772,9 +9771,9 @@
 	0x0000014d,
 	0x020c020c,
 	0x0000014d,
-पूर्ण;
+};
 
-अटल स्थिर u32 papd_comp_epsilon_tbl_core0_rev7[] = अणु
+static const u32 papd_comp_epsilon_tbl_core0_rev7[] = {
 	0x00000000,
 	0x00000000,
 	0x00016023,
@@ -9839,9 +9838,9 @@
 	0x015acfff,
 	0x01590fff,
 	0x0156cfff,
-पूर्ण;
+};
 
-अटल स्थिर u32 papd_cal_scalars_tbl_core0_rev7[] = अणु
+static const u32 papd_cal_scalars_tbl_core0_rev7[] = {
 	0x0b5e002d,
 	0x0ae2002f,
 	0x0a3b0032,
@@ -9906,9 +9905,9 @@
 	0x005805d6,
 	0x0053062e,
 	0x004e068c,
-पूर्ण;
+};
 
-अटल स्थिर u32 papd_comp_epsilon_tbl_core1_rev7[] = अणु
+static const u32 papd_comp_epsilon_tbl_core1_rev7[] = {
 	0x00000000,
 	0x00000000,
 	0x00016023,
@@ -9973,9 +9972,9 @@
 	0x015acfff,
 	0x01590fff,
 	0x0156cfff,
-पूर्ण;
+};
 
-अटल स्थिर u32 papd_cal_scalars_tbl_core1_rev7[] = अणु
+static const u32 papd_cal_scalars_tbl_core1_rev7[] = {
 	0x0b5e002d,
 	0x0ae2002f,
 	0x0a3b0032,
@@ -10040,61 +10039,61 @@
 	0x005805d6,
 	0x0053062e,
 	0x004e068c,
-पूर्ण;
+};
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev7[] = अणु
-	अणु&frame_काष्ठा_rev3, ARRAY_SIZE(frame_काष्ठा_rev3), 10, 0, 32पूर्ण,
-	अणु&pilot_tbl_rev3, ARRAY_SIZE(pilot_tbl_rev3), 11, 0, 16पूर्ण,
-	अणु&पंचांगap_tbl_rev7, ARRAY_SIZE(पंचांगap_tbl_rev7), 12, 0, 32पूर्ण,
-	अणु&पूर्णांकlv_tbl_rev3, ARRAY_SIZE(पूर्णांकlv_tbl_rev3), 13, 0, 32पूर्ण,
-	अणु&tdtrn_tbl_rev3, ARRAY_SIZE(tdtrn_tbl_rev3), 14, 0, 32पूर्ण,
-	अणु&noise_var_tbl_rev7, ARRAY_SIZE(noise_var_tbl_rev7), 16, 0, 32पूर्ण,
-	अणु&mcs_tbl_rev3, ARRAY_SIZE(mcs_tbl_rev3), 18, 0, 16पूर्ण,
-	अणु&tdi_tbl20_ant0_rev3, ARRAY_SIZE(tdi_tbl20_ant0_rev3), 19, 128, 32पूर्ण,
-	अणु&tdi_tbl20_ant1_rev3, ARRAY_SIZE(tdi_tbl20_ant1_rev3), 19, 256, 32पूर्ण,
-	अणु&tdi_tbl40_ant0_rev3, ARRAY_SIZE(tdi_tbl40_ant0_rev3), 19, 640, 32पूर्ण,
-	अणु&tdi_tbl40_ant1_rev3, ARRAY_SIZE(tdi_tbl40_ant1_rev3), 19, 768, 32पूर्ण,
-	अणु&pltlut_tbl_rev3, ARRAY_SIZE(pltlut_tbl_rev3), 20, 0, 32पूर्ण,
-	अणु&chanest_tbl_rev3, ARRAY_SIZE(chanest_tbl_rev3), 22, 0, 32पूर्ण,
-	अणु&frame_lut_rev3, ARRAY_SIZE(frame_lut_rev3), 24, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8पूर्ण,
-	अणु&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8पूर्ण,
-	अणु&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8पूर्ण,
-	अणु&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32पूर्ण,
-	अणु&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32पूर्ण,
-	अणु&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32पूर्ण,
-	अणु&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32पूर्ण,
-	अणु&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16पूर्ण,
-	अणु&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16पूर्ण,
-	अणु&papd_comp_rfpwr_tbl_core0_rev3,
-	 ARRAY_SIZE(papd_comp_rfpwr_tbl_core0_rev3), 26, 576, 16पूर्ण,
-	अणु&papd_comp_rfpwr_tbl_core1_rev3,
-	 ARRAY_SIZE(papd_comp_rfpwr_tbl_core1_rev3), 27, 576, 16पूर्ण,
-	अणु&papd_comp_epsilon_tbl_core0_rev7,
-	 ARRAY_SIZE(papd_comp_epsilon_tbl_core0_rev7), 31, 0, 32पूर्ण,
-	अणु&papd_cal_scalars_tbl_core0_rev7,
-	 ARRAY_SIZE(papd_cal_scalars_tbl_core0_rev7), 32, 0, 32पूर्ण,
-	अणु&papd_comp_epsilon_tbl_core1_rev7,
-	 ARRAY_SIZE(papd_comp_epsilon_tbl_core1_rev7), 33, 0, 32पूर्ण,
-	अणु&papd_cal_scalars_tbl_core1_rev7,
-	 ARRAY_SIZE(papd_cal_scalars_tbl_core1_rev7), 34, 0, 32पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev7[] = {
+	{&frame_struct_rev3, ARRAY_SIZE(frame_struct_rev3), 10, 0, 32},
+	{&pilot_tbl_rev3, ARRAY_SIZE(pilot_tbl_rev3), 11, 0, 16},
+	{&tmap_tbl_rev7, ARRAY_SIZE(tmap_tbl_rev7), 12, 0, 32},
+	{&intlv_tbl_rev3, ARRAY_SIZE(intlv_tbl_rev3), 13, 0, 32},
+	{&tdtrn_tbl_rev3, ARRAY_SIZE(tdtrn_tbl_rev3), 14, 0, 32},
+	{&noise_var_tbl_rev7, ARRAY_SIZE(noise_var_tbl_rev7), 16, 0, 32},
+	{&mcs_tbl_rev3, ARRAY_SIZE(mcs_tbl_rev3), 18, 0, 16},
+	{&tdi_tbl20_ant0_rev3, ARRAY_SIZE(tdi_tbl20_ant0_rev3), 19, 128, 32},
+	{&tdi_tbl20_ant1_rev3, ARRAY_SIZE(tdi_tbl20_ant1_rev3), 19, 256, 32},
+	{&tdi_tbl40_ant0_rev3, ARRAY_SIZE(tdi_tbl40_ant0_rev3), 19, 640, 32},
+	{&tdi_tbl40_ant1_rev3, ARRAY_SIZE(tdi_tbl40_ant1_rev3), 19, 768, 32},
+	{&pltlut_tbl_rev3, ARRAY_SIZE(pltlut_tbl_rev3), 20, 0, 32},
+	{&chanest_tbl_rev3, ARRAY_SIZE(chanest_tbl_rev3), 22, 0, 32},
+	{&frame_lut_rev3, ARRAY_SIZE(frame_lut_rev3), 24, 0, 8},
+	{&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8},
+	{&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8},
+	{&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8},
+	{&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8},
+	{&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32},
+	{&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32},
+	{&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32},
+	{&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32},
+	{&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16},
+	{&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16},
+	{&papd_comp_rfpwr_tbl_core0_rev3,
+	 ARRAY_SIZE(papd_comp_rfpwr_tbl_core0_rev3), 26, 576, 16},
+	{&papd_comp_rfpwr_tbl_core1_rev3,
+	 ARRAY_SIZE(papd_comp_rfpwr_tbl_core1_rev3), 27, 576, 16},
+	{&papd_comp_epsilon_tbl_core0_rev7,
+	 ARRAY_SIZE(papd_comp_epsilon_tbl_core0_rev7), 31, 0, 32},
+	{&papd_cal_scalars_tbl_core0_rev7,
+	 ARRAY_SIZE(papd_cal_scalars_tbl_core0_rev7), 32, 0, 32},
+	{&papd_comp_epsilon_tbl_core1_rev7,
+	 ARRAY_SIZE(papd_comp_epsilon_tbl_core1_rev7), 33, 0, 32},
+	{&papd_cal_scalars_tbl_core1_rev7,
+	 ARRAY_SIZE(papd_cal_scalars_tbl_core1_rev7), 34, 0, 32},
+};
 
-स्थिर u32 mimophytbl_info_sz_rev7 = ARRAY_SIZE(mimophytbl_info_rev7);
+const u32 mimophytbl_info_sz_rev7 = ARRAY_SIZE(mimophytbl_info_rev7);
 
-स्थिर काष्ठा phytbl_info mimophytbl_info_rev16[] = अणु
-	अणु&noise_var_tbl_rev7, ARRAY_SIZE(noise_var_tbl_rev7), 16, 0, 32पूर्ण,
-	अणु&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8पूर्ण,
-	अणु&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8पूर्ण,
-	अणु&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8पूर्ण,
-	अणु&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8पूर्ण,
-	अणु&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32पूर्ण,
-	अणु&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32पूर्ण,
-	अणु&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32पूर्ण,
-	अणु&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32पूर्ण,
-	अणु&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16पूर्ण,
-	अणु&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16पूर्ण,
-पूर्ण;
+const struct phytbl_info mimophytbl_info_rev16[] = {
+	{&noise_var_tbl_rev7, ARRAY_SIZE(noise_var_tbl_rev7), 16, 0, 32},
+	{&est_pwr_lut_core0_rev3, ARRAY_SIZE(est_pwr_lut_core0_rev3), 26, 0, 8},
+	{&est_pwr_lut_core1_rev3, ARRAY_SIZE(est_pwr_lut_core1_rev3), 27, 0, 8},
+	{&adj_pwr_lut_core0_rev3, ARRAY_SIZE(adj_pwr_lut_core0_rev3), 26, 64, 8},
+	{&adj_pwr_lut_core1_rev3, ARRAY_SIZE(adj_pwr_lut_core1_rev3), 27, 64, 8},
+	{&gainctrl_lut_core0_rev3, ARRAY_SIZE(gainctrl_lut_core0_rev3), 26, 192, 32},
+	{&gainctrl_lut_core1_rev3, ARRAY_SIZE(gainctrl_lut_core1_rev3), 27, 192, 32},
+	{&iq_lut_core0_rev3, ARRAY_SIZE(iq_lut_core0_rev3), 26, 320, 32},
+	{&iq_lut_core1_rev3, ARRAY_SIZE(iq_lut_core1_rev3), 27, 320, 32},
+	{&loft_lut_core0_rev3, ARRAY_SIZE(loft_lut_core0_rev3), 26, 448, 16},
+	{&loft_lut_core1_rev3, ARRAY_SIZE(loft_lut_core1_rev3), 27, 448, 16},
+};
 
-स्थिर u32 mimophytbl_info_sz_rev16 = ARRAY_SIZE(mimophytbl_info_rev16);
+const u32 mimophytbl_info_sz_rev16 = ARRAY_SIZE(mimophytbl_info_rev16);

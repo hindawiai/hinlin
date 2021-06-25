@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * board initialization should put one of these पूर्णांकo dev->platक्रमm_data
- * and place the sl811hs onto platक्रमm_bus named "sl811-hcd".
+ * board initialization should put one of these into dev->platform_data
+ * and place the sl811hs onto platform_bus named "sl811-hcd".
  */
 
-#अगर_अघोषित __LINUX_USB_SL811_H
-#घोषणा __LINUX_USB_SL811_H
+#ifndef __LINUX_USB_SL811_H
+#define __LINUX_USB_SL811_H
 
-काष्ठा sl811_platक्रमm_data अणु
-	अचिन्हित	can_wakeup:1;
+struct sl811_platform_data {
+	unsigned	can_wakeup:1;
 
-	/* given port_घातer, msec/2 after घातer on till घातer good */
+	/* given port_power, msec/2 after power on till power good */
 	u8		potpg;
 
-	/* mA/2 घातer supplied on this port (max = शेष = 250) */
-	u8		घातer;
+	/* mA/2 power supplied on this port (max = default = 250) */
+	u8		power;
 
-	/* sl811 relies on an बाह्यal source of VBUS current */
-	व्योम		(*port_घातer)(काष्ठा device *dev, पूर्णांक is_on);
+	/* sl811 relies on an external source of VBUS current */
+	void		(*port_power)(struct device *dev, int is_on);
 
 	/* pulse sl811 nRST (probably with a GPIO) */
-	व्योम		(*reset)(काष्ठा device *dev);
+	void		(*reset)(struct device *dev);
 
 	/* some boards need something like these: */
-	/* पूर्णांक		(*check_overcurrent)(काष्ठा device *dev); */
-	/* व्योम		(*घड़ी_enable)(काष्ठा device *dev, पूर्णांक is_on); */
-पूर्ण;
+	/* int		(*check_overcurrent)(struct device *dev); */
+	/* void		(*clock_enable)(struct device *dev, int is_on); */
+};
 
-#पूर्ण_अगर /* __LINUX_USB_SL811_H */
+#endif /* __LINUX_USB_SL811_H */

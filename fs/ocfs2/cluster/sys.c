@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * sys.c
  *
- * OCFS2 cluster sysfs पूर्णांकerface
+ * OCFS2 cluster sysfs interface
  *
  * Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+#include <linux/fs.h>
 
-#समावेश "ocfs2_nodemanager.h"
-#समावेश "masklog.h"
-#समावेश "sys.h"
+#include "ocfs2_nodemanager.h"
+#include "masklog.h"
+#include "sys.h"
 
 
-अटल sमाप_प्रकार version_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			    अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", O2NM_API_VERSION);
-पूर्ण
-अटल काष्ठा kobj_attribute attr_version =
-	__ATTR(पूर्णांकerface_revision, S_IRUGO, version_show, शून्य);
+static ssize_t version_show(struct kobject *kobj, struct kobj_attribute *attr,
+			    char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%u\n", O2NM_API_VERSION);
+}
+static struct kobj_attribute attr_version =
+	__ATTR(interface_revision, S_IRUGO, version_show, NULL);
 
-अटल काष्ठा attribute *o2cb_attrs[] = अणु
+static struct attribute *o2cb_attrs[] = {
 	&attr_version.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group o2cb_attr_group = अणु
+static struct attribute_group o2cb_attr_group = {
 	.attrs = o2cb_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा kset *o2cb_kset;
+static struct kset *o2cb_kset;
 
-व्योम o2cb_sys_shutकरोwn(व्योम)
-अणु
-	mlog_sys_shutकरोwn();
-	kset_unरेजिस्टर(o2cb_kset);
-पूर्ण
+void o2cb_sys_shutdown(void)
+{
+	mlog_sys_shutdown();
+	kset_unregister(o2cb_kset);
+}
 
-पूर्णांक o2cb_sys_init(व्योम)
-अणु
-	पूर्णांक ret;
+int o2cb_sys_init(void)
+{
+	int ret;
 
-	o2cb_kset = kset_create_and_add("o2cb", शून्य, fs_kobj);
-	अगर (!o2cb_kset)
-		वापस -ENOMEM;
+	o2cb_kset = kset_create_and_add("o2cb", NULL, fs_kobj);
+	if (!o2cb_kset)
+		return -ENOMEM;
 
 	ret = sysfs_create_group(&o2cb_kset->kobj, &o2cb_attr_group);
-	अगर (ret)
-		जाओ error;
+	if (ret)
+		goto error;
 
 	ret = mlog_sys_init(o2cb_kset);
-	अगर (ret)
-		जाओ error;
-	वापस 0;
+	if (ret)
+		goto error;
+	return 0;
 error:
-	kset_unरेजिस्टर(o2cb_kset);
-	वापस ret;
-पूर्ण
+	kset_unregister(o2cb_kset);
+	return ret;
+}

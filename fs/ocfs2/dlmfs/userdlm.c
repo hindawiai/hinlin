@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * userdlm.c
  *
  * Code which implements the kernel side of a minimal userspace
- * पूर्णांकerface to our DLM.
+ * interface to our DLM.
  *
- * Many of the functions here are pared करोwn versions of dlmglue.c
+ * Many of the functions here are pared down versions of dlmglue.c
  * functions.
  *
  * Copyright (C) 2003, 2004 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/signal.h>
+#include <linux/sched/signal.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/crc32.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/types.h>
+#include <linux/crc32.h>
 
-#समावेश "../ocfs2_lockingver.h"
-#समावेश "../stackglue.h"
-#समावेश "userdlm.h"
+#include "../ocfs2_lockingver.h"
+#include "../stackglue.h"
+#include "userdlm.h"
 
-#घोषणा MLOG_MASK_PREFIX ML_DLMFS
-#समावेश "../cluster/masklog.h"
+#define MLOG_MASK_PREFIX ML_DLMFS
+#include "../cluster/masklog.h"
 
 
-अटल अंतरभूत काष्ठा user_lock_res *user_lksb_to_lock_res(काष्ठा ocfs2_dlm_lksb *lksb)
-अणु
-	वापस container_of(lksb, काष्ठा user_lock_res, l_lksb);
-पूर्ण
+static inline struct user_lock_res *user_lksb_to_lock_res(struct ocfs2_dlm_lksb *lksb)
+{
+	return container_of(lksb, struct user_lock_res, l_lksb);
+}
 
-अटल अंतरभूत पूर्णांक user_check_रुको_flag(काष्ठा user_lock_res *lockres,
-				       पूर्णांक flag)
-अणु
-	पूर्णांक ret;
+static inline int user_check_wait_flag(struct user_lock_res *lockres,
+				       int flag)
+{
+	int ret;
 
 	spin_lock(&lockres->l_lock);
 	ret = lockres->l_flags & flag;
 	spin_unlock(&lockres->l_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम user_रुको_on_busy_lock(काष्ठा user_lock_res *lockres)
+static inline void user_wait_on_busy_lock(struct user_lock_res *lockres)
 
-अणु
-	रुको_event(lockres->l_event,
-		   !user_check_रुको_flag(lockres, USER_LOCK_BUSY));
-पूर्ण
+{
+	wait_event(lockres->l_event,
+		   !user_check_wait_flag(lockres, USER_LOCK_BUSY));
+}
 
-अटल अंतरभूत व्योम user_रुको_on_blocked_lock(काष्ठा user_lock_res *lockres)
+static inline void user_wait_on_blocked_lock(struct user_lock_res *lockres)
 
-अणु
-	रुको_event(lockres->l_event,
-		   !user_check_रुको_flag(lockres, USER_LOCK_BLOCKED));
-पूर्ण
+{
+	wait_event(lockres->l_event,
+		   !user_check_wait_flag(lockres, USER_LOCK_BLOCKED));
+}
 
 /* I heart container_of... */
-अटल अंतरभूत काष्ठा ocfs2_cluster_connection *
-cluster_connection_from_user_lockres(काष्ठा user_lock_res *lockres)
-अणु
-	काष्ठा dlmfs_inode_निजी *ip;
+static inline struct ocfs2_cluster_connection *
+cluster_connection_from_user_lockres(struct user_lock_res *lockres)
+{
+	struct dlmfs_inode_private *ip;
 
 	ip = container_of(lockres,
-			  काष्ठा dlmfs_inode_निजी,
+			  struct dlmfs_inode_private,
 			  ip_lockres);
-	वापस ip->ip_conn;
-पूर्ण
+	return ip->ip_conn;
+}
 
-अटल काष्ठा inode *
-user_dlm_inode_from_user_lockres(काष्ठा user_lock_res *lockres)
-अणु
-	काष्ठा dlmfs_inode_निजी *ip;
+static struct inode *
+user_dlm_inode_from_user_lockres(struct user_lock_res *lockres)
+{
+	struct dlmfs_inode_private *ip;
 
 	ip = container_of(lockres,
-			  काष्ठा dlmfs_inode_निजी,
+			  struct dlmfs_inode_private,
 			  ip_lockres);
-	वापस &ip->ip_vfs_inode;
-पूर्ण
+	return &ip->ip_vfs_inode;
+}
 
-अटल अंतरभूत व्योम user_recover_from_dlm_error(काष्ठा user_lock_res *lockres)
-अणु
+static inline void user_recover_from_dlm_error(struct user_lock_res *lockres)
+{
 	spin_lock(&lockres->l_lock);
 	lockres->l_flags &= ~USER_LOCK_BUSY;
 	spin_unlock(&lockres->l_lock);
-पूर्ण
+}
 
-#घोषणा user_log_dlm_error(_func, _stat, _lockres) करो अणु			\
+#define user_log_dlm_error(_func, _stat, _lockres) do {			\
 	mlog(ML_ERROR, "Dlm error %d while calling %s on "		\
 		"resource %.*s\n", _stat, _func,			\
 		_lockres->l_namelen, _lockres->l_name); 		\
-पूर्ण जबतक (0)
+} while (0)
 
 /* WARNING: This function lives in a world where the only three lock
  * levels are EX, PR, and NL. It *will* have to be adjusted when more
  * lock types are added. */
-अटल अंतरभूत पूर्णांक user_highest_compat_lock_level(पूर्णांक level)
-अणु
-	पूर्णांक new_level = DLM_LOCK_EX;
+static inline int user_highest_compat_lock_level(int level)
+{
+	int new_level = DLM_LOCK_EX;
 
-	अगर (level == DLM_LOCK_EX)
+	if (level == DLM_LOCK_EX)
 		new_level = DLM_LOCK_NL;
-	अन्यथा अगर (level == DLM_LOCK_PR)
+	else if (level == DLM_LOCK_PR)
 		new_level = DLM_LOCK_PR;
-	वापस new_level;
-पूर्ण
+	return new_level;
+}
 
-अटल व्योम user_ast(काष्ठा ocfs2_dlm_lksb *lksb)
-अणु
-	काष्ठा user_lock_res *lockres = user_lksb_to_lock_res(lksb);
-	पूर्णांक status;
+static void user_ast(struct ocfs2_dlm_lksb *lksb)
+{
+	struct user_lock_res *lockres = user_lksb_to_lock_res(lksb);
+	int status;
 
 	mlog(ML_BASTS, "AST fired for lockres %.*s, level %d => %d\n",
 	     lockres->l_namelen, lockres->l_name, lockres->l_level,
@@ -121,25 +120,25 @@ user_dlm_inode_from_user_lockres(काष्ठा user_lock_res *lockres)
 	spin_lock(&lockres->l_lock);
 
 	status = ocfs2_dlm_lock_status(&lockres->l_lksb);
-	अगर (status) अणु
+	if (status) {
 		mlog(ML_ERROR, "lksb status value of %u on lockres %.*s\n",
 		     status, lockres->l_namelen, lockres->l_name);
 		spin_unlock(&lockres->l_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mlog_bug_on_msg(lockres->l_requested == DLM_LOCK_IV,
 			"Lockres %.*s, requested ivmode. flags 0x%x\n",
 			lockres->l_namelen, lockres->l_name, lockres->l_flags);
 
-	/* we're करोwnconverting. */
-	अगर (lockres->l_requested < lockres->l_level) अणु
-		अगर (lockres->l_requested <=
-		    user_highest_compat_lock_level(lockres->l_blocking)) अणु
+	/* we're downconverting. */
+	if (lockres->l_requested < lockres->l_level) {
+		if (lockres->l_requested <=
+		    user_highest_compat_lock_level(lockres->l_blocking)) {
 			lockres->l_blocking = DLM_LOCK_NL;
 			lockres->l_flags &= ~USER_LOCK_BLOCKED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	lockres->l_level = lockres->l_requested;
 	lockres->l_requested = DLM_LOCK_IV;
@@ -149,144 +148,144 @@ user_dlm_inode_from_user_lockres(काष्ठा user_lock_res *lockres)
 	spin_unlock(&lockres->l_lock);
 
 	wake_up(&lockres->l_event);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम user_dlm_grab_inode_ref(काष्ठा user_lock_res *lockres)
-अणु
-	काष्ठा inode *inode;
+static inline void user_dlm_grab_inode_ref(struct user_lock_res *lockres)
+{
+	struct inode *inode;
 	inode = user_dlm_inode_from_user_lockres(lockres);
-	अगर (!igrab(inode))
+	if (!igrab(inode))
 		BUG();
-पूर्ण
+}
 
-अटल व्योम user_dlm_unblock_lock(काष्ठा work_काष्ठा *work);
+static void user_dlm_unblock_lock(struct work_struct *work);
 
-अटल व्योम __user_dlm_queue_lockres(काष्ठा user_lock_res *lockres)
-अणु
-	अगर (!(lockres->l_flags & USER_LOCK_QUEUED)) अणु
+static void __user_dlm_queue_lockres(struct user_lock_res *lockres)
+{
+	if (!(lockres->l_flags & USER_LOCK_QUEUED)) {
 		user_dlm_grab_inode_ref(lockres);
 
 		INIT_WORK(&lockres->l_work, user_dlm_unblock_lock);
 
 		queue_work(user_dlm_worker, &lockres->l_work);
 		lockres->l_flags |= USER_LOCK_QUEUED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __user_dlm_cond_queue_lockres(काष्ठा user_lock_res *lockres)
-अणु
-	पूर्णांक queue = 0;
+static void __user_dlm_cond_queue_lockres(struct user_lock_res *lockres)
+{
+	int queue = 0;
 
-	अगर (!(lockres->l_flags & USER_LOCK_BLOCKED))
-		वापस;
+	if (!(lockres->l_flags & USER_LOCK_BLOCKED))
+		return;
 
-	चयन (lockres->l_blocking) अणु
-	हाल DLM_LOCK_EX:
-		अगर (!lockres->l_ex_holders && !lockres->l_ro_holders)
+	switch (lockres->l_blocking) {
+	case DLM_LOCK_EX:
+		if (!lockres->l_ex_holders && !lockres->l_ro_holders)
 			queue = 1;
-		अवरोध;
-	हाल DLM_LOCK_PR:
-		अगर (!lockres->l_ex_holders)
+		break;
+	case DLM_LOCK_PR:
+		if (!lockres->l_ex_holders)
 			queue = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	अगर (queue)
+	if (queue)
 		__user_dlm_queue_lockres(lockres);
-पूर्ण
+}
 
-अटल व्योम user_bast(काष्ठा ocfs2_dlm_lksb *lksb, पूर्णांक level)
-अणु
-	काष्ठा user_lock_res *lockres = user_lksb_to_lock_res(lksb);
+static void user_bast(struct ocfs2_dlm_lksb *lksb, int level)
+{
+	struct user_lock_res *lockres = user_lksb_to_lock_res(lksb);
 
 	mlog(ML_BASTS, "BAST fired for lockres %.*s, blocking %d, level %d\n",
 	     lockres->l_namelen, lockres->l_name, level, lockres->l_level);
 
 	spin_lock(&lockres->l_lock);
 	lockres->l_flags |= USER_LOCK_BLOCKED;
-	अगर (level > lockres->l_blocking)
+	if (level > lockres->l_blocking)
 		lockres->l_blocking = level;
 
 	__user_dlm_queue_lockres(lockres);
 	spin_unlock(&lockres->l_lock);
 
 	wake_up(&lockres->l_event);
-पूर्ण
+}
 
-अटल व्योम user_unlock_ast(काष्ठा ocfs2_dlm_lksb *lksb, पूर्णांक status)
-अणु
-	काष्ठा user_lock_res *lockres = user_lksb_to_lock_res(lksb);
+static void user_unlock_ast(struct ocfs2_dlm_lksb *lksb, int status)
+{
+	struct user_lock_res *lockres = user_lksb_to_lock_res(lksb);
 
 	mlog(ML_BASTS, "UNLOCK AST fired for lockres %.*s, flags 0x%x\n",
 	     lockres->l_namelen, lockres->l_name, lockres->l_flags);
 
-	अगर (status)
+	if (status)
 		mlog(ML_ERROR, "dlm returns status %d\n", status);
 
 	spin_lock(&lockres->l_lock);
-	/* The tearकरोwn flag माला_लो set early during the unlock process,
+	/* The teardown flag gets set early during the unlock process,
 	 * so test the cancel flag to make sure that this ast isn't
-	 * क्रम a concurrent cancel. */
-	अगर (lockres->l_flags & USER_LOCK_IN_TEARDOWN
-	    && !(lockres->l_flags & USER_LOCK_IN_CANCEL)) अणु
+	 * for a concurrent cancel. */
+	if (lockres->l_flags & USER_LOCK_IN_TEARDOWN
+	    && !(lockres->l_flags & USER_LOCK_IN_CANCEL)) {
 		lockres->l_level = DLM_LOCK_IV;
-	पूर्ण अन्यथा अगर (status == DLM_CANCELGRANT) अणु
+	} else if (status == DLM_CANCELGRANT) {
 		/* We tried to cancel a convert request, but it was
-		 * alपढ़ोy granted. Don't clear the busy flag - the
-		 * ast should've करोne this alपढ़ोy. */
+		 * already granted. Don't clear the busy flag - the
+		 * ast should've done this already. */
 		BUG_ON(!(lockres->l_flags & USER_LOCK_IN_CANCEL));
 		lockres->l_flags &= ~USER_LOCK_IN_CANCEL;
-		जाओ out_noclear;
-	पूर्ण अन्यथा अणु
+		goto out_noclear;
+	} else {
 		BUG_ON(!(lockres->l_flags & USER_LOCK_IN_CANCEL));
 		/* Cancel succeeded, we want to re-queue */
 		lockres->l_requested = DLM_LOCK_IV; /* cancel an
 						    * upconvert
 						    * request. */
 		lockres->l_flags &= ~USER_LOCK_IN_CANCEL;
-		/* we want the unblock thपढ़ो to look at it again
+		/* we want the unblock thread to look at it again
 		 * now. */
-		अगर (lockres->l_flags & USER_LOCK_BLOCKED)
+		if (lockres->l_flags & USER_LOCK_BLOCKED)
 			__user_dlm_queue_lockres(lockres);
-	पूर्ण
+	}
 
 	lockres->l_flags &= ~USER_LOCK_BUSY;
 out_noclear:
 	spin_unlock(&lockres->l_lock);
 
 	wake_up(&lockres->l_event);
-पूर्ण
+}
 
 /*
  * This is the userdlmfs locking protocol version.
  *
- * See fs/ocfs2/dlmglue.c क्रम more details on locking versions.
+ * See fs/ocfs2/dlmglue.c for more details on locking versions.
  */
-अटल काष्ठा ocfs2_locking_protocol user_dlm_lproto = अणु
-	.lp_max_version = अणु
+static struct ocfs2_locking_protocol user_dlm_lproto = {
+	.lp_max_version = {
 		.pv_major = OCFS2_LOCKING_PROTOCOL_MAJOR,
 		.pv_minor = OCFS2_LOCKING_PROTOCOL_MINOR,
-	पूर्ण,
+	},
 	.lp_lock_ast		= user_ast,
 	.lp_blocking_ast	= user_bast,
 	.lp_unlock_ast		= user_unlock_ast,
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम user_dlm_drop_inode_ref(काष्ठा user_lock_res *lockres)
-अणु
-	काष्ठा inode *inode;
+static inline void user_dlm_drop_inode_ref(struct user_lock_res *lockres)
+{
+	struct inode *inode;
 	inode = user_dlm_inode_from_user_lockres(lockres);
 	iput(inode);
-पूर्ण
+}
 
-अटल व्योम user_dlm_unblock_lock(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक new_level, status;
-	काष्ठा user_lock_res *lockres =
-		container_of(work, काष्ठा user_lock_res, l_work);
-	काष्ठा ocfs2_cluster_connection *conn =
+static void user_dlm_unblock_lock(struct work_struct *work)
+{
+	int new_level, status;
+	struct user_lock_res *lockres =
+		container_of(work, struct user_lock_res, l_work);
+	struct ocfs2_cluster_connection *conn =
 		cluster_connection_from_user_lockres(lockres);
 
 	mlog(0, "lockres %.*s\n", lockres->l_namelen, lockres->l_name);
@@ -297,69 +296,69 @@ out_noclear:
 			"Lockres %.*s, flags 0x%x\n",
 			lockres->l_namelen, lockres->l_name, lockres->l_flags);
 
-	/* notice that we करोn't clear USER_LOCK_BLOCKED here. If it's
+	/* notice that we don't clear USER_LOCK_BLOCKED here. If it's
 	 * set, we want user_ast clear it. */
 	lockres->l_flags &= ~USER_LOCK_QUEUED;
 
-	/* It's valid to get here and no दीर्घer be blocked - अगर we get
+	/* It's valid to get here and no longer be blocked - if we get
 	 * several basts in a row, we might be queued by the first
-	 * one, the unblock thपढ़ो might run and clear the queued
+	 * one, the unblock thread might run and clear the queued
 	 * flag, and finally we might get another bast which re-queues
-	 * us beक्रमe our ast क्रम the करोwnconvert is called. */
-	अगर (!(lockres->l_flags & USER_LOCK_BLOCKED)) अणु
+	 * us before our ast for the downconvert is called. */
+	if (!(lockres->l_flags & USER_LOCK_BLOCKED)) {
 		mlog(ML_BASTS, "lockres %.*s USER_LOCK_BLOCKED\n",
 		     lockres->l_namelen, lockres->l_name);
 		spin_unlock(&lockres->l_lock);
-		जाओ drop_ref;
-	पूर्ण
+		goto drop_ref;
+	}
 
-	अगर (lockres->l_flags & USER_LOCK_IN_TEARDOWN) अणु
+	if (lockres->l_flags & USER_LOCK_IN_TEARDOWN) {
 		mlog(ML_BASTS, "lockres %.*s USER_LOCK_IN_TEARDOWN\n",
 		     lockres->l_namelen, lockres->l_name);
 		spin_unlock(&lockres->l_lock);
-		जाओ drop_ref;
-	पूर्ण
+		goto drop_ref;
+	}
 
-	अगर (lockres->l_flags & USER_LOCK_BUSY) अणु
-		अगर (lockres->l_flags & USER_LOCK_IN_CANCEL) अणु
+	if (lockres->l_flags & USER_LOCK_BUSY) {
+		if (lockres->l_flags & USER_LOCK_IN_CANCEL) {
 			mlog(ML_BASTS, "lockres %.*s USER_LOCK_IN_CANCEL\n",
 			     lockres->l_namelen, lockres->l_name);
 			spin_unlock(&lockres->l_lock);
-			जाओ drop_ref;
-		पूर्ण
+			goto drop_ref;
+		}
 
 		lockres->l_flags |= USER_LOCK_IN_CANCEL;
 		spin_unlock(&lockres->l_lock);
 
 		status = ocfs2_dlm_unlock(conn, &lockres->l_lksb,
 					  DLM_LKF_CANCEL);
-		अगर (status)
+		if (status)
 			user_log_dlm_error("ocfs2_dlm_unlock", status, lockres);
-		जाओ drop_ref;
-	पूर्ण
+		goto drop_ref;
+	}
 
-	/* If there are still incompat holders, we can निकास safely
+	/* If there are still incompat holders, we can exit safely
 	 * without worrying about re-queueing this lock as that will
 	 * happen on the last call to user_cluster_unlock. */
-	अगर ((lockres->l_blocking == DLM_LOCK_EX)
-	    && (lockres->l_ex_holders || lockres->l_ro_holders)) अणु
+	if ((lockres->l_blocking == DLM_LOCK_EX)
+	    && (lockres->l_ex_holders || lockres->l_ro_holders)) {
 		spin_unlock(&lockres->l_lock);
 		mlog(ML_BASTS, "lockres %.*s, EX/PR Holders %u,%u\n",
 		     lockres->l_namelen, lockres->l_name,
 		     lockres->l_ex_holders, lockres->l_ro_holders);
-		जाओ drop_ref;
-	पूर्ण
+		goto drop_ref;
+	}
 
-	अगर ((lockres->l_blocking == DLM_LOCK_PR)
-	    && lockres->l_ex_holders) अणु
+	if ((lockres->l_blocking == DLM_LOCK_PR)
+	    && lockres->l_ex_holders) {
 		spin_unlock(&lockres->l_lock);
 		mlog(ML_BASTS, "lockres %.*s, EX Holders %u\n",
 		     lockres->l_namelen, lockres->l_name,
 		     lockres->l_ex_holders);
-		जाओ drop_ref;
-	पूर्ण
+		goto drop_ref;
+	}
 
-	/* yay, we can करोwnconvert now. */
+	/* yay, we can downconvert now. */
 	new_level = user_highest_compat_lock_level(lockres->l_blocking);
 	lockres->l_requested = new_level;
 	lockres->l_flags |= USER_LOCK_BUSY;
@@ -367,100 +366,100 @@ out_noclear:
 	     lockres->l_namelen, lockres->l_name, lockres->l_level, new_level);
 	spin_unlock(&lockres->l_lock);
 
-	/* need lock करोwnconvert request now... */
+	/* need lock downconvert request now... */
 	status = ocfs2_dlm_lock(conn, new_level, &lockres->l_lksb,
 				DLM_LKF_CONVERT|DLM_LKF_VALBLK,
 				lockres->l_name,
 				lockres->l_namelen);
-	अगर (status) अणु
+	if (status) {
 		user_log_dlm_error("ocfs2_dlm_lock", status, lockres);
 		user_recover_from_dlm_error(lockres);
-	पूर्ण
+	}
 
 drop_ref:
 	user_dlm_drop_inode_ref(lockres);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम user_dlm_inc_holders(काष्ठा user_lock_res *lockres,
-					पूर्णांक level)
-अणु
-	चयन(level) अणु
-	हाल DLM_LOCK_EX:
+static inline void user_dlm_inc_holders(struct user_lock_res *lockres,
+					int level)
+{
+	switch(level) {
+	case DLM_LOCK_EX:
 		lockres->l_ex_holders++;
-		अवरोध;
-	हाल DLM_LOCK_PR:
+		break;
+	case DLM_LOCK_PR:
 		lockres->l_ro_holders++;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* predict what lock level we'll be dropping करोwn to on behalf
- * of another node, and वापस true अगर the currently wanted
+/* predict what lock level we'll be dropping down to on behalf
+ * of another node, and return true if the currently wanted
  * level will be compatible with it. */
-अटल अंतरभूत पूर्णांक
-user_may_जारी_on_blocked_lock(काष्ठा user_lock_res *lockres,
-				  पूर्णांक wanted)
-अणु
+static inline int
+user_may_continue_on_blocked_lock(struct user_lock_res *lockres,
+				  int wanted)
+{
 	BUG_ON(!(lockres->l_flags & USER_LOCK_BLOCKED));
 
-	वापस wanted <= user_highest_compat_lock_level(lockres->l_blocking);
-पूर्ण
+	return wanted <= user_highest_compat_lock_level(lockres->l_blocking);
+}
 
-पूर्णांक user_dlm_cluster_lock(काष्ठा user_lock_res *lockres,
-			  पूर्णांक level,
-			  पूर्णांक lkm_flags)
-अणु
-	पूर्णांक status, local_flags;
-	काष्ठा ocfs2_cluster_connection *conn =
+int user_dlm_cluster_lock(struct user_lock_res *lockres,
+			  int level,
+			  int lkm_flags)
+{
+	int status, local_flags;
+	struct ocfs2_cluster_connection *conn =
 		cluster_connection_from_user_lockres(lockres);
 
-	अगर (level != DLM_LOCK_EX &&
-	    level != DLM_LOCK_PR) अणु
+	if (level != DLM_LOCK_EX &&
+	    level != DLM_LOCK_PR) {
 		mlog(ML_ERROR, "lockres %.*s: invalid request!\n",
 		     lockres->l_namelen, lockres->l_name);
 		status = -EINVAL;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	mlog(ML_BASTS, "lockres %.*s, level %d, flags = 0x%x\n",
 	     lockres->l_namelen, lockres->l_name, level, lkm_flags);
 
 again:
-	अगर (संकेत_pending(current)) अणु
+	if (signal_pending(current)) {
 		status = -ERESTARTSYS;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	spin_lock(&lockres->l_lock);
 
 	/* We only compare against the currently granted level
-	 * here. If the lock is blocked रुकोing on a करोwnconvert,
+	 * here. If the lock is blocked waiting on a downconvert,
 	 * we'll get caught below. */
-	अगर ((lockres->l_flags & USER_LOCK_BUSY) &&
-	    (level > lockres->l_level)) अणु
-		/* is someone sitting in dlm_lock? If so, रुको on
+	if ((lockres->l_flags & USER_LOCK_BUSY) &&
+	    (level > lockres->l_level)) {
+		/* is someone sitting in dlm_lock? If so, wait on
 		 * them. */
 		spin_unlock(&lockres->l_lock);
 
-		user_रुको_on_busy_lock(lockres);
-		जाओ again;
-	पूर्ण
+		user_wait_on_busy_lock(lockres);
+		goto again;
+	}
 
-	अगर ((lockres->l_flags & USER_LOCK_BLOCKED) &&
-	    (!user_may_जारी_on_blocked_lock(lockres, level))) अणु
+	if ((lockres->l_flags & USER_LOCK_BLOCKED) &&
+	    (!user_may_continue_on_blocked_lock(lockres, level))) {
 		/* is the lock is currently blocked on behalf of
 		 * another node */
 		spin_unlock(&lockres->l_lock);
 
-		user_रुको_on_blocked_lock(lockres);
-		जाओ again;
-	पूर्ण
+		user_wait_on_blocked_lock(lockres);
+		goto again;
+	}
 
-	अगर (level > lockres->l_level) अणु
+	if (level > lockres->l_level) {
 		local_flags = lkm_flags | DLM_LKF_VALBLK;
-		अगर (lockres->l_level != DLM_LOCK_IV)
+		if (lockres->l_level != DLM_LOCK_IV)
 			local_flags |= DLM_LKF_CONVERT;
 
 		lockres->l_requested = level;
@@ -474,66 +473,66 @@ again:
 		status = ocfs2_dlm_lock(conn, level, &lockres->l_lksb,
 					local_flags, lockres->l_name,
 					lockres->l_namelen);
-		अगर (status) अणु
-			अगर ((lkm_flags & DLM_LKF_NOQUEUE) &&
+		if (status) {
+			if ((lkm_flags & DLM_LKF_NOQUEUE) &&
 			    (status != -EAGAIN))
 				user_log_dlm_error("ocfs2_dlm_lock",
 						   status, lockres);
 			user_recover_from_dlm_error(lockres);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		user_रुको_on_busy_lock(lockres);
-		जाओ again;
-	पूर्ण
+		user_wait_on_busy_lock(lockres);
+		goto again;
+	}
 
 	user_dlm_inc_holders(lockres, level);
 	spin_unlock(&lockres->l_lock);
 
 	status = 0;
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल अंतरभूत व्योम user_dlm_dec_holders(काष्ठा user_lock_res *lockres,
-					पूर्णांक level)
-अणु
-	चयन(level) अणु
-	हाल DLM_LOCK_EX:
+static inline void user_dlm_dec_holders(struct user_lock_res *lockres,
+					int level)
+{
+	switch(level) {
+	case DLM_LOCK_EX:
 		BUG_ON(!lockres->l_ex_holders);
 		lockres->l_ex_holders--;
-		अवरोध;
-	हाल DLM_LOCK_PR:
+		break;
+	case DLM_LOCK_PR:
 		BUG_ON(!lockres->l_ro_holders);
 		lockres->l_ro_holders--;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम user_dlm_cluster_unlock(काष्ठा user_lock_res *lockres,
-			     पूर्णांक level)
-अणु
-	अगर (level != DLM_LOCK_EX &&
-	    level != DLM_LOCK_PR) अणु
+void user_dlm_cluster_unlock(struct user_lock_res *lockres,
+			     int level)
+{
+	if (level != DLM_LOCK_EX &&
+	    level != DLM_LOCK_PR) {
 		mlog(ML_ERROR, "lockres %.*s: invalid request!\n",
 		     lockres->l_namelen, lockres->l_name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock(&lockres->l_lock);
 	user_dlm_dec_holders(lockres, level);
 	__user_dlm_cond_queue_lockres(lockres);
 	spin_unlock(&lockres->l_lock);
-पूर्ण
+}
 
-व्योम user_dlm_ग_लिखो_lvb(काष्ठा inode *inode,
-			स्थिर अक्षर *val,
-			अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा user_lock_res *lockres = &DLMFS_I(inode)->ip_lockres;
-	अक्षर *lvb;
+void user_dlm_write_lvb(struct inode *inode,
+			const char *val,
+			unsigned int len)
+{
+	struct user_lock_res *lockres = &DLMFS_I(inode)->ip_lockres;
+	char *lvb;
 
 	BUG_ON(len > DLM_LVB_LEN);
 
@@ -541,130 +540,130 @@ bail:
 
 	BUG_ON(lockres->l_level < DLM_LOCK_EX);
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-	स_नकल(lvb, val, len);
+	memcpy(lvb, val, len);
 
 	spin_unlock(&lockres->l_lock);
-पूर्ण
+}
 
-bool user_dlm_पढ़ो_lvb(काष्ठा inode *inode, अक्षर *val)
-अणु
-	काष्ठा user_lock_res *lockres = &DLMFS_I(inode)->ip_lockres;
-	अक्षर *lvb;
+bool user_dlm_read_lvb(struct inode *inode, char *val)
+{
+	struct user_lock_res *lockres = &DLMFS_I(inode)->ip_lockres;
+	char *lvb;
 	bool ret = true;
 
 	spin_lock(&lockres->l_lock);
 
 	BUG_ON(lockres->l_level < DLM_LOCK_PR);
-	अगर (ocfs2_dlm_lvb_valid(&lockres->l_lksb)) अणु
+	if (ocfs2_dlm_lvb_valid(&lockres->l_lksb)) {
 		lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-		स_नकल(val, lvb, DLM_LVB_LEN);
-	पूर्ण अन्यथा
+		memcpy(val, lvb, DLM_LVB_LEN);
+	} else
 		ret = false;
 
 	spin_unlock(&lockres->l_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम user_dlm_lock_res_init(काष्ठा user_lock_res *lockres,
-			    काष्ठा dentry *dentry)
-अणु
-	स_रखो(lockres, 0, माप(*lockres));
+void user_dlm_lock_res_init(struct user_lock_res *lockres,
+			    struct dentry *dentry)
+{
+	memset(lockres, 0, sizeof(*lockres));
 
 	spin_lock_init(&lockres->l_lock);
-	init_रुकोqueue_head(&lockres->l_event);
+	init_waitqueue_head(&lockres->l_event);
 	lockres->l_level = DLM_LOCK_IV;
 	lockres->l_requested = DLM_LOCK_IV;
 	lockres->l_blocking = DLM_LOCK_IV;
 
-	/* should have been checked beक्रमe getting here. */
+	/* should have been checked before getting here. */
 	BUG_ON(dentry->d_name.len >= USER_DLM_LOCK_ID_MAX_LEN);
 
-	स_नकल(lockres->l_name,
+	memcpy(lockres->l_name,
 	       dentry->d_name.name,
 	       dentry->d_name.len);
 	lockres->l_namelen = dentry->d_name.len;
-पूर्ण
+}
 
-पूर्णांक user_dlm_destroy_lock(काष्ठा user_lock_res *lockres)
-अणु
-	पूर्णांक status = -EBUSY;
-	काष्ठा ocfs2_cluster_connection *conn =
+int user_dlm_destroy_lock(struct user_lock_res *lockres)
+{
+	int status = -EBUSY;
+	struct ocfs2_cluster_connection *conn =
 		cluster_connection_from_user_lockres(lockres);
 
 	mlog(ML_BASTS, "lockres %.*s\n", lockres->l_namelen, lockres->l_name);
 
 	spin_lock(&lockres->l_lock);
-	अगर (lockres->l_flags & USER_LOCK_IN_TEARDOWN) अणु
+	if (lockres->l_flags & USER_LOCK_IN_TEARDOWN) {
 		spin_unlock(&lockres->l_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	lockres->l_flags |= USER_LOCK_IN_TEARDOWN;
 
-	जबतक (lockres->l_flags & USER_LOCK_BUSY) अणु
+	while (lockres->l_flags & USER_LOCK_BUSY) {
 		spin_unlock(&lockres->l_lock);
 
-		user_रुको_on_busy_lock(lockres);
+		user_wait_on_busy_lock(lockres);
 
 		spin_lock(&lockres->l_lock);
-	पूर्ण
+	}
 
-	अगर (lockres->l_ro_holders || lockres->l_ex_holders) अणु
+	if (lockres->l_ro_holders || lockres->l_ex_holders) {
 		spin_unlock(&lockres->l_lock);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	status = 0;
-	अगर (!(lockres->l_flags & USER_LOCK_ATTACHED)) अणु
+	if (!(lockres->l_flags & USER_LOCK_ATTACHED)) {
 		spin_unlock(&lockres->l_lock);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	lockres->l_flags &= ~USER_LOCK_ATTACHED;
 	lockres->l_flags |= USER_LOCK_BUSY;
 	spin_unlock(&lockres->l_lock);
 
 	status = ocfs2_dlm_unlock(conn, &lockres->l_lksb, DLM_LKF_VALBLK);
-	अगर (status) अणु
+	if (status) {
 		user_log_dlm_error("ocfs2_dlm_unlock", status, lockres);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	user_रुको_on_busy_lock(lockres);
+	user_wait_on_busy_lock(lockres);
 
 	status = 0;
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम user_dlm_recovery_handler_noop(पूर्णांक node_num,
-					   व्योम *recovery_data)
-अणु
+static void user_dlm_recovery_handler_noop(int node_num,
+					   void *recovery_data)
+{
 	/* We ignore recovery events */
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम user_dlm_set_locking_protocol(व्योम)
-अणु
+void user_dlm_set_locking_protocol(void)
+{
 	ocfs2_stack_glue_set_max_proto_version(&user_dlm_lproto.lp_max_version);
-पूर्ण
+}
 
-काष्ठा ocfs2_cluster_connection *user_dlm_रेजिस्टर(स्थिर काष्ठा qstr *name)
-अणु
-	पूर्णांक rc;
-	काष्ठा ocfs2_cluster_connection *conn;
+struct ocfs2_cluster_connection *user_dlm_register(const struct qstr *name)
+{
+	int rc;
+	struct ocfs2_cluster_connection *conn;
 
 	rc = ocfs2_cluster_connect_agnostic(name->name, name->len,
 					    &user_dlm_lproto,
 					    user_dlm_recovery_handler_noop,
-					    शून्य, &conn);
-	अगर (rc)
-		mlog_त्रुटि_सं(rc);
+					    NULL, &conn);
+	if (rc)
+		mlog_errno(rc);
 
-	वापस rc ? ERR_PTR(rc) : conn;
-पूर्ण
+	return rc ? ERR_PTR(rc) : conn;
+}
 
-व्योम user_dlm_unरेजिस्टर(काष्ठा ocfs2_cluster_connection *conn)
-अणु
+void user_dlm_unregister(struct ocfs2_cluster_connection *conn)
+{
 	ocfs2_cluster_disconnect(conn, 0);
-पूर्ण
+}

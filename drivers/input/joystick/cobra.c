@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  */
 
 /*
- * Creative Lअसल Blaster GamePad Cobra driver क्रम Linux
+ * Creative Labs Blaster GamePad Cobra driver for Linux
  */
 
 /*
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/gameport.h>
-#समावेश <linux/input.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/gameport.h>
+#include <linux/input.h>
+#include <linux/jiffies.h>
 
-#घोषणा DRIVER_DESC	"Creative Labs Blaster GamePad Cobra driver"
+#define DRIVER_DESC	"Creative Labs Blaster GamePad Cobra driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा COBRA_MAX_STROBE	45	/* 45 us max रुको क्रम first strobe */
-#घोषणा COBRA_LENGTH		36
+#define COBRA_MAX_STROBE	45	/* 45 us max wait for first strobe */
+#define COBRA_LENGTH		36
 
-अटल पूर्णांक cobra_btn[] = अणु BTN_START, BTN_SELECT, BTN_TL, BTN_TR, BTN_X, BTN_Y, BTN_Z, BTN_A, BTN_B, BTN_C, BTN_TL2, BTN_TR2, 0 पूर्ण;
+static int cobra_btn[] = { BTN_START, BTN_SELECT, BTN_TL, BTN_TR, BTN_X, BTN_Y, BTN_Z, BTN_A, BTN_B, BTN_C, BTN_TL2, BTN_TR2, 0 };
 
-काष्ठा cobra अणु
-	काष्ठा gameport *gameport;
-	काष्ठा input_dev *dev[2];
-	पूर्णांक पढ़ोs;
-	पूर्णांक bads;
-	अचिन्हित अक्षर exists;
-	अक्षर phys[2][32];
-पूर्ण;
+struct cobra {
+	struct gameport *gameport;
+	struct input_dev *dev[2];
+	int reads;
+	int bads;
+	unsigned char exists;
+	char phys[2][32];
+};
 
-अटल अचिन्हित अक्षर cobra_पढ़ो_packet(काष्ठा gameport *gameport, अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर u, v, w;
+static unsigned char cobra_read_packet(struct gameport *gameport, unsigned int *data)
+{
+	unsigned long flags;
+	unsigned char u, v, w;
 	__u64 buf[2];
-	पूर्णांक r[2], t[2];
-	पूर्णांक i, j, ret;
+	int r[2], t[2];
+	int i, j, ret;
 
-	पूर्णांक strobe = gameport_समय(gameport, COBRA_MAX_STROBE);
+	int strobe = gameport_time(gameport, COBRA_MAX_STROBE);
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		r[i] = buf[i] = 0;
 		t[i] = COBRA_MAX_STROBE;
-	पूर्ण
+	}
 
 	local_irq_save(flags);
 
-	u = gameport_पढ़ो(gameport);
+	u = gameport_read(gameport);
 
-	करो अणु
+	do {
 		t[0]--; t[1]--;
-		v = gameport_पढ़ो(gameport);
-		क्रम (i = 0, w = u ^ v; i < 2 && w; i++, w >>= 2)
-			अगर (w & 0x30) अणु
-				अगर ((w & 0x30) < 0x30 && r[i] < COBRA_LENGTH && t[i] > 0) अणु
+		v = gameport_read(gameport);
+		for (i = 0, w = u ^ v; i < 2 && w; i++, w >>= 2)
+			if (w & 0x30) {
+				if ((w & 0x30) < 0x30 && r[i] < COBRA_LENGTH && t[i] > 0) {
 					buf[i] |= (__u64)((w >> 5) & 1) << r[i]++;
 					t[i] = strobe;
 					u = v;
-				पूर्ण अन्यथा t[i] = 0;
-			पूर्ण
-	पूर्ण जबतक (t[0] > 0 || t[1] > 0);
+				} else t[i] = 0;
+			}
+	} while (t[0] > 0 || t[1] > 0);
 
 	local_irq_restore(flags);
 
 	ret = 0;
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 
-		अगर (r[i] != COBRA_LENGTH) जारी;
+		if (r[i] != COBRA_LENGTH) continue;
 
-		क्रम (j = 0; j < COBRA_LENGTH && (buf[i] & 0x04104107f) ^ 0x041041040; j++)
+		for (j = 0; j < COBRA_LENGTH && (buf[i] & 0x04104107f) ^ 0x041041040; j++)
 			buf[i] = (buf[i] >> 1) | ((__u64)(buf[i] & 1) << (COBRA_LENGTH - 1));
 
-		अगर (j < COBRA_LENGTH) ret |= (1 << i);
+		if (j < COBRA_LENGTH) ret |= (1 << i);
 
 		data[i] = ((buf[i] >>  7) & 0x000001f) | ((buf[i] >>  8) & 0x00003e0)
 			| ((buf[i] >>  9) & 0x0007c00) | ((buf[i] >> 10) & 0x00f8000)
 			| ((buf[i] >> 11) & 0x1f00000);
 
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cobra_poll(काष्ठा gameport *gameport)
-अणु
-	काष्ठा cobra *cobra = gameport_get_drvdata(gameport);
-	काष्ठा input_dev *dev;
-	अचिन्हित पूर्णांक data[2];
-	पूर्णांक i, j, r;
+static void cobra_poll(struct gameport *gameport)
+{
+	struct cobra *cobra = gameport_get_drvdata(gameport);
+	struct input_dev *dev;
+	unsigned int data[2];
+	int i, j, r;
 
-	cobra->पढ़ोs++;
+	cobra->reads++;
 
-	अगर ((r = cobra_पढ़ो_packet(gameport, data)) != cobra->exists) अणु
+	if ((r = cobra_read_packet(gameport, data)) != cobra->exists) {
 		cobra->bads++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < 2; i++)
-		अगर (cobra->exists & r & (1 << i)) अणु
+	for (i = 0; i < 2; i++)
+		if (cobra->exists & r & (1 << i)) {
 
 			dev = cobra->dev[i];
 
-			input_report_असल(dev, ABS_X, ((data[i] >> 4) & 1) - ((data[i] >> 3) & 1));
-			input_report_असल(dev, ABS_Y, ((data[i] >> 2) & 1) - ((data[i] >> 1) & 1));
+			input_report_abs(dev, ABS_X, ((data[i] >> 4) & 1) - ((data[i] >> 3) & 1));
+			input_report_abs(dev, ABS_Y, ((data[i] >> 2) & 1) - ((data[i] >> 1) & 1));
 
-			क्रम (j = 0; cobra_btn[j]; j++)
+			for (j = 0; cobra_btn[j]; j++)
 				input_report_key(dev, cobra_btn[j], data[i] & (0x20 << j));
 
 			input_sync(dev);
 
-		पूर्ण
-पूर्ण
+		}
+}
 
-अटल पूर्णांक cobra_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा cobra *cobra = input_get_drvdata(dev);
+static int cobra_open(struct input_dev *dev)
+{
+	struct cobra *cobra = input_get_drvdata(dev);
 
 	gameport_start_polling(cobra->gameport);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cobra_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा cobra *cobra = input_get_drvdata(dev);
+static void cobra_close(struct input_dev *dev)
+{
+	struct cobra *cobra = input_get_drvdata(dev);
 
 	gameport_stop_polling(cobra->gameport);
-पूर्ण
+}
 
-अटल पूर्णांक cobra_connect(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv)
-अणु
-	काष्ठा cobra *cobra;
-	काष्ठा input_dev *input_dev;
-	अचिन्हित पूर्णांक data[2];
-	पूर्णांक i, j;
-	पूर्णांक err;
+static int cobra_connect(struct gameport *gameport, struct gameport_driver *drv)
+{
+	struct cobra *cobra;
+	struct input_dev *input_dev;
+	unsigned int data[2];
+	int i, j;
+	int err;
 
-	cobra = kzalloc(माप(काष्ठा cobra), GFP_KERNEL);
-	अगर (!cobra)
-		वापस -ENOMEM;
+	cobra = kzalloc(sizeof(struct cobra), GFP_KERNEL);
+	if (!cobra)
+		return -ENOMEM;
 
 	cobra->gameport = gameport;
 
 	gameport_set_drvdata(gameport, cobra);
 
-	err = gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW);
-	अगर (err)
-		जाओ fail1;
+	err = gameport_open(gameport, drv, GAMEPORT_MODE_RAW);
+	if (err)
+		goto fail1;
 
-	cobra->exists = cobra_पढ़ो_packet(gameport, data);
+	cobra->exists = cobra_read_packet(gameport, data);
 
-	क्रम (i = 0; i < 2; i++)
-		अगर ((cobra->exists >> i) & data[i] & 1) अणु
-			prपूर्णांकk(KERN_WARNING "cobra.c: Device %d on %s has the Ext bit set. ID is: %d"
+	for (i = 0; i < 2; i++)
+		if ((cobra->exists >> i) & data[i] & 1) {
+			printk(KERN_WARNING "cobra.c: Device %d on %s has the Ext bit set. ID is: %d"
 				" Contact vojtech@ucw.cz\n", i, gameport->phys, (data[i] >> 2) & 7);
 			cobra->exists &= ~(1 << i);
-		पूर्ण
+		}
 
-	अगर (!cobra->exists) अणु
+	if (!cobra->exists) {
 		err = -ENODEV;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	gameport_set_poll_handler(gameport, cobra_poll);
-	gameport_set_poll_पूर्णांकerval(gameport, 20);
+	gameport_set_poll_interval(gameport, 20);
 
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (~(cobra->exists >> i) & 1)
-			जारी;
+	for (i = 0; i < 2; i++) {
+		if (~(cobra->exists >> i) & 1)
+			continue;
 
 		cobra->dev[i] = input_dev = input_allocate_device();
-		अगर (!input_dev) अणु
+		if (!input_dev) {
 			err = -ENOMEM;
-			जाओ fail3;
-		पूर्ण
+			goto fail3;
+		}
 
-		snम_लिखो(cobra->phys[i], माप(cobra->phys[i]),
+		snprintf(cobra->phys[i], sizeof(cobra->phys[i]),
 			 "%s/input%d", gameport->phys, i);
 
 		input_dev->name = "Creative Labs Blaster GamePad Cobra";
 		input_dev->phys = cobra->phys[i];
 		input_dev->id.bustype = BUS_GAMEPORT;
-		input_dev->id.venकरोr = GAMEPORT_ID_VENDOR_CREATIVE;
+		input_dev->id.vendor = GAMEPORT_ID_VENDOR_CREATIVE;
 		input_dev->id.product = 0x0008;
 		input_dev->id.version = 0x0100;
 		input_dev->dev.parent = &gameport->dev;
 
 		input_set_drvdata(input_dev, cobra);
 
-		input_dev->खोलो = cobra_खोलो;
-		input_dev->बंद = cobra_बंद;
+		input_dev->open = cobra_open;
+		input_dev->close = cobra_close;
 
 		input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
-		input_set_असल_params(input_dev, ABS_X, -1, 1, 0, 0);
-		input_set_असल_params(input_dev, ABS_Y, -1, 1, 0, 0);
-		क्रम (j = 0; cobra_btn[j]; j++)
+		input_set_abs_params(input_dev, ABS_X, -1, 1, 0, 0);
+		input_set_abs_params(input_dev, ABS_Y, -1, 1, 0, 0);
+		for (j = 0; cobra_btn[j]; j++)
 			set_bit(cobra_btn[j], input_dev->keybit);
 
-		err = input_रेजिस्टर_device(cobra->dev[i]);
-		अगर (err)
-			जाओ fail4;
-	पूर्ण
+		err = input_register_device(cobra->dev[i]);
+		if (err)
+			goto fail4;
+	}
 
-	वापस 0;
+	return 0;
 
- fail4:	input_मुक्त_device(cobra->dev[i]);
- fail3:	जबतक (--i >= 0)
-		अगर (cobra->dev[i])
-			input_unरेजिस्टर_device(cobra->dev[i]);
- fail2:	gameport_बंद(gameport);
- fail1:	gameport_set_drvdata(gameport, शून्य);
-	kमुक्त(cobra);
-	वापस err;
-पूर्ण
+ fail4:	input_free_device(cobra->dev[i]);
+ fail3:	while (--i >= 0)
+		if (cobra->dev[i])
+			input_unregister_device(cobra->dev[i]);
+ fail2:	gameport_close(gameport);
+ fail1:	gameport_set_drvdata(gameport, NULL);
+	kfree(cobra);
+	return err;
+}
 
-अटल व्योम cobra_disconnect(काष्ठा gameport *gameport)
-अणु
-	काष्ठा cobra *cobra = gameport_get_drvdata(gameport);
-	पूर्णांक i;
+static void cobra_disconnect(struct gameport *gameport)
+{
+	struct cobra *cobra = gameport_get_drvdata(gameport);
+	int i;
 
-	क्रम (i = 0; i < 2; i++)
-		अगर ((cobra->exists >> i) & 1)
-			input_unरेजिस्टर_device(cobra->dev[i]);
-	gameport_बंद(gameport);
-	gameport_set_drvdata(gameport, शून्य);
-	kमुक्त(cobra);
-पूर्ण
+	for (i = 0; i < 2; i++)
+		if ((cobra->exists >> i) & 1)
+			input_unregister_device(cobra->dev[i]);
+	gameport_close(gameport);
+	gameport_set_drvdata(gameport, NULL);
+	kfree(cobra);
+}
 
-अटल काष्ठा gameport_driver cobra_drv = अणु
-	.driver		= अणु
+static struct gameport_driver cobra_drv = {
+	.driver		= {
 		.name	= "cobra",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.connect	= cobra_connect,
 	.disconnect	= cobra_disconnect,
-पूर्ण;
+};
 
 module_gameport_driver(cobra_drv);

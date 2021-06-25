@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hfsplus/wrapper.c
  *
@@ -10,54 +9,54 @@
  * Handling of HFS wrappers around HFS+ volumes
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/cdrom.h>
-#समावेश <linux/genhd.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/cdrom.h>
+#include <linux/genhd.h>
+#include <asm/unaligned.h>
 
-#समावेश "hfsplus_fs.h"
-#समावेश "hfsplus_raw.h"
+#include "hfsplus_fs.h"
+#include "hfsplus_raw.h"
 
-काष्ठा hfsplus_wd अणु
+struct hfsplus_wd {
 	u32 ablk_size;
 	u16 ablk_start;
 	u16 embed_start;
 	u16 embed_count;
-पूर्ण;
+};
 
 /**
- * hfsplus_submit_bio - Perक्रमm block I/O
- * @sb: super block of volume क्रम I/O
- * @sector: block to पढ़ो or ग_लिखो, क्रम blocks of HFSPLUS_SECTOR_SIZE bytes
- * @buf: buffer क्रम I/O
- * @data: output poपूर्णांकer क्रम location of requested data
+ * hfsplus_submit_bio - Perform block I/O
+ * @sb: super block of volume for I/O
+ * @sector: block to read or write, for blocks of HFSPLUS_SECTOR_SIZE bytes
+ * @buf: buffer for I/O
+ * @data: output pointer for location of requested data
  * @op: direction of I/O
  * @op_flags: request op flags
  *
  * The unit of I/O is hfsplus_min_io_size(sb), which may be bigger than
- * HFSPLUS_SECTOR_SIZE, and @buf must be sized accordingly. On पढ़ोs
- * @data will वापस a poपूर्णांकer to the start of the requested sector,
+ * HFSPLUS_SECTOR_SIZE, and @buf must be sized accordingly. On reads
+ * @data will return a pointer to the start of the requested sector,
  * which may not be the same location as @buf.
  *
  * If @sector is not aligned to the bdev logical block size it will
- * be rounded करोwn. For ग_लिखोs this means that @buf should contain data
- * that starts at the rounded-करोwn address. As दीर्घ as the data was
- * पढ़ो using hfsplus_submit_bio() and the same buffer is used things
+ * be rounded down. For writes this means that @buf should contain data
+ * that starts at the rounded-down address. As long as the data was
+ * read using hfsplus_submit_bio() and the same buffer is used things
  * will work correctly.
  */
-पूर्णांक hfsplus_submit_bio(काष्ठा super_block *sb, sector_t sector,
-		       व्योम *buf, व्योम **data, पूर्णांक op, पूर्णांक op_flags)
-अणु
-	काष्ठा bio *bio;
-	पूर्णांक ret = 0;
+int hfsplus_submit_bio(struct super_block *sb, sector_t sector,
+		       void *buf, void **data, int op, int op_flags)
+{
+	struct bio *bio;
+	int ret = 0;
 	u64 io_size;
 	loff_t start;
-	पूर्णांक offset;
+	int offset;
 
 	/*
 	 * Align sector to hardware sector size and find offset. We
-	 * assume that io_size is a घातer of two, which _should_
+	 * assume that io_size is a power of two, which _should_
 	 * be true.
 	 */
 	io_size = hfsplus_min_io_size(sb);
@@ -70,51 +69,51 @@
 	bio_set_dev(bio, sb->s_bdev);
 	bio_set_op_attrs(bio, op, op_flags);
 
-	अगर (op != WRITE && data)
+	if (op != WRITE && data)
 		*data = (u8 *)buf + offset;
 
-	जबतक (io_size > 0) अणु
-		अचिन्हित पूर्णांक page_offset = offset_in_page(buf);
-		अचिन्हित पूर्णांक len = min_t(अचिन्हित पूर्णांक, PAGE_SIZE - page_offset,
+	while (io_size > 0) {
+		unsigned int page_offset = offset_in_page(buf);
+		unsigned int len = min_t(unsigned int, PAGE_SIZE - page_offset,
 					 io_size);
 
 		ret = bio_add_page(bio, virt_to_page(buf), len, page_offset);
-		अगर (ret != len) अणु
+		if (ret != len) {
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		io_size -= len;
 		buf = (u8 *)buf + len;
-	पूर्ण
+	}
 
-	ret = submit_bio_रुको(bio);
+	ret = submit_bio_wait(bio);
 out:
 	bio_put(bio);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल पूर्णांक hfsplus_पढ़ो_mdb(व्योम *bufptr, काष्ठा hfsplus_wd *wd)
-अणु
+static int hfsplus_read_mdb(void *bufptr, struct hfsplus_wd *wd)
+{
 	u32 extent;
 	u16 attrib;
 	__be16 sig;
 
 	sig = *(__be16 *)(bufptr + HFSP_WRAPOFF_EMBEDSIG);
-	अगर (sig != cpu_to_be16(HFSPLUS_VOLHEAD_SIG) &&
+	if (sig != cpu_to_be16(HFSPLUS_VOLHEAD_SIG) &&
 	    sig != cpu_to_be16(HFSPLUS_VOLHEAD_SIGX))
-		वापस 0;
+		return 0;
 
 	attrib = be16_to_cpu(*(__be16 *)(bufptr + HFSP_WRAPOFF_ATTRIB));
-	अगर (!(attrib & HFSP_WRAP_ATTRIB_SLOCK) ||
+	if (!(attrib & HFSP_WRAP_ATTRIB_SLOCK) ||
 	   !(attrib & HFSP_WRAP_ATTRIB_SPARED))
-		वापस 0;
+		return 0;
 
 	wd->ablk_size =
 		be32_to_cpu(*(__be32 *)(bufptr + HFSP_WRAPOFF_ABLKSIZE));
-	अगर (wd->ablk_size < HFSPLUS_SECTOR_SIZE)
-		वापस 0;
-	अगर (wd->ablk_size % HFSPLUS_SECTOR_SIZE)
-		वापस 0;
+	if (wd->ablk_size < HFSPLUS_SECTOR_SIZE)
+		return 0;
+	if (wd->ablk_size % HFSPLUS_SECTOR_SIZE)
+		return 0;
 	wd->ablk_start =
 		be16_to_cpu(*(__be16 *)(bufptr + HFSP_WRAPOFF_ABLKSTART));
 
@@ -122,148 +121,148 @@ out:
 	wd->embed_start = (extent >> 16) & 0xFFFF;
 	wd->embed_count = extent & 0xFFFF;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक hfsplus_get_last_session(काष्ठा super_block *sb,
+static int hfsplus_get_last_session(struct super_block *sb,
 				    sector_t *start, sector_t *size)
-अणु
-	काष्ठा cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
+{
+	struct cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
 
-	/* शेष values */
+	/* default values */
 	*start = 0;
-	*size = i_size_पढ़ो(sb->s_bdev->bd_inode) >> 9;
+	*size = i_size_read(sb->s_bdev->bd_inode) >> 9;
 
-	अगर (HFSPLUS_SB(sb)->session >= 0) अणु
-		काष्ठा cdrom_tocentry te;
+	if (HFSPLUS_SB(sb)->session >= 0) {
+		struct cdrom_tocentry te;
 
-		अगर (!cdi)
-			वापस -EINVAL;
+		if (!cdi)
+			return -EINVAL;
 
 		te.cdte_track = HFSPLUS_SB(sb)->session;
-		te.cdte_क्रमmat = CDROM_LBA;
-		अगर (cdrom_पढ़ो_tocentry(cdi, &te) ||
-		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) अणु
+		te.cdte_format = CDROM_LBA;
+		if (cdrom_read_tocentry(cdi, &te) ||
+		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) {
 			pr_err("invalid session number or type of track\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*start = (sector_t)te.cdte_addr.lba << 2;
-	पूर्ण अन्यथा अगर (cdi) अणु
-		काष्ठा cdrom_multisession ms_info;
+	} else if (cdi) {
+		struct cdrom_multisession ms_info;
 
-		ms_info.addr_क्रमmat = CDROM_LBA;
-		अगर (cdrom_multisession(cdi, &ms_info) == 0 && ms_info.xa_flag)
+		ms_info.addr_format = CDROM_LBA;
+		if (cdrom_multisession(cdi, &ms_info) == 0 && ms_info.xa_flag)
 			*start = (sector_t)ms_info.addr.lba << 2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Find the volume header and fill in some minimum bits in superblock */
-/* Takes in super block, वापसs true अगर good data पढ़ो */
-पूर्णांक hfsplus_पढ़ो_wrapper(काष्ठा super_block *sb)
-अणु
-	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	काष्ठा hfsplus_wd wd;
+/* Takes in super block, returns true if good data read */
+int hfsplus_read_wrapper(struct super_block *sb)
+{
+	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	struct hfsplus_wd wd;
 	sector_t part_start, part_size;
 	u32 blocksize;
-	पूर्णांक error = 0;
+	int error = 0;
 
 	error = -EINVAL;
 	blocksize = sb_min_blocksize(sb, HFSPLUS_SECTOR_SIZE);
-	अगर (!blocksize)
-		जाओ out;
+	if (!blocksize)
+		goto out;
 
-	अगर (hfsplus_get_last_session(sb, &part_start, &part_size))
-		जाओ out;
+	if (hfsplus_get_last_session(sb, &part_start, &part_size))
+		goto out;
 
 	error = -ENOMEM;
-	sbi->s_vhdr_buf = kदो_स्मृति(hfsplus_min_io_size(sb), GFP_KERNEL);
-	अगर (!sbi->s_vhdr_buf)
-		जाओ out;
-	sbi->s_backup_vhdr_buf = kदो_स्मृति(hfsplus_min_io_size(sb), GFP_KERNEL);
-	अगर (!sbi->s_backup_vhdr_buf)
-		जाओ out_मुक्त_vhdr;
+	sbi->s_vhdr_buf = kmalloc(hfsplus_min_io_size(sb), GFP_KERNEL);
+	if (!sbi->s_vhdr_buf)
+		goto out;
+	sbi->s_backup_vhdr_buf = kmalloc(hfsplus_min_io_size(sb), GFP_KERNEL);
+	if (!sbi->s_backup_vhdr_buf)
+		goto out_free_vhdr;
 
-reपढ़ो:
+reread:
 	error = hfsplus_submit_bio(sb, part_start + HFSPLUS_VOLHEAD_SECTOR,
-				   sbi->s_vhdr_buf, (व्योम **)&sbi->s_vhdr,
+				   sbi->s_vhdr_buf, (void **)&sbi->s_vhdr,
 				   REQ_OP_READ, 0);
-	अगर (error)
-		जाओ out_मुक्त_backup_vhdr;
+	if (error)
+		goto out_free_backup_vhdr;
 
 	error = -EINVAL;
-	चयन (sbi->s_vhdr->signature) अणु
-	हाल cpu_to_be16(HFSPLUS_VOLHEAD_SIGX):
+	switch (sbi->s_vhdr->signature) {
+	case cpu_to_be16(HFSPLUS_VOLHEAD_SIGX):
 		set_bit(HFSPLUS_SB_HFSX, &sbi->flags);
 		fallthrough;
-	हाल cpu_to_be16(HFSPLUS_VOLHEAD_SIG):
-		अवरोध;
-	हाल cpu_to_be16(HFSP_WRAP_MAGIC):
-		अगर (!hfsplus_पढ़ो_mdb(sbi->s_vhdr, &wd))
-			जाओ out_मुक्त_backup_vhdr;
+	case cpu_to_be16(HFSPLUS_VOLHEAD_SIG):
+		break;
+	case cpu_to_be16(HFSP_WRAP_MAGIC):
+		if (!hfsplus_read_mdb(sbi->s_vhdr, &wd))
+			goto out_free_backup_vhdr;
 		wd.ablk_size >>= HFSPLUS_SECTOR_SHIFT;
 		part_start += (sector_t)wd.ablk_start +
 			       (sector_t)wd.embed_start * wd.ablk_size;
 		part_size = (sector_t)wd.embed_count * wd.ablk_size;
-		जाओ reपढ़ो;
-	शेष:
+		goto reread;
+	default:
 		/*
-		 * Check क्रम a partition block.
+		 * Check for a partition block.
 		 *
-		 * (should करो this only क्रम cdrom/loop though)
+		 * (should do this only for cdrom/loop though)
 		 */
-		अगर (hfs_part_find(sb, &part_start, &part_size))
-			जाओ out_मुक्त_backup_vhdr;
-		जाओ reपढ़ो;
-	पूर्ण
+		if (hfs_part_find(sb, &part_start, &part_size))
+			goto out_free_backup_vhdr;
+		goto reread;
+	}
 
 	error = hfsplus_submit_bio(sb, part_start + part_size - 2,
 				   sbi->s_backup_vhdr_buf,
-				   (व्योम **)&sbi->s_backup_vhdr, REQ_OP_READ,
+				   (void **)&sbi->s_backup_vhdr, REQ_OP_READ,
 				   0);
-	अगर (error)
-		जाओ out_मुक्त_backup_vhdr;
+	if (error)
+		goto out_free_backup_vhdr;
 
 	error = -EINVAL;
-	अगर (sbi->s_backup_vhdr->signature != sbi->s_vhdr->signature) अणु
+	if (sbi->s_backup_vhdr->signature != sbi->s_vhdr->signature) {
 		pr_warn("invalid secondary volume header\n");
-		जाओ out_मुक्त_backup_vhdr;
-	पूर्ण
+		goto out_free_backup_vhdr;
+	}
 
 	blocksize = be32_to_cpu(sbi->s_vhdr->blocksize);
 
 	/*
 	 * Block size must be at least as large as a sector and a multiple of 2.
 	 */
-	अगर (blocksize < HFSPLUS_SECTOR_SIZE || ((blocksize - 1) & blocksize))
-		जाओ out_मुक्त_backup_vhdr;
+	if (blocksize < HFSPLUS_SECTOR_SIZE || ((blocksize - 1) & blocksize))
+		goto out_free_backup_vhdr;
 	sbi->alloc_blksz = blocksize;
-	sbi->alloc_blksz_shअगरt = ilog2(blocksize);
+	sbi->alloc_blksz_shift = ilog2(blocksize);
 	blocksize = min_t(u32, sbi->alloc_blksz, PAGE_SIZE);
 
 	/*
 	 * Align block size to block offset.
 	 */
-	जबतक (part_start & ((blocksize >> HFSPLUS_SECTOR_SHIFT) - 1))
+	while (part_start & ((blocksize >> HFSPLUS_SECTOR_SHIFT) - 1))
 		blocksize >>= 1;
 
-	अगर (sb_set_blocksize(sb, blocksize) != blocksize) अणु
+	if (sb_set_blocksize(sb, blocksize) != blocksize) {
 		pr_err("unable to set blocksize to %u!\n", blocksize);
-		जाओ out_मुक्त_backup_vhdr;
-	पूर्ण
+		goto out_free_backup_vhdr;
+	}
 
 	sbi->blockoffset =
 		part_start >> (sb->s_blocksize_bits - HFSPLUS_SECTOR_SHIFT);
 	sbi->part_start = part_start;
 	sbi->sect_count = part_size;
-	sbi->fs_shअगरt = sbi->alloc_blksz_shअगरt - sb->s_blocksize_bits;
-	वापस 0;
+	sbi->fs_shift = sbi->alloc_blksz_shift - sb->s_blocksize_bits;
+	return 0;
 
-out_मुक्त_backup_vhdr:
-	kमुक्त(sbi->s_backup_vhdr_buf);
-out_मुक्त_vhdr:
-	kमुक्त(sbi->s_vhdr_buf);
+out_free_backup_vhdr:
+	kfree(sbi->s_backup_vhdr_buf);
+out_free_vhdr:
+	kfree(sbi->s_vhdr_buf);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}

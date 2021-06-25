@@ -1,392 +1,391 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  */
 
-#समावेश <dt-bindings/घड़ी/imx7d-घड़ी.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/types.h>
+#include <dt-bindings/clock/imx7d-clock.h>
+#include <linux/bits.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/types.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-अटल u32 share_count_sai1;
-अटल u32 share_count_sai2;
-अटल u32 share_count_sai3;
-अटल u32 share_count_nand;
-अटल u32 share_count_enet1;
-अटल u32 share_count_enet2;
+static u32 share_count_sai1;
+static u32 share_count_sai2;
+static u32 share_count_sai3;
+static u32 share_count_nand;
+static u32 share_count_enet1;
+static u32 share_count_enet2;
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable test_भाग_प्रकारable[] = अणु
-	अणु .val = 3, .भाग = 1, पूर्ण,
-	अणु .val = 2, .भाग = 1, पूर्ण,
-	अणु .val = 1, .भाग = 2, पूर्ण,
-	अणु .val = 0, .भाग = 4, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_div_table test_div_table[] = {
+	{ .val = 3, .div = 1, },
+	{ .val = 2, .div = 1, },
+	{ .val = 1, .div = 2, },
+	{ .val = 0, .div = 4, },
+	{ }
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable post_भाग_प्रकारable[] = अणु
-	अणु .val = 3, .भाग = 4, पूर्ण,
-	अणु .val = 2, .भाग = 1, पूर्ण,
-	अणु .val = 1, .भाग = 2, पूर्ण,
-	अणु .val = 0, .भाग = 1, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_div_table post_div_table[] = {
+	{ .val = 3, .div = 4, },
+	{ .val = 2, .div = 1, },
+	{ .val = 1, .div = 2, },
+	{ .val = 0, .div = 1, },
+	{ }
+};
 
-अटल स्थिर अक्षर *arm_a7_sel[] = अणु "osc", "pll_arm_main_clk",
+static const char *arm_a7_sel[] = { "osc", "pll_arm_main_clk",
 	"pll_enet_500m_clk", "pll_dram_main_clk",
 	"pll_sys_main_clk", "pll_sys_pfd0_392m_clk", "pll_audio_post_div",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *arm_m4_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *arm_m4_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_250m_clk", "pll_sys_pfd2_270m_clk",
 	"pll_dram_533m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *axi_sel[] = अणु "osc", "pll_sys_pfd1_332m_clk",
+static const char *axi_sel[] = { "osc", "pll_sys_pfd1_332m_clk",
 	"pll_dram_533m_clk", "pll_enet_250m_clk", "pll_sys_pfd5_clk",
-	"pll_audio_post_div", "pll_video_post_div", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_audio_post_div", "pll_video_post_div", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *disp_axi_sel[] = अणु "osc", "pll_sys_pfd1_332m_clk",
+static const char *disp_axi_sel[] = { "osc", "pll_sys_pfd1_332m_clk",
 	"pll_dram_533m_clk", "pll_enet_250m_clk", "pll_sys_pfd6_clk",
-	"pll_sys_pfd7_clk", "pll_audio_post_div", "pll_video_post_div", पूर्ण;
+	"pll_sys_pfd7_clk", "pll_audio_post_div", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *enet_axi_sel[] = अणु "osc", "pll_sys_pfd2_270m_clk",
+static const char *enet_axi_sel[] = { "osc", "pll_sys_pfd2_270m_clk",
 	"pll_dram_533m_clk", "pll_enet_250m_clk",
 	"pll_sys_main_240m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"pll_sys_pfd4_clk", पूर्ण;
+	"pll_sys_pfd4_clk", };
 
-अटल स्थिर अक्षर *nand_usdhc_bus_sel[] = अणु "osc", "pll_sys_pfd2_270m_clk",
+static const char *nand_usdhc_bus_sel[] = { "osc", "pll_sys_pfd2_270m_clk",
 	"pll_dram_533m_clk", "pll_sys_main_240m_clk",
 	"pll_sys_pfd2_135m_clk", "pll_sys_pfd6_clk", "pll_enet_250m_clk",
-	"pll_audio_post_div", पूर्ण;
+	"pll_audio_post_div", };
 
-अटल स्थिर अक्षर *ahb_channel_sel[] = अणु "osc", "pll_sys_pfd2_270m_clk",
+static const char *ahb_channel_sel[] = { "osc", "pll_sys_pfd2_270m_clk",
 	"pll_dram_533m_clk", "pll_sys_pfd0_392m_clk",
 	"pll_enet_250m_clk", "pll_usb_main_clk", "pll_audio_post_div",
-	"pll_video_post_div", पूर्ण;
+	"pll_video_post_div", };
 
-अटल स्थिर अक्षर *dram_phym_sel[] = अणु "pll_dram_main_clk",
-	"dram_phym_alt_clk", पूर्ण;
+static const char *dram_phym_sel[] = { "pll_dram_main_clk",
+	"dram_phym_alt_clk", };
 
-अटल स्थिर अक्षर *dram_sel[] = अणु "pll_dram_main_clk",
-	"dram_alt_root_clk", पूर्ण;
+static const char *dram_sel[] = { "pll_dram_main_clk",
+	"dram_alt_root_clk", };
 
-अटल स्थिर अक्षर *dram_phym_alt_sel[] = अणु "osc", "pll_dram_533m_clk",
+static const char *dram_phym_alt_sel[] = { "osc", "pll_dram_533m_clk",
 	"pll_sys_main_clk", "pll_enet_500m_clk",
 	"pll_usb_main_clk", "pll_sys_pfd7_clk", "pll_audio_post_div",
-	"pll_video_post_div", पूर्ण;
+	"pll_video_post_div", };
 
-अटल स्थिर अक्षर *dram_alt_sel[] = अणु "osc", "pll_dram_533m_clk",
+static const char *dram_alt_sel[] = { "osc", "pll_dram_533m_clk",
 	"pll_sys_main_clk", "pll_enet_500m_clk",
 	"pll_enet_250m_clk", "pll_sys_pfd0_392m_clk",
-	"pll_audio_post_div", "pll_sys_pfd2_270m_clk", पूर्ण;
+	"pll_audio_post_div", "pll_sys_pfd2_270m_clk", };
 
-अटल स्थिर अक्षर *usb_hsic_sel[] = अणु "osc", "pll_sys_main_clk",
+static const char *usb_hsic_sel[] = { "osc", "pll_sys_main_clk",
 	"pll_usb_main_clk", "pll_sys_pfd3_clk", "pll_sys_pfd4_clk",
-	"pll_sys_pfd5_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd5_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *pcie_ctrl_sel[] = अणु "osc", "pll_enet_250m_clk",
+static const char *pcie_ctrl_sel[] = { "osc", "pll_enet_250m_clk",
 	"pll_sys_main_240m_clk", "pll_sys_pfd2_270m_clk",
 	"pll_dram_533m_clk", "pll_enet_500m_clk",
-	"pll_sys_pfd1_332m_clk", "pll_sys_pfd6_clk", पूर्ण;
+	"pll_sys_pfd1_332m_clk", "pll_sys_pfd6_clk", };
 
-अटल स्थिर अक्षर *pcie_phy_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *pcie_phy_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_enet_500m_clk", "ext_clk_1", "ext_clk_2", "ext_clk_3",
-	"ext_clk_4", "pll_sys_pfd0_392m_clk", पूर्ण;
+	"ext_clk_4", "pll_sys_pfd0_392m_clk", };
 
-अटल स्थिर अक्षर *epdc_pixel_sel[] = अणु "osc", "pll_sys_pfd1_332m_clk",
+static const char *epdc_pixel_sel[] = { "osc", "pll_sys_pfd1_332m_clk",
 	"pll_dram_533m_clk", "pll_sys_main_clk", "pll_sys_pfd5_clk",
-	"pll_sys_pfd6_clk", "pll_sys_pfd7_clk", "pll_video_post_div", पूर्ण;
+	"pll_sys_pfd6_clk", "pll_sys_pfd7_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *lcdअगर_pixel_sel[] = अणु "osc", "pll_sys_pfd5_clk",
+static const char *lcdif_pixel_sel[] = { "osc", "pll_sys_pfd5_clk",
 	"pll_dram_533m_clk", "ext_clk_3", "pll_sys_pfd4_clk",
 	"pll_sys_pfd2_270m_clk", "pll_video_post_div",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *mipi_dsi_sel[] = अणु "osc", "pll_sys_pfd5_clk",
+static const char *mipi_dsi_sel[] = { "osc", "pll_sys_pfd5_clk",
 	"pll_sys_pfd3_clk", "pll_sys_main_clk", "pll_sys_pfd0_196m_clk",
-	"pll_dram_533m_clk", "pll_video_post_div", "pll_audio_post_div", पूर्ण;
+	"pll_dram_533m_clk", "pll_video_post_div", "pll_audio_post_div", };
 
-अटल स्थिर अक्षर *mipi_csi_sel[] = अणु "osc", "pll_sys_pfd4_clk",
+static const char *mipi_csi_sel[] = { "osc", "pll_sys_pfd4_clk",
 	"pll_sys_pfd3_clk", "pll_sys_main_clk", "pll_sys_pfd0_196m_clk",
-	"pll_dram_533m_clk", "pll_video_post_div", "pll_audio_post_div", पूर्ण;
+	"pll_dram_533m_clk", "pll_video_post_div", "pll_audio_post_div", };
 
-अटल स्थिर अक्षर *mipi_dphy_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *mipi_dphy_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_dram_533m_clk", "pll_sys_pfd5_clk", "ref_1m_clk", "ext_clk_2",
-	"pll_video_post_div", "ext_clk_3", पूर्ण;
+	"pll_video_post_div", "ext_clk_3", };
 
-अटल स्थिर अक्षर *sai1_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *sai1_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_audio_post_div", "pll_dram_533m_clk", "pll_video_post_div",
-	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_2", पूर्ण;
+	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_2", };
 
-अटल स्थिर अक्षर *sai2_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *sai2_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_audio_post_div", "pll_dram_533m_clk", "pll_video_post_div",
-	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_2", पूर्ण;
+	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_2", };
 
-अटल स्थिर अक्षर *sai3_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *sai3_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_audio_post_div", "pll_dram_533m_clk", "pll_video_post_div",
-	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_3", पूर्ण;
+	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_clk_3", };
 
-अटल स्थिर अक्षर *spdअगर_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *spdif_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_audio_post_div", "pll_dram_533m_clk", "pll_video_post_div",
-	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_3_clk", पूर्ण;
+	"pll_sys_pfd4_clk", "pll_enet_125m_clk", "ext_3_clk", };
 
-अटल स्थिर अक्षर *enet1_ref_sel[] = अणु "osc", "pll_enet_125m_clk",
+static const char *enet1_ref_sel[] = { "osc", "pll_enet_125m_clk",
 	"pll_enet_50m_clk", "pll_enet_25m_clk",
 	"pll_sys_main_120m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"ext_clk_4", पूर्ण;
+	"ext_clk_4", };
 
-अटल स्थिर अक्षर *enet1_समय_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *enet1_time_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_audio_post_div", "ext_clk_1", "ext_clk_2", "ext_clk_3",
-	"ext_clk_4", "pll_video_post_div", पूर्ण;
+	"ext_clk_4", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *enet2_ref_sel[] = अणु "osc", "pll_enet_125m_clk",
+static const char *enet2_ref_sel[] = { "osc", "pll_enet_125m_clk",
 	"pll_enet_50m_clk", "pll_enet_25m_clk",
 	"pll_sys_main_120m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"ext_clk_4", पूर्ण;
+	"ext_clk_4", };
 
-अटल स्थिर अक्षर *enet2_समय_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *enet2_time_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_audio_post_div", "ext_clk_1", "ext_clk_2", "ext_clk_3",
-	"ext_clk_4", "pll_video_post_div", पूर्ण;
+	"ext_clk_4", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *enet_phy_ref_sel[] = अणु "osc", "pll_enet_25m_clk",
+static const char *enet_phy_ref_sel[] = { "osc", "pll_enet_25m_clk",
 	"pll_enet_50m_clk", "pll_enet_125m_clk",
 	"pll_dram_533m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"pll_sys_pfd3_clk", पूर्ण;
+	"pll_sys_pfd3_clk", };
 
-अटल स्थिर अक्षर *eim_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *eim_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_sys_pfd2_270m_clk", "pll_sys_pfd3_clk", "pll_enet_125m_clk",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *nand_sel[] = अणु "osc", "pll_sys_main_clk",
+static const char *nand_sel[] = { "osc", "pll_sys_main_clk",
 	"pll_dram_533m_clk", "pll_sys_pfd0_392m_clk", "pll_sys_pfd3_clk",
 	"pll_enet_500m_clk", "pll_enet_250m_clk",
-	"pll_video_post_div", पूर्ण;
+	"pll_video_post_div", };
 
-अटल स्थिर अक्षर *qspi_sel[] = अणु "osc", "pll_sys_pfd4_clk",
+static const char *qspi_sel[] = { "osc", "pll_sys_pfd4_clk",
 	"pll_dram_533m_clk", "pll_enet_500m_clk", "pll_sys_pfd3_clk",
-	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *usdhc1_sel[] = अणु "osc", "pll_sys_pfd0_392m_clk",
+static const char *usdhc1_sel[] = { "osc", "pll_sys_pfd0_392m_clk",
 	"pll_dram_533m_clk", "pll_enet_500m_clk", "pll_sys_pfd4_clk",
-	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *usdhc2_sel[] = अणु "osc", "pll_sys_pfd0_392m_clk",
+static const char *usdhc2_sel[] = { "osc", "pll_sys_pfd0_392m_clk",
 	"pll_dram_533m_clk", "pll_enet_500m_clk", "pll_sys_pfd4_clk",
-	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *usdhc3_sel[] = अणु "osc", "pll_sys_pfd0_392m_clk",
+static const char *usdhc3_sel[] = { "osc", "pll_sys_pfd0_392m_clk",
 	"pll_dram_533m_clk", "pll_enet_500m_clk", "pll_sys_pfd4_clk",
-	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd2_270m_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *can1_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *can1_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_dram_533m_clk", "pll_sys_main_clk",
 	"pll_enet_40m_clk", "pll_usb_main_clk", "ext_clk_1",
-	"ext_clk_4", पूर्ण;
+	"ext_clk_4", };
 
-अटल स्थिर अक्षर *can2_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *can2_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_dram_533m_clk", "pll_sys_main_clk",
 	"pll_enet_40m_clk", "pll_usb_main_clk", "ext_clk_1",
-	"ext_clk_3", पूर्ण;
+	"ext_clk_3", };
 
-अटल स्थिर अक्षर *i2c1_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *i2c1_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_enet_50m_clk", "pll_dram_533m_clk",
 	"pll_audio_post_div", "pll_video_post_div", "pll_usb_main_clk",
-	"pll_sys_pfd2_135m_clk", पूर्ण;
+	"pll_sys_pfd2_135m_clk", };
 
-अटल स्थिर अक्षर *i2c2_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *i2c2_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_enet_50m_clk", "pll_dram_533m_clk",
 	"pll_audio_post_div", "pll_video_post_div", "pll_usb_main_clk",
-	"pll_sys_pfd2_135m_clk", पूर्ण;
+	"pll_sys_pfd2_135m_clk", };
 
-अटल स्थिर अक्षर *i2c3_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *i2c3_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_enet_50m_clk", "pll_dram_533m_clk",
 	"pll_audio_post_div", "pll_video_post_div", "pll_usb_main_clk",
-	"pll_sys_pfd2_135m_clk", पूर्ण;
+	"pll_sys_pfd2_135m_clk", };
 
-अटल स्थिर अक्षर *i2c4_sel[] = अणु "osc", "pll_sys_main_120m_clk",
+static const char *i2c4_sel[] = { "osc", "pll_sys_main_120m_clk",
 	"pll_enet_50m_clk", "pll_dram_533m_clk",
 	"pll_audio_post_div", "pll_video_post_div", "pll_usb_main_clk",
-	"pll_sys_pfd2_135m_clk", पूर्ण;
+	"pll_sys_pfd2_135m_clk", };
 
-अटल स्थिर अक्षर *uart1_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart1_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_4",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart2_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart2_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_3",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart3_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart3_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_4",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart4_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart4_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_3",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart5_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart5_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_4",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart6_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart6_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_3",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *uart7_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *uart7_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_enet_100m_clk",
 	"pll_sys_main_clk", "ext_clk_2", "ext_clk_4",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *ecspi1_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *ecspi1_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_sys_main_120m_clk",
 	"pll_sys_main_clk", "pll_sys_pfd4_clk", "pll_enet_250m_clk",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *ecspi2_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *ecspi2_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_sys_main_120m_clk",
 	"pll_sys_main_clk", "pll_sys_pfd4_clk", "pll_enet_250m_clk",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *ecspi3_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *ecspi3_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_sys_main_120m_clk",
 	"pll_sys_main_clk", "pll_sys_pfd4_clk", "pll_enet_250m_clk",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *ecspi4_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *ecspi4_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_enet_40m_clk", "pll_sys_main_120m_clk",
 	"pll_sys_main_clk", "pll_sys_pfd4_clk", "pll_enet_250m_clk",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *pwm1_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *pwm1_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_1", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_1", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *pwm2_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *pwm2_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_1", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_1", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *pwm3_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *pwm3_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_2", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_2", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *pwm4_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *pwm4_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_2", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_2", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *flexसमयr1_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *flextimer1_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_3", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_3", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *flexसमयr2_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *flextimer2_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_main_120m_clk", "pll_enet_40m_clk", "pll_audio_post_div",
-	"ext_clk_3", "ref_1m_clk", "pll_video_post_div", पूर्ण;
+	"ext_clk_3", "ref_1m_clk", "pll_video_post_div", };
 
-अटल स्थिर अक्षर *sim1_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *sim1_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_usb_main_clk", "pll_audio_post_div", "pll_enet_125m_clk",
-	"pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *sim2_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *sim2_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_usb_main_clk", "pll_video_post_div", "pll_enet_125m_clk",
-	"pll_sys_pfd7_clk", पूर्ण;
+	"pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *gpt1_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *gpt1_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_pfd0_392m_clk", "pll_enet_40m_clk", "pll_video_post_div",
-	"ref_1m_clk", "pll_audio_post_div", "ext_clk_1", पूर्ण;
+	"ref_1m_clk", "pll_audio_post_div", "ext_clk_1", };
 
-अटल स्थिर अक्षर *gpt2_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *gpt2_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_pfd0_392m_clk", "pll_enet_40m_clk", "pll_video_post_div",
-	"ref_1m_clk", "pll_audio_post_div", "ext_clk_2", पूर्ण;
+	"ref_1m_clk", "pll_audio_post_div", "ext_clk_2", };
 
-अटल स्थिर अक्षर *gpt3_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *gpt3_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_pfd0_392m_clk", "pll_enet_40m_clk", "pll_video_post_div",
-	"ref_1m_clk", "pll_audio_post_div", "ext_clk_3", पूर्ण;
+	"ref_1m_clk", "pll_audio_post_div", "ext_clk_3", };
 
-अटल स्थिर अक्षर *gpt4_sel[] = अणु "osc", "pll_enet_100m_clk",
+static const char *gpt4_sel[] = { "osc", "pll_enet_100m_clk",
 	"pll_sys_pfd0_392m_clk", "pll_enet_40m_clk", "pll_video_post_div",
-	"ref_1m_clk", "pll_audio_post_div", "ext_clk_4", पूर्ण;
+	"ref_1m_clk", "pll_audio_post_div", "ext_clk_4", };
 
-अटल स्थिर अक्षर *trace_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *trace_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_enet_125m_clk", "pll_usb_main_clk", "ext_clk_2",
-	"ext_clk_3", पूर्ण;
+	"ext_clk_3", };
 
-अटल स्थिर अक्षर *wकरोg_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *wdog_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_enet_125m_clk", "pll_usb_main_clk", "ref_1m_clk",
-	"pll_sys_pfd1_166m_clk", पूर्ण;
+	"pll_sys_pfd1_166m_clk", };
 
-अटल स्थिर अक्षर *csi_mclk_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *csi_mclk_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_enet_125m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *audio_mclk_sel[] = अणु "osc", "pll_sys_pfd2_135m_clk",
+static const char *audio_mclk_sel[] = { "osc", "pll_sys_pfd2_135m_clk",
 	"pll_sys_main_120m_clk", "pll_dram_533m_clk",
 	"pll_enet_125m_clk", "pll_audio_post_div", "pll_video_post_div",
-	"pll_usb_main_clk", पूर्ण;
+	"pll_usb_main_clk", };
 
-अटल स्थिर अक्षर *wrclk_sel[] = अणु "osc", "pll_enet_40m_clk",
+static const char *wrclk_sel[] = { "osc", "pll_enet_40m_clk",
 	"pll_dram_533m_clk", "pll_usb_main_clk",
 	"pll_sys_main_240m_clk", "pll_sys_pfd2_270m_clk",
-	"pll_enet_500m_clk", "pll_sys_pfd7_clk", पूर्ण;
+	"pll_enet_500m_clk", "pll_sys_pfd7_clk", };
 
-अटल स्थिर अक्षर *clko1_sel[] = अणु "osc", "pll_sys_main_clk",
+static const char *clko1_sel[] = { "osc", "pll_sys_main_clk",
 	"pll_sys_main_240m_clk", "pll_sys_pfd0_196m_clk", "pll_sys_pfd3_clk",
-	"pll_enet_500m_clk", "pll_dram_533m_clk", "ref_1m_clk", पूर्ण;
+	"pll_enet_500m_clk", "pll_dram_533m_clk", "ref_1m_clk", };
 
-अटल स्थिर अक्षर *clko2_sel[] = अणु "osc", "pll_sys_main_240m_clk",
+static const char *clko2_sel[] = { "osc", "pll_sys_main_240m_clk",
 	"pll_sys_pfd0_392m_clk", "pll_sys_pfd1_166m_clk", "pll_sys_pfd4_clk",
-	"pll_audio_post_div", "pll_video_post_div", "ckil", पूर्ण;
+	"pll_audio_post_div", "pll_video_post_div", "ckil", };
 
-अटल स्थिर अक्षर *lvds1_sel[] = अणु "pll_arm_main_clk",
+static const char *lvds1_sel[] = { "pll_arm_main_clk",
 	"pll_sys_main_clk", "pll_sys_pfd0_392m_clk", "pll_sys_pfd1_332m_clk",
 	"pll_sys_pfd2_270m_clk", "pll_sys_pfd3_clk", "pll_sys_pfd4_clk",
 	"pll_sys_pfd5_clk", "pll_sys_pfd6_clk", "pll_sys_pfd7_clk",
 	"pll_audio_post_div", "pll_video_post_div", "pll_enet_500m_clk",
 	"pll_enet_250m_clk", "pll_enet_125m_clk", "pll_enet_100m_clk",
 	"pll_enet_50m_clk", "pll_enet_40m_clk", "pll_enet_25m_clk",
-	"pll_dram_main_clk", पूर्ण;
+	"pll_dram_main_clk", };
 
-अटल स्थिर अक्षर *pll_bypass_src_sel[] = अणु "osc", "dummy", पूर्ण;
-अटल स्थिर अक्षर *pll_arm_bypass_sel[] = अणु "pll_arm_main", "pll_arm_main_src", पूर्ण;
-अटल स्थिर अक्षर *pll_dram_bypass_sel[] = अणु "pll_dram_main", "pll_dram_main_src", पूर्ण;
-अटल स्थिर अक्षर *pll_sys_bypass_sel[] = अणु "pll_sys_main", "pll_sys_main_src", पूर्ण;
-अटल स्थिर अक्षर *pll_enet_bypass_sel[] = अणु "pll_enet_main", "pll_enet_main_src", पूर्ण;
-अटल स्थिर अक्षर *pll_audio_bypass_sel[] = अणु "pll_audio_main", "pll_audio_main_src", पूर्ण;
-अटल स्थिर अक्षर *pll_video_bypass_sel[] = अणु "pll_video_main", "pll_video_main_src", पूर्ण;
+static const char *pll_bypass_src_sel[] = { "osc", "dummy", };
+static const char *pll_arm_bypass_sel[] = { "pll_arm_main", "pll_arm_main_src", };
+static const char *pll_dram_bypass_sel[] = { "pll_dram_main", "pll_dram_main_src", };
+static const char *pll_sys_bypass_sel[] = { "pll_sys_main", "pll_sys_main_src", };
+static const char *pll_enet_bypass_sel[] = { "pll_enet_main", "pll_enet_main_src", };
+static const char *pll_audio_bypass_sel[] = { "pll_audio_main", "pll_audio_main_src", };
+static const char *pll_video_bypass_sel[] = { "pll_video_main", "pll_video_main_src", };
 
-अटल काष्ठा clk_hw **hws;
-अटल काष्ठा clk_hw_onecell_data *clk_hw_data;
+static struct clk_hw **hws;
+static struct clk_hw_onecell_data *clk_hw_data;
 
-अटल व्योम __init imx7d_घड़ीs_init(काष्ठा device_node *ccm_node)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *base;
+static void __init imx7d_clocks_init(struct device_node *ccm_node)
+{
+	struct device_node *np;
+	void __iomem *base;
 
-	clk_hw_data = kzalloc(काष्ठा_size(clk_hw_data, hws,
+	clk_hw_data = kzalloc(struct_size(clk_hw_data, hws,
 					  IMX7D_CLK_END), GFP_KERNEL);
-	अगर (WARN_ON(!clk_hw_data))
-		वापस;
+	if (WARN_ON(!clk_hw_data))
+		return;
 
 	clk_hw_data->num = IMX7D_CLK_END;
 	hws = clk_hw_data->hws;
@@ -395,7 +394,7 @@
 	hws[IMX7D_OSC_24M_CLK] = imx_obtain_fixed_clk_hw(ccm_node, "osc");
 	hws[IMX7D_CKIL] = imx_obtain_fixed_clk_hw(ccm_node, "ckil");
 
-	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx7d-anatop");
+	np = of_find_compatible_node(NULL, NULL, "fsl,imx7d-anatop");
 	base = of_iomap(np, 0);
 	WARN_ON(!base);
 	of_node_put(np);
@@ -427,16 +426,16 @@
 	hws[IMX7D_PLL_AUDIO_MAIN_CLK] = imx_clk_hw_gate("pll_audio_main_clk", "pll_audio_main_bypass", base + 0xf0, 13);
 	hws[IMX7D_PLL_VIDEO_MAIN_CLK] = imx_clk_hw_gate("pll_video_main_clk", "pll_video_main_bypass", base + 0x130, 13);
 
-	hws[IMX7D_PLL_DRAM_TEST_DIV]  = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll_dram_test_div", "pll_dram_main_bypass",
-				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x70, 21, 2, 0, test_भाग_प्रकारable, &imx_ccm_lock);
-	hws[IMX7D_PLL_AUDIO_TEST_DIV]  = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll_audio_test_div", "pll_audio_main_clk",
-				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0xf0, 19, 2, 0, test_भाग_प्रकारable, &imx_ccm_lock);
-	hws[IMX7D_PLL_AUDIO_POST_DIV] = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll_audio_post_div", "pll_audio_test_div",
-				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0xf0, 22, 2, 0, post_भाग_प्रकारable, &imx_ccm_lock);
-	hws[IMX7D_PLL_VIDEO_TEST_DIV]  = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll_video_test_div", "pll_video_main_clk",
-				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x130, 19, 2, 0, test_भाग_प्रकारable, &imx_ccm_lock);
-	hws[IMX7D_PLL_VIDEO_POST_DIV] = clk_hw_रेजिस्टर_भागider_table(शून्य, "pll_video_post_div", "pll_video_test_div",
-				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x130, 22, 2, 0, post_भाग_प्रकारable, &imx_ccm_lock);
+	hws[IMX7D_PLL_DRAM_TEST_DIV]  = clk_hw_register_divider_table(NULL, "pll_dram_test_div", "pll_dram_main_bypass",
+				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x70, 21, 2, 0, test_div_table, &imx_ccm_lock);
+	hws[IMX7D_PLL_AUDIO_TEST_DIV]  = clk_hw_register_divider_table(NULL, "pll_audio_test_div", "pll_audio_main_clk",
+				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0xf0, 19, 2, 0, test_div_table, &imx_ccm_lock);
+	hws[IMX7D_PLL_AUDIO_POST_DIV] = clk_hw_register_divider_table(NULL, "pll_audio_post_div", "pll_audio_test_div",
+				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0xf0, 22, 2, 0, post_div_table, &imx_ccm_lock);
+	hws[IMX7D_PLL_VIDEO_TEST_DIV]  = clk_hw_register_divider_table(NULL, "pll_video_test_div", "pll_video_main_clk",
+				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x130, 19, 2, 0, test_div_table, &imx_ccm_lock);
+	hws[IMX7D_PLL_VIDEO_POST_DIV] = clk_hw_register_divider_table(NULL, "pll_video_post_div", "pll_video_test_div",
+				CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE, base + 0x130, 22, 2, 0, post_div_table, &imx_ccm_lock);
 
 	hws[IMX7D_PLL_SYS_PFD0_392M_CLK] = imx_clk_hw_pfd("pll_sys_pfd0_392m_clk", "pll_sys_main_clk", base + 0xc0, 0);
 	hws[IMX7D_PLL_SYS_PFD1_332M_CLK] = imx_clk_hw_pfd("pll_sys_pfd1_332m_clk", "pll_sys_main_clk", base + 0xc0, 1);
@@ -497,7 +496,7 @@
 	hws[IMX7D_AHB_CHANNEL_ROOT_SRC] = imx_clk_hw_mux2("ahb_src", base + 0x9000, 24, 3, ahb_channel_sel, ARRAY_SIZE(ahb_channel_sel));
 
 	hws[IMX7D_ENET_AXI_ROOT_SRC] = imx_clk_hw_mux2_flags("enet_axi_src", base + 0x8900, 24, 3, enet_axi_sel, ARRAY_SIZE(enet_axi_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_न_अंकD_USDHC_BUS_ROOT_SRC] = imx_clk_hw_mux2_flags("nand_usdhc_src", base + 0x8980, 24, 3, nand_usdhc_bus_sel, ARRAY_SIZE(nand_usdhc_bus_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_NAND_USDHC_BUS_ROOT_SRC] = imx_clk_hw_mux2_flags("nand_usdhc_src", base + 0x8980, 24, 3, nand_usdhc_bus_sel, ARRAY_SIZE(nand_usdhc_bus_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_DRAM_PHYM_ROOT_SRC] = imx_clk_hw_mux2_flags("dram_phym_src", base + 0x9800, 24, 1, dram_phym_sel, ARRAY_SIZE(dram_phym_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_DRAM_ROOT_SRC] = imx_clk_hw_mux2_flags("dram_src", base + 0x9880, 24, 1, dram_sel, ARRAY_SIZE(dram_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_DRAM_PHYM_ALT_ROOT_SRC] = imx_clk_hw_mux2_flags("dram_phym_alt_src", base + 0xa000, 24, 3, dram_phym_alt_sel, ARRAY_SIZE(dram_phym_alt_sel), CLK_SET_PARENT_GATE);
@@ -506,21 +505,21 @@
 	hws[IMX7D_PCIE_CTRL_ROOT_SRC] = imx_clk_hw_mux2_flags("pcie_ctrl_src", base + 0xa180, 24, 3, pcie_ctrl_sel, ARRAY_SIZE(pcie_ctrl_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_PCIE_PHY_ROOT_SRC] = imx_clk_hw_mux2_flags("pcie_phy_src", base + 0xa200, 24, 3, pcie_phy_sel, ARRAY_SIZE(pcie_phy_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_EPDC_PIXEL_ROOT_SRC] = imx_clk_hw_mux2_flags("epdc_pixel_src", base + 0xa280, 24, 3, epdc_pixel_sel, ARRAY_SIZE(epdc_pixel_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_LCDIF_PIXEL_ROOT_SRC] = imx_clk_hw_mux2_flags("lcdif_pixel_src", base + 0xa300, 24, 3, lcdअगर_pixel_sel, ARRAY_SIZE(lcdअगर_pixel_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_LCDIF_PIXEL_ROOT_SRC] = imx_clk_hw_mux2_flags("lcdif_pixel_src", base + 0xa300, 24, 3, lcdif_pixel_sel, ARRAY_SIZE(lcdif_pixel_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_MIPI_DSI_ROOT_SRC] = imx_clk_hw_mux2_flags("mipi_dsi_src", base + 0xa380, 24, 3,  mipi_dsi_sel, ARRAY_SIZE(mipi_dsi_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_MIPI_CSI_ROOT_SRC] = imx_clk_hw_mux2_flags("mipi_csi_src", base + 0xa400, 24, 3, mipi_csi_sel, ARRAY_SIZE(mipi_csi_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_MIPI_DPHY_ROOT_SRC] = imx_clk_hw_mux2_flags("mipi_dphy_src", base + 0xa480, 24, 3, mipi_dphy_sel, ARRAY_SIZE(mipi_dphy_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_SAI1_ROOT_SRC] = imx_clk_hw_mux2_flags("sai1_src", base + 0xa500, 24, 3, sai1_sel, ARRAY_SIZE(sai1_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_SAI2_ROOT_SRC] = imx_clk_hw_mux2_flags("sai2_src", base + 0xa580, 24, 3, sai2_sel, ARRAY_SIZE(sai2_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_SAI3_ROOT_SRC] = imx_clk_hw_mux2_flags("sai3_src", base + 0xa600, 24, 3, sai3_sel, ARRAY_SIZE(sai3_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_SPDIF_ROOT_SRC] = imx_clk_hw_mux2_flags("spdif_src", base + 0xa680, 24, 3, spdअगर_sel, ARRAY_SIZE(spdअगर_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_SPDIF_ROOT_SRC] = imx_clk_hw_mux2_flags("spdif_src", base + 0xa680, 24, 3, spdif_sel, ARRAY_SIZE(spdif_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_ENET1_REF_ROOT_SRC] = imx_clk_hw_mux2_flags("enet1_ref_src", base + 0xa700, 24, 3, enet1_ref_sel, ARRAY_SIZE(enet1_ref_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_ENET1_TIME_ROOT_SRC] = imx_clk_hw_mux2_flags("enet1_time_src", base + 0xa780, 24, 3, enet1_समय_sel, ARRAY_SIZE(enet1_समय_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_ENET1_TIME_ROOT_SRC] = imx_clk_hw_mux2_flags("enet1_time_src", base + 0xa780, 24, 3, enet1_time_sel, ARRAY_SIZE(enet1_time_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_ENET2_REF_ROOT_SRC] = imx_clk_hw_mux2_flags("enet2_ref_src", base + 0xa800, 24, 3, enet2_ref_sel, ARRAY_SIZE(enet2_ref_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_ENET2_TIME_ROOT_SRC] = imx_clk_hw_mux2_flags("enet2_time_src", base + 0xa880, 24, 3, enet2_समय_sel, ARRAY_SIZE(enet2_समय_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_ENET2_TIME_ROOT_SRC] = imx_clk_hw_mux2_flags("enet2_time_src", base + 0xa880, 24, 3, enet2_time_sel, ARRAY_SIZE(enet2_time_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_ENET_PHY_REF_ROOT_SRC] = imx_clk_hw_mux2_flags("enet_phy_ref_src", base + 0xa900, 24, 3, enet_phy_ref_sel, ARRAY_SIZE(enet_phy_ref_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_EIM_ROOT_SRC] = imx_clk_hw_mux2_flags("eim_src", base + 0xa980, 24, 3, eim_sel, ARRAY_SIZE(eim_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_न_अंकD_ROOT_SRC] = imx_clk_hw_mux2_flags("nand_src", base + 0xaa00, 24, 3, nand_sel, ARRAY_SIZE(nand_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_NAND_ROOT_SRC] = imx_clk_hw_mux2_flags("nand_src", base + 0xaa00, 24, 3, nand_sel, ARRAY_SIZE(nand_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_QSPI_ROOT_SRC] = imx_clk_hw_mux2_flags("qspi_src", base + 0xaa80, 24, 3, qspi_sel, ARRAY_SIZE(qspi_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_USDHC1_ROOT_SRC] = imx_clk_hw_mux2_flags("usdhc1_src", base + 0xab00, 24, 3, usdhc1_sel, ARRAY_SIZE(usdhc1_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_USDHC2_ROOT_SRC] = imx_clk_hw_mux2_flags("usdhc2_src", base + 0xab80, 24, 3, usdhc2_sel, ARRAY_SIZE(usdhc2_sel), CLK_SET_PARENT_GATE);
@@ -546,8 +545,8 @@
 	hws[IMX7D_PWM2_ROOT_SRC] = imx_clk_hw_mux2_flags("pwm2_src", base + 0xb580, 24, 3, pwm2_sel, ARRAY_SIZE(pwm2_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_PWM3_ROOT_SRC] = imx_clk_hw_mux2_flags("pwm3_src", base + 0xb600, 24, 3, pwm3_sel, ARRAY_SIZE(pwm3_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_PWM4_ROOT_SRC] = imx_clk_hw_mux2_flags("pwm4_src", base + 0xb680, 24, 3, pwm4_sel, ARRAY_SIZE(pwm4_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_FLEXTIMER1_ROOT_SRC] = imx_clk_hw_mux2_flags("flextimer1_src", base + 0xb700, 24, 3, flexसमयr1_sel, ARRAY_SIZE(flexसमयr1_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_FLEXTIMER2_ROOT_SRC] = imx_clk_hw_mux2_flags("flextimer2_src", base + 0xb780, 24, 3, flexसमयr2_sel, ARRAY_SIZE(flexसमयr2_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_FLEXTIMER1_ROOT_SRC] = imx_clk_hw_mux2_flags("flextimer1_src", base + 0xb700, 24, 3, flextimer1_sel, ARRAY_SIZE(flextimer1_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_FLEXTIMER2_ROOT_SRC] = imx_clk_hw_mux2_flags("flextimer2_src", base + 0xb780, 24, 3, flextimer2_sel, ARRAY_SIZE(flextimer2_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_SIM1_ROOT_SRC] = imx_clk_hw_mux2_flags("sim1_src", base + 0xb800, 24, 3, sim1_sel, ARRAY_SIZE(sim1_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_SIM2_ROOT_SRC] = imx_clk_hw_mux2_flags("sim2_src", base + 0xb880, 24, 3, sim2_sel, ARRAY_SIZE(sim2_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_GPT1_ROOT_SRC] = imx_clk_hw_mux2_flags("gpt1_src", base + 0xb900, 24, 3, gpt1_sel, ARRAY_SIZE(gpt1_sel), CLK_SET_PARENT_GATE);
@@ -555,7 +554,7 @@
 	hws[IMX7D_GPT3_ROOT_SRC] = imx_clk_hw_mux2_flags("gpt3_src", base + 0xba00, 24, 3, gpt3_sel, ARRAY_SIZE(gpt3_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_GPT4_ROOT_SRC] = imx_clk_hw_mux2_flags("gpt4_src", base + 0xba80, 24, 3, gpt4_sel, ARRAY_SIZE(gpt4_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_TRACE_ROOT_SRC] = imx_clk_hw_mux2_flags("trace_src", base + 0xbb00, 24, 3, trace_sel, ARRAY_SIZE(trace_sel), CLK_SET_PARENT_GATE);
-	hws[IMX7D_WDOG_ROOT_SRC] = imx_clk_hw_mux2_flags("wdog_src", base + 0xbb80, 24, 3, wकरोg_sel, ARRAY_SIZE(wकरोg_sel), CLK_SET_PARENT_GATE);
+	hws[IMX7D_WDOG_ROOT_SRC] = imx_clk_hw_mux2_flags("wdog_src", base + 0xbb80, 24, 3, wdog_sel, ARRAY_SIZE(wdog_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_CSI_MCLK_ROOT_SRC] = imx_clk_hw_mux2_flags("csi_mclk_src", base + 0xbc00, 24, 3, csi_mclk_sel, ARRAY_SIZE(csi_mclk_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_AUDIO_MCLK_ROOT_SRC] = imx_clk_hw_mux2_flags("audio_mclk_src", base + 0xbc80, 24, 3, audio_mclk_sel, ARRAY_SIZE(audio_mclk_sel), CLK_SET_PARENT_GATE);
 	hws[IMX7D_WRCLK_ROOT_SRC] = imx_clk_hw_mux2_flags("wrclk_src", base + 0xbd00, 24, 3, wrclk_sel, ARRAY_SIZE(wrclk_sel), CLK_SET_PARENT_GATE);
@@ -567,7 +566,7 @@
 	hws[IMX7D_MAIN_AXI_ROOT_CG] = imx_clk_hw_gate3("axi_cg", "axi_src", base + 0x8800, 28);
 	hws[IMX7D_DISP_AXI_ROOT_CG] = imx_clk_hw_gate3("disp_axi_cg", "disp_axi_src", base + 0x8880, 28);
 	hws[IMX7D_ENET_AXI_ROOT_CG] = imx_clk_hw_gate3("enet_axi_cg", "enet_axi_src", base + 0x8900, 28);
-	hws[IMX7D_न_अंकD_USDHC_BUS_ROOT_CG] = imx_clk_hw_gate3("nand_usdhc_cg", "nand_usdhc_src", base + 0x8980, 28);
+	hws[IMX7D_NAND_USDHC_BUS_ROOT_CG] = imx_clk_hw_gate3("nand_usdhc_cg", "nand_usdhc_src", base + 0x8980, 28);
 	hws[IMX7D_AHB_CHANNEL_ROOT_CG] = imx_clk_hw_gate3("ahb_cg", "ahb_src", base + 0x9000, 28);
 	hws[IMX7D_DRAM_PHYM_ROOT_CG] = imx_clk_hw_gate3("dram_phym_cg", "dram_phym_src", base + 0x9800, 28);
 	hws[IMX7D_DRAM_ROOT_CG] = imx_clk_hw_gate3("dram_cg", "dram_src", base + 0x9880, 28);
@@ -591,7 +590,7 @@
 	hws[IMX7D_ENET2_TIME_ROOT_CG] = imx_clk_hw_gate3("enet2_time_cg", "enet2_time_src", base + 0xa880, 28);
 	hws[IMX7D_ENET_PHY_REF_ROOT_CG] = imx_clk_hw_gate3("enet_phy_ref_cg", "enet_phy_ref_src", base + 0xa900, 28);
 	hws[IMX7D_EIM_ROOT_CG] = imx_clk_hw_gate3("eim_cg", "eim_src", base + 0xa980, 28);
-	hws[IMX7D_न_अंकD_ROOT_CG] = imx_clk_hw_gate3("nand_cg", "nand_src", base + 0xaa00, 28);
+	hws[IMX7D_NAND_ROOT_CG] = imx_clk_hw_gate3("nand_cg", "nand_src", base + 0xaa00, 28);
 	hws[IMX7D_QSPI_ROOT_CG] = imx_clk_hw_gate3("qspi_cg", "qspi_src", base + 0xaa80, 28);
 	hws[IMX7D_USDHC1_ROOT_CG] = imx_clk_hw_gate3("usdhc1_cg", "usdhc1_src", base + 0xab00, 28);
 	hws[IMX7D_USDHC2_ROOT_CG] = imx_clk_hw_gate3("usdhc2_cg", "usdhc2_src", base + 0xab80, 28);
@@ -633,143 +632,143 @@
 	hws[IMX7D_CLKO1_ROOT_CG] = imx_clk_hw_gate3("clko1_cg", "clko1_src", base + 0xbd80, 28);
 	hws[IMX7D_CLKO2_ROOT_CG] = imx_clk_hw_gate3("clko2_cg", "clko2_src", base + 0xbe00, 28);
 
-	hws[IMX7D_MAIN_AXI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("axi_pre_div", "axi_cg", base + 0x8800, 16, 3);
-	hws[IMX7D_DISP_AXI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("disp_axi_pre_div", "disp_axi_cg", base + 0x8880, 16, 3);
-	hws[IMX7D_ENET_AXI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet_axi_pre_div", "enet_axi_cg", base + 0x8900, 16, 3);
-	hws[IMX7D_न_अंकD_USDHC_BUS_ROOT_PRE_DIV] = imx_clk_hw_भागider2("nand_usdhc_pre_div", "nand_usdhc_cg", base + 0x8980, 16, 3);
-	hws[IMX7D_AHB_CHANNEL_ROOT_PRE_DIV] = imx_clk_hw_भागider2("ahb_pre_div", "ahb_cg", base + 0x9000, 16, 3);
-	hws[IMX7D_DRAM_PHYM_ALT_ROOT_PRE_DIV] = imx_clk_hw_भागider2("dram_phym_alt_pre_div", "dram_phym_alt_cg", base + 0xa000, 16, 3);
-	hws[IMX7D_DRAM_ALT_ROOT_PRE_DIV] = imx_clk_hw_भागider2("dram_alt_pre_div", "dram_alt_cg", base + 0xa080, 16, 3);
-	hws[IMX7D_USB_HSIC_ROOT_PRE_DIV] = imx_clk_hw_भागider2("usb_hsic_pre_div", "usb_hsic_cg", base + 0xa100, 16, 3);
-	hws[IMX7D_PCIE_CTRL_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pcie_ctrl_pre_div", "pcie_ctrl_cg", base + 0xa180, 16, 3);
-	hws[IMX7D_PCIE_PHY_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pcie_phy_pre_div", "pcie_phy_cg", base + 0xa200, 16, 3);
-	hws[IMX7D_EPDC_PIXEL_ROOT_PRE_DIV] = imx_clk_hw_भागider2("epdc_pixel_pre_div", "epdc_pixel_cg", base + 0xa280, 16, 3);
-	hws[IMX7D_LCDIF_PIXEL_ROOT_PRE_DIV] = imx_clk_hw_भागider2("lcdif_pixel_pre_div", "lcdif_pixel_cg", base + 0xa300, 16, 3);
-	hws[IMX7D_MIPI_DSI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("mipi_dsi_pre_div", "mipi_dsi_cg", base + 0xa380, 16, 3);
-	hws[IMX7D_MIPI_CSI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("mipi_csi_pre_div", "mipi_csi_cg", base + 0xa400, 16, 3);
-	hws[IMX7D_MIPI_DPHY_ROOT_PRE_DIV] = imx_clk_hw_भागider2("mipi_dphy_pre_div", "mipi_dphy_cg", base + 0xa480, 16, 3);
-	hws[IMX7D_SAI1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("sai1_pre_div", "sai1_cg", base + 0xa500, 16, 3);
-	hws[IMX7D_SAI2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("sai2_pre_div", "sai2_cg", base + 0xa580, 16, 3);
-	hws[IMX7D_SAI3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("sai3_pre_div", "sai3_cg", base + 0xa600, 16, 3);
-	hws[IMX7D_SPDIF_ROOT_PRE_DIV] = imx_clk_hw_भागider2("spdif_pre_div", "spdif_cg", base + 0xa680, 16, 3);
-	hws[IMX7D_ENET1_REF_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet1_ref_pre_div", "enet1_ref_cg", base + 0xa700, 16, 3);
-	hws[IMX7D_ENET1_TIME_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet1_time_pre_div", "enet1_time_cg", base + 0xa780, 16, 3);
-	hws[IMX7D_ENET2_REF_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet2_ref_pre_div", "enet2_ref_cg", base + 0xa800, 16, 3);
-	hws[IMX7D_ENET2_TIME_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet2_time_pre_div", "enet2_time_cg", base + 0xa880, 16, 3);
-	hws[IMX7D_ENET_PHY_REF_ROOT_PRE_DIV] = imx_clk_hw_भागider2("enet_phy_ref_pre_div", "enet_phy_ref_cg", base + 0xa900, 16, 3);
-	hws[IMX7D_EIM_ROOT_PRE_DIV] = imx_clk_hw_भागider2("eim_pre_div", "eim_cg", base + 0xa980, 16, 3);
-	hws[IMX7D_न_अंकD_ROOT_PRE_DIV] = imx_clk_hw_भागider2("nand_pre_div", "nand_cg", base + 0xaa00, 16, 3);
-	hws[IMX7D_QSPI_ROOT_PRE_DIV] = imx_clk_hw_भागider2("qspi_pre_div", "qspi_cg", base + 0xaa80, 16, 3);
-	hws[IMX7D_USDHC1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("usdhc1_pre_div", "usdhc1_cg", base + 0xab00, 16, 3);
-	hws[IMX7D_USDHC2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("usdhc2_pre_div", "usdhc2_cg", base + 0xab80, 16, 3);
-	hws[IMX7D_USDHC3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("usdhc3_pre_div", "usdhc3_cg", base + 0xac00, 16, 3);
-	hws[IMX7D_CAN1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("can1_pre_div", "can1_cg", base + 0xac80, 16, 3);
-	hws[IMX7D_CAN2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("can2_pre_div", "can2_cg", base + 0xad00, 16, 3);
-	hws[IMX7D_I2C1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("i2c1_pre_div", "i2c1_cg", base + 0xad80, 16, 3);
-	hws[IMX7D_I2C2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("i2c2_pre_div", "i2c2_cg", base + 0xae00, 16, 3);
-	hws[IMX7D_I2C3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("i2c3_pre_div", "i2c3_cg", base + 0xae80, 16, 3);
-	hws[IMX7D_I2C4_ROOT_PRE_DIV] = imx_clk_hw_भागider2("i2c4_pre_div", "i2c4_cg", base + 0xaf00, 16, 3);
-	hws[IMX7D_UART1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart1_pre_div", "uart1_cg", base + 0xaf80, 16, 3);
-	hws[IMX7D_UART2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart2_pre_div", "uart2_cg", base + 0xb000, 16, 3);
-	hws[IMX7D_UART3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart3_pre_div", "uart3_cg", base + 0xb080, 16, 3);
-	hws[IMX7D_UART4_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart4_pre_div", "uart4_cg", base + 0xb100, 16, 3);
-	hws[IMX7D_UART5_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart5_pre_div", "uart5_cg", base + 0xb180, 16, 3);
-	hws[IMX7D_UART6_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart6_pre_div", "uart6_cg", base + 0xb200, 16, 3);
-	hws[IMX7D_UART7_ROOT_PRE_DIV] = imx_clk_hw_भागider2("uart7_pre_div", "uart7_cg", base + 0xb280, 16, 3);
-	hws[IMX7D_ECSPI1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("ecspi1_pre_div", "ecspi1_cg", base + 0xb300, 16, 3);
-	hws[IMX7D_ECSPI2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("ecspi2_pre_div", "ecspi2_cg", base + 0xb380, 16, 3);
-	hws[IMX7D_ECSPI3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("ecspi3_pre_div", "ecspi3_cg", base + 0xb400, 16, 3);
-	hws[IMX7D_ECSPI4_ROOT_PRE_DIV] = imx_clk_hw_भागider2("ecspi4_pre_div", "ecspi4_cg", base + 0xb480, 16, 3);
-	hws[IMX7D_PWM1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pwm1_pre_div", "pwm1_cg", base + 0xb500, 16, 3);
-	hws[IMX7D_PWM2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pwm2_pre_div", "pwm2_cg", base + 0xb580, 16, 3);
-	hws[IMX7D_PWM3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pwm3_pre_div", "pwm3_cg", base + 0xb600, 16, 3);
-	hws[IMX7D_PWM4_ROOT_PRE_DIV] = imx_clk_hw_भागider2("pwm4_pre_div", "pwm4_cg", base + 0xb680, 16, 3);
-	hws[IMX7D_FLEXTIMER1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("flextimer1_pre_div", "flextimer1_cg", base + 0xb700, 16, 3);
-	hws[IMX7D_FLEXTIMER2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("flextimer2_pre_div", "flextimer2_cg", base + 0xb780, 16, 3);
-	hws[IMX7D_SIM1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("sim1_pre_div", "sim1_cg", base + 0xb800, 16, 3);
-	hws[IMX7D_SIM2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("sim2_pre_div", "sim2_cg", base + 0xb880, 16, 3);
-	hws[IMX7D_GPT1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("gpt1_pre_div", "gpt1_cg", base + 0xb900, 16, 3);
-	hws[IMX7D_GPT2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("gpt2_pre_div", "gpt2_cg", base + 0xb980, 16, 3);
-	hws[IMX7D_GPT3_ROOT_PRE_DIV] = imx_clk_hw_भागider2("gpt3_pre_div", "gpt3_cg", base + 0xba00, 16, 3);
-	hws[IMX7D_GPT4_ROOT_PRE_DIV] = imx_clk_hw_भागider2("gpt4_pre_div", "gpt4_cg", base + 0xba80, 16, 3);
-	hws[IMX7D_TRACE_ROOT_PRE_DIV] = imx_clk_hw_भागider2("trace_pre_div", "trace_cg", base + 0xbb00, 16, 3);
-	hws[IMX7D_WDOG_ROOT_PRE_DIV] = imx_clk_hw_भागider2("wdog_pre_div", "wdog_cg", base + 0xbb80, 16, 3);
-	hws[IMX7D_CSI_MCLK_ROOT_PRE_DIV] = imx_clk_hw_भागider2("csi_mclk_pre_div", "csi_mclk_cg", base + 0xbc00, 16, 3);
-	hws[IMX7D_AUDIO_MCLK_ROOT_PRE_DIV] = imx_clk_hw_भागider2("audio_mclk_pre_div", "audio_mclk_cg", base + 0xbc80, 16, 3);
-	hws[IMX7D_WRCLK_ROOT_PRE_DIV] = imx_clk_hw_भागider2("wrclk_pre_div", "wrclk_cg", base + 0xbd00, 16, 3);
-	hws[IMX7D_CLKO1_ROOT_PRE_DIV] = imx_clk_hw_भागider2("clko1_pre_div", "clko1_cg", base + 0xbd80, 16, 3);
-	hws[IMX7D_CLKO2_ROOT_PRE_DIV] = imx_clk_hw_भागider2("clko2_pre_div", "clko2_cg", base + 0xbe00, 16, 3);
+	hws[IMX7D_MAIN_AXI_ROOT_PRE_DIV] = imx_clk_hw_divider2("axi_pre_div", "axi_cg", base + 0x8800, 16, 3);
+	hws[IMX7D_DISP_AXI_ROOT_PRE_DIV] = imx_clk_hw_divider2("disp_axi_pre_div", "disp_axi_cg", base + 0x8880, 16, 3);
+	hws[IMX7D_ENET_AXI_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet_axi_pre_div", "enet_axi_cg", base + 0x8900, 16, 3);
+	hws[IMX7D_NAND_USDHC_BUS_ROOT_PRE_DIV] = imx_clk_hw_divider2("nand_usdhc_pre_div", "nand_usdhc_cg", base + 0x8980, 16, 3);
+	hws[IMX7D_AHB_CHANNEL_ROOT_PRE_DIV] = imx_clk_hw_divider2("ahb_pre_div", "ahb_cg", base + 0x9000, 16, 3);
+	hws[IMX7D_DRAM_PHYM_ALT_ROOT_PRE_DIV] = imx_clk_hw_divider2("dram_phym_alt_pre_div", "dram_phym_alt_cg", base + 0xa000, 16, 3);
+	hws[IMX7D_DRAM_ALT_ROOT_PRE_DIV] = imx_clk_hw_divider2("dram_alt_pre_div", "dram_alt_cg", base + 0xa080, 16, 3);
+	hws[IMX7D_USB_HSIC_ROOT_PRE_DIV] = imx_clk_hw_divider2("usb_hsic_pre_div", "usb_hsic_cg", base + 0xa100, 16, 3);
+	hws[IMX7D_PCIE_CTRL_ROOT_PRE_DIV] = imx_clk_hw_divider2("pcie_ctrl_pre_div", "pcie_ctrl_cg", base + 0xa180, 16, 3);
+	hws[IMX7D_PCIE_PHY_ROOT_PRE_DIV] = imx_clk_hw_divider2("pcie_phy_pre_div", "pcie_phy_cg", base + 0xa200, 16, 3);
+	hws[IMX7D_EPDC_PIXEL_ROOT_PRE_DIV] = imx_clk_hw_divider2("epdc_pixel_pre_div", "epdc_pixel_cg", base + 0xa280, 16, 3);
+	hws[IMX7D_LCDIF_PIXEL_ROOT_PRE_DIV] = imx_clk_hw_divider2("lcdif_pixel_pre_div", "lcdif_pixel_cg", base + 0xa300, 16, 3);
+	hws[IMX7D_MIPI_DSI_ROOT_PRE_DIV] = imx_clk_hw_divider2("mipi_dsi_pre_div", "mipi_dsi_cg", base + 0xa380, 16, 3);
+	hws[IMX7D_MIPI_CSI_ROOT_PRE_DIV] = imx_clk_hw_divider2("mipi_csi_pre_div", "mipi_csi_cg", base + 0xa400, 16, 3);
+	hws[IMX7D_MIPI_DPHY_ROOT_PRE_DIV] = imx_clk_hw_divider2("mipi_dphy_pre_div", "mipi_dphy_cg", base + 0xa480, 16, 3);
+	hws[IMX7D_SAI1_ROOT_PRE_DIV] = imx_clk_hw_divider2("sai1_pre_div", "sai1_cg", base + 0xa500, 16, 3);
+	hws[IMX7D_SAI2_ROOT_PRE_DIV] = imx_clk_hw_divider2("sai2_pre_div", "sai2_cg", base + 0xa580, 16, 3);
+	hws[IMX7D_SAI3_ROOT_PRE_DIV] = imx_clk_hw_divider2("sai3_pre_div", "sai3_cg", base + 0xa600, 16, 3);
+	hws[IMX7D_SPDIF_ROOT_PRE_DIV] = imx_clk_hw_divider2("spdif_pre_div", "spdif_cg", base + 0xa680, 16, 3);
+	hws[IMX7D_ENET1_REF_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet1_ref_pre_div", "enet1_ref_cg", base + 0xa700, 16, 3);
+	hws[IMX7D_ENET1_TIME_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet1_time_pre_div", "enet1_time_cg", base + 0xa780, 16, 3);
+	hws[IMX7D_ENET2_REF_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet2_ref_pre_div", "enet2_ref_cg", base + 0xa800, 16, 3);
+	hws[IMX7D_ENET2_TIME_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet2_time_pre_div", "enet2_time_cg", base + 0xa880, 16, 3);
+	hws[IMX7D_ENET_PHY_REF_ROOT_PRE_DIV] = imx_clk_hw_divider2("enet_phy_ref_pre_div", "enet_phy_ref_cg", base + 0xa900, 16, 3);
+	hws[IMX7D_EIM_ROOT_PRE_DIV] = imx_clk_hw_divider2("eim_pre_div", "eim_cg", base + 0xa980, 16, 3);
+	hws[IMX7D_NAND_ROOT_PRE_DIV] = imx_clk_hw_divider2("nand_pre_div", "nand_cg", base + 0xaa00, 16, 3);
+	hws[IMX7D_QSPI_ROOT_PRE_DIV] = imx_clk_hw_divider2("qspi_pre_div", "qspi_cg", base + 0xaa80, 16, 3);
+	hws[IMX7D_USDHC1_ROOT_PRE_DIV] = imx_clk_hw_divider2("usdhc1_pre_div", "usdhc1_cg", base + 0xab00, 16, 3);
+	hws[IMX7D_USDHC2_ROOT_PRE_DIV] = imx_clk_hw_divider2("usdhc2_pre_div", "usdhc2_cg", base + 0xab80, 16, 3);
+	hws[IMX7D_USDHC3_ROOT_PRE_DIV] = imx_clk_hw_divider2("usdhc3_pre_div", "usdhc3_cg", base + 0xac00, 16, 3);
+	hws[IMX7D_CAN1_ROOT_PRE_DIV] = imx_clk_hw_divider2("can1_pre_div", "can1_cg", base + 0xac80, 16, 3);
+	hws[IMX7D_CAN2_ROOT_PRE_DIV] = imx_clk_hw_divider2("can2_pre_div", "can2_cg", base + 0xad00, 16, 3);
+	hws[IMX7D_I2C1_ROOT_PRE_DIV] = imx_clk_hw_divider2("i2c1_pre_div", "i2c1_cg", base + 0xad80, 16, 3);
+	hws[IMX7D_I2C2_ROOT_PRE_DIV] = imx_clk_hw_divider2("i2c2_pre_div", "i2c2_cg", base + 0xae00, 16, 3);
+	hws[IMX7D_I2C3_ROOT_PRE_DIV] = imx_clk_hw_divider2("i2c3_pre_div", "i2c3_cg", base + 0xae80, 16, 3);
+	hws[IMX7D_I2C4_ROOT_PRE_DIV] = imx_clk_hw_divider2("i2c4_pre_div", "i2c4_cg", base + 0xaf00, 16, 3);
+	hws[IMX7D_UART1_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart1_pre_div", "uart1_cg", base + 0xaf80, 16, 3);
+	hws[IMX7D_UART2_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart2_pre_div", "uart2_cg", base + 0xb000, 16, 3);
+	hws[IMX7D_UART3_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart3_pre_div", "uart3_cg", base + 0xb080, 16, 3);
+	hws[IMX7D_UART4_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart4_pre_div", "uart4_cg", base + 0xb100, 16, 3);
+	hws[IMX7D_UART5_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart5_pre_div", "uart5_cg", base + 0xb180, 16, 3);
+	hws[IMX7D_UART6_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart6_pre_div", "uart6_cg", base + 0xb200, 16, 3);
+	hws[IMX7D_UART7_ROOT_PRE_DIV] = imx_clk_hw_divider2("uart7_pre_div", "uart7_cg", base + 0xb280, 16, 3);
+	hws[IMX7D_ECSPI1_ROOT_PRE_DIV] = imx_clk_hw_divider2("ecspi1_pre_div", "ecspi1_cg", base + 0xb300, 16, 3);
+	hws[IMX7D_ECSPI2_ROOT_PRE_DIV] = imx_clk_hw_divider2("ecspi2_pre_div", "ecspi2_cg", base + 0xb380, 16, 3);
+	hws[IMX7D_ECSPI3_ROOT_PRE_DIV] = imx_clk_hw_divider2("ecspi3_pre_div", "ecspi3_cg", base + 0xb400, 16, 3);
+	hws[IMX7D_ECSPI4_ROOT_PRE_DIV] = imx_clk_hw_divider2("ecspi4_pre_div", "ecspi4_cg", base + 0xb480, 16, 3);
+	hws[IMX7D_PWM1_ROOT_PRE_DIV] = imx_clk_hw_divider2("pwm1_pre_div", "pwm1_cg", base + 0xb500, 16, 3);
+	hws[IMX7D_PWM2_ROOT_PRE_DIV] = imx_clk_hw_divider2("pwm2_pre_div", "pwm2_cg", base + 0xb580, 16, 3);
+	hws[IMX7D_PWM3_ROOT_PRE_DIV] = imx_clk_hw_divider2("pwm3_pre_div", "pwm3_cg", base + 0xb600, 16, 3);
+	hws[IMX7D_PWM4_ROOT_PRE_DIV] = imx_clk_hw_divider2("pwm4_pre_div", "pwm4_cg", base + 0xb680, 16, 3);
+	hws[IMX7D_FLEXTIMER1_ROOT_PRE_DIV] = imx_clk_hw_divider2("flextimer1_pre_div", "flextimer1_cg", base + 0xb700, 16, 3);
+	hws[IMX7D_FLEXTIMER2_ROOT_PRE_DIV] = imx_clk_hw_divider2("flextimer2_pre_div", "flextimer2_cg", base + 0xb780, 16, 3);
+	hws[IMX7D_SIM1_ROOT_PRE_DIV] = imx_clk_hw_divider2("sim1_pre_div", "sim1_cg", base + 0xb800, 16, 3);
+	hws[IMX7D_SIM2_ROOT_PRE_DIV] = imx_clk_hw_divider2("sim2_pre_div", "sim2_cg", base + 0xb880, 16, 3);
+	hws[IMX7D_GPT1_ROOT_PRE_DIV] = imx_clk_hw_divider2("gpt1_pre_div", "gpt1_cg", base + 0xb900, 16, 3);
+	hws[IMX7D_GPT2_ROOT_PRE_DIV] = imx_clk_hw_divider2("gpt2_pre_div", "gpt2_cg", base + 0xb980, 16, 3);
+	hws[IMX7D_GPT3_ROOT_PRE_DIV] = imx_clk_hw_divider2("gpt3_pre_div", "gpt3_cg", base + 0xba00, 16, 3);
+	hws[IMX7D_GPT4_ROOT_PRE_DIV] = imx_clk_hw_divider2("gpt4_pre_div", "gpt4_cg", base + 0xba80, 16, 3);
+	hws[IMX7D_TRACE_ROOT_PRE_DIV] = imx_clk_hw_divider2("trace_pre_div", "trace_cg", base + 0xbb00, 16, 3);
+	hws[IMX7D_WDOG_ROOT_PRE_DIV] = imx_clk_hw_divider2("wdog_pre_div", "wdog_cg", base + 0xbb80, 16, 3);
+	hws[IMX7D_CSI_MCLK_ROOT_PRE_DIV] = imx_clk_hw_divider2("csi_mclk_pre_div", "csi_mclk_cg", base + 0xbc00, 16, 3);
+	hws[IMX7D_AUDIO_MCLK_ROOT_PRE_DIV] = imx_clk_hw_divider2("audio_mclk_pre_div", "audio_mclk_cg", base + 0xbc80, 16, 3);
+	hws[IMX7D_WRCLK_ROOT_PRE_DIV] = imx_clk_hw_divider2("wrclk_pre_div", "wrclk_cg", base + 0xbd00, 16, 3);
+	hws[IMX7D_CLKO1_ROOT_PRE_DIV] = imx_clk_hw_divider2("clko1_pre_div", "clko1_cg", base + 0xbd80, 16, 3);
+	hws[IMX7D_CLKO2_ROOT_PRE_DIV] = imx_clk_hw_divider2("clko2_pre_div", "clko2_cg", base + 0xbe00, 16, 3);
 
-	hws[IMX7D_ARM_A7_ROOT_DIV] = imx_clk_hw_भागider2("arm_a7_div", "arm_a7_cg", base + 0x8000, 0, 3);
-	hws[IMX7D_ARM_M4_ROOT_DIV] = imx_clk_hw_भागider2("arm_m4_div", "arm_m4_cg", base + 0x8080, 0, 3);
-	hws[IMX7D_MAIN_AXI_ROOT_DIV] = imx_clk_hw_भागider2("axi_post_div", "axi_pre_div", base + 0x8800, 0, 6);
-	hws[IMX7D_DISP_AXI_ROOT_DIV] = imx_clk_hw_भागider2("disp_axi_post_div", "disp_axi_pre_div", base + 0x8880, 0, 6);
-	hws[IMX7D_ENET_AXI_ROOT_DIV] = imx_clk_hw_भागider2("enet_axi_post_div", "enet_axi_pre_div", base + 0x8900, 0, 6);
-	hws[IMX7D_न_अंकD_USDHC_BUS_ROOT_CLK] = imx_clk_hw_भागider2("nand_usdhc_root_clk", "nand_usdhc_pre_div", base + 0x8980, 0, 6);
-	hws[IMX7D_AHB_CHANNEL_ROOT_DIV] = imx_clk_hw_भागider2("ahb_root_clk", "ahb_pre_div", base + 0x9000, 0, 6);
-	hws[IMX7D_IPG_ROOT_CLK] = imx_clk_hw_भागider_flags("ipg_root_clk", "ahb_root_clk", base + 0x9080, 0, 2, CLK_IS_CRITICAL | CLK_OPS_PARENT_ENABLE | CLK_SET_RATE_PARENT);
-	hws[IMX7D_DRAM_ROOT_DIV] = imx_clk_hw_भागider2("dram_post_div", "dram_cg", base + 0x9880, 0, 3);
-	hws[IMX7D_DRAM_PHYM_ALT_ROOT_DIV] = imx_clk_hw_भागider2("dram_phym_alt_post_div", "dram_phym_alt_pre_div", base + 0xa000, 0, 3);
-	hws[IMX7D_DRAM_ALT_ROOT_DIV] = imx_clk_hw_भागider2("dram_alt_post_div", "dram_alt_pre_div", base + 0xa080, 0, 3);
-	hws[IMX7D_USB_HSIC_ROOT_DIV] = imx_clk_hw_भागider2("usb_hsic_post_div", "usb_hsic_pre_div", base + 0xa100, 0, 6);
-	hws[IMX7D_PCIE_CTRL_ROOT_DIV] = imx_clk_hw_भागider2("pcie_ctrl_post_div", "pcie_ctrl_pre_div", base + 0xa180, 0, 6);
-	hws[IMX7D_PCIE_PHY_ROOT_DIV] = imx_clk_hw_भागider2("pcie_phy_post_div", "pcie_phy_pre_div", base + 0xa200, 0, 6);
-	hws[IMX7D_EPDC_PIXEL_ROOT_DIV] = imx_clk_hw_भागider2("epdc_pixel_post_div", "epdc_pixel_pre_div", base + 0xa280, 0, 6);
-	hws[IMX7D_LCDIF_PIXEL_ROOT_DIV] = imx_clk_hw_भागider2("lcdif_pixel_post_div", "lcdif_pixel_pre_div", base + 0xa300, 0, 6);
-	hws[IMX7D_MIPI_DSI_ROOT_DIV] = imx_clk_hw_भागider2("mipi_dsi_post_div", "mipi_dsi_pre_div", base + 0xa380, 0, 6);
-	hws[IMX7D_MIPI_CSI_ROOT_DIV] = imx_clk_hw_भागider2("mipi_csi_post_div", "mipi_csi_pre_div", base + 0xa400, 0, 6);
-	hws[IMX7D_MIPI_DPHY_ROOT_DIV] = imx_clk_hw_भागider2("mipi_dphy_post_div", "mipi_dphy_pre_div", base + 0xa480, 0, 6);
-	hws[IMX7D_SAI1_ROOT_DIV] = imx_clk_hw_भागider2("sai1_post_div", "sai1_pre_div", base + 0xa500, 0, 6);
-	hws[IMX7D_SAI2_ROOT_DIV] = imx_clk_hw_भागider2("sai2_post_div", "sai2_pre_div", base + 0xa580, 0, 6);
-	hws[IMX7D_SAI3_ROOT_DIV] = imx_clk_hw_भागider2("sai3_post_div", "sai3_pre_div", base + 0xa600, 0, 6);
-	hws[IMX7D_SPDIF_ROOT_DIV] = imx_clk_hw_भागider2("spdif_post_div", "spdif_pre_div", base + 0xa680, 0, 6);
-	hws[IMX7D_ENET1_REF_ROOT_DIV] = imx_clk_hw_भागider2("enet1_ref_post_div", "enet1_ref_pre_div", base + 0xa700, 0, 6);
-	hws[IMX7D_ENET1_TIME_ROOT_DIV] = imx_clk_hw_भागider2("enet1_time_post_div", "enet1_time_pre_div", base + 0xa780, 0, 6);
-	hws[IMX7D_ENET2_REF_ROOT_DIV] = imx_clk_hw_भागider2("enet2_ref_post_div", "enet2_ref_pre_div", base + 0xa800, 0, 6);
-	hws[IMX7D_ENET2_TIME_ROOT_DIV] = imx_clk_hw_भागider2("enet2_time_post_div", "enet2_time_pre_div", base + 0xa880, 0, 6);
-	hws[IMX7D_ENET_PHY_REF_ROOT_CLK] = imx_clk_hw_भागider2("enet_phy_ref_root_clk", "enet_phy_ref_pre_div", base + 0xa900, 0, 6);
-	hws[IMX7D_EIM_ROOT_DIV] = imx_clk_hw_भागider2("eim_post_div", "eim_pre_div", base + 0xa980, 0, 6);
-	hws[IMX7D_न_अंकD_ROOT_CLK] = imx_clk_hw_भागider2("nand_root_clk", "nand_pre_div", base + 0xaa00, 0, 6);
-	hws[IMX7D_QSPI_ROOT_DIV] = imx_clk_hw_भागider2("qspi_post_div", "qspi_pre_div", base + 0xaa80, 0, 6);
-	hws[IMX7D_USDHC1_ROOT_DIV] = imx_clk_hw_भागider2("usdhc1_post_div", "usdhc1_pre_div", base + 0xab00, 0, 6);
-	hws[IMX7D_USDHC2_ROOT_DIV] = imx_clk_hw_भागider2("usdhc2_post_div", "usdhc2_pre_div", base + 0xab80, 0, 6);
-	hws[IMX7D_USDHC3_ROOT_DIV] = imx_clk_hw_भागider2("usdhc3_post_div", "usdhc3_pre_div", base + 0xac00, 0, 6);
-	hws[IMX7D_CAN1_ROOT_DIV] = imx_clk_hw_भागider2("can1_post_div", "can1_pre_div", base + 0xac80, 0, 6);
-	hws[IMX7D_CAN2_ROOT_DIV] = imx_clk_hw_भागider2("can2_post_div", "can2_pre_div", base + 0xad00, 0, 6);
-	hws[IMX7D_I2C1_ROOT_DIV] = imx_clk_hw_भागider2("i2c1_post_div", "i2c1_pre_div", base + 0xad80, 0, 6);
-	hws[IMX7D_I2C2_ROOT_DIV] = imx_clk_hw_भागider2("i2c2_post_div", "i2c2_pre_div", base + 0xae00, 0, 6);
-	hws[IMX7D_I2C3_ROOT_DIV] = imx_clk_hw_भागider2("i2c3_post_div", "i2c3_pre_div", base + 0xae80, 0, 6);
-	hws[IMX7D_I2C4_ROOT_DIV] = imx_clk_hw_भागider2("i2c4_post_div", "i2c4_pre_div", base + 0xaf00, 0, 6);
-	hws[IMX7D_UART1_ROOT_DIV] = imx_clk_hw_भागider2("uart1_post_div", "uart1_pre_div", base + 0xaf80, 0, 6);
-	hws[IMX7D_UART2_ROOT_DIV] = imx_clk_hw_भागider2("uart2_post_div", "uart2_pre_div", base + 0xb000, 0, 6);
-	hws[IMX7D_UART3_ROOT_DIV] = imx_clk_hw_भागider2("uart3_post_div", "uart3_pre_div", base + 0xb080, 0, 6);
-	hws[IMX7D_UART4_ROOT_DIV] = imx_clk_hw_भागider2("uart4_post_div", "uart4_pre_div", base + 0xb100, 0, 6);
-	hws[IMX7D_UART5_ROOT_DIV] = imx_clk_hw_भागider2("uart5_post_div", "uart5_pre_div", base + 0xb180, 0, 6);
-	hws[IMX7D_UART6_ROOT_DIV] = imx_clk_hw_भागider2("uart6_post_div", "uart6_pre_div", base + 0xb200, 0, 6);
-	hws[IMX7D_UART7_ROOT_DIV] = imx_clk_hw_भागider2("uart7_post_div", "uart7_pre_div", base + 0xb280, 0, 6);
-	hws[IMX7D_ECSPI1_ROOT_DIV] = imx_clk_hw_भागider2("ecspi1_post_div", "ecspi1_pre_div", base + 0xb300, 0, 6);
-	hws[IMX7D_ECSPI2_ROOT_DIV] = imx_clk_hw_भागider2("ecspi2_post_div", "ecspi2_pre_div", base + 0xb380, 0, 6);
-	hws[IMX7D_ECSPI3_ROOT_DIV] = imx_clk_hw_भागider2("ecspi3_post_div", "ecspi3_pre_div", base + 0xb400, 0, 6);
-	hws[IMX7D_ECSPI4_ROOT_DIV] = imx_clk_hw_भागider2("ecspi4_post_div", "ecspi4_pre_div", base + 0xb480, 0, 6);
-	hws[IMX7D_PWM1_ROOT_DIV] = imx_clk_hw_भागider2("pwm1_post_div", "pwm1_pre_div", base + 0xb500, 0, 6);
-	hws[IMX7D_PWM2_ROOT_DIV] = imx_clk_hw_भागider2("pwm2_post_div", "pwm2_pre_div", base + 0xb580, 0, 6);
-	hws[IMX7D_PWM3_ROOT_DIV] = imx_clk_hw_भागider2("pwm3_post_div", "pwm3_pre_div", base + 0xb600, 0, 6);
-	hws[IMX7D_PWM4_ROOT_DIV] = imx_clk_hw_भागider2("pwm4_post_div", "pwm4_pre_div", base + 0xb680, 0, 6);
-	hws[IMX7D_FLEXTIMER1_ROOT_DIV] = imx_clk_hw_भागider2("flextimer1_post_div", "flextimer1_pre_div", base + 0xb700, 0, 6);
-	hws[IMX7D_FLEXTIMER2_ROOT_DIV] = imx_clk_hw_भागider2("flextimer2_post_div", "flextimer2_pre_div", base + 0xb780, 0, 6);
-	hws[IMX7D_SIM1_ROOT_DIV] = imx_clk_hw_भागider2("sim1_post_div", "sim1_pre_div", base + 0xb800, 0, 6);
-	hws[IMX7D_SIM2_ROOT_DIV] = imx_clk_hw_भागider2("sim2_post_div", "sim2_pre_div", base + 0xb880, 0, 6);
-	hws[IMX7D_GPT1_ROOT_DIV] = imx_clk_hw_भागider2("gpt1_post_div", "gpt1_pre_div", base + 0xb900, 0, 6);
-	hws[IMX7D_GPT2_ROOT_DIV] = imx_clk_hw_भागider2("gpt2_post_div", "gpt2_pre_div", base + 0xb980, 0, 6);
-	hws[IMX7D_GPT3_ROOT_DIV] = imx_clk_hw_भागider2("gpt3_post_div", "gpt3_pre_div", base + 0xba00, 0, 6);
-	hws[IMX7D_GPT4_ROOT_DIV] = imx_clk_hw_भागider2("gpt4_post_div", "gpt4_pre_div", base + 0xba80, 0, 6);
-	hws[IMX7D_TRACE_ROOT_DIV] = imx_clk_hw_भागider2("trace_post_div", "trace_pre_div", base + 0xbb00, 0, 6);
-	hws[IMX7D_WDOG_ROOT_DIV] = imx_clk_hw_भागider2("wdog_post_div", "wdog_pre_div", base + 0xbb80, 0, 6);
-	hws[IMX7D_CSI_MCLK_ROOT_DIV] = imx_clk_hw_भागider2("csi_mclk_post_div", "csi_mclk_pre_div", base + 0xbc00, 0, 6);
-	hws[IMX7D_AUDIO_MCLK_ROOT_DIV] = imx_clk_hw_भागider2("audio_mclk_post_div", "audio_mclk_pre_div", base + 0xbc80, 0, 6);
-	hws[IMX7D_WRCLK_ROOT_DIV] = imx_clk_hw_भागider2("wrclk_post_div", "wrclk_pre_div", base + 0xbd00, 0, 6);
-	hws[IMX7D_CLKO1_ROOT_DIV] = imx_clk_hw_भागider2("clko1_post_div", "clko1_pre_div", base + 0xbd80, 0, 6);
-	hws[IMX7D_CLKO2_ROOT_DIV] = imx_clk_hw_भागider2("clko2_post_div", "clko2_pre_div", base + 0xbe00, 0, 6);
+	hws[IMX7D_ARM_A7_ROOT_DIV] = imx_clk_hw_divider2("arm_a7_div", "arm_a7_cg", base + 0x8000, 0, 3);
+	hws[IMX7D_ARM_M4_ROOT_DIV] = imx_clk_hw_divider2("arm_m4_div", "arm_m4_cg", base + 0x8080, 0, 3);
+	hws[IMX7D_MAIN_AXI_ROOT_DIV] = imx_clk_hw_divider2("axi_post_div", "axi_pre_div", base + 0x8800, 0, 6);
+	hws[IMX7D_DISP_AXI_ROOT_DIV] = imx_clk_hw_divider2("disp_axi_post_div", "disp_axi_pre_div", base + 0x8880, 0, 6);
+	hws[IMX7D_ENET_AXI_ROOT_DIV] = imx_clk_hw_divider2("enet_axi_post_div", "enet_axi_pre_div", base + 0x8900, 0, 6);
+	hws[IMX7D_NAND_USDHC_BUS_ROOT_CLK] = imx_clk_hw_divider2("nand_usdhc_root_clk", "nand_usdhc_pre_div", base + 0x8980, 0, 6);
+	hws[IMX7D_AHB_CHANNEL_ROOT_DIV] = imx_clk_hw_divider2("ahb_root_clk", "ahb_pre_div", base + 0x9000, 0, 6);
+	hws[IMX7D_IPG_ROOT_CLK] = imx_clk_hw_divider_flags("ipg_root_clk", "ahb_root_clk", base + 0x9080, 0, 2, CLK_IS_CRITICAL | CLK_OPS_PARENT_ENABLE | CLK_SET_RATE_PARENT);
+	hws[IMX7D_DRAM_ROOT_DIV] = imx_clk_hw_divider2("dram_post_div", "dram_cg", base + 0x9880, 0, 3);
+	hws[IMX7D_DRAM_PHYM_ALT_ROOT_DIV] = imx_clk_hw_divider2("dram_phym_alt_post_div", "dram_phym_alt_pre_div", base + 0xa000, 0, 3);
+	hws[IMX7D_DRAM_ALT_ROOT_DIV] = imx_clk_hw_divider2("dram_alt_post_div", "dram_alt_pre_div", base + 0xa080, 0, 3);
+	hws[IMX7D_USB_HSIC_ROOT_DIV] = imx_clk_hw_divider2("usb_hsic_post_div", "usb_hsic_pre_div", base + 0xa100, 0, 6);
+	hws[IMX7D_PCIE_CTRL_ROOT_DIV] = imx_clk_hw_divider2("pcie_ctrl_post_div", "pcie_ctrl_pre_div", base + 0xa180, 0, 6);
+	hws[IMX7D_PCIE_PHY_ROOT_DIV] = imx_clk_hw_divider2("pcie_phy_post_div", "pcie_phy_pre_div", base + 0xa200, 0, 6);
+	hws[IMX7D_EPDC_PIXEL_ROOT_DIV] = imx_clk_hw_divider2("epdc_pixel_post_div", "epdc_pixel_pre_div", base + 0xa280, 0, 6);
+	hws[IMX7D_LCDIF_PIXEL_ROOT_DIV] = imx_clk_hw_divider2("lcdif_pixel_post_div", "lcdif_pixel_pre_div", base + 0xa300, 0, 6);
+	hws[IMX7D_MIPI_DSI_ROOT_DIV] = imx_clk_hw_divider2("mipi_dsi_post_div", "mipi_dsi_pre_div", base + 0xa380, 0, 6);
+	hws[IMX7D_MIPI_CSI_ROOT_DIV] = imx_clk_hw_divider2("mipi_csi_post_div", "mipi_csi_pre_div", base + 0xa400, 0, 6);
+	hws[IMX7D_MIPI_DPHY_ROOT_DIV] = imx_clk_hw_divider2("mipi_dphy_post_div", "mipi_dphy_pre_div", base + 0xa480, 0, 6);
+	hws[IMX7D_SAI1_ROOT_DIV] = imx_clk_hw_divider2("sai1_post_div", "sai1_pre_div", base + 0xa500, 0, 6);
+	hws[IMX7D_SAI2_ROOT_DIV] = imx_clk_hw_divider2("sai2_post_div", "sai2_pre_div", base + 0xa580, 0, 6);
+	hws[IMX7D_SAI3_ROOT_DIV] = imx_clk_hw_divider2("sai3_post_div", "sai3_pre_div", base + 0xa600, 0, 6);
+	hws[IMX7D_SPDIF_ROOT_DIV] = imx_clk_hw_divider2("spdif_post_div", "spdif_pre_div", base + 0xa680, 0, 6);
+	hws[IMX7D_ENET1_REF_ROOT_DIV] = imx_clk_hw_divider2("enet1_ref_post_div", "enet1_ref_pre_div", base + 0xa700, 0, 6);
+	hws[IMX7D_ENET1_TIME_ROOT_DIV] = imx_clk_hw_divider2("enet1_time_post_div", "enet1_time_pre_div", base + 0xa780, 0, 6);
+	hws[IMX7D_ENET2_REF_ROOT_DIV] = imx_clk_hw_divider2("enet2_ref_post_div", "enet2_ref_pre_div", base + 0xa800, 0, 6);
+	hws[IMX7D_ENET2_TIME_ROOT_DIV] = imx_clk_hw_divider2("enet2_time_post_div", "enet2_time_pre_div", base + 0xa880, 0, 6);
+	hws[IMX7D_ENET_PHY_REF_ROOT_CLK] = imx_clk_hw_divider2("enet_phy_ref_root_clk", "enet_phy_ref_pre_div", base + 0xa900, 0, 6);
+	hws[IMX7D_EIM_ROOT_DIV] = imx_clk_hw_divider2("eim_post_div", "eim_pre_div", base + 0xa980, 0, 6);
+	hws[IMX7D_NAND_ROOT_CLK] = imx_clk_hw_divider2("nand_root_clk", "nand_pre_div", base + 0xaa00, 0, 6);
+	hws[IMX7D_QSPI_ROOT_DIV] = imx_clk_hw_divider2("qspi_post_div", "qspi_pre_div", base + 0xaa80, 0, 6);
+	hws[IMX7D_USDHC1_ROOT_DIV] = imx_clk_hw_divider2("usdhc1_post_div", "usdhc1_pre_div", base + 0xab00, 0, 6);
+	hws[IMX7D_USDHC2_ROOT_DIV] = imx_clk_hw_divider2("usdhc2_post_div", "usdhc2_pre_div", base + 0xab80, 0, 6);
+	hws[IMX7D_USDHC3_ROOT_DIV] = imx_clk_hw_divider2("usdhc3_post_div", "usdhc3_pre_div", base + 0xac00, 0, 6);
+	hws[IMX7D_CAN1_ROOT_DIV] = imx_clk_hw_divider2("can1_post_div", "can1_pre_div", base + 0xac80, 0, 6);
+	hws[IMX7D_CAN2_ROOT_DIV] = imx_clk_hw_divider2("can2_post_div", "can2_pre_div", base + 0xad00, 0, 6);
+	hws[IMX7D_I2C1_ROOT_DIV] = imx_clk_hw_divider2("i2c1_post_div", "i2c1_pre_div", base + 0xad80, 0, 6);
+	hws[IMX7D_I2C2_ROOT_DIV] = imx_clk_hw_divider2("i2c2_post_div", "i2c2_pre_div", base + 0xae00, 0, 6);
+	hws[IMX7D_I2C3_ROOT_DIV] = imx_clk_hw_divider2("i2c3_post_div", "i2c3_pre_div", base + 0xae80, 0, 6);
+	hws[IMX7D_I2C4_ROOT_DIV] = imx_clk_hw_divider2("i2c4_post_div", "i2c4_pre_div", base + 0xaf00, 0, 6);
+	hws[IMX7D_UART1_ROOT_DIV] = imx_clk_hw_divider2("uart1_post_div", "uart1_pre_div", base + 0xaf80, 0, 6);
+	hws[IMX7D_UART2_ROOT_DIV] = imx_clk_hw_divider2("uart2_post_div", "uart2_pre_div", base + 0xb000, 0, 6);
+	hws[IMX7D_UART3_ROOT_DIV] = imx_clk_hw_divider2("uart3_post_div", "uart3_pre_div", base + 0xb080, 0, 6);
+	hws[IMX7D_UART4_ROOT_DIV] = imx_clk_hw_divider2("uart4_post_div", "uart4_pre_div", base + 0xb100, 0, 6);
+	hws[IMX7D_UART5_ROOT_DIV] = imx_clk_hw_divider2("uart5_post_div", "uart5_pre_div", base + 0xb180, 0, 6);
+	hws[IMX7D_UART6_ROOT_DIV] = imx_clk_hw_divider2("uart6_post_div", "uart6_pre_div", base + 0xb200, 0, 6);
+	hws[IMX7D_UART7_ROOT_DIV] = imx_clk_hw_divider2("uart7_post_div", "uart7_pre_div", base + 0xb280, 0, 6);
+	hws[IMX7D_ECSPI1_ROOT_DIV] = imx_clk_hw_divider2("ecspi1_post_div", "ecspi1_pre_div", base + 0xb300, 0, 6);
+	hws[IMX7D_ECSPI2_ROOT_DIV] = imx_clk_hw_divider2("ecspi2_post_div", "ecspi2_pre_div", base + 0xb380, 0, 6);
+	hws[IMX7D_ECSPI3_ROOT_DIV] = imx_clk_hw_divider2("ecspi3_post_div", "ecspi3_pre_div", base + 0xb400, 0, 6);
+	hws[IMX7D_ECSPI4_ROOT_DIV] = imx_clk_hw_divider2("ecspi4_post_div", "ecspi4_pre_div", base + 0xb480, 0, 6);
+	hws[IMX7D_PWM1_ROOT_DIV] = imx_clk_hw_divider2("pwm1_post_div", "pwm1_pre_div", base + 0xb500, 0, 6);
+	hws[IMX7D_PWM2_ROOT_DIV] = imx_clk_hw_divider2("pwm2_post_div", "pwm2_pre_div", base + 0xb580, 0, 6);
+	hws[IMX7D_PWM3_ROOT_DIV] = imx_clk_hw_divider2("pwm3_post_div", "pwm3_pre_div", base + 0xb600, 0, 6);
+	hws[IMX7D_PWM4_ROOT_DIV] = imx_clk_hw_divider2("pwm4_post_div", "pwm4_pre_div", base + 0xb680, 0, 6);
+	hws[IMX7D_FLEXTIMER1_ROOT_DIV] = imx_clk_hw_divider2("flextimer1_post_div", "flextimer1_pre_div", base + 0xb700, 0, 6);
+	hws[IMX7D_FLEXTIMER2_ROOT_DIV] = imx_clk_hw_divider2("flextimer2_post_div", "flextimer2_pre_div", base + 0xb780, 0, 6);
+	hws[IMX7D_SIM1_ROOT_DIV] = imx_clk_hw_divider2("sim1_post_div", "sim1_pre_div", base + 0xb800, 0, 6);
+	hws[IMX7D_SIM2_ROOT_DIV] = imx_clk_hw_divider2("sim2_post_div", "sim2_pre_div", base + 0xb880, 0, 6);
+	hws[IMX7D_GPT1_ROOT_DIV] = imx_clk_hw_divider2("gpt1_post_div", "gpt1_pre_div", base + 0xb900, 0, 6);
+	hws[IMX7D_GPT2_ROOT_DIV] = imx_clk_hw_divider2("gpt2_post_div", "gpt2_pre_div", base + 0xb980, 0, 6);
+	hws[IMX7D_GPT3_ROOT_DIV] = imx_clk_hw_divider2("gpt3_post_div", "gpt3_pre_div", base + 0xba00, 0, 6);
+	hws[IMX7D_GPT4_ROOT_DIV] = imx_clk_hw_divider2("gpt4_post_div", "gpt4_pre_div", base + 0xba80, 0, 6);
+	hws[IMX7D_TRACE_ROOT_DIV] = imx_clk_hw_divider2("trace_post_div", "trace_pre_div", base + 0xbb00, 0, 6);
+	hws[IMX7D_WDOG_ROOT_DIV] = imx_clk_hw_divider2("wdog_post_div", "wdog_pre_div", base + 0xbb80, 0, 6);
+	hws[IMX7D_CSI_MCLK_ROOT_DIV] = imx_clk_hw_divider2("csi_mclk_post_div", "csi_mclk_pre_div", base + 0xbc00, 0, 6);
+	hws[IMX7D_AUDIO_MCLK_ROOT_DIV] = imx_clk_hw_divider2("audio_mclk_post_div", "audio_mclk_pre_div", base + 0xbc80, 0, 6);
+	hws[IMX7D_WRCLK_ROOT_DIV] = imx_clk_hw_divider2("wrclk_post_div", "wrclk_pre_div", base + 0xbd00, 0, 6);
+	hws[IMX7D_CLKO1_ROOT_DIV] = imx_clk_hw_divider2("clko1_post_div", "clko1_pre_div", base + 0xbd80, 0, 6);
+	hws[IMX7D_CLKO2_ROOT_DIV] = imx_clk_hw_divider2("clko2_post_div", "clko2_pre_div", base + 0xbe00, 0, 6);
 
 	hws[IMX7D_ARM_A7_ROOT_CLK] = imx_clk_hw_gate2_flags("arm_a7_root_clk", "arm_a7_div", base + 0x4000, 0, CLK_OPS_PARENT_ENABLE);
 	hws[IMX7D_ARM_M4_ROOT_CLK] = imx_clk_hw_gate4("arm_m4_root_clk", "arm_m4_div", base + 0x4010, 0);
@@ -808,8 +807,8 @@
 	hws[IMX7D_SAI3_IPG_CLK]  = imx_clk_hw_gate2_shared2("sai3_ipg_clk",  "ipg_root_clk",  base + 0x48e0, 0, &share_count_sai3);
 	hws[IMX7D_SPDIF_ROOT_CLK] = imx_clk_hw_gate4("spdif_root_clk", "spdif_post_div", base + 0x44d0, 0);
 	hws[IMX7D_EIM_ROOT_CLK] = imx_clk_hw_gate4("eim_root_clk", "eim_post_div", base + 0x4160, 0);
-	hws[IMX7D_न_अंकD_RAWन_अंकD_CLK] = imx_clk_hw_gate2_shared2("nand_rawnand_clk", "nand_root_clk", base + 0x4140, 0, &share_count_nand);
-	hws[IMX7D_न_अंकD_USDHC_BUS_RAWन_अंकD_CLK] = imx_clk_hw_gate2_shared2("nand_usdhc_rawnand_clk", "nand_usdhc_root_clk", base + 0x4140, 0, &share_count_nand);
+	hws[IMX7D_NAND_RAWNAND_CLK] = imx_clk_hw_gate2_shared2("nand_rawnand_clk", "nand_root_clk", base + 0x4140, 0, &share_count_nand);
+	hws[IMX7D_NAND_USDHC_BUS_RAWNAND_CLK] = imx_clk_hw_gate2_shared2("nand_usdhc_rawnand_clk", "nand_usdhc_root_clk", base + 0x4140, 0, &share_count_nand);
 	hws[IMX7D_QSPI_ROOT_CLK] = imx_clk_hw_gate4("qspi_root_clk", "qspi_post_div", base + 0x4150, 0);
 	hws[IMX7D_USDHC1_ROOT_CLK] = imx_clk_hw_gate4("usdhc1_root_clk", "usdhc1_post_div", base + 0x46c0, 0);
 	hws[IMX7D_USDHC2_ROOT_CLK] = imx_clk_hw_gate4("usdhc2_root_clk", "usdhc2_post_div", base + 0x46d0, 0);
@@ -881,11 +880,11 @@
 	/* use old gpt clk setting, gpt1 root clk must be twice as gpt counter freq */
 	clk_set_parent(hws[IMX7D_GPT1_ROOT_SRC]->clk, hws[IMX7D_OSC_24M_CLK]->clk);
 
-	/* Set घड़ी rate क्रम USBPHY, the USB_PLL at CCM is from USBOTG2 */
+	/* Set clock rate for USBPHY, the USB_PLL at CCM is from USBOTG2 */
 	hws[IMX7D_USB1_MAIN_480M_CLK] = imx_clk_hw_fixed_factor("pll_usb1_main_clk", "osc", 20, 1);
 	hws[IMX7D_USB_MAIN_480M_CLK] = imx_clk_hw_fixed_factor("pll_usb_main_clk", "osc", 20, 1);
 
-	imx_रेजिस्टर_uart_घड़ीs(7);
+	imx_register_uart_clocks(7);
 
-पूर्ण
-CLK_OF_DECLARE(imx7d, "fsl,imx7d-ccm", imx7d_घड़ीs_init);
+}
+CLK_OF_DECLARE(imx7d, "fsl,imx7d-ccm", imx7d_clocks_init);

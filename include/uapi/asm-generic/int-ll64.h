@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * यंत्र-generic/पूर्णांक-ll64.h
+ * asm-generic/int-ll64.h
  *
- * Integer declarations क्रम architectures which use "long long"
- * क्रम 64-bit types.
+ * Integer declarations for architectures which use "long long"
+ * for 64-bit types.
  */
 
-#अगर_अघोषित _UAPI_ASM_GENERIC_INT_LL64_H
-#घोषणा _UAPI_ASM_GENERIC_INT_LL64_H
+#ifndef _UAPI_ASM_GENERIC_INT_LL64_H
+#define _UAPI_ASM_GENERIC_INT_LL64_H
 
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <asm/bitsperlong.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 /*
- * __xx is ok: it करोesn't pollute the POSIX namespace. Use these in the
+ * __xx is ok: it doesn't pollute the POSIX namespace. Use these in the
  * header files exported to user space
  */
 
-प्रकार __चिन्हित__ अक्षर __s8;
-प्रकार अचिन्हित अक्षर __u8;
+typedef __signed__ char __s8;
+typedef unsigned char __u8;
 
-प्रकार __चिन्हित__ लघु __s16;
-प्रकार अचिन्हित लघु __u16;
+typedef __signed__ short __s16;
+typedef unsigned short __u16;
 
-प्रकार __चिन्हित__ पूर्णांक __s32;
-प्रकार अचिन्हित पूर्णांक __u32;
+typedef __signed__ int __s32;
+typedef unsigned int __u32;
 
-#अगर_घोषित __GNUC__
-__extension__ प्रकार __चिन्हित__ दीर्घ दीर्घ __s64;
-__extension__ प्रकार अचिन्हित दीर्घ दीर्घ __u64;
-#अन्यथा
-प्रकार __चिन्हित__ दीर्घ दीर्घ __s64;
-प्रकार अचिन्हित दीर्घ दीर्घ __u64;
-#पूर्ण_अगर
+#ifdef __GNUC__
+__extension__ typedef __signed__ long long __s64;
+__extension__ typedef unsigned long long __u64;
+#else
+typedef __signed__ long long __s64;
+typedef unsigned long long __u64;
+#endif
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
 
-#पूर्ण_अगर /* _UAPI_ASM_GENERIC_INT_LL64_H */
+#endif /* _UAPI_ASM_GENERIC_INT_LL64_H */

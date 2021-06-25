@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASMSPARC_PARAM_H
-#घोषणा _ASMSPARC_PARAM_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASMSPARC_PARAM_H
+#define _ASMSPARC_PARAM_H
 
-#घोषणा EXEC_PAGESIZE	8192    /* Thanks क्रम sun4's we carry baggage... */
-#समावेश <यंत्र-generic/param.h>
+#define EXEC_PAGESIZE	8192    /* Thanks for sun4's we carry baggage... */
+#include <asm-generic/param.h>
 
-#पूर्ण_अगर /* _ASMSPARC_PARAM_H */
+#endif /* _ASMSPARC_PARAM_H */

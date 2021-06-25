@@ -1,334 +1,333 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Driver क्रम SGI's IOC3 based Ethernet cards as found in the PCI card.
+// SPDX-License-Identifier: GPL-2.0
+/* Driver for SGI's IOC3 based Ethernet cards as found in the PCI card.
  *
  * Copyright (C) 1999, 2000, 01, 03, 06 Ralf Baechle
  * Copyright (C) 1995, 1999, 2000, 2001 by Silicon Graphics, Inc.
  *
  * References:
- *  o IOC3 ASIC specअगरication 4.51, 1996-04-18
- *  o IEEE 802.3 specअगरication, 2000 edition
- *  o DP38840A Specअगरication, National Semiconductor, March 1997
+ *  o IOC3 ASIC specification 4.51, 1996-04-18
+ *  o IEEE 802.3 specification, 2000 edition
+ *  o DP38840A Specification, National Semiconductor, March 1997
  *
- * To करो:
+ * To do:
  *
- *  o Use prefetching क्रम large packets.  What is a good lower limit क्रम
+ *  o Use prefetching for large packets.  What is a good lower limit for
  *    prefetching?
  *  o Use hardware checksums.
  *  o Which PHYs might possibly be attached to the IOC3 in real live,
- *    which workarounds are required क्रम them?  Do we ever have Lucent's?
- *  o For the 2.5 branch समाप्त the mii-tool ioctls.
+ *    which workarounds are required for them?  Do we ever have Lucent's?
+ *  o For the 2.5 branch kill the mii-tool ioctls.
  */
 
-#घोषणा IOC3_NAME	"ioc3-eth"
-#घोषणा IOC3_VERSION	"2.6.3-4"
+#define IOC3_NAME	"ioc3-eth"
+#define IOC3_VERSION	"2.6.3-4"
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/crc16.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/in.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/nvmem-consumer.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/crc16.h>
+#include <linux/crc32.h>
+#include <linux/mii.h>
+#include <linux/in.h>
+#include <linux/io.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/gfp.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/skbuff.h>
+#include <linux/dma-mapping.h>
+#include <linux/platform_device.h>
+#include <linux/nvmem-consumer.h>
 
-#समावेश <net/ip.h>
+#include <net/ip.h>
 
-#समावेश <यंत्र/sn/ioc3.h>
-#समावेश <यंत्र/pci/bridge.h>
+#include <asm/sn/ioc3.h>
+#include <asm/pci/bridge.h>
 
-#घोषणा CRC16_INIT	0
-#घोषणा CRC16_VALID	0xb001
+#define CRC16_INIT	0
+#define CRC16_VALID	0xb001
 
 /* Number of RX buffers.  This is tunable in the range of 16 <= x < 512.
- * The value must be a घातer of two.
+ * The value must be a power of two.
  */
-#घोषणा RX_BUFFS		64
-#घोषणा RX_RING_ENTRIES		512		/* fixed in hardware */
-#घोषणा RX_RING_MASK		(RX_RING_ENTRIES - 1)
-#घोषणा RX_RING_SIZE		(RX_RING_ENTRIES * माप(u64))
+#define RX_BUFFS		64
+#define RX_RING_ENTRIES		512		/* fixed in hardware */
+#define RX_RING_MASK		(RX_RING_ENTRIES - 1)
+#define RX_RING_SIZE		(RX_RING_ENTRIES * sizeof(u64))
 
 /* 128 TX buffers (not tunable) */
-#घोषणा TX_RING_ENTRIES		128
-#घोषणा TX_RING_MASK		(TX_RING_ENTRIES - 1)
-#घोषणा TX_RING_SIZE		(TX_RING_ENTRIES * माप(काष्ठा ioc3_etxd))
+#define TX_RING_ENTRIES		128
+#define TX_RING_MASK		(TX_RING_ENTRIES - 1)
+#define TX_RING_SIZE		(TX_RING_ENTRIES * sizeof(struct ioc3_etxd))
 
-/* IOC3 करोes dma transfers in 128 byte blocks */
-#घोषणा IOC3_DMA_XFER_LEN	128UL
+/* IOC3 does dma transfers in 128 byte blocks */
+#define IOC3_DMA_XFER_LEN	128UL
 
 /* Every RX buffer starts with 8 byte descriptor data */
-#घोषणा RX_OFFSET		(माप(काष्ठा ioc3_erxbuf) + NET_IP_ALIGN)
-#घोषणा RX_BUF_SIZE		(13 * IOC3_DMA_XFER_LEN)
+#define RX_OFFSET		(sizeof(struct ioc3_erxbuf) + NET_IP_ALIGN)
+#define RX_BUF_SIZE		(13 * IOC3_DMA_XFER_LEN)
 
-#घोषणा ETCSR_FD   ((21 << ETCSR_IPGR2_SHIFT) | (21 << ETCSR_IPGR1_SHIFT) | 21)
-#घोषणा ETCSR_HD   ((17 << ETCSR_IPGR2_SHIFT) | (11 << ETCSR_IPGR1_SHIFT) | 21)
+#define ETCSR_FD   ((21 << ETCSR_IPGR2_SHIFT) | (21 << ETCSR_IPGR1_SHIFT) | 21)
+#define ETCSR_HD   ((17 << ETCSR_IPGR2_SHIFT) | (11 << ETCSR_IPGR1_SHIFT) | 21)
 
 /* Private per NIC data of the driver.  */
-काष्ठा ioc3_निजी अणु
-	काष्ठा ioc3_ethregs *regs;
-	काष्ठा device *dma_dev;
+struct ioc3_private {
+	struct ioc3_ethregs *regs;
+	struct device *dma_dev;
 	u32 *ssram;
-	अचिन्हित दीर्घ *rxr;		/* poपूर्णांकer to receiver ring */
-	व्योम *tx_ring;
-	काष्ठा ioc3_etxd *txr;
+	unsigned long *rxr;		/* pointer to receiver ring */
+	void *tx_ring;
+	struct ioc3_etxd *txr;
 	dma_addr_t rxr_dma;
 	dma_addr_t txr_dma;
-	काष्ठा sk_buff *rx_skbs[RX_RING_ENTRIES];
-	काष्ठा sk_buff *tx_skbs[TX_RING_ENTRIES];
-	पूर्णांक rx_ci;			/* RX consumer index */
-	पूर्णांक rx_pi;			/* RX producer index */
-	पूर्णांक tx_ci;			/* TX consumer index */
-	पूर्णांक tx_pi;			/* TX producer index */
-	पूर्णांक txqlen;
+	struct sk_buff *rx_skbs[RX_RING_ENTRIES];
+	struct sk_buff *tx_skbs[TX_RING_ENTRIES];
+	int rx_ci;			/* RX consumer index */
+	int rx_pi;			/* RX producer index */
+	int tx_ci;			/* TX consumer index */
+	int tx_pi;			/* TX producer index */
+	int txqlen;
 	u32 emcr, ehar_h, ehar_l;
 	spinlock_t ioc3_lock;
-	काष्ठा mii_अगर_info mii;
+	struct mii_if_info mii;
 
-	/* Members used by स्वतःnegotiation  */
-	काष्ठा समयr_list ioc3_समयr;
-पूर्ण;
+	/* Members used by autonegotiation  */
+	struct timer_list ioc3_timer;
+};
 
-अटल पूर्णांक ioc3_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
-अटल व्योम ioc3_set_multicast_list(काष्ठा net_device *dev);
-अटल netdev_tx_t ioc3_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
-अटल व्योम ioc3_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
-अटल अंतरभूत अचिन्हित पूर्णांक ioc3_hash(स्थिर अचिन्हित अक्षर *addr);
-अटल व्योम ioc3_start(काष्ठा ioc3_निजी *ip);
-अटल अंतरभूत व्योम ioc3_stop(काष्ठा ioc3_निजी *ip);
-अटल व्योम ioc3_init(काष्ठा net_device *dev);
-अटल पूर्णांक ioc3_alloc_rx_bufs(काष्ठा net_device *dev);
-अटल व्योम ioc3_मुक्त_rx_bufs(काष्ठा ioc3_निजी *ip);
-अटल अंतरभूत व्योम ioc3_clean_tx_ring(काष्ठा ioc3_निजी *ip);
+static int ioc3_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+static void ioc3_set_multicast_list(struct net_device *dev);
+static netdev_tx_t ioc3_start_xmit(struct sk_buff *skb, struct net_device *dev);
+static void ioc3_timeout(struct net_device *dev, unsigned int txqueue);
+static inline unsigned int ioc3_hash(const unsigned char *addr);
+static void ioc3_start(struct ioc3_private *ip);
+static inline void ioc3_stop(struct ioc3_private *ip);
+static void ioc3_init(struct net_device *dev);
+static int ioc3_alloc_rx_bufs(struct net_device *dev);
+static void ioc3_free_rx_bufs(struct ioc3_private *ip);
+static inline void ioc3_clean_tx_ring(struct ioc3_private *ip);
 
-अटल स्थिर काष्ठा ethtool_ops ioc3_ethtool_ops;
+static const struct ethtool_ops ioc3_ethtool_ops;
 
-अटल अंतरभूत अचिन्हित दीर्घ aligned_rx_skb_addr(अचिन्हित दीर्घ addr)
-अणु
-	वापस (~addr + 1) & (IOC3_DMA_XFER_LEN - 1UL);
-पूर्ण
+static inline unsigned long aligned_rx_skb_addr(unsigned long addr)
+{
+	return (~addr + 1) & (IOC3_DMA_XFER_LEN - 1UL);
+}
 
-अटल अंतरभूत पूर्णांक ioc3_alloc_skb(काष्ठा ioc3_निजी *ip, काष्ठा sk_buff **skb,
-				 काष्ठा ioc3_erxbuf **rxb, dma_addr_t *rxb_dma)
-अणु
-	काष्ठा sk_buff *new_skb;
+static inline int ioc3_alloc_skb(struct ioc3_private *ip, struct sk_buff **skb,
+				 struct ioc3_erxbuf **rxb, dma_addr_t *rxb_dma)
+{
+	struct sk_buff *new_skb;
 	dma_addr_t d;
-	पूर्णांक offset;
+	int offset;
 
 	new_skb = alloc_skb(RX_BUF_SIZE + IOC3_DMA_XFER_LEN - 1, GFP_ATOMIC);
-	अगर (!new_skb)
-		वापस -ENOMEM;
+	if (!new_skb)
+		return -ENOMEM;
 
 	/* ensure buffer is aligned to IOC3_DMA_XFER_LEN */
-	offset = aligned_rx_skb_addr((अचिन्हित दीर्घ)new_skb->data);
-	अगर (offset)
+	offset = aligned_rx_skb_addr((unsigned long)new_skb->data);
+	if (offset)
 		skb_reserve(new_skb, offset);
 
 	d = dma_map_single(ip->dma_dev, new_skb->data,
 			   RX_BUF_SIZE, DMA_FROM_DEVICE);
 
-	अगर (dma_mapping_error(ip->dma_dev, d)) अणु
-		dev_kमुक्त_skb_any(new_skb);
-		वापस -ENOMEM;
-	पूर्ण
+	if (dma_mapping_error(ip->dma_dev, d)) {
+		dev_kfree_skb_any(new_skb);
+		return -ENOMEM;
+	}
 	*rxb_dma = d;
-	*rxb = (काष्ठा ioc3_erxbuf *)new_skb->data;
+	*rxb = (struct ioc3_erxbuf *)new_skb->data;
 	skb_reserve(new_skb, RX_OFFSET);
 	*skb = new_skb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PCI_XTALK_BRIDGE
-अटल अंतरभूत अचिन्हित दीर्घ ioc3_map(dma_addr_t addr, अचिन्हित दीर्घ attr)
-अणु
-	वापस (addr & ~PCI64_ATTR_BAR) | attr;
-पूर्ण
+#ifdef CONFIG_PCI_XTALK_BRIDGE
+static inline unsigned long ioc3_map(dma_addr_t addr, unsigned long attr)
+{
+	return (addr & ~PCI64_ATTR_BAR) | attr;
+}
 
-#घोषणा ERBAR_VAL	(ERBAR_BARRIER_BIT << ERBAR_RXBARR_SHIFT)
-#अन्यथा
-अटल अंतरभूत अचिन्हित दीर्घ ioc3_map(dma_addr_t addr, अचिन्हित दीर्घ attr)
-अणु
-	वापस addr;
-पूर्ण
+#define ERBAR_VAL	(ERBAR_BARRIER_BIT << ERBAR_RXBARR_SHIFT)
+#else
+static inline unsigned long ioc3_map(dma_addr_t addr, unsigned long attr)
+{
+	return addr;
+}
 
-#घोषणा ERBAR_VAL	0
-#पूर्ण_अगर
+#define ERBAR_VAL	0
+#endif
 
-अटल पूर्णांक ioc3eth_nvmem_match(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	स्थिर अक्षर *name = dev_name(dev);
-	स्थिर अक्षर *prefix = data;
-	पूर्णांक prefix_len;
+static int ioc3eth_nvmem_match(struct device *dev, const void *data)
+{
+	const char *name = dev_name(dev);
+	const char *prefix = data;
+	int prefix_len;
 
-	prefix_len = म_माप(prefix);
-	अगर (म_माप(name) < (prefix_len + 3))
-		वापस 0;
+	prefix_len = strlen(prefix);
+	if (strlen(name) < (prefix_len + 3))
+		return 0;
 
-	अगर (स_भेद(prefix, name, prefix_len) != 0)
-		वापस 0;
+	if (memcmp(prefix, name, prefix_len) != 0)
+		return 0;
 
 	/* found nvmem device which is attached to our ioc3
-	 * now check क्रम one wire family code 09, 89 and 91
+	 * now check for one wire family code 09, 89 and 91
 	 */
-	अगर (स_भेद(name + prefix_len, "09-", 3) == 0)
-		वापस 1;
-	अगर (स_भेद(name + prefix_len, "89-", 3) == 0)
-		वापस 1;
-	अगर (स_भेद(name + prefix_len, "91-", 3) == 0)
-		वापस 1;
+	if (memcmp(name + prefix_len, "09-", 3) == 0)
+		return 1;
+	if (memcmp(name + prefix_len, "89-", 3) == 0)
+		return 1;
+	if (memcmp(name + prefix_len, "91-", 3) == 0)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc3eth_get_mac_addr(काष्ठा resource *res, u8 mac_addr[6])
-अणु
-	काष्ठा nvmem_device *nvmem;
-	अक्षर prefix[24];
+static int ioc3eth_get_mac_addr(struct resource *res, u8 mac_addr[6])
+{
+	struct nvmem_device *nvmem;
+	char prefix[24];
 	u8 prom[16];
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
-	snम_लिखो(prefix, माप(prefix), "ioc3-%012llx-",
+	snprintf(prefix, sizeof(prefix), "ioc3-%012llx-",
 		 res->start & ~0xffff);
 
 	nvmem = nvmem_device_find(prefix, ioc3eth_nvmem_match);
-	अगर (IS_ERR(nvmem))
-		वापस PTR_ERR(nvmem);
+	if (IS_ERR(nvmem))
+		return PTR_ERR(nvmem);
 
-	ret = nvmem_device_पढ़ो(nvmem, 0, 16, prom);
+	ret = nvmem_device_read(nvmem, 0, 16, prom);
 	nvmem_device_put(nvmem);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* check, अगर content is valid */
-	अगर (prom[0] != 0x0a ||
+	/* check, if content is valid */
+	if (prom[0] != 0x0a ||
 	    crc16(CRC16_INIT, prom, 13) != CRC16_VALID)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	क्रम (i = 0; i < 6; i++)
+	for (i = 0; i < 6; i++)
 		mac_addr[i] = prom[10 - i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __ioc3_set_mac_address(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static void __ioc3_set_mac_address(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
-	ग_लिखोl((dev->dev_addr[5] <<  8) |
+	writel((dev->dev_addr[5] <<  8) |
 	       dev->dev_addr[4],
 	       &ip->regs->emar_h);
-	ग_लिखोl((dev->dev_addr[3] << 24) |
+	writel((dev->dev_addr[3] << 24) |
 	       (dev->dev_addr[2] << 16) |
 	       (dev->dev_addr[1] <<  8) |
 	       dev->dev_addr[0],
 	       &ip->regs->emar_l);
-पूर्ण
+}
 
-अटल पूर्णांक ioc3_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा sockaddr *sa = addr;
+static int ioc3_set_mac_address(struct net_device *dev, void *addr)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct sockaddr *sa = addr;
 
-	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len);
+	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len);
 
 	spin_lock_irq(&ip->ioc3_lock);
 	__ioc3_set_mac_address(dev);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Caller must hold the ioc3_lock ever क्रम MII पढ़ोers.  This is also
+/* Caller must hold the ioc3_lock ever for MII readers.  This is also
  * used to protect the transmitter side but it's low contention.
  */
-अटल पूर्णांक ioc3_mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy, पूर्णांक reg)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static int ioc3_mdio_read(struct net_device *dev, int phy, int reg)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
 
-	जबतक (पढ़ोl(&regs->micr) & MICR_BUSY)
+	while (readl(&regs->micr) & MICR_BUSY)
 		;
-	ग_लिखोl((phy << MICR_PHYADDR_SHIFT) | reg | MICR_READTRIG,
+	writel((phy << MICR_PHYADDR_SHIFT) | reg | MICR_READTRIG,
 	       &regs->micr);
-	जबतक (पढ़ोl(&regs->micr) & MICR_BUSY)
+	while (readl(&regs->micr) & MICR_BUSY)
 		;
 
-	वापस पढ़ोl(&regs->midr_r) & MIDR_DATA_MASK;
-पूर्ण
+	return readl(&regs->midr_r) & MIDR_DATA_MASK;
+}
 
-अटल व्योम ioc3_mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy, पूर्णांक reg, पूर्णांक data)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static void ioc3_mdio_write(struct net_device *dev, int phy, int reg, int data)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
 
-	जबतक (पढ़ोl(&regs->micr) & MICR_BUSY)
+	while (readl(&regs->micr) & MICR_BUSY)
 		;
-	ग_लिखोl(data, &regs->midr_w);
-	ग_लिखोl((phy << MICR_PHYADDR_SHIFT) | reg, &regs->micr);
-	जबतक (पढ़ोl(&regs->micr) & MICR_BUSY)
+	writel(data, &regs->midr_w);
+	writel((phy << MICR_PHYADDR_SHIFT) | reg, &regs->micr);
+	while (readl(&regs->micr) & MICR_BUSY)
 		;
-पूर्ण
+}
 
-अटल पूर्णांक ioc3_mii_init(काष्ठा ioc3_निजी *ip);
+static int ioc3_mii_init(struct ioc3_private *ip);
 
-अटल काष्ठा net_device_stats *ioc3_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static struct net_device_stats *ioc3_get_stats(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
 
-	dev->stats.collisions += पढ़ोl(&regs->etcdc) & ETCDC_COLLCNT_MASK;
-	वापस &dev->stats;
-पूर्ण
+	dev->stats.collisions += readl(&regs->etcdc) & ETCDC_COLLCNT_MASK;
+	return &dev->stats;
+}
 
-अटल व्योम ioc3_tcpudp_checksum(काष्ठा sk_buff *skb, u32 hwsum, पूर्णांक len)
-अणु
-	काष्ठा ethhdr *eh = eth_hdr(skb);
-	अचिन्हित पूर्णांक proto;
-	अचिन्हित अक्षर *cp;
-	काष्ठा iphdr *ih;
+static void ioc3_tcpudp_checksum(struct sk_buff *skb, u32 hwsum, int len)
+{
+	struct ethhdr *eh = eth_hdr(skb);
+	unsigned int proto;
+	unsigned char *cp;
+	struct iphdr *ih;
 	u32 csum, ehsum;
 	u16 *ew;
 
-	/* Did hardware handle the checksum at all?  The हालs we can handle
+	/* Did hardware handle the checksum at all?  The cases we can handle
 	 * are:
 	 *
 	 * - TCP and UDP checksums of IPv4 only.
-	 * - IPv6 would be करोable but we keep that क्रम later ...
-	 * - Only unfragmented packets.  Did somebody alपढ़ोy tell you
+	 * - IPv6 would be doable but we keep that for later ...
+	 * - Only unfragmented packets.  Did somebody already tell you
 	 *   fragmentation is evil?
-	 * - करोn't care about packet size.  Worst हाल when processing a
-	 *   malक्रमmed packet we'll try to access the packet at ip header +
+	 * - don't care about packet size.  Worst case when processing a
+	 *   malformed packet we'll try to access the packet at ip header +
 	 *   64 bytes which is still inside the skb.  Even in the unlikely
-	 *   हाल where the checksum is right the higher layers will still
+	 *   case where the checksum is right the higher layers will still
 	 *   drop the packet as appropriate.
 	 */
-	अगर (eh->h_proto != htons(ETH_P_IP))
-		वापस;
+	if (eh->h_proto != htons(ETH_P_IP))
+		return;
 
-	ih = (काष्ठा iphdr *)((अक्षर *)eh + ETH_HLEN);
-	अगर (ip_is_fragment(ih))
-		वापस;
+	ih = (struct iphdr *)((char *)eh + ETH_HLEN);
+	if (ip_is_fragment(ih))
+		return;
 
 	proto = ih->protocol;
-	अगर (proto != IPPROTO_TCP && proto != IPPROTO_UDP)
-		वापस;
+	if (proto != IPPROTO_TCP && proto != IPPROTO_UDP)
+		return;
 
-	/* Same as tx - compute csum of pseuकरो header  */
+	/* Same as tx - compute csum of pseudo header  */
 	csum = hwsum +
 	       (ih->tot_len - (ih->ihl << 2)) +
 	       htons((u16)ih->protocol) +
@@ -347,29 +346,29 @@
 	/* In the next step we also subtract the 1's complement
 	 * checksum of the trailing ethernet CRC.
 	 */
-	cp = (अक्षर *)eh + len;	/* poपूर्णांकs at trailing CRC */
-	अगर (len & 1) अणु
+	cp = (char *)eh + len;	/* points at trailing CRC */
+	if (len & 1) {
 		csum += 0xffff ^ (u16)((cp[1] << 8) | cp[0]);
 		csum += 0xffff ^ (u16)((cp[3] << 8) | cp[2]);
-	पूर्ण अन्यथा अणु
+	} else {
 		csum += 0xffff ^ (u16)((cp[0] << 8) | cp[1]);
 		csum += 0xffff ^ (u16)((cp[2] << 8) | cp[3]);
-	पूर्ण
+	}
 
 	csum = (csum & 0xffff) + (csum >> 16);
 	csum = (csum & 0xffff) + (csum >> 16);
 
-	अगर (csum == 0xffff)
+	if (csum == 0xffff)
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ioc3_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा sk_buff *skb, *new_skb;
-	पूर्णांक rx_entry, n_entry, len;
-	काष्ठा ioc3_erxbuf *rxb;
-	अचिन्हित दीर्घ *rxr;
+static inline void ioc3_rx(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct sk_buff *skb, *new_skb;
+	int rx_entry, n_entry, len;
+	struct ioc3_erxbuf *rxb;
+	unsigned long *rxr;
 	dma_addr_t d;
 	u32 w0, err;
 
@@ -378,27 +377,27 @@
 	n_entry = ip->rx_pi;
 
 	skb = ip->rx_skbs[rx_entry];
-	rxb = (काष्ठा ioc3_erxbuf *)(skb->data - RX_OFFSET);
+	rxb = (struct ioc3_erxbuf *)(skb->data - RX_OFFSET);
 	w0 = be32_to_cpu(rxb->w0);
 
-	जबतक (w0 & ERXBUF_V) अणु
+	while (w0 & ERXBUF_V) {
 		err = be32_to_cpu(rxb->err);		/* It's valid ...  */
-		अगर (err & ERXBUF_GOODPKT) अणु
+		if (err & ERXBUF_GOODPKT) {
 			len = ((w0 >> ERXBUF_BYTECNT_SHIFT) & 0x7ff) - 4;
 			skb_put(skb, len);
 			skb->protocol = eth_type_trans(skb, dev);
 
-			अगर (ioc3_alloc_skb(ip, &new_skb, &rxb, &d)) अणु
+			if (ioc3_alloc_skb(ip, &new_skb, &rxb, &d)) {
 				/* Ouch, drop packet and just recycle packet
 				 * to keep the ring filled.
 				 */
 				dev->stats.rx_dropped++;
 				new_skb = skb;
 				d = rxr[rx_entry];
-				जाओ next;
-			पूर्ण
+				goto next;
+			}
 
-			अगर (likely(dev->features & NETIF_F_RXCSUM))
+			if (likely(dev->features & NETIF_F_RXCSUM))
 				ioc3_tcpudp_checksum(skb,
 						     w0 & ERXBUF_IPCKSUM_MASK,
 						     len);
@@ -406,13 +405,13 @@
 			dma_unmap_single(ip->dma_dev, rxr[rx_entry],
 					 RX_BUF_SIZE, DMA_FROM_DEVICE);
 
-			netअगर_rx(skb);
+			netif_rx(skb);
 
-			ip->rx_skbs[rx_entry] = शून्य;	/* Poison  */
+			ip->rx_skbs[rx_entry] = NULL;	/* Poison  */
 
 			dev->stats.rx_packets++;		/* Statistics */
 			dev->stats.rx_bytes += len;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* The frame is invalid and the skb never
 			 * reached the network layer so we can just
 			 * recycle it.
@@ -420,10 +419,10 @@
 			new_skb = skb;
 			d = rxr[rx_entry];
 			dev->stats.rx_errors++;
-		पूर्ण
-		अगर (err & ERXBUF_CRCERR)	/* Statistics */
+		}
+		if (err & ERXBUF_CRCERR)	/* Statistics */
 			dev->stats.rx_crc_errors++;
-		अगर (err & ERXBUF_FRAMERR)
+		if (err & ERXBUF_FRAMERR)
 			dev->stats.rx_frame_errors++;
 
 next:
@@ -435,466 +434,466 @@ next:
 		/* Now go on to the next ring entry.  */
 		rx_entry = (rx_entry + 1) & RX_RING_MASK;
 		skb = ip->rx_skbs[rx_entry];
-		rxb = (काष्ठा ioc3_erxbuf *)(skb->data - RX_OFFSET);
+		rxb = (struct ioc3_erxbuf *)(skb->data - RX_OFFSET);
 		w0 = be32_to_cpu(rxb->w0);
-	पूर्ण
-	ग_लिखोl((n_entry << 3) | ERPIR_ARM, &ip->regs->erpir);
+	}
+	writel((n_entry << 3) | ERPIR_ARM, &ip->regs->erpir);
 	ip->rx_pi = n_entry;
 	ip->rx_ci = rx_entry;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ioc3_tx(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
-	अचिन्हित दीर्घ packets, bytes;
-	पूर्णांक tx_entry, o_entry;
-	काष्ठा sk_buff *skb;
+static inline void ioc3_tx(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
+	unsigned long packets, bytes;
+	int tx_entry, o_entry;
+	struct sk_buff *skb;
 	u32 etcir;
 
 	spin_lock(&ip->ioc3_lock);
-	etcir = पढ़ोl(&regs->etcir);
+	etcir = readl(&regs->etcir);
 
 	tx_entry = (etcir >> 7) & TX_RING_MASK;
 	o_entry = ip->tx_ci;
 	packets = 0;
 	bytes = 0;
 
-	जबतक (o_entry != tx_entry) अणु
+	while (o_entry != tx_entry) {
 		packets++;
 		skb = ip->tx_skbs[o_entry];
 		bytes += skb->len;
 		dev_consume_skb_irq(skb);
-		ip->tx_skbs[o_entry] = शून्य;
+		ip->tx_skbs[o_entry] = NULL;
 
 		o_entry = (o_entry + 1) & TX_RING_MASK;	/* Next */
 
-		etcir = पढ़ोl(&regs->etcir);		/* More pkts sent?  */
+		etcir = readl(&regs->etcir);		/* More pkts sent?  */
 		tx_entry = (etcir >> 7) & TX_RING_MASK;
-	पूर्ण
+	}
 
 	dev->stats.tx_packets += packets;
 	dev->stats.tx_bytes += bytes;
 	ip->txqlen -= packets;
 
-	अगर (netअगर_queue_stopped(dev) && ip->txqlen < TX_RING_ENTRIES)
-		netअगर_wake_queue(dev);
+	if (netif_queue_stopped(dev) && ip->txqlen < TX_RING_ENTRIES)
+		netif_wake_queue(dev);
 
 	ip->tx_ci = o_entry;
 	spin_unlock(&ip->ioc3_lock);
-पूर्ण
+}
 
 /* Deal with fatal IOC3 errors.  This condition might be caused by a hard or
  * software problems, so we should try to recover
- * more gracefully अगर this ever happens.  In theory we might be flooded
- * with such error पूर्णांकerrupts अगर something really goes wrong, so we might
- * also consider to take the पूर्णांकerface करोwn.
+ * more gracefully if this ever happens.  In theory we might be flooded
+ * with such error interrupts if something really goes wrong, so we might
+ * also consider to take the interface down.
  */
-अटल व्योम ioc3_error(काष्ठा net_device *dev, u32 eisr)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static void ioc3_error(struct net_device *dev, u32 eisr)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
 	spin_lock(&ip->ioc3_lock);
 
-	अगर (eisr & EISR_RXOFLO)
+	if (eisr & EISR_RXOFLO)
 		net_err_ratelimited("%s: RX overflow.\n", dev->name);
-	अगर (eisr & EISR_RXBUFOFLO)
+	if (eisr & EISR_RXBUFOFLO)
 		net_err_ratelimited("%s: RX buffer overflow.\n", dev->name);
-	अगर (eisr & EISR_RXMEMERR)
+	if (eisr & EISR_RXMEMERR)
 		net_err_ratelimited("%s: RX PCI error.\n", dev->name);
-	अगर (eisr & EISR_RXPARERR)
+	if (eisr & EISR_RXPARERR)
 		net_err_ratelimited("%s: RX SSRAM parity error.\n", dev->name);
-	अगर (eisr & EISR_TXBUFUFLO)
+	if (eisr & EISR_TXBUFUFLO)
 		net_err_ratelimited("%s: TX buffer underflow.\n", dev->name);
-	अगर (eisr & EISR_TXMEMERR)
+	if (eisr & EISR_TXMEMERR)
 		net_err_ratelimited("%s: TX PCI error.\n", dev->name);
 
 	ioc3_stop(ip);
-	ioc3_मुक्त_rx_bufs(ip);
+	ioc3_free_rx_bufs(ip);
 	ioc3_clean_tx_ring(ip);
 
 	ioc3_init(dev);
-	अगर (ioc3_alloc_rx_bufs(dev)) अणु
+	if (ioc3_alloc_rx_bufs(dev)) {
 		netdev_err(dev, "%s: rx buffer allocation failed\n", __func__);
 		spin_unlock(&ip->ioc3_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ioc3_start(ip);
 	ioc3_mii_init(ip);
 
-	netअगर_wake_queue(dev);
+	netif_wake_queue(dev);
 
 	spin_unlock(&ip->ioc3_lock);
-पूर्ण
+}
 
-/* The पूर्णांकerrupt handler करोes all of the Rx thपढ़ो work and cleans up
- * after the Tx thपढ़ो.
+/* The interrupt handler does all of the Rx thread work and cleans up
+ * after the Tx thread.
  */
-अटल irqवापस_t ioc3_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev_id);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static irqreturn_t ioc3_interrupt(int irq, void *dev_id)
+{
+	struct ioc3_private *ip = netdev_priv(dev_id);
+	struct ioc3_ethregs *regs = ip->regs;
 	u32 eisr;
 
-	eisr = पढ़ोl(&regs->eisr);
-	ग_लिखोl(eisr, &regs->eisr);
-	पढ़ोl(&regs->eisr);				/* Flush */
+	eisr = readl(&regs->eisr);
+	writel(eisr, &regs->eisr);
+	readl(&regs->eisr);				/* Flush */
 
-	अगर (eisr & (EISR_RXOFLO | EISR_RXBUFOFLO | EISR_RXMEMERR |
+	if (eisr & (EISR_RXOFLO | EISR_RXBUFOFLO | EISR_RXMEMERR |
 		    EISR_RXPARERR | EISR_TXBUFUFLO | EISR_TXMEMERR))
 		ioc3_error(dev_id, eisr);
-	अगर (eisr & EISR_RXTIMERINT)
+	if (eisr & EISR_RXTIMERINT)
 		ioc3_rx(dev_id);
-	अगर (eisr & EISR_TXEXPLICIT)
+	if (eisr & EISR_TXEXPLICIT)
 		ioc3_tx(dev_id);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अंतरभूत व्योम ioc3_setup_duplex(काष्ठा ioc3_निजी *ip)
-अणु
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static inline void ioc3_setup_duplex(struct ioc3_private *ip)
+{
+	struct ioc3_ethregs *regs = ip->regs;
 
 	spin_lock_irq(&ip->ioc3_lock);
 
-	अगर (ip->mii.full_duplex) अणु
-		ग_लिखोl(ETCSR_FD, &regs->etcsr);
+	if (ip->mii.full_duplex) {
+		writel(ETCSR_FD, &regs->etcsr);
 		ip->emcr |= EMCR_DUPLEX;
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(ETCSR_HD, &regs->etcsr);
+	} else {
+		writel(ETCSR_HD, &regs->etcsr);
 		ip->emcr &= ~EMCR_DUPLEX;
-	पूर्ण
-	ग_लिखोl(ip->emcr, &regs->emcr);
+	}
+	writel(ip->emcr, &regs->emcr);
 
 	spin_unlock_irq(&ip->ioc3_lock);
-पूर्ण
+}
 
-अटल व्योम ioc3_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ioc3_निजी *ip = from_समयr(ip, t, ioc3_समयr);
+static void ioc3_timer(struct timer_list *t)
+{
+	struct ioc3_private *ip = from_timer(ip, t, ioc3_timer);
 
-	/* Prपूर्णांक the link status अगर it has changed */
+	/* Print the link status if it has changed */
 	mii_check_media(&ip->mii, 1, 0);
 	ioc3_setup_duplex(ip);
 
-	ip->ioc3_समयr.expires = jअगरfies + ((12 * HZ) / 10); /* 1.2s */
-	add_समयr(&ip->ioc3_समयr);
-पूर्ण
+	ip->ioc3_timer.expires = jiffies + ((12 * HZ) / 10); /* 1.2s */
+	add_timer(&ip->ioc3_timer);
+}
 
 /* Try to find a PHY.  There is no apparent relation between the MII addresses
- * in the SGI करोcumentation and what we find in reality, so we simply probe
- * क्रम the PHY.
+ * in the SGI documentation and what we find in reality, so we simply probe
+ * for the PHY.
  */
-अटल पूर्णांक ioc3_mii_init(काष्ठा ioc3_निजी *ip)
-अणु
+static int ioc3_mii_init(struct ioc3_private *ip)
+{
 	u16 word;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 32; i++) अणु
-		word = ioc3_mdio_पढ़ो(ip->mii.dev, i, MII_PHYSID1);
+	for (i = 0; i < 32; i++) {
+		word = ioc3_mdio_read(ip->mii.dev, i, MII_PHYSID1);
 
-		अगर (word != 0xffff && word != 0x0000) अणु
+		if (word != 0xffff && word != 0x0000) {
 			ip->mii.phy_id = i;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	ip->mii.phy_id = -1;
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम ioc3_mii_start(काष्ठा ioc3_निजी *ip)
-अणु
-	ip->ioc3_समयr.expires = jअगरfies + (12 * HZ) / 10;  /* 1.2 sec. */
-	add_समयr(&ip->ioc3_समयr);
-पूर्ण
+static void ioc3_mii_start(struct ioc3_private *ip)
+{
+	ip->ioc3_timer.expires = jiffies + (12 * HZ) / 10;  /* 1.2 sec. */
+	add_timer(&ip->ioc3_timer);
+}
 
-अटल अंतरभूत व्योम ioc3_tx_unmap(काष्ठा ioc3_निजी *ip, पूर्णांक entry)
-अणु
-	काष्ठा ioc3_etxd *desc;
+static inline void ioc3_tx_unmap(struct ioc3_private *ip, int entry)
+{
+	struct ioc3_etxd *desc;
 	u32 cmd, bufcnt, len;
 
 	desc = &ip->txr[entry];
 	cmd = be32_to_cpu(desc->cmd);
 	bufcnt = be32_to_cpu(desc->bufcnt);
-	अगर (cmd & ETXD_B1V) अणु
+	if (cmd & ETXD_B1V) {
 		len = (bufcnt & ETXD_B1CNT_MASK) >> ETXD_B1CNT_SHIFT;
 		dma_unmap_single(ip->dma_dev, be64_to_cpu(desc->p1),
 				 len, DMA_TO_DEVICE);
-	पूर्ण
-	अगर (cmd & ETXD_B2V) अणु
+	}
+	if (cmd & ETXD_B2V) {
 		len = (bufcnt & ETXD_B2CNT_MASK) >> ETXD_B2CNT_SHIFT;
 		dma_unmap_single(ip->dma_dev, be64_to_cpu(desc->p2),
 				 len, DMA_TO_DEVICE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम ioc3_clean_tx_ring(काष्ठा ioc3_निजी *ip)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static inline void ioc3_clean_tx_ring(struct ioc3_private *ip)
+{
+	struct sk_buff *skb;
+	int i;
 
-	क्रम (i = 0; i < TX_RING_ENTRIES; i++) अणु
+	for (i = 0; i < TX_RING_ENTRIES; i++) {
 		skb = ip->tx_skbs[i];
-		अगर (skb) अणु
+		if (skb) {
 			ioc3_tx_unmap(ip, i);
-			ip->tx_skbs[i] = शून्य;
-			dev_kमुक्त_skb_any(skb);
-		पूर्ण
+			ip->tx_skbs[i] = NULL;
+			dev_kfree_skb_any(skb);
+		}
 		ip->txr[i].cmd = 0;
-	पूर्ण
+	}
 	ip->tx_pi = 0;
 	ip->tx_ci = 0;
-पूर्ण
+}
 
-अटल व्योम ioc3_मुक्त_rx_bufs(काष्ठा ioc3_निजी *ip)
-अणु
-	पूर्णांक rx_entry, n_entry;
-	काष्ठा sk_buff *skb;
+static void ioc3_free_rx_bufs(struct ioc3_private *ip)
+{
+	int rx_entry, n_entry;
+	struct sk_buff *skb;
 
 	n_entry = ip->rx_ci;
 	rx_entry = ip->rx_pi;
 
-	जबतक (n_entry != rx_entry) अणु
+	while (n_entry != rx_entry) {
 		skb = ip->rx_skbs[n_entry];
-		अगर (skb) अणु
+		if (skb) {
 			dma_unmap_single(ip->dma_dev,
 					 be64_to_cpu(ip->rxr[n_entry]),
 					 RX_BUF_SIZE, DMA_FROM_DEVICE);
-			dev_kमुक्त_skb_any(skb);
-		पूर्ण
+			dev_kfree_skb_any(skb);
+		}
 		n_entry = (n_entry + 1) & RX_RING_MASK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ioc3_alloc_rx_bufs(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_erxbuf *rxb;
+static int ioc3_alloc_rx_bufs(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_erxbuf *rxb;
 	dma_addr_t d;
-	पूर्णांक i;
+	int i;
 
 	/* Now the rx buffers.  The RX ring may be larger but
-	 * we only allocate 16 buffers क्रम now.  Need to tune
-	 * this क्रम perक्रमmance and memory later.
+	 * we only allocate 16 buffers for now.  Need to tune
+	 * this for performance and memory later.
 	 */
-	क्रम (i = 0; i < RX_BUFFS; i++) अणु
-		अगर (ioc3_alloc_skb(ip, &ip->rx_skbs[i], &rxb, &d))
-			वापस -ENOMEM;
+	for (i = 0; i < RX_BUFFS; i++) {
+		if (ioc3_alloc_skb(ip, &ip->rx_skbs[i], &rxb, &d))
+			return -ENOMEM;
 
 		rxb->w0 = 0;	/* Clear valid flag */
 		ip->rxr[i] = cpu_to_be64(ioc3_map(d, PCI64_ATTR_BAR));
-	पूर्ण
+	}
 	ip->rx_ci = 0;
 	ip->rx_pi = RX_BUFFS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम ioc3_ssram_disc(काष्ठा ioc3_निजी *ip)
-अणु
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static inline void ioc3_ssram_disc(struct ioc3_private *ip)
+{
+	struct ioc3_ethregs *regs = ip->regs;
 	u32 *ssram0 = &ip->ssram[0x0000];
 	u32 *ssram1 = &ip->ssram[0x4000];
 	u32 pattern = 0x5555;
 
 	/* Assume the larger size SSRAM and enable parity checking */
-	ग_लिखोl(पढ़ोl(&regs->emcr) | (EMCR_बफ_मान | EMCR_RAMPAR), &regs->emcr);
-	पढ़ोl(&regs->emcr); /* Flush */
+	writel(readl(&regs->emcr) | (EMCR_BUFSIZ | EMCR_RAMPAR), &regs->emcr);
+	readl(&regs->emcr); /* Flush */
 
-	ग_लिखोl(pattern, ssram0);
-	ग_लिखोl(~pattern & IOC3_SSRAM_DM, ssram1);
+	writel(pattern, ssram0);
+	writel(~pattern & IOC3_SSRAM_DM, ssram1);
 
-	अगर ((पढ़ोl(ssram0) & IOC3_SSRAM_DM) != pattern ||
-	    (पढ़ोl(ssram1) & IOC3_SSRAM_DM) != (~pattern & IOC3_SSRAM_DM)) अणु
+	if ((readl(ssram0) & IOC3_SSRAM_DM) != pattern ||
+	    (readl(ssram1) & IOC3_SSRAM_DM) != (~pattern & IOC3_SSRAM_DM)) {
 		/* set ssram size to 64 KB */
 		ip->emcr |= EMCR_RAMPAR;
-		ग_लिखोl(पढ़ोl(&regs->emcr) & ~EMCR_बफ_मान, &regs->emcr);
-	पूर्ण अन्यथा अणु
-		ip->emcr |= EMCR_बफ_मान | EMCR_RAMPAR;
-	पूर्ण
-पूर्ण
+		writel(readl(&regs->emcr) & ~EMCR_BUFSIZ, &regs->emcr);
+	} else {
+		ip->emcr |= EMCR_BUFSIZ | EMCR_RAMPAR;
+	}
+}
 
-अटल व्योम ioc3_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static void ioc3_init(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
 
-	del_समयr_sync(&ip->ioc3_समयr);	/* Kill अगर running	*/
+	del_timer_sync(&ip->ioc3_timer);	/* Kill if running	*/
 
-	ग_लिखोl(EMCR_RST, &regs->emcr);		/* Reset		*/
-	पढ़ोl(&regs->emcr);			/* Flush WB		*/
-	udelay(4);				/* Give it समय ...	*/
-	ग_लिखोl(0, &regs->emcr);
-	पढ़ोl(&regs->emcr);
+	writel(EMCR_RST, &regs->emcr);		/* Reset		*/
+	readl(&regs->emcr);			/* Flush WB		*/
+	udelay(4);				/* Give it time ...	*/
+	writel(0, &regs->emcr);
+	readl(&regs->emcr);
 
-	/* Misc रेजिस्टरs  */
-	ग_लिखोl(ERBAR_VAL, &regs->erbar);
-	पढ़ोl(&regs->etcdc);			/* Clear on पढ़ो */
-	ग_लिखोl(15, &regs->ercsr);		/* RX low watermark  */
-	ग_लिखोl(0, &regs->ertr);			/* Interrupt immediately */
+	/* Misc registers  */
+	writel(ERBAR_VAL, &regs->erbar);
+	readl(&regs->etcdc);			/* Clear on read */
+	writel(15, &regs->ercsr);		/* RX low watermark  */
+	writel(0, &regs->ertr);			/* Interrupt immediately */
 	__ioc3_set_mac_address(dev);
-	ग_लिखोl(ip->ehar_h, &regs->ehar_h);
-	ग_लिखोl(ip->ehar_l, &regs->ehar_l);
-	ग_लिखोl(42, &regs->ersr);		/* XXX should be अक्रमom */
-पूर्ण
+	writel(ip->ehar_h, &regs->ehar_h);
+	writel(ip->ehar_l, &regs->ehar_l);
+	writel(42, &regs->ersr);		/* XXX should be random */
+}
 
-अटल व्योम ioc3_start(काष्ठा ioc3_निजी *ip)
-अणु
-	काष्ठा ioc3_ethregs *regs = ip->regs;
-	अचिन्हित दीर्घ ring;
+static void ioc3_start(struct ioc3_private *ip)
+{
+	struct ioc3_ethregs *regs = ip->regs;
+	unsigned long ring;
 
-	/* Now the rx ring base, consume & produce रेजिस्टरs.  */
+	/* Now the rx ring base, consume & produce registers.  */
 	ring = ioc3_map(ip->rxr_dma, PCI64_ATTR_PREC);
-	ग_लिखोl(ring >> 32, &regs->erbr_h);
-	ग_लिखोl(ring & 0xffffffff, &regs->erbr_l);
-	ग_लिखोl(ip->rx_ci << 3, &regs->ercir);
-	ग_लिखोl((ip->rx_pi << 3) | ERPIR_ARM, &regs->erpir);
+	writel(ring >> 32, &regs->erbr_h);
+	writel(ring & 0xffffffff, &regs->erbr_l);
+	writel(ip->rx_ci << 3, &regs->ercir);
+	writel((ip->rx_pi << 3) | ERPIR_ARM, &regs->erpir);
 
 	ring = ioc3_map(ip->txr_dma, PCI64_ATTR_PREC);
 
 	ip->txqlen = 0;					/* nothing queued  */
 
-	/* Now the tx ring base, consume & produce रेजिस्टरs.  */
-	ग_लिखोl(ring >> 32, &regs->etbr_h);
-	ग_लिखोl(ring & 0xffffffff, &regs->etbr_l);
-	ग_लिखोl(ip->tx_pi << 7, &regs->etpir);
-	ग_लिखोl(ip->tx_ci << 7, &regs->etcir);
-	पढ़ोl(&regs->etcir);				/* Flush */
+	/* Now the tx ring base, consume & produce registers.  */
+	writel(ring >> 32, &regs->etbr_h);
+	writel(ring & 0xffffffff, &regs->etbr_l);
+	writel(ip->tx_pi << 7, &regs->etpir);
+	writel(ip->tx_ci << 7, &regs->etcir);
+	readl(&regs->etcir);				/* Flush */
 
 	ip->emcr |= ((RX_OFFSET / 2) << EMCR_RXOFF_SHIFT) | EMCR_TXDMAEN |
 		    EMCR_TXEN | EMCR_RXDMAEN | EMCR_RXEN | EMCR_PADEN;
-	ग_लिखोl(ip->emcr, &regs->emcr);
-	ग_लिखोl(EISR_RXTIMERINT | EISR_RXOFLO | EISR_RXBUFOFLO |
+	writel(ip->emcr, &regs->emcr);
+	writel(EISR_RXTIMERINT | EISR_RXOFLO | EISR_RXBUFOFLO |
 	       EISR_RXMEMERR | EISR_RXPARERR | EISR_TXBUFUFLO |
 	       EISR_TXEXPLICIT | EISR_TXMEMERR, &regs->eier);
-	पढ़ोl(&regs->eier);
-पूर्ण
+	readl(&regs->eier);
+}
 
-अटल अंतरभूत व्योम ioc3_stop(काष्ठा ioc3_निजी *ip)
-अणु
-	काष्ठा ioc3_ethregs *regs = ip->regs;
+static inline void ioc3_stop(struct ioc3_private *ip)
+{
+	struct ioc3_ethregs *regs = ip->regs;
 
-	ग_लिखोl(0, &regs->emcr);			/* Shutup */
-	ग_लिखोl(0, &regs->eier);			/* Disable पूर्णांकerrupts */
-	पढ़ोl(&regs->eier);			/* Flush */
-पूर्ण
+	writel(0, &regs->emcr);			/* Shutup */
+	writel(0, &regs->eier);			/* Disable interrupts */
+	readl(&regs->eier);			/* Flush */
+}
 
-अटल पूर्णांक ioc3_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static int ioc3_open(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
 	ip->ehar_h = 0;
 	ip->ehar_l = 0;
 
 	ioc3_init(dev);
-	अगर (ioc3_alloc_rx_bufs(dev)) अणु
+	if (ioc3_alloc_rx_bufs(dev)) {
 		netdev_err(dev, "%s: rx buffer allocation failed\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	ioc3_start(ip);
 	ioc3_mii_start(ip);
 
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+	netif_start_queue(dev);
+	return 0;
+}
 
-अटल पूर्णांक ioc3_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static int ioc3_close(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
-	del_समयr_sync(&ip->ioc3_समयr);
+	del_timer_sync(&ip->ioc3_timer);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	ioc3_stop(ip);
 
-	ioc3_मुक्त_rx_bufs(ip);
+	ioc3_free_rx_bufs(ip);
 	ioc3_clean_tx_ring(ip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_device_ops ioc3_netdev_ops = अणु
-	.nकरो_खोलो		= ioc3_खोलो,
-	.nकरो_stop		= ioc3_बंद,
-	.nकरो_start_xmit		= ioc3_start_xmit,
-	.nकरो_tx_समयout		= ioc3_समयout,
-	.nकरो_get_stats		= ioc3_get_stats,
-	.nकरो_set_rx_mode	= ioc3_set_multicast_list,
-	.nकरो_करो_ioctl		= ioc3_ioctl,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= ioc3_set_mac_address,
-पूर्ण;
+static const struct net_device_ops ioc3_netdev_ops = {
+	.ndo_open		= ioc3_open,
+	.ndo_stop		= ioc3_close,
+	.ndo_start_xmit		= ioc3_start_xmit,
+	.ndo_tx_timeout		= ioc3_timeout,
+	.ndo_get_stats		= ioc3_get_stats,
+	.ndo_set_rx_mode	= ioc3_set_multicast_list,
+	.ndo_do_ioctl		= ioc3_ioctl,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= ioc3_set_mac_address,
+};
 
-अटल पूर्णांक ioc3eth_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	u32 sw_physid1, sw_physid2, venकरोr, model, rev;
-	काष्ठा ioc3_निजी *ip;
-	काष्ठा net_device *dev;
-	काष्ठा resource *regs;
+static int ioc3eth_probe(struct platform_device *pdev)
+{
+	u32 sw_physid1, sw_physid2, vendor, model, rev;
+	struct ioc3_private *ip;
+	struct net_device *dev;
+	struct resource *regs;
 	u8 mac_addr[6];
-	पूर्णांक err;
+	int err;
 
-	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	/* get mac addr from one wire prom */
-	अगर (ioc3eth_get_mac_addr(regs, mac_addr))
-		वापस -EPROBE_DEFER; /* not available yet */
+	if (ioc3eth_get_mac_addr(regs, mac_addr))
+		return -EPROBE_DEFER; /* not available yet */
 
-	dev = alloc_etherdev(माप(काष्ठा ioc3_निजी));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = alloc_etherdev(sizeof(struct ioc3_private));
+	if (!dev)
+		return -ENOMEM;
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	ip = netdev_priv(dev);
 	ip->dma_dev = pdev->dev.parent;
-	ip->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ip->regs)) अणु
+	ip->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ip->regs)) {
 		err = PTR_ERR(ip->regs);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	ip->ssram = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(ip->ssram)) अणु
+	ip->ssram = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(ip->ssram)) {
 		err = PTR_ERR(ip->ssram);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	dev->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dev->irq < 0) अणु
+	dev->irq = platform_get_irq(pdev, 0);
+	if (dev->irq < 0) {
 		err = dev->irq;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (devm_request_irq(&pdev->dev, dev->irq, ioc3_पूर्णांकerrupt,
-			     IRQF_SHARED, "ioc3-eth", dev)) अणु
+	if (devm_request_irq(&pdev->dev, dev->irq, ioc3_interrupt,
+			     IRQF_SHARED, "ioc3-eth", dev)) {
 		dev_err(&pdev->dev, "Can't get irq %d\n", dev->irq);
 		err = -ENODEV;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	spin_lock_init(&ip->ioc3_lock);
-	समयr_setup(&ip->ioc3_समयr, ioc3_समयr, 0);
+	timer_setup(&ip->ioc3_timer, ioc3_timer, 0);
 
 	ioc3_stop(ip);
 
 	/* Allocate rx ring.  4kb = 512 entries, must be 4kb aligned */
 	ip->rxr = dma_alloc_coherent(ip->dma_dev, RX_RING_SIZE, &ip->rxr_dma,
 				     GFP_KERNEL);
-	अगर (!ip->rxr) अणु
+	if (!ip->rxr) {
 		pr_err("ioc3-eth: rx ring allocation failed\n");
 		err = -ENOMEM;
-		जाओ out_stop;
-	पूर्ण
+		goto out_stop;
+	}
 
 	/* Allocate tx rings.  16kb = 128 bufs, must be 16kb aligned  */
 	ip->tx_ring = dma_alloc_coherent(ip->dma_dev, TX_RING_SIZE + SZ_16K - 1,
 					 &ip->txr_dma, GFP_KERNEL);
-	अगर (!ip->tx_ring) अणु
+	if (!ip->tx_ring) {
 		pr_err("ioc3-eth: tx ring allocation failed\n");
 		err = -ENOMEM;
-		जाओ out_stop;
-	पूर्ण
+		goto out_stop;
+	}
 	/* Align TX ring */
 	ip->txr = PTR_ALIGN(ip->tx_ring, SZ_16K);
 	ip->txr_dma = ALIGN(ip->txr_dma, SZ_16K);
@@ -904,102 +903,102 @@ next:
 	ip->mii.phy_id_mask = 0x1f;
 	ip->mii.reg_num_mask = 0x1f;
 	ip->mii.dev = dev;
-	ip->mii.mdio_पढ़ो = ioc3_mdio_पढ़ो;
-	ip->mii.mdio_ग_लिखो = ioc3_mdio_ग_लिखो;
+	ip->mii.mdio_read = ioc3_mdio_read;
+	ip->mii.mdio_write = ioc3_mdio_write;
 
 	ioc3_mii_init(ip);
 
-	अगर (ip->mii.phy_id == -1) अणु
+	if (ip->mii.phy_id == -1) {
 		netdev_err(dev, "Didn't find a PHY, goodbye.\n");
 		err = -ENODEV;
-		जाओ out_stop;
-	पूर्ण
+		goto out_stop;
+	}
 
 	ioc3_mii_start(ip);
 	ioc3_ssram_disc(ip);
-	स_नकल(dev->dev_addr, mac_addr, ETH_ALEN);
+	memcpy(dev->dev_addr, mac_addr, ETH_ALEN);
 
-	/* The IOC3-specअगरic entries in the device काष्ठाure. */
-	dev->watchकरोg_समयo	= 5 * HZ;
+	/* The IOC3-specific entries in the device structure. */
+	dev->watchdog_timeo	= 5 * HZ;
 	dev->netdev_ops		= &ioc3_netdev_ops;
 	dev->ethtool_ops	= &ioc3_ethtool_ops;
 	dev->hw_features	= NETIF_F_IP_CSUM | NETIF_F_RXCSUM;
 	dev->features		= NETIF_F_IP_CSUM | NETIF_F_HIGHDMA;
 
-	sw_physid1 = ioc3_mdio_पढ़ो(dev, ip->mii.phy_id, MII_PHYSID1);
-	sw_physid2 = ioc3_mdio_पढ़ो(dev, ip->mii.phy_id, MII_PHYSID2);
+	sw_physid1 = ioc3_mdio_read(dev, ip->mii.phy_id, MII_PHYSID1);
+	sw_physid2 = ioc3_mdio_read(dev, ip->mii.phy_id, MII_PHYSID2);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ out_stop;
+	err = register_netdev(dev);
+	if (err)
+		goto out_stop;
 
 	mii_check_media(&ip->mii, 1, 1);
 	ioc3_setup_duplex(ip);
 
-	venकरोr = (sw_physid1 << 12) | (sw_physid2 >> 4);
+	vendor = (sw_physid1 << 12) | (sw_physid2 >> 4);
 	model  = (sw_physid2 >> 4) & 0x3f;
 	rev    = sw_physid2 & 0xf;
 	netdev_info(dev, "Using PHY %d, vendor 0x%x, model %d, rev %d.\n",
-		    ip->mii.phy_id, venकरोr, model, rev);
+		    ip->mii.phy_id, vendor, model, rev);
 	netdev_info(dev, "IOC3 SSRAM has %d kbyte.\n",
-		    ip->emcr & EMCR_बफ_मान ? 128 : 64);
+		    ip->emcr & EMCR_BUFSIZ ? 128 : 64);
 
-	वापस 0;
+	return 0;
 
 out_stop:
-	del_समयr_sync(&ip->ioc3_समयr);
-	अगर (ip->rxr)
-		dma_मुक्त_coherent(ip->dma_dev, RX_RING_SIZE, ip->rxr,
+	del_timer_sync(&ip->ioc3_timer);
+	if (ip->rxr)
+		dma_free_coherent(ip->dma_dev, RX_RING_SIZE, ip->rxr,
 				  ip->rxr_dma);
-	अगर (ip->tx_ring)
-		dma_मुक्त_coherent(ip->dma_dev, TX_RING_SIZE + SZ_16K - 1, ip->tx_ring,
+	if (ip->tx_ring)
+		dma_free_coherent(ip->dma_dev, TX_RING_SIZE + SZ_16K - 1, ip->tx_ring,
 				  ip->txr_dma);
-out_मुक्त:
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+out_free:
+	free_netdev(dev);
+	return err;
+}
 
-अटल पूर्णांक ioc3eth_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static int ioc3eth_remove(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct ioc3_private *ip = netdev_priv(dev);
 
-	dma_मुक्त_coherent(ip->dma_dev, RX_RING_SIZE, ip->rxr, ip->rxr_dma);
-	dma_मुक्त_coherent(ip->dma_dev, TX_RING_SIZE + SZ_16K - 1, ip->tx_ring, ip->txr_dma);
+	dma_free_coherent(ip->dma_dev, RX_RING_SIZE, ip->rxr, ip->rxr_dma);
+	dma_free_coherent(ip->dma_dev, TX_RING_SIZE + SZ_16K - 1, ip->tx_ring, ip->txr_dma);
 
-	unरेजिस्टर_netdev(dev);
-	del_समयr_sync(&ip->ioc3_समयr);
-	मुक्त_netdev(dev);
+	unregister_netdev(dev);
+	del_timer_sync(&ip->ioc3_timer);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल netdev_tx_t ioc3_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_etxd *desc;
-	अचिन्हित दीर्घ data;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक produce;
+static netdev_tx_t ioc3_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_etxd *desc;
+	unsigned long data;
+	unsigned int len;
+	int produce;
 	u32 w0 = 0;
 
 	/* IOC3 has a fairly simple minded checksumming hardware which simply
-	 * adds up the 1's complement checksum क्रम the entire packet and
-	 * inserts it at an offset which can be specअगरied in the descriptor
-	 * पूर्णांकo the transmit packet.  This means we have to compensate क्रम the
-	 * MAC header which should not be summed and the TCP/UDP pseuकरो headers
+	 * adds up the 1's complement checksum for the entire packet and
+	 * inserts it at an offset which can be specified in the descriptor
+	 * into the transmit packet.  This means we have to compensate for the
+	 * MAC header which should not be summed and the TCP/UDP pseudo headers
 	 * manually.
 	 */
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
-		स्थिर काष्ठा iphdr *ih = ip_hdr(skb);
-		स्थिर पूर्णांक proto = ntohs(ih->protocol);
-		अचिन्हित पूर्णांक csoff;
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		const struct iphdr *ih = ip_hdr(skb);
+		const int proto = ntohs(ih->protocol);
+		unsigned int csoff;
 		u32 csum, ehsum;
 		u16 *eh;
 
 		/* The MAC header.  skb->mac seem the logic approach
-		 * to find the MAC header - except it's a शून्य poपूर्णांकer ...
+		 * to find the MAC header - except it's a NULL pointer ...
 		 */
 		eh = (u16 *)skb->data;
 
@@ -1007,7 +1006,7 @@ out_मुक्त:
 		ehsum = eh[0] + eh[1] + eh[2] + eh[3] + eh[4] + eh[5] + eh[6];
 
 		/* Skip IP header; it's sum is always zero and was
-		 * alपढ़ोy filled in by ip_output.c
+		 * already filled in by ip_output.c
 		 */
 		csum = csum_tcpudp_nofold(ih->saddr, ih->daddr,
 					  ih->tot_len - (ih->ihl << 2),
@@ -1017,40 +1016,40 @@ out_मुक्त:
 		csum = (csum & 0xffff) + (csum >> 16);
 
 		csoff = ETH_HLEN + (ih->ihl << 2);
-		अगर (proto == IPPROTO_UDP) अणु
-			csoff += दुरत्व(काष्ठा udphdr, check);
+		if (proto == IPPROTO_UDP) {
+			csoff += offsetof(struct udphdr, check);
 			udp_hdr(skb)->check = csum;
-		पूर्ण
-		अगर (proto == IPPROTO_TCP) अणु
-			csoff += दुरत्व(काष्ठा tcphdr, check);
+		}
+		if (proto == IPPROTO_TCP) {
+			csoff += offsetof(struct tcphdr, check);
 			tcp_hdr(skb)->check = csum;
-		पूर्ण
+		}
 
 		w0 = ETXD_DOCHECKSUM | (csoff << ETXD_CHKOFF_SHIFT);
-	पूर्ण
+	}
 
 	spin_lock_irq(&ip->ioc3_lock);
 
-	data = (अचिन्हित दीर्घ)skb->data;
+	data = (unsigned long)skb->data;
 	len = skb->len;
 
 	produce = ip->tx_pi;
 	desc = &ip->txr[produce];
 
-	अगर (len <= 104) अणु
-		/* Short packet, let's copy it directly पूर्णांकo the ring.  */
+	if (len <= 104) {
+		/* Short packet, let's copy it directly into the ring.  */
 		skb_copy_from_linear_data(skb, desc->data, skb->len);
-		अगर (len < ETH_ZLEN) अणु
-			/* Very लघु packet, pad with zeros at the end. */
-			स_रखो(desc->data + len, 0, ETH_ZLEN - len);
+		if (len < ETH_ZLEN) {
+			/* Very short packet, pad with zeros at the end. */
+			memset(desc->data + len, 0, ETH_ZLEN - len);
 			len = ETH_ZLEN;
-		पूर्ण
+		}
 		desc->cmd = cpu_to_be32(len | ETXD_INTWHENDONE | ETXD_D0V | w0);
 		desc->bufcnt = cpu_to_be32(len);
-	पूर्ण अन्यथा अगर ((data ^ (data + len - 1)) & 0x4000) अणु
-		अचिन्हित दीर्घ b2 = (data | 0x3fffUL) + 1UL;
-		अचिन्हित दीर्घ s1 = b2 - data;
-		अचिन्हित दीर्घ s2 = data + len - b2;
+	} else if ((data ^ (data + len - 1)) & 0x4000) {
+		unsigned long b2 = (data | 0x3fffUL) + 1UL;
+		unsigned long s1 = b2 - data;
+		unsigned long s2 = data + len - b2;
 		dma_addr_t d1, d2;
 
 		desc->cmd    = cpu_to_be32(len | ETXD_INTWHENDONE |
@@ -1058,227 +1057,227 @@ out_मुक्त:
 		desc->bufcnt = cpu_to_be32((s1 << ETXD_B1CNT_SHIFT) |
 					   (s2 << ETXD_B2CNT_SHIFT));
 		d1 = dma_map_single(ip->dma_dev, skb->data, s1, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ip->dma_dev, d1))
-			जाओ drop_packet;
-		d2 = dma_map_single(ip->dma_dev, (व्योम *)b2, s1, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ip->dma_dev, d2)) अणु
+		if (dma_mapping_error(ip->dma_dev, d1))
+			goto drop_packet;
+		d2 = dma_map_single(ip->dma_dev, (void *)b2, s1, DMA_TO_DEVICE);
+		if (dma_mapping_error(ip->dma_dev, d2)) {
 			dma_unmap_single(ip->dma_dev, d1, len, DMA_TO_DEVICE);
-			जाओ drop_packet;
-		पूर्ण
+			goto drop_packet;
+		}
 		desc->p1     = cpu_to_be64(ioc3_map(d1, PCI64_ATTR_PREF));
 		desc->p2     = cpu_to_be64(ioc3_map(d2, PCI64_ATTR_PREF));
-	पूर्ण अन्यथा अणु
+	} else {
 		dma_addr_t d;
 
-		/* Normal sized packet that करोesn't cross a page boundary. */
+		/* Normal sized packet that doesn't cross a page boundary. */
 		desc->cmd = cpu_to_be32(len | ETXD_INTWHENDONE | ETXD_B1V | w0);
 		desc->bufcnt = cpu_to_be32(len << ETXD_B1CNT_SHIFT);
 		d = dma_map_single(ip->dma_dev, skb->data, len, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(ip->dma_dev, d))
-			जाओ drop_packet;
+		if (dma_mapping_error(ip->dma_dev, d))
+			goto drop_packet;
 		desc->p1     = cpu_to_be64(ioc3_map(d, PCI64_ATTR_PREF));
-	पूर्ण
+	}
 
 	mb(); /* make sure all descriptor changes are visible */
 
 	ip->tx_skbs[produce] = skb;			/* Remember skb */
 	produce = (produce + 1) & TX_RING_MASK;
 	ip->tx_pi = produce;
-	ग_लिखोl(produce << 7, &ip->regs->etpir);		/* Fire ... */
+	writel(produce << 7, &ip->regs->etpir);		/* Fire ... */
 
 	ip->txqlen++;
 
-	अगर (ip->txqlen >= (TX_RING_ENTRIES - 1))
-		netअगर_stop_queue(dev);
+	if (ip->txqlen >= (TX_RING_ENTRIES - 1))
+		netif_stop_queue(dev);
 
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 drop_packet:
-	dev_kमुक्त_skb_any(skb);
+	dev_kfree_skb_any(skb);
 	dev->stats.tx_dropped++;
 
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम ioc3_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static void ioc3_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
 	netdev_err(dev, "transmit timed out, resetting\n");
 
 	spin_lock_irq(&ip->ioc3_lock);
 
 	ioc3_stop(ip);
-	ioc3_मुक्त_rx_bufs(ip);
+	ioc3_free_rx_bufs(ip);
 	ioc3_clean_tx_ring(ip);
 
 	ioc3_init(dev);
-	अगर (ioc3_alloc_rx_bufs(dev)) अणु
+	if (ioc3_alloc_rx_bufs(dev)) {
 		netdev_err(dev, "%s: rx buffer allocation failed\n", __func__);
 		spin_unlock_irq(&ip->ioc3_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 	ioc3_start(ip);
 	ioc3_mii_init(ip);
 	ioc3_mii_start(ip);
 
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
 /* Given a multicast ethernet address, this routine calculates the
  * address's bit index in the logical address filter mask
  */
-अटल अंतरभूत अचिन्हित पूर्णांक ioc3_hash(स्थिर अचिन्हित अक्षर *addr)
-अणु
-	अचिन्हित पूर्णांक temp = 0;
-	पूर्णांक bits;
+static inline unsigned int ioc3_hash(const unsigned char *addr)
+{
+	unsigned int temp = 0;
+	int bits;
 	u32 crc;
 
 	crc = ether_crc_le(ETH_ALEN, addr);
 
-	crc &= 0x3f;    /* bit reverse lowest 6 bits क्रम hash index */
-	क्रम (bits = 6; --bits >= 0; ) अणु
+	crc &= 0x3f;    /* bit reverse lowest 6 bits for hash index */
+	for (bits = 6; --bits >= 0; ) {
 		temp <<= 1;
 		temp |= (crc & 0x1);
 		crc >>= 1;
-	पूर्ण
+	}
 
-	वापस temp;
-पूर्ण
+	return temp;
+}
 
-अटल व्योम ioc3_get_drvinfo(काष्ठा net_device *dev,
-			     काष्ठा ethtool_drvinfo *info)
-अणु
-	strlcpy(info->driver, IOC3_NAME, माप(info->driver));
-	strlcpy(info->version, IOC3_VERSION, माप(info->version));
+static void ioc3_get_drvinfo(struct net_device *dev,
+			     struct ethtool_drvinfo *info)
+{
+	strlcpy(info->driver, IOC3_NAME, sizeof(info->driver));
+	strlcpy(info->version, IOC3_VERSION, sizeof(info->version));
 	strlcpy(info->bus_info, pci_name(to_pci_dev(dev->dev.parent)),
-		माप(info->bus_info));
-पूर्ण
+		sizeof(info->bus_info));
+}
 
-अटल पूर्णांक ioc3_get_link_ksettings(काष्ठा net_device *dev,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
+static int ioc3_get_link_ksettings(struct net_device *dev,
+				   struct ethtool_link_ksettings *cmd)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
 
 	spin_lock_irq(&ip->ioc3_lock);
 	mii_ethtool_get_link_ksettings(&ip->mii, cmd);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ioc3_set_link_ksettings(काष्ठा net_device *dev,
-				   स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	पूर्णांक rc;
+static int ioc3_set_link_ksettings(struct net_device *dev,
+				   const struct ethtool_link_ksettings *cmd)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	int rc;
 
 	spin_lock_irq(&ip->ioc3_lock);
 	rc = mii_ethtool_set_link_ksettings(&ip->mii, cmd);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ioc3_nway_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	पूर्णांक rc;
+static int ioc3_nway_reset(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	int rc;
 
 	spin_lock_irq(&ip->ioc3_lock);
 	rc = mii_nway_restart(&ip->mii);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u32 ioc3_get_link(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	पूर्णांक rc;
+static u32 ioc3_get_link(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	int rc;
 
 	spin_lock_irq(&ip->ioc3_lock);
 	rc = mii_link_ok(&ip->mii);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ioc3_ethtool_ops = अणु
+static const struct ethtool_ops ioc3_ethtool_ops = {
 	.get_drvinfo		= ioc3_get_drvinfo,
 	.nway_reset		= ioc3_nway_reset,
 	.get_link		= ioc3_get_link,
 	.get_link_ksettings	= ioc3_get_link_ksettings,
 	.set_link_ksettings	= ioc3_set_link_ksettings,
-पूर्ण;
+};
 
-अटल पूर्णांक ioc3_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	पूर्णांक rc;
+static int ioc3_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	int rc;
 
 	spin_lock_irq(&ip->ioc3_lock);
-	rc = generic_mii_ioctl(&ip->mii, अगर_mii(rq), cmd, शून्य);
+	rc = generic_mii_ioctl(&ip->mii, if_mii(rq), cmd, NULL);
 	spin_unlock_irq(&ip->ioc3_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम ioc3_set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा ioc3_निजी *ip = netdev_priv(dev);
-	काष्ठा ioc3_ethregs *regs = ip->regs;
-	काष्ठा netdev_hw_addr *ha;
+static void ioc3_set_multicast_list(struct net_device *dev)
+{
+	struct ioc3_private *ip = netdev_priv(dev);
+	struct ioc3_ethregs *regs = ip->regs;
+	struct netdev_hw_addr *ha;
 	u64 ehar = 0;
 
 	spin_lock_irq(&ip->ioc3_lock);
 
-	अगर (dev->flags & IFF_PROMISC) अणु			/* Set promiscuous.  */
+	if (dev->flags & IFF_PROMISC) {			/* Set promiscuous.  */
 		ip->emcr |= EMCR_PROMISC;
-		ग_लिखोl(ip->emcr, &regs->emcr);
-		पढ़ोl(&regs->emcr);
-	पूर्ण अन्यथा अणु
+		writel(ip->emcr, &regs->emcr);
+		readl(&regs->emcr);
+	} else {
 		ip->emcr &= ~EMCR_PROMISC;
-		ग_लिखोl(ip->emcr, &regs->emcr);		/* Clear promiscuous. */
-		पढ़ोl(&regs->emcr);
+		writel(ip->emcr, &regs->emcr);		/* Clear promiscuous. */
+		readl(&regs->emcr);
 
-		अगर ((dev->flags & IFF_ALLMULTI) ||
-		    (netdev_mc_count(dev) > 64)) अणु
-			/* Too many क्रम hashing to make sense or we want all
+		if ((dev->flags & IFF_ALLMULTI) ||
+		    (netdev_mc_count(dev) > 64)) {
+			/* Too many for hashing to make sense or we want all
 			 * multicast packets anyway,  so skip computing all the
 			 * hashes and just accept all packets.
 			 */
 			ip->ehar_h = 0xffffffff;
 			ip->ehar_l = 0xffffffff;
-		पूर्ण अन्यथा अणु
-			netdev_क्रम_each_mc_addr(ha, dev) अणु
+		} else {
+			netdev_for_each_mc_addr(ha, dev) {
 				ehar |= (1UL << ioc3_hash(ha->addr));
-			पूर्ण
+			}
 			ip->ehar_h = ehar >> 32;
 			ip->ehar_l = ehar & 0xffffffff;
-		पूर्ण
-		ग_लिखोl(ip->ehar_h, &regs->ehar_h);
-		ग_लिखोl(ip->ehar_l, &regs->ehar_l);
-	पूर्ण
+		}
+		writel(ip->ehar_h, &regs->ehar_h);
+		writel(ip->ehar_l, &regs->ehar_l);
+	}
 
 	spin_unlock_irq(&ip->ioc3_lock);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver ioc3eth_driver = अणु
+static struct platform_driver ioc3eth_driver = {
 	.probe  = ioc3eth_probe,
-	.हटाओ = ioc3eth_हटाओ,
-	.driver = अणु
+	.remove = ioc3eth_remove,
+	.driver = {
 		.name = "ioc3-eth",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_platक्रमm_driver(ioc3eth_driver);
+module_platform_driver(ioc3eth_driver);
 
 MODULE_AUTHOR("Ralf Baechle <ralf@linux-mips.org>");
 MODULE_DESCRIPTION("SGI IOC3 Ethernet driver");

@@ -1,88 +1,87 @@
-<शैली गुरु>
 /*
  *  linux/sound/oss/dmasound/dmasound_core.c
  *
  *
- *  OSS/Free compatible Atari TT/Falcon and Amiga DMA sound driver क्रम
+ *  OSS/Free compatible Atari TT/Falcon and Amiga DMA sound driver for
  *  Linux/m68k
- *  Extended to support Power Macपूर्णांकosh क्रम Linux/ppc by Paul Mackerras
+ *  Extended to support Power Macintosh for Linux/ppc by Paul Mackerras
  *
  *  (c) 1995 by Michael Schlueter & Michael Marte
  *
- *  Michael Schlueter (michael@duck.syd.de) did the basic काष्ठाure of the VFS
- *  पूर्णांकerface and the u-law to चिन्हित byte conversion.
+ *  Michael Schlueter (michael@duck.syd.de) did the basic structure of the VFS
+ *  interface and the u-law to signed byte conversion.
  *
- *  Michael Marte (marte@inक्रमmatik.uni-muenchen.de) did the sound queue,
- *  /dev/mixer, /dev/sndstat and complemented the VFS पूर्णांकerface. He would like
+ *  Michael Marte (marte@informatik.uni-muenchen.de) did the sound queue,
+ *  /dev/mixer, /dev/sndstat and complemented the VFS interface. He would like
  *  to thank:
- *    - Michael Schlueter क्रम initial ideas and करोcumentation on the MFP and
+ *    - Michael Schlueter for initial ideas and documentation on the MFP and
  *	the DMA sound hardware.
- *    - Therapy? क्रम their CD 'Troublegum' which really made me rock.
+ *    - Therapy? for their CD 'Troublegum' which really made me rock.
  *
  *  /dev/sndstat is based on code by Hannu Savolainen, the author of the
  *  VoxWare family of drivers.
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the मुख्य directory of this archive
- *  क्रम more details.
+ *  License.  See the file COPYING in the main directory of this archive
+ *  for more details.
  *
  *  History:
  *
  *	1995/8/25	First release
  *
  *	1995/9/02	Roman Hodek:
- *			  - Fixed atari_stram_alloc() call, the समयr
+ *			  - Fixed atari_stram_alloc() call, the timer
  *			    programming and several race conditions
  *	1995/9/14	Roman Hodek:
  *			  - After some discussion with Michael Schlueter,
- *			    revised the पूर्णांकerrupt disabling
+ *			    revised the interrupt disabling
  *			  - Slightly speeded up U8->S8 translation by using
- *			    दीर्घ operations where possible
- *			  - Added 4:3 पूर्णांकerpolation क्रम /dev/audio
+ *			    long operations where possible
+ *			  - Added 4:3 interpolation for /dev/audio
  *
  *	1995/9/20	Torsten Scherer:
- *			  - Fixed a bug in sq_ग_लिखो and changed /dev/audio
+ *			  - Fixed a bug in sq_write and changed /dev/audio
  *			    converting to play at 12517Hz instead of 6258Hz.
  *
  *	1995/9/23	Torsten Scherer:
- *			  - Changed sq_पूर्णांकerrupt() and sq_play() to pre-program
- *			    the DMA क्रम another frame जबतक there's still one
+ *			  - Changed sq_interrupt() and sq_play() to pre-program
+ *			    the DMA for another frame while there's still one
  *			    running. This allows the IRQ response to be
- *			    arbitrarily delayed and playing will still जारी.
+ *			    arbitrarily delayed and playing will still continue.
  *
  *	1995/10/14	Guenther Kelleter, Torsten Scherer:
- *			  - Better support क्रम Falcon audio (the Falcon करोesn't
- *			    उठाओ an IRQ at the end of a frame, but at the
+ *			  - Better support for Falcon audio (the Falcon doesn't
+ *			    raise an IRQ at the end of a frame, but at the
  *			    beginning instead!). uses 'if (codec_dma)' in lots
- *			    of places to simply चयन between Falcon and TT
+ *			    of places to simply switch between Falcon and TT
  *			    code.
  *
  *	1995/11/06	Torsten Scherer:
- *			  - Started पूर्णांकroducing a hardware असलtraction scheme
- *			    (may perhaps also serve क्रम Amigas?)
+ *			  - Started introducing a hardware abstraction scheme
+ *			    (may perhaps also serve for Amigas?)
  *			  - Can now play samples at almost all frequencies by
  *			    means of a more generalized expand routine
  *			  - Takes a good deal of care to cut data only at
  *			    sample sizes
- *			  - Buffer size is now a kernel runसमय option
+ *			  - Buffer size is now a kernel runtime option
  *			  - Implemented fsync() & several minor improvements
  *			Guenther Kelleter:
- *			  - Useful hपूर्णांकs and bug fixes
- *			  - Cross-checked it क्रम Falcons
+ *			  - Useful hints and bug fixes
+ *			  - Cross-checked it for Falcons
  *
  *	1996/3/9	Geert Uytterhoeven:
- *			  - Support added क्रम Amiga, A-law, 16-bit little
+ *			  - Support added for Amiga, A-law, 16-bit little
  *			    endian.
- *			  - Unअगरication to drivers/sound/dmasound.c.
+ *			  - Unification to drivers/sound/dmasound.c.
  *
  *	1996/4/6	Martin Mitchell:
  *			  - Updated to 1.3 kernel.
  *
  *	1996/6/13       Topi Kanerva:
- *			  - Fixed things that were broken (मुख्यly the amiga
+ *			  - Fixed things that were broken (mainly the amiga
  *			    14-bit routines)
  *			  - /dev/sndstat shows now the real hardware frequency
- *			  - The lowpass filter is disabled by शेष now
+ *			  - The lowpass filter is disabled by default now
  *
  *	1996/9/25	Geert Uytterhoeven:
  *			  - Modularization
@@ -90,11 +89,11 @@
  *	1998/6/10	Andreas Schwab:
  *			  - Converted to use sound_core
  *
- *	1999/12/28	Riअक्षरd Zidlicky:
- *			  - Added support क्रम Q40
+ *	1999/12/28	Richard Zidlicky:
+ *			  - Added support for Q40
  *
  *	2000/2/27	Geert Uytterhoeven:
- *			  - Clean up and split the code पूर्णांकo 4 parts:
+ *			  - Clean up and split the code into 4 parts:
  *			      o dmasound_core: machine-independent code
  *			      o dmasound_atari: Atari TT and Falcon support
  *			      o dmasound_awacs: Apple PowerMac support
@@ -104,385 +103,385 @@
  *			  - Integration of dmasound_q40
  *			  - Small clean ups
  *
- *	2001/01/26 [1.0] Iain Sanकरोe
+ *	2001/01/26 [1.0] Iain Sandoe
  *			  - make /dev/sndstat show revision & edition info.
  *			  - since dmasound.mach.sq_setup() can fail on pmac
- *			    its type has been changed to पूर्णांक and the वापसs
+ *			    its type has been changed to int and the returns
  *			    are checked.
  *		   [1.1]  - stop missing translations from being called.
- *	2001/02/08 [1.2]  - हटाओ unused translation tables & move machine-
- *			    specअगरic tables to low-level.
- *			  - वापस correct info. क्रम SNDCTL_DSP_GETFMTS.
+ *	2001/02/08 [1.2]  - remove unused translation tables & move machine-
+ *			    specific tables to low-level.
+ *			  - return correct info. for SNDCTL_DSP_GETFMTS.
  *		   [1.3]  - implement SNDCTL_DSP_GETCAPS fully.
  *		   [1.4]  - make /dev/sndstat text length usage deterministic.
  *			  - make /dev/sndstat call to low-level
  *			    dmasound.mach.state_info() pass max space to ll driver.
  *			  - tidy startup banners and output info.
- *		   [1.5]  - tidy up a little (हटाओd some unused #घोषणाs in
+ *		   [1.5]  - tidy up a little (removed some unused #defines in
  *			    dmasound.h)
  *			  - fix up HAS_RECORD conditionalisation.
  *			  - add record code in places it is missing...
- *			  - change buf-sizes to bytes to allow < 1kb क्रम pmac
- *			    अगर user param entry is < 256 the value is taken to
+ *			  - change buf-sizes to bytes to allow < 1kb for pmac
+ *			    if user param entry is < 256 the value is taken to
  *			    be in kb > 256 is taken to be in bytes.
- *			  - make शेष buff/frag params conditional on
- *			    machine to allow smaller values क्रम pmac.
- *			  - made the ioctls, पढ़ो & ग_लिखो comply with the OSS
+ *			  - make default buff/frag params conditional on
+ *			    machine to allow smaller values for pmac.
+ *			  - made the ioctls, read & write comply with the OSS
  *			    rules on setting params.
- *			  - added parsing of _setup() params क्रम record.
+ *			  - added parsing of _setup() params for record.
  *	2001/04/04 [1.6]  - fix bug where sample rates higher than maximum were
  *			    being reported as OK.
- *			  - fix खोलो() to वापस -EBUSY as per OSS करोc. when
+ *			  - fix open() to return -EBUSY as per OSS doc. when
  *			    audio is in use - this is independent of O_NOBLOCK.
  *			  - fix bug where SNDCTL_DSP_POST was blocking.
  */
 
  /* Record capability notes 30/01/2001:
   * At present these observations apply only to pmac LL driver (the only one
-  * that can करो record, at present).  However, अगर other LL drivers क्रम machines
+  * that can do record, at present).  However, if other LL drivers for machines
   * with record are added they may apply.
   *
-  * The fragment parameters क्रम the record and play channels are separate.
-  * However, अगर the driver is खोलोed O_RDWR there is no way (in the current OSS
-  * API) to specअगरy their values independently क्रम the record and playback
+  * The fragment parameters for the record and play channels are separate.
+  * However, if the driver is opened O_RDWR there is no way (in the current OSS
+  * API) to specify their values independently for the record and playback
   * channels.  Since the only common factor between the input & output is the
-  * sample rate (on pmac) it should be possible to खोलो /dev/dspX O_WRONLY and
-  * /dev/dspY O_RDONLY.  The input & output channels could then have dअगरferent
-  * अक्षरacteristics (other than the first that sets sample rate claiming the
-  * right to set it क्रम ever).  As it stands, the क्रमmat, channels, number of
+  * sample rate (on pmac) it should be possible to open /dev/dspX O_WRONLY and
+  * /dev/dspY O_RDONLY.  The input & output channels could then have different
+  * characteristics (other than the first that sets sample rate claiming the
+  * right to set it for ever).  As it stands, the format, channels, number of
   * bits & sample rate are assumed to be common.  In the future perhaps these
-  * should be the responsibility of the LL driver - and then अगर a card really
-  * करोes not share items between record & playback they can be specअगरied
+  * should be the responsibility of the LL driver - and then if a card really
+  * does not share items between record & playback they can be specified
   * separately.
 */
 
-/* Thपढ़ो-safeness of shared_resources notes: 31/01/2001
- * If the user खोलोs O_RDWR and then splits record & play between two thपढ़ोs
+/* Thread-safeness of shared_resources notes: 31/01/2001
+ * If the user opens O_RDWR and then splits record & play between two threads
  * both of which inherit the fd - and then starts changing things from both
- * - we will have dअगरficulty telling.
+ * - we will have difficulty telling.
  *
  * It's bad application coding - but ...
- * TODO: think about how to sort this out... without bogging everything करोwn in
+ * TODO: think about how to sort this out... without bogging everything down in
  * semaphores.
  *
  * Similarly, the OSS spec says "all changes to parameters must be between
- * खोलो() and the first पढ़ो() or ग_लिखो(). - and a bit later on (by
- * implication) "between SNDCTL_DSP_RESET and the first पढ़ो() or ग_लिखो() after
- * it".  If the app is multi-thपढ़ोed and this rule is broken between thपढ़ोs
+ * open() and the first read() or write(). - and a bit later on (by
+ * implication) "between SNDCTL_DSP_RESET and the first read() or write() after
+ * it".  If the app is multi-threaded and this rule is broken between threads
  * we will have trouble spotting it - and the fault will be rather obscure :-(
  *
- * We will try and put out at least a kmsg अगर we see it happen... but I think
- * it will be quite hard to trap it with an -EXXX वापस... because we can't
- * see the fault until after the damage is करोne.
+ * We will try and put out at least a kmsg if we see it happen... but I think
+ * it will be quite hard to trap it with an -EXXX return... because we can't
+ * see the fault until after the damage is done.
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sound.h>
-#समावेश <linux/init.h>
-#समावेश <linux/soundcard.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/sound.h>
+#include <linux/init.h>
+#include <linux/soundcard.h>
+#include <linux/poll.h>
+#include <linux/mutex.h>
+#include <linux/sched/signal.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "dmasound.h"
+#include "dmasound.h"
 
-#घोषणा DMASOUND_CORE_REVISION 1
-#घोषणा DMASOUND_CORE_EDITION 6
+#define DMASOUND_CORE_REVISION 1
+#define DMASOUND_CORE_EDITION 6
 
     /*
      *  Declarations
      */
 
-अटल DEFINE_MUTEX(dmasound_core_mutex);
-पूर्णांक dmasound_catchRadius = 0;
-module_param(dmasound_catchRadius, पूर्णांक, 0);
+static DEFINE_MUTEX(dmasound_core_mutex);
+int dmasound_catchRadius = 0;
+module_param(dmasound_catchRadius, int, 0);
 
-अटल अचिन्हित पूर्णांक numWriteBufs = DEFAULT_N_BUFFERS;
-module_param(numWriteBufs, पूर्णांक, 0);
-अटल अचिन्हित पूर्णांक ग_लिखोBufSize = DEFAULT_BUFF_SIZE ;	/* in bytes */
-module_param(ग_लिखोBufSize, पूर्णांक, 0);
+static unsigned int numWriteBufs = DEFAULT_N_BUFFERS;
+module_param(numWriteBufs, int, 0);
+static unsigned int writeBufSize = DEFAULT_BUFF_SIZE ;	/* in bytes */
+module_param(writeBufSize, int, 0);
 
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित MODULE
-अटल पूर्णांक sq_unit = -1;
-अटल पूर्णांक mixer_unit = -1;
-अटल पूर्णांक state_unit = -1;
-अटल पूर्णांक irq_installed;
-#पूर्ण_अगर /* MODULE */
+#ifdef MODULE
+static int sq_unit = -1;
+static int mixer_unit = -1;
+static int state_unit = -1;
+static int irq_installed;
+#endif /* MODULE */
 
-/* control over who can modअगरy resources shared between play/record */
-अटल भ_शेषe_t shared_resource_owner;
-अटल पूर्णांक shared_resources_initialised;
+/* control over who can modify resources shared between play/record */
+static fmode_t shared_resource_owner;
+static int shared_resources_initialised;
 
     /*
      *  Mid level stuff
      */
 
-काष्ठा sound_settings dmasound = अणु
+struct sound_settings dmasound = {
 	.lock = __SPIN_LOCK_UNLOCKED(dmasound.lock)
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम sound_silence(व्योम)
-अणु
+static inline void sound_silence(void)
+{
 	dmasound.mach.silence(); /* _MUST_ stop DMA */
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक sound_set_क्रमmat(पूर्णांक क्रमmat)
-अणु
-	वापस dmasound.mach.setFormat(क्रमmat);
-पूर्ण
+static inline int sound_set_format(int format)
+{
+	return dmasound.mach.setFormat(format);
+}
 
 
-अटल पूर्णांक sound_set_speed(पूर्णांक speed)
-अणु
-	अगर (speed < 0)
-		वापस dmasound.soft.speed;
+static int sound_set_speed(int speed)
+{
+	if (speed < 0)
+		return dmasound.soft.speed;
 
 	/* trap out-of-range speed settings.
 	   at present we allow (arbitrarily) low rates - using soft
 	   up-conversion - but we can't allow > max because there is
-	   no soft करोwn-conversion.
+	   no soft down-conversion.
 	*/
-	अगर (dmasound.mach.max_dsp_speed &&
+	if (dmasound.mach.max_dsp_speed &&
 	   (speed > dmasound.mach.max_dsp_speed))
 		speed = dmasound.mach.max_dsp_speed ;
 
 	dmasound.soft.speed = speed;
 
-	अगर (dmasound.minDev == SND_DEV_DSP)
+	if (dmasound.minDev == SND_DEV_DSP)
 		dmasound.dsp.speed = dmasound.soft.speed;
 
-	वापस dmasound.soft.speed;
-पूर्ण
+	return dmasound.soft.speed;
+}
 
-अटल पूर्णांक sound_set_stereo(पूर्णांक stereo)
-अणु
-	अगर (stereo < 0)
-		वापस dmasound.soft.stereo;
+static int sound_set_stereo(int stereo)
+{
+	if (stereo < 0)
+		return dmasound.soft.stereo;
 
 	stereo = !!stereo;    /* should be 0 or 1 now */
 
 	dmasound.soft.stereo = stereo;
-	अगर (dmasound.minDev == SND_DEV_DSP)
+	if (dmasound.minDev == SND_DEV_DSP)
 		dmasound.dsp.stereo = stereo;
 
-	वापस stereo;
-पूर्ण
+	return stereo;
+}
 
-अटल sमाप_प्रकार sound_copy_translate(TRANS *trans, स्थिर u_अक्षर __user *userPtr,
-				    माप_प्रकार userCount, u_अक्षर frame[],
-				    sमाप_प्रकार *frameUsed, sमाप_प्रकार frameLeft)
-अणु
-	sमाप_प्रकार (*ct_func)(स्थिर u_अक्षर __user *, माप_प्रकार, u_अक्षर *, sमाप_प्रकार *, sमाप_प्रकार);
+static ssize_t sound_copy_translate(TRANS *trans, const u_char __user *userPtr,
+				    size_t userCount, u_char frame[],
+				    ssize_t *frameUsed, ssize_t frameLeft)
+{
+	ssize_t (*ct_func)(const u_char __user *, size_t, u_char *, ssize_t *, ssize_t);
 
-	चयन (dmasound.soft.क्रमmat) अणु
-	    हाल AFMT_MU_LAW:
+	switch (dmasound.soft.format) {
+	    case AFMT_MU_LAW:
 		ct_func = trans->ct_ulaw;
-		अवरोध;
-	    हाल AFMT_A_LAW:
+		break;
+	    case AFMT_A_LAW:
 		ct_func = trans->ct_alaw;
-		अवरोध;
-	    हाल AFMT_S8:
+		break;
+	    case AFMT_S8:
 		ct_func = trans->ct_s8;
-		अवरोध;
-	    हाल AFMT_U8:
+		break;
+	    case AFMT_U8:
 		ct_func = trans->ct_u8;
-		अवरोध;
-	    हाल AFMT_S16_BE:
+		break;
+	    case AFMT_S16_BE:
 		ct_func = trans->ct_s16be;
-		अवरोध;
-	    हाल AFMT_U16_BE:
+		break;
+	    case AFMT_U16_BE:
 		ct_func = trans->ct_u16be;
-		अवरोध;
-	    हाल AFMT_S16_LE:
+		break;
+	    case AFMT_S16_LE:
 		ct_func = trans->ct_s16le;
-		अवरोध;
-	    हाल AFMT_U16_LE:
+		break;
+	    case AFMT_U16_LE:
 		ct_func = trans->ct_u16le;
-		अवरोध;
-	    शेष:
-		वापस 0;
-	पूर्ण
-	/* अगर the user has requested a non-existent translation करोn't try
-	   to call it but just वापस 0 bytes moved
+		break;
+	    default:
+		return 0;
+	}
+	/* if the user has requested a non-existent translation don't try
+	   to call it but just return 0 bytes moved
 	*/
-	अगर (ct_func)
-		वापस ct_func(userPtr, userCount, frame, frameUsed, frameLeft);
-	वापस 0;
-पूर्ण
+	if (ct_func)
+		return ct_func(userPtr, userCount, frame, frameUsed, frameLeft);
+	return 0;
+}
 
     /*
-     *  /dev/mixer असलtraction
+     *  /dev/mixer abstraction
      */
 
-अटल काष्ठा अणु
-    पूर्णांक busy;
-    पूर्णांक modअगरy_counter;
-पूर्ण mixer;
+static struct {
+    int busy;
+    int modify_counter;
+} mixer;
 
-अटल पूर्णांक mixer_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int mixer_open(struct inode *inode, struct file *file)
+{
 	mutex_lock(&dmasound_core_mutex);
-	अगर (!try_module_get(dmasound.mach.owner)) अणु
+	if (!try_module_get(dmasound.mach.owner)) {
 		mutex_unlock(&dmasound_core_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	mixer.busy = 1;
 	mutex_unlock(&dmasound_core_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixer_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int mixer_release(struct inode *inode, struct file *file)
+{
 	mutex_lock(&dmasound_core_mutex);
 	mixer.busy = 0;
 	module_put(dmasound.mach.owner);
 	mutex_unlock(&dmasound_core_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mixer_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	अगर (_SIOC_सूची(cmd) & _SIOC_WRITE)
-	    mixer.modअगरy_counter++;
-	चयन (cmd) अणु
-	    हाल OSS_GETVERSION:
-		वापस IOCTL_OUT(arg, SOUND_VERSION);
-	    हाल SOUND_MIXER_INFO:
-		अणु
+static int mixer_ioctl(struct file *file, u_int cmd, u_long arg)
+{
+	if (_SIOC_DIR(cmd) & _SIOC_WRITE)
+	    mixer.modify_counter++;
+	switch (cmd) {
+	    case OSS_GETVERSION:
+		return IOCTL_OUT(arg, SOUND_VERSION);
+	    case SOUND_MIXER_INFO:
+		{
 		    mixer_info info;
-		    स_रखो(&info, 0, माप(info));
-		    strscpy(info.id, dmasound.mach.name2, माप(info.id));
-		    strscpy(info.name, dmasound.mach.name2, माप(info.name));
-		    info.modअगरy_counter = mixer.modअगरy_counter;
-		    अगर (copy_to_user((व्योम __user *)arg, &info, माप(info)))
-			    वापस -EFAULT;
-		    वापस 0;
-		पूर्ण
-	पूर्ण
-	अगर (dmasound.mach.mixer_ioctl)
-	    वापस dmasound.mach.mixer_ioctl(cmd, arg);
-	वापस -EINVAL;
-पूर्ण
+		    memset(&info, 0, sizeof(info));
+		    strscpy(info.id, dmasound.mach.name2, sizeof(info.id));
+		    strscpy(info.name, dmasound.mach.name2, sizeof(info.name));
+		    info.modify_counter = mixer.modify_counter;
+		    if (copy_to_user((void __user *)arg, &info, sizeof(info)))
+			    return -EFAULT;
+		    return 0;
+		}
+	}
+	if (dmasound.mach.mixer_ioctl)
+	    return dmasound.mach.mixer_ioctl(cmd, arg);
+	return -EINVAL;
+}
 
-अटल दीर्घ mixer_unlocked_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	पूर्णांक ret;
+static long mixer_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
+{
+	int ret;
 
 	mutex_lock(&dmasound_core_mutex);
 	ret = mixer_ioctl(file, cmd, arg);
 	mutex_unlock(&dmasound_core_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations mixer_fops =
-अणु
+static const struct file_operations mixer_fops =
+{
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= mixer_unlocked_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= mixer_खोलो,
+	.open		= mixer_open,
 	.release	= mixer_release,
-पूर्ण;
+};
 
-अटल व्योम mixer_init(व्योम)
-अणु
-#अगर_अघोषित MODULE
-	पूर्णांक mixer_unit;
-#पूर्ण_अगर
-	mixer_unit = रेजिस्टर_sound_mixer(&mixer_fops, -1);
-	अगर (mixer_unit < 0)
-		वापस;
+static void mixer_init(void)
+{
+#ifndef MODULE
+	int mixer_unit;
+#endif
+	mixer_unit = register_sound_mixer(&mixer_fops, -1);
+	if (mixer_unit < 0)
+		return;
 
 	mixer.busy = 0;
 	dmasound.treble = 0;
 	dmasound.bass = 0;
-	अगर (dmasound.mach.mixer_init)
+	if (dmasound.mach.mixer_init)
 	    dmasound.mach.mixer_init();
-पूर्ण
+}
 
 
     /*
      *  Sound queue stuff, the heart of the driver
      */
 
-काष्ठा sound_queue dmasound_ग_लिखो_sq;
-अटल व्योम sq_reset_output(व्योम) ;
+struct sound_queue dmasound_write_sq;
+static void sq_reset_output(void) ;
 
-अटल पूर्णांक sq_allocate_buffers(काष्ठा sound_queue *sq, पूर्णांक num, पूर्णांक size)
-अणु
-	पूर्णांक i;
+static int sq_allocate_buffers(struct sound_queue *sq, int num, int size)
+{
+	int i;
 
-	अगर (sq->buffers)
-		वापस 0;
+	if (sq->buffers)
+		return 0;
 	sq->numBufs = num;
 	sq->bufSize = size;
-	sq->buffers = kदो_स्मृति_array (num, माप(अक्षर *), GFP_KERNEL);
-	अगर (!sq->buffers)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < num; i++) अणु
+	sq->buffers = kmalloc_array (num, sizeof(char *), GFP_KERNEL);
+	if (!sq->buffers)
+		return -ENOMEM;
+	for (i = 0; i < num; i++) {
 		sq->buffers[i] = dmasound.mach.dma_alloc(size, GFP_KERNEL);
-		अगर (!sq->buffers[i]) अणु
-			जबतक (i--)
-				dmasound.mach.dma_मुक्त(sq->buffers[i], size);
-			kमुक्त(sq->buffers);
-			sq->buffers = शून्य;
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!sq->buffers[i]) {
+			while (i--)
+				dmasound.mach.dma_free(sq->buffers[i], size);
+			kfree(sq->buffers);
+			sq->buffers = NULL;
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
 
-अटल व्योम sq_release_buffers(काष्ठा sound_queue *sq)
-अणु
-	पूर्णांक i;
+static void sq_release_buffers(struct sound_queue *sq)
+{
+	int i;
 
-	अगर (sq->buffers) अणु
-		क्रम (i = 0; i < sq->numBufs; i++)
-			dmasound.mach.dma_मुक्त(sq->buffers[i], sq->bufSize);
-		kमुक्त(sq->buffers);
-		sq->buffers = शून्य;
-	पूर्ण
-पूर्ण
+	if (sq->buffers) {
+		for (i = 0; i < sq->numBufs; i++)
+			dmasound.mach.dma_free(sq->buffers[i], sq->bufSize);
+		kfree(sq->buffers);
+		sq->buffers = NULL;
+	}
+}
 
 
-अटल पूर्णांक sq_setup(काष्ठा sound_queue *sq)
-अणु
-	पूर्णांक (*setup_func)(व्योम) = शून्य;
-	पूर्णांक hard_frame ;
+static int sq_setup(struct sound_queue *sq)
+{
+	int (*setup_func)(void) = NULL;
+	int hard_frame ;
 
-	अगर (sq->locked) अणु /* are we alपढ़ोy set? - and not changeable */
-#अगर_घोषित DEBUG_DMASOUND
-prपूर्णांकk("dmasound_core: tried to sq_setup a locked queue\n") ;
-#पूर्ण_अगर
-		वापस -EINVAL ;
-	पूर्ण
-	sq->locked = 1 ; /* करोn't think we have a race prob. here _check_ */
+	if (sq->locked) { /* are we already set? - and not changeable */
+#ifdef DEBUG_DMASOUND
+printk("dmasound_core: tried to sq_setup a locked queue\n") ;
+#endif
+		return -EINVAL ;
+	}
+	sq->locked = 1 ; /* don't think we have a race prob. here _check_ */
 
 	/* make sure that the parameters are set up
-	   This should have been करोne alपढ़ोy...
+	   This should have been done already...
 	*/
 
 	dmasound.mach.init();
 
 	/* OK.  If the user has set fragment parameters explicitly, then we
-	   should leave them alone... as दीर्घ as they are valid.
-	   Invalid user fragment params can occur अगर we allow the whole buffer
+	   should leave them alone... as long as they are valid.
+	   Invalid user fragment params can occur if we allow the whole buffer
 	   to be used when the user requests the fragments sizes (with no soft
 	   x-lation) and then the user subsequently sets a soft x-lation that
-	   requires increased पूर्णांकernal buffering.
+	   requires increased internal buffering.
 
-	   Othwerwise (अगर the user did not set them) OSS says that we should
+	   Othwerwise (if the user did not set them) OSS says that we should
 	   select frag params on the basis of 0.5 s output & 0.1 s input
-	   latency. (TODO.  For now we will copy in the शेषs.)
+	   latency. (TODO.  For now we will copy in the defaults.)
 	*/
 
-	अगर (sq->user_frags <= 0) अणु
+	if (sq->user_frags <= 0) {
 		sq->max_count = sq->numBufs ;
 		sq->max_active = sq->numBufs ;
 		sq->block_size = sq->bufSize;
@@ -493,458 +492,458 @@ prपूर्णांकk("dmasound_core: tried to sq_setup a locked queue\n")
 			(dmasound.soft.size * (dmasound.soft.stereo+1) ) ;
 		sq->user_frag_size /=
 			(dmasound.hard.size * (dmasound.hard.stereo+1) ) ;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* work out requested block size */
 		sq->block_size = sq->user_frag_size ;
 		sq->block_size *=
 			(dmasound.hard.size * (dmasound.hard.stereo+1) ) ;
 		sq->block_size /=
 			(dmasound.soft.size * (dmasound.soft.stereo+1) ) ;
-		/* the user wants to ग_लिखो frag-size chunks */
+		/* the user wants to write frag-size chunks */
 		sq->block_size *= dmasound.hard.speed ;
 		sq->block_size /= dmasound.soft.speed ;
-		/* this only works क्रम size values which are घातers of 2 */
+		/* this only works for size values which are powers of 2 */
 		hard_frame =
 			(dmasound.hard.size * (dmasound.hard.stereo+1))/8 ;
 		sq->block_size +=  (hard_frame - 1) ;
 		sq->block_size &= ~(hard_frame - 1) ; /* make sure we are aligned */
-		/* let's just check क्रम obvious mistakes */
-		अगर ( sq->block_size <= 0 || sq->block_size > sq->bufSize) अणु
-#अगर_घोषित DEBUG_DMASOUND
-prपूर्णांकk("dmasound_core: invalid frag size (user set %d)\n", sq->user_frag_size) ;
-#पूर्ण_अगर
+		/* let's just check for obvious mistakes */
+		if ( sq->block_size <= 0 || sq->block_size > sq->bufSize) {
+#ifdef DEBUG_DMASOUND
+printk("dmasound_core: invalid frag size (user set %d)\n", sq->user_frag_size) ;
+#endif
 			sq->block_size = sq->bufSize ;
-		पूर्ण
-		अगर ( sq->user_frags <= sq->numBufs ) अणु
+		}
+		if ( sq->user_frags <= sq->numBufs ) {
 			sq->max_count = sq->user_frags ;
-			/* अगर user has set max_active - then use it */
+			/* if user has set max_active - then use it */
 			sq->max_active = (sq->max_active <= sq->max_count) ?
 				sq->max_active : sq->max_count ;
-		पूर्ण अन्यथा अणु
-#अगर_घोषित DEBUG_DMASOUND
-prपूर्णांकk("dmasound_core: invalid frag count (user set %d)\n", sq->user_frags) ;
-#पूर्ण_अगर
+		} else {
+#ifdef DEBUG_DMASOUND
+printk("dmasound_core: invalid frag count (user set %d)\n", sq->user_frags) ;
+#endif
 			sq->max_count =
 			sq->max_active = sq->numBufs ;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sq->front = sq->count = sq->rear_size = 0;
 	sq->syncing = 0;
 	sq->active = 0;
 
-	अगर (sq == &ग_लिखो_sq) अणु
+	if (sq == &write_sq) {
 	    sq->rear = -1;
-	    setup_func = dmasound.mach.ग_लिखो_sq_setup;
-	पूर्ण
-	अगर (setup_func)
-	    वापस setup_func();
-	वापस 0 ;
-पूर्ण
+	    setup_func = dmasound.mach.write_sq_setup;
+	}
+	if (setup_func)
+	    return setup_func();
+	return 0 ;
+}
 
-अटल अंतरभूत व्योम sq_play(व्योम)
-अणु
+static inline void sq_play(void)
+{
 	dmasound.mach.play();
-पूर्ण
+}
 
-अटल sमाप_प्रकार sq_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *src, माप_प्रकार uLeft,
+static ssize_t sq_write(struct file *file, const char __user *src, size_t uLeft,
 			loff_t *ppos)
-अणु
-	sमाप_प्रकार uWritten = 0;
-	u_अक्षर *dest;
-	sमाप_प्रकार uUsed = 0, bUsed, bLeft;
-	अचिन्हित दीर्घ flags ;
+{
+	ssize_t uWritten = 0;
+	u_char *dest;
+	ssize_t uUsed = 0, bUsed, bLeft;
+	unsigned long flags ;
 
 	/* ++TeSche: Is something like this necessary?
-	 * Hey, that's an honest question! Or करोes any other part of the
-	 * fileप्रणाली alपढ़ोy checks this situation? I really करोn't know.
+	 * Hey, that's an honest question! Or does any other part of the
+	 * filesystem already checks this situation? I really don't know.
 	 */
-	अगर (uLeft == 0)
-		वापस 0;
+	if (uLeft == 0)
+		return 0;
 
 	/* implement any changes we have made to the soft/hard params.
-	   this is not satisfactory really, all we have करोne up to now is to
+	   this is not satisfactory really, all we have done up to now is to
 	   say what we would like - there hasn't been any real checking of capability
 	*/
 
-	अगर (shared_resources_initialised == 0) अणु
+	if (shared_resources_initialised == 0) {
 		dmasound.mach.init() ;
 		shared_resources_initialised = 1 ;
-	पूर्ण
+	}
 
-	/* set up the sq अगर it is not alपढ़ोy करोne. This may seem a dumb place
-	   to करो it - but it is what OSS requires.  It means that ग_लिखो() can
-	   वापस memory allocation errors.  To aव्योम this possibility use the
+	/* set up the sq if it is not already done. This may seem a dumb place
+	   to do it - but it is what OSS requires.  It means that write() can
+	   return memory allocation errors.  To avoid this possibility use the
 	   GETBLKSIZE or GETOSPACE ioctls (after you've fiddled with all the
-	   params you want to change) - these ioctls also क्रमce the setup.
+	   params you want to change) - these ioctls also force the setup.
 	*/
 
-	अगर (ग_लिखो_sq.locked == 0) अणु
-		अगर ((uWritten = sq_setup(&ग_लिखो_sq)) < 0) वापस uWritten ;
+	if (write_sq.locked == 0) {
+		if ((uWritten = sq_setup(&write_sq)) < 0) return uWritten ;
 		uWritten = 0 ;
-	पूर्ण
+	}
 
 /* FIXME: I think that this may be the wrong behaviour when we get strapped
-	क्रम समय and the cpu is बंद to being (or actually) behind in sending data.
-	- because we've lost the समय that the N samples, alपढ़ोy in the buffer,
+	for time and the cpu is close to being (or actually) behind in sending data.
+	- because we've lost the time that the N samples, already in the buffer,
 	would have given us to get here with the next lot from the user.
 */
-	/* The पूर्णांकerrupt करोesn't start to play the last, incomplete frame.
-	 * Thus we can append to it without disabling the पूर्णांकerrupts! (Note
-	 * also that ग_लिखो_sq.rear isn't affected by the पूर्णांकerrupt.)
+	/* The interrupt doesn't start to play the last, incomplete frame.
+	 * Thus we can append to it without disabling the interrupts! (Note
+	 * also that write_sq.rear isn't affected by the interrupt.)
 	 */
 
-	/* as of 1.6 this behaviour changes अगर SNDCTL_DSP_POST has been issued:
+	/* as of 1.6 this behaviour changes if SNDCTL_DSP_POST has been issued:
 	   this will mimic the behaviour of syncing and allow the sq_play() to
 	   queue a partial fragment.  Since sq_play() may/will be called from
 	   the IRQ handler - at least on Pmac we have to deal with it.
-	   The strategy - possibly not optimum - is to समाप्त _POST status अगर we
+	   The strategy - possibly not optimum - is to kill _POST status if we
 	   get here.  This seems, at least, reasonable - in the sense that POST
-	   is supposed to indicate that we might not ग_लिखो beक्रमe the queue
-	   is drained - and अगर we get here in समय then it करोes not apply.
+	   is supposed to indicate that we might not write before the queue
+	   is drained - and if we get here in time then it does not apply.
 	*/
 
 	spin_lock_irqsave(&dmasound.lock, flags);
-	ग_लिखो_sq.syncing &= ~2 ; /* take out POST status */
+	write_sq.syncing &= ~2 ; /* take out POST status */
 	spin_unlock_irqrestore(&dmasound.lock, flags);
 
-	अगर (ग_लिखो_sq.count > 0 &&
-	    (bLeft = ग_लिखो_sq.block_size-ग_लिखो_sq.rear_size) > 0) अणु
-		dest = ग_लिखो_sq.buffers[ग_लिखो_sq.rear];
-		bUsed = ग_लिखो_sq.rear_size;
-		uUsed = sound_copy_translate(dmasound.trans_ग_लिखो, src, uLeft,
+	if (write_sq.count > 0 &&
+	    (bLeft = write_sq.block_size-write_sq.rear_size) > 0) {
+		dest = write_sq.buffers[write_sq.rear];
+		bUsed = write_sq.rear_size;
+		uUsed = sound_copy_translate(dmasound.trans_write, src, uLeft,
 					     dest, &bUsed, bLeft);
-		अगर (uUsed <= 0)
-			वापस uUsed;
+		if (uUsed <= 0)
+			return uUsed;
 		src += uUsed;
 		uWritten += uUsed;
 		uLeft = (uUsed <= uLeft) ? (uLeft - uUsed) : 0 ; /* paranoia */
-		ग_लिखो_sq.rear_size = bUsed;
-	पूर्ण
+		write_sq.rear_size = bUsed;
+	}
 
-	जबतक (uLeft) अणु
-		DEFINE_WAIT(रुको);
+	while (uLeft) {
+		DEFINE_WAIT(wait);
 
-		जबतक (ग_लिखो_sq.count >= ग_लिखो_sq.max_active) अणु
-			prepare_to_रुको(&ग_लिखो_sq.action_queue, &रुको, TASK_INTERRUPTIBLE);
+		while (write_sq.count >= write_sq.max_active) {
+			prepare_to_wait(&write_sq.action_queue, &wait, TASK_INTERRUPTIBLE);
 			sq_play();
-			अगर (ग_लिखो_sq.non_blocking) अणु
-				finish_रुको(&ग_लिखो_sq.action_queue, &रुको);
-				वापस uWritten > 0 ? uWritten : -EAGAIN;
-			पूर्ण
-			अगर (ग_लिखो_sq.count < ग_लिखो_sq.max_active)
-				अवरोध;
+			if (write_sq.non_blocking) {
+				finish_wait(&write_sq.action_queue, &wait);
+				return uWritten > 0 ? uWritten : -EAGAIN;
+			}
+			if (write_sq.count < write_sq.max_active)
+				break;
 
-			schedule_समयout(HZ);
-			अगर (संकेत_pending(current)) अणु
-				finish_रुको(&ग_लिखो_sq.action_queue, &रुको);
-				वापस uWritten > 0 ? uWritten : -EINTR;
-			पूर्ण
-		पूर्ण
+			schedule_timeout(HZ);
+			if (signal_pending(current)) {
+				finish_wait(&write_sq.action_queue, &wait);
+				return uWritten > 0 ? uWritten : -EINTR;
+			}
+		}
 
-		finish_रुको(&ग_लिखो_sq.action_queue, &रुको);
+		finish_wait(&write_sq.action_queue, &wait);
 
-		/* Here, we can aव्योम disabling the पूर्णांकerrupt by first
+		/* Here, we can avoid disabling the interrupt by first
 		 * copying and translating the data, and then updating
-		 * the ग_लिखो_sq variables. Until this is करोne, the पूर्णांकerrupt
+		 * the write_sq variables. Until this is done, the interrupt
 		 * won't see the new frame and we can work on it
 		 * undisturbed.
 		 */
 
-		dest = ग_लिखो_sq.buffers[(ग_लिखो_sq.rear+1) % ग_लिखो_sq.max_count];
+		dest = write_sq.buffers[(write_sq.rear+1) % write_sq.max_count];
 		bUsed = 0;
-		bLeft = ग_लिखो_sq.block_size;
-		uUsed = sound_copy_translate(dmasound.trans_ग_लिखो, src, uLeft,
+		bLeft = write_sq.block_size;
+		uUsed = sound_copy_translate(dmasound.trans_write, src, uLeft,
 					     dest, &bUsed, bLeft);
-		अगर (uUsed <= 0)
-			अवरोध;
+		if (uUsed <= 0)
+			break;
 		src += uUsed;
 		uWritten += uUsed;
 		uLeft = (uUsed <= uLeft) ? (uLeft - uUsed) : 0 ; /* paranoia */
-		अगर (bUsed) अणु
-			ग_लिखो_sq.rear = (ग_लिखो_sq.rear+1) % ग_लिखो_sq.max_count;
-			ग_लिखो_sq.rear_size = bUsed;
-			ग_लिखो_sq.count++;
-		पूर्ण
-	पूर्ण /* uUsed may have been 0 */
+		if (bUsed) {
+			write_sq.rear = (write_sq.rear+1) % write_sq.max_count;
+			write_sq.rear_size = bUsed;
+			write_sq.count++;
+		}
+	} /* uUsed may have been 0 */
 
 	sq_play();
 
-	वापस uUsed < 0? uUsed: uWritten;
-पूर्ण
+	return uUsed < 0? uUsed: uWritten;
+}
 
-अटल __poll_t sq_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
-अणु
+static __poll_t sq_poll(struct file *file, struct poll_table_struct *wait)
+{
 	__poll_t mask = 0;
-	पूर्णांक retVal;
+	int retVal;
 	
-	अगर (ग_लिखो_sq.locked == 0) अणु
-		अगर ((retVal = sq_setup(&ग_लिखो_sq)) < 0)
-			वापस retVal;
-		वापस 0;
-	पूर्ण
-	अगर (file->f_mode & FMODE_WRITE )
-		poll_रुको(file, &ग_लिखो_sq.action_queue, रुको);
-	अगर (file->f_mode & FMODE_WRITE)
-		अगर (ग_लिखो_sq.count < ग_लिखो_sq.max_active || ग_लिखो_sq.block_size - ग_लिखो_sq.rear_size > 0)
+	if (write_sq.locked == 0) {
+		if ((retVal = sq_setup(&write_sq)) < 0)
+			return retVal;
+		return 0;
+	}
+	if (file->f_mode & FMODE_WRITE )
+		poll_wait(file, &write_sq.action_queue, wait);
+	if (file->f_mode & FMODE_WRITE)
+		if (write_sq.count < write_sq.max_active || write_sq.block_size - write_sq.rear_size > 0)
 			mask |= EPOLLOUT | EPOLLWRNORM;
-	वापस mask;
+	return mask;
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sq_init_रुकोqueue(काष्ठा sound_queue *sq)
-अणु
-	init_रुकोqueue_head(&sq->action_queue);
-	init_रुकोqueue_head(&sq->खोलो_queue);
-	init_रुकोqueue_head(&sq->sync_queue);
+static inline void sq_init_waitqueue(struct sound_queue *sq)
+{
+	init_waitqueue_head(&sq->action_queue);
+	init_waitqueue_head(&sq->open_queue);
+	init_waitqueue_head(&sq->sync_queue);
 	sq->busy = 0;
-पूर्ण
+}
 
-#अगर 0 /* blocking खोलो() */
-अटल अंतरभूत व्योम sq_wake_up(काष्ठा sound_queue *sq, काष्ठा file *file,
-			      भ_शेषe_t mode)
-अणु
-	अगर (file->f_mode & mode) अणु
+#if 0 /* blocking open() */
+static inline void sq_wake_up(struct sound_queue *sq, struct file *file,
+			      fmode_t mode)
+{
+	if (file->f_mode & mode) {
 		sq->busy = 0; /* CHECK: IS THIS OK??? */
-		WAKE_UP(sq->खोलो_queue);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		WAKE_UP(sq->open_queue);
+	}
+}
+#endif
 
-अटल पूर्णांक sq_खोलो2(काष्ठा sound_queue *sq, काष्ठा file *file, भ_शेषe_t mode,
-		    पूर्णांक numbufs, पूर्णांक bufsize)
-अणु
-	पूर्णांक rc = 0;
+static int sq_open2(struct sound_queue *sq, struct file *file, fmode_t mode,
+		    int numbufs, int bufsize)
+{
+	int rc = 0;
 
-	अगर (file->f_mode & mode) अणु
-		अगर (sq->busy) अणु
-#अगर 0 /* blocking खोलो() */
+	if (file->f_mode & mode) {
+		if (sq->busy) {
+#if 0 /* blocking open() */
 			rc = -EBUSY;
-			अगर (file->f_flags & O_NONBLOCK)
-				वापस rc;
+			if (file->f_flags & O_NONBLOCK)
+				return rc;
 			rc = -EINTR;
-			अगर (रुको_event_पूर्णांकerruptible(sq->खोलो_queue, !sq->busy))
-				वापस rc;
+			if (wait_event_interruptible(sq->open_queue, !sq->busy))
+				return rc;
 			rc = 0;
-#अन्यथा
-			/* OSS manual says we will वापस EBUSY regardless
+#else
+			/* OSS manual says we will return EBUSY regardless
 			   of O_NOBLOCK.
 			*/
-			वापस -EBUSY ;
-#पूर्ण_अगर
-		पूर्ण
+			return -EBUSY ;
+#endif
+		}
 		sq->busy = 1; /* Let's play spot-the-race-condition */
 
-		/* allocate the शेष number & size of buffers.
-		   (i.e. specअगरied in _setup() or as module params)
+		/* allocate the default number & size of buffers.
+		   (i.e. specified in _setup() or as module params)
 		   can't be changed at the moment - but _could_ be perhaps
 		   in the setfragments ioctl.
 		*/
-		अगर (( rc = sq_allocate_buffers(sq, numbufs, bufsize))) अणु
-#अगर 0 /* blocking खोलो() */
+		if (( rc = sq_allocate_buffers(sq, numbufs, bufsize))) {
+#if 0 /* blocking open() */
 			sq_wake_up(sq, file, mode);
-#अन्यथा
+#else
 			sq->busy = 0 ;
-#पूर्ण_अगर
-			वापस rc;
-		पूर्ण
+#endif
+			return rc;
+		}
 
 		sq->non_blocking = file->f_flags & O_NONBLOCK;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-#घोषणा ग_लिखो_sq_init_रुकोqueue()	sq_init_रुकोqueue(&ग_लिखो_sq)
-#अगर 0 /* blocking खोलो() */
-#घोषणा ग_लिखो_sq_wake_up(file)		sq_wake_up(&ग_लिखो_sq, file, FMODE_WRITE)
-#पूर्ण_अगर
-#घोषणा ग_लिखो_sq_release_buffers()	sq_release_buffers(&ग_लिखो_sq)
-#घोषणा ग_लिखो_sq_खोलो(file)	\
-	sq_खोलो2(&ग_लिखो_sq, file, FMODE_WRITE, numWriteBufs, ग_लिखोBufSize )
+#define write_sq_init_waitqueue()	sq_init_waitqueue(&write_sq)
+#if 0 /* blocking open() */
+#define write_sq_wake_up(file)		sq_wake_up(&write_sq, file, FMODE_WRITE)
+#endif
+#define write_sq_release_buffers()	sq_release_buffers(&write_sq)
+#define write_sq_open(file)	\
+	sq_open2(&write_sq, file, FMODE_WRITE, numWriteBufs, writeBufSize )
 
-अटल पूर्णांक sq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक rc;
+static int sq_open(struct inode *inode, struct file *file)
+{
+	int rc;
 
 	mutex_lock(&dmasound_core_mutex);
-	अगर (!try_module_get(dmasound.mach.owner)) अणु
+	if (!try_module_get(dmasound.mach.owner)) {
 		mutex_unlock(&dmasound_core_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	rc = ग_लिखो_sq_खोलो(file); /* checks the f_mode */
-	अगर (rc)
-		जाओ out;
-	अगर (file->f_mode & FMODE_READ) अणु
-		/* TODO: अगर O_RDWR, release any resources grabbed by ग_लिखो part */
-		rc = -ENXIO ; /* I think this is what is required by खोलो(2) */
-		जाओ out;
-	पूर्ण
+	rc = write_sq_open(file); /* checks the f_mode */
+	if (rc)
+		goto out;
+	if (file->f_mode & FMODE_READ) {
+		/* TODO: if O_RDWR, release any resources grabbed by write part */
+		rc = -ENXIO ; /* I think this is what is required by open(2) */
+		goto out;
+	}
 
-	अगर (dmasound.mach.sq_खोलो)
-	    dmasound.mach.sq_खोलो(file->f_mode);
+	if (dmasound.mach.sq_open)
+	    dmasound.mach.sq_open(file->f_mode);
 
-	/* CHECK whether this is sensible - in the हाल that dsp0 could be खोलोed
-	  O_RDONLY and dsp1 could be खोलोed O_WRONLY
+	/* CHECK whether this is sensible - in the case that dsp0 could be opened
+	  O_RDONLY and dsp1 could be opened O_WRONLY
 	*/
 
 	dmasound.minDev = iminor(inode) & 0x0f;
 
 	/* OK. - we should make some attempt at consistency. At least the H'ware
 	   options should be set with a valid mode.  We will make it that the LL
-	   driver must supply शेषs क्रम hard & soft params.
+	   driver must supply defaults for hard & soft params.
 	*/
 
-	अगर (shared_resource_owner == 0) अणु
-		/* you can make this AFMT_U8/mono/8K अगर you want to mimic old
-		   OSS behaviour - जबतक we still have soft translations ;-) */
-		dmasound.soft = dmasound.mach.शेष_soft ;
-		dmasound.dsp = dmasound.mach.शेष_soft ;
-		dmasound.hard = dmasound.mach.शेष_hard ;
-	पूर्ण
+	if (shared_resource_owner == 0) {
+		/* you can make this AFMT_U8/mono/8K if you want to mimic old
+		   OSS behaviour - while we still have soft translations ;-) */
+		dmasound.soft = dmasound.mach.default_soft ;
+		dmasound.dsp = dmasound.mach.default_soft ;
+		dmasound.hard = dmasound.mach.default_hard ;
+	}
 
-#अगर_अघोषित DMASOUND_STRICT_OSS_COMPLIANCE
-	/* none of the current LL drivers can actually करो this "native" at the moment
-	   OSS करोes not really require us to supply /dev/audio अगर we can't करो it.
+#ifndef DMASOUND_STRICT_OSS_COMPLIANCE
+	/* none of the current LL drivers can actually do this "native" at the moment
+	   OSS does not really require us to supply /dev/audio if we can't do it.
 	*/
-	अगर (dmasound.minDev == SND_DEV_AUDIO) अणु
+	if (dmasound.minDev == SND_DEV_AUDIO) {
 		sound_set_speed(8000);
 		sound_set_stereo(0);
-		sound_set_क्रमmat(AFMT_MU_LAW);
-	पूर्ण
-#पूर्ण_अगर
+		sound_set_format(AFMT_MU_LAW);
+	}
+#endif
 	mutex_unlock(&dmasound_core_mutex);
-	वापस 0;
+	return 0;
  out:
 	module_put(dmasound.mach.owner);
 	mutex_unlock(&dmasound_core_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम sq_reset_output(व्योम)
-अणु
+static void sq_reset_output(void)
+{
 	sound_silence(); /* this _must_ stop DMA, we might be about to lose the buffers */
-	ग_लिखो_sq.active = 0;
-	ग_लिखो_sq.count = 0;
-	ग_लिखो_sq.rear_size = 0;
-	/* ग_लिखो_sq.front = (ग_लिखो_sq.rear+1) % ग_लिखो_sq.max_count;*/
-	ग_लिखो_sq.front = 0 ;
-	ग_लिखो_sq.rear = -1 ; /* same as क्रम set-up */
+	write_sq.active = 0;
+	write_sq.count = 0;
+	write_sq.rear_size = 0;
+	/* write_sq.front = (write_sq.rear+1) % write_sq.max_count;*/
+	write_sq.front = 0 ;
+	write_sq.rear = -1 ; /* same as for set-up */
 
 	/* OK - we can unlock the parameters and fragment settings */
-	ग_लिखो_sq.locked = 0 ;
-	ग_लिखो_sq.user_frags = 0 ;
-	ग_लिखो_sq.user_frag_size = 0 ;
-पूर्ण
+	write_sq.locked = 0 ;
+	write_sq.user_frags = 0 ;
+	write_sq.user_frag_size = 0 ;
+}
 
-अटल व्योम sq_reset(व्योम)
-अणु
+static void sq_reset(void)
+{
 	sq_reset_output() ;
 	/* we could consider resetting the shared_resources_owner here... but I
-	   think it is probably still rather non-obvious to application ग_लिखोr
+	   think it is probably still rather non-obvious to application writer
 	*/
 
-	/* we release everything अन्यथा though */
+	/* we release everything else though */
 	shared_resources_initialised = 0 ;
-पूर्ण
+}
 
-अटल पूर्णांक sq_fsync(व्योम)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक समयout = 5;
+static int sq_fsync(void)
+{
+	int rc = 0;
+	int timeout = 5;
 
-	ग_लिखो_sq.syncing |= 1;
-	sq_play();	/* there may be an incomplete frame रुकोing */
+	write_sq.syncing |= 1;
+	sq_play();	/* there may be an incomplete frame waiting */
 
-	जबतक (ग_लिखो_sq.active) अणु
-		रुको_event_पूर्णांकerruptible_समयout(ग_लिखो_sq.sync_queue,
-						 !ग_लिखो_sq.active, HZ);
-		अगर (संकेत_pending(current)) अणु
-			/* While रुकोing क्रम audio output to drain, an
-			 * पूर्णांकerrupt occurred.  Stop audio output immediately
+	while (write_sq.active) {
+		wait_event_interruptible_timeout(write_sq.sync_queue,
+						 !write_sq.active, HZ);
+		if (signal_pending(current)) {
+			/* While waiting for audio output to drain, an
+			 * interrupt occurred.  Stop audio output immediately
 			 * and clear the queue. */
 			sq_reset_output();
 			rc = -EINTR;
-			अवरोध;
-		पूर्ण
-		अगर (!--समयout) अणु
-			prपूर्णांकk(KERN_WARNING "dmasound: Timeout draining output\n");
+			break;
+		}
+		if (!--timeout) {
+			printk(KERN_WARNING "dmasound: Timeout draining output\n");
 			sq_reset_output();
 			rc = -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* flag no sync regardless of whether we had a DSP_POST or not */
-	ग_लिखो_sq.syncing = 0 ;
-	वापस rc;
-पूर्ण
+	write_sq.syncing = 0 ;
+	return rc;
+}
 
-अटल पूर्णांक sq_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक rc = 0;
+static int sq_release(struct inode *inode, struct file *file)
+{
+	int rc = 0;
 
 	mutex_lock(&dmasound_core_mutex);
 
-	अगर (file->f_mode & FMODE_WRITE) अणु
-		अगर (ग_लिखो_sq.busy)
+	if (file->f_mode & FMODE_WRITE) {
+		if (write_sq.busy)
 			rc = sq_fsync();
 
 		sq_reset_output() ; /* make sure dma is stopped and all is quiet */
-		ग_लिखो_sq_release_buffers();
-		ग_लिखो_sq.busy = 0;
-	पूर्ण
+		write_sq_release_buffers();
+		write_sq.busy = 0;
+	}
 
-	अगर (file->f_mode & shared_resource_owner) अणु /* it's us that has them */
+	if (file->f_mode & shared_resource_owner) { /* it's us that has them */
 		shared_resource_owner = 0 ;
 		shared_resources_initialised = 0 ;
-		dmasound.hard = dmasound.mach.शेष_hard ;
-	पूर्ण
+		dmasound.hard = dmasound.mach.default_hard ;
+	}
 
 	module_put(dmasound.mach.owner);
 
-#अगर 0 /* blocking खोलो() */
-	/* Wake up a process रुकोing क्रम the queue being released.
-	 * Note: There may be several processes रुकोing क्रम a call
-	 * to खोलो() वापसing. */
+#if 0 /* blocking open() */
+	/* Wake up a process waiting for the queue being released.
+	 * Note: There may be several processes waiting for a call
+	 * to open() returning. */
 
-	/* Iain: hmm I करोn't understand this next comment ... */
+	/* Iain: hmm I don't understand this next comment ... */
 	/* There is probably a DOS atack here. They change the mode flag. */
 	/* XXX add check here,*/
-	पढ़ो_sq_wake_up(file); /* checks f_mode */
-	ग_लिखो_sq_wake_up(file); /* checks f_mode */
-#पूर्ण_अगर /* blocking खोलो() */
+	read_sq_wake_up(file); /* checks f_mode */
+	write_sq_wake_up(file); /* checks f_mode */
+#endif /* blocking open() */
 
 	mutex_unlock(&dmasound_core_mutex);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* here we see अगर we have a right to modअगरy क्रमmat, channels, size and so on
-   अगर no-one अन्यथा has claimed it alपढ़ोy then we करो...
+/* here we see if we have a right to modify format, channels, size and so on
+   if no-one else has claimed it already then we do...
 
    TODO: We might change this to mask O_RDWR such that only one or the other channel
-   is the owner - अगर we have problems.
+   is the owner - if we have problems.
 */
 
-अटल पूर्णांक shared_resources_are_mine(भ_शेषe_t md)
-अणु
-	अगर (shared_resource_owner)
-		वापस (shared_resource_owner & md) != 0;
-	अन्यथा अणु
+static int shared_resources_are_mine(fmode_t md)
+{
+	if (shared_resource_owner)
+		return (shared_resource_owner & md) != 0;
+	else {
 		shared_resource_owner = md ;
-		वापस 1 ;
-	पूर्ण
-पूर्ण
+		return 1 ;
+	}
+}
 
-/* अगर either queue is locked we must deny the right to change shared params
+/* if either queue is locked we must deny the right to change shared params
 */
 
-अटल पूर्णांक queues_are_quiescent(व्योम)
-अणु
-	अगर (ग_लिखो_sq.locked)
-		वापस 0 ;
-	वापस 1 ;
-पूर्ण
+static int queues_are_quiescent(void)
+{
+	if (write_sq.locked)
+		return 0 ;
+	return 1 ;
+}
 
 /* check and set a queue's fragments per user's wishes...
    we will check against the pre-defined literals and the actual sizes.
@@ -952,568 +951,568 @@ prपूर्णांकk("dmasound_core: invalid frag count (user set %d)\n",
    buffer requirements *after* this call - OSS says "call setfrags first"
 */
 
-/* It is possible to replace all the -EINVAL वापसs with an override that
-   just माला_दो the allowable value in.  This may be what many OSS apps require
+/* It is possible to replace all the -EINVAL returns with an override that
+   just puts the allowable value in.  This may be what many OSS apps require
 */
 
-अटल पूर्णांक set_queue_frags(काष्ठा sound_queue *sq, पूर्णांक bufs, पूर्णांक size)
-अणु
-	अगर (sq->locked) अणु
-#अगर_घोषित DEBUG_DMASOUND
-prपूर्णांकk("dmasound_core: tried to set_queue_frags on a locked queue\n") ;
-#पूर्ण_अगर
-		वापस -EINVAL ;
-	पूर्ण
+static int set_queue_frags(struct sound_queue *sq, int bufs, int size)
+{
+	if (sq->locked) {
+#ifdef DEBUG_DMASOUND
+printk("dmasound_core: tried to set_queue_frags on a locked queue\n") ;
+#endif
+		return -EINVAL ;
+	}
 
-	अगर ((size < MIN_FRAG_SIZE) || (size > MAX_FRAG_SIZE))
-		वापस -EINVAL ;
+	if ((size < MIN_FRAG_SIZE) || (size > MAX_FRAG_SIZE))
+		return -EINVAL ;
 	size = (1<<size) ; /* now in bytes */
-	अगर (size > sq->bufSize)
-		वापस -EINVAL ; /* this might still not work */
+	if (size > sq->bufSize)
+		return -EINVAL ; /* this might still not work */
 
-	अगर (bufs <= 0)
-		वापस -EINVAL ;
-	अगर (bufs > sq->numBufs) /* the user is allowed say "don't care" with 0x7fff */
+	if (bufs <= 0)
+		return -EINVAL ;
+	if (bufs > sq->numBufs) /* the user is allowed say "don't care" with 0x7fff */
 		bufs = sq->numBufs ;
 
-	/* there is, currently, no way to specअगरy max_active separately
+	/* there is, currently, no way to specify max_active separately
 	   from max_count.  This could be a LL driver issue - I guess
-	   अगर there is a requirement क्रम these values to be dअगरferent then
+	   if there is a requirement for these values to be different then
 	  we will have to pass that info. up to this level.
 	*/
 	sq->user_frags =
 	sq->max_active = bufs ;
 	sq->user_frag_size = size ;
 
-	वापस 0 ;
-पूर्ण
+	return 0 ;
+}
 
-अटल पूर्णांक sq_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	पूर्णांक val, result;
-	u_दीर्घ fmt;
-	पूर्णांक data;
-	पूर्णांक size, nbufs;
+static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
+{
+	int val, result;
+	u_long fmt;
+	int data;
+	int size, nbufs;
 	audio_buf_info info;
 
-	चयन (cmd) अणु
-	हाल SNDCTL_DSP_RESET:
+	switch (cmd) {
+	case SNDCTL_DSP_RESET:
 		sq_reset();
-		वापस 0;
-		अवरोध ;
-	हाल SNDCTL_DSP_GETFMTS:
+		return 0;
+		break ;
+	case SNDCTL_DSP_GETFMTS:
 		fmt = dmasound.mach.hardware_afmts ; /* this is what OSS says.. */
-		वापस IOCTL_OUT(arg, fmt);
-		अवरोध ;
-	हाल SNDCTL_DSP_GETBLKSIZE:
+		return IOCTL_OUT(arg, fmt);
+		break ;
+	case SNDCTL_DSP_GETBLKSIZE:
 		/* this should tell the caller about bytes that the app can
-		   पढ़ो/ग_लिखो - the app करोesn't care about our पूर्णांकernal buffers.
-		   We क्रमce sq_setup() here as per OSS 1.1 (which should
+		   read/write - the app doesn't care about our internal buffers.
+		   We force sq_setup() here as per OSS 1.1 (which should
 		   compute the values necessary).
-		   Since there is no mechanism to specअगरy पढ़ो/ग_लिखो separately, क्रम
-		   fds खोलोed O_RDWR, the ग_लिखो_sq values will, arbitrarily, overग_लिखो
-		   the पढ़ो_sq ones.
+		   Since there is no mechanism to specify read/write separately, for
+		   fds opened O_RDWR, the write_sq values will, arbitrarily, overwrite
+		   the read_sq ones.
 		*/
 		size = 0 ;
-		अगर (file->f_mode & FMODE_WRITE) अणु
-			अगर ( !ग_लिखो_sq.locked )
-				sq_setup(&ग_लिखो_sq) ;
-			size = ग_लिखो_sq.user_frag_size ;
-		पूर्ण
-		वापस IOCTL_OUT(arg, size);
-		अवरोध ;
-	हाल SNDCTL_DSP_POST:
-		/* all we are going to करो is to tell the LL that any
-		   partial frags can be queued क्रम output.
+		if (file->f_mode & FMODE_WRITE) {
+			if ( !write_sq.locked )
+				sq_setup(&write_sq) ;
+			size = write_sq.user_frag_size ;
+		}
+		return IOCTL_OUT(arg, size);
+		break ;
+	case SNDCTL_DSP_POST:
+		/* all we are going to do is to tell the LL that any
+		   partial frags can be queued for output.
 		   The LL will have to clear this flag when last output
 		   is queued.
 		*/
-		ग_लिखो_sq.syncing |= 0x2 ;
+		write_sq.syncing |= 0x2 ;
 		sq_play() ;
-		वापस 0 ;
-	हाल SNDCTL_DSP_SYNC:
+		return 0 ;
+	case SNDCTL_DSP_SYNC:
 		/* This call, effectively, has the same behaviour as SNDCTL_DSP_RESET
-		   except that it रुकोs क्रम output to finish beक्रमe resetting
-		   everything - पढ़ो, however, is समाप्तed immediately.
+		   except that it waits for output to finish before resetting
+		   everything - read, however, is killed immediately.
 		*/
 		result = 0 ;
-		अगर (file->f_mode & FMODE_WRITE) अणु
+		if (file->f_mode & FMODE_WRITE) {
 			result = sq_fsync();
 			sq_reset_output() ;
-		पूर्ण
-		/* अगर we are the shared resource owner then release them */
-		अगर (file->f_mode & shared_resource_owner)
+		}
+		/* if we are the shared resource owner then release them */
+		if (file->f_mode & shared_resource_owner)
 			shared_resources_initialised = 0 ;
-		वापस result ;
-		अवरोध ;
-	हाल SOUND_PCM_READ_RATE:
-		वापस IOCTL_OUT(arg, dmasound.soft.speed);
-	हाल SNDCTL_DSP_SPEED:
+		return result ;
+		break ;
+	case SOUND_PCM_READ_RATE:
+		return IOCTL_OUT(arg, dmasound.soft.speed);
+	case SNDCTL_DSP_SPEED:
 		/* changing this on the fly will have weird effects on the sound.
-		   Where there are rate conversions implemented in soft क्रमm - it
+		   Where there are rate conversions implemented in soft form - it
 		   will cause the _ctx_xxx() functions to be substituted.
-		   However, there करोesn't appear to be any reason to dis-allow it from
+		   However, there doesn't appear to be any reason to dis-allow it from
 		   a driver pov.
 		*/
-		अगर (shared_resources_are_mine(file->f_mode)) अणु
+		if (shared_resources_are_mine(file->f_mode)) {
 			IOCTL_IN(arg, data);
 			data = sound_set_speed(data) ;
 			shared_resources_initialised = 0 ;
-			वापस IOCTL_OUT(arg, data);
-		पूर्ण अन्यथा
-			वापस -EINVAL ;
-		अवरोध ;
+			return IOCTL_OUT(arg, data);
+		} else
+			return -EINVAL ;
+		break ;
 	/* OSS says these next 4 actions are undefined when the device is
-	   busy/active - we will just वापस -EINVAL.
+	   busy/active - we will just return -EINVAL.
 	   To be allowed to change one - (a) you have to own the right
 	    (b) the queue(s) must be quiescent
 	*/
-	हाल SNDCTL_DSP_STEREO:
-		अगर (shared_resources_are_mine(file->f_mode) &&
-		    queues_are_quiescent()) अणु
+	case SNDCTL_DSP_STEREO:
+		if (shared_resources_are_mine(file->f_mode) &&
+		    queues_are_quiescent()) {
 			IOCTL_IN(arg, data);
 			shared_resources_initialised = 0 ;
-			वापस IOCTL_OUT(arg, sound_set_stereo(data));
-		पूर्ण अन्यथा
-			वापस -EINVAL ;
-		अवरोध ;
-	हाल SOUND_PCM_WRITE_CHANNELS:
-		अगर (shared_resources_are_mine(file->f_mode) &&
-		    queues_are_quiescent()) अणु
+			return IOCTL_OUT(arg, sound_set_stereo(data));
+		} else
+			return -EINVAL ;
+		break ;
+	case SOUND_PCM_WRITE_CHANNELS:
+		if (shared_resources_are_mine(file->f_mode) &&
+		    queues_are_quiescent()) {
 			IOCTL_IN(arg, data);
-			/* the user might ask क्रम 20 channels, we will वापस 1 or 2 */
+			/* the user might ask for 20 channels, we will return 1 or 2 */
 			shared_resources_initialised = 0 ;
-			वापस IOCTL_OUT(arg, sound_set_stereo(data-1)+1);
-		पूर्ण अन्यथा
-			वापस -EINVAL ;
-		अवरोध ;
-	हाल SNDCTL_DSP_SETFMT:
-		अगर (shared_resources_are_mine(file->f_mode) &&
-		    queues_are_quiescent()) अणु
-		    	पूर्णांक क्रमmat;
+			return IOCTL_OUT(arg, sound_set_stereo(data-1)+1);
+		} else
+			return -EINVAL ;
+		break ;
+	case SNDCTL_DSP_SETFMT:
+		if (shared_resources_are_mine(file->f_mode) &&
+		    queues_are_quiescent()) {
+		    	int format;
 			IOCTL_IN(arg, data);
 			shared_resources_initialised = 0 ;
-			क्रमmat = sound_set_क्रमmat(data);
-			result = IOCTL_OUT(arg, क्रमmat);
-			अगर (result < 0)
-				वापस result;
-			अगर (क्रमmat != data && data != AFMT_QUERY)
-				वापस -EINVAL;
-			वापस 0;
-		पूर्ण अन्यथा
-			वापस -EINVAL ;
-	हाल SNDCTL_DSP_SUBDIVIDE:
-		वापस -EINVAL ;
-	हाल SNDCTL_DSP_SETFRAGMENT:
-		/* we can करो this independently क्रम the two queues - with the
-		   proviso that क्रम fds खोलोed O_RDWR we cannot separate the
+			format = sound_set_format(data);
+			result = IOCTL_OUT(arg, format);
+			if (result < 0)
+				return result;
+			if (format != data && data != AFMT_QUERY)
+				return -EINVAL;
+			return 0;
+		} else
+			return -EINVAL ;
+	case SNDCTL_DSP_SUBDIVIDE:
+		return -EINVAL ;
+	case SNDCTL_DSP_SETFRAGMENT:
+		/* we can do this independently for the two queues - with the
+		   proviso that for fds opened O_RDWR we cannot separate the
 		   actions and both queues will be set per the last call.
-		   NOTE: this करोes *NOT* actually set the queue up - merely
-		   रेजिस्टरs our पूर्णांकentions.
+		   NOTE: this does *NOT* actually set the queue up - merely
+		   registers our intentions.
 		*/
 		IOCTL_IN(arg, data);
 		result = 0 ;
 		nbufs = (data >> 16) & 0x7fff ; /* 0x7fff is 'use maximum' */
 		size = data & 0xffff;
-		अगर (file->f_mode & FMODE_WRITE) अणु
-			result = set_queue_frags(&ग_लिखो_sq, nbufs, size) ;
-			अगर (result)
-				वापस result ;
-		पूर्ण
-		/* NOTE: this वापस value is irrelevant - OSS specअगरically says that
+		if (file->f_mode & FMODE_WRITE) {
+			result = set_queue_frags(&write_sq, nbufs, size) ;
+			if (result)
+				return result ;
+		}
+		/* NOTE: this return value is irrelevant - OSS specifically says that
 		   the value is 'random' and that the user _must_ check the actual
 		   frags values using SNDCTL_DSP_GETBLKSIZE or similar */
-		वापस IOCTL_OUT(arg, data);
-		अवरोध ;
-	हाल SNDCTL_DSP_GETOSPACE:
+		return IOCTL_OUT(arg, data);
+		break ;
+	case SNDCTL_DSP_GETOSPACE:
 		/*
 		*/
-		अगर (file->f_mode & FMODE_WRITE) अणु
-			अगर ( !ग_लिखो_sq.locked )
-				sq_setup(&ग_लिखो_sq) ;
-			info.fragments = ग_लिखो_sq.max_active - ग_लिखो_sq.count;
-			info.fragstotal = ग_लिखो_sq.max_active;
-			info.fragsize = ग_लिखो_sq.user_frag_size;
+		if (file->f_mode & FMODE_WRITE) {
+			if ( !write_sq.locked )
+				sq_setup(&write_sq) ;
+			info.fragments = write_sq.max_active - write_sq.count;
+			info.fragstotal = write_sq.max_active;
+			info.fragsize = write_sq.user_frag_size;
 			info.bytes = info.fragments * info.fragsize;
-			अगर (copy_to_user((व्योम __user *)arg, &info, माप(info)))
-				वापस -EFAULT;
-			वापस 0;
-		पूर्ण अन्यथा
-			वापस -EINVAL ;
-		अवरोध ;
-	हाल SNDCTL_DSP_GETCAPS:
+			if (copy_to_user((void __user *)arg, &info, sizeof(info)))
+				return -EFAULT;
+			return 0;
+		} else
+			return -EINVAL ;
+		break ;
+	case SNDCTL_DSP_GETCAPS:
 		val = dmasound.mach.capabilities & 0xffffff00;
-		वापस IOCTL_OUT(arg,val);
+		return IOCTL_OUT(arg,val);
 
-	शेष:
-		वापस mixer_ioctl(file, cmd, arg);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	default:
+		return mixer_ioctl(file, cmd, arg);
+	}
+	return -EINVAL;
+}
 
-अटल दीर्घ sq_unlocked_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
-अणु
-	पूर्णांक ret;
+static long sq_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
+{
+	int ret;
 
 	mutex_lock(&dmasound_core_mutex);
 	ret = sq_ioctl(file, cmd, arg);
 	mutex_unlock(&dmasound_core_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations sq_fops =
-अणु
+static const struct file_operations sq_fops =
+{
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= sq_ग_लिखो,
+	.write		= sq_write,
 	.poll		= sq_poll,
 	.unlocked_ioctl	= sq_unlocked_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= sq_खोलो,
+	.open		= sq_open,
 	.release	= sq_release,
-पूर्ण;
+};
 
-अटल पूर्णांक sq_init(व्योम)
-अणु
-	स्थिर काष्ठा file_operations *fops = &sq_fops;
-#अगर_अघोषित MODULE
-	पूर्णांक sq_unit;
-#पूर्ण_अगर
+static int sq_init(void)
+{
+	const struct file_operations *fops = &sq_fops;
+#ifndef MODULE
+	int sq_unit;
+#endif
 
-	sq_unit = रेजिस्टर_sound_dsp(fops, -1);
-	अगर (sq_unit < 0) अणु
-		prपूर्णांकk(KERN_ERR "dmasound_core: couldn't register fops\n") ;
-		वापस sq_unit ;
-	पूर्ण
+	sq_unit = register_sound_dsp(fops, -1);
+	if (sq_unit < 0) {
+		printk(KERN_ERR "dmasound_core: couldn't register fops\n") ;
+		return sq_unit ;
+	}
 
-	ग_लिखो_sq_init_रुकोqueue();
+	write_sq_init_waitqueue();
 
-	/* These parameters will be restored क्रम every clean खोलो()
-	 * in the हाल of multiple खोलो()s (e.g. dsp0 & dsp1) they
-	 * will be set so दीर्घ as the shared resources have no owner.
+	/* These parameters will be restored for every clean open()
+	 * in the case of multiple open()s (e.g. dsp0 & dsp1) they
+	 * will be set so long as the shared resources have no owner.
 	 */
 
-	अगर (shared_resource_owner == 0) अणु
-		dmasound.soft = dmasound.mach.शेष_soft ;
-		dmasound.hard = dmasound.mach.शेष_hard ;
-		dmasound.dsp = dmasound.mach.शेष_soft ;
+	if (shared_resource_owner == 0) {
+		dmasound.soft = dmasound.mach.default_soft ;
+		dmasound.hard = dmasound.mach.default_hard ;
+		dmasound.dsp = dmasound.mach.default_soft ;
 		shared_resources_initialised = 0 ;
-	पूर्ण
-	वापस 0 ;
-पूर्ण
+	}
+	return 0 ;
+}
 
 
     /*
      *  /dev/sndstat
      */
 
-/* we allow more space क्रम record-enabled because there are extra output lines.
+/* we allow more space for record-enabled because there are extra output lines.
    the number here must include the amount we are prepared to give to the low-level
    driver.
 */
 
-#घोषणा STAT_BUFF_LEN 768
+#define STAT_BUFF_LEN 768
 
 /* this is how much space we will allow the low-level driver to use
-   in the stat buffer.  Currently, 2 * (80 अक्षरacter line + <NL>).
-   We करो not police this (it is up to the ll driver to be honest).
+   in the stat buffer.  Currently, 2 * (80 character line + <NL>).
+   We do not police this (it is up to the ll driver to be honest).
 */
 
-#घोषणा LOW_LEVEL_STAT_ALLOC 162
+#define LOW_LEVEL_STAT_ALLOC 162
 
-अटल काष्ठा अणु
-    पूर्णांक busy;
-    अक्षर buf[STAT_BUFF_LEN];	/* state.buf should not overflow! */
-    पूर्णांक len, ptr;
-पूर्ण state;
+static struct {
+    int busy;
+    char buf[STAT_BUFF_LEN];	/* state.buf should not overflow! */
+    int len, ptr;
+} state;
 
-/* publish this function क्रम use by low-level code, अगर required */
+/* publish this function for use by low-level code, if required */
 
-अटल अक्षर *get_afmt_string(पूर्णांक afmt)
-अणु
-        चयन(afmt) अणु
-            हाल AFMT_MU_LAW:
-                वापस "mu-law";
-                अवरोध;
-            हाल AFMT_A_LAW:
-                वापस "A-law";
-                अवरोध;
-            हाल AFMT_U8:
-                वापस "unsigned 8 bit";
-                अवरोध;
-            हाल AFMT_S8:
-                वापस "signed 8 bit";
-                अवरोध;
-            हाल AFMT_S16_BE:
-                वापस "signed 16 bit BE";
-                अवरोध;
-            हाल AFMT_U16_BE:
-                वापस "unsigned 16 bit BE";
-                अवरोध;
-            हाल AFMT_S16_LE:
-                वापस "signed 16 bit LE";
-                अवरोध;
-            हाल AFMT_U16_LE:
-                वापस "unsigned 16 bit LE";
-                अवरोध;
-	    हाल 0:
-		वापस "format not set" ;
-		अवरोध ;
-            शेष:
-                अवरोध ;
-        पूर्ण
-        वापस "ERROR: Unsupported AFMT_XXXX code" ;
-पूर्ण
+static char *get_afmt_string(int afmt)
+{
+        switch(afmt) {
+            case AFMT_MU_LAW:
+                return "mu-law";
+                break;
+            case AFMT_A_LAW:
+                return "A-law";
+                break;
+            case AFMT_U8:
+                return "unsigned 8 bit";
+                break;
+            case AFMT_S8:
+                return "signed 8 bit";
+                break;
+            case AFMT_S16_BE:
+                return "signed 16 bit BE";
+                break;
+            case AFMT_U16_BE:
+                return "unsigned 16 bit BE";
+                break;
+            case AFMT_S16_LE:
+                return "signed 16 bit LE";
+                break;
+            case AFMT_U16_LE:
+                return "unsigned 16 bit LE";
+                break;
+	    case 0:
+		return "format not set" ;
+		break ;
+            default:
+                break ;
+        }
+        return "ERROR: Unsupported AFMT_XXXX code" ;
+}
 
-अटल पूर्णांक state_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अक्षर *buffer = state.buf;
-	पूर्णांक len = 0;
-	पूर्णांक ret;
+static int state_open(struct inode *inode, struct file *file)
+{
+	char *buffer = state.buf;
+	int len = 0;
+	int ret;
 
 	mutex_lock(&dmasound_core_mutex);
 	ret = -EBUSY;
-	अगर (state.busy)
-		जाओ out;
+	if (state.busy)
+		goto out;
 
 	ret = -ENODEV;
-	अगर (!try_module_get(dmasound.mach.owner))
-		जाओ out;
+	if (!try_module_get(dmasound.mach.owner))
+		goto out;
 
 	state.ptr = 0;
 	state.busy = 1;
 
-	len += प्र_लिखो(buffer+len, "%sDMA sound driver rev %03d :\n",
+	len += sprintf(buffer+len, "%sDMA sound driver rev %03d :\n",
 		dmasound.mach.name, (DMASOUND_CORE_REVISION<<4) +
 		((dmasound.mach.version>>8) & 0x0f));
-	len += प्र_लिखो(buffer+len,
+	len += sprintf(buffer+len,
 		"Core driver edition %02d.%02d : %s driver edition %02d.%02d\n",
 		DMASOUND_CORE_REVISION, DMASOUND_CORE_EDITION, dmasound.mach.name2,
 		(dmasound.mach.version >> 8), (dmasound.mach.version & 0xff)) ;
 
 	/* call the low-level module to fill in any stat info. that it has
-	   अगर present.  Maximum buffer usage is specअगरied.
+	   if present.  Maximum buffer usage is specified.
 	*/
 
-	अगर (dmasound.mach.state_info)
+	if (dmasound.mach.state_info)
 		len += dmasound.mach.state_info(buffer+len,
-			(माप_प्रकार) LOW_LEVEL_STAT_ALLOC) ;
+			(size_t) LOW_LEVEL_STAT_ALLOC) ;
 
 	/* make usage of the state buffer as deterministic as poss.
 	   exceptional conditions could cause overrun - and this is flagged as
 	   a kernel error.
 	*/
 
-	/* क्रमmats and settings */
+	/* formats and settings */
 
-	len += प्र_लिखो(buffer+len,"\t\t === Formats & settings ===\n") ;
-	len += प्र_लिखो(buffer+len,"Parameter %20s%20s\n","soft","hard") ;
-	len += प्र_लिखो(buffer+len,"Format   :%20s%20s\n",
-		get_afmt_string(dmasound.soft.क्रमmat),
-		get_afmt_string(dmasound.hard.क्रमmat));
+	len += sprintf(buffer+len,"\t\t === Formats & settings ===\n") ;
+	len += sprintf(buffer+len,"Parameter %20s%20s\n","soft","hard") ;
+	len += sprintf(buffer+len,"Format   :%20s%20s\n",
+		get_afmt_string(dmasound.soft.format),
+		get_afmt_string(dmasound.hard.format));
 
-	len += प्र_लिखो(buffer+len,"Samp Rate:%14d s/sec%14d s/sec\n",
+	len += sprintf(buffer+len,"Samp Rate:%14d s/sec%14d s/sec\n",
 		       dmasound.soft.speed, dmasound.hard.speed);
 
-	len += प्र_लिखो(buffer+len,"Channels :%20s%20s\n",
+	len += sprintf(buffer+len,"Channels :%20s%20s\n",
 		       dmasound.soft.stereo ? "stereo" : "mono",
 		       dmasound.hard.stereo ? "stereo" : "mono" );
 
 	/* sound queue status */
 
-	len += प्र_लिखो(buffer+len,"\t\t === Sound Queue status ===\n");
-	len += प्र_लिखो(buffer+len,"Allocated:%8s%6s\n","Buffers","Size") ;
-	len += प्र_लिखो(buffer+len,"%9s:%8d%6d\n",
-		"write", ग_लिखो_sq.numBufs, ग_लिखो_sq.bufSize) ;
-	len += प्र_लिखो(buffer+len,
+	len += sprintf(buffer+len,"\t\t === Sound Queue status ===\n");
+	len += sprintf(buffer+len,"Allocated:%8s%6s\n","Buffers","Size") ;
+	len += sprintf(buffer+len,"%9s:%8d%6d\n",
+		"write", write_sq.numBufs, write_sq.bufSize) ;
+	len += sprintf(buffer+len,
 		"Current  : MaxFrg FragSiz MaxAct Frnt Rear "
 		"Cnt RrSize A B S L  xruns\n") ;
-	len += प्र_लिखो(buffer+len,"%9s:%7d%8d%7d%5d%5d%4d%7d%2d%2d%2d%2d%7d\n",
-		"write", ग_लिखो_sq.max_count, ग_लिखो_sq.block_size,
-		ग_लिखो_sq.max_active, ग_लिखो_sq.front, ग_लिखो_sq.rear,
-		ग_लिखो_sq.count, ग_लिखो_sq.rear_size, ग_लिखो_sq.active,
-		ग_लिखो_sq.busy, ग_लिखो_sq.syncing, ग_लिखो_sq.locked, ग_लिखो_sq.xruns) ;
-#अगर_घोषित DEBUG_DMASOUND
-prपूर्णांकk("dmasound: stat buffer used %d bytes\n", len) ;
-#पूर्ण_अगर
+	len += sprintf(buffer+len,"%9s:%7d%8d%7d%5d%5d%4d%7d%2d%2d%2d%2d%7d\n",
+		"write", write_sq.max_count, write_sq.block_size,
+		write_sq.max_active, write_sq.front, write_sq.rear,
+		write_sq.count, write_sq.rear_size, write_sq.active,
+		write_sq.busy, write_sq.syncing, write_sq.locked, write_sq.xruns) ;
+#ifdef DEBUG_DMASOUND
+printk("dmasound: stat buffer used %d bytes\n", len) ;
+#endif
 
-	अगर (len >= STAT_BUFF_LEN)
-		prपूर्णांकk(KERN_ERR "dmasound_core: stat buffer overflowed!\n");
+	if (len >= STAT_BUFF_LEN)
+		printk(KERN_ERR "dmasound_core: stat buffer overflowed!\n");
 
 	state.len = len;
 	ret = 0;
 out:
 	mutex_unlock(&dmasound_core_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक state_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int state_release(struct inode *inode, struct file *file)
+{
 	mutex_lock(&dmasound_core_mutex);
 	state.busy = 0;
 	module_put(dmasound.mach.owner);
 	mutex_unlock(&dmasound_core_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार state_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t state_read(struct file *file, char __user *buf, size_t count,
 			  loff_t *ppos)
-अणु
-	पूर्णांक n = state.len - state.ptr;
-	अगर (n > count)
+{
+	int n = state.len - state.ptr;
+	if (n > count)
 		n = count;
-	अगर (n <= 0)
-		वापस 0;
-	अगर (copy_to_user(buf, &state.buf[state.ptr], n))
-		वापस -EFAULT;
+	if (n <= 0)
+		return 0;
+	if (copy_to_user(buf, &state.buf[state.ptr], n))
+		return -EFAULT;
 	state.ptr += n;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल स्थिर काष्ठा file_operations state_fops = अणु
+static const struct file_operations state_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.पढ़ो		= state_पढ़ो,
-	.खोलो		= state_खोलो,
+	.read		= state_read,
+	.open		= state_open,
 	.release	= state_release,
-पूर्ण;
+};
 
-अटल पूर्णांक state_init(व्योम)
-अणु
-#अगर_अघोषित MODULE
-	पूर्णांक state_unit;
-#पूर्ण_अगर
-	state_unit = रेजिस्टर_sound_special(&state_fops, SND_DEV_STATUS);
-	अगर (state_unit < 0)
-		वापस state_unit ;
+static int state_init(void)
+{
+#ifndef MODULE
+	int state_unit;
+#endif
+	state_unit = register_sound_special(&state_fops, SND_DEV_STATUS);
+	if (state_unit < 0)
+		return state_unit ;
 	state.busy = 0;
-	वापस 0 ;
-पूर्ण
+	return 0 ;
+}
 
 
     /*
      *  Config & Setup
      *
-     *  This function is called by _one_ chipset-specअगरic driver
+     *  This function is called by _one_ chipset-specific driver
      */
 
-पूर्णांक dmasound_init(व्योम)
-अणु
-	पूर्णांक res ;
-#अगर_घोषित MODULE
-	अगर (irq_installed)
-		वापस -EBUSY;
-#पूर्ण_अगर
+int dmasound_init(void)
+{
+	int res ;
+#ifdef MODULE
+	if (irq_installed)
+		return -EBUSY;
+#endif
 
 	/* Set up sound queue, /dev/audio and /dev/dsp. */
 
-	/* Set शेष settings. */
-	अगर ((res = sq_init()) < 0)
-		वापस res ;
+	/* Set default settings. */
+	if ((res = sq_init()) < 0)
+		return res ;
 
 	/* Set up /dev/sndstat. */
-	अगर ((res = state_init()) < 0)
-		वापस res ;
+	if ((res = state_init()) < 0)
+		return res ;
 
 	/* Set up /dev/mixer. */
 	mixer_init();
 
-	अगर (!dmasound.mach.irqinit()) अणु
-		prपूर्णांकk(KERN_ERR "DMA sound driver: Interrupt initialization failed\n");
-		वापस -ENODEV;
-	पूर्ण
-#अगर_घोषित MODULE
+	if (!dmasound.mach.irqinit()) {
+		printk(KERN_ERR "DMA sound driver: Interrupt initialization failed\n");
+		return -ENODEV;
+	}
+#ifdef MODULE
 	irq_installed = 1;
-#पूर्ण_अगर
+#endif
 
-	prपूर्णांकk(KERN_INFO "%s DMA sound driver rev %03d installed\n",
+	printk(KERN_INFO "%s DMA sound driver rev %03d installed\n",
 		dmasound.mach.name, (DMASOUND_CORE_REVISION<<4) +
 		((dmasound.mach.version>>8) & 0x0f));
-	prपूर्णांकk(KERN_INFO
+	printk(KERN_INFO
 		"Core driver edition %02d.%02d : %s driver edition %02d.%02d\n",
 		DMASOUND_CORE_REVISION, DMASOUND_CORE_EDITION, dmasound.mach.name2,
 		(dmasound.mach.version >> 8), (dmasound.mach.version & 0xff)) ;
-	prपूर्णांकk(KERN_INFO "Write will use %4d fragments of %7d bytes as default\n",
-		numWriteBufs, ग_लिखोBufSize) ;
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "Write will use %4d fragments of %7d bytes as default\n",
+		numWriteBufs, writeBufSize) ;
+	return 0;
+}
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 
-व्योम dmasound_deinit(व्योम)
-अणु
-	अगर (irq_installed) अणु
+void dmasound_deinit(void)
+{
+	if (irq_installed) {
 		sound_silence();
 		dmasound.mach.irqcleanup();
 		irq_installed = 0;
-	पूर्ण
+	}
 
-	ग_लिखो_sq_release_buffers();
+	write_sq_release_buffers();
 
-	अगर (mixer_unit >= 0)
-		unरेजिस्टर_sound_mixer(mixer_unit);
-	अगर (state_unit >= 0)
-		unरेजिस्टर_sound_special(state_unit);
-	अगर (sq_unit >= 0)
-		unरेजिस्टर_sound_dsp(sq_unit);
-पूर्ण
+	if (mixer_unit >= 0)
+		unregister_sound_mixer(mixer_unit);
+	if (state_unit >= 0)
+		unregister_sound_special(state_unit);
+	if (sq_unit >= 0)
+		unregister_sound_dsp(sq_unit);
+}
 
-#अन्यथा /* !MODULE */
+#else /* !MODULE */
 
-अटल पूर्णांक dmasound_setup(अक्षर *str)
-अणु
-	पूर्णांक पूर्णांकs[6], size;
+static int dmasound_setup(char *str)
+{
+	int ints[6], size;
 
-	str = get_options(str, ARRAY_SIZE(पूर्णांकs), पूर्णांकs);
+	str = get_options(str, ARRAY_SIZE(ints), ints);
 
-	/* check the bootstrap parameter क्रम "dmasound=" */
+	/* check the bootstrap parameter for "dmasound=" */
 
-	/* FIXME: other than in the most naive of हालs there is no sense in these
-	 *	  buffers being other than घातers of two.  This is not checked yet.
+	/* FIXME: other than in the most naive of cases there is no sense in these
+	 *	  buffers being other than powers of two.  This is not checked yet.
 	 */
 
-	चयन (पूर्णांकs[0]) अणु
-	हाल 3:
-		अगर ((पूर्णांकs[3] < 0) || (पूर्णांकs[3] > MAX_CATCH_RADIUS))
-			prपूर्णांकk("dmasound_setup: invalid catch radius, using default = %d\n", catchRadius);
-		अन्यथा
-			catchRadius = पूर्णांकs[3];
+	switch (ints[0]) {
+	case 3:
+		if ((ints[3] < 0) || (ints[3] > MAX_CATCH_RADIUS))
+			printk("dmasound_setup: invalid catch radius, using default = %d\n", catchRadius);
+		else
+			catchRadius = ints[3];
 		fallthrough;
-	हाल 2:
-		अगर (पूर्णांकs[1] < MIN_BUFFERS)
-			prपूर्णांकk("dmasound_setup: invalid number of buffers, using default = %d\n", numWriteBufs);
-		अन्यथा
-			numWriteBufs = पूर्णांकs[1];
+	case 2:
+		if (ints[1] < MIN_BUFFERS)
+			printk("dmasound_setup: invalid number of buffers, using default = %d\n", numWriteBufs);
+		else
+			numWriteBufs = ints[1];
 		fallthrough;
-	हाल 1:
-		अगर ((size = पूर्णांकs[2]) < 256) /* check क्रम small buffer specs */
+	case 1:
+		if ((size = ints[2]) < 256) /* check for small buffer specs */
 			size <<= 10 ;
-                अगर (size < MIN_बफ_मानE || size > MAX_बफ_मानE)
-                        prपूर्णांकk("dmasound_setup: invalid write buffer size, using default = %d\n", ग_लिखोBufSize);
-                अन्यथा
-                        ग_लिखोBufSize = size;
-	हाल 0:
-		अवरोध;
-	शेष:
-		prपूर्णांकk("dmasound_setup: invalid number of arguments\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+                if (size < MIN_BUFSIZE || size > MAX_BUFSIZE)
+                        printk("dmasound_setup: invalid write buffer size, using default = %d\n", writeBufSize);
+                else
+                        writeBufSize = size;
+	case 0:
+		break;
+	default:
+		printk("dmasound_setup: invalid number of arguments\n");
+		return 0;
+	}
+	return 1;
+}
 
 __setup("dmasound=", dmasound_setup);
 
-#पूर्ण_अगर /* !MODULE */
+#endif /* !MODULE */
 
     /*
      *  Conversion tables
      */
 
-#अगर_घोषित HAS_8BIT_TABLES
+#ifdef HAS_8BIT_TABLES
 /* 8 bit mu-law */
 
-अक्षर dmasound_ulaw2dma8[] = अणु
+char dmasound_ulaw2dma8[] = {
 	-126,	-122,	-118,	-114,	-110,	-106,	-102,	-98,
 	-94,	-90,	-86,	-82,	-78,	-74,	-70,	-66,
 	-63,	-61,	-59,	-57,	-55,	-53,	-51,	-49,
@@ -1546,11 +1545,11 @@ __setup("dmasound=", dmasound_setup);
 	0,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0,
 	0,	0,	0,	0,	0,	0,	0,	0
-पूर्ण;
+};
 
 /* 8 bit A-law */
 
-अक्षर dmasound_alaw2dma8[] = अणु
+char dmasound_alaw2dma8[] = {
 	-22,	-21,	-24,	-23,	-18,	-17,	-20,	-19,
 	-30,	-29,	-32,	-31,	-26,	-25,	-28,	-27,
 	-11,	-11,	-12,	-12,	-9,	-9,	-10,	-10,
@@ -1583,21 +1582,21 @@ __setup("dmasound=", dmasound_setup);
 	7,	7,	7,	7,	6,	6,	6,	6,
 	2,	2,	2,	2,	2,	2,	2,	2,
 	3,	3,	3,	3,	3,	3,	3,	3
-पूर्ण;
-#पूर्ण_अगर /* HAS_8BIT_TABLES */
+};
+#endif /* HAS_8BIT_TABLES */
 
     /*
-     *  Visible symbols क्रम modules
+     *  Visible symbols for modules
      */
 
 EXPORT_SYMBOL(dmasound);
 EXPORT_SYMBOL(dmasound_init);
-#अगर_घोषित MODULE
+#ifdef MODULE
 EXPORT_SYMBOL(dmasound_deinit);
-#पूर्ण_अगर
-EXPORT_SYMBOL(dmasound_ग_लिखो_sq);
+#endif
+EXPORT_SYMBOL(dmasound_write_sq);
 EXPORT_SYMBOL(dmasound_catchRadius);
-#अगर_घोषित HAS_8BIT_TABLES
+#ifdef HAS_8BIT_TABLES
 EXPORT_SYMBOL(dmasound_ulaw2dma8);
 EXPORT_SYMBOL(dmasound_alaw2dma8);
-#पूर्ण_अगर
+#endif

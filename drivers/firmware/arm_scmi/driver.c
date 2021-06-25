@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * System Control and Management Interface (SCMI) Message Protocol driver
  *
  * SCMI Message Protocol is used between the System Control Processor(SCP)
  * and the Application Processors(AP). The Message Handling Unit(MHU)
- * provides a mechanism क्रम पूर्णांकer-processor communication between SCP's
+ * provides a mechanism for inter-processor communication between SCP's
  * Cortex M3 and AP.
  *
- * SCP offers control and management of the core/cluster घातer states,
- * various घातer करोमुख्य DVFS including the core/cluster, certain प्रणाली
- * घड़ीs configuration, thermal sensors and many others.
+ * SCP offers control and management of the core/cluster power states,
+ * various power domain DVFS including the core/cluster, certain system
+ * clocks configuration, thermal sensors and many others.
  *
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/device.h>
-#समावेश <linux/export.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/processor.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/slab.h>
+#include <linux/bitmap.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/idr.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/ktime.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/processor.h>
+#include <linux/refcount.h>
+#include <linux/slab.h>
 
-#समावेश "common.h"
-#समावेश "notify.h"
+#include "common.h"
+#include "notify.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/scmi.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/scmi.h>
 
-क्रमागत scmi_error_codes अणु
+enum scmi_error_codes {
 	SCMI_SUCCESS = 0,	/* Success */
 	SCMI_ERR_SUPPORT = -1,	/* Not supported */
 	SCMI_ERR_PARAMS = -2,	/* Invalid Parameters */
@@ -49,192 +48,192 @@
 	SCMI_ERR_HARDWARE = -9,	/* Hardware Error */
 	SCMI_ERR_PROTOCOL = -10,/* Protocol Error */
 	SCMI_ERR_MAX
-पूर्ण;
+};
 
-/* List of all SCMI devices active in प्रणाली */
-अटल LIST_HEAD(scmi_list);
-/* Protection क्रम the entire list */
-अटल DEFINE_MUTEX(scmi_list_mutex);
-/* Track the unique id क्रम the transfers क्रम debug & profiling purpose */
-अटल atomic_t transfer_last_id;
+/* List of all SCMI devices active in system */
+static LIST_HEAD(scmi_list);
+/* Protection for the entire list */
+static DEFINE_MUTEX(scmi_list_mutex);
+/* Track the unique id for the transfers for debug & profiling purpose */
+static atomic_t transfer_last_id;
 
-अटल DEFINE_IDR(scmi_requested_devices);
-अटल DEFINE_MUTEX(scmi_requested_devices_mtx);
+static DEFINE_IDR(scmi_requested_devices);
+static DEFINE_MUTEX(scmi_requested_devices_mtx);
 
-काष्ठा scmi_requested_dev अणु
-	स्थिर काष्ठा scmi_device_id *id_table;
-	काष्ठा list_head node;
-पूर्ण;
+struct scmi_requested_dev {
+	const struct scmi_device_id *id_table;
+	struct list_head node;
+};
 
 /**
- * काष्ठा scmi_xfers_info - Structure to manage transfer inक्रमmation
+ * struct scmi_xfers_info - Structure to manage transfer information
  *
- * @xfer_block: Pपुनः_स्मृतिated Message array
- * @xfer_alloc_table: Biपंचांगap table क्रम allocated messages.
- *	Index of this biपंचांगap table is also used क्रम message
- *	sequence identअगरier.
- * @xfer_lock: Protection क्रम message allocation
+ * @xfer_block: Preallocated Message array
+ * @xfer_alloc_table: Bitmap table for allocated messages.
+ *	Index of this bitmap table is also used for message
+ *	sequence identifier.
+ * @xfer_lock: Protection for message allocation
  */
-काष्ठा scmi_xfers_info अणु
-	काष्ठा scmi_xfer *xfer_block;
-	अचिन्हित दीर्घ *xfer_alloc_table;
+struct scmi_xfers_info {
+	struct scmi_xfer *xfer_block;
+	unsigned long *xfer_alloc_table;
 	spinlock_t xfer_lock;
-पूर्ण;
+};
 
 /**
- * काष्ठा scmi_protocol_instance  - Describe an initialized protocol instance.
+ * struct scmi_protocol_instance  - Describe an initialized protocol instance.
  * @handle: Reference to the SCMI handle associated to this protocol instance.
  * @proto: A reference to the protocol descriptor.
- * @gid: A reference क्रम per-protocol devres management.
+ * @gid: A reference for per-protocol devres management.
  * @users: A refcount to track effective users of this protocol.
- * @priv: Reference क्रम optional protocol निजी data.
- * @ph: An embedded protocol handle that will be passed करोwn to protocol
- *	initialization code to identअगरy this instance.
+ * @priv: Reference for optional protocol private data.
+ * @ph: An embedded protocol handle that will be passed down to protocol
+ *	initialization code to identify this instance.
  *
- * Each protocol is initialized independently once क्रम each SCMI platक्रमm in
+ * Each protocol is initialized independently once for each SCMI platform in
  * which is defined by DT and implemented by the SCMI server fw.
  */
-काष्ठा scmi_protocol_instance अणु
-	स्थिर काष्ठा scmi_handle	*handle;
-	स्थिर काष्ठा scmi_protocol	*proto;
-	व्योम				*gid;
+struct scmi_protocol_instance {
+	const struct scmi_handle	*handle;
+	const struct scmi_protocol	*proto;
+	void				*gid;
 	refcount_t			users;
-	व्योम				*priv;
-	काष्ठा scmi_protocol_handle	ph;
-पूर्ण;
+	void				*priv;
+	struct scmi_protocol_handle	ph;
+};
 
-#घोषणा ph_to_pi(h)	container_of(h, काष्ठा scmi_protocol_instance, ph)
+#define ph_to_pi(h)	container_of(h, struct scmi_protocol_instance, ph)
 
 /**
- * काष्ठा scmi_info - Structure representing a SCMI instance
+ * struct scmi_info - Structure representing a SCMI instance
  *
- * @dev: Device poपूर्णांकer
- * @desc: SoC description क्रम this instance
- * @version: SCMI revision inक्रमmation containing protocol version,
- *	implementation version and (sub-)venकरोr identअगरication.
+ * @dev: Device pointer
+ * @desc: SoC description for this instance
+ * @version: SCMI revision information containing protocol version,
+ *	implementation version and (sub-)vendor identification.
  * @handle: Instance of SCMI handle to send to clients
  * @tx_minfo: Universal Transmit Message management info
  * @rx_minfo: Universal Receive Message management info
- * @tx_idr: IDR object to map protocol id to Tx channel info poपूर्णांकer
- * @rx_idr: IDR object to map protocol id to Rx channel info poपूर्णांकer
- * @protocols: IDR क्रम protocols' instance descriptors initialized क्रम
+ * @tx_idr: IDR object to map protocol id to Tx channel info pointer
+ * @rx_idr: IDR object to map protocol id to Rx channel info pointer
+ * @protocols: IDR for protocols' instance descriptors initialized for
  *	       this SCMI instance: populated on protocol's first attempted
  *	       usage.
  * @protocols_mtx: A mutex to protect protocols instances initialization.
  * @protocols_imp: List of protocols implemented, currently maximum of
  *	MAX_PROTOCOLS_IMP elements allocated by the base protocol
- * @active_protocols: IDR storing device_nodes क्रम protocols actually defined
+ * @active_protocols: IDR storing device_nodes for protocols actually defined
  *		      in the DT and confirmed as implemented by fw.
- * @notअगरy_priv: Poपूर्णांकer to निजी data काष्ठाure specअगरic to notअगरications.
+ * @notify_priv: Pointer to private data structure specific to notifications.
  * @node: List head
  * @users: Number of users of this instance
  */
-काष्ठा scmi_info अणु
-	काष्ठा device *dev;
-	स्थिर काष्ठा scmi_desc *desc;
-	काष्ठा scmi_revision_info version;
-	काष्ठा scmi_handle handle;
-	काष्ठा scmi_xfers_info tx_minfo;
-	काष्ठा scmi_xfers_info rx_minfo;
-	काष्ठा idr tx_idr;
-	काष्ठा idr rx_idr;
-	काष्ठा idr protocols;
+struct scmi_info {
+	struct device *dev;
+	const struct scmi_desc *desc;
+	struct scmi_revision_info version;
+	struct scmi_handle handle;
+	struct scmi_xfers_info tx_minfo;
+	struct scmi_xfers_info rx_minfo;
+	struct idr tx_idr;
+	struct idr rx_idr;
+	struct idr protocols;
 	/* Ensure mutual exclusive access to protocols instance array */
-	काष्ठा mutex protocols_mtx;
+	struct mutex protocols_mtx;
 	u8 *protocols_imp;
-	काष्ठा idr active_protocols;
-	व्योम *notअगरy_priv;
-	काष्ठा list_head node;
-	पूर्णांक users;
-पूर्ण;
+	struct idr active_protocols;
+	void *notify_priv;
+	struct list_head node;
+	int users;
+};
 
-#घोषणा handle_to_scmi_info(h)	container_of(h, काष्ठा scmi_info, handle)
+#define handle_to_scmi_info(h)	container_of(h, struct scmi_info, handle)
 
-अटल स्थिर पूर्णांक scmi_linux_errmap[] = अणु
-	/* better than चयन हाल as दीर्घ as वापस value is continuous */
+static const int scmi_linux_errmap[] = {
+	/* better than switch case as long as return value is continuous */
 	0,			/* SCMI_SUCCESS */
 	-EOPNOTSUPP,		/* SCMI_ERR_SUPPORT */
 	-EINVAL,		/* SCMI_ERR_PARAM */
 	-EACCES,		/* SCMI_ERR_ACCESS */
 	-ENOENT,		/* SCMI_ERR_ENTRY */
-	-दुस्फल,		/* SCMI_ERR_RANGE */
+	-ERANGE,		/* SCMI_ERR_RANGE */
 	-EBUSY,			/* SCMI_ERR_BUSY */
 	-ECOMM,			/* SCMI_ERR_COMMS */
 	-EIO,			/* SCMI_ERR_GENERIC */
 	-EREMOTEIO,		/* SCMI_ERR_HARDWARE */
 	-EPROTO,		/* SCMI_ERR_PROTOCOL */
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक scmi_to_linux_त्रुटि_सं(पूर्णांक त्रुटि_सं)
-अणु
-	अगर (त्रुटि_सं < SCMI_SUCCESS && त्रुटि_सं > SCMI_ERR_MAX)
-		वापस scmi_linux_errmap[-त्रुटि_सं];
-	वापस -EIO;
-पूर्ण
+static inline int scmi_to_linux_errno(int errno)
+{
+	if (errno < SCMI_SUCCESS && errno > SCMI_ERR_MAX)
+		return scmi_linux_errmap[-errno];
+	return -EIO;
+}
 
 /**
  * scmi_dump_header_dbg() - Helper to dump a message header.
  *
- * @dev: Device poपूर्णांकer corresponding to the SCMI entity
- * @hdr: poपूर्णांकer to header.
+ * @dev: Device pointer corresponding to the SCMI entity
+ * @hdr: pointer to header.
  */
-अटल अंतरभूत व्योम scmi_dump_header_dbg(काष्ठा device *dev,
-					काष्ठा scmi_msg_hdr *hdr)
-अणु
+static inline void scmi_dump_header_dbg(struct device *dev,
+					struct scmi_msg_hdr *hdr)
+{
 	dev_dbg(dev, "Message ID: %x Sequence ID: %x Protocol: %x\n",
 		hdr->id, hdr->seq, hdr->protocol_id);
-पूर्ण
+}
 
-व्योम scmi_notअगरication_instance_data_set(स्थिर काष्ठा scmi_handle *handle,
-					 व्योम *priv)
-अणु
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
+void scmi_notification_instance_data_set(const struct scmi_handle *handle,
+					 void *priv)
+{
+	struct scmi_info *info = handle_to_scmi_info(handle);
 
-	info->notअगरy_priv = priv;
-	/* Ensure updated protocol निजी date are visible */
+	info->notify_priv = priv;
+	/* Ensure updated protocol private date are visible */
 	smp_wmb();
-पूर्ण
+}
 
-व्योम *scmi_notअगरication_instance_data_get(स्थिर काष्ठा scmi_handle *handle)
-अणु
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
+void *scmi_notification_instance_data_get(const struct scmi_handle *handle)
+{
+	struct scmi_info *info = handle_to_scmi_info(handle);
 
-	/* Ensure protocols_निजी_data has been updated */
+	/* Ensure protocols_private_data has been updated */
 	smp_rmb();
-	वापस info->notअगरy_priv;
-पूर्ण
+	return info->notify_priv;
+}
 
 /**
  * scmi_xfer_get() - Allocate one message
  *
- * @handle: Poपूर्णांकer to SCMI entity handle
- * @minfo: Poपूर्णांकer to Tx/Rx Message management info based on channel type
+ * @handle: Pointer to SCMI entity handle
+ * @minfo: Pointer to Tx/Rx Message management info based on channel type
  *
  * Helper function which is used by various message functions that are
- * exposed to clients of this driver क्रम allocating a message traffic event.
+ * exposed to clients of this driver for allocating a message traffic event.
  *
- * This function can sleep depending on pending requests alपढ़ोy in the प्रणाली
- * क्रम the SCMI entity. Further, this also holds a spinlock to मुख्यtain
- * पूर्णांकegrity of पूर्णांकernal data काष्ठाures.
+ * This function can sleep depending on pending requests already in the system
+ * for the SCMI entity. Further, this also holds a spinlock to maintain
+ * integrity of internal data structures.
  *
- * Return: 0 अगर all went fine, अन्यथा corresponding error.
+ * Return: 0 if all went fine, else corresponding error.
  */
-अटल काष्ठा scmi_xfer *scmi_xfer_get(स्थिर काष्ठा scmi_handle *handle,
-				       काष्ठा scmi_xfers_info *minfo)
-अणु
+static struct scmi_xfer *scmi_xfer_get(const struct scmi_handle *handle,
+				       struct scmi_xfers_info *minfo)
+{
 	u16 xfer_id;
-	काष्ठा scmi_xfer *xfer;
-	अचिन्हित दीर्घ flags, bit_pos;
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
+	struct scmi_xfer *xfer;
+	unsigned long flags, bit_pos;
+	struct scmi_info *info = handle_to_scmi_info(handle);
 
 	/* Keep the locked section as small as possible */
 	spin_lock_irqsave(&minfo->xfer_lock, flags);
 	bit_pos = find_first_zero_bit(minfo->xfer_alloc_table,
 				      info->desc->max_msg);
-	अगर (bit_pos == info->desc->max_msg) अणु
+	if (bit_pos == info->desc->max_msg) {
 		spin_unlock_irqrestore(&minfo->xfer_lock, flags);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 	set_bit(bit_pos, minfo->xfer_alloc_table);
 	spin_unlock_irqrestore(&minfo->xfer_lock, flags);
 
@@ -242,24 +241,24 @@
 
 	xfer = &minfo->xfer_block[xfer_id];
 	xfer->hdr.seq = xfer_id;
-	reinit_completion(&xfer->करोne);
-	xfer->transfer_id = atomic_inc_वापस(&transfer_last_id);
+	reinit_completion(&xfer->done);
+	xfer->transfer_id = atomic_inc_return(&transfer_last_id);
 
-	वापस xfer;
-पूर्ण
+	return xfer;
+}
 
 /**
  * __scmi_xfer_put() - Release a message
  *
- * @minfo: Poपूर्णांकer to Tx/Rx Message management info based on channel type
+ * @minfo: Pointer to Tx/Rx Message management info based on channel type
  * @xfer: message that was reserved by scmi_xfer_get
  *
- * This holds a spinlock to मुख्यtain पूर्णांकegrity of पूर्णांकernal data काष्ठाures.
+ * This holds a spinlock to maintain integrity of internal data structures.
  */
-अटल व्योम
-__scmi_xfer_put(काष्ठा scmi_xfers_info *minfo, काष्ठा scmi_xfer *xfer)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+__scmi_xfer_put(struct scmi_xfers_info *minfo, struct scmi_xfer *xfer)
+{
+	unsigned long flags;
 
 	/*
 	 * Keep the locked section as small as possible
@@ -269,295 +268,295 @@ __scmi_xfer_put(काष्ठा scmi_xfers_info *minfo, काष्ठा sc
 	spin_lock_irqsave(&minfo->xfer_lock, flags);
 	clear_bit(xfer->hdr.seq, minfo->xfer_alloc_table);
 	spin_unlock_irqrestore(&minfo->xfer_lock, flags);
-पूर्ण
+}
 
-अटल व्योम scmi_handle_notअगरication(काष्ठा scmi_chan_info *cinfo, u32 msg_hdr)
-अणु
-	काष्ठा scmi_xfer *xfer;
-	काष्ठा device *dev = cinfo->dev;
-	काष्ठा scmi_info *info = handle_to_scmi_info(cinfo->handle);
-	काष्ठा scmi_xfers_info *minfo = &info->rx_minfo;
-	kसमय_प्रकार ts;
+static void scmi_handle_notification(struct scmi_chan_info *cinfo, u32 msg_hdr)
+{
+	struct scmi_xfer *xfer;
+	struct device *dev = cinfo->dev;
+	struct scmi_info *info = handle_to_scmi_info(cinfo->handle);
+	struct scmi_xfers_info *minfo = &info->rx_minfo;
+	ktime_t ts;
 
-	ts = kसमय_get_bootसमय();
+	ts = ktime_get_boottime();
 	xfer = scmi_xfer_get(cinfo->handle, minfo);
-	अगर (IS_ERR(xfer)) अणु
+	if (IS_ERR(xfer)) {
 		dev_err(dev, "failed to get free message slot (%ld)\n",
 			PTR_ERR(xfer));
 		info->desc->ops->clear_channel(cinfo);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	unpack_scmi_header(msg_hdr, &xfer->hdr);
 	scmi_dump_header_dbg(dev, &xfer->hdr);
-	info->desc->ops->fetch_notअगरication(cinfo, info->desc->max_msg_size,
+	info->desc->ops->fetch_notification(cinfo, info->desc->max_msg_size,
 					    xfer);
-	scmi_notअगरy(cinfo->handle, xfer->hdr.protocol_id,
+	scmi_notify(cinfo->handle, xfer->hdr.protocol_id,
 		    xfer->hdr.id, xfer->rx.buf, xfer->rx.len, ts);
 
-	trace_scmi_rx_करोne(xfer->transfer_id, xfer->hdr.id,
+	trace_scmi_rx_done(xfer->transfer_id, xfer->hdr.id,
 			   xfer->hdr.protocol_id, xfer->hdr.seq,
 			   MSG_TYPE_NOTIFICATION);
 
 	__scmi_xfer_put(minfo, xfer);
 
 	info->desc->ops->clear_channel(cinfo);
-पूर्ण
+}
 
-अटल व्योम scmi_handle_response(काष्ठा scmi_chan_info *cinfo,
+static void scmi_handle_response(struct scmi_chan_info *cinfo,
 				 u16 xfer_id, u8 msg_type)
-अणु
-	काष्ठा scmi_xfer *xfer;
-	काष्ठा device *dev = cinfo->dev;
-	काष्ठा scmi_info *info = handle_to_scmi_info(cinfo->handle);
-	काष्ठा scmi_xfers_info *minfo = &info->tx_minfo;
+{
+	struct scmi_xfer *xfer;
+	struct device *dev = cinfo->dev;
+	struct scmi_info *info = handle_to_scmi_info(cinfo->handle);
+	struct scmi_xfers_info *minfo = &info->tx_minfo;
 
 	/* Are we even expecting this? */
-	अगर (!test_bit(xfer_id, minfo->xfer_alloc_table)) अणु
+	if (!test_bit(xfer_id, minfo->xfer_alloc_table)) {
 		dev_err(dev, "message for %d is not expected!\n", xfer_id);
 		info->desc->ops->clear_channel(cinfo);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	xfer = &minfo->xfer_block[xfer_id];
 	/*
-	 * Even अगर a response was indeed expected on this slot at this poपूर्णांक,
-	 * a buggy platक्रमm could wrongly reply feeding us an unexpected
+	 * Even if a response was indeed expected on this slot at this point,
+	 * a buggy platform could wrongly reply feeding us an unexpected
 	 * delayed response we're not prepared to handle: bail-out safely
 	 * blaming firmware.
 	 */
-	अगर (unlikely(msg_type == MSG_TYPE_DELAYED_RESP && !xfer->async_करोne)) अणु
+	if (unlikely(msg_type == MSG_TYPE_DELAYED_RESP && !xfer->async_done)) {
 		dev_err(dev,
 			"Delayed Response for %d not expected! Buggy F/W ?\n",
 			xfer_id);
 		info->desc->ops->clear_channel(cinfo);
-		/* It was unexpected, so nobody will clear the xfer अगर not us */
+		/* It was unexpected, so nobody will clear the xfer if not us */
 		__scmi_xfer_put(minfo, xfer);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	scmi_dump_header_dbg(dev, &xfer->hdr);
 
 	info->desc->ops->fetch_response(cinfo, xfer);
 
-	trace_scmi_rx_करोne(xfer->transfer_id, xfer->hdr.id,
+	trace_scmi_rx_done(xfer->transfer_id, xfer->hdr.id,
 			   xfer->hdr.protocol_id, xfer->hdr.seq,
 			   msg_type);
 
-	अगर (msg_type == MSG_TYPE_DELAYED_RESP) अणु
+	if (msg_type == MSG_TYPE_DELAYED_RESP) {
 		info->desc->ops->clear_channel(cinfo);
-		complete(xfer->async_करोne);
-	पूर्ण अन्यथा अणु
-		complete(&xfer->करोne);
-	पूर्ण
-पूर्ण
+		complete(xfer->async_done);
+	} else {
+		complete(&xfer->done);
+	}
+}
 
 /**
- * scmi_rx_callback() - callback क्रम receiving messages
+ * scmi_rx_callback() - callback for receiving messages
  *
  * @cinfo: SCMI channel info
  * @msg_hdr: Message header
  *
- * Processes one received message to appropriate transfer inक्रमmation and
- * संकेतs completion of the transfer.
+ * Processes one received message to appropriate transfer information and
+ * signals completion of the transfer.
  *
  * NOTE: This function will be invoked in IRQ context, hence should be
  * as optimal as possible.
  */
-व्योम scmi_rx_callback(काष्ठा scmi_chan_info *cinfo, u32 msg_hdr)
-अणु
+void scmi_rx_callback(struct scmi_chan_info *cinfo, u32 msg_hdr)
+{
 	u16 xfer_id = MSG_XTRACT_TOKEN(msg_hdr);
 	u8 msg_type = MSG_XTRACT_TYPE(msg_hdr);
 
-	चयन (msg_type) अणु
-	हाल MSG_TYPE_NOTIFICATION:
-		scmi_handle_notअगरication(cinfo, msg_hdr);
-		अवरोध;
-	हाल MSG_TYPE_COMMAND:
-	हाल MSG_TYPE_DELAYED_RESP:
+	switch (msg_type) {
+	case MSG_TYPE_NOTIFICATION:
+		scmi_handle_notification(cinfo, msg_hdr);
+		break;
+	case MSG_TYPE_COMMAND:
+	case MSG_TYPE_DELAYED_RESP:
 		scmi_handle_response(cinfo, xfer_id, msg_type);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(1, "received unknown msg_type:%d\n", msg_type);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /**
  * xfer_put() - Release a transmit message
  *
- * @ph: Poपूर्णांकer to SCMI protocol handle
+ * @ph: Pointer to SCMI protocol handle
  * @xfer: message that was reserved by scmi_xfer_get
  */
-अटल व्योम xfer_put(स्थिर काष्ठा scmi_protocol_handle *ph,
-		     काष्ठा scmi_xfer *xfer)
-अणु
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
-	काष्ठा scmi_info *info = handle_to_scmi_info(pi->handle);
+static void xfer_put(const struct scmi_protocol_handle *ph,
+		     struct scmi_xfer *xfer)
+{
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
+	struct scmi_info *info = handle_to_scmi_info(pi->handle);
 
 	__scmi_xfer_put(&info->tx_minfo, xfer);
-पूर्ण
+}
 
-#घोषणा SCMI_MAX_POLL_TO_NS	(100 * NSEC_PER_USEC)
+#define SCMI_MAX_POLL_TO_NS	(100 * NSEC_PER_USEC)
 
-अटल bool scmi_xfer_करोne_no_समयout(काष्ठा scmi_chan_info *cinfo,
-				      काष्ठा scmi_xfer *xfer, kसमय_प्रकार stop)
-अणु
-	काष्ठा scmi_info *info = handle_to_scmi_info(cinfo->handle);
+static bool scmi_xfer_done_no_timeout(struct scmi_chan_info *cinfo,
+				      struct scmi_xfer *xfer, ktime_t stop)
+{
+	struct scmi_info *info = handle_to_scmi_info(cinfo->handle);
 
-	वापस info->desc->ops->poll_करोne(cinfo, xfer) ||
-	       kसमय_after(kसमय_get(), stop);
-पूर्ण
+	return info->desc->ops->poll_done(cinfo, xfer) ||
+	       ktime_after(ktime_get(), stop);
+}
 
 /**
- * करो_xfer() - Do one transfer
+ * do_xfer() - Do one transfer
  *
- * @ph: Poपूर्णांकer to SCMI protocol handle
- * @xfer: Transfer to initiate and रुको क्रम response
+ * @ph: Pointer to SCMI protocol handle
+ * @xfer: Transfer to initiate and wait for response
  *
- * Return: -ETIMEDOUT in हाल of no response, अगर transmit error,
- *	वापस corresponding error, अन्यथा अगर all goes well,
- *	वापस 0.
+ * Return: -ETIMEDOUT in case of no response, if transmit error,
+ *	return corresponding error, else if all goes well,
+ *	return 0.
  */
-अटल पूर्णांक करो_xfer(स्थिर काष्ठा scmi_protocol_handle *ph,
-		   काष्ठा scmi_xfer *xfer)
-अणु
-	पूर्णांक ret;
-	पूर्णांक समयout;
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
-	काष्ठा scmi_info *info = handle_to_scmi_info(pi->handle);
-	काष्ठा device *dev = info->dev;
-	काष्ठा scmi_chan_info *cinfo;
+static int do_xfer(const struct scmi_protocol_handle *ph,
+		   struct scmi_xfer *xfer)
+{
+	int ret;
+	int timeout;
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
+	struct scmi_info *info = handle_to_scmi_info(pi->handle);
+	struct device *dev = info->dev;
+	struct scmi_chan_info *cinfo;
 
 	/*
 	 * Re-instate protocol id here from protocol handle so that cannot be
 	 * overridden by mistake (or malice) by the protocol code mangling with
-	 * the scmi_xfer काष्ठाure.
+	 * the scmi_xfer structure.
 	 */
 	xfer->hdr.protocol_id = pi->proto->id;
 
 	cinfo = idr_find(&info->tx_idr, xfer->hdr.protocol_id);
-	अगर (unlikely(!cinfo))
-		वापस -EINVAL;
+	if (unlikely(!cinfo))
+		return -EINVAL;
 
 	trace_scmi_xfer_begin(xfer->transfer_id, xfer->hdr.id,
 			      xfer->hdr.protocol_id, xfer->hdr.seq,
 			      xfer->hdr.poll_completion);
 
 	ret = info->desc->ops->send_message(cinfo, xfer);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_dbg(dev, "Failed to send message %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (xfer->hdr.poll_completion) अणु
-		kसमय_प्रकार stop = kसमय_add_ns(kसमय_get(), SCMI_MAX_POLL_TO_NS);
+	if (xfer->hdr.poll_completion) {
+		ktime_t stop = ktime_add_ns(ktime_get(), SCMI_MAX_POLL_TO_NS);
 
-		spin_until_cond(scmi_xfer_करोne_no_समयout(cinfo, xfer, stop));
+		spin_until_cond(scmi_xfer_done_no_timeout(cinfo, xfer, stop));
 
-		अगर (kसमय_beक्रमe(kसमय_get(), stop))
+		if (ktime_before(ktime_get(), stop))
 			info->desc->ops->fetch_response(cinfo, xfer);
-		अन्यथा
+		else
 			ret = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
-		/* And we रुको क्रम the response. */
-		समयout = msecs_to_jअगरfies(info->desc->max_rx_समयout_ms);
-		अगर (!रुको_क्रम_completion_समयout(&xfer->करोne, समयout)) अणु
+	} else {
+		/* And we wait for the response. */
+		timeout = msecs_to_jiffies(info->desc->max_rx_timeout_ms);
+		if (!wait_for_completion_timeout(&xfer->done, timeout)) {
 			dev_err(dev, "timed out in resp(caller: %pS)\n",
-				(व्योम *)_RET_IP_);
+				(void *)_RET_IP_);
 			ret = -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!ret && xfer->hdr.status)
-		ret = scmi_to_linux_त्रुटि_सं(xfer->hdr.status);
+	if (!ret && xfer->hdr.status)
+		ret = scmi_to_linux_errno(xfer->hdr.status);
 
-	अगर (info->desc->ops->mark_txकरोne)
-		info->desc->ops->mark_txकरोne(cinfo, ret);
+	if (info->desc->ops->mark_txdone)
+		info->desc->ops->mark_txdone(cinfo, ret);
 
 	trace_scmi_xfer_end(xfer->transfer_id, xfer->hdr.id,
 			    xfer->hdr.protocol_id, xfer->hdr.seq, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम reset_rx_to_maxsz(स्थिर काष्ठा scmi_protocol_handle *ph,
-			      काष्ठा scmi_xfer *xfer)
-अणु
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
-	काष्ठा scmi_info *info = handle_to_scmi_info(pi->handle);
+static void reset_rx_to_maxsz(const struct scmi_protocol_handle *ph,
+			      struct scmi_xfer *xfer)
+{
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
+	struct scmi_info *info = handle_to_scmi_info(pi->handle);
 
 	xfer->rx.len = info->desc->max_msg_size;
-पूर्ण
+}
 
-#घोषणा SCMI_MAX_RESPONSE_TIMEOUT	(2 * MSEC_PER_SEC)
+#define SCMI_MAX_RESPONSE_TIMEOUT	(2 * MSEC_PER_SEC)
 
 /**
- * करो_xfer_with_response() - Do one transfer and रुको until the delayed
+ * do_xfer_with_response() - Do one transfer and wait until the delayed
  *	response is received
  *
- * @ph: Poपूर्णांकer to SCMI protocol handle
- * @xfer: Transfer to initiate and रुको क्रम response
+ * @ph: Pointer to SCMI protocol handle
+ * @xfer: Transfer to initiate and wait for response
  *
- * Return: -ETIMEDOUT in हाल of no delayed response, अगर transmit error,
- *	वापस corresponding error, अन्यथा अगर all goes well, वापस 0.
+ * Return: -ETIMEDOUT in case of no delayed response, if transmit error,
+ *	return corresponding error, else if all goes well, return 0.
  */
-अटल पूर्णांक करो_xfer_with_response(स्थिर काष्ठा scmi_protocol_handle *ph,
-				 काष्ठा scmi_xfer *xfer)
-अणु
-	पूर्णांक ret, समयout = msecs_to_jअगरfies(SCMI_MAX_RESPONSE_TIMEOUT);
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
+static int do_xfer_with_response(const struct scmi_protocol_handle *ph,
+				 struct scmi_xfer *xfer)
+{
+	int ret, timeout = msecs_to_jiffies(SCMI_MAX_RESPONSE_TIMEOUT);
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
 	DECLARE_COMPLETION_ONSTACK(async_response);
 
 	xfer->hdr.protocol_id = pi->proto->id;
 
-	xfer->async_करोne = &async_response;
+	xfer->async_done = &async_response;
 
-	ret = करो_xfer(ph, xfer);
-	अगर (!ret && !रुको_क्रम_completion_समयout(xfer->async_करोne, समयout))
+	ret = do_xfer(ph, xfer);
+	if (!ret && !wait_for_completion_timeout(xfer->async_done, timeout))
 		ret = -ETIMEDOUT;
 
-	xfer->async_करोne = शून्य;
-	वापस ret;
-पूर्ण
+	xfer->async_done = NULL;
+	return ret;
+}
 
 /**
- * xfer_get_init() - Allocate and initialise one message क्रम transmit
+ * xfer_get_init() - Allocate and initialise one message for transmit
  *
- * @ph: Poपूर्णांकer to SCMI protocol handle
- * @msg_id: Message identअगरier
+ * @ph: Pointer to SCMI protocol handle
+ * @msg_id: Message identifier
  * @tx_size: transmit message size
  * @rx_size: receive message size
- * @p: poपूर्णांकer to the allocated and initialised message
+ * @p: pointer to the allocated and initialised message
  *
  * This function allocates the message using @scmi_xfer_get and
  * initialise the header.
  *
- * Return: 0 अगर all went fine with @p poपूर्णांकing to message, अन्यथा
+ * Return: 0 if all went fine with @p pointing to message, else
  *	corresponding error.
  */
-अटल पूर्णांक xfer_get_init(स्थिर काष्ठा scmi_protocol_handle *ph,
-			 u8 msg_id, माप_प्रकार tx_size, माप_प्रकार rx_size,
-			 काष्ठा scmi_xfer **p)
-अणु
-	पूर्णांक ret;
-	काष्ठा scmi_xfer *xfer;
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
-	काष्ठा scmi_info *info = handle_to_scmi_info(pi->handle);
-	काष्ठा scmi_xfers_info *minfo = &info->tx_minfo;
-	काष्ठा device *dev = info->dev;
+static int xfer_get_init(const struct scmi_protocol_handle *ph,
+			 u8 msg_id, size_t tx_size, size_t rx_size,
+			 struct scmi_xfer **p)
+{
+	int ret;
+	struct scmi_xfer *xfer;
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
+	struct scmi_info *info = handle_to_scmi_info(pi->handle);
+	struct scmi_xfers_info *minfo = &info->tx_minfo;
+	struct device *dev = info->dev;
 
 	/* Ensure we have sane transfer sizes */
-	अगर (rx_size > info->desc->max_msg_size ||
+	if (rx_size > info->desc->max_msg_size ||
 	    tx_size > info->desc->max_msg_size)
-		वापस -दुस्फल;
+		return -ERANGE;
 
 	xfer = scmi_xfer_get(pi->handle, minfo);
-	अगर (IS_ERR(xfer)) अणु
+	if (IS_ERR(xfer)) {
 		ret = PTR_ERR(xfer);
 		dev_err(dev, "failed to get free message slot(%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	xfer->tx.len = tx_size;
 	xfer->rx.len = rx_size ? : info->desc->max_msg_size;
@@ -567,79 +566,79 @@ __scmi_xfer_put(काष्ठा scmi_xfers_info *minfo, काष्ठा sc
 
 	*p = xfer;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * version_get() - command to get the revision of the SCMI entity
  *
- * @ph: Poपूर्णांकer to SCMI protocol handle
- * @version: Holds वापसed version of protocol.
+ * @ph: Pointer to SCMI protocol handle
+ * @version: Holds returned version of protocol.
  *
- * Updates the SCMI inक्रमmation in the पूर्णांकernal data काष्ठाure.
+ * Updates the SCMI information in the internal data structure.
  *
- * Return: 0 अगर all went fine, अन्यथा वापस appropriate error.
+ * Return: 0 if all went fine, else return appropriate error.
  */
-अटल पूर्णांक version_get(स्थिर काष्ठा scmi_protocol_handle *ph, u32 *version)
-अणु
-	पूर्णांक ret;
+static int version_get(const struct scmi_protocol_handle *ph, u32 *version)
+{
+	int ret;
 	__le32 *rev_info;
-	काष्ठा scmi_xfer *t;
+	struct scmi_xfer *t;
 
-	ret = xfer_get_init(ph, PROTOCOL_VERSION, 0, माप(*version), &t);
-	अगर (ret)
-		वापस ret;
+	ret = xfer_get_init(ph, PROTOCOL_VERSION, 0, sizeof(*version), &t);
+	if (ret)
+		return ret;
 
-	ret = करो_xfer(ph, t);
-	अगर (!ret) अणु
+	ret = do_xfer(ph, t);
+	if (!ret) {
 		rev_info = t->rx.buf;
 		*version = le32_to_cpu(*rev_info);
-	पूर्ण
+	}
 
 	xfer_put(ph, t);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * scmi_set_protocol_priv  - Set protocol specअगरic data at init समय
+ * scmi_set_protocol_priv  - Set protocol specific data at init time
  *
  * @ph: A reference to the protocol handle.
- * @priv: The निजी data to set.
+ * @priv: The private data to set.
  *
  * Return: 0 on Success
  */
-अटल पूर्णांक scmi_set_protocol_priv(स्थिर काष्ठा scmi_protocol_handle *ph,
-				  व्योम *priv)
-अणु
-	काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
+static int scmi_set_protocol_priv(const struct scmi_protocol_handle *ph,
+				  void *priv)
+{
+	struct scmi_protocol_instance *pi = ph_to_pi(ph);
 
 	pi->priv = priv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * scmi_get_protocol_priv  - Set protocol specअगरic data at init समय
+ * scmi_get_protocol_priv  - Set protocol specific data at init time
  *
  * @ph: A reference to the protocol handle.
  *
- * Return: Protocol निजी data अगर any was set.
+ * Return: Protocol private data if any was set.
  */
-अटल व्योम *scmi_get_protocol_priv(स्थिर काष्ठा scmi_protocol_handle *ph)
-अणु
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
+static void *scmi_get_protocol_priv(const struct scmi_protocol_handle *ph)
+{
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
 
-	वापस pi->priv;
-पूर्ण
+	return pi->priv;
+}
 
-अटल स्थिर काष्ठा scmi_xfer_ops xfer_ops = अणु
+static const struct scmi_xfer_ops xfer_ops = {
 	.version_get = version_get,
 	.xfer_get_init = xfer_get_init,
 	.reset_rx_to_maxsz = reset_rx_to_maxsz,
-	.करो_xfer = करो_xfer,
-	.करो_xfer_with_response = करो_xfer_with_response,
+	.do_xfer = do_xfer,
+	.do_xfer_with_response = do_xfer_with_response,
 	.xfer_put = xfer_put,
-पूर्ण;
+};
 
 /**
  * scmi_revision_area_get  - Retrieve version memory area.
@@ -652,13 +651,13 @@ __scmi_xfer_put(काष्ठा scmi_xfers_info *minfo, काष्ठा sc
  * Return: A reference to the version memory area associated to the SCMI
  *	   instance underlying this protocol handle.
  */
-काष्ठा scmi_revision_info *
-scmi_revision_area_get(स्थिर काष्ठा scmi_protocol_handle *ph)
-अणु
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
+struct scmi_revision_info *
+scmi_revision_area_get(const struct scmi_protocol_handle *ph)
+{
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
 
-	वापस pi->handle->version;
-पूर्ण
+	return pi->handle->version;
+}
 
 /**
  * scmi_alloc_init_protocol_instance  - Allocate and initialize a protocol
@@ -667,34 +666,34 @@ scmi_revision_area_get(स्थिर काष्ठा scmi_protocol_handle *
  * @proto: The protocol descriptor.
  *
  * Allocate a new protocol instance descriptor, using the provided @proto
- * description, against the specअगरied SCMI instance @info, and initialize it;
+ * description, against the specified SCMI instance @info, and initialize it;
  * all resources management is handled via a dedicated per-protocol devres
  * group.
  *
- * Context: Assumes to be called with @protocols_mtx alपढ़ोy acquired.
+ * Context: Assumes to be called with @protocols_mtx already acquired.
  * Return: A reference to a freshly allocated and initialized protocol instance
  *	   or ERR_PTR on failure. On failure the @proto reference is at first
- *	   put using @scmi_protocol_put() beक्रमe releasing all the devres group.
+ *	   put using @scmi_protocol_put() before releasing all the devres group.
  */
-अटल काष्ठा scmi_protocol_instance *
-scmi_alloc_init_protocol_instance(काष्ठा scmi_info *info,
-				  स्थिर काष्ठा scmi_protocol *proto)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	व्योम *gid;
-	काष्ठा scmi_protocol_instance *pi;
-	स्थिर काष्ठा scmi_handle *handle = &info->handle;
+static struct scmi_protocol_instance *
+scmi_alloc_init_protocol_instance(struct scmi_info *info,
+				  const struct scmi_protocol *proto)
+{
+	int ret = -ENOMEM;
+	void *gid;
+	struct scmi_protocol_instance *pi;
+	const struct scmi_handle *handle = &info->handle;
 
-	/* Protocol specअगरic devres group */
-	gid = devres_खोलो_group(handle->dev, शून्य, GFP_KERNEL);
-	अगर (!gid) अणु
+	/* Protocol specific devres group */
+	gid = devres_open_group(handle->dev, NULL, GFP_KERNEL);
+	if (!gid) {
 		scmi_protocol_put(proto->id);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	pi = devm_kzalloc(handle->dev, माप(*pi), GFP_KERNEL);
-	अगर (!pi)
-		जाओ clean;
+	pi = devm_kzalloc(handle->dev, sizeof(*pi), GFP_KERNEL);
+	if (!pi)
+		goto clean;
 
 	pi->gid = gid;
 	pi->proto = proto;
@@ -704,212 +703,212 @@ scmi_alloc_init_protocol_instance(काष्ठा scmi_info *info,
 	pi->ph.set_priv = scmi_set_protocol_priv;
 	pi->ph.get_priv = scmi_get_protocol_priv;
 	refcount_set(&pi->users, 1);
-	/* proto->init is assured NON शून्य by scmi_protocol_रेजिस्टर */
+	/* proto->init is assured NON NULL by scmi_protocol_register */
 	ret = pi->proto->instance_init(&pi->ph);
-	अगर (ret)
-		जाओ clean;
+	if (ret)
+		goto clean;
 
 	ret = idr_alloc(&info->protocols, pi, proto->id, proto->id + 1,
 			GFP_KERNEL);
-	अगर (ret != proto->id)
-		जाओ clean;
+	if (ret != proto->id)
+		goto clean;
 
 	/*
-	 * Warn but ignore events registration errors since we करो not want
-	 * to skip whole protocols अगर their notअगरications are messed up.
+	 * Warn but ignore events registration errors since we do not want
+	 * to skip whole protocols if their notifications are messed up.
 	 */
-	अगर (pi->proto->events) अणु
-		ret = scmi_रेजिस्टर_protocol_events(handle, pi->proto->id,
+	if (pi->proto->events) {
+		ret = scmi_register_protocol_events(handle, pi->proto->id,
 						    &pi->ph,
 						    pi->proto->events);
-		अगर (ret)
+		if (ret)
 			dev_warn(handle->dev,
 				 "Protocol:%X - Events Registration Failed - err:%d\n",
 				 pi->proto->id, ret);
-	पूर्ण
+	}
 
-	devres_बंद_group(handle->dev, pi->gid);
+	devres_close_group(handle->dev, pi->gid);
 	dev_dbg(handle->dev, "Initialized protocol: 0x%X\n", pi->proto->id);
 
-	वापस pi;
+	return pi;
 
 clean:
-	/* Take care to put the protocol module's owner beक्रमe releasing all */
+	/* Take care to put the protocol module's owner before releasing all */
 	scmi_protocol_put(proto->id);
 	devres_release_group(handle->dev, gid);
 out:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /**
  * scmi_get_protocol_instance  - Protocol initialization helper.
- * @handle: A reference to the SCMI platक्रमm instance.
+ * @handle: A reference to the SCMI platform instance.
  * @protocol_id: The protocol being requested.
  *
- * In हाल the required protocol has never been requested beक्रमe क्रम this
- * instance, allocate and initialize all the needed काष्ठाures जबतक handling
+ * In case the required protocol has never been requested before for this
+ * instance, allocate and initialize all the needed structures while handling
  * resource allocation with a dedicated per-protocol devres subgroup.
  *
  * Return: A reference to an initialized protocol instance or error on failure:
- *	   in particular वापसs -EPROBE_DEFER when the desired protocol could
+ *	   in particular returns -EPROBE_DEFER when the desired protocol could
  *	   NOT be found.
  */
-अटल काष्ठा scmi_protocol_instance * __must_check
-scmi_get_protocol_instance(स्थिर काष्ठा scmi_handle *handle, u8 protocol_id)
-अणु
-	काष्ठा scmi_protocol_instance *pi;
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
+static struct scmi_protocol_instance * __must_check
+scmi_get_protocol_instance(const struct scmi_handle *handle, u8 protocol_id)
+{
+	struct scmi_protocol_instance *pi;
+	struct scmi_info *info = handle_to_scmi_info(handle);
 
 	mutex_lock(&info->protocols_mtx);
 	pi = idr_find(&info->protocols, protocol_id);
 
-	अगर (pi) अणु
+	if (pi) {
 		refcount_inc(&pi->users);
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा scmi_protocol *proto;
+	} else {
+		const struct scmi_protocol *proto;
 
-		/* Fails अगर protocol not रेजिस्टरed on bus */
+		/* Fails if protocol not registered on bus */
 		proto = scmi_protocol_get(protocol_id);
-		अगर (proto)
+		if (proto)
 			pi = scmi_alloc_init_protocol_instance(info, proto);
-		अन्यथा
+		else
 			pi = ERR_PTR(-EPROBE_DEFER);
-	पूर्ण
+	}
 	mutex_unlock(&info->protocols_mtx);
 
-	वापस pi;
-पूर्ण
+	return pi;
+}
 
 /**
  * scmi_protocol_acquire  - Protocol acquire
- * @handle: A reference to the SCMI platक्रमm instance.
+ * @handle: A reference to the SCMI platform instance.
  * @protocol_id: The protocol being requested.
  *
- * Register a new user क्रम the requested protocol on the specअगरied SCMI
- * platक्रमm instance, possibly triggering its initialization on first user.
+ * Register a new user for the requested protocol on the specified SCMI
+ * platform instance, possibly triggering its initialization on first user.
  *
- * Return: 0 अगर protocol was acquired successfully.
+ * Return: 0 if protocol was acquired successfully.
  */
-पूर्णांक scmi_protocol_acquire(स्थिर काष्ठा scmi_handle *handle, u8 protocol_id)
-अणु
-	वापस PTR_ERR_OR_ZERO(scmi_get_protocol_instance(handle, protocol_id));
-पूर्ण
+int scmi_protocol_acquire(const struct scmi_handle *handle, u8 protocol_id)
+{
+	return PTR_ERR_OR_ZERO(scmi_get_protocol_instance(handle, protocol_id));
+}
 
 /**
  * scmi_protocol_release  - Protocol de-initialization helper.
- * @handle: A reference to the SCMI platक्रमm instance.
+ * @handle: A reference to the SCMI platform instance.
  * @protocol_id: The protocol being requested.
  *
- * Remove one user क्रम the specअगरied protocol and triggers de-initialization
+ * Remove one user for the specified protocol and triggers de-initialization
  * and resources de-allocation once the last user has gone.
  */
-व्योम scmi_protocol_release(स्थिर काष्ठा scmi_handle *handle, u8 protocol_id)
-अणु
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
-	काष्ठा scmi_protocol_instance *pi;
+void scmi_protocol_release(const struct scmi_handle *handle, u8 protocol_id)
+{
+	struct scmi_info *info = handle_to_scmi_info(handle);
+	struct scmi_protocol_instance *pi;
 
 	mutex_lock(&info->protocols_mtx);
 	pi = idr_find(&info->protocols, protocol_id);
-	अगर (WARN_ON(!pi))
-		जाओ out;
+	if (WARN_ON(!pi))
+		goto out;
 
-	अगर (refcount_dec_and_test(&pi->users)) अणु
-		व्योम *gid = pi->gid;
+	if (refcount_dec_and_test(&pi->users)) {
+		void *gid = pi->gid;
 
-		अगर (pi->proto->events)
-			scmi_deरेजिस्टर_protocol_events(handle, protocol_id);
+		if (pi->proto->events)
+			scmi_deregister_protocol_events(handle, protocol_id);
 
-		अगर (pi->proto->instance_deinit)
+		if (pi->proto->instance_deinit)
 			pi->proto->instance_deinit(&pi->ph);
 
-		idr_हटाओ(&info->protocols, protocol_id);
+		idr_remove(&info->protocols, protocol_id);
 
 		scmi_protocol_put(protocol_id);
 
 		devres_release_group(handle->dev, gid);
 		dev_dbg(handle->dev, "De-Initialized protocol: 0x%X\n",
 			protocol_id);
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&info->protocols_mtx);
-पूर्ण
+}
 
-व्योम scmi_setup_protocol_implemented(स्थिर काष्ठा scmi_protocol_handle *ph,
+void scmi_setup_protocol_implemented(const struct scmi_protocol_handle *ph,
 				     u8 *prot_imp)
-अणु
-	स्थिर काष्ठा scmi_protocol_instance *pi = ph_to_pi(ph);
-	काष्ठा scmi_info *info = handle_to_scmi_info(pi->handle);
+{
+	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
+	struct scmi_info *info = handle_to_scmi_info(pi->handle);
 
 	info->protocols_imp = prot_imp;
-पूर्ण
+}
 
-अटल bool
-scmi_is_protocol_implemented(स्थिर काष्ठा scmi_handle *handle, u8 prot_id)
-अणु
-	पूर्णांक i;
-	काष्ठा scmi_info *info = handle_to_scmi_info(handle);
+static bool
+scmi_is_protocol_implemented(const struct scmi_handle *handle, u8 prot_id)
+{
+	int i;
+	struct scmi_info *info = handle_to_scmi_info(handle);
 
-	अगर (!info->protocols_imp)
-		वापस false;
+	if (!info->protocols_imp)
+		return false;
 
-	क्रम (i = 0; i < MAX_PROTOCOLS_IMP; i++)
-		अगर (info->protocols_imp[i] == prot_id)
-			वापस true;
-	वापस false;
-पूर्ण
+	for (i = 0; i < MAX_PROTOCOLS_IMP; i++)
+		if (info->protocols_imp[i] == prot_id)
+			return true;
+	return false;
+}
 
-काष्ठा scmi_protocol_devres अणु
-	स्थिर काष्ठा scmi_handle *handle;
+struct scmi_protocol_devres {
+	const struct scmi_handle *handle;
 	u8 protocol_id;
-पूर्ण;
+};
 
-अटल व्योम scmi_devm_release_protocol(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा scmi_protocol_devres *dres = res;
+static void scmi_devm_release_protocol(struct device *dev, void *res)
+{
+	struct scmi_protocol_devres *dres = res;
 
 	scmi_protocol_release(dres->handle, dres->protocol_id);
-पूर्ण
+}
 
 /**
  * scmi_devm_protocol_get  - Devres managed get protocol operations and handle
- * @sdev: A reference to an scmi_device whose embedded काष्ठा device is to
- *	  be used क्रम devres accounting.
+ * @sdev: A reference to an scmi_device whose embedded struct device is to
+ *	  be used for devres accounting.
  * @protocol_id: The protocol being requested.
- * @ph: A poपूर्णांकer reference used to pass back the associated protocol handle.
+ * @ph: A pointer reference used to pass back the associated protocol handle.
  *
- * Get hold of a protocol accounting क्रम its usage, eventually triggering its
- * initialization, and वापसing the protocol specअगरic operations and related
+ * Get hold of a protocol accounting for its usage, eventually triggering its
+ * initialization, and returning the protocol specific operations and related
  * protocol handle which will be used as first argument in most of the
  * protocols operations methods.
- * Being a devres based managed method, protocol hold will be स्वतःmatically
+ * Being a devres based managed method, protocol hold will be automatically
  * released, and possibly de-initialized on last user, once the SCMI driver
  * owning the scmi_device is unbound from it.
  *
  * Return: A reference to the requested protocol operations or error.
- *	   Must be checked क्रम errors by caller.
+ *	   Must be checked for errors by caller.
  */
-अटल स्थिर व्योम __must_check *
-scmi_devm_protocol_get(काष्ठा scmi_device *sdev, u8 protocol_id,
-		       काष्ठा scmi_protocol_handle **ph)
-अणु
-	काष्ठा scmi_protocol_instance *pi;
-	काष्ठा scmi_protocol_devres *dres;
-	काष्ठा scmi_handle *handle = sdev->handle;
+static const void __must_check *
+scmi_devm_protocol_get(struct scmi_device *sdev, u8 protocol_id,
+		       struct scmi_protocol_handle **ph)
+{
+	struct scmi_protocol_instance *pi;
+	struct scmi_protocol_devres *dres;
+	struct scmi_handle *handle = sdev->handle;
 
-	अगर (!ph)
-		वापस ERR_PTR(-EINVAL);
+	if (!ph)
+		return ERR_PTR(-EINVAL);
 
 	dres = devres_alloc(scmi_devm_release_protocol,
-			    माप(*dres), GFP_KERNEL);
-	अगर (!dres)
-		वापस ERR_PTR(-ENOMEM);
+			    sizeof(*dres), GFP_KERNEL);
+	if (!dres)
+		return ERR_PTR(-ENOMEM);
 
 	pi = scmi_get_protocol_instance(handle, protocol_id);
-	अगर (IS_ERR(pi)) अणु
-		devres_मुक्त(dres);
-		वापस pi;
-	पूर्ण
+	if (IS_ERR(pi)) {
+		devres_free(dres);
+		return pi;
+	}
 
 	dres->handle = handle;
 	dres->protocol_id = protocol_id;
@@ -917,311 +916,311 @@ scmi_devm_protocol_get(काष्ठा scmi_device *sdev, u8 protocol_id,
 
 	*ph = &pi->ph;
 
-	वापस pi->proto->ops;
-पूर्ण
+	return pi->proto->ops;
+}
 
-अटल पूर्णांक scmi_devm_protocol_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा scmi_protocol_devres *dres = res;
+static int scmi_devm_protocol_match(struct device *dev, void *res, void *data)
+{
+	struct scmi_protocol_devres *dres = res;
 
-	अगर (WARN_ON(!dres || !data))
-		वापस 0;
+	if (WARN_ON(!dres || !data))
+		return 0;
 
-	वापस dres->protocol_id == *((u8 *)data);
-पूर्ण
+	return dres->protocol_id == *((u8 *)data);
+}
 
 /**
  * scmi_devm_protocol_put  - Devres managed put protocol operations and handle
- * @sdev: A reference to an scmi_device whose embedded काष्ठा device is to
- *	  be used क्रम devres accounting.
+ * @sdev: A reference to an scmi_device whose embedded struct device is to
+ *	  be used for devres accounting.
  * @protocol_id: The protocol being requested.
  *
  * Explicitly release a protocol hold previously obtained calling the above
  * @scmi_devm_protocol_get.
  */
-अटल व्योम scmi_devm_protocol_put(काष्ठा scmi_device *sdev, u8 protocol_id)
-अणु
-	पूर्णांक ret;
+static void scmi_devm_protocol_put(struct scmi_device *sdev, u8 protocol_id)
+{
+	int ret;
 
 	ret = devres_release(&sdev->dev, scmi_devm_release_protocol,
 			     scmi_devm_protocol_match, &protocol_id);
 	WARN_ON(ret);
-पूर्ण
+}
 
-अटल अंतरभूत
-काष्ठा scmi_handle *scmi_handle_get_from_info_unlocked(काष्ठा scmi_info *info)
-अणु
+static inline
+struct scmi_handle *scmi_handle_get_from_info_unlocked(struct scmi_info *info)
+{
 	info->users++;
-	वापस &info->handle;
-पूर्ण
+	return &info->handle;
+}
 
 /**
- * scmi_handle_get() - Get the SCMI handle क्रम a device
+ * scmi_handle_get() - Get the SCMI handle for a device
  *
- * @dev: poपूर्णांकer to device क्रम which we want SCMI handle
+ * @dev: pointer to device for which we want SCMI handle
  *
- * NOTE: The function करोes not track inभागidual clients of the framework
- * and is expected to be मुख्यtained by caller of SCMI protocol library.
+ * NOTE: The function does not track individual clients of the framework
+ * and is expected to be maintained by caller of SCMI protocol library.
  * scmi_handle_put must be balanced with successful scmi_handle_get
  *
- * Return: poपूर्णांकer to handle अगर successful, शून्य on error
+ * Return: pointer to handle if successful, NULL on error
  */
-काष्ठा scmi_handle *scmi_handle_get(काष्ठा device *dev)
-अणु
-	काष्ठा list_head *p;
-	काष्ठा scmi_info *info;
-	काष्ठा scmi_handle *handle = शून्य;
+struct scmi_handle *scmi_handle_get(struct device *dev)
+{
+	struct list_head *p;
+	struct scmi_info *info;
+	struct scmi_handle *handle = NULL;
 
 	mutex_lock(&scmi_list_mutex);
-	list_क्रम_each(p, &scmi_list) अणु
-		info = list_entry(p, काष्ठा scmi_info, node);
-		अगर (dev->parent == info->dev) अणु
+	list_for_each(p, &scmi_list) {
+		info = list_entry(p, struct scmi_info, node);
+		if (dev->parent == info->dev) {
 			handle = scmi_handle_get_from_info_unlocked(info);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&scmi_list_mutex);
 
-	वापस handle;
-पूर्ण
+	return handle;
+}
 
 /**
  * scmi_handle_put() - Release the handle acquired by scmi_handle_get
  *
  * @handle: handle acquired by scmi_handle_get
  *
- * NOTE: The function करोes not track inभागidual clients of the framework
- * and is expected to be मुख्यtained by caller of SCMI protocol library.
+ * NOTE: The function does not track individual clients of the framework
+ * and is expected to be maintained by caller of SCMI protocol library.
  * scmi_handle_put must be balanced with successful scmi_handle_get
  *
  * Return: 0 is successfully released
- *	अगर null was passed, it वापसs -EINVAL;
+ *	if null was passed, it returns -EINVAL;
  */
-पूर्णांक scmi_handle_put(स्थिर काष्ठा scmi_handle *handle)
-अणु
-	काष्ठा scmi_info *info;
+int scmi_handle_put(const struct scmi_handle *handle)
+{
+	struct scmi_info *info;
 
-	अगर (!handle)
-		वापस -EINVAL;
+	if (!handle)
+		return -EINVAL;
 
 	info = handle_to_scmi_info(handle);
 	mutex_lock(&scmi_list_mutex);
-	अगर (!WARN_ON(!info->users))
+	if (!WARN_ON(!info->users))
 		info->users--;
 	mutex_unlock(&scmi_list_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __scmi_xfer_info_init(काष्ठा scmi_info *sinfo,
-				 काष्ठा scmi_xfers_info *info)
-अणु
-	पूर्णांक i;
-	काष्ठा scmi_xfer *xfer;
-	काष्ठा device *dev = sinfo->dev;
-	स्थिर काष्ठा scmi_desc *desc = sinfo->desc;
+static int __scmi_xfer_info_init(struct scmi_info *sinfo,
+				 struct scmi_xfers_info *info)
+{
+	int i;
+	struct scmi_xfer *xfer;
+	struct device *dev = sinfo->dev;
+	const struct scmi_desc *desc = sinfo->desc;
 
 	/* Pre-allocated messages, no more than what hdr.seq can support */
-	अगर (WARN_ON(desc->max_msg >= MSG_TOKEN_MAX)) अणु
+	if (WARN_ON(desc->max_msg >= MSG_TOKEN_MAX)) {
 		dev_err(dev, "Maximum message of %d exceeds supported %ld\n",
 			desc->max_msg, MSG_TOKEN_MAX);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	info->xfer_block = devm_kसुस्मृति(dev, desc->max_msg,
-					माप(*info->xfer_block), GFP_KERNEL);
-	अगर (!info->xfer_block)
-		वापस -ENOMEM;
+	info->xfer_block = devm_kcalloc(dev, desc->max_msg,
+					sizeof(*info->xfer_block), GFP_KERNEL);
+	if (!info->xfer_block)
+		return -ENOMEM;
 
-	info->xfer_alloc_table = devm_kसुस्मृति(dev, BITS_TO_LONGS(desc->max_msg),
-					      माप(दीर्घ), GFP_KERNEL);
-	अगर (!info->xfer_alloc_table)
-		वापस -ENOMEM;
+	info->xfer_alloc_table = devm_kcalloc(dev, BITS_TO_LONGS(desc->max_msg),
+					      sizeof(long), GFP_KERNEL);
+	if (!info->xfer_alloc_table)
+		return -ENOMEM;
 
-	/* Pre-initialize the buffer poपूर्णांकer to pre-allocated buffers */
-	क्रम (i = 0, xfer = info->xfer_block; i < desc->max_msg; i++, xfer++) अणु
-		xfer->rx.buf = devm_kसुस्मृति(dev, माप(u8), desc->max_msg_size,
+	/* Pre-initialize the buffer pointer to pre-allocated buffers */
+	for (i = 0, xfer = info->xfer_block; i < desc->max_msg; i++, xfer++) {
+		xfer->rx.buf = devm_kcalloc(dev, sizeof(u8), desc->max_msg_size,
 					    GFP_KERNEL);
-		अगर (!xfer->rx.buf)
-			वापस -ENOMEM;
+		if (!xfer->rx.buf)
+			return -ENOMEM;
 
 		xfer->tx.buf = xfer->rx.buf;
-		init_completion(&xfer->करोne);
-	पूर्ण
+		init_completion(&xfer->done);
+	}
 
 	spin_lock_init(&info->xfer_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scmi_xfer_info_init(काष्ठा scmi_info *sinfo)
-अणु
-	पूर्णांक ret = __scmi_xfer_info_init(sinfo, &sinfo->tx_minfo);
+static int scmi_xfer_info_init(struct scmi_info *sinfo)
+{
+	int ret = __scmi_xfer_info_init(sinfo, &sinfo->tx_minfo);
 
-	अगर (!ret && idr_find(&sinfo->rx_idr, SCMI_PROTOCOL_BASE))
+	if (!ret && idr_find(&sinfo->rx_idr, SCMI_PROTOCOL_BASE))
 		ret = __scmi_xfer_info_init(sinfo, &sinfo->rx_minfo);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scmi_chan_setup(काष्ठा scmi_info *info, काष्ठा device *dev,
-			   पूर्णांक prot_id, bool tx)
-अणु
-	पूर्णांक ret, idx;
-	काष्ठा scmi_chan_info *cinfo;
-	काष्ठा idr *idr;
+static int scmi_chan_setup(struct scmi_info *info, struct device *dev,
+			   int prot_id, bool tx)
+{
+	int ret, idx;
+	struct scmi_chan_info *cinfo;
+	struct idr *idr;
 
 	/* Transmit channel is first entry i.e. index 0 */
 	idx = tx ? 0 : 1;
 	idr = tx ? &info->tx_idr : &info->rx_idr;
 
-	/* check अगर alपढ़ोy allocated, used क्रम multiple device per protocol */
+	/* check if already allocated, used for multiple device per protocol */
 	cinfo = idr_find(idr, prot_id);
-	अगर (cinfo)
-		वापस 0;
+	if (cinfo)
+		return 0;
 
-	अगर (!info->desc->ops->chan_available(dev, idx)) अणु
+	if (!info->desc->ops->chan_available(dev, idx)) {
 		cinfo = idr_find(idr, SCMI_PROTOCOL_BASE);
-		अगर (unlikely(!cinfo)) /* Possible only अगर platक्रमm has no Rx */
-			वापस -EINVAL;
-		जाओ idr_alloc;
-	पूर्ण
+		if (unlikely(!cinfo)) /* Possible only if platform has no Rx */
+			return -EINVAL;
+		goto idr_alloc;
+	}
 
-	cinfo = devm_kzalloc(info->dev, माप(*cinfo), GFP_KERNEL);
-	अगर (!cinfo)
-		वापस -ENOMEM;
+	cinfo = devm_kzalloc(info->dev, sizeof(*cinfo), GFP_KERNEL);
+	if (!cinfo)
+		return -ENOMEM;
 
 	cinfo->dev = dev;
 
 	ret = info->desc->ops->chan_setup(cinfo, info->dev, tx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 idr_alloc:
 	ret = idr_alloc(idr, cinfo, prot_id, prot_id + 1, GFP_KERNEL);
-	अगर (ret != prot_id) अणु
+	if (ret != prot_id) {
 		dev_err(dev, "unable to allocate SCMI idr slot err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	cinfo->handle = &info->handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-scmi_txrx_setup(काष्ठा scmi_info *info, काष्ठा device *dev, पूर्णांक prot_id)
-अणु
-	पूर्णांक ret = scmi_chan_setup(info, dev, prot_id, true);
+static inline int
+scmi_txrx_setup(struct scmi_info *info, struct device *dev, int prot_id)
+{
+	int ret = scmi_chan_setup(info, dev, prot_id, true);
 
-	अगर (!ret) /* Rx is optional, hence no error check */
+	if (!ret) /* Rx is optional, hence no error check */
 		scmi_chan_setup(info, dev, prot_id, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * scmi_get_protocol_device  - Helper to get/create an SCMI device.
  *
- * @np: A device node representing a valid active protocols क्रम the referred
+ * @np: A device node representing a valid active protocols for the referred
  * SCMI instance.
- * @info: The referred SCMI instance क्रम which we are getting/creating this
+ * @info: The referred SCMI instance for which we are getting/creating this
  * device.
  * @prot_id: The protocol ID.
  * @name: The device name.
  *
- * Referring to the specअगरic SCMI instance identअगरied by @info, this helper
- * takes care to वापस a properly initialized device matching the requested
- * @proto_id and @name: अगर device was still not existent it is created as a
- * child of the specअगरied SCMI instance @info and its transport properly
+ * Referring to the specific SCMI instance identified by @info, this helper
+ * takes care to return a properly initialized device matching the requested
+ * @proto_id and @name: if device was still not existent it is created as a
+ * child of the specified SCMI instance @info and its transport properly
  * initialized as usual.
  */
-अटल अंतरभूत काष्ठा scmi_device *
-scmi_get_protocol_device(काष्ठा device_node *np, काष्ठा scmi_info *info,
-			 पूर्णांक prot_id, स्थिर अक्षर *name)
-अणु
-	काष्ठा scmi_device *sdev;
+static inline struct scmi_device *
+scmi_get_protocol_device(struct device_node *np, struct scmi_info *info,
+			 int prot_id, const char *name)
+{
+	struct scmi_device *sdev;
 
-	/* Alपढ़ोy created क्रम this parent SCMI instance ? */
+	/* Already created for this parent SCMI instance ? */
 	sdev = scmi_child_dev_find(info->dev, prot_id, name);
-	अगर (sdev)
-		वापस sdev;
+	if (sdev)
+		return sdev;
 
 	pr_debug("Creating SCMI device (%s) for protocol %x\n", name, prot_id);
 
 	sdev = scmi_device_create(np, info->dev, prot_id, name);
-	अगर (!sdev) अणु
+	if (!sdev) {
 		dev_err(info->dev, "failed to create %d protocol device\n",
 			prot_id);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (scmi_txrx_setup(info, &sdev->dev, prot_id)) अणु
+	if (scmi_txrx_setup(info, &sdev->dev, prot_id)) {
 		dev_err(&sdev->dev, "failed to setup transport\n");
 		scmi_device_destroy(sdev);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस sdev;
-पूर्ण
+	return sdev;
+}
 
-अटल अंतरभूत व्योम
-scmi_create_protocol_device(काष्ठा device_node *np, काष्ठा scmi_info *info,
-			    पूर्णांक prot_id, स्थिर अक्षर *name)
-अणु
-	काष्ठा scmi_device *sdev;
+static inline void
+scmi_create_protocol_device(struct device_node *np, struct scmi_info *info,
+			    int prot_id, const char *name)
+{
+	struct scmi_device *sdev;
 
 	sdev = scmi_get_protocol_device(np, info, prot_id, name);
-	अगर (!sdev)
-		वापस;
+	if (!sdev)
+		return;
 
-	/* setup handle now as the transport is पढ़ोy */
+	/* setup handle now as the transport is ready */
 	scmi_set_handle(sdev);
-पूर्ण
+}
 
 /**
- * scmi_create_protocol_devices  - Create devices क्रम all pending requests क्रम
+ * scmi_create_protocol_devices  - Create devices for all pending requests for
  * this SCMI instance.
  *
  * @np: The device node describing the protocol
  * @info: The SCMI instance descriptor
  * @prot_id: The protocol ID
  *
- * All devices previously requested क्रम this instance (अगर any) are found and
+ * All devices previously requested for this instance (if any) are found and
  * created by scanning the proper @&scmi_requested_devices entry.
  */
-अटल व्योम scmi_create_protocol_devices(काष्ठा device_node *np,
-					 काष्ठा scmi_info *info, पूर्णांक prot_id)
-अणु
-	काष्ठा list_head *phead;
+static void scmi_create_protocol_devices(struct device_node *np,
+					 struct scmi_info *info, int prot_id)
+{
+	struct list_head *phead;
 
 	mutex_lock(&scmi_requested_devices_mtx);
 	phead = idr_find(&scmi_requested_devices, prot_id);
-	अगर (phead) अणु
-		काष्ठा scmi_requested_dev *rdev;
+	if (phead) {
+		struct scmi_requested_dev *rdev;
 
-		list_क्रम_each_entry(rdev, phead, node)
+		list_for_each_entry(rdev, phead, node)
 			scmi_create_protocol_device(np, info, prot_id,
 						    rdev->id_table->name);
-	पूर्ण
+	}
 	mutex_unlock(&scmi_requested_devices_mtx);
-पूर्ण
+}
 
 /**
  * scmi_protocol_device_request  - Helper to request a device
  *
- * @id_table: A protocol/name pair descriptor क्रम the device to be created.
+ * @id_table: A protocol/name pair descriptor for the device to be created.
  *
- * This helper let an SCMI driver request specअगरic devices identअगरied by the
- * @id_table to be created क्रम each active SCMI instance.
+ * This helper let an SCMI driver request specific devices identified by the
+ * @id_table to be created for each active SCMI instance.
  *
- * The requested device name MUST NOT be alपढ़ोy existent क्रम any protocol;
+ * The requested device name MUST NOT be already existent for any protocol;
  * at first the freshly requested @id_table is annotated in the IDR table
- * @scmi_requested_devices, then a matching device is created क्रम each alपढ़ोy
- * active SCMI instance. (अगर any)
+ * @scmi_requested_devices, then a matching device is created for each already
+ * active SCMI instance. (if any)
  *
- * This way the requested device is created straight-away क्रम all the alपढ़ोy
- * initialized(probed) SCMI instances (handles) and it reमुख्यs also annotated
- * as pending creation अगर the requesting SCMI driver was loaded beक्रमe some
+ * This way the requested device is created straight-away for all the already
+ * initialized(probed) SCMI instances (handles) and it remains also annotated
+ * as pending creation if the requesting SCMI driver was loaded before some
  * SCMI instance and related transports were available: when such late instance
  * is probed, its probe will take care to scan the list of pending requested
  * devices and create those on its own (see @scmi_create_protocol_devices and
@@ -1229,176 +1228,176 @@ scmi_create_protocol_device(काष्ठा device_node *np, काष्ठ�
  *
  * Return: 0 on Success
  */
-पूर्णांक scmi_protocol_device_request(स्थिर काष्ठा scmi_device_id *id_table)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक id = 0;
-	काष्ठा list_head *head, *phead = शून्य;
-	काष्ठा scmi_requested_dev *rdev;
-	काष्ठा scmi_info *info;
+int scmi_protocol_device_request(const struct scmi_device_id *id_table)
+{
+	int ret = 0;
+	unsigned int id = 0;
+	struct list_head *head, *phead = NULL;
+	struct scmi_requested_dev *rdev;
+	struct scmi_info *info;
 
 	pr_debug("Requesting SCMI device (%s) for protocol %x\n",
 		 id_table->name, id_table->protocol_id);
 
 	/*
-	 * Search क्रम the matching protocol rdev list and then search
-	 * of any existent equally named device...fails अगर any duplicate found.
+	 * Search for the matching protocol rdev list and then search
+	 * of any existent equally named device...fails if any duplicate found.
 	 */
 	mutex_lock(&scmi_requested_devices_mtx);
-	idr_क्रम_each_entry(&scmi_requested_devices, head, id) अणु
-		अगर (!phead) अणु
-			/* A list found रेजिस्टरed in the IDR is never empty */
-			rdev = list_first_entry(head, काष्ठा scmi_requested_dev,
+	idr_for_each_entry(&scmi_requested_devices, head, id) {
+		if (!phead) {
+			/* A list found registered in the IDR is never empty */
+			rdev = list_first_entry(head, struct scmi_requested_dev,
 						node);
-			अगर (rdev->id_table->protocol_id ==
+			if (rdev->id_table->protocol_id ==
 			    id_table->protocol_id)
 				phead = head;
-		पूर्ण
-		list_क्रम_each_entry(rdev, head, node) अणु
-			अगर (!म_भेद(rdev->id_table->name, id_table->name)) अणु
+		}
+		list_for_each_entry(rdev, head, node) {
+			if (!strcmp(rdev->id_table->name, id_table->name)) {
 				pr_err("Ignoring duplicate request [%d] %s\n",
 				       rdev->id_table->protocol_id,
 				       rdev->id_table->name);
 				ret = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 	/*
-	 * No duplicate found क्रम requested id_table, so let's create a new
-	 * requested device entry क्रम this new valid request.
+	 * No duplicate found for requested id_table, so let's create a new
+	 * requested device entry for this new valid request.
 	 */
-	rdev = kzalloc(माप(*rdev), GFP_KERNEL);
-	अगर (!rdev) अणु
+	rdev = kzalloc(sizeof(*rdev), GFP_KERNEL);
+	if (!rdev) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rdev->id_table = id_table;
 
 	/*
 	 * Append the new requested device table descriptor to the head of the
-	 * related protocol list, eventually creating such head अगर not alपढ़ोy
+	 * related protocol list, eventually creating such head if not already
 	 * there.
 	 */
-	अगर (!phead) अणु
-		phead = kzalloc(माप(*phead), GFP_KERNEL);
-		अगर (!phead) अणु
-			kमुक्त(rdev);
+	if (!phead) {
+		phead = kzalloc(sizeof(*phead), GFP_KERNEL);
+		if (!phead) {
+			kfree(rdev);
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		INIT_LIST_HEAD(phead);
 
-		ret = idr_alloc(&scmi_requested_devices, (व्योम *)phead,
+		ret = idr_alloc(&scmi_requested_devices, (void *)phead,
 				id_table->protocol_id,
 				id_table->protocol_id + 1, GFP_KERNEL);
-		अगर (ret != id_table->protocol_id) अणु
+		if (ret != id_table->protocol_id) {
 			pr_err("Failed to save SCMI device - ret:%d\n", ret);
-			kमुक्त(rdev);
-			kमुक्त(phead);
+			kfree(rdev);
+			kfree(phead);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = 0;
-	पूर्ण
+	}
 	list_add(&rdev->node, phead);
 
 	/*
-	 * Now effectively create and initialize the requested device क्रम every
-	 * alपढ़ोy initialized SCMI instance which has रेजिस्टरed the requested
+	 * Now effectively create and initialize the requested device for every
+	 * already initialized SCMI instance which has registered the requested
 	 * protocol as a valid active one: i.e. defined in DT and supported by
-	 * current platक्रमm FW.
+	 * current platform FW.
 	 */
 	mutex_lock(&scmi_list_mutex);
-	list_क्रम_each_entry(info, &scmi_list, node) अणु
-		काष्ठा device_node *child;
+	list_for_each_entry(info, &scmi_list, node) {
+		struct device_node *child;
 
 		child = idr_find(&info->active_protocols,
 				 id_table->protocol_id);
-		अगर (child) अणु
-			काष्ठा scmi_device *sdev;
+		if (child) {
+			struct scmi_device *sdev;
 
 			sdev = scmi_get_protocol_device(child, info,
 							id_table->protocol_id,
 							id_table->name);
-			/* Set handle अगर not alपढ़ोy set: device existed */
-			अगर (sdev && !sdev->handle)
+			/* Set handle if not already set: device existed */
+			if (sdev && !sdev->handle)
 				sdev->handle =
 					scmi_handle_get_from_info_unlocked(info);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(info->dev,
 				"Failed. SCMI protocol %d not active.\n",
 				id_table->protocol_id);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&scmi_list_mutex);
 
 out:
 	mutex_unlock(&scmi_requested_devices_mtx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * scmi_protocol_device_unrequest  - Helper to unrequest a device
  *
- * @id_table: A protocol/name pair descriptor क्रम the device to be unrequested.
+ * @id_table: A protocol/name pair descriptor for the device to be unrequested.
  *
  * An helper to let an SCMI driver release its request about devices; note that
  * devices are created and initialized once the first SCMI driver request them
  * but they destroyed only on SCMI core unloading/unbinding.
  *
- * The current SCMI transport layer uses such devices as पूर्णांकernal references and
+ * The current SCMI transport layer uses such devices as internal references and
  * as such they could be shared as same transport between multiple drivers so
- * that cannot be safely destroyed till the whole SCMI stack is हटाओd.
+ * that cannot be safely destroyed till the whole SCMI stack is removed.
  * (unless adding further burden of refcounting.)
  */
-व्योम scmi_protocol_device_unrequest(स्थिर काष्ठा scmi_device_id *id_table)
-अणु
-	काष्ठा list_head *phead;
+void scmi_protocol_device_unrequest(const struct scmi_device_id *id_table)
+{
+	struct list_head *phead;
 
 	pr_debug("Unrequesting SCMI device (%s) for protocol %x\n",
 		 id_table->name, id_table->protocol_id);
 
 	mutex_lock(&scmi_requested_devices_mtx);
 	phead = idr_find(&scmi_requested_devices, id_table->protocol_id);
-	अगर (phead) अणु
-		काष्ठा scmi_requested_dev *victim, *पंचांगp;
+	if (phead) {
+		struct scmi_requested_dev *victim, *tmp;
 
-		list_क्रम_each_entry_safe(victim, पंचांगp, phead, node) अणु
-			अगर (!म_भेद(victim->id_table->name, id_table->name)) अणु
+		list_for_each_entry_safe(victim, tmp, phead, node) {
+			if (!strcmp(victim->id_table->name, id_table->name)) {
 				list_del(&victim->node);
-				kमुक्त(victim);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				kfree(victim);
+				break;
+			}
+		}
 
-		अगर (list_empty(phead)) अणु
-			idr_हटाओ(&scmi_requested_devices,
+		if (list_empty(phead)) {
+			idr_remove(&scmi_requested_devices,
 				   id_table->protocol_id);
-			kमुक्त(phead);
-		पूर्ण
-	पूर्ण
+			kfree(phead);
+		}
+	}
 	mutex_unlock(&scmi_requested_devices_mtx);
-पूर्ण
+}
 
-अटल पूर्णांक scmi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा scmi_handle *handle;
-	स्थिर काष्ठा scmi_desc *desc;
-	काष्ठा scmi_info *info;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *child, *np = dev->of_node;
+static int scmi_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct scmi_handle *handle;
+	const struct scmi_desc *desc;
+	struct scmi_info *info;
+	struct device *dev = &pdev->dev;
+	struct device_node *child, *np = dev->of_node;
 
 	desc = of_device_get_match_data(dev);
-	अगर (!desc)
-		वापस -EINVAL;
+	if (!desc)
+		return -EINVAL;
 
-	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = dev;
 	info->desc = desc;
@@ -1407,7 +1406,7 @@ out:
 	mutex_init(&info->protocols_mtx);
 	idr_init(&info->active_protocols);
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 	idr_init(&info->tx_idr);
 	idr_init(&info->rx_idr);
 
@@ -1418,210 +1417,210 @@ out:
 	handle->devm_protocol_put = scmi_devm_protocol_put;
 
 	ret = scmi_txrx_setup(info, dev, SCMI_PROTOCOL_BASE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = scmi_xfer_info_init(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (scmi_notअगरication_init(handle))
+	if (scmi_notification_init(handle))
 		dev_err(dev, "SCMI Notifications NOT available.\n");
 
 	/*
 	 * Trigger SCMI Base protocol initialization.
 	 * It's mandatory and won't be ever released/deinit until the
-	 * SCMI stack is shutकरोwn/unloaded as a whole.
+	 * SCMI stack is shutdown/unloaded as a whole.
 	 */
 	ret = scmi_protocol_acquire(handle, SCMI_PROTOCOL_BASE);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to communicate with SCMI\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_lock(&scmi_list_mutex);
 	list_add_tail(&info->node, &scmi_list);
 	mutex_unlock(&scmi_list_mutex);
 
-	क्रम_each_available_child_of_node(np, child) अणु
+	for_each_available_child_of_node(np, child) {
 		u32 prot_id;
 
-		अगर (of_property_पढ़ो_u32(child, "reg", &prot_id))
-			जारी;
+		if (of_property_read_u32(child, "reg", &prot_id))
+			continue;
 
-		अगर (!FIELD_FIT(MSG_PROTOCOL_ID_MASK, prot_id))
+		if (!FIELD_FIT(MSG_PROTOCOL_ID_MASK, prot_id))
 			dev_err(dev, "Out of range protocol %d\n", prot_id);
 
-		अगर (!scmi_is_protocol_implemented(handle, prot_id)) अणु
+		if (!scmi_is_protocol_implemented(handle, prot_id)) {
 			dev_err(dev, "SCMI protocol %d not implemented\n",
 				prot_id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Save this valid DT protocol descriptor amongst
-		 * @active_protocols क्रम this SCMI instance/
+		 * @active_protocols for this SCMI instance/
 		 */
 		ret = idr_alloc(&info->active_protocols, child,
 				prot_id, prot_id + 1, GFP_KERNEL);
-		अगर (ret != prot_id) अणु
+		if (ret != prot_id) {
 			dev_err(dev, "SCMI protocol %d already activated. Skip\n",
 				prot_id);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		of_node_get(child);
 		scmi_create_protocol_devices(child, info, prot_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम scmi_मुक्त_channel(काष्ठा scmi_chan_info *cinfo, काष्ठा idr *idr, पूर्णांक id)
-अणु
-	idr_हटाओ(idr, id);
-पूर्ण
+void scmi_free_channel(struct scmi_chan_info *cinfo, struct idr *idr, int id)
+{
+	idr_remove(idr, id);
+}
 
-अटल पूर्णांक scmi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = 0, id;
-	काष्ठा scmi_info *info = platक्रमm_get_drvdata(pdev);
-	काष्ठा idr *idr = &info->tx_idr;
-	काष्ठा device_node *child;
+static int scmi_remove(struct platform_device *pdev)
+{
+	int ret = 0, id;
+	struct scmi_info *info = platform_get_drvdata(pdev);
+	struct idr *idr = &info->tx_idr;
+	struct device_node *child;
 
 	mutex_lock(&scmi_list_mutex);
-	अगर (info->users)
+	if (info->users)
 		ret = -EBUSY;
-	अन्यथा
+	else
 		list_del(&info->node);
 	mutex_unlock(&scmi_list_mutex);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	scmi_notअगरication_निकास(&info->handle);
+	scmi_notification_exit(&info->handle);
 
 	mutex_lock(&info->protocols_mtx);
 	idr_destroy(&info->protocols);
 	mutex_unlock(&info->protocols_mtx);
 
-	idr_क्रम_each_entry(&info->active_protocols, child, id)
+	idr_for_each_entry(&info->active_protocols, child, id)
 		of_node_put(child);
 	idr_destroy(&info->active_protocols);
 
-	/* Safe to मुक्त channels since no more users */
-	ret = idr_क्रम_each(idr, info->desc->ops->chan_मुक्त, idr);
+	/* Safe to free channels since no more users */
+	ret = idr_for_each(idr, info->desc->ops->chan_free, idr);
 	idr_destroy(&info->tx_idr);
 
 	idr = &info->rx_idr;
-	ret = idr_क्रम_each(idr, info->desc->ops->chan_मुक्त, idr);
+	ret = idr_for_each(idr, info->desc->ops->chan_free, idr);
 	idr_destroy(&info->rx_idr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार protocol_version_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scmi_info *info = dev_get_drvdata(dev);
+static ssize_t protocol_version_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct scmi_info *info = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u.%u\n", info->version.major_ver,
+	return sprintf(buf, "%u.%u\n", info->version.major_ver,
 		       info->version.minor_ver);
-पूर्ण
-अटल DEVICE_ATTR_RO(protocol_version);
+}
+static DEVICE_ATTR_RO(protocol_version);
 
-अटल sमाप_प्रकार firmware_version_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scmi_info *info = dev_get_drvdata(dev);
+static ssize_t firmware_version_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct scmi_info *info = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "0x%x\n", info->version.impl_ver);
-पूर्ण
-अटल DEVICE_ATTR_RO(firmware_version);
+	return sprintf(buf, "0x%x\n", info->version.impl_ver);
+}
+static DEVICE_ATTR_RO(firmware_version);
 
-अटल sमाप_प्रकार venकरोr_id_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scmi_info *info = dev_get_drvdata(dev);
+static ssize_t vendor_id_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct scmi_info *info = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", info->version.venकरोr_id);
-पूर्ण
-अटल DEVICE_ATTR_RO(venकरोr_id);
+	return sprintf(buf, "%s\n", info->version.vendor_id);
+}
+static DEVICE_ATTR_RO(vendor_id);
 
-अटल sमाप_प्रकार sub_venकरोr_id_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scmi_info *info = dev_get_drvdata(dev);
+static ssize_t sub_vendor_id_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct scmi_info *info = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", info->version.sub_venकरोr_id);
-पूर्ण
-अटल DEVICE_ATTR_RO(sub_venकरोr_id);
+	return sprintf(buf, "%s\n", info->version.sub_vendor_id);
+}
+static DEVICE_ATTR_RO(sub_vendor_id);
 
-अटल काष्ठा attribute *versions_attrs[] = अणु
+static struct attribute *versions_attrs[] = {
 	&dev_attr_firmware_version.attr,
 	&dev_attr_protocol_version.attr,
-	&dev_attr_venकरोr_id.attr,
-	&dev_attr_sub_venकरोr_id.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_vendor_id.attr,
+	&dev_attr_sub_vendor_id.attr,
+	NULL,
+};
 ATTRIBUTE_GROUPS(versions);
 
 /* Each compatible listed below must have descriptor associated with it */
-अटल स्थिर काष्ठा of_device_id scmi_of_match[] = अणु
-	अणु .compatible = "arm,scmi", .data = &scmi_mailbox_desc पूर्ण,
-#अगर_घोषित CONFIG_HAVE_ARM_SMCCC_DISCOVERY
-	अणु .compatible = "arm,scmi-smc", .data = &scmi_smc_descपूर्ण,
-#पूर्ण_अगर
-	अणु /* Sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id scmi_of_match[] = {
+	{ .compatible = "arm,scmi", .data = &scmi_mailbox_desc },
+#ifdef CONFIG_HAVE_ARM_SMCCC_DISCOVERY
+	{ .compatible = "arm,scmi-smc", .data = &scmi_smc_desc},
+#endif
+	{ /* Sentinel */ },
+};
 
 MODULE_DEVICE_TABLE(of, scmi_of_match);
 
-अटल काष्ठा platक्रमm_driver scmi_driver = अणु
-	.driver = अणु
+static struct platform_driver scmi_driver = {
+	.driver = {
 		   .name = "arm-scmi",
 		   .of_match_table = scmi_of_match,
 		   .dev_groups = versions_groups,
-		   पूर्ण,
+		   },
 	.probe = scmi_probe,
-	.हटाओ = scmi_हटाओ,
-पूर्ण;
+	.remove = scmi_remove,
+};
 
-अटल पूर्णांक __init scmi_driver_init(व्योम)
-अणु
+static int __init scmi_driver_init(void)
+{
 	scmi_bus_init();
 
-	scmi_base_रेजिस्टर();
+	scmi_base_register();
 
-	scmi_घड़ी_रेजिस्टर();
-	scmi_perf_रेजिस्टर();
-	scmi_घातer_रेजिस्टर();
-	scmi_reset_रेजिस्टर();
-	scmi_sensors_रेजिस्टर();
-	scmi_voltage_रेजिस्टर();
-	scmi_प्रणाली_रेजिस्टर();
+	scmi_clock_register();
+	scmi_perf_register();
+	scmi_power_register();
+	scmi_reset_register();
+	scmi_sensors_register();
+	scmi_voltage_register();
+	scmi_system_register();
 
-	वापस platक्रमm_driver_रेजिस्टर(&scmi_driver);
-पूर्ण
+	return platform_driver_register(&scmi_driver);
+}
 subsys_initcall(scmi_driver_init);
 
-अटल व्योम __निकास scmi_driver_निकास(व्योम)
-अणु
-	scmi_base_unरेजिस्टर();
+static void __exit scmi_driver_exit(void)
+{
+	scmi_base_unregister();
 
-	scmi_घड़ी_unरेजिस्टर();
-	scmi_perf_unरेजिस्टर();
-	scmi_घातer_unरेजिस्टर();
-	scmi_reset_unरेजिस्टर();
-	scmi_sensors_unरेजिस्टर();
-	scmi_voltage_unरेजिस्टर();
-	scmi_प्रणाली_unरेजिस्टर();
+	scmi_clock_unregister();
+	scmi_perf_unregister();
+	scmi_power_unregister();
+	scmi_reset_unregister();
+	scmi_sensors_unregister();
+	scmi_voltage_unregister();
+	scmi_system_unregister();
 
-	scmi_bus_निकास();
+	scmi_bus_exit();
 
-	platक्रमm_driver_unरेजिस्टर(&scmi_driver);
-पूर्ण
-module_निकास(scmi_driver_निकास);
+	platform_driver_unregister(&scmi_driver);
+}
+module_exit(scmi_driver_exit);
 
 MODULE_ALIAS("platform: arm-scmi");
 MODULE_AUTHOR("Sudeep Holla <sudeep.holla@arm.com>");

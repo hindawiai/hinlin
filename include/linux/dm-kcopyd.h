@@ -1,90 +1,89 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2001 - 2003 Sistina Software
  * Copyright (C) 2004 - 2008 Red Hat, Inc. All rights reserved.
  *
- * kcopyd provides a simple पूर्णांकerface क्रम copying an area of one
+ * kcopyd provides a simple interface for copying an area of one
  * block-device to one or more other block-devices, either synchronous
- * or with an asynchronous completion notअगरication.
+ * or with an asynchronous completion notification.
  *
  * This file is released under the GPL.
  */
 
-#अगर_अघोषित _LINUX_DM_KCOPYD_H
-#घोषणा _LINUX_DM_KCOPYD_H
+#ifndef _LINUX_DM_KCOPYD_H
+#define _LINUX_DM_KCOPYD_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/dm-पन.स>
+#include <linux/dm-io.h>
 
 /* FIXME: make this configurable */
-#घोषणा DM_KCOPYD_MAX_REGIONS 8
+#define DM_KCOPYD_MAX_REGIONS 8
 
-#घोषणा DM_KCOPYD_IGNORE_ERROR 1
-#घोषणा DM_KCOPYD_WRITE_SEQ    2
+#define DM_KCOPYD_IGNORE_ERROR 1
+#define DM_KCOPYD_WRITE_SEQ    2
 
-काष्ठा dm_kcopyd_throttle अणु
-	अचिन्हित throttle;
-	अचिन्हित num_io_jobs;
-	अचिन्हित io_period;
-	अचिन्हित total_period;
-	अचिन्हित last_jअगरfies;
-पूर्ण;
+struct dm_kcopyd_throttle {
+	unsigned throttle;
+	unsigned num_io_jobs;
+	unsigned io_period;
+	unsigned total_period;
+	unsigned last_jiffies;
+};
 
 /*
  * kcopyd clients that want to support throttling must pass an initialised
- * dm_kcopyd_throttle काष्ठा पूर्णांकo dm_kcopyd_client_create().
- * Two or more clients may share the same instance of this काष्ठा between
- * them अगर they wish to be throttled as a group.
+ * dm_kcopyd_throttle struct into dm_kcopyd_client_create().
+ * Two or more clients may share the same instance of this struct between
+ * them if they wish to be throttled as a group.
  *
  * This macro also creates a corresponding module parameter to configure
  * the amount of throttling.
  */
-#घोषणा DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(name, description)	\
-अटल काष्ठा dm_kcopyd_throttle dm_kcopyd_throttle = अणु 100, 0, 0, 0, 0 पूर्ण; \
-module_param_named(name, dm_kcopyd_throttle.throttle, uपूर्णांक, 0644); \
+#define DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(name, description)	\
+static struct dm_kcopyd_throttle dm_kcopyd_throttle = { 100, 0, 0, 0, 0 }; \
+module_param_named(name, dm_kcopyd_throttle.throttle, uint, 0644); \
 MODULE_PARM_DESC(name, description)
 
 /*
  * To use kcopyd you must first create a dm_kcopyd_client object.
- * throttle can be शून्य अगर you करोn't want any throttling.
+ * throttle can be NULL if you don't want any throttling.
  */
-काष्ठा dm_kcopyd_client;
-काष्ठा dm_kcopyd_client *dm_kcopyd_client_create(काष्ठा dm_kcopyd_throttle *throttle);
-व्योम dm_kcopyd_client_destroy(काष्ठा dm_kcopyd_client *kc);
+struct dm_kcopyd_client;
+struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *throttle);
+void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc);
 
 /*
  * Submit a copy job to kcopyd.  This is built on top of the
  * previous three fns.
  *
- * पढ़ो_err is a boolean,
- * ग_लिखो_err is a bitset, with 1 bit क्रम each destination region
+ * read_err is a boolean,
+ * write_err is a bitset, with 1 bit for each destination region
  */
-प्रकार व्योम (*dm_kcopyd_notअगरy_fn)(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err,
-				    व्योम *context);
+typedef void (*dm_kcopyd_notify_fn)(int read_err, unsigned long write_err,
+				    void *context);
 
-व्योम dm_kcopyd_copy(काष्ठा dm_kcopyd_client *kc, काष्ठा dm_io_region *from,
-		    अचिन्हित num_dests, काष्ठा dm_io_region *dests,
-		    अचिन्हित flags, dm_kcopyd_notअगरy_fn fn, व्योम *context);
+void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
+		    unsigned num_dests, struct dm_io_region *dests,
+		    unsigned flags, dm_kcopyd_notify_fn fn, void *context);
 
 /*
- * Prepare a callback and submit it via the kcopyd thपढ़ो.
+ * Prepare a callback and submit it via the kcopyd thread.
  *
- * dm_kcopyd_prepare_callback allocates a callback काष्ठाure and वापसs it.
- * It must not be called from पूर्णांकerrupt context.
- * The वापसed value should be passed पूर्णांकo dm_kcopyd_करो_callback.
+ * dm_kcopyd_prepare_callback allocates a callback structure and returns it.
+ * It must not be called from interrupt context.
+ * The returned value should be passed into dm_kcopyd_do_callback.
  *
- * dm_kcopyd_करो_callback submits the callback.
- * It may be called from पूर्णांकerrupt context.
- * The callback is issued from the kcopyd thपढ़ो.
+ * dm_kcopyd_do_callback submits the callback.
+ * It may be called from interrupt context.
+ * The callback is issued from the kcopyd thread.
  */
-व्योम *dm_kcopyd_prepare_callback(काष्ठा dm_kcopyd_client *kc,
-				 dm_kcopyd_notअगरy_fn fn, व्योम *context);
-व्योम dm_kcopyd_करो_callback(व्योम *job, पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err);
+void *dm_kcopyd_prepare_callback(struct dm_kcopyd_client *kc,
+				 dm_kcopyd_notify_fn fn, void *context);
+void dm_kcopyd_do_callback(void *job, int read_err, unsigned long write_err);
 
-व्योम dm_kcopyd_zero(काष्ठा dm_kcopyd_client *kc,
-		    अचिन्हित num_dests, काष्ठा dm_io_region *dests,
-		    अचिन्हित flags, dm_kcopyd_notअगरy_fn fn, व्योम *context);
+void dm_kcopyd_zero(struct dm_kcopyd_client *kc,
+		    unsigned num_dests, struct dm_io_region *dests,
+		    unsigned flags, dm_kcopyd_notify_fn fn, void *context);
 
-#पूर्ण_अगर	/* __KERNEL__ */
-#पूर्ण_अगर	/* _LINUX_DM_KCOPYD_H */
+#endif	/* __KERNEL__ */
+#endif	/* _LINUX_DM_KCOPYD_H */

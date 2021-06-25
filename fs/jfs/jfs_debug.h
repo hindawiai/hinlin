@@ -1,110 +1,109 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2002
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
-#अगर_अघोषित _H_JFS_DEBUG
-#घोषणा _H_JFS_DEBUG
+#ifndef _H_JFS_DEBUG
+#define _H_JFS_DEBUG
 
 /*
  *	jfs_debug.h
  *
- * global debug message, data काष्ठाure/macro definitions
+ * global debug message, data structure/macro definitions
  * under control of CONFIG_JFS_DEBUG, CONFIG_JFS_STATISTICS;
  */
 
 /*
- * Create /proc/fs/jfs अगर procfs is enabled andeither
+ * Create /proc/fs/jfs if procfs is enabled andeither
  * CONFIG_JFS_DEBUG or CONFIG_JFS_STATISTICS is defined
  */
-#अगर defined(CONFIG_PROC_FS) && (defined(CONFIG_JFS_DEBUG) || defined(CONFIG_JFS_STATISTICS))
-#घोषणा PROC_FS_JFS
-बाह्य व्योम jfs_proc_init(व्योम);
-बाह्य व्योम jfs_proc_clean(व्योम);
-#पूर्ण_अगर
+#if defined(CONFIG_PROC_FS) && (defined(CONFIG_JFS_DEBUG) || defined(CONFIG_JFS_STATISTICS))
+#define PROC_FS_JFS
+extern void jfs_proc_init(void);
+extern void jfs_proc_clean(void);
+#endif
 
 /*
- *	निश्चित with traditional म_लिखो/panic
+ *	assert with traditional printf/panic
  */
-#घोषणा निश्चित(p) करो अणु	\
-	अगर (!(p)) अणु	\
-		prपूर्णांकk(KERN_CRIT "BUG at %s:%d assert(%s)\n",	\
-		       __खाता__, __LINE__, #p);			\
+#define assert(p) do {	\
+	if (!(p)) {	\
+		printk(KERN_CRIT "BUG at %s:%d assert(%s)\n",	\
+		       __FILE__, __LINE__, #p);			\
 		BUG();	\
-	पूर्ण		\
-पूर्ण जबतक (0)
+	}		\
+} while (0)
 
 /*
  *	debug ON
  *	--------
  */
-#अगर_घोषित CONFIG_JFS_DEBUG
-#घोषणा ASSERT(p) निश्चित(p)
+#ifdef CONFIG_JFS_DEBUG
+#define ASSERT(p) assert(p)
 
-/* prपूर्णांकk verbosity */
-#घोषणा JFS_LOGLEVEL_ERR 1
-#घोषणा JFS_LOGLEVEL_WARN 2
-#घोषणा JFS_LOGLEVEL_DEBUG 3
-#घोषणा JFS_LOGLEVEL_INFO 4
+/* printk verbosity */
+#define JFS_LOGLEVEL_ERR 1
+#define JFS_LOGLEVEL_WARN 2
+#define JFS_LOGLEVEL_DEBUG 3
+#define JFS_LOGLEVEL_INFO 4
 
-बाह्य पूर्णांक jfsloglevel;
+extern int jfsloglevel;
 
-पूर्णांक jfs_txanchor_proc_show(काष्ठा seq_file *m, व्योम *v);
+int jfs_txanchor_proc_show(struct seq_file *m, void *v);
 
-/* inक्रमmation message: e.g., configuration, major event */
-#घोषणा jfs_info(fmt, arg...) करो अणु			\
-	अगर (jfsloglevel >= JFS_LOGLEVEL_INFO)		\
-		prपूर्णांकk(KERN_INFO fmt "\n", ## arg);	\
-पूर्ण जबतक (0)
+/* information message: e.g., configuration, major event */
+#define jfs_info(fmt, arg...) do {			\
+	if (jfsloglevel >= JFS_LOGLEVEL_INFO)		\
+		printk(KERN_INFO fmt "\n", ## arg);	\
+} while (0)
 
 /* debug message: ad hoc */
-#घोषणा jfs_debug(fmt, arg...) करो अणु			\
-	अगर (jfsloglevel >= JFS_LOGLEVEL_DEBUG)		\
-		prपूर्णांकk(KERN_DEBUG fmt "\n", ## arg);	\
-पूर्ण जबतक (0)
+#define jfs_debug(fmt, arg...) do {			\
+	if (jfsloglevel >= JFS_LOGLEVEL_DEBUG)		\
+		printk(KERN_DEBUG fmt "\n", ## arg);	\
+} while (0)
 
 /* warn message: */
-#घोषणा jfs_warn(fmt, arg...) करो अणु			\
-	अगर (jfsloglevel >= JFS_LOGLEVEL_WARN)		\
-		prपूर्णांकk(KERN_WARNING fmt "\n", ## arg);	\
-पूर्ण जबतक (0)
+#define jfs_warn(fmt, arg...) do {			\
+	if (jfsloglevel >= JFS_LOGLEVEL_WARN)		\
+		printk(KERN_WARNING fmt "\n", ## arg);	\
+} while (0)
 
 /* error event message: e.g., i/o error */
-#घोषणा jfs_err(fmt, arg...) करो अणु			\
-	अगर (jfsloglevel >= JFS_LOGLEVEL_ERR)		\
-		prपूर्णांकk(KERN_ERR fmt "\n", ## arg);	\
-पूर्ण जबतक (0)
+#define jfs_err(fmt, arg...) do {			\
+	if (jfsloglevel >= JFS_LOGLEVEL_ERR)		\
+		printk(KERN_ERR fmt "\n", ## arg);	\
+} while (0)
 
 /*
  *	debug OFF
  *	---------
  */
-#अन्यथा				/* CONFIG_JFS_DEBUG */
-#घोषणा ASSERT(p) करो अणुपूर्ण जबतक (0)
-#घोषणा jfs_info(fmt, arg...) करो अणुपूर्ण जबतक (0)
-#घोषणा jfs_debug(fmt, arg...) करो अणुपूर्ण जबतक (0)
-#घोषणा jfs_warn(fmt, arg...) करो अणुपूर्ण जबतक (0)
-#घोषणा jfs_err(fmt, arg...) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर				/* CONFIG_JFS_DEBUG */
+#else				/* CONFIG_JFS_DEBUG */
+#define ASSERT(p) do {} while (0)
+#define jfs_info(fmt, arg...) do {} while (0)
+#define jfs_debug(fmt, arg...) do {} while (0)
+#define jfs_warn(fmt, arg...) do {} while (0)
+#define jfs_err(fmt, arg...) do {} while (0)
+#endif				/* CONFIG_JFS_DEBUG */
 
 /*
  *	statistics
  *	----------
  */
-#अगर_घोषित	CONFIG_JFS_STATISTICS
-पूर्णांक jfs_lmstats_proc_show(काष्ठा seq_file *m, व्योम *v);
-पूर्णांक jfs_txstats_proc_show(काष्ठा seq_file *m, व्योम *v);
-पूर्णांक jfs_mpstat_proc_show(काष्ठा seq_file *m, व्योम *v);
-पूर्णांक jfs_xtstat_proc_show(काष्ठा seq_file *m, व्योम *v);
+#ifdef	CONFIG_JFS_STATISTICS
+int jfs_lmstats_proc_show(struct seq_file *m, void *v);
+int jfs_txstats_proc_show(struct seq_file *m, void *v);
+int jfs_mpstat_proc_show(struct seq_file *m, void *v);
+int jfs_xtstat_proc_show(struct seq_file *m, void *v);
 
-#घोषणा	INCREMENT(x)		((x)++)
-#घोषणा	DECREMENT(x)		((x)--)
-#घोषणा	HIGHWATERMARK(x,y)	((x) = max((x), (y)))
-#अन्यथा
-#घोषणा	INCREMENT(x)
-#घोषणा	DECREMENT(x)
-#घोषणा	HIGHWATERMARK(x,y)
-#पूर्ण_अगर				/* CONFIG_JFS_STATISTICS */
+#define	INCREMENT(x)		((x)++)
+#define	DECREMENT(x)		((x)--)
+#define	HIGHWATERMARK(x,y)	((x) = max((x), (y)))
+#else
+#define	INCREMENT(x)
+#define	DECREMENT(x)
+#define	HIGHWATERMARK(x,y)
+#endif				/* CONFIG_JFS_STATISTICS */
 
-#पूर्ण_अगर				/* _H_JFS_DEBUG */
+#endif				/* _H_JFS_DEBUG */

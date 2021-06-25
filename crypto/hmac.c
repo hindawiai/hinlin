@@ -1,209 +1,208 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
- * HMAC: Keyed-Hashing क्रम Message Authentication (RFC2104).
+ * HMAC: Keyed-Hashing for Message Authentication (RFC2104).
  *
- * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
- * Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
+ * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  *
  * The HMAC implementation is derived from USAGI.
  * Copyright (c) 2002 Kazunori Miyazawa <miyazawa@linux-ipv6.org> / USAGI
  */
 
-#समावेश <crypto/hmac.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/माला.स>
+#include <crypto/hmac.h>
+#include <crypto/internal/hash.h>
+#include <crypto/scatterwalk.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/scatterlist.h>
+#include <linux/string.h>
 
-काष्ठा hmac_ctx अणु
-	काष्ठा crypto_shash *hash;
-पूर्ण;
+struct hmac_ctx {
+	struct crypto_shash *hash;
+};
 
-अटल अंतरभूत व्योम *align_ptr(व्योम *p, अचिन्हित पूर्णांक align)
-अणु
-	वापस (व्योम *)ALIGN((अचिन्हित दीर्घ)p, align);
-पूर्ण
+static inline void *align_ptr(void *p, unsigned int align)
+{
+	return (void *)ALIGN((unsigned long)p, align);
+}
 
-अटल अंतरभूत काष्ठा hmac_ctx *hmac_ctx(काष्ठा crypto_shash *tfm)
-अणु
-	वापस align_ptr(crypto_shash_ctx_aligned(tfm) +
+static inline struct hmac_ctx *hmac_ctx(struct crypto_shash *tfm)
+{
+	return align_ptr(crypto_shash_ctx_aligned(tfm) +
 			 crypto_shash_statesize(tfm) * 2,
 			 crypto_tfm_ctx_alignment());
-पूर्ण
+}
 
-अटल पूर्णांक hmac_setkey(काष्ठा crypto_shash *parent,
-		       स्थिर u8 *inkey, अचिन्हित पूर्णांक keylen)
-अणु
-	पूर्णांक bs = crypto_shash_blocksize(parent);
-	पूर्णांक ds = crypto_shash_digestsize(parent);
-	पूर्णांक ss = crypto_shash_statesize(parent);
-	अक्षर *ipad = crypto_shash_ctx_aligned(parent);
-	अक्षर *opad = ipad + ss;
-	काष्ठा hmac_ctx *ctx = align_ptr(opad + ss,
+static int hmac_setkey(struct crypto_shash *parent,
+		       const u8 *inkey, unsigned int keylen)
+{
+	int bs = crypto_shash_blocksize(parent);
+	int ds = crypto_shash_digestsize(parent);
+	int ss = crypto_shash_statesize(parent);
+	char *ipad = crypto_shash_ctx_aligned(parent);
+	char *opad = ipad + ss;
+	struct hmac_ctx *ctx = align_ptr(opad + ss,
 					 crypto_tfm_ctx_alignment());
-	काष्ठा crypto_shash *hash = ctx->hash;
+	struct crypto_shash *hash = ctx->hash;
 	SHASH_DESC_ON_STACK(shash, hash);
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
 	shash->tfm = hash;
 
-	अगर (keylen > bs) अणु
-		पूर्णांक err;
+	if (keylen > bs) {
+		int err;
 
 		err = crypto_shash_digest(shash, inkey, keylen, ipad);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		keylen = ds;
-	पूर्ण अन्यथा
-		स_नकल(ipad, inkey, keylen);
+	} else
+		memcpy(ipad, inkey, keylen);
 
-	स_रखो(ipad + keylen, 0, bs - keylen);
-	स_नकल(opad, ipad, bs);
+	memset(ipad + keylen, 0, bs - keylen);
+	memcpy(opad, ipad, bs);
 
-	क्रम (i = 0; i < bs; i++) अणु
+	for (i = 0; i < bs; i++) {
 		ipad[i] ^= HMAC_IPAD_VALUE;
 		opad[i] ^= HMAC_OPAD_VALUE;
-	पूर्ण
+	}
 
-	वापस crypto_shash_init(shash) ?:
+	return crypto_shash_init(shash) ?:
 	       crypto_shash_update(shash, ipad, bs) ?:
 	       crypto_shash_export(shash, ipad) ?:
 	       crypto_shash_init(shash) ?:
 	       crypto_shash_update(shash, opad, bs) ?:
 	       crypto_shash_export(shash, opad);
-पूर्ण
+}
 
-अटल पूर्णांक hmac_export(काष्ठा shash_desc *pdesc, व्योम *out)
-अणु
-	काष्ठा shash_desc *desc = shash_desc_ctx(pdesc);
+static int hmac_export(struct shash_desc *pdesc, void *out)
+{
+	struct shash_desc *desc = shash_desc_ctx(pdesc);
 
-	वापस crypto_shash_export(desc, out);
-पूर्ण
+	return crypto_shash_export(desc, out);
+}
 
-अटल पूर्णांक hmac_import(काष्ठा shash_desc *pdesc, स्थिर व्योम *in)
-अणु
-	काष्ठा shash_desc *desc = shash_desc_ctx(pdesc);
-	काष्ठा hmac_ctx *ctx = hmac_ctx(pdesc->tfm);
+static int hmac_import(struct shash_desc *pdesc, const void *in)
+{
+	struct shash_desc *desc = shash_desc_ctx(pdesc);
+	struct hmac_ctx *ctx = hmac_ctx(pdesc->tfm);
 
 	desc->tfm = ctx->hash;
 
-	वापस crypto_shash_import(desc, in);
-पूर्ण
+	return crypto_shash_import(desc, in);
+}
 
-अटल पूर्णांक hmac_init(काष्ठा shash_desc *pdesc)
-अणु
-	वापस hmac_import(pdesc, crypto_shash_ctx_aligned(pdesc->tfm));
-पूर्ण
+static int hmac_init(struct shash_desc *pdesc)
+{
+	return hmac_import(pdesc, crypto_shash_ctx_aligned(pdesc->tfm));
+}
 
-अटल पूर्णांक hmac_update(काष्ठा shash_desc *pdesc,
-		       स्थिर u8 *data, अचिन्हित पूर्णांक nbytes)
-अणु
-	काष्ठा shash_desc *desc = shash_desc_ctx(pdesc);
+static int hmac_update(struct shash_desc *pdesc,
+		       const u8 *data, unsigned int nbytes)
+{
+	struct shash_desc *desc = shash_desc_ctx(pdesc);
 
-	वापस crypto_shash_update(desc, data, nbytes);
-पूर्ण
+	return crypto_shash_update(desc, data, nbytes);
+}
 
-अटल पूर्णांक hmac_final(काष्ठा shash_desc *pdesc, u8 *out)
-अणु
-	काष्ठा crypto_shash *parent = pdesc->tfm;
-	पूर्णांक ds = crypto_shash_digestsize(parent);
-	पूर्णांक ss = crypto_shash_statesize(parent);
-	अक्षर *opad = crypto_shash_ctx_aligned(parent) + ss;
-	काष्ठा shash_desc *desc = shash_desc_ctx(pdesc);
+static int hmac_final(struct shash_desc *pdesc, u8 *out)
+{
+	struct crypto_shash *parent = pdesc->tfm;
+	int ds = crypto_shash_digestsize(parent);
+	int ss = crypto_shash_statesize(parent);
+	char *opad = crypto_shash_ctx_aligned(parent) + ss;
+	struct shash_desc *desc = shash_desc_ctx(pdesc);
 
-	वापस crypto_shash_final(desc, out) ?:
+	return crypto_shash_final(desc, out) ?:
 	       crypto_shash_import(desc, opad) ?:
 	       crypto_shash_finup(desc, out, ds, out);
-पूर्ण
+}
 
-अटल पूर्णांक hmac_finup(काष्ठा shash_desc *pdesc, स्थिर u8 *data,
-		      अचिन्हित पूर्णांक nbytes, u8 *out)
-अणु
+static int hmac_finup(struct shash_desc *pdesc, const u8 *data,
+		      unsigned int nbytes, u8 *out)
+{
 
-	काष्ठा crypto_shash *parent = pdesc->tfm;
-	पूर्णांक ds = crypto_shash_digestsize(parent);
-	पूर्णांक ss = crypto_shash_statesize(parent);
-	अक्षर *opad = crypto_shash_ctx_aligned(parent) + ss;
-	काष्ठा shash_desc *desc = shash_desc_ctx(pdesc);
+	struct crypto_shash *parent = pdesc->tfm;
+	int ds = crypto_shash_digestsize(parent);
+	int ss = crypto_shash_statesize(parent);
+	char *opad = crypto_shash_ctx_aligned(parent) + ss;
+	struct shash_desc *desc = shash_desc_ctx(pdesc);
 
-	वापस crypto_shash_finup(desc, data, nbytes, out) ?:
+	return crypto_shash_finup(desc, data, nbytes, out) ?:
 	       crypto_shash_import(desc, opad) ?:
 	       crypto_shash_finup(desc, out, ds, out);
-पूर्ण
+}
 
-अटल पूर्णांक hmac_init_tfm(काष्ठा crypto_shash *parent)
-अणु
-	काष्ठा crypto_shash *hash;
-	काष्ठा shash_instance *inst = shash_alg_instance(parent);
-	काष्ठा crypto_shash_spawn *spawn = shash_instance_ctx(inst);
-	काष्ठा hmac_ctx *ctx = hmac_ctx(parent);
+static int hmac_init_tfm(struct crypto_shash *parent)
+{
+	struct crypto_shash *hash;
+	struct shash_instance *inst = shash_alg_instance(parent);
+	struct crypto_shash_spawn *spawn = shash_instance_ctx(inst);
+	struct hmac_ctx *ctx = hmac_ctx(parent);
 
 	hash = crypto_spawn_shash(spawn);
-	अगर (IS_ERR(hash))
-		वापस PTR_ERR(hash);
+	if (IS_ERR(hash))
+		return PTR_ERR(hash);
 
-	parent->descsize = माप(काष्ठा shash_desc) +
+	parent->descsize = sizeof(struct shash_desc) +
 			   crypto_shash_descsize(hash);
 
 	ctx->hash = hash;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hmac_निकास_tfm(काष्ठा crypto_shash *parent)
-अणु
-	काष्ठा hmac_ctx *ctx = hmac_ctx(parent);
-	crypto_मुक्त_shash(ctx->hash);
-पूर्ण
+static void hmac_exit_tfm(struct crypto_shash *parent)
+{
+	struct hmac_ctx *ctx = hmac_ctx(parent);
+	crypto_free_shash(ctx->hash);
+}
 
-अटल पूर्णांक hmac_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	काष्ठा shash_instance *inst;
-	काष्ठा crypto_shash_spawn *spawn;
-	काष्ठा crypto_alg *alg;
-	काष्ठा shash_alg *salg;
+static int hmac_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	struct shash_instance *inst;
+	struct crypto_shash_spawn *spawn;
+	struct crypto_alg *alg;
+	struct shash_alg *salg;
 	u32 mask;
-	पूर्णांक err;
-	पूर्णांक ds;
-	पूर्णांक ss;
+	int err;
+	int ds;
+	int ss;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SHASH, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inst = kzalloc(माप(*inst) + माप(*spawn), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 	spawn = shash_instance_ctx(inst);
 
 	err = crypto_grab_shash(spawn, shash_crypto_instance(inst),
 				crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	salg = crypto_spawn_shash_alg(spawn);
 	alg = &salg->base;
 
 	/* The underlying hash algorithm must not require a key */
 	err = -EINVAL;
-	अगर (crypto_shash_alg_needs_key(salg))
-		जाओ err_मुक्त_inst;
+	if (crypto_shash_alg_needs_key(salg))
+		goto err_free_inst;
 
 	ds = salg->digestsize;
 	ss = salg->statesize;
-	अगर (ds > alg->cra_blocksize ||
+	if (ds > alg->cra_blocksize ||
 	    ss < alg->cra_blocksize)
-		जाओ err_मुक्त_inst;
+		goto err_free_inst;
 
-	err = crypto_inst_setname(shash_crypto_instance(inst), पंचांगpl->name, alg);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	err = crypto_inst_setname(shash_crypto_instance(inst), tmpl->name, alg);
+	if (err)
+		goto err_free_inst;
 
 	inst->alg.base.cra_priority = alg->cra_priority;
 	inst->alg.base.cra_blocksize = alg->cra_blocksize;
@@ -213,7 +212,7 @@
 	inst->alg.digestsize = ds;
 	inst->alg.statesize = ss;
 
-	inst->alg.base.cra_ctxsize = माप(काष्ठा hmac_ctx) +
+	inst->alg.base.cra_ctxsize = sizeof(struct hmac_ctx) +
 				     ALIGN(ss * 2, crypto_tfm_ctx_alignment());
 
 	inst->alg.init = hmac_init;
@@ -224,36 +223,36 @@
 	inst->alg.import = hmac_import;
 	inst->alg.setkey = hmac_setkey;
 	inst->alg.init_tfm = hmac_init_tfm;
-	inst->alg.निकास_tfm = hmac_निकास_tfm;
+	inst->alg.exit_tfm = hmac_exit_tfm;
 
-	inst->मुक्त = shash_मुक्त_singlespawn_instance;
+	inst->free = shash_free_singlespawn_instance;
 
-	err = shash_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		shash_मुक्त_singlespawn_instance(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = shash_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		shash_free_singlespawn_instance(inst);
+	}
+	return err;
+}
 
-अटल काष्ठा crypto_ढाँचा hmac_पंचांगpl = अणु
+static struct crypto_template hmac_tmpl = {
 	.name = "hmac",
 	.create = hmac_create,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init hmac_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचा(&hmac_पंचांगpl);
-पूर्ण
+static int __init hmac_module_init(void)
+{
+	return crypto_register_template(&hmac_tmpl);
+}
 
-अटल व्योम __निकास hmac_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचा(&hmac_पंचांगpl);
-पूर्ण
+static void __exit hmac_module_exit(void)
+{
+	crypto_unregister_template(&hmac_tmpl);
+}
 
 subsys_initcall(hmac_module_init);
-module_निकास(hmac_module_निकास);
+module_exit(hmac_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("HMAC hash algorithm");

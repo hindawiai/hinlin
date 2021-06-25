@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-1.0+
+// SPDX-License-Identifier: GPL-1.0+
 /*
  * Renesas USB driver
  *
@@ -7,176 +6,176 @@
  * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/interrupt.h>
 
-#समावेश "common.h"
-#समावेश "mod.h"
+#include "common.h"
+#include "mod.h"
 
 /*
- *		स्वतःnomy
+ *		autonomy
  *
- * these functions are used अगर platक्रमm करोesn't have बाह्यal phy.
- *  -> there is no "notify_hotplug" callback from platक्रमm
+ * these functions are used if platform doesn't have external phy.
+ *  -> there is no "notify_hotplug" callback from platform
  *  -> call "notify_hotplug" by itself
- *  -> use own पूर्णांकerrupt to connect/disconnect
- *  -> it mean module घड़ी is always ON
+ *  -> use own interrupt to connect/disconnect
+ *  -> it mean module clock is always ON
  *             ~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-अटल पूर्णांक usbhsm_स्वतःnomy_get_vbus(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+static int usbhsm_autonomy_get_vbus(struct platform_device *pdev)
+{
+	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
 
-	वापस  VBSTS & usbhs_पढ़ो(priv, INTSTS0);
-पूर्ण
+	return  VBSTS & usbhs_read(priv, INTSTS0);
+}
 
-अटल पूर्णांक usbhsm_स्वतःnomy_irq_vbus(काष्ठा usbhs_priv *priv,
-				    काष्ठा usbhs_irq_state *irq_state)
-अणु
-	काष्ठा platक्रमm_device *pdev = usbhs_priv_to_pdev(priv);
+static int usbhsm_autonomy_irq_vbus(struct usbhs_priv *priv,
+				    struct usbhs_irq_state *irq_state)
+{
+	struct platform_device *pdev = usbhs_priv_to_pdev(priv);
 
-	usbhsc_schedule_notअगरy_hotplug(pdev);
+	usbhsc_schedule_notify_hotplug(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम usbhs_mod_स्वतःnomy_mode(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+void usbhs_mod_autonomy_mode(struct usbhs_priv *priv)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
-	info->irq_vbus = usbhsm_स्वतःnomy_irq_vbus;
-	info->get_vbus = usbhsm_स्वतःnomy_get_vbus;
+	info->irq_vbus = usbhsm_autonomy_irq_vbus;
+	info->get_vbus = usbhsm_autonomy_get_vbus;
 
-	usbhs_irq_callback_update(priv, शून्य);
-पूर्ण
+	usbhs_irq_callback_update(priv, NULL);
+}
 
-व्योम usbhs_mod_non_स्वतःnomy_mode(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+void usbhs_mod_non_autonomy_mode(struct usbhs_priv *priv)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
 	info->get_vbus = priv->pfunc->get_vbus;
-पूर्ण
+}
 
 /*
  *		host / gadget functions
  *
- * renesas_usbhs host/gadget can रेजिस्टर itself by below functions.
+ * renesas_usbhs host/gadget can register itself by below functions.
  * these functions are called when probe
  *
  */
-व्योम usbhs_mod_रेजिस्टर(काष्ठा usbhs_priv *priv, काष्ठा usbhs_mod *mod, पूर्णांक id)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+void usbhs_mod_register(struct usbhs_priv *priv, struct usbhs_mod *mod, int id)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
 	info->mod[id]	= mod;
 	mod->priv	= priv;
-पूर्ण
+}
 
-काष्ठा usbhs_mod *usbhs_mod_get(काष्ठा usbhs_priv *priv, पूर्णांक id)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
-	काष्ठा usbhs_mod *ret = शून्य;
+struct usbhs_mod *usbhs_mod_get(struct usbhs_priv *priv, int id)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+	struct usbhs_mod *ret = NULL;
 
-	चयन (id) अणु
-	हाल USBHS_HOST:
-	हाल USBHS_GADGET:
+	switch (id) {
+	case USBHS_HOST:
+	case USBHS_GADGET:
 		ret = info->mod[id];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक usbhs_mod_is_host(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_mod *mod = usbhs_mod_get_current(priv);
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+int usbhs_mod_is_host(struct usbhs_priv *priv)
+{
+	struct usbhs_mod *mod = usbhs_mod_get_current(priv);
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
-	अगर (!mod)
-		वापस -EINVAL;
+	if (!mod)
+		return -EINVAL;
 
-	वापस info->mod[USBHS_HOST] == mod;
-पूर्ण
+	return info->mod[USBHS_HOST] == mod;
+}
 
-काष्ठा usbhs_mod *usbhs_mod_get_current(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+struct usbhs_mod *usbhs_mod_get_current(struct usbhs_priv *priv)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
-	वापस info->curt;
-पूर्ण
+	return info->curt;
+}
 
-पूर्णांक usbhs_mod_change(काष्ठा usbhs_priv *priv, पूर्णांक id)
-अणु
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
-	काष्ठा usbhs_mod *mod = शून्य;
-	पूर्णांक ret = 0;
+int usbhs_mod_change(struct usbhs_priv *priv, int id)
+{
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+	struct usbhs_mod *mod = NULL;
+	int ret = 0;
 
 	/* id < 0 mean no current */
-	चयन (id) अणु
-	हाल USBHS_HOST:
-	हाल USBHS_GADGET:
+	switch (id) {
+	case USBHS_HOST:
+	case USBHS_GADGET:
 		mod = info->mod[id];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 	info->curt = mod;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t usbhs_पूर्णांकerrupt(पूर्णांक irq, व्योम *data);
-पूर्णांक usbhs_mod_probe(काष्ठा usbhs_priv *priv)
-अणु
-	काष्ठा device *dev = usbhs_priv_to_dev(priv);
-	पूर्णांक ret;
+static irqreturn_t usbhs_interrupt(int irq, void *data);
+int usbhs_mod_probe(struct usbhs_priv *priv)
+{
+	struct device *dev = usbhs_priv_to_dev(priv);
+	int ret;
 
 	/*
 	 * install host/gadget driver
 	 */
 	ret = usbhs_mod_host_probe(priv);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = usbhs_mod_gadget_probe(priv);
-	अगर (ret < 0)
-		जाओ mod_init_host_err;
+	if (ret < 0)
+		goto mod_init_host_err;
 
 	/* irq settings */
-	ret = devm_request_irq(dev, priv->irq, usbhs_पूर्णांकerrupt,
+	ret = devm_request_irq(dev, priv->irq, usbhs_interrupt,
 			  priv->irqflags, dev_name(dev), priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "irq request err\n");
-		जाओ mod_init_gadget_err;
-	पूर्ण
+		goto mod_init_gadget_err;
+	}
 
-	वापस ret;
+	return ret;
 
 mod_init_gadget_err:
-	usbhs_mod_gadget_हटाओ(priv);
+	usbhs_mod_gadget_remove(priv);
 mod_init_host_err:
-	usbhs_mod_host_हटाओ(priv);
+	usbhs_mod_host_remove(priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम usbhs_mod_हटाओ(काष्ठा usbhs_priv *priv)
-अणु
-	usbhs_mod_host_हटाओ(priv);
-	usbhs_mod_gadget_हटाओ(priv);
-पूर्ण
+void usbhs_mod_remove(struct usbhs_priv *priv)
+{
+	usbhs_mod_host_remove(priv);
+	usbhs_mod_gadget_remove(priv);
+}
 
 /*
  *		status functions
  */
-पूर्णांक usbhs_status_get_device_state(काष्ठा usbhs_irq_state *irq_state)
-अणु
-	वापस (पूर्णांक)irq_state->पूर्णांकsts0 & DVSQ_MASK;
-पूर्ण
+int usbhs_status_get_device_state(struct usbhs_irq_state *irq_state)
+{
+	return (int)irq_state->intsts0 & DVSQ_MASK;
+}
 
-पूर्णांक usbhs_status_get_ctrl_stage(काष्ठा usbhs_irq_state *irq_state)
-अणु
+int usbhs_status_get_ctrl_stage(struct usbhs_irq_state *irq_state)
+{
 	/*
-	 * वापस value
+	 * return value
 	 *
 	 * IDLE_SETUP_STAGE
 	 * READ_DATA_STAGE
@@ -186,72 +185,72 @@ mod_init_host_err:
 	 * NODATA_STATUS_STAGE
 	 * SEQUENCE_ERROR
 	 */
-	वापस (पूर्णांक)irq_state->पूर्णांकsts0 & CTSQ_MASK;
-पूर्ण
+	return (int)irq_state->intsts0 & CTSQ_MASK;
+}
 
-अटल पूर्णांक usbhs_status_get_each_irq(काष्ठा usbhs_priv *priv,
-				     काष्ठा usbhs_irq_state *state)
-अणु
-	काष्ठा usbhs_mod *mod = usbhs_mod_get_current(priv);
-	u16 पूर्णांकenb0, पूर्णांकenb1;
-	अचिन्हित दीर्घ flags;
+static int usbhs_status_get_each_irq(struct usbhs_priv *priv,
+				     struct usbhs_irq_state *state)
+{
+	struct usbhs_mod *mod = usbhs_mod_get_current(priv);
+	u16 intenb0, intenb1;
+	unsigned long flags;
 
 	/********************  spin lock ********************/
 	usbhs_lock(priv, flags);
-	state->पूर्णांकsts0 = usbhs_पढ़ो(priv, INTSTS0);
-	पूर्णांकenb0 = usbhs_पढ़ो(priv, INTENB0);
+	state->intsts0 = usbhs_read(priv, INTSTS0);
+	intenb0 = usbhs_read(priv, INTENB0);
 
-	अगर (usbhs_mod_is_host(priv)) अणु
-		state->पूर्णांकsts1 = usbhs_पढ़ो(priv, INTSTS1);
-		पूर्णांकenb1 = usbhs_पढ़ो(priv, INTENB1);
-	पूर्ण अन्यथा अणु
-		state->पूर्णांकsts1 = पूर्णांकenb1 = 0;
-	पूर्ण
+	if (usbhs_mod_is_host(priv)) {
+		state->intsts1 = usbhs_read(priv, INTSTS1);
+		intenb1 = usbhs_read(priv, INTENB1);
+	} else {
+		state->intsts1 = intenb1 = 0;
+	}
 
 	/* mask */
-	अगर (mod) अणु
-		state->brdysts = usbhs_पढ़ो(priv, BRDYSTS);
-		state->nrdysts = usbhs_पढ़ो(priv, NRDYSTS);
-		state->bempsts = usbhs_पढ़ो(priv, BEMPSTS);
+	if (mod) {
+		state->brdysts = usbhs_read(priv, BRDYSTS);
+		state->nrdysts = usbhs_read(priv, NRDYSTS);
+		state->bempsts = usbhs_read(priv, BEMPSTS);
 
 		state->bempsts &= mod->irq_bempsts;
 		state->brdysts &= mod->irq_brdysts;
-	पूर्ण
+	}
 	usbhs_unlock(priv, flags);
 	/********************  spin unlock ******************/
 
 	/*
-	 * Check whether the irq enable रेजिस्टरs and the irq status are set
+	 * Check whether the irq enable registers and the irq status are set
 	 * when IRQF_SHARED is set.
 	 */
-	अगर (priv->irqflags & IRQF_SHARED) अणु
-		अगर (!(पूर्णांकenb0 & state->पूर्णांकsts0) &&
-		    !(पूर्णांकenb1 & state->पूर्णांकsts1) &&
+	if (priv->irqflags & IRQF_SHARED) {
+		if (!(intenb0 & state->intsts0) &&
+		    !(intenb1 & state->intsts1) &&
 		    !(state->bempsts) &&
 		    !(state->brdysts))
-			वापस -EIO;
-	पूर्ण
+			return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *		पूर्णांकerrupt
+ *		interrupt
  */
-#घोषणा INTSTS0_MAGIC 0xF800 /* acknowledge magical पूर्णांकerrupt sources */
-#घोषणा INTSTS1_MAGIC 0xA870 /* acknowledge magical पूर्णांकerrupt sources */
-अटल irqवापस_t usbhs_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा usbhs_priv *priv = data;
-	काष्ठा usbhs_irq_state irq_state;
+#define INTSTS0_MAGIC 0xF800 /* acknowledge magical interrupt sources */
+#define INTSTS1_MAGIC 0xA870 /* acknowledge magical interrupt sources */
+static irqreturn_t usbhs_interrupt(int irq, void *data)
+{
+	struct usbhs_priv *priv = data;
+	struct usbhs_irq_state irq_state;
 
-	अगर (usbhs_status_get_each_irq(priv, &irq_state) < 0)
-		वापस IRQ_NONE;
+	if (usbhs_status_get_each_irq(priv, &irq_state) < 0)
+		return IRQ_NONE;
 
 	/*
-	 * clear पूर्णांकerrupt
+	 * clear interrupt
 	 *
-	 * The hardware is _very_ picky to clear पूर्णांकerrupt bit.
+	 * The hardware is _very_ picky to clear interrupt bit.
 	 * Especially INTSTS0_MAGIC, INTSTS1_MAGIC value.
 	 *
 	 * see
@@ -259,20 +258,20 @@ mod_init_host_err:
 	 *	 - "Control Transfer (DCP)"
 	 *	   - Function :: VALID bit should 0
 	 */
-	usbhs_ग_लिखो(priv, INTSTS0, ~irq_state.पूर्णांकsts0 & INTSTS0_MAGIC);
-	अगर (usbhs_mod_is_host(priv))
-		usbhs_ग_लिखो(priv, INTSTS1, ~irq_state.पूर्णांकsts1 & INTSTS1_MAGIC);
+	usbhs_write(priv, INTSTS0, ~irq_state.intsts0 & INTSTS0_MAGIC);
+	if (usbhs_mod_is_host(priv))
+		usbhs_write(priv, INTSTS1, ~irq_state.intsts1 & INTSTS1_MAGIC);
 
 	/*
 	 * The driver should not clear the xxxSTS after the line of
 	 * "call irq callback functions" because each "if" statement is
-	 * possible to call the callback function क्रम aव्योमing any side effects.
+	 * possible to call the callback function for avoiding any side effects.
 	 */
-	अगर (irq_state.पूर्णांकsts0 & BRDY)
-		usbhs_ग_लिखो(priv, BRDYSTS, ~irq_state.brdysts);
-	usbhs_ग_लिखो(priv, NRDYSTS, ~irq_state.nrdysts);
-	अगर (irq_state.पूर्णांकsts0 & BEMP)
-		usbhs_ग_लिखो(priv, BEMPSTS, ~irq_state.bempsts);
+	if (irq_state.intsts0 & BRDY)
+		usbhs_write(priv, BRDYSTS, ~irq_state.brdysts);
+	usbhs_write(priv, NRDYSTS, ~irq_state.nrdysts);
+	if (irq_state.intsts0 & BEMP)
+		usbhs_write(priv, BEMPSTS, ~irq_state.bempsts);
 
 	/*
 	 * call irq callback functions
@@ -281,43 +280,43 @@ mod_init_host_err:
 	 */
 
 	/* INTSTS0 */
-	अगर (irq_state.पूर्णांकsts0 & VBINT)
+	if (irq_state.intsts0 & VBINT)
 		usbhs_mod_info_call(priv, irq_vbus, priv, &irq_state);
 
-	अगर (irq_state.पूर्णांकsts0 & DVST)
+	if (irq_state.intsts0 & DVST)
 		usbhs_mod_call(priv, irq_dev_state, priv, &irq_state);
 
-	अगर (irq_state.पूर्णांकsts0 & CTRT)
+	if (irq_state.intsts0 & CTRT)
 		usbhs_mod_call(priv, irq_ctrl_stage, priv, &irq_state);
 
-	अगर (irq_state.पूर्णांकsts0 & BEMP)
+	if (irq_state.intsts0 & BEMP)
 		usbhs_mod_call(priv, irq_empty, priv, &irq_state);
 
-	अगर (irq_state.पूर्णांकsts0 & BRDY)
-		usbhs_mod_call(priv, irq_पढ़ोy, priv, &irq_state);
+	if (irq_state.intsts0 & BRDY)
+		usbhs_mod_call(priv, irq_ready, priv, &irq_state);
 
-	अगर (usbhs_mod_is_host(priv)) अणु
+	if (usbhs_mod_is_host(priv)) {
 		/* INTSTS1 */
-		अगर (irq_state.पूर्णांकsts1 & ATTCH)
+		if (irq_state.intsts1 & ATTCH)
 			usbhs_mod_call(priv, irq_attch, priv, &irq_state);
 
-		अगर (irq_state.पूर्णांकsts1 & DTCH)
+		if (irq_state.intsts1 & DTCH)
 			usbhs_mod_call(priv, irq_dtch, priv, &irq_state);
 
-		अगर (irq_state.पूर्णांकsts1 & SIGN)
+		if (irq_state.intsts1 & SIGN)
 			usbhs_mod_call(priv, irq_sign, priv, &irq_state);
 
-		अगर (irq_state.पूर्णांकsts1 & SACK)
+		if (irq_state.intsts1 & SACK)
 			usbhs_mod_call(priv, irq_sack, priv, &irq_state);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
-व्योम usbhs_irq_callback_update(काष्ठा usbhs_priv *priv, काष्ठा usbhs_mod *mod)
-अणु
-	u16 पूर्णांकenb0 = 0;
-	u16 पूर्णांकenb1 = 0;
-	काष्ठा usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
+void usbhs_irq_callback_update(struct usbhs_priv *priv, struct usbhs_mod *mod)
+{
+	u16 intenb0 = 0;
+	u16 intenb1 = 0;
+	struct usbhs_mod_info *info = usbhs_priv_to_modinfo(priv);
 
 	/*
 	 * BEMPENB/BRDYENB are picky.
@@ -327,62 +326,62 @@ mod_init_host_err:
 	 *  - update BEMPENB/BRDYENB
 	 *  - update INTSTS0
 	 */
-	usbhs_ग_लिखो(priv, INTENB0, 0);
-	अगर (usbhs_mod_is_host(priv))
-		usbhs_ग_लिखो(priv, INTENB1, 0);
+	usbhs_write(priv, INTENB0, 0);
+	if (usbhs_mod_is_host(priv))
+		usbhs_write(priv, INTENB1, 0);
 
-	usbhs_ग_लिखो(priv, BEMPENB, 0);
-	usbhs_ग_लिखो(priv, BRDYENB, 0);
+	usbhs_write(priv, BEMPENB, 0);
+	usbhs_write(priv, BRDYENB, 0);
 
 	/*
 	 * see also
-	 *	usbhs_पूर्णांकerrupt
+	 *	usbhs_interrupt
 	 */
 
-	अगर (info->irq_vbus)
-		पूर्णांकenb0 |= VBSE;
+	if (info->irq_vbus)
+		intenb0 |= VBSE;
 
-	अगर (mod) अणु
+	if (mod) {
 		/*
 		 * INTSTS0
 		 */
-		अगर (mod->irq_ctrl_stage)
-			पूर्णांकenb0 |= CTRE;
+		if (mod->irq_ctrl_stage)
+			intenb0 |= CTRE;
 
-		अगर (mod->irq_dev_state)
-			पूर्णांकenb0 |= DVSE;
+		if (mod->irq_dev_state)
+			intenb0 |= DVSE;
 
-		अगर (mod->irq_empty && mod->irq_bempsts) अणु
-			usbhs_ग_लिखो(priv, BEMPENB, mod->irq_bempsts);
-			पूर्णांकenb0 |= BEMPE;
-		पूर्ण
+		if (mod->irq_empty && mod->irq_bempsts) {
+			usbhs_write(priv, BEMPENB, mod->irq_bempsts);
+			intenb0 |= BEMPE;
+		}
 
-		अगर (mod->irq_पढ़ोy && mod->irq_brdysts) अणु
-			usbhs_ग_लिखो(priv, BRDYENB, mod->irq_brdysts);
-			पूर्णांकenb0 |= BRDYE;
-		पूर्ण
+		if (mod->irq_ready && mod->irq_brdysts) {
+			usbhs_write(priv, BRDYENB, mod->irq_brdysts);
+			intenb0 |= BRDYE;
+		}
 
-		अगर (usbhs_mod_is_host(priv)) अणु
+		if (usbhs_mod_is_host(priv)) {
 			/*
 			 * INTSTS1
 			 */
-			अगर (mod->irq_attch)
-				पूर्णांकenb1 |= ATTCHE;
+			if (mod->irq_attch)
+				intenb1 |= ATTCHE;
 
-			अगर (mod->irq_dtch)
-				पूर्णांकenb1 |= DTCHE;
+			if (mod->irq_dtch)
+				intenb1 |= DTCHE;
 
-			अगर (mod->irq_sign)
-				पूर्णांकenb1 |= SIGNE;
+			if (mod->irq_sign)
+				intenb1 |= SIGNE;
 
-			अगर (mod->irq_sack)
-				पूर्णांकenb1 |= SACKE;
-		पूर्ण
-	पूर्ण
+			if (mod->irq_sack)
+				intenb1 |= SACKE;
+		}
+	}
 
-	अगर (पूर्णांकenb0)
-		usbhs_ग_लिखो(priv, INTENB0, पूर्णांकenb0);
+	if (intenb0)
+		usbhs_write(priv, INTENB0, intenb0);
 
-	अगर (usbhs_mod_is_host(priv) && पूर्णांकenb1)
-		usbhs_ग_लिखो(priv, INTENB1, पूर्णांकenb1);
-पूर्ण
+	if (usbhs_mod_is_host(priv) && intenb1)
+		usbhs_write(priv, INTENB1, intenb1);
+}

@@ -1,210 +1,209 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * INT3406 thermal driver क्रम display participant device
+ * INT3406 thermal driver for display participant device
  *
  * Copyright (C) 2016, Intel Corporation
- * Authors: Aaron Lu <aaron.lu@पूर्णांकel.com>
+ * Authors: Aaron Lu <aaron.lu@intel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/thermal.h>
-#समावेश <acpi/video.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/acpi.h>
+#include <linux/backlight.h>
+#include <linux/thermal.h>
+#include <acpi/video.h>
 
-#घोषणा INT3406_BRIGHTNESS_LIMITS_CHANGED	0x80
+#define INT3406_BRIGHTNESS_LIMITS_CHANGED	0x80
 
-काष्ठा पूर्णांक3406_thermal_data अणु
-	पूर्णांक upper_limit;
-	पूर्णांक lower_limit;
+struct int3406_thermal_data {
+	int upper_limit;
+	int lower_limit;
 	acpi_handle handle;
-	काष्ठा acpi_video_device_brightness *br;
-	काष्ठा backlight_device *raw_bd;
-	काष्ठा thermal_cooling_device *cooling_dev;
-पूर्ण;
+	struct acpi_video_device_brightness *br;
+	struct backlight_device *raw_bd;
+	struct thermal_cooling_device *cooling_dev;
+};
 
 /*
  * According to the ACPI spec,
  * "Each brightness level is represented by a number between 0 and 100,
  * and can be thought of as a percentage. For example, 50 can be 50%
- * घातer consumption or 50% brightness, as defined by the OEM."
+ * power consumption or 50% brightness, as defined by the OEM."
  *
- * As पूर्णांक3406 device uses this value to communicate with the native
+ * As int3406 device uses this value to communicate with the native
  * graphics driver, we make the assumption that it represents
  * the percentage of brightness only
  */
-#घोषणा ACPI_TO_RAW(v, d) (d->raw_bd->props.max_brightness * v / 100)
-#घोषणा RAW_TO_ACPI(v, d) (v * 100 / d->raw_bd->props.max_brightness)
+#define ACPI_TO_RAW(v, d) (d->raw_bd->props.max_brightness * v / 100)
+#define RAW_TO_ACPI(v, d) (v * 100 / d->raw_bd->props.max_brightness)
 
-अटल पूर्णांक
-पूर्णांक3406_thermal_get_max_state(काष्ठा thermal_cooling_device *cooling_dev,
-			      अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा पूर्णांक3406_thermal_data *d = cooling_dev->devdata;
+static int
+int3406_thermal_get_max_state(struct thermal_cooling_device *cooling_dev,
+			      unsigned long *state)
+{
+	struct int3406_thermal_data *d = cooling_dev->devdata;
 
 	*state = d->upper_limit - d->lower_limit;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-पूर्णांक3406_thermal_set_cur_state(काष्ठा thermal_cooling_device *cooling_dev,
-			      अचिन्हित दीर्घ state)
-अणु
-	काष्ठा पूर्णांक3406_thermal_data *d = cooling_dev->devdata;
-	पूर्णांक acpi_level, raw_level;
+static int
+int3406_thermal_set_cur_state(struct thermal_cooling_device *cooling_dev,
+			      unsigned long state)
+{
+	struct int3406_thermal_data *d = cooling_dev->devdata;
+	int acpi_level, raw_level;
 
-	अगर (state > d->upper_limit - d->lower_limit)
-		वापस -EINVAL;
+	if (state > d->upper_limit - d->lower_limit)
+		return -EINVAL;
 
 	acpi_level = d->br->levels[d->upper_limit - state];
 
 	raw_level = ACPI_TO_RAW(acpi_level, d);
 
-	वापस backlight_device_set_brightness(d->raw_bd, raw_level);
-पूर्ण
+	return backlight_device_set_brightness(d->raw_bd, raw_level);
+}
 
-अटल पूर्णांक
-पूर्णांक3406_thermal_get_cur_state(काष्ठा thermal_cooling_device *cooling_dev,
-			      अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा पूर्णांक3406_thermal_data *d = cooling_dev->devdata;
-	पूर्णांक acpi_level;
-	पूर्णांक index;
+static int
+int3406_thermal_get_cur_state(struct thermal_cooling_device *cooling_dev,
+			      unsigned long *state)
+{
+	struct int3406_thermal_data *d = cooling_dev->devdata;
+	int acpi_level;
+	int index;
 
 	acpi_level = RAW_TO_ACPI(d->raw_bd->props.brightness, d);
 
 	/*
-	 * There is no 1:1 mapping between the firmware पूर्णांकerface level
-	 * with the raw पूर्णांकerface level, we will have to find one that is
+	 * There is no 1:1 mapping between the firmware interface level
+	 * with the raw interface level, we will have to find one that is
 	 * right above it.
 	 */
-	क्रम (index = d->lower_limit; index < d->upper_limit; index++) अणु
-		अगर (acpi_level <= d->br->levels[index])
-			अवरोध;
-	पूर्ण
+	for (index = d->lower_limit; index < d->upper_limit; index++) {
+		if (acpi_level <= d->br->levels[index])
+			break;
+	}
 
 	*state = d->upper_limit - index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_cooling_device_ops video_cooling_ops = अणु
-	.get_max_state = पूर्णांक3406_thermal_get_max_state,
-	.get_cur_state = पूर्णांक3406_thermal_get_cur_state,
-	.set_cur_state = पूर्णांक3406_thermal_set_cur_state,
-पूर्ण;
+static const struct thermal_cooling_device_ops video_cooling_ops = {
+	.get_max_state = int3406_thermal_get_max_state,
+	.get_cur_state = int3406_thermal_get_cur_state,
+	.set_cur_state = int3406_thermal_set_cur_state,
+};
 
-अटल पूर्णांक पूर्णांक3406_thermal_get_index(पूर्णांक *array, पूर्णांक nr, पूर्णांक value)
-अणु
-	पूर्णांक i;
+static int int3406_thermal_get_index(int *array, int nr, int value)
+{
+	int i;
 
-	क्रम (i = 2; i < nr; i++) अणु
-		अगर (array[i] == value)
-			अवरोध;
-	पूर्ण
-	वापस i == nr ? -ENOENT : i;
-पूर्ण
+	for (i = 2; i < nr; i++) {
+		if (array[i] == value)
+			break;
+	}
+	return i == nr ? -ENOENT : i;
+}
 
-अटल व्योम पूर्णांक3406_thermal_get_limit(काष्ठा पूर्णांक3406_thermal_data *d)
-अणु
+static void int3406_thermal_get_limit(struct int3406_thermal_data *d)
+{
 	acpi_status status;
-	अचिन्हित दीर्घ दीर्घ lower_limit, upper_limit;
+	unsigned long long lower_limit, upper_limit;
 
-	status = acpi_evaluate_पूर्णांकeger(d->handle, "DDDL", शून्य, &lower_limit);
-	अगर (ACPI_SUCCESS(status))
-		d->lower_limit = पूर्णांक3406_thermal_get_index(d->br->levels,
+	status = acpi_evaluate_integer(d->handle, "DDDL", NULL, &lower_limit);
+	if (ACPI_SUCCESS(status))
+		d->lower_limit = int3406_thermal_get_index(d->br->levels,
 					d->br->count, lower_limit);
 
-	status = acpi_evaluate_पूर्णांकeger(d->handle, "DDPC", शून्य, &upper_limit);
-	अगर (ACPI_SUCCESS(status))
-		d->upper_limit = पूर्णांक3406_thermal_get_index(d->br->levels,
+	status = acpi_evaluate_integer(d->handle, "DDPC", NULL, &upper_limit);
+	if (ACPI_SUCCESS(status))
+		d->upper_limit = int3406_thermal_get_index(d->br->levels,
 					d->br->count, upper_limit);
 
 	/* lower_limit and upper_limit should be always set */
 	d->lower_limit = d->lower_limit > 0 ? d->lower_limit : 2;
 	d->upper_limit = d->upper_limit > 0 ? d->upper_limit : d->br->count - 1;
-पूर्ण
+}
 
-अटल व्योम पूर्णांक3406_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	अगर (event == INT3406_BRIGHTNESS_LIMITS_CHANGED)
-		पूर्णांक3406_thermal_get_limit(data);
-पूर्ण
+static void int3406_notify(acpi_handle handle, u32 event, void *data)
+{
+	if (event == INT3406_BRIGHTNESS_LIMITS_CHANGED)
+		int3406_thermal_get_limit(data);
+}
 
-अटल पूर्णांक पूर्णांक3406_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
-	काष्ठा पूर्णांक3406_thermal_data *d;
-	काष्ठा backlight_device *bd;
-	पूर्णांक ret;
+static int int3406_thermal_probe(struct platform_device *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+	struct int3406_thermal_data *d;
+	struct backlight_device *bd;
+	int ret;
 
-	अगर (!ACPI_HANDLE(&pdev->dev))
-		वापस -ENODEV;
+	if (!ACPI_HANDLE(&pdev->dev))
+		return -ENODEV;
 
-	d = devm_kzalloc(&pdev->dev, माप(*d), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = devm_kzalloc(&pdev->dev, sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 	d->handle = ACPI_HANDLE(&pdev->dev);
 
 	bd = backlight_device_get_by_type(BACKLIGHT_RAW);
-	अगर (!bd)
-		वापस -ENODEV;
+	if (!bd)
+		return -ENODEV;
 	d->raw_bd = bd;
 
-	ret = acpi_video_get_levels(ACPI_COMPANION(&pdev->dev), &d->br, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = acpi_video_get_levels(ACPI_COMPANION(&pdev->dev), &d->br, NULL);
+	if (ret)
+		return ret;
 
-	पूर्णांक3406_thermal_get_limit(d);
+	int3406_thermal_get_limit(d);
 
-	d->cooling_dev = thermal_cooling_device_रेजिस्टर(acpi_device_bid(adev),
+	d->cooling_dev = thermal_cooling_device_register(acpi_device_bid(adev),
 							 d, &video_cooling_ops);
-	अगर (IS_ERR(d->cooling_dev))
-		जाओ err;
+	if (IS_ERR(d->cooling_dev))
+		goto err;
 
-	ret = acpi_install_notअगरy_handler(adev->handle, ACPI_DEVICE_NOTIFY,
-					  पूर्णांक3406_notअगरy, d);
-	अगर (ret)
-		जाओ err_cdev;
+	ret = acpi_install_notify_handler(adev->handle, ACPI_DEVICE_NOTIFY,
+					  int3406_notify, d);
+	if (ret)
+		goto err_cdev;
 
-	platक्रमm_set_drvdata(pdev, d);
+	platform_set_drvdata(pdev, d);
 
-	वापस 0;
+	return 0;
 
 err_cdev:
-	thermal_cooling_device_unरेजिस्टर(d->cooling_dev);
+	thermal_cooling_device_unregister(d->cooling_dev);
 err:
-	kमुक्त(d->br);
-	वापस -ENODEV;
-पूर्ण
+	kfree(d->br);
+	return -ENODEV;
+}
 
-अटल पूर्णांक पूर्णांक3406_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांक3406_thermal_data *d = platक्रमm_get_drvdata(pdev);
+static int int3406_thermal_remove(struct platform_device *pdev)
+{
+	struct int3406_thermal_data *d = platform_get_drvdata(pdev);
 
-	thermal_cooling_device_unरेजिस्टर(d->cooling_dev);
-	kमुक्त(d->br);
-	वापस 0;
-पूर्ण
+	thermal_cooling_device_unregister(d->cooling_dev);
+	kfree(d->br);
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id पूर्णांक3406_thermal_match[] = अणु
-	अणु"INT3406", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct acpi_device_id int3406_thermal_match[] = {
+	{"INT3406", 0},
+	{}
+};
 
-MODULE_DEVICE_TABLE(acpi, पूर्णांक3406_thermal_match);
+MODULE_DEVICE_TABLE(acpi, int3406_thermal_match);
 
-अटल काष्ठा platक्रमm_driver पूर्णांक3406_thermal_driver = अणु
-	.probe = पूर्णांक3406_thermal_probe,
-	.हटाओ = पूर्णांक3406_thermal_हटाओ,
-	.driver = अणु
+static struct platform_driver int3406_thermal_driver = {
+	.probe = int3406_thermal_probe,
+	.remove = int3406_thermal_remove,
+	.driver = {
 		   .name = "int3406 thermal",
-		   .acpi_match_table = पूर्णांक3406_thermal_match,
-		   पूर्ण,
-पूर्ण;
+		   .acpi_match_table = int3406_thermal_match,
+		   },
+};
 
-module_platक्रमm_driver(पूर्णांक3406_thermal_driver);
+module_platform_driver(int3406_thermal_driver);
 
 MODULE_DESCRIPTION("INT3406 Thermal driver");
 MODULE_LICENSE("GPL v2");

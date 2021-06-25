@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2017 Christoph Hellwig.
  */
 
-#समावेश "xfs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_trace.h"
+#include "xfs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_bit.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_trace.h"
 
 /*
  * In-core extent record layout:
@@ -26,35 +25,35 @@
  * | 22:63 | high 42 bits of startblock |
  * +-------+----------------------------+
  */
-#घोषणा XFS_IEXT_STARTOFF_MASK		xfs_mask64lo(BMBT_STARTOFF_BITLEN)
-#घोषणा XFS_IEXT_LENGTH_MASK		xfs_mask64lo(BMBT_BLOCKCOUNT_BITLEN)
-#घोषणा XFS_IEXT_STARTBLOCK_MASK	xfs_mask64lo(BMBT_STARTBLOCK_BITLEN)
+#define XFS_IEXT_STARTOFF_MASK		xfs_mask64lo(BMBT_STARTOFF_BITLEN)
+#define XFS_IEXT_LENGTH_MASK		xfs_mask64lo(BMBT_BLOCKCOUNT_BITLEN)
+#define XFS_IEXT_STARTBLOCK_MASK	xfs_mask64lo(BMBT_STARTBLOCK_BITLEN)
 
-काष्ठा xfs_iext_rec अणु
-	uपूर्णांक64_t			lo;
-	uपूर्णांक64_t			hi;
-पूर्ण;
+struct xfs_iext_rec {
+	uint64_t			lo;
+	uint64_t			hi;
+};
 
 /*
  * Given that the length can't be a zero, only an empty hi value indicates an
  * unused record.
  */
-अटल bool xfs_iext_rec_is_empty(काष्ठा xfs_iext_rec *rec)
-अणु
-	वापस rec->hi == 0;
-पूर्ण
+static bool xfs_iext_rec_is_empty(struct xfs_iext_rec *rec)
+{
+	return rec->hi == 0;
+}
 
-अटल अंतरभूत व्योम xfs_iext_rec_clear(काष्ठा xfs_iext_rec *rec)
-अणु
+static inline void xfs_iext_rec_clear(struct xfs_iext_rec *rec)
+{
 	rec->lo = 0;
 	rec->hi = 0;
-पूर्ण
+}
 
-अटल व्योम
+static void
 xfs_iext_set(
-	काष्ठा xfs_iext_rec	*rec,
-	काष्ठा xfs_bmbt_irec	*irec)
-अणु
+	struct xfs_iext_rec	*rec,
+	struct xfs_bmbt_irec	*irec)
+{
 	ASSERT((irec->br_startoff & ~XFS_IEXT_STARTOFF_MASK) == 0);
 	ASSERT((irec->br_blockcount & ~XFS_IEXT_LENGTH_MASK) == 0);
 	ASSERT((irec->br_startblock & ~XFS_IEXT_STARTBLOCK_MASK) == 0);
@@ -65,33 +64,33 @@ xfs_iext_set(
 	rec->lo |= (irec->br_startblock << 54);
 	rec->hi |= ((irec->br_startblock & ~xfs_mask64lo(10)) << (22 - 10));
 
-	अगर (irec->br_state == XFS_EXT_UNWRITTEN)
+	if (irec->br_state == XFS_EXT_UNWRITTEN)
 		rec->hi |= (1 << 21);
-पूर्ण
+}
 
-अटल व्योम
+static void
 xfs_iext_get(
-	काष्ठा xfs_bmbt_irec	*irec,
-	काष्ठा xfs_iext_rec	*rec)
-अणु
+	struct xfs_bmbt_irec	*irec,
+	struct xfs_iext_rec	*rec)
+{
 	irec->br_startoff = rec->lo & XFS_IEXT_STARTOFF_MASK;
 	irec->br_blockcount = rec->hi & XFS_IEXT_LENGTH_MASK;
 
 	irec->br_startblock = rec->lo >> 54;
 	irec->br_startblock |= (rec->hi & xfs_mask64hi(42)) >> (22 - 10);
 
-	अगर (rec->hi & (1 << 21))
+	if (rec->hi & (1 << 21))
 		irec->br_state = XFS_EXT_UNWRITTEN;
-	अन्यथा
+	else
 		irec->br_state = XFS_EXT_NORM;
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	NODE_SIZE	= 256,
-	KEYS_PER_NODE	= NODE_SIZE / (माप(uपूर्णांक64_t) + माप(व्योम *)),
-	RECS_PER_LEAF	= (NODE_SIZE - (2 * माप(काष्ठा xfs_iext_leaf *))) /
-				माप(काष्ठा xfs_iext_rec),
-पूर्ण;
+	KEYS_PER_NODE	= NODE_SIZE / (sizeof(uint64_t) + sizeof(void *)),
+	RECS_PER_LEAF	= (NODE_SIZE - (2 * sizeof(struct xfs_iext_leaf *))) /
+				sizeof(struct xfs_iext_rec),
+};
 
 /*
  * In-core extent btree block layout:
@@ -100,11 +99,11 @@ xfs_iext_get(
  *
  * The leaf blocks are made up by %KEYS_PER_NODE extent records, which each
  * contain the startoffset, blockcount, startblock and unwritten extent flag.
- * See above क्रम the exact क्रमmat, followed by poपूर्णांकers to the previous and next
- * leaf blocks (अगर there are any).
+ * See above for the exact format, followed by pointers to the previous and next
+ * leaf blocks (if there are any).
  *
  * The inner (non-leaf) blocks first contain KEYS_PER_NODE lookup keys, followed
- * by an equal number of poपूर्णांकers to the btree blocks at the next lower level.
+ * by an equal number of pointers to the btree blocks at the next lower level.
  *
  *		+-------+-------+-------+-------+-------+----------+----------+
  * Leaf:	| rec 1 | rec 2 | rec 3 | rec 4 | rec N | prev-ptr | next-ptr |
@@ -114,938 +113,938 @@ xfs_iext_get(
  * Inner:	| key 1 | key 2 | key 3 | key N | ptr 1 | ptr 2 | ptr3 | ptr N |
  *		+-------+-------+-------+-------+-------+-------+------+-------+
  */
-काष्ठा xfs_iext_node अणु
-	uपूर्णांक64_t		keys[KEYS_PER_NODE];
-#घोषणा XFS_IEXT_KEY_INVALID	(1ULL << 63)
-	व्योम			*ptrs[KEYS_PER_NODE];
-पूर्ण;
+struct xfs_iext_node {
+	uint64_t		keys[KEYS_PER_NODE];
+#define XFS_IEXT_KEY_INVALID	(1ULL << 63)
+	void			*ptrs[KEYS_PER_NODE];
+};
 
-काष्ठा xfs_iext_leaf अणु
-	काष्ठा xfs_iext_rec	recs[RECS_PER_LEAF];
-	काष्ठा xfs_iext_leaf	*prev;
-	काष्ठा xfs_iext_leaf	*next;
-पूर्ण;
+struct xfs_iext_leaf {
+	struct xfs_iext_rec	recs[RECS_PER_LEAF];
+	struct xfs_iext_leaf	*prev;
+	struct xfs_iext_leaf	*next;
+};
 
-अंतरभूत xfs_extnum_t xfs_iext_count(काष्ठा xfs_अगरork *अगरp)
-अणु
-	वापस अगरp->अगर_bytes / माप(काष्ठा xfs_iext_rec);
-पूर्ण
+inline xfs_extnum_t xfs_iext_count(struct xfs_ifork *ifp)
+{
+	return ifp->if_bytes / sizeof(struct xfs_iext_rec);
+}
 
-अटल अंतरभूत पूर्णांक xfs_iext_max_recs(काष्ठा xfs_अगरork *अगरp)
-अणु
-	अगर (अगरp->अगर_height == 1)
-		वापस xfs_iext_count(अगरp);
-	वापस RECS_PER_LEAF;
-पूर्ण
+static inline int xfs_iext_max_recs(struct xfs_ifork *ifp)
+{
+	if (ifp->if_height == 1)
+		return xfs_iext_count(ifp);
+	return RECS_PER_LEAF;
+}
 
-अटल अंतरभूत काष्ठा xfs_iext_rec *cur_rec(काष्ठा xfs_iext_cursor *cur)
-अणु
-	वापस &cur->leaf->recs[cur->pos];
-पूर्ण
+static inline struct xfs_iext_rec *cur_rec(struct xfs_iext_cursor *cur)
+{
+	return &cur->leaf->recs[cur->pos];
+}
 
-अटल अंतरभूत bool xfs_iext_valid(काष्ठा xfs_अगरork *अगरp,
-		काष्ठा xfs_iext_cursor *cur)
-अणु
-	अगर (!cur->leaf)
-		वापस false;
-	अगर (cur->pos < 0 || cur->pos >= xfs_iext_max_recs(अगरp))
-		वापस false;
-	अगर (xfs_iext_rec_is_empty(cur_rec(cur)))
-		वापस false;
-	वापस true;
-पूर्ण
+static inline bool xfs_iext_valid(struct xfs_ifork *ifp,
+		struct xfs_iext_cursor *cur)
+{
+	if (!cur->leaf)
+		return false;
+	if (cur->pos < 0 || cur->pos >= xfs_iext_max_recs(ifp))
+		return false;
+	if (xfs_iext_rec_is_empty(cur_rec(cur)))
+		return false;
+	return true;
+}
 
-अटल व्योम *
+static void *
 xfs_iext_find_first_leaf(
-	काष्ठा xfs_अगरork	*अगरp)
-अणु
-	काष्ठा xfs_iext_node	*node = अगरp->अगर_u1.अगर_root;
-	पूर्णांक			height;
+	struct xfs_ifork	*ifp)
+{
+	struct xfs_iext_node	*node = ifp->if_u1.if_root;
+	int			height;
 
-	अगर (!अगरp->अगर_height)
-		वापस शून्य;
+	if (!ifp->if_height)
+		return NULL;
 
-	क्रम (height = अगरp->अगर_height; height > 1; height--) अणु
+	for (height = ifp->if_height; height > 1; height--) {
 		node = node->ptrs[0];
 		ASSERT(node);
-	पूर्ण
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल व्योम *
+static void *
 xfs_iext_find_last_leaf(
-	काष्ठा xfs_अगरork	*अगरp)
-अणु
-	काष्ठा xfs_iext_node	*node = अगरp->अगर_u1.अगर_root;
-	पूर्णांक			height, i;
+	struct xfs_ifork	*ifp)
+{
+	struct xfs_iext_node	*node = ifp->if_u1.if_root;
+	int			height, i;
 
-	अगर (!अगरp->अगर_height)
-		वापस शून्य;
+	if (!ifp->if_height)
+		return NULL;
 
-	क्रम (height = अगरp->अगर_height; height > 1; height--) अणु
-		क्रम (i = 1; i < KEYS_PER_NODE; i++)
-			अगर (!node->ptrs[i])
-				अवरोध;
+	for (height = ifp->if_height; height > 1; height--) {
+		for (i = 1; i < KEYS_PER_NODE; i++)
+			if (!node->ptrs[i])
+				break;
 		node = node->ptrs[i - 1];
 		ASSERT(node);
-	पूर्ण
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-व्योम
+void
 xfs_iext_first(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
 	cur->pos = 0;
-	cur->leaf = xfs_iext_find_first_leaf(अगरp);
-पूर्ण
+	cur->leaf = xfs_iext_find_first_leaf(ifp);
+}
 
-व्योम
+void
 xfs_iext_last(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
-	पूर्णांक			i;
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
+	int			i;
 
-	cur->leaf = xfs_iext_find_last_leaf(अगरp);
-	अगर (!cur->leaf) अणु
+	cur->leaf = xfs_iext_find_last_leaf(ifp);
+	if (!cur->leaf) {
 		cur->pos = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 1; i < xfs_iext_max_recs(अगरp); i++) अणु
-		अगर (xfs_iext_rec_is_empty(&cur->leaf->recs[i]))
-			अवरोध;
-	पूर्ण
+	for (i = 1; i < xfs_iext_max_recs(ifp); i++) {
+		if (xfs_iext_rec_is_empty(&cur->leaf->recs[i]))
+			break;
+	}
 	cur->pos = i - 1;
-पूर्ण
+}
 
-व्योम
+void
 xfs_iext_next(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
-	अगर (!cur->leaf) अणु
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
+	if (!cur->leaf) {
 		ASSERT(cur->pos <= 0 || cur->pos >= RECS_PER_LEAF);
-		xfs_iext_first(अगरp, cur);
-		वापस;
-	पूर्ण
+		xfs_iext_first(ifp, cur);
+		return;
+	}
 
 	ASSERT(cur->pos >= 0);
-	ASSERT(cur->pos < xfs_iext_max_recs(अगरp));
+	ASSERT(cur->pos < xfs_iext_max_recs(ifp));
 
 	cur->pos++;
-	अगर (अगरp->अगर_height > 1 && !xfs_iext_valid(अगरp, cur) &&
-	    cur->leaf->next) अणु
+	if (ifp->if_height > 1 && !xfs_iext_valid(ifp, cur) &&
+	    cur->leaf->next) {
 		cur->leaf = cur->leaf->next;
 		cur->pos = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
+void
 xfs_iext_prev(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
-	अगर (!cur->leaf) अणु
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
+	if (!cur->leaf) {
 		ASSERT(cur->pos <= 0 || cur->pos >= RECS_PER_LEAF);
-		xfs_iext_last(अगरp, cur);
-		वापस;
-	पूर्ण
+		xfs_iext_last(ifp, cur);
+		return;
+	}
 
 	ASSERT(cur->pos >= 0);
 	ASSERT(cur->pos <= RECS_PER_LEAF);
 
 recurse:
-	करो अणु
+	do {
 		cur->pos--;
-		अगर (xfs_iext_valid(अगरp, cur))
-			वापस;
-	पूर्ण जबतक (cur->pos > 0);
+		if (xfs_iext_valid(ifp, cur))
+			return;
+	} while (cur->pos > 0);
 
-	अगर (अगरp->अगर_height > 1 && cur->leaf->prev) अणु
+	if (ifp->if_height > 1 && cur->leaf->prev) {
 		cur->leaf = cur->leaf->prev;
 		cur->pos = RECS_PER_LEAF;
-		जाओ recurse;
-	पूर्ण
-पूर्ण
+		goto recurse;
+	}
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_iext_key_cmp(
-	काष्ठा xfs_iext_node	*node,
-	पूर्णांक			n,
+	struct xfs_iext_node	*node,
+	int			n,
 	xfs_fileoff_t		offset)
-अणु
-	अगर (node->keys[n] > offset)
-		वापस 1;
-	अगर (node->keys[n] < offset)
-		वापस -1;
-	वापस 0;
-पूर्ण
+{
+	if (node->keys[n] > offset)
+		return 1;
+	if (node->keys[n] < offset)
+		return -1;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_iext_rec_cmp(
-	काष्ठा xfs_iext_rec	*rec,
+	struct xfs_iext_rec	*rec,
 	xfs_fileoff_t		offset)
-अणु
-	uपूर्णांक64_t		rec_offset = rec->lo & XFS_IEXT_STARTOFF_MASK;
-	uपूर्णांक32_t		rec_len = rec->hi & XFS_IEXT_LENGTH_MASK;
+{
+	uint64_t		rec_offset = rec->lo & XFS_IEXT_STARTOFF_MASK;
+	uint32_t		rec_len = rec->hi & XFS_IEXT_LENGTH_MASK;
 
-	अगर (rec_offset > offset)
-		वापस 1;
-	अगर (rec_offset + rec_len <= offset)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (rec_offset > offset)
+		return 1;
+	if (rec_offset + rec_len <= offset)
+		return -1;
+	return 0;
+}
 
-अटल व्योम *
+static void *
 xfs_iext_find_level(
-	काष्ठा xfs_अगरork	*अगरp,
+	struct xfs_ifork	*ifp,
 	xfs_fileoff_t		offset,
-	पूर्णांक			level)
-अणु
-	काष्ठा xfs_iext_node	*node = अगरp->अगर_u1.अगर_root;
-	पूर्णांक			height, i;
+	int			level)
+{
+	struct xfs_iext_node	*node = ifp->if_u1.if_root;
+	int			height, i;
 
-	अगर (!अगरp->अगर_height)
-		वापस शून्य;
+	if (!ifp->if_height)
+		return NULL;
 
-	क्रम (height = अगरp->अगर_height; height > level; height--) अणु
-		क्रम (i = 1; i < KEYS_PER_NODE; i++)
-			अगर (xfs_iext_key_cmp(node, i, offset) > 0)
-				अवरोध;
+	for (height = ifp->if_height; height > level; height--) {
+		for (i = 1; i < KEYS_PER_NODE; i++)
+			if (xfs_iext_key_cmp(node, i, offset) > 0)
+				break;
 
 		node = node->ptrs[i - 1];
-		अगर (!node)
-			अवरोध;
-	पूर्ण
+		if (!node)
+			break;
+	}
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल पूर्णांक
+static int
 xfs_iext_node_pos(
-	काष्ठा xfs_iext_node	*node,
+	struct xfs_iext_node	*node,
 	xfs_fileoff_t		offset)
-अणु
-	पूर्णांक			i;
+{
+	int			i;
 
-	क्रम (i = 1; i < KEYS_PER_NODE; i++) अणु
-		अगर (xfs_iext_key_cmp(node, i, offset) > 0)
-			अवरोध;
-	पूर्ण
+	for (i = 1; i < KEYS_PER_NODE; i++) {
+		if (xfs_iext_key_cmp(node, i, offset) > 0)
+			break;
+	}
 
-	वापस i - 1;
-पूर्ण
+	return i - 1;
+}
 
-अटल पूर्णांक
+static int
 xfs_iext_node_insert_pos(
-	काष्ठा xfs_iext_node	*node,
+	struct xfs_iext_node	*node,
 	xfs_fileoff_t		offset)
-अणु
-	पूर्णांक			i;
+{
+	int			i;
 
-	क्रम (i = 0; i < KEYS_PER_NODE; i++) अणु
-		अगर (xfs_iext_key_cmp(node, i, offset) > 0)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < KEYS_PER_NODE; i++) {
+		if (xfs_iext_key_cmp(node, i, offset) > 0)
+			return i;
+	}
 
-	वापस KEYS_PER_NODE;
-पूर्ण
+	return KEYS_PER_NODE;
+}
 
-अटल पूर्णांक
+static int
 xfs_iext_node_nr_entries(
-	काष्ठा xfs_iext_node	*node,
-	पूर्णांक			start)
-अणु
-	पूर्णांक			i;
+	struct xfs_iext_node	*node,
+	int			start)
+{
+	int			i;
 
-	क्रम (i = start; i < KEYS_PER_NODE; i++) अणु
-		अगर (node->keys[i] == XFS_IEXT_KEY_INVALID)
-			अवरोध;
-	पूर्ण
+	for (i = start; i < KEYS_PER_NODE; i++) {
+		if (node->keys[i] == XFS_IEXT_KEY_INVALID)
+			break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक
+static int
 xfs_iext_leaf_nr_entries(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_leaf	*leaf,
-	पूर्णांक			start)
-अणु
-	पूर्णांक			i;
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_leaf	*leaf,
+	int			start)
+{
+	int			i;
 
-	क्रम (i = start; i < xfs_iext_max_recs(अगरp); i++) अणु
-		अगर (xfs_iext_rec_is_empty(&leaf->recs[i]))
-			अवरोध;
-	पूर्ण
+	for (i = start; i < xfs_iext_max_recs(ifp); i++) {
+		if (xfs_iext_rec_is_empty(&leaf->recs[i]))
+			break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल अंतरभूत uपूर्णांक64_t
+static inline uint64_t
 xfs_iext_leaf_key(
-	काष्ठा xfs_iext_leaf	*leaf,
-	पूर्णांक			n)
-अणु
-	वापस leaf->recs[n].lo & XFS_IEXT_STARTOFF_MASK;
-पूर्ण
+	struct xfs_iext_leaf	*leaf,
+	int			n)
+{
+	return leaf->recs[n].lo & XFS_IEXT_STARTOFF_MASK;
+}
 
-अटल व्योम
+static void
 xfs_iext_grow(
-	काष्ठा xfs_अगरork	*अगरp)
-अणु
-	काष्ठा xfs_iext_node	*node = kmem_zalloc(NODE_SIZE, KM_NOFS);
-	पूर्णांक			i;
+	struct xfs_ifork	*ifp)
+{
+	struct xfs_iext_node	*node = kmem_zalloc(NODE_SIZE, KM_NOFS);
+	int			i;
 
-	अगर (अगरp->अगर_height == 1) अणु
-		काष्ठा xfs_iext_leaf *prev = अगरp->अगर_u1.अगर_root;
+	if (ifp->if_height == 1) {
+		struct xfs_iext_leaf *prev = ifp->if_u1.if_root;
 
 		node->keys[0] = xfs_iext_leaf_key(prev, 0);
 		node->ptrs[0] = prev;
-	पूर्ण अन्यथा  अणु
-		काष्ठा xfs_iext_node *prev = अगरp->अगर_u1.अगर_root;
+	} else  {
+		struct xfs_iext_node *prev = ifp->if_u1.if_root;
 
-		ASSERT(अगरp->अगर_height > 1);
+		ASSERT(ifp->if_height > 1);
 
 		node->keys[0] = prev->keys[0];
 		node->ptrs[0] = prev;
-	पूर्ण
+	}
 
-	क्रम (i = 1; i < KEYS_PER_NODE; i++)
+	for (i = 1; i < KEYS_PER_NODE; i++)
 		node->keys[i] = XFS_IEXT_KEY_INVALID;
 
-	अगरp->अगर_u1.अगर_root = node;
-	अगरp->अगर_height++;
-पूर्ण
+	ifp->if_u1.if_root = node;
+	ifp->if_height++;
+}
 
-अटल व्योम
+static void
 xfs_iext_update_node(
-	काष्ठा xfs_अगरork	*अगरp,
+	struct xfs_ifork	*ifp,
 	xfs_fileoff_t		old_offset,
 	xfs_fileoff_t		new_offset,
-	पूर्णांक			level,
-	व्योम			*ptr)
-अणु
-	काष्ठा xfs_iext_node	*node = अगरp->अगर_u1.अगर_root;
-	पूर्णांक			height, i;
+	int			level,
+	void			*ptr)
+{
+	struct xfs_iext_node	*node = ifp->if_u1.if_root;
+	int			height, i;
 
-	क्रम (height = अगरp->अगर_height; height > level; height--) अणु
-		क्रम (i = 0; i < KEYS_PER_NODE; i++) अणु
-			अगर (i > 0 && xfs_iext_key_cmp(node, i, old_offset) > 0)
-				अवरोध;
-			अगर (node->keys[i] == old_offset)
+	for (height = ifp->if_height; height > level; height--) {
+		for (i = 0; i < KEYS_PER_NODE; i++) {
+			if (i > 0 && xfs_iext_key_cmp(node, i, old_offset) > 0)
+				break;
+			if (node->keys[i] == old_offset)
 				node->keys[i] = new_offset;
-		पूर्ण
+		}
 		node = node->ptrs[i - 1];
 		ASSERT(node);
-	पूर्ण
+	}
 
 	ASSERT(node == ptr);
-पूर्ण
+}
 
-अटल काष्ठा xfs_iext_node *
+static struct xfs_iext_node *
 xfs_iext_split_node(
-	काष्ठा xfs_iext_node	**nodep,
-	पूर्णांक			*pos,
-	पूर्णांक			*nr_entries)
-अणु
-	काष्ठा xfs_iext_node	*node = *nodep;
-	काष्ठा xfs_iext_node	*new = kmem_zalloc(NODE_SIZE, KM_NOFS);
-	स्थिर पूर्णांक		nr_move = KEYS_PER_NODE / 2;
-	पूर्णांक			nr_keep = nr_move + (KEYS_PER_NODE & 1);
-	पूर्णांक			i = 0;
+	struct xfs_iext_node	**nodep,
+	int			*pos,
+	int			*nr_entries)
+{
+	struct xfs_iext_node	*node = *nodep;
+	struct xfs_iext_node	*new = kmem_zalloc(NODE_SIZE, KM_NOFS);
+	const int		nr_move = KEYS_PER_NODE / 2;
+	int			nr_keep = nr_move + (KEYS_PER_NODE & 1);
+	int			i = 0;
 
-	/* क्रम sequential append operations just spill over पूर्णांकo the new node */
-	अगर (*pos == KEYS_PER_NODE) अणु
+	/* for sequential append operations just spill over into the new node */
+	if (*pos == KEYS_PER_NODE) {
 		*nodep = new;
 		*pos = 0;
 		*nr_entries = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 
-	क्रम (i = 0; i < nr_move; i++) अणु
+	for (i = 0; i < nr_move; i++) {
 		new->keys[i] = node->keys[nr_keep + i];
 		new->ptrs[i] = node->ptrs[nr_keep + i];
 
 		node->keys[nr_keep + i] = XFS_IEXT_KEY_INVALID;
-		node->ptrs[nr_keep + i] = शून्य;
-	पूर्ण
+		node->ptrs[nr_keep + i] = NULL;
+	}
 
-	अगर (*pos >= nr_keep) अणु
+	if (*pos >= nr_keep) {
 		*nodep = new;
 		*pos -= nr_keep;
 		*nr_entries = nr_move;
-	पूर्ण अन्यथा अणु
+	} else {
 		*nr_entries = nr_keep;
-	पूर्ण
-करोne:
-	क्रम (; i < KEYS_PER_NODE; i++)
+	}
+done:
+	for (; i < KEYS_PER_NODE; i++)
 		new->keys[i] = XFS_IEXT_KEY_INVALID;
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल व्योम
+static void
 xfs_iext_insert_node(
-	काष्ठा xfs_अगरork	*अगरp,
-	uपूर्णांक64_t		offset,
-	व्योम			*ptr,
-	पूर्णांक			level)
-अणु
-	काष्ठा xfs_iext_node	*node, *new;
-	पूर्णांक			i, pos, nr_entries;
+	struct xfs_ifork	*ifp,
+	uint64_t		offset,
+	void			*ptr,
+	int			level)
+{
+	struct xfs_iext_node	*node, *new;
+	int			i, pos, nr_entries;
 
 again:
-	अगर (अगरp->अगर_height < level)
-		xfs_iext_grow(अगरp);
+	if (ifp->if_height < level)
+		xfs_iext_grow(ifp);
 
-	new = शून्य;
-	node = xfs_iext_find_level(अगरp, offset, level);
+	new = NULL;
+	node = xfs_iext_find_level(ifp, offset, level);
 	pos = xfs_iext_node_insert_pos(node, offset);
 	nr_entries = xfs_iext_node_nr_entries(node, pos);
 
 	ASSERT(pos >= nr_entries || xfs_iext_key_cmp(node, pos, offset) != 0);
 	ASSERT(nr_entries <= KEYS_PER_NODE);
 
-	अगर (nr_entries == KEYS_PER_NODE)
+	if (nr_entries == KEYS_PER_NODE)
 		new = xfs_iext_split_node(&node, &pos, &nr_entries);
 
 	/*
-	 * Update the poपूर्णांकers in higher levels अगर the first entry changes
+	 * Update the pointers in higher levels if the first entry changes
 	 * in an existing node.
 	 */
-	अगर (node != new && pos == 0 && nr_entries > 0)
-		xfs_iext_update_node(अगरp, node->keys[0], offset, level, node);
+	if (node != new && pos == 0 && nr_entries > 0)
+		xfs_iext_update_node(ifp, node->keys[0], offset, level, node);
 
-	क्रम (i = nr_entries; i > pos; i--) अणु
+	for (i = nr_entries; i > pos; i--) {
 		node->keys[i] = node->keys[i - 1];
 		node->ptrs[i] = node->ptrs[i - 1];
-	पूर्ण
+	}
 	node->keys[pos] = offset;
 	node->ptrs[pos] = ptr;
 
-	अगर (new) अणु
+	if (new) {
 		offset = new->keys[0];
 		ptr = new;
 		level++;
-		जाओ again;
-	पूर्ण
-पूर्ण
+		goto again;
+	}
+}
 
-अटल काष्ठा xfs_iext_leaf *
+static struct xfs_iext_leaf *
 xfs_iext_split_leaf(
-	काष्ठा xfs_iext_cursor	*cur,
-	पूर्णांक			*nr_entries)
-अणु
-	काष्ठा xfs_iext_leaf	*leaf = cur->leaf;
-	काष्ठा xfs_iext_leaf	*new = kmem_zalloc(NODE_SIZE, KM_NOFS);
-	स्थिर पूर्णांक		nr_move = RECS_PER_LEAF / 2;
-	पूर्णांक			nr_keep = nr_move + (RECS_PER_LEAF & 1);
-	पूर्णांक			i;
+	struct xfs_iext_cursor	*cur,
+	int			*nr_entries)
+{
+	struct xfs_iext_leaf	*leaf = cur->leaf;
+	struct xfs_iext_leaf	*new = kmem_zalloc(NODE_SIZE, KM_NOFS);
+	const int		nr_move = RECS_PER_LEAF / 2;
+	int			nr_keep = nr_move + (RECS_PER_LEAF & 1);
+	int			i;
 
-	/* क्रम sequential append operations just spill over पूर्णांकo the new node */
-	अगर (cur->pos == RECS_PER_LEAF) अणु
+	/* for sequential append operations just spill over into the new node */
+	if (cur->pos == RECS_PER_LEAF) {
 		cur->leaf = new;
 		cur->pos = 0;
 		*nr_entries = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	क्रम (i = 0; i < nr_move; i++) अणु
+	for (i = 0; i < nr_move; i++) {
 		new->recs[i] = leaf->recs[nr_keep + i];
 		xfs_iext_rec_clear(&leaf->recs[nr_keep + i]);
-	पूर्ण
+	}
 
-	अगर (cur->pos >= nr_keep) अणु
+	if (cur->pos >= nr_keep) {
 		cur->leaf = new;
 		cur->pos -= nr_keep;
 		*nr_entries = nr_move;
-	पूर्ण अन्यथा अणु
+	} else {
 		*nr_entries = nr_keep;
-	पूर्ण
-करोne:
-	अगर (leaf->next)
+	}
+done:
+	if (leaf->next)
 		leaf->next->prev = new;
 	new->next = leaf->next;
 	new->prev = leaf;
 	leaf->next = new;
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल व्योम
+static void
 xfs_iext_alloc_root(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
-	ASSERT(अगरp->अगर_bytes == 0);
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
+	ASSERT(ifp->if_bytes == 0);
 
-	अगरp->अगर_u1.अगर_root = kmem_zalloc(माप(काष्ठा xfs_iext_rec), KM_NOFS);
-	अगरp->अगर_height = 1;
+	ifp->if_u1.if_root = kmem_zalloc(sizeof(struct xfs_iext_rec), KM_NOFS);
+	ifp->if_height = 1;
 
-	/* now that we have a node step पूर्णांकo it */
-	cur->leaf = अगरp->अगर_u1.अगर_root;
+	/* now that we have a node step into it */
+	cur->leaf = ifp->if_u1.if_root;
 	cur->pos = 0;
-पूर्ण
+}
 
-अटल व्योम
-xfs_iext_पुनः_स्मृति_root(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur)
-अणु
-	पूर्णांक64_t new_size = अगरp->अगर_bytes + माप(काष्ठा xfs_iext_rec);
-	व्योम *new;
+static void
+xfs_iext_realloc_root(
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur)
+{
+	int64_t new_size = ifp->if_bytes + sizeof(struct xfs_iext_rec);
+	void *new;
 
-	/* account क्रम the prev/next poपूर्णांकers */
-	अगर (new_size / माप(काष्ठा xfs_iext_rec) == RECS_PER_LEAF)
+	/* account for the prev/next pointers */
+	if (new_size / sizeof(struct xfs_iext_rec) == RECS_PER_LEAF)
 		new_size = NODE_SIZE;
 
-	new = kपुनः_स्मृति(अगरp->अगर_u1.अगर_root, new_size, GFP_NOFS | __GFP_NOFAIL);
-	स_रखो(new + अगरp->अगर_bytes, 0, new_size - अगरp->अगर_bytes);
-	अगरp->अगर_u1.अगर_root = new;
+	new = krealloc(ifp->if_u1.if_root, new_size, GFP_NOFS | __GFP_NOFAIL);
+	memset(new + ifp->if_bytes, 0, new_size - ifp->if_bytes);
+	ifp->if_u1.if_root = new;
 	cur->leaf = new;
-पूर्ण
+}
 
 /*
  * Increment the sequence counter on extent tree changes. If we are on a COW
- * विभाजन, this allows the ग_लिखोback code to skip looking क्रम a COW extent अगर the
- * COW विभाजन hasn't changed. We use WRITE_ONCE here to ensure the update to the
- * sequence counter is seen beक्रमe the modअगरications to the extent tree itself
+ * fork, this allows the writeback code to skip looking for a COW extent if the
+ * COW fork hasn't changed. We use WRITE_ONCE here to ensure the update to the
+ * sequence counter is seen before the modifications to the extent tree itself
  * take effect.
  */
-अटल अंतरभूत व्योम xfs_iext_inc_seq(काष्ठा xfs_अगरork *अगरp)
-अणु
-	WRITE_ONCE(अगरp->अगर_seq, READ_ONCE(अगरp->अगर_seq) + 1);
-पूर्ण
+static inline void xfs_iext_inc_seq(struct xfs_ifork *ifp)
+{
+	WRITE_ONCE(ifp->if_seq, READ_ONCE(ifp->if_seq) + 1);
+}
 
-व्योम
+void
 xfs_iext_insert(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_bmbt_irec	*irec,
-	पूर्णांक			state)
-अणु
-	काष्ठा xfs_अगरork	*अगरp = xfs_iext_state_to_विभाजन(ip, state);
+	struct xfs_inode	*ip,
+	struct xfs_iext_cursor	*cur,
+	struct xfs_bmbt_irec	*irec,
+	int			state)
+{
+	struct xfs_ifork	*ifp = xfs_iext_state_to_fork(ip, state);
 	xfs_fileoff_t		offset = irec->br_startoff;
-	काष्ठा xfs_iext_leaf	*new = शून्य;
-	पूर्णांक			nr_entries, i;
+	struct xfs_iext_leaf	*new = NULL;
+	int			nr_entries, i;
 
-	xfs_iext_inc_seq(अगरp);
+	xfs_iext_inc_seq(ifp);
 
-	अगर (अगरp->अगर_height == 0)
-		xfs_iext_alloc_root(अगरp, cur);
-	अन्यथा अगर (अगरp->अगर_height == 1)
-		xfs_iext_पुनः_स्मृति_root(अगरp, cur);
+	if (ifp->if_height == 0)
+		xfs_iext_alloc_root(ifp, cur);
+	else if (ifp->if_height == 1)
+		xfs_iext_realloc_root(ifp, cur);
 
-	nr_entries = xfs_iext_leaf_nr_entries(अगरp, cur->leaf, cur->pos);
+	nr_entries = xfs_iext_leaf_nr_entries(ifp, cur->leaf, cur->pos);
 	ASSERT(nr_entries <= RECS_PER_LEAF);
 	ASSERT(cur->pos >= nr_entries ||
 	       xfs_iext_rec_cmp(cur_rec(cur), irec->br_startoff) != 0);
 
-	अगर (nr_entries == RECS_PER_LEAF)
+	if (nr_entries == RECS_PER_LEAF)
 		new = xfs_iext_split_leaf(cur, &nr_entries);
 
 	/*
-	 * Update the poपूर्णांकers in higher levels अगर the first entry changes
+	 * Update the pointers in higher levels if the first entry changes
 	 * in an existing node.
 	 */
-	अगर (cur->leaf != new && cur->pos == 0 && nr_entries > 0) अणु
-		xfs_iext_update_node(अगरp, xfs_iext_leaf_key(cur->leaf, 0),
+	if (cur->leaf != new && cur->pos == 0 && nr_entries > 0) {
+		xfs_iext_update_node(ifp, xfs_iext_leaf_key(cur->leaf, 0),
 				offset, 1, cur->leaf);
-	पूर्ण
+	}
 
-	क्रम (i = nr_entries; i > cur->pos; i--)
+	for (i = nr_entries; i > cur->pos; i--)
 		cur->leaf->recs[i] = cur->leaf->recs[i - 1];
 	xfs_iext_set(cur_rec(cur), irec);
-	अगरp->अगर_bytes += माप(काष्ठा xfs_iext_rec);
+	ifp->if_bytes += sizeof(struct xfs_iext_rec);
 
 	trace_xfs_iext_insert(ip, cur, state, _RET_IP_);
 
-	अगर (new)
-		xfs_iext_insert_node(अगरp, xfs_iext_leaf_key(new, 0), new, 2);
-पूर्ण
+	if (new)
+		xfs_iext_insert_node(ifp, xfs_iext_leaf_key(new, 0), new, 2);
+}
 
-अटल काष्ठा xfs_iext_node *
+static struct xfs_iext_node *
 xfs_iext_rebalance_node(
-	काष्ठा xfs_iext_node	*parent,
-	पूर्णांक			*pos,
-	काष्ठा xfs_iext_node	*node,
-	पूर्णांक			nr_entries)
-अणु
+	struct xfs_iext_node	*parent,
+	int			*pos,
+	struct xfs_iext_node	*node,
+	int			nr_entries)
+{
 	/*
-	 * If the neighbouring nodes are completely full, or have dअगरferent
+	 * If the neighbouring nodes are completely full, or have different
 	 * parents, we might never be able to merge our node, and will only
 	 * delete it once the number of entries hits zero.
 	 */
-	अगर (nr_entries == 0)
-		वापस node;
+	if (nr_entries == 0)
+		return node;
 
-	अगर (*pos > 0) अणु
-		काष्ठा xfs_iext_node *prev = parent->ptrs[*pos - 1];
-		पूर्णांक nr_prev = xfs_iext_node_nr_entries(prev, 0), i;
+	if (*pos > 0) {
+		struct xfs_iext_node *prev = parent->ptrs[*pos - 1];
+		int nr_prev = xfs_iext_node_nr_entries(prev, 0), i;
 
-		अगर (nr_prev + nr_entries <= KEYS_PER_NODE) अणु
-			क्रम (i = 0; i < nr_entries; i++) अणु
+		if (nr_prev + nr_entries <= KEYS_PER_NODE) {
+			for (i = 0; i < nr_entries; i++) {
 				prev->keys[nr_prev + i] = node->keys[i];
 				prev->ptrs[nr_prev + i] = node->ptrs[i];
-			पूर्ण
-			वापस node;
-		पूर्ण
-	पूर्ण
+			}
+			return node;
+		}
+	}
 
-	अगर (*pos + 1 < xfs_iext_node_nr_entries(parent, *pos)) अणु
-		काष्ठा xfs_iext_node *next = parent->ptrs[*pos + 1];
-		पूर्णांक nr_next = xfs_iext_node_nr_entries(next, 0), i;
+	if (*pos + 1 < xfs_iext_node_nr_entries(parent, *pos)) {
+		struct xfs_iext_node *next = parent->ptrs[*pos + 1];
+		int nr_next = xfs_iext_node_nr_entries(next, 0), i;
 
-		अगर (nr_entries + nr_next <= KEYS_PER_NODE) अणु
+		if (nr_entries + nr_next <= KEYS_PER_NODE) {
 			/*
-			 * Merge the next node पूर्णांकo this node so that we करोn't
-			 * have to करो an additional update of the keys in the
+			 * Merge the next node into this node so that we don't
+			 * have to do an additional update of the keys in the
 			 * higher levels.
 			 */
-			क्रम (i = 0; i < nr_next; i++) अणु
+			for (i = 0; i < nr_next; i++) {
 				node->keys[nr_entries + i] = next->keys[i];
 				node->ptrs[nr_entries + i] = next->ptrs[i];
-			पूर्ण
+			}
 
 			++*pos;
-			वापस next;
-		पूर्ण
-	पूर्ण
+			return next;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-xfs_iext_हटाओ_node(
-	काष्ठा xfs_अगरork	*अगरp,
+static void
+xfs_iext_remove_node(
+	struct xfs_ifork	*ifp,
 	xfs_fileoff_t		offset,
-	व्योम			*victim)
-अणु
-	काष्ठा xfs_iext_node	*node, *parent;
-	पूर्णांक			level = 2, pos, nr_entries, i;
+	void			*victim)
+{
+	struct xfs_iext_node	*node, *parent;
+	int			level = 2, pos, nr_entries, i;
 
-	ASSERT(level <= अगरp->अगर_height);
-	node = xfs_iext_find_level(अगरp, offset, level);
+	ASSERT(level <= ifp->if_height);
+	node = xfs_iext_find_level(ifp, offset, level);
 	pos = xfs_iext_node_pos(node, offset);
 again:
 	ASSERT(node->ptrs[pos]);
 	ASSERT(node->ptrs[pos] == victim);
-	kmem_मुक्त(victim);
+	kmem_free(victim);
 
 	nr_entries = xfs_iext_node_nr_entries(node, pos) - 1;
 	offset = node->keys[0];
-	क्रम (i = pos; i < nr_entries; i++) अणु
+	for (i = pos; i < nr_entries; i++) {
 		node->keys[i] = node->keys[i + 1];
 		node->ptrs[i] = node->ptrs[i + 1];
-	पूर्ण
+	}
 	node->keys[nr_entries] = XFS_IEXT_KEY_INVALID;
-	node->ptrs[nr_entries] = शून्य;
+	node->ptrs[nr_entries] = NULL;
 
-	अगर (pos == 0 && nr_entries > 0) अणु
-		xfs_iext_update_node(अगरp, offset, node->keys[0], level, node);
+	if (pos == 0 && nr_entries > 0) {
+		xfs_iext_update_node(ifp, offset, node->keys[0], level, node);
 		offset = node->keys[0];
-	पूर्ण
+	}
 
-	अगर (nr_entries >= KEYS_PER_NODE / 2)
-		वापस;
+	if (nr_entries >= KEYS_PER_NODE / 2)
+		return;
 
-	अगर (level < अगरp->अगर_height) अणु
+	if (level < ifp->if_height) {
 		/*
 		 * If we aren't at the root yet try to find a neighbour node to
-		 * merge with (or delete the node अगर it is empty), and then
+		 * merge with (or delete the node if it is empty), and then
 		 * recurse up to the next level.
 		 */
 		level++;
-		parent = xfs_iext_find_level(अगरp, offset, level);
+		parent = xfs_iext_find_level(ifp, offset, level);
 		pos = xfs_iext_node_pos(parent, offset);
 
 		ASSERT(pos != KEYS_PER_NODE);
 		ASSERT(parent->ptrs[pos] == node);
 
 		node = xfs_iext_rebalance_node(parent, &pos, node, nr_entries);
-		अगर (node) अणु
+		if (node) {
 			victim = node;
 			node = parent;
-			जाओ again;
-		पूर्ण
-	पूर्ण अन्यथा अगर (nr_entries == 1) अणु
+			goto again;
+		}
+	} else if (nr_entries == 1) {
 		/*
 		 * If we are at the root and only one entry is left we can just
-		 * मुक्त this node and update the root poपूर्णांकer.
+		 * free this node and update the root pointer.
 		 */
-		ASSERT(node == अगरp->अगर_u1.अगर_root);
-		अगरp->अगर_u1.अगर_root = node->ptrs[0];
-		अगरp->अगर_height--;
-		kmem_मुक्त(node);
-	पूर्ण
-पूर्ण
+		ASSERT(node == ifp->if_u1.if_root);
+		ifp->if_u1.if_root = node->ptrs[0];
+		ifp->if_height--;
+		kmem_free(node);
+	}
+}
 
-अटल व्योम
+static void
 xfs_iext_rebalance_leaf(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_iext_leaf	*leaf,
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur,
+	struct xfs_iext_leaf	*leaf,
 	xfs_fileoff_t		offset,
-	पूर्णांक			nr_entries)
-अणु
+	int			nr_entries)
+{
 	/*
 	 * If the neighbouring nodes are completely full we might never be able
 	 * to merge our node, and will only delete it once the number of
 	 * entries hits zero.
 	 */
-	अगर (nr_entries == 0)
-		जाओ हटाओ_node;
+	if (nr_entries == 0)
+		goto remove_node;
 
-	अगर (leaf->prev) अणु
-		पूर्णांक nr_prev = xfs_iext_leaf_nr_entries(अगरp, leaf->prev, 0), i;
+	if (leaf->prev) {
+		int nr_prev = xfs_iext_leaf_nr_entries(ifp, leaf->prev, 0), i;
 
-		अगर (nr_prev + nr_entries <= RECS_PER_LEAF) अणु
-			क्रम (i = 0; i < nr_entries; i++)
+		if (nr_prev + nr_entries <= RECS_PER_LEAF) {
+			for (i = 0; i < nr_entries; i++)
 				leaf->prev->recs[nr_prev + i] = leaf->recs[i];
 
-			अगर (cur->leaf == leaf) अणु
+			if (cur->leaf == leaf) {
 				cur->leaf = leaf->prev;
 				cur->pos += nr_prev;
-			पूर्ण
-			जाओ हटाओ_node;
-		पूर्ण
-	पूर्ण
+			}
+			goto remove_node;
+		}
+	}
 
-	अगर (leaf->next) अणु
-		पूर्णांक nr_next = xfs_iext_leaf_nr_entries(अगरp, leaf->next, 0), i;
+	if (leaf->next) {
+		int nr_next = xfs_iext_leaf_nr_entries(ifp, leaf->next, 0), i;
 
-		अगर (nr_entries + nr_next <= RECS_PER_LEAF) अणु
+		if (nr_entries + nr_next <= RECS_PER_LEAF) {
 			/*
-			 * Merge the next node पूर्णांकo this node so that we करोn't
-			 * have to करो an additional update of the keys in the
+			 * Merge the next node into this node so that we don't
+			 * have to do an additional update of the keys in the
 			 * higher levels.
 			 */
-			क्रम (i = 0; i < nr_next; i++) अणु
+			for (i = 0; i < nr_next; i++) {
 				leaf->recs[nr_entries + i] =
 					leaf->next->recs[i];
-			पूर्ण
+			}
 
-			अगर (cur->leaf == leaf->next) अणु
+			if (cur->leaf == leaf->next) {
 				cur->leaf = leaf;
 				cur->pos += nr_entries;
-			पूर्ण
+			}
 
 			offset = xfs_iext_leaf_key(leaf->next, 0);
 			leaf = leaf->next;
-			जाओ हटाओ_node;
-		पूर्ण
-	पूर्ण
+			goto remove_node;
+		}
+	}
 
-	वापस;
-हटाओ_node:
-	अगर (leaf->prev)
+	return;
+remove_node:
+	if (leaf->prev)
 		leaf->prev->next = leaf->next;
-	अगर (leaf->next)
+	if (leaf->next)
 		leaf->next->prev = leaf->prev;
-	xfs_iext_हटाओ_node(अगरp, offset, leaf);
-पूर्ण
+	xfs_iext_remove_node(ifp, offset, leaf);
+}
 
-अटल व्योम
-xfs_iext_मुक्त_last_leaf(
-	काष्ठा xfs_अगरork	*अगरp)
-अणु
-	अगरp->अगर_height--;
-	kmem_मुक्त(अगरp->अगर_u1.अगर_root);
-	अगरp->अगर_u1.अगर_root = शून्य;
-पूर्ण
+static void
+xfs_iext_free_last_leaf(
+	struct xfs_ifork	*ifp)
+{
+	ifp->if_height--;
+	kmem_free(ifp->if_u1.if_root);
+	ifp->if_u1.if_root = NULL;
+}
 
-व्योम
-xfs_iext_हटाओ(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_iext_cursor	*cur,
-	पूर्णांक			state)
-अणु
-	काष्ठा xfs_अगरork	*अगरp = xfs_iext_state_to_विभाजन(ip, state);
-	काष्ठा xfs_iext_leaf	*leaf = cur->leaf;
+void
+xfs_iext_remove(
+	struct xfs_inode	*ip,
+	struct xfs_iext_cursor	*cur,
+	int			state)
+{
+	struct xfs_ifork	*ifp = xfs_iext_state_to_fork(ip, state);
+	struct xfs_iext_leaf	*leaf = cur->leaf;
 	xfs_fileoff_t		offset = xfs_iext_leaf_key(leaf, 0);
-	पूर्णांक			i, nr_entries;
+	int			i, nr_entries;
 
-	trace_xfs_iext_हटाओ(ip, cur, state, _RET_IP_);
+	trace_xfs_iext_remove(ip, cur, state, _RET_IP_);
 
-	ASSERT(अगरp->अगर_height > 0);
-	ASSERT(अगरp->अगर_u1.अगर_root != शून्य);
-	ASSERT(xfs_iext_valid(अगरp, cur));
+	ASSERT(ifp->if_height > 0);
+	ASSERT(ifp->if_u1.if_root != NULL);
+	ASSERT(xfs_iext_valid(ifp, cur));
 
-	xfs_iext_inc_seq(अगरp);
+	xfs_iext_inc_seq(ifp);
 
-	nr_entries = xfs_iext_leaf_nr_entries(अगरp, leaf, cur->pos) - 1;
-	क्रम (i = cur->pos; i < nr_entries; i++)
+	nr_entries = xfs_iext_leaf_nr_entries(ifp, leaf, cur->pos) - 1;
+	for (i = cur->pos; i < nr_entries; i++)
 		leaf->recs[i] = leaf->recs[i + 1];
 	xfs_iext_rec_clear(&leaf->recs[nr_entries]);
-	अगरp->अगर_bytes -= माप(काष्ठा xfs_iext_rec);
+	ifp->if_bytes -= sizeof(struct xfs_iext_rec);
 
-	अगर (cur->pos == 0 && nr_entries > 0) अणु
-		xfs_iext_update_node(अगरp, offset, xfs_iext_leaf_key(leaf, 0), 1,
+	if (cur->pos == 0 && nr_entries > 0) {
+		xfs_iext_update_node(ifp, offset, xfs_iext_leaf_key(leaf, 0), 1,
 				leaf);
 		offset = xfs_iext_leaf_key(leaf, 0);
-	पूर्ण अन्यथा अगर (cur->pos == nr_entries) अणु
-		अगर (अगरp->अगर_height > 1 && leaf->next)
+	} else if (cur->pos == nr_entries) {
+		if (ifp->if_height > 1 && leaf->next)
 			cur->leaf = leaf->next;
-		अन्यथा
-			cur->leaf = शून्य;
+		else
+			cur->leaf = NULL;
 		cur->pos = 0;
-	पूर्ण
+	}
 
-	अगर (nr_entries >= RECS_PER_LEAF / 2)
-		वापस;
+	if (nr_entries >= RECS_PER_LEAF / 2)
+		return;
 
-	अगर (अगरp->अगर_height > 1)
-		xfs_iext_rebalance_leaf(अगरp, cur, leaf, offset, nr_entries);
-	अन्यथा अगर (nr_entries == 0)
-		xfs_iext_मुक्त_last_leaf(अगरp);
-पूर्ण
+	if (ifp->if_height > 1)
+		xfs_iext_rebalance_leaf(ifp, cur, leaf, offset, nr_entries);
+	else if (nr_entries == 0)
+		xfs_iext_free_last_leaf(ifp);
+}
 
 /*
  * Lookup the extent covering bno.
  *
- * If there is an extent covering bno वापस the extent index, and store the
- * expanded extent काष्ठाure in *gotp, and the extent cursor in *cur.
+ * If there is an extent covering bno return the extent index, and store the
+ * expanded extent structure in *gotp, and the extent cursor in *cur.
  * If there is no extent covering bno, but there is an extent after it (e.g.
- * it lies in a hole) वापस that extent in *gotp and its cursor in *cur
+ * it lies in a hole) return that extent in *gotp and its cursor in *cur
  * instead.
- * If bno is beyond the last extent वापस false, and वापस an invalid
+ * If bno is beyond the last extent return false, and return an invalid
  * cursor value.
  */
 bool
 xfs_iext_lookup_extent(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_अगरork	*अगरp,
+	struct xfs_inode	*ip,
+	struct xfs_ifork	*ifp,
 	xfs_fileoff_t		offset,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_bmbt_irec	*gotp)
-अणु
+	struct xfs_iext_cursor	*cur,
+	struct xfs_bmbt_irec	*gotp)
+{
 	XFS_STATS_INC(ip->i_mount, xs_look_exlist);
 
-	cur->leaf = xfs_iext_find_level(अगरp, offset, 1);
-	अगर (!cur->leaf) अणु
+	cur->leaf = xfs_iext_find_level(ifp, offset, 1);
+	if (!cur->leaf) {
 		cur->pos = 0;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	क्रम (cur->pos = 0; cur->pos < xfs_iext_max_recs(अगरp); cur->pos++) अणु
-		काष्ठा xfs_iext_rec *rec = cur_rec(cur);
+	for (cur->pos = 0; cur->pos < xfs_iext_max_recs(ifp); cur->pos++) {
+		struct xfs_iext_rec *rec = cur_rec(cur);
 
-		अगर (xfs_iext_rec_is_empty(rec))
-			अवरोध;
-		अगर (xfs_iext_rec_cmp(rec, offset) >= 0)
-			जाओ found;
-	पूर्ण
+		if (xfs_iext_rec_is_empty(rec))
+			break;
+		if (xfs_iext_rec_cmp(rec, offset) >= 0)
+			goto found;
+	}
 
-	/* Try looking in the next node क्रम an entry > offset */
-	अगर (अगरp->अगर_height == 1 || !cur->leaf->next)
-		वापस false;
+	/* Try looking in the next node for an entry > offset */
+	if (ifp->if_height == 1 || !cur->leaf->next)
+		return false;
 	cur->leaf = cur->leaf->next;
 	cur->pos = 0;
-	अगर (!xfs_iext_valid(अगरp, cur))
-		वापस false;
+	if (!xfs_iext_valid(ifp, cur))
+		return false;
 found:
 	xfs_iext_get(gotp, cur_rec(cur));
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Returns the last extent beक्रमe end, and अगर this extent करोesn't cover
+ * Returns the last extent before end, and if this extent doesn't cover
  * end, update end to the end of the extent.
  */
 bool
-xfs_iext_lookup_extent_beक्रमe(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_अगरork	*अगरp,
+xfs_iext_lookup_extent_before(
+	struct xfs_inode	*ip,
+	struct xfs_ifork	*ifp,
 	xfs_fileoff_t		*end,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_bmbt_irec	*gotp)
-अणु
+	struct xfs_iext_cursor	*cur,
+	struct xfs_bmbt_irec	*gotp)
+{
 	/* could be optimized to not even look up the next on a match.. */
-	अगर (xfs_iext_lookup_extent(ip, अगरp, *end - 1, cur, gotp) &&
+	if (xfs_iext_lookup_extent(ip, ifp, *end - 1, cur, gotp) &&
 	    gotp->br_startoff <= *end - 1)
-		वापस true;
-	अगर (!xfs_iext_prev_extent(अगरp, cur, gotp))
-		वापस false;
+		return true;
+	if (!xfs_iext_prev_extent(ifp, cur, gotp))
+		return false;
 	*end = gotp->br_startoff + gotp->br_blockcount;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम
+void
 xfs_iext_update_extent(
-	काष्ठा xfs_inode	*ip,
-	पूर्णांक			state,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_bmbt_irec	*new)
-अणु
-	काष्ठा xfs_अगरork	*अगरp = xfs_iext_state_to_विभाजन(ip, state);
+	struct xfs_inode	*ip,
+	int			state,
+	struct xfs_iext_cursor	*cur,
+	struct xfs_bmbt_irec	*new)
+{
+	struct xfs_ifork	*ifp = xfs_iext_state_to_fork(ip, state);
 
-	xfs_iext_inc_seq(अगरp);
+	xfs_iext_inc_seq(ifp);
 
-	अगर (cur->pos == 0) अणु
-		काष्ठा xfs_bmbt_irec	old;
+	if (cur->pos == 0) {
+		struct xfs_bmbt_irec	old;
 
 		xfs_iext_get(&old, cur_rec(cur));
-		अगर (new->br_startoff != old.br_startoff) अणु
-			xfs_iext_update_node(अगरp, old.br_startoff,
+		if (new->br_startoff != old.br_startoff) {
+			xfs_iext_update_node(ifp, old.br_startoff,
 					new->br_startoff, 1, cur->leaf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	trace_xfs_bmap_pre_update(ip, cur, state, _RET_IP_);
 	xfs_iext_set(cur_rec(cur), new);
 	trace_xfs_bmap_post_update(ip, cur, state, _RET_IP_);
-पूर्ण
+}
 
 /*
- * Return true अगर the cursor poपूर्णांकs at an extent and वापस the extent काष्ठाure
- * in gotp.  Else वापस false.
+ * Return true if the cursor points at an extent and return the extent structure
+ * in gotp.  Else return false.
  */
 bool
 xfs_iext_get_extent(
-	काष्ठा xfs_अगरork	*अगरp,
-	काष्ठा xfs_iext_cursor	*cur,
-	काष्ठा xfs_bmbt_irec	*gotp)
-अणु
-	अगर (!xfs_iext_valid(अगरp, cur))
-		वापस false;
+	struct xfs_ifork	*ifp,
+	struct xfs_iext_cursor	*cur,
+	struct xfs_bmbt_irec	*gotp)
+{
+	if (!xfs_iext_valid(ifp, cur))
+		return false;
 	xfs_iext_get(gotp, cur_rec(cur));
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * This is a recursive function, because of that we need to be extremely
  * careful with stack usage.
  */
-अटल व्योम
+static void
 xfs_iext_destroy_node(
-	काष्ठा xfs_iext_node	*node,
-	पूर्णांक			level)
-अणु
-	पूर्णांक			i;
+	struct xfs_iext_node	*node,
+	int			level)
+{
+	int			i;
 
-	अगर (level > 1) अणु
-		क्रम (i = 0; i < KEYS_PER_NODE; i++) अणु
-			अगर (node->keys[i] == XFS_IEXT_KEY_INVALID)
-				अवरोध;
+	if (level > 1) {
+		for (i = 0; i < KEYS_PER_NODE; i++) {
+			if (node->keys[i] == XFS_IEXT_KEY_INVALID)
+				break;
 			xfs_iext_destroy_node(node->ptrs[i], level - 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kmem_मुक्त(node);
-पूर्ण
+	kmem_free(node);
+}
 
-व्योम
+void
 xfs_iext_destroy(
-	काष्ठा xfs_अगरork	*अगरp)
-अणु
-	xfs_iext_destroy_node(अगरp->अगर_u1.अगर_root, अगरp->अगर_height);
+	struct xfs_ifork	*ifp)
+{
+	xfs_iext_destroy_node(ifp->if_u1.if_root, ifp->if_height);
 
-	अगरp->अगर_bytes = 0;
-	अगरp->अगर_height = 0;
-	अगरp->अगर_u1.अगर_root = शून्य;
-पूर्ण
+	ifp->if_bytes = 0;
+	ifp->if_height = 0;
+	ifp->if_u1.if_root = NULL;
+}

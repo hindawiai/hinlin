@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel Transactional Synchronization Extensions (TSX) control.
  *
  * Copyright (C) 2019 Intel Corporation
  *
  * Author:
- *	Pawan Gupta <pawan.kumar.gupta@linux.पूर्णांकel.com>
+ *	Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
  */
 
-#समावेश <linux/cpufeature.h>
+#include <linux/cpufeature.h>
 
-#समावेश <यंत्र/cmdline.h>
+#include <asm/cmdline.h>
 
-#समावेश "cpu.h"
+#include "cpu.h"
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) "tsx: " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) "tsx: " fmt
 
-क्रमागत tsx_ctrl_states tsx_ctrl_state __ro_after_init = TSX_CTRL_NOT_SUPPORTED;
+enum tsx_ctrl_states tsx_ctrl_state __ro_after_init = TSX_CTRL_NOT_SUPPORTED;
 
-व्योम tsx_disable(व्योम)
-अणु
+void tsx_disable(void)
+{
 	u64 tsx;
 
 	rdmsrl(MSR_IA32_TSX_CTRL, tsx);
 
-	/* Force all transactions to immediately पात */
+	/* Force all transactions to immediately abort */
 	tsx |= TSX_CTRL_RTM_DISABLE;
 
 	/*
-	 * Ensure TSX support is not क्रमागतerated in CPUID.
+	 * Ensure TSX support is not enumerated in CPUID.
 	 * This is visible to userspace and will ensure they
-	 * करो not waste resources trying TSX transactions that
-	 * will always पात.
+	 * do not waste resources trying TSX transactions that
+	 * will always abort.
 	 */
 	tsx |= TSX_CTRL_CPUID_CLEAR;
 
 	wrmsrl(MSR_IA32_TSX_CTRL, tsx);
-पूर्ण
+}
 
-व्योम tsx_enable(व्योम)
-अणु
+void tsx_enable(void)
+{
 	u64 tsx;
 
 	rdmsrl(MSR_IA32_TSX_CTRL, tsx);
@@ -50,72 +49,72 @@
 	tsx &= ~TSX_CTRL_RTM_DISABLE;
 
 	/*
-	 * Ensure TSX support is क्रमागतerated in CPUID.
+	 * Ensure TSX support is enumerated in CPUID.
 	 * This is visible to userspace and will ensure they
-	 * can क्रमागतerate and use the TSX feature.
+	 * can enumerate and use the TSX feature.
 	 */
 	tsx &= ~TSX_CTRL_CPUID_CLEAR;
 
 	wrmsrl(MSR_IA32_TSX_CTRL, tsx);
-पूर्ण
+}
 
-अटल bool __init tsx_ctrl_is_supported(व्योम)
-अणु
-	u64 ia32_cap = x86_पढ़ो_arch_cap_msr();
+static bool __init tsx_ctrl_is_supported(void)
+{
+	u64 ia32_cap = x86_read_arch_cap_msr();
 
 	/*
-	 * TSX is controlled via MSR_IA32_TSX_CTRL.  However, support क्रम this
-	 * MSR is क्रमागतerated by ARCH_CAP_TSX_MSR bit in MSR_IA32_ARCH_CAPABILITIES.
+	 * TSX is controlled via MSR_IA32_TSX_CTRL.  However, support for this
+	 * MSR is enumerated by ARCH_CAP_TSX_MSR bit in MSR_IA32_ARCH_CAPABILITIES.
 	 *
 	 * TSX control (aka MSR_IA32_TSX_CTRL) is only available after a
 	 * microcode update on CPUs that have their MSR_IA32_ARCH_CAPABILITIES
 	 * bit MDS_NO=1. CPUs with MDS_NO=0 are not planned to get
 	 * MSR_IA32_TSX_CTRL support even after a microcode update. Thus,
-	 * tsx= cmdline requests will करो nothing on CPUs without
+	 * tsx= cmdline requests will do nothing on CPUs without
 	 * MSR_IA32_TSX_CTRL support.
 	 */
-	वापस !!(ia32_cap & ARCH_CAP_TSX_CTRL_MSR);
-पूर्ण
+	return !!(ia32_cap & ARCH_CAP_TSX_CTRL_MSR);
+}
 
-अटल क्रमागत tsx_ctrl_states x86_get_tsx_स्वतः_mode(व्योम)
-अणु
-	अगर (boot_cpu_has_bug(X86_BUG_TAA))
-		वापस TSX_CTRL_DISABLE;
+static enum tsx_ctrl_states x86_get_tsx_auto_mode(void)
+{
+	if (boot_cpu_has_bug(X86_BUG_TAA))
+		return TSX_CTRL_DISABLE;
 
-	वापस TSX_CTRL_ENABLE;
-पूर्ण
+	return TSX_CTRL_ENABLE;
+}
 
-व्योम __init tsx_init(व्योम)
-अणु
-	अक्षर arg[5] = अणुपूर्ण;
-	पूर्णांक ret;
+void __init tsx_init(void)
+{
+	char arg[5] = {};
+	int ret;
 
-	अगर (!tsx_ctrl_is_supported())
-		वापस;
+	if (!tsx_ctrl_is_supported())
+		return;
 
-	ret = cmdline_find_option(boot_command_line, "tsx", arg, माप(arg));
-	अगर (ret >= 0) अणु
-		अगर (!म_भेद(arg, "on")) अणु
+	ret = cmdline_find_option(boot_command_line, "tsx", arg, sizeof(arg));
+	if (ret >= 0) {
+		if (!strcmp(arg, "on")) {
 			tsx_ctrl_state = TSX_CTRL_ENABLE;
-		पूर्ण अन्यथा अगर (!म_भेद(arg, "off")) अणु
+		} else if (!strcmp(arg, "off")) {
 			tsx_ctrl_state = TSX_CTRL_DISABLE;
-		पूर्ण अन्यथा अगर (!म_भेद(arg, "auto")) अणु
-			tsx_ctrl_state = x86_get_tsx_स्वतः_mode();
-		पूर्ण अन्यथा अणु
+		} else if (!strcmp(arg, "auto")) {
+			tsx_ctrl_state = x86_get_tsx_auto_mode();
+		} else {
 			tsx_ctrl_state = TSX_CTRL_DISABLE;
 			pr_err("invalid option, defaulting to off\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* tsx= not provided */
-		अगर (IS_ENABLED(CONFIG_X86_INTEL_TSX_MODE_AUTO))
-			tsx_ctrl_state = x86_get_tsx_स्वतः_mode();
-		अन्यथा अगर (IS_ENABLED(CONFIG_X86_INTEL_TSX_MODE_OFF))
+		if (IS_ENABLED(CONFIG_X86_INTEL_TSX_MODE_AUTO))
+			tsx_ctrl_state = x86_get_tsx_auto_mode();
+		else if (IS_ENABLED(CONFIG_X86_INTEL_TSX_MODE_OFF))
 			tsx_ctrl_state = TSX_CTRL_DISABLE;
-		अन्यथा
+		else
 			tsx_ctrl_state = TSX_CTRL_ENABLE;
-	पूर्ण
+	}
 
-	अगर (tsx_ctrl_state == TSX_CTRL_DISABLE) अणु
+	if (tsx_ctrl_state == TSX_CTRL_DISABLE) {
 		tsx_disable();
 
 		/*
@@ -125,12 +124,12 @@
 		 */
 		setup_clear_cpu_cap(X86_FEATURE_RTM);
 		setup_clear_cpu_cap(X86_FEATURE_HLE);
-	पूर्ण अन्यथा अगर (tsx_ctrl_state == TSX_CTRL_ENABLE) अणु
+	} else if (tsx_ctrl_state == TSX_CTRL_ENABLE) {
 
 		/*
-		 * HW शेषs TSX to be enabled at bootup.
+		 * HW defaults TSX to be enabled at bootup.
 		 * We may still need the TSX enable support
-		 * during init क्रम special हालs like
+		 * during init for special cases like
 		 * kexec after TSX is disabled.
 		 */
 		tsx_enable();
@@ -139,7 +138,7 @@
 		 * tsx_enable() will change the state of the RTM and HLE CPUID
 		 * bits. Force them here since they are now expected to be set.
 		 */
-		setup_क्रमce_cpu_cap(X86_FEATURE_RTM);
-		setup_क्रमce_cpu_cap(X86_FEATURE_HLE);
-	पूर्ण
-पूर्ण
+		setup_force_cpu_cap(X86_FEATURE_RTM);
+		setup_force_cpu_cap(X86_FEATURE_HLE);
+	}
+}

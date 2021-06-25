@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013 Intel Corporation. All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,227 +32,227 @@
  * SOFTWARE.
  */
 /*
- * This file contains all of the code that is specअगरic to the SerDes
+ * This file contains all of the code that is specific to the SerDes
  * on the QLogic_IB 7220 chip.
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
 
-#समावेश "qib.h"
-#समावेश "qib_7220.h"
+#include "qib.h"
+#include "qib_7220.h"
 
-#घोषणा SD7220_FW_NAME "qlogic/sd7220.fw"
+#define SD7220_FW_NAME "qlogic/sd7220.fw"
 MODULE_FIRMWARE(SD7220_FW_NAME);
 
 /*
- * Same as in qib_iba7220.c, but just the रेजिस्टरs needed here.
+ * Same as in qib_iba7220.c, but just the registers needed here.
  * Could move whole set to qib_7220.h, but decided better to keep
  * local.
  */
-#घोषणा KREG_IDX(regname) (QIB_7220_##regname##_OFFS / माप(u64))
-#घोषणा kr_hwerrclear KREG_IDX(HwErrClear)
-#घोषणा kr_hwerrmask KREG_IDX(HwErrMask)
-#घोषणा kr_hwerrstatus KREG_IDX(HwErrStatus)
-#घोषणा kr_ibcstatus KREG_IDX(IBCStatus)
-#घोषणा kr_ibserdesctrl KREG_IDX(IBSerDesCtrl)
-#घोषणा kr_scratch KREG_IDX(Scratch)
-#घोषणा kr_xgxs_cfg KREG_IDX(XGXSCfg)
+#define KREG_IDX(regname) (QIB_7220_##regname##_OFFS / sizeof(u64))
+#define kr_hwerrclear KREG_IDX(HwErrClear)
+#define kr_hwerrmask KREG_IDX(HwErrMask)
+#define kr_hwerrstatus KREG_IDX(HwErrStatus)
+#define kr_ibcstatus KREG_IDX(IBCStatus)
+#define kr_ibserdesctrl KREG_IDX(IBSerDesCtrl)
+#define kr_scratch KREG_IDX(Scratch)
+#define kr_xgxs_cfg KREG_IDX(XGXSCfg)
 /* these are used only here, not in qib_iba7220.c */
-#घोषणा kr_ibsd_epb_access_ctrl KREG_IDX(ibsd_epb_access_ctrl)
-#घोषणा kr_ibsd_epb_transaction_reg KREG_IDX(ibsd_epb_transaction_reg)
-#घोषणा kr_pciesd_epb_transaction_reg KREG_IDX(pciesd_epb_transaction_reg)
-#घोषणा kr_pciesd_epb_access_ctrl KREG_IDX(pciesd_epb_access_ctrl)
-#घोषणा kr_serdes_ddsrxeq0 KREG_IDX(SerDes_DDSRXEQ0)
+#define kr_ibsd_epb_access_ctrl KREG_IDX(ibsd_epb_access_ctrl)
+#define kr_ibsd_epb_transaction_reg KREG_IDX(ibsd_epb_transaction_reg)
+#define kr_pciesd_epb_transaction_reg KREG_IDX(pciesd_epb_transaction_reg)
+#define kr_pciesd_epb_access_ctrl KREG_IDX(pciesd_epb_access_ctrl)
+#define kr_serdes_ddsrxeq0 KREG_IDX(SerDes_DDSRXEQ0)
 
 /*
  * The IBSerDesMappTable is a memory that holds values to be stored in
- * various SerDes रेजिस्टरs by IBC.
+ * various SerDes registers by IBC.
  */
-#घोषणा kr_serdes_maptable KREG_IDX(IBSerDesMappTable)
+#define kr_serdes_maptable KREG_IDX(IBSerDesMappTable)
 
 /*
- * Below used क्रम sdnum parameter, selecting one of the two sections
- * used क्रम PCIe, or the single SerDes used क्रम IB.
+ * Below used for sdnum parameter, selecting one of the two sections
+ * used for PCIe, or the single SerDes used for IB.
  */
-#घोषणा PCIE_SERDES0 0
-#घोषणा PCIE_SERDES1 1
+#define PCIE_SERDES0 0
+#define PCIE_SERDES1 1
 
 /*
- * The EPB requires addressing in a particular क्रमm. EPB_LOC() is पूर्णांकended
- * to make #definitions a little more पढ़ोable.
+ * The EPB requires addressing in a particular form. EPB_LOC() is intended
+ * to make #definitions a little more readable.
  */
-#घोषणा EPB_ADDR_SHF 8
-#घोषणा EPB_LOC(chn, elt, reg) \
+#define EPB_ADDR_SHF 8
+#define EPB_LOC(chn, elt, reg) \
 	(((elt & 0xf) | ((chn & 7) << 4) | ((reg & 0x3f) << 9)) << \
 	 EPB_ADDR_SHF)
-#घोषणा EPB_IB_QUAD0_CS_SHF (25)
-#घोषणा EPB_IB_QUAD0_CS (1U <<  EPB_IB_QUAD0_CS_SHF)
-#घोषणा EPB_IB_UC_CS_SHF (26)
-#घोषणा EPB_PCIE_UC_CS_SHF (27)
-#घोषणा EPB_GLOBAL_WR (1U << (EPB_ADDR_SHF + 8))
+#define EPB_IB_QUAD0_CS_SHF (25)
+#define EPB_IB_QUAD0_CS (1U <<  EPB_IB_QUAD0_CS_SHF)
+#define EPB_IB_UC_CS_SHF (26)
+#define EPB_PCIE_UC_CS_SHF (27)
+#define EPB_GLOBAL_WR (1U << (EPB_ADDR_SHF + 8))
 
 /* Forward declarations. */
-अटल पूर्णांक qib_sd7220_reg_mod(काष्ठा qib_devdata *dd, पूर्णांक sdnum, u32 loc,
+static int qib_sd7220_reg_mod(struct qib_devdata *dd, int sdnum, u32 loc,
 			      u32 data, u32 mask);
-अटल पूर्णांक ibsd_mod_allchnls(काष्ठा qib_devdata *dd, पूर्णांक loc, पूर्णांक val,
-			     पूर्णांक mask);
-अटल पूर्णांक qib_sd_trimकरोne_poll(काष्ठा qib_devdata *dd);
-अटल व्योम qib_sd_trimकरोne_monitor(काष्ठा qib_devdata *dd, स्थिर अक्षर *where);
-अटल पूर्णांक qib_sd_setvals(काष्ठा qib_devdata *dd);
-अटल पूर्णांक qib_sd_early(काष्ठा qib_devdata *dd);
-अटल पूर्णांक qib_sd_dactrim(काष्ठा qib_devdata *dd);
-अटल पूर्णांक qib_पूर्णांकernal_presets(काष्ठा qib_devdata *dd);
-/* Tweak the रेजिस्टर (CMUCTRL5) that contains the TRIMSELF controls */
-अटल पूर्णांक qib_sd_trimself(काष्ठा qib_devdata *dd, पूर्णांक val);
-अटल पूर्णांक epb_access(काष्ठा qib_devdata *dd, पूर्णांक sdnum, पूर्णांक claim);
-अटल पूर्णांक qib_sd7220_ib_load(काष्ठा qib_devdata *dd,
-			      स्थिर काष्ठा firmware *fw);
-अटल पूर्णांक qib_sd7220_ib_vfy(काष्ठा qib_devdata *dd,
-			     स्थिर काष्ठा firmware *fw);
+static int ibsd_mod_allchnls(struct qib_devdata *dd, int loc, int val,
+			     int mask);
+static int qib_sd_trimdone_poll(struct qib_devdata *dd);
+static void qib_sd_trimdone_monitor(struct qib_devdata *dd, const char *where);
+static int qib_sd_setvals(struct qib_devdata *dd);
+static int qib_sd_early(struct qib_devdata *dd);
+static int qib_sd_dactrim(struct qib_devdata *dd);
+static int qib_internal_presets(struct qib_devdata *dd);
+/* Tweak the register (CMUCTRL5) that contains the TRIMSELF controls */
+static int qib_sd_trimself(struct qib_devdata *dd, int val);
+static int epb_access(struct qib_devdata *dd, int sdnum, int claim);
+static int qib_sd7220_ib_load(struct qib_devdata *dd,
+			      const struct firmware *fw);
+static int qib_sd7220_ib_vfy(struct qib_devdata *dd,
+			     const struct firmware *fw);
 
 /*
  * Below keeps track of whether the "once per power-on" initialization has
- * been करोne, because uC code Version 1.32.17 or higher allows the uC to
+ * been done, because uC code Version 1.32.17 or higher allows the uC to
  * be reset at will, and Automatic Equalization may require it. So the
- * state of the reset "pin", is no दीर्घer valid. Instead, we check क्रम the
+ * state of the reset "pin", is no longer valid. Instead, we check for the
  * actual uC code having been loaded.
  */
-अटल पूर्णांक qib_ibsd_ucode_loaded(काष्ठा qib_pportdata *ppd,
-				 स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा qib_devdata *dd = ppd->dd;
+static int qib_ibsd_ucode_loaded(struct qib_pportdata *ppd,
+				 const struct firmware *fw)
+{
+	struct qib_devdata *dd = ppd->dd;
 
-	अगर (!dd->cspec->serdes_first_init_करोne &&
+	if (!dd->cspec->serdes_first_init_done &&
 	    qib_sd7220_ib_vfy(dd, fw) > 0)
-		dd->cspec->serdes_first_init_करोne = 1;
-	वापस dd->cspec->serdes_first_init_करोne;
-पूर्ण
+		dd->cspec->serdes_first_init_done = 1;
+	return dd->cspec->serdes_first_init_done;
+}
 
-/* repeat #घोषणा क्रम local use. "Real" #घोषणा is in qib_iba7220.c */
-#घोषणा QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR      0x0000004000000000ULL
-#घोषणा IB_MPREG5 (EPB_LOC(6, 0, 0xE) | (1L << EPB_IB_UC_CS_SHF))
-#घोषणा IB_MPREG6 (EPB_LOC(6, 0, 0xF) | (1U << EPB_IB_UC_CS_SHF))
-#घोषणा UC_PAR_CLR_D 8
-#घोषणा UC_PAR_CLR_M 0xC
-#घोषणा IB_CTRL2(chn) (EPB_LOC(chn, 7, 3) | EPB_IB_QUAD0_CS)
-#घोषणा START_EQ1(chan) EPB_LOC(chan, 7, 0x27)
+/* repeat #define for local use. "Real" #define is in qib_iba7220.c */
+#define QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR      0x0000004000000000ULL
+#define IB_MPREG5 (EPB_LOC(6, 0, 0xE) | (1L << EPB_IB_UC_CS_SHF))
+#define IB_MPREG6 (EPB_LOC(6, 0, 0xF) | (1U << EPB_IB_UC_CS_SHF))
+#define UC_PAR_CLR_D 8
+#define UC_PAR_CLR_M 0xC
+#define IB_CTRL2(chn) (EPB_LOC(chn, 7, 3) | EPB_IB_QUAD0_CS)
+#define START_EQ1(chan) EPB_LOC(chan, 7, 0x27)
 
-व्योम qib_sd7220_clr_ibpar(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret;
+void qib_sd7220_clr_ibpar(struct qib_devdata *dd)
+{
+	int ret;
 
 	/* clear, then re-enable parity errs */
 	ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_MPREG6,
 		UC_PAR_CLR_D, UC_PAR_CLR_M);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		qib_dev_err(dd, "Failed clearing IBSerDes Parity err\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_MPREG6, 0,
 		UC_PAR_CLR_M);
 
-	qib_पढ़ो_kreg32(dd, kr_scratch);
+	qib_read_kreg32(dd, kr_scratch);
 	udelay(4);
-	qib_ग_लिखो_kreg(dd, kr_hwerrclear,
+	qib_write_kreg(dd, kr_hwerrclear,
 		QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR);
-	qib_पढ़ो_kreg32(dd, kr_scratch);
+	qib_read_kreg32(dd, kr_scratch);
 bail:
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
- * After a reset or other unusual event, the epb पूर्णांकerface may need
+ * After a reset or other unusual event, the epb interface may need
  * to be re-synchronized, between the host and the uC.
- * वापसs <0 क्रम failure to resync within IBSD_RESYNC_TRIES (not expected)
+ * returns <0 for failure to resync within IBSD_RESYNC_TRIES (not expected)
  */
-#घोषणा IBSD_RESYNC_TRIES 3
-#घोषणा IB_PGUDP(chn) (EPB_LOC((chn), 2, 1) | EPB_IB_QUAD0_CS)
-#घोषणा IB_CMUDONE(chn) (EPB_LOC((chn), 7, 0xF) | EPB_IB_QUAD0_CS)
+#define IBSD_RESYNC_TRIES 3
+#define IB_PGUDP(chn) (EPB_LOC((chn), 2, 1) | EPB_IB_QUAD0_CS)
+#define IB_CMUDONE(chn) (EPB_LOC((chn), 7, 0xF) | EPB_IB_QUAD0_CS)
 
-अटल पूर्णांक qib_resync_ibepb(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret, pat, tries, chn;
+static int qib_resync_ibepb(struct qib_devdata *dd)
+{
+	int ret, pat, tries, chn;
 	u32 loc;
 
 	ret = -1;
 	chn = 0;
-	क्रम (tries = 0; tries < (4 * IBSD_RESYNC_TRIES); ++tries) अणु
+	for (tries = 0; tries < (4 * IBSD_RESYNC_TRIES); ++tries) {
 		loc = IB_PGUDP(chn);
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, 0, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed read in resync\n");
-			जारी;
-		पूर्ण
-		अगर (ret != 0xF0 && ret != 0x55 && tries == 0)
+			continue;
+		}
+		if (ret != 0xF0 && ret != 0x55 && tries == 0)
 			qib_dev_err(dd, "unexpected pattern in resync\n");
 		pat = ret ^ 0xA5; /* alternate F0 and 55 */
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, pat, 0xFF);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed write in resync\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, 0, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed re-read in resync\n");
-			जारी;
-		पूर्ण
-		अगर (ret != pat) अणु
+			continue;
+		}
+		if (ret != pat) {
 			qib_dev_err(dd, "Failed compare1 in resync\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 		loc = IB_CMUDONE(chn);
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, 0, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed CMUDONE rd in resync\n");
-			जारी;
-		पूर्ण
-		अगर ((ret & 0x70) != ((chn << 4) | 0x40)) अणु
+			continue;
+		}
+		if ((ret & 0x70) != ((chn << 4) | 0x40)) {
 			qib_dev_err(dd, "Bad CMUDONE value %02X, chn %d\n",
 				    ret, chn);
-			जारी;
-		पूर्ण
-		अगर (++chn == 4)
-			अवरोध;  /* Success */
-	पूर्ण
-	वापस (ret > 0) ? 0 : ret;
-पूर्ण
+			continue;
+		}
+		if (++chn == 4)
+			break;  /* Success */
+	}
+	return (ret > 0) ? 0 : ret;
+}
 
 /*
- * Localize the stuff that should be करोne to change IB uC reset
- * वापसs <0 क्रम errors.
+ * Localize the stuff that should be done to change IB uC reset
+ * returns <0 for errors.
  */
-अटल पूर्णांक qib_ibsd_reset(काष्ठा qib_devdata *dd, पूर्णांक निश्चित_rst)
-अणु
+static int qib_ibsd_reset(struct qib_devdata *dd, int assert_rst)
+{
 	u64 rst_val;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+	int ret = 0;
+	unsigned long flags;
 
-	rst_val = qib_पढ़ो_kreg64(dd, kr_ibserdesctrl);
-	अगर (निश्चित_rst) अणु
+	rst_val = qib_read_kreg64(dd, kr_ibserdesctrl);
+	if (assert_rst) {
 		/*
-		 * Venकरोr recommends "interrupting" uC beक्रमe reset, to
+		 * Vendor recommends "interrupting" uC before reset, to
 		 * minimize possible glitches.
 		 */
 		spin_lock_irqsave(&dd->cspec->sdepb_lock, flags);
 		epb_access(dd, IB_7220_SERDES, 1);
 		rst_val |= 1ULL;
-		/* Squelch possible parity error from _निश्चितing_ reset */
-		qib_ग_लिखो_kreg(dd, kr_hwerrmask,
+		/* Squelch possible parity error from _asserting_ reset */
+		qib_write_kreg(dd, kr_hwerrmask,
 			       dd->cspec->hwerrmask &
 			       ~QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR);
-		qib_ग_लिखो_kreg(dd, kr_ibserdesctrl, rst_val);
-		/* flush ग_लिखो, delay to ensure it took effect */
-		qib_पढ़ो_kreg32(dd, kr_scratch);
+		qib_write_kreg(dd, kr_ibserdesctrl, rst_val);
+		/* flush write, delay to ensure it took effect */
+		qib_read_kreg32(dd, kr_scratch);
 		udelay(2);
-		/* once it's reset, can हटाओ पूर्णांकerrupt */
+		/* once it's reset, can remove interrupt */
 		epb_access(dd, IB_7220_SERDES, -1);
 		spin_unlock_irqrestore(&dd->cspec->sdepb_lock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Beक्रमe we de-निश्चित reset, we need to deal with
+		 * Before we de-assert reset, we need to deal with
 		 * possible glitch on the Parity-error line.
 		 * Suppress it around the reset, both in chip-level
 		 * hwerrmask and in IB uC control reg. uC will allow
@@ -262,94 +261,94 @@ bail:
 		u64 val;
 
 		rst_val &= ~(1ULL);
-		qib_ग_लिखो_kreg(dd, kr_hwerrmask,
+		qib_write_kreg(dd, kr_hwerrmask,
 			       dd->cspec->hwerrmask &
 			       ~QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR);
 
 		ret = qib_resync_ibepb(dd);
-		अगर (ret < 0)
+		if (ret < 0)
 			qib_dev_err(dd, "unable to re-sync IB EPB\n");
 
 		/* set uC control regs to suppress parity errs */
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_MPREG5, 1, 1);
-		अगर (ret < 0)
-			जाओ bail;
-		/* IB uC code past Version 1.32.17 allow suppression of wकरोg */
+		if (ret < 0)
+			goto bail;
+		/* IB uC code past Version 1.32.17 allow suppression of wdog */
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_MPREG6, 0x80,
 			0x80);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed to set WDOG disable\n");
-			जाओ bail;
-		पूर्ण
-		qib_ग_लिखो_kreg(dd, kr_ibserdesctrl, rst_val);
-		/* flush ग_लिखो, delay क्रम startup */
-		qib_पढ़ो_kreg32(dd, kr_scratch);
+			goto bail;
+		}
+		qib_write_kreg(dd, kr_ibserdesctrl, rst_val);
+		/* flush write, delay for startup */
+		qib_read_kreg32(dd, kr_scratch);
 		udelay(1);
 		/* clear, then re-enable parity errs */
 		qib_sd7220_clr_ibpar(dd);
-		val = qib_पढ़ो_kreg64(dd, kr_hwerrstatus);
-		अगर (val & QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR) अणु
+		val = qib_read_kreg64(dd, kr_hwerrstatus);
+		if (val & QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR) {
 			qib_dev_err(dd, "IBUC Parity still set after RST\n");
 			dd->cspec->hwerrmask &=
 				~QLOGIC_IB_HWE_IB_UC_MEMORYPARITYERR;
-		पूर्ण
-		qib_ग_लिखो_kreg(dd, kr_hwerrmask,
+		}
+		qib_write_kreg(dd, kr_hwerrmask,
 			dd->cspec->hwerrmask);
-	पूर्ण
+	}
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qib_sd_trimकरोne_monitor(काष्ठा qib_devdata *dd,
-	स्थिर अक्षर *where)
-अणु
-	पूर्णांक ret, chn, baduns;
+static void qib_sd_trimdone_monitor(struct qib_devdata *dd,
+	const char *where)
+{
+	int ret, chn, baduns;
 	u64 val;
 
-	अगर (!where)
+	if (!where)
 		where = "?";
 
-	/* give समय क्रम reset to settle out in EPB */
+	/* give time for reset to settle out in EPB */
 	udelay(2);
 
 	ret = qib_resync_ibepb(dd);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "not able to re-sync IB EPB (%s)\n", where);
 
 	/* Do "sacrificial read" to get EPB in sane state after reset */
 	ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_CTRL2(0), 0, 0);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "Failed TRIMDONE 1st read, (%s)\n", where);
 
-	/* Check/show "summary" Trim-करोne bit in IBCStatus */
-	val = qib_पढ़ो_kreg64(dd, kr_ibcstatus);
-	अगर (!(val & (1ULL << 11)))
+	/* Check/show "summary" Trim-done bit in IBCStatus */
+	val = qib_read_kreg64(dd, kr_ibcstatus);
+	if (!(val & (1ULL << 11)))
 		qib_dev_err(dd, "IBCS TRIMDONE clear (%s)\n", where);
 	/*
 	 * Do "dummy read/mod/wr" to get EPB in sane state after reset
-	 * The शेष value क्रम MPREG6 is 0.
+	 * The default value for MPREG6 is 0.
 	 */
 	udelay(2);
 
 	ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, IB_MPREG6, 0x80, 0x80);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "Failed Dummy RMW, (%s)\n", where);
 	udelay(10);
 
 	baduns = 0;
 
-	क्रम (chn = 3; chn >= 0; --chn) अणु
-		/* Read CTRL reg क्रम each channel to check TRIMDONE */
+	for (chn = 3; chn >= 0; --chn) {
+		/* Read CTRL reg for each channel to check TRIMDONE */
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES,
 			IB_CTRL2(chn), 0, 0);
-		अगर (ret < 0)
+		if (ret < 0)
 			qib_dev_err(dd,
 				"Failed checking TRIMDONE, chn %d (%s)\n",
 				chn, where);
 
-		अगर (!(ret & 0x10)) अणु
-			पूर्णांक probe;
+		if (!(ret & 0x10)) {
+			int probe;
 
 			baduns |= (1 << chn);
 			qib_dev_err(dd,
@@ -365,422 +364,422 @@ bail:
 				probe, probe);
 			ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES,
 				IB_CTRL2(chn), 0x10, 0x10);
-			अगर (ret < 0)
+			if (ret < 0)
 				qib_dev_err(dd,
 					"Err on TRIMDONE rewrite1\n");
-		पूर्ण
-	पूर्ण
-	क्रम (chn = 3; chn >= 0; --chn) अणु
-		/* Read CTRL reg क्रम each channel to check TRIMDONE */
-		अगर (baduns & (1 << chn)) अणु
+		}
+	}
+	for (chn = 3; chn >= 0; --chn) {
+		/* Read CTRL reg for each channel to check TRIMDONE */
+		if (baduns & (1 << chn)) {
 			qib_dev_err(dd,
 				"Resetting TRIMDONE on chn %d (%s)\n",
 				chn, where);
 			ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES,
 				IB_CTRL2(chn), 0x10, 0x10);
-			अगर (ret < 0)
+			if (ret < 0)
 				qib_dev_err(dd,
 					"Failed re-setting TRIMDONE, chn %d (%s)\n",
 					chn, where);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Below is portion of IBA7220-specअगरic bringup_serdes() that actually
- * deals with रेजिस्टरs and memory within the SerDes itself.
+ * Below is portion of IBA7220-specific bringup_serdes() that actually
+ * deals with registers and memory within the SerDes itself.
  * Post IB uC code version 1.32.17, was_reset being 1 is not really
- * inक्रमmative, so we द्विगुन-check.
+ * informative, so we double-check.
  */
-पूर्णांक qib_sd7220_init(काष्ठा qib_devdata *dd)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	पूर्णांक ret = 1; /* शेष to failure */
-	पूर्णांक first_reset, was_reset;
+int qib_sd7220_init(struct qib_devdata *dd)
+{
+	const struct firmware *fw;
+	int ret = 1; /* default to failure */
+	int first_reset, was_reset;
 
 	/* SERDES MPU reset recorded in D0 */
-	was_reset = (qib_पढ़ो_kreg64(dd, kr_ibserdesctrl) & 1);
-	अगर (!was_reset) अणु
-		/* entered with reset not निश्चितed, we need to करो it */
+	was_reset = (qib_read_kreg64(dd, kr_ibserdesctrl) & 1);
+	if (!was_reset) {
+		/* entered with reset not asserted, we need to do it */
 		qib_ibsd_reset(dd, 1);
-		qib_sd_trimकरोne_monitor(dd, "Driver-reload");
-	पूर्ण
+		qib_sd_trimdone_monitor(dd, "Driver-reload");
+	}
 
 	ret = request_firmware(&fw, SD7220_FW_NAME, &dd->pcidev->dev);
-	अगर (ret) अणु
+	if (ret) {
 		qib_dev_err(dd, "Failed to load IB SERDES image\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Substitute our deduced value क्रम was_reset */
+	/* Substitute our deduced value for was_reset */
 	ret = qib_ibsd_ucode_loaded(dd->pport, fw);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
-	first_reset = !ret; /* First reset अगर IBSD uCode not yet loaded */
+	first_reset = !ret; /* First reset if IBSD uCode not yet loaded */
 	/*
-	 * Alter some regs per venकरोr latest करोc, reset-शेषs
-	 * are not right क्रम IB.
+	 * Alter some regs per vendor latest doc, reset-defaults
+	 * are not right for IB.
 	 */
 	ret = qib_sd_early(dd);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		qib_dev_err(dd, "Failed to set IB SERDES early defaults\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	/*
 	 * Set DAC manual trim IB.
-	 * We only करो this once after chip has been reset (usually
-	 * same as once per प्रणाली boot).
+	 * We only do this once after chip has been reset (usually
+	 * same as once per system boot).
 	 */
-	अगर (first_reset) अणु
+	if (first_reset) {
 		ret = qib_sd_dactrim(dd);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed IB SERDES DAC trim\n");
-			जाओ bail;
-		पूर्ण
-	पूर्ण
+			goto bail;
+		}
+	}
 	/*
-	 * Set various रेजिस्टरs (DDS and RXEQ) that will be
+	 * Set various registers (DDS and RXEQ) that will be
 	 * controlled by IBC (in 1.2 mode) to reasonable preset values
-	 * Calling the "internal" version aव्योमs the "check for needed"
+	 * Calling the "internal" version avoids the "check for needed"
 	 * and "trimdone monitor" that might be counter-productive.
 	 */
-	ret = qib_पूर्णांकernal_presets(dd);
-	अगर (ret < 0) अणु
+	ret = qib_internal_presets(dd);
+	if (ret < 0) {
 		qib_dev_err(dd, "Failed to set IB SERDES presets\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 	ret = qib_sd_trimself(dd, 0x80);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		qib_dev_err(dd, "Failed to set IB SERDES TRIMSELF\n");
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	/* Load image, then try to verअगरy */
+	/* Load image, then try to verify */
 	ret = 0;        /* Assume success */
-	अगर (first_reset) अणु
-		पूर्णांक vfy;
-		पूर्णांक trim_करोne;
+	if (first_reset) {
+		int vfy;
+		int trim_done;
 
 		ret = qib_sd7220_ib_load(dd, fw);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed to load IB SERDES image\n");
-			जाओ bail;
-		पूर्ण अन्यथा अणु
-			/* Loaded image, try to verअगरy */
+			goto bail;
+		} else {
+			/* Loaded image, try to verify */
 			vfy = qib_sd7220_ib_vfy(dd, fw);
-			अगर (vfy != ret) अणु
+			if (vfy != ret) {
 				qib_dev_err(dd, "SERDES PRAM VFY failed\n");
-				जाओ bail;
-			पूर्ण /* end अगर verअगरied */
-		पूर्ण /* end अगर loaded */
+				goto bail;
+			} /* end if verified */
+		} /* end if loaded */
 
 		/*
-		 * Loaded and verअगरied. Almost good...
+		 * Loaded and verified. Almost good...
 		 * hold "success" in ret
 		 */
 		ret = 0;
 		/*
-		 * Prev steps all worked, जारी bringup
-		 * De-निश्चित RESET to uC, only in first reset, to allow
+		 * Prev steps all worked, continue bringup
+		 * De-assert RESET to uC, only in first reset, to allow
 		 * trimming.
 		 *
-		 * Since our शेष setup sets START_EQ1 to
-		 * PRESET, we need to clear that क्रम this very first run.
+		 * Since our default setup sets START_EQ1 to
+		 * PRESET, we need to clear that for this very first run.
 		 */
 		ret = ibsd_mod_allchnls(dd, START_EQ1(0), 0, 0x38);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			qib_dev_err(dd, "Failed clearing START_EQ1\n");
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
 		qib_ibsd_reset(dd, 0);
 		/*
-		 * If this is not the first reset, trimकरोne should be set
-		 * alपढ़ोy. We may need to check about this.
+		 * If this is not the first reset, trimdone should be set
+		 * already. We may need to check about this.
 		 */
-		trim_करोne = qib_sd_trimकरोne_poll(dd);
+		trim_done = qib_sd_trimdone_poll(dd);
 		/*
-		 * Whether or not trimकरोne succeeded, we need to put the
-		 * uC back पूर्णांकo reset to aव्योम a possible fight with the
+		 * Whether or not trimdone succeeded, we need to put the
+		 * uC back into reset to avoid a possible fight with the
 		 * IBC state-machine.
 		 */
 		qib_ibsd_reset(dd, 1);
 
-		अगर (!trim_करोne) अणु
+		if (!trim_done) {
 			qib_dev_err(dd, "No TRIMDONE seen\n");
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 		/*
-		 * DEBUG: check each समय we reset अगर trimकरोne bits have
+		 * DEBUG: check each time we reset if trimdone bits have
 		 * gotten cleared, and re-set them.
 		 */
-		qib_sd_trimकरोne_monitor(dd, "First-reset");
-		/* Remember so we करो not re-करो the load, dactrim, etc. */
-		dd->cspec->serdes_first_init_करोne = 1;
-	पूर्ण
+		qib_sd_trimdone_monitor(dd, "First-reset");
+		/* Remember so we do not re-do the load, dactrim, etc. */
+		dd->cspec->serdes_first_init_done = 1;
+	}
 	/*
-	 * setup क्रम channel training and load values क्रम
+	 * setup for channel training and load values for
 	 * RxEq and DDS in tables used by IBC in IB1.2 mode
 	 */
 	ret = 0;
-	अगर (qib_sd_setvals(dd) >= 0)
-		जाओ करोne;
+	if (qib_sd_setvals(dd) >= 0)
+		goto done;
 bail:
 	ret = 1;
-करोne:
-	/* start relock समयr regardless, but start at 1 second */
+done:
+	/* start relock timer regardless, but start at 1 second */
 	set_7220_relock_poll(dd, -1);
 
 	release_firmware(fw);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा EPB_ACC_REQ 1
-#घोषणा EPB_ACC_GNT 0x100
-#घोषणा EPB_DATA_MASK 0xFF
-#घोषणा EPB_RD (1ULL << 24)
-#घोषणा EPB_TRANS_RDY (1ULL << 31)
-#घोषणा EPB_TRANS_ERR (1ULL << 30)
-#घोषणा EPB_TRANS_TRIES 5
+#define EPB_ACC_REQ 1
+#define EPB_ACC_GNT 0x100
+#define EPB_DATA_MASK 0xFF
+#define EPB_RD (1ULL << 24)
+#define EPB_TRANS_RDY (1ULL << 31)
+#define EPB_TRANS_ERR (1ULL << 30)
+#define EPB_TRANS_TRIES 5
 
 /*
  * query, claim, release ownership of the EPB (External Parallel Bus)
- * क्रम a specअगरied SERDES.
+ * for a specified SERDES.
  * the "claim" parameter is >0 to claim, <0 to release, 0 to query.
- * Returns <0 क्रम errors, >0 अगर we had ownership, अन्यथा 0.
+ * Returns <0 for errors, >0 if we had ownership, else 0.
  */
-अटल पूर्णांक epb_access(काष्ठा qib_devdata *dd, पूर्णांक sdnum, पूर्णांक claim)
-अणु
+static int epb_access(struct qib_devdata *dd, int sdnum, int claim)
+{
 	u16 acc;
 	u64 accval;
-	पूर्णांक owned = 0;
+	int owned = 0;
 	u64 oct_sel = 0;
 
-	चयन (sdnum) अणु
-	हाल IB_7220_SERDES:
+	switch (sdnum) {
+	case IB_7220_SERDES:
 		/*
 		 * The IB SERDES "ownership" is fairly simple. A single each
 		 * request/grant.
 		 */
 		acc = kr_ibsd_epb_access_ctrl;
-		अवरोध;
+		break;
 
-	हाल PCIE_SERDES0:
-	हाल PCIE_SERDES1:
+	case PCIE_SERDES0:
+	case PCIE_SERDES1:
 		/* PCIe SERDES has two "octants", need to select which */
 		acc = kr_pciesd_epb_access_ctrl;
 		oct_sel = (2 << (sdnum - PCIE_SERDES0));
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
 	/* Make sure any outstanding transaction was seen */
-	qib_पढ़ो_kreg32(dd, kr_scratch);
+	qib_read_kreg32(dd, kr_scratch);
 	udelay(15);
 
-	accval = qib_पढ़ो_kreg32(dd, acc);
+	accval = qib_read_kreg32(dd, acc);
 
 	owned = !!(accval & EPB_ACC_GNT);
-	अगर (claim < 0) अणु
+	if (claim < 0) {
 		/* Need to release */
 		u64 pollval;
 		/*
-		 * The only ग_लिखोable bits are the request and CS.
+		 * The only writeable bits are the request and CS.
 		 * Both should be clear
 		 */
 		u64 newval = 0;
 
-		qib_ग_लिखो_kreg(dd, acc, newval);
-		/* First पढ़ो after ग_लिखो is not trustworthy */
-		pollval = qib_पढ़ो_kreg32(dd, acc);
+		qib_write_kreg(dd, acc, newval);
+		/* First read after write is not trustworthy */
+		pollval = qib_read_kreg32(dd, acc);
 		udelay(5);
-		pollval = qib_पढ़ो_kreg32(dd, acc);
-		अगर (pollval & EPB_ACC_GNT)
+		pollval = qib_read_kreg32(dd, acc);
+		if (pollval & EPB_ACC_GNT)
 			owned = -1;
-	पूर्ण अन्यथा अगर (claim > 0) अणु
+	} else if (claim > 0) {
 		/* Need to claim */
 		u64 pollval;
 		u64 newval = EPB_ACC_REQ | oct_sel;
 
-		qib_ग_लिखो_kreg(dd, acc, newval);
-		/* First पढ़ो after ग_लिखो is not trustworthy */
-		pollval = qib_पढ़ो_kreg32(dd, acc);
+		qib_write_kreg(dd, acc, newval);
+		/* First read after write is not trustworthy */
+		pollval = qib_read_kreg32(dd, acc);
 		udelay(5);
-		pollval = qib_पढ़ो_kreg32(dd, acc);
-		अगर (!(pollval & EPB_ACC_GNT))
+		pollval = qib_read_kreg32(dd, acc);
+		if (!(pollval & EPB_ACC_GNT))
 			owned = -1;
-	पूर्ण
-	वापस owned;
-पूर्ण
+	}
+	return owned;
+}
 
 /*
- * Lemma to deal with race condition of ग_लिखो..पढ़ो to epb regs
+ * Lemma to deal with race condition of write..read to epb regs
  */
-अटल पूर्णांक epb_trans(काष्ठा qib_devdata *dd, u16 reg, u64 i_val, u64 *o_vp)
-अणु
-	पूर्णांक tries;
+static int epb_trans(struct qib_devdata *dd, u16 reg, u64 i_val, u64 *o_vp)
+{
+	int tries;
 	u64 transval;
 
-	qib_ग_लिखो_kreg(dd, reg, i_val);
-	/* Throw away first पढ़ो, as RDY bit may be stale */
-	transval = qib_पढ़ो_kreg64(dd, reg);
+	qib_write_kreg(dd, reg, i_val);
+	/* Throw away first read, as RDY bit may be stale */
+	transval = qib_read_kreg64(dd, reg);
 
-	क्रम (tries = EPB_TRANS_TRIES; tries; --tries) अणु
-		transval = qib_पढ़ो_kreg32(dd, reg);
-		अगर (transval & EPB_TRANS_RDY)
-			अवरोध;
+	for (tries = EPB_TRANS_TRIES; tries; --tries) {
+		transval = qib_read_kreg32(dd, reg);
+		if (transval & EPB_TRANS_RDY)
+			break;
 		udelay(5);
-	पूर्ण
-	अगर (transval & EPB_TRANS_ERR)
-		वापस -1;
-	अगर (tries > 0 && o_vp)
+	}
+	if (transval & EPB_TRANS_ERR)
+		return -1;
+	if (tries > 0 && o_vp)
 		*o_vp = transval;
-	वापस tries;
-पूर्ण
+	return tries;
+}
 
 /**
- * qib_sd7220_reg_mod - modअगरy SERDES रेजिस्टर
+ * qib_sd7220_reg_mod - modify SERDES register
  * @dd: the qlogic_ib device
  * @sdnum: which SERDES to access
- * @loc: location - channel, element, रेजिस्टर, as packed by EPB_LOC() macro.
- * @wd: Write Data - value to set in रेजिस्टर
- * @mask: ones where data should be spliced पूर्णांकo reg.
+ * @loc: location - channel, element, register, as packed by EPB_LOC() macro.
+ * @wd: Write Data - value to set in register
+ * @mask: ones where data should be spliced into reg.
  *
- * Basic रेजिस्टर पढ़ो/modअगरy/ग_लिखो, with un-needed acesses elided. That is,
- * a mask of zero will prevent ग_लिखो, जबतक a mask of 0xFF will prevent पढ़ो.
- * वापसs current (presumed, अगर a ग_लिखो was करोne) contents of selected
- * रेजिस्टर, or <0 अगर errors.
+ * Basic register read/modify/write, with un-needed acesses elided. That is,
+ * a mask of zero will prevent write, while a mask of 0xFF will prevent read.
+ * returns current (presumed, if a write was done) contents of selected
+ * register, or <0 if errors.
  */
-अटल पूर्णांक qib_sd7220_reg_mod(काष्ठा qib_devdata *dd, पूर्णांक sdnum, u32 loc,
+static int qib_sd7220_reg_mod(struct qib_devdata *dd, int sdnum, u32 loc,
 			      u32 wd, u32 mask)
-अणु
+{
 	u16 trans;
 	u64 transval;
-	पूर्णांक owned;
-	पूर्णांक tries, ret;
-	अचिन्हित दीर्घ flags;
+	int owned;
+	int tries, ret;
+	unsigned long flags;
 
-	चयन (sdnum) अणु
-	हाल IB_7220_SERDES:
+	switch (sdnum) {
+	case IB_7220_SERDES:
 		trans = kr_ibsd_epb_transaction_reg;
-		अवरोध;
+		break;
 
-	हाल PCIE_SERDES0:
-	हाल PCIE_SERDES1:
+	case PCIE_SERDES0:
+	case PCIE_SERDES1:
 		trans = kr_pciesd_epb_transaction_reg;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -1;
-	पूर्ण
+	default:
+		return -1;
+	}
 
 	/*
-	 * All access is locked in software (vs other host thपढ़ोs) and
+	 * All access is locked in software (vs other host threads) and
 	 * hardware (vs uC access).
 	 */
 	spin_lock_irqsave(&dd->cspec->sdepb_lock, flags);
 
 	owned = epb_access(dd, sdnum, 1);
-	अगर (owned < 0) अणु
+	if (owned < 0) {
 		spin_unlock_irqrestore(&dd->cspec->sdepb_lock, flags);
-		वापस -1;
-	पूर्ण
-	क्रम (tries = EPB_TRANS_TRIES; tries; --tries) अणु
-		transval = qib_पढ़ो_kreg32(dd, trans);
-		अगर (transval & EPB_TRANS_RDY)
-			अवरोध;
+		return -1;
+	}
+	for (tries = EPB_TRANS_TRIES; tries; --tries) {
+		transval = qib_read_kreg32(dd, trans);
+		if (transval & EPB_TRANS_RDY)
+			break;
 		udelay(5);
-	पूर्ण
+	}
 
-	अगर (tries > 0) अणु
-		tries = 1;      /* to make पढ़ो-skip work */
-		अगर (mask != 0xFF) अणु
+	if (tries > 0) {
+		tries = 1;      /* to make read-skip work */
+		if (mask != 0xFF) {
 			/*
-			 * Not a pure ग_लिखो, so need to पढ़ो.
+			 * Not a pure write, so need to read.
 			 * loc encodes chip-select as well as address
 			 */
 			transval = loc | EPB_RD;
 			tries = epb_trans(dd, trans, transval, &transval);
-		पूर्ण
-		अगर (tries > 0 && mask != 0) अणु
+		}
+		if (tries > 0 && mask != 0) {
 			/*
-			 * Not a pure पढ़ो, so need to ग_लिखो.
+			 * Not a pure read, so need to write.
 			 */
 			wd = (wd & mask) | (transval & ~mask);
 			transval = loc | (wd & EPB_DATA_MASK);
 			tries = epb_trans(dd, trans, transval, &transval);
-		पूर्ण
-	पूर्ण
-	/* अन्यथा, failed to see पढ़ोy, what error-handling? */
+		}
+	}
+	/* else, failed to see ready, what error-handling? */
 
 	/*
 	 * Release bus. Failure is an error.
 	 */
-	अगर (epb_access(dd, sdnum, -1) < 0)
+	if (epb_access(dd, sdnum, -1) < 0)
 		ret = -1;
-	अन्यथा
+	else
 		ret = transval & EPB_DATA_MASK;
 
 	spin_unlock_irqrestore(&dd->cspec->sdepb_lock, flags);
-	अगर (tries <= 0)
+	if (tries <= 0)
 		ret = -1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा EPB_ROM_R (2)
-#घोषणा EPB_ROM_W (1)
+#define EPB_ROM_R (2)
+#define EPB_ROM_W (1)
 /*
  * Below, all uC-related, use appropriate UC_CS, depending
  * on which SerDes is used.
  */
-#घोषणा EPB_UC_CTL EPB_LOC(6, 0, 0)
-#घोषणा EPB_MADDRL EPB_LOC(6, 0, 2)
-#घोषणा EPB_MADDRH EPB_LOC(6, 0, 3)
-#घोषणा EPB_ROMDATA EPB_LOC(6, 0, 4)
-#घोषणा EPB_RAMDATA EPB_LOC(6, 0, 5)
+#define EPB_UC_CTL EPB_LOC(6, 0, 0)
+#define EPB_MADDRL EPB_LOC(6, 0, 2)
+#define EPB_MADDRH EPB_LOC(6, 0, 3)
+#define EPB_ROMDATA EPB_LOC(6, 0, 4)
+#define EPB_RAMDATA EPB_LOC(6, 0, 5)
 
 /* Transfer date to/from uC Program RAM of IB or PCIe SerDes */
-अटल पूर्णांक qib_sd7220_ram_xfer(काष्ठा qib_devdata *dd, पूर्णांक sdnum, u32 loc,
-			       u8 *buf, पूर्णांक cnt, पूर्णांक rd_notwr)
-अणु
+static int qib_sd7220_ram_xfer(struct qib_devdata *dd, int sdnum, u32 loc,
+			       u8 *buf, int cnt, int rd_notwr)
+{
 	u16 trans;
 	u64 transval;
 	u64 csbit;
-	पूर्णांक owned;
-	पूर्णांक tries;
-	पूर्णांक sofar;
-	पूर्णांक addr;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	int owned;
+	int tries;
+	int sofar;
+	int addr;
+	int ret;
+	unsigned long flags;
 
-	/* Pick appropriate transaction reg and "Chip select" क्रम this serdes */
-	चयन (sdnum) अणु
-	हाल IB_7220_SERDES:
+	/* Pick appropriate transaction reg and "Chip select" for this serdes */
+	switch (sdnum) {
+	case IB_7220_SERDES:
 		csbit = 1ULL << EPB_IB_UC_CS_SHF;
 		trans = kr_ibsd_epb_transaction_reg;
-		अवरोध;
+		break;
 
-	हाल PCIE_SERDES0:
-	हाल PCIE_SERDES1:
-		/* PCIe SERDES has uC "chip select" in dअगरferent bit, too */
+	case PCIE_SERDES0:
+	case PCIE_SERDES1:
+		/* PCIe SERDES has uC "chip select" in different bit, too */
 		csbit = 1ULL << EPB_PCIE_UC_CS_SHF;
 		trans = kr_pciesd_epb_transaction_reg;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -1;
-	पूर्ण
+	default:
+		return -1;
+	}
 
 	spin_lock_irqsave(&dd->cspec->sdepb_lock, flags);
 
 	owned = epb_access(dd, sdnum, 1);
-	अगर (owned < 0) अणु
+	if (owned < 0) {
 		spin_unlock_irqrestore(&dd->cspec->sdepb_lock, flags);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
 	 * In future code, we may need to distinguish several address ranges,
@@ -790,18 +789,18 @@ bail:
 	 * The memory is 8KB.
 	 */
 	addr = loc & 0x1FFF;
-	क्रम (tries = EPB_TRANS_TRIES; tries; --tries) अणु
-		transval = qib_पढ़ो_kreg32(dd, trans);
-		अगर (transval & EPB_TRANS_RDY)
-			अवरोध;
+	for (tries = EPB_TRANS_TRIES; tries; --tries) {
+		transval = qib_read_kreg32(dd, trans);
+		if (transval & EPB_TRANS_RDY)
+			break;
 		udelay(5);
-	पूर्ण
+	}
 
 	sofar = 0;
-	अगर (tries > 0) अणु
+	if (tries > 0) {
 		/*
-		 * Every "memory" access is करोubly-indirect.
-		 * We set two bytes of address, then पढ़ो/ग_लिखो
+		 * Every "memory" access is doubly-indirect.
+		 * We set two bytes of address, then read/write
 		 * one or mores bytes of data.
 		 */
 
@@ -809,173 +808,173 @@ bail:
 		transval = csbit | EPB_UC_CTL |
 			(rd_notwr ? EPB_ROM_R : EPB_ROM_W);
 		tries = epb_trans(dd, trans, transval, &transval);
-		जबतक (tries > 0 && sofar < cnt) अणु
-			अगर (!sofar) अणु
+		while (tries > 0 && sofar < cnt) {
+			if (!sofar) {
 				/* Only set address at start of chunk */
-				पूर्णांक addrbyte = (addr + sofar) >> 8;
+				int addrbyte = (addr + sofar) >> 8;
 
 				transval = csbit | EPB_MADDRH | addrbyte;
 				tries = epb_trans(dd, trans, transval,
 						  &transval);
-				अगर (tries <= 0)
-					अवरोध;
+				if (tries <= 0)
+					break;
 				addrbyte = (addr + sofar) & 0xFF;
 				transval = csbit | EPB_MADDRL | addrbyte;
 				tries = epb_trans(dd, trans, transval,
 						 &transval);
-				अगर (tries <= 0)
-					अवरोध;
-			पूर्ण
+				if (tries <= 0)
+					break;
+			}
 
-			अगर (rd_notwr)
+			if (rd_notwr)
 				transval = csbit | EPB_ROMDATA | EPB_RD;
-			अन्यथा
+			else
 				transval = csbit | EPB_ROMDATA | buf[sofar];
 			tries = epb_trans(dd, trans, transval, &transval);
-			अगर (tries <= 0)
-				अवरोध;
-			अगर (rd_notwr)
+			if (tries <= 0)
+				break;
+			if (rd_notwr)
 				buf[sofar] = transval & EPB_DATA_MASK;
 			++sofar;
-		पूर्ण
-		/* Finally, clear control-bit क्रम Read or Write */
+		}
+		/* Finally, clear control-bit for Read or Write */
 		transval = csbit | EPB_UC_CTL;
 		tries = epb_trans(dd, trans, transval, &transval);
-	पूर्ण
+	}
 
 	ret = sofar;
 	/* Release bus. Failure is an error */
-	अगर (epb_access(dd, sdnum, -1) < 0)
+	if (epb_access(dd, sdnum, -1) < 0)
 		ret = -1;
 
 	spin_unlock_irqrestore(&dd->cspec->sdepb_lock, flags);
-	अगर (tries <= 0)
+	if (tries <= 0)
 		ret = -1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा PROG_CHUNK 64
+#define PROG_CHUNK 64
 
-अटल पूर्णांक qib_sd7220_prog_ld(काष्ठा qib_devdata *dd, पूर्णांक sdnum,
-			      स्थिर u8 *img, पूर्णांक len, पूर्णांक offset)
-अणु
-	पूर्णांक cnt, sofar, req;
+static int qib_sd7220_prog_ld(struct qib_devdata *dd, int sdnum,
+			      const u8 *img, int len, int offset)
+{
+	int cnt, sofar, req;
 
 	sofar = 0;
-	जबतक (sofar < len) अणु
+	while (sofar < len) {
 		req = len - sofar;
-		अगर (req > PROG_CHUNK)
+		if (req > PROG_CHUNK)
 			req = PROG_CHUNK;
 		cnt = qib_sd7220_ram_xfer(dd, sdnum, offset + sofar,
 					  (u8 *)img + sofar, req, 0);
-		अगर (cnt < req) अणु
+		if (cnt < req) {
 			sofar = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		sofar += req;
-	पूर्ण
-	वापस sofar;
-पूर्ण
+	}
+	return sofar;
+}
 
-#घोषणा VFY_CHUNK 64
-#घोषणा SD_PRAM_ERROR_LIMIT 42
+#define VFY_CHUNK 64
+#define SD_PRAM_ERROR_LIMIT 42
 
-अटल पूर्णांक qib_sd7220_prog_vfy(काष्ठा qib_devdata *dd, पूर्णांक sdnum,
-			       स्थिर u8 *img, पूर्णांक len, पूर्णांक offset)
-अणु
-	पूर्णांक cnt, sofar, req, idx, errors;
-	अचिन्हित अक्षर पढ़ोback[VFY_CHUNK];
+static int qib_sd7220_prog_vfy(struct qib_devdata *dd, int sdnum,
+			       const u8 *img, int len, int offset)
+{
+	int cnt, sofar, req, idx, errors;
+	unsigned char readback[VFY_CHUNK];
 
 	errors = 0;
 	sofar = 0;
-	जबतक (sofar < len) अणु
+	while (sofar < len) {
 		req = len - sofar;
-		अगर (req > VFY_CHUNK)
+		if (req > VFY_CHUNK)
 			req = VFY_CHUNK;
 		cnt = qib_sd7220_ram_xfer(dd, sdnum, sofar + offset,
-					  पढ़ोback, req, 1);
-		अगर (cnt < req) अणु
-			/* failed in पढ़ो itself */
+					  readback, req, 1);
+		if (cnt < req) {
+			/* failed in read itself */
 			sofar = -1;
-			अवरोध;
-		पूर्ण
-		क्रम (idx = 0; idx < cnt; ++idx) अणु
-			अगर (पढ़ोback[idx] != img[idx+sofar])
+			break;
+		}
+		for (idx = 0; idx < cnt; ++idx) {
+			if (readback[idx] != img[idx+sofar])
 				++errors;
-		पूर्ण
+		}
 		sofar += cnt;
-	पूर्ण
-	वापस errors ? -errors : sofar;
-पूर्ण
+	}
+	return errors ? -errors : sofar;
+}
 
-अटल पूर्णांक
-qib_sd7220_ib_load(काष्ठा qib_devdata *dd, स्थिर काष्ठा firmware *fw)
-अणु
-	वापस qib_sd7220_prog_ld(dd, IB_7220_SERDES, fw->data, fw->size, 0);
-पूर्ण
+static int
+qib_sd7220_ib_load(struct qib_devdata *dd, const struct firmware *fw)
+{
+	return qib_sd7220_prog_ld(dd, IB_7220_SERDES, fw->data, fw->size, 0);
+}
 
-अटल पूर्णांक
-qib_sd7220_ib_vfy(काष्ठा qib_devdata *dd, स्थिर काष्ठा firmware *fw)
-अणु
-	वापस qib_sd7220_prog_vfy(dd, IB_7220_SERDES, fw->data, fw->size, 0);
-पूर्ण
+static int
+qib_sd7220_ib_vfy(struct qib_devdata *dd, const struct firmware *fw)
+{
+	return qib_sd7220_prog_vfy(dd, IB_7220_SERDES, fw->data, fw->size, 0);
+}
 
 /*
- * IRQ not set up at this poपूर्णांक in init, so we poll.
+ * IRQ not set up at this point in init, so we poll.
  */
-#घोषणा IB_SERDES_TRIM_DONE (1ULL << 11)
-#घोषणा TRIM_TMO (15)
+#define IB_SERDES_TRIM_DONE (1ULL << 11)
+#define TRIM_TMO (15)
 
-अटल पूर्णांक qib_sd_trimकरोne_poll(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक trim_पंचांगo, ret;
-	uपूर्णांक64_t val;
+static int qib_sd_trimdone_poll(struct qib_devdata *dd)
+{
+	int trim_tmo, ret;
+	uint64_t val;
 
 	/*
 	 * Default to failure, so IBC will not start
 	 * without IB_SERDES_TRIM_DONE.
 	 */
 	ret = 0;
-	क्रम (trim_पंचांगo = 0; trim_पंचांगo < TRIM_TMO; ++trim_पंचांगo) अणु
-		val = qib_पढ़ो_kreg64(dd, kr_ibcstatus);
-		अगर (val & IB_SERDES_TRIM_DONE) अणु
+	for (trim_tmo = 0; trim_tmo < TRIM_TMO; ++trim_tmo) {
+		val = qib_read_kreg64(dd, kr_ibcstatus);
+		if (val & IB_SERDES_TRIM_DONE) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		msleep(20);
-	पूर्ण
-	अगर (trim_पंचांगo >= TRIM_TMO) अणु
-		qib_dev_err(dd, "No TRIMDONE in %d tries\n", trim_पंचांगo);
+	}
+	if (trim_tmo >= TRIM_TMO) {
+		qib_dev_err(dd, "No TRIMDONE in %d tries\n", trim_tmo);
 		ret = 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#घोषणा TX_FAST_ELT (9)
+#define TX_FAST_ELT (9)
 
 /*
- * Set the "negotiation" values क्रम SERDES. These are used by the IB1.2
+ * Set the "negotiation" values for SERDES. These are used by the IB1.2
  * link negotiation. Macros below are attempt to keep the values a
  * little more human-editable.
  * First, values related to Drive De-emphasis Settings.
  */
 
-#घोषणा NUM_DDS_REGS 6
-#घोषणा DDS_REG_MAP 0x76A910 /* LSB-first list of regs (in elt 9) to mod */
+#define NUM_DDS_REGS 6
+#define DDS_REG_MAP 0x76A910 /* LSB-first list of regs (in elt 9) to mod */
 
-#घोषणा DDS_VAL(amp_d, मुख्य_d, ipst_d, ipre_d, amp_s, मुख्य_s, ipst_s, ipre_s) \
-	अणु अणु ((amp_d & 0x1F) << 1) | 1, ((amp_s & 0x1F) << 1) | 1, \
-	  (मुख्य_d << 3) | 4 | (ipre_d >> 2), \
-	  (मुख्य_s << 3) | 4 | (ipre_s >> 2), \
+#define DDS_VAL(amp_d, main_d, ipst_d, ipre_d, amp_s, main_s, ipst_s, ipre_s) \
+	{ { ((amp_d & 0x1F) << 1) | 1, ((amp_s & 0x1F) << 1) | 1, \
+	  (main_d << 3) | 4 | (ipre_d >> 2), \
+	  (main_s << 3) | 4 | (ipre_s >> 2), \
 	  ((ipst_d & 0xF) << 1) | ((ipre_d & 3) << 6) | 0x21, \
-	  ((ipst_s & 0xF) << 1) | ((ipre_s & 3) << 6) | 0x21 पूर्ण पूर्ण
+	  ((ipst_s & 0xF) << 1) | ((ipre_s & 3) << 6) | 0x21 } }
 
-अटल काष्ठा dds_init अणु
-	uपूर्णांक8_t reg_vals[NUM_DDS_REGS];
-पूर्ण dds_init_vals[] = अणु
+static struct dds_init {
+	uint8_t reg_vals[NUM_DDS_REGS];
+} dds_init_vals[] = {
 	/*       DDR(FDR)       SDR(HDR)   */
-	/* Venकरोr recommends below क्रम 3m cable */
-#घोषणा DDS_3M 0
+	/* Vendor recommends below for 3m cable */
+#define DDS_3M 0
 	DDS_VAL(31, 19, 12, 0, 29, 22,  9, 0),
 	DDS_VAL(31, 12, 15, 4, 31, 15, 15, 1),
 	DDS_VAL(31, 13, 15, 3, 31, 16, 15, 0),
@@ -989,33 +988,33 @@ qib_sd7220_ib_vfy(काष्ठा qib_devdata *dd, स्थिर काष�
 	DDS_VAL(31, 22,  9, 0, 26, 25,  6, 0),
 	DDS_VAL(30, 23,  8, 0, 25, 26,  5, 0),
 	DDS_VAL(29, 24,  7, 0, 23, 27,  4, 0),
-	/* Venकरोr recommends below क्रम 1m cable */
-#घोषणा DDS_1M 13
+	/* Vendor recommends below for 1m cable */
+#define DDS_1M 13
 	DDS_VAL(28, 25,  6, 0, 21, 28,  3, 0),
 	DDS_VAL(27, 26,  5, 0, 19, 29,  2, 0),
 	DDS_VAL(25, 27,  4, 0, 17, 30,  1, 0)
-पूर्ण;
+};
 
 /*
  * Now the RXEQ section of the table.
  */
-/* Hardware packs an element number and रेजिस्टर address thus: */
-#घोषणा RXEQ_INIT_RDESC(elt, addr) (((elt) & 0xF) | ((addr) << 4))
-#घोषणा RXEQ_VAL(elt, adr, val0, val1, val2, val3) \
-	अणुRXEQ_INIT_RDESC((elt), (adr)), अणु(val0), (val1), (val2), (val3)पूर्ण पूर्ण
+/* Hardware packs an element number and register address thus: */
+#define RXEQ_INIT_RDESC(elt, addr) (((elt) & 0xF) | ((addr) << 4))
+#define RXEQ_VAL(elt, adr, val0, val1, val2, val3) \
+	{RXEQ_INIT_RDESC((elt), (adr)), {(val0), (val1), (val2), (val3)} }
 
-#घोषणा RXEQ_VAL_ALL(elt, adr, val)  \
-	अणुRXEQ_INIT_RDESC((elt), (adr)), अणु(val), (val), (val), (val)पूर्ण पूर्ण
+#define RXEQ_VAL_ALL(elt, adr, val)  \
+	{RXEQ_INIT_RDESC((elt), (adr)), {(val), (val), (val), (val)} }
 
-#घोषणा RXEQ_SDR_DFELTH 0
-#घोषणा RXEQ_SDR_TLTH 0
-#घोषणा RXEQ_SDR_G1CNT_Z1CNT 0x11
-#घोषणा RXEQ_SDR_ZCNT 23
+#define RXEQ_SDR_DFELTH 0
+#define RXEQ_SDR_TLTH 0
+#define RXEQ_SDR_G1CNT_Z1CNT 0x11
+#define RXEQ_SDR_ZCNT 23
 
-अटल काष्ठा rxeq_init अणु
-	u16 rdesc;      /* in क्रमm used in SerDesDDSRXEQ */
+static struct rxeq_init {
+	u16 rdesc;      /* in form used in SerDesDDSRXEQ */
 	u8  rdata[4];
-पूर्ण rxeq_init_vals[] = अणु
+} rxeq_init_vals[] = {
 	/* Set Rcv Eq. to Preset node */
 	RXEQ_VAL_ALL(7, 0x27, 0x10),
 	/* Set DFELTHFDR/HDR thresholds */
@@ -1033,303 +1032,303 @@ qib_sd7220_ib_vfy(काष्ठा qib_devdata *dd, स्थिर काष�
 	/* Toggle RELOCK (in VCDL_CTRL0) to lock to data */
 	RXEQ_VAL_ALL(6, 6, 0x20), /* Set D5 High */
 	RXEQ_VAL_ALL(6, 6, 0), /* Set D5 Low */
-पूर्ण;
+};
 
-/* There are 17 values from venकरोr, but IBC only accesses the first 16 */
-#घोषणा DDS_ROWS (16)
-#घोषणा RXEQ_ROWS ARRAY_SIZE(rxeq_init_vals)
+/* There are 17 values from vendor, but IBC only accesses the first 16 */
+#define DDS_ROWS (16)
+#define RXEQ_ROWS ARRAY_SIZE(rxeq_init_vals)
 
-अटल पूर्णांक qib_sd_setvals(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक idx, midx;
-	पूर्णांक min_idx;     /* Minimum index क्रम this portion of table */
-	uपूर्णांक32_t dds_reg_map;
+static int qib_sd_setvals(struct qib_devdata *dd)
+{
+	int idx, midx;
+	int min_idx;     /* Minimum index for this portion of table */
+	uint32_t dds_reg_map;
 	u64 __iomem *taddr, *iaddr;
-	uपूर्णांक64_t data;
-	uपूर्णांक64_t sdctl;
+	uint64_t data;
+	uint64_t sdctl;
 
 	taddr = dd->kregbase + kr_serdes_maptable;
 	iaddr = dd->kregbase + kr_serdes_ddsrxeq0;
 
 	/*
 	 * Init the DDS section of the table.
-	 * Each "row" of the table provokes NUM_DDS_REG ग_लिखोs, to the
-	 * रेजिस्टरs indicated in DDS_REG_MAP.
+	 * Each "row" of the table provokes NUM_DDS_REG writes, to the
+	 * registers indicated in DDS_REG_MAP.
 	 */
-	sdctl = qib_पढ़ो_kreg64(dd, kr_ibserdesctrl);
+	sdctl = qib_read_kreg64(dd, kr_ibserdesctrl);
 	sdctl = (sdctl & ~(0x1f << 8)) | (NUM_DDS_REGS << 8);
 	sdctl = (sdctl & ~(0x1f << 13)) | (RXEQ_ROWS << 13);
-	qib_ग_लिखो_kreg(dd, kr_ibserdesctrl, sdctl);
+	qib_write_kreg(dd, kr_ibserdesctrl, sdctl);
 
 	/*
-	 * Iterate करोwn table within loop क्रम each रेजिस्टर to store.
+	 * Iterate down table within loop for each register to store.
 	 */
 	dds_reg_map = DDS_REG_MAP;
-	क्रम (idx = 0; idx < NUM_DDS_REGS; ++idx) अणु
+	for (idx = 0; idx < NUM_DDS_REGS; ++idx) {
 		data = ((dds_reg_map & 0xF) << 4) | TX_FAST_ELT;
-		ग_लिखोq(data, iaddr + idx);
-		qib_पढ़ो_kreg32(dd, kr_scratch);
+		writeq(data, iaddr + idx);
+		qib_read_kreg32(dd, kr_scratch);
 		dds_reg_map >>= 4;
-		क्रम (midx = 0; midx < DDS_ROWS; ++midx) अणु
+		for (midx = 0; midx < DDS_ROWS; ++midx) {
 			u64 __iomem *daddr = taddr + ((midx << 4) + idx);
 
 			data = dds_init_vals[midx].reg_vals[idx];
-			ग_लिखोq(data, daddr);
-			qib_पढ़ो_kreg32(dd, kr_scratch);
-		पूर्ण /* End inner क्रम (vals क्रम this reg, each row) */
-	पूर्ण /* end outer क्रम (regs to be stored) */
+			writeq(data, daddr);
+			qib_read_kreg32(dd, kr_scratch);
+		} /* End inner for (vals for this reg, each row) */
+	} /* end outer for (regs to be stored) */
 
 	/*
 	 * Init the RXEQ section of the table.
-	 * This runs in a dअगरferent order, as the pattern of
-	 * रेजिस्टर references is more complex, but there are only
-	 * four "data" values per रेजिस्टर.
+	 * This runs in a different order, as the pattern of
+	 * register references is more complex, but there are only
+	 * four "data" values per register.
 	 */
 	min_idx = idx; /* RXEQ indices pick up where DDS left off */
 	taddr += 0x100; /* RXEQ data is in second half of table */
-	/* Iterate through RXEQ रेजिस्टर addresses */
-	क्रम (idx = 0; idx < RXEQ_ROWS; ++idx) अणु
-		पूर्णांक didx; /* "destination" */
-		पूर्णांक vidx;
+	/* Iterate through RXEQ register addresses */
+	for (idx = 0; idx < RXEQ_ROWS; ++idx) {
+		int didx; /* "destination" */
+		int vidx;
 
 		/* didx is offset by min_idx to address RXEQ range of regs */
 		didx = idx + min_idx;
-		/* Store the next RXEQ रेजिस्टर address */
-		ग_लिखोq(rxeq_init_vals[idx].rdesc, iaddr + didx);
-		qib_पढ़ो_kreg32(dd, kr_scratch);
+		/* Store the next RXEQ register address */
+		writeq(rxeq_init_vals[idx].rdesc, iaddr + didx);
+		qib_read_kreg32(dd, kr_scratch);
 		/* Iterate through RXEQ values */
-		क्रम (vidx = 0; vidx < 4; vidx++) अणु
+		for (vidx = 0; vidx < 4; vidx++) {
 			data = rxeq_init_vals[idx].rdata[vidx];
-			ग_लिखोq(data, taddr + (vidx << 6) + idx);
-			qib_पढ़ो_kreg32(dd, kr_scratch);
-		पूर्ण
-	पूर्ण /* end outer क्रम (Reg-ग_लिखोs क्रम RXEQ) */
-	वापस 0;
-पूर्ण
+			writeq(data, taddr + (vidx << 6) + idx);
+			qib_read_kreg32(dd, kr_scratch);
+		}
+	} /* end outer for (Reg-writes for RXEQ) */
+	return 0;
+}
 
-#घोषणा CMUCTRL5 EPB_LOC(7, 0, 0x15)
-#घोषणा RXHSCTRL0(chan) EPB_LOC(chan, 6, 0)
-#घोषणा VCDL_DAC2(chan) EPB_LOC(chan, 6, 5)
-#घोषणा VCDL_CTRL0(chan) EPB_LOC(chan, 6, 6)
-#घोषणा VCDL_CTRL2(chan) EPB_LOC(chan, 6, 8)
-#घोषणा START_EQ2(chan) EPB_LOC(chan, 7, 0x28)
+#define CMUCTRL5 EPB_LOC(7, 0, 0x15)
+#define RXHSCTRL0(chan) EPB_LOC(chan, 6, 0)
+#define VCDL_DAC2(chan) EPB_LOC(chan, 6, 5)
+#define VCDL_CTRL0(chan) EPB_LOC(chan, 6, 6)
+#define VCDL_CTRL2(chan) EPB_LOC(chan, 6, 8)
+#define START_EQ2(chan) EPB_LOC(chan, 7, 0x28)
 
 /*
  * Repeat a "store" across all channels of the IB SerDes.
  * Although nominally it inherits the "read value" of the last
- * channel it modअगरied, the only really useful वापस is <0 क्रम
- * failure, >= 0 क्रम success. The parameter 'loc' is assumed to
- * be the location in some channel of the रेजिस्टर to be modअगरied
- * The caller can specअगरy use of the "gang write" option of EPB,
- * in which हाल we use the specअगरied channel data क्रम any fields
+ * channel it modified, the only really useful return is <0 for
+ * failure, >= 0 for success. The parameter 'loc' is assumed to
+ * be the location in some channel of the register to be modified
+ * The caller can specify use of the "gang write" option of EPB,
+ * in which case we use the specified channel data for any fields
  * not explicitely written.
  */
-अटल पूर्णांक ibsd_mod_allchnls(काष्ठा qib_devdata *dd, पूर्णांक loc, पूर्णांक val,
-			     पूर्णांक mask)
-अणु
-	पूर्णांक ret = -1;
-	पूर्णांक chnl;
+static int ibsd_mod_allchnls(struct qib_devdata *dd, int loc, int val,
+			     int mask)
+{
+	int ret = -1;
+	int chnl;
 
-	अगर (loc & EPB_GLOBAL_WR) अणु
+	if (loc & EPB_GLOBAL_WR) {
 		/*
 		 * Our caller has assured us that we can set all four
 		 * channels at once. Trust that. If mask is not 0xFF,
-		 * we will पढ़ो the _specअगरied_ channel क्रम our starting
+		 * we will read the _specified_ channel for our starting
 		 * value.
 		 */
 		loc |= (1U << EPB_IB_QUAD0_CS_SHF);
 		chnl = (loc >> (4 + EPB_ADDR_SHF)) & 7;
-		अगर (mask != 0xFF) अणु
+		if (mask != 0xFF) {
 			ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES,
 						 loc & ~EPB_GLOBAL_WR, 0, 0);
-			अगर (ret < 0) अणु
-				पूर्णांक sloc = loc >> EPB_ADDR_SHF;
+			if (ret < 0) {
+				int sloc = loc >> EPB_ADDR_SHF;
 
 				qib_dev_err(dd,
 					"pre-read failed: elt %d, addr 0x%X, chnl %d\n",
 					(sloc & 0xF),
 					(sloc >> 9) & 0x3f, chnl);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			val = (ret & ~mask) | (val & mask);
-		पूर्ण
+		}
 		loc &=  ~(7 << (4+EPB_ADDR_SHF));
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, val, 0xFF);
-		अगर (ret < 0) अणु
-			पूर्णांक sloc = loc >> EPB_ADDR_SHF;
+		if (ret < 0) {
+			int sloc = loc >> EPB_ADDR_SHF;
 
 			qib_dev_err(dd,
 				"Global WR failed: elt %d, addr 0x%X, val %02X\n",
 				(sloc & 0xF), (sloc >> 9) & 0x3f, val);
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 	/* Clear "channel" and set CS so we can simply iterate */
 	loc &=  ~(7 << (4+EPB_ADDR_SHF));
 	loc |= (1U << EPB_IB_QUAD0_CS_SHF);
-	क्रम (chnl = 0; chnl < 4; ++chnl) अणु
-		पूर्णांक cloc = loc | (chnl << (4+EPB_ADDR_SHF));
+	for (chnl = 0; chnl < 4; ++chnl) {
+		int cloc = loc | (chnl << (4+EPB_ADDR_SHF));
 
 		ret = qib_sd7220_reg_mod(dd, IB_7220_SERDES, cloc, val, mask);
-		अगर (ret < 0) अणु
-			पूर्णांक sloc = loc >> EPB_ADDR_SHF;
+		if (ret < 0) {
+			int sloc = loc >> EPB_ADDR_SHF;
 
 			qib_dev_err(dd,
 				"Write failed: elt %d, addr 0x%X, chnl %d, val 0x%02X, mask 0x%02X\n",
 				(sloc & 0xF), (sloc >> 9) & 0x3f, chnl,
 				val & 0xFF, mask & 0xFF);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
 /*
- * Set the Tx values normally modअगरied by IBC in IB1.2 mode to शेष
+ * Set the Tx values normally modified by IBC in IB1.2 mode to default
  * values, as gotten from first row of init table.
  */
-अटल पूर्णांक set_dds_vals(काष्ठा qib_devdata *dd, काष्ठा dds_init *ddi)
-अणु
-	पूर्णांक ret;
-	पूर्णांक idx, reg, data;
-	uपूर्णांक32_t regmap;
+static int set_dds_vals(struct qib_devdata *dd, struct dds_init *ddi)
+{
+	int ret;
+	int idx, reg, data;
+	uint32_t regmap;
 
 	regmap = DDS_REG_MAP;
-	क्रम (idx = 0; idx < NUM_DDS_REGS; ++idx) अणु
+	for (idx = 0; idx < NUM_DDS_REGS; ++idx) {
 		reg = (regmap & 0xF);
 		regmap >>= 4;
 		data = ddi->reg_vals[idx];
-		/* Venकरोr says RMW not needed क्रम these regs, use 0xFF mask */
+		/* Vendor says RMW not needed for these regs, use 0xFF mask */
 		ret = ibsd_mod_allchnls(dd, EPB_LOC(0, 9, reg), data, 0xFF);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret < 0)
+			break;
+	}
+	return ret;
+}
 
 /*
- * Set the Rx values normally modअगरied by IBC in IB1.2 mode to शेष
+ * Set the Rx values normally modified by IBC in IB1.2 mode to default
  * values, as gotten from selected column of init table.
  */
-अटल पूर्णांक set_rxeq_vals(काष्ठा qib_devdata *dd, पूर्णांक vsel)
-अणु
-	पूर्णांक ret;
-	पूर्णांक ridx;
-	पूर्णांक cnt = ARRAY_SIZE(rxeq_init_vals);
+static int set_rxeq_vals(struct qib_devdata *dd, int vsel)
+{
+	int ret;
+	int ridx;
+	int cnt = ARRAY_SIZE(rxeq_init_vals);
 
-	क्रम (ridx = 0; ridx < cnt; ++ridx) अणु
-		पूर्णांक elt, reg, val, loc;
+	for (ridx = 0; ridx < cnt; ++ridx) {
+		int elt, reg, val, loc;
 
 		elt = rxeq_init_vals[ridx].rdesc & 0xF;
 		reg = rxeq_init_vals[ridx].rdesc >> 4;
 		loc = EPB_LOC(0, elt, reg);
 		val = rxeq_init_vals[ridx].rdata[vsel];
-		/* mask of 0xFF, because hardware करोes full-byte store. */
+		/* mask of 0xFF, because hardware does full-byte store. */
 		ret = ibsd_mod_allchnls(dd, loc, val, 0xFF);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret < 0)
+			break;
+	}
+	return ret;
+}
 
 /*
- * Set the शेष values (row 0) क्रम DDR Driver Demphasis.
- * we करो this initially and whenever we turn off IB-1.2
+ * Set the default values (row 0) for DDR Driver Demphasis.
+ * we do this initially and whenever we turn off IB-1.2
  *
- * The "default" values क्रम Rx equalization are also stored to
- * SerDes रेजिस्टरs. Formerly (and still शेष), we used set 2.
+ * The "default" values for Rx equalization are also stored to
+ * SerDes registers. Formerly (and still default), we used set 2.
  * For experimenting with cables and link-partners, we allow changing
  * that via a module parameter.
  */
-अटल अचिन्हित qib_rxeq_set = 2;
-module_param_named(rxeq_शेष_set, qib_rxeq_set, uपूर्णांक,
+static unsigned qib_rxeq_set = 2;
+module_param_named(rxeq_default_set, qib_rxeq_set, uint,
 		   S_IWUSR | S_IRUGO);
-MODULE_PARM_DESC(rxeq_शेष_set,
+MODULE_PARM_DESC(rxeq_default_set,
 		 "Which set [0..3] of Rx Equalization values is default");
 
-अटल पूर्णांक qib_पूर्णांकernal_presets(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret = 0;
+static int qib_internal_presets(struct qib_devdata *dd)
+{
+	int ret = 0;
 
 	ret = set_dds_vals(dd, dds_init_vals + DDS_3M);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "Failed to set default DDS values\n");
 	ret = set_rxeq_vals(dd, qib_rxeq_set & 3);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "Failed to set default RXEQ values\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक qib_sd7220_presets(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret = 0;
+int qib_sd7220_presets(struct qib_devdata *dd)
+{
+	int ret = 0;
 
-	अगर (!dd->cspec->presets_needed)
-		वापस ret;
+	if (!dd->cspec->presets_needed)
+		return ret;
 	dd->cspec->presets_needed = 0;
-	/* Assert uC reset, so we करोn't clash with it. */
+	/* Assert uC reset, so we don't clash with it. */
 	qib_ibsd_reset(dd, 1);
 	udelay(2);
-	qib_sd_trimकरोne_monitor(dd, "link-down");
+	qib_sd_trimdone_monitor(dd, "link-down");
 
-	ret = qib_पूर्णांकernal_presets(dd);
-	वापस ret;
-पूर्ण
+	ret = qib_internal_presets(dd);
+	return ret;
+}
 
-अटल पूर्णांक qib_sd_trimself(काष्ठा qib_devdata *dd, पूर्णांक val)
-अणु
-	पूर्णांक loc = CMUCTRL5 | (1U << EPB_IB_QUAD0_CS_SHF);
+static int qib_sd_trimself(struct qib_devdata *dd, int val)
+{
+	int loc = CMUCTRL5 | (1U << EPB_IB_QUAD0_CS_SHF);
 
-	वापस qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, val, 0xFF);
-पूर्ण
+	return qib_sd7220_reg_mod(dd, IB_7220_SERDES, loc, val, 0xFF);
+}
 
-अटल पूर्णांक qib_sd_early(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int qib_sd_early(struct qib_devdata *dd)
+{
+	int ret;
 
 	ret = ibsd_mod_allchnls(dd, RXHSCTRL0(0) | EPB_GLOBAL_WR, 0xD4, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 	ret = ibsd_mod_allchnls(dd, START_EQ1(0) | EPB_GLOBAL_WR, 0x10, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 	ret = ibsd_mod_allchnls(dd, START_EQ2(0) | EPB_GLOBAL_WR, 0x30, 0xFF);
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा BACTRL(chnl) EPB_LOC(chnl, 6, 0x0E)
-#घोषणा LDOUTCTRL1(chnl) EPB_LOC(chnl, 7, 6)
-#घोषणा RXHSSTATUS(chnl) EPB_LOC(chnl, 6, 0xF)
+#define BACTRL(chnl) EPB_LOC(chnl, 6, 0x0E)
+#define LDOUTCTRL1(chnl) EPB_LOC(chnl, 7, 6)
+#define RXHSSTATUS(chnl) EPB_LOC(chnl, 6, 0xF)
 
-अटल पूर्णांक qib_sd_dactrim(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int qib_sd_dactrim(struct qib_devdata *dd)
+{
+	int ret;
 
 	ret = ibsd_mod_allchnls(dd, VCDL_DAC2(0) | EPB_GLOBAL_WR, 0x2D, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
-	/* more fine-tuning of what will be शेष */
+	/* more fine-tuning of what will be default */
 	ret = ibsd_mod_allchnls(dd, VCDL_CTRL2(0), 3, 0xF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
 	ret = ibsd_mod_allchnls(dd, BACTRL(0) | EPB_GLOBAL_WR, 0x40, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
 	ret = ibsd_mod_allchnls(dd, LDOUTCTRL1(0) | EPB_GLOBAL_WR, 0x04, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
 	ret = ibsd_mod_allchnls(dd, RXHSSTATUS(0) | EPB_GLOBAL_WR, 0x04, 0xFF);
-	अगर (ret < 0)
-		जाओ bail;
+	if (ret < 0)
+		goto bail;
 
 	/*
-	 * Delay क्रम max possible number of steps, with slop.
+	 * Delay for max possible number of steps, with slop.
 	 * Each step is about 4usec.
 	 */
 	udelay(415);
@@ -1337,110 +1336,110 @@ bail:
 	ret = ibsd_mod_allchnls(dd, LDOUTCTRL1(0) | EPB_GLOBAL_WR, 0x00, 0xFF);
 
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा RELOCK_FIRST_MS 3
-#घोषणा RXLSPPM(chan) EPB_LOC(chan, 0, 2)
-व्योम toggle_7220_rclkrls(काष्ठा qib_devdata *dd)
-अणु
-	पूर्णांक loc = RXLSPPM(0) | EPB_GLOBAL_WR;
-	पूर्णांक ret;
+#define RELOCK_FIRST_MS 3
+#define RXLSPPM(chan) EPB_LOC(chan, 0, 2)
+void toggle_7220_rclkrls(struct qib_devdata *dd)
+{
+	int loc = RXLSPPM(0) | EPB_GLOBAL_WR;
+	int ret;
 
 	ret = ibsd_mod_allchnls(dd, loc, 0, 0x80);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "RCLKRLS failed to clear D7\n");
-	अन्यथा अणु
+	else {
 		udelay(1);
 		ibsd_mod_allchnls(dd, loc, 0x80, 0x80);
-	पूर्ण
-	/* And again क्रम good measure */
+	}
+	/* And again for good measure */
 	udelay(1);
 	ret = ibsd_mod_allchnls(dd, loc, 0, 0x80);
-	अगर (ret < 0)
+	if (ret < 0)
 		qib_dev_err(dd, "RCLKRLS failed to clear D7\n");
-	अन्यथा अणु
+	else {
 		udelay(1);
 		ibsd_mod_allchnls(dd, loc, 0x80, 0x80);
-	पूर्ण
+	}
 	/* Now reset xgxs and IBC to complete the recovery */
 	dd->f_xgxs_reset(dd->pport);
-पूर्ण
+}
 
 /*
- * Shut करोwn the समयr that polls क्रम relock occasions, अगर needed
+ * Shut down the timer that polls for relock occasions, if needed
  * this is "hooked" from qib_7220_quiet_serdes(), which is called
- * just beक्रमe qib_shutकरोwn_device() in qib_driver.c shuts करोwn all
- * the other समयrs
+ * just before qib_shutdown_device() in qib_driver.c shuts down all
+ * the other timers
  */
-व्योम shutकरोwn_7220_relock_poll(काष्ठा qib_devdata *dd)
-अणु
-	अगर (dd->cspec->relock_समयr_active)
-		del_समयr_sync(&dd->cspec->relock_समयr);
-पूर्ण
+void shutdown_7220_relock_poll(struct qib_devdata *dd)
+{
+	if (dd->cspec->relock_timer_active)
+		del_timer_sync(&dd->cspec->relock_timer);
+}
 
-अटल अचिन्हित qib_relock_by_समयr = 1;
-module_param_named(relock_by_समयr, qib_relock_by_समयr, uपूर्णांक,
+static unsigned qib_relock_by_timer = 1;
+module_param_named(relock_by_timer, qib_relock_by_timer, uint,
 		   S_IWUSR | S_IRUGO);
-MODULE_PARM_DESC(relock_by_समयr, "Allow relock attempt if link not up");
+MODULE_PARM_DESC(relock_by_timer, "Allow relock attempt if link not up");
 
-अटल व्योम qib_run_relock(काष्ठा समयr_list *t)
-अणु
-	काष्ठा qib_chip_specअगरic *cs = from_समयr(cs, t, relock_समयr);
-	काष्ठा qib_devdata *dd = cs->dd;
-	काष्ठा qib_pportdata *ppd = dd->pport;
-	पूर्णांक समयoff;
+static void qib_run_relock(struct timer_list *t)
+{
+	struct qib_chip_specific *cs = from_timer(cs, t, relock_timer);
+	struct qib_devdata *dd = cs->dd;
+	struct qib_pportdata *ppd = dd->pport;
+	int timeoff;
 
 	/*
-	 * Check link-training state क्रम "stuck" state, when करोwn.
-	 * अगर found, try relock and schedule another try at
+	 * Check link-training state for "stuck" state, when down.
+	 * if found, try relock and schedule another try at
 	 * exponentially growing delay, maxed at one second.
-	 * अगर not stuck, our work is करोne.
+	 * if not stuck, our work is done.
 	 */
-	अगर ((dd->flags & QIB_INITTED) && !(ppd->lflags &
+	if ((dd->flags & QIB_INITTED) && !(ppd->lflags &
 	    (QIBL_IB_AUTONEG_INPROG | QIBL_LINKINIT | QIBL_LINKARMED |
-	     QIBL_LINKACTIVE))) अणु
-		अगर (qib_relock_by_समयr) अणु
-			अगर (!(ppd->lflags & QIBL_IB_LINK_DISABLED))
+	     QIBL_LINKACTIVE))) {
+		if (qib_relock_by_timer) {
+			if (!(ppd->lflags & QIBL_IB_LINK_DISABLED))
 				toggle_7220_rclkrls(dd);
-		पूर्ण
-		/* re-set समयr क्रम next check */
-		समयoff = cs->relock_पूर्णांकerval << 1;
-		अगर (समयoff > HZ)
-			समयoff = HZ;
-		cs->relock_पूर्णांकerval = समयoff;
-	पूर्ण अन्यथा
-		समयoff = HZ;
-	mod_समयr(&cs->relock_समयr, jअगरfies + समयoff);
-पूर्ण
+		}
+		/* re-set timer for next check */
+		timeoff = cs->relock_interval << 1;
+		if (timeoff > HZ)
+			timeoff = HZ;
+		cs->relock_interval = timeoff;
+	} else
+		timeoff = HZ;
+	mod_timer(&cs->relock_timer, jiffies + timeoff);
+}
 
-व्योम set_7220_relock_poll(काष्ठा qib_devdata *dd, पूर्णांक ibup)
-अणु
-	काष्ठा qib_chip_specअगरic *cs = dd->cspec;
+void set_7220_relock_poll(struct qib_devdata *dd, int ibup)
+{
+	struct qib_chip_specific *cs = dd->cspec;
 
-	अगर (ibup) अणु
-		/* We are now up, relax समयr to 1 second पूर्णांकerval */
-		अगर (cs->relock_समयr_active) अणु
-			cs->relock_पूर्णांकerval = HZ;
-			mod_समयr(&cs->relock_समयr, jअगरfies + HZ);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Transition to करोwn, (re-)set समयr to लघु पूर्णांकerval. */
-		अचिन्हित पूर्णांक समयout;
+	if (ibup) {
+		/* We are now up, relax timer to 1 second interval */
+		if (cs->relock_timer_active) {
+			cs->relock_interval = HZ;
+			mod_timer(&cs->relock_timer, jiffies + HZ);
+		}
+	} else {
+		/* Transition to down, (re-)set timer to short interval. */
+		unsigned int timeout;
 
-		समयout = msecs_to_jअगरfies(RELOCK_FIRST_MS);
-		अगर (समयout == 0)
-			समयout = 1;
-		/* If समयr has not yet been started, करो so. */
-		अगर (!cs->relock_समयr_active) अणु
-			cs->relock_समयr_active = 1;
-			समयr_setup(&cs->relock_समयr, qib_run_relock, 0);
-			cs->relock_पूर्णांकerval = समयout;
-			cs->relock_समयr.expires = jअगरfies + समयout;
-			add_समयr(&cs->relock_समयr);
-		पूर्ण अन्यथा अणु
-			cs->relock_पूर्णांकerval = समयout;
-			mod_समयr(&cs->relock_समयr, jअगरfies + समयout);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		timeout = msecs_to_jiffies(RELOCK_FIRST_MS);
+		if (timeout == 0)
+			timeout = 1;
+		/* If timer has not yet been started, do so. */
+		if (!cs->relock_timer_active) {
+			cs->relock_timer_active = 1;
+			timer_setup(&cs->relock_timer, qib_run_relock, 0);
+			cs->relock_interval = timeout;
+			cs->relock_timer.expires = jiffies + timeout;
+			add_timer(&cs->relock_timer);
+		} else {
+			cs->relock_interval = timeout;
+			mod_timer(&cs->relock_timer, jiffies + timeout);
+		}
+	}
+}

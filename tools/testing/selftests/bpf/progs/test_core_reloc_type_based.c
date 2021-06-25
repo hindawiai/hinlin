@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <stdbool.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	अक्षर in[256];
-	अक्षर out[256];
+struct {
+	char in[256];
+	char out[256];
 	bool skip;
-पूर्ण data = अणुपूर्ण;
+} data = {};
 
-काष्ठा a_काष्ठा अणु
-	पूर्णांक x;
-पूर्ण;
+struct a_struct {
+	int x;
+};
 
-जोड़ a_जोड़ अणु
-	पूर्णांक y;
-	पूर्णांक z;
-पूर्ण;
+union a_union {
+	int y;
+	int z;
+};
 
-प्रकार काष्ठा a_काष्ठा named_काष्ठा_प्रकार;
+typedef struct a_struct named_struct_typedef;
 
-प्रकार काष्ठा अणु पूर्णांक x, y, z; पूर्ण anon_काष्ठा_प्रकार;
+typedef struct { int x, y, z; } anon_struct_typedef;
 
-प्रकार काष्ठा अणु
-	पूर्णांक a, b, c;
-पूर्ण *काष्ठा_ptr_प्रकार;
+typedef struct {
+	int a, b, c;
+} *struct_ptr_typedef;
 
-क्रमागत an_क्रमागत अणु
+enum an_enum {
 	AN_ENUM_VAL1 = 1,
 	AN_ENUM_VAL2 = 2,
 	AN_ENUM_VAL3 = 3,
-पूर्ण;
+};
 
-प्रकार पूर्णांक पूर्णांक_प्रकार;
+typedef int int_typedef;
 
-प्रकार क्रमागत अणु TYPEDEF_ENUM_VAL1, TYPEDEF_ENUM_VAL2 पूर्ण क्रमागत_प्रकार;
+typedef enum { TYPEDEF_ENUM_VAL1, TYPEDEF_ENUM_VAL2 } enum_typedef;
 
-प्रकार व्योम *व्योम_ptr_प्रकार;
+typedef void *void_ptr_typedef;
 
-प्रकार पूर्णांक (*func_proto_प्रकार)(दीर्घ);
+typedef int (*func_proto_typedef)(long);
 
-प्रकार अक्षर arr_प्रकार[20];
+typedef char arr_typedef[20];
 
-काष्ठा core_reloc_type_based_output अणु
-	bool काष्ठा_exists;
-	bool जोड़_exists;
-	bool क्रमागत_exists;
-	bool प्रकार_named_काष्ठा_exists;
-	bool प्रकार_anon_काष्ठा_exists;
-	bool प्रकार_काष्ठा_ptr_exists;
-	bool प्रकार_पूर्णांक_exists;
-	bool प्रकार_क्रमागत_exists;
-	bool प्रकार_व्योम_ptr_exists;
-	bool प्रकार_func_proto_exists;
-	bool प्रकार_arr_exists;
+struct core_reloc_type_based_output {
+	bool struct_exists;
+	bool union_exists;
+	bool enum_exists;
+	bool typedef_named_struct_exists;
+	bool typedef_anon_struct_exists;
+	bool typedef_struct_ptr_exists;
+	bool typedef_int_exists;
+	bool typedef_enum_exists;
+	bool typedef_void_ptr_exists;
+	bool typedef_func_proto_exists;
+	bool typedef_arr_exists;
 
-	पूर्णांक काष्ठा_sz;
-	पूर्णांक जोड़_sz;
-	पूर्णांक क्रमागत_sz;
-	पूर्णांक प्रकार_named_काष्ठा_sz;
-	पूर्णांक प्रकार_anon_काष्ठा_sz;
-	पूर्णांक प्रकार_काष्ठा_ptr_sz;
-	पूर्णांक प्रकार_पूर्णांक_sz;
-	पूर्णांक प्रकार_क्रमागत_sz;
-	पूर्णांक प्रकार_व्योम_ptr_sz;
-	पूर्णांक प्रकार_func_proto_sz;
-	पूर्णांक प्रकार_arr_sz;
-पूर्ण;
+	int struct_sz;
+	int union_sz;
+	int enum_sz;
+	int typedef_named_struct_sz;
+	int typedef_anon_struct_sz;
+	int typedef_struct_ptr_sz;
+	int typedef_int_sz;
+	int typedef_enum_sz;
+	int typedef_void_ptr_sz;
+	int typedef_func_proto_sz;
+	int typedef_arr_sz;
+};
 
 SEC("raw_tracepoint/sys_enter")
-पूर्णांक test_core_type_based(व्योम *ctx)
-अणु
-#अगर __has_builtin(__builtin_preserve_type_info)
-	काष्ठा core_reloc_type_based_output *out = (व्योम *)&data.out;
+int test_core_type_based(void *ctx)
+{
+#if __has_builtin(__builtin_preserve_type_info)
+	struct core_reloc_type_based_output *out = (void *)&data.out;
 
-	out->काष्ठा_exists = bpf_core_type_exists(काष्ठा a_काष्ठा);
-	out->जोड़_exists = bpf_core_type_exists(जोड़ a_जोड़);
-	out->क्रमागत_exists = bpf_core_type_exists(क्रमागत an_क्रमागत);
-	out->प्रकार_named_काष्ठा_exists = bpf_core_type_exists(named_काष्ठा_प्रकार);
-	out->प्रकार_anon_काष्ठा_exists = bpf_core_type_exists(anon_काष्ठा_प्रकार);
-	out->प्रकार_काष्ठा_ptr_exists = bpf_core_type_exists(काष्ठा_ptr_प्रकार);
-	out->प्रकार_पूर्णांक_exists = bpf_core_type_exists(पूर्णांक_प्रकार);
-	out->प्रकार_क्रमागत_exists = bpf_core_type_exists(क्रमागत_प्रकार);
-	out->प्रकार_व्योम_ptr_exists = bpf_core_type_exists(व्योम_ptr_प्रकार);
-	out->प्रकार_func_proto_exists = bpf_core_type_exists(func_proto_प्रकार);
-	out->प्रकार_arr_exists = bpf_core_type_exists(arr_प्रकार);
+	out->struct_exists = bpf_core_type_exists(struct a_struct);
+	out->union_exists = bpf_core_type_exists(union a_union);
+	out->enum_exists = bpf_core_type_exists(enum an_enum);
+	out->typedef_named_struct_exists = bpf_core_type_exists(named_struct_typedef);
+	out->typedef_anon_struct_exists = bpf_core_type_exists(anon_struct_typedef);
+	out->typedef_struct_ptr_exists = bpf_core_type_exists(struct_ptr_typedef);
+	out->typedef_int_exists = bpf_core_type_exists(int_typedef);
+	out->typedef_enum_exists = bpf_core_type_exists(enum_typedef);
+	out->typedef_void_ptr_exists = bpf_core_type_exists(void_ptr_typedef);
+	out->typedef_func_proto_exists = bpf_core_type_exists(func_proto_typedef);
+	out->typedef_arr_exists = bpf_core_type_exists(arr_typedef);
 
-	out->काष्ठा_sz = bpf_core_type_size(काष्ठा a_काष्ठा);
-	out->जोड़_sz = bpf_core_type_size(जोड़ a_जोड़);
-	out->क्रमागत_sz = bpf_core_type_size(क्रमागत an_क्रमागत);
-	out->प्रकार_named_काष्ठा_sz = bpf_core_type_size(named_काष्ठा_प्रकार);
-	out->प्रकार_anon_काष्ठा_sz = bpf_core_type_size(anon_काष्ठा_प्रकार);
-	out->प्रकार_काष्ठा_ptr_sz = bpf_core_type_size(काष्ठा_ptr_प्रकार);
-	out->प्रकार_पूर्णांक_sz = bpf_core_type_size(पूर्णांक_प्रकार);
-	out->प्रकार_क्रमागत_sz = bpf_core_type_size(क्रमागत_प्रकार);
-	out->प्रकार_व्योम_ptr_sz = bpf_core_type_size(व्योम_ptr_प्रकार);
-	out->प्रकार_func_proto_sz = bpf_core_type_size(func_proto_प्रकार);
-	out->प्रकार_arr_sz = bpf_core_type_size(arr_प्रकार);
-#अन्यथा
+	out->struct_sz = bpf_core_type_size(struct a_struct);
+	out->union_sz = bpf_core_type_size(union a_union);
+	out->enum_sz = bpf_core_type_size(enum an_enum);
+	out->typedef_named_struct_sz = bpf_core_type_size(named_struct_typedef);
+	out->typedef_anon_struct_sz = bpf_core_type_size(anon_struct_typedef);
+	out->typedef_struct_ptr_sz = bpf_core_type_size(struct_ptr_typedef);
+	out->typedef_int_sz = bpf_core_type_size(int_typedef);
+	out->typedef_enum_sz = bpf_core_type_size(enum_typedef);
+	out->typedef_void_ptr_sz = bpf_core_type_size(void_ptr_typedef);
+	out->typedef_func_proto_sz = bpf_core_type_size(func_proto_typedef);
+	out->typedef_arr_sz = bpf_core_type_size(arr_typedef);
+#else
 	data.skip = true;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}

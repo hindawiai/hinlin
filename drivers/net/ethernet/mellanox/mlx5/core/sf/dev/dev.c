@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/device.h>
-#समावेश "mlx5_core.h"
-#समावेश "dev.h"
-#समावेश "sf/vhca_event.h"
-#समावेश "sf/sf.h"
-#समावेश "sf/mlx5_ifc_vhca_event.h"
-#समावेश "ecpf.h"
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/device.h>
+#include "mlx5_core.h"
+#include "dev.h"
+#include "sf/vhca_event.h"
+#include "sf/sf.h"
+#include "sf/mlx5_ifc_vhca_event.h"
+#include "ecpf.h"
 
-काष्ठा mlx5_sf_dev_table अणु
-	काष्ठा xarray devices;
-	अचिन्हित पूर्णांक max_sfs;
+struct mlx5_sf_dev_table {
+	struct xarray devices;
+	unsigned int max_sfs;
 	phys_addr_t base_address;
 	u64 sf_bar_length;
-	काष्ठा notअगरier_block nb;
-	काष्ठा mlx5_core_dev *dev;
-पूर्ण;
+	struct notifier_block nb;
+	struct mlx5_core_dev *dev;
+};
 
-अटल bool mlx5_sf_dev_supported(स्थिर काष्ठा mlx5_core_dev *dev)
-अणु
-	वापस MLX5_CAP_GEN(dev, sf) && mlx5_vhca_event_supported(dev);
-पूर्ण
+static bool mlx5_sf_dev_supported(const struct mlx5_core_dev *dev)
+{
+	return MLX5_CAP_GEN(dev, sf) && mlx5_vhca_event_supported(dev);
+}
 
-bool mlx5_sf_dev_allocated(स्थिर काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
+bool mlx5_sf_dev_allocated(const struct mlx5_core_dev *dev)
+{
+	struct mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
 
-	अगर (!mlx5_sf_dev_supported(dev))
-		वापस false;
+	if (!mlx5_sf_dev_supported(dev))
+		return false;
 
-	वापस !xa_empty(&table->devices);
-पूर्ण
+	return !xa_empty(&table->devices);
+}
 
-अटल sमाप_प्रकार sfnum_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा auxiliary_device *adev = container_of(dev, काष्ठा auxiliary_device, dev);
-	काष्ठा mlx5_sf_dev *sf_dev = container_of(adev, काष्ठा mlx5_sf_dev, adev);
+static ssize_t sfnum_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct auxiliary_device *adev = container_of(dev, struct auxiliary_device, dev);
+	struct mlx5_sf_dev *sf_dev = container_of(adev, struct mlx5_sf_dev, adev);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", sf_dev->sfnum);
-पूर्ण
-अटल DEVICE_ATTR_RO(sfnum);
+	return scnprintf(buf, PAGE_SIZE, "%u\n", sf_dev->sfnum);
+}
+static DEVICE_ATTR_RO(sfnum);
 
-अटल काष्ठा attribute *sf_device_attrs[] = अणु
+static struct attribute *sf_device_attrs[] = {
 	&dev_attr_sfnum.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group sf_attr_group = अणु
+static const struct attribute_group sf_attr_group = {
 	.attrs = sf_device_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *sf_attr_groups[2] = अणु
+static const struct attribute_group *sf_attr_groups[2] = {
 	&sf_attr_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल व्योम mlx5_sf_dev_release(काष्ठा device *device)
-अणु
-	काष्ठा auxiliary_device *adev = container_of(device, काष्ठा auxiliary_device, dev);
-	काष्ठा mlx5_sf_dev *sf_dev = container_of(adev, काष्ठा mlx5_sf_dev, adev);
+static void mlx5_sf_dev_release(struct device *device)
+{
+	struct auxiliary_device *adev = container_of(device, struct auxiliary_device, dev);
+	struct mlx5_sf_dev *sf_dev = container_of(adev, struct mlx5_sf_dev, adev);
 
-	mlx5_adev_idx_मुक्त(adev->id);
-	kमुक्त(sf_dev);
-पूर्ण
+	mlx5_adev_idx_free(adev->id);
+	kfree(sf_dev);
+}
 
-अटल व्योम mlx5_sf_dev_हटाओ(काष्ठा mlx5_sf_dev *sf_dev)
-अणु
+static void mlx5_sf_dev_remove(struct mlx5_sf_dev *sf_dev)
+{
 	auxiliary_device_delete(&sf_dev->adev);
 	auxiliary_device_uninit(&sf_dev->adev);
-पूर्ण
+}
 
-अटल व्योम mlx5_sf_dev_add(काष्ठा mlx5_core_dev *dev, u16 sf_index, u32 sfnum)
-अणु
-	काष्ठा mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
-	काष्ठा mlx5_sf_dev *sf_dev;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक err;
-	पूर्णांक id;
+static void mlx5_sf_dev_add(struct mlx5_core_dev *dev, u16 sf_index, u32 sfnum)
+{
+	struct mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
+	struct mlx5_sf_dev *sf_dev;
+	struct pci_dev *pdev;
+	int err;
+	int id;
 
 	id = mlx5_adev_idx_alloc();
-	अगर (id < 0) अणु
+	if (id < 0) {
 		err = id;
-		जाओ add_err;
-	पूर्ण
+		goto add_err;
+	}
 
-	sf_dev = kzalloc(माप(*sf_dev), GFP_KERNEL);
-	अगर (!sf_dev) अणु
-		mlx5_adev_idx_मुक्त(id);
+	sf_dev = kzalloc(sizeof(*sf_dev), GFP_KERNEL);
+	if (!sf_dev) {
+		mlx5_adev_idx_free(id);
 		err = -ENOMEM;
-		जाओ add_err;
-	पूर्ण
+		goto add_err;
+	}
 	pdev = dev->pdev;
 	sf_dev->adev.id = id;
 	sf_dev->adev.name = MLX5_SF_DEV_ID_NAME;
@@ -102,132 +101,132 @@ bool mlx5_sf_dev_allocated(स्थिर काष्ठा mlx5_core_dev *dev
 	sf_dev->sfnum = sfnum;
 	sf_dev->parent_mdev = dev;
 
-	अगर (!table->max_sfs) अणु
-		mlx5_adev_idx_मुक्त(id);
-		kमुक्त(sf_dev);
+	if (!table->max_sfs) {
+		mlx5_adev_idx_free(id);
+		kfree(sf_dev);
 		err = -EOPNOTSUPP;
-		जाओ add_err;
-	पूर्ण
+		goto add_err;
+	}
 	sf_dev->bar_base_addr = table->base_address + (sf_index * table->sf_bar_length);
 
 	err = auxiliary_device_init(&sf_dev->adev);
-	अगर (err) अणु
-		mlx5_adev_idx_मुक्त(id);
-		kमुक्त(sf_dev);
-		जाओ add_err;
-	पूर्ण
+	if (err) {
+		mlx5_adev_idx_free(id);
+		kfree(sf_dev);
+		goto add_err;
+	}
 
 	err = auxiliary_device_add(&sf_dev->adev);
-	अगर (err) अणु
+	if (err) {
 		put_device(&sf_dev->adev.dev);
-		जाओ add_err;
-	पूर्ण
+		goto add_err;
+	}
 
 	err = xa_insert(&table->devices, sf_index, sf_dev, GFP_KERNEL);
-	अगर (err)
-		जाओ xa_err;
-	वापस;
+	if (err)
+		goto xa_err;
+	return;
 
 xa_err:
-	mlx5_sf_dev_हटाओ(sf_dev);
+	mlx5_sf_dev_remove(sf_dev);
 add_err:
 	mlx5_core_err(dev, "SF DEV: fail device add for index=%d sfnum=%d err=%d\n",
 		      sf_index, sfnum, err);
-पूर्ण
+}
 
-अटल व्योम mlx5_sf_dev_del(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_sf_dev *sf_dev, u16 sf_index)
-अणु
-	काष्ठा mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
+static void mlx5_sf_dev_del(struct mlx5_core_dev *dev, struct mlx5_sf_dev *sf_dev, u16 sf_index)
+{
+	struct mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
 
 	xa_erase(&table->devices, sf_index);
-	mlx5_sf_dev_हटाओ(sf_dev);
-पूर्ण
+	mlx5_sf_dev_remove(sf_dev);
+}
 
-अटल पूर्णांक
-mlx5_sf_dev_state_change_handler(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event_code, व्योम *data)
-अणु
-	काष्ठा mlx5_sf_dev_table *table = container_of(nb, काष्ठा mlx5_sf_dev_table, nb);
-	स्थिर काष्ठा mlx5_vhca_state_event *event = data;
-	काष्ठा mlx5_sf_dev *sf_dev;
+static int
+mlx5_sf_dev_state_change_handler(struct notifier_block *nb, unsigned long event_code, void *data)
+{
+	struct mlx5_sf_dev_table *table = container_of(nb, struct mlx5_sf_dev_table, nb);
+	const struct mlx5_vhca_state_event *event = data;
+	struct mlx5_sf_dev *sf_dev;
 	u16 max_functions;
 	u16 sf_index;
 	u16 base_id;
 
 	max_functions = mlx5_sf_max_functions(table->dev);
-	अगर (!max_functions)
-		वापस 0;
+	if (!max_functions)
+		return 0;
 
 	base_id = MLX5_CAP_GEN(table->dev, sf_base_id);
-	अगर (event->function_id < base_id || event->function_id >= (base_id + max_functions))
-		वापस 0;
+	if (event->function_id < base_id || event->function_id >= (base_id + max_functions))
+		return 0;
 
 	sf_index = event->function_id - base_id;
 	sf_dev = xa_load(&table->devices, sf_index);
-	चयन (event->new_vhca_state) अणु
-	हाल MLX5_VHCA_STATE_INVALID:
-	हाल MLX5_VHCA_STATE_ALLOCATED:
-		अगर (sf_dev)
+	switch (event->new_vhca_state) {
+	case MLX5_VHCA_STATE_INVALID:
+	case MLX5_VHCA_STATE_ALLOCATED:
+		if (sf_dev)
 			mlx5_sf_dev_del(table->dev, sf_dev, sf_index);
-		अवरोध;
-	हाल MLX5_VHCA_STATE_TEARDOWN_REQUEST:
-		अगर (sf_dev)
+		break;
+	case MLX5_VHCA_STATE_TEARDOWN_REQUEST:
+		if (sf_dev)
 			mlx5_sf_dev_del(table->dev, sf_dev, sf_index);
-		अन्यथा
+		else
 			mlx5_core_err(table->dev,
 				      "SF DEV: teardown state for invalid dev index=%d fn_id=0x%x\n",
 				      sf_index, event->sw_function_id);
-		अवरोध;
-	हाल MLX5_VHCA_STATE_ACTIVE:
-		अगर (!sf_dev)
+		break;
+	case MLX5_VHCA_STATE_ACTIVE:
+		if (!sf_dev)
 			mlx5_sf_dev_add(table->dev, sf_index, event->sw_function_id);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlx5_sf_dev_vhca_arm_all(काष्ठा mlx5_sf_dev_table *table)
-अणु
-	काष्ठा mlx5_core_dev *dev = table->dev;
+static int mlx5_sf_dev_vhca_arm_all(struct mlx5_sf_dev_table *table)
+{
+	struct mlx5_core_dev *dev = table->dev;
 	u16 max_functions;
 	u16 function_id;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+	int err = 0;
+	int i;
 
 	max_functions = mlx5_sf_max_functions(dev);
 	function_id = MLX5_CAP_GEN(dev, sf_base_id);
-	/* Arm the vhca context as the vhca event notअगरier */
-	क्रम (i = 0; i < max_functions; i++) अणु
+	/* Arm the vhca context as the vhca event notifier */
+	for (i = 0; i < max_functions; i++) {
 		err = mlx5_vhca_event_arm(dev, function_id);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		function_id++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम mlx5_sf_dev_table_create(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_sf_dev_table *table;
-	अचिन्हित पूर्णांक max_sfs;
-	पूर्णांक err;
+void mlx5_sf_dev_table_create(struct mlx5_core_dev *dev)
+{
+	struct mlx5_sf_dev_table *table;
+	unsigned int max_sfs;
+	int err;
 
-	अगर (!mlx5_sf_dev_supported(dev) || !mlx5_vhca_event_supported(dev))
-		वापस;
+	if (!mlx5_sf_dev_supported(dev) || !mlx5_vhca_event_supported(dev))
+		return;
 
-	table = kzalloc(माप(*table), GFP_KERNEL);
-	अगर (!table) अणु
+	table = kzalloc(sizeof(*table), GFP_KERNEL);
+	if (!table) {
 		err = -ENOMEM;
-		जाओ table_err;
-	पूर्ण
+		goto table_err;
+	}
 
-	table->nb.notअगरier_call = mlx5_sf_dev_state_change_handler;
+	table->nb.notifier_call = mlx5_sf_dev_state_change_handler;
 	table->dev = dev;
-	अगर (MLX5_CAP_GEN(dev, max_num_sf))
+	if (MLX5_CAP_GEN(dev, max_num_sf))
 		max_sfs = MLX5_CAP_GEN(dev, max_num_sf);
-	अन्यथा
+	else
 		max_sfs = 1 << MLX5_CAP_GEN(dev, log_max_sf);
 	table->sf_bar_length = 1 << (MLX5_CAP_GEN(dev, log_min_sf_size) + 12);
 	table->base_address = pci_resource_start(dev->pdev, 2);
@@ -235,44 +234,44 @@ mlx5_sf_dev_state_change_handler(काष्ठा notअगरier_block *nb, �
 	xa_init(&table->devices);
 	dev->priv.sf_dev_table = table;
 
-	err = mlx5_vhca_event_notअगरier_रेजिस्टर(dev, &table->nb);
-	अगर (err)
-		जाओ vhca_err;
+	err = mlx5_vhca_event_notifier_register(dev, &table->nb);
+	if (err)
+		goto vhca_err;
 	err = mlx5_sf_dev_vhca_arm_all(table);
-	अगर (err)
-		जाओ arm_err;
+	if (err)
+		goto arm_err;
 	mlx5_core_dbg(dev, "SF DEV: max sf devices=%d\n", max_sfs);
-	वापस;
+	return;
 
 arm_err:
-	mlx5_vhca_event_notअगरier_unरेजिस्टर(dev, &table->nb);
+	mlx5_vhca_event_notifier_unregister(dev, &table->nb);
 vhca_err:
 	table->max_sfs = 0;
-	kमुक्त(table);
-	dev->priv.sf_dev_table = शून्य;
+	kfree(table);
+	dev->priv.sf_dev_table = NULL;
 table_err:
 	mlx5_core_err(dev, "SF DEV table create err = %d\n", err);
-पूर्ण
+}
 
-अटल व्योम mlx5_sf_dev_destroy_all(काष्ठा mlx5_sf_dev_table *table)
-अणु
-	काष्ठा mlx5_sf_dev *sf_dev;
-	अचिन्हित दीर्घ index;
+static void mlx5_sf_dev_destroy_all(struct mlx5_sf_dev_table *table)
+{
+	struct mlx5_sf_dev *sf_dev;
+	unsigned long index;
 
-	xa_क्रम_each(&table->devices, index, sf_dev) अणु
+	xa_for_each(&table->devices, index, sf_dev) {
 		xa_erase(&table->devices, index);
-		mlx5_sf_dev_हटाओ(sf_dev);
-	पूर्ण
-पूर्ण
+		mlx5_sf_dev_remove(sf_dev);
+	}
+}
 
-व्योम mlx5_sf_dev_table_destroy(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
+void mlx5_sf_dev_table_destroy(struct mlx5_core_dev *dev)
+{
+	struct mlx5_sf_dev_table *table = dev->priv.sf_dev_table;
 
-	अगर (!table)
-		वापस;
+	if (!table)
+		return;
 
-	mlx5_vhca_event_notअगरier_unरेजिस्टर(dev, &table->nb);
+	mlx5_vhca_event_notifier_unregister(dev, &table->nb);
 
 	/* Now that event handler is not running, it is safe to destroy
 	 * the sf device without race.
@@ -280,6 +279,6 @@ table_err:
 	mlx5_sf_dev_destroy_all(table);
 
 	WARN_ON(!xa_empty(&table->devices));
-	kमुक्त(table);
-	dev->priv.sf_dev_table = शून्य;
-पूर्ण
+	kfree(table);
+	dev->priv.sf_dev_table = NULL;
+}

@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *    Page Deallocation Table (PDT) support
  *
- *    The Page Deallocation Table (PDT) is मुख्यtained by firmware and holds a
+ *    The Page Deallocation Table (PDT) is maintained by firmware and holds a
  *    list of memory addresses in which memory errors were detected.
- *    The list contains both single-bit (correctable) and द्विगुन-bit
+ *    The list contains both single-bit (correctable) and double-bit
  *    (uncorrectable) errors.
  *
  *    Copyright 2017 by Helge Deller <deller@gmx.de>
  *
  *    possible future enhancements:
- *    - add userspace पूर्णांकerface via procfs or sysfs to clear PDT
+ *    - add userspace interface via procfs or sysfs to clear PDT
  */
 
-#समावेश <linux/memblock.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/pgtable.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
+#include <linux/memblock.h>
+#include <linux/seq_file.h>
+#include <linux/kthread.h>
+#include <linux/initrd.h>
+#include <linux/pgtable.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
 
-#समावेश <यंत्र/pdc.h>
-#समावेश <यंत्र/pdcpat.h>
-#समावेश <यंत्र/sections.h>
+#include <asm/pdc.h>
+#include <asm/pdcpat.h>
+#include <asm/sections.h>
 
-क्रमागत pdt_access_type अणु
+enum pdt_access_type {
 	PDT_NONE,
 	PDT_PDC,
 	PDT_PAT_NEW,
 	PDT_PAT_CELL
-पूर्ण;
+};
 
-अटल क्रमागत pdt_access_type pdt_type;
+static enum pdt_access_type pdt_type;
 
-/* PDT poll पूर्णांकerval: 1 minute अगर errors, 5 minutes अगर everything OK. */
-#घोषणा PDT_POLL_INTERVAL_DEFAULT	(5*60*HZ)
-#घोषणा PDT_POLL_INTERVAL_SHORT		(1*60*HZ)
-अटल अचिन्हित दीर्घ pdt_poll_पूर्णांकerval = PDT_POLL_INTERVAL_DEFAULT;
+/* PDT poll interval: 1 minute if errors, 5 minutes if everything OK. */
+#define PDT_POLL_INTERVAL_DEFAULT	(5*60*HZ)
+#define PDT_POLL_INTERVAL_SHORT		(1*60*HZ)
+static unsigned long pdt_poll_interval = PDT_POLL_INTERVAL_DEFAULT;
 
-/* global PDT status inक्रमmation */
-अटल काष्ठा pdc_mem_retinfo pdt_status;
+/* global PDT status information */
+static struct pdc_mem_retinfo pdt_status;
 
-#घोषणा MAX_PDT_TABLE_SIZE	PAGE_SIZE
-#घोषणा MAX_PDT_ENTRIES		(MAX_PDT_TABLE_SIZE / माप(अचिन्हित दीर्घ))
-अटल अचिन्हित दीर्घ pdt_entry[MAX_PDT_ENTRIES] __page_aligned_bss;
+#define MAX_PDT_TABLE_SIZE	PAGE_SIZE
+#define MAX_PDT_ENTRIES		(MAX_PDT_TABLE_SIZE / sizeof(unsigned long))
+static unsigned long pdt_entry[MAX_PDT_ENTRIES] __page_aligned_bss;
 
 /*
- * Constants क्रम the pdt_entry क्रमmat:
+ * Constants for the pdt_entry format:
  * A pdt_entry holds the physical address in bits 0-57, bits 58-61 are
  * reserved, bit 62 is the perm bit and bit 63 is the error_type bit.
- * The perm bit indicates whether the error have been verअगरied as a permanent
- * error (value of 1) or has not been verअगरied, and may be transient (value
+ * The perm bit indicates whether the error have been verified as a permanent
+ * error (value of 1) or has not been verified, and may be transient (value
  * of 0). The error_type bit indicates whether the error is a single bit error
  * (value of 1) or a multiple bit error.
  * On non-PAT machines phys_addr is encoded in bits 0-59 and error_type in bit
- * 63. Those machines करोn't provide the perm bit.
+ * 63. Those machines don't provide the perm bit.
  */
 
-#घोषणा PDT_ADDR_PHYS_MASK	(pdt_type != PDT_PDC ? ~0x3f : ~0x0f)
-#घोषणा PDT_ADDR_PERM_ERR	(pdt_type != PDT_PDC ? 2UL : 0UL)
-#घोषणा PDT_ADDR_SINGLE_ERR	1UL
+#define PDT_ADDR_PHYS_MASK	(pdt_type != PDT_PDC ? ~0x3f : ~0x0f)
+#define PDT_ADDR_PERM_ERR	(pdt_type != PDT_PDC ? 2UL : 0UL)
+#define PDT_ADDR_SINGLE_ERR	1UL
 
 /* report PDT entries via /proc/meminfo */
-व्योम arch_report_meminfo(काष्ठा seq_file *m)
-अणु
-	अगर (pdt_type == PDT_NONE)
-		वापस;
+void arch_report_meminfo(struct seq_file *m)
+{
+	if (pdt_type == PDT_NONE)
+		return;
 
-	seq_म_लिखो(m, "PDT_max_entries: %7lu\n",
+	seq_printf(m, "PDT_max_entries: %7lu\n",
 			pdt_status.pdt_size);
-	seq_म_लिखो(m, "PDT_cur_entries: %7lu\n",
+	seq_printf(m, "PDT_cur_entries: %7lu\n",
 			pdt_status.pdt_entries);
-पूर्ण
+}
 
-अटल पूर्णांक get_info_pat_new(व्योम)
-अणु
-	काष्ठा pdc_pat_mem_retinfo pat_rinfo;
-	पूर्णांक ret;
+static int get_info_pat_new(void)
+{
+	struct pdc_pat_mem_retinfo pat_rinfo;
+	int ret;
 
-	/* newer PAT machines like C8000 report info क्रम all cells */
-	अगर (is_pdc_pat())
+	/* newer PAT machines like C8000 report info for all cells */
+	if (is_pdc_pat())
 		ret = pdc_pat_mem_pdt_info(&pat_rinfo);
-	अन्यथा
-		वापस PDC_BAD_PROC;
+	else
+		return PDC_BAD_PROC;
 
 	pdt_status.pdt_size = pat_rinfo.max_pdt_entries;
 	pdt_status.pdt_entries = pat_rinfo.current_pdt_entries;
@@ -92,19 +91,19 @@
 	pdt_status.first_dbe_loc = pat_rinfo.first_dbe_loc;
 	pdt_status.good_mem = pat_rinfo.good_mem;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक get_info_pat_cell(व्योम)
-अणु
-	काष्ठा pdc_pat_mem_cell_pdt_retinfo cell_rinfo;
-	पूर्णांक ret;
+static int get_info_pat_cell(void)
+{
+	struct pdc_pat_mem_cell_pdt_retinfo cell_rinfo;
+	int ret;
 
 	/* older PAT machines like rp5470 report cell info only */
-	अगर (is_pdc_pat())
+	if (is_pdc_pat())
 		ret = pdc_pat_mem_pdt_cell_info(&cell_rinfo, parisc_cell_num);
-	अन्यथा
-		वापस PDC_BAD_PROC;
+	else
+		return PDC_BAD_PROC;
 
 	pdt_status.pdt_size = cell_rinfo.max_pdt_entries;
 	pdt_status.pdt_entries = cell_rinfo.current_pdt_entries;
@@ -112,121 +111,121 @@
 	pdt_status.first_dbe_loc = cell_rinfo.first_dbe_loc;
 	pdt_status.good_mem = cell_rinfo.good_mem;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम report_mem_err(अचिन्हित दीर्घ pde)
-अणु
-	काष्ठा pdc_pat_mem_phys_mem_location loc;
-	अचिन्हित दीर्घ addr;
-	अक्षर dimm_txt[32];
+static void report_mem_err(unsigned long pde)
+{
+	struct pdc_pat_mem_phys_mem_location loc;
+	unsigned long addr;
+	char dimm_txt[32];
 
 	addr = pde & PDT_ADDR_PHYS_MASK;
 
 	/* show DIMM slot description on PAT machines */
-	अगर (is_pdc_pat()) अणु
+	if (is_pdc_pat()) {
 		pdc_pat_mem_get_dimm_phys_location(&loc, addr);
-		प्र_लिखो(dimm_txt, "DIMM slot %02x, ", loc.dimm_slot);
-	पूर्ण अन्यथा
+		sprintf(dimm_txt, "DIMM slot %02x, ", loc.dimm_slot);
+	} else
 		dimm_txt[0] = 0;
 
 	pr_warn("PDT: BAD MEMORY at 0x%08lx, %s%s%s-bit error.\n",
 		addr, dimm_txt,
 		pde & PDT_ADDR_PERM_ERR ? "permanent ":"",
 		pde & PDT_ADDR_SINGLE_ERR ? "single":"multi");
-पूर्ण
+}
 
 
 /*
  * pdc_pdt_init()
  *
- * Initialize kernel PDT काष्ठाures, पढ़ो initial PDT table from firmware,
+ * Initialize kernel PDT structures, read initial PDT table from firmware,
  * report all current PDT entries and mark bad memory with memblock_reserve()
- * to aव्योम that the kernel will use broken memory areas.
+ * to avoid that the kernel will use broken memory areas.
  *
  */
-व्योम __init pdc_pdt_init(व्योम)
-अणु
-	पूर्णांक ret, i;
-	अचिन्हित दीर्घ entries;
-	काष्ठा pdc_mem_पढ़ो_pdt pdt_पढ़ो_ret;
+void __init pdc_pdt_init(void)
+{
+	int ret, i;
+	unsigned long entries;
+	struct pdc_mem_read_pdt pdt_read_ret;
 
 	pdt_type = PDT_PAT_NEW;
 	ret = get_info_pat_new();
 
-	अगर (ret != PDC_OK) अणु
+	if (ret != PDC_OK) {
 		pdt_type = PDT_PAT_CELL;
 		ret = get_info_pat_cell();
-	पूर्ण
+	}
 
-	अगर (ret != PDC_OK) अणु
+	if (ret != PDC_OK) {
 		pdt_type = PDT_PDC;
 		/* non-PAT machines provide the standard PDC call */
 		ret = pdc_mem_pdt_info(&pdt_status);
-	पूर्ण
+	}
 
-	अगर (ret != PDC_OK) अणु
+	if (ret != PDC_OK) {
 		pdt_type = PDT_NONE;
 		pr_info("PDT: Firmware does not provide any page deallocation"
 			" information.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	entries = pdt_status.pdt_entries;
-	अगर (WARN_ON(entries > MAX_PDT_ENTRIES))
+	if (WARN_ON(entries > MAX_PDT_ENTRIES))
 		entries = pdt_status.pdt_entries = MAX_PDT_ENTRIES;
 
 	pr_info("PDT: type %s, size %lu, entries %lu, status %lu, dbe_loc 0x%lx,"
 		" good_mem %lu MB\n",
-			pdt_type == PDT_PDC ? __stringअगरy(PDT_PDC) :
-			pdt_type == PDT_PAT_CELL ? __stringअगरy(PDT_PAT_CELL)
-						 : __stringअगरy(PDT_PAT_NEW),
+			pdt_type == PDT_PDC ? __stringify(PDT_PDC) :
+			pdt_type == PDT_PAT_CELL ? __stringify(PDT_PAT_CELL)
+						 : __stringify(PDT_PAT_NEW),
 			pdt_status.pdt_size, pdt_status.pdt_entries,
 			pdt_status.pdt_status, pdt_status.first_dbe_loc,
 			pdt_status.good_mem / 1024 / 1024);
 
-	अगर (entries == 0) अणु
+	if (entries == 0) {
 		pr_info("PDT: Firmware reports all memory OK.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pdt_status.first_dbe_loc &&
-		pdt_status.first_dbe_loc <= __pa((अचिन्हित दीर्घ)&_end))
+	if (pdt_status.first_dbe_loc &&
+		pdt_status.first_dbe_loc <= __pa((unsigned long)&_end))
 		pr_crit("CRITICAL: Bad memory inside kernel image memory area!\n");
 
 	pr_warn("PDT: Firmware reports %lu entries of faulty memory:\n",
 		entries);
 
-	अगर (pdt_type == PDT_PDC)
-		ret = pdc_mem_pdt_पढ़ो_entries(&pdt_पढ़ो_ret, pdt_entry);
-	अन्यथा अणु
-#अगर_घोषित CONFIG_64BIT
-		काष्ठा pdc_pat_mem_पढ़ो_pd_retinfo pat_pret;
+	if (pdt_type == PDT_PDC)
+		ret = pdc_mem_pdt_read_entries(&pdt_read_ret, pdt_entry);
+	else {
+#ifdef CONFIG_64BIT
+		struct pdc_pat_mem_read_pd_retinfo pat_pret;
 
-		अगर (pdt_type == PDT_PAT_CELL)
-			ret = pdc_pat_mem_पढ़ो_cell_pdt(&pat_pret, pdt_entry,
+		if (pdt_type == PDT_PAT_CELL)
+			ret = pdc_pat_mem_read_cell_pdt(&pat_pret, pdt_entry,
 				MAX_PDT_ENTRIES);
-		अन्यथा
-			ret = pdc_pat_mem_पढ़ो_pd_pdt(&pat_pret, pdt_entry,
+		else
+			ret = pdc_pat_mem_read_pd_pdt(&pat_pret, pdt_entry,
 				MAX_PDT_TABLE_SIZE, 0);
-#अन्यथा
+#else
 		ret = PDC_BAD_PROC;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	अगर (ret != PDC_OK) अणु
+	if (ret != PDC_OK) {
 		pdt_type = PDT_NONE;
 		pr_warn("PDT: Get PDT entries failed with %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < pdt_status.pdt_entries; i++) अणु
-		अचिन्हित दीर्घ addr;
+	for (i = 0; i < pdt_status.pdt_entries; i++) {
+		unsigned long addr;
 
 		report_mem_err(pdt_entry[i]);
 
 		addr = pdt_entry[i] & PDT_ADDR_PHYS_MASK;
-		अगर (IS_ENABLED(CONFIG_BLK_DEV_INITRD) &&
+		if (IS_ENABLED(CONFIG_BLK_DEV_INITRD) &&
 			addr >= initrd_start && addr < initrd_end)
 			pr_crit("CRITICAL: initrd possibly broken "
 				"due to bad memory!\n");
@@ -234,132 +233,132 @@
 		/* mark memory page bad */
 		memblock_reserve(pdt_entry[i] & PAGE_MASK, PAGE_SIZE);
 		num_poisoned_pages_inc();
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
- * This is the PDT kernel thपढ़ो मुख्य loop.
+ * This is the PDT kernel thread main loop.
  */
 
-अटल पूर्णांक pdt_मुख्यloop(व्योम *unused)
-अणु
-	काष्ठा pdc_mem_पढ़ो_pdt pdt_पढ़ो_ret;
-	काष्ठा pdc_pat_mem_पढ़ो_pd_retinfo pat_pret __maybe_unused;
-	अचिन्हित दीर्घ old_num_entries;
-	अचिन्हित दीर्घ *bad_mem_ptr;
-	पूर्णांक num, ret;
+static int pdt_mainloop(void *unused)
+{
+	struct pdc_mem_read_pdt pdt_read_ret;
+	struct pdc_pat_mem_read_pd_retinfo pat_pret __maybe_unused;
+	unsigned long old_num_entries;
+	unsigned long *bad_mem_ptr;
+	int num, ret;
 
-	क्रम (;;) अणु
+	for (;;) {
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		old_num_entries = pdt_status.pdt_entries;
 
-		schedule_समयout(pdt_poll_पूर्णांकerval);
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		schedule_timeout(pdt_poll_interval);
+		if (kthread_should_stop())
+			break;
 
 		/* Do we have new PDT entries? */
-		चयन (pdt_type) अणु
-		हाल PDT_PAT_NEW:
+		switch (pdt_type) {
+		case PDT_PAT_NEW:
 			ret = get_info_pat_new();
-			अवरोध;
-		हाल PDT_PAT_CELL:
+			break;
+		case PDT_PAT_CELL:
 			ret = get_info_pat_cell();
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = pdc_mem_pdt_info(&pdt_status);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret != PDC_OK) अणु
+		if (ret != PDC_OK) {
 			pr_warn("PDT: unexpected failure %d\n", ret);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* अगर no new PDT entries, just रुको again */
+		/* if no new PDT entries, just wait again */
 		num = pdt_status.pdt_entries - old_num_entries;
-		अगर (num <= 0)
-			जारी;
+		if (num <= 0)
+			continue;
 
-		/* decrease poll पूर्णांकerval in हाल we found memory errors */
-		अगर (pdt_status.pdt_entries &&
-			pdt_poll_पूर्णांकerval == PDT_POLL_INTERVAL_DEFAULT)
-			pdt_poll_पूर्णांकerval = PDT_POLL_INTERVAL_SHORT;
+		/* decrease poll interval in case we found memory errors */
+		if (pdt_status.pdt_entries &&
+			pdt_poll_interval == PDT_POLL_INTERVAL_DEFAULT)
+			pdt_poll_interval = PDT_POLL_INTERVAL_SHORT;
 
 		/* limit entries to get */
-		अगर (num > MAX_PDT_ENTRIES) अणु
+		if (num > MAX_PDT_ENTRIES) {
 			num = MAX_PDT_ENTRIES;
 			pdt_status.pdt_entries = old_num_entries + num;
-		पूर्ण
+		}
 
 		/* get new entries */
-		चयन (pdt_type) अणु
-#अगर_घोषित CONFIG_64BIT
-		हाल PDT_PAT_CELL:
-			अगर (pdt_status.pdt_entries > MAX_PDT_ENTRIES) अणु
+		switch (pdt_type) {
+#ifdef CONFIG_64BIT
+		case PDT_PAT_CELL:
+			if (pdt_status.pdt_entries > MAX_PDT_ENTRIES) {
 				pr_crit("PDT: too many entries.\n");
-				वापस -ENOMEM;
-			पूर्ण
-			ret = pdc_pat_mem_पढ़ो_cell_pdt(&pat_pret, pdt_entry,
+				return -ENOMEM;
+			}
+			ret = pdc_pat_mem_read_cell_pdt(&pat_pret, pdt_entry,
 				MAX_PDT_ENTRIES);
 			bad_mem_ptr = &pdt_entry[old_num_entries];
-			अवरोध;
-		हाल PDT_PAT_NEW:
-			ret = pdc_pat_mem_पढ़ो_pd_pdt(&pat_pret,
+			break;
+		case PDT_PAT_NEW:
+			ret = pdc_pat_mem_read_pd_pdt(&pat_pret,
 				pdt_entry,
-				num * माप(अचिन्हित दीर्घ),
-				old_num_entries * माप(अचिन्हित दीर्घ));
+				num * sizeof(unsigned long),
+				old_num_entries * sizeof(unsigned long));
 			bad_mem_ptr = &pdt_entry[0];
-			अवरोध;
-#पूर्ण_अगर
-		शेष:
-			ret = pdc_mem_pdt_पढ़ो_entries(&pdt_पढ़ो_ret,
+			break;
+#endif
+		default:
+			ret = pdc_mem_pdt_read_entries(&pdt_read_ret,
 				pdt_entry);
 			bad_mem_ptr = &pdt_entry[old_num_entries];
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* report and mark memory broken */
-		जबतक (num--) अणु
-			अचिन्हित दीर्घ pde = *bad_mem_ptr++;
+		while (num--) {
+			unsigned long pde = *bad_mem_ptr++;
 
 			report_mem_err(pde);
 
-#अगर_घोषित CONFIG_MEMORY_FAILURE
-			अगर ((pde & PDT_ADDR_PERM_ERR) ||
+#ifdef CONFIG_MEMORY_FAILURE
+			if ((pde & PDT_ADDR_PERM_ERR) ||
 			    ((pde & PDT_ADDR_SINGLE_ERR) == 0))
 				memory_failure(pde >> PAGE_SHIFT, 0);
-			अन्यथा
+			else
 				soft_offline_page(pde >> PAGE_SHIFT, 0);
-#अन्यथा
+#else
 			pr_crit("PDT: memory error at 0x%lx ignored.\n"
 				"Rebuild kernel with CONFIG_MEMORY_FAILURE=y "
 				"for real handling.\n",
 				pde & PDT_ADDR_PHYS_MASK);
-#पूर्ण_अगर
+#endif
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक __init pdt_initcall(व्योम)
-अणु
-	काष्ठा task_काष्ठा *kpdtd_task;
+static int __init pdt_initcall(void)
+{
+	struct task_struct *kpdtd_task;
 
-	अगर (pdt_type == PDT_NONE)
-		वापस -ENODEV;
+	if (pdt_type == PDT_NONE)
+		return -ENODEV;
 
-	kpdtd_task = kthपढ़ो_create(pdt_मुख्यloop, शून्य, "kpdtd");
-	अगर (IS_ERR(kpdtd_task))
-		वापस PTR_ERR(kpdtd_task);
+	kpdtd_task = kthread_create(pdt_mainloop, NULL, "kpdtd");
+	if (IS_ERR(kpdtd_task))
+		return PTR_ERR(kpdtd_task);
 
 	wake_up_process(kpdtd_task);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(pdt_initcall);

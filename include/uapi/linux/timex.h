@@ -1,208 +1,207 @@
-<शैली गुरु>
 /*****************************************************************************
  *                                                                           *
  * Copyright (c) David L. Mills 1993                                         *
  *                                                                           *
- * Permission to use, copy, modअगरy, and distribute this software and its     *
- * करोcumentation क्रम any purpose and without fee is hereby granted, provided *
+ * Permission to use, copy, modify, and distribute this software and its     *
+ * documentation for any purpose and without fee is hereby granted, provided *
  * that the above copyright notice appears in all copies and that both the   *
  * copyright notice and this permission notice appear in supporting          *
- * करोcumentation, and that the name University of Delaware not be used in    *
- * advertising or खुलाity pertaining to distribution of the software       *
- * without specअगरic, written prior permission.  The University of Delaware   *
- * makes no representations about the suitability this software क्रम any      *
+ * documentation, and that the name University of Delaware not be used in    *
+ * advertising or publicity pertaining to distribution of the software       *
+ * without specific, written prior permission.  The University of Delaware   *
+ * makes no representations about the suitability this software for any      *
  * purpose.  It is provided "as is" without express or implied warranty.     *
  *                                                                           *
  *****************************************************************************/
 
 /*
- * Modअगरication history समयx.h
+ * Modification history timex.h
  *
  * 29 Dec 97	Russell King
- *	Moved CLOCK_TICK_RATE, CLOCK_TICK_FACTOR and FINETUNE to यंत्र/समयx.h
- *	क्रम ARM machines
+ *	Moved CLOCK_TICK_RATE, CLOCK_TICK_FACTOR and FINETUNE to asm/timex.h
+ *	for ARM machines
  *
  *  9 Jan 97    Adrian Sun
- *      Shअगरted LATCH define to allow access to alpha machines.
+ *      Shifted LATCH define to allow access to alpha machines.
  *
  * 26 Sep 94	David L. Mills
- *	Added defines क्रम hybrid phase/frequency-lock loop.
+ *	Added defines for hybrid phase/frequency-lock loop.
  *
  * 19 Mar 94	David L. Mills
  *	Moved defines from kernel routines to header file and added new
- *	defines क्रम PPS phase-lock loop.
+ *	defines for PPS phase-lock loop.
  *
  * 20 Feb 94	David L. Mills
- *	Revised status codes and काष्ठाures क्रम बाह्यal घड़ी and PPS
- *	संकेत discipline.
+ *	Revised status codes and structures for external clock and PPS
+ *	signal discipline.
  *
  * 28 Nov 93	David L. Mills
  *	Adjusted parameters to improve stability and increase poll
- *	पूर्णांकerval.
+ *	interval.
  *
  * 17 Sep 93    David L. Mills
- *      Created file $NTP/include/sys/समयx.h
+ *      Created file $NTP/include/sys/timex.h
  * 07 Oct 93    Torsten Duwe
- *      Derived linux/समयx.h
+ *      Derived linux/timex.h
  * 1995-08-13    Torsten Duwe
  *      kernel PLL updated to 1994-12-13 specs (rfc-1589)
  * 1997-08-30    Ulrich Windl
- *      Added new स्थिरant NTP_PHASE_LIMIT
+ *      Added new constant NTP_PHASE_LIMIT
  * 2004-08-12    Christoph Lameter
- *      Reworked समय पूर्णांकerpolation logic
+ *      Reworked time interpolation logic
  */
-#अगर_अघोषित _UAPI_LINUX_TIMEX_H
-#घोषणा _UAPI_LINUX_TIMEX_H
+#ifndef _UAPI_LINUX_TIMEX_H
+#define _UAPI_LINUX_TIMEX_H
 
-#समावेश <linux/समय.स>
+#include <linux/time.h>
 
-#घोषणा NTP_API		4	/* NTP API version */
+#define NTP_API		4	/* NTP API version */
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 /*
- * syscall पूर्णांकerface - used (मुख्यly by NTP daemon)
- * to discipline kernel घड़ी oscillator
+ * syscall interface - used (mainly by NTP daemon)
+ * to discipline kernel clock oscillator
  */
-काष्ठा समयx अणु
-	अचिन्हित पूर्णांक modes;	/* mode selector */
-	__kernel_दीर्घ_t offset;	/* समय offset (usec) */
-	__kernel_दीर्घ_t freq;	/* frequency offset (scaled ppm) */
-	__kernel_दीर्घ_t maxerror;/* maximum error (usec) */
-	__kernel_दीर्घ_t esterror;/* estimated error (usec) */
-	पूर्णांक status;		/* घड़ी command/status */
-	__kernel_दीर्घ_t स्थिरant;/* pll समय स्थिरant */
-	__kernel_दीर्घ_t precision;/* घड़ी precision (usec) (पढ़ो only) */
-	__kernel_दीर्घ_t tolerance;/* घड़ी frequency tolerance (ppm)
-				   * (पढ़ो only)
+struct timex {
+	unsigned int modes;	/* mode selector */
+	__kernel_long_t offset;	/* time offset (usec) */
+	__kernel_long_t freq;	/* frequency offset (scaled ppm) */
+	__kernel_long_t maxerror;/* maximum error (usec) */
+	__kernel_long_t esterror;/* estimated error (usec) */
+	int status;		/* clock command/status */
+	__kernel_long_t constant;/* pll time constant */
+	__kernel_long_t precision;/* clock precision (usec) (read only) */
+	__kernel_long_t tolerance;/* clock frequency tolerance (ppm)
+				   * (read only)
 				   */
-	काष्ठा समयval समय;	/* (पढ़ो only, except क्रम ADJ_SETOFFSET) */
-	__kernel_दीर्घ_t tick;	/* (modअगरied) usecs between घड़ी ticks */
+	struct timeval time;	/* (read only, except for ADJ_SETOFFSET) */
+	__kernel_long_t tick;	/* (modified) usecs between clock ticks */
 
-	__kernel_दीर्घ_t ppsfreq;/* pps frequency (scaled ppm) (ro) */
-	__kernel_दीर्घ_t jitter; /* pps jitter (us) (ro) */
-	पूर्णांक shअगरt;              /* पूर्णांकerval duration (s) (shअगरt) (ro) */
-	__kernel_दीर्घ_t stabil;            /* pps stability (scaled ppm) (ro) */
-	__kernel_दीर्घ_t jitcnt; /* jitter limit exceeded (ro) */
-	__kernel_दीर्घ_t calcnt; /* calibration पूर्णांकervals (ro) */
-	__kernel_दीर्घ_t errcnt; /* calibration errors (ro) */
-	__kernel_दीर्घ_t stbcnt; /* stability limit exceeded (ro) */
+	__kernel_long_t ppsfreq;/* pps frequency (scaled ppm) (ro) */
+	__kernel_long_t jitter; /* pps jitter (us) (ro) */
+	int shift;              /* interval duration (s) (shift) (ro) */
+	__kernel_long_t stabil;            /* pps stability (scaled ppm) (ro) */
+	__kernel_long_t jitcnt; /* jitter limit exceeded (ro) */
+	__kernel_long_t calcnt; /* calibration intervals (ro) */
+	__kernel_long_t errcnt; /* calibration errors (ro) */
+	__kernel_long_t stbcnt; /* stability limit exceeded (ro) */
 
-	पूर्णांक tai;		/* TAI offset (ro) */
+	int tai;		/* TAI offset (ro) */
 
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-पूर्ण;
-#पूर्ण_अगर
+	int  :32; int  :32; int  :32; int  :32;
+	int  :32; int  :32; int  :32; int  :32;
+	int  :32; int  :32; int  :32;
+};
+#endif
 
-काष्ठा __kernel_समयx_समयval अणु
-	__kernel_समय64_t       tv_sec;
-	दीर्घ दीर्घ		tv_usec;
-पूर्ण;
+struct __kernel_timex_timeval {
+	__kernel_time64_t       tv_sec;
+	long long		tv_usec;
+};
 
-काष्ठा __kernel_समयx अणु
-	अचिन्हित पूर्णांक modes;	/* mode selector */
-	पूर्णांक :32;            /* pad */
-	दीर्घ दीर्घ offset;	/* समय offset (usec) */
-	दीर्घ दीर्घ freq;	/* frequency offset (scaled ppm) */
-	दीर्घ दीर्घ maxerror;/* maximum error (usec) */
-	दीर्घ दीर्घ esterror;/* estimated error (usec) */
-	पूर्णांक status;		/* घड़ी command/status */
-	पूर्णांक :32;            /* pad */
-	दीर्घ दीर्घ स्थिरant;/* pll समय स्थिरant */
-	दीर्घ दीर्घ precision;/* घड़ी precision (usec) (पढ़ो only) */
-	दीर्घ दीर्घ tolerance;/* घड़ी frequency tolerance (ppm)
-				   * (पढ़ो only)
+struct __kernel_timex {
+	unsigned int modes;	/* mode selector */
+	int :32;            /* pad */
+	long long offset;	/* time offset (usec) */
+	long long freq;	/* frequency offset (scaled ppm) */
+	long long maxerror;/* maximum error (usec) */
+	long long esterror;/* estimated error (usec) */
+	int status;		/* clock command/status */
+	int :32;            /* pad */
+	long long constant;/* pll time constant */
+	long long precision;/* clock precision (usec) (read only) */
+	long long tolerance;/* clock frequency tolerance (ppm)
+				   * (read only)
 				   */
-	काष्ठा __kernel_समयx_समयval समय;	/* (पढ़ो only, except क्रम ADJ_SETOFFSET) */
-	दीर्घ दीर्घ tick;	/* (modअगरied) usecs between घड़ी ticks */
+	struct __kernel_timex_timeval time;	/* (read only, except for ADJ_SETOFFSET) */
+	long long tick;	/* (modified) usecs between clock ticks */
 
-	दीर्घ दीर्घ ppsfreq;/* pps frequency (scaled ppm) (ro) */
-	दीर्घ दीर्घ jitter; /* pps jitter (us) (ro) */
-	पूर्णांक shअगरt;              /* पूर्णांकerval duration (s) (shअगरt) (ro) */
-	पूर्णांक :32;            /* pad */
-	दीर्घ दीर्घ stabil;            /* pps stability (scaled ppm) (ro) */
-	दीर्घ दीर्घ jitcnt; /* jitter limit exceeded (ro) */
-	दीर्घ दीर्घ calcnt; /* calibration पूर्णांकervals (ro) */
-	दीर्घ दीर्घ errcnt; /* calibration errors (ro) */
-	दीर्घ दीर्घ stbcnt; /* stability limit exceeded (ro) */
+	long long ppsfreq;/* pps frequency (scaled ppm) (ro) */
+	long long jitter; /* pps jitter (us) (ro) */
+	int shift;              /* interval duration (s) (shift) (ro) */
+	int :32;            /* pad */
+	long long stabil;            /* pps stability (scaled ppm) (ro) */
+	long long jitcnt; /* jitter limit exceeded (ro) */
+	long long calcnt; /* calibration intervals (ro) */
+	long long errcnt; /* calibration errors (ro) */
+	long long stbcnt; /* stability limit exceeded (ro) */
 
-	पूर्णांक tai;		/* TAI offset (ro) */
+	int tai;		/* TAI offset (ro) */
 
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
-पूर्ण;
+	int  :32; int  :32; int  :32; int  :32;
+	int  :32; int  :32; int  :32; int  :32;
+	int  :32; int  :32; int  :32;
+};
 
 /*
- * Mode codes (समयx.mode)
+ * Mode codes (timex.mode)
  */
-#घोषणा ADJ_OFFSET		0x0001	/* समय offset */
-#घोषणा ADJ_FREQUENCY		0x0002	/* frequency offset */
-#घोषणा ADJ_MAXERROR		0x0004	/* maximum समय error */
-#घोषणा ADJ_ESTERROR		0x0008	/* estimated समय error */
-#घोषणा ADJ_STATUS		0x0010	/* घड़ी status */
-#घोषणा ADJ_TIMECONST		0x0020	/* pll समय स्थिरant */
-#घोषणा ADJ_TAI			0x0080	/* set TAI offset */
-#घोषणा ADJ_SETOFFSET		0x0100  /* add 'time' to current समय */
-#घोषणा ADJ_MICRO		0x1000	/* select microsecond resolution */
-#घोषणा ADJ_न_अंकO		0x2000	/* select nanosecond resolution */
-#घोषणा ADJ_TICK		0x4000	/* tick value */
+#define ADJ_OFFSET		0x0001	/* time offset */
+#define ADJ_FREQUENCY		0x0002	/* frequency offset */
+#define ADJ_MAXERROR		0x0004	/* maximum time error */
+#define ADJ_ESTERROR		0x0008	/* estimated time error */
+#define ADJ_STATUS		0x0010	/* clock status */
+#define ADJ_TIMECONST		0x0020	/* pll time constant */
+#define ADJ_TAI			0x0080	/* set TAI offset */
+#define ADJ_SETOFFSET		0x0100  /* add 'time' to current time */
+#define ADJ_MICRO		0x1000	/* select microsecond resolution */
+#define ADJ_NANO		0x2000	/* select nanosecond resolution */
+#define ADJ_TICK		0x4000	/* tick value */
 
-#अगर_अघोषित __KERNEL__
-#घोषणा ADJ_OFFSET_SINGLESHOT	0x8001	/* old-fashioned adjसमय */
-#घोषणा ADJ_OFFSET_SS_READ	0xa001	/* पढ़ो-only adjसमय */
-#पूर्ण_अगर
+#ifndef __KERNEL__
+#define ADJ_OFFSET_SINGLESHOT	0x8001	/* old-fashioned adjtime */
+#define ADJ_OFFSET_SS_READ	0xa001	/* read-only adjtime */
+#endif
 
 /* NTP userland likes the MOD_ prefix better */
-#घोषणा MOD_OFFSET	ADJ_OFFSET
-#घोषणा MOD_FREQUENCY	ADJ_FREQUENCY
-#घोषणा MOD_MAXERROR	ADJ_MAXERROR
-#घोषणा MOD_ESTERROR	ADJ_ESTERROR
-#घोषणा MOD_STATUS	ADJ_STATUS
-#घोषणा MOD_TIMECONST	ADJ_TIMECONST
-#घोषणा MOD_TAI	ADJ_TAI
-#घोषणा MOD_MICRO	ADJ_MICRO
-#घोषणा MOD_न_अंकO	ADJ_न_अंकO
+#define MOD_OFFSET	ADJ_OFFSET
+#define MOD_FREQUENCY	ADJ_FREQUENCY
+#define MOD_MAXERROR	ADJ_MAXERROR
+#define MOD_ESTERROR	ADJ_ESTERROR
+#define MOD_STATUS	ADJ_STATUS
+#define MOD_TIMECONST	ADJ_TIMECONST
+#define MOD_TAI	ADJ_TAI
+#define MOD_MICRO	ADJ_MICRO
+#define MOD_NANO	ADJ_NANO
 
 
 /*
- * Status codes (समयx.status)
+ * Status codes (timex.status)
  */
-#घोषणा STA_PLL		0x0001	/* enable PLL updates (rw) */
-#घोषणा STA_PPSFREQ	0x0002	/* enable PPS freq discipline (rw) */
-#घोषणा STA_PPSTIME	0x0004	/* enable PPS समय discipline (rw) */
-#घोषणा STA_FLL		0x0008	/* select frequency-lock mode (rw) */
+#define STA_PLL		0x0001	/* enable PLL updates (rw) */
+#define STA_PPSFREQ	0x0002	/* enable PPS freq discipline (rw) */
+#define STA_PPSTIME	0x0004	/* enable PPS time discipline (rw) */
+#define STA_FLL		0x0008	/* select frequency-lock mode (rw) */
 
-#घोषणा STA_INS		0x0010	/* insert leap (rw) */
-#घोषणा STA_DEL		0x0020	/* delete leap (rw) */
-#घोषणा STA_UNSYNC	0x0040	/* घड़ी unsynchronized (rw) */
-#घोषणा STA_FREQHOLD	0x0080	/* hold frequency (rw) */
+#define STA_INS		0x0010	/* insert leap (rw) */
+#define STA_DEL		0x0020	/* delete leap (rw) */
+#define STA_UNSYNC	0x0040	/* clock unsynchronized (rw) */
+#define STA_FREQHOLD	0x0080	/* hold frequency (rw) */
 
-#घोषणा STA_PPSSIGNAL	0x0100	/* PPS संकेत present (ro) */
-#घोषणा STA_PPSJITTER	0x0200	/* PPS संकेत jitter exceeded (ro) */
-#घोषणा STA_PPSWANDER	0x0400	/* PPS संकेत wander exceeded (ro) */
-#घोषणा STA_PPSERROR	0x0800	/* PPS संकेत calibration error (ro) */
+#define STA_PPSSIGNAL	0x0100	/* PPS signal present (ro) */
+#define STA_PPSJITTER	0x0200	/* PPS signal jitter exceeded (ro) */
+#define STA_PPSWANDER	0x0400	/* PPS signal wander exceeded (ro) */
+#define STA_PPSERROR	0x0800	/* PPS signal calibration error (ro) */
 
-#घोषणा STA_CLOCKERR	0x1000	/* घड़ी hardware fault (ro) */
-#घोषणा STA_न_अंकO	0x2000	/* resolution (0 = us, 1 = ns) (ro) */
-#घोषणा STA_MODE	0x4000	/* mode (0 = PLL, 1 = FLL) (ro) */
-#घोषणा STA_CLK		0x8000	/* घड़ी source (0 = A, 1 = B) (ro) */
+#define STA_CLOCKERR	0x1000	/* clock hardware fault (ro) */
+#define STA_NANO	0x2000	/* resolution (0 = us, 1 = ns) (ro) */
+#define STA_MODE	0x4000	/* mode (0 = PLL, 1 = FLL) (ro) */
+#define STA_CLK		0x8000	/* clock source (0 = A, 1 = B) (ro) */
 
-/* पढ़ो-only bits */
-#घोषणा STA_RONLY (STA_PPSSIGNAL | STA_PPSJITTER | STA_PPSWANDER | \
-	STA_PPSERROR | STA_CLOCKERR | STA_न_अंकO | STA_MODE | STA_CLK)
+/* read-only bits */
+#define STA_RONLY (STA_PPSSIGNAL | STA_PPSJITTER | STA_PPSWANDER | \
+	STA_PPSERROR | STA_CLOCKERR | STA_NANO | STA_MODE | STA_CLK)
 
 /*
- * Clock states (समय_state)
+ * Clock states (time_state)
  */
-#घोषणा TIME_OK		0	/* घड़ी synchronized, no leap second */
-#घोषणा TIME_INS	1	/* insert leap second */
-#घोषणा TIME_DEL	2	/* delete leap second */
-#घोषणा TIME_OOP	3	/* leap second in progress */
-#घोषणा TIME_WAIT	4	/* leap second has occurred */
-#घोषणा TIME_ERROR	5	/* घड़ी not synchronized */
-#घोषणा TIME_BAD	TIME_ERROR /* bw compat */
+#define TIME_OK		0	/* clock synchronized, no leap second */
+#define TIME_INS	1	/* insert leap second */
+#define TIME_DEL	2	/* delete leap second */
+#define TIME_OOP	3	/* leap second in progress */
+#define TIME_WAIT	4	/* leap second has occurred */
+#define TIME_ERROR	5	/* clock not synchronized */
+#define TIME_BAD	TIME_ERROR /* bw compat */
 
 
-#पूर्ण_अगर /* _UAPI_LINUX_TIMEX_H */
+#endif /* _UAPI_LINUX_TIMEX_H */

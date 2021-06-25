@@ -1,30 +1,29 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm.h"
-#समावेश "dm-bio-prison-v1.h"
-#समावेश "dm-bio-prison-v2.h"
+#include "dm.h"
+#include "dm-bio-prison-v1.h"
+#include "dm-bio-prison-v2.h"
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/mempool.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
 /*----------------------------------------------------------------*/
 
-#घोषणा MIN_CELLS 1024
+#define MIN_CELLS 1024
 
-काष्ठा dm_bio_prison अणु
+struct dm_bio_prison {
 	spinlock_t lock;
-	काष्ठा rb_root cells;
+	struct rb_root cells;
 	mempool_t cell_pool;
-पूर्ण;
+};
 
-अटल काष्ठा kmem_cache *_cell_cache;
+static struct kmem_cache *_cell_cache;
 
 /*----------------------------------------------------------------*/
 
@@ -32,427 +31,427 @@
  * @nr_cells should be the number of cells you want in use _concurrently_.
  * Don't confuse it with the number of distinct keys.
  */
-काष्ठा dm_bio_prison *dm_bio_prison_create(व्योम)
-अणु
-	काष्ठा dm_bio_prison *prison = kzalloc(माप(*prison), GFP_KERNEL);
-	पूर्णांक ret;
+struct dm_bio_prison *dm_bio_prison_create(void)
+{
+	struct dm_bio_prison *prison = kzalloc(sizeof(*prison), GFP_KERNEL);
+	int ret;
 
-	अगर (!prison)
-		वापस शून्य;
+	if (!prison)
+		return NULL;
 
 	spin_lock_init(&prison->lock);
 
 	ret = mempool_init_slab_pool(&prison->cell_pool, MIN_CELLS, _cell_cache);
-	अगर (ret) अणु
-		kमुक्त(prison);
-		वापस शून्य;
-	पूर्ण
+	if (ret) {
+		kfree(prison);
+		return NULL;
+	}
 
 	prison->cells = RB_ROOT;
 
-	वापस prison;
-पूर्ण
+	return prison;
+}
 EXPORT_SYMBOL_GPL(dm_bio_prison_create);
 
-व्योम dm_bio_prison_destroy(काष्ठा dm_bio_prison *prison)
-अणु
-	mempool_निकास(&prison->cell_pool);
-	kमुक्त(prison);
-पूर्ण
+void dm_bio_prison_destroy(struct dm_bio_prison *prison)
+{
+	mempool_exit(&prison->cell_pool);
+	kfree(prison);
+}
 EXPORT_SYMBOL_GPL(dm_bio_prison_destroy);
 
-काष्ठा dm_bio_prison_cell *dm_bio_prison_alloc_cell(काष्ठा dm_bio_prison *prison, gfp_t gfp)
-अणु
-	वापस mempool_alloc(&prison->cell_pool, gfp);
-पूर्ण
+struct dm_bio_prison_cell *dm_bio_prison_alloc_cell(struct dm_bio_prison *prison, gfp_t gfp)
+{
+	return mempool_alloc(&prison->cell_pool, gfp);
+}
 EXPORT_SYMBOL_GPL(dm_bio_prison_alloc_cell);
 
-व्योम dm_bio_prison_मुक्त_cell(काष्ठा dm_bio_prison *prison,
-			     काष्ठा dm_bio_prison_cell *cell)
-अणु
-	mempool_मुक्त(cell, &prison->cell_pool);
-पूर्ण
-EXPORT_SYMBOL_GPL(dm_bio_prison_मुक्त_cell);
+void dm_bio_prison_free_cell(struct dm_bio_prison *prison,
+			     struct dm_bio_prison_cell *cell)
+{
+	mempool_free(cell, &prison->cell_pool);
+}
+EXPORT_SYMBOL_GPL(dm_bio_prison_free_cell);
 
-अटल व्योम __setup_new_cell(काष्ठा dm_cell_key *key,
-			     काष्ठा bio *holder,
-			     काष्ठा dm_bio_prison_cell *cell)
-अणु
-       स_नकल(&cell->key, key, माप(cell->key));
+static void __setup_new_cell(struct dm_cell_key *key,
+			     struct bio *holder,
+			     struct dm_bio_prison_cell *cell)
+{
+       memcpy(&cell->key, key, sizeof(cell->key));
        cell->holder = holder;
        bio_list_init(&cell->bios);
-पूर्ण
+}
 
-अटल पूर्णांक cmp_keys(काष्ठा dm_cell_key *lhs,
-		    काष्ठा dm_cell_key *rhs)
-अणु
-	अगर (lhs->भव < rhs->भव)
-		वापस -1;
+static int cmp_keys(struct dm_cell_key *lhs,
+		    struct dm_cell_key *rhs)
+{
+	if (lhs->virtual < rhs->virtual)
+		return -1;
 
-	अगर (lhs->भव > rhs->भव)
-		वापस 1;
+	if (lhs->virtual > rhs->virtual)
+		return 1;
 
-	अगर (lhs->dev < rhs->dev)
-		वापस -1;
+	if (lhs->dev < rhs->dev)
+		return -1;
 
-	अगर (lhs->dev > rhs->dev)
-		वापस 1;
+	if (lhs->dev > rhs->dev)
+		return 1;
 
-	अगर (lhs->block_end <= rhs->block_begin)
-		वापस -1;
+	if (lhs->block_end <= rhs->block_begin)
+		return -1;
 
-	अगर (lhs->block_begin >= rhs->block_end)
-		वापस 1;
+	if (lhs->block_begin >= rhs->block_end)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __bio_detain(काष्ठा dm_bio_prison *prison,
-			काष्ठा dm_cell_key *key,
-			काष्ठा bio *inmate,
-			काष्ठा dm_bio_prison_cell *cell_pपुनः_स्मृति,
-			काष्ठा dm_bio_prison_cell **cell_result)
-अणु
-	पूर्णांक r;
-	काष्ठा rb_node **new = &prison->cells.rb_node, *parent = शून्य;
+static int __bio_detain(struct dm_bio_prison *prison,
+			struct dm_cell_key *key,
+			struct bio *inmate,
+			struct dm_bio_prison_cell *cell_prealloc,
+			struct dm_bio_prison_cell **cell_result)
+{
+	int r;
+	struct rb_node **new = &prison->cells.rb_node, *parent = NULL;
 
-	जबतक (*new) अणु
-		काष्ठा dm_bio_prison_cell *cell =
-			rb_entry(*new, काष्ठा dm_bio_prison_cell, node);
+	while (*new) {
+		struct dm_bio_prison_cell *cell =
+			rb_entry(*new, struct dm_bio_prison_cell, node);
 
 		r = cmp_keys(key, &cell->key);
 
 		parent = *new;
-		अगर (r < 0)
+		if (r < 0)
 			new = &((*new)->rb_left);
-		अन्यथा अगर (r > 0)
+		else if (r > 0)
 			new = &((*new)->rb_right);
-		अन्यथा अणु
-			अगर (inmate)
+		else {
+			if (inmate)
 				bio_list_add(&cell->bios, inmate);
 			*cell_result = cell;
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	__setup_new_cell(key, inmate, cell_pपुनः_स्मृति);
-	*cell_result = cell_pपुनः_स्मृति;
+	__setup_new_cell(key, inmate, cell_prealloc);
+	*cell_result = cell_prealloc;
 
-	rb_link_node(&cell_pपुनः_स्मृति->node, parent, new);
-	rb_insert_color(&cell_pपुनः_स्मृति->node, &prison->cells);
+	rb_link_node(&cell_prealloc->node, parent, new);
+	rb_insert_color(&cell_prealloc->node, &prison->cells);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bio_detain(काष्ठा dm_bio_prison *prison,
-		      काष्ठा dm_cell_key *key,
-		      काष्ठा bio *inmate,
-		      काष्ठा dm_bio_prison_cell *cell_pपुनः_स्मृति,
-		      काष्ठा dm_bio_prison_cell **cell_result)
-अणु
-	पूर्णांक r;
+static int bio_detain(struct dm_bio_prison *prison,
+		      struct dm_cell_key *key,
+		      struct bio *inmate,
+		      struct dm_bio_prison_cell *cell_prealloc,
+		      struct dm_bio_prison_cell **cell_result)
+{
+	int r;
 
 	spin_lock_irq(&prison->lock);
-	r = __bio_detain(prison, key, inmate, cell_pपुनः_स्मृति, cell_result);
+	r = __bio_detain(prison, key, inmate, cell_prealloc, cell_result);
 	spin_unlock_irq(&prison->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_bio_detain(काष्ठा dm_bio_prison *prison,
-		  काष्ठा dm_cell_key *key,
-		  काष्ठा bio *inmate,
-		  काष्ठा dm_bio_prison_cell *cell_pपुनः_स्मृति,
-		  काष्ठा dm_bio_prison_cell **cell_result)
-अणु
-	वापस bio_detain(prison, key, inmate, cell_pपुनः_स्मृति, cell_result);
-पूर्ण
+int dm_bio_detain(struct dm_bio_prison *prison,
+		  struct dm_cell_key *key,
+		  struct bio *inmate,
+		  struct dm_bio_prison_cell *cell_prealloc,
+		  struct dm_bio_prison_cell **cell_result)
+{
+	return bio_detain(prison, key, inmate, cell_prealloc, cell_result);
+}
 EXPORT_SYMBOL_GPL(dm_bio_detain);
 
-पूर्णांक dm_get_cell(काष्ठा dm_bio_prison *prison,
-		काष्ठा dm_cell_key *key,
-		काष्ठा dm_bio_prison_cell *cell_pपुनः_स्मृति,
-		काष्ठा dm_bio_prison_cell **cell_result)
-अणु
-	वापस bio_detain(prison, key, शून्य, cell_pपुनः_स्मृति, cell_result);
-पूर्ण
+int dm_get_cell(struct dm_bio_prison *prison,
+		struct dm_cell_key *key,
+		struct dm_bio_prison_cell *cell_prealloc,
+		struct dm_bio_prison_cell **cell_result)
+{
+	return bio_detain(prison, key, NULL, cell_prealloc, cell_result);
+}
 EXPORT_SYMBOL_GPL(dm_get_cell);
 
 /*
  * @inmates must have been initialised prior to this call
  */
-अटल व्योम __cell_release(काष्ठा dm_bio_prison *prison,
-			   काष्ठा dm_bio_prison_cell *cell,
-			   काष्ठा bio_list *inmates)
-अणु
+static void __cell_release(struct dm_bio_prison *prison,
+			   struct dm_bio_prison_cell *cell,
+			   struct bio_list *inmates)
+{
 	rb_erase(&cell->node, &prison->cells);
 
-	अगर (inmates) अणु
-		अगर (cell->holder)
+	if (inmates) {
+		if (cell->holder)
 			bio_list_add(inmates, cell->holder);
 		bio_list_merge(inmates, &cell->bios);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dm_cell_release(काष्ठा dm_bio_prison *prison,
-		     काष्ठा dm_bio_prison_cell *cell,
-		     काष्ठा bio_list *bios)
-अणु
+void dm_cell_release(struct dm_bio_prison *prison,
+		     struct dm_bio_prison_cell *cell,
+		     struct bio_list *bios)
+{
 	spin_lock_irq(&prison->lock);
 	__cell_release(prison, cell, bios);
 	spin_unlock_irq(&prison->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_cell_release);
 
 /*
- * Someबार we करोn't want the holder, just the additional bios.
+ * Sometimes we don't want the holder, just the additional bios.
  */
-अटल व्योम __cell_release_no_holder(काष्ठा dm_bio_prison *prison,
-				     काष्ठा dm_bio_prison_cell *cell,
-				     काष्ठा bio_list *inmates)
-अणु
+static void __cell_release_no_holder(struct dm_bio_prison *prison,
+				     struct dm_bio_prison_cell *cell,
+				     struct bio_list *inmates)
+{
 	rb_erase(&cell->node, &prison->cells);
 	bio_list_merge(inmates, &cell->bios);
-पूर्ण
+}
 
-व्योम dm_cell_release_no_holder(काष्ठा dm_bio_prison *prison,
-			       काष्ठा dm_bio_prison_cell *cell,
-			       काष्ठा bio_list *inmates)
-अणु
-	अचिन्हित दीर्घ flags;
+void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+			       struct dm_bio_prison_cell *cell,
+			       struct bio_list *inmates)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&prison->lock, flags);
 	__cell_release_no_holder(prison, cell, inmates);
 	spin_unlock_irqrestore(&prison->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
 
-व्योम dm_cell_error(काष्ठा dm_bio_prison *prison,
-		   काष्ठा dm_bio_prison_cell *cell, blk_status_t error)
-अणु
-	काष्ठा bio_list bios;
-	काष्ठा bio *bio;
+void dm_cell_error(struct dm_bio_prison *prison,
+		   struct dm_bio_prison_cell *cell, blk_status_t error)
+{
+	struct bio_list bios;
+	struct bio *bio;
 
 	bio_list_init(&bios);
 	dm_cell_release(prison, cell, &bios);
 
-	जबतक ((bio = bio_list_pop(&bios))) अणु
+	while ((bio = bio_list_pop(&bios))) {
 		bio->bi_status = error;
 		bio_endio(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(dm_cell_error);
 
-व्योम dm_cell_visit_release(काष्ठा dm_bio_prison *prison,
-			   व्योम (*visit_fn)(व्योम *, काष्ठा dm_bio_prison_cell *),
-			   व्योम *context,
-			   काष्ठा dm_bio_prison_cell *cell)
-अणु
+void dm_cell_visit_release(struct dm_bio_prison *prison,
+			   void (*visit_fn)(void *, struct dm_bio_prison_cell *),
+			   void *context,
+			   struct dm_bio_prison_cell *cell)
+{
 	spin_lock_irq(&prison->lock);
 	visit_fn(context, cell);
 	rb_erase(&cell->node, &prison->cells);
 	spin_unlock_irq(&prison->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_cell_visit_release);
 
-अटल पूर्णांक __promote_or_release(काष्ठा dm_bio_prison *prison,
-				काष्ठा dm_bio_prison_cell *cell)
-अणु
-	अगर (bio_list_empty(&cell->bios)) अणु
+static int __promote_or_release(struct dm_bio_prison *prison,
+				struct dm_bio_prison_cell *cell)
+{
+	if (bio_list_empty(&cell->bios)) {
 		rb_erase(&cell->node, &prison->cells);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	cell->holder = bio_list_pop(&cell->bios);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_cell_promote_or_release(काष्ठा dm_bio_prison *prison,
-			       काष्ठा dm_bio_prison_cell *cell)
-अणु
-	पूर्णांक r;
+int dm_cell_promote_or_release(struct dm_bio_prison *prison,
+			       struct dm_bio_prison_cell *cell)
+{
+	int r;
 
 	spin_lock_irq(&prison->lock);
 	r = __promote_or_release(prison, cell);
 	spin_unlock_irq(&prison->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_cell_promote_or_release);
 
 /*----------------------------------------------------------------*/
 
-#घोषणा DEFERRED_SET_SIZE 64
+#define DEFERRED_SET_SIZE 64
 
-काष्ठा dm_deferred_entry अणु
-	काष्ठा dm_deferred_set *ds;
-	अचिन्हित count;
-	काष्ठा list_head work_items;
-पूर्ण;
+struct dm_deferred_entry {
+	struct dm_deferred_set *ds;
+	unsigned count;
+	struct list_head work_items;
+};
 
-काष्ठा dm_deferred_set अणु
+struct dm_deferred_set {
 	spinlock_t lock;
-	अचिन्हित current_entry;
-	अचिन्हित sweeper;
-	काष्ठा dm_deferred_entry entries[DEFERRED_SET_SIZE];
-पूर्ण;
+	unsigned current_entry;
+	unsigned sweeper;
+	struct dm_deferred_entry entries[DEFERRED_SET_SIZE];
+};
 
-काष्ठा dm_deferred_set *dm_deferred_set_create(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा dm_deferred_set *ds;
+struct dm_deferred_set *dm_deferred_set_create(void)
+{
+	int i;
+	struct dm_deferred_set *ds;
 
-	ds = kदो_स्मृति(माप(*ds), GFP_KERNEL);
-	अगर (!ds)
-		वापस शून्य;
+	ds = kmalloc(sizeof(*ds), GFP_KERNEL);
+	if (!ds)
+		return NULL;
 
 	spin_lock_init(&ds->lock);
 	ds->current_entry = 0;
 	ds->sweeper = 0;
-	क्रम (i = 0; i < DEFERRED_SET_SIZE; i++) अणु
+	for (i = 0; i < DEFERRED_SET_SIZE; i++) {
 		ds->entries[i].ds = ds;
 		ds->entries[i].count = 0;
 		INIT_LIST_HEAD(&ds->entries[i].work_items);
-	पूर्ण
+	}
 
-	वापस ds;
-पूर्ण
+	return ds;
+}
 EXPORT_SYMBOL_GPL(dm_deferred_set_create);
 
-व्योम dm_deferred_set_destroy(काष्ठा dm_deferred_set *ds)
-अणु
-	kमुक्त(ds);
-पूर्ण
+void dm_deferred_set_destroy(struct dm_deferred_set *ds)
+{
+	kfree(ds);
+}
 EXPORT_SYMBOL_GPL(dm_deferred_set_destroy);
 
-काष्ठा dm_deferred_entry *dm_deferred_entry_inc(काष्ठा dm_deferred_set *ds)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा dm_deferred_entry *entry;
+struct dm_deferred_entry *dm_deferred_entry_inc(struct dm_deferred_set *ds)
+{
+	unsigned long flags;
+	struct dm_deferred_entry *entry;
 
 	spin_lock_irqsave(&ds->lock, flags);
 	entry = ds->entries + ds->current_entry;
 	entry->count++;
 	spin_unlock_irqrestore(&ds->lock, flags);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 EXPORT_SYMBOL_GPL(dm_deferred_entry_inc);
 
-अटल अचिन्हित ds_next(अचिन्हित index)
-अणु
-	वापस (index + 1) % DEFERRED_SET_SIZE;
-पूर्ण
+static unsigned ds_next(unsigned index)
+{
+	return (index + 1) % DEFERRED_SET_SIZE;
+}
 
-अटल व्योम __sweep(काष्ठा dm_deferred_set *ds, काष्ठा list_head *head)
-अणु
-	जबतक ((ds->sweeper != ds->current_entry) &&
-	       !ds->entries[ds->sweeper].count) अणु
+static void __sweep(struct dm_deferred_set *ds, struct list_head *head)
+{
+	while ((ds->sweeper != ds->current_entry) &&
+	       !ds->entries[ds->sweeper].count) {
 		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
 		ds->sweeper = ds_next(ds->sweeper);
-	पूर्ण
+	}
 
-	अगर ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
+	if ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
 		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
-पूर्ण
+}
 
-व्योम dm_deferred_entry_dec(काष्ठा dm_deferred_entry *entry, काष्ठा list_head *head)
-अणु
-	अचिन्हित दीर्घ flags;
+void dm_deferred_entry_dec(struct dm_deferred_entry *entry, struct list_head *head)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&entry->ds->lock, flags);
 	BUG_ON(!entry->count);
 	--entry->count;
 	__sweep(entry->ds, head);
 	spin_unlock_irqrestore(&entry->ds->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_deferred_entry_dec);
 
 /*
- * Returns 1 अगर deferred or 0 अगर no pending items to delay job.
+ * Returns 1 if deferred or 0 if no pending items to delay job.
  */
-पूर्णांक dm_deferred_set_add_work(काष्ठा dm_deferred_set *ds, काष्ठा list_head *work)
-अणु
-	पूर्णांक r = 1;
-	अचिन्हित next_entry;
+int dm_deferred_set_add_work(struct dm_deferred_set *ds, struct list_head *work)
+{
+	int r = 1;
+	unsigned next_entry;
 
 	spin_lock_irq(&ds->lock);
-	अगर ((ds->sweeper == ds->current_entry) &&
+	if ((ds->sweeper == ds->current_entry) &&
 	    !ds->entries[ds->current_entry].count)
 		r = 0;
-	अन्यथा अणु
+	else {
 		list_add(work, &ds->entries[ds->current_entry].work_items);
 		next_entry = ds_next(ds->current_entry);
-		अगर (!ds->entries[next_entry].count)
+		if (!ds->entries[next_entry].count)
 			ds->current_entry = next_entry;
-	पूर्ण
+	}
 	spin_unlock_irq(&ds->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_deferred_set_add_work);
 
 /*----------------------------------------------------------------*/
 
-अटल पूर्णांक __init dm_bio_prison_init_v1(व्योम)
-अणु
+static int __init dm_bio_prison_init_v1(void)
+{
 	_cell_cache = KMEM_CACHE(dm_bio_prison_cell, 0);
-	अगर (!_cell_cache)
-		वापस -ENOMEM;
+	if (!_cell_cache)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dm_bio_prison_निकास_v1(व्योम)
-अणु
+static void dm_bio_prison_exit_v1(void)
+{
 	kmem_cache_destroy(_cell_cache);
-	_cell_cache = शून्य;
-पूर्ण
+	_cell_cache = NULL;
+}
 
-अटल पूर्णांक (*_inits[])(व्योम) __initdata = अणु
+static int (*_inits[])(void) __initdata = {
 	dm_bio_prison_init_v1,
 	dm_bio_prison_init_v2,
-पूर्ण;
+};
 
-अटल व्योम (*_निकासs[])(व्योम) = अणु
-	dm_bio_prison_निकास_v1,
-	dm_bio_prison_निकास_v2,
-पूर्ण;
+static void (*_exits[])(void) = {
+	dm_bio_prison_exit_v1,
+	dm_bio_prison_exit_v2,
+};
 
-अटल पूर्णांक __init dm_bio_prison_init(व्योम)
-अणु
-	स्थिर पूर्णांक count = ARRAY_SIZE(_inits);
+static int __init dm_bio_prison_init(void)
+{
+	const int count = ARRAY_SIZE(_inits);
 
-	पूर्णांक r, i;
+	int r, i;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		r = _inits[i]();
-		अगर (r)
-			जाओ bad;
-	पूर्ण
+		if (r)
+			goto bad;
+	}
 
-	वापस 0;
+	return 0;
 
       bad:
-	जबतक (i--)
-		_निकासs[i]();
+	while (i--)
+		_exits[i]();
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_bio_prison_निकास(व्योम)
-अणु
-	पूर्णांक i = ARRAY_SIZE(_निकासs);
+static void __exit dm_bio_prison_exit(void)
+{
+	int i = ARRAY_SIZE(_exits);
 
-	जबतक (i--)
-		_निकासs[i]();
-पूर्ण
+	while (i--)
+		_exits[i]();
+}
 
 /*
  * module hooks
  */
 module_init(dm_bio_prison_init);
-module_निकास(dm_bio_prison_निकास);
+module_exit(dm_bio_prison_exit);
 
 MODULE_DESCRIPTION(DM_NAME " bio prison");
 MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,24 +23,24 @@
  *
  */
 
-#अगर_अघोषित __AMDGPU_DM_IRQ_PARAMS_H__
-#घोषणा __AMDGPU_DM_IRQ_PARAMS_H__
+#ifndef __AMDGPU_DM_IRQ_PARAMS_H__
+#define __AMDGPU_DM_IRQ_PARAMS_H__
 
-#समावेश "amdgpu_dm_crc.h"
+#include "amdgpu_dm_crc.h"
 
-काष्ठा dm_irq_params अणु
+struct dm_irq_params {
 	u32 last_flip_vblank;
-	काष्ठा mod_vrr_params vrr_params;
-	काष्ठा dc_stream_state *stream;
-	पूर्णांक active_planes;
-	काष्ठा mod_मुक्तsync_config मुक्तsync_config;
+	struct mod_vrr_params vrr_params;
+	struct dc_stream_state *stream;
+	int active_planes;
+	struct mod_freesync_config freesync_config;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	क्रमागत amdgpu_dm_pipe_crc_source crc_src;
-#अगर_घोषित CONFIG_DRM_AMD_SECURE_DISPLAY
-	काष्ठा crc_winकरोw_parm crc_winकरोw;
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_FS
+	enum amdgpu_dm_pipe_crc_source crc_src;
+#ifdef CONFIG_DRM_AMD_SECURE_DISPLAY
+	struct crc_window_parm crc_window;
+#endif
+#endif
+};
 
-#पूर्ण_अगर /* __AMDGPU_DM_IRQ_PARAMS_H__ */
+#endif /* __AMDGPU_DM_IRQ_PARAMS_H__ */

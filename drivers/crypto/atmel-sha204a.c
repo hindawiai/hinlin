@@ -1,171 +1,170 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Microchip / Aपंचांगel SHA204A (I2C) driver.
+ * Microchip / Atmel SHA204A (I2C) driver.
  *
  * Copyright (c) 2019 Linaro, Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश "atmel-i2c.h"
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include "atmel-i2c.h"
 
-अटल व्योम aपंचांगel_sha204a_rng_करोne(काष्ठा aपंचांगel_i2c_work_data *work_data,
-				   व्योम *areq, पूर्णांक status)
-अणु
-	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv = work_data->ctx;
-	काष्ठा hwrng *rng = areq;
+static void atmel_sha204a_rng_done(struct atmel_i2c_work_data *work_data,
+				   void *areq, int status)
+{
+	struct atmel_i2c_client_priv *i2c_priv = work_data->ctx;
+	struct hwrng *rng = areq;
 
-	अगर (status)
+	if (status)
 		dev_warn_ratelimited(&i2c_priv->client->dev,
 				     "i2c transaction failed (%d)\n",
 				     status);
 
-	rng->priv = (अचिन्हित दीर्घ)work_data;
+	rng->priv = (unsigned long)work_data;
 	atomic_dec(&i2c_priv->tfm_count);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_sha204a_rng_पढ़ो_nonblocking(काष्ठा hwrng *rng, व्योम *data,
-					      माप_प्रकार max)
-अणु
-	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv;
-	काष्ठा aपंचांगel_i2c_work_data *work_data;
+static int atmel_sha204a_rng_read_nonblocking(struct hwrng *rng, void *data,
+					      size_t max)
+{
+	struct atmel_i2c_client_priv *i2c_priv;
+	struct atmel_i2c_work_data *work_data;
 
-	i2c_priv = container_of(rng, काष्ठा aपंचांगel_i2c_client_priv, hwrng);
+	i2c_priv = container_of(rng, struct atmel_i2c_client_priv, hwrng);
 
-	/* keep maximum 1 asynchronous पढ़ो in flight at any समय */
-	अगर (!atomic_add_unless(&i2c_priv->tfm_count, 1, 1))
-		वापस 0;
+	/* keep maximum 1 asynchronous read in flight at any time */
+	if (!atomic_add_unless(&i2c_priv->tfm_count, 1, 1))
+		return 0;
 
-	अगर (rng->priv) अणु
-		work_data = (काष्ठा aपंचांगel_i2c_work_data *)rng->priv;
-		max = min(माप(work_data->cmd.data), max);
-		स_नकल(data, &work_data->cmd.data, max);
+	if (rng->priv) {
+		work_data = (struct atmel_i2c_work_data *)rng->priv;
+		max = min(sizeof(work_data->cmd.data), max);
+		memcpy(data, &work_data->cmd.data, max);
 		rng->priv = 0;
-	पूर्ण अन्यथा अणु
-		work_data = kदो_स्मृति(माप(*work_data), GFP_ATOMIC);
-		अगर (!work_data)
-			वापस -ENOMEM;
+	} else {
+		work_data = kmalloc(sizeof(*work_data), GFP_ATOMIC);
+		if (!work_data)
+			return -ENOMEM;
 
 		work_data->ctx = i2c_priv;
 		work_data->client = i2c_priv->client;
 
 		max = 0;
-	पूर्ण
+	}
 
-	aपंचांगel_i2c_init_अक्रमom_cmd(&work_data->cmd);
-	aपंचांगel_i2c_enqueue(work_data, aपंचांगel_sha204a_rng_करोne, rng);
+	atmel_i2c_init_random_cmd(&work_data->cmd);
+	atmel_i2c_enqueue(work_data, atmel_sha204a_rng_done, rng);
 
-	वापस max;
-पूर्ण
+	return max;
+}
 
-अटल पूर्णांक aपंचांगel_sha204a_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max,
-				  bool रुको)
-अणु
-	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv;
-	काष्ठा aपंचांगel_i2c_cmd cmd;
-	पूर्णांक ret;
+static int atmel_sha204a_rng_read(struct hwrng *rng, void *data, size_t max,
+				  bool wait)
+{
+	struct atmel_i2c_client_priv *i2c_priv;
+	struct atmel_i2c_cmd cmd;
+	int ret;
 
-	अगर (!रुको)
-		वापस aपंचांगel_sha204a_rng_पढ़ो_nonblocking(rng, data, max);
+	if (!wait)
+		return atmel_sha204a_rng_read_nonblocking(rng, data, max);
 
-	i2c_priv = container_of(rng, काष्ठा aपंचांगel_i2c_client_priv, hwrng);
+	i2c_priv = container_of(rng, struct atmel_i2c_client_priv, hwrng);
 
-	aपंचांगel_i2c_init_अक्रमom_cmd(&cmd);
+	atmel_i2c_init_random_cmd(&cmd);
 
-	ret = aपंचांगel_i2c_send_receive(i2c_priv->client, &cmd);
-	अगर (ret)
-		वापस ret;
+	ret = atmel_i2c_send_receive(i2c_priv->client, &cmd);
+	if (ret)
+		return ret;
 
-	max = min(माप(cmd.data), max);
-	स_नकल(data, cmd.data, max);
+	max = min(sizeof(cmd.data), max);
+	memcpy(data, cmd.data, max);
 
-	वापस max;
-पूर्ण
+	return max;
+}
 
-अटल पूर्णांक aपंचांगel_sha204a_probe(काष्ठा i2c_client *client,
-			       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv;
-	पूर्णांक ret;
+static int atmel_sha204a_probe(struct i2c_client *client,
+			       const struct i2c_device_id *id)
+{
+	struct atmel_i2c_client_priv *i2c_priv;
+	int ret;
 
-	ret = aपंचांगel_i2c_probe(client, id);
-	अगर (ret)
-		वापस ret;
+	ret = atmel_i2c_probe(client, id);
+	if (ret)
+		return ret;
 
 	i2c_priv = i2c_get_clientdata(client);
 
-	स_रखो(&i2c_priv->hwrng, 0, माप(i2c_priv->hwrng));
+	memset(&i2c_priv->hwrng, 0, sizeof(i2c_priv->hwrng));
 
 	i2c_priv->hwrng.name = dev_name(&client->dev);
-	i2c_priv->hwrng.पढ़ो = aपंचांगel_sha204a_rng_पढ़ो;
+	i2c_priv->hwrng.read = atmel_sha204a_rng_read;
 	i2c_priv->hwrng.quality = 1024;
 
-	ret = devm_hwrng_रेजिस्टर(&client->dev, &i2c_priv->hwrng);
-	अगर (ret)
+	ret = devm_hwrng_register(&client->dev, &i2c_priv->hwrng);
+	if (ret)
 		dev_warn(&client->dev, "failed to register RNG (%d)\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aपंचांगel_sha204a_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा aपंचांगel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
+static int atmel_sha204a_remove(struct i2c_client *client)
+{
+	struct atmel_i2c_client_priv *i2c_priv = i2c_get_clientdata(client);
 
-	अगर (atomic_पढ़ो(&i2c_priv->tfm_count)) अणु
+	if (atomic_read(&i2c_priv->tfm_count)) {
 		dev_err(&client->dev, "Device is busy\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (i2c_priv->hwrng.priv)
-		kमुक्त((व्योम *)i2c_priv->hwrng.priv);
+	if (i2c_priv->hwrng.priv)
+		kfree((void *)i2c_priv->hwrng.priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_sha204a_dt_ids[] = अणु
-	अणु .compatible = "atmel,atsha204a", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_sha204a_dt_ids);
+static const struct of_device_id atmel_sha204a_dt_ids[] = {
+	{ .compatible = "atmel,atsha204a", },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, atmel_sha204a_dt_ids);
 
-अटल स्थिर काष्ठा i2c_device_id aपंचांगel_sha204a_id[] = अणु
-	अणु "atsha204a", 0 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(i2c, aपंचांगel_sha204a_id);
+static const struct i2c_device_id atmel_sha204a_id[] = {
+	{ "atsha204a", 0 },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(i2c, atmel_sha204a_id);
 
-अटल काष्ठा i2c_driver aपंचांगel_sha204a_driver = अणु
-	.probe			= aपंचांगel_sha204a_probe,
-	.हटाओ			= aपंचांगel_sha204a_हटाओ,
-	.id_table		= aपंचांगel_sha204a_id,
+static struct i2c_driver atmel_sha204a_driver = {
+	.probe			= atmel_sha204a_probe,
+	.remove			= atmel_sha204a_remove,
+	.id_table		= atmel_sha204a_id,
 
 	.driver.name		= "atmel-sha204a",
-	.driver.of_match_table	= of_match_ptr(aपंचांगel_sha204a_dt_ids),
-पूर्ण;
+	.driver.of_match_table	= of_match_ptr(atmel_sha204a_dt_ids),
+};
 
-अटल पूर्णांक __init aपंचांगel_sha204a_init(व्योम)
-अणु
-	वापस i2c_add_driver(&aपंचांगel_sha204a_driver);
-पूर्ण
+static int __init atmel_sha204a_init(void)
+{
+	return i2c_add_driver(&atmel_sha204a_driver);
+}
 
-अटल व्योम __निकास aपंचांगel_sha204a_निकास(व्योम)
-अणु
+static void __exit atmel_sha204a_exit(void)
+{
 	flush_scheduled_work();
-	i2c_del_driver(&aपंचांगel_sha204a_driver);
-पूर्ण
+	i2c_del_driver(&atmel_sha204a_driver);
+}
 
-module_init(aपंचांगel_sha204a_init);
-module_निकास(aपंचांगel_sha204a_निकास);
+module_init(atmel_sha204a_init);
+module_exit(atmel_sha204a_exit);
 
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");
 MODULE_LICENSE("GPL v2");

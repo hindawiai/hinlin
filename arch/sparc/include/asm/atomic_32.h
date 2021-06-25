@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* atomic.h: These still suck, but the I-cache hit rate is higher.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
- * Copyright (C) 2000 Anton Blanअक्षरd (anton@linuxcare.com.au)
+ * Copyright (C) 2000 Anton Blanchard (anton@linuxcare.com.au)
  * Copyright (C) 2007 Kyle McMartin (kyle@parisc-linux.org)
  *
  * Additions by Keith M Wesolowski (wesolows@foobazco.org) based
- * on यंत्र-parisc/atomic.h Copyright (C) 2000 Philipp Rumpf <prumpf@tux.org>.
+ * on asm-parisc/atomic.h Copyright (C) 2000 Philipp Rumpf <prumpf@tux.org>.
  */
 
-#अगर_अघोषित __ARCH_SPARC_ATOMIC__
-#घोषणा __ARCH_SPARC_ATOMIC__
+#ifndef __ARCH_SPARC_ATOMIC__
+#define __ARCH_SPARC_ATOMIC__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/cmpxchg.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र-generic/atomic64.h>
+#include <asm/cmpxchg.h>
+#include <asm/barrier.h>
+#include <asm-generic/atomic64.h>
 
-पूर्णांक atomic_add_वापस(पूर्णांक, atomic_t *);
-पूर्णांक atomic_fetch_add(पूर्णांक, atomic_t *);
-पूर्णांक atomic_fetch_and(पूर्णांक, atomic_t *);
-पूर्णांक atomic_fetch_or(पूर्णांक, atomic_t *);
-पूर्णांक atomic_fetch_xor(पूर्णांक, atomic_t *);
-पूर्णांक atomic_cmpxchg(atomic_t *, पूर्णांक, पूर्णांक);
-पूर्णांक atomic_xchg(atomic_t *, पूर्णांक);
-पूर्णांक atomic_fetch_add_unless(atomic_t *, पूर्णांक, पूर्णांक);
-व्योम atomic_set(atomic_t *, पूर्णांक);
+int atomic_add_return(int, atomic_t *);
+int atomic_fetch_add(int, atomic_t *);
+int atomic_fetch_and(int, atomic_t *);
+int atomic_fetch_or(int, atomic_t *);
+int atomic_fetch_xor(int, atomic_t *);
+int atomic_cmpxchg(atomic_t *, int, int);
+int atomic_xchg(atomic_t *, int);
+int atomic_fetch_add_unless(atomic_t *, int, int);
+void atomic_set(atomic_t *, int);
 
-#घोषणा atomic_fetch_add_unless	atomic_fetch_add_unless
+#define atomic_fetch_add_unless	atomic_fetch_add_unless
 
-#घोषणा atomic_set_release(v, i)	atomic_set((v), (i))
+#define atomic_set_release(v, i)	atomic_set((v), (i))
 
-#घोषणा atomic_पढ़ो(v)          READ_ONCE((v)->counter)
+#define atomic_read(v)          READ_ONCE((v)->counter)
 
-#घोषणा atomic_add(i, v)	((व्योम)atomic_add_वापस( (पूर्णांक)(i), (v)))
-#घोषणा atomic_sub(i, v)	((व्योम)atomic_add_वापस(-(पूर्णांक)(i), (v)))
+#define atomic_add(i, v)	((void)atomic_add_return( (int)(i), (v)))
+#define atomic_sub(i, v)	((void)atomic_add_return(-(int)(i), (v)))
 
-#घोषणा atomic_and(i, v)	((व्योम)atomic_fetch_and((i), (v)))
-#घोषणा atomic_or(i, v)		((व्योम)atomic_fetch_or((i), (v)))
-#घोषणा atomic_xor(i, v)	((व्योम)atomic_fetch_xor((i), (v)))
+#define atomic_and(i, v)	((void)atomic_fetch_and((i), (v)))
+#define atomic_or(i, v)		((void)atomic_fetch_or((i), (v)))
+#define atomic_xor(i, v)	((void)atomic_fetch_xor((i), (v)))
 
-#घोषणा atomic_sub_वापस(i, v)	(atomic_add_वापस(-(पूर्णांक)(i), (v)))
-#घोषणा atomic_fetch_sub(i, v)  (atomic_fetch_add (-(पूर्णांक)(i), (v)))
+#define atomic_sub_return(i, v)	(atomic_add_return(-(int)(i), (v)))
+#define atomic_fetch_sub(i, v)  (atomic_fetch_add (-(int)(i), (v)))
 
-#पूर्ण_अगर /* !(__ARCH_SPARC_ATOMIC__) */
+#endif /* !(__ARCH_SPARC_ATOMIC__) */

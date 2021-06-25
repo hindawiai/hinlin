@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FS_CEPH_IO_H
-#घोषणा _FS_CEPH_IO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FS_CEPH_IO_H
+#define _FS_CEPH_IO_H
 
-व्योम ceph_start_io_पढ़ो(काष्ठा inode *inode);
-व्योम ceph_end_io_पढ़ो(काष्ठा inode *inode);
-व्योम ceph_start_io_ग_लिखो(काष्ठा inode *inode);
-व्योम ceph_end_io_ग_लिखो(काष्ठा inode *inode);
-व्योम ceph_start_io_direct(काष्ठा inode *inode);
-व्योम ceph_end_io_direct(काष्ठा inode *inode);
+void ceph_start_io_read(struct inode *inode);
+void ceph_end_io_read(struct inode *inode);
+void ceph_start_io_write(struct inode *inode);
+void ceph_end_io_write(struct inode *inode);
+void ceph_start_io_direct(struct inode *inode);
+void ceph_end_io_direct(struct inode *inode);
 
-#पूर्ण_अगर /* FS_CEPH_IO_H */
+#endif /* FS_CEPH_IO_H */

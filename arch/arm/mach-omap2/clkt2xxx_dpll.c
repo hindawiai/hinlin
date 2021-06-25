@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * OMAP2-specअगरic DPLL control functions
+ * OMAP2-specific DPLL control functions
  *
  * Copyright (C) 2011 Nokia Corporation
  * Paul Walmsley
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#समावेश "clock.h"
-#समावेश "cm2xxx.h"
-#समावेश "cm-regbits-24xx.h"
+#include "clock.h"
+#include "cm2xxx.h"
+#include "cm-regbits-24xx.h"
 
 /* Private functions */
 
 /**
- * _allow_idle - enable DPLL स्वतःidle bits
- * @clk: काष्ठा clk * of the DPLL to operate on
+ * _allow_idle - enable DPLL autoidle bits
+ * @clk: struct clk * of the DPLL to operate on
  *
- * Enable DPLL स्वतःmatic idle control.  The DPLL will enter low-घातer
- * stop when its करोwnstream घड़ीs are gated.  No वापस value.
- * REVISIT: DPLL can optionally enter low-घातer bypass by writing 0x1
+ * Enable DPLL automatic idle control.  The DPLL will enter low-power
+ * stop when its downstream clocks are gated.  No return value.
+ * REVISIT: DPLL can optionally enter low-power bypass by writing 0x1
  * instead.  Add some mechanism to optionally enter this mode.
  */
-अटल व्योम _allow_idle(काष्ठा clk_hw_omap *clk)
-अणु
-	अगर (!clk || !clk->dpll_data)
-		वापस;
+static void _allow_idle(struct clk_hw_omap *clk)
+{
+	if (!clk || !clk->dpll_data)
+		return;
 
-	omap2xxx_cm_set_dpll_स्वतः_low_घातer_stop();
-पूर्ण
+	omap2xxx_cm_set_dpll_auto_low_power_stop();
+}
 
 /**
- * _deny_idle - prevent DPLL from स्वतःmatically idling
- * @clk: काष्ठा clk * of the DPLL to operate on
+ * _deny_idle - prevent DPLL from automatically idling
+ * @clk: struct clk * of the DPLL to operate on
  *
- * Disable DPLL स्वतःmatic idle control.  No वापस value.
+ * Disable DPLL automatic idle control.  No return value.
  */
-अटल व्योम _deny_idle(काष्ठा clk_hw_omap *clk)
-अणु
-	अगर (!clk || !clk->dpll_data)
-		वापस;
+static void _deny_idle(struct clk_hw_omap *clk)
+{
+	if (!clk || !clk->dpll_data)
+		return;
 
-	omap2xxx_cm_set_dpll_disable_स्वतःidle();
-पूर्ण
+	omap2xxx_cm_set_dpll_disable_autoidle();
+}
 
 
 /* Public data */
-स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap2xxx_dpll = अणु
+const struct clk_hw_omap_ops clkhwops_omap2xxx_dpll = {
 	.allow_idle	= _allow_idle,
 	.deny_idle	= _deny_idle,
-पूर्ण;
+};

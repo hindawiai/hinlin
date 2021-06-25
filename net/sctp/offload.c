@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * sctp_offload - GRO/GSO Offloading क्रम SCTP
+ * sctp_offload - GRO/GSO Offloading for SCTP
  *
- * Copyright (C) 2015, Marcelo Ricarकरो Leitner <marcelo.leitner@gmail.com>
+ * Copyright (C) 2015, Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/sctp.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/समय.स>
-#समावेश <net/net_namespace.h>
+#include <linux/kernel.h>
+#include <linux/kprobes.h>
+#include <linux/socket.h>
+#include <linux/sctp.h>
+#include <linux/proc_fs.h>
+#include <linux/vmalloc.h>
+#include <linux/module.h>
+#include <linux/kfifo.h>
+#include <linux/time.h>
+#include <net/net_namespace.h>
 
-#समावेश <linux/skbuff.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/checksum.h>
-#समावेश <net/protocol.h>
+#include <linux/skbuff.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/checksum.h>
+#include <net/protocol.h>
 
-अटल __le32 sctp_gso_make_checksum(काष्ठा sk_buff *skb)
-अणु
+static __le32 sctp_gso_make_checksum(struct sk_buff *skb)
+{
 	skb->ip_summed = CHECKSUM_NONE;
 	skb->csum_not_inet = 0;
-	/* csum and csum_start in GSO CB may be needed to करो the UDP
+	/* csum and csum_start in GSO CB may be needed to do the UDP
 	 * checksum when it's a UDP tunneling packet.
 	 */
-	SKB_GSO_CB(skb)->csum = (__क्रमce __wsum)~0;
+	SKB_GSO_CB(skb)->csum = (__force __wsum)~0;
 	SKB_GSO_CB(skb)->csum_start = skb_headroom(skb) + skb->len;
-	वापस sctp_compute_cksum(skb, skb_transport_offset(skb));
-पूर्ण
+	return sctp_compute_cksum(skb, skb_transport_offset(skb));
+}
 
-अटल काष्ठा sk_buff *sctp_gso_segment(काष्ठा sk_buff *skb,
+static struct sk_buff *sctp_gso_segment(struct sk_buff *skb,
 					netdev_features_t features)
-अणु
-	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
-	काष्ठा sctphdr *sh;
+{
+	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sctphdr *sh;
 
-	अगर (!skb_is_gso_sctp(skb))
-		जाओ out;
+	if (!skb_is_gso_sctp(skb))
+		goto out;
 
 	sh = sctp_hdr(skb);
-	अगर (!pskb_may_pull(skb, माप(*sh)))
-		जाओ out;
+	if (!pskb_may_pull(skb, sizeof(*sh)))
+		goto out;
 
-	__skb_pull(skb, माप(*sh));
+	__skb_pull(skb, sizeof(*sh));
 
-	अगर (skb_gso_ok(skb, features | NETIF_F_GSO_ROBUST)) अणु
+	if (skb_gso_ok(skb, features | NETIF_F_GSO_ROBUST)) {
 		/* Packet is from an untrusted source, reset gso_segs. */
-		काष्ठा skb_shared_info *pinfo = skb_shinfo(skb);
-		काष्ठा sk_buff *frag_iter;
+		struct skb_shared_info *pinfo = skb_shinfo(skb);
+		struct sk_buff *frag_iter;
 
 		pinfo->gso_segs = 0;
-		अगर (skb->len != skb->data_len) अणु
+		if (skb->len != skb->data_len) {
 			/* Means we have chunks in here too */
 			pinfo->gso_segs++;
-		पूर्ण
+		}
 
 		skb_walk_frags(skb, frag_iter)
 			pinfo->gso_segs++;
 
-		segs = शून्य;
-		जाओ out;
-	पूर्ण
+		segs = NULL;
+		goto out;
+	}
 
 	segs = skb_segment(skb, (features | NETIF_F_HW_CSUM) & ~NETIF_F_SG);
-	अगर (IS_ERR(segs))
-		जाओ out;
+	if (IS_ERR(segs))
+		goto out;
 
-	/* All that is left is update SCTP CRC अगर necessary */
-	अगर (!(features & NETIF_F_SCTP_CRC)) अणु
-		क्रम (skb = segs; skb; skb = skb->next) अणु
-			अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+	/* All that is left is update SCTP CRC if necessary */
+	if (!(features & NETIF_F_SCTP_CRC)) {
+		for (skb = segs; skb; skb = skb->next) {
+			if (skb->ip_summed == CHECKSUM_PARTIAL) {
 				sh = sctp_hdr(skb);
 				sh->checksum = sctp_gso_make_checksum(skb);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 out:
-	वापस segs;
-पूर्ण
+	return segs;
+}
 
-अटल स्थिर काष्ठा net_offload sctp_offload = अणु
-	.callbacks = अणु
+static const struct net_offload sctp_offload = {
+	.callbacks = {
 		.gso_segment = sctp_gso_segment,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा net_offload sctp6_offload = अणु
-	.callbacks = अणु
+static const struct net_offload sctp6_offload = {
+	.callbacks = {
 		.gso_segment = sctp_gso_segment,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init sctp_offload_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init sctp_offload_init(void)
+{
+	int ret;
 
 	ret = inet_add_offload(&sctp_offload, IPPROTO_SCTP);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = inet6_add_offload(&sctp6_offload, IPPROTO_SCTP);
-	अगर (ret)
-		जाओ ipv4;
+	if (ret)
+		goto ipv4;
 
 	crc32c_csum_stub = &sctp_csum_ops;
-	वापस ret;
+	return ret;
 
 ipv4:
 	inet_del_offload(&sctp_offload, IPPROTO_SCTP);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}

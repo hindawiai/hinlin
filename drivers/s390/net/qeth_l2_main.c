@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *    Copyright IBM Corp. 2007, 2009
  *    Author(s): Utz Bacher <utz.bacher@de.ibm.com>,
@@ -8,1298 +7,1298 @@
  *		 Frank Blaschka <frank.blaschka@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "qeth"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "qeth"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अगर_bridge.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/hashtable.h>
-#समावेश <net/चयनdev.h>
-#समावेश <यंत्र/chsc.h>
-#समावेश <यंत्र/css_अक्षरs.h>
-#समावेश <यंत्र/setup.h>
-#समावेश "qeth_core.h"
-#समावेश "qeth_l2.h"
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/etherdevice.h>
+#include <linux/if_bridge.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <linux/hashtable.h>
+#include <net/switchdev.h>
+#include <asm/chsc.h>
+#include <asm/css_chars.h>
+#include <asm/setup.h>
+#include "qeth_core.h"
+#include "qeth_l2.h"
 
-अटल पूर्णांक qeth_l2_setdelmac_makerc(काष्ठा qeth_card *card, u16 retcode)
-अणु
-	पूर्णांक rc;
+static int qeth_l2_setdelmac_makerc(struct qeth_card *card, u16 retcode)
+{
+	int rc;
 
-	अगर (retcode)
+	if (retcode)
 		QETH_CARD_TEXT_(card, 2, "err%04x", retcode);
-	चयन (retcode) अणु
-	हाल IPA_RC_SUCCESS:
+	switch (retcode) {
+	case IPA_RC_SUCCESS:
 		rc = 0;
-		अवरोध;
-	हाल IPA_RC_L2_UNSUPPORTED_CMD:
+		break;
+	case IPA_RC_L2_UNSUPPORTED_CMD:
 		rc = -EOPNOTSUPP;
-		अवरोध;
-	हाल IPA_RC_L2_ADDR_TABLE_FULL:
+		break;
+	case IPA_RC_L2_ADDR_TABLE_FULL:
 		rc = -ENOSPC;
-		अवरोध;
-	हाल IPA_RC_L2_DUP_MAC:
-	हाल IPA_RC_L2_DUP_LAYER3_MAC:
+		break;
+	case IPA_RC_L2_DUP_MAC:
+	case IPA_RC_L2_DUP_LAYER3_MAC:
 		rc = -EADDRINUSE;
-		अवरोध;
-	हाल IPA_RC_L2_MAC_NOT_AUTH_BY_HYP:
-	हाल IPA_RC_L2_MAC_NOT_AUTH_BY_ADP:
+		break;
+	case IPA_RC_L2_MAC_NOT_AUTH_BY_HYP:
+	case IPA_RC_L2_MAC_NOT_AUTH_BY_ADP:
 		rc = -EADDRNOTAVAIL;
-		अवरोध;
-	हाल IPA_RC_L2_MAC_NOT_FOUND:
+		break;
+	case IPA_RC_L2_MAC_NOT_FOUND:
 		rc = -ENOENT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EIO;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल पूर्णांक qeth_l2_send_setdelmac_cb(काष्ठा qeth_card *card,
-				     काष्ठा qeth_reply *reply,
-				     अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *) data;
+static int qeth_l2_send_setdelmac_cb(struct qeth_card *card,
+				     struct qeth_reply *reply,
+				     unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *) data;
 
-	वापस qeth_l2_setdelmac_makerc(card, cmd->hdr.वापस_code);
-पूर्ण
+	return qeth_l2_setdelmac_makerc(card, cmd->hdr.return_code);
+}
 
-अटल पूर्णांक qeth_l2_send_setdelmac(काष्ठा qeth_card *card, __u8 *mac,
-			   क्रमागत qeth_ipa_cmds ipacmd)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd;
-	काष्ठा qeth_cmd_buffer *iob;
+static int qeth_l2_send_setdelmac(struct qeth_card *card, __u8 *mac,
+			   enum qeth_ipa_cmds ipacmd)
+{
+	struct qeth_ipa_cmd *cmd;
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT(card, 2, "L2sdmac");
 	iob = qeth_ipa_alloc_cmd(card, ipacmd, QETH_PROT_IPV4,
-				 IPA_DATA_SIZखातापूर्ण(setdelmac));
-	अगर (!iob)
-		वापस -ENOMEM;
+				 IPA_DATA_SIZEOF(setdelmac));
+	if (!iob)
+		return -ENOMEM;
 	cmd = __ipa_cmd(iob);
 	cmd->data.setdelmac.mac_length = ETH_ALEN;
 	ether_addr_copy(cmd->data.setdelmac.mac, mac);
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_send_setdelmac_cb, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_send_setdelmac_cb, NULL);
+}
 
-अटल पूर्णांक qeth_l2_send_seपंचांगac(काष्ठा qeth_card *card, __u8 *mac)
-अणु
-	पूर्णांक rc;
+static int qeth_l2_send_setmac(struct qeth_card *card, __u8 *mac)
+{
+	int rc;
 
 	QETH_CARD_TEXT(card, 2, "L2Setmac");
 	rc = qeth_l2_send_setdelmac(card, mac, IPA_CMD_SETVMAC);
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		dev_info(&card->gdev->dev,
 			 "MAC address %pM successfully registered\n", mac);
-	पूर्ण अन्यथा अणु
-		चयन (rc) अणु
-		हाल -EADDRINUSE:
+	} else {
+		switch (rc) {
+		case -EADDRINUSE:
 			dev_warn(&card->gdev->dev,
 				"MAC address %pM already exists\n", mac);
-			अवरोध;
-		हाल -EADDRNOTAVAIL:
+			break;
+		case -EADDRNOTAVAIL:
 			dev_warn(&card->gdev->dev,
 				"MAC address %pM is not authorized\n", mac);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+			break;
+		}
+	}
+	return rc;
+}
 
-अटल पूर्णांक qeth_l2_ग_लिखो_mac(काष्ठा qeth_card *card, u8 *mac)
-अणु
-	क्रमागत qeth_ipa_cmds cmd = is_multicast_ether_addr(mac) ?
+static int qeth_l2_write_mac(struct qeth_card *card, u8 *mac)
+{
+	enum qeth_ipa_cmds cmd = is_multicast_ether_addr(mac) ?
 					IPA_CMD_SETGMAC : IPA_CMD_SETVMAC;
-	पूर्णांक rc;
+	int rc;
 
 	QETH_CARD_TEXT(card, 2, "L2Wmac");
 	rc = qeth_l2_send_setdelmac(card, mac, cmd);
-	अगर (rc == -EADDRINUSE)
+	if (rc == -EADDRINUSE)
 		QETH_DBF_MESSAGE(2, "MAC already registered on device %x\n",
 				 CARD_DEVID(card));
-	अन्यथा अगर (rc)
+	else if (rc)
 		QETH_DBF_MESSAGE(2, "Failed to register MAC on device %x: %d\n",
 				 CARD_DEVID(card), rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qeth_l2_हटाओ_mac(काष्ठा qeth_card *card, u8 *mac)
-अणु
-	क्रमागत qeth_ipa_cmds cmd = is_multicast_ether_addr(mac) ?
+static int qeth_l2_remove_mac(struct qeth_card *card, u8 *mac)
+{
+	enum qeth_ipa_cmds cmd = is_multicast_ether_addr(mac) ?
 					IPA_CMD_DELGMAC : IPA_CMD_DELVMAC;
-	पूर्णांक rc;
+	int rc;
 
 	QETH_CARD_TEXT(card, 2, "L2Rmac");
 	rc = qeth_l2_send_setdelmac(card, mac, cmd);
-	अगर (rc)
+	if (rc)
 		QETH_DBF_MESSAGE(2, "Failed to delete MAC on device %u: %d\n",
 				 CARD_DEVID(card), rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qeth_l2_drain_rx_mode_cache(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_mac *mac;
-	काष्ठा hlist_node *पंचांगp;
-	पूर्णांक i;
+static void qeth_l2_drain_rx_mode_cache(struct qeth_card *card)
+{
+	struct qeth_mac *mac;
+	struct hlist_node *tmp;
+	int i;
 
-	hash_क्रम_each_safe(card->rx_mode_addrs, i, पंचांगp, mac, hnode) अणु
+	hash_for_each_safe(card->rx_mode_addrs, i, tmp, mac, hnode) {
 		hash_del(&mac->hnode);
-		kमुक्त(mac);
-	पूर्ण
-पूर्ण
+		kfree(mac);
+	}
+}
 
-अटल व्योम qeth_l2_fill_header(काष्ठा qeth_qdio_out_q *queue,
-				काष्ठा qeth_hdr *hdr, काष्ठा sk_buff *skb,
-				__be16 proto, अचिन्हित पूर्णांक data_len)
-अणु
-	पूर्णांक cast_type = qeth_get_ether_cast_type(skb);
-	काष्ठा vlan_ethhdr *veth = vlan_eth_hdr(skb);
+static void qeth_l2_fill_header(struct qeth_qdio_out_q *queue,
+				struct qeth_hdr *hdr, struct sk_buff *skb,
+				__be16 proto, unsigned int data_len)
+{
+	int cast_type = qeth_get_ether_cast_type(skb);
+	struct vlan_ethhdr *veth = vlan_eth_hdr(skb);
 
 	hdr->hdr.l2.pkt_length = data_len;
 
-	अगर (skb_is_gso(skb)) अणु
+	if (skb_is_gso(skb)) {
 		hdr->hdr.l2.id = QETH_HEADER_TYPE_L2_TSO;
-	पूर्ण अन्यथा अणु
+	} else {
 		hdr->hdr.l2.id = QETH_HEADER_TYPE_LAYER2;
-		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
+		if (skb->ip_summed == CHECKSUM_PARTIAL)
 			qeth_tx_csum(skb, &hdr->hdr.l2.flags[1], proto);
-	पूर्ण
+	}
 
 	/* set byte byte 3 to casting flags */
-	अगर (cast_type == RTN_MULTICAST)
+	if (cast_type == RTN_MULTICAST)
 		hdr->hdr.l2.flags[2] |= QETH_LAYER2_FLAG_MULTICAST;
-	अन्यथा अगर (cast_type == RTN_BROADCAST)
+	else if (cast_type == RTN_BROADCAST)
 		hdr->hdr.l2.flags[2] |= QETH_LAYER2_FLAG_BROADCAST;
-	अन्यथा
+	else
 		hdr->hdr.l2.flags[2] |= QETH_LAYER2_FLAG_UNICAST;
 
 	/* VSWITCH relies on the VLAN
-	 * inक्रमmation to be present in
+	 * information to be present in
 	 * the QDIO header */
-	अगर (veth->h_vlan_proto == htons(ETH_P_8021Q)) अणु
+	if (veth->h_vlan_proto == htons(ETH_P_8021Q)) {
 		hdr->hdr.l2.flags[2] |= QETH_LAYER2_FLAG_VLAN;
 		hdr->hdr.l2.vlan_id = ntohs(veth->h_vlan_TCI);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक qeth_l2_setdelvlan_makerc(काष्ठा qeth_card *card, u16 retcode)
-अणु
-	अगर (retcode)
+static int qeth_l2_setdelvlan_makerc(struct qeth_card *card, u16 retcode)
+{
+	if (retcode)
 		QETH_CARD_TEXT_(card, 2, "err%04x", retcode);
 
-	चयन (retcode) अणु
-	हाल IPA_RC_SUCCESS:
-		वापस 0;
-	हाल IPA_RC_L2_INVALID_VLAN_ID:
-		वापस -EINVAL;
-	हाल IPA_RC_L2_DUP_VLAN_ID:
-		वापस -EEXIST;
-	हाल IPA_RC_L2_VLAN_ID_NOT_FOUND:
-		वापस -ENOENT;
-	हाल IPA_RC_L2_VLAN_ID_NOT_ALLOWED:
-		वापस -EPERM;
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+	switch (retcode) {
+	case IPA_RC_SUCCESS:
+		return 0;
+	case IPA_RC_L2_INVALID_VLAN_ID:
+		return -EINVAL;
+	case IPA_RC_L2_DUP_VLAN_ID:
+		return -EEXIST;
+	case IPA_RC_L2_VLAN_ID_NOT_FOUND:
+		return -ENOENT;
+	case IPA_RC_L2_VLAN_ID_NOT_ALLOWED:
+		return -EPERM;
+	default:
+		return -EIO;
+	}
+}
 
-अटल पूर्णांक qeth_l2_send_setdelvlan_cb(काष्ठा qeth_card *card,
-				      काष्ठा qeth_reply *reply,
-				      अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *) data;
+static int qeth_l2_send_setdelvlan_cb(struct qeth_card *card,
+				      struct qeth_reply *reply,
+				      unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *) data;
 
 	QETH_CARD_TEXT(card, 2, "L2sdvcb");
-	अगर (cmd->hdr.वापस_code) अणु
+	if (cmd->hdr.return_code) {
 		QETH_DBF_MESSAGE(2, "Error in processing VLAN %u on device %x: %#x.\n",
 				 cmd->data.setdelvlan.vlan_id,
-				 CARD_DEVID(card), cmd->hdr.वापस_code);
+				 CARD_DEVID(card), cmd->hdr.return_code);
 		QETH_CARD_TEXT_(card, 2, "L2VL%4x", cmd->hdr.command);
-	पूर्ण
-	वापस qeth_l2_setdelvlan_makerc(card, cmd->hdr.वापस_code);
-पूर्ण
+	}
+	return qeth_l2_setdelvlan_makerc(card, cmd->hdr.return_code);
+}
 
-अटल पूर्णांक qeth_l2_send_setdelvlan(काष्ठा qeth_card *card, __u16 i,
-				   क्रमागत qeth_ipa_cmds ipacmd)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd;
-	काष्ठा qeth_cmd_buffer *iob;
+static int qeth_l2_send_setdelvlan(struct qeth_card *card, __u16 i,
+				   enum qeth_ipa_cmds ipacmd)
+{
+	struct qeth_ipa_cmd *cmd;
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT_(card, 4, "L2sdv%x", ipacmd);
 	iob = qeth_ipa_alloc_cmd(card, ipacmd, QETH_PROT_IPV4,
-				 IPA_DATA_SIZखातापूर्ण(setdelvlan));
-	अगर (!iob)
-		वापस -ENOMEM;
+				 IPA_DATA_SIZEOF(setdelvlan));
+	if (!iob)
+		return -ENOMEM;
 	cmd = __ipa_cmd(iob);
 	cmd->data.setdelvlan.vlan_id = i;
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_send_setdelvlan_cb, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_send_setdelvlan_cb, NULL);
+}
 
-अटल पूर्णांक qeth_l2_vlan_rx_add_vid(काष्ठा net_device *dev,
+static int qeth_l2_vlan_rx_add_vid(struct net_device *dev,
 				   __be16 proto, u16 vid)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+{
+	struct qeth_card *card = dev->ml_priv;
 
 	QETH_CARD_TEXT_(card, 4, "aid:%d", vid);
-	अगर (!vid)
-		वापस 0;
+	if (!vid)
+		return 0;
 
-	वापस qeth_l2_send_setdelvlan(card, vid, IPA_CMD_SETVLAN);
-पूर्ण
+	return qeth_l2_send_setdelvlan(card, vid, IPA_CMD_SETVLAN);
+}
 
-अटल पूर्णांक qeth_l2_vlan_rx_समाप्त_vid(काष्ठा net_device *dev,
+static int qeth_l2_vlan_rx_kill_vid(struct net_device *dev,
 				    __be16 proto, u16 vid)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+{
+	struct qeth_card *card = dev->ml_priv;
 
 	QETH_CARD_TEXT_(card, 4, "kid:%d", vid);
-	अगर (!vid)
-		वापस 0;
+	if (!vid)
+		return 0;
 
-	वापस qeth_l2_send_setdelvlan(card, vid, IPA_CMD_DELVLAN);
-पूर्ण
+	return qeth_l2_send_setdelvlan(card, vid, IPA_CMD_DELVLAN);
+}
 
-अटल व्योम qeth_l2_set_pnso_mode(काष्ठा qeth_card *card,
-				  क्रमागत qeth_pnso_mode mode)
-अणु
+static void qeth_l2_set_pnso_mode(struct qeth_card *card,
+				  enum qeth_pnso_mode mode)
+{
 	spin_lock_irq(get_ccwdev_lock(CARD_RDEV(card)));
 	WRITE_ONCE(card->info.pnso_mode, mode);
 	spin_unlock_irq(get_ccwdev_lock(CARD_RDEV(card)));
 
-	अगर (mode == QETH_PNSO_NONE)
+	if (mode == QETH_PNSO_NONE)
 		drain_workqueue(card->event_wq);
-पूर्ण
+}
 
-अटल व्योम qeth_l2_dev2br_fdb_flush(काष्ठा qeth_card *card)
-अणु
-	काष्ठा चयनdev_notअगरier_fdb_info info;
+static void qeth_l2_dev2br_fdb_flush(struct qeth_card *card)
+{
+	struct switchdev_notifier_fdb_info info;
 
 	QETH_CARD_TEXT(card, 2, "fdbflush");
 
-	info.addr = शून्य;
+	info.addr = NULL;
 	/* flush all VLANs: */
 	info.vid = 0;
 	info.added_by_user = false;
 	info.offloaded = true;
 
-	call_चयनdev_notअगरiers(SWITCHDEV_FDB_FLUSH_TO_BRIDGE,
-				 card->dev, &info.info, शून्य);
-पूर्ण
+	call_switchdev_notifiers(SWITCHDEV_FDB_FLUSH_TO_BRIDGE,
+				 card->dev, &info.info, NULL);
+}
 
-अटल पूर्णांक qeth_l2_request_initial_mac(काष्ठा qeth_card *card)
-अणु
-	पूर्णांक rc = 0;
+static int qeth_l2_request_initial_mac(struct qeth_card *card)
+{
+	int rc = 0;
 
 	QETH_CARD_TEXT(card, 2, "l2reqmac");
 
-	अगर (MACHINE_IS_VM) अणु
+	if (MACHINE_IS_VM) {
 		rc = qeth_vm_request_mac(card);
-		अगर (!rc)
-			जाओ out;
+		if (!rc)
+			goto out;
 		QETH_DBF_MESSAGE(2, "z/VM MAC Service failed on device %x: %#x\n",
 				 CARD_DEVID(card), rc);
 		QETH_CARD_TEXT_(card, 2, "err%04x", rc);
 		/* fall back to alternative mechanism: */
-	पूर्ण
+	}
 
-	अगर (!IS_OSN(card)) अणु
+	if (!IS_OSN(card)) {
 		rc = qeth_setadpparms_change_macaddr(card);
-		अगर (!rc)
-			जाओ out;
+		if (!rc)
+			goto out;
 		QETH_DBF_MESSAGE(2, "READ_MAC Assist failed on device %x: %#x\n",
 				 CARD_DEVID(card), rc);
 		QETH_CARD_TEXT_(card, 2, "1err%04x", rc);
 		/* fall back once more: */
-	पूर्ण
+	}
 
-	/* some devices करोn't support a custom MAC address: */
-	अगर (IS_OSM(card) || IS_OSX(card))
-		वापस (rc) ? rc : -EADDRNOTAVAIL;
-	eth_hw_addr_अक्रमom(card->dev);
+	/* some devices don't support a custom MAC address: */
+	if (IS_OSM(card) || IS_OSX(card))
+		return (rc) ? rc : -EADDRNOTAVAIL;
+	eth_hw_addr_random(card->dev);
 
 out:
 	QETH_CARD_HEX(card, 2, card->dev->dev_addr, card->dev->addr_len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qeth_l2_रेजिस्टर_dev_addr(काष्ठा qeth_card *card)
-अणु
-	अगर (!is_valid_ether_addr(card->dev->dev_addr))
+static void qeth_l2_register_dev_addr(struct qeth_card *card)
+{
+	if (!is_valid_ether_addr(card->dev->dev_addr))
 		qeth_l2_request_initial_mac(card);
 
-	अगर (!IS_OSN(card) && !qeth_l2_send_seपंचांगac(card, card->dev->dev_addr))
-		card->info.dev_addr_is_रेजिस्टरed = 1;
-	अन्यथा
-		card->info.dev_addr_is_रेजिस्टरed = 0;
-पूर्ण
+	if (!IS_OSN(card) && !qeth_l2_send_setmac(card, card->dev->dev_addr))
+		card->info.dev_addr_is_registered = 1;
+	else
+		card->info.dev_addr_is_registered = 0;
+}
 
-अटल पूर्णांक qeth_l2_validate_addr(काष्ठा net_device *dev)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+static int qeth_l2_validate_addr(struct net_device *dev)
+{
+	struct qeth_card *card = dev->ml_priv;
 
-	अगर (card->info.dev_addr_is_रेजिस्टरed)
-		वापस eth_validate_addr(dev);
+	if (card->info.dev_addr_is_registered)
+		return eth_validate_addr(dev);
 
 	QETH_CARD_TEXT(card, 4, "nomacadr");
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
-अटल पूर्णांक qeth_l2_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा sockaddr *addr = p;
-	काष्ठा qeth_card *card = dev->ml_priv;
+static int qeth_l2_set_mac_address(struct net_device *dev, void *p)
+{
+	struct sockaddr *addr = p;
+	struct qeth_card *card = dev->ml_priv;
 	u8 old_addr[ETH_ALEN];
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	QETH_CARD_TEXT(card, 3, "setmac");
 
-	अगर (IS_OSM(card) || IS_OSX(card)) अणु
+	if (IS_OSM(card) || IS_OSX(card)) {
 		QETH_CARD_TEXT(card, 3, "setmcTYP");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 	QETH_CARD_HEX(card, 3, addr->sa_data, ETH_ALEN);
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	/* करोn't रेजिस्टर the same address twice */
-	अगर (ether_addr_equal_64bits(dev->dev_addr, addr->sa_data) &&
-	    card->info.dev_addr_is_रेजिस्टरed)
-		वापस 0;
+	/* don't register the same address twice */
+	if (ether_addr_equal_64bits(dev->dev_addr, addr->sa_data) &&
+	    card->info.dev_addr_is_registered)
+		return 0;
 
-	/* add the new address, चयन over, drop the old */
-	rc = qeth_l2_send_seपंचांगac(card, addr->sa_data);
-	अगर (rc)
-		वापस rc;
+	/* add the new address, switch over, drop the old */
+	rc = qeth_l2_send_setmac(card, addr->sa_data);
+	if (rc)
+		return rc;
 	ether_addr_copy(old_addr, dev->dev_addr);
 	ether_addr_copy(dev->dev_addr, addr->sa_data);
 
-	अगर (card->info.dev_addr_is_रेजिस्टरed)
-		qeth_l2_हटाओ_mac(card, old_addr);
-	card->info.dev_addr_is_रेजिस्टरed = 1;
-	वापस 0;
-पूर्ण
+	if (card->info.dev_addr_is_registered)
+		qeth_l2_remove_mac(card, old_addr);
+	card->info.dev_addr_is_registered = 1;
+	return 0;
+}
 
-अटल व्योम qeth_l2_promisc_to_bridge(काष्ठा qeth_card *card, bool enable)
-अणु
-	पूर्णांक role;
-	पूर्णांक rc;
+static void qeth_l2_promisc_to_bridge(struct qeth_card *card, bool enable)
+{
+	int role;
+	int rc;
 
 	QETH_CARD_TEXT(card, 3, "pmisc2br");
 
-	अगर (enable) अणु
-		अगर (card->options.sbp.reflect_promisc_primary)
+	if (enable) {
+		if (card->options.sbp.reflect_promisc_primary)
 			role = QETH_SBP_ROLE_PRIMARY;
-		अन्यथा
+		else
 			role = QETH_SBP_ROLE_SECONDARY;
-	पूर्ण अन्यथा
+	} else
 		role = QETH_SBP_ROLE_NONE;
 
 	rc = qeth_bridgeport_setrole(card, role);
 	QETH_CARD_TEXT_(card, 2, "bpm%c%04x", enable ? '+' : '-', rc);
-	अगर (!rc) अणु
+	if (!rc) {
 		card->options.sbp.role = role;
 		card->info.promisc_mode = enable;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qeth_l2_set_promisc_mode(काष्ठा qeth_card *card)
-अणु
+static void qeth_l2_set_promisc_mode(struct qeth_card *card)
+{
 	bool enable = card->dev->flags & IFF_PROMISC;
 
-	अगर (card->info.promisc_mode == enable)
-		वापस;
+	if (card->info.promisc_mode == enable)
+		return;
 
-	अगर (qeth_adp_supported(card, IPA_SETADP_SET_PROMISC_MODE)) अणु
+	if (qeth_adp_supported(card, IPA_SETADP_SET_PROMISC_MODE)) {
 		qeth_setadp_promisc_mode(card, enable);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&card->sbp_lock);
-		अगर (card->options.sbp.reflect_promisc)
+		if (card->options.sbp.reflect_promisc)
 			qeth_l2_promisc_to_bridge(card, enable);
 		mutex_unlock(&card->sbp_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* New MAC address is added to the hash table and marked to be written on card
- * only अगर there is not in the hash table storage alपढ़ोy
+ * only if there is not in the hash table storage already
  *
 */
-अटल व्योम qeth_l2_add_mac(काष्ठा qeth_card *card, काष्ठा netdev_hw_addr *ha)
-अणु
+static void qeth_l2_add_mac(struct qeth_card *card, struct netdev_hw_addr *ha)
+{
 	u32 mac_hash = get_unaligned((u32 *)(&ha->addr[2]));
-	काष्ठा qeth_mac *mac;
+	struct qeth_mac *mac;
 
-	hash_क्रम_each_possible(card->rx_mode_addrs, mac, hnode, mac_hash) अणु
-		अगर (ether_addr_equal_64bits(ha->addr, mac->mac_addr)) अणु
+	hash_for_each_possible(card->rx_mode_addrs, mac, hnode, mac_hash) {
+		if (ether_addr_equal_64bits(ha->addr, mac->mac_addr)) {
 			mac->disp_flag = QETH_DISP_ADDR_DO_NOTHING;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	mac = kzalloc(माप(काष्ठा qeth_mac), GFP_ATOMIC);
-	अगर (!mac)
-		वापस;
+	mac = kzalloc(sizeof(struct qeth_mac), GFP_ATOMIC);
+	if (!mac)
+		return;
 
 	ether_addr_copy(mac->mac_addr, ha->addr);
 	mac->disp_flag = QETH_DISP_ADDR_ADD;
 
 	hash_add(card->rx_mode_addrs, &mac->hnode, mac_hash);
-पूर्ण
+}
 
-अटल व्योम qeth_l2_rx_mode_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qeth_card *card = container_of(work, काष्ठा qeth_card,
+static void qeth_l2_rx_mode_work(struct work_struct *work)
+{
+	struct qeth_card *card = container_of(work, struct qeth_card,
 					      rx_mode_work);
-	काष्ठा net_device *dev = card->dev;
-	काष्ठा netdev_hw_addr *ha;
-	काष्ठा qeth_mac *mac;
-	काष्ठा hlist_node *पंचांगp;
-	पूर्णांक i;
-	पूर्णांक rc;
+	struct net_device *dev = card->dev;
+	struct netdev_hw_addr *ha;
+	struct qeth_mac *mac;
+	struct hlist_node *tmp;
+	int i;
+	int rc;
 
 	QETH_CARD_TEXT(card, 3, "setmulti");
 
-	netअगर_addr_lock_bh(dev);
-	netdev_क्रम_each_mc_addr(ha, dev)
+	netif_addr_lock_bh(dev);
+	netdev_for_each_mc_addr(ha, dev)
 		qeth_l2_add_mac(card, ha);
-	netdev_क्रम_each_uc_addr(ha, dev)
+	netdev_for_each_uc_addr(ha, dev)
 		qeth_l2_add_mac(card, ha);
-	netअगर_addr_unlock_bh(dev);
+	netif_addr_unlock_bh(dev);
 
-	hash_क्रम_each_safe(card->rx_mode_addrs, i, पंचांगp, mac, hnode) अणु
-		चयन (mac->disp_flag) अणु
-		हाल QETH_DISP_ADDR_DELETE:
-			qeth_l2_हटाओ_mac(card, mac->mac_addr);
+	hash_for_each_safe(card->rx_mode_addrs, i, tmp, mac, hnode) {
+		switch (mac->disp_flag) {
+		case QETH_DISP_ADDR_DELETE:
+			qeth_l2_remove_mac(card, mac->mac_addr);
 			hash_del(&mac->hnode);
-			kमुक्त(mac);
-			अवरोध;
-		हाल QETH_DISP_ADDR_ADD:
-			rc = qeth_l2_ग_लिखो_mac(card, mac->mac_addr);
-			अगर (rc) अणु
+			kfree(mac);
+			break;
+		case QETH_DISP_ADDR_ADD:
+			rc = qeth_l2_write_mac(card, mac->mac_addr);
+			if (rc) {
 				hash_del(&mac->hnode);
-				kमुक्त(mac);
-				अवरोध;
-			पूर्ण
+				kfree(mac);
+				break;
+			}
 			fallthrough;
-		शेष:
-			/* क्रम next call to set_rx_mode(): */
+		default:
+			/* for next call to set_rx_mode(): */
 			mac->disp_flag = QETH_DISP_ADDR_DELETE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	qeth_l2_set_promisc_mode(card);
-पूर्ण
+}
 
-अटल पूर्णांक qeth_l2_xmit_osn(काष्ठा qeth_card *card, काष्ठा sk_buff *skb,
-			    काष्ठा qeth_qdio_out_q *queue)
-अणु
-	gfp_t gfp = GFP_ATOMIC | (skb_pfmeदो_स्मृति(skb) ? __GFP_MEMALLOC : 0);
-	काष्ठा qeth_hdr *hdr = (काष्ठा qeth_hdr *)skb->data;
-	addr_t end = (addr_t)(skb->data + माप(*hdr));
+static int qeth_l2_xmit_osn(struct qeth_card *card, struct sk_buff *skb,
+			    struct qeth_qdio_out_q *queue)
+{
+	gfp_t gfp = GFP_ATOMIC | (skb_pfmemalloc(skb) ? __GFP_MEMALLOC : 0);
+	struct qeth_hdr *hdr = (struct qeth_hdr *)skb->data;
+	addr_t end = (addr_t)(skb->data + sizeof(*hdr));
 	addr_t start = (addr_t)skb->data;
-	अचिन्हित पूर्णांक elements = 0;
-	अचिन्हित पूर्णांक hd_len = 0;
-	पूर्णांक rc;
+	unsigned int elements = 0;
+	unsigned int hd_len = 0;
+	int rc;
 
-	अगर (skb->protocol == htons(ETH_P_IPV6))
-		वापस -EPROTONOSUPPORT;
+	if (skb->protocol == htons(ETH_P_IPV6))
+		return -EPROTONOSUPPORT;
 
-	अगर (qeth_get_elements_क्रम_range(start, end) > 1) अणु
+	if (qeth_get_elements_for_range(start, end) > 1) {
 		/* Misaligned HW header, move it to its own buffer element. */
 		hdr = kmem_cache_alloc(qeth_core_header_cache, gfp);
-		अगर (!hdr)
-			वापस -ENOMEM;
-		hd_len = माप(*hdr);
-		skb_copy_from_linear_data(skb, (अक्षर *)hdr, hd_len);
+		if (!hdr)
+			return -ENOMEM;
+		hd_len = sizeof(*hdr);
+		skb_copy_from_linear_data(skb, (char *)hdr, hd_len);
 		elements++;
-	पूर्ण
+	}
 
 	elements += qeth_count_elements(skb, hd_len);
-	अगर (elements > queue->max_elements) अणु
+	if (elements > queue->max_elements) {
 		rc = -E2BIG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = qeth_करो_send_packet(card, queue, skb, hdr, hd_len, hd_len,
+	rc = qeth_do_send_packet(card, queue, skb, hdr, hd_len, hd_len,
 				 elements);
 out:
-	अगर (rc && hd_len)
-		kmem_cache_मुक्त(qeth_core_header_cache, hdr);
-	वापस rc;
-पूर्ण
+	if (rc && hd_len)
+		kmem_cache_free(qeth_core_header_cache, hdr);
+	return rc;
+}
 
-अटल netdev_tx_t qeth_l2_hard_start_xmit(काष्ठा sk_buff *skb,
-					   काष्ठा net_device *dev)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+static netdev_tx_t qeth_l2_hard_start_xmit(struct sk_buff *skb,
+					   struct net_device *dev)
+{
+	struct qeth_card *card = dev->ml_priv;
 	u16 txq = skb_get_queue_mapping(skb);
-	काष्ठा qeth_qdio_out_q *queue;
-	पूर्णांक rc;
+	struct qeth_qdio_out_q *queue;
+	int rc;
 
-	अगर (!skb_is_gso(skb))
+	if (!skb_is_gso(skb))
 		qdisc_skb_cb(skb)->pkt_len = skb->len;
-	अगर (IS_IQD(card))
+	if (IS_IQD(card))
 		txq = qeth_iqd_translate_txq(dev, txq);
 	queue = card->qdio.out_qs[txq];
 
-	अगर (IS_OSN(card))
+	if (IS_OSN(card))
 		rc = qeth_l2_xmit_osn(card, skb, queue);
-	अन्यथा
+	else
 		rc = qeth_xmit(card, skb, queue, vlan_get_protocol(skb),
 			       qeth_l2_fill_header);
 
-	अगर (!rc)
-		वापस NETDEV_TX_OK;
+	if (!rc)
+		return NETDEV_TX_OK;
 
 	QETH_TXQ_STAT_INC(queue, tx_dropped);
-	kमुक्त_skb(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	kfree_skb(skb);
+	return NETDEV_TX_OK;
+}
 
-अटल u16 qeth_l2_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
-				काष्ठा net_device *sb_dev)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+static u16 qeth_l2_select_queue(struct net_device *dev, struct sk_buff *skb,
+				struct net_device *sb_dev)
+{
+	struct qeth_card *card = dev->ml_priv;
 
-	अगर (IS_IQD(card))
-		वापस qeth_iqd_select_queue(dev, skb,
+	if (IS_IQD(card))
+		return qeth_iqd_select_queue(dev, skb,
 					     qeth_get_ether_cast_type(skb),
 					     sb_dev);
-	अगर (qeth_uses_tx_prio_queueing(card))
-		वापस qeth_get_priority_queue(card, skb);
+	if (qeth_uses_tx_prio_queueing(card))
+		return qeth_get_priority_queue(card, skb);
 
-	वापस netdev_pick_tx(dev, skb, sb_dev);
-पूर्ण
+	return netdev_pick_tx(dev, skb, sb_dev);
+}
 
-अटल व्योम qeth_l2_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा qeth_card *card = dev->ml_priv;
+static void qeth_l2_set_rx_mode(struct net_device *dev)
+{
+	struct qeth_card *card = dev->ml_priv;
 
 	schedule_work(&card->rx_mode_work);
-पूर्ण
+}
 
 /**
- *	qeth_l2_pnso() - perक्रमm network subchannel operation
- *	@card: qeth_card काष्ठाure poपूर्णांकer
+ *	qeth_l2_pnso() - perform network subchannel operation
+ *	@card: qeth_card structure pointer
  *	@oc: Operation Code
- *	@cnc: Boolean Change-Notअगरication Control
- *	@cb: Callback function will be executed क्रम each element
+ *	@cnc: Boolean Change-Notification Control
+ *	@cb: Callback function will be executed for each element
  *		of the address list
- *	@priv: Poपूर्णांकer to pass to the callback function.
+ *	@priv: Pointer to pass to the callback function.
  *
- *	Collects network inक्रमmation in a network address list and calls the
- *	callback function क्रम every entry in the list. If "change-notअगरication-
+ *	Collects network information in a network address list and calls the
+ *	callback function for every entry in the list. If "change-notification-
  *	control" is set, further changes in the address list will be reported
  *	via the IPA command.
  */
-अटल पूर्णांक qeth_l2_pnso(काष्ठा qeth_card *card, u8 oc, पूर्णांक cnc,
-			व्योम (*cb)(व्योम *priv, काष्ठा chsc_pnso_naid_l2 *entry),
-			व्योम *priv)
-अणु
-	काष्ठा ccw_device *ddev = CARD_DDEV(card);
-	काष्ठा chsc_pnso_area *rr;
+static int qeth_l2_pnso(struct qeth_card *card, u8 oc, int cnc,
+			void (*cb)(void *priv, struct chsc_pnso_naid_l2 *entry),
+			void *priv)
+{
+	struct ccw_device *ddev = CARD_DDEV(card);
+	struct chsc_pnso_area *rr;
 	u32 prev_instance = 0;
-	पूर्णांक isfirstblock = 1;
-	पूर्णांक i, size, elems;
-	पूर्णांक rc;
+	int isfirstblock = 1;
+	int i, size, elems;
+	int rc;
 
-	rr = (काष्ठा chsc_pnso_area *)get_zeroed_page(GFP_KERNEL);
-	अगर (rr == शून्य)
-		वापस -ENOMEM;
-	करो अणु
+	rr = (struct chsc_pnso_area *)get_zeroed_page(GFP_KERNEL);
+	if (rr == NULL)
+		return -ENOMEM;
+	do {
 		QETH_CARD_TEXT(card, 2, "PNSO");
 		/* on the first iteration, naihdr.resume_token will be zero */
 		rc = ccw_device_pnso(ddev, rr, oc, rr->naihdr.resume_token,
 				     cnc);
-		अगर (rc)
-			जारी;
-		अगर (cb == शून्य)
-			जारी;
+		if (rc)
+			continue;
+		if (cb == NULL)
+			continue;
 
 		size = rr->naihdr.naids;
-		अगर (size != माप(काष्ठा chsc_pnso_naid_l2)) अणु
+		if (size != sizeof(struct chsc_pnso_naid_l2)) {
 			WARN_ON_ONCE(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		elems = (rr->response.length - माप(काष्ठा chsc_header) -
-			 माप(काष्ठा chsc_pnso_naihdr)) / size;
+		elems = (rr->response.length - sizeof(struct chsc_header) -
+			 sizeof(struct chsc_pnso_naihdr)) / size;
 
-		अगर (!isfirstblock && (rr->naihdr.instance != prev_instance)) अणु
-			/* Inक्रमm the caller that they need to scrap */
-			/* the data that was alपढ़ोy reported via cb */
+		if (!isfirstblock && (rr->naihdr.instance != prev_instance)) {
+			/* Inform the caller that they need to scrap */
+			/* the data that was already reported via cb */
 			rc = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		isfirstblock = 0;
 		prev_instance = rr->naihdr.instance;
-		क्रम (i = 0; i < elems; i++)
+		for (i = 0; i < elems; i++)
 			(*cb)(priv, &rr->entries[i]);
-	पूर्ण जबतक ((rc == -EBUSY) || (!rc && /* list stored */
+	} while ((rc == -EBUSY) || (!rc && /* list stored */
 		   /* resume token is non-zero => list incomplete */
 		   (rr->naihdr.resume_token.t1 || rr->naihdr.resume_token.t2)));
 
-	अगर (rc)
+	if (rc)
 		QETH_CARD_TEXT_(card, 2, "PNrp%04x", rr->response.code);
 
-	मुक्त_page((अचिन्हित दीर्घ)rr);
-	वापस rc;
-पूर्ण
+	free_page((unsigned long)rr);
+	return rc;
+}
 
-अटल bool qeth_is_my_net_अगर_token(काष्ठा qeth_card *card,
-				    काष्ठा net_अगर_token *token)
-अणु
-	वापस ((card->info.ddev_devno == token->devnum) &&
+static bool qeth_is_my_net_if_token(struct qeth_card *card,
+				    struct net_if_token *token)
+{
+	return ((card->info.ddev_devno == token->devnum) &&
 		(card->info.cssid == token->cssid) &&
 		(card->info.iid == token->iid) &&
 		(card->info.ssid == token->ssid) &&
 		(card->info.chpid == token->chpid) &&
 		(card->info.chid == token->chid));
-पूर्ण
+}
 
 /**
- *	qeth_l2_dev2br_fdb_notअगरy() - update fdb of master bridge
- *	@card:	qeth_card काष्ठाure poपूर्णांकer
- *	@code:	event biपंचांगask: high order bit 0x80 set to
+ *	qeth_l2_dev2br_fdb_notify() - update fdb of master bridge
+ *	@card:	qeth_card structure pointer
+ *	@code:	event bitmask: high order bit 0x80 set to
  *				1 - removal of an object
  *				0 - addition of an object
  *			       Object type(s):
  *				0x01 - VLAN, 0x02 - MAC, 0x03 - VLAN and MAC
- *	@token: "network token" काष्ठाure identअगरying 'physical' location
+ *	@token: "network token" structure identifying 'physical' location
  *		of the target
- *	@addr_lnid: काष्ठाure with MAC address and VLAN ID of the target
+ *	@addr_lnid: structure with MAC address and VLAN ID of the target
  */
-अटल व्योम qeth_l2_dev2br_fdb_notअगरy(काष्ठा qeth_card *card, u8 code,
-				      काष्ठा net_अगर_token *token,
-				      काष्ठा mac_addr_lnid *addr_lnid)
-अणु
-	काष्ठा चयनdev_notअगरier_fdb_info info;
+static void qeth_l2_dev2br_fdb_notify(struct qeth_card *card, u8 code,
+				      struct net_if_token *token,
+				      struct mac_addr_lnid *addr_lnid)
+{
+	struct switchdev_notifier_fdb_info info;
 	u8 ntfy_mac[ETH_ALEN];
 
 	ether_addr_copy(ntfy_mac, addr_lnid->mac);
 	/* Ignore VLAN only changes */
-	अगर (!(code & IPA_ADDR_CHANGE_CODE_MACADDR))
-		वापस;
+	if (!(code & IPA_ADDR_CHANGE_CODE_MACADDR))
+		return;
 	/* Ignore mcast entries */
-	अगर (is_multicast_ether_addr(ntfy_mac))
-		वापस;
+	if (is_multicast_ether_addr(ntfy_mac))
+		return;
 	/* Ignore my own addresses */
-	अगर (qeth_is_my_net_अगर_token(card, token))
-		वापस;
+	if (qeth_is_my_net_if_token(card, token))
+		return;
 
 	info.addr = ntfy_mac;
-	/* करोn't report VLAN IDs */
+	/* don't report VLAN IDs */
 	info.vid = 0;
 	info.added_by_user = false;
 	info.offloaded = true;
 
-	अगर (code & IPA_ADDR_CHANGE_CODE_REMOVAL) अणु
-		call_चयनdev_notअगरiers(SWITCHDEV_FDB_DEL_TO_BRIDGE,
-					 card->dev, &info.info, शून्य);
+	if (code & IPA_ADDR_CHANGE_CODE_REMOVAL) {
+		call_switchdev_notifiers(SWITCHDEV_FDB_DEL_TO_BRIDGE,
+					 card->dev, &info.info, NULL);
 		QETH_CARD_TEXT(card, 4, "andelmac");
 		QETH_CARD_TEXT_(card, 4,
 				"mc%012lx", ether_addr_to_u64(ntfy_mac));
-	पूर्ण अन्यथा अणु
-		call_चयनdev_notअगरiers(SWITCHDEV_FDB_ADD_TO_BRIDGE,
-					 card->dev, &info.info, शून्य);
+	} else {
+		call_switchdev_notifiers(SWITCHDEV_FDB_ADD_TO_BRIDGE,
+					 card->dev, &info.info, NULL);
 		QETH_CARD_TEXT(card, 4, "anaddmac");
 		QETH_CARD_TEXT_(card, 4,
 				"mc%012lx", ether_addr_to_u64(ntfy_mac));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम qeth_l2_dev2br_an_set_cb(व्योम *priv,
-				     काष्ठा chsc_pnso_naid_l2 *entry)
-अणु
+static void qeth_l2_dev2br_an_set_cb(void *priv,
+				     struct chsc_pnso_naid_l2 *entry)
+{
 	u8 code = IPA_ADDR_CHANGE_CODE_MACADDR;
-	काष्ठा qeth_card *card = priv;
+	struct qeth_card *card = priv;
 
-	अगर (entry->addr_lnid.lnid < VLAN_N_VID)
+	if (entry->addr_lnid.lnid < VLAN_N_VID)
 		code |= IPA_ADDR_CHANGE_CODE_VLANID;
-	qeth_l2_dev2br_fdb_notअगरy(card, code,
-				  (काष्ठा net_अगर_token *)&entry->nit,
-				  (काष्ठा mac_addr_lnid *)&entry->addr_lnid);
-पूर्ण
+	qeth_l2_dev2br_fdb_notify(card, code,
+				  (struct net_if_token *)&entry->nit,
+				  (struct mac_addr_lnid *)&entry->addr_lnid);
+}
 
 /**
  *	qeth_l2_dev2br_an_set() -
  *	Enable or disable 'dev to bridge network address notification'
- *	@card: qeth_card काष्ठाure poपूर्णांकer
+ *	@card: qeth_card structure pointer
  *	@enable: Enable or disable 'dev to bridge network address notification'
  *
- *	Returns negative त्रुटि_सं-compatible error indication or 0 on success.
+ *	Returns negative errno-compatible error indication or 0 on success.
  *
- *	On enable, emits a series of address notअगरications क्रम all
- *	currently रेजिस्टरed hosts.
+ *	On enable, emits a series of address notifications for all
+ *	currently registered hosts.
  */
-अटल पूर्णांक qeth_l2_dev2br_an_set(काष्ठा qeth_card *card, bool enable)
-अणु
-	पूर्णांक rc;
+static int qeth_l2_dev2br_an_set(struct qeth_card *card, bool enable)
+{
+	int rc;
 
-	अगर (enable) अणु
+	if (enable) {
 		QETH_CARD_TEXT(card, 2, "anseton");
 		rc = qeth_l2_pnso(card, PNSO_OC_NET_ADDR_INFO, 1,
 				  qeth_l2_dev2br_an_set_cb, card);
-		अगर (rc == -EAGAIN)
-			/* address notअगरication enabled, but inconsistent
-			 * addresses reported -> disable address notअगरication
+		if (rc == -EAGAIN)
+			/* address notification enabled, but inconsistent
+			 * addresses reported -> disable address notification
 			 */
 			qeth_l2_pnso(card, PNSO_OC_NET_ADDR_INFO, 0,
-				     शून्य, शून्य);
-	पूर्ण अन्यथा अणु
+				     NULL, NULL);
+	} else {
 		QETH_CARD_TEXT(card, 2, "ansetoff");
-		rc = qeth_l2_pnso(card, PNSO_OC_NET_ADDR_INFO, 0, शून्य, शून्य);
-	पूर्ण
+		rc = qeth_l2_pnso(card, PNSO_OC_NET_ADDR_INFO, 0, NULL, NULL);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक qeth_l2_bridge_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
-				  काष्ठा net_device *dev, u32 filter_mask,
-				  पूर्णांक nlflags)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(dev);
-	काष्ठा qeth_card *card = dev->ml_priv;
+static int qeth_l2_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
+				  struct net_device *dev, u32 filter_mask,
+				  int nlflags)
+{
+	struct qeth_priv *priv = netdev_priv(dev);
+	struct qeth_card *card = dev->ml_priv;
 	u16 mode = BRIDGE_MODE_UNDEF;
 
-	/* Do not even show qeth devs that cannot करो bridge_setlink */
-	अगर (!priv->brport_hw_features || !netअगर_device_present(dev) ||
+	/* Do not even show qeth devs that cannot do bridge_setlink */
+	if (!priv->brport_hw_features || !netif_device_present(dev) ||
 	    qeth_bridgeport_is_in_use(card))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	वापस nकरो_dflt_bridge_getlink(skb, pid, seq, dev,
+	return ndo_dflt_bridge_getlink(skb, pid, seq, dev,
 				       mode, priv->brport_features,
 				       priv->brport_hw_features,
-				       nlflags, filter_mask, शून्य);
-पूर्ण
+				       nlflags, filter_mask, NULL);
+}
 
-अटल स्थिर काष्ठा nla_policy qeth_brport_policy[IFLA_BRPORT_MAX + 1] = अणु
-	[IFLA_BRPORT_LEARNING_SYNC]	= अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy qeth_brport_policy[IFLA_BRPORT_MAX + 1] = {
+	[IFLA_BRPORT_LEARNING_SYNC]	= { .type = NLA_U8 },
+};
 
 /**
  *	qeth_l2_bridge_setlink() - set bridgeport attributes
  *	@dev: netdevice
  *	@nlh: netlink message header
  *	@flags: bridge flags (here: BRIDGE_FLAGS_SELF)
- *	@extack: extended ACK report काष्ठा
+ *	@extack: extended ACK report struct
  *
  *	Called under rtnl_lock
  */
-अटल पूर्णांक qeth_l2_bridge_setlink(काष्ठा net_device *dev, काष्ठा nlmsghdr *nlh,
-				  u16 flags, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(dev);
-	काष्ठा nlattr *bp_tb[IFLA_BRPORT_MAX + 1];
-	काष्ठा qeth_card *card = dev->ml_priv;
-	काष्ठा nlattr *attr, *nested_attr;
+static int qeth_l2_bridge_setlink(struct net_device *dev, struct nlmsghdr *nlh,
+				  u16 flags, struct netlink_ext_ack *extack)
+{
+	struct qeth_priv *priv = netdev_priv(dev);
+	struct nlattr *bp_tb[IFLA_BRPORT_MAX + 1];
+	struct qeth_card *card = dev->ml_priv;
+	struct nlattr *attr, *nested_attr;
 	bool enable, has_protinfo = false;
-	पूर्णांक rem1, rem2;
-	पूर्णांक rc;
+	int rem1, rem2;
+	int rc;
 
-	अगर (!netअगर_device_present(dev))
-		वापस -ENODEV;
-	अगर (!(priv->brport_hw_features))
-		वापस -EOPNOTSUPP;
+	if (!netif_device_present(dev))
+		return -ENODEV;
+	if (!(priv->brport_hw_features))
+		return -EOPNOTSUPP;
 
-	nlmsg_क्रम_each_attr(attr, nlh, माप(काष्ठा अगरinfomsg), rem1) अणु
-		अगर (nla_type(attr) == IFLA_PROTINFO) अणु
+	nlmsg_for_each_attr(attr, nlh, sizeof(struct ifinfomsg), rem1) {
+		if (nla_type(attr) == IFLA_PROTINFO) {
 			rc = nla_parse_nested(bp_tb, IFLA_BRPORT_MAX, attr,
 					      qeth_brport_policy, extack);
-			अगर (rc)
-				वापस rc;
+			if (rc)
+				return rc;
 			has_protinfo = true;
-		पूर्ण अन्यथा अगर (nla_type(attr) == IFLA_AF_SPEC) अणु
-			nla_क्रम_each_nested(nested_attr, attr, rem2) अणु
-				अगर (nla_type(nested_attr) == IFLA_BRIDGE_FLAGS)
-					जारी;
+		} else if (nla_type(attr) == IFLA_AF_SPEC) {
+			nla_for_each_nested(nested_attr, attr, rem2) {
+				if (nla_type(nested_attr) == IFLA_BRIDGE_FLAGS)
+					continue;
 				NL_SET_ERR_MSG_ATTR(extack, nested_attr,
 						    "Unsupported attribute");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		} else {
 			NL_SET_ERR_MSG_ATTR(extack, attr, "Unsupported attribute");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (!has_protinfo)
-		वापस 0;
-	अगर (!bp_tb[IFLA_BRPORT_LEARNING_SYNC])
-		वापस -EINVAL;
+			return -EINVAL;
+		}
+	}
+	if (!has_protinfo)
+		return 0;
+	if (!bp_tb[IFLA_BRPORT_LEARNING_SYNC])
+		return -EINVAL;
 	enable = !!nla_get_u8(bp_tb[IFLA_BRPORT_LEARNING_SYNC]);
 
-	अगर (enable == !!(priv->brport_features & BR_LEARNING_SYNC))
-		वापस 0;
+	if (enable == !!(priv->brport_features & BR_LEARNING_SYNC))
+		return 0;
 
 	mutex_lock(&card->sbp_lock);
-	/* करो not change anything अगर BridgePort is enabled */
-	अगर (qeth_bridgeport_is_in_use(card)) अणु
+	/* do not change anything if BridgePort is enabled */
+	if (qeth_bridgeport_is_in_use(card)) {
 		NL_SET_ERR_MSG(extack, "n/a (BridgePort)");
 		rc = -EBUSY;
-	पूर्ण अन्यथा अगर (enable) अणु
+	} else if (enable) {
 		qeth_l2_set_pnso_mode(card, QETH_PNSO_ADDR_INFO);
 		rc = qeth_l2_dev2br_an_set(card, true);
-		अगर (rc)
+		if (rc)
 			qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
-		अन्यथा
+		else
 			priv->brport_features |= BR_LEARNING_SYNC;
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = qeth_l2_dev2br_an_set(card, false);
-		अगर (!rc) अणु
+		if (!rc) {
 			qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
 			priv->brport_features ^= BR_LEARNING_SYNC;
 			qeth_l2_dev2br_fdb_flush(card);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&card->sbp_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा net_device_ops qeth_l2_netdev_ops = अणु
-	.nकरो_खोलो		= qeth_खोलो,
-	.nकरो_stop		= qeth_stop,
-	.nकरो_get_stats64	= qeth_get_stats64,
-	.nकरो_start_xmit		= qeth_l2_hard_start_xmit,
-	.nकरो_features_check	= qeth_features_check,
-	.nकरो_select_queue	= qeth_l2_select_queue,
-	.nकरो_validate_addr	= qeth_l2_validate_addr,
-	.nकरो_set_rx_mode	= qeth_l2_set_rx_mode,
-	.nकरो_करो_ioctl		= qeth_करो_ioctl,
-	.nकरो_set_mac_address    = qeth_l2_set_mac_address,
-	.nकरो_vlan_rx_add_vid	= qeth_l2_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid   = qeth_l2_vlan_rx_समाप्त_vid,
-	.nकरो_tx_समयout		= qeth_tx_समयout,
-	.nकरो_fix_features	= qeth_fix_features,
-	.nकरो_set_features	= qeth_set_features,
-	.nकरो_bridge_getlink	= qeth_l2_bridge_getlink,
-	.nकरो_bridge_setlink	= qeth_l2_bridge_setlink,
-पूर्ण;
+static const struct net_device_ops qeth_l2_netdev_ops = {
+	.ndo_open		= qeth_open,
+	.ndo_stop		= qeth_stop,
+	.ndo_get_stats64	= qeth_get_stats64,
+	.ndo_start_xmit		= qeth_l2_hard_start_xmit,
+	.ndo_features_check	= qeth_features_check,
+	.ndo_select_queue	= qeth_l2_select_queue,
+	.ndo_validate_addr	= qeth_l2_validate_addr,
+	.ndo_set_rx_mode	= qeth_l2_set_rx_mode,
+	.ndo_do_ioctl		= qeth_do_ioctl,
+	.ndo_set_mac_address    = qeth_l2_set_mac_address,
+	.ndo_vlan_rx_add_vid	= qeth_l2_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid   = qeth_l2_vlan_rx_kill_vid,
+	.ndo_tx_timeout		= qeth_tx_timeout,
+	.ndo_fix_features	= qeth_fix_features,
+	.ndo_set_features	= qeth_set_features,
+	.ndo_bridge_getlink	= qeth_l2_bridge_getlink,
+	.ndo_bridge_setlink	= qeth_l2_bridge_setlink,
+};
 
-अटल स्थिर काष्ठा net_device_ops qeth_osn_netdev_ops = अणु
-	.nकरो_खोलो		= qeth_खोलो,
-	.nकरो_stop		= qeth_stop,
-	.nकरो_get_stats64	= qeth_get_stats64,
-	.nकरो_start_xmit		= qeth_l2_hard_start_xmit,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_tx_समयout		= qeth_tx_समयout,
-पूर्ण;
+static const struct net_device_ops qeth_osn_netdev_ops = {
+	.ndo_open		= qeth_open,
+	.ndo_stop		= qeth_stop,
+	.ndo_get_stats64	= qeth_get_stats64,
+	.ndo_start_xmit		= qeth_l2_hard_start_xmit,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_tx_timeout		= qeth_tx_timeout,
+};
 
-अटल पूर्णांक qeth_l2_setup_netdev(काष्ठा qeth_card *card)
-अणु
-	अगर (IS_OSN(card)) अणु
+static int qeth_l2_setup_netdev(struct qeth_card *card)
+{
+	if (IS_OSN(card)) {
 		card->dev->netdev_ops = &qeth_osn_netdev_ops;
 		card->dev->flags |= IFF_NOARP;
-		जाओ add_napi;
-	पूर्ण
+		goto add_napi;
+	}
 
-	card->dev->needed_headroom = माप(काष्ठा qeth_hdr);
+	card->dev->needed_headroom = sizeof(struct qeth_hdr);
 	card->dev->netdev_ops = &qeth_l2_netdev_ops;
 	card->dev->priv_flags |= IFF_UNICAST_FLT;
 
-	अगर (IS_OSM(card)) अणु
+	if (IS_OSM(card)) {
 		card->dev->features |= NETIF_F_VLAN_CHALLENGED;
-	पूर्ण अन्यथा अणु
-		अगर (!IS_VM_NIC(card))
+	} else {
+		if (!IS_VM_NIC(card))
 			card->dev->hw_features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 		card->dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
-	पूर्ण
+	}
 
-	अगर (IS_OSD(card) && !IS_VM_NIC(card)) अणु
+	if (IS_OSD(card) && !IS_VM_NIC(card)) {
 		card->dev->features |= NETIF_F_SG;
 		/* OSA 3S and earlier has no RX/TX support */
-		अगर (qeth_is_supported(card, IPA_OUTBOUND_CHECKSUM)) अणु
+		if (qeth_is_supported(card, IPA_OUTBOUND_CHECKSUM)) {
 			card->dev->hw_features |= NETIF_F_IP_CSUM;
 			card->dev->vlan_features |= NETIF_F_IP_CSUM;
-		पूर्ण
-	पूर्ण
-	अगर (qeth_is_supported6(card, IPA_OUTBOUND_CHECKSUM_V6)) अणु
+		}
+	}
+	if (qeth_is_supported6(card, IPA_OUTBOUND_CHECKSUM_V6)) {
 		card->dev->hw_features |= NETIF_F_IPV6_CSUM;
 		card->dev->vlan_features |= NETIF_F_IPV6_CSUM;
-	पूर्ण
-	अगर (qeth_is_supported(card, IPA_INBOUND_CHECKSUM) ||
-	    qeth_is_supported6(card, IPA_INBOUND_CHECKSUM_V6)) अणु
+	}
+	if (qeth_is_supported(card, IPA_INBOUND_CHECKSUM) ||
+	    qeth_is_supported6(card, IPA_INBOUND_CHECKSUM_V6)) {
 		card->dev->hw_features |= NETIF_F_RXCSUM;
 		card->dev->vlan_features |= NETIF_F_RXCSUM;
-	पूर्ण
-	अगर (qeth_is_supported(card, IPA_OUTBOUND_TSO)) अणु
+	}
+	if (qeth_is_supported(card, IPA_OUTBOUND_TSO)) {
 		card->dev->hw_features |= NETIF_F_TSO;
 		card->dev->vlan_features |= NETIF_F_TSO;
-	पूर्ण
-	अगर (qeth_is_supported6(card, IPA_OUTBOUND_TSO)) अणु
+	}
+	if (qeth_is_supported6(card, IPA_OUTBOUND_TSO)) {
 		card->dev->hw_features |= NETIF_F_TSO6;
 		card->dev->vlan_features |= NETIF_F_TSO6;
-	पूर्ण
+	}
 
-	अगर (card->dev->hw_features & (NETIF_F_TSO | NETIF_F_TSO6)) अणु
-		card->dev->needed_headroom = माप(काष्ठा qeth_hdr_tso);
-		netअगर_keep_dst(card->dev);
-		netअगर_set_gso_max_size(card->dev,
+	if (card->dev->hw_features & (NETIF_F_TSO | NETIF_F_TSO6)) {
+		card->dev->needed_headroom = sizeof(struct qeth_hdr_tso);
+		netif_keep_dst(card->dev);
+		netif_set_gso_max_size(card->dev,
 				       PAGE_SIZE * (QDIO_MAX_ELEMENTS_PER_BUFFER - 1));
-	पूर्ण
+	}
 
 add_napi:
-	netअगर_napi_add(card->dev, &card->napi, qeth_poll, QETH_NAPI_WEIGHT);
-	वापस रेजिस्टर_netdev(card->dev);
-पूर्ण
+	netif_napi_add(card->dev, &card->napi, qeth_poll, QETH_NAPI_WEIGHT);
+	return register_netdev(card->dev);
+}
 
-अटल व्योम qeth_l2_trace_features(काष्ठा qeth_card *card)
-अणु
+static void qeth_l2_trace_features(struct qeth_card *card)
+{
 	/* Set BridgePort features */
 	QETH_CARD_TEXT(card, 2, "featuSBP");
 	QETH_CARD_HEX(card, 2, &card->options.sbp.supported_funcs,
-		      माप(card->options.sbp.supported_funcs));
+		      sizeof(card->options.sbp.supported_funcs));
 	/* VNIC Characteristics features */
 	QETH_CARD_TEXT(card, 2, "feaVNICC");
-	QETH_CARD_HEX(card, 2, &card->options.vnicc.sup_अक्षरs,
-		      माप(card->options.vnicc.sup_अक्षरs));
-पूर्ण
+	QETH_CARD_HEX(card, 2, &card->options.vnicc.sup_chars,
+		      sizeof(card->options.vnicc.sup_chars));
+}
 
-अटल व्योम qeth_l2_setup_bridgeport_attrs(काष्ठा qeth_card *card)
-अणु
-	अगर (!card->options.sbp.reflect_promisc &&
-	    card->options.sbp.role != QETH_SBP_ROLE_NONE) अणु
-		/* Conditional to aव्योम spurious error messages */
+static void qeth_l2_setup_bridgeport_attrs(struct qeth_card *card)
+{
+	if (!card->options.sbp.reflect_promisc &&
+	    card->options.sbp.role != QETH_SBP_ROLE_NONE) {
+		/* Conditional to avoid spurious error messages */
 		qeth_bridgeport_setrole(card, card->options.sbp.role);
 		/* Let the callback function refresh the stored role value. */
 		qeth_bridgeport_query_ports(card, &card->options.sbp.role,
-					    शून्य);
-	पूर्ण
-	अगर (card->options.sbp.hostnotअगरication) अणु
-		अगर (qeth_bridgeport_an_set(card, 1))
-			card->options.sbp.hostnotअगरication = 0;
-	पूर्ण
-पूर्ण
+					    NULL);
+	}
+	if (card->options.sbp.hostnotification) {
+		if (qeth_bridgeport_an_set(card, 1))
+			card->options.sbp.hostnotification = 0;
+	}
+}
 
 /**
  *	qeth_l2_detect_dev2br_support() -
  *	Detect whether this card supports 'dev to bridge fdb network address
- *	change notअगरication' and thus can support the learning_sync bridgeport
+ *	change notification' and thus can support the learning_sync bridgeport
  *	attribute
- *	@card: qeth_card काष्ठाure poपूर्णांकer
+ *	@card: qeth_card structure pointer
  */
-अटल व्योम qeth_l2_detect_dev2br_support(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(card->dev);
+static void qeth_l2_detect_dev2br_support(struct qeth_card *card)
+{
+	struct qeth_priv *priv = netdev_priv(card->dev);
 	bool dev2br_supported;
 
 	QETH_CARD_TEXT(card, 2, "d2brsup");
-	अगर (!IS_IQD(card))
-		वापस;
+	if (!IS_IQD(card))
+		return;
 
 	/* dev2br requires valid cssid,iid,chid */
 	dev2br_supported = card->info.ids_valid &&
-			   css_general_अक्षरacteristics.enarf;
+			   css_general_characteristics.enarf;
 	QETH_CARD_TEXT_(card, 2, "D2Bsup%02x", dev2br_supported);
 
-	अगर (dev2br_supported)
+	if (dev2br_supported)
 		priv->brport_hw_features |= BR_LEARNING_SYNC;
-	अन्यथा
+	else
 		priv->brport_hw_features &= ~BR_LEARNING_SYNC;
-पूर्ण
+}
 
-अटल व्योम qeth_l2_enable_brport_features(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(card->dev);
-	पूर्णांक rc;
+static void qeth_l2_enable_brport_features(struct qeth_card *card)
+{
+	struct qeth_priv *priv = netdev_priv(card->dev);
+	int rc;
 
-	अगर (priv->brport_features & BR_LEARNING_SYNC) अणु
-		अगर (priv->brport_hw_features & BR_LEARNING_SYNC) अणु
+	if (priv->brport_features & BR_LEARNING_SYNC) {
+		if (priv->brport_hw_features & BR_LEARNING_SYNC) {
 			qeth_l2_set_pnso_mode(card, QETH_PNSO_ADDR_INFO);
 			rc = qeth_l2_dev2br_an_set(card, true);
-			अगर (rc == -EAGAIN) अणु
+			if (rc == -EAGAIN) {
 				/* Recoverable error, retry once */
 				qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
 				qeth_l2_dev2br_fdb_flush(card);
 				qeth_l2_set_pnso_mode(card, QETH_PNSO_ADDR_INFO);
 				rc = qeth_l2_dev2br_an_set(card, true);
-			पूर्ण
-			अगर (rc) अणु
+			}
+			if (rc) {
 				netdev_err(card->dev,
 					   "failed to enable bridge learning_sync: %d\n",
 					   rc);
 				qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
 				qeth_l2_dev2br_fdb_flush(card);
 				priv->brport_features ^= BR_LEARNING_SYNC;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			dev_warn(&card->gdev->dev,
 				"bridge learning_sync not supported\n");
 			priv->brport_features ^= BR_LEARNING_SYNC;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_QETH_OSN
-अटल व्योम qeth_osn_assist_cb(काष्ठा qeth_card *card,
-			       काष्ठा qeth_cmd_buffer *iob,
-			       अचिन्हित पूर्णांक data_length)
-अणु
-	qeth_notअगरy_cmd(iob, 0);
+#ifdef CONFIG_QETH_OSN
+static void qeth_osn_assist_cb(struct qeth_card *card,
+			       struct qeth_cmd_buffer *iob,
+			       unsigned int data_length)
+{
+	qeth_notify_cmd(iob, 0);
 	qeth_put_cmd(iob);
-पूर्ण
+}
 
-पूर्णांक qeth_osn_assist(काष्ठा net_device *dev, व्योम *data, पूर्णांक data_len)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
-	काष्ठा qeth_card *card;
+int qeth_osn_assist(struct net_device *dev, void *data, int data_len)
+{
+	struct qeth_cmd_buffer *iob;
+	struct qeth_card *card;
 
-	अगर (data_len < 0)
-		वापस -EINVAL;
-	अगर (!dev)
-		वापस -ENODEV;
+	if (data_len < 0)
+		return -EINVAL;
+	if (!dev)
+		return -ENODEV;
 	card = dev->ml_priv;
-	अगर (!card)
-		वापस -ENODEV;
+	if (!card)
+		return -ENODEV;
 	QETH_CARD_TEXT(card, 2, "osnsdmc");
-	अगर (!qeth_card_hw_is_reachable(card))
-		वापस -ENODEV;
+	if (!qeth_card_hw_is_reachable(card))
+		return -ENODEV;
 
-	iob = qeth_alloc_cmd(&card->ग_लिखो, IPA_PDU_HEADER_SIZE + data_len, 1,
+	iob = qeth_alloc_cmd(&card->write, IPA_PDU_HEADER_SIZE + data_len, 1,
 			     QETH_IPA_TIMEOUT);
-	अगर (!iob)
-		वापस -ENOMEM;
+	if (!iob)
+		return -ENOMEM;
 
-	qeth_prepare_ipa_cmd(card, iob, (u16) data_len, शून्य);
+	qeth_prepare_ipa_cmd(card, iob, (u16) data_len, NULL);
 
-	स_नकल(__ipa_cmd(iob), data, data_len);
+	memcpy(__ipa_cmd(iob), data, data_len);
 	iob->callback = qeth_osn_assist_cb;
-	वापस qeth_send_ipa_cmd(card, iob, शून्य, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, NULL, NULL);
+}
 EXPORT_SYMBOL(qeth_osn_assist);
 
-पूर्णांक qeth_osn_रेजिस्टर(अचिन्हित अक्षर *पढ़ो_dev_no, काष्ठा net_device **dev,
-		  पूर्णांक (*assist_cb)(काष्ठा net_device *, व्योम *),
-		  पूर्णांक (*data_cb)(काष्ठा sk_buff *))
-अणु
-	काष्ठा qeth_card *card;
-	अक्षर bus_id[16];
+int qeth_osn_register(unsigned char *read_dev_no, struct net_device **dev,
+		  int (*assist_cb)(struct net_device *, void *),
+		  int (*data_cb)(struct sk_buff *))
+{
+	struct qeth_card *card;
+	char bus_id[16];
 	u16 devno;
 
-	स_नकल(&devno, पढ़ो_dev_no, 2);
-	प्र_लिखो(bus_id, "0.0.%04x", devno);
+	memcpy(&devno, read_dev_no, 2);
+	sprintf(bus_id, "0.0.%04x", devno);
 	card = qeth_get_card_by_busid(bus_id);
-	अगर (!card || !IS_OSN(card))
-		वापस -ENODEV;
+	if (!card || !IS_OSN(card))
+		return -ENODEV;
 	*dev = card->dev;
 
 	QETH_CARD_TEXT(card, 2, "osnreg");
-	अगर ((assist_cb == शून्य) || (data_cb == शून्य))
-		वापस -EINVAL;
+	if ((assist_cb == NULL) || (data_cb == NULL))
+		return -EINVAL;
 	card->osn_info.assist_cb = assist_cb;
 	card->osn_info.data_cb = data_cb;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(qeth_osn_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(qeth_osn_register);
 
-व्योम qeth_osn_deरेजिस्टर(काष्ठा net_device *dev)
-अणु
-	काष्ठा qeth_card *card;
+void qeth_osn_deregister(struct net_device *dev)
+{
+	struct qeth_card *card;
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 	card = dev->ml_priv;
-	अगर (!card)
-		वापस;
+	if (!card)
+		return;
 	QETH_CARD_TEXT(card, 2, "osndereg");
-	card->osn_info.assist_cb = शून्य;
-	card->osn_info.data_cb = शून्य;
-पूर्ण
-EXPORT_SYMBOL(qeth_osn_deरेजिस्टर);
-#पूर्ण_अगर
+	card->osn_info.assist_cb = NULL;
+	card->osn_info.data_cb = NULL;
+}
+EXPORT_SYMBOL(qeth_osn_deregister);
+#endif
 
-/* SETBRIDGEPORT support, async notअगरications */
+/* SETBRIDGEPORT support, async notifications */
 
-क्रमागत qeth_an_event_type अणुanev_reg_unreg, anev_पात, anev_resetपूर्ण;
+enum qeth_an_event_type {anev_reg_unreg, anev_abort, anev_reset};
 
 /**
- * qeth_bridge_emit_host_event() - bridgeport address change notअगरication
- * @card:  qeth_card काष्ठाure poपूर्णांकer, क्रम udev events.
- * @evtype:  "normal" रेजिस्टर/unरेजिस्टर, or पात, or reset. For पात
- *	      and reset token and addr_lnid are unused and may be शून्य.
- * @code:  event biपंचांगask: high order bit 0x80 value 1 means removal of an
+ * qeth_bridge_emit_host_event() - bridgeport address change notification
+ * @card:  qeth_card structure pointer, for udev events.
+ * @evtype:  "normal" register/unregister, or abort, or reset. For abort
+ *	      and reset token and addr_lnid are unused and may be NULL.
+ * @code:  event bitmask: high order bit 0x80 value 1 means removal of an
  *			  object, 0 - addition of an object.
  *			  0x01 - VLAN, 0x02 - MAC, 0x03 - VLAN and MAC.
- * @token: "network token" काष्ठाure identअगरying physical address of the port.
- * @addr_lnid: poपूर्णांकer to काष्ठाure with MAC address and VLAN ID.
+ * @token: "network token" structure identifying physical address of the port.
+ * @addr_lnid: pointer to structure with MAC address and VLAN ID.
  *
  * This function is called when registrations and deregistrations are
- * reported by the hardware, and also when notअगरications are enabled -
- * क्रम all currently रेजिस्टरed addresses.
+ * reported by the hardware, and also when notifications are enabled -
+ * for all currently registered addresses.
  */
-अटल व्योम qeth_bridge_emit_host_event(काष्ठा qeth_card *card,
-					क्रमागत qeth_an_event_type evtype,
+static void qeth_bridge_emit_host_event(struct qeth_card *card,
+					enum qeth_an_event_type evtype,
 					u8 code,
-					काष्ठा net_अगर_token *token,
-					काष्ठा mac_addr_lnid *addr_lnid)
-अणु
-	अक्षर str[7][32];
-	अक्षर *env[8];
-	पूर्णांक i = 0;
+					struct net_if_token *token,
+					struct mac_addr_lnid *addr_lnid)
+{
+	char str[7][32];
+	char *env[8];
+	int i = 0;
 
-	चयन (evtype) अणु
-	हाल anev_reg_unreg:
-		snम_लिखो(str[i], माप(str[i]), "BRIDGEDHOST=%s",
+	switch (evtype) {
+	case anev_reg_unreg:
+		snprintf(str[i], sizeof(str[i]), "BRIDGEDHOST=%s",
 				(code & IPA_ADDR_CHANGE_CODE_REMOVAL)
 				? "deregister" : "register");
 		env[i] = str[i]; i++;
-		अगर (code & IPA_ADDR_CHANGE_CODE_VLANID) अणु
-			snम_लिखो(str[i], माप(str[i]), "VLAN=%d",
+		if (code & IPA_ADDR_CHANGE_CODE_VLANID) {
+			snprintf(str[i], sizeof(str[i]), "VLAN=%d",
 				addr_lnid->lnid);
 			env[i] = str[i]; i++;
-		पूर्ण
-		अगर (code & IPA_ADDR_CHANGE_CODE_MACADDR) अणु
-			snम_लिखो(str[i], माप(str[i]), "MAC=%pM",
+		}
+		if (code & IPA_ADDR_CHANGE_CODE_MACADDR) {
+			snprintf(str[i], sizeof(str[i]), "MAC=%pM",
 				addr_lnid->mac);
 			env[i] = str[i]; i++;
-		पूर्ण
-		snम_लिखो(str[i], माप(str[i]), "NTOK_BUSID=%x.%x.%04x",
+		}
+		snprintf(str[i], sizeof(str[i]), "NTOK_BUSID=%x.%x.%04x",
 			token->cssid, token->ssid, token->devnum);
 		env[i] = str[i]; i++;
-		snम_लिखो(str[i], माप(str[i]), "NTOK_IID=%02x", token->iid);
+		snprintf(str[i], sizeof(str[i]), "NTOK_IID=%02x", token->iid);
 		env[i] = str[i]; i++;
-		snम_लिखो(str[i], माप(str[i]), "NTOK_CHPID=%02x",
+		snprintf(str[i], sizeof(str[i]), "NTOK_CHPID=%02x",
 				token->chpid);
 		env[i] = str[i]; i++;
-		snम_लिखो(str[i], माप(str[i]), "NTOK_CHID=%04x", token->chid);
+		snprintf(str[i], sizeof(str[i]), "NTOK_CHID=%04x", token->chid);
 		env[i] = str[i]; i++;
-		अवरोध;
-	हाल anev_पात:
-		snम_लिखो(str[i], माप(str[i]), "BRIDGEDHOST=abort");
+		break;
+	case anev_abort:
+		snprintf(str[i], sizeof(str[i]), "BRIDGEDHOST=abort");
 		env[i] = str[i]; i++;
-		अवरोध;
-	हाल anev_reset:
-		snम_लिखो(str[i], माप(str[i]), "BRIDGEDHOST=reset");
+		break;
+	case anev_reset:
+		snprintf(str[i], sizeof(str[i]), "BRIDGEDHOST=reset");
 		env[i] = str[i]; i++;
-		अवरोध;
-	पूर्ण
-	env[i] = शून्य;
+		break;
+	}
+	env[i] = NULL;
 	kobject_uevent_env(&card->gdev->dev.kobj, KOBJ_CHANGE, env);
-पूर्ण
+}
 
-काष्ठा qeth_bridge_state_data अणु
-	काष्ठा work_काष्ठा worker;
-	काष्ठा qeth_card *card;
+struct qeth_bridge_state_data {
+	struct work_struct worker;
+	struct qeth_card *card;
 	u8 role;
 	u8 state;
-पूर्ण;
+};
 
-अटल व्योम qeth_bridge_state_change_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qeth_bridge_state_data *data =
-		container_of(work, काष्ठा qeth_bridge_state_data, worker);
-	अक्षर env_locrem[32];
-	अक्षर env_role[32];
-	अक्षर env_state[32];
-	अक्षर *env[] = अणु
+static void qeth_bridge_state_change_worker(struct work_struct *work)
+{
+	struct qeth_bridge_state_data *data =
+		container_of(work, struct qeth_bridge_state_data, worker);
+	char env_locrem[32];
+	char env_role[32];
+	char env_state[32];
+	char *env[] = {
 		env_locrem,
 		env_role,
 		env_state,
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
-	snम_लिखो(env_locrem, माप(env_locrem), "BRIDGEPORT=statechange");
-	snम_लिखो(env_role, माप(env_role), "ROLE=%s",
+	snprintf(env_locrem, sizeof(env_locrem), "BRIDGEPORT=statechange");
+	snprintf(env_role, sizeof(env_role), "ROLE=%s",
 		(data->role == QETH_SBP_ROLE_NONE) ? "none" :
 		(data->role == QETH_SBP_ROLE_PRIMARY) ? "primary" :
 		(data->role == QETH_SBP_ROLE_SECONDARY) ? "secondary" :
 		"<INVALID>");
-	snम_लिखो(env_state, माप(env_state), "STATE=%s",
+	snprintf(env_state, sizeof(env_state), "STATE=%s",
 		(data->state == QETH_SBP_STATE_INACTIVE) ? "inactive" :
 		(data->state == QETH_SBP_STATE_STANDBY) ? "standby" :
 		(data->state == QETH_SBP_STATE_ACTIVE) ? "active" :
 		"<INVALID>");
 	kobject_uevent_env(&data->card->gdev->dev.kobj,
 				KOBJ_CHANGE, env);
-	kमुक्त(data);
-पूर्ण
+	kfree(data);
+}
 
-अटल व्योम qeth_bridge_state_change(काष्ठा qeth_card *card,
-					काष्ठा qeth_ipa_cmd *cmd)
-अणु
-	काष्ठा qeth_sbp_port_data *qports = &cmd->data.sbp.data.port_data;
-	काष्ठा qeth_bridge_state_data *data;
+static void qeth_bridge_state_change(struct qeth_card *card,
+					struct qeth_ipa_cmd *cmd)
+{
+	struct qeth_sbp_port_data *qports = &cmd->data.sbp.data.port_data;
+	struct qeth_bridge_state_data *data;
 
 	QETH_CARD_TEXT(card, 2, "brstchng");
-	अगर (qports->num_entries == 0) अणु
+	if (qports->num_entries == 0) {
 		QETH_CARD_TEXT(card, 2, "BPempty");
-		वापस;
-	पूर्ण
-	अगर (qports->entry_length != माप(काष्ठा qeth_sbp_port_entry)) अणु
+		return;
+	}
+	if (qports->entry_length != sizeof(struct qeth_sbp_port_entry)) {
 		QETH_CARD_TEXT_(card, 2, "BPsz%04x", qports->entry_length);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	data = kzalloc(माप(*data), GFP_ATOMIC);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(*data), GFP_ATOMIC);
+	if (!data) {
 		QETH_CARD_TEXT(card, 2, "BPSalloc");
-		वापस;
-	पूर्ण
+		return;
+	}
 	INIT_WORK(&data->worker, qeth_bridge_state_change_worker);
 	data->card = card;
-	/* Inक्रमmation क्रम the local port: */
+	/* Information for the local port: */
 	data->role = qports->entry[0].role;
 	data->state = qports->entry[0].state;
 
 	queue_work(card->event_wq, &data->worker);
-पूर्ण
+}
 
-काष्ठा qeth_addr_change_data अणु
-	काष्ठा delayed_work dwork;
-	काष्ठा qeth_card *card;
-	काष्ठा qeth_ipacmd_addr_change ac_event;
-पूर्ण;
+struct qeth_addr_change_data {
+	struct delayed_work dwork;
+	struct qeth_card *card;
+	struct qeth_ipacmd_addr_change ac_event;
+};
 
-अटल व्योम qeth_l2_dev2br_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा qeth_addr_change_data *data;
-	काष्ठा qeth_card *card;
-	काष्ठा qeth_priv *priv;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rc;
+static void qeth_l2_dev2br_worker(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct qeth_addr_change_data *data;
+	struct qeth_card *card;
+	struct qeth_priv *priv;
+	unsigned int i;
+	int rc;
 
-	data = container_of(dwork, काष्ठा qeth_addr_change_data, dwork);
+	data = container_of(dwork, struct qeth_addr_change_data, dwork);
 	card = data->card;
 	priv = netdev_priv(card->dev);
 
 	QETH_CARD_TEXT(card, 4, "dev2brew");
 
-	अगर (READ_ONCE(card->info.pnso_mode) == QETH_PNSO_NONE)
-		जाओ मुक्त;
+	if (READ_ONCE(card->info.pnso_mode) == QETH_PNSO_NONE)
+		goto free;
 
-	अगर (data->ac_event.lost_event_mask) अणु
+	if (data->ac_event.lost_event_mask) {
 		/* Potential re-config in progress, try again later: */
-		अगर (!rtnl_trylock()) अणु
+		if (!rtnl_trylock()) {
 			queue_delayed_work(card->event_wq, dwork,
-					   msecs_to_jअगरfies(100));
-			वापस;
-		पूर्ण
+					   msecs_to_jiffies(100));
+			return;
+		}
 
-		अगर (!netअगर_device_present(card->dev)) अणु
+		if (!netif_device_present(card->dev)) {
 			rtnl_unlock();
-			जाओ मुक्त;
-		पूर्ण
+			goto free;
+		}
 
 		QETH_DBF_MESSAGE(3,
 				 "Address change notification overflow on device %x\n",
 				 CARD_DEVID(card));
 		/* Card fdb and bridge fdb are out of sync, card has stopped
-		 * notअगरications (no need to drain_workqueue). Purge all
+		 * notifications (no need to drain_workqueue). Purge all
 		 * 'extern_learn' entries from the parent bridge and restart
-		 * the notअगरications.
+		 * the notifications.
 		 */
 		qeth_l2_dev2br_fdb_flush(card);
 		rc = qeth_l2_dev2br_an_set(card, true);
-		अगर (rc) अणु
-			/* TODO: अगर we want to retry after -EAGAIN, be
+		if (rc) {
+			/* TODO: if we want to retry after -EAGAIN, be
 			 * aware there could be stale entries in the
 			 * workqueue now, that need to be drained.
 			 * For now we give up:
@@ -1309,53 +1308,53 @@ EXPORT_SYMBOL(qeth_osn_deरेजिस्टर);
 				   rc);
 			WRITE_ONCE(card->info.pnso_mode,
 				   QETH_PNSO_NONE);
-			/* To हटाओ fdb entries reported by an_set: */
+			/* To remove fdb entries reported by an_set: */
 			qeth_l2_dev2br_fdb_flush(card);
 			priv->brport_features ^= BR_LEARNING_SYNC;
-		पूर्ण अन्यथा अणु
+		} else {
 			QETH_DBF_MESSAGE(3,
 					 "Address Notification resynced on device %x\n",
 					 CARD_DEVID(card));
-		पूर्ण
+		}
 
 		rtnl_unlock();
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < data->ac_event.num_entries; i++) अणु
-			काष्ठा qeth_ipacmd_addr_change_entry *entry =
+	} else {
+		for (i = 0; i < data->ac_event.num_entries; i++) {
+			struct qeth_ipacmd_addr_change_entry *entry =
 					&data->ac_event.entry[i];
-			qeth_l2_dev2br_fdb_notअगरy(card,
+			qeth_l2_dev2br_fdb_notify(card,
 						  entry->change_code,
 						  &entry->token,
 						  &entry->addr_lnid);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-मुक्त:
-	kमुक्त(data);
-पूर्ण
+free:
+	kfree(data);
+}
 
-अटल व्योम qeth_addr_change_event_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा qeth_addr_change_data *data;
-	काष्ठा qeth_card *card;
-	पूर्णांक i;
+static void qeth_addr_change_event_worker(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct qeth_addr_change_data *data;
+	struct qeth_card *card;
+	int i;
 
-	data = container_of(dwork, काष्ठा qeth_addr_change_data, dwork);
+	data = container_of(dwork, struct qeth_addr_change_data, dwork);
 	card = data->card;
 
 	QETH_CARD_TEXT(data->card, 4, "adrchgew");
 
-	अगर (READ_ONCE(card->info.pnso_mode) == QETH_PNSO_NONE)
-		जाओ मुक्त;
+	if (READ_ONCE(card->info.pnso_mode) == QETH_PNSO_NONE)
+		goto free;
 
-	अगर (data->ac_event.lost_event_mask) अणु
+	if (data->ac_event.lost_event_mask) {
 		/* Potential re-config in progress, try again later: */
-		अगर (!mutex_trylock(&card->sbp_lock)) अणु
+		if (!mutex_trylock(&card->sbp_lock)) {
 			queue_delayed_work(card->event_wq, dwork,
-					   msecs_to_jअगरfies(100));
-			वापस;
-		पूर्ण
+					   msecs_to_jiffies(100));
+			return;
+		}
 
 		dev_info(&data->card->gdev->dev,
 			 "Address change notification stopped on %s (%s)\n",
@@ -1366,875 +1365,875 @@ EXPORT_SYMBOL(qeth_osn_deरेजिस्टर);
 			? "Bridge port state change"
 			: "Unknown reason");
 
-		data->card->options.sbp.hostnotअगरication = 0;
+		data->card->options.sbp.hostnotification = 0;
 		card->info.pnso_mode = QETH_PNSO_NONE;
 		mutex_unlock(&data->card->sbp_lock);
-		qeth_bridge_emit_host_event(data->card, anev_पात,
-					    0, शून्य, शून्य);
-	पूर्ण अन्यथा
-		क्रम (i = 0; i < data->ac_event.num_entries; i++) अणु
-			काष्ठा qeth_ipacmd_addr_change_entry *entry =
+		qeth_bridge_emit_host_event(data->card, anev_abort,
+					    0, NULL, NULL);
+	} else
+		for (i = 0; i < data->ac_event.num_entries; i++) {
+			struct qeth_ipacmd_addr_change_entry *entry =
 					&data->ac_event.entry[i];
 			qeth_bridge_emit_host_event(data->card,
 						    anev_reg_unreg,
 						    entry->change_code,
 						    &entry->token,
 						    &entry->addr_lnid);
-		पूर्ण
+		}
 
-मुक्त:
-	kमुक्त(data);
-पूर्ण
+free:
+	kfree(data);
+}
 
-अटल व्योम qeth_addr_change_event(काष्ठा qeth_card *card,
-				   काष्ठा qeth_ipa_cmd *cmd)
-अणु
-	काष्ठा qeth_ipacmd_addr_change *hostevs =
+static void qeth_addr_change_event(struct qeth_card *card,
+				   struct qeth_ipa_cmd *cmd)
+{
+	struct qeth_ipacmd_addr_change *hostevs =
 		 &cmd->data.addrchange;
-	काष्ठा qeth_addr_change_data *data;
-	पूर्णांक extrasize;
+	struct qeth_addr_change_data *data;
+	int extrasize;
 
-	अगर (card->info.pnso_mode == QETH_PNSO_NONE)
-		वापस;
+	if (card->info.pnso_mode == QETH_PNSO_NONE)
+		return;
 
 	QETH_CARD_TEXT(card, 4, "adrchgev");
-	अगर (cmd->hdr.वापस_code != 0x0000) अणु
-		अगर (cmd->hdr.वापस_code == 0x0010) अणु
-			अगर (hostevs->lost_event_mask == 0x00)
+	if (cmd->hdr.return_code != 0x0000) {
+		if (cmd->hdr.return_code == 0x0010) {
+			if (hostevs->lost_event_mask == 0x00)
 				hostevs->lost_event_mask = 0xff;
-		पूर्ण अन्यथा अणु
+		} else {
 			QETH_CARD_TEXT_(card, 2, "ACHN%04x",
-				cmd->hdr.वापस_code);
-			वापस;
-		पूर्ण
-	पूर्ण
-	extrasize = माप(काष्ठा qeth_ipacmd_addr_change_entry) *
+				cmd->hdr.return_code);
+			return;
+		}
+	}
+	extrasize = sizeof(struct qeth_ipacmd_addr_change_entry) *
 						hostevs->num_entries;
-	data = kzalloc(माप(काष्ठा qeth_addr_change_data) + extrasize,
+	data = kzalloc(sizeof(struct qeth_addr_change_data) + extrasize,
 		       GFP_ATOMIC);
-	अगर (!data) अणु
+	if (!data) {
 		QETH_CARD_TEXT(card, 2, "ACNalloc");
-		वापस;
-	पूर्ण
-	अगर (card->info.pnso_mode == QETH_PNSO_BRIDGEPORT)
+		return;
+	}
+	if (card->info.pnso_mode == QETH_PNSO_BRIDGEPORT)
 		INIT_DELAYED_WORK(&data->dwork, qeth_addr_change_event_worker);
-	अन्यथा
+	else
 		INIT_DELAYED_WORK(&data->dwork, qeth_l2_dev2br_worker);
 	data->card = card;
-	स_नकल(&data->ac_event, hostevs,
-			माप(काष्ठा qeth_ipacmd_addr_change) + extrasize);
+	memcpy(&data->ac_event, hostevs,
+			sizeof(struct qeth_ipacmd_addr_change) + extrasize);
 	queue_delayed_work(card->event_wq, &data->dwork, 0);
-पूर्ण
+}
 
 /* SETBRIDGEPORT support; sending commands */
 
-काष्ठा _qeth_sbp_cbctl अणु
-	जोड़ अणु
+struct _qeth_sbp_cbctl {
+	union {
 		u32 supported;
-		काष्ठा अणु
-			क्रमागत qeth_sbp_roles *role;
-			क्रमागत qeth_sbp_states *state;
-		पूर्ण qports;
-	पूर्ण data;
-पूर्ण;
+		struct {
+			enum qeth_sbp_roles *role;
+			enum qeth_sbp_states *state;
+		} qports;
+	} data;
+};
 
-अटल पूर्णांक qeth_bridgeport_makerc(काष्ठा qeth_card *card,
-				  काष्ठा qeth_ipa_cmd *cmd)
-अणु
-	काष्ठा qeth_ipacmd_setbridgeport *sbp = &cmd->data.sbp;
-	क्रमागत qeth_ipa_sbp_cmd setcmd = sbp->hdr.command_code;
-	u16 ipa_rc = cmd->hdr.वापस_code;
-	u16 sbp_rc = sbp->hdr.वापस_code;
-	पूर्णांक rc;
+static int qeth_bridgeport_makerc(struct qeth_card *card,
+				  struct qeth_ipa_cmd *cmd)
+{
+	struct qeth_ipacmd_setbridgeport *sbp = &cmd->data.sbp;
+	enum qeth_ipa_sbp_cmd setcmd = sbp->hdr.command_code;
+	u16 ipa_rc = cmd->hdr.return_code;
+	u16 sbp_rc = sbp->hdr.return_code;
+	int rc;
 
-	अगर (ipa_rc == IPA_RC_SUCCESS && sbp_rc == IPA_RC_SUCCESS)
-		वापस 0;
+	if (ipa_rc == IPA_RC_SUCCESS && sbp_rc == IPA_RC_SUCCESS)
+		return 0;
 
-	अगर ((IS_IQD(card) && ipa_rc == IPA_RC_SUCCESS) ||
-	    (!IS_IQD(card) && ipa_rc == sbp_rc)) अणु
-		चयन (sbp_rc) अणु
-		हाल IPA_RC_SUCCESS:
+	if ((IS_IQD(card) && ipa_rc == IPA_RC_SUCCESS) ||
+	    (!IS_IQD(card) && ipa_rc == sbp_rc)) {
+		switch (sbp_rc) {
+		case IPA_RC_SUCCESS:
 			rc = 0;
-			अवरोध;
-		हाल IPA_RC_L2_UNSUPPORTED_CMD:
-		हाल IPA_RC_UNSUPPORTED_COMMAND:
+			break;
+		case IPA_RC_L2_UNSUPPORTED_CMD:
+		case IPA_RC_UNSUPPORTED_COMMAND:
 			rc = -EOPNOTSUPP;
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_NOT_CONFIGURED:
-		हाल IPA_RC_SBP_IQD_NOT_CONFIGURED:
+			break;
+		case IPA_RC_SBP_OSA_NOT_CONFIGURED:
+		case IPA_RC_SBP_IQD_NOT_CONFIGURED:
 			rc = -ENODEV; /* maybe not the best code here? */
 			dev_err(&card->gdev->dev,
 	"The device is not configured as a Bridge Port\n");
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_OS_MISMATCH:
-		हाल IPA_RC_SBP_IQD_OS_MISMATCH:
+			break;
+		case IPA_RC_SBP_OSA_OS_MISMATCH:
+		case IPA_RC_SBP_IQD_OS_MISMATCH:
 			rc = -EPERM;
 			dev_err(&card->gdev->dev,
 	"A Bridge Port is already configured by a different operating system\n");
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_ANO_DEV_PRIMARY:
-		हाल IPA_RC_SBP_IQD_ANO_DEV_PRIMARY:
-			चयन (setcmd) अणु
-			हाल IPA_SBP_SET_PRIMARY_BRIDGE_PORT:
+			break;
+		case IPA_RC_SBP_OSA_ANO_DEV_PRIMARY:
+		case IPA_RC_SBP_IQD_ANO_DEV_PRIMARY:
+			switch (setcmd) {
+			case IPA_SBP_SET_PRIMARY_BRIDGE_PORT:
 				rc = -EEXIST;
 				dev_err(&card->gdev->dev,
 	"The LAN already has a primary Bridge Port\n");
-				अवरोध;
-			हाल IPA_SBP_SET_SECONDARY_BRIDGE_PORT:
+				break;
+			case IPA_SBP_SET_SECONDARY_BRIDGE_PORT:
 				rc = -EBUSY;
 				dev_err(&card->gdev->dev,
 	"The device is already a primary Bridge Port\n");
-				अवरोध;
-			शेष:
+				break;
+			default:
 				rc = -EIO;
-			पूर्ण
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_CURRENT_SECOND:
-		हाल IPA_RC_SBP_IQD_CURRENT_SECOND:
+			}
+			break;
+		case IPA_RC_SBP_OSA_CURRENT_SECOND:
+		case IPA_RC_SBP_IQD_CURRENT_SECOND:
 			rc = -EBUSY;
 			dev_err(&card->gdev->dev,
 	"The device is already a secondary Bridge Port\n");
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_LIMIT_SECOND:
-		हाल IPA_RC_SBP_IQD_LIMIT_SECOND:
+			break;
+		case IPA_RC_SBP_OSA_LIMIT_SECOND:
+		case IPA_RC_SBP_IQD_LIMIT_SECOND:
 			rc = -EEXIST;
 			dev_err(&card->gdev->dev,
 	"The LAN cannot have more secondary Bridge Ports\n");
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_CURRENT_PRIMARY:
-		हाल IPA_RC_SBP_IQD_CURRENT_PRIMARY:
+			break;
+		case IPA_RC_SBP_OSA_CURRENT_PRIMARY:
+		case IPA_RC_SBP_IQD_CURRENT_PRIMARY:
 			rc = -EBUSY;
 			dev_err(&card->gdev->dev,
 	"The device is already a primary Bridge Port\n");
-			अवरोध;
-		हाल IPA_RC_SBP_OSA_NOT_AUTHD_BY_ZMAN:
-		हाल IPA_RC_SBP_IQD_NOT_AUTHD_BY_ZMAN:
+			break;
+		case IPA_RC_SBP_OSA_NOT_AUTHD_BY_ZMAN:
+		case IPA_RC_SBP_IQD_NOT_AUTHD_BY_ZMAN:
 			rc = -EACCES;
 			dev_err(&card->gdev->dev,
 	"The device is not authorized to be a Bridge Port\n");
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = -EIO;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (ipa_rc) अणु
-		हाल IPA_RC_NOTSUPP:
+		}
+	} else {
+		switch (ipa_rc) {
+		case IPA_RC_NOTSUPP:
 			rc = -EOPNOTSUPP;
-			अवरोध;
-		हाल IPA_RC_UNSUPPORTED_COMMAND:
+			break;
+		case IPA_RC_UNSUPPORTED_COMMAND:
 			rc = -EOPNOTSUPP;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = -EIO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rc) अणु
+	if (rc) {
 		QETH_CARD_TEXT_(card, 2, "SBPi%04x", ipa_rc);
 		QETH_CARD_TEXT_(card, 2, "SBPc%04x", sbp_rc);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल काष्ठा qeth_cmd_buffer *qeth_sbp_build_cmd(काष्ठा qeth_card *card,
-						  क्रमागत qeth_ipa_sbp_cmd sbp_cmd,
-						  अचिन्हित पूर्णांक data_length)
-अणु
-	क्रमागत qeth_ipa_cmds ipa_cmd = IS_IQD(card) ? IPA_CMD_SETBRIDGEPORT_IQD :
+static struct qeth_cmd_buffer *qeth_sbp_build_cmd(struct qeth_card *card,
+						  enum qeth_ipa_sbp_cmd sbp_cmd,
+						  unsigned int data_length)
+{
+	enum qeth_ipa_cmds ipa_cmd = IS_IQD(card) ? IPA_CMD_SETBRIDGEPORT_IQD :
 						    IPA_CMD_SETBRIDGEPORT_OSA;
-	काष्ठा qeth_ipacmd_sbp_hdr *hdr;
-	काष्ठा qeth_cmd_buffer *iob;
+	struct qeth_ipacmd_sbp_hdr *hdr;
+	struct qeth_cmd_buffer *iob;
 
 	iob = qeth_ipa_alloc_cmd(card, ipa_cmd, QETH_PROT_NONE,
 				 data_length +
-				 दुरत्व(काष्ठा qeth_ipacmd_setbridgeport,
+				 offsetof(struct qeth_ipacmd_setbridgeport,
 					  data));
-	अगर (!iob)
-		वापस iob;
+	if (!iob)
+		return iob;
 
 	hdr = &__ipa_cmd(iob)->data.sbp.hdr;
-	hdr->cmdlength = माप(*hdr) + data_length;
+	hdr->cmdlength = sizeof(*hdr) + data_length;
 	hdr->command_code = sbp_cmd;
 	hdr->used_total = 1;
 	hdr->seq_no = 1;
-	वापस iob;
-पूर्ण
+	return iob;
+}
 
-अटल पूर्णांक qeth_bridgeport_query_support_cb(काष्ठा qeth_card *card,
-	काष्ठा qeth_reply *reply, अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *) data;
-	काष्ठा _qeth_sbp_cbctl *cbctl = (काष्ठा _qeth_sbp_cbctl *)reply->param;
-	पूर्णांक rc;
+static int qeth_bridgeport_query_support_cb(struct qeth_card *card,
+	struct qeth_reply *reply, unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *) data;
+	struct _qeth_sbp_cbctl *cbctl = (struct _qeth_sbp_cbctl *)reply->param;
+	int rc;
 
 	QETH_CARD_TEXT(card, 2, "brqsupcb");
 	rc = qeth_bridgeport_makerc(card, cmd);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	cbctl->data.supported =
 		cmd->data.sbp.data.query_cmds_supp.supported_cmds;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * qeth_bridgeport_query_support() - store biपंचांगask of supported subfunctions.
- * @card:			     qeth_card काष्ठाure poपूर्णांकer.
+ * qeth_bridgeport_query_support() - store bitmask of supported subfunctions.
+ * @card:			     qeth_card structure pointer.
  *
- * Sets biपंचांगask of supported setbridgeport subfunctions in the qeth_card
+ * Sets bitmask of supported setbridgeport subfunctions in the qeth_card
  * strucutre: card->options.sbp.supported_funcs.
  */
-अटल व्योम qeth_bridgeport_query_support(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
-	काष्ठा _qeth_sbp_cbctl cbctl;
+static void qeth_bridgeport_query_support(struct qeth_card *card)
+{
+	struct qeth_cmd_buffer *iob;
+	struct _qeth_sbp_cbctl cbctl;
 
 	QETH_CARD_TEXT(card, 2, "brqsuppo");
 	iob = qeth_sbp_build_cmd(card, IPA_SBP_QUERY_COMMANDS_SUPPORTED,
-				 SBP_DATA_SIZखातापूर्ण(query_cmds_supp));
-	अगर (!iob)
-		वापस;
+				 SBP_DATA_SIZEOF(query_cmds_supp));
+	if (!iob)
+		return;
 
-	अगर (qeth_send_ipa_cmd(card, iob, qeth_bridgeport_query_support_cb,
-			      &cbctl)) अणु
+	if (qeth_send_ipa_cmd(card, iob, qeth_bridgeport_query_support_cb,
+			      &cbctl)) {
 		card->options.sbp.role = QETH_SBP_ROLE_NONE;
 		card->options.sbp.supported_funcs = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 	card->options.sbp.supported_funcs = cbctl.data.supported;
-पूर्ण
+}
 
-अटल पूर्णांक qeth_bridgeport_query_ports_cb(काष्ठा qeth_card *card,
-	काष्ठा qeth_reply *reply, अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *) data;
-	काष्ठा _qeth_sbp_cbctl *cbctl = (काष्ठा _qeth_sbp_cbctl *)reply->param;
-	काष्ठा qeth_sbp_port_data *qports;
-	पूर्णांक rc;
+static int qeth_bridgeport_query_ports_cb(struct qeth_card *card,
+	struct qeth_reply *reply, unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *) data;
+	struct _qeth_sbp_cbctl *cbctl = (struct _qeth_sbp_cbctl *)reply->param;
+	struct qeth_sbp_port_data *qports;
+	int rc;
 
 	QETH_CARD_TEXT(card, 2, "brqprtcb");
 	rc = qeth_bridgeport_makerc(card, cmd);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	qports = &cmd->data.sbp.data.port_data;
-	अगर (qports->entry_length != माप(काष्ठा qeth_sbp_port_entry)) अणु
+	if (qports->entry_length != sizeof(struct qeth_sbp_port_entry)) {
 		QETH_CARD_TEXT_(card, 2, "SBPs%04x", qports->entry_length);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* first entry contains the state of the local port */
-	अगर (qports->num_entries > 0) अणु
-		अगर (cbctl->data.qports.role)
+	if (qports->num_entries > 0) {
+		if (cbctl->data.qports.role)
 			*cbctl->data.qports.role = qports->entry[0].role;
-		अगर (cbctl->data.qports.state)
+		if (cbctl->data.qports.state)
 			*cbctl->data.qports.state = qports->entry[0].state;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  * qeth_bridgeport_query_ports() - query local bridgeport status.
- * @card:			   qeth_card काष्ठाure poपूर्णांकer.
+ * @card:			   qeth_card structure pointer.
  * @role:   Role of the port: 0-none, 1-primary, 2-secondary.
  * @state:  State of the port: 0-inactive, 1-standby, 2-active.
  *
- * Returns negative त्रुटि_सं-compatible error indication or 0 on success.
+ * Returns negative errno-compatible error indication or 0 on success.
  *
- * 'role' and 'state' are not updated in हाल of hardware operation failure.
+ * 'role' and 'state' are not updated in case of hardware operation failure.
  */
-पूर्णांक qeth_bridgeport_query_ports(काष्ठा qeth_card *card,
-	क्रमागत qeth_sbp_roles *role, क्रमागत qeth_sbp_states *state)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
-	काष्ठा _qeth_sbp_cbctl cbctl = अणु
-		.data = अणु
-			.qports = अणु
+int qeth_bridgeport_query_ports(struct qeth_card *card,
+	enum qeth_sbp_roles *role, enum qeth_sbp_states *state)
+{
+	struct qeth_cmd_buffer *iob;
+	struct _qeth_sbp_cbctl cbctl = {
+		.data = {
+			.qports = {
 				.role = role,
 				.state = state,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण;
+			},
+		},
+	};
 
 	QETH_CARD_TEXT(card, 2, "brqports");
-	अगर (!(card->options.sbp.supported_funcs & IPA_SBP_QUERY_BRIDGE_PORTS))
-		वापस -EOPNOTSUPP;
+	if (!(card->options.sbp.supported_funcs & IPA_SBP_QUERY_BRIDGE_PORTS))
+		return -EOPNOTSUPP;
 	iob = qeth_sbp_build_cmd(card, IPA_SBP_QUERY_BRIDGE_PORTS, 0);
-	अगर (!iob)
-		वापस -ENOMEM;
+	if (!iob)
+		return -ENOMEM;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_bridgeport_query_ports_cb,
+	return qeth_send_ipa_cmd(card, iob, qeth_bridgeport_query_ports_cb,
 				 &cbctl);
-पूर्ण
+}
 
-अटल पूर्णांक qeth_bridgeport_set_cb(काष्ठा qeth_card *card,
-	काष्ठा qeth_reply *reply, अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *)data;
+static int qeth_bridgeport_set_cb(struct qeth_card *card,
+	struct qeth_reply *reply, unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *)data;
 
 	QETH_CARD_TEXT(card, 2, "brsetrcb");
-	वापस qeth_bridgeport_makerc(card, cmd);
-पूर्ण
+	return qeth_bridgeport_makerc(card, cmd);
+}
 
 /**
  * qeth_bridgeport_setrole() - Assign primary role to the port.
- * @card:		       qeth_card काष्ठाure poपूर्णांकer.
+ * @card:		       qeth_card structure pointer.
  * @role:		       Role to assign.
  *
- * Returns negative त्रुटि_सं-compatible error indication or 0 on success.
+ * Returns negative errno-compatible error indication or 0 on success.
  */
-पूर्णांक qeth_bridgeport_setrole(काष्ठा qeth_card *card, क्रमागत qeth_sbp_roles role)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
-	क्रमागत qeth_ipa_sbp_cmd setcmd;
-	अचिन्हित पूर्णांक cmdlength = 0;
+int qeth_bridgeport_setrole(struct qeth_card *card, enum qeth_sbp_roles role)
+{
+	struct qeth_cmd_buffer *iob;
+	enum qeth_ipa_sbp_cmd setcmd;
+	unsigned int cmdlength = 0;
 
 	QETH_CARD_TEXT(card, 2, "brsetrol");
-	चयन (role) अणु
-	हाल QETH_SBP_ROLE_NONE:
+	switch (role) {
+	case QETH_SBP_ROLE_NONE:
 		setcmd = IPA_SBP_RESET_BRIDGE_PORT_ROLE;
-		अवरोध;
-	हाल QETH_SBP_ROLE_PRIMARY:
+		break;
+	case QETH_SBP_ROLE_PRIMARY:
 		setcmd = IPA_SBP_SET_PRIMARY_BRIDGE_PORT;
-		cmdlength = SBP_DATA_SIZखातापूर्ण(set_primary);
-		अवरोध;
-	हाल QETH_SBP_ROLE_SECONDARY:
+		cmdlength = SBP_DATA_SIZEOF(set_primary);
+		break;
+	case QETH_SBP_ROLE_SECONDARY:
 		setcmd = IPA_SBP_SET_SECONDARY_BRIDGE_PORT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!(card->options.sbp.supported_funcs & setcmd))
-		वापस -EOPNOTSUPP;
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (!(card->options.sbp.supported_funcs & setcmd))
+		return -EOPNOTSUPP;
 	iob = qeth_sbp_build_cmd(card, setcmd, cmdlength);
-	अगर (!iob)
-		वापस -ENOMEM;
+	if (!iob)
+		return -ENOMEM;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_bridgeport_set_cb, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_bridgeport_set_cb, NULL);
+}
 
-अटल व्योम qeth_bridgeport_an_set_cb(व्योम *priv,
-				      काष्ठा chsc_pnso_naid_l2 *entry)
-अणु
-	काष्ठा qeth_card *card = (काष्ठा qeth_card *)priv;
+static void qeth_bridgeport_an_set_cb(void *priv,
+				      struct chsc_pnso_naid_l2 *entry)
+{
+	struct qeth_card *card = (struct qeth_card *)priv;
 	u8 code;
 
 	code = IPA_ADDR_CHANGE_CODE_MACADDR;
-	अगर (entry->addr_lnid.lnid < VLAN_N_VID)
+	if (entry->addr_lnid.lnid < VLAN_N_VID)
 		code |= IPA_ADDR_CHANGE_CODE_VLANID;
 	qeth_bridge_emit_host_event(card, anev_reg_unreg, code,
-				    (काष्ठा net_अगर_token *)&entry->nit,
-				    (काष्ठा mac_addr_lnid *)&entry->addr_lnid);
-पूर्ण
+				    (struct net_if_token *)&entry->nit,
+				    (struct mac_addr_lnid *)&entry->addr_lnid);
+}
 
 /**
- * qeth_bridgeport_an_set() - Enable or disable bridgeport address notअगरication
- * @card:		      qeth_card काष्ठाure poपूर्णांकer.
- * @enable:		      0 - disable, non-zero - enable notअगरications
+ * qeth_bridgeport_an_set() - Enable or disable bridgeport address notification
+ * @card:		      qeth_card structure pointer.
+ * @enable:		      0 - disable, non-zero - enable notifications
  *
- * Returns negative त्रुटि_सं-compatible error indication or 0 on success.
+ * Returns negative errno-compatible error indication or 0 on success.
  *
- * On enable, emits a series of address notअगरications udev events क्रम all
- * currently रेजिस्टरed hosts.
+ * On enable, emits a series of address notifications udev events for all
+ * currently registered hosts.
  */
-पूर्णांक qeth_bridgeport_an_set(काष्ठा qeth_card *card, पूर्णांक enable)
-अणु
-	पूर्णांक rc;
+int qeth_bridgeport_an_set(struct qeth_card *card, int enable)
+{
+	int rc;
 
-	अगर (!card->options.sbp.supported_funcs)
-		वापस -EOPNOTSUPP;
+	if (!card->options.sbp.supported_funcs)
+		return -EOPNOTSUPP;
 
-	अगर (enable) अणु
-		qeth_bridge_emit_host_event(card, anev_reset, 0, शून्य, शून्य);
+	if (enable) {
+		qeth_bridge_emit_host_event(card, anev_reset, 0, NULL, NULL);
 		qeth_l2_set_pnso_mode(card, QETH_PNSO_BRIDGEPORT);
 		rc = qeth_l2_pnso(card, PNSO_OC_NET_BRIDGE_INFO, 1,
 				  qeth_bridgeport_an_set_cb, card);
-		अगर (rc)
+		if (rc)
 			qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
-	पूर्ण अन्यथा अणु
-		rc = qeth_l2_pnso(card, PNSO_OC_NET_BRIDGE_INFO, 0, शून्य, शून्य);
+	} else {
+		rc = qeth_l2_pnso(card, PNSO_OC_NET_BRIDGE_INFO, 0, NULL, NULL);
 		qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /* VNIC Characteristics support */
 
-/* handle VNICC IPA command वापस codes; convert to error codes */
-अटल पूर्णांक qeth_l2_vnicc_makerc(काष्ठा qeth_card *card, u16 ipa_rc)
-अणु
-	पूर्णांक rc;
+/* handle VNICC IPA command return codes; convert to error codes */
+static int qeth_l2_vnicc_makerc(struct qeth_card *card, u16 ipa_rc)
+{
+	int rc;
 
-	चयन (ipa_rc) अणु
-	हाल IPA_RC_SUCCESS:
-		वापस ipa_rc;
-	हाल IPA_RC_L2_UNSUPPORTED_CMD:
-	हाल IPA_RC_NOTSUPP:
+	switch (ipa_rc) {
+	case IPA_RC_SUCCESS:
+		return ipa_rc;
+	case IPA_RC_L2_UNSUPPORTED_CMD:
+	case IPA_RC_NOTSUPP:
 		rc = -EOPNOTSUPP;
-		अवरोध;
-	हाल IPA_RC_VNICC_OOSEQ:
+		break;
+	case IPA_RC_VNICC_OOSEQ:
 		rc = -EALREADY;
-		अवरोध;
-	हाल IPA_RC_VNICC_VNICBP:
+		break;
+	case IPA_RC_VNICC_VNICBP:
 		rc = -EBUSY;
-		अवरोध;
-	हाल IPA_RC_L2_ADDR_TABLE_FULL:
+		break;
+	case IPA_RC_L2_ADDR_TABLE_FULL:
 		rc = -ENOSPC;
-		अवरोध;
-	हाल IPA_RC_L2_MAC_NOT_AUTH_BY_ADP:
+		break;
+	case IPA_RC_L2_MAC_NOT_AUTH_BY_ADP:
 		rc = -EACCES;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EIO;
-	पूर्ण
+	}
 
 	QETH_CARD_TEXT_(card, 2, "err%04x", ipa_rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* generic VNICC request call back */
-अटल पूर्णांक qeth_l2_vnicc_request_cb(काष्ठा qeth_card *card,
-				    काष्ठा qeth_reply *reply,
-				    अचिन्हित दीर्घ data)
-अणु
-	काष्ठा qeth_ipa_cmd *cmd = (काष्ठा qeth_ipa_cmd *) data;
-	काष्ठा qeth_ipacmd_vnicc *rep = &cmd->data.vnicc;
+static int qeth_l2_vnicc_request_cb(struct qeth_card *card,
+				    struct qeth_reply *reply,
+				    unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *) data;
+	struct qeth_ipacmd_vnicc *rep = &cmd->data.vnicc;
 	u32 sub_cmd = cmd->data.vnicc.hdr.sub_command;
 
 	QETH_CARD_TEXT(card, 2, "vniccrcb");
-	अगर (cmd->hdr.वापस_code)
-		वापस qeth_l2_vnicc_makerc(card, cmd->hdr.वापस_code);
-	/* वापस results to caller */
-	card->options.vnicc.sup_अक्षरs = rep->vnicc_cmds.supported;
-	card->options.vnicc.cur_अक्षरs = rep->vnicc_cmds.enabled;
+	if (cmd->hdr.return_code)
+		return qeth_l2_vnicc_makerc(card, cmd->hdr.return_code);
+	/* return results to caller */
+	card->options.vnicc.sup_chars = rep->vnicc_cmds.supported;
+	card->options.vnicc.cur_chars = rep->vnicc_cmds.enabled;
 
-	अगर (sub_cmd == IPA_VNICC_QUERY_CMDS)
+	if (sub_cmd == IPA_VNICC_QUERY_CMDS)
 		*(u32 *)reply->param = rep->data.query_cmds.sup_cmds;
-	अन्यथा अगर (sub_cmd == IPA_VNICC_GET_TIMEOUT)
-		*(u32 *)reply->param = rep->data.माला_लोet_समयout.समयout;
+	else if (sub_cmd == IPA_VNICC_GET_TIMEOUT)
+		*(u32 *)reply->param = rep->data.getset_timeout.timeout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा qeth_cmd_buffer *qeth_l2_vnicc_build_cmd(काष्ठा qeth_card *card,
+static struct qeth_cmd_buffer *qeth_l2_vnicc_build_cmd(struct qeth_card *card,
 						       u32 vnicc_cmd,
-						       अचिन्हित पूर्णांक data_length)
-अणु
-	काष्ठा qeth_ipacmd_vnicc_hdr *hdr;
-	काष्ठा qeth_cmd_buffer *iob;
+						       unsigned int data_length)
+{
+	struct qeth_ipacmd_vnicc_hdr *hdr;
+	struct qeth_cmd_buffer *iob;
 
 	iob = qeth_ipa_alloc_cmd(card, IPA_CMD_VNICC, QETH_PROT_NONE,
 				 data_length +
-				 दुरत्व(काष्ठा qeth_ipacmd_vnicc, data));
-	अगर (!iob)
-		वापस शून्य;
+				 offsetof(struct qeth_ipacmd_vnicc, data));
+	if (!iob)
+		return NULL;
 
 	hdr = &__ipa_cmd(iob)->data.vnicc.hdr;
-	hdr->data_length = माप(*hdr) + data_length;
+	hdr->data_length = sizeof(*hdr) + data_length;
 	hdr->sub_command = vnicc_cmd;
-	वापस iob;
-पूर्ण
+	return iob;
+}
 
-/* VNICC query VNIC अक्षरacteristics request */
-अटल पूर्णांक qeth_l2_vnicc_query_अक्षरs(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
+/* VNICC query VNIC characteristics request */
+static int qeth_l2_vnicc_query_chars(struct qeth_card *card)
+{
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT(card, 2, "vniccqch");
 	iob = qeth_l2_vnicc_build_cmd(card, IPA_VNICC_QUERY_CHARS, 0);
-	अगर (!iob)
-		वापस -ENOMEM;
+	if (!iob)
+		return -ENOMEM;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, NULL);
+}
 
 /* VNICC query sub commands request */
-अटल पूर्णांक qeth_l2_vnicc_query_cmds(काष्ठा qeth_card *card, u32 vnic_अक्षर,
+static int qeth_l2_vnicc_query_cmds(struct qeth_card *card, u32 vnic_char,
 				    u32 *sup_cmds)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
+{
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT(card, 2, "vniccqcm");
 	iob = qeth_l2_vnicc_build_cmd(card, IPA_VNICC_QUERY_CMDS,
-				      VNICC_DATA_SIZखातापूर्ण(query_cmds));
-	अगर (!iob)
-		वापस -ENOMEM;
+				      VNICC_DATA_SIZEOF(query_cmds));
+	if (!iob)
+		return -ENOMEM;
 
-	__ipa_cmd(iob)->data.vnicc.data.query_cmds.vnic_अक्षर = vnic_अक्षर;
+	__ipa_cmd(iob)->data.vnicc.data.query_cmds.vnic_char = vnic_char;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, sup_cmds);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, sup_cmds);
+}
 
-/* VNICC enable/disable अक्षरacteristic request */
-अटल पूर्णांक qeth_l2_vnicc_set_अक्षर(काष्ठा qeth_card *card, u32 vnic_अक्षर,
+/* VNICC enable/disable characteristic request */
+static int qeth_l2_vnicc_set_char(struct qeth_card *card, u32 vnic_char,
 				      u32 cmd)
-अणु
-	काष्ठा qeth_cmd_buffer *iob;
+{
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT(card, 2, "vniccedc");
-	iob = qeth_l2_vnicc_build_cmd(card, cmd, VNICC_DATA_SIZखातापूर्ण(set_अक्षर));
-	अगर (!iob)
-		वापस -ENOMEM;
+	iob = qeth_l2_vnicc_build_cmd(card, cmd, VNICC_DATA_SIZEOF(set_char));
+	if (!iob)
+		return -ENOMEM;
 
-	__ipa_cmd(iob)->data.vnicc.data.set_अक्षर.vnic_अक्षर = vnic_अक्षर;
+	__ipa_cmd(iob)->data.vnicc.data.set_char.vnic_char = vnic_char;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, शून्य);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, NULL);
+}
 
-/* VNICC get/set समयout क्रम अक्षरacteristic request */
-अटल पूर्णांक qeth_l2_vnicc_माला_लोet_समयout(काष्ठा qeth_card *card, u32 vnicc,
-					u32 cmd, u32 *समयout)
-अणु
-	काष्ठा qeth_vnicc_माला_लोet_समयout *माला_लोet_समयout;
-	काष्ठा qeth_cmd_buffer *iob;
+/* VNICC get/set timeout for characteristic request */
+static int qeth_l2_vnicc_getset_timeout(struct qeth_card *card, u32 vnicc,
+					u32 cmd, u32 *timeout)
+{
+	struct qeth_vnicc_getset_timeout *getset_timeout;
+	struct qeth_cmd_buffer *iob;
 
 	QETH_CARD_TEXT(card, 2, "vniccgst");
 	iob = qeth_l2_vnicc_build_cmd(card, cmd,
-				      VNICC_DATA_SIZखातापूर्ण(माला_लोet_समयout));
-	अगर (!iob)
-		वापस -ENOMEM;
+				      VNICC_DATA_SIZEOF(getset_timeout));
+	if (!iob)
+		return -ENOMEM;
 
-	माला_लोet_समयout = &__ipa_cmd(iob)->data.vnicc.data.माला_लोet_समयout;
-	माला_लोet_समयout->vnic_अक्षर = vnicc;
+	getset_timeout = &__ipa_cmd(iob)->data.vnicc.data.getset_timeout;
+	getset_timeout->vnic_char = vnicc;
 
-	अगर (cmd == IPA_VNICC_SET_TIMEOUT)
-		माला_लोet_समयout->समयout = *समयout;
+	if (cmd == IPA_VNICC_SET_TIMEOUT)
+		getset_timeout->timeout = *timeout;
 
-	वापस qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, समयout);
-पूर्ण
+	return qeth_send_ipa_cmd(card, iob, qeth_l2_vnicc_request_cb, timeout);
+}
 
-/* recover user समयout setting */
-अटल bool qeth_l2_vnicc_recover_समयout(काष्ठा qeth_card *card, u32 vnicc,
-					  u32 *समयout)
-अणु
-	अगर (card->options.vnicc.sup_अक्षरs & vnicc &&
-	    card->options.vnicc.माला_लोet_समयout_sup & vnicc &&
-	    !qeth_l2_vnicc_माला_लोet_समयout(card, vnicc, IPA_VNICC_SET_TIMEOUT,
-					  समयout))
-		वापस false;
-	*समयout = QETH_VNICC_DEFAULT_TIMEOUT;
-	वापस true;
-पूर्ण
+/* recover user timeout setting */
+static bool qeth_l2_vnicc_recover_timeout(struct qeth_card *card, u32 vnicc,
+					  u32 *timeout)
+{
+	if (card->options.vnicc.sup_chars & vnicc &&
+	    card->options.vnicc.getset_timeout_sup & vnicc &&
+	    !qeth_l2_vnicc_getset_timeout(card, vnicc, IPA_VNICC_SET_TIMEOUT,
+					  timeout))
+		return false;
+	*timeout = QETH_VNICC_DEFAULT_TIMEOUT;
+	return true;
+}
 
 /* set current VNICC flag state; called from sysfs store function */
-पूर्णांक qeth_l2_vnicc_set_state(काष्ठा qeth_card *card, u32 vnicc, bool state)
-अणु
-	पूर्णांक rc = 0;
+int qeth_l2_vnicc_set_state(struct qeth_card *card, u32 vnicc, bool state)
+{
+	int rc = 0;
 	u32 cmd;
 
 	QETH_CARD_TEXT(card, 2, "vniccsch");
 
-	/* check अगर अक्षरacteristic and enable/disable are supported */
-	अगर (!(card->options.vnicc.sup_अक्षरs & vnicc) ||
-	    !(card->options.vnicc.set_अक्षर_sup & vnicc))
-		वापस -EOPNOTSUPP;
+	/* check if characteristic and enable/disable are supported */
+	if (!(card->options.vnicc.sup_chars & vnicc) ||
+	    !(card->options.vnicc.set_char_sup & vnicc))
+		return -EOPNOTSUPP;
 
-	अगर (qeth_bridgeport_is_in_use(card))
-		वापस -EBUSY;
+	if (qeth_bridgeport_is_in_use(card))
+		return -EBUSY;
 
-	/* set enable/disable command and store wanted अक्षरacteristic */
-	अगर (state) अणु
+	/* set enable/disable command and store wanted characteristic */
+	if (state) {
 		cmd = IPA_VNICC_ENABLE;
-		card->options.vnicc.wanted_अक्षरs |= vnicc;
-	पूर्ण अन्यथा अणु
+		card->options.vnicc.wanted_chars |= vnicc;
+	} else {
 		cmd = IPA_VNICC_DISABLE;
-		card->options.vnicc.wanted_अक्षरs &= ~vnicc;
-	पूर्ण
+		card->options.vnicc.wanted_chars &= ~vnicc;
+	}
 
-	/* करो we need to करो anything? */
-	अगर (card->options.vnicc.cur_अक्षरs == card->options.vnicc.wanted_अक्षरs)
-		वापस rc;
+	/* do we need to do anything? */
+	if (card->options.vnicc.cur_chars == card->options.vnicc.wanted_chars)
+		return rc;
 
-	/* अगर card is not पढ़ोy, simply stop here */
-	अगर (!qeth_card_hw_is_reachable(card)) अणु
-		अगर (state)
-			card->options.vnicc.cur_अक्षरs |= vnicc;
-		अन्यथा
-			card->options.vnicc.cur_अक्षरs &= ~vnicc;
-		वापस rc;
-	पूर्ण
+	/* if card is not ready, simply stop here */
+	if (!qeth_card_hw_is_reachable(card)) {
+		if (state)
+			card->options.vnicc.cur_chars |= vnicc;
+		else
+			card->options.vnicc.cur_chars &= ~vnicc;
+		return rc;
+	}
 
-	rc = qeth_l2_vnicc_set_अक्षर(card, vnicc, cmd);
-	अगर (rc)
-		card->options.vnicc.wanted_अक्षरs =
-			card->options.vnicc.cur_अक्षरs;
-	अन्यथा अणु
-		/* successful online VNICC change; handle special हालs */
-		अगर (state && vnicc == QETH_VNICC_RX_BCAST)
+	rc = qeth_l2_vnicc_set_char(card, vnicc, cmd);
+	if (rc)
+		card->options.vnicc.wanted_chars =
+			card->options.vnicc.cur_chars;
+	else {
+		/* successful online VNICC change; handle special cases */
+		if (state && vnicc == QETH_VNICC_RX_BCAST)
 			card->options.vnicc.rx_bcast_enabled = true;
-		अगर (!state && vnicc == QETH_VNICC_LEARNING)
-			qeth_l2_vnicc_recover_समयout(card, vnicc,
-					&card->options.vnicc.learning_समयout);
-	पूर्ण
+		if (!state && vnicc == QETH_VNICC_LEARNING)
+			qeth_l2_vnicc_recover_timeout(card, vnicc,
+					&card->options.vnicc.learning_timeout);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* get current VNICC flag state; called from sysfs show function */
-पूर्णांक qeth_l2_vnicc_get_state(काष्ठा qeth_card *card, u32 vnicc, bool *state)
-अणु
-	पूर्णांक rc = 0;
+int qeth_l2_vnicc_get_state(struct qeth_card *card, u32 vnicc, bool *state)
+{
+	int rc = 0;
 
 	QETH_CARD_TEXT(card, 2, "vniccgch");
 
-	/* check अगर अक्षरacteristic is supported */
-	अगर (!(card->options.vnicc.sup_अक्षरs & vnicc))
-		वापस -EOPNOTSUPP;
+	/* check if characteristic is supported */
+	if (!(card->options.vnicc.sup_chars & vnicc))
+		return -EOPNOTSUPP;
 
-	अगर (qeth_bridgeport_is_in_use(card))
-		वापस -EBUSY;
+	if (qeth_bridgeport_is_in_use(card))
+		return -EBUSY;
 
-	/* अगर card is पढ़ोy, query current VNICC state */
-	अगर (qeth_card_hw_is_reachable(card))
-		rc = qeth_l2_vnicc_query_अक्षरs(card);
+	/* if card is ready, query current VNICC state */
+	if (qeth_card_hw_is_reachable(card))
+		rc = qeth_l2_vnicc_query_chars(card);
 
-	*state = (card->options.vnicc.cur_अक्षरs & vnicc) ? true : false;
-	वापस rc;
-पूर्ण
+	*state = (card->options.vnicc.cur_chars & vnicc) ? true : false;
+	return rc;
+}
 
-/* set VNICC समयout; called from sysfs store function. Currently, only learning
- * supports समयout
+/* set VNICC timeout; called from sysfs store function. Currently, only learning
+ * supports timeout
  */
-पूर्णांक qeth_l2_vnicc_set_समयout(काष्ठा qeth_card *card, u32 समयout)
-अणु
-	पूर्णांक rc = 0;
+int qeth_l2_vnicc_set_timeout(struct qeth_card *card, u32 timeout)
+{
+	int rc = 0;
 
 	QETH_CARD_TEXT(card, 2, "vniccsto");
 
-	/* check अगर अक्षरacteristic and set_समयout are supported */
-	अगर (!(card->options.vnicc.sup_अक्षरs & QETH_VNICC_LEARNING) ||
-	    !(card->options.vnicc.माला_लोet_समयout_sup & QETH_VNICC_LEARNING))
-		वापस -EOPNOTSUPP;
+	/* check if characteristic and set_timeout are supported */
+	if (!(card->options.vnicc.sup_chars & QETH_VNICC_LEARNING) ||
+	    !(card->options.vnicc.getset_timeout_sup & QETH_VNICC_LEARNING))
+		return -EOPNOTSUPP;
 
-	अगर (qeth_bridgeport_is_in_use(card))
-		वापस -EBUSY;
+	if (qeth_bridgeport_is_in_use(card))
+		return -EBUSY;
 
-	/* करो we need to करो anything? */
-	अगर (card->options.vnicc.learning_समयout == समयout)
-		वापस rc;
+	/* do we need to do anything? */
+	if (card->options.vnicc.learning_timeout == timeout)
+		return rc;
 
-	/* अगर card is not पढ़ोy, simply store the value पूर्णांकernally and वापस */
-	अगर (!qeth_card_hw_is_reachable(card)) अणु
-		card->options.vnicc.learning_समयout = समयout;
-		वापस rc;
-	पूर्ण
+	/* if card is not ready, simply store the value internally and return */
+	if (!qeth_card_hw_is_reachable(card)) {
+		card->options.vnicc.learning_timeout = timeout;
+		return rc;
+	}
 
-	/* send समयout value to card; अगर successful, store value पूर्णांकernally */
-	rc = qeth_l2_vnicc_माला_लोet_समयout(card, QETH_VNICC_LEARNING,
-					  IPA_VNICC_SET_TIMEOUT, &समयout);
-	अगर (!rc)
-		card->options.vnicc.learning_समयout = समयout;
+	/* send timeout value to card; if successful, store value internally */
+	rc = qeth_l2_vnicc_getset_timeout(card, QETH_VNICC_LEARNING,
+					  IPA_VNICC_SET_TIMEOUT, &timeout);
+	if (!rc)
+		card->options.vnicc.learning_timeout = timeout;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* get current VNICC समयout; called from sysfs show function. Currently, only
- * learning supports समयout
+/* get current VNICC timeout; called from sysfs show function. Currently, only
+ * learning supports timeout
  */
-पूर्णांक qeth_l2_vnicc_get_समयout(काष्ठा qeth_card *card, u32 *समयout)
-अणु
-	पूर्णांक rc = 0;
+int qeth_l2_vnicc_get_timeout(struct qeth_card *card, u32 *timeout)
+{
+	int rc = 0;
 
 	QETH_CARD_TEXT(card, 2, "vniccgto");
 
-	/* check अगर अक्षरacteristic and get_समयout are supported */
-	अगर (!(card->options.vnicc.sup_अक्षरs & QETH_VNICC_LEARNING) ||
-	    !(card->options.vnicc.माला_लोet_समयout_sup & QETH_VNICC_LEARNING))
-		वापस -EOPNOTSUPP;
+	/* check if characteristic and get_timeout are supported */
+	if (!(card->options.vnicc.sup_chars & QETH_VNICC_LEARNING) ||
+	    !(card->options.vnicc.getset_timeout_sup & QETH_VNICC_LEARNING))
+		return -EOPNOTSUPP;
 
-	अगर (qeth_bridgeport_is_in_use(card))
-		वापस -EBUSY;
+	if (qeth_bridgeport_is_in_use(card))
+		return -EBUSY;
 
-	/* अगर card is पढ़ोy, get समयout. Otherwise, just वापस stored value */
-	*समयout = card->options.vnicc.learning_समयout;
-	अगर (qeth_card_hw_is_reachable(card))
-		rc = qeth_l2_vnicc_माला_लोet_समयout(card, QETH_VNICC_LEARNING,
+	/* if card is ready, get timeout. Otherwise, just return stored value */
+	*timeout = card->options.vnicc.learning_timeout;
+	if (qeth_card_hw_is_reachable(card))
+		rc = qeth_l2_vnicc_getset_timeout(card, QETH_VNICC_LEARNING,
 						  IPA_VNICC_GET_TIMEOUT,
-						  समयout);
+						  timeout);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* check अगर VNICC is currently enabled */
-अटल bool _qeth_l2_vnicc_is_in_use(काष्ठा qeth_card *card)
-अणु
-	अगर (!card->options.vnicc.sup_अक्षरs)
-		वापस false;
-	/* शेष values are only OK अगर rx_bcast was not enabled by user
+/* check if VNICC is currently enabled */
+static bool _qeth_l2_vnicc_is_in_use(struct qeth_card *card)
+{
+	if (!card->options.vnicc.sup_chars)
+		return false;
+	/* default values are only OK if rx_bcast was not enabled by user
 	 * or the card is offline.
 	 */
-	अगर (card->options.vnicc.cur_अक्षरs == QETH_VNICC_DEFAULT) अणु
-		अगर (!card->options.vnicc.rx_bcast_enabled ||
+	if (card->options.vnicc.cur_chars == QETH_VNICC_DEFAULT) {
+		if (!card->options.vnicc.rx_bcast_enabled ||
 		    !qeth_card_hw_is_reachable(card))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	return true;
+}
 
 /**
  *	qeth_bridgeport_allowed - are any qeth_bridgeport functions allowed?
- *	@card: qeth_card काष्ठाure poपूर्णांकer
+ *	@card: qeth_card structure pointer
  *
  *	qeth_bridgeport functionality is mutually exclusive with usage of the
- *	VNIC Characteristics and dev2br address notअगरications
+ *	VNIC Characteristics and dev2br address notifications
  */
-bool qeth_bridgeport_allowed(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(card->dev);
+bool qeth_bridgeport_allowed(struct qeth_card *card)
+{
+	struct qeth_priv *priv = netdev_priv(card->dev);
 
-	वापस (!_qeth_l2_vnicc_is_in_use(card) &&
+	return (!_qeth_l2_vnicc_is_in_use(card) &&
 		!(priv->brport_features & BR_LEARNING_SYNC));
-पूर्ण
+}
 
-/* recover user अक्षरacteristic setting */
-अटल bool qeth_l2_vnicc_recover_अक्षर(काष्ठा qeth_card *card, u32 vnicc,
+/* recover user characteristic setting */
+static bool qeth_l2_vnicc_recover_char(struct qeth_card *card, u32 vnicc,
 				       bool enable)
-अणु
+{
 	u32 cmd = enable ? IPA_VNICC_ENABLE : IPA_VNICC_DISABLE;
 
-	अगर (card->options.vnicc.sup_अक्षरs & vnicc &&
-	    card->options.vnicc.set_अक्षर_sup & vnicc &&
-	    !qeth_l2_vnicc_set_अक्षर(card, vnicc, cmd))
-		वापस false;
-	card->options.vnicc.wanted_अक्षरs &= ~vnicc;
-	card->options.vnicc.wanted_अक्षरs |= QETH_VNICC_DEFAULT & vnicc;
-	वापस true;
-पूर्ण
+	if (card->options.vnicc.sup_chars & vnicc &&
+	    card->options.vnicc.set_char_sup & vnicc &&
+	    !qeth_l2_vnicc_set_char(card, vnicc, cmd))
+		return false;
+	card->options.vnicc.wanted_chars &= ~vnicc;
+	card->options.vnicc.wanted_chars |= QETH_VNICC_DEFAULT & vnicc;
+	return true;
+}
 
 /* (re-)initialize VNICC */
-अटल व्योम qeth_l2_vnicc_init(काष्ठा qeth_card *card)
-अणु
-	u32 *समयout = &card->options.vnicc.learning_समयout;
+static void qeth_l2_vnicc_init(struct qeth_card *card)
+{
+	u32 *timeout = &card->options.vnicc.learning_timeout;
 	bool enable, error = false;
-	अचिन्हित पूर्णांक अक्षरs_len, i;
-	अचिन्हित दीर्घ अक्षरs_पंचांगp;
+	unsigned int chars_len, i;
+	unsigned long chars_tmp;
 	u32 sup_cmds, vnicc;
 
 	QETH_CARD_TEXT(card, 2, "vniccini");
 	/* reset rx_bcast */
 	card->options.vnicc.rx_bcast_enabled = 0;
-	/* initial query and storage of VNIC अक्षरacteristics */
-	अगर (qeth_l2_vnicc_query_अक्षरs(card)) अणु
-		अगर (card->options.vnicc.wanted_अक्षरs != QETH_VNICC_DEFAULT ||
-		    *समयout != QETH_VNICC_DEFAULT_TIMEOUT)
+	/* initial query and storage of VNIC characteristics */
+	if (qeth_l2_vnicc_query_chars(card)) {
+		if (card->options.vnicc.wanted_chars != QETH_VNICC_DEFAULT ||
+		    *timeout != QETH_VNICC_DEFAULT_TIMEOUT)
 			dev_err(&card->gdev->dev, "Configuring the VNIC characteristics failed\n");
-		/* fail quietly अगर user didn't change the शेष config */
-		card->options.vnicc.sup_अक्षरs = 0;
-		card->options.vnicc.cur_अक्षरs = 0;
-		card->options.vnicc.wanted_अक्षरs = QETH_VNICC_DEFAULT;
-		वापस;
-	पूर्ण
-	/* get supported commands क्रम each supported अक्षरacteristic */
-	अक्षरs_पंचांगp = card->options.vnicc.sup_अक्षरs;
-	अक्षरs_len = माप(card->options.vnicc.sup_अक्षरs) * BITS_PER_BYTE;
-	क्रम_each_set_bit(i, &अक्षरs_पंचांगp, अक्षरs_len) अणु
+		/* fail quietly if user didn't change the default config */
+		card->options.vnicc.sup_chars = 0;
+		card->options.vnicc.cur_chars = 0;
+		card->options.vnicc.wanted_chars = QETH_VNICC_DEFAULT;
+		return;
+	}
+	/* get supported commands for each supported characteristic */
+	chars_tmp = card->options.vnicc.sup_chars;
+	chars_len = sizeof(card->options.vnicc.sup_chars) * BITS_PER_BYTE;
+	for_each_set_bit(i, &chars_tmp, chars_len) {
 		vnicc = BIT(i);
-		अगर (qeth_l2_vnicc_query_cmds(card, vnicc, &sup_cmds)) अणु
+		if (qeth_l2_vnicc_query_cmds(card, vnicc, &sup_cmds)) {
 			sup_cmds = 0;
 			error = true;
-		पूर्ण
-		अगर ((sup_cmds & IPA_VNICC_SET_TIMEOUT) &&
+		}
+		if ((sup_cmds & IPA_VNICC_SET_TIMEOUT) &&
 		    (sup_cmds & IPA_VNICC_GET_TIMEOUT))
-			card->options.vnicc.माला_लोet_समयout_sup |= vnicc;
-		अन्यथा
-			card->options.vnicc.माला_लोet_समयout_sup &= ~vnicc;
-		अगर ((sup_cmds & IPA_VNICC_ENABLE) &&
+			card->options.vnicc.getset_timeout_sup |= vnicc;
+		else
+			card->options.vnicc.getset_timeout_sup &= ~vnicc;
+		if ((sup_cmds & IPA_VNICC_ENABLE) &&
 		    (sup_cmds & IPA_VNICC_DISABLE))
-			card->options.vnicc.set_अक्षर_sup |= vnicc;
-		अन्यथा
-			card->options.vnicc.set_अक्षर_sup &= ~vnicc;
-	पूर्ण
-	/* enक्रमce assumed शेष values and recover settings, अगर changed  */
-	error |= qeth_l2_vnicc_recover_समयout(card, QETH_VNICC_LEARNING,
-					       समयout);
-	/* Change अक्षरs, अगर necessary  */
-	अक्षरs_पंचांगp = card->options.vnicc.wanted_अक्षरs ^
-		    card->options.vnicc.cur_अक्षरs;
-	अक्षरs_len = माप(card->options.vnicc.wanted_अक्षरs) * BITS_PER_BYTE;
-	क्रम_each_set_bit(i, &अक्षरs_पंचांगp, अक्षरs_len) अणु
+			card->options.vnicc.set_char_sup |= vnicc;
+		else
+			card->options.vnicc.set_char_sup &= ~vnicc;
+	}
+	/* enforce assumed default values and recover settings, if changed  */
+	error |= qeth_l2_vnicc_recover_timeout(card, QETH_VNICC_LEARNING,
+					       timeout);
+	/* Change chars, if necessary  */
+	chars_tmp = card->options.vnicc.wanted_chars ^
+		    card->options.vnicc.cur_chars;
+	chars_len = sizeof(card->options.vnicc.wanted_chars) * BITS_PER_BYTE;
+	for_each_set_bit(i, &chars_tmp, chars_len) {
 		vnicc = BIT(i);
-		enable = card->options.vnicc.wanted_अक्षरs & vnicc;
-		error |= qeth_l2_vnicc_recover_अक्षर(card, vnicc, enable);
-	पूर्ण
-	अगर (error)
+		enable = card->options.vnicc.wanted_chars & vnicc;
+		error |= qeth_l2_vnicc_recover_char(card, vnicc, enable);
+	}
+	if (error)
 		dev_err(&card->gdev->dev, "Configuring the VNIC characteristics failed\n");
-पूर्ण
+}
 
-/* configure शेष values of VNIC अक्षरacteristics */
-अटल व्योम qeth_l2_vnicc_set_शेषs(काष्ठा qeth_card *card)
-अणु
-	/* अक्षरacteristics values */
-	card->options.vnicc.sup_अक्षरs = QETH_VNICC_ALL;
-	card->options.vnicc.cur_अक्षरs = QETH_VNICC_DEFAULT;
-	card->options.vnicc.learning_समयout = QETH_VNICC_DEFAULT_TIMEOUT;
+/* configure default values of VNIC characteristics */
+static void qeth_l2_vnicc_set_defaults(struct qeth_card *card)
+{
+	/* characteristics values */
+	card->options.vnicc.sup_chars = QETH_VNICC_ALL;
+	card->options.vnicc.cur_chars = QETH_VNICC_DEFAULT;
+	card->options.vnicc.learning_timeout = QETH_VNICC_DEFAULT_TIMEOUT;
 	/* supported commands */
-	card->options.vnicc.set_अक्षर_sup = QETH_VNICC_ALL;
-	card->options.vnicc.माला_लोet_समयout_sup = QETH_VNICC_LEARNING;
+	card->options.vnicc.set_char_sup = QETH_VNICC_ALL;
+	card->options.vnicc.getset_timeout_sup = QETH_VNICC_LEARNING;
 	/* settings wanted by users */
-	card->options.vnicc.wanted_अक्षरs = QETH_VNICC_DEFAULT;
-पूर्ण
+	card->options.vnicc.wanted_chars = QETH_VNICC_DEFAULT;
+}
 
-अटल स्थिर काष्ठा device_type qeth_l2_devtype = अणु
+static const struct device_type qeth_l2_devtype = {
 	.name = "qeth_layer2",
 	.groups = qeth_l2_attr_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक qeth_l2_probe_device(काष्ठा ccwgroup_device *gdev)
-अणु
-	काष्ठा qeth_card *card = dev_get_drvdata(&gdev->dev);
-	पूर्णांक rc;
+static int qeth_l2_probe_device(struct ccwgroup_device *gdev)
+{
+	struct qeth_card *card = dev_get_drvdata(&gdev->dev);
+	int rc;
 
-	अगर (IS_OSN(card))
+	if (IS_OSN(card))
 		dev_notice(&gdev->dev, "OSN support will be dropped in 2021\n");
 
-	qeth_l2_vnicc_set_शेषs(card);
+	qeth_l2_vnicc_set_defaults(card);
 	mutex_init(&card->sbp_lock);
 
-	अगर (gdev->dev.type == &qeth_generic_devtype) अणु
+	if (gdev->dev.type == &qeth_generic_devtype) {
 		rc = device_add_groups(&gdev->dev, qeth_l2_attr_groups);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
 	INIT_WORK(&card->rx_mode_work, qeth_l2_rx_mode_work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qeth_l2_हटाओ_device(काष्ठा ccwgroup_device *gdev)
-अणु
-	काष्ठा qeth_card *card = dev_get_drvdata(&gdev->dev);
+static void qeth_l2_remove_device(struct ccwgroup_device *gdev)
+{
+	struct qeth_card *card = dev_get_drvdata(&gdev->dev);
 
-	अगर (gdev->dev.type == &qeth_generic_devtype)
-		device_हटाओ_groups(&gdev->dev, qeth_l2_attr_groups);
-	qeth_set_allowed_thपढ़ोs(card, 0, 1);
-	रुको_event(card->रुको_q, qeth_thपढ़ोs_running(card, 0xffffffff) == 0);
+	if (gdev->dev.type == &qeth_generic_devtype)
+		device_remove_groups(&gdev->dev, qeth_l2_attr_groups);
+	qeth_set_allowed_threads(card, 0, 1);
+	wait_event(card->wait_q, qeth_threads_running(card, 0xffffffff) == 0);
 
-	अगर (gdev->state == CCWGROUP_ONLINE)
+	if (gdev->state == CCWGROUP_ONLINE)
 		qeth_set_offline(card, card->discipline, false);
 
-	cancel_work_sync(&card->बंद_dev_work);
-	अगर (card->dev->reg_state == NETREG_REGISTERED)
-		unरेजिस्टर_netdev(card->dev);
-पूर्ण
+	cancel_work_sync(&card->close_dev_work);
+	if (card->dev->reg_state == NETREG_REGISTERED)
+		unregister_netdev(card->dev);
+}
 
-अटल पूर्णांक qeth_l2_set_online(काष्ठा qeth_card *card, bool carrier_ok)
-अणु
-	काष्ठा net_device *dev = card->dev;
-	पूर्णांक rc = 0;
+static int qeth_l2_set_online(struct qeth_card *card, bool carrier_ok)
+{
+	struct net_device *dev = card->dev;
+	int rc = 0;
 
 	qeth_l2_detect_dev2br_support(card);
 
 	mutex_lock(&card->sbp_lock);
 	qeth_bridgeport_query_support(card);
-	अगर (card->options.sbp.supported_funcs) अणु
+	if (card->options.sbp.supported_funcs) {
 		qeth_l2_setup_bridgeport_attrs(card);
 		dev_info(&card->gdev->dev,
 			 "The device represents a Bridge Capable Port\n");
-	पूर्ण
+	}
 	mutex_unlock(&card->sbp_lock);
 
-	qeth_l2_रेजिस्टर_dev_addr(card);
+	qeth_l2_register_dev_addr(card);
 
-	/* क्रम the rx_bcast अक्षरacteristic, init VNICC after seपंचांगac */
+	/* for the rx_bcast characteristic, init VNICC after setmac */
 	qeth_l2_vnicc_init(card);
 
 	qeth_l2_trace_features(card);
@@ -2244,109 +2243,109 @@ bool qeth_bridgeport_allowed(काष्ठा qeth_card *card)
 
 	card->state = CARD_STATE_SOFTSETUP;
 
-	qeth_set_allowed_thपढ़ोs(card, 0xffffffff, 0);
+	qeth_set_allowed_threads(card, 0xffffffff, 0);
 
-	अगर (dev->reg_state != NETREG_REGISTERED) अणु
+	if (dev->reg_state != NETREG_REGISTERED) {
 		rc = qeth_l2_setup_netdev(card);
-		अगर (rc)
-			जाओ err_setup;
+		if (rc)
+			goto err_setup;
 
-		अगर (carrier_ok)
-			netअगर_carrier_on(dev);
-	पूर्ण अन्यथा अणु
+		if (carrier_ok)
+			netif_carrier_on(dev);
+	} else {
 		rtnl_lock();
 		rc = qeth_set_real_num_tx_queues(card,
 						 qeth_tx_actual_queues(card));
-		अगर (rc) अणु
+		if (rc) {
 			rtnl_unlock();
-			जाओ err_set_queues;
-		पूर्ण
+			goto err_set_queues;
+		}
 
-		अगर (carrier_ok)
-			netअगर_carrier_on(dev);
-		अन्यथा
-			netअगर_carrier_off(dev);
+		if (carrier_ok)
+			netif_carrier_on(dev);
+		else
+			netif_carrier_off(dev);
 
-		netअगर_device_attach(dev);
+		netif_device_attach(dev);
 		qeth_enable_hw_features(dev);
 		qeth_l2_enable_brport_features(card);
 
-		अगर (card->info.खोलो_when_online) अणु
-			card->info.खोलो_when_online = 0;
-			dev_खोलो(dev, शून्य);
-		पूर्ण
+		if (card->info.open_when_online) {
+			card->info.open_when_online = 0;
+			dev_open(dev, NULL);
+		}
 		rtnl_unlock();
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
 err_set_queues:
 err_setup:
-	qeth_set_allowed_thपढ़ोs(card, 0, 1);
+	qeth_set_allowed_threads(card, 0, 1);
 	card->state = CARD_STATE_DOWN;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम qeth_l2_set_offline(काष्ठा qeth_card *card)
-अणु
-	काष्ठा qeth_priv *priv = netdev_priv(card->dev);
+static void qeth_l2_set_offline(struct qeth_card *card)
+{
+	struct qeth_priv *priv = netdev_priv(card->dev);
 
-	qeth_set_allowed_thपढ़ोs(card, 0, 1);
+	qeth_set_allowed_threads(card, 0, 1);
 	qeth_l2_drain_rx_mode_cache(card);
 
-	अगर (card->state == CARD_STATE_SOFTSETUP)
+	if (card->state == CARD_STATE_SOFTSETUP)
 		card->state = CARD_STATE_DOWN;
 
 	qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
-	अगर (priv->brport_features & BR_LEARNING_SYNC)
+	if (priv->brport_features & BR_LEARNING_SYNC)
 		qeth_l2_dev2br_fdb_flush(card);
-पूर्ण
+}
 
-/* Returns zero अगर the command is successfully "consumed" */
-अटल पूर्णांक qeth_l2_control_event(काष्ठा qeth_card *card,
-				 काष्ठा qeth_ipa_cmd *cmd)
-अणु
-	चयन (cmd->hdr.command) अणु
-	हाल IPA_CMD_SETBRIDGEPORT_OSA:
-	हाल IPA_CMD_SETBRIDGEPORT_IQD:
-		अगर (cmd->data.sbp.hdr.command_code ==
-		    IPA_SBP_BRIDGE_PORT_STATE_CHANGE) अणु
+/* Returns zero if the command is successfully "consumed" */
+static int qeth_l2_control_event(struct qeth_card *card,
+				 struct qeth_ipa_cmd *cmd)
+{
+	switch (cmd->hdr.command) {
+	case IPA_CMD_SETBRIDGEPORT_OSA:
+	case IPA_CMD_SETBRIDGEPORT_IQD:
+		if (cmd->data.sbp.hdr.command_code ==
+		    IPA_SBP_BRIDGE_PORT_STATE_CHANGE) {
 			qeth_bridge_state_change(card, cmd);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		वापस 1;
-	हाल IPA_CMD_ADDRESS_CHANGE_NOTIF:
+		return 1;
+	case IPA_CMD_ADDRESS_CHANGE_NOTIF:
 		qeth_addr_change_event(card, cmd);
-		वापस 0;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return 1;
+	}
+}
 
-स्थिर काष्ठा qeth_discipline qeth_l2_discipline = अणु
+const struct qeth_discipline qeth_l2_discipline = {
 	.devtype = &qeth_l2_devtype,
 	.setup = qeth_l2_probe_device,
-	.हटाओ = qeth_l2_हटाओ_device,
+	.remove = qeth_l2_remove_device,
 	.set_online = qeth_l2_set_online,
 	.set_offline = qeth_l2_set_offline,
-	.करो_ioctl = शून्य,
+	.do_ioctl = NULL,
 	.control_event_handler = qeth_l2_control_event,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(qeth_l2_discipline);
 
-अटल पूर्णांक __init qeth_l2_init(व्योम)
-अणु
+static int __init qeth_l2_init(void)
+{
 	pr_info("register layer 2 discipline\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास qeth_l2_निकास(व्योम)
-अणु
+static void __exit qeth_l2_exit(void)
+{
 	pr_info("unregister layer 2 discipline\n");
-पूर्ण
+}
 
 module_init(qeth_l2_init);
-module_निकास(qeth_l2_निकास);
+module_exit(qeth_l2_exit);
 MODULE_AUTHOR("Frank Blaschka <frank.blaschka@de.ibm.com>");
 MODULE_DESCRIPTION("qeth layer 2 discipline");
 MODULE_LICENSE("GPL");

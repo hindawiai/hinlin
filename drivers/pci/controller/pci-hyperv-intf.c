@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) Microsoft Corporation.
  *
@@ -7,62 +6,62 @@
  *   Haiyang Zhang <haiyangz@microsoft.com>
  *
  * This small module is a helper driver allows other drivers to
- * have a common पूर्णांकerface with the Hyper-V PCI frontend driver.
+ * have a common interface with the Hyper-V PCI frontend driver.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/hyperv.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/hyperv.h>
 
-काष्ठा hyperv_pci_block_ops hvpci_block_ops;
+struct hyperv_pci_block_ops hvpci_block_ops;
 EXPORT_SYMBOL_GPL(hvpci_block_ops);
 
-पूर्णांक hyperv_पढ़ो_cfg_blk(काष्ठा pci_dev *dev, व्योम *buf, अचिन्हित पूर्णांक buf_len,
-			अचिन्हित पूर्णांक block_id, अचिन्हित पूर्णांक *bytes_वापसed)
-अणु
-	अगर (!hvpci_block_ops.पढ़ो_block)
-		वापस -EOPNOTSUPP;
+int hyperv_read_cfg_blk(struct pci_dev *dev, void *buf, unsigned int buf_len,
+			unsigned int block_id, unsigned int *bytes_returned)
+{
+	if (!hvpci_block_ops.read_block)
+		return -EOPNOTSUPP;
 
-	वापस hvpci_block_ops.पढ़ो_block(dev, buf, buf_len, block_id,
-					  bytes_वापसed);
-पूर्ण
-EXPORT_SYMBOL_GPL(hyperv_पढ़ो_cfg_blk);
+	return hvpci_block_ops.read_block(dev, buf, buf_len, block_id,
+					  bytes_returned);
+}
+EXPORT_SYMBOL_GPL(hyperv_read_cfg_blk);
 
-पूर्णांक hyperv_ग_लिखो_cfg_blk(काष्ठा pci_dev *dev, व्योम *buf, अचिन्हित पूर्णांक len,
-			 अचिन्हित पूर्णांक block_id)
-अणु
-	अगर (!hvpci_block_ops.ग_लिखो_block)
-		वापस -EOPNOTSUPP;
+int hyperv_write_cfg_blk(struct pci_dev *dev, void *buf, unsigned int len,
+			 unsigned int block_id)
+{
+	if (!hvpci_block_ops.write_block)
+		return -EOPNOTSUPP;
 
-	वापस hvpci_block_ops.ग_लिखो_block(dev, buf, len, block_id);
-पूर्ण
-EXPORT_SYMBOL_GPL(hyperv_ग_लिखो_cfg_blk);
+	return hvpci_block_ops.write_block(dev, buf, len, block_id);
+}
+EXPORT_SYMBOL_GPL(hyperv_write_cfg_blk);
 
-पूर्णांक hyperv_reg_block_invalidate(काष्ठा pci_dev *dev, व्योम *context,
-				व्योम (*block_invalidate)(व्योम *context,
+int hyperv_reg_block_invalidate(struct pci_dev *dev, void *context,
+				void (*block_invalidate)(void *context,
 							 u64 block_mask))
-अणु
-	अगर (!hvpci_block_ops.reg_blk_invalidate)
-		वापस -EOPNOTSUPP;
+{
+	if (!hvpci_block_ops.reg_blk_invalidate)
+		return -EOPNOTSUPP;
 
-	वापस hvpci_block_ops.reg_blk_invalidate(dev, context,
+	return hvpci_block_ops.reg_blk_invalidate(dev, context,
 						  block_invalidate);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(hyperv_reg_block_invalidate);
 
-अटल व्योम __निकास निकास_hv_pci_पूर्णांकf(व्योम)
-अणु
-पूर्ण
+static void __exit exit_hv_pci_intf(void)
+{
+}
 
-अटल पूर्णांक __init init_hv_pci_पूर्णांकf(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static int __init init_hv_pci_intf(void)
+{
+	return 0;
+}
 
-module_init(init_hv_pci_पूर्णांकf);
-module_निकास(निकास_hv_pci_पूर्णांकf);
+module_init(init_hv_pci_intf);
+module_exit(exit_hv_pci_intf);
 
 MODULE_DESCRIPTION("Hyper-V PCI Interface");
 MODULE_LICENSE("GPL v2");

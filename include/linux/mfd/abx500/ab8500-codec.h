@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
  * Author: Ola Lilja <ola.o.lilja@stericsson.com>
- *         क्रम ST-Ericsson.
+ *         for ST-Ericsson.
  *
  * License terms:
  */
 
-#अगर_अघोषित AB8500_CORE_CODEC_H
-#घोषणा AB8500_CORE_CODEC_H
+#ifndef AB8500_CORE_CODEC_H
+#define AB8500_CORE_CODEC_H
 
 /* Mic-types */
-क्रमागत amic_type अणु
+enum amic_type {
 	AMIC_TYPE_SINGLE_ENDED,
 	AMIC_TYPE_DIFFERENTIAL
-पूर्ण;
+};
 
 /* Mic-biases */
-क्रमागत amic_micbias अणु
+enum amic_micbias {
 	AMIC_MICBIAS_VAMIC1,
 	AMIC_MICBIAS_VAMIC2,
 	AMIC_MICBIAS_UNKNOWN
-पूर्ण;
+};
 
 /* Bias-voltage */
-क्रमागत ear_cm_voltage अणु
+enum ear_cm_voltage {
 	EAR_CMV_0_95V,
 	EAR_CMV_1_10V,
 	EAR_CMV_1_27V,
 	EAR_CMV_1_58V,
 	EAR_CMV_UNKNOWN
-पूर्ण;
+};
 
 /* Analog microphone settings */
-काष्ठा amic_settings अणु
-	क्रमागत amic_type mic1_type;
-	क्रमागत amic_type mic2_type;
-	क्रमागत amic_micbias mic1a_micbias;
-	क्रमागत amic_micbias mic1b_micbias;
-	क्रमागत amic_micbias mic2_micbias;
-पूर्ण;
+struct amic_settings {
+	enum amic_type mic1_type;
+	enum amic_type mic2_type;
+	enum amic_micbias mic1a_micbias;
+	enum amic_micbias mic1b_micbias;
+	enum amic_micbias mic2_micbias;
+};
 
-/* Platक्रमm data काष्ठाure क्रम the audio-parts of the AB8500 */
-काष्ठा ab8500_codec_platक्रमm_data अणु
-	काष्ठा amic_settings amics;
-	क्रमागत ear_cm_voltage ear_cmv;
-पूर्ण;
+/* Platform data structure for the audio-parts of the AB8500 */
+struct ab8500_codec_platform_data {
+	struct amic_settings amics;
+	enum ear_cm_voltage ear_cmv;
+};
 
-#पूर्ण_अगर
+#endif

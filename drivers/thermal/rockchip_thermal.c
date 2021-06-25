@@ -1,844 +1,843 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2016, Fuzhou Rockchip Electronics Co., Ltd
  * Caesar Wang <wxt@rock-chips.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/pinctrl/consumer.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include <linux/thermal.h>
+#include <linux/mfd/syscon.h>
+#include <linux/pinctrl/consumer.h>
 
 /*
- * If the temperature over a period of समय High,
+ * If the temperature over a period of time High,
  * the resulting TSHUT gave CRU module,let it reset the entire chip,
  * or via GPIO give PMIC.
  */
-क्रमागत tshut_mode अणु
+enum tshut_mode {
 	TSHUT_MODE_CRU = 0,
 	TSHUT_MODE_GPIO,
-पूर्ण;
+};
 
 /*
- * The प्रणाली Temperature Sensors tshut(tshut) polarity
+ * The system Temperature Sensors tshut(tshut) polarity
  * the bit 8 is tshut polarity.
  * 0: low active, 1: high active
  */
-क्रमागत tshut_polarity अणु
+enum tshut_polarity {
 	TSHUT_LOW_ACTIVE = 0,
 	TSHUT_HIGH_ACTIVE,
-पूर्ण;
+};
 
 /*
- * The प्रणाली has two Temperature Sensors.
- * sensor0 is क्रम CPU, and sensor1 is क्रम GPU.
+ * The system has two Temperature Sensors.
+ * sensor0 is for CPU, and sensor1 is for GPU.
  */
-क्रमागत sensor_id अणु
+enum sensor_id {
 	SENSOR_CPU = 0,
 	SENSOR_GPU,
-पूर्ण;
+};
 
 /*
  * The conversion table has the adc value and temperature.
  * ADC_DECREMENT: the adc value is of diminishing.(e.g. rk3288_code_table)
  * ADC_INCREMENT: the adc value is incremental.(e.g. rk3368_code_table)
  */
-क्रमागत adc_sort_mode अणु
+enum adc_sort_mode {
 	ADC_DECREMENT = 0,
 	ADC_INCREMENT,
-पूर्ण;
+};
 
-#समावेश "thermal_hwmon.h"
+#include "thermal_hwmon.h"
 
 /**
  * The max sensors is two in rockchip SoCs.
  * Two sensors: CPU and GPU sensor.
  */
-#घोषणा SOC_MAX_SENSORS	2
+#define SOC_MAX_SENSORS	2
 
 /**
- * काष्ठा chip_tsadc_table - hold inक्रमmation about chip-specअगरic dअगरferences
+ * struct chip_tsadc_table - hold information about chip-specific differences
  * @id: conversion table
  * @length: size of conversion table
- * @data_mask: mask to apply on data inमाला_दो
+ * @data_mask: mask to apply on data inputs
  * @mode: sort mode of this adc variant (incrementing or decrementing)
  */
-काष्ठा chip_tsadc_table अणु
-	स्थिर काष्ठा tsadc_table *id;
-	अचिन्हित पूर्णांक length;
+struct chip_tsadc_table {
+	const struct tsadc_table *id;
+	unsigned int length;
 	u32 data_mask;
-	क्रमागत adc_sort_mode mode;
-पूर्ण;
+	enum adc_sort_mode mode;
+};
 
 /**
- * काष्ठा rockchip_tsadc_chip - hold the निजी data of tsadc chip
+ * struct rockchip_tsadc_chip - hold the private data of tsadc chip
  * @chn_id: array of sensor ids of chip corresponding to the channel
  * @chn_num: the channel number of tsadc chip
- * @tshut_temp: the hardware-controlled shutकरोwn temperature value
- * @tshut_mode: the hardware-controlled shutकरोwn mode (0:CRU 1:GPIO)
+ * @tshut_temp: the hardware-controlled shutdown temperature value
+ * @tshut_mode: the hardware-controlled shutdown mode (0:CRU 1:GPIO)
  * @tshut_polarity: the hardware-controlled active polarity (0:LOW 1:HIGH)
  * @initialize: SoC special initialize tsadc controller method
- * @irq_ack: clear the पूर्णांकerrupt
- * @control: enable/disable method क्रम the tsadc controller
+ * @irq_ack: clear the interrupt
+ * @control: enable/disable method for the tsadc controller
  * @get_temp: get the temperature
- * @set_alarm_temp: set the high temperature पूर्णांकerrupt
- * @set_tshut_temp: set the hardware-controlled shutकरोwn temperature
- * @set_tshut_mode: set the hardware-controlled shutकरोwn mode
- * @table: the chip-specअगरic conversion table
+ * @set_alarm_temp: set the high temperature interrupt
+ * @set_tshut_temp: set the hardware-controlled shutdown temperature
+ * @set_tshut_mode: set the hardware-controlled shutdown mode
+ * @table: the chip-specific conversion table
  */
-काष्ठा rockchip_tsadc_chip अणु
+struct rockchip_tsadc_chip {
 	/* The sensor id of chip correspond to the ADC channel */
-	पूर्णांक chn_id[SOC_MAX_SENSORS];
-	पूर्णांक chn_num;
+	int chn_id[SOC_MAX_SENSORS];
+	int chn_num;
 
 	/* The hardware-controlled tshut property */
-	पूर्णांक tshut_temp;
-	क्रमागत tshut_mode tshut_mode;
-	क्रमागत tshut_polarity tshut_polarity;
+	int tshut_temp;
+	enum tshut_mode tshut_mode;
+	enum tshut_polarity tshut_polarity;
 
 	/* Chip-wide methods */
-	व्योम (*initialize)(काष्ठा regmap *grf,
-			   व्योम __iomem *reg, क्रमागत tshut_polarity p);
-	व्योम (*irq_ack)(व्योम __iomem *reg);
-	व्योम (*control)(व्योम __iomem *reg, bool on);
+	void (*initialize)(struct regmap *grf,
+			   void __iomem *reg, enum tshut_polarity p);
+	void (*irq_ack)(void __iomem *reg);
+	void (*control)(void __iomem *reg, bool on);
 
 	/* Per-sensor methods */
-	पूर्णांक (*get_temp)(स्थिर काष्ठा chip_tsadc_table *table,
-			पूर्णांक chn, व्योम __iomem *reg, पूर्णांक *temp);
-	पूर्णांक (*set_alarm_temp)(स्थिर काष्ठा chip_tsadc_table *table,
-			      पूर्णांक chn, व्योम __iomem *reg, पूर्णांक temp);
-	पूर्णांक (*set_tshut_temp)(स्थिर काष्ठा chip_tsadc_table *table,
-			      पूर्णांक chn, व्योम __iomem *reg, पूर्णांक temp);
-	व्योम (*set_tshut_mode)(पूर्णांक chn, व्योम __iomem *reg, क्रमागत tshut_mode m);
+	int (*get_temp)(const struct chip_tsadc_table *table,
+			int chn, void __iomem *reg, int *temp);
+	int (*set_alarm_temp)(const struct chip_tsadc_table *table,
+			      int chn, void __iomem *reg, int temp);
+	int (*set_tshut_temp)(const struct chip_tsadc_table *table,
+			      int chn, void __iomem *reg, int temp);
+	void (*set_tshut_mode)(int chn, void __iomem *reg, enum tshut_mode m);
 
 	/* Per-table methods */
-	काष्ठा chip_tsadc_table table;
-पूर्ण;
+	struct chip_tsadc_table table;
+};
 
 /**
- * काष्ठा rockchip_thermal_sensor - hold the inक्रमmation of thermal sensor
- * @thermal:  poपूर्णांकer to the platक्रमm/configuration data
- * @tzd: poपूर्णांकer to a thermal zone
- * @id: identअगरier of the thermal sensor
+ * struct rockchip_thermal_sensor - hold the information of thermal sensor
+ * @thermal:  pointer to the platform/configuration data
+ * @tzd: pointer to a thermal zone
+ * @id: identifier of the thermal sensor
  */
-काष्ठा rockchip_thermal_sensor अणु
-	काष्ठा rockchip_thermal_data *thermal;
-	काष्ठा thermal_zone_device *tzd;
-	पूर्णांक id;
-पूर्ण;
+struct rockchip_thermal_sensor {
+	struct rockchip_thermal_data *thermal;
+	struct thermal_zone_device *tzd;
+	int id;
+};
 
 /**
- * काष्ठा rockchip_thermal_data - hold the निजी data of thermal driver
- * @chip: poपूर्णांकer to the platक्रमm/configuration data
- * @pdev: platक्रमm device of thermal
+ * struct rockchip_thermal_data - hold the private data of thermal driver
+ * @chip: pointer to the platform/configuration data
+ * @pdev: platform device of thermal
  * @reset: the reset controller of tsadc
  * @sensors: array of thermal sensors
- * @clk: the controller घड़ी is भागided by the exteral 24MHz
- * @pclk: the advanced peripherals bus घड़ी
- * @grf: the general रेजिस्टर file will be used to करो अटल set by software
+ * @clk: the controller clock is divided by the exteral 24MHz
+ * @pclk: the advanced peripherals bus clock
+ * @grf: the general register file will be used to do static set by software
  * @regs: the base address of tsadc controller
- * @tshut_temp: the hardware-controlled shutकरोwn temperature value
- * @tshut_mode: the hardware-controlled shutकरोwn mode (0:CRU 1:GPIO)
+ * @tshut_temp: the hardware-controlled shutdown temperature value
+ * @tshut_mode: the hardware-controlled shutdown mode (0:CRU 1:GPIO)
  * @tshut_polarity: the hardware-controlled active polarity (0:LOW 1:HIGH)
  */
-काष्ठा rockchip_thermal_data अणु
-	स्थिर काष्ठा rockchip_tsadc_chip *chip;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा reset_control *reset;
+struct rockchip_thermal_data {
+	const struct rockchip_tsadc_chip *chip;
+	struct platform_device *pdev;
+	struct reset_control *reset;
 
-	काष्ठा rockchip_thermal_sensor sensors[SOC_MAX_SENSORS];
+	struct rockchip_thermal_sensor sensors[SOC_MAX_SENSORS];
 
-	काष्ठा clk *clk;
-	काष्ठा clk *pclk;
+	struct clk *clk;
+	struct clk *pclk;
 
-	काष्ठा regmap *grf;
-	व्योम __iomem *regs;
+	struct regmap *grf;
+	void __iomem *regs;
 
-	पूर्णांक tshut_temp;
-	क्रमागत tshut_mode tshut_mode;
-	क्रमागत tshut_polarity tshut_polarity;
-पूर्ण;
+	int tshut_temp;
+	enum tshut_mode tshut_mode;
+	enum tshut_polarity tshut_polarity;
+};
 
 /**
  * TSADC Sensor Register description:
  *
- * TSADCV2_* are used क्रम RK3288 SoCs, the other chips can reuse it.
- * TSADCV3_* are used क्रम newer SoCs than RK3288. (e.g: RK3228, RK3399)
+ * TSADCV2_* are used for RK3288 SoCs, the other chips can reuse it.
+ * TSADCV3_* are used for newer SoCs than RK3288. (e.g: RK3228, RK3399)
  *
  */
-#घोषणा TSADCV2_USER_CON			0x00
-#घोषणा TSADCV2_AUTO_CON			0x04
-#घोषणा TSADCV2_INT_EN				0x08
-#घोषणा TSADCV2_INT_PD				0x0c
-#घोषणा TSADCV2_DATA(chn)			(0x20 + (chn) * 0x04)
-#घोषणा TSADCV2_COMP_INT(chn)		        (0x30 + (chn) * 0x04)
-#घोषणा TSADCV2_COMP_SHUT(chn)		        (0x40 + (chn) * 0x04)
-#घोषणा TSADCV2_HIGHT_INT_DEBOUNCE		0x60
-#घोषणा TSADCV2_HIGHT_TSHUT_DEBOUNCE		0x64
-#घोषणा TSADCV2_AUTO_PERIOD			0x68
-#घोषणा TSADCV2_AUTO_PERIOD_HT			0x6c
+#define TSADCV2_USER_CON			0x00
+#define TSADCV2_AUTO_CON			0x04
+#define TSADCV2_INT_EN				0x08
+#define TSADCV2_INT_PD				0x0c
+#define TSADCV2_DATA(chn)			(0x20 + (chn) * 0x04)
+#define TSADCV2_COMP_INT(chn)		        (0x30 + (chn) * 0x04)
+#define TSADCV2_COMP_SHUT(chn)		        (0x40 + (chn) * 0x04)
+#define TSADCV2_HIGHT_INT_DEBOUNCE		0x60
+#define TSADCV2_HIGHT_TSHUT_DEBOUNCE		0x64
+#define TSADCV2_AUTO_PERIOD			0x68
+#define TSADCV2_AUTO_PERIOD_HT			0x6c
 
-#घोषणा TSADCV2_AUTO_EN				BIT(0)
-#घोषणा TSADCV2_AUTO_SRC_EN(chn)		BIT(4 + (chn))
-#घोषणा TSADCV2_AUTO_TSHUT_POLARITY_HIGH	BIT(8)
+#define TSADCV2_AUTO_EN				BIT(0)
+#define TSADCV2_AUTO_SRC_EN(chn)		BIT(4 + (chn))
+#define TSADCV2_AUTO_TSHUT_POLARITY_HIGH	BIT(8)
 
-#घोषणा TSADCV3_AUTO_Q_SEL_EN			BIT(1)
+#define TSADCV3_AUTO_Q_SEL_EN			BIT(1)
 
-#घोषणा TSADCV2_INT_SRC_EN(chn)			BIT(chn)
-#घोषणा TSADCV2_SHUT_2GPIO_SRC_EN(chn)		BIT(4 + (chn))
-#घोषणा TSADCV2_SHUT_2CRU_SRC_EN(chn)		BIT(8 + (chn))
+#define TSADCV2_INT_SRC_EN(chn)			BIT(chn)
+#define TSADCV2_SHUT_2GPIO_SRC_EN(chn)		BIT(4 + (chn))
+#define TSADCV2_SHUT_2CRU_SRC_EN(chn)		BIT(8 + (chn))
 
-#घोषणा TSADCV2_INT_PD_CLEAR_MASK		~BIT(8)
-#घोषणा TSADCV3_INT_PD_CLEAR_MASK		~BIT(16)
+#define TSADCV2_INT_PD_CLEAR_MASK		~BIT(8)
+#define TSADCV3_INT_PD_CLEAR_MASK		~BIT(16)
 
-#घोषणा TSADCV2_DATA_MASK			0xfff
-#घोषणा TSADCV3_DATA_MASK			0x3ff
+#define TSADCV2_DATA_MASK			0xfff
+#define TSADCV3_DATA_MASK			0x3ff
 
-#घोषणा TSADCV2_HIGHT_INT_DEBOUNCE_COUNT	4
-#घोषणा TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT	4
-#घोषणा TSADCV2_AUTO_PERIOD_TIME		250 /* 250ms */
-#घोषणा TSADCV2_AUTO_PERIOD_HT_TIME		50  /* 50ms */
-#घोषणा TSADCV3_AUTO_PERIOD_TIME		1875 /* 2.5ms */
-#घोषणा TSADCV3_AUTO_PERIOD_HT_TIME		1875 /* 2.5ms */
+#define TSADCV2_HIGHT_INT_DEBOUNCE_COUNT	4
+#define TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT	4
+#define TSADCV2_AUTO_PERIOD_TIME		250 /* 250ms */
+#define TSADCV2_AUTO_PERIOD_HT_TIME		50  /* 50ms */
+#define TSADCV3_AUTO_PERIOD_TIME		1875 /* 2.5ms */
+#define TSADCV3_AUTO_PERIOD_HT_TIME		1875 /* 2.5ms */
 
-#घोषणा TSADCV2_USER_INTER_PD_SOC		0x340 /* 13 घड़ीs */
+#define TSADCV2_USER_INTER_PD_SOC		0x340 /* 13 clocks */
 
-#घोषणा GRF_SARADC_TESTBIT			0x0e644
-#घोषणा GRF_TSADC_TESTBIT_L			0x0e648
-#घोषणा GRF_TSADC_TESTBIT_H			0x0e64c
+#define GRF_SARADC_TESTBIT			0x0e644
+#define GRF_TSADC_TESTBIT_L			0x0e648
+#define GRF_TSADC_TESTBIT_H			0x0e64c
 
-#घोषणा PX30_GRF_SOC_CON2			0x0408
+#define PX30_GRF_SOC_CON2			0x0408
 
-#घोषणा GRF_SARADC_TESTBIT_ON			(0x10001 << 2)
-#घोषणा GRF_TSADC_TESTBIT_H_ON			(0x10001 << 2)
-#घोषणा GRF_TSADC_VCM_EN_L			(0x10001 << 7)
-#घोषणा GRF_TSADC_VCM_EN_H			(0x10001 << 7)
+#define GRF_SARADC_TESTBIT_ON			(0x10001 << 2)
+#define GRF_TSADC_TESTBIT_H_ON			(0x10001 << 2)
+#define GRF_TSADC_VCM_EN_L			(0x10001 << 7)
+#define GRF_TSADC_VCM_EN_H			(0x10001 << 7)
 
-#घोषणा GRF_CON_TSADC_CH_INV			(0x10001 << 1)
+#define GRF_CON_TSADC_CH_INV			(0x10001 << 1)
 
 /**
- * काष्ठा tsadc_table - code to temperature conversion table
+ * struct tsadc_table - code to temperature conversion table
  * @code: the value of adc channel
  * @temp: the temperature
  * Note:
  * code to temperature mapping of the temperature sensor is a piece wise linear
  * curve.Any temperature, code faling between to 2 give temperatures can be
- * linearly पूर्णांकerpolated.
+ * linearly interpolated.
  * Code to Temperature mapping should be updated based on manufacturer results.
  */
-काष्ठा tsadc_table अणु
+struct tsadc_table {
 	u32 code;
-	पूर्णांक temp;
-पूर्ण;
+	int temp;
+};
 
-अटल स्थिर काष्ठा tsadc_table rv1108_table[] = अणु
-	अणु0, -40000पूर्ण,
-	अणु374, -40000पूर्ण,
-	अणु382, -35000पूर्ण,
-	अणु389, -30000पूर्ण,
-	अणु397, -25000पूर्ण,
-	अणु405, -20000पूर्ण,
-	अणु413, -15000पूर्ण,
-	अणु421, -10000पूर्ण,
-	अणु429, -5000पूर्ण,
-	अणु436, 0पूर्ण,
-	अणु444, 5000पूर्ण,
-	अणु452, 10000पूर्ण,
-	अणु460, 15000पूर्ण,
-	अणु468, 20000पूर्ण,
-	अणु476, 25000पूर्ण,
-	अणु483, 30000पूर्ण,
-	अणु491, 35000पूर्ण,
-	अणु499, 40000पूर्ण,
-	अणु507, 45000पूर्ण,
-	अणु515, 50000पूर्ण,
-	अणु523, 55000पूर्ण,
-	अणु531, 60000पूर्ण,
-	अणु539, 65000पूर्ण,
-	अणु547, 70000पूर्ण,
-	अणु555, 75000पूर्ण,
-	अणु562, 80000पूर्ण,
-	अणु570, 85000पूर्ण,
-	अणु578, 90000पूर्ण,
-	अणु586, 95000पूर्ण,
-	अणु594, 100000पूर्ण,
-	अणु602, 105000पूर्ण,
-	अणु610, 110000पूर्ण,
-	अणु618, 115000पूर्ण,
-	अणु626, 120000पूर्ण,
-	अणु634, 125000पूर्ण,
-	अणुTSADCV2_DATA_MASK, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rv1108_table[] = {
+	{0, -40000},
+	{374, -40000},
+	{382, -35000},
+	{389, -30000},
+	{397, -25000},
+	{405, -20000},
+	{413, -15000},
+	{421, -10000},
+	{429, -5000},
+	{436, 0},
+	{444, 5000},
+	{452, 10000},
+	{460, 15000},
+	{468, 20000},
+	{476, 25000},
+	{483, 30000},
+	{491, 35000},
+	{499, 40000},
+	{507, 45000},
+	{515, 50000},
+	{523, 55000},
+	{531, 60000},
+	{539, 65000},
+	{547, 70000},
+	{555, 75000},
+	{562, 80000},
+	{570, 85000},
+	{578, 90000},
+	{586, 95000},
+	{594, 100000},
+	{602, 105000},
+	{610, 110000},
+	{618, 115000},
+	{626, 120000},
+	{634, 125000},
+	{TSADCV2_DATA_MASK, 125000},
+};
 
-अटल स्थिर काष्ठा tsadc_table rk3228_code_table[] = अणु
-	अणु0, -40000पूर्ण,
-	अणु588, -40000पूर्ण,
-	अणु593, -35000पूर्ण,
-	अणु598, -30000पूर्ण,
-	अणु603, -25000पूर्ण,
-	अणु608, -20000पूर्ण,
-	अणु613, -15000पूर्ण,
-	अणु618, -10000पूर्ण,
-	अणु623, -5000पूर्ण,
-	अणु629, 0पूर्ण,
-	अणु634, 5000पूर्ण,
-	अणु639, 10000पूर्ण,
-	अणु644, 15000पूर्ण,
-	अणु649, 20000पूर्ण,
-	अणु654, 25000पूर्ण,
-	अणु660, 30000पूर्ण,
-	अणु665, 35000पूर्ण,
-	अणु670, 40000पूर्ण,
-	अणु675, 45000पूर्ण,
-	अणु681, 50000पूर्ण,
-	अणु686, 55000पूर्ण,
-	अणु691, 60000पूर्ण,
-	अणु696, 65000पूर्ण,
-	अणु702, 70000पूर्ण,
-	अणु707, 75000पूर्ण,
-	अणु712, 80000पूर्ण,
-	अणु717, 85000पूर्ण,
-	अणु723, 90000पूर्ण,
-	अणु728, 95000पूर्ण,
-	अणु733, 100000पूर्ण,
-	अणु738, 105000पूर्ण,
-	अणु744, 110000पूर्ण,
-	अणु749, 115000पूर्ण,
-	अणु754, 120000पूर्ण,
-	अणु760, 125000पूर्ण,
-	अणुTSADCV2_DATA_MASK, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rk3228_code_table[] = {
+	{0, -40000},
+	{588, -40000},
+	{593, -35000},
+	{598, -30000},
+	{603, -25000},
+	{608, -20000},
+	{613, -15000},
+	{618, -10000},
+	{623, -5000},
+	{629, 0},
+	{634, 5000},
+	{639, 10000},
+	{644, 15000},
+	{649, 20000},
+	{654, 25000},
+	{660, 30000},
+	{665, 35000},
+	{670, 40000},
+	{675, 45000},
+	{681, 50000},
+	{686, 55000},
+	{691, 60000},
+	{696, 65000},
+	{702, 70000},
+	{707, 75000},
+	{712, 80000},
+	{717, 85000},
+	{723, 90000},
+	{728, 95000},
+	{733, 100000},
+	{738, 105000},
+	{744, 110000},
+	{749, 115000},
+	{754, 120000},
+	{760, 125000},
+	{TSADCV2_DATA_MASK, 125000},
+};
 
-अटल स्थिर काष्ठा tsadc_table rk3288_code_table[] = अणु
-	अणुTSADCV2_DATA_MASK, -40000पूर्ण,
-	अणु3800, -40000पूर्ण,
-	अणु3792, -35000पूर्ण,
-	अणु3783, -30000पूर्ण,
-	अणु3774, -25000पूर्ण,
-	अणु3765, -20000पूर्ण,
-	अणु3756, -15000पूर्ण,
-	अणु3747, -10000पूर्ण,
-	अणु3737, -5000पूर्ण,
-	अणु3728, 0पूर्ण,
-	अणु3718, 5000पूर्ण,
-	अणु3708, 10000पूर्ण,
-	अणु3698, 15000पूर्ण,
-	अणु3688, 20000पूर्ण,
-	अणु3678, 25000पूर्ण,
-	अणु3667, 30000पूर्ण,
-	अणु3656, 35000पूर्ण,
-	अणु3645, 40000पूर्ण,
-	अणु3634, 45000पूर्ण,
-	अणु3623, 50000पूर्ण,
-	अणु3611, 55000पूर्ण,
-	अणु3600, 60000पूर्ण,
-	अणु3588, 65000पूर्ण,
-	अणु3575, 70000पूर्ण,
-	अणु3563, 75000पूर्ण,
-	अणु3550, 80000पूर्ण,
-	अणु3537, 85000पूर्ण,
-	अणु3524, 90000पूर्ण,
-	अणु3510, 95000पूर्ण,
-	अणु3496, 100000पूर्ण,
-	अणु3482, 105000पूर्ण,
-	अणु3467, 110000पूर्ण,
-	अणु3452, 115000पूर्ण,
-	अणु3437, 120000पूर्ण,
-	अणु3421, 125000पूर्ण,
-	अणु0, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rk3288_code_table[] = {
+	{TSADCV2_DATA_MASK, -40000},
+	{3800, -40000},
+	{3792, -35000},
+	{3783, -30000},
+	{3774, -25000},
+	{3765, -20000},
+	{3756, -15000},
+	{3747, -10000},
+	{3737, -5000},
+	{3728, 0},
+	{3718, 5000},
+	{3708, 10000},
+	{3698, 15000},
+	{3688, 20000},
+	{3678, 25000},
+	{3667, 30000},
+	{3656, 35000},
+	{3645, 40000},
+	{3634, 45000},
+	{3623, 50000},
+	{3611, 55000},
+	{3600, 60000},
+	{3588, 65000},
+	{3575, 70000},
+	{3563, 75000},
+	{3550, 80000},
+	{3537, 85000},
+	{3524, 90000},
+	{3510, 95000},
+	{3496, 100000},
+	{3482, 105000},
+	{3467, 110000},
+	{3452, 115000},
+	{3437, 120000},
+	{3421, 125000},
+	{0, 125000},
+};
 
-अटल स्थिर काष्ठा tsadc_table rk3328_code_table[] = अणु
-	अणु0, -40000पूर्ण,
-	अणु296, -40000पूर्ण,
-	अणु304, -35000पूर्ण,
-	अणु313, -30000पूर्ण,
-	अणु331, -20000पूर्ण,
-	अणु340, -15000पूर्ण,
-	अणु349, -10000पूर्ण,
-	अणु359, -5000पूर्ण,
-	अणु368, 0पूर्ण,
-	अणु378, 5000पूर्ण,
-	अणु388, 10000पूर्ण,
-	अणु398, 15000पूर्ण,
-	अणु408, 20000पूर्ण,
-	अणु418, 25000पूर्ण,
-	अणु429, 30000पूर्ण,
-	अणु440, 35000पूर्ण,
-	अणु451, 40000पूर्ण,
-	अणु462, 45000पूर्ण,
-	अणु473, 50000पूर्ण,
-	अणु485, 55000पूर्ण,
-	अणु496, 60000पूर्ण,
-	अणु508, 65000पूर्ण,
-	अणु521, 70000पूर्ण,
-	अणु533, 75000पूर्ण,
-	अणु546, 80000पूर्ण,
-	अणु559, 85000पूर्ण,
-	अणु572, 90000पूर्ण,
-	अणु586, 95000पूर्ण,
-	अणु600, 100000पूर्ण,
-	अणु614, 105000पूर्ण,
-	अणु629, 110000पूर्ण,
-	अणु644, 115000पूर्ण,
-	अणु659, 120000पूर्ण,
-	अणु675, 125000पूर्ण,
-	अणुTSADCV2_DATA_MASK, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rk3328_code_table[] = {
+	{0, -40000},
+	{296, -40000},
+	{304, -35000},
+	{313, -30000},
+	{331, -20000},
+	{340, -15000},
+	{349, -10000},
+	{359, -5000},
+	{368, 0},
+	{378, 5000},
+	{388, 10000},
+	{398, 15000},
+	{408, 20000},
+	{418, 25000},
+	{429, 30000},
+	{440, 35000},
+	{451, 40000},
+	{462, 45000},
+	{473, 50000},
+	{485, 55000},
+	{496, 60000},
+	{508, 65000},
+	{521, 70000},
+	{533, 75000},
+	{546, 80000},
+	{559, 85000},
+	{572, 90000},
+	{586, 95000},
+	{600, 100000},
+	{614, 105000},
+	{629, 110000},
+	{644, 115000},
+	{659, 120000},
+	{675, 125000},
+	{TSADCV2_DATA_MASK, 125000},
+};
 
-अटल स्थिर काष्ठा tsadc_table rk3368_code_table[] = अणु
-	अणु0, -40000पूर्ण,
-	अणु106, -40000पूर्ण,
-	अणु108, -35000पूर्ण,
-	अणु110, -30000पूर्ण,
-	अणु112, -25000पूर्ण,
-	अणु114, -20000पूर्ण,
-	अणु116, -15000पूर्ण,
-	अणु118, -10000पूर्ण,
-	अणु120, -5000पूर्ण,
-	अणु122, 0पूर्ण,
-	अणु124, 5000पूर्ण,
-	अणु126, 10000पूर्ण,
-	अणु128, 15000पूर्ण,
-	अणु130, 20000पूर्ण,
-	अणु132, 25000पूर्ण,
-	अणु134, 30000पूर्ण,
-	अणु136, 35000पूर्ण,
-	अणु138, 40000पूर्ण,
-	अणु140, 45000पूर्ण,
-	अणु142, 50000पूर्ण,
-	अणु144, 55000पूर्ण,
-	अणु146, 60000पूर्ण,
-	अणु148, 65000पूर्ण,
-	अणु150, 70000पूर्ण,
-	अणु152, 75000पूर्ण,
-	अणु154, 80000पूर्ण,
-	अणु156, 85000पूर्ण,
-	अणु158, 90000पूर्ण,
-	अणु160, 95000पूर्ण,
-	अणु162, 100000पूर्ण,
-	अणु163, 105000पूर्ण,
-	अणु165, 110000पूर्ण,
-	अणु167, 115000पूर्ण,
-	अणु169, 120000पूर्ण,
-	अणु171, 125000पूर्ण,
-	अणुTSADCV3_DATA_MASK, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rk3368_code_table[] = {
+	{0, -40000},
+	{106, -40000},
+	{108, -35000},
+	{110, -30000},
+	{112, -25000},
+	{114, -20000},
+	{116, -15000},
+	{118, -10000},
+	{120, -5000},
+	{122, 0},
+	{124, 5000},
+	{126, 10000},
+	{128, 15000},
+	{130, 20000},
+	{132, 25000},
+	{134, 30000},
+	{136, 35000},
+	{138, 40000},
+	{140, 45000},
+	{142, 50000},
+	{144, 55000},
+	{146, 60000},
+	{148, 65000},
+	{150, 70000},
+	{152, 75000},
+	{154, 80000},
+	{156, 85000},
+	{158, 90000},
+	{160, 95000},
+	{162, 100000},
+	{163, 105000},
+	{165, 110000},
+	{167, 115000},
+	{169, 120000},
+	{171, 125000},
+	{TSADCV3_DATA_MASK, 125000},
+};
 
-अटल स्थिर काष्ठा tsadc_table rk3399_code_table[] = अणु
-	अणु0, -40000पूर्ण,
-	अणु402, -40000पूर्ण,
-	अणु410, -35000पूर्ण,
-	अणु419, -30000पूर्ण,
-	अणु427, -25000पूर्ण,
-	अणु436, -20000पूर्ण,
-	अणु444, -15000पूर्ण,
-	अणु453, -10000पूर्ण,
-	अणु461, -5000पूर्ण,
-	अणु470, 0पूर्ण,
-	अणु478, 5000पूर्ण,
-	अणु487, 10000पूर्ण,
-	अणु496, 15000पूर्ण,
-	अणु504, 20000पूर्ण,
-	अणु513, 25000पूर्ण,
-	अणु521, 30000पूर्ण,
-	अणु530, 35000पूर्ण,
-	अणु538, 40000पूर्ण,
-	अणु547, 45000पूर्ण,
-	अणु555, 50000पूर्ण,
-	अणु564, 55000पूर्ण,
-	अणु573, 60000पूर्ण,
-	अणु581, 65000पूर्ण,
-	अणु590, 70000पूर्ण,
-	अणु599, 75000पूर्ण,
-	अणु607, 80000पूर्ण,
-	अणु616, 85000पूर्ण,
-	अणु624, 90000पूर्ण,
-	अणु633, 95000पूर्ण,
-	अणु642, 100000पूर्ण,
-	अणु650, 105000पूर्ण,
-	अणु659, 110000पूर्ण,
-	अणु668, 115000पूर्ण,
-	अणु677, 120000पूर्ण,
-	अणु685, 125000पूर्ण,
-	अणुTSADCV3_DATA_MASK, 125000पूर्ण,
-पूर्ण;
+static const struct tsadc_table rk3399_code_table[] = {
+	{0, -40000},
+	{402, -40000},
+	{410, -35000},
+	{419, -30000},
+	{427, -25000},
+	{436, -20000},
+	{444, -15000},
+	{453, -10000},
+	{461, -5000},
+	{470, 0},
+	{478, 5000},
+	{487, 10000},
+	{496, 15000},
+	{504, 20000},
+	{513, 25000},
+	{521, 30000},
+	{530, 35000},
+	{538, 40000},
+	{547, 45000},
+	{555, 50000},
+	{564, 55000},
+	{573, 60000},
+	{581, 65000},
+	{590, 70000},
+	{599, 75000},
+	{607, 80000},
+	{616, 85000},
+	{624, 90000},
+	{633, 95000},
+	{642, 100000},
+	{650, 105000},
+	{659, 110000},
+	{668, 115000},
+	{677, 120000},
+	{685, 125000},
+	{TSADCV3_DATA_MASK, 125000},
+};
 
-अटल u32 rk_tsadcv2_temp_to_code(स्थिर काष्ठा chip_tsadc_table *table,
-				   पूर्णांक temp)
-अणु
-	पूर्णांक high, low, mid;
-	अचिन्हित दीर्घ num;
-	अचिन्हित पूर्णांक denom;
+static u32 rk_tsadcv2_temp_to_code(const struct chip_tsadc_table *table,
+				   int temp)
+{
+	int high, low, mid;
+	unsigned long num;
+	unsigned int denom;
 	u32 error = table->data_mask;
 
 	low = 0;
-	high = (table->length - 1) - 1; /* ignore the last check क्रम table */
+	high = (table->length - 1) - 1; /* ignore the last check for table */
 	mid = (high + low) / 2;
 
 	/* Return mask code data when the temp is over table range */
-	अगर (temp < table->id[low].temp || temp > table->id[high].temp)
-		जाओ निकास;
+	if (temp < table->id[low].temp || temp > table->id[high].temp)
+		goto exit;
 
-	जबतक (low <= high) अणु
-		अगर (temp == table->id[mid].temp)
-			वापस table->id[mid].code;
-		अन्यथा अगर (temp < table->id[mid].temp)
+	while (low <= high) {
+		if (temp == table->id[mid].temp)
+			return table->id[mid].code;
+		else if (temp < table->id[mid].temp)
 			high = mid - 1;
-		अन्यथा
+		else
 			low = mid + 1;
 		mid = (low + high) / 2;
-	पूर्ण
+	}
 
 	/*
 	 * The conversion code granularity provided by the table. Let's
 	 * assume that the relationship between temperature and
-	 * analog value between 2 table entries is linear and पूर्णांकerpolate
+	 * analog value between 2 table entries is linear and interpolate
 	 * to produce less granular result.
 	 */
-	num = असल(table->id[mid + 1].code - table->id[mid].code);
+	num = abs(table->id[mid + 1].code - table->id[mid].code);
 	num *= temp - table->id[mid].temp;
 	denom = table->id[mid + 1].temp - table->id[mid].temp;
 
-	चयन (table->mode) अणु
-	हाल ADC_DECREMENT:
-		वापस table->id[mid].code - (num / denom);
-	हाल ADC_INCREMENT:
-		वापस table->id[mid].code + (num / denom);
-	शेष:
+	switch (table->mode) {
+	case ADC_DECREMENT:
+		return table->id[mid].code - (num / denom);
+	case ADC_INCREMENT:
+		return table->id[mid].code + (num / denom);
+	default:
 		pr_err("%s: unknown table mode: %d\n", __func__, table->mode);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-निकास:
+exit:
 	pr_err("%s: invalid temperature, temp=%d error=%d\n",
 	       __func__, temp, error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक rk_tsadcv2_code_to_temp(स्थिर काष्ठा chip_tsadc_table *table,
-				   u32 code, पूर्णांक *temp)
-अणु
-	अचिन्हित पूर्णांक low = 1;
-	अचिन्हित पूर्णांक high = table->length - 1;
-	अचिन्हित पूर्णांक mid = (low + high) / 2;
-	अचिन्हित पूर्णांक num;
-	अचिन्हित दीर्घ denom;
+static int rk_tsadcv2_code_to_temp(const struct chip_tsadc_table *table,
+				   u32 code, int *temp)
+{
+	unsigned int low = 1;
+	unsigned int high = table->length - 1;
+	unsigned int mid = (low + high) / 2;
+	unsigned int num;
+	unsigned long denom;
 
 	WARN_ON(table->length < 2);
 
-	चयन (table->mode) अणु
-	हाल ADC_DECREMENT:
+	switch (table->mode) {
+	case ADC_DECREMENT:
 		code &= table->data_mask;
-		अगर (code <= table->id[high].code)
-			वापस -EAGAIN;		/* Incorrect पढ़ोing */
+		if (code <= table->id[high].code)
+			return -EAGAIN;		/* Incorrect reading */
 
-		जबतक (low <= high) अणु
-			अगर (code >= table->id[mid].code &&
+		while (low <= high) {
+			if (code >= table->id[mid].code &&
 			    code < table->id[mid - 1].code)
-				अवरोध;
-			अन्यथा अगर (code < table->id[mid].code)
+				break;
+			else if (code < table->id[mid].code)
 				low = mid + 1;
-			अन्यथा
+			else
 				high = mid - 1;
 
 			mid = (low + high) / 2;
-		पूर्ण
-		अवरोध;
-	हाल ADC_INCREMENT:
+		}
+		break;
+	case ADC_INCREMENT:
 		code &= table->data_mask;
-		अगर (code < table->id[low].code)
-			वापस -EAGAIN;		/* Incorrect पढ़ोing */
+		if (code < table->id[low].code)
+			return -EAGAIN;		/* Incorrect reading */
 
-		जबतक (low <= high) अणु
-			अगर (code <= table->id[mid].code &&
+		while (low <= high) {
+			if (code <= table->id[mid].code &&
 			    code > table->id[mid - 1].code)
-				अवरोध;
-			अन्यथा अगर (code > table->id[mid].code)
+				break;
+			else if (code > table->id[mid].code)
 				low = mid + 1;
-			अन्यथा
+			else
 				high = mid - 1;
 
 			mid = (low + high) / 2;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		pr_err("%s: unknown table mode: %d\n", __func__, table->mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * The 5C granularity provided by the table is too much. Let's
-	 * assume that the relationship between sensor पढ़ोings and
-	 * temperature between 2 table entries is linear and पूर्णांकerpolate
+	 * assume that the relationship between sensor readings and
+	 * temperature between 2 table entries is linear and interpolate
 	 * to produce less granular result.
 	 */
 	num = table->id[mid].temp - table->id[mid - 1].temp;
-	num *= असल(table->id[mid - 1].code - code);
-	denom = असल(table->id[mid - 1].code - table->id[mid].code);
+	num *= abs(table->id[mid - 1].code - code);
+	denom = abs(table->id[mid - 1].code - table->id[mid].code);
 	*temp = table->id[mid - 1].temp + (num / denom);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * rk_tsadcv2_initialize - initialize TASDC Controller.
- * @grf: the general रेजिस्टर file will be used to करो अटल set by software
+ * @grf: the general register file will be used to do static set by software
  * @regs: the base address of tsadc controller
  * @tshut_polarity: the hardware-controlled active polarity (0:LOW 1:HIGH)
  *
  * (1) Set TSADC_V2_AUTO_PERIOD:
- *     Configure the पूर्णांकerleave between every two accessing of
+ *     Configure the interleave between every two accessing of
  *     TSADC in normal operation.
  *
  * (2) Set TSADCV2_AUTO_PERIOD_HT:
- *     Configure the पूर्णांकerleave between every two accessing of
+ *     Configure the interleave between every two accessing of
  *     TSADC after the temperature is higher than COM_SHUT or COM_INT.
  *
  * (3) Set TSADCV2_HIGH_INT_DEBOUNCE and TSADC_HIGHT_TSHUT_DEBOUNCE:
- *     If the temperature is higher than COMP_INT or COMP_SHUT क्रम
- *     "debounce" बार, TSADC controller will generate पूर्णांकerrupt or TSHUT.
+ *     If the temperature is higher than COMP_INT or COMP_SHUT for
+ *     "debounce" times, TSADC controller will generate interrupt or TSHUT.
  */
-अटल व्योम rk_tsadcv2_initialize(काष्ठा regmap *grf, व्योम __iomem *regs,
-				  क्रमागत tshut_polarity tshut_polarity)
-अणु
-	अगर (tshut_polarity == TSHUT_HIGH_ACTIVE)
-		ग_लिखोl_relaxed(0U | TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
+static void rk_tsadcv2_initialize(struct regmap *grf, void __iomem *regs,
+				  enum tshut_polarity tshut_polarity)
+{
+	if (tshut_polarity == TSHUT_HIGH_ACTIVE)
+		writel_relaxed(0U | TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
 			       regs + TSADCV2_AUTO_CON);
-	अन्यथा
-		ग_लिखोl_relaxed(0U & ~TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
+	else
+		writel_relaxed(0U & ~TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
 			       regs + TSADCV2_AUTO_CON);
 
-	ग_लिखोl_relaxed(TSADCV2_AUTO_PERIOD_TIME, regs + TSADCV2_AUTO_PERIOD);
-	ग_लिखोl_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
+	writel_relaxed(TSADCV2_AUTO_PERIOD_TIME, regs + TSADCV2_AUTO_PERIOD);
+	writel_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
 		       regs + TSADCV2_HIGHT_INT_DEBOUNCE);
-	ग_लिखोl_relaxed(TSADCV2_AUTO_PERIOD_HT_TIME,
+	writel_relaxed(TSADCV2_AUTO_PERIOD_HT_TIME,
 		       regs + TSADCV2_AUTO_PERIOD_HT);
-	ग_लिखोl_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
+	writel_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
 		       regs + TSADCV2_HIGHT_TSHUT_DEBOUNCE);
-पूर्ण
+}
 
 /**
  * rk_tsadcv3_initialize - initialize TASDC Controller.
- * @grf: the general रेजिस्टर file will be used to करो अटल set by software
+ * @grf: the general register file will be used to do static set by software
  * @regs: the base address of tsadc controller
  * @tshut_polarity: the hardware-controlled active polarity (0:LOW 1:HIGH)
  *
- * (1) The tsadc control घातer sequence.
+ * (1) The tsadc control power sequence.
  *
  * (2) Set TSADC_V2_AUTO_PERIOD:
- *     Configure the पूर्णांकerleave between every two accessing of
+ *     Configure the interleave between every two accessing of
  *     TSADC in normal operation.
  *
  * (2) Set TSADCV2_AUTO_PERIOD_HT:
- *     Configure the पूर्णांकerleave between every two accessing of
+ *     Configure the interleave between every two accessing of
  *     TSADC after the temperature is higher than COM_SHUT or COM_INT.
  *
  * (3) Set TSADCV2_HIGH_INT_DEBOUNCE and TSADC_HIGHT_TSHUT_DEBOUNCE:
- *     If the temperature is higher than COMP_INT or COMP_SHUT क्रम
- *     "debounce" बार, TSADC controller will generate पूर्णांकerrupt or TSHUT.
+ *     If the temperature is higher than COMP_INT or COMP_SHUT for
+ *     "debounce" times, TSADC controller will generate interrupt or TSHUT.
  */
-अटल व्योम rk_tsadcv3_initialize(काष्ठा regmap *grf, व्योम __iomem *regs,
-				  क्रमागत tshut_polarity tshut_polarity)
-अणु
-	/* The tsadc control घातer sequence */
-	अगर (IS_ERR(grf)) अणु
-		/* Set पूर्णांकerleave value to workround ic समय sync issue */
-		ग_लिखोl_relaxed(TSADCV2_USER_INTER_PD_SOC, regs +
+static void rk_tsadcv3_initialize(struct regmap *grf, void __iomem *regs,
+				  enum tshut_polarity tshut_polarity)
+{
+	/* The tsadc control power sequence */
+	if (IS_ERR(grf)) {
+		/* Set interleave value to workround ic time sync issue */
+		writel_relaxed(TSADCV2_USER_INTER_PD_SOC, regs +
 			       TSADCV2_USER_CON);
 
-		ग_लिखोl_relaxed(TSADCV2_AUTO_PERIOD_TIME,
+		writel_relaxed(TSADCV2_AUTO_PERIOD_TIME,
 			       regs + TSADCV2_AUTO_PERIOD);
-		ग_लिखोl_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
+		writel_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
 			       regs + TSADCV2_HIGHT_INT_DEBOUNCE);
-		ग_लिखोl_relaxed(TSADCV2_AUTO_PERIOD_HT_TIME,
+		writel_relaxed(TSADCV2_AUTO_PERIOD_HT_TIME,
 			       regs + TSADCV2_AUTO_PERIOD_HT);
-		ग_लिखोl_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
+		writel_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
 			       regs + TSADCV2_HIGHT_TSHUT_DEBOUNCE);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Enable the voltage common mode feature */
-		regmap_ग_लिखो(grf, GRF_TSADC_TESTBIT_L, GRF_TSADC_VCM_EN_L);
-		regmap_ग_लिखो(grf, GRF_TSADC_TESTBIT_H, GRF_TSADC_VCM_EN_H);
+		regmap_write(grf, GRF_TSADC_TESTBIT_L, GRF_TSADC_VCM_EN_L);
+		regmap_write(grf, GRF_TSADC_TESTBIT_H, GRF_TSADC_VCM_EN_H);
 
 		usleep_range(15, 100); /* The spec note says at least 15 us */
-		regmap_ग_लिखो(grf, GRF_SARADC_TESTBIT, GRF_SARADC_TESTBIT_ON);
-		regmap_ग_लिखो(grf, GRF_TSADC_TESTBIT_H, GRF_TSADC_TESTBIT_H_ON);
+		regmap_write(grf, GRF_SARADC_TESTBIT, GRF_SARADC_TESTBIT_ON);
+		regmap_write(grf, GRF_TSADC_TESTBIT_H, GRF_TSADC_TESTBIT_H_ON);
 		usleep_range(90, 200); /* The spec note says at least 90 us */
 
-		ग_लिखोl_relaxed(TSADCV3_AUTO_PERIOD_TIME,
+		writel_relaxed(TSADCV3_AUTO_PERIOD_TIME,
 			       regs + TSADCV2_AUTO_PERIOD);
-		ग_लिखोl_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
+		writel_relaxed(TSADCV2_HIGHT_INT_DEBOUNCE_COUNT,
 			       regs + TSADCV2_HIGHT_INT_DEBOUNCE);
-		ग_लिखोl_relaxed(TSADCV3_AUTO_PERIOD_HT_TIME,
+		writel_relaxed(TSADCV3_AUTO_PERIOD_HT_TIME,
 			       regs + TSADCV2_AUTO_PERIOD_HT);
-		ग_लिखोl_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
+		writel_relaxed(TSADCV2_HIGHT_TSHUT_DEBOUNCE_COUNT,
 			       regs + TSADCV2_HIGHT_TSHUT_DEBOUNCE);
-	पूर्ण
+	}
 
-	अगर (tshut_polarity == TSHUT_HIGH_ACTIVE)
-		ग_लिखोl_relaxed(0U | TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
+	if (tshut_polarity == TSHUT_HIGH_ACTIVE)
+		writel_relaxed(0U | TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
 			       regs + TSADCV2_AUTO_CON);
-	अन्यथा
-		ग_लिखोl_relaxed(0U & ~TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
+	else
+		writel_relaxed(0U & ~TSADCV2_AUTO_TSHUT_POLARITY_HIGH,
 			       regs + TSADCV2_AUTO_CON);
-पूर्ण
+}
 
-अटल व्योम rk_tsadcv4_initialize(काष्ठा regmap *grf, व्योम __iomem *regs,
-				  क्रमागत tshut_polarity tshut_polarity)
-अणु
+static void rk_tsadcv4_initialize(struct regmap *grf, void __iomem *regs,
+				  enum tshut_polarity tshut_polarity)
+{
 	rk_tsadcv2_initialize(grf, regs, tshut_polarity);
-	regmap_ग_लिखो(grf, PX30_GRF_SOC_CON2, GRF_CON_TSADC_CH_INV);
-पूर्ण
+	regmap_write(grf, PX30_GRF_SOC_CON2, GRF_CON_TSADC_CH_INV);
+}
 
-अटल व्योम rk_tsadcv2_irq_ack(व्योम __iomem *regs)
-अणु
+static void rk_tsadcv2_irq_ack(void __iomem *regs)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_INT_PD);
-	ग_लिखोl_relaxed(val & TSADCV2_INT_PD_CLEAR_MASK, regs + TSADCV2_INT_PD);
-पूर्ण
+	val = readl_relaxed(regs + TSADCV2_INT_PD);
+	writel_relaxed(val & TSADCV2_INT_PD_CLEAR_MASK, regs + TSADCV2_INT_PD);
+}
 
-अटल व्योम rk_tsadcv3_irq_ack(व्योम __iomem *regs)
-अणु
+static void rk_tsadcv3_irq_ack(void __iomem *regs)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_INT_PD);
-	ग_लिखोl_relaxed(val & TSADCV3_INT_PD_CLEAR_MASK, regs + TSADCV2_INT_PD);
-पूर्ण
+	val = readl_relaxed(regs + TSADCV2_INT_PD);
+	writel_relaxed(val & TSADCV3_INT_PD_CLEAR_MASK, regs + TSADCV2_INT_PD);
+}
 
-अटल व्योम rk_tsadcv2_control(व्योम __iomem *regs, bool enable)
-अणु
+static void rk_tsadcv2_control(void __iomem *regs, bool enable)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_AUTO_CON);
-	अगर (enable)
+	val = readl_relaxed(regs + TSADCV2_AUTO_CON);
+	if (enable)
 		val |= TSADCV2_AUTO_EN;
-	अन्यथा
+	else
 		val &= ~TSADCV2_AUTO_EN;
 
-	ग_लिखोl_relaxed(val, regs + TSADCV2_AUTO_CON);
-पूर्ण
+	writel_relaxed(val, regs + TSADCV2_AUTO_CON);
+}
 
 /**
  * rk_tsadcv3_control - the tsadc controller is enabled or disabled.
  * @regs: the base address of tsadc controller
  * @enable: boolean flag to enable the controller
  *
- * NOTE: TSADC controller works at स्वतः mode, and some SoCs need set the
+ * NOTE: TSADC controller works at auto mode, and some SoCs need set the
  * tsadc_q_sel bit on TSADCV2_AUTO_CON[1]. The (1024 - tsadc_q) as output
- * adc value अगर setting this bit to enable.
+ * adc value if setting this bit to enable.
  */
-अटल व्योम rk_tsadcv3_control(व्योम __iomem *regs, bool enable)
-अणु
+static void rk_tsadcv3_control(void __iomem *regs, bool enable)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_AUTO_CON);
-	अगर (enable)
+	val = readl_relaxed(regs + TSADCV2_AUTO_CON);
+	if (enable)
 		val |= TSADCV2_AUTO_EN | TSADCV3_AUTO_Q_SEL_EN;
-	अन्यथा
+	else
 		val &= ~TSADCV2_AUTO_EN;
 
-	ग_लिखोl_relaxed(val, regs + TSADCV2_AUTO_CON);
-पूर्ण
+	writel_relaxed(val, regs + TSADCV2_AUTO_CON);
+}
 
-अटल पूर्णांक rk_tsadcv2_get_temp(स्थिर काष्ठा chip_tsadc_table *table,
-			       पूर्णांक chn, व्योम __iomem *regs, पूर्णांक *temp)
-अणु
+static int rk_tsadcv2_get_temp(const struct chip_tsadc_table *table,
+			       int chn, void __iomem *regs, int *temp)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_DATA(chn));
+	val = readl_relaxed(regs + TSADCV2_DATA(chn));
 
-	वापस rk_tsadcv2_code_to_temp(table, val, temp);
-पूर्ण
+	return rk_tsadcv2_code_to_temp(table, val, temp);
+}
 
-अटल पूर्णांक rk_tsadcv2_alarm_temp(स्थिर काष्ठा chip_tsadc_table *table,
-				 पूर्णांक chn, व्योम __iomem *regs, पूर्णांक temp)
-अणु
+static int rk_tsadcv2_alarm_temp(const struct chip_tsadc_table *table,
+				 int chn, void __iomem *regs, int temp)
+{
 	u32 alarm_value;
-	u32 पूर्णांक_en, पूर्णांक_clr;
+	u32 int_en, int_clr;
 
 	/*
-	 * In some हालs, some sensors didn't need the trip poपूर्णांकs, the
-	 * set_trips will pass अणु-पूर्णांक_उच्च, पूर्णांक_उच्चपूर्ण to trigger tsadc alarm
-	 * in the end, ignore this हाल and disable the high temperature
-	 * पूर्णांकerrupt.
+	 * In some cases, some sensors didn't need the trip points, the
+	 * set_trips will pass {-INT_MAX, INT_MAX} to trigger tsadc alarm
+	 * in the end, ignore this case and disable the high temperature
+	 * interrupt.
 	 */
-	अगर (temp == पूर्णांक_उच्च) अणु
-		पूर्णांक_clr = पढ़ोl_relaxed(regs + TSADCV2_INT_EN);
-		पूर्णांक_clr &= ~TSADCV2_INT_SRC_EN(chn);
-		ग_लिखोl_relaxed(पूर्णांक_clr, regs + TSADCV2_INT_EN);
-		वापस 0;
-	पूर्ण
+	if (temp == INT_MAX) {
+		int_clr = readl_relaxed(regs + TSADCV2_INT_EN);
+		int_clr &= ~TSADCV2_INT_SRC_EN(chn);
+		writel_relaxed(int_clr, regs + TSADCV2_INT_EN);
+		return 0;
+	}
 
 	/* Make sure the value is valid */
 	alarm_value = rk_tsadcv2_temp_to_code(table, temp);
-	अगर (alarm_value == table->data_mask)
-		वापस -दुस्फल;
+	if (alarm_value == table->data_mask)
+		return -ERANGE;
 
-	ग_लिखोl_relaxed(alarm_value & table->data_mask,
+	writel_relaxed(alarm_value & table->data_mask,
 		       regs + TSADCV2_COMP_INT(chn));
 
-	पूर्णांक_en = पढ़ोl_relaxed(regs + TSADCV2_INT_EN);
-	पूर्णांक_en |= TSADCV2_INT_SRC_EN(chn);
-	ग_लिखोl_relaxed(पूर्णांक_en, regs + TSADCV2_INT_EN);
+	int_en = readl_relaxed(regs + TSADCV2_INT_EN);
+	int_en |= TSADCV2_INT_SRC_EN(chn);
+	writel_relaxed(int_en, regs + TSADCV2_INT_EN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rk_tsadcv2_tshut_temp(स्थिर काष्ठा chip_tsadc_table *table,
-				 पूर्णांक chn, व्योम __iomem *regs, पूर्णांक temp)
-अणु
+static int rk_tsadcv2_tshut_temp(const struct chip_tsadc_table *table,
+				 int chn, void __iomem *regs, int temp)
+{
 	u32 tshut_value, val;
 
 	/* Make sure the value is valid */
 	tshut_value = rk_tsadcv2_temp_to_code(table, temp);
-	अगर (tshut_value == table->data_mask)
-		वापस -दुस्फल;
+	if (tshut_value == table->data_mask)
+		return -ERANGE;
 
-	ग_लिखोl_relaxed(tshut_value, regs + TSADCV2_COMP_SHUT(chn));
+	writel_relaxed(tshut_value, regs + TSADCV2_COMP_SHUT(chn));
 
 	/* TSHUT will be valid */
-	val = पढ़ोl_relaxed(regs + TSADCV2_AUTO_CON);
-	ग_लिखोl_relaxed(val | TSADCV2_AUTO_SRC_EN(chn), regs + TSADCV2_AUTO_CON);
+	val = readl_relaxed(regs + TSADCV2_AUTO_CON);
+	writel_relaxed(val | TSADCV2_AUTO_SRC_EN(chn), regs + TSADCV2_AUTO_CON);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rk_tsadcv2_tshut_mode(पूर्णांक chn, व्योम __iomem *regs,
-				  क्रमागत tshut_mode mode)
-अणु
+static void rk_tsadcv2_tshut_mode(int chn, void __iomem *regs,
+				  enum tshut_mode mode)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(regs + TSADCV2_INT_EN);
-	अगर (mode == TSHUT_MODE_GPIO) अणु
+	val = readl_relaxed(regs + TSADCV2_INT_EN);
+	if (mode == TSHUT_MODE_GPIO) {
 		val &= ~TSADCV2_SHUT_2CRU_SRC_EN(chn);
 		val |= TSADCV2_SHUT_2GPIO_SRC_EN(chn);
-	पूर्ण अन्यथा अणु
+	} else {
 		val &= ~TSADCV2_SHUT_2GPIO_SRC_EN(chn);
 		val |= TSADCV2_SHUT_2CRU_SRC_EN(chn);
-	पूर्ण
+	}
 
-	ग_लिखोl_relaxed(val, regs + TSADCV2_INT_EN);
-पूर्ण
+	writel_relaxed(val, regs + TSADCV2_INT_EN);
+}
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip px30_tsadc_data = अणु
+static const struct rockchip_tsadc_chip px30_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
 	.chn_id[SENSOR_GPU] = 1, /* gpu sensor is channel 1 */
-	.chn_num = 2, /* 2 channels क्रम tsadc */
+	.chn_num = 2, /* 2 channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_CRU, /* शेष TSHUT via CRU */
+	.tshut_mode = TSHUT_MODE_CRU, /* default TSHUT via CRU */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv4_initialize,
@@ -849,20 +848,20 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3328_code_table,
 		.length = ARRAY_SIZE(rk3328_code_table),
 		.data_mask = TSADCV2_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rv1108_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rv1108_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
-	.chn_num = 1, /* one channel क्रम tsadc */
+	.chn_num = 1, /* one channel for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv2_initialize,
@@ -873,20 +872,20 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rv1108_table,
 		.length = ARRAY_SIZE(rv1108_table),
 		.data_mask = TSADCV2_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3228_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3228_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
-	.chn_num = 1, /* one channel क्रम tsadc */
+	.chn_num = 1, /* one channel for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv2_initialize,
@@ -897,21 +896,21 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3228_code_table,
 		.length = ARRAY_SIZE(rk3228_code_table),
 		.data_mask = TSADCV3_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3288_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3288_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 1, /* cpu sensor is channel 1 */
 	.chn_id[SENSOR_GPU] = 2, /* gpu sensor is channel 2 */
-	.chn_num = 2, /* two channels क्रम tsadc */
+	.chn_num = 2, /* two channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv2_initialize,
@@ -922,19 +921,19 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3288_code_table,
 		.length = ARRAY_SIZE(rk3288_code_table),
 		.data_mask = TSADCV2_DATA_MASK,
 		.mode = ADC_DECREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3328_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3328_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
-	.chn_num = 1, /* one channels क्रम tsadc */
+	.chn_num = 1, /* one channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_CRU, /* शेष TSHUT via CRU */
+	.tshut_mode = TSHUT_MODE_CRU, /* default TSHUT via CRU */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv2_initialize,
@@ -945,21 +944,21 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3328_code_table,
 		.length = ARRAY_SIZE(rk3328_code_table),
 		.data_mask = TSADCV2_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3366_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3366_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
 	.chn_id[SENSOR_GPU] = 1, /* gpu sensor is channel 1 */
-	.chn_num = 2, /* two channels क्रम tsadc */
+	.chn_num = 2, /* two channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv3_initialize,
@@ -970,21 +969,21 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3228_code_table,
 		.length = ARRAY_SIZE(rk3228_code_table),
 		.data_mask = TSADCV3_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3368_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3368_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
 	.chn_id[SENSOR_GPU] = 1, /* gpu sensor is channel 1 */
-	.chn_num = 2, /* two channels क्रम tsadc */
+	.chn_num = 2, /* two channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv2_initialize,
@@ -995,21 +994,21 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3368_code_table,
 		.length = ARRAY_SIZE(rk3368_code_table),
 		.data_mask = TSADCV3_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rockchip_tsadc_chip rk3399_tsadc_data = अणु
+static const struct rockchip_tsadc_chip rk3399_tsadc_data = {
 	.chn_id[SENSOR_CPU] = 0, /* cpu sensor is channel 0 */
 	.chn_id[SENSOR_GPU] = 1, /* gpu sensor is channel 1 */
-	.chn_num = 2, /* two channels क्रम tsadc */
+	.chn_num = 2, /* two channels for tsadc */
 
-	.tshut_mode = TSHUT_MODE_GPIO, /* शेष TSHUT via GPIO give PMIC */
-	.tshut_polarity = TSHUT_LOW_ACTIVE, /* शेष TSHUT LOW ACTIVE */
+	.tshut_mode = TSHUT_MODE_GPIO, /* default TSHUT via GPIO give PMIC */
+	.tshut_polarity = TSHUT_LOW_ACTIVE, /* default TSHUT LOW ACTIVE */
 	.tshut_temp = 95000,
 
 	.initialize = rk_tsadcv3_initialize,
@@ -1020,368 +1019,368 @@
 	.set_tshut_temp = rk_tsadcv2_tshut_temp,
 	.set_tshut_mode = rk_tsadcv2_tshut_mode,
 
-	.table = अणु
+	.table = {
 		.id = rk3399_code_table,
 		.length = ARRAY_SIZE(rk3399_code_table),
 		.data_mask = TSADCV3_DATA_MASK,
 		.mode = ADC_INCREMENT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id of_rockchip_thermal_match[] = अणु
-	अणु	.compatible = "rockchip,px30-tsadc",
-		.data = (व्योम *)&px30_tsadc_data,
-	पूर्ण,
-	अणु
+static const struct of_device_id of_rockchip_thermal_match[] = {
+	{	.compatible = "rockchip,px30-tsadc",
+		.data = (void *)&px30_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rv1108-tsadc",
-		.data = (व्योम *)&rv1108_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rv1108_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3228-tsadc",
-		.data = (व्योम *)&rk3228_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rk3228_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3288-tsadc",
-		.data = (व्योम *)&rk3288_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rk3288_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3328-tsadc",
-		.data = (व्योम *)&rk3328_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rk3328_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3366-tsadc",
-		.data = (व्योम *)&rk3366_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rk3366_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3368-tsadc",
-		.data = (व्योम *)&rk3368_tsadc_data,
-	पूर्ण,
-	अणु
+		.data = (void *)&rk3368_tsadc_data,
+	},
+	{
 		.compatible = "rockchip,rk3399-tsadc",
-		.data = (व्योम *)&rk3399_tsadc_data,
-	पूर्ण,
-	अणु /* end */ पूर्ण,
-पूर्ण;
+		.data = (void *)&rk3399_tsadc_data,
+	},
+	{ /* end */ },
+};
 MODULE_DEVICE_TABLE(of, of_rockchip_thermal_match);
 
-अटल व्योम
-rockchip_thermal_toggle_sensor(काष्ठा rockchip_thermal_sensor *sensor, bool on)
-अणु
-	काष्ठा thermal_zone_device *tzd = sensor->tzd;
+static void
+rockchip_thermal_toggle_sensor(struct rockchip_thermal_sensor *sensor, bool on)
+{
+	struct thermal_zone_device *tzd = sensor->tzd;
 
-	अगर (on)
+	if (on)
 		thermal_zone_device_enable(tzd);
-	अन्यथा
+	else
 		thermal_zone_device_disable(tzd);
-पूर्ण
+}
 
-अटल irqवापस_t rockchip_thermal_alarm_irq_thपढ़ो(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा rockchip_thermal_data *thermal = dev;
-	पूर्णांक i;
+static irqreturn_t rockchip_thermal_alarm_irq_thread(int irq, void *dev)
+{
+	struct rockchip_thermal_data *thermal = dev;
+	int i;
 
 	dev_dbg(&thermal->pdev->dev, "thermal alarm\n");
 
 	thermal->chip->irq_ack(thermal->regs);
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++)
+	for (i = 0; i < thermal->chip->chn_num; i++)
 		thermal_zone_device_update(thermal->sensors[i].tzd,
 					   THERMAL_EVENT_UNSPECIFIED);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक rockchip_thermal_set_trips(व्योम *_sensor, पूर्णांक low, पूर्णांक high)
-अणु
-	काष्ठा rockchip_thermal_sensor *sensor = _sensor;
-	काष्ठा rockchip_thermal_data *thermal = sensor->thermal;
-	स्थिर काष्ठा rockchip_tsadc_chip *tsadc = thermal->chip;
+static int rockchip_thermal_set_trips(void *_sensor, int low, int high)
+{
+	struct rockchip_thermal_sensor *sensor = _sensor;
+	struct rockchip_thermal_data *thermal = sensor->thermal;
+	const struct rockchip_tsadc_chip *tsadc = thermal->chip;
 
 	dev_dbg(&thermal->pdev->dev, "%s: sensor %d: low: %d, high %d\n",
 		__func__, sensor->id, low, high);
 
-	वापस tsadc->set_alarm_temp(&tsadc->table,
+	return tsadc->set_alarm_temp(&tsadc->table,
 				     sensor->id, thermal->regs, high);
-पूर्ण
+}
 
-अटल पूर्णांक rockchip_thermal_get_temp(व्योम *_sensor, पूर्णांक *out_temp)
-अणु
-	काष्ठा rockchip_thermal_sensor *sensor = _sensor;
-	काष्ठा rockchip_thermal_data *thermal = sensor->thermal;
-	स्थिर काष्ठा rockchip_tsadc_chip *tsadc = sensor->thermal->chip;
-	पूर्णांक retval;
+static int rockchip_thermal_get_temp(void *_sensor, int *out_temp)
+{
+	struct rockchip_thermal_sensor *sensor = _sensor;
+	struct rockchip_thermal_data *thermal = sensor->thermal;
+	const struct rockchip_tsadc_chip *tsadc = sensor->thermal->chip;
+	int retval;
 
 	retval = tsadc->get_temp(&tsadc->table,
 				 sensor->id, thermal->regs, out_temp);
 	dev_dbg(&thermal->pdev->dev, "sensor %d - temp: %d, retval: %d\n",
 		sensor->id, *out_temp, retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops rockchip_of_thermal_ops = अणु
+static const struct thermal_zone_of_device_ops rockchip_of_thermal_ops = {
 	.get_temp = rockchip_thermal_get_temp,
 	.set_trips = rockchip_thermal_set_trips,
-पूर्ण;
+};
 
-अटल पूर्णांक rockchip_configure_from_dt(काष्ठा device *dev,
-				      काष्ठा device_node *np,
-				      काष्ठा rockchip_thermal_data *thermal)
-अणु
+static int rockchip_configure_from_dt(struct device *dev,
+				      struct device_node *np,
+				      struct rockchip_thermal_data *thermal)
+{
 	u32 shut_temp, tshut_mode, tshut_polarity;
 
-	अगर (of_property_पढ़ो_u32(np, "rockchip,hw-tshut-temp", &shut_temp)) अणु
+	if (of_property_read_u32(np, "rockchip,hw-tshut-temp", &shut_temp)) {
 		dev_warn(dev,
 			 "Missing tshut temp property, using default %d\n",
 			 thermal->chip->tshut_temp);
 		thermal->tshut_temp = thermal->chip->tshut_temp;
-	पूर्ण अन्यथा अणु
-		अगर (shut_temp > पूर्णांक_उच्च) अणु
+	} else {
+		if (shut_temp > INT_MAX) {
 			dev_err(dev, "Invalid tshut temperature specified: %d\n",
 				shut_temp);
-			वापस -दुस्फल;
-		पूर्ण
+			return -ERANGE;
+		}
 		thermal->tshut_temp = shut_temp;
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "rockchip,hw-tshut-mode", &tshut_mode)) अणु
+	if (of_property_read_u32(np, "rockchip,hw-tshut-mode", &tshut_mode)) {
 		dev_warn(dev,
 			 "Missing tshut mode property, using default (%s)\n",
 			 thermal->chip->tshut_mode == TSHUT_MODE_GPIO ?
 				"gpio" : "cru");
 		thermal->tshut_mode = thermal->chip->tshut_mode;
-	पूर्ण अन्यथा अणु
+	} else {
 		thermal->tshut_mode = tshut_mode;
-	पूर्ण
+	}
 
-	अगर (thermal->tshut_mode > 1) अणु
+	if (thermal->tshut_mode > 1) {
 		dev_err(dev, "Invalid tshut mode specified: %d\n",
 			thermal->tshut_mode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "rockchip,hw-tshut-polarity",
-				 &tshut_polarity)) अणु
+	if (of_property_read_u32(np, "rockchip,hw-tshut-polarity",
+				 &tshut_polarity)) {
 		dev_warn(dev,
 			 "Missing tshut-polarity property, using default (%s)\n",
 			 thermal->chip->tshut_polarity == TSHUT_LOW_ACTIVE ?
 				"low" : "high");
 		thermal->tshut_polarity = thermal->chip->tshut_polarity;
-	पूर्ण अन्यथा अणु
+	} else {
 		thermal->tshut_polarity = tshut_polarity;
-	पूर्ण
+	}
 
-	अगर (thermal->tshut_polarity > 1) अणु
+	if (thermal->tshut_polarity > 1) {
 		dev_err(dev, "Invalid tshut-polarity specified: %d\n",
 			thermal->tshut_polarity);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* The tsadc wont to handle the error in here since some SoCs didn't
 	 * need this property.
 	 */
 	thermal->grf = syscon_regmap_lookup_by_phandle(np, "rockchip,grf");
-	अगर (IS_ERR(thermal->grf))
+	if (IS_ERR(thermal->grf))
 		dev_warn(dev, "Missing rockchip,grf property\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-rockchip_thermal_रेजिस्टर_sensor(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा rockchip_thermal_data *thermal,
-				 काष्ठा rockchip_thermal_sensor *sensor,
-				 पूर्णांक id)
-अणु
-	स्थिर काष्ठा rockchip_tsadc_chip *tsadc = thermal->chip;
-	पूर्णांक error;
+static int
+rockchip_thermal_register_sensor(struct platform_device *pdev,
+				 struct rockchip_thermal_data *thermal,
+				 struct rockchip_thermal_sensor *sensor,
+				 int id)
+{
+	const struct rockchip_tsadc_chip *tsadc = thermal->chip;
+	int error;
 
 	tsadc->set_tshut_mode(id, thermal->regs, thermal->tshut_mode);
 
 	error = tsadc->set_tshut_temp(&tsadc->table, id, thermal->regs,
 			      thermal->tshut_temp);
-	अगर (error)
+	if (error)
 		dev_err(&pdev->dev, "%s: invalid tshut=%d, error=%d\n",
 			__func__, thermal->tshut_temp, error);
 
 	sensor->thermal = thermal;
 	sensor->id = id;
-	sensor->tzd = devm_thermal_zone_of_sensor_रेजिस्टर(&pdev->dev, id,
+	sensor->tzd = devm_thermal_zone_of_sensor_register(&pdev->dev, id,
 					sensor, &rockchip_of_thermal_ops);
-	अगर (IS_ERR(sensor->tzd)) अणु
+	if (IS_ERR(sensor->tzd)) {
 		error = PTR_ERR(sensor->tzd);
 		dev_err(&pdev->dev, "failed to register sensor %d: %d\n",
 			id, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * Reset TSADC Controller, reset all tsadc रेजिस्टरs.
+ * Reset TSADC Controller, reset all tsadc registers.
  * @reset: the reset controller of tsadc
  */
-अटल व्योम rockchip_thermal_reset_controller(काष्ठा reset_control *reset)
-अणु
-	reset_control_निश्चित(reset);
+static void rockchip_thermal_reset_controller(struct reset_control *reset)
+{
+	reset_control_assert(reset);
 	usleep_range(10, 20);
-	reset_control_deनिश्चित(reset);
-पूर्ण
+	reset_control_deassert(reset);
+}
 
-अटल पूर्णांक rockchip_thermal_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा rockchip_thermal_data *thermal;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा resource *res;
-	पूर्णांक irq;
-	पूर्णांक i;
-	पूर्णांक error;
+static int rockchip_thermal_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct rockchip_thermal_data *thermal;
+	const struct of_device_id *match;
+	struct resource *res;
+	int irq;
+	int i;
+	int error;
 
 	match = of_match_node(of_rockchip_thermal_match, np);
-	अगर (!match)
-		वापस -ENXIO;
+	if (!match)
+		return -ENXIO;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -EINVAL;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -EINVAL;
 
-	thermal = devm_kzalloc(&pdev->dev, माप(काष्ठा rockchip_thermal_data),
+	thermal = devm_kzalloc(&pdev->dev, sizeof(struct rockchip_thermal_data),
 			       GFP_KERNEL);
-	अगर (!thermal)
-		वापस -ENOMEM;
+	if (!thermal)
+		return -ENOMEM;
 
 	thermal->pdev = pdev;
 
-	thermal->chip = (स्थिर काष्ठा rockchip_tsadc_chip *)match->data;
-	अगर (!thermal->chip)
-		वापस -EINVAL;
+	thermal->chip = (const struct rockchip_tsadc_chip *)match->data;
+	if (!thermal->chip)
+		return -EINVAL;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	thermal->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(thermal->regs))
-		वापस PTR_ERR(thermal->regs);
+	if (IS_ERR(thermal->regs))
+		return PTR_ERR(thermal->regs);
 
 	thermal->reset = devm_reset_control_get(&pdev->dev, "tsadc-apb");
-	अगर (IS_ERR(thermal->reset)) अणु
+	if (IS_ERR(thermal->reset)) {
 		error = PTR_ERR(thermal->reset);
 		dev_err(&pdev->dev, "failed to get tsadc reset: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	thermal->clk = devm_clk_get(&pdev->dev, "tsadc");
-	अगर (IS_ERR(thermal->clk)) अणु
+	if (IS_ERR(thermal->clk)) {
 		error = PTR_ERR(thermal->clk);
 		dev_err(&pdev->dev, "failed to get tsadc clock: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	thermal->pclk = devm_clk_get(&pdev->dev, "apb_pclk");
-	अगर (IS_ERR(thermal->pclk)) अणु
+	if (IS_ERR(thermal->pclk)) {
 		error = PTR_ERR(thermal->pclk);
 		dev_err(&pdev->dev, "failed to get apb_pclk clock: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = clk_prepare_enable(thermal->clk);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to enable converter clock: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = clk_prepare_enable(thermal->pclk);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to enable pclk: %d\n", error);
-		जाओ err_disable_clk;
-	पूर्ण
+		goto err_disable_clk;
+	}
 
 	rockchip_thermal_reset_controller(thermal->reset);
 
 	error = rockchip_configure_from_dt(&pdev->dev, np, thermal);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to parse device tree data: %d\n",
 			error);
-		जाओ err_disable_pclk;
-	पूर्ण
+		goto err_disable_pclk;
+	}
 
 	thermal->chip->initialize(thermal->grf, thermal->regs,
 				  thermal->tshut_polarity);
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++) अणु
-		error = rockchip_thermal_रेजिस्टर_sensor(pdev, thermal,
+	for (i = 0; i < thermal->chip->chn_num; i++) {
+		error = rockchip_thermal_register_sensor(pdev, thermal,
 						&thermal->sensors[i],
 						thermal->chip->chn_id[i]);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&pdev->dev,
 				"failed to register sensor[%d] : error = %d\n",
 				i, error);
-			जाओ err_disable_pclk;
-		पूर्ण
-	पूर्ण
+			goto err_disable_pclk;
+		}
+	}
 
-	error = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-					  &rockchip_thermal_alarm_irq_thपढ़ो,
+	error = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+					  &rockchip_thermal_alarm_irq_thread,
 					  IRQF_ONESHOT,
 					  "rockchip_thermal", thermal);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev,
 			"failed to request tsadc irq: %d\n", error);
-		जाओ err_disable_pclk;
-	पूर्ण
+		goto err_disable_pclk;
+	}
 
 	thermal->chip->control(thermal->regs, true);
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++) अणु
+	for (i = 0; i < thermal->chip->chn_num; i++) {
 		rockchip_thermal_toggle_sensor(&thermal->sensors[i], true);
 		thermal->sensors[i].tzd->tzp->no_hwmon = false;
 		error = thermal_add_hwmon_sysfs(thermal->sensors[i].tzd);
-		अगर (error)
+		if (error)
 			dev_warn(&pdev->dev,
 				 "failed to register sensor %d with hwmon: %d\n",
 				 i, error);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, thermal);
+	platform_set_drvdata(pdev, thermal);
 
-	वापस 0;
+	return 0;
 
 err_disable_pclk:
 	clk_disable_unprepare(thermal->pclk);
 err_disable_clk:
 	clk_disable_unprepare(thermal->clk);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक rockchip_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rockchip_thermal_data *thermal = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int rockchip_thermal_remove(struct platform_device *pdev)
+{
+	struct rockchip_thermal_data *thermal = platform_get_drvdata(pdev);
+	int i;
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++) अणु
-		काष्ठा rockchip_thermal_sensor *sensor = &thermal->sensors[i];
+	for (i = 0; i < thermal->chip->chn_num; i++) {
+		struct rockchip_thermal_sensor *sensor = &thermal->sensors[i];
 
-		thermal_हटाओ_hwmon_sysfs(sensor->tzd);
+		thermal_remove_hwmon_sysfs(sensor->tzd);
 		rockchip_thermal_toggle_sensor(sensor, false);
-	पूर्ण
+	}
 
 	thermal->chip->control(thermal->regs, false);
 
 	clk_disable_unprepare(thermal->pclk);
 	clk_disable_unprepare(thermal->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rockchip_thermal_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rockchip_thermal_data *thermal = dev_get_drvdata(dev);
-	पूर्णांक i;
+static int __maybe_unused rockchip_thermal_suspend(struct device *dev)
+{
+	struct rockchip_thermal_data *thermal = dev_get_drvdata(dev);
+	int i;
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++)
+	for (i = 0; i < thermal->chip->chn_num; i++)
 		rockchip_thermal_toggle_sensor(&thermal->sensors[i], false);
 
 	thermal->chip->control(thermal->regs, false);
@@ -1391,32 +1390,32 @@ err_disable_clk:
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rockchip_thermal_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rockchip_thermal_data *thermal = dev_get_drvdata(dev);
-	पूर्णांक i;
-	पूर्णांक error;
+static int __maybe_unused rockchip_thermal_resume(struct device *dev)
+{
+	struct rockchip_thermal_data *thermal = dev_get_drvdata(dev);
+	int i;
+	int error;
 
 	error = clk_enable(thermal->clk);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = clk_enable(thermal->pclk);
-	अगर (error) अणु
+	if (error) {
 		clk_disable(thermal->clk);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	rockchip_thermal_reset_controller(thermal->reset);
 
 	thermal->chip->initialize(thermal->grf, thermal->regs,
 				  thermal->tshut_polarity);
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++) अणु
-		पूर्णांक id = thermal->sensors[i].id;
+	for (i = 0; i < thermal->chip->chn_num; i++) {
+		int id = thermal->sensors[i].id;
 
 		thermal->chip->set_tshut_mode(id, thermal->regs,
 					      thermal->tshut_mode);
@@ -1424,35 +1423,35 @@ err_disable_clk:
 		error = thermal->chip->set_tshut_temp(&thermal->chip->table,
 					      id, thermal->regs,
 					      thermal->tshut_temp);
-		अगर (error)
+		if (error)
 			dev_err(dev, "%s: invalid tshut=%d, error=%d\n",
 				__func__, thermal->tshut_temp, error);
-	पूर्ण
+	}
 
 	thermal->chip->control(thermal->regs, true);
 
-	क्रम (i = 0; i < thermal->chip->chn_num; i++)
+	for (i = 0; i < thermal->chip->chn_num; i++)
 		rockchip_thermal_toggle_sensor(&thermal->sensors[i], true);
 
-	pinctrl_pm_select_शेष_state(dev);
+	pinctrl_pm_select_default_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(rockchip_thermal_pm_ops,
+static SIMPLE_DEV_PM_OPS(rockchip_thermal_pm_ops,
 			 rockchip_thermal_suspend, rockchip_thermal_resume);
 
-अटल काष्ठा platक्रमm_driver rockchip_thermal_driver = अणु
-	.driver = अणु
+static struct platform_driver rockchip_thermal_driver = {
+	.driver = {
 		.name = "rockchip-thermal",
 		.pm = &rockchip_thermal_pm_ops,
 		.of_match_table = of_rockchip_thermal_match,
-	पूर्ण,
+	},
 	.probe = rockchip_thermal_probe,
-	.हटाओ = rockchip_thermal_हटाओ,
-पूर्ण;
+	.remove = rockchip_thermal_remove,
+};
 
-module_platक्रमm_driver(rockchip_thermal_driver);
+module_platform_driver(rockchip_thermal_driver);
 
 MODULE_DESCRIPTION("ROCKCHIP THERMAL Driver");
 MODULE_AUTHOR("Rockchip, Inc.");

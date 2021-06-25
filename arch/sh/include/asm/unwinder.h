@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_UNWINDER_H
-#घोषणा _LINUX_UNWINDER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_UNWINDER_H
+#define _LINUX_UNWINDER_H
 
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/stacktrace.h>
 
-काष्ठा unwinder अणु
-	स्थिर अक्षर *name;
-	काष्ठा list_head list;
-	पूर्णांक rating;
-	व्योम (*dump)(काष्ठा task_काष्ठा *, काष्ठा pt_regs *,
-		     अचिन्हित दीर्घ *, स्थिर काष्ठा stacktrace_ops *, व्योम *);
-पूर्ण;
+struct unwinder {
+	const char *name;
+	struct list_head list;
+	int rating;
+	void (*dump)(struct task_struct *, struct pt_regs *,
+		     unsigned long *, const struct stacktrace_ops *, void *);
+};
 
-बाह्य पूर्णांक unwinder_init(व्योम);
-बाह्य पूर्णांक unwinder_रेजिस्टर(काष्ठा unwinder *);
+extern int unwinder_init(void);
+extern int unwinder_register(struct unwinder *);
 
-बाह्य व्योम unwind_stack(काष्ठा task_काष्ठा *, काष्ठा pt_regs *,
-			 अचिन्हित दीर्घ *, स्थिर काष्ठा stacktrace_ops *,
-			 व्योम *);
+extern void unwind_stack(struct task_struct *, struct pt_regs *,
+			 unsigned long *, const struct stacktrace_ops *,
+			 void *);
 
-बाह्य व्योम stack_पढ़ोer_dump(काष्ठा task_काष्ठा *, काष्ठा pt_regs *,
-			      अचिन्हित दीर्घ *, स्थिर काष्ठा stacktrace_ops *,
-			      व्योम *);
+extern void stack_reader_dump(struct task_struct *, struct pt_regs *,
+			      unsigned long *, const struct stacktrace_ops *,
+			      void *);
 
 /*
- * Used by fault handling code to संकेत to the unwinder code that it
- * should चयन to a dअगरferent unwinder.
+ * Used by fault handling code to signal to the unwinder code that it
+ * should switch to a different unwinder.
  */
-बाह्य पूर्णांक unwinder_faulted;
+extern int unwinder_faulted;
 
-#पूर्ण_अगर /* _LINUX_UNWINDER_H */
+#endif /* _LINUX_UNWINDER_H */

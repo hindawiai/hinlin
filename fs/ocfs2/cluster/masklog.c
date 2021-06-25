@@ -1,104 +1,103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2004, 2005 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/string.h>
+#include <linux/uaccess.h>
 
-#समावेश "masklog.h"
+#include "masklog.h"
 
-काष्ठा mlog_bits mlog_and_bits = MLOG_BITS_RHS(MLOG_INITIAL_AND_MASK);
+struct mlog_bits mlog_and_bits = MLOG_BITS_RHS(MLOG_INITIAL_AND_MASK);
 EXPORT_SYMBOL_GPL(mlog_and_bits);
-काष्ठा mlog_bits mlog_not_bits = MLOG_BITS_RHS(0);
+struct mlog_bits mlog_not_bits = MLOG_BITS_RHS(0);
 EXPORT_SYMBOL_GPL(mlog_not_bits);
 
-अटल sमाप_प्रकार mlog_mask_show(u64 mask, अक्षर *buf)
-अणु
-	अक्षर *state;
+static ssize_t mlog_mask_show(u64 mask, char *buf)
+{
+	char *state;
 
-	अगर (__mlog_test_u64(mask, mlog_and_bits))
+	if (__mlog_test_u64(mask, mlog_and_bits))
 		state = "allow";
-	अन्यथा अगर (__mlog_test_u64(mask, mlog_not_bits))
+	else if (__mlog_test_u64(mask, mlog_not_bits))
 		state = "deny";
-	अन्यथा
+	else
 		state = "off";
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", state);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%s\n", state);
+}
 
-अटल sमाप_प्रकार mlog_mask_store(u64 mask, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अगर (!strnहालcmp(buf, "allow", 5)) अणु
+static ssize_t mlog_mask_store(u64 mask, const char *buf, size_t count)
+{
+	if (!strncasecmp(buf, "allow", 5)) {
 		__mlog_set_u64(mask, mlog_and_bits);
 		__mlog_clear_u64(mask, mlog_not_bits);
-	पूर्ण अन्यथा अगर (!strnहालcmp(buf, "deny", 4)) अणु
+	} else if (!strncasecmp(buf, "deny", 4)) {
 		__mlog_set_u64(mask, mlog_not_bits);
 		__mlog_clear_u64(mask, mlog_and_bits);
-	पूर्ण अन्यथा अगर (!strnहालcmp(buf, "off", 3)) अणु
+	} else if (!strncasecmp(buf, "off", 3)) {
 		__mlog_clear_u64(mask, mlog_not_bits);
 		__mlog_clear_u64(mask, mlog_and_bits);
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-व्योम __mlog_prपूर्णांकk(स्थिर u64 *mask, स्थिर अक्षर *func, पूर्णांक line,
-		   स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
-	स्थिर अक्षर *level;
-	स्थिर अक्षर *prefix = "";
+void __mlog_printk(const u64 *mask, const char *func, int line,
+		   const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+	const char *level;
+	const char *prefix = "";
 
-	अगर (!__mlog_test_u64(*mask, mlog_and_bits) ||
+	if (!__mlog_test_u64(*mask, mlog_and_bits) ||
 	    __mlog_test_u64(*mask, mlog_not_bits))
-		वापस;
+		return;
 
-	अगर (*mask & ML_ERROR) अणु
+	if (*mask & ML_ERROR) {
 		level = KERN_ERR;
 		prefix = "ERROR: ";
-	पूर्ण अन्यथा अगर (*mask & ML_NOTICE) अणु
+	} else if (*mask & ML_NOTICE) {
 		level = KERN_NOTICE;
-	पूर्ण अन्यथा अणु
+	} else {
 		level = KERN_INFO;
-	पूर्ण
+	}
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	prपूर्णांकk("%s(%s,%u,%u):%s:%d %s%pV",
+	printk("%s(%s,%u,%u):%s:%d %s%pV",
 	       level, current->comm, task_pid_nr(current),
 	       raw_smp_processor_id(), func, line, prefix, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
-EXPORT_SYMBOL_GPL(__mlog_prपूर्णांकk);
+	va_end(args);
+}
+EXPORT_SYMBOL_GPL(__mlog_printk);
 
-काष्ठा mlog_attribute अणु
-	काष्ठा attribute attr;
+struct mlog_attribute {
+	struct attribute attr;
 	u64 mask;
-पूर्ण;
+};
 
-#घोषणा to_mlog_attr(_attr) container_of(_attr, काष्ठा mlog_attribute, attr)
+#define to_mlog_attr(_attr) container_of(_attr, struct mlog_attribute, attr)
 
-#घोषणा define_mask(_name) अणु			\
-	.attr = अणु				\
+#define define_mask(_name) {			\
+	.attr = {				\
 		.name = #_name,			\
 		.mode = S_IRUGO | S_IWUSR,	\
-	पूर्ण,					\
+	},					\
 	.mask = ML_##_name,			\
-पूर्ण
+}
 
-अटल काष्ठा mlog_attribute mlog_attrs[MLOG_MAX_BITS] = अणु
+static struct mlog_attribute mlog_attrs[MLOG_MAX_BITS] = {
 	define_mask(TCP),
 	define_mask(MSG),
 	define_mask(SOCKET),
@@ -119,56 +118,56 @@ EXPORT_SYMBOL_GPL(__mlog_prपूर्णांकk);
 	define_mask(ERROR),
 	define_mask(NOTICE),
 	define_mask(KTHREAD),
-पूर्ण;
+};
 
-अटल काष्ठा attribute *mlog_attr_ptrs[MLOG_MAX_BITS] = अणुशून्य, पूर्ण;
+static struct attribute *mlog_attr_ptrs[MLOG_MAX_BITS] = {NULL, };
 
-अटल sमाप_प्रकार mlog_show(काष्ठा kobject *obj, काष्ठा attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा mlog_attribute *mlog_attr = to_mlog_attr(attr);
+static ssize_t mlog_show(struct kobject *obj, struct attribute *attr,
+			 char *buf)
+{
+	struct mlog_attribute *mlog_attr = to_mlog_attr(attr);
 
-	वापस mlog_mask_show(mlog_attr->mask, buf);
-पूर्ण
+	return mlog_mask_show(mlog_attr->mask, buf);
+}
 
-अटल sमाप_प्रकार mlog_store(काष्ठा kobject *obj, काष्ठा attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा mlog_attribute *mlog_attr = to_mlog_attr(attr);
+static ssize_t mlog_store(struct kobject *obj, struct attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct mlog_attribute *mlog_attr = to_mlog_attr(attr);
 
-	वापस mlog_mask_store(mlog_attr->mask, buf, count);
-पूर्ण
+	return mlog_mask_store(mlog_attr->mask, buf, count);
+}
 
-अटल स्थिर काष्ठा sysfs_ops mlog_attr_ops = अणु
+static const struct sysfs_ops mlog_attr_ops = {
 	.show  = mlog_show,
 	.store = mlog_store,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type mlog_ktype = अणु
-	.शेष_attrs = mlog_attr_ptrs,
+static struct kobj_type mlog_ktype = {
+	.default_attrs = mlog_attr_ptrs,
 	.sysfs_ops     = &mlog_attr_ops,
-पूर्ण;
+};
 
-अटल काष्ठा kset mlog_kset = अणु
-	.kobj   = अणु.ktype = &mlog_ktypeपूर्ण,
-पूर्ण;
+static struct kset mlog_kset = {
+	.kobj   = {.ktype = &mlog_ktype},
+};
 
-पूर्णांक mlog_sys_init(काष्ठा kset *o2cb_kset)
-अणु
-	पूर्णांक i = 0;
+int mlog_sys_init(struct kset *o2cb_kset)
+{
+	int i = 0;
 
-	जबतक (mlog_attrs[i].attr.mode) अणु
+	while (mlog_attrs[i].attr.mode) {
 		mlog_attr_ptrs[i] = &mlog_attrs[i].attr;
 		i++;
-	पूर्ण
-	mlog_attr_ptrs[i] = शून्य;
+	}
+	mlog_attr_ptrs[i] = NULL;
 
 	kobject_set_name(&mlog_kset.kobj, "logmask");
 	mlog_kset.kobj.kset = o2cb_kset;
-	वापस kset_रेजिस्टर(&mlog_kset);
-पूर्ण
+	return kset_register(&mlog_kset);
+}
 
-व्योम mlog_sys_shutकरोwn(व्योम)
-अणु
-	kset_unरेजिस्टर(&mlog_kset);
-पूर्ण
+void mlog_sys_shutdown(void)
+{
+	kset_unregister(&mlog_kset);
+}

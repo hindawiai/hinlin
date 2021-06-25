@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-/* include/यंत्र-m68knommu/MC68VZ328.h: 'VZ328 control रेजिस्टरs
+/* include/asm-m68knommu/MC68VZ328.h: 'VZ328 control registers
  *
  * Copyright (c) 2000-2001	Lineo Inc. <www.lineo.com>
  * Copyright (c) 2000-2001	Lineo Canada Corp. <www.lineo.ca>
  * Copyright (C) 1999		Vladimir Gurevich <vgurevic@cisco.com>
  * 				Bare & Hare Software, Inc.
- * Based on include/यंत्र-m68knommu/MC68332.h
+ * Based on include/asm-m68knommu/MC68332.h
  * Copyright (C) 1998  Kenneth Albanowski <kjahds@kjahds.com>,
  *                     The Silver Hammer Group, Ltd.
  *
@@ -15,15 +14,15 @@
  * vz multiport fixes by Michael Leslie <mleslie@lineo.com>
  */
 
-#अगर_अघोषित _MC68VZ328_H_
-#घोषणा _MC68VZ328_H_
+#ifndef _MC68VZ328_H_
+#define _MC68VZ328_H_
 
-#घोषणा BYTE_REF(addr) (*((अस्थिर अचिन्हित अक्षर*)addr))
-#घोषणा WORD_REF(addr) (*((अस्थिर अचिन्हित लघु*)addr))
-#घोषणा LONG_REF(addr) (*((अस्थिर अचिन्हित दीर्घ*)addr))
+#define BYTE_REF(addr) (*((volatile unsigned char*)addr))
+#define WORD_REF(addr) (*((volatile unsigned short*)addr))
+#define LONG_REF(addr) (*((volatile unsigned long*)addr))
 
-#घोषणा PUT_FIELD(field, val) (((val) << field##_SHIFT) & field##_MASK)
-#घोषणा GET_FIELD(reg, field) (((reg) & field##_MASK) >> field##_SHIFT)
+#define PUT_FIELD(field, val) (((val) << field##_SHIFT) & field##_MASK)
+#define GET_FIELD(reg, field) (((reg) & field##_MASK) >> field##_SHIFT)
 
 /********** 
  *
@@ -34,22 +33,22 @@
 /*
  * System Control Register (SCR)
  */
-#घोषणा SCR_ADDR	0xfffff000
-#घोषणा SCR		BYTE_REF(SCR_ADDR)
+#define SCR_ADDR	0xfffff000
+#define SCR		BYTE_REF(SCR_ADDR)
 
-#घोषणा SCR_WDTH8	0x01	/* 8-Bit Width Select */
-#घोषणा SCR_DMAP	0x04	/* Double Map */
-#घोषणा SCR_SO		0x08	/* Supervisor Only */
-#घोषणा SCR_BETEN	0x10	/* Bus-Error Time-Out Enable */
-#घोषणा SCR_PRV		0x20	/* Privilege Violation */
-#घोषणा SCR_WPV		0x40	/* Write Protect Violation */
-#घोषणा SCR_BETO	0x80	/* Bus-Error TimeOut */
+#define SCR_WDTH8	0x01	/* 8-Bit Width Select */
+#define SCR_DMAP	0x04	/* Double Map */
+#define SCR_SO		0x08	/* Supervisor Only */
+#define SCR_BETEN	0x10	/* Bus-Error Time-Out Enable */
+#define SCR_PRV		0x20	/* Privilege Violation */
+#define SCR_WPV		0x40	/* Write Protect Violation */
+#define SCR_BETO	0x80	/* Bus-Error TimeOut */
 
 /*
- * Silicon ID Register (Mask Revision Register (MRR) क्रम '328 Compatibility)
+ * Silicon ID Register (Mask Revision Register (MRR) for '328 Compatibility)
  */
-#घोषणा MRR_ADDR 0xfffff004
-#घोषणा MRR	 LONG_REF(MRR_ADDR)
+#define MRR_ADDR 0xfffff004
+#define MRR	 LONG_REF(MRR_ADDR)
 
 /********** 
  *
@@ -60,88 +59,88 @@
 /*
  * Chip Select Group Base Registers 
  */
-#घोषणा CSGBA_ADDR	0xfffff100
-#घोषणा CSGBB_ADDR	0xfffff102
+#define CSGBA_ADDR	0xfffff100
+#define CSGBB_ADDR	0xfffff102
 
-#घोषणा CSGBC_ADDR	0xfffff104
-#घोषणा CSGBD_ADDR	0xfffff106
+#define CSGBC_ADDR	0xfffff104
+#define CSGBD_ADDR	0xfffff106
 
-#घोषणा CSGBA		WORD_REF(CSGBA_ADDR)
-#घोषणा CSGBB		WORD_REF(CSGBB_ADDR)
-#घोषणा CSGBC		WORD_REF(CSGBC_ADDR)
-#घोषणा CSGBD		WORD_REF(CSGBD_ADDR)
+#define CSGBA		WORD_REF(CSGBA_ADDR)
+#define CSGBB		WORD_REF(CSGBB_ADDR)
+#define CSGBC		WORD_REF(CSGBC_ADDR)
+#define CSGBD		WORD_REF(CSGBD_ADDR)
 
 /*
  * Chip Select Registers 
  */
-#घोषणा CSA_ADDR	0xfffff110
-#घोषणा CSB_ADDR	0xfffff112
-#घोषणा CSC_ADDR	0xfffff114
-#घोषणा CSD_ADDR	0xfffff116
+#define CSA_ADDR	0xfffff110
+#define CSB_ADDR	0xfffff112
+#define CSC_ADDR	0xfffff114
+#define CSD_ADDR	0xfffff116
 
-#घोषणा CSA		WORD_REF(CSA_ADDR)
-#घोषणा CSB		WORD_REF(CSB_ADDR)
-#घोषणा CSC		WORD_REF(CSC_ADDR)
-#घोषणा CSD		WORD_REF(CSD_ADDR)
+#define CSA		WORD_REF(CSA_ADDR)
+#define CSB		WORD_REF(CSB_ADDR)
+#define CSC		WORD_REF(CSC_ADDR)
+#define CSD		WORD_REF(CSD_ADDR)
 
-#घोषणा CSA_EN		0x0001		/* Chip-Select Enable */
-#घोषणा CSA_SIZ_MASK	0x000e		/* Chip-Select Size */
-#घोषणा CSA_SIZ_SHIFT   1
-#घोषणा CSA_WS_MASK	0x0070		/* Wait State */
-#घोषणा CSA_WS_SHIFT    4
-#घोषणा CSA_BSW		0x0080		/* Data Bus Width */
-#घोषणा CSA_FLASH	0x0100		/* FLASH Memory Support */
-#घोषणा CSA_RO		0x8000		/* Read-Only */
+#define CSA_EN		0x0001		/* Chip-Select Enable */
+#define CSA_SIZ_MASK	0x000e		/* Chip-Select Size */
+#define CSA_SIZ_SHIFT   1
+#define CSA_WS_MASK	0x0070		/* Wait State */
+#define CSA_WS_SHIFT    4
+#define CSA_BSW		0x0080		/* Data Bus Width */
+#define CSA_FLASH	0x0100		/* FLASH Memory Support */
+#define CSA_RO		0x8000		/* Read-Only */
 
-#घोषणा CSB_EN		0x0001		/* Chip-Select Enable */
-#घोषणा CSB_SIZ_MASK	0x000e		/* Chip-Select Size */
-#घोषणा CSB_SIZ_SHIFT   1
-#घोषणा CSB_WS_MASK	0x0070		/* Wait State */
-#घोषणा CSB_WS_SHIFT    4
-#घोषणा CSB_BSW		0x0080		/* Data Bus Width */
-#घोषणा CSB_FLASH	0x0100		/* FLASH Memory Support */
-#घोषणा CSB_UPSIZ_MASK	0x1800		/* Unरक्षित memory block size */
-#घोषणा CSB_UPSIZ_SHIFT 11
-#घोषणा CSB_ROP		0x2000		/* Reaकरोnly अगर रक्षित */
-#घोषणा CSB_SOP		0x4000		/* Supervisor only अगर रक्षित */
-#घोषणा CSB_RO		0x8000		/* Read-Only */
+#define CSB_EN		0x0001		/* Chip-Select Enable */
+#define CSB_SIZ_MASK	0x000e		/* Chip-Select Size */
+#define CSB_SIZ_SHIFT   1
+#define CSB_WS_MASK	0x0070		/* Wait State */
+#define CSB_WS_SHIFT    4
+#define CSB_BSW		0x0080		/* Data Bus Width */
+#define CSB_FLASH	0x0100		/* FLASH Memory Support */
+#define CSB_UPSIZ_MASK	0x1800		/* Unprotected memory block size */
+#define CSB_UPSIZ_SHIFT 11
+#define CSB_ROP		0x2000		/* Readonly if protected */
+#define CSB_SOP		0x4000		/* Supervisor only if protected */
+#define CSB_RO		0x8000		/* Read-Only */
 
-#घोषणा CSC_EN		0x0001		/* Chip-Select Enable */
-#घोषणा CSC_SIZ_MASK	0x000e		/* Chip-Select Size */
-#घोषणा CSC_SIZ_SHIFT   1
-#घोषणा CSC_WS_MASK	0x0070		/* Wait State */
-#घोषणा CSC_WS_SHIFT    4
-#घोषणा CSC_BSW		0x0080		/* Data Bus Width */
-#घोषणा CSC_FLASH	0x0100		/* FLASH Memory Support */
-#घोषणा CSC_UPSIZ_MASK	0x1800		/* Unरक्षित memory block size */
-#घोषणा CSC_UPSIZ_SHIFT 11
-#घोषणा CSC_ROP		0x2000		/* Reaकरोnly अगर रक्षित */
-#घोषणा CSC_SOP		0x4000		/* Supervisor only अगर रक्षित */
-#घोषणा CSC_RO		0x8000		/* Read-Only */
+#define CSC_EN		0x0001		/* Chip-Select Enable */
+#define CSC_SIZ_MASK	0x000e		/* Chip-Select Size */
+#define CSC_SIZ_SHIFT   1
+#define CSC_WS_MASK	0x0070		/* Wait State */
+#define CSC_WS_SHIFT    4
+#define CSC_BSW		0x0080		/* Data Bus Width */
+#define CSC_FLASH	0x0100		/* FLASH Memory Support */
+#define CSC_UPSIZ_MASK	0x1800		/* Unprotected memory block size */
+#define CSC_UPSIZ_SHIFT 11
+#define CSC_ROP		0x2000		/* Readonly if protected */
+#define CSC_SOP		0x4000		/* Supervisor only if protected */
+#define CSC_RO		0x8000		/* Read-Only */
 
-#घोषणा CSD_EN		0x0001		/* Chip-Select Enable */
-#घोषणा CSD_SIZ_MASK	0x000e		/* Chip-Select Size */
-#घोषणा CSD_SIZ_SHIFT   1
-#घोषणा CSD_WS_MASK	0x0070		/* Wait State */
-#घोषणा CSD_WS_SHIFT    4
-#घोषणा CSD_BSW		0x0080		/* Data Bus Width */
-#घोषणा CSD_FLASH	0x0100		/* FLASH Memory Support */
-#घोषणा CSD_DRAM	0x0200		/* Dram Selection */
-#घोषणा	CSD_COMB	0x0400		/* Combining */
-#घोषणा CSD_UPSIZ_MASK	0x1800		/* Unरक्षित memory block size */
-#घोषणा CSD_UPSIZ_SHIFT 11
-#घोषणा CSD_ROP		0x2000		/* Reaकरोnly अगर रक्षित */
-#घोषणा CSD_SOP		0x4000		/* Supervisor only अगर रक्षित */
-#घोषणा CSD_RO		0x8000		/* Read-Only */
+#define CSD_EN		0x0001		/* Chip-Select Enable */
+#define CSD_SIZ_MASK	0x000e		/* Chip-Select Size */
+#define CSD_SIZ_SHIFT   1
+#define CSD_WS_MASK	0x0070		/* Wait State */
+#define CSD_WS_SHIFT    4
+#define CSD_BSW		0x0080		/* Data Bus Width */
+#define CSD_FLASH	0x0100		/* FLASH Memory Support */
+#define CSD_DRAM	0x0200		/* Dram Selection */
+#define	CSD_COMB	0x0400		/* Combining */
+#define CSD_UPSIZ_MASK	0x1800		/* Unprotected memory block size */
+#define CSD_UPSIZ_SHIFT 11
+#define CSD_ROP		0x2000		/* Readonly if protected */
+#define CSD_SOP		0x4000		/* Supervisor only if protected */
+#define CSD_RO		0x8000		/* Read-Only */
 
 /*
  * Emulation Chip-Select Register 
  */
-#घोषणा EMUCS_ADDR	0xfffff118
-#घोषणा EMUCS		WORD_REF(EMUCS_ADDR)
+#define EMUCS_ADDR	0xfffff118
+#define EMUCS		WORD_REF(EMUCS_ADDR)
 
-#घोषणा EMUCS_WS_MASK	0x0070
-#घोषणा EMUCS_WS_SHIFT	4
+#define EMUCS_WS_MASK	0x0070
+#define EMUCS_WS_SHIFT	4
 
 /********** 
  *
@@ -152,43 +151,43 @@
 /*
  * PLL Control Register 
  */
-#घोषणा PLLCR_ADDR	0xfffff200
-#घोषणा PLLCR		WORD_REF(PLLCR_ADDR)
+#define PLLCR_ADDR	0xfffff200
+#define PLLCR		WORD_REF(PLLCR_ADDR)
 
-#घोषणा PLLCR_DISPLL	       0x0008	/* Disable PLL */
-#घोषणा PLLCR_CLKEN	       0x0010	/* Clock (CLKO pin) enable */
-#घोषणा PLLCR_PRESC	       0x0020	/* VCO prescaler */
-#घोषणा PLLCR_SYSCLK_SEL_MASK  0x0700	/* System Clock Selection */
-#घोषणा PLLCR_SYSCLK_SEL_SHIFT 8
-#घोषणा PLLCR_LCDCLK_SEL_MASK  0x3800	/* LCD Clock Selection */
-#घोषणा PLLCR_LCDCLK_SEL_SHIFT 11
+#define PLLCR_DISPLL	       0x0008	/* Disable PLL */
+#define PLLCR_CLKEN	       0x0010	/* Clock (CLKO pin) enable */
+#define PLLCR_PRESC	       0x0020	/* VCO prescaler */
+#define PLLCR_SYSCLK_SEL_MASK  0x0700	/* System Clock Selection */
+#define PLLCR_SYSCLK_SEL_SHIFT 8
+#define PLLCR_LCDCLK_SEL_MASK  0x3800	/* LCD Clock Selection */
+#define PLLCR_LCDCLK_SEL_SHIFT 11
 
 /* '328-compatible definitions */
-#घोषणा PLLCR_PIXCLK_SEL_MASK	PLLCR_LCDCLK_SEL_MASK
-#घोषणा PLLCR_PIXCLK_SEL_SHIFT	PLLCR_LCDCLK_SEL_SHIFT
+#define PLLCR_PIXCLK_SEL_MASK	PLLCR_LCDCLK_SEL_MASK
+#define PLLCR_PIXCLK_SEL_SHIFT	PLLCR_LCDCLK_SEL_SHIFT
 
 /*
  * PLL Frequency Select Register
  */
-#घोषणा PLLFSR_ADDR	0xfffff202
-#घोषणा PLLFSR		WORD_REF(PLLFSR_ADDR)
+#define PLLFSR_ADDR	0xfffff202
+#define PLLFSR		WORD_REF(PLLFSR_ADDR)
 
-#घोषणा PLLFSR_PC_MASK	0x00ff		/* P Count */
-#घोषणा PLLFSR_PC_SHIFT 0
-#घोषणा PLLFSR_QC_MASK	0x0f00		/* Q Count */
-#घोषणा PLLFSR_QC_SHIFT 8
-#घोषणा PLLFSR_PROT	0x4000		/* Protect P & Q */
-#घोषणा PLLFSR_CLK32	0x8000		/* Clock 32 (kHz) */
+#define PLLFSR_PC_MASK	0x00ff		/* P Count */
+#define PLLFSR_PC_SHIFT 0
+#define PLLFSR_QC_MASK	0x0f00		/* Q Count */
+#define PLLFSR_QC_SHIFT 8
+#define PLLFSR_PROT	0x4000		/* Protect P & Q */
+#define PLLFSR_CLK32	0x8000		/* Clock 32 (kHz) */
 
 /*
  * Power Control Register
  */
-#घोषणा PCTRL_ADDR	0xfffff207
-#घोषणा PCTRL		BYTE_REF(PCTRL_ADDR)
+#define PCTRL_ADDR	0xfffff207
+#define PCTRL		BYTE_REF(PCTRL_ADDR)
 
-#घोषणा PCTRL_WIDTH_MASK	0x1f	/* CPU Clock bursts width */
-#घोषणा PCTRL_WIDTH_SHIFT	0
-#घोषणा PCTRL_PCEN		0x80	/* Power Control Enable */
+#define PCTRL_WIDTH_MASK	0x1f	/* CPU Clock bursts width */
+#define PCTRL_WIDTH_SHIFT	0
+#define PCTRL_PCEN		0x80	/* Power Control Enable */
 
 /**********
  *
@@ -199,150 +198,150 @@
 /* 
  * Interrupt Vector Register
  */
-#घोषणा IVR_ADDR	0xfffff300
-#घोषणा IVR		BYTE_REF(IVR_ADDR)
+#define IVR_ADDR	0xfffff300
+#define IVR		BYTE_REF(IVR_ADDR)
 
-#घोषणा IVR_VECTOR_MASK 0xF8
+#define IVR_VECTOR_MASK 0xF8
 
 /*
  * Interrupt control Register
  */
-#घोषणा ICR_ADDR	0xfffff302
-#घोषणा ICR		WORD_REF(ICR_ADDR)
+#define ICR_ADDR	0xfffff302
+#define ICR		WORD_REF(ICR_ADDR)
 
-#घोषणा ICR_POL5	0x0080	/* Polarity Control क्रम IRQ5 */
-#घोषणा ICR_ET6		0x0100	/* Edge Trigger Select क्रम IRQ6 */
-#घोषणा ICR_ET3		0x0200	/* Edge Trigger Select क्रम IRQ3 */
-#घोषणा ICR_ET2		0x0400	/* Edge Trigger Select क्रम IRQ2 */
-#घोषणा ICR_ET1		0x0800	/* Edge Trigger Select क्रम IRQ1 */
-#घोषणा ICR_POL6	0x1000	/* Polarity Control क्रम IRQ6 */
-#घोषणा ICR_POL3	0x2000	/* Polarity Control क्रम IRQ3 */
-#घोषणा ICR_POL2	0x4000	/* Polarity Control क्रम IRQ2 */
-#घोषणा ICR_POL1	0x8000	/* Polarity Control क्रम IRQ1 */
+#define ICR_POL5	0x0080	/* Polarity Control for IRQ5 */
+#define ICR_ET6		0x0100	/* Edge Trigger Select for IRQ6 */
+#define ICR_ET3		0x0200	/* Edge Trigger Select for IRQ3 */
+#define ICR_ET2		0x0400	/* Edge Trigger Select for IRQ2 */
+#define ICR_ET1		0x0800	/* Edge Trigger Select for IRQ1 */
+#define ICR_POL6	0x1000	/* Polarity Control for IRQ6 */
+#define ICR_POL3	0x2000	/* Polarity Control for IRQ3 */
+#define ICR_POL2	0x4000	/* Polarity Control for IRQ2 */
+#define ICR_POL1	0x8000	/* Polarity Control for IRQ1 */
 
 /*
  * Interrupt Mask Register
  */
-#घोषणा IMR_ADDR	0xfffff304
-#घोषणा IMR		LONG_REF(IMR_ADDR)
+#define IMR_ADDR	0xfffff304
+#define IMR		LONG_REF(IMR_ADDR)
 
 /*
- * Define the names क्रम bit positions first. This is useful क्रम 
+ * Define the names for bit positions first. This is useful for 
  * request_irq
  */
-#घोषणा SPI2_IRQ_NUM	0	/* SPI 2 पूर्णांकerrupt */
-#घोषणा TMR_IRQ_NUM	1	/* Timer 1 पूर्णांकerrupt */
-#घोषणा UART1_IRQ_NUM	2	/* UART 1 पूर्णांकerrupt */	
-#घोषणा	WDT_IRQ_NUM	3	/* Watchकरोg Timer पूर्णांकerrupt */
-#घोषणा RTC_IRQ_NUM	4	/* RTC पूर्णांकerrupt */
-#घोषणा TMR2_IRQ_NUM	5	/* Timer 2 पूर्णांकerrupt */
-#घोषणा	KB_IRQ_NUM	6	/* Keyboard Interrupt */
-#घोषणा PWM1_IRQ_NUM	7	/* Pulse-Width Modulator 1 पूर्णांक. */
-#घोषणा	INT0_IRQ_NUM	8	/* External INT0 */
-#घोषणा	INT1_IRQ_NUM	9	/* External INT1 */
-#घोषणा	INT2_IRQ_NUM	10	/* External INT2 */
-#घोषणा	INT3_IRQ_NUM	11	/* External INT3 */
-#घोषणा UART2_IRQ_NUM	12	/* UART 2 पूर्णांकerrupt */	
-#घोषणा PWM2_IRQ_NUM	13	/* Pulse-Width Modulator 1 पूर्णांक. */
-#घोषणा IRQ1_IRQ_NUM	16	/* IRQ1 */
-#घोषणा IRQ2_IRQ_NUM	17	/* IRQ2 */
-#घोषणा IRQ3_IRQ_NUM	18	/* IRQ3 */
-#घोषणा IRQ6_IRQ_NUM	19	/* IRQ6 */
-#घोषणा IRQ5_IRQ_NUM	20	/* IRQ5 */
-#घोषणा SPI1_IRQ_NUM	21	/* SPI 1 पूर्णांकerrupt */
-#घोषणा SAM_IRQ_NUM	22	/* Sampling Timer क्रम RTC */
-#घोषणा EMIQ_IRQ_NUM	23	/* Emulator Interrupt */
+#define SPI2_IRQ_NUM	0	/* SPI 2 interrupt */
+#define TMR_IRQ_NUM	1	/* Timer 1 interrupt */
+#define UART1_IRQ_NUM	2	/* UART 1 interrupt */	
+#define	WDT_IRQ_NUM	3	/* Watchdog Timer interrupt */
+#define RTC_IRQ_NUM	4	/* RTC interrupt */
+#define TMR2_IRQ_NUM	5	/* Timer 2 interrupt */
+#define	KB_IRQ_NUM	6	/* Keyboard Interrupt */
+#define PWM1_IRQ_NUM	7	/* Pulse-Width Modulator 1 int. */
+#define	INT0_IRQ_NUM	8	/* External INT0 */
+#define	INT1_IRQ_NUM	9	/* External INT1 */
+#define	INT2_IRQ_NUM	10	/* External INT2 */
+#define	INT3_IRQ_NUM	11	/* External INT3 */
+#define UART2_IRQ_NUM	12	/* UART 2 interrupt */	
+#define PWM2_IRQ_NUM	13	/* Pulse-Width Modulator 1 int. */
+#define IRQ1_IRQ_NUM	16	/* IRQ1 */
+#define IRQ2_IRQ_NUM	17	/* IRQ2 */
+#define IRQ3_IRQ_NUM	18	/* IRQ3 */
+#define IRQ6_IRQ_NUM	19	/* IRQ6 */
+#define IRQ5_IRQ_NUM	20	/* IRQ5 */
+#define SPI1_IRQ_NUM	21	/* SPI 1 interrupt */
+#define SAM_IRQ_NUM	22	/* Sampling Timer for RTC */
+#define EMIQ_IRQ_NUM	23	/* Emulator Interrupt */
 
-#घोषणा SPI_IRQ_NUM	SPI2_IRQ_NUM
+#define SPI_IRQ_NUM	SPI2_IRQ_NUM
 
 /* '328-compatible definitions */
-#घोषणा SPIM_IRQ_NUM	SPI_IRQ_NUM
-#घोषणा TMR1_IRQ_NUM	TMR_IRQ_NUM
-#घोषणा UART_IRQ_NUM	UART1_IRQ_NUM
+#define SPIM_IRQ_NUM	SPI_IRQ_NUM
+#define TMR1_IRQ_NUM	TMR_IRQ_NUM
+#define UART_IRQ_NUM	UART1_IRQ_NUM
 
 /* 
- * Here go the biपंचांगasks themselves
+ * Here go the bitmasks themselves
  */
-#घोषणा IMR_MSPI 	(1 << SPI_IRQ_NUM)	/* Mask SPI पूर्णांकerrupt */
-#घोषणा	IMR_MTMR	(1 << TMR_IRQ_NUM)	/* Mask Timer पूर्णांकerrupt */
-#घोषणा IMR_MUART	(1 << UART_IRQ_NUM)	/* Mask UART पूर्णांकerrupt */	
-#घोषणा	IMR_MWDT	(1 << WDT_IRQ_NUM)	/* Mask Watchकरोg Timer पूर्णांकerrupt */
-#घोषणा IMR_MRTC	(1 << RTC_IRQ_NUM)	/* Mask RTC पूर्णांकerrupt */
-#घोषणा	IMR_MKB		(1 << KB_IRQ_NUM)	/* Mask Keyboard Interrupt */
-#घोषणा IMR_MPWM	(1 << PWM_IRQ_NUM)	/* Mask Pulse-Width Modulator पूर्णांक. */
-#घोषणा	IMR_MINT0	(1 << INT0_IRQ_NUM)	/* Mask External INT0 */
-#घोषणा	IMR_MINT1	(1 << INT1_IRQ_NUM)	/* Mask External INT1 */
-#घोषणा	IMR_MINT2	(1 << INT2_IRQ_NUM)	/* Mask External INT2 */
-#घोषणा	IMR_MINT3	(1 << INT3_IRQ_NUM)	/* Mask External INT3 */
-#घोषणा IMR_MIRQ1	(1 << IRQ1_IRQ_NUM)	/* Mask IRQ1 */
-#घोषणा IMR_MIRQ2	(1 << IRQ2_IRQ_NUM)	/* Mask IRQ2 */
-#घोषणा IMR_MIRQ3	(1 << IRQ3_IRQ_NUM)	/* Mask IRQ3 */
-#घोषणा IMR_MIRQ6	(1 << IRQ6_IRQ_NUM)	/* Mask IRQ6 */
-#घोषणा IMR_MIRQ5	(1 << IRQ5_IRQ_NUM)	/* Mask IRQ5 */
-#घोषणा IMR_MSAM	(1 << SAM_IRQ_NUM)	/* Mask Sampling Timer क्रम RTC */
-#घोषणा IMR_MEMIQ	(1 << EMIQ_IRQ_NUM)	/* Mask Emulator Interrupt */
+#define IMR_MSPI 	(1 << SPI_IRQ_NUM)	/* Mask SPI interrupt */
+#define	IMR_MTMR	(1 << TMR_IRQ_NUM)	/* Mask Timer interrupt */
+#define IMR_MUART	(1 << UART_IRQ_NUM)	/* Mask UART interrupt */	
+#define	IMR_MWDT	(1 << WDT_IRQ_NUM)	/* Mask Watchdog Timer interrupt */
+#define IMR_MRTC	(1 << RTC_IRQ_NUM)	/* Mask RTC interrupt */
+#define	IMR_MKB		(1 << KB_IRQ_NUM)	/* Mask Keyboard Interrupt */
+#define IMR_MPWM	(1 << PWM_IRQ_NUM)	/* Mask Pulse-Width Modulator int. */
+#define	IMR_MINT0	(1 << INT0_IRQ_NUM)	/* Mask External INT0 */
+#define	IMR_MINT1	(1 << INT1_IRQ_NUM)	/* Mask External INT1 */
+#define	IMR_MINT2	(1 << INT2_IRQ_NUM)	/* Mask External INT2 */
+#define	IMR_MINT3	(1 << INT3_IRQ_NUM)	/* Mask External INT3 */
+#define IMR_MIRQ1	(1 << IRQ1_IRQ_NUM)	/* Mask IRQ1 */
+#define IMR_MIRQ2	(1 << IRQ2_IRQ_NUM)	/* Mask IRQ2 */
+#define IMR_MIRQ3	(1 << IRQ3_IRQ_NUM)	/* Mask IRQ3 */
+#define IMR_MIRQ6	(1 << IRQ6_IRQ_NUM)	/* Mask IRQ6 */
+#define IMR_MIRQ5	(1 << IRQ5_IRQ_NUM)	/* Mask IRQ5 */
+#define IMR_MSAM	(1 << SAM_IRQ_NUM)	/* Mask Sampling Timer for RTC */
+#define IMR_MEMIQ	(1 << EMIQ_IRQ_NUM)	/* Mask Emulator Interrupt */
 
 /* '328-compatible definitions */
-#घोषणा IMR_MSPIM	IMR_MSPI
-#घोषणा IMR_MTMR1	IMR_MTMR
+#define IMR_MSPIM	IMR_MSPI
+#define IMR_MTMR1	IMR_MTMR
 
 /* 
  * Interrupt Status Register 
  */
-#घोषणा ISR_ADDR	0xfffff30c
-#घोषणा ISR		LONG_REF(ISR_ADDR)
+#define ISR_ADDR	0xfffff30c
+#define ISR		LONG_REF(ISR_ADDR)
 
-#घोषणा ISR_SPI 	(1 << SPI_IRQ_NUM)	/* SPI पूर्णांकerrupt */
-#घोषणा	ISR_TMR		(1 << TMR_IRQ_NUM)	/* Timer पूर्णांकerrupt */
-#घोषणा ISR_UART	(1 << UART_IRQ_NUM)	/* UART पूर्णांकerrupt */	
-#घोषणा	ISR_WDT		(1 << WDT_IRQ_NUM)	/* Watchकरोg Timer पूर्णांकerrupt */
-#घोषणा ISR_RTC		(1 << RTC_IRQ_NUM)	/* RTC पूर्णांकerrupt */
-#घोषणा	ISR_KB		(1 << KB_IRQ_NUM)	/* Keyboard Interrupt */
-#घोषणा ISR_PWM		(1 << PWM_IRQ_NUM)	/* Pulse-Width Modulator पूर्णांकerrupt */
-#घोषणा	ISR_INT0	(1 << INT0_IRQ_NUM)	/* External INT0 */
-#घोषणा	ISR_INT1	(1 << INT1_IRQ_NUM)	/* External INT1 */
-#घोषणा	ISR_INT2	(1 << INT2_IRQ_NUM)	/* External INT2 */
-#घोषणा	ISR_INT3	(1 << INT3_IRQ_NUM)	/* External INT3 */
-#घोषणा ISR_IRQ1	(1 << IRQ1_IRQ_NUM)	/* IRQ1 */
-#घोषणा ISR_IRQ2	(1 << IRQ2_IRQ_NUM)	/* IRQ2 */
-#घोषणा ISR_IRQ3	(1 << IRQ3_IRQ_NUM)	/* IRQ3 */
-#घोषणा ISR_IRQ6	(1 << IRQ6_IRQ_NUM)	/* IRQ6 */
-#घोषणा ISR_IRQ5	(1 << IRQ5_IRQ_NUM)	/* IRQ5 */
-#घोषणा ISR_SAM		(1 << SAM_IRQ_NUM)	/* Sampling Timer क्रम RTC */
-#घोषणा ISR_EMIQ	(1 << EMIQ_IRQ_NUM)	/* Emulator Interrupt */
+#define ISR_SPI 	(1 << SPI_IRQ_NUM)	/* SPI interrupt */
+#define	ISR_TMR		(1 << TMR_IRQ_NUM)	/* Timer interrupt */
+#define ISR_UART	(1 << UART_IRQ_NUM)	/* UART interrupt */	
+#define	ISR_WDT		(1 << WDT_IRQ_NUM)	/* Watchdog Timer interrupt */
+#define ISR_RTC		(1 << RTC_IRQ_NUM)	/* RTC interrupt */
+#define	ISR_KB		(1 << KB_IRQ_NUM)	/* Keyboard Interrupt */
+#define ISR_PWM		(1 << PWM_IRQ_NUM)	/* Pulse-Width Modulator interrupt */
+#define	ISR_INT0	(1 << INT0_IRQ_NUM)	/* External INT0 */
+#define	ISR_INT1	(1 << INT1_IRQ_NUM)	/* External INT1 */
+#define	ISR_INT2	(1 << INT2_IRQ_NUM)	/* External INT2 */
+#define	ISR_INT3	(1 << INT3_IRQ_NUM)	/* External INT3 */
+#define ISR_IRQ1	(1 << IRQ1_IRQ_NUM)	/* IRQ1 */
+#define ISR_IRQ2	(1 << IRQ2_IRQ_NUM)	/* IRQ2 */
+#define ISR_IRQ3	(1 << IRQ3_IRQ_NUM)	/* IRQ3 */
+#define ISR_IRQ6	(1 << IRQ6_IRQ_NUM)	/* IRQ6 */
+#define ISR_IRQ5	(1 << IRQ5_IRQ_NUM)	/* IRQ5 */
+#define ISR_SAM		(1 << SAM_IRQ_NUM)	/* Sampling Timer for RTC */
+#define ISR_EMIQ	(1 << EMIQ_IRQ_NUM)	/* Emulator Interrupt */
 
 /* '328-compatible definitions */
-#घोषणा ISR_SPIM	ISR_SPI
-#घोषणा ISR_TMR1	ISR_TMR
+#define ISR_SPIM	ISR_SPI
+#define ISR_TMR1	ISR_TMR
 
 /* 
  * Interrupt Pending Register 
  */
-#घोषणा IPR_ADDR	0xfffff30c
-#घोषणा IPR		LONG_REF(IPR_ADDR)
+#define IPR_ADDR	0xfffff30c
+#define IPR		LONG_REF(IPR_ADDR)
 
-#घोषणा IPR_SPI 	(1 << SPI_IRQ_NUM)	/* SPI पूर्णांकerrupt */
-#घोषणा	IPR_TMR		(1 << TMR_IRQ_NUM)	/* Timer पूर्णांकerrupt */
-#घोषणा IPR_UART	(1 << UART_IRQ_NUM)	/* UART पूर्णांकerrupt */	
-#घोषणा	IPR_WDT		(1 << WDT_IRQ_NUM)	/* Watchकरोg Timer पूर्णांकerrupt */
-#घोषणा IPR_RTC		(1 << RTC_IRQ_NUM)	/* RTC पूर्णांकerrupt */
-#घोषणा	IPR_KB		(1 << KB_IRQ_NUM)	/* Keyboard Interrupt */
-#घोषणा IPR_PWM		(1 << PWM_IRQ_NUM)	/* Pulse-Width Modulator पूर्णांकerrupt */
-#घोषणा	IPR_INT0	(1 << INT0_IRQ_NUM)	/* External INT0 */
-#घोषणा	IPR_INT1	(1 << INT1_IRQ_NUM)	/* External INT1 */
-#घोषणा	IPR_INT2	(1 << INT2_IRQ_NUM)	/* External INT2 */
-#घोषणा	IPR_INT3	(1 << INT3_IRQ_NUM)	/* External INT3 */
-#घोषणा IPR_IRQ1	(1 << IRQ1_IRQ_NUM)	/* IRQ1 */
-#घोषणा IPR_IRQ2	(1 << IRQ2_IRQ_NUM)	/* IRQ2 */
-#घोषणा IPR_IRQ3	(1 << IRQ3_IRQ_NUM)	/* IRQ3 */
-#घोषणा IPR_IRQ6	(1 << IRQ6_IRQ_NUM)	/* IRQ6 */
-#घोषणा IPR_IRQ5	(1 << IRQ5_IRQ_NUM)	/* IRQ5 */
-#घोषणा IPR_SAM		(1 << SAM_IRQ_NUM)	/* Sampling Timer क्रम RTC */
-#घोषणा IPR_EMIQ	(1 << EMIQ_IRQ_NUM)	/* Emulator Interrupt */
+#define IPR_SPI 	(1 << SPI_IRQ_NUM)	/* SPI interrupt */
+#define	IPR_TMR		(1 << TMR_IRQ_NUM)	/* Timer interrupt */
+#define IPR_UART	(1 << UART_IRQ_NUM)	/* UART interrupt */	
+#define	IPR_WDT		(1 << WDT_IRQ_NUM)	/* Watchdog Timer interrupt */
+#define IPR_RTC		(1 << RTC_IRQ_NUM)	/* RTC interrupt */
+#define	IPR_KB		(1 << KB_IRQ_NUM)	/* Keyboard Interrupt */
+#define IPR_PWM		(1 << PWM_IRQ_NUM)	/* Pulse-Width Modulator interrupt */
+#define	IPR_INT0	(1 << INT0_IRQ_NUM)	/* External INT0 */
+#define	IPR_INT1	(1 << INT1_IRQ_NUM)	/* External INT1 */
+#define	IPR_INT2	(1 << INT2_IRQ_NUM)	/* External INT2 */
+#define	IPR_INT3	(1 << INT3_IRQ_NUM)	/* External INT3 */
+#define IPR_IRQ1	(1 << IRQ1_IRQ_NUM)	/* IRQ1 */
+#define IPR_IRQ2	(1 << IRQ2_IRQ_NUM)	/* IRQ2 */
+#define IPR_IRQ3	(1 << IRQ3_IRQ_NUM)	/* IRQ3 */
+#define IPR_IRQ6	(1 << IRQ6_IRQ_NUM)	/* IRQ6 */
+#define IPR_IRQ5	(1 << IRQ5_IRQ_NUM)	/* IRQ5 */
+#define IPR_SAM		(1 << SAM_IRQ_NUM)	/* Sampling Timer for RTC */
+#define IPR_EMIQ	(1 << EMIQ_IRQ_NUM)	/* Emulator Interrupt */
 
 /* '328-compatible definitions */
-#घोषणा IPR_SPIM	IPR_SPI
-#घोषणा IPR_TMR1	IPR_TMR
+#define IPR_SPIM	IPR_SPI
+#define IPR_TMR1	IPR_TMR
 
 /**********
  *
@@ -353,248 +352,248 @@
 /*
  * Port A
  */
-#घोषणा PAसूची_ADDR	0xfffff400		/* Port A direction reg */
-#घोषणा PADATA_ADDR	0xfffff401		/* Port A data रेजिस्टर */
-#घोषणा PAPUEN_ADDR	0xfffff402		/* Port A Pull-Up enable reg */
+#define PADIR_ADDR	0xfffff400		/* Port A direction reg */
+#define PADATA_ADDR	0xfffff401		/* Port A data register */
+#define PAPUEN_ADDR	0xfffff402		/* Port A Pull-Up enable reg */
 
-#घोषणा PAसूची		BYTE_REF(PAसूची_ADDR)
-#घोषणा PADATA		BYTE_REF(PADATA_ADDR)
-#घोषणा PAPUEN		BYTE_REF(PAPUEN_ADDR)
+#define PADIR		BYTE_REF(PADIR_ADDR)
+#define PADATA		BYTE_REF(PADATA_ADDR)
+#define PAPUEN		BYTE_REF(PAPUEN_ADDR)
 
-#घोषणा PA(x)		(1 << (x))
+#define PA(x)		(1 << (x))
 
 /* 
  * Port B
  */
-#घोषणा PBसूची_ADDR	0xfffff408		/* Port B direction reg */
-#घोषणा PBDATA_ADDR	0xfffff409		/* Port B data रेजिस्टर */
-#घोषणा PBPUEN_ADDR	0xfffff40a		/* Port B Pull-Up enable reg */
-#घोषणा PBSEL_ADDR	0xfffff40b		/* Port B Select Register */
+#define PBDIR_ADDR	0xfffff408		/* Port B direction reg */
+#define PBDATA_ADDR	0xfffff409		/* Port B data register */
+#define PBPUEN_ADDR	0xfffff40a		/* Port B Pull-Up enable reg */
+#define PBSEL_ADDR	0xfffff40b		/* Port B Select Register */
 
-#घोषणा PBसूची		BYTE_REF(PBसूची_ADDR)
-#घोषणा PBDATA		BYTE_REF(PBDATA_ADDR)
-#घोषणा PBPUEN		BYTE_REF(PBPUEN_ADDR)
-#घोषणा PBSEL		BYTE_REF(PBSEL_ADDR)
+#define PBDIR		BYTE_REF(PBDIR_ADDR)
+#define PBDATA		BYTE_REF(PBDATA_ADDR)
+#define PBPUEN		BYTE_REF(PBPUEN_ADDR)
+#define PBSEL		BYTE_REF(PBSEL_ADDR)
 
-#घोषणा PB(x)		(1 << (x))
+#define PB(x)		(1 << (x))
 
-#घोषणा PB_CSB0		0x01	/* Use CSB0      as PB[0] */
-#घोषणा PB_CSB1		0x02	/* Use CSB1      as PB[1] */
-#घोषणा PB_CSC0_RAS0	0x04    /* Use CSC0/RAS0 as PB[2] */	
-#घोषणा PB_CSC1_RAS1	0x08    /* Use CSC1/RAS1 as PB[3] */	
-#घोषणा PB_CSD0_CAS0	0x10    /* Use CSD0/CAS0 as PB[4] */	
-#घोषणा PB_CSD1_CAS1	0x20    /* Use CSD1/CAS1 as PB[5] */
-#घोषणा PB_TIN_TOUT	0x40	/* Use TIN/TOUT  as PB[6] */
-#घोषणा PB_PWMO		0x80	/* Use PWMO      as PB[7] */
+#define PB_CSB0		0x01	/* Use CSB0      as PB[0] */
+#define PB_CSB1		0x02	/* Use CSB1      as PB[1] */
+#define PB_CSC0_RAS0	0x04    /* Use CSC0/RAS0 as PB[2] */	
+#define PB_CSC1_RAS1	0x08    /* Use CSC1/RAS1 as PB[3] */	
+#define PB_CSD0_CAS0	0x10    /* Use CSD0/CAS0 as PB[4] */	
+#define PB_CSD1_CAS1	0x20    /* Use CSD1/CAS1 as PB[5] */
+#define PB_TIN_TOUT	0x40	/* Use TIN/TOUT  as PB[6] */
+#define PB_PWMO		0x80	/* Use PWMO      as PB[7] */
 
 /* 
  * Port C
  */
-#घोषणा PCसूची_ADDR	0xfffff410		/* Port C direction reg */
-#घोषणा PCDATA_ADDR	0xfffff411		/* Port C data रेजिस्टर */
-#घोषणा PCPDEN_ADDR	0xfffff412		/* Port C Pull-Down enb. reg */
-#घोषणा PCSEL_ADDR	0xfffff413		/* Port C Select Register */
+#define PCDIR_ADDR	0xfffff410		/* Port C direction reg */
+#define PCDATA_ADDR	0xfffff411		/* Port C data register */
+#define PCPDEN_ADDR	0xfffff412		/* Port C Pull-Down enb. reg */
+#define PCSEL_ADDR	0xfffff413		/* Port C Select Register */
 
-#घोषणा PCसूची		BYTE_REF(PCसूची_ADDR)
-#घोषणा PCDATA		BYTE_REF(PCDATA_ADDR)
-#घोषणा PCPDEN		BYTE_REF(PCPDEN_ADDR)
-#घोषणा PCSEL		BYTE_REF(PCSEL_ADDR)
+#define PCDIR		BYTE_REF(PCDIR_ADDR)
+#define PCDATA		BYTE_REF(PCDATA_ADDR)
+#define PCPDEN		BYTE_REF(PCPDEN_ADDR)
+#define PCSEL		BYTE_REF(PCSEL_ADDR)
 
-#घोषणा PC(x)		(1 << (x))
+#define PC(x)		(1 << (x))
 
-#घोषणा PC_LD0		0x01	/* Use LD0  as PC[0] */
-#घोषणा PC_LD1		0x02	/* Use LD1  as PC[1] */
-#घोषणा PC_LD2		0x04	/* Use LD2  as PC[2] */
-#घोषणा PC_LD3		0x08	/* Use LD3  as PC[3] */
-#घोषणा PC_LFLM		0x10	/* Use LFLM as PC[4] */
-#घोषणा PC_LLP 		0x20	/* Use LLP  as PC[5] */
-#घोषणा PC_LCLK		0x40	/* Use LCLK as PC[6] */
-#घोषणा PC_LACD		0x80	/* Use LACD as PC[7] */
+#define PC_LD0		0x01	/* Use LD0  as PC[0] */
+#define PC_LD1		0x02	/* Use LD1  as PC[1] */
+#define PC_LD2		0x04	/* Use LD2  as PC[2] */
+#define PC_LD3		0x08	/* Use LD3  as PC[3] */
+#define PC_LFLM		0x10	/* Use LFLM as PC[4] */
+#define PC_LLP 		0x20	/* Use LLP  as PC[5] */
+#define PC_LCLK		0x40	/* Use LCLK as PC[6] */
+#define PC_LACD		0x80	/* Use LACD as PC[7] */
 
 /* 
  * Port D
  */
-#घोषणा PDसूची_ADDR	0xfffff418		/* Port D direction reg */
-#घोषणा PDDATA_ADDR	0xfffff419		/* Port D data रेजिस्टर */
-#घोषणा PDPUEN_ADDR	0xfffff41a		/* Port D Pull-Up enable reg */
-#घोषणा PDSEL_ADDR	0xfffff41b		/* Port D Select Register */
-#घोषणा PDPOL_ADDR	0xfffff41c		/* Port D Polarity Register */
-#घोषणा PसूचीQEN_ADDR	0xfffff41d		/* Port D IRQ enable रेजिस्टर */
-#घोषणा PDKBEN_ADDR	0xfffff41e		/* Port D Keyboard Enable reg */
-#घोषणा	PDIQEG_ADDR	0xfffff41f		/* Port D IRQ Edge Register */
+#define PDDIR_ADDR	0xfffff418		/* Port D direction reg */
+#define PDDATA_ADDR	0xfffff419		/* Port D data register */
+#define PDPUEN_ADDR	0xfffff41a		/* Port D Pull-Up enable reg */
+#define PDSEL_ADDR	0xfffff41b		/* Port D Select Register */
+#define PDPOL_ADDR	0xfffff41c		/* Port D Polarity Register */
+#define PDIRQEN_ADDR	0xfffff41d		/* Port D IRQ enable register */
+#define PDKBEN_ADDR	0xfffff41e		/* Port D Keyboard Enable reg */
+#define	PDIQEG_ADDR	0xfffff41f		/* Port D IRQ Edge Register */
 
-#घोषणा PDसूची		BYTE_REF(PDसूची_ADDR)
-#घोषणा PDDATA		BYTE_REF(PDDATA_ADDR)
-#घोषणा PDPUEN		BYTE_REF(PDPUEN_ADDR)
-#घोषणा PDSEL		BYTE_REF(PDSEL_ADDR)
-#घोषणा	PDPOL		BYTE_REF(PDPOL_ADDR)
-#घोषणा PसूचीQEN		BYTE_REF(PसूचीQEN_ADDR)
-#घोषणा PDKBEN		BYTE_REF(PDKBEN_ADDR)
-#घोषणा PDIQEG		BYTE_REF(PDIQEG_ADDR)
+#define PDDIR		BYTE_REF(PDDIR_ADDR)
+#define PDDATA		BYTE_REF(PDDATA_ADDR)
+#define PDPUEN		BYTE_REF(PDPUEN_ADDR)
+#define PDSEL		BYTE_REF(PDSEL_ADDR)
+#define	PDPOL		BYTE_REF(PDPOL_ADDR)
+#define PDIRQEN		BYTE_REF(PDIRQEN_ADDR)
+#define PDKBEN		BYTE_REF(PDKBEN_ADDR)
+#define PDIQEG		BYTE_REF(PDIQEG_ADDR)
 
-#घोषणा PD(x)		(1 << (x))
+#define PD(x)		(1 << (x))
 
-#घोषणा PD_INT0		0x01	/* Use INT0 as PD[0] */
-#घोषणा PD_INT1		0x02	/* Use INT1 as PD[1] */
-#घोषणा PD_INT2		0x04	/* Use INT2 as PD[2] */
-#घोषणा PD_INT3		0x08	/* Use INT3 as PD[3] */
-#घोषणा PD_IRQ1		0x10	/* Use IRQ1 as PD[4] */
-#घोषणा PD_IRQ2		0x20	/* Use IRQ2 as PD[5] */
-#घोषणा PD_IRQ3		0x40	/* Use IRQ3 as PD[6] */
-#घोषणा PD_IRQ6		0x80	/* Use IRQ6 as PD[7] */
+#define PD_INT0		0x01	/* Use INT0 as PD[0] */
+#define PD_INT1		0x02	/* Use INT1 as PD[1] */
+#define PD_INT2		0x04	/* Use INT2 as PD[2] */
+#define PD_INT3		0x08	/* Use INT3 as PD[3] */
+#define PD_IRQ1		0x10	/* Use IRQ1 as PD[4] */
+#define PD_IRQ2		0x20	/* Use IRQ2 as PD[5] */
+#define PD_IRQ3		0x40	/* Use IRQ3 as PD[6] */
+#define PD_IRQ6		0x80	/* Use IRQ6 as PD[7] */
 
 /* 
  * Port E
  */
-#घोषणा PEसूची_ADDR	0xfffff420		/* Port E direction reg */
-#घोषणा PEDATA_ADDR	0xfffff421		/* Port E data रेजिस्टर */
-#घोषणा PEPUEN_ADDR	0xfffff422		/* Port E Pull-Up enable reg */
-#घोषणा PESEL_ADDR	0xfffff423		/* Port E Select Register */
+#define PEDIR_ADDR	0xfffff420		/* Port E direction reg */
+#define PEDATA_ADDR	0xfffff421		/* Port E data register */
+#define PEPUEN_ADDR	0xfffff422		/* Port E Pull-Up enable reg */
+#define PESEL_ADDR	0xfffff423		/* Port E Select Register */
 
-#घोषणा PEसूची		BYTE_REF(PEसूची_ADDR)
-#घोषणा PEDATA		BYTE_REF(PEDATA_ADDR)
-#घोषणा PEPUEN		BYTE_REF(PEPUEN_ADDR)
-#घोषणा PESEL		BYTE_REF(PESEL_ADDR)
+#define PEDIR		BYTE_REF(PEDIR_ADDR)
+#define PEDATA		BYTE_REF(PEDATA_ADDR)
+#define PEPUEN		BYTE_REF(PEPUEN_ADDR)
+#define PESEL		BYTE_REF(PESEL_ADDR)
 
-#घोषणा PE(x)		(1 << (x))
+#define PE(x)		(1 << (x))
 
-#घोषणा PE_SPMTXD	0x01	/* Use SPMTXD as PE[0] */
-#घोषणा PE_SPMRXD	0x02	/* Use SPMRXD as PE[1] */
-#घोषणा PE_SPMCLK	0x04	/* Use SPMCLK as PE[2] */
-#घोषणा PE_DWE		0x08	/* Use DWE    as PE[3] */
-#घोषणा PE_RXD		0x10	/* Use RXD    as PE[4] */
-#घोषणा PE_TXD		0x20	/* Use TXD    as PE[5] */
-#घोषणा PE_RTS		0x40	/* Use RTS    as PE[6] */
-#घोषणा PE_CTS		0x80	/* Use CTS    as PE[7] */
+#define PE_SPMTXD	0x01	/* Use SPMTXD as PE[0] */
+#define PE_SPMRXD	0x02	/* Use SPMRXD as PE[1] */
+#define PE_SPMCLK	0x04	/* Use SPMCLK as PE[2] */
+#define PE_DWE		0x08	/* Use DWE    as PE[3] */
+#define PE_RXD		0x10	/* Use RXD    as PE[4] */
+#define PE_TXD		0x20	/* Use TXD    as PE[5] */
+#define PE_RTS		0x40	/* Use RTS    as PE[6] */
+#define PE_CTS		0x80	/* Use CTS    as PE[7] */
 
 /* 
  * Port F
  */
-#घोषणा PFसूची_ADDR	0xfffff428		/* Port F direction reg */
-#घोषणा PFDATA_ADDR	0xfffff429		/* Port F data रेजिस्टर */
-#घोषणा PFPUEN_ADDR	0xfffff42a		/* Port F Pull-Up enable reg */
-#घोषणा PFSEL_ADDR	0xfffff42b		/* Port F Select Register */
+#define PFDIR_ADDR	0xfffff428		/* Port F direction reg */
+#define PFDATA_ADDR	0xfffff429		/* Port F data register */
+#define PFPUEN_ADDR	0xfffff42a		/* Port F Pull-Up enable reg */
+#define PFSEL_ADDR	0xfffff42b		/* Port F Select Register */
 
-#घोषणा PFसूची		BYTE_REF(PFसूची_ADDR)
-#घोषणा PFDATA		BYTE_REF(PFDATA_ADDR)
-#घोषणा PFPUEN		BYTE_REF(PFPUEN_ADDR)
-#घोषणा PFSEL		BYTE_REF(PFSEL_ADDR)
+#define PFDIR		BYTE_REF(PFDIR_ADDR)
+#define PFDATA		BYTE_REF(PFDATA_ADDR)
+#define PFPUEN		BYTE_REF(PFPUEN_ADDR)
+#define PFSEL		BYTE_REF(PFSEL_ADDR)
 
-#घोषणा PF(x)		(1 << (x))
+#define PF(x)		(1 << (x))
 
-#घोषणा PF_LCONTRAST	0x01	/* Use LCONTRAST as PF[0] */
-#घोषणा PF_IRQ5         0x02    /* Use IRQ5      as PF[1] */
-#घोषणा PF_CLKO         0x04    /* Use CLKO      as PF[2] */
-#घोषणा PF_A20          0x08    /* Use A20       as PF[3] */
-#घोषणा PF_A21          0x10    /* Use A21       as PF[4] */
-#घोषणा PF_A22          0x20    /* Use A22       as PF[5] */
-#घोषणा PF_A23          0x40    /* Use A23       as PF[6] */
-#घोषणा PF_CSA1		0x80    /* Use CSA1      as PF[7] */
+#define PF_LCONTRAST	0x01	/* Use LCONTRAST as PF[0] */
+#define PF_IRQ5         0x02    /* Use IRQ5      as PF[1] */
+#define PF_CLKO         0x04    /* Use CLKO      as PF[2] */
+#define PF_A20          0x08    /* Use A20       as PF[3] */
+#define PF_A21          0x10    /* Use A21       as PF[4] */
+#define PF_A22          0x20    /* Use A22       as PF[5] */
+#define PF_A23          0x40    /* Use A23       as PF[6] */
+#define PF_CSA1		0x80    /* Use CSA1      as PF[7] */
 
 /* 
  * Port G
  */
-#घोषणा PGसूची_ADDR	0xfffff430		/* Port G direction reg */
-#घोषणा PGDATA_ADDR	0xfffff431		/* Port G data रेजिस्टर */
-#घोषणा PGPUEN_ADDR	0xfffff432		/* Port G Pull-Up enable reg */
-#घोषणा PGSEL_ADDR	0xfffff433		/* Port G Select Register */
+#define PGDIR_ADDR	0xfffff430		/* Port G direction reg */
+#define PGDATA_ADDR	0xfffff431		/* Port G data register */
+#define PGPUEN_ADDR	0xfffff432		/* Port G Pull-Up enable reg */
+#define PGSEL_ADDR	0xfffff433		/* Port G Select Register */
 
-#घोषणा PGसूची		BYTE_REF(PGसूची_ADDR)
-#घोषणा PGDATA		BYTE_REF(PGDATA_ADDR)
-#घोषणा PGPUEN		BYTE_REF(PGPUEN_ADDR)
-#घोषणा PGSEL		BYTE_REF(PGSEL_ADDR)
+#define PGDIR		BYTE_REF(PGDIR_ADDR)
+#define PGDATA		BYTE_REF(PGDATA_ADDR)
+#define PGPUEN		BYTE_REF(PGPUEN_ADDR)
+#define PGSEL		BYTE_REF(PGSEL_ADDR)
 
-#घोषणा PG(x)		(1 << (x))
+#define PG(x)		(1 << (x))
 
-#घोषणा PG_BUSW_DTACK	0x01	/* Use BUSW/DTACK as PG[0] */
-#घोषणा PG_A0		0x02	/* Use A0         as PG[1] */
-#घोषणा PG_EMUIRQ	0x04	/* Use EMUIRQ     as PG[2] */
-#घोषणा PG_HIZ_P_D	0x08	/* Use HIZ/P/D    as PG[3] */
-#घोषणा PG_EMUCS        0x10	/* Use EMUCS      as PG[4] */
-#घोषणा PG_EMUBRK	0x20	/* Use EMUBRK     as PG[5] */
+#define PG_BUSW_DTACK	0x01	/* Use BUSW/DTACK as PG[0] */
+#define PG_A0		0x02	/* Use A0         as PG[1] */
+#define PG_EMUIRQ	0x04	/* Use EMUIRQ     as PG[2] */
+#define PG_HIZ_P_D	0x08	/* Use HIZ/P/D    as PG[3] */
+#define PG_EMUCS        0x10	/* Use EMUCS      as PG[4] */
+#define PG_EMUBRK	0x20	/* Use EMUBRK     as PG[5] */
 
 /* 
  * Port J
  */
-#घोषणा PJसूची_ADDR	0xfffff438		/* Port J direction reg */
-#घोषणा PJDATA_ADDR	0xfffff439		/* Port J data रेजिस्टर */
-#घोषणा PJPUEN_ADDR	0xfffff43A		/* Port J Pull-Up enb. reg */
-#घोषणा PJSEL_ADDR	0xfffff43B		/* Port J Select Register */
+#define PJDIR_ADDR	0xfffff438		/* Port J direction reg */
+#define PJDATA_ADDR	0xfffff439		/* Port J data register */
+#define PJPUEN_ADDR	0xfffff43A		/* Port J Pull-Up enb. reg */
+#define PJSEL_ADDR	0xfffff43B		/* Port J Select Register */
 
-#घोषणा PJसूची		BYTE_REF(PJसूची_ADDR)
-#घोषणा PJDATA		BYTE_REF(PJDATA_ADDR)
-#घोषणा PJPUEN		BYTE_REF(PJPUEN_ADDR)
-#घोषणा PJSEL		BYTE_REF(PJSEL_ADDR)
+#define PJDIR		BYTE_REF(PJDIR_ADDR)
+#define PJDATA		BYTE_REF(PJDATA_ADDR)
+#define PJPUEN		BYTE_REF(PJPUEN_ADDR)
+#define PJSEL		BYTE_REF(PJSEL_ADDR)
 
-#घोषणा PJ(x)		(1 << (x))
+#define PJ(x)		(1 << (x))
 
 /*
  * Port K
  */
-#घोषणा PKसूची_ADDR	0xfffff440		/* Port K direction reg */
-#घोषणा PKDATA_ADDR	0xfffff441		/* Port K data रेजिस्टर */
-#घोषणा PKPUEN_ADDR	0xfffff442		/* Port K Pull-Up enb. reg */
-#घोषणा PKSEL_ADDR	0xfffff443		/* Port K Select Register */
+#define PKDIR_ADDR	0xfffff440		/* Port K direction reg */
+#define PKDATA_ADDR	0xfffff441		/* Port K data register */
+#define PKPUEN_ADDR	0xfffff442		/* Port K Pull-Up enb. reg */
+#define PKSEL_ADDR	0xfffff443		/* Port K Select Register */
 
-#घोषणा PKसूची		BYTE_REF(PKसूची_ADDR)
-#घोषणा PKDATA		BYTE_REF(PKDATA_ADDR)
-#घोषणा PKPUEN		BYTE_REF(PKPUEN_ADDR)
-#घोषणा PKSEL		BYTE_REF(PKSEL_ADDR)
+#define PKDIR		BYTE_REF(PKDIR_ADDR)
+#define PKDATA		BYTE_REF(PKDATA_ADDR)
+#define PKPUEN		BYTE_REF(PKPUEN_ADDR)
+#define PKSEL		BYTE_REF(PKSEL_ADDR)
 
-#घोषणा PK(x)		(1 << (x))
+#define PK(x)		(1 << (x))
 
-#घोषणा PK_DATAREADY		0x01	/* Use ~DATA_READY  as PK[0] */
-#घोषणा PK_PWM2		0x01	/* Use PWM2  as PK[0] */
-#घोषणा PK_R_W		0x02	/* Use R/W  as PK[1] */
-#घोषणा PK_LDS		0x04	/* Use /LDS  as PK[2] */
-#घोषणा PK_UDS		0x08	/* Use /UDS  as PK[3] */
-#घोषणा PK_LD4		0x10	/* Use LD4 as PK[4] */
-#घोषणा PK_LD5 		0x20	/* Use LD5  as PK[5] */
-#घोषणा PK_LD6		0x40	/* Use LD6 as PK[6] */
-#घोषणा PK_LD7		0x80	/* Use LD7 as PK[7] */
+#define PK_DATAREADY		0x01	/* Use ~DATA_READY  as PK[0] */
+#define PK_PWM2		0x01	/* Use PWM2  as PK[0] */
+#define PK_R_W		0x02	/* Use R/W  as PK[1] */
+#define PK_LDS		0x04	/* Use /LDS  as PK[2] */
+#define PK_UDS		0x08	/* Use /UDS  as PK[3] */
+#define PK_LD4		0x10	/* Use LD4 as PK[4] */
+#define PK_LD5 		0x20	/* Use LD5  as PK[5] */
+#define PK_LD6		0x40	/* Use LD6 as PK[6] */
+#define PK_LD7		0x80	/* Use LD7 as PK[7] */
 
-#घोषणा PJसूची_ADDR	0xfffff438		/* Port J direction reg */
-#घोषणा PJDATA_ADDR	0xfffff439		/* Port J data रेजिस्टर */
-#घोषणा PJPUEN_ADDR	0xfffff43A		/* Port J Pull-Up enable reg */
-#घोषणा PJSEL_ADDR	0xfffff43B		/* Port J Select Register */
+#define PJDIR_ADDR	0xfffff438		/* Port J direction reg */
+#define PJDATA_ADDR	0xfffff439		/* Port J data register */
+#define PJPUEN_ADDR	0xfffff43A		/* Port J Pull-Up enable reg */
+#define PJSEL_ADDR	0xfffff43B		/* Port J Select Register */
 
-#घोषणा PJसूची		BYTE_REF(PJसूची_ADDR)
-#घोषणा PJDATA		BYTE_REF(PJDATA_ADDR)
-#घोषणा PJPUEN		BYTE_REF(PJPUEN_ADDR)
-#घोषणा PJSEL		BYTE_REF(PJSEL_ADDR)
+#define PJDIR		BYTE_REF(PJDIR_ADDR)
+#define PJDATA		BYTE_REF(PJDATA_ADDR)
+#define PJPUEN		BYTE_REF(PJPUEN_ADDR)
+#define PJSEL		BYTE_REF(PJSEL_ADDR)
 
-#घोषणा PJ(x)		(1 << (x))
+#define PJ(x)		(1 << (x))
 
-#घोषणा PJ_MOSI 	0x01	/* Use MOSI       as PJ[0] */
-#घोषणा PJ_MISO		0x02	/* Use MISO       as PJ[1] */
-#घोषणा PJ_SPICLK1  	0x04	/* Use SPICLK1    as PJ[2] */
-#घोषणा PJ_SS   	0x08	/* Use SS         as PJ[3] */
-#घोषणा PJ_RXD2         0x10	/* Use RXD2       as PJ[4] */
-#घोषणा PJ_TXD2  	0x20	/* Use TXD2       as PJ[5] */
-#घोषणा PJ_RTS2  	0x40	/* Use RTS2       as PJ[5] */
-#घोषणा PJ_CTS2  	0x80	/* Use CTS2       as PJ[5] */
+#define PJ_MOSI 	0x01	/* Use MOSI       as PJ[0] */
+#define PJ_MISO		0x02	/* Use MISO       as PJ[1] */
+#define PJ_SPICLK1  	0x04	/* Use SPICLK1    as PJ[2] */
+#define PJ_SS   	0x08	/* Use SS         as PJ[3] */
+#define PJ_RXD2         0x10	/* Use RXD2       as PJ[4] */
+#define PJ_TXD2  	0x20	/* Use TXD2       as PJ[5] */
+#define PJ_RTS2  	0x40	/* Use RTS2       as PJ[5] */
+#define PJ_CTS2  	0x80	/* Use CTS2       as PJ[5] */
 
 /*
  * Port M
  */
-#घोषणा PMसूची_ADDR	0xfffff448		/* Port M direction reg */
-#घोषणा PMDATA_ADDR	0xfffff449		/* Port M data रेजिस्टर */
-#घोषणा PMPUEN_ADDR	0xfffff44a		/* Port M Pull-Up enable reg */
-#घोषणा PMSEL_ADDR	0xfffff44b		/* Port M Select Register */
+#define PMDIR_ADDR	0xfffff448		/* Port M direction reg */
+#define PMDATA_ADDR	0xfffff449		/* Port M data register */
+#define PMPUEN_ADDR	0xfffff44a		/* Port M Pull-Up enable reg */
+#define PMSEL_ADDR	0xfffff44b		/* Port M Select Register */
 
-#घोषणा PMसूची		BYTE_REF(PMसूची_ADDR)
-#घोषणा PMDATA		BYTE_REF(PMDATA_ADDR)
-#घोषणा PMPUEN		BYTE_REF(PMPUEN_ADDR)
-#घोषणा PMSEL		BYTE_REF(PMSEL_ADDR)
+#define PMDIR		BYTE_REF(PMDIR_ADDR)
+#define PMDATA		BYTE_REF(PMDATA_ADDR)
+#define PMPUEN		BYTE_REF(PMPUEN_ADDR)
+#define PMSEL		BYTE_REF(PMSEL_ADDR)
 
-#घोषणा PM(x)		(1 << (x))
+#define PM(x)		(1 << (x))
 
-#घोषणा PM_SDCLK	0x01	/* Use SDCLK      as PM[0] */
-#घोषणा PM_SDCE		0x02	/* Use SDCE       as PM[1] */
-#घोषणा PM_DQMH 	0x04	/* Use DQMH       as PM[2] */
-#घोषणा PM_DQML 	0x08	/* Use DQML       as PM[3] */
-#घोषणा PM_SDA10        0x10	/* Use SDA10      as PM[4] */
-#घोषणा PM_DMOE 	0x20	/* Use DMOE       as PM[5] */
+#define PM_SDCLK	0x01	/* Use SDCLK      as PM[0] */
+#define PM_SDCE		0x02	/* Use SDCE       as PM[1] */
+#define PM_DQMH 	0x04	/* Use DQMH       as PM[2] */
+#define PM_DQML 	0x08	/* Use DQML       as PM[3] */
+#define PM_SDA10        0x10	/* Use SDA10      as PM[4] */
+#define PM_DMOE 	0x20	/* Use DMOE       as PM[5] */
 
 /**********
  *
@@ -605,41 +604,41 @@
 /*
  * PWM Control Register
  */
-#घोषणा PWMC_ADDR	0xfffff500
-#घोषणा PWMC		WORD_REF(PWMC_ADDR)
+#define PWMC_ADDR	0xfffff500
+#define PWMC		WORD_REF(PWMC_ADDR)
 
-#घोषणा PWMC_CLKSEL_MASK	0x0003	/* Clock Selection */
-#घोषणा PWMC_CLKSEL_SHIFT	0
-#घोषणा PWMC_REPEAT_MASK	0x000c	/* Sample Repeats */
-#घोषणा PWMC_REPEAT_SHIFT	2
-#घोषणा PWMC_EN			0x0010	/* Enable PWM */
-#घोषणा PMNC_FIFOAV		0x0020	/* FIFO Available */
-#घोषणा PWMC_IRQEN		0x0040	/* Interrupt Request Enable */
-#घोषणा PWMC_IRQ		0x0080	/* Interrupt Request (FIFO empty) */
-#घोषणा PWMC_PRESCALER_MASK	0x7f00	/* Incoming Clock prescaler */
-#घोषणा PWMC_PRESCALER_SHIFT	8
-#घोषणा PWMC_CLKSRC		0x8000	/* Clock Source Select */
+#define PWMC_CLKSEL_MASK	0x0003	/* Clock Selection */
+#define PWMC_CLKSEL_SHIFT	0
+#define PWMC_REPEAT_MASK	0x000c	/* Sample Repeats */
+#define PWMC_REPEAT_SHIFT	2
+#define PWMC_EN			0x0010	/* Enable PWM */
+#define PMNC_FIFOAV		0x0020	/* FIFO Available */
+#define PWMC_IRQEN		0x0040	/* Interrupt Request Enable */
+#define PWMC_IRQ		0x0080	/* Interrupt Request (FIFO empty) */
+#define PWMC_PRESCALER_MASK	0x7f00	/* Incoming Clock prescaler */
+#define PWMC_PRESCALER_SHIFT	8
+#define PWMC_CLKSRC		0x8000	/* Clock Source Select */
 
 /* '328-compatible definitions */
-#घोषणा PWMC_PWMEN	PWMC_EN
+#define PWMC_PWMEN	PWMC_EN
 
 /*
  * PWM Sample Register 
  */
-#घोषणा PWMS_ADDR	0xfffff502
-#घोषणा PWMS		WORD_REF(PWMS_ADDR)
+#define PWMS_ADDR	0xfffff502
+#define PWMS		WORD_REF(PWMS_ADDR)
 
 /*
  * PWM Period Register
  */
-#घोषणा PWMP_ADDR	0xfffff504
-#घोषणा PWMP		BYTE_REF(PWMP_ADDR)
+#define PWMP_ADDR	0xfffff504
+#define PWMP		BYTE_REF(PWMP_ADDR)
 
 /*
  * PWM Counter Register
  */
-#घोषणा PWMCNT_ADDR	0xfffff505
-#घोषणा PWMCNT		BYTE_REF(PWMCNT_ADDR)
+#define PWMCNT_ADDR	0xfffff505
+#define PWMCNT		BYTE_REF(PWMCNT_ADDR)
 
 /**********
  *
@@ -648,81 +647,81 @@
  **********/
 
 /* 
- * Timer Control रेजिस्टर
+ * Timer Control register
  */
-#घोषणा TCTL_ADDR	0xfffff600
-#घोषणा TCTL		WORD_REF(TCTL_ADDR)
+#define TCTL_ADDR	0xfffff600
+#define TCTL		WORD_REF(TCTL_ADDR)
 
-#घोषणा	TCTL_TEN		0x0001	/* Timer Enable  */
-#घोषणा TCTL_CLKSOURCE_MASK 	0x000e	/* Clock Source: */
-#घोषणा   TCTL_CLKSOURCE_STOP	   0x0000	/* Stop count (disabled)    */
-#घोषणा   TCTL_CLKSOURCE_SYSCLK	   0x0002	/* SYSCLK to prescaler      */
-#घोषणा   TCTL_CLKSOURCE_SYSCLK_16 0x0004	/* SYSCLK/16 to prescaler   */
-#घोषणा   TCTL_CLKSOURCE_TIN	   0x0006	/* TIN to prescaler         */
-#घोषणा   TCTL_CLKSOURCE_32KHZ	   0x0008	/* 32kHz घड़ी to prescaler */
-#घोषणा TCTL_IRQEN		0x0010	/* IRQ Enable    */
-#घोषणा TCTL_OM			0x0020	/* Output Mode   */
-#घोषणा TCTL_CAP_MASK		0x00c0	/* Capture Edge: */
-#घोषणा	  TCTL_CAP_RE		0x0040		/* Capture on rizing edge   */
-#घोषणा   TCTL_CAP_FE		0x0080		/* Capture on falling edge  */
-#घोषणा TCTL_FRR		0x0010	/* Free-Run Mode */
+#define	TCTL_TEN		0x0001	/* Timer Enable  */
+#define TCTL_CLKSOURCE_MASK 	0x000e	/* Clock Source: */
+#define   TCTL_CLKSOURCE_STOP	   0x0000	/* Stop count (disabled)    */
+#define   TCTL_CLKSOURCE_SYSCLK	   0x0002	/* SYSCLK to prescaler      */
+#define   TCTL_CLKSOURCE_SYSCLK_16 0x0004	/* SYSCLK/16 to prescaler   */
+#define   TCTL_CLKSOURCE_TIN	   0x0006	/* TIN to prescaler         */
+#define   TCTL_CLKSOURCE_32KHZ	   0x0008	/* 32kHz clock to prescaler */
+#define TCTL_IRQEN		0x0010	/* IRQ Enable    */
+#define TCTL_OM			0x0020	/* Output Mode   */
+#define TCTL_CAP_MASK		0x00c0	/* Capture Edge: */
+#define	  TCTL_CAP_RE		0x0040		/* Capture on rizing edge   */
+#define   TCTL_CAP_FE		0x0080		/* Capture on falling edge  */
+#define TCTL_FRR		0x0010	/* Free-Run Mode */
 
 /* '328-compatible definitions */
-#घोषणा TCTL1_ADDR	TCTL_ADDR
-#घोषणा TCTL1		TCTL
+#define TCTL1_ADDR	TCTL_ADDR
+#define TCTL1		TCTL
 
 /*
  * Timer Prescaler Register
  */
-#घोषणा TPRER_ADDR	0xfffff602
-#घोषणा TPRER		WORD_REF(TPRER_ADDR)
+#define TPRER_ADDR	0xfffff602
+#define TPRER		WORD_REF(TPRER_ADDR)
 
 /* '328-compatible definitions */
-#घोषणा TPRER1_ADDR	TPRER_ADDR
-#घोषणा TPRER1		TPRER
+#define TPRER1_ADDR	TPRER_ADDR
+#define TPRER1		TPRER
 
 /*
  * Timer Compare Register
  */
-#घोषणा TCMP_ADDR	0xfffff604
-#घोषणा TCMP		WORD_REF(TCMP_ADDR)
+#define TCMP_ADDR	0xfffff604
+#define TCMP		WORD_REF(TCMP_ADDR)
 
 /* '328-compatible definitions */
-#घोषणा TCMP1_ADDR	TCMP_ADDR
-#घोषणा TCMP1		TCMP
+#define TCMP1_ADDR	TCMP_ADDR
+#define TCMP1		TCMP
 
 /*
- * Timer Capture रेजिस्टर
+ * Timer Capture register
  */
-#घोषणा TCR_ADDR	0xfffff606
-#घोषणा TCR		WORD_REF(TCR_ADDR)
+#define TCR_ADDR	0xfffff606
+#define TCR		WORD_REF(TCR_ADDR)
 
 /* '328-compatible definitions */
-#घोषणा TCR1_ADDR	TCR_ADDR
-#घोषणा TCR1		TCR
+#define TCR1_ADDR	TCR_ADDR
+#define TCR1		TCR
 
 /*
  * Timer Counter Register
  */
-#घोषणा TCN_ADDR	0xfffff608
-#घोषणा TCN		WORD_REF(TCN_ADDR)
+#define TCN_ADDR	0xfffff608
+#define TCN		WORD_REF(TCN_ADDR)
 
 /* '328-compatible definitions */
-#घोषणा TCN1_ADDR	TCN_ADDR
-#घोषणा TCN1		TCN
+#define TCN1_ADDR	TCN_ADDR
+#define TCN1		TCN
 
 /*
  * Timer Status Register
  */
-#घोषणा TSTAT_ADDR	0xfffff60a
-#घोषणा TSTAT		WORD_REF(TSTAT_ADDR)
+#define TSTAT_ADDR	0xfffff60a
+#define TSTAT		WORD_REF(TSTAT_ADDR)
 
-#घोषणा TSTAT_COMP	0x0001		/* Compare Event occurred */
-#घोषणा TSTAT_CAPT	0x0001		/* Capture Event occurred */
+#define TSTAT_COMP	0x0001		/* Compare Event occurred */
+#define TSTAT_CAPT	0x0001		/* Capture Event occurred */
 
 /* '328-compatible definitions */
-#घोषणा TSTAT1_ADDR	TSTAT_ADDR
-#घोषणा TSTAT1		TSTAT
+#define TSTAT1_ADDR	TSTAT_ADDR
+#define TSTAT1		TSTAT
 
 /**********
  *
@@ -733,29 +732,29 @@
 /*
  * SPIM Data Register
  */
-#घोषणा SPIMDATA_ADDR	0xfffff800
-#घोषणा SPIMDATA	WORD_REF(SPIMDATA_ADDR)
+#define SPIMDATA_ADDR	0xfffff800
+#define SPIMDATA	WORD_REF(SPIMDATA_ADDR)
 
 /*
  * SPIM Control/Status Register
  */
-#घोषणा SPIMCONT_ADDR	0xfffff802
-#घोषणा SPIMCONT	WORD_REF(SPIMCONT_ADDR)
+#define SPIMCONT_ADDR	0xfffff802
+#define SPIMCONT	WORD_REF(SPIMCONT_ADDR)
 
-#घोषणा SPIMCONT_BIT_COUNT_MASK	 0x000f	/* Transfer Length in Bytes */
-#घोषणा SPIMCONT_BIT_COUNT_SHIFT 0
-#घोषणा SPIMCONT_POL		 0x0010	/* SPMCLK Signel Polarity */
-#घोषणा	SPIMCONT_PHA		 0x0020	/* Clock/Data phase relationship */
-#घोषणा SPIMCONT_IRQEN		 0x0040 /* IRQ Enable */
-#घोषणा SPIMCONT_IRQ		 0x0080	/* Interrupt Request */
-#घोषणा SPIMCONT_XCH		 0x0100	/* Exchange */
-#घोषणा SPIMCONT_ENABLE		 0x0200	/* Enable SPIM */
-#घोषणा SPIMCONT_DATA_RATE_MASK	 0xe000	/* SPIM Data Rate */
-#घोषणा SPIMCONT_DATA_RATE_SHIFT 13
+#define SPIMCONT_BIT_COUNT_MASK	 0x000f	/* Transfer Length in Bytes */
+#define SPIMCONT_BIT_COUNT_SHIFT 0
+#define SPIMCONT_POL		 0x0010	/* SPMCLK Signel Polarity */
+#define	SPIMCONT_PHA		 0x0020	/* Clock/Data phase relationship */
+#define SPIMCONT_IRQEN		 0x0040 /* IRQ Enable */
+#define SPIMCONT_IRQ		 0x0080	/* Interrupt Request */
+#define SPIMCONT_XCH		 0x0100	/* Exchange */
+#define SPIMCONT_ENABLE		 0x0200	/* Enable SPIM */
+#define SPIMCONT_DATA_RATE_MASK	 0xe000	/* SPIM Data Rate */
+#define SPIMCONT_DATA_RATE_SHIFT 13
 
 /* '328-compatible definitions */
-#घोषणा SPIMCONT_SPIMIRQ	SPIMCONT_IRQ
-#घोषणा SPIMCONT_SPIMEN		SPIMCONT_ENABLE
+#define SPIMCONT_SPIMIRQ	SPIMCONT_IRQ
+#define SPIMCONT_SPIMEN		SPIMCONT_ENABLE
 
 /**********
  *
@@ -767,151 +766,151 @@
  * UART Status/Control Register
  */
 
-#घोषणा USTCNT_ADDR	0xfffff900
-#घोषणा USTCNT		WORD_REF(USTCNT_ADDR)
+#define USTCNT_ADDR	0xfffff900
+#define USTCNT		WORD_REF(USTCNT_ADDR)
 
-#घोषणा USTCNT_TXAE	0x0001	/* Transmitter Available Interrupt Enable */
-#घोषणा USTCNT_TXHE	0x0002	/* Transmitter Half Empty Enable */
-#घोषणा USTCNT_TXEE	0x0004	/* Transmitter Empty Interrupt Enable */
-#घोषणा USTCNT_RXRE	0x0008	/* Receiver Ready Interrupt Enable */
-#घोषणा USTCNT_RXHE	0x0010	/* Receiver Half-Full Interrupt Enable */
-#घोषणा USTCNT_RXFE	0x0020	/* Receiver Full Interrupt Enable */
-#घोषणा USTCNT_CTSD	0x0040	/* CTS Delta Interrupt Enable */
-#घोषणा USTCNT_ODEN	0x0080	/* Old Data Interrupt Enable */
-#घोषणा USTCNT_8_7	0x0100	/* Eight or seven-bit transmission */
-#घोषणा USTCNT_STOP	0x0200	/* Stop bit transmission */
-#घोषणा USTCNT_ODD	0x0400	/* Odd Parity */
-#घोषणा	USTCNT_PEN	0x0800	/* Parity Enable */
-#घोषणा USTCNT_CLKM	0x1000	/* Clock Mode Select */
-#घोषणा	USTCNT_TXEN	0x2000	/* Transmitter Enable */
-#घोषणा USTCNT_RXEN	0x4000	/* Receiver Enable */
-#घोषणा USTCNT_UEN	0x8000	/* UART Enable */
+#define USTCNT_TXAE	0x0001	/* Transmitter Available Interrupt Enable */
+#define USTCNT_TXHE	0x0002	/* Transmitter Half Empty Enable */
+#define USTCNT_TXEE	0x0004	/* Transmitter Empty Interrupt Enable */
+#define USTCNT_RXRE	0x0008	/* Receiver Ready Interrupt Enable */
+#define USTCNT_RXHE	0x0010	/* Receiver Half-Full Interrupt Enable */
+#define USTCNT_RXFE	0x0020	/* Receiver Full Interrupt Enable */
+#define USTCNT_CTSD	0x0040	/* CTS Delta Interrupt Enable */
+#define USTCNT_ODEN	0x0080	/* Old Data Interrupt Enable */
+#define USTCNT_8_7	0x0100	/* Eight or seven-bit transmission */
+#define USTCNT_STOP	0x0200	/* Stop bit transmission */
+#define USTCNT_ODD	0x0400	/* Odd Parity */
+#define	USTCNT_PEN	0x0800	/* Parity Enable */
+#define USTCNT_CLKM	0x1000	/* Clock Mode Select */
+#define	USTCNT_TXEN	0x2000	/* Transmitter Enable */
+#define USTCNT_RXEN	0x4000	/* Receiver Enable */
+#define USTCNT_UEN	0x8000	/* UART Enable */
 
 /* '328-compatible definitions */
-#घोषणा USTCNT_TXAVAILEN	USTCNT_TXAE
-#घोषणा USTCNT_TXHALFEN		USTCNT_TXHE
-#घोषणा USTCNT_TXEMPTYEN	USTCNT_TXEE
-#घोषणा USTCNT_RXREADYEN	USTCNT_RXRE
-#घोषणा USTCNT_RXHALFEN		USTCNT_RXHE
-#घोषणा USTCNT_RXFULLEN		USTCNT_RXFE
-#घोषणा USTCNT_CTSDELTAEN	USTCNT_CTSD
-#घोषणा USTCNT_ODD_EVEN		USTCNT_ODD
-#घोषणा USTCNT_PARITYEN		USTCNT_PEN
-#घोषणा USTCNT_CLKMODE		USTCNT_CLKM
-#घोषणा USTCNT_UARTEN		USTCNT_UEN
+#define USTCNT_TXAVAILEN	USTCNT_TXAE
+#define USTCNT_TXHALFEN		USTCNT_TXHE
+#define USTCNT_TXEMPTYEN	USTCNT_TXEE
+#define USTCNT_RXREADYEN	USTCNT_RXRE
+#define USTCNT_RXHALFEN		USTCNT_RXHE
+#define USTCNT_RXFULLEN		USTCNT_RXFE
+#define USTCNT_CTSDELTAEN	USTCNT_CTSD
+#define USTCNT_ODD_EVEN		USTCNT_ODD
+#define USTCNT_PARITYEN		USTCNT_PEN
+#define USTCNT_CLKMODE		USTCNT_CLKM
+#define USTCNT_UARTEN		USTCNT_UEN
 
 /*
  * UART Baud Control Register
  */
-#घोषणा UBAUD_ADDR	0xfffff902
-#घोषणा UBAUD		WORD_REF(UBAUD_ADDR)
+#define UBAUD_ADDR	0xfffff902
+#define UBAUD		WORD_REF(UBAUD_ADDR)
 
-#घोषणा UBAUD_PRESCALER_MASK	0x003f	/* Actual भागisor is 65 - PRESCALER */
-#घोषणा UBAUD_PRESCALER_SHIFT	0
-#घोषणा UBAUD_DIVIDE_MASK	0x0700	/* Baud Rate freq. भागisor */
-#घोषणा UBAUD_DIVIDE_SHIFT	8
-#घोषणा UBAUD_BAUD_SRC		0x0800	/* Baud Rate Source */
-#घोषणा UBAUD_UCLKसूची		0x2000	/* UCLK Direction */
+#define UBAUD_PRESCALER_MASK	0x003f	/* Actual divisor is 65 - PRESCALER */
+#define UBAUD_PRESCALER_SHIFT	0
+#define UBAUD_DIVIDE_MASK	0x0700	/* Baud Rate freq. divisor */
+#define UBAUD_DIVIDE_SHIFT	8
+#define UBAUD_BAUD_SRC		0x0800	/* Baud Rate Source */
+#define UBAUD_UCLKDIR		0x2000	/* UCLK Direction */
 
 /*
  * UART Receiver Register 
  */
-#घोषणा URX_ADDR	0xfffff904
-#घोषणा URX		WORD_REF(URX_ADDR)
+#define URX_ADDR	0xfffff904
+#define URX		WORD_REF(URX_ADDR)
 
-#घोषणा URX_RXDATA_ADDR	0xfffff905
-#घोषणा URX_RXDATA	BYTE_REF(URX_RXDATA_ADDR)
+#define URX_RXDATA_ADDR	0xfffff905
+#define URX_RXDATA	BYTE_REF(URX_RXDATA_ADDR)
 
-#घोषणा URX_RXDATA_MASK	 0x00ff	/* Received data */
-#घोषणा URX_RXDATA_SHIFT 0
-#घोषणा URX_PARITY_ERROR 0x0100	/* Parity Error */
-#घोषणा URX_BREAK	 0x0200	/* Break Detected */
-#घोषणा URX_FRAME_ERROR	 0x0400	/* Framing Error */
-#घोषणा URX_OVRUN	 0x0800	/* Serial Overrun */
-#घोषणा URX_OLD_DATA	 0x1000	/* Old data in FIFO */
-#घोषणा URX_DATA_READY	 0x2000	/* Data Ready (FIFO not empty) */
-#घोषणा URX_FIFO_HALF	 0x4000 /* FIFO is Half-Full */
-#घोषणा URX_FIFO_FULL	 0x8000	/* FIFO is Full */
+#define URX_RXDATA_MASK	 0x00ff	/* Received data */
+#define URX_RXDATA_SHIFT 0
+#define URX_PARITY_ERROR 0x0100	/* Parity Error */
+#define URX_BREAK	 0x0200	/* Break Detected */
+#define URX_FRAME_ERROR	 0x0400	/* Framing Error */
+#define URX_OVRUN	 0x0800	/* Serial Overrun */
+#define URX_OLD_DATA	 0x1000	/* Old data in FIFO */
+#define URX_DATA_READY	 0x2000	/* Data Ready (FIFO not empty) */
+#define URX_FIFO_HALF	 0x4000 /* FIFO is Half-Full */
+#define URX_FIFO_FULL	 0x8000	/* FIFO is Full */
 
 /*
  * UART Transmitter Register 
  */
-#घोषणा UTX_ADDR	0xfffff906
-#घोषणा UTX		WORD_REF(UTX_ADDR)
+#define UTX_ADDR	0xfffff906
+#define UTX		WORD_REF(UTX_ADDR)
 
-#घोषणा UTX_TXDATA_ADDR	0xfffff907
-#घोषणा UTX_TXDATA	BYTE_REF(UTX_TXDATA_ADDR)
+#define UTX_TXDATA_ADDR	0xfffff907
+#define UTX_TXDATA	BYTE_REF(UTX_TXDATA_ADDR)
 
-#घोषणा UTX_TXDATA_MASK	 0x00ff	/* Data to be transmitted */
-#घोषणा UTX_TXDATA_SHIFT 0
-#घोषणा UTX_CTS_DELTA	 0x0100	/* CTS changed */
-#घोषणा UTX_CTS_STAT	 0x0200	/* CTS State */
-#घोषणा	UTX_BUSY	 0x0400	/* FIFO is busy, sending a अक्षरacter */
-#घोषणा	UTX_NOCTS	 0x0800	/* Ignore CTS */
-#घोषणा UTX_SEND_BREAK	 0x1000	/* Send a BREAK */
-#घोषणा UTX_TX_AVAIL	 0x2000	/* Transmit FIFO has a slot available */
-#घोषणा UTX_FIFO_HALF	 0x4000	/* Transmit FIFO is half empty */
-#घोषणा UTX_FIFO_EMPTY	 0x8000	/* Transmit FIFO is empty */
+#define UTX_TXDATA_MASK	 0x00ff	/* Data to be transmitted */
+#define UTX_TXDATA_SHIFT 0
+#define UTX_CTS_DELTA	 0x0100	/* CTS changed */
+#define UTX_CTS_STAT	 0x0200	/* CTS State */
+#define	UTX_BUSY	 0x0400	/* FIFO is busy, sending a character */
+#define	UTX_NOCTS	 0x0800	/* Ignore CTS */
+#define UTX_SEND_BREAK	 0x1000	/* Send a BREAK */
+#define UTX_TX_AVAIL	 0x2000	/* Transmit FIFO has a slot available */
+#define UTX_FIFO_HALF	 0x4000	/* Transmit FIFO is half empty */
+#define UTX_FIFO_EMPTY	 0x8000	/* Transmit FIFO is empty */
 
 /* '328-compatible definitions */
-#घोषणा UTX_CTS_STATUS	UTX_CTS_STAT
-#घोषणा UTX_IGNORE_CTS	UTX_NOCTS
+#define UTX_CTS_STATUS	UTX_CTS_STAT
+#define UTX_IGNORE_CTS	UTX_NOCTS
 
 /*
  * UART Miscellaneous Register 
  */
-#घोषणा UMISC_ADDR	0xfffff908
-#घोषणा UMISC		WORD_REF(UMISC_ADDR)
+#define UMISC_ADDR	0xfffff908
+#define UMISC		WORD_REF(UMISC_ADDR)
 
-#घोषणा UMISC_TX_POL	 0x0004	/* Transmit Polarity */
-#घोषणा UMISC_RX_POL	 0x0008	/* Receive Polarity */
-#घोषणा UMISC_IRDA_LOOP	 0x0010	/* IrDA Loopback Enable */
-#घोषणा UMISC_IRDA_EN	 0x0020	/* Infra-Red Enable */
-#घोषणा UMISC_RTS	 0x0040	/* Set RTS status */
-#घोषणा UMISC_RTSCONT	 0x0080	/* Choose RTS control */
-#घोषणा UMISC_IR_TEST	 0x0400	/* IRDA Test Enable */
-#घोषणा UMISC_BAUD_RESET 0x0800	/* Reset Baud Rate Generation Counters */
-#घोषणा UMISC_LOOP	 0x1000	/* Serial Loopback Enable */
-#घोषणा UMISC_FORCE_PERR 0x2000	/* Force Parity Error */
-#घोषणा UMISC_CLKSRC	 0x4000	/* Clock Source */
-#घोषणा UMISC_BAUD_TEST	 0x8000	/* Enable Baud Test Mode */
+#define UMISC_TX_POL	 0x0004	/* Transmit Polarity */
+#define UMISC_RX_POL	 0x0008	/* Receive Polarity */
+#define UMISC_IRDA_LOOP	 0x0010	/* IrDA Loopback Enable */
+#define UMISC_IRDA_EN	 0x0020	/* Infra-Red Enable */
+#define UMISC_RTS	 0x0040	/* Set RTS status */
+#define UMISC_RTSCONT	 0x0080	/* Choose RTS control */
+#define UMISC_IR_TEST	 0x0400	/* IRDA Test Enable */
+#define UMISC_BAUD_RESET 0x0800	/* Reset Baud Rate Generation Counters */
+#define UMISC_LOOP	 0x1000	/* Serial Loopback Enable */
+#define UMISC_FORCE_PERR 0x2000	/* Force Parity Error */
+#define UMISC_CLKSRC	 0x4000	/* Clock Source */
+#define UMISC_BAUD_TEST	 0x8000	/* Enable Baud Test Mode */
 
 /* 
- * UART Non-पूर्णांकeger Prescaler Register
+ * UART Non-integer Prescaler Register
  */
-#घोषणा NIPR_ADDR	0xfffff90a
-#घोषणा NIPR		WORD_REF(NIPR_ADDR)
+#define NIPR_ADDR	0xfffff90a
+#define NIPR		WORD_REF(NIPR_ADDR)
 
-#घोषणा NIPR_STEP_VALUE_MASK	0x00ff	/* NI prescaler step value */
-#घोषणा NIPR_STEP_VALUE_SHIFT	0
-#घोषणा NIPR_SELECT_MASK	0x0700	/* Tap Selection */
-#घोषणा NIPR_SELECT_SHIFT	8
-#घोषणा NIPR_PRE_SEL		0x8000	/* Non-पूर्णांकeger prescaler select */
+#define NIPR_STEP_VALUE_MASK	0x00ff	/* NI prescaler step value */
+#define NIPR_STEP_VALUE_SHIFT	0
+#define NIPR_SELECT_MASK	0x0700	/* Tap Selection */
+#define NIPR_SELECT_SHIFT	8
+#define NIPR_PRE_SEL		0x8000	/* Non-integer prescaler select */
 
 
-/* generalization of uart control रेजिस्टरs to support multiple ports: */
-प्रकार काष्ठा अणु
-  अस्थिर अचिन्हित लघु पूर्णांक ustcnt;
-  अस्थिर अचिन्हित लघु पूर्णांक ubaud;
-  जोड़ अणु
-    अस्थिर अचिन्हित लघु पूर्णांक w;
-    काष्ठा अणु
-      अस्थिर अचिन्हित अक्षर status;
-      अस्थिर अचिन्हित अक्षर rxdata;
-    पूर्ण b;
-  पूर्ण urx;
-  जोड़ अणु
-    अस्थिर अचिन्हित लघु पूर्णांक w;
-    काष्ठा अणु
-      अस्थिर अचिन्हित अक्षर status;
-      अस्थिर अचिन्हित अक्षर txdata;
-    पूर्ण b;
-  पूर्ण utx;
-  अस्थिर अचिन्हित लघु पूर्णांक umisc;
-  अस्थिर अचिन्हित लघु पूर्णांक nipr;
-  अस्थिर अचिन्हित लघु पूर्णांक hmark;
-  अस्थिर अचिन्हित लघु पूर्णांक unused;
-पूर्ण __packed m68328_uart;
+/* generalization of uart control registers to support multiple ports: */
+typedef struct {
+  volatile unsigned short int ustcnt;
+  volatile unsigned short int ubaud;
+  union {
+    volatile unsigned short int w;
+    struct {
+      volatile unsigned char status;
+      volatile unsigned char rxdata;
+    } b;
+  } urx;
+  union {
+    volatile unsigned short int w;
+    struct {
+      volatile unsigned char status;
+      volatile unsigned char txdata;
+    } b;
+  } utx;
+  volatile unsigned short int umisc;
+  volatile unsigned short int nipr;
+  volatile unsigned short int hmark;
+  volatile unsigned short int unused;
+} __packed m68328_uart;
 
 
 
@@ -925,185 +924,185 @@
 /*
  * LCD Screen Starting Address Register 
  */
-#घोषणा LSSA_ADDR	0xfffffa00
-#घोषणा LSSA		LONG_REF(LSSA_ADDR)
+#define LSSA_ADDR	0xfffffa00
+#define LSSA		LONG_REF(LSSA_ADDR)
 
-#घोषणा LSSA_SSA_MASK	0x1ffffffe	/* Bits 0 and 29-31 are reserved */
+#define LSSA_SSA_MASK	0x1ffffffe	/* Bits 0 and 29-31 are reserved */
 
 /*
  * LCD Virtual Page Width Register 
  */
-#घोषणा LVPW_ADDR	0xfffffa05
-#घोषणा LVPW		BYTE_REF(LVPW_ADDR)
+#define LVPW_ADDR	0xfffffa05
+#define LVPW		BYTE_REF(LVPW_ADDR)
 
 /*
  * LCD Screen Width Register (not compatible with '328 !!!) 
  */
-#घोषणा LXMAX_ADDR	0xfffffa08
-#घोषणा LXMAX		WORD_REF(LXMAX_ADDR)
+#define LXMAX_ADDR	0xfffffa08
+#define LXMAX		WORD_REF(LXMAX_ADDR)
 
-#घोषणा LXMAX_XM_MASK	0x02f0		/* Bits 0-3 and 10-15 are reserved */
+#define LXMAX_XM_MASK	0x02f0		/* Bits 0-3 and 10-15 are reserved */
 
 /*
  * LCD Screen Height Register
  */
-#घोषणा LYMAX_ADDR	0xfffffa0a
-#घोषणा LYMAX		WORD_REF(LYMAX_ADDR)
+#define LYMAX_ADDR	0xfffffa0a
+#define LYMAX		WORD_REF(LYMAX_ADDR)
 
-#घोषणा LYMAX_YM_MASK	0x01ff		/* Bits 9-15 are reserved */
+#define LYMAX_YM_MASK	0x01ff		/* Bits 9-15 are reserved */
 
 /*
  * LCD Cursor X Position Register
  */
-#घोषणा LCXP_ADDR	0xfffffa18
-#घोषणा LCXP		WORD_REF(LCXP_ADDR)
+#define LCXP_ADDR	0xfffffa18
+#define LCXP		WORD_REF(LCXP_ADDR)
 
-#घोषणा LCXP_CC_MASK	0xc000		/* Cursor Control */
-#घोषणा   LCXP_CC_TRAMSPARENT	0x0000
-#घोषणा   LCXP_CC_BLACK		0x4000
-#घोषणा   LCXP_CC_REVERSED	0x8000
-#घोषणा   LCXP_CC_WHITE		0xc000
-#घोषणा LCXP_CXP_MASK	0x02ff		/* Cursor X position */
+#define LCXP_CC_MASK	0xc000		/* Cursor Control */
+#define   LCXP_CC_TRAMSPARENT	0x0000
+#define   LCXP_CC_BLACK		0x4000
+#define   LCXP_CC_REVERSED	0x8000
+#define   LCXP_CC_WHITE		0xc000
+#define LCXP_CXP_MASK	0x02ff		/* Cursor X position */
 
 /*
  * LCD Cursor Y Position Register
  */
-#घोषणा LCYP_ADDR	0xfffffa1a
-#घोषणा LCYP		WORD_REF(LCYP_ADDR)
+#define LCYP_ADDR	0xfffffa1a
+#define LCYP		WORD_REF(LCYP_ADDR)
 
-#घोषणा LCYP_CYP_MASK	0x01ff		/* Cursor Y Position */
+#define LCYP_CYP_MASK	0x01ff		/* Cursor Y Position */
 
 /*
  * LCD Cursor Width and Heigth Register
  */
-#घोषणा LCWCH_ADDR	0xfffffa1c
-#घोषणा LCWCH		WORD_REF(LCWCH_ADDR)
+#define LCWCH_ADDR	0xfffffa1c
+#define LCWCH		WORD_REF(LCWCH_ADDR)
 
-#घोषणा LCWCH_CH_MASK	0x001f		/* Cursor Height */
-#घोषणा LCWCH_CH_SHIFT	0
-#घोषणा LCWCH_CW_MASK	0x1f00		/* Cursor Width */
-#घोषणा LCWCH_CW_SHIFT	8
+#define LCWCH_CH_MASK	0x001f		/* Cursor Height */
+#define LCWCH_CH_SHIFT	0
+#define LCWCH_CW_MASK	0x1f00		/* Cursor Width */
+#define LCWCH_CW_SHIFT	8
 
 /*
  * LCD Blink Control Register
  */
-#घोषणा LBLKC_ADDR	0xfffffa1f
-#घोषणा LBLKC		BYTE_REF(LBLKC_ADDR)
+#define LBLKC_ADDR	0xfffffa1f
+#define LBLKC		BYTE_REF(LBLKC_ADDR)
 
-#घोषणा LBLKC_BD_MASK	0x7f	/* Blink Divisor */
-#घोषणा LBLKC_BD_SHIFT	0
-#घोषणा LBLKC_BKEN	0x80	/* Blink Enabled */
+#define LBLKC_BD_MASK	0x7f	/* Blink Divisor */
+#define LBLKC_BD_SHIFT	0
+#define LBLKC_BKEN	0x80	/* Blink Enabled */
 
 /*
  * LCD Panel Interface Configuration Register 
  */
-#घोषणा LPICF_ADDR	0xfffffa20
-#घोषणा LPICF		BYTE_REF(LPICF_ADDR)
+#define LPICF_ADDR	0xfffffa20
+#define LPICF		BYTE_REF(LPICF_ADDR)
 
-#घोषणा LPICF_GS_MASK	 0x03	 /* Gray-Scale Mode */
-#घोषणा	  LPICF_GS_BW	   0x00
-#घोषणा   LPICF_GS_GRAY_4  0x01
-#घोषणा   LPICF_GS_GRAY_16 0x02
-#घोषणा LPICF_PBSIZ_MASK 0x0c	/* Panel Bus Width */
-#घोषणा   LPICF_PBSIZ_1	   0x00
-#घोषणा   LPICF_PBSIZ_2    0x04
-#घोषणा   LPICF_PBSIZ_4    0x08
+#define LPICF_GS_MASK	 0x03	 /* Gray-Scale Mode */
+#define	  LPICF_GS_BW	   0x00
+#define   LPICF_GS_GRAY_4  0x01
+#define   LPICF_GS_GRAY_16 0x02
+#define LPICF_PBSIZ_MASK 0x0c	/* Panel Bus Width */
+#define   LPICF_PBSIZ_1	   0x00
+#define   LPICF_PBSIZ_2    0x04
+#define   LPICF_PBSIZ_4    0x08
 
 /*
  * LCD Polarity Configuration Register 
  */
-#घोषणा LPOLCF_ADDR	0xfffffa21
-#घोषणा LPOLCF		BYTE_REF(LPOLCF_ADDR)
+#define LPOLCF_ADDR	0xfffffa21
+#define LPOLCF		BYTE_REF(LPOLCF_ADDR)
 
-#घोषणा LPOLCF_PIXPOL	0x01	/* Pixel Polarity */
-#घोषणा LPOLCF_LPPOL	0x02	/* Line Pulse Polarity */
-#घोषणा LPOLCF_FLMPOL	0x04	/* Frame Marker Polarity */
-#घोषणा LPOLCF_LCKPOL	0x08	/* LCD Shअगरt Lock Polarity */
+#define LPOLCF_PIXPOL	0x01	/* Pixel Polarity */
+#define LPOLCF_LPPOL	0x02	/* Line Pulse Polarity */
+#define LPOLCF_FLMPOL	0x04	/* Frame Marker Polarity */
+#define LPOLCF_LCKPOL	0x08	/* LCD Shift Lock Polarity */
 
 /*
  * LACD (LCD Alternate Crystal Direction) Rate Control Register
  */
-#घोषणा LACDRC_ADDR	0xfffffa23
-#घोषणा LACDRC		BYTE_REF(LACDRC_ADDR)
+#define LACDRC_ADDR	0xfffffa23
+#define LACDRC		BYTE_REF(LACDRC_ADDR)
 
-#घोषणा LACDRC_ACDSLT	 0x80	/* Signal Source Select */
-#घोषणा LACDRC_ACD_MASK	 0x0f	/* Alternate Crystal Direction Control */
-#घोषणा LACDRC_ACD_SHIFT 0
+#define LACDRC_ACDSLT	 0x80	/* Signal Source Select */
+#define LACDRC_ACD_MASK	 0x0f	/* Alternate Crystal Direction Control */
+#define LACDRC_ACD_SHIFT 0
 
 /*
  * LCD Pixel Clock Divider Register
  */
-#घोषणा LPXCD_ADDR	0xfffffa25
-#घोषणा LPXCD		BYTE_REF(LPXCD_ADDR)
+#define LPXCD_ADDR	0xfffffa25
+#define LPXCD		BYTE_REF(LPXCD_ADDR)
 
-#घोषणा	LPXCD_PCD_MASK	0x3f 	/* Pixel Clock Divider */
-#घोषणा LPXCD_PCD_SHIFT	0
+#define	LPXCD_PCD_MASK	0x3f 	/* Pixel Clock Divider */
+#define LPXCD_PCD_SHIFT	0
 
 /*
  * LCD Clocking Control Register
  */
-#घोषणा LCKCON_ADDR	0xfffffa27
-#घोषणा LCKCON		BYTE_REF(LCKCON_ADDR)
+#define LCKCON_ADDR	0xfffffa27
+#define LCKCON		BYTE_REF(LCKCON_ADDR)
 
-#घोषणा LCKCON_DWS_MASK	 0x0f	/* Display Wait-State */
-#घोषणा LCKCON_DWS_SHIFT 0
-#घोषणा LCKCON_DWIDTH	 0x40	/* Display Memory Width  */
-#घोषणा LCKCON_LCDON	 0x80	/* Enable LCD Controller */
+#define LCKCON_DWS_MASK	 0x0f	/* Display Wait-State */
+#define LCKCON_DWS_SHIFT 0
+#define LCKCON_DWIDTH	 0x40	/* Display Memory Width  */
+#define LCKCON_LCDON	 0x80	/* Enable LCD Controller */
 
 /* '328-compatible definitions */
-#घोषणा LCKCON_DW_MASK  LCKCON_DWS_MASK
-#घोषणा LCKCON_DW_SHIFT LCKCON_DWS_SHIFT
+#define LCKCON_DW_MASK  LCKCON_DWS_MASK
+#define LCKCON_DW_SHIFT LCKCON_DWS_SHIFT
  
 /*
- * LCD Refresh Rate Adjusपंचांगent Register 
+ * LCD Refresh Rate Adjustment Register 
  */
-#घोषणा LRRA_ADDR	0xfffffa29
-#घोषणा LRRA		BYTE_REF(LRRA_ADDR)
+#define LRRA_ADDR	0xfffffa29
+#define LRRA		BYTE_REF(LRRA_ADDR)
 
 /*
  * LCD Panning Offset Register
  */
-#घोषणा LPOSR_ADDR	0xfffffa2d
-#घोषणा LPOSR		BYTE_REF(LPOSR_ADDR)
+#define LPOSR_ADDR	0xfffffa2d
+#define LPOSR		BYTE_REF(LPOSR_ADDR)
 
-#घोषणा LPOSR_POS_MASK	0x0f	/* Pixel Offset Code */
-#घोषणा LPOSR_POS_SHIFT	0
+#define LPOSR_POS_MASK	0x0f	/* Pixel Offset Code */
+#define LPOSR_POS_SHIFT	0
 
 /*
  * LCD Frame Rate Control Modulation Register
  */
-#घोषणा LFRCM_ADDR	0xfffffa31
-#घोषणा LFRCM		BYTE_REF(LFRCM_ADDR)
+#define LFRCM_ADDR	0xfffffa31
+#define LFRCM		BYTE_REF(LFRCM_ADDR)
 
-#घोषणा LFRCM_YMOD_MASK	 0x0f	/* Vertical Modulation */
-#घोषणा LFRCM_YMOD_SHIFT 0
-#घोषणा LFRCM_XMOD_MASK	 0xf0	/* Horizontal Modulation */
-#घोषणा LFRCM_XMOD_SHIFT 4
+#define LFRCM_YMOD_MASK	 0x0f	/* Vertical Modulation */
+#define LFRCM_YMOD_SHIFT 0
+#define LFRCM_XMOD_MASK	 0xf0	/* Horizontal Modulation */
+#define LFRCM_XMOD_SHIFT 4
 
 /*
  * LCD Gray Palette Mapping Register
  */
-#घोषणा LGPMR_ADDR	0xfffffa33
-#घोषणा LGPMR		BYTE_REF(LGPMR_ADDR)
+#define LGPMR_ADDR	0xfffffa33
+#define LGPMR		BYTE_REF(LGPMR_ADDR)
 
-#घोषणा LGPMR_G1_MASK	0x0f
-#घोषणा LGPMR_G1_SHIFT	0
-#घोषणा LGPMR_G2_MASK	0xf0
-#घोषणा LGPMR_G2_SHIFT	4
+#define LGPMR_G1_MASK	0x0f
+#define LGPMR_G1_SHIFT	0
+#define LGPMR_G2_MASK	0xf0
+#define LGPMR_G2_SHIFT	4
 
 /* 
  * PWM Contrast Control Register
  */
-#घोषणा PWMR_ADDR	0xfffffa36
-#घोषणा PWMR		WORD_REF(PWMR_ADDR)
+#define PWMR_ADDR	0xfffffa36
+#define PWMR		WORD_REF(PWMR_ADDR)
 
-#घोषणा PWMR_PW_MASK	0x00ff	/* Pulse Width */
-#घोषणा PWMR_PW_SHIFT	0
-#घोषणा PWMR_CCPEN	0x0100	/* Contrast Control Enable */
-#घोषणा PWMR_SRC_MASK	0x0600	/* Input Clock Source */
-#घोषणा   PWMR_SRC_LINE	  0x0000	/* Line Pulse  */
-#घोषणा   PWMR_SRC_PIXEL  0x0200	/* Pixel Clock */
-#घोषणा   PWMR_SRC_LCD    0x4000	/* LCD घड़ी   */
+#define PWMR_PW_MASK	0x00ff	/* Pulse Width */
+#define PWMR_PW_SHIFT	0
+#define PWMR_CCPEN	0x0100	/* Contrast Control Enable */
+#define PWMR_SRC_MASK	0x0600	/* Input Clock Source */
+#define   PWMR_SRC_LINE	  0x0000	/* Line Pulse  */
+#define   PWMR_SRC_PIXEL  0x0200	/* Pixel Clock */
+#define   PWMR_SRC_LCD    0x4000	/* LCD clock   */
 
 /**********
  *
@@ -1114,122 +1113,122 @@
 /*
  * RTC Hours Minutes and Seconds Register
  */
-#घोषणा RTCTIME_ADDR	0xfffffb00
-#घोषणा RTCTIME		LONG_REF(RTCTIME_ADDR)
+#define RTCTIME_ADDR	0xfffffb00
+#define RTCTIME		LONG_REF(RTCTIME_ADDR)
 
-#घोषणा RTCTIME_SECONDS_MASK	0x0000003f	/* Seconds */
-#घोषणा RTCTIME_SECONDS_SHIFT	0
-#घोषणा RTCTIME_MINUTES_MASK	0x003f0000	/* Minutes */
-#घोषणा RTCTIME_MINUTES_SHIFT	16
-#घोषणा RTCTIME_HOURS_MASK	0x1f000000	/* Hours */
-#घोषणा RTCTIME_HOURS_SHIFT	24
+#define RTCTIME_SECONDS_MASK	0x0000003f	/* Seconds */
+#define RTCTIME_SECONDS_SHIFT	0
+#define RTCTIME_MINUTES_MASK	0x003f0000	/* Minutes */
+#define RTCTIME_MINUTES_SHIFT	16
+#define RTCTIME_HOURS_MASK	0x1f000000	/* Hours */
+#define RTCTIME_HOURS_SHIFT	24
 
 /*
  *  RTC Alarm Register 
  */
-#घोषणा RTCALRM_ADDR    0xfffffb04
-#घोषणा RTCALRM         LONG_REF(RTCALRM_ADDR)
+#define RTCALRM_ADDR    0xfffffb04
+#define RTCALRM         LONG_REF(RTCALRM_ADDR)
 
-#घोषणा RTCALRM_SECONDS_MASK    0x0000003f      /* Seconds */
-#घोषणा RTCALRM_SECONDS_SHIFT   0
-#घोषणा RTCALRM_MINUTES_MASK    0x003f0000      /* Minutes */
-#घोषणा RTCALRM_MINUTES_SHIFT   16
-#घोषणा RTCALRM_HOURS_MASK      0x1f000000      /* Hours */
-#घोषणा RTCALRM_HOURS_SHIFT     24
+#define RTCALRM_SECONDS_MASK    0x0000003f      /* Seconds */
+#define RTCALRM_SECONDS_SHIFT   0
+#define RTCALRM_MINUTES_MASK    0x003f0000      /* Minutes */
+#define RTCALRM_MINUTES_SHIFT   16
+#define RTCALRM_HOURS_MASK      0x1f000000      /* Hours */
+#define RTCALRM_HOURS_SHIFT     24
 
 /*
- * Watchकरोg Timer Register 
+ * Watchdog Timer Register 
  */
-#घोषणा WATCHDOG_ADDR	0xfffffb0a
-#घोषणा WATCHDOG	WORD_REF(WATCHDOG_ADDR)
+#define WATCHDOG_ADDR	0xfffffb0a
+#define WATCHDOG	WORD_REF(WATCHDOG_ADDR)
 
-#घोषणा WATCHDOG_EN	0x0001	/* Watchकरोg Enabled */
-#घोषणा WATCHDOG_ISEL	0x0002	/* Select the watchकरोg पूर्णांकerrupt */
-#घोषणा WATCHDOG_INTF	0x0080	/* Watchकरोg पूर्णांकerrupt occurred */
-#घोषणा WATCHDOG_CNT_MASK  0x0300	/* Watchकरोg Counter */
-#घोषणा WATCHDOG_CNT_SHIFT 8
+#define WATCHDOG_EN	0x0001	/* Watchdog Enabled */
+#define WATCHDOG_ISEL	0x0002	/* Select the watchdog interrupt */
+#define WATCHDOG_INTF	0x0080	/* Watchdog interrupt occurred */
+#define WATCHDOG_CNT_MASK  0x0300	/* Watchdog Counter */
+#define WATCHDOG_CNT_SHIFT 8
 
 /*
  * RTC Control Register
  */
-#घोषणा RTCCTL_ADDR	0xfffffb0c
-#घोषणा RTCCTL		WORD_REF(RTCCTL_ADDR)
+#define RTCCTL_ADDR	0xfffffb0c
+#define RTCCTL		WORD_REF(RTCCTL_ADDR)
 
-#घोषणा RTCCTL_XTL	0x0020	/* Crystal Selection */
-#घोषणा RTCCTL_EN	0x0080	/* RTC Enable */
+#define RTCCTL_XTL	0x0020	/* Crystal Selection */
+#define RTCCTL_EN	0x0080	/* RTC Enable */
 
 /* '328-compatible definitions */
-#घोषणा RTCCTL_384	RTCCTL_XTL
-#घोषणा RTCCTL_ENABLE	RTCCTL_EN
+#define RTCCTL_384	RTCCTL_XTL
+#define RTCCTL_ENABLE	RTCCTL_EN
 
 /*
  * RTC Interrupt Status Register 
  */
-#घोषणा RTCISR_ADDR	0xfffffb0e
-#घोषणा RTCISR		WORD_REF(RTCISR_ADDR)
+#define RTCISR_ADDR	0xfffffb0e
+#define RTCISR		WORD_REF(RTCISR_ADDR)
 
-#घोषणा RTCISR_SW	0x0001	/* Stopwatch समयd out */
-#घोषणा RTCISR_MIN	0x0002	/* 1-minute पूर्णांकerrupt has occurred */
-#घोषणा RTCISR_ALM	0x0004	/* Alarm पूर्णांकerrupt has occurred */
-#घोषणा RTCISR_DAY	0x0008	/* 24-hour rollover पूर्णांकerrupt has occurred */
-#घोषणा RTCISR_1HZ	0x0010	/* 1Hz पूर्णांकerrupt has occurred */
-#घोषणा RTCISR_HR	0x0020	/* 1-hour पूर्णांकerrupt has occurred */
-#घोषणा RTCISR_SAM0	0x0100	/*   4Hz /   4.6875Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM1	0x0200	/*   8Hz /   9.3750Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM2	0x0400	/*  16Hz /  18.7500Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM3	0x0800	/*  32Hz /  37.5000Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM4	0x1000	/*  64Hz /  75.0000Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM5	0x2000	/* 128Hz / 150.0000Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM6	0x4000	/* 256Hz / 300.0000Hz पूर्णांकerrupt has occurred */ 
-#घोषणा RTCISR_SAM7	0x8000	/* 512Hz / 600.0000Hz पूर्णांकerrupt has occurred */ 
+#define RTCISR_SW	0x0001	/* Stopwatch timed out */
+#define RTCISR_MIN	0x0002	/* 1-minute interrupt has occurred */
+#define RTCISR_ALM	0x0004	/* Alarm interrupt has occurred */
+#define RTCISR_DAY	0x0008	/* 24-hour rollover interrupt has occurred */
+#define RTCISR_1HZ	0x0010	/* 1Hz interrupt has occurred */
+#define RTCISR_HR	0x0020	/* 1-hour interrupt has occurred */
+#define RTCISR_SAM0	0x0100	/*   4Hz /   4.6875Hz interrupt has occurred */ 
+#define RTCISR_SAM1	0x0200	/*   8Hz /   9.3750Hz interrupt has occurred */ 
+#define RTCISR_SAM2	0x0400	/*  16Hz /  18.7500Hz interrupt has occurred */ 
+#define RTCISR_SAM3	0x0800	/*  32Hz /  37.5000Hz interrupt has occurred */ 
+#define RTCISR_SAM4	0x1000	/*  64Hz /  75.0000Hz interrupt has occurred */ 
+#define RTCISR_SAM5	0x2000	/* 128Hz / 150.0000Hz interrupt has occurred */ 
+#define RTCISR_SAM6	0x4000	/* 256Hz / 300.0000Hz interrupt has occurred */ 
+#define RTCISR_SAM7	0x8000	/* 512Hz / 600.0000Hz interrupt has occurred */ 
 
 /*
  * RTC Interrupt Enable Register
  */
-#घोषणा RTCIENR_ADDR	0xfffffb10
-#घोषणा RTCIENR		WORD_REF(RTCIENR_ADDR)
+#define RTCIENR_ADDR	0xfffffb10
+#define RTCIENR		WORD_REF(RTCIENR_ADDR)
 
-#घोषणा RTCIENR_SW	0x0001	/* Stopwatch पूर्णांकerrupt enable */
-#घोषणा RTCIENR_MIN	0x0002	/* 1-minute पूर्णांकerrupt enable */
-#घोषणा RTCIENR_ALM	0x0004	/* Alarm पूर्णांकerrupt enable */
-#घोषणा RTCIENR_DAY	0x0008	/* 24-hour rollover पूर्णांकerrupt enable */
-#घोषणा RTCIENR_1HZ	0x0010	/* 1Hz पूर्णांकerrupt enable */
-#घोषणा RTCIENR_HR	0x0020	/* 1-hour पूर्णांकerrupt enable */
-#घोषणा RTCIENR_SAM0	0x0100	/*   4Hz /   4.6875Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM1	0x0200	/*   8Hz /   9.3750Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM2	0x0400	/*  16Hz /  18.7500Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM3	0x0800	/*  32Hz /  37.5000Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM4	0x1000	/*  64Hz /  75.0000Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM5	0x2000	/* 128Hz / 150.0000Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM6	0x4000	/* 256Hz / 300.0000Hz पूर्णांकerrupt enable */ 
-#घोषणा RTCIENR_SAM7	0x8000	/* 512Hz / 600.0000Hz पूर्णांकerrupt enable */ 
+#define RTCIENR_SW	0x0001	/* Stopwatch interrupt enable */
+#define RTCIENR_MIN	0x0002	/* 1-minute interrupt enable */
+#define RTCIENR_ALM	0x0004	/* Alarm interrupt enable */
+#define RTCIENR_DAY	0x0008	/* 24-hour rollover interrupt enable */
+#define RTCIENR_1HZ	0x0010	/* 1Hz interrupt enable */
+#define RTCIENR_HR	0x0020	/* 1-hour interrupt enable */
+#define RTCIENR_SAM0	0x0100	/*   4Hz /   4.6875Hz interrupt enable */ 
+#define RTCIENR_SAM1	0x0200	/*   8Hz /   9.3750Hz interrupt enable */ 
+#define RTCIENR_SAM2	0x0400	/*  16Hz /  18.7500Hz interrupt enable */ 
+#define RTCIENR_SAM3	0x0800	/*  32Hz /  37.5000Hz interrupt enable */ 
+#define RTCIENR_SAM4	0x1000	/*  64Hz /  75.0000Hz interrupt enable */ 
+#define RTCIENR_SAM5	0x2000	/* 128Hz / 150.0000Hz interrupt enable */ 
+#define RTCIENR_SAM6	0x4000	/* 256Hz / 300.0000Hz interrupt enable */ 
+#define RTCIENR_SAM7	0x8000	/* 512Hz / 600.0000Hz interrupt enable */ 
 
 /* 
  * Stopwatch Minutes Register
  */
-#घोषणा STPWCH_ADDR	0xfffffb12
-#घोषणा STPWCH		WORD_REF(STPWCH_ADDR)
+#define STPWCH_ADDR	0xfffffb12
+#define STPWCH		WORD_REF(STPWCH_ADDR)
 
-#घोषणा STPWCH_CNT_MASK	 0x003f	/* Stopwatch countकरोwn value */
-#घोषणा SPTWCH_CNT_SHIFT 0
+#define STPWCH_CNT_MASK	 0x003f	/* Stopwatch countdown value */
+#define SPTWCH_CNT_SHIFT 0
 
 /*
  * RTC Day Count Register 
  */
-#घोषणा DAYR_ADDR	0xfffffb1a
-#घोषणा DAYR		WORD_REF(DAYR_ADDR)
+#define DAYR_ADDR	0xfffffb1a
+#define DAYR		WORD_REF(DAYR_ADDR)
 
-#घोषणा DAYR_DAYS_MASK	0x1ff	/* Day Setting */
-#घोषणा DAYR_DAYS_SHIFT 0
+#define DAYR_DAYS_MASK	0x1ff	/* Day Setting */
+#define DAYR_DAYS_SHIFT 0
 
 /*
  * RTC Day Alarm Register 
  */
-#घोषणा DAYALARM_ADDR	0xfffffb1c
-#घोषणा DAYALARM	WORD_REF(DAYALARM_ADDR)
+#define DAYALARM_ADDR	0xfffffb1c
+#define DAYALARM	WORD_REF(DAYALARM_ADDR)
 
-#घोषणा DAYALARM_DAYSAL_MASK	0x01ff	/* Day Setting of the Alarm */
-#घोषणा DAYALARM_DAYSAL_SHIFT 	0
+#define DAYALARM_DAYSAL_MASK	0x01ff	/* Day Setting of the Alarm */
+#define DAYALARM_DAYSAL_SHIFT 	0
 
 /**********
  *
@@ -1240,53 +1239,53 @@
 /*
  * DRAM Memory Configuration Register 
  */
-#घोषणा DRAMMC_ADDR	0xfffffc00
-#घोषणा DRAMMC		WORD_REF(DRAMMC_ADDR)
+#define DRAMMC_ADDR	0xfffffc00
+#define DRAMMC		WORD_REF(DRAMMC_ADDR)
 
-#घोषणा DRAMMC_ROW12_MASK	0xc000	/* Row address bit क्रम MD12 */
-#घोषणा   DRAMMC_ROW12_PA10	0x0000
-#घोषणा   DRAMMC_ROW12_PA21	0x4000	
-#घोषणा   DRAMMC_ROW12_PA23	0x8000
-#घोषणा	DRAMMC_ROW0_MASK	0x3000	/* Row address bit क्रम MD0 */
-#घोषणा	  DRAMMC_ROW0_PA11	0x0000
-#घोषणा   DRAMMC_ROW0_PA22	0x1000
-#घोषणा   DRAMMC_ROW0_PA23	0x2000
-#घोषणा DRAMMC_ROW11		0x0800	/* Row address bit क्रम MD11 PA20/PA22 */
-#घोषणा DRAMMC_ROW10		0x0400	/* Row address bit क्रम MD10 PA19/PA21 */
-#घोषणा	DRAMMC_ROW9		0x0200	/* Row address bit क्रम MD9  PA9/PA19  */
-#घोषणा DRAMMC_ROW8		0x0100	/* Row address bit क्रम MD8  PA10/PA20 */
-#घोषणा DRAMMC_COL10		0x0080	/* Col address bit क्रम MD10 PA11/PA0  */
-#घोषणा DRAMMC_COL9		0x0040	/* Col address bit क्रम MD9  PA10/PA0  */
-#घोषणा DRAMMC_COL8		0x0020	/* Col address bit क्रम MD8  PA9/PA0   */
-#घोषणा DRAMMC_REF_MASK		0x001f	/* Refresh Cycle */
-#घोषणा DRAMMC_REF_SHIFT	0
+#define DRAMMC_ROW12_MASK	0xc000	/* Row address bit for MD12 */
+#define   DRAMMC_ROW12_PA10	0x0000
+#define   DRAMMC_ROW12_PA21	0x4000	
+#define   DRAMMC_ROW12_PA23	0x8000
+#define	DRAMMC_ROW0_MASK	0x3000	/* Row address bit for MD0 */
+#define	  DRAMMC_ROW0_PA11	0x0000
+#define   DRAMMC_ROW0_PA22	0x1000
+#define   DRAMMC_ROW0_PA23	0x2000
+#define DRAMMC_ROW11		0x0800	/* Row address bit for MD11 PA20/PA22 */
+#define DRAMMC_ROW10		0x0400	/* Row address bit for MD10 PA19/PA21 */
+#define	DRAMMC_ROW9		0x0200	/* Row address bit for MD9  PA9/PA19  */
+#define DRAMMC_ROW8		0x0100	/* Row address bit for MD8  PA10/PA20 */
+#define DRAMMC_COL10		0x0080	/* Col address bit for MD10 PA11/PA0  */
+#define DRAMMC_COL9		0x0040	/* Col address bit for MD9  PA10/PA0  */
+#define DRAMMC_COL8		0x0020	/* Col address bit for MD8  PA9/PA0   */
+#define DRAMMC_REF_MASK		0x001f	/* Refresh Cycle */
+#define DRAMMC_REF_SHIFT	0
 
 /*
  * DRAM Control Register
  */
-#घोषणा DRAMC_ADDR	0xfffffc02
-#घोषणा DRAMC		WORD_REF(DRAMC_ADDR)
+#define DRAMC_ADDR	0xfffffc02
+#define DRAMC		WORD_REF(DRAMC_ADDR)
 
-#घोषणा DRAMC_DWE	   0x0001	/* DRAM Write Enable */
-#घोषणा DRAMC_RST	   0x0002	/* Reset Burst Refresh Enable */
-#घोषणा DRAMC_LPR	   0x0004	/* Low-Power Refresh Enable */
-#घोषणा DRAMC_SLW	   0x0008	/* Slow RAM */
-#घोषणा DRAMC_LSP	   0x0010	/* Light Sleep */
-#घोषणा DRAMC_MSW	   0x0020	/* Slow Multiplexing */
-#घोषणा DRAMC_WS_MASK	   0x00c0	/* Wait-states */
-#घोषणा DRAMC_WS_SHIFT	   6
-#घोषणा DRAMC_PGSZ_MASK    0x0300	/* Page Size क्रम fast page mode */
-#घोषणा DRAMC_PGSZ_SHIFT   8
-#घोषणा   DRAMC_PGSZ_256K  0x0000	
-#घोषणा   DRAMC_PGSZ_512K  0x0100
-#घोषणा   DRAMC_PGSZ_1024K 0x0200
-#घोषणा	  DRAMC_PGSZ_2048K 0x0300
-#घोषणा DRAMC_EDO	   0x0400	/* EDO DRAM */
-#घोषणा DRAMC_CLK	   0x0800	/* Refresh Timer Clock source select */
-#घोषणा DRAMC_BC_MASK	   0x3000	/* Page Access Clock Cycle (FP mode) */
-#घोषणा DRAMC_BC_SHIFT	   12
-#घोषणा DRAMC_RM	   0x4000	/* Refresh Mode */
-#घोषणा DRAMC_EN	   0x8000	/* DRAM Controller enable */
+#define DRAMC_DWE	   0x0001	/* DRAM Write Enable */
+#define DRAMC_RST	   0x0002	/* Reset Burst Refresh Enable */
+#define DRAMC_LPR	   0x0004	/* Low-Power Refresh Enable */
+#define DRAMC_SLW	   0x0008	/* Slow RAM */
+#define DRAMC_LSP	   0x0010	/* Light Sleep */
+#define DRAMC_MSW	   0x0020	/* Slow Multiplexing */
+#define DRAMC_WS_MASK	   0x00c0	/* Wait-states */
+#define DRAMC_WS_SHIFT	   6
+#define DRAMC_PGSZ_MASK    0x0300	/* Page Size for fast page mode */
+#define DRAMC_PGSZ_SHIFT   8
+#define   DRAMC_PGSZ_256K  0x0000	
+#define   DRAMC_PGSZ_512K  0x0100
+#define   DRAMC_PGSZ_1024K 0x0200
+#define	  DRAMC_PGSZ_2048K 0x0300
+#define DRAMC_EDO	   0x0400	/* EDO DRAM */
+#define DRAMC_CLK	   0x0800	/* Refresh Timer Clock source select */
+#define DRAMC_BC_MASK	   0x3000	/* Page Access Clock Cycle (FP mode) */
+#define DRAMC_BC_SHIFT	   12
+#define DRAMC_RM	   0x4000	/* Refresh Mode */
+#define DRAMC_EN	   0x8000	/* DRAM Controller enable */
 
 
 /**********
@@ -1298,54 +1297,54 @@
 /*
  * ICE Module Address Compare Register
  */
-#घोषणा ICEMACR_ADDR	0xfffffd00
-#घोषणा ICEMACR		LONG_REF(ICEMACR_ADDR)
+#define ICEMACR_ADDR	0xfffffd00
+#define ICEMACR		LONG_REF(ICEMACR_ADDR)
 
 /*
  * ICE Module Address Mask Register
  */
-#घोषणा ICEMAMR_ADDR	0xfffffd04
-#घोषणा ICEMAMR		LONG_REF(ICEMAMR_ADDR)
+#define ICEMAMR_ADDR	0xfffffd04
+#define ICEMAMR		LONG_REF(ICEMAMR_ADDR)
 
 /*
  * ICE Module Control Compare Register
  */
-#घोषणा ICEMCCR_ADDR	0xfffffd08
-#घोषणा ICEMCCR		WORD_REF(ICEMCCR_ADDR)
+#define ICEMCCR_ADDR	0xfffffd08
+#define ICEMCCR		WORD_REF(ICEMCCR_ADDR)
 
-#घोषणा ICEMCCR_PD	0x0001	/* Program/Data Cycle Selection */
-#घोषणा ICEMCCR_RW	0x0002	/* Read/Write Cycle Selection */
+#define ICEMCCR_PD	0x0001	/* Program/Data Cycle Selection */
+#define ICEMCCR_RW	0x0002	/* Read/Write Cycle Selection */
 
 /*
  * ICE Module Control Mask Register
  */
-#घोषणा ICEMCMR_ADDR	0xfffffd0a
-#घोषणा ICEMCMR		WORD_REF(ICEMCMR_ADDR)
+#define ICEMCMR_ADDR	0xfffffd0a
+#define ICEMCMR		WORD_REF(ICEMCMR_ADDR)
 
-#घोषणा ICEMCMR_PDM	0x0001	/* Program/Data Cycle Mask */
-#घोषणा ICEMCMR_RWM	0x0002	/* Read/Write Cycle Mask */
+#define ICEMCMR_PDM	0x0001	/* Program/Data Cycle Mask */
+#define ICEMCMR_RWM	0x0002	/* Read/Write Cycle Mask */
 
 /*
  * ICE Module Control Register 
  */
-#घोषणा ICEMCR_ADDR	0xfffffd0c
-#घोषणा ICEMCR		WORD_REF(ICEMCR_ADDR)
+#define ICEMCR_ADDR	0xfffffd0c
+#define ICEMCR		WORD_REF(ICEMCR_ADDR)
 
-#घोषणा ICEMCR_CEN	0x0001	/* Compare Enable */
-#घोषणा ICEMCR_PBEN	0x0002	/* Program Break Enable */
-#घोषणा ICEMCR_SB	0x0004	/* Single Breakpoपूर्णांक */
-#घोषणा ICEMCR_HMDIS	0x0008	/* HardMap disable */
-#घोषणा ICEMCR_BBIEN	0x0010	/* Bus Break Interrupt Enable */
+#define ICEMCR_CEN	0x0001	/* Compare Enable */
+#define ICEMCR_PBEN	0x0002	/* Program Break Enable */
+#define ICEMCR_SB	0x0004	/* Single Breakpoint */
+#define ICEMCR_HMDIS	0x0008	/* HardMap disable */
+#define ICEMCR_BBIEN	0x0010	/* Bus Break Interrupt Enable */
 
 /*
  * ICE Module Status Register 
  */
-#घोषणा ICEMSR_ADDR	0xfffffd0e
-#घोषणा ICEMSR		WORD_REF(ICEMSR_ADDR)
+#define ICEMSR_ADDR	0xfffffd0e
+#define ICEMSR		WORD_REF(ICEMSR_ADDR)
 
-#घोषणा ICEMSR_EMUEN	0x0001	/* Emulation Enable */
-#घोषणा ICEMSR_BRKIRQ	0x0002	/* A-Line Vector Fetch Detected */
-#घोषणा ICEMSR_BBIRQ	0x0004	/* Bus Break Interrupt Detected */
-#घोषणा ICEMSR_EMIRQ	0x0008	/* EMUIRQ Falling Edge Detected */
+#define ICEMSR_EMUEN	0x0001	/* Emulation Enable */
+#define ICEMSR_BRKIRQ	0x0002	/* A-Line Vector Fetch Detected */
+#define ICEMSR_BBIRQ	0x0004	/* Bus Break Interrupt Detected */
+#define ICEMSR_EMIRQ	0x0008	/* EMUIRQ Falling Edge Detected */
 
-#पूर्ण_अगर /* _MC68VZ328_H_ */
+#endif /* _MC68VZ328_H_ */

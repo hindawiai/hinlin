@@ -1,4 +1,3 @@
-<शैली गुरु>
 /**
  * Marvell Bluetooth driver
  *
@@ -6,376 +5,376 @@
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modअगरy this File in
+ * (the "License").  You may use, redistribute and/or modify this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
  *
- * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  **/
 
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <linux/mmc/sdio_func.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <linux/mmc/sdio_func.h>
 
-#समावेश "btmrvl_drv.h"
-#समावेश "btmrvl_sdio.h"
+#include "btmrvl_drv.h"
+#include "btmrvl_sdio.h"
 
-#घोषणा VERSION "1.0"
+#define VERSION "1.0"
 
 /*
- * This function is called by पूर्णांकerface specअगरic पूर्णांकerrupt handler.
- * It updates Power Save & Host Sleep states, and wakes up the मुख्य
- * thपढ़ो.
+ * This function is called by interface specific interrupt handler.
+ * It updates Power Save & Host Sleep states, and wakes up the main
+ * thread.
  */
-व्योम bपंचांगrvl_पूर्णांकerrupt(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
+void btmrvl_interrupt(struct btmrvl_private *priv)
+{
 	priv->adapter->ps_state = PS_AWAKE;
 
 	priv->adapter->wakeup_tries = 0;
 
-	priv->adapter->पूर्णांक_count++;
+	priv->adapter->int_count++;
 
-	अगर (priv->adapter->hs_state == HS_ACTIVATED) अणु
+	if (priv->adapter->hs_state == HS_ACTIVATED) {
 		BT_DBG("BT: HS DEACTIVATED in ISR!");
 		priv->adapter->hs_state = HS_DEACTIVATED;
-	पूर्ण
+	}
 
-	wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_पूर्णांकerrupt);
+	wake_up_interruptible(&priv->main_thread.wait_q);
+}
+EXPORT_SYMBOL_GPL(btmrvl_interrupt);
 
-bool bपंचांगrvl_check_evtpkt(काष्ठा bपंचांगrvl_निजी *priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hci_event_hdr *hdr = (व्योम *) skb->data;
+bool btmrvl_check_evtpkt(struct btmrvl_private *priv, struct sk_buff *skb)
+{
+	struct hci_event_hdr *hdr = (void *) skb->data;
 
-	अगर (hdr->evt == HCI_EV_CMD_COMPLETE) अणु
-		काष्ठा hci_ev_cmd_complete *ec;
+	if (hdr->evt == HCI_EV_CMD_COMPLETE) {
+		struct hci_ev_cmd_complete *ec;
 		u16 opcode;
 
-		ec = (व्योम *) (skb->data + HCI_EVENT_HDR_SIZE);
+		ec = (void *) (skb->data + HCI_EVENT_HDR_SIZE);
 		opcode = __le16_to_cpu(ec->opcode);
 
-		अगर (priv->bपंचांगrvl_dev.sendcmdflag) अणु
-			priv->bपंचांगrvl_dev.sendcmdflag = false;
+		if (priv->btmrvl_dev.sendcmdflag) {
+			priv->btmrvl_dev.sendcmdflag = false;
 			priv->adapter->cmd_complete = true;
-			wake_up_पूर्णांकerruptible(&priv->adapter->cmd_रुको_q);
+			wake_up_interruptible(&priv->adapter->cmd_wait_q);
 
-			अगर (hci_opcode_ogf(opcode) == 0x3F) अणु
+			if (hci_opcode_ogf(opcode) == 0x3F) {
 				BT_DBG("vendor event skipped: opcode=%#4.4x",
 				       opcode);
-				kमुक्त_skb(skb);
-				वापस false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				kfree_skb(skb);
+				return false;
+			}
+		}
+	}
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_check_evtpkt);
+	return true;
+}
+EXPORT_SYMBOL_GPL(btmrvl_check_evtpkt);
 
-पूर्णांक bपंचांगrvl_process_event(काष्ठा bपंचांगrvl_निजी *priv, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगrvl_adapter *adapter = priv->adapter;
-	काष्ठा bपंचांगrvl_event *event;
-	पूर्णांक ret = 0;
+int btmrvl_process_event(struct btmrvl_private *priv, struct sk_buff *skb)
+{
+	struct btmrvl_adapter *adapter = priv->adapter;
+	struct btmrvl_event *event;
+	int ret = 0;
 
-	event = (काष्ठा bपंचांगrvl_event *) skb->data;
-	अगर (event->ec != 0xff) अणु
+	event = (struct btmrvl_event *) skb->data;
+	if (event->ec != 0xff) {
 		BT_DBG("Not Marvell Event=%x", event->ec);
 		ret = -EINVAL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	चयन (event->data[0]) अणु
-	हाल BT_EVENT_AUTO_SLEEP_MODE:
-		अगर (!event->data[2]) अणु
-			अगर (event->data[1] == BT_PS_ENABLE)
+	switch (event->data[0]) {
+	case BT_EVENT_AUTO_SLEEP_MODE:
+		if (!event->data[2]) {
+			if (event->data[1] == BT_PS_ENABLE)
 				adapter->psmode = 1;
-			अन्यथा
+			else
 				adapter->psmode = 0;
 			BT_DBG("PS Mode:%s",
 				(adapter->psmode) ? "Enable" : "Disable");
-		पूर्ण अन्यथा अणु
+		} else {
 			BT_DBG("PS Mode command failed");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BT_EVENT_HOST_SLEEP_CONFIG:
-		अगर (!event->data[3])
+	case BT_EVENT_HOST_SLEEP_CONFIG:
+		if (!event->data[3])
 			BT_DBG("gpio=%x, gap=%x", event->data[1],
 							event->data[2]);
-		अन्यथा
+		else
 			BT_DBG("HSCFG command failed");
-		अवरोध;
+		break;
 
-	हाल BT_EVENT_HOST_SLEEP_ENABLE:
-		अगर (!event->data[1]) अणु
+	case BT_EVENT_HOST_SLEEP_ENABLE:
+		if (!event->data[1]) {
 			adapter->hs_state = HS_ACTIVATED;
-			अगर (adapter->psmode)
+			if (adapter->psmode)
 				adapter->ps_state = PS_SLEEP;
-			wake_up_पूर्णांकerruptible(&adapter->event_hs_रुको_q);
+			wake_up_interruptible(&adapter->event_hs_wait_q);
 			BT_DBG("HS ACTIVATED!");
-		पूर्ण अन्यथा अणु
+		} else {
 			BT_DBG("HS Enable failed");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BT_EVENT_MODULE_CFG_REQ:
-		अगर (priv->bपंचांगrvl_dev.sendcmdflag &&
-				event->data[1] == MODULE_BRINGUP_REQ) अणु
+	case BT_EVENT_MODULE_CFG_REQ:
+		if (priv->btmrvl_dev.sendcmdflag &&
+				event->data[1] == MODULE_BRINGUP_REQ) {
 			BT_DBG("EVENT:%s",
 				((event->data[2] == MODULE_BROUGHT_UP) ||
 				(event->data[2] == MODULE_ALREADY_UP)) ?
 				"Bring-up succeed" : "Bring-up failed");
 
-			अगर (event->length > 3 && event->data[3])
-				priv->bपंचांगrvl_dev.dev_type = HCI_AMP;
-			अन्यथा
-				priv->bपंचांगrvl_dev.dev_type = HCI_PRIMARY;
+			if (event->length > 3 && event->data[3])
+				priv->btmrvl_dev.dev_type = HCI_AMP;
+			else
+				priv->btmrvl_dev.dev_type = HCI_PRIMARY;
 
-			BT_DBG("dev_type: %d", priv->bपंचांगrvl_dev.dev_type);
-		पूर्ण अन्यथा अगर (priv->bपंचांगrvl_dev.sendcmdflag &&
-				event->data[1] == MODULE_SHUTDOWN_REQ) अणु
+			BT_DBG("dev_type: %d", priv->btmrvl_dev.dev_type);
+		} else if (priv->btmrvl_dev.sendcmdflag &&
+				event->data[1] == MODULE_SHUTDOWN_REQ) {
 			BT_DBG("EVENT:%s", (event->data[2]) ?
 				"Shutdown failed" : "Shutdown succeed");
-		पूर्ण अन्यथा अणु
+		} else {
 			BT_DBG("BT_CMD_MODULE_CFG_REQ resp for APP");
 			ret = -EINVAL;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल BT_EVENT_POWER_STATE:
-		अगर (event->data[1] == BT_PS_SLEEP)
+	case BT_EVENT_POWER_STATE:
+		if (event->data[1] == BT_PS_SLEEP)
 			adapter->ps_state = PS_SLEEP;
 		BT_DBG("EVENT:%s",
 			(adapter->ps_state) ? "PS_SLEEP" : "PS_AWAKE");
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		BT_DBG("Unknown Event=%d", event->data[0]);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-निकास:
-	अगर (!ret)
-		kमुक्त_skb(skb);
+exit:
+	if (!ret)
+		kfree_skb(skb);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_process_event);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btmrvl_process_event);
 
-अटल पूर्णांक bपंचांगrvl_send_sync_cmd(काष्ठा bपंचांगrvl_निजी *priv, u16 opcode,
-				स्थिर व्योम *param, u8 len)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा hci_command_hdr *hdr;
+static int btmrvl_send_sync_cmd(struct btmrvl_private *priv, u16 opcode,
+				const void *param, u8 len)
+{
+	struct sk_buff *skb;
+	struct hci_command_hdr *hdr;
 
-	अगर (priv->surprise_हटाओd) अणु
+	if (priv->surprise_removed) {
 		BT_ERR("Card is removed");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	skb = bt_skb_alloc(HCI_COMMAND_HDR_SIZE + len, GFP_KERNEL);
-	अगर (!skb) अणु
+	if (!skb) {
 		BT_ERR("No free skb");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hdr = skb_put(skb, HCI_COMMAND_HDR_SIZE);
 	hdr->opcode = cpu_to_le16(opcode);
 	hdr->plen = len;
 
-	अगर (len)
+	if (len)
 		skb_put_data(skb, param, len);
 
 	hci_skb_pkt_type(skb) = MRVL_VENDOR_PKT;
 
 	skb_queue_head(&priv->adapter->tx_queue, skb);
 
-	priv->bपंचांगrvl_dev.sendcmdflag = true;
+	priv->btmrvl_dev.sendcmdflag = true;
 
 	priv->adapter->cmd_complete = false;
 
-	wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
+	wake_up_interruptible(&priv->main_thread.wait_q);
 
-	अगर (!रुको_event_पूर्णांकerruptible_समयout(priv->adapter->cmd_रुको_q,
+	if (!wait_event_interruptible_timeout(priv->adapter->cmd_wait_q,
 					      priv->adapter->cmd_complete ||
-					      priv->surprise_हटाओd,
+					      priv->surprise_removed,
 					      WAIT_UNTIL_CMD_RESP))
-		वापस -ETIMEDOUT;
+		return -ETIMEDOUT;
 
-	अगर (priv->surprise_हटाओd)
-		वापस -EFAULT;
+	if (priv->surprise_removed)
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bपंचांगrvl_send_module_cfg_cmd(काष्ठा bपंचांगrvl_निजी *priv, u8 subcmd)
-अणु
-	पूर्णांक ret;
+int btmrvl_send_module_cfg_cmd(struct btmrvl_private *priv, u8 subcmd)
+{
+	int ret;
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_MODULE_CFG_REQ, &subcmd, 1);
-	अगर (ret)
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_MODULE_CFG_REQ, &subcmd, 1);
+	if (ret)
 		BT_ERR("module_cfg_cmd(%x) failed", subcmd);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_send_module_cfg_cmd);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btmrvl_send_module_cfg_cmd);
 
-अटल पूर्णांक bपंचांगrvl_enable_sco_routing_to_host(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	पूर्णांक ret;
+static int btmrvl_enable_sco_routing_to_host(struct btmrvl_private *priv)
+{
+	int ret;
 	u8 subcmd = 0;
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_ROUTE_SCO_TO_HOST, &subcmd, 1);
-	अगर (ret)
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_ROUTE_SCO_TO_HOST, &subcmd, 1);
+	if (ret)
 		BT_ERR("BT_CMD_ROUTE_SCO_TO_HOST command failed: %#x", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक bपंचांगrvl_pscan_winकरोw_reporting(काष्ठा bपंचांगrvl_निजी *priv, u8 subcmd)
-अणु
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret;
+int btmrvl_pscan_window_reporting(struct btmrvl_private *priv, u8 subcmd)
+{
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret;
 
-	अगर (!card->support_pscan_win_report)
-		वापस 0;
+	if (!card->support_pscan_win_report)
+		return 0;
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_PSCAN_WIN_REPORT_ENABLE,
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_PSCAN_WIN_REPORT_ENABLE,
 				   &subcmd, 1);
-	अगर (ret)
+	if (ret)
 		BT_ERR("PSCAN_WIN_REPORT_ENABLE command failed: %#x", ret);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_pscan_winकरोw_reporting);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btmrvl_pscan_window_reporting);
 
-पूर्णांक bपंचांगrvl_send_hscfg_cmd(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	पूर्णांक ret;
+int btmrvl_send_hscfg_cmd(struct btmrvl_private *priv)
+{
+	int ret;
 	u8 param[2];
 
-	param[0] = (priv->bपंचांगrvl_dev.gpio_gap & 0xff00) >> 8;
-	param[1] = (u8) (priv->bपंचांगrvl_dev.gpio_gap & 0x00ff);
+	param[0] = (priv->btmrvl_dev.gpio_gap & 0xff00) >> 8;
+	param[1] = (u8) (priv->btmrvl_dev.gpio_gap & 0x00ff);
 
 	BT_DBG("Sending HSCFG Command, gpio=0x%x, gap=0x%x",
 	       param[0], param[1]);
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_HOST_SLEEP_CONFIG, param, 2);
-	अगर (ret)
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_HOST_SLEEP_CONFIG, param, 2);
+	if (ret)
 		BT_ERR("HSCFG command failed");
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_send_hscfg_cmd);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btmrvl_send_hscfg_cmd);
 
-पूर्णांक bपंचांगrvl_enable_ps(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	पूर्णांक ret;
+int btmrvl_enable_ps(struct btmrvl_private *priv)
+{
+	int ret;
 	u8 param;
 
-	अगर (priv->bपंचांगrvl_dev.psmode)
+	if (priv->btmrvl_dev.psmode)
 		param = BT_PS_ENABLE;
-	अन्यथा
+	else
 		param = BT_PS_DISABLE;
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_AUTO_SLEEP_MODE, &param, 1);
-	अगर (ret)
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_AUTO_SLEEP_MODE, &param, 1);
+	if (ret)
 		BT_ERR("PSMODE command failed");
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_enable_ps);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btmrvl_enable_ps);
 
-पूर्णांक bपंचांगrvl_enable_hs(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा bपंचांगrvl_adapter *adapter = priv->adapter;
-	पूर्णांक ret;
+int btmrvl_enable_hs(struct btmrvl_private *priv)
+{
+	struct btmrvl_adapter *adapter = priv->adapter;
+	int ret;
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_HOST_SLEEP_ENABLE, शून्य, 0);
-	अगर (ret) अणु
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_HOST_SLEEP_ENABLE, NULL, 0);
+	if (ret) {
 		BT_ERR("Host sleep enable command failed");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = रुको_event_पूर्णांकerruptible_समयout(adapter->event_hs_रुको_q,
+	ret = wait_event_interruptible_timeout(adapter->event_hs_wait_q,
 					       adapter->hs_state ||
-					       priv->surprise_हटाओd,
+					       priv->surprise_removed,
 					       WAIT_UNTIL_HS_STATE_CHANGED);
-	अगर (ret < 0 || priv->surprise_हटाओd) अणु
+	if (ret < 0 || priv->surprise_removed) {
 		BT_ERR("event_hs_wait_q terminated (%d): %d,%d,%d",
 		       ret, adapter->hs_state, adapter->ps_state,
 		       adapter->wakeup_tries);
-	पूर्ण अन्यथा अगर (!ret) अणु
+	} else if (!ret) {
 		BT_ERR("hs_enable timeout: %d,%d,%d", adapter->hs_state,
 		       adapter->ps_state, adapter->wakeup_tries);
 		ret = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
+	} else {
 		BT_DBG("host sleep enabled: %d,%d,%d", adapter->hs_state,
 		       adapter->ps_state, adapter->wakeup_tries);
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_enable_hs);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(btmrvl_enable_hs);
 
-पूर्णांक bपंचांगrvl_prepare_command(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	पूर्णांक ret = 0;
+int btmrvl_prepare_command(struct btmrvl_private *priv)
+{
+	int ret = 0;
 
-	अगर (priv->bपंचांगrvl_dev.hscfgcmd) अणु
-		priv->bपंचांगrvl_dev.hscfgcmd = 0;
-		bपंचांगrvl_send_hscfg_cmd(priv);
-	पूर्ण
+	if (priv->btmrvl_dev.hscfgcmd) {
+		priv->btmrvl_dev.hscfgcmd = 0;
+		btmrvl_send_hscfg_cmd(priv);
+	}
 
-	अगर (priv->bपंचांगrvl_dev.pscmd) अणु
-		priv->bपंचांगrvl_dev.pscmd = 0;
-		bपंचांगrvl_enable_ps(priv);
-	पूर्ण
+	if (priv->btmrvl_dev.pscmd) {
+		priv->btmrvl_dev.pscmd = 0;
+		btmrvl_enable_ps(priv);
+	}
 
-	अगर (priv->bपंचांगrvl_dev.hscmd) अणु
-		priv->bपंचांगrvl_dev.hscmd = 0;
+	if (priv->btmrvl_dev.hscmd) {
+		priv->btmrvl_dev.hscmd = 0;
 
-		अगर (priv->bपंचांगrvl_dev.hsmode) अणु
-			ret = bपंचांगrvl_enable_hs(priv);
-		पूर्ण अन्यथा अणु
+		if (priv->btmrvl_dev.hsmode) {
+			ret = btmrvl_enable_hs(priv);
+		} else {
 			ret = priv->hw_wakeup_firmware(priv);
 			priv->adapter->hs_state = HS_DEACTIVATED;
 			BT_DBG("BT: HS DEACTIVATED due to host activity!");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_tx_pkt(काष्ठा bपंचांगrvl_निजी *priv, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret = 0;
+static int btmrvl_tx_pkt(struct btmrvl_private *priv, struct sk_buff *skb)
+{
+	int ret = 0;
 
-	अगर (!skb || !skb->data)
-		वापस -EINVAL;
+	if (!skb || !skb->data)
+		return -EINVAL;
 
-	अगर (!skb->len || ((skb->len + BTM_HEADER_LEN) > BTM_UPLD_SIZE)) अणु
+	if (!skb->len || ((skb->len + BTM_HEADER_LEN) > BTM_UPLD_SIZE)) {
 		BT_ERR("Tx Error: Bad skb length %d : %d",
 						skb->len, BTM_UPLD_SIZE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	skb_push(skb, BTM_HEADER_LEN);
 
 	/* header type: byte[3]
-	 * HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Venकरोr
+	 * HCI_COMMAND = 1, ACL_DATA = 2, SCO_DATA = 3, 0xFE = Vendor
 	 * header length: byte[2][1][0]
 	 */
 
@@ -384,15 +383,15 @@ EXPORT_SYMBOL_GPL(bपंचांगrvl_enable_hs);
 	skb->data[2] = (skb->len & 0xff0000) >> 16;
 	skb->data[3] = hci_skb_pkt_type(skb);
 
-	अगर (priv->hw_host_to_card)
+	if (priv->hw_host_to_card)
 		ret = priv->hw_host_to_card(priv, skb->data, skb->len);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम bपंचांगrvl_init_adapter(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	पूर्णांक buf_size;
+static void btmrvl_init_adapter(struct btmrvl_private *priv)
+{
+	int buf_size;
 
 	skb_queue_head_init(&priv->adapter->tx_queue);
 
@@ -400,406 +399,406 @@ EXPORT_SYMBOL_GPL(bपंचांगrvl_enable_hs);
 
 	buf_size = ALIGN_SZ(SDIO_BLOCK_SIZE, BTSDIO_DMA_ALIGN);
 	priv->adapter->hw_regs_buf = kzalloc(buf_size, GFP_KERNEL);
-	अगर (!priv->adapter->hw_regs_buf) अणु
-		priv->adapter->hw_regs = शून्य;
+	if (!priv->adapter->hw_regs_buf) {
+		priv->adapter->hw_regs = NULL;
 		BT_ERR("Unable to allocate buffer for hw_regs.");
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->adapter->hw_regs =
 			(u8 *)ALIGN_ADDR(priv->adapter->hw_regs_buf,
 					 BTSDIO_DMA_ALIGN);
 		BT_DBG("hw_regs_buf=%p hw_regs=%p",
 		       priv->adapter->hw_regs_buf, priv->adapter->hw_regs);
-	पूर्ण
+	}
 
-	init_रुकोqueue_head(&priv->adapter->cmd_रुको_q);
-	init_रुकोqueue_head(&priv->adapter->event_hs_रुको_q);
-पूर्ण
+	init_waitqueue_head(&priv->adapter->cmd_wait_q);
+	init_waitqueue_head(&priv->adapter->event_hs_wait_q);
+}
 
-अटल व्योम bपंचांगrvl_मुक्त_adapter(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
+static void btmrvl_free_adapter(struct btmrvl_private *priv)
+{
 	skb_queue_purge(&priv->adapter->tx_queue);
 
-	kमुक्त(priv->adapter->hw_regs_buf);
-	kमुक्त(priv->adapter);
+	kfree(priv->adapter->hw_regs_buf);
+	kfree(priv->adapter);
 
-	priv->adapter = शून्य;
-पूर्ण
+	priv->adapter = NULL;
+}
 
-अटल पूर्णांक bपंचांगrvl_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
+static int btmrvl_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
 
 	BT_DBG("type=%d, len=%d", hci_skb_pkt_type(skb), skb->len);
 
-	अगर (priv->adapter->is_suspending || priv->adapter->is_suspended) अणु
+	if (priv->adapter->is_suspending || priv->adapter->is_suspended) {
 		BT_ERR("%s: Device is suspending or suspended", __func__);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	चयन (hci_skb_pkt_type(skb)) अणु
-	हाल HCI_COMMAND_PKT:
+	switch (hci_skb_pkt_type(skb)) {
+	case HCI_COMMAND_PKT:
 		hdev->stat.cmd_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_ACLDATA_PKT:
+	case HCI_ACLDATA_PKT:
 		hdev->stat.acl_tx++;
-		अवरोध;
+		break;
 
-	हाल HCI_SCODATA_PKT:
+	case HCI_SCODATA_PKT:
 		hdev->stat.sco_tx++;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	skb_queue_tail(&priv->adapter->tx_queue, skb);
 
-	अगर (!priv->adapter->is_suspended)
-		wake_up_पूर्णांकerruptible(&priv->मुख्य_thपढ़ो.रुको_q);
+	if (!priv->adapter->is_suspended)
+		wake_up_interruptible(&priv->main_thread.wait_q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_flush(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
-
-	skb_queue_purge(&priv->adapter->tx_queue);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक bपंचांगrvl_बंद(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
+static int btmrvl_flush(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
 
 	skb_queue_purge(&priv->adapter->tx_queue);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_खोलो(काष्ठा hci_dev *hdev)
-अणु
-	वापस 0;
-पूर्ण
+static int btmrvl_close(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
 
-अटल पूर्णांक bपंचांगrvl_करोwnload_cal_data(काष्ठा bपंचांगrvl_निजी *priv,
-				    u8 *data, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+	skb_queue_purge(&priv->adapter->tx_queue);
+
+	return 0;
+}
+
+static int btmrvl_open(struct hci_dev *hdev)
+{
+	return 0;
+}
+
+static int btmrvl_download_cal_data(struct btmrvl_private *priv,
+				    u8 *data, int len)
+{
+	int ret;
 
 	data[0] = 0x00;
 	data[1] = 0x00;
 	data[2] = 0x00;
 	data[3] = len;
 
-	prपूर्णांक_hex_dump_bytes("Calibration data: ",
+	print_hex_dump_bytes("Calibration data: ",
 			     DUMP_PREFIX_OFFSET, data, BT_CAL_HDR_LEN + len);
 
-	ret = bपंचांगrvl_send_sync_cmd(priv, BT_CMD_LOAD_CONFIG_DATA, data,
+	ret = btmrvl_send_sync_cmd(priv, BT_CMD_LOAD_CONFIG_DATA, data,
 				   BT_CAL_HDR_LEN + len);
-	अगर (ret)
+	if (ret)
 		BT_ERR("Failed to download calibration data");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_check_device_tree(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा device_node *dt_node;
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
+static int btmrvl_check_device_tree(struct btmrvl_private *priv)
+{
+	struct device_node *dt_node;
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
 	u8 cal_data[BT_CAL_HDR_LEN + BT_CAL_DATA_SIZE];
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u16 gpio, gap;
 
-	अगर (card->plt_of_node) अणु
+	if (card->plt_of_node) {
 		dt_node = card->plt_of_node;
-		ret = of_property_पढ़ो_u16(dt_node, "marvell,wakeup-pin",
+		ret = of_property_read_u16(dt_node, "marvell,wakeup-pin",
 					   &gpio);
-		अगर (ret)
-			gpio = (priv->bपंचांगrvl_dev.gpio_gap & 0xff00) >> 8;
+		if (ret)
+			gpio = (priv->btmrvl_dev.gpio_gap & 0xff00) >> 8;
 
-		ret = of_property_पढ़ो_u16(dt_node, "marvell,wakeup-gap-ms",
+		ret = of_property_read_u16(dt_node, "marvell,wakeup-gap-ms",
 					   &gap);
-		अगर (ret)
-			gap = (u8)(priv->bपंचांगrvl_dev.gpio_gap & 0x00ff);
+		if (ret)
+			gap = (u8)(priv->btmrvl_dev.gpio_gap & 0x00ff);
 
-		priv->bपंचांगrvl_dev.gpio_gap = (gpio << 8) + gap;
+		priv->btmrvl_dev.gpio_gap = (gpio << 8) + gap;
 
-		ret = of_property_पढ़ो_u8_array(dt_node, "marvell,cal-data",
+		ret = of_property_read_u8_array(dt_node, "marvell,cal-data",
 						cal_data + BT_CAL_HDR_LEN,
 						BT_CAL_DATA_SIZE);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		BT_DBG("Use cal data from device tree");
-		ret = bपंचांगrvl_करोwnload_cal_data(priv, cal_data,
+		ret = btmrvl_download_cal_data(priv, cal_data,
 					       BT_CAL_DATA_SIZE);
-		अगर (ret)
+		if (ret)
 			BT_ERR("Fail to download calibrate data");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bपंचांगrvl_setup(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
-	पूर्णांक ret;
+static int btmrvl_setup(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
+	int ret;
 
-	ret = bपंचांगrvl_send_module_cfg_cmd(priv, MODULE_BRINGUP_REQ);
-	अगर (ret)
-		वापस ret;
+	ret = btmrvl_send_module_cfg_cmd(priv, MODULE_BRINGUP_REQ);
+	if (ret)
+		return ret;
 
-	priv->bपंचांगrvl_dev.gpio_gap = 0xfffe;
+	priv->btmrvl_dev.gpio_gap = 0xfffe;
 
-	bपंचांगrvl_check_device_tree(priv);
+	btmrvl_check_device_tree(priv);
 
-	bपंचांगrvl_enable_sco_routing_to_host(priv);
+	btmrvl_enable_sco_routing_to_host(priv);
 
-	bपंचांगrvl_pscan_winकरोw_reporting(priv, 0x01);
+	btmrvl_pscan_window_reporting(priv, 0x01);
 
-	priv->bपंचांगrvl_dev.psmode = 1;
-	bपंचांगrvl_enable_ps(priv);
+	priv->btmrvl_dev.psmode = 1;
+	btmrvl_enable_ps(priv);
 
-	bपंचांगrvl_send_hscfg_cmd(priv);
+	btmrvl_send_hscfg_cmd(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bपंचांगrvl_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
-अणु
-	काष्ठा sk_buff *skb;
-	दीर्घ ret;
+static int btmrvl_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+{
+	struct sk_buff *skb;
+	long ret;
 	u8 buf[8];
 
 	buf[0] = MRVL_VENDOR_PKT;
-	buf[1] = माप(bdaddr_t);
-	स_नकल(buf + 2, bdaddr, माप(bdaddr_t));
+	buf[1] = sizeof(bdaddr_t);
+	memcpy(buf + 2, bdaddr, sizeof(bdaddr_t));
 
-	skb = __hci_cmd_sync(hdev, BT_CMD_SET_BDADDR, माप(buf), buf,
+	skb = __hci_cmd_sync(hdev, BT_CMD_SET_BDADDR, sizeof(buf), buf,
 			     HCI_INIT_TIMEOUT);
-	अगर (IS_ERR(skb)) अणु
+	if (IS_ERR(skb)) {
 		ret = PTR_ERR(skb);
 		BT_ERR("%s: changing btmrvl device address failed (%ld)",
 		       hdev->name, ret);
-		वापस ret;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return ret;
+	}
+	kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bपंचांगrvl_prevent_wake(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv = hci_get_drvdata(hdev);
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
+static bool btmrvl_prevent_wake(struct hci_dev *hdev)
+{
+	struct btmrvl_private *priv = hci_get_drvdata(hdev);
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
 
-	वापस !device_may_wakeup(&card->func->dev);
-पूर्ण
+	return !device_may_wakeup(&card->func->dev);
+}
 
 /*
  * This function handles the event generated by firmware, rx data
  * received from firmware, and tx data sent from kernel.
  */
-अटल पूर्णांक bपंचांगrvl_service_मुख्य_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा bपंचांगrvl_thपढ़ो *thपढ़ो = data;
-	काष्ठा bपंचांगrvl_निजी *priv = thपढ़ो->priv;
-	काष्ठा bपंचांगrvl_adapter *adapter = priv->adapter;
-	रुको_queue_entry_t रुको;
-	काष्ठा sk_buff *skb;
-	uदीर्घ flags;
+static int btmrvl_service_main_thread(void *data)
+{
+	struct btmrvl_thread *thread = data;
+	struct btmrvl_private *priv = thread->priv;
+	struct btmrvl_adapter *adapter = priv->adapter;
+	wait_queue_entry_t wait;
+	struct sk_buff *skb;
+	ulong flags;
 
-	init_रुकोqueue_entry(&रुको, current);
+	init_waitqueue_entry(&wait, current);
 
-	क्रम (;;) अणु
-		add_रुको_queue(&thपढ़ो->रुको_q, &रुको);
+	for (;;) {
+		add_wait_queue(&thread->wait_q, &wait);
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (kthपढ़ो_should_stop() || priv->surprise_हटाओd) अणु
+		if (kthread_should_stop() || priv->surprise_removed) {
 			BT_DBG("main_thread: break from main thread");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (adapter->wakeup_tries ||
-				((!adapter->पूर्णांक_count) &&
-				(!priv->bपंचांगrvl_dev.tx_dnld_rdy ||
-				skb_queue_empty(&adapter->tx_queue)))) अणु
+		if (adapter->wakeup_tries ||
+				((!adapter->int_count) &&
+				(!priv->btmrvl_dev.tx_dnld_rdy ||
+				skb_queue_empty(&adapter->tx_queue)))) {
 			BT_DBG("main_thread is sleeping...");
 			schedule();
-		पूर्ण
+		}
 
 		set_current_state(TASK_RUNNING);
 
-		हटाओ_रुको_queue(&thपढ़ो->रुको_q, &रुको);
+		remove_wait_queue(&thread->wait_q, &wait);
 
 		BT_DBG("main_thread woke up");
 
-		अगर (kthपढ़ो_should_stop() || priv->surprise_हटाओd) अणु
+		if (kthread_should_stop() || priv->surprise_removed) {
 			BT_DBG("main_thread: break from main thread");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		spin_lock_irqsave(&priv->driver_lock, flags);
-		अगर (adapter->पूर्णांक_count) अणु
-			adapter->पूर्णांक_count = 0;
+		if (adapter->int_count) {
+			adapter->int_count = 0;
 			spin_unlock_irqrestore(&priv->driver_lock, flags);
-			priv->hw_process_पूर्णांक_status(priv);
-		पूर्ण अन्यथा अगर (adapter->ps_state == PS_SLEEP &&
-					!skb_queue_empty(&adapter->tx_queue)) अणु
+			priv->hw_process_int_status(priv);
+		} else if (adapter->ps_state == PS_SLEEP &&
+					!skb_queue_empty(&adapter->tx_queue)) {
 			spin_unlock_irqrestore(&priv->driver_lock, flags);
 			adapter->wakeup_tries++;
 			priv->hw_wakeup_firmware(priv);
-			जारी;
-		पूर्ण अन्यथा अणु
+			continue;
+		} else {
 			spin_unlock_irqrestore(&priv->driver_lock, flags);
-		पूर्ण
+		}
 
-		अगर (adapter->ps_state == PS_SLEEP)
-			जारी;
+		if (adapter->ps_state == PS_SLEEP)
+			continue;
 
-		अगर (!priv->bपंचांगrvl_dev.tx_dnld_rdy ||
+		if (!priv->btmrvl_dev.tx_dnld_rdy ||
 		    priv->adapter->is_suspended)
-			जारी;
+			continue;
 
 		skb = skb_dequeue(&adapter->tx_queue);
-		अगर (skb) अणु
-			अगर (bपंचांगrvl_tx_pkt(priv, skb))
-				priv->bपंचांगrvl_dev.hcidev->stat.err_tx++;
-			अन्यथा
-				priv->bपंचांगrvl_dev.hcidev->stat.byte_tx += skb->len;
+		if (skb) {
+			if (btmrvl_tx_pkt(priv, skb))
+				priv->btmrvl_dev.hcidev->stat.err_tx++;
+			else
+				priv->btmrvl_dev.hcidev->stat.byte_tx += skb->len;
 
-			kमुक्त_skb(skb);
-		पूर्ण
-	पूर्ण
+			kfree_skb(skb);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bपंचांगrvl_रेजिस्टर_hdev(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा hci_dev *hdev = शून्य;
-	काष्ठा bपंचांगrvl_sdio_card *card = priv->bपंचांगrvl_dev.card;
-	पूर्णांक ret;
+int btmrvl_register_hdev(struct btmrvl_private *priv)
+{
+	struct hci_dev *hdev = NULL;
+	struct btmrvl_sdio_card *card = priv->btmrvl_dev.card;
+	int ret;
 
 	hdev = hci_alloc_dev();
-	अगर (!hdev) अणु
+	if (!hdev) {
 		BT_ERR("Can not allocate HCI device");
-		जाओ err_hdev;
-	पूर्ण
+		goto err_hdev;
+	}
 
-	priv->bपंचांगrvl_dev.hcidev = hdev;
+	priv->btmrvl_dev.hcidev = hdev;
 	hci_set_drvdata(hdev, priv);
 
 	hdev->bus   = HCI_SDIO;
-	hdev->खोलो  = bपंचांगrvl_खोलो;
-	hdev->बंद = bपंचांगrvl_बंद;
-	hdev->flush = bपंचांगrvl_flush;
-	hdev->send  = bपंचांगrvl_send_frame;
-	hdev->setup = bपंचांगrvl_setup;
-	hdev->set_bdaddr = bपंचांगrvl_set_bdaddr;
-	hdev->prevent_wake = bपंचांगrvl_prevent_wake;
+	hdev->open  = btmrvl_open;
+	hdev->close = btmrvl_close;
+	hdev->flush = btmrvl_flush;
+	hdev->send  = btmrvl_send_frame;
+	hdev->setup = btmrvl_setup;
+	hdev->set_bdaddr = btmrvl_set_bdaddr;
+	hdev->prevent_wake = btmrvl_prevent_wake;
 	SET_HCIDEV_DEV(hdev, &card->func->dev);
 
-	hdev->dev_type = priv->bपंचांगrvl_dev.dev_type;
+	hdev->dev_type = priv->btmrvl_dev.dev_type;
 
-	ret = hci_रेजिस्टर_dev(hdev);
-	अगर (ret < 0) अणु
+	ret = hci_register_dev(hdev);
+	if (ret < 0) {
 		BT_ERR("Can not register HCI device");
-		जाओ err_hci_रेजिस्टर_dev;
-	पूर्ण
+		goto err_hci_register_dev;
+	}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	bपंचांगrvl_debugfs_init(hdev);
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+	btmrvl_debugfs_init(hdev);
+#endif
 
-	वापस 0;
+	return 0;
 
-err_hci_रेजिस्टर_dev:
-	hci_मुक्त_dev(hdev);
+err_hci_register_dev:
+	hci_free_dev(hdev);
 
 err_hdev:
-	/* Stop the thपढ़ो servicing the पूर्णांकerrupts */
-	kthपढ़ो_stop(priv->मुख्य_thपढ़ो.task);
+	/* Stop the thread servicing the interrupts */
+	kthread_stop(priv->main_thread.task);
 
-	bपंचांगrvl_मुक्त_adapter(priv);
-	kमुक्त(priv);
+	btmrvl_free_adapter(priv);
+	kfree(priv);
 
-	वापस -ENOMEM;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_रेजिस्टर_hdev);
+	return -ENOMEM;
+}
+EXPORT_SYMBOL_GPL(btmrvl_register_hdev);
 
-काष्ठा bपंचांगrvl_निजी *bपंचांगrvl_add_card(व्योम *card)
-अणु
-	काष्ठा bपंचांगrvl_निजी *priv;
+struct btmrvl_private *btmrvl_add_card(void *card)
+{
+	struct btmrvl_private *priv;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		BT_ERR("Can not allocate priv");
-		जाओ err_priv;
-	पूर्ण
+		goto err_priv;
+	}
 
-	priv->adapter = kzalloc(माप(*priv->adapter), GFP_KERNEL);
-	अगर (!priv->adapter) अणु
+	priv->adapter = kzalloc(sizeof(*priv->adapter), GFP_KERNEL);
+	if (!priv->adapter) {
 		BT_ERR("Allocate buffer for btmrvl_adapter failed!");
-		जाओ err_adapter;
-	पूर्ण
+		goto err_adapter;
+	}
 
-	bपंचांगrvl_init_adapter(priv);
+	btmrvl_init_adapter(priv);
 
 	BT_DBG("Starting kthread...");
-	priv->मुख्य_thपढ़ो.priv = priv;
+	priv->main_thread.priv = priv;
 	spin_lock_init(&priv->driver_lock);
 
-	init_रुकोqueue_head(&priv->मुख्य_thपढ़ो.रुको_q);
-	priv->मुख्य_thपढ़ो.task = kthपढ़ो_run(bपंचांगrvl_service_मुख्य_thपढ़ो,
-				&priv->मुख्य_thपढ़ो, "btmrvl_main_service");
-	अगर (IS_ERR(priv->मुख्य_thपढ़ो.task))
-		जाओ err_thपढ़ो;
+	init_waitqueue_head(&priv->main_thread.wait_q);
+	priv->main_thread.task = kthread_run(btmrvl_service_main_thread,
+				&priv->main_thread, "btmrvl_main_service");
+	if (IS_ERR(priv->main_thread.task))
+		goto err_thread;
 
-	priv->bपंचांगrvl_dev.card = card;
-	priv->bपंचांगrvl_dev.tx_dnld_rdy = true;
+	priv->btmrvl_dev.card = card;
+	priv->btmrvl_dev.tx_dnld_rdy = true;
 
-	वापस priv;
+	return priv;
 
-err_thपढ़ो:
-	bपंचांगrvl_मुक्त_adapter(priv);
+err_thread:
+	btmrvl_free_adapter(priv);
 
 err_adapter:
-	kमुक्त(priv);
+	kfree(priv);
 
 err_priv:
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_add_card);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(btmrvl_add_card);
 
-पूर्णांक bपंचांगrvl_हटाओ_card(काष्ठा bपंचांगrvl_निजी *priv)
-अणु
-	काष्ठा hci_dev *hdev;
+int btmrvl_remove_card(struct btmrvl_private *priv)
+{
+	struct hci_dev *hdev;
 
-	hdev = priv->bपंचांगrvl_dev.hcidev;
+	hdev = priv->btmrvl_dev.hcidev;
 
-	wake_up_पूर्णांकerruptible(&priv->adapter->cmd_रुको_q);
-	wake_up_पूर्णांकerruptible(&priv->adapter->event_hs_रुको_q);
+	wake_up_interruptible(&priv->adapter->cmd_wait_q);
+	wake_up_interruptible(&priv->adapter->event_hs_wait_q);
 
-	kthपढ़ो_stop(priv->मुख्य_thपढ़ो.task);
+	kthread_stop(priv->main_thread.task);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-	bपंचांगrvl_debugfs_हटाओ(hdev);
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+	btmrvl_debugfs_remove(hdev);
+#endif
 
-	hci_unरेजिस्टर_dev(hdev);
+	hci_unregister_dev(hdev);
 
-	hci_मुक्त_dev(hdev);
+	hci_free_dev(hdev);
 
-	priv->bपंचांगrvl_dev.hcidev = शून्य;
+	priv->btmrvl_dev.hcidev = NULL;
 
-	bपंचांगrvl_मुक्त_adapter(priv);
+	btmrvl_free_adapter(priv);
 
-	kमुक्त(priv);
+	kfree(priv);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(bपंचांगrvl_हटाओ_card);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(btmrvl_remove_card);
 
 MODULE_AUTHOR("Marvell International Ltd.");
 MODULE_DESCRIPTION("Marvell Bluetooth driver ver " VERSION);

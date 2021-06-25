@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Marvell PXA2xx family pin control
  *
  * Copyright (C) 2015 Robert Jarzmik
  */
 
-#अगर_अघोषित __PINCTRL_PXA_H
-#घोषणा __PINCTRL_PXA_H
+#ifndef __PINCTRL_PXA_H
+#define __PINCTRL_PXA_H
 
-#घोषणा PXA_FUNCTION(_dir, _af, _name)				\
-	अणु							\
+#define PXA_FUNCTION(_dir, _af, _name)				\
+	{							\
 		.name = _name,					\
 		.muxval = (_dir | (_af << 1)),			\
-	पूर्ण
+	}
 
-#घोषणा PXA_PIN(_pin, funcs...)					\
-	अणु							\
+#define PXA_PIN(_pin, funcs...)					\
+	{							\
 		.pin = _pin,					\
-		.functions = (काष्ठा pxa_desc_function[])अणु	\
-			funcs, अणु पूर्ण पूर्ण,				\
-	पूर्ण
+		.functions = (struct pxa_desc_function[]){	\
+			funcs, { } },				\
+	}
 
-#घोषणा PXA_GPIO_PIN(_pin, funcs...)				\
-	अणु							\
+#define PXA_GPIO_PIN(_pin, funcs...)				\
+	{							\
 		.pin = _pin,					\
-		.functions = (काष्ठा pxa_desc_function[])अणु	\
+		.functions = (struct pxa_desc_function[]){	\
 			PXA_FUNCTION(0, 0, "gpio_in"),		\
 			PXA_FUNCTION(1, 0, "gpio_out"),		\
-			funcs, अणु पूर्ण पूर्ण,				\
-	पूर्ण
+			funcs, { } },				\
+	}
 
-#घोषणा PXA_GPIO_ONLY_PIN(_pin)					\
-	अणु							\
+#define PXA_GPIO_ONLY_PIN(_pin)					\
+	{							\
 		.pin = _pin,					\
-		.functions = (काष्ठा pxa_desc_function[])अणु	\
+		.functions = (struct pxa_desc_function[]){	\
 			PXA_FUNCTION(0, 0, "gpio_in"),		\
 			PXA_FUNCTION(1, 0, "gpio_out"),		\
-			अणु पूर्ण पूर्ण,					\
-	पूर्ण
+			{ } },					\
+	}
 
-#घोषणा PXA_PINCTRL_PIN(pin)		\
+#define PXA_PINCTRL_PIN(pin)		\
 	PINCTRL_PIN(pin, "P" #pin)
 
-काष्ठा pxa_desc_function अणु
-	स्थिर अक्षर	*name;
+struct pxa_desc_function {
+	const char	*name;
 	u8		muxval;
-पूर्ण;
+};
 
-काष्ठा pxa_desc_pin अणु
-	काष्ठा pinctrl_pin_desc		pin;
-	काष्ठा pxa_desc_function	*functions;
-पूर्ण;
+struct pxa_desc_pin {
+	struct pinctrl_pin_desc		pin;
+	struct pxa_desc_function	*functions;
+};
 
-काष्ठा pxa_pinctrl_group अणु
-	स्थिर अक्षर	*name;
-	अचिन्हित	pin;
-पूर्ण;
+struct pxa_pinctrl_group {
+	const char	*name;
+	unsigned	pin;
+};
 
-काष्ठा pxa_pinctrl_function अणु
-	स्थिर अक्षर	*name;
-	स्थिर अक्षर	**groups;
-	अचिन्हित	ngroups;
-पूर्ण;
+struct pxa_pinctrl_function {
+	const char	*name;
+	const char	**groups;
+	unsigned	ngroups;
+};
 
-काष्ठा pxa_pinctrl अणु
+struct pxa_pinctrl {
 	spinlock_t			lock;
-	व्योम __iomem			**base_gafr;
-	व्योम __iomem			**base_gpdr;
-	व्योम __iomem			**base_pgsr;
-	काष्ठा device			*dev;
-	काष्ठा pinctrl_desc		desc;
-	काष्ठा pinctrl_dev		*pctl_dev;
-	अचिन्हित			npins;
-	स्थिर काष्ठा pxa_desc_pin	*ppins;
-	अचिन्हित			ngroups;
-	काष्ठा pxa_pinctrl_group	*groups;
-	अचिन्हित			nfuncs;
-	काष्ठा pxa_pinctrl_function	*functions;
-	अक्षर				*name;
-पूर्ण;
+	void __iomem			**base_gafr;
+	void __iomem			**base_gpdr;
+	void __iomem			**base_pgsr;
+	struct device			*dev;
+	struct pinctrl_desc		desc;
+	struct pinctrl_dev		*pctl_dev;
+	unsigned			npins;
+	const struct pxa_desc_pin	*ppins;
+	unsigned			ngroups;
+	struct pxa_pinctrl_group	*groups;
+	unsigned			nfuncs;
+	struct pxa_pinctrl_function	*functions;
+	char				*name;
+};
 
-पूर्णांक pxa2xx_pinctrl_init(काष्ठा platक्रमm_device *pdev,
-			स्थिर काष्ठा pxa_desc_pin *ppins, पूर्णांक npins,
-			व्योम __iomem *base_gafr[], व्योम __iomem *base_gpdr[],
-			व्योम __iomem *base_gpsr[]);
+int pxa2xx_pinctrl_init(struct platform_device *pdev,
+			const struct pxa_desc_pin *ppins, int npins,
+			void __iomem *base_gafr[], void __iomem *base_gpdr[],
+			void __iomem *base_gpsr[]);
 
-#पूर्ण_अगर /* __PINCTRL_PXA_H */
+#endif /* __PINCTRL_PXA_H */

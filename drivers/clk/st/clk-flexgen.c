@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * clk-flexgen.c
  *
  * Copyright (C) ST-Microelectronics SA 2013
- * Author:  Maxime Coquelin <maxime.coquelin@st.com> क्रम ST-Microelectronics.
+ * Author:  Maxime Coquelin <maxime.coquelin@st.com> for ST-Microelectronics.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-काष्ठा clkgen_data अणु
-	अचिन्हित दीर्घ flags;
+struct clkgen_data {
+	unsigned long flags;
 	bool mode;
-पूर्ण;
+};
 
-काष्ठा flexgen अणु
-	काष्ठा clk_hw hw;
+struct flexgen {
+	struct clk_hw hw;
 
 	/* Crossbar */
-	काष्ठा clk_mux mux;
-	/* Pre-भागisor's gate */
-	काष्ठा clk_gate pgate;
-	/* Pre-भागisor */
-	काष्ठा clk_भागider pभाग;
-	/* Final भागisor's gate */
-	काष्ठा clk_gate fgate;
-	/* Final भागisor */
-	काष्ठा clk_भागider fभाग;
+	struct clk_mux mux;
+	/* Pre-divisor's gate */
+	struct clk_gate pgate;
+	/* Pre-divisor */
+	struct clk_divider pdiv;
+	/* Final divisor's gate */
+	struct clk_gate fgate;
+	/* Final divisor */
+	struct clk_divider fdiv;
 	/* Asynchronous mode control */
-	काष्ठा clk_gate sync;
+	struct clk_gate sync;
 	/* hw control flags */
 	bool control_mode;
-पूर्ण;
+};
 
-#घोषणा to_flexgen(_hw) container_of(_hw, काष्ठा flexgen, hw)
-#घोषणा to_clk_gate(_hw) container_of(_hw, काष्ठा clk_gate, hw)
+#define to_flexgen(_hw) container_of(_hw, struct flexgen, hw)
+#define to_clk_gate(_hw) container_of(_hw, struct clk_gate, hw)
 
-अटल पूर्णांक flexgen_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *pgate_hw = &flexgen->pgate.hw;
-	काष्ठा clk_hw *fgate_hw = &flexgen->fgate.hw;
+static int flexgen_enable(struct clk_hw *hw)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *pgate_hw = &flexgen->pgate.hw;
+	struct clk_hw *fgate_hw = &flexgen->fgate.hw;
 
 	__clk_hw_set_clk(pgate_hw, hw);
 	__clk_hw_set_clk(fgate_hw, hw);
@@ -58,13 +57,13 @@
 	clk_gate_ops.enable(fgate_hw);
 
 	pr_debug("%s: flexgen output enabled\n", clk_hw_get_name(hw));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम flexgen_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *fgate_hw = &flexgen->fgate.hw;
+static void flexgen_disable(struct clk_hw *hw)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *fgate_hw = &flexgen->fgate.hw;
 
 	/* disable only the final gate */
 	__clk_hw_set_clk(fgate_hw, hw);
@@ -72,120 +71,120 @@
 	clk_gate_ops.disable(fgate_hw);
 
 	pr_debug("%s: flexgen output disabled\n", clk_hw_get_name(hw));
-पूर्ण
+}
 
-अटल पूर्णांक flexgen_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *fgate_hw = &flexgen->fgate.hw;
+static int flexgen_is_enabled(struct clk_hw *hw)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *fgate_hw = &flexgen->fgate.hw;
 
 	__clk_hw_set_clk(fgate_hw, hw);
 
-	अगर (!clk_gate_ops.is_enabled(fgate_hw))
-		वापस 0;
+	if (!clk_gate_ops.is_enabled(fgate_hw))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u8 flexgen_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *mux_hw = &flexgen->mux.hw;
-
-	__clk_hw_set_clk(mux_hw, hw);
-
-	वापस clk_mux_ops.get_parent(mux_hw);
-पूर्ण
-
-अटल पूर्णांक flexgen_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *mux_hw = &flexgen->mux.hw;
+static u8 flexgen_get_parent(struct clk_hw *hw)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *mux_hw = &flexgen->mux.hw;
 
 	__clk_hw_set_clk(mux_hw, hw);
 
-	वापस clk_mux_ops.set_parent(mux_hw, index);
-पूर्ण
+	return clk_mux_ops.get_parent(mux_hw);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-clk_best_भाग(अचिन्हित दीर्घ parent_rate, अचिन्हित दीर्घ rate)
-अणु
-	वापस parent_rate / rate + ((rate > (2*(parent_rate % rate))) ? 0 : 1);
-पूर्ण
+static int flexgen_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *mux_hw = &flexgen->mux.hw;
 
-अटल दीर्घ flexgen_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ *prate)
-अणु
-	अचिन्हित दीर्घ भाग;
+	__clk_hw_set_clk(mux_hw, hw);
 
-	/* Round भाग according to exact prate and wished rate */
-	भाग = clk_best_भाग(*prate, rate);
+	return clk_mux_ops.set_parent(mux_hw, index);
+}
 
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) अणु
-		*prate = rate * भाग;
-		वापस rate;
-	पूर्ण
+static inline unsigned long
+clk_best_div(unsigned long parent_rate, unsigned long rate)
+{
+	return parent_rate / rate + ((rate > (2*(parent_rate % rate))) ? 0 : 1);
+}
 
-	वापस *prate / भाग;
-पूर्ण
+static long flexgen_round_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long *prate)
+{
+	unsigned long div;
 
-अटल अचिन्हित दीर्घ flexgen_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *pभाग_hw = &flexgen->pभाग.hw;
-	काष्ठा clk_hw *fभाग_hw = &flexgen->fभाग.hw;
-	अचिन्हित दीर्घ mid_rate;
+	/* Round div according to exact prate and wished rate */
+	div = clk_best_div(*prate, rate);
 
-	__clk_hw_set_clk(pभाग_hw, hw);
-	__clk_hw_set_clk(fभाग_hw, hw);
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) {
+		*prate = rate * div;
+		return rate;
+	}
 
-	mid_rate = clk_भागider_ops.recalc_rate(pभाग_hw, parent_rate);
+	return *prate / div;
+}
 
-	वापस clk_भागider_ops.recalc_rate(fभाग_hw, mid_rate);
-पूर्ण
+static unsigned long flexgen_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *pdiv_hw = &flexgen->pdiv.hw;
+	struct clk_hw *fdiv_hw = &flexgen->fdiv.hw;
+	unsigned long mid_rate;
 
-अटल पूर्णांक flexgen_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा flexgen *flexgen = to_flexgen(hw);
-	काष्ठा clk_hw *pभाग_hw = &flexgen->pभाग.hw;
-	काष्ठा clk_hw *fभाग_hw = &flexgen->fभाग.hw;
-	काष्ठा clk_hw *sync_hw = &flexgen->sync.hw;
-	काष्ठा clk_gate *config = to_clk_gate(sync_hw);
-	अचिन्हित दीर्घ भाग = 0;
-	पूर्णांक ret = 0;
+	__clk_hw_set_clk(pdiv_hw, hw);
+	__clk_hw_set_clk(fdiv_hw, hw);
+
+	mid_rate = clk_divider_ops.recalc_rate(pdiv_hw, parent_rate);
+
+	return clk_divider_ops.recalc_rate(fdiv_hw, mid_rate);
+}
+
+static int flexgen_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent_rate)
+{
+	struct flexgen *flexgen = to_flexgen(hw);
+	struct clk_hw *pdiv_hw = &flexgen->pdiv.hw;
+	struct clk_hw *fdiv_hw = &flexgen->fdiv.hw;
+	struct clk_hw *sync_hw = &flexgen->sync.hw;
+	struct clk_gate *config = to_clk_gate(sync_hw);
+	unsigned long div = 0;
+	int ret = 0;
 	u32 reg;
 
-	__clk_hw_set_clk(pभाग_hw, hw);
-	__clk_hw_set_clk(fभाग_hw, hw);
+	__clk_hw_set_clk(pdiv_hw, hw);
+	__clk_hw_set_clk(fdiv_hw, hw);
 
-	अगर (flexgen->control_mode) अणु
-		reg = पढ़ोl(config->reg);
+	if (flexgen->control_mode) {
+		reg = readl(config->reg);
 		reg &= ~BIT(config->bit_idx);
-		ग_लिखोl(reg, config->reg);
-	पूर्ण
+		writel(reg, config->reg);
+	}
 
-	भाग = clk_best_भाग(parent_rate, rate);
+	div = clk_best_div(parent_rate, rate);
 
 	/*
-	* pभाग is मुख्यly targeted क्रम low freq results, जबतक fभाग
-	* should be used क्रम भाग <= 64. The other way round can
+	* pdiv is mainly targeted for low freq results, while fdiv
+	* should be used for div <= 64. The other way round can
 	* lead to 'duty cycle' issues.
 	*/
 
-	अगर (भाग <= 64) अणु
-		clk_भागider_ops.set_rate(pभाग_hw, parent_rate, parent_rate);
-		ret = clk_भागider_ops.set_rate(fभाग_hw, rate, rate * भाग);
-	पूर्ण अन्यथा अणु
-		clk_भागider_ops.set_rate(fभाग_hw, parent_rate, parent_rate);
-		ret = clk_भागider_ops.set_rate(pभाग_hw, rate, rate * भाग);
-	पूर्ण
+	if (div <= 64) {
+		clk_divider_ops.set_rate(pdiv_hw, parent_rate, parent_rate);
+		ret = clk_divider_ops.set_rate(fdiv_hw, rate, rate * div);
+	} else {
+		clk_divider_ops.set_rate(fdiv_hw, parent_rate, parent_rate);
+		ret = clk_divider_ops.set_rate(pdiv_hw, rate, rate * div);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा clk_ops flexgen_ops = अणु
+static const struct clk_ops flexgen_ops = {
 	.enable = flexgen_enable,
 	.disable = flexgen_disable,
 	.is_enabled = flexgen_is_enabled,
@@ -194,21 +193,21 @@ clk_best_भाग(अचिन्हित दीर्घ parent_rate, अच�
 	.round_rate = flexgen_round_rate,
 	.recalc_rate = flexgen_recalc_rate,
 	.set_rate = flexgen_set_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk *clk_रेजिस्टर_flexgen(स्थिर अक्षर *name,
-				स्थिर अक्षर **parent_names, u8 num_parents,
-				व्योम __iomem *reg, spinlock_t *lock, u32 idx,
-				अचिन्हित दीर्घ flexgen_flags, bool mode) अणु
-	काष्ठा flexgen *fgxbar;
-	काष्ठा clk *clk;
-	काष्ठा clk_init_data init;
-	u32  xbar_shअगरt;
-	व्योम __iomem *xbar_reg, *fभाग_reg;
+static struct clk *clk_register_flexgen(const char *name,
+				const char **parent_names, u8 num_parents,
+				void __iomem *reg, spinlock_t *lock, u32 idx,
+				unsigned long flexgen_flags, bool mode) {
+	struct flexgen *fgxbar;
+	struct clk *clk;
+	struct clk_init_data init;
+	u32  xbar_shift;
+	void __iomem *xbar_reg, *fdiv_reg;
 
-	fgxbar = kzalloc(माप(काष्ठा flexgen), GFP_KERNEL);
-	अगर (!fgxbar)
-		वापस ERR_PTR(-ENOMEM);
+	fgxbar = kzalloc(sizeof(struct flexgen), GFP_KERNEL);
+	if (!fgxbar)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &flexgen_ops;
@@ -217,194 +216,194 @@ clk_best_भाग(अचिन्हित दीर्घ parent_rate, अच�
 	init.num_parents = num_parents;
 
 	xbar_reg = reg + 0x18 + (idx & ~0x3);
-	xbar_shअगरt = (idx % 4) * 0x8;
-	fभाग_reg = reg + 0x164 + idx * 4;
+	xbar_shift = (idx % 4) * 0x8;
+	fdiv_reg = reg + 0x164 + idx * 4;
 
 	/* Crossbar element config */
 	fgxbar->mux.lock = lock;
 	fgxbar->mux.mask = BIT(6) - 1;
 	fgxbar->mux.reg = xbar_reg;
-	fgxbar->mux.shअगरt = xbar_shअगरt;
-	fgxbar->mux.table = शून्य;
+	fgxbar->mux.shift = xbar_shift;
+	fgxbar->mux.table = NULL;
 
 
-	/* Pre-भागider's gate config (in xbar रेजिस्टर)*/
+	/* Pre-divider's gate config (in xbar register)*/
 	fgxbar->pgate.lock = lock;
 	fgxbar->pgate.reg = xbar_reg;
-	fgxbar->pgate.bit_idx = xbar_shअगरt + 6;
+	fgxbar->pgate.bit_idx = xbar_shift + 6;
 
-	/* Pre-भागider config */
-	fgxbar->pभाग.lock = lock;
-	fgxbar->pभाग.reg = reg + 0x58 + idx * 4;
-	fgxbar->pभाग.width = 10;
+	/* Pre-divider config */
+	fgxbar->pdiv.lock = lock;
+	fgxbar->pdiv.reg = reg + 0x58 + idx * 4;
+	fgxbar->pdiv.width = 10;
 
-	/* Final भागider's gate config */
+	/* Final divider's gate config */
 	fgxbar->fgate.lock = lock;
-	fgxbar->fgate.reg = fभाग_reg;
+	fgxbar->fgate.reg = fdiv_reg;
 	fgxbar->fgate.bit_idx = 6;
 
-	/* Final भागider config */
-	fgxbar->fभाग.lock = lock;
-	fgxbar->fभाग.reg = fभाग_reg;
-	fgxbar->fभाग.width = 6;
+	/* Final divider config */
+	fgxbar->fdiv.lock = lock;
+	fgxbar->fdiv.reg = fdiv_reg;
+	fgxbar->fdiv.width = 6;
 
-	/* Final भागider sync config */
+	/* Final divider sync config */
 	fgxbar->sync.lock = lock;
-	fgxbar->sync.reg = fभाग_reg;
+	fgxbar->sync.reg = fdiv_reg;
 	fgxbar->sync.bit_idx = 7;
 
 	fgxbar->control_mode = mode;
 
 	fgxbar->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &fgxbar->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(fgxbar);
-	अन्यथा
+	clk = clk_register(NULL, &fgxbar->hw);
+	if (IS_ERR(clk))
+		kfree(fgxbar);
+	else
 		pr_debug("%s: parent %s rate %u\n",
 			__clk_get_name(clk),
 			__clk_get_name(clk_get_parent(clk)),
-			(अचिन्हित पूर्णांक)clk_get_rate(clk));
-	वापस clk;
-पूर्ण
+			(unsigned int)clk_get_rate(clk));
+	return clk;
+}
 
-अटल स्थिर अक्षर ** __init flexgen_get_parents(काष्ठा device_node *np,
-						       पूर्णांक *num_parents)
-अणु
-	स्थिर अक्षर **parents;
-	अचिन्हित पूर्णांक nparents;
+static const char ** __init flexgen_get_parents(struct device_node *np,
+						       int *num_parents)
+{
+	const char **parents;
+	unsigned int nparents;
 
 	nparents = of_clk_get_parent_count(np);
-	अगर (WARN_ON(!nparents))
-		वापस शून्य;
+	if (WARN_ON(!nparents))
+		return NULL;
 
-	parents = kसुस्मृति(nparents, माप(स्थिर अक्षर *), GFP_KERNEL);
-	अगर (!parents)
-		वापस शून्य;
+	parents = kcalloc(nparents, sizeof(const char *), GFP_KERNEL);
+	if (!parents)
+		return NULL;
 
 	*num_parents = of_clk_parent_fill(np, parents, nparents);
 
-	वापस parents;
-पूर्ण
+	return parents;
+}
 
-अटल स्थिर काष्ठा clkgen_data clkgen_audio = अणु
+static const struct clkgen_data clkgen_audio = {
 	.flags = CLK_SET_RATE_PARENT,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clkgen_data clkgen_video = अणु
+static const struct clkgen_data clkgen_video = {
 	.flags = CLK_SET_RATE_PARENT,
 	.mode = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id flexgen_of_match[] = अणु
-	अणु
+static const struct of_device_id flexgen_of_match[] = {
+	{
 		.compatible = "st,flexgen-audio",
 		.data = &clkgen_audio,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,flexgen-video",
 		.data = &clkgen_video,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-अटल व्योम __init st_of_flexgen_setup(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *pnode;
-	व्योम __iomem *reg;
-	काष्ठा clk_onecell_data *clk_data;
-	स्थिर अक्षर **parents;
-	पूर्णांक num_parents, i;
-	spinlock_t *rlock = शून्य;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा clkgen_data *data = शून्य;
-	अचिन्हित दीर्घ flex_flags = 0;
-	पूर्णांक ret;
+static void __init st_of_flexgen_setup(struct device_node *np)
+{
+	struct device_node *pnode;
+	void __iomem *reg;
+	struct clk_onecell_data *clk_data;
+	const char **parents;
+	int num_parents, i;
+	spinlock_t *rlock = NULL;
+	const struct of_device_id *match;
+	struct clkgen_data *data = NULL;
+	unsigned long flex_flags = 0;
+	int ret;
 	bool clk_mode = 0;
 
 	pnode = of_get_parent(np);
-	अगर (!pnode)
-		वापस;
+	if (!pnode)
+		return;
 
 	reg = of_iomap(pnode, 0);
 	of_node_put(pnode);
-	अगर (!reg)
-		वापस;
+	if (!reg)
+		return;
 
 	parents = flexgen_get_parents(np, &num_parents);
-	अगर (!parents) अणु
+	if (!parents) {
 		iounmap(reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	match = of_match_node(flexgen_of_match, np);
-	अगर (match) अणु
-		data = (काष्ठा clkgen_data *)match->data;
+	if (match) {
+		data = (struct clkgen_data *)match->data;
 		flex_flags = data->flags;
 		clk_mode = data->mode;
-	पूर्ण
+	}
 
-	clk_data = kzalloc(माप(*clk_data), GFP_KERNEL);
-	अगर (!clk_data)
-		जाओ err;
+	clk_data = kzalloc(sizeof(*clk_data), GFP_KERNEL);
+	if (!clk_data)
+		goto err;
 
 	ret = of_property_count_strings(np, "clock-output-names");
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		pr_err("%s: Failed to get number of output clocks (%d)",
 				__func__, clk_data->clk_num);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	clk_data->clk_num = ret;
 
-	clk_data->clks = kसुस्मृति(clk_data->clk_num, माप(काष्ठा clk *),
+	clk_data->clks = kcalloc(clk_data->clk_num, sizeof(struct clk *),
 			GFP_KERNEL);
-	अगर (!clk_data->clks)
-		जाओ err;
+	if (!clk_data->clks)
+		goto err;
 
-	rlock = kzalloc(माप(spinlock_t), GFP_KERNEL);
-	अगर (!rlock)
-		जाओ err;
+	rlock = kzalloc(sizeof(spinlock_t), GFP_KERNEL);
+	if (!rlock)
+		goto err;
 
 	spin_lock_init(rlock);
 
-	क्रम (i = 0; i < clk_data->clk_num; i++) अणु
-		काष्ठा clk *clk;
-		स्थिर अक्षर *clk_name;
+	for (i = 0; i < clk_data->clk_num; i++) {
+		struct clk *clk;
+		const char *clk_name;
 
-		अगर (of_property_पढ़ो_string_index(np, "clock-output-names",
-						  i, &clk_name)) अणु
-			अवरोध;
-		पूर्ण
+		if (of_property_read_string_index(np, "clock-output-names",
+						  i, &clk_name)) {
+			break;
+		}
 
 		flex_flags &= ~CLK_IS_CRITICAL;
 		of_clk_detect_critical(np, i, &flex_flags);
 
 		/*
-		 * If we पढ़ो an empty घड़ी name then the output is unused
+		 * If we read an empty clock name then the output is unused
 		 */
-		अगर (*clk_name == '\0')
-			जारी;
+		if (*clk_name == '\0')
+			continue;
 
-		clk = clk_रेजिस्टर_flexgen(clk_name, parents, num_parents,
+		clk = clk_register_flexgen(clk_name, parents, num_parents,
 					   reg, rlock, i, flex_flags, clk_mode);
 
-		अगर (IS_ERR(clk))
-			जाओ err;
+		if (IS_ERR(clk))
+			goto err;
 
 		clk_data->clks[i] = clk;
-	पूर्ण
+	}
 
-	kमुक्त(parents);
+	kfree(parents);
 	of_clk_add_provider(np, of_clk_src_onecell_get, clk_data);
 
-	वापस;
+	return;
 
 err:
 	iounmap(reg);
-	अगर (clk_data)
-		kमुक्त(clk_data->clks);
-	kमुक्त(clk_data);
-	kमुक्त(parents);
-	kमुक्त(rlock);
-पूर्ण
+	if (clk_data)
+		kfree(clk_data->clks);
+	kfree(clk_data);
+	kfree(parents);
+	kfree(rlock);
+}
 CLK_OF_DECLARE(flexgen, "st,flexgen", st_of_flexgen_setup);

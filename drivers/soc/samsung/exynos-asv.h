@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2019 Samsung Electronics Co., Ltd.
  *	      http://www.samsung.com/
@@ -7,68 +6,68 @@
  *
  * Samsung Exynos SoC Adaptive Supply Voltage support
  */
-#अगर_अघोषित __LINUX_SOC_EXYNOS_ASV_H
-#घोषणा __LINUX_SOC_EXYNOS_ASV_H
+#ifndef __LINUX_SOC_EXYNOS_ASV_H
+#define __LINUX_SOC_EXYNOS_ASV_H
 
-काष्ठा regmap;
+struct regmap;
 
 /* HPM, IDS values to select target group */
-काष्ठा asv_limit_entry अणु
-	अचिन्हित पूर्णांक hpm;
-	अचिन्हित पूर्णांक ids;
-पूर्ण;
+struct asv_limit_entry {
+	unsigned int hpm;
+	unsigned int ids;
+};
 
-काष्ठा exynos_asv_table अणु
-	अचिन्हित पूर्णांक num_rows;
-	अचिन्हित पूर्णांक num_cols;
+struct exynos_asv_table {
+	unsigned int num_rows;
+	unsigned int num_cols;
 	u32 *buf;
-पूर्ण;
+};
 
-काष्ठा exynos_asv_subsys अणु
-	काष्ठा exynos_asv *asv;
-	स्थिर अक्षर *cpu_dt_compat;
-	पूर्णांक id;
-	काष्ठा exynos_asv_table table;
+struct exynos_asv_subsys {
+	struct exynos_asv *asv;
+	const char *cpu_dt_compat;
+	int id;
+	struct exynos_asv_table table;
 
-	अचिन्हित पूर्णांक base_volt;
-	अचिन्हित पूर्णांक offset_volt_h;
-	अचिन्हित पूर्णांक offset_volt_l;
-पूर्ण;
+	unsigned int base_volt;
+	unsigned int offset_volt_h;
+	unsigned int offset_volt_l;
+};
 
-काष्ठा exynos_asv अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *chipid_regmap;
-	काष्ठा exynos_asv_subsys subsys[2];
+struct exynos_asv {
+	struct device *dev;
+	struct regmap *chipid_regmap;
+	struct exynos_asv_subsys subsys[2];
 
-	पूर्णांक (*opp_get_voltage)(स्थिर काष्ठा exynos_asv_subsys *subs,
-			       पूर्णांक level, अचिन्हित पूर्णांक voltage);
-	अचिन्हित पूर्णांक group;
-	अचिन्हित पूर्णांक table;
+	int (*opp_get_voltage)(const struct exynos_asv_subsys *subs,
+			       int level, unsigned int voltage);
+	unsigned int group;
+	unsigned int table;
 
-	/* True अगर SG fields from PKG_ID रेजिस्टर should be used */
+	/* True if SG fields from PKG_ID register should be used */
 	bool use_sg;
-	/* ASV bin पढ़ो from DT */
-	पूर्णांक of_bin;
-पूर्ण;
+	/* ASV bin read from DT */
+	int of_bin;
+};
 
-अटल अंतरभूत u32 __asv_get_table_entry(स्थिर काष्ठा exynos_asv_table *table,
-					अचिन्हित पूर्णांक row, अचिन्हित पूर्णांक col)
-अणु
-	वापस table->buf[row * (table->num_cols) + col];
-पूर्ण
+static inline u32 __asv_get_table_entry(const struct exynos_asv_table *table,
+					unsigned int row, unsigned int col)
+{
+	return table->buf[row * (table->num_cols) + col];
+}
 
-अटल अंतरभूत u32 exynos_asv_opp_get_voltage(स्थिर काष्ठा exynos_asv_subsys *subsys,
-					अचिन्हित पूर्णांक level, अचिन्हित पूर्णांक group)
-अणु
-	वापस __asv_get_table_entry(&subsys->table, level, group + 1);
-पूर्ण
+static inline u32 exynos_asv_opp_get_voltage(const struct exynos_asv_subsys *subsys,
+					unsigned int level, unsigned int group)
+{
+	return __asv_get_table_entry(&subsys->table, level, group + 1);
+}
 
-अटल अंतरभूत u32 exynos_asv_opp_get_frequency(स्थिर काष्ठा exynos_asv_subsys *subsys,
-					अचिन्हित पूर्णांक level)
-अणु
-	वापस __asv_get_table_entry(&subsys->table, level, 0);
-पूर्ण
+static inline u32 exynos_asv_opp_get_frequency(const struct exynos_asv_subsys *subsys,
+					unsigned int level)
+{
+	return __asv_get_table_entry(&subsys->table, level, 0);
+}
 
-पूर्णांक exynos_asv_init(काष्ठा device *dev, काष्ठा regmap *regmap);
+int exynos_asv_init(struct device *dev, struct regmap *regmap);
 
-#पूर्ण_अगर /* __LINUX_SOC_EXYNOS_ASV_H */
+#endif /* __LINUX_SOC_EXYNOS_ASV_H */

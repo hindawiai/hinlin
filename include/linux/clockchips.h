@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/*  linux/include/linux/घड़ीchips.h
+/* SPDX-License-Identifier: GPL-2.0 */
+/*  linux/include/linux/clockchips.h
  *
- *  This file contains the काष्ठाure definitions क्रम घड़ीchips.
+ *  This file contains the structure definitions for clockchips.
  *
- *  If you are not a घड़ीchip, or the समय of day code, you should
+ *  If you are not a clockchip, or the time of day code, you should
  *  not be including this file!
  */
-#अगर_अघोषित _LINUX_CLOCKCHIPS_H
-#घोषणा _LINUX_CLOCKCHIPS_H
+#ifndef _LINUX_CLOCKCHIPS_H
+#define _LINUX_CLOCKCHIPS_H
 
-#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS
+#ifdef CONFIG_GENERIC_CLOCKEVENTS
 
-# include <linux/घड़ीsource.h>
+# include <linux/clocksource.h>
 # include <linux/cpumask.h>
-# include <linux/kसमय.स>
-# include <linux/notअगरier.h>
+# include <linux/ktime.h>
+# include <linux/notifier.h>
 
-काष्ठा घड़ी_event_device;
-काष्ठा module;
+struct clock_event_device;
+struct module;
 
 /*
- * Possible states of a घड़ी event device.
+ * Possible states of a clock event device.
  *
- * DETACHED:	Device is not used by घड़ीevents core. Initial state or can be
+ * DETACHED:	Device is not used by clockevents core. Initial state or can be
  *		reached from SHUTDOWN.
- * SHUTDOWN:	Device is घातered-off. Can be reached from PERIODIC or ONESHOT.
+ * SHUTDOWN:	Device is powered-off. Can be reached from PERIODIC or ONESHOT.
  * PERIODIC:	Device is programmed to generate events periodically. Can be
  *		reached from DETACHED or SHUTDOWN.
  * ONESHOT:	Device is programmed to generate event only once. Can be reached
@@ -33,13 +32,13 @@
  * ONESHOT_STOPPED: Device was programmed in ONESHOT mode and is temporarily
  *		    stopped.
  */
-क्रमागत घड़ी_event_state अणु
+enum clock_event_state {
 	CLOCK_EVT_STATE_DETACHED,
 	CLOCK_EVT_STATE_SHUTDOWN,
 	CLOCK_EVT_STATE_PERIODIC,
 	CLOCK_EVT_STATE_ONESHOT,
 	CLOCK_EVT_STATE_ONESHOT_STOPPED,
-पूर्ण;
+};
 
 /*
  * Clock event features
@@ -49,180 +48,180 @@
 # define CLOCK_EVT_FEAT_KTIME		0x000004
 
 /*
- * x86(64) specअगरic (mis)features:
+ * x86(64) specific (mis)features:
  *
  * - Clockevent source stops in C3 State and needs broadcast support.
- * - Local APIC समयr is used as a dummy device.
+ * - Local APIC timer is used as a dummy device.
  */
 # define CLOCK_EVT_FEAT_C3STOP		0x000008
 # define CLOCK_EVT_FEAT_DUMMY		0x000010
 
 /*
- * Core shall set the पूर्णांकerrupt affinity dynamically in broadcast mode
+ * Core shall set the interrupt affinity dynamically in broadcast mode
  */
 # define CLOCK_EVT_FEAT_DYNIRQ		0x000020
 # define CLOCK_EVT_FEAT_PERCPU		0x000040
 
 /*
- * Clockevent device is based on a hrसमयr क्रम broadcast
+ * Clockevent device is based on a hrtimer for broadcast
  */
 # define CLOCK_EVT_FEAT_HRTIMER		0x000080
 
 /**
- * काष्ठा घड़ी_event_device - घड़ी event device descriptor
- * @event_handler:	Asचिन्हित by the framework to be called by the low
+ * struct clock_event_device - clock event device descriptor
+ * @event_handler:	Assigned by the framework to be called by the low
  *			level handler of the event source
- * @set_next_event:	set next event function using a घड़ीsource delta
- * @set_next_kसमय:	set next event function using a direct kसमय value
- * @next_event:		local storage क्रम the next event in oneshot mode
+ * @set_next_event:	set next event function using a clocksource delta
+ * @set_next_ktime:	set next event function using a direct ktime value
+ * @next_event:		local storage for the next event in oneshot mode
  * @max_delta_ns:	maximum delta value in ns
  * @min_delta_ns:	minimum delta value in ns
  * @mult:		nanosecond to cycles multiplier
- * @shअगरt:		nanoseconds to cycles भागisor (घातer of two)
- * @state_use_accessors:current state of the device, asचिन्हित by the core code
+ * @shift:		nanoseconds to cycles divisor (power of two)
+ * @state_use_accessors:current state of the device, assigned by the core code
  * @features:		features
- * @retries:		number of क्रमced programming retries
- * @set_state_periodic:	चयन state to periodic
- * @set_state_oneshot:	चयन state to oneshot
- * @set_state_oneshot_stopped: चयन state to oneshot_stopped
- * @set_state_shutकरोwn:	चयन state to shutकरोwn
+ * @retries:		number of forced programming retries
+ * @set_state_periodic:	switch state to periodic
+ * @set_state_oneshot:	switch state to oneshot
+ * @set_state_oneshot_stopped: switch state to oneshot_stopped
+ * @set_state_shutdown:	switch state to shutdown
  * @tick_resume:	resume clkevt device
  * @broadcast:		function to broadcast events
- * @min_delta_ticks:	minimum delta value in ticks stored क्रम reconfiguration
- * @max_delta_ticks:	maximum delta value in ticks stored क्रम reconfiguration
- * @name:		ptr to घड़ी event name
- * @rating:		variable to rate घड़ी event devices
- * @irq:		IRQ number (only क्रम non CPU local devices)
+ * @min_delta_ticks:	minimum delta value in ticks stored for reconfiguration
+ * @max_delta_ticks:	maximum delta value in ticks stored for reconfiguration
+ * @name:		ptr to clock event name
+ * @rating:		variable to rate clock event devices
+ * @irq:		IRQ number (only for non CPU local devices)
  * @bound_on:		Bound on CPU
- * @cpumask:		cpumask to indicate क्रम which CPUs this device works
- * @list:		list head क्रम the management code
+ * @cpumask:		cpumask to indicate for which CPUs this device works
+ * @list:		list head for the management code
  * @owner:		module reference
  */
-काष्ठा घड़ी_event_device अणु
-	व्योम			(*event_handler)(काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*set_next_event)(अचिन्हित दीर्घ evt, काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*set_next_kसमय)(kसमय_प्रकार expires, काष्ठा घड़ी_event_device *);
-	kसमय_प्रकार			next_event;
+struct clock_event_device {
+	void			(*event_handler)(struct clock_event_device *);
+	int			(*set_next_event)(unsigned long evt, struct clock_event_device *);
+	int			(*set_next_ktime)(ktime_t expires, struct clock_event_device *);
+	ktime_t			next_event;
 	u64			max_delta_ns;
 	u64			min_delta_ns;
 	u32			mult;
-	u32			shअगरt;
-	क्रमागत घड़ी_event_state	state_use_accessors;
-	अचिन्हित पूर्णांक		features;
-	अचिन्हित दीर्घ		retries;
+	u32			shift;
+	enum clock_event_state	state_use_accessors;
+	unsigned int		features;
+	unsigned long		retries;
 
-	पूर्णांक			(*set_state_periodic)(काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*set_state_oneshot)(काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*set_state_oneshot_stopped)(काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*set_state_shutकरोwn)(काष्ठा घड़ी_event_device *);
-	पूर्णांक			(*tick_resume)(काष्ठा घड़ी_event_device *);
+	int			(*set_state_periodic)(struct clock_event_device *);
+	int			(*set_state_oneshot)(struct clock_event_device *);
+	int			(*set_state_oneshot_stopped)(struct clock_event_device *);
+	int			(*set_state_shutdown)(struct clock_event_device *);
+	int			(*tick_resume)(struct clock_event_device *);
 
-	व्योम			(*broadcast)(स्थिर काष्ठा cpumask *mask);
-	व्योम			(*suspend)(काष्ठा घड़ी_event_device *);
-	व्योम			(*resume)(काष्ठा घड़ी_event_device *);
-	अचिन्हित दीर्घ		min_delta_ticks;
-	अचिन्हित दीर्घ		max_delta_ticks;
+	void			(*broadcast)(const struct cpumask *mask);
+	void			(*suspend)(struct clock_event_device *);
+	void			(*resume)(struct clock_event_device *);
+	unsigned long		min_delta_ticks;
+	unsigned long		max_delta_ticks;
 
-	स्थिर अक्षर		*name;
-	पूर्णांक			rating;
-	पूर्णांक			irq;
-	पूर्णांक			bound_on;
-	स्थिर काष्ठा cpumask	*cpumask;
-	काष्ठा list_head	list;
-	काष्ठा module		*owner;
-पूर्ण ____cacheline_aligned;
+	const char		*name;
+	int			rating;
+	int			irq;
+	int			bound_on;
+	const struct cpumask	*cpumask;
+	struct list_head	list;
+	struct module		*owner;
+} ____cacheline_aligned;
 
-/* Helpers to verअगरy state of a घड़ीevent device */
-अटल अंतरभूत bool घड़ीevent_state_detached(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors == CLOCK_EVT_STATE_DETACHED;
-पूर्ण
+/* Helpers to verify state of a clockevent device */
+static inline bool clockevent_state_detached(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors == CLOCK_EVT_STATE_DETACHED;
+}
 
-अटल अंतरभूत bool घड़ीevent_state_shutकरोwn(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors == CLOCK_EVT_STATE_SHUTDOWN;
-पूर्ण
+static inline bool clockevent_state_shutdown(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors == CLOCK_EVT_STATE_SHUTDOWN;
+}
 
-अटल अंतरभूत bool घड़ीevent_state_periodic(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors == CLOCK_EVT_STATE_PERIODIC;
-पूर्ण
+static inline bool clockevent_state_periodic(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors == CLOCK_EVT_STATE_PERIODIC;
+}
 
-अटल अंतरभूत bool घड़ीevent_state_oneshot(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors == CLOCK_EVT_STATE_ONESHOT;
-पूर्ण
+static inline bool clockevent_state_oneshot(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors == CLOCK_EVT_STATE_ONESHOT;
+}
 
-अटल अंतरभूत bool घड़ीevent_state_oneshot_stopped(काष्ठा घड़ी_event_device *dev)
-अणु
-	वापस dev->state_use_accessors == CLOCK_EVT_STATE_ONESHOT_STOPPED;
-पूर्ण
+static inline bool clockevent_state_oneshot_stopped(struct clock_event_device *dev)
+{
+	return dev->state_use_accessors == CLOCK_EVT_STATE_ONESHOT_STOPPED;
+}
 
 /*
- * Calculate a multiplication factor क्रम scaled math, which is used to convert
- * nanoseconds based values to घड़ी ticks:
+ * Calculate a multiplication factor for scaled math, which is used to convert
+ * nanoseconds based values to clock ticks:
  *
- * घड़ी_प्रकारicks = (nanoseconds * factor) >> shअगरt.
+ * clock_ticks = (nanoseconds * factor) >> shift.
  *
- * भाग_sc is the rearranged equation to calculate a factor from a given घड़ी
+ * div_sc is the rearranged equation to calculate a factor from a given clock
  * ticks / nanoseconds ratio:
  *
- * factor = (घड़ी_प्रकारicks << shअगरt) / nanoseconds
+ * factor = (clock_ticks << shift) / nanoseconds
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-भाग_sc(अचिन्हित दीर्घ ticks, अचिन्हित दीर्घ nsec, पूर्णांक shअगरt)
-अणु
-	u64 पंचांगp = ((u64)ticks) << shअगरt;
+static inline unsigned long
+div_sc(unsigned long ticks, unsigned long nsec, int shift)
+{
+	u64 tmp = ((u64)ticks) << shift;
 
-	करो_भाग(पंचांगp, nsec);
+	do_div(tmp, nsec);
 
-	वापस (अचिन्हित दीर्घ) पंचांगp;
-पूर्ण
+	return (unsigned long) tmp;
+}
 
 /* Clock event layer functions */
-बाह्य u64 घड़ीevent_delta2ns(अचिन्हित दीर्घ latch, काष्ठा घड़ी_event_device *evt);
-बाह्य व्योम घड़ीevents_रेजिस्टर_device(काष्ठा घड़ी_event_device *dev);
-बाह्य पूर्णांक घड़ीevents_unbind_device(काष्ठा घड़ी_event_device *ced, पूर्णांक cpu);
+extern u64 clockevent_delta2ns(unsigned long latch, struct clock_event_device *evt);
+extern void clockevents_register_device(struct clock_event_device *dev);
+extern int clockevents_unbind_device(struct clock_event_device *ced, int cpu);
 
-बाह्य व्योम घड़ीevents_config_and_रेजिस्टर(काष्ठा घड़ी_event_device *dev,
-					    u32 freq, अचिन्हित दीर्घ min_delta,
-					    अचिन्हित दीर्घ max_delta);
+extern void clockevents_config_and_register(struct clock_event_device *dev,
+					    u32 freq, unsigned long min_delta,
+					    unsigned long max_delta);
 
-बाह्य पूर्णांक घड़ीevents_update_freq(काष्ठा घड़ी_event_device *ce, u32 freq);
+extern int clockevents_update_freq(struct clock_event_device *ce, u32 freq);
 
-अटल अंतरभूत व्योम
-घड़ीevents_calc_mult_shअगरt(काष्ठा घड़ी_event_device *ce, u32 freq, u32 maxsec)
-अणु
-	वापस घड़ीs_calc_mult_shअगरt(&ce->mult, &ce->shअगरt, NSEC_PER_SEC, freq, maxsec);
-पूर्ण
+static inline void
+clockevents_calc_mult_shift(struct clock_event_device *ce, u32 freq, u32 maxsec)
+{
+	return clocks_calc_mult_shift(&ce->mult, &ce->shift, NSEC_PER_SEC, freq, maxsec);
+}
 
-बाह्य व्योम घड़ीevents_suspend(व्योम);
-बाह्य व्योम घड़ीevents_resume(व्योम);
+extern void clockevents_suspend(void);
+extern void clockevents_resume(void);
 
-# अगरdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-#  अगरdef CONFIG_ARCH_HAS_TICK_BROADCAST
-बाह्य व्योम tick_broadcast(स्थिर काष्ठा cpumask *mask);
-#  अन्यथा
-#   define tick_broadcast	शून्य
-#  endअगर
-बाह्य पूर्णांक tick_receive_broadcast(व्योम);
-# endअगर
+# ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+#  ifdef CONFIG_ARCH_HAS_TICK_BROADCAST
+extern void tick_broadcast(const struct cpumask *mask);
+#  else
+#   define tick_broadcast	NULL
+#  endif
+extern int tick_receive_broadcast(void);
+# endif
 
-# अगर defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_TICK_ONESHOT)
-बाह्य व्योम tick_setup_hrसमयr_broadcast(व्योम);
-बाह्य पूर्णांक tick_check_broadcast_expired(व्योम);
-# अन्यथा
-अटल अंतरभूत पूर्णांक tick_check_broadcast_expired(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_setup_hrसमयr_broadcast(व्योम) अणु पूर्ण
-# endअगर
+# if defined(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST) && defined(CONFIG_TICK_ONESHOT)
+extern void tick_setup_hrtimer_broadcast(void);
+extern int tick_check_broadcast_expired(void);
+# else
+static inline int tick_check_broadcast_expired(void) { return 0; }
+static inline void tick_setup_hrtimer_broadcast(void) { }
+# endif
 
-#अन्यथा /* !CONFIG_GENERIC_CLOCKEVENTS: */
+#else /* !CONFIG_GENERIC_CLOCKEVENTS: */
 
-अटल अंतरभूत व्योम घड़ीevents_suspend(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम घड़ीevents_resume(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक tick_check_broadcast_expired(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम tick_setup_hrसमयr_broadcast(व्योम) अणु पूर्ण
+static inline void clockevents_suspend(void) { }
+static inline void clockevents_resume(void) { }
+static inline int tick_check_broadcast_expired(void) { return 0; }
+static inline void tick_setup_hrtimer_broadcast(void) { }
 
-#पूर्ण_अगर /* !CONFIG_GENERIC_CLOCKEVENTS */
+#endif /* !CONFIG_GENERIC_CLOCKEVENTS */
 
-#पूर्ण_अगर /* _LINUX_CLOCKCHIPS_H */
+#endif /* _LINUX_CLOCKCHIPS_H */

@@ -1,89 +1,88 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  A low-level PATA driver to handle a Compact Flash connected on the
  *  Mikrotik's RouterBoard 532 board.
  *
- *  Copyright (C) 2007 Gabor Juhos <juhosg at खोलोwrt.org>
- *  Copyright (C) 2008 Florian Fainelli <florian@खोलोwrt.org>
+ *  Copyright (C) 2007 Gabor Juhos <juhosg at openwrt.org>
+ *  Copyright (C) 2008 Florian Fainelli <florian@openwrt.org>
  *
  *  This file was based on: drivers/ata/pata_ixp4xx_cf.c
  *	Copyright (C) 2006-07 Tower Technologies
  *	Author: Alessandro Zummo <a.zummo@towertech.it>
  *
- *  Also was based on the driver क्रम Linux 2.4.xx published by Mikrotik क्रम
+ *  Also was based on the driver for Linux 2.4.xx published by Mikrotik for
  *  their RouterBoard 1xx and 5xx series devices. The original Mikrotik code
  *  seems not to have a license.
  */
 
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/पन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/io.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/gpio/consumer.h>
 
-#समावेश <linux/libata.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/libata.h>
+#include <scsi/scsi_host.h>
 
-#समावेश <यंत्र/mach-rc32434/rb.h>
+#include <asm/mach-rc32434/rb.h>
 
-#घोषणा DRV_NAME	"pata-rb532-cf"
-#घोषणा DRV_VERSION	"0.1.0"
-#घोषणा DRV_DESC	"PATA driver for RouterBOARD 532 Compact Flash"
+#define DRV_NAME	"pata-rb532-cf"
+#define DRV_VERSION	"0.1.0"
+#define DRV_DESC	"PATA driver for RouterBOARD 532 Compact Flash"
 
-#घोषणा RB500_CF_MAXPORTS	1
-#घोषणा RB500_CF_IO_DELAY	400
+#define RB500_CF_MAXPORTS	1
+#define RB500_CF_IO_DELAY	400
 
-#घोषणा RB500_CF_REG_BASE	0x0800
-#घोषणा RB500_CF_REG_ERR	0x080D
-#घोषणा RB500_CF_REG_CTRL	0x080E
-/* 32bit buffered data रेजिस्टर offset */
-#घोषणा RB500_CF_REG_DBUF32	0x0C00
+#define RB500_CF_REG_BASE	0x0800
+#define RB500_CF_REG_ERR	0x080D
+#define RB500_CF_REG_CTRL	0x080E
+/* 32bit buffered data register offset */
+#define RB500_CF_REG_DBUF32	0x0C00
 
-काष्ठा rb532_cf_info अणु
-	व्योम __iomem	*iobase;
-	काष्ठा gpio_desc *gpio_line;
-	अचिन्हित पूर्णांक	irq;
-पूर्ण;
+struct rb532_cf_info {
+	void __iomem	*iobase;
+	struct gpio_desc *gpio_line;
+	unsigned int	irq;
+};
 
 /* ------------------------------------------------------------------------ */
 
-अटल irqवापस_t rb532_pata_irq_handler(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा ata_host *ah = dev_instance;
-	काष्ठा rb532_cf_info *info = ah->निजी_data;
+static irqreturn_t rb532_pata_irq_handler(int irq, void *dev_instance)
+{
+	struct ata_host *ah = dev_instance;
+	struct rb532_cf_info *info = ah->private_data;
 
-	अगर (gpiod_get_value(info->gpio_line)) अणु
+	if (gpiod_get_value(info->gpio_line)) {
 		irq_set_irq_type(info->irq, IRQ_TYPE_LEVEL_LOW);
-		ata_sff_पूर्णांकerrupt(info->irq, dev_instance);
-	पूर्ण अन्यथा अणु
+		ata_sff_interrupt(info->irq, dev_instance);
+	} else {
 		irq_set_irq_type(info->irq, IRQ_TYPE_LEVEL_HIGH);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा ata_port_operations rb532_pata_port_ops = अणु
+static struct ata_port_operations rb532_pata_port_ops = {
 	.inherits		= &ata_sff_port_ops,
 	.sff_data_xfer		= ata_sff_data_xfer32,
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------ */
 
-अटल काष्ठा scsi_host_ढाँचा rb532_pata_sht = अणु
+static struct scsi_host_template rb532_pata_sht = {
 	ATA_PIO_SHT(DRV_NAME),
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------ */
 
-अटल व्योम rb532_pata_setup_ports(काष्ठा ata_host *ah)
-अणु
-	काष्ठा rb532_cf_info *info = ah->निजी_data;
-	काष्ठा ata_port *ap;
+static void rb532_pata_setup_ports(struct ata_host *ah)
+{
+	struct rb532_cf_info *info = ah->private_data;
+	struct ata_port *ap;
 
 	ap = ah->ports[0];
 
@@ -98,84 +97,84 @@
 
 	ap->ioaddr.data_addr	= info->iobase + RB500_CF_REG_DBUF32;
 	ap->ioaddr.error_addr	= info->iobase + RB500_CF_REG_ERR;
-पूर्ण
+}
 
-अटल पूर्णांक rb532_pata_driver_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक irq;
-	काष्ठा gpio_desc *gpiod;
-	काष्ठा resource *res;
-	काष्ठा ata_host *ah;
-	काष्ठा rb532_cf_info *info;
-	पूर्णांक ret;
+static int rb532_pata_driver_probe(struct platform_device *pdev)
+{
+	int irq;
+	struct gpio_desc *gpiod;
+	struct resource *res;
+	struct ata_host *ah;
+	struct rb532_cf_info *info;
+	int ret;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "no IOMEM resource found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0) {
 		dev_err(&pdev->dev, "no IRQ resource found\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	gpiod = devm_gpiod_get(&pdev->dev, शून्य, GPIOD_IN);
-	अगर (IS_ERR(gpiod)) अणु
+	gpiod = devm_gpiod_get(&pdev->dev, NULL, GPIOD_IN);
+	if (IS_ERR(gpiod)) {
 		dev_err(&pdev->dev, "no GPIO found for irq%d\n", irq);
-		वापस PTR_ERR(gpiod);
-	पूर्ण
+		return PTR_ERR(gpiod);
+	}
 	gpiod_set_consumer_name(gpiod, DRV_NAME);
 
 	/* allocate host */
 	ah = ata_host_alloc(&pdev->dev, RB500_CF_MAXPORTS);
-	अगर (!ah)
-		वापस -ENOMEM;
+	if (!ah)
+		return -ENOMEM;
 
-	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	ah->निजी_data = info;
+	ah->private_data = info;
 	info->gpio_line = gpiod;
 	info->irq = irq;
 
 	info->iobase = devm_ioremap(&pdev->dev, res->start,
 				resource_size(res));
-	अगर (!info->iobase)
-		वापस -ENOMEM;
+	if (!info->iobase)
+		return -ENOMEM;
 
 	rb532_pata_setup_ports(ah);
 
 	ret = ata_host_activate(ah, irq, rb532_pata_irq_handler,
 				IRQF_TRIGGER_LOW, &rb532_pata_sht);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rb532_pata_driver_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ata_host *ah = platक्रमm_get_drvdata(pdev);
+static int rb532_pata_driver_remove(struct platform_device *pdev)
+{
+	struct ata_host *ah = platform_get_drvdata(pdev);
 
 	ata_host_detach(ah);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver rb532_pata_platक्रमm_driver = अणु
+static struct platform_driver rb532_pata_platform_driver = {
 	.probe		= rb532_pata_driver_probe,
-	.हटाओ		= rb532_pata_driver_हटाओ,
-	.driver	 = अणु
+	.remove		= rb532_pata_driver_remove,
+	.driver	 = {
 		.name   = DRV_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा DRV_INFO DRV_DESC " version " DRV_VERSION
+#define DRV_INFO DRV_DESC " version " DRV_VERSION
 
-module_platक्रमm_driver(rb532_pata_platक्रमm_driver);
+module_platform_driver(rb532_pata_platform_driver);
 
 MODULE_AUTHOR("Gabor Juhos <juhosg at openwrt.org>");
 MODULE_AUTHOR("Florian Fainelli <florian@openwrt.org>");

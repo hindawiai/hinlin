@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Copyright (C) 2016 Noralf Trथचnnes
+ * Copyright (C) 2016 Noralf Trønnes
  */
 
-#अगर_अघोषित __LINUX_DRM_SIMPLE_KMS_HELPER_H
-#घोषणा __LINUX_DRM_SIMPLE_KMS_HELPER_H
+#ifndef __LINUX_DRM_SIMPLE_KMS_HELPER_H
+#define __LINUX_DRM_SIMPLE_KMS_HELPER_H
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_plane.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_plane.h>
 
-काष्ठा drm_simple_display_pipe;
+struct drm_simple_display_pipe;
 
 /**
- * काष्ठा drm_simple_display_pipe_funcs - helper operations क्रम a simple
+ * struct drm_simple_display_pipe_funcs - helper operations for a simple
  *                                        display pipeline
  */
-काष्ठा drm_simple_display_pipe_funcs अणु
+struct drm_simple_display_pipe_funcs {
 	/**
 	 * @mode_valid:
 	 *
-	 * This callback is used to check अगर a specअगरic mode is valid in the
+	 * This callback is used to check if a specific mode is valid in the
 	 * crtc used in this simple display pipe. This should be implemented
-	 * अगर the display pipe has some sort of restriction in the modes
+	 * if the display pipe has some sort of restriction in the modes
 	 * it can display. For example, a given display pipe may be responsible
-	 * to set a घड़ी value. If the घड़ी can not produce all the values
-	 * क्रम the available modes then this callback can be used to restrict
+	 * to set a clock value. If the clock can not produce all the values
+	 * for the available modes then this callback can be used to restrict
 	 * the number of modes to only the ones that can be displayed. Another
 	 * reason can be bandwidth mitigation: the memory port on the display
 	 * controller can have bandwidth limitations not allowing pixel data
@@ -43,15 +42,15 @@
 	 *
 	 * Since this function is both called from the check phase of an atomic
 	 * commit, and the mode validation in the probe paths it is not allowed
-	 * to look at anything अन्यथा but the passed-in mode, and validate it
-	 * against configuration-invariant hardware स्थिरraपूर्णांकs.
+	 * to look at anything else but the passed-in mode, and validate it
+	 * against configuration-invariant hardware constraints.
 	 *
 	 * RETURNS:
 	 *
 	 * drm_mode_status Enum
 	 */
-	क्रमागत drm_mode_status (*mode_valid)(काष्ठा drm_simple_display_pipe *pipe,
-					   स्थिर काष्ठा drm_display_mode *mode);
+	enum drm_mode_status (*mode_valid)(struct drm_simple_display_pipe *pipe,
+					   const struct drm_display_mode *mode);
 
 	/**
 	 * @enable:
@@ -60,9 +59,9 @@
 	 * It is called when the underlying crtc is enabled.
 	 * This hook is optional.
 	 */
-	व्योम (*enable)(काष्ठा drm_simple_display_pipe *pipe,
-		       काष्ठा drm_crtc_state *crtc_state,
-		       काष्ठा drm_plane_state *plane_state);
+	void (*enable)(struct drm_simple_display_pipe *pipe,
+		       struct drm_crtc_state *crtc_state,
+		       struct drm_plane_state *plane_state);
 	/**
 	 * @disable:
 	 *
@@ -70,28 +69,28 @@
 	 * It is called when the underlying crtc is disabled.
 	 * This hook is optional.
 	 */
-	व्योम (*disable)(काष्ठा drm_simple_display_pipe *pipe);
+	void (*disable)(struct drm_simple_display_pipe *pipe);
 
 	/**
 	 * @check:
 	 *
 	 * This function is called in the check phase of an atomic update,
-	 * specअगरically when the underlying plane is checked.
-	 * The simple display pipeline helpers alपढ़ोy check that the plane is
+	 * specifically when the underlying plane is checked.
+	 * The simple display pipeline helpers already check that the plane is
 	 * not scaled, fills the entire visible area and is always enabled
 	 * when the crtc is also enabled.
 	 * This hook is optional.
 	 *
 	 * RETURNS:
 	 *
-	 * 0 on success, -EINVAL अगर the state or the transition can't be
-	 * supported, -ENOMEM on memory allocation failure and -EDEADLK अगर an
-	 * attempt to obtain another state object ran पूर्णांकo a &drm_modeset_lock
+	 * 0 on success, -EINVAL if the state or the transition can't be
+	 * supported, -ENOMEM on memory allocation failure and -EDEADLK if an
+	 * attempt to obtain another state object ran into a &drm_modeset_lock
 	 * deadlock.
 	 */
-	पूर्णांक (*check)(काष्ठा drm_simple_display_pipe *pipe,
-		     काष्ठा drm_plane_state *plane_state,
-		     काष्ठा drm_crtc_state *crtc_state);
+	int (*check)(struct drm_simple_display_pipe *pipe,
+		     struct drm_plane_state *plane_state,
+		     struct drm_crtc_state *crtc_state);
 	/**
 	 * @update:
 	 *
@@ -101,140 +100,140 @@
 	 * This is the function drivers should submit the
 	 * &drm_pending_vblank_event from. Using either
 	 * drm_crtc_arm_vblank_event(), when the driver supports vblank
-	 * पूर्णांकerrupt handling, or drm_crtc_send_vblank_event() क्रम more
-	 * complex हाल. In हाल the hardware lacks vblank support entirely,
-	 * drivers can set &काष्ठा drm_crtc_state.no_vblank in
-	 * &काष्ठा drm_simple_display_pipe_funcs.check and let DRM's
+	 * interrupt handling, or drm_crtc_send_vblank_event() for more
+	 * complex case. In case the hardware lacks vblank support entirely,
+	 * drivers can set &struct drm_crtc_state.no_vblank in
+	 * &struct drm_simple_display_pipe_funcs.check and let DRM's
 	 * atomic helper fake a vblank event.
 	 */
-	व्योम (*update)(काष्ठा drm_simple_display_pipe *pipe,
-		       काष्ठा drm_plane_state *old_plane_state);
+	void (*update)(struct drm_simple_display_pipe *pipe,
+		       struct drm_plane_state *old_plane_state);
 
 	/**
 	 * @prepare_fb:
 	 *
-	 * Optional, called by &drm_plane_helper_funcs.prepare_fb.  Please पढ़ो
-	 * the करोcumentation क्रम the &drm_plane_helper_funcs.prepare_fb hook क्रम
+	 * Optional, called by &drm_plane_helper_funcs.prepare_fb.  Please read
+	 * the documentation for the &drm_plane_helper_funcs.prepare_fb hook for
 	 * more details.
 	 *
 	 * Drivers which always have their buffers pinned should use
-	 * drm_gem_simple_display_pipe_prepare_fb() क्रम this hook.
+	 * drm_gem_simple_display_pipe_prepare_fb() for this hook.
 	 */
-	पूर्णांक (*prepare_fb)(काष्ठा drm_simple_display_pipe *pipe,
-			  काष्ठा drm_plane_state *plane_state);
+	int (*prepare_fb)(struct drm_simple_display_pipe *pipe,
+			  struct drm_plane_state *plane_state);
 
 	/**
 	 * @cleanup_fb:
 	 *
-	 * Optional, called by &drm_plane_helper_funcs.cleanup_fb.  Please पढ़ो
-	 * the करोcumentation क्रम the &drm_plane_helper_funcs.cleanup_fb hook क्रम
+	 * Optional, called by &drm_plane_helper_funcs.cleanup_fb.  Please read
+	 * the documentation for the &drm_plane_helper_funcs.cleanup_fb hook for
 	 * more details.
 	 */
-	व्योम (*cleanup_fb)(काष्ठा drm_simple_display_pipe *pipe,
-			   काष्ठा drm_plane_state *plane_state);
+	void (*cleanup_fb)(struct drm_simple_display_pipe *pipe,
+			   struct drm_plane_state *plane_state);
 
 	/**
 	 * @enable_vblank:
 	 *
-	 * Optional, called by &drm_crtc_funcs.enable_vblank. Please पढ़ो
-	 * the करोcumentation क्रम the &drm_crtc_funcs.enable_vblank hook क्रम
+	 * Optional, called by &drm_crtc_funcs.enable_vblank. Please read
+	 * the documentation for the &drm_crtc_funcs.enable_vblank hook for
 	 * more details.
 	 */
-	पूर्णांक (*enable_vblank)(काष्ठा drm_simple_display_pipe *pipe);
+	int (*enable_vblank)(struct drm_simple_display_pipe *pipe);
 
 	/**
 	 * @disable_vblank:
 	 *
-	 * Optional, called by &drm_crtc_funcs.disable_vblank. Please पढ़ो
-	 * the करोcumentation क्रम the &drm_crtc_funcs.disable_vblank hook क्रम
+	 * Optional, called by &drm_crtc_funcs.disable_vblank. Please read
+	 * the documentation for the &drm_crtc_funcs.disable_vblank hook for
 	 * more details.
 	 */
-	व्योम (*disable_vblank)(काष्ठा drm_simple_display_pipe *pipe);
+	void (*disable_vblank)(struct drm_simple_display_pipe *pipe);
 
 	/**
 	 * @reset_plane:
 	 *
-	 * Optional, called by &drm_plane_funcs.reset. Please पढ़ो the
-	 * करोcumentation क्रम the &drm_plane_funcs.reset hook क्रम more details.
+	 * Optional, called by &drm_plane_funcs.reset. Please read the
+	 * documentation for the &drm_plane_funcs.reset hook for more details.
 	 */
-	व्योम (*reset_plane)(काष्ठा drm_simple_display_pipe *pipe);
+	void (*reset_plane)(struct drm_simple_display_pipe *pipe);
 
 	/**
 	 * @duplicate_plane_state:
 	 *
 	 * Optional, called by &drm_plane_funcs.atomic_duplicate_state.  Please
-	 * पढ़ो the करोcumentation क्रम the &drm_plane_funcs.atomic_duplicate_state
-	 * hook क्रम more details.
+	 * read the documentation for the &drm_plane_funcs.atomic_duplicate_state
+	 * hook for more details.
 	 */
-	काष्ठा drm_plane_state * (*duplicate_plane_state)(काष्ठा drm_simple_display_pipe *pipe);
+	struct drm_plane_state * (*duplicate_plane_state)(struct drm_simple_display_pipe *pipe);
 
 	/**
 	 * @destroy_plane_state:
 	 *
 	 * Optional, called by &drm_plane_funcs.atomic_destroy_state.  Please
-	 * पढ़ो the करोcumentation क्रम the &drm_plane_funcs.atomic_destroy_state
-	 * hook क्रम more details.
+	 * read the documentation for the &drm_plane_funcs.atomic_destroy_state
+	 * hook for more details.
 	 */
-	व्योम (*destroy_plane_state)(काष्ठा drm_simple_display_pipe *pipe,
-				    काष्ठा drm_plane_state *plane_state);
-पूर्ण;
+	void (*destroy_plane_state)(struct drm_simple_display_pipe *pipe,
+				    struct drm_plane_state *plane_state);
+};
 
 /**
- * काष्ठा drm_simple_display_pipe - simple display pipeline
- * @crtc: CRTC control काष्ठाure
- * @plane: Plane control काष्ठाure
- * @encoder: Encoder control काष्ठाure
- * @connector: Connector control काष्ठाure
+ * struct drm_simple_display_pipe - simple display pipeline
+ * @crtc: CRTC control structure
+ * @plane: Plane control structure
+ * @encoder: Encoder control structure
+ * @connector: Connector control structure
  * @funcs: Pipeline control functions (optional)
  *
- * Simple display pipeline with plane, crtc and encoder collapsed पूर्णांकo one
+ * Simple display pipeline with plane, crtc and encoder collapsed into one
  * entity. It should be initialized by calling drm_simple_display_pipe_init().
  */
-काष्ठा drm_simple_display_pipe अणु
-	काष्ठा drm_crtc crtc;
-	काष्ठा drm_plane plane;
-	काष्ठा drm_encoder encoder;
-	काष्ठा drm_connector *connector;
+struct drm_simple_display_pipe {
+	struct drm_crtc crtc;
+	struct drm_plane plane;
+	struct drm_encoder encoder;
+	struct drm_connector *connector;
 
-	स्थिर काष्ठा drm_simple_display_pipe_funcs *funcs;
-पूर्ण;
+	const struct drm_simple_display_pipe_funcs *funcs;
+};
 
-पूर्णांक drm_simple_display_pipe_attach_bridge(काष्ठा drm_simple_display_pipe *pipe,
-					  काष्ठा drm_bridge *bridge);
+int drm_simple_display_pipe_attach_bridge(struct drm_simple_display_pipe *pipe,
+					  struct drm_bridge *bridge);
 
-पूर्णांक drm_simple_display_pipe_init(काष्ठा drm_device *dev,
-			काष्ठा drm_simple_display_pipe *pipe,
-			स्थिर काष्ठा drm_simple_display_pipe_funcs *funcs,
-			स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
-			स्थिर uपूर्णांक64_t *क्रमmat_modअगरiers,
-			काष्ठा drm_connector *connector);
+int drm_simple_display_pipe_init(struct drm_device *dev,
+			struct drm_simple_display_pipe *pipe,
+			const struct drm_simple_display_pipe_funcs *funcs,
+			const uint32_t *formats, unsigned int format_count,
+			const uint64_t *format_modifiers,
+			struct drm_connector *connector);
 
-पूर्णांक drm_simple_encoder_init(काष्ठा drm_device *dev,
-			    काष्ठा drm_encoder *encoder,
-			    पूर्णांक encoder_type);
+int drm_simple_encoder_init(struct drm_device *dev,
+			    struct drm_encoder *encoder,
+			    int encoder_type);
 
-व्योम *__drmm_simple_encoder_alloc(काष्ठा drm_device *dev, माप_प्रकार size,
-				  माप_प्रकार offset, पूर्णांक encoder_type);
+void *__drmm_simple_encoder_alloc(struct drm_device *dev, size_t size,
+				  size_t offset, int encoder_type);
 
 /**
  * drmm_simple_encoder_alloc - Allocate and initialize an encoder with basic
  *                             functionality.
  * @dev: drm device
- * @type: the type of the काष्ठा which contains काष्ठा &drm_encoder
+ * @type: the type of the struct which contains struct &drm_encoder
  * @member: the name of the &drm_encoder within @type.
  * @encoder_type: user visible type of the encoder
  *
  * Allocates and initializes an encoder that has no further functionality.
- * Settings क्रम possible CRTC and clones are left to their initial values.
- * Cleanup is स्वतःmatically handled through रेजिस्टरing drm_encoder_cleanup()
+ * Settings for possible CRTC and clones are left to their initial values.
+ * Cleanup is automatically handled through registering drm_encoder_cleanup()
  * with drmm_add_action().
  *
  * Returns:
- * Poपूर्णांकer to new encoder, or ERR_PTR on failure.
+ * Pointer to new encoder, or ERR_PTR on failure.
  */
-#घोषणा drmm_simple_encoder_alloc(dev, type, member, encoder_type) \
-	((type *)__drmm_simple_encoder_alloc(dev, माप(type), \
-					     दुरत्व(type, member), \
+#define drmm_simple_encoder_alloc(dev, type, member, encoder_type) \
+	((type *)__drmm_simple_encoder_alloc(dev, sizeof(type), \
+					     offsetof(type, member), \
 					     encoder_type))
 
-#पूर्ण_अगर /* __LINUX_DRM_SIMPLE_KMS_HELPER_H */
+#endif /* __LINUX_DRM_SIMPLE_KMS_HELPER_H */

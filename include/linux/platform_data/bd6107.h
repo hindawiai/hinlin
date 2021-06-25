@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * bd6107.h - Rohm BD6107 LEDs Driver
  */
-#अगर_अघोषित __BD6107_H__
-#घोषणा __BD6107_H__
+#ifndef __BD6107_H__
+#define __BD6107_H__
 
-काष्ठा device;
+struct device;
 
-काष्ठा bd6107_platक्रमm_data अणु
-	काष्ठा device *fbdev;
-	अचिन्हित पूर्णांक def_value;
-पूर्ण;
+struct bd6107_platform_data {
+	struct device *fbdev;
+	unsigned int def_value;
+};
 
-#पूर्ण_अगर
+#endif

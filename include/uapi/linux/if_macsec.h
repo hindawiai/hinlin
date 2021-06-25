@@ -1,60 +1,59 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * include/uapi/linux/अगर_macsec.h - MACsec device
+ * include/uapi/linux/if_macsec.h - MACsec device
  *
  * Copyright (c) 2015 Sabrina Dubroca <sd@queasysnail.net>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#अगर_अघोषित _UAPI_MACSEC_H
-#घोषणा _UAPI_MACSEC_H
+#ifndef _UAPI_MACSEC_H
+#define _UAPI_MACSEC_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा MACSEC_GENL_NAME "macsec"
-#घोषणा MACSEC_GENL_VERSION 1
+#define MACSEC_GENL_NAME "macsec"
+#define MACSEC_GENL_VERSION 1
 
-#घोषणा MACSEC_MAX_KEY_LEN 128
+#define MACSEC_MAX_KEY_LEN 128
 
-#घोषणा MACSEC_KEYID_LEN 16
+#define MACSEC_KEYID_LEN 16
 
 /* cipher IDs as per IEEE802.1AE-2018 (Table 14-1) */
-#घोषणा MACSEC_CIPHER_ID_GCM_AES_128 0x0080C20001000001ULL
-#घोषणा MACSEC_CIPHER_ID_GCM_AES_256 0x0080C20001000002ULL
-#घोषणा MACSEC_CIPHER_ID_GCM_AES_XPN_128 0x0080C20001000003ULL
-#घोषणा MACSEC_CIPHER_ID_GCM_AES_XPN_256 0x0080C20001000004ULL
+#define MACSEC_CIPHER_ID_GCM_AES_128 0x0080C20001000001ULL
+#define MACSEC_CIPHER_ID_GCM_AES_256 0x0080C20001000002ULL
+#define MACSEC_CIPHER_ID_GCM_AES_XPN_128 0x0080C20001000003ULL
+#define MACSEC_CIPHER_ID_GCM_AES_XPN_256 0x0080C20001000004ULL
 
-/* deprecated cipher ID क्रम GCM-AES-128 */
-#घोषणा MACSEC_DEFAULT_CIPHER_ID     0x0080020001000001ULL
-#घोषणा MACSEC_DEFAULT_CIPHER_ALT    MACSEC_CIPHER_ID_GCM_AES_128
+/* deprecated cipher ID for GCM-AES-128 */
+#define MACSEC_DEFAULT_CIPHER_ID     0x0080020001000001ULL
+#define MACSEC_DEFAULT_CIPHER_ALT    MACSEC_CIPHER_ID_GCM_AES_128
 
-#घोषणा MACSEC_MIN_ICV_LEN 8
-#घोषणा MACSEC_MAX_ICV_LEN 32
-/* upper limit क्रम ICV length as recommended by IEEE802.1AE-2006 */
-#घोषणा MACSEC_STD_ICV_LEN 16
+#define MACSEC_MIN_ICV_LEN 8
+#define MACSEC_MAX_ICV_LEN 32
+/* upper limit for ICV length as recommended by IEEE802.1AE-2006 */
+#define MACSEC_STD_ICV_LEN 16
 
-क्रमागत macsec_attrs अणु
+enum macsec_attrs {
 	MACSEC_ATTR_UNSPEC,
-	MACSEC_ATTR_IFINDEX,     /* u32, अगरindex of the MACsec netdevice */
+	MACSEC_ATTR_IFINDEX,     /* u32, ifindex of the MACsec netdevice */
 	MACSEC_ATTR_RXSC_CONFIG, /* config, nested macsec_rxsc_attrs */
 	MACSEC_ATTR_SA_CONFIG,   /* config, nested macsec_sa_attrs */
 	MACSEC_ATTR_SECY,        /* dump, nested macsec_secy_attrs */
-	MACSEC_ATTR_TXSA_LIST,   /* dump, nested, macsec_sa_attrs क्रम each TXSA */
-	MACSEC_ATTR_RXSC_LIST,   /* dump, nested, macsec_rxsc_attrs क्रम each RXSC */
+	MACSEC_ATTR_TXSA_LIST,   /* dump, nested, macsec_sa_attrs for each TXSA */
+	MACSEC_ATTR_RXSC_LIST,   /* dump, nested, macsec_rxsc_attrs for each RXSC */
 	MACSEC_ATTR_TXSC_STATS,  /* dump, nested, macsec_txsc_stats_attr */
 	MACSEC_ATTR_SECY_STATS,  /* dump, nested, macsec_secy_stats_attr */
 	MACSEC_ATTR_OFFLOAD,     /* config, nested, macsec_offload_attrs */
 	__MACSEC_ATTR_END,
 	NUM_MACSEC_ATTR = __MACSEC_ATTR_END,
 	MACSEC_ATTR_MAX = __MACSEC_ATTR_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_secy_attrs अणु
+enum macsec_secy_attrs {
 	MACSEC_SECY_ATTR_UNSPEC,
 	MACSEC_SECY_ATTR_SCI,
 	MACSEC_SECY_ATTR_ENCODING_SA,
@@ -73,9 +72,9 @@
 	__MACSEC_SECY_ATTR_END,
 	NUM_MACSEC_SECY_ATTR = __MACSEC_SECY_ATTR_END,
 	MACSEC_SECY_ATTR_MAX = __MACSEC_SECY_ATTR_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_rxsc_attrs अणु
+enum macsec_rxsc_attrs {
 	MACSEC_RXSC_ATTR_UNSPEC,
 	MACSEC_RXSC_ATTR_SCI,     /* config/dump, u64 */
 	MACSEC_RXSC_ATTR_ACTIVE,  /* config/dump, u8 0..1 */
@@ -85,13 +84,13 @@
 	__MACSEC_RXSC_ATTR_END,
 	NUM_MACSEC_RXSC_ATTR = __MACSEC_RXSC_ATTR_END,
 	MACSEC_RXSC_ATTR_MAX = __MACSEC_RXSC_ATTR_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_sa_attrs अणु
+enum macsec_sa_attrs {
 	MACSEC_SA_ATTR_UNSPEC,
 	MACSEC_SA_ATTR_AN,     /* config/dump, u8 0..3 */
 	MACSEC_SA_ATTR_ACTIVE, /* config/dump, u8 0..1 */
-	MACSEC_SA_ATTR_PN,     /* config/dump, u32/u64 (u64 अगर XPN) */
+	MACSEC_SA_ATTR_PN,     /* config/dump, u32/u64 (u64 if XPN) */
 	MACSEC_SA_ATTR_KEY,    /* config, data */
 	MACSEC_SA_ATTR_KEYID,  /* config/dump, 128-bit */
 	MACSEC_SA_ATTR_STATS,  /* dump, nested, macsec_sa_stats_attr */
@@ -101,18 +100,18 @@
 	__MACSEC_SA_ATTR_END,
 	NUM_MACSEC_SA_ATTR = __MACSEC_SA_ATTR_END,
 	MACSEC_SA_ATTR_MAX = __MACSEC_SA_ATTR_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_offload_attrs अणु
+enum macsec_offload_attrs {
 	MACSEC_OFFLOAD_ATTR_UNSPEC,
 	MACSEC_OFFLOAD_ATTR_TYPE, /* config/dump, u8 0..2 */
 	MACSEC_OFFLOAD_ATTR_PAD,
 	__MACSEC_OFFLOAD_ATTR_END,
 	NUM_MACSEC_OFFLOAD_ATTR = __MACSEC_OFFLOAD_ATTR_END,
 	MACSEC_OFFLOAD_ATTR_MAX = __MACSEC_OFFLOAD_ATTR_END - 1,
-पूर्ण;
+};
 
-क्रमागत macsec_nl_commands अणु
+enum macsec_nl_commands {
 	MACSEC_CMD_GET_TXSC,
 	MACSEC_CMD_ADD_RXSC,
 	MACSEC_CMD_DEL_RXSC,
@@ -124,10 +123,10 @@
 	MACSEC_CMD_DEL_RXSA,
 	MACSEC_CMD_UPD_RXSA,
 	MACSEC_CMD_UPD_OFFLOAD,
-पूर्ण;
+};
 
 /* u64 per-RXSC stats */
-क्रमागत macsec_rxsc_stats_attr अणु
+enum macsec_rxsc_stats_attr {
 	MACSEC_RXSC_STATS_ATTR_UNSPEC,
 	MACSEC_RXSC_STATS_ATTR_IN_OCTETS_VALIDATED,
 	MACSEC_RXSC_STATS_ATTR_IN_OCTETS_DECRYPTED,
@@ -143,10 +142,10 @@
 	__MACSEC_RXSC_STATS_ATTR_END,
 	NUM_MACSEC_RXSC_STATS_ATTR = __MACSEC_RXSC_STATS_ATTR_END,
 	MACSEC_RXSC_STATS_ATTR_MAX = __MACSEC_RXSC_STATS_ATTR_END - 1,
-पूर्ण;
+};
 
-/* u32 per-अणुRX,TXपूर्णSA stats */
-क्रमागत macsec_sa_stats_attr अणु
+/* u32 per-{RX,TX}SA stats */
+enum macsec_sa_stats_attr {
 	MACSEC_SA_STATS_ATTR_UNSPEC,
 	MACSEC_SA_STATS_ATTR_IN_PKTS_OK,
 	MACSEC_SA_STATS_ATTR_IN_PKTS_INVALID,
@@ -158,10 +157,10 @@
 	__MACSEC_SA_STATS_ATTR_END,
 	NUM_MACSEC_SA_STATS_ATTR = __MACSEC_SA_STATS_ATTR_END,
 	MACSEC_SA_STATS_ATTR_MAX = __MACSEC_SA_STATS_ATTR_END - 1,
-पूर्ण;
+};
 
 /* u64 per-TXSC stats */
-क्रमागत macsec_txsc_stats_attr अणु
+enum macsec_txsc_stats_attr {
 	MACSEC_TXSC_STATS_ATTR_UNSPEC,
 	MACSEC_TXSC_STATS_ATTR_OUT_PKTS_PROTECTED,
 	MACSEC_TXSC_STATS_ATTR_OUT_PKTS_ENCRYPTED,
@@ -171,10 +170,10 @@
 	__MACSEC_TXSC_STATS_ATTR_END,
 	NUM_MACSEC_TXSC_STATS_ATTR = __MACSEC_TXSC_STATS_ATTR_END,
 	MACSEC_TXSC_STATS_ATTR_MAX = __MACSEC_TXSC_STATS_ATTR_END - 1,
-पूर्ण;
+};
 
 /* u64 per-SecY stats */
-क्रमागत macsec_secy_stats_attr अणु
+enum macsec_secy_stats_attr {
 	MACSEC_SECY_STATS_ATTR_UNSPEC,
 	MACSEC_SECY_STATS_ATTR_OUT_PKTS_UNTAGGED,
 	MACSEC_SECY_STATS_ATTR_IN_PKTS_UNTAGGED,
@@ -188,6 +187,6 @@
 	__MACSEC_SECY_STATS_ATTR_END,
 	NUM_MACSEC_SECY_STATS_ATTR = __MACSEC_SECY_STATS_ATTR_END,
 	MACSEC_SECY_STATS_ATTR_MAX = __MACSEC_SECY_STATS_ATTR_END - 1,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_MACSEC_H */
+#endif /* _UAPI_MACSEC_H */

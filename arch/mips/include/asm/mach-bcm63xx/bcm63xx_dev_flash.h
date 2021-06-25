@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __BCM63XX_FLASH_H
-#घोषणा __BCM63XX_FLASH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __BCM63XX_FLASH_H
+#define __BCM63XX_FLASH_H
 
-क्रमागत अणु
+enum {
 	BCM63XX_FLASH_TYPE_PARALLEL,
 	BCM63XX_FLASH_TYPE_SERIAL,
-	BCM63XX_FLASH_TYPE_न_अंकD,
-पूर्ण;
+	BCM63XX_FLASH_TYPE_NAND,
+};
 
-पूर्णांक __init bcm63xx_flash_रेजिस्टर(व्योम);
+int __init bcm63xx_flash_register(void);
 
-#पूर्ण_अगर /* __BCM63XX_FLASH_H */
+#endif /* __BCM63XX_FLASH_H */

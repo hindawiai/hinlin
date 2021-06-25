@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * nvme-lightnvm.c - LightNVM NVMe device
  *
- * Copyright (C) 2014-2015 IT University of Cखोलोhagen
+ * Copyright (C) 2014-2015 IT University of Copenhagen
  * Initial release: Matias Bjorling <mb@lightnvm.io>
  */
 
-#समावेश "nvme.h"
+#include "nvme.h"
 
-#समावेश <linux/nvme.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/lightnvm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sched/sysctl.h>
-#समावेश <uapi/linux/lightnvm.h>
+#include <linux/nvme.h>
+#include <linux/bitops.h>
+#include <linux/lightnvm.h>
+#include <linux/vmalloc.h>
+#include <linux/sched/sysctl.h>
+#include <uapi/linux/lightnvm.h>
 
-क्रमागत nvme_nvm_admin_opcode अणु
+enum nvme_nvm_admin_opcode {
 	nvme_nvm_admin_identity		= 0xe2,
 	nvme_nvm_admin_get_bb_tbl	= 0xf2,
 	nvme_nvm_admin_set_bb_tbl	= 0xf1,
-पूर्ण;
+};
 
-क्रमागत nvme_nvm_log_page अणु
+enum nvme_nvm_log_page {
 	NVME_NVM_LOG_REPORT_CHUNK	= 0xca,
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_ph_rw अणु
+struct nvme_nvm_ph_rw {
 	__u8			opcode;
 	__u8			flags;
 	__u16			command_id;
@@ -40,9 +39,9 @@
 	__le16			control;
 	__le32			dsmgmt;
 	__le64			resv;
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_erase_blk अणु
+struct nvme_nvm_erase_blk {
 	__u8			opcode;
 	__u8			flags;
 	__u16			command_id;
@@ -55,9 +54,9 @@
 	__le16			control;
 	__le32			dsmgmt;
 	__le64			resv;
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_identity अणु
+struct nvme_nvm_identity {
 	__u8			opcode;
 	__u8			flags;
 	__u16			command_id;
@@ -66,9 +65,9 @@
 	__le64			prp1;
 	__le64			prp2;
 	__u32			rsvd11[6];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_getbbtbl अणु
+struct nvme_nvm_getbbtbl {
 	__u8			opcode;
 	__u8			flags;
 	__u16			command_id;
@@ -78,9 +77,9 @@
 	__le64			prp2;
 	__le64			spba;
 	__u32			rsvd4[4];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_setbbtbl अणु
+struct nvme_nvm_setbbtbl {
 	__u8			opcode;
 	__u8			flags;
 	__u16			command_id;
@@ -93,20 +92,20 @@
 	__u8			value;
 	__u8			rsvd3;
 	__u32			rsvd4[3];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_command अणु
-	जोड़ अणु
-		काष्ठा nvme_common_command common;
-		काष्ठा nvme_nvm_ph_rw ph_rw;
-		काष्ठा nvme_nvm_erase_blk erase;
-		काष्ठा nvme_nvm_identity identity;
-		काष्ठा nvme_nvm_getbbtbl get_bb;
-		काष्ठा nvme_nvm_setbbtbl set_bb;
-	पूर्ण;
-पूर्ण;
+struct nvme_nvm_command {
+	union {
+		struct nvme_common_command common;
+		struct nvme_nvm_ph_rw ph_rw;
+		struct nvme_nvm_erase_blk erase;
+		struct nvme_nvm_identity identity;
+		struct nvme_nvm_getbbtbl get_bb;
+		struct nvme_nvm_setbbtbl set_bb;
+	};
+};
 
-काष्ठा nvme_nvm_id12_grp अणु
+struct nvme_nvm_id12_grp {
 	__u8			mtype;
 	__u8			fmtype;
 	__le16			res16;
@@ -130,9 +129,9 @@
 	__le32			mccap;
 	__le16			cpar;
 	__u8			reserved[906];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nvme_nvm_id12_addrf अणु
+struct nvme_nvm_id12_addrf {
 	__u8			ch_offset;
 	__u8			ch_len;
 	__u8			lun_offset;
@@ -146,22 +145,22 @@
 	__u8			sec_offset;
 	__u8			sec_len;
 	__u8			res[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nvme_nvm_id12 अणु
+struct nvme_nvm_id12 {
 	__u8			ver_id;
 	__u8			vmnt;
 	__u8			cgrps;
 	__u8			res;
 	__le32			cap;
-	__le32			करोm;
-	काष्ठा nvme_nvm_id12_addrf ppaf;
+	__le32			dom;
+	struct nvme_nvm_id12_addrf ppaf;
 	__u8			resv[228];
-	काष्ठा nvme_nvm_id12_grp grp;
+	struct nvme_nvm_id12_grp grp;
 	__u8			resv2[2880];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा nvme_nvm_bb_tbl अणु
+struct nvme_nvm_bb_tbl {
 	__u8	tblid[4];
 	__le16	verid;
 	__le16	revid;
@@ -173,22 +172,22 @@
 	__le32	thresv;
 	__le32	rsvd2[8];
 	__u8	blk[];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_id20_addrf अणु
+struct nvme_nvm_id20_addrf {
 	__u8			grp_len;
 	__u8			pu_len;
 	__u8			chk_len;
 	__u8			lba_len;
 	__u8			resv[4];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_id20 अणु
+struct nvme_nvm_id20 {
 	__u8			mjr;
 	__u8			mnr;
 	__u8			resv[6];
 
-	काष्ठा nvme_nvm_id20_addrf lbaf;
+	struct nvme_nvm_id20_addrf lbaf;
 
 	__le32			mccap;
 	__u8			resv2[12];
@@ -211,7 +210,7 @@
 	__le32			maxocpu;
 	__u8			resv5[44];
 
-	/* Perक्रमmance related metrics */
+	/* Performance related metrics */
 	__le32			trdt;
 	__le32			trdm;
 	__le32			twrt;
@@ -223,11 +222,11 @@
 	/* Reserved area */
 	__u8			resv7[2816];
 
-	/* Venकरोr specअगरic */
+	/* Vendor specific */
 	__u8			vs[1024];
-पूर्ण;
+};
 
-काष्ठा nvme_nvm_chk_meta अणु
+struct nvme_nvm_chk_meta {
 	__u8	state;
 	__u8	type;
 	__u8	wi;
@@ -235,32 +234,32 @@
 	__le64	slba;
 	__le64	cnlb;
 	__le64	wp;
-पूर्ण;
+};
 
 /*
- * Check we didn't inadvertently grow the command काष्ठा
+ * Check we didn't inadvertently grow the command struct
  */
-अटल अंतरभूत व्योम _nvme_nvm_check_size(व्योम)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_identity) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_ph_rw) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_erase_blk) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_getbbtbl) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_setbbtbl) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_id12_grp) != 960);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_id12_addrf) != 16);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_id12) != NVME_IDENTIFY_DATA_SIZE);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_bb_tbl) != 64);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_id20_addrf) != 8);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_id20) != NVME_IDENTIFY_DATA_SIZE);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_chk_meta) != 32);
-	BUILD_BUG_ON(माप(काष्ठा nvme_nvm_chk_meta) !=
-						माप(काष्ठा nvm_chk_meta));
-पूर्ण
+static inline void _nvme_nvm_check_size(void)
+{
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_identity) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_ph_rw) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_erase_blk) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_getbbtbl) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_setbbtbl) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_id12_grp) != 960);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_id12_addrf) != 16);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_id12) != NVME_IDENTIFY_DATA_SIZE);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_bb_tbl) != 64);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_id20_addrf) != 8);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_id20) != NVME_IDENTIFY_DATA_SIZE);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_chk_meta) != 32);
+	BUILD_BUG_ON(sizeof(struct nvme_nvm_chk_meta) !=
+						sizeof(struct nvm_chk_meta));
+}
 
-अटल व्योम nvme_nvm_set_addr_12(काष्ठा nvm_addrf_12 *dst,
-				 काष्ठा nvme_nvm_id12_addrf *src)
-अणु
+static void nvme_nvm_set_addr_12(struct nvm_addrf_12 *dst,
+				 struct nvme_nvm_id12_addrf *src)
+{
 	dst->ch_len = src->ch_len;
 	dst->lun_len = src->lun_len;
 	dst->blk_len = src->blk_len;
@@ -281,29 +280,29 @@
 	dst->pg_mask = ((1ULL << dst->pg_len) - 1) << dst->pg_offset;
 	dst->pln_mask = ((1ULL << dst->pln_len) - 1) << dst->pln_offset;
 	dst->sec_mask = ((1ULL << dst->sec_len) - 1) << dst->sec_offset;
-पूर्ण
+}
 
-अटल पूर्णांक nvme_nvm_setup_12(काष्ठा nvme_nvm_id12 *id,
-			     काष्ठा nvm_geo *geo)
-अणु
-	काष्ठा nvme_nvm_id12_grp *src;
-	पूर्णांक sec_per_pg, sec_per_pl, pg_per_blk;
+static int nvme_nvm_setup_12(struct nvme_nvm_id12 *id,
+			     struct nvm_geo *geo)
+{
+	struct nvme_nvm_id12_grp *src;
+	int sec_per_pg, sec_per_pl, pg_per_blk;
 
-	अगर (id->cgrps != 1)
-		वापस -EINVAL;
+	if (id->cgrps != 1)
+		return -EINVAL;
 
 	src = &id->grp;
 
-	अगर (src->mtype != 0) अणु
+	if (src->mtype != 0) {
 		pr_err("nvm: memory type not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* 1.2 spec. only reports a single version id - unfold */
 	geo->major_ver_id = id->ver_id;
 	geo->minor_ver_id = 2;
 
-	/* Set compacted version क्रम upper layers */
+	/* Set compacted version for upper layers */
 	geo->version = NVM_OCSSD_SPEC_12;
 
 	geo->num_ch = src->num_ch;
@@ -325,11 +324,11 @@
 
 	geo->ws_min = sec_per_pg;
 	geo->ws_opt = sec_per_pg;
-	geo->mw_cunits = geo->ws_opt << 3;	/* शेष to MLC safe values */
+	geo->mw_cunits = geo->ws_opt << 3;	/* default to MLC safe values */
 
-	/* Do not impose values क्रम maximum number of खोलो blocks as it is
-	 * unspecअगरied in 1.2. Users of 1.2 must be aware of this and eventually
-	 * specअगरy these values through a quirk अगर restrictions apply.
+	/* Do not impose values for maximum number of open blocks as it is
+	 * unspecified in 1.2. Users of 1.2 must be aware of this and eventually
+	 * specify these values through a quirk if restrictions apply.
 	 */
 	geo->maxoc = geo->all_luns * geo->num_chk;
 	geo->maxocpu = geo->num_chk;
@@ -346,7 +345,7 @@
 	/* 1.2 compatibility */
 	geo->vmnt = id->vmnt;
 	geo->cap = le32_to_cpu(id->cap);
-	geo->करोm = le32_to_cpu(id->करोm);
+	geo->dom = le32_to_cpu(id->dom);
 
 	geo->mtype = src->mtype;
 	geo->fmtype = src->fmtype;
@@ -356,26 +355,26 @@
 
 	geo->pln_mode = NVM_PLANE_SINGLE;
 
-	अगर (geo->mpos & 0x020202) अणु
+	if (geo->mpos & 0x020202) {
 		geo->pln_mode = NVM_PLANE_DOUBLE;
 		geo->ws_opt <<= 1;
-	पूर्ण अन्यथा अगर (geo->mpos & 0x040404) अणु
+	} else if (geo->mpos & 0x040404) {
 		geo->pln_mode = NVM_PLANE_QUAD;
 		geo->ws_opt <<= 2;
-	पूर्ण
+	}
 
 	geo->num_pln = src->num_pln;
 	geo->num_pg = le16_to_cpu(src->num_pg);
 	geo->fpg_sz = le16_to_cpu(src->fpg_sz);
 
-	nvme_nvm_set_addr_12((काष्ठा nvm_addrf_12 *)&geo->addrf, &id->ppaf);
+	nvme_nvm_set_addr_12((struct nvm_addrf_12 *)&geo->addrf, &id->ppaf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvme_nvm_set_addr_20(काष्ठा nvm_addrf *dst,
-				 काष्ठा nvme_nvm_id20_addrf *src)
-अणु
+static void nvme_nvm_set_addr_20(struct nvm_addrf *dst,
+				 struct nvme_nvm_id20_addrf *src)
+{
 	dst->ch_len = src->grp_len;
 	dst->lun_len = src->pu_len;
 	dst->chk_len = src->chk_len;
@@ -390,15 +389,15 @@
 	dst->lun_mask = ((1ULL << dst->lun_len) - 1) << dst->lun_offset;
 	dst->chk_mask = ((1ULL << dst->chk_len) - 1) << dst->chk_offset;
 	dst->sec_mask = ((1ULL << dst->sec_len) - 1) << dst->sec_offset;
-पूर्ण
+}
 
-अटल पूर्णांक nvme_nvm_setup_20(काष्ठा nvme_nvm_id20 *id,
-			     काष्ठा nvm_geo *geo)
-अणु
+static int nvme_nvm_setup_20(struct nvme_nvm_id20 *id,
+			     struct nvm_geo *geo)
+{
 	geo->major_ver_id = id->mjr;
 	geo->minor_ver_id = id->mnr;
 
-	/* Set compacted version क्रम upper layers */
+	/* Set compacted version for upper layers */
 	geo->version = NVM_OCSSD_SPEC_20;
 
 	geo->num_ch = le16_to_cpu(id->num_grp);
@@ -426,115 +425,115 @@
 
 	nvme_nvm_set_addr_20(&geo->addrf, &id->lbaf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_nvm_identity(काष्ठा nvm_dev *nvmdev)
-अणु
-	काष्ठा nvme_ns *ns = nvmdev->q->queuedata;
-	काष्ठा nvme_nvm_id12 *id;
-	काष्ठा nvme_nvm_command c = अणुपूर्ण;
-	पूर्णांक ret;
+static int nvme_nvm_identity(struct nvm_dev *nvmdev)
+{
+	struct nvme_ns *ns = nvmdev->q->queuedata;
+	struct nvme_nvm_id12 *id;
+	struct nvme_nvm_command c = {};
+	int ret;
 
 	c.identity.opcode = nvme_nvm_admin_identity;
 	c.identity.nsid = cpu_to_le32(ns->head->ns_id);
 
-	id = kदो_स्मृति(माप(काष्ठा nvme_nvm_id12), GFP_KERNEL);
-	अगर (!id)
-		वापस -ENOMEM;
+	id = kmalloc(sizeof(struct nvme_nvm_id12), GFP_KERNEL);
+	if (!id)
+		return -ENOMEM;
 
-	ret = nvme_submit_sync_cmd(ns->ctrl->admin_q, (काष्ठा nvme_command *)&c,
-				id, माप(काष्ठा nvme_nvm_id12));
-	अगर (ret) अणु
+	ret = nvme_submit_sync_cmd(ns->ctrl->admin_q, (struct nvme_command *)&c,
+				id, sizeof(struct nvme_nvm_id12));
+	if (ret) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * The 1.2 and 2.0 specअगरications share the first byte in their geometry
+	 * The 1.2 and 2.0 specifications share the first byte in their geometry
 	 * command to make it possible to know what version a device implements.
 	 */
-	चयन (id->ver_id) अणु
-	हाल 1:
+	switch (id->ver_id) {
+	case 1:
 		ret = nvme_nvm_setup_12(id, &nvmdev->geo);
-		अवरोध;
-	हाल 2:
-		ret = nvme_nvm_setup_20((काष्ठा nvme_nvm_id20 *)id,
+		break;
+	case 2:
+		ret = nvme_nvm_setup_20((struct nvme_nvm_id20 *)id,
 							&nvmdev->geo);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(ns->ctrl->device, "OCSSD revision not supported (%d)\n",
 							id->ver_id);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 out:
-	kमुक्त(id);
-	वापस ret;
-पूर्ण
+	kfree(id);
+	return ret;
+}
 
-अटल पूर्णांक nvme_nvm_get_bb_tbl(काष्ठा nvm_dev *nvmdev, काष्ठा ppa_addr ppa,
+static int nvme_nvm_get_bb_tbl(struct nvm_dev *nvmdev, struct ppa_addr ppa,
 								u8 *blks)
-अणु
-	काष्ठा request_queue *q = nvmdev->q;
-	काष्ठा nvm_geo *geo = &nvmdev->geo;
-	काष्ठा nvme_ns *ns = q->queuedata;
-	काष्ठा nvme_ctrl *ctrl = ns->ctrl;
-	काष्ठा nvme_nvm_command c = अणुपूर्ण;
-	काष्ठा nvme_nvm_bb_tbl *bb_tbl;
-	पूर्णांक nr_blks = geo->num_chk * geo->num_pln;
-	पूर्णांक tblsz = माप(काष्ठा nvme_nvm_bb_tbl) + nr_blks;
-	पूर्णांक ret = 0;
+{
+	struct request_queue *q = nvmdev->q;
+	struct nvm_geo *geo = &nvmdev->geo;
+	struct nvme_ns *ns = q->queuedata;
+	struct nvme_ctrl *ctrl = ns->ctrl;
+	struct nvme_nvm_command c = {};
+	struct nvme_nvm_bb_tbl *bb_tbl;
+	int nr_blks = geo->num_chk * geo->num_pln;
+	int tblsz = sizeof(struct nvme_nvm_bb_tbl) + nr_blks;
+	int ret = 0;
 
 	c.get_bb.opcode = nvme_nvm_admin_get_bb_tbl;
 	c.get_bb.nsid = cpu_to_le32(ns->head->ns_id);
 	c.get_bb.spba = cpu_to_le64(ppa.ppa);
 
 	bb_tbl = kzalloc(tblsz, GFP_KERNEL);
-	अगर (!bb_tbl)
-		वापस -ENOMEM;
+	if (!bb_tbl)
+		return -ENOMEM;
 
-	ret = nvme_submit_sync_cmd(ctrl->admin_q, (काष्ठा nvme_command *)&c,
+	ret = nvme_submit_sync_cmd(ctrl->admin_q, (struct nvme_command *)&c,
 								bb_tbl, tblsz);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(ctrl->device, "get bad block table failed (%d)\n", ret);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (bb_tbl->tblid[0] != 'B' || bb_tbl->tblid[1] != 'B' ||
-		bb_tbl->tblid[2] != 'L' || bb_tbl->tblid[3] != 'T') अणु
+	if (bb_tbl->tblid[0] != 'B' || bb_tbl->tblid[1] != 'B' ||
+		bb_tbl->tblid[2] != 'L' || bb_tbl->tblid[3] != 'T') {
 		dev_err(ctrl->device, "bbt format mismatch\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (le16_to_cpu(bb_tbl->verid) != 1) अणु
+	if (le16_to_cpu(bb_tbl->verid) != 1) {
 		ret = -EINVAL;
 		dev_err(ctrl->device, "bbt version not supported\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (le32_to_cpu(bb_tbl->tblks) != nr_blks) अणु
+	if (le32_to_cpu(bb_tbl->tblks) != nr_blks) {
 		ret = -EINVAL;
 		dev_err(ctrl->device,
 				"bbt unsuspected blocks returned (%u!=%u)",
 				le32_to_cpu(bb_tbl->tblks), nr_blks);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(blks, bb_tbl->blk, geo->num_chk * geo->num_pln);
+	memcpy(blks, bb_tbl->blk, geo->num_chk * geo->num_pln);
 out:
-	kमुक्त(bb_tbl);
-	वापस ret;
-पूर्ण
+	kfree(bb_tbl);
+	return ret;
+}
 
-अटल पूर्णांक nvme_nvm_set_bb_tbl(काष्ठा nvm_dev *nvmdev, काष्ठा ppa_addr *ppas,
-							पूर्णांक nr_ppas, पूर्णांक type)
-अणु
-	काष्ठा nvme_ns *ns = nvmdev->q->queuedata;
-	काष्ठा nvme_nvm_command c = अणुपूर्ण;
-	पूर्णांक ret = 0;
+static int nvme_nvm_set_bb_tbl(struct nvm_dev *nvmdev, struct ppa_addr *ppas,
+							int nr_ppas, int type)
+{
+	struct nvme_ns *ns = nvmdev->q->queuedata;
+	struct nvme_nvm_command c = {};
+	int ret = 0;
 
 	c.set_bb.opcode = nvme_nvm_admin_set_bb_tbl;
 	c.set_bb.nsid = cpu_to_le32(ns->head->ns_id);
@@ -542,40 +541,40 @@ out:
 	c.set_bb.nlb = cpu_to_le16(nr_ppas - 1);
 	c.set_bb.value = type;
 
-	ret = nvme_submit_sync_cmd(ns->ctrl->admin_q, (काष्ठा nvme_command *)&c,
-								शून्य, 0);
-	अगर (ret)
+	ret = nvme_submit_sync_cmd(ns->ctrl->admin_q, (struct nvme_command *)&c,
+								NULL, 0);
+	if (ret)
 		dev_err(ns->ctrl->device, "set bad block table failed (%d)\n",
 									ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Expect the lba in device क्रमmat
+ * Expect the lba in device format
  */
-अटल पूर्णांक nvme_nvm_get_chk_meta(काष्ठा nvm_dev *ndev,
-				 sector_t slba, पूर्णांक nchks,
-				 काष्ठा nvm_chk_meta *meta)
-अणु
-	काष्ठा nvm_geo *geo = &ndev->geo;
-	काष्ठा nvme_ns *ns = ndev->q->queuedata;
-	काष्ठा nvme_ctrl *ctrl = ns->ctrl;
-	काष्ठा nvme_nvm_chk_meta *dev_meta, *dev_meta_off;
-	काष्ठा ppa_addr ppa;
-	माप_प्रकार left = nchks * माप(काष्ठा nvme_nvm_chk_meta);
-	माप_प्रकार log_pos, offset, len;
-	पूर्णांक i, max_len;
-	पूर्णांक ret = 0;
+static int nvme_nvm_get_chk_meta(struct nvm_dev *ndev,
+				 sector_t slba, int nchks,
+				 struct nvm_chk_meta *meta)
+{
+	struct nvm_geo *geo = &ndev->geo;
+	struct nvme_ns *ns = ndev->q->queuedata;
+	struct nvme_ctrl *ctrl = ns->ctrl;
+	struct nvme_nvm_chk_meta *dev_meta, *dev_meta_off;
+	struct ppa_addr ppa;
+	size_t left = nchks * sizeof(struct nvme_nvm_chk_meta);
+	size_t log_pos, offset, len;
+	int i, max_len;
+	int ret = 0;
 
 	/*
-	 * limit requests to maximum 256K to aव्योम issuing arbitrary large
-	 * requests when the device करोes not specअगरic a maximum transfer size.
+	 * limit requests to maximum 256K to avoid issuing arbitrary large
+	 * requests when the device does not specific a maximum transfer size.
 	 */
-	max_len = min_t(अचिन्हित पूर्णांक, ctrl->max_hw_sectors << 9, 256 * 1024);
+	max_len = min_t(unsigned int, ctrl->max_hw_sectors << 9, 256 * 1024);
 
-	dev_meta = kदो_स्मृति(max_len, GFP_KERNEL);
-	अगर (!dev_meta)
-		वापस -ENOMEM;
+	dev_meta = kmalloc(max_len, GFP_KERNEL);
+	if (!dev_meta)
+		return -ENOMEM;
 
 	/* Normalize lba address space to obtain log offset */
 	ppa.ppa = slba;
@@ -585,23 +584,23 @@ out:
 	log_pos += ppa.m.pu * geo->num_chk;
 	log_pos += ppa.m.grp * geo->num_lun * geo->num_chk;
 
-	offset = log_pos * माप(काष्ठा nvme_nvm_chk_meta);
+	offset = log_pos * sizeof(struct nvme_nvm_chk_meta);
 
-	जबतक (left) अणु
-		len = min_t(अचिन्हित पूर्णांक, left, max_len);
+	while (left) {
+		len = min_t(unsigned int, left, max_len);
 
-		स_रखो(dev_meta, 0, max_len);
+		memset(dev_meta, 0, max_len);
 		dev_meta_off = dev_meta;
 
 		ret = nvme_get_log(ctrl, ns->head->ns_id,
 				NVME_NVM_LOG_REPORT_CHUNK, 0, NVME_CSI_NVM,
 				dev_meta, len, offset);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(ctrl->device, "Get REPORT CHUNK log error\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		क्रम (i = 0; i < len; i += माप(काष्ठा nvme_nvm_chk_meta)) अणु
+		for (i = 0; i < len; i += sizeof(struct nvme_nvm_chk_meta)) {
 			meta->state = dev_meta_off->state;
 			meta->type = dev_meta_off->type;
 			meta->wi = dev_meta_off->wi;
@@ -611,128 +610,128 @@ out:
 
 			meta++;
 			dev_meta_off++;
-		पूर्ण
+		}
 
 		offset += len;
 		left -= len;
-	पूर्ण
+	}
 
-	kमुक्त(dev_meta);
+	kfree(dev_meta);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम nvme_nvm_rqtocmd(काष्ठा nvm_rq *rqd, काष्ठा nvme_ns *ns,
-				    काष्ठा nvme_nvm_command *c)
-अणु
+static inline void nvme_nvm_rqtocmd(struct nvm_rq *rqd, struct nvme_ns *ns,
+				    struct nvme_nvm_command *c)
+{
 	c->ph_rw.opcode = rqd->opcode;
 	c->ph_rw.nsid = cpu_to_le32(ns->head->ns_id);
 	c->ph_rw.spba = cpu_to_le64(rqd->ppa_addr.ppa);
 	c->ph_rw.metadata = cpu_to_le64(rqd->dma_meta_list);
 	c->ph_rw.control = cpu_to_le16(rqd->flags);
 	c->ph_rw.length = cpu_to_le16(rqd->nr_ppas - 1);
-पूर्ण
+}
 
-अटल व्योम nvme_nvm_end_io(काष्ठा request *rq, blk_status_t status)
-अणु
-	काष्ठा nvm_rq *rqd = rq->end_io_data;
+static void nvme_nvm_end_io(struct request *rq, blk_status_t status)
+{
+	struct nvm_rq *rqd = rq->end_io_data;
 
 	rqd->ppa_status = le64_to_cpu(nvme_req(rq)->result.u64);
 	rqd->error = nvme_req(rq)->status;
 	nvm_end_io(rqd);
 
-	kमुक्त(nvme_req(rq)->cmd);
-	blk_mq_मुक्त_request(rq);
-पूर्ण
+	kfree(nvme_req(rq)->cmd);
+	blk_mq_free_request(rq);
+}
 
-अटल काष्ठा request *nvme_nvm_alloc_request(काष्ठा request_queue *q,
-					      काष्ठा nvm_rq *rqd,
-					      काष्ठा nvme_nvm_command *cmd)
-अणु
-	काष्ठा nvme_ns *ns = q->queuedata;
-	काष्ठा request *rq;
+static struct request *nvme_nvm_alloc_request(struct request_queue *q,
+					      struct nvm_rq *rqd,
+					      struct nvme_nvm_command *cmd)
+{
+	struct nvme_ns *ns = q->queuedata;
+	struct request *rq;
 
 	nvme_nvm_rqtocmd(rqd, ns, cmd);
 
-	rq = nvme_alloc_request(q, (काष्ठा nvme_command *)cmd, 0);
-	अगर (IS_ERR(rq))
-		वापस rq;
+	rq = nvme_alloc_request(q, (struct nvme_command *)cmd, 0);
+	if (IS_ERR(rq))
+		return rq;
 
 	rq->cmd_flags &= ~REQ_FAILFAST_DRIVER;
 
-	अगर (rqd->bio)
+	if (rqd->bio)
 		blk_rq_append_bio(rq, rqd->bio);
-	अन्यथा
+	else
 		rq->ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, IOPRIO_NORM);
 
-	वापस rq;
-पूर्ण
+	return rq;
+}
 
-अटल पूर्णांक nvme_nvm_submit_io(काष्ठा nvm_dev *dev, काष्ठा nvm_rq *rqd,
-			      व्योम *buf)
-अणु
-	काष्ठा nvm_geo *geo = &dev->geo;
-	काष्ठा request_queue *q = dev->q;
-	काष्ठा nvme_nvm_command *cmd;
-	काष्ठा request *rq;
-	पूर्णांक ret;
+static int nvme_nvm_submit_io(struct nvm_dev *dev, struct nvm_rq *rqd,
+			      void *buf)
+{
+	struct nvm_geo *geo = &dev->geo;
+	struct request_queue *q = dev->q;
+	struct nvme_nvm_command *cmd;
+	struct request *rq;
+	int ret;
 
-	cmd = kzalloc(माप(काष्ठा nvme_nvm_command), GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(struct nvme_nvm_command), GFP_KERNEL);
+	if (!cmd)
+		return -ENOMEM;
 
 	rq = nvme_nvm_alloc_request(q, rqd, cmd);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		ret = PTR_ERR(rq);
-		जाओ err_मुक्त_cmd;
-	पूर्ण
+		goto err_free_cmd;
+	}
 
-	अगर (buf) अणु
+	if (buf) {
 		ret = blk_rq_map_kern(q, rq, buf, geo->csecs * rqd->nr_ppas,
 				GFP_KERNEL);
-		अगर (ret)
-			जाओ err_मुक्त_cmd;
-	पूर्ण
+		if (ret)
+			goto err_free_cmd;
+	}
 
 	rq->end_io_data = rqd;
 
-	blk_execute_rq_noरुको(शून्य, rq, 0, nvme_nvm_end_io);
+	blk_execute_rq_nowait(NULL, rq, 0, nvme_nvm_end_io);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_cmd:
-	kमुक्त(cmd);
-	वापस ret;
-पूर्ण
+err_free_cmd:
+	kfree(cmd);
+	return ret;
+}
 
-अटल व्योम *nvme_nvm_create_dma_pool(काष्ठा nvm_dev *nvmdev, अक्षर *name,
-					पूर्णांक size)
-अणु
-	काष्ठा nvme_ns *ns = nvmdev->q->queuedata;
+static void *nvme_nvm_create_dma_pool(struct nvm_dev *nvmdev, char *name,
+					int size)
+{
+	struct nvme_ns *ns = nvmdev->q->queuedata;
 
-	वापस dma_pool_create(name, ns->ctrl->dev, size, PAGE_SIZE, 0);
-पूर्ण
+	return dma_pool_create(name, ns->ctrl->dev, size, PAGE_SIZE, 0);
+}
 
-अटल व्योम nvme_nvm_destroy_dma_pool(व्योम *pool)
-अणु
-	काष्ठा dma_pool *dma_pool = pool;
+static void nvme_nvm_destroy_dma_pool(void *pool)
+{
+	struct dma_pool *dma_pool = pool;
 
 	dma_pool_destroy(dma_pool);
-पूर्ण
+}
 
-अटल व्योम *nvme_nvm_dev_dma_alloc(काष्ठा nvm_dev *dev, व्योम *pool,
+static void *nvme_nvm_dev_dma_alloc(struct nvm_dev *dev, void *pool,
 				    gfp_t mem_flags, dma_addr_t *dma_handler)
-अणु
-	वापस dma_pool_alloc(pool, mem_flags, dma_handler);
-पूर्ण
+{
+	return dma_pool_alloc(pool, mem_flags, dma_handler);
+}
 
-अटल व्योम nvme_nvm_dev_dma_मुक्त(व्योम *pool, व्योम *addr,
+static void nvme_nvm_dev_dma_free(void *pool, void *addr,
 							dma_addr_t dma_handler)
-अणु
-	dma_pool_मुक्त(pool, addr, dma_handler);
-पूर्ण
+{
+	dma_pool_free(pool, addr, dma_handler);
+}
 
-अटल काष्ठा nvm_dev_ops nvme_nvm_dev_ops = अणु
+static struct nvm_dev_ops nvme_nvm_dev_ops = {
 	.identity		= nvme_nvm_identity,
 
 	.get_bb_tbl		= nvme_nvm_get_bb_tbl,
@@ -745,162 +744,162 @@ err_मुक्त_cmd:
 	.create_dma_pool	= nvme_nvm_create_dma_pool,
 	.destroy_dma_pool	= nvme_nvm_destroy_dma_pool,
 	.dev_dma_alloc		= nvme_nvm_dev_dma_alloc,
-	.dev_dma_मुक्त		= nvme_nvm_dev_dma_मुक्त,
-पूर्ण;
+	.dev_dma_free		= nvme_nvm_dev_dma_free,
+};
 
-अटल पूर्णांक nvme_nvm_submit_user_cmd(काष्ठा request_queue *q,
-				काष्ठा nvme_ns *ns,
-				काष्ठा nvme_nvm_command *vcmd,
-				व्योम __user *ubuf, अचिन्हित पूर्णांक bufflen,
-				व्योम __user *meta_buf, अचिन्हित पूर्णांक meta_len,
-				व्योम __user *ppa_buf, अचिन्हित पूर्णांक ppa_len,
-				u32 *result, u64 *status, अचिन्हित पूर्णांक समयout)
-अणु
-	bool ग_लिखो = nvme_is_ग_लिखो((काष्ठा nvme_command *)vcmd);
-	काष्ठा nvm_dev *dev = ns->ndev;
-	काष्ठा request *rq;
-	काष्ठा bio *bio = शून्य;
-	__le64 *ppa_list = शून्य;
+static int nvme_nvm_submit_user_cmd(struct request_queue *q,
+				struct nvme_ns *ns,
+				struct nvme_nvm_command *vcmd,
+				void __user *ubuf, unsigned int bufflen,
+				void __user *meta_buf, unsigned int meta_len,
+				void __user *ppa_buf, unsigned int ppa_len,
+				u32 *result, u64 *status, unsigned int timeout)
+{
+	bool write = nvme_is_write((struct nvme_command *)vcmd);
+	struct nvm_dev *dev = ns->ndev;
+	struct request *rq;
+	struct bio *bio = NULL;
+	__le64 *ppa_list = NULL;
 	dma_addr_t ppa_dma;
-	__le64 *metadata = शून्य;
+	__le64 *metadata = NULL;
 	dma_addr_t metadata_dma;
-	DECLARE_COMPLETION_ONSTACK(रुको);
-	पूर्णांक ret = 0;
+	DECLARE_COMPLETION_ONSTACK(wait);
+	int ret = 0;
 
-	rq = nvme_alloc_request(q, (काष्ठा nvme_command *)vcmd, 0);
-	अगर (IS_ERR(rq)) अणु
+	rq = nvme_alloc_request(q, (struct nvme_command *)vcmd, 0);
+	if (IS_ERR(rq)) {
 		ret = -ENOMEM;
-		जाओ err_cmd;
-	पूर्ण
+		goto err_cmd;
+	}
 
-	अगर (समयout)
-		rq->समयout = समयout;
+	if (timeout)
+		rq->timeout = timeout;
 
-	अगर (ppa_buf && ppa_len) अणु
+	if (ppa_buf && ppa_len) {
 		ppa_list = dma_pool_alloc(dev->dma_pool, GFP_KERNEL, &ppa_dma);
-		अगर (!ppa_list) अणु
+		if (!ppa_list) {
 			ret = -ENOMEM;
-			जाओ err_rq;
-		पूर्ण
-		अगर (copy_from_user(ppa_list, (व्योम __user *)ppa_buf,
-						माप(u64) * (ppa_len + 1))) अणु
+			goto err_rq;
+		}
+		if (copy_from_user(ppa_list, (void __user *)ppa_buf,
+						sizeof(u64) * (ppa_len + 1))) {
 			ret = -EFAULT;
-			जाओ err_ppa;
-		पूर्ण
+			goto err_ppa;
+		}
 		vcmd->ph_rw.spba = cpu_to_le64(ppa_dma);
-	पूर्ण अन्यथा अणु
-		vcmd->ph_rw.spba = cpu_to_le64((uपूर्णांकptr_t)ppa_buf);
-	पूर्ण
+	} else {
+		vcmd->ph_rw.spba = cpu_to_le64((uintptr_t)ppa_buf);
+	}
 
-	अगर (ubuf && bufflen) अणु
-		ret = blk_rq_map_user(q, rq, शून्य, ubuf, bufflen, GFP_KERNEL);
-		अगर (ret)
-			जाओ err_ppa;
+	if (ubuf && bufflen) {
+		ret = blk_rq_map_user(q, rq, NULL, ubuf, bufflen, GFP_KERNEL);
+		if (ret)
+			goto err_ppa;
 		bio = rq->bio;
 
-		अगर (meta_buf && meta_len) अणु
+		if (meta_buf && meta_len) {
 			metadata = dma_pool_alloc(dev->dma_pool, GFP_KERNEL,
 								&metadata_dma);
-			अगर (!metadata) अणु
+			if (!metadata) {
 				ret = -ENOMEM;
-				जाओ err_map;
-			पूर्ण
+				goto err_map;
+			}
 
-			अगर (ग_लिखो) अणु
-				अगर (copy_from_user(metadata,
-						(व्योम __user *)meta_buf,
-						meta_len)) अणु
+			if (write) {
+				if (copy_from_user(metadata,
+						(void __user *)meta_buf,
+						meta_len)) {
 					ret = -EFAULT;
-					जाओ err_meta;
-				पूर्ण
-			पूर्ण
+					goto err_meta;
+				}
+			}
 			vcmd->ph_rw.metadata = cpu_to_le64(metadata_dma);
-		पूर्ण
+		}
 
 		bio_set_dev(bio, ns->disk->part0);
-	पूर्ण
+	}
 
-	blk_execute_rq(शून्य, rq, 0);
+	blk_execute_rq(NULL, rq, 0);
 
-	अगर (nvme_req(rq)->flags & NVME_REQ_CANCELLED)
+	if (nvme_req(rq)->flags & NVME_REQ_CANCELLED)
 		ret = -EINTR;
-	अन्यथा अगर (nvme_req(rq)->status & 0x7ff)
+	else if (nvme_req(rq)->status & 0x7ff)
 		ret = -EIO;
-	अगर (result)
+	if (result)
 		*result = nvme_req(rq)->status & 0x7ff;
-	अगर (status)
+	if (status)
 		*status = le64_to_cpu(nvme_req(rq)->result.u64);
 
-	अगर (metadata && !ret && !ग_लिखो) अणु
-		अगर (copy_to_user(meta_buf, (व्योम *)metadata, meta_len))
+	if (metadata && !ret && !write) {
+		if (copy_to_user(meta_buf, (void *)metadata, meta_len))
 			ret = -EFAULT;
-	पूर्ण
+	}
 err_meta:
-	अगर (meta_buf && meta_len)
-		dma_pool_मुक्त(dev->dma_pool, metadata, metadata_dma);
+	if (meta_buf && meta_len)
+		dma_pool_free(dev->dma_pool, metadata, metadata_dma);
 err_map:
-	अगर (bio)
+	if (bio)
 		blk_rq_unmap_user(bio);
 err_ppa:
-	अगर (ppa_buf && ppa_len)
-		dma_pool_मुक्त(dev->dma_pool, ppa_list, ppa_dma);
+	if (ppa_buf && ppa_len)
+		dma_pool_free(dev->dma_pool, ppa_list, ppa_dma);
 err_rq:
-	blk_mq_मुक्त_request(rq);
+	blk_mq_free_request(rq);
 err_cmd:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nvme_nvm_submit_vio(काष्ठा nvme_ns *ns,
-					काष्ठा nvm_user_vio __user *uvio)
-अणु
-	काष्ठा nvm_user_vio vio;
-	काष्ठा nvme_nvm_command c;
-	अचिन्हित पूर्णांक length;
-	पूर्णांक ret;
+static int nvme_nvm_submit_vio(struct nvme_ns *ns,
+					struct nvm_user_vio __user *uvio)
+{
+	struct nvm_user_vio vio;
+	struct nvme_nvm_command c;
+	unsigned int length;
+	int ret;
 
-	अगर (copy_from_user(&vio, uvio, माप(vio)))
-		वापस -EFAULT;
-	अगर (vio.flags)
-		वापस -EINVAL;
+	if (copy_from_user(&vio, uvio, sizeof(vio)))
+		return -EFAULT;
+	if (vio.flags)
+		return -EINVAL;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.ph_rw.opcode = vio.opcode;
 	c.ph_rw.nsid = cpu_to_le32(ns->head->ns_id);
 	c.ph_rw.control = cpu_to_le16(vio.control);
 	c.ph_rw.length = cpu_to_le16(vio.nppas);
 
-	length = (vio.nppas + 1) << ns->lba_shअगरt;
+	length = (vio.nppas + 1) << ns->lba_shift;
 
 	ret = nvme_nvm_submit_user_cmd(ns->queue, ns, &c,
-			(व्योम __user *)(uपूर्णांकptr_t)vio.addr, length,
-			(व्योम __user *)(uपूर्णांकptr_t)vio.metadata,
+			(void __user *)(uintptr_t)vio.addr, length,
+			(void __user *)(uintptr_t)vio.metadata,
 							vio.metadata_len,
-			(व्योम __user *)(uपूर्णांकptr_t)vio.ppa_list, vio.nppas,
+			(void __user *)(uintptr_t)vio.ppa_list, vio.nppas,
 			&vio.result, &vio.status, 0);
 
-	अगर (ret && copy_to_user(uvio, &vio, माप(vio)))
-		वापस -EFAULT;
+	if (ret && copy_to_user(uvio, &vio, sizeof(vio)))
+		return -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nvme_nvm_user_vcmd(काष्ठा nvme_ns *ns, पूर्णांक admin,
-					काष्ठा nvm_passthru_vio __user *uvcmd)
-अणु
-	काष्ठा nvm_passthru_vio vcmd;
-	काष्ठा nvme_nvm_command c;
-	काष्ठा request_queue *q;
-	अचिन्हित पूर्णांक समयout = 0;
-	पूर्णांक ret;
+static int nvme_nvm_user_vcmd(struct nvme_ns *ns, int admin,
+					struct nvm_passthru_vio __user *uvcmd)
+{
+	struct nvm_passthru_vio vcmd;
+	struct nvme_nvm_command c;
+	struct request_queue *q;
+	unsigned int timeout = 0;
+	int ret;
 
-	अगर (copy_from_user(&vcmd, uvcmd, माप(vcmd)))
-		वापस -EFAULT;
-	अगर ((vcmd.opcode != 0xF2) && (!capable(CAP_SYS_ADMIN)))
-		वापस -EACCES;
-	अगर (vcmd.flags)
-		वापस -EINVAL;
+	if (copy_from_user(&vcmd, uvcmd, sizeof(vcmd)))
+		return -EFAULT;
+	if ((vcmd.opcode != 0xF2) && (!capable(CAP_SYS_ADMIN)))
+		return -EACCES;
+	if (vcmd.flags)
+		return -EINVAL;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.common.opcode = vcmd.opcode;
 	c.common.nsid = cpu_to_le32(ns->head->ns_id);
 	c.common.cdw2[0] = cpu_to_le32(vcmd.cdw2);
@@ -912,113 +911,113 @@ err_cmd:
 	c.common.cdw14 = cpu_to_le32(vcmd.cdw14);
 	c.common.cdw15 = cpu_to_le32(vcmd.cdw15);
 
-	अगर (vcmd.समयout_ms)
-		समयout = msecs_to_jअगरfies(vcmd.समयout_ms);
+	if (vcmd.timeout_ms)
+		timeout = msecs_to_jiffies(vcmd.timeout_ms);
 
 	q = admin ? ns->ctrl->admin_q : ns->queue;
 
 	ret = nvme_nvm_submit_user_cmd(q, ns,
-			(काष्ठा nvme_nvm_command *)&c,
-			(व्योम __user *)(uपूर्णांकptr_t)vcmd.addr, vcmd.data_len,
-			(व्योम __user *)(uपूर्णांकptr_t)vcmd.metadata,
+			(struct nvme_nvm_command *)&c,
+			(void __user *)(uintptr_t)vcmd.addr, vcmd.data_len,
+			(void __user *)(uintptr_t)vcmd.metadata,
 							vcmd.metadata_len,
-			(व्योम __user *)(uपूर्णांकptr_t)vcmd.ppa_list, vcmd.nppas,
-			&vcmd.result, &vcmd.status, समयout);
+			(void __user *)(uintptr_t)vcmd.ppa_list, vcmd.nppas,
+			&vcmd.result, &vcmd.status, timeout);
 
-	अगर (ret && copy_to_user(uvcmd, &vcmd, माप(vcmd)))
-		वापस -EFAULT;
+	if (ret && copy_to_user(uvcmd, &vcmd, sizeof(vcmd)))
+		return -EFAULT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक nvme_nvm_ioctl(काष्ठा nvme_ns *ns, अचिन्हित पूर्णांक cmd, व्योम __user *argp)
-अणु
-	चयन (cmd) अणु
-	हाल NVME_NVM_IOCTL_ADMIN_VIO:
-		वापस nvme_nvm_user_vcmd(ns, 1, argp);
-	हाल NVME_NVM_IOCTL_IO_VIO:
-		वापस nvme_nvm_user_vcmd(ns, 0, argp);
-	हाल NVME_NVM_IOCTL_SUBMIT_VIO:
-		वापस nvme_nvm_submit_vio(ns, argp);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+int nvme_nvm_ioctl(struct nvme_ns *ns, unsigned int cmd, void __user *argp)
+{
+	switch (cmd) {
+	case NVME_NVM_IOCTL_ADMIN_VIO:
+		return nvme_nvm_user_vcmd(ns, 1, argp);
+	case NVME_NVM_IOCTL_IO_VIO:
+		return nvme_nvm_user_vcmd(ns, 0, argp);
+	case NVME_NVM_IOCTL_SUBMIT_VIO:
+		return nvme_nvm_submit_vio(ns, argp);
+	default:
+		return -ENOTTY;
+	}
+}
 
-पूर्णांक nvme_nvm_रेजिस्टर(काष्ठा nvme_ns *ns, अक्षर *disk_name, पूर्णांक node)
-अणु
-	काष्ठा request_queue *q = ns->queue;
-	काष्ठा nvm_dev *dev;
-	काष्ठा nvm_geo *geo;
+int nvme_nvm_register(struct nvme_ns *ns, char *disk_name, int node)
+{
+	struct request_queue *q = ns->queue;
+	struct nvm_dev *dev;
+	struct nvm_geo *geo;
 
 	_nvme_nvm_check_size();
 
 	dev = nvm_alloc_dev(node);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
-	/* Note that csecs and sos will be overridden अगर it is a 1.2 drive. */
+	/* Note that csecs and sos will be overridden if it is a 1.2 drive. */
 	geo = &dev->geo;
-	geo->csecs = 1 << ns->lba_shअगरt;
+	geo->csecs = 1 << ns->lba_shift;
 	geo->sos = ns->ms;
-	अगर (ns->features & NVME_NS_EXT_LBAS)
+	if (ns->features & NVME_NS_EXT_LBAS)
 		geo->ext = true;
-	अन्यथा
+	else
 		geo->ext = false;
 	geo->mdts = ns->ctrl->max_hw_sectors;
 
 	dev->q = q;
-	स_नकल(dev->name, disk_name, DISK_NAME_LEN);
+	memcpy(dev->name, disk_name, DISK_NAME_LEN);
 	dev->ops = &nvme_nvm_dev_ops;
-	dev->निजी_data = ns;
+	dev->private_data = ns;
 	ns->ndev = dev;
 
-	वापस nvm_रेजिस्टर(dev);
-पूर्ण
+	return nvm_register(dev);
+}
 
-व्योम nvme_nvm_unरेजिस्टर(काष्ठा nvme_ns *ns)
-अणु
-	nvm_unरेजिस्टर(ns->ndev);
-पूर्ण
+void nvme_nvm_unregister(struct nvme_ns *ns)
+{
+	nvm_unregister(ns->ndev);
+}
 
-अटल sमाप_प्रकार nvm_dev_attr_show(काष्ठा device *dev,
-		काष्ठा device_attribute *dattr, अक्षर *page)
-अणु
-	काष्ठा nvme_ns *ns = nvme_get_ns_from_dev(dev);
-	काष्ठा nvm_dev *ndev = ns->ndev;
-	काष्ठा nvm_geo *geo = &ndev->geo;
-	काष्ठा attribute *attr;
+static ssize_t nvm_dev_attr_show(struct device *dev,
+		struct device_attribute *dattr, char *page)
+{
+	struct nvme_ns *ns = nvme_get_ns_from_dev(dev);
+	struct nvm_dev *ndev = ns->ndev;
+	struct nvm_geo *geo = &ndev->geo;
+	struct attribute *attr;
 
-	अगर (!ndev)
-		वापस 0;
+	if (!ndev)
+		return 0;
 
 	attr = &dattr->attr;
 
-	अगर (म_भेद(attr->name, "version") == 0) अणु
-		अगर (geo->major_ver_id == 1)
-			वापस scnम_लिखो(page, PAGE_SIZE, "%u\n",
+	if (strcmp(attr->name, "version") == 0) {
+		if (geo->major_ver_id == 1)
+			return scnprintf(page, PAGE_SIZE, "%u\n",
 						geo->major_ver_id);
-		अन्यथा
-			वापस scnम_लिखो(page, PAGE_SIZE, "%u.%u\n",
+		else
+			return scnprintf(page, PAGE_SIZE, "%u.%u\n",
 						geo->major_ver_id,
 						geo->minor_ver_id);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "capabilities") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->cap);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "read_typ") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->trdt);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "read_max") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->trdm);
-	पूर्ण अन्यथा अणु
-		वापस scnम_लिखो(page,
+	} else if (strcmp(attr->name, "capabilities") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->cap);
+	} else if (strcmp(attr->name, "read_typ") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->trdt);
+	} else if (strcmp(attr->name, "read_max") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->trdm);
+	} else {
+		return scnprintf(page,
 				 PAGE_SIZE,
 				 "Unhandled attr(%s) in `%s`\n",
 				 attr->name, __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार nvm_dev_attr_show_ppaf(काष्ठा nvm_addrf_12 *ppaf, अक्षर *page)
-अणु
-	वापस scnम_लिखो(page, PAGE_SIZE,
+static ssize_t nvm_dev_attr_show_ppaf(struct nvm_addrf_12 *ppaf, char *page)
+{
+	return scnprintf(page, PAGE_SIZE,
 		"0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
 				ppaf->ch_offset, ppaf->ch_len,
 				ppaf->lun_offset, ppaf->lun_len,
@@ -1026,181 +1025,181 @@ err_cmd:
 				ppaf->blk_offset, ppaf->blk_len,
 				ppaf->pg_offset, ppaf->pg_len,
 				ppaf->sec_offset, ppaf->sec_len);
-पूर्ण
+}
 
-अटल sमाप_प्रकार nvm_dev_attr_show_12(काष्ठा device *dev,
-		काष्ठा device_attribute *dattr, अक्षर *page)
-अणु
-	काष्ठा nvme_ns *ns = nvme_get_ns_from_dev(dev);
-	काष्ठा nvm_dev *ndev = ns->ndev;
-	काष्ठा nvm_geo *geo = &ndev->geo;
-	काष्ठा attribute *attr;
+static ssize_t nvm_dev_attr_show_12(struct device *dev,
+		struct device_attribute *dattr, char *page)
+{
+	struct nvme_ns *ns = nvme_get_ns_from_dev(dev);
+	struct nvm_dev *ndev = ns->ndev;
+	struct nvm_geo *geo = &ndev->geo;
+	struct attribute *attr;
 
-	अगर (!ndev)
-		वापस 0;
-
-	attr = &dattr->attr;
-
-	अगर (म_भेद(attr->name, "vendor_opcode") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->vmnt);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "device_mode") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->करोm);
-	/* kept क्रम compatibility */
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "media_manager") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%s\n", "gennvm");
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "ppa_format") == 0) अणु
-		वापस nvm_dev_attr_show_ppaf((व्योम *)&geo->addrf, page);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "media_type") == 0) अणु	/* u8 */
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->mtype);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "flash_media_type") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->fmtype);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "num_channels") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_ch);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "num_luns") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_lun);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "num_planes") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_pln);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "num_blocks") == 0) अणु	/* u16 */
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_chk);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "num_pages") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_pg);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "page_size") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->fpg_sz);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "hw_sector_size") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->csecs);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "oob_sector_size") == 0) अणु/* u32 */
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->sos);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "prog_typ") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tprt);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "prog_max") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tprm);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "erase_typ") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tbet);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "erase_max") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tbem);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "multiplane_modes") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "0x%08x\n", geo->mpos);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "media_capabilities") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "0x%08x\n", geo->mccap);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "max_phys_secs") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", NVM_MAX_VLBA);
-	पूर्ण अन्यथा अणु
-		वापस scnम_लिखो(page, PAGE_SIZE,
-			"Unhandled attr(%s) in `%s`\n",
-			attr->name, __func__);
-	पूर्ण
-पूर्ण
-
-अटल sमाप_प्रकार nvm_dev_attr_show_20(काष्ठा device *dev,
-		काष्ठा device_attribute *dattr, अक्षर *page)
-अणु
-	काष्ठा nvme_ns *ns = nvme_get_ns_from_dev(dev);
-	काष्ठा nvm_dev *ndev = ns->ndev;
-	काष्ठा nvm_geo *geo = &ndev->geo;
-	काष्ठा attribute *attr;
-
-	अगर (!ndev)
-		वापस 0;
+	if (!ndev)
+		return 0;
 
 	attr = &dattr->attr;
 
-	अगर (म_भेद(attr->name, "groups") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_ch);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "punits") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_lun);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "chunks") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->num_chk);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "clba") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->clba);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "ws_min") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->ws_min);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "ws_opt") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->ws_opt);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "maxoc") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->maxoc);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "maxocpu") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->maxocpu);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "mw_cunits") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->mw_cunits);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "write_typ") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tprt);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "write_max") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tprm);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "reset_typ") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tbet);
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "reset_max") == 0) अणु
-		वापस scnम_लिखो(page, PAGE_SIZE, "%u\n", geo->tbem);
-	पूर्ण अन्यथा अणु
-		वापस scnम_लिखो(page, PAGE_SIZE,
+	if (strcmp(attr->name, "vendor_opcode") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->vmnt);
+	} else if (strcmp(attr->name, "device_mode") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->dom);
+	/* kept for compatibility */
+	} else if (strcmp(attr->name, "media_manager") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%s\n", "gennvm");
+	} else if (strcmp(attr->name, "ppa_format") == 0) {
+		return nvm_dev_attr_show_ppaf((void *)&geo->addrf, page);
+	} else if (strcmp(attr->name, "media_type") == 0) {	/* u8 */
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->mtype);
+	} else if (strcmp(attr->name, "flash_media_type") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->fmtype);
+	} else if (strcmp(attr->name, "num_channels") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_ch);
+	} else if (strcmp(attr->name, "num_luns") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_lun);
+	} else if (strcmp(attr->name, "num_planes") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_pln);
+	} else if (strcmp(attr->name, "num_blocks") == 0) {	/* u16 */
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_chk);
+	} else if (strcmp(attr->name, "num_pages") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_pg);
+	} else if (strcmp(attr->name, "page_size") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->fpg_sz);
+	} else if (strcmp(attr->name, "hw_sector_size") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->csecs);
+	} else if (strcmp(attr->name, "oob_sector_size") == 0) {/* u32 */
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->sos);
+	} else if (strcmp(attr->name, "prog_typ") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tprt);
+	} else if (strcmp(attr->name, "prog_max") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tprm);
+	} else if (strcmp(attr->name, "erase_typ") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tbet);
+	} else if (strcmp(attr->name, "erase_max") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tbem);
+	} else if (strcmp(attr->name, "multiplane_modes") == 0) {
+		return scnprintf(page, PAGE_SIZE, "0x%08x\n", geo->mpos);
+	} else if (strcmp(attr->name, "media_capabilities") == 0) {
+		return scnprintf(page, PAGE_SIZE, "0x%08x\n", geo->mccap);
+	} else if (strcmp(attr->name, "max_phys_secs") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", NVM_MAX_VLBA);
+	} else {
+		return scnprintf(page, PAGE_SIZE,
 			"Unhandled attr(%s) in `%s`\n",
 			attr->name, __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा NVM_DEV_ATTR_RO(_name)					\
-	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show, शून्य)
-#घोषणा NVM_DEV_ATTR_12_RO(_name)					\
-	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show_12, शून्य)
-#घोषणा NVM_DEV_ATTR_20_RO(_name)					\
-	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show_20, शून्य)
+static ssize_t nvm_dev_attr_show_20(struct device *dev,
+		struct device_attribute *dattr, char *page)
+{
+	struct nvme_ns *ns = nvme_get_ns_from_dev(dev);
+	struct nvm_dev *ndev = ns->ndev;
+	struct nvm_geo *geo = &ndev->geo;
+	struct attribute *attr;
+
+	if (!ndev)
+		return 0;
+
+	attr = &dattr->attr;
+
+	if (strcmp(attr->name, "groups") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_ch);
+	} else if (strcmp(attr->name, "punits") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_lun);
+	} else if (strcmp(attr->name, "chunks") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->num_chk);
+	} else if (strcmp(attr->name, "clba") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->clba);
+	} else if (strcmp(attr->name, "ws_min") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->ws_min);
+	} else if (strcmp(attr->name, "ws_opt") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->ws_opt);
+	} else if (strcmp(attr->name, "maxoc") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->maxoc);
+	} else if (strcmp(attr->name, "maxocpu") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->maxocpu);
+	} else if (strcmp(attr->name, "mw_cunits") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->mw_cunits);
+	} else if (strcmp(attr->name, "write_typ") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tprt);
+	} else if (strcmp(attr->name, "write_max") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tprm);
+	} else if (strcmp(attr->name, "reset_typ") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tbet);
+	} else if (strcmp(attr->name, "reset_max") == 0) {
+		return scnprintf(page, PAGE_SIZE, "%u\n", geo->tbem);
+	} else {
+		return scnprintf(page, PAGE_SIZE,
+			"Unhandled attr(%s) in `%s`\n",
+			attr->name, __func__);
+	}
+}
+
+#define NVM_DEV_ATTR_RO(_name)					\
+	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show, NULL)
+#define NVM_DEV_ATTR_12_RO(_name)					\
+	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show_12, NULL)
+#define NVM_DEV_ATTR_20_RO(_name)					\
+	DEVICE_ATTR(_name, S_IRUGO, nvm_dev_attr_show_20, NULL)
 
 /* general attributes */
-अटल NVM_DEV_ATTR_RO(version);
-अटल NVM_DEV_ATTR_RO(capabilities);
+static NVM_DEV_ATTR_RO(version);
+static NVM_DEV_ATTR_RO(capabilities);
 
-अटल NVM_DEV_ATTR_RO(पढ़ो_typ);
-अटल NVM_DEV_ATTR_RO(पढ़ो_max);
+static NVM_DEV_ATTR_RO(read_typ);
+static NVM_DEV_ATTR_RO(read_max);
 
 /* 1.2 values */
-अटल NVM_DEV_ATTR_12_RO(venकरोr_opcode);
-अटल NVM_DEV_ATTR_12_RO(device_mode);
-अटल NVM_DEV_ATTR_12_RO(ppa_क्रमmat);
-अटल NVM_DEV_ATTR_12_RO(media_manager);
-अटल NVM_DEV_ATTR_12_RO(media_type);
-अटल NVM_DEV_ATTR_12_RO(flash_media_type);
-अटल NVM_DEV_ATTR_12_RO(num_channels);
-अटल NVM_DEV_ATTR_12_RO(num_luns);
-अटल NVM_DEV_ATTR_12_RO(num_planes);
-अटल NVM_DEV_ATTR_12_RO(num_blocks);
-अटल NVM_DEV_ATTR_12_RO(num_pages);
-अटल NVM_DEV_ATTR_12_RO(page_size);
-अटल NVM_DEV_ATTR_12_RO(hw_sector_size);
-अटल NVM_DEV_ATTR_12_RO(oob_sector_size);
-अटल NVM_DEV_ATTR_12_RO(prog_typ);
-अटल NVM_DEV_ATTR_12_RO(prog_max);
-अटल NVM_DEV_ATTR_12_RO(erase_typ);
-अटल NVM_DEV_ATTR_12_RO(erase_max);
-अटल NVM_DEV_ATTR_12_RO(multiplane_modes);
-अटल NVM_DEV_ATTR_12_RO(media_capabilities);
-अटल NVM_DEV_ATTR_12_RO(max_phys_secs);
+static NVM_DEV_ATTR_12_RO(vendor_opcode);
+static NVM_DEV_ATTR_12_RO(device_mode);
+static NVM_DEV_ATTR_12_RO(ppa_format);
+static NVM_DEV_ATTR_12_RO(media_manager);
+static NVM_DEV_ATTR_12_RO(media_type);
+static NVM_DEV_ATTR_12_RO(flash_media_type);
+static NVM_DEV_ATTR_12_RO(num_channels);
+static NVM_DEV_ATTR_12_RO(num_luns);
+static NVM_DEV_ATTR_12_RO(num_planes);
+static NVM_DEV_ATTR_12_RO(num_blocks);
+static NVM_DEV_ATTR_12_RO(num_pages);
+static NVM_DEV_ATTR_12_RO(page_size);
+static NVM_DEV_ATTR_12_RO(hw_sector_size);
+static NVM_DEV_ATTR_12_RO(oob_sector_size);
+static NVM_DEV_ATTR_12_RO(prog_typ);
+static NVM_DEV_ATTR_12_RO(prog_max);
+static NVM_DEV_ATTR_12_RO(erase_typ);
+static NVM_DEV_ATTR_12_RO(erase_max);
+static NVM_DEV_ATTR_12_RO(multiplane_modes);
+static NVM_DEV_ATTR_12_RO(media_capabilities);
+static NVM_DEV_ATTR_12_RO(max_phys_secs);
 
 /* 2.0 values */
-अटल NVM_DEV_ATTR_20_RO(groups);
-अटल NVM_DEV_ATTR_20_RO(punits);
-अटल NVM_DEV_ATTR_20_RO(chunks);
-अटल NVM_DEV_ATTR_20_RO(clba);
-अटल NVM_DEV_ATTR_20_RO(ws_min);
-अटल NVM_DEV_ATTR_20_RO(ws_opt);
-अटल NVM_DEV_ATTR_20_RO(maxoc);
-अटल NVM_DEV_ATTR_20_RO(maxocpu);
-अटल NVM_DEV_ATTR_20_RO(mw_cunits);
-अटल NVM_DEV_ATTR_20_RO(ग_लिखो_typ);
-अटल NVM_DEV_ATTR_20_RO(ग_लिखो_max);
-अटल NVM_DEV_ATTR_20_RO(reset_typ);
-अटल NVM_DEV_ATTR_20_RO(reset_max);
+static NVM_DEV_ATTR_20_RO(groups);
+static NVM_DEV_ATTR_20_RO(punits);
+static NVM_DEV_ATTR_20_RO(chunks);
+static NVM_DEV_ATTR_20_RO(clba);
+static NVM_DEV_ATTR_20_RO(ws_min);
+static NVM_DEV_ATTR_20_RO(ws_opt);
+static NVM_DEV_ATTR_20_RO(maxoc);
+static NVM_DEV_ATTR_20_RO(maxocpu);
+static NVM_DEV_ATTR_20_RO(mw_cunits);
+static NVM_DEV_ATTR_20_RO(write_typ);
+static NVM_DEV_ATTR_20_RO(write_max);
+static NVM_DEV_ATTR_20_RO(reset_typ);
+static NVM_DEV_ATTR_20_RO(reset_max);
 
-अटल काष्ठा attribute *nvm_dev_attrs[] = अणु
+static struct attribute *nvm_dev_attrs[] = {
 	/* version agnostic attrs */
 	&dev_attr_version.attr,
 	&dev_attr_capabilities.attr,
-	&dev_attr_पढ़ो_typ.attr,
-	&dev_attr_पढ़ो_max.attr,
+	&dev_attr_read_typ.attr,
+	&dev_attr_read_max.attr,
 
 	/* 1.2 attrs */
-	&dev_attr_venकरोr_opcode.attr,
+	&dev_attr_vendor_opcode.attr,
 	&dev_attr_device_mode.attr,
 	&dev_attr_media_manager.attr,
-	&dev_attr_ppa_क्रमmat.attr,
+	&dev_attr_ppa_format.attr,
 	&dev_attr_media_type.attr,
 	&dev_attr_flash_media_type.attr,
 	&dev_attr_num_channels.attr,
@@ -1230,46 +1229,46 @@ err_cmd:
 	&dev_attr_maxocpu.attr,
 	&dev_attr_mw_cunits.attr,
 
-	&dev_attr_ग_लिखो_typ.attr,
-	&dev_attr_ग_लिखो_max.attr,
+	&dev_attr_write_typ.attr,
+	&dev_attr_write_max.attr,
 	&dev_attr_reset_typ.attr,
 	&dev_attr_reset_max.attr,
 
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t nvm_dev_attrs_visible(काष्ठा kobject *kobj,
-				     काष्ठा attribute *attr, पूर्णांक index)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा gendisk *disk = dev_to_disk(dev);
-	काष्ठा nvme_ns *ns = disk->निजी_data;
-	काष्ठा nvm_dev *ndev = ns->ndev;
-	काष्ठा device_attribute *dev_attr =
+static umode_t nvm_dev_attrs_visible(struct kobject *kobj,
+				     struct attribute *attr, int index)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct gendisk *disk = dev_to_disk(dev);
+	struct nvme_ns *ns = disk->private_data;
+	struct nvm_dev *ndev = ns->ndev;
+	struct device_attribute *dev_attr =
 		container_of(attr, typeof(*dev_attr), attr);
 
-	अगर (!ndev)
-		वापस 0;
+	if (!ndev)
+		return 0;
 
-	अगर (dev_attr->show == nvm_dev_attr_show)
-		वापस attr->mode;
+	if (dev_attr->show == nvm_dev_attr_show)
+		return attr->mode;
 
-	चयन (ndev->geo.major_ver_id) अणु
-	हाल 1:
-		अगर (dev_attr->show == nvm_dev_attr_show_12)
-			वापस attr->mode;
-		अवरोध;
-	हाल 2:
-		अगर (dev_attr->show == nvm_dev_attr_show_20)
-			वापस attr->mode;
-		अवरोध;
-	पूर्ण
+	switch (ndev->geo.major_ver_id) {
+	case 1:
+		if (dev_attr->show == nvm_dev_attr_show_12)
+			return attr->mode;
+		break;
+	case 2:
+		if (dev_attr->show == nvm_dev_attr_show_20)
+			return attr->mode;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा attribute_group nvme_nvm_attr_group = अणु
+const struct attribute_group nvme_nvm_attr_group = {
 	.name		= "lightnvm",
 	.attrs		= nvm_dev_attrs,
 	.is_visible	= nvm_dev_attrs_visible,
-पूर्ण;
+};

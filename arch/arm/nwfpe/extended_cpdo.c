@@ -1,143 +1,142 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
-    NetWinder Floating Poपूर्णांक Emulator
+    NetWinder Floating Point Emulator
     (c) Rebel.COM, 1998,1999
 
     Direct questions, comments to Scott Bambrough <scottb@netwinder.org>
 
 */
 
-#समावेश "fpa11.h"
-#समावेश "softfloat.h"
-#समावेश "fpopcode.h"
+#include "fpa11.h"
+#include "softfloat.h"
+#include "fpopcode.h"
 
-भग्नx80 भग्नx80_exp(भग्नx80 Fm);
-भग्नx80 भग्नx80_ln(भग्नx80 Fm);
-भग्नx80 भग्नx80_sin(भग्नx80 rFm);
-भग्नx80 भग्नx80_cos(भग्नx80 rFm);
-भग्नx80 भग्नx80_arcsin(भग्नx80 rFm);
-भग्नx80 भग्नx80_arctan(भग्नx80 rFm);
-भग्नx80 भग्नx80_log(भग्नx80 rFm);
-भग्नx80 भग्नx80_tan(भग्नx80 rFm);
-भग्नx80 भग्नx80_arccos(भग्नx80 rFm);
-भग्नx80 भग्नx80_घात(भग्नx80 rFn, भग्नx80 rFm);
-भग्नx80 भग्नx80_pol(भग्नx80 rFn, भग्नx80 rFm);
+floatx80 floatx80_exp(floatx80 Fm);
+floatx80 floatx80_ln(floatx80 Fm);
+floatx80 floatx80_sin(floatx80 rFm);
+floatx80 floatx80_cos(floatx80 rFm);
+floatx80 floatx80_arcsin(floatx80 rFm);
+floatx80 floatx80_arctan(floatx80 rFm);
+floatx80 floatx80_log(floatx80 rFm);
+floatx80 floatx80_tan(floatx80 rFm);
+floatx80 floatx80_arccos(floatx80 rFm);
+floatx80 floatx80_pow(floatx80 rFn, floatx80 rFm);
+floatx80 floatx80_pol(floatx80 rFn, floatx80 rFm);
 
-अटल भग्नx80 भग्नx80_rsf(काष्ठा roundingData *roundData, भग्नx80 rFn, भग्नx80 rFm)
-अणु
-	वापस भग्नx80_sub(roundData, rFm, rFn);
-पूर्ण
+static floatx80 floatx80_rsf(struct roundingData *roundData, floatx80 rFn, floatx80 rFm)
+{
+	return floatx80_sub(roundData, rFm, rFn);
+}
 
-अटल भग्नx80 भग्नx80_rdv(काष्ठा roundingData *roundData, भग्नx80 rFn, भग्नx80 rFm)
-अणु
-	वापस भग्नx80_भाग(roundData, rFm, rFn);
-पूर्ण
+static floatx80 floatx80_rdv(struct roundingData *roundData, floatx80 rFn, floatx80 rFm)
+{
+	return floatx80_div(roundData, rFm, rFn);
+}
 
-अटल भग्नx80 (*स्थिर dyadic_extended[16])(काष्ठा roundingData*, भग्नx80 rFn, भग्नx80 rFm) = अणु
-	[ADF_CODE >> 20] = भग्नx80_add,
-	[MUF_CODE >> 20] = भग्नx80_mul,
-	[SUF_CODE >> 20] = भग्नx80_sub,
-	[RSF_CODE >> 20] = भग्नx80_rsf,
-	[DVF_CODE >> 20] = भग्नx80_भाग,
-	[RDF_CODE >> 20] = भग्नx80_rdv,
-	[RMF_CODE >> 20] = भग्नx80_rem,
+static floatx80 (*const dyadic_extended[16])(struct roundingData*, floatx80 rFn, floatx80 rFm) = {
+	[ADF_CODE >> 20] = floatx80_add,
+	[MUF_CODE >> 20] = floatx80_mul,
+	[SUF_CODE >> 20] = floatx80_sub,
+	[RSF_CODE >> 20] = floatx80_rsf,
+	[DVF_CODE >> 20] = floatx80_div,
+	[RDF_CODE >> 20] = floatx80_rdv,
+	[RMF_CODE >> 20] = floatx80_rem,
 
 	/* strictly, these opcodes should not be implemented */
-	[FML_CODE >> 20] = भग्नx80_mul,
-	[FDV_CODE >> 20] = भग्नx80_भाग,
-	[FRD_CODE >> 20] = भग्नx80_rdv,
-पूर्ण;
+	[FML_CODE >> 20] = floatx80_mul,
+	[FDV_CODE >> 20] = floatx80_div,
+	[FRD_CODE >> 20] = floatx80_rdv,
+};
 
-अटल भग्नx80 भग्नx80_mvf(काष्ठा roundingData *roundData, भग्नx80 rFm)
-अणु
-	वापस rFm;
-पूर्ण
+static floatx80 floatx80_mvf(struct roundingData *roundData, floatx80 rFm)
+{
+	return rFm;
+}
 
-अटल भग्नx80 भग्नx80_mnf(काष्ठा roundingData *roundData, भग्नx80 rFm)
-अणु
+static floatx80 floatx80_mnf(struct roundingData *roundData, floatx80 rFm)
+{
 	rFm.high ^= 0x8000;
-	वापस rFm;
-पूर्ण
+	return rFm;
+}
 
-अटल भग्नx80 भग्नx80_असल(काष्ठा roundingData *roundData, भग्नx80 rFm)
-अणु
+static floatx80 floatx80_abs(struct roundingData *roundData, floatx80 rFm)
+{
 	rFm.high &= 0x7fff;
-	वापस rFm;
-पूर्ण
+	return rFm;
+}
 
-अटल भग्नx80 (*स्थिर monadic_extended[16])(काष्ठा roundingData*, भग्नx80 rFm) = अणु
-	[MVF_CODE >> 20] = भग्नx80_mvf,
-	[MNF_CODE >> 20] = भग्नx80_mnf,
-	[ABS_CODE >> 20] = भग्नx80_असल,
-	[RND_CODE >> 20] = भग्नx80_round_to_पूर्णांक,
-	[URD_CODE >> 20] = भग्नx80_round_to_पूर्णांक,
-	[SQT_CODE >> 20] = भग्नx80_वर्ग_मूल,
-	[NRM_CODE >> 20] = भग्नx80_mvf,
-पूर्ण;
+static floatx80 (*const monadic_extended[16])(struct roundingData*, floatx80 rFm) = {
+	[MVF_CODE >> 20] = floatx80_mvf,
+	[MNF_CODE >> 20] = floatx80_mnf,
+	[ABS_CODE >> 20] = floatx80_abs,
+	[RND_CODE >> 20] = floatx80_round_to_int,
+	[URD_CODE >> 20] = floatx80_round_to_int,
+	[SQT_CODE >> 20] = floatx80_sqrt,
+	[NRM_CODE >> 20] = floatx80_mvf,
+};
 
-अचिन्हित पूर्णांक ExtendedCPDO(काष्ठा roundingData *roundData, स्थिर अचिन्हित पूर्णांक opcode, FPREG * rFd)
-अणु
+unsigned int ExtendedCPDO(struct roundingData *roundData, const unsigned int opcode, FPREG * rFd)
+{
 	FPA11 *fpa11 = GET_FPA11();
-	भग्नx80 rFm;
-	अचिन्हित पूर्णांक Fm, opc_mask_shअगरt;
+	floatx80 rFm;
+	unsigned int Fm, opc_mask_shift;
 
 	Fm = getFm(opcode);
-	अगर (CONSTANT_FM(opcode)) अणु
+	if (CONSTANT_FM(opcode)) {
 		rFm = getExtendedConstant(Fm);
-	पूर्ण अन्यथा अणु
-		चयन (fpa11->fType[Fm]) अणु
-		हाल typeSingle:
-			rFm = भग्न32_to_भग्नx80(fpa11->fpreg[Fm].fSingle);
-			अवरोध;
+	} else {
+		switch (fpa11->fType[Fm]) {
+		case typeSingle:
+			rFm = float32_to_floatx80(fpa11->fpreg[Fm].fSingle);
+			break;
 
-		हाल typeDouble:
-			rFm = भग्न64_to_भग्नx80(fpa11->fpreg[Fm].fDouble);
-			अवरोध;
+		case typeDouble:
+			rFm = float64_to_floatx80(fpa11->fpreg[Fm].fDouble);
+			break;
 
-		हाल typeExtended:
+		case typeExtended:
 			rFm = fpa11->fpreg[Fm].fExtended;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस 0;
-		पूर्ण
-	पूर्ण
+		default:
+			return 0;
+		}
+	}
 
-	opc_mask_shअगरt = (opcode & MASK_ARITHMETIC_OPCODE) >> 20;
-	अगर (!MONADIC_INSTRUCTION(opcode)) अणु
-		अचिन्हित पूर्णांक Fn = getFn(opcode);
-		भग्नx80 rFn;
+	opc_mask_shift = (opcode & MASK_ARITHMETIC_OPCODE) >> 20;
+	if (!MONADIC_INSTRUCTION(opcode)) {
+		unsigned int Fn = getFn(opcode);
+		floatx80 rFn;
 
-		चयन (fpa11->fType[Fn]) अणु
-		हाल typeSingle:
-			rFn = भग्न32_to_भग्नx80(fpa11->fpreg[Fn].fSingle);
-			अवरोध;
+		switch (fpa11->fType[Fn]) {
+		case typeSingle:
+			rFn = float32_to_floatx80(fpa11->fpreg[Fn].fSingle);
+			break;
 
-		हाल typeDouble:
-			rFn = भग्न64_to_भग्नx80(fpa11->fpreg[Fn].fDouble);
-			अवरोध;
+		case typeDouble:
+			rFn = float64_to_floatx80(fpa11->fpreg[Fn].fDouble);
+			break;
 
-		हाल typeExtended:
+		case typeExtended:
 			rFn = fpa11->fpreg[Fn].fExtended;
-			अवरोध;
+			break;
 
-		शेष:
-			वापस 0;
-		पूर्ण
+		default:
+			return 0;
+		}
 
-		अगर (dyadic_extended[opc_mask_shअगरt]) अणु
-			rFd->fExtended = dyadic_extended[opc_mask_shअगरt](roundData, rFn, rFm);
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (monadic_extended[opc_mask_shअगरt]) अणु
-			rFd->fExtended = monadic_extended[opc_mask_shअगरt](roundData, rFm);
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+		if (dyadic_extended[opc_mask_shift]) {
+			rFd->fExtended = dyadic_extended[opc_mask_shift](roundData, rFn, rFm);
+		} else {
+			return 0;
+		}
+	} else {
+		if (monadic_extended[opc_mask_shift]) {
+			rFd->fExtended = monadic_extended[opc_mask_shift](roundData, rFm);
+		} else {
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

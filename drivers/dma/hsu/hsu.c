@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Core driver क्रम the High Speed UART DMA
+ * Core driver for the High Speed UART DMA
  *
  * Copyright (C) 2015 Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  *
  * Partially based on the bits found in drivers/tty/serial/mfd.c.
  */
 
 /*
  * DMA channel allocation:
- * 1. Even number chans are used क्रम DMA Read (UART TX), odd chans क्रम DMA
+ * 1. Even number chans are used for DMA Read (UART TX), odd chans for DMA
  *    Write (UART RX).
- * 2. 0/1 channel are asचिन्हित to port 0, 2/3 chan to port 1, 4/5 chan to
+ * 2. 0/1 channel are assigned to port 0, 2/3 chan to port 1, 4/5 chan to
  *    port 3, and so on.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश "hsu.h"
+#include "hsu.h"
 
-#घोषणा HSU_DMA_BUSWIDTHS				\
+#define HSU_DMA_BUSWIDTHS				\
 	BIT(DMA_SLAVE_BUSWIDTH_UNDEFINED)	|	\
 	BIT(DMA_SLAVE_BUSWIDTH_1_BYTE)		|	\
 	BIT(DMA_SLAVE_BUSWIDTH_2_BYTES)		|	\
@@ -35,421 +34,421 @@
 	BIT(DMA_SLAVE_BUSWIDTH_8_BYTES)		|	\
 	BIT(DMA_SLAVE_BUSWIDTH_16_BYTES)
 
-अटल अंतरभूत व्योम hsu_chan_disable(काष्ठा hsu_dma_chan *hsuc)
-अणु
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_CR, 0);
-पूर्ण
+static inline void hsu_chan_disable(struct hsu_dma_chan *hsuc)
+{
+	hsu_chan_writel(hsuc, HSU_CH_CR, 0);
+}
 
-अटल अंतरभूत व्योम hsu_chan_enable(काष्ठा hsu_dma_chan *hsuc)
-अणु
+static inline void hsu_chan_enable(struct hsu_dma_chan *hsuc)
+{
 	u32 cr = HSU_CH_CR_CHA;
 
-	अगर (hsuc->direction == DMA_MEM_TO_DEV)
+	if (hsuc->direction == DMA_MEM_TO_DEV)
 		cr &= ~HSU_CH_CR_CHD;
-	अन्यथा अगर (hsuc->direction == DMA_DEV_TO_MEM)
+	else if (hsuc->direction == DMA_DEV_TO_MEM)
 		cr |= HSU_CH_CR_CHD;
 
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_CR, cr);
-पूर्ण
+	hsu_chan_writel(hsuc, HSU_CH_CR, cr);
+}
 
-अटल व्योम hsu_dma_chan_start(काष्ठा hsu_dma_chan *hsuc)
-अणु
-	काष्ठा dma_slave_config *config = &hsuc->config;
-	काष्ठा hsu_dma_desc *desc = hsuc->desc;
+static void hsu_dma_chan_start(struct hsu_dma_chan *hsuc)
+{
+	struct dma_slave_config *config = &hsuc->config;
+	struct hsu_dma_desc *desc = hsuc->desc;
 	u32 bsr = 0, mtsr = 0;	/* to shut the compiler up */
 	u32 dcr = HSU_CH_DCR_CHSOE | HSU_CH_DCR_CHEI;
-	अचिन्हित पूर्णांक i, count;
+	unsigned int i, count;
 
-	अगर (hsuc->direction == DMA_MEM_TO_DEV) अणु
+	if (hsuc->direction == DMA_MEM_TO_DEV) {
 		bsr = config->dst_maxburst;
 		mtsr = config->dst_addr_width;
-	पूर्ण अन्यथा अगर (hsuc->direction == DMA_DEV_TO_MEM) अणु
+	} else if (hsuc->direction == DMA_DEV_TO_MEM) {
 		bsr = config->src_maxburst;
 		mtsr = config->src_addr_width;
-	पूर्ण
+	}
 
 	hsu_chan_disable(hsuc);
 
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_DCR, 0);
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_BSR, bsr);
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_MTSR, mtsr);
+	hsu_chan_writel(hsuc, HSU_CH_DCR, 0);
+	hsu_chan_writel(hsuc, HSU_CH_BSR, bsr);
+	hsu_chan_writel(hsuc, HSU_CH_MTSR, mtsr);
 
 	/* Set descriptors */
 	count = desc->nents - desc->active;
-	क्रम (i = 0; i < count && i < HSU_DMA_CHAN_NR_DESC; i++) अणु
-		hsu_chan_ग_लिखोl(hsuc, HSU_CH_DxSAR(i), desc->sg[i].addr);
-		hsu_chan_ग_लिखोl(hsuc, HSU_CH_DxTSR(i), desc->sg[i].len);
+	for (i = 0; i < count && i < HSU_DMA_CHAN_NR_DESC; i++) {
+		hsu_chan_writel(hsuc, HSU_CH_DxSAR(i), desc->sg[i].addr);
+		hsu_chan_writel(hsuc, HSU_CH_DxTSR(i), desc->sg[i].len);
 
-		/* Prepare value क्रम DCR */
+		/* Prepare value for DCR */
 		dcr |= HSU_CH_DCR_DESCA(i);
-		dcr |= HSU_CH_DCR_CHTOI(i);	/* समयout bit, see HSU Errata 1 */
+		dcr |= HSU_CH_DCR_CHTOI(i);	/* timeout bit, see HSU Errata 1 */
 
 		desc->active++;
-	पूर्ण
-	/* Only क्रम the last descriptor in the chain */
+	}
+	/* Only for the last descriptor in the chain */
 	dcr |= HSU_CH_DCR_CHSOD(count - 1);
 	dcr |= HSU_CH_DCR_CHDI(count - 1);
 
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_DCR, dcr);
+	hsu_chan_writel(hsuc, HSU_CH_DCR, dcr);
 
 	hsu_chan_enable(hsuc);
-पूर्ण
+}
 
-अटल व्योम hsu_dma_stop_channel(काष्ठा hsu_dma_chan *hsuc)
-अणु
+static void hsu_dma_stop_channel(struct hsu_dma_chan *hsuc)
+{
 	hsu_chan_disable(hsuc);
-	hsu_chan_ग_लिखोl(hsuc, HSU_CH_DCR, 0);
-पूर्ण
+	hsu_chan_writel(hsuc, HSU_CH_DCR, 0);
+}
 
-अटल व्योम hsu_dma_start_channel(काष्ठा hsu_dma_chan *hsuc)
-अणु
+static void hsu_dma_start_channel(struct hsu_dma_chan *hsuc)
+{
 	hsu_dma_chan_start(hsuc);
-पूर्ण
+}
 
-अटल व्योम hsu_dma_start_transfer(काष्ठा hsu_dma_chan *hsuc)
-अणु
-	काष्ठा virt_dma_desc *vdesc;
+static void hsu_dma_start_transfer(struct hsu_dma_chan *hsuc)
+{
+	struct virt_dma_desc *vdesc;
 
 	/* Get the next descriptor */
 	vdesc = vchan_next_desc(&hsuc->vchan);
-	अगर (!vdesc) अणु
-		hsuc->desc = शून्य;
-		वापस;
-	पूर्ण
+	if (!vdesc) {
+		hsuc->desc = NULL;
+		return;
+	}
 
 	list_del(&vdesc->node);
 	hsuc->desc = to_hsu_dma_desc(vdesc);
 
 	/* Start the channel with a new descriptor */
 	hsu_dma_start_channel(hsuc);
-पूर्ण
+}
 
 /*
  *      hsu_dma_get_status() - get DMA channel status
  *      @chip: HSUART DMA chip
  *      @nr: DMA channel number
- *      @status: poपूर्णांकer क्रम DMA Channel Status Register value
+ *      @status: pointer for DMA Channel Status Register value
  *
  *      Description:
- *      The function पढ़ोs and clears the DMA Channel Status Register, checks
- *      अगर it was a समयout पूर्णांकerrupt and वापसs a corresponding value.
+ *      The function reads and clears the DMA Channel Status Register, checks
+ *      if it was a timeout interrupt and returns a corresponding value.
  *
- *      Caller should provide a valid poपूर्णांकer क्रम the DMA Channel Status
- *      Register value that will be वापसed in @status.
+ *      Caller should provide a valid pointer for the DMA Channel Status
+ *      Register value that will be returned in @status.
  *
  *      Return:
- *      1 क्रम DMA समयout status, 0 क्रम other DMA status, or error code क्रम
- *      invalid parameters or no पूर्णांकerrupt pending.
+ *      1 for DMA timeout status, 0 for other DMA status, or error code for
+ *      invalid parameters or no interrupt pending.
  */
-पूर्णांक hsu_dma_get_status(काष्ठा hsu_dma_chip *chip, अचिन्हित लघु nr,
+int hsu_dma_get_status(struct hsu_dma_chip *chip, unsigned short nr,
 		       u32 *status)
-अणु
-	काष्ठा hsu_dma_chan *hsuc;
-	अचिन्हित दीर्घ flags;
+{
+	struct hsu_dma_chan *hsuc;
+	unsigned long flags;
 	u32 sr;
 
 	/* Sanity check */
-	अगर (nr >= chip->hsu->nr_channels)
-		वापस -EINVAL;
+	if (nr >= chip->hsu->nr_channels)
+		return -EINVAL;
 
 	hsuc = &chip->hsu->chan[nr];
 
 	/*
-	 * No matter what situation, need पढ़ो clear the IRQ status
+	 * No matter what situation, need read clear the IRQ status
 	 * There is a bug, see Errata 5, HSD 2900918
 	 */
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
-	sr = hsu_chan_पढ़ोl(hsuc, HSU_CH_SR);
+	sr = hsu_chan_readl(hsuc, HSU_CH_SR);
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
 
-	/* Check अगर any पूर्णांकerrupt is pending */
+	/* Check if any interrupt is pending */
 	sr &= ~(HSU_CH_SR_DESCE_ANY | HSU_CH_SR_CDESC_ANY);
-	अगर (!sr)
-		वापस -EIO;
+	if (!sr)
+		return -EIO;
 
-	/* Timeout IRQ, need रुको some समय, see Errata 2 */
-	अगर (sr & HSU_CH_SR_DESCTO_ANY)
+	/* Timeout IRQ, need wait some time, see Errata 2 */
+	if (sr & HSU_CH_SR_DESCTO_ANY)
 		udelay(2);
 
 	/*
-	 * At this poपूर्णांक, at least one of Descriptor Time Out, Channel Error
+	 * At this point, at least one of Descriptor Time Out, Channel Error
 	 * or Descriptor Done bits must be set. Clear the Descriptor Time Out
-	 * bits and अगर sr is still non-zero, it must be channel error or
-	 * descriptor करोne which are higher priority than समयout and handled
-	 * in hsu_dma_करो_irq(). Else, it must be a समयout.
+	 * bits and if sr is still non-zero, it must be channel error or
+	 * descriptor done which are higher priority than timeout and handled
+	 * in hsu_dma_do_irq(). Else, it must be a timeout.
 	 */
 	sr &= ~HSU_CH_SR_DESCTO_ANY;
 
 	*status = sr;
 
-	वापस sr ? 0 : 1;
-पूर्ण
+	return sr ? 0 : 1;
+}
 EXPORT_SYMBOL_GPL(hsu_dma_get_status);
 
 /*
- *      hsu_dma_करो_irq() - DMA पूर्णांकerrupt handler
+ *      hsu_dma_do_irq() - DMA interrupt handler
  *      @chip: HSUART DMA chip
  *      @nr: DMA channel number
  *      @status: Channel Status Register value
  *
  *      Description:
- *      This function handles Channel Error and Descriptor Done पूर्णांकerrupts.
- *      This function should be called after determining that the DMA पूर्णांकerrupt
- *      is not a normal समयout पूर्णांकerrupt, ie. hsu_dma_get_status() वापसed 0.
+ *      This function handles Channel Error and Descriptor Done interrupts.
+ *      This function should be called after determining that the DMA interrupt
+ *      is not a normal timeout interrupt, ie. hsu_dma_get_status() returned 0.
  *
  *      Return:
- *      0 क्रम invalid channel number, 1 otherwise.
+ *      0 for invalid channel number, 1 otherwise.
  */
-पूर्णांक hsu_dma_करो_irq(काष्ठा hsu_dma_chip *chip, अचिन्हित लघु nr, u32 status)
-अणु
-	काष्ठा hsu_dma_chan *hsuc;
-	काष्ठा hsu_dma_desc *desc;
-	अचिन्हित दीर्घ flags;
+int hsu_dma_do_irq(struct hsu_dma_chip *chip, unsigned short nr, u32 status)
+{
+	struct hsu_dma_chan *hsuc;
+	struct hsu_dma_desc *desc;
+	unsigned long flags;
 
 	/* Sanity check */
-	अगर (nr >= chip->hsu->nr_channels)
-		वापस 0;
+	if (nr >= chip->hsu->nr_channels)
+		return 0;
 
 	hsuc = &chip->hsu->chan[nr];
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
 	desc = hsuc->desc;
-	अगर (desc) अणु
-		अगर (status & HSU_CH_SR_CHE) अणु
+	if (desc) {
+		if (status & HSU_CH_SR_CHE) {
 			desc->status = DMA_ERROR;
-		पूर्ण अन्यथा अगर (desc->active < desc->nents) अणु
+		} else if (desc->active < desc->nents) {
 			hsu_dma_start_channel(hsuc);
-		पूर्ण अन्यथा अणु
+		} else {
 			vchan_cookie_complete(&desc->vdesc);
 			desc->status = DMA_COMPLETE;
 			hsu_dma_start_transfer(hsuc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
 
-	वापस 1;
-पूर्ण
-EXPORT_SYMBOL_GPL(hsu_dma_करो_irq);
+	return 1;
+}
+EXPORT_SYMBOL_GPL(hsu_dma_do_irq);
 
-अटल काष्ठा hsu_dma_desc *hsu_dma_alloc_desc(अचिन्हित पूर्णांक nents)
-अणु
-	काष्ठा hsu_dma_desc *desc;
+static struct hsu_dma_desc *hsu_dma_alloc_desc(unsigned int nents)
+{
+	struct hsu_dma_desc *desc;
 
-	desc = kzalloc(माप(*desc), GFP_NOWAIT);
-	अगर (!desc)
-		वापस शून्य;
+	desc = kzalloc(sizeof(*desc), GFP_NOWAIT);
+	if (!desc)
+		return NULL;
 
-	desc->sg = kसुस्मृति(nents, माप(*desc->sg), GFP_NOWAIT);
-	अगर (!desc->sg) अणु
-		kमुक्त(desc);
-		वापस शून्य;
-	पूर्ण
+	desc->sg = kcalloc(nents, sizeof(*desc->sg), GFP_NOWAIT);
+	if (!desc->sg) {
+		kfree(desc);
+		return NULL;
+	}
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम hsu_dma_desc_मुक्त(काष्ठा virt_dma_desc *vdesc)
-अणु
-	काष्ठा hsu_dma_desc *desc = to_hsu_dma_desc(vdesc);
+static void hsu_dma_desc_free(struct virt_dma_desc *vdesc)
+{
+	struct hsu_dma_desc *desc = to_hsu_dma_desc(vdesc);
 
-	kमुक्त(desc->sg);
-	kमुक्त(desc);
-पूर्ण
+	kfree(desc->sg);
+	kfree(desc);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *hsu_dma_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	काष्ठा hsu_dma_desc *desc;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक i;
+static struct dma_async_tx_descriptor *hsu_dma_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	struct hsu_dma_desc *desc;
+	struct scatterlist *sg;
+	unsigned int i;
 
 	desc = hsu_dma_alloc_desc(sg_len);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		desc->sg[i].addr = sg_dma_address(sg);
 		desc->sg[i].len = sg_dma_len(sg);
 
 		desc->length += sg_dma_len(sg);
-	पूर्ण
+	}
 
 	desc->nents = sg_len;
 	desc->direction = direction;
 	/* desc->active = 0 by kzalloc */
 	desc->status = DMA_IN_PROGRESS;
 
-	वापस vchan_tx_prep(&hsuc->vchan, &desc->vdesc, flags);
-पूर्ण
+	return vchan_tx_prep(&hsuc->vchan, &desc->vdesc, flags);
+}
 
-अटल व्योम hsu_dma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static void hsu_dma_issue_pending(struct dma_chan *chan)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
-	अगर (vchan_issue_pending(&hsuc->vchan) && !hsuc->desc)
+	if (vchan_issue_pending(&hsuc->vchan) && !hsuc->desc)
 		hsu_dma_start_transfer(hsuc);
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
-पूर्ण
+}
 
-अटल माप_प्रकार hsu_dma_active_desc_size(काष्ठा hsu_dma_chan *hsuc)
-अणु
-	काष्ठा hsu_dma_desc *desc = hsuc->desc;
-	माप_प्रकार bytes = 0;
-	पूर्णांक i;
+static size_t hsu_dma_active_desc_size(struct hsu_dma_chan *hsuc)
+{
+	struct hsu_dma_desc *desc = hsuc->desc;
+	size_t bytes = 0;
+	int i;
 
-	क्रम (i = desc->active; i < desc->nents; i++)
+	for (i = desc->active; i < desc->nents; i++)
 		bytes += desc->sg[i].len;
 
 	i = HSU_DMA_CHAN_NR_DESC - 1;
-	करो अणु
-		bytes += hsu_chan_पढ़ोl(hsuc, HSU_CH_DxTSR(i));
-	पूर्ण जबतक (--i >= 0);
+	do {
+		bytes += hsu_chan_readl(hsuc, HSU_CH_DxTSR(i));
+	} while (--i >= 0);
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल क्रमागत dma_status hsu_dma_tx_status(काष्ठा dma_chan *chan,
-	dma_cookie_t cookie, काष्ठा dma_tx_state *state)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	काष्ठा virt_dma_desc *vdesc;
-	क्रमागत dma_status status;
-	माप_प्रकार bytes;
-	अचिन्हित दीर्घ flags;
+static enum dma_status hsu_dma_tx_status(struct dma_chan *chan,
+	dma_cookie_t cookie, struct dma_tx_state *state)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	struct virt_dma_desc *vdesc;
+	enum dma_status status;
+	size_t bytes;
+	unsigned long flags;
 
 	status = dma_cookie_status(chan, cookie, state);
-	अगर (status == DMA_COMPLETE)
-		वापस status;
+	if (status == DMA_COMPLETE)
+		return status;
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
 	vdesc = vchan_find_desc(&hsuc->vchan, cookie);
-	अगर (hsuc->desc && cookie == hsuc->desc->vdesc.tx.cookie) अणु
+	if (hsuc->desc && cookie == hsuc->desc->vdesc.tx.cookie) {
 		bytes = hsu_dma_active_desc_size(hsuc);
 		dma_set_residue(state, bytes);
 		status = hsuc->desc->status;
-	पूर्ण अन्यथा अगर (vdesc) अणु
+	} else if (vdesc) {
 		bytes = to_hsu_dma_desc(vdesc)->length;
 		dma_set_residue(state, bytes);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक hsu_dma_slave_config(काष्ठा dma_chan *chan,
-				काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+static int hsu_dma_slave_config(struct dma_chan *chan,
+				struct dma_slave_config *config)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
 
-	स_नकल(&hsuc->config, config, माप(hsuc->config));
+	memcpy(&hsuc->config, config, sizeof(hsuc->config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hsu_dma_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int hsu_dma_pause(struct dma_chan *chan)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
-	अगर (hsuc->desc && hsuc->desc->status == DMA_IN_PROGRESS) अणु
+	if (hsuc->desc && hsuc->desc->status == DMA_IN_PROGRESS) {
 		hsu_chan_disable(hsuc);
 		hsuc->desc->status = DMA_PAUSED;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hsu_dma_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int hsu_dma_resume(struct dma_chan *chan)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
-	अगर (hsuc->desc && hsuc->desc->status == DMA_PAUSED) अणु
+	if (hsuc->desc && hsuc->desc->status == DMA_PAUSED) {
 		hsuc->desc->status = DMA_IN_PROGRESS;
 		hsu_chan_enable(hsuc);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hsu_dma_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
-	अचिन्हित दीर्घ flags;
+static int hsu_dma_terminate_all(struct dma_chan *chan)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+	unsigned long flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&hsuc->vchan.lock, flags);
 
 	hsu_dma_stop_channel(hsuc);
-	अगर (hsuc->desc) अणु
-		hsu_dma_desc_मुक्त(&hsuc->desc->vdesc);
-		hsuc->desc = शून्य;
-	पूर्ण
+	if (hsuc->desc) {
+		hsu_dma_desc_free(&hsuc->desc->vdesc);
+		hsuc->desc = NULL;
+	}
 
 	vchan_get_all_descriptors(&hsuc->vchan, &head);
 	spin_unlock_irqrestore(&hsuc->vchan.lock, flags);
-	vchan_dma_desc_मुक्त_list(&hsuc->vchan, &head);
+	vchan_dma_desc_free_list(&hsuc->vchan, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hsu_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	vchan_मुक्त_chan_resources(to_virt_chan(chan));
-पूर्ण
+static void hsu_dma_free_chan_resources(struct dma_chan *chan)
+{
+	vchan_free_chan_resources(to_virt_chan(chan));
+}
 
-अटल व्योम hsu_dma_synchronize(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
+static void hsu_dma_synchronize(struct dma_chan *chan)
+{
+	struct hsu_dma_chan *hsuc = to_hsu_dma_chan(chan);
 
 	vchan_synchronize(&hsuc->vchan);
-पूर्ण
+}
 
-पूर्णांक hsu_dma_probe(काष्ठा hsu_dma_chip *chip)
-अणु
-	काष्ठा hsu_dma *hsu;
-	व्योम __iomem *addr = chip->regs + chip->offset;
-	अचिन्हित लघु i;
-	पूर्णांक ret;
+int hsu_dma_probe(struct hsu_dma_chip *chip)
+{
+	struct hsu_dma *hsu;
+	void __iomem *addr = chip->regs + chip->offset;
+	unsigned short i;
+	int ret;
 
-	hsu = devm_kzalloc(chip->dev, माप(*hsu), GFP_KERNEL);
-	अगर (!hsu)
-		वापस -ENOMEM;
+	hsu = devm_kzalloc(chip->dev, sizeof(*hsu), GFP_KERNEL);
+	if (!hsu)
+		return -ENOMEM;
 
 	chip->hsu = hsu;
 
 	/* Calculate nr_channels from the IO space length */
 	hsu->nr_channels = (chip->length - chip->offset) / HSU_DMA_CHAN_LENGTH;
 
-	hsu->chan = devm_kसुस्मृति(chip->dev, hsu->nr_channels,
-				 माप(*hsu->chan), GFP_KERNEL);
-	अगर (!hsu->chan)
-		वापस -ENOMEM;
+	hsu->chan = devm_kcalloc(chip->dev, hsu->nr_channels,
+				 sizeof(*hsu->chan), GFP_KERNEL);
+	if (!hsu->chan)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&hsu->dma.channels);
-	क्रम (i = 0; i < hsu->nr_channels; i++) अणु
-		काष्ठा hsu_dma_chan *hsuc = &hsu->chan[i];
+	for (i = 0; i < hsu->nr_channels; i++) {
+		struct hsu_dma_chan *hsuc = &hsu->chan[i];
 
-		hsuc->vchan.desc_मुक्त = hsu_dma_desc_मुक्त;
+		hsuc->vchan.desc_free = hsu_dma_desc_free;
 		vchan_init(&hsuc->vchan, &hsu->dma);
 
 		hsuc->direction = (i & 0x1) ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV;
 		hsuc->reg = addr + i * HSU_DMA_CHAN_LENGTH;
-	पूर्ण
+	}
 
 	dma_cap_set(DMA_SLAVE, hsu->dma.cap_mask);
 	dma_cap_set(DMA_PRIVATE, hsu->dma.cap_mask);
 
-	hsu->dma.device_मुक्त_chan_resources = hsu_dma_मुक्त_chan_resources;
+	hsu->dma.device_free_chan_resources = hsu_dma_free_chan_resources;
 
 	hsu->dma.device_prep_slave_sg = hsu_dma_prep_slave_sg;
 
@@ -457,7 +456,7 @@ EXPORT_SYMBOL_GPL(hsu_dma_करो_irq);
 	hsu->dma.device_tx_status = hsu_dma_tx_status;
 
 	hsu->dma.device_config = hsu_dma_slave_config;
-	hsu->dma.device_छोड़ो = hsu_dma_छोड़ो;
+	hsu->dma.device_pause = hsu_dma_pause;
 	hsu->dma.device_resume = hsu_dma_resume;
 	hsu->dma.device_terminate_all = hsu_dma_terminate_all;
 	hsu->dma.device_synchronize = hsu_dma_synchronize;
@@ -471,31 +470,31 @@ EXPORT_SYMBOL_GPL(hsu_dma_करो_irq);
 
 	dma_set_max_seg_size(hsu->dma.dev, HSU_CH_DxTSR_MASK);
 
-	ret = dma_async_device_रेजिस्टर(&hsu->dma);
-	अगर (ret)
-		वापस ret;
+	ret = dma_async_device_register(&hsu->dma);
+	if (ret)
+		return ret;
 
 	dev_info(chip->dev, "Found HSU DMA, %d channels\n", hsu->nr_channels);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(hsu_dma_probe);
 
-पूर्णांक hsu_dma_हटाओ(काष्ठा hsu_dma_chip *chip)
-अणु
-	काष्ठा hsu_dma *hsu = chip->hsu;
-	अचिन्हित लघु i;
+int hsu_dma_remove(struct hsu_dma_chip *chip)
+{
+	struct hsu_dma *hsu = chip->hsu;
+	unsigned short i;
 
-	dma_async_device_unरेजिस्टर(&hsu->dma);
+	dma_async_device_unregister(&hsu->dma);
 
-	क्रम (i = 0; i < hsu->nr_channels; i++) अणु
-		काष्ठा hsu_dma_chan *hsuc = &hsu->chan[i];
+	for (i = 0; i < hsu->nr_channels; i++) {
+		struct hsu_dma_chan *hsuc = &hsu->chan[i];
 
-		tasklet_समाप्त(&hsuc->vchan.task);
-	पूर्ण
+		tasklet_kill(&hsuc->vchan.task);
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(hsu_dma_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(hsu_dma_remove);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("High Speed UART DMA core driver");

@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Network पूर्णांकerface table.
+ * Network interface table.
  *
- * Network पूर्णांकerfaces (devices) करो not have a security field, so we
- * मुख्यtain a table associating each पूर्णांकerface with a SID.
+ * Network interfaces (devices) do not have a security field, so we
+ * maintain a table associating each interface with a SID.
  *
  * Author: James Morris <jmorris@redhat.com>
  *
@@ -12,270 +11,270 @@
  * Copyright (C) 2007 Hewlett-Packard Development Company, L.P.
  *		      Paul Moore <paul@paul-moore.com>
  */
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <net/net_namespace.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/notifier.h>
+#include <linux/netdevice.h>
+#include <linux/rcupdate.h>
+#include <net/net_namespace.h>
 
-#समावेश "security.h"
-#समावेश "objsec.h"
-#समावेश "netif.h"
+#include "security.h"
+#include "objsec.h"
+#include "netif.h"
 
-#घोषणा SEL_NETIF_HASH_SIZE	64
-#घोषणा SEL_NETIF_HASH_MAX	1024
+#define SEL_NETIF_HASH_SIZE	64
+#define SEL_NETIF_HASH_MAX	1024
 
-काष्ठा sel_netअगर अणु
-	काष्ठा list_head list;
-	काष्ठा netअगर_security_काष्ठा nsec;
-	काष्ठा rcu_head rcu_head;
-पूर्ण;
+struct sel_netif {
+	struct list_head list;
+	struct netif_security_struct nsec;
+	struct rcu_head rcu_head;
+};
 
-अटल u32 sel_netअगर_total;
-अटल DEFINE_SPINLOCK(sel_netअगर_lock);
-अटल काष्ठा list_head sel_netअगर_hash[SEL_NETIF_HASH_SIZE];
+static u32 sel_netif_total;
+static DEFINE_SPINLOCK(sel_netif_lock);
+static struct list_head sel_netif_hash[SEL_NETIF_HASH_SIZE];
 
 /**
- * sel_netअगर_hashfn - Hashing function क्रम the पूर्णांकerface table
+ * sel_netif_hashfn - Hashing function for the interface table
  * @ns: the network namespace
- * @अगरindex: the network पूर्णांकerface
+ * @ifindex: the network interface
  *
  * Description:
- * This is the hashing function क्रम the network पूर्णांकerface table, it वापसs the
- * bucket number क्रम the given पूर्णांकerface.
+ * This is the hashing function for the network interface table, it returns the
+ * bucket number for the given interface.
  *
  */
-अटल अंतरभूत u32 sel_netअगर_hashfn(स्थिर काष्ठा net *ns, पूर्णांक अगरindex)
-अणु
-	वापस (((uपूर्णांकptr_t)ns + अगरindex) & (SEL_NETIF_HASH_SIZE - 1));
-पूर्ण
+static inline u32 sel_netif_hashfn(const struct net *ns, int ifindex)
+{
+	return (((uintptr_t)ns + ifindex) & (SEL_NETIF_HASH_SIZE - 1));
+}
 
 /**
- * sel_netअगर_find - Search क्रम an पूर्णांकerface record
+ * sel_netif_find - Search for an interface record
  * @ns: the network namespace
- * @अगरindex: the network पूर्णांकerface
+ * @ifindex: the network interface
  *
  * Description:
- * Search the network पूर्णांकerface table and वापस the record matching @अगरindex.
- * If an entry can not be found in the table वापस शून्य.
+ * Search the network interface table and return the record matching @ifindex.
+ * If an entry can not be found in the table return NULL.
  *
  */
-अटल अंतरभूत काष्ठा sel_netअगर *sel_netअगर_find(स्थिर काष्ठा net *ns,
-					       पूर्णांक अगरindex)
-अणु
-	पूर्णांक idx = sel_netअगर_hashfn(ns, अगरindex);
-	काष्ठा sel_netअगर *netअगर;
+static inline struct sel_netif *sel_netif_find(const struct net *ns,
+					       int ifindex)
+{
+	int idx = sel_netif_hashfn(ns, ifindex);
+	struct sel_netif *netif;
 
-	list_क्रम_each_entry_rcu(netअगर, &sel_netअगर_hash[idx], list)
-		अगर (net_eq(netअगर->nsec.ns, ns) &&
-		    netअगर->nsec.अगरindex == अगरindex)
-			वापस netअगर;
+	list_for_each_entry_rcu(netif, &sel_netif_hash[idx], list)
+		if (net_eq(netif->nsec.ns, ns) &&
+		    netif->nsec.ifindex == ifindex)
+			return netif;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * sel_netअगर_insert - Insert a new पूर्णांकerface पूर्णांकo the table
- * @netअगर: the new पूर्णांकerface record
+ * sel_netif_insert - Insert a new interface into the table
+ * @netif: the new interface record
  *
  * Description:
- * Add a new पूर्णांकerface record to the network पूर्णांकerface hash table.  Returns
+ * Add a new interface record to the network interface hash table.  Returns
  * zero on success, negative values on failure.
  *
  */
-अटल पूर्णांक sel_netअगर_insert(काष्ठा sel_netअगर *netअगर)
-अणु
-	पूर्णांक idx;
+static int sel_netif_insert(struct sel_netif *netif)
+{
+	int idx;
 
-	अगर (sel_netअगर_total >= SEL_NETIF_HASH_MAX)
-		वापस -ENOSPC;
+	if (sel_netif_total >= SEL_NETIF_HASH_MAX)
+		return -ENOSPC;
 
-	idx = sel_netअगर_hashfn(netअगर->nsec.ns, netअगर->nsec.अगरindex);
-	list_add_rcu(&netअगर->list, &sel_netअगर_hash[idx]);
-	sel_netअगर_total++;
+	idx = sel_netif_hashfn(netif->nsec.ns, netif->nsec.ifindex);
+	list_add_rcu(&netif->list, &sel_netif_hash[idx]);
+	sel_netif_total++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sel_netअगर_destroy - Remove an पूर्णांकerface record from the table
- * @netअगर: the existing पूर्णांकerface record
+ * sel_netif_destroy - Remove an interface record from the table
+ * @netif: the existing interface record
  *
  * Description:
- * Remove an existing पूर्णांकerface record from the network पूर्णांकerface table.
+ * Remove an existing interface record from the network interface table.
  *
  */
-अटल व्योम sel_netअगर_destroy(काष्ठा sel_netअगर *netअगर)
-अणु
-	list_del_rcu(&netअगर->list);
-	sel_netअगर_total--;
-	kमुक्त_rcu(netअगर, rcu_head);
-पूर्ण
+static void sel_netif_destroy(struct sel_netif *netif)
+{
+	list_del_rcu(&netif->list);
+	sel_netif_total--;
+	kfree_rcu(netif, rcu_head);
+}
 
 /**
- * sel_netअगर_sid_slow - Lookup the SID of a network पूर्णांकerface using the policy
+ * sel_netif_sid_slow - Lookup the SID of a network interface using the policy
  * @ns: the network namespace
- * @अगरindex: the network पूर्णांकerface
- * @sid: पूर्णांकerface SID
+ * @ifindex: the network interface
+ * @sid: interface SID
  *
  * Description:
- * This function determines the SID of a network पूर्णांकerface by querying the
- * security policy.  The result is added to the network पूर्णांकerface table to
+ * This function determines the SID of a network interface by querying the
+ * security policy.  The result is added to the network interface table to
  * speedup future queries.  Returns zero on success, negative values on
  * failure.
  *
  */
-अटल पूर्णांक sel_netअगर_sid_slow(काष्ठा net *ns, पूर्णांक अगरindex, u32 *sid)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा sel_netअगर *netअगर;
-	काष्ठा sel_netअगर *new;
-	काष्ठा net_device *dev;
+static int sel_netif_sid_slow(struct net *ns, int ifindex, u32 *sid)
+{
+	int ret = 0;
+	struct sel_netif *netif;
+	struct sel_netif *new;
+	struct net_device *dev;
 
 	/* NOTE: we always use init's network namespace since we don't
 	 * currently support containers */
 
-	dev = dev_get_by_index(ns, अगरindex);
-	अगर (unlikely(dev == शून्य)) अणु
+	dev = dev_get_by_index(ns, ifindex);
+	if (unlikely(dev == NULL)) {
 		pr_warn("SELinux: failure in %s(), invalid network interface (%d)\n",
-			__func__, अगरindex);
-		वापस -ENOENT;
-	पूर्ण
+			__func__, ifindex);
+		return -ENOENT;
+	}
 
-	spin_lock_bh(&sel_netअगर_lock);
-	netअगर = sel_netअगर_find(ns, अगरindex);
-	अगर (netअगर != शून्य) अणु
-		*sid = netअगर->nsec.sid;
-		जाओ out;
-	पूर्ण
+	spin_lock_bh(&sel_netif_lock);
+	netif = sel_netif_find(ns, ifindex);
+	if (netif != NULL) {
+		*sid = netif->nsec.sid;
+		goto out;
+	}
 
-	ret = security_netअगर_sid(&selinux_state, dev->name, sid);
-	अगर (ret != 0)
-		जाओ out;
-	new = kzalloc(माप(*new), GFP_ATOMIC);
-	अगर (new) अणु
+	ret = security_netif_sid(&selinux_state, dev->name, sid);
+	if (ret != 0)
+		goto out;
+	new = kzalloc(sizeof(*new), GFP_ATOMIC);
+	if (new) {
 		new->nsec.ns = ns;
-		new->nsec.अगरindex = अगरindex;
+		new->nsec.ifindex = ifindex;
 		new->nsec.sid = *sid;
-		अगर (sel_netअगर_insert(new))
-			kमुक्त(new);
-	पूर्ण
+		if (sel_netif_insert(new))
+			kfree(new);
+	}
 
 out:
-	spin_unlock_bh(&sel_netअगर_lock);
+	spin_unlock_bh(&sel_netif_lock);
 	dev_put(dev);
-	अगर (unlikely(ret))
+	if (unlikely(ret))
 		pr_warn("SELinux: failure in %s(), unable to determine network interface label (%d)\n",
-			__func__, अगरindex);
-	वापस ret;
-पूर्ण
+			__func__, ifindex);
+	return ret;
+}
 
 /**
- * sel_netअगर_sid - Lookup the SID of a network पूर्णांकerface
+ * sel_netif_sid - Lookup the SID of a network interface
  * @ns: the network namespace
- * @अगरindex: the network पूर्णांकerface
- * @sid: पूर्णांकerface SID
+ * @ifindex: the network interface
+ * @sid: interface SID
  *
  * Description:
- * This function determines the SID of a network पूर्णांकerface using the fastest
- * method possible.  First the पूर्णांकerface table is queried, but अगर an entry
+ * This function determines the SID of a network interface using the fastest
+ * method possible.  First the interface table is queried, but if an entry
  * can't be found then the policy is queried and the result is added to the
  * table to speedup future queries.  Returns zero on success, negative values
  * on failure.
  *
  */
-पूर्णांक sel_netअगर_sid(काष्ठा net *ns, पूर्णांक अगरindex, u32 *sid)
-अणु
-	काष्ठा sel_netअगर *netअगर;
+int sel_netif_sid(struct net *ns, int ifindex, u32 *sid)
+{
+	struct sel_netif *netif;
 
-	rcu_पढ़ो_lock();
-	netअगर = sel_netअगर_find(ns, अगरindex);
-	अगर (likely(netअगर != शून्य)) अणु
-		*sid = netअगर->nsec.sid;
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	netif = sel_netif_find(ns, ifindex);
+	if (likely(netif != NULL)) {
+		*sid = netif->nsec.sid;
+		rcu_read_unlock();
+		return 0;
+	}
+	rcu_read_unlock();
 
-	वापस sel_netअगर_sid_slow(ns, अगरindex, sid);
-पूर्ण
+	return sel_netif_sid_slow(ns, ifindex, sid);
+}
 
 /**
- * sel_netअगर_समाप्त - Remove an entry from the network पूर्णांकerface table
+ * sel_netif_kill - Remove an entry from the network interface table
  * @ns: the network namespace
- * @अगरindex: the network पूर्णांकerface
+ * @ifindex: the network interface
  *
  * Description:
- * This function हटाओs the entry matching @अगरindex from the network पूर्णांकerface
- * table अगर it exists.
+ * This function removes the entry matching @ifindex from the network interface
+ * table if it exists.
  *
  */
-अटल व्योम sel_netअगर_समाप्त(स्थिर काष्ठा net *ns, पूर्णांक अगरindex)
-अणु
-	काष्ठा sel_netअगर *netअगर;
+static void sel_netif_kill(const struct net *ns, int ifindex)
+{
+	struct sel_netif *netif;
 
-	rcu_पढ़ो_lock();
-	spin_lock_bh(&sel_netअगर_lock);
-	netअगर = sel_netअगर_find(ns, अगरindex);
-	अगर (netअगर)
-		sel_netअगर_destroy(netअगर);
-	spin_unlock_bh(&sel_netअगर_lock);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	spin_lock_bh(&sel_netif_lock);
+	netif = sel_netif_find(ns, ifindex);
+	if (netif)
+		sel_netif_destroy(netif);
+	spin_unlock_bh(&sel_netif_lock);
+	rcu_read_unlock();
+}
 
 /**
- * sel_netअगर_flush - Flush the entire network पूर्णांकerface table
+ * sel_netif_flush - Flush the entire network interface table
  *
  * Description:
- * Remove all entries from the network पूर्णांकerface table.
+ * Remove all entries from the network interface table.
  *
  */
-व्योम sel_netअगर_flush(व्योम)
-अणु
-	पूर्णांक idx;
-	काष्ठा sel_netअगर *netअगर;
+void sel_netif_flush(void)
+{
+	int idx;
+	struct sel_netif *netif;
 
-	spin_lock_bh(&sel_netअगर_lock);
-	क्रम (idx = 0; idx < SEL_NETIF_HASH_SIZE; idx++)
-		list_क्रम_each_entry(netअगर, &sel_netअगर_hash[idx], list)
-			sel_netअगर_destroy(netअगर);
-	spin_unlock_bh(&sel_netअगर_lock);
-पूर्ण
+	spin_lock_bh(&sel_netif_lock);
+	for (idx = 0; idx < SEL_NETIF_HASH_SIZE; idx++)
+		list_for_each_entry(netif, &sel_netif_hash[idx], list)
+			sel_netif_destroy(netif);
+	spin_unlock_bh(&sel_netif_lock);
+}
 
-अटल पूर्णांक sel_netअगर_netdev_notअगरier_handler(काष्ठा notअगरier_block *this,
-					     अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+static int sel_netif_netdev_notifier_handler(struct notifier_block *this,
+					     unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 
-	अगर (event == NETDEV_DOWN)
-		sel_netअगर_समाप्त(dev_net(dev), dev->अगरindex);
+	if (event == NETDEV_DOWN)
+		sel_netif_kill(dev_net(dev), dev->ifindex);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block sel_netअगर_netdev_notअगरier = अणु
-	.notअगरier_call = sel_netअगर_netdev_notअगरier_handler,
-पूर्ण;
+static struct notifier_block sel_netif_netdev_notifier = {
+	.notifier_call = sel_netif_netdev_notifier_handler,
+};
 
-अटल __init पूर्णांक sel_netअगर_init(व्योम)
-अणु
-	पूर्णांक i;
+static __init int sel_netif_init(void)
+{
+	int i;
 
-	अगर (!selinux_enabled_boot)
-		वापस 0;
+	if (!selinux_enabled_boot)
+		return 0;
 
-	क्रम (i = 0; i < SEL_NETIF_HASH_SIZE; i++)
-		INIT_LIST_HEAD(&sel_netअगर_hash[i]);
+	for (i = 0; i < SEL_NETIF_HASH_SIZE; i++)
+		INIT_LIST_HEAD(&sel_netif_hash[i]);
 
-	रेजिस्टर_netdevice_notअगरier(&sel_netअगर_netdev_notअगरier);
+	register_netdevice_notifier(&sel_netif_netdev_notifier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__initcall(sel_netअगर_init);
+__initcall(sel_netif_init);
 

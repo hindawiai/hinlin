@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,273 +25,273 @@
  *
  **************************************************************************/
 
-#समावेश <linux/dmapool.h>
-#समावेश <linux/pci.h>
+#include <linux/dmapool.h>
+#include <linux/pci.h>
 
-#समावेश <drm/tपंचांग/tपंचांग_bo_api.h>
+#include <drm/ttm/ttm_bo_api.h>
 
-#समावेश "vmwgfx_drv.h"
+#include "vmwgfx_drv.h"
 
 /*
- * Size of अंतरभूत command buffers. Try to make sure that a page size is a
+ * Size of inline command buffers. Try to make sure that a page size is a
  * multiple of the DMA pool allocation size.
  */
-#घोषणा VMW_CMDBUF_INLINE_ALIGN 64
-#घोषणा VMW_CMDBUF_INLINE_SIZE \
-	(1024 - ALIGN(माप(SVGACBHeader), VMW_CMDBUF_INLINE_ALIGN))
+#define VMW_CMDBUF_INLINE_ALIGN 64
+#define VMW_CMDBUF_INLINE_SIZE \
+	(1024 - ALIGN(sizeof(SVGACBHeader), VMW_CMDBUF_INLINE_ALIGN))
 
 /**
- * काष्ठा vmw_cmdbuf_context - Command buffer context queues
+ * struct vmw_cmdbuf_context - Command buffer context queues
  *
  * @submitted: List of command buffers that have been submitted to the
  * manager but not yet submitted to hardware.
  * @hw_submitted: List of command buffers submitted to hardware.
  * @preempted: List of preempted command buffers.
  * @num_hw_submitted: Number of buffers currently being processed by hardware
- * @block_submission: Identअगरies a block command submission.
+ * @block_submission: Identifies a block command submission.
  */
-काष्ठा vmw_cmdbuf_context अणु
-	काष्ठा list_head submitted;
-	काष्ठा list_head hw_submitted;
-	काष्ठा list_head preempted;
-	अचिन्हित num_hw_submitted;
+struct vmw_cmdbuf_context {
+	struct list_head submitted;
+	struct list_head hw_submitted;
+	struct list_head preempted;
+	unsigned num_hw_submitted;
 	bool block_submission;
-पूर्ण;
+};
 
 /**
- * काष्ठा vmw_cmdbuf_man - Command buffer manager
+ * struct vmw_cmdbuf_man - Command buffer manager
  *
- * @cur_mutex: Mutex protecting the command buffer used क्रम incremental small
+ * @cur_mutex: Mutex protecting the command buffer used for incremental small
  * kernel command submissions, @cur.
  * @space_mutex: Mutex to protect against starvation when we allocate
- * मुख्य pool buffer space.
+ * main pool buffer space.
  * @error_mutex: Mutex to serialize the work queue error handling.
- * Note this is not needed अगर the same workqueue handler
+ * Note this is not needed if the same workqueue handler
  * can't race with itself...
- * @work: A काष्ठा work_काष्ठा implementeing command buffer error handling.
+ * @work: A struct work_struct implementeing command buffer error handling.
  * Immutable.
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठा. Immutable.
+ * @dev_priv: Pointer to the device private struct. Immutable.
  * @ctx: Array of command buffer context queues. The queues and the context
- * data is रक्षित by @lock.
+ * data is protected by @lock.
  * @error: List of command buffers that have caused device errors.
  * Protected by @lock.
- * @mm: Range manager क्रम the command buffer space. Manager allocations and
- * मुक्तs are रक्षित by @lock.
- * @cmd_space: Buffer object क्रम the command buffer space, unless we were
+ * @mm: Range manager for the command buffer space. Manager allocations and
+ * frees are protected by @lock.
+ * @cmd_space: Buffer object for the command buffer space, unless we were
  * able to make a contigous coherent DMA memory allocation, @handle. Immutable.
- * @map_obj: Mapping state क्रम @cmd_space. Immutable.
- * @map: Poपूर्णांकer to command buffer space. May be a mapped buffer object or
+ * @map_obj: Mapping state for @cmd_space. Immutable.
+ * @map: Pointer to command buffer space. May be a mapped buffer object or
  * a contigous coherent DMA memory allocation. Immutable.
- * @cur: Command buffer क्रम small kernel command submissions. Protected by
+ * @cur: Command buffer for small kernel command submissions. Protected by
  * the @cur_mutex.
- * @cur_pos: Space alपढ़ोy used in @cur. Protected by @cur_mutex.
- * @शेष_size: Default size क्रम the @cur command buffer. Immutable.
+ * @cur_pos: Space already used in @cur. Protected by @cur_mutex.
+ * @default_size: Default size for the @cur command buffer. Immutable.
  * @max_hw_submitted: Max number of in-flight command buffers the device can
  * handle. Immutable.
  * @lock: Spinlock protecting command submission queues.
- * @headers: Pool of DMA memory क्रम device command buffer headers.
+ * @headers: Pool of DMA memory for device command buffer headers.
  * Internal protection.
- * @dheaders: Pool of DMA memory क्रम device command buffer headers with trailing
- * space क्रम अंतरभूत data. Internal protection.
- * @alloc_queue: Wait queue क्रम processes रुकोing to allocate command buffer
+ * @dheaders: Pool of DMA memory for device command buffer headers with trailing
+ * space for inline data. Internal protection.
+ * @alloc_queue: Wait queue for processes waiting to allocate command buffer
  * space.
- * @idle_queue: Wait queue क्रम processes रुकोing क्रम command buffer idle.
+ * @idle_queue: Wait queue for processes waiting for command buffer idle.
  * @irq_on: Whether the process function has requested irq to be turned on.
  * Protected by @lock.
  * @using_mob: Whether the command buffer space is a MOB or a contigous DMA
  * allocation. Immutable.
  * @has_pool: Has a large pool of DMA memory which allows larger allocations.
  * Typically this is false only during bootstrap.
- * @handle: DMA address handle क्रम the command buffer space अगर @using_mob is
+ * @handle: DMA address handle for the command buffer space if @using_mob is
  * false. Immutable.
  * @size: The size of the command buffer space. Immutable.
  * @num_contexts: Number of contexts actually enabled.
  */
-काष्ठा vmw_cmdbuf_man अणु
-	काष्ठा mutex cur_mutex;
-	काष्ठा mutex space_mutex;
-	काष्ठा mutex error_mutex;
-	काष्ठा work_काष्ठा work;
-	काष्ठा vmw_निजी *dev_priv;
-	काष्ठा vmw_cmdbuf_context ctx[SVGA_CB_CONTEXT_MAX];
-	काष्ठा list_head error;
-	काष्ठा drm_mm mm;
-	काष्ठा tपंचांग_buffer_object *cmd_space;
-	काष्ठा tपंचांग_bo_kmap_obj map_obj;
+struct vmw_cmdbuf_man {
+	struct mutex cur_mutex;
+	struct mutex space_mutex;
+	struct mutex error_mutex;
+	struct work_struct work;
+	struct vmw_private *dev_priv;
+	struct vmw_cmdbuf_context ctx[SVGA_CB_CONTEXT_MAX];
+	struct list_head error;
+	struct drm_mm mm;
+	struct ttm_buffer_object *cmd_space;
+	struct ttm_bo_kmap_obj map_obj;
 	u8 *map;
-	काष्ठा vmw_cmdbuf_header *cur;
-	माप_प्रकार cur_pos;
-	माप_प्रकार शेष_size;
-	अचिन्हित max_hw_submitted;
+	struct vmw_cmdbuf_header *cur;
+	size_t cur_pos;
+	size_t default_size;
+	unsigned max_hw_submitted;
 	spinlock_t lock;
-	काष्ठा dma_pool *headers;
-	काष्ठा dma_pool *dheaders;
-	रुको_queue_head_t alloc_queue;
-	रुको_queue_head_t idle_queue;
+	struct dma_pool *headers;
+	struct dma_pool *dheaders;
+	wait_queue_head_t alloc_queue;
+	wait_queue_head_t idle_queue;
 	bool irq_on;
 	bool using_mob;
 	bool has_pool;
 	dma_addr_t handle;
-	माप_प्रकार size;
+	size_t size;
 	u32 num_contexts;
-पूर्ण;
+};
 
 /**
- * काष्ठा vmw_cmdbuf_header - Command buffer metadata
+ * struct vmw_cmdbuf_header - Command buffer metadata
  *
  * @man: The command buffer manager.
  * @cb_header: Device command buffer header, allocated from a DMA pool.
  * @cb_context: The device command buffer context.
- * @list: List head क्रम attaching to the manager lists.
+ * @list: List head for attaching to the manager lists.
  * @node: The range manager node.
  * @handle: The DMA address of @cb_header. Handed to the device on command
  * buffer submission.
- * @cmd: Poपूर्णांकer to the command buffer space of this buffer.
+ * @cmd: Pointer to the command buffer space of this buffer.
  * @size: Size of the command buffer space of this buffer.
  * @reserved: Reserved space of this buffer.
- * @अंतरभूत_space: Whether अंतरभूत command buffer space is used.
+ * @inline_space: Whether inline command buffer space is used.
  */
-काष्ठा vmw_cmdbuf_header अणु
-	काष्ठा vmw_cmdbuf_man *man;
+struct vmw_cmdbuf_header {
+	struct vmw_cmdbuf_man *man;
 	SVGACBHeader *cb_header;
 	SVGACBContext cb_context;
-	काष्ठा list_head list;
-	काष्ठा drm_mm_node node;
+	struct list_head list;
+	struct drm_mm_node node;
 	dma_addr_t handle;
 	u8 *cmd;
-	माप_प्रकार size;
-	माप_प्रकार reserved;
-	bool अंतरभूत_space;
-पूर्ण;
+	size_t size;
+	size_t reserved;
+	bool inline_space;
+};
 
 /**
- * काष्ठा vmw_cmdbuf_dheader - Device command buffer header with अंतरभूत
+ * struct vmw_cmdbuf_dheader - Device command buffer header with inline
  * command buffer space.
  *
  * @cb_header: Device command buffer header.
  * @cmd: Inline command buffer space.
  */
-काष्ठा vmw_cmdbuf_dheader अणु
+struct vmw_cmdbuf_dheader {
 	SVGACBHeader cb_header;
 	u8 cmd[VMW_CMDBUF_INLINE_SIZE] __aligned(VMW_CMDBUF_INLINE_ALIGN);
-पूर्ण;
+};
 
 /**
- * काष्ठा vmw_cmdbuf_alloc_info - Command buffer space allocation metadata
+ * struct vmw_cmdbuf_alloc_info - Command buffer space allocation metadata
  *
  * @page_size: Size of requested command buffer space in pages.
- * @node: Poपूर्णांकer to the range manager node.
- * @करोne: True अगर this allocation has succeeded.
+ * @node: Pointer to the range manager node.
+ * @done: True if this allocation has succeeded.
  */
-काष्ठा vmw_cmdbuf_alloc_info अणु
-	माप_प्रकार page_size;
-	काष्ठा drm_mm_node *node;
-	bool करोne;
-पूर्ण;
+struct vmw_cmdbuf_alloc_info {
+	size_t page_size;
+	struct drm_mm_node *node;
+	bool done;
+};
 
 /* Loop over each context in the command buffer manager. */
-#घोषणा क्रम_each_cmdbuf_ctx(_man, _i, _ctx)				\
-	क्रम (_i = 0, _ctx = &(_man)->ctx[0]; (_i) < (_man)->num_contexts; \
+#define for_each_cmdbuf_ctx(_man, _i, _ctx)				\
+	for (_i = 0, _ctx = &(_man)->ctx[0]; (_i) < (_man)->num_contexts; \
 	     ++(_i), ++(_ctx))
 
-अटल पूर्णांक vmw_cmdbuf_startstop(काष्ठा vmw_cmdbuf_man *man, u32 context,
+static int vmw_cmdbuf_startstop(struct vmw_cmdbuf_man *man, u32 context,
 				bool enable);
-अटल पूर्णांक vmw_cmdbuf_preempt(काष्ठा vmw_cmdbuf_man *man, u32 context);
+static int vmw_cmdbuf_preempt(struct vmw_cmdbuf_man *man, u32 context);
 
 /**
  * vmw_cmdbuf_cur_lock - Helper to lock the cur_mutex.
  *
  * @man: The range manager.
- * @पूर्णांकerruptible: Whether to रुको पूर्णांकerruptible when locking.
+ * @interruptible: Whether to wait interruptible when locking.
  */
-अटल पूर्णांक vmw_cmdbuf_cur_lock(काष्ठा vmw_cmdbuf_man *man, bool पूर्णांकerruptible)
-अणु
-	अगर (पूर्णांकerruptible) अणु
-		अगर (mutex_lock_पूर्णांकerruptible(&man->cur_mutex))
-			वापस -ERESTARTSYS;
-	पूर्ण अन्यथा अणु
+static int vmw_cmdbuf_cur_lock(struct vmw_cmdbuf_man *man, bool interruptible)
+{
+	if (interruptible) {
+		if (mutex_lock_interruptible(&man->cur_mutex))
+			return -ERESTARTSYS;
+	} else {
 		mutex_lock(&man->cur_mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_cmdbuf_cur_unlock - Helper to unlock the cur_mutex.
  *
  * @man: The range manager.
  */
-अटल व्योम vmw_cmdbuf_cur_unlock(काष्ठा vmw_cmdbuf_man *man)
-अणु
+static void vmw_cmdbuf_cur_unlock(struct vmw_cmdbuf_man *man)
+{
 	mutex_unlock(&man->cur_mutex);
-पूर्ण
+}
 
 /**
- * vmw_cmdbuf_header_अंतरभूत_मुक्त - Free a काष्ठा vmw_cmdbuf_header that has
- * been used क्रम the device context with अंतरभूत command buffers.
+ * vmw_cmdbuf_header_inline_free - Free a struct vmw_cmdbuf_header that has
+ * been used for the device context with inline command buffers.
  * Need not be called locked.
  *
- * @header: Poपूर्णांकer to the header to मुक्त.
+ * @header: Pointer to the header to free.
  */
-अटल व्योम vmw_cmdbuf_header_अंतरभूत_मुक्त(काष्ठा vmw_cmdbuf_header *header)
-अणु
-	काष्ठा vmw_cmdbuf_dheader *dheader;
+static void vmw_cmdbuf_header_inline_free(struct vmw_cmdbuf_header *header)
+{
+	struct vmw_cmdbuf_dheader *dheader;
 
-	अगर (WARN_ON_ONCE(!header->अंतरभूत_space))
-		वापस;
+	if (WARN_ON_ONCE(!header->inline_space))
+		return;
 
-	dheader = container_of(header->cb_header, काष्ठा vmw_cmdbuf_dheader,
+	dheader = container_of(header->cb_header, struct vmw_cmdbuf_dheader,
 			       cb_header);
-	dma_pool_मुक्त(header->man->dheaders, dheader, header->handle);
-	kमुक्त(header);
-पूर्ण
+	dma_pool_free(header->man->dheaders, dheader, header->handle);
+	kfree(header);
+}
 
 /**
- * __vmw_cmdbuf_header_मुक्त - Free a काष्ठा vmw_cmdbuf_header  and its
- * associated काष्ठाures.
+ * __vmw_cmdbuf_header_free - Free a struct vmw_cmdbuf_header  and its
+ * associated structures.
  *
- * @header: Poपूर्णांकer to the header to मुक्त.
+ * @header: Pointer to the header to free.
  *
- * For पूर्णांकernal use. Must be called with man::lock held.
+ * For internal use. Must be called with man::lock held.
  */
-अटल व्योम __vmw_cmdbuf_header_मुक्त(काष्ठा vmw_cmdbuf_header *header)
-अणु
-	काष्ठा vmw_cmdbuf_man *man = header->man;
+static void __vmw_cmdbuf_header_free(struct vmw_cmdbuf_header *header)
+{
+	struct vmw_cmdbuf_man *man = header->man;
 
-	lockdep_निश्चित_held_once(&man->lock);
+	lockdep_assert_held_once(&man->lock);
 
-	अगर (header->अंतरभूत_space) अणु
-		vmw_cmdbuf_header_अंतरभूत_मुक्त(header);
-		वापस;
-	पूर्ण
+	if (header->inline_space) {
+		vmw_cmdbuf_header_inline_free(header);
+		return;
+	}
 
-	drm_mm_हटाओ_node(&header->node);
+	drm_mm_remove_node(&header->node);
 	wake_up_all(&man->alloc_queue);
-	अगर (header->cb_header)
-		dma_pool_मुक्त(man->headers, header->cb_header,
+	if (header->cb_header)
+		dma_pool_free(man->headers, header->cb_header,
 			      header->handle);
-	kमुक्त(header);
-पूर्ण
+	kfree(header);
+}
 
 /**
- * vmw_cmdbuf_header_मुक्त - Free a काष्ठा vmw_cmdbuf_header  and its
- * associated काष्ठाures.
+ * vmw_cmdbuf_header_free - Free a struct vmw_cmdbuf_header  and its
+ * associated structures.
  *
- * @header: Poपूर्णांकer to the header to मुक्त.
+ * @header: Pointer to the header to free.
  */
-व्योम vmw_cmdbuf_header_मुक्त(काष्ठा vmw_cmdbuf_header *header)
-अणु
-	काष्ठा vmw_cmdbuf_man *man = header->man;
+void vmw_cmdbuf_header_free(struct vmw_cmdbuf_header *header)
+{
+	struct vmw_cmdbuf_man *man = header->man;
 
-	/* Aव्योम locking अगर अंतरभूत_space */
-	अगर (header->अंतरभूत_space) अणु
-		vmw_cmdbuf_header_अंतरभूत_मुक्त(header);
-		वापस;
-	पूर्ण
+	/* Avoid locking if inline_space */
+	if (header->inline_space) {
+		vmw_cmdbuf_header_inline_free(header);
+		return;
+	}
 	spin_lock(&man->lock);
-	__vmw_cmdbuf_header_मुक्त(header);
+	__vmw_cmdbuf_header_free(header);
 	spin_unlock(&man->lock);
-पूर्ण
+}
 
 
 /**
@@ -300,33 +299,33 @@
  *
  * @header: The header of the buffer to submit.
  */
-अटल पूर्णांक vmw_cmdbuf_header_submit(काष्ठा vmw_cmdbuf_header *header)
-अणु
-	काष्ठा vmw_cmdbuf_man *man = header->man;
+static int vmw_cmdbuf_header_submit(struct vmw_cmdbuf_header *header)
+{
+	struct vmw_cmdbuf_man *man = header->man;
 	u32 val;
 
 	val = upper_32_bits(header->handle);
-	vmw_ग_लिखो(man->dev_priv, SVGA_REG_COMMAND_HIGH, val);
+	vmw_write(man->dev_priv, SVGA_REG_COMMAND_HIGH, val);
 
 	val = lower_32_bits(header->handle);
 	val |= header->cb_context & SVGA_CB_CONTEXT_MASK;
-	vmw_ग_लिखो(man->dev_priv, SVGA_REG_COMMAND_LOW, val);
+	vmw_write(man->dev_priv, SVGA_REG_COMMAND_LOW, val);
 
-	वापस header->cb_header->status;
-पूर्ण
+	return header->cb_header->status;
+}
 
 /**
  * vmw_cmdbuf_ctx_init: Initialize a command buffer context.
  *
  * @ctx: The command buffer context to initialize
  */
-अटल व्योम vmw_cmdbuf_ctx_init(काष्ठा vmw_cmdbuf_context *ctx)
-अणु
+static void vmw_cmdbuf_ctx_init(struct vmw_cmdbuf_context *ctx)
+{
 	INIT_LIST_HEAD(&ctx->hw_submitted);
 	INIT_LIST_HEAD(&ctx->submitted);
 	INIT_LIST_HEAD(&ctx->preempted);
 	ctx->num_hw_submitted = 0;
-पूर्ण
+}
 
 /**
  * vmw_cmdbuf_ctx_submit: Submit command buffers from a command buffer
@@ -338,33 +337,33 @@
  * Submits command buffers to hardware until there are no more command
  * buffers to submit or the hardware can't handle more command buffers.
  */
-अटल व्योम vmw_cmdbuf_ctx_submit(काष्ठा vmw_cmdbuf_man *man,
-				  काष्ठा vmw_cmdbuf_context *ctx)
-अणु
-	जबतक (ctx->num_hw_submitted < man->max_hw_submitted &&
+static void vmw_cmdbuf_ctx_submit(struct vmw_cmdbuf_man *man,
+				  struct vmw_cmdbuf_context *ctx)
+{
+	while (ctx->num_hw_submitted < man->max_hw_submitted &&
 	       !list_empty(&ctx->submitted) &&
-	       !ctx->block_submission) अणु
-		काष्ठा vmw_cmdbuf_header *entry;
+	       !ctx->block_submission) {
+		struct vmw_cmdbuf_header *entry;
 		SVGACBStatus status;
 
 		entry = list_first_entry(&ctx->submitted,
-					 काष्ठा vmw_cmdbuf_header,
+					 struct vmw_cmdbuf_header,
 					 list);
 
 		status = vmw_cmdbuf_header_submit(entry);
 
 		/* This should never happen */
-		अगर (WARN_ON_ONCE(status == SVGA_CB_STATUS_QUEUE_FULL)) अणु
+		if (WARN_ON_ONCE(status == SVGA_CB_STATUS_QUEUE_FULL)) {
 			entry->cb_header->status = SVGA_CB_STATUS_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		list_del(&entry->list);
 		list_add_tail(&entry->list, &ctx->hw_submitted);
 		ctx->num_hw_submitted++;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 /**
  * vmw_cmdbuf_ctx_process - Process a command buffer context.
@@ -373,60 +372,60 @@
  * @ctx: The command buffer context.
  * @notempty: Pass back count of non-empty command submitted lists.
  *
- * Submit command buffers to hardware अगर possible, and process finished
- * buffers. Typically मुक्तing them, but on preemption or error take
- * appropriate action. Wake up रुकोers अगर appropriate.
+ * Submit command buffers to hardware if possible, and process finished
+ * buffers. Typically freeing them, but on preemption or error take
+ * appropriate action. Wake up waiters if appropriate.
  */
-अटल व्योम vmw_cmdbuf_ctx_process(काष्ठा vmw_cmdbuf_man *man,
-				   काष्ठा vmw_cmdbuf_context *ctx,
-				   पूर्णांक *notempty)
-अणु
-	काष्ठा vmw_cmdbuf_header *entry, *next;
+static void vmw_cmdbuf_ctx_process(struct vmw_cmdbuf_man *man,
+				   struct vmw_cmdbuf_context *ctx,
+				   int *notempty)
+{
+	struct vmw_cmdbuf_header *entry, *next;
 
 	vmw_cmdbuf_ctx_submit(man, ctx);
 
-	list_क्रम_each_entry_safe(entry, next, &ctx->hw_submitted, list) अणु
+	list_for_each_entry_safe(entry, next, &ctx->hw_submitted, list) {
 		SVGACBStatus status = entry->cb_header->status;
 
-		अगर (status == SVGA_CB_STATUS_NONE)
-			अवरोध;
+		if (status == SVGA_CB_STATUS_NONE)
+			break;
 
 		list_del(&entry->list);
 		wake_up_all(&man->idle_queue);
 		ctx->num_hw_submitted--;
-		चयन (status) अणु
-		हाल SVGA_CB_STATUS_COMPLETED:
-			__vmw_cmdbuf_header_मुक्त(entry);
-			अवरोध;
-		हाल SVGA_CB_STATUS_COMMAND_ERROR:
+		switch (status) {
+		case SVGA_CB_STATUS_COMPLETED:
+			__vmw_cmdbuf_header_free(entry);
+			break;
+		case SVGA_CB_STATUS_COMMAND_ERROR:
 			WARN_ONCE(true, "Command buffer error.\n");
 			entry->cb_header->status = SVGA_CB_STATUS_NONE;
 			list_add_tail(&entry->list, &man->error);
 			schedule_work(&man->work);
-			अवरोध;
-		हाल SVGA_CB_STATUS_PREEMPTED:
+			break;
+		case SVGA_CB_STATUS_PREEMPTED:
 			entry->cb_header->status = SVGA_CB_STATUS_NONE;
 			list_add_tail(&entry->list, &ctx->preempted);
-			अवरोध;
-		हाल SVGA_CB_STATUS_CB_HEADER_ERROR:
+			break;
+		case SVGA_CB_STATUS_CB_HEADER_ERROR:
 			WARN_ONCE(true, "Command buffer header error.\n");
-			__vmw_cmdbuf_header_मुक्त(entry);
-			अवरोध;
-		शेष:
+			__vmw_cmdbuf_header_free(entry);
+			break;
+		default:
 			WARN_ONCE(true, "Undefined command buffer status.\n");
-			__vmw_cmdbuf_header_मुक्त(entry);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			__vmw_cmdbuf_header_free(entry);
+			break;
+		}
+	}
 
 	vmw_cmdbuf_ctx_submit(man, ctx);
-	अगर (!list_empty(&ctx->submitted))
+	if (!list_empty(&ctx->submitted))
 		(*notempty)++;
-पूर्ण
+}
 
 /**
  * vmw_cmdbuf_man_process - Process all command buffer contexts and
- * चयन on and off irqs as appropriate.
+ * switch on and off irqs as appropriate.
  *
  * @man: The command buffer manager.
  *
@@ -434,35 +433,35 @@
  * command buffers left that are not submitted to hardware, Make sure
  * IRQ handling is turned on. Otherwise, make sure it's turned off.
  */
-अटल व्योम vmw_cmdbuf_man_process(काष्ठा vmw_cmdbuf_man *man)
-अणु
-	पूर्णांक notempty;
-	काष्ठा vmw_cmdbuf_context *ctx;
-	पूर्णांक i;
+static void vmw_cmdbuf_man_process(struct vmw_cmdbuf_man *man)
+{
+	int notempty;
+	struct vmw_cmdbuf_context *ctx;
+	int i;
 
 retry:
 	notempty = 0;
-	क्रम_each_cmdbuf_ctx(man, i, ctx)
+	for_each_cmdbuf_ctx(man, i, ctx)
 		vmw_cmdbuf_ctx_process(man, ctx, &notempty);
 
-	अगर (man->irq_on && !notempty) अणु
-		vmw_generic_रुकोer_हटाओ(man->dev_priv,
+	if (man->irq_on && !notempty) {
+		vmw_generic_waiter_remove(man->dev_priv,
 					  SVGA_IRQFLAG_COMMAND_BUFFER,
-					  &man->dev_priv->cmdbuf_रुकोers);
+					  &man->dev_priv->cmdbuf_waiters);
 		man->irq_on = false;
-	पूर्ण अन्यथा अगर (!man->irq_on && notempty) अणु
-		vmw_generic_रुकोer_add(man->dev_priv,
+	} else if (!man->irq_on && notempty) {
+		vmw_generic_waiter_add(man->dev_priv,
 				       SVGA_IRQFLAG_COMMAND_BUFFER,
-				       &man->dev_priv->cmdbuf_रुकोers);
+				       &man->dev_priv->cmdbuf_waiters);
 		man->irq_on = true;
 
-		/* Rerun in हाल we just missed an irq. */
-		जाओ retry;
-	पूर्ण
-पूर्ण
+		/* Rerun in case we just missed an irq. */
+		goto retry;
+	}
+}
 
 /**
- * vmw_cmdbuf_ctx_add - Schedule a command buffer क्रम submission on a
+ * vmw_cmdbuf_ctx_add - Schedule a command buffer for submission on a
  * command buffer context
  *
  * @man: The command buffer manager.
@@ -470,38 +469,38 @@ retry:
  * @cb_context: The command buffer context to use.
  *
  * This function adds @header to the "submitted" queue of the command
- * buffer context identअगरied by @cb_context. It then calls the command buffer
+ * buffer context identified by @cb_context. It then calls the command buffer
  * manager processing to potentially submit the buffer to hardware.
  * @man->lock needs to be held when calling this function.
  */
-अटल व्योम vmw_cmdbuf_ctx_add(काष्ठा vmw_cmdbuf_man *man,
-			       काष्ठा vmw_cmdbuf_header *header,
+static void vmw_cmdbuf_ctx_add(struct vmw_cmdbuf_man *man,
+			       struct vmw_cmdbuf_header *header,
 			       SVGACBContext cb_context)
-अणु
-	अगर (!(header->cb_header->flags & SVGA_CB_FLAG_DX_CONTEXT))
+{
+	if (!(header->cb_header->flags & SVGA_CB_FLAG_DX_CONTEXT))
 		header->cb_header->dxContext = 0;
 	header->cb_context = cb_context;
 	list_add_tail(&header->list, &man->ctx[cb_context].submitted);
 
 	vmw_cmdbuf_man_process(man);
-पूर्ण
+}
 
 /**
- * vmw_cmdbuf_irqthपढ़ो - The मुख्य part of the command buffer पूर्णांकerrupt
- * handler implemented as a thपढ़ोed irq task.
+ * vmw_cmdbuf_irqthread - The main part of the command buffer interrupt
+ * handler implemented as a threaded irq task.
  *
- * @man: Poपूर्णांकer to the command buffer manager.
+ * @man: Pointer to the command buffer manager.
  *
- * The bottom half of the पूर्णांकerrupt handler simply calls पूर्णांकo the
- * command buffer processor to मुक्त finished buffers and submit any
+ * The bottom half of the interrupt handler simply calls into the
+ * command buffer processor to free finished buffers and submit any
  * queued buffers to hardware.
  */
-व्योम vmw_cmdbuf_irqthपढ़ो(काष्ठा vmw_cmdbuf_man *man)
-अणु
+void vmw_cmdbuf_irqthread(struct vmw_cmdbuf_man *man)
+{
 	spin_lock(&man->lock);
 	vmw_cmdbuf_man_process(man);
 	spin_unlock(&man->lock);
-पूर्ण
+}
 
 /**
  * vmw_cmdbuf_work_func - The deferred work function that handles
@@ -512,60 +511,60 @@ retry:
  * Restarting the command buffer context after an error requires process
  * context, so it is deferred to this work function.
  */
-अटल व्योम vmw_cmdbuf_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vmw_cmdbuf_man *man =
-		container_of(work, काष्ठा vmw_cmdbuf_man, work);
-	काष्ठा vmw_cmdbuf_header *entry, *next;
-	uपूर्णांक32_t dummy;
+static void vmw_cmdbuf_work_func(struct work_struct *work)
+{
+	struct vmw_cmdbuf_man *man =
+		container_of(work, struct vmw_cmdbuf_man, work);
+	struct vmw_cmdbuf_header *entry, *next;
+	uint32_t dummy;
 	bool send_fence = false;
-	काष्ठा list_head restart_head[SVGA_CB_CONTEXT_MAX];
-	पूर्णांक i;
-	काष्ठा vmw_cmdbuf_context *ctx;
+	struct list_head restart_head[SVGA_CB_CONTEXT_MAX];
+	int i;
+	struct vmw_cmdbuf_context *ctx;
 	bool global_block = false;
 
-	क्रम_each_cmdbuf_ctx(man, i, ctx)
+	for_each_cmdbuf_ctx(man, i, ctx)
 		INIT_LIST_HEAD(&restart_head[i]);
 
 	mutex_lock(&man->error_mutex);
 	spin_lock(&man->lock);
-	list_क्रम_each_entry_safe(entry, next, &man->error, list) अणु
+	list_for_each_entry_safe(entry, next, &man->error, list) {
 		SVGACBHeader *cb_hdr = entry->cb_header;
 		SVGA3dCmdHeader *header = (SVGA3dCmdHeader *)
 			(entry->cmd + cb_hdr->errorOffset);
 		u32 error_cmd_size, new_start_offset;
-		स्थिर अक्षर *cmd_name;
+		const char *cmd_name;
 
 		list_del_init(&entry->list);
 		global_block = true;
 
-		अगर (!vmw_cmd_describe(header, &error_cmd_size, &cmd_name)) अणु
+		if (!vmw_cmd_describe(header, &error_cmd_size, &cmd_name)) {
 			VMW_DEBUG_USER("Unknown command causing device error.\n");
 			VMW_DEBUG_USER("Command buffer offset is %lu\n",
-				       (अचिन्हित दीर्घ) cb_hdr->errorOffset);
-			__vmw_cmdbuf_header_मुक्त(entry);
+				       (unsigned long) cb_hdr->errorOffset);
+			__vmw_cmdbuf_header_free(entry);
 			send_fence = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		VMW_DEBUG_USER("Command \"%s\" causing device error.\n",
 			       cmd_name);
 		VMW_DEBUG_USER("Command buffer offset is %lu\n",
-			       (अचिन्हित दीर्घ) cb_hdr->errorOffset);
+			       (unsigned long) cb_hdr->errorOffset);
 		VMW_DEBUG_USER("Command size is %lu\n",
-			       (अचिन्हित दीर्घ) error_cmd_size);
+			       (unsigned long) error_cmd_size);
 
 		new_start_offset = cb_hdr->errorOffset + error_cmd_size;
 
-		अगर (new_start_offset >= cb_hdr->length) अणु
-			__vmw_cmdbuf_header_मुक्त(entry);
+		if (new_start_offset >= cb_hdr->length) {
+			__vmw_cmdbuf_header_free(entry);
 			send_fence = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (man->using_mob)
+		if (man->using_mob)
 			cb_hdr->ptr.mob.mobOffset += new_start_offset;
-		अन्यथा
+		else
 			cb_hdr->ptr.pa += (u64) new_start_offset;
 
 		entry->cmd += new_start_offset;
@@ -574,19 +573,19 @@ retry:
 		cb_hdr->offset = 0;
 
 		list_add_tail(&entry->list, &restart_head[entry->cb_context]);
-	पूर्ण
+	}
 
-	क्रम_each_cmdbuf_ctx(man, i, ctx)
+	for_each_cmdbuf_ctx(man, i, ctx)
 		man->ctx[i].block_submission = true;
 
 	spin_unlock(&man->lock);
 
 	/* Preempt all contexts */
-	अगर (global_block && vmw_cmdbuf_preempt(man, 0))
+	if (global_block && vmw_cmdbuf_preempt(man, 0))
 		DRM_ERROR("Failed preempting command buffer contexts\n");
 
 	spin_lock(&man->lock);
-	क्रम_each_cmdbuf_ctx(man, i, ctx) अणु
+	for_each_cmdbuf_ctx(man, i, ctx) {
 		/* Move preempted command buffers to the preempted queue. */
 		vmw_cmdbuf_ctx_process(man, ctx, &dummy);
 
@@ -603,333 +602,333 @@ retry:
 
 		ctx->block_submission = false;
 		list_splice_init(&restart_head[i], &ctx->submitted);
-	पूर्ण
+	}
 
 	vmw_cmdbuf_man_process(man);
 	spin_unlock(&man->lock);
 
-	अगर (global_block && vmw_cmdbuf_startstop(man, 0, true))
+	if (global_block && vmw_cmdbuf_startstop(man, 0, true))
 		DRM_ERROR("Failed restarting command buffer contexts\n");
 
-	/* Send a new fence in हाल one was हटाओd */
-	अगर (send_fence) अणु
+	/* Send a new fence in case one was removed */
+	if (send_fence) {
 		vmw_cmd_send_fence(man->dev_priv, &dummy);
 		wake_up_all(&man->idle_queue);
-	पूर्ण
+	}
 
 	mutex_unlock(&man->error_mutex);
-पूर्ण
+}
 
 /**
  * vmw_cmdbuf_man idle - Check whether the command buffer manager is idle.
  *
  * @man: The command buffer manager.
- * @check_preempted: Check also the preempted queue क्रम pending command buffers.
+ * @check_preempted: Check also the preempted queue for pending command buffers.
  *
  */
-अटल bool vmw_cmdbuf_man_idle(काष्ठा vmw_cmdbuf_man *man,
+static bool vmw_cmdbuf_man_idle(struct vmw_cmdbuf_man *man,
 				bool check_preempted)
-अणु
-	काष्ठा vmw_cmdbuf_context *ctx;
+{
+	struct vmw_cmdbuf_context *ctx;
 	bool idle = false;
-	पूर्णांक i;
+	int i;
 
 	spin_lock(&man->lock);
 	vmw_cmdbuf_man_process(man);
-	क्रम_each_cmdbuf_ctx(man, i, ctx) अणु
-		अगर (!list_empty(&ctx->submitted) ||
+	for_each_cmdbuf_ctx(man, i, ctx) {
+		if (!list_empty(&ctx->submitted) ||
 		    !list_empty(&ctx->hw_submitted) ||
 		    (check_preempted && !list_empty(&ctx->preempted)))
-			जाओ out_unlock;
-	पूर्ण
+			goto out_unlock;
+	}
 
 	idle = list_empty(&man->error);
 
 out_unlock:
 	spin_unlock(&man->lock);
 
-	वापस idle;
-पूर्ण
+	return idle;
+}
 
 /**
- * __vmw_cmdbuf_cur_flush - Flush the current command buffer क्रम small kernel
+ * __vmw_cmdbuf_cur_flush - Flush the current command buffer for small kernel
  * command submissions
  *
  * @man: The command buffer manager.
  *
  * Flushes the current command buffer without allocating a new one. A new one
- * is स्वतःmatically allocated when needed. Call with @man->cur_mutex held.
+ * is automatically allocated when needed. Call with @man->cur_mutex held.
  */
-अटल व्योम __vmw_cmdbuf_cur_flush(काष्ठा vmw_cmdbuf_man *man)
-अणु
-	काष्ठा vmw_cmdbuf_header *cur = man->cur;
+static void __vmw_cmdbuf_cur_flush(struct vmw_cmdbuf_man *man)
+{
+	struct vmw_cmdbuf_header *cur = man->cur;
 
-	lockdep_निश्चित_held_once(&man->cur_mutex);
+	lockdep_assert_held_once(&man->cur_mutex);
 
-	अगर (!cur)
-		वापस;
+	if (!cur)
+		return;
 
 	spin_lock(&man->lock);
-	अगर (man->cur_pos == 0) अणु
-		__vmw_cmdbuf_header_मुक्त(cur);
-		जाओ out_unlock;
-	पूर्ण
+	if (man->cur_pos == 0) {
+		__vmw_cmdbuf_header_free(cur);
+		goto out_unlock;
+	}
 
 	man->cur->cb_header->length = man->cur_pos;
 	vmw_cmdbuf_ctx_add(man, man->cur, SVGA_CB_CONTEXT_0);
 out_unlock:
 	spin_unlock(&man->lock);
-	man->cur = शून्य;
+	man->cur = NULL;
 	man->cur_pos = 0;
-पूर्ण
+}
 
 /**
- * vmw_cmdbuf_cur_flush - Flush the current command buffer क्रम small kernel
+ * vmw_cmdbuf_cur_flush - Flush the current command buffer for small kernel
  * command submissions
  *
  * @man: The command buffer manager.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible when sleeping.
+ * @interruptible: Whether to sleep interruptible when sleeping.
  *
  * Flushes the current command buffer without allocating a new one. A new one
- * is स्वतःmatically allocated when needed.
+ * is automatically allocated when needed.
  */
-पूर्णांक vmw_cmdbuf_cur_flush(काष्ठा vmw_cmdbuf_man *man,
-			 bool पूर्णांकerruptible)
-अणु
-	पूर्णांक ret = vmw_cmdbuf_cur_lock(man, पूर्णांकerruptible);
+int vmw_cmdbuf_cur_flush(struct vmw_cmdbuf_man *man,
+			 bool interruptible)
+{
+	int ret = vmw_cmdbuf_cur_lock(man, interruptible);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	__vmw_cmdbuf_cur_flush(man);
 	vmw_cmdbuf_cur_unlock(man);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_cmdbuf_idle - Wait क्रम command buffer manager idle.
+ * vmw_cmdbuf_idle - Wait for command buffer manager idle.
  *
  * @man: The command buffer manager.
- * @पूर्णांकerruptible: Sleep पूर्णांकerruptible जबतक रुकोing.
- * @समयout: Time out after this many ticks.
+ * @interruptible: Sleep interruptible while waiting.
+ * @timeout: Time out after this many ticks.
  *
  * Wait until the command buffer manager has processed all command buffers,
- * or until a समयout occurs. If a समयout occurs, the function will वापस
+ * or until a timeout occurs. If a timeout occurs, the function will return
  * -EBUSY.
  */
-पूर्णांक vmw_cmdbuf_idle(काष्ठा vmw_cmdbuf_man *man, bool पूर्णांकerruptible,
-		    अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक ret;
+int vmw_cmdbuf_idle(struct vmw_cmdbuf_man *man, bool interruptible,
+		    unsigned long timeout)
+{
+	int ret;
 
-	ret = vmw_cmdbuf_cur_flush(man, पूर्णांकerruptible);
-	vmw_generic_रुकोer_add(man->dev_priv,
+	ret = vmw_cmdbuf_cur_flush(man, interruptible);
+	vmw_generic_waiter_add(man->dev_priv,
 			       SVGA_IRQFLAG_COMMAND_BUFFER,
-			       &man->dev_priv->cmdbuf_रुकोers);
+			       &man->dev_priv->cmdbuf_waiters);
 
-	अगर (पूर्णांकerruptible) अणु
-		ret = रुको_event_पूर्णांकerruptible_समयout
+	if (interruptible) {
+		ret = wait_event_interruptible_timeout
 			(man->idle_queue, vmw_cmdbuf_man_idle(man, true),
-			 समयout);
-	पूर्ण अन्यथा अणु
-		ret = रुको_event_समयout
+			 timeout);
+	} else {
+		ret = wait_event_timeout
 			(man->idle_queue, vmw_cmdbuf_man_idle(man, true),
-			 समयout);
-	पूर्ण
-	vmw_generic_रुकोer_हटाओ(man->dev_priv,
+			 timeout);
+	}
+	vmw_generic_waiter_remove(man->dev_priv,
 				  SVGA_IRQFLAG_COMMAND_BUFFER,
-				  &man->dev_priv->cmdbuf_रुकोers);
-	अगर (ret == 0) अणु
-		अगर (!vmw_cmdbuf_man_idle(man, true))
+				  &man->dev_priv->cmdbuf_waiters);
+	if (ret == 0) {
+		if (!vmw_cmdbuf_man_idle(man, true))
 			ret = -EBUSY;
-		अन्यथा
+		else
 			ret = 0;
-	पूर्ण
-	अगर (ret > 0)
+	}
+	if (ret > 0)
 		ret = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_cmdbuf_try_alloc - Try to allocate buffer space from the मुख्य pool.
+ * vmw_cmdbuf_try_alloc - Try to allocate buffer space from the main pool.
  *
  * @man: The command buffer manager.
  * @info: Allocation info. Will hold the size on entry and allocated mm node
- * on successful वापस.
+ * on successful return.
  *
- * Try to allocate buffer space from the मुख्य pool. Returns true अगर succeeded.
- * If a fatal error was hit, the error code is वापसed in @info->ret.
+ * Try to allocate buffer space from the main pool. Returns true if succeeded.
+ * If a fatal error was hit, the error code is returned in @info->ret.
  */
-अटल bool vmw_cmdbuf_try_alloc(काष्ठा vmw_cmdbuf_man *man,
-				 काष्ठा vmw_cmdbuf_alloc_info *info)
-अणु
-	पूर्णांक ret;
+static bool vmw_cmdbuf_try_alloc(struct vmw_cmdbuf_man *man,
+				 struct vmw_cmdbuf_alloc_info *info)
+{
+	int ret;
 
-	अगर (info->करोne)
-		वापस true;
+	if (info->done)
+		return true;
 
-	स_रखो(info->node, 0, माप(*info->node));
+	memset(info->node, 0, sizeof(*info->node));
 	spin_lock(&man->lock);
 	ret = drm_mm_insert_node(&man->mm, info->node, info->page_size);
-	अगर (ret) अणु
+	if (ret) {
 		vmw_cmdbuf_man_process(man);
 		ret = drm_mm_insert_node(&man->mm, info->node, info->page_size);
-	पूर्ण
+	}
 
 	spin_unlock(&man->lock);
-	info->करोne = !ret;
+	info->done = !ret;
 
-	वापस info->करोne;
-पूर्ण
+	return info->done;
+}
 
 /**
- * vmw_cmdbuf_alloc_space - Allocate buffer space from the मुख्य pool.
+ * vmw_cmdbuf_alloc_space - Allocate buffer space from the main pool.
  *
  * @man: The command buffer manager.
- * @node: Poपूर्णांकer to pre-allocated range-manager node.
+ * @node: Pointer to pre-allocated range-manager node.
  * @size: The size of the allocation.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible जबतक रुकोing क्रम space.
+ * @interruptible: Whether to sleep interruptible while waiting for space.
  *
- * This function allocates buffer space from the मुख्य pool, and अगर there is
- * no space available ATM, it turns on IRQ handling and sleeps रुकोing क्रम it to
+ * This function allocates buffer space from the main pool, and if there is
+ * no space available ATM, it turns on IRQ handling and sleeps waiting for it to
  * become available.
  */
-अटल पूर्णांक vmw_cmdbuf_alloc_space(काष्ठा vmw_cmdbuf_man *man,
-				  काष्ठा drm_mm_node *node,
-				  माप_प्रकार size,
-				  bool पूर्णांकerruptible)
-अणु
-	काष्ठा vmw_cmdbuf_alloc_info info;
+static int vmw_cmdbuf_alloc_space(struct vmw_cmdbuf_man *man,
+				  struct drm_mm_node *node,
+				  size_t size,
+				  bool interruptible)
+{
+	struct vmw_cmdbuf_alloc_info info;
 
 	info.page_size = PAGE_ALIGN(size) >> PAGE_SHIFT;
 	info.node = node;
-	info.करोne = false;
+	info.done = false;
 
 	/*
 	 * To prevent starvation of large requests, only one allocating call
-	 * at a समय रुकोing क्रम space.
+	 * at a time waiting for space.
 	 */
-	अगर (पूर्णांकerruptible) अणु
-		अगर (mutex_lock_पूर्णांकerruptible(&man->space_mutex))
-			वापस -ERESTARTSYS;
-	पूर्ण अन्यथा अणु
+	if (interruptible) {
+		if (mutex_lock_interruptible(&man->space_mutex))
+			return -ERESTARTSYS;
+	} else {
 		mutex_lock(&man->space_mutex);
-	पूर्ण
+	}
 
-	/* Try to allocate space without रुकोing. */
-	अगर (vmw_cmdbuf_try_alloc(man, &info))
-		जाओ out_unlock;
+	/* Try to allocate space without waiting. */
+	if (vmw_cmdbuf_try_alloc(man, &info))
+		goto out_unlock;
 
-	vmw_generic_रुकोer_add(man->dev_priv,
+	vmw_generic_waiter_add(man->dev_priv,
 			       SVGA_IRQFLAG_COMMAND_BUFFER,
-			       &man->dev_priv->cmdbuf_रुकोers);
+			       &man->dev_priv->cmdbuf_waiters);
 
-	अगर (पूर्णांकerruptible) अणु
-		पूर्णांक ret;
+	if (interruptible) {
+		int ret;
 
-		ret = रुको_event_पूर्णांकerruptible
+		ret = wait_event_interruptible
 			(man->alloc_queue, vmw_cmdbuf_try_alloc(man, &info));
-		अगर (ret) अणु
-			vmw_generic_रुकोer_हटाओ
+		if (ret) {
+			vmw_generic_waiter_remove
 				(man->dev_priv, SVGA_IRQFLAG_COMMAND_BUFFER,
-				 &man->dev_priv->cmdbuf_रुकोers);
+				 &man->dev_priv->cmdbuf_waiters);
 			mutex_unlock(&man->space_mutex);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		रुको_event(man->alloc_queue, vmw_cmdbuf_try_alloc(man, &info));
-	पूर्ण
-	vmw_generic_रुकोer_हटाओ(man->dev_priv,
+			return ret;
+		}
+	} else {
+		wait_event(man->alloc_queue, vmw_cmdbuf_try_alloc(man, &info));
+	}
+	vmw_generic_waiter_remove(man->dev_priv,
 				  SVGA_IRQFLAG_COMMAND_BUFFER,
-				  &man->dev_priv->cmdbuf_रुकोers);
+				  &man->dev_priv->cmdbuf_waiters);
 
 out_unlock:
 	mutex_unlock(&man->space_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_cmdbuf_space_pool - Set up a command buffer header with command buffer
- * space from the मुख्य pool.
+ * space from the main pool.
  *
  * @man: The command buffer manager.
- * @header: Poपूर्णांकer to the header to set up.
+ * @header: Pointer to the header to set up.
  * @size: The requested size of the buffer space.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible जबतक रुकोing क्रम space.
+ * @interruptible: Whether to sleep interruptible while waiting for space.
  */
-अटल पूर्णांक vmw_cmdbuf_space_pool(काष्ठा vmw_cmdbuf_man *man,
-				 काष्ठा vmw_cmdbuf_header *header,
-				 माप_प्रकार size,
-				 bool पूर्णांकerruptible)
-अणु
+static int vmw_cmdbuf_space_pool(struct vmw_cmdbuf_man *man,
+				 struct vmw_cmdbuf_header *header,
+				 size_t size,
+				 bool interruptible)
+{
 	SVGACBHeader *cb_hdr;
-	माप_प्रकार offset;
-	पूर्णांक ret;
+	size_t offset;
+	int ret;
 
-	अगर (!man->has_pool)
-		वापस -ENOMEM;
+	if (!man->has_pool)
+		return -ENOMEM;
 
-	ret = vmw_cmdbuf_alloc_space(man, &header->node,  size, पूर्णांकerruptible);
+	ret = vmw_cmdbuf_alloc_space(man, &header->node,  size, interruptible);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	header->cb_header = dma_pool_zalloc(man->headers, GFP_KERNEL,
 					    &header->handle);
-	अगर (!header->cb_header) अणु
+	if (!header->cb_header) {
 		ret = -ENOMEM;
-		जाओ out_no_cb_header;
-	पूर्ण
+		goto out_no_cb_header;
+	}
 
 	header->size = header->node.size << PAGE_SHIFT;
 	cb_hdr = header->cb_header;
 	offset = header->node.start << PAGE_SHIFT;
 	header->cmd = man->map + offset;
-	अगर (man->using_mob) अणु
+	if (man->using_mob) {
 		cb_hdr->flags = SVGA_CB_FLAG_MOB;
 		cb_hdr->ptr.mob.mobid = man->cmd_space->mem.start;
 		cb_hdr->ptr.mob.mobOffset = offset;
-	पूर्ण अन्यथा अणु
+	} else {
 		cb_hdr->ptr.pa = (u64)man->handle + (u64)offset;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_no_cb_header:
 	spin_lock(&man->lock);
-	drm_mm_हटाओ_node(&header->node);
+	drm_mm_remove_node(&header->node);
 	spin_unlock(&man->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_cmdbuf_space_अंतरभूत - Set up a command buffer header with
- * अंतरभूत command buffer space.
+ * vmw_cmdbuf_space_inline - Set up a command buffer header with
+ * inline command buffer space.
  *
  * @man: The command buffer manager.
- * @header: Poपूर्णांकer to the header to set up.
+ * @header: Pointer to the header to set up.
  * @size: The requested size of the buffer space.
  */
-अटल पूर्णांक vmw_cmdbuf_space_अंतरभूत(काष्ठा vmw_cmdbuf_man *man,
-				   काष्ठा vmw_cmdbuf_header *header,
-				   पूर्णांक size)
-अणु
-	काष्ठा vmw_cmdbuf_dheader *dheader;
+static int vmw_cmdbuf_space_inline(struct vmw_cmdbuf_man *man,
+				   struct vmw_cmdbuf_header *header,
+				   int size)
+{
+	struct vmw_cmdbuf_dheader *dheader;
 	SVGACBHeader *cb_hdr;
 
-	अगर (WARN_ON_ONCE(size > VMW_CMDBUF_INLINE_SIZE))
-		वापस -ENOMEM;
+	if (WARN_ON_ONCE(size > VMW_CMDBUF_INLINE_SIZE))
+		return -ENOMEM;
 
 	dheader = dma_pool_zalloc(man->dheaders, GFP_KERNEL,
 				  &header->handle);
-	अगर (!dheader)
-		वापस -ENOMEM;
+	if (!dheader)
+		return -ENOMEM;
 
-	header->अंतरभूत_space = true;
+	header->inline_space = true;
 	header->size = VMW_CMDBUF_INLINE_SIZE;
 	cb_hdr = &dheader->cb_header;
 	header->cb_header = cb_hdr;
@@ -937,10 +936,10 @@ out_no_cb_header:
 	cb_hdr->status = SVGA_CB_STATUS_NONE;
 	cb_hdr->flags = SVGA_CB_FLAG_NONE;
 	cb_hdr->ptr.pa = (u64)header->handle +
-		(u64)दुरत्व(काष्ठा vmw_cmdbuf_dheader, cmd);
+		(u64)offsetof(struct vmw_cmdbuf_dheader, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_cmdbuf_alloc - Allocate a command buffer header complete with
@@ -948,94 +947,94 @@ out_no_cb_header:
  *
  * @man: The command buffer manager.
  * @size: The requested size of the buffer space.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible जबतक रुकोing क्रम space.
- * @p_header: poपूर्णांकs to a header poपूर्णांकer to populate on successful वापस.
+ * @interruptible: Whether to sleep interruptible while waiting for space.
+ * @p_header: points to a header pointer to populate on successful return.
  *
- * Returns a poपूर्णांकer to command buffer space अगर successful. Otherwise
- * वापसs an error poपूर्णांकer. The header poपूर्णांकer वापसed in @p_header should
- * be used क्रम upcoming calls to vmw_cmdbuf_reserve() and vmw_cmdbuf_commit().
+ * Returns a pointer to command buffer space if successful. Otherwise
+ * returns an error pointer. The header pointer returned in @p_header should
+ * be used for upcoming calls to vmw_cmdbuf_reserve() and vmw_cmdbuf_commit().
  */
-व्योम *vmw_cmdbuf_alloc(काष्ठा vmw_cmdbuf_man *man,
-		       माप_प्रकार size, bool पूर्णांकerruptible,
-		       काष्ठा vmw_cmdbuf_header **p_header)
-अणु
-	काष्ठा vmw_cmdbuf_header *header;
-	पूर्णांक ret = 0;
+void *vmw_cmdbuf_alloc(struct vmw_cmdbuf_man *man,
+		       size_t size, bool interruptible,
+		       struct vmw_cmdbuf_header **p_header)
+{
+	struct vmw_cmdbuf_header *header;
+	int ret = 0;
 
-	*p_header = शून्य;
+	*p_header = NULL;
 
-	header = kzalloc(माप(*header), GFP_KERNEL);
-	अगर (!header)
-		वापस ERR_PTR(-ENOMEM);
+	header = kzalloc(sizeof(*header), GFP_KERNEL);
+	if (!header)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (size <= VMW_CMDBUF_INLINE_SIZE)
-		ret = vmw_cmdbuf_space_अंतरभूत(man, header, size);
-	अन्यथा
-		ret = vmw_cmdbuf_space_pool(man, header, size, पूर्णांकerruptible);
+	if (size <= VMW_CMDBUF_INLINE_SIZE)
+		ret = vmw_cmdbuf_space_inline(man, header, size);
+	else
+		ret = vmw_cmdbuf_space_pool(man, header, size, interruptible);
 
-	अगर (ret) अणु
-		kमुक्त(header);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		kfree(header);
+		return ERR_PTR(ret);
+	}
 
 	header->man = man;
 	INIT_LIST_HEAD(&header->list);
 	header->cb_header->status = SVGA_CB_STATUS_NONE;
 	*p_header = header;
 
-	वापस header->cmd;
-पूर्ण
+	return header->cmd;
+}
 
 /**
- * vmw_cmdbuf_reserve_cur - Reserve space क्रम commands in the current
+ * vmw_cmdbuf_reserve_cur - Reserve space for commands in the current
  * command buffer.
  *
  * @man: The command buffer manager.
  * @size: The requested size of the commands.
- * @ctx_id: The context id अगर any. Otherwise set to SVGA3D_REG_INVALID.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible जबतक रुकोing क्रम space.
+ * @ctx_id: The context id if any. Otherwise set to SVGA3D_REG_INVALID.
+ * @interruptible: Whether to sleep interruptible while waiting for space.
  *
- * Returns a poपूर्णांकer to command buffer space अगर successful. Otherwise
- * वापसs an error poपूर्णांकer.
+ * Returns a pointer to command buffer space if successful. Otherwise
+ * returns an error pointer.
  */
-अटल व्योम *vmw_cmdbuf_reserve_cur(काष्ठा vmw_cmdbuf_man *man,
-				    माप_प्रकार size,
-				    पूर्णांक ctx_id,
-				    bool पूर्णांकerruptible)
-अणु
-	काष्ठा vmw_cmdbuf_header *cur;
-	व्योम *ret;
+static void *vmw_cmdbuf_reserve_cur(struct vmw_cmdbuf_man *man,
+				    size_t size,
+				    int ctx_id,
+				    bool interruptible)
+{
+	struct vmw_cmdbuf_header *cur;
+	void *ret;
 
-	अगर (vmw_cmdbuf_cur_lock(man, पूर्णांकerruptible))
-		वापस ERR_PTR(-ERESTARTSYS);
+	if (vmw_cmdbuf_cur_lock(man, interruptible))
+		return ERR_PTR(-ERESTARTSYS);
 
 	cur = man->cur;
-	अगर (cur && (size + man->cur_pos > cur->size ||
+	if (cur && (size + man->cur_pos > cur->size ||
 		    ((cur->cb_header->flags & SVGA_CB_FLAG_DX_CONTEXT) &&
 		     ctx_id != cur->cb_header->dxContext)))
 		__vmw_cmdbuf_cur_flush(man);
 
-	अगर (!man->cur) अणु
+	if (!man->cur) {
 		ret = vmw_cmdbuf_alloc(man,
-				       max_t(माप_प्रकार, size, man->शेष_size),
-				       पूर्णांकerruptible, &man->cur);
-		अगर (IS_ERR(ret)) अणु
+				       max_t(size_t, size, man->default_size),
+				       interruptible, &man->cur);
+		if (IS_ERR(ret)) {
 			vmw_cmdbuf_cur_unlock(man);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		cur = man->cur;
-	पूर्ण
+	}
 
-	अगर (ctx_id != SVGA3D_INVALID_ID) अणु
+	if (ctx_id != SVGA3D_INVALID_ID) {
 		cur->cb_header->flags |= SVGA_CB_FLAG_DX_CONTEXT;
 		cur->cb_header->dxContext = ctx_id;
-	पूर्ण
+	}
 
 	cur->reserved = size;
 
-	वापस (व्योम *) (man->cur->cmd + man->cur_pos);
-पूर्ण
+	return (void *) (man->cur->cmd + man->cur_pos);
+}
 
 /**
  * vmw_cmdbuf_commit_cur - Commit commands in the current command buffer.
@@ -1044,120 +1043,120 @@ out_no_cb_header:
  * @size: The size of the commands actually written.
  * @flush: Whether to flush the command buffer immediately.
  */
-अटल व्योम vmw_cmdbuf_commit_cur(काष्ठा vmw_cmdbuf_man *man,
-				  माप_प्रकार size, bool flush)
-अणु
-	काष्ठा vmw_cmdbuf_header *cur = man->cur;
+static void vmw_cmdbuf_commit_cur(struct vmw_cmdbuf_man *man,
+				  size_t size, bool flush)
+{
+	struct vmw_cmdbuf_header *cur = man->cur;
 
-	lockdep_निश्चित_held_once(&man->cur_mutex);
+	lockdep_assert_held_once(&man->cur_mutex);
 
 	WARN_ON(size > cur->reserved);
 	man->cur_pos += size;
-	अगर (!size)
+	if (!size)
 		cur->cb_header->flags &= ~SVGA_CB_FLAG_DX_CONTEXT;
-	अगर (flush)
+	if (flush)
 		__vmw_cmdbuf_cur_flush(man);
 	vmw_cmdbuf_cur_unlock(man);
-पूर्ण
+}
 
 /**
- * vmw_cmdbuf_reserve - Reserve space क्रम commands in a command buffer.
+ * vmw_cmdbuf_reserve - Reserve space for commands in a command buffer.
  *
  * @man: The command buffer manager.
  * @size: The requested size of the commands.
- * @ctx_id: The context id अगर any. Otherwise set to SVGA3D_REG_INVALID.
- * @पूर्णांकerruptible: Whether to sleep पूर्णांकerruptible जबतक रुकोing क्रम space.
- * @header: Header of the command buffer. शून्य अगर the current command buffer
+ * @ctx_id: The context id if any. Otherwise set to SVGA3D_REG_INVALID.
+ * @interruptible: Whether to sleep interruptible while waiting for space.
+ * @header: Header of the command buffer. NULL if the current command buffer
  * should be used.
  *
- * Returns a poपूर्णांकer to command buffer space अगर successful. Otherwise
- * वापसs an error poपूर्णांकer.
+ * Returns a pointer to command buffer space if successful. Otherwise
+ * returns an error pointer.
  */
-व्योम *vmw_cmdbuf_reserve(काष्ठा vmw_cmdbuf_man *man, माप_प्रकार size,
-			 पूर्णांक ctx_id, bool पूर्णांकerruptible,
-			 काष्ठा vmw_cmdbuf_header *header)
-अणु
-	अगर (!header)
-		वापस vmw_cmdbuf_reserve_cur(man, size, ctx_id, पूर्णांकerruptible);
+void *vmw_cmdbuf_reserve(struct vmw_cmdbuf_man *man, size_t size,
+			 int ctx_id, bool interruptible,
+			 struct vmw_cmdbuf_header *header)
+{
+	if (!header)
+		return vmw_cmdbuf_reserve_cur(man, size, ctx_id, interruptible);
 
-	अगर (size > header->size)
-		वापस ERR_PTR(-EINVAL);
+	if (size > header->size)
+		return ERR_PTR(-EINVAL);
 
-	अगर (ctx_id != SVGA3D_INVALID_ID) अणु
+	if (ctx_id != SVGA3D_INVALID_ID) {
 		header->cb_header->flags |= SVGA_CB_FLAG_DX_CONTEXT;
 		header->cb_header->dxContext = ctx_id;
-	पूर्ण
+	}
 
 	header->reserved = size;
-	वापस header->cmd;
-पूर्ण
+	return header->cmd;
+}
 
 /**
  * vmw_cmdbuf_commit - Commit commands in a command buffer.
  *
  * @man: The command buffer manager.
  * @size: The size of the commands actually written.
- * @header: Header of the command buffer. शून्य अगर the current command buffer
+ * @header: Header of the command buffer. NULL if the current command buffer
  * should be used.
  * @flush: Whether to flush the command buffer immediately.
  */
-व्योम vmw_cmdbuf_commit(काष्ठा vmw_cmdbuf_man *man, माप_प्रकार size,
-		       काष्ठा vmw_cmdbuf_header *header, bool flush)
-अणु
-	अगर (!header) अणु
+void vmw_cmdbuf_commit(struct vmw_cmdbuf_man *man, size_t size,
+		       struct vmw_cmdbuf_header *header, bool flush)
+{
+	if (!header) {
 		vmw_cmdbuf_commit_cur(man, size, flush);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	(व्योम) vmw_cmdbuf_cur_lock(man, false);
+	(void) vmw_cmdbuf_cur_lock(man, false);
 	__vmw_cmdbuf_cur_flush(man);
 	WARN_ON(size > header->reserved);
 	man->cur = header;
 	man->cur_pos = size;
-	अगर (!size)
+	if (!size)
 		header->cb_header->flags &= ~SVGA_CB_FLAG_DX_CONTEXT;
-	अगर (flush)
+	if (flush)
 		__vmw_cmdbuf_cur_flush(man);
 	vmw_cmdbuf_cur_unlock(man);
-पूर्ण
+}
 
 
 /**
  * vmw_cmdbuf_send_device_command - Send a command through the device context.
  *
  * @man: The command buffer manager.
- * @command: Poपूर्णांकer to the command to send.
+ * @command: Pointer to the command to send.
  * @size: Size of the command.
  *
  * Synchronously sends a device context command.
  */
-अटल पूर्णांक vmw_cmdbuf_send_device_command(काष्ठा vmw_cmdbuf_man *man,
-					  स्थिर व्योम *command,
-					  माप_प्रकार size)
-अणु
-	काष्ठा vmw_cmdbuf_header *header;
-	पूर्णांक status;
-	व्योम *cmd = vmw_cmdbuf_alloc(man, size, false, &header);
+static int vmw_cmdbuf_send_device_command(struct vmw_cmdbuf_man *man,
+					  const void *command,
+					  size_t size)
+{
+	struct vmw_cmdbuf_header *header;
+	int status;
+	void *cmd = vmw_cmdbuf_alloc(man, size, false, &header);
 
-	अगर (IS_ERR(cmd))
-		वापस PTR_ERR(cmd);
+	if (IS_ERR(cmd))
+		return PTR_ERR(cmd);
 
-	स_नकल(cmd, command, size);
+	memcpy(cmd, command, size);
 	header->cb_header->length = size;
 	header->cb_context = SVGA_CB_CONTEXT_DEVICE;
 	spin_lock(&man->lock);
 	status = vmw_cmdbuf_header_submit(header);
 	spin_unlock(&man->lock);
-	vmw_cmdbuf_header_मुक्त(header);
+	vmw_cmdbuf_header_free(header);
 
-	अगर (status != SVGA_CB_STATUS_COMPLETED) अणु
+	if (status != SVGA_CB_STATUS_COMPLETED) {
 		DRM_ERROR("Device context command failed with status %d\n",
 			  status);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_cmdbuf_preempt - Send a preempt command through the device
@@ -1168,19 +1167,19 @@ out_no_cb_header:
  *
  * Synchronously sends a preempt command.
  */
-अटल पूर्णांक vmw_cmdbuf_preempt(काष्ठा vmw_cmdbuf_man *man, u32 context)
-अणु
-	काष्ठा अणु
-		uपूर्णांक32 id;
+static int vmw_cmdbuf_preempt(struct vmw_cmdbuf_man *man, u32 context)
+{
+	struct {
+		uint32 id;
 		SVGADCCmdPreempt body;
-	पूर्ण __packed cmd;
+	} __packed cmd;
 
 	cmd.id = SVGA_DC_CMD_PREEMPT;
 	cmd.body.context = SVGA_CB_CONTEXT_0 + context;
 	cmd.body.ignoreIDZero = 0;
 
-	वापस vmw_cmdbuf_send_device_command(man, &cmd, माप(cmd));
-पूर्ण
+	return vmw_cmdbuf_send_device_command(man, &cmd, sizeof(cmd));
+}
 
 
 /**
@@ -1193,73 +1192,73 @@ out_no_cb_header:
  *
  * Synchronously sends a device start / stop context command.
  */
-अटल पूर्णांक vmw_cmdbuf_startstop(काष्ठा vmw_cmdbuf_man *man, u32 context,
+static int vmw_cmdbuf_startstop(struct vmw_cmdbuf_man *man, u32 context,
 				bool enable)
-अणु
-	काष्ठा अणु
-		uपूर्णांक32 id;
+{
+	struct {
+		uint32 id;
 		SVGADCCmdStartStop body;
-	पूर्ण __packed cmd;
+	} __packed cmd;
 
 	cmd.id = SVGA_DC_CMD_START_STOP_CONTEXT;
 	cmd.body.enable = (enable) ? 1 : 0;
 	cmd.body.context = SVGA_CB_CONTEXT_0 + context;
 
-	वापस vmw_cmdbuf_send_device_command(man, &cmd, माप(cmd));
-पूर्ण
+	return vmw_cmdbuf_send_device_command(man, &cmd, sizeof(cmd));
+}
 
 /**
  * vmw_cmdbuf_set_pool_size - Set command buffer manager sizes
  *
  * @man: The command buffer manager.
- * @size: The size of the मुख्य space pool.
+ * @size: The size of the main space pool.
  *
- * Set the size and allocate the मुख्य command buffer space pool.
+ * Set the size and allocate the main command buffer space pool.
  * If successful, this enables large command submissions.
  * Note that this function requires that rudimentary command
- * submission is alपढ़ोy available and that the MOB memory manager is alive.
+ * submission is already available and that the MOB memory manager is alive.
  * Returns 0 on success. Negative error code on failure.
  */
-पूर्णांक vmw_cmdbuf_set_pool_size(काष्ठा vmw_cmdbuf_man *man, माप_प्रकार size)
-अणु
-	काष्ठा vmw_निजी *dev_priv = man->dev_priv;
+int vmw_cmdbuf_set_pool_size(struct vmw_cmdbuf_man *man, size_t size)
+{
+	struct vmw_private *dev_priv = man->dev_priv;
 	bool dummy;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (man->has_pool)
-		वापस -EINVAL;
+	if (man->has_pool)
+		return -EINVAL;
 
 	/* First, try to allocate a huge chunk of DMA memory */
 	size = PAGE_ALIGN(size);
 	man->map = dma_alloc_coherent(dev_priv->drm.dev, size,
 				      &man->handle, GFP_KERNEL);
-	अगर (man->map) अणु
+	if (man->map) {
 		man->using_mob = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * DMA memory failed. If we can have command buffers in a
 		 * MOB, try to use that instead. Note that this will
-		 * actually call पूर्णांकo the alपढ़ोy enabled manager, when
+		 * actually call into the already enabled manager, when
 		 * binding the MOB.
 		 */
-		अगर (!(dev_priv->capabilities & SVGA_CAP_DX) ||
+		if (!(dev_priv->capabilities & SVGA_CAP_DX) ||
 		    !dev_priv->has_mob)
-			वापस -ENOMEM;
+			return -ENOMEM;
 
 		ret = vmw_bo_create_kernel(dev_priv, size,
 					   &vmw_mob_placement,
 					   &man->cmd_space);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		man->using_mob = true;
-		ret = tपंचांग_bo_kmap(man->cmd_space, 0, size >> PAGE_SHIFT,
+		ret = ttm_bo_kmap(man->cmd_space, 0, size >> PAGE_SHIFT,
 				  &man->map_obj);
-		अगर (ret)
-			जाओ out_no_map;
+		if (ret)
+			goto out_no_map;
 
-		man->map = tपंचांग_kmap_obj_भव(&man->map_obj, &dummy);
-	पूर्ण
+		man->map = ttm_kmap_obj_virtual(&man->map_obj, &dummy);
+	}
 
 	man->size = size;
 	drm_mm_init(&man->mm, 0, size >> PAGE_SHIFT);
@@ -1267,71 +1266,71 @@ out_no_cb_header:
 	man->has_pool = true;
 
 	/*
-	 * For now, set the शेष size to VMW_CMDBUF_INLINE_SIZE to
+	 * For now, set the default size to VMW_CMDBUF_INLINE_SIZE to
 	 * prevent deadlocks from happening when vmw_cmdbuf_space_pool()
-	 * needs to रुको क्रम space and we block on further command
-	 * submissions to be able to मुक्त up space.
+	 * needs to wait for space and we block on further command
+	 * submissions to be able to free up space.
 	 */
-	man->शेष_size = VMW_CMDBUF_INLINE_SIZE;
+	man->default_size = VMW_CMDBUF_INLINE_SIZE;
 	DRM_INFO("Using command buffers with %s pool.\n",
 		 (man->using_mob) ? "MOB" : "DMA");
 
-	वापस 0;
+	return 0;
 
 out_no_map:
-	अगर (man->using_mob) अणु
-		tपंचांग_bo_put(man->cmd_space);
-		man->cmd_space = शून्य;
-	पूर्ण
+	if (man->using_mob) {
+		ttm_bo_put(man->cmd_space);
+		man->cmd_space = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_cmdbuf_man_create: Create a command buffer manager and enable it क्रम
- * अंतरभूत command buffer submissions only.
+ * vmw_cmdbuf_man_create: Create a command buffer manager and enable it for
+ * inline command buffer submissions only.
  *
- * @dev_priv: Poपूर्णांकer to device निजी काष्ठाure.
+ * @dev_priv: Pointer to device private structure.
  *
- * Returns a poपूर्णांकer to a cummand buffer manager to success or error poपूर्णांकer
- * on failure. The command buffer manager will be enabled क्रम submissions of
+ * Returns a pointer to a cummand buffer manager to success or error pointer
+ * on failure. The command buffer manager will be enabled for submissions of
  * size VMW_CMDBUF_INLINE_SIZE only.
  */
-काष्ठा vmw_cmdbuf_man *vmw_cmdbuf_man_create(काष्ठा vmw_निजी *dev_priv)
-अणु
-	काष्ठा vmw_cmdbuf_man *man;
-	काष्ठा vmw_cmdbuf_context *ctx;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+struct vmw_cmdbuf_man *vmw_cmdbuf_man_create(struct vmw_private *dev_priv)
+{
+	struct vmw_cmdbuf_man *man;
+	struct vmw_cmdbuf_context *ctx;
+	unsigned int i;
+	int ret;
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_COMMAND_BUFFERS))
-		वापस ERR_PTR(-ENOSYS);
+	if (!(dev_priv->capabilities & SVGA_CAP_COMMAND_BUFFERS))
+		return ERR_PTR(-ENOSYS);
 
-	man = kzalloc(माप(*man), GFP_KERNEL);
-	अगर (!man)
-		वापस ERR_PTR(-ENOMEM);
+	man = kzalloc(sizeof(*man), GFP_KERNEL);
+	if (!man)
+		return ERR_PTR(-ENOMEM);
 
 	man->num_contexts = (dev_priv->capabilities & SVGA_CAP_HP_CMD_QUEUE) ?
 		2 : 1;
 	man->headers = dma_pool_create("vmwgfx cmdbuf",
 				       dev_priv->drm.dev,
-				       माप(SVGACBHeader),
+				       sizeof(SVGACBHeader),
 				       64, PAGE_SIZE);
-	अगर (!man->headers) अणु
+	if (!man->headers) {
 		ret = -ENOMEM;
-		जाओ out_no_pool;
-	पूर्ण
+		goto out_no_pool;
+	}
 
 	man->dheaders = dma_pool_create("vmwgfx inline cmdbuf",
 					dev_priv->drm.dev,
-					माप(काष्ठा vmw_cmdbuf_dheader),
+					sizeof(struct vmw_cmdbuf_dheader),
 					64, PAGE_SIZE);
-	अगर (!man->dheaders) अणु
+	if (!man->dheaders) {
 		ret = -ENOMEM;
-		जाओ out_no_dpool;
-	पूर्ण
+		goto out_no_dpool;
+	}
 
-	क्रम_each_cmdbuf_ctx(man, i, ctx)
+	for_each_cmdbuf_ctx(man, i, ctx)
 		vmw_cmdbuf_ctx_init(ctx);
 
 	INIT_LIST_HEAD(&man->error);
@@ -1339,82 +1338,82 @@ out_no_map:
 	mutex_init(&man->cur_mutex);
 	mutex_init(&man->space_mutex);
 	mutex_init(&man->error_mutex);
-	man->शेष_size = VMW_CMDBUF_INLINE_SIZE;
-	init_रुकोqueue_head(&man->alloc_queue);
-	init_रुकोqueue_head(&man->idle_queue);
+	man->default_size = VMW_CMDBUF_INLINE_SIZE;
+	init_waitqueue_head(&man->alloc_queue);
+	init_waitqueue_head(&man->idle_queue);
 	man->dev_priv = dev_priv;
 	man->max_hw_submitted = SVGA_CB_MAX_QUEUED_PER_CONTEXT - 1;
 	INIT_WORK(&man->work, &vmw_cmdbuf_work_func);
-	vmw_generic_रुकोer_add(dev_priv, SVGA_IRQFLAG_ERROR,
-			       &dev_priv->error_रुकोers);
+	vmw_generic_waiter_add(dev_priv, SVGA_IRQFLAG_ERROR,
+			       &dev_priv->error_waiters);
 	ret = vmw_cmdbuf_startstop(man, 0, true);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed starting command buffer contexts\n");
 		vmw_cmdbuf_man_destroy(man);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस man;
+	return man;
 
 out_no_dpool:
 	dma_pool_destroy(man->headers);
 out_no_pool:
-	kमुक्त(man);
+	kfree(man);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /**
- * vmw_cmdbuf_हटाओ_pool - Take करोwn the मुख्य buffer space pool.
+ * vmw_cmdbuf_remove_pool - Take down the main buffer space pool.
  *
- * @man: Poपूर्णांकer to a command buffer manager.
+ * @man: Pointer to a command buffer manager.
  *
- * This function हटाओs the मुख्य buffer space pool, and should be called
- * beक्रमe MOB memory management is हटाओd. When this function has been called,
+ * This function removes the main buffer space pool, and should be called
+ * before MOB memory management is removed. When this function has been called,
  * only small command buffer submissions of size VMW_CMDBUF_INLINE_SIZE or
- * less are allowed, and the शेष size of the command buffer क्रम small kernel
+ * less are allowed, and the default size of the command buffer for small kernel
  * submissions is also set to this size.
  */
-व्योम vmw_cmdbuf_हटाओ_pool(काष्ठा vmw_cmdbuf_man *man)
-अणु
-	अगर (!man->has_pool)
-		वापस;
+void vmw_cmdbuf_remove_pool(struct vmw_cmdbuf_man *man)
+{
+	if (!man->has_pool)
+		return;
 
 	man->has_pool = false;
-	man->शेष_size = VMW_CMDBUF_INLINE_SIZE;
-	(व्योम) vmw_cmdbuf_idle(man, false, 10*HZ);
-	अगर (man->using_mob) अणु
-		(व्योम) tपंचांग_bo_kunmap(&man->map_obj);
-		tपंचांग_bo_put(man->cmd_space);
-		man->cmd_space = शून्य;
-	पूर्ण अन्यथा अणु
-		dma_मुक्त_coherent(man->dev_priv->drm.dev,
+	man->default_size = VMW_CMDBUF_INLINE_SIZE;
+	(void) vmw_cmdbuf_idle(man, false, 10*HZ);
+	if (man->using_mob) {
+		(void) ttm_bo_kunmap(&man->map_obj);
+		ttm_bo_put(man->cmd_space);
+		man->cmd_space = NULL;
+	} else {
+		dma_free_coherent(man->dev_priv->drm.dev,
 				  man->size, man->map, man->handle);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * vmw_cmdbuf_man_destroy - Take करोwn a command buffer manager.
+ * vmw_cmdbuf_man_destroy - Take down a command buffer manager.
  *
- * @man: Poपूर्णांकer to a command buffer manager.
+ * @man: Pointer to a command buffer manager.
  *
  * This function idles and then destroys a command buffer manager.
  */
-व्योम vmw_cmdbuf_man_destroy(काष्ठा vmw_cmdbuf_man *man)
-अणु
+void vmw_cmdbuf_man_destroy(struct vmw_cmdbuf_man *man)
+{
 	WARN_ON_ONCE(man->has_pool);
-	(व्योम) vmw_cmdbuf_idle(man, false, 10*HZ);
+	(void) vmw_cmdbuf_idle(man, false, 10*HZ);
 
-	अगर (vmw_cmdbuf_startstop(man, 0, false))
+	if (vmw_cmdbuf_startstop(man, 0, false))
 		DRM_ERROR("Failed stopping command buffer contexts.\n");
 
-	vmw_generic_रुकोer_हटाओ(man->dev_priv, SVGA_IRQFLAG_ERROR,
-				  &man->dev_priv->error_रुकोers);
-	(व्योम) cancel_work_sync(&man->work);
+	vmw_generic_waiter_remove(man->dev_priv, SVGA_IRQFLAG_ERROR,
+				  &man->dev_priv->error_waiters);
+	(void) cancel_work_sync(&man->work);
 	dma_pool_destroy(man->dheaders);
 	dma_pool_destroy(man->headers);
 	mutex_destroy(&man->cur_mutex);
 	mutex_destroy(&man->space_mutex);
 	mutex_destroy(&man->error_mutex);
-	kमुक्त(man);
-पूर्ण
+	kfree(man);
+}

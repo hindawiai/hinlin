@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  * features.h
  *
@@ -8,18 +7,18 @@
  * Copyright (c) 2006, Ian Campbell
  */
 
-#अगर_अघोषित __XEN_FEATURES_H__
-#घोषणा __XEN_FEATURES_H__
+#ifndef __XEN_FEATURES_H__
+#define __XEN_FEATURES_H__
 
-#समावेश <xen/पूर्णांकerface/features.h>
+#include <xen/interface/features.h>
 
-व्योम xen_setup_features(व्योम);
+void xen_setup_features(void);
 
-बाह्य u8 xen_features[XENFEAT_NR_SUBMAPS * 32];
+extern u8 xen_features[XENFEAT_NR_SUBMAPS * 32];
 
-अटल अंतरभूत पूर्णांक xen_feature(पूर्णांक flag)
-अणु
-	वापस xen_features[flag];
-पूर्ण
+static inline int xen_feature(int flag)
+{
+	return xen_features[flag];
+}
 
-#पूर्ण_अगर /* __ASM_XEN_FEATURES_H__ */
+#endif /* __ASM_XEN_FEATURES_H__ */

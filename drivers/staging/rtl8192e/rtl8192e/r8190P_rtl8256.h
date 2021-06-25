@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
+ * Contact Information: wlanfae <wlanfae@realtek.com>
  */
-#अगर_अघोषित RTL8225H
-#घोषणा RTL8225H
+#ifndef RTL8225H
+#define RTL8225H
 
-#घोषणा RTL819X_TOTAL_RF_PATH 2
-व्योम rtl92e_set_bandwidth(काष्ठा net_device *dev,
-			  क्रमागत ht_channel_width Bandwidth);
-bool rtl92e_config_rf(काष्ठा net_device *dev);
-व्योम rtl92e_set_cck_tx_घातer(काष्ठा net_device *dev, u8	घातerlevel);
-व्योम rtl92e_set_ofdm_tx_घातer(काष्ठा net_device *dev, u8 घातerlevel);
+#define RTL819X_TOTAL_RF_PATH 2
+void rtl92e_set_bandwidth(struct net_device *dev,
+			  enum ht_channel_width Bandwidth);
+bool rtl92e_config_rf(struct net_device *dev);
+void rtl92e_set_cck_tx_power(struct net_device *dev, u8	powerlevel);
+void rtl92e_set_ofdm_tx_power(struct net_device *dev, u8 powerlevel);
 
-#पूर्ण_अगर
+#endif

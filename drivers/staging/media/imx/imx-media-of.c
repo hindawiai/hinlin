@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Media driver क्रम Freescale i.MX5/6 SOC
+ * Media driver for Freescale i.MX5/6 SOC
  *
  * Open Firmware parsing.
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/videobuf2-dma-contig.h>
-#समावेश <linux/of_graph.h>
-#समावेश <video/imx-ipu-v3.h>
-#समावेश "imx-media.h"
+#include <linux/of_platform.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
+#include <media/videobuf2-dma-contig.h>
+#include <linux/of_graph.h>
+#include <video/imx-ipu-v3.h>
+#include "imx-media.h"
 
-पूर्णांक imx_media_of_add_csi(काष्ठा imx_media_dev *imxmd,
-			 काष्ठा device_node *csi_np)
-अणु
-	काष्ठा v4l2_async_subdev *asd;
-	पूर्णांक ret = 0;
+int imx_media_of_add_csi(struct imx_media_dev *imxmd,
+			 struct device_node *csi_np)
+{
+	struct v4l2_async_subdev *asd;
+	int ret = 0;
 
-	अगर (!of_device_is_available(csi_np)) अणु
+	if (!of_device_is_available(csi_np)) {
 		dev_dbg(imxmd->md.dev, "%s: %pOFn not enabled\n", __func__,
 			csi_np);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* add CSI fwnode to async notअगरier */
-	asd = v4l2_async_notअगरier_add_fwnode_subdev(&imxmd->notअगरier,
+	/* add CSI fwnode to async notifier */
+	asd = v4l2_async_notifier_add_fwnode_subdev(&imxmd->notifier,
 						    of_fwnode_handle(csi_np),
-						    काष्ठा v4l2_async_subdev);
-	अगर (IS_ERR(asd)) अणु
+						    struct v4l2_async_subdev);
+	if (IS_ERR(asd)) {
 		ret = PTR_ERR(asd);
-		अगर (ret == -EEXIST)
+		if (ret == -EEXIST)
 			dev_dbg(imxmd->md.dev, "%s: already added %pOFn\n",
 				__func__, csi_np);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(imx_media_of_add_csi);
 
-पूर्णांक imx_media_add_of_subdevs(काष्ठा imx_media_dev *imxmd,
-			     काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *csi_np;
-	पूर्णांक i, ret;
+int imx_media_add_of_subdevs(struct imx_media_dev *imxmd,
+			     struct device_node *np)
+{
+	struct device_node *csi_np;
+	int i, ret;
 
-	क्रम (i = 0; ; i++) अणु
+	for (i = 0; ; i++) {
 		csi_np = of_parse_phandle(np, "ports", i);
-		अगर (!csi_np)
-			अवरोध;
+		if (!csi_np)
+			break;
 
 		ret = imx_media_of_add_csi(imxmd, csi_np);
-		अगर (ret) अणु
-			/* unavailable or alपढ़ोy added is not an error */
-			अगर (ret == -ENODEV || ret == -EEXIST) अणु
+		if (ret) {
+			/* unavailable or already added is not an error */
+			if (ret == -ENODEV || ret == -EEXIST) {
 				of_node_put(csi_np);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			/* other error, can't जारी */
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			/* other error, can't continue */
+			goto err_out;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
 	of_node_put(csi_np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(imx_media_add_of_subdevs);

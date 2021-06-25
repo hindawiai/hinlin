@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Spपढ़ोtrum Communications Inc.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Spreadtrum Communications Inc.
 
-#समावेश <linux/hwspinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/nvmem-provider.h>
+#include <linux/hwspinlock.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/nvmem-provider.h>
 
-/* PMIC global रेजिस्टरs definition */
-#घोषणा SC27XX_MODULE_EN		0xc08
-#घोषणा SC2730_MODULE_EN		0x1808
-#घोषणा SC27XX_EFUSE_EN			BIT(6)
+/* PMIC global registers definition */
+#define SC27XX_MODULE_EN		0xc08
+#define SC2730_MODULE_EN		0x1808
+#define SC27XX_EFUSE_EN			BIT(6)
 
-/* Efuse controller रेजिस्टरs definition */
-#घोषणा SC27XX_EFUSE_GLB_CTRL		0x0
-#घोषणा SC27XX_EFUSE_DATA_RD		0x4
-#घोषणा SC27XX_EFUSE_DATA_WR		0x8
-#घोषणा SC27XX_EFUSE_BLOCK_INDEX	0xc
-#घोषणा SC27XX_EFUSE_MODE_CTRL		0x10
-#घोषणा SC27XX_EFUSE_STATUS		0x14
-#घोषणा SC27XX_EFUSE_WR_TIMING_CTRL	0x20
-#घोषणा SC27XX_EFUSE_RD_TIMING_CTRL	0x24
-#घोषणा SC27XX_EFUSE_EFUSE_DEB_CTRL	0x28
+/* Efuse controller registers definition */
+#define SC27XX_EFUSE_GLB_CTRL		0x0
+#define SC27XX_EFUSE_DATA_RD		0x4
+#define SC27XX_EFUSE_DATA_WR		0x8
+#define SC27XX_EFUSE_BLOCK_INDEX	0xc
+#define SC27XX_EFUSE_MODE_CTRL		0x10
+#define SC27XX_EFUSE_STATUS		0x14
+#define SC27XX_EFUSE_WR_TIMING_CTRL	0x20
+#define SC27XX_EFUSE_RD_TIMING_CTRL	0x24
+#define SC27XX_EFUSE_EFUSE_DEB_CTRL	0x28
 
-/* Mask definition क्रम SC27XX_EFUSE_BLOCK_INDEX रेजिस्टर */
-#घोषणा SC27XX_EFUSE_BLOCK_MASK		GENMASK(4, 0)
+/* Mask definition for SC27XX_EFUSE_BLOCK_INDEX register */
+#define SC27XX_EFUSE_BLOCK_MASK		GENMASK(4, 0)
 
-/* Bits definitions क्रम SC27XX_EFUSE_MODE_CTRL रेजिस्टर */
-#घोषणा SC27XX_EFUSE_PG_START		BIT(0)
-#घोषणा SC27XX_EFUSE_RD_START		BIT(1)
-#घोषणा SC27XX_EFUSE_CLR_RDDONE		BIT(2)
+/* Bits definitions for SC27XX_EFUSE_MODE_CTRL register */
+#define SC27XX_EFUSE_PG_START		BIT(0)
+#define SC27XX_EFUSE_RD_START		BIT(1)
+#define SC27XX_EFUSE_CLR_RDDONE		BIT(2)
 
-/* Bits definitions क्रम SC27XX_EFUSE_STATUS रेजिस्टर */
-#घोषणा SC27XX_EFUSE_PGM_BUSY		BIT(0)
-#घोषणा SC27XX_EFUSE_READ_BUSY		BIT(1)
-#घोषणा SC27XX_EFUSE_STANDBY		BIT(2)
-#घोषणा SC27XX_EFUSE_GLOBAL_PROT	BIT(3)
-#घोषणा SC27XX_EFUSE_RD_DONE		BIT(4)
+/* Bits definitions for SC27XX_EFUSE_STATUS register */
+#define SC27XX_EFUSE_PGM_BUSY		BIT(0)
+#define SC27XX_EFUSE_READ_BUSY		BIT(1)
+#define SC27XX_EFUSE_STANDBY		BIT(2)
+#define SC27XX_EFUSE_GLOBAL_PROT	BIT(3)
+#define SC27XX_EFUSE_RD_DONE		BIT(4)
 
 /* Block number and block width (bytes) definitions */
-#घोषणा SC27XX_EFUSE_BLOCK_MAX		32
-#घोषणा SC27XX_EFUSE_BLOCK_WIDTH	2
+#define SC27XX_EFUSE_BLOCK_MAX		32
+#define SC27XX_EFUSE_BLOCK_WIDTH	2
 
-/* Timeout (ms) क्रम the trylock of hardware spinlocks */
-#घोषणा SC27XX_EFUSE_HWLOCK_TIMEOUT	5000
+/* Timeout (ms) for the trylock of hardware spinlocks */
+#define SC27XX_EFUSE_HWLOCK_TIMEOUT	5000
 
 /* Timeout (us) of polling the status */
-#घोषणा SC27XX_EFUSE_POLL_TIMEOUT	3000000
-#घोषणा SC27XX_EFUSE_POLL_DELAY_US	10000
+#define SC27XX_EFUSE_POLL_TIMEOUT	3000000
+#define SC27XX_EFUSE_POLL_DELAY_US	10000
 
 /*
- * Since dअगरferent PMICs of SC27xx series can have dअगरferent
- * address , we should save address in the device data काष्ठाure.
+ * Since different PMICs of SC27xx series can have different
+ * address , we should save address in the device data structure.
  */
-काष्ठा sc27xx_efuse_variant_data अणु
+struct sc27xx_efuse_variant_data {
 	u32 module_en;
-पूर्ण;
+};
 
-काष्ठा sc27xx_efuse अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा hwspinlock *hwlock;
-	काष्ठा mutex mutex;
+struct sc27xx_efuse {
+	struct device *dev;
+	struct regmap *regmap;
+	struct hwspinlock *hwlock;
+	struct mutex mutex;
 	u32 base;
-	स्थिर काष्ठा sc27xx_efuse_variant_data *var_data;
-पूर्ण;
+	const struct sc27xx_efuse_variant_data *var_data;
+};
 
-अटल स्थिर काष्ठा sc27xx_efuse_variant_data sc2731_edata = अणु
+static const struct sc27xx_efuse_variant_data sc2731_edata = {
 	.module_en = SC27XX_MODULE_EN,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sc27xx_efuse_variant_data sc2730_edata = अणु
+static const struct sc27xx_efuse_variant_data sc2730_edata = {
 	.module_en = SC2730_MODULE_EN,
-पूर्ण;
+};
 
 /*
- * On Spपढ़ोtrum platक्रमm, we have multi-subप्रणालीs will access the unique
+ * On Spreadtrum platform, we have multi-subsystems will access the unique
  * efuse controller, so we need one hardware spinlock to synchronize between
- * the multiple subप्रणालीs.
+ * the multiple subsystems.
  */
-अटल पूर्णांक sc27xx_efuse_lock(काष्ठा sc27xx_efuse *efuse)
-अणु
-	पूर्णांक ret;
+static int sc27xx_efuse_lock(struct sc27xx_efuse *efuse)
+{
+	int ret;
 
 	mutex_lock(&efuse->mutex);
 
-	ret = hwspin_lock_समयout_raw(efuse->hwlock,
+	ret = hwspin_lock_timeout_raw(efuse->hwlock,
 				      SC27XX_EFUSE_HWLOCK_TIMEOUT);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(efuse->dev, "timeout to get the hwspinlock\n");
 		mutex_unlock(&efuse->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sc27xx_efuse_unlock(काष्ठा sc27xx_efuse *efuse)
-अणु
+static void sc27xx_efuse_unlock(struct sc27xx_efuse *efuse)
+{
 	hwspin_unlock_raw(efuse->hwlock);
 	mutex_unlock(&efuse->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक sc27xx_efuse_poll_status(काष्ठा sc27xx_efuse *efuse, u32 bits)
-अणु
-	पूर्णांक ret;
+static int sc27xx_efuse_poll_status(struct sc27xx_efuse *efuse, u32 bits)
+{
+	int ret;
 	u32 val;
 
-	ret = regmap_पढ़ो_poll_समयout(efuse->regmap,
+	ret = regmap_read_poll_timeout(efuse->regmap,
 				       efuse->base + SC27XX_EFUSE_STATUS,
 				       val, (val & bits),
 				       SC27XX_EFUSE_POLL_DELAY_US,
 				       SC27XX_EFUSE_POLL_TIMEOUT);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(efuse->dev, "timeout to update the efuse status\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sc27xx_efuse_पढ़ो(व्योम *context, u32 offset, व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा sc27xx_efuse *efuse = context;
+static int sc27xx_efuse_read(void *context, u32 offset, void *val, size_t bytes)
+{
+	struct sc27xx_efuse *efuse = context;
 	u32 buf, blk_index = offset / SC27XX_EFUSE_BLOCK_WIDTH;
 	u32 blk_offset = (offset % SC27XX_EFUSE_BLOCK_WIDTH) * BITS_PER_BYTE;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (blk_index > SC27XX_EFUSE_BLOCK_MAX ||
+	if (blk_index > SC27XX_EFUSE_BLOCK_MAX ||
 	    bytes > SC27XX_EFUSE_BLOCK_WIDTH)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ret = sc27xx_efuse_lock(efuse);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Enable the efuse controller. */
 	ret = regmap_update_bits(efuse->regmap, efuse->var_data->module_en,
 				 SC27XX_EFUSE_EN, SC27XX_EFUSE_EN);
-	अगर (ret)
-		जाओ unlock_efuse;
+	if (ret)
+		goto unlock_efuse;
 
 	/*
-	 * Beक्रमe पढ़ोing, we should ensure the efuse controller is in
+	 * Before reading, we should ensure the efuse controller is in
 	 * standby state.
 	 */
 	ret = sc27xx_efuse_poll_status(efuse, SC27XX_EFUSE_STANDBY);
-	अगर (ret)
-		जाओ disable_efuse;
+	if (ret)
+		goto disable_efuse;
 
-	/* Set the block address to be पढ़ो. */
-	ret = regmap_ग_लिखो(efuse->regmap,
+	/* Set the block address to be read. */
+	ret = regmap_write(efuse->regmap,
 			   efuse->base + SC27XX_EFUSE_BLOCK_INDEX,
 			   blk_index & SC27XX_EFUSE_BLOCK_MASK);
-	अगर (ret)
-		जाओ disable_efuse;
+	if (ret)
+		goto disable_efuse;
 
-	/* Start पढ़ोing process from efuse memory. */
+	/* Start reading process from efuse memory. */
 	ret = regmap_update_bits(efuse->regmap,
 				 efuse->base + SC27XX_EFUSE_MODE_CTRL,
 				 SC27XX_EFUSE_RD_START,
 				 SC27XX_EFUSE_RD_START);
-	अगर (ret)
-		जाओ disable_efuse;
+	if (ret)
+		goto disable_efuse;
 
 	/*
-	 * Polling the पढ़ो करोne status to make sure the पढ़ोing process
-	 * is completed, that means the data can be पढ़ो out now.
+	 * Polling the read done status to make sure the reading process
+	 * is completed, that means the data can be read out now.
 	 */
 	ret = sc27xx_efuse_poll_status(efuse, SC27XX_EFUSE_RD_DONE);
-	अगर (ret)
-		जाओ disable_efuse;
+	if (ret)
+		goto disable_efuse;
 
 	/* Read data from efuse memory. */
-	ret = regmap_पढ़ो(efuse->regmap, efuse->base + SC27XX_EFUSE_DATA_RD,
+	ret = regmap_read(efuse->regmap, efuse->base + SC27XX_EFUSE_DATA_RD,
 			  &buf);
-	अगर (ret)
-		जाओ disable_efuse;
+	if (ret)
+		goto disable_efuse;
 
-	/* Clear the पढ़ो करोne flag. */
+	/* Clear the read done flag. */
 	ret = regmap_update_bits(efuse->regmap,
 				 efuse->base + SC27XX_EFUSE_MODE_CTRL,
 				 SC27XX_EFUSE_CLR_RDDONE,
 				 SC27XX_EFUSE_CLR_RDDONE);
 
 disable_efuse:
-	/* Disable the efuse controller after पढ़ोing. */
+	/* Disable the efuse controller after reading. */
 	regmap_update_bits(efuse->regmap, efuse->var_data->module_en, SC27XX_EFUSE_EN, 0);
 unlock_efuse:
 	sc27xx_efuse_unlock(efuse);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		buf >>= blk_offset;
-		स_नकल(val, &buf, bytes);
-	पूर्ण
+		memcpy(val, &buf, bytes);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sc27xx_efuse_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा nvmem_config econfig = अणु पूर्ण;
-	काष्ठा nvmem_device *nvmem;
-	काष्ठा sc27xx_efuse *efuse;
-	पूर्णांक ret;
+static int sc27xx_efuse_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct nvmem_config econfig = { };
+	struct nvmem_device *nvmem;
+	struct sc27xx_efuse *efuse;
+	int ret;
 
-	efuse = devm_kzalloc(&pdev->dev, माप(*efuse), GFP_KERNEL);
-	अगर (!efuse)
-		वापस -ENOMEM;
+	efuse = devm_kzalloc(&pdev->dev, sizeof(*efuse), GFP_KERNEL);
+	if (!efuse)
+		return -ENOMEM;
 
-	efuse->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!efuse->regmap) अणु
+	efuse->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!efuse->regmap) {
 		dev_err(&pdev->dev, "failed to get efuse regmap\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "reg", &efuse->base);
-	अगर (ret) अणु
+	ret = of_property_read_u32(np, "reg", &efuse->base);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to get efuse base address\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = of_hwspin_lock_get_id(np, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to get hwspinlock id\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	efuse->hwlock = devm_hwspin_lock_request_specअगरic(&pdev->dev, ret);
-	अगर (!efuse->hwlock) अणु
+	efuse->hwlock = devm_hwspin_lock_request_specific(&pdev->dev, ret);
+	if (!efuse->hwlock) {
 		dev_err(&pdev->dev, "failed to request hwspinlock\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	mutex_init(&efuse->mutex);
 	efuse->dev = &pdev->dev;
@@ -243,36 +242,36 @@ unlock_efuse:
 
 	econfig.stride = 1;
 	econfig.word_size = 1;
-	econfig.पढ़ो_only = true;
+	econfig.read_only = true;
 	econfig.name = "sc27xx-efuse";
 	econfig.size = SC27XX_EFUSE_BLOCK_MAX * SC27XX_EFUSE_BLOCK_WIDTH;
-	econfig.reg_पढ़ो = sc27xx_efuse_पढ़ो;
+	econfig.reg_read = sc27xx_efuse_read;
 	econfig.priv = efuse;
 	econfig.dev = &pdev->dev;
-	nvmem = devm_nvmem_रेजिस्टर(&pdev->dev, &econfig);
-	अगर (IS_ERR(nvmem)) अणु
+	nvmem = devm_nvmem_register(&pdev->dev, &econfig);
+	if (IS_ERR(nvmem)) {
 		dev_err(&pdev->dev, "failed to register nvmem config\n");
-		वापस PTR_ERR(nvmem);
-	पूर्ण
+		return PTR_ERR(nvmem);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sc27xx_efuse_of_match[] = अणु
-	अणु .compatible = "sprd,sc2731-efuse", .data = &sc2731_edataपूर्ण,
-	अणु .compatible = "sprd,sc2730-efuse", .data = &sc2730_edataपूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id sc27xx_efuse_of_match[] = {
+	{ .compatible = "sprd,sc2731-efuse", .data = &sc2731_edata},
+	{ .compatible = "sprd,sc2730-efuse", .data = &sc2730_edata},
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver sc27xx_efuse_driver = अणु
+static struct platform_driver sc27xx_efuse_driver = {
 	.probe = sc27xx_efuse_probe,
-	.driver = अणु
+	.driver = {
 		.name = "sc27xx-efuse",
 		.of_match_table = sc27xx_efuse_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sc27xx_efuse_driver);
+module_platform_driver(sc27xx_efuse_driver);
 
 MODULE_AUTHOR("Freeman Liu <freeman.liu@spreadtrum.com>");
 MODULE_DESCRIPTION("Spreadtrum SC27xx efuse driver");

@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 	TDA665x tuner driver
 	Copyright (C) Manu Abraham (abraham.manu@gmail.com)
 
 */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <media/dvb_frontend.h>
-#समावेश "tda665x.h"
+#include <media/dvb_frontend.h>
+#include "tda665x.h"
 
-काष्ठा tda665x_state अणु
-	काष्ठा dvb_frontend		*fe;
-	काष्ठा i2c_adapter		*i2c;
-	स्थिर काष्ठा tda665x_config	*config;
+struct tda665x_state {
+	struct dvb_frontend		*fe;
+	struct i2c_adapter		*i2c;
+	const struct tda665x_config	*config;
 
 	u32 frequency;
 	u32 bandwidth;
-पूर्ण;
+};
 
-अटल पूर्णांक tda665x_पढ़ो(काष्ठा tda665x_state *state, u8 *buf)
-अणु
-	स्थिर काष्ठा tda665x_config *config = state->config;
-	पूर्णांक err = 0;
-	काष्ठा i2c_msg msg = अणु .addr = config->addr, .flags = I2C_M_RD, .buf = buf, .len = 2 पूर्ण;
-
-	err = i2c_transfer(state->i2c, &msg, 1);
-	अगर (err != 1)
-		जाओ निकास;
-
-	वापस err;
-निकास:
-	prपूर्णांकk(KERN_ERR "%s: I/O Error err=<%d>\n", __func__, err);
-	वापस err;
-पूर्ण
-
-अटल पूर्णांक tda665x_ग_लिखो(काष्ठा tda665x_state *state, u8 *buf, u8 length)
-अणु
-	स्थिर काष्ठा tda665x_config *config = state->config;
-	पूर्णांक err = 0;
-	काष्ठा i2c_msg msg = अणु .addr = config->addr, .flags = 0, .buf = buf, .len = length पूर्ण;
+static int tda665x_read(struct tda665x_state *state, u8 *buf)
+{
+	const struct tda665x_config *config = state->config;
+	int err = 0;
+	struct i2c_msg msg = { .addr = config->addr, .flags = I2C_M_RD, .buf = buf, .len = 2 };
 
 	err = i2c_transfer(state->i2c, &msg, 1);
-	अगर (err != 1)
-		जाओ निकास;
+	if (err != 1)
+		goto exit;
 
-	वापस err;
-निकास:
-	prपूर्णांकk(KERN_ERR "%s: I/O Error err=<%d>\n", __func__, err);
-	वापस err;
-पूर्ण
+	return err;
+exit:
+	printk(KERN_ERR "%s: I/O Error err=<%d>\n", __func__, err);
+	return err;
+}
 
-अटल पूर्णांक tda665x_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा tda665x_state *state = fe->tuner_priv;
+static int tda665x_write(struct tda665x_state *state, u8 *buf, u8 length)
+{
+	const struct tda665x_config *config = state->config;
+	int err = 0;
+	struct i2c_msg msg = { .addr = config->addr, .flags = 0, .buf = buf, .len = length };
+
+	err = i2c_transfer(state->i2c, &msg, 1);
+	if (err != 1)
+		goto exit;
+
+	return err;
+exit:
+	printk(KERN_ERR "%s: I/O Error err=<%d>\n", __func__, err);
+	return err;
+}
+
+static int tda665x_get_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct tda665x_state *state = fe->tuner_priv;
 
 	*frequency = state->frequency;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda665x_get_status(काष्ठा dvb_frontend *fe, u32 *status)
-अणु
-	काष्ठा tda665x_state *state = fe->tuner_priv;
+static int tda665x_get_status(struct dvb_frontend *fe, u32 *status)
+{
+	struct tda665x_state *state = fe->tuner_priv;
 	u8 result = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	*status = 0;
 
-	err = tda665x_पढ़ो(state, &result);
-	अगर (err < 0)
-		जाओ निकास;
+	err = tda665x_read(state, &result);
+	if (err < 0)
+		goto exit;
 
-	अगर ((result >> 6) & 0x01) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: Tuner Phase Locked\n", __func__);
+	if ((result >> 6) & 0x01) {
+		printk(KERN_DEBUG "%s: Tuner Phase Locked\n", __func__);
 		*status = 1;
-	पूर्ण
+	}
 
-	वापस err;
-निकास:
-	prपूर्णांकk(KERN_ERR "%s: I/O Error\n", __func__);
-	वापस err;
-पूर्ण
+	return err;
+exit:
+	printk(KERN_ERR "%s: I/O Error\n", __func__);
+	return err;
+}
 
-अटल पूर्णांक tda665x_set_frequency(काष्ठा dvb_frontend *fe,
+static int tda665x_set_frequency(struct dvb_frontend *fe,
 				 u32 new_frequency)
-अणु
-	काष्ठा tda665x_state *state = fe->tuner_priv;
-	स्थिर काष्ठा tda665x_config *config = state->config;
+{
+	struct tda665x_state *state = fe->tuner_priv;
+	const struct tda665x_config *config = state->config;
 	u32 frequency, status = 0;
 	u8 buf[4];
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर ((new_frequency < config->frequency_max)
-	    || (new_frequency > config->frequency_min)) अणु
-		prपूर्णांकk(KERN_ERR "%s: Frequency beyond limits, frequency=%d\n",
+	if ((new_frequency < config->frequency_max)
+	    || (new_frequency > config->frequency_min)) {
+		printk(KERN_ERR "%s: Frequency beyond limits, frequency=%d\n",
 		       __func__, new_frequency);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	frequency = new_frequency;
 
 	frequency += config->frequency_offst;
 	frequency *= config->ref_multiplier;
-	frequency += config->ref_भागider >> 1;
-	frequency /= config->ref_भागider;
+	frequency += config->ref_divider >> 1;
+	frequency /= config->ref_divider;
 
 	buf[0] = (u8) ((frequency & 0x7f00) >> 8);
 	buf[1] = (u8) (frequency & 0x00ff) >> 0;
@@ -118,99 +117,99 @@
 	/* restore frequency */
 	frequency = new_frequency;
 
-	अगर (frequency < 153000000) अणु
+	if (frequency < 153000000) {
 		/* VHF-L */
 		buf[3] |= 0x01; /* fc, Low Band, 47 - 153 MHz */
-		अगर (frequency < 68000000)
+		if (frequency < 68000000)
 			buf[3] |= 0x40; /* 83uA */
-		अगर (frequency < 1040000000)
+		if (frequency < 1040000000)
 			buf[3] |= 0x60; /* 122uA */
-		अगर (frequency < 1250000000)
+		if (frequency < 1250000000)
 			buf[3] |= 0x80; /* 163uA */
-		अन्यथा
+		else
 			buf[3] |= 0xa0; /* 254uA */
-	पूर्ण अन्यथा अगर (frequency < 438000000) अणु
+	} else if (frequency < 438000000) {
 		/* VHF-H */
 		buf[3] |= 0x02; /* fc, Mid Band, 153 - 438 MHz */
-		अगर (frequency < 230000000)
+		if (frequency < 230000000)
 			buf[3] |= 0x40;
-		अगर (frequency < 300000000)
+		if (frequency < 300000000)
 			buf[3] |= 0x60;
-		अन्यथा
+		else
 			buf[3] |= 0x80;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* UHF */
 		buf[3] |= 0x04; /* fc, High Band, 438 - 862 MHz */
-		अगर (frequency < 470000000)
+		if (frequency < 470000000)
 			buf[3] |= 0x60;
-		अगर (frequency < 526000000)
+		if (frequency < 526000000)
 			buf[3] |= 0x80;
-		अन्यथा
+		else
 			buf[3] |= 0xa0;
-	पूर्ण
+	}
 
 	/* Set params */
-	err = tda665x_ग_लिखो(state, buf, 5);
-	अगर (err < 0)
-		जाओ निकास;
+	err = tda665x_write(state, buf, 5);
+	if (err < 0)
+		goto exit;
 
-	/* sleep क्रम some समय */
-	prपूर्णांकk(KERN_DEBUG "%s: Waiting to Phase LOCK\n", __func__);
+	/* sleep for some time */
+	printk(KERN_DEBUG "%s: Waiting to Phase LOCK\n", __func__);
 	msleep(20);
 	/* check status */
 	err = tda665x_get_status(fe, &status);
-	अगर (err < 0)
-		जाओ निकास;
+	if (err < 0)
+		goto exit;
 
-	अगर (status == 1) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: Tuner Phase locked: status=%d\n",
+	if (status == 1) {
+		printk(KERN_DEBUG "%s: Tuner Phase locked: status=%d\n",
 		       __func__, status);
 		state->frequency = frequency; /* cache successful state */
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "%s: No Phase lock: status=%d\n",
+	} else {
+		printk(KERN_ERR "%s: No Phase lock: status=%d\n",
 		       __func__, status);
-	पूर्ण
+	}
 
-	वापस 0;
-निकास:
-	prपूर्णांकk(KERN_ERR "%s: I/O Error\n", __func__);
-	वापस err;
-पूर्ण
+	return 0;
+exit:
+	printk(KERN_ERR "%s: I/O Error\n", __func__);
+	return err;
+}
 
-अटल पूर्णांक tda665x_set_params(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+static int tda665x_set_params(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
 
 	tda665x_set_frequency(fe, c->frequency);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tda665x_release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा tda665x_state *state = fe->tuner_priv;
+static void tda665x_release(struct dvb_frontend *fe)
+{
+	struct tda665x_state *state = fe->tuner_priv;
 
-	fe->tuner_priv = शून्य;
-	kमुक्त(state);
-पूर्ण
+	fe->tuner_priv = NULL;
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_tuner_ops tda665x_ops = अणु
+static const struct dvb_tuner_ops tda665x_ops = {
 	.get_status	= tda665x_get_status,
 	.set_params	= tda665x_set_params,
 	.get_frequency	= tda665x_get_frequency,
 	.release	= tda665x_release
-पूर्ण;
+};
 
-काष्ठा dvb_frontend *tda665x_attach(काष्ठा dvb_frontend *fe,
-				    स्थिर काष्ठा tda665x_config *config,
-				    काष्ठा i2c_adapter *i2c)
-अणु
-	काष्ठा tda665x_state *state = शून्य;
-	काष्ठा dvb_tuner_info *info;
+struct dvb_frontend *tda665x_attach(struct dvb_frontend *fe,
+				    const struct tda665x_config *config,
+				    struct i2c_adapter *i2c)
+{
+	struct tda665x_state *state = NULL;
+	struct dvb_tuner_info *info;
 
-	state = kzalloc(माप(काष्ठा tda665x_state), GFP_KERNEL);
-	अगर (!state)
-		वापस शून्य;
+	state = kzalloc(sizeof(struct tda665x_state), GFP_KERNEL);
+	if (!state)
+		return NULL;
 
 	state->config		= config;
 	state->i2c		= i2c;
@@ -219,15 +218,15 @@
 	fe->ops.tuner_ops	= tda665x_ops;
 	info			 = &fe->ops.tuner_ops.info;
 
-	स_नकल(info->name, config->name, माप(config->name));
+	memcpy(info->name, config->name, sizeof(config->name));
 	info->frequency_min_hz	= config->frequency_min;
 	info->frequency_max_hz	= config->frequency_max;
 	info->frequency_step_hz	= config->frequency_offst;
 
-	prपूर्णांकk(KERN_DEBUG "%s: Attaching TDA665x (%s) tuner\n", __func__, info->name);
+	printk(KERN_DEBUG "%s: Attaching TDA665x (%s) tuner\n", __func__, info->name);
 
-	वापस fe;
-पूर्ण
+	return fe;
+}
 EXPORT_SYMBOL(tda665x_attach);
 
 MODULE_DESCRIPTION("TDA665x driver");

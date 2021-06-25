@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Supports क्रम the button array on the Surface tablets.
+ * Supports for the button array on the Surface tablets.
  *
  * (C) Copyright 2016 Red Hat, Inc
  *
  * Based on soc_button_array.c:
  *
- * अणुCपूर्ण Copyright 2014 Intel Corporation
+ * {C} Copyright 2014 Intel Corporation
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio_keys.h>
+#include <linux/gpio.h>
+#include <linux/platform_device.h>
 
 
-#घोषणा SURFACE_BUTTON_OBJ_NAME		"TEV2"
-#घोषणा MAX_NBUTTONS			4
+#define SURFACE_BUTTON_OBJ_NAME		"TEV2"
+#define MAX_NBUTTONS			4
 
 /*
- * Some of the buttons like volume up/करोwn are स्वतः repeat, जबतक others
- * are not. To support both, we रेजिस्टर two platक्रमm devices, and put
- * buttons पूर्णांकo them based on whether the key should be स्वतः repeat.
+ * Some of the buttons like volume up/down are auto repeat, while others
+ * are not. To support both, we register two platform devices, and put
+ * buttons into them based on whether the key should be auto repeat.
  */
-#घोषणा BUTTON_TYPES			2
+#define BUTTON_TYPES			2
 
 /*
  * Power button, Home button, Volume buttons support is supposed to
  * be covered by drivers/input/misc/soc_button_array.c, which is implemented
  * according to "Windows ACPI Design Guide for SoC Platforms".
  * However surface 3 seems not to obey the specs, instead it uses
- * device TEV2(MSHW0028) क्रम declaring the GPIOs. The gpios are also slightly
- * dअगरferent in which the Home button is active high.
+ * device TEV2(MSHW0028) for declaring the GPIOs. The gpios are also slightly
+ * different in which the Home button is active high.
  * Compared to surfacepro3_button.c which also handles MSHW0028, the Surface 3
- * is a reduce platक्रमm and thus uses GPIOs, not ACPI events.
+ * is a reduce platform and thus uses GPIOs, not ACPI events.
  * We choose an I2C driver here because we need to access the resources
- * declared under the device node, जबतक surfacepro3_button.c only needs
+ * declared under the device node, while surfacepro3_button.c only needs
  * the ACPI companion node.
  */
-अटल स्थिर काष्ठा acpi_device_id surface3_acpi_match[] = अणु
-	अणु "MSHW0028", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id surface3_acpi_match[] = {
+	{ "MSHW0028", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, surface3_acpi_match);
 
-काष्ठा surface3_button_info अणु
-	स्थिर अक्षर *name;
-	पूर्णांक acpi_index;
-	अचिन्हित पूर्णांक event_type;
-	अचिन्हित पूर्णांक event_code;
-	bool स्वतःrepeat;
+struct surface3_button_info {
+	const char *name;
+	int acpi_index;
+	unsigned int event_type;
+	unsigned int event_code;
+	bool autorepeat;
 	bool wakeup;
 	bool active_low;
-पूर्ण;
+};
 
-काष्ठा surface3_button_data अणु
-	काष्ठा platक्रमm_device *children[BUTTON_TYPES];
-पूर्ण;
+struct surface3_button_data {
+	struct platform_device *children[BUTTON_TYPES];
+};
 
 /*
  * Get the Nth GPIO number from the ACPI object.
  */
-अटल पूर्णांक surface3_button_lookup_gpio(काष्ठा device *dev, पूर्णांक acpi_index)
-अणु
-	काष्ठा gpio_desc *desc;
-	पूर्णांक gpio;
+static int surface3_button_lookup_gpio(struct device *dev, int acpi_index)
+{
+	struct gpio_desc *desc;
+	int gpio;
 
-	desc = gpiod_get_index(dev, शून्य, acpi_index, GPIOD_ASIS);
-	अगर (IS_ERR(desc))
-		वापस PTR_ERR(desc);
+	desc = gpiod_get_index(dev, NULL, acpi_index, GPIOD_ASIS);
+	if (IS_ERR(desc))
+		return PTR_ERR(desc);
 
 	gpio = desc_to_gpio(desc);
 
 	gpiod_put(desc);
 
-	वापस gpio;
-पूर्ण
+	return gpio;
+}
 
-अटल काष्ठा platक्रमm_device *
-surface3_button_device_create(काष्ठा i2c_client *client,
-			      स्थिर काष्ठा surface3_button_info *button_info,
-			      bool स्वतःrepeat)
-अणु
-	स्थिर काष्ठा surface3_button_info *info;
-	काष्ठा platक्रमm_device *pd;
-	काष्ठा gpio_keys_button *gpio_keys;
-	काष्ठा gpio_keys_platक्रमm_data *gpio_keys_pdata;
-	पूर्णांक n_buttons = 0;
-	पूर्णांक gpio;
-	पूर्णांक error;
+static struct platform_device *
+surface3_button_device_create(struct i2c_client *client,
+			      const struct surface3_button_info *button_info,
+			      bool autorepeat)
+{
+	const struct surface3_button_info *info;
+	struct platform_device *pd;
+	struct gpio_keys_button *gpio_keys;
+	struct gpio_keys_platform_data *gpio_keys_pdata;
+	int n_buttons = 0;
+	int gpio;
+	int error;
 
 	gpio_keys_pdata = devm_kzalloc(&client->dev,
-				       माप(*gpio_keys_pdata) +
-				       माप(*gpio_keys) * MAX_NBUTTONS,
+				       sizeof(*gpio_keys_pdata) +
+				       sizeof(*gpio_keys) * MAX_NBUTTONS,
 				       GFP_KERNEL);
-	अगर (!gpio_keys_pdata)
-		वापस ERR_PTR(-ENOMEM);
+	if (!gpio_keys_pdata)
+		return ERR_PTR(-ENOMEM);
 
-	gpio_keys = (व्योम *)(gpio_keys_pdata + 1);
+	gpio_keys = (void *)(gpio_keys_pdata + 1);
 
-	क्रम (info = button_info; info->name; info++) अणु
-		अगर (info->स्वतःrepeat != स्वतःrepeat)
-			जारी;
+	for (info = button_info; info->name; info++) {
+		if (info->autorepeat != autorepeat)
+			continue;
 
 		gpio = surface3_button_lookup_gpio(&client->dev,
 						   info->acpi_index);
-		अगर (!gpio_is_valid(gpio))
-			जारी;
+		if (!gpio_is_valid(gpio))
+			continue;
 
 		gpio_keys[n_buttons].type = info->event_type;
 		gpio_keys[n_buttons].code = info->event_code;
@@ -123,124 +122,124 @@ surface3_button_device_create(काष्ठा i2c_client *client,
 		gpio_keys[n_buttons].desc = info->name;
 		gpio_keys[n_buttons].wakeup = info->wakeup;
 		n_buttons++;
-	पूर्ण
+	}
 
-	अगर (n_buttons == 0) अणु
+	if (n_buttons == 0) {
 		error = -ENODEV;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	gpio_keys_pdata->buttons = gpio_keys;
 	gpio_keys_pdata->nbuttons = n_buttons;
-	gpio_keys_pdata->rep = स्वतःrepeat;
+	gpio_keys_pdata->rep = autorepeat;
 
-	pd = platक्रमm_device_alloc("gpio-keys", PLATFORM_DEVID_AUTO);
-	अगर (!pd) अणु
+	pd = platform_device_alloc("gpio-keys", PLATFORM_DEVID_AUTO);
+	if (!pd) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	error = platक्रमm_device_add_data(pd, gpio_keys_pdata,
-					 माप(*gpio_keys_pdata));
-	अगर (error)
-		जाओ err_मुक्त_pdev;
+	error = platform_device_add_data(pd, gpio_keys_pdata,
+					 sizeof(*gpio_keys_pdata));
+	if (error)
+		goto err_free_pdev;
 
-	error = platक्रमm_device_add(pd);
-	अगर (error)
-		जाओ err_मुक्त_pdev;
+	error = platform_device_add(pd);
+	if (error)
+		goto err_free_pdev;
 
-	वापस pd;
+	return pd;
 
-err_मुक्त_pdev:
-	platक्रमm_device_put(pd);
-err_मुक्त_mem:
-	devm_kमुक्त(&client->dev, gpio_keys_pdata);
-	वापस ERR_PTR(error);
-पूर्ण
+err_free_pdev:
+	platform_device_put(pd);
+err_free_mem:
+	devm_kfree(&client->dev, gpio_keys_pdata);
+	return ERR_PTR(error);
+}
 
-अटल पूर्णांक surface3_button_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा surface3_button_data *priv = i2c_get_clientdata(client);
+static int surface3_button_remove(struct i2c_client *client)
+{
+	struct surface3_button_data *priv = i2c_get_clientdata(client);
 
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < BUTTON_TYPES; i++)
-		अगर (priv->children[i])
-			platक्रमm_device_unरेजिस्टर(priv->children[i]);
+	for (i = 0; i < BUTTON_TYPES; i++)
+		if (priv->children[i])
+			platform_device_unregister(priv->children[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा surface3_button_info surface3_button_surface3[] = अणु
-	अणु "power", 0, EV_KEY, KEY_POWER, false, true, true पूर्ण,
-	अणु "home", 1, EV_KEY, KEY_LEFTMETA, false, true, false पूर्ण,
-	अणु "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true पूर्ण,
-	अणु "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false, true पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct surface3_button_info surface3_button_surface3[] = {
+	{ "power", 0, EV_KEY, KEY_POWER, false, true, true },
+	{ "home", 1, EV_KEY, KEY_LEFTMETA, false, true, false },
+	{ "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true },
+	{ "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false, true },
+	{ }
+};
 
-अटल पूर्णांक surface3_button_probe(काष्ठा i2c_client *client,
-				 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा surface3_button_data *priv;
-	काष्ठा platक्रमm_device *pd;
-	पूर्णांक i;
-	पूर्णांक error;
+static int surface3_button_probe(struct i2c_client *client,
+				 const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct surface3_button_data *priv;
+	struct platform_device *pd;
+	int i;
+	int error;
 
-	अगर (म_भेदन(acpi_device_bid(ACPI_COMPANION(&client->dev)),
+	if (strncmp(acpi_device_bid(ACPI_COMPANION(&client->dev)),
 		    SURFACE_BUTTON_OBJ_NAME,
-		    म_माप(SURFACE_BUTTON_OBJ_NAME)))
-		वापस -ENODEV;
+		    strlen(SURFACE_BUTTON_OBJ_NAME)))
+		return -ENODEV;
 
-	error = gpiod_count(dev, शून्य);
-	अगर (error < 0) अणु
+	error = gpiod_count(dev, NULL);
+	if (error < 0) {
 		dev_dbg(dev, "no GPIO attached, ignoring...\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, priv);
 
-	क्रम (i = 0; i < BUTTON_TYPES; i++) अणु
+	for (i = 0; i < BUTTON_TYPES; i++) {
 		pd = surface3_button_device_create(client,
 						   surface3_button_surface3,
 						   i == 0);
-		अगर (IS_ERR(pd)) अणु
+		if (IS_ERR(pd)) {
 			error = PTR_ERR(pd);
-			अगर (error != -ENODEV) अणु
-				surface3_button_हटाओ(client);
-				वापस error;
-			पूर्ण
-			जारी;
-		पूर्ण
+			if (error != -ENODEV) {
+				surface3_button_remove(client);
+				return error;
+			}
+			continue;
+		}
 
 		priv->children[i] = pd;
-	पूर्ण
+	}
 
-	अगर (!priv->children[0] && !priv->children[1])
-		वापस -ENODEV;
+	if (!priv->children[0] && !priv->children[1])
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id surface3_id[] = अणु
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id surface3_id[] = {
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, surface3_id);
 
-अटल काष्ठा i2c_driver surface3_driver = अणु
+static struct i2c_driver surface3_driver = {
 	.probe = surface3_button_probe,
-	.हटाओ = surface3_button_हटाओ,
+	.remove = surface3_button_remove,
 	.id_table = surface3_id,
-	.driver = अणु
+	.driver = {
 		.name = "surface3",
 		.acpi_match_table = ACPI_PTR(surface3_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(surface3_driver);
 
 MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@gmail.com>");

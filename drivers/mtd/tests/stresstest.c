@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2008 Nokia Corporation
  *
- * Test अक्रमom पढ़ोs, ग_लिखोs and erases on MTD device.
+ * Test random reads, writes and erases on MTD device.
  *
  * Author: Adrian Hunter <ext-adrian.hunter@nokia.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/err.h>
+#include <linux/mtd/mtd.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/vmalloc.h>
+#include <linux/random.h>
 
-#समावेश "mtd_test.h"
+#include "mtd_test.h"
 
-अटल पूर्णांक dev = -EINVAL;
-module_param(dev, पूर्णांक, S_IRUGO);
+static int dev = -EINVAL;
+module_param(dev, int, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-अटल पूर्णांक count = 10000;
-module_param(count, पूर्णांक, S_IRUGO);
+static int count = 10000;
+module_param(count, int, S_IRUGO);
 MODULE_PARM_DESC(count, "Number of operations to do (default is 10000)");
 
-अटल काष्ठा mtd_info *mtd;
-अटल अचिन्हित अक्षर *ग_लिखोbuf;
-अटल अचिन्हित अक्षर *पढ़ोbuf;
-अटल अचिन्हित अक्षर *bbt;
-अटल पूर्णांक *offsets;
+static struct mtd_info *mtd;
+static unsigned char *writebuf;
+static unsigned char *readbuf;
+static unsigned char *bbt;
+static int *offsets;
 
-अटल पूर्णांक pgsize;
-अटल पूर्णांक bufsize;
-अटल पूर्णांक ebcnt;
-अटल पूर्णांक pgcnt;
+static int pgsize;
+static int bufsize;
+static int ebcnt;
+static int pgcnt;
 
-अटल पूर्णांक अक्रम_eb(व्योम)
-अणु
-	अचिन्हित पूर्णांक eb;
+static int rand_eb(void)
+{
+	unsigned int eb;
 
 again:
-	eb = pअक्रमom_u32();
-	/* Read or ग_लिखो up 2 eraseblocks at a समय - hence 'ebcnt - 1' */
+	eb = prandom_u32();
+	/* Read or write up 2 eraseblocks at a time - hence 'ebcnt - 1' */
 	eb %= (ebcnt - 1);
-	अगर (bbt[eb])
-		जाओ again;
-	वापस eb;
-पूर्ण
+	if (bbt[eb])
+		goto again;
+	return eb;
+}
 
-अटल पूर्णांक अक्रम_offs(व्योम)
-अणु
-	अचिन्हित पूर्णांक offs;
+static int rand_offs(void)
+{
+	unsigned int offs;
 
-	offs = pअक्रमom_u32();
+	offs = prandom_u32();
 	offs %= bufsize;
-	वापस offs;
-पूर्ण
+	return offs;
+}
 
-अटल पूर्णांक अक्रम_len(पूर्णांक offs)
-अणु
-	अचिन्हित पूर्णांक len;
+static int rand_len(int offs)
+{
+	unsigned int len;
 
-	len = pअक्रमom_u32();
+	len = prandom_u32();
 	len %= (bufsize - offs);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक करो_पढ़ो(व्योम)
-अणु
-	पूर्णांक eb = अक्रम_eb();
-	पूर्णांक offs = अक्रम_offs();
-	पूर्णांक len = अक्रम_len(offs);
+static int do_read(void)
+{
+	int eb = rand_eb();
+	int offs = rand_offs();
+	int len = rand_len(offs);
 	loff_t addr;
 
-	अगर (bbt[eb + 1]) अणु
-		अगर (offs >= mtd->erasesize)
+	if (bbt[eb + 1]) {
+		if (offs >= mtd->erasesize)
 			offs -= mtd->erasesize;
-		अगर (offs + len > mtd->erasesize)
+		if (offs + len > mtd->erasesize)
 			len = mtd->erasesize - offs;
-	पूर्ण
+	}
 	addr = (loff_t)eb * mtd->erasesize + offs;
-	वापस mtdtest_पढ़ो(mtd, addr, len, पढ़ोbuf);
-पूर्ण
+	return mtdtest_read(mtd, addr, len, readbuf);
+}
 
-अटल पूर्णांक करो_ग_लिखो(व्योम)
-अणु
-	पूर्णांक eb = अक्रम_eb(), offs, err, len;
+static int do_write(void)
+{
+	int eb = rand_eb(), offs, err, len;
 	loff_t addr;
 
 	offs = offsets[eb];
-	अगर (offs >= mtd->erasesize) अणु
+	if (offs >= mtd->erasesize) {
 		err = mtdtest_erase_eraseblock(mtd, eb);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		offs = offsets[eb] = 0;
-	पूर्ण
-	len = अक्रम_len(offs);
+	}
+	len = rand_len(offs);
 	len = ((len + pgsize - 1) / pgsize) * pgsize;
-	अगर (offs + len > mtd->erasesize) अणु
-		अगर (bbt[eb + 1])
+	if (offs + len > mtd->erasesize) {
+		if (bbt[eb + 1])
 			len = mtd->erasesize - offs;
-		अन्यथा अणु
+		else {
 			err = mtdtest_erase_eraseblock(mtd, eb + 1);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			offsets[eb + 1] = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	addr = (loff_t)eb * mtd->erasesize + offs;
-	err = mtdtest_ग_लिखो(mtd, addr, len, ग_लिखोbuf);
-	अगर (unlikely(err))
-		वापस err;
+	err = mtdtest_write(mtd, addr, len, writebuf);
+	if (unlikely(err))
+		return err;
 	offs += len;
-	जबतक (offs > mtd->erasesize) अणु
+	while (offs > mtd->erasesize) {
 		offsets[eb++] = mtd->erasesize;
 		offs -= mtd->erasesize;
-	पूर्ण
+	}
 	offsets[eb] = offs;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_operation(व्योम)
-अणु
-	अगर (pअक्रमom_u32() & 1)
-		वापस करो_पढ़ो();
-	अन्यथा
-		वापस करो_ग_लिखो();
-पूर्ण
+static int do_operation(void)
+{
+	if (prandom_u32() & 1)
+		return do_read();
+	else
+		return do_write();
+}
 
-अटल पूर्णांक __init mtd_stresstest_init(व्योम)
-अणु
-	पूर्णांक err;
-	पूर्णांक i, op;
-	uपूर्णांक64_t पंचांगp;
+static int __init mtd_stresstest_init(void)
+{
+	int err;
+	int i, op;
+	uint64_t tmp;
 
-	prपूर्णांकk(KERN_INFO "\n");
-	prपूर्णांकk(KERN_INFO "=================================================\n");
+	printk(KERN_INFO "\n");
+	printk(KERN_INFO "=================================================\n");
 
-	अगर (dev < 0) अणु
+	if (dev < 0) {
 		pr_info("Please specify a valid mtd-device via module parameter\n");
 		pr_crit("CAREFUL: This test wipes all data on the specified MTD device!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(शून्य, dev);
-	अगर (IS_ERR(mtd)) अणु
+	mtd = get_mtd_device(NULL, dev);
+	if (IS_ERR(mtd)) {
 		err = PTR_ERR(mtd);
 		pr_err("error: cannot get MTD device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (mtd->ग_लिखोsize == 1) अणु
+	if (mtd->writesize == 1) {
 		pr_info("not NAND flash, assume page size is 512 "
 		       "bytes.\n");
 		pgsize = 512;
-	पूर्ण अन्यथा
-		pgsize = mtd->ग_लिखोsize;
+	} else
+		pgsize = mtd->writesize;
 
-	पंचांगp = mtd->size;
-	करो_भाग(पंचांगp, mtd->erasesize);
-	ebcnt = पंचांगp;
+	tmp = mtd->size;
+	do_div(tmp, mtd->erasesize);
+	ebcnt = tmp;
 	pgcnt = mtd->erasesize / pgsize;
 
 	pr_info("MTD device size %llu, eraseblock size %u, "
 	       "page size %u, count of eraseblocks %u, pages per "
 	       "eraseblock %u, OOB size %u\n",
-	       (अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
+	       (unsigned long long)mtd->size, mtd->erasesize,
 	       pgsize, ebcnt, pgcnt, mtd->oobsize);
 
-	अगर (ebcnt < 2) अणु
+	if (ebcnt < 2) {
 		pr_err("error: need at least 2 eraseblocks\n");
 		err = -ENOSPC;
-		जाओ out_put_mtd;
-	पूर्ण
+		goto out_put_mtd;
+	}
 
-	/* Read or ग_लिखो up 2 eraseblocks at a समय */
+	/* Read or write up 2 eraseblocks at a time */
 	bufsize = mtd->erasesize * 2;
 
 	err = -ENOMEM;
-	पढ़ोbuf = vदो_स्मृति(bufsize);
-	ग_लिखोbuf = vदो_स्मृति(bufsize);
-	offsets = kदो_स्मृति_array(ebcnt, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!पढ़ोbuf || !ग_लिखोbuf || !offsets)
-		जाओ out;
-	क्रम (i = 0; i < ebcnt; i++)
+	readbuf = vmalloc(bufsize);
+	writebuf = vmalloc(bufsize);
+	offsets = kmalloc_array(ebcnt, sizeof(int), GFP_KERNEL);
+	if (!readbuf || !writebuf || !offsets)
+		goto out;
+	for (i = 0; i < ebcnt; i++)
 		offsets[i] = mtd->erasesize;
-	pअक्रमom_bytes(ग_लिखोbuf, bufsize);
+	prandom_bytes(writebuf, bufsize);
 
 	bbt = kzalloc(ebcnt, GFP_KERNEL);
-	अगर (!bbt)
-		जाओ out;
-	err = mtdtest_scan_क्रम_bad_eraseblocks(mtd, bbt, 0, ebcnt);
-	अगर (err)
-		जाओ out;
+	if (!bbt)
+		goto out;
+	err = mtdtest_scan_for_bad_eraseblocks(mtd, bbt, 0, ebcnt);
+	if (err)
+		goto out;
 
 	/* Do operations */
 	pr_info("doing operations\n");
-	क्रम (op = 0; op < count; op++) अणु
-		अगर ((op & 1023) == 0)
+	for (op = 0; op < count; op++) {
+		if ((op & 1023) == 0)
 			pr_info("%d operations done\n", op);
-		err = करो_operation();
-		अगर (err)
-			जाओ out;
+		err = do_operation();
+		if (err)
+			goto out;
 
 		err = mtdtest_relax();
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 	pr_info("finished, %d operations done\n", op);
 
 out:
-	kमुक्त(offsets);
-	kमुक्त(bbt);
-	vमुक्त(ग_लिखोbuf);
-	vमुक्त(पढ़ोbuf);
+	kfree(offsets);
+	kfree(bbt);
+	vfree(writebuf);
+	vfree(readbuf);
 out_put_mtd:
 	put_mtd_device(mtd);
-	अगर (err)
+	if (err)
 		pr_info("error %d occurred\n", err);
-	prपूर्णांकk(KERN_INFO "=================================================\n");
-	वापस err;
-पूर्ण
+	printk(KERN_INFO "=================================================\n");
+	return err;
+}
 module_init(mtd_stresstest_init);
 
-अटल व्योम __निकास mtd_stresstest_निकास(व्योम)
-अणु
-	वापस;
-पूर्ण
-module_निकास(mtd_stresstest_निकास);
+static void __exit mtd_stresstest_exit(void)
+{
+	return;
+}
+module_exit(mtd_stresstest_exit);
 
 MODULE_DESCRIPTION("Stress test module");
 MODULE_AUTHOR("Adrian Hunter");

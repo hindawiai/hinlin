@@ -1,197 +1,196 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015 Intel Deutschland GmbH
  */
-#समावेश <net/mac80211.h>
-#समावेश "ieee80211_i.h"
-#समावेश "trace.h"
-#समावेश "driver-ops.h"
+#include <net/mac80211.h>
+#include "ieee80211_i.h"
+#include "trace.h"
+#include "driver-ops.h"
 
-पूर्णांक drv_start(काष्ठा ieee80211_local *local)
-अणु
-	पूर्णांक ret;
+int drv_start(struct ieee80211_local *local)
+{
+	int ret;
 
 	might_sleep();
 
-	अगर (WARN_ON(local->started))
-		वापस -EALREADY;
+	if (WARN_ON(local->started))
+		return -EALREADY;
 
 	trace_drv_start(local);
 	local->started = true;
 	/* allow rx frames */
 	smp_mb();
 	ret = local->ops->start(&local->hw);
-	trace_drv_वापस_पूर्णांक(local, ret);
+	trace_drv_return_int(local, ret);
 
-	अगर (ret)
+	if (ret)
 		local->started = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम drv_stop(काष्ठा ieee80211_local *local)
-अणु
+void drv_stop(struct ieee80211_local *local)
+{
 	might_sleep();
 
-	अगर (WARN_ON(!local->started))
-		वापस;
+	if (WARN_ON(!local->started))
+		return;
 
 	trace_drv_stop(local);
 	local->ops->stop(&local->hw);
-	trace_drv_वापस_व्योम(local);
+	trace_drv_return_void(local);
 
-	/* sync away all work on the tasklet beक्रमe clearing started */
+	/* sync away all work on the tasklet before clearing started */
 	tasklet_disable(&local->tasklet);
 	tasklet_enable(&local->tasklet);
 
 	barrier();
 
 	local->started = false;
-पूर्ण
+}
 
-पूर्णांक drv_add_पूर्णांकerface(काष्ठा ieee80211_local *local,
-		      काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
-	पूर्णांक ret;
+int drv_add_interface(struct ieee80211_local *local,
+		      struct ieee80211_sub_if_data *sdata)
+{
+	int ret;
 
 	might_sleep();
 
-	अगर (WARN_ON(sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN ||
-		    (sdata->vअगर.type == NL80211_IFTYPE_MONITOR &&
+	if (WARN_ON(sdata->vif.type == NL80211_IFTYPE_AP_VLAN ||
+		    (sdata->vif.type == NL80211_IFTYPE_MONITOR &&
 		     !ieee80211_hw_check(&local->hw, WANT_MONITOR_VIF) &&
 		     !(sdata->u.mntr.flags & MONITOR_FLAG_ACTIVE))))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	trace_drv_add_पूर्णांकerface(local, sdata);
-	ret = local->ops->add_पूर्णांकerface(&local->hw, &sdata->vअगर);
-	trace_drv_वापस_पूर्णांक(local, ret);
+	trace_drv_add_interface(local, sdata);
+	ret = local->ops->add_interface(&local->hw, &sdata->vif);
+	trace_drv_return_int(local, ret);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		sdata->flags |= IEEE80211_SDATA_IN_DRIVER;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक drv_change_पूर्णांकerface(काष्ठा ieee80211_local *local,
-			 काष्ठा ieee80211_sub_अगर_data *sdata,
-			 क्रमागत nl80211_अगरtype type, bool p2p)
-अणु
-	पूर्णांक ret;
+int drv_change_interface(struct ieee80211_local *local,
+			 struct ieee80211_sub_if_data *sdata,
+			 enum nl80211_iftype type, bool p2p)
+{
+	int ret;
 
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस -EIO;
+	if (!check_sdata_in_driver(sdata))
+		return -EIO;
 
-	trace_drv_change_पूर्णांकerface(local, sdata, type, p2p);
-	ret = local->ops->change_पूर्णांकerface(&local->hw, &sdata->vअगर, type, p2p);
-	trace_drv_वापस_पूर्णांक(local, ret);
-	वापस ret;
-पूर्ण
+	trace_drv_change_interface(local, sdata, type, p2p);
+	ret = local->ops->change_interface(&local->hw, &sdata->vif, type, p2p);
+	trace_drv_return_int(local, ret);
+	return ret;
+}
 
-व्योम drv_हटाओ_पूर्णांकerface(काष्ठा ieee80211_local *local,
-			  काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
+void drv_remove_interface(struct ieee80211_local *local,
+			  struct ieee80211_sub_if_data *sdata)
+{
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस;
+	if (!check_sdata_in_driver(sdata))
+		return;
 
-	trace_drv_हटाओ_पूर्णांकerface(local, sdata);
-	local->ops->हटाओ_पूर्णांकerface(&local->hw, &sdata->vअगर);
+	trace_drv_remove_interface(local, sdata);
+	local->ops->remove_interface(&local->hw, &sdata->vif);
 	sdata->flags &= ~IEEE80211_SDATA_IN_DRIVER;
-	trace_drv_वापस_व्योम(local);
-पूर्ण
+	trace_drv_return_void(local);
+}
 
 __must_check
-पूर्णांक drv_sta_state(काष्ठा ieee80211_local *local,
-		  काष्ठा ieee80211_sub_अगर_data *sdata,
-		  काष्ठा sta_info *sta,
-		  क्रमागत ieee80211_sta_state old_state,
-		  क्रमागत ieee80211_sta_state new_state)
-अणु
-	पूर्णांक ret = 0;
+int drv_sta_state(struct ieee80211_local *local,
+		  struct ieee80211_sub_if_data *sdata,
+		  struct sta_info *sta,
+		  enum ieee80211_sta_state old_state,
+		  enum ieee80211_sta_state new_state)
+{
+	int ret = 0;
 
 	might_sleep();
 
 	sdata = get_bss_sdata(sdata);
-	अगर (!check_sdata_in_driver(sdata))
-		वापस -EIO;
+	if (!check_sdata_in_driver(sdata))
+		return -EIO;
 
 	trace_drv_sta_state(local, sdata, &sta->sta, old_state, new_state);
-	अगर (local->ops->sta_state) अणु
-		ret = local->ops->sta_state(&local->hw, &sdata->vअगर, &sta->sta,
+	if (local->ops->sta_state) {
+		ret = local->ops->sta_state(&local->hw, &sdata->vif, &sta->sta,
 					    old_state, new_state);
-	पूर्ण अन्यथा अगर (old_state == IEEE80211_STA_AUTH &&
-		   new_state == IEEE80211_STA_ASSOC) अणु
+	} else if (old_state == IEEE80211_STA_AUTH &&
+		   new_state == IEEE80211_STA_ASSOC) {
 		ret = drv_sta_add(local, sdata, &sta->sta);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			sta->uploaded = true;
-			अगर (rcu_access_poपूर्णांकer(sta->sta.rates))
+			if (rcu_access_pointer(sta->sta.rates))
 				drv_sta_rate_tbl_update(local, sdata, &sta->sta);
-		पूर्ण
-	पूर्ण अन्यथा अगर (old_state == IEEE80211_STA_ASSOC &&
-		   new_state == IEEE80211_STA_AUTH) अणु
-		drv_sta_हटाओ(local, sdata, &sta->sta);
-	पूर्ण
-	trace_drv_वापस_पूर्णांक(local, ret);
-	वापस ret;
-पूर्ण
+		}
+	} else if (old_state == IEEE80211_STA_ASSOC &&
+		   new_state == IEEE80211_STA_AUTH) {
+		drv_sta_remove(local, sdata, &sta->sta);
+	}
+	trace_drv_return_int(local, ret);
+	return ret;
+}
 
 __must_check
-पूर्णांक drv_sta_set_txpwr(काष्ठा ieee80211_local *local,
-		      काष्ठा ieee80211_sub_अगर_data *sdata,
-		      काष्ठा sta_info *sta)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+int drv_sta_set_txpwr(struct ieee80211_local *local,
+		      struct ieee80211_sub_if_data *sdata,
+		      struct sta_info *sta)
+{
+	int ret = -EOPNOTSUPP;
 
 	might_sleep();
 
 	sdata = get_bss_sdata(sdata);
-	अगर (!check_sdata_in_driver(sdata))
-		वापस -EIO;
+	if (!check_sdata_in_driver(sdata))
+		return -EIO;
 
 	trace_drv_sta_set_txpwr(local, sdata, &sta->sta);
-	अगर (local->ops->sta_set_txpwr)
-		ret = local->ops->sta_set_txpwr(&local->hw, &sdata->vअगर,
+	if (local->ops->sta_set_txpwr)
+		ret = local->ops->sta_set_txpwr(&local->hw, &sdata->vif,
 						&sta->sta);
-	trace_drv_वापस_पूर्णांक(local, ret);
-	वापस ret;
-पूर्ण
+	trace_drv_return_int(local, ret);
+	return ret;
+}
 
-व्योम drv_sta_rc_update(काष्ठा ieee80211_local *local,
-		       काष्ठा ieee80211_sub_अगर_data *sdata,
-		       काष्ठा ieee80211_sta *sta, u32 changed)
-अणु
+void drv_sta_rc_update(struct ieee80211_local *local,
+		       struct ieee80211_sub_if_data *sdata,
+		       struct ieee80211_sta *sta, u32 changed)
+{
 	sdata = get_bss_sdata(sdata);
-	अगर (!check_sdata_in_driver(sdata))
-		वापस;
+	if (!check_sdata_in_driver(sdata))
+		return;
 
 	WARN_ON(changed & IEEE80211_RC_SUPP_RATES_CHANGED &&
-		(sdata->vअगर.type != NL80211_IFTYPE_ADHOC &&
-		 sdata->vअगर.type != NL80211_IFTYPE_MESH_POINT));
+		(sdata->vif.type != NL80211_IFTYPE_ADHOC &&
+		 sdata->vif.type != NL80211_IFTYPE_MESH_POINT));
 
 	trace_drv_sta_rc_update(local, sdata, sta, changed);
-	अगर (local->ops->sta_rc_update)
-		local->ops->sta_rc_update(&local->hw, &sdata->vअगर,
+	if (local->ops->sta_rc_update)
+		local->ops->sta_rc_update(&local->hw, &sdata->vif,
 					  sta, changed);
 
-	trace_drv_वापस_व्योम(local);
-पूर्ण
+	trace_drv_return_void(local);
+}
 
-पूर्णांक drv_conf_tx(काष्ठा ieee80211_local *local,
-		काष्ठा ieee80211_sub_अगर_data *sdata, u16 ac,
-		स्थिर काष्ठा ieee80211_tx_queue_params *params)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+int drv_conf_tx(struct ieee80211_local *local,
+		struct ieee80211_sub_if_data *sdata, u16 ac,
+		const struct ieee80211_tx_queue_params *params)
+{
+	int ret = -EOPNOTSUPP;
 
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस -EIO;
+	if (!check_sdata_in_driver(sdata))
+		return -EIO;
 
-	अगर (params->cw_min == 0 || params->cw_min > params->cw_max) अणु
+	if (params->cw_min == 0 || params->cw_min > params->cw_max) {
 		/*
 		 * If we can't configure hardware anyway, don't warn. We may
 		 * never have initialized the CW parameters.
@@ -199,98 +198,98 @@ __must_check
 		WARN_ONCE(local->ops->conf_tx,
 			  "%s: invalid CW_min/CW_max: %d/%d\n",
 			  sdata->name, params->cw_min, params->cw_max);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	trace_drv_conf_tx(local, sdata, ac, params);
-	अगर (local->ops->conf_tx)
-		ret = local->ops->conf_tx(&local->hw, &sdata->vअगर,
+	if (local->ops->conf_tx)
+		ret = local->ops->conf_tx(&local->hw, &sdata->vif,
 					  ac, params);
-	trace_drv_वापस_पूर्णांक(local, ret);
-	वापस ret;
-पूर्ण
+	trace_drv_return_int(local, ret);
+	return ret;
+}
 
-u64 drv_get_tsf(काष्ठा ieee80211_local *local,
-		काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
+u64 drv_get_tsf(struct ieee80211_local *local,
+		struct ieee80211_sub_if_data *sdata)
+{
 	u64 ret = -1ULL;
 
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस ret;
+	if (!check_sdata_in_driver(sdata))
+		return ret;
 
 	trace_drv_get_tsf(local, sdata);
-	अगर (local->ops->get_tsf)
-		ret = local->ops->get_tsf(&local->hw, &sdata->vअगर);
-	trace_drv_वापस_u64(local, ret);
-	वापस ret;
-पूर्ण
+	if (local->ops->get_tsf)
+		ret = local->ops->get_tsf(&local->hw, &sdata->vif);
+	trace_drv_return_u64(local, ret);
+	return ret;
+}
 
-व्योम drv_set_tsf(काष्ठा ieee80211_local *local,
-		 काष्ठा ieee80211_sub_अगर_data *sdata,
+void drv_set_tsf(struct ieee80211_local *local,
+		 struct ieee80211_sub_if_data *sdata,
 		 u64 tsf)
-अणु
+{
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस;
+	if (!check_sdata_in_driver(sdata))
+		return;
 
 	trace_drv_set_tsf(local, sdata, tsf);
-	अगर (local->ops->set_tsf)
-		local->ops->set_tsf(&local->hw, &sdata->vअगर, tsf);
-	trace_drv_वापस_व्योम(local);
-पूर्ण
+	if (local->ops->set_tsf)
+		local->ops->set_tsf(&local->hw, &sdata->vif, tsf);
+	trace_drv_return_void(local);
+}
 
-व्योम drv_offset_tsf(काष्ठा ieee80211_local *local,
-		    काष्ठा ieee80211_sub_अगर_data *sdata,
+void drv_offset_tsf(struct ieee80211_local *local,
+		    struct ieee80211_sub_if_data *sdata,
 		    s64 offset)
-अणु
+{
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस;
+	if (!check_sdata_in_driver(sdata))
+		return;
 
 	trace_drv_offset_tsf(local, sdata, offset);
-	अगर (local->ops->offset_tsf)
-		local->ops->offset_tsf(&local->hw, &sdata->vअगर, offset);
-	trace_drv_वापस_व्योम(local);
-पूर्ण
+	if (local->ops->offset_tsf)
+		local->ops->offset_tsf(&local->hw, &sdata->vif, offset);
+	trace_drv_return_void(local);
+}
 
-व्योम drv_reset_tsf(काष्ठा ieee80211_local *local,
-		   काष्ठा ieee80211_sub_अगर_data *sdata)
-अणु
+void drv_reset_tsf(struct ieee80211_local *local,
+		   struct ieee80211_sub_if_data *sdata)
+{
 	might_sleep();
 
-	अगर (!check_sdata_in_driver(sdata))
-		वापस;
+	if (!check_sdata_in_driver(sdata))
+		return;
 
 	trace_drv_reset_tsf(local, sdata);
-	अगर (local->ops->reset_tsf)
-		local->ops->reset_tsf(&local->hw, &sdata->vअगर);
-	trace_drv_वापस_व्योम(local);
-पूर्ण
+	if (local->ops->reset_tsf)
+		local->ops->reset_tsf(&local->hw, &sdata->vif);
+	trace_drv_return_void(local);
+}
 
-पूर्णांक drv_चयन_vअगर_chanctx(काष्ठा ieee80211_local *local,
-			   काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs,
-			   पूर्णांक n_vअगरs, क्रमागत ieee80211_chanctx_चयन_mode mode)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+int drv_switch_vif_chanctx(struct ieee80211_local *local,
+			   struct ieee80211_vif_chanctx_switch *vifs,
+			   int n_vifs, enum ieee80211_chanctx_switch_mode mode)
+{
+	int ret = 0;
+	int i;
 
 	might_sleep();
 
-	अगर (!local->ops->चयन_vअगर_chanctx)
-		वापस -EOPNOTSUPP;
+	if (!local->ops->switch_vif_chanctx)
+		return -EOPNOTSUPP;
 
-	क्रम (i = 0; i < n_vअगरs; i++) अणु
-		काष्ठा ieee80211_chanctx *new_ctx =
-			container_of(vअगरs[i].new_ctx,
-				     काष्ठा ieee80211_chanctx,
+	for (i = 0; i < n_vifs; i++) {
+		struct ieee80211_chanctx *new_ctx =
+			container_of(vifs[i].new_ctx,
+				     struct ieee80211_chanctx,
 				     conf);
-		काष्ठा ieee80211_chanctx *old_ctx =
-			container_of(vअगरs[i].old_ctx,
-				     काष्ठा ieee80211_chanctx,
+		struct ieee80211_chanctx *old_ctx =
+			container_of(vifs[i].old_ctx,
+				     struct ieee80211_chanctx,
 				     conf);
 
 		WARN_ON_ONCE(!old_ctx->driver_present);
@@ -298,50 +297,50 @@ u64 drv_get_tsf(काष्ठा ieee80211_local *local,
 			      new_ctx->driver_present) ||
 			     (mode == CHANCTX_SWMODE_REASSIGN_VIF &&
 			      !new_ctx->driver_present));
-	पूर्ण
+	}
 
-	trace_drv_चयन_vअगर_chanctx(local, vअगरs, n_vअगरs, mode);
-	ret = local->ops->चयन_vअगर_chanctx(&local->hw,
-					     vअगरs, n_vअगरs, mode);
-	trace_drv_वापस_पूर्णांक(local, ret);
+	trace_drv_switch_vif_chanctx(local, vifs, n_vifs, mode);
+	ret = local->ops->switch_vif_chanctx(&local->hw,
+					     vifs, n_vifs, mode);
+	trace_drv_return_int(local, ret);
 
-	अगर (!ret && mode == CHANCTX_SWMODE_SWAP_CONTEXTS) अणु
-		क्रम (i = 0; i < n_vअगरs; i++) अणु
-			काष्ठा ieee80211_chanctx *new_ctx =
-				container_of(vअगरs[i].new_ctx,
-					     काष्ठा ieee80211_chanctx,
+	if (!ret && mode == CHANCTX_SWMODE_SWAP_CONTEXTS) {
+		for (i = 0; i < n_vifs; i++) {
+			struct ieee80211_chanctx *new_ctx =
+				container_of(vifs[i].new_ctx,
+					     struct ieee80211_chanctx,
 					     conf);
-			काष्ठा ieee80211_chanctx *old_ctx =
-				container_of(vअगरs[i].old_ctx,
-					     काष्ठा ieee80211_chanctx,
+			struct ieee80211_chanctx *old_ctx =
+				container_of(vifs[i].old_ctx,
+					     struct ieee80211_chanctx,
 					     conf);
 
 			new_ctx->driver_present = true;
 			old_ctx->driver_present = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक drv_ampdu_action(काष्ठा ieee80211_local *local,
-		     काष्ठा ieee80211_sub_अगर_data *sdata,
-		     काष्ठा ieee80211_ampdu_params *params)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+int drv_ampdu_action(struct ieee80211_local *local,
+		     struct ieee80211_sub_if_data *sdata,
+		     struct ieee80211_ampdu_params *params)
+{
+	int ret = -EOPNOTSUPP;
 
 	might_sleep();
 
 	sdata = get_bss_sdata(sdata);
-	अगर (!check_sdata_in_driver(sdata))
-		वापस -EIO;
+	if (!check_sdata_in_driver(sdata))
+		return -EIO;
 
 	trace_drv_ampdu_action(local, sdata, params);
 
-	अगर (local->ops->ampdu_action)
-		ret = local->ops->ampdu_action(&local->hw, &sdata->vअगर, params);
+	if (local->ops->ampdu_action)
+		ret = local->ops->ampdu_action(&local->hw, &sdata->vif, params);
 
-	trace_drv_वापस_पूर्णांक(local, ret);
+	trace_drv_return_int(local, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

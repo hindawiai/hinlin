@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTL8723B_CMD_C_
+#define _RTL8723B_CMD_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <rtl8723b_hal.h>
-#समावेश "hal_com_h2c.h"
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <rtl8723b_hal.h>
+#include "hal_com_h2c.h"
 
-#घोषणा MAX_H2C_BOX_NUMS	4
-#घोषणा MESSAGE_BOX_SIZE	4
+#define MAX_H2C_BOX_NUMS	4
+#define MESSAGE_BOX_SIZE	4
 
-#घोषणा RTL8723B_MAX_CMD_LEN	7
-#घोषणा RTL8723B_EX_MESSAGE_BOX_SIZE	4
+#define RTL8723B_MAX_CMD_LEN	7
+#define RTL8723B_EX_MESSAGE_BOX_SIZE	4
 
-अटल u8 _is_fw_पढ़ो_cmd_करोwn(काष्ठा adapter *padapter, u8 msgbox_num)
-अणु
-	u8 पढ़ो_करोwn = false;
-	पूर्णांक retry_cnts = 100;
+static u8 _is_fw_read_cmd_down(struct adapter *padapter, u8 msgbox_num)
+{
+	u8 read_down = false;
+	int retry_cnts = 100;
 
 	u8 valid;
 
-	करो अणु
-		valid = rtw_पढ़ो8(padapter, REG_HMETFR) & BIT(msgbox_num);
-		अगर (0 == valid) अणु
-			पढ़ो_करोwn = true;
-		पूर्ण
-	पूर्ण जबतक ((!पढ़ो_करोwn) && (retry_cnts--));
+	do {
+		valid = rtw_read8(padapter, REG_HMETFR) & BIT(msgbox_num);
+		if (0 == valid) {
+			read_down = true;
+		}
+	} while ((!read_down) && (retry_cnts--));
 
-	वापस पढ़ो_करोwn;
+	return read_down;
 
-पूर्ण
+}
 
 
 /*****************************************
-* H2C Msg क्रमmat :
+* H2C Msg format :
 *| 31 - 8		|7-5	| 4 - 0	|
 *| h2c_msg	|Class	|CMD_ID	|
 *| 31-0						|
 *| Ext msg					|
 *
 ******************************************/
-s32 FillH2CCmd8723B(काष्ठा adapter *padapter, u8 ElementID, u32 CmdLen, u8 *pCmdBuffer)
-अणु
+s32 FillH2CCmd8723B(struct adapter *padapter, u8 ElementID, u32 CmdLen, u8 *pCmdBuffer)
+{
 	u8 h2c_box_num;
 	u32 msgbox_addr;
 	u32 msgbox_ex_addr = 0;
-	काष्ठा hal_com_data *pHalData;
+	struct hal_com_data *pHalData;
 	u32 h2c_cmd = 0;
 	u32 h2c_cmd_ex = 0;
 	s32 ret = _FAIL;
 
 	padapter = GET_PRIMARY_ADAPTER(padapter);
 	pHalData = GET_HAL_DATA(padapter);
-	अगर (mutex_lock_पूर्णांकerruptible(&(adapter_to_dvobj(padapter)->h2c_fwcmd_mutex)))
-		वापस ret;
+	if (mutex_lock_interruptible(&(adapter_to_dvobj(padapter)->h2c_fwcmd_mutex)))
+		return ret;
 
-	अगर (!pCmdBuffer) अणु
-		जाओ निकास;
-	पूर्ण
+	if (!pCmdBuffer) {
+		goto exit;
+	}
 
-	अगर (CmdLen > RTL8723B_MAX_CMD_LEN) अणु
-		जाओ निकास;
-	पूर्ण
+	if (CmdLen > RTL8723B_MAX_CMD_LEN) {
+		goto exit;
+	}
 
-	अगर (padapter->bSurpriseRemoved)
-		जाओ निकास;
+	if (padapter->bSurpriseRemoved)
+		goto exit;
 
-	/* pay attention to अगर  race condition happened in  H2C cmd setting. */
-	करो अणु
+	/* pay attention to if  race condition happened in  H2C cmd setting. */
+	do {
 		h2c_box_num = pHalData->LastHMEBoxNum;
 
-		अगर (!_is_fw_पढ़ो_cmd_करोwn(padapter, h2c_box_num))
-			जाओ निकास;
+		if (!_is_fw_read_cmd_down(padapter, h2c_box_num))
+			goto exit;
 
-		अगर (CmdLen <= 3)
-			स_नकल((u8 *)(&h2c_cmd)+1, pCmdBuffer, CmdLen);
-		अन्यथा अणु
-			स_नकल((u8 *)(&h2c_cmd)+1, pCmdBuffer, 3);
-			स_नकल((u8 *)(&h2c_cmd_ex), pCmdBuffer+3, CmdLen-3);
+		if (CmdLen <= 3)
+			memcpy((u8 *)(&h2c_cmd)+1, pCmdBuffer, CmdLen);
+		else {
+			memcpy((u8 *)(&h2c_cmd)+1, pCmdBuffer, 3);
+			memcpy((u8 *)(&h2c_cmd_ex), pCmdBuffer+3, CmdLen-3);
 /* 			*(u8 *)(&h2c_cmd) |= BIT(7); */
-		पूर्ण
+		}
 
 		*(u8 *)(&h2c_cmd) |= ElementID;
 
-		अगर (CmdLen > 3) अणु
+		if (CmdLen > 3) {
 			msgbox_ex_addr = REG_HMEBOX_EXT0_8723B + (h2c_box_num*RTL8723B_EX_MESSAGE_BOX_SIZE);
-			rtw_ग_लिखो32(padapter, msgbox_ex_addr, h2c_cmd_ex);
-		पूर्ण
+			rtw_write32(padapter, msgbox_ex_addr, h2c_cmd_ex);
+		}
 		msgbox_addr = REG_HMEBOX_0 + (h2c_box_num*MESSAGE_BOX_SIZE);
-		rtw_ग_लिखो32(padapter, msgbox_addr, h2c_cmd);
+		rtw_write32(padapter, msgbox_addr, h2c_cmd);
 
 		pHalData->LastHMEBoxNum = (h2c_box_num+1) % MAX_H2C_BOX_NUMS;
 
-	पूर्ण जबतक (0);
+	} while (0);
 
 	ret = _SUCCESS;
 
-निकास:
+exit:
 
 	mutex_unlock(&(adapter_to_dvobj(padapter)->h2c_fwcmd_mutex));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम Conकाष्ठाBeacon(काष्ठा adapter *padapter, u8 *pframe, u32 *pLength)
-अणु
-	काष्ठा ieee80211_hdr *pwlanhdr;
+static void ConstructBeacon(struct adapter *padapter, u8 *pframe, u32 *pLength)
+{
+	struct ieee80211_hdr *pwlanhdr;
 	__le16 *fctrl;
 	u32 rate_len, pktlen;
-	काष्ठा mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा wlan_bssid_ex *cur_network = &(pmlmeinfo->network);
-	u8 bc_addr[] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct wlan_bssid_ex *cur_network = &(pmlmeinfo->network);
+	u8 bc_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 
 	fctrl = &(pwlanhdr->frame_control);
 	*(fctrl) = 0;
 
-	स_नकल(pwlanhdr->addr1, bc_addr, ETH_ALEN);
-	स_नकल(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
-	स_नकल(pwlanhdr->addr3, get_my_bssid(cur_network), ETH_ALEN);
+	memcpy(pwlanhdr->addr1, bc_addr, ETH_ALEN);
+	memcpy(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
+	memcpy(pwlanhdr->addr3, get_my_bssid(cur_network), ETH_ALEN);
 
 	SetSeqNum(pwlanhdr, 0/*pmlmeext->mgnt_seq*/);
 	/* pmlmeext->mgnt_seq++; */
 	SetFrameSubType(pframe, WIFI_BEACON);
 
-	pframe += माप(काष्ठा ieee80211_hdr_3addr);
-	pktlen = माप(काष्ठा ieee80211_hdr_3addr);
+	pframe += sizeof(struct ieee80211_hdr_3addr);
+	pktlen = sizeof(struct ieee80211_hdr_3addr);
 
-	/* बारtamp will be inserted by hardware */
+	/* timestamp will be inserted by hardware */
 	pframe += 8;
 	pktlen += 8;
 
-	/*  beacon पूर्णांकerval: 2 bytes */
-	स_नकल(pframe, (अचिन्हित अक्षर *)(rtw_get_beacon_पूर्णांकerval_from_ie(cur_network->IEs)), 2);
+	/*  beacon interval: 2 bytes */
+	memcpy(pframe, (unsigned char *)(rtw_get_beacon_interval_from_ie(cur_network->IEs)), 2);
 
 	pframe += 2;
 	pktlen += 2;
 
 	/*  capability info: 2 bytes */
-	स_नकल(pframe, (अचिन्हित अक्षर *)(rtw_get_capability_from_ie(cur_network->IEs)), 2);
+	memcpy(pframe, (unsigned char *)(rtw_get_capability_from_ie(cur_network->IEs)), 2);
 
 	pframe += 2;
 	pktlen += 2;
 
-	अगर ((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE) अणु
-		pktlen += cur_network->IELength - माप(काष्ठा ndis_802_11_fix_ie);
-		स_नकल(pframe, cur_network->IEs+माप(काष्ठा ndis_802_11_fix_ie), pktlen);
+	if ((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE) {
+		pktlen += cur_network->IELength - sizeof(struct ndis_802_11_fix_ie);
+		memcpy(pframe, cur_network->IEs+sizeof(struct ndis_802_11_fix_ie), pktlen);
 
-		जाओ _Conकाष्ठाBeacon;
-	पूर्ण
+		goto _ConstructBeacon;
+	}
 
-	/* below क्रम ad-hoc mode */
+	/* below for ad-hoc mode */
 
 	/*  SSID */
 	pframe = rtw_set_ie(pframe, WLAN_EID_SSID, cur_network->Ssid.SsidLength, cur_network->Ssid.Ssid, &pktlen);
@@ -166,44 +165,44 @@ s32 FillH2CCmd8723B(काष्ठा adapter *padapter, u8 ElementID, u32 CmdL
 	pframe = rtw_set_ie(pframe, WLAN_EID_SUPP_RATES, ((rate_len > 8) ? 8 : rate_len), cur_network->SupportedRates, &pktlen);
 
 	/*  DS parameter set */
-	pframe = rtw_set_ie(pframe, WLAN_EID_DS_PARAMS, 1, (अचिन्हित अक्षर *)&(cur_network->Configuration.DSConfig), &pktlen);
+	pframe = rtw_set_ie(pframe, WLAN_EID_DS_PARAMS, 1, (unsigned char *)&(cur_network->Configuration.DSConfig), &pktlen);
 
-	अगर ((pmlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE) अणु
-		u32 ATIMWinकरोw;
+	if ((pmlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE) {
+		u32 ATIMWindow;
 		/*  IBSS Parameter Set... */
-		/* ATIMWinकरोw = cur->Configuration.ATIMWinकरोw; */
-		ATIMWinकरोw = 0;
-		pframe = rtw_set_ie(pframe, WLAN_EID_IBSS_PARAMS, 2, (अचिन्हित अक्षर *)(&ATIMWinकरोw), &pktlen);
-	पूर्ण
+		/* ATIMWindow = cur->Configuration.ATIMWindow; */
+		ATIMWindow = 0;
+		pframe = rtw_set_ie(pframe, WLAN_EID_IBSS_PARAMS, 2, (unsigned char *)(&ATIMWindow), &pktlen);
+	}
 
 
-	/* toकरो: ERP IE */
+	/* todo: ERP IE */
 
 
 	/*  EXTERNDED SUPPORTED RATE */
-	अगर (rate_len > 8)
+	if (rate_len > 8)
 		pframe = rtw_set_ie(pframe, WLAN_EID_EXT_SUPP_RATES, (rate_len - 8), (cur_network->SupportedRates + 8), &pktlen);
 
 
-	/* toकरो:HT क्रम adhoc */
+	/* todo:HT for adhoc */
 
-_Conकाष्ठाBeacon:
+_ConstructBeacon:
 
-	अगर ((pktlen + TXDESC_SIZE) > 512)
-		वापस;
+	if ((pktlen + TXDESC_SIZE) > 512)
+		return;
 
 	*pLength = pktlen;
 
-पूर्ण
+}
 
-अटल व्योम Conकाष्ठाPSPoll(काष्ठा adapter *padapter, u8 *pframe, u32 *pLength)
-अणु
-	काष्ठा ieee80211_hdr *pwlanhdr;
+static void ConstructPSPoll(struct adapter *padapter, u8 *pframe, u32 *pLength)
+{
+	struct ieee80211_hdr *pwlanhdr;
 	__le16 *fctrl;
-	काष्ठा mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 
 	/*  Frame control. */
 	fctrl = &(pwlanhdr->frame_control);
@@ -215,16 +214,16 @@ _Conकाष्ठाBeacon:
 	SetDuration(pframe, (pmlmeinfo->aid | 0xc000));
 
 	/*  BSSID. */
-	स_नकल(pwlanhdr->addr1, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
+	memcpy(pwlanhdr->addr1, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
 
 	/*  TA. */
-	स_नकल(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
+	memcpy(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
 
 	*pLength = 16;
-पूर्ण
+}
 
-अटल व्योम Conकाष्ठाNullFunctionData(
-	काष्ठा adapter *padapter,
+static void ConstructNullFunctionData(
+	struct adapter *padapter,
 	u8 *pframe,
 	u32 *pLength,
 	u8 *StaAddr,
@@ -233,96 +232,96 @@ _Conकाष्ठाBeacon:
 	u8 bEosp,
 	u8 bForcePowerSave
 )
-अणु
-	काष्ठा ieee80211_hdr *pwlanhdr;
+{
+	struct ieee80211_hdr *pwlanhdr;
 	__le16 *fctrl;
 	u32 pktlen;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा wlan_network *cur_network = &pmlmepriv->cur_network;
-	काष्ठा mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct wlan_network *cur_network = &pmlmepriv->cur_network;
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 
 	fctrl = &pwlanhdr->frame_control;
 	*(fctrl) = 0;
-	अगर (bForcePowerSave)
+	if (bForcePowerSave)
 		SetPwrMgt(fctrl);
 
-	चयन (cur_network->network.Infraकाष्ठाureMode) अणु
-	हाल Ndis802_11Infraकाष्ठाure:
+	switch (cur_network->network.InfrastructureMode) {
+	case Ndis802_11Infrastructure:
 		SetToDs(fctrl);
-		स_नकल(pwlanhdr->addr1, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
-		स_नकल(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
-		स_नकल(pwlanhdr->addr3, StaAddr, ETH_ALEN);
-		अवरोध;
-	हाल Ndis802_11APMode:
+		memcpy(pwlanhdr->addr1, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
+		memcpy(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
+		memcpy(pwlanhdr->addr3, StaAddr, ETH_ALEN);
+		break;
+	case Ndis802_11APMode:
 		SetFrDs(fctrl);
-		स_नकल(pwlanhdr->addr1, StaAddr, ETH_ALEN);
-		स_नकल(pwlanhdr->addr2, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
-		स_नकल(pwlanhdr->addr3, myid(&(padapter->eeprompriv)), ETH_ALEN);
-		अवरोध;
-	हाल Ndis802_11IBSS:
-	शेष:
-		स_नकल(pwlanhdr->addr1, StaAddr, ETH_ALEN);
-		स_नकल(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
-		स_नकल(pwlanhdr->addr3, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
-		अवरोध;
-	पूर्ण
+		memcpy(pwlanhdr->addr1, StaAddr, ETH_ALEN);
+		memcpy(pwlanhdr->addr2, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
+		memcpy(pwlanhdr->addr3, myid(&(padapter->eeprompriv)), ETH_ALEN);
+		break;
+	case Ndis802_11IBSS:
+	default:
+		memcpy(pwlanhdr->addr1, StaAddr, ETH_ALEN);
+		memcpy(pwlanhdr->addr2, myid(&(padapter->eeprompriv)), ETH_ALEN);
+		memcpy(pwlanhdr->addr3, get_my_bssid(&(pmlmeinfo->network)), ETH_ALEN);
+		break;
+	}
 
 	SetSeqNum(pwlanhdr, 0);
 
-	अगर (bQoS) अणु
-		काष्ठा ieee80211_qos_hdr *pwlanqoshdr;
+	if (bQoS) {
+		struct ieee80211_qos_hdr *pwlanqoshdr;
 
-		SetFrameSubType(pframe, WIFI_QOS_DATA_शून्य);
+		SetFrameSubType(pframe, WIFI_QOS_DATA_NULL);
 
-		pwlanqoshdr = (काष्ठा ieee80211_qos_hdr *)pframe;
+		pwlanqoshdr = (struct ieee80211_qos_hdr *)pframe;
 		SetPriority(&pwlanqoshdr->qos_ctrl, AC);
 		SetEOSP(&pwlanqoshdr->qos_ctrl, bEosp);
 
-		pktlen = माप(काष्ठा ieee80211_qos_hdr);
-	पूर्ण अन्यथा अणु
-		SetFrameSubType(pframe, WIFI_DATA_शून्य);
+		pktlen = sizeof(struct ieee80211_qos_hdr);
+	} else {
+		SetFrameSubType(pframe, WIFI_DATA_NULL);
 
-		pktlen = माप(काष्ठा ieee80211_hdr_3addr);
-	पूर्ण
+		pktlen = sizeof(struct ieee80211_hdr_3addr);
+	}
 
 	*pLength = pktlen;
-पूर्ण
+}
 
 /*
- * To check अगर reserved page content is destroyed by beacon because beacon
+ * To check if reserved page content is destroyed by beacon because beacon
  * is too large.
  */
 /* 2010.06.23. Added by tynli. */
-व्योम CheckFwRsvdPageContent(काष्ठा adapter *Adapter)
-अणु
-पूर्ण
+void CheckFwRsvdPageContent(struct adapter *Adapter)
+{
+}
 
-अटल व्योम rtl8723b_set_FwRsvdPage_cmd(काष्ठा adapter *padapter, काष्ठा rsvdpage_loc *rsvdpageloc)
-अणु
-	u8 u1H2CRsvdPageParm[H2C_RSVDPAGE_LOC_LEN] = अणु0पूर्ण;
+static void rtl8723b_set_FwRsvdPage_cmd(struct adapter *padapter, struct rsvdpage_loc *rsvdpageloc)
+{
+	u8 u1H2CRsvdPageParm[H2C_RSVDPAGE_LOC_LEN] = {0};
 
 	SET_8723B_H2CCMD_RSVDPAGE_LOC_PROBE_RSP(u1H2CRsvdPageParm, rsvdpageloc->LocProbeRsp);
 	SET_8723B_H2CCMD_RSVDPAGE_LOC_PSPOLL(u1H2CRsvdPageParm, rsvdpageloc->LocPsPoll);
-	SET_8723B_H2CCMD_RSVDPAGE_LOC_शून्य_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocNullData);
-	SET_8723B_H2CCMD_RSVDPAGE_LOC_QOS_शून्य_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocQosNull);
-	SET_8723B_H2CCMD_RSVDPAGE_LOC_BT_QOS_शून्य_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocBTQosNull);
+	SET_8723B_H2CCMD_RSVDPAGE_LOC_NULL_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocNullData);
+	SET_8723B_H2CCMD_RSVDPAGE_LOC_QOS_NULL_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocQosNull);
+	SET_8723B_H2CCMD_RSVDPAGE_LOC_BT_QOS_NULL_DATA(u1H2CRsvdPageParm, rsvdpageloc->LocBTQosNull);
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CRsvdPageParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CRsvdPageParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CRsvdPageParm, H2C_RSVDPAGE_LOC_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_RSVD_PAGE, H2C_RSVDPAGE_LOC_LEN, u1H2CRsvdPageParm);
-पूर्ण
+}
 
-अटल व्योम rtl8723b_set_FwAoacRsvdPage_cmd(काष्ठा adapter *padapter, काष्ठा rsvdpage_loc *rsvdpageloc)
-अणु
-पूर्ण
+static void rtl8723b_set_FwAoacRsvdPage_cmd(struct adapter *padapter, struct rsvdpage_loc *rsvdpageloc)
+{
+}
 
-व्योम rtl8723b_set_FwMediaStatusRpt_cmd(काष्ठा adapter *padapter, u8 mstatus, u8 macid)
-अणु
-	u8 u1H2CMediaStatusRptParm[H2C_MEDIA_STATUS_RPT_LEN] = अणु0पूर्ण;
+void rtl8723b_set_FwMediaStatusRpt_cmd(struct adapter *padapter, u8 mstatus, u8 macid)
+{
+	u8 u1H2CMediaStatusRptParm[H2C_MEDIA_STATUS_RPT_LEN] = {0};
 	u8 macid_end = 0;
 
 	SET_8723B_H2CCMD_MSRRPT_PARM_OPMODE(u1H2CMediaStatusRptParm, mstatus);
@@ -330,15 +329,15 @@ _Conकाष्ठाBeacon:
 	SET_8723B_H2CCMD_MSRRPT_PARM_MACID(u1H2CMediaStatusRptParm, macid);
 	SET_8723B_H2CCMD_MSRRPT_PARM_MACID_END(u1H2CMediaStatusRptParm, macid_end);
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CMediaStatusRptParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CMediaStatusRptParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CMediaStatusRptParm, H2C_MEDIA_STATUS_RPT_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_MEDIA_STATUS_RPT, H2C_MEDIA_STATUS_RPT_LEN, u1H2CMediaStatusRptParm);
-पूर्ण
+}
 
-व्योम rtl8723b_set_FwMacIdConfig_cmd(काष्ठा adapter *padapter, u8 mac_id, u8 raid, u8 bw, u8 sgi, u32 mask)
-अणु
-	u8 u1H2CMacIdConfigParm[H2C_MACID_CFG_LEN] = अणु0पूर्ण;
+void rtl8723b_set_FwMacIdConfig_cmd(struct adapter *padapter, u8 mac_id, u8 raid, u8 bw, u8 sgi, u32 mask)
+{
+	u8 u1H2CMacIdConfigParm[H2C_MACID_CFG_LEN] = {0};
 
 	SET_8723B_H2CCMD_MACID_CFG_MACID(u1H2CMacIdConfigParm, mac_id);
 	SET_8723B_H2CCMD_MACID_CFG_RAID(u1H2CMacIdConfigParm, raid);
@@ -349,15 +348,15 @@ _Conकाष्ठाBeacon:
 	SET_8723B_H2CCMD_MACID_CFG_RATE_MASK2(u1H2CMacIdConfigParm, (u8)((mask & 0x00ff0000) >> 16));
 	SET_8723B_H2CCMD_MACID_CFG_RATE_MASK3(u1H2CMacIdConfigParm, (u8)((mask & 0xff000000) >> 24));
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CMacIdConfigParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CMacIdConfigParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CMacIdConfigParm, H2C_MACID_CFG_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_MACID_CFG, H2C_MACID_CFG_LEN, u1H2CMacIdConfigParm);
-पूर्ण
+}
 
-व्योम rtl8723b_set_rssi_cmd(काष्ठा adapter *padapter, u8 *param)
-अणु
-	u8 u1H2CRssiSettingParm[H2C_RSSI_SETTING_LEN] = अणु0पूर्ण;
+void rtl8723b_set_rssi_cmd(struct adapter *padapter, u8 *param)
+{
+	u8 u1H2CRssiSettingParm[H2C_RSSI_SETTING_LEN] = {0};
 	u8 mac_id = *param;
 	u8 rssi = *(param+2);
 	u8 uldl_state = 0;
@@ -366,137 +365,137 @@ _Conकाष्ठाBeacon:
 	SET_8723B_H2CCMD_RSSI_SETTING_RSSI(u1H2CRssiSettingParm, rssi);
 	SET_8723B_H2CCMD_RSSI_SETTING_ULDL_STATE(u1H2CRssiSettingParm, uldl_state);
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CRssiSettingParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CRssiSettingParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CRssiSettingParm, H2C_RSSI_SETTING_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_RSSI_SETTING, H2C_RSSI_SETTING_LEN, u1H2CRssiSettingParm);
-पूर्ण
+}
 
-व्योम rtl8723b_set_FwPwrMode_cmd(काष्ठा adapter *padapter, u8 psmode)
-अणु
-	पूर्णांक i;
-	काष्ठा pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	u8 u1H2CPwrModeParm[H2C_PWRMODE_LEN] = अणु0पूर्ण;
-	u8 PowerState = 0, awake_पूर्णांकvl = 1, byte5 = 0, rlbm = 0;
+void rtl8723b_set_FwPwrMode_cmd(struct adapter *padapter, u8 psmode)
+{
+	int i;
+	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	u8 u1H2CPwrModeParm[H2C_PWRMODE_LEN] = {0};
+	u8 PowerState = 0, awake_intvl = 1, byte5 = 0, rlbm = 0;
 
-	अगर (pwrpriv->dtim > 0 && pwrpriv->dtim < 16)
-		awake_पूर्णांकvl = pwrpriv->dtim+1;/* DTIM = (awake_पूर्णांकvl - 1) */
-	अन्यथा
-		awake_पूर्णांकvl = 3;/* DTIM =2 */
+	if (pwrpriv->dtim > 0 && pwrpriv->dtim < 16)
+		awake_intvl = pwrpriv->dtim+1;/* DTIM = (awake_intvl - 1) */
+	else
+		awake_intvl = 3;/* DTIM =2 */
 
 	rlbm = 2;
 
-	अगर (padapter->registrypriv.wअगरi_spec == 1) अणु
-		awake_पूर्णांकvl = 2;
+	if (padapter->registrypriv.wifi_spec == 1) {
+		awake_intvl = 2;
 		rlbm = 2;
-	पूर्ण
+	}
 
-	अगर (psmode > 0) अणु
-		अगर (hal_btcoex_IsBtControlLps(padapter) == true) अणु
+	if (psmode > 0) {
+		if (hal_btcoex_IsBtControlLps(padapter) == true) {
 			PowerState = hal_btcoex_RpwmVal(padapter);
 			byte5 = hal_btcoex_LpsVal(padapter);
 
-			अगर ((rlbm == 2) && (byte5 & BIT(4))) अणु
-				/*  Keep awake पूर्णांकerval to 1 to prevent from */
-				/*  decreasing coex perक्रमmance */
-				awake_पूर्णांकvl = 2;
+			if ((rlbm == 2) && (byte5 & BIT(4))) {
+				/*  Keep awake interval to 1 to prevent from */
+				/*  decreasing coex performance */
+				awake_intvl = 2;
 				rlbm = 2;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			PowerState = 0x00;/*  AllON(0x0C), RFON(0x04), RFOFF(0x00) */
 			byte5 = 0x40;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		PowerState = 0x0C;/*  AllON(0x0C), RFON(0x04), RFOFF(0x00) */
 		byte5 = 0x40;
-	पूर्ण
+	}
 
 	SET_8723B_H2CCMD_PWRMODE_PARM_MODE(u1H2CPwrModeParm, (psmode > 0) ? 1 : 0);
 	SET_8723B_H2CCMD_PWRMODE_PARM_SMART_PS(u1H2CPwrModeParm, pwrpriv->smart_ps);
 	SET_8723B_H2CCMD_PWRMODE_PARM_RLBM(u1H2CPwrModeParm, rlbm);
-	SET_8723B_H2CCMD_PWRMODE_PARM_BCN_PASS_TIME(u1H2CPwrModeParm, awake_पूर्णांकvl);
+	SET_8723B_H2CCMD_PWRMODE_PARM_BCN_PASS_TIME(u1H2CPwrModeParm, awake_intvl);
 	SET_8723B_H2CCMD_PWRMODE_PARM_ALL_QUEUE_UAPSD(u1H2CPwrModeParm, padapter->registrypriv.uapsd_enable);
 	SET_8723B_H2CCMD_PWRMODE_PARM_PWR_STATE(u1H2CPwrModeParm, PowerState);
 	SET_8723B_H2CCMD_PWRMODE_PARM_BYTE5(u1H2CPwrModeParm, byte5);
-	अगर (psmode != PS_MODE_ACTIVE) अणु
-		अगर (!pmlmeext->adaptive_tsf_करोne && pmlmeext->bcn_cnt > 0) अणु
+	if (psmode != PS_MODE_ACTIVE) {
+		if (!pmlmeext->adaptive_tsf_done && pmlmeext->bcn_cnt > 0) {
 			u8 ratio_20_delay, ratio_80_delay;
 
-			/* byte 6 क्रम adaptive_early_32k */
+			/* byte 6 for adaptive_early_32k */
 			/* 0:3] = DrvBcnEarly  (ms) , [4:7] = DrvBcnTimeOut  (ms) */
-			/*  20% क्रम DrvBcnEarly, 80% क्रम DrvBcnTimeOut */
+			/*  20% for DrvBcnEarly, 80% for DrvBcnTimeOut */
 			ratio_20_delay = 0;
 			ratio_80_delay = 0;
 			pmlmeext->DrvBcnEarly = 0xff;
 			pmlmeext->DrvBcnTimeOut = 0xff;
 
-			क्रम (i = 0; i < 9; i++) अणु
+			for (i = 0; i < 9; i++) {
 				pmlmeext->bcn_delay_ratio[i] = (pmlmeext->bcn_delay_cnt[i]*100)/pmlmeext->bcn_cnt;
 
 				ratio_20_delay += pmlmeext->bcn_delay_ratio[i];
 				ratio_80_delay += pmlmeext->bcn_delay_ratio[i];
 
-				अगर (ratio_20_delay > 20 && pmlmeext->DrvBcnEarly == 0xff)
+				if (ratio_20_delay > 20 && pmlmeext->DrvBcnEarly == 0xff)
 					pmlmeext->DrvBcnEarly = i;
 
-				अगर (ratio_80_delay > 80 && pmlmeext->DrvBcnTimeOut == 0xff)
+				if (ratio_80_delay > 80 && pmlmeext->DrvBcnTimeOut == 0xff)
 					pmlmeext->DrvBcnTimeOut = i;
 
 				/* reset adaptive_early_32k cnt */
 				pmlmeext->bcn_delay_cnt[i] = 0;
 				pmlmeext->bcn_delay_ratio[i] = 0;
 
-			पूर्ण
+			}
 
 			pmlmeext->bcn_cnt = 0;
-			pmlmeext->adaptive_tsf_करोne = true;
+			pmlmeext->adaptive_tsf_done = true;
 
-		पूर्ण
+		}
 
-/* offload to FW अगर fw version > v15.10
+/* offload to FW if fw version > v15.10
 		pmlmeext->DrvBcnEarly = 0;
 		pmlmeext->DrvBcnTimeOut =7;
 
-		अगर ((pmlmeext->DrvBcnEarly!= 0Xff) && (pmlmeext->DrvBcnTimeOut!= 0xff))
+		if ((pmlmeext->DrvBcnEarly!= 0Xff) && (pmlmeext->DrvBcnTimeOut!= 0xff))
 			u1H2CPwrModeParm[H2C_PWRMODE_LEN-1] = BIT(0) | ((pmlmeext->DrvBcnEarly<<1)&0x0E) |((pmlmeext->DrvBcnTimeOut<<4)&0xf0) ;
 */
 
-	पूर्ण
+	}
 
 	hal_btcoex_RecordPwrMode(padapter, u1H2CPwrModeParm, H2C_PWRMODE_LEN);
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CPwrModeParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CPwrModeParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CPwrModeParm, H2C_PWRMODE_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_SET_PWR_MODE, H2C_PWRMODE_LEN, u1H2CPwrModeParm);
-पूर्ण
+}
 
-व्योम rtl8723b_set_FwPsTuneParam_cmd(काष्ठा adapter *padapter)
-अणु
-	u8 u1H2CPsTuneParm[H2C_PSTUNEPARAM_LEN] = अणु0पूर्ण;
-	u8 bcn_to_limit = 10; /* 10 * 100 * awakeपूर्णांकerval (ms) */
-	u8 dtim_समयout = 5; /* ms रुको broadcast data समयr */
-	u8 ps_समयout = 20;  /* ms Keep awake when tx */
+void rtl8723b_set_FwPsTuneParam_cmd(struct adapter *padapter)
+{
+	u8 u1H2CPsTuneParm[H2C_PSTUNEPARAM_LEN] = {0};
+	u8 bcn_to_limit = 10; /* 10 * 100 * awakeinterval (ms) */
+	u8 dtim_timeout = 5; /* ms wait broadcast data timer */
+	u8 ps_timeout = 20;  /* ms Keep awake when tx */
 	u8 dtim_period = 3;
 
 	SET_8723B_H2CCMD_PSTUNE_PARM_BCN_TO_LIMIT(u1H2CPsTuneParm, bcn_to_limit);
-	SET_8723B_H2CCMD_PSTUNE_PARM_DTIM_TIMEOUT(u1H2CPsTuneParm, dtim_समयout);
-	SET_8723B_H2CCMD_PSTUNE_PARM_PS_TIMEOUT(u1H2CPsTuneParm, ps_समयout);
+	SET_8723B_H2CCMD_PSTUNE_PARM_DTIM_TIMEOUT(u1H2CPsTuneParm, dtim_timeout);
+	SET_8723B_H2CCMD_PSTUNE_PARM_PS_TIMEOUT(u1H2CPsTuneParm, ps_timeout);
 	SET_8723B_H2CCMD_PSTUNE_PARM_ADOPT(u1H2CPsTuneParm, 1);
 	SET_8723B_H2CCMD_PSTUNE_PARM_DTIM_PERIOD(u1H2CPsTuneParm, dtim_period);
 
-	prपूर्णांक_hex_dump_debug(DRIVER_PREFIX ": u1H2CPsTuneParm:", DUMP_PREFIX_NONE,
+	print_hex_dump_debug(DRIVER_PREFIX ": u1H2CPsTuneParm:", DUMP_PREFIX_NONE,
 			     16, 1, u1H2CPsTuneParm, H2C_PSTUNEPARAM_LEN, false);
 
 	FillH2CCmd8723B(padapter, H2C_8723B_PS_TUNING_PARA, H2C_PSTUNEPARAM_LEN, u1H2CPsTuneParm);
-पूर्ण
+}
 
-व्योम rtl8723b_set_FwPwrModeInIPS_cmd(काष्ठा adapter *padapter, u8 cmd_param)
-अणु
+void rtl8723b_set_FwPwrModeInIPS_cmd(struct adapter *padapter, u8 cmd_param)
+{
 
 	FillH2CCmd8723B(padapter, H2C_8723B_FWLPS_IN_IPS_, 1, &cmd_param);
-पूर्ण
+}
 
 /*
  * Description: Fill the reserved packets that FW will use to RSVD page.
@@ -505,23 +504,23 @@ _Conकाष्ठाBeacon:
  *
  * Input:
  *
- * bDLFinished - false: At the first समय we will send all the packets as
+ * bDLFinished - false: At the first time we will send all the packets as
  * a large packet to Hw, so we need to set the packet length to total length.
  *
- * true: At the second समय, we should send the first packet (शेष:beacon)
+ * true: At the second time, we should send the first packet (default:beacon)
  * to Hw again and set the length in descriptor to the real beacon length.
  */
 /* 2009.10.15 by tynli. */
-अटल व्योम rtl8723b_set_FwRsvdPagePkt(
-	काष्ठा adapter *padapter, bool bDLFinished
+static void rtl8723b_set_FwRsvdPagePkt(
+	struct adapter *padapter, bool bDLFinished
 )
-अणु
-	काष्ठा xmit_frame *pcmdframe;
-	काष्ठा pkt_attrib *pattrib;
-	काष्ठा xmit_priv *pxmitpriv;
-	काष्ठा mlme_ext_priv *pmlmeext;
-	काष्ठा mlme_ext_info *pmlmeinfo;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+{
+	struct xmit_frame *pcmdframe;
+	struct pkt_attrib *pattrib;
+	struct xmit_priv *pxmitpriv;
+	struct mlme_ext_priv *pmlmeext;
+	struct mlme_ext_info *pmlmeinfo;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u32 BeaconLength = 0, PSPollLength = 0;
 	u32 NullDataLength = 0, QosNullLength = 0, BTQosNullLength = 0;
 	u8 *ReservedPagePacket;
@@ -530,7 +529,7 @@ _Conकाष्ठाBeacon:
 	u16 BufIndex, PageSize = 128;
 	u32 TotalPacketLen, MaxRsvdPageBufSize = 0;
 
-	काष्ठा rsvdpage_loc RsvdPageLoc;
+	struct rsvdpage_loc RsvdPageLoc;
 
 	pxmitpriv = &padapter->xmitpriv;
 	pmlmeext = &padapter->mlmeextpriv;
@@ -540,21 +539,21 @@ _Conकाष्ठाBeacon:
 	MaxRsvdPageBufSize = RsvdPageNum*PageSize;
 
 	pcmdframe = rtw_alloc_cmdxmitframe(pxmitpriv);
-	अगर (!pcmdframe)
-		वापस;
+	if (!pcmdframe)
+		return;
 
 	ReservedPagePacket = pcmdframe->buf_addr;
-	स_रखो(&RsvdPageLoc, 0, माप(काष्ठा rsvdpage_loc));
+	memset(&RsvdPageLoc, 0, sizeof(struct rsvdpage_loc));
 
 	/* 3 (1) beacon */
 	BufIndex = TxDescOffset;
-	Conकाष्ठाBeacon(padapter, &ReservedPagePacket[BufIndex], &BeaconLength);
+	ConstructBeacon(padapter, &ReservedPagePacket[BufIndex], &BeaconLength);
 
-	/*  When we count the first page size, we need to reserve description size क्रम the RSVD */
+	/*  When we count the first page size, we need to reserve description size for the RSVD */
 	/*  packet, it will be filled in front of the packet in TXPKTBUF. */
 	CurtPktPageNum = (u8)PageNum_128(TxDescLen + BeaconLength);
-	/* If we करोn't add 1 more page, the WOWLAN function has a problem. Baron thinks it's a bug of firmware */
-	अगर (CurtPktPageNum == 1)
+	/* If we don't add 1 more page, the WOWLAN function has a problem. Baron thinks it's a bug of firmware */
+	if (CurtPktPageNum == 1)
 		CurtPktPageNum += 1;
 
 	TotalPageNum += CurtPktPageNum;
@@ -563,7 +562,7 @@ _Conकाष्ठाBeacon:
 
 	/* 3 (2) ps-poll */
 	RsvdPageLoc.LocPsPoll = TotalPageNum;
-	Conकाष्ठाPSPoll(padapter, &ReservedPagePacket[BufIndex], &PSPollLength);
+	ConstructPSPoll(padapter, &ReservedPagePacket[BufIndex], &PSPollLength);
 	rtl8723b_fill_fake_txdesc(padapter, &ReservedPagePacket[BufIndex-TxDescLen], PSPollLength, true, false, false);
 
 	CurtPktPageNum = (u8)PageNum_128(TxDescLen + PSPollLength);
@@ -574,7 +573,7 @@ _Conकाष्ठाBeacon:
 
 	/* 3 (3) null data */
 	RsvdPageLoc.LocNullData = TotalPageNum;
-	Conकाष्ठाNullFunctionData(
+	ConstructNullFunctionData(
 		padapter,
 		&ReservedPagePacket[BufIndex],
 		&NullDataLength,
@@ -591,7 +590,7 @@ _Conकाष्ठाBeacon:
 
 	/* 3 (5) Qos null data */
 	RsvdPageLoc.LocQosNull = TotalPageNum;
-	Conकाष्ठाNullFunctionData(
+	ConstructNullFunctionData(
 		padapter,
 		&ReservedPagePacket[BufIndex],
 		&QosNullLength,
@@ -608,7 +607,7 @@ _Conकाष्ठाBeacon:
 
 	/* 3 (6) BT Qos null data */
 	RsvdPageLoc.LocBTQosNull = TotalPageNum;
-	Conकाष्ठाNullFunctionData(
+	ConstructNullFunctionData(
 		padapter,
 		&ReservedPagePacket[BufIndex],
 		&BTQosNullLength,
@@ -625,159 +624,159 @@ _Conकाष्ठाBeacon:
 
 	TotalPacketLen = BufIndex + BTQosNullLength;
 
-	अगर (TotalPacketLen > MaxRsvdPageBufSize) अणु
-		जाओ error;
-	पूर्ण अन्यथा अणु
+	if (TotalPacketLen > MaxRsvdPageBufSize) {
+		goto error;
+	} else {
 		/*  update attribute */
 		pattrib = &pcmdframe->attrib;
 		update_mgntframe_attrib(padapter, pattrib);
 		pattrib->qsel = 0x10;
 		pattrib->pktlen = pattrib->last_txcmdsz = TotalPacketLen - TxDescOffset;
-		dump_mgntframe_and_रुको(padapter, pcmdframe, 100);
-	पूर्ण
+		dump_mgntframe_and_wait(padapter, pcmdframe, 100);
+	}
 
-	अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
+	if (check_fwstate(pmlmepriv, _FW_LINKED)) {
 		rtl8723b_set_FwRsvdPage_cmd(padapter, &RsvdPageLoc);
 		rtl8723b_set_FwAoacRsvdPage_cmd(padapter, &RsvdPageLoc);
-	पूर्ण अन्यथा अणु
+	} else {
 		rtl8723b_set_FwAoacRsvdPage_cmd(padapter, &RsvdPageLoc);
-	पूर्ण
-	वापस;
+	}
+	return;
 
 error:
 
-	rtw_मुक्त_xmitframe(pxmitpriv, pcmdframe);
-पूर्ण
+	rtw_free_xmitframe(pxmitpriv, pcmdframe);
+}
 
-व्योम rtl8723b_करोwnload_rsvd_page(काष्ठा adapter *padapter, u8 mstatus)
-अणु
-	काष्ठा hal_com_data	*pHalData = GET_HAL_DATA(padapter);
-	काष्ठा mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void rtl8723b_download_rsvd_page(struct adapter *padapter, u8 mstatus)
+{
+	struct hal_com_data	*pHalData = GET_HAL_DATA(padapter);
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 	bool bcn_valid = false;
 	u8 DLBcnCount = 0;
 	u32 poll = 0;
 	u8 val8;
 
-	अगर (mstatus == RT_MEDIA_CONNECT) अणु
+	if (mstatus == RT_MEDIA_CONNECT) {
 		bool bRecover = false;
 		u8 v8;
 
-		/*  We should set AID, correct TSF, HW seq enable beक्रमe set JoinBssReport to Fw in 88/92C. */
+		/*  We should set AID, correct TSF, HW seq enable before set JoinBssReport to Fw in 88/92C. */
 		/*  Suggested by filen. Added by tynli. */
-		rtw_ग_लिखो16(padapter, REG_BCN_PSR_RPT, (0xC000|pmlmeinfo->aid));
+		rtw_write16(padapter, REG_BCN_PSR_RPT, (0xC000|pmlmeinfo->aid));
 
 		/*  set REG_CR bit 8 */
-		v8 = rtw_पढ़ो8(padapter, REG_CR+1);
+		v8 = rtw_read8(padapter, REG_CR+1);
 		v8 |= BIT(0); /*  ENSWBCN */
-		rtw_ग_लिखो8(padapter, REG_CR+1, v8);
+		rtw_write8(padapter, REG_CR+1, v8);
 
-		/*  Disable Hw protection क्रम a समय which revserd क्रम Hw sending beacon. */
-		/*  Fix करोwnload reserved page packet fail that access collision with the protection समय. */
+		/*  Disable Hw protection for a time which revserd for Hw sending beacon. */
+		/*  Fix download reserved page packet fail that access collision with the protection time. */
 		/*  2010.05.11. Added by tynli. */
-		val8 = rtw_पढ़ो8(padapter, REG_BCN_CTRL);
+		val8 = rtw_read8(padapter, REG_BCN_CTRL);
 		val8 &= ~EN_BCN_FUNCTION;
 		val8 |= DIS_TSF_UDT;
-		rtw_ग_लिखो8(padapter, REG_BCN_CTRL, val8);
+		rtw_write8(padapter, REG_BCN_CTRL, val8);
 
 		/*  Set FWHW_TXQ_CTRL 0x422[6]= 0 to tell Hw the packet is not a real beacon frame. */
-		अगर (pHalData->RegFwHwTxQCtrl & BIT(6))
+		if (pHalData->RegFwHwTxQCtrl & BIT(6))
 			bRecover = true;
 
 		/*  To tell Hw the packet is not a real beacon frame. */
-		rtw_ग_लिखो8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl & ~BIT(6));
+		rtw_write8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl & ~BIT(6));
 		pHalData->RegFwHwTxQCtrl &= ~BIT(6);
 
 		/*  Clear beacon valid check bit. */
-		rtw_hal_set_hwreg(padapter, HW_VAR_BCN_VALID, शून्य);
-		rtw_hal_set_hwreg(padapter, HW_VAR_DL_BCN_SEL, शून्य);
+		rtw_hal_set_hwreg(padapter, HW_VAR_BCN_VALID, NULL);
+		rtw_hal_set_hwreg(padapter, HW_VAR_DL_BCN_SEL, NULL);
 
 		DLBcnCount = 0;
 		poll = 0;
-		करो अणु
-			/*  करोwnload rsvd page. */
+		do {
+			/*  download rsvd page. */
 			rtl8723b_set_FwRsvdPagePkt(padapter, 0);
 			DLBcnCount++;
-			करो अणु
+			do {
 				yield();
 				/* mdelay(10); */
-				/*  check rsvd page करोwnload OK. */
+				/*  check rsvd page download OK. */
 				rtw_hal_get_hwreg(padapter, HW_VAR_BCN_VALID, (u8 *)(&bcn_valid));
 				poll++;
-			पूर्ण जबतक (!bcn_valid && (poll%10) != 0 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
+			} while (!bcn_valid && (poll%10) != 0 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
 
-		पूर्ण जबतक (!bcn_valid && DLBcnCount <= 100 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
+		} while (!bcn_valid && DLBcnCount <= 100 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
 
-		अगर (padapter->bSurpriseRemoved || padapter->bDriverStopped) अणु
-		पूर्ण अन्यथा अणु
-			काष्ठा pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
-			pwrctl->fw_psmode_अगरace_id = padapter->अगरace_id;
-		पूर्ण
+		if (padapter->bSurpriseRemoved || padapter->bDriverStopped) {
+		} else {
+			struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
+			pwrctl->fw_psmode_iface_id = padapter->iface_id;
+		}
 
 		/*  2010.05.11. Added by tynli. */
-		val8 = rtw_पढ़ो8(padapter, REG_BCN_CTRL);
+		val8 = rtw_read8(padapter, REG_BCN_CTRL);
 		val8 |= EN_BCN_FUNCTION;
 		val8 &= ~DIS_TSF_UDT;
-		rtw_ग_लिखो8(padapter, REG_BCN_CTRL, val8);
+		rtw_write8(padapter, REG_BCN_CTRL, val8);
 
-		/*  To make sure that अगर there exists an adapter which would like to send beacon. */
+		/*  To make sure that if there exists an adapter which would like to send beacon. */
 		/*  If exists, the origianl value of 0x422[6] will be 1, we should check this to */
-		/*  prevent from setting 0x422[6] to 0 after करोwnload reserved page, or it will cause */
+		/*  prevent from setting 0x422[6] to 0 after download reserved page, or it will cause */
 		/*  the beacon cannot be sent by HW. */
 		/*  2010.06.23. Added by tynli. */
-		अगर (bRecover) अणु
-			rtw_ग_लिखो8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl | BIT(6));
+		if (bRecover) {
+			rtw_write8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl | BIT(6));
 			pHalData->RegFwHwTxQCtrl |= BIT(6);
-		पूर्ण
+		}
 
 		/*  Clear CR[8] or beacon packet will not be send to TxBuf anymore. */
-		v8 = rtw_पढ़ो8(padapter, REG_CR+1);
+		v8 = rtw_read8(padapter, REG_CR+1);
 		v8 &= ~BIT(0); /*  ~ENSWBCN */
-		rtw_ग_लिखो8(padapter, REG_CR+1, v8);
-	पूर्ण
-पूर्ण
+		rtw_write8(padapter, REG_CR+1, v8);
+	}
+}
 
-व्योम rtl8723b_set_FwJoinBssRpt_cmd(काष्ठा adapter *padapter, u8 mstatus)
-अणु
-	अगर (mstatus == 1)
-		rtl8723b_करोwnload_rsvd_page(padapter, RT_MEDIA_CONNECT);
-पूर्ण
+void rtl8723b_set_FwJoinBssRpt_cmd(struct adapter *padapter, u8 mstatus)
+{
+	if (mstatus == 1)
+		rtl8723b_download_rsvd_page(padapter, RT_MEDIA_CONNECT);
+}
 
 /* arg[0] = macid */
 /* arg[1] = raid */
-/* arg[2] = लघुGIrate */
+/* arg[2] = shortGIrate */
 /* arg[3] = init_rate */
-व्योम rtl8723b_Add_RateATid(
-	काष्ठा adapter *padapter,
-	u32 biपंचांगap,
+void rtl8723b_Add_RateATid(
+	struct adapter *padapter,
+	u32 bitmap,
 	u8 *arg,
 	u8 rssi_level
 )
-अणु
-	काष्ठा hal_com_data	*pHalData = GET_HAL_DATA(padapter);
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा sta_info *psta;
+{
+	struct hal_com_data	*pHalData = GET_HAL_DATA(padapter);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct sta_info *psta;
 	u8 mac_id = arg[0];
 	u8 raid = arg[1];
-	u8 लघुGI = arg[2];
+	u8 shortGI = arg[2];
 	u8 bw;
-	u32 mask = biपंचांगap&0x0FFFFFFF;
+	u32 mask = bitmap&0x0FFFFFFF;
 
 	psta = pmlmeinfo->FW_sta_info[mac_id].psta;
-	अगर (!psta)
-		वापस;
+	if (!psta)
+		return;
 
 	bw = psta->bw_mode;
 
-	अगर (rssi_level != DM_RATR_STA_INIT)
-		mask = ODM_Get_Rate_Biपंचांगap(&pHalData->odmpriv, mac_id, mask, rssi_level);
+	if (rssi_level != DM_RATR_STA_INIT)
+		mask = ODM_Get_Rate_Bitmap(&pHalData->odmpriv, mac_id, mask, rssi_level);
 
-	rtl8723b_set_FwMacIdConfig_cmd(padapter, mac_id, raid, bw, लघुGI, mask);
-पूर्ण
+	rtl8723b_set_FwMacIdConfig_cmd(padapter, mac_id, raid, bw, shortGI, mask);
+}
 
-अटल व्योम Conकाष्ठाBtNullFunctionData(
-	काष्ठा adapter *padapter,
+static void ConstructBtNullFunctionData(
+	struct adapter *padapter,
 	u8 *pframe,
 	u32 *pLength,
 	u8 *StaAddr,
@@ -786,56 +785,56 @@ error:
 	u8 bEosp,
 	u8 bForcePowerSave
 )
-अणु
-	काष्ठा ieee80211_hdr *pwlanhdr;
+{
+	struct ieee80211_hdr *pwlanhdr;
 	__le16 *fctrl;
 	u32 pktlen;
 	u8 bssid[ETH_ALEN];
 
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 
-	अगर (!StaAddr) अणु
-		स_नकल(bssid, myid(&padapter->eeprompriv), ETH_ALEN);
+	if (!StaAddr) {
+		memcpy(bssid, myid(&padapter->eeprompriv), ETH_ALEN);
 		StaAddr = bssid;
-	पूर्ण
+	}
 
 	fctrl = &pwlanhdr->frame_control;
 	*fctrl = 0;
-	अगर (bForcePowerSave)
+	if (bForcePowerSave)
 		SetPwrMgt(fctrl);
 
 	SetFrDs(fctrl);
-	स_नकल(pwlanhdr->addr1, StaAddr, ETH_ALEN);
-	स_नकल(pwlanhdr->addr2, myid(&padapter->eeprompriv), ETH_ALEN);
-	स_नकल(pwlanhdr->addr3, myid(&padapter->eeprompriv), ETH_ALEN);
+	memcpy(pwlanhdr->addr1, StaAddr, ETH_ALEN);
+	memcpy(pwlanhdr->addr2, myid(&padapter->eeprompriv), ETH_ALEN);
+	memcpy(pwlanhdr->addr3, myid(&padapter->eeprompriv), ETH_ALEN);
 
 	SetDuration(pwlanhdr, 0);
 	SetSeqNum(pwlanhdr, 0);
 
-	अगर (bQoS) अणु
-		काष्ठा ieee80211_qos_hdr *pwlanqoshdr;
+	if (bQoS) {
+		struct ieee80211_qos_hdr *pwlanqoshdr;
 
-		SetFrameSubType(pframe, WIFI_QOS_DATA_शून्य);
+		SetFrameSubType(pframe, WIFI_QOS_DATA_NULL);
 
-		pwlanqoshdr = (काष्ठा ieee80211_qos_hdr *)pframe;
+		pwlanqoshdr = (struct ieee80211_qos_hdr *)pframe;
 		SetPriority(&pwlanqoshdr->qos_ctrl, AC);
 		SetEOSP(&pwlanqoshdr->qos_ctrl, bEosp);
 
-		pktlen = माप(काष्ठा ieee80211_qos_hdr);
-	पूर्ण अन्यथा अणु
-		SetFrameSubType(pframe, WIFI_DATA_शून्य);
+		pktlen = sizeof(struct ieee80211_qos_hdr);
+	} else {
+		SetFrameSubType(pframe, WIFI_DATA_NULL);
 
-		pktlen = माप(काष्ठा ieee80211_hdr_3addr);
-	पूर्ण
+		pktlen = sizeof(struct ieee80211_hdr_3addr);
+	}
 
 	*pLength = pktlen;
-पूर्ण
+}
 
-अटल व्योम SetFwRsvdPagePkt_BTCoex(काष्ठा adapter *padapter)
-अणु
-	काष्ठा xmit_frame *pcmdframe;
-	काष्ठा pkt_attrib *pattrib;
-	काष्ठा xmit_priv *pxmitpriv;
+static void SetFwRsvdPagePkt_BTCoex(struct adapter *padapter)
+{
+	struct xmit_frame *pcmdframe;
+	struct pkt_attrib *pattrib;
+	struct xmit_priv *pxmitpriv;
 	u32 BeaconLength = 0;
 	u32 BTQosNullLength = 0;
 	u8 *ReservedPagePacket;
@@ -843,7 +842,7 @@ error:
 	u8 TotalPageNum = 0, CurtPktPageNum = 0, RsvdPageNum = 0;
 	u16 BufIndex, PageSize;
 	u32 TotalPacketLen, MaxRsvdPageBufSize = 0;
-	काष्ठा rsvdpage_loc RsvdPageLoc;
+	struct rsvdpage_loc RsvdPageLoc;
 
 	pxmitpriv = &padapter->xmitpriv;
 	TxDescLen = TXDESC_SIZE;
@@ -854,39 +853,39 @@ error:
 	MaxRsvdPageBufSize = RsvdPageNum*PageSize;
 
 	pcmdframe = rtw_alloc_cmdxmitframe(pxmitpriv);
-	अगर (!pcmdframe)
-		वापस;
+	if (!pcmdframe)
+		return;
 
 	ReservedPagePacket = pcmdframe->buf_addr;
-	स_रखो(&RsvdPageLoc, 0, माप(काष्ठा rsvdpage_loc));
+	memset(&RsvdPageLoc, 0, sizeof(struct rsvdpage_loc));
 
 	/* 3 (1) beacon */
 	BufIndex = TxDescOffset;
-	Conकाष्ठाBeacon(padapter, &ReservedPagePacket[BufIndex], &BeaconLength);
+	ConstructBeacon(padapter, &ReservedPagePacket[BufIndex], &BeaconLength);
 
-	/*  When we count the first page size, we need to reserve description size क्रम the RSVD */
+	/*  When we count the first page size, we need to reserve description size for the RSVD */
 	/*  packet, it will be filled in front of the packet in TXPKTBUF. */
 	CurtPktPageNum = (u8)PageNum_128(TxDescLen + BeaconLength);
-	/* If we करोn't add 1 more page, the WOWLAN function has a problem. Baron thinks it's a bug of firmware */
-	अगर (CurtPktPageNum == 1)
+	/* If we don't add 1 more page, the WOWLAN function has a problem. Baron thinks it's a bug of firmware */
+	if (CurtPktPageNum == 1)
 		CurtPktPageNum += 1;
 	TotalPageNum += CurtPktPageNum;
 
 	BufIndex += (CurtPktPageNum*PageSize);
 
 	/*  Jump to lastest page */
-	अगर (BufIndex < (MaxRsvdPageBufSize - PageSize)) अणु
+	if (BufIndex < (MaxRsvdPageBufSize - PageSize)) {
 		BufIndex = TxDescOffset + (MaxRsvdPageBufSize - PageSize);
 		TotalPageNum = BCNQ_PAGE_NUM_8723B - 1;
-	पूर्ण
+	}
 
 	/* 3 (6) BT Qos null data */
 	RsvdPageLoc.LocBTQosNull = TotalPageNum;
-	Conकाष्ठाBtNullFunctionData(
+	ConstructBtNullFunctionData(
 		padapter,
 		&ReservedPagePacket[BufIndex],
 		&BTQosNullLength,
-		शून्य,
+		NULL,
 		true, 0, 0, false
 	);
 	rtl8723b_fill_fake_txdesc(padapter, &ReservedPagePacket[BufIndex-TxDescLen], BTQosNullLength, false, true, false);
@@ -896,30 +895,30 @@ error:
 	TotalPageNum += CurtPktPageNum;
 
 	TotalPacketLen = BufIndex + BTQosNullLength;
-	अगर (TotalPacketLen > MaxRsvdPageBufSize)
-		जाओ error;
+	if (TotalPacketLen > MaxRsvdPageBufSize)
+		goto error;
 
 	/*  update attribute */
 	pattrib = &pcmdframe->attrib;
 	update_mgntframe_attrib(padapter, pattrib);
 	pattrib->qsel = 0x10;
 	pattrib->pktlen = pattrib->last_txcmdsz = TotalPacketLen - TxDescOffset;
-	dump_mgntframe_and_रुको(padapter, pcmdframe, 100);
+	dump_mgntframe_and_wait(padapter, pcmdframe, 100);
 
 	rtl8723b_set_FwRsvdPage_cmd(padapter, &RsvdPageLoc);
 	rtl8723b_set_FwAoacRsvdPage_cmd(padapter, &RsvdPageLoc);
 
-	वापस;
+	return;
 
 error:
-	rtw_मुक्त_xmitframe(pxmitpriv, pcmdframe);
-पूर्ण
+	rtw_free_xmitframe(pxmitpriv, pcmdframe);
+}
 
-व्योम rtl8723b_करोwnload_BTCoex_AP_mode_rsvd_page(काष्ठा adapter *padapter)
-अणु
-	काष्ठा hal_com_data *pHalData;
-	काष्ठा mlme_ext_priv *pmlmeext;
-	काष्ठा mlme_ext_info *pmlmeinfo;
+void rtl8723b_download_BTCoex_AP_mode_rsvd_page(struct adapter *padapter)
+{
+	struct hal_com_data *pHalData;
+	struct mlme_ext_priv *pmlmeext;
+	struct mlme_ext_info *pmlmeinfo;
 	u8 bRecover = false;
 	u8 bcn_valid = false;
 	u8 DLBcnCount = 0;
@@ -930,72 +929,72 @@ error:
 	pmlmeext = &padapter->mlmeextpriv;
 	pmlmeinfo = &pmlmeext->mlmext_info;
 
-	/*  We should set AID, correct TSF, HW seq enable beक्रमe set JoinBssReport to Fw in 88/92C. */
+	/*  We should set AID, correct TSF, HW seq enable before set JoinBssReport to Fw in 88/92C. */
 	/*  Suggested by filen. Added by tynli. */
-	rtw_ग_लिखो16(padapter, REG_BCN_PSR_RPT, (0xC000|pmlmeinfo->aid));
+	rtw_write16(padapter, REG_BCN_PSR_RPT, (0xC000|pmlmeinfo->aid));
 
 	/*  set REG_CR bit 8 */
-	val8 = rtw_पढ़ो8(padapter, REG_CR+1);
+	val8 = rtw_read8(padapter, REG_CR+1);
 	val8 |= BIT(0); /*  ENSWBCN */
-	rtw_ग_लिखो8(padapter,  REG_CR+1, val8);
+	rtw_write8(padapter,  REG_CR+1, val8);
 
-	/*  Disable Hw protection क्रम a समय which revserd क्रम Hw sending beacon. */
-	/*  Fix करोwnload reserved page packet fail that access collision with the protection समय. */
+	/*  Disable Hw protection for a time which revserd for Hw sending beacon. */
+	/*  Fix download reserved page packet fail that access collision with the protection time. */
 	/*  2010.05.11. Added by tynli. */
-	val8 = rtw_पढ़ो8(padapter, REG_BCN_CTRL);
+	val8 = rtw_read8(padapter, REG_BCN_CTRL);
 	val8 &= ~EN_BCN_FUNCTION;
 	val8 |= DIS_TSF_UDT;
-	rtw_ग_लिखो8(padapter, REG_BCN_CTRL, val8);
+	rtw_write8(padapter, REG_BCN_CTRL, val8);
 
 	/*  Set FWHW_TXQ_CTRL 0x422[6]= 0 to tell Hw the packet is not a real beacon frame. */
-	अगर (pHalData->RegFwHwTxQCtrl & BIT(6))
+	if (pHalData->RegFwHwTxQCtrl & BIT(6))
 		bRecover = true;
 
 	/*  To tell Hw the packet is not a real beacon frame. */
 	pHalData->RegFwHwTxQCtrl &= ~BIT(6);
-	rtw_ग_लिखो8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl);
+	rtw_write8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl);
 
 	/*  Clear beacon valid check bit. */
-	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_VALID, शून्य);
-	rtw_hal_set_hwreg(padapter, HW_VAR_DL_BCN_SEL, शून्य);
+	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_VALID, NULL);
+	rtw_hal_set_hwreg(padapter, HW_VAR_DL_BCN_SEL, NULL);
 
 	DLBcnCount = 0;
 	poll = 0;
-	करो अणु
+	do {
 		SetFwRsvdPagePkt_BTCoex(padapter);
 		DLBcnCount++;
-		करो अणु
+		do {
 			yield();
 /* 			mdelay(10); */
-			/*  check rsvd page करोwnload OK. */
+			/*  check rsvd page download OK. */
 			rtw_hal_get_hwreg(padapter, HW_VAR_BCN_VALID, &bcn_valid);
 			poll++;
-		पूर्ण जबतक (!bcn_valid && (poll%10) != 0 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
-	पूर्ण जबतक (!bcn_valid && (DLBcnCount <= 100) && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
+		} while (!bcn_valid && (poll%10) != 0 && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
+	} while (!bcn_valid && (DLBcnCount <= 100) && !padapter->bSurpriseRemoved && !padapter->bDriverStopped);
 
-	अगर (bcn_valid) अणु
-		काष्ठा pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
-		pwrctl->fw_psmode_अगरace_id = padapter->अगरace_id;
-	पूर्ण
+	if (bcn_valid) {
+		struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
+		pwrctl->fw_psmode_iface_id = padapter->iface_id;
+	}
 
 	/*  2010.05.11. Added by tynli. */
-	val8 = rtw_पढ़ो8(padapter, REG_BCN_CTRL);
+	val8 = rtw_read8(padapter, REG_BCN_CTRL);
 	val8 |= EN_BCN_FUNCTION;
 	val8 &= ~DIS_TSF_UDT;
-	rtw_ग_लिखो8(padapter, REG_BCN_CTRL, val8);
+	rtw_write8(padapter, REG_BCN_CTRL, val8);
 
-	/*  To make sure that अगर there exists an adapter which would like to send beacon. */
+	/*  To make sure that if there exists an adapter which would like to send beacon. */
 	/*  If exists, the origianl value of 0x422[6] will be 1, we should check this to */
-	/*  prevent from setting 0x422[6] to 0 after करोwnload reserved page, or it will cause */
+	/*  prevent from setting 0x422[6] to 0 after download reserved page, or it will cause */
 	/*  the beacon cannot be sent by HW. */
 	/*  2010.06.23. Added by tynli. */
-	अगर (bRecover) अणु
+	if (bRecover) {
 		pHalData->RegFwHwTxQCtrl |= BIT(6);
-		rtw_ग_लिखो8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl);
-	पूर्ण
+		rtw_write8(padapter, REG_FWHW_TXQ_CTRL+2, pHalData->RegFwHwTxQCtrl);
+	}
 
 	/*  Clear CR[8] or beacon packet will not be send to TxBuf anymore. */
-	val8 = rtw_पढ़ो8(padapter, REG_CR+1);
+	val8 = rtw_read8(padapter, REG_CR+1);
 	val8 &= ~BIT(0); /*  ~ENSWBCN */
-	rtw_ग_लिखो8(padapter, REG_CR+1, val8);
-पूर्ण
+	rtw_write8(padapter, REG_CR+1, val8);
+}

@@ -1,108 +1,107 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_MODULELOADER_H
-#घोषणा _LINUX_MODULELOADER_H
-/* The stuff needed क्रम archs to support modules. */
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_MODULELOADER_H
+#define _LINUX_MODULELOADER_H
+/* The stuff needed for archs to support modules. */
 
-#समावेश <linux/module.h>
-#समावेश <linux/elf.h>
+#include <linux/module.h>
+#include <linux/elf.h>
 
-/* These may be implemented by architectures that need to hook पूर्णांकo the
- * module loader code.  Architectures that करोn't need to करो anything special
- * can just rely on the 'weak' शेष hooks defined in kernel/module.c.
+/* These may be implemented by architectures that need to hook into the
+ * module loader code.  Architectures that don't need to do anything special
+ * can just rely on the 'weak' default hooks defined in kernel/module.c.
  * Note, however, that at least one of apply_relocate or apply_relocate_add
  * must be implemented by each architecture.
  */
 
-/* Adjust arch-specअगरic sections.  Return 0 on success.  */
-पूर्णांक module_frob_arch_sections(Elf_Ehdr *hdr,
+/* Adjust arch-specific sections.  Return 0 on success.  */
+int module_frob_arch_sections(Elf_Ehdr *hdr,
 			      Elf_Shdr *sechdrs,
-			      अक्षर *secstrings,
-			      काष्ठा module *mod);
+			      char *secstrings,
+			      struct module *mod);
 
-/* Additional bytes needed by arch in front of inभागidual sections */
-अचिन्हित पूर्णांक arch_mod_section_prepend(काष्ठा module *mod, अचिन्हित पूर्णांक section);
+/* Additional bytes needed by arch in front of individual sections */
+unsigned int arch_mod_section_prepend(struct module *mod, unsigned int section);
 
-/* Allocator used क्रम allocating काष्ठा module, core sections and init
-   sections.  Returns शून्य on failure. */
-व्योम *module_alloc(अचिन्हित दीर्घ size);
+/* Allocator used for allocating struct module, core sections and init
+   sections.  Returns NULL on failure. */
+void *module_alloc(unsigned long size);
 
-/* Free memory वापसed from module_alloc. */
-व्योम module_memमुक्त(व्योम *module_region);
+/* Free memory returned from module_alloc. */
+void module_memfree(void *module_region);
 
-/* Determines अगर the section name is an init section (that is only used during
+/* Determines if the section name is an init section (that is only used during
  * module loading).
  */
-bool module_init_section(स्थिर अक्षर *name);
+bool module_init_section(const char *name);
 
-/* Determines अगर the section name is an निकास section (that is only used during
+/* Determines if the section name is an exit section (that is only used during
  * module unloading)
  */
-bool module_निकास_section(स्थिर अक्षर *name);
+bool module_exit_section(const char *name);
 
 /*
- * Apply the given relocation to the (simplअगरied) ELF.  Return -error
+ * Apply the given relocation to the (simplified) ELF.  Return -error
  * or 0.
  */
-#अगर_घोषित CONFIG_MODULES_USE_ELF_REL
-पूर्णांक apply_relocate(Elf_Shdr *sechdrs,
-		   स्थिर अक्षर *strtab,
-		   अचिन्हित पूर्णांक symindex,
-		   अचिन्हित पूर्णांक rअन्यथाc,
-		   काष्ठा module *mod);
-#अन्यथा
-अटल अंतरभूत पूर्णांक apply_relocate(Elf_Shdr *sechdrs,
-				 स्थिर अक्षर *strtab,
-				 अचिन्हित पूर्णांक symindex,
-				 अचिन्हित पूर्णांक rअन्यथाc,
-				 काष्ठा module *me)
-अणु
-	prपूर्णांकk(KERN_ERR "module %s: REL relocation unsupported\n",
+#ifdef CONFIG_MODULES_USE_ELF_REL
+int apply_relocate(Elf_Shdr *sechdrs,
+		   const char *strtab,
+		   unsigned int symindex,
+		   unsigned int relsec,
+		   struct module *mod);
+#else
+static inline int apply_relocate(Elf_Shdr *sechdrs,
+				 const char *strtab,
+				 unsigned int symindex,
+				 unsigned int relsec,
+				 struct module *me)
+{
+	printk(KERN_ERR "module %s: REL relocation unsupported\n",
 	       module_name(me));
-	वापस -ENOEXEC;
-पूर्ण
-#पूर्ण_अगर
+	return -ENOEXEC;
+}
+#endif
 
 /*
- * Apply the given add relocation to the (simplअगरied) ELF.  Return
+ * Apply the given add relocation to the (simplified) ELF.  Return
  * -error or 0
  */
-#अगर_घोषित CONFIG_MODULES_USE_ELF_RELA
-पूर्णांक apply_relocate_add(Elf_Shdr *sechdrs,
-		       स्थिर अक्षर *strtab,
-		       अचिन्हित पूर्णांक symindex,
-		       अचिन्हित पूर्णांक rअन्यथाc,
-		       काष्ठा module *mod);
-#अन्यथा
-अटल अंतरभूत पूर्णांक apply_relocate_add(Elf_Shdr *sechdrs,
-				     स्थिर अक्षर *strtab,
-				     अचिन्हित पूर्णांक symindex,
-				     अचिन्हित पूर्णांक rअन्यथाc,
-				     काष्ठा module *me)
-अणु
-	prपूर्णांकk(KERN_ERR "module %s: REL relocation unsupported\n",
+#ifdef CONFIG_MODULES_USE_ELF_RELA
+int apply_relocate_add(Elf_Shdr *sechdrs,
+		       const char *strtab,
+		       unsigned int symindex,
+		       unsigned int relsec,
+		       struct module *mod);
+#else
+static inline int apply_relocate_add(Elf_Shdr *sechdrs,
+				     const char *strtab,
+				     unsigned int symindex,
+				     unsigned int relsec,
+				     struct module *me)
+{
+	printk(KERN_ERR "module %s: REL relocation unsupported\n",
 	       module_name(me));
-	वापस -ENOEXEC;
-पूर्ण
-#पूर्ण_अगर
+	return -ENOEXEC;
+}
+#endif
 
-/* Any final processing of module beक्रमe access.  Return -error or 0. */
-पूर्णांक module_finalize(स्थिर Elf_Ehdr *hdr,
-		    स्थिर Elf_Shdr *sechdrs,
-		    काष्ठा module *mod);
+/* Any final processing of module before access.  Return -error or 0. */
+int module_finalize(const Elf_Ehdr *hdr,
+		    const Elf_Shdr *sechdrs,
+		    struct module *mod);
 
 /* Any cleanup needed when module leaves. */
-व्योम module_arch_cleanup(काष्ठा module *mod);
+void module_arch_cleanup(struct module *mod);
 
-/* Any cleanup beक्रमe मुक्तing mod->module_init */
-व्योम module_arch_मुक्तing_init(काष्ठा module *mod);
+/* Any cleanup before freeing mod->module_init */
+void module_arch_freeing_init(struct module *mod);
 
-#अगर (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && \
+#if (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && \
 		!defined(CONFIG_KASAN_VMALLOC)
-#समावेश <linux/kasan.h>
-#घोषणा MODULE_ALIGN (PAGE_SIZE << KASAN_SHADOW_SCALE_SHIFT)
-#अन्यथा
-#घोषणा MODULE_ALIGN PAGE_SIZE
-#पूर्ण_अगर
+#include <linux/kasan.h>
+#define MODULE_ALIGN (PAGE_SIZE << KASAN_SHADOW_SCALE_SHIFT)
+#else
+#define MODULE_ALIGN PAGE_SIZE
+#endif
 
-#पूर्ण_अगर
+#endif

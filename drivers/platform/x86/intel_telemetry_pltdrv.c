@@ -1,386 +1,385 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Intel SOC Telemetry Platक्रमm Driver: Currently supports APL
+ * Intel SOC Telemetry Platform Driver: Currently supports APL
  * Copyright (c) 2015, Intel Corporation.
  * All Rights Reserved.
  *
- * This file provides the platक्रमm specअगरic telemetry implementation क्रम APL.
- * It used the PUNIT and PMC IPC पूर्णांकerfaces क्रम configuring the counters.
+ * This file provides the platform specific telemetry implementation for APL.
+ * It used the PUNIT and PMC IPC interfaces for configuring the counters.
  * The accumulated results are fetched from SRAM.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/cpu_device_id.h>
-#समावेश <यंत्र/पूर्णांकel-family.h>
-#समावेश <यंत्र/पूर्णांकel_punit_ipc.h>
-#समावेश <यंत्र/पूर्णांकel_telemetry.h>
+#include <asm/cpu_device_id.h>
+#include <asm/intel-family.h>
+#include <asm/intel_punit_ipc.h>
+#include <asm/intel_telemetry.h>
 
-#घोषणा DRIVER_NAME	"intel_telemetry"
-#घोषणा DRIVER_VERSION	"1.0.0"
+#define DRIVER_NAME	"intel_telemetry"
+#define DRIVER_VERSION	"1.0.0"
 
-#घोषणा TELEM_TRC_VERBOSITY_MASK	0x3
+#define TELEM_TRC_VERBOSITY_MASK	0x3
 
-#घोषणा TELEM_MIN_PERIOD(x)		((x) & 0x7F0000)
-#घोषणा TELEM_MAX_PERIOD(x)		((x) & 0x7F000000)
-#घोषणा TELEM_SAMPLE_PERIOD_INVALID(x)	((x) & (BIT(7)))
-#घोषणा TELEM_CLEAR_SAMPLE_PERIOD(x)	((x) &= ~0x7F)
+#define TELEM_MIN_PERIOD(x)		((x) & 0x7F0000)
+#define TELEM_MAX_PERIOD(x)		((x) & 0x7F000000)
+#define TELEM_SAMPLE_PERIOD_INVALID(x)	((x) & (BIT(7)))
+#define TELEM_CLEAR_SAMPLE_PERIOD(x)	((x) &= ~0x7F)
 
-#घोषणा TELEM_SAMPLING_DEFAULT_PERIOD	0xD
+#define TELEM_SAMPLING_DEFAULT_PERIOD	0xD
 
-#घोषणा TELEM_MAX_EVENTS_SRAM		28
-#घोषणा TELEM_SSRAM_STARTTIME_OFFSET	8
-#घोषणा TELEM_SSRAM_EVTLOG_OFFSET	16
+#define TELEM_MAX_EVENTS_SRAM		28
+#define TELEM_SSRAM_STARTTIME_OFFSET	8
+#define TELEM_SSRAM_EVTLOG_OFFSET	16
 
-#घोषणा IOSS_TELEM			0xeb
-#घोषणा IOSS_TELEM_EVENT_READ		0x0
-#घोषणा IOSS_TELEM_EVENT_WRITE		0x1
-#घोषणा IOSS_TELEM_INFO_READ		0x2
-#घोषणा IOSS_TELEM_TRACE_CTL_READ	0x5
-#घोषणा IOSS_TELEM_TRACE_CTL_WRITE	0x6
-#घोषणा IOSS_TELEM_EVENT_CTL_READ	0x7
-#घोषणा IOSS_TELEM_EVENT_CTL_WRITE	0x8
-#घोषणा IOSS_TELEM_EVT_WRITE_SIZE	0x3
+#define IOSS_TELEM			0xeb
+#define IOSS_TELEM_EVENT_READ		0x0
+#define IOSS_TELEM_EVENT_WRITE		0x1
+#define IOSS_TELEM_INFO_READ		0x2
+#define IOSS_TELEM_TRACE_CTL_READ	0x5
+#define IOSS_TELEM_TRACE_CTL_WRITE	0x6
+#define IOSS_TELEM_EVENT_CTL_READ	0x7
+#define IOSS_TELEM_EVENT_CTL_WRITE	0x8
+#define IOSS_TELEM_EVT_WRITE_SIZE	0x3
 
-#घोषणा TELEM_INFO_SRAMEVTS_MASK	0xFF00
-#घोषणा TELEM_INFO_SRAMEVTS_SHIFT	0x8
-#घोषणा TELEM_SSRAM_READ_TIMEOUT	10
+#define TELEM_INFO_SRAMEVTS_MASK	0xFF00
+#define TELEM_INFO_SRAMEVTS_SHIFT	0x8
+#define TELEM_SSRAM_READ_TIMEOUT	10
 
-#घोषणा TELEM_INFO_NENABLES_MASK	0xFF
-#घोषणा TELEM_EVENT_ENABLE		0x8000
+#define TELEM_INFO_NENABLES_MASK	0xFF
+#define TELEM_EVENT_ENABLE		0x8000
 
-#घोषणा TELEM_MASK_BIT			1
-#घोषणा TELEM_MASK_BYTE			0xFF
-#घोषणा BYTES_PER_LONG			8
-#घोषणा TELEM_MASK_PCS_STATE		0xF
+#define TELEM_MASK_BIT			1
+#define TELEM_MASK_BYTE			0xFF
+#define BYTES_PER_LONG			8
+#define TELEM_MASK_PCS_STATE		0xF
 
-#घोषणा TELEM_DISABLE(x)		((x) &= ~(BIT(31)))
-#घोषणा TELEM_CLEAR_EVENTS(x)		((x) |= (BIT(30)))
-#घोषणा TELEM_ENABLE_SRAM_EVT_TRACE(x)	((x) &= ~(BIT(30) | BIT(24)))
-#घोषणा TELEM_ENABLE_PERIODIC(x)	((x) |= (BIT(23) | BIT(31) | BIT(7)))
-#घोषणा TELEM_EXTRACT_VERBOSITY(x, y)	((y) = (((x) >> 27) & 0x3))
-#घोषणा TELEM_CLEAR_VERBOSITY_BITS(x)	((x) &= ~(BIT(27) | BIT(28)))
-#घोषणा TELEM_SET_VERBOSITY_BITS(x, y)	((x) |= ((y) << 27))
+#define TELEM_DISABLE(x)		((x) &= ~(BIT(31)))
+#define TELEM_CLEAR_EVENTS(x)		((x) |= (BIT(30)))
+#define TELEM_ENABLE_SRAM_EVT_TRACE(x)	((x) &= ~(BIT(30) | BIT(24)))
+#define TELEM_ENABLE_PERIODIC(x)	((x) |= (BIT(23) | BIT(31) | BIT(7)))
+#define TELEM_EXTRACT_VERBOSITY(x, y)	((y) = (((x) >> 27) & 0x3))
+#define TELEM_CLEAR_VERBOSITY_BITS(x)	((x) &= ~(BIT(27) | BIT(28)))
+#define TELEM_SET_VERBOSITY_BITS(x, y)	((x) |= ((y) << 27))
 
-क्रमागत telemetry_action अणु
+enum telemetry_action {
 	TELEM_UPDATE = 0,
 	TELEM_ADD,
 	TELEM_RESET,
 	TELEM_ACTION_NONE
-पूर्ण;
+};
 
-काष्ठा telem_ssram_region अणु
-	u64 बारtamp;
-	u64 start_समय;
+struct telem_ssram_region {
+	u64 timestamp;
+	u64 start_time;
 	u64 events[TELEM_MAX_EVENTS_SRAM];
-पूर्ण;
+};
 
-अटल काष्ठा telemetry_plt_config *telm_conf;
+static struct telemetry_plt_config *telm_conf;
 
 /*
- * The following counters are programmed by शेष during setup.
+ * The following counters are programmed by default during setup.
  * Only 20 allocated to kernel driver
  */
-अटल काष्ठा telemetry_evपंचांगap
-	telemetry_apl_ioss_शेष_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = अणु
-	अणु"SOC_S0IX_TOTAL_RES",			0x4800पूर्ण,
-	अणु"SOC_S0IX_TOTAL_OCC",			0x4000पूर्ण,
-	अणु"SOC_S0IX_SHALLOW_RES",		0x4801पूर्ण,
-	अणु"SOC_S0IX_SHALLOW_OCC",		0x4001पूर्ण,
-	अणु"SOC_S0IX_DEEP_RES",			0x4802पूर्ण,
-	अणु"SOC_S0IX_DEEP_OCC",			0x4002पूर्ण,
-	अणु"PMC_POWER_GATE",			0x5818पूर्ण,
-	अणु"PMC_D3_STATES",			0x5819पूर्ण,
-	अणु"PMC_D0I3_STATES",			0x581Aपूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_GPIO",		0x6000पूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_TIMER",		0x6001पूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_VNNREQ",         0x6002पूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_LOWPOWER",       0x6003पूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_EXTERNAL",       0x6004पूर्ण,
-	अणु"PMC_S0IX_WAKE_REASON_MISC",           0x6005पूर्ण,
-	अणु"PMC_S0IX_BLOCKING_IPS_D3_D0I3",       0x6006पूर्ण,
-	अणु"PMC_S0IX_BLOCKING_IPS_PG",            0x6007पूर्ण,
-	अणु"PMC_S0IX_BLOCKING_MISC_IPS_PG",       0x6008पूर्ण,
-	अणु"PMC_S0IX_BLOCK_IPS_VNN_REQ",          0x6009पूर्ण,
-	अणु"PMC_S0IX_BLOCK_IPS_CLOCKS",           0x600Bपूर्ण,
-पूर्ण;
+static struct telemetry_evtmap
+	telemetry_apl_ioss_default_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = {
+	{"SOC_S0IX_TOTAL_RES",			0x4800},
+	{"SOC_S0IX_TOTAL_OCC",			0x4000},
+	{"SOC_S0IX_SHALLOW_RES",		0x4801},
+	{"SOC_S0IX_SHALLOW_OCC",		0x4001},
+	{"SOC_S0IX_DEEP_RES",			0x4802},
+	{"SOC_S0IX_DEEP_OCC",			0x4002},
+	{"PMC_POWER_GATE",			0x5818},
+	{"PMC_D3_STATES",			0x5819},
+	{"PMC_D0I3_STATES",			0x581A},
+	{"PMC_S0IX_WAKE_REASON_GPIO",		0x6000},
+	{"PMC_S0IX_WAKE_REASON_TIMER",		0x6001},
+	{"PMC_S0IX_WAKE_REASON_VNNREQ",         0x6002},
+	{"PMC_S0IX_WAKE_REASON_LOWPOWER",       0x6003},
+	{"PMC_S0IX_WAKE_REASON_EXTERNAL",       0x6004},
+	{"PMC_S0IX_WAKE_REASON_MISC",           0x6005},
+	{"PMC_S0IX_BLOCKING_IPS_D3_D0I3",       0x6006},
+	{"PMC_S0IX_BLOCKING_IPS_PG",            0x6007},
+	{"PMC_S0IX_BLOCKING_MISC_IPS_PG",       0x6008},
+	{"PMC_S0IX_BLOCK_IPS_VNN_REQ",          0x6009},
+	{"PMC_S0IX_BLOCK_IPS_CLOCKS",           0x600B},
+};
 
 
-अटल काष्ठा telemetry_evपंचांगap
-	telemetry_apl_pss_शेष_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = अणु
-	अणु"IA_CORE0_C6_RES",			0x0400पूर्ण,
-	अणु"IA_CORE0_C6_CTR",			0x0000पूर्ण,
-	अणु"IA_MODULE0_C7_RES",			0x0410पूर्ण,
-	अणु"IA_MODULE0_C7_CTR",			0x000Eपूर्ण,
-	अणु"IA_C0_RES",				0x0805पूर्ण,
-	अणु"PCS_LTR",				0x2801पूर्ण,
-	अणु"PSTATES",				0x2802पूर्ण,
-	अणु"SOC_S0I3_RES",			0x0409पूर्ण,
-	अणु"SOC_S0I3_CTR",			0x000Aपूर्ण,
-	अणु"PCS_S0I3_CTR",			0x0009पूर्ण,
-	अणु"PCS_C1E_RES",				0x041Aपूर्ण,
-	अणु"PCS_IDLE_STATUS",			0x2806पूर्ण,
-	अणु"IA_PERF_LIMITS",			0x280Bपूर्ण,
-	अणु"GT_PERF_LIMITS",			0x280Cपूर्ण,
-	अणु"PCS_WAKEUP_S0IX_CTR",			0x0030पूर्ण,
-	अणु"PCS_IDLE_BLOCKED",			0x2C00पूर्ण,
-	अणु"PCS_S0IX_BLOCKED",			0x2C01पूर्ण,
-	अणु"PCS_S0IX_WAKE_REASONS",		0x2C02पूर्ण,
-	अणु"PCS_LTR_BLOCKING",			0x2C03पूर्ण,
-	अणु"PC2_AND_MEM_SHALLOW_IDLE_RES",	0x1D40पूर्ण,
-पूर्ण;
+static struct telemetry_evtmap
+	telemetry_apl_pss_default_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = {
+	{"IA_CORE0_C6_RES",			0x0400},
+	{"IA_CORE0_C6_CTR",			0x0000},
+	{"IA_MODULE0_C7_RES",			0x0410},
+	{"IA_MODULE0_C7_CTR",			0x000E},
+	{"IA_C0_RES",				0x0805},
+	{"PCS_LTR",				0x2801},
+	{"PSTATES",				0x2802},
+	{"SOC_S0I3_RES",			0x0409},
+	{"SOC_S0I3_CTR",			0x000A},
+	{"PCS_S0I3_CTR",			0x0009},
+	{"PCS_C1E_RES",				0x041A},
+	{"PCS_IDLE_STATUS",			0x2806},
+	{"IA_PERF_LIMITS",			0x280B},
+	{"GT_PERF_LIMITS",			0x280C},
+	{"PCS_WAKEUP_S0IX_CTR",			0x0030},
+	{"PCS_IDLE_BLOCKED",			0x2C00},
+	{"PCS_S0IX_BLOCKED",			0x2C01},
+	{"PCS_S0IX_WAKE_REASONS",		0x2C02},
+	{"PCS_LTR_BLOCKING",			0x2C03},
+	{"PC2_AND_MEM_SHALLOW_IDLE_RES",	0x1D40},
+};
 
-अटल काष्ठा telemetry_evपंचांगap
-	telemetry_glk_pss_शेष_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = अणु
-	अणु"IA_CORE0_C6_RES",			0x0400पूर्ण,
-	अणु"IA_CORE0_C6_CTR",			0x0000पूर्ण,
-	अणु"IA_MODULE0_C7_RES",			0x0410पूर्ण,
-	अणु"IA_MODULE0_C7_CTR",			0x000Cपूर्ण,
-	अणु"IA_C0_RES",				0x0805पूर्ण,
-	अणु"PCS_LTR",				0x2801पूर्ण,
-	अणु"PSTATES",				0x2802पूर्ण,
-	अणु"SOC_S0I3_RES",			0x0407पूर्ण,
-	अणु"SOC_S0I3_CTR",			0x0008पूर्ण,
-	अणु"PCS_S0I3_CTR",			0x0007पूर्ण,
-	अणु"PCS_C1E_RES",				0x0414पूर्ण,
-	अणु"PCS_IDLE_STATUS",			0x2806पूर्ण,
-	अणु"IA_PERF_LIMITS",			0x280Bपूर्ण,
-	अणु"GT_PERF_LIMITS",			0x280Cपूर्ण,
-	अणु"PCS_WAKEUP_S0IX_CTR",			0x0025पूर्ण,
-	अणु"PCS_IDLE_BLOCKED",			0x2C00पूर्ण,
-	अणु"PCS_S0IX_BLOCKED",			0x2C01पूर्ण,
-	अणु"PCS_S0IX_WAKE_REASONS",		0x2C02पूर्ण,
-	अणु"PCS_LTR_BLOCKING",			0x2C03पूर्ण,
-	अणु"PC2_AND_MEM_SHALLOW_IDLE_RES",	0x1D40पूर्ण,
-पूर्ण;
+static struct telemetry_evtmap
+	telemetry_glk_pss_default_events[TELEM_MAX_OS_ALLOCATED_EVENTS] = {
+	{"IA_CORE0_C6_RES",			0x0400},
+	{"IA_CORE0_C6_CTR",			0x0000},
+	{"IA_MODULE0_C7_RES",			0x0410},
+	{"IA_MODULE0_C7_CTR",			0x000C},
+	{"IA_C0_RES",				0x0805},
+	{"PCS_LTR",				0x2801},
+	{"PSTATES",				0x2802},
+	{"SOC_S0I3_RES",			0x0407},
+	{"SOC_S0I3_CTR",			0x0008},
+	{"PCS_S0I3_CTR",			0x0007},
+	{"PCS_C1E_RES",				0x0414},
+	{"PCS_IDLE_STATUS",			0x2806},
+	{"IA_PERF_LIMITS",			0x280B},
+	{"GT_PERF_LIMITS",			0x280C},
+	{"PCS_WAKEUP_S0IX_CTR",			0x0025},
+	{"PCS_IDLE_BLOCKED",			0x2C00},
+	{"PCS_S0IX_BLOCKED",			0x2C01},
+	{"PCS_S0IX_WAKE_REASONS",		0x2C02},
+	{"PCS_LTR_BLOCKING",			0x2C03},
+	{"PC2_AND_MEM_SHALLOW_IDLE_RES",	0x1D40},
+};
 
-/* APL specअगरic Data */
-अटल काष्ठा telemetry_plt_config telem_apl_config = अणु
-	.pss_config = अणु
-		.telem_evts = telemetry_apl_pss_शेष_events,
-	पूर्ण,
-	.ioss_config = अणु
-		.telem_evts = telemetry_apl_ioss_शेष_events,
-	पूर्ण,
-पूर्ण;
+/* APL specific Data */
+static struct telemetry_plt_config telem_apl_config = {
+	.pss_config = {
+		.telem_evts = telemetry_apl_pss_default_events,
+	},
+	.ioss_config = {
+		.telem_evts = telemetry_apl_ioss_default_events,
+	},
+};
 
-/* GLK specअगरic Data */
-अटल काष्ठा telemetry_plt_config telem_glk_config = अणु
-	.pss_config = अणु
-		.telem_evts = telemetry_glk_pss_शेष_events,
-	पूर्ण,
-	.ioss_config = अणु
-		.telem_evts = telemetry_apl_ioss_शेष_events,
-	पूर्ण,
-पूर्ण;
+/* GLK specific Data */
+static struct telemetry_plt_config telem_glk_config = {
+	.pss_config = {
+		.telem_evts = telemetry_glk_pss_default_events,
+	},
+	.ioss_config = {
+		.telem_evts = telemetry_apl_ioss_default_events,
+	},
+};
 
-अटल स्थिर काष्ठा x86_cpu_id telemetry_cpu_ids[] = अणु
+static const struct x86_cpu_id telemetry_cpu_ids[] = {
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&telem_apl_config),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&telem_glk_config),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 MODULE_DEVICE_TABLE(x86cpu, telemetry_cpu_ids);
 
-अटल अंतरभूत पूर्णांक telem_get_unitconfig(क्रमागत telemetry_unit telem_unit,
-				     काष्ठा telemetry_unit_config **unit_config)
-अणु
-	अगर (telem_unit == TELEM_PSS)
+static inline int telem_get_unitconfig(enum telemetry_unit telem_unit,
+				     struct telemetry_unit_config **unit_config)
+{
+	if (telem_unit == TELEM_PSS)
 		*unit_config = &(telm_conf->pss_config);
-	अन्यथा अगर (telem_unit == TELEM_IOSS)
+	else if (telem_unit == TELEM_IOSS)
 		*unit_config = &(telm_conf->ioss_config);
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक telemetry_check_evtid(क्रमागत telemetry_unit telem_unit,
-				 u32 *evपंचांगap, u8 len,
-				 क्रमागत telemetry_action action)
-अणु
-	काष्ठा telemetry_unit_config *unit_config;
-	पूर्णांक ret;
+static int telemetry_check_evtid(enum telemetry_unit telem_unit,
+				 u32 *evtmap, u8 len,
+				 enum telemetry_action action)
+{
+	struct telemetry_unit_config *unit_config;
+	int ret;
 
 	ret = telem_get_unitconfig(telem_unit, &unit_config);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	चयन (action) अणु
-	हाल TELEM_RESET:
-		अगर (len > TELEM_MAX_EVENTS_SRAM)
-			वापस -EINVAL;
+	switch (action) {
+	case TELEM_RESET:
+		if (len > TELEM_MAX_EVENTS_SRAM)
+			return -EINVAL;
 
-		अवरोध;
+		break;
 
-	हाल TELEM_UPDATE:
-		अगर (len > TELEM_MAX_EVENTS_SRAM)
-			वापस -EINVAL;
+	case TELEM_UPDATE:
+		if (len > TELEM_MAX_EVENTS_SRAM)
+			return -EINVAL;
 
-		अगर ((len > 0) && (evपंचांगap == शून्य))
-			वापस -EINVAL;
+		if ((len > 0) && (evtmap == NULL))
+			return -EINVAL;
 
-		अवरोध;
+		break;
 
-	हाल TELEM_ADD:
-		अगर ((len + unit_config->ssram_evts_used) >
+	case TELEM_ADD:
+		if ((len + unit_config->ssram_evts_used) >
 		    TELEM_MAX_EVENTS_SRAM)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर ((len > 0) && (evपंचांगap == शून्य))
-			वापस -EINVAL;
+		if ((len > 0) && (evtmap == NULL))
+			return -EINVAL;
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown Telemetry action specified %d\n", action);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल अंतरभूत पूर्णांक telemetry_plt_config_ioss_event(u32 evt_id, पूर्णांक index)
-अणु
-	u32 ग_लिखो_buf;
+static inline int telemetry_plt_config_ioss_event(u32 evt_id, int index)
+{
+	u32 write_buf;
 
-	ग_लिखो_buf = evt_id | TELEM_EVENT_ENABLE;
-	ग_लिखो_buf <<= BITS_PER_BYTE;
-	ग_लिखो_buf |= index;
+	write_buf = evt_id | TELEM_EVENT_ENABLE;
+	write_buf <<= BITS_PER_BYTE;
+	write_buf |= index;
 
-	वापस पूर्णांकel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
-					 IOSS_TELEM_EVENT_WRITE, &ग_लिखो_buf,
-					 IOSS_TELEM_EVT_WRITE_SIZE, शून्य, 0);
-पूर्ण
+	return intel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
+					 IOSS_TELEM_EVENT_WRITE, &write_buf,
+					 IOSS_TELEM_EVT_WRITE_SIZE, NULL, 0);
+}
 
-अटल अंतरभूत पूर्णांक telemetry_plt_config_pss_event(u32 evt_id, पूर्णांक index)
-अणु
-	u32 ग_लिखो_buf;
-	पूर्णांक ret;
+static inline int telemetry_plt_config_pss_event(u32 evt_id, int index)
+{
+	u32 write_buf;
+	int ret;
 
-	ग_लिखो_buf = evt_id | TELEM_EVENT_ENABLE;
-	ret = पूर्णांकel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT,
-				      index, 0, &ग_लिखो_buf, शून्य);
+	write_buf = evt_id | TELEM_EVENT_ENABLE;
+	ret = intel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT,
+				      index, 0, &write_buf, NULL);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telemetry_setup_iossevtconfig(काष्ठा telemetry_evtconfig evtconfig,
-					 क्रमागत telemetry_action action)
-अणु
-	काष्ठा पूर्णांकel_scu_ipc_dev *scu = telm_conf->scu;
+static int telemetry_setup_iossevtconfig(struct telemetry_evtconfig evtconfig,
+					 enum telemetry_action action)
+{
+	struct intel_scu_ipc_dev *scu = telm_conf->scu;
 	u8 num_ioss_evts, ioss_period;
-	पूर्णांक ret, index, idx;
-	u32 *ioss_evपंचांगap;
+	int ret, index, idx;
+	u32 *ioss_evtmap;
 	u32 telem_ctrl;
 
 	num_ioss_evts = evtconfig.num_evts;
 	ioss_period = evtconfig.period;
-	ioss_evपंचांगap = evtconfig.evपंचांगap;
+	ioss_evtmap = evtconfig.evtmap;
 
 	/* Get telemetry EVENT CTL */
-	ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
-				    IOSS_TELEM_EVENT_CTL_READ, शून्य, 0,
-				    &telem_ctrl, माप(telem_ctrl));
-	अगर (ret) अणु
+	ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
+				    IOSS_TELEM_EVENT_CTL_READ, NULL, 0,
+				    &telem_ctrl, sizeof(telem_ctrl));
+	if (ret) {
 		pr_err("IOSS TELEM_CTRL Read Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Disable Telemetry */
 	TELEM_DISABLE(telem_ctrl);
 
-	ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+	ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 				    IOSS_TELEM_EVENT_CTL_WRITE, &telem_ctrl,
-				    माप(telem_ctrl), शून्य, 0);
-	अगर (ret) अणु
+				    sizeof(telem_ctrl), NULL, 0);
+	if (ret) {
 		pr_err("IOSS TELEM_CTRL Event Disable Write Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 
 	/* Reset Everything */
-	अगर (action == TELEM_RESET) अणु
+	if (action == TELEM_RESET) {
 		/* Clear All Events */
 		TELEM_CLEAR_EVENTS(telem_ctrl);
 
-		ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+		ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 					    IOSS_TELEM_EVENT_CTL_WRITE,
-					    &telem_ctrl, माप(telem_ctrl),
-					    शून्य, 0);
-		अगर (ret) अणु
+					    &telem_ctrl, sizeof(telem_ctrl),
+					    NULL, 0);
+		if (ret) {
 			pr_err("IOSS TELEM_CTRL Event Disable Write Failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		telm_conf->ioss_config.ssram_evts_used = 0;
 
 		/* Configure Events */
-		क्रम (idx = 0; idx < num_ioss_evts; idx++) अणु
-			अगर (telemetry_plt_config_ioss_event(
+		for (idx = 0; idx < num_ioss_evts; idx++) {
+			if (telemetry_plt_config_ioss_event(
 			    telm_conf->ioss_config.telem_evts[idx].evt_id,
-			    idx)) अणु
+			    idx)) {
 				pr_err("IOSS TELEM_RESET Fail for data: %x\n",
 				telm_conf->ioss_config.telem_evts[idx].evt_id);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			telm_conf->ioss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Re-Configure Everything */
-	अगर (action == TELEM_UPDATE) अणु
+	if (action == TELEM_UPDATE) {
 		/* Clear All Events */
 		TELEM_CLEAR_EVENTS(telem_ctrl);
 
-		ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+		ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 					    IOSS_TELEM_EVENT_CTL_WRITE,
-					    &telem_ctrl, माप(telem_ctrl),
-					    शून्य, 0);
-		अगर (ret) अणु
+					    &telem_ctrl, sizeof(telem_ctrl),
+					    NULL, 0);
+		if (ret) {
 			pr_err("IOSS TELEM_CTRL Event Disable Write Failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		telm_conf->ioss_config.ssram_evts_used = 0;
 
 		/* Configure Events */
-		क्रम (index = 0; index < num_ioss_evts; index++) अणु
+		for (index = 0; index < num_ioss_evts; index++) {
 			telm_conf->ioss_config.telem_evts[index].evt_id =
-			ioss_evपंचांगap[index];
+			ioss_evtmap[index];
 
-			अगर (telemetry_plt_config_ioss_event(
+			if (telemetry_plt_config_ioss_event(
 			    telm_conf->ioss_config.telem_evts[index].evt_id,
-			    index)) अणु
+			    index)) {
 				pr_err("IOSS TELEM_UPDATE Fail for Evt%x\n",
-					ioss_evपंचांगap[index]);
-				जारी;
-			पूर्ण
+					ioss_evtmap[index]);
+				continue;
+			}
 			telm_conf->ioss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Add some Events */
-	अगर (action == TELEM_ADD) अणु
+	if (action == TELEM_ADD) {
 		/* Configure Events */
-		क्रम (index = telm_conf->ioss_config.ssram_evts_used, idx = 0;
-		     idx < num_ioss_evts; index++, idx++) अणु
+		for (index = telm_conf->ioss_config.ssram_evts_used, idx = 0;
+		     idx < num_ioss_evts; index++, idx++) {
 			telm_conf->ioss_config.telem_evts[index].evt_id =
-			ioss_evपंचांगap[idx];
+			ioss_evtmap[idx];
 
-			अगर (telemetry_plt_config_ioss_event(
+			if (telemetry_plt_config_ioss_event(
 			    telm_conf->ioss_config.telem_evts[index].evt_id,
-			    index)) अणु
+			    index)) {
 				pr_err("IOSS TELEM_ADD Fail for Event %x\n",
-					ioss_evपंचांगap[idx]);
-				जारी;
-			पूर्ण
+					ioss_evtmap[idx]);
+				continue;
+			}
 			telm_conf->ioss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Enable Periodic Telemetry Events and enable SRAM trace */
 	TELEM_CLEAR_SAMPLE_PERIOD(telem_ctrl);
@@ -388,125 +387,125 @@ MODULE_DEVICE_TABLE(x86cpu, telemetry_cpu_ids);
 	TELEM_ENABLE_PERIODIC(telem_ctrl);
 	telem_ctrl |= ioss_period;
 
-	ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+	ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 				    IOSS_TELEM_EVENT_CTL_WRITE,
-				    &telem_ctrl, माप(telem_ctrl), शून्य, 0);
-	अगर (ret) अणु
+				    &telem_ctrl, sizeof(telem_ctrl), NULL, 0);
+	if (ret) {
 		pr_err("IOSS TELEM_CTRL Event Enable Write Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	telm_conf->ioss_config.curr_period = ioss_period;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक telemetry_setup_pssevtconfig(काष्ठा telemetry_evtconfig evtconfig,
-					क्रमागत telemetry_action action)
-अणु
+static int telemetry_setup_pssevtconfig(struct telemetry_evtconfig evtconfig,
+					enum telemetry_action action)
+{
 	u8 num_pss_evts, pss_period;
-	पूर्णांक ret, index, idx;
-	u32 *pss_evपंचांगap;
+	int ret, index, idx;
+	u32 *pss_evtmap;
 	u32 telem_ctrl;
 
 	num_pss_evts = evtconfig.num_evts;
 	pss_period = evtconfig.period;
-	pss_evपंचांगap = evtconfig.evपंचांगap;
+	pss_evtmap = evtconfig.evtmap;
 
 	/* PSS Config */
 	/* Get telemetry EVENT CTL */
-	ret = पूर्णांकel_punit_ipc_command(IPC_PUNIT_BIOS_READ_TELE_EVENT_CTRL,
-				      0, 0, शून्य, &telem_ctrl);
-	अगर (ret) अणु
+	ret = intel_punit_ipc_command(IPC_PUNIT_BIOS_READ_TELE_EVENT_CTRL,
+				      0, 0, NULL, &telem_ctrl);
+	if (ret) {
 		pr_err("PSS TELEM_CTRL Read Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Disable Telemetry */
 	TELEM_DISABLE(telem_ctrl);
-	ret = पूर्णांकel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				      0, 0, &telem_ctrl, शून्य);
-	अगर (ret) अणु
+	ret = intel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
+				      0, 0, &telem_ctrl, NULL);
+	if (ret) {
 		pr_err("PSS TELEM_CTRL Event Disable Write Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Reset Everything */
-	अगर (action == TELEM_RESET) अणु
+	if (action == TELEM_RESET) {
 		/* Clear All Events */
 		TELEM_CLEAR_EVENTS(telem_ctrl);
 
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				0, 0, &telem_ctrl, शून्य);
-		अगर (ret) अणु
+				0, 0, &telem_ctrl, NULL);
+		if (ret) {
 			pr_err("PSS TELEM_CTRL Event Disable Write Failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		telm_conf->pss_config.ssram_evts_used = 0;
 		/* Configure Events */
-		क्रम (idx = 0; idx < num_pss_evts; idx++) अणु
-			अगर (telemetry_plt_config_pss_event(
+		for (idx = 0; idx < num_pss_evts; idx++) {
+			if (telemetry_plt_config_pss_event(
 			    telm_conf->pss_config.telem_evts[idx].evt_id,
-			    idx)) अणु
+			    idx)) {
 				pr_err("PSS TELEM_RESET Fail for Event %x\n",
 				telm_conf->pss_config.telem_evts[idx].evt_id);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			telm_conf->pss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Re-Configure Everything */
-	अगर (action == TELEM_UPDATE) अणु
+	if (action == TELEM_UPDATE) {
 		/* Clear All Events */
 		TELEM_CLEAR_EVENTS(telem_ctrl);
 
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				0, 0, &telem_ctrl, शून्य);
-		अगर (ret) अणु
+				0, 0, &telem_ctrl, NULL);
+		if (ret) {
 			pr_err("PSS TELEM_CTRL Event Disable Write Failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		telm_conf->pss_config.ssram_evts_used = 0;
 
 		/* Configure Events */
-		क्रम (index = 0; index < num_pss_evts; index++) अणु
+		for (index = 0; index < num_pss_evts; index++) {
 			telm_conf->pss_config.telem_evts[index].evt_id =
-			pss_evपंचांगap[index];
+			pss_evtmap[index];
 
-			अगर (telemetry_plt_config_pss_event(
+			if (telemetry_plt_config_pss_event(
 			    telm_conf->pss_config.telem_evts[index].evt_id,
-			    index)) अणु
+			    index)) {
 				pr_err("PSS TELEM_UPDATE Fail for Event %x\n",
-					pss_evपंचांगap[index]);
-				जारी;
-			पूर्ण
+					pss_evtmap[index]);
+				continue;
+			}
 			telm_conf->pss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Add some Events */
-	अगर (action == TELEM_ADD) अणु
+	if (action == TELEM_ADD) {
 		/* Configure Events */
-		क्रम (index = telm_conf->pss_config.ssram_evts_used, idx = 0;
-		     idx < num_pss_evts; index++, idx++) अणु
+		for (index = telm_conf->pss_config.ssram_evts_used, idx = 0;
+		     idx < num_pss_evts; index++, idx++) {
 
 			telm_conf->pss_config.telem_evts[index].evt_id =
-			pss_evपंचांगap[idx];
+			pss_evtmap[idx];
 
-			अगर (telemetry_plt_config_pss_event(
+			if (telemetry_plt_config_pss_event(
 			    telm_conf->pss_config.telem_evts[index].evt_id,
-			    index)) अणु
+			    index)) {
 				pr_err("PSS TELEM_ADD Fail for Event %x\n",
-					pss_evपंचांगap[idx]);
-				जारी;
-			पूर्ण
+					pss_evtmap[idx]);
+				continue;
+			}
 			telm_conf->pss_config.ssram_evts_used++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Enable Periodic Telemetry Events and enable SRAM trace */
 	TELEM_CLEAR_SAMPLE_PERIOD(telem_ctrl);
@@ -514,193 +513,193 @@ MODULE_DEVICE_TABLE(x86cpu, telemetry_cpu_ids);
 	TELEM_ENABLE_PERIODIC(telem_ctrl);
 	telem_ctrl |= pss_period;
 
-	ret = पूर्णांकel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				      0, 0, &telem_ctrl, शून्य);
-	अगर (ret) अणु
+	ret = intel_punit_ipc_command(IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
+				      0, 0, &telem_ctrl, NULL);
+	if (ret) {
 		pr_err("PSS TELEM_CTRL Event Enable Write Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	telm_conf->pss_config.curr_period = pss_period;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक telemetry_setup_evtconfig(काष्ठा telemetry_evtconfig pss_evtconfig,
-				     काष्ठा telemetry_evtconfig ioss_evtconfig,
-				     क्रमागत telemetry_action action)
-अणु
-	पूर्णांक ret;
+static int telemetry_setup_evtconfig(struct telemetry_evtconfig pss_evtconfig,
+				     struct telemetry_evtconfig ioss_evtconfig,
+				     enum telemetry_action action)
+{
+	int ret;
 
 	mutex_lock(&(telm_conf->telem_lock));
 
-	अगर ((action == TELEM_UPDATE) && (telm_conf->telem_in_use)) अणु
+	if ((action == TELEM_UPDATE) && (telm_conf->telem_in_use)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = telemetry_check_evtid(TELEM_PSS, pss_evtconfig.evपंचांगap,
+	ret = telemetry_check_evtid(TELEM_PSS, pss_evtconfig.evtmap,
 				    pss_evtconfig.num_evts, action);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = telemetry_check_evtid(TELEM_IOSS, ioss_evtconfig.evपंचांगap,
+	ret = telemetry_check_evtid(TELEM_IOSS, ioss_evtconfig.evtmap,
 				    ioss_evtconfig.num_evts, action);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (ioss_evtconfig.num_evts) अणु
+	if (ioss_evtconfig.num_evts) {
 		ret = telemetry_setup_iossevtconfig(ioss_evtconfig, action);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर (pss_evtconfig.num_evts) अणु
+	if (pss_evtconfig.num_evts) {
 		ret = telemetry_setup_pssevtconfig(pss_evtconfig, action);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	अगर ((action == TELEM_UPDATE) || (action == TELEM_ADD))
+	if ((action == TELEM_UPDATE) || (action == TELEM_ADD))
 		telm_conf->telem_in_use = true;
-	अन्यथा
+	else
 		telm_conf->telem_in_use = false;
 
 out:
 	mutex_unlock(&(telm_conf->telem_lock));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telemetry_setup(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
-	u32 पढ़ो_buf, events, event_regs;
-	पूर्णांक ret;
+static int telemetry_setup(struct platform_device *pdev)
+{
+	struct telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
+	u32 read_buf, events, event_regs;
+	int ret;
 
-	ret = पूर्णांकel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
-					IOSS_TELEM_INFO_READ, शून्य, 0,
-					&पढ़ो_buf, माप(पढ़ो_buf));
-	अगर (ret) अणु
+	ret = intel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
+					IOSS_TELEM_INFO_READ, NULL, 0,
+					&read_buf, sizeof(read_buf));
+	if (ret) {
 		dev_err(&pdev->dev, "IOSS TELEM_INFO Read Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Get telemetry Info */
-	events = (पढ़ो_buf & TELEM_INFO_SRAMEVTS_MASK) >>
+	events = (read_buf & TELEM_INFO_SRAMEVTS_MASK) >>
 		  TELEM_INFO_SRAMEVTS_SHIFT;
-	event_regs = पढ़ो_buf & TELEM_INFO_NENABLES_MASK;
-	अगर ((events < TELEM_MAX_EVENTS_SRAM) ||
-	    (event_regs < TELEM_MAX_EVENTS_SRAM)) अणु
+	event_regs = read_buf & TELEM_INFO_NENABLES_MASK;
+	if ((events < TELEM_MAX_EVENTS_SRAM) ||
+	    (event_regs < TELEM_MAX_EVENTS_SRAM)) {
 		dev_err(&pdev->dev, "IOSS:Insufficient Space for SRAM Trace\n");
 		dev_err(&pdev->dev, "SRAM Events %d; Event Regs %d\n",
 			events, event_regs);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	telm_conf->ioss_config.min_period = TELEM_MIN_PERIOD(पढ़ो_buf);
-	telm_conf->ioss_config.max_period = TELEM_MAX_PERIOD(पढ़ो_buf);
+	telm_conf->ioss_config.min_period = TELEM_MIN_PERIOD(read_buf);
+	telm_conf->ioss_config.max_period = TELEM_MAX_PERIOD(read_buf);
 
 	/* PUNIT Mailbox Setup */
-	ret = पूर्णांकel_punit_ipc_command(IPC_PUNIT_BIOS_READ_TELE_INFO, 0, 0,
-				      शून्य, &पढ़ो_buf);
-	अगर (ret) अणु
+	ret = intel_punit_ipc_command(IPC_PUNIT_BIOS_READ_TELE_INFO, 0, 0,
+				      NULL, &read_buf);
+	if (ret) {
 		dev_err(&pdev->dev, "PSS TELEM_INFO Read Failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Get telemetry Info */
-	events = (पढ़ो_buf & TELEM_INFO_SRAMEVTS_MASK) >>
+	events = (read_buf & TELEM_INFO_SRAMEVTS_MASK) >>
 		  TELEM_INFO_SRAMEVTS_SHIFT;
-	event_regs = पढ़ो_buf & TELEM_INFO_SRAMEVTS_MASK;
-	अगर ((events < TELEM_MAX_EVENTS_SRAM) ||
-	    (event_regs < TELEM_MAX_EVENTS_SRAM)) अणु
+	event_regs = read_buf & TELEM_INFO_SRAMEVTS_MASK;
+	if ((events < TELEM_MAX_EVENTS_SRAM) ||
+	    (event_regs < TELEM_MAX_EVENTS_SRAM)) {
 		dev_err(&pdev->dev, "PSS:Insufficient Space for SRAM Trace\n");
 		dev_err(&pdev->dev, "SRAM Events %d; Event Regs %d\n",
 			events, event_regs);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	telm_conf->pss_config.min_period = TELEM_MIN_PERIOD(पढ़ो_buf);
-	telm_conf->pss_config.max_period = TELEM_MAX_PERIOD(पढ़ो_buf);
+	telm_conf->pss_config.min_period = TELEM_MIN_PERIOD(read_buf);
+	telm_conf->pss_config.max_period = TELEM_MAX_PERIOD(read_buf);
 
-	pss_evtconfig.evपंचांगap = शून्य;
+	pss_evtconfig.evtmap = NULL;
 	pss_evtconfig.num_evts = TELEM_MAX_OS_ALLOCATED_EVENTS;
 	pss_evtconfig.period = TELEM_SAMPLING_DEFAULT_PERIOD;
 
-	ioss_evtconfig.evपंचांगap = शून्य;
+	ioss_evtconfig.evtmap = NULL;
 	ioss_evtconfig.num_evts = TELEM_MAX_OS_ALLOCATED_EVENTS;
 	ioss_evtconfig.period = TELEM_SAMPLING_DEFAULT_PERIOD;
 
 	ret = telemetry_setup_evtconfig(pss_evtconfig, ioss_evtconfig,
 					TELEM_RESET);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "TELEMETRY Setup Failed\n");
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक telemetry_plt_update_events(काष्ठा telemetry_evtconfig pss_evtconfig,
-				काष्ठा telemetry_evtconfig ioss_evtconfig)
-अणु
-	पूर्णांक ret;
+static int telemetry_plt_update_events(struct telemetry_evtconfig pss_evtconfig,
+				struct telemetry_evtconfig ioss_evtconfig)
+{
+	int ret;
 
-	अगर ((pss_evtconfig.num_evts > 0) &&
-	    (TELEM_SAMPLE_PERIOD_INVALID(pss_evtconfig.period))) अणु
+	if ((pss_evtconfig.num_evts > 0) &&
+	    (TELEM_SAMPLE_PERIOD_INVALID(pss_evtconfig.period))) {
 		pr_err("PSS Sampling Period Out of Range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((ioss_evtconfig.num_evts > 0) &&
-	    (TELEM_SAMPLE_PERIOD_INVALID(ioss_evtconfig.period))) अणु
+	if ((ioss_evtconfig.num_evts > 0) &&
+	    (TELEM_SAMPLE_PERIOD_INVALID(ioss_evtconfig.period))) {
 		pr_err("IOSS Sampling Period Out of Range\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = telemetry_setup_evtconfig(pss_evtconfig, ioss_evtconfig,
 					TELEM_UPDATE);
-	अगर (ret)
+	if (ret)
 		pr_err("TELEMETRY Config Failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक telemetry_plt_set_sampling_period(u8 pss_period, u8 ioss_period)
-अणु
+static int telemetry_plt_set_sampling_period(u8 pss_period, u8 ioss_period)
+{
 	u32 telem_ctrl = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	mutex_lock(&(telm_conf->telem_lock));
-	अगर (ioss_period) अणु
-		काष्ठा पूर्णांकel_scu_ipc_dev *scu = telm_conf->scu;
+	if (ioss_period) {
+		struct intel_scu_ipc_dev *scu = telm_conf->scu;
 
-		अगर (TELEM_SAMPLE_PERIOD_INVALID(ioss_period)) अणु
+		if (TELEM_SAMPLE_PERIOD_INVALID(ioss_period)) {
 			pr_err("IOSS Sampling Period Out of Range\n");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Get telemetry EVENT CTL */
-		ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
-					    IOSS_TELEM_EVENT_CTL_READ, शून्य, 0,
-					    &telem_ctrl, माप(telem_ctrl));
-		अगर (ret) अणु
+		ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
+					    IOSS_TELEM_EVENT_CTL_READ, NULL, 0,
+					    &telem_ctrl, sizeof(telem_ctrl));
+		if (ret) {
 			pr_err("IOSS TELEM_CTRL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Disable Telemetry */
 		TELEM_DISABLE(telem_ctrl);
 
-		ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+		ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 						IOSS_TELEM_EVENT_CTL_WRITE,
-						&telem_ctrl, माप(telem_ctrl),
-						शून्य, 0);
-		अगर (ret) अणु
+						&telem_ctrl, sizeof(telem_ctrl),
+						NULL, 0);
+		if (ret) {
 			pr_err("IOSS TELEM_CTRL Event Disable Write Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Enable Periodic Telemetry Events and enable SRAM trace */
 		TELEM_CLEAR_SAMPLE_PERIOD(telem_ctrl);
@@ -708,42 +707,42 @@ out:
 		TELEM_ENABLE_PERIODIC(telem_ctrl);
 		telem_ctrl |= ioss_period;
 
-		ret = पूर्णांकel_scu_ipc_dev_command(scu, IOSS_TELEM,
+		ret = intel_scu_ipc_dev_command(scu, IOSS_TELEM,
 						IOSS_TELEM_EVENT_CTL_WRITE,
-						&telem_ctrl, माप(telem_ctrl),
-						शून्य, 0);
-		अगर (ret) अणु
+						&telem_ctrl, sizeof(telem_ctrl),
+						NULL, 0);
+		if (ret) {
 			pr_err("IOSS TELEM_CTRL Event Enable Write Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		telm_conf->ioss_config.curr_period = ioss_period;
-	पूर्ण
+	}
 
-	अगर (pss_period) अणु
-		अगर (TELEM_SAMPLE_PERIOD_INVALID(pss_period)) अणु
+	if (pss_period) {
+		if (TELEM_SAMPLE_PERIOD_INVALID(pss_period)) {
 			pr_err("PSS Sampling Period Out of Range\n");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Get telemetry EVENT CTL */
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_READ_TELE_EVENT_CTRL,
-				0, 0, शून्य, &telem_ctrl);
-		अगर (ret) अणु
+				0, 0, NULL, &telem_ctrl);
+		if (ret) {
 			pr_err("PSS TELEM_CTRL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Disable Telemetry */
 		TELEM_DISABLE(telem_ctrl);
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				0, 0, &telem_ctrl, शून्य);
-		अगर (ret) अणु
+				0, 0, &telem_ctrl, NULL);
+		if (ret) {
 			pr_err("PSS TELEM_CTRL Event Disable Write Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Enable Periodic Telemetry Events and enable SRAM trace */
 		TELEM_CLEAR_SAMPLE_PERIOD(telem_ctrl);
@@ -751,67 +750,67 @@ out:
 		TELEM_ENABLE_PERIODIC(telem_ctrl);
 		telem_ctrl |= pss_period;
 
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_WRITE_TELE_EVENT_CTRL,
-				0, 0, &telem_ctrl, शून्य);
-		अगर (ret) अणु
+				0, 0, &telem_ctrl, NULL);
+		if (ret) {
 			pr_err("PSS TELEM_CTRL Event Enable Write Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		telm_conf->pss_config.curr_period = pss_period;
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&(telm_conf->telem_lock));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक telemetry_plt_get_sampling_period(u8 *pss_min_period,
+static int telemetry_plt_get_sampling_period(u8 *pss_min_period,
 					     u8 *pss_max_period,
 					     u8 *ioss_min_period,
 					     u8 *ioss_max_period)
-अणु
+{
 	*pss_min_period = telm_conf->pss_config.min_period;
 	*pss_max_period = telm_conf->pss_config.max_period;
 	*ioss_min_period = telm_conf->ioss_config.min_period;
 	*ioss_max_period = telm_conf->ioss_config.max_period;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक telemetry_plt_reset_events(व्योम)
-अणु
-	काष्ठा telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
-	पूर्णांक ret;
+static int telemetry_plt_reset_events(void)
+{
+	struct telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
+	int ret;
 
-	pss_evtconfig.evपंचांगap = शून्य;
+	pss_evtconfig.evtmap = NULL;
 	pss_evtconfig.num_evts = TELEM_MAX_OS_ALLOCATED_EVENTS;
 	pss_evtconfig.period = TELEM_SAMPLING_DEFAULT_PERIOD;
 
-	ioss_evtconfig.evपंचांगap = शून्य;
+	ioss_evtconfig.evtmap = NULL;
 	ioss_evtconfig.num_evts = TELEM_MAX_OS_ALLOCATED_EVENTS;
 	ioss_evtconfig.period = TELEM_SAMPLING_DEFAULT_PERIOD;
 
 	ret = telemetry_setup_evtconfig(pss_evtconfig, ioss_evtconfig,
 					TELEM_RESET);
-	अगर (ret)
+	if (ret)
 		pr_err("TELEMETRY Reset Failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक telemetry_plt_get_eventconfig(काष्ठा telemetry_evtconfig *pss_config,
-					काष्ठा telemetry_evtconfig *ioss_config,
-					पूर्णांक pss_len, पूर्णांक ioss_len)
-अणु
-	u32 *pss_evपंचांगap, *ioss_evपंचांगap;
+static int telemetry_plt_get_eventconfig(struct telemetry_evtconfig *pss_config,
+					struct telemetry_evtconfig *ioss_config,
+					int pss_len, int ioss_len)
+{
+	u32 *pss_evtmap, *ioss_evtmap;
 	u32 index;
 
-	pss_evपंचांगap = pss_config->evपंचांगap;
-	ioss_evपंचांगap = ioss_config->evपंचांगap;
+	pss_evtmap = pss_config->evtmap;
+	ioss_evtmap = ioss_config->evtmap;
 
 	mutex_lock(&(telm_conf->telem_lock));
 	pss_config->num_evts = telm_conf->pss_config.ssram_evts_used;
@@ -820,369 +819,369 @@ out:
 	pss_config->period = telm_conf->pss_config.curr_period;
 	ioss_config->period = telm_conf->ioss_config.curr_period;
 
-	अगर ((pss_len < telm_conf->pss_config.ssram_evts_used) ||
-	    (ioss_len < telm_conf->ioss_config.ssram_evts_used)) अणु
+	if ((pss_len < telm_conf->pss_config.ssram_evts_used) ||
+	    (ioss_len < telm_conf->ioss_config.ssram_evts_used)) {
 		mutex_unlock(&(telm_conf->telem_lock));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (index = 0; index < telm_conf->pss_config.ssram_evts_used;
-	     index++) अणु
-		pss_evपंचांगap[index] =
+	for (index = 0; index < telm_conf->pss_config.ssram_evts_used;
+	     index++) {
+		pss_evtmap[index] =
 		telm_conf->pss_config.telem_evts[index].evt_id;
-	पूर्ण
+	}
 
-	क्रम (index = 0; index < telm_conf->ioss_config.ssram_evts_used;
-	     index++) अणु
-		ioss_evपंचांगap[index] =
+	for (index = 0; index < telm_conf->ioss_config.ssram_evts_used;
+	     index++) {
+		ioss_evtmap[index] =
 		telm_conf->ioss_config.telem_evts[index].evt_id;
-	पूर्ण
+	}
 
 	mutex_unlock(&(telm_conf->telem_lock));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक telemetry_plt_add_events(u8 num_pss_evts, u8 num_ioss_evts,
-				    u32 *pss_evपंचांगap, u32 *ioss_evपंचांगap)
-अणु
-	काष्ठा telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
-	पूर्णांक ret;
+static int telemetry_plt_add_events(u8 num_pss_evts, u8 num_ioss_evts,
+				    u32 *pss_evtmap, u32 *ioss_evtmap)
+{
+	struct telemetry_evtconfig pss_evtconfig, ioss_evtconfig;
+	int ret;
 
-	pss_evtconfig.evपंचांगap = pss_evपंचांगap;
+	pss_evtconfig.evtmap = pss_evtmap;
 	pss_evtconfig.num_evts = num_pss_evts;
 	pss_evtconfig.period = telm_conf->pss_config.curr_period;
 
-	ioss_evtconfig.evपंचांगap = ioss_evपंचांगap;
+	ioss_evtconfig.evtmap = ioss_evtmap;
 	ioss_evtconfig.num_evts = num_ioss_evts;
 	ioss_evtconfig.period = telm_conf->ioss_config.curr_period;
 
 	ret = telemetry_setup_evtconfig(pss_evtconfig, ioss_evtconfig,
 					TELEM_ADD);
-	अगर (ret)
+	if (ret)
 		pr_err("TELEMETRY ADD Failed\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telem_evtlog_पढ़ो(क्रमागत telemetry_unit telem_unit,
-			     काष्ठा telem_ssram_region *ssram_region, u8 len)
-अणु
-	काष्ठा telemetry_unit_config *unit_config;
-	u64 बारtamp_prev, बारtamp_next;
-	पूर्णांक ret, index, समयout = 0;
+static int telem_evtlog_read(enum telemetry_unit telem_unit,
+			     struct telem_ssram_region *ssram_region, u8 len)
+{
+	struct telemetry_unit_config *unit_config;
+	u64 timestamp_prev, timestamp_next;
+	int ret, index, timeout = 0;
 
 	ret = telem_get_unitconfig(telem_unit, &unit_config);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (len > unit_config->ssram_evts_used)
+	if (len > unit_config->ssram_evts_used)
 		len = unit_config->ssram_evts_used;
 
-	करो अणु
-		बारtamp_prev = पढ़ोq(unit_config->regmap);
-		अगर (!बारtamp_prev) अणु
+	do {
+		timestamp_prev = readq(unit_config->regmap);
+		if (!timestamp_prev) {
 			pr_err("Ssram under update. Please Try Later\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		ssram_region->start_समय = पढ़ोq(unit_config->regmap +
+		ssram_region->start_time = readq(unit_config->regmap +
 						 TELEM_SSRAM_STARTTIME_OFFSET);
 
-		क्रम (index = 0; index < len; index++) अणु
+		for (index = 0; index < len; index++) {
 			ssram_region->events[index] =
-			पढ़ोq(unit_config->regmap + TELEM_SSRAM_EVTLOG_OFFSET +
+			readq(unit_config->regmap + TELEM_SSRAM_EVTLOG_OFFSET +
 			      BYTES_PER_LONG*index);
-		पूर्ण
+		}
 
-		बारtamp_next = पढ़ोq(unit_config->regmap);
-		अगर (!बारtamp_next) अणु
+		timestamp_next = readq(unit_config->regmap);
+		if (!timestamp_next) {
 			pr_err("Ssram under update. Please Try Later\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		अगर (समयout++ > TELEM_SSRAM_READ_TIMEOUT) अणु
+		if (timeout++ > TELEM_SSRAM_READ_TIMEOUT) {
 			pr_err("Timeout while reading Events\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-	पूर्ण जबतक (बारtamp_prev != बारtamp_next);
+	} while (timestamp_prev != timestamp_next);
 
-	ssram_region->बारtamp = बारtamp_next;
+	ssram_region->timestamp = timestamp_next;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक telemetry_plt_raw_पढ़ो_eventlog(क्रमागत telemetry_unit telem_unit,
-					   काष्ठा telemetry_evtlog *evtlog,
-					   पूर्णांक len, पूर्णांक log_all_evts)
-अणु
-	पूर्णांक index, idx1, ret, पढ़ोlen = len;
-	काष्ठा telem_ssram_region ssram_region;
-	काष्ठा telemetry_evपंचांगap *evपंचांगap;
+static int telemetry_plt_raw_read_eventlog(enum telemetry_unit telem_unit,
+					   struct telemetry_evtlog *evtlog,
+					   int len, int log_all_evts)
+{
+	int index, idx1, ret, readlen = len;
+	struct telem_ssram_region ssram_region;
+	struct telemetry_evtmap *evtmap;
 
-	चयन (telem_unit)	अणु
-	हाल TELEM_PSS:
-		evपंचांगap = telm_conf->pss_config.telem_evts;
-		अवरोध;
+	switch (telem_unit)	{
+	case TELEM_PSS:
+		evtmap = telm_conf->pss_config.telem_evts;
+		break;
 
-	हाल TELEM_IOSS:
-		evपंचांगap = telm_conf->ioss_config.telem_evts;
-		अवरोध;
+	case TELEM_IOSS:
+		evtmap = telm_conf->ioss_config.telem_evts;
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown Telemetry Unit Specified %d\n", telem_unit);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!log_all_evts)
-		पढ़ोlen = TELEM_MAX_EVENTS_SRAM;
+	if (!log_all_evts)
+		readlen = TELEM_MAX_EVENTS_SRAM;
 
-	ret = telem_evtlog_पढ़ो(telem_unit, &ssram_region, पढ़ोlen);
-	अगर (ret < 0)
-		वापस ret;
+	ret = telem_evtlog_read(telem_unit, &ssram_region, readlen);
+	if (ret < 0)
+		return ret;
 
-	/* Invalid evt-id array specअगरied via length mismatch */
-	अगर ((!log_all_evts) && (len > ret))
-		वापस -EINVAL;
+	/* Invalid evt-id array specified via length mismatch */
+	if ((!log_all_evts) && (len > ret))
+		return -EINVAL;
 
-	अगर (log_all_evts)
-		क्रम (index = 0; index < ret; index++) अणु
+	if (log_all_evts)
+		for (index = 0; index < ret; index++) {
 			evtlog[index].telem_evtlog = ssram_region.events[index];
-			evtlog[index].telem_evtid = evपंचांगap[index].evt_id;
-		पूर्ण
-	अन्यथा
-		क्रम (index = 0, पढ़ोlen = 0; (index < ret) && (पढ़ोlen < len);
-		     index++) अणु
-			क्रम (idx1 = 0; idx1 < len; idx1++) अणु
+			evtlog[index].telem_evtid = evtmap[index].evt_id;
+		}
+	else
+		for (index = 0, readlen = 0; (index < ret) && (readlen < len);
+		     index++) {
+			for (idx1 = 0; idx1 < len; idx1++) {
 				/* Elements matched */
-				अगर (evपंचांगap[index].evt_id ==
-				    evtlog[idx1].telem_evtid) अणु
+				if (evtmap[index].evt_id ==
+				    evtlog[idx1].telem_evtid) {
 					evtlog[idx1].telem_evtlog =
 					ssram_region.events[index];
-					पढ़ोlen++;
+					readlen++;
 
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					break;
+				}
+			}
+		}
 
-	वापस पढ़ोlen;
-पूर्ण
+	return readlen;
+}
 
-अटल पूर्णांक telemetry_plt_पढ़ो_eventlog(क्रमागत telemetry_unit telem_unit,
-		काष्ठा telemetry_evtlog *evtlog, पूर्णांक len, पूर्णांक log_all_evts)
-अणु
-	पूर्णांक ret;
+static int telemetry_plt_read_eventlog(enum telemetry_unit telem_unit,
+		struct telemetry_evtlog *evtlog, int len, int log_all_evts)
+{
+	int ret;
 
 	mutex_lock(&(telm_conf->telem_lock));
-	ret = telemetry_plt_raw_पढ़ो_eventlog(telem_unit, evtlog,
+	ret = telemetry_plt_raw_read_eventlog(telem_unit, evtlog,
 					      len, log_all_evts);
 	mutex_unlock(&(telm_conf->telem_lock));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telemetry_plt_get_trace_verbosity(क्रमागत telemetry_unit telem_unit,
+static int telemetry_plt_get_trace_verbosity(enum telemetry_unit telem_unit,
 					     u32 *verbosity)
-अणु
+{
 	u32 temp = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (verbosity == शून्य)
-		वापस -EINVAL;
+	if (verbosity == NULL)
+		return -EINVAL;
 
 	mutex_lock(&(telm_conf->telem_trace_lock));
-	चयन (telem_unit) अणु
-	हाल TELEM_PSS:
-		ret = पूर्णांकel_punit_ipc_command(
+	switch (telem_unit) {
+	case TELEM_PSS:
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_READ_TELE_TRACE_CTRL,
-				0, 0, शून्य, &temp);
-		अगर (ret) अणु
+				0, 0, NULL, &temp);
+		if (ret) {
 			pr_err("PSS TRACE_CTRL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अवरोध;
+		break;
 
-	हाल TELEM_IOSS:
-		ret = पूर्णांकel_scu_ipc_dev_command(telm_conf->scu,
+	case TELEM_IOSS:
+		ret = intel_scu_ipc_dev_command(telm_conf->scu,
 				IOSS_TELEM, IOSS_TELEM_TRACE_CTL_READ,
-				शून्य, 0, &temp, माप(temp));
-		अगर (ret) अणु
+				NULL, 0, &temp, sizeof(temp));
+		if (ret) {
 			pr_err("IOSS TRACE_CTL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown Telemetry Unit Specified %d\n", telem_unit);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	TELEM_EXTRACT_VERBOSITY(temp, *verbosity);
 
 out:
 	mutex_unlock(&(telm_conf->telem_trace_lock));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telemetry_plt_set_trace_verbosity(क्रमागत telemetry_unit telem_unit,
+static int telemetry_plt_set_trace_verbosity(enum telemetry_unit telem_unit,
 					     u32 verbosity)
-अणु
+{
 	u32 temp = 0;
-	पूर्णांक ret;
+	int ret;
 
 	verbosity &= TELEM_TRC_VERBOSITY_MASK;
 
 	mutex_lock(&(telm_conf->telem_trace_lock));
-	चयन (telem_unit) अणु
-	हाल TELEM_PSS:
-		ret = पूर्णांकel_punit_ipc_command(
+	switch (telem_unit) {
+	case TELEM_PSS:
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_READ_TELE_TRACE_CTRL,
-				0, 0, शून्य, &temp);
-		अगर (ret) अणु
+				0, 0, NULL, &temp);
+		if (ret) {
 			pr_err("PSS TRACE_CTRL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		TELEM_CLEAR_VERBOSITY_BITS(temp);
 		TELEM_SET_VERBOSITY_BITS(temp, verbosity);
 
-		ret = पूर्णांकel_punit_ipc_command(
+		ret = intel_punit_ipc_command(
 				IPC_PUNIT_BIOS_WRITE_TELE_TRACE_CTRL,
-				0, 0, &temp, शून्य);
-		अगर (ret) अणु
+				0, 0, &temp, NULL);
+		if (ret) {
 			pr_err("PSS TRACE_CTRL Verbosity Set Failed\n");
-			जाओ out;
-		पूर्ण
-		अवरोध;
+			goto out;
+		}
+		break;
 
-	हाल TELEM_IOSS:
-		ret = पूर्णांकel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
+	case TELEM_IOSS:
+		ret = intel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
 						IOSS_TELEM_TRACE_CTL_READ,
-						शून्य, 0, &temp, माप(temp));
-		अगर (ret) अणु
+						NULL, 0, &temp, sizeof(temp));
+		if (ret) {
 			pr_err("IOSS TRACE_CTL Read Failed\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		TELEM_CLEAR_VERBOSITY_BITS(temp);
 		TELEM_SET_VERBOSITY_BITS(temp, verbosity);
 
-		ret = पूर्णांकel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
+		ret = intel_scu_ipc_dev_command(telm_conf->scu, IOSS_TELEM,
 						IOSS_TELEM_TRACE_CTL_WRITE,
-						&temp, माप(temp), शून्य, 0);
-		अगर (ret) अणु
+						&temp, sizeof(temp), NULL, 0);
+		if (ret) {
 			pr_err("IOSS TRACE_CTL Verbosity Set Failed\n");
-			जाओ out;
-		पूर्ण
-		अवरोध;
+			goto out;
+		}
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown Telemetry Unit Specified %d\n", telem_unit);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
 	mutex_unlock(&(telm_conf->telem_trace_lock));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा telemetry_core_ops telm_pltops = अणु
+static const struct telemetry_core_ops telm_pltops = {
 	.get_trace_verbosity = telemetry_plt_get_trace_verbosity,
 	.set_trace_verbosity = telemetry_plt_set_trace_verbosity,
 	.set_sampling_period = telemetry_plt_set_sampling_period,
 	.get_sampling_period = telemetry_plt_get_sampling_period,
-	.raw_पढ़ो_eventlog = telemetry_plt_raw_पढ़ो_eventlog,
+	.raw_read_eventlog = telemetry_plt_raw_read_eventlog,
 	.get_eventconfig = telemetry_plt_get_eventconfig,
 	.update_events = telemetry_plt_update_events,
-	.पढ़ो_eventlog = telemetry_plt_पढ़ो_eventlog,
+	.read_eventlog = telemetry_plt_read_eventlog,
 	.reset_events = telemetry_plt_reset_events,
 	.add_events = telemetry_plt_add_events,
-पूर्ण;
+};
 
-अटल पूर्णांक telemetry_pltdrv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा x86_cpu_id *id;
-	व्योम __iomem *mem;
-	पूर्णांक ret;
+static int telemetry_pltdrv_probe(struct platform_device *pdev)
+{
+	const struct x86_cpu_id *id;
+	void __iomem *mem;
+	int ret;
 
 	id = x86_match_cpu(telemetry_cpu_ids);
-	अगर (!id)
-		वापस -ENODEV;
+	if (!id)
+		return -ENODEV;
 
-	telm_conf = (काष्ठा telemetry_plt_config *)id->driver_data;
+	telm_conf = (struct telemetry_plt_config *)id->driver_data;
 
 	telm_conf->pmc = dev_get_drvdata(pdev->dev.parent);
 
-	mem = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mem))
-		वापस PTR_ERR(mem);
+	mem = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mem))
+		return PTR_ERR(mem);
 
 	telm_conf->pss_config.regmap = mem;
 
-	mem = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(mem))
-		वापस PTR_ERR(mem);
+	mem = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(mem))
+		return PTR_ERR(mem);
 
 	telm_conf->ioss_config.regmap = mem;
 
-	telm_conf->scu = devm_पूर्णांकel_scu_ipc_dev_get(&pdev->dev);
-	अगर (!telm_conf->scu) अणु
+	telm_conf->scu = devm_intel_scu_ipc_dev_get(&pdev->dev);
+	if (!telm_conf->scu) {
 		ret = -EPROBE_DEFER;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_init(&telm_conf->telem_lock);
 	mutex_init(&telm_conf->telem_trace_lock);
 
 	ret = telemetry_setup(pdev);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = telemetry_set_pltdata(&telm_pltops, telm_conf);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "TELEMETRY Set Pltops Failed.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 
 out:
 	dev_err(&pdev->dev, "TELEMETRY Setup Failed.\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक telemetry_pltdrv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int telemetry_pltdrv_remove(struct platform_device *pdev)
+{
 	telemetry_clear_pltdata();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver telemetry_soc_driver = अणु
+static struct platform_driver telemetry_soc_driver = {
 	.probe		= telemetry_pltdrv_probe,
-	.हटाओ		= telemetry_pltdrv_हटाओ,
-	.driver		= अणु
+	.remove		= telemetry_pltdrv_remove,
+	.driver		= {
 		.name	= DRIVER_NAME,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init telemetry_module_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&telemetry_soc_driver);
-पूर्ण
+static int __init telemetry_module_init(void)
+{
+	return platform_driver_register(&telemetry_soc_driver);
+}
 
-अटल व्योम __निकास telemetry_module_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&telemetry_soc_driver);
-पूर्ण
+static void __exit telemetry_module_exit(void)
+{
+	platform_driver_unregister(&telemetry_soc_driver);
+}
 
 device_initcall(telemetry_module_init);
-module_निकास(telemetry_module_निकास);
+module_exit(telemetry_module_exit);
 
 MODULE_AUTHOR("Souvik Kumar Chakravarty <souvik.k.chakravarty@intel.com>");
 MODULE_DESCRIPTION("Intel SoC Telemetry Platform Driver");

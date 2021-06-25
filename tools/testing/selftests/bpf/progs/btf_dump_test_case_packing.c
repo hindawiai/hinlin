@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * BTF-to-C dumper tests क्रम काष्ठा packing determination.
+ * BTF-to-C dumper tests for struct packing determination.
  *
  * Copyright (c) 2019 Facebook
  */
 /* ----- START-EXPECTED-OUTPUT ----- */
-काष्ठा packed_trailing_space अणु
-	पूर्णांक a;
-	लघु b;
-पूर्ण __attribute__((packed));
+struct packed_trailing_space {
+	int a;
+	short b;
+} __attribute__((packed));
 
-काष्ठा non_packed_trailing_space अणु
-	पूर्णांक a;
-	लघु b;
-पूर्ण;
+struct non_packed_trailing_space {
+	int a;
+	short b;
+};
 
-काष्ठा packed_fields अणु
-	लघु a;
-	पूर्णांक b;
-पूर्ण __attribute__((packed));
+struct packed_fields {
+	short a;
+	int b;
+} __attribute__((packed));
 
-काष्ठा non_packed_fields अणु
-	लघु a;
-	पूर्णांक b;
-पूर्ण;
+struct non_packed_fields {
+	short a;
+	int b;
+};
 
-काष्ठा nested_packed अणु
-	अक्षर: 4;
-	पूर्णांक a: 4;
-	दीर्घ पूर्णांक b;
-	काष्ठा अणु
-		अक्षर c;
-		पूर्णांक d;
-	पूर्ण __attribute__((packed)) e;
-पूर्ण __attribute__((packed));
+struct nested_packed {
+	char: 4;
+	int a: 4;
+	long int b;
+	struct {
+		char c;
+		int d;
+	} __attribute__((packed)) e;
+} __attribute__((packed));
 
-जोड़ जोड़_is_never_packed अणु
-	पूर्णांक a: 4;
-	अक्षर b;
-	अक्षर c: 1;
-पूर्ण;
+union union_is_never_packed {
+	int a: 4;
+	char b;
+	char c: 1;
+};
 
-जोड़ जोड़_करोes_not_need_packing अणु
-	काष्ठा अणु
-		दीर्घ पूर्णांक a;
-		पूर्णांक b;
-	पूर्ण __attribute__((packed));
-	पूर्णांक c;
-पूर्ण;
+union union_does_not_need_packing {
+	struct {
+		long int a;
+		int b;
+	} __attribute__((packed));
+	int c;
+};
 
-जोड़ jump_code_जोड़ अणु
-	अक्षर code[5];
-	काष्ठा अणु
-		अक्षर jump;
-		पूर्णांक offset;
-	पूर्ण __attribute__((packed));
-पूर्ण;
+union jump_code_union {
+	char code[5];
+	struct {
+		char jump;
+		int offset;
+	} __attribute__((packed));
+};
 
 /*------ END-EXPECTED-OUTPUT ------ */
 
-पूर्णांक f(काष्ठा अणु
-	काष्ठा packed_trailing_space _1;
-	काष्ठा non_packed_trailing_space _2;
-	काष्ठा packed_fields _3;
-	काष्ठा non_packed_fields _4;
-	काष्ठा nested_packed _5;
-	जोड़ जोड़_is_never_packed _6;
-	जोड़ जोड़_करोes_not_need_packing _7;
-	जोड़ jump_code_जोड़ _8;
-पूर्ण *_)
-अणु
-	वापस 0;
-पूर्ण
+int f(struct {
+	struct packed_trailing_space _1;
+	struct non_packed_trailing_space _2;
+	struct packed_fields _3;
+	struct non_packed_fields _4;
+	struct nested_packed _5;
+	union union_is_never_packed _6;
+	union union_does_not_need_packing _7;
+	union jump_code_union _8;
+} *_)
+{
+	return 0;
+}

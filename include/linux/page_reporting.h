@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PAGE_REPORTING_H
-#घोषणा _LINUX_PAGE_REPORTING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PAGE_REPORTING_H
+#define _LINUX_PAGE_REPORTING_H
 
-#समावेश <linux/mmzone.h>
-#समावेश <linux/scatterlist.h>
+#include <linux/mmzone.h>
+#include <linux/scatterlist.h>
 
-/* This value should always be a घातer of 2, see page_reporting_cycle() */
-#घोषणा PAGE_REPORTING_CAPACITY		32
+/* This value should always be a power of 2, see page_reporting_cycle() */
+#define PAGE_REPORTING_CAPACITY		32
 
-काष्ठा page_reporting_dev_info अणु
+struct page_reporting_dev_info {
 	/* function that alters pages to make them "reported" */
-	पूर्णांक (*report)(काष्ठा page_reporting_dev_info *prdev,
-		      काष्ठा scatterlist *sg, अचिन्हित पूर्णांक nents);
+	int (*report)(struct page_reporting_dev_info *prdev,
+		      struct scatterlist *sg, unsigned int nents);
 
-	/* work काष्ठा क्रम processing reports */
-	काष्ठा delayed_work work;
+	/* work struct for processing reports */
+	struct delayed_work work;
 
 	/* Current state of page reporting */
 	atomic_t state;
-पूर्ण;
+};
 
-/* Tear-करोwn and bring-up क्रम page reporting devices */
-व्योम page_reporting_unरेजिस्टर(काष्ठा page_reporting_dev_info *prdev);
-पूर्णांक page_reporting_रेजिस्टर(काष्ठा page_reporting_dev_info *prdev);
-#पूर्ण_अगर /*_LINUX_PAGE_REPORTING_H */
+/* Tear-down and bring-up for page reporting devices */
+void page_reporting_unregister(struct page_reporting_dev_info *prdev);
+int page_reporting_register(struct page_reporting_dev_info *prdev);
+#endif /*_LINUX_PAGE_REPORTING_H */

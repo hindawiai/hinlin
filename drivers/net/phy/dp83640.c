@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम the National Semiconductor DP83640 PHYTER
+ * Driver for the National Semiconductor DP83640 PHYTER
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/crc32.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/ptp_classअगरy.h>
-#समावेश <linux/ptp_घड़ी_kernel.h>
+#include <linux/crc32.h>
+#include <linux/ethtool.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mii.h>
+#include <linux/module.h>
+#include <linux/net_tstamp.h>
+#include <linux/netdevice.h>
+#include <linux/if_vlan.h>
+#include <linux/phy.h>
+#include <linux/ptp_classify.h>
+#include <linux/ptp_clock_kernel.h>
 
-#समावेश "dp83640_reg.h"
+#include "dp83640_reg.h"
 
-#घोषणा DP83640_PHY_ID	0x20005ce1
-#घोषणा PAGESEL		0x13
-#घोषणा MAX_RXTS	64
-#घोषणा N_EXT_TS	6
-#घोषणा N_PER_OUT	7
-#घोषणा PSF_PTPVER	2
-#घोषणा PSF_EVNT	0x4000
-#घोषणा PSF_RX		0x2000
-#घोषणा PSF_TX		0x1000
-#घोषणा EXT_EVENT	1
-#घोषणा CAL_EVENT	7
-#घोषणा CAL_TRIGGER	1
-#घोषणा DP83640_N_PINS	12
+#define DP83640_PHY_ID	0x20005ce1
+#define PAGESEL		0x13
+#define MAX_RXTS	64
+#define N_EXT_TS	6
+#define N_PER_OUT	7
+#define PSF_PTPVER	2
+#define PSF_EVNT	0x4000
+#define PSF_RX		0x2000
+#define PSF_TX		0x1000
+#define EXT_EVENT	1
+#define CAL_EVENT	7
+#define CAL_TRIGGER	1
+#define DP83640_N_PINS	12
 
-#घोषणा MII_DP83640_MICR 0x11
-#घोषणा MII_DP83640_MISR 0x12
+#define MII_DP83640_MICR 0x11
+#define MII_DP83640_MISR 0x12
 
-#घोषणा MII_DP83640_MICR_OE 0x1
-#घोषणा MII_DP83640_MICR_IE 0x2
+#define MII_DP83640_MICR_OE 0x1
+#define MII_DP83640_MICR_IE 0x2
 
-#घोषणा MII_DP83640_MISR_RHF_INT_EN 0x01
-#घोषणा MII_DP83640_MISR_FHF_INT_EN 0x02
-#घोषणा MII_DP83640_MISR_ANC_INT_EN 0x04
-#घोषणा MII_DP83640_MISR_DUP_INT_EN 0x08
-#घोषणा MII_DP83640_MISR_SPD_INT_EN 0x10
-#घोषणा MII_DP83640_MISR_LINK_INT_EN 0x20
-#घोषणा MII_DP83640_MISR_ED_INT_EN 0x40
-#घोषणा MII_DP83640_MISR_LQ_INT_EN 0x80
-#घोषणा MII_DP83640_MISR_ANC_INT 0x400
-#घोषणा MII_DP83640_MISR_DUP_INT 0x800
-#घोषणा MII_DP83640_MISR_SPD_INT 0x1000
-#घोषणा MII_DP83640_MISR_LINK_INT 0x2000
-#घोषणा MII_DP83640_MISR_INT_MASK (MII_DP83640_MISR_ANC_INT |\
+#define MII_DP83640_MISR_RHF_INT_EN 0x01
+#define MII_DP83640_MISR_FHF_INT_EN 0x02
+#define MII_DP83640_MISR_ANC_INT_EN 0x04
+#define MII_DP83640_MISR_DUP_INT_EN 0x08
+#define MII_DP83640_MISR_SPD_INT_EN 0x10
+#define MII_DP83640_MISR_LINK_INT_EN 0x20
+#define MII_DP83640_MISR_ED_INT_EN 0x40
+#define MII_DP83640_MISR_LQ_INT_EN 0x80
+#define MII_DP83640_MISR_ANC_INT 0x400
+#define MII_DP83640_MISR_DUP_INT 0x800
+#define MII_DP83640_MISR_SPD_INT 0x1000
+#define MII_DP83640_MISR_LINK_INT 0x2000
+#define MII_DP83640_MISR_INT_MASK (MII_DP83640_MISR_ANC_INT |\
 				   MII_DP83640_MISR_DUP_INT |\
 				   MII_DP83640_MISR_SPD_INT |\
 				   MII_DP83640_MISR_LINK_INT)
 
 /* phyter seems to miss the mark by 16 ns */
-#घोषणा ADJTIME_FIX	16
+#define ADJTIME_FIX	16
 
-#घोषणा SKB_TIMESTAMP_TIMEOUT	2 /* jअगरfies */
+#define SKB_TIMESTAMP_TIMEOUT	2 /* jiffies */
 
-#अगर defined(__BIG_ENDIAN)
-#घोषणा ENDIAN_FLAG	0
-#या_अगर defined(__LITTLE_ENDIAN)
-#घोषणा ENDIAN_FLAG	PSF_ENDIAN
-#पूर्ण_अगर
+#if defined(__BIG_ENDIAN)
+#define ENDIAN_FLAG	0
+#elif defined(__LITTLE_ENDIAN)
+#define ENDIAN_FLAG	PSF_ENDIAN
+#endif
 
-काष्ठा dp83640_skb_info अणु
-	पूर्णांक ptp_type;
-	अचिन्हित दीर्घ पंचांगo;
-पूर्ण;
+struct dp83640_skb_info {
+	int ptp_type;
+	unsigned long tmo;
+};
 
-काष्ठा phy_rxts अणु
+struct phy_rxts {
 	u16 ns_lo;   /* ns[15:0] */
 	u16 ns_hi;   /* overflow[1:0], ns[29:16] */
 	u16 sec_lo;  /* sec[15:0] */
 	u16 sec_hi;  /* sec[31:16] */
 	u16 seqid;   /* sequenceId[15:0] */
 	u16 msgtype; /* messageType[3:0], hash[11:0] */
-पूर्ण;
+};
 
-काष्ठा phy_txts अणु
+struct phy_txts {
 	u16 ns_lo;   /* ns[15:0] */
 	u16 ns_hi;   /* overflow[1:0], ns[29:16] */
 	u16 sec_lo;  /* sec[15:0] */
 	u16 sec_hi;  /* sec[31:16] */
-पूर्ण;
+};
 
-काष्ठा rxts अणु
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ पंचांगo;
+struct rxts {
+	struct list_head list;
+	unsigned long tmo;
 	u64 ns;
 	u16 seqid;
 	u8  msgtype;
 	u16 hash;
-पूर्ण;
+};
 
-काष्ठा dp83640_घड़ी;
+struct dp83640_clock;
 
-काष्ठा dp83640_निजी अणु
-	काष्ठा list_head list;
-	काष्ठा dp83640_घड़ी *घड़ी;
-	काष्ठा phy_device *phydev;
-	काष्ठा mii_बारtamper mii_ts;
-	काष्ठा delayed_work ts_work;
-	पूर्णांक hwts_tx_en;
-	पूर्णांक hwts_rx_en;
-	पूर्णांक layer;
-	पूर्णांक version;
+struct dp83640_private {
+	struct list_head list;
+	struct dp83640_clock *clock;
+	struct phy_device *phydev;
+	struct mii_timestamper mii_ts;
+	struct delayed_work ts_work;
+	int hwts_tx_en;
+	int hwts_rx_en;
+	int layer;
+	int version;
 	/* remember state of cfg0 during calibration */
-	पूर्णांक cfg0;
-	/* remember the last event समय stamp */
-	काष्ठा phy_txts edata;
-	/* list of rx बारtamps */
-	काष्ठा list_head rxts;
-	काष्ठा list_head rxpool;
-	काष्ठा rxts rx_pool_data[MAX_RXTS];
+	int cfg0;
+	/* remember the last event time stamp */
+	struct phy_txts edata;
+	/* list of rx timestamps */
+	struct list_head rxts;
+	struct list_head rxpool;
+	struct rxts rx_pool_data[MAX_RXTS];
 	/* protects above three fields from concurrent access */
 	spinlock_t rx_lock;
 	/* queues of incoming and outgoing packets */
-	काष्ठा sk_buff_head rx_queue;
-	काष्ठा sk_buff_head tx_queue;
-पूर्ण;
+	struct sk_buff_head rx_queue;
+	struct sk_buff_head tx_queue;
+};
 
-काष्ठा dp83640_घड़ी अणु
+struct dp83640_clock {
 	/* keeps the instance in the 'phyter_clocks' list */
-	काष्ठा list_head list;
-	/* we create one घड़ी instance per MII bus */
-	काष्ठा mii_bus *bus;
-	/* protects extended रेजिस्टरs from concurrent access */
-	काष्ठा mutex extreg_lock;
+	struct list_head list;
+	/* we create one clock instance per MII bus */
+	struct mii_bus *bus;
+	/* protects extended registers from concurrent access */
+	struct mutex extreg_lock;
 	/* remembers which page was last selected */
-	पूर्णांक page;
+	int page;
 	/* our advertised capabilities */
-	काष्ठा ptp_घड़ी_info caps;
+	struct ptp_clock_info caps;
 	/* protects the three fields below from concurrent access */
-	काष्ठा mutex घड़ी_lock;
-	/* the one phyter from which we shall पढ़ो */
-	काष्ठा dp83640_निजी *chosen;
+	struct mutex clock_lock;
+	/* the one phyter from which we shall read */
+	struct dp83640_private *chosen;
 	/* list of the other attached phyters, not chosen */
-	काष्ठा list_head phylist;
-	/* reference to our PTP hardware घड़ी */
-	काष्ठा ptp_घड़ी *ptp_घड़ी;
-पूर्ण;
+	struct list_head phylist;
+	/* reference to our PTP hardware clock */
+	struct ptp_clock *ptp_clock;
+};
 
 /* globals */
 
-क्रमागत अणु
+enum {
 	CALIBRATE_GPIO,
 	PEROUT_GPIO,
 	EXTTS0_GPIO,
@@ -161,36 +160,36 @@
 	EXTTS4_GPIO,
 	EXTTS5_GPIO,
 	GPIO_TABLE_SIZE
-पूर्ण;
+};
 
-अटल पूर्णांक chosen_phy = -1;
-अटल uलघु gpio_tab[GPIO_TABLE_SIZE] = अणु
+static int chosen_phy = -1;
+static ushort gpio_tab[GPIO_TABLE_SIZE] = {
 	1, 2, 3, 4, 8, 9, 10, 11
-पूर्ण;
+};
 
-module_param(chosen_phy, पूर्णांक, 0444);
-module_param_array(gpio_tab, uलघु, शून्य, 0444);
+module_param(chosen_phy, int, 0444);
+module_param_array(gpio_tab, ushort, NULL, 0444);
 
 MODULE_PARM_DESC(chosen_phy, \
 	"The address of the PHY to use for the ancillary clock features");
 MODULE_PARM_DESC(gpio_tab, \
 	"Which GPIO line to use for which purpose: cal,perout,extts1,...,extts6");
 
-अटल व्योम dp83640_gpio_शेषs(काष्ठा ptp_pin_desc *pd)
-अणु
-	पूर्णांक i, index;
+static void dp83640_gpio_defaults(struct ptp_pin_desc *pd)
+{
+	int i, index;
 
-	क्रम (i = 0; i < DP83640_N_PINS; i++) अणु
-		snम_लिखो(pd[i].name, माप(pd[i].name), "GPIO%d", 1 + i);
+	for (i = 0; i < DP83640_N_PINS; i++) {
+		snprintf(pd[i].name, sizeof(pd[i].name), "GPIO%d", 1 + i);
 		pd[i].index = i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < GPIO_TABLE_SIZE; i++) अणु
-		अगर (gpio_tab[i] < 1 || gpio_tab[i] > DP83640_N_PINS) अणु
+	for (i = 0; i < GPIO_TABLE_SIZE; i++) {
+		if (gpio_tab[i] < 1 || gpio_tab[i] > DP83640_N_PINS) {
 			pr_err("gpio_tab[%d]=%hu out of range", i, gpio_tab[i]);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	index = gpio_tab[CALIBRATE_GPIO] - 1;
 	pd[index].func = PTP_PF_PHYSYNC;
@@ -200,78 +199,78 @@ MODULE_PARM_DESC(gpio_tab, \
 	pd[index].func = PTP_PF_PEROUT;
 	pd[index].chan = 0;
 
-	क्रम (i = EXTTS0_GPIO; i < GPIO_TABLE_SIZE; i++) अणु
+	for (i = EXTTS0_GPIO; i < GPIO_TABLE_SIZE; i++) {
 		index = gpio_tab[i] - 1;
 		pd[index].func = PTP_PF_EXTTS;
 		pd[index].chan = i - EXTTS0_GPIO;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* a list of घड़ीs and a mutex to protect it */
-अटल LIST_HEAD(phyter_घड़ीs);
-अटल DEFINE_MUTEX(phyter_घड़ीs_lock);
+/* a list of clocks and a mutex to protect it */
+static LIST_HEAD(phyter_clocks);
+static DEFINE_MUTEX(phyter_clocks_lock);
 
-अटल व्योम rx_बारtamp_work(काष्ठा work_काष्ठा *work);
+static void rx_timestamp_work(struct work_struct *work);
 
-/* extended रेजिस्टर access functions */
+/* extended register access functions */
 
-#घोषणा BROADCAST_ADDR 31
+#define BROADCAST_ADDR 31
 
-अटल अंतरभूत पूर्णांक broadcast_ग_लिखो(काष्ठा phy_device *phydev, u32 regnum,
+static inline int broadcast_write(struct phy_device *phydev, u32 regnum,
 				  u16 val)
-अणु
-	वापस mdiobus_ग_लिखो(phydev->mdio.bus, BROADCAST_ADDR, regnum, val);
-पूर्ण
+{
+	return mdiobus_write(phydev->mdio.bus, BROADCAST_ADDR, regnum, val);
+}
 
 /* Caller must hold extreg_lock. */
-अटल पूर्णांक ext_पढ़ो(काष्ठा phy_device *phydev, पूर्णांक page, u32 regnum)
-अणु
-	काष्ठा dp83640_निजी *dp83640 = phydev->priv;
-	पूर्णांक val;
+static int ext_read(struct phy_device *phydev, int page, u32 regnum)
+{
+	struct dp83640_private *dp83640 = phydev->priv;
+	int val;
 
-	अगर (dp83640->घड़ी->page != page) अणु
-		broadcast_ग_लिखो(phydev, PAGESEL, page);
-		dp83640->घड़ी->page = page;
-	पूर्ण
-	val = phy_पढ़ो(phydev, regnum);
+	if (dp83640->clock->page != page) {
+		broadcast_write(phydev, PAGESEL, page);
+		dp83640->clock->page = page;
+	}
+	val = phy_read(phydev, regnum);
 
-	वापस val;
-पूर्ण
-
-/* Caller must hold extreg_lock. */
-अटल व्योम ext_ग_लिखो(पूर्णांक broadcast, काष्ठा phy_device *phydev,
-		      पूर्णांक page, u32 regnum, u16 val)
-अणु
-	काष्ठा dp83640_निजी *dp83640 = phydev->priv;
-
-	अगर (dp83640->घड़ी->page != page) अणु
-		broadcast_ग_लिखो(phydev, PAGESEL, page);
-		dp83640->घड़ी->page = page;
-	पूर्ण
-	अगर (broadcast)
-		broadcast_ग_लिखो(phydev, regnum, val);
-	अन्यथा
-		phy_ग_लिखो(phydev, regnum, val);
-पूर्ण
+	return val;
+}
 
 /* Caller must hold extreg_lock. */
-अटल पूर्णांक tdr_ग_लिखो(पूर्णांक bc, काष्ठा phy_device *dev,
-		     स्थिर काष्ठा बारpec64 *ts, u16 cmd)
-अणु
-	ext_ग_लिखो(bc, dev, PAGE4, PTP_TDR, ts->tv_nsec & 0xffff);/* ns[15:0]  */
-	ext_ग_लिखो(bc, dev, PAGE4, PTP_TDR, ts->tv_nsec >> 16);   /* ns[31:16] */
-	ext_ग_लिखो(bc, dev, PAGE4, PTP_TDR, ts->tv_sec & 0xffff); /* sec[15:0] */
-	ext_ग_लिखो(bc, dev, PAGE4, PTP_TDR, ts->tv_sec >> 16);    /* sec[31:16]*/
+static void ext_write(int broadcast, struct phy_device *phydev,
+		      int page, u32 regnum, u16 val)
+{
+	struct dp83640_private *dp83640 = phydev->priv;
 
-	ext_ग_लिखो(bc, dev, PAGE4, PTP_CTL, cmd);
+	if (dp83640->clock->page != page) {
+		broadcast_write(phydev, PAGESEL, page);
+		dp83640->clock->page = page;
+	}
+	if (broadcast)
+		broadcast_write(phydev, regnum, val);
+	else
+		phy_write(phydev, regnum, val);
+}
 
-	वापस 0;
-पूर्ण
+/* Caller must hold extreg_lock. */
+static int tdr_write(int bc, struct phy_device *dev,
+		     const struct timespec64 *ts, u16 cmd)
+{
+	ext_write(bc, dev, PAGE4, PTP_TDR, ts->tv_nsec & 0xffff);/* ns[15:0]  */
+	ext_write(bc, dev, PAGE4, PTP_TDR, ts->tv_nsec >> 16);   /* ns[31:16] */
+	ext_write(bc, dev, PAGE4, PTP_TDR, ts->tv_sec & 0xffff); /* sec[15:0] */
+	ext_write(bc, dev, PAGE4, PTP_TDR, ts->tv_sec >> 16);    /* sec[31:16]*/
 
-/* convert phy बारtamps पूर्णांकo driver बारtamps */
+	ext_write(bc, dev, PAGE4, PTP_CTL, cmd);
 
-अटल व्योम phy2rxts(काष्ठा phy_rxts *p, काष्ठा rxts *rxts)
-अणु
+	return 0;
+}
+
+/* convert phy timestamps into driver timestamps */
+
+static void phy2rxts(struct phy_rxts *p, struct rxts *rxts)
+{
 	u32 sec;
 
 	sec = p->sec_lo;
@@ -283,11 +282,11 @@ MODULE_PARM_DESC(gpio_tab, \
 	rxts->seqid = p->seqid;
 	rxts->msgtype = (p->msgtype >> 12) & 0xf;
 	rxts->hash = p->msgtype & 0x0fff;
-	rxts->पंचांगo = jअगरfies + SKB_TIMESTAMP_TIMEOUT;
-पूर्ण
+	rxts->tmo = jiffies + SKB_TIMESTAMP_TIMEOUT;
+}
 
-अटल u64 phy2txts(काष्ठा phy_txts *p)
-अणु
+static u64 phy2txts(struct phy_txts *p)
+{
 	u64 ns;
 	u32 sec;
 
@@ -298,26 +297,26 @@ MODULE_PARM_DESC(gpio_tab, \
 	ns |= (p->ns_hi & 0x3fff) << 16;
 	ns += ((u64)sec) * 1000000000ULL;
 
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल पूर्णांक periodic_output(काष्ठा dp83640_घड़ी *घड़ी,
-			   काष्ठा ptp_घड़ी_request *clkreq, bool on,
-			   पूर्णांक trigger)
-अणु
-	काष्ठा dp83640_निजी *dp83640 = घड़ी->chosen;
-	काष्ठा phy_device *phydev = dp83640->phydev;
+static int periodic_output(struct dp83640_clock *clock,
+			   struct ptp_clock_request *clkreq, bool on,
+			   int trigger)
+{
+	struct dp83640_private *dp83640 = clock->chosen;
+	struct phy_device *phydev = dp83640->phydev;
 	u32 sec, nsec, pwidth;
 	u16 gpio, ptp_trig, val;
 
-	अगर (on) अणु
-		gpio = 1 + ptp_find_pin(घड़ी->ptp_घड़ी, PTP_PF_PEROUT,
+	if (on) {
+		gpio = 1 + ptp_find_pin(clock->ptp_clock, PTP_PF_PEROUT,
 					trigger);
-		अगर (gpio < 1)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		if (gpio < 1)
+			return -EINVAL;
+	} else {
 		gpio = 0;
-	पूर्ण
+	}
 
 	ptp_trig = TRIG_WR |
 		(trigger & TRIG_CSEL_MASK) << TRIG_CSEL_SHIFT |
@@ -327,14 +326,14 @@ MODULE_PARM_DESC(gpio_tab, \
 
 	val = (trigger & TRIG_SEL_MASK) << TRIG_SEL_SHIFT;
 
-	अगर (!on) अणु
+	if (!on) {
 		val |= TRIG_DIS;
-		mutex_lock(&घड़ी->extreg_lock);
-		ext_ग_लिखो(0, phydev, PAGE5, PTP_TRIG, ptp_trig);
-		ext_ग_लिखो(0, phydev, PAGE4, PTP_CTL, val);
-		mutex_unlock(&घड़ी->extreg_lock);
-		वापस 0;
-	पूर्ण
+		mutex_lock(&clock->extreg_lock);
+		ext_write(0, phydev, PAGE5, PTP_TRIG, ptp_trig);
+		ext_write(0, phydev, PAGE4, PTP_CTL, val);
+		mutex_unlock(&clock->extreg_lock);
+		return 0;
+	}
 
 	sec = clkreq->perout.start.sec;
 	nsec = clkreq->perout.start.nsec;
@@ -342,336 +341,336 @@ MODULE_PARM_DESC(gpio_tab, \
 	pwidth += clkreq->perout.period.nsec;
 	pwidth /= 2;
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	ext_ग_लिखो(0, phydev, PAGE5, PTP_TRIG, ptp_trig);
+	ext_write(0, phydev, PAGE5, PTP_TRIG, ptp_trig);
 
 	/*load trigger*/
 	val |= TRIG_LOAD;
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_CTL, val);
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, nsec & 0xffff);   /* ns[15:0] */
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, nsec >> 16);      /* ns[31:16] */
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, sec & 0xffff);    /* sec[15:0] */
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, sec >> 16);       /* sec[31:16] */
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, pwidth & 0xffff); /* ns[15:0] */
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, pwidth >> 16);    /* ns[31:16] */
+	ext_write(0, phydev, PAGE4, PTP_CTL, val);
+	ext_write(0, phydev, PAGE4, PTP_TDR, nsec & 0xffff);   /* ns[15:0] */
+	ext_write(0, phydev, PAGE4, PTP_TDR, nsec >> 16);      /* ns[31:16] */
+	ext_write(0, phydev, PAGE4, PTP_TDR, sec & 0xffff);    /* sec[15:0] */
+	ext_write(0, phydev, PAGE4, PTP_TDR, sec >> 16);       /* sec[31:16] */
+	ext_write(0, phydev, PAGE4, PTP_TDR, pwidth & 0xffff); /* ns[15:0] */
+	ext_write(0, phydev, PAGE4, PTP_TDR, pwidth >> 16);    /* ns[31:16] */
 	/* Triggers 0 and 1 has programmable pulsewidth2 */
-	अगर (trigger < 2) अणु
-		ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, pwidth & 0xffff);
-		ext_ग_लिखो(0, phydev, PAGE4, PTP_TDR, pwidth >> 16);
-	पूर्ण
+	if (trigger < 2) {
+		ext_write(0, phydev, PAGE4, PTP_TDR, pwidth & 0xffff);
+		ext_write(0, phydev, PAGE4, PTP_TDR, pwidth >> 16);
+	}
 
 	/*enable trigger*/
 	val &= ~TRIG_LOAD;
 	val |= TRIG_EN;
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_CTL, val);
+	ext_write(0, phydev, PAGE4, PTP_CTL, val);
 
-	mutex_unlock(&घड़ी->extreg_lock);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&clock->extreg_lock);
+	return 0;
+}
 
-/* ptp घड़ी methods */
+/* ptp clock methods */
 
-अटल पूर्णांक ptp_dp83640_adjfine(काष्ठा ptp_घड़ी_info *ptp, दीर्घ scaled_ppm)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
-	काष्ठा phy_device *phydev = घड़ी->chosen->phydev;
+static int ptp_dp83640_adjfine(struct ptp_clock_info *ptp, long scaled_ppm)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
+	struct phy_device *phydev = clock->chosen->phydev;
 	u64 rate;
-	पूर्णांक neg_adj = 0;
+	int neg_adj = 0;
 	u16 hi, lo;
 
-	अगर (scaled_ppm < 0) अणु
+	if (scaled_ppm < 0) {
 		neg_adj = 1;
 		scaled_ppm = -scaled_ppm;
-	पूर्ण
+	}
 	rate = scaled_ppm;
 	rate <<= 13;
-	rate = भाग_u64(rate, 15625);
+	rate = div_u64(rate, 15625);
 
 	hi = (rate >> 16) & PTP_RATE_HI_MASK;
-	अगर (neg_adj)
-		hi |= PTP_RATE_सूची;
+	if (neg_adj)
+		hi |= PTP_RATE_DIR;
 
 	lo = rate & 0xffff;
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	ext_ग_लिखो(1, phydev, PAGE4, PTP_RATEH, hi);
-	ext_ग_लिखो(1, phydev, PAGE4, PTP_RATEL, lo);
+	ext_write(1, phydev, PAGE4, PTP_RATEH, hi);
+	ext_write(1, phydev, PAGE4, PTP_RATEL, lo);
 
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_unlock(&clock->extreg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptp_dp83640_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
-	काष्ठा phy_device *phydev = घड़ी->chosen->phydev;
-	काष्ठा बारpec64 ts;
-	पूर्णांक err;
+static int ptp_dp83640_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
+	struct phy_device *phydev = clock->chosen->phydev;
+	struct timespec64 ts;
+	int err;
 
 	delta += ADJTIME_FIX;
 
-	ts = ns_to_बारpec64(delta);
+	ts = ns_to_timespec64(delta);
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	err = tdr_ग_लिखो(1, phydev, &ts, PTP_STEP_CLK);
+	err = tdr_write(1, phydev, &ts, PTP_STEP_CLK);
 
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_unlock(&clock->extreg_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ptp_dp83640_समय_लो(काष्ठा ptp_घड़ी_info *ptp,
-			       काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
-	काष्ठा phy_device *phydev = घड़ी->chosen->phydev;
-	अचिन्हित पूर्णांक val[4];
+static int ptp_dp83640_gettime(struct ptp_clock_info *ptp,
+			       struct timespec64 *ts)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
+	struct phy_device *phydev = clock->chosen->phydev;
+	unsigned int val[4];
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_CTL, PTP_RD_CLK);
+	ext_write(0, phydev, PAGE4, PTP_CTL, PTP_RD_CLK);
 
-	val[0] = ext_पढ़ो(phydev, PAGE4, PTP_TDR); /* ns[15:0] */
-	val[1] = ext_पढ़ो(phydev, PAGE4, PTP_TDR); /* ns[31:16] */
-	val[2] = ext_पढ़ो(phydev, PAGE4, PTP_TDR); /* sec[15:0] */
-	val[3] = ext_पढ़ो(phydev, PAGE4, PTP_TDR); /* sec[31:16] */
+	val[0] = ext_read(phydev, PAGE4, PTP_TDR); /* ns[15:0] */
+	val[1] = ext_read(phydev, PAGE4, PTP_TDR); /* ns[31:16] */
+	val[2] = ext_read(phydev, PAGE4, PTP_TDR); /* sec[15:0] */
+	val[3] = ext_read(phydev, PAGE4, PTP_TDR); /* sec[31:16] */
 
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_unlock(&clock->extreg_lock);
 
 	ts->tv_nsec = val[0] | (val[1] << 16);
 	ts->tv_sec  = val[2] | (val[3] << 16);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ptp_dp83640_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			       स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
-	काष्ठा phy_device *phydev = घड़ी->chosen->phydev;
-	पूर्णांक err;
+static int ptp_dp83640_settime(struct ptp_clock_info *ptp,
+			       const struct timespec64 *ts)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
+	struct phy_device *phydev = clock->chosen->phydev;
+	int err;
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	err = tdr_ग_लिखो(1, phydev, ts, PTP_LOAD_CLK);
+	err = tdr_write(1, phydev, ts, PTP_LOAD_CLK);
 
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_unlock(&clock->extreg_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ptp_dp83640_enable(काष्ठा ptp_घड़ी_info *ptp,
-			      काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
-	काष्ठा phy_device *phydev = घड़ी->chosen->phydev;
-	अचिन्हित पूर्णांक index;
+static int ptp_dp83640_enable(struct ptp_clock_info *ptp,
+			      struct ptp_clock_request *rq, int on)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
+	struct phy_device *phydev = clock->chosen->phydev;
+	unsigned int index;
 	u16 evnt, event_num, gpio_num;
 
-	चयन (rq->type) अणु
-	हाल PTP_CLK_REQ_EXTTS:
+	switch (rq->type) {
+	case PTP_CLK_REQ_EXTTS:
 		/* Reject requests with unsupported flags */
-		अगर (rq->extts.flags & ~(PTP_ENABLE_FEATURE |
+		if (rq->extts.flags & ~(PTP_ENABLE_FEATURE |
 					PTP_RISING_EDGE |
 					PTP_FALLING_EDGE |
 					PTP_STRICT_FLAGS))
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
-		/* Reject requests to enable समय stamping on both edges. */
-		अगर ((rq->extts.flags & PTP_STRICT_FLAGS) &&
+		/* Reject requests to enable time stamping on both edges. */
+		if ((rq->extts.flags & PTP_STRICT_FLAGS) &&
 		    (rq->extts.flags & PTP_ENABLE_FEATURE) &&
 		    (rq->extts.flags & PTP_EXTTS_EDGES) == PTP_EXTTS_EDGES)
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
 		index = rq->extts.index;
-		अगर (index >= N_EXT_TS)
-			वापस -EINVAL;
+		if (index >= N_EXT_TS)
+			return -EINVAL;
 		event_num = EXT_EVENT + index;
 		evnt = EVNT_WR | (event_num & EVNT_SEL_MASK) << EVNT_SEL_SHIFT;
-		अगर (on) अणु
-			gpio_num = 1 + ptp_find_pin(घड़ी->ptp_घड़ी,
+		if (on) {
+			gpio_num = 1 + ptp_find_pin(clock->ptp_clock,
 						    PTP_PF_EXTTS, index);
-			अगर (gpio_num < 1)
-				वापस -EINVAL;
+			if (gpio_num < 1)
+				return -EINVAL;
 			evnt |= (gpio_num & EVNT_GPIO_MASK) << EVNT_GPIO_SHIFT;
-			अगर (rq->extts.flags & PTP_FALLING_EDGE)
+			if (rq->extts.flags & PTP_FALLING_EDGE)
 				evnt |= EVNT_FALL;
-			अन्यथा
+			else
 				evnt |= EVNT_RISE;
-		पूर्ण
-		mutex_lock(&घड़ी->extreg_lock);
-		ext_ग_लिखो(0, phydev, PAGE5, PTP_EVNT, evnt);
-		mutex_unlock(&घड़ी->extreg_lock);
-		वापस 0;
+		}
+		mutex_lock(&clock->extreg_lock);
+		ext_write(0, phydev, PAGE5, PTP_EVNT, evnt);
+		mutex_unlock(&clock->extreg_lock);
+		return 0;
 
-	हाल PTP_CLK_REQ_PEROUT:
+	case PTP_CLK_REQ_PEROUT:
 		/* Reject requests with unsupported flags */
-		अगर (rq->perout.flags)
-			वापस -EOPNOTSUPP;
-		अगर (rq->perout.index >= N_PER_OUT)
-			वापस -EINVAL;
-		वापस periodic_output(घड़ी, rq, on, rq->perout.index);
+		if (rq->perout.flags)
+			return -EOPNOTSUPP;
+		if (rq->perout.index >= N_PER_OUT)
+			return -EINVAL;
+		return periodic_output(clock, rq, on, rq->perout.index);
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक ptp_dp83640_verअगरy(काष्ठा ptp_घड़ी_info *ptp, अचिन्हित पूर्णांक pin,
-			      क्रमागत ptp_pin_function func, अचिन्हित पूर्णांक chan)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा dp83640_घड़ी, caps);
+static int ptp_dp83640_verify(struct ptp_clock_info *ptp, unsigned int pin,
+			      enum ptp_pin_function func, unsigned int chan)
+{
+	struct dp83640_clock *clock =
+		container_of(ptp, struct dp83640_clock, caps);
 
-	अगर (घड़ी->caps.pin_config[pin].func == PTP_PF_PHYSYNC &&
-	    !list_empty(&घड़ी->phylist))
-		वापस 1;
+	if (clock->caps.pin_config[pin].func == PTP_PF_PHYSYNC &&
+	    !list_empty(&clock->phylist))
+		return 1;
 
-	अगर (func == PTP_PF_PHYSYNC)
-		वापस 1;
+	if (func == PTP_PF_PHYSYNC)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 status_frame_dst[6] = अणु 0x01, 0x1B, 0x19, 0x00, 0x00, 0x00 पूर्ण;
-अटल u8 status_frame_src[6] = अणु 0x08, 0x00, 0x17, 0x0B, 0x6B, 0x0F पूर्ण;
+static u8 status_frame_dst[6] = { 0x01, 0x1B, 0x19, 0x00, 0x00, 0x00 };
+static u8 status_frame_src[6] = { 0x08, 0x00, 0x17, 0x0B, 0x6B, 0x0F };
 
-अटल व्योम enable_status_frames(काष्ठा phy_device *phydev, bool on)
-अणु
-	काष्ठा dp83640_निजी *dp83640 = phydev->priv;
-	काष्ठा dp83640_घड़ी *घड़ी = dp83640->घड़ी;
+static void enable_status_frames(struct phy_device *phydev, bool on)
+{
+	struct dp83640_private *dp83640 = phydev->priv;
+	struct dp83640_clock *clock = dp83640->clock;
 	u16 cfg0 = 0, ver;
 
-	अगर (on)
+	if (on)
 		cfg0 = PSF_EVNT_EN | PSF_RXTS_EN | PSF_TXTS_EN | ENDIAN_FLAG;
 
 	ver = (PSF_PTPVER & VERSIONPTP_MASK) << VERSIONPTP_SHIFT;
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
-	ext_ग_लिखो(0, phydev, PAGE5, PSF_CFG0, cfg0);
-	ext_ग_लिखो(0, phydev, PAGE6, PSF_CFG1, ver);
+	ext_write(0, phydev, PAGE5, PSF_CFG0, cfg0);
+	ext_write(0, phydev, PAGE6, PSF_CFG1, ver);
 
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_unlock(&clock->extreg_lock);
 
-	अगर (!phydev->attached_dev) अणु
+	if (!phydev->attached_dev) {
 		phydev_warn(phydev,
 			    "expected to find an attached netdevice\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (on) अणु
-		अगर (dev_mc_add(phydev->attached_dev, status_frame_dst))
+	if (on) {
+		if (dev_mc_add(phydev->attached_dev, status_frame_dst))
 			phydev_warn(phydev, "failed to add mc address\n");
-	पूर्ण अन्यथा अणु
-		अगर (dev_mc_del(phydev->attached_dev, status_frame_dst))
+	} else {
+		if (dev_mc_del(phydev->attached_dev, status_frame_dst))
 			phydev_warn(phydev, "failed to delete mc address\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool is_status_frame(काष्ठा sk_buff *skb, पूर्णांक type)
-अणु
-	काष्ठा ethhdr *h = eth_hdr(skb);
+static bool is_status_frame(struct sk_buff *skb, int type)
+{
+	struct ethhdr *h = eth_hdr(skb);
 
-	अगर (PTP_CLASS_V2_L2 == type &&
-	    !स_भेद(h->h_source, status_frame_src, माप(status_frame_src)))
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (PTP_CLASS_V2_L2 == type &&
+	    !memcmp(h->h_source, status_frame_src, sizeof(status_frame_src)))
+		return true;
+	else
+		return false;
+}
 
-अटल पूर्णांक expired(काष्ठा rxts *rxts)
-अणु
-	वापस समय_after(jअगरfies, rxts->पंचांगo);
-पूर्ण
+static int expired(struct rxts *rxts)
+{
+	return time_after(jiffies, rxts->tmo);
+}
 
 /* Caller must hold rx_lock. */
-अटल व्योम prune_rx_ts(काष्ठा dp83640_निजी *dp83640)
-अणु
-	काष्ठा list_head *this, *next;
-	काष्ठा rxts *rxts;
+static void prune_rx_ts(struct dp83640_private *dp83640)
+{
+	struct list_head *this, *next;
+	struct rxts *rxts;
 
-	list_क्रम_each_safe(this, next, &dp83640->rxts) अणु
-		rxts = list_entry(this, काष्ठा rxts, list);
-		अगर (expired(rxts)) अणु
+	list_for_each_safe(this, next, &dp83640->rxts) {
+		rxts = list_entry(this, struct rxts, list);
+		if (expired(rxts)) {
 			list_del_init(&rxts->list);
 			list_add(&rxts->list, &dp83640->rxpool);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* synchronize the phyters so they act as one घड़ी */
+/* synchronize the phyters so they act as one clock */
 
-अटल व्योम enable_broadcast(काष्ठा phy_device *phydev, पूर्णांक init_page, पूर्णांक on)
-अणु
-	पूर्णांक val;
-	phy_ग_लिखो(phydev, PAGESEL, 0);
-	val = phy_पढ़ो(phydev, PHYCR2);
-	अगर (on)
+static void enable_broadcast(struct phy_device *phydev, int init_page, int on)
+{
+	int val;
+	phy_write(phydev, PAGESEL, 0);
+	val = phy_read(phydev, PHYCR2);
+	if (on)
 		val |= BC_WRITE;
-	अन्यथा
+	else
 		val &= ~BC_WRITE;
-	phy_ग_लिखो(phydev, PHYCR2, val);
-	phy_ग_लिखो(phydev, PAGESEL, init_page);
-पूर्ण
+	phy_write(phydev, PHYCR2, val);
+	phy_write(phydev, PAGESEL, init_page);
+}
 
-अटल व्योम recalibrate(काष्ठा dp83640_घड़ी *घड़ी)
-अणु
-	s64 now, dअगरf;
-	काष्ठा phy_txts event_ts;
-	काष्ठा बारpec64 ts;
-	काष्ठा list_head *this;
-	काष्ठा dp83640_निजी *पंचांगp;
-	काष्ठा phy_device *master = घड़ी->chosen->phydev;
+static void recalibrate(struct dp83640_clock *clock)
+{
+	s64 now, diff;
+	struct phy_txts event_ts;
+	struct timespec64 ts;
+	struct list_head *this;
+	struct dp83640_private *tmp;
+	struct phy_device *master = clock->chosen->phydev;
 	u16 cal_gpio, cfg0, evnt, ptp_trig, trigger, val;
 
 	trigger = CAL_TRIGGER;
-	cal_gpio = 1 + ptp_find_pin_unlocked(घड़ी->ptp_घड़ी, PTP_PF_PHYSYNC, 0);
-	अगर (cal_gpio < 1) अणु
+	cal_gpio = 1 + ptp_find_pin_unlocked(clock->ptp_clock, PTP_PF_PHYSYNC, 0);
+	if (cal_gpio < 1) {
 		pr_err("PHY calibration pin not available - PHY is not calibrated.");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	mutex_lock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
 
 	/*
-	 * enable broadcast, disable status frames, enable ptp घड़ी
+	 * enable broadcast, disable status frames, enable ptp clock
 	 */
-	list_क्रम_each(this, &घड़ी->phylist) अणु
-		पंचांगp = list_entry(this, काष्ठा dp83640_निजी, list);
-		enable_broadcast(पंचांगp->phydev, घड़ी->page, 1);
-		पंचांगp->cfg0 = ext_पढ़ो(पंचांगp->phydev, PAGE5, PSF_CFG0);
-		ext_ग_लिखो(0, पंचांगp->phydev, PAGE5, PSF_CFG0, 0);
-		ext_ग_लिखो(0, पंचांगp->phydev, PAGE4, PTP_CTL, PTP_ENABLE);
-	पूर्ण
-	enable_broadcast(master, घड़ी->page, 1);
-	cfg0 = ext_पढ़ो(master, PAGE5, PSF_CFG0);
-	ext_ग_लिखो(0, master, PAGE5, PSF_CFG0, 0);
-	ext_ग_लिखो(0, master, PAGE4, PTP_CTL, PTP_ENABLE);
+	list_for_each(this, &clock->phylist) {
+		tmp = list_entry(this, struct dp83640_private, list);
+		enable_broadcast(tmp->phydev, clock->page, 1);
+		tmp->cfg0 = ext_read(tmp->phydev, PAGE5, PSF_CFG0);
+		ext_write(0, tmp->phydev, PAGE5, PSF_CFG0, 0);
+		ext_write(0, tmp->phydev, PAGE4, PTP_CTL, PTP_ENABLE);
+	}
+	enable_broadcast(master, clock->page, 1);
+	cfg0 = ext_read(master, PAGE5, PSF_CFG0);
+	ext_write(0, master, PAGE5, PSF_CFG0, 0);
+	ext_write(0, master, PAGE4, PTP_CTL, PTP_ENABLE);
 
 	/*
-	 * enable an event बारtamp
+	 * enable an event timestamp
 	 */
 	evnt = EVNT_WR | EVNT_RISE | EVNT_SINGLE;
 	evnt |= (CAL_EVENT & EVNT_SEL_MASK) << EVNT_SEL_SHIFT;
 	evnt |= (cal_gpio & EVNT_GPIO_MASK) << EVNT_GPIO_SHIFT;
 
-	list_क्रम_each(this, &घड़ी->phylist) अणु
-		पंचांगp = list_entry(this, काष्ठा dp83640_निजी, list);
-		ext_ग_लिखो(0, पंचांगp->phydev, PAGE5, PTP_EVNT, evnt);
-	पूर्ण
-	ext_ग_लिखो(0, master, PAGE5, PTP_EVNT, evnt);
+	list_for_each(this, &clock->phylist) {
+		tmp = list_entry(this, struct dp83640_private, list);
+		ext_write(0, tmp->phydev, PAGE5, PTP_EVNT, evnt);
+	}
+	ext_write(0, master, PAGE5, PTP_EVNT, evnt);
 
 	/*
 	 * configure a trigger
@@ -679,139 +678,139 @@ MODULE_PARM_DESC(gpio_tab, \
 	ptp_trig = TRIG_WR | TRIG_IF_LATE | TRIG_PULSE;
 	ptp_trig |= (trigger  & TRIG_CSEL_MASK) << TRIG_CSEL_SHIFT;
 	ptp_trig |= (cal_gpio & TRIG_GPIO_MASK) << TRIG_GPIO_SHIFT;
-	ext_ग_लिखो(0, master, PAGE5, PTP_TRIG, ptp_trig);
+	ext_write(0, master, PAGE5, PTP_TRIG, ptp_trig);
 
 	/* load trigger */
 	val = (trigger & TRIG_SEL_MASK) << TRIG_SEL_SHIFT;
 	val |= TRIG_LOAD;
-	ext_ग_लिखो(0, master, PAGE4, PTP_CTL, val);
+	ext_write(0, master, PAGE4, PTP_CTL, val);
 
 	/* enable trigger */
 	val &= ~TRIG_LOAD;
 	val |= TRIG_EN;
-	ext_ग_लिखो(0, master, PAGE4, PTP_CTL, val);
+	ext_write(0, master, PAGE4, PTP_CTL, val);
 
 	/* disable trigger */
 	val = (trigger & TRIG_SEL_MASK) << TRIG_SEL_SHIFT;
 	val |= TRIG_DIS;
-	ext_ग_लिखो(0, master, PAGE4, PTP_CTL, val);
+	ext_write(0, master, PAGE4, PTP_CTL, val);
 
 	/*
-	 * पढ़ो out and correct offsets
+	 * read out and correct offsets
 	 */
-	val = ext_पढ़ो(master, PAGE4, PTP_STS);
+	val = ext_read(master, PAGE4, PTP_STS);
 	phydev_info(master, "master PTP_STS  0x%04hx\n", val);
-	val = ext_पढ़ो(master, PAGE4, PTP_ESTS);
+	val = ext_read(master, PAGE4, PTP_ESTS);
 	phydev_info(master, "master PTP_ESTS 0x%04hx\n", val);
-	event_ts.ns_lo  = ext_पढ़ो(master, PAGE4, PTP_EDATA);
-	event_ts.ns_hi  = ext_पढ़ो(master, PAGE4, PTP_EDATA);
-	event_ts.sec_lo = ext_पढ़ो(master, PAGE4, PTP_EDATA);
-	event_ts.sec_hi = ext_पढ़ो(master, PAGE4, PTP_EDATA);
+	event_ts.ns_lo  = ext_read(master, PAGE4, PTP_EDATA);
+	event_ts.ns_hi  = ext_read(master, PAGE4, PTP_EDATA);
+	event_ts.sec_lo = ext_read(master, PAGE4, PTP_EDATA);
+	event_ts.sec_hi = ext_read(master, PAGE4, PTP_EDATA);
 	now = phy2txts(&event_ts);
 
-	list_क्रम_each(this, &घड़ी->phylist) अणु
-		पंचांगp = list_entry(this, काष्ठा dp83640_निजी, list);
-		val = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_STS);
-		phydev_info(पंचांगp->phydev, "slave  PTP_STS  0x%04hx\n", val);
-		val = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_ESTS);
-		phydev_info(पंचांगp->phydev, "slave  PTP_ESTS 0x%04hx\n", val);
-		event_ts.ns_lo  = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_EDATA);
-		event_ts.ns_hi  = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_EDATA);
-		event_ts.sec_lo = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_EDATA);
-		event_ts.sec_hi = ext_पढ़ो(पंचांगp->phydev, PAGE4, PTP_EDATA);
-		dअगरf = now - (s64) phy2txts(&event_ts);
-		phydev_info(पंचांगp->phydev, "slave offset %lld nanoseconds\n",
-			    dअगरf);
-		dअगरf += ADJTIME_FIX;
-		ts = ns_to_बारpec64(dअगरf);
-		tdr_ग_लिखो(0, पंचांगp->phydev, &ts, PTP_STEP_CLK);
-	पूर्ण
+	list_for_each(this, &clock->phylist) {
+		tmp = list_entry(this, struct dp83640_private, list);
+		val = ext_read(tmp->phydev, PAGE4, PTP_STS);
+		phydev_info(tmp->phydev, "slave  PTP_STS  0x%04hx\n", val);
+		val = ext_read(tmp->phydev, PAGE4, PTP_ESTS);
+		phydev_info(tmp->phydev, "slave  PTP_ESTS 0x%04hx\n", val);
+		event_ts.ns_lo  = ext_read(tmp->phydev, PAGE4, PTP_EDATA);
+		event_ts.ns_hi  = ext_read(tmp->phydev, PAGE4, PTP_EDATA);
+		event_ts.sec_lo = ext_read(tmp->phydev, PAGE4, PTP_EDATA);
+		event_ts.sec_hi = ext_read(tmp->phydev, PAGE4, PTP_EDATA);
+		diff = now - (s64) phy2txts(&event_ts);
+		phydev_info(tmp->phydev, "slave offset %lld nanoseconds\n",
+			    diff);
+		diff += ADJTIME_FIX;
+		ts = ns_to_timespec64(diff);
+		tdr_write(0, tmp->phydev, &ts, PTP_STEP_CLK);
+	}
 
 	/*
 	 * restore status frames
 	 */
-	list_क्रम_each(this, &घड़ी->phylist) अणु
-		पंचांगp = list_entry(this, काष्ठा dp83640_निजी, list);
-		ext_ग_लिखो(0, पंचांगp->phydev, PAGE5, PSF_CFG0, पंचांगp->cfg0);
-	पूर्ण
-	ext_ग_लिखो(0, master, PAGE5, PSF_CFG0, cfg0);
+	list_for_each(this, &clock->phylist) {
+		tmp = list_entry(this, struct dp83640_private, list);
+		ext_write(0, tmp->phydev, PAGE5, PSF_CFG0, tmp->cfg0);
+	}
+	ext_write(0, master, PAGE5, PSF_CFG0, cfg0);
 
-	mutex_unlock(&घड़ी->extreg_lock);
-पूर्ण
+	mutex_unlock(&clock->extreg_lock);
+}
 
-/* समय stamping methods */
+/* time stamping methods */
 
-अटल अंतरभूत u16 exts_chan_to_edata(पूर्णांक ch)
-अणु
-	वापस 1 << ((ch + EXT_EVENT) * 2);
-पूर्ण
+static inline u16 exts_chan_to_edata(int ch)
+{
+	return 1 << ((ch + EXT_EVENT) * 2);
+}
 
-अटल पूर्णांक decode_evnt(काष्ठा dp83640_निजी *dp83640,
-		       व्योम *data, पूर्णांक len, u16 ests)
-अणु
-	काष्ठा phy_txts *phy_txts;
-	काष्ठा ptp_घड़ी_event event;
-	पूर्णांक i, parsed;
-	पूर्णांक words = (ests >> EVNT_TS_LEN_SHIFT) & EVNT_TS_LEN_MASK;
+static int decode_evnt(struct dp83640_private *dp83640,
+		       void *data, int len, u16 ests)
+{
+	struct phy_txts *phy_txts;
+	struct ptp_clock_event event;
+	int i, parsed;
+	int words = (ests >> EVNT_TS_LEN_SHIFT) & EVNT_TS_LEN_MASK;
 	u16 ext_status = 0;
 
-	/* calculate length of the event बारtamp status message */
-	अगर (ests & MULT_EVNT)
-		parsed = (words + 2) * माप(u16);
-	अन्यथा
-		parsed = (words + 1) * माप(u16);
+	/* calculate length of the event timestamp status message */
+	if (ests & MULT_EVNT)
+		parsed = (words + 2) * sizeof(u16);
+	else
+		parsed = (words + 1) * sizeof(u16);
 
-	/* check अगर enough data is available */
-	अगर (len < parsed)
-		वापस len;
+	/* check if enough data is available */
+	if (len < parsed)
+		return len;
 
-	अगर (ests & MULT_EVNT) अणु
+	if (ests & MULT_EVNT) {
 		ext_status = *(u16 *) data;
-		data += माप(ext_status);
-	पूर्ण
+		data += sizeof(ext_status);
+	}
 
 	phy_txts = data;
 
-	चयन (words) अणु
-	हाल 3:
+	switch (words) {
+	case 3:
 		dp83640->edata.sec_hi = phy_txts->sec_hi;
 		fallthrough;
-	हाल 2:
+	case 2:
 		dp83640->edata.sec_lo = phy_txts->sec_lo;
 		fallthrough;
-	हाल 1:
+	case 1:
 		dp83640->edata.ns_hi = phy_txts->ns_hi;
 		fallthrough;
-	हाल 0:
+	case 0:
 		dp83640->edata.ns_lo = phy_txts->ns_lo;
-	पूर्ण
+	}
 
-	अगर (!ext_status) अणु
+	if (!ext_status) {
 		i = ((ests >> EVNT_NUM_SHIFT) & EVNT_NUM_MASK) - EXT_EVENT;
 		ext_status = exts_chan_to_edata(i);
-	पूर्ण
+	}
 
 	event.type = PTP_CLOCK_EXTTS;
-	event.बारtamp = phy2txts(&dp83640->edata);
+	event.timestamp = phy2txts(&dp83640->edata);
 
-	/* Compensate क्रम input path and synchronization delays */
-	event.बारtamp -= 35;
+	/* Compensate for input path and synchronization delays */
+	event.timestamp -= 35;
 
-	क्रम (i = 0; i < N_EXT_TS; i++) अणु
-		अगर (ext_status & exts_chan_to_edata(i)) अणु
+	for (i = 0; i < N_EXT_TS; i++) {
+		if (ext_status & exts_chan_to_edata(i)) {
 			event.index = i;
-			ptp_घड़ी_event(dp83640->घड़ी->ptp_घड़ी, &event);
-		पूर्ण
-	पूर्ण
+			ptp_clock_event(dp83640->clock->ptp_clock, &event);
+		}
+	}
 
-	वापस parsed;
-पूर्ण
+	return parsed;
+}
 
-#घोषणा DP83640_PACKET_HASH_LEN		10
+#define DP83640_PACKET_HASH_LEN		10
 
-अटल पूर्णांक match(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक type, काष्ठा rxts *rxts)
-अणु
-	काष्ठा ptp_header *hdr;
+static int match(struct sk_buff *skb, unsigned int type, struct rxts *rxts)
+{
+	struct ptp_header *hdr;
 	u8 msgtype;
 	u16 seqid;
 	u16 hash;
@@ -819,615 +818,615 @@ MODULE_PARM_DESC(gpio_tab, \
 	/* check sequenceID, messageType, 12 bit hash of offset 20-29 */
 
 	hdr = ptp_parse_header(skb, type);
-	अगर (!hdr)
-		वापस 0;
+	if (!hdr)
+		return 0;
 
 	msgtype = ptp_get_msgtype(hdr, type);
 
-	अगर (rxts->msgtype != (msgtype & 0xf))
-		वापस 0;
+	if (rxts->msgtype != (msgtype & 0xf))
+		return 0;
 
 	seqid = be16_to_cpu(hdr->sequence_id);
-	अगर (rxts->seqid != seqid)
-		वापस 0;
+	if (rxts->seqid != seqid)
+		return 0;
 
 	hash = ether_crc(DP83640_PACKET_HASH_LEN,
-			 (अचिन्हित अक्षर *)&hdr->source_port_identity) >> 20;
-	अगर (rxts->hash != hash)
-		वापस 0;
+			 (unsigned char *)&hdr->source_port_identity) >> 20;
+	if (rxts->hash != hash)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम decode_rxts(काष्ठा dp83640_निजी *dp83640,
-			काष्ठा phy_rxts *phy_rxts)
-अणु
-	काष्ठा rxts *rxts;
-	काष्ठा skb_shared_hwtstamps *shhwtstamps = शून्य;
-	काष्ठा sk_buff *skb;
-	अचिन्हित दीर्घ flags;
+static void decode_rxts(struct dp83640_private *dp83640,
+			struct phy_rxts *phy_rxts)
+{
+	struct rxts *rxts;
+	struct skb_shared_hwtstamps *shhwtstamps = NULL;
+	struct sk_buff *skb;
+	unsigned long flags;
 	u8 overflow;
 
 	overflow = (phy_rxts->ns_hi >> 14) & 0x3;
-	अगर (overflow)
+	if (overflow)
 		pr_debug("rx timestamp queue overflow, count %d\n", overflow);
 
 	spin_lock_irqsave(&dp83640->rx_lock, flags);
 
 	prune_rx_ts(dp83640);
 
-	अगर (list_empty(&dp83640->rxpool)) अणु
+	if (list_empty(&dp83640->rxpool)) {
 		pr_debug("rx timestamp pool is empty\n");
-		जाओ out;
-	पूर्ण
-	rxts = list_first_entry(&dp83640->rxpool, काष्ठा rxts, list);
+		goto out;
+	}
+	rxts = list_first_entry(&dp83640->rxpool, struct rxts, list);
 	list_del_init(&rxts->list);
 	phy2rxts(phy_rxts, rxts);
 
 	spin_lock(&dp83640->rx_queue.lock);
-	skb_queue_walk(&dp83640->rx_queue, skb) अणु
-		काष्ठा dp83640_skb_info *skb_info;
+	skb_queue_walk(&dp83640->rx_queue, skb) {
+		struct dp83640_skb_info *skb_info;
 
-		skb_info = (काष्ठा dp83640_skb_info *)skb->cb;
-		अगर (match(skb, skb_info->ptp_type, rxts)) अणु
+		skb_info = (struct dp83640_skb_info *)skb->cb;
+		if (match(skb, skb_info->ptp_type, rxts)) {
 			__skb_unlink(skb, &dp83640->rx_queue);
 			shhwtstamps = skb_hwtstamps(skb);
-			स_रखो(shhwtstamps, 0, माप(*shhwtstamps));
-			shhwtstamps->hwtstamp = ns_to_kसमय(rxts->ns);
+			memset(shhwtstamps, 0, sizeof(*shhwtstamps));
+			shhwtstamps->hwtstamp = ns_to_ktime(rxts->ns);
 			list_add(&rxts->list, &dp83640->rxpool);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&dp83640->rx_queue.lock);
 
-	अगर (!shhwtstamps)
+	if (!shhwtstamps)
 		list_add_tail(&rxts->list, &dp83640->rxts);
 out:
 	spin_unlock_irqrestore(&dp83640->rx_lock, flags);
 
-	अगर (shhwtstamps)
-		netअगर_rx_ni(skb);
-पूर्ण
+	if (shhwtstamps)
+		netif_rx_ni(skb);
+}
 
-अटल व्योम decode_txts(काष्ठा dp83640_निजी *dp83640,
-			काष्ठा phy_txts *phy_txts)
-अणु
-	काष्ठा skb_shared_hwtstamps shhwtstamps;
-	काष्ठा dp83640_skb_info *skb_info;
-	काष्ठा sk_buff *skb;
+static void decode_txts(struct dp83640_private *dp83640,
+			struct phy_txts *phy_txts)
+{
+	struct skb_shared_hwtstamps shhwtstamps;
+	struct dp83640_skb_info *skb_info;
+	struct sk_buff *skb;
 	u8 overflow;
 	u64 ns;
 
-	/* We must alपढ़ोy have the skb that triggered this. */
+	/* We must already have the skb that triggered this. */
 again:
 	skb = skb_dequeue(&dp83640->tx_queue);
-	अगर (!skb) अणु
+	if (!skb) {
 		pr_debug("have timestamp but tx_queue empty\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	overflow = (phy_txts->ns_hi >> 14) & 0x3;
-	अगर (overflow) अणु
+	if (overflow) {
 		pr_debug("tx timestamp queue overflow, count %d\n", overflow);
-		जबतक (skb) अणु
-			kमुक्त_skb(skb);
+		while (skb) {
+			kfree_skb(skb);
 			skb = skb_dequeue(&dp83640->tx_queue);
-		पूर्ण
-		वापस;
-	पूर्ण
-	skb_info = (काष्ठा dp83640_skb_info *)skb->cb;
-	अगर (समय_after(jअगरfies, skb_info->पंचांगo)) अणु
-		kमुक्त_skb(skb);
-		जाओ again;
-	पूर्ण
+		}
+		return;
+	}
+	skb_info = (struct dp83640_skb_info *)skb->cb;
+	if (time_after(jiffies, skb_info->tmo)) {
+		kfree_skb(skb);
+		goto again;
+	}
 
 	ns = phy2txts(phy_txts);
-	स_रखो(&shhwtstamps, 0, माप(shhwtstamps));
-	shhwtstamps.hwtstamp = ns_to_kसमय(ns);
-	skb_complete_tx_बारtamp(skb, &shhwtstamps);
-पूर्ण
+	memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+	shhwtstamps.hwtstamp = ns_to_ktime(ns);
+	skb_complete_tx_timestamp(skb, &shhwtstamps);
+}
 
-अटल व्योम decode_status_frame(काष्ठा dp83640_निजी *dp83640,
-				काष्ठा sk_buff *skb)
-अणु
-	काष्ठा phy_rxts *phy_rxts;
-	काष्ठा phy_txts *phy_txts;
+static void decode_status_frame(struct dp83640_private *dp83640,
+				struct sk_buff *skb)
+{
+	struct phy_rxts *phy_rxts;
+	struct phy_txts *phy_txts;
 	u8 *ptr;
-	पूर्णांक len, size;
+	int len, size;
 	u16 ests, type;
 
 	ptr = skb->data + 2;
 
-	क्रम (len = skb_headlen(skb) - 2; len > माप(type); len -= size) अणु
+	for (len = skb_headlen(skb) - 2; len > sizeof(type); len -= size) {
 
 		type = *(u16 *)ptr;
 		ests = type & 0x0fff;
 		type = type & 0xf000;
-		len -= माप(type);
-		ptr += माप(type);
+		len -= sizeof(type);
+		ptr += sizeof(type);
 
-		अगर (PSF_RX == type && len >= माप(*phy_rxts)) अणु
+		if (PSF_RX == type && len >= sizeof(*phy_rxts)) {
 
-			phy_rxts = (काष्ठा phy_rxts *) ptr;
+			phy_rxts = (struct phy_rxts *) ptr;
 			decode_rxts(dp83640, phy_rxts);
-			size = माप(*phy_rxts);
+			size = sizeof(*phy_rxts);
 
-		पूर्ण अन्यथा अगर (PSF_TX == type && len >= माप(*phy_txts)) अणु
+		} else if (PSF_TX == type && len >= sizeof(*phy_txts)) {
 
-			phy_txts = (काष्ठा phy_txts *) ptr;
+			phy_txts = (struct phy_txts *) ptr;
 			decode_txts(dp83640, phy_txts);
-			size = माप(*phy_txts);
+			size = sizeof(*phy_txts);
 
-		पूर्ण अन्यथा अगर (PSF_EVNT == type) अणु
+		} else if (PSF_EVNT == type) {
 
 			size = decode_evnt(dp83640, ptr, len, ests);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			size = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ptr += size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक is_sync(काष्ठा sk_buff *skb, पूर्णांक type)
-अणु
-	काष्ठा ptp_header *hdr;
+static int is_sync(struct sk_buff *skb, int type)
+{
+	struct ptp_header *hdr;
 
 	hdr = ptp_parse_header(skb, type);
-	अगर (!hdr)
-		वापस 0;
+	if (!hdr)
+		return 0;
 
-	वापस ptp_get_msgtype(hdr, type) == PTP_MSGTYPE_SYNC;
-पूर्ण
+	return ptp_get_msgtype(hdr, type) == PTP_MSGTYPE_SYNC;
+}
 
-अटल व्योम dp83640_मुक्त_घड़ीs(व्योम)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी;
-	काष्ठा list_head *this, *next;
+static void dp83640_free_clocks(void)
+{
+	struct dp83640_clock *clock;
+	struct list_head *this, *next;
 
-	mutex_lock(&phyter_घड़ीs_lock);
+	mutex_lock(&phyter_clocks_lock);
 
-	list_क्रम_each_safe(this, next, &phyter_घड़ीs) अणु
-		घड़ी = list_entry(this, काष्ठा dp83640_घड़ी, list);
-		अगर (!list_empty(&घड़ी->phylist)) अणु
+	list_for_each_safe(this, next, &phyter_clocks) {
+		clock = list_entry(this, struct dp83640_clock, list);
+		if (!list_empty(&clock->phylist)) {
 			pr_warn("phy list non-empty while unloading\n");
 			BUG();
-		पूर्ण
-		list_del(&घड़ी->list);
-		mutex_destroy(&घड़ी->extreg_lock);
-		mutex_destroy(&घड़ी->घड़ी_lock);
-		put_device(&घड़ी->bus->dev);
-		kमुक्त(घड़ी->caps.pin_config);
-		kमुक्त(घड़ी);
-	पूर्ण
+		}
+		list_del(&clock->list);
+		mutex_destroy(&clock->extreg_lock);
+		mutex_destroy(&clock->clock_lock);
+		put_device(&clock->bus->dev);
+		kfree(clock->caps.pin_config);
+		kfree(clock);
+	}
 
-	mutex_unlock(&phyter_घड़ीs_lock);
-पूर्ण
+	mutex_unlock(&phyter_clocks_lock);
+}
 
-अटल व्योम dp83640_घड़ी_init(काष्ठा dp83640_घड़ी *घड़ी, काष्ठा mii_bus *bus)
-अणु
-	INIT_LIST_HEAD(&घड़ी->list);
-	घड़ी->bus = bus;
-	mutex_init(&घड़ी->extreg_lock);
-	mutex_init(&घड़ी->घड़ी_lock);
-	INIT_LIST_HEAD(&घड़ी->phylist);
-	घड़ी->caps.owner = THIS_MODULE;
-	प्र_लिखो(घड़ी->caps.name, "dp83640 timer");
-	घड़ी->caps.max_adj	= 1953124;
-	घड़ी->caps.n_alarm	= 0;
-	घड़ी->caps.n_ext_ts	= N_EXT_TS;
-	घड़ी->caps.n_per_out	= N_PER_OUT;
-	घड़ी->caps.n_pins	= DP83640_N_PINS;
-	घड़ी->caps.pps		= 0;
-	घड़ी->caps.adjfine	= ptp_dp83640_adjfine;
-	घड़ी->caps.adjसमय	= ptp_dp83640_adjसमय;
-	घड़ी->caps.समय_लो64	= ptp_dp83640_समय_लो;
-	घड़ी->caps.समय_रखो64	= ptp_dp83640_समय_रखो;
-	घड़ी->caps.enable	= ptp_dp83640_enable;
-	घड़ी->caps.verअगरy	= ptp_dp83640_verअगरy;
+static void dp83640_clock_init(struct dp83640_clock *clock, struct mii_bus *bus)
+{
+	INIT_LIST_HEAD(&clock->list);
+	clock->bus = bus;
+	mutex_init(&clock->extreg_lock);
+	mutex_init(&clock->clock_lock);
+	INIT_LIST_HEAD(&clock->phylist);
+	clock->caps.owner = THIS_MODULE;
+	sprintf(clock->caps.name, "dp83640 timer");
+	clock->caps.max_adj	= 1953124;
+	clock->caps.n_alarm	= 0;
+	clock->caps.n_ext_ts	= N_EXT_TS;
+	clock->caps.n_per_out	= N_PER_OUT;
+	clock->caps.n_pins	= DP83640_N_PINS;
+	clock->caps.pps		= 0;
+	clock->caps.adjfine	= ptp_dp83640_adjfine;
+	clock->caps.adjtime	= ptp_dp83640_adjtime;
+	clock->caps.gettime64	= ptp_dp83640_gettime;
+	clock->caps.settime64	= ptp_dp83640_settime;
+	clock->caps.enable	= ptp_dp83640_enable;
+	clock->caps.verify	= ptp_dp83640_verify;
 	/*
-	 * Convert the module param शेषs पूर्णांकo a dynamic pin configuration.
+	 * Convert the module param defaults into a dynamic pin configuration.
 	 */
-	dp83640_gpio_शेषs(घड़ी->caps.pin_config);
+	dp83640_gpio_defaults(clock->caps.pin_config);
 	/*
 	 * Get a reference to this bus instance.
 	 */
 	get_device(&bus->dev);
-पूर्ण
+}
 
-अटल पूर्णांक choose_this_phy(काष्ठा dp83640_घड़ी *घड़ी,
-			   काष्ठा phy_device *phydev)
-अणु
-	अगर (chosen_phy == -1 && !घड़ी->chosen)
-		वापस 1;
+static int choose_this_phy(struct dp83640_clock *clock,
+			   struct phy_device *phydev)
+{
+	if (chosen_phy == -1 && !clock->chosen)
+		return 1;
 
-	अगर (chosen_phy == phydev->mdio.addr)
-		वापस 1;
+	if (chosen_phy == phydev->mdio.addr)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dp83640_घड़ी *dp83640_घड़ी_get(काष्ठा dp83640_घड़ी *घड़ी)
-अणु
-	अगर (घड़ी)
-		mutex_lock(&घड़ी->घड़ी_lock);
-	वापस घड़ी;
-पूर्ण
+static struct dp83640_clock *dp83640_clock_get(struct dp83640_clock *clock)
+{
+	if (clock)
+		mutex_lock(&clock->clock_lock);
+	return clock;
+}
 
 /*
- * Look up and lock a घड़ी by bus instance.
- * If there is no घड़ी क्रम this bus, then create it first.
+ * Look up and lock a clock by bus instance.
+ * If there is no clock for this bus, then create it first.
  */
-अटल काष्ठा dp83640_घड़ी *dp83640_घड़ी_get_bus(काष्ठा mii_bus *bus)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी = शून्य, *पंचांगp;
-	काष्ठा list_head *this;
+static struct dp83640_clock *dp83640_clock_get_bus(struct mii_bus *bus)
+{
+	struct dp83640_clock *clock = NULL, *tmp;
+	struct list_head *this;
 
-	mutex_lock(&phyter_घड़ीs_lock);
+	mutex_lock(&phyter_clocks_lock);
 
-	list_क्रम_each(this, &phyter_घड़ीs) अणु
-		पंचांगp = list_entry(this, काष्ठा dp83640_घड़ी, list);
-		अगर (पंचांगp->bus == bus) अणु
-			घड़ी = पंचांगp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (घड़ी)
-		जाओ out;
+	list_for_each(this, &phyter_clocks) {
+		tmp = list_entry(this, struct dp83640_clock, list);
+		if (tmp->bus == bus) {
+			clock = tmp;
+			break;
+		}
+	}
+	if (clock)
+		goto out;
 
-	घड़ी = kzalloc(माप(काष्ठा dp83640_घड़ी), GFP_KERNEL);
-	अगर (!घड़ी)
-		जाओ out;
+	clock = kzalloc(sizeof(struct dp83640_clock), GFP_KERNEL);
+	if (!clock)
+		goto out;
 
-	घड़ी->caps.pin_config = kसुस्मृति(DP83640_N_PINS,
-					 माप(काष्ठा ptp_pin_desc),
+	clock->caps.pin_config = kcalloc(DP83640_N_PINS,
+					 sizeof(struct ptp_pin_desc),
 					 GFP_KERNEL);
-	अगर (!घड़ी->caps.pin_config) अणु
-		kमुक्त(घड़ी);
-		घड़ी = शून्य;
-		जाओ out;
-	पूर्ण
-	dp83640_घड़ी_init(घड़ी, bus);
-	list_add_tail(&घड़ी->list, &phyter_घड़ीs);
+	if (!clock->caps.pin_config) {
+		kfree(clock);
+		clock = NULL;
+		goto out;
+	}
+	dp83640_clock_init(clock, bus);
+	list_add_tail(&clock->list, &phyter_clocks);
 out:
-	mutex_unlock(&phyter_घड़ीs_lock);
+	mutex_unlock(&phyter_clocks_lock);
 
-	वापस dp83640_घड़ी_get(घड़ी);
-पूर्ण
+	return dp83640_clock_get(clock);
+}
 
-अटल व्योम dp83640_घड़ी_put(काष्ठा dp83640_घड़ी *घड़ी)
-अणु
-	mutex_unlock(&घड़ी->घड़ी_lock);
-पूर्ण
+static void dp83640_clock_put(struct dp83640_clock *clock)
+{
+	mutex_unlock(&clock->clock_lock);
+}
 
-अटल पूर्णांक dp83640_soft_reset(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+static int dp83640_soft_reset(struct phy_device *phydev)
+{
+	int ret;
 
 	ret = genphy_soft_reset(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* From DP83640 datasheet: "Software driver code must रुको 3 us
-	 * following a software reset beक्रमe allowing further serial MII
+	/* From DP83640 datasheet: "Software driver code must wait 3 us
+	 * following a software reset before allowing further serial MII
 	 * operations with the DP83640."
 	 */
-	udelay(10);		/* Taking udelay inaccuracy पूर्णांकo account */
+	udelay(10);		/* Taking udelay inaccuracy into account */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp83640_config_init(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा dp83640_निजी *dp83640 = phydev->priv;
-	काष्ठा dp83640_घड़ी *घड़ी = dp83640->घड़ी;
+static int dp83640_config_init(struct phy_device *phydev)
+{
+	struct dp83640_private *dp83640 = phydev->priv;
+	struct dp83640_clock *clock = dp83640->clock;
 
-	अगर (घड़ी->chosen && !list_empty(&घड़ी->phylist))
-		recalibrate(घड़ी);
-	अन्यथा अणु
-		mutex_lock(&घड़ी->extreg_lock);
-		enable_broadcast(phydev, घड़ी->page, 1);
-		mutex_unlock(&घड़ी->extreg_lock);
-	पूर्ण
+	if (clock->chosen && !list_empty(&clock->phylist))
+		recalibrate(clock);
+	else {
+		mutex_lock(&clock->extreg_lock);
+		enable_broadcast(phydev, clock->page, 1);
+		mutex_unlock(&clock->extreg_lock);
+	}
 
 	enable_status_frames(phydev, true);
 
-	mutex_lock(&घड़ी->extreg_lock);
-	ext_ग_लिखो(0, phydev, PAGE4, PTP_CTL, PTP_ENABLE);
-	mutex_unlock(&घड़ी->extreg_lock);
+	mutex_lock(&clock->extreg_lock);
+	ext_write(0, phydev, PAGE4, PTP_CTL, PTP_ENABLE);
+	mutex_unlock(&clock->extreg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp83640_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err = phy_पढ़ो(phydev, MII_DP83640_MISR);
+static int dp83640_ack_interrupt(struct phy_device *phydev)
+{
+	int err = phy_read(phydev, MII_DP83640_MISR);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp83640_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक micr;
-	पूर्णांक misr;
-	पूर्णांक err;
+static int dp83640_config_intr(struct phy_device *phydev)
+{
+	int micr;
+	int misr;
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = dp83640_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = dp83640_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		misr = phy_पढ़ो(phydev, MII_DP83640_MISR);
-		अगर (misr < 0)
-			वापस misr;
+		misr = phy_read(phydev, MII_DP83640_MISR);
+		if (misr < 0)
+			return misr;
 		misr |=
 			(MII_DP83640_MISR_ANC_INT_EN |
 			MII_DP83640_MISR_DUP_INT_EN |
 			MII_DP83640_MISR_SPD_INT_EN |
 			MII_DP83640_MISR_LINK_INT_EN);
-		err = phy_ग_लिखो(phydev, MII_DP83640_MISR, misr);
-		अगर (err < 0)
-			वापस err;
+		err = phy_write(phydev, MII_DP83640_MISR, misr);
+		if (err < 0)
+			return err;
 
-		micr = phy_पढ़ो(phydev, MII_DP83640_MICR);
-		अगर (micr < 0)
-			वापस micr;
+		micr = phy_read(phydev, MII_DP83640_MICR);
+		if (micr < 0)
+			return micr;
 		micr |=
 			(MII_DP83640_MICR_OE |
 			MII_DP83640_MICR_IE);
-		वापस phy_ग_लिखो(phydev, MII_DP83640_MICR, micr);
-	पूर्ण अन्यथा अणु
-		micr = phy_पढ़ो(phydev, MII_DP83640_MICR);
-		अगर (micr < 0)
-			वापस micr;
+		return phy_write(phydev, MII_DP83640_MICR, micr);
+	} else {
+		micr = phy_read(phydev, MII_DP83640_MICR);
+		if (micr < 0)
+			return micr;
 		micr &=
 			~(MII_DP83640_MICR_OE |
 			MII_DP83640_MICR_IE);
-		err = phy_ग_लिखो(phydev, MII_DP83640_MICR, micr);
-		अगर (err < 0)
-			वापस err;
+		err = phy_write(phydev, MII_DP83640_MICR, micr);
+		if (err < 0)
+			return err;
 
-		misr = phy_पढ़ो(phydev, MII_DP83640_MISR);
-		अगर (misr < 0)
-			वापस misr;
+		misr = phy_read(phydev, MII_DP83640_MISR);
+		if (misr < 0)
+			return misr;
 		misr &=
 			~(MII_DP83640_MISR_ANC_INT_EN |
 			MII_DP83640_MISR_DUP_INT_EN |
 			MII_DP83640_MISR_SPD_INT_EN |
 			MII_DP83640_MISR_LINK_INT_EN);
-		err = phy_ग_लिखो(phydev, MII_DP83640_MISR, misr);
-		अगर (err)
-			वापस err;
+		err = phy_write(phydev, MII_DP83640_MISR, misr);
+		if (err)
+			return err;
 
-		वापस dp83640_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
-पूर्ण
+		return dp83640_ack_interrupt(phydev);
+	}
+}
 
-अटल irqवापस_t dp83640_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t dp83640_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो(phydev, MII_DP83640_MISR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_DP83640_MISR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & MII_DP83640_MISR_INT_MASK))
-		वापस IRQ_NONE;
+	if (!(irq_status & MII_DP83640_MISR_INT_MASK))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक dp83640_hwtstamp(काष्ठा mii_बारtamper *mii_ts, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा dp83640_निजी *dp83640 =
-		container_of(mii_ts, काष्ठा dp83640_निजी, mii_ts);
-	काष्ठा hwtstamp_config cfg;
+static int dp83640_hwtstamp(struct mii_timestamper *mii_ts, struct ifreq *ifr)
+{
+	struct dp83640_private *dp83640 =
+		container_of(mii_ts, struct dp83640_private, mii_ts);
+	struct hwtstamp_config cfg;
 	u16 txcfg0, rxcfg0;
 
-	अगर (copy_from_user(&cfg, अगरr->अगरr_data, माप(cfg)))
-		वापस -EFAULT;
+	if (copy_from_user(&cfg, ifr->ifr_data, sizeof(cfg)))
+		return -EFAULT;
 
-	अगर (cfg.flags) /* reserved क्रम future extensions */
-		वापस -EINVAL;
+	if (cfg.flags) /* reserved for future extensions */
+		return -EINVAL;
 
-	अगर (cfg.tx_type < 0 || cfg.tx_type > HWTSTAMP_TX_ONESTEP_SYNC)
-		वापस -दुस्फल;
+	if (cfg.tx_type < 0 || cfg.tx_type > HWTSTAMP_TX_ONESTEP_SYNC)
+		return -ERANGE;
 
 	dp83640->hwts_tx_en = cfg.tx_type;
 
-	चयन (cfg.rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (cfg.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		dp83640->hwts_rx_en = 0;
 		dp83640->layer = 0;
 		dp83640->version = 0;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
 		dp83640->hwts_rx_en = 1;
 		dp83640->layer = PTP_CLASS_L4;
 		dp83640->version = PTP_CLASS_V1;
 		cfg.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
 		dp83640->hwts_rx_en = 1;
 		dp83640->layer = PTP_CLASS_L4;
 		dp83640->version = PTP_CLASS_V2;
 		cfg.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
 		dp83640->hwts_rx_en = 1;
 		dp83640->layer = PTP_CLASS_L2;
 		dp83640->version = PTP_CLASS_V2;
 		cfg.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		dp83640->hwts_rx_en = 1;
 		dp83640->layer = PTP_CLASS_L4 | PTP_CLASS_L2;
 		dp83640->version = PTP_CLASS_V2;
 		cfg.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
 	txcfg0 = (dp83640->version & TX_PTP_VER_MASK) << TX_PTP_VER_SHIFT;
 	rxcfg0 = (dp83640->version & TX_PTP_VER_MASK) << TX_PTP_VER_SHIFT;
 
-	अगर (dp83640->layer & PTP_CLASS_L2) अणु
+	if (dp83640->layer & PTP_CLASS_L2) {
 		txcfg0 |= TX_L2_EN;
 		rxcfg0 |= RX_L2_EN;
-	पूर्ण
-	अगर (dp83640->layer & PTP_CLASS_L4) अणु
+	}
+	if (dp83640->layer & PTP_CLASS_L4) {
 		txcfg0 |= TX_IPV6_EN | TX_IPV4_EN;
 		rxcfg0 |= RX_IPV6_EN | RX_IPV4_EN;
-	पूर्ण
+	}
 
-	अगर (dp83640->hwts_tx_en)
+	if (dp83640->hwts_tx_en)
 		txcfg0 |= TX_TS_EN;
 
-	अगर (dp83640->hwts_tx_en == HWTSTAMP_TX_ONESTEP_SYNC)
+	if (dp83640->hwts_tx_en == HWTSTAMP_TX_ONESTEP_SYNC)
 		txcfg0 |= SYNC_1STEP | CHK_1STEP;
 
-	अगर (dp83640->hwts_rx_en)
+	if (dp83640->hwts_rx_en)
 		rxcfg0 |= RX_TS_EN;
 
-	mutex_lock(&dp83640->घड़ी->extreg_lock);
+	mutex_lock(&dp83640->clock->extreg_lock);
 
-	ext_ग_लिखो(0, dp83640->phydev, PAGE5, PTP_TXCFG0, txcfg0);
-	ext_ग_लिखो(0, dp83640->phydev, PAGE5, PTP_RXCFG0, rxcfg0);
+	ext_write(0, dp83640->phydev, PAGE5, PTP_TXCFG0, txcfg0);
+	ext_write(0, dp83640->phydev, PAGE5, PTP_RXCFG0, rxcfg0);
 
-	mutex_unlock(&dp83640->घड़ी->extreg_lock);
+	mutex_unlock(&dp83640->clock->extreg_lock);
 
-	वापस copy_to_user(अगरr->अगरr_data, &cfg, माप(cfg)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(ifr->ifr_data, &cfg, sizeof(cfg)) ? -EFAULT : 0;
+}
 
-अटल व्योम rx_बारtamp_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा dp83640_निजी *dp83640 =
-		container_of(work, काष्ठा dp83640_निजी, ts_work.work);
-	काष्ठा sk_buff *skb;
+static void rx_timestamp_work(struct work_struct *work)
+{
+	struct dp83640_private *dp83640 =
+		container_of(work, struct dp83640_private, ts_work.work);
+	struct sk_buff *skb;
 
 	/* Deliver expired packets. */
-	जबतक ((skb = skb_dequeue(&dp83640->rx_queue))) अणु
-		काष्ठा dp83640_skb_info *skb_info;
+	while ((skb = skb_dequeue(&dp83640->rx_queue))) {
+		struct dp83640_skb_info *skb_info;
 
-		skb_info = (काष्ठा dp83640_skb_info *)skb->cb;
-		अगर (!समय_after(jअगरfies, skb_info->पंचांगo)) अणु
+		skb_info = (struct dp83640_skb_info *)skb->cb;
+		if (!time_after(jiffies, skb_info->tmo)) {
 			skb_queue_head(&dp83640->rx_queue, skb);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		netअगर_rx_ni(skb);
-	पूर्ण
+		netif_rx_ni(skb);
+	}
 
-	अगर (!skb_queue_empty(&dp83640->rx_queue))
+	if (!skb_queue_empty(&dp83640->rx_queue))
 		schedule_delayed_work(&dp83640->ts_work, SKB_TIMESTAMP_TIMEOUT);
-पूर्ण
+}
 
-अटल bool dp83640_rxtstamp(काष्ठा mii_बारtamper *mii_ts,
-			     काष्ठा sk_buff *skb, पूर्णांक type)
-अणु
-	काष्ठा dp83640_निजी *dp83640 =
-		container_of(mii_ts, काष्ठा dp83640_निजी, mii_ts);
-	काष्ठा dp83640_skb_info *skb_info = (काष्ठा dp83640_skb_info *)skb->cb;
-	काष्ठा list_head *this, *next;
-	काष्ठा rxts *rxts;
-	काष्ठा skb_shared_hwtstamps *shhwtstamps = शून्य;
-	अचिन्हित दीर्घ flags;
+static bool dp83640_rxtstamp(struct mii_timestamper *mii_ts,
+			     struct sk_buff *skb, int type)
+{
+	struct dp83640_private *dp83640 =
+		container_of(mii_ts, struct dp83640_private, mii_ts);
+	struct dp83640_skb_info *skb_info = (struct dp83640_skb_info *)skb->cb;
+	struct list_head *this, *next;
+	struct rxts *rxts;
+	struct skb_shared_hwtstamps *shhwtstamps = NULL;
+	unsigned long flags;
 
-	अगर (is_status_frame(skb, type)) अणु
+	if (is_status_frame(skb, type)) {
 		decode_status_frame(dp83640, skb);
-		kमुक्त_skb(skb);
-		वापस true;
-	पूर्ण
+		kfree_skb(skb);
+		return true;
+	}
 
-	अगर (!dp83640->hwts_rx_en)
-		वापस false;
+	if (!dp83640->hwts_rx_en)
+		return false;
 
-	अगर ((type & dp83640->version) == 0 || (type & dp83640->layer) == 0)
-		वापस false;
+	if ((type & dp83640->version) == 0 || (type & dp83640->layer) == 0)
+		return false;
 
 	spin_lock_irqsave(&dp83640->rx_lock, flags);
 	prune_rx_ts(dp83640);
-	list_क्रम_each_safe(this, next, &dp83640->rxts) अणु
-		rxts = list_entry(this, काष्ठा rxts, list);
-		अगर (match(skb, type, rxts)) अणु
+	list_for_each_safe(this, next, &dp83640->rxts) {
+		rxts = list_entry(this, struct rxts, list);
+		if (match(skb, type, rxts)) {
 			shhwtstamps = skb_hwtstamps(skb);
-			स_रखो(shhwtstamps, 0, माप(*shhwtstamps));
-			shhwtstamps->hwtstamp = ns_to_kसमय(rxts->ns);
+			memset(shhwtstamps, 0, sizeof(*shhwtstamps));
+			shhwtstamps->hwtstamp = ns_to_ktime(rxts->ns);
 			list_del_init(&rxts->list);
 			list_add(&rxts->list, &dp83640->rxpool);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&dp83640->rx_lock, flags);
 
-	अगर (!shhwtstamps) अणु
+	if (!shhwtstamps) {
 		skb_info->ptp_type = type;
-		skb_info->पंचांगo = jअगरfies + SKB_TIMESTAMP_TIMEOUT;
+		skb_info->tmo = jiffies + SKB_TIMESTAMP_TIMEOUT;
 		skb_queue_tail(&dp83640->rx_queue, skb);
 		schedule_delayed_work(&dp83640->ts_work, SKB_TIMESTAMP_TIMEOUT);
-	पूर्ण अन्यथा अणु
-		netअगर_rx_ni(skb);
-	पूर्ण
+	} else {
+		netif_rx_ni(skb);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम dp83640_txtstamp(काष्ठा mii_बारtamper *mii_ts,
-			     काष्ठा sk_buff *skb, पूर्णांक type)
-अणु
-	काष्ठा dp83640_skb_info *skb_info = (काष्ठा dp83640_skb_info *)skb->cb;
-	काष्ठा dp83640_निजी *dp83640 =
-		container_of(mii_ts, काष्ठा dp83640_निजी, mii_ts);
+static void dp83640_txtstamp(struct mii_timestamper *mii_ts,
+			     struct sk_buff *skb, int type)
+{
+	struct dp83640_skb_info *skb_info = (struct dp83640_skb_info *)skb->cb;
+	struct dp83640_private *dp83640 =
+		container_of(mii_ts, struct dp83640_private, mii_ts);
 
-	चयन (dp83640->hwts_tx_en) अणु
+	switch (dp83640->hwts_tx_en) {
 
-	हाल HWTSTAMP_TX_ONESTEP_SYNC:
-		अगर (is_sync(skb, type)) अणु
-			kमुक्त_skb(skb);
-			वापस;
-		पूर्ण
+	case HWTSTAMP_TX_ONESTEP_SYNC:
+		if (is_sync(skb, type)) {
+			kfree_skb(skb);
+			return;
+		}
 		fallthrough;
-	हाल HWTSTAMP_TX_ON:
+	case HWTSTAMP_TX_ON:
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-		skb_info->पंचांगo = jअगरfies + SKB_TIMESTAMP_TIMEOUT;
+		skb_info->tmo = jiffies + SKB_TIMESTAMP_TIMEOUT;
 		skb_queue_tail(&dp83640->tx_queue, skb);
-		अवरोध;
+		break;
 
-	हाल HWTSTAMP_TX_OFF:
-	शेष:
-		kमुक्त_skb(skb);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case HWTSTAMP_TX_OFF:
+	default:
+		kfree_skb(skb);
+		break;
+	}
+}
 
-अटल पूर्णांक dp83640_ts_info(काष्ठा mii_बारtamper *mii_ts,
-			   काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा dp83640_निजी *dp83640 =
-		container_of(mii_ts, काष्ठा dp83640_निजी, mii_ts);
+static int dp83640_ts_info(struct mii_timestamper *mii_ts,
+			   struct ethtool_ts_info *info)
+{
+	struct dp83640_private *dp83640 =
+		container_of(mii_ts, struct dp83640_private, mii_ts);
 
-	info->so_बारtamping =
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
 		SOF_TIMESTAMPING_RAW_HARDWARE;
-	info->phc_index = ptp_घड़ी_index(dp83640->घड़ी->ptp_घड़ी);
+	info->phc_index = ptp_clock_index(dp83640->clock->ptp_clock);
 	info->tx_types =
 		(1 << HWTSTAMP_TX_OFF) |
 		(1 << HWTSTAMP_TX_ON) |
@@ -1438,25 +1437,25 @@ out:
 		(1 << HWTSTAMP_FILTER_PTP_V2_L4_EVENT) |
 		(1 << HWTSTAMP_FILTER_PTP_V2_L2_EVENT) |
 		(1 << HWTSTAMP_FILTER_PTP_V2_EVENT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dp83640_probe(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी;
-	काष्ठा dp83640_निजी *dp83640;
-	पूर्णांक err = -ENOMEM, i;
+static int dp83640_probe(struct phy_device *phydev)
+{
+	struct dp83640_clock *clock;
+	struct dp83640_private *dp83640;
+	int err = -ENOMEM, i;
 
-	अगर (phydev->mdio.addr == BROADCAST_ADDR)
-		वापस 0;
+	if (phydev->mdio.addr == BROADCAST_ADDR)
+		return 0;
 
-	घड़ी = dp83640_घड़ी_get_bus(phydev->mdio.bus);
-	अगर (!घड़ी)
-		जाओ no_घड़ी;
+	clock = dp83640_clock_get_bus(phydev->mdio.bus);
+	if (!clock)
+		goto no_clock;
 
-	dp83640 = kzalloc(माप(काष्ठा dp83640_निजी), GFP_KERNEL);
-	अगर (!dp83640)
-		जाओ no_memory;
+	dp83640 = kzalloc(sizeof(struct dp83640_private), GFP_KERNEL);
+	if (!dp83640)
+		goto no_memory;
 
 	dp83640->phydev = phydev;
 	dp83640->mii_ts.rxtstamp = dp83640_rxtstamp;
@@ -1464,10 +1463,10 @@ out:
 	dp83640->mii_ts.hwtstamp = dp83640_hwtstamp;
 	dp83640->mii_ts.ts_info  = dp83640_ts_info;
 
-	INIT_DELAYED_WORK(&dp83640->ts_work, rx_बारtamp_work);
+	INIT_DELAYED_WORK(&dp83640->ts_work, rx_timestamp_work);
 	INIT_LIST_HEAD(&dp83640->rxts);
 	INIT_LIST_HEAD(&dp83640->rxpool);
-	क्रम (i = 0; i < MAX_RXTS; i++)
+	for (i = 0; i < MAX_RXTS; i++)
 		list_add(&dp83640->rx_pool_data[i].list, &dp83640->rxpool);
 
 	phydev->mii_ts = &dp83640->mii_ts;
@@ -1477,41 +1476,41 @@ out:
 	skb_queue_head_init(&dp83640->rx_queue);
 	skb_queue_head_init(&dp83640->tx_queue);
 
-	dp83640->घड़ी = घड़ी;
+	dp83640->clock = clock;
 
-	अगर (choose_this_phy(घड़ी, phydev)) अणु
-		घड़ी->chosen = dp83640;
-		घड़ी->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&घड़ी->caps,
+	if (choose_this_phy(clock, phydev)) {
+		clock->chosen = dp83640;
+		clock->ptp_clock = ptp_clock_register(&clock->caps,
 						      &phydev->mdio.dev);
-		अगर (IS_ERR(घड़ी->ptp_घड़ी)) अणु
-			err = PTR_ERR(घड़ी->ptp_घड़ी);
-			जाओ no_रेजिस्टर;
-		पूर्ण
-	पूर्ण अन्यथा
-		list_add_tail(&dp83640->list, &घड़ी->phylist);
+		if (IS_ERR(clock->ptp_clock)) {
+			err = PTR_ERR(clock->ptp_clock);
+			goto no_register;
+		}
+	} else
+		list_add_tail(&dp83640->list, &clock->phylist);
 
-	dp83640_घड़ी_put(घड़ी);
-	वापस 0;
+	dp83640_clock_put(clock);
+	return 0;
 
-no_रेजिस्टर:
-	घड़ी->chosen = शून्य;
-	kमुक्त(dp83640);
+no_register:
+	clock->chosen = NULL;
+	kfree(dp83640);
 no_memory:
-	dp83640_घड़ी_put(घड़ी);
-no_घड़ी:
-	वापस err;
-पूर्ण
+	dp83640_clock_put(clock);
+no_clock:
+	return err;
+}
 
-अटल व्योम dp83640_हटाओ(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा dp83640_घड़ी *घड़ी;
-	काष्ठा list_head *this, *next;
-	काष्ठा dp83640_निजी *पंचांगp, *dp83640 = phydev->priv;
+static void dp83640_remove(struct phy_device *phydev)
+{
+	struct dp83640_clock *clock;
+	struct list_head *this, *next;
+	struct dp83640_private *tmp, *dp83640 = phydev->priv;
 
-	अगर (phydev->mdio.addr == BROADCAST_ADDR)
-		वापस;
+	if (phydev->mdio.addr == BROADCAST_ADDR)
+		return;
 
-	phydev->mii_ts = शून्य;
+	phydev->mii_ts = NULL;
 
 	enable_status_frames(phydev, false);
 	cancel_delayed_work_sync(&dp83640->ts_work);
@@ -1519,59 +1518,59 @@ no_घड़ी:
 	skb_queue_purge(&dp83640->rx_queue);
 	skb_queue_purge(&dp83640->tx_queue);
 
-	घड़ी = dp83640_घड़ी_get(dp83640->घड़ी);
+	clock = dp83640_clock_get(dp83640->clock);
 
-	अगर (dp83640 == घड़ी->chosen) अणु
-		ptp_घड़ी_unरेजिस्टर(घड़ी->ptp_घड़ी);
-		घड़ी->chosen = शून्य;
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_safe(this, next, &घड़ी->phylist) अणु
-			पंचांगp = list_entry(this, काष्ठा dp83640_निजी, list);
-			अगर (पंचांगp == dp83640) अणु
-				list_del_init(&पंचांगp->list);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	if (dp83640 == clock->chosen) {
+		ptp_clock_unregister(clock->ptp_clock);
+		clock->chosen = NULL;
+	} else {
+		list_for_each_safe(this, next, &clock->phylist) {
+			tmp = list_entry(this, struct dp83640_private, list);
+			if (tmp == dp83640) {
+				list_del_init(&tmp->list);
+				break;
+			}
+		}
+	}
 
-	dp83640_घड़ी_put(घड़ी);
-	kमुक्त(dp83640);
-पूर्ण
+	dp83640_clock_put(clock);
+	kfree(dp83640);
+}
 
-अटल काष्ठा phy_driver dp83640_driver = अणु
+static struct phy_driver dp83640_driver = {
 	.phy_id		= DP83640_PHY_ID,
 	.phy_id_mask	= 0xfffffff0,
 	.name		= "NatSemi DP83640",
 	/* PHY_BASIC_FEATURES */
 	.probe		= dp83640_probe,
-	.हटाओ		= dp83640_हटाओ,
+	.remove		= dp83640_remove,
 	.soft_reset	= dp83640_soft_reset,
 	.config_init	= dp83640_config_init,
-	.config_पूर्णांकr    = dp83640_config_पूर्णांकr,
-	.handle_पूर्णांकerrupt = dp83640_handle_पूर्णांकerrupt,
-पूर्ण;
+	.config_intr    = dp83640_config_intr,
+	.handle_interrupt = dp83640_handle_interrupt,
+};
 
-अटल पूर्णांक __init dp83640_init(व्योम)
-अणु
-	वापस phy_driver_रेजिस्टर(&dp83640_driver, THIS_MODULE);
-पूर्ण
+static int __init dp83640_init(void)
+{
+	return phy_driver_register(&dp83640_driver, THIS_MODULE);
+}
 
-अटल व्योम __निकास dp83640_निकास(व्योम)
-अणु
-	dp83640_मुक्त_घड़ीs();
-	phy_driver_unरेजिस्टर(&dp83640_driver);
-पूर्ण
+static void __exit dp83640_exit(void)
+{
+	dp83640_free_clocks();
+	phy_driver_unregister(&dp83640_driver);
+}
 
 MODULE_DESCRIPTION("National Semiconductor DP83640 PHY driver");
 MODULE_AUTHOR("Richard Cochran <richardcochran@gmail.com>");
 MODULE_LICENSE("GPL");
 
 module_init(dp83640_init);
-module_निकास(dp83640_निकास);
+module_exit(dp83640_exit);
 
-अटल काष्ठा mdio_device_id __maybe_unused dp83640_tbl[] = अणु
-	अणु DP83640_PHY_ID, 0xfffffff0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct mdio_device_id __maybe_unused dp83640_tbl[] = {
+	{ DP83640_PHY_ID, 0xfffffff0 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(mdio, dp83640_tbl);

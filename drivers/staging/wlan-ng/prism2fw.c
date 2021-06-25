@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1)
-/* from src/prism2/करोwnload/prism2dl.c
+// SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1)
+/* from src/prism2/download/prism2dl.c
  *
- * utility क्रम करोwnloading prism2 images moved पूर्णांकo kernelspace
+ * utility for downloading prism2 images moved into kernelspace
  *
  * Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  * --------------------------------------------------------------------
@@ -16,17 +15,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License क्रम the specअगरic language governing
+ *   implied. See the License for the specific language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   हाल the provisions of the GPL are applicable instead of the
+ *   case the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you करो not delete
+ *   and other provisions required by the GPL.  If you do not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -49,74 +48,74 @@
 
 /*================================================================*/
 /* System Includes */
-#समावेश <linux/ihex.h>
-#समावेश <linux/slab.h>
+#include <linux/ihex.h>
+#include <linux/slab.h>
 
 /*================================================================*/
 /* Local Constants */
 
-#घोषणा PRISM2_USB_FWखाता	"prism2_ru.fw"
-MODULE_FIRMWARE(PRISM2_USB_FWखाता);
+#define PRISM2_USB_FWFILE	"prism2_ru.fw"
+MODULE_FIRMWARE(PRISM2_USB_FWFILE);
 
-#घोषणा S3DATA_MAX		5000
-#घोषणा S3PLUG_MAX		200
-#घोषणा S3CRC_MAX		200
-#घोषणा S3INFO_MAX		50
+#define S3DATA_MAX		5000
+#define S3PLUG_MAX		200
+#define S3CRC_MAX		200
+#define S3INFO_MAX		50
 
-#घोषणा S3ADDR_PLUG		(0xff000000UL)
-#घोषणा S3ADDR_CRC		(0xff100000UL)
-#घोषणा S3ADDR_INFO		(0xff200000UL)
-#घोषणा S3ADDR_START		(0xff400000UL)
+#define S3ADDR_PLUG		(0xff000000UL)
+#define S3ADDR_CRC		(0xff100000UL)
+#define S3ADDR_INFO		(0xff200000UL)
+#define S3ADDR_START		(0xff400000UL)
 
-#घोषणा CHUNKS_MAX		100
+#define CHUNKS_MAX		100
 
-#घोषणा WRITESIZE_MAX		4096
+#define WRITESIZE_MAX		4096
 
 /*================================================================*/
 /* Local Types */
 
-काष्ठा s3datarec अणु
+struct s3datarec {
 	u32 len;
 	u32 addr;
 	u8 checksum;
 	u8 *data;
-पूर्ण;
+};
 
-काष्ठा s3plugrec अणु
+struct s3plugrec {
 	u32 itemcode;
 	u32 addr;
 	u32 len;
-पूर्ण;
+};
 
-काष्ठा s3crcrec अणु
+struct s3crcrec {
 	u32 addr;
 	u32 len;
-	अचिन्हित पूर्णांक करोग_लिखो;
-पूर्ण;
+	unsigned int dowrite;
+};
 
-काष्ठा s3inक्रमec अणु
+struct s3inforec {
 	u16 len;
 	u16 type;
-	जोड़ अणु
-		काष्ठा hfa384x_compident version;
-		काष्ठा hfa384x_caplevel compat;
+	union {
+		struct hfa384x_compident version;
+		struct hfa384x_caplevel compat;
 		u16 buildseq;
-		काष्ठा hfa384x_compident platक्रमm;
-	पूर्ण info;
-पूर्ण;
+		struct hfa384x_compident platform;
+	} info;
+};
 
-काष्ठा pda अणु
+struct pda {
 	u8 buf[HFA384x_PDA_LEN_MAX];
-	काष्ठा hfa384x_pdrec *rec[HFA384x_PDA_RECS_MAX];
-	अचिन्हित पूर्णांक nrec;
-पूर्ण;
+	struct hfa384x_pdrec *rec[HFA384x_PDA_RECS_MAX];
+	unsigned int nrec;
+};
 
-काष्ठा imgchunk अणु
+struct imgchunk {
 	u32 addr;	/* start address */
 	u32 len;	/* in bytes */
-	u16 crc;	/* CRC value (अगर it falls at a chunk boundary) */
+	u16 crc;	/* CRC value (if it falls at a chunk boundary) */
 	u8 *data;
-पूर्ण;
+};
 
 /*================================================================*/
 /* Local Static Definitions */
@@ -125,69 +124,69 @@ MODULE_FIRMWARE(PRISM2_USB_FWखाता);
 /* s-record image processing */
 
 /* Data records */
-अटल अचिन्हित पूर्णांक ns3data;
-अटल काष्ठा s3datarec *s3data;
+static unsigned int ns3data;
+static struct s3datarec *s3data;
 
 /* Plug records */
-अटल अचिन्हित पूर्णांक ns3plug;
-अटल काष्ठा s3plugrec s3plug[S3PLUG_MAX];
+static unsigned int ns3plug;
+static struct s3plugrec s3plug[S3PLUG_MAX];
 
 /* CRC records */
-अटल अचिन्हित पूर्णांक ns3crc;
-अटल काष्ठा s3crcrec s3crc[S3CRC_MAX];
+static unsigned int ns3crc;
+static struct s3crcrec s3crc[S3CRC_MAX];
 
 /* Info records */
-अटल अचिन्हित पूर्णांक ns3info;
-अटल काष्ठा s3inक्रमec s3info[S3INFO_MAX];
+static unsigned int ns3info;
+static struct s3inforec s3info[S3INFO_MAX];
 
 /* S7 record (there _better_ be only one) */
-अटल u32 startaddr;
+static u32 startaddr;
 
 /* Load image chunks */
-अटल अचिन्हित पूर्णांक nfchunks;
-अटल काष्ठा imgchunk fchunk[CHUNKS_MAX];
+static unsigned int nfchunks;
+static struct imgchunk fchunk[CHUNKS_MAX];
 
-/* Note that क्रम the following pdrec_t arrays, the len and code */
+/* Note that for the following pdrec_t arrays, the len and code */
 /*   fields are stored in HOST byte order. The mkpdrlist() function */
-/*   करोes the conversion.  */
+/*   does the conversion.  */
 /*----------------------------------------------------------------*/
 /* PDA, built from [card|newfile]+[addfile1+addfile2...] */
 
-अटल काष्ठा pda pda;
-अटल काष्ठा hfa384x_compident nicid;
-अटल काष्ठा hfa384x_caplevel rfid;
-अटल काष्ठा hfa384x_caplevel macid;
-अटल काष्ठा hfa384x_caplevel priid;
+static struct pda pda;
+static struct hfa384x_compident nicid;
+static struct hfa384x_caplevel rfid;
+static struct hfa384x_caplevel macid;
+static struct hfa384x_caplevel priid;
 
 /*================================================================*/
 /* Local Function Declarations */
 
-अटल पूर्णांक prism2_fwapply(स्थिर काष्ठा ihex_binrec *rfptr,
-			  काष्ठा wlandevice *wlandev);
+static int prism2_fwapply(const struct ihex_binrec *rfptr,
+			  struct wlandevice *wlandev);
 
-अटल पूर्णांक पढ़ो_fwfile(स्थिर काष्ठा ihex_binrec *rfptr);
+static int read_fwfile(const struct ihex_binrec *rfptr);
 
-अटल पूर्णांक mkimage(काष्ठा imgchunk *clist, अचिन्हित पूर्णांक *ccnt);
+static int mkimage(struct imgchunk *clist, unsigned int *ccnt);
 
-अटल पूर्णांक पढ़ो_cardpda(काष्ठा pda *pda, काष्ठा wlandevice *wlandev);
+static int read_cardpda(struct pda *pda, struct wlandevice *wlandev);
 
-अटल पूर्णांक mkpdrlist(काष्ठा pda *pda);
+static int mkpdrlist(struct pda *pda);
 
-अटल पूर्णांक plugimage(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक nfchunks,
-		     काष्ठा s3plugrec *s3plug, अचिन्हित पूर्णांक ns3plug,
-		     काष्ठा pda *pda);
+static int plugimage(struct imgchunk *fchunk, unsigned int nfchunks,
+		     struct s3plugrec *s3plug, unsigned int ns3plug,
+		     struct pda *pda);
 
-अटल पूर्णांक crcimage(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक nfchunks,
-		    काष्ठा s3crcrec *s3crc, अचिन्हित पूर्णांक ns3crc);
+static int crcimage(struct imgchunk *fchunk, unsigned int nfchunks,
+		    struct s3crcrec *s3crc, unsigned int ns3crc);
 
-अटल पूर्णांक ग_लिखोimage(काष्ठा wlandevice *wlandev, काष्ठा imgchunk *fchunk,
-		      अचिन्हित पूर्णांक nfchunks);
+static int writeimage(struct wlandevice *wlandev, struct imgchunk *fchunk,
+		      unsigned int nfchunks);
 
-अटल व्योम मुक्त_chunks(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक *nfchunks);
+static void free_chunks(struct imgchunk *fchunk, unsigned int *nfchunks);
 
-अटल व्योम मुक्त_srecs(व्योम);
+static void free_srecs(void);
 
-अटल पूर्णांक validate_identity(व्योम);
+static int validate_identity(void);
 
 /*================================================================*/
 /* Function Definitions */
@@ -195,45 +194,45 @@ MODULE_FIRMWARE(PRISM2_USB_FWखाता);
 /*----------------------------------------------------------------
  * prism2_fwtry
  *
- * Try and get firmware पूर्णांकo memory
+ * Try and get firmware into memory
  *
  * Arguments:
- *	udev	usb device काष्ठाure
- *	wlandev wlan device काष्ठाure
+ *	udev	usb device structure
+ *	wlandev wlan device structure
  *
  * Returns:
  *	0	- success
  *	~0	- failure
  *----------------------------------------------------------------
  */
-अटल पूर्णांक prism2_fwtry(काष्ठा usb_device *udev, काष्ठा wlandevice *wlandev)
-अणु
-	स्थिर काष्ठा firmware *fw_entry = शून्य;
+static int prism2_fwtry(struct usb_device *udev, struct wlandevice *wlandev)
+{
+	const struct firmware *fw_entry = NULL;
 
 	netdev_info(wlandev->netdev, "prism2_usb: Checking for firmware %s\n",
-		    PRISM2_USB_FWखाता);
-	अगर (request_ihex_firmware(&fw_entry,
-				  PRISM2_USB_FWखाता, &udev->dev) != 0) अणु
+		    PRISM2_USB_FWFILE);
+	if (request_ihex_firmware(&fw_entry,
+				  PRISM2_USB_FWFILE, &udev->dev) != 0) {
 		netdev_info(wlandev->netdev,
 			    "prism2_usb: Firmware not available, but not essential\n");
 		netdev_info(wlandev->netdev,
 			    "prism2_usb: can continue to use card anyway.\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	netdev_info(wlandev->netdev,
 		    "prism2_usb: %s will be processed, size %zu\n",
-		    PRISM2_USB_FWखाता, fw_entry->size);
-	prism2_fwapply((स्थिर काष्ठा ihex_binrec *)fw_entry->data, wlandev);
+		    PRISM2_USB_FWFILE, fw_entry->size);
+	prism2_fwapply((const struct ihex_binrec *)fw_entry->data, wlandev);
 
 	release_firmware(fw_entry);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
  * prism2_fwapply
  *
- * Apply the firmware loaded पूर्णांकo memory
+ * Apply the firmware loaded into memory
  *
  * Arguments:
  *	rfptr	firmware image in kernel memory
@@ -244,78 +243,78 @@ MODULE_FIRMWARE(PRISM2_USB_FWखाता);
  *	~0	- failure
  *----------------------------------------------------------------
  */
-अटल पूर्णांक prism2_fwapply(स्थिर काष्ठा ihex_binrec *rfptr,
-			  काष्ठा wlandevice *wlandev)
-अणु
-	चिन्हित पूर्णांक result = 0;
-	काष्ठा p80211msg_करोt11req_mibget geपंचांगsg;
-	काष्ठा p80211itemd *item;
+static int prism2_fwapply(const struct ihex_binrec *rfptr,
+			  struct wlandevice *wlandev)
+{
+	signed int result = 0;
+	struct p80211msg_dot11req_mibget getmsg;
+	struct p80211itemd *item;
 	u32 *data;
 
-	/* Initialize the data काष्ठाures */
+	/* Initialize the data structures */
 	ns3data = 0;
-	s3data = kसुस्मृति(S3DATA_MAX, माप(*s3data), GFP_KERNEL);
-	अगर (!s3data) अणु
+	s3data = kcalloc(S3DATA_MAX, sizeof(*s3data), GFP_KERNEL);
+	if (!s3data) {
 		result = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ns3plug = 0;
-	स_रखो(s3plug, 0, माप(s3plug));
+	memset(s3plug, 0, sizeof(s3plug));
 	ns3crc = 0;
-	स_रखो(s3crc, 0, माप(s3crc));
+	memset(s3crc, 0, sizeof(s3crc));
 	ns3info = 0;
-	स_रखो(s3info, 0, माप(s3info));
+	memset(s3info, 0, sizeof(s3info));
 	startaddr = 0;
 
 	nfchunks = 0;
-	स_रखो(fchunk, 0, माप(fchunk));
-	स_रखो(&nicid, 0, माप(nicid));
-	स_रखो(&rfid, 0, माप(rfid));
-	स_रखो(&macid, 0, माप(macid));
-	स_रखो(&priid, 0, माप(priid));
+	memset(fchunk, 0, sizeof(fchunk));
+	memset(&nicid, 0, sizeof(nicid));
+	memset(&rfid, 0, sizeof(rfid));
+	memset(&macid, 0, sizeof(macid));
+	memset(&priid, 0, sizeof(priid));
 
 	/* clear the pda and add an initial END record */
-	स_रखो(&pda, 0, माप(pda));
-	pda.rec[0] = (काष्ठा hfa384x_pdrec *)pda.buf;
+	memset(&pda, 0, sizeof(pda));
+	pda.rec[0] = (struct hfa384x_pdrec *)pda.buf;
 	pda.rec[0]->len = cpu_to_le16(2);	/* len in words */
 	pda.rec[0]->code = cpu_to_le16(HFA384x_PDR_END_OF_PDA);
 	pda.nrec = 1;
 
 	/*-----------------------------------------------------*/
-	/* Put card पूर्णांकo fwload state */
-	prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_fwload);
+	/* Put card into fwload state */
+	prism2sta_ifstate(wlandev, P80211ENUM_ifstate_fwload);
 
 	/* Build the PDA we're going to use. */
-	अगर (पढ़ो_cardpda(&pda, wlandev)) अणु
+	if (read_cardpda(&pda, wlandev)) {
 		netdev_err(wlandev->netdev, "load_cardpda failed, exiting.\n");
 		result = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* पढ़ो the card's PRI-SUP */
-	स_रखो(&geपंचांगsg, 0, माप(geपंचांगsg));
-	geपंचांगsg.msgcode = DIDMSG_DOT11REQ_MIBGET;
-	geपंचांगsg.msglen = माप(geपंचांगsg);
-	म_नकल(geपंचांगsg.devname, wlandev->name);
+	/* read the card's PRI-SUP */
+	memset(&getmsg, 0, sizeof(getmsg));
+	getmsg.msgcode = DIDMSG_DOT11REQ_MIBGET;
+	getmsg.msglen = sizeof(getmsg);
+	strcpy(getmsg.devname, wlandev->name);
 
-	geपंचांगsg.mibattribute.did = DIDMSG_DOT11REQ_MIBGET_MIBATTRIBUTE;
-	geपंचांगsg.mibattribute.status = P80211ENUM_msgitem_status_data_ok;
-	geपंचांगsg.resultcode.did = DIDMSG_DOT11REQ_MIBGET_RESULTCODE;
-	geपंचांगsg.resultcode.status = P80211ENUM_msgitem_status_no_value;
+	getmsg.mibattribute.did = DIDMSG_DOT11REQ_MIBGET_MIBATTRIBUTE;
+	getmsg.mibattribute.status = P80211ENUM_msgitem_status_data_ok;
+	getmsg.resultcode.did = DIDMSG_DOT11REQ_MIBGET_RESULTCODE;
+	getmsg.resultcode.status = P80211ENUM_msgitem_status_no_value;
 
-	item = (काष्ठा p80211itemd *)geपंचांगsg.mibattribute.data;
+	item = (struct p80211itemd *)getmsg.mibattribute.data;
 	item->did = DIDMIB_P2_NIC_PRISUPRANGE;
 	item->status = P80211ENUM_msgitem_status_no_value;
 
 	data = (u32 *)item->data;
 
-	/* DIDmsg_करोt11req_mibget */
-	prism2mgmt_mibset_mibget(wlandev, &geपंचांगsg);
-	अगर (geपंचांगsg.resultcode.data != P80211ENUM_resultcode_success)
+	/* DIDmsg_dot11req_mibget */
+	prism2mgmt_mibset_mibget(wlandev, &getmsg);
+	if (getmsg.resultcode.data != P80211ENUM_resultcode_success)
 		netdev_err(wlandev->netdev, "Couldn't fetch PRI-SUP info\n");
 
-	/* Alपढ़ोy in host order */
+	/* Already in host order */
 	priid.role = *data++;
 	priid.id = *data++;
 	priid.variant = *data++;
@@ -323,70 +322,70 @@ MODULE_FIRMWARE(PRISM2_USB_FWखाता);
 	priid.top = *data++;
 
 	/* Read the S3 file */
-	result = पढ़ो_fwfile(rfptr);
-	अगर (result) अणु
+	result = read_fwfile(rfptr);
+	if (result) {
 		netdev_err(wlandev->netdev,
 			   "Failed to read the data exiting.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	result = validate_identity();
-	अगर (result) अणु
+	if (result) {
 		netdev_err(wlandev->netdev, "Incompatible firmware image.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (startaddr == 0x00000000) अणु
+	if (startaddr == 0x00000000) {
 		netdev_err(wlandev->netdev,
 			   "Can't RAM download a Flash image!\n");
 		result = 1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Make the image chunks */
 	result = mkimage(fchunk, &nfchunks);
-	अगर (result) अणु
+	if (result) {
 		netdev_err(wlandev->netdev, "Failed to make image chunk.\n");
-		जाओ मुक्त_chunks;
-	पूर्ण
+		goto free_chunks;
+	}
 
 	/* Do any plugging */
 	result = plugimage(fchunk, nfchunks, s3plug, ns3plug, &pda);
-	अगर (result) अणु
+	if (result) {
 		netdev_err(wlandev->netdev, "Failed to plug data.\n");
-		जाओ मुक्त_chunks;
-	पूर्ण
+		goto free_chunks;
+	}
 
 	/* Insert any CRCs */
 	result = crcimage(fchunk, nfchunks, s3crc, ns3crc);
-	अगर (result) अणु
+	if (result) {
 		netdev_err(wlandev->netdev, "Failed to insert all CRCs\n");
-		जाओ मुक्त_chunks;
-	पूर्ण
+		goto free_chunks;
+	}
 
 	/* Write the image */
-	result = ग_लिखोimage(wlandev, fchunk, nfchunks);
-	अगर (result) अणु
+	result = writeimage(wlandev, fchunk, nfchunks);
+	if (result) {
 		netdev_err(wlandev->netdev, "Failed to ramwrite image data.\n");
-		जाओ मुक्त_chunks;
-	पूर्ण
+		goto free_chunks;
+	}
 
 	netdev_info(wlandev->netdev, "prism2_usb: firmware loading finished.\n");
 
-मुक्त_chunks:
+free_chunks:
 	/* clear any allocated memory */
-	मुक्त_chunks(fchunk, &nfchunks);
-	मुक्त_srecs();
+	free_chunks(fchunk, &nfchunks);
+	free_srecs();
 
 out:
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * crcimage
  *
- * Adds a CRC16 in the two bytes prior to each block identअगरied by
- * an S3 CRC record.  Currently, we करोn't actually करो a CRC we just
+ * Adds a CRC16 in the two bytes prior to each block identified by
+ * an S3 CRC record.  Currently, we don't actually do a CRC we just
  * insert the value 0xC0DE in hfa384x order.
  *
  * Arguments:
@@ -400,42 +399,42 @@ out:
  *	~0	failure
  *----------------------------------------------------------------
  */
-अटल पूर्णांक crcimage(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक nfchunks,
-		    काष्ठा s3crcrec *s3crc, अचिन्हित पूर्णांक ns3crc)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक i;
-	पूर्णांक c;
+static int crcimage(struct imgchunk *fchunk, unsigned int nfchunks,
+		    struct s3crcrec *s3crc, unsigned int ns3crc)
+{
+	int result = 0;
+	int i;
+	int c;
 	u32 crcstart;
 	u32 cstart = 0;
 	u32 cend;
 	u8 *dest;
 	u32 chunkoff;
 
-	क्रम (i = 0; i < ns3crc; i++) अणु
-		अगर (!s3crc[i].करोग_लिखो)
-			जारी;
+	for (i = 0; i < ns3crc; i++) {
+		if (!s3crc[i].dowrite)
+			continue;
 		crcstart = s3crc[i].addr;
 		/* Find chunk */
-		क्रम (c = 0; c < nfchunks; c++) अणु
+		for (c = 0; c < nfchunks; c++) {
 			cstart = fchunk[c].addr;
 			cend = fchunk[c].addr + fchunk[c].len;
-			/* the line below करोes an address & len match search */
-			/* unक्रमtunately, I've found that the len fields of */
-			/* some crc records करोn't match with the length of */
+			/* the line below does an address & len match search */
+			/* unfortunately, I've found that the len fields of */
+			/* some crc records don't match with the length of */
 			/* the actual data, so we're not checking right now */
-			/* अगर (crcstart-2 >= cstart && crcend <= cend) अवरोध; */
+			/* if (crcstart-2 >= cstart && crcend <= cend) break; */
 
 			/* note the -2 below, it's to make sure the chunk has */
-			/* space क्रम the CRC value */
-			अगर (crcstart - 2 >= cstart && crcstart < cend)
-				अवरोध;
-		पूर्ण
-		अगर (c >= nfchunks) अणु
+			/* space for the CRC value */
+			if (crcstart - 2 >= cstart && crcstart < cend)
+				break;
+		}
+		if (c >= nfchunks) {
 			pr_err("Failed to find chunk for crcrec[%d], addr=0x%06x len=%d , aborting crc.\n",
 			       i, s3crc[i].addr, s3crc[i].len);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		/* Insert crc */
 		pr_debug("Adding crc @ 0x%06x\n", s3crc[i].addr - 2);
@@ -443,14 +442,14 @@ out:
 		dest = fchunk[c].data + chunkoff;
 		*dest = 0xde;
 		*(dest + 1) = 0xc0;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 /*----------------------------------------------------------------
- * मुक्त_chunks
+ * free_chunks
  *
- * Clears the chunklist data काष्ठाures in preparation क्रम a new file.
+ * Clears the chunklist data structures in preparation for a new file.
  *
  * Arguments:
  *	none
@@ -459,21 +458,21 @@ out:
  *	nothing
  *----------------------------------------------------------------
  */
-अटल व्योम मुक्त_chunks(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक *nfchunks)
-अणु
-	पूर्णांक i;
+static void free_chunks(struct imgchunk *fchunk, unsigned int *nfchunks)
+{
+	int i;
 
-	क्रम (i = 0; i < *nfchunks; i++)
-		kमुक्त(fchunk[i].data);
+	for (i = 0; i < *nfchunks; i++)
+		kfree(fchunk[i].data);
 
 	*nfchunks = 0;
-	स_रखो(fchunk, 0, माप(*fchunk));
-पूर्ण
+	memset(fchunk, 0, sizeof(*fchunk));
+}
 
 /*----------------------------------------------------------------
- * मुक्त_srecs
+ * free_srecs
  *
- * Clears the srec data काष्ठाures in preparation क्रम a new file.
+ * Clears the srec data structures in preparation for a new file.
  *
  * Arguments:
  *	none
@@ -482,40 +481,40 @@ out:
  *	nothing
  *----------------------------------------------------------------
  */
-अटल व्योम मुक्त_srecs(व्योम)
-अणु
+static void free_srecs(void)
+{
 	ns3data = 0;
-	kमुक्त(s3data);
+	kfree(s3data);
 	ns3plug = 0;
-	स_रखो(s3plug, 0, माप(s3plug));
+	memset(s3plug, 0, sizeof(s3plug));
 	ns3crc = 0;
-	स_रखो(s3crc, 0, माप(s3crc));
+	memset(s3crc, 0, sizeof(s3crc));
 	ns3info = 0;
-	स_रखो(s3info, 0, माप(s3info));
+	memset(s3info, 0, sizeof(s3info));
 	startaddr = 0;
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * mkimage
  *
- * Scans the currently loaded set of S records क्रम data residing
+ * Scans the currently loaded set of S records for data residing
  * in contiguous memory regions.  Each contiguous region is then
- * made पूर्णांकo a 'chunk'.  This function assumes that we're building
+ * made into a 'chunk'.  This function assumes that we're building
  * a new chunk list.  Assumes the s3data items are in sorted order.
  *
  * Arguments:	none
  *
  * Returns:
  *	0	- success
- *	~0	- failure (probably an त्रुटि_सं)
+ *	~0	- failure (probably an errno)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक mkimage(काष्ठा imgchunk *clist, अचिन्हित पूर्णांक *ccnt)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक i;
-	पूर्णांक j;
-	पूर्णांक currchunk = 0;
+static int mkimage(struct imgchunk *clist, unsigned int *ccnt)
+{
+	int result = 0;
+	int i;
+	int j;
+	int currchunk = 0;
 	u32 nextaddr = 0;
 	u32 s3start;
 	u32 s3end;
@@ -523,135 +522,135 @@ out:
 	u32 cend;
 	u32 coffset;
 
-	/* There may alपढ़ोy be data in the chunklist */
+	/* There may already be data in the chunklist */
 	*ccnt = 0;
 
 	/* Establish the location and size of each chunk */
-	क्रम (i = 0; i < ns3data; i++) अणु
-		अगर (s3data[i].addr == nextaddr) अणु
+	for (i = 0; i < ns3data; i++) {
+		if (s3data[i].addr == nextaddr) {
 			/* existing chunk, grow it */
 			clist[currchunk].len += s3data[i].len;
 			nextaddr += s3data[i].len;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* New chunk */
 			(*ccnt)++;
 			currchunk = *ccnt - 1;
 			clist[currchunk].addr = s3data[i].addr;
 			clist[currchunk].len = s3data[i].len;
 			nextaddr = s3data[i].addr + s3data[i].len;
-			/* Expand the chunk अगर there is a CRC record at */
+			/* Expand the chunk if there is a CRC record at */
 			/* their beginning bound */
-			क्रम (j = 0; j < ns3crc; j++) अणु
-				अगर (s3crc[j].करोग_लिखो &&
-				    s3crc[j].addr == clist[currchunk].addr) अणु
+			for (j = 0; j < ns3crc; j++) {
+				if (s3crc[j].dowrite &&
+				    s3crc[j].addr == clist[currchunk].addr) {
 					clist[currchunk].addr -= 2;
 					clist[currchunk].len += 2;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 	/* We're currently assuming there aren't any overlapping chunks */
-	/*  अगर this proves false, we'll need to add code to coalesce. */
+	/*  if this proves false, we'll need to add code to coalesce. */
 
-	/* Allocate buffer space क्रम chunks */
-	क्रम (i = 0; i < *ccnt; i++) अणु
+	/* Allocate buffer space for chunks */
+	for (i = 0; i < *ccnt; i++) {
 		clist[i].data = kzalloc(clist[i].len, GFP_KERNEL);
-		अगर (!clist[i].data)
-			वापस 1;
+		if (!clist[i].data)
+			return 1;
 
 		pr_debug("chunk[%d]: addr=0x%06x len=%d\n",
 			 i, clist[i].addr, clist[i].len);
-	पूर्ण
+	}
 
 	/* Copy srec data to chunks */
-	क्रम (i = 0; i < ns3data; i++) अणु
+	for (i = 0; i < ns3data; i++) {
 		s3start = s3data[i].addr;
 		s3end = s3start + s3data[i].len - 1;
-		क्रम (j = 0; j < *ccnt; j++) अणु
+		for (j = 0; j < *ccnt; j++) {
 			cstart = clist[j].addr;
 			cend = cstart + clist[j].len - 1;
-			अगर (s3start >= cstart && s3end <= cend)
-				अवरोध;
-		पूर्ण
-		अगर (((अचिन्हित पूर्णांक)j) >= (*ccnt)) अणु
+			if (s3start >= cstart && s3end <= cend)
+				break;
+		}
+		if (((unsigned int)j) >= (*ccnt)) {
 			pr_err("s3rec(a=0x%06x,l=%d), no chunk match, exiting.\n",
 			       s3start, s3data[i].len);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		coffset = s3start - cstart;
-		स_नकल(clist[j].data + coffset, s3data[i].data, s3data[i].len);
-	पूर्ण
+		memcpy(clist[j].data + coffset, s3data[i].data, s3data[i].len);
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * mkpdrlist
  *
- * Reads a raw PDA and builds an array of pdrec_t काष्ठाures.
+ * Reads a raw PDA and builds an array of pdrec_t structures.
  *
  * Arguments:
  *	pda	buffer containing raw PDA bytes
- *	pdrec	ptr to an array of pdrec_t's.  Will be filled on निकास.
+ *	pdrec	ptr to an array of pdrec_t's.  Will be filled on exit.
  *	nrec	ptr to a variable that will contain the count of PDRs
  *
  * Returns:
  *	0	- success
- *	~0	- failure (probably an त्रुटि_सं)
+ *	~0	- failure (probably an errno)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक mkpdrlist(काष्ठा pda *pda)
-अणु
+static int mkpdrlist(struct pda *pda)
+{
 	__le16 *pda16 = (__le16 *)pda->buf;
-	पूर्णांक curroff;		/* in 'words' */
+	int curroff;		/* in 'words' */
 
 	pda->nrec = 0;
 	curroff = 0;
-	जबतक (curroff < (HFA384x_PDA_LEN_MAX / 2 - 1) &&
-	       le16_to_cpu(pda16[curroff + 1]) != HFA384x_PDR_END_OF_PDA) अणु
-		pda->rec[pda->nrec] = (काष्ठा hfa384x_pdrec *)&pda16[curroff];
+	while (curroff < (HFA384x_PDA_LEN_MAX / 2 - 1) &&
+	       le16_to_cpu(pda16[curroff + 1]) != HFA384x_PDR_END_OF_PDA) {
+		pda->rec[pda->nrec] = (struct hfa384x_pdrec *)&pda16[curroff];
 
-		अगर (le16_to_cpu(pda->rec[pda->nrec]->code) ==
-		    HFA384x_PDR_NICID) अणु
-			स_नकल(&nicid, &pda->rec[pda->nrec]->data.nicid,
-			       माप(nicid));
+		if (le16_to_cpu(pda->rec[pda->nrec]->code) ==
+		    HFA384x_PDR_NICID) {
+			memcpy(&nicid, &pda->rec[pda->nrec]->data.nicid,
+			       sizeof(nicid));
 			le16_to_cpus(&nicid.id);
 			le16_to_cpus(&nicid.variant);
 			le16_to_cpus(&nicid.major);
 			le16_to_cpus(&nicid.minor);
-		पूर्ण
-		अगर (le16_to_cpu(pda->rec[pda->nrec]->code) ==
-		    HFA384x_PDR_MFISUPRANGE) अणु
-			स_नकल(&rfid, &pda->rec[pda->nrec]->data.mfisuprange,
-			       माप(rfid));
+		}
+		if (le16_to_cpu(pda->rec[pda->nrec]->code) ==
+		    HFA384x_PDR_MFISUPRANGE) {
+			memcpy(&rfid, &pda->rec[pda->nrec]->data.mfisuprange,
+			       sizeof(rfid));
 			le16_to_cpus(&rfid.id);
 			le16_to_cpus(&rfid.variant);
 			le16_to_cpus(&rfid.bottom);
 			le16_to_cpus(&rfid.top);
-		पूर्ण
-		अगर (le16_to_cpu(pda->rec[pda->nrec]->code) ==
-		    HFA384x_PDR_CFISUPRANGE) अणु
-			स_नकल(&macid, &pda->rec[pda->nrec]->data.cfisuprange,
-			       माप(macid));
+		}
+		if (le16_to_cpu(pda->rec[pda->nrec]->code) ==
+		    HFA384x_PDR_CFISUPRANGE) {
+			memcpy(&macid, &pda->rec[pda->nrec]->data.cfisuprange,
+			       sizeof(macid));
 			le16_to_cpus(&macid.id);
 			le16_to_cpus(&macid.variant);
 			le16_to_cpus(&macid.bottom);
 			le16_to_cpus(&macid.top);
-		पूर्ण
+		}
 
 		(pda->nrec)++;
 		curroff += le16_to_cpu(pda16[curroff]) + 1;
-	पूर्ण
-	अगर (curroff >= (HFA384x_PDA_LEN_MAX / 2 - 1)) अणु
+	}
+	if (curroff >= (HFA384x_PDA_LEN_MAX / 2 - 1)) {
 		pr_err("no end record found or invalid lengths in PDR data, exiting. %x %d\n",
 		       curroff, pda->nrec);
-		वापस 1;
-	पूर्ण
-	pda->rec[pda->nrec] = (काष्ठा hfa384x_pdrec *)&pda16[curroff];
+		return 1;
+	}
+	pda->rec[pda->nrec] = (struct hfa384x_pdrec *)&pda16[curroff];
 	(pda->nrec)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
  * plugimage
@@ -671,14 +670,14 @@ out:
  *	~0	failure
  *----------------------------------------------------------------
  */
-अटल पूर्णांक plugimage(काष्ठा imgchunk *fchunk, अचिन्हित पूर्णांक nfchunks,
-		     काष्ठा s3plugrec *s3plug, अचिन्हित पूर्णांक ns3plug,
-		     काष्ठा pda *pda)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक i;			/* plug index */
-	पूर्णांक j;			/* index of PDR or -1 अगर fname plug */
-	पूर्णांक c;			/* chunk index */
+static int plugimage(struct imgchunk *fchunk, unsigned int nfchunks,
+		     struct s3plugrec *s3plug, unsigned int ns3plug,
+		     struct pda *pda)
+{
+	int result = 0;
+	int i;			/* plug index */
+	int j;			/* index of PDR or -1 if fname plug */
+	int c;			/* chunk index */
 	u32 pstart;
 	u32 pend;
 	u32 cstart = 0;
@@ -686,58 +685,58 @@ out:
 	u32 chunkoff;
 	u8 *dest;
 
-	/* क्रम each plug record */
-	क्रम (i = 0; i < ns3plug; i++) अणु
+	/* for each plug record */
+	for (i = 0; i < ns3plug; i++) {
 		pstart = s3plug[i].addr;
 		pend = s3plug[i].addr + s3plug[i].len;
 		/* find the matching PDR (or filename) */
-		अगर (s3plug[i].itemcode != 0xffffffffUL) अणु /* not filename */
-			क्रम (j = 0; j < pda->nrec; j++) अणु
-				अगर (s3plug[i].itemcode ==
+		if (s3plug[i].itemcode != 0xffffffffUL) { /* not filename */
+			for (j = 0; j < pda->nrec; j++) {
+				if (s3plug[i].itemcode ==
 				    le16_to_cpu(pda->rec[j]->code))
-					अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					break;
+			}
+		} else {
 			j = -1;
-		पूर्ण
-		अगर (j >= pda->nrec && j != -1) अणु /*  अगर no matching PDR, fail */
+		}
+		if (j >= pda->nrec && j != -1) { /*  if no matching PDR, fail */
 			pr_warn("warning: Failed to find PDR for plugrec 0x%04x.\n",
 				s3plug[i].itemcode);
-			जारी;	/* and move on to the next PDR */
+			continue;	/* and move on to the next PDR */
 
 			/* MSM: They swear that unless it's the MAC address,
 			 * the serial number, or the TX calibration records,
-			 * then there's reasonable शेषs in the f/w
-			 * image.  Thereक्रमe, missing PDRs in the card
+			 * then there's reasonable defaults in the f/w
+			 * image.  Therefore, missing PDRs in the card
 			 * should only be a warning, not fatal.
-			 * TODO: add fatals क्रम the PDRs mentioned above.
+			 * TODO: add fatals for the PDRs mentioned above.
 			 */
-		पूर्ण
+		}
 
 		/* Validate plug len against PDR len */
-		अगर (j != -1 && s3plug[i].len < le16_to_cpu(pda->rec[j]->len)) अणु
+		if (j != -1 && s3plug[i].len < le16_to_cpu(pda->rec[j]->len)) {
 			pr_err("error: Plug vs. PDR len mismatch for plugrec 0x%04x, abort plugging.\n",
 			       s3plug[i].itemcode);
 			result = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Validate plug address against
-		 * chunk data and identअगरy chunk
+		 * chunk data and identify chunk
 		 */
-		क्रम (c = 0; c < nfchunks; c++) अणु
+		for (c = 0; c < nfchunks; c++) {
 			cstart = fchunk[c].addr;
 			cend = fchunk[c].addr + fchunk[c].len;
-			अगर (pstart >= cstart && pend <= cend)
-				अवरोध;
-		पूर्ण
-		अगर (c >= nfchunks) अणु
+			if (pstart >= cstart && pend <= cend)
+				break;
+		}
+		if (c >= nfchunks) {
 			pr_err("error: Failed to find image chunk for plugrec 0x%04x.\n",
 			       s3plug[i].itemcode);
 			result = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Plug data */
 		chunkoff = pstart - cstart;
@@ -746,160 +745,160 @@ out:
 			 s3plug[i].itemcode, pstart, s3plug[i].len,
 			 c, chunkoff);
 
-		अगर (j == -1) अणु	/* plug the filename */
-			स_रखो(dest, 0, s3plug[i].len);
-			म_नकलन(dest, PRISM2_USB_FWखाता, s3plug[i].len - 1);
-		पूर्ण अन्यथा अणु	/* plug a PDR */
-			स_नकल(dest, &pda->rec[j]->data, s3plug[i].len);
-		पूर्ण
-	पूर्ण
-	वापस result;
-पूर्ण
+		if (j == -1) {	/* plug the filename */
+			memset(dest, 0, s3plug[i].len);
+			strncpy(dest, PRISM2_USB_FWFILE, s3plug[i].len - 1);
+		} else {	/* plug a PDR */
+			memcpy(dest, &pda->rec[j]->data, s3plug[i].len);
+		}
+	}
+	return result;
+}
 
 /*----------------------------------------------------------------
- * पढ़ो_cardpda
+ * read_cardpda
  *
- * Sends the command क्रम the driver to पढ़ो the pda from the card
+ * Sends the command for the driver to read the pda from the card
  * named in the device variable.  Upon success, the card pda is
- * stored in the "cardpda" variables.  Note that the pda काष्ठाure
+ * stored in the "cardpda" variables.  Note that the pda structure
  * is considered 'well formed' after this function.  That means
  * that the nrecs is valid, the rec array has been set up, and there's
  * a valid PDAEND record in the raw PDA data.
  *
  * Arguments:
- *	pda		pda काष्ठाure
+ *	pda		pda structure
  *	wlandev		device
  *
  * Returns:
  *	0	- success
- *	~0	- failure (probably an त्रुटि_सं)
+ *	~0	- failure (probably an errno)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक पढ़ो_cardpda(काष्ठा pda *pda, काष्ठा wlandevice *wlandev)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा p80211msg_p2req_पढ़ोpda *msg;
+static int read_cardpda(struct pda *pda, struct wlandevice *wlandev)
+{
+	int result = 0;
+	struct p80211msg_p2req_readpda *msg;
 
-	msg = kzalloc(माप(*msg), GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	msg = kzalloc(sizeof(*msg), GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 
 	/* set up the msg */
 	msg->msgcode = DIDMSG_P2REQ_READPDA;
-	msg->msglen = माप(msg);
-	म_नकल(msg->devname, wlandev->name);
+	msg->msglen = sizeof(msg);
+	strcpy(msg->devname, wlandev->name);
 	msg->pda.did = DIDMSG_P2REQ_READPDA_PDA;
 	msg->pda.len = HFA384x_PDA_LEN_MAX;
 	msg->pda.status = P80211ENUM_msgitem_status_no_value;
 	msg->resultcode.did = DIDMSG_P2REQ_READPDA_RESULTCODE;
-	msg->resultcode.len = माप(u32);
+	msg->resultcode.len = sizeof(u32);
 	msg->resultcode.status = P80211ENUM_msgitem_status_no_value;
 
-	अगर (prism2mgmt_पढ़ोpda(wlandev, msg) != 0) अणु
-		/* prism2mgmt_पढ़ोpda prपूर्णांकs an त्रुटि_सं अगर appropriate */
+	if (prism2mgmt_readpda(wlandev, msg) != 0) {
+		/* prism2mgmt_readpda prints an errno if appropriate */
 		result = -1;
-	पूर्ण अन्यथा अगर (msg->resultcode.data == P80211ENUM_resultcode_success) अणु
-		स_नकल(pda->buf, msg->pda.data, HFA384x_PDA_LEN_MAX);
+	} else if (msg->resultcode.data == P80211ENUM_resultcode_success) {
+		memcpy(pda->buf, msg->pda.data, HFA384x_PDA_LEN_MAX);
 		result = mkpdrlist(pda);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* resultcode must've been something other than success */
 		result = -1;
-	पूर्ण
+	}
 
-	kमुक्त(msg);
-	वापस result;
-पूर्ण
+	kfree(msg);
+	return result;
+}
 
 /*----------------------------------------------------------------
- * पढ़ो_fwfile
+ * read_fwfile
  *
  * Reads the given fw file which should have been compiled from an srec
  * file. Each record in the fw file will either be a plain data record,
- * a start address record, or other records used क्रम plugging.
+ * a start address record, or other records used for plugging.
  *
- * Note that data records are expected to be sorted पूर्णांकo
+ * Note that data records are expected to be sorted into
  * ascending address order in the fw file.
  *
  * Note also that the start address record, originally an S7 record in
  * the srec file, is expected in the fw file to be like a data record but
- * with a certain address to make it identअगरiable.
+ * with a certain address to make it identifiable.
  *
- * Here's the SREC क्रमmat that the fw should have come from:
+ * Here's the SREC format that the fw should have come from:
  * S[37]nnaaaaaaaaddd...dddcc
  *
  *       nn - number of bytes starting with the address field
- * aaaaaaaa - address in पढ़ोable (or big endian) क्रमmat
- * dd....dd - 0-245 data bytes (two अक्षरs per byte)
+ * aaaaaaaa - address in readable (or big endian) format
+ * dd....dd - 0-245 data bytes (two chars per byte)
  *       cc - checksum
  *
- * The S7 record's (there should be only one) address value माला_लो
+ * The S7 record's (there should be only one) address value gets
  * converted to an S3 record with address of 0xff400000, with the
  * start address being stored as a 4 byte data word. That address is
- * the start execution address used क्रम RAM करोwnloads.
+ * the start execution address used for RAM downloads.
  *
- * The S3 records have a collection of subक्रमmats indicated by the
+ * The S3 records have a collection of subformats indicated by the
  * value of aaaaaaaa:
- *   0xff000000 - Plug record, data field क्रमmat:
+ *   0xff000000 - Plug record, data field format:
  *                xxxxxxxxaaaaaaaassssssss
  *                x - PDR code number (little endian)
  *                a - Address in load image to plug (little endian)
  *                s - Length of plug data area (little endian)
  *
- *   0xff100000 - CRC16 generation record, data field क्रमmat:
+ *   0xff100000 - CRC16 generation record, data field format:
  *                aaaaaaaassssssssbbbbbbbb
- *                a - Start address क्रम CRC calculation (little endian)
+ *                a - Start address for CRC calculation (little endian)
  *                s - Length of data to  calculate over (little endian)
- *                b - Boolean, true=ग_लिखो crc, false=करोn't ग_लिखो
+ *                b - Boolean, true=write crc, false=don't write
  *
- *   0xff200000 - Info record, data field क्रमmat:
+ *   0xff200000 - Info record, data field format:
  *                ssssttttdd..dd
  *                s - Size in words (little endian)
- *                t - Info type (little endian), see #घोषणाs and
- *                    काष्ठा s3inक्रमec क्रम details about types.
+ *                t - Info type (little endian), see #defines and
+ *                    struct s3inforec for details about types.
  *                d - (s - 1) little endian words giving the contents of
  *                    the given info type.
  *
- *   0xff400000 - Start address record, data field क्रमmat:
+ *   0xff400000 - Start address record, data field format:
  *                aaaaaaaa
  *                a - Address in load image to plug (little endian)
  *
  * Arguments:
- *	record	firmware image (ihex record काष्ठाure) in kernel memory
+ *	record	firmware image (ihex record structure) in kernel memory
  *
  * Returns:
  *	0	- success
- *	~0	- failure (probably an त्रुटि_सं)
+ *	~0	- failure (probably an errno)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक पढ़ो_fwfile(स्थिर काष्ठा ihex_binrec *record)
-अणु
-	पूर्णांक		i;
-	पूर्णांक		rcnt = 0;
-	u16		*पंचांगpinfo;
+static int read_fwfile(const struct ihex_binrec *record)
+{
+	int		i;
+	int		rcnt = 0;
+	u16		*tmpinfo;
 	u16		*ptr16;
 	u32		*ptr32, len, addr;
 
 	pr_debug("Reading fw file ...\n");
 
-	जबतक (record) अणु
+	while (record) {
 		rcnt++;
 
 		len = be16_to_cpu(record->len);
 		addr = be32_to_cpu(record->addr);
 
-		/* Poपूर्णांक पूर्णांकo data क्रम dअगरferent word lengths */
+		/* Point into data for different word lengths */
 		ptr32 = (u32 *)record->data;
 		ptr16 = (u16 *)record->data;
 
 		/* parse what was an S3 srec and put it in the right array */
-		चयन (addr) अणु
-		हाल S3ADDR_START:
+		switch (addr) {
+		case S3ADDR_START:
 			startaddr = *ptr32;
 			pr_debug("  S7 start addr, record=%d addr=0x%08x\n",
 				 rcnt,
 				 startaddr);
-			अवरोध;
-		हाल S3ADDR_PLUG:
+			break;
+		case S3ADDR_PLUG:
 			s3plug[ns3plug].itemcode = *ptr32;
 			s3plug[ns3plug].addr = *(ptr32 + 1);
 			s3plug[ns3plug].len = *(ptr32 + 2);
@@ -911,28 +910,28 @@ out:
 				 s3plug[ns3plug].len);
 
 			ns3plug++;
-			अगर (ns3plug == S3PLUG_MAX) अणु
+			if (ns3plug == S3PLUG_MAX) {
 				pr_err("S3 plugrec limit reached - aborting\n");
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		हाल S3ADDR_CRC:
+				return 1;
+			}
+			break;
+		case S3ADDR_CRC:
 			s3crc[ns3crc].addr = *ptr32;
 			s3crc[ns3crc].len = *(ptr32 + 1);
-			s3crc[ns3crc].करोग_लिखो = *(ptr32 + 2);
+			s3crc[ns3crc].dowrite = *(ptr32 + 2);
 
 			pr_debug("  S3 crcrec, record=%d addr=0x%08x len=%d write=0x%08x\n",
 				 rcnt,
 				 s3crc[ns3crc].addr,
 				 s3crc[ns3crc].len,
-				 s3crc[ns3crc].करोग_लिखो);
+				 s3crc[ns3crc].dowrite);
 			ns3crc++;
-			अगर (ns3crc == S3CRC_MAX) अणु
+			if (ns3crc == S3CRC_MAX) {
 				pr_err("S3 crcrec limit reached - aborting\n");
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		हाल S3ADDR_INFO:
+				return 1;
+			}
+			break;
+		case S3ADDR_INFO:
 			s3info[ns3info].len = *ptr16;
 			s3info[ns3info].type = *(ptr16 + 1);
 
@@ -940,47 +939,47 @@ out:
 				 rcnt,
 				 s3info[ns3info].len,
 				 s3info[ns3info].type);
-			अगर (((s3info[ns3info].len - 1) * माप(u16)) >
-			   माप(s3info[ns3info].info)) अणु
+			if (((s3info[ns3info].len - 1) * sizeof(u16)) >
+			   sizeof(s3info[ns3info].info)) {
 				pr_err("S3 inforec length too long - aborting\n");
-				वापस 1;
-			पूर्ण
+				return 1;
+			}
 
-			पंचांगpinfo = (u16 *)&s3info[ns3info].info.version;
+			tmpinfo = (u16 *)&s3info[ns3info].info.version;
 			pr_debug("            info=");
-			क्रम (i = 0; i < s3info[ns3info].len - 1; i++) अणु
-				पंचांगpinfo[i] = *(ptr16 + 2 + i);
-				pr_debug("%04x ", पंचांगpinfo[i]);
-			पूर्ण
+			for (i = 0; i < s3info[ns3info].len - 1; i++) {
+				tmpinfo[i] = *(ptr16 + 2 + i);
+				pr_debug("%04x ", tmpinfo[i]);
+			}
 			pr_debug("\n");
 
 			ns3info++;
-			अगर (ns3info == S3INFO_MAX) अणु
+			if (ns3info == S3INFO_MAX) {
 				pr_err("S3 inforec limit reached - aborting\n");
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		शेष:	/* Data record */
+				return 1;
+			}
+			break;
+		default:	/* Data record */
 			s3data[ns3data].addr = addr;
 			s3data[ns3data].len = len;
-			s3data[ns3data].data = (uपूर्णांक8_t *)record->data;
+			s3data[ns3data].data = (uint8_t *)record->data;
 			ns3data++;
-			अगर (ns3data == S3DATA_MAX) अणु
+			if (ns3data == S3DATA_MAX) {
 				pr_err("S3 datarec limit reached - aborting\n");
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				return 1;
+			}
+			break;
+		}
 		record = ihex_next_binrec(record);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*----------------------------------------------------------------
- * ग_लिखोimage
+ * writeimage
  *
- * Takes the chunks, builds p80211 messages and sends them करोwn
- * to the driver क्रम writing to the card.
+ * Takes the chunks, builds p80211 messages and sends them down
+ * to the driver for writing to the card.
  *
  * Arguments:
  *	wlandev		device
@@ -992,48 +991,48 @@ out:
  *	~0	failure
  *----------------------------------------------------------------
  */
-अटल पूर्णांक ग_लिखोimage(काष्ठा wlandevice *wlandev, काष्ठा imgchunk *fchunk,
-		      अचिन्हित पूर्णांक nfchunks)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा p80211msg_p2req_ramdl_state *rsपंचांगsg;
-	काष्ठा p80211msg_p2req_ramdl_ग_लिखो *rwrmsg;
+static int writeimage(struct wlandevice *wlandev, struct imgchunk *fchunk,
+		      unsigned int nfchunks)
+{
+	int result = 0;
+	struct p80211msg_p2req_ramdl_state *rstmsg;
+	struct p80211msg_p2req_ramdl_write *rwrmsg;
 	u32 resultcode;
-	पूर्णांक i;
-	पूर्णांक j;
-	अचिन्हित पूर्णांक nग_लिखोs;
+	int i;
+	int j;
+	unsigned int nwrites;
 	u32 curroff;
 	u32 currlen;
 	u32 currdaddr;
 
-	rsपंचांगsg = kzalloc(माप(*rsपंचांगsg), GFP_KERNEL);
-	rwrmsg = kzalloc(माप(*rwrmsg), GFP_KERNEL);
-	अगर (!rsपंचांगsg || !rwrmsg) अणु
-		kमुक्त(rsपंचांगsg);
-		kमुक्त(rwrmsg);
+	rstmsg = kzalloc(sizeof(*rstmsg), GFP_KERNEL);
+	rwrmsg = kzalloc(sizeof(*rwrmsg), GFP_KERNEL);
+	if (!rstmsg || !rwrmsg) {
+		kfree(rstmsg);
+		kfree(rwrmsg);
 		netdev_err(wlandev->netdev,
 			   "%s: no memory for firmware download, aborting download\n",
 			   __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Initialize the messages */
-	म_नकल(rsपंचांगsg->devname, wlandev->name);
-	rsपंचांगsg->msgcode = DIDMSG_P2REQ_RAMDL_STATE;
-	rsपंचांगsg->msglen = माप(*rsपंचांगsg);
-	rsपंचांगsg->enable.did = DIDMSG_P2REQ_RAMDL_STATE_ENABLE;
-	rsपंचांगsg->exeaddr.did = DIDMSG_P2REQ_RAMDL_STATE_EXEADDR;
-	rsपंचांगsg->resultcode.did = DIDMSG_P2REQ_RAMDL_STATE_RESULTCODE;
-	rsपंचांगsg->enable.status = P80211ENUM_msgitem_status_data_ok;
-	rsपंचांगsg->exeaddr.status = P80211ENUM_msgitem_status_data_ok;
-	rsपंचांगsg->resultcode.status = P80211ENUM_msgitem_status_no_value;
-	rsपंचांगsg->enable.len = माप(u32);
-	rsपंचांगsg->exeaddr.len = माप(u32);
-	rsपंचांगsg->resultcode.len = माप(u32);
+	strcpy(rstmsg->devname, wlandev->name);
+	rstmsg->msgcode = DIDMSG_P2REQ_RAMDL_STATE;
+	rstmsg->msglen = sizeof(*rstmsg);
+	rstmsg->enable.did = DIDMSG_P2REQ_RAMDL_STATE_ENABLE;
+	rstmsg->exeaddr.did = DIDMSG_P2REQ_RAMDL_STATE_EXEADDR;
+	rstmsg->resultcode.did = DIDMSG_P2REQ_RAMDL_STATE_RESULTCODE;
+	rstmsg->enable.status = P80211ENUM_msgitem_status_data_ok;
+	rstmsg->exeaddr.status = P80211ENUM_msgitem_status_data_ok;
+	rstmsg->resultcode.status = P80211ENUM_msgitem_status_no_value;
+	rstmsg->enable.len = sizeof(u32);
+	rstmsg->exeaddr.len = sizeof(u32);
+	rstmsg->resultcode.len = sizeof(u32);
 
-	म_नकल(rwrmsg->devname, wlandev->name);
+	strcpy(rwrmsg->devname, wlandev->name);
 	rwrmsg->msgcode = DIDMSG_P2REQ_RAMDL_WRITE;
-	rwrmsg->msglen = माप(*rwrmsg);
+	rwrmsg->msglen = sizeof(*rwrmsg);
 	rwrmsg->addr.did = DIDMSG_P2REQ_RAMDL_WRITE_ADDR;
 	rwrmsg->len.did = DIDMSG_P2REQ_RAMDL_WRITE_LEN;
 	rwrmsg->data.did = DIDMSG_P2REQ_RAMDL_WRITE_DATA;
@@ -1042,109 +1041,109 @@ out:
 	rwrmsg->len.status = P80211ENUM_msgitem_status_data_ok;
 	rwrmsg->data.status = P80211ENUM_msgitem_status_data_ok;
 	rwrmsg->resultcode.status = P80211ENUM_msgitem_status_no_value;
-	rwrmsg->addr.len = माप(u32);
-	rwrmsg->len.len = माप(u32);
+	rwrmsg->addr.len = sizeof(u32);
+	rwrmsg->len.len = sizeof(u32);
 	rwrmsg->data.len = WRITESIZE_MAX;
-	rwrmsg->resultcode.len = माप(u32);
+	rwrmsg->resultcode.len = sizeof(u32);
 
 	/* Send xxx_state(enable) */
 	pr_debug("Sending dl_state(enable) message.\n");
-	rsपंचांगsg->enable.data = P80211ENUM_truth_true;
-	rsपंचांगsg->exeaddr.data = startaddr;
+	rstmsg->enable.data = P80211ENUM_truth_true;
+	rstmsg->exeaddr.data = startaddr;
 
-	result = prism2mgmt_ramdl_state(wlandev, rsपंचांगsg);
-	अगर (result) अणु
+	result = prism2mgmt_ramdl_state(wlandev, rstmsg);
+	if (result) {
 		netdev_err(wlandev->netdev,
 			   "%s state enable failed w/ result=%d, aborting download\n",
 			   __func__, result);
-		जाओ मुक्त_result;
-	पूर्ण
-	resultcode = rsपंचांगsg->resultcode.data;
-	अगर (resultcode != P80211ENUM_resultcode_success) अणु
+		goto free_result;
+	}
+	resultcode = rstmsg->resultcode.data;
+	if (resultcode != P80211ENUM_resultcode_success) {
 		netdev_err(wlandev->netdev,
 			   "%s()->xxxdl_state msg indicates failure, w/ resultcode=%d, aborting download.\n",
 			   __func__, resultcode);
 		result = 1;
-		जाओ मुक्त_result;
-	पूर्ण
+		goto free_result;
+	}
 
 	/* Now, loop through the data chunks and send WRITESIZE_MAX data */
-	क्रम (i = 0; i < nfchunks; i++) अणु
-		nग_लिखोs = fchunk[i].len / WRITESIZE_MAX;
-		nग_लिखोs += (fchunk[i].len % WRITESIZE_MAX) ? 1 : 0;
+	for (i = 0; i < nfchunks; i++) {
+		nwrites = fchunk[i].len / WRITESIZE_MAX;
+		nwrites += (fchunk[i].len % WRITESIZE_MAX) ? 1 : 0;
 		curroff = 0;
-		क्रम (j = 0; j < nग_लिखोs; j++) अणु
+		for (j = 0; j < nwrites; j++) {
 			/* TODO Move this to a separate function */
-			पूर्णांक lenleft = fchunk[i].len - (WRITESIZE_MAX * j);
+			int lenleft = fchunk[i].len - (WRITESIZE_MAX * j);
 
-			अगर (fchunk[i].len > WRITESIZE_MAX)
+			if (fchunk[i].len > WRITESIZE_MAX)
 				currlen = WRITESIZE_MAX;
-			अन्यथा
+			else
 				currlen = lenleft;
 			curroff = j * WRITESIZE_MAX;
 			currdaddr = fchunk[i].addr + curroff;
 			/* Setup the message */
 			rwrmsg->addr.data = currdaddr;
 			rwrmsg->len.data = currlen;
-			स_नकल(rwrmsg->data.data,
+			memcpy(rwrmsg->data.data,
 			       fchunk[i].data + curroff, currlen);
 
-			/* Send flashdl_ग_लिखो(pda) */
+			/* Send flashdl_write(pda) */
 			pr_debug
 			    ("Sending xxxdl_write message addr=%06x len=%d.\n",
 			     currdaddr, currlen);
 
-			result = prism2mgmt_ramdl_ग_लिखो(wlandev, rwrmsg);
+			result = prism2mgmt_ramdl_write(wlandev, rwrmsg);
 
 			/* Check the results */
-			अगर (result) अणु
+			if (result) {
 				netdev_err(wlandev->netdev,
 					   "%s chunk write failed w/ result=%d, aborting download\n",
 					   __func__, result);
-				जाओ मुक्त_result;
-			पूर्ण
-			resultcode = rsपंचांगsg->resultcode.data;
-			अगर (resultcode != P80211ENUM_resultcode_success) अणु
+				goto free_result;
+			}
+			resultcode = rstmsg->resultcode.data;
+			if (resultcode != P80211ENUM_resultcode_success) {
 				pr_err("%s()->xxxdl_write msg indicates failure, w/ resultcode=%d, aborting download.\n",
 				       __func__, resultcode);
 				result = 1;
-				जाओ मुक्त_result;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto free_result;
+			}
+		}
+	}
 
 	/* Send xxx_state(disable) */
 	pr_debug("Sending dl_state(disable) message.\n");
-	rsपंचांगsg->enable.data = P80211ENUM_truth_false;
-	rsपंचांगsg->exeaddr.data = 0;
+	rstmsg->enable.data = P80211ENUM_truth_false;
+	rstmsg->exeaddr.data = 0;
 
-	result = prism2mgmt_ramdl_state(wlandev, rsपंचांगsg);
-	अगर (result) अणु
+	result = prism2mgmt_ramdl_state(wlandev, rstmsg);
+	if (result) {
 		netdev_err(wlandev->netdev,
 			   "%s state disable failed w/ result=%d, aborting download\n",
 			   __func__, result);
-		जाओ मुक्त_result;
-	पूर्ण
-	resultcode = rsपंचांगsg->resultcode.data;
-	अगर (resultcode != P80211ENUM_resultcode_success) अणु
+		goto free_result;
+	}
+	resultcode = rstmsg->resultcode.data;
+	if (resultcode != P80211ENUM_resultcode_success) {
 		netdev_err(wlandev->netdev,
 			   "%s()->xxxdl_state msg indicates failure, w/ resultcode=%d, aborting download.\n",
 			   __func__, resultcode);
 		result = 1;
-		जाओ मुक्त_result;
-	पूर्ण
+		goto free_result;
+	}
 
-मुक्त_result:
-	kमुक्त(rsपंचांगsg);
-	kमुक्त(rwrmsg);
-	वापस result;
-पूर्ण
+free_result:
+	kfree(rstmsg);
+	kfree(rwrmsg);
+	return result;
+}
 
-अटल पूर्णांक validate_identity(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक result = 1;
-	पूर्णांक trump = 0;
+static int validate_identity(void)
+{
+	int i;
+	int result = 1;
+	int trump = 0;
 
 	pr_debug("NIC ID: %#x v%d.%d.%d\n",
 		 nicid.id, nicid.major, nicid.minor, nicid.variant);
@@ -1155,16 +1154,16 @@ out:
 	pr_debug("PRI ID: %#x v%d %d->%d\n",
 		 priid.id, priid.variant, priid.bottom, priid.top);
 
-	क्रम (i = 0; i < ns3info; i++) अणु
-		चयन (s3info[i].type) अणु
-		हाल 1:
+	for (i = 0; i < ns3info; i++) {
+		switch (s3info[i].type) {
+		case 1:
 			pr_debug("Version:  ID %#x %d.%d.%d\n",
 				 s3info[i].info.version.id,
 				 s3info[i].info.version.major,
 				 s3info[i].info.version.minor,
 				 s3info[i].info.version.variant);
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			pr_debug("Compat: Role %#x Id %#x v%d %d->%d\n",
 				 s3info[i].info.compat.role,
 				 s3info[i].info.compat.id,
@@ -1173,65 +1172,65 @@ out:
 				 s3info[i].info.compat.top);
 
 			/* MAC compat range */
-			अगर ((s3info[i].info.compat.role == 1) &&
-			    (s3info[i].info.compat.id == 2)) अणु
-				अगर (s3info[i].info.compat.variant !=
-				    macid.variant) अणु
+			if ((s3info[i].info.compat.role == 1) &&
+			    (s3info[i].info.compat.id == 2)) {
+				if (s3info[i].info.compat.variant !=
+				    macid.variant) {
 					result = 2;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/* PRI compat range */
-			अगर ((s3info[i].info.compat.role == 1) &&
-			    (s3info[i].info.compat.id == 3)) अणु
-				अगर ((s3info[i].info.compat.bottom >
+			if ((s3info[i].info.compat.role == 1) &&
+			    (s3info[i].info.compat.id == 3)) {
+				if ((s3info[i].info.compat.bottom >
 				     priid.top) ||
 				    (s3info[i].info.compat.top <
-				     priid.bottom)) अणु
+				     priid.bottom)) {
 					result = 3;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			/* SEC compat range */
-			अगर ((s3info[i].info.compat.role == 1) &&
-			    (s3info[i].info.compat.id == 4)) अणु
+			if ((s3info[i].info.compat.role == 1) &&
+			    (s3info[i].info.compat.id == 4)) {
 				/* FIXME: isn't something missing here? */
-			पूर्ण
+			}
 
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			pr_debug("Seq: %#x\n", s3info[i].info.buildseq);
 
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			pr_debug("Platform:  ID %#x %d.%d.%d\n",
 				 s3info[i].info.version.id,
 				 s3info[i].info.version.major,
 				 s3info[i].info.version.minor,
 				 s3info[i].info.version.variant);
 
-			अगर (nicid.id != s3info[i].info.version.id)
-				जारी;
-			अगर (nicid.major != s3info[i].info.version.major)
-				जारी;
-			अगर (nicid.minor != s3info[i].info.version.minor)
-				जारी;
-			अगर ((nicid.variant != s3info[i].info.version.variant) &&
+			if (nicid.id != s3info[i].info.version.id)
+				continue;
+			if (nicid.major != s3info[i].info.version.major)
+				continue;
+			if (nicid.minor != s3info[i].info.version.minor)
+				continue;
+			if ((nicid.variant != s3info[i].info.version.variant) &&
 			    (nicid.id != 0x8008))
-				जारी;
+				continue;
 
 			trump = 1;
-			अवरोध;
-		हाल 0x8001:
+			break;
+		case 0x8001:
 			pr_debug("name inforec len %d\n", s3info[i].len);
 
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_debug("Unknown inforec type %d\n", s3info[i].type);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* walk through */
 
-	अगर (trump && (result != 2))
+	if (trump && (result != 2))
 		result = 0;
-	वापस result;
-पूर्ण
+	return result;
+}

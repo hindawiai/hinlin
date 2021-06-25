@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  * Author: Felix Fietkau <nbd@nbd.name>
@@ -7,66 +6,66 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
 
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/sdio_ids.h>
-#समावेश <linux/mmc/sdio_func.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/sdio_ids.h>
+#include <linux/mmc/sdio_func.h>
 
-#समावेश "../trace.h"
-#समावेश "mt7615.h"
-#समावेश "sdio.h"
-#समावेश "mac.h"
+#include "../trace.h"
+#include "mt7615.h"
+#include "sdio.h"
+#include "mac.h"
 
-अटल पूर्णांक mt7663s_refill_sched_quota(काष्ठा mt76_dev *dev, u32 *data)
-अणु
-	u32 ple_ac_data_quota[] = अणु
+static int mt7663s_refill_sched_quota(struct mt76_dev *dev, u32 *data)
+{
+	u32 ple_ac_data_quota[] = {
 		FIELD_GET(TXQ_CNT_L, data[4]), /* VO */
 		FIELD_GET(TXQ_CNT_H, data[3]), /* VI */
 		FIELD_GET(TXQ_CNT_L, data[3]), /* BE */
 		FIELD_GET(TXQ_CNT_H, data[2]), /* BK */
-	पूर्ण;
-	u32 pse_ac_data_quota[] = अणु
+	};
+	u32 pse_ac_data_quota[] = {
 		FIELD_GET(TXQ_CNT_H, data[1]), /* VO */
 		FIELD_GET(TXQ_CNT_L, data[1]), /* VI */
 		FIELD_GET(TXQ_CNT_H, data[0]), /* BE */
 		FIELD_GET(TXQ_CNT_L, data[0]), /* BK */
-	पूर्ण;
+	};
 	u32 pse_mcu_quota = FIELD_GET(TXQ_CNT_L, data[2]);
 	u32 pse_data_quota = 0, ple_data_quota = 0;
-	काष्ठा mt76_sdio *sdio = &dev->sdio;
-	पूर्णांक i;
+	struct mt76_sdio *sdio = &dev->sdio;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pse_ac_data_quota); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(pse_ac_data_quota); i++) {
 		pse_data_quota += pse_ac_data_quota[i];
 		ple_data_quota += ple_ac_data_quota[i];
-	पूर्ण
+	}
 
-	अगर (!pse_data_quota && !ple_data_quota && !pse_mcu_quota)
-		वापस 0;
+	if (!pse_data_quota && !ple_data_quota && !pse_mcu_quota)
+		return 0;
 
 	sdio->sched.pse_mcu_quota += pse_mcu_quota;
 	sdio->sched.pse_data_quota += pse_data_quota;
 	sdio->sched.ple_data_quota += ple_data_quota;
 
-	वापस pse_data_quota + ple_data_quota + pse_mcu_quota;
-पूर्ण
+	return pse_data_quota + ple_data_quota + pse_mcu_quota;
+}
 
-अटल काष्ठा sk_buff *mt7663s_build_rx_skb(व्योम *data, पूर्णांक data_len,
-					    पूर्णांक buf_len)
-अणु
-	पूर्णांक len = min_t(पूर्णांक, data_len, MT_SKB_HEAD_LEN);
-	काष्ठा sk_buff *skb;
+static struct sk_buff *mt7663s_build_rx_skb(void *data, int data_len,
+					    int buf_len)
+{
+	int len = min_t(int, data_len, MT_SKB_HEAD_LEN);
+	struct sk_buff *skb;
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
 	skb_put_data(skb, data, len);
-	अगर (data_len > len) अणु
-		काष्ठा page *page;
+	if (data_len > len) {
+		struct page *page;
 
 		data += len;
 		page = virt_to_head_page(data);
@@ -74,55 +73,55 @@
 				page, data - page_address(page),
 				data_len - len, buf_len);
 		get_page(page);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक mt7663s_rx_run_queue(काष्ठा mt76_dev *dev, क्रमागत mt76_rxq_id qid,
-				काष्ठा mt76s_पूर्णांकr *पूर्णांकr)
-अणु
-	काष्ठा mt76_queue *q = &dev->q_rx[qid];
-	काष्ठा mt76_sdio *sdio = &dev->sdio;
-	पूर्णांक len = 0, err, i;
-	काष्ठा page *page;
+static int mt7663s_rx_run_queue(struct mt76_dev *dev, enum mt76_rxq_id qid,
+				struct mt76s_intr *intr)
+{
+	struct mt76_queue *q = &dev->q_rx[qid];
+	struct mt76_sdio *sdio = &dev->sdio;
+	int len = 0, err, i;
+	struct page *page;
 	u8 *buf;
 
-	क्रम (i = 0; i < पूर्णांकr->rx.num[qid]; i++)
-		len += round_up(पूर्णांकr->rx.len[qid][i] + 4, 4);
+	for (i = 0; i < intr->rx.num[qid]; i++)
+		len += round_up(intr->rx.len[qid][i] + 4, 4);
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	अगर (len > sdio->func->cur_blksize)
+	if (len > sdio->func->cur_blksize)
 		len = roundup(len, sdio->func->cur_blksize);
 
 	page = __dev_alloc_pages(GFP_KERNEL, get_order(len));
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	buf = page_address(page);
 
-	err = sdio_पढ़ोsb(sdio->func, buf, MCR_WRDR(qid), len);
-	अगर (err < 0) अणु
+	err = sdio_readsb(sdio->func, buf, MCR_WRDR(qid), len);
+	if (err < 0) {
 		dev_err(dev->dev, "sdio read data failed:%d\n", err);
 		put_page(page);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	क्रम (i = 0; i < पूर्णांकr->rx.num[qid]; i++) अणु
-		पूर्णांक index = (q->head + i) % q->ndesc;
-		काष्ठा mt76_queue_entry *e = &q->entry[index];
+	for (i = 0; i < intr->rx.num[qid]; i++) {
+		int index = (q->head + i) % q->ndesc;
+		struct mt76_queue_entry *e = &q->entry[index];
 
-		len = पूर्णांकr->rx.len[qid][i];
+		len = intr->rx.len[qid][i];
 		e->skb = mt7663s_build_rx_skb(buf, len, round_up(len + 4, 4));
-		अगर (!e->skb)
-			अवरोध;
+		if (!e->skb)
+			break;
 
 		buf += round_up(len + 4, 4);
-		अगर (q->queued + i + 1 == q->ndesc)
-			अवरोध;
-	पूर्ण
+		if (q->queued + i + 1 == q->ndesc)
+			break;
+	}
 	put_page(page);
 
 	spin_lock_bh(&q->lock);
@@ -130,198 +129,198 @@
 	q->queued += i;
 	spin_unlock_bh(&q->lock);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक mt7663s_rx_handler(काष्ठा mt76_dev *dev)
-अणु
-	काष्ठा mt76_sdio *sdio = &dev->sdio;
-	काष्ठा mt76s_पूर्णांकr *पूर्णांकr = sdio->पूर्णांकr_data;
-	पूर्णांक nframes = 0, ret;
+static int mt7663s_rx_handler(struct mt76_dev *dev)
+{
+	struct mt76_sdio *sdio = &dev->sdio;
+	struct mt76s_intr *intr = sdio->intr_data;
+	int nframes = 0, ret;
 
-	ret = sdio_पढ़ोsb(sdio->func, पूर्णांकr, MCR_WHISR, माप(*पूर्णांकr));
-	अगर (ret < 0)
-		वापस ret;
+	ret = sdio_readsb(sdio->func, intr, MCR_WHISR, sizeof(*intr));
+	if (ret < 0)
+		return ret;
 
-	trace_dev_irq(dev, पूर्णांकr->isr, 0);
+	trace_dev_irq(dev, intr->isr, 0);
 
-	अगर (पूर्णांकr->isr & WHIER_RX0_DONE_INT_EN) अणु
-		ret = mt7663s_rx_run_queue(dev, 0, पूर्णांकr);
-		अगर (ret > 0) अणु
+	if (intr->isr & WHIER_RX0_DONE_INT_EN) {
+		ret = mt7663s_rx_run_queue(dev, 0, intr);
+		if (ret > 0) {
 			mt76_worker_schedule(&sdio->net_worker);
 			nframes += ret;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (पूर्णांकr->isr & WHIER_RX1_DONE_INT_EN) अणु
-		ret = mt7663s_rx_run_queue(dev, 1, पूर्णांकr);
-		अगर (ret > 0) अणु
+	if (intr->isr & WHIER_RX1_DONE_INT_EN) {
+		ret = mt7663s_rx_run_queue(dev, 1, intr);
+		if (ret > 0) {
 			mt76_worker_schedule(&sdio->net_worker);
 			nframes += ret;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	nframes += !!mt7663s_refill_sched_quota(dev, पूर्णांकr->tx.wtqcr);
+	nframes += !!mt7663s_refill_sched_quota(dev, intr->tx.wtqcr);
 
-	वापस nframes;
-पूर्ण
+	return nframes;
+}
 
-अटल पूर्णांक mt7663s_tx_pick_quota(काष्ठा mt76_sdio *sdio, bool mcu, पूर्णांक buf_sz,
-				 पूर्णांक *pse_size, पूर्णांक *ple_size)
-अणु
-	पूर्णांक pse_sz;
+static int mt7663s_tx_pick_quota(struct mt76_sdio *sdio, bool mcu, int buf_sz,
+				 int *pse_size, int *ple_size)
+{
+	int pse_sz;
 
 	pse_sz = DIV_ROUND_UP(buf_sz + sdio->sched.deficit, MT_PSE_PAGE_SZ);
 
-	अगर (mcu) अणु
-		अगर (sdio->sched.pse_mcu_quota < *pse_size + pse_sz)
-			वापस -EBUSY;
-	पूर्ण अन्यथा अणु
-		अगर (sdio->sched.pse_data_quota < *pse_size + pse_sz ||
+	if (mcu) {
+		if (sdio->sched.pse_mcu_quota < *pse_size + pse_sz)
+			return -EBUSY;
+	} else {
+		if (sdio->sched.pse_data_quota < *pse_size + pse_sz ||
 		    sdio->sched.ple_data_quota < *ple_size + 1)
-			वापस -EBUSY;
+			return -EBUSY;
 
 		*ple_size = *ple_size + 1;
-	पूर्ण
+	}
 	*pse_size = *pse_size + pse_sz;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mt7663s_tx_update_quota(काष्ठा mt76_sdio *sdio, bool mcu,
-				    पूर्णांक pse_size, पूर्णांक ple_size)
-अणु
-	अगर (mcu) अणु
+static void mt7663s_tx_update_quota(struct mt76_sdio *sdio, bool mcu,
+				    int pse_size, int ple_size)
+{
+	if (mcu) {
 		sdio->sched.pse_mcu_quota -= pse_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		sdio->sched.pse_data_quota -= pse_size;
 		sdio->sched.ple_data_quota -= ple_size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __mt7663s_xmit_queue(काष्ठा mt76_dev *dev, u8 *data, पूर्णांक len)
-अणु
-	काष्ठा mt76_sdio *sdio = &dev->sdio;
-	पूर्णांक err;
+static int __mt7663s_xmit_queue(struct mt76_dev *dev, u8 *data, int len)
+{
+	struct mt76_sdio *sdio = &dev->sdio;
+	int err;
 
-	अगर (len > sdio->func->cur_blksize)
+	if (len > sdio->func->cur_blksize)
 		len = roundup(len, sdio->func->cur_blksize);
 
-	err = sdio_ग_लिखोsb(sdio->func, MCR_WTDR1, data, len);
-	अगर (err)
+	err = sdio_writesb(sdio->func, MCR_WTDR1, data, len);
+	if (err)
 		dev_err(dev->dev, "sdio write failed: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mt7663s_tx_run_queue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
-अणु
-	पूर्णांक qid, err, nframes = 0, len = 0, pse_sz = 0, ple_sz = 0;
+static int mt7663s_tx_run_queue(struct mt76_dev *dev, struct mt76_queue *q)
+{
+	int qid, err, nframes = 0, len = 0, pse_sz = 0, ple_sz = 0;
 	bool mcu = q == dev->q_mcu[MT_MCUQ_WM];
-	काष्ठा mt76_sdio *sdio = &dev->sdio;
+	struct mt76_sdio *sdio = &dev->sdio;
 	u8 pad;
 
 	qid = mcu ? ARRAY_SIZE(sdio->xmit_buf) - 1 : q->qid;
-	जबतक (q->first != q->head) अणु
-		काष्ठा mt76_queue_entry *e = &q->entry[q->first];
-		काष्ठा sk_buff *iter;
+	while (q->first != q->head) {
+		struct mt76_queue_entry *e = &q->entry[q->first];
+		struct sk_buff *iter;
 
 		smp_rmb();
 
-		अगर (!test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state)) अणु
+		if (!test_bit(MT76_STATE_MCU_RUNNING, &dev->phy.state)) {
 			__skb_put_zero(e->skb, 4);
 			err = __mt7663s_xmit_queue(dev, e->skb->data,
 						   e->skb->len);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			जाओ next;
-		पूर्ण
+			goto next;
+		}
 
 		pad = roundup(e->skb->len, 4) - e->skb->len;
-		अगर (len + e->skb->len + pad + 4 > MT76S_XMIT_BUF_SZ)
-			अवरोध;
+		if (len + e->skb->len + pad + 4 > MT76S_XMIT_BUF_SZ)
+			break;
 
-		अगर (mt7663s_tx_pick_quota(sdio, mcu, e->buf_sz, &pse_sz,
+		if (mt7663s_tx_pick_quota(sdio, mcu, e->buf_sz, &pse_sz,
 					  &ple_sz))
-			अवरोध;
+			break;
 
-		स_नकल(sdio->xmit_buf[qid] + len, e->skb->data,
+		memcpy(sdio->xmit_buf[qid] + len, e->skb->data,
 		       skb_headlen(e->skb));
 		len += skb_headlen(e->skb);
 		nframes++;
 
-		skb_walk_frags(e->skb, iter) अणु
-			स_नकल(sdio->xmit_buf[qid] + len, iter->data,
+		skb_walk_frags(e->skb, iter) {
+			memcpy(sdio->xmit_buf[qid] + len, iter->data,
 			       iter->len);
 			len += iter->len;
 			nframes++;
-		पूर्ण
+		}
 
-		अगर (unlikely(pad)) अणु
-			स_रखो(sdio->xmit_buf[qid] + len, 0, pad);
+		if (unlikely(pad)) {
+			memset(sdio->xmit_buf[qid] + len, 0, pad);
 			len += pad;
-		पूर्ण
+		}
 next:
 		q->first = (q->first + 1) % q->ndesc;
-		e->करोne = true;
-	पूर्ण
+		e->done = true;
+	}
 
-	अगर (nframes) अणु
-		स_रखो(sdio->xmit_buf[qid] + len, 0, 4);
+	if (nframes) {
+		memset(sdio->xmit_buf[qid] + len, 0, 4);
 		err = __mt7663s_xmit_queue(dev, sdio->xmit_buf[qid], len + 4);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 	mt7663s_tx_update_quota(sdio, mcu, pse_sz, ple_sz);
 
 	mt76_worker_schedule(&sdio->status_worker);
 
-	वापस nframes;
-पूर्ण
+	return nframes;
+}
 
-व्योम mt7663s_txrx_worker(काष्ठा mt76_worker *w)
-अणु
-	काष्ठा mt76_sdio *sdio = container_of(w, काष्ठा mt76_sdio,
+void mt7663s_txrx_worker(struct mt76_worker *w)
+{
+	struct mt76_sdio *sdio = container_of(w, struct mt76_sdio,
 					      txrx_worker);
-	काष्ठा mt76_dev *dev = container_of(sdio, काष्ठा mt76_dev, sdio);
-	पूर्णांक i, nframes, ret;
+	struct mt76_dev *dev = container_of(sdio, struct mt76_dev, sdio);
+	int i, nframes, ret;
 
-	/* disable पूर्णांकerrupt */
+	/* disable interrupt */
 	sdio_claim_host(sdio->func);
-	sdio_ग_लिखोl(sdio->func, WHLPCR_INT_EN_CLR, MCR_WHLPCR, शून्य);
+	sdio_writel(sdio->func, WHLPCR_INT_EN_CLR, MCR_WHLPCR, NULL);
 
-	करो अणु
+	do {
 		nframes = 0;
 
 		/* tx */
-		क्रम (i = 0; i <= MT_TXQ_PSD; i++) अणु
+		for (i = 0; i <= MT_TXQ_PSD; i++) {
 			ret = mt7663s_tx_run_queue(dev, dev->phy.q_tx[i]);
-			अगर (ret > 0)
+			if (ret > 0)
 				nframes += ret;
-		पूर्ण
+		}
 		ret = mt7663s_tx_run_queue(dev, dev->q_mcu[MT_MCUQ_WM]);
-		अगर (ret > 0)
+		if (ret > 0)
 			nframes += ret;
 
 		/* rx */
 		ret = mt7663s_rx_handler(dev);
-		अगर (ret > 0)
+		if (ret > 0)
 			nframes += ret;
-	पूर्ण जबतक (nframes > 0);
+	} while (nframes > 0);
 
-	/* enable पूर्णांकerrupt */
-	sdio_ग_लिखोl(sdio->func, WHLPCR_INT_EN_SET, MCR_WHLPCR, शून्य);
+	/* enable interrupt */
+	sdio_writel(sdio->func, WHLPCR_INT_EN_SET, MCR_WHLPCR, NULL);
 	sdio_release_host(sdio->func);
-पूर्ण
+}
 
-व्योम mt7663s_sdio_irq(काष्ठा sdio_func *func)
-अणु
-	काष्ठा mt7615_dev *dev = sdio_get_drvdata(func);
-	काष्ठा mt76_sdio *sdio = &dev->mt76.sdio;
+void mt7663s_sdio_irq(struct sdio_func *func)
+{
+	struct mt7615_dev *dev = sdio_get_drvdata(func);
+	struct mt76_sdio *sdio = &dev->mt76.sdio;
 
-	अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->mt76.phy.state))
-		वापस;
+	if (!test_bit(MT76_STATE_INITIALIZED, &dev->mt76.phy.state))
+		return;
 
 	mt76_worker_schedule(&sdio->txrx_worker);
-पूर्ण
+}

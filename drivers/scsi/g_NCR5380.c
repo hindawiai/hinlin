@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Generic Generic NCR5380 driver
  *
  * Copyright 1993, Drew Eckhardt
  * Visionary Computing
  * (Unix and Linux consulting and custom programming)
- * drew@coloraकरो.edu
+ * drew@colorado.edu
  * +1 (303) 440-4894
  *
  * NCR53C400 extensions (c) 1994,1995,1996, Kevin Lentin
@@ -18,157 +17,157 @@
  * DTC3181E extensions (c) 1997, Ronald van Cuijlenborg
  * ronald.van.cuijlenborg@tip.nl or nutty@dds.nl
  *
- * Added ISAPNP support क्रम DTC436 adapters,
- * Thomas Sailer, sailer@अगरe.ee.ethz.ch
+ * Added ISAPNP support for DTC436 adapters,
+ * Thomas Sailer, sailer@ife.ee.ethz.ch
  *
- * See Documentation/scsi/g_NCR5380.rst क्रम more info.
+ * See Documentation/scsi/g_NCR5380.rst for more info.
  */
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/module.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <asm/io.h>
+#include <linux/blkdev.h>
+#include <linux/module.h>
+#include <scsi/scsi_host.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/isa.h>
+#include <linux/pnp.h>
+#include <linux/interrupt.h>
 
-/* Definitions क्रम the core NCR5380 driver. */
+/* Definitions for the core NCR5380 driver. */
 
-#घोषणा NCR5380_पढ़ो(reg) \
-	ioपढ़ो8(hostdata->io + hostdata->offset + (reg))
-#घोषणा NCR5380_ग_लिखो(reg, value) \
-	ioग_लिखो8(value, hostdata->io + hostdata->offset + (reg))
+#define NCR5380_read(reg) \
+	ioread8(hostdata->io + hostdata->offset + (reg))
+#define NCR5380_write(reg, value) \
+	iowrite8(value, hostdata->io + hostdata->offset + (reg))
 
-#घोषणा NCR5380_implementation_fields \
-	पूर्णांक offset; \
-	पूर्णांक c400_ctl_status; \
-	पूर्णांक c400_blk_cnt; \
-	पूर्णांक c400_host_buf; \
-	पूर्णांक io_width; \
-	पूर्णांक pdma_residual; \
-	पूर्णांक board
+#define NCR5380_implementation_fields \
+	int offset; \
+	int c400_ctl_status; \
+	int c400_blk_cnt; \
+	int c400_host_buf; \
+	int io_width; \
+	int pdma_residual; \
+	int board
 
-#घोषणा NCR5380_dma_xfer_len            generic_NCR5380_dma_xfer_len
-#घोषणा NCR5380_dma_recv_setup          generic_NCR5380_precv
-#घोषणा NCR5380_dma_send_setup          generic_NCR5380_psend
-#घोषणा NCR5380_dma_residual            generic_NCR5380_dma_residual
+#define NCR5380_dma_xfer_len            generic_NCR5380_dma_xfer_len
+#define NCR5380_dma_recv_setup          generic_NCR5380_precv
+#define NCR5380_dma_send_setup          generic_NCR5380_psend
+#define NCR5380_dma_residual            generic_NCR5380_dma_residual
 
-#घोषणा NCR5380_पूर्णांकr                    generic_NCR5380_पूर्णांकr
-#घोषणा NCR5380_queue_command           generic_NCR5380_queue_command
-#घोषणा NCR5380_पात                   generic_NCR5380_पात
-#घोषणा NCR5380_host_reset              generic_NCR5380_host_reset
-#घोषणा NCR5380_info                    generic_NCR5380_info
+#define NCR5380_intr                    generic_NCR5380_intr
+#define NCR5380_queue_command           generic_NCR5380_queue_command
+#define NCR5380_abort                   generic_NCR5380_abort
+#define NCR5380_host_reset              generic_NCR5380_host_reset
+#define NCR5380_info                    generic_NCR5380_info
 
-#घोषणा NCR5380_io_delay(x)             udelay(x)
+#define NCR5380_io_delay(x)             udelay(x)
 
-#समावेश "NCR5380.h"
+#include "NCR5380.h"
 
-#घोषणा DRV_MODULE_NAME "g_NCR5380"
+#define DRV_MODULE_NAME "g_NCR5380"
 
-#घोषणा NCR53C400_mem_base 0x3880
-#घोषणा NCR53C400_host_buffer 0x3900
-#घोषणा NCR53C400_region_size 0x3a00
+#define NCR53C400_mem_base 0x3880
+#define NCR53C400_host_buffer 0x3900
+#define NCR53C400_region_size 0x3a00
 
-#घोषणा BOARD_NCR5380 0
-#घोषणा BOARD_NCR53C400 1
-#घोषणा BOARD_NCR53C400A 2
-#घोषणा BOARD_DTC3181E 3
-#घोषणा BOARD_HP_C2502 4
+#define BOARD_NCR5380 0
+#define BOARD_NCR53C400 1
+#define BOARD_NCR53C400A 2
+#define BOARD_DTC3181E 3
+#define BOARD_HP_C2502 4
 
-#घोषणा IRQ_AUTO 254
+#define IRQ_AUTO 254
 
-#घोषणा MAX_CARDS 8
-#घोषणा DMA_MAX_SIZE 32768
+#define MAX_CARDS 8
+#define DMA_MAX_SIZE 32768
 
-/* old-style parameters क्रम compatibility */
-अटल पूर्णांक ncr_irq = -1;
-अटल पूर्णांक ncr_addr;
-अटल पूर्णांक ncr_5380;
-अटल पूर्णांक ncr_53c400;
-अटल पूर्णांक ncr_53c400a;
-अटल पूर्णांक dtc_3181e;
-अटल पूर्णांक hp_c2502;
-module_param_hw(ncr_irq, पूर्णांक, irq, 0);
-module_param_hw(ncr_addr, पूर्णांक, ioport, 0);
-module_param(ncr_5380, पूर्णांक, 0);
-module_param(ncr_53c400, पूर्णांक, 0);
-module_param(ncr_53c400a, पूर्णांक, 0);
-module_param(dtc_3181e, पूर्णांक, 0);
-module_param(hp_c2502, पूर्णांक, 0);
+/* old-style parameters for compatibility */
+static int ncr_irq = -1;
+static int ncr_addr;
+static int ncr_5380;
+static int ncr_53c400;
+static int ncr_53c400a;
+static int dtc_3181e;
+static int hp_c2502;
+module_param_hw(ncr_irq, int, irq, 0);
+module_param_hw(ncr_addr, int, ioport, 0);
+module_param(ncr_5380, int, 0);
+module_param(ncr_53c400, int, 0);
+module_param(ncr_53c400a, int, 0);
+module_param(dtc_3181e, int, 0);
+module_param(hp_c2502, int, 0);
 
-अटल पूर्णांक irq[] = अणु -1, -1, -1, -1, -1, -1, -1, -1 पूर्ण;
-module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0);
+static int irq[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+module_param_hw_array(irq, int, irq, NULL, 0);
 MODULE_PARM_DESC(irq, "IRQ number(s) (0=none, 254=auto [default])");
 
-अटल पूर्णांक base[] = अणु 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-module_param_hw_array(base, पूर्णांक, ioport, शून्य, 0);
+static int base[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+module_param_hw_array(base, int, ioport, NULL, 0);
 MODULE_PARM_DESC(base, "base address(es)");
 
-अटल पूर्णांक card[] = अणु -1, -1, -1, -1, -1, -1, -1, -1 पूर्ण;
-module_param_array(card, पूर्णांक, शून्य, 0);
+static int card[] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+module_param_array(card, int, NULL, 0);
 MODULE_PARM_DESC(card, "card type (0=NCR5380, 1=NCR53C400, 2=NCR53C400A, 3=DTC3181E, 4=HP C2502)");
 
 MODULE_ALIAS("g_NCR5380_mmio");
 MODULE_LICENSE("GPL");
 
-अटल व्योम g_NCR5380_trigger_irq(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
+static void g_NCR5380_trigger_irq(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
 
 	/*
-	 * An पूर्णांकerrupt is triggered whenever BSY = false, SEL = true
-	 * and a bit set in the SELECT_ENABLE_REG is निश्चितed on the
+	 * An interrupt is triggered whenever BSY = false, SEL = true
+	 * and a bit set in the SELECT_ENABLE_REG is asserted on the
 	 * SCSI bus.
 	 *
-	 * Note that the bus is only driven when the phase control संकेतs
+	 * Note that the bus is only driven when the phase control signals
 	 * (I/O, C/D, and MSG) match those in the TCR.
 	 */
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG,
-	              PHASE_SR_TO_TCR(NCR5380_पढ़ो(STATUS_REG) & PHASE_MASK));
-	NCR5380_ग_लिखो(SELECT_ENABLE_REG, hostdata->id_mask);
-	NCR5380_ग_लिखो(OUTPUT_DATA_REG, hostdata->id_mask);
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG,
+	NCR5380_write(TARGET_COMMAND_REG,
+	              PHASE_SR_TO_TCR(NCR5380_read(STATUS_REG) & PHASE_MASK));
+	NCR5380_write(SELECT_ENABLE_REG, hostdata->id_mask);
+	NCR5380_write(OUTPUT_DATA_REG, hostdata->id_mask);
+	NCR5380_write(INITIATOR_COMMAND_REG,
 	              ICR_BASE | ICR_ASSERT_DATA | ICR_ASSERT_SEL);
 
 	msleep(1);
 
-	NCR5380_ग_लिखो(INITIATOR_COMMAND_REG, ICR_BASE);
-	NCR5380_ग_लिखो(SELECT_ENABLE_REG, 0);
-	NCR5380_ग_लिखो(TARGET_COMMAND_REG, 0);
-पूर्ण
+	NCR5380_write(INITIATOR_COMMAND_REG, ICR_BASE);
+	NCR5380_write(SELECT_ENABLE_REG, 0);
+	NCR5380_write(TARGET_COMMAND_REG, 0);
+}
 
 /**
  * g_NCR5380_probe_irq - find the IRQ of a NCR5380 or equivalent
  * @instance: SCSI host instance
  *
- * Autoprobe क्रम the IRQ line used by the card by triggering an IRQ
- * and then looking to see what पूर्णांकerrupt actually turned up.
+ * Autoprobe for the IRQ line used by the card by triggering an IRQ
+ * and then looking to see what interrupt actually turned up.
  */
 
-अटल पूर्णांक g_NCR5380_probe_irq(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	पूर्णांक irq_mask, irq;
+static int g_NCR5380_probe_irq(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	int irq_mask, irq;
 
-	NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+	NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 	irq_mask = probe_irq_on();
 	g_NCR5380_trigger_irq(instance);
 	irq = probe_irq_off(irq_mask);
-	NCR5380_पढ़ो(RESET_PARITY_INTERRUPT_REG);
+	NCR5380_read(RESET_PARITY_INTERRUPT_REG);
 
-	अगर (irq <= 0)
-		वापस NO_IRQ;
-	वापस irq;
-पूर्ण
+	if (irq <= 0)
+		return NO_IRQ;
+	return irq;
+}
 
 /*
  * Configure I/O address of 53C400A or DTC436 by writing magic numbers
  * to ports 0x779 and 0x379.
  */
-अटल व्योम magic_configure(पूर्णांक idx, u8 irq, u8 magic[])
-अणु
+static void magic_configure(int idx, u8 irq, u8 magic[])
+{
 	u8 cfg = 0;
 
 	outb(magic[0], 0x779);
@@ -177,526 +176,526 @@ MODULE_LICENSE("GPL");
 	outb(magic[3], 0x379);
 	outb(magic[4], 0x379);
 
-	अगर (irq == 9)
+	if (irq == 9)
 		irq = 2;
 
-	अगर (idx >= 0 && idx <= 7)
+	if (idx >= 0 && idx <= 7)
 		cfg = 0x80 | idx | (irq << 4);
 	outb(cfg, 0x379);
-पूर्ण
+}
 
-अटल irqवापस_t legacy_empty_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t legacy_empty_irq_handler(int irq, void *dev_id)
+{
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक legacy_find_मुक्त_irq(पूर्णांक *irq_table)
-अणु
-	जबतक (*irq_table != -1) अणु
-		अगर (!request_irq(*irq_table, legacy_empty_irq_handler,
+static int legacy_find_free_irq(int *irq_table)
+{
+	while (*irq_table != -1) {
+		if (!request_irq(*irq_table, legacy_empty_irq_handler,
 		                 IRQF_PROBE_SHARED, "Test IRQ",
-		                 (व्योम *)irq_table)) अणु
-			मुक्त_irq(*irq_table, (व्योम *) irq_table);
-			वापस *irq_table;
-		पूर्ण
+		                 (void *)irq_table)) {
+			free_irq(*irq_table, (void *) irq_table);
+			return *irq_table;
+		}
 		irq_table++;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 
-अटल अचिन्हित पूर्णांक ncr_53c400a_ports[] = अणु
+static unsigned int ncr_53c400a_ports[] = {
 	0x280, 0x290, 0x300, 0x310, 0x330, 0x340, 0x348, 0x350, 0
-पूर्ण;
-अटल अचिन्हित पूर्णांक dtc_3181e_ports[] = अणु
+};
+static unsigned int dtc_3181e_ports[] = {
 	0x220, 0x240, 0x280, 0x2a0, 0x2c0, 0x300, 0x320, 0x340, 0
-पूर्ण;
-अटल u8 ncr_53c400a_magic[] = अणु	/* 53C400A & DTC436 */
+};
+static u8 ncr_53c400a_magic[] = {	/* 53C400A & DTC436 */
 	0x59, 0xb9, 0xc5, 0xae, 0xa6
-पूर्ण;
-अटल u8 hp_c2502_magic[] = अणु	/* HP C2502 */
+};
+static u8 hp_c2502_magic[] = {	/* HP C2502 */
 	0x0f, 0x22, 0xf0, 0x20, 0x80
-पूर्ण;
-अटल पूर्णांक hp_c2502_irqs[] = अणु
+};
+static int hp_c2502_irqs[] = {
 	9, 5, 7, 3, 4, -1
-पूर्ण;
+};
 
-अटल पूर्णांक generic_NCR5380_init_one(काष्ठा scsi_host_ढाँचा *tpnt,
-			काष्ठा device *pdev, पूर्णांक base, पूर्णांक irq, पूर्णांक board)
-अणु
+static int generic_NCR5380_init_one(struct scsi_host_template *tpnt,
+			struct device *pdev, int base, int irq, int board)
+{
 	bool is_pmio = base <= 0xffff;
-	पूर्णांक ret;
-	पूर्णांक flags = 0;
-	अचिन्हित पूर्णांक *ports = शून्य;
-	u8 *magic = शून्य;
-	पूर्णांक i;
-	पूर्णांक port_idx = -1;
-	अचिन्हित दीर्घ region_size;
-	काष्ठा Scsi_Host *instance;
-	काष्ठा NCR5380_hostdata *hostdata;
+	int ret;
+	int flags = 0;
+	unsigned int *ports = NULL;
+	u8 *magic = NULL;
+	int i;
+	int port_idx = -1;
+	unsigned long region_size;
+	struct Scsi_Host *instance;
+	struct NCR5380_hostdata *hostdata;
 	u8 __iomem *iomem;
 
-	चयन (board) अणु
-	हाल BOARD_NCR5380:
+	switch (board) {
+	case BOARD_NCR5380:
 		flags = FLAG_NO_PSEUDO_DMA | FLAG_DMA_FIXUP;
-		अवरोध;
-	हाल BOARD_NCR53C400A:
+		break;
+	case BOARD_NCR53C400A:
 		ports = ncr_53c400a_ports;
 		magic = ncr_53c400a_magic;
-		अवरोध;
-	हाल BOARD_HP_C2502:
+		break;
+	case BOARD_HP_C2502:
 		ports = ncr_53c400a_ports;
 		magic = hp_c2502_magic;
-		अवरोध;
-	हाल BOARD_DTC3181E:
+		break;
+	case BOARD_DTC3181E:
 		ports = dtc_3181e_ports;
 		magic = ncr_53c400a_magic;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (is_pmio && ports && magic) अणु
-		/* wakeup sequence क्रम the NCR53C400A and DTC3181E */
+	if (is_pmio && ports && magic) {
+		/* wakeup sequence for the NCR53C400A and DTC3181E */
 
-		/* Disable the adapter and look क्रम a मुक्त io port */
+		/* Disable the adapter and look for a free io port */
 		magic_configure(-1, 0, magic);
 
 		region_size = 16;
-		अगर (base)
-			क्रम (i = 0; ports[i]; i++) अणु
-				अगर (base == ports[i]) अणु	/* index found */
-					अगर (!request_region(ports[i],
+		if (base)
+			for (i = 0; ports[i]; i++) {
+				if (base == ports[i]) {	/* index found */
+					if (!request_region(ports[i],
 							    region_size,
 							    "ncr53c80"))
-						वापस -EBUSY;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		अन्यथा
-			क्रम (i = 0; ports[i]; i++) अणु
-				अगर (!request_region(ports[i], region_size,
+						return -EBUSY;
+					break;
+				}
+			}
+		else
+			for (i = 0; ports[i]; i++) {
+				if (!request_region(ports[i], region_size,
 						    "ncr53c80"))
-					जारी;
-				अगर (inb(ports[i]) == 0xff)
-					अवरोध;
+					continue;
+				if (inb(ports[i]) == 0xff)
+					break;
 				release_region(ports[i], region_size);
-			पूर्ण
-		अगर (ports[i]) अणु
-			/* At this poपूर्णांक we have our region reserved */
+			}
+		if (ports[i]) {
+			/* At this point we have our region reserved */
 			magic_configure(i, 0, magic); /* no IRQ yet */
 			base = ports[i];
 			outb(0xc0, base + 9);
-			अगर (inb(base + 9) != 0x80) अणु
+			if (inb(base + 9) != 0x80) {
 				ret = -ENODEV;
-				जाओ out_release;
-			पूर्ण
+				goto out_release;
+			}
 			port_idx = i;
-		पूर्ण अन्यथा
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (is_pmio) अणु
+		} else
+			return -EINVAL;
+	} else if (is_pmio) {
 		/* NCR5380 - no configuration, just grab */
 		region_size = 8;
-		अगर (!base || !request_region(base, region_size, "ncr5380"))
-			वापस -EBUSY;
-	पूर्ण अन्यथा अणु	/* MMIO */
+		if (!base || !request_region(base, region_size, "ncr5380"))
+			return -EBUSY;
+	} else {	/* MMIO */
 		region_size = NCR53C400_region_size;
-		अगर (!request_mem_region(base, region_size, "ncr5380"))
-			वापस -EBUSY;
-	पूर्ण
+		if (!request_mem_region(base, region_size, "ncr5380"))
+			return -EBUSY;
+	}
 
-	अगर (is_pmio)
+	if (is_pmio)
 		iomem = ioport_map(base, region_size);
-	अन्यथा
+	else
 		iomem = ioremap(base, region_size);
 
-	अगर (!iomem) अणु
+	if (!iomem) {
 		ret = -ENOMEM;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
-	instance = scsi_host_alloc(tpnt, माप(काष्ठा NCR5380_hostdata));
-	अगर (instance == शून्य) अणु
+	instance = scsi_host_alloc(tpnt, sizeof(struct NCR5380_hostdata));
+	if (instance == NULL) {
 		ret = -ENOMEM;
-		जाओ out_unmap;
-	पूर्ण
+		goto out_unmap;
+	}
 	hostdata = shost_priv(instance);
 
 	hostdata->board = board;
 	hostdata->io = iomem;
 	hostdata->region_size = region_size;
 
-	अगर (is_pmio) अणु
+	if (is_pmio) {
 		hostdata->io_port = base;
-		hostdata->io_width = 1; /* 8-bit PDMA by शेष */
+		hostdata->io_width = 1; /* 8-bit PDMA by default */
 		hostdata->offset = 0;
 
 		/*
-		 * On NCR53C400 boards, NCR5380 रेजिस्टरs are mapped 8 past
+		 * On NCR53C400 boards, NCR5380 registers are mapped 8 past
 		 * the base address.
 		 */
-		चयन (board) अणु
-		हाल BOARD_NCR53C400:
+		switch (board) {
+		case BOARD_NCR53C400:
 			hostdata->io_port += 8;
 			hostdata->c400_ctl_status = 0;
 			hostdata->c400_blk_cnt = 1;
 			hostdata->c400_host_buf = 4;
-			अवरोध;
-		हाल BOARD_DTC3181E:
+			break;
+		case BOARD_DTC3181E:
 			hostdata->io_width = 2;	/* 16-bit PDMA */
 			fallthrough;
-		हाल BOARD_NCR53C400A:
-		हाल BOARD_HP_C2502:
+		case BOARD_NCR53C400A:
+		case BOARD_HP_C2502:
 			hostdata->c400_ctl_status = 9;
 			hostdata->c400_blk_cnt = 10;
 			hostdata->c400_host_buf = 8;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		hostdata->base = base;
 		hostdata->offset = NCR53C400_mem_base;
-		चयन (board) अणु
-		हाल BOARD_NCR53C400:
+		switch (board) {
+		case BOARD_NCR53C400:
 			hostdata->c400_ctl_status = 0x100;
 			hostdata->c400_blk_cnt = 0x101;
 			hostdata->c400_host_buf = 0x104;
-			अवरोध;
-		हाल BOARD_DTC3181E:
-		हाल BOARD_NCR53C400A:
-		हाल BOARD_HP_C2502:
+			break;
+		case BOARD_DTC3181E:
+		case BOARD_NCR53C400A:
+		case BOARD_HP_C2502:
 			pr_err(DRV_MODULE_NAME ": unknown register offsets\n");
 			ret = -EINVAL;
-			जाओ out_unरेजिस्टर;
-		पूर्ण
-	पूर्ण
+			goto out_unregister;
+		}
+	}
 
-	/* Check क्रम vacant slot */
-	NCR5380_ग_लिखो(MODE_REG, 0);
-	अगर (NCR5380_पढ़ो(MODE_REG) != 0) अणु
+	/* Check for vacant slot */
+	NCR5380_write(MODE_REG, 0);
+	if (NCR5380_read(MODE_REG) != 0) {
 		ret = -ENODEV;
-		जाओ out_unरेजिस्टर;
-	पूर्ण
+		goto out_unregister;
+	}
 
 	ret = NCR5380_init(instance, flags | FLAG_LATE_DMA_SETUP);
-	अगर (ret)
-		जाओ out_unरेजिस्टर;
+	if (ret)
+		goto out_unregister;
 
-	चयन (board) अणु
-	हाल BOARD_NCR53C400:
-	हाल BOARD_DTC3181E:
-	हाल BOARD_NCR53C400A:
-	हाल BOARD_HP_C2502:
-		NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE);
-	पूर्ण
+	switch (board) {
+	case BOARD_NCR53C400:
+	case BOARD_DTC3181E:
+	case BOARD_NCR53C400A:
+	case BOARD_HP_C2502:
+		NCR5380_write(hostdata->c400_ctl_status, CSR_BASE);
+	}
 
 	NCR5380_maybe_reset_bus(instance);
 
-	/* Compatibility with करोcumented NCR5380 kernel parameters */
-	अगर (irq == 255 || irq == 0)
+	/* Compatibility with documented NCR5380 kernel parameters */
+	if (irq == 255 || irq == 0)
 		irq = NO_IRQ;
-	अन्यथा अगर (irq == -1)
+	else if (irq == -1)
 		irq = IRQ_AUTO;
 
-	अगर (board == BOARD_HP_C2502) अणु
-		पूर्णांक *irq_table = hp_c2502_irqs;
-		पूर्णांक board_irq = -1;
+	if (board == BOARD_HP_C2502) {
+		int *irq_table = hp_c2502_irqs;
+		int board_irq = -1;
 
-		चयन (irq) अणु
-		हाल NO_IRQ:
+		switch (irq) {
+		case NO_IRQ:
 			board_irq = 0;
-			अवरोध;
-		हाल IRQ_AUTO:
-			board_irq = legacy_find_मुक्त_irq(irq_table);
-			अवरोध;
-		शेष:
-			जबतक (*irq_table != -1)
-				अगर (*irq_table++ == irq)
+			break;
+		case IRQ_AUTO:
+			board_irq = legacy_find_free_irq(irq_table);
+			break;
+		default:
+			while (*irq_table != -1)
+				if (*irq_table++ == irq)
 					board_irq = irq;
-		पूर्ण
+		}
 
-		अगर (board_irq <= 0) अणु
+		if (board_irq <= 0) {
 			board_irq = 0;
 			irq = NO_IRQ;
-		पूर्ण
+		}
 
 		magic_configure(port_idx, board_irq, magic);
-	पूर्ण
+	}
 
-	अगर (irq == IRQ_AUTO) अणु
+	if (irq == IRQ_AUTO) {
 		instance->irq = g_NCR5380_probe_irq(instance);
-		अगर (instance->irq == NO_IRQ)
-			shost_prपूर्णांकk(KERN_INFO, instance, "no irq detected\n");
-	पूर्ण अन्यथा अणु
+		if (instance->irq == NO_IRQ)
+			shost_printk(KERN_INFO, instance, "no irq detected\n");
+	} else {
 		instance->irq = irq;
-		अगर (instance->irq == NO_IRQ)
-			shost_prपूर्णांकk(KERN_INFO, instance, "no irq provided\n");
-	पूर्ण
+		if (instance->irq == NO_IRQ)
+			shost_printk(KERN_INFO, instance, "no irq provided\n");
+	}
 
-	अगर (instance->irq != NO_IRQ) अणु
-		अगर (request_irq(instance->irq, generic_NCR5380_पूर्णांकr,
-				0, "NCR5380", instance)) अणु
+	if (instance->irq != NO_IRQ) {
+		if (request_irq(instance->irq, generic_NCR5380_intr,
+				0, "NCR5380", instance)) {
 			instance->irq = NO_IRQ;
-			shost_prपूर्णांकk(KERN_INFO, instance,
+			shost_printk(KERN_INFO, instance,
 			             "irq %d denied\n", instance->irq);
-		पूर्ण अन्यथा अणु
-			shost_prपूर्णांकk(KERN_INFO, instance,
+		} else {
+			shost_printk(KERN_INFO, instance,
 			             "irq %d acquired\n", instance->irq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = scsi_add_host(instance, pdev);
-	अगर (ret)
-		जाओ out_मुक्त_irq;
+	if (ret)
+		goto out_free_irq;
 	scsi_scan_host(instance);
 	dev_set_drvdata(pdev, instance);
-	वापस 0;
+	return 0;
 
-out_मुक्त_irq:
-	अगर (instance->irq != NO_IRQ)
-		मुक्त_irq(instance->irq, instance);
-	NCR5380_निकास(instance);
-out_unरेजिस्टर:
+out_free_irq:
+	if (instance->irq != NO_IRQ)
+		free_irq(instance->irq, instance);
+	NCR5380_exit(instance);
+out_unregister:
 	scsi_host_put(instance);
 out_unmap:
 	iounmap(iomem);
 out_release:
-	अगर (is_pmio)
+	if (is_pmio)
 		release_region(base, region_size);
-	अन्यथा
+	else
 		release_mem_region(base, region_size);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम generic_NCR5380_release_resources(काष्ठा Scsi_Host *instance)
-अणु
-	काष्ठा NCR5380_hostdata *hostdata = shost_priv(instance);
-	व्योम __iomem *iomem = hostdata->io;
-	अचिन्हित दीर्घ io_port = hostdata->io_port;
-	अचिन्हित दीर्घ base = hostdata->base;
-	अचिन्हित दीर्घ region_size = hostdata->region_size;
+static void generic_NCR5380_release_resources(struct Scsi_Host *instance)
+{
+	struct NCR5380_hostdata *hostdata = shost_priv(instance);
+	void __iomem *iomem = hostdata->io;
+	unsigned long io_port = hostdata->io_port;
+	unsigned long base = hostdata->base;
+	unsigned long region_size = hostdata->region_size;
 
-	scsi_हटाओ_host(instance);
-	अगर (instance->irq != NO_IRQ)
-		मुक्त_irq(instance->irq, instance);
-	NCR5380_निकास(instance);
+	scsi_remove_host(instance);
+	if (instance->irq != NO_IRQ)
+		free_irq(instance->irq, instance);
+	NCR5380_exit(instance);
 	scsi_host_put(instance);
 	iounmap(iomem);
-	अगर (io_port)
+	if (io_port)
 		release_region(io_port, region_size);
-	अन्यथा
+	else
 		release_mem_region(base, region_size);
-पूर्ण
+}
 
-/* रुको_क्रम_53c80_access - रुको क्रम 53C80 रेजिस्टरs to become accessible
- * @hostdata: scsi host निजी data
+/* wait_for_53c80_access - wait for 53C80 registers to become accessible
+ * @hostdata: scsi host private data
  *
- * The रेजिस्टरs within the 53C80 logic block are inaccessible until
- * bit 7 in the 53C400 control status रेजिस्टर माला_लो निश्चितed.
+ * The registers within the 53C80 logic block are inaccessible until
+ * bit 7 in the 53C400 control status register gets asserted.
  */
 
-अटल व्योम रुको_क्रम_53c80_access(काष्ठा NCR5380_hostdata *hostdata)
-अणु
-	पूर्णांक count = 10000;
+static void wait_for_53c80_access(struct NCR5380_hostdata *hostdata)
+{
+	int count = 10000;
 
-	करो अणु
-		अगर (hostdata->board == BOARD_DTC3181E)
+	do {
+		if (hostdata->board == BOARD_DTC3181E)
 			udelay(4); /* DTC436 chip hangs without this */
-		अगर (NCR5380_पढ़ो(hostdata->c400_ctl_status) & CSR_53C80_REG)
-			वापस;
-	पूर्ण जबतक (--count > 0);
+		if (NCR5380_read(hostdata->c400_ctl_status) & CSR_53C80_REG)
+			return;
+	} while (--count > 0);
 
-	scmd_prपूर्णांकk(KERN_ERR, hostdata->connected,
+	scmd_printk(KERN_ERR, hostdata->connected,
 	            "53c80 registers not accessible, device will be reset\n");
-	NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_RESET);
-	NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE);
-पूर्ण
+	NCR5380_write(hostdata->c400_ctl_status, CSR_RESET);
+	NCR5380_write(hostdata->c400_ctl_status, CSR_BASE);
+}
 
 /**
- * generic_NCR5380_precv - pseuकरो DMA receive
- * @hostdata: scsi host निजी data
- * @dst: buffer to ग_लिखो पूर्णांकo
+ * generic_NCR5380_precv - pseudo DMA receive
+ * @hostdata: scsi host private data
+ * @dst: buffer to write into
  * @len: transfer size
  *
- * Perक्रमm a pseuकरो DMA mode receive from a 53C400 or equivalent device.
+ * Perform a pseudo DMA mode receive from a 53C400 or equivalent device.
  */
 
-अटल अंतरभूत पूर्णांक generic_NCR5380_precv(काष्ठा NCR5380_hostdata *hostdata,
-                                        अचिन्हित अक्षर *dst, पूर्णांक len)
-अणु
-	पूर्णांक residual;
-	पूर्णांक start = 0;
+static inline int generic_NCR5380_precv(struct NCR5380_hostdata *hostdata,
+                                        unsigned char *dst, int len)
+{
+	int residual;
+	int start = 0;
 
-	NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE | CSR_TRANS_सूची);
-	NCR5380_ग_लिखो(hostdata->c400_blk_cnt, len / 128);
+	NCR5380_write(hostdata->c400_ctl_status, CSR_BASE | CSR_TRANS_DIR);
+	NCR5380_write(hostdata->c400_blk_cnt, len / 128);
 
-	करो अणु
-		अगर (start == len - 128) अणु
-			/* Ignore End of DMA पूर्णांकerrupt क्रम the final buffer */
-			अगर (NCR5380_poll_politely(hostdata, hostdata->c400_ctl_status,
+	do {
+		if (start == len - 128) {
+			/* Ignore End of DMA interrupt for the final buffer */
+			if (NCR5380_poll_politely(hostdata, hostdata->c400_ctl_status,
 			                          CSR_HOST_BUF_NOT_RDY, 0, 0) < 0)
-				अवरोध;
-		पूर्ण अन्यथा अणु
-			अगर (NCR5380_poll_politely2(hostdata, hostdata->c400_ctl_status,
+				break;
+		} else {
+			if (NCR5380_poll_politely2(hostdata, hostdata->c400_ctl_status,
 			                           CSR_HOST_BUF_NOT_RDY, 0,
 			                           hostdata->c400_ctl_status,
 			                           CSR_GATED_53C80_IRQ,
 			                           CSR_GATED_53C80_IRQ, 0) < 0 ||
-			    NCR5380_पढ़ो(hostdata->c400_ctl_status) & CSR_HOST_BUF_NOT_RDY)
-				अवरोध;
-		पूर्ण
+			    NCR5380_read(hostdata->c400_ctl_status) & CSR_HOST_BUF_NOT_RDY)
+				break;
+		}
 
-		अगर (hostdata->io_port && hostdata->io_width == 2)
+		if (hostdata->io_port && hostdata->io_width == 2)
 			insw(hostdata->io_port + hostdata->c400_host_buf,
 			     dst + start, 64);
-		अन्यथा अगर (hostdata->io_port)
+		else if (hostdata->io_port)
 			insb(hostdata->io_port + hostdata->c400_host_buf,
 			     dst + start, 128);
-		अन्यथा
-			स_नकल_fromio(dst + start,
+		else
+			memcpy_fromio(dst + start,
 				hostdata->io + NCR53C400_host_buffer, 128);
 		start += 128;
-	पूर्ण जबतक (start < len);
+	} while (start < len);
 
 	residual = len - start;
 
-	अगर (residual != 0) अणु
-		/* 53c80 पूर्णांकerrupt or transfer समयout. Reset 53c400 logic. */
-		NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_RESET);
-		NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE);
-	पूर्ण
-	रुको_क्रम_53c80_access(hostdata);
+	if (residual != 0) {
+		/* 53c80 interrupt or transfer timeout. Reset 53c400 logic. */
+		NCR5380_write(hostdata->c400_ctl_status, CSR_RESET);
+		NCR5380_write(hostdata->c400_ctl_status, CSR_BASE);
+	}
+	wait_for_53c80_access(hostdata);
 
-	अगर (residual == 0 && NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
+	if (residual == 0 && NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
 	                                           BASR_END_DMA_TRANSFER,
 	                                           BASR_END_DMA_TRANSFER,
 						   0) < 0)
-		scmd_prपूर्णांकk(KERN_ERR, hostdata->connected, "%s: End of DMA timeout\n",
+		scmd_printk(KERN_ERR, hostdata->connected, "%s: End of DMA timeout\n",
 		            __func__);
 
 	hostdata->pdma_residual = residual;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * generic_NCR5380_psend - pseuकरो DMA send
- * @hostdata: scsi host निजी data
- * @src: buffer to पढ़ो from
+ * generic_NCR5380_psend - pseudo DMA send
+ * @hostdata: scsi host private data
+ * @src: buffer to read from
  * @len: transfer size
  *
- * Perक्रमm a pseuकरो DMA mode send to a 53C400 or equivalent device.
+ * Perform a pseudo DMA mode send to a 53C400 or equivalent device.
  */
 
-अटल अंतरभूत पूर्णांक generic_NCR5380_psend(काष्ठा NCR5380_hostdata *hostdata,
-                                        अचिन्हित अक्षर *src, पूर्णांक len)
-अणु
-	पूर्णांक residual;
-	पूर्णांक start = 0;
+static inline int generic_NCR5380_psend(struct NCR5380_hostdata *hostdata,
+                                        unsigned char *src, int len)
+{
+	int residual;
+	int start = 0;
 
-	NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE);
-	NCR5380_ग_लिखो(hostdata->c400_blk_cnt, len / 128);
+	NCR5380_write(hostdata->c400_ctl_status, CSR_BASE);
+	NCR5380_write(hostdata->c400_blk_cnt, len / 128);
 
-	करो अणु
-		अगर (NCR5380_poll_politely2(hostdata, hostdata->c400_ctl_status,
+	do {
+		if (NCR5380_poll_politely2(hostdata, hostdata->c400_ctl_status,
 		                           CSR_HOST_BUF_NOT_RDY, 0,
 		                           hostdata->c400_ctl_status,
 		                           CSR_GATED_53C80_IRQ,
 		                           CSR_GATED_53C80_IRQ, 0) < 0 ||
-		    NCR5380_पढ़ो(hostdata->c400_ctl_status) & CSR_HOST_BUF_NOT_RDY) अणु
+		    NCR5380_read(hostdata->c400_ctl_status) & CSR_HOST_BUF_NOT_RDY) {
 			/* Both 128 B buffers are in use */
-			अगर (start >= 128)
+			if (start >= 128)
 				start -= 128;
-			अगर (start >= 128)
+			if (start >= 128)
 				start -= 128;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (start >= len && NCR5380_पढ़ो(hostdata->c400_blk_cnt) == 0)
-			अवरोध;
+		if (start >= len && NCR5380_read(hostdata->c400_blk_cnt) == 0)
+			break;
 
-		अगर (NCR5380_पढ़ो(hostdata->c400_ctl_status) & CSR_GATED_53C80_IRQ) अणु
+		if (NCR5380_read(hostdata->c400_ctl_status) & CSR_GATED_53C80_IRQ) {
 			/* Host buffer is empty, other one is in use */
-			अगर (start >= 128)
+			if (start >= 128)
 				start -= 128;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (start >= len)
-			जारी;
+		if (start >= len)
+			continue;
 
-		अगर (hostdata->io_port && hostdata->io_width == 2)
+		if (hostdata->io_port && hostdata->io_width == 2)
 			outsw(hostdata->io_port + hostdata->c400_host_buf,
 			      src + start, 64);
-		अन्यथा अगर (hostdata->io_port)
+		else if (hostdata->io_port)
 			outsb(hostdata->io_port + hostdata->c400_host_buf,
 			      src + start, 128);
-		अन्यथा
-			स_नकल_toio(hostdata->io + NCR53C400_host_buffer,
+		else
+			memcpy_toio(hostdata->io + NCR53C400_host_buffer,
 			            src + start, 128);
 		start += 128;
-	पूर्ण जबतक (1);
+	} while (1);
 
 	residual = len - start;
 
-	अगर (residual != 0) अणु
-		/* 53c80 पूर्णांकerrupt or transfer समयout. Reset 53c400 logic. */
-		NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_RESET);
-		NCR5380_ग_लिखो(hostdata->c400_ctl_status, CSR_BASE);
-	पूर्ण
-	रुको_क्रम_53c80_access(hostdata);
+	if (residual != 0) {
+		/* 53c80 interrupt or transfer timeout. Reset 53c400 logic. */
+		NCR5380_write(hostdata->c400_ctl_status, CSR_RESET);
+		NCR5380_write(hostdata->c400_ctl_status, CSR_BASE);
+	}
+	wait_for_53c80_access(hostdata);
 
-	अगर (residual == 0) अणु
-		अगर (NCR5380_poll_politely(hostdata, TARGET_COMMAND_REG,
+	if (residual == 0) {
+		if (NCR5380_poll_politely(hostdata, TARGET_COMMAND_REG,
 		                          TCR_LAST_BYTE_SENT, TCR_LAST_BYTE_SENT,
 					  0) < 0)
-			scmd_prपूर्णांकk(KERN_ERR, hostdata->connected,
+			scmd_printk(KERN_ERR, hostdata->connected,
 			            "%s: Last Byte Sent timeout\n", __func__);
 
-		अगर (NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
+		if (NCR5380_poll_politely(hostdata, BUS_AND_STATUS_REG,
 		                          BASR_END_DMA_TRANSFER, BASR_END_DMA_TRANSFER,
 					  0) < 0)
-			scmd_prपूर्णांकk(KERN_ERR, hostdata->connected, "%s: End of DMA timeout\n",
+			scmd_printk(KERN_ERR, hostdata->connected, "%s: End of DMA timeout\n",
 			            __func__);
-	पूर्ण
+	}
 
 	hostdata->pdma_residual = residual;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक generic_NCR5380_dma_xfer_len(काष्ठा NCR5380_hostdata *hostdata,
-                                        काष्ठा scsi_cmnd *cmd)
-अणु
-	पूर्णांक transfersize = cmd->SCp.this_residual;
+static int generic_NCR5380_dma_xfer_len(struct NCR5380_hostdata *hostdata,
+                                        struct scsi_cmnd *cmd)
+{
+	int transfersize = cmd->SCp.this_residual;
 
-	अगर (hostdata->flags & FLAG_NO_PSEUDO_DMA)
-		वापस 0;
+	if (hostdata->flags & FLAG_NO_PSEUDO_DMA)
+		return 0;
 
 	/* 53C400 datasheet: non-modulo-128-byte transfers should use PIO */
-	अगर (transfersize % 128)
-		वापस 0;
+	if (transfersize % 128)
+		return 0;
 
-	/* Limit PDMA send to 512 B to aव्योम अक्रमom corruption on DTC3181E */
-	अगर (hostdata->board == BOARD_DTC3181E &&
+	/* Limit PDMA send to 512 B to avoid random corruption on DTC3181E */
+	if (hostdata->board == BOARD_DTC3181E &&
 	    cmd->sc_data_direction == DMA_TO_DEVICE)
 		transfersize = min(cmd->SCp.this_residual, 512);
 
-	वापस min(transfersize, DMA_MAX_SIZE);
-पूर्ण
+	return min(transfersize, DMA_MAX_SIZE);
+}
 
-अटल पूर्णांक generic_NCR5380_dma_residual(काष्ठा NCR5380_hostdata *hostdata)
-अणु
-	वापस hostdata->pdma_residual;
-पूर्ण
+static int generic_NCR5380_dma_residual(struct NCR5380_hostdata *hostdata)
+{
+	return hostdata->pdma_residual;
+}
 
 /* Include the core driver code. */
 
-#समावेश "NCR5380.c"
+#include "NCR5380.c"
 
-अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
+static struct scsi_host_template driver_template = {
 	.module			= THIS_MODULE,
 	.proc_name		= DRV_MODULE_NAME,
 	.name			= "Generic NCR5380/NCR53C400 SCSI",
 	.info			= generic_NCR5380_info,
 	.queuecommand		= generic_NCR5380_queue_command,
-	.eh_पात_handler	= generic_NCR5380_पात,
+	.eh_abort_handler	= generic_NCR5380_abort,
 	.eh_host_reset_handler	= generic_NCR5380_host_reset,
 	.can_queue		= 16,
 	.this_id		= 7,
@@ -705,115 +704,115 @@ out_release:
 	.dma_boundary		= PAGE_SIZE - 1,
 	.cmd_size		= NCR5380_CMD_SIZE,
 	.max_sectors		= 128,
-पूर्ण;
+};
 
-अटल पूर्णांक generic_NCR5380_isa_match(काष्ठा device *pdev, अचिन्हित पूर्णांक ndev)
-अणु
-	पूर्णांक ret = generic_NCR5380_init_one(&driver_ढाँचा, pdev, base[ndev],
+static int generic_NCR5380_isa_match(struct device *pdev, unsigned int ndev)
+{
+	int ret = generic_NCR5380_init_one(&driver_template, pdev, base[ndev],
 	                                   irq[ndev], card[ndev]);
-	अगर (ret) अणु
-		अगर (base[ndev])
-			prपूर्णांकk(KERN_WARNING "Card not found at address 0x%03x\n",
+	if (ret) {
+		if (base[ndev])
+			printk(KERN_WARNING "Card not found at address 0x%03x\n",
 			       base[ndev]);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम generic_NCR5380_isa_हटाओ(काष्ठा device *pdev,
-				       अचिन्हित पूर्णांक ndev)
-अणु
+static void generic_NCR5380_isa_remove(struct device *pdev,
+				       unsigned int ndev)
+{
 	generic_NCR5380_release_resources(dev_get_drvdata(pdev));
-	dev_set_drvdata(pdev, शून्य);
-पूर्ण
+	dev_set_drvdata(pdev, NULL);
+}
 
-अटल काष्ठा isa_driver generic_NCR5380_isa_driver = अणु
+static struct isa_driver generic_NCR5380_isa_driver = {
 	.match		= generic_NCR5380_isa_match,
-	.हटाओ		= generic_NCR5380_isa_हटाओ,
-	.driver		= अणु
+	.remove		= generic_NCR5380_isa_remove,
+	.driver		= {
 		.name	= DRV_MODULE_NAME
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_PNP
-अटल स्थिर काष्ठा pnp_device_id generic_NCR5380_pnp_ids[] = अणु
-	अणु .id = "DTC436e", .driver_data = BOARD_DTC3181E पूर्ण,
-	अणु .id = "" पूर्ण
-पूर्ण;
+#ifdef CONFIG_PNP
+static const struct pnp_device_id generic_NCR5380_pnp_ids[] = {
+	{ .id = "DTC436e", .driver_data = BOARD_DTC3181E },
+	{ .id = "" }
+};
 MODULE_DEVICE_TABLE(pnp, generic_NCR5380_pnp_ids);
 
-अटल पूर्णांक generic_NCR5380_pnp_probe(काष्ठा pnp_dev *pdev,
-                                     स्थिर काष्ठा pnp_device_id *id)
-अणु
-	पूर्णांक base, irq;
+static int generic_NCR5380_pnp_probe(struct pnp_dev *pdev,
+                                     const struct pnp_device_id *id)
+{
+	int base, irq;
 
-	अगर (pnp_activate_dev(pdev) < 0)
-		वापस -EBUSY;
+	if (pnp_activate_dev(pdev) < 0)
+		return -EBUSY;
 
 	base = pnp_port_start(pdev, 0);
 	irq = pnp_irq(pdev, 0);
 
-	वापस generic_NCR5380_init_one(&driver_ढाँचा, &pdev->dev, base, irq,
+	return generic_NCR5380_init_one(&driver_template, &pdev->dev, base, irq,
 	                                id->driver_data);
-पूर्ण
+}
 
-अटल व्योम generic_NCR5380_pnp_हटाओ(काष्ठा pnp_dev *pdev)
-अणु
+static void generic_NCR5380_pnp_remove(struct pnp_dev *pdev)
+{
 	generic_NCR5380_release_resources(pnp_get_drvdata(pdev));
-	pnp_set_drvdata(pdev, शून्य);
-पूर्ण
+	pnp_set_drvdata(pdev, NULL);
+}
 
-अटल काष्ठा pnp_driver generic_NCR5380_pnp_driver = अणु
+static struct pnp_driver generic_NCR5380_pnp_driver = {
 	.name		= DRV_MODULE_NAME,
 	.id_table	= generic_NCR5380_pnp_ids,
 	.probe		= generic_NCR5380_pnp_probe,
-	.हटाओ		= generic_NCR5380_pnp_हटाओ,
-पूर्ण;
-#पूर्ण_अगर /* defined(CONFIG_PNP) */
+	.remove		= generic_NCR5380_pnp_remove,
+};
+#endif /* defined(CONFIG_PNP) */
 
-अटल पूर्णांक pnp_रेजिस्टरed, isa_रेजिस्टरed;
+static int pnp_registered, isa_registered;
 
-अटल पूर्णांक __init generic_NCR5380_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init generic_NCR5380_init(void)
+{
+	int ret = 0;
 
 	/* compatibility with old-style parameters */
-	अगर (irq[0] == -1 && base[0] == 0 && card[0] == -1) अणु
+	if (irq[0] == -1 && base[0] == 0 && card[0] == -1) {
 		irq[0] = ncr_irq;
 		base[0] = ncr_addr;
-		अगर (ncr_5380)
+		if (ncr_5380)
 			card[0] = BOARD_NCR5380;
-		अगर (ncr_53c400)
+		if (ncr_53c400)
 			card[0] = BOARD_NCR53C400;
-		अगर (ncr_53c400a)
+		if (ncr_53c400a)
 			card[0] = BOARD_NCR53C400A;
-		अगर (dtc_3181e)
+		if (dtc_3181e)
 			card[0] = BOARD_DTC3181E;
-		अगर (hp_c2502)
+		if (hp_c2502)
 			card[0] = BOARD_HP_C2502;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_PNP
-	अगर (!pnp_रेजिस्टर_driver(&generic_NCR5380_pnp_driver))
-		pnp_रेजिस्टरed = 1;
-#पूर्ण_अगर
-	ret = isa_रेजिस्टर_driver(&generic_NCR5380_isa_driver, MAX_CARDS);
-	अगर (!ret)
-		isa_रेजिस्टरed = 1;
+#ifdef CONFIG_PNP
+	if (!pnp_register_driver(&generic_NCR5380_pnp_driver))
+		pnp_registered = 1;
+#endif
+	ret = isa_register_driver(&generic_NCR5380_isa_driver, MAX_CARDS);
+	if (!ret)
+		isa_registered = 1;
 
-	वापस (pnp_रेजिस्टरed || isa_रेजिस्टरed) ? 0 : ret;
-पूर्ण
+	return (pnp_registered || isa_registered) ? 0 : ret;
+}
 
-अटल व्योम __निकास generic_NCR5380_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_PNP
-	अगर (pnp_रेजिस्टरed)
-		pnp_unरेजिस्टर_driver(&generic_NCR5380_pnp_driver);
-#पूर्ण_अगर
-	अगर (isa_रेजिस्टरed)
-		isa_unरेजिस्टर_driver(&generic_NCR5380_isa_driver);
-पूर्ण
+static void __exit generic_NCR5380_exit(void)
+{
+#ifdef CONFIG_PNP
+	if (pnp_registered)
+		pnp_unregister_driver(&generic_NCR5380_pnp_driver);
+#endif
+	if (isa_registered)
+		isa_unregister_driver(&generic_NCR5380_isa_driver);
+}
 
 module_init(generic_NCR5380_init);
-module_निकास(generic_NCR5380_निकास);
+module_exit(generic_NCR5380_exit);

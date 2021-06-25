@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
- * Copyright (c) 2007 Bruno Ranकरोlf <bruno@thinktube.com>
+ * Copyright (c) 2007 Bruno Randolf <bruno@thinktube.com>
  *
- *  This file is मुक्त software: you may copy, redistribute and/or modअगरy it
+ *  This file is free software: you may copy, redistribute and/or modify it
  *  under the terms of the GNU General Public License as published by the
  *  Free Software Foundation, either version 2 of the License, or (at your
  *  option) any later version.
@@ -10,10 +9,10 @@
  *  This file is distributed in the hope that it will be useful, but
  *  WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License क्रम more details.
+ *  General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
  * This file incorporates work covered by the following copyright and
@@ -27,19 +26,19 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    similar to the "NO WARRANTY" disclaimer below ("Disclaimer") and any
  *    redistribution must be conditioned upon including a substantially
- *    similar Disclaimer requirement क्रम further binary redistribution.
+ *    similar Disclaimer requirement for further binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -59,30 +58,30 @@
  * THE POSSIBILITY OF SUCH DAMAGES.
  */
 
-#अगर_अघोषित _ATH5K_DEBUG_H
-#घोषणा _ATH5K_DEBUG_H
+#ifndef _ATH5K_DEBUG_H
+#define _ATH5K_DEBUG_H
 
-काष्ठा ath5k_hw;
-काष्ठा sk_buff;
-काष्ठा ath5k_buf;
+struct ath5k_hw;
+struct sk_buff;
+struct ath5k_buf;
 
-काष्ठा ath5k_dbg_info अणु
-	अचिन्हित पूर्णांक		level;		/* debug level */
-पूर्ण;
+struct ath5k_dbg_info {
+	unsigned int		level;		/* debug level */
+};
 
 /**
- * क्रमागत ath5k_debug_level - ath5k debug level
+ * enum ath5k_debug_level - ath5k debug level
  *
  * @ATH5K_DEBUG_RESET: reset processing
- * @ATH5K_DEBUG_INTR: पूर्णांकerrupt handling
+ * @ATH5K_DEBUG_INTR: interrupt handling
  * @ATH5K_DEBUG_MODE: mode init/setup
  * @ATH5K_DEBUG_XMIT: basic xmit operation
  * @ATH5K_DEBUG_BEACON: beacon handling
  * @ATH5K_DEBUG_CALIBRATE: periodic calibration
- * @ATH5K_DEBUG_TXPOWER: transmit घातer setting
+ * @ATH5K_DEBUG_TXPOWER: transmit power setting
  * @ATH5K_DEBUG_LED: led management
- * @ATH5K_DEBUG_DUMP_RX: prपूर्णांक received skb content
- * @ATH5K_DEBUG_DUMP_TX: prपूर्णांक transmit skb content
+ * @ATH5K_DEBUG_DUMP_RX: print received skb content
+ * @ATH5K_DEBUG_DUMP_TX: print transmit skb content
  * @ATH5K_DEBUG_DUMPBANDS: dump bands
  * @ATH5K_DEBUG_DMA: debug dma start/stop
  * @ATH5K_DEBUG_TRACE: trace function calls
@@ -90,13 +89,13 @@
  * @ATH5K_DEBUG_ANY: show at any debug level
  *
  * The debug level is used to control the amount and type of debugging output
- * we want to see. The debug level is given in calls to ATH5K_DBG to specअगरy
+ * we want to see. The debug level is given in calls to ATH5K_DBG to specify
  * where the message should appear, and the user can control the debugging
  * messages he wants to see, either by the module parameter 'debug' on module
  * load, or dynamically by using debugfs 'ath5k/phyX/debug'. these levels can
  * be combined together by bitwise OR.
  */
-क्रमागत ath5k_debug_level अणु
+enum ath5k_debug_level {
 	ATH5K_DEBUG_RESET	= 0x00000001,
 	ATH5K_DEBUG_INTR	= 0x00000002,
 	ATH5K_DEBUG_MODE	= 0x00000004,
@@ -110,57 +109,57 @@
 	ATH5K_DEBUG_ANI		= 0x00002000,
 	ATH5K_DEBUG_DESC	= 0x00004000,
 	ATH5K_DEBUG_ANY		= 0xffffffff
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_ATH5K_DEBUG
+#ifdef CONFIG_ATH5K_DEBUG
 
-#घोषणा ATH5K_DBG(_sc, _m, _fmt, ...) करो अणु \
-	अगर (unlikely((_sc)->debug.level & (_m) && net_ratelimit())) \
+#define ATH5K_DBG(_sc, _m, _fmt, ...) do { \
+	if (unlikely((_sc)->debug.level & (_m) && net_ratelimit())) \
 		ATH5K_PRINTK(_sc, KERN_DEBUG, "(%s:%d): " _fmt, \
 			__func__, __LINE__, ##__VA_ARGS__); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा ATH5K_DBG_UNLIMIT(_sc, _m, _fmt, ...) करो अणु \
-	अगर (unlikely((_sc)->debug.level & (_m))) \
+#define ATH5K_DBG_UNLIMIT(_sc, _m, _fmt, ...) do { \
+	if (unlikely((_sc)->debug.level & (_m))) \
 		ATH5K_PRINTK(_sc, KERN_DEBUG, "(%s:%d): " _fmt, \
 			__func__, __LINE__, ##__VA_ARGS__); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-व्योम
-ath5k_debug_init_device(काष्ठा ath5k_hw *ah);
+void
+ath5k_debug_init_device(struct ath5k_hw *ah);
 
-व्योम
-ath5k_debug_prपूर्णांकrxbuffs(काष्ठा ath5k_hw *ah);
+void
+ath5k_debug_printrxbuffs(struct ath5k_hw *ah);
 
-व्योम
-ath5k_debug_dump_bands(काष्ठा ath5k_hw *ah);
+void
+ath5k_debug_dump_bands(struct ath5k_hw *ah);
 
-व्योम
-ath5k_debug_prपूर्णांकtxbuf(काष्ठा ath5k_hw *ah, काष्ठा ath5k_buf *bf);
+void
+ath5k_debug_printtxbuf(struct ath5k_hw *ah, struct ath5k_buf *bf);
 
-#अन्यथा /* no debugging */
+#else /* no debugging */
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-अटल अंतरभूत __म_लिखो(3, 4) व्योम
-ATH5K_DBG(काष्ठा ath5k_hw *ah, अचिन्हित पूर्णांक m, स्थिर अक्षर *fmt, ...) अणुपूर्ण
+static inline __printf(3, 4) void
+ATH5K_DBG(struct ath5k_hw *ah, unsigned int m, const char *fmt, ...) {}
 
-अटल अंतरभूत __म_लिखो(3, 4) व्योम
-ATH5K_DBG_UNLIMIT(काष्ठा ath5k_hw *ah, अचिन्हित पूर्णांक m, स्थिर अक्षर *fmt, ...)
-अणुपूर्ण
+static inline __printf(3, 4) void
+ATH5K_DBG_UNLIMIT(struct ath5k_hw *ah, unsigned int m, const char *fmt, ...)
+{}
 
-अटल अंतरभूत व्योम
-ath5k_debug_init_device(काष्ठा ath5k_hw *ah) अणुपूर्ण
+static inline void
+ath5k_debug_init_device(struct ath5k_hw *ah) {}
 
-अटल अंतरभूत व्योम
-ath5k_debug_prपूर्णांकrxbuffs(काष्ठा ath5k_hw *ah) अणुपूर्ण
+static inline void
+ath5k_debug_printrxbuffs(struct ath5k_hw *ah) {}
 
-अटल अंतरभूत व्योम
-ath5k_debug_dump_bands(काष्ठा ath5k_hw *ah) अणुपूर्ण
+static inline void
+ath5k_debug_dump_bands(struct ath5k_hw *ah) {}
 
-अटल अंतरभूत व्योम
-ath5k_debug_prपूर्णांकtxbuf(काष्ठा ath5k_hw *ah, काष्ठा ath5k_buf *bf) अणुपूर्ण
+static inline void
+ath5k_debug_printtxbuf(struct ath5k_hw *ah, struct ath5k_buf *bf) {}
 
-#पूर्ण_अगर /* अगरdef CONFIG_ATH5K_DEBUG */
+#endif /* ifdef CONFIG_ATH5K_DEBUG */
 
-#पूर्ण_अगर /* अगरndef _ATH5K_DEBUG_H */
+#endif /* ifndef _ATH5K_DEBUG_H */

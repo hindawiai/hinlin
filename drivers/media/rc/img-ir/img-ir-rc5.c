@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * ImgTec IR Decoder setup क्रम Philips RC-5 protocol.
+ * ImgTec IR Decoder setup for Philips RC-5 protocol.
  *
  * Copyright 2012-2014 Imagination Technologies Ltd.
  */
 
-#समावेश "img-ir-hw.h"
+#include "img-ir-hw.h"
 
 /* Convert RC5 data to a scancode */
-अटल पूर्णांक img_ir_rc5_scancode(पूर्णांक len, u64 raw, u64 enabled_protocols,
-				काष्ठा img_ir_scancode_req *request)
-अणु
-	अचिन्हित पूर्णांक addr, cmd, tgl, start;
+static int img_ir_rc5_scancode(int len, u64 raw, u64 enabled_protocols,
+				struct img_ir_scancode_req *request)
+{
+	unsigned int addr, cmd, tgl, start;
 
-	/* Quirk in the decoder shअगरts everything by 2 to the left. */
+	/* Quirk in the decoder shifts everything by 2 to the left. */
 	raw   >>= 2;
 
 	start	=  (raw >> 13)	& 0x01;
@@ -27,59 +26,59 @@
 	 */
 	cmd	+= ((raw >> 12) & 0x01) ? 0 : 0x40;
 
-	अगर (!start)
-		वापस -EINVAL;
+	if (!start)
+		return -EINVAL;
 
 	request->protocol = RC_PROTO_RC5;
 	request->scancode = addr << 8 | cmd;
 	request->toggle   = tgl;
-	वापस IMG_IR_SCANCODE;
-पूर्ण
+	return IMG_IR_SCANCODE;
+}
 
 /* Convert RC5 scancode to RC5 data filter */
-अटल पूर्णांक img_ir_rc5_filter(स्थिर काष्ठा rc_scancode_filter *in,
-				 काष्ठा img_ir_filter *out, u64 protocols)
-अणु
+static int img_ir_rc5_filter(const struct rc_scancode_filter *in,
+				 struct img_ir_filter *out, u64 protocols)
+{
 	/* Not supported by the hw. */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * RC-5 decoder
  * see http://www.sbprojects.com/knowledge/ir/rc5.php
  */
-काष्ठा img_ir_decoder img_ir_rc5 = अणु
+struct img_ir_decoder img_ir_rc5 = {
 	.type      = RC_PROTO_BIT_RC5,
-	.control   = अणु
+	.control   = {
 		.bitoriend2	= 1,
 		.code_type	= IMG_IR_CODETYPE_BIPHASE,
 		.decodend2	= 1,
-	पूर्ण,
-	/* मुख्य timings */
+	},
+	/* main timings */
 	.tolerance	= 16,
 	.unit		= 888888, /* 1/36k*32=888.888microseconds */
-	.timings	= अणु
+	.timings	= {
 		/* 10 symbol */
-		.s10 = अणु
-			.pulse	= अणु 1 पूर्ण,
-			.space	= अणु 1 पूर्ण,
-		पूर्ण,
+		.s10 = {
+			.pulse	= { 1 },
+			.space	= { 1 },
+		},
 
 		/* 11 symbol */
-		.s11 = अणु
-			.pulse	= अणु 1 पूर्ण,
-			.space	= अणु 1 पूर्ण,
-		पूर्ण,
+		.s11 = {
+			.pulse	= { 1 },
+			.space	= { 1 },
+		},
 
-		/* मुक्त समय */
-		.ft  = अणु
+		/* free time */
+		.ft  = {
 			.minlen = 14,
 			.maxlen = 14,
 			.ft_min = 5,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
 	/* scancode logic */
 	.scancode	= img_ir_rc5_scancode,
 	.filter		= img_ir_rc5_filter,
-पूर्ण;
+};

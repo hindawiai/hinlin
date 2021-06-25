@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2010, Paul Cercueil <paul@crapouillou.net>
- *  JZ4740 Watchकरोg driver
+ *  JZ4740 Watchdog driver
  */
 
-#समावेश <linux/mfd/ingenic-tcu.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regmap.h>
+#include <linux/mfd/ingenic-tcu.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/watchdog.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/clk.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/regmap.h>
 
-#घोषणा DEFAULT_HEARTBEAT 5
-#घोषणा MAX_HEARTBEAT     2048
+#define DEFAULT_HEARTBEAT 5
+#define MAX_HEARTBEAT     2048
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		 "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-अटल अचिन्हित पूर्णांक heartbeat = DEFAULT_HEARTBEAT;
-module_param(heartbeat, uपूर्णांक, 0);
+static unsigned int heartbeat = DEFAULT_HEARTBEAT;
+module_param(heartbeat, uint, 0);
 MODULE_PARM_DESC(heartbeat,
 		"Watchdog heartbeat period in seconds from 1 to "
 		__MODULE_STRING(MAX_HEARTBEAT) ", default "
 		__MODULE_STRING(DEFAULT_HEARTBEAT));
 
-काष्ठा jz4740_wdt_drvdata अणु
-	काष्ठा watchकरोg_device wdt;
-	काष्ठा regmap *map;
-	काष्ठा clk *clk;
-	अचिन्हित दीर्घ clk_rate;
-पूर्ण;
+struct jz4740_wdt_drvdata {
+	struct watchdog_device wdt;
+	struct regmap *map;
+	struct clk *clk;
+	unsigned long clk_rate;
+};
 
-अटल पूर्णांक jz4740_wdt_ping(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा jz4740_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
+static int jz4740_wdt_ping(struct watchdog_device *wdt_dev)
+{
+	struct jz4740_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
 
-	regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCNT, 0);
+	regmap_write(drvdata->map, TCU_REG_WDT_TCNT, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jz4740_wdt_set_समयout(काष्ठा watchकरोg_device *wdt_dev,
-				    अचिन्हित पूर्णांक new_समयout)
-अणु
-	काष्ठा jz4740_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
-	u16 समयout_value = (u16)(drvdata->clk_rate * new_समयout);
-	अचिन्हित पूर्णांक tcer;
+static int jz4740_wdt_set_timeout(struct watchdog_device *wdt_dev,
+				    unsigned int new_timeout)
+{
+	struct jz4740_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
+	u16 timeout_value = (u16)(drvdata->clk_rate * new_timeout);
+	unsigned int tcer;
 
-	regmap_पढ़ो(drvdata->map, TCU_REG_WDT_TCER, &tcer);
-	regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCER, 0);
+	regmap_read(drvdata->map, TCU_REG_WDT_TCER, &tcer);
+	regmap_write(drvdata->map, TCU_REG_WDT_TCER, 0);
 
-	regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TDR, समयout_value);
-	regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCNT, 0);
+	regmap_write(drvdata->map, TCU_REG_WDT_TDR, timeout_value);
+	regmap_write(drvdata->map, TCU_REG_WDT_TCNT, 0);
 
-	अगर (tcer & TCU_WDT_TCER_TCEN)
-		regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCER, TCU_WDT_TCER_TCEN);
+	if (tcer & TCU_WDT_TCER_TCEN)
+		regmap_write(drvdata->map, TCU_REG_WDT_TCER, TCU_WDT_TCER_TCEN);
 
-	wdt_dev->समयout = new_समयout;
-	वापस 0;
-पूर्ण
+	wdt_dev->timeout = new_timeout;
+	return 0;
+}
 
-अटल पूर्णांक jz4740_wdt_start(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा jz4740_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
-	अचिन्हित पूर्णांक tcer;
-	पूर्णांक ret;
+static int jz4740_wdt_start(struct watchdog_device *wdt_dev)
+{
+	struct jz4740_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
+	unsigned int tcer;
+	int ret;
 
 	ret = clk_prepare_enable(drvdata->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	regmap_पढ़ो(drvdata->map, TCU_REG_WDT_TCER, &tcer);
+	regmap_read(drvdata->map, TCU_REG_WDT_TCER, &tcer);
 
-	jz4740_wdt_set_समयout(wdt_dev, wdt_dev->समयout);
+	jz4740_wdt_set_timeout(wdt_dev, wdt_dev->timeout);
 
-	/* Start watchकरोg अगर it wasn't started alपढ़ोy */
-	अगर (!(tcer & TCU_WDT_TCER_TCEN))
-		regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCER, TCU_WDT_TCER_TCEN);
+	/* Start watchdog if it wasn't started already */
+	if (!(tcer & TCU_WDT_TCER_TCEN))
+		regmap_write(drvdata->map, TCU_REG_WDT_TCER, TCU_WDT_TCER_TCEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jz4740_wdt_stop(काष्ठा watchकरोg_device *wdt_dev)
-अणु
-	काष्ठा jz4740_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
+static int jz4740_wdt_stop(struct watchdog_device *wdt_dev)
+{
+	struct jz4740_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
 
-	regmap_ग_लिखो(drvdata->map, TCU_REG_WDT_TCER, 0);
+	regmap_write(drvdata->map, TCU_REG_WDT_TCER, 0);
 	clk_disable_unprepare(drvdata->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jz4740_wdt_restart(काष्ठा watchकरोg_device *wdt_dev,
-			      अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	wdt_dev->समयout = 0;
+static int jz4740_wdt_restart(struct watchdog_device *wdt_dev,
+			      unsigned long action, void *data)
+{
+	wdt_dev->timeout = 0;
 	jz4740_wdt_start(wdt_dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info jz4740_wdt_info = अणु
+static const struct watchdog_info jz4740_wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "jz4740 Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops jz4740_wdt_ops = अणु
+static const struct watchdog_ops jz4740_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = jz4740_wdt_start,
 	.stop = jz4740_wdt_stop,
 	.ping = jz4740_wdt_ping,
-	.set_समयout = jz4740_wdt_set_समयout,
+	.set_timeout = jz4740_wdt_set_timeout,
 	.restart = jz4740_wdt_restart,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id jz4740_wdt_of_matches[] = अणु
-	अणु .compatible = "ingenic,jz4740-watchdog", पूर्ण,
-	अणु .compatible = "ingenic,jz4780-watchdog", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id jz4740_wdt_of_matches[] = {
+	{ .compatible = "ingenic,jz4740-watchdog", },
+	{ .compatible = "ingenic,jz4780-watchdog", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, jz4740_wdt_of_matches);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक jz4740_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा jz4740_wdt_drvdata *drvdata;
-	काष्ठा watchकरोg_device *jz4740_wdt;
-	दीर्घ rate;
-	पूर्णांक ret;
+static int jz4740_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct jz4740_wdt_drvdata *drvdata;
+	struct watchdog_device *jz4740_wdt;
+	long rate;
+	int ret;
 
-	drvdata = devm_kzalloc(dev, माप(काष्ठा jz4740_wdt_drvdata),
+	drvdata = devm_kzalloc(dev, sizeof(struct jz4740_wdt_drvdata),
 			       GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	if (!drvdata)
+		return -ENOMEM;
 
 	drvdata->clk = devm_clk_get(&pdev->dev, "wdt");
-	अगर (IS_ERR(drvdata->clk)) अणु
+	if (IS_ERR(drvdata->clk)) {
 		dev_err(&pdev->dev, "cannot find WDT clock\n");
-		वापस PTR_ERR(drvdata->clk);
-	पूर्ण
+		return PTR_ERR(drvdata->clk);
+	}
 
-	/* Set smallest घड़ी possible */
+	/* Set smallest clock possible */
 	rate = clk_round_rate(drvdata->clk, 1);
-	अगर (rate < 0)
-		वापस rate;
+	if (rate < 0)
+		return rate;
 
 	ret = clk_set_rate(drvdata->clk, rate);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drvdata->clk_rate = rate;
 	jz4740_wdt = &drvdata->wdt;
 	jz4740_wdt->info = &jz4740_wdt_info;
 	jz4740_wdt->ops = &jz4740_wdt_ops;
-	jz4740_wdt->min_समयout = 1;
-	jz4740_wdt->max_समयout = 0xffff / rate;
-	jz4740_wdt->समयout = clamp(heartbeat,
-				    jz4740_wdt->min_समयout,
-				    jz4740_wdt->max_समयout);
+	jz4740_wdt->min_timeout = 1;
+	jz4740_wdt->max_timeout = 0xffff / rate;
+	jz4740_wdt->timeout = clamp(heartbeat,
+				    jz4740_wdt->min_timeout,
+				    jz4740_wdt->max_timeout);
 	jz4740_wdt->parent = dev;
-	watchकरोg_set_nowayout(jz4740_wdt, nowayout);
-	watchकरोg_set_drvdata(jz4740_wdt, drvdata);
+	watchdog_set_nowayout(jz4740_wdt, nowayout);
+	watchdog_set_drvdata(jz4740_wdt, drvdata);
 
 	drvdata->map = device_node_to_regmap(dev->parent->of_node);
-	अगर (!drvdata->map) अणु
+	if (!drvdata->map) {
 		dev_err(dev, "regmap not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस devm_watchकरोg_रेजिस्टर_device(dev, &drvdata->wdt);
-पूर्ण
+	return devm_watchdog_register_device(dev, &drvdata->wdt);
+}
 
-अटल काष्ठा platक्रमm_driver jz4740_wdt_driver = अणु
+static struct platform_driver jz4740_wdt_driver = {
 	.probe = jz4740_wdt_probe,
-	.driver = अणु
+	.driver = {
 		.name = "jz4740-wdt",
 		.of_match_table = of_match_ptr(jz4740_wdt_of_matches),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(jz4740_wdt_driver);
+module_platform_driver(jz4740_wdt_driver);
 
 MODULE_AUTHOR("Paul Cercueil <paul@crapouillou.net>");
 MODULE_DESCRIPTION("jz4740 Watchdog Driver");

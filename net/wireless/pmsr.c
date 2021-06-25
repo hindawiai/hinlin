@@ -1,529 +1,528 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
-#अगर_अघोषित __PMSR_H
-#घोषणा __PMSR_H
-#समावेश <net/cfg80211.h>
-#समावेश "core.h"
-#समावेश "nl80211.h"
-#समावेश "rdev-ops.h"
+#ifndef __PMSR_H
+#define __PMSR_H
+#include <net/cfg80211.h>
+#include "core.h"
+#include "nl80211.h"
+#include "rdev-ops.h"
 
-अटल पूर्णांक pmsr_parse_fपंचांग(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-			  काष्ठा nlattr *fपंचांगreq,
-			  काष्ठा cfg80211_pmsr_request_peer *out,
-			  काष्ठा genl_info *info)
-अणु
-	स्थिर काष्ठा cfg80211_pmsr_capabilities *capa = rdev->wiphy.pmsr_capa;
-	काष्ठा nlattr *tb[NL80211_PMSR_FTM_REQ_ATTR_MAX + 1];
+static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
+			  struct nlattr *ftmreq,
+			  struct cfg80211_pmsr_request_peer *out,
+			  struct genl_info *info)
+{
+	const struct cfg80211_pmsr_capabilities *capa = rdev->wiphy.pmsr_capa;
+	struct nlattr *tb[NL80211_PMSR_FTM_REQ_ATTR_MAX + 1];
 	u32 preamble = NL80211_PREAMBLE_DMG; /* only optional in DMG */
 
 	/* validate existing data */
-	अगर (!(rdev->wiphy.pmsr_capa->fपंचांग.bandwidths & BIT(out->chandef.width))) अणु
+	if (!(rdev->wiphy.pmsr_capa->ftm.bandwidths & BIT(out->chandef.width))) {
 		NL_SET_ERR_MSG(info->extack, "FTM: unsupported bandwidth");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* no validation needed - was alपढ़ोy करोne via nested policy */
-	nla_parse_nested_deprecated(tb, NL80211_PMSR_FTM_REQ_ATTR_MAX, fपंचांगreq,
-				    शून्य, शून्य);
+	/* no validation needed - was already done via nested policy */
+	nla_parse_nested_deprecated(tb, NL80211_PMSR_FTM_REQ_ATTR_MAX, ftmreq,
+				    NULL, NULL);
 
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE])
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE])
 		preamble = nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE]);
 
-	/* set up values - काष्ठा is 0-initialized */
-	out->fपंचांग.requested = true;
+	/* set up values - struct is 0-initialized */
+	out->ftm.requested = true;
 
-	चयन (out->chandef.chan->band) अणु
-	हाल NL80211_BAND_60GHZ:
+	switch (out->chandef.chan->band) {
+	case NL80211_BAND_60GHZ:
 		/* optional */
-		अवरोध;
-	शेष:
-		अगर (!tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE]) अणु
+		break;
+	default:
+		if (!tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE]) {
 			NL_SET_ERR_MSG(info->extack,
 				       "FTM: must specify preamble");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (!(capa->fपंचांग.preambles & BIT(preamble))) अणु
+	if (!(capa->ftm.preambles & BIT(preamble))) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE],
 				    "FTM: invalid preamble");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.preamble = preamble;
+	out->ftm.preamble = preamble;
 
-	out->fपंचांग.burst_period = 0;
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_PERIOD])
-		out->fपंचांग.burst_period =
+	out->ftm.burst_period = 0;
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_PERIOD])
+		out->ftm.burst_period =
 			nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_PERIOD]);
 
-	out->fपंचांग.asap = !!tb[NL80211_PMSR_FTM_REQ_ATTR_ASAP];
-	अगर (out->fपंचांग.asap && !capa->fपंचांग.asap) अणु
+	out->ftm.asap = !!tb[NL80211_PMSR_FTM_REQ_ATTR_ASAP];
+	if (out->ftm.asap && !capa->ftm.asap) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_ASAP],
 				    "FTM: ASAP mode not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!out->fपंचांग.asap && !capa->fपंचांग.non_asap) अणु
+	if (!out->ftm.asap && !capa->ftm.non_asap) {
 		NL_SET_ERR_MSG(info->extack,
 			       "FTM: non-ASAP mode not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.num_bursts_exp = 0;
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_BURSTS_EXP])
-		out->fपंचांग.num_bursts_exp =
+	out->ftm.num_bursts_exp = 0;
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_BURSTS_EXP])
+		out->ftm.num_bursts_exp =
 			nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_BURSTS_EXP]);
 
-	अगर (capa->fपंचांग.max_bursts_exponent >= 0 &&
-	    out->fपंचांग.num_bursts_exp > capa->fपंचांग.max_bursts_exponent) अणु
+	if (capa->ftm.max_bursts_exponent >= 0 &&
+	    out->ftm.num_bursts_exp > capa->ftm.max_bursts_exponent) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_BURSTS_EXP],
 				    "FTM: max NUM_BURSTS_EXP must be set lower than the device limit");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.burst_duration = 15;
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_DURATION])
-		out->fपंचांग.burst_duration =
+	out->ftm.burst_duration = 15;
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_DURATION])
+		out->ftm.burst_duration =
 			nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_BURST_DURATION]);
 
-	out->fपंचांग.fपंचांगs_per_burst = 0;
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_FTMS_PER_BURST])
-		out->fपंचांग.fपंचांगs_per_burst =
+	out->ftm.ftms_per_burst = 0;
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_FTMS_PER_BURST])
+		out->ftm.ftms_per_burst =
 			nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_FTMS_PER_BURST]);
 
-	अगर (capa->fपंचांग.max_fपंचांगs_per_burst &&
-	    (out->fपंचांग.fपंचांगs_per_burst > capa->fपंचांग.max_fपंचांगs_per_burst ||
-	     out->fपंचांग.fपंचांगs_per_burst == 0)) अणु
+	if (capa->ftm.max_ftms_per_burst &&
+	    (out->ftm.ftms_per_burst > capa->ftm.max_ftms_per_burst ||
+	     out->ftm.ftms_per_burst == 0)) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_FTMS_PER_BURST],
 				    "FTM: FTMs per burst must be set lower than the device limit but non-zero");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.fपंचांगr_retries = 3;
-	अगर (tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_FTMR_RETRIES])
-		out->fपंचांग.fपंचांगr_retries =
+	out->ftm.ftmr_retries = 3;
+	if (tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_FTMR_RETRIES])
+		out->ftm.ftmr_retries =
 			nla_get_u32(tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_FTMR_RETRIES]);
 
-	out->fपंचांग.request_lci = !!tb[NL80211_PMSR_FTM_REQ_ATTR_REQUEST_LCI];
-	अगर (out->fपंचांग.request_lci && !capa->fपंचांग.request_lci) अणु
+	out->ftm.request_lci = !!tb[NL80211_PMSR_FTM_REQ_ATTR_REQUEST_LCI];
+	if (out->ftm.request_lci && !capa->ftm.request_lci) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_REQUEST_LCI],
 				    "FTM: LCI request not supported");
-	पूर्ण
+	}
 
-	out->fपंचांग.request_civicloc =
+	out->ftm.request_civicloc =
 		!!tb[NL80211_PMSR_FTM_REQ_ATTR_REQUEST_CIVICLOC];
-	अगर (out->fपंचांग.request_civicloc && !capa->fपंचांग.request_civicloc) अणु
+	if (out->ftm.request_civicloc && !capa->ftm.request_civicloc) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_REQUEST_CIVICLOC],
 			    "FTM: civic location request not supported");
-	पूर्ण
+	}
 
-	out->fपंचांग.trigger_based =
+	out->ftm.trigger_based =
 		!!tb[NL80211_PMSR_FTM_REQ_ATTR_TRIGGER_BASED];
-	अगर (out->fपंचांग.trigger_based && !capa->fपंचांग.trigger_based) अणु
+	if (out->ftm.trigger_based && !capa->ftm.trigger_based) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_TRIGGER_BASED],
 				    "FTM: trigger based ranging is not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.non_trigger_based =
+	out->ftm.non_trigger_based =
 		!!tb[NL80211_PMSR_FTM_REQ_ATTR_NON_TRIGGER_BASED];
-	अगर (out->fपंचांग.non_trigger_based && !capa->fपंचांग.non_trigger_based) अणु
+	if (out->ftm.non_trigger_based && !capa->ftm.non_trigger_based) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_NON_TRIGGER_BASED],
 				    "FTM: trigger based ranging is not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (out->fपंचांग.trigger_based && out->fपंचांग.non_trigger_based) अणु
+	if (out->ftm.trigger_based && out->ftm.non_trigger_based) {
 		NL_SET_ERR_MSG(info->extack,
 			       "FTM: can't set both trigger based and non trigger based");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((out->fपंचांग.trigger_based || out->fपंचांग.non_trigger_based) &&
-	    out->fपंचांग.preamble != NL80211_PREAMBLE_HE) अणु
+	if ((out->ftm.trigger_based || out->ftm.non_trigger_based) &&
+	    out->ftm.preamble != NL80211_PREAMBLE_HE) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE],
 				    "FTM: non EDCA based ranging must use HE preamble");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	out->fपंचांग.lmr_feedback =
+	out->ftm.lmr_feedback =
 		!!tb[NL80211_PMSR_FTM_REQ_ATTR_LMR_FEEDBACK];
-	अगर (!out->fपंचांग.trigger_based && !out->fपंचांग.non_trigger_based &&
-	    out->fपंचांग.lmr_feedback) अणु
+	if (!out->ftm.trigger_based && !out->ftm.non_trigger_based &&
+	    out->ftm.lmr_feedback) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_LMR_FEEDBACK],
 				    "FTM: LMR feedback set for EDCA based ranging");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pmsr_parse_peer(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-			   काष्ठा nlattr *peer,
-			   काष्ठा cfg80211_pmsr_request_peer *out,
-			   काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *tb[NL80211_PMSR_PEER_ATTR_MAX + 1];
-	काष्ठा nlattr *req[NL80211_PMSR_REQ_ATTR_MAX + 1];
-	काष्ठा nlattr *treq;
-	पूर्णांक err, rem;
+static int pmsr_parse_peer(struct cfg80211_registered_device *rdev,
+			   struct nlattr *peer,
+			   struct cfg80211_pmsr_request_peer *out,
+			   struct genl_info *info)
+{
+	struct nlattr *tb[NL80211_PMSR_PEER_ATTR_MAX + 1];
+	struct nlattr *req[NL80211_PMSR_REQ_ATTR_MAX + 1];
+	struct nlattr *treq;
+	int err, rem;
 
-	/* no validation needed - was alपढ़ोy करोne via nested policy */
+	/* no validation needed - was already done via nested policy */
 	nla_parse_nested_deprecated(tb, NL80211_PMSR_PEER_ATTR_MAX, peer,
-				    शून्य, शून्य);
+				    NULL, NULL);
 
-	अगर (!tb[NL80211_PMSR_PEER_ATTR_ADDR] ||
+	if (!tb[NL80211_PMSR_PEER_ATTR_ADDR] ||
 	    !tb[NL80211_PMSR_PEER_ATTR_CHAN] ||
-	    !tb[NL80211_PMSR_PEER_ATTR_REQ]) अणु
+	    !tb[NL80211_PMSR_PEER_ATTR_REQ]) {
 		NL_SET_ERR_MSG_ATTR(info->extack, peer,
 				    "insufficient peer data");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(out->addr, nla_data(tb[NL80211_PMSR_PEER_ATTR_ADDR]), ETH_ALEN);
+	memcpy(out->addr, nla_data(tb[NL80211_PMSR_PEER_ATTR_ADDR]), ETH_ALEN);
 
 	/* reuse info->attrs */
-	स_रखो(info->attrs, 0, माप(*info->attrs) * (NL80211_ATTR_MAX + 1));
+	memset(info->attrs, 0, sizeof(*info->attrs) * (NL80211_ATTR_MAX + 1));
 	err = nla_parse_nested_deprecated(info->attrs, NL80211_ATTR_MAX,
 					  tb[NL80211_PMSR_PEER_ATTR_CHAN],
-					  शून्य, info->extack);
-	अगर (err)
-		वापस err;
+					  NULL, info->extack);
+	if (err)
+		return err;
 
 	err = nl80211_parse_chandef(rdev, info, &out->chandef);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* no validation needed - was alपढ़ोy करोne via nested policy */
+	/* no validation needed - was already done via nested policy */
 	nla_parse_nested_deprecated(req, NL80211_PMSR_REQ_ATTR_MAX,
-				    tb[NL80211_PMSR_PEER_ATTR_REQ], शून्य,
-				    शून्य);
+				    tb[NL80211_PMSR_PEER_ATTR_REQ], NULL,
+				    NULL);
 
-	अगर (!req[NL80211_PMSR_REQ_ATTR_DATA]) अणु
+	if (!req[NL80211_PMSR_REQ_ATTR_DATA]) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_PEER_ATTR_REQ],
 				    "missing request type/data");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (req[NL80211_PMSR_REQ_ATTR_GET_AP_TSF])
+	if (req[NL80211_PMSR_REQ_ATTR_GET_AP_TSF])
 		out->report_ap_tsf = true;
 
-	अगर (out->report_ap_tsf && !rdev->wiphy.pmsr_capa->report_ap_tsf) अणु
+	if (out->report_ap_tsf && !rdev->wiphy.pmsr_capa->report_ap_tsf) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    req[NL80211_PMSR_REQ_ATTR_GET_AP_TSF],
 				    "reporting AP TSF is not supported");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	nla_क्रम_each_nested(treq, req[NL80211_PMSR_REQ_ATTR_DATA], rem) अणु
-		चयन (nla_type(treq)) अणु
-		हाल NL80211_PMSR_TYPE_FTM:
-			err = pmsr_parse_fपंचांग(rdev, treq, out, info);
-			अवरोध;
-		शेष:
+	nla_for_each_nested(treq, req[NL80211_PMSR_REQ_ATTR_DATA], rem) {
+		switch (nla_type(treq)) {
+		case NL80211_PMSR_TYPE_FTM:
+			err = pmsr_parse_ftm(rdev, treq, out, info);
+			break;
+		default:
 			NL_SET_ERR_MSG_ATTR(info->extack, treq,
 					    "unsupported measurement type");
 			err = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nl80211_pmsr_start(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा nlattr *reqattr = info->attrs[NL80211_ATTR_PEER_MEASUREMENTS];
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = info->user_ptr[0];
-	काष्ठा wireless_dev *wdev = info->user_ptr[1];
-	काष्ठा cfg80211_pmsr_request *req;
-	काष्ठा nlattr *peers, *peer;
-	पूर्णांक count, rem, err, idx;
+int nl80211_pmsr_start(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr *reqattr = info->attrs[NL80211_ATTR_PEER_MEASUREMENTS];
+	struct cfg80211_registered_device *rdev = info->user_ptr[0];
+	struct wireless_dev *wdev = info->user_ptr[1];
+	struct cfg80211_pmsr_request *req;
+	struct nlattr *peers, *peer;
+	int count, rem, err, idx;
 
-	अगर (!rdev->wiphy.pmsr_capa)
-		वापस -EOPNOTSUPP;
+	if (!rdev->wiphy.pmsr_capa)
+		return -EOPNOTSUPP;
 
-	अगर (!reqattr)
-		वापस -EINVAL;
+	if (!reqattr)
+		return -EINVAL;
 
 	peers = nla_find(nla_data(reqattr), nla_len(reqattr),
 			 NL80211_PMSR_ATTR_PEERS);
-	अगर (!peers)
-		वापस -EINVAL;
+	if (!peers)
+		return -EINVAL;
 
 	count = 0;
-	nla_क्रम_each_nested(peer, peers, rem) अणु
+	nla_for_each_nested(peer, peers, rem) {
 		count++;
 
-		अगर (count > rdev->wiphy.pmsr_capa->max_peers) अणु
+		if (count > rdev->wiphy.pmsr_capa->max_peers) {
 			NL_SET_ERR_MSG_ATTR(info->extack, peer,
 					    "Too many peers used");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	req = kzalloc(काष्ठा_size(req, peers, count), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(struct_size(req, peers, count), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
-	अगर (info->attrs[NL80211_ATTR_TIMEOUT])
-		req->समयout = nla_get_u32(info->attrs[NL80211_ATTR_TIMEOUT]);
+	if (info->attrs[NL80211_ATTR_TIMEOUT])
+		req->timeout = nla_get_u32(info->attrs[NL80211_ATTR_TIMEOUT]);
 
-	अगर (info->attrs[NL80211_ATTR_MAC]) अणु
-		अगर (!rdev->wiphy.pmsr_capa->अक्रमomize_mac_addr) अणु
+	if (info->attrs[NL80211_ATTR_MAC]) {
+		if (!rdev->wiphy.pmsr_capa->randomize_mac_addr) {
 			NL_SET_ERR_MSG_ATTR(info->extack,
 					    info->attrs[NL80211_ATTR_MAC],
 					    "device cannot randomize MAC address");
 			err = -EINVAL;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		err = nl80211_parse_अक्रमom_mac(info->attrs, req->mac_addr,
+		err = nl80211_parse_random_mac(info->attrs, req->mac_addr,
 					       req->mac_addr_mask);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण अन्यथा अणु
-		स_नकल(req->mac_addr, wdev_address(wdev), ETH_ALEN);
+		if (err)
+			goto out_err;
+	} else {
+		memcpy(req->mac_addr, wdev_address(wdev), ETH_ALEN);
 		eth_broadcast_addr(req->mac_addr_mask);
-	पूर्ण
+	}
 
 	idx = 0;
-	nla_क्रम_each_nested(peer, peers, rem) अणु
-		/* NB: this reuses info->attrs, but we no दीर्घer need it */
+	nla_for_each_nested(peer, peers, rem) {
+		/* NB: this reuses info->attrs, but we no longer need it */
 		err = pmsr_parse_peer(rdev, peer, &req->peers[idx], info);
-		अगर (err)
-			जाओ out_err;
+		if (err)
+			goto out_err;
 		idx++;
-	पूर्ण
+	}
 
 	req->n_peers = count;
 	req->cookie = cfg80211_assign_cookie(rdev);
 	req->nl_portid = info->snd_portid;
 
 	err = rdev_start_pmsr(rdev, wdev, req);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
 	list_add_tail(&req->list, &wdev->pmsr_list);
 
 	nl_set_extack_cookie_u64(info->extack, req->cookie);
-	वापस 0;
+	return 0;
 out_err:
-	kमुक्त(req);
-	वापस err;
-पूर्ण
+	kfree(req);
+	return err;
+}
 
-व्योम cfg80211_pmsr_complete(काष्ठा wireless_dev *wdev,
-			    काष्ठा cfg80211_pmsr_request *req,
+void cfg80211_pmsr_complete(struct wireless_dev *wdev,
+			    struct cfg80211_pmsr_request *req,
 			    gfp_t gfp)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_pmsr_request *पंचांगp, *prev, *to_मुक्त = शून्य;
-	काष्ठा sk_buff *msg;
-	व्योम *hdr;
+{
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_pmsr_request *tmp, *prev, *to_free = NULL;
+	struct sk_buff *msg;
+	void *hdr;
 
 	trace_cfg80211_pmsr_complete(wdev->wiphy, wdev, req->cookie);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
-	अगर (!msg)
-		जाओ मुक्त_request;
+	if (!msg)
+		goto free_request;
 
 	hdr = nl80211hdr_put(msg, 0, 0, 0,
 			     NL80211_CMD_PEER_MEASUREMENT_COMPLETE);
-	अगर (!hdr)
-		जाओ मुक्त_msg;
+	if (!hdr)
+		goto free_msg;
 
-	अगर (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
+	if (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
 	    nla_put_u64_64bit(msg, NL80211_ATTR_WDEV, wdev_id(wdev),
 			      NL80211_ATTR_PAD))
-		जाओ मुक्त_msg;
+		goto free_msg;
 
-	अगर (nla_put_u64_64bit(msg, NL80211_ATTR_COOKIE, req->cookie,
+	if (nla_put_u64_64bit(msg, NL80211_ATTR_COOKIE, req->cookie,
 			      NL80211_ATTR_PAD))
-		जाओ मुक्त_msg;
+		goto free_msg;
 
 	genlmsg_end(msg, hdr);
 	genlmsg_unicast(wiphy_net(wdev->wiphy), msg, req->nl_portid);
-	जाओ मुक्त_request;
-मुक्त_msg:
-	nlmsg_मुक्त(msg);
-मुक्त_request:
+	goto free_request;
+free_msg:
+	nlmsg_free(msg);
+free_request:
 	spin_lock_bh(&wdev->pmsr_lock);
 	/*
-	 * cfg80211_pmsr_process_पात() may have alपढ़ोy moved this request
-	 * to the मुक्त list, and will मुक्त it later. In this हाल, करोn't मुक्त
+	 * cfg80211_pmsr_process_abort() may have already moved this request
+	 * to the free list, and will free it later. In this case, don't free
 	 * it here.
 	 */
-	list_क्रम_each_entry_safe(पंचांगp, prev, &wdev->pmsr_list, list) अणु
-		अगर (पंचांगp == req) अणु
+	list_for_each_entry_safe(tmp, prev, &wdev->pmsr_list, list) {
+		if (tmp == req) {
 			list_del(&req->list);
-			to_मुक्त = req;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			to_free = req;
+			break;
+		}
+	}
 	spin_unlock_bh(&wdev->pmsr_lock);
-	kमुक्त(to_मुक्त);
-पूर्ण
+	kfree(to_free);
+}
 EXPORT_SYMBOL_GPL(cfg80211_pmsr_complete);
 
-अटल पूर्णांक nl80211_pmsr_send_fपंचांग_res(काष्ठा sk_buff *msg,
-				     काष्ठा cfg80211_pmsr_result *res)
-अणु
-	अगर (res->status == NL80211_PMSR_STATUS_FAILURE) अणु
-		अगर (nla_put_u32(msg, NL80211_PMSR_FTM_RESP_ATTR_FAIL_REASON,
-				res->fपंचांग.failure_reason))
-			जाओ error;
+static int nl80211_pmsr_send_ftm_res(struct sk_buff *msg,
+				     struct cfg80211_pmsr_result *res)
+{
+	if (res->status == NL80211_PMSR_STATUS_FAILURE) {
+		if (nla_put_u32(msg, NL80211_PMSR_FTM_RESP_ATTR_FAIL_REASON,
+				res->ftm.failure_reason))
+			goto error;
 
-		अगर (res->fपंचांग.failure_reason ==
+		if (res->ftm.failure_reason ==
 			NL80211_PMSR_FTM_FAILURE_PEER_BUSY &&
-		    res->fपंचांग.busy_retry_समय &&
+		    res->ftm.busy_retry_time &&
 		    nla_put_u32(msg, NL80211_PMSR_FTM_RESP_ATTR_BUSY_RETRY_TIME,
-				res->fपंचांग.busy_retry_समय))
-			जाओ error;
+				res->ftm.busy_retry_time))
+			goto error;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-#घोषणा PUT(tp, attr, val)						\
-	करो अणु								\
-		अगर (nla_put_##tp(msg,					\
+#define PUT(tp, attr, val)						\
+	do {								\
+		if (nla_put_##tp(msg,					\
 				 NL80211_PMSR_FTM_RESP_ATTR_##attr,	\
-				 res->fपंचांग.val))				\
-			जाओ error;					\
-	पूर्ण जबतक (0)
+				 res->ftm.val))				\
+			goto error;					\
+	} while (0)
 
-#घोषणा PUTOPT(tp, attr, val)						\
-	करो अणु								\
-		अगर (res->fपंचांग.val##_valid)				\
+#define PUTOPT(tp, attr, val)						\
+	do {								\
+		if (res->ftm.val##_valid)				\
 			PUT(tp, attr, val);				\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा PUT_U64(attr, val)						\
-	करो अणु								\
-		अगर (nla_put_u64_64bit(msg,				\
+#define PUT_U64(attr, val)						\
+	do {								\
+		if (nla_put_u64_64bit(msg,				\
 				      NL80211_PMSR_FTM_RESP_ATTR_##attr,\
-				      res->fपंचांग.val,			\
+				      res->ftm.val,			\
 				      NL80211_PMSR_FTM_RESP_ATTR_PAD))	\
-			जाओ error;					\
-	पूर्ण जबतक (0)
+			goto error;					\
+	} while (0)
 
-#घोषणा PUTOPT_U64(attr, val)						\
-	करो अणु								\
-		अगर (res->fपंचांग.val##_valid)				\
+#define PUTOPT_U64(attr, val)						\
+	do {								\
+		if (res->ftm.val##_valid)				\
 			PUT_U64(attr, val);				\
-	पूर्ण जबतक (0)
+	} while (0)
 
-	अगर (res->fपंचांग.burst_index >= 0)
+	if (res->ftm.burst_index >= 0)
 		PUT(u32, BURST_INDEX, burst_index);
-	PUTOPT(u32, NUM_FTMR_ATTEMPTS, num_fपंचांगr_attempts);
-	PUTOPT(u32, NUM_FTMR_SUCCESSES, num_fपंचांगr_successes);
+	PUTOPT(u32, NUM_FTMR_ATTEMPTS, num_ftmr_attempts);
+	PUTOPT(u32, NUM_FTMR_SUCCESSES, num_ftmr_successes);
 	PUT(u8, NUM_BURSTS_EXP, num_bursts_exp);
 	PUT(u8, BURST_DURATION, burst_duration);
-	PUT(u8, FTMS_PER_BURST, fपंचांगs_per_burst);
+	PUT(u8, FTMS_PER_BURST, ftms_per_burst);
 	PUTOPT(s32, RSSI_AVG, rssi_avg);
-	PUTOPT(s32, RSSI_SPREAD, rssi_spपढ़ो);
-	अगर (res->fपंचांग.tx_rate_valid &&
-	    !nl80211_put_sta_rate(msg, &res->fपंचांग.tx_rate,
+	PUTOPT(s32, RSSI_SPREAD, rssi_spread);
+	if (res->ftm.tx_rate_valid &&
+	    !nl80211_put_sta_rate(msg, &res->ftm.tx_rate,
 				  NL80211_PMSR_FTM_RESP_ATTR_TX_RATE))
-		जाओ error;
-	अगर (res->fपंचांग.rx_rate_valid &&
-	    !nl80211_put_sta_rate(msg, &res->fपंचांग.rx_rate,
+		goto error;
+	if (res->ftm.rx_rate_valid &&
+	    !nl80211_put_sta_rate(msg, &res->ftm.rx_rate,
 				  NL80211_PMSR_FTM_RESP_ATTR_RX_RATE))
-		जाओ error;
+		goto error;
 	PUTOPT_U64(RTT_AVG, rtt_avg);
 	PUTOPT_U64(RTT_VARIANCE, rtt_variance);
-	PUTOPT_U64(RTT_SPREAD, rtt_spपढ़ो);
+	PUTOPT_U64(RTT_SPREAD, rtt_spread);
 	PUTOPT_U64(DIST_AVG, dist_avg);
 	PUTOPT_U64(DIST_VARIANCE, dist_variance);
-	PUTOPT_U64(DIST_SPREAD, dist_spपढ़ो);
-	अगर (res->fपंचांग.lci && res->fपंचांग.lci_len &&
+	PUTOPT_U64(DIST_SPREAD, dist_spread);
+	if (res->ftm.lci && res->ftm.lci_len &&
 	    nla_put(msg, NL80211_PMSR_FTM_RESP_ATTR_LCI,
-		    res->fपंचांग.lci_len, res->fपंचांग.lci))
-		जाओ error;
-	अगर (res->fपंचांग.civicloc && res->fपंचांग.civicloc_len &&
+		    res->ftm.lci_len, res->ftm.lci))
+		goto error;
+	if (res->ftm.civicloc && res->ftm.civicloc_len &&
 	    nla_put(msg, NL80211_PMSR_FTM_RESP_ATTR_CIVICLOC,
-		    res->fपंचांग.civicloc_len, res->fपंचांग.civicloc))
-		जाओ error;
-#अघोषित PUT
-#अघोषित PUTOPT
-#अघोषित PUT_U64
-#अघोषित PUTOPT_U64
+		    res->ftm.civicloc_len, res->ftm.civicloc))
+		goto error;
+#undef PUT
+#undef PUTOPT
+#undef PUT_U64
+#undef PUTOPT_U64
 
-	वापस 0;
+	return 0;
 error:
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक nl80211_pmsr_send_result(काष्ठा sk_buff *msg,
-				    काष्ठा cfg80211_pmsr_result *res)
-अणु
-	काष्ठा nlattr *pmsr, *peers, *peer, *resp, *data, *typedata;
+static int nl80211_pmsr_send_result(struct sk_buff *msg,
+				    struct cfg80211_pmsr_result *res)
+{
+	struct nlattr *pmsr, *peers, *peer, *resp, *data, *typedata;
 
 	pmsr = nla_nest_start_noflag(msg, NL80211_ATTR_PEER_MEASUREMENTS);
-	अगर (!pmsr)
-		जाओ error;
+	if (!pmsr)
+		goto error;
 
 	peers = nla_nest_start_noflag(msg, NL80211_PMSR_ATTR_PEERS);
-	अगर (!peers)
-		जाओ error;
+	if (!peers)
+		goto error;
 
 	peer = nla_nest_start_noflag(msg, 1);
-	अगर (!peer)
-		जाओ error;
+	if (!peer)
+		goto error;
 
-	अगर (nla_put(msg, NL80211_PMSR_PEER_ATTR_ADDR, ETH_ALEN, res->addr))
-		जाओ error;
+	if (nla_put(msg, NL80211_PMSR_PEER_ATTR_ADDR, ETH_ALEN, res->addr))
+		goto error;
 
 	resp = nla_nest_start_noflag(msg, NL80211_PMSR_PEER_ATTR_RESP);
-	अगर (!resp)
-		जाओ error;
+	if (!resp)
+		goto error;
 
-	अगर (nla_put_u32(msg, NL80211_PMSR_RESP_ATTR_STATUS, res->status) ||
+	if (nla_put_u32(msg, NL80211_PMSR_RESP_ATTR_STATUS, res->status) ||
 	    nla_put_u64_64bit(msg, NL80211_PMSR_RESP_ATTR_HOST_TIME,
-			      res->host_समय, NL80211_PMSR_RESP_ATTR_PAD))
-		जाओ error;
+			      res->host_time, NL80211_PMSR_RESP_ATTR_PAD))
+		goto error;
 
-	अगर (res->ap_tsf_valid &&
+	if (res->ap_tsf_valid &&
 	    nla_put_u64_64bit(msg, NL80211_PMSR_RESP_ATTR_AP_TSF,
 			      res->ap_tsf, NL80211_PMSR_RESP_ATTR_PAD))
-		जाओ error;
+		goto error;
 
-	अगर (res->final && nla_put_flag(msg, NL80211_PMSR_RESP_ATTR_FINAL))
-		जाओ error;
+	if (res->final && nla_put_flag(msg, NL80211_PMSR_RESP_ATTR_FINAL))
+		goto error;
 
 	data = nla_nest_start_noflag(msg, NL80211_PMSR_RESP_ATTR_DATA);
-	अगर (!data)
-		जाओ error;
+	if (!data)
+		goto error;
 
 	typedata = nla_nest_start_noflag(msg, res->type);
-	अगर (!typedata)
-		जाओ error;
+	if (!typedata)
+		goto error;
 
-	चयन (res->type) अणु
-	हाल NL80211_PMSR_TYPE_FTM:
-		अगर (nl80211_pmsr_send_fपंचांग_res(msg, res))
-			जाओ error;
-		अवरोध;
-	शेष:
+	switch (res->type) {
+	case NL80211_PMSR_TYPE_FTM:
+		if (nl80211_pmsr_send_ftm_res(msg, res))
+			goto error;
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 
 	nla_nest_end(msg, typedata);
 	nla_nest_end(msg, data);
@@ -532,123 +531,123 @@ error:
 	nla_nest_end(msg, peers);
 	nla_nest_end(msg, pmsr);
 
-	वापस 0;
+	return 0;
 error:
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-व्योम cfg80211_pmsr_report(काष्ठा wireless_dev *wdev,
-			  काष्ठा cfg80211_pmsr_request *req,
-			  काष्ठा cfg80211_pmsr_result *result,
+void cfg80211_pmsr_report(struct wireless_dev *wdev,
+			  struct cfg80211_pmsr_request *req,
+			  struct cfg80211_pmsr_result *result,
 			  gfp_t gfp)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा sk_buff *msg;
-	व्योम *hdr;
-	पूर्णांक err;
+{
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct sk_buff *msg;
+	void *hdr;
+	int err;
 
 	trace_cfg80211_pmsr_report(wdev->wiphy, wdev, req->cookie,
 				   result->addr);
 
 	/*
 	 * Currently, only variable items are LCI and civic location,
-	 * both of which are reasonably लघु so we करोn't need to
-	 * worry about them here क्रम the allocation.
+	 * both of which are reasonably short so we don't need to
+	 * worry about them here for the allocation.
 	 */
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
-	अगर (!msg)
-		वापस;
+	if (!msg)
+		return;
 
 	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_PEER_MEASUREMENT_RESULT);
-	अगर (!hdr)
-		जाओ मुक्त;
+	if (!hdr)
+		goto free;
 
-	अगर (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
+	if (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
 	    nla_put_u64_64bit(msg, NL80211_ATTR_WDEV, wdev_id(wdev),
 			      NL80211_ATTR_PAD))
-		जाओ मुक्त;
+		goto free;
 
-	अगर (nla_put_u64_64bit(msg, NL80211_ATTR_COOKIE, req->cookie,
+	if (nla_put_u64_64bit(msg, NL80211_ATTR_COOKIE, req->cookie,
 			      NL80211_ATTR_PAD))
-		जाओ मुक्त;
+		goto free;
 
 	err = nl80211_pmsr_send_result(msg, result);
-	अगर (err) अणु
+	if (err) {
 		pr_err_ratelimited("peer measurement result: message didn't fit!");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	genlmsg_end(msg, hdr);
 	genlmsg_unicast(wiphy_net(wdev->wiphy), msg, req->nl_portid);
-	वापस;
-मुक्त:
-	nlmsg_मुक्त(msg);
-पूर्ण
+	return;
+free:
+	nlmsg_free(msg);
+}
 EXPORT_SYMBOL_GPL(cfg80211_pmsr_report);
 
-अटल व्योम cfg80211_pmsr_process_पात(काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	काष्ठा cfg80211_pmsr_request *req, *पंचांगp;
-	LIST_HEAD(मुक्त_list);
+static void cfg80211_pmsr_process_abort(struct wireless_dev *wdev)
+{
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	struct cfg80211_pmsr_request *req, *tmp;
+	LIST_HEAD(free_list);
 
-	lockdep_निश्चित_held(&wdev->mtx);
+	lockdep_assert_held(&wdev->mtx);
 
 	spin_lock_bh(&wdev->pmsr_lock);
-	list_क्रम_each_entry_safe(req, पंचांगp, &wdev->pmsr_list, list) अणु
-		अगर (req->nl_portid)
-			जारी;
-		list_move_tail(&req->list, &मुक्त_list);
-	पूर्ण
+	list_for_each_entry_safe(req, tmp, &wdev->pmsr_list, list) {
+		if (req->nl_portid)
+			continue;
+		list_move_tail(&req->list, &free_list);
+	}
 	spin_unlock_bh(&wdev->pmsr_lock);
 
-	list_क्रम_each_entry_safe(req, पंचांगp, &मुक्त_list, list) अणु
-		rdev_पात_pmsr(rdev, wdev, req);
+	list_for_each_entry_safe(req, tmp, &free_list, list) {
+		rdev_abort_pmsr(rdev, wdev, req);
 
-		kमुक्त(req);
-	पूर्ण
-पूर्ण
+		kfree(req);
+	}
+}
 
-व्योम cfg80211_pmsr_मुक्त_wk(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wireless_dev *wdev = container_of(work, काष्ठा wireless_dev,
-						 pmsr_मुक्त_wk);
+void cfg80211_pmsr_free_wk(struct work_struct *work)
+{
+	struct wireless_dev *wdev = container_of(work, struct wireless_dev,
+						 pmsr_free_wk);
 
 	wdev_lock(wdev);
-	cfg80211_pmsr_process_पात(wdev);
+	cfg80211_pmsr_process_abort(wdev);
 	wdev_unlock(wdev);
-पूर्ण
+}
 
-व्योम cfg80211_pmsr_wdev_करोwn(काष्ठा wireless_dev *wdev)
-अणु
-	काष्ठा cfg80211_pmsr_request *req;
+void cfg80211_pmsr_wdev_down(struct wireless_dev *wdev)
+{
+	struct cfg80211_pmsr_request *req;
 	bool found = false;
 
 	spin_lock_bh(&wdev->pmsr_lock);
-	list_क्रम_each_entry(req, &wdev->pmsr_list, list) अणु
+	list_for_each_entry(req, &wdev->pmsr_list, list) {
 		found = true;
 		req->nl_portid = 0;
-	पूर्ण
+	}
 	spin_unlock_bh(&wdev->pmsr_lock);
 
-	अगर (found)
-		cfg80211_pmsr_process_पात(wdev);
+	if (found)
+		cfg80211_pmsr_process_abort(wdev);
 
 	WARN_ON(!list_empty(&wdev->pmsr_list));
-पूर्ण
+}
 
-व्योम cfg80211_release_pmsr(काष्ठा wireless_dev *wdev, u32 portid)
-अणु
-	काष्ठा cfg80211_pmsr_request *req;
+void cfg80211_release_pmsr(struct wireless_dev *wdev, u32 portid)
+{
+	struct cfg80211_pmsr_request *req;
 
 	spin_lock_bh(&wdev->pmsr_lock);
-	list_क्रम_each_entry(req, &wdev->pmsr_list, list) अणु
-		अगर (req->nl_portid == portid) अणु
+	list_for_each_entry(req, &wdev->pmsr_list, list) {
+		if (req->nl_portid == portid) {
 			req->nl_portid = 0;
-			schedule_work(&wdev->pmsr_मुक्त_wk);
-		पूर्ण
-	पूर्ण
+			schedule_work(&wdev->pmsr_free_wk);
+		}
+	}
 	spin_unlock_bh(&wdev->pmsr_lock);
-पूर्ण
+}
 
-#पूर्ण_अगर /* __PMSR_H */
+#endif /* __PMSR_H */

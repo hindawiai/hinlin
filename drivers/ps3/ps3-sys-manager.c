@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  PS3 System Manager.
  *
@@ -7,42 +6,42 @@
  *  Copyright 2007 Sony Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/workqueue.h>
+#include <linux/reboot.h>
+#include <linux/sched/signal.h>
 
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/lv1call.h>
-#समावेश <यंत्र/ps3.h>
+#include <asm/firmware.h>
+#include <asm/lv1call.h>
+#include <asm/ps3.h>
 
-#समावेश "vuart.h"
+#include "vuart.h"
 
 /**
- * ps3_sys_manager - PS3 प्रणाली manager driver.
+ * ps3_sys_manager - PS3 system manager driver.
  *
- * The प्रणाली manager provides an asynchronous प्रणाली event notअगरication
- * mechanism क्रम reporting events like thermal alert and button presses to
- * guests.  It also provides support to control प्रणाली shutकरोwn and startup.
+ * The system manager provides an asynchronous system event notification
+ * mechanism for reporting events like thermal alert and button presses to
+ * guests.  It also provides support to control system shutdown and startup.
  *
- * The actual प्रणाली manager is implemented as an application running in the
- * प्रणाली policy module in lpar_1.  Guests communicate with the प्रणाली manager
+ * The actual system manager is implemented as an application running in the
+ * system policy module in lpar_1.  Guests communicate with the system manager
  * through port 2 of the vuart using a simple packet message protocol.
  * Messages are comprised of a fixed field header followed by a message
- * specअगरic payload.
+ * specific payload.
  */
 
 /**
- * काष्ठा ps3_sys_manager_header - System manager message header.
+ * struct ps3_sys_manager_header - System manager message header.
  * @version: Header version, currently 1.
  * @size: Header size in bytes, currently 16.
  * @payload_size: Message payload size in bytes.
- * @service_id: Message type, one of क्रमागत ps3_sys_manager_service_id.
- * @request_tag: Unique number to identअगरy reply.
+ * @service_id: Message type, one of enum ps3_sys_manager_service_id.
+ * @request_tag: Unique number to identify reply.
  */
 
-काष्ठा ps3_sys_manager_header अणु
+struct ps3_sys_manager_header {
 	/* version 1 */
 	u8 version;
 	u8 size;
@@ -51,36 +50,36 @@
 	u16 service_id;
 	u16 reserved_2;
 	u32 request_tag;
-पूर्ण;
+};
 
-#घोषणा dump_sm_header(_h) _dump_sm_header(_h, __func__, __LINE__)
-अटल व्योम __maybe_unused _dump_sm_header(
-	स्थिर काष्ठा ps3_sys_manager_header *h, स्थिर अक्षर *func, पूर्णांक line)
-अणु
+#define dump_sm_header(_h) _dump_sm_header(_h, __func__, __LINE__)
+static void __maybe_unused _dump_sm_header(
+	const struct ps3_sys_manager_header *h, const char *func, int line)
+{
 	pr_debug("%s:%d: version:      %xh\n", func, line, h->version);
 	pr_debug("%s:%d: size:         %xh\n", func, line, h->size);
 	pr_debug("%s:%d: payload_size: %xh\n", func, line, h->payload_size);
 	pr_debug("%s:%d: service_id:   %xh\n", func, line, h->service_id);
 	pr_debug("%s:%d: request_tag:  %xh\n", func, line, h->request_tag);
-पूर्ण
+}
 
 /**
  * @PS3_SM_RX_MSG_LEN_MIN - Shortest received message length.
  * @PS3_SM_RX_MSG_LEN_MAX - Longest received message length.
  *
- * Currently all messages received from the प्रणाली manager are either
+ * Currently all messages received from the system manager are either
  * (16 bytes header + 8 bytes payload = 24 bytes) or (16 bytes header
- * + 16 bytes payload = 32 bytes).  This knowledge is used to simplअगरy
+ * + 16 bytes payload = 32 bytes).  This knowledge is used to simplify
  * the logic.
  */
 
-क्रमागत अणु
+enum {
 	PS3_SM_RX_MSG_LEN_MIN = 24,
 	PS3_SM_RX_MSG_LEN_MAX = 32,
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_service_id - Message header service_id.
+ * enum ps3_sys_manager_service_id - Message header service_id.
  * @PS3_SM_SERVICE_ID_REQUEST:       guest --> sys_manager.
  * @PS3_SM_SERVICE_ID_REQUEST_ERROR: guest <-- sys_manager.
  * @PS3_SM_SERVICE_ID_COMMAND:       guest <-- sys_manager.
@@ -89,12 +88,12 @@
  * @PS3_SM_SERVICE_ID_EXTERN_EVENT:  guest <-- sys_manager.
  * @PS3_SM_SERVICE_ID_SET_NEXT_OP:   guest --> sys_manager.
  *
- * PS3_SM_SERVICE_ID_REQUEST_ERROR is वापसed क्रम invalid data values in a
- * a PS3_SM_SERVICE_ID_REQUEST message.  It also seems to be वापसed when
- * a REQUEST message is sent at the wrong समय.
+ * PS3_SM_SERVICE_ID_REQUEST_ERROR is returned for invalid data values in a
+ * a PS3_SM_SERVICE_ID_REQUEST message.  It also seems to be returned when
+ * a REQUEST message is sent at the wrong time.
  */
 
-क्रमागत ps3_sys_manager_service_id अणु
+enum ps3_sys_manager_service_id {
 	/* version 1 */
 	PS3_SM_SERVICE_ID_REQUEST = 1,
 	PS3_SM_SERVICE_ID_RESPONSE = 2,
@@ -103,43 +102,43 @@
 	PS3_SM_SERVICE_ID_SET_NEXT_OP = 5,
 	PS3_SM_SERVICE_ID_REQUEST_ERROR = 6,
 	PS3_SM_SERVICE_ID_SET_ATTR = 8,
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_attr - Notअगरication attribute (bit position mask).
+ * enum ps3_sys_manager_attr - Notification attribute (bit position mask).
  * @PS3_SM_ATTR_POWER: Power button.
  * @PS3_SM_ATTR_RESET: Reset button, not available on retail console.
  * @PS3_SM_ATTR_THERMAL: System thermal alert.
  * @PS3_SM_ATTR_CONTROLLER: Remote controller event.
  * @PS3_SM_ATTR_ALL: Logical OR of all.
  *
- * The guest tells the प्रणाली manager which events it is पूर्णांकerested in receiving
- * notice of by sending the प्रणाली manager a logical OR of notअगरication
+ * The guest tells the system manager which events it is interested in receiving
+ * notice of by sending the system manager a logical OR of notification
  * attributes via the ps3_sys_manager_send_attr() routine.
  */
 
-क्रमागत ps3_sys_manager_attr अणु
+enum ps3_sys_manager_attr {
 	/* version 1 */
 	PS3_SM_ATTR_POWER = 1,
 	PS3_SM_ATTR_RESET = 2,
 	PS3_SM_ATTR_THERMAL = 4,
 	PS3_SM_ATTR_CONTROLLER = 8, /* bogus? */
 	PS3_SM_ATTR_ALL = 0x0f,
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_event - External event type, reported by प्रणाली manager.
+ * enum ps3_sys_manager_event - External event type, reported by system manager.
  * @PS3_SM_EVENT_POWER_PRESSED: payload.value =
- *  क्रमागत ps3_sys_manager_button_event.
- * @PS3_SM_EVENT_POWER_RELEASED: payload.value = समय pressed in millisec.
+ *  enum ps3_sys_manager_button_event.
+ * @PS3_SM_EVENT_POWER_RELEASED: payload.value = time pressed in millisec.
  * @PS3_SM_EVENT_RESET_PRESSED: payload.value =
- *  क्रमागत ps3_sys_manager_button_event.
- * @PS3_SM_EVENT_RESET_RELEASED: payload.value = समय pressed in millisec.
+ *  enum ps3_sys_manager_button_event.
+ * @PS3_SM_EVENT_RESET_RELEASED: payload.value = time pressed in millisec.
  * @PS3_SM_EVENT_THERMAL_ALERT: payload.value = thermal zone id.
  * @PS3_SM_EVENT_THERMAL_CLEARED: payload.value = thermal zone id.
  */
 
-क्रमागत ps3_sys_manager_event अणु
+enum ps3_sys_manager_event {
 	/* version 1 */
 	PS3_SM_EVENT_POWER_PRESSED = 3,
 	PS3_SM_EVENT_POWER_RELEASED = 4,
@@ -148,375 +147,375 @@
 	PS3_SM_EVENT_THERMAL_ALERT = 7,
 	PS3_SM_EVENT_THERMAL_CLEARED = 8,
 	/* no info on controller events */
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_button_event - Button event payload values.
+ * enum ps3_sys_manager_button_event - Button event payload values.
  * @PS3_SM_BUTTON_EVENT_HARD: Hardware generated event.
  * @PS3_SM_BUTTON_EVENT_SOFT: Software generated event.
  */
 
-क्रमागत ps3_sys_manager_button_event अणु
+enum ps3_sys_manager_button_event {
 	PS3_SM_BUTTON_EVENT_HARD = 0,
 	PS3_SM_BUTTON_EVENT_SOFT = 1,
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_next_op - Operation to perक्रमm after lpar is destroyed.
+ * enum ps3_sys_manager_next_op - Operation to perform after lpar is destroyed.
  */
 
-क्रमागत ps3_sys_manager_next_op अणु
+enum ps3_sys_manager_next_op {
 	/* version 3 */
 	PS3_SM_NEXT_OP_SYS_SHUTDOWN = 1,
 	PS3_SM_NEXT_OP_SYS_REBOOT = 2,
 	PS3_SM_NEXT_OP_LPAR_REBOOT = 0x82,
-पूर्ण;
+};
 
 /**
- * क्रमागत ps3_sys_manager_wake_source - Next-op wakeup source (bit position mask).
- * @PS3_SM_WAKE_DEFAULT: Disk insert, घातer button, eject button.
+ * enum ps3_sys_manager_wake_source - Next-op wakeup source (bit position mask).
+ * @PS3_SM_WAKE_DEFAULT: Disk insert, power button, eject button.
  * @PS3_SM_WAKE_W_O_L: Ether or wireless LAN.
  * @PS3_SM_WAKE_P_O_R: Power on reset.
  *
- * Additional wakeup sources when specअगरying PS3_SM_NEXT_OP_SYS_SHUTDOWN.
- * The प्रणाली will always wake from the PS3_SM_WAKE_DEFAULT sources.
+ * Additional wakeup sources when specifying PS3_SM_NEXT_OP_SYS_SHUTDOWN.
+ * The system will always wake from the PS3_SM_WAKE_DEFAULT sources.
  * Sources listed here are the only ones available to guests in the
  * other-os lpar.
  */
 
-क्रमागत ps3_sys_manager_wake_source अणु
+enum ps3_sys_manager_wake_source {
 	/* version 3 */
 	PS3_SM_WAKE_DEFAULT   = 0,
 	PS3_SM_WAKE_W_O_L     = 0x00000400,
 	PS3_SM_WAKE_P_O_R     = 0x80000000,
-पूर्ण;
+};
 
 /**
- * user_wake_sources - User specअगरied wakeup sources.
+ * user_wake_sources - User specified wakeup sources.
  *
- * Logical OR of क्रमागत ps3_sys_manager_wake_source types.
+ * Logical OR of enum ps3_sys_manager_wake_source types.
  */
 
-अटल u32 user_wake_sources = PS3_SM_WAKE_DEFAULT;
+static u32 user_wake_sources = PS3_SM_WAKE_DEFAULT;
 
 /**
- * क्रमागत ps3_sys_manager_cmd - Command from प्रणाली manager to guest.
+ * enum ps3_sys_manager_cmd - Command from system manager to guest.
  *
  * The guest completes the actions needed, then acks or naks the command via
- * ps3_sys_manager_send_response().  In the हाल of @PS3_SM_CMD_SHUTDOWN,
- * the guest must be fully prepared क्रम a प्रणाली घातeroff prior to acking the
+ * ps3_sys_manager_send_response().  In the case of @PS3_SM_CMD_SHUTDOWN,
+ * the guest must be fully prepared for a system poweroff prior to acking the
  * command.
  */
 
-क्रमागत ps3_sys_manager_cmd अणु
+enum ps3_sys_manager_cmd {
 	/* version 1 */
-	PS3_SM_CMD_SHUTDOWN = 1, /* shutकरोwn guest OS */
-पूर्ण;
+	PS3_SM_CMD_SHUTDOWN = 1, /* shutdown guest OS */
+};
 
 /**
- * ps3_sm_क्रमce_घातer_off - Poweroff helper.
+ * ps3_sm_force_power_off - Poweroff helper.
  *
- * A global variable used to क्रमce a घातeroff when the घातer button has
- * been pressed irrespective of how init handles the ctrl_alt_del संकेत.
+ * A global variable used to force a poweroff when the power button has
+ * been pressed irrespective of how init handles the ctrl_alt_del signal.
  *
  */
 
-अटल अचिन्हित पूर्णांक ps3_sm_क्रमce_घातer_off;
+static unsigned int ps3_sm_force_power_off;
 
 /**
- * ps3_sys_manager_ग_लिखो - Helper to ग_लिखो a two part message to the vuart.
+ * ps3_sys_manager_write - Helper to write a two part message to the vuart.
  *
  */
 
-अटल पूर्णांक ps3_sys_manager_ग_लिखो(काष्ठा ps3_प्रणाली_bus_device *dev,
-	स्थिर काष्ठा ps3_sys_manager_header *header, स्थिर व्योम *payload)
-अणु
-	पूर्णांक result;
+static int ps3_sys_manager_write(struct ps3_system_bus_device *dev,
+	const struct ps3_sys_manager_header *header, const void *payload)
+{
+	int result;
 
 	BUG_ON(header->version != 1);
 	BUG_ON(header->size != 16);
 	BUG_ON(header->payload_size != 8 && header->payload_size != 16);
 	BUG_ON(header->service_id > 8);
 
-	result = ps3_vuart_ग_लिखो(dev, header,
-		माप(काष्ठा ps3_sys_manager_header));
+	result = ps3_vuart_write(dev, header,
+		sizeof(struct ps3_sys_manager_header));
 
-	अगर (!result)
-		result = ps3_vuart_ग_लिखो(dev, payload, header->payload_size);
+	if (!result)
+		result = ps3_vuart_write(dev, payload, header->payload_size);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /**
- * ps3_sys_manager_send_attr - Send a 'set attribute' to the प्रणाली manager.
+ * ps3_sys_manager_send_attr - Send a 'set attribute' to the system manager.
  *
  */
 
-अटल पूर्णांक ps3_sys_manager_send_attr(काष्ठा ps3_प्रणाली_bus_device *dev,
-	क्रमागत ps3_sys_manager_attr attr)
-अणु
-	काष्ठा ps3_sys_manager_header header;
-	काष्ठा अणु
+static int ps3_sys_manager_send_attr(struct ps3_system_bus_device *dev,
+	enum ps3_sys_manager_attr attr)
+{
+	struct ps3_sys_manager_header header;
+	struct {
 		u8 version;
 		u8 reserved_1[3];
 		u32 attribute;
-	पूर्ण payload;
+	} payload;
 
-	BUILD_BUG_ON(माप(payload) != 8);
+	BUILD_BUG_ON(sizeof(payload) != 8);
 
 	dev_dbg(&dev->core, "%s:%d: %xh\n", __func__, __LINE__, attr);
 
-	स_रखो(&header, 0, माप(header));
+	memset(&header, 0, sizeof(header));
 	header.version = 1;
 	header.size = 16;
 	header.payload_size = 16;
 	header.service_id = PS3_SM_SERVICE_ID_SET_ATTR;
 
-	स_रखो(&payload, 0, माप(payload));
+	memset(&payload, 0, sizeof(payload));
 	payload.version = 1;
 	payload.attribute = attr;
 
-	वापस ps3_sys_manager_ग_लिखो(dev, &header, &payload);
-पूर्ण
+	return ps3_sys_manager_write(dev, &header, &payload);
+}
 
 /**
- * ps3_sys_manager_send_next_op - Send a 'set next op' to the प्रणाली manager.
+ * ps3_sys_manager_send_next_op - Send a 'set next op' to the system manager.
  *
- * Tell the प्रणाली manager what to करो after this lpar is destroyed.
+ * Tell the system manager what to do after this lpar is destroyed.
  */
 
-अटल पूर्णांक ps3_sys_manager_send_next_op(काष्ठा ps3_प्रणाली_bus_device *dev,
-	क्रमागत ps3_sys_manager_next_op op,
-	क्रमागत ps3_sys_manager_wake_source wake_source)
-अणु
-	काष्ठा ps3_sys_manager_header header;
-	काष्ठा अणु
+static int ps3_sys_manager_send_next_op(struct ps3_system_bus_device *dev,
+	enum ps3_sys_manager_next_op op,
+	enum ps3_sys_manager_wake_source wake_source)
+{
+	struct ps3_sys_manager_header header;
+	struct {
 		u8 version;
 		u8 type;
 		u8 gos_id;
 		u8 reserved_1;
 		u32 wake_source;
 		u8 reserved_2[8];
-	पूर्ण payload;
+	} payload;
 
-	BUILD_BUG_ON(माप(payload) != 16);
+	BUILD_BUG_ON(sizeof(payload) != 16);
 
 	dev_dbg(&dev->core, "%s:%d: (%xh)\n", __func__, __LINE__, op);
 
-	स_रखो(&header, 0, माप(header));
+	memset(&header, 0, sizeof(header));
 	header.version = 1;
 	header.size = 16;
 	header.payload_size = 16;
 	header.service_id = PS3_SM_SERVICE_ID_SET_NEXT_OP;
 
-	स_रखो(&payload, 0, माप(payload));
+	memset(&payload, 0, sizeof(payload));
 	payload.version = 3;
 	payload.type = op;
 	payload.gos_id = 3; /* other os */
 	payload.wake_source = wake_source;
 
-	वापस ps3_sys_manager_ग_लिखो(dev, &header, &payload);
-पूर्ण
+	return ps3_sys_manager_write(dev, &header, &payload);
+}
 
 /**
- * ps3_sys_manager_send_request_shutकरोwn - Send 'request' to the प्रणाली manager.
+ * ps3_sys_manager_send_request_shutdown - Send 'request' to the system manager.
  *
- * The guest sends this message to request an operation or action of the प्रणाली
- * manager.  The reply is a command message from the प्रणाली manager.  In the
- * command handler the guest perक्रमms the requested operation.  The result of
- * the command is then communicated back to the प्रणाली manager with a response
+ * The guest sends this message to request an operation or action of the system
+ * manager.  The reply is a command message from the system manager.  In the
+ * command handler the guest performs the requested operation.  The result of
+ * the command is then communicated back to the system manager with a response
  * message.
  *
  * Currently, the only supported request is the 'shutdown self' request.
  */
 
-अटल पूर्णांक ps3_sys_manager_send_request_shutकरोwn(
-	काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	काष्ठा ps3_sys_manager_header header;
-	काष्ठा अणु
+static int ps3_sys_manager_send_request_shutdown(
+	struct ps3_system_bus_device *dev)
+{
+	struct ps3_sys_manager_header header;
+	struct {
 		u8 version;
 		u8 type;
 		u8 gos_id;
 		u8 reserved_1[13];
-	पूर्ण payload;
+	} payload;
 
-	BUILD_BUG_ON(माप(payload) != 16);
+	BUILD_BUG_ON(sizeof(payload) != 16);
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
-	स_रखो(&header, 0, माप(header));
+	memset(&header, 0, sizeof(header));
 	header.version = 1;
 	header.size = 16;
 	header.payload_size = 16;
 	header.service_id = PS3_SM_SERVICE_ID_REQUEST;
 
-	स_रखो(&payload, 0, माप(payload));
+	memset(&payload, 0, sizeof(payload));
 	payload.version = 1;
-	payload.type = 1; /* shutकरोwn */
+	payload.type = 1; /* shutdown */
 	payload.gos_id = 0; /* self */
 
-	वापस ps3_sys_manager_ग_लिखो(dev, &header, &payload);
-पूर्ण
+	return ps3_sys_manager_write(dev, &header, &payload);
+}
 
 /**
- * ps3_sys_manager_send_response - Send a 'response' to the प्रणाली manager.
+ * ps3_sys_manager_send_response - Send a 'response' to the system manager.
  * @status: zero = success, others fail.
  *
- * The guest sends this message to the प्रणाली manager to acnowledge success or
- * failure of a command sent by the प्रणाली manager.
+ * The guest sends this message to the system manager to acnowledge success or
+ * failure of a command sent by the system manager.
  */
 
-अटल पूर्णांक ps3_sys_manager_send_response(काष्ठा ps3_प्रणाली_bus_device *dev,
+static int ps3_sys_manager_send_response(struct ps3_system_bus_device *dev,
 	u64 status)
-अणु
-	काष्ठा ps3_sys_manager_header header;
-	काष्ठा अणु
+{
+	struct ps3_sys_manager_header header;
+	struct {
 		u8 version;
 		u8 reserved_1[3];
 		u8 status;
 		u8 reserved_2[11];
-	पूर्ण payload;
+	} payload;
 
-	BUILD_BUG_ON(माप(payload) != 16);
+	BUILD_BUG_ON(sizeof(payload) != 16);
 
 	dev_dbg(&dev->core, "%s:%d: (%s)\n", __func__, __LINE__,
 		(status ? "nak" : "ack"));
 
-	स_रखो(&header, 0, माप(header));
+	memset(&header, 0, sizeof(header));
 	header.version = 1;
 	header.size = 16;
 	header.payload_size = 16;
 	header.service_id = PS3_SM_SERVICE_ID_RESPONSE;
 
-	स_रखो(&payload, 0, माप(payload));
+	memset(&payload, 0, sizeof(payload));
 	payload.version = 1;
 	payload.status = status;
 
-	वापस ps3_sys_manager_ग_लिखो(dev, &header, &payload);
-पूर्ण
+	return ps3_sys_manager_write(dev, &header, &payload);
+}
 
 /**
  * ps3_sys_manager_handle_event - Second stage event msg handler.
  *
  */
 
-अटल पूर्णांक ps3_sys_manager_handle_event(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
-	काष्ठा अणु
+static int ps3_sys_manager_handle_event(struct ps3_system_bus_device *dev)
+{
+	int result;
+	struct {
 		u8 version;
 		u8 type;
 		u8 reserved_1[2];
 		u32 value;
 		u8 reserved_2[8];
-	पूर्ण event;
+	} event;
 
-	BUILD_BUG_ON(माप(event) != 16);
+	BUILD_BUG_ON(sizeof(event) != 16);
 
-	result = ps3_vuart_पढ़ो(dev, &event, माप(event));
+	result = ps3_vuart_read(dev, &event, sizeof(event));
 	BUG_ON(result && "need to retry here");
 
-	अगर (event.version != 1) अणु
+	if (event.version != 1) {
 		dev_dbg(&dev->core, "%s:%d: unsupported event version (%u)\n",
 			__func__, __LINE__, event.version);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (event.type) अणु
-	हाल PS3_SM_EVENT_POWER_PRESSED:
+	switch (event.type) {
+	case PS3_SM_EVENT_POWER_PRESSED:
 		dev_dbg(&dev->core, "%s:%d: POWER_PRESSED (%s)\n",
 			__func__, __LINE__,
 			(event.value == PS3_SM_BUTTON_EVENT_SOFT ? "soft"
 			: "hard"));
-		ps3_sm_क्रमce_घातer_off = 1;
+		ps3_sm_force_power_off = 1;
 		/*
 		 * A memory barrier is use here to sync memory since
 		 * ps3_sys_manager_final_restart() could be called on
 		 * another cpu.
 		 */
 		wmb();
-		समाप्त_cad_pid(संक_विघ्न, 1); /* ctrl_alt_del */
-		अवरोध;
-	हाल PS3_SM_EVENT_POWER_RELEASED:
+		kill_cad_pid(SIGINT, 1); /* ctrl_alt_del */
+		break;
+	case PS3_SM_EVENT_POWER_RELEASED:
 		dev_dbg(&dev->core, "%s:%d: POWER_RELEASED (%u ms)\n",
 			__func__, __LINE__, event.value);
-		अवरोध;
-	हाल PS3_SM_EVENT_RESET_PRESSED:
+		break;
+	case PS3_SM_EVENT_RESET_PRESSED:
 		dev_dbg(&dev->core, "%s:%d: RESET_PRESSED (%s)\n",
 			__func__, __LINE__,
 			(event.value == PS3_SM_BUTTON_EVENT_SOFT ? "soft"
 			: "hard"));
-		ps3_sm_क्रमce_घातer_off = 0;
+		ps3_sm_force_power_off = 0;
 		/*
 		 * A memory barrier is use here to sync memory since
 		 * ps3_sys_manager_final_restart() could be called on
 		 * another cpu.
 		 */
 		wmb();
-		समाप्त_cad_pid(संक_विघ्न, 1); /* ctrl_alt_del */
-		अवरोध;
-	हाल PS3_SM_EVENT_RESET_RELEASED:
+		kill_cad_pid(SIGINT, 1); /* ctrl_alt_del */
+		break;
+	case PS3_SM_EVENT_RESET_RELEASED:
 		dev_dbg(&dev->core, "%s:%d: RESET_RELEASED (%u ms)\n",
 			__func__, __LINE__, event.value);
-		अवरोध;
-	हाल PS3_SM_EVENT_THERMAL_ALERT:
+		break;
+	case PS3_SM_EVENT_THERMAL_ALERT:
 		dev_dbg(&dev->core, "%s:%d: THERMAL_ALERT (zone %u)\n",
 			__func__, __LINE__, event.value);
 		pr_info("PS3 Thermal Alert Zone %u\n", event.value);
-		अवरोध;
-	हाल PS3_SM_EVENT_THERMAL_CLEARED:
+		break;
+	case PS3_SM_EVENT_THERMAL_CLEARED:
 		dev_dbg(&dev->core, "%s:%d: THERMAL_CLEARED (zone %u)\n",
 			__func__, __LINE__, event.value);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&dev->core, "%s:%d: unknown event (%u)\n",
 			__func__, __LINE__, event.type);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /**
  * ps3_sys_manager_handle_cmd - Second stage command msg handler.
  *
- * The प्रणाली manager sends this in reply to a 'request' message from the guest.
+ * The system manager sends this in reply to a 'request' message from the guest.
  */
 
-अटल पूर्णांक ps3_sys_manager_handle_cmd(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
-	काष्ठा अणु
+static int ps3_sys_manager_handle_cmd(struct ps3_system_bus_device *dev)
+{
+	int result;
+	struct {
 		u8 version;
 		u8 type;
 		u8 reserved_1[14];
-	पूर्ण cmd;
+	} cmd;
 
-	BUILD_BUG_ON(माप(cmd) != 16);
+	BUILD_BUG_ON(sizeof(cmd) != 16);
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
-	result = ps3_vuart_पढ़ो(dev, &cmd, माप(cmd));
+	result = ps3_vuart_read(dev, &cmd, sizeof(cmd));
 	BUG_ON(result && "need to retry here");
 
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
-	अगर (cmd.version != 1) अणु
+	if (cmd.version != 1) {
 		dev_dbg(&dev->core, "%s:%d: unsupported cmd version (%u)\n",
 			__func__, __LINE__, cmd.version);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (cmd.type != PS3_SM_CMD_SHUTDOWN) अणु
+	if (cmd.type != PS3_SM_CMD_SHUTDOWN) {
 		dev_dbg(&dev->core, "%s:%d: unknown cmd (%u)\n",
 			__func__, __LINE__, cmd.type);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ps3_sys_manager_send_response(dev, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ps3_sys_manager_handle_msg - First stage msg handler.
@@ -524,89 +523,89 @@
  * Can be called directly to manually poll vuart and pump message handler.
  */
 
-अटल पूर्णांक ps3_sys_manager_handle_msg(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_sys_manager_header header;
+static int ps3_sys_manager_handle_msg(struct ps3_system_bus_device *dev)
+{
+	int result;
+	struct ps3_sys_manager_header header;
 
-	result = ps3_vuart_पढ़ो(dev, &header,
-		माप(काष्ठा ps3_sys_manager_header));
+	result = ps3_vuart_read(dev, &header,
+		sizeof(struct ps3_sys_manager_header));
 
-	अगर (result)
-		वापस result;
+	if (result)
+		return result;
 
-	अगर (header.version != 1) अणु
+	if (header.version != 1) {
 		dev_dbg(&dev->core, "%s:%d: unsupported header version (%u)\n",
 			__func__, __LINE__, header.version);
 		dump_sm_header(&header);
-		जाओ fail_header;
-	पूर्ण
+		goto fail_header;
+	}
 
-	BUILD_BUG_ON(माप(header) != 16);
+	BUILD_BUG_ON(sizeof(header) != 16);
 
-	अगर (header.size != 16 || (header.payload_size != 8
-		&& header.payload_size != 16)) अणु
+	if (header.size != 16 || (header.payload_size != 8
+		&& header.payload_size != 16)) {
 		dump_sm_header(&header);
 		BUG();
-	पूर्ण
+	}
 
-	चयन (header.service_id) अणु
-	हाल PS3_SM_SERVICE_ID_EXTERN_EVENT:
+	switch (header.service_id) {
+	case PS3_SM_SERVICE_ID_EXTERN_EVENT:
 		dev_dbg(&dev->core, "%s:%d: EVENT\n", __func__, __LINE__);
-		वापस ps3_sys_manager_handle_event(dev);
-	हाल PS3_SM_SERVICE_ID_COMMAND:
+		return ps3_sys_manager_handle_event(dev);
+	case PS3_SM_SERVICE_ID_COMMAND:
 		dev_dbg(&dev->core, "%s:%d: COMMAND\n", __func__, __LINE__);
-		वापस ps3_sys_manager_handle_cmd(dev);
-	हाल PS3_SM_SERVICE_ID_REQUEST_ERROR:
+		return ps3_sys_manager_handle_cmd(dev);
+	case PS3_SM_SERVICE_ID_REQUEST_ERROR:
 		dev_dbg(&dev->core, "%s:%d: REQUEST_ERROR\n", __func__,
 			__LINE__);
 		dump_sm_header(&header);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(&dev->core, "%s:%d: unknown service_id (%u)\n",
 			__func__, __LINE__, header.service_id);
-		अवरोध;
-	पूर्ण
-	जाओ fail_id;
+		break;
+	}
+	goto fail_id;
 
 fail_header:
 	ps3_vuart_clear_rx_bytes(dev, 0);
-	वापस -EIO;
+	return -EIO;
 fail_id:
 	ps3_vuart_clear_rx_bytes(dev, header.payload_size);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल व्योम ps3_sys_manager_fin(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	ps3_sys_manager_send_request_shutकरोwn(dev);
+static void ps3_sys_manager_fin(struct ps3_system_bus_device *dev)
+{
+	ps3_sys_manager_send_request_shutdown(dev);
 
 	pr_emerg("System Halted, OK to turn off power\n");
 
-	जबतक (ps3_sys_manager_handle_msg(dev)) अणु
-		/* छोड़ो until next DEC पूर्णांकerrupt */
-		lv1_छोड़ो(0);
-	पूर्ण
+	while (ps3_sys_manager_handle_msg(dev)) {
+		/* pause until next DEC interrupt */
+		lv1_pause(0);
+	}
 
-	जबतक (1) अणु
-		/* छोड़ो, ignoring DEC पूर्णांकerrupt */
-		lv1_छोड़ो(1);
-	पूर्ण
-पूर्ण
+	while (1) {
+		/* pause, ignoring DEC interrupt */
+		lv1_pause(1);
+	}
+}
 
 /**
- * ps3_sys_manager_final_घातer_off - The final platक्रमm machine_घातer_off routine.
+ * ps3_sys_manager_final_power_off - The final platform machine_power_off routine.
  *
- * This routine never वापसs.  The routine disables asynchronous vuart पढ़ोs
+ * This routine never returns.  The routine disables asynchronous vuart reads
  * then spins calling ps3_sys_manager_handle_msg() to receive and acknowledge
- * the shutकरोwn command sent from the प्रणाली manager.  Soon after the
+ * the shutdown command sent from the system manager.  Soon after the
  * acknowledgement is sent the lpar is destroyed by the HV.  This routine
- * should only be called from ps3_घातer_off() through
- * ps3_sys_manager_ops.घातer_off.
+ * should only be called from ps3_power_off() through
+ * ps3_sys_manager_ops.power_off.
  */
 
-अटल व्योम ps3_sys_manager_final_घातer_off(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+static void ps3_sys_manager_final_power_off(struct ps3_system_bus_device *dev)
+{
 	BUG_ON(!dev);
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
@@ -617,31 +616,31 @@ fail_id:
 		user_wake_sources);
 
 	ps3_sys_manager_fin(dev);
-पूर्ण
+}
 
 /**
- * ps3_sys_manager_final_restart - The final platक्रमm machine_restart routine.
+ * ps3_sys_manager_final_restart - The final platform machine_restart routine.
  *
- * This routine never वापसs.  The routine disables asynchronous vuart पढ़ोs
+ * This routine never returns.  The routine disables asynchronous vuart reads
  * then spins calling ps3_sys_manager_handle_msg() to receive and acknowledge
- * the shutकरोwn command sent from the प्रणाली manager.  Soon after the
+ * the shutdown command sent from the system manager.  Soon after the
  * acknowledgement is sent the lpar is destroyed by the HV.  This routine
  * should only be called from ps3_restart() through ps3_sys_manager_ops.restart.
  */
 
-अटल व्योम ps3_sys_manager_final_restart(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+static void ps3_sys_manager_final_restart(struct ps3_system_bus_device *dev)
+{
 	BUG_ON(!dev);
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
-	/* Check अगर we got here via a घातer button event. */
+	/* Check if we got here via a power button event. */
 
-	अगर (ps3_sm_क्रमce_घातer_off) अणु
+	if (ps3_sm_force_power_off) {
 		dev_dbg(&dev->core, "%s:%d: forcing poweroff\n",
 			__func__, __LINE__);
-		ps3_sys_manager_final_घातer_off(dev);
-	पूर्ण
+		ps3_sys_manager_final_power_off(dev);
+	}
 
 	ps3_vuart_cancel_async(dev);
 
@@ -650,106 +649,106 @@ fail_id:
 		user_wake_sources);
 
 	ps3_sys_manager_fin(dev);
-पूर्ण
+}
 
 /**
  * ps3_sys_manager_get_wol - Get wake-on-lan setting.
  */
 
-पूर्णांक ps3_sys_manager_get_wol(व्योम)
-अणु
+int ps3_sys_manager_get_wol(void)
+{
 	pr_debug("%s:%d\n", __func__, __LINE__);
 
-	वापस (user_wake_sources & PS3_SM_WAKE_W_O_L) != 0;
-पूर्ण
+	return (user_wake_sources & PS3_SM_WAKE_W_O_L) != 0;
+}
 EXPORT_SYMBOL_GPL(ps3_sys_manager_get_wol);
 
 /**
  * ps3_sys_manager_set_wol - Set wake-on-lan setting.
  */
 
-व्योम ps3_sys_manager_set_wol(पूर्णांक state)
-अणु
-	अटल DEFINE_MUTEX(mutex);
+void ps3_sys_manager_set_wol(int state)
+{
+	static DEFINE_MUTEX(mutex);
 
 	mutex_lock(&mutex);
 
 	pr_debug("%s:%d: %d\n", __func__, __LINE__, state);
 
-	अगर (state)
+	if (state)
 		user_wake_sources |= PS3_SM_WAKE_W_O_L;
-	अन्यथा
+	else
 		user_wake_sources &= ~PS3_SM_WAKE_W_O_L;
 	mutex_unlock(&mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ps3_sys_manager_set_wol);
 
 /**
- * ps3_sys_manager_work - Asynchronous पढ़ो handler.
+ * ps3_sys_manager_work - Asynchronous read handler.
  *
  * Signaled when PS3_SM_RX_MSG_LEN_MIN bytes arrive at the vuart port.
  */
 
-अटल व्योम ps3_sys_manager_work(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+static void ps3_sys_manager_work(struct ps3_system_bus_device *dev)
+{
 	ps3_sys_manager_handle_msg(dev);
-	ps3_vuart_पढ़ो_async(dev, PS3_SM_RX_MSG_LEN_MIN);
-पूर्ण
+	ps3_vuart_read_async(dev, PS3_SM_RX_MSG_LEN_MIN);
+}
 
-अटल पूर्णांक ps3_sys_manager_probe(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_sys_manager_ops ops;
+static int ps3_sys_manager_probe(struct ps3_system_bus_device *dev)
+{
+	int result;
+	struct ps3_sys_manager_ops ops;
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
-	ops.घातer_off = ps3_sys_manager_final_घातer_off;
+	ops.power_off = ps3_sys_manager_final_power_off;
 	ops.restart = ps3_sys_manager_final_restart;
 	ops.dev = dev;
 
-	/* ps3_sys_manager_रेजिस्टर_ops copies ops. */
+	/* ps3_sys_manager_register_ops copies ops. */
 
-	ps3_sys_manager_रेजिस्टर_ops(&ops);
+	ps3_sys_manager_register_ops(&ops);
 
 	result = ps3_sys_manager_send_attr(dev, PS3_SM_ATTR_ALL);
 	BUG_ON(result);
 
-	result = ps3_vuart_पढ़ो_async(dev, PS3_SM_RX_MSG_LEN_MIN);
+	result = ps3_vuart_read_async(dev, PS3_SM_RX_MSG_LEN_MIN);
 	BUG_ON(result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_sys_manager_हटाओ(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+static int ps3_sys_manager_remove(struct ps3_system_bus_device *dev)
+{
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ps3_sys_manager_shutकरोwn(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+static void ps3_sys_manager_shutdown(struct ps3_system_bus_device *dev)
+{
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
-पूर्ण
+}
 
-अटल काष्ठा ps3_vuart_port_driver ps3_sys_manager = अणु
+static struct ps3_vuart_port_driver ps3_sys_manager = {
 	.core.match_id = PS3_MATCH_ID_SYSTEM_MANAGER,
 	.core.core.name = "ps3_sys_manager",
 	.probe = ps3_sys_manager_probe,
-	.हटाओ = ps3_sys_manager_हटाओ,
-	.shutकरोwn = ps3_sys_manager_shutकरोwn,
+	.remove = ps3_sys_manager_remove,
+	.shutdown = ps3_sys_manager_shutdown,
 	.work = ps3_sys_manager_work,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ps3_sys_manager_init(व्योम)
-अणु
-	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		वापस -ENODEV;
+static int __init ps3_sys_manager_init(void)
+{
+	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		return -ENODEV;
 
-	वापस ps3_vuart_port_driver_रेजिस्टर(&ps3_sys_manager);
-पूर्ण
+	return ps3_vuart_port_driver_register(&ps3_sys_manager);
+}
 
 module_init(ps3_sys_manager_init);
-/* Module हटाओ not supported. */
+/* Module remove not supported. */
 
 MODULE_AUTHOR("Sony Corporation");
 MODULE_LICENSE("GPL v2");

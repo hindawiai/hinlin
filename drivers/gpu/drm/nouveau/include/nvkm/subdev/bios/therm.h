@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVBIOS_THERM_H__
-#घोषणा __NVBIOS_THERM_H__
-काष्ठा nvbios_therm_threshold अणु
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVBIOS_THERM_H__
+#define __NVBIOS_THERM_H__
+struct nvbios_therm_threshold {
 	u8 temp;
 	u8 hysteresis;
-पूर्ण;
+};
 
-काष्ठा nvbios_therm_sensor अणु
+struct nvbios_therm_sensor {
 	/* diode */
 	s16 slope_mult;
-	s16 slope_भाग;
+	s16 slope_div;
 	s16 offset_num;
 	s16 offset_den;
-	s8 offset_स्थिरant;
+	s8 offset_constant;
 
 	/* thresholds */
-	काष्ठा nvbios_therm_threshold thrs_fan_boost;
-	काष्ठा nvbios_therm_threshold thrs_करोwn_घड़ी;
-	काष्ठा nvbios_therm_threshold thrs_critical;
-	काष्ठा nvbios_therm_threshold thrs_shutकरोwn;
-पूर्ण;
+	struct nvbios_therm_threshold thrs_fan_boost;
+	struct nvbios_therm_threshold thrs_down_clock;
+	struct nvbios_therm_threshold thrs_critical;
+	struct nvbios_therm_threshold thrs_shutdown;
+};
 
-क्रमागत nvbios_therm_fan_type अणु
+enum nvbios_therm_fan_type {
 	NVBIOS_THERM_FAN_UNK = 0,
 	NVBIOS_THERM_FAN_TOGGLE = 1,
 	NVBIOS_THERM_FAN_PWM = 2,
-पूर्ण;
+};
 
 /* no vbios have more than 6 */
-#घोषणा NVKM_TEMP_FAN_TRIP_MAX 10
-काष्ठा nvbios_therm_trip_poपूर्णांक अणु
-	पूर्णांक fan_duty;
-	पूर्णांक temp;
-	पूर्णांक hysteresis;
-पूर्ण;
+#define NVKM_TEMP_FAN_TRIP_MAX 10
+struct nvbios_therm_trip_point {
+	int fan_duty;
+	int temp;
+	int hysteresis;
+};
 
-क्रमागत nvbios_therm_fan_mode अणु
+enum nvbios_therm_fan_mode {
 	NVBIOS_THERM_FAN_TRIP = 0,
 	NVBIOS_THERM_FAN_LINEAR = 1,
 	NVBIOS_THERM_FAN_OTHER = 2,
-पूर्ण;
+};
 
-काष्ठा nvbios_therm_fan अणु
-	क्रमागत nvbios_therm_fan_type type;
+struct nvbios_therm_fan {
+	enum nvbios_therm_fan_type type;
 
 	u32 pwm_freq;
 
@@ -51,24 +50,24 @@
 	u8 max_duty;
 
 	u16 bump_period;
-	u16 slow_करोwn_period;
+	u16 slow_down_period;
 
-	क्रमागत nvbios_therm_fan_mode fan_mode;
-	काष्ठा nvbios_therm_trip_poपूर्णांक trip[NVKM_TEMP_FAN_TRIP_MAX];
+	enum nvbios_therm_fan_mode fan_mode;
+	struct nvbios_therm_trip_point trip[NVKM_TEMP_FAN_TRIP_MAX];
 	u8 nr_fan_trip;
 	u8 linear_min_temp;
 	u8 linear_max_temp;
-पूर्ण;
+};
 
-क्रमागत nvbios_therm_करोमुख्य अणु
+enum nvbios_therm_domain {
 	NVBIOS_THERM_DOMAIN_CORE,
 	NVBIOS_THERM_DOMAIN_AMBIENT,
-पूर्ण;
+};
 
-पूर्णांक
-nvbios_therm_sensor_parse(काष्ठा nvkm_bios *, क्रमागत nvbios_therm_करोमुख्य,
-			  काष्ठा nvbios_therm_sensor *);
+int
+nvbios_therm_sensor_parse(struct nvkm_bios *, enum nvbios_therm_domain,
+			  struct nvbios_therm_sensor *);
 
-पूर्णांक
-nvbios_therm_fan_parse(काष्ठा nvkm_bios *, काष्ठा nvbios_therm_fan *);
-#पूर्ण_अगर
+int
+nvbios_therm_fan_parse(struct nvkm_bios *, struct nvbios_therm_fan *);
+#endif

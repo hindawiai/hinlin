@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TPM_DEV_H
-#घोषणा _TPM_DEV_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TPM_DEV_H
+#define _TPM_DEV_H
 
-#समावेश <linux/poll.h>
-#समावेश "tpm.h"
+#include <linux/poll.h>
+#include "tpm.h"
 
-काष्ठा file_priv अणु
-	काष्ठा tpm_chip *chip;
-	काष्ठा tpm_space *space;
+struct file_priv {
+	struct tpm_chip *chip;
+	struct tpm_space *space;
 
-	काष्ठा mutex buffer_mutex;
-	काष्ठा समयr_list user_पढ़ो_समयr;      /* user needs to claim result */
-	काष्ठा work_काष्ठा समयout_work;
-	काष्ठा work_काष्ठा async_work;
-	रुको_queue_head_t async_रुको;
-	sमाप_प्रकार response_length;
-	bool response_पढ़ो;
+	struct mutex buffer_mutex;
+	struct timer_list user_read_timer;      /* user needs to claim result */
+	struct work_struct timeout_work;
+	struct work_struct async_work;
+	wait_queue_head_t async_wait;
+	ssize_t response_length;
+	bool response_read;
 	bool command_enqueued;
 
-	u8 data_buffer[TPM_बफ_मानE];
-पूर्ण;
+	u8 data_buffer[TPM_BUFSIZE];
+};
 
-व्योम tpm_common_खोलो(काष्ठा file *file, काष्ठा tpm_chip *chip,
-		     काष्ठा file_priv *priv, काष्ठा tpm_space *space);
-sमाप_प्रकार tpm_common_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार size, loff_t *off);
-sमाप_प्रकार tpm_common_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			 माप_प्रकार size, loff_t *off);
-__poll_t tpm_common_poll(काष्ठा file *file, poll_table *रुको);
+void tpm_common_open(struct file *file, struct tpm_chip *chip,
+		     struct file_priv *priv, struct tpm_space *space);
+ssize_t tpm_common_read(struct file *file, char __user *buf,
+			size_t size, loff_t *off);
+ssize_t tpm_common_write(struct file *file, const char __user *buf,
+			 size_t size, loff_t *off);
+__poll_t tpm_common_poll(struct file *file, poll_table *wait);
 
-व्योम tpm_common_release(काष्ठा file *file, काष्ठा file_priv *priv);
-#पूर्ण_अगर
+void tpm_common_release(struct file *file, struct file_priv *priv);
+#endif

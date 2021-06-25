@@ -1,372 +1,371 @@
-<शैली गुरु>
 /*
- * Marvell Armada 370/XP SoC समयr handling.
+ * Marvell Armada 370/XP SoC timer handling.
  *
  * Copyright (C) 2012 Marvell
  *
  * Lior Amsalem <alior@marvell.com>
- * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
- * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Timer 0 is used as मुक्त-running घड़ीsource, जबतक समयr 1 is
- * used as घड़ी_event_device.
+ * Timer 0 is used as free-running clocksource, while timer 1 is
+ * used as clock_event_device.
  *
  * ---
- * Clocksource driver क्रम Armada 370 and Armada XP SoC.
- * This driver implements one compatible string क्रम each SoC, given
- * each has its own अक्षरacteristics:
+ * Clocksource driver for Armada 370 and Armada XP SoC.
+ * This driver implements one compatible string for each SoC, given
+ * each has its own characteristics:
  *
- *   * Armada 370 has no 25 MHz fixed समयr.
+ *   * Armada 370 has no 25 MHz fixed timer.
  *
- *   * Armada XP cannot work properly without such 25 MHz fixed समयr as
- *     करोing otherwise leads to using a घड़ीsource whose frequency varies
- *     when करोing cpufreq frequency changes.
+ *   * Armada XP cannot work properly without such 25 MHz fixed timer as
+ *     doing otherwise leads to using a clocksource whose frequency varies
+ *     when doing cpufreq frequency changes.
  *
- * See Documentation/devicetree/bindings/समयr/marvell,armada-370-xp-समयr.txt
+ * See Documentation/devicetree/bindings/timer/marvell,armada-370-xp-timer.txt
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/syscore_ops.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/kernel.h>
+#include <linux/clk.h>
+#include <linux/cpu.h>
+#include <linux/timer.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/sched_clock.h>
+#include <linux/percpu.h>
+#include <linux/syscore_ops.h>
 
-#समावेश <यंत्र/delay.h>
+#include <asm/delay.h>
 
 /*
- * Timer block रेजिस्टरs.
+ * Timer block registers.
  */
-#घोषणा TIMER_CTRL_OFF		0x0000
-#घोषणा  TIMER0_EN		 BIT(0)
-#घोषणा  TIMER0_RELOAD_EN	 BIT(1)
-#घोषणा  TIMER0_25MHZ            BIT(11)
-#घोषणा  TIMER0_DIV(भाग)         ((भाग) << 19)
-#घोषणा  TIMER1_EN		 BIT(2)
-#घोषणा  TIMER1_RELOAD_EN	 BIT(3)
-#घोषणा  TIMER1_25MHZ            BIT(12)
-#घोषणा  TIMER1_DIV(भाग)         ((भाग) << 22)
-#घोषणा TIMER_EVENTS_STATUS	0x0004
-#घोषणा  TIMER0_CLR_MASK         (~0x1)
-#घोषणा  TIMER1_CLR_MASK         (~0x100)
-#घोषणा TIMER0_RELOAD_OFF	0x0010
-#घोषणा TIMER0_VAL_OFF		0x0014
-#घोषणा TIMER1_RELOAD_OFF	0x0018
-#घोषणा TIMER1_VAL_OFF		0x001c
+#define TIMER_CTRL_OFF		0x0000
+#define  TIMER0_EN		 BIT(0)
+#define  TIMER0_RELOAD_EN	 BIT(1)
+#define  TIMER0_25MHZ            BIT(11)
+#define  TIMER0_DIV(div)         ((div) << 19)
+#define  TIMER1_EN		 BIT(2)
+#define  TIMER1_RELOAD_EN	 BIT(3)
+#define  TIMER1_25MHZ            BIT(12)
+#define  TIMER1_DIV(div)         ((div) << 22)
+#define TIMER_EVENTS_STATUS	0x0004
+#define  TIMER0_CLR_MASK         (~0x1)
+#define  TIMER1_CLR_MASK         (~0x100)
+#define TIMER0_RELOAD_OFF	0x0010
+#define TIMER0_VAL_OFF		0x0014
+#define TIMER1_RELOAD_OFF	0x0018
+#define TIMER1_VAL_OFF		0x001c
 
-#घोषणा LCL_TIMER_EVENTS_STATUS	0x0028
-/* Global समयrs are connected to the coherency fabric घड़ी, and the
-   below भागider reduces their incrementing frequency. */
-#घोषणा TIMER_DIVIDER_SHIFT     5
-#घोषणा TIMER_DIVIDER           (1 << TIMER_DIVIDER_SHIFT)
+#define LCL_TIMER_EVENTS_STATUS	0x0028
+/* Global timers are connected to the coherency fabric clock, and the
+   below divider reduces their incrementing frequency. */
+#define TIMER_DIVIDER_SHIFT     5
+#define TIMER_DIVIDER           (1 << TIMER_DIVIDER_SHIFT)
 
 /*
- * SoC-specअगरic data.
+ * SoC-specific data.
  */
-अटल व्योम __iomem *समयr_base, *local_base;
-अटल अचिन्हित पूर्णांक समयr_clk;
-अटल bool समयr25Mhz = true;
-अटल u32 enable_mask;
+static void __iomem *timer_base, *local_base;
+static unsigned int timer_clk;
+static bool timer25Mhz = true;
+static u32 enable_mask;
 
 /*
- * Number of समयr ticks per jअगरfy.
+ * Number of timer ticks per jiffy.
  */
-अटल u32 ticks_per_jअगरfy;
+static u32 ticks_per_jiffy;
 
-अटल काष्ठा घड़ी_event_device __percpu *armada_370_xp_evt;
+static struct clock_event_device __percpu *armada_370_xp_evt;
 
-अटल व्योम local_समयr_ctrl_clrset(u32 clr, u32 set)
-अणु
-	ग_लिखोl((पढ़ोl(local_base + TIMER_CTRL_OFF) & ~clr) | set,
+static void local_timer_ctrl_clrset(u32 clr, u32 set)
+{
+	writel((readl(local_base + TIMER_CTRL_OFF) & ~clr) | set,
 		local_base + TIMER_CTRL_OFF);
-पूर्ण
+}
 
-अटल u64 notrace armada_370_xp_पढ़ो_sched_घड़ी(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL_OFF);
-पूर्ण
+static u64 notrace armada_370_xp_read_sched_clock(void)
+{
+	return ~readl(timer_base + TIMER0_VAL_OFF);
+}
 
 /*
  * Clockevent handling.
  */
-अटल पूर्णांक
-armada_370_xp_clkevt_next_event(अचिन्हित दीर्घ delta,
-				काष्ठा घड़ी_event_device *dev)
-अणु
+static int
+armada_370_xp_clkevt_next_event(unsigned long delta,
+				struct clock_event_device *dev)
+{
 	/*
-	 * Clear घड़ीevent समयr पूर्णांकerrupt.
+	 * Clear clockevent timer interrupt.
 	 */
-	ग_लिखोl(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
-
-	/*
-	 * Setup new घड़ीevent समयr value.
-	 */
-	ग_लिखोl(delta, local_base + TIMER0_VAL_OFF);
+	writel(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
 
 	/*
-	 * Enable the समयr.
+	 * Setup new clockevent timer value.
 	 */
-	local_समयr_ctrl_clrset(TIMER0_RELOAD_EN, enable_mask);
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक armada_370_xp_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	/*
-	 * Disable समयr.
-	 */
-	local_समयr_ctrl_clrset(TIMER0_EN, 0);
+	writel(delta, local_base + TIMER0_VAL_OFF);
 
 	/*
-	 * ACK pending समयr पूर्णांकerrupt.
+	 * Enable the timer.
 	 */
-	ग_लिखोl(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
-	वापस 0;
-पूर्ण
+	local_timer_ctrl_clrset(TIMER0_RELOAD_EN, enable_mask);
+	return 0;
+}
 
-अटल पूर्णांक armada_370_xp_clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
+static int armada_370_xp_clkevt_shutdown(struct clock_event_device *evt)
+{
 	/*
-	 * Setup समयr to fire at 1/HZ पूर्णांकervals.
+	 * Disable timer.
 	 */
-	ग_लिखोl(ticks_per_jअगरfy - 1, local_base + TIMER0_RELOAD_OFF);
-	ग_लिखोl(ticks_per_jअगरfy - 1, local_base + TIMER0_VAL_OFF);
+	local_timer_ctrl_clrset(TIMER0_EN, 0);
 
 	/*
-	 * Enable समयr.
+	 * ACK pending timer interrupt.
 	 */
-	local_समयr_ctrl_clrset(0, TIMER0_RELOAD_EN | enable_mask);
-	वापस 0;
-पूर्ण
+	writel(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
+	return 0;
+}
 
-अटल पूर्णांक armada_370_xp_clkevt_irq;
-
-अटल irqवापस_t armada_370_xp_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+static int armada_370_xp_clkevt_set_periodic(struct clock_event_device *evt)
+{
 	/*
-	 * ACK समयr पूर्णांकerrupt and call event handler.
+	 * Setup timer to fire at 1/HZ intervals.
 	 */
-	काष्ठा घड़ी_event_device *evt = dev_id;
+	writel(ticks_per_jiffy - 1, local_base + TIMER0_RELOAD_OFF);
+	writel(ticks_per_jiffy - 1, local_base + TIMER0_VAL_OFF);
 
-	ग_लिखोl(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
+	/*
+	 * Enable timer.
+	 */
+	local_timer_ctrl_clrset(0, TIMER0_RELOAD_EN | enable_mask);
+	return 0;
+}
+
+static int armada_370_xp_clkevt_irq;
+
+static irqreturn_t armada_370_xp_timer_interrupt(int irq, void *dev_id)
+{
+	/*
+	 * ACK timer interrupt and call event handler.
+	 */
+	struct clock_event_device *evt = dev_id;
+
+	writel(TIMER0_CLR_MASK, local_base + LCL_TIMER_EVENTS_STATUS);
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Setup the local घड़ी events क्रम a CPU.
+ * Setup the local clock events for a CPU.
  */
-अटल पूर्णांक armada_370_xp_समयr_starting_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा घड़ी_event_device *evt = per_cpu_ptr(armada_370_xp_evt, cpu);
+static int armada_370_xp_timer_starting_cpu(unsigned int cpu)
+{
+	struct clock_event_device *evt = per_cpu_ptr(armada_370_xp_evt, cpu);
 	u32 clr = 0, set = 0;
 
-	अगर (समयr25Mhz)
+	if (timer25Mhz)
 		set = TIMER0_25MHZ;
-	अन्यथा
+	else
 		clr = TIMER0_25MHZ;
-	local_समयr_ctrl_clrset(clr, set);
+	local_timer_ctrl_clrset(clr, set);
 
 	evt->name		= "armada_370_xp_per_cpu_tick";
 	evt->features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_PERIODIC;
-	evt->shअगरt		= 32;
+	evt->shift		= 32;
 	evt->rating		= 300;
 	evt->set_next_event	= armada_370_xp_clkevt_next_event;
-	evt->set_state_shutकरोwn	= armada_370_xp_clkevt_shutकरोwn;
+	evt->set_state_shutdown	= armada_370_xp_clkevt_shutdown;
 	evt->set_state_periodic	= armada_370_xp_clkevt_set_periodic;
-	evt->set_state_oneshot	= armada_370_xp_clkevt_shutकरोwn;
-	evt->tick_resume	= armada_370_xp_clkevt_shutकरोwn;
+	evt->set_state_oneshot	= armada_370_xp_clkevt_shutdown;
+	evt->tick_resume	= armada_370_xp_clkevt_shutdown;
 	evt->irq		= armada_370_xp_clkevt_irq;
 	evt->cpumask		= cpumask_of(cpu);
 
-	घड़ीevents_config_and_रेजिस्टर(evt, समयr_clk, 1, 0xfffffffe);
+	clockevents_config_and_register(evt, timer_clk, 1, 0xfffffffe);
 	enable_percpu_irq(evt->irq, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_370_xp_समयr_dying_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा घड़ी_event_device *evt = per_cpu_ptr(armada_370_xp_evt, cpu);
+static int armada_370_xp_timer_dying_cpu(unsigned int cpu)
+{
+	struct clock_event_device *evt = per_cpu_ptr(armada_370_xp_evt, cpu);
 
-	evt->set_state_shutकरोwn(evt);
+	evt->set_state_shutdown(evt);
 	disable_percpu_irq(evt->irq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 समयr0_ctrl_reg, समयr0_local_ctrl_reg;
+static u32 timer0_ctrl_reg, timer0_local_ctrl_reg;
 
-अटल पूर्णांक armada_370_xp_समयr_suspend(व्योम)
-अणु
-	समयr0_ctrl_reg = पढ़ोl(समयr_base + TIMER_CTRL_OFF);
-	समयr0_local_ctrl_reg = पढ़ोl(local_base + TIMER_CTRL_OFF);
-	वापस 0;
-पूर्ण
+static int armada_370_xp_timer_suspend(void)
+{
+	timer0_ctrl_reg = readl(timer_base + TIMER_CTRL_OFF);
+	timer0_local_ctrl_reg = readl(local_base + TIMER_CTRL_OFF);
+	return 0;
+}
 
-अटल व्योम armada_370_xp_समयr_resume(व्योम)
-अणु
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_VAL_OFF);
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_RELOAD_OFF);
-	ग_लिखोl(समयr0_ctrl_reg, समयr_base + TIMER_CTRL_OFF);
-	ग_लिखोl(समयr0_local_ctrl_reg, local_base + TIMER_CTRL_OFF);
-पूर्ण
+static void armada_370_xp_timer_resume(void)
+{
+	writel(0xffffffff, timer_base + TIMER0_VAL_OFF);
+	writel(0xffffffff, timer_base + TIMER0_RELOAD_OFF);
+	writel(timer0_ctrl_reg, timer_base + TIMER_CTRL_OFF);
+	writel(timer0_local_ctrl_reg, local_base + TIMER_CTRL_OFF);
+}
 
-अटल काष्ठा syscore_ops armada_370_xp_समयr_syscore_ops = अणु
-	.suspend	= armada_370_xp_समयr_suspend,
-	.resume		= armada_370_xp_समयr_resume,
-पूर्ण;
+static struct syscore_ops armada_370_xp_timer_syscore_ops = {
+	.suspend	= armada_370_xp_timer_suspend,
+	.resume		= armada_370_xp_timer_resume,
+};
 
-अटल अचिन्हित दीर्घ armada_370_delay_समयr_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl(समयr_base + TIMER0_VAL_OFF);
-पूर्ण
+static unsigned long armada_370_delay_timer_read(void)
+{
+	return ~readl(timer_base + TIMER0_VAL_OFF);
+}
 
-अटल काष्ठा delay_समयr armada_370_delay_समयr = अणु
-	.पढ़ो_current_समयr = armada_370_delay_समयr_पढ़ो,
-पूर्ण;
+static struct delay_timer armada_370_delay_timer = {
+	.read_current_timer = armada_370_delay_timer_read,
+};
 
-अटल पूर्णांक __init armada_370_xp_समयr_common_init(काष्ठा device_node *np)
-अणु
+static int __init armada_370_xp_timer_common_init(struct device_node *np)
+{
 	u32 clr = 0, set = 0;
-	पूर्णांक res;
+	int res;
 
-	समयr_base = of_iomap(np, 0);
-	अगर (!समयr_base) अणु
+	timer_base = of_iomap(np, 0);
+	if (!timer_base) {
 		pr_err("Failed to iomap\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	local_base = of_iomap(np, 1);
-	अगर (!local_base) अणु
+	if (!local_base) {
 		pr_err("Failed to iomap\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (समयr25Mhz) अणु
+	if (timer25Mhz) {
 		set = TIMER0_25MHZ;		
 		enable_mask = TIMER0_EN;
-	पूर्ण अन्यथा अणु
+	} else {
 		clr = TIMER0_25MHZ;
 		enable_mask = TIMER0_EN | TIMER0_DIV(TIMER_DIVIDER_SHIFT);
-	पूर्ण
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL_OFF, clr | set, set);
-	local_समयr_ctrl_clrset(clr, set);
+	}
+	atomic_io_modify(timer_base + TIMER_CTRL_OFF, clr | set, set);
+	local_timer_ctrl_clrset(clr, set);
 
 	/*
-	 * We use समयr 0 as घड़ीsource, and निजी(local) समयr 0
-	 * क्रम घड़ीevents
+	 * We use timer 0 as clocksource, and private(local) timer 0
+	 * for clockevents
 	 */
 	armada_370_xp_clkevt_irq = irq_of_parse_and_map(np, 4);
 
-	ticks_per_jअगरfy = (समयr_clk + HZ / 2) / HZ;
+	ticks_per_jiffy = (timer_clk + HZ / 2) / HZ;
 
 	/*
-	 * Setup मुक्त-running घड़ीsource समयr (पूर्णांकerrupts
+	 * Setup free-running clocksource timer (interrupts
 	 * disabled).
 	 */
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_VAL_OFF);
-	ग_लिखोl(0xffffffff, समयr_base + TIMER0_RELOAD_OFF);
+	writel(0xffffffff, timer_base + TIMER0_VAL_OFF);
+	writel(0xffffffff, timer_base + TIMER0_RELOAD_OFF);
 
-	atomic_io_modअगरy(समयr_base + TIMER_CTRL_OFF,
+	atomic_io_modify(timer_base + TIMER_CTRL_OFF,
 		TIMER0_RELOAD_EN | enable_mask,
 		TIMER0_RELOAD_EN | enable_mask);
 
-	armada_370_delay_समयr.freq = समयr_clk;
-	रेजिस्टर_current_समयr_delay(&armada_370_delay_समयr);
+	armada_370_delay_timer.freq = timer_clk;
+	register_current_timer_delay(&armada_370_delay_timer);
 
 	/*
-	 * Set scale and समयr क्रम sched_घड़ी.
+	 * Set scale and timer for sched_clock.
 	 */
-	sched_घड़ी_रेजिस्टर(armada_370_xp_पढ़ो_sched_घड़ी, 32, समयr_clk);
+	sched_clock_register(armada_370_xp_read_sched_clock, 32, timer_clk);
 
-	res = घड़ीsource_mmio_init(समयr_base + TIMER0_VAL_OFF,
+	res = clocksource_mmio_init(timer_base + TIMER0_VAL_OFF,
 				    "armada_370_xp_clocksource",
-				    समयr_clk, 300, 32, घड़ीsource_mmio_पढ़ोl_करोwn);
-	अगर (res) अणु
+				    timer_clk, 300, 32, clocksource_mmio_readl_down);
+	if (res) {
 		pr_err("Failed to initialize clocksource mmio\n");
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	armada_370_xp_evt = alloc_percpu(काष्ठा घड़ी_event_device);
-	अगर (!armada_370_xp_evt)
-		वापस -ENOMEM;
+	armada_370_xp_evt = alloc_percpu(struct clock_event_device);
+	if (!armada_370_xp_evt)
+		return -ENOMEM;
 
 	/*
-	 * Setup घड़ीevent समयr (पूर्णांकerrupt-driven).
+	 * Setup clockevent timer (interrupt-driven).
 	 */
 	res = request_percpu_irq(armada_370_xp_clkevt_irq,
-				armada_370_xp_समयr_पूर्णांकerrupt,
+				armada_370_xp_timer_interrupt,
 				"armada_370_xp_per_cpu_tick",
 				armada_370_xp_evt);
-	/* Immediately configure the समयr on the boot CPU */
-	अगर (res) अणु
+	/* Immediately configure the timer on the boot CPU */
+	if (res) {
 		pr_err("Failed to request percpu irq\n");
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
 	res = cpuhp_setup_state(CPUHP_AP_ARMADA_TIMER_STARTING,
 				"clockevents/armada:starting",
-				armada_370_xp_समयr_starting_cpu,
-				armada_370_xp_समयr_dying_cpu);
-	अगर (res) अणु
+				armada_370_xp_timer_starting_cpu,
+				armada_370_xp_timer_dying_cpu);
+	if (res) {
 		pr_err("Failed to setup hotplug state and timer\n");
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	रेजिस्टर_syscore_ops(&armada_370_xp_समयr_syscore_ops);
+	register_syscore_ops(&armada_370_xp_timer_syscore_ops);
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init armada_xp_समयr_init(काष्ठा device_node *np)
-अणु
-	काष्ठा clk *clk = of_clk_get_by_name(np, "fixed");
-	पूर्णांक ret;
+static int __init armada_xp_timer_init(struct device_node *np)
+{
+	struct clk *clk = of_clk_get_by_name(np, "fixed");
+	int ret;
 
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Failed to get clock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	समयr_clk = clk_get_rate(clk);
+	timer_clk = clk_get_rate(clk);
 
-	वापस armada_370_xp_समयr_common_init(np);
-पूर्ण
+	return armada_370_xp_timer_common_init(np);
+}
 TIMER_OF_DECLARE(armada_xp, "marvell,armada-xp-timer",
-		       armada_xp_समयr_init);
+		       armada_xp_timer_init);
 
-अटल पूर्णांक __init armada_375_समयr_init(काष्ठा device_node *np)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int __init armada_375_timer_init(struct device_node *np)
+{
+	struct clk *clk;
+	int ret;
 
 	clk = of_clk_get_by_name(np, "fixed");
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		ret = clk_prepare_enable(clk);
-		अगर (ret)
-			वापस ret;
-		समयr_clk = clk_get_rate(clk);
-	पूर्ण अन्यथा अणु
+		if (ret)
+			return ret;
+		timer_clk = clk_get_rate(clk);
+	} else {
 
 		/*
 		 * This fallback is required in order to retain proper
@@ -374,44 +373,44 @@ TIMER_OF_DECLARE(armada_xp, "marvell,armada-xp-timer",
 		 */
 		clk = of_clk_get(np, 0);
 
-		/* Must have at least a घड़ी */
-		अगर (IS_ERR(clk)) अणु
+		/* Must have at least a clock */
+		if (IS_ERR(clk)) {
 			pr_err("Failed to get clock\n");
-			वापस PTR_ERR(clk);
-		पूर्ण
+			return PTR_ERR(clk);
+		}
 
 		ret = clk_prepare_enable(clk);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		समयr_clk = clk_get_rate(clk) / TIMER_DIVIDER;
-		समयr25Mhz = false;
-	पूर्ण
+		timer_clk = clk_get_rate(clk) / TIMER_DIVIDER;
+		timer25Mhz = false;
+	}
 
-	वापस armada_370_xp_समयr_common_init(np);
-पूर्ण
+	return armada_370_xp_timer_common_init(np);
+}
 TIMER_OF_DECLARE(armada_375, "marvell,armada-375-timer",
-		       armada_375_समयr_init);
+		       armada_375_timer_init);
 
-अटल पूर्णांक __init armada_370_समयr_init(काष्ठा device_node *np)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int __init armada_370_timer_init(struct device_node *np)
+{
+	struct clk *clk;
+	int ret;
 
 	clk = of_clk_get(np, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Failed to get clock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	ret = clk_prepare_enable(clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	समयr_clk = clk_get_rate(clk) / TIMER_DIVIDER;
-	समयr25Mhz = false;
+	timer_clk = clk_get_rate(clk) / TIMER_DIVIDER;
+	timer25Mhz = false;
 
-	वापस armada_370_xp_समयr_common_init(np);
-पूर्ण
+	return armada_370_xp_timer_common_init(np);
+}
 TIMER_OF_DECLARE(armada_370, "marvell,armada-370-timer",
-		       armada_370_समयr_init);
+		       armada_370_timer_init);

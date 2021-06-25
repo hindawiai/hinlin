@@ -1,216 +1,215 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019, Linaro Ltd
  */
-#समावेश <dt-bindings/घातer/qcom-aoss-qmp.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mailbox_client.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/slab.h>
+#include <dt-bindings/power/qcom-aoss-qmp.h>
+#include <linux/clk-provider.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/mailbox_client.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/thermal.h>
+#include <linux/slab.h>
 
-#घोषणा QMP_DESC_MAGIC			0x0
-#घोषणा QMP_DESC_VERSION		0x4
-#घोषणा QMP_DESC_FEATURES		0x8
+#define QMP_DESC_MAGIC			0x0
+#define QMP_DESC_VERSION		0x4
+#define QMP_DESC_FEATURES		0x8
 
 /* AOP-side offsets */
-#घोषणा QMP_DESC_UCORE_LINK_STATE	0xc
-#घोषणा QMP_DESC_UCORE_LINK_STATE_ACK	0x10
-#घोषणा QMP_DESC_UCORE_CH_STATE		0x14
-#घोषणा QMP_DESC_UCORE_CH_STATE_ACK	0x18
-#घोषणा QMP_DESC_UCORE_MBOX_SIZE	0x1c
-#घोषणा QMP_DESC_UCORE_MBOX_OFFSET	0x20
+#define QMP_DESC_UCORE_LINK_STATE	0xc
+#define QMP_DESC_UCORE_LINK_STATE_ACK	0x10
+#define QMP_DESC_UCORE_CH_STATE		0x14
+#define QMP_DESC_UCORE_CH_STATE_ACK	0x18
+#define QMP_DESC_UCORE_MBOX_SIZE	0x1c
+#define QMP_DESC_UCORE_MBOX_OFFSET	0x20
 
 /* Linux-side offsets */
-#घोषणा QMP_DESC_MCORE_LINK_STATE	0x24
-#घोषणा QMP_DESC_MCORE_LINK_STATE_ACK	0x28
-#घोषणा QMP_DESC_MCORE_CH_STATE		0x2c
-#घोषणा QMP_DESC_MCORE_CH_STATE_ACK	0x30
-#घोषणा QMP_DESC_MCORE_MBOX_SIZE	0x34
-#घोषणा QMP_DESC_MCORE_MBOX_OFFSET	0x38
+#define QMP_DESC_MCORE_LINK_STATE	0x24
+#define QMP_DESC_MCORE_LINK_STATE_ACK	0x28
+#define QMP_DESC_MCORE_CH_STATE		0x2c
+#define QMP_DESC_MCORE_CH_STATE_ACK	0x30
+#define QMP_DESC_MCORE_MBOX_SIZE	0x34
+#define QMP_DESC_MCORE_MBOX_OFFSET	0x38
 
-#घोषणा QMP_STATE_UP			GENMASK(15, 0)
-#घोषणा QMP_STATE_DOWN			GENMASK(31, 16)
+#define QMP_STATE_UP			GENMASK(15, 0)
+#define QMP_STATE_DOWN			GENMASK(31, 16)
 
-#घोषणा QMP_MAGIC			0x4d41494c /* mail */
-#घोषणा QMP_VERSION			1
+#define QMP_MAGIC			0x4d41494c /* mail */
+#define QMP_VERSION			1
 
 /* 64 bytes is enough to store the requests and provides padding to 4 bytes */
-#घोषणा QMP_MSG_LEN			64
+#define QMP_MSG_LEN			64
 
-#घोषणा QMP_NUM_COOLING_RESOURCES	2
+#define QMP_NUM_COOLING_RESOURCES	2
 
-अटल bool qmp_cdev_max_state = 1;
+static bool qmp_cdev_max_state = 1;
 
-काष्ठा qmp_cooling_device अणु
-	काष्ठा thermal_cooling_device *cdev;
-	काष्ठा qmp *qmp;
-	अक्षर *name;
+struct qmp_cooling_device {
+	struct thermal_cooling_device *cdev;
+	struct qmp *qmp;
+	char *name;
 	bool state;
-पूर्ण;
+};
 
 /**
- * काष्ठा qmp - driver state क्रम QMP implementation
- * @msgram: iomem referencing the message RAM used क्रम communication
+ * struct qmp - driver state for QMP implementation
+ * @msgram: iomem referencing the message RAM used for communication
  * @dev: reference to QMP device
- * @mbox_client: mailbox client used to ring the करोorbell on transmit
- * @mbox_chan: mailbox channel used to ring the करोorbell on transmit
+ * @mbox_client: mailbox client used to ring the doorbell on transmit
+ * @mbox_chan: mailbox channel used to ring the doorbell on transmit
  * @offset: offset within @msgram where messages should be written
  * @size: maximum size of the messages to be transmitted
- * @event: रुको_queue क्रम synchronization with the IRQ
+ * @event: wait_queue for synchronization with the IRQ
  * @tx_lock: provides synchronization between multiple callers of qmp_send()
- * @qdss_clk: QDSS घड़ी hw काष्ठा
+ * @qdss_clk: QDSS clock hw struct
  * @pd_data: genpd data
  * @cooling_devs: thermal cooling devices
  */
-काष्ठा qmp अणु
-	व्योम __iomem *msgram;
-	काष्ठा device *dev;
+struct qmp {
+	void __iomem *msgram;
+	struct device *dev;
 
-	काष्ठा mbox_client mbox_client;
-	काष्ठा mbox_chan *mbox_chan;
+	struct mbox_client mbox_client;
+	struct mbox_chan *mbox_chan;
 
-	माप_प्रकार offset;
-	माप_प्रकार size;
+	size_t offset;
+	size_t size;
 
-	रुको_queue_head_t event;
+	wait_queue_head_t event;
 
-	काष्ठा mutex tx_lock;
+	struct mutex tx_lock;
 
-	काष्ठा clk_hw qdss_clk;
-	काष्ठा genpd_onecell_data pd_data;
-	काष्ठा qmp_cooling_device *cooling_devs;
-पूर्ण;
+	struct clk_hw qdss_clk;
+	struct genpd_onecell_data pd_data;
+	struct qmp_cooling_device *cooling_devs;
+};
 
-काष्ठा qmp_pd अणु
-	काष्ठा qmp *qmp;
-	काष्ठा generic_pm_करोमुख्य pd;
-पूर्ण;
+struct qmp_pd {
+	struct qmp *qmp;
+	struct generic_pm_domain pd;
+};
 
-#घोषणा to_qmp_pd_resource(res) container_of(res, काष्ठा qmp_pd, pd)
+#define to_qmp_pd_resource(res) container_of(res, struct qmp_pd, pd)
 
-अटल व्योम qmp_kick(काष्ठा qmp *qmp)
-अणु
-	mbox_send_message(qmp->mbox_chan, शून्य);
-	mbox_client_txकरोne(qmp->mbox_chan, 0);
-पूर्ण
+static void qmp_kick(struct qmp *qmp)
+{
+	mbox_send_message(qmp->mbox_chan, NULL);
+	mbox_client_txdone(qmp->mbox_chan, 0);
+}
 
-अटल bool qmp_magic_valid(काष्ठा qmp *qmp)
-अणु
-	वापस पढ़ोl(qmp->msgram + QMP_DESC_MAGIC) == QMP_MAGIC;
-पूर्ण
+static bool qmp_magic_valid(struct qmp *qmp)
+{
+	return readl(qmp->msgram + QMP_DESC_MAGIC) == QMP_MAGIC;
+}
 
-अटल bool qmp_link_acked(काष्ठा qmp *qmp)
-अणु
-	वापस पढ़ोl(qmp->msgram + QMP_DESC_MCORE_LINK_STATE_ACK) == QMP_STATE_UP;
-पूर्ण
+static bool qmp_link_acked(struct qmp *qmp)
+{
+	return readl(qmp->msgram + QMP_DESC_MCORE_LINK_STATE_ACK) == QMP_STATE_UP;
+}
 
-अटल bool qmp_mcore_channel_acked(काष्ठा qmp *qmp)
-अणु
-	वापस पढ़ोl(qmp->msgram + QMP_DESC_MCORE_CH_STATE_ACK) == QMP_STATE_UP;
-पूर्ण
+static bool qmp_mcore_channel_acked(struct qmp *qmp)
+{
+	return readl(qmp->msgram + QMP_DESC_MCORE_CH_STATE_ACK) == QMP_STATE_UP;
+}
 
-अटल bool qmp_ucore_channel_up(काष्ठा qmp *qmp)
-अणु
-	वापस पढ़ोl(qmp->msgram + QMP_DESC_UCORE_CH_STATE) == QMP_STATE_UP;
-पूर्ण
+static bool qmp_ucore_channel_up(struct qmp *qmp)
+{
+	return readl(qmp->msgram + QMP_DESC_UCORE_CH_STATE) == QMP_STATE_UP;
+}
 
-अटल पूर्णांक qmp_खोलो(काष्ठा qmp *qmp)
-अणु
-	पूर्णांक ret;
+static int qmp_open(struct qmp *qmp)
+{
+	int ret;
 	u32 val;
 
-	अगर (!qmp_magic_valid(qmp)) अणु
+	if (!qmp_magic_valid(qmp)) {
 		dev_err(qmp->dev, "QMP magic doesn't match\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	val = पढ़ोl(qmp->msgram + QMP_DESC_VERSION);
-	अगर (val != QMP_VERSION) अणु
+	val = readl(qmp->msgram + QMP_DESC_VERSION);
+	if (val != QMP_VERSION) {
 		dev_err(qmp->dev, "unsupported QMP version %d\n", val);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	qmp->offset = पढ़ोl(qmp->msgram + QMP_DESC_MCORE_MBOX_OFFSET);
-	qmp->size = पढ़ोl(qmp->msgram + QMP_DESC_MCORE_MBOX_SIZE);
-	अगर (!qmp->size) अणु
+	qmp->offset = readl(qmp->msgram + QMP_DESC_MCORE_MBOX_OFFSET);
+	qmp->size = readl(qmp->msgram + QMP_DESC_MCORE_MBOX_SIZE);
+	if (!qmp->size) {
 		dev_err(qmp->dev, "invalid mailbox size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Ack remote core's link state */
-	val = पढ़ोl(qmp->msgram + QMP_DESC_UCORE_LINK_STATE);
-	ग_लिखोl(val, qmp->msgram + QMP_DESC_UCORE_LINK_STATE_ACK);
+	val = readl(qmp->msgram + QMP_DESC_UCORE_LINK_STATE);
+	writel(val, qmp->msgram + QMP_DESC_UCORE_LINK_STATE_ACK);
 
 	/* Set local core's link state to up */
-	ग_लिखोl(QMP_STATE_UP, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
+	writel(QMP_STATE_UP, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
 
 	qmp_kick(qmp);
 
-	ret = रुको_event_समयout(qmp->event, qmp_link_acked(qmp), HZ);
-	अगर (!ret) अणु
+	ret = wait_event_timeout(qmp->event, qmp_link_acked(qmp), HZ);
+	if (!ret) {
 		dev_err(qmp->dev, "ucore didn't ack link\n");
-		जाओ समयout_बंद_link;
-	पूर्ण
+		goto timeout_close_link;
+	}
 
-	ग_लिखोl(QMP_STATE_UP, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
+	writel(QMP_STATE_UP, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
 
 	qmp_kick(qmp);
 
-	ret = रुको_event_समयout(qmp->event, qmp_ucore_channel_up(qmp), HZ);
-	अगर (!ret) अणु
+	ret = wait_event_timeout(qmp->event, qmp_ucore_channel_up(qmp), HZ);
+	if (!ret) {
 		dev_err(qmp->dev, "ucore didn't open channel\n");
-		जाओ समयout_बंद_channel;
-	पूर्ण
+		goto timeout_close_channel;
+	}
 
 	/* Ack remote core's channel state */
-	ग_लिखोl(QMP_STATE_UP, qmp->msgram + QMP_DESC_UCORE_CH_STATE_ACK);
+	writel(QMP_STATE_UP, qmp->msgram + QMP_DESC_UCORE_CH_STATE_ACK);
 
 	qmp_kick(qmp);
 
-	ret = रुको_event_समयout(qmp->event, qmp_mcore_channel_acked(qmp), HZ);
-	अगर (!ret) अणु
+	ret = wait_event_timeout(qmp->event, qmp_mcore_channel_acked(qmp), HZ);
+	if (!ret) {
 		dev_err(qmp->dev, "ucore didn't ack channel\n");
-		जाओ समयout_बंद_channel;
-	पूर्ण
+		goto timeout_close_channel;
+	}
 
-	वापस 0;
+	return 0;
 
-समयout_बंद_channel:
-	ग_लिखोl(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
+timeout_close_channel:
+	writel(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
 
-समयout_बंद_link:
-	ग_लिखोl(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
+timeout_close_link:
+	writel(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
 	qmp_kick(qmp);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल व्योम qmp_बंद(काष्ठा qmp *qmp)
-अणु
-	ग_लिखोl(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
-	ग_लिखोl(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
+static void qmp_close(struct qmp *qmp)
+{
+	writel(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_CH_STATE);
+	writel(QMP_STATE_DOWN, qmp->msgram + QMP_DESC_MCORE_LINK_STATE);
 	qmp_kick(qmp);
-पूर्ण
+}
 
-अटल irqवापस_t qmp_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qmp *qmp = data;
+static irqreturn_t qmp_intr(int irq, void *data)
+{
+	struct qmp *qmp = data;
 
 	wake_up_all(&qmp->event);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool qmp_message_empty(काष्ठा qmp *qmp)
-अणु
-	वापस पढ़ोl(qmp->msgram + qmp->offset) == 0;
-पूर्ण
+static bool qmp_message_empty(struct qmp *qmp)
+{
+	return readl(qmp->msgram + qmp->offset) == 0;
+}
 
 /**
  * qmp_send() - send a message to the AOSS
@@ -218,404 +217,404 @@
  * @data: message to be sent
  * @len: length of the message
  *
- * Transmit @data to AOSS and रुको क्रम the AOSS to acknowledge the message.
- * @len must be a multiple of 4 and not दीर्घer than the mailbox size. Access is
+ * Transmit @data to AOSS and wait for the AOSS to acknowledge the message.
+ * @len must be a multiple of 4 and not longer than the mailbox size. Access is
  * synchronized by this implementation.
  *
- * Return: 0 on success, negative त्रुटि_सं on failure
+ * Return: 0 on success, negative errno on failure
  */
-अटल पूर्णांक qmp_send(काष्ठा qmp *qmp, स्थिर व्योम *data, माप_प्रकार len)
-अणु
-	दीर्घ समय_left;
-	पूर्णांक ret;
+static int qmp_send(struct qmp *qmp, const void *data, size_t len)
+{
+	long time_left;
+	int ret;
 
-	अगर (WARN_ON(len + माप(u32) > qmp->size))
-		वापस -EINVAL;
+	if (WARN_ON(len + sizeof(u32) > qmp->size))
+		return -EINVAL;
 
-	अगर (WARN_ON(len % माप(u32)))
-		वापस -EINVAL;
+	if (WARN_ON(len % sizeof(u32)))
+		return -EINVAL;
 
 	mutex_lock(&qmp->tx_lock);
 
 	/* The message RAM only implements 32-bit accesses */
-	__ioग_लिखो32_copy(qmp->msgram + qmp->offset + माप(u32),
-			 data, len / माप(u32));
-	ग_लिखोl(len, qmp->msgram + qmp->offset);
+	__iowrite32_copy(qmp->msgram + qmp->offset + sizeof(u32),
+			 data, len / sizeof(u32));
+	writel(len, qmp->msgram + qmp->offset);
 
 	/* Read back len to confirm data written in message RAM */
-	पढ़ोl(qmp->msgram + qmp->offset);
+	readl(qmp->msgram + qmp->offset);
 	qmp_kick(qmp);
 
-	समय_left = रुको_event_पूर्णांकerruptible_समयout(qmp->event,
+	time_left = wait_event_interruptible_timeout(qmp->event,
 						     qmp_message_empty(qmp), HZ);
-	अगर (!समय_left) अणु
+	if (!time_left) {
 		dev_err(qmp->dev, "ucore did not ack channel\n");
 		ret = -ETIMEDOUT;
 
 		/* Clear message from buffer */
-		ग_लिखोl(0, qmp->msgram + qmp->offset);
-	पूर्ण अन्यथा अणु
+		writel(0, qmp->msgram + qmp->offset);
+	} else {
 		ret = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&qmp->tx_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qmp_qdss_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	अटल स्थिर अक्षर buf[QMP_MSG_LEN] = "{class: clock, res: qdss, val: 1}";
-	काष्ठा qmp *qmp = container_of(hw, काष्ठा qmp, qdss_clk);
+static int qmp_qdss_clk_prepare(struct clk_hw *hw)
+{
+	static const char buf[QMP_MSG_LEN] = "{class: clock, res: qdss, val: 1}";
+	struct qmp *qmp = container_of(hw, struct qmp, qdss_clk);
 
-	वापस qmp_send(qmp, buf, माप(buf));
-पूर्ण
+	return qmp_send(qmp, buf, sizeof(buf));
+}
 
-अटल व्योम qmp_qdss_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
-	अटल स्थिर अक्षर buf[QMP_MSG_LEN] = "{class: clock, res: qdss, val: 0}";
-	काष्ठा qmp *qmp = container_of(hw, काष्ठा qmp, qdss_clk);
+static void qmp_qdss_clk_unprepare(struct clk_hw *hw)
+{
+	static const char buf[QMP_MSG_LEN] = "{class: clock, res: qdss, val: 0}";
+	struct qmp *qmp = container_of(hw, struct qmp, qdss_clk);
 
-	qmp_send(qmp, buf, माप(buf));
-पूर्ण
+	qmp_send(qmp, buf, sizeof(buf));
+}
 
-अटल स्थिर काष्ठा clk_ops qmp_qdss_clk_ops = अणु
+static const struct clk_ops qmp_qdss_clk_ops = {
 	.prepare = qmp_qdss_clk_prepare,
 	.unprepare = qmp_qdss_clk_unprepare,
-पूर्ण;
+};
 
-अटल पूर्णांक qmp_qdss_clk_add(काष्ठा qmp *qmp)
-अणु
-	अटल स्थिर काष्ठा clk_init_data qdss_init = अणु
+static int qmp_qdss_clk_add(struct qmp *qmp)
+{
+	static const struct clk_init_data qdss_init = {
 		.ops = &qmp_qdss_clk_ops,
 		.name = "qdss",
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	qmp->qdss_clk.init = &qdss_init;
-	ret = clk_hw_रेजिस्टर(qmp->dev, &qmp->qdss_clk);
-	अगर (ret < 0) अणु
+	ret = clk_hw_register(qmp->dev, &qmp->qdss_clk);
+	if (ret < 0) {
 		dev_err(qmp->dev, "failed to register qdss clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = of_clk_add_hw_provider(qmp->dev->of_node, of_clk_hw_simple_get,
 				     &qmp->qdss_clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(qmp->dev, "unable to register of clk hw provider\n");
-		clk_hw_unरेजिस्टर(&qmp->qdss_clk);
-	पूर्ण
+		clk_hw_unregister(&qmp->qdss_clk);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qmp_qdss_clk_हटाओ(काष्ठा qmp *qmp)
-अणु
+static void qmp_qdss_clk_remove(struct qmp *qmp)
+{
 	of_clk_del_provider(qmp->dev->of_node);
-	clk_hw_unरेजिस्टर(&qmp->qdss_clk);
-पूर्ण
+	clk_hw_unregister(&qmp->qdss_clk);
+}
 
-अटल पूर्णांक qmp_pd_घातer_toggle(काष्ठा qmp_pd *res, bool enable)
-अणु
-	अक्षर buf[QMP_MSG_LEN] = अणुपूर्ण;
+static int qmp_pd_power_toggle(struct qmp_pd *res, bool enable)
+{
+	char buf[QMP_MSG_LEN] = {};
 
-	snम_लिखो(buf, माप(buf),
+	snprintf(buf, sizeof(buf),
 		 "{class: image, res: load_state, name: %s, val: %s}",
 		 res->pd.name, enable ? "on" : "off");
-	वापस qmp_send(res->qmp, buf, माप(buf));
-पूर्ण
+	return qmp_send(res->qmp, buf, sizeof(buf));
+}
 
-अटल पूर्णांक qmp_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	वापस qmp_pd_घातer_toggle(to_qmp_pd_resource(करोमुख्य), true);
-पूर्ण
+static int qmp_pd_power_on(struct generic_pm_domain *domain)
+{
+	return qmp_pd_power_toggle(to_qmp_pd_resource(domain), true);
+}
 
-अटल पूर्णांक qmp_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	वापस qmp_pd_घातer_toggle(to_qmp_pd_resource(करोमुख्य), false);
-पूर्ण
+static int qmp_pd_power_off(struct generic_pm_domain *domain)
+{
+	return qmp_pd_power_toggle(to_qmp_pd_resource(domain), false);
+}
 
-अटल स्थिर अक्षर * स्थिर sdm845_resources[] = अणु
+static const char * const sdm845_resources[] = {
 	[AOSS_QMP_LS_CDSP] = "cdsp",
 	[AOSS_QMP_LS_LPASS] = "adsp",
 	[AOSS_QMP_LS_MODEM] = "modem",
 	[AOSS_QMP_LS_SLPI] = "slpi",
 	[AOSS_QMP_LS_SPSS] = "spss",
 	[AOSS_QMP_LS_VENUS] = "venus",
-पूर्ण;
+};
 
-अटल पूर्णांक qmp_pd_add(काष्ठा qmp *qmp)
-अणु
-	काष्ठा genpd_onecell_data *data = &qmp->pd_data;
-	काष्ठा device *dev = qmp->dev;
-	काष्ठा qmp_pd *res;
-	माप_प्रकार num = ARRAY_SIZE(sdm845_resources);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int qmp_pd_add(struct qmp *qmp)
+{
+	struct genpd_onecell_data *data = &qmp->pd_data;
+	struct device *dev = qmp->dev;
+	struct qmp_pd *res;
+	size_t num = ARRAY_SIZE(sdm845_resources);
+	int ret;
+	int i;
 
-	res = devm_kसुस्मृति(dev, num, माप(*res), GFP_KERNEL);
-	अगर (!res)
-		वापस -ENOMEM;
+	res = devm_kcalloc(dev, num, sizeof(*res), GFP_KERNEL);
+	if (!res)
+		return -ENOMEM;
 
-	data->करोमुख्यs = devm_kसुस्मृति(dev, num, माप(*data->करोमुख्यs),
+	data->domains = devm_kcalloc(dev, num, sizeof(*data->domains),
 				     GFP_KERNEL);
-	अगर (!data->करोमुख्यs)
-		वापस -ENOMEM;
+	if (!data->domains)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		res[i].qmp = qmp;
 		res[i].pd.name = sdm845_resources[i];
-		res[i].pd.घातer_on = qmp_pd_घातer_on;
-		res[i].pd.घातer_off = qmp_pd_घातer_off;
+		res[i].pd.power_on = qmp_pd_power_on;
+		res[i].pd.power_off = qmp_pd_power_off;
 
-		ret = pm_genpd_init(&res[i].pd, शून्य, true);
-		अगर (ret < 0) अणु
+		ret = pm_genpd_init(&res[i].pd, NULL, true);
+		if (ret < 0) {
 			dev_err(dev, "failed to init genpd\n");
-			जाओ unroll_genpds;
-		पूर्ण
+			goto unroll_genpds;
+		}
 
-		data->करोमुख्यs[i] = &res[i].pd;
-	पूर्ण
+		data->domains[i] = &res[i].pd;
+	}
 
-	data->num_करोमुख्यs = i;
+	data->num_domains = i;
 
 	ret = of_genpd_add_provider_onecell(dev->of_node, data);
-	अगर (ret < 0)
-		जाओ unroll_genpds;
+	if (ret < 0)
+		goto unroll_genpds;
 
-	वापस 0;
+	return 0;
 
 unroll_genpds:
-	क्रम (i--; i >= 0; i--)
-		pm_genpd_हटाओ(data->करोमुख्यs[i]);
+	for (i--; i >= 0; i--)
+		pm_genpd_remove(data->domains[i]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qmp_pd_हटाओ(काष्ठा qmp *qmp)
-अणु
-	काष्ठा genpd_onecell_data *data = &qmp->pd_data;
-	काष्ठा device *dev = qmp->dev;
-	पूर्णांक i;
+static void qmp_pd_remove(struct qmp *qmp)
+{
+	struct genpd_onecell_data *data = &qmp->pd_data;
+	struct device *dev = qmp->dev;
+	int i;
 
 	of_genpd_del_provider(dev->of_node);
 
-	क्रम (i = 0; i < data->num_करोमुख्यs; i++)
-		pm_genpd_हटाओ(data->करोमुख्यs[i]);
-पूर्ण
+	for (i = 0; i < data->num_domains; i++)
+		pm_genpd_remove(data->domains[i]);
+}
 
-अटल पूर्णांक qmp_cdev_get_max_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ *state)
-अणु
+static int qmp_cdev_get_max_state(struct thermal_cooling_device *cdev,
+				  unsigned long *state)
+{
 	*state = qmp_cdev_max_state;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qmp_cdev_get_cur_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा qmp_cooling_device *qmp_cdev = cdev->devdata;
+static int qmp_cdev_get_cur_state(struct thermal_cooling_device *cdev,
+				  unsigned long *state)
+{
+	struct qmp_cooling_device *qmp_cdev = cdev->devdata;
 
 	*state = qmp_cdev->state;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qmp_cdev_set_cur_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ state)
-अणु
-	काष्ठा qmp_cooling_device *qmp_cdev = cdev->devdata;
-	अक्षर buf[QMP_MSG_LEN] = अणुपूर्ण;
+static int qmp_cdev_set_cur_state(struct thermal_cooling_device *cdev,
+				  unsigned long state)
+{
+	struct qmp_cooling_device *qmp_cdev = cdev->devdata;
+	char buf[QMP_MSG_LEN] = {};
 	bool cdev_state;
-	पूर्णांक ret;
+	int ret;
 
 	/* Normalize state */
 	cdev_state = !!state;
 
-	अगर (qmp_cdev->state == state)
-		वापस 0;
+	if (qmp_cdev->state == state)
+		return 0;
 
-	snम_लिखो(buf, माप(buf),
+	snprintf(buf, sizeof(buf),
 		 "{class: volt_flr, event:zero_temp, res:%s, value:%s}",
 			qmp_cdev->name,
 			cdev_state ? "on" : "off");
 
-	ret = qmp_send(qmp_cdev->qmp, buf, माप(buf));
+	ret = qmp_send(qmp_cdev->qmp, buf, sizeof(buf));
 
-	अगर (!ret)
+	if (!ret)
 		qmp_cdev->state = cdev_state;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा thermal_cooling_device_ops qmp_cooling_device_ops = अणु
+static struct thermal_cooling_device_ops qmp_cooling_device_ops = {
 	.get_max_state = qmp_cdev_get_max_state,
 	.get_cur_state = qmp_cdev_get_cur_state,
 	.set_cur_state = qmp_cdev_set_cur_state,
-पूर्ण;
+};
 
-अटल पूर्णांक qmp_cooling_device_add(काष्ठा qmp *qmp,
-				  काष्ठा qmp_cooling_device *qmp_cdev,
-				  काष्ठा device_node *node)
-अणु
-	अक्षर *cdev_name = (अक्षर *)node->name;
+static int qmp_cooling_device_add(struct qmp *qmp,
+				  struct qmp_cooling_device *qmp_cdev,
+				  struct device_node *node)
+{
+	char *cdev_name = (char *)node->name;
 
 	qmp_cdev->qmp = qmp;
 	qmp_cdev->state = !qmp_cdev_max_state;
 	qmp_cdev->name = cdev_name;
-	qmp_cdev->cdev = devm_thermal_of_cooling_device_रेजिस्टर
+	qmp_cdev->cdev = devm_thermal_of_cooling_device_register
 				(qmp->dev, node,
 				cdev_name,
 				qmp_cdev, &qmp_cooling_device_ops);
 
-	अगर (IS_ERR(qmp_cdev->cdev))
+	if (IS_ERR(qmp_cdev->cdev))
 		dev_err(qmp->dev, "unable to register %s cooling device\n",
 			cdev_name);
 
-	वापस PTR_ERR_OR_ZERO(qmp_cdev->cdev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(qmp_cdev->cdev);
+}
 
-अटल पूर्णांक qmp_cooling_devices_रेजिस्टर(काष्ठा qmp *qmp)
-अणु
-	काष्ठा device_node *np, *child;
-	पूर्णांक count = QMP_NUM_COOLING_RESOURCES;
-	पूर्णांक ret;
+static int qmp_cooling_devices_register(struct qmp *qmp)
+{
+	struct device_node *np, *child;
+	int count = QMP_NUM_COOLING_RESOURCES;
+	int ret;
 
 	np = qmp->dev->of_node;
 
-	qmp->cooling_devs = devm_kसुस्मृति(qmp->dev, count,
-					 माप(*qmp->cooling_devs),
+	qmp->cooling_devs = devm_kcalloc(qmp->dev, count,
+					 sizeof(*qmp->cooling_devs),
 					 GFP_KERNEL);
 
-	अगर (!qmp->cooling_devs)
-		वापस -ENOMEM;
+	if (!qmp->cooling_devs)
+		return -ENOMEM;
 
-	क्रम_each_available_child_of_node(np, child) अणु
-		अगर (!of_find_property(child, "#cooling-cells", शून्य))
-			जारी;
+	for_each_available_child_of_node(np, child) {
+		if (!of_find_property(child, "#cooling-cells", NULL))
+			continue;
 		ret = qmp_cooling_device_add(qmp, &qmp->cooling_devs[count++],
 					     child);
-		अगर (ret)
-			जाओ unroll;
-	पूर्ण
+		if (ret)
+			goto unroll;
+	}
 
-	वापस 0;
+	return 0;
 
 unroll:
-	जबतक (--count >= 0)
-		thermal_cooling_device_unरेजिस्टर
+	while (--count >= 0)
+		thermal_cooling_device_unregister
 			(qmp->cooling_devs[count].cdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qmp_cooling_devices_हटाओ(काष्ठा qmp *qmp)
-अणु
-	पूर्णांक i;
+static void qmp_cooling_devices_remove(struct qmp *qmp)
+{
+	int i;
 
-	क्रम (i = 0; i < QMP_NUM_COOLING_RESOURCES; i++)
-		thermal_cooling_device_unरेजिस्टर(qmp->cooling_devs[i].cdev);
-पूर्ण
+	for (i = 0; i < QMP_NUM_COOLING_RESOURCES; i++)
+		thermal_cooling_device_unregister(qmp->cooling_devs[i].cdev);
+}
 
-अटल पूर्णांक qmp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा qmp *qmp;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int qmp_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct qmp *qmp;
+	int irq;
+	int ret;
 
-	qmp = devm_kzalloc(&pdev->dev, माप(*qmp), GFP_KERNEL);
-	अगर (!qmp)
-		वापस -ENOMEM;
+	qmp = devm_kzalloc(&pdev->dev, sizeof(*qmp), GFP_KERNEL);
+	if (!qmp)
+		return -ENOMEM;
 
 	qmp->dev = &pdev->dev;
-	init_रुकोqueue_head(&qmp->event);
+	init_waitqueue_head(&qmp->event);
 	mutex_init(&qmp->tx_lock);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	qmp->msgram = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(qmp->msgram))
-		वापस PTR_ERR(qmp->msgram);
+	if (IS_ERR(qmp->msgram))
+		return PTR_ERR(qmp->msgram);
 
 	qmp->mbox_client.dev = &pdev->dev;
-	qmp->mbox_client.knows_txकरोne = true;
+	qmp->mbox_client.knows_txdone = true;
 	qmp->mbox_chan = mbox_request_channel(&qmp->mbox_client, 0);
-	अगर (IS_ERR(qmp->mbox_chan)) अणु
+	if (IS_ERR(qmp->mbox_chan)) {
 		dev_err(&pdev->dev, "failed to acquire ipc mailbox\n");
-		वापस PTR_ERR(qmp->mbox_chan);
-	पूर्ण
+		return PTR_ERR(qmp->mbox_chan);
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	ret = devm_request_irq(&pdev->dev, irq, qmp_पूर्णांकr, IRQF_ONESHOT,
+	irq = platform_get_irq(pdev, 0);
+	ret = devm_request_irq(&pdev->dev, irq, qmp_intr, IRQF_ONESHOT,
 			       "aoss-qmp", qmp);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to request interrupt\n");
-		जाओ err_मुक्त_mbox;
-	पूर्ण
+		goto err_free_mbox;
+	}
 
-	ret = qmp_खोलो(qmp);
-	अगर (ret < 0)
-		जाओ err_मुक्त_mbox;
+	ret = qmp_open(qmp);
+	if (ret < 0)
+		goto err_free_mbox;
 
 	ret = qmp_qdss_clk_add(qmp);
-	अगर (ret)
-		जाओ err_बंद_qmp;
+	if (ret)
+		goto err_close_qmp;
 
 	ret = qmp_pd_add(qmp);
-	अगर (ret)
-		जाओ err_हटाओ_qdss_clk;
+	if (ret)
+		goto err_remove_qdss_clk;
 
-	ret = qmp_cooling_devices_रेजिस्टर(qmp);
-	अगर (ret)
+	ret = qmp_cooling_devices_register(qmp);
+	if (ret)
 		dev_err(&pdev->dev, "failed to register aoss cooling devices\n");
 
-	platक्रमm_set_drvdata(pdev, qmp);
+	platform_set_drvdata(pdev, qmp);
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_qdss_clk:
-	qmp_qdss_clk_हटाओ(qmp);
-err_बंद_qmp:
-	qmp_बंद(qmp);
-err_मुक्त_mbox:
-	mbox_मुक्त_channel(qmp->mbox_chan);
+err_remove_qdss_clk:
+	qmp_qdss_clk_remove(qmp);
+err_close_qmp:
+	qmp_close(qmp);
+err_free_mbox:
+	mbox_free_channel(qmp->mbox_chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qmp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा qmp *qmp = platक्रमm_get_drvdata(pdev);
+static int qmp_remove(struct platform_device *pdev)
+{
+	struct qmp *qmp = platform_get_drvdata(pdev);
 
-	qmp_qdss_clk_हटाओ(qmp);
-	qmp_pd_हटाओ(qmp);
-	qmp_cooling_devices_हटाओ(qmp);
+	qmp_qdss_clk_remove(qmp);
+	qmp_pd_remove(qmp);
+	qmp_cooling_devices_remove(qmp);
 
-	qmp_बंद(qmp);
-	mbox_मुक्त_channel(qmp->mbox_chan);
+	qmp_close(qmp);
+	mbox_free_channel(qmp->mbox_chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id qmp_dt_match[] = अणु
-	अणु .compatible = "qcom,sc7180-aoss-qmp", पूर्ण,
-	अणु .compatible = "qcom,sc7280-aoss-qmp", पूर्ण,
-	अणु .compatible = "qcom,sdm845-aoss-qmp", पूर्ण,
-	अणु .compatible = "qcom,sm8150-aoss-qmp", पूर्ण,
-	अणु .compatible = "qcom,sm8250-aoss-qmp", पूर्ण,
-	अणु .compatible = "qcom,sm8350-aoss-qmp", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id qmp_dt_match[] = {
+	{ .compatible = "qcom,sc7180-aoss-qmp", },
+	{ .compatible = "qcom,sc7280-aoss-qmp", },
+	{ .compatible = "qcom,sdm845-aoss-qmp", },
+	{ .compatible = "qcom,sm8150-aoss-qmp", },
+	{ .compatible = "qcom,sm8250-aoss-qmp", },
+	{ .compatible = "qcom,sm8350-aoss-qmp", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, qmp_dt_match);
 
-अटल काष्ठा platक्रमm_driver qmp_driver = अणु
-	.driver = अणु
+static struct platform_driver qmp_driver = {
+	.driver = {
 		.name		= "qcom_aoss_qmp",
 		.of_match_table	= qmp_dt_match,
-	पूर्ण,
+	},
 	.probe = qmp_probe,
-	.हटाओ	= qmp_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(qmp_driver);
+	.remove	= qmp_remove,
+};
+module_platform_driver(qmp_driver);
 
 MODULE_DESCRIPTION("Qualcomm AOSS QMP driver");
 MODULE_LICENSE("GPL v2");

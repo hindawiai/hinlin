@@ -1,119 +1,118 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Test that संकेत delivery is able to expand the stack segment without
+ * Test that signal delivery is able to expand the stack segment without
  * triggering a SEGV.
  *
  * Based on test code by Tom Lane.
  */
 
-#समावेश <err.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#समावेश "../pmu/lib.h"
-#समावेश "utils.h"
+#include "../pmu/lib.h"
+#include "utils.h"
 
-#घोषणा _KB (1024)
-#घोषणा _MB (1024 * 1024)
+#define _KB (1024)
+#define _MB (1024 * 1024)
 
-अटल अक्षर *stack_base_ptr;
-अटल अक्षर *stack_top_ptr;
+static char *stack_base_ptr;
+static char *stack_top_ptr;
 
-अटल अस्थिर संक_पूर्ण_प्रकार sig_occurred = 0;
+static volatile sig_atomic_t sig_occurred = 0;
 
-अटल व्योम sigusr1_handler(पूर्णांक संकेत_arg)
-अणु
+static void sigusr1_handler(int signal_arg)
+{
 	sig_occurred = 1;
-पूर्ण
+}
 
-अटल पूर्णांक consume_stack(अचिन्हित पूर्णांक stack_size, जोड़ pipe ग_लिखो_pipe)
-अणु
-	अक्षर stack_cur;
+static int consume_stack(unsigned int stack_size, union pipe write_pipe)
+{
+	char stack_cur;
 
-	अगर ((stack_base_ptr - &stack_cur) < stack_size)
-		वापस consume_stack(stack_size, ग_लिखो_pipe);
-	अन्यथा अणु
+	if ((stack_base_ptr - &stack_cur) < stack_size)
+		return consume_stack(stack_size, write_pipe);
+	else {
 		stack_top_ptr = &stack_cur;
 
-		FAIL_IF(notअगरy_parent(ग_लिखो_pipe));
+		FAIL_IF(notify_parent(write_pipe));
 
-		जबतक (!sig_occurred)
+		while (!sig_occurred)
 			barrier();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक child(अचिन्हित पूर्णांक stack_size, जोड़ pipe ग_लिखो_pipe)
-अणु
-	काष्ठा sigaction act;
-	अक्षर stack_base;
+static int child(unsigned int stack_size, union pipe write_pipe)
+{
+	struct sigaction act;
+	char stack_base;
 
 	act.sa_handler = sigusr1_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
-	अगर (sigaction(SIGUSR1, &act, शून्य) < 0)
+	if (sigaction(SIGUSR1, &act, NULL) < 0)
 		err(1, "sigaction");
 
-	stack_base_ptr = (अक्षर *) (((माप_प्रकार) &stack_base + 65535) & ~65535UL);
+	stack_base_ptr = (char *) (((size_t) &stack_base + 65535) & ~65535UL);
 
-	FAIL_IF(consume_stack(stack_size, ग_लिखो_pipe));
+	FAIL_IF(consume_stack(stack_size, write_pipe));
 
-	म_लिखो("size 0x%06x: OK, stack base %p top %p (%zx used)\n",
+	printf("size 0x%06x: OK, stack base %p top %p (%zx used)\n",
 		stack_size, stack_base_ptr, stack_top_ptr,
 		stack_base_ptr - stack_top_ptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_one_size(अचिन्हित पूर्णांक stack_size)
-अणु
-	जोड़ pipe पढ़ो_pipe, ग_लिखो_pipe;
+static int test_one_size(unsigned int stack_size)
+{
+	union pipe read_pipe, write_pipe;
 	pid_t pid;
 
-	FAIL_IF(pipe(पढ़ो_pipe.fds) == -1);
-	FAIL_IF(pipe(ग_लिखो_pipe.fds) == -1);
+	FAIL_IF(pipe(read_pipe.fds) == -1);
+	FAIL_IF(pipe(write_pipe.fds) == -1);
 
-	pid = विभाजन();
-	अगर (pid == 0) अणु
-		बंद(पढ़ो_pipe.पढ़ो_fd);
-		बंद(ग_लिखो_pipe.ग_लिखो_fd);
-		निकास(child(stack_size, पढ़ो_pipe));
-	पूर्ण
+	pid = fork();
+	if (pid == 0) {
+		close(read_pipe.read_fd);
+		close(write_pipe.write_fd);
+		exit(child(stack_size, read_pipe));
+	}
 
-	बंद(पढ़ो_pipe.ग_लिखो_fd);
-	बंद(ग_लिखो_pipe.पढ़ो_fd);
-	FAIL_IF(sync_with_child(पढ़ो_pipe, ग_लिखो_pipe));
+	close(read_pipe.write_fd);
+	close(write_pipe.read_fd);
+	FAIL_IF(sync_with_child(read_pipe, write_pipe));
 
-	समाप्त(pid, SIGUSR1);
+	kill(pid, SIGUSR1);
 
-	FAIL_IF(रुको_क्रम_child(pid));
+	FAIL_IF(wait_for_child(pid));
 
-	बंद(पढ़ो_pipe.पढ़ो_fd);
-	बंद(ग_लिखो_pipe.ग_लिखो_fd);
+	close(read_pipe.read_fd);
+	close(write_pipe.write_fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक test(व्योम)
-अणु
-	अचिन्हित पूर्णांक i, size;
+int test(void)
+{
+	unsigned int i, size;
 
 	// Test with used stack from 1MB - 64K to 1MB + 64K
 	// Increment by 64 to get more coverage of odd sizes
-	क्रम (i = 0; i < (128 * _KB); i += 64) अणु
+	for (i = 0; i < (128 * _KB); i += 64) {
 		size = i + (1 * _MB) - (64 * _KB);
 		FAIL_IF(test_one_size(size));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(test, "stack_expansion_signal");
-पूर्ण
+int main(void)
+{
+	return test_harness(test, "stack_expansion_signal");
+}

@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright तऊ 2011 Ivan Djelic <ivan.djelic@parrot.com>
+ * Copyright © 2011 Ivan Djelic <ivan.djelic@parrot.com>
  *
- * This file is the header क्रम the न_अंकD BCH ECC implementation.
+ * This file is the header for the NAND BCH ECC implementation.
  */
 
-#अगर_अघोषित __MTD_न_अंकD_ECC_SW_BCH_H__
-#घोषणा __MTD_न_अंकD_ECC_SW_BCH_H__
+#ifndef __MTD_NAND_ECC_SW_BCH_H__
+#define __MTD_NAND_ECC_SW_BCH_H__
 
-#समावेश <linux/mtd/nand.h>
-#समावेश <linux/bch.h>
+#include <linux/mtd/nand.h>
+#include <linux/bch.h>
 
 /**
- * काष्ठा nand_ecc_sw_bch_conf - निजी software BCH ECC engine काष्ठाure
+ * struct nand_ecc_sw_bch_conf - private software BCH ECC engine structure
  * @req_ctx: Save request context and tweak the original request to fit the
  *           engine needs
  * @code_size: Number of bytes needed to store a code (one code per step)
  * @calc_buf: Buffer to use when calculating ECC bytes
- * @code_buf: Buffer to use when पढ़ोing (raw) ECC bytes from the chip
- * @bch: BCH control काष्ठाure
+ * @code_buf: Buffer to use when reading (raw) ECC bytes from the chip
+ * @bch: BCH control structure
  * @errloc: error location array
  * @eccmask: XOR ecc mask, allows erased pages to be decoded as valid
  */
-काष्ठा nand_ecc_sw_bch_conf अणु
-	काष्ठा nand_ecc_req_tweak_ctx req_ctx;
-	अचिन्हित पूर्णांक code_size;
+struct nand_ecc_sw_bch_conf {
+	struct nand_ecc_req_tweak_ctx req_ctx;
+	unsigned int code_size;
 	u8 *calc_buf;
 	u8 *code_buf;
-	काष्ठा bch_control *bch;
-	अचिन्हित पूर्णांक *errloc;
-	अचिन्हित अक्षर *eccmask;
-पूर्ण;
+	struct bch_control *bch;
+	unsigned int *errloc;
+	unsigned char *eccmask;
+};
 
-#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_BCH)
+#if IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_BCH)
 
-पूर्णांक nand_ecc_sw_bch_calculate(काष्ठा nand_device *nand,
-			      स्थिर अचिन्हित अक्षर *buf, अचिन्हित अक्षर *code);
-पूर्णांक nand_ecc_sw_bch_correct(काष्ठा nand_device *nand, अचिन्हित अक्षर *buf,
-			    अचिन्हित अक्षर *पढ़ो_ecc, अचिन्हित अक्षर *calc_ecc);
-पूर्णांक nand_ecc_sw_bch_init_ctx(काष्ठा nand_device *nand);
-व्योम nand_ecc_sw_bch_cleanup_ctx(काष्ठा nand_device *nand);
-काष्ठा nand_ecc_engine *nand_ecc_sw_bch_get_engine(व्योम);
+int nand_ecc_sw_bch_calculate(struct nand_device *nand,
+			      const unsigned char *buf, unsigned char *code);
+int nand_ecc_sw_bch_correct(struct nand_device *nand, unsigned char *buf,
+			    unsigned char *read_ecc, unsigned char *calc_ecc);
+int nand_ecc_sw_bch_init_ctx(struct nand_device *nand);
+void nand_ecc_sw_bch_cleanup_ctx(struct nand_device *nand);
+struct nand_ecc_engine *nand_ecc_sw_bch_get_engine(void);
 
-#अन्यथा /* !CONFIG_MTD_न_अंकD_ECC_SW_BCH */
+#else /* !CONFIG_MTD_NAND_ECC_SW_BCH */
 
-अटल अंतरभूत पूर्णांक nand_ecc_sw_bch_calculate(काष्ठा nand_device *nand,
-					    स्थिर अचिन्हित अक्षर *buf,
-					    अचिन्हित अक्षर *code)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int nand_ecc_sw_bch_calculate(struct nand_device *nand,
+					    const unsigned char *buf,
+					    unsigned char *code)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक nand_ecc_sw_bch_correct(काष्ठा nand_device *nand,
-					  अचिन्हित अक्षर *buf,
-					  अचिन्हित अक्षर *पढ़ो_ecc,
-					  अचिन्हित अक्षर *calc_ecc)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int nand_ecc_sw_bch_correct(struct nand_device *nand,
+					  unsigned char *buf,
+					  unsigned char *read_ecc,
+					  unsigned char *calc_ecc)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक nand_ecc_sw_bch_init_ctx(काष्ठा nand_device *nand)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static inline int nand_ecc_sw_bch_init_ctx(struct nand_device *nand)
+{
+	return -ENOTSUPP;
+}
 
-अटल अंतरभूत व्योम nand_ecc_sw_bch_cleanup_ctx(काष्ठा nand_device *nand) अणुपूर्ण
+static inline void nand_ecc_sw_bch_cleanup_ctx(struct nand_device *nand) {}
 
-#पूर्ण_अगर /* CONFIG_MTD_न_अंकD_ECC_SW_BCH */
+#endif /* CONFIG_MTD_NAND_ECC_SW_BCH */
 
-#पूर्ण_अगर /* __MTD_न_अंकD_ECC_SW_BCH_H__ */
+#endif /* __MTD_NAND_ECC_SW_BCH_H__ */

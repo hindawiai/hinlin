@@ -1,105 +1,104 @@
-<शैली गुरु>
 /*
- * vpअगर-display - VPIF display driver
- * Display driver क्रम TI DaVinci VPIF
+ * vpif-display - VPIF display driver
+ * Display driver for TI DaVinci VPIF
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - https://www.ti.com/
  * Copyright (C) 2014 Lad, Prabhakar <prabhakar.csengg@gmail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed .as is. WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <media/v4l2-ioctl.h>
+#include <media/v4l2-ioctl.h>
 
-#समावेश "vpif.h"
-#समावेश "vpif_display.h"
+#include "vpif.h"
+#include "vpif_display.h"
 
 MODULE_DESCRIPTION("TI DaVinci VPIF Display driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(VPIF_DISPLAY_VERSION);
 
-#घोषणा VPIF_V4L2_STD (V4L2_STD_525_60 | V4L2_STD_625_50)
+#define VPIF_V4L2_STD (V4L2_STD_525_60 | V4L2_STD_625_50)
 
-#घोषणा vpअगर_err(fmt, arg...)	v4l2_err(&vpअगर_obj.v4l2_dev, fmt, ## arg)
-#घोषणा vpअगर_dbg(level, debug, fmt, arg...)	\
-		v4l2_dbg(level, debug, &vpअगर_obj.v4l2_dev, fmt, ## arg)
+#define vpif_err(fmt, arg...)	v4l2_err(&vpif_obj.v4l2_dev, fmt, ## arg)
+#define vpif_dbg(level, debug, fmt, arg...)	\
+		v4l2_dbg(level, debug, &vpif_obj.v4l2_dev, fmt, ## arg)
 
-अटल पूर्णांक debug = 1;
+static int debug = 1;
 
-module_param(debug, पूर्णांक, 0644);
+module_param(debug, int, 0644);
 
 MODULE_PARM_DESC(debug, "Debug level 0-1");
 
-#घोषणा VPIF_DRIVER_NAME	"vpif_display"
+#define VPIF_DRIVER_NAME	"vpif_display"
 MODULE_ALIAS("platform:" VPIF_DRIVER_NAME);
 
-/* Is set to 1 in हाल of SDTV क्रमmats, 2 in हाल of HDTV क्रमmats. */
-अटल पूर्णांक ycmux_mode;
+/* Is set to 1 in case of SDTV formats, 2 in case of HDTV formats. */
+static int ycmux_mode;
 
-अटल u8 channel_first_पूर्णांक[VPIF_NUMOBJECTS][2] = अणु अणु1, 1पूर्ण पूर्ण;
+static u8 channel_first_int[VPIF_NUMOBJECTS][2] = { {1, 1} };
 
-अटल काष्ठा vpअगर_device vpअगर_obj = अणु अणुशून्यपूर्ण पूर्ण;
-अटल काष्ठा device *vpअगर_dev;
-अटल व्योम vpअगर_calculate_offsets(काष्ठा channel_obj *ch);
-अटल व्योम vpअगर_config_addr(काष्ठा channel_obj *ch, पूर्णांक muxmode);
+static struct vpif_device vpif_obj = { {NULL} };
+static struct device *vpif_dev;
+static void vpif_calculate_offsets(struct channel_obj *ch);
+static void vpif_config_addr(struct channel_obj *ch, int muxmode);
 
-अटल अंतरभूत
-काष्ठा vpअगर_disp_buffer *to_vpअगर_buffer(काष्ठा vb2_v4l2_buffer *vb)
-अणु
-	वापस container_of(vb, काष्ठा vpअगर_disp_buffer, vb);
-पूर्ण
+static inline
+struct vpif_disp_buffer *to_vpif_buffer(struct vb2_v4l2_buffer *vb)
+{
+	return container_of(vb, struct vpif_disp_buffer, vb);
+}
 
 /**
- * vpअगर_buffer_prepare :  callback function क्रम buffer prepare
+ * vpif_buffer_prepare :  callback function for buffer prepare
  * @vb: ptr to vb2_buffer
  *
- * This is the callback function क्रम buffer prepare when vb2_qbuf()
- * function is called. The buffer is prepared and user space भव address
- * or user address is converted पूर्णांकo  physical address
+ * This is the callback function for buffer prepare when vb2_qbuf()
+ * function is called. The buffer is prepared and user space virtual address
+ * or user address is converted into  physical address
  */
-अटल पूर्णांक vpअगर_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा channel_obj *ch = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा common_obj *common;
+static int vpif_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct channel_obj *ch = vb2_get_drv_priv(vb->vb2_queue);
+	struct common_obj *common;
 
 	common = &ch->common[VPIF_VIDEO_INDEX];
 
 	vb2_set_plane_payload(vb, 0, common->fmt.fmt.pix.sizeimage);
-	अगर (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
-		वापस -EINVAL;
+	if (vb2_get_plane_payload(vb, 0) > vb2_plane_size(vb, 0))
+		return -EINVAL;
 
 	vbuf->field = common->fmt.fmt.pix.field;
 
-	अगर (vb->vb2_queue->type != V4L2_BUF_TYPE_SLICED_VBI_OUTPUT) अणु
-		अचिन्हित दीर्घ addr = vb2_dma_contig_plane_dma_addr(vb, 0);
+	if (vb->vb2_queue->type != V4L2_BUF_TYPE_SLICED_VBI_OUTPUT) {
+		unsigned long addr = vb2_dma_contig_plane_dma_addr(vb, 0);
 
-		अगर (!ISALIGNED(addr + common->ytop_off) ||
-			!ISALIGNED(addr + common->ybपंचांग_off) ||
+		if (!ISALIGNED(addr + common->ytop_off) ||
+			!ISALIGNED(addr + common->ybtm_off) ||
 			!ISALIGNED(addr + common->ctop_off) ||
-			!ISALIGNED(addr + common->cbपंचांग_off)) अणु
-			vpअगर_err("buffer offset not aligned to 8 bytes\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			!ISALIGNED(addr + common->cbtm_off)) {
+			vpif_err("buffer offset not aligned to 8 bytes\n");
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vpअगर_buffer_queue_setup : Callback function क्रम buffer setup.
+ * vpif_buffer_queue_setup : Callback function for buffer setup.
  * @vq: vb2_queue ptr
  * @nbuffers: ptr to number of buffers requested by application
  * @nplanes:: contains number of distinct video planes needed to hold a frame
@@ -109,45 +108,45 @@ MODULE_ALIAS("platform:" VPIF_DRIVER_NAME);
  * This callback function is called when reqbuf() is called to adjust
  * the buffer count and buffer size
  */
-अटल पूर्णांक vpअगर_buffer_queue_setup(काष्ठा vb2_queue *vq,
-				अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
-				अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा channel_obj *ch = vb2_get_drv_priv(vq);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	अचिन्हित size = common->fmt.fmt.pix.sizeimage;
+static int vpif_buffer_queue_setup(struct vb2_queue *vq,
+				unsigned int *nbuffers, unsigned int *nplanes,
+				unsigned int sizes[], struct device *alloc_devs[])
+{
+	struct channel_obj *ch = vb2_get_drv_priv(vq);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	unsigned size = common->fmt.fmt.pix.sizeimage;
 
-	अगर (*nplanes) अणु
-		अगर (sizes[0] < size)
-			वापस -EINVAL;
+	if (*nplanes) {
+		if (sizes[0] < size)
+			return -EINVAL;
 		size = sizes[0];
-	पूर्ण
+	}
 
-	अगर (vq->num_buffers + *nbuffers < 3)
+	if (vq->num_buffers + *nbuffers < 3)
 		*nbuffers = 3 - vq->num_buffers;
 
 	*nplanes = 1;
 	sizes[0] = size;
 
-	/* Calculate the offset क्रम Y and C data  in the buffer */
-	vpअगर_calculate_offsets(ch);
+	/* Calculate the offset for Y and C data  in the buffer */
+	vpif_calculate_offsets(ch);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vpअगर_buffer_queue : Callback function to add buffer to DMA queue
+ * vpif_buffer_queue : Callback function to add buffer to DMA queue
  * @vb: ptr to vb2_buffer
  *
  * This callback function queues the buffer to DMA engine
  */
-अटल व्योम vpअगर_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vpअगर_disp_buffer *buf = to_vpअगर_buffer(vbuf);
-	काष्ठा channel_obj *ch = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा common_obj *common;
-	अचिन्हित दीर्घ flags;
+static void vpif_buffer_queue(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vpif_disp_buffer *buf = to_vpif_buffer(vbuf);
+	struct channel_obj *ch = vb2_get_drv_priv(vb->vb2_queue);
+	struct common_obj *common;
+	unsigned long flags;
 
 	common = &ch->common[VPIF_VIDEO_INDEX];
 
@@ -155,325 +154,325 @@ MODULE_ALIAS("platform:" VPIF_DRIVER_NAME);
 	spin_lock_irqsave(&common->irqlock, flags);
 	list_add_tail(&buf->list, &common->dma_queue);
 	spin_unlock_irqrestore(&common->irqlock, flags);
-पूर्ण
+}
 
 /**
- * vpअगर_start_streaming : Starts the DMA engine क्रम streaming
+ * vpif_start_streaming : Starts the DMA engine for streaming
  * @vq: ptr to vb2_buffer
  * @count: number of buffers
  */
-अटल पूर्णांक vpअगर_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा vpअगर_display_config *vpअगर_config_data =
-					vpअगर_dev->platक्रमm_data;
-	काष्ठा channel_obj *ch = vb2_get_drv_priv(vq);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा vpअगर_params *vpअगर = &ch->vpअगरparams;
-	काष्ठा vpअगर_disp_buffer *buf, *पंचांगp;
-	अचिन्हित दीर्घ addr, flags;
-	पूर्णांक ret;
+static int vpif_start_streaming(struct vb2_queue *vq, unsigned int count)
+{
+	struct vpif_display_config *vpif_config_data =
+					vpif_dev->platform_data;
+	struct channel_obj *ch = vb2_get_drv_priv(vq);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct vpif_params *vpif = &ch->vpifparams;
+	struct vpif_disp_buffer *buf, *tmp;
+	unsigned long addr, flags;
+	int ret;
 
 	spin_lock_irqsave(&common->irqlock, flags);
 
 	/* Initialize field_id */
 	ch->field_id = 0;
 
-	/* घड़ी settings */
-	अगर (vpअगर_config_data->set_घड़ी) अणु
-		ret = vpअगर_config_data->set_घड़ी(ch->vpअगरparams.std_info.
-		ycmux_mode, ch->vpअगरparams.std_info.hd_sd);
-		अगर (ret < 0) अणु
-			vpअगर_err("can't set clock\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+	/* clock settings */
+	if (vpif_config_data->set_clock) {
+		ret = vpif_config_data->set_clock(ch->vpifparams.std_info.
+		ycmux_mode, ch->vpifparams.std_info.hd_sd);
+		if (ret < 0) {
+			vpif_err("can't set clock\n");
+			goto err;
+		}
+	}
 
 	/* set the parameters and addresses */
-	ret = vpअगर_set_video_params(vpअगर, ch->channel_id + 2);
-	अगर (ret < 0)
-		जाओ err;
+	ret = vpif_set_video_params(vpif, ch->channel_id + 2);
+	if (ret < 0)
+		goto err;
 
 	ycmux_mode = ret;
-	vpअगर_config_addr(ch, ret);
+	vpif_config_addr(ch, ret);
 	/* Get the next frame from the buffer queue */
 	common->next_frm = common->cur_frm =
 			    list_entry(common->dma_queue.next,
-				       काष्ठा vpअगर_disp_buffer, list);
+				       struct vpif_disp_buffer, list);
 
 	list_del(&common->cur_frm->list);
 	spin_unlock_irqrestore(&common->irqlock, flags);
 
 	addr = vb2_dma_contig_plane_dma_addr(&common->cur_frm->vb.vb2_buf, 0);
 	common->set_addr((addr + common->ytop_off),
-			    (addr + common->ybपंचांग_off),
+			    (addr + common->ybtm_off),
 			    (addr + common->ctop_off),
-			    (addr + common->cbपंचांग_off));
+			    (addr + common->cbtm_off));
 
 	/*
-	 * Set पूर्णांकerrupt क्रम both the fields in VPIF
-	 * Register enable channel in VPIF रेजिस्टर
+	 * Set interrupt for both the fields in VPIF
+	 * Register enable channel in VPIF register
 	 */
-	channel_first_पूर्णांक[VPIF_VIDEO_INDEX][ch->channel_id] = 1;
-	अगर (VPIF_CHANNEL2_VIDEO == ch->channel_id) अणु
-		channel2_पूर्णांकr_निश्चित();
-		channel2_पूर्णांकr_enable(1);
+	channel_first_int[VPIF_VIDEO_INDEX][ch->channel_id] = 1;
+	if (VPIF_CHANNEL2_VIDEO == ch->channel_id) {
+		channel2_intr_assert();
+		channel2_intr_enable(1);
 		enable_channel2(1);
-		अगर (vpअगर_config_data->chan_config[VPIF_CHANNEL2_VIDEO].clip_en)
+		if (vpif_config_data->chan_config[VPIF_CHANNEL2_VIDEO].clip_en)
 			channel2_clipping_enable(1);
-	पूर्ण
+	}
 
-	अगर (VPIF_CHANNEL3_VIDEO == ch->channel_id || ycmux_mode == 2) अणु
-		channel3_पूर्णांकr_निश्चित();
-		channel3_पूर्णांकr_enable(1);
+	if (VPIF_CHANNEL3_VIDEO == ch->channel_id || ycmux_mode == 2) {
+		channel3_intr_assert();
+		channel3_intr_enable(1);
 		enable_channel3(1);
-		अगर (vpअगर_config_data->chan_config[VPIF_CHANNEL3_VIDEO].clip_en)
+		if (vpif_config_data->chan_config[VPIF_CHANNEL3_VIDEO].clip_en)
 			channel3_clipping_enable(1);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	list_क्रम_each_entry_safe(buf, पंचांगp, &common->dma_queue, list) अणु
+	list_for_each_entry_safe(buf, tmp, &common->dma_queue, list) {
 		list_del(&buf->list);
-		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
-	पूर्ण
+		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
+	}
 	spin_unlock_irqrestore(&common->irqlock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vpअगर_stop_streaming : Stop the DMA engine
+ * vpif_stop_streaming : Stop the DMA engine
  * @vq: ptr to vb2_queue
  *
- * This callback stops the DMA engine and any reमुख्यing buffers
+ * This callback stops the DMA engine and any remaining buffers
  * in the DMA queue are released.
  */
-अटल व्योम vpअगर_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा channel_obj *ch = vb2_get_drv_priv(vq);
-	काष्ठा common_obj *common;
-	अचिन्हित दीर्घ flags;
+static void vpif_stop_streaming(struct vb2_queue *vq)
+{
+	struct channel_obj *ch = vb2_get_drv_priv(vq);
+	struct common_obj *common;
+	unsigned long flags;
 
 	common = &ch->common[VPIF_VIDEO_INDEX];
 
 	/* Disable channel */
-	अगर (VPIF_CHANNEL2_VIDEO == ch->channel_id) अणु
+	if (VPIF_CHANNEL2_VIDEO == ch->channel_id) {
 		enable_channel2(0);
-		channel2_पूर्णांकr_enable(0);
-	पूर्ण
-	अगर (VPIF_CHANNEL3_VIDEO == ch->channel_id || ycmux_mode == 2) अणु
+		channel2_intr_enable(0);
+	}
+	if (VPIF_CHANNEL3_VIDEO == ch->channel_id || ycmux_mode == 2) {
 		enable_channel3(0);
-		channel3_पूर्णांकr_enable(0);
-	पूर्ण
+		channel3_intr_enable(0);
+	}
 
 	/* release all active buffers */
 	spin_lock_irqsave(&common->irqlock, flags);
-	अगर (common->cur_frm == common->next_frm) अणु
-		vb2_buffer_करोne(&common->cur_frm->vb.vb2_buf,
+	if (common->cur_frm == common->next_frm) {
+		vb2_buffer_done(&common->cur_frm->vb.vb2_buf,
 				VB2_BUF_STATE_ERROR);
-	पूर्ण अन्यथा अणु
-		अगर (common->cur_frm)
-			vb2_buffer_करोne(&common->cur_frm->vb.vb2_buf,
+	} else {
+		if (common->cur_frm)
+			vb2_buffer_done(&common->cur_frm->vb.vb2_buf,
 					VB2_BUF_STATE_ERROR);
-		अगर (common->next_frm)
-			vb2_buffer_करोne(&common->next_frm->vb.vb2_buf,
+		if (common->next_frm)
+			vb2_buffer_done(&common->next_frm->vb.vb2_buf,
 					VB2_BUF_STATE_ERROR);
-	पूर्ण
+	}
 
-	जबतक (!list_empty(&common->dma_queue)) अणु
+	while (!list_empty(&common->dma_queue)) {
 		common->next_frm = list_entry(common->dma_queue.next,
-						काष्ठा vpअगर_disp_buffer, list);
+						struct vpif_disp_buffer, list);
 		list_del(&common->next_frm->list);
-		vb2_buffer_करोne(&common->next_frm->vb.vb2_buf,
+		vb2_buffer_done(&common->next_frm->vb.vb2_buf,
 				VB2_BUF_STATE_ERROR);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&common->irqlock, flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा vb2_ops video_qops = अणु
-	.queue_setup		= vpअगर_buffer_queue_setup,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
-	.buf_prepare		= vpअगर_buffer_prepare,
-	.start_streaming	= vpअगर_start_streaming,
-	.stop_streaming		= vpअगर_stop_streaming,
-	.buf_queue		= vpअगर_buffer_queue,
-पूर्ण;
+static const struct vb2_ops video_qops = {
+	.queue_setup		= vpif_buffer_queue_setup,
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
+	.buf_prepare		= vpif_buffer_prepare,
+	.start_streaming	= vpif_start_streaming,
+	.stop_streaming		= vpif_stop_streaming,
+	.buf_queue		= vpif_buffer_queue,
+};
 
-अटल व्योम process_progressive_mode(काष्ठा common_obj *common)
-अणु
-	अचिन्हित दीर्घ addr;
+static void process_progressive_mode(struct common_obj *common)
+{
+	unsigned long addr;
 
 	spin_lock(&common->irqlock);
 	/* Get the next buffer from buffer queue */
 	common->next_frm = list_entry(common->dma_queue.next,
-				काष्ठा vpअगर_disp_buffer, list);
+				struct vpif_disp_buffer, list);
 	/* Remove that buffer from the buffer queue */
 	list_del(&common->next_frm->list);
 	spin_unlock(&common->irqlock);
 
-	/* Set top and bottom field addrs in VPIF रेजिस्टरs */
+	/* Set top and bottom field addrs in VPIF registers */
 	addr = vb2_dma_contig_plane_dma_addr(&common->next_frm->vb.vb2_buf, 0);
 	common->set_addr(addr + common->ytop_off,
-				 addr + common->ybपंचांग_off,
+				 addr + common->ybtm_off,
 				 addr + common->ctop_off,
-				 addr + common->cbपंचांग_off);
-पूर्ण
+				 addr + common->cbtm_off);
+}
 
-अटल व्योम process_पूर्णांकerlaced_mode(पूर्णांक fid, काष्ठा common_obj *common)
-अणु
+static void process_interlaced_mode(int fid, struct common_obj *common)
+{
 	/* device field id and local field id are in sync */
 	/* If this is even field */
-	अगर (0 == fid) अणु
-		अगर (common->cur_frm == common->next_frm)
-			वापस;
+	if (0 == fid) {
+		if (common->cur_frm == common->next_frm)
+			return;
 
 		/* one frame is displayed If next frame is
 		 *  available, release cur_frm and move on */
-		/* Copy frame display समय */
-		common->cur_frm->vb.vb2_buf.बारtamp = kसमय_get_ns();
+		/* Copy frame display time */
+		common->cur_frm->vb.vb2_buf.timestamp = ktime_get_ns();
 		/* Change status of the cur_frm */
-		vb2_buffer_करोne(&common->cur_frm->vb.vb2_buf,
+		vb2_buffer_done(&common->cur_frm->vb.vb2_buf,
 					VB2_BUF_STATE_DONE);
-		/* Make cur_frm poपूर्णांकing to next_frm */
+		/* Make cur_frm pointing to next_frm */
 		common->cur_frm = common->next_frm;
 
-	पूर्ण अन्यथा अगर (1 == fid) अणु	/* odd field */
+	} else if (1 == fid) {	/* odd field */
 		spin_lock(&common->irqlock);
-		अगर (list_empty(&common->dma_queue)
-		    || (common->cur_frm != common->next_frm)) अणु
+		if (list_empty(&common->dma_queue)
+		    || (common->cur_frm != common->next_frm)) {
 			spin_unlock(&common->irqlock);
-			वापस;
-		पूर्ण
+			return;
+		}
 		spin_unlock(&common->irqlock);
 		/* one field is displayed configure the next
-		 * frame अगर it is available अन्यथा hold on current
+		 * frame if it is available else hold on current
 		 * frame */
 		/* Get next from the buffer queue */
 		process_progressive_mode(common);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * vpअगर_channel_isr: It changes status of the displayed buffer, takes next
- * buffer from the queue and sets its address in VPIF रेजिस्टरs
+ * vpif_channel_isr: It changes status of the displayed buffer, takes next
+ * buffer from the queue and sets its address in VPIF registers
  */
-अटल irqवापस_t vpअगर_channel_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा vpअगर_device *dev = &vpअगर_obj;
-	काष्ठा channel_obj *ch;
-	काष्ठा common_obj *common;
-	पूर्णांक fid = -1, i;
-	पूर्णांक channel_id;
+static irqreturn_t vpif_channel_isr(int irq, void *dev_id)
+{
+	struct vpif_device *dev = &vpif_obj;
+	struct channel_obj *ch;
+	struct common_obj *common;
+	int fid = -1, i;
+	int channel_id;
 
-	channel_id = *(पूर्णांक *)(dev_id);
-	अगर (!vpअगर_पूर्णांकr_status(channel_id + 2))
-		वापस IRQ_NONE;
+	channel_id = *(int *)(dev_id);
+	if (!vpif_intr_status(channel_id + 2))
+		return IRQ_NONE;
 
 	ch = dev->dev[channel_id];
-	क्रम (i = 0; i < VPIF_NUMOBJECTS; i++) अणु
+	for (i = 0; i < VPIF_NUMOBJECTS; i++) {
 		common = &ch->common[i];
 		/* If streaming is started in this channel */
 
-		अगर (1 == ch->vpअगरparams.std_info.frm_fmt) अणु
+		if (1 == ch->vpifparams.std_info.frm_fmt) {
 			spin_lock(&common->irqlock);
-			अगर (list_empty(&common->dma_queue)) अणु
+			if (list_empty(&common->dma_queue)) {
 				spin_unlock(&common->irqlock);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			spin_unlock(&common->irqlock);
 
 			/* Progressive mode */
-			अगर (!channel_first_पूर्णांक[i][channel_id]) अणु
+			if (!channel_first_int[i][channel_id]) {
 				/* Mark status of the cur_frm to
-				 * करोne and unlock semaphore on it */
-				common->cur_frm->vb.vb2_buf.बारtamp =
-						kसमय_get_ns();
-				vb2_buffer_करोne(&common->cur_frm->vb.vb2_buf,
+				 * done and unlock semaphore on it */
+				common->cur_frm->vb.vb2_buf.timestamp =
+						ktime_get_ns();
+				vb2_buffer_done(&common->cur_frm->vb.vb2_buf,
 						VB2_BUF_STATE_DONE);
-				/* Make cur_frm poपूर्णांकing to next_frm */
+				/* Make cur_frm pointing to next_frm */
 				common->cur_frm = common->next_frm;
-			पूर्ण
+			}
 
-			channel_first_पूर्णांक[i][channel_id] = 0;
+			channel_first_int[i][channel_id] = 0;
 			process_progressive_mode(common);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Interlaced mode */
-			/* If it is first पूर्णांकerrupt, ignore it */
+			/* If it is first interrupt, ignore it */
 
-			अगर (channel_first_पूर्णांक[i][channel_id]) अणु
-				channel_first_पूर्णांक[i][channel_id] = 0;
-				जारी;
-			पूर्ण
+			if (channel_first_int[i][channel_id]) {
+				channel_first_int[i][channel_id] = 0;
+				continue;
+			}
 
-			अगर (0 == i) अणु
+			if (0 == i) {
 				ch->field_id ^= 1;
-				/* Get field id from VPIF रेजिस्टरs */
-				fid = vpअगर_channel_getfid(ch->channel_id + 2);
-				/* If fid करोes not match with stored field id */
-				अगर (fid != ch->field_id) अणु
+				/* Get field id from VPIF registers */
+				fid = vpif_channel_getfid(ch->channel_id + 2);
+				/* If fid does not match with stored field id */
+				if (fid != ch->field_id) {
 					/* Make them in sync */
-					अगर (0 == fid)
+					if (0 == fid)
 						ch->field_id = fid;
 
-					वापस IRQ_HANDLED;
-				पूर्ण
-			पूर्ण
-			process_पूर्णांकerlaced_mode(fid, common);
-		पूर्ण
-	पूर्ण
+					return IRQ_HANDLED;
+				}
+			}
+			process_interlaced_mode(fid, common);
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक vpअगर_update_std_info(काष्ठा channel_obj *ch)
-अणु
-	काष्ठा video_obj *vid_ch = &ch->video;
-	काष्ठा vpअगर_params *vpअगरparams = &ch->vpअगरparams;
-	काष्ठा vpअगर_channel_config_params *std_info = &vpअगरparams->std_info;
-	स्थिर काष्ठा vpअगर_channel_config_params *config;
+static int vpif_update_std_info(struct channel_obj *ch)
+{
+	struct video_obj *vid_ch = &ch->video;
+	struct vpif_params *vpifparams = &ch->vpifparams;
+	struct vpif_channel_config_params *std_info = &vpifparams->std_info;
+	const struct vpif_channel_config_params *config;
 
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < vpअगर_ch_params_count; i++) अणु
-		config = &vpअगर_ch_params[i];
-		अगर (config->hd_sd == 0) अणु
-			vpअगर_dbg(2, debug, "SD format\n");
-			अगर (config->stdid & vid_ch->stdid) अणु
-				स_नकल(std_info, config, माप(*config));
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < vpif_ch_params_count; i++) {
+		config = &vpif_ch_params[i];
+		if (config->hd_sd == 0) {
+			vpif_dbg(2, debug, "SD format\n");
+			if (config->stdid & vid_ch->stdid) {
+				memcpy(std_info, config, sizeof(*config));
+				break;
+			}
+		}
+	}
 
-	अगर (i == vpअगर_ch_params_count) अणु
-		vpअगर_dbg(1, debug, "Format not found\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (i == vpif_ch_params_count) {
+		vpif_dbg(1, debug, "Format not found\n");
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_update_resolution(काष्ठा channel_obj *ch)
-अणु
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा video_obj *vid_ch = &ch->video;
-	काष्ठा vpअगर_params *vpअगरparams = &ch->vpअगरparams;
-	काष्ठा vpअगर_channel_config_params *std_info = &vpअगरparams->std_info;
+static int vpif_update_resolution(struct channel_obj *ch)
+{
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct video_obj *vid_ch = &ch->video;
+	struct vpif_params *vpifparams = &ch->vpifparams;
+	struct vpif_channel_config_params *std_info = &vpifparams->std_info;
 
-	अगर (!vid_ch->stdid && !vid_ch->dv_timings.bt.height)
-		वापस -EINVAL;
+	if (!vid_ch->stdid && !vid_ch->dv_timings.bt.height)
+		return -EINVAL;
 
-	अगर (vid_ch->stdid) अणु
-		अगर (vpअगर_update_std_info(ch))
-			वापस -EINVAL;
-	पूर्ण
+	if (vid_ch->stdid) {
+		if (vpif_update_std_info(ch))
+			return -EINVAL;
+	}
 
-	common->fmt.fmt.pix.pixelक्रमmat = V4L2_PIX_FMT_YUV422P;
+	common->fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422P;
 	common->fmt.fmt.pix.width = std_info->width;
 	common->fmt.fmt.pix.height = std_info->height;
-	vpअगर_dbg(1, debug, "Pixel details: Width = %d,Height = %d\n",
+	vpif_dbg(1, debug, "Pixel details: Width = %d,Height = %d\n",
 			common->fmt.fmt.pix.width, common->fmt.fmt.pix.height);
 
 	/* Set height and width paramateres */
@@ -481,163 +480,163 @@ err:
 	common->width = std_info->width;
 	common->fmt.fmt.pix.sizeimage = common->height * common->width * 2;
 
-	अगर (vid_ch->stdid)
+	if (vid_ch->stdid)
 		common->fmt.fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
-	अन्यथा
+	else
 		common->fmt.fmt.pix.colorspace = V4L2_COLORSPACE_REC709;
 
-	अगर (ch->vpअगरparams.std_info.frm_fmt)
+	if (ch->vpifparams.std_info.frm_fmt)
 		common->fmt.fmt.pix.field = V4L2_FIELD_NONE;
-	अन्यथा
+	else
 		common->fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vpअगर_calculate_offsets: This function calculates buffers offset क्रम Y and C
+ * vpif_calculate_offsets: This function calculates buffers offset for Y and C
  * in the top and bottom field
  */
-अटल व्योम vpअगर_calculate_offsets(काष्ठा channel_obj *ch)
-अणु
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा vpअगर_params *vpअगरparams = &ch->vpअगरparams;
-	क्रमागत v4l2_field field = common->fmt.fmt.pix.field;
-	काष्ठा video_obj *vid_ch = &ch->video;
-	अचिन्हित पूर्णांक hpitch, sizeimage;
+static void vpif_calculate_offsets(struct channel_obj *ch)
+{
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct vpif_params *vpifparams = &ch->vpifparams;
+	enum v4l2_field field = common->fmt.fmt.pix.field;
+	struct video_obj *vid_ch = &ch->video;
+	unsigned int hpitch, sizeimage;
 
-	अगर (V4L2_FIELD_ANY == common->fmt.fmt.pix.field) अणु
-		अगर (ch->vpअगरparams.std_info.frm_fmt)
+	if (V4L2_FIELD_ANY == common->fmt.fmt.pix.field) {
+		if (ch->vpifparams.std_info.frm_fmt)
 			vid_ch->buf_field = V4L2_FIELD_NONE;
-		अन्यथा
+		else
 			vid_ch->buf_field = V4L2_FIELD_INTERLACED;
-	पूर्ण अन्यथा अणु
+	} else {
 		vid_ch->buf_field = common->fmt.fmt.pix.field;
-	पूर्ण
+	}
 
 	sizeimage = common->fmt.fmt.pix.sizeimage;
 
 	hpitch = common->fmt.fmt.pix.bytesperline;
-	अगर ((V4L2_FIELD_NONE == vid_ch->buf_field) ||
-	    (V4L2_FIELD_INTERLACED == vid_ch->buf_field)) अणु
+	if ((V4L2_FIELD_NONE == vid_ch->buf_field) ||
+	    (V4L2_FIELD_INTERLACED == vid_ch->buf_field)) {
 		common->ytop_off = 0;
-		common->ybपंचांग_off = hpitch;
+		common->ybtm_off = hpitch;
 		common->ctop_off = sizeimage / 2;
-		common->cbपंचांग_off = sizeimage / 2 + hpitch;
-	पूर्ण अन्यथा अगर (V4L2_FIELD_SEQ_TB == vid_ch->buf_field) अणु
+		common->cbtm_off = sizeimage / 2 + hpitch;
+	} else if (V4L2_FIELD_SEQ_TB == vid_ch->buf_field) {
 		common->ytop_off = 0;
-		common->ybपंचांग_off = sizeimage / 4;
+		common->ybtm_off = sizeimage / 4;
 		common->ctop_off = sizeimage / 2;
-		common->cbपंचांग_off = common->ctop_off + sizeimage / 4;
-	पूर्ण अन्यथा अगर (V4L2_FIELD_SEQ_BT == vid_ch->buf_field) अणु
-		common->ybपंचांग_off = 0;
+		common->cbtm_off = common->ctop_off + sizeimage / 4;
+	} else if (V4L2_FIELD_SEQ_BT == vid_ch->buf_field) {
+		common->ybtm_off = 0;
 		common->ytop_off = sizeimage / 4;
-		common->cbपंचांग_off = sizeimage / 2;
-		common->ctop_off = common->cbपंचांग_off + sizeimage / 4;
-	पूर्ण
+		common->cbtm_off = sizeimage / 2;
+		common->ctop_off = common->cbtm_off + sizeimage / 4;
+	}
 
-	अगर ((V4L2_FIELD_NONE == vid_ch->buf_field) ||
-	    (V4L2_FIELD_INTERLACED == vid_ch->buf_field)) अणु
-		vpअगरparams->video_params.storage_mode = 1;
-	पूर्ण अन्यथा अणु
-		vpअगरparams->video_params.storage_mode = 0;
-	पूर्ण
+	if ((V4L2_FIELD_NONE == vid_ch->buf_field) ||
+	    (V4L2_FIELD_INTERLACED == vid_ch->buf_field)) {
+		vpifparams->video_params.storage_mode = 1;
+	} else {
+		vpifparams->video_params.storage_mode = 0;
+	}
 
-	अगर (ch->vpअगरparams.std_info.frm_fmt == 1) अणु
-		vpअगरparams->video_params.hpitch =
+	if (ch->vpifparams.std_info.frm_fmt == 1) {
+		vpifparams->video_params.hpitch =
 		    common->fmt.fmt.pix.bytesperline;
-	पूर्ण अन्यथा अणु
-		अगर ((field == V4L2_FIELD_ANY) ||
+	} else {
+		if ((field == V4L2_FIELD_ANY) ||
 			(field == V4L2_FIELD_INTERLACED))
-			vpअगरparams->video_params.hpitch =
+			vpifparams->video_params.hpitch =
 			    common->fmt.fmt.pix.bytesperline * 2;
-		अन्यथा
-			vpअगरparams->video_params.hpitch =
+		else
+			vpifparams->video_params.hpitch =
 			    common->fmt.fmt.pix.bytesperline;
-	पूर्ण
+	}
 
-	ch->vpअगरparams.video_params.stdid = ch->vpअगरparams.std_info.stdid;
-पूर्ण
+	ch->vpifparams.video_params.stdid = ch->vpifparams.std_info.stdid;
+}
 
-अटल व्योम vpअगर_config_addr(काष्ठा channel_obj *ch, पूर्णांक muxmode)
-अणु
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+static void vpif_config_addr(struct channel_obj *ch, int muxmode)
+{
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
 
-	अगर (VPIF_CHANNEL3_VIDEO == ch->channel_id) अणु
+	if (VPIF_CHANNEL3_VIDEO == ch->channel_id) {
 		common->set_addr = ch3_set_videobuf_addr;
-	पूर्ण अन्यथा अणु
-		अगर (2 == muxmode)
+	} else {
+		if (2 == muxmode)
 			common->set_addr = ch2_set_videobuf_addr_yc_nmux;
-		अन्यथा
+		else
 			common->set_addr = ch2_set_videobuf_addr;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* functions implementing ioctls */
 /**
- * vpअगर_querycap() - QUERYCAP handler
+ * vpif_querycap() - QUERYCAP handler
  * @file: file ptr
  * @priv: file handle
- * @cap: ptr to v4l2_capability काष्ठाure
+ * @cap: ptr to v4l2_capability structure
  */
-अटल पूर्णांक vpअगर_querycap(काष्ठा file *file, व्योम  *priv,
-				काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
+static int vpif_querycap(struct file *file, void  *priv,
+				struct v4l2_capability *cap)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
 
-	strscpy(cap->driver, VPIF_DRIVER_NAME, माप(cap->driver));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
-		 dev_name(vpअगर_dev));
-	strscpy(cap->card, config->card_name, माप(cap->card));
+	strscpy(cap->driver, VPIF_DRIVER_NAME, sizeof(cap->driver));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
+		 dev_name(vpif_dev));
+	strscpy(cap->card, config->card_name, sizeof(cap->card));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम  *priv,
-					काष्ठा v4l2_fmtdesc *fmt)
-अणु
-	अगर (fmt->index != 0)
-		वापस -EINVAL;
+static int vpif_enum_fmt_vid_out(struct file *file, void  *priv,
+					struct v4l2_fmtdesc *fmt)
+{
+	if (fmt->index != 0)
+		return -EINVAL;
 
-	/* Fill in the inक्रमmation about क्रमmat */
-	fmt->pixelक्रमmat = V4L2_PIX_FMT_YUV422P;
-	वापस 0;
-पूर्ण
+	/* Fill in the information about format */
+	fmt->pixelformat = V4L2_PIX_FMT_YUV422P;
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+static int vpif_g_fmt_vid_out(struct file *file, void *priv,
+				struct v4l2_format *fmt)
+{
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
 
 	/* Check the validity of the buffer type */
-	अगर (common->fmt.type != fmt->type)
-		वापस -EINVAL;
+	if (common->fmt.type != fmt->type)
+		return -EINVAL;
 
-	अगर (vpअगर_update_resolution(ch))
-		वापस -EINVAL;
+	if (vpif_update_resolution(ch))
+		return -EINVAL;
 	*fmt = common->fmt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &fmt->fmt.pix;
+static int vpif_try_fmt_vid_out(struct file *file, void *priv,
+				struct v4l2_format *fmt)
+{
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct v4l2_pix_format *pixfmt = &fmt->fmt.pix;
 
 	/*
 	 * to suppress v4l-compliance warnings silently correct
-	 * the pixelक्रमmat
+	 * the pixelformat
 	 */
-	अगर (pixfmt->pixelक्रमmat != V4L2_PIX_FMT_YUV422P)
-		pixfmt->pixelक्रमmat = common->fmt.fmt.pix.pixelक्रमmat;
+	if (pixfmt->pixelformat != V4L2_PIX_FMT_YUV422P)
+		pixfmt->pixelformat = common->fmt.fmt.pix.pixelformat;
 
-	अगर (vpअगर_update_resolution(ch))
-		वापस -EINVAL;
+	if (vpif_update_resolution(ch))
+		return -EINVAL;
 
 	pixfmt->colorspace = common->fmt.fmt.pix.colorspace;
 	pixfmt->field = common->fmt.fmt.pix.field;
@@ -646,314 +645,314 @@ err:
 	pixfmt->height = common->fmt.fmt.pix.height;
 	pixfmt->sizeimage = pixfmt->bytesperline * pixfmt->height * 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
-				काष्ठा v4l2_क्रमmat *fmt)
-अणु
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा v4l2_pix_क्रमmat *pixfmt = &fmt->fmt.pix;
-	पूर्णांक ret;
+static int vpif_s_fmt_vid_out(struct file *file, void *priv,
+				struct v4l2_format *fmt)
+{
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct v4l2_pix_format *pixfmt = &fmt->fmt.pix;
+	int ret;
 
-	अगर (vb2_is_busy(&common->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&common->buffer_queue))
+		return -EBUSY;
 
-	ret = vpअगर_try_fmt_vid_out(file, priv, fmt);
-	अगर (ret)
-		वापस ret;
+	ret = vpif_try_fmt_vid_out(file, priv, fmt);
+	if (ret)
+		return ret;
 
-	/* store the pix क्रमmat in the channel object */
+	/* store the pix format in the channel object */
 	common->fmt.fmt.pix = *pixfmt;
 
-	/* store the क्रमmat in the channel object */
+	/* store the format in the channel object */
 	common->fmt = *fmt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id std_id)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा v4l2_output output;
-	पूर्णांक ret;
+static int vpif_s_std(struct file *file, void *priv, v4l2_std_id std_id)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct vpif_display_chan_config *chan_cfg;
+	struct v4l2_output output;
+	int ret;
 
-	अगर (!config->chan_config[ch->channel_id].outमाला_दो)
-		वापस -ENODATA;
+	if (!config->chan_config[ch->channel_id].outputs)
+		return -ENODATA;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	output = chan_cfg->outमाला_दो[ch->output_idx].output;
-	अगर (output.capabilities != V4L2_OUT_CAP_STD)
-		वापस -ENODATA;
+	output = chan_cfg->outputs[ch->output_idx].output;
+	if (output.capabilities != V4L2_OUT_CAP_STD)
+		return -ENODATA;
 
-	अगर (vb2_is_busy(&common->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&common->buffer_queue))
+		return -EBUSY;
 
 
-	अगर (!(std_id & VPIF_V4L2_STD))
-		वापस -EINVAL;
+	if (!(std_id & VPIF_V4L2_STD))
+		return -EINVAL;
 
 	/* Call encoder subdevice function to set the standard */
 	ch->video.stdid = std_id;
-	स_रखो(&ch->video.dv_timings, 0, माप(ch->video.dv_timings));
-	/* Get the inक्रमmation about the standard */
-	अगर (vpअगर_update_resolution(ch))
-		वापस -EINVAL;
+	memset(&ch->video.dv_timings, 0, sizeof(ch->video.dv_timings));
+	/* Get the information about the standard */
+	if (vpif_update_resolution(ch))
+		return -EINVAL;
 
 	common->fmt.fmt.pix.bytesperline = common->fmt.fmt.pix.width;
 
-	ret = v4l2_device_call_until_err(&vpअगर_obj.v4l2_dev, 1, video,
+	ret = v4l2_device_call_until_err(&vpif_obj.v4l2_dev, 1, video,
 						s_std_output, std_id);
-	अगर (ret < 0) अणु
-		vpअगर_err("Failed to set output standard\n");
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		vpif_err("Failed to set output standard\n");
+		return ret;
+	}
 
-	ret = v4l2_device_call_until_err(&vpअगर_obj.v4l2_dev, 1, video,
+	ret = v4l2_device_call_until_err(&vpif_obj.v4l2_dev, 1, video,
 							s_std, std_id);
-	अगर (ret < 0)
-		vpअगर_err("Failed to set standard for sub devices\n");
-	वापस ret;
-पूर्ण
+	if (ret < 0)
+		vpif_err("Failed to set standard for sub devices\n");
+	return ret;
+}
 
-अटल पूर्णांक vpअगर_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *std)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा v4l2_output output;
+static int vpif_g_std(struct file *file, void *priv, v4l2_std_id *std)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_display_chan_config *chan_cfg;
+	struct v4l2_output output;
 
-	अगर (!config->chan_config[ch->channel_id].outमाला_दो)
-		वापस -ENODATA;
+	if (!config->chan_config[ch->channel_id].outputs)
+		return -ENODATA;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	output = chan_cfg->outमाला_दो[ch->output_idx].output;
-	अगर (output.capabilities != V4L2_OUT_CAP_STD)
-		वापस -ENODATA;
+	output = chan_cfg->outputs[ch->output_idx].output;
+	if (output.capabilities != V4L2_OUT_CAP_STD)
+		return -ENODATA;
 
 	*std = ch->video.stdid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_क्रमागत_output(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_output *output)
-अणु
+static int vpif_enum_output(struct file *file, void *fh,
+				struct v4l2_output *output)
+{
 
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_display_chan_config *chan_cfg;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	अगर (output->index >= chan_cfg->output_count) अणु
-		vpअगर_dbg(1, debug, "Invalid output index\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (output->index >= chan_cfg->output_count) {
+		vpif_dbg(1, debug, "Invalid output index\n");
+		return -EINVAL;
+	}
 
-	*output = chan_cfg->outमाला_दो[output->index].output;
-	वापस 0;
-पूर्ण
+	*output = chan_cfg->outputs[output->index].output;
+	return 0;
+}
 
 /**
- * vpअगर_output_to_subdev() - Maps output to sub device
- * @vpअगर_cfg: global config ptr
+ * vpif_output_to_subdev() - Maps output to sub device
+ * @vpif_cfg: global config ptr
  * @chan_cfg: channel config ptr
  * @index: Given output index from application
  *
- * lookup the sub device inक्रमmation क्रम a given output index.
+ * lookup the sub device information for a given output index.
  * we report all the output to application. output table also
- * has sub device name क्रम the each output
+ * has sub device name for the each output
  */
-अटल पूर्णांक
-vpअगर_output_to_subdev(काष्ठा vpअगर_display_config *vpअगर_cfg,
-		      काष्ठा vpअगर_display_chan_config *chan_cfg, पूर्णांक index)
-अणु
-	काष्ठा vpअगर_subdev_info *subdev_info;
-	स्थिर अक्षर *subdev_name;
-	पूर्णांक i;
+static int
+vpif_output_to_subdev(struct vpif_display_config *vpif_cfg,
+		      struct vpif_display_chan_config *chan_cfg, int index)
+{
+	struct vpif_subdev_info *subdev_info;
+	const char *subdev_name;
+	int i;
 
-	vpअगर_dbg(2, debug, "vpif_output_to_subdev\n");
+	vpif_dbg(2, debug, "vpif_output_to_subdev\n");
 
-	अगर (!chan_cfg->outमाला_दो)
-		वापस -1;
+	if (!chan_cfg->outputs)
+		return -1;
 
-	subdev_name = chan_cfg->outमाला_दो[index].subdev_name;
-	अगर (!subdev_name)
-		वापस -1;
+	subdev_name = chan_cfg->outputs[index].subdev_name;
+	if (!subdev_name)
+		return -1;
 
 	/* loop through the sub device list to get the sub device info */
-	क्रम (i = 0; i < vpअगर_cfg->subdev_count; i++) अणु
-		subdev_info = &vpअगर_cfg->subdevinfo[i];
-		अगर (!म_भेद(subdev_info->name, subdev_name))
-			वापस i;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	for (i = 0; i < vpif_cfg->subdev_count; i++) {
+		subdev_info = &vpif_cfg->subdevinfo[i];
+		if (!strcmp(subdev_info->name, subdev_name))
+			return i;
+	}
+	return -1;
+}
 
 /**
- * vpअगर_set_output() - Select an output
- * @vpअगर_cfg: global config ptr
+ * vpif_set_output() - Select an output
+ * @vpif_cfg: global config ptr
  * @ch: channel
  * @index: Given output index from application
  *
  * Select the given output.
  */
-अटल पूर्णांक vpअगर_set_output(काष्ठा vpअगर_display_config *vpअगर_cfg,
-		      काष्ठा channel_obj *ch, पूर्णांक index)
-अणु
-	काष्ठा vpअगर_display_chan_config *chan_cfg =
-		&vpअगर_cfg->chan_config[ch->channel_id];
-	काष्ठा v4l2_subdev *sd = शून्य;
+static int vpif_set_output(struct vpif_display_config *vpif_cfg,
+		      struct channel_obj *ch, int index)
+{
+	struct vpif_display_chan_config *chan_cfg =
+		&vpif_cfg->chan_config[ch->channel_id];
+	struct v4l2_subdev *sd = NULL;
 	u32 input = 0, output = 0;
-	पूर्णांक sd_index;
-	पूर्णांक ret;
+	int sd_index;
+	int ret;
 
-	sd_index = vpअगर_output_to_subdev(vpअगर_cfg, chan_cfg, index);
-	अगर (sd_index >= 0)
-		sd = vpअगर_obj.sd[sd_index];
+	sd_index = vpif_output_to_subdev(vpif_cfg, chan_cfg, index);
+	if (sd_index >= 0)
+		sd = vpif_obj.sd[sd_index];
 
-	अगर (sd) अणु
-		input = chan_cfg->outमाला_दो[index].input_route;
-		output = chan_cfg->outमाला_दो[index].output_route;
+	if (sd) {
+		input = chan_cfg->outputs[index].input_route;
+		output = chan_cfg->outputs[index].output_route;
 		ret = v4l2_subdev_call(sd, video, s_routing, input, output, 0);
-		अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
-			vpअगर_err("Failed to set output\n");
-			वापस ret;
-		पूर्ण
+		if (ret < 0 && ret != -ENOIOCTLCMD) {
+			vpif_err("Failed to set output\n");
+			return ret;
+		}
 
-	पूर्ण
+	}
 	ch->output_idx = index;
 	ch->sd = sd;
-	अगर (chan_cfg->outमाला_दो)
+	if (chan_cfg->outputs)
 		/* update tvnorms from the sub device output info */
-		ch->video_dev.tvnorms = chan_cfg->outमाला_दो[index].output.std;
-	वापस 0;
-पूर्ण
+		ch->video_dev.tvnorms = chan_cfg->outputs[index].output.std;
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_s_output(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+static int vpif_s_output(struct file *file, void *priv, unsigned int i)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_display_chan_config *chan_cfg;
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
 
-	अगर (vb2_is_busy(&common->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&common->buffer_queue))
+		return -EBUSY;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
 
-	अगर (i >= chan_cfg->output_count)
-		वापस -EINVAL;
+	if (i >= chan_cfg->output_count)
+		return -EINVAL;
 
-	वापस vpअगर_set_output(config, ch, i);
-पूर्ण
+	return vpif_set_output(config, ch, i);
+}
 
-अटल पूर्णांक vpअगर_g_output(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
-अणु
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
+static int vpif_g_output(struct file *file, void *priv, unsigned int *i)
+{
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
 
 	*i = ch->output_idx;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vpअगर_क्रमागत_dv_timings() - ENUM_DV_TIMINGS handler
+ * vpif_enum_dv_timings() - ENUM_DV_TIMINGS handler
  * @file: file ptr
  * @priv: file handle
  * @timings: input timings
  */
-अटल पूर्णांक
-vpअगर_क्रमागत_dv_timings(काष्ठा file *file, व्योम *priv,
-		     काष्ठा v4l2_क्रमागत_dv_timings *timings)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा v4l2_output output;
-	पूर्णांक ret;
+static int
+vpif_enum_dv_timings(struct file *file, void *priv,
+		     struct v4l2_enum_dv_timings *timings)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_display_chan_config *chan_cfg;
+	struct v4l2_output output;
+	int ret;
 
-	अगर (!config->chan_config[ch->channel_id].outमाला_दो)
-		वापस -ENODATA;
+	if (!config->chan_config[ch->channel_id].outputs)
+		return -ENODATA;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	output = chan_cfg->outमाला_दो[ch->output_idx].output;
-	अगर (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
-		वापस -ENODATA;
+	output = chan_cfg->outputs[ch->output_idx].output;
+	if (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
+		return -ENODATA;
 
 	timings->pad = 0;
 
-	ret = v4l2_subdev_call(ch->sd, pad, क्रमागत_dv_timings, timings);
-	अगर (ret == -ENOIOCTLCMD || ret == -ENODEV)
-		वापस -EINVAL;
-	वापस ret;
-पूर्ण
+	ret = v4l2_subdev_call(ch->sd, pad, enum_dv_timings, timings);
+	if (ret == -ENOIOCTLCMD || ret == -ENODEV)
+		return -EINVAL;
+	return ret;
+}
 
 /**
- * vpअगर_s_dv_timings() - S_DV_TIMINGS handler
+ * vpif_s_dv_timings() - S_DV_TIMINGS handler
  * @file: file ptr
  * @priv: file handle
  * @timings: digital video timings
  */
-अटल पूर्णांक vpअगर_s_dv_timings(काष्ठा file *file, व्योम *priv,
-		काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_params *vpअगरparams = &ch->vpअगरparams;
-	काष्ठा common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
-	काष्ठा vpअगर_channel_config_params *std_info = &vpअगरparams->std_info;
-	काष्ठा video_obj *vid_ch = &ch->video;
-	काष्ठा v4l2_bt_timings *bt = &vid_ch->dv_timings.bt;
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा v4l2_output output;
-	पूर्णांक ret;
+static int vpif_s_dv_timings(struct file *file, void *priv,
+		struct v4l2_dv_timings *timings)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_params *vpifparams = &ch->vpifparams;
+	struct common_obj *common = &ch->common[VPIF_VIDEO_INDEX];
+	struct vpif_channel_config_params *std_info = &vpifparams->std_info;
+	struct video_obj *vid_ch = &ch->video;
+	struct v4l2_bt_timings *bt = &vid_ch->dv_timings.bt;
+	struct vpif_display_chan_config *chan_cfg;
+	struct v4l2_output output;
+	int ret;
 
-	अगर (!config->chan_config[ch->channel_id].outमाला_दो)
-		वापस -ENODATA;
+	if (!config->chan_config[ch->channel_id].outputs)
+		return -ENODATA;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	output = chan_cfg->outमाला_दो[ch->output_idx].output;
-	अगर (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
-		वापस -ENODATA;
+	output = chan_cfg->outputs[ch->output_idx].output;
+	if (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
+		return -ENODATA;
 
-	अगर (vb2_is_busy(&common->buffer_queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&common->buffer_queue))
+		return -EBUSY;
 
-	अगर (timings->type != V4L2_DV_BT_656_1120) अणु
-		vpअगर_dbg(2, debug, "Timing type not defined\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (timings->type != V4L2_DV_BT_656_1120) {
+		vpif_dbg(2, debug, "Timing type not defined\n");
+		return -EINVAL;
+	}
 
-	/* Configure subdevice timings, अगर any */
+	/* Configure subdevice timings, if any */
 	ret = v4l2_subdev_call(ch->sd, video, s_dv_timings, timings);
-	अगर (ret == -ENOIOCTLCMD || ret == -ENODEV)
+	if (ret == -ENOIOCTLCMD || ret == -ENODEV)
 		ret = 0;
-	अगर (ret < 0) अणु
-		vpअगर_dbg(2, debug, "Error setting custom DV timings\n");
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		vpif_dbg(2, debug, "Error setting custom DV timings\n");
+		return ret;
+	}
 
-	अगर (!(timings->bt.width && timings->bt.height &&
+	if (!(timings->bt.width && timings->bt.height &&
 				(timings->bt.hbackporch ||
 				 timings->bt.hfrontporch ||
 				 timings->bt.hsync) &&
 				timings->bt.vfrontporch &&
 				(timings->bt.vbackporch ||
-				 timings->bt.vsync))) अणु
-		vpअगर_dbg(2, debug, "Timings for width, height, horizontal back porch, horizontal sync, horizontal front porch, vertical back porch, vertical sync and vertical back porch must be defined\n");
-		वापस -EINVAL;
-	पूर्ण
+				 timings->bt.vsync))) {
+		vpif_dbg(2, debug, "Timings for width, height, horizontal back porch, horizontal sync, horizontal front porch, vertical back porch, vertical sync and vertical back porch must be defined\n");
+		return -EINVAL;
+	}
 
 	vid_ch->dv_timings = *timings;
 
@@ -966,8 +965,8 @@ vpअगर_क्रमागत_dv_timings(काष्ठा file *file, व�
 	std_info->l3 = bt->vsync + bt->vbackporch + 1;
 
 	std_info->vsize = V4L2_DV_BT_FRAME_HEIGHT(bt);
-	अगर (bt->पूर्णांकerlaced) अणु
-		अगर (bt->il_vbackporch || bt->il_vfrontporch || bt->il_vsync) अणु
+	if (bt->interlaced) {
+		if (bt->il_vbackporch || bt->il_vfrontporch || bt->il_vsync) {
 			std_info->l5 = std_info->vsize/2 -
 				(bt->vfrontporch - 1);
 			std_info->l7 = std_info->vsize/2 + 1;
@@ -975,82 +974,82 @@ vpअगर_क्रमागत_dv_timings(काष्ठा file *file, व�
 				bt->il_vbackporch + 1;
 			std_info->l11 = std_info->vsize -
 				(bt->il_vfrontporch - 1);
-		पूर्ण अन्यथा अणु
-			vpअगर_dbg(2, debug, "Required timing values for interlaced BT format missing\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		} else {
+			vpif_dbg(2, debug, "Required timing values for interlaced BT format missing\n");
+			return -EINVAL;
+		}
+	} else {
 		std_info->l5 = std_info->vsize - (bt->vfrontporch - 1);
-	पूर्ण
+	}
 	strscpy(std_info->name, "Custom timings BT656/1120",
-		माप(std_info->name));
+		sizeof(std_info->name));
 	std_info->width = bt->width;
 	std_info->height = bt->height;
-	std_info->frm_fmt = bt->पूर्णांकerlaced ? 0 : 1;
+	std_info->frm_fmt = bt->interlaced ? 0 : 1;
 	std_info->ycmux_mode = 0;
-	std_info->capture_क्रमmat = 0;
+	std_info->capture_format = 0;
 	std_info->vbi_supported = 0;
 	std_info->hd_sd = 1;
 	std_info->stdid = 0;
 	vid_ch->stdid = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vpअगर_g_dv_timings() - G_DV_TIMINGS handler
+ * vpif_g_dv_timings() - G_DV_TIMINGS handler
  * @file: file ptr
  * @priv: file handle
  * @timings: digital video timings
  */
-अटल पूर्णांक vpअगर_g_dv_timings(काष्ठा file *file, व्योम *priv,
-		काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा vpअगर_display_config *config = vpअगर_dev->platक्रमm_data;
-	काष्ठा video_device *vdev = video_devdata(file);
-	काष्ठा channel_obj *ch = video_get_drvdata(vdev);
-	काष्ठा vpअगर_display_chan_config *chan_cfg;
-	काष्ठा video_obj *vid_ch = &ch->video;
-	काष्ठा v4l2_output output;
+static int vpif_g_dv_timings(struct file *file, void *priv,
+		struct v4l2_dv_timings *timings)
+{
+	struct vpif_display_config *config = vpif_dev->platform_data;
+	struct video_device *vdev = video_devdata(file);
+	struct channel_obj *ch = video_get_drvdata(vdev);
+	struct vpif_display_chan_config *chan_cfg;
+	struct video_obj *vid_ch = &ch->video;
+	struct v4l2_output output;
 
-	अगर (!config->chan_config[ch->channel_id].outमाला_दो)
-		जाओ error;
+	if (!config->chan_config[ch->channel_id].outputs)
+		goto error;
 
 	chan_cfg = &config->chan_config[ch->channel_id];
-	output = chan_cfg->outमाला_दो[ch->output_idx].output;
+	output = chan_cfg->outputs[ch->output_idx].output;
 
-	अगर (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
-		जाओ error;
+	if (output.capabilities != V4L2_OUT_CAP_DV_TIMINGS)
+		goto error;
 
 	*timings = vid_ch->dv_timings;
 
-	वापस 0;
+	return 0;
 error:
-	वापस -ENODATA;
-पूर्ण
+	return -ENODATA;
+}
 
 /*
- * vpअगर_log_status() - Status inक्रमmation
+ * vpif_log_status() - Status information
  * @file: file ptr
  * @priv: file handle
  *
  * Returns zero.
  */
-अटल पूर्णांक vpअगर_log_status(काष्ठा file *filep, व्योम *priv)
-अणु
-	/* status क्रम sub devices */
-	v4l2_device_call_all(&vpअगर_obj.v4l2_dev, 0, core, log_status);
+static int vpif_log_status(struct file *filep, void *priv)
+{
+	/* status for sub devices */
+	v4l2_device_call_all(&vpif_obj.v4l2_dev, 0, core, log_status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* vpअगर display ioctl operations */
-अटल स्थिर काष्ठा v4l2_ioctl_ops vpअगर_ioctl_ops = अणु
-	.vidioc_querycap		= vpअगर_querycap,
-	.vidioc_क्रमागत_fmt_vid_out	= vpअगर_क्रमागत_fmt_vid_out,
-	.vidioc_g_fmt_vid_out		= vpअगर_g_fmt_vid_out,
-	.vidioc_s_fmt_vid_out		= vpअगर_s_fmt_vid_out,
-	.vidioc_try_fmt_vid_out		= vpअगर_try_fmt_vid_out,
+/* vpif display ioctl operations */
+static const struct v4l2_ioctl_ops vpif_ioctl_ops = {
+	.vidioc_querycap		= vpif_querycap,
+	.vidioc_enum_fmt_vid_out	= vpif_enum_fmt_vid_out,
+	.vidioc_g_fmt_vid_out		= vpif_g_fmt_vid_out,
+	.vidioc_s_fmt_vid_out		= vpif_s_fmt_vid_out,
+	.vidioc_try_fmt_vid_out		= vpif_try_fmt_vid_out,
 
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
 	.vidioc_create_bufs		= vb2_ioctl_create_bufs,
@@ -1061,106 +1060,106 @@ error:
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
 
-	.vidioc_s_std			= vpअगर_s_std,
-	.vidioc_g_std			= vpअगर_g_std,
+	.vidioc_s_std			= vpif_s_std,
+	.vidioc_g_std			= vpif_g_std,
 
-	.vidioc_क्रमागत_output		= vpअगर_क्रमागत_output,
-	.vidioc_s_output		= vpअगर_s_output,
-	.vidioc_g_output		= vpअगर_g_output,
+	.vidioc_enum_output		= vpif_enum_output,
+	.vidioc_s_output		= vpif_s_output,
+	.vidioc_g_output		= vpif_g_output,
 
-	.vidioc_क्रमागत_dv_timings		= vpअगर_क्रमागत_dv_timings,
-	.vidioc_s_dv_timings		= vpअगर_s_dv_timings,
-	.vidioc_g_dv_timings		= vpअगर_g_dv_timings,
+	.vidioc_enum_dv_timings		= vpif_enum_dv_timings,
+	.vidioc_s_dv_timings		= vpif_s_dv_timings,
+	.vidioc_g_dv_timings		= vpif_g_dv_timings,
 
-	.vidioc_log_status		= vpअगर_log_status,
-पूर्ण;
+	.vidioc_log_status		= vpif_log_status,
+};
 
-अटल स्थिर काष्ठा v4l2_file_operations vpअगर_fops = अणु
+static const struct v4l2_file_operations vpif_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= v4l2_fh_खोलो,
+	.open		= v4l2_fh_open,
 	.release	= vb2_fop_release,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= vb2_fop_mmap,
 	.poll		= vb2_fop_poll
-पूर्ण;
+};
 
 /*Configure the channels, buffer sizei, request irq */
-अटल पूर्णांक initialize_vpअगर(व्योम)
-अणु
-	पूर्णांक मुक्त_channel_objects_index;
-	पूर्णांक err, i, j;
+static int initialize_vpif(void)
+{
+	int free_channel_objects_index;
+	int err, i, j;
 
-	/* Allocate memory क्रम six channel objects */
-	क्रम (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) अणु
-		vpअगर_obj.dev[i] =
-		    kzalloc(माप(काष्ठा channel_obj), GFP_KERNEL);
-		/* If memory allocation fails, वापस error */
-		अगर (!vpअगर_obj.dev[i]) अणु
-			मुक्त_channel_objects_index = i;
+	/* Allocate memory for six channel objects */
+	for (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) {
+		vpif_obj.dev[i] =
+		    kzalloc(sizeof(struct channel_obj), GFP_KERNEL);
+		/* If memory allocation fails, return error */
+		if (!vpif_obj.dev[i]) {
+			free_channel_objects_index = i;
 			err = -ENOMEM;
-			जाओ vpअगर_init_मुक्त_channel_objects;
-		पूर्ण
-	पूर्ण
+			goto vpif_init_free_channel_objects;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-vpअगर_init_मुक्त_channel_objects:
-	क्रम (j = 0; j < मुक्त_channel_objects_index; j++)
-		kमुक्त(vpअगर_obj.dev[j]);
-	वापस err;
-पूर्ण
+vpif_init_free_channel_objects:
+	for (j = 0; j < free_channel_objects_index; j++)
+		kfree(vpif_obj.dev[j]);
+	return err;
+}
 
-अटल व्योम मुक्त_vpअगर_objs(व्योम)
-अणु
-	पूर्णांक i;
+static void free_vpif_objs(void)
+{
+	int i;
 
-	क्रम (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++)
-		kमुक्त(vpअगर_obj.dev[i]);
-पूर्ण
+	for (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++)
+		kfree(vpif_obj.dev[i]);
+}
 
-अटल पूर्णांक vpअगर_probe_complete(व्योम)
-अणु
-	काष्ठा common_obj *common;
-	काष्ठा video_device *vdev;
-	काष्ठा channel_obj *ch;
-	काष्ठा vb2_queue *q;
-	पूर्णांक j, err, k;
+static int vpif_probe_complete(void)
+{
+	struct common_obj *common;
+	struct video_device *vdev;
+	struct channel_obj *ch;
+	struct vb2_queue *q;
+	int j, err, k;
 
-	क्रम (j = 0; j < VPIF_DISPLAY_MAX_DEVICES; j++) अणु
-		ch = vpअगर_obj.dev[j];
+	for (j = 0; j < VPIF_DISPLAY_MAX_DEVICES; j++) {
+		ch = vpif_obj.dev[j];
 		/* Initialize field of the channel objects */
-		क्रम (k = 0; k < VPIF_NUMOBJECTS; k++) अणु
+		for (k = 0; k < VPIF_NUMOBJECTS; k++) {
 			common = &ch->common[k];
 			spin_lock_init(&common->irqlock);
 			mutex_init(&common->lock);
-			common->set_addr = शून्य;
+			common->set_addr = NULL;
 			common->ytop_off = 0;
-			common->ybपंचांग_off = 0;
+			common->ybtm_off = 0;
 			common->ctop_off = 0;
-			common->cbपंचांग_off = 0;
-			common->cur_frm = शून्य;
-			common->next_frm = शून्य;
-			स_रखो(&common->fmt, 0, माप(common->fmt));
-		पूर्ण
+			common->cbtm_off = 0;
+			common->cur_frm = NULL;
+			common->next_frm = NULL;
+			memset(&common->fmt, 0, sizeof(common->fmt));
+		}
 		ch->initialized = 0;
-		अगर (vpअगर_obj.config->subdev_count)
-			ch->sd = vpअगर_obj.sd[0];
+		if (vpif_obj.config->subdev_count)
+			ch->sd = vpif_obj.sd[0];
 		ch->channel_id = j;
 
-		स_रखो(&ch->vpअगरparams, 0, माप(ch->vpअगरparams));
+		memset(&ch->vpifparams, 0, sizeof(ch->vpifparams));
 
 		ch->common[VPIF_VIDEO_INDEX].fmt.type =
 						V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 		/* select output 0 */
-		err = vpअगर_set_output(vpअगर_obj.config, ch, 0);
-		अगर (err)
-			जाओ probe_out;
+		err = vpif_set_output(vpif_obj.config, ch, 0);
+		if (err)
+			goto probe_out;
 
-		/* set initial क्रमmat */
+		/* set initial format */
 		ch->video.stdid = V4L2_STD_525_60;
-		स_रखो(&ch->video.dv_timings, 0, माप(ch->video.dv_timings));
-		vpअगर_update_resolution(ch);
+		memset(&ch->video.dv_timings, 0, sizeof(ch->video.dv_timings));
+		vpif_update_resolution(ch);
 
 		/* Initialize vb2 queue */
 		q = &common->buffer_queue;
@@ -1169,235 +1168,235 @@ vpअगर_init_मुक्त_channel_objects:
 		q->drv_priv = ch;
 		q->ops = &video_qops;
 		q->mem_ops = &vb2_dma_contig_memops;
-		q->buf_काष्ठा_size = माप(काष्ठा vpअगर_disp_buffer);
-		q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+		q->buf_struct_size = sizeof(struct vpif_disp_buffer);
+		q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 		q->min_buffers_needed = 1;
 		q->lock = &common->lock;
-		q->dev = vpअगर_dev;
+		q->dev = vpif_dev;
 		err = vb2_queue_init(q);
-		अगर (err) अणु
-			vpअगर_err("vpif_display: vb2_queue_init() failed\n");
-			जाओ probe_out;
-		पूर्ण
+		if (err) {
+			vpif_err("vpif_display: vb2_queue_init() failed\n");
+			goto probe_out;
+		}
 
 		INIT_LIST_HEAD(&common->dma_queue);
 
-		/* रेजिस्टर video device */
-		vpअगर_dbg(1, debug, "channel=%p,channel->video_dev=%p\n",
+		/* register video device */
+		vpif_dbg(1, debug, "channel=%p,channel->video_dev=%p\n",
 			 ch, &ch->video_dev);
 
-		/* Initialize the video_device काष्ठाure */
+		/* Initialize the video_device structure */
 		vdev = &ch->video_dev;
-		strscpy(vdev->name, VPIF_DRIVER_NAME, माप(vdev->name));
+		strscpy(vdev->name, VPIF_DRIVER_NAME, sizeof(vdev->name));
 		vdev->release = video_device_release_empty;
-		vdev->fops = &vpअगर_fops;
-		vdev->ioctl_ops = &vpअगर_ioctl_ops;
-		vdev->v4l2_dev = &vpअगर_obj.v4l2_dev;
-		vdev->vfl_dir = VFL_सूची_TX;
+		vdev->fops = &vpif_fops;
+		vdev->ioctl_ops = &vpif_ioctl_ops;
+		vdev->v4l2_dev = &vpif_obj.v4l2_dev;
+		vdev->vfl_dir = VFL_DIR_TX;
 		vdev->queue = q;
 		vdev->lock = &common->lock;
 		vdev->device_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING;
 		video_set_drvdata(&ch->video_dev, ch);
-		err = video_रेजिस्टर_device(vdev, VFL_TYPE_VIDEO,
+		err = video_register_device(vdev, VFL_TYPE_VIDEO,
 					    (j ? 3 : 2));
-		अगर (err < 0)
-			जाओ probe_out;
-	पूर्ण
+		if (err < 0)
+			goto probe_out;
+	}
 
-	वापस 0;
+	return 0;
 
 probe_out:
-	क्रम (k = 0; k < j; k++) अणु
-		ch = vpअगर_obj.dev[k];
-		video_unरेजिस्टर_device(&ch->video_dev);
-	पूर्ण
-	वापस err;
-पूर्ण
+	for (k = 0; k < j; k++) {
+		ch = vpif_obj.dev[k];
+		video_unregister_device(&ch->video_dev);
+	}
+	return err;
+}
 
 /*
- * vpअगर_probe: This function creates device entries by रेजिस्टर itself to the
+ * vpif_probe: This function creates device entries by register itself to the
  * V4L2 driver and initializes fields of each channel objects
  */
-अटल __init पूर्णांक vpअगर_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vpअगर_subdev_info *subdevdata;
-	काष्ठा i2c_adapter *i2c_adap;
-	काष्ठा resource *res;
-	पूर्णांक subdev_count;
-	पूर्णांक res_idx = 0;
-	पूर्णांक i, err;
+static __init int vpif_probe(struct platform_device *pdev)
+{
+	struct vpif_subdev_info *subdevdata;
+	struct i2c_adapter *i2c_adap;
+	struct resource *res;
+	int subdev_count;
+	int res_idx = 0;
+	int i, err;
 
-	अगर (!pdev->dev.platक्रमm_data) अणु
+	if (!pdev->dev.platform_data) {
 		dev_warn(&pdev->dev, "Missing platform data.  Giving up.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	vpअगर_dev = &pdev->dev;
-	err = initialize_vpअगर();
+	vpif_dev = &pdev->dev;
+	err = initialize_vpif();
 
-	अगर (err) अणु
-		v4l2_err(vpअगर_dev->driver, "Error initializing vpif\n");
-		वापस err;
-	पूर्ण
+	if (err) {
+		v4l2_err(vpif_dev->driver, "Error initializing vpif\n");
+		return err;
+	}
 
-	err = v4l2_device_रेजिस्टर(vpअगर_dev, &vpअगर_obj.v4l2_dev);
-	अगर (err) अणु
-		v4l2_err(vpअगर_dev->driver, "Error registering v4l2 device\n");
-		जाओ vpअगर_मुक्त;
-	पूर्ण
+	err = v4l2_device_register(vpif_dev, &vpif_obj.v4l2_dev);
+	if (err) {
+		v4l2_err(vpif_dev->driver, "Error registering v4l2 device\n");
+		goto vpif_free;
+	}
 
-	जबतक ((res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, res_idx))) अणु
-		err = devm_request_irq(&pdev->dev, res->start, vpअगर_channel_isr,
+	while ((res = platform_get_resource(pdev, IORESOURCE_IRQ, res_idx))) {
+		err = devm_request_irq(&pdev->dev, res->start, vpif_channel_isr,
 					IRQF_SHARED, VPIF_DRIVER_NAME,
-					(व्योम *)(&vpअगर_obj.dev[res_idx]->
+					(void *)(&vpif_obj.dev[res_idx]->
 					channel_id));
-		अगर (err) अणु
+		if (err) {
 			err = -EINVAL;
-			vpअगर_err("VPIF IRQ request failed\n");
-			जाओ vpअगर_unरेजिस्टर;
-		पूर्ण
+			vpif_err("VPIF IRQ request failed\n");
+			goto vpif_unregister;
+		}
 		res_idx++;
-	पूर्ण
+	}
 
-	vpअगर_obj.config = pdev->dev.platक्रमm_data;
-	subdev_count = vpअगर_obj.config->subdev_count;
-	subdevdata = vpअगर_obj.config->subdevinfo;
-	vpअगर_obj.sd = kसुस्मृति(subdev_count, माप(*vpअगर_obj.sd), GFP_KERNEL);
-	अगर (!vpअगर_obj.sd) अणु
+	vpif_obj.config = pdev->dev.platform_data;
+	subdev_count = vpif_obj.config->subdev_count;
+	subdevdata = vpif_obj.config->subdevinfo;
+	vpif_obj.sd = kcalloc(subdev_count, sizeof(*vpif_obj.sd), GFP_KERNEL);
+	if (!vpif_obj.sd) {
 		err = -ENOMEM;
-		जाओ vpअगर_unरेजिस्टर;
-	पूर्ण
+		goto vpif_unregister;
+	}
 
-	i2c_adap = i2c_get_adapter(vpअगर_obj.config->i2c_adapter_id);
-	क्रम (i = 0; i < subdev_count; i++) अणु
-		vpअगर_obj.sd[i] =
-			v4l2_i2c_new_subdev_board(&vpअगर_obj.v4l2_dev,
+	i2c_adap = i2c_get_adapter(vpif_obj.config->i2c_adapter_id);
+	for (i = 0; i < subdev_count; i++) {
+		vpif_obj.sd[i] =
+			v4l2_i2c_new_subdev_board(&vpif_obj.v4l2_dev,
 						  i2c_adap,
 						  &subdevdata[i].board_info,
-						  शून्य);
-		अगर (!vpअगर_obj.sd[i]) अणु
-			vpअगर_err("Error registering v4l2 subdevice\n");
+						  NULL);
+		if (!vpif_obj.sd[i]) {
+			vpif_err("Error registering v4l2 subdevice\n");
 			err = -ENODEV;
-			जाओ probe_subdev_out;
-		पूर्ण
+			goto probe_subdev_out;
+		}
 
-		अगर (vpअगर_obj.sd[i])
-			vpअगर_obj.sd[i]->grp_id = 1 << i;
-	पूर्ण
-	err = vpअगर_probe_complete();
-	अगर (err)
-		जाओ probe_subdev_out;
+		if (vpif_obj.sd[i])
+			vpif_obj.sd[i]->grp_id = 1 << i;
+	}
+	err = vpif_probe_complete();
+	if (err)
+		goto probe_subdev_out;
 
-	वापस 0;
+	return 0;
 
 probe_subdev_out:
-	kमुक्त(vpअगर_obj.sd);
-vpअगर_unरेजिस्टर:
-	v4l2_device_unरेजिस्टर(&vpअगर_obj.v4l2_dev);
-vpअगर_मुक्त:
-	मुक्त_vpअगर_objs();
+	kfree(vpif_obj.sd);
+vpif_unregister:
+	v4l2_device_unregister(&vpif_obj.v4l2_dev);
+vpif_free:
+	free_vpif_objs();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * vpअगर_हटाओ: It un-रेजिस्टर channels from V4L2 driver
+ * vpif_remove: It un-register channels from V4L2 driver
  */
-अटल पूर्णांक vpअगर_हटाओ(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा channel_obj *ch;
-	पूर्णांक i;
+static int vpif_remove(struct platform_device *device)
+{
+	struct channel_obj *ch;
+	int i;
 
-	v4l2_device_unरेजिस्टर(&vpअगर_obj.v4l2_dev);
+	v4l2_device_unregister(&vpif_obj.v4l2_dev);
 
-	kमुक्त(vpअगर_obj.sd);
-	/* un-रेजिस्टर device */
-	क्रम (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) अणु
-		/* Get the poपूर्णांकer to the channel object */
-		ch = vpअगर_obj.dev[i];
-		/* Unरेजिस्टर video device */
-		video_unरेजिस्टर_device(&ch->video_dev);
-	पूर्ण
-	मुक्त_vpअगर_objs();
+	kfree(vpif_obj.sd);
+	/* un-register device */
+	for (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) {
+		/* Get the pointer to the channel object */
+		ch = vpif_obj.dev[i];
+		/* Unregister video device */
+		video_unregister_device(&ch->video_dev);
+	}
+	free_vpif_objs();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक vpअगर_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा common_obj *common;
-	काष्ठा channel_obj *ch;
-	पूर्णांक i;
+#ifdef CONFIG_PM_SLEEP
+static int vpif_suspend(struct device *dev)
+{
+	struct common_obj *common;
+	struct channel_obj *ch;
+	int i;
 
-	क्रम (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) अणु
-		/* Get the poपूर्णांकer to the channel object */
-		ch = vpअगर_obj.dev[i];
+	for (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) {
+		/* Get the pointer to the channel object */
+		ch = vpif_obj.dev[i];
 		common = &ch->common[VPIF_VIDEO_INDEX];
 
-		अगर (!vb2_start_streaming_called(&common->buffer_queue))
-			जारी;
+		if (!vb2_start_streaming_called(&common->buffer_queue))
+			continue;
 
 		mutex_lock(&common->lock);
 		/* Disable channel */
-		अगर (ch->channel_id == VPIF_CHANNEL2_VIDEO) अणु
+		if (ch->channel_id == VPIF_CHANNEL2_VIDEO) {
 			enable_channel2(0);
-			channel2_पूर्णांकr_enable(0);
-		पूर्ण
-		अगर (ch->channel_id == VPIF_CHANNEL3_VIDEO ||
-			ycmux_mode == 2) अणु
+			channel2_intr_enable(0);
+		}
+		if (ch->channel_id == VPIF_CHANNEL3_VIDEO ||
+			ycmux_mode == 2) {
 			enable_channel3(0);
-			channel3_पूर्णांकr_enable(0);
-		पूर्ण
+			channel3_intr_enable(0);
+		}
 		mutex_unlock(&common->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpअगर_resume(काष्ठा device *dev)
-अणु
+static int vpif_resume(struct device *dev)
+{
 
-	काष्ठा common_obj *common;
-	काष्ठा channel_obj *ch;
-	पूर्णांक i;
+	struct common_obj *common;
+	struct channel_obj *ch;
+	int i;
 
-	क्रम (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) अणु
-		/* Get the poपूर्णांकer to the channel object */
-		ch = vpअगर_obj.dev[i];
+	for (i = 0; i < VPIF_DISPLAY_MAX_DEVICES; i++) {
+		/* Get the pointer to the channel object */
+		ch = vpif_obj.dev[i];
 		common = &ch->common[VPIF_VIDEO_INDEX];
 
-		अगर (!vb2_start_streaming_called(&common->buffer_queue))
-			जारी;
+		if (!vb2_start_streaming_called(&common->buffer_queue))
+			continue;
 
 		mutex_lock(&common->lock);
 		/* Enable channel */
-		अगर (ch->channel_id == VPIF_CHANNEL2_VIDEO) अणु
+		if (ch->channel_id == VPIF_CHANNEL2_VIDEO) {
 			enable_channel2(1);
-			channel2_पूर्णांकr_enable(1);
-		पूर्ण
-		अगर (ch->channel_id == VPIF_CHANNEL3_VIDEO ||
-				ycmux_mode == 2) अणु
+			channel2_intr_enable(1);
+		}
+		if (ch->channel_id == VPIF_CHANNEL3_VIDEO ||
+				ycmux_mode == 2) {
 			enable_channel3(1);
-			channel3_पूर्णांकr_enable(1);
-		पूर्ण
+			channel3_intr_enable(1);
+		}
 		mutex_unlock(&common->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(vpअगर_pm_ops, vpअगर_suspend, vpअगर_resume);
+static SIMPLE_DEV_PM_OPS(vpif_pm_ops, vpif_suspend, vpif_resume);
 
-अटल __refdata काष्ठा platक्रमm_driver vpअगर_driver = अणु
-	.driver	= अणु
+static __refdata struct platform_driver vpif_driver = {
+	.driver	= {
 			.name	= VPIF_DRIVER_NAME,
-			.pm	= &vpअगर_pm_ops,
-	पूर्ण,
-	.probe	= vpअगर_probe,
-	.हटाओ	= vpअगर_हटाओ,
-पूर्ण;
+			.pm	= &vpif_pm_ops,
+	},
+	.probe	= vpif_probe,
+	.remove	= vpif_remove,
+};
 
-module_platक्रमm_driver(vpअगर_driver);
+module_platform_driver(vpif_driver);

@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control.
- * Control loops क्रम PowerMac7,2 and 7,3
+ * Control loops for PowerMac7,2 and 7,3
  *
  * Copyright (C) 2012 Benjamin Herrenschmidt, IBM Corp.
  */
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reboot.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/smu.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/reboot.h>
+#include <asm/prom.h>
+#include <asm/smu.h>
 
-#समावेश "windfarm.h"
-#समावेश "windfarm_pid.h"
-#समावेश "windfarm_mpu.h"
+#include "windfarm.h"
+#include "windfarm_pid.h"
+#include "windfarm_mpu.h"
 
-#घोषणा VERSION "1.0"
+#define VERSION "1.0"
 
-#अघोषित DEBUG
-#अघोषित LOTSA_DEBUG
+#undef DEBUG
+#undef LOTSA_DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(args...)	prपूर्णांकk(args)
-#अन्यथा
-#घोषणा DBG(args...)	करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(args...)	printk(args)
+#else
+#define DBG(args...)	do { } while(0)
+#endif
 
-#अगर_घोषित LOTSA_DEBUG
-#घोषणा DBG_LOTS(args...)	prपूर्णांकk(args)
-#अन्यथा
-#घोषणा DBG_LOTS(args...)	करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef LOTSA_DEBUG
+#define DBG_LOTS(args...)	printk(args)
+#else
+#define DBG_LOTS(args...)	do { } while(0)
+#endif
 
-/* define this to क्रमce CPU overtemp to 60 degree, useful क्रम testing
+/* define this to force CPU overtemp to 60 degree, useful for testing
  * the overtemp code
  */
-#अघोषित HACKED_OVERTEMP
+#undef HACKED_OVERTEMP
 
 /* We currently only handle 2 chips */
-#घोषणा NR_CHIPS	2
-#घोषणा NR_CPU_FANS	3 * NR_CHIPS
+#define NR_CHIPS	2
+#define NR_CPU_FANS	3 * NR_CHIPS
 
 /* Controls and sensors */
-अटल काष्ठा wf_sensor *sens_cpu_temp[NR_CHIPS];
-अटल काष्ठा wf_sensor *sens_cpu_volts[NR_CHIPS];
-अटल काष्ठा wf_sensor *sens_cpu_amps[NR_CHIPS];
-अटल काष्ठा wf_sensor *backside_temp;
-अटल काष्ठा wf_sensor *drives_temp;
+static struct wf_sensor *sens_cpu_temp[NR_CHIPS];
+static struct wf_sensor *sens_cpu_volts[NR_CHIPS];
+static struct wf_sensor *sens_cpu_amps[NR_CHIPS];
+static struct wf_sensor *backside_temp;
+static struct wf_sensor *drives_temp;
 
-अटल काष्ठा wf_control *cpu_front_fans[NR_CHIPS];
-अटल काष्ठा wf_control *cpu_rear_fans[NR_CHIPS];
-अटल काष्ठा wf_control *cpu_pumps[NR_CHIPS];
-अटल काष्ठा wf_control *backside_fan;
-अटल काष्ठा wf_control *drives_fan;
-अटल काष्ठा wf_control *slots_fan;
-अटल काष्ठा wf_control *cpufreq_clamp;
+static struct wf_control *cpu_front_fans[NR_CHIPS];
+static struct wf_control *cpu_rear_fans[NR_CHIPS];
+static struct wf_control *cpu_pumps[NR_CHIPS];
+static struct wf_control *backside_fan;
+static struct wf_control *drives_fan;
+static struct wf_control *slots_fan;
+static struct wf_control *cpufreq_clamp;
 
-/* We keep a temperature history क्रम average calculation of 180s */
-#घोषणा CPU_TEMP_HIST_SIZE	180
+/* We keep a temperature history for average calculation of 180s */
+#define CPU_TEMP_HIST_SIZE	180
 
-/* Fixed speed क्रम slot fan */
-#घोषणा	SLOTS_FAN_DEFAULT_PWM	40
+/* Fixed speed for slot fan */
+#define	SLOTS_FAN_DEFAULT_PWM	40
 
-/* Scale value क्रम CPU पूर्णांकake fans */
-#घोषणा CPU_INTAKE_SCALE	0x0000f852
+/* Scale value for CPU intake fans */
+#define CPU_INTAKE_SCALE	0x0000f852
 
 /* PID loop state */
-अटल स्थिर काष्ठा mpu_data *cpu_mpu_data[NR_CHIPS];
-अटल काष्ठा wf_cpu_pid_state cpu_pid[NR_CHIPS];
-अटल bool cpu_pid_combined;
-अटल u32 cpu_thist[CPU_TEMP_HIST_SIZE];
-अटल पूर्णांक cpu_thist_pt;
-अटल s64 cpu_thist_total;
-अटल s32 cpu_all_पंचांगax = 100 << 16;
-अटल काष्ठा wf_pid_state backside_pid;
-अटल पूर्णांक backside_tick;
-अटल काष्ठा wf_pid_state drives_pid;
-अटल पूर्णांक drives_tick;
+static const struct mpu_data *cpu_mpu_data[NR_CHIPS];
+static struct wf_cpu_pid_state cpu_pid[NR_CHIPS];
+static bool cpu_pid_combined;
+static u32 cpu_thist[CPU_TEMP_HIST_SIZE];
+static int cpu_thist_pt;
+static s64 cpu_thist_total;
+static s32 cpu_all_tmax = 100 << 16;
+static struct wf_pid_state backside_pid;
+static int backside_tick;
+static struct wf_pid_state drives_pid;
+static int drives_tick;
 
-अटल पूर्णांक nr_chips;
-अटल bool have_all_controls;
-अटल bool have_all_sensors;
-अटल bool started;
+static int nr_chips;
+static bool have_all_controls;
+static bool have_all_sensors;
+static bool started;
 
-अटल पूर्णांक failure_state;
-#घोषणा FAILURE_SENSOR		1
-#घोषणा FAILURE_FAN		2
-#घोषणा FAILURE_PERM		4
-#घोषणा FAILURE_LOW_OVERTEMP	8
-#घोषणा FAILURE_HIGH_OVERTEMP	16
+static int failure_state;
+#define FAILURE_SENSOR		1
+#define FAILURE_FAN		2
+#define FAILURE_PERM		4
+#define FAILURE_LOW_OVERTEMP	8
+#define FAILURE_HIGH_OVERTEMP	16
 
 /* Overtemp values */
-#घोषणा LOW_OVER_AVERAGE	0
-#घोषणा LOW_OVER_IMMEDIATE	(10 << 16)
-#घोषणा LOW_OVER_CLEAR		((-10) << 16)
-#घोषणा HIGH_OVER_IMMEDIATE	(14 << 16)
-#घोषणा HIGH_OVER_AVERAGE	(10 << 16)
-#घोषणा HIGH_OVER_IMMEDIATE	(14 << 16)
+#define LOW_OVER_AVERAGE	0
+#define LOW_OVER_IMMEDIATE	(10 << 16)
+#define LOW_OVER_CLEAR		((-10) << 16)
+#define HIGH_OVER_IMMEDIATE	(14 << 16)
+#define HIGH_OVER_AVERAGE	(10 << 16)
+#define HIGH_OVER_IMMEDIATE	(14 << 16)
 
 
-अटल व्योम cpu_max_all_fans(व्योम)
-अणु
-	पूर्णांक i;
+static void cpu_max_all_fans(void)
+{
+	int i;
 
-	/* We max all CPU fans in हाल of a sensor error. We also करो the
-	 * cpufreq clamping now, even अगर it's supposedly करोne later by the
-	 * generic code anyway, we करो it earlier here to react faster
+	/* We max all CPU fans in case of a sensor error. We also do the
+	 * cpufreq clamping now, even if it's supposedly done later by the
+	 * generic code anyway, we do it earlier here to react faster
 	 */
-	अगर (cpufreq_clamp)
+	if (cpufreq_clamp)
 		wf_control_set_max(cpufreq_clamp);
-	क्रम (i = 0; i < nr_chips; i++) अणु
-		अगर (cpu_front_fans[i])
+	for (i = 0; i < nr_chips; i++) {
+		if (cpu_front_fans[i])
 			wf_control_set_max(cpu_front_fans[i]);
-		अगर (cpu_rear_fans[i])
+		if (cpu_rear_fans[i])
 			wf_control_set_max(cpu_rear_fans[i]);
-		अगर (cpu_pumps[i])
+		if (cpu_pumps[i])
 			wf_control_set_max(cpu_pumps[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक cpu_check_overtemp(s32 temp)
-अणु
-	पूर्णांक new_state = 0;
+static int cpu_check_overtemp(s32 temp)
+{
+	int new_state = 0;
 	s32 t_avg, t_old;
-	अटल bool first = true;
+	static bool first = true;
 
-	/* First check क्रम immediate overtemps */
-	अगर (temp >= (cpu_all_पंचांगax + LOW_OVER_IMMEDIATE)) अणु
+	/* First check for immediate overtemps */
+	if (temp >= (cpu_all_tmax + LOW_OVER_IMMEDIATE)) {
 		new_state |= FAILURE_LOW_OVERTEMP;
-		अगर ((failure_state & FAILURE_LOW_OVERTEMP) == 0)
-			prपूर्णांकk(KERN_ERR "windfarm: Overtemp due to immediate CPU"
+		if ((failure_state & FAILURE_LOW_OVERTEMP) == 0)
+			printk(KERN_ERR "windfarm: Overtemp due to immediate CPU"
 			       " temperature !\n");
-	पूर्ण
-	अगर (temp >= (cpu_all_पंचांगax + HIGH_OVER_IMMEDIATE)) अणु
+	}
+	if (temp >= (cpu_all_tmax + HIGH_OVER_IMMEDIATE)) {
 		new_state |= FAILURE_HIGH_OVERTEMP;
-		अगर ((failure_state & FAILURE_HIGH_OVERTEMP) == 0)
-			prपूर्णांकk(KERN_ERR "windfarm: Critical overtemp due to"
+		if ((failure_state & FAILURE_HIGH_OVERTEMP) == 0)
+			printk(KERN_ERR "windfarm: Critical overtemp due to"
 			       " immediate CPU temperature !\n");
-	पूर्ण
+	}
 
 	/*
-	 * The first समय around, initialize the array with the first
-	 * temperature पढ़ोing
+	 * The first time around, initialize the array with the first
+	 * temperature reading
 	 */
-	अगर (first) अणु
-		पूर्णांक i;
+	if (first) {
+		int i;
 
 		cpu_thist_total = 0;
-		क्रम (i = 0; i < CPU_TEMP_HIST_SIZE; i++) अणु
+		for (i = 0; i < CPU_TEMP_HIST_SIZE; i++) {
 			cpu_thist[i] = temp;
 			cpu_thist_total += temp;
-		पूर्ण
+		}
 		first = false;
-	पूर्ण
+	}
 
 	/*
-	 * We calculate a history of max temperatures and use that क्रम the
+	 * We calculate a history of max temperatures and use that for the
 	 * overtemp management
 	 */
 	t_old = cpu_thist[cpu_thist_pt];
@@ -172,146 +171,146 @@
 	DBG_LOTS("  t_avg = %d.%03d (out: %d.%03d, in: %d.%03d)\n",
 		 FIX32TOPRINT(t_avg), FIX32TOPRINT(t_old), FIX32TOPRINT(temp));
 
-	/* Now check क्रम average overtemps */
-	अगर (t_avg >= (cpu_all_पंचांगax + LOW_OVER_AVERAGE)) अणु
+	/* Now check for average overtemps */
+	if (t_avg >= (cpu_all_tmax + LOW_OVER_AVERAGE)) {
 		new_state |= FAILURE_LOW_OVERTEMP;
-		अगर ((failure_state & FAILURE_LOW_OVERTEMP) == 0)
-			prपूर्णांकk(KERN_ERR "windfarm: Overtemp due to average CPU"
+		if ((failure_state & FAILURE_LOW_OVERTEMP) == 0)
+			printk(KERN_ERR "windfarm: Overtemp due to average CPU"
 			       " temperature !\n");
-	पूर्ण
-	अगर (t_avg >= (cpu_all_पंचांगax + HIGH_OVER_AVERAGE)) अणु
+	}
+	if (t_avg >= (cpu_all_tmax + HIGH_OVER_AVERAGE)) {
 		new_state |= FAILURE_HIGH_OVERTEMP;
-		अगर ((failure_state & FAILURE_HIGH_OVERTEMP) == 0)
-			prपूर्णांकk(KERN_ERR "windfarm: Critical overtemp due to"
+		if ((failure_state & FAILURE_HIGH_OVERTEMP) == 0)
+			printk(KERN_ERR "windfarm: Critical overtemp due to"
 			       " average CPU temperature !\n");
-	पूर्ण
+	}
 
-	/* Now handle overtemp conditions. We करोn't currently use the windfarm
+	/* Now handle overtemp conditions. We don't currently use the windfarm
 	 * overtemp handling core as it's not fully suited to the needs of those
 	 * new machine. This will be fixed later.
 	 */
-	अगर (new_state) अणु
-		/* High overtemp -> immediate shutकरोwn */
-		अगर (new_state & FAILURE_HIGH_OVERTEMP)
-			machine_घातer_off();
-		अगर ((failure_state & new_state) != new_state)
+	if (new_state) {
+		/* High overtemp -> immediate shutdown */
+		if (new_state & FAILURE_HIGH_OVERTEMP)
+			machine_power_off();
+		if ((failure_state & new_state) != new_state)
 			cpu_max_all_fans();
 		failure_state |= new_state;
-	पूर्ण अन्यथा अगर ((failure_state & FAILURE_LOW_OVERTEMP) &&
-		   (temp < (cpu_all_पंचांगax + LOW_OVER_CLEAR))) अणु
-		prपूर्णांकk(KERN_ERR "windfarm: Overtemp condition cleared !\n");
+	} else if ((failure_state & FAILURE_LOW_OVERTEMP) &&
+		   (temp < (cpu_all_tmax + LOW_OVER_CLEAR))) {
+		printk(KERN_ERR "windfarm: Overtemp condition cleared !\n");
 		failure_state &= ~FAILURE_LOW_OVERTEMP;
-	पूर्ण
+	}
 
-	वापस failure_state & (FAILURE_LOW_OVERTEMP | FAILURE_HIGH_OVERTEMP);
-पूर्ण
+	return failure_state & (FAILURE_LOW_OVERTEMP | FAILURE_HIGH_OVERTEMP);
+}
 
-अटल पूर्णांक पढ़ो_one_cpu_vals(पूर्णांक cpu, s32 *temp, s32 *घातer)
-अणु
+static int read_one_cpu_vals(int cpu, s32 *temp, s32 *power)
+{
 	s32 dtemp, volts, amps;
-	पूर्णांक rc;
+	int rc;
 
 	/* Get diode temperature */
 	rc = wf_sensor_get(sens_cpu_temp[cpu], &dtemp);
-	अगर (rc) अणु
+	if (rc) {
 		DBG("  CPU%d: temp reading error !\n", cpu);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	DBG_LOTS("  CPU%d: temp   = %d.%03d\n", cpu, FIX32TOPRINT((dtemp)));
 	*temp = dtemp;
 
 	/* Get voltage */
 	rc = wf_sensor_get(sens_cpu_volts[cpu], &volts);
-	अगर (rc) अणु
+	if (rc) {
 		DBG("  CPU%d, volts reading error !\n", cpu);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	DBG_LOTS("  CPU%d: volts  = %d.%03d\n", cpu, FIX32TOPRINT((volts)));
 
 	/* Get current */
 	rc = wf_sensor_get(sens_cpu_amps[cpu], &amps);
-	अगर (rc) अणु
+	if (rc) {
 		DBG("  CPU%d, current reading error !\n", cpu);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	DBG_LOTS("  CPU%d: amps   = %d.%03d\n", cpu, FIX32TOPRINT((amps)));
 
-	/* Calculate घातer */
+	/* Calculate power */
 
 	/* Scale voltage and current raw sensor values according to fixed scales
-	 * obtained in Darwin and calculate घातer from I and V
+	 * obtained in Darwin and calculate power from I and V
 	 */
-	*घातer = (((u64)volts) * ((u64)amps)) >> 16;
+	*power = (((u64)volts) * ((u64)amps)) >> 16;
 
-	DBG_LOTS("  CPU%d: power  = %d.%03d\n", cpu, FIX32TOPRINT((*घातer)));
+	DBG_LOTS("  CPU%d: power  = %d.%03d\n", cpu, FIX32TOPRINT((*power)));
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल व्योम cpu_fans_tick_split(व्योम)
-अणु
-	पूर्णांक err, cpu;
-	s32 पूर्णांकake, temp, घातer, t_max = 0;
+static void cpu_fans_tick_split(void)
+{
+	int err, cpu;
+	s32 intake, temp, power, t_max = 0;
 
 	DBG_LOTS("* cpu fans_tick_split()\n");
 
-	क्रम (cpu = 0; cpu < nr_chips; ++cpu) अणु
-		काष्ठा wf_cpu_pid_state *sp = &cpu_pid[cpu];
+	for (cpu = 0; cpu < nr_chips; ++cpu) {
+		struct wf_cpu_pid_state *sp = &cpu_pid[cpu];
 
 		/* Read current speed */
 		wf_control_get(cpu_rear_fans[cpu], &sp->target);
 
 		DBG_LOTS("  CPU%d: cur_target = %d RPM\n", cpu, sp->target);
 
-		err = पढ़ो_one_cpu_vals(cpu, &temp, &घातer);
-		अगर (err) अणु
+		err = read_one_cpu_vals(cpu, &temp, &power);
+		if (err) {
 			failure_state |= FAILURE_SENSOR;
 			cpu_max_all_fans();
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/* Keep track of highest temp */
 		t_max = max(t_max, temp);
 
 		/* Handle possible overtemps */
-		अगर (cpu_check_overtemp(t_max))
-			वापस;
+		if (cpu_check_overtemp(t_max))
+			return;
 
 		/* Run PID */
-		wf_cpu_pid_run(sp, घातer, temp);
+		wf_cpu_pid_run(sp, power, temp);
 
 		DBG_LOTS("  CPU%d: target = %d RPM\n", cpu, sp->target);
 
 		/* Apply result directly to exhaust fan */
 		err = wf_control_set(cpu_rear_fans[cpu], sp->target);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("wf_pm72: Fan %s reports error %d\n",
 				cpu_rear_fans[cpu]->name, err);
 			failure_state |= FAILURE_FAN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Scale result क्रम पूर्णांकake fan */
-		पूर्णांकake = (sp->target * CPU_INTAKE_SCALE) >> 16;
-		DBG_LOTS("  CPU%d: intake = %d RPM\n", cpu, पूर्णांकake);
-		err = wf_control_set(cpu_front_fans[cpu], पूर्णांकake);
-		अगर (err) अणु
+		/* Scale result for intake fan */
+		intake = (sp->target * CPU_INTAKE_SCALE) >> 16;
+		DBG_LOTS("  CPU%d: intake = %d RPM\n", cpu, intake);
+		err = wf_control_set(cpu_front_fans[cpu], intake);
+		if (err) {
 			pr_warn("wf_pm72: Fan %s reports error %d\n",
 				cpu_front_fans[cpu]->name, err);
 			failure_state |= FAILURE_FAN;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम cpu_fans_tick_combined(व्योम)
-अणु
-	s32 temp0, घातer0, temp1, घातer1, t_max = 0;
-	s32 temp, घातer, पूर्णांकake, pump;
-	काष्ठा wf_control *pump0, *pump1;
-	काष्ठा wf_cpu_pid_state *sp = &cpu_pid[0];
-	पूर्णांक err, cpu;
+static void cpu_fans_tick_combined(void)
+{
+	s32 temp0, power0, temp1, power1, t_max = 0;
+	s32 temp, power, intake, pump;
+	struct wf_control *pump0, *pump1;
+	struct wf_cpu_pid_state *sp = &cpu_pid[0];
+	int err, cpu;
 
 	DBG_LOTS("* cpu fans_tick_combined()\n");
 
@@ -320,94 +319,94 @@
 
 	DBG_LOTS("  CPUs: cur_target = %d RPM\n", sp->target);
 
-	/* Read values क्रम both CPUs */
-	err = पढ़ो_one_cpu_vals(0, &temp0, &घातer0);
-	अगर (err) अणु
+	/* Read values for both CPUs */
+	err = read_one_cpu_vals(0, &temp0, &power0);
+	if (err) {
 		failure_state |= FAILURE_SENSOR;
 		cpu_max_all_fans();
-		वापस;
-	पूर्ण
-	err = पढ़ो_one_cpu_vals(1, &temp1, &घातer1);
-	अगर (err) अणु
+		return;
+	}
+	err = read_one_cpu_vals(1, &temp1, &power1);
+	if (err) {
 		failure_state |= FAILURE_SENSOR;
 		cpu_max_all_fans();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Keep track of highest temp */
 	t_max = max(t_max, max(temp0, temp1));
 
 	/* Handle possible overtemps */
-	अगर (cpu_check_overtemp(t_max))
-		वापस;
+	if (cpu_check_overtemp(t_max))
+		return;
 
-	/* Use the max temp & घातer of both */
+	/* Use the max temp & power of both */
 	temp = max(temp0, temp1);
-	घातer = max(घातer0, घातer1);
+	power = max(power0, power1);
 
 	/* Run PID */
-	wf_cpu_pid_run(sp, घातer, temp);
+	wf_cpu_pid_run(sp, power, temp);
 
-	/* Scale result क्रम पूर्णांकake fan */
-	पूर्णांकake = (sp->target * CPU_INTAKE_SCALE) >> 16;
+	/* Scale result for intake fan */
+	intake = (sp->target * CPU_INTAKE_SCALE) >> 16;
 
 	/* Same deal with pump speed */
 	pump0 = cpu_pumps[0];
 	pump1 = cpu_pumps[1];
-	अगर (!pump0) अणु
+	if (!pump0) {
 		pump0 = pump1;
-		pump1 = शून्य;
-	पूर्ण
+		pump1 = NULL;
+	}
 	pump = (sp->target * wf_control_get_max(pump0)) /
 		cpu_mpu_data[0]->rmaxn_exhaust_fan;
 
 	DBG_LOTS("  CPUs: target = %d RPM\n", sp->target);
-	DBG_LOTS("  CPUs: intake = %d RPM\n", पूर्णांकake);
+	DBG_LOTS("  CPUs: intake = %d RPM\n", intake);
 	DBG_LOTS("  CPUs: pump   = %d RPM\n", pump);
 
-	क्रम (cpu = 0; cpu < nr_chips; cpu++) अणु
+	for (cpu = 0; cpu < nr_chips; cpu++) {
 		err = wf_control_set(cpu_rear_fans[cpu], sp->target);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("wf_pm72: Fan %s reports error %d\n",
 				cpu_rear_fans[cpu]->name, err);
 			failure_state |= FAILURE_FAN;
-		पूर्ण
-		err = wf_control_set(cpu_front_fans[cpu], पूर्णांकake);
-		अगर (err) अणु
+		}
+		err = wf_control_set(cpu_front_fans[cpu], intake);
+		if (err) {
 			pr_warn("wf_pm72: Fan %s reports error %d\n",
 				cpu_front_fans[cpu]->name, err);
 			failure_state |= FAILURE_FAN;
-		पूर्ण
+		}
 		err = 0;
-		अगर (cpu_pumps[cpu])
+		if (cpu_pumps[cpu])
 			err = wf_control_set(cpu_pumps[cpu], pump);
-		अगर (err) अणु
+		if (err) {
 			pr_warn("wf_pm72: Pump %s reports error %d\n",
 				cpu_pumps[cpu]->name, err);
 			failure_state |= FAILURE_FAN;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Implementation... */
-अटल पूर्णांक cpu_setup_pid(पूर्णांक cpu)
-अणु
-	काष्ठा wf_cpu_pid_param pid;
-	स्थिर काष्ठा mpu_data *mpu = cpu_mpu_data[cpu];
-	s32 पंचांगax, ttarget, ptarget;
-	पूर्णांक fmin, fmax, hsize;
+static int cpu_setup_pid(int cpu)
+{
+	struct wf_cpu_pid_param pid;
+	const struct mpu_data *mpu = cpu_mpu_data[cpu];
+	s32 tmax, ttarget, ptarget;
+	int fmin, fmax, hsize;
 
 	/* Get PID params from the appropriate MPU EEPROM */
-	पंचांगax = mpu->पंचांगax << 16;
+	tmax = mpu->tmax << 16;
 	ttarget = mpu->ttarget << 16;
 	ptarget = ((s32)(mpu->pmaxh - mpu->padjmax)) << 16;
 
 	DBG("wf_72: CPU%d ttarget = %d.%03d, tmax = %d.%03d\n",
-	    cpu, FIX32TOPRINT(ttarget), FIX32TOPRINT(पंचांगax));
+	    cpu, FIX32TOPRINT(ttarget), FIX32TOPRINT(tmax));
 
-	/* We keep a global पंचांगax क्रम overtemp calculations */
-	अगर (पंचांगax < cpu_all_पंचांगax)
-		cpu_all_पंचांगax = पंचांगax;
+	/* We keep a global tmax for overtemp calculations */
+	if (tmax < cpu_all_tmax)
+		cpu_all_tmax = tmax;
 
 	/* Set PID min/max by using the rear fan min/max */
 	fmin = wf_control_get_min(cpu_rear_fans[cpu]);
@@ -415,16 +414,16 @@
 	DBG("wf_72: CPU%d max RPM range = [%d..%d]\n", cpu, fmin, fmax);
 
 	/* History size */
-	hsize = min_t(पूर्णांक, mpu->tguardband, WF_PID_MAX_HISTORY);
+	hsize = min_t(int, mpu->tguardband, WF_PID_MAX_HISTORY);
 	DBG("wf_72: CPU%d history size = %d\n", cpu, hsize);
 
 	/* Initialize PID loop */
-	pid.पूर्णांकerval	= 1;	/* seconds */
+	pid.interval	= 1;	/* seconds */
 	pid.history_len = hsize;
 	pid.gd		= mpu->pid_gd;
 	pid.gp		= mpu->pid_gp;
 	pid.gr		= mpu->pid_gr;
-	pid.पंचांगax	= पंचांगax;
+	pid.tmax	= tmax;
 	pid.ttarget	= ttarget;
 	pid.pmaxadj	= ptarget;
 	pid.min		= fmin;
@@ -433,12 +432,12 @@
 	wf_cpu_pid_init(&cpu_pid[cpu], &pid);
 	cpu_pid[cpu].target = 1000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Backside/U3 fan */
-अटल काष्ठा wf_pid_param backside_u3_param = अणु
-	.पूर्णांकerval	= 5,
+static struct wf_pid_param backside_u3_param = {
+	.interval	= 5,
 	.history_len	= 2,
 	.gd		= 40 << 20,
 	.gp		= 5 << 20,
@@ -447,10 +446,10 @@
 	.additive	= 1,
 	.min		= 20,
 	.max		= 100,
-पूर्ण;
+};
 
-अटल काष्ठा wf_pid_param backside_u3h_param = अणु
-	.पूर्णांकerval	= 5,
+static struct wf_pid_param backside_u3h_param = {
+	.interval	= 5,
 	.history_len	= 2,
 	.gd		= 20 << 20,
 	.gp		= 5 << 20,
@@ -459,64 +458,64 @@
 	.additive	= 1,
 	.min		= 20,
 	.max		= 100,
-पूर्ण;
+};
 
-अटल व्योम backside_fan_tick(व्योम)
-अणु
+static void backside_fan_tick(void)
+{
 	s32 temp;
-	पूर्णांक speed;
-	पूर्णांक err;
+	int speed;
+	int err;
 
-	अगर (!backside_fan || !backside_temp || !backside_tick)
-		वापस;
-	अगर (--backside_tick > 0)
-		वापस;
-	backside_tick = backside_pid.param.पूर्णांकerval;
+	if (!backside_fan || !backside_temp || !backside_tick)
+		return;
+	if (--backside_tick > 0)
+		return;
+	backside_tick = backside_pid.param.interval;
 
 	DBG_LOTS("* backside fans tick\n");
 
 	/* Update fan speed from actual fans */
 	err = wf_control_get(backside_fan, &speed);
-	अगर (!err)
+	if (!err)
 		backside_pid.target = speed;
 
 	err = wf_sensor_get(backside_temp, &temp);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "windfarm: U4 temp sensor error %d\n",
+	if (err) {
+		printk(KERN_WARNING "windfarm: U4 temp sensor error %d\n",
 		       err);
 		failure_state |= FAILURE_SENSOR;
 		wf_control_set_max(backside_fan);
-		वापस;
-	पूर्ण
+		return;
+	}
 	speed = wf_pid_run(&backside_pid, temp);
 
 	DBG_LOTS("backside PID temp=%d.%.3d speed=%d\n",
 		 FIX32TOPRINT(temp), speed);
 
 	err = wf_control_set(backside_fan, speed);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "windfarm: backside fan error %d\n", err);
+	if (err) {
+		printk(KERN_WARNING "windfarm: backside fan error %d\n", err);
 		failure_state |= FAILURE_FAN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम backside_setup_pid(व्योम)
-अणु
-	/* first समय initialize things */
+static void backside_setup_pid(void)
+{
+	/* first time initialize things */
 	s32 fmin = wf_control_get_min(backside_fan);
 	s32 fmax = wf_control_get_max(backside_fan);
-	काष्ठा wf_pid_param param;
-	काष्ठा device_node *u3;
-	पूर्णांक u3h = 1; /* conservative by शेष */
+	struct wf_pid_param param;
+	struct device_node *u3;
+	int u3h = 1; /* conservative by default */
 
 	u3 = of_find_node_by_path("/u3@0,f8000000");
-	अगर (u3 != शून्य) अणु
-		स्थिर u32 *vers = of_get_property(u3, "device-rev", शून्य);
-		अगर (vers)
-			अगर (((*vers) & 0x3f) < 0x34)
+	if (u3 != NULL) {
+		const u32 *vers = of_get_property(u3, "device-rev", NULL);
+		if (vers)
+			if (((*vers) & 0x3f) < 0x34)
 				u3h = 0;
 		of_node_put(u3);
-	पूर्ण
+	}
 
 	param = u3h ? backside_u3h_param : backside_u3_param;
 
@@ -526,11 +525,11 @@
 	backside_tick = 1;
 
 	pr_info("wf_pm72: Backside control loop started.\n");
-पूर्ण
+}
 
 /* Drive bay fan */
-अटल स्थिर काष्ठा wf_pid_param drives_param = अणु
-	.पूर्णांकerval	= 5,
+static const struct wf_pid_param drives_param = {
+	.interval	= 5,
 	.history_len	= 2,
 	.gd		= 30 << 20,
 	.gp		= 5 << 20,
@@ -539,52 +538,52 @@
 	.additive	= 1,
 	.min		= 300,
 	.max		= 4000,
-पूर्ण;
+};
 
-अटल व्योम drives_fan_tick(व्योम)
-अणु
+static void drives_fan_tick(void)
+{
 	s32 temp;
-	पूर्णांक speed;
-	पूर्णांक err;
+	int speed;
+	int err;
 
-	अगर (!drives_fan || !drives_temp || !drives_tick)
-		वापस;
-	अगर (--drives_tick > 0)
-		वापस;
-	drives_tick = drives_pid.param.पूर्णांकerval;
+	if (!drives_fan || !drives_temp || !drives_tick)
+		return;
+	if (--drives_tick > 0)
+		return;
+	drives_tick = drives_pid.param.interval;
 
 	DBG_LOTS("* drives fans tick\n");
 
 	/* Update fan speed from actual fans */
 	err = wf_control_get(drives_fan, &speed);
-	अगर (!err)
+	if (!err)
 		drives_pid.target = speed;
 
 	err = wf_sensor_get(drives_temp, &temp);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("wf_pm72: drive bay temp sensor error %d\n", err);
 		failure_state |= FAILURE_SENSOR;
 		wf_control_set_max(drives_fan);
-		वापस;
-	पूर्ण
+		return;
+	}
 	speed = wf_pid_run(&drives_pid, temp);
 
 	DBG_LOTS("drives PID temp=%d.%.3d speed=%d\n",
 		 FIX32TOPRINT(temp), speed);
 
 	err = wf_control_set(drives_fan, speed);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_WARNING "windfarm: drive bay fan error %d\n", err);
+	if (err) {
+		printk(KERN_WARNING "windfarm: drive bay fan error %d\n", err);
 		failure_state |= FAILURE_FAN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम drives_setup_pid(व्योम)
-अणु
-	/* first समय initialize things */
+static void drives_setup_pid(void)
+{
+	/* first time initialize things */
 	s32 fmin = wf_control_get_min(drives_fan);
 	s32 fmax = wf_control_get_max(drives_fan);
-	काष्ठा wf_pid_param param = drives_param;
+	struct wf_pid_param param = drives_param;
 
 	param.min = max(param.min, fmin);
 	param.max = min(param.max, fmax);
@@ -592,53 +591,53 @@
 	drives_tick = 1;
 
 	pr_info("wf_pm72: Drive bay control loop started.\n");
-पूर्ण
+}
 
-अटल व्योम set_fail_state(व्योम)
-अणु
+static void set_fail_state(void)
+{
 	cpu_max_all_fans();
 
-	अगर (backside_fan)
+	if (backside_fan)
 		wf_control_set_max(backside_fan);
-	अगर (slots_fan)
+	if (slots_fan)
 		wf_control_set_max(slots_fan);
-	अगर (drives_fan)
+	if (drives_fan)
 		wf_control_set_max(drives_fan);
-पूर्ण
+}
 
-अटल व्योम pm72_tick(व्योम)
-अणु
-	पूर्णांक i, last_failure;
+static void pm72_tick(void)
+{
+	int i, last_failure;
 
-	अगर (!started) अणु
+	if (!started) {
 		started = true;
-		prपूर्णांकk(KERN_INFO "windfarm: CPUs control loops started.\n");
-		क्रम (i = 0; i < nr_chips; ++i) अणु
-			अगर (cpu_setup_pid(i) < 0) अणु
+		printk(KERN_INFO "windfarm: CPUs control loops started.\n");
+		for (i = 0; i < nr_chips; ++i) {
+			if (cpu_setup_pid(i) < 0) {
 				failure_state = FAILURE_PERM;
 				set_fail_state();
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		DBG_LOTS("cpu_all_tmax=%d.%03d\n", FIX32TOPRINT(cpu_all_पंचांगax));
+				break;
+			}
+		}
+		DBG_LOTS("cpu_all_tmax=%d.%03d\n", FIX32TOPRINT(cpu_all_tmax));
 
 		backside_setup_pid();
 		drives_setup_pid();
 
 		/*
-		 * We करोn't have the right stuff to drive the PCI fan
-		 * so we fix it to a शेष value
+		 * We don't have the right stuff to drive the PCI fan
+		 * so we fix it to a default value
 		 */
 		wf_control_set(slots_fan, SLOTS_FAN_DEFAULT_PWM);
 
-#अगर_घोषित HACKED_OVERTEMP
-		cpu_all_पंचांगax = 60 << 16;
-#पूर्ण_अगर
-	पूर्ण
+#ifdef HACKED_OVERTEMP
+		cpu_all_tmax = 60 << 16;
+#endif
+	}
 
 	/* Permanent failure, bail out */
-	अगर (failure_state & FAILURE_PERM)
-		वापस;
+	if (failure_state & FAILURE_PERM)
+		return;
 
 	/*
 	 * Clear all failure bits except low overtemp which will be eventually
@@ -646,9 +645,9 @@
 	 */
 	last_failure = failure_state;
 	failure_state &= FAILURE_LOW_OVERTEMP;
-	अगर (cpu_pid_combined)
+	if (cpu_pid_combined)
 		cpu_fans_tick_combined();
-	अन्यथा
+	else
 		cpu_fans_tick_split();
 	backside_fan_tick();
 	drives_fan_tick();
@@ -656,41 +655,41 @@
 	DBG_LOTS("  last_failure: 0x%x, failure_state: %x\n",
 		 last_failure, failure_state);
 
-	/* Check क्रम failures. Any failure causes cpufreq clamping */
-	अगर (failure_state && last_failure == 0 && cpufreq_clamp)
+	/* Check for failures. Any failure causes cpufreq clamping */
+	if (failure_state && last_failure == 0 && cpufreq_clamp)
 		wf_control_set_max(cpufreq_clamp);
-	अगर (failure_state == 0 && last_failure && cpufreq_clamp)
+	if (failure_state == 0 && last_failure && cpufreq_clamp)
 		wf_control_set_min(cpufreq_clamp);
 
-	/* That's it क्रम now, we might want to deal with other failures
-	 * dअगरferently in the future though
+	/* That's it for now, we might want to deal with other failures
+	 * differently in the future though
 	 */
-पूर्ण
+}
 
-अटल व्योम pm72_new_control(काष्ठा wf_control *ct)
-अणु
+static void pm72_new_control(struct wf_control *ct)
+{
 	bool all_controls;
 	bool had_pump = cpu_pumps[0] || cpu_pumps[1];
 
-	अगर (!म_भेद(ct->name, "cpu-front-fan-0"))
+	if (!strcmp(ct->name, "cpu-front-fan-0"))
 		cpu_front_fans[0] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpu-front-fan-1"))
+	else if (!strcmp(ct->name, "cpu-front-fan-1"))
 		cpu_front_fans[1] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpu-rear-fan-0"))
+	else if (!strcmp(ct->name, "cpu-rear-fan-0"))
 		cpu_rear_fans[0] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpu-rear-fan-1"))
+	else if (!strcmp(ct->name, "cpu-rear-fan-1"))
 		cpu_rear_fans[1] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpu-pump-0"))
+	else if (!strcmp(ct->name, "cpu-pump-0"))
 		cpu_pumps[0] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpu-pump-1"))
+	else if (!strcmp(ct->name, "cpu-pump-1"))
 		cpu_pumps[1] = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "backside-fan"))
+	else if (!strcmp(ct->name, "backside-fan"))
 		backside_fan = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "slots-fan"))
+	else if (!strcmp(ct->name, "slots-fan"))
 		slots_fan = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "drive-bay-fan"))
+	else if (!strcmp(ct->name, "drive-bay-fan"))
 		drives_fan = ct;
-	अन्यथा अगर (!म_भेद(ct->name, "cpufreq-clamp"))
+	else if (!strcmp(ct->name, "cpufreq-clamp"))
 		cpufreq_clamp = ct;
 
 	all_controls =
@@ -699,39 +698,39 @@
 		backside_fan &&
 		slots_fan &&
 		drives_fan;
-	अगर (nr_chips > 1)
+	if (nr_chips > 1)
 		all_controls &=
 			cpu_front_fans[1] &&
 			cpu_rear_fans[1];
 	have_all_controls = all_controls;
 
-	अगर ((cpu_pumps[0] || cpu_pumps[1]) && !had_pump) अणु
+	if ((cpu_pumps[0] || cpu_pumps[1]) && !had_pump) {
 		pr_info("wf_pm72: Liquid cooling pump(s) detected,"
 			" using new algorithm !\n");
 		cpu_pid_combined = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम pm72_new_sensor(काष्ठा wf_sensor *sr)
-अणु
+static void pm72_new_sensor(struct wf_sensor *sr)
+{
 	bool all_sensors;
 
-	अगर (!म_भेद(sr->name, "cpu-diode-temp-0"))
+	if (!strcmp(sr->name, "cpu-diode-temp-0"))
 		sens_cpu_temp[0] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "cpu-diode-temp-1"))
+	else if (!strcmp(sr->name, "cpu-diode-temp-1"))
 		sens_cpu_temp[1] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "cpu-voltage-0"))
+	else if (!strcmp(sr->name, "cpu-voltage-0"))
 		sens_cpu_volts[0] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "cpu-voltage-1"))
+	else if (!strcmp(sr->name, "cpu-voltage-1"))
 		sens_cpu_volts[1] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "cpu-current-0"))
+	else if (!strcmp(sr->name, "cpu-current-0"))
 		sens_cpu_amps[0] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "cpu-current-1"))
+	else if (!strcmp(sr->name, "cpu-current-1"))
 		sens_cpu_amps[1] = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "backside-temp"))
+	else if (!strcmp(sr->name, "backside-temp"))
 		backside_temp = sr;
-	अन्यथा अगर (!म_भेद(sr->name, "hd-temp"))
+	else if (!strcmp(sr->name, "hd-temp"))
 		drives_temp = sr;
 
 	all_sensors =
@@ -740,105 +739,105 @@
 		sens_cpu_amps[0] &&
 		backside_temp &&
 		drives_temp;
-	अगर (nr_chips > 1)
+	if (nr_chips > 1)
 		all_sensors &=
 			sens_cpu_temp[1] &&
 			sens_cpu_volts[1] &&
 			sens_cpu_amps[1];
 
 	have_all_sensors = all_sensors;
-पूर्ण
+}
 
-अटल पूर्णांक pm72_wf_notअगरy(काष्ठा notअगरier_block *self,
-			  अचिन्हित दीर्घ event, व्योम *data)
-अणु
-	चयन (event) अणु
-	हाल WF_EVENT_NEW_SENSOR:
+static int pm72_wf_notify(struct notifier_block *self,
+			  unsigned long event, void *data)
+{
+	switch (event) {
+	case WF_EVENT_NEW_SENSOR:
 		pm72_new_sensor(data);
-		अवरोध;
-	हाल WF_EVENT_NEW_CONTROL:
+		break;
+	case WF_EVENT_NEW_CONTROL:
 		pm72_new_control(data);
-		अवरोध;
-	हाल WF_EVENT_TICK:
-		अगर (have_all_controls && have_all_sensors)
+		break;
+	case WF_EVENT_TICK:
+		if (have_all_controls && have_all_sensors)
 			pm72_tick();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block pm72_events = अणु
-	.notअगरier_call = pm72_wf_notअगरy,
-पूर्ण;
+static struct notifier_block pm72_events = {
+	.notifier_call = pm72_wf_notify,
+};
 
-अटल पूर्णांक wf_pm72_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	wf_रेजिस्टर_client(&pm72_events);
-	वापस 0;
-पूर्ण
+static int wf_pm72_probe(struct platform_device *dev)
+{
+	wf_register_client(&pm72_events);
+	return 0;
+}
 
-अटल पूर्णांक wf_pm72_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	wf_unरेजिस्टर_client(&pm72_events);
+static int wf_pm72_remove(struct platform_device *dev)
+{
+	wf_unregister_client(&pm72_events);
 
 	/* should release all sensors and controls */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver wf_pm72_driver = अणु
+static struct platform_driver wf_pm72_driver = {
 	.probe	= wf_pm72_probe,
-	.हटाओ	= wf_pm72_हटाओ,
-	.driver	= अणु
+	.remove	= wf_pm72_remove,
+	.driver	= {
 		.name = "windfarm",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init wf_pm72_init(व्योम)
-अणु
-	काष्ठा device_node *cpu;
-	पूर्णांक i;
+static int __init wf_pm72_init(void)
+{
+	struct device_node *cpu;
+	int i;
 
-	अगर (!of_machine_is_compatible("PowerMac7,2") &&
+	if (!of_machine_is_compatible("PowerMac7,2") &&
 	    !of_machine_is_compatible("PowerMac7,3"))
-		वापस -ENODEV;
+		return -ENODEV;
 
 	/* Count the number of CPU cores */
 	nr_chips = 0;
-	क्रम_each_node_by_type(cpu, "cpu")
+	for_each_node_by_type(cpu, "cpu")
 		++nr_chips;
-	अगर (nr_chips > NR_CHIPS)
+	if (nr_chips > NR_CHIPS)
 		nr_chips = NR_CHIPS;
 
 	pr_info("windfarm: Initializing for desktop G5 with %d chips\n",
 		nr_chips);
 
-	/* Get MPU data क्रम each CPU */
-	क्रम (i = 0; i < nr_chips; i++) अणु
+	/* Get MPU data for each CPU */
+	for (i = 0; i < nr_chips; i++) {
 		cpu_mpu_data[i] = wf_get_mpu(i);
-		अगर (!cpu_mpu_data[i]) अणु
+		if (!cpu_mpu_data[i]) {
 			pr_err("wf_pm72: Failed to find MPU data for CPU %d\n", i);
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण
+			return -ENXIO;
+		}
+	}
 
-#अगर_घोषित MODULE
+#ifdef MODULE
 	request_module("windfarm_fcu_controls");
 	request_module("windfarm_lm75_sensor");
 	request_module("windfarm_ad7417_sensor");
 	request_module("windfarm_max6690_sensor");
 	request_module("windfarm_cpufreq_clamp");
-#पूर्ण_अगर /* MODULE */
+#endif /* MODULE */
 
-	platक्रमm_driver_रेजिस्टर(&wf_pm72_driver);
-	वापस 0;
-पूर्ण
+	platform_driver_register(&wf_pm72_driver);
+	return 0;
+}
 
-अटल व्योम __निकास wf_pm72_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&wf_pm72_driver);
-पूर्ण
+static void __exit wf_pm72_exit(void)
+{
+	platform_driver_unregister(&wf_pm72_driver);
+}
 
 module_init(wf_pm72_init);
-module_निकास(wf_pm72_निकास);
+module_exit(wf_pm72_exit);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("Thermal control for AGP PowerMac G5s");

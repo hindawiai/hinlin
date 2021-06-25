@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_COMPAT_SIGNAL_H
-#घोषणा __ASM_COMPAT_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_COMPAT_SIGNAL_H
+#define __ASM_COMPAT_SIGNAL_H
 
-#समावेश <linux/bug.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/compiler.h>
+#include <linux/bug.h>
+#include <linux/compat.h>
+#include <linux/compiler.h>
 
-#समावेश <यंत्र/संकेत.स>
-#समावेश <यंत्र/siginfo.h>
+#include <asm/signal.h>
+#include <asm/siginfo.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-अटल अंतरभूत पूर्णांक __copy_conv_sigset_to_user(compat_sigset_t __user *d,
-	स्थिर sigset_t *s)
-अणु
-	BUILD_BUG_ON(माप(*d) != माप(*s));
+static inline int __copy_conv_sigset_to_user(compat_sigset_t __user *d,
+	const sigset_t *s)
+{
+	BUILD_BUG_ON(sizeof(*d) != sizeof(*s));
 	BUILD_BUG_ON(_NSIG_WORDS != 2);
 
-	वापस put_compat_sigset(d, s, माप(*d));
-पूर्ण
+	return put_compat_sigset(d, s, sizeof(*d));
+}
 
-अटल अंतरभूत पूर्णांक __copy_conv_sigset_from_user(sigset_t *d,
-	स्थिर compat_sigset_t __user *s)
-अणु
-	वापस get_compat_sigset(d, s);
-पूर्ण
+static inline int __copy_conv_sigset_from_user(sigset_t *d,
+	const compat_sigset_t __user *s)
+{
+	return get_compat_sigset(d, s);
+}
 
-#पूर्ण_अगर /* __ASM_COMPAT_SIGNAL_H */
+#endif /* __ASM_COMPAT_SIGNAL_H */

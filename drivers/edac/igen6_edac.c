@@ -1,336 +1,335 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम Intel client SoC with पूर्णांकegrated memory controller using IBECC
+ * Driver for Intel client SoC with integrated memory controller using IBECC
  *
  * Copyright (C) 2020 Intel Corporation
  *
- * The In-Band ECC (IBECC) IP provides ECC protection to all or specअगरic
- * regions of the physical memory space. It's used क्रम memory controllers
- * that करोn't support the out-of-band ECC which often needs an additional
- * storage device to each channel क्रम storing ECC data.
+ * The In-Band ECC (IBECC) IP provides ECC protection to all or specific
+ * regions of the physical memory space. It's used for memory controllers
+ * that don't support the out-of-band ECC which often needs an additional
+ * storage device to each channel for storing ECC data.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/llist.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/edac.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/mach_traps.h>
-#समावेश <यंत्र/nmi.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/irq_work.h>
+#include <linux/llist.h>
+#include <linux/genalloc.h>
+#include <linux/edac.h>
+#include <linux/bits.h>
+#include <linux/io.h>
+#include <asm/mach_traps.h>
+#include <asm/nmi.h>
 
-#समावेश "edac_mc.h"
-#समावेश "edac_module.h"
+#include "edac_mc.h"
+#include "edac_module.h"
 
-#घोषणा IGEN6_REVISION	"v2.4"
+#define IGEN6_REVISION	"v2.4"
 
-#घोषणा EDAC_MOD_STR	"igen6_edac"
-#घोषणा IGEN6_NMI_NAME	"igen6_ibecc"
+#define EDAC_MOD_STR	"igen6_edac"
+#define IGEN6_NMI_NAME	"igen6_ibecc"
 
 /* Debug macros */
-#घोषणा igen6_prपूर्णांकk(level, fmt, arg...)		\
-	edac_prपूर्णांकk(level, "igen6", fmt, ##arg)
+#define igen6_printk(level, fmt, arg...)		\
+	edac_printk(level, "igen6", fmt, ##arg)
 
-#घोषणा igen6_mc_prपूर्णांकk(mci, level, fmt, arg...)	\
-	edac_mc_chipset_prपूर्णांकk(mci, level, "igen6", fmt, ##arg)
+#define igen6_mc_printk(mci, level, fmt, arg...)	\
+	edac_mc_chipset_printk(mci, level, "igen6", fmt, ##arg)
 
-#घोषणा GET_BITFIELD(v, lo, hi) (((v) & GENMASK_ULL(hi, lo)) >> (lo))
+#define GET_BITFIELD(v, lo, hi) (((v) & GENMASK_ULL(hi, lo)) >> (lo))
 
-#घोषणा NUM_IMC				1 /* Max memory controllers */
-#घोषणा NUM_CHANNELS			2 /* Max channels */
-#घोषणा NUM_DIMMS			2 /* Max DIMMs per channel */
+#define NUM_IMC				1 /* Max memory controllers */
+#define NUM_CHANNELS			2 /* Max channels */
+#define NUM_DIMMS			2 /* Max DIMMs per channel */
 
-#घोषणा _4GB				BIT_ULL(32)
+#define _4GB				BIT_ULL(32)
 
 /* Size of physical memory */
-#घोषणा TOM_OFFSET			0xa0
+#define TOM_OFFSET			0xa0
 /* Top of low usable DRAM */
-#घोषणा TOLUD_OFFSET			0xbc
-/* Capability रेजिस्टर C */
-#घोषणा CAPID_C_OFFSET			0xec
-#घोषणा CAPID_C_IBECC			BIT(15)
+#define TOLUD_OFFSET			0xbc
+/* Capability register C */
+#define CAPID_C_OFFSET			0xec
+#define CAPID_C_IBECC			BIT(15)
 
 /* Error Status */
-#घोषणा ERRSTS_OFFSET			0xc8
-#घोषणा ERRSTS_CE			BIT_ULL(6)
-#घोषणा ERRSTS_UE			BIT_ULL(7)
+#define ERRSTS_OFFSET			0xc8
+#define ERRSTS_CE			BIT_ULL(6)
+#define ERRSTS_UE			BIT_ULL(7)
 
 /* Error Command */
-#घोषणा ERRCMD_OFFSET			0xca
-#घोषणा ERRCMD_CE			BIT_ULL(6)
-#घोषणा ERRCMD_UE			BIT_ULL(7)
+#define ERRCMD_OFFSET			0xca
+#define ERRCMD_CE			BIT_ULL(6)
+#define ERRCMD_UE			BIT_ULL(7)
 
 /* IBECC MMIO base address */
-#घोषणा IBECC_BASE			(res_cfg->ibecc_base)
-#घोषणा IBECC_ACTIVATE_OFFSET		IBECC_BASE
-#घोषणा IBECC_ACTIVATE_EN		BIT(0)
+#define IBECC_BASE			(res_cfg->ibecc_base)
+#define IBECC_ACTIVATE_OFFSET		IBECC_BASE
+#define IBECC_ACTIVATE_EN		BIT(0)
 
 /* IBECC error log */
-#घोषणा ECC_ERROR_LOG_OFFSET		(IBECC_BASE + 0x170)
-#घोषणा ECC_ERROR_LOG_CE		BIT_ULL(62)
-#घोषणा ECC_ERROR_LOG_UE		BIT_ULL(63)
-#घोषणा ECC_ERROR_LOG_ADDR_SHIFT	5
-#घोषणा ECC_ERROR_LOG_ADDR(v)		GET_BITFIELD(v, 5, 38)
-#घोषणा ECC_ERROR_LOG_SYND(v)		GET_BITFIELD(v, 46, 61)
+#define ECC_ERROR_LOG_OFFSET		(IBECC_BASE + 0x170)
+#define ECC_ERROR_LOG_CE		BIT_ULL(62)
+#define ECC_ERROR_LOG_UE		BIT_ULL(63)
+#define ECC_ERROR_LOG_ADDR_SHIFT	5
+#define ECC_ERROR_LOG_ADDR(v)		GET_BITFIELD(v, 5, 38)
+#define ECC_ERROR_LOG_SYND(v)		GET_BITFIELD(v, 46, 61)
 
 /* Host MMIO base address */
-#घोषणा MCHBAR_OFFSET			0x48
-#घोषणा MCHBAR_EN			BIT_ULL(0)
-#घोषणा MCHBAR_BASE(v)			(GET_BITFIELD(v, 16, 38) << 16)
-#घोषणा MCHBAR_SIZE			0x10000
+#define MCHBAR_OFFSET			0x48
+#define MCHBAR_EN			BIT_ULL(0)
+#define MCHBAR_BASE(v)			(GET_BITFIELD(v, 16, 38) << 16)
+#define MCHBAR_SIZE			0x10000
 
-/* Parameters क्रम the channel decode stage */
-#घोषणा MAD_INTER_CHANNEL_OFFSET	0x5000
-#घोषणा MAD_INTER_CHANNEL_DDR_TYPE(v)	GET_BITFIELD(v, 0, 2)
-#घोषणा MAD_INTER_CHANNEL_ECHM(v)	GET_BITFIELD(v, 3, 3)
-#घोषणा MAD_INTER_CHANNEL_CH_L_MAP(v)	GET_BITFIELD(v, 4, 4)
-#घोषणा MAD_INTER_CHANNEL_CH_S_SIZE(v)	((u64)GET_BITFIELD(v, 12, 19) << 29)
+/* Parameters for the channel decode stage */
+#define MAD_INTER_CHANNEL_OFFSET	0x5000
+#define MAD_INTER_CHANNEL_DDR_TYPE(v)	GET_BITFIELD(v, 0, 2)
+#define MAD_INTER_CHANNEL_ECHM(v)	GET_BITFIELD(v, 3, 3)
+#define MAD_INTER_CHANNEL_CH_L_MAP(v)	GET_BITFIELD(v, 4, 4)
+#define MAD_INTER_CHANNEL_CH_S_SIZE(v)	((u64)GET_BITFIELD(v, 12, 19) << 29)
 
-/* Parameters क्रम DRAM decode stage */
-#घोषणा MAD_INTRA_CH0_OFFSET		0x5004
-#घोषणा MAD_INTRA_CH_DIMM_L_MAP(v)	GET_BITFIELD(v, 0, 0)
+/* Parameters for DRAM decode stage */
+#define MAD_INTRA_CH0_OFFSET		0x5004
+#define MAD_INTRA_CH_DIMM_L_MAP(v)	GET_BITFIELD(v, 0, 0)
 
-/* DIMM अक्षरacteristics */
-#घोषणा MAD_DIMM_CH0_OFFSET		0x500c
-#घोषणा MAD_DIMM_CH_DIMM_L_SIZE(v)	((u64)GET_BITFIELD(v, 0, 6) << 29)
-#घोषणा MAD_DIMM_CH_DLW(v)		GET_BITFIELD(v, 7, 8)
-#घोषणा MAD_DIMM_CH_DIMM_S_SIZE(v)	((u64)GET_BITFIELD(v, 16, 22) << 29)
-#घोषणा MAD_DIMM_CH_DSW(v)		GET_BITFIELD(v, 24, 25)
+/* DIMM characteristics */
+#define MAD_DIMM_CH0_OFFSET		0x500c
+#define MAD_DIMM_CH_DIMM_L_SIZE(v)	((u64)GET_BITFIELD(v, 0, 6) << 29)
+#define MAD_DIMM_CH_DLW(v)		GET_BITFIELD(v, 7, 8)
+#define MAD_DIMM_CH_DIMM_S_SIZE(v)	((u64)GET_BITFIELD(v, 16, 22) << 29)
+#define MAD_DIMM_CH_DSW(v)		GET_BITFIELD(v, 24, 25)
 
-/* Hash क्रम channel selection */
-#घोषणा CHANNEL_HASH_OFFSET		0X5024
-/* Hash क्रम enhanced channel selection */
-#घोषणा CHANNEL_EHASH_OFFSET		0X5028
-#घोषणा CHANNEL_HASH_MASK(v)		(GET_BITFIELD(v, 6, 19) << 6)
-#घोषणा CHANNEL_HASH_LSB_MASK_BIT(v)	GET_BITFIELD(v, 24, 26)
-#घोषणा CHANNEL_HASH_MODE(v)		GET_BITFIELD(v, 28, 28)
+/* Hash for channel selection */
+#define CHANNEL_HASH_OFFSET		0X5024
+/* Hash for enhanced channel selection */
+#define CHANNEL_EHASH_OFFSET		0X5028
+#define CHANNEL_HASH_MASK(v)		(GET_BITFIELD(v, 6, 19) << 6)
+#define CHANNEL_HASH_LSB_MASK_BIT(v)	GET_BITFIELD(v, 24, 26)
+#define CHANNEL_HASH_MODE(v)		GET_BITFIELD(v, 28, 28)
 
-अटल काष्ठा res_config अणु
-	पूर्णांक num_imc;
+static struct res_config {
+	int num_imc;
 	u32 ibecc_base;
-	bool (*ibecc_available)(काष्ठा pci_dev *pdev);
-	/* Convert error address logged in IBECC to प्रणाली physical address */
+	bool (*ibecc_available)(struct pci_dev *pdev);
+	/* Convert error address logged in IBECC to system physical address */
 	u64 (*err_addr_to_sys_addr)(u64 eaddr);
-	/* Convert error address logged in IBECC to पूर्णांकegrated memory controller address */
+	/* Convert error address logged in IBECC to integrated memory controller address */
 	u64 (*err_addr_to_imc_addr)(u64 eaddr);
-पूर्ण *res_cfg;
+} *res_cfg;
 
-काष्ठा igen6_imc अणु
-	पूर्णांक mc;
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा pci_dev *pdev;
-	काष्ठा device dev;
-	व्योम __iomem *winकरोw;
+struct igen6_imc {
+	int mc;
+	struct mem_ctl_info *mci;
+	struct pci_dev *pdev;
+	struct device dev;
+	void __iomem *window;
 	u64 ch_s_size;
-	पूर्णांक ch_l_map;
+	int ch_l_map;
 	u64 dimm_s_size[NUM_CHANNELS];
 	u64 dimm_l_size[NUM_CHANNELS];
-	पूर्णांक dimm_l_map[NUM_CHANNELS];
-पूर्ण;
+	int dimm_l_map[NUM_CHANNELS];
+};
 
-अटल काष्ठा igen6_pvt अणु
-	काष्ठा igen6_imc imc[NUM_IMC];
-पूर्ण *igen6_pvt;
+static struct igen6_pvt {
+	struct igen6_imc imc[NUM_IMC];
+} *igen6_pvt;
 
 /* The top of low usable DRAM */
-अटल u32 igen6_tolud;
+static u32 igen6_tolud;
 /* The size of physical memory */
-अटल u64 igen6_tom;
+static u64 igen6_tom;
 
-काष्ठा decoded_addr अणु
-	पूर्णांक mc;
+struct decoded_addr {
+	int mc;
 	u64 imc_addr;
 	u64 sys_addr;
-	पूर्णांक channel_idx;
+	int channel_idx;
 	u64 channel_addr;
-	पूर्णांक sub_channel_idx;
+	int sub_channel_idx;
 	u64 sub_channel_addr;
-पूर्ण;
+};
 
-काष्ठा ecclog_node अणु
-	काष्ठा llist_node llnode;
-	पूर्णांक mc;
+struct ecclog_node {
+	struct llist_node llnode;
+	int mc;
 	u64 ecclog;
-पूर्ण;
+};
 
 /*
  * In the NMI handler, the driver uses the lock-less memory allocator
  * to allocate memory to store the IBECC error logs and links the logs
- * to the lock-less list. Delay prपूर्णांकk() and the work of error reporting
+ * to the lock-less list. Delay printk() and the work of error reporting
  * to EDAC core in a worker.
  */
-#घोषणा ECCLOG_POOL_SIZE	PAGE_SIZE
-अटल LLIST_HEAD(ecclog_llist);
-अटल काष्ठा gen_pool *ecclog_pool;
-अटल अक्षर ecclog_buf[ECCLOG_POOL_SIZE];
-अटल काष्ठा irq_work ecclog_irq_work;
-अटल काष्ठा work_काष्ठा ecclog_work;
+#define ECCLOG_POOL_SIZE	PAGE_SIZE
+static LLIST_HEAD(ecclog_llist);
+static struct gen_pool *ecclog_pool;
+static char ecclog_buf[ECCLOG_POOL_SIZE];
+static struct irq_work ecclog_irq_work;
+static struct work_struct ecclog_work;
 
-/* Compute die IDs क्रम Elkhart Lake with IBECC */
-#घोषणा DID_EHL_SKU5	0x4514
-#घोषणा DID_EHL_SKU6	0x4528
-#घोषणा DID_EHL_SKU7	0x452a
-#घोषणा DID_EHL_SKU8	0x4516
-#घोषणा DID_EHL_SKU9	0x452c
-#घोषणा DID_EHL_SKU10	0x452e
-#घोषणा DID_EHL_SKU11	0x4532
-#घोषणा DID_EHL_SKU12	0x4518
-#घोषणा DID_EHL_SKU13	0x451a
-#घोषणा DID_EHL_SKU14	0x4534
-#घोषणा DID_EHL_SKU15	0x4536
+/* Compute die IDs for Elkhart Lake with IBECC */
+#define DID_EHL_SKU5	0x4514
+#define DID_EHL_SKU6	0x4528
+#define DID_EHL_SKU7	0x452a
+#define DID_EHL_SKU8	0x4516
+#define DID_EHL_SKU9	0x452c
+#define DID_EHL_SKU10	0x452e
+#define DID_EHL_SKU11	0x4532
+#define DID_EHL_SKU12	0x4518
+#define DID_EHL_SKU13	0x451a
+#define DID_EHL_SKU14	0x4534
+#define DID_EHL_SKU15	0x4536
 
-अटल bool ehl_ibecc_available(काष्ठा pci_dev *pdev)
-अणु
+static bool ehl_ibecc_available(struct pci_dev *pdev)
+{
 	u32 v;
 
-	अगर (pci_पढ़ो_config_dword(pdev, CAPID_C_OFFSET, &v))
-		वापस false;
+	if (pci_read_config_dword(pdev, CAPID_C_OFFSET, &v))
+		return false;
 
-	वापस !!(CAPID_C_IBECC & v);
-पूर्ण
+	return !!(CAPID_C_IBECC & v);
+}
 
-अटल u64 ehl_err_addr_to_sys_addr(u64 eaddr)
-अणु
-	वापस eaddr;
-पूर्ण
+static u64 ehl_err_addr_to_sys_addr(u64 eaddr)
+{
+	return eaddr;
+}
 
-अटल u64 ehl_err_addr_to_imc_addr(u64 eaddr)
-अणु
-	अगर (eaddr < igen6_tolud)
-		वापस eaddr;
+static u64 ehl_err_addr_to_imc_addr(u64 eaddr)
+{
+	if (eaddr < igen6_tolud)
+		return eaddr;
 
-	अगर (igen6_tom <= _4GB)
-		वापस eaddr + igen6_tolud - _4GB;
+	if (igen6_tom <= _4GB)
+		return eaddr + igen6_tolud - _4GB;
 
-	अगर (eaddr < _4GB)
-		वापस eaddr + igen6_tolud - igen6_tom;
+	if (eaddr < _4GB)
+		return eaddr + igen6_tolud - igen6_tom;
 
-	वापस eaddr;
-पूर्ण
+	return eaddr;
+}
 
-अटल काष्ठा res_config ehl_cfg = अणु
+static struct res_config ehl_cfg = {
 	.num_imc	 = 1,
 	.ibecc_base	 = 0xdc00,
 	.ibecc_available = ehl_ibecc_available,
 	.err_addr_to_sys_addr  = ehl_err_addr_to_sys_addr,
 	.err_addr_to_imc_addr  = ehl_err_addr_to_imc_addr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id igen6_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU5), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU6), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU7), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU8), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU9), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU10), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU11), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU12), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU13), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU14), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु PCI_VDEVICE(INTEL, DID_EHL_SKU15), (kernel_uदीर्घ_t)&ehl_cfg पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id igen6_pci_tbl[] = {
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU5), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU6), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU7), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU8), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU9), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU10), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU11), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU12), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU13), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU14), (kernel_ulong_t)&ehl_cfg },
+	{ PCI_VDEVICE(INTEL, DID_EHL_SKU15), (kernel_ulong_t)&ehl_cfg },
+	{ },
+};
 MODULE_DEVICE_TABLE(pci, igen6_pci_tbl);
 
-अटल क्रमागत dev_type get_width(पूर्णांक dimm_l, u32 mad_dimm)
-अणु
+static enum dev_type get_width(int dimm_l, u32 mad_dimm)
+{
 	u32 w = dimm_l ? MAD_DIMM_CH_DLW(mad_dimm) :
 			 MAD_DIMM_CH_DSW(mad_dimm);
 
-	चयन (w) अणु
-	हाल 0:
-		वापस DEV_X8;
-	हाल 1:
-		वापस DEV_X16;
-	हाल 2:
-		वापस DEV_X32;
-	शेष:
-		वापस DEV_UNKNOWN;
-	पूर्ण
-पूर्ण
+	switch (w) {
+	case 0:
+		return DEV_X8;
+	case 1:
+		return DEV_X16;
+	case 2:
+		return DEV_X32;
+	default:
+		return DEV_UNKNOWN;
+	}
+}
 
-अटल क्रमागत mem_type get_memory_type(u32 mad_पूर्णांकer)
-अणु
-	u32 t = MAD_INTER_CHANNEL_DDR_TYPE(mad_पूर्णांकer);
+static enum mem_type get_memory_type(u32 mad_inter)
+{
+	u32 t = MAD_INTER_CHANNEL_DDR_TYPE(mad_inter);
 
-	चयन (t) अणु
-	हाल 0:
-		वापस MEM_DDR4;
-	हाल 1:
-		वापस MEM_DDR3;
-	हाल 2:
-		वापस MEM_LPDDR3;
-	हाल 3:
-		वापस MEM_LPDDR4;
-	हाल 4:
-		वापस MEM_WIO2;
-	शेष:
-		वापस MEM_UNKNOWN;
-	पूर्ण
-पूर्ण
+	switch (t) {
+	case 0:
+		return MEM_DDR4;
+	case 1:
+		return MEM_DDR3;
+	case 2:
+		return MEM_LPDDR3;
+	case 3:
+		return MEM_LPDDR4;
+	case 4:
+		return MEM_WIO2;
+	default:
+		return MEM_UNKNOWN;
+	}
+}
 
-अटल पूर्णांक decode_chan_idx(u64 addr, u64 mask, पूर्णांक पूर्णांकlv_bit)
-अणु
+static int decode_chan_idx(u64 addr, u64 mask, int intlv_bit)
+{
 	u64 hash_addr = addr & mask, hash = 0;
-	u64 पूर्णांकlv = (addr >> पूर्णांकlv_bit) & 1;
-	पूर्णांक i;
+	u64 intlv = (addr >> intlv_bit) & 1;
+	int i;
 
-	क्रम (i = 6; i < 20; i++)
+	for (i = 6; i < 20; i++)
 		hash ^= (hash_addr >> i) & 1;
 
-	वापस (पूर्णांक)hash ^ पूर्णांकlv;
-पूर्ण
+	return (int)hash ^ intlv;
+}
 
-अटल u64 decode_channel_addr(u64 addr, पूर्णांक पूर्णांकlv_bit)
-अणु
+static u64 decode_channel_addr(u64 addr, int intlv_bit)
+{
 	u64 channel_addr;
 
-	/* Remove the पूर्णांकerleave bit and shअगरt upper part करोwn to fill gap */
-	channel_addr  = GET_BITFIELD(addr, पूर्णांकlv_bit + 1, 63) << पूर्णांकlv_bit;
-	channel_addr |= GET_BITFIELD(addr, 0, पूर्णांकlv_bit - 1);
+	/* Remove the interleave bit and shift upper part down to fill gap */
+	channel_addr  = GET_BITFIELD(addr, intlv_bit + 1, 63) << intlv_bit;
+	channel_addr |= GET_BITFIELD(addr, 0, intlv_bit - 1);
 
-	वापस channel_addr;
-पूर्ण
+	return channel_addr;
+}
 
-अटल व्योम decode_addr(u64 addr, u32 hash, u64 s_size, पूर्णांक l_map,
-			पूर्णांक *idx, u64 *sub_addr)
-अणु
-	पूर्णांक पूर्णांकlv_bit = CHANNEL_HASH_LSB_MASK_BIT(hash) + 6;
+static void decode_addr(u64 addr, u32 hash, u64 s_size, int l_map,
+			int *idx, u64 *sub_addr)
+{
+	int intlv_bit = CHANNEL_HASH_LSB_MASK_BIT(hash) + 6;
 
-	अगर (addr > 2 * s_size) अणु
+	if (addr > 2 * s_size) {
 		*sub_addr = addr - s_size;
 		*idx = l_map;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (CHANNEL_HASH_MODE(hash)) अणु
-		*sub_addr = decode_channel_addr(addr, पूर्णांकlv_bit);
-		*idx = decode_chan_idx(addr, CHANNEL_HASH_MASK(hash), पूर्णांकlv_bit);
-	पूर्ण अन्यथा अणु
+	if (CHANNEL_HASH_MODE(hash)) {
+		*sub_addr = decode_channel_addr(addr, intlv_bit);
+		*idx = decode_chan_idx(addr, CHANNEL_HASH_MASK(hash), intlv_bit);
+	} else {
 		*sub_addr = decode_channel_addr(addr, 6);
 		*idx = GET_BITFIELD(addr, 6, 6);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक igen6_decode(काष्ठा decoded_addr *res)
-अणु
-	काष्ठा igen6_imc *imc = &igen6_pvt->imc[res->mc];
+static int igen6_decode(struct decoded_addr *res)
+{
+	struct igen6_imc *imc = &igen6_pvt->imc[res->mc];
 	u64 addr = res->imc_addr, sub_addr, s_size;
-	पूर्णांक idx, l_map;
+	int idx, l_map;
 	u32 hash;
 
-	अगर (addr >= igen6_tom) अणु
+	if (addr >= igen6_tom) {
 		edac_dbg(0, "Address 0x%llx out of range\n", addr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Decode channel */
-	hash   = पढ़ोl(imc->winकरोw + CHANNEL_HASH_OFFSET);
+	hash   = readl(imc->window + CHANNEL_HASH_OFFSET);
 	s_size = imc->ch_s_size;
 	l_map  = imc->ch_l_map;
 	decode_addr(addr, hash, s_size, l_map, &idx, &sub_addr);
@@ -338,20 +337,20 @@ MODULE_DEVICE_TABLE(pci, igen6_pci_tbl);
 	res->channel_addr = sub_addr;
 
 	/* Decode sub-channel/DIMM */
-	hash   = पढ़ोl(imc->winकरोw + CHANNEL_EHASH_OFFSET);
+	hash   = readl(imc->window + CHANNEL_EHASH_OFFSET);
 	s_size = imc->dimm_s_size[idx];
 	l_map  = imc->dimm_l_map[idx];
 	decode_addr(res->channel_addr, hash, s_size, l_map, &idx, &sub_addr);
 	res->sub_channel_idx  = idx;
 	res->sub_channel_addr = sub_addr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम igen6_output_error(काष्ठा decoded_addr *res,
-			       काष्ठा mem_ctl_info *mci, u64 ecclog)
-अणु
-	क्रमागत hw_event_mc_err_type type = ecclog & ECC_ERROR_LOG_UE ?
+static void igen6_output_error(struct decoded_addr *res,
+			       struct mem_ctl_info *mci, u64 ecclog)
+{
+	enum hw_event_mc_err_type type = ecclog & ECC_ERROR_LOG_UE ?
 					 HW_EVENT_ERR_UNCORRECTED :
 					 HW_EVENT_ERR_CORRECTED;
 
@@ -361,133 +360,133 @@ MODULE_DEVICE_TABLE(pci, igen6_pci_tbl);
 			     ECC_ERROR_LOG_SYND(ecclog),
 			     res->channel_idx, res->sub_channel_idx,
 			     -1, "", "");
-पूर्ण
+}
 
-अटल काष्ठा gen_pool *ecclog_gen_pool_create(व्योम)
-अणु
-	काष्ठा gen_pool *pool;
+static struct gen_pool *ecclog_gen_pool_create(void)
+{
+	struct gen_pool *pool;
 
-	pool = gen_pool_create(ilog2(माप(काष्ठा ecclog_node)), -1);
-	अगर (!pool)
-		वापस शून्य;
+	pool = gen_pool_create(ilog2(sizeof(struct ecclog_node)), -1);
+	if (!pool)
+		return NULL;
 
-	अगर (gen_pool_add(pool, (अचिन्हित दीर्घ)ecclog_buf, ECCLOG_POOL_SIZE, -1)) अणु
+	if (gen_pool_add(pool, (unsigned long)ecclog_buf, ECCLOG_POOL_SIZE, -1)) {
 		gen_pool_destroy(pool);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस pool;
-पूर्ण
+	return pool;
+}
 
-अटल पूर्णांक ecclog_gen_pool_add(पूर्णांक mc, u64 ecclog)
-अणु
-	काष्ठा ecclog_node *node;
+static int ecclog_gen_pool_add(int mc, u64 ecclog)
+{
+	struct ecclog_node *node;
 
-	node = (व्योम *)gen_pool_alloc(ecclog_pool, माप(*node));
-	अगर (!node)
-		वापस -ENOMEM;
+	node = (void *)gen_pool_alloc(ecclog_pool, sizeof(*node));
+	if (!node)
+		return -ENOMEM;
 
 	node->mc = mc;
 	node->ecclog = ecclog;
 	llist_add(&node->llnode, &ecclog_llist);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Either the memory-mapped I/O status रेजिस्टर ECC_ERROR_LOG or the PCI
- * configuration space status रेजिस्टर ERRSTS can indicate whether a
+ * Either the memory-mapped I/O status register ECC_ERROR_LOG or the PCI
+ * configuration space status register ERRSTS can indicate whether a
  * correctable error or an uncorrectable error occurred. We only use the
- * ECC_ERROR_LOG रेजिस्टर to check error type, but need to clear both
- * रेजिस्टरs to enable future error events.
+ * ECC_ERROR_LOG register to check error type, but need to clear both
+ * registers to enable future error events.
  */
-अटल u64 ecclog_पढ़ो_and_clear(काष्ठा igen6_imc *imc)
-अणु
-	u64 ecclog = पढ़ोq(imc->winकरोw + ECC_ERROR_LOG_OFFSET);
+static u64 ecclog_read_and_clear(struct igen6_imc *imc)
+{
+	u64 ecclog = readq(imc->window + ECC_ERROR_LOG_OFFSET);
 
-	अगर (ecclog & (ECC_ERROR_LOG_CE | ECC_ERROR_LOG_UE)) अणु
+	if (ecclog & (ECC_ERROR_LOG_CE | ECC_ERROR_LOG_UE)) {
 		/* Clear CE/UE bits by writing 1s */
-		ग_लिखोq(ecclog, imc->winकरोw + ECC_ERROR_LOG_OFFSET);
-		वापस ecclog;
-	पूर्ण
+		writeq(ecclog, imc->window + ECC_ERROR_LOG_OFFSET);
+		return ecclog;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम errsts_clear(काष्ठा igen6_imc *imc)
-अणु
+static void errsts_clear(struct igen6_imc *imc)
+{
 	u16 errsts;
 
-	अगर (pci_पढ़ो_config_word(imc->pdev, ERRSTS_OFFSET, &errsts)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read ERRSTS\n");
-		वापस;
-	पूर्ण
+	if (pci_read_config_word(imc->pdev, ERRSTS_OFFSET, &errsts)) {
+		igen6_printk(KERN_ERR, "Failed to read ERRSTS\n");
+		return;
+	}
 
 	/* Clear CE/UE bits by writing 1s */
-	अगर (errsts & (ERRSTS_CE | ERRSTS_UE))
-		pci_ग_लिखो_config_word(imc->pdev, ERRSTS_OFFSET, errsts);
-पूर्ण
+	if (errsts & (ERRSTS_CE | ERRSTS_UE))
+		pci_write_config_word(imc->pdev, ERRSTS_OFFSET, errsts);
+}
 
-अटल पूर्णांक errcmd_enable_error_reporting(bool enable)
-अणु
-	काष्ठा igen6_imc *imc = &igen6_pvt->imc[0];
+static int errcmd_enable_error_reporting(bool enable)
+{
+	struct igen6_imc *imc = &igen6_pvt->imc[0];
 	u16 errcmd;
-	पूर्णांक rc;
+	int rc;
 
-	rc = pci_पढ़ो_config_word(imc->pdev, ERRCMD_OFFSET, &errcmd);
-	अगर (rc)
-		वापस rc;
+	rc = pci_read_config_word(imc->pdev, ERRCMD_OFFSET, &errcmd);
+	if (rc)
+		return rc;
 
-	अगर (enable)
+	if (enable)
 		errcmd |= ERRCMD_CE | ERRSTS_UE;
-	अन्यथा
+	else
 		errcmd &= ~(ERRCMD_CE | ERRSTS_UE);
 
-	rc = pci_ग_लिखो_config_word(imc->pdev, ERRCMD_OFFSET, errcmd);
-	अगर (rc)
-		वापस rc;
+	rc = pci_write_config_word(imc->pdev, ERRCMD_OFFSET, errcmd);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ecclog_handler(व्योम)
-अणु
-	काष्ठा igen6_imc *imc;
-	पूर्णांक i, n = 0;
+static int ecclog_handler(void)
+{
+	struct igen6_imc *imc;
+	int i, n = 0;
 	u64 ecclog;
 
-	क्रम (i = 0; i < res_cfg->num_imc; i++) अणु
+	for (i = 0; i < res_cfg->num_imc; i++) {
 		imc = &igen6_pvt->imc[i];
 
 		/* errsts_clear() isn't NMI-safe. Delay it in the IRQ context */
 
-		ecclog = ecclog_पढ़ो_and_clear(imc);
-		अगर (!ecclog)
-			जारी;
+		ecclog = ecclog_read_and_clear(imc);
+		if (!ecclog)
+			continue;
 
-		अगर (!ecclog_gen_pool_add(i, ecclog))
+		if (!ecclog_gen_pool_add(i, ecclog))
 			irq_work_queue(&ecclog_irq_work);
 
 		n++;
-	पूर्ण
+	}
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल व्योम ecclog_work_cb(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ecclog_node *node, *पंचांगp;
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा llist_node *head;
-	काष्ठा decoded_addr res;
+static void ecclog_work_cb(struct work_struct *work)
+{
+	struct ecclog_node *node, *tmp;
+	struct mem_ctl_info *mci;
+	struct llist_node *head;
+	struct decoded_addr res;
 	u64 eaddr;
 
 	head = llist_del_all(&ecclog_llist);
-	अगर (!head)
-		वापस;
+	if (!head)
+		return;
 
-	llist_क्रम_each_entry_safe(node, पंचांगp, head, llnode) अणु
-		स_रखो(&res, 0, माप(res));
+	llist_for_each_entry_safe(node, tmp, head, llnode) {
+		memset(&res, 0, sizeof(res));
 		eaddr = ECC_ERROR_LOG_ADDR(node->ecclog) <<
 			ECC_ERROR_LOG_ADDR_SHIFT;
 		res.mc	     = node->mc;
@@ -497,279 +496,279 @@ MODULE_DEVICE_TABLE(pci, igen6_pci_tbl);
 		mci = igen6_pvt->imc[res.mc].mci;
 
 		edac_dbg(2, "MC %d, ecclog = 0x%llx\n", node->mc, node->ecclog);
-		igen6_mc_prपूर्णांकk(mci, KERN_DEBUG, "HANDLING IBECC MEMORY ERROR\n");
-		igen6_mc_prपूर्णांकk(mci, KERN_DEBUG, "ADDR 0x%llx ", res.sys_addr);
+		igen6_mc_printk(mci, KERN_DEBUG, "HANDLING IBECC MEMORY ERROR\n");
+		igen6_mc_printk(mci, KERN_DEBUG, "ADDR 0x%llx ", res.sys_addr);
 
-		अगर (!igen6_decode(&res))
+		if (!igen6_decode(&res))
 			igen6_output_error(&res, mci, node->ecclog);
 
-		gen_pool_मुक्त(ecclog_pool, (अचिन्हित दीर्घ)node, माप(*node));
-	पूर्ण
-पूर्ण
+		gen_pool_free(ecclog_pool, (unsigned long)node, sizeof(*node));
+	}
+}
 
-अटल व्योम ecclog_irq_work_cb(काष्ठा irq_work *irq_work)
-अणु
-	पूर्णांक i;
+static void ecclog_irq_work_cb(struct irq_work *irq_work)
+{
+	int i;
 
-	क्रम (i = 0; i < res_cfg->num_imc; i++)
+	for (i = 0; i < res_cfg->num_imc; i++)
 		errsts_clear(&igen6_pvt->imc[i]);
 
-	अगर (!llist_empty(&ecclog_llist))
+	if (!llist_empty(&ecclog_llist))
 		schedule_work(&ecclog_work);
-पूर्ण
+}
 
-अटल पूर्णांक ecclog_nmi_handler(अचिन्हित पूर्णांक cmd, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित अक्षर reason;
+static int ecclog_nmi_handler(unsigned int cmd, struct pt_regs *regs)
+{
+	unsigned char reason;
 
-	अगर (!ecclog_handler())
-		वापस NMI_DONE;
+	if (!ecclog_handler())
+		return NMI_DONE;
 
 	/*
 	 * Both In-Band ECC correctable error and uncorrectable error are
 	 * reported by SERR# NMI. The NMI generic code (see pci_serr_error())
-	 * करोesn't clear the bit NMI_REASON_CLEAR_SERR (in port 0x61) to
+	 * doesn't clear the bit NMI_REASON_CLEAR_SERR (in port 0x61) to
 	 * re-enable the SERR# NMI after NMI handling. So clear this bit here
-	 * to re-enable SERR# NMI क्रम receiving future In-Band ECC errors.
+	 * to re-enable SERR# NMI for receiving future In-Band ECC errors.
 	 */
-	reason  = x86_platक्रमm.get_nmi_reason() & NMI_REASON_CLEAR_MASK;
+	reason  = x86_platform.get_nmi_reason() & NMI_REASON_CLEAR_MASK;
 	reason |= NMI_REASON_CLEAR_SERR;
 	outb(reason, NMI_REASON_PORT);
 	reason &= ~NMI_REASON_CLEAR_SERR;
 	outb(reason, NMI_REASON_PORT);
 
-	वापस NMI_HANDLED;
-पूर्ण
+	return NMI_HANDLED;
+}
 
-अटल bool igen6_check_ecc(काष्ठा igen6_imc *imc)
-अणु
-	u32 activate = पढ़ोl(imc->winकरोw + IBECC_ACTIVATE_OFFSET);
+static bool igen6_check_ecc(struct igen6_imc *imc)
+{
+	u32 activate = readl(imc->window + IBECC_ACTIVATE_OFFSET);
 
-	वापस !!(activate & IBECC_ACTIVATE_EN);
-पूर्ण
+	return !!(activate & IBECC_ACTIVATE_EN);
+}
 
-अटल पूर्णांक igen6_get_dimm_config(काष्ठा mem_ctl_info *mci)
-अणु
-	काष्ठा igen6_imc *imc = mci->pvt_info;
-	u32 mad_पूर्णांकer, mad_पूर्णांकra, mad_dimm;
-	पूर्णांक i, j, ndimms, mc = imc->mc;
-	काष्ठा dimm_info *dimm;
-	क्रमागत mem_type mtype;
-	क्रमागत dev_type dtype;
+static int igen6_get_dimm_config(struct mem_ctl_info *mci)
+{
+	struct igen6_imc *imc = mci->pvt_info;
+	u32 mad_inter, mad_intra, mad_dimm;
+	int i, j, ndimms, mc = imc->mc;
+	struct dimm_info *dimm;
+	enum mem_type mtype;
+	enum dev_type dtype;
 	u64 dsize;
 	bool ecc;
 
 	edac_dbg(2, "\n");
 
-	mad_पूर्णांकer = पढ़ोl(imc->winकरोw + MAD_INTER_CHANNEL_OFFSET);
-	mtype = get_memory_type(mad_पूर्णांकer);
+	mad_inter = readl(imc->window + MAD_INTER_CHANNEL_OFFSET);
+	mtype = get_memory_type(mad_inter);
 	ecc = igen6_check_ecc(imc);
-	imc->ch_s_size = MAD_INTER_CHANNEL_CH_S_SIZE(mad_पूर्णांकer);
-	imc->ch_l_map  = MAD_INTER_CHANNEL_CH_L_MAP(mad_पूर्णांकer);
+	imc->ch_s_size = MAD_INTER_CHANNEL_CH_S_SIZE(mad_inter);
+	imc->ch_l_map  = MAD_INTER_CHANNEL_CH_L_MAP(mad_inter);
 
-	क्रम (i = 0; i < NUM_CHANNELS; i++) अणु
-		mad_पूर्णांकra = पढ़ोl(imc->winकरोw + MAD_INTRA_CH0_OFFSET + i * 4);
-		mad_dimm  = पढ़ोl(imc->winकरोw + MAD_DIMM_CH0_OFFSET + i * 4);
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		mad_intra = readl(imc->window + MAD_INTRA_CH0_OFFSET + i * 4);
+		mad_dimm  = readl(imc->window + MAD_DIMM_CH0_OFFSET + i * 4);
 
 		imc->dimm_l_size[i] = MAD_DIMM_CH_DIMM_L_SIZE(mad_dimm);
 		imc->dimm_s_size[i] = MAD_DIMM_CH_DIMM_S_SIZE(mad_dimm);
-		imc->dimm_l_map[i]  = MAD_INTRA_CH_DIMM_L_MAP(mad_पूर्णांकra);
+		imc->dimm_l_map[i]  = MAD_INTRA_CH_DIMM_L_MAP(mad_intra);
 		ndimms = 0;
 
-		क्रम (j = 0; j < NUM_DIMMS; j++) अणु
+		for (j = 0; j < NUM_DIMMS; j++) {
 			dimm = edac_get_dimm(mci, i, j, 0);
 
-			अगर (j ^ imc->dimm_l_map[i]) अणु
+			if (j ^ imc->dimm_l_map[i]) {
 				dtype = get_width(0, mad_dimm);
 				dsize = imc->dimm_s_size[i];
-			पूर्ण अन्यथा अणु
+			} else {
 				dtype = get_width(1, mad_dimm);
 				dsize = imc->dimm_l_size[i];
-			पूर्ण
+			}
 
-			अगर (!dsize)
-				जारी;
+			if (!dsize)
+				continue;
 
 			dimm->grain = 64;
 			dimm->mtype = mtype;
 			dimm->dtype = dtype;
 			dimm->nr_pages  = MiB_TO_PAGES(dsize >> 20);
 			dimm->edac_mode = EDAC_SECDED;
-			snम_लिखो(dimm->label, माप(dimm->label),
+			snprintf(dimm->label, sizeof(dimm->label),
 				 "MC#%d_Chan#%d_DIMM#%d", mc, i, j);
 			edac_dbg(0, "MC %d, Channel %d, DIMM %d, Size %llu MiB (%u pages)\n",
 				 mc, i, j, dsize >> 20, dimm->nr_pages);
 
 			ndimms++;
-		पूर्ण
+		}
 
-		अगर (ndimms && !ecc) अणु
-			igen6_prपूर्णांकk(KERN_ERR, "MC%d In-Band ECC is disabled\n", mc);
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+		if (ndimms && !ecc) {
+			igen6_printk(KERN_ERR, "MC%d In-Band ECC is disabled\n", mc);
+			return -ENODEV;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_EDAC_DEBUG
+#ifdef CONFIG_EDAC_DEBUG
 /* Top of upper usable DRAM */
-अटल u64 igen6_touud;
-#घोषणा TOUUD_OFFSET	0xa8
+static u64 igen6_touud;
+#define TOUUD_OFFSET	0xa8
 
-अटल व्योम igen6_reg_dump(काष्ठा igen6_imc *imc)
-अणु
-	पूर्णांक i;
+static void igen6_reg_dump(struct igen6_imc *imc)
+{
+	int i;
 
 	edac_dbg(2, "CHANNEL_HASH     : 0x%x\n",
-		 पढ़ोl(imc->winकरोw + CHANNEL_HASH_OFFSET));
+		 readl(imc->window + CHANNEL_HASH_OFFSET));
 	edac_dbg(2, "CHANNEL_EHASH    : 0x%x\n",
-		 पढ़ोl(imc->winकरोw + CHANNEL_EHASH_OFFSET));
+		 readl(imc->window + CHANNEL_EHASH_OFFSET));
 	edac_dbg(2, "MAD_INTER_CHANNEL: 0x%x\n",
-		 पढ़ोl(imc->winकरोw + MAD_INTER_CHANNEL_OFFSET));
+		 readl(imc->window + MAD_INTER_CHANNEL_OFFSET));
 	edac_dbg(2, "ECC_ERROR_LOG    : 0x%llx\n",
-		 पढ़ोq(imc->winकरोw + ECC_ERROR_LOG_OFFSET));
+		 readq(imc->window + ECC_ERROR_LOG_OFFSET));
 
-	क्रम (i = 0; i < NUM_CHANNELS; i++) अणु
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		edac_dbg(2, "MAD_INTRA_CH%d    : 0x%x\n", i,
-			 पढ़ोl(imc->winकरोw + MAD_INTRA_CH0_OFFSET + i * 4));
+			 readl(imc->window + MAD_INTRA_CH0_OFFSET + i * 4));
 		edac_dbg(2, "MAD_DIMM_CH%d     : 0x%x\n", i,
-			 पढ़ोl(imc->winकरोw + MAD_DIMM_CH0_OFFSET + i * 4));
-	पूर्ण
+			 readl(imc->window + MAD_DIMM_CH0_OFFSET + i * 4));
+	}
 	edac_dbg(2, "TOLUD            : 0x%x", igen6_tolud);
 	edac_dbg(2, "TOUUD            : 0x%llx", igen6_touud);
 	edac_dbg(2, "TOM              : 0x%llx", igen6_tom);
-पूर्ण
+}
 
-अटल काष्ठा dentry *igen6_test;
+static struct dentry *igen6_test;
 
-अटल पूर्णांक debugfs_u64_set(व्योम *data, u64 val)
-अणु
+static int debugfs_u64_set(void *data, u64 val)
+{
 	u64 ecclog;
 
-	अगर ((val >= igen6_tolud && val < _4GB) || val >= igen6_touud) अणु
+	if ((val >= igen6_tolud && val < _4GB) || val >= igen6_touud) {
 		edac_dbg(0, "Address 0x%llx out of range\n", val);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_warn_once("Fake error to 0x%llx injected via debugfs\n", val);
 
 	val  >>= ECC_ERROR_LOG_ADDR_SHIFT;
 	ecclog = (val << ECC_ERROR_LOG_ADDR_SHIFT) | ECC_ERROR_LOG_CE;
 
-	अगर (!ecclog_gen_pool_add(0, ecclog))
+	if (!ecclog_gen_pool_add(0, ecclog))
 		irq_work_queue(&ecclog_irq_work);
 
-	वापस 0;
-पूर्ण
-DEFINE_SIMPLE_ATTRIBUTE(fops_u64_wo, शून्य, debugfs_u64_set, "%llu\n");
+	return 0;
+}
+DEFINE_SIMPLE_ATTRIBUTE(fops_u64_wo, NULL, debugfs_u64_set, "%llu\n");
 
-अटल व्योम igen6_debug_setup(व्योम)
-अणु
+static void igen6_debug_setup(void)
+{
 	igen6_test = edac_debugfs_create_dir("igen6_test");
-	अगर (!igen6_test)
-		वापस;
+	if (!igen6_test)
+		return;
 
-	अगर (!edac_debugfs_create_file("addr", 0200, igen6_test,
-				      शून्य, &fops_u64_wo)) अणु
-		debugfs_हटाओ(igen6_test);
-		igen6_test = शून्य;
-	पूर्ण
-पूर्ण
+	if (!edac_debugfs_create_file("addr", 0200, igen6_test,
+				      NULL, &fops_u64_wo)) {
+		debugfs_remove(igen6_test);
+		igen6_test = NULL;
+	}
+}
 
-अटल व्योम igen6_debug_tearकरोwn(व्योम)
-अणु
-	debugfs_हटाओ_recursive(igen6_test);
-पूर्ण
-#अन्यथा
-अटल व्योम igen6_reg_dump(काष्ठा igen6_imc *imc) अणुपूर्ण
-अटल व्योम igen6_debug_setup(व्योम) अणुपूर्ण
-अटल व्योम igen6_debug_tearकरोwn(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+static void igen6_debug_teardown(void)
+{
+	debugfs_remove_recursive(igen6_test);
+}
+#else
+static void igen6_reg_dump(struct igen6_imc *imc) {}
+static void igen6_debug_setup(void) {}
+static void igen6_debug_teardown(void) {}
+#endif
 
-अटल पूर्णांक igen6_pci_setup(काष्ठा pci_dev *pdev, u64 *mchbar)
-अणु
-	जोड़  अणु
+static int igen6_pci_setup(struct pci_dev *pdev, u64 *mchbar)
+{
+	union  {
 		u64 v;
-		काष्ठा अणु
+		struct {
 			u32 v_lo;
 			u32 v_hi;
-		पूर्ण;
-	पूर्ण u;
+		};
+	} u;
 
 	edac_dbg(2, "\n");
 
-	अगर (!res_cfg->ibecc_available(pdev)) अणु
+	if (!res_cfg->ibecc_available(pdev)) {
 		edac_dbg(2, "No In-Band ECC IP\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (pci_पढ़ो_config_dword(pdev, TOLUD_OFFSET, &igen6_tolud)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read TOLUD\n");
-		जाओ fail;
-	पूर्ण
+	if (pci_read_config_dword(pdev, TOLUD_OFFSET, &igen6_tolud)) {
+		igen6_printk(KERN_ERR, "Failed to read TOLUD\n");
+		goto fail;
+	}
 
 	igen6_tolud &= GENMASK(31, 20);
 
-	अगर (pci_पढ़ो_config_dword(pdev, TOM_OFFSET, &u.v_lo)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read lower TOM\n");
-		जाओ fail;
-	पूर्ण
+	if (pci_read_config_dword(pdev, TOM_OFFSET, &u.v_lo)) {
+		igen6_printk(KERN_ERR, "Failed to read lower TOM\n");
+		goto fail;
+	}
 
-	अगर (pci_पढ़ो_config_dword(pdev, TOM_OFFSET + 4, &u.v_hi)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read upper TOM\n");
-		जाओ fail;
-	पूर्ण
+	if (pci_read_config_dword(pdev, TOM_OFFSET + 4, &u.v_hi)) {
+		igen6_printk(KERN_ERR, "Failed to read upper TOM\n");
+		goto fail;
+	}
 
 	igen6_tom = u.v & GENMASK_ULL(38, 20);
 
-	अगर (pci_पढ़ो_config_dword(pdev, MCHBAR_OFFSET, &u.v_lo)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read lower MCHBAR\n");
-		जाओ fail;
-	पूर्ण
+	if (pci_read_config_dword(pdev, MCHBAR_OFFSET, &u.v_lo)) {
+		igen6_printk(KERN_ERR, "Failed to read lower MCHBAR\n");
+		goto fail;
+	}
 
-	अगर (pci_पढ़ो_config_dword(pdev, MCHBAR_OFFSET + 4, &u.v_hi)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to read upper MCHBAR\n");
-		जाओ fail;
-	पूर्ण
+	if (pci_read_config_dword(pdev, MCHBAR_OFFSET + 4, &u.v_hi)) {
+		igen6_printk(KERN_ERR, "Failed to read upper MCHBAR\n");
+		goto fail;
+	}
 
-	अगर (!(u.v & MCHBAR_EN)) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "MCHBAR is disabled\n");
-		जाओ fail;
-	पूर्ण
+	if (!(u.v & MCHBAR_EN)) {
+		igen6_printk(KERN_ERR, "MCHBAR is disabled\n");
+		goto fail;
+	}
 
 	*mchbar = MCHBAR_BASE(u.v);
 
-#अगर_घोषित CONFIG_EDAC_DEBUG
-	अगर (pci_पढ़ो_config_dword(pdev, TOUUD_OFFSET, &u.v_lo))
+#ifdef CONFIG_EDAC_DEBUG
+	if (pci_read_config_dword(pdev, TOUUD_OFFSET, &u.v_lo))
 		edac_dbg(2, "Failed to read lower TOUUD\n");
-	अन्यथा अगर (pci_पढ़ो_config_dword(pdev, TOUUD_OFFSET + 4, &u.v_hi))
+	else if (pci_read_config_dword(pdev, TOUUD_OFFSET + 4, &u.v_hi))
 		edac_dbg(2, "Failed to read upper TOUUD\n");
-	अन्यथा
+	else
 		igen6_touud = u.v & GENMASK_ULL(38, 20);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
+	return 0;
 fail:
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक igen6_रेजिस्टर_mci(पूर्णांक mc, u64 mchbar, काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा edac_mc_layer layers[2];
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा igen6_imc *imc;
-	व्योम __iomem *winकरोw;
-	पूर्णांक rc;
+static int igen6_register_mci(int mc, u64 mchbar, struct pci_dev *pdev)
+{
+	struct edac_mc_layer layers[2];
+	struct mem_ctl_info *mci;
+	struct igen6_imc *imc;
+	void __iomem *window;
+	int rc;
 
 	edac_dbg(2, "\n");
 
 	mchbar += mc * MCHBAR_SIZE;
-	winकरोw = ioremap(mchbar, MCHBAR_SIZE);
-	अगर (!winकरोw) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to ioremap 0x%llx\n", mchbar);
-		वापस -ENODEV;
-	पूर्ण
+	window = ioremap(mchbar, MCHBAR_SIZE);
+	if (!window) {
+		igen6_printk(KERN_ERR, "Failed to ioremap 0x%llx\n", mchbar);
+		return -ENODEV;
+	}
 
 	layers[0].type = EDAC_MC_LAYER_CHANNEL;
 	layers[0].size = NUM_CHANNELS;
@@ -779,16 +778,16 @@ fail:
 	layers[1].is_virt_csrow = true;
 
 	mci = edac_mc_alloc(mc, ARRAY_SIZE(layers), layers, 0);
-	अगर (!mci) अणु
+	if (!mci) {
 		rc = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	mci->ctl_name = kaप्र_लिखो(GFP_KERNEL, "Intel_client_SoC MC#%d", mc);
-	अगर (!mci->ctl_name) अणु
+	mci->ctl_name = kasprintf(GFP_KERNEL, "Intel_client_SoC MC#%d", mc);
+	if (!mci->ctl_name) {
 		rc = -ENOMEM;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	mci->mtype_cap = MEM_FLAG_LPDDR4 | MEM_FLAG_DDR4;
 	mci->edac_ctl_cap = EDAC_FLAG_SECDED;
@@ -800,178 +799,178 @@ fail:
 	imc = mci->pvt_info;
 	device_initialize(&imc->dev);
 	/*
-	 * EDAC core uses mci->pdev(poपूर्णांकer of काष्ठाure device) as
+	 * EDAC core uses mci->pdev(pointer of structure device) as
 	 * memory controller ID. The client SoCs attach one or more
 	 * memory controllers to single pci_dev (single pci_dev->dev
-	 * can be क्रम multiple memory controllers).
+	 * can be for multiple memory controllers).
 	 *
 	 * To make mci->pdev unique, assign pci_dev->dev to mci->pdev
-	 * क्रम the first memory controller and assign a unique imc->dev
-	 * to mci->pdev क्रम each non-first memory controller.
+	 * for the first memory controller and assign a unique imc->dev
+	 * to mci->pdev for each non-first memory controller.
 	 */
 	mci->pdev = mc ? &imc->dev : &pdev->dev;
 	imc->mc	= mc;
 	imc->pdev = pdev;
-	imc->winकरोw = winकरोw;
+	imc->window = window;
 
 	igen6_reg_dump(imc);
 
 	rc = igen6_get_dimm_config(mci);
-	अगर (rc)
-		जाओ fail3;
+	if (rc)
+		goto fail3;
 
 	rc = edac_mc_add_mc(mci);
-	अगर (rc) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to register mci#%d\n", mc);
-		जाओ fail3;
-	पूर्ण
+	if (rc) {
+		igen6_printk(KERN_ERR, "Failed to register mci#%d\n", mc);
+		goto fail3;
+	}
 
 	imc->mci = mci;
-	वापस 0;
+	return 0;
 fail3:
-	kमुक्त(mci->ctl_name);
+	kfree(mci->ctl_name);
 fail2:
-	edac_mc_मुक्त(mci);
+	edac_mc_free(mci);
 fail:
-	iounmap(winकरोw);
-	वापस rc;
-पूर्ण
+	iounmap(window);
+	return rc;
+}
 
-अटल व्योम igen6_unरेजिस्टर_mcis(व्योम)
-अणु
-	काष्ठा mem_ctl_info *mci;
-	काष्ठा igen6_imc *imc;
-	पूर्णांक i;
+static void igen6_unregister_mcis(void)
+{
+	struct mem_ctl_info *mci;
+	struct igen6_imc *imc;
+	int i;
 
 	edac_dbg(2, "\n");
 
-	क्रम (i = 0; i < res_cfg->num_imc; i++) अणु
+	for (i = 0; i < res_cfg->num_imc; i++) {
 		imc = &igen6_pvt->imc[i];
 		mci = imc->mci;
-		अगर (!mci)
-			जारी;
+		if (!mci)
+			continue;
 
 		edac_mc_del_mc(mci->pdev);
-		kमुक्त(mci->ctl_name);
-		edac_mc_मुक्त(mci);
-		iounmap(imc->winकरोw);
-	पूर्ण
-पूर्ण
+		kfree(mci->ctl_name);
+		edac_mc_free(mci);
+		iounmap(imc->window);
+	}
+}
 
-अटल पूर्णांक igen6_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
+static int igen6_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
 	u64 mchbar;
-	पूर्णांक i, rc;
+	int i, rc;
 
 	edac_dbg(2, "\n");
 
-	igen6_pvt = kzalloc(माप(*igen6_pvt), GFP_KERNEL);
-	अगर (!igen6_pvt)
-		वापस -ENOMEM;
+	igen6_pvt = kzalloc(sizeof(*igen6_pvt), GFP_KERNEL);
+	if (!igen6_pvt)
+		return -ENOMEM;
 
-	res_cfg = (काष्ठा res_config *)ent->driver_data;
+	res_cfg = (struct res_config *)ent->driver_data;
 
 	rc = igen6_pci_setup(pdev, &mchbar);
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 
-	क्रम (i = 0; i < res_cfg->num_imc; i++) अणु
-		rc = igen6_रेजिस्टर_mci(i, mchbar, pdev);
-		अगर (rc)
-			जाओ fail2;
-	पूर्ण
+	for (i = 0; i < res_cfg->num_imc; i++) {
+		rc = igen6_register_mci(i, mchbar, pdev);
+		if (rc)
+			goto fail2;
+	}
 
 	ecclog_pool = ecclog_gen_pool_create();
-	अगर (!ecclog_pool) अणु
+	if (!ecclog_pool) {
 		rc = -ENOMEM;
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	INIT_WORK(&ecclog_work, ecclog_work_cb);
 	init_irq_work(&ecclog_irq_work, ecclog_irq_work_cb);
 
-	/* Check अगर any pending errors beक्रमe रेजिस्टरing the NMI handler */
+	/* Check if any pending errors before registering the NMI handler */
 	ecclog_handler();
 
-	rc = रेजिस्टर_nmi_handler(NMI_SERR, ecclog_nmi_handler,
+	rc = register_nmi_handler(NMI_SERR, ecclog_nmi_handler,
 				  0, IGEN6_NMI_NAME);
-	अगर (rc) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to register NMI handler\n");
-		जाओ fail3;
-	पूर्ण
+	if (rc) {
+		igen6_printk(KERN_ERR, "Failed to register NMI handler\n");
+		goto fail3;
+	}
 
 	/* Enable error reporting */
 	rc = errcmd_enable_error_reporting(true);
-	अगर (rc) अणु
-		igen6_prपूर्णांकk(KERN_ERR, "Failed to enable error reporting\n");
-		जाओ fail4;
-	पूर्ण
+	if (rc) {
+		igen6_printk(KERN_ERR, "Failed to enable error reporting\n");
+		goto fail4;
+	}
 
 	igen6_debug_setup();
-	वापस 0;
+	return 0;
 fail4:
-	unरेजिस्टर_nmi_handler(NMI_SERR, IGEN6_NMI_NAME);
+	unregister_nmi_handler(NMI_SERR, IGEN6_NMI_NAME);
 fail3:
 	gen_pool_destroy(ecclog_pool);
 fail2:
-	igen6_unरेजिस्टर_mcis();
+	igen6_unregister_mcis();
 fail:
-	kमुक्त(igen6_pvt);
-	वापस rc;
-पूर्ण
+	kfree(igen6_pvt);
+	return rc;
+}
 
-अटल व्योम igen6_हटाओ(काष्ठा pci_dev *pdev)
-अणु
+static void igen6_remove(struct pci_dev *pdev)
+{
 	edac_dbg(2, "\n");
 
-	igen6_debug_tearकरोwn();
+	igen6_debug_teardown();
 	errcmd_enable_error_reporting(false);
-	unरेजिस्टर_nmi_handler(NMI_SERR, IGEN6_NMI_NAME);
+	unregister_nmi_handler(NMI_SERR, IGEN6_NMI_NAME);
 	irq_work_sync(&ecclog_irq_work);
 	flush_work(&ecclog_work);
 	gen_pool_destroy(ecclog_pool);
-	igen6_unरेजिस्टर_mcis();
-	kमुक्त(igen6_pvt);
-पूर्ण
+	igen6_unregister_mcis();
+	kfree(igen6_pvt);
+}
 
-अटल काष्ठा pci_driver igen6_driver = अणु
+static struct pci_driver igen6_driver = {
 	.name     = EDAC_MOD_STR,
 	.probe    = igen6_probe,
-	.हटाओ   = igen6_हटाओ,
+	.remove   = igen6_remove,
 	.id_table = igen6_pci_tbl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init igen6_init(व्योम)
-अणु
-	स्थिर अक्षर *owner;
-	पूर्णांक rc;
+static int __init igen6_init(void)
+{
+	const char *owner;
+	int rc;
 
 	edac_dbg(2, "\n");
 
 	owner = edac_get_owner();
-	अगर (owner && म_भेदन(owner, EDAC_MOD_STR, माप(EDAC_MOD_STR)))
-		वापस -ENODEV;
+	if (owner && strncmp(owner, EDAC_MOD_STR, sizeof(EDAC_MOD_STR)))
+		return -ENODEV;
 
 	edac_op_state = EDAC_OPSTATE_NMI;
 
-	rc = pci_रेजिस्टर_driver(&igen6_driver);
-	अगर (rc)
-		वापस rc;
+	rc = pci_register_driver(&igen6_driver);
+	if (rc)
+		return rc;
 
-	igen6_prपूर्णांकk(KERN_INFO, "%s\n", IGEN6_REVISION);
+	igen6_printk(KERN_INFO, "%s\n", IGEN6_REVISION);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास igen6_निकास(व्योम)
-अणु
+static void __exit igen6_exit(void)
+{
 	edac_dbg(2, "\n");
 
-	pci_unरेजिस्टर_driver(&igen6_driver);
-पूर्ण
+	pci_unregister_driver(&igen6_driver);
+}
 
 module_init(igen6_init);
-module_निकास(igen6_निकास);
+module_exit(igen6_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Qiuxu Zhuo");

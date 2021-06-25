@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* $Date: 2005/03/07 23:59:05 $ $RCSfile: tp.h,v $ $Revision: 1.20 $ */
-#अगर_अघोषित CHELSIO_TP_H
-#घोषणा CHELSIO_TP_H
+#ifndef CHELSIO_TP_H
+#define CHELSIO_TP_H
 
-#समावेश "common.h"
+#include "common.h"
 
-#घोषणा TP_MAX_RX_COALESCING_SIZE 16224U
+#define TP_MAX_RX_COALESCING_SIZE 16224U
 
-काष्ठा tp_mib_statistics अणु
+struct tp_mib_statistics {
 
 	/* IP */
 	u32 ipInReceive_hi;
@@ -29,10 +28,10 @@
 	u32 ipOutDiscards_lo;
 	u32 ipOutNoRoutes_hi;
 	u32 ipOutNoRoutes_lo;
-	u32 ipReयंत्रTimeout;
-	u32 ipReयंत्रReqds;
-	u32 ipReयंत्रOKs;
-	u32 ipReयंत्रFails;
+	u32 ipReasmTimeout;
+	u32 ipReasmReqds;
+	u32 ipReasmOKs;
+	u32 ipReasmFails;
 
 	u32 reserved[8];
 
@@ -53,22 +52,22 @@
 	u32 tcpInErrs_lo;
 	u32 tcpRtoMin;
 	u32 tcpRtoMax;
-पूर्ण;
+};
 
-काष्ठा petp;
-काष्ठा tp_params;
+struct petp;
+struct tp_params;
 
-काष्ठा petp *t1_tp_create(adapter_t *adapter, काष्ठा tp_params *p);
-व्योम t1_tp_destroy(काष्ठा petp *tp);
+struct petp *t1_tp_create(adapter_t *adapter, struct tp_params *p);
+void t1_tp_destroy(struct petp *tp);
 
-व्योम t1_tp_पूर्णांकr_disable(काष्ठा petp *tp);
-व्योम t1_tp_पूर्णांकr_enable(काष्ठा petp *tp);
-व्योम t1_tp_पूर्णांकr_clear(काष्ठा petp *tp);
-पूर्णांक t1_tp_पूर्णांकr_handler(काष्ठा petp *tp);
+void t1_tp_intr_disable(struct petp *tp);
+void t1_tp_intr_enable(struct petp *tp);
+void t1_tp_intr_clear(struct petp *tp);
+int t1_tp_intr_handler(struct petp *tp);
 
-व्योम t1_tp_get_mib_statistics(adapter_t *adap, काष्ठा tp_mib_statistics *tps);
-व्योम t1_tp_set_tcp_checksum_offload(काष्ठा petp *tp, पूर्णांक enable);
-व्योम t1_tp_set_ip_checksum_offload(काष्ठा petp *tp, पूर्णांक enable);
-पूर्णांक t1_tp_set_coalescing_size(काष्ठा petp *tp, अचिन्हित पूर्णांक size);
-पूर्णांक t1_tp_reset(काष्ठा petp *tp, काष्ठा tp_params *p, अचिन्हित पूर्णांक tp_clk);
-#पूर्ण_अगर
+void t1_tp_get_mib_statistics(adapter_t *adap, struct tp_mib_statistics *tps);
+void t1_tp_set_tcp_checksum_offload(struct petp *tp, int enable);
+void t1_tp_set_ip_checksum_offload(struct petp *tp, int enable);
+int t1_tp_set_coalescing_size(struct petp *tp, unsigned int size);
+int t1_tp_reset(struct petp *tp, struct tp_params *p, unsigned int tp_clk);
+#endif

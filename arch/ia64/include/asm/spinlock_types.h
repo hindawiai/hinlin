@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_SPINLOCK_TYPES_H
-#घोषणा _ASM_IA64_SPINLOCK_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_SPINLOCK_TYPES_H
+#define _ASM_IA64_SPINLOCK_TYPES_H
 
-#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
+#ifndef __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#पूर्ण_अगर
+#endif
 
-प्रकार काष्ठा अणु
-	अस्थिर अचिन्हित पूर्णांक lock;
-पूर्ण arch_spinlock_t;
+typedef struct {
+	volatile unsigned int lock;
+} arch_spinlock_t;
 
-#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु 0 पूर्ण
+#define __ARCH_SPIN_LOCK_UNLOCKED	{ 0 }
 
-प्रकार काष्ठा अणु
-	अस्थिर अचिन्हित पूर्णांक पढ़ो_counter	: 31;
-	अस्थिर अचिन्हित पूर्णांक ग_लिखो_lock	:  1;
-पूर्ण arch_rwlock_t;
+typedef struct {
+	volatile unsigned int read_counter	: 31;
+	volatile unsigned int write_lock	:  1;
+} arch_rwlock_t;
 
-#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु 0, 0 पूर्ण
+#define __ARCH_RW_LOCK_UNLOCKED		{ 0, 0 }
 
-#पूर्ण_अगर
+#endif

@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
-/* Google भव Ethernet (gve) driver
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/* Google virtual Ethernet (gve) driver
  *
  * Copyright (C) 2015-2019 Google, Inc.
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश "gve.h"
-#समावेश "gve_adminq.h"
+#include <linux/ethtool.h>
+#include <linux/rtnetlink.h>
+#include "gve.h"
+#include "gve_adminq.h"
 
-अटल व्योम gve_get_drvinfo(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static void gve_get_drvinfo(struct net_device *netdev,
+			    struct ethtool_drvinfo *info)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
-	strscpy(info->driver, "gve", माप(info->driver));
-	strscpy(info->version, gve_version_str, माप(info->version));
-	strscpy(info->bus_info, pci_name(priv->pdev), माप(info->bus_info));
-पूर्ण
+	strscpy(info->driver, "gve", sizeof(info->driver));
+	strscpy(info->version, gve_version_str, sizeof(info->version));
+	strscpy(info->bus_info, pci_name(priv->pdev), sizeof(info->bus_info));
+}
 
-अटल व्योम gve_set_msglevel(काष्ठा net_device *netdev, u32 value)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static void gve_set_msglevel(struct net_device *netdev, u32 value)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
 	priv->msg_enable = value;
-पूर्ण
+}
 
-अटल u32 gve_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static u32 gve_get_msglevel(struct net_device *netdev)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
-	वापस priv->msg_enable;
-पूर्ण
+	return priv->msg_enable;
+}
 
-अटल स्थिर अक्षर gve_gstrings_मुख्य_stats[][ETH_GSTRING_LEN] = अणु
+static const char gve_gstrings_main_stats[][ETH_GSTRING_LEN] = {
 	"rx_packets", "tx_packets", "rx_bytes", "tx_bytes",
 	"rx_dropped", "tx_dropped", "tx_timeouts",
 	"rx_skb_alloc_fail", "rx_buf_alloc_fail", "rx_desc_err_dropped_pkt",
 	"interface_up_cnt", "interface_down_cnt", "reset_cnt",
 	"page_alloc_fail", "dma_mapping_error", "stats_report_trigger_cnt",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर gve_gstrings_rx_stats[][ETH_GSTRING_LEN] = अणु
+static const char gve_gstrings_rx_stats[][ETH_GSTRING_LEN] = {
 	"rx_posted_desc[%u]", "rx_completed_desc[%u]", "rx_bytes[%u]",
 	"rx_dropped_pkt[%u]", "rx_copybreak_pkt[%u]", "rx_copied_pkt[%u]",
 	"rx_queue_drop_cnt[%u]", "rx_no_buffers_posted[%u]",
 	"rx_drops_packet_over_mru[%u]", "rx_drops_invalid_checksum[%u]",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर gve_gstrings_tx_stats[][ETH_GSTRING_LEN] = अणु
+static const char gve_gstrings_tx_stats[][ETH_GSTRING_LEN] = {
 	"tx_posted_desc[%u]", "tx_completed_desc[%u]", "tx_bytes[%u]",
 	"tx_wake[%u]", "tx_stop[%u]", "tx_event_counter[%u]",
 	"tx_dma_mapping_error[%u]",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर gve_gstrings_adminq_stats[][ETH_GSTRING_LEN] = अणु
+static const char gve_gstrings_adminq_stats[][ETH_GSTRING_LEN] = {
 	"adminq_prod_cnt", "adminq_cmd_fail", "adminq_timeouts",
 	"adminq_describe_device_cnt", "adminq_cfg_device_resources_cnt",
 	"adminq_register_page_list_cnt", "adminq_unregister_page_list_cnt",
@@ -63,148 +62,148 @@
 	"adminq_destroy_tx_queue_cnt", "adminq_destroy_rx_queue_cnt",
 	"adminq_dcfg_device_resources_cnt", "adminq_set_driver_parameter_cnt",
 	"adminq_report_stats_cnt", "adminq_report_link_speed_cnt"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर gve_gstrings_priv_flags[][ETH_GSTRING_LEN] = अणु
+static const char gve_gstrings_priv_flags[][ETH_GSTRING_LEN] = {
 	"report-stats",
-पूर्ण;
+};
 
-#घोषणा GVE_MAIN_STATS_LEN  ARRAY_SIZE(gve_gstrings_मुख्य_stats)
-#घोषणा GVE_ADMINQ_STATS_LEN  ARRAY_SIZE(gve_gstrings_adminq_stats)
-#घोषणा NUM_GVE_TX_CNTS	ARRAY_SIZE(gve_gstrings_tx_stats)
-#घोषणा NUM_GVE_RX_CNTS	ARRAY_SIZE(gve_gstrings_rx_stats)
-#घोषणा GVE_PRIV_FLAGS_STR_LEN ARRAY_SIZE(gve_gstrings_priv_flags)
+#define GVE_MAIN_STATS_LEN  ARRAY_SIZE(gve_gstrings_main_stats)
+#define GVE_ADMINQ_STATS_LEN  ARRAY_SIZE(gve_gstrings_adminq_stats)
+#define NUM_GVE_TX_CNTS	ARRAY_SIZE(gve_gstrings_tx_stats)
+#define NUM_GVE_RX_CNTS	ARRAY_SIZE(gve_gstrings_rx_stats)
+#define GVE_PRIV_FLAGS_STR_LEN ARRAY_SIZE(gve_gstrings_priv_flags)
 
-अटल व्योम gve_get_strings(काष्ठा net_device *netdev, u32 stringset, u8 *data)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
-	अक्षर *s = (अक्षर *)data;
-	पूर्णांक i, j;
+static void gve_get_strings(struct net_device *netdev, u32 stringset, u8 *data)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
+	char *s = (char *)data;
+	int i, j;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(s, *gve_gstrings_मुख्य_stats,
-		       माप(gve_gstrings_मुख्य_stats));
-		s += माप(gve_gstrings_मुख्य_stats);
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(s, *gve_gstrings_main_stats,
+		       sizeof(gve_gstrings_main_stats));
+		s += sizeof(gve_gstrings_main_stats);
 
-		क्रम (i = 0; i < priv->rx_cfg.num_queues; i++) अणु
-			क्रम (j = 0; j < NUM_GVE_RX_CNTS; j++) अणु
-				snम_लिखो(s, ETH_GSTRING_LEN,
+		for (i = 0; i < priv->rx_cfg.num_queues; i++) {
+			for (j = 0; j < NUM_GVE_RX_CNTS; j++) {
+				snprintf(s, ETH_GSTRING_LEN,
 					 gve_gstrings_rx_stats[j], i);
 				s += ETH_GSTRING_LEN;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		क्रम (i = 0; i < priv->tx_cfg.num_queues; i++) अणु
-			क्रम (j = 0; j < NUM_GVE_TX_CNTS; j++) अणु
-				snम_लिखो(s, ETH_GSTRING_LEN,
+		for (i = 0; i < priv->tx_cfg.num_queues; i++) {
+			for (j = 0; j < NUM_GVE_TX_CNTS; j++) {
+				snprintf(s, ETH_GSTRING_LEN,
 					 gve_gstrings_tx_stats[j], i);
 				s += ETH_GSTRING_LEN;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		स_नकल(s, *gve_gstrings_adminq_stats,
-		       माप(gve_gstrings_adminq_stats));
-		s += माप(gve_gstrings_adminq_stats);
-		अवरोध;
+		memcpy(s, *gve_gstrings_adminq_stats,
+		       sizeof(gve_gstrings_adminq_stats));
+		s += sizeof(gve_gstrings_adminq_stats);
+		break;
 
-	हाल ETH_SS_PRIV_FLAGS:
-		स_नकल(s, *gve_gstrings_priv_flags,
-		       माप(gve_gstrings_priv_flags));
-		s += माप(gve_gstrings_priv_flags);
-		अवरोध;
+	case ETH_SS_PRIV_FLAGS:
+		memcpy(s, *gve_gstrings_priv_flags,
+		       sizeof(gve_gstrings_priv_flags));
+		s += sizeof(gve_gstrings_priv_flags);
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक gve_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static int gve_get_sset_count(struct net_device *netdev, int sset)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस GVE_MAIN_STATS_LEN + GVE_ADMINQ_STATS_LEN +
+	switch (sset) {
+	case ETH_SS_STATS:
+		return GVE_MAIN_STATS_LEN + GVE_ADMINQ_STATS_LEN +
 		       (priv->rx_cfg.num_queues * NUM_GVE_RX_CNTS) +
 		       (priv->tx_cfg.num_queues * NUM_GVE_TX_CNTS);
-	हाल ETH_SS_PRIV_FLAGS:
-		वापस GVE_PRIV_FLAGS_STR_LEN;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	case ETH_SS_PRIV_FLAGS:
+		return GVE_PRIV_FLAGS_STR_LEN;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम
-gve_get_ethtool_stats(काष्ठा net_device *netdev,
-		      काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	u64 पंचांगp_rx_pkts, पंचांगp_rx_bytes, पंचांगp_rx_skb_alloc_fail,	पंचांगp_rx_buf_alloc_fail,
-		पंचांगp_rx_desc_err_dropped_pkt, पंचांगp_tx_pkts, पंचांगp_tx_bytes;
+static void
+gve_get_ethtool_stats(struct net_device *netdev,
+		      struct ethtool_stats *stats, u64 *data)
+{
+	u64 tmp_rx_pkts, tmp_rx_bytes, tmp_rx_skb_alloc_fail,	tmp_rx_buf_alloc_fail,
+		tmp_rx_desc_err_dropped_pkt, tmp_tx_pkts, tmp_tx_bytes;
 	u64 rx_buf_alloc_fail, rx_desc_err_dropped_pkt, rx_pkts,
 		rx_skb_alloc_fail, rx_bytes, tx_pkts, tx_bytes;
-	पूर्णांक stats_idx, base_stats_idx, max_stats_idx;
-	काष्ठा stats *report_stats;
-	पूर्णांक *rx_qid_to_stats_idx;
-	पूर्णांक *tx_qid_to_stats_idx;
-	काष्ठा gve_priv *priv;
+	int stats_idx, base_stats_idx, max_stats_idx;
+	struct stats *report_stats;
+	int *rx_qid_to_stats_idx;
+	int *tx_qid_to_stats_idx;
+	struct gve_priv *priv;
 	bool skip_nic_stats;
-	अचिन्हित पूर्णांक start;
-	पूर्णांक ring;
-	पूर्णांक i, j;
+	unsigned int start;
+	int ring;
+	int i, j;
 
 	ASSERT_RTNL();
 
 	priv = netdev_priv(netdev);
 	report_stats = priv->stats_report->stats;
-	rx_qid_to_stats_idx = kदो_स्मृति_array(priv->rx_cfg.num_queues,
-					    माप(पूर्णांक), GFP_KERNEL);
-	अगर (!rx_qid_to_stats_idx)
-		वापस;
-	tx_qid_to_stats_idx = kदो_स्मृति_array(priv->tx_cfg.num_queues,
-					    माप(पूर्णांक), GFP_KERNEL);
-	अगर (!tx_qid_to_stats_idx) अणु
-		kमुक्त(rx_qid_to_stats_idx);
-		वापस;
-	पूर्ण
-	क्रम (rx_pkts = 0, rx_bytes = 0, rx_skb_alloc_fail = 0,
+	rx_qid_to_stats_idx = kmalloc_array(priv->rx_cfg.num_queues,
+					    sizeof(int), GFP_KERNEL);
+	if (!rx_qid_to_stats_idx)
+		return;
+	tx_qid_to_stats_idx = kmalloc_array(priv->tx_cfg.num_queues,
+					    sizeof(int), GFP_KERNEL);
+	if (!tx_qid_to_stats_idx) {
+		kfree(rx_qid_to_stats_idx);
+		return;
+	}
+	for (rx_pkts = 0, rx_bytes = 0, rx_skb_alloc_fail = 0,
 	     rx_buf_alloc_fail = 0, rx_desc_err_dropped_pkt = 0, ring = 0;
-	     ring < priv->rx_cfg.num_queues; ring++) अणु
-		अगर (priv->rx) अणु
-			करो अणु
-				काष्ठा gve_rx_ring *rx = &priv->rx[ring];
+	     ring < priv->rx_cfg.num_queues; ring++) {
+		if (priv->rx) {
+			do {
+				struct gve_rx_ring *rx = &priv->rx[ring];
 
 				start =
 				  u64_stats_fetch_begin(&priv->rx[ring].statss);
-				पंचांगp_rx_pkts = rx->rpackets;
-				पंचांगp_rx_bytes = rx->rbytes;
-				पंचांगp_rx_skb_alloc_fail = rx->rx_skb_alloc_fail;
-				पंचांगp_rx_buf_alloc_fail = rx->rx_buf_alloc_fail;
-				पंचांगp_rx_desc_err_dropped_pkt =
+				tmp_rx_pkts = rx->rpackets;
+				tmp_rx_bytes = rx->rbytes;
+				tmp_rx_skb_alloc_fail = rx->rx_skb_alloc_fail;
+				tmp_rx_buf_alloc_fail = rx->rx_buf_alloc_fail;
+				tmp_rx_desc_err_dropped_pkt =
 					rx->rx_desc_err_dropped_pkt;
-			पूर्ण जबतक (u64_stats_fetch_retry(&priv->rx[ring].statss,
+			} while (u64_stats_fetch_retry(&priv->rx[ring].statss,
 						       start));
-			rx_pkts += पंचांगp_rx_pkts;
-			rx_bytes += पंचांगp_rx_bytes;
-			rx_skb_alloc_fail += पंचांगp_rx_skb_alloc_fail;
-			rx_buf_alloc_fail += पंचांगp_rx_buf_alloc_fail;
-			rx_desc_err_dropped_pkt += पंचांगp_rx_desc_err_dropped_pkt;
-		पूर्ण
-	पूर्ण
-	क्रम (tx_pkts = 0, tx_bytes = 0, ring = 0;
-	     ring < priv->tx_cfg.num_queues; ring++) अणु
-		अगर (priv->tx) अणु
-			करो अणु
+			rx_pkts += tmp_rx_pkts;
+			rx_bytes += tmp_rx_bytes;
+			rx_skb_alloc_fail += tmp_rx_skb_alloc_fail;
+			rx_buf_alloc_fail += tmp_rx_buf_alloc_fail;
+			rx_desc_err_dropped_pkt += tmp_rx_desc_err_dropped_pkt;
+		}
+	}
+	for (tx_pkts = 0, tx_bytes = 0, ring = 0;
+	     ring < priv->tx_cfg.num_queues; ring++) {
+		if (priv->tx) {
+			do {
 				start =
 				  u64_stats_fetch_begin(&priv->tx[ring].statss);
-				पंचांगp_tx_pkts = priv->tx[ring].pkt_करोne;
-				पंचांगp_tx_bytes = priv->tx[ring].bytes_करोne;
-			पूर्ण जबतक (u64_stats_fetch_retry(&priv->tx[ring].statss,
+				tmp_tx_pkts = priv->tx[ring].pkt_done;
+				tmp_tx_bytes = priv->tx[ring].bytes_done;
+			} while (u64_stats_fetch_retry(&priv->tx[ring].statss,
 						       start));
-			tx_pkts += पंचांगp_tx_pkts;
-			tx_bytes += पंचांगp_tx_bytes;
-		पूर्ण
-	पूर्ण
+			tx_pkts += tmp_tx_pkts;
+			tx_bytes += tmp_tx_bytes;
+		}
+	}
 
 	i = 0;
 	data[i++] = rx_pkts;
@@ -217,12 +216,12 @@ gve_get_ethtool_stats(काष्ठा net_device *netdev,
 	/* Skip tx_dropped */
 	i++;
 
-	data[i++] = priv->tx_समयo_cnt;
+	data[i++] = priv->tx_timeo_cnt;
 	data[i++] = rx_skb_alloc_fail;
 	data[i++] = rx_buf_alloc_fail;
 	data[i++] = rx_desc_err_dropped_pkt;
-	data[i++] = priv->पूर्णांकerface_up_cnt;
-	data[i++] = priv->पूर्णांकerface_करोwn_cnt;
+	data[i++] = priv->interface_up_cnt;
+	data[i++] = priv->interface_down_cnt;
 	data[i++] = priv->reset_cnt;
 	data[i++] = priv->page_alloc_fail;
 	data[i++] = priv->dma_mapping_error;
@@ -234,124 +233,124 @@ gve_get_ethtool_stats(काष्ठा net_device *netdev,
 		GVE_RX_STATS_REPORT_NUM * priv->rx_cfg.num_queues;
 	max_stats_idx = NIC_RX_STATS_REPORT_NUM * priv->rx_cfg.num_queues +
 		base_stats_idx;
-	/* Preprocess the stats report क्रम rx, map queue id to start index */
+	/* Preprocess the stats report for rx, map queue id to start index */
 	skip_nic_stats = false;
-	क्रम (stats_idx = base_stats_idx; stats_idx < max_stats_idx;
-		stats_idx += NIC_RX_STATS_REPORT_NUM) अणु
+	for (stats_idx = base_stats_idx; stats_idx < max_stats_idx;
+		stats_idx += NIC_RX_STATS_REPORT_NUM) {
 		u32 stat_name = be32_to_cpu(report_stats[stats_idx].stat_name);
 		u32 queue_id = be32_to_cpu(report_stats[stats_idx].queue_id);
 
-		अगर (stat_name == 0) अणु
+		if (stat_name == 0) {
 			/* no stats written by NIC yet */
 			skip_nic_stats = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rx_qid_to_stats_idx[queue_id] = stats_idx;
-	पूर्ण
+	}
 	/* walk RX rings */
-	अगर (priv->rx) अणु
-		क्रम (ring = 0; ring < priv->rx_cfg.num_queues; ring++) अणु
-			काष्ठा gve_rx_ring *rx = &priv->rx[ring];
+	if (priv->rx) {
+		for (ring = 0; ring < priv->rx_cfg.num_queues; ring++) {
+			struct gve_rx_ring *rx = &priv->rx[ring];
 
 			data[i++] = rx->fill_cnt;
 			data[i++] = rx->cnt;
-			करो अणु
+			do {
 				start =
 				  u64_stats_fetch_begin(&priv->rx[ring].statss);
-				पंचांगp_rx_bytes = rx->rbytes;
-				पंचांगp_rx_skb_alloc_fail = rx->rx_skb_alloc_fail;
-				पंचांगp_rx_buf_alloc_fail = rx->rx_buf_alloc_fail;
-				पंचांगp_rx_desc_err_dropped_pkt =
+				tmp_rx_bytes = rx->rbytes;
+				tmp_rx_skb_alloc_fail = rx->rx_skb_alloc_fail;
+				tmp_rx_buf_alloc_fail = rx->rx_buf_alloc_fail;
+				tmp_rx_desc_err_dropped_pkt =
 					rx->rx_desc_err_dropped_pkt;
-			पूर्ण जबतक (u64_stats_fetch_retry(&priv->rx[ring].statss,
+			} while (u64_stats_fetch_retry(&priv->rx[ring].statss,
 						       start));
-			data[i++] = पंचांगp_rx_bytes;
+			data[i++] = tmp_rx_bytes;
 			/* rx dropped packets */
-			data[i++] = पंचांगp_rx_skb_alloc_fail +
-				पंचांगp_rx_buf_alloc_fail +
-				पंचांगp_rx_desc_err_dropped_pkt;
-			data[i++] = rx->rx_copyअवरोध_pkt;
+			data[i++] = tmp_rx_skb_alloc_fail +
+				tmp_rx_buf_alloc_fail +
+				tmp_rx_desc_err_dropped_pkt;
+			data[i++] = rx->rx_copybreak_pkt;
 			data[i++] = rx->rx_copied_pkt;
 			/* stats from NIC */
-			अगर (skip_nic_stats) अणु
+			if (skip_nic_stats) {
 				/* skip NIC rx stats */
 				i += NIC_RX_STATS_REPORT_NUM;
-				जारी;
-			पूर्ण
-			क्रम (j = 0; j < NIC_RX_STATS_REPORT_NUM; j++) अणु
+				continue;
+			}
+			for (j = 0; j < NIC_RX_STATS_REPORT_NUM; j++) {
 				u64 value =
 				be64_to_cpu(report_stats[rx_qid_to_stats_idx[ring] + j].value);
 
 				data[i++] = value;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		i += priv->rx_cfg.num_queues * NUM_GVE_RX_CNTS;
-	पूर्ण
+	}
 
 	/* For tx cross-reporting stats, start from nic tx stats in report */
 	base_stats_idx = max_stats_idx;
 	max_stats_idx = NIC_TX_STATS_REPORT_NUM * priv->tx_cfg.num_queues +
 		max_stats_idx;
-	/* Preprocess the stats report क्रम tx, map queue id to start index */
+	/* Preprocess the stats report for tx, map queue id to start index */
 	skip_nic_stats = false;
-	क्रम (stats_idx = base_stats_idx; stats_idx < max_stats_idx;
-		stats_idx += NIC_TX_STATS_REPORT_NUM) अणु
+	for (stats_idx = base_stats_idx; stats_idx < max_stats_idx;
+		stats_idx += NIC_TX_STATS_REPORT_NUM) {
 		u32 stat_name = be32_to_cpu(report_stats[stats_idx].stat_name);
 		u32 queue_id = be32_to_cpu(report_stats[stats_idx].queue_id);
 
-		अगर (stat_name == 0) अणु
+		if (stat_name == 0) {
 			/* no stats written by NIC yet */
 			skip_nic_stats = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		tx_qid_to_stats_idx[queue_id] = stats_idx;
-	पूर्ण
+	}
 	/* walk TX rings */
-	अगर (priv->tx) अणु
-		क्रम (ring = 0; ring < priv->tx_cfg.num_queues; ring++) अणु
-			काष्ठा gve_tx_ring *tx = &priv->tx[ring];
+	if (priv->tx) {
+		for (ring = 0; ring < priv->tx_cfg.num_queues; ring++) {
+			struct gve_tx_ring *tx = &priv->tx[ring];
 
 			data[i++] = tx->req;
-			data[i++] = tx->करोne;
-			करो अणु
+			data[i++] = tx->done;
+			do {
 				start =
 				  u64_stats_fetch_begin(&priv->tx[ring].statss);
-				पंचांगp_tx_bytes = tx->bytes_करोne;
-			पूर्ण जबतक (u64_stats_fetch_retry(&priv->tx[ring].statss,
+				tmp_tx_bytes = tx->bytes_done;
+			} while (u64_stats_fetch_retry(&priv->tx[ring].statss,
 						       start));
-			data[i++] = पंचांगp_tx_bytes;
+			data[i++] = tmp_tx_bytes;
 			data[i++] = tx->wake_queue;
 			data[i++] = tx->stop_queue;
 			data[i++] = be32_to_cpu(gve_tx_load_event_counter(priv,
 									  tx));
 			data[i++] = tx->dma_mapping_error;
 			/* stats from NIC */
-			अगर (skip_nic_stats) अणु
+			if (skip_nic_stats) {
 				/* skip NIC tx stats */
 				i += NIC_TX_STATS_REPORT_NUM;
-				जारी;
-			पूर्ण
-			क्रम (j = 0; j < NIC_TX_STATS_REPORT_NUM; j++) अणु
+				continue;
+			}
+			for (j = 0; j < NIC_TX_STATS_REPORT_NUM; j++) {
 				u64 value =
 				be64_to_cpu(report_stats[tx_qid_to_stats_idx[ring] + j].value);
 				data[i++] = value;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		i += priv->tx_cfg.num_queues * NUM_GVE_TX_CNTS;
-	पूर्ण
+	}
 
-	kमुक्त(rx_qid_to_stats_idx);
-	kमुक्त(tx_qid_to_stats_idx);
+	kfree(rx_qid_to_stats_idx);
+	kfree(tx_qid_to_stats_idx);
 	/* AQ Stats */
 	data[i++] = priv->adminq_prod_cnt;
 	data[i++] = priv->adminq_cmd_fail;
-	data[i++] = priv->adminq_समयouts;
+	data[i++] = priv->adminq_timeouts;
 	data[i++] = priv->adminq_describe_device_cnt;
 	data[i++] = priv->adminq_cfg_device_resources_cnt;
-	data[i++] = priv->adminq_रेजिस्टर_page_list_cnt;
-	data[i++] = priv->adminq_unरेजिस्टर_page_list_cnt;
+	data[i++] = priv->adminq_register_page_list_cnt;
+	data[i++] = priv->adminq_unregister_page_list_cnt;
 	data[i++] = priv->adminq_create_tx_queue_cnt;
 	data[i++] = priv->adminq_create_rx_queue_cnt;
 	data[i++] = priv->adminq_destroy_tx_queue_cnt;
@@ -360,12 +359,12 @@ gve_get_ethtool_stats(काष्ठा net_device *netdev,
 	data[i++] = priv->adminq_set_driver_parameter_cnt;
 	data[i++] = priv->adminq_report_stats_cnt;
 	data[i++] = priv->adminq_report_link_speed_cnt;
-पूर्ण
+}
 
-अटल व्योम gve_get_channels(काष्ठा net_device *netdev,
-			     काष्ठा ethtool_channels *cmd)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static void gve_get_channels(struct net_device *netdev,
+			     struct ethtool_channels *cmd)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
 	cmd->max_rx = priv->rx_cfg.max_queues;
 	cmd->max_tx = priv->tx_cfg.max_queues;
@@ -375,152 +374,152 @@ gve_get_ethtool_stats(काष्ठा net_device *netdev,
 	cmd->tx_count = priv->tx_cfg.num_queues;
 	cmd->other_count = 0;
 	cmd->combined_count = 0;
-पूर्ण
+}
 
-अटल पूर्णांक gve_set_channels(काष्ठा net_device *netdev,
-			    काष्ठा ethtool_channels *cmd)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
-	काष्ठा gve_queue_config new_tx_cfg = priv->tx_cfg;
-	काष्ठा gve_queue_config new_rx_cfg = priv->rx_cfg;
-	काष्ठा ethtool_channels old_settings;
-	पूर्णांक new_tx = cmd->tx_count;
-	पूर्णांक new_rx = cmd->rx_count;
+static int gve_set_channels(struct net_device *netdev,
+			    struct ethtool_channels *cmd)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
+	struct gve_queue_config new_tx_cfg = priv->tx_cfg;
+	struct gve_queue_config new_rx_cfg = priv->rx_cfg;
+	struct ethtool_channels old_settings;
+	int new_tx = cmd->tx_count;
+	int new_rx = cmd->rx_count;
 
 	gve_get_channels(netdev, &old_settings);
 
 	/* Changing combined is not allowed */
-	अगर (cmd->combined_count != old_settings.combined_count)
-		वापस -EINVAL;
+	if (cmd->combined_count != old_settings.combined_count)
+		return -EINVAL;
 
-	अगर (!new_rx || !new_tx)
-		वापस -EINVAL;
+	if (!new_rx || !new_tx)
+		return -EINVAL;
 
-	अगर (!netअगर_carrier_ok(netdev)) अणु
+	if (!netif_carrier_ok(netdev)) {
 		priv->tx_cfg.num_queues = new_tx;
 		priv->rx_cfg.num_queues = new_rx;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	new_tx_cfg.num_queues = new_tx;
 	new_rx_cfg.num_queues = new_rx;
 
-	वापस gve_adjust_queues(priv, new_rx_cfg, new_tx_cfg);
-पूर्ण
+	return gve_adjust_queues(priv, new_rx_cfg, new_tx_cfg);
+}
 
-अटल व्योम gve_get_ringparam(काष्ठा net_device *netdev,
-			      काष्ठा ethtool_ringparam *cmd)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static void gve_get_ringparam(struct net_device *netdev,
+			      struct ethtool_ringparam *cmd)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
 	cmd->rx_max_pending = priv->rx_desc_cnt;
 	cmd->tx_max_pending = priv->tx_desc_cnt;
 	cmd->rx_pending = priv->rx_desc_cnt;
 	cmd->tx_pending = priv->tx_desc_cnt;
-पूर्ण
+}
 
-अटल पूर्णांक gve_user_reset(काष्ठा net_device *netdev, u32 *flags)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static int gve_user_reset(struct net_device *netdev, u32 *flags)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
-	अगर (*flags == ETH_RESET_ALL) अणु
+	if (*flags == ETH_RESET_ALL) {
 		*flags = 0;
-		वापस gve_reset(priv, true);
-	पूर्ण
+		return gve_reset(priv, true);
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक gve_get_tunable(काष्ठा net_device *netdev,
-			   स्थिर काष्ठा ethtool_tunable *etuna, व्योम *value)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static int gve_get_tunable(struct net_device *netdev,
+			   const struct ethtool_tunable *etuna, void *value)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 
-	चयन (etuna->id) अणु
-	हाल ETHTOOL_RX_COPYBREAK:
-		*(u32 *)value = priv->rx_copyअवरोध;
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (etuna->id) {
+	case ETHTOOL_RX_COPYBREAK:
+		*(u32 *)value = priv->rx_copybreak;
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक gve_set_tunable(काष्ठा net_device *netdev,
-			   स्थिर काष्ठा ethtool_tunable *etuna,
-			   स्थिर व्योम *value)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static int gve_set_tunable(struct net_device *netdev,
+			   const struct ethtool_tunable *etuna,
+			   const void *value)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 	u32 len;
 
-	चयन (etuna->id) अणु
-	हाल ETHTOOL_RX_COPYBREAK:
+	switch (etuna->id) {
+	case ETHTOOL_RX_COPYBREAK:
 		len = *(u32 *)value;
-		अगर (len > PAGE_SIZE / 2)
-			वापस -EINVAL;
-		priv->rx_copyअवरोध = len;
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		if (len > PAGE_SIZE / 2)
+			return -EINVAL;
+		priv->rx_copybreak = len;
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल u32 gve_get_priv_flags(काष्ठा net_device *netdev)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static u32 gve_get_priv_flags(struct net_device *netdev)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 	u32 ret_flags = 0;
 
 	/* Only 1 flag exists currently: report-stats (BIT(O)), so set that flag. */
-	अगर (priv->ethtool_flags & BIT(0))
+	if (priv->ethtool_flags & BIT(0))
 		ret_flags |= BIT(0);
-	वापस ret_flags;
-पूर्ण
+	return ret_flags;
+}
 
-अटल पूर्णांक gve_set_priv_flags(काष्ठा net_device *netdev, u32 flags)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
+static int gve_set_priv_flags(struct net_device *netdev, u32 flags)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
 	u64 ori_flags, new_flags;
 
 	ori_flags = READ_ONCE(priv->ethtool_flags);
 	new_flags = ori_flags;
 
 	/* Only one priv flag exists: report-stats (BIT(0))*/
-	अगर (flags & BIT(0))
+	if (flags & BIT(0))
 		new_flags |= BIT(0);
-	अन्यथा
+	else
 		new_flags &= ~(BIT(0));
 	priv->ethtool_flags = new_flags;
-	/* start report-stats समयr when user turns report stats on. */
-	अगर (flags & BIT(0)) अणु
-		mod_समयr(&priv->stats_report_समयr,
-			  round_jअगरfies(jअगरfies +
-					msecs_to_jअगरfies(priv->stats_report_समयr_period)));
-	पूर्ण
+	/* start report-stats timer when user turns report stats on. */
+	if (flags & BIT(0)) {
+		mod_timer(&priv->stats_report_timer,
+			  round_jiffies(jiffies +
+					msecs_to_jiffies(priv->stats_report_timer_period)));
+	}
 	/* Zero off gve stats when report-stats turned off and */
-	/* delete report stats समयr. */
-	अगर (!(flags & BIT(0)) && (ori_flags & BIT(0))) अणु
-		पूर्णांक tx_stats_num = GVE_TX_STATS_REPORT_NUM *
+	/* delete report stats timer. */
+	if (!(flags & BIT(0)) && (ori_flags & BIT(0))) {
+		int tx_stats_num = GVE_TX_STATS_REPORT_NUM *
 			priv->tx_cfg.num_queues;
-		पूर्णांक rx_stats_num = GVE_RX_STATS_REPORT_NUM *
+		int rx_stats_num = GVE_RX_STATS_REPORT_NUM *
 			priv->rx_cfg.num_queues;
 
-		स_रखो(priv->stats_report->stats, 0, (tx_stats_num + rx_stats_num) *
-				   माप(काष्ठा stats));
-		del_समयr_sync(&priv->stats_report_समयr);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memset(priv->stats_report->stats, 0, (tx_stats_num + rx_stats_num) *
+				   sizeof(struct stats));
+		del_timer_sync(&priv->stats_report_timer);
+	}
+	return 0;
+}
 
-अटल पूर्णांक gve_get_link_ksettings(काष्ठा net_device *netdev,
-				  काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा gve_priv *priv = netdev_priv(netdev);
-	पूर्णांक err = gve_adminq_report_link_speed(priv);
+static int gve_get_link_ksettings(struct net_device *netdev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct gve_priv *priv = netdev_priv(netdev);
+	int err = gve_adminq_report_link_speed(priv);
 
 	cmd->base.speed = priv->link_speed;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-स्थिर काष्ठा ethtool_ops gve_ethtool_ops = अणु
+const struct ethtool_ops gve_ethtool_ops = {
 	.get_drvinfo = gve_get_drvinfo,
 	.get_strings = gve_get_strings,
 	.get_sset_count = gve_get_sset_count,
@@ -537,4 +536,4 @@ gve_get_ethtool_stats(काष्ठा net_device *netdev,
 	.get_priv_flags = gve_get_priv_flags,
 	.set_priv_flags = gve_set_priv_flags,
 	.get_link_ksettings = gve_get_link_ksettings
-पूर्ण;
+};

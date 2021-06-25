@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
-  nubus.h: various definitions and prototypes क्रम NuBus drivers to use.
+  nubus.h: various definitions and prototypes for NuBus drivers to use.
 
   Originally written by Alan Cox.
 
   Hacked to death by C. Scott Ananian and David Huggins-Daines.
   
-  Some of the स्थिरants in here are from the corresponding
+  Some of the constants in here are from the corresponding
   NetBSD/OpenBSD header file, by Allen Briggs.  We figured out the
   rest of them on our own. */
 
-#अगर_अघोषित _UAPILINUX_NUBUS_H
-#घोषणा _UAPILINUX_NUBUS_H
+#ifndef _UAPILINUX_NUBUS_H
+#define _UAPILINUX_NUBUS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत nubus_category अणु
+enum nubus_category {
 	NUBUS_CAT_BOARD          = 0x0001,
 	NUBUS_CAT_DISPLAY        = 0x0003,
 	NUBUS_CAT_NETWORK        = 0x0004,
@@ -25,22 +24,22 @@
 	NUBUS_CAT_CPU            = 0x000A,
 	/* For lack of a better name */
 	NUBUS_CAT_DUODOCK        = 0x0020
-पूर्ण;
+};
 
-क्रमागत nubus_type_network अणु
+enum nubus_type_network {
 	NUBUS_TYPE_ETHERNET      = 0x0001,
 	NUBUS_TYPE_RS232         = 0x0002
-पूर्ण;
+};
 
-क्रमागत nubus_type_display अणु
+enum nubus_type_display {
 	NUBUS_TYPE_VIDEO         = 0x0001
-पूर्ण;
+};
 
-क्रमागत nubus_type_cpu अणु
+enum nubus_type_cpu {
 	NUBUS_TYPE_68020         = 0x0003,
 	NUBUS_TYPE_68030         = 0x0004,
 	NUBUS_TYPE_68040         = 0x0005
-पूर्ण;
+};
 
 /* Known <Cat,Type,SW,HW> tuples: (according to TattleTech and Slots)
  *  68030 motherboards: <10,4,0,24>
@@ -50,7 +49,7 @@
  *  Toby Frame Buffer card: <3,1,1,1>
  *  RBV built-in video (IIci): <3,1,1,24>
  *  Valkyrie built-in video (Q630): <3,1,1,46>
- *  Macपूर्णांकosh Display Card: <3,1,1,25>
+ *  Macintosh Display Card: <3,1,1,25>
  *  Sonora built-in video (P460): <3,1,1,34>
  *  Jet framebuffer (DuoDock Plus): <3,1,1,41>
  *
@@ -73,13 +72,13 @@
  *  or from its distribution site: ftp://ftp.decismkr.com/dms
  */
 
-/* DrSW: Uniquely identअगरies the software पूर्णांकerface to a board.  This
+/* DrSW: Uniquely identifies the software interface to a board.  This
    is usually the one you want to look at when writing a driver.  It's
    not as useful as you think, though, because as we should know by
    now (duh), "Apple Compatible" can mean a lot of things... */
 
 /* Add known DrSW values here */
-क्रमागत nubus_drsw अणु
+enum nubus_drsw {
 	/* NUBUS_CAT_DISPLAY */
 	NUBUS_DRSW_APPLE        = 0x0001,
 	NUBUS_DRSW_APPLE_HIRES  = 0x0013, /* MacII HiRes card driver */
@@ -101,14 +100,14 @@
 
 	/* NUBUS_CAT_CPU */
 	NUBUS_DRSW_NONE         = 0x0000,
-पूर्ण;
+};
 
-/* DrHW: Uniquely identअगरies the hardware पूर्णांकerface to a board (or at
+/* DrHW: Uniquely identifies the hardware interface to a board (or at
    least, it should...  some video cards are known to incorrectly
-   identअगरy themselves as Toby cards) */
+   identify themselves as Toby cards) */
 
 /* Add known DrHW values here */
-क्रमागत nubus_drhw अणु
+enum nubus_drhw {
 	/* NUBUS_CAT_DISPLAY */
 	NUBUS_DRHW_APPLE_TFB      = 0x0001, /* Toby frame buffer card */
 	NUBUS_DRHW_APPLE_WVC      = 0x0006, /* Apple Workstation Video Card */
@@ -118,7 +117,7 @@
 	NUBUS_DRHW_APPLE_MVC      = 0x0014, /* Mac II Monochrome Video Card */
 	NUBUS_DRHW_APPLE_PVC      = 0x0017, /* Mac II Portrait Video Card */
 	NUBUS_DRHW_APPLE_RBV1     = 0x0018, /* IIci RBV video */
-	NUBUS_DRHW_APPLE_MDC      = 0x0019, /* Macपूर्णांकosh Display Card */
+	NUBUS_DRHW_APPLE_MDC      = 0x0019, /* Macintosh Display Card */
 	NUBUS_DRHW_APPLE_VSC      = 0x0020, /* Duo MiniDock ViSC framebuffer */
 	NUBUS_DRHW_APPLE_SONORA   = 0x0022, /* Sonora built-in video */
 	NUBUS_DRHW_APPLE_JET      = 0x0029, /* Jet framebuffer (DuoDock) */
@@ -135,7 +134,7 @@
 	NUBUS_DRHW_RDIUS_PC8      = 0x0291, /* Radius PrecisionColor 8 */
 	NUBUS_DRHW_LAPIS_PCS8     = 0x0292, /* Lapis ProColorServer 8 */
 	NUBUS_DRHW_RASTER_24XLI   = 0x02A0, /* RasterOps 8/24 XLi */
-	NUBUS_DRHW_RASTER_PBPGT   = 0x02A5, /* RasterOps Paपूर्णांकBoard Prism GT */
+	NUBUS_DRHW_RASTER_PBPGT   = 0x02A5, /* RasterOps PaintBoard Prism GT */
 	NUBUS_DRHW_EMACH_FSX      = 0x02AE, /* E-Machines Futura SX */
 	NUBUS_DRHW_RASTER_24XLTV  = 0x02B7, /* RasterOps 24XLTV */
 	NUBUS_DRHW_SMAC_THUND24   = 0x02CB, /* SuperMac Thunder/24 */
@@ -156,16 +155,16 @@
 	NUBUS_DRHW_APPLE_SONIC_LC = 0x0119,
 	NUBUS_DRHW_FOCUS          = 0x011c,
 	NUBUS_DRHW_SONNET         = 0x011d,
-पूर्ण;
+};
 
-/* Resource IDs: These are the identअगरiers क्रम the various weird and
-   wonderful tidbits of inक्रमmation that may or may not reside in the
+/* Resource IDs: These are the identifiers for the various weird and
+   wonderful tidbits of information that may or may not reside in the
    NuBus ROM directory. */
-क्रमागत nubus_res_id अणु
+enum nubus_res_id {
 	NUBUS_RESID_TYPE         = 0x0001,
 	NUBUS_RESID_NAME         = 0x0002,
 	NUBUS_RESID_ICON         = 0x0003,
-	NUBUS_RESID_DRVRसूची      = 0x0004,
+	NUBUS_RESID_DRVRDIR      = 0x0004,
 	NUBUS_RESID_LOADREC      = 0x0005,
 	NUBUS_RESID_BOOTREC      = 0x0006,
 	NUBUS_RESID_FLAGS        = 0x0007,
@@ -177,10 +176,10 @@
 	NUBUS_RESID_CICN         = 0x000f,
 	NUBUS_RESID_ICL8         = 0x0010,
 	NUBUS_RESID_ICL4         = 0x0011,
-पूर्ण;
+};
 
-/* Category-specअगरic resources. */
-क्रमागत nubus_board_res_id अणु
+/* Category-specific resources. */
+enum nubus_board_res_id {
 	NUBUS_RESID_BOARDID      = 0x0020,
 	NUBUS_RESID_PRAMINITDATA = 0x0021,
 	NUBUS_RESID_PRIMARYINIT  = 0x0022,
@@ -192,34 +191,34 @@
 	/* Not sure why Apple put these next two in here */
 	NUBUS_RESID_VIDNAMES     = 0x0041,
 	NUBUS_RESID_VIDMODES     = 0x007e
-पूर्ण;
+};
 
-/* Fields within the venकरोr info directory */
-क्रमागत nubus_venकरोr_res_id अणु
+/* Fields within the vendor info directory */
+enum nubus_vendor_res_id {
 	NUBUS_RESID_VEND_ID     = 0x0001,
 	NUBUS_RESID_VEND_SERIAL = 0x0002,
 	NUBUS_RESID_VEND_REV    = 0x0003,
 	NUBUS_RESID_VEND_PART   = 0x0004,
 	NUBUS_RESID_VEND_DATE   = 0x0005
-पूर्ण;
+};
 
-क्रमागत nubus_net_res_id अणु
+enum nubus_net_res_id {
 	NUBUS_RESID_MAC_ADDRESS  = 0x0080
-पूर्ण;
+};
 
-क्रमागत nubus_cpu_res_id अणु
+enum nubus_cpu_res_id {
 	NUBUS_RESID_MEMINFO      = 0x0081,
 	NUBUS_RESID_ROMINFO      = 0x0082
-पूर्ण;
+};
 
-क्रमागत nubus_display_res_id अणु
-	NUBUS_RESID_GAMMAसूची    = 0x0040,
+enum nubus_display_res_id {
+	NUBUS_RESID_GAMMADIR    = 0x0040,
 	NUBUS_RESID_FIRSTMODE   = 0x0080,
 	NUBUS_RESID_SECONDMODE  = 0x0081,
 	NUBUS_RESID_THIRDMODE   = 0x0082,
 	NUBUS_RESID_FOURTHMODE  = 0x0083,
 	NUBUS_RESID_FIFTHMODE   = 0x0084,
 	NUBUS_RESID_SIXTHMODE   = 0x0085
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPILINUX_NUBUS_H */
+#endif /* _UAPILINUX_NUBUS_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  SR-IPv6 implementation
  *
@@ -7,61 +6,61 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
-#अगर_अघोषित _NET_SEG6_H
-#घोषणा _NET_SEG6_H
+#ifndef _NET_SEG6_H
+#define _NET_SEG6_H
 
-#समावेश <linux/net.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/seg6.h>
-#समावेश <linux/rhashtable-types.h>
+#include <linux/net.h>
+#include <linux/ipv6.h>
+#include <linux/seg6.h>
+#include <linux/rhashtable-types.h>
 
-अटल अंतरभूत व्योम update_csum_dअगरf4(काष्ठा sk_buff *skb, __be32 from,
+static inline void update_csum_diff4(struct sk_buff *skb, __be32 from,
 				     __be32 to)
-अणु
-	__be32 dअगरf[] = अणु ~from, to पूर्ण;
+{
+	__be32 diff[] = { ~from, to };
 
-	skb->csum = ~csum_partial((अक्षर *)dअगरf, माप(dअगरf), ~skb->csum);
-पूर्ण
+	skb->csum = ~csum_partial((char *)diff, sizeof(diff), ~skb->csum);
+}
 
-अटल अंतरभूत व्योम update_csum_dअगरf16(काष्ठा sk_buff *skb, __be32 *from,
+static inline void update_csum_diff16(struct sk_buff *skb, __be32 *from,
 				      __be32 *to)
-अणु
-	__be32 dअगरf[] = अणु
+{
+	__be32 diff[] = {
 		~from[0], ~from[1], ~from[2], ~from[3],
 		to[0], to[1], to[2], to[3],
-	पूर्ण;
+	};
 
-	skb->csum = ~csum_partial((अक्षर *)dअगरf, माप(dअगरf), ~skb->csum);
-पूर्ण
+	skb->csum = ~csum_partial((char *)diff, sizeof(diff), ~skb->csum);
+}
 
-काष्ठा seg6_pernet_data अणु
-	काष्ठा mutex lock;
-	काष्ठा in6_addr __rcu *tun_src;
-#अगर_घोषित CONFIG_IPV6_SEG6_HMAC
-	काष्ठा rhashtable hmac_infos;
-#पूर्ण_अगर
-पूर्ण;
+struct seg6_pernet_data {
+	struct mutex lock;
+	struct in6_addr __rcu *tun_src;
+#ifdef CONFIG_IPV6_SEG6_HMAC
+	struct rhashtable hmac_infos;
+#endif
+};
 
-अटल अंतरभूत काष्ठा seg6_pernet_data *seg6_pernet(काष्ठा net *net)
-अणु
-#अगर IS_ENABLED(CONFIG_IPV6)
-	वापस net->ipv6.seg6_data;
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static inline struct seg6_pernet_data *seg6_pernet(struct net *net)
+{
+#if IS_ENABLED(CONFIG_IPV6)
+	return net->ipv6.seg6_data;
+#else
+	return NULL;
+#endif
+}
 
-बाह्य पूर्णांक seg6_init(व्योम);
-बाह्य व्योम seg6_निकास(व्योम);
-बाह्य पूर्णांक seg6_iptunnel_init(व्योम);
-बाह्य व्योम seg6_iptunnel_निकास(व्योम);
-बाह्य पूर्णांक seg6_local_init(व्योम);
-बाह्य व्योम seg6_local_निकास(व्योम);
+extern int seg6_init(void);
+extern void seg6_exit(void);
+extern int seg6_iptunnel_init(void);
+extern void seg6_iptunnel_exit(void);
+extern int seg6_local_init(void);
+extern void seg6_local_exit(void);
 
-बाह्य bool seg6_validate_srh(काष्ठा ipv6_sr_hdr *srh, पूर्णांक len, bool reduced);
-बाह्य पूर्णांक seg6_करो_srh_encap(काष्ठा sk_buff *skb, काष्ठा ipv6_sr_hdr *osrh,
-			     पूर्णांक proto);
-बाह्य पूर्णांक seg6_करो_srh_अंतरभूत(काष्ठा sk_buff *skb, काष्ठा ipv6_sr_hdr *osrh);
-बाह्य पूर्णांक seg6_lookup_nexthop(काष्ठा sk_buff *skb, काष्ठा in6_addr *nhaddr,
+extern bool seg6_validate_srh(struct ipv6_sr_hdr *srh, int len, bool reduced);
+extern int seg6_do_srh_encap(struct sk_buff *skb, struct ipv6_sr_hdr *osrh,
+			     int proto);
+extern int seg6_do_srh_inline(struct sk_buff *skb, struct ipv6_sr_hdr *osrh);
+extern int seg6_lookup_nexthop(struct sk_buff *skb, struct in6_addr *nhaddr,
 			       u32 tbl_id);
-#पूर्ण_अगर
+#endif

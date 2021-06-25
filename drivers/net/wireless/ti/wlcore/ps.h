@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This file is part of wl1271
  *
@@ -8,18 +7,18 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#अगर_अघोषित __PS_H__
-#घोषणा __PS_H__
+#ifndef __PS_H__
+#define __PS_H__
 
-#समावेश "wlcore.h"
-#समावेश "acx.h"
+#include "wlcore.h"
+#include "acx.h"
 
-पूर्णांक wl1271_ps_set_mode(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		       क्रमागत wl1271_cmd_ps_mode mode);
-व्योम wl12xx_ps_link_start(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_ps_set_mode(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		       enum wl1271_cmd_ps_mode mode);
+void wl12xx_ps_link_start(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			  u8 hlid, bool clean_queues);
-व्योम wl12xx_ps_link_end(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 hlid);
+void wl12xx_ps_link_end(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 hlid);
 
-#घोषणा WL1271_PS_COMPLETE_TIMEOUT 500
+#define WL1271_PS_COMPLETE_TIMEOUT 500
 
-#पूर्ण_अगर /* __WL1271_PS_H__ */
+#endif /* __WL1271_PS_H__ */

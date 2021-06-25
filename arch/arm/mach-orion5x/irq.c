@@ -1,55 +1,54 @@
-<शैली गुरु>
 /*
  * arch/arm/mach-orion5x/irq.c
  *
- * Core IRQ functions क्रम Marvell Orion System On Chip
+ * Core IRQ functions for Marvell Orion System On Chip
  *
- * Maपूर्णांकainer: Tzachi Perelstein <tzachi@marvell.com>
+ * Maintainer: Tzachi Perelstein <tzachi@marvell.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#समावेश <linux/gpपन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <plat/orion-gpपन.स>
-#समावेश <plat/irq.h>
-#समावेश <यंत्र/exception.h>
-#समावेश "bridge-regs.h"
-#समावेश "common.h"
+#include <linux/gpio.h>
+#include <linux/kernel.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <plat/orion-gpio.h>
+#include <plat/irq.h>
+#include <asm/exception.h>
+#include "bridge-regs.h"
+#include "common.h"
 
-अटल पूर्णांक __initdata gpio0_irqs[4] = अणु
+static int __initdata gpio0_irqs[4] = {
 	IRQ_ORION5X_GPIO_0_7,
 	IRQ_ORION5X_GPIO_8_15,
 	IRQ_ORION5X_GPIO_16_23,
 	IRQ_ORION5X_GPIO_24_31,
-पूर्ण;
+};
 
-अटल यंत्रlinkage व्योम
-__exception_irq_entry orion5x_legacy_handle_irq(काष्ठा pt_regs *regs)
-अणु
+static asmlinkage void
+__exception_irq_entry orion5x_legacy_handle_irq(struct pt_regs *regs)
+{
 	u32 stat;
 
-	stat = पढ़ोl_relaxed(MAIN_IRQ_CAUSE);
-	stat &= पढ़ोl_relaxed(MAIN_IRQ_MASK);
-	अगर (stat) अणु
-		अचिन्हित पूर्णांक hwirq = 1 + __fls(stat);
+	stat = readl_relaxed(MAIN_IRQ_CAUSE);
+	stat &= readl_relaxed(MAIN_IRQ_MASK);
+	if (stat) {
+		unsigned int hwirq = 1 + __fls(stat);
 		handle_IRQ(hwirq, regs);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-व्योम __init orion5x_init_irq(व्योम)
-अणु
+void __init orion5x_init_irq(void)
+{
 	orion_irq_init(1, MAIN_IRQ_MASK);
 
 	set_handle_irq(orion5x_legacy_handle_irq);
 
 	/*
-	 * Initialize gpiolib क्रम GPIOs 0-31.
+	 * Initialize gpiolib for GPIOs 0-31.
 	 */
-	orion_gpio_init(शून्य, 0, 32, GPIO_VIRT_BASE, 0,
+	orion_gpio_init(NULL, 0, 32, GPIO_VIRT_BASE, 0,
 			IRQ_ORION5X_GPIO_START, gpio0_irqs);
-पूर्ण
+}

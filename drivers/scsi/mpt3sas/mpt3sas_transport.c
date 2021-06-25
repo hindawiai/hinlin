@@ -1,36 +1,35 @@
-<शैली गुरु>
 /*
- * SAS Transport Layer क्रम MPT (Message Passing Technology) based controllers
+ * SAS Transport Layer for MPT (Message Passing Technology) based controllers
  *
  * This code is based on drivers/scsi/mpt3sas/mpt3sas_transport.c
  * Copyright (C) 2012-2014  LSI Corporation
  * Copyright (C) 2013-2014 Avago Technologies
  *  (mailto: MPT-FusionLinux.pdl@avagotech.com)
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * NO WARRANTY
  * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
  * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
- * solely responsible क्रम determining the appropriateness of using and
+ * solely responsible for determining the appropriateness of using and
  * distributing the Program and assumes all risks associated with its
  * exercise of rights under this Agreement, including but not limited to
  * the risks and costs of program errors, damage to or loss of data,
- * programs or equipment, and unavailability or पूर्णांकerruption of operations.
+ * programs or equipment, and unavailability or interruption of operations.
 
  * DISCLAIMER OF LIABILITY
  * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -38,46 +37,46 @@
  * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301,
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/workqueue.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_transport_sas.h>
-#समावेश <scsi/scsi_dbg.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_transport_sas.h>
+#include <scsi/scsi_dbg.h>
 
-#समावेश "mpt3sas_base.h"
+#include "mpt3sas_base.h"
 
 /**
- * _transport_get_port_id_by_sas_phy - get zone's port id that Phy beदीर्घ to
+ * _transport_get_port_id_by_sas_phy - get zone's port id that Phy belong to
  * @phy: sas_phy object
  *
  * Return Port number
  */
-अटल अंतरभूत u8
-_transport_get_port_id_by_sas_phy(काष्ठा sas_phy *phy)
-अणु
+static inline u8
+_transport_get_port_id_by_sas_phy(struct sas_phy *phy)
+{
 	u8 port_id = 0xFF;
-	काष्ठा hba_port *port = phy->hostdata;
+	struct hba_port *port = phy->hostdata;
 
-	अगर (port)
+	if (port)
 		port_id = port->port_id;
 
-	वापस port_id;
-पूर्ण
+	return port_id;
+}
 
 /**
  * _transport_sas_node_find_by_sas_address - sas node search
@@ -86,19 +85,19 @@ _transport_get_port_id_by_sas_phy(काष्ठा sas_phy *phy)
  * @port: hba port entry
  * Context: Calling function should acquire ioc->sas_node_lock.
  *
- * Search क्रम either hba phys or expander device based on handle, then वापसs
+ * Search for either hba phys or expander device based on handle, then returns
  * the sas_node object.
  */
-अटल काष्ठा _sas_node *
-_transport_sas_node_find_by_sas_address(काष्ठा MPT3SAS_ADAPTER *ioc,
-	u64 sas_address, काष्ठा hba_port *port)
-अणु
-	अगर (ioc->sas_hba.sas_address == sas_address)
-		वापस &ioc->sas_hba;
-	अन्यथा
-		वापस mpt3sas_scsih_expander_find_by_sas_address(ioc,
+static struct _sas_node *
+_transport_sas_node_find_by_sas_address(struct MPT3SAS_ADAPTER *ioc,
+	u64 sas_address, struct hba_port *port)
+{
+	if (ioc->sas_hba.sas_address == sas_address)
+		return &ioc->sas_hba;
+	else
+		return mpt3sas_scsih_expander_find_by_sas_address(ioc,
 		    sas_address, port);
-पूर्ण
+}
 
 /**
  * _transport_get_port_id_by_rphy - Get Port number from rphy object
@@ -107,237 +106,237 @@ _transport_sas_node_find_by_sas_address(काष्ठा MPT3SAS_ADAPTER *ioc,
  *
  * Returns Port number.
  */
-अटल u8
-_transport_get_port_id_by_rphy(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा sas_rphy *rphy)
-अणु
-	काष्ठा _sas_node *sas_expander;
-	काष्ठा _sas_device *sas_device;
-	अचिन्हित दीर्घ flags;
+static u8
+_transport_get_port_id_by_rphy(struct MPT3SAS_ADAPTER *ioc,
+	struct sas_rphy *rphy)
+{
+	struct _sas_node *sas_expander;
+	struct _sas_device *sas_device;
+	unsigned long flags;
 	u8 port_id = 0xFF;
 
-	अगर (!rphy)
-		वापस port_id;
+	if (!rphy)
+		return port_id;
 
-	अगर (rphy->identअगरy.device_type == SAS_EDGE_EXPANDER_DEVICE ||
-	    rphy->identअगरy.device_type == SAS_FANOUT_EXPANDER_DEVICE) अणु
+	if (rphy->identify.device_type == SAS_EDGE_EXPANDER_DEVICE ||
+	    rphy->identify.device_type == SAS_FANOUT_EXPANDER_DEVICE) {
 		spin_lock_irqsave(&ioc->sas_node_lock, flags);
-		list_क्रम_each_entry(sas_expander,
-		    &ioc->sas_expander_list, list) अणु
-			अगर (sas_expander->rphy == rphy) अणु
+		list_for_each_entry(sas_expander,
+		    &ioc->sas_expander_list, list) {
+			if (sas_expander->rphy == rphy) {
 				port_id = sas_expander->port->port_id;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-	पूर्ण अन्यथा अगर (rphy->identअगरy.device_type == SAS_END_DEVICE) अणु
+	} else if (rphy->identify.device_type == SAS_END_DEVICE) {
 		spin_lock_irqsave(&ioc->sas_device_lock, flags);
 		sas_device = __mpt3sas_get_sdev_by_rphy(ioc, rphy);
-		अगर (sas_device) अणु
+		if (sas_device) {
 			port_id = sas_device->port->port_id;
 			sas_device_put(sas_device);
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&ioc->sas_device_lock, flags);
-	पूर्ण
+	}
 
-	वापस port_id;
-पूर्ण
+	return port_id;
+}
 
 /**
  * _transport_convert_phy_link_rate -
- * @link_rate: link rate वापसed from mpt firmware
+ * @link_rate: link rate returned from mpt firmware
  *
- * Convert link_rate from mpi fusion पूर्णांकo sas_transport क्रमm.
+ * Convert link_rate from mpi fusion into sas_transport form.
  */
-अटल क्रमागत sas_linkrate
+static enum sas_linkrate
 _transport_convert_phy_link_rate(u8 link_rate)
-अणु
-	क्रमागत sas_linkrate rc;
+{
+	enum sas_linkrate rc;
 
-	चयन (link_rate) अणु
-	हाल MPI2_SAS_NEG_LINK_RATE_1_5:
+	switch (link_rate) {
+	case MPI2_SAS_NEG_LINK_RATE_1_5:
 		rc = SAS_LINK_RATE_1_5_GBPS;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_3_0:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_3_0:
 		rc = SAS_LINK_RATE_3_0_GBPS;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_6_0:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_6_0:
 		rc = SAS_LINK_RATE_6_0_GBPS;
-		अवरोध;
-	हाल MPI25_SAS_NEG_LINK_RATE_12_0:
+		break;
+	case MPI25_SAS_NEG_LINK_RATE_12_0:
 		rc = SAS_LINK_RATE_12_0_GBPS;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_PHY_DISABLED:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_PHY_DISABLED:
 		rc = SAS_PHY_DISABLED;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_NEGOTIATION_FAILED:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_NEGOTIATION_FAILED:
 		rc = SAS_LINK_RATE_FAILED;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_PORT_SELECTOR:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_PORT_SELECTOR:
 		rc = SAS_SATA_PORT_SELECTOR;
-		अवरोध;
-	हाल MPI2_SAS_NEG_LINK_RATE_SMP_RESET_IN_PROGRESS:
+		break;
+	case MPI2_SAS_NEG_LINK_RATE_SMP_RESET_IN_PROGRESS:
 		rc = SAS_PHY_RESET_IN_PROGRESS;
-		अवरोध;
+		break;
 
-	शेष:
-	हाल MPI2_SAS_NEG_LINK_RATE_SATA_OOB_COMPLETE:
-	हाल MPI2_SAS_NEG_LINK_RATE_UNKNOWN_LINK_RATE:
+	default:
+	case MPI2_SAS_NEG_LINK_RATE_SATA_OOB_COMPLETE:
+	case MPI2_SAS_NEG_LINK_RATE_UNKNOWN_LINK_RATE:
 		rc = SAS_LINK_RATE_UNKNOWN;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
 /**
- * _transport_set_identअगरy - set identअगरy क्रम phys and end devices
+ * _transport_set_identify - set identify for phys and end devices
  * @ioc: per adapter object
  * @handle: device handle
- * @identअगरy: sas identअगरy info
+ * @identify: sas identify info
  *
- * Populates sas identअगरy info.
+ * Populates sas identify info.
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_set_identअगरy(काष्ठा MPT3SAS_ADAPTER *ioc, u16 handle,
-	काष्ठा sas_identअगरy *identअगरy)
-अणु
+static int
+_transport_set_identify(struct MPT3SAS_ADAPTER *ioc, u16 handle,
+	struct sas_identify *identify)
+{
 	Mpi2SasDevicePage0_t sas_device_pg0;
 	Mpi2ConfigReply_t mpi_reply;
 	u32 device_info;
 	u32 ioc_status;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery) अणु
+	if (ioc->shost_recovery || ioc->pci_error_recovery) {
 		ioc_info(ioc, "%s: host reset in progress!\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर ((mpt3sas_config_get_sas_device_pg0(ioc, &mpi_reply, &sas_device_pg0,
-	    MPI2_SAS_DEVICE_PGAD_FORM_HANDLE, handle))) अणु
+	if ((mpt3sas_config_get_sas_device_pg0(ioc, &mpi_reply, &sas_device_pg0,
+	    MPI2_SAS_DEVICE_PGAD_FORM_HANDLE, handle))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस -ENXIO;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		return -ENXIO;
+	}
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
 		ioc_err(ioc, "handle(0x%04x), ioc_status(0x%04x) failure at %s:%d/%s()!\n",
-			handle, ioc_status, __खाता__, __LINE__, __func__);
-		वापस -EIO;
-	पूर्ण
+			handle, ioc_status, __FILE__, __LINE__, __func__);
+		return -EIO;
+	}
 
-	स_रखो(identअगरy, 0, माप(काष्ठा sas_identअगरy));
+	memset(identify, 0, sizeof(struct sas_identify));
 	device_info = le32_to_cpu(sas_device_pg0.DeviceInfo);
 
 	/* sas_address */
-	identअगरy->sas_address = le64_to_cpu(sas_device_pg0.SASAddress);
+	identify->sas_address = le64_to_cpu(sas_device_pg0.SASAddress);
 
 	/* phy number of the parent device this device is linked to */
-	identअगरy->phy_identअगरier = sas_device_pg0.PhyNum;
+	identify->phy_identifier = sas_device_pg0.PhyNum;
 
 	/* device_type */
-	चयन (device_info & MPI2_SAS_DEVICE_INFO_MASK_DEVICE_TYPE) अणु
-	हाल MPI2_SAS_DEVICE_INFO_NO_DEVICE:
-		identअगरy->device_type = SAS_PHY_UNUSED;
-		अवरोध;
-	हाल MPI2_SAS_DEVICE_INFO_END_DEVICE:
-		identअगरy->device_type = SAS_END_DEVICE;
-		अवरोध;
-	हाल MPI2_SAS_DEVICE_INFO_EDGE_EXPANDER:
-		identअगरy->device_type = SAS_EDGE_EXPANDER_DEVICE;
-		अवरोध;
-	हाल MPI2_SAS_DEVICE_INFO_FANOUT_EXPANDER:
-		identअगरy->device_type = SAS_FANOUT_EXPANDER_DEVICE;
-		अवरोध;
-	पूर्ण
+	switch (device_info & MPI2_SAS_DEVICE_INFO_MASK_DEVICE_TYPE) {
+	case MPI2_SAS_DEVICE_INFO_NO_DEVICE:
+		identify->device_type = SAS_PHY_UNUSED;
+		break;
+	case MPI2_SAS_DEVICE_INFO_END_DEVICE:
+		identify->device_type = SAS_END_DEVICE;
+		break;
+	case MPI2_SAS_DEVICE_INFO_EDGE_EXPANDER:
+		identify->device_type = SAS_EDGE_EXPANDER_DEVICE;
+		break;
+	case MPI2_SAS_DEVICE_INFO_FANOUT_EXPANDER:
+		identify->device_type = SAS_FANOUT_EXPANDER_DEVICE;
+		break;
+	}
 
 	/* initiator_port_protocols */
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SSP_INITIATOR)
-		identअगरy->initiator_port_protocols |= SAS_PROTOCOL_SSP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_STP_INITIATOR)
-		identअगरy->initiator_port_protocols |= SAS_PROTOCOL_STP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SMP_INITIATOR)
-		identअगरy->initiator_port_protocols |= SAS_PROTOCOL_SMP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SATA_HOST)
-		identअगरy->initiator_port_protocols |= SAS_PROTOCOL_SATA;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SSP_INITIATOR)
+		identify->initiator_port_protocols |= SAS_PROTOCOL_SSP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_STP_INITIATOR)
+		identify->initiator_port_protocols |= SAS_PROTOCOL_STP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SMP_INITIATOR)
+		identify->initiator_port_protocols |= SAS_PROTOCOL_SMP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SATA_HOST)
+		identify->initiator_port_protocols |= SAS_PROTOCOL_SATA;
 
 	/* target_port_protocols */
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SSP_TARGET)
-		identअगरy->target_port_protocols |= SAS_PROTOCOL_SSP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_STP_TARGET)
-		identअगरy->target_port_protocols |= SAS_PROTOCOL_STP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SMP_TARGET)
-		identअगरy->target_port_protocols |= SAS_PROTOCOL_SMP;
-	अगर (device_info & MPI2_SAS_DEVICE_INFO_SATA_DEVICE)
-		identअगरy->target_port_protocols |= SAS_PROTOCOL_SATA;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SSP_TARGET)
+		identify->target_port_protocols |= SAS_PROTOCOL_SSP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_STP_TARGET)
+		identify->target_port_protocols |= SAS_PROTOCOL_STP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SMP_TARGET)
+		identify->target_port_protocols |= SAS_PROTOCOL_SMP;
+	if (device_info & MPI2_SAS_DEVICE_INFO_SATA_DEVICE)
+		identify->target_port_protocols |= SAS_PROTOCOL_SATA;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mpt3sas_transport_करोne -  पूर्णांकernal transport layer callback handler.
+ * mpt3sas_transport_done -  internal transport layer callback handler.
  * @ioc: per adapter object
- * @smid: प्रणाली request message index
+ * @smid: system request message index
  * @msix_index: MSIX table index supplied by the OS
  * @reply: reply message frame(lower 32bit addr)
  *
- * Callback handler when sending पूर्णांकernal generated transport cmds.
+ * Callback handler when sending internal generated transport cmds.
  * The callback index passed is `ioc->transport_cb_idx`
  *
- * Return: 1 meaning mf should be मुक्तd from _base_पूर्णांकerrupt
- *         0 means the mf is मुक्तd from this function.
+ * Return: 1 meaning mf should be freed from _base_interrupt
+ *         0 means the mf is freed from this function.
  */
 u8
-mpt3sas_transport_करोne(काष्ठा MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index,
+mpt3sas_transport_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index,
 	u32 reply)
-अणु
+{
 	MPI2DefaultReply_t *mpi_reply;
 
 	mpi_reply =  mpt3sas_base_get_reply_virt_addr(ioc, reply);
-	अगर (ioc->transport_cmds.status == MPT3_CMD_NOT_USED)
-		वापस 1;
-	अगर (ioc->transport_cmds.smid != smid)
-		वापस 1;
+	if (ioc->transport_cmds.status == MPT3_CMD_NOT_USED)
+		return 1;
+	if (ioc->transport_cmds.smid != smid)
+		return 1;
 	ioc->transport_cmds.status |= MPT3_CMD_COMPLETE;
-	अगर (mpi_reply) अणु
-		स_नकल(ioc->transport_cmds.reply, mpi_reply,
+	if (mpi_reply) {
+		memcpy(ioc->transport_cmds.reply, mpi_reply,
 		    mpi_reply->MsgLength*4);
 		ioc->transport_cmds.status |= MPT3_CMD_REPLY_VALID;
-	पूर्ण
+	}
 	ioc->transport_cmds.status &= ~MPT3_CMD_PENDING;
-	complete(&ioc->transport_cmds.करोne);
-	वापस 1;
-पूर्ण
+	complete(&ioc->transport_cmds.done);
+	return 1;
+}
 
-/* report manufacture request काष्ठाure */
-काष्ठा rep_manu_request अणु
+/* report manufacture request structure */
+struct rep_manu_request {
 	u8 smp_frame_type;
 	u8 function;
 	u8 reserved;
 	u8 request_length;
-पूर्ण;
+};
 
-/* report manufacture reply काष्ठाure */
-काष्ठा rep_manu_reply अणु
+/* report manufacture reply structure */
+struct rep_manu_reply {
 	u8 smp_frame_type; /* 0x41 */
 	u8 function; /* 0x01 */
 	u8 function_result;
 	u8 response_length;
 	u16 expander_change_count;
 	u8 reserved0[2];
-	u8 sas_क्रमmat;
+	u8 sas_format;
 	u8 reserved2[3];
-	u8 venकरोr_id[SAS_EXPANDER_VENDOR_ID_LEN];
+	u8 vendor_id[SAS_EXPANDER_VENDOR_ID_LEN];
 	u8 product_id[SAS_EXPANDER_PRODUCT_ID_LEN];
 	u8 product_rev[SAS_EXPANDER_PRODUCT_REV_LEN];
-	u8 component_venकरोr_id[SAS_EXPANDER_COMPONENT_VENDOR_ID_LEN];
+	u8 component_vendor_id[SAS_EXPANDER_COMPONENT_VENDOR_ID_LEN];
 	u16 component_id;
 	u8 component_revision_id;
 	u8 reserved3;
-	u8 venकरोr_specअगरic[8];
-पूर्ण;
+	u8 vendor_specific[8];
+};
 
 /**
  * _transport_expander_report_manufacture - obtain SMP report_manufacture
@@ -348,68 +347,68 @@ mpt3sas_transport_करोne(काष्ठा MPT3SAS_ADAPTER *ioc, u16 smid,
  *
  * Fills in the sas_expander_device object when SMP port is created.
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_expander_report_manufacture(काष्ठा MPT3SAS_ADAPTER *ioc,
-	u64 sas_address, काष्ठा sas_expander_device *edev, u8 port_id)
-अणु
+static int
+_transport_expander_report_manufacture(struct MPT3SAS_ADAPTER *ioc,
+	u64 sas_address, struct sas_expander_device *edev, u8 port_id)
+{
 	Mpi2SmpPassthroughRequest_t *mpi_request;
 	Mpi2SmpPassthroughReply_t *mpi_reply;
-	काष्ठा rep_manu_reply *manufacture_reply;
-	काष्ठा rep_manu_request *manufacture_request;
-	पूर्णांक rc;
+	struct rep_manu_reply *manufacture_reply;
+	struct rep_manu_request *manufacture_request;
+	int rc;
 	u16 smid;
-	व्योम *psge;
+	void *psge;
 	u8 issue_reset = 0;
-	व्योम *data_out = शून्य;
+	void *data_out = NULL;
 	dma_addr_t data_out_dma;
 	dma_addr_t data_in_dma;
-	माप_प्रकार data_in_sz;
-	माप_प्रकार data_out_sz;
+	size_t data_in_sz;
+	size_t data_out_sz;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery) अणु
+	if (ioc->shost_recovery || ioc->pci_error_recovery) {
 		ioc_info(ioc, "%s: host reset in progress!\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	mutex_lock(&ioc->transport_cmds.mutex);
 
-	अगर (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) अणु
+	if (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) {
 		ioc_err(ioc, "%s: transport_cmds in use\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc->transport_cmds.status = MPT3_CMD_PENDING;
 
-	rc = mpt3sas_रुको_क्रम_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
-	अगर (rc)
-		जाओ out;
+	rc = mpt3sas_wait_for_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
+	if (rc)
+		goto out;
 
 	smid = mpt3sas_base_get_smid(ioc, ioc->transport_cb_idx);
-	अगर (!smid) अणु
+	if (!smid) {
 		ioc_err(ioc, "%s: failed obtaining a smid\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = 0;
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 	ioc->transport_cmds.smid = smid;
 
-	data_out_sz = माप(काष्ठा rep_manu_request);
-	data_in_sz = माप(काष्ठा rep_manu_reply);
+	data_out_sz = sizeof(struct rep_manu_request);
+	data_in_sz = sizeof(struct rep_manu_reply);
 	data_out = dma_alloc_coherent(&ioc->pdev->dev, data_out_sz + data_in_sz,
 			&data_out_dma, GFP_KERNEL);
-	अगर (!data_out) अणु
-		pr_err("failure at %s:%d/%s()!\n", __खाता__,
+	if (!data_out) {
+		pr_err("failure at %s:%d/%s()!\n", __FILE__,
 		    __LINE__, __func__);
 		rc = -ENOMEM;
-		mpt3sas_base_मुक्त_smid(ioc, smid);
-		जाओ out;
-	पूर्ण
+		mpt3sas_base_free_smid(ioc, smid);
+		goto out;
+	}
 
-	data_in_dma = data_out_dma + माप(काष्ठा rep_manu_request);
+	data_in_dma = data_out_dma + sizeof(struct rep_manu_request);
 
 	manufacture_request = data_out;
 	manufacture_request->smp_frame_type = 0x40;
@@ -417,7 +416,7 @@ _transport_expander_report_manufacture(काष्ठा MPT3SAS_ADAPTER *ioc,
 	manufacture_request->reserved = 0;
 	manufacture_request->request_length = 0;
 
-	स_रखो(mpi_request, 0, माप(Mpi2SmpPassthroughRequest_t));
+	memset(mpi_request, 0, sizeof(Mpi2SmpPassthroughRequest_t));
 	mpi_request->Function = MPI2_FUNCTION_SMP_PASSTHROUGH;
 	mpi_request->PhysicalPort = port_id;
 	mpi_request->SASAddress = cpu_to_le64(sas_address);
@@ -427,70 +426,70 @@ _transport_expander_report_manufacture(काष्ठा MPT3SAS_ADAPTER *ioc,
 	ioc->build_sg(ioc, psge, data_out_dma, data_out_sz, data_in_dma,
 	    data_in_sz);
 
-	dtransportprपूर्णांकk(ioc,
+	dtransportprintk(ioc,
 			 ioc_info(ioc, "report_manufacture - send to sas_addr(0x%016llx)\n",
 				  (u64)sas_address));
-	init_completion(&ioc->transport_cmds.करोne);
-	ioc->put_smid_शेष(ioc, smid);
-	रुको_क्रम_completion_समयout(&ioc->transport_cmds.करोne, 10*HZ);
+	init_completion(&ioc->transport_cmds.done);
+	ioc->put_smid_default(ioc, smid);
+	wait_for_completion_timeout(&ioc->transport_cmds.done, 10*HZ);
 
-	अगर (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) अणु
+	if (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) {
 		ioc_err(ioc, "%s: timeout\n", __func__);
 		_debug_dump_mf(mpi_request,
-		    माप(Mpi2SmpPassthroughRequest_t)/4);
-		अगर (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
+		    sizeof(Mpi2SmpPassthroughRequest_t)/4);
+		if (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
 			issue_reset = 1;
-		जाओ issue_host_reset;
-	पूर्ण
+		goto issue_host_reset;
+	}
 
-	dtransportprपूर्णांकk(ioc, ioc_info(ioc, "report_manufacture - complete\n"));
+	dtransportprintk(ioc, ioc_info(ioc, "report_manufacture - complete\n"));
 
-	अगर (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) अणु
-		u8 *पंचांगp;
+	if (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) {
+		u8 *tmp;
 
 		mpi_reply = ioc->transport_cmds.reply;
 
-		dtransportprपूर्णांकk(ioc,
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "report_manufacture - reply data transfer size(%d)\n",
 					  le16_to_cpu(mpi_reply->ResponseDataLength)));
 
-		अगर (le16_to_cpu(mpi_reply->ResponseDataLength) !=
-		    माप(काष्ठा rep_manu_reply))
-			जाओ out;
+		if (le16_to_cpu(mpi_reply->ResponseDataLength) !=
+		    sizeof(struct rep_manu_reply))
+			goto out;
 
-		manufacture_reply = data_out + माप(काष्ठा rep_manu_request);
-		म_नकलन(edev->venकरोr_id, manufacture_reply->venकरोr_id,
+		manufacture_reply = data_out + sizeof(struct rep_manu_request);
+		strncpy(edev->vendor_id, manufacture_reply->vendor_id,
 		     SAS_EXPANDER_VENDOR_ID_LEN);
-		म_नकलन(edev->product_id, manufacture_reply->product_id,
+		strncpy(edev->product_id, manufacture_reply->product_id,
 		     SAS_EXPANDER_PRODUCT_ID_LEN);
-		म_नकलन(edev->product_rev, manufacture_reply->product_rev,
+		strncpy(edev->product_rev, manufacture_reply->product_rev,
 		     SAS_EXPANDER_PRODUCT_REV_LEN);
-		edev->level = manufacture_reply->sas_क्रमmat & 1;
-		अगर (edev->level) अणु
-			म_नकलन(edev->component_venकरोr_id,
-			    manufacture_reply->component_venकरोr_id,
+		edev->level = manufacture_reply->sas_format & 1;
+		if (edev->level) {
+			strncpy(edev->component_vendor_id,
+			    manufacture_reply->component_vendor_id,
 			     SAS_EXPANDER_COMPONENT_VENDOR_ID_LEN);
-			पंचांगp = (u8 *)&manufacture_reply->component_id;
-			edev->component_id = पंचांगp[0] << 8 | पंचांगp[1];
+			tmp = (u8 *)&manufacture_reply->component_id;
+			edev->component_id = tmp[0] << 8 | tmp[1];
 			edev->component_revision_id =
 			    manufacture_reply->component_revision_id;
-		पूर्ण
-	पूर्ण अन्यथा
-		dtransportprपूर्णांकk(ioc,
+		}
+	} else
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "report_manufacture - no reply\n"));
 
  issue_host_reset:
-	अगर (issue_reset)
+	if (issue_reset)
 		mpt3sas_base_hard_reset_handler(ioc, FORCE_BIG_HAMMER);
  out:
 	ioc->transport_cmds.status = MPT3_CMD_NOT_USED;
-	अगर (data_out)
-		dma_मुक्त_coherent(&ioc->pdev->dev, data_out_sz + data_in_sz,
+	if (data_out)
+		dma_free_coherent(&ioc->pdev->dev, data_out_sz + data_in_sz,
 		    data_out, data_out_dma);
 
 	mutex_unlock(&ioc->transport_cmds.mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /**
@@ -498,28 +497,28 @@ _transport_expander_report_manufacture(काष्ठा MPT3SAS_ADAPTER *ioc,
  * @ioc: per adapter object
  * @mpt3sas_port: mpt3sas per port object
  */
-अटल व्योम
-_transport_delete_port(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा _sas_port *mpt3sas_port)
-अणु
-	u64 sas_address = mpt3sas_port->remote_identअगरy.sas_address;
-	काष्ठा hba_port *port = mpt3sas_port->hba_port;
-	क्रमागत sas_device_type device_type =
-	    mpt3sas_port->remote_identअगरy.device_type;
+static void
+_transport_delete_port(struct MPT3SAS_ADAPTER *ioc,
+	struct _sas_port *mpt3sas_port)
+{
+	u64 sas_address = mpt3sas_port->remote_identify.sas_address;
+	struct hba_port *port = mpt3sas_port->hba_port;
+	enum sas_device_type device_type =
+	    mpt3sas_port->remote_identify.device_type;
 
-	dev_prपूर्णांकk(KERN_INFO, &mpt3sas_port->port->dev,
+	dev_printk(KERN_INFO, &mpt3sas_port->port->dev,
 	    "remove: sas_addr(0x%016llx)\n",
-	    (अचिन्हित दीर्घ दीर्घ) sas_address);
+	    (unsigned long long) sas_address);
 
 	ioc->logging_level |= MPT_DEBUG_TRANSPORT;
-	अगर (device_type == SAS_END_DEVICE)
-		mpt3sas_device_हटाओ_by_sas_address(ioc,
+	if (device_type == SAS_END_DEVICE)
+		mpt3sas_device_remove_by_sas_address(ioc,
 		    sas_address, port);
-	अन्यथा अगर (device_type == SAS_EDGE_EXPANDER_DEVICE ||
+	else if (device_type == SAS_EDGE_EXPANDER_DEVICE ||
 	    device_type == SAS_FANOUT_EXPANDER_DEVICE)
-		mpt3sas_expander_हटाओ(ioc, sas_address, port);
+		mpt3sas_expander_remove(ioc, sas_address, port);
 	ioc->logging_level &= ~MPT_DEBUG_TRANSPORT;
-पूर्ण
+}
 
 /**
  * _transport_delete_phy - helper function to removing single phy from port
@@ -527,21 +526,21 @@ _transport_delete_port(काष्ठा MPT3SAS_ADAPTER *ioc,
  * @mpt3sas_port: mpt3sas per port object
  * @mpt3sas_phy: mpt3sas per phy object
  */
-अटल व्योम
-_transport_delete_phy(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा _sas_port *mpt3sas_port, काष्ठा _sas_phy *mpt3sas_phy)
-अणु
-	u64 sas_address = mpt3sas_port->remote_identअगरy.sas_address;
+static void
+_transport_delete_phy(struct MPT3SAS_ADAPTER *ioc,
+	struct _sas_port *mpt3sas_port, struct _sas_phy *mpt3sas_phy)
+{
+	u64 sas_address = mpt3sas_port->remote_identify.sas_address;
 
-	dev_prपूर्णांकk(KERN_INFO, &mpt3sas_phy->phy->dev,
+	dev_printk(KERN_INFO, &mpt3sas_phy->phy->dev,
 	    "remove: sas_addr(0x%016llx), phy(%d)\n",
-	    (अचिन्हित दीर्घ दीर्घ) sas_address, mpt3sas_phy->phy_id);
+	    (unsigned long long) sas_address, mpt3sas_phy->phy_id);
 
 	list_del(&mpt3sas_phy->port_siblings);
 	mpt3sas_port->num_phys--;
 	sas_port_delete_phy(mpt3sas_port->port, mpt3sas_phy->phy);
-	mpt3sas_phy->phy_beदीर्घs_to_port = 0;
-पूर्ण
+	mpt3sas_phy->phy_belongs_to_port = 0;
+}
 
 /**
  * _transport_add_phy - helper function to adding single phy to port
@@ -549,21 +548,21 @@ _transport_delete_phy(काष्ठा MPT3SAS_ADAPTER *ioc,
  * @mpt3sas_port: mpt3sas per port object
  * @mpt3sas_phy: mpt3sas per phy object
  */
-अटल व्योम
-_transport_add_phy(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठा _sas_port *mpt3sas_port,
-	काष्ठा _sas_phy *mpt3sas_phy)
-अणु
-	u64 sas_address = mpt3sas_port->remote_identअगरy.sas_address;
+static void
+_transport_add_phy(struct MPT3SAS_ADAPTER *ioc, struct _sas_port *mpt3sas_port,
+	struct _sas_phy *mpt3sas_phy)
+{
+	u64 sas_address = mpt3sas_port->remote_identify.sas_address;
 
-	dev_prपूर्णांकk(KERN_INFO, &mpt3sas_phy->phy->dev,
-	    "add: sas_addr(0x%016llx), phy(%d)\n", (अचिन्हित दीर्घ दीर्घ)
+	dev_printk(KERN_INFO, &mpt3sas_phy->phy->dev,
+	    "add: sas_addr(0x%016llx), phy(%d)\n", (unsigned long long)
 	    sas_address, mpt3sas_phy->phy_id);
 
 	list_add_tail(&mpt3sas_phy->port_siblings, &mpt3sas_port->phy_list);
 	mpt3sas_port->num_phys++;
 	sas_port_add_phy(mpt3sas_port->port, mpt3sas_phy->phy);
-	mpt3sas_phy->phy_beदीर्घs_to_port = 1;
-पूर्ण
+	mpt3sas_phy->phy_belongs_to_port = 1;
+}
 
 /**
  * mpt3sas_transport_add_phy_to_an_existing_port - adding new phy to existing port
@@ -573,37 +572,37 @@ _transport_add_phy(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठा _
  * @sas_address: sas address of device/expander were phy needs to be added to
  * @port: hba port entry
  */
-व्योम
-mpt3sas_transport_add_phy_to_an_existing_port(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा _sas_node *sas_node, काष्ठा _sas_phy *mpt3sas_phy,
-	u64 sas_address, काष्ठा hba_port *port)
-अणु
-	काष्ठा _sas_port *mpt3sas_port;
-	काष्ठा _sas_phy *phy_srch;
+void
+mpt3sas_transport_add_phy_to_an_existing_port(struct MPT3SAS_ADAPTER *ioc,
+	struct _sas_node *sas_node, struct _sas_phy *mpt3sas_phy,
+	u64 sas_address, struct hba_port *port)
+{
+	struct _sas_port *mpt3sas_port;
+	struct _sas_phy *phy_srch;
 
-	अगर (mpt3sas_phy->phy_beदीर्घs_to_port == 1)
-		वापस;
+	if (mpt3sas_phy->phy_belongs_to_port == 1)
+		return;
 
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
-	list_क्रम_each_entry(mpt3sas_port, &sas_node->sas_port_list,
-	    port_list) अणु
-		अगर (mpt3sas_port->remote_identअगरy.sas_address !=
+	list_for_each_entry(mpt3sas_port, &sas_node->sas_port_list,
+	    port_list) {
+		if (mpt3sas_port->remote_identify.sas_address !=
 		    sas_address)
-			जारी;
-		अगर (mpt3sas_port->hba_port != port)
-			जारी;
-		list_क्रम_each_entry(phy_srch, &mpt3sas_port->phy_list,
-		    port_siblings) अणु
-			अगर (phy_srch == mpt3sas_phy)
-				वापस;
-		पूर्ण
+			continue;
+		if (mpt3sas_port->hba_port != port)
+			continue;
+		list_for_each_entry(phy_srch, &mpt3sas_port->phy_list,
+		    port_siblings) {
+			if (phy_srch == mpt3sas_phy)
+				return;
+		}
 		_transport_add_phy(ioc, mpt3sas_port, mpt3sas_phy);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-पूर्ण
+}
 
 /**
  * mpt3sas_transport_del_phy_from_an_existing_port - delete phy from existing port
@@ -611,36 +610,36 @@ mpt3sas_transport_add_phy_to_an_existing_port(काष्ठा MPT3SAS_ADAPTER
  * @sas_node: sas node object (either expander or sas host)
  * @mpt3sas_phy: mpt3sas per phy object
  */
-व्योम
-mpt3sas_transport_del_phy_from_an_existing_port(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा _sas_node *sas_node, काष्ठा _sas_phy *mpt3sas_phy)
-अणु
-	काष्ठा _sas_port *mpt3sas_port, *next;
-	काष्ठा _sas_phy *phy_srch;
+void
+mpt3sas_transport_del_phy_from_an_existing_port(struct MPT3SAS_ADAPTER *ioc,
+	struct _sas_node *sas_node, struct _sas_phy *mpt3sas_phy)
+{
+	struct _sas_port *mpt3sas_port, *next;
+	struct _sas_phy *phy_srch;
 
-	अगर (mpt3sas_phy->phy_beदीर्घs_to_port == 0)
-		वापस;
+	if (mpt3sas_phy->phy_belongs_to_port == 0)
+		return;
 
-	list_क्रम_each_entry_safe(mpt3sas_port, next, &sas_node->sas_port_list,
-	    port_list) अणु
-		list_क्रम_each_entry(phy_srch, &mpt3sas_port->phy_list,
-		    port_siblings) अणु
-			अगर (phy_srch != mpt3sas_phy)
-				जारी;
+	list_for_each_entry_safe(mpt3sas_port, next, &sas_node->sas_port_list,
+	    port_list) {
+		list_for_each_entry(phy_srch, &mpt3sas_port->phy_list,
+		    port_siblings) {
+			if (phy_srch != mpt3sas_phy)
+				continue;
 
 			/*
 			 * Don't delete port during host reset,
 			 * just delete phy.
 			 */
-			अगर (mpt3sas_port->num_phys == 1 && !ioc->shost_recovery)
+			if (mpt3sas_port->num_phys == 1 && !ioc->shost_recovery)
 				_transport_delete_port(ioc, mpt3sas_port);
-			अन्यथा
+			else
 				_transport_delete_phy(ioc, mpt3sas_port,
 				    mpt3sas_phy);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 /**
  * _transport_sanity_check - sanity check when adding a new port
@@ -651,22 +650,22 @@ mpt3sas_transport_del_phy_from_an_existing_port(काष्ठा MPT3SAS_ADAPT
  *
  * See the explanation above from _transport_delete_duplicate_port
  */
-अटल व्योम
-_transport_sanity_check(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठा _sas_node *sas_node,
-	u64 sas_address, काष्ठा hba_port *port)
-अणु
-	पूर्णांक i;
+static void
+_transport_sanity_check(struct MPT3SAS_ADAPTER *ioc, struct _sas_node *sas_node,
+	u64 sas_address, struct hba_port *port)
+{
+	int i;
 
-	क्रम (i = 0; i < sas_node->num_phys; i++) अणु
-		अगर (sas_node->phy[i].remote_identअगरy.sas_address != sas_address)
-			जारी;
-		अगर (sas_node->phy[i].port != port)
-			जारी;
-		अगर (sas_node->phy[i].phy_beदीर्घs_to_port == 1)
+	for (i = 0; i < sas_node->num_phys; i++) {
+		if (sas_node->phy[i].remote_identify.sas_address != sas_address)
+			continue;
+		if (sas_node->phy[i].port != port)
+			continue;
+		if (sas_node->phy[i].phy_belongs_to_port == 1)
 			mpt3sas_transport_del_phy_from_an_existing_port(ioc,
 			    sas_node, &sas_node->phy[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * mpt3sas_transport_port_add - insert port to the list
@@ -680,33 +679,33 @@ _transport_sanity_check(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठ
  *
  * Return: mpt3sas_port.
  */
-काष्ठा _sas_port *
-mpt3sas_transport_port_add(काष्ठा MPT3SAS_ADAPTER *ioc, u16 handle,
-	u64 sas_address, काष्ठा hba_port *hba_port)
-अणु
-	काष्ठा _sas_phy *mpt3sas_phy, *next;
-	काष्ठा _sas_port *mpt3sas_port;
-	अचिन्हित दीर्घ flags;
-	काष्ठा _sas_node *sas_node;
-	काष्ठा sas_rphy *rphy;
-	काष्ठा _sas_device *sas_device = शून्य;
-	पूर्णांक i;
-	काष्ठा sas_port *port;
-	काष्ठा भव_phy *vphy = शून्य;
+struct _sas_port *
+mpt3sas_transport_port_add(struct MPT3SAS_ADAPTER *ioc, u16 handle,
+	u64 sas_address, struct hba_port *hba_port)
+{
+	struct _sas_phy *mpt3sas_phy, *next;
+	struct _sas_port *mpt3sas_port;
+	unsigned long flags;
+	struct _sas_node *sas_node;
+	struct sas_rphy *rphy;
+	struct _sas_device *sas_device = NULL;
+	int i;
+	struct sas_port *port;
+	struct virtual_phy *vphy = NULL;
 
-	अगर (!hba_port) अणु
+	if (!hba_port) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-		    __खाता__, __LINE__, __func__);
-		वापस शून्य;
-	पूर्ण
+		    __FILE__, __LINE__, __func__);
+		return NULL;
+	}
 
-	mpt3sas_port = kzalloc(माप(काष्ठा _sas_port),
+	mpt3sas_port = kzalloc(sizeof(struct _sas_port),
 	    GFP_KERNEL);
-	अगर (!mpt3sas_port) अणु
+	if (!mpt3sas_port) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस शून्य;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		return NULL;
+	}
 
 	INIT_LIST_HEAD(&mpt3sas_port->port_list);
 	INIT_LIST_HEAD(&mpt3sas_port->phy_list);
@@ -715,131 +714,131 @@ mpt3sas_transport_port_add(काष्ठा MPT3SAS_ADAPTER *ioc, u16 handle,
 	    sas_address, hba_port);
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
-	अगर (!sas_node) अणु
+	if (!sas_node) {
 		ioc_err(ioc, "%s: Could not find parent sas_address(0x%016llx)!\n",
 			__func__, (u64)sas_address);
-		जाओ out_fail;
-	पूर्ण
+		goto out_fail;
+	}
 
-	अगर ((_transport_set_identअगरy(ioc, handle,
-	    &mpt3sas_port->remote_identअगरy))) अणु
+	if ((_transport_set_identify(ioc, handle,
+	    &mpt3sas_port->remote_identify))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		जाओ out_fail;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		goto out_fail;
+	}
 
-	अगर (mpt3sas_port->remote_identअगरy.device_type == SAS_PHY_UNUSED) अणु
+	if (mpt3sas_port->remote_identify.device_type == SAS_PHY_UNUSED) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		जाओ out_fail;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		goto out_fail;
+	}
 
 	mpt3sas_port->hba_port = hba_port;
 	_transport_sanity_check(ioc, sas_node,
-	    mpt3sas_port->remote_identअगरy.sas_address, hba_port);
+	    mpt3sas_port->remote_identify.sas_address, hba_port);
 
-	क्रम (i = 0; i < sas_node->num_phys; i++) अणु
-		अगर (sas_node->phy[i].remote_identअगरy.sas_address !=
-		    mpt3sas_port->remote_identअगरy.sas_address)
-			जारी;
-		अगर (sas_node->phy[i].port != hba_port)
-			जारी;
+	for (i = 0; i < sas_node->num_phys; i++) {
+		if (sas_node->phy[i].remote_identify.sas_address !=
+		    mpt3sas_port->remote_identify.sas_address)
+			continue;
+		if (sas_node->phy[i].port != hba_port)
+			continue;
 		list_add_tail(&sas_node->phy[i].port_siblings,
 		    &mpt3sas_port->phy_list);
 		mpt3sas_port->num_phys++;
-		अगर (sas_node->handle <= ioc->sas_hba.num_phys) अणु
-			अगर (!sas_node->phy[i].hba_vphy) अणु
+		if (sas_node->handle <= ioc->sas_hba.num_phys) {
+			if (!sas_node->phy[i].hba_vphy) {
 				hba_port->phy_mask |= (1 << i);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			vphy = mpt3sas_get_vphy_by_phy(ioc, hba_port, i);
-			अगर (!vphy) अणु
+			if (!vphy) {
 				ioc_err(ioc, "failure at %s:%d/%s()!\n",
-				    __खाता__, __LINE__, __func__);
-				जाओ out_fail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				    __FILE__, __LINE__, __func__);
+				goto out_fail;
+			}
+		}
+	}
 
-	अगर (!mpt3sas_port->num_phys) अणु
+	if (!mpt3sas_port->num_phys) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		जाओ out_fail;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		goto out_fail;
+	}
 
-	अगर (mpt3sas_port->remote_identअगरy.device_type == SAS_END_DEVICE) अणु
+	if (mpt3sas_port->remote_identify.device_type == SAS_END_DEVICE) {
 		sas_device = mpt3sas_get_sdev_by_addr(ioc,
-		    mpt3sas_port->remote_identअगरy.sas_address,
+		    mpt3sas_port->remote_identify.sas_address,
 		    mpt3sas_port->hba_port);
-		अगर (!sas_device) अणु
+		if (!sas_device) {
 			ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			    __खाता__, __LINE__, __func__);
-			जाओ out_fail;
-		पूर्ण
+			    __FILE__, __LINE__, __func__);
+			goto out_fail;
+		}
 		sas_device->pend_sas_rphy_add = 1;
-	पूर्ण
+	}
 
-	अगर (!sas_node->parent_dev) अणु
+	if (!sas_node->parent_dev) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		जाओ out_fail;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		goto out_fail;
+	}
 	port = sas_port_alloc_num(sas_node->parent_dev);
-	अगर ((sas_port_add(port))) अणु
+	if ((sas_port_add(port))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		जाओ out_fail;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		goto out_fail;
+	}
 
-	list_क्रम_each_entry(mpt3sas_phy, &mpt3sas_port->phy_list,
-	    port_siblings) अणु
-		अगर ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
-			dev_prपूर्णांकk(KERN_INFO, &port->dev,
+	list_for_each_entry(mpt3sas_phy, &mpt3sas_port->phy_list,
+	    port_siblings) {
+		if ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
+			dev_printk(KERN_INFO, &port->dev,
 				"add: handle(0x%04x), sas_addr(0x%016llx), phy(%d)\n",
-				handle, (अचिन्हित दीर्घ दीर्घ)
-			    mpt3sas_port->remote_identअगरy.sas_address,
+				handle, (unsigned long long)
+			    mpt3sas_port->remote_identify.sas_address,
 			    mpt3sas_phy->phy_id);
 		sas_port_add_phy(port, mpt3sas_phy->phy);
-		mpt3sas_phy->phy_beदीर्घs_to_port = 1;
+		mpt3sas_phy->phy_belongs_to_port = 1;
 		mpt3sas_phy->port = hba_port;
-	पूर्ण
+	}
 
 	mpt3sas_port->port = port;
-	अगर (mpt3sas_port->remote_identअगरy.device_type == SAS_END_DEVICE) अणु
+	if (mpt3sas_port->remote_identify.device_type == SAS_END_DEVICE) {
 		rphy = sas_end_device_alloc(port);
 		sas_device->rphy = rphy;
-		अगर (sas_node->handle <= ioc->sas_hba.num_phys) अणु
-			अगर (!vphy)
+		if (sas_node->handle <= ioc->sas_hba.num_phys) {
+			if (!vphy)
 				hba_port->sas_address =
 				    sas_device->sas_address;
-			अन्यथा
+			else
 				vphy->sas_address =
 				    sas_device->sas_address;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		rphy = sas_expander_alloc(port,
-		    mpt3sas_port->remote_identअगरy.device_type);
-		अगर (sas_node->handle <= ioc->sas_hba.num_phys)
+		    mpt3sas_port->remote_identify.device_type);
+		if (sas_node->handle <= ioc->sas_hba.num_phys)
 			hba_port->sas_address =
-			    mpt3sas_port->remote_identअगरy.sas_address;
-	पूर्ण
+			    mpt3sas_port->remote_identify.sas_address;
+	}
 
-	rphy->identअगरy = mpt3sas_port->remote_identअगरy;
+	rphy->identify = mpt3sas_port->remote_identify;
 
-	अगर ((sas_rphy_add(rphy))) अणु
+	if ((sas_rphy_add(rphy))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+	}
 
-	अगर (mpt3sas_port->remote_identअगरy.device_type == SAS_END_DEVICE) अणु
+	if (mpt3sas_port->remote_identify.device_type == SAS_END_DEVICE) {
 		sas_device->pend_sas_rphy_add = 0;
 		sas_device_put(sas_device);
-	पूर्ण
+	}
 
 	dev_info(&rphy->dev,
 	    "add: handle(0x%04x), sas_addr(0x%016llx)\n", handle,
-	    (अचिन्हित दीर्घ दीर्घ)mpt3sas_port->remote_identअगरy.sas_address);
+	    (unsigned long long)mpt3sas_port->remote_identify.sas_address);
 
 	mpt3sas_port->rphy = rphy;
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
@@ -847,156 +846,156 @@ mpt3sas_transport_port_add(काष्ठा MPT3SAS_ADAPTER *ioc, u16 handle,
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
 	/* fill in report manufacture */
-	अगर (mpt3sas_port->remote_identअगरy.device_type ==
+	if (mpt3sas_port->remote_identify.device_type ==
 	    MPI2_SAS_DEVICE_INFO_EDGE_EXPANDER ||
-	    mpt3sas_port->remote_identअगरy.device_type ==
+	    mpt3sas_port->remote_identify.device_type ==
 	    MPI2_SAS_DEVICE_INFO_FANOUT_EXPANDER)
 		_transport_expander_report_manufacture(ioc,
-		    mpt3sas_port->remote_identअगरy.sas_address,
+		    mpt3sas_port->remote_identify.sas_address,
 		    rphy_to_expander_device(rphy), hba_port->port_id);
-	वापस mpt3sas_port;
+	return mpt3sas_port;
 
  out_fail:
-	list_क्रम_each_entry_safe(mpt3sas_phy, next, &mpt3sas_port->phy_list,
+	list_for_each_entry_safe(mpt3sas_phy, next, &mpt3sas_port->phy_list,
 	    port_siblings)
 		list_del(&mpt3sas_phy->port_siblings);
-	kमुक्त(mpt3sas_port);
-	वापस शून्य;
-पूर्ण
+	kfree(mpt3sas_port);
+	return NULL;
+}
 
 /**
- * mpt3sas_transport_port_हटाओ - हटाओ port from the list
+ * mpt3sas_transport_port_remove - remove port from the list
  * @ioc: per adapter object
  * @sas_address: sas address of attached device
  * @sas_address_parent: sas address of parent expander or sas host
  * @port: hba port entry
  * Context: This function will acquire ioc->sas_node_lock.
  *
- * Removing object and मुक्तing associated memory from the
+ * Removing object and freeing associated memory from the
  * ioc->sas_port_list.
  */
-व्योम
-mpt3sas_transport_port_हटाओ(काष्ठा MPT3SAS_ADAPTER *ioc, u64 sas_address,
-	u64 sas_address_parent, काष्ठा hba_port *port)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
-	काष्ठा _sas_port *mpt3sas_port, *next;
-	काष्ठा _sas_node *sas_node;
+void
+mpt3sas_transport_port_remove(struct MPT3SAS_ADAPTER *ioc, u64 sas_address,
+	u64 sas_address_parent, struct hba_port *port)
+{
+	int i;
+	unsigned long flags;
+	struct _sas_port *mpt3sas_port, *next;
+	struct _sas_node *sas_node;
 	u8 found = 0;
-	काष्ठा _sas_phy *mpt3sas_phy, *next_phy;
-	काष्ठा hba_port *hba_port_next, *hba_port = शून्य;
-	काष्ठा भव_phy *vphy, *vphy_next = शून्य;
+	struct _sas_phy *mpt3sas_phy, *next_phy;
+	struct hba_port *hba_port_next, *hba_port = NULL;
+	struct virtual_phy *vphy, *vphy_next = NULL;
 
-	अगर (!port)
-		वापस;
+	if (!port)
+		return;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
 	sas_node = _transport_sas_node_find_by_sas_address(ioc,
 	    sas_address_parent, port);
-	अगर (!sas_node) अणु
+	if (!sas_node) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस;
-	पूर्ण
-	list_क्रम_each_entry_safe(mpt3sas_port, next, &sas_node->sas_port_list,
-	    port_list) अणु
-		अगर (mpt3sas_port->remote_identअगरy.sas_address != sas_address)
-			जारी;
-		अगर (mpt3sas_port->hba_port != port)
-			जारी;
+		return;
+	}
+	list_for_each_entry_safe(mpt3sas_port, next, &sas_node->sas_port_list,
+	    port_list) {
+		if (mpt3sas_port->remote_identify.sas_address != sas_address)
+			continue;
+		if (mpt3sas_port->hba_port != port)
+			continue;
 		found = 1;
 		list_del(&mpt3sas_port->port_list);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
  out:
-	अगर (!found) अणु
+	if (!found) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sas_node->handle <= ioc->sas_hba.num_phys &&
-	    (ioc->multipath_on_hba)) अणु
-		अगर (port->vphys_mask) अणु
-			list_क्रम_each_entry_safe(vphy, vphy_next,
-			    &port->vphys_list, list) अणु
-				अगर (vphy->sas_address != sas_address)
-					जारी;
+	if (sas_node->handle <= ioc->sas_hba.num_phys &&
+	    (ioc->multipath_on_hba)) {
+		if (port->vphys_mask) {
+			list_for_each_entry_safe(vphy, vphy_next,
+			    &port->vphys_list, list) {
+				if (vphy->sas_address != sas_address)
+					continue;
 				ioc_info(ioc,
 				    "remove vphy entry: %p of port:%p,from %d port's vphys list\n",
 				    vphy, port, port->port_id);
 				port->vphys_mask &= ~vphy->phy_mask;
 				list_del(&vphy->list);
-				kमुक्त(vphy);
-			पूर्ण
-		पूर्ण
+				kfree(vphy);
+			}
+		}
 
-		list_क्रम_each_entry_safe(hba_port, hba_port_next,
-		    &ioc->port_table_list, list) अणु
-			अगर (hba_port != port)
-				जारी;
+		list_for_each_entry_safe(hba_port, hba_port_next,
+		    &ioc->port_table_list, list) {
+			if (hba_port != port)
+				continue;
 			/*
-			 * Delete hba_port object अगर
+			 * Delete hba_port object if
 			 *  - hba_port object's sas address matches with current
-			 *    हटाओd device's sas address and no vphy's
+			 *    removed device's sas address and no vphy's
 			 *    associated with it.
-			 *  - Current हटाओd device is a vSES device and
+			 *  - Current removed device is a vSES device and
 			 *    none of the other direct attached device have
 			 *    this vSES device's port number (hence hba_port
 			 *    object sas_address field will be zero).
 			 */
-			अगर ((hba_port->sas_address == sas_address ||
-			    !hba_port->sas_address) && !hba_port->vphys_mask) अणु
+			if ((hba_port->sas_address == sas_address ||
+			    !hba_port->sas_address) && !hba_port->vphys_mask) {
 				ioc_info(ioc,
 				    "remove hba_port entry: %p port: %d from hba_port list\n",
 				    hba_port, hba_port->port_id);
 				list_del(&hba_port->list);
-				kमुक्त(hba_port);
-			पूर्ण अन्यथा अगर (hba_port->sas_address == sas_address &&
-			    hba_port->vphys_mask) अणु
+				kfree(hba_port);
+			} else if (hba_port->sas_address == sas_address &&
+			    hba_port->vphys_mask) {
 				/*
-				 * Current हटाओd device is a non vSES device
+				 * Current removed device is a non vSES device
 				 * and a vSES device has the same port number
 				 * as of current device's port number. Hence
-				 * only clear the sas_address filed, करोn't
+				 * only clear the sas_address filed, don't
 				 * delete the hba_port object.
 				 */
 				ioc_info(ioc,
 				    "clearing sas_address from hba_port entry: %p port: %d from hba_port list\n",
 				    hba_port, hba_port->port_id);
 				port->sas_address = 0;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 
-	क्रम (i = 0; i < sas_node->num_phys; i++) अणु
-		अगर (sas_node->phy[i].remote_identअगरy.sas_address == sas_address)
-			स_रखो(&sas_node->phy[i].remote_identअगरy, 0 ,
-			    माप(काष्ठा sas_identअगरy));
-	पूर्ण
+	for (i = 0; i < sas_node->num_phys; i++) {
+		if (sas_node->phy[i].remote_identify.sas_address == sas_address)
+			memset(&sas_node->phy[i].remote_identify, 0 ,
+			    sizeof(struct sas_identify));
+	}
 
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
-	list_क्रम_each_entry_safe(mpt3sas_phy, next_phy,
-	    &mpt3sas_port->phy_list, port_siblings) अणु
-		अगर ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
-			dev_prपूर्णांकk(KERN_INFO, &mpt3sas_port->port->dev,
+	list_for_each_entry_safe(mpt3sas_phy, next_phy,
+	    &mpt3sas_port->phy_list, port_siblings) {
+		if ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
+			dev_printk(KERN_INFO, &mpt3sas_port->port->dev,
 			    "remove: sas_addr(0x%016llx), phy(%d)\n",
-			    (अचिन्हित दीर्घ दीर्घ)
-			    mpt3sas_port->remote_identअगरy.sas_address,
+			    (unsigned long long)
+			    mpt3sas_port->remote_identify.sas_address,
 			    mpt3sas_phy->phy_id);
-		mpt3sas_phy->phy_beदीर्घs_to_port = 0;
-		अगर (!ioc->हटाओ_host)
+		mpt3sas_phy->phy_belongs_to_port = 0;
+		if (!ioc->remove_host)
 			sas_port_delete_phy(mpt3sas_port->port,
 						mpt3sas_phy->phy);
 		list_del(&mpt3sas_phy->port_siblings);
-	पूर्ण
-	अगर (!ioc->हटाओ_host)
+	}
+	if (!ioc->remove_host)
 		sas_port_delete(mpt3sas_port->port);
 	ioc_info(ioc, "%s: removed: sas_addr(0x%016llx)\n",
-	    __func__, (अचिन्हित दीर्घ दीर्घ)sas_address);
-	kमुक्त(mpt3sas_port);
-पूर्ण
+	    __func__, (unsigned long long)sas_address);
+	kfree(mpt3sas_port);
+}
 
 /**
  * mpt3sas_transport_add_host_phy - report sas_host phy to transport
@@ -1005,36 +1004,36 @@ mpt3sas_transport_port_हटाओ(काष्ठा MPT3SAS_ADAPTER *ioc, u64
  * @phy_pg0: sas phy page 0
  * @parent_dev: parent device class object
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-पूर्णांक
-mpt3sas_transport_add_host_phy(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठा _sas_phy
-	*mpt3sas_phy, Mpi2SasPhyPage0_t phy_pg0, काष्ठा device *parent_dev)
-अणु
-	काष्ठा sas_phy *phy;
-	पूर्णांक phy_index = mpt3sas_phy->phy_id;
+int
+mpt3sas_transport_add_host_phy(struct MPT3SAS_ADAPTER *ioc, struct _sas_phy
+	*mpt3sas_phy, Mpi2SasPhyPage0_t phy_pg0, struct device *parent_dev)
+{
+	struct sas_phy *phy;
+	int phy_index = mpt3sas_phy->phy_id;
 
 
 	INIT_LIST_HEAD(&mpt3sas_phy->port_siblings);
 	phy = sas_phy_alloc(parent_dev, phy_index);
-	अगर (!phy) अणु
+	if (!phy) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस -1;
-	पूर्ण
-	अगर ((_transport_set_identअगरy(ioc, mpt3sas_phy->handle,
-	    &mpt3sas_phy->identअगरy))) अणु
+			__FILE__, __LINE__, __func__);
+		return -1;
+	}
+	if ((_transport_set_identify(ioc, mpt3sas_phy->handle,
+	    &mpt3sas_phy->identify))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		sas_phy_मुक्त(phy);
-		वापस -1;
-	पूर्ण
-	phy->identअगरy = mpt3sas_phy->identअगरy;
+			__FILE__, __LINE__, __func__);
+		sas_phy_free(phy);
+		return -1;
+	}
+	phy->identify = mpt3sas_phy->identify;
 	mpt3sas_phy->attached_handle = le16_to_cpu(phy_pg0.AttachedDevHandle);
-	अगर (mpt3sas_phy->attached_handle)
-		_transport_set_identअगरy(ioc, mpt3sas_phy->attached_handle,
-		    &mpt3sas_phy->remote_identअगरy);
-	phy->identअगरy.phy_identअगरier = mpt3sas_phy->phy_id;
+	if (mpt3sas_phy->attached_handle)
+		_transport_set_identify(ioc, mpt3sas_phy->attached_handle,
+		    &mpt3sas_phy->remote_identify);
+	phy->identify.phy_identifier = mpt3sas_phy->phy_id;
 	phy->negotiated_linkrate = _transport_convert_phy_link_rate(
 	    phy_pg0.NegotiatedLinkRate & MPI2_SAS_NEG_LINK_RATE_MASK_PHYSICAL);
 	phy->minimum_linkrate_hw = _transport_convert_phy_link_rate(
@@ -1047,24 +1046,24 @@ mpt3sas_transport_add_host_phy(काष्ठा MPT3SAS_ADAPTER *ioc, का�
 	    phy_pg0.ProgrammedLinkRate >> 4);
 	phy->hostdata = mpt3sas_phy->port;
 
-	अगर ((sas_phy_add(phy))) अणु
+	if ((sas_phy_add(phy))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		sas_phy_मुक्त(phy);
-		वापस -1;
-	पूर्ण
-	अगर ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
-		dev_prपूर्णांकk(KERN_INFO, &phy->dev,
+			__FILE__, __LINE__, __func__);
+		sas_phy_free(phy);
+		return -1;
+	}
+	if ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
+		dev_printk(KERN_INFO, &phy->dev,
 		    "add: handle(0x%04x), sas_addr(0x%016llx)\n"
 		    "\tattached_handle(0x%04x), sas_addr(0x%016llx)\n",
-		    mpt3sas_phy->handle, (अचिन्हित दीर्घ दीर्घ)
-		    mpt3sas_phy->identअगरy.sas_address,
+		    mpt3sas_phy->handle, (unsigned long long)
+		    mpt3sas_phy->identify.sas_address,
 		    mpt3sas_phy->attached_handle,
-		    (अचिन्हित दीर्घ दीर्घ)
-		    mpt3sas_phy->remote_identअगरy.sas_address);
+		    (unsigned long long)
+		    mpt3sas_phy->remote_identify.sas_address);
 	mpt3sas_phy->phy = phy;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
@@ -1074,37 +1073,37 @@ mpt3sas_transport_add_host_phy(काष्ठा MPT3SAS_ADAPTER *ioc, का�
  * @expander_pg1: expander page 1
  * @parent_dev: parent device class object
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-पूर्णांक
-mpt3sas_transport_add_expander_phy(काष्ठा MPT3SAS_ADAPTER *ioc, काष्ठा _sas_phy
+int
+mpt3sas_transport_add_expander_phy(struct MPT3SAS_ADAPTER *ioc, struct _sas_phy
 	*mpt3sas_phy, Mpi2ExpanderPage1_t expander_pg1,
-	काष्ठा device *parent_dev)
-अणु
-	काष्ठा sas_phy *phy;
-	पूर्णांक phy_index = mpt3sas_phy->phy_id;
+	struct device *parent_dev)
+{
+	struct sas_phy *phy;
+	int phy_index = mpt3sas_phy->phy_id;
 
 	INIT_LIST_HEAD(&mpt3sas_phy->port_siblings);
 	phy = sas_phy_alloc(parent_dev, phy_index);
-	अगर (!phy) अणु
+	if (!phy) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस -1;
-	पूर्ण
-	अगर ((_transport_set_identअगरy(ioc, mpt3sas_phy->handle,
-	    &mpt3sas_phy->identअगरy))) अणु
+			__FILE__, __LINE__, __func__);
+		return -1;
+	}
+	if ((_transport_set_identify(ioc, mpt3sas_phy->handle,
+	    &mpt3sas_phy->identify))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		sas_phy_मुक्त(phy);
-		वापस -1;
-	पूर्ण
-	phy->identअगरy = mpt3sas_phy->identअगरy;
+			__FILE__, __LINE__, __func__);
+		sas_phy_free(phy);
+		return -1;
+	}
+	phy->identify = mpt3sas_phy->identify;
 	mpt3sas_phy->attached_handle =
 	    le16_to_cpu(expander_pg1.AttachedDevHandle);
-	अगर (mpt3sas_phy->attached_handle)
-		_transport_set_identअगरy(ioc, mpt3sas_phy->attached_handle,
-		    &mpt3sas_phy->remote_identअगरy);
-	phy->identअगरy.phy_identअगरier = mpt3sas_phy->phy_id;
+	if (mpt3sas_phy->attached_handle)
+		_transport_set_identify(ioc, mpt3sas_phy->attached_handle,
+		    &mpt3sas_phy->remote_identify);
+	phy->identify.phy_identifier = mpt3sas_phy->phy_id;
 	phy->negotiated_linkrate = _transport_convert_phy_link_rate(
 	    expander_pg1.NegotiatedLinkRate &
 	    MPI2_SAS_NEG_LINK_RATE_MASK_PHYSICAL);
@@ -1118,24 +1117,24 @@ mpt3sas_transport_add_expander_phy(काष्ठा MPT3SAS_ADAPTER *ioc, क�
 	    expander_pg1.ProgrammedLinkRate >> 4);
 	phy->hostdata = mpt3sas_phy->port;
 
-	अगर ((sas_phy_add(phy))) अणु
+	if ((sas_phy_add(phy))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		sas_phy_मुक्त(phy);
-		वापस -1;
-	पूर्ण
-	अगर ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
-		dev_prपूर्णांकk(KERN_INFO, &phy->dev,
+			__FILE__, __LINE__, __func__);
+		sas_phy_free(phy);
+		return -1;
+	}
+	if ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
+		dev_printk(KERN_INFO, &phy->dev,
 		    "add: handle(0x%04x), sas_addr(0x%016llx)\n"
 		    "\tattached_handle(0x%04x), sas_addr(0x%016llx)\n",
-		    mpt3sas_phy->handle, (अचिन्हित दीर्घ दीर्घ)
-		    mpt3sas_phy->identअगरy.sas_address,
+		    mpt3sas_phy->handle, (unsigned long long)
+		    mpt3sas_phy->identify.sas_address,
 		    mpt3sas_phy->attached_handle,
-		    (अचिन्हित दीर्घ दीर्घ)
-		    mpt3sas_phy->remote_identअगरy.sas_address);
+		    (unsigned long long)
+		    mpt3sas_phy->remote_identify.sas_address);
 	mpt3sas_phy->phy = phy;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * mpt3sas_transport_update_links - refreshing phy link changes
@@ -1148,228 +1147,228 @@ mpt3sas_transport_add_expander_phy(काष्ठा MPT3SAS_ADAPTER *ioc, क�
  *
  * Return nothing.
  */
-व्योम
-mpt3sas_transport_update_links(काष्ठा MPT3SAS_ADAPTER *ioc,
+void
+mpt3sas_transport_update_links(struct MPT3SAS_ADAPTER *ioc,
 	u64 sas_address, u16 handle, u8 phy_number, u8 link_rate,
-	काष्ठा hba_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा _sas_node *sas_node;
-	काष्ठा _sas_phy *mpt3sas_phy;
-	काष्ठा hba_port *hba_port = शून्य;
+	struct hba_port *port)
+{
+	unsigned long flags;
+	struct _sas_node *sas_node;
+	struct _sas_phy *mpt3sas_phy;
+	struct hba_port *hba_port = NULL;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery)
-		वापस;
+	if (ioc->shost_recovery || ioc->pci_error_recovery)
+		return;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
 	sas_node = _transport_sas_node_find_by_sas_address(ioc,
 	    sas_address, port);
-	अगर (!sas_node) अणु
+	if (!sas_node) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mpt3sas_phy = &sas_node->phy[phy_number];
 	mpt3sas_phy->attached_handle = handle;
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-	अगर (handle && (link_rate >= MPI2_SAS_NEG_LINK_RATE_1_5)) अणु
-		_transport_set_identअगरy(ioc, handle,
-		    &mpt3sas_phy->remote_identअगरy);
-		अगर ((sas_node->handle <= ioc->sas_hba.num_phys) &&
-		    (ioc->multipath_on_hba)) अणु
-			list_क्रम_each_entry(hba_port,
-			    &ioc->port_table_list, list) अणु
-				अगर (hba_port->sas_address == sas_address &&
+	if (handle && (link_rate >= MPI2_SAS_NEG_LINK_RATE_1_5)) {
+		_transport_set_identify(ioc, handle,
+		    &mpt3sas_phy->remote_identify);
+		if ((sas_node->handle <= ioc->sas_hba.num_phys) &&
+		    (ioc->multipath_on_hba)) {
+			list_for_each_entry(hba_port,
+			    &ioc->port_table_list, list) {
+				if (hba_port->sas_address == sas_address &&
 				    hba_port == port)
 					hba_port->phy_mask |=
 					    (1 << mpt3sas_phy->phy_id);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		mpt3sas_transport_add_phy_to_an_existing_port(ioc, sas_node,
-		    mpt3sas_phy, mpt3sas_phy->remote_identअगरy.sas_address,
+		    mpt3sas_phy, mpt3sas_phy->remote_identify.sas_address,
 		    port);
-	पूर्ण अन्यथा
-		स_रखो(&mpt3sas_phy->remote_identअगरy, 0 , माप(काष्ठा
-		    sas_identअगरy));
+	} else
+		memset(&mpt3sas_phy->remote_identify, 0 , sizeof(struct
+		    sas_identify));
 
-	अगर (mpt3sas_phy->phy)
+	if (mpt3sas_phy->phy)
 		mpt3sas_phy->phy->negotiated_linkrate =
 		    _transport_convert_phy_link_rate(link_rate);
 
-	अगर ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
-		dev_prपूर्णांकk(KERN_INFO, &mpt3sas_phy->phy->dev,
+	if ((ioc->logging_level & MPT_DEBUG_TRANSPORT))
+		dev_printk(KERN_INFO, &mpt3sas_phy->phy->dev,
 		    "refresh: parent sas_addr(0x%016llx),\n"
 		    "\tlink_rate(0x%02x), phy(%d)\n"
 		    "\tattached_handle(0x%04x), sas_addr(0x%016llx)\n",
-		    (अचिन्हित दीर्घ दीर्घ)sas_address,
-		    link_rate, phy_number, handle, (अचिन्हित दीर्घ दीर्घ)
-		    mpt3sas_phy->remote_identअगरy.sas_address);
-पूर्ण
+		    (unsigned long long)sas_address,
+		    link_rate, phy_number, handle, (unsigned long long)
+		    mpt3sas_phy->remote_identify.sas_address);
+}
 
-अटल अंतरभूत व्योम *
-phy_to_ioc(काष्ठा sas_phy *phy)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-	वापस shost_priv(shost);
-पूर्ण
+static inline void *
+phy_to_ioc(struct sas_phy *phy)
+{
+	struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+	return shost_priv(shost);
+}
 
-अटल अंतरभूत व्योम *
-rphy_to_ioc(काष्ठा sas_rphy *rphy)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(rphy->dev.parent->parent);
-	वापस shost_priv(shost);
-पूर्ण
+static inline void *
+rphy_to_ioc(struct sas_rphy *rphy)
+{
+	struct Scsi_Host *shost = dev_to_shost(rphy->dev.parent->parent);
+	return shost_priv(shost);
+}
 
-/* report phy error log काष्ठाure */
-काष्ठा phy_error_log_request अणु
+/* report phy error log structure */
+struct phy_error_log_request {
 	u8 smp_frame_type; /* 0x40 */
 	u8 function; /* 0x11 */
 	u8 allocated_response_length;
 	u8 request_length; /* 02 */
 	u8 reserved_1[5];
-	u8 phy_identअगरier;
+	u8 phy_identifier;
 	u8 reserved_2[2];
-पूर्ण;
+};
 
-/* report phy error log reply काष्ठाure */
-काष्ठा phy_error_log_reply अणु
+/* report phy error log reply structure */
+struct phy_error_log_reply {
 	u8 smp_frame_type; /* 0x41 */
 	u8 function; /* 0x11 */
 	u8 function_result;
 	u8 response_length;
 	__be16 expander_change_count;
 	u8 reserved_1[3];
-	u8 phy_identअगरier;
+	u8 phy_identifier;
 	u8 reserved_2[2];
 	__be32 invalid_dword;
 	__be32 running_disparity_error;
 	__be32 loss_of_dword_sync;
 	__be32 phy_reset_problem;
-पूर्ण;
+};
 
 /**
- * _transport_get_expander_phy_error_log - वापस expander counters
+ * _transport_get_expander_phy_error_log - return expander counters
  * @ioc: per adapter object
  * @phy: The sas phy object
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  *
  */
-अटल पूर्णांक
-_transport_get_expander_phy_error_log(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा sas_phy *phy)
-अणु
+static int
+_transport_get_expander_phy_error_log(struct MPT3SAS_ADAPTER *ioc,
+	struct sas_phy *phy)
+{
 	Mpi2SmpPassthroughRequest_t *mpi_request;
 	Mpi2SmpPassthroughReply_t *mpi_reply;
-	काष्ठा phy_error_log_request *phy_error_log_request;
-	काष्ठा phy_error_log_reply *phy_error_log_reply;
-	पूर्णांक rc;
+	struct phy_error_log_request *phy_error_log_request;
+	struct phy_error_log_reply *phy_error_log_reply;
+	int rc;
 	u16 smid;
-	व्योम *psge;
+	void *psge;
 	u8 issue_reset = 0;
-	व्योम *data_out = शून्य;
+	void *data_out = NULL;
 	dma_addr_t data_out_dma;
 	u32 sz;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery) अणु
+	if (ioc->shost_recovery || ioc->pci_error_recovery) {
 		ioc_info(ioc, "%s: host reset in progress!\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	mutex_lock(&ioc->transport_cmds.mutex);
 
-	अगर (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) अणु
+	if (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) {
 		ioc_err(ioc, "%s: transport_cmds in use\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc->transport_cmds.status = MPT3_CMD_PENDING;
 
-	rc = mpt3sas_रुको_क्रम_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
-	अगर (rc)
-		जाओ out;
+	rc = mpt3sas_wait_for_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
+	if (rc)
+		goto out;
 
 	smid = mpt3sas_base_get_smid(ioc, ioc->transport_cb_idx);
-	अगर (!smid) अणु
+	if (!smid) {
 		ioc_err(ioc, "%s: failed obtaining a smid\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 	ioc->transport_cmds.smid = smid;
 
-	sz = माप(काष्ठा phy_error_log_request) +
-	    माप(काष्ठा phy_error_log_reply);
+	sz = sizeof(struct phy_error_log_request) +
+	    sizeof(struct phy_error_log_reply);
 	data_out = dma_alloc_coherent(&ioc->pdev->dev, sz, &data_out_dma,
 			GFP_KERNEL);
-	अगर (!data_out) अणु
-		pr_err("failure at %s:%d/%s()!\n", __खाता__,
+	if (!data_out) {
+		pr_err("failure at %s:%d/%s()!\n", __FILE__,
 		    __LINE__, __func__);
 		rc = -ENOMEM;
-		mpt3sas_base_मुक्त_smid(ioc, smid);
-		जाओ out;
-	पूर्ण
+		mpt3sas_base_free_smid(ioc, smid);
+		goto out;
+	}
 
 	rc = -EINVAL;
-	स_रखो(data_out, 0, sz);
+	memset(data_out, 0, sz);
 	phy_error_log_request = data_out;
 	phy_error_log_request->smp_frame_type = 0x40;
 	phy_error_log_request->function = 0x11;
 	phy_error_log_request->request_length = 2;
 	phy_error_log_request->allocated_response_length = 0;
-	phy_error_log_request->phy_identअगरier = phy->number;
+	phy_error_log_request->phy_identifier = phy->number;
 
-	स_रखो(mpi_request, 0, माप(Mpi2SmpPassthroughRequest_t));
+	memset(mpi_request, 0, sizeof(Mpi2SmpPassthroughRequest_t));
 	mpi_request->Function = MPI2_FUNCTION_SMP_PASSTHROUGH;
 	mpi_request->PhysicalPort = _transport_get_port_id_by_sas_phy(phy);
 	mpi_request->VF_ID = 0; /* TODO */
 	mpi_request->VP_ID = 0;
-	mpi_request->SASAddress = cpu_to_le64(phy->identअगरy.sas_address);
+	mpi_request->SASAddress = cpu_to_le64(phy->identify.sas_address);
 	mpi_request->RequestDataLength =
-	    cpu_to_le16(माप(काष्ठा phy_error_log_request));
+	    cpu_to_le16(sizeof(struct phy_error_log_request));
 	psge = &mpi_request->SGL;
 
 	ioc->build_sg(ioc, psge, data_out_dma,
-		माप(काष्ठा phy_error_log_request),
-	    data_out_dma + माप(काष्ठा phy_error_log_request),
-	    माप(काष्ठा phy_error_log_reply));
+		sizeof(struct phy_error_log_request),
+	    data_out_dma + sizeof(struct phy_error_log_request),
+	    sizeof(struct phy_error_log_reply));
 
-	dtransportprपूर्णांकk(ioc,
+	dtransportprintk(ioc,
 			 ioc_info(ioc, "phy_error_log - send to sas_addr(0x%016llx), phy(%d)\n",
-				  (u64)phy->identअगरy.sas_address,
+				  (u64)phy->identify.sas_address,
 				  phy->number));
-	init_completion(&ioc->transport_cmds.करोne);
-	ioc->put_smid_शेष(ioc, smid);
-	रुको_क्रम_completion_समयout(&ioc->transport_cmds.करोne, 10*HZ);
+	init_completion(&ioc->transport_cmds.done);
+	ioc->put_smid_default(ioc, smid);
+	wait_for_completion_timeout(&ioc->transport_cmds.done, 10*HZ);
 
-	अगर (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) अणु
+	if (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) {
 		ioc_err(ioc, "%s: timeout\n", __func__);
 		_debug_dump_mf(mpi_request,
-		    माप(Mpi2SmpPassthroughRequest_t)/4);
-		अगर (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
+		    sizeof(Mpi2SmpPassthroughRequest_t)/4);
+		if (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
 			issue_reset = 1;
-		जाओ issue_host_reset;
-	पूर्ण
+		goto issue_host_reset;
+	}
 
-	dtransportprपूर्णांकk(ioc, ioc_info(ioc, "phy_error_log - complete\n"));
+	dtransportprintk(ioc, ioc_info(ioc, "phy_error_log - complete\n"));
 
-	अगर (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) अणु
+	if (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) {
 
 		mpi_reply = ioc->transport_cmds.reply;
 
-		dtransportprपूर्णांकk(ioc,
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_error_log - reply data transfer size(%d)\n",
 					  le16_to_cpu(mpi_reply->ResponseDataLength)));
 
-		अगर (le16_to_cpu(mpi_reply->ResponseDataLength) !=
-		    माप(काष्ठा phy_error_log_reply))
-			जाओ out;
+		if (le16_to_cpu(mpi_reply->ResponseDataLength) !=
+		    sizeof(struct phy_error_log_reply))
+			goto out;
 
 		phy_error_log_reply = data_out +
-		    माप(काष्ठा phy_error_log_request);
+		    sizeof(struct phy_error_log_request);
 
-		dtransportprपूर्णांकk(ioc,
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_error_log - function_result(%d)\n",
 					  phy_error_log_reply->function_result));
 
@@ -1382,60 +1381,60 @@ _transport_get_expander_phy_error_log(काष्ठा MPT3SAS_ADAPTER *ioc,
 		phy->phy_reset_problem_count =
 		    be32_to_cpu(phy_error_log_reply->phy_reset_problem);
 		rc = 0;
-	पूर्ण अन्यथा
-		dtransportprपूर्णांकk(ioc,
+	} else
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_error_log - no reply\n"));
 
  issue_host_reset:
-	अगर (issue_reset)
+	if (issue_reset)
 		mpt3sas_base_hard_reset_handler(ioc, FORCE_BIG_HAMMER);
  out:
 	ioc->transport_cmds.status = MPT3_CMD_NOT_USED;
-	अगर (data_out)
-		dma_मुक्त_coherent(&ioc->pdev->dev, sz, data_out, data_out_dma);
+	if (data_out)
+		dma_free_coherent(&ioc->pdev->dev, sz, data_out, data_out_dma);
 
 	mutex_unlock(&ioc->transport_cmds.mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * _transport_get_linkerrors - वापस phy counters क्रम both hba and expanders
+ * _transport_get_linkerrors - return phy counters for both hba and expanders
  * @phy: The sas phy object
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  *
  */
-अटल पूर्णांक
-_transport_get_linkerrors(काष्ठा sas_phy *phy)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
-	अचिन्हित दीर्घ flags;
+static int
+_transport_get_linkerrors(struct sas_phy *phy)
+{
+	struct MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
+	unsigned long flags;
 	Mpi2ConfigReply_t mpi_reply;
 	Mpi2SasPhyPage1_t phy_pg1;
-	काष्ठा hba_port *port = phy->hostdata;
-	पूर्णांक port_id = port->port_id;
+	struct hba_port *port = phy->hostdata;
+	int port_id = port->port_id;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
-	अगर (_transport_sas_node_find_by_sas_address(ioc,
-	    phy->identअगरy.sas_address,
-	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == शून्य) अणु
+	if (_transport_sas_node_find_by_sas_address(ioc,
+	    phy->identify.sas_address,
+	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == NULL) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
-	अगर (phy->identअगरy.sas_address != ioc->sas_hba.sas_address)
-		वापस _transport_get_expander_phy_error_log(ioc, phy);
+	if (phy->identify.sas_address != ioc->sas_hba.sas_address)
+		return _transport_get_expander_phy_error_log(ioc, phy);
 
 	/* get hba phy error logs */
-	अगर ((mpt3sas_config_get_phy_pg1(ioc, &mpi_reply, &phy_pg1,
-		    phy->number))) अणु
+	if ((mpt3sas_config_get_phy_pg1(ioc, &mpi_reply, &phy_pg1,
+		    phy->number))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस -ENXIO;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		return -ENXIO;
+	}
 
-	अगर (mpi_reply.IOCStatus || mpi_reply.IOCLogInfo)
+	if (mpi_reply.IOCStatus || mpi_reply.IOCLogInfo)
 		ioc_info(ioc, "phy(%d), ioc_status (0x%04x), loginfo(0x%08x)\n",
 			 phy->number,
 			 le16_to_cpu(mpi_reply.IOCStatus),
@@ -1448,94 +1447,94 @@ _transport_get_linkerrors(काष्ठा sas_phy *phy)
 	    le32_to_cpu(phy_pg1.LossDwordSynchCount);
 	phy->phy_reset_problem_count =
 	    le32_to_cpu(phy_pg1.PhyResetProblemCount);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * _transport_get_enclosure_identअगरier -
+ * _transport_get_enclosure_identifier -
  * @rphy: The sas phy object
- * @identअगरier: ?
+ * @identifier: ?
  *
- * Obtain the enclosure logical id क्रम an expander.
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Obtain the enclosure logical id for an expander.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_get_enclosure_identअगरier(काष्ठा sas_rphy *rphy, u64 *identअगरier)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = rphy_to_ioc(rphy);
-	काष्ठा _sas_device *sas_device;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int
+_transport_get_enclosure_identifier(struct sas_rphy *rphy, u64 *identifier)
+{
+	struct MPT3SAS_ADAPTER *ioc = rphy_to_ioc(rphy);
+	struct _sas_device *sas_device;
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(&ioc->sas_device_lock, flags);
 	sas_device = __mpt3sas_get_sdev_by_rphy(ioc, rphy);
-	अगर (sas_device) अणु
-		*identअगरier = sas_device->enclosure_logical_id;
+	if (sas_device) {
+		*identifier = sas_device->enclosure_logical_id;
 		rc = 0;
 		sas_device_put(sas_device);
-	पूर्ण अन्यथा अणु
-		*identअगरier = 0;
+	} else {
+		*identifier = 0;
 		rc = -ENXIO;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&ioc->sas_device_lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * _transport_get_bay_identअगरier -
+ * _transport_get_bay_identifier -
  * @rphy: The sas phy object
  *
- * Return: the slot id क्रम a device that resides inside an enclosure.
+ * Return: the slot id for a device that resides inside an enclosure.
  */
-अटल पूर्णांक
-_transport_get_bay_identअगरier(काष्ठा sas_rphy *rphy)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = rphy_to_ioc(rphy);
-	काष्ठा _sas_device *sas_device;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int
+_transport_get_bay_identifier(struct sas_rphy *rphy)
+{
+	struct MPT3SAS_ADAPTER *ioc = rphy_to_ioc(rphy);
+	struct _sas_device *sas_device;
+	unsigned long flags;
+	int rc;
 
 	spin_lock_irqsave(&ioc->sas_device_lock, flags);
 	sas_device = __mpt3sas_get_sdev_by_rphy(ioc, rphy);
-	अगर (sas_device) अणु
+	if (sas_device) {
 		rc = sas_device->slot;
 		sas_device_put(sas_device);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = -ENXIO;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ioc->sas_device_lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* phy control request काष्ठाure */
-काष्ठा phy_control_request अणु
+/* phy control request structure */
+struct phy_control_request {
 	u8 smp_frame_type; /* 0x40 */
 	u8 function; /* 0x91 */
 	u8 allocated_response_length;
 	u8 request_length; /* 0x09 */
 	u16 expander_change_count;
 	u8 reserved_1[3];
-	u8 phy_identअगरier;
+	u8 phy_identifier;
 	u8 phy_operation;
 	u8 reserved_2[13];
 	u64 attached_device_name;
 	u8 programmed_min_physical_link_rate;
 	u8 programmed_max_physical_link_rate;
 	u8 reserved_3[6];
-पूर्ण;
+};
 
-/* phy control reply काष्ठाure */
-काष्ठा phy_control_reply अणु
+/* phy control reply structure */
+struct phy_control_reply {
 	u8 smp_frame_type; /* 0x41 */
 	u8 function; /* 0x11 */
 	u8 function_result;
 	u8 response_length;
-पूर्ण;
+};
 
-#घोषणा SMP_PHY_CONTROL_LINK_RESET	(0x01)
-#घोषणा SMP_PHY_CONTROL_HARD_RESET	(0x02)
-#घोषणा SMP_PHY_CONTROL_DISABLE		(0x03)
+#define SMP_PHY_CONTROL_LINK_RESET	(0x01)
+#define SMP_PHY_CONTROL_HARD_RESET	(0x02)
+#define SMP_PHY_CONTROL_DISABLE		(0x03)
 
 /**
  * _transport_expander_phy_control - expander phy control
@@ -1543,202 +1542,202 @@ _transport_get_bay_identअगरier(काष्ठा sas_rphy *rphy)
  * @phy: The sas phy object
  * @phy_operation: ?
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  *
  */
-अटल पूर्णांक
-_transport_expander_phy_control(काष्ठा MPT3SAS_ADAPTER *ioc,
-	काष्ठा sas_phy *phy, u8 phy_operation)
-अणु
+static int
+_transport_expander_phy_control(struct MPT3SAS_ADAPTER *ioc,
+	struct sas_phy *phy, u8 phy_operation)
+{
 	Mpi2SmpPassthroughRequest_t *mpi_request;
 	Mpi2SmpPassthroughReply_t *mpi_reply;
-	काष्ठा phy_control_request *phy_control_request;
-	काष्ठा phy_control_reply *phy_control_reply;
-	पूर्णांक rc;
+	struct phy_control_request *phy_control_request;
+	struct phy_control_reply *phy_control_reply;
+	int rc;
 	u16 smid;
-	व्योम *psge;
+	void *psge;
 	u8 issue_reset = 0;
-	व्योम *data_out = शून्य;
+	void *data_out = NULL;
 	dma_addr_t data_out_dma;
 	u32 sz;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery) अणु
+	if (ioc->shost_recovery || ioc->pci_error_recovery) {
 		ioc_info(ioc, "%s: host reset in progress!\n", __func__);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	mutex_lock(&ioc->transport_cmds.mutex);
 
-	अगर (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) अणु
+	if (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) {
 		ioc_err(ioc, "%s: transport_cmds in use\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc->transport_cmds.status = MPT3_CMD_PENDING;
 
-	rc = mpt3sas_रुको_क्रम_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
-	अगर (rc)
-		जाओ out;
+	rc = mpt3sas_wait_for_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
+	if (rc)
+		goto out;
 
 	smid = mpt3sas_base_get_smid(ioc, ioc->transport_cb_idx);
-	अगर (!smid) अणु
+	if (!smid) {
 		ioc_err(ioc, "%s: failed obtaining a smid\n", __func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 	ioc->transport_cmds.smid = smid;
 
-	sz = माप(काष्ठा phy_control_request) +
-	    माप(काष्ठा phy_control_reply);
+	sz = sizeof(struct phy_control_request) +
+	    sizeof(struct phy_control_reply);
 	data_out = dma_alloc_coherent(&ioc->pdev->dev, sz, &data_out_dma,
 			GFP_KERNEL);
-	अगर (!data_out) अणु
-		pr_err("failure at %s:%d/%s()!\n", __खाता__,
+	if (!data_out) {
+		pr_err("failure at %s:%d/%s()!\n", __FILE__,
 		    __LINE__, __func__);
 		rc = -ENOMEM;
-		mpt3sas_base_मुक्त_smid(ioc, smid);
-		जाओ out;
-	पूर्ण
+		mpt3sas_base_free_smid(ioc, smid);
+		goto out;
+	}
 
 	rc = -EINVAL;
-	स_रखो(data_out, 0, sz);
+	memset(data_out, 0, sz);
 	phy_control_request = data_out;
 	phy_control_request->smp_frame_type = 0x40;
 	phy_control_request->function = 0x91;
 	phy_control_request->request_length = 9;
 	phy_control_request->allocated_response_length = 0;
-	phy_control_request->phy_identअगरier = phy->number;
+	phy_control_request->phy_identifier = phy->number;
 	phy_control_request->phy_operation = phy_operation;
 	phy_control_request->programmed_min_physical_link_rate =
 	    phy->minimum_linkrate << 4;
 	phy_control_request->programmed_max_physical_link_rate =
 	    phy->maximum_linkrate << 4;
 
-	स_रखो(mpi_request, 0, माप(Mpi2SmpPassthroughRequest_t));
+	memset(mpi_request, 0, sizeof(Mpi2SmpPassthroughRequest_t));
 	mpi_request->Function = MPI2_FUNCTION_SMP_PASSTHROUGH;
 	mpi_request->PhysicalPort = _transport_get_port_id_by_sas_phy(phy);
 	mpi_request->VF_ID = 0; /* TODO */
 	mpi_request->VP_ID = 0;
-	mpi_request->SASAddress = cpu_to_le64(phy->identअगरy.sas_address);
+	mpi_request->SASAddress = cpu_to_le64(phy->identify.sas_address);
 	mpi_request->RequestDataLength =
-	    cpu_to_le16(माप(काष्ठा phy_error_log_request));
+	    cpu_to_le16(sizeof(struct phy_error_log_request));
 	psge = &mpi_request->SGL;
 
 	ioc->build_sg(ioc, psge, data_out_dma,
-			    माप(काष्ठा phy_control_request),
-	    data_out_dma + माप(काष्ठा phy_control_request),
-	    माप(काष्ठा phy_control_reply));
+			    sizeof(struct phy_control_request),
+	    data_out_dma + sizeof(struct phy_control_request),
+	    sizeof(struct phy_control_reply));
 
-	dtransportprपूर्णांकk(ioc,
+	dtransportprintk(ioc,
 			 ioc_info(ioc, "phy_control - send to sas_addr(0x%016llx), phy(%d), opcode(%d)\n",
-				  (u64)phy->identअगरy.sas_address,
+				  (u64)phy->identify.sas_address,
 				  phy->number, phy_operation));
-	init_completion(&ioc->transport_cmds.करोne);
-	ioc->put_smid_शेष(ioc, smid);
-	रुको_क्रम_completion_समयout(&ioc->transport_cmds.करोne, 10*HZ);
+	init_completion(&ioc->transport_cmds.done);
+	ioc->put_smid_default(ioc, smid);
+	wait_for_completion_timeout(&ioc->transport_cmds.done, 10*HZ);
 
-	अगर (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) अणु
+	if (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) {
 		ioc_err(ioc, "%s: timeout\n", __func__);
 		_debug_dump_mf(mpi_request,
-		    माप(Mpi2SmpPassthroughRequest_t)/4);
-		अगर (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
+		    sizeof(Mpi2SmpPassthroughRequest_t)/4);
+		if (!(ioc->transport_cmds.status & MPT3_CMD_RESET))
 			issue_reset = 1;
-		जाओ issue_host_reset;
-	पूर्ण
+		goto issue_host_reset;
+	}
 
-	dtransportprपूर्णांकk(ioc, ioc_info(ioc, "phy_control - complete\n"));
+	dtransportprintk(ioc, ioc_info(ioc, "phy_control - complete\n"));
 
-	अगर (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) अणु
+	if (ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID) {
 
 		mpi_reply = ioc->transport_cmds.reply;
 
-		dtransportprपूर्णांकk(ioc,
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_control - reply data transfer size(%d)\n",
 					  le16_to_cpu(mpi_reply->ResponseDataLength)));
 
-		अगर (le16_to_cpu(mpi_reply->ResponseDataLength) !=
-		    माप(काष्ठा phy_control_reply))
-			जाओ out;
+		if (le16_to_cpu(mpi_reply->ResponseDataLength) !=
+		    sizeof(struct phy_control_reply))
+			goto out;
 
 		phy_control_reply = data_out +
-		    माप(काष्ठा phy_control_request);
+		    sizeof(struct phy_control_request);
 
-		dtransportprपूर्णांकk(ioc,
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_control - function_result(%d)\n",
 					  phy_control_reply->function_result));
 
 		rc = 0;
-	पूर्ण अन्यथा
-		dtransportprपूर्णांकk(ioc,
+	} else
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "phy_control - no reply\n"));
 
  issue_host_reset:
-	अगर (issue_reset)
+	if (issue_reset)
 		mpt3sas_base_hard_reset_handler(ioc, FORCE_BIG_HAMMER);
  out:
 	ioc->transport_cmds.status = MPT3_CMD_NOT_USED;
-	अगर (data_out)
-		dma_मुक्त_coherent(&ioc->pdev->dev, sz, data_out,
+	if (data_out)
+		dma_free_coherent(&ioc->pdev->dev, sz, data_out,
 				data_out_dma);
 
 	mutex_unlock(&ioc->transport_cmds.mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * _transport_phy_reset -
  * @phy: The sas phy object
  * @hard_reset:
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_phy_reset(काष्ठा sas_phy *phy, पूर्णांक hard_reset)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
+static int
+_transport_phy_reset(struct sas_phy *phy, int hard_reset)
+{
+	struct MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
 	Mpi2SasIoUnitControlReply_t mpi_reply;
 	Mpi2SasIoUnitControlRequest_t mpi_request;
-	काष्ठा hba_port *port = phy->hostdata;
-	पूर्णांक port_id = port->port_id;
-	अचिन्हित दीर्घ flags;
+	struct hba_port *port = phy->hostdata;
+	int port_id = port->port_id;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
-	अगर (_transport_sas_node_find_by_sas_address(ioc,
-	    phy->identअगरy.sas_address,
-	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == शून्य) अणु
+	if (_transport_sas_node_find_by_sas_address(ioc,
+	    phy->identify.sas_address,
+	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == NULL) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
 	/* handle expander phys */
-	अगर (phy->identअगरy.sas_address != ioc->sas_hba.sas_address)
-		वापस _transport_expander_phy_control(ioc, phy,
+	if (phy->identify.sas_address != ioc->sas_hba.sas_address)
+		return _transport_expander_phy_control(ioc, phy,
 		    (hard_reset == 1) ? SMP_PHY_CONTROL_HARD_RESET :
 		    SMP_PHY_CONTROL_LINK_RESET);
 
 	/* handle hba phys */
-	स_रखो(&mpi_request, 0, माप(Mpi2SasIoUnitControlRequest_t));
+	memset(&mpi_request, 0, sizeof(Mpi2SasIoUnitControlRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_SAS_IO_UNIT_CONTROL;
 	mpi_request.Operation = hard_reset ?
 	    MPI2_SAS_OP_PHY_HARD_RESET : MPI2_SAS_OP_PHY_LINK_RESET;
 	mpi_request.PhyNum = phy->number;
 
-	अगर ((mpt3sas_base_sas_iounit_control(ioc, &mpi_reply, &mpi_request))) अणु
+	if ((mpt3sas_base_sas_iounit_control(ioc, &mpi_reply, &mpi_request))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
-		वापस -ENXIO;
-	पूर्ण
+			__FILE__, __LINE__, __func__);
+		return -ENXIO;
+	}
 
-	अगर (mpi_reply.IOCStatus || mpi_reply.IOCLogInfo)
+	if (mpi_reply.IOCStatus || mpi_reply.IOCLogInfo)
 		ioc_info(ioc, "phy(%d), ioc_status(0x%04x), loginfo(0x%08x)\n",
 			 phy->number, le16_to_cpu(mpi_reply.IOCStatus),
 			 le32_to_cpu(mpi_reply.IOCLogInfo));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * _transport_phy_enable - enable/disable phys
@@ -1746,109 +1745,109 @@ _transport_phy_reset(काष्ठा sas_phy *phy, पूर्णांक h
  * @enable: enable phy when true
  *
  * Only support sas_host direct attached phys.
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_phy_enable(काष्ठा sas_phy *phy, पूर्णांक enable)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
-	Mpi2SasIOUnitPage1_t *sas_iounit_pg1 = शून्य;
-	Mpi2SasIOUnitPage0_t *sas_iounit_pg0 = शून्य;
+static int
+_transport_phy_enable(struct sas_phy *phy, int enable)
+{
+	struct MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
+	Mpi2SasIOUnitPage1_t *sas_iounit_pg1 = NULL;
+	Mpi2SasIOUnitPage0_t *sas_iounit_pg0 = NULL;
 	Mpi2ConfigReply_t mpi_reply;
 	u16 ioc_status;
 	u16 sz;
-	पूर्णांक rc = 0;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i, discovery_active;
-	काष्ठा hba_port *port = phy->hostdata;
-	पूर्णांक port_id = port->port_id;
+	int rc = 0;
+	unsigned long flags;
+	int i, discovery_active;
+	struct hba_port *port = phy->hostdata;
+	int port_id = port->port_id;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
-	अगर (_transport_sas_node_find_by_sas_address(ioc,
-	    phy->identअगरy.sas_address,
-	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == शून्य) अणु
+	if (_transport_sas_node_find_by_sas_address(ioc,
+	    phy->identify.sas_address,
+	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == NULL) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
 	/* handle expander phys */
-	अगर (phy->identअगरy.sas_address != ioc->sas_hba.sas_address)
-		वापस _transport_expander_phy_control(ioc, phy,
+	if (phy->identify.sas_address != ioc->sas_hba.sas_address)
+		return _transport_expander_phy_control(ioc, phy,
 		    (enable == 1) ? SMP_PHY_CONTROL_LINK_RESET :
 		    SMP_PHY_CONTROL_DISABLE);
 
 	/* handle hba phys */
 
-	/* पढ़ो sas_iounit page 0 */
-	sz = दुरत्व(Mpi2SasIOUnitPage0_t, PhyData) + (ioc->sas_hba.num_phys *
-	    माप(Mpi2SasIOUnit0PhyData_t));
+	/* read sas_iounit page 0 */
+	sz = offsetof(Mpi2SasIOUnitPage0_t, PhyData) + (ioc->sas_hba.num_phys *
+	    sizeof(Mpi2SasIOUnit0PhyData_t));
 	sas_iounit_pg0 = kzalloc(sz, GFP_KERNEL);
-	अगर (!sas_iounit_pg0) अणु
+	if (!sas_iounit_pg0) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	अगर ((mpt3sas_config_get_sas_iounit_pg0(ioc, &mpi_reply,
-	    sas_iounit_pg0, sz))) अणु
+		goto out;
+	}
+	if ((mpt3sas_config_get_sas_iounit_pg0(ioc, &mpi_reply,
+	    sas_iounit_pg0, sz))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* unable to enable/disable phys when when discovery is active */
-	क्रम (i = 0, discovery_active = 0; i < ioc->sas_hba.num_phys ; i++) अणु
-		अगर (sas_iounit_pg0->PhyData[i].PortFlags &
-		    MPI2_SASIOUNIT0_PORTFLAGS_DISCOVERY_IN_PROGRESS) अणु
+	for (i = 0, discovery_active = 0; i < ioc->sas_hba.num_phys ; i++) {
+		if (sas_iounit_pg0->PhyData[i].PortFlags &
+		    MPI2_SASIOUNIT0_PORTFLAGS_DISCOVERY_IN_PROGRESS) {
 			ioc_err(ioc, "discovery is active on port = %d, phy = %d: unable to enable/disable phys, try again later!\n",
 				sas_iounit_pg0->PhyData[i].Port, i);
 			discovery_active = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (discovery_active) अणु
+	if (discovery_active) {
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* पढ़ो sas_iounit page 1 */
-	sz = दुरत्व(Mpi2SasIOUnitPage1_t, PhyData) + (ioc->sas_hba.num_phys *
-	    माप(Mpi2SasIOUnit1PhyData_t));
+	/* read sas_iounit page 1 */
+	sz = offsetof(Mpi2SasIOUnitPage1_t, PhyData) + (ioc->sas_hba.num_phys *
+	    sizeof(Mpi2SasIOUnit1PhyData_t));
 	sas_iounit_pg1 = kzalloc(sz, GFP_KERNEL);
-	अगर (!sas_iounit_pg1) अणु
+	if (!sas_iounit_pg1) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	अगर ((mpt3sas_config_get_sas_iounit_pg1(ioc, &mpi_reply,
-	    sas_iounit_pg1, sz))) अणु
+		goto out;
+	}
+	if ((mpt3sas_config_get_sas_iounit_pg1(ioc, &mpi_reply,
+	    sas_iounit_pg1, sz))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* copy Port/PortFlags/PhyFlags from page 0 */
-	क्रम (i = 0; i < ioc->sas_hba.num_phys ; i++) अणु
+	for (i = 0; i < ioc->sas_hba.num_phys ; i++) {
 		sas_iounit_pg1->PhyData[i].Port =
 		    sas_iounit_pg0->PhyData[i].Port;
 		sas_iounit_pg1->PhyData[i].PortFlags =
@@ -1858,26 +1857,26 @@ _transport_phy_enable(काष्ठा sas_phy *phy, पूर्णांक 
 		    (sas_iounit_pg0->PhyData[i].PhyFlags &
 		    (MPI2_SASIOUNIT0_PHYFLAGS_ZONING_ENABLED +
 		    MPI2_SASIOUNIT0_PHYFLAGS_PHY_DISABLED));
-	पूर्ण
+	}
 
-	अगर (enable)
+	if (enable)
 		sas_iounit_pg1->PhyData[phy->number].PhyFlags
 		    &= ~MPI2_SASIOUNIT1_PHYFLAGS_PHY_DISABLE;
-	अन्यथा
+	else
 		sas_iounit_pg1->PhyData[phy->number].PhyFlags
 		    |= MPI2_SASIOUNIT1_PHYFLAGS_PHY_DISABLE;
 
 	mpt3sas_config_set_sas_iounit_pg1(ioc, &mpi_reply, sas_iounit_pg1, sz);
 
 	/* link reset */
-	अगर (enable)
+	if (enable)
 		_transport_phy_reset(phy, 0);
 
  out:
-	kमुक्त(sas_iounit_pg1);
-	kमुक्त(sas_iounit_pg0);
-	वापस rc;
-पूर्ण
+	kfree(sas_iounit_pg1);
+	kfree(sas_iounit_pg0);
+	return rc;
+}
 
 /**
  * _transport_phy_speed - set phy min/max link rates
@@ -1886,104 +1885,104 @@ _transport_phy_enable(काष्ठा sas_phy *phy, पूर्णांक 
  *
  * Only support sas_host direct attached phys.
  *
- * Return: 0 क्रम success, non-zero क्रम failure.
+ * Return: 0 for success, non-zero for failure.
  */
-अटल पूर्णांक
-_transport_phy_speed(काष्ठा sas_phy *phy, काष्ठा sas_phy_linkrates *rates)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
-	Mpi2SasIOUnitPage1_t *sas_iounit_pg1 = शून्य;
+static int
+_transport_phy_speed(struct sas_phy *phy, struct sas_phy_linkrates *rates)
+{
+	struct MPT3SAS_ADAPTER *ioc = phy_to_ioc(phy);
+	Mpi2SasIOUnitPage1_t *sas_iounit_pg1 = NULL;
 	Mpi2SasPhyPage0_t phy_pg0;
 	Mpi2ConfigReply_t mpi_reply;
 	u16 ioc_status;
 	u16 sz;
-	पूर्णांक i;
-	पूर्णांक rc = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा hba_port *port = phy->hostdata;
-	पूर्णांक port_id = port->port_id;
+	int i;
+	int rc = 0;
+	unsigned long flags;
+	struct hba_port *port = phy->hostdata;
+	int port_id = port->port_id;
 
 	spin_lock_irqsave(&ioc->sas_node_lock, flags);
-	अगर (_transport_sas_node_find_by_sas_address(ioc,
-	    phy->identअगरy.sas_address,
-	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == शून्य) अणु
+	if (_transport_sas_node_find_by_sas_address(ioc,
+	    phy->identify.sas_address,
+	    mpt3sas_get_port_by_id(ioc, port_id, 0)) == NULL) {
 		spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_unlock_irqrestore(&ioc->sas_node_lock, flags);
 
-	अगर (!rates->minimum_linkrate)
+	if (!rates->minimum_linkrate)
 		rates->minimum_linkrate = phy->minimum_linkrate;
-	अन्यथा अगर (rates->minimum_linkrate < phy->minimum_linkrate_hw)
+	else if (rates->minimum_linkrate < phy->minimum_linkrate_hw)
 		rates->minimum_linkrate = phy->minimum_linkrate_hw;
 
-	अगर (!rates->maximum_linkrate)
+	if (!rates->maximum_linkrate)
 		rates->maximum_linkrate = phy->maximum_linkrate;
-	अन्यथा अगर (rates->maximum_linkrate > phy->maximum_linkrate_hw)
+	else if (rates->maximum_linkrate > phy->maximum_linkrate_hw)
 		rates->maximum_linkrate = phy->maximum_linkrate_hw;
 
 	/* handle expander phys */
-	अगर (phy->identअगरy.sas_address != ioc->sas_hba.sas_address) अणु
+	if (phy->identify.sas_address != ioc->sas_hba.sas_address) {
 		phy->minimum_linkrate = rates->minimum_linkrate;
 		phy->maximum_linkrate = rates->maximum_linkrate;
-		वापस _transport_expander_phy_control(ioc, phy,
+		return _transport_expander_phy_control(ioc, phy,
 		    SMP_PHY_CONTROL_LINK_RESET);
-	पूर्ण
+	}
 
 	/* handle hba phys */
 
 	/* sas_iounit page 1 */
-	sz = दुरत्व(Mpi2SasIOUnitPage1_t, PhyData) + (ioc->sas_hba.num_phys *
-	    माप(Mpi2SasIOUnit1PhyData_t));
+	sz = offsetof(Mpi2SasIOUnitPage1_t, PhyData) + (ioc->sas_hba.num_phys *
+	    sizeof(Mpi2SasIOUnit1PhyData_t));
 	sas_iounit_pg1 = kzalloc(sz, GFP_KERNEL);
-	अगर (!sas_iounit_pg1) अणु
+	if (!sas_iounit_pg1) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	अगर ((mpt3sas_config_get_sas_iounit_pg1(ioc, &mpi_reply,
-	    sas_iounit_pg1, sz))) अणु
+		goto out;
+	}
+	if ((mpt3sas_config_get_sas_iounit_pg1(ioc, &mpi_reply,
+	    sas_iounit_pg1, sz))) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < ioc->sas_hba.num_phys; i++) अणु
-		अगर (phy->number != i) अणु
+	for (i = 0; i < ioc->sas_hba.num_phys; i++) {
+		if (phy->number != i) {
 			sas_iounit_pg1->PhyData[i].MaxMinLinkRate =
 			    (ioc->sas_hba.phy[i].phy->minimum_linkrate +
 			    (ioc->sas_hba.phy[i].phy->maximum_linkrate << 4));
-		पूर्ण अन्यथा अणु
+		} else {
 			sas_iounit_pg1->PhyData[i].MaxMinLinkRate =
 			    (rates->minimum_linkrate +
 			    (rates->maximum_linkrate << 4));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (mpt3sas_config_set_sas_iounit_pg1(ioc, &mpi_reply, sas_iounit_pg1,
-	    sz)) अणु
+	if (mpt3sas_config_set_sas_iounit_pg1(ioc, &mpi_reply, sas_iounit_pg1,
+	    sz)) {
 		ioc_err(ioc, "failure at %s:%d/%s()!\n",
-			__खाता__, __LINE__, __func__);
+			__FILE__, __LINE__, __func__);
 		rc = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* link reset */
 	_transport_phy_reset(phy, 0);
 
-	/* पढ़ो phy page 0, then update the rates in the sas transport phy */
-	अगर (!mpt3sas_config_get_phy_pg0(ioc, &mpi_reply, &phy_pg0,
-	    phy->number)) अणु
+	/* read phy page 0, then update the rates in the sas transport phy */
+	if (!mpt3sas_config_get_phy_pg0(ioc, &mpi_reply, &phy_pg0,
+	    phy->number)) {
 		phy->minimum_linkrate = _transport_convert_phy_link_rate(
 		    phy_pg0.ProgrammedLinkRate & MPI2_SAS_PRATE_MIN_RATE_MASK);
 		phy->maximum_linkrate = _transport_convert_phy_link_rate(
@@ -1991,126 +1990,126 @@ _transport_phy_speed(काष्ठा sas_phy *phy, काष्ठा sas_phy
 		phy->negotiated_linkrate = _transport_convert_phy_link_rate(
 		    phy_pg0.NegotiatedLinkRate &
 		    MPI2_SAS_NEG_LINK_RATE_MASK_PHYSICAL);
-	पूर्ण
+	}
 
  out:
-	kमुक्त(sas_iounit_pg1);
-	वापस rc;
-पूर्ण
+	kfree(sas_iounit_pg1);
+	return rc;
+}
 
-अटल पूर्णांक
-_transport_map_smp_buffer(काष्ठा device *dev, काष्ठा bsg_buffer *buf,
-		dma_addr_t *dma_addr, माप_प्रकार *dma_len, व्योम **p)
-अणु
-	/* Check अगर the request is split across multiple segments */
-	अगर (buf->sg_cnt > 1) अणु
+static int
+_transport_map_smp_buffer(struct device *dev, struct bsg_buffer *buf,
+		dma_addr_t *dma_addr, size_t *dma_len, void **p)
+{
+	/* Check if the request is split across multiple segments */
+	if (buf->sg_cnt > 1) {
 		*p = dma_alloc_coherent(dev, buf->payload_len, dma_addr,
 				GFP_KERNEL);
-		अगर (!*p)
-			वापस -ENOMEM;
+		if (!*p)
+			return -ENOMEM;
 		*dma_len = buf->payload_len;
-	पूर्ण अन्यथा अणु
-		अगर (!dma_map_sg(dev, buf->sg_list, 1, DMA_BIसूचीECTIONAL))
-			वापस -ENOMEM;
+	} else {
+		if (!dma_map_sg(dev, buf->sg_list, 1, DMA_BIDIRECTIONAL))
+			return -ENOMEM;
 		*dma_addr = sg_dma_address(buf->sg_list);
 		*dma_len = sg_dma_len(buf->sg_list);
-		*p = शून्य;
-	पूर्ण
+		*p = NULL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-_transport_unmap_smp_buffer(काष्ठा device *dev, काष्ठा bsg_buffer *buf,
-		dma_addr_t dma_addr, व्योम *p)
-अणु
-	अगर (p)
-		dma_मुक्त_coherent(dev, buf->payload_len, p, dma_addr);
-	अन्यथा
-		dma_unmap_sg(dev, buf->sg_list, 1, DMA_BIसूचीECTIONAL);
-पूर्ण
+static void
+_transport_unmap_smp_buffer(struct device *dev, struct bsg_buffer *buf,
+		dma_addr_t dma_addr, void *p)
+{
+	if (p)
+		dma_free_coherent(dev, buf->payload_len, p, dma_addr);
+	else
+		dma_unmap_sg(dev, buf->sg_list, 1, DMA_BIDIRECTIONAL);
+}
 
 /**
- * _transport_smp_handler - transport portal क्रम smp passthru
+ * _transport_smp_handler - transport portal for smp passthru
  * @job: ?
  * @shost: shost object
  * @rphy: sas transport rphy object
  *
- * This used primarily क्रम smp_utils.
+ * This used primarily for smp_utils.
  * Example:
  *           smp_rep_general /sys/class/bsg/expander-5:0
  */
-अटल व्योम
-_transport_smp_handler(काष्ठा bsg_job *job, काष्ठा Scsi_Host *shost,
-		काष्ठा sas_rphy *rphy)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = shost_priv(shost);
+static void
+_transport_smp_handler(struct bsg_job *job, struct Scsi_Host *shost,
+		struct sas_rphy *rphy)
+{
+	struct MPT3SAS_ADAPTER *ioc = shost_priv(shost);
 	Mpi2SmpPassthroughRequest_t *mpi_request;
 	Mpi2SmpPassthroughReply_t *mpi_reply;
-	पूर्णांक rc;
+	int rc;
 	u16 smid;
-	व्योम *psge;
+	void *psge;
 	dma_addr_t dma_addr_in;
 	dma_addr_t dma_addr_out;
-	व्योम *addr_in = शून्य;
-	व्योम *addr_out = शून्य;
-	माप_प्रकार dma_len_in;
-	माप_प्रकार dma_len_out;
-	अचिन्हित पूर्णांक reslen = 0;
+	void *addr_in = NULL;
+	void *addr_out = NULL;
+	size_t dma_len_in;
+	size_t dma_len_out;
+	unsigned int reslen = 0;
 
-	अगर (ioc->shost_recovery || ioc->pci_error_recovery) अणु
+	if (ioc->shost_recovery || ioc->pci_error_recovery) {
 		ioc_info(ioc, "%s: host reset in progress!\n", __func__);
 		rc = -EFAULT;
-		जाओ job_करोne;
-	पूर्ण
+		goto job_done;
+	}
 
-	rc = mutex_lock_पूर्णांकerruptible(&ioc->transport_cmds.mutex);
-	अगर (rc)
-		जाओ job_करोne;
+	rc = mutex_lock_interruptible(&ioc->transport_cmds.mutex);
+	if (rc)
+		goto job_done;
 
-	अगर (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) अणु
+	if (ioc->transport_cmds.status != MPT3_CMD_NOT_USED) {
 		ioc_err(ioc, "%s: transport_cmds in use\n",
 			__func__);
 		rc = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ioc->transport_cmds.status = MPT3_CMD_PENDING;
 
 	rc = _transport_map_smp_buffer(&ioc->pdev->dev, &job->request_payload,
 			&dma_addr_out, &dma_len_out, &addr_out);
-	अगर (rc)
-		जाओ out;
-	अगर (addr_out) अणु
+	if (rc)
+		goto out;
+	if (addr_out) {
 		sg_copy_to_buffer(job->request_payload.sg_list,
 				job->request_payload.sg_cnt, addr_out,
 				job->request_payload.payload_len);
-	पूर्ण
+	}
 
 	rc = _transport_map_smp_buffer(&ioc->pdev->dev, &job->reply_payload,
 			&dma_addr_in, &dma_len_in, &addr_in);
-	अगर (rc)
-		जाओ unmap_out;
+	if (rc)
+		goto unmap_out;
 
-	rc = mpt3sas_रुको_क्रम_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
-	अगर (rc)
-		जाओ unmap_in;
+	rc = mpt3sas_wait_for_ioc(ioc, IOC_OPERATIONAL_WAIT_COUNT);
+	if (rc)
+		goto unmap_in;
 
 	smid = mpt3sas_base_get_smid(ioc, ioc->transport_cb_idx);
-	अगर (!smid) अणु
+	if (!smid) {
 		ioc_err(ioc, "%s: failed obtaining a smid\n", __func__);
 		rc = -EAGAIN;
-		जाओ unmap_in;
-	पूर्ण
+		goto unmap_in;
+	}
 
 	rc = 0;
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 	ioc->transport_cmds.smid = smid;
 
-	स_रखो(mpi_request, 0, माप(Mpi2SmpPassthroughRequest_t));
+	memset(mpi_request, 0, sizeof(Mpi2SmpPassthroughRequest_t));
 	mpi_request->Function = MPI2_FUNCTION_SMP_PASSTHROUGH;
 	mpi_request->PhysicalPort = _transport_get_port_id_by_rphy(ioc, rphy);
 	mpi_request->SASAddress = (rphy) ?
-	    cpu_to_le64(rphy->identअगरy.sas_address) :
+	    cpu_to_le64(rphy->identify.sas_address) :
 	    cpu_to_le64(ioc->sas_hba.sas_address);
 	mpi_request->RequestDataLength = cpu_to_le16(dma_len_out - 4);
 	psge = &mpi_request->SGL;
@@ -2118,49 +2117,49 @@ _transport_smp_handler(काष्ठा bsg_job *job, काष्ठा Scsi_
 	ioc->build_sg(ioc, psge, dma_addr_out, dma_len_out - 4, dma_addr_in,
 			dma_len_in - 4);
 
-	dtransportprपूर्णांकk(ioc,
+	dtransportprintk(ioc,
 			 ioc_info(ioc, "%s: sending smp request\n", __func__));
 
-	init_completion(&ioc->transport_cmds.करोne);
-	ioc->put_smid_शेष(ioc, smid);
-	रुको_क्रम_completion_समयout(&ioc->transport_cmds.करोne, 10*HZ);
+	init_completion(&ioc->transport_cmds.done);
+	ioc->put_smid_default(ioc, smid);
+	wait_for_completion_timeout(&ioc->transport_cmds.done, 10*HZ);
 
-	अगर (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) अणु
+	if (!(ioc->transport_cmds.status & MPT3_CMD_COMPLETE)) {
 		ioc_err(ioc, "%s: timeout\n", __func__);
 		_debug_dump_mf(mpi_request,
-		    माप(Mpi2SmpPassthroughRequest_t)/4);
-		अगर (!(ioc->transport_cmds.status & MPT3_CMD_RESET)) अणु
+		    sizeof(Mpi2SmpPassthroughRequest_t)/4);
+		if (!(ioc->transport_cmds.status & MPT3_CMD_RESET)) {
 			mpt3sas_base_hard_reset_handler(ioc, FORCE_BIG_HAMMER);
 			rc = -ETIMEDOUT;
-			जाओ unmap_in;
-		पूर्ण
-	पूर्ण
+			goto unmap_in;
+		}
+	}
 
-	dtransportprपूर्णांकk(ioc, ioc_info(ioc, "%s - complete\n", __func__));
+	dtransportprintk(ioc, ioc_info(ioc, "%s - complete\n", __func__));
 
-	अगर (!(ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID)) अणु
-		dtransportprपूर्णांकk(ioc,
+	if (!(ioc->transport_cmds.status & MPT3_CMD_REPLY_VALID)) {
+		dtransportprintk(ioc,
 				 ioc_info(ioc, "%s: no reply\n", __func__));
 		rc = -ENXIO;
-		जाओ unmap_in;
-	पूर्ण
+		goto unmap_in;
+	}
 
 	mpi_reply = ioc->transport_cmds.reply;
 
-	dtransportprपूर्णांकk(ioc,
+	dtransportprintk(ioc,
 			 ioc_info(ioc, "%s: reply data transfer size(%d)\n",
 				  __func__,
 				  le16_to_cpu(mpi_reply->ResponseDataLength)));
 
-	स_नकल(job->reply, mpi_reply, माप(*mpi_reply));
-	job->reply_len = माप(*mpi_reply);
+	memcpy(job->reply, mpi_reply, sizeof(*mpi_reply));
+	job->reply_len = sizeof(*mpi_reply);
 	reslen = le16_to_cpu(mpi_reply->ResponseDataLength);
 
-	अगर (addr_in) अणु
+	if (addr_in) {
 		sg_copy_to_buffer(job->reply_payload.sg_list,
 				job->reply_payload.sg_cnt, addr_in,
 				job->reply_payload.payload_len);
-	पूर्ण
+	}
 
 	rc = 0;
  unmap_in:
@@ -2172,18 +2171,18 @@ _transport_smp_handler(काष्ठा bsg_job *job, काष्ठा Scsi_
  out:
 	ioc->transport_cmds.status = MPT3_CMD_NOT_USED;
 	mutex_unlock(&ioc->transport_cmds.mutex);
-job_करोne:
-	bsg_job_करोne(job, rc, reslen);
-पूर्ण
+job_done:
+	bsg_job_done(job, rc, reslen);
+}
 
-काष्ठा sas_function_ढाँचा mpt3sas_transport_functions = अणु
+struct sas_function_template mpt3sas_transport_functions = {
 	.get_linkerrors		= _transport_get_linkerrors,
-	.get_enclosure_identअगरier = _transport_get_enclosure_identअगरier,
-	.get_bay_identअगरier	= _transport_get_bay_identअगरier,
+	.get_enclosure_identifier = _transport_get_enclosure_identifier,
+	.get_bay_identifier	= _transport_get_bay_identifier,
 	.phy_reset		= _transport_phy_reset,
 	.phy_enable		= _transport_phy_enable,
 	.set_phy_speed		= _transport_phy_speed,
 	.smp_handler		= _transport_smp_handler,
-पूर्ण;
+};
 
-काष्ठा scsi_transport_ढाँचा *mpt3sas_transport_ढाँचा;
+struct scsi_transport_template *mpt3sas_transport_template;

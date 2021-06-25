@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASMAXP_UCONTEXT_H
-#घोषणा _ASMAXP_UCONTEXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASMAXP_UCONTEXT_H
+#define _ASMAXP_UCONTEXT_H
 
-काष्ठा ucontext अणु
-	अचिन्हित दीर्घ	  uc_flags;
-	काष्ठा ucontext  *uc_link;
+struct ucontext {
+	unsigned long	  uc_flags;
+	struct ucontext  *uc_link;
 	old_sigset_t	  uc_osf_sigmask;
 	stack_t		  uc_stack;
-	काष्ठा sigcontext uc_mcontext;
-	sigset_t	  uc_sigmask;	/* mask last क्रम extensibility */
-पूर्ण;
+	struct sigcontext uc_mcontext;
+	sigset_t	  uc_sigmask;	/* mask last for extensibility */
+};
 
-#पूर्ण_अगर /* !_ASMAXP_UCONTEXT_H */
+#endif /* !_ASMAXP_UCONTEXT_H */

@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* sbuslib.h: SBUS fb helper library पूर्णांकerfaces */
-#अगर_अघोषित _SBUSLIB_H
-#घोषणा _SBUSLIB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+/* sbuslib.h: SBUS fb helper library interfaces */
+#ifndef _SBUSLIB_H
+#define _SBUSLIB_H
 
-काष्ठा sbus_mmap_map अणु
-	अचिन्हित दीर्घ voff;
-	अचिन्हित दीर्घ poff;
-	अचिन्हित दीर्घ size;
-पूर्ण;
+struct sbus_mmap_map {
+	unsigned long voff;
+	unsigned long poff;
+	unsigned long size;
+};
 
-#घोषणा SBUS_MMAP_FBSIZE(n) (-n)
-#घोषणा SBUS_MMAP_EMPTY	0x80000000
+#define SBUS_MMAP_FBSIZE(n) (-n)
+#define SBUS_MMAP_EMPTY	0x80000000
 
-बाह्य व्योम sbusfb_fill_var(काष्ठा fb_var_screeninfo *var,
-			    काष्ठा device_node *dp, पूर्णांक bpp);
-काष्ठा vm_area_काष्ठा;
-बाह्य पूर्णांक sbusfb_mmap_helper(काष्ठा sbus_mmap_map *map,
-			      अचिन्हित दीर्घ physbase, अचिन्हित दीर्घ fbsize,
-			      अचिन्हित दीर्घ iospace,
-			      काष्ठा vm_area_काष्ठा *vma);
-पूर्णांक sbusfb_ioctl_helper(अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ arg,
-			काष्ठा fb_info *info,
-			पूर्णांक type, पूर्णांक fb_depth, अचिन्हित दीर्घ fb_size);
-पूर्णांक sbusfb_compat_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
-			अचिन्हित दीर्घ arg);
+extern void sbusfb_fill_var(struct fb_var_screeninfo *var,
+			    struct device_node *dp, int bpp);
+struct vm_area_struct;
+extern int sbusfb_mmap_helper(struct sbus_mmap_map *map,
+			      unsigned long physbase, unsigned long fbsize,
+			      unsigned long iospace,
+			      struct vm_area_struct *vma);
+int sbusfb_ioctl_helper(unsigned long cmd, unsigned long arg,
+			struct fb_info *info,
+			int type, int fb_depth, unsigned long fb_size);
+int sbusfb_compat_ioctl(struct fb_info *info, unsigned int cmd,
+			unsigned long arg);
 
-#पूर्ण_अगर /* _SBUSLIB_H */
+#endif /* _SBUSLIB_H */

@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2020 Collabora Ltd.
  */
-#अगर_अघोषित _SYSCALL_USER_DISPATCH_H
-#घोषणा _SYSCALL_USER_DISPATCH_H
+#ifndef _SYSCALL_USER_DISPATCH_H
+#define _SYSCALL_USER_DISPATCH_H
 
-#समावेश <linux/thपढ़ो_info.h>
+#include <linux/thread_info.h>
 
-#अगर_घोषित CONFIG_GENERIC_ENTRY
+#ifdef CONFIG_GENERIC_ENTRY
 
-काष्ठा syscall_user_dispatch अणु
-	अक्षर __user	*selector;
-	अचिन्हित दीर्घ	offset;
-	अचिन्हित दीर्घ	len;
+struct syscall_user_dispatch {
+	char __user	*selector;
+	unsigned long	offset;
+	unsigned long	len;
 	bool		on_dispatch;
-पूर्ण;
+};
 
-पूर्णांक set_syscall_user_dispatch(अचिन्हित दीर्घ mode, अचिन्हित दीर्घ offset,
-			      अचिन्हित दीर्घ len, अक्षर __user *selector);
+int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
+			      unsigned long len, char __user *selector);
 
-#घोषणा clear_syscall_work_syscall_user_dispatch(tsk) \
+#define clear_syscall_work_syscall_user_dispatch(tsk) \
 	clear_task_syscall_work(tsk, SYSCALL_USER_DISPATCH)
 
-#अन्यथा
-काष्ठा syscall_user_dispatch अणुपूर्ण;
+#else
+struct syscall_user_dispatch {};
 
-अटल अंतरभूत पूर्णांक set_syscall_user_dispatch(अचिन्हित दीर्घ mode, अचिन्हित दीर्घ offset,
-					    अचिन्हित दीर्घ len, अक्षर __user *selector)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int set_syscall_user_dispatch(unsigned long mode, unsigned long offset,
+					    unsigned long len, char __user *selector)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम clear_syscall_work_syscall_user_dispatch(काष्ठा task_काष्ठा *tsk)
-अणु
-पूर्ण
+static inline void clear_syscall_work_syscall_user_dispatch(struct task_struct *tsk)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_GENERIC_ENTRY */
+#endif /* CONFIG_GENERIC_ENTRY */
 
-#पूर्ण_अगर /* _SYSCALL_USER_DISPATCH_H */
+#endif /* _SYSCALL_USER_DISPATCH_H */

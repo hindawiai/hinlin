@@ -1,125 +1,124 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MARVELL_CESA_H__
-#घोषणा __MARVELL_CESA_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MARVELL_CESA_H__
+#define __MARVELL_CESA_H__
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/skcipher.h>
 
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/dmapool.h>
+#include <linux/dma-direction.h>
+#include <linux/dmapool.h>
 
-#घोषणा CESA_ENGINE_OFF(i)			(((i) * 0x2000))
+#define CESA_ENGINE_OFF(i)			(((i) * 0x2000))
 
-#घोषणा CESA_TDMA_BYTE_CNT			0x800
-#घोषणा CESA_TDMA_SRC_ADDR			0x810
-#घोषणा CESA_TDMA_DST_ADDR			0x820
-#घोषणा CESA_TDMA_NEXT_ADDR			0x830
+#define CESA_TDMA_BYTE_CNT			0x800
+#define CESA_TDMA_SRC_ADDR			0x810
+#define CESA_TDMA_DST_ADDR			0x820
+#define CESA_TDMA_NEXT_ADDR			0x830
 
-#घोषणा CESA_TDMA_CONTROL			0x840
-#घोषणा CESA_TDMA_DST_BURST			GENMASK(2, 0)
-#घोषणा CESA_TDMA_DST_BURST_32B			3
-#घोषणा CESA_TDMA_DST_BURST_128B		4
-#घोषणा CESA_TDMA_OUT_RD_EN			BIT(4)
-#घोषणा CESA_TDMA_SRC_BURST			GENMASK(8, 6)
-#घोषणा CESA_TDMA_SRC_BURST_32B			(3 << 6)
-#घोषणा CESA_TDMA_SRC_BURST_128B		(4 << 6)
-#घोषणा CESA_TDMA_CHAIN				BIT(9)
-#घोषणा CESA_TDMA_BYTE_SWAP			BIT(11)
-#घोषणा CESA_TDMA_NO_BYTE_SWAP			BIT(11)
-#घोषणा CESA_TDMA_EN				BIT(12)
-#घोषणा CESA_TDMA_FETCH_ND			BIT(13)
-#घोषणा CESA_TDMA_ACT				BIT(14)
+#define CESA_TDMA_CONTROL			0x840
+#define CESA_TDMA_DST_BURST			GENMASK(2, 0)
+#define CESA_TDMA_DST_BURST_32B			3
+#define CESA_TDMA_DST_BURST_128B		4
+#define CESA_TDMA_OUT_RD_EN			BIT(4)
+#define CESA_TDMA_SRC_BURST			GENMASK(8, 6)
+#define CESA_TDMA_SRC_BURST_32B			(3 << 6)
+#define CESA_TDMA_SRC_BURST_128B		(4 << 6)
+#define CESA_TDMA_CHAIN				BIT(9)
+#define CESA_TDMA_BYTE_SWAP			BIT(11)
+#define CESA_TDMA_NO_BYTE_SWAP			BIT(11)
+#define CESA_TDMA_EN				BIT(12)
+#define CESA_TDMA_FETCH_ND			BIT(13)
+#define CESA_TDMA_ACT				BIT(14)
 
-#घोषणा CESA_TDMA_CUR				0x870
-#घोषणा CESA_TDMA_ERROR_CAUSE			0x8c8
-#घोषणा CESA_TDMA_ERROR_MSK			0x8cc
+#define CESA_TDMA_CUR				0x870
+#define CESA_TDMA_ERROR_CAUSE			0x8c8
+#define CESA_TDMA_ERROR_MSK			0x8cc
 
-#घोषणा CESA_TDMA_WINDOW_BASE(x)		(((x) * 0x8) + 0xa00)
-#घोषणा CESA_TDMA_WINDOW_CTRL(x)		(((x) * 0x8) + 0xa04)
+#define CESA_TDMA_WINDOW_BASE(x)		(((x) * 0x8) + 0xa00)
+#define CESA_TDMA_WINDOW_CTRL(x)		(((x) * 0x8) + 0xa04)
 
-#घोषणा CESA_IVDIG(x)				(0xdd00 + ((x) * 4) +	\
+#define CESA_IVDIG(x)				(0xdd00 + ((x) * 4) +	\
 						 (((x) < 5) ? 0 : 0x14))
 
-#घोषणा CESA_SA_CMD				0xde00
-#घोषणा CESA_SA_CMD_EN_CESA_SA_ACCL0		BIT(0)
-#घोषणा CESA_SA_CMD_EN_CESA_SA_ACCL1		BIT(1)
-#घोषणा CESA_SA_CMD_DISABLE_SEC			BIT(2)
+#define CESA_SA_CMD				0xde00
+#define CESA_SA_CMD_EN_CESA_SA_ACCL0		BIT(0)
+#define CESA_SA_CMD_EN_CESA_SA_ACCL1		BIT(1)
+#define CESA_SA_CMD_DISABLE_SEC			BIT(2)
 
-#घोषणा CESA_SA_DESC_P0				0xde04
+#define CESA_SA_DESC_P0				0xde04
 
-#घोषणा CESA_SA_DESC_P1				0xde14
+#define CESA_SA_DESC_P1				0xde14
 
-#घोषणा CESA_SA_CFG				0xde08
-#घोषणा CESA_SA_CFG_STOP_DIG_ERR		GENMASK(1, 0)
-#घोषणा CESA_SA_CFG_DIG_ERR_CONT		0
-#घोषणा CESA_SA_CFG_DIG_ERR_SKIP		1
-#घोषणा CESA_SA_CFG_DIG_ERR_STOP		3
-#घोषणा CESA_SA_CFG_CH0_W_IDMA			BIT(7)
-#घोषणा CESA_SA_CFG_CH1_W_IDMA			BIT(8)
-#घोषणा CESA_SA_CFG_ACT_CH0_IDMA		BIT(9)
-#घोषणा CESA_SA_CFG_ACT_CH1_IDMA		BIT(10)
-#घोषणा CESA_SA_CFG_MULTI_PKT			BIT(11)
-#घोषणा CESA_SA_CFG_PARA_DIS			BIT(13)
+#define CESA_SA_CFG				0xde08
+#define CESA_SA_CFG_STOP_DIG_ERR		GENMASK(1, 0)
+#define CESA_SA_CFG_DIG_ERR_CONT		0
+#define CESA_SA_CFG_DIG_ERR_SKIP		1
+#define CESA_SA_CFG_DIG_ERR_STOP		3
+#define CESA_SA_CFG_CH0_W_IDMA			BIT(7)
+#define CESA_SA_CFG_CH1_W_IDMA			BIT(8)
+#define CESA_SA_CFG_ACT_CH0_IDMA		BIT(9)
+#define CESA_SA_CFG_ACT_CH1_IDMA		BIT(10)
+#define CESA_SA_CFG_MULTI_PKT			BIT(11)
+#define CESA_SA_CFG_PARA_DIS			BIT(13)
 
-#घोषणा CESA_SA_ACCEL_STATUS			0xde0c
-#घोषणा CESA_SA_ST_ACT_0			BIT(0)
-#घोषणा CESA_SA_ST_ACT_1			BIT(1)
+#define CESA_SA_ACCEL_STATUS			0xde0c
+#define CESA_SA_ST_ACT_0			BIT(0)
+#define CESA_SA_ST_ACT_1			BIT(1)
 
 /*
- * CESA_SA_FPGA_INT_STATUS looks like a FPGA leftover and is करोcumented only
+ * CESA_SA_FPGA_INT_STATUS looks like a FPGA leftover and is documented only
  * in Errata 4.12. It looks like that it was part of an IRQ-controller in FPGA
- * and someone क्रमgot to हटाओ  it जबतक चयनing to the core and moving to
+ * and someone forgot to remove  it while switching to the core and moving to
  * CESA_SA_INT_STATUS.
  */
-#घोषणा CESA_SA_FPGA_INT_STATUS			0xdd68
-#घोषणा CESA_SA_INT_STATUS			0xde20
-#घोषणा CESA_SA_INT_AUTH_DONE			BIT(0)
-#घोषणा CESA_SA_INT_DES_E_DONE			BIT(1)
-#घोषणा CESA_SA_INT_AES_E_DONE			BIT(2)
-#घोषणा CESA_SA_INT_AES_D_DONE			BIT(3)
-#घोषणा CESA_SA_INT_ENC_DONE			BIT(4)
-#घोषणा CESA_SA_INT_ACCEL0_DONE			BIT(5)
-#घोषणा CESA_SA_INT_ACCEL1_DONE			BIT(6)
-#घोषणा CESA_SA_INT_ACC0_IDMA_DONE		BIT(7)
-#घोषणा CESA_SA_INT_ACC1_IDMA_DONE		BIT(8)
-#घोषणा CESA_SA_INT_IDMA_DONE			BIT(9)
-#घोषणा CESA_SA_INT_IDMA_OWN_ERR		BIT(10)
+#define CESA_SA_FPGA_INT_STATUS			0xdd68
+#define CESA_SA_INT_STATUS			0xde20
+#define CESA_SA_INT_AUTH_DONE			BIT(0)
+#define CESA_SA_INT_DES_E_DONE			BIT(1)
+#define CESA_SA_INT_AES_E_DONE			BIT(2)
+#define CESA_SA_INT_AES_D_DONE			BIT(3)
+#define CESA_SA_INT_ENC_DONE			BIT(4)
+#define CESA_SA_INT_ACCEL0_DONE			BIT(5)
+#define CESA_SA_INT_ACCEL1_DONE			BIT(6)
+#define CESA_SA_INT_ACC0_IDMA_DONE		BIT(7)
+#define CESA_SA_INT_ACC1_IDMA_DONE		BIT(8)
+#define CESA_SA_INT_IDMA_DONE			BIT(9)
+#define CESA_SA_INT_IDMA_OWN_ERR		BIT(10)
 
-#घोषणा CESA_SA_INT_MSK				0xde24
+#define CESA_SA_INT_MSK				0xde24
 
-#घोषणा CESA_SA_DESC_CFG_OP_MAC_ONLY		0
-#घोषणा CESA_SA_DESC_CFG_OP_CRYPT_ONLY		1
-#घोषणा CESA_SA_DESC_CFG_OP_MAC_CRYPT		2
-#घोषणा CESA_SA_DESC_CFG_OP_CRYPT_MAC		3
-#घोषणा CESA_SA_DESC_CFG_OP_MSK			GENMASK(1, 0)
-#घोषणा CESA_SA_DESC_CFG_MACM_SHA256		(1 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_HMAC_SHA256	(3 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_MD5		(4 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_SHA1		(5 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_HMAC_MD5		(6 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_HMAC_SHA1		(7 << 4)
-#घोषणा CESA_SA_DESC_CFG_MACM_MSK		GENMASK(6, 4)
-#घोषणा CESA_SA_DESC_CFG_CRYPTM_DES		(1 << 8)
-#घोषणा CESA_SA_DESC_CFG_CRYPTM_3DES		(2 << 8)
-#घोषणा CESA_SA_DESC_CFG_CRYPTM_AES		(3 << 8)
-#घोषणा CESA_SA_DESC_CFG_CRYPTM_MSK		GENMASK(9, 8)
-#घोषणा CESA_SA_DESC_CFG_सूची_ENC		(0 << 12)
-#घोषणा CESA_SA_DESC_CFG_सूची_DEC		(1 << 12)
-#घोषणा CESA_SA_DESC_CFG_CRYPTCM_ECB		(0 << 16)
-#घोषणा CESA_SA_DESC_CFG_CRYPTCM_CBC		(1 << 16)
-#घोषणा CESA_SA_DESC_CFG_CRYPTCM_MSK		BIT(16)
-#घोषणा CESA_SA_DESC_CFG_3DES_EEE		(0 << 20)
-#घोषणा CESA_SA_DESC_CFG_3DES_EDE		(1 << 20)
-#घोषणा CESA_SA_DESC_CFG_AES_LEN_128		(0 << 24)
-#घोषणा CESA_SA_DESC_CFG_AES_LEN_192		(1 << 24)
-#घोषणा CESA_SA_DESC_CFG_AES_LEN_256		(2 << 24)
-#घोषणा CESA_SA_DESC_CFG_AES_LEN_MSK		GENMASK(25, 24)
-#घोषणा CESA_SA_DESC_CFG_NOT_FRAG		(0 << 30)
-#घोषणा CESA_SA_DESC_CFG_FIRST_FRAG		(1 << 30)
-#घोषणा CESA_SA_DESC_CFG_LAST_FRAG		(2 << 30)
-#घोषणा CESA_SA_DESC_CFG_MID_FRAG		(3 << 30)
-#घोषणा CESA_SA_DESC_CFG_FRAG_MSK		GENMASK(31, 30)
+#define CESA_SA_DESC_CFG_OP_MAC_ONLY		0
+#define CESA_SA_DESC_CFG_OP_CRYPT_ONLY		1
+#define CESA_SA_DESC_CFG_OP_MAC_CRYPT		2
+#define CESA_SA_DESC_CFG_OP_CRYPT_MAC		3
+#define CESA_SA_DESC_CFG_OP_MSK			GENMASK(1, 0)
+#define CESA_SA_DESC_CFG_MACM_SHA256		(1 << 4)
+#define CESA_SA_DESC_CFG_MACM_HMAC_SHA256	(3 << 4)
+#define CESA_SA_DESC_CFG_MACM_MD5		(4 << 4)
+#define CESA_SA_DESC_CFG_MACM_SHA1		(5 << 4)
+#define CESA_SA_DESC_CFG_MACM_HMAC_MD5		(6 << 4)
+#define CESA_SA_DESC_CFG_MACM_HMAC_SHA1		(7 << 4)
+#define CESA_SA_DESC_CFG_MACM_MSK		GENMASK(6, 4)
+#define CESA_SA_DESC_CFG_CRYPTM_DES		(1 << 8)
+#define CESA_SA_DESC_CFG_CRYPTM_3DES		(2 << 8)
+#define CESA_SA_DESC_CFG_CRYPTM_AES		(3 << 8)
+#define CESA_SA_DESC_CFG_CRYPTM_MSK		GENMASK(9, 8)
+#define CESA_SA_DESC_CFG_DIR_ENC		(0 << 12)
+#define CESA_SA_DESC_CFG_DIR_DEC		(1 << 12)
+#define CESA_SA_DESC_CFG_CRYPTCM_ECB		(0 << 16)
+#define CESA_SA_DESC_CFG_CRYPTCM_CBC		(1 << 16)
+#define CESA_SA_DESC_CFG_CRYPTCM_MSK		BIT(16)
+#define CESA_SA_DESC_CFG_3DES_EEE		(0 << 20)
+#define CESA_SA_DESC_CFG_3DES_EDE		(1 << 20)
+#define CESA_SA_DESC_CFG_AES_LEN_128		(0 << 24)
+#define CESA_SA_DESC_CFG_AES_LEN_192		(1 << 24)
+#define CESA_SA_DESC_CFG_AES_LEN_256		(2 << 24)
+#define CESA_SA_DESC_CFG_AES_LEN_MSK		GENMASK(25, 24)
+#define CESA_SA_DESC_CFG_NOT_FRAG		(0 << 30)
+#define CESA_SA_DESC_CFG_FIRST_FRAG		(1 << 30)
+#define CESA_SA_DESC_CFG_LAST_FRAG		(2 << 30)
+#define CESA_SA_DESC_CFG_MID_FRAG		(3 << 30)
+#define CESA_SA_DESC_CFG_FRAG_MSK		GENMASK(31, 30)
 
 /*
  * /-----------\ 0
@@ -152,74 +151,74 @@
  * \-----------/ SRAM size
  */
 
-#घोषणा CESA_SA_CFG_SRAM_OFFSET			0x00
-#घोषणा CESA_SA_DATA_SRAM_OFFSET		0x80
+#define CESA_SA_CFG_SRAM_OFFSET			0x00
+#define CESA_SA_DATA_SRAM_OFFSET		0x80
 
-#घोषणा CESA_SA_CRYPT_KEY_SRAM_OFFSET		0x20
-#घोषणा CESA_SA_CRYPT_IV_SRAM_OFFSET		0x40
+#define CESA_SA_CRYPT_KEY_SRAM_OFFSET		0x20
+#define CESA_SA_CRYPT_IV_SRAM_OFFSET		0x40
 
-#घोषणा CESA_SA_MAC_IIV_SRAM_OFFSET		0x20
-#घोषणा CESA_SA_MAC_OIV_SRAM_OFFSET		0x40
-#घोषणा CESA_SA_MAC_DIG_SRAM_OFFSET		0x60
+#define CESA_SA_MAC_IIV_SRAM_OFFSET		0x20
+#define CESA_SA_MAC_OIV_SRAM_OFFSET		0x40
+#define CESA_SA_MAC_DIG_SRAM_OFFSET		0x60
 
-#घोषणा CESA_SA_DESC_CRYPT_DATA(offset)					\
+#define CESA_SA_DESC_CRYPT_DATA(offset)					\
 	cpu_to_le32((CESA_SA_DATA_SRAM_OFFSET + (offset)) |		\
 		    ((CESA_SA_DATA_SRAM_OFFSET + (offset)) << 16))
 
-#घोषणा CESA_SA_DESC_CRYPT_IV(offset)					\
+#define CESA_SA_DESC_CRYPT_IV(offset)					\
 	cpu_to_le32((CESA_SA_CRYPT_IV_SRAM_OFFSET + (offset)) |	\
 		    ((CESA_SA_CRYPT_IV_SRAM_OFFSET + (offset)) << 16))
 
-#घोषणा CESA_SA_DESC_CRYPT_KEY(offset)					\
+#define CESA_SA_DESC_CRYPT_KEY(offset)					\
 	cpu_to_le32(CESA_SA_CRYPT_KEY_SRAM_OFFSET + (offset))
 
-#घोषणा CESA_SA_DESC_MAC_DATA(offset)					\
+#define CESA_SA_DESC_MAC_DATA(offset)					\
 	cpu_to_le32(CESA_SA_DATA_SRAM_OFFSET + (offset))
-#घोषणा CESA_SA_DESC_MAC_DATA_MSK		cpu_to_le32(GENMASK(15, 0))
+#define CESA_SA_DESC_MAC_DATA_MSK		cpu_to_le32(GENMASK(15, 0))
 
-#घोषणा CESA_SA_DESC_MAC_TOTAL_LEN(total_len)	cpu_to_le32((total_len) << 16)
-#घोषणा CESA_SA_DESC_MAC_TOTAL_LEN_MSK		cpu_to_le32(GENMASK(31, 16))
+#define CESA_SA_DESC_MAC_TOTAL_LEN(total_len)	cpu_to_le32((total_len) << 16)
+#define CESA_SA_DESC_MAC_TOTAL_LEN_MSK		cpu_to_le32(GENMASK(31, 16))
 
-#घोषणा CESA_SA_DESC_MAC_SRC_TOTAL_LEN_MAX	0xffff
+#define CESA_SA_DESC_MAC_SRC_TOTAL_LEN_MAX	0xffff
 
-#घोषणा CESA_SA_DESC_MAC_DIGEST(offset)					\
+#define CESA_SA_DESC_MAC_DIGEST(offset)					\
 	cpu_to_le32(CESA_SA_MAC_DIG_SRAM_OFFSET + (offset))
-#घोषणा CESA_SA_DESC_MAC_DIGEST_MSK		cpu_to_le32(GENMASK(15, 0))
+#define CESA_SA_DESC_MAC_DIGEST_MSK		cpu_to_le32(GENMASK(15, 0))
 
-#घोषणा CESA_SA_DESC_MAC_FRAG_LEN(frag_len)	cpu_to_le32((frag_len) << 16)
-#घोषणा CESA_SA_DESC_MAC_FRAG_LEN_MSK		cpu_to_le32(GENMASK(31, 16))
+#define CESA_SA_DESC_MAC_FRAG_LEN(frag_len)	cpu_to_le32((frag_len) << 16)
+#define CESA_SA_DESC_MAC_FRAG_LEN_MSK		cpu_to_le32(GENMASK(31, 16))
 
-#घोषणा CESA_SA_DESC_MAC_IV(offset)					\
+#define CESA_SA_DESC_MAC_IV(offset)					\
 	cpu_to_le32((CESA_SA_MAC_IIV_SRAM_OFFSET + (offset)) |		\
 		    ((CESA_SA_MAC_OIV_SRAM_OFFSET + (offset)) << 16))
 
-#घोषणा CESA_SA_SRAM_SIZE			2048
-#घोषणा CESA_SA_SRAM_PAYLOAD_SIZE		(cesa_dev->sram_size - \
+#define CESA_SA_SRAM_SIZE			2048
+#define CESA_SA_SRAM_PAYLOAD_SIZE		(cesa_dev->sram_size - \
 						 CESA_SA_DATA_SRAM_OFFSET)
 
-#घोषणा CESA_SA_DEFAULT_SRAM_SIZE		2048
-#घोषणा CESA_SA_MIN_SRAM_SIZE			1024
+#define CESA_SA_DEFAULT_SRAM_SIZE		2048
+#define CESA_SA_MIN_SRAM_SIZE			1024
 
-#घोषणा CESA_SA_SRAM_MSK			(2048 - 1)
+#define CESA_SA_SRAM_MSK			(2048 - 1)
 
-#घोषणा CESA_MAX_HASH_BLOCK_SIZE		64
-#घोषणा CESA_HASH_BLOCK_SIZE_MSK		(CESA_MAX_HASH_BLOCK_SIZE - 1)
+#define CESA_MAX_HASH_BLOCK_SIZE		64
+#define CESA_HASH_BLOCK_SIZE_MSK		(CESA_MAX_HASH_BLOCK_SIZE - 1)
 
 /**
- * काष्ठा mv_cesa_sec_accel_desc - security accelerator descriptor
+ * struct mv_cesa_sec_accel_desc - security accelerator descriptor
  * @config:	engine config
- * @enc_p:	input and output data poपूर्णांकers क्रम a cipher operation
+ * @enc_p:	input and output data pointers for a cipher operation
  * @enc_len:	cipher operation length
- * @enc_key_p:	cipher key poपूर्णांकer
- * @enc_iv:	cipher IV poपूर्णांकers
- * @mac_src_p:	input poपूर्णांकer and total hash length
- * @mac_digest:	digest poपूर्णांकer and hash operation length
- * @mac_iv:	hmac IV poपूर्णांकers
+ * @enc_key_p:	cipher key pointer
+ * @enc_iv:	cipher IV pointers
+ * @mac_src_p:	input pointer and total hash length
+ * @mac_digest:	digest pointer and hash operation length
+ * @mac_iv:	hmac IV pointers
  *
  * Structure passed to the CESA engine to describe the crypto operation
  * to be executed.
  */
-काष्ठा mv_cesa_sec_accel_desc अणु
+struct mv_cesa_sec_accel_desc {
 	__le32 config;
 	__le32 enc_p;
 	__le32 enc_len;
@@ -228,67 +227,67 @@
 	__le32 mac_src_p;
 	__le32 mac_digest;
 	__le32 mac_iv;
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_skcipher_op_ctx - cipher operation context
+ * struct mv_cesa_skcipher_op_ctx - cipher operation context
  * @key:	cipher key
  * @iv:		cipher IV
  *
  * Context associated to a cipher operation.
  */
-काष्ठा mv_cesa_skcipher_op_ctx अणु
+struct mv_cesa_skcipher_op_ctx {
 	__le32 key[8];
 	u32 iv[4];
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_hash_op_ctx - hash or hmac operation context
+ * struct mv_cesa_hash_op_ctx - hash or hmac operation context
  * @key:	cipher key
  * @iv:		cipher IV
  *
  * Context associated to an hash or hmac operation.
  */
-काष्ठा mv_cesa_hash_op_ctx अणु
+struct mv_cesa_hash_op_ctx {
 	u32 iv[16];
 	__le32 hash[8];
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_op_ctx - crypto operation context
+ * struct mv_cesa_op_ctx - crypto operation context
  * @desc:	CESA descriptor
  * @ctx:	context associated to the crypto operation
  *
  * Context associated to a crypto operation.
  */
-काष्ठा mv_cesa_op_ctx अणु
-	काष्ठा mv_cesa_sec_accel_desc desc;
-	जोड़ अणु
-		काष्ठा mv_cesa_skcipher_op_ctx skcipher;
-		काष्ठा mv_cesa_hash_op_ctx hash;
-	पूर्ण ctx;
-पूर्ण;
+struct mv_cesa_op_ctx {
+	struct mv_cesa_sec_accel_desc desc;
+	union {
+		struct mv_cesa_skcipher_op_ctx skcipher;
+		struct mv_cesa_hash_op_ctx hash;
+	} ctx;
+};
 
 /* TDMA descriptor flags */
-#घोषणा CESA_TDMA_DST_IN_SRAM			BIT(31)
-#घोषणा CESA_TDMA_SRC_IN_SRAM			BIT(30)
-#घोषणा CESA_TDMA_END_OF_REQ			BIT(29)
-#घोषणा CESA_TDMA_BREAK_CHAIN			BIT(28)
-#घोषणा CESA_TDMA_SET_STATE			BIT(27)
-#घोषणा CESA_TDMA_TYPE_MSK			GENMASK(26, 0)
-#घोषणा CESA_TDMA_DUMMY				0
-#घोषणा CESA_TDMA_DATA				1
-#घोषणा CESA_TDMA_OP				2
-#घोषणा CESA_TDMA_RESULT			3
+#define CESA_TDMA_DST_IN_SRAM			BIT(31)
+#define CESA_TDMA_SRC_IN_SRAM			BIT(30)
+#define CESA_TDMA_END_OF_REQ			BIT(29)
+#define CESA_TDMA_BREAK_CHAIN			BIT(28)
+#define CESA_TDMA_SET_STATE			BIT(27)
+#define CESA_TDMA_TYPE_MSK			GENMASK(26, 0)
+#define CESA_TDMA_DUMMY				0
+#define CESA_TDMA_DATA				1
+#define CESA_TDMA_OP				2
+#define CESA_TDMA_RESULT			3
 
 /**
- * काष्ठा mv_cesa_tdma_desc - TDMA descriptor
+ * struct mv_cesa_tdma_desc - TDMA descriptor
  * @byte_cnt:	number of bytes to transfer
  * @src:	DMA address of the source
  * @dst:	DMA address of the destination
  * @next_dma:	DMA address of the next TDMA descriptor
  * @cur_dma:	DMA address of this TDMA descriptor
- * @next:	poपूर्णांकer to the next TDMA descriptor
+ * @next:	pointer to the next TDMA descriptor
  * @op:		CESA operation attached to this TDMA descriptor
  * @data:	raw data attached to this TDMA descriptor
  * @flags:	flags describing the TDMA transfer. See the
@@ -297,76 +296,76 @@
  * TDMA descriptor used to create a transfer chain describing a crypto
  * operation.
  */
-काष्ठा mv_cesa_tdma_desc अणु
+struct mv_cesa_tdma_desc {
 	__le32 byte_cnt;
-	जोड़ अणु
+	union {
 		__le32 src;
 		u32 src_dma;
-	पूर्ण;
-	जोड़ अणु
+	};
+	union {
 		__le32 dst;
 		u32 dst_dma;
-	पूर्ण;
+	};
 	__le32 next_dma;
 
 	/* Software state */
 	dma_addr_t cur_dma;
-	काष्ठा mv_cesa_tdma_desc *next;
-	जोड़ अणु
-		काष्ठा mv_cesa_op_ctx *op;
-		व्योम *data;
-	पूर्ण;
+	struct mv_cesa_tdma_desc *next;
+	union {
+		struct mv_cesa_op_ctx *op;
+		void *data;
+	};
 	u32 flags;
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_sg_dma_iter - scatter-gather iterator
+ * struct mv_cesa_sg_dma_iter - scatter-gather iterator
  * @dir:	transfer direction
  * @sg:		scatter list
  * @offset:	current position in the scatter list
  * @op_offset:	current position in the crypto operation
  *
- * Iterator used to iterate over a scatterlist जबतक creating a TDMA chain क्रम
+ * Iterator used to iterate over a scatterlist while creating a TDMA chain for
  * a crypto operation.
  */
-काष्ठा mv_cesa_sg_dma_iter अणु
-	क्रमागत dma_data_direction dir;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक op_offset;
-पूर्ण;
+struct mv_cesa_sg_dma_iter {
+	enum dma_data_direction dir;
+	struct scatterlist *sg;
+	unsigned int offset;
+	unsigned int op_offset;
+};
 
 /**
- * काष्ठा mv_cesa_dma_iter - crypto operation iterator
+ * struct mv_cesa_dma_iter - crypto operation iterator
  * @len:	the crypto operation length
  * @offset:	current position in the crypto operation
  * @op_len:	sub-operation length (the crypto engine can only act on 2kb
  *		chunks)
  *
- * Iterator used to create a TDMA chain क्रम a given crypto operation.
+ * Iterator used to create a TDMA chain for a given crypto operation.
  */
-काष्ठा mv_cesa_dma_iter अणु
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक op_len;
-पूर्ण;
+struct mv_cesa_dma_iter {
+	unsigned int len;
+	unsigned int offset;
+	unsigned int op_len;
+};
 
 /**
- * काष्ठा mv_cesa_tdma_chain - TDMA chain
+ * struct mv_cesa_tdma_chain - TDMA chain
  * @first:	first entry in the TDMA chain
  * @last:	last entry in the TDMA chain
  *
- * Stores a TDMA chain क्रम a specअगरic crypto operation.
+ * Stores a TDMA chain for a specific crypto operation.
  */
-काष्ठा mv_cesa_tdma_chain अणु
-	काष्ठा mv_cesa_tdma_desc *first;
-	काष्ठा mv_cesa_tdma_desc *last;
-पूर्ण;
+struct mv_cesa_tdma_chain {
+	struct mv_cesa_tdma_desc *first;
+	struct mv_cesa_tdma_desc *last;
+};
 
-काष्ठा mv_cesa_engine;
+struct mv_cesa_engine;
 
 /**
- * काष्ठा mv_cesa_caps - CESA device capabilities
+ * struct mv_cesa_caps - CESA device capabilities
  * @engines:		number of engines
  * @has_tdma:		whether this device has a TDMA block
  * @cipher_algs:	supported cipher algorithms
@@ -376,17 +375,17 @@
  *
  * Structure used to describe CESA device capabilities.
  */
-काष्ठा mv_cesa_caps अणु
-	पूर्णांक nengines;
+struct mv_cesa_caps {
+	int nengines;
 	bool has_tdma;
-	काष्ठा skcipher_alg **cipher_algs;
-	पूर्णांक ncipher_algs;
-	काष्ठा ahash_alg **ahash_algs;
-	पूर्णांक nahash_algs;
-पूर्ण;
+	struct skcipher_alg **cipher_algs;
+	int ncipher_algs;
+	struct ahash_alg **ahash_algs;
+	int nahash_algs;
+};
 
 /**
- * काष्ठा mv_cesa_dev_dma - DMA pools
+ * struct mv_cesa_dev_dma - DMA pools
  * @tdma_desc_pool:	TDMA desc pool
  * @op_pool:		crypto operation pool
  * @cache_pool:		data cache pool (used by hash implementation when the
@@ -394,40 +393,40 @@
  * @padding_pool:	padding pool (used by hash implementation when hardware
  *			padding cannot be used)
  *
- * Structure containing the dअगरferent DMA pools used by this driver.
+ * Structure containing the different DMA pools used by this driver.
  */
-काष्ठा mv_cesa_dev_dma अणु
-	काष्ठा dma_pool *tdma_desc_pool;
-	काष्ठा dma_pool *op_pool;
-	काष्ठा dma_pool *cache_pool;
-	काष्ठा dma_pool *padding_pool;
-पूर्ण;
+struct mv_cesa_dev_dma {
+	struct dma_pool *tdma_desc_pool;
+	struct dma_pool *op_pool;
+	struct dma_pool *cache_pool;
+	struct dma_pool *padding_pool;
+};
 
 /**
- * काष्ठा mv_cesa_dev - CESA device
+ * struct mv_cesa_dev - CESA device
  * @caps:	device capabilities
- * @regs:	device रेजिस्टरs
+ * @regs:	device registers
  * @sram_size:	usable SRAM size
  * @lock:	device lock
  * @engines:	array of engines
  * @dma:	dma pools
  *
- * Structure storing CESA device inक्रमmation.
+ * Structure storing CESA device information.
  */
-काष्ठा mv_cesa_dev अणु
-	स्थिर काष्ठा mv_cesa_caps *caps;
-	व्योम __iomem *regs;
-	काष्ठा device *dev;
-	अचिन्हित पूर्णांक sram_size;
+struct mv_cesa_dev {
+	const struct mv_cesa_caps *caps;
+	void __iomem *regs;
+	struct device *dev;
+	unsigned int sram_size;
 	spinlock_t lock;
-	काष्ठा mv_cesa_engine *engines;
-	काष्ठा mv_cesa_dev_dma *dma;
-पूर्ण;
+	struct mv_cesa_engine *engines;
+	struct mv_cesa_dev_dma *dma;
+};
 
 /**
- * काष्ठा mv_cesa_engine - CESA engine
+ * struct mv_cesa_engine - CESA engine
  * @id:			engine id
- * @regs:		engine रेजिस्टरs
+ * @regs:		engine registers
  * @sram:		SRAM memory region
  * @sram_pool:		SRAM memory region from pool
  * @sram_dma:		DMA address of the SRAM memory region
@@ -436,246 +435,246 @@
  * @clk:		engine clk
  * @zclk:		engine zclk
  * @max_req_len:	maximum chunk length (useful to create the TDMA chain)
- * @पूर्णांक_mask:		पूर्णांकerrupt mask cache
- * @pool:		memory pool poपूर्णांकing to the memory region reserved in
+ * @int_mask:		interrupt mask cache
+ * @pool:		memory pool pointing to the memory region reserved in
  *			SRAM
- * @queue:		fअगरo of the pending crypto requests
- * @load:		engine load counter, useful क्रम load balancing
+ * @queue:		fifo of the pending crypto requests
+ * @load:		engine load counter, useful for load balancing
  * @chain:		list of the current tdma descriptors being processed
  *			by this engine.
- * @complete_queue:	fअगरo of the processed requests by the engine
+ * @complete_queue:	fifo of the processed requests by the engine
  *
- * Structure storing CESA engine inक्रमmation.
+ * Structure storing CESA engine information.
  */
-काष्ठा mv_cesa_engine अणु
-	पूर्णांक id;
-	व्योम __iomem *regs;
-	जोड़ अणु
-		व्योम __iomem *sram;
-		व्योम *sram_pool;
-	पूर्ण;
+struct mv_cesa_engine {
+	int id;
+	void __iomem *regs;
+	union {
+		void __iomem *sram;
+		void *sram_pool;
+	};
 	dma_addr_t sram_dma;
 	spinlock_t lock;
-	काष्ठा crypto_async_request *req;
-	काष्ठा clk *clk;
-	काष्ठा clk *zclk;
-	माप_प्रकार max_req_len;
-	u32 पूर्णांक_mask;
-	काष्ठा gen_pool *pool;
-	काष्ठा crypto_queue queue;
+	struct crypto_async_request *req;
+	struct clk *clk;
+	struct clk *zclk;
+	size_t max_req_len;
+	u32 int_mask;
+	struct gen_pool *pool;
+	struct crypto_queue queue;
 	atomic_t load;
-	काष्ठा mv_cesa_tdma_chain chain;
-	काष्ठा list_head complete_queue;
-	पूर्णांक irq;
-पूर्ण;
+	struct mv_cesa_tdma_chain chain;
+	struct list_head complete_queue;
+	int irq;
+};
 
 /**
- * काष्ठा mv_cesa_req_ops - CESA request operations
- * @process:	process a request chunk result (should वापस 0 अगर the
- *		operation, -EINPROGRESS अगर it needs more steps or an error
+ * struct mv_cesa_req_ops - CESA request operations
+ * @process:	process a request chunk result (should return 0 if the
+ *		operation, -EINPROGRESS if it needs more steps or an error
  *		code)
  * @step:	launch the crypto operation on the next chunk
  * @cleanup:	cleanup the crypto request (release associated data)
  * @complete:	complete the request, i.e copy result or context from sram when
  *		needed.
  */
-काष्ठा mv_cesa_req_ops अणु
-	पूर्णांक (*process)(काष्ठा crypto_async_request *req, u32 status);
-	व्योम (*step)(काष्ठा crypto_async_request *req);
-	व्योम (*cleanup)(काष्ठा crypto_async_request *req);
-	व्योम (*complete)(काष्ठा crypto_async_request *req);
-पूर्ण;
+struct mv_cesa_req_ops {
+	int (*process)(struct crypto_async_request *req, u32 status);
+	void (*step)(struct crypto_async_request *req);
+	void (*cleanup)(struct crypto_async_request *req);
+	void (*complete)(struct crypto_async_request *req);
+};
 
 /**
- * काष्ठा mv_cesa_ctx - CESA operation context
+ * struct mv_cesa_ctx - CESA operation context
  * @ops:	crypto operations
  *
- * Base context काष्ठाure inherited by operation specअगरic ones.
+ * Base context structure inherited by operation specific ones.
  */
-काष्ठा mv_cesa_ctx अणु
-	स्थिर काष्ठा mv_cesa_req_ops *ops;
-पूर्ण;
+struct mv_cesa_ctx {
+	const struct mv_cesa_req_ops *ops;
+};
 
 /**
- * काष्ठा mv_cesa_hash_ctx - CESA hash operation context
- * @base:	base context काष्ठाure
+ * struct mv_cesa_hash_ctx - CESA hash operation context
+ * @base:	base context structure
  *
- * Hash context काष्ठाure.
+ * Hash context structure.
  */
-काष्ठा mv_cesa_hash_ctx अणु
-	काष्ठा mv_cesa_ctx base;
-पूर्ण;
+struct mv_cesa_hash_ctx {
+	struct mv_cesa_ctx base;
+};
 
 /**
- * काष्ठा mv_cesa_hash_ctx - CESA hmac operation context
- * @base:	base context काष्ठाure
+ * struct mv_cesa_hash_ctx - CESA hmac operation context
+ * @base:	base context structure
  * @iv:		initialization vectors
  *
- * HMAC context काष्ठाure.
+ * HMAC context structure.
  */
-काष्ठा mv_cesa_hmac_ctx अणु
-	काष्ठा mv_cesa_ctx base;
+struct mv_cesa_hmac_ctx {
+	struct mv_cesa_ctx base;
 	__be32 iv[16];
-पूर्ण;
+};
 
 /**
- * क्रमागत mv_cesa_req_type - request type definitions
+ * enum mv_cesa_req_type - request type definitions
  * @CESA_STD_REQ:	standard request
  * @CESA_DMA_REQ:	DMA request
  */
-क्रमागत mv_cesa_req_type अणु
+enum mv_cesa_req_type {
 	CESA_STD_REQ,
 	CESA_DMA_REQ,
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_req - CESA request
+ * struct mv_cesa_req - CESA request
  * @engine:	engine associated with this request
  * @chain:	list of tdma descriptors associated  with this request
  */
-काष्ठा mv_cesa_req अणु
-	काष्ठा mv_cesa_engine *engine;
-	काष्ठा mv_cesa_tdma_chain chain;
-पूर्ण;
+struct mv_cesa_req {
+	struct mv_cesa_engine *engine;
+	struct mv_cesa_tdma_chain chain;
+};
 
 /**
- * काष्ठा mv_cesa_sg_std_iter - CESA scatter-gather iterator क्रम standard
+ * struct mv_cesa_sg_std_iter - CESA scatter-gather iterator for standard
  *				requests
  * @iter:	sg mapping iterator
  * @offset:	current offset in the SG entry mapped in memory
  */
-काष्ठा mv_cesa_sg_std_iter अणु
-	काष्ठा sg_mapping_iter iter;
-	अचिन्हित पूर्णांक offset;
-पूर्ण;
+struct mv_cesa_sg_std_iter {
+	struct sg_mapping_iter iter;
+	unsigned int offset;
+};
 
 /**
- * काष्ठा mv_cesa_skcipher_std_req - cipher standard request
+ * struct mv_cesa_skcipher_std_req - cipher standard request
  * @op:		operation context
  * @offset:	current operation offset
  * @size:	size of the crypto operation
  */
-काष्ठा mv_cesa_skcipher_std_req अणु
-	काष्ठा mv_cesa_op_ctx op;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक size;
+struct mv_cesa_skcipher_std_req {
+	struct mv_cesa_op_ctx op;
+	unsigned int offset;
+	unsigned int size;
 	bool skip_ctx;
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_skcipher_req - cipher request
- * @req:	type specअगरic request inक्रमmation
+ * struct mv_cesa_skcipher_req - cipher request
+ * @req:	type specific request information
  * @src_nents:	number of entries in the src sg list
  * @dst_nents:	number of entries in the dest sg list
  */
-काष्ठा mv_cesa_skcipher_req अणु
-	काष्ठा mv_cesa_req base;
-	काष्ठा mv_cesa_skcipher_std_req std;
-	पूर्णांक src_nents;
-	पूर्णांक dst_nents;
-पूर्ण;
+struct mv_cesa_skcipher_req {
+	struct mv_cesa_req base;
+	struct mv_cesa_skcipher_std_req std;
+	int src_nents;
+	int dst_nents;
+};
 
 /**
- * काष्ठा mv_cesa_ahash_std_req - standard hash request
+ * struct mv_cesa_ahash_std_req - standard hash request
  * @offset:	current operation offset
  */
-काष्ठा mv_cesa_ahash_std_req अणु
-	अचिन्हित पूर्णांक offset;
-पूर्ण;
+struct mv_cesa_ahash_std_req {
+	unsigned int offset;
+};
 
 /**
- * काष्ठा mv_cesa_ahash_dma_req - DMA hash request
+ * struct mv_cesa_ahash_dma_req - DMA hash request
  * @padding:		padding buffer
  * @padding_dma:	DMA address of the padding buffer
  * @cache_dma:		DMA address of the cache buffer
  */
-काष्ठा mv_cesa_ahash_dma_req अणु
+struct mv_cesa_ahash_dma_req {
 	u8 *padding;
 	dma_addr_t padding_dma;
 	u8 *cache;
 	dma_addr_t cache_dma;
-पूर्ण;
+};
 
 /**
- * काष्ठा mv_cesa_ahash_req - hash request
- * @req:		type specअगरic request inक्रमmation
+ * struct mv_cesa_ahash_req - hash request
+ * @req:		type specific request information
  * @cache:		cache buffer
- * @cache_ptr:		ग_लिखो poपूर्णांकer in the cache buffer
+ * @cache_ptr:		write pointer in the cache buffer
  * @len:		hash total length
  * @src_nents:		number of entries in the scatterlist
  * @last_req:		define whether the current operation is the last one
  *			or not
  * @state:		hash state
  */
-काष्ठा mv_cesa_ahash_req अणु
-	काष्ठा mv_cesa_req base;
-	जोड़ अणु
-		काष्ठा mv_cesa_ahash_dma_req dma;
-		काष्ठा mv_cesa_ahash_std_req std;
-	पूर्ण req;
-	काष्ठा mv_cesa_op_ctx op_पंचांगpl;
+struct mv_cesa_ahash_req {
+	struct mv_cesa_req base;
+	union {
+		struct mv_cesa_ahash_dma_req dma;
+		struct mv_cesa_ahash_std_req std;
+	} req;
+	struct mv_cesa_op_ctx op_tmpl;
 	u8 cache[CESA_MAX_HASH_BLOCK_SIZE];
-	अचिन्हित पूर्णांक cache_ptr;
+	unsigned int cache_ptr;
 	u64 len;
-	पूर्णांक src_nents;
+	int src_nents;
 	bool last_req;
 	bool algo_le;
 	u32 state[8];
-पूर्ण;
+};
 
 /* CESA functions */
 
-बाह्य काष्ठा mv_cesa_dev *cesa_dev;
+extern struct mv_cesa_dev *cesa_dev;
 
 
-अटल अंतरभूत व्योम
-mv_cesa_engine_enqueue_complete_request(काष्ठा mv_cesa_engine *engine,
-					काष्ठा crypto_async_request *req)
-अणु
+static inline void
+mv_cesa_engine_enqueue_complete_request(struct mv_cesa_engine *engine,
+					struct crypto_async_request *req)
+{
 	list_add_tail(&req->list, &engine->complete_queue);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा crypto_async_request *
-mv_cesa_engine_dequeue_complete_request(काष्ठा mv_cesa_engine *engine)
-अणु
-	काष्ठा crypto_async_request *req;
+static inline struct crypto_async_request *
+mv_cesa_engine_dequeue_complete_request(struct mv_cesa_engine *engine)
+{
+	struct crypto_async_request *req;
 
 	req = list_first_entry_or_null(&engine->complete_queue,
-				       काष्ठा crypto_async_request,
+				       struct crypto_async_request,
 				       list);
-	अगर (req)
+	if (req)
 		list_del(&req->list);
 
-	वापस req;
-पूर्ण
+	return req;
+}
 
 
-अटल अंतरभूत क्रमागत mv_cesa_req_type
-mv_cesa_req_get_type(काष्ठा mv_cesa_req *req)
-अणु
-	वापस req->chain.first ? CESA_DMA_REQ : CESA_STD_REQ;
-पूर्ण
+static inline enum mv_cesa_req_type
+mv_cesa_req_get_type(struct mv_cesa_req *req)
+{
+	return req->chain.first ? CESA_DMA_REQ : CESA_STD_REQ;
+}
 
-अटल अंतरभूत व्योम mv_cesa_update_op_cfg(काष्ठा mv_cesa_op_ctx *op,
+static inline void mv_cesa_update_op_cfg(struct mv_cesa_op_ctx *op,
 					 u32 cfg, u32 mask)
-अणु
+{
 	op->desc.config &= cpu_to_le32(~mask);
 	op->desc.config |= cpu_to_le32(cfg);
-पूर्ण
+}
 
-अटल अंतरभूत u32 mv_cesa_get_op_cfg(स्थिर काष्ठा mv_cesa_op_ctx *op)
-अणु
-	वापस le32_to_cpu(op->desc.config);
-पूर्ण
+static inline u32 mv_cesa_get_op_cfg(const struct mv_cesa_op_ctx *op)
+{
+	return le32_to_cpu(op->desc.config);
+}
 
-अटल अंतरभूत व्योम mv_cesa_set_op_cfg(काष्ठा mv_cesa_op_ctx *op, u32 cfg)
-अणु
+static inline void mv_cesa_set_op_cfg(struct mv_cesa_op_ctx *op, u32 cfg)
+{
 	op->desc.config = cpu_to_le32(cfg);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_adjust_op(काष्ठा mv_cesa_engine *engine,
-				     काष्ठा mv_cesa_op_ctx *op)
-अणु
+static inline void mv_cesa_adjust_op(struct mv_cesa_engine *engine,
+				     struct mv_cesa_op_ctx *op)
+{
 	u32 offset = engine->sram_dma & CESA_SA_SRAM_MSK;
 
 	op->desc.enc_p = CESA_SA_DESC_CRYPT_DATA(offset);
@@ -686,89 +685,89 @@ mv_cesa_req_get_type(काष्ठा mv_cesa_req *req)
 	op->desc.mac_digest &= ~CESA_SA_DESC_MAC_DIGEST_MSK;
 	op->desc.mac_digest |= CESA_SA_DESC_MAC_DIGEST(offset);
 	op->desc.mac_iv = CESA_SA_DESC_MAC_IV(offset);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_set_crypt_op_len(काष्ठा mv_cesa_op_ctx *op, पूर्णांक len)
-अणु
+static inline void mv_cesa_set_crypt_op_len(struct mv_cesa_op_ctx *op, int len)
+{
 	op->desc.enc_len = cpu_to_le32(len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_set_mac_op_total_len(काष्ठा mv_cesa_op_ctx *op,
-						पूर्णांक len)
-अणु
+static inline void mv_cesa_set_mac_op_total_len(struct mv_cesa_op_ctx *op,
+						int len)
+{
 	op->desc.mac_src_p &= ~CESA_SA_DESC_MAC_TOTAL_LEN_MSK;
 	op->desc.mac_src_p |= CESA_SA_DESC_MAC_TOTAL_LEN(len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_set_mac_op_frag_len(काष्ठा mv_cesa_op_ctx *op,
-					       पूर्णांक len)
-अणु
+static inline void mv_cesa_set_mac_op_frag_len(struct mv_cesa_op_ctx *op,
+					       int len)
+{
 	op->desc.mac_digest &= ~CESA_SA_DESC_MAC_FRAG_LEN_MSK;
 	op->desc.mac_digest |= CESA_SA_DESC_MAC_FRAG_LEN(len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_set_पूर्णांक_mask(काष्ठा mv_cesa_engine *engine,
-					u32 पूर्णांक_mask)
-अणु
-	अगर (पूर्णांक_mask == engine->पूर्णांक_mask)
-		वापस;
+static inline void mv_cesa_set_int_mask(struct mv_cesa_engine *engine,
+					u32 int_mask)
+{
+	if (int_mask == engine->int_mask)
+		return;
 
-	ग_लिखोl_relaxed(पूर्णांक_mask, engine->regs + CESA_SA_INT_MSK);
-	engine->पूर्णांक_mask = पूर्णांक_mask;
-पूर्ण
+	writel_relaxed(int_mask, engine->regs + CESA_SA_INT_MSK);
+	engine->int_mask = int_mask;
+}
 
-अटल अंतरभूत u32 mv_cesa_get_पूर्णांक_mask(काष्ठा mv_cesa_engine *engine)
-अणु
-	वापस engine->पूर्णांक_mask;
-पूर्ण
+static inline u32 mv_cesa_get_int_mask(struct mv_cesa_engine *engine)
+{
+	return engine->int_mask;
+}
 
-अटल अंतरभूत bool mv_cesa_mac_op_is_first_frag(स्थिर काष्ठा mv_cesa_op_ctx *op)
-अणु
-	वापस (mv_cesa_get_op_cfg(op) & CESA_SA_DESC_CFG_FRAG_MSK) ==
+static inline bool mv_cesa_mac_op_is_first_frag(const struct mv_cesa_op_ctx *op)
+{
+	return (mv_cesa_get_op_cfg(op) & CESA_SA_DESC_CFG_FRAG_MSK) ==
 		CESA_SA_DESC_CFG_FIRST_FRAG;
-पूर्ण
+}
 
-पूर्णांक mv_cesa_queue_req(काष्ठा crypto_async_request *req,
-		      काष्ठा mv_cesa_req *creq);
+int mv_cesa_queue_req(struct crypto_async_request *req,
+		      struct mv_cesa_req *creq);
 
-काष्ठा crypto_async_request *
-mv_cesa_dequeue_req_locked(काष्ठा mv_cesa_engine *engine,
-			   काष्ठा crypto_async_request **backlog);
+struct crypto_async_request *
+mv_cesa_dequeue_req_locked(struct mv_cesa_engine *engine,
+			   struct crypto_async_request **backlog);
 
-अटल अंतरभूत काष्ठा mv_cesa_engine *mv_cesa_select_engine(पूर्णांक weight)
-अणु
-	पूर्णांक i;
+static inline struct mv_cesa_engine *mv_cesa_select_engine(int weight)
+{
+	int i;
 	u32 min_load = U32_MAX;
-	काष्ठा mv_cesa_engine *selected = शून्य;
+	struct mv_cesa_engine *selected = NULL;
 
-	क्रम (i = 0; i < cesa_dev->caps->nengines; i++) अणु
-		काष्ठा mv_cesa_engine *engine = cesa_dev->engines + i;
-		u32 load = atomic_पढ़ो(&engine->load);
+	for (i = 0; i < cesa_dev->caps->nengines; i++) {
+		struct mv_cesa_engine *engine = cesa_dev->engines + i;
+		u32 load = atomic_read(&engine->load);
 
-		अगर (load < min_load) अणु
+		if (load < min_load) {
 			min_load = load;
 			selected = engine;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	atomic_add(weight, &selected->load);
 
-	वापस selected;
-पूर्ण
+	return selected;
+}
 
 /*
  * Helper function that indicates whether a crypto request needs to be
  * cleaned up or not after being enqueued using mv_cesa_queue_req().
  */
-अटल अंतरभूत पूर्णांक mv_cesa_req_needs_cleanup(काष्ठा crypto_async_request *req,
-					    पूर्णांक ret)
-अणु
+static inline int mv_cesa_req_needs_cleanup(struct crypto_async_request *req,
+					    int ret)
+{
 	/*
 	 * The queue still had some space, the request was queued
 	 * normally, so there's no need to clean it up.
 	 */
-	अगर (ret == -EINPROGRESS)
-		वापस false;
+	if (ret == -EINPROGRESS)
+		return false;
 
 	/*
 	 * The queue had not space left, but since the request is
@@ -776,141 +775,141 @@ mv_cesa_dequeue_req_locked(काष्ठा mv_cesa_engine *engine,
 	 * the backlog and will be processed later. There's no need to
 	 * clean it up.
 	 */
-	अगर (ret == -EBUSY)
-		वापस false;
+	if (ret == -EBUSY)
+		return false;
 
 	/* Request wasn't queued, we need to clean it up */
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* TDMA functions */
 
-अटल अंतरभूत व्योम mv_cesa_req_dma_iter_init(काष्ठा mv_cesa_dma_iter *iter,
-					     अचिन्हित पूर्णांक len)
-अणु
+static inline void mv_cesa_req_dma_iter_init(struct mv_cesa_dma_iter *iter,
+					     unsigned int len)
+{
 	iter->len = len;
 	iter->op_len = min(len, CESA_SA_SRAM_PAYLOAD_SIZE);
 	iter->offset = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mv_cesa_sg_dma_iter_init(काष्ठा mv_cesa_sg_dma_iter *iter,
-					    काष्ठा scatterlist *sg,
-					    क्रमागत dma_data_direction dir)
-अणु
+static inline void mv_cesa_sg_dma_iter_init(struct mv_cesa_sg_dma_iter *iter,
+					    struct scatterlist *sg,
+					    enum dma_data_direction dir)
+{
 	iter->op_offset = 0;
 	iter->offset = 0;
 	iter->sg = sg;
 	iter->dir = dir;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-mv_cesa_req_dma_iter_transfer_len(काष्ठा mv_cesa_dma_iter *iter,
-				  काष्ठा mv_cesa_sg_dma_iter *sgiter)
-अणु
-	वापस min(iter->op_len - sgiter->op_offset,
+static inline unsigned int
+mv_cesa_req_dma_iter_transfer_len(struct mv_cesa_dma_iter *iter,
+				  struct mv_cesa_sg_dma_iter *sgiter)
+{
+	return min(iter->op_len - sgiter->op_offset,
 		   sg_dma_len(sgiter->sg) - sgiter->offset);
-पूर्ण
+}
 
-bool mv_cesa_req_dma_iter_next_transfer(काष्ठा mv_cesa_dma_iter *chain,
-					काष्ठा mv_cesa_sg_dma_iter *sgiter,
-					अचिन्हित पूर्णांक len);
+bool mv_cesa_req_dma_iter_next_transfer(struct mv_cesa_dma_iter *chain,
+					struct mv_cesa_sg_dma_iter *sgiter,
+					unsigned int len);
 
-अटल अंतरभूत bool mv_cesa_req_dma_iter_next_op(काष्ठा mv_cesa_dma_iter *iter)
-अणु
+static inline bool mv_cesa_req_dma_iter_next_op(struct mv_cesa_dma_iter *iter)
+{
 	iter->offset += iter->op_len;
 	iter->op_len = min(iter->len - iter->offset,
 			   CESA_SA_SRAM_PAYLOAD_SIZE);
 
-	वापस iter->op_len;
-पूर्ण
+	return iter->op_len;
+}
 
-व्योम mv_cesa_dma_step(काष्ठा mv_cesa_req *dreq);
+void mv_cesa_dma_step(struct mv_cesa_req *dreq);
 
-अटल अंतरभूत पूर्णांक mv_cesa_dma_process(काष्ठा mv_cesa_req *dreq,
+static inline int mv_cesa_dma_process(struct mv_cesa_req *dreq,
 				      u32 status)
-अणु
-	अगर (!(status & CESA_SA_INT_ACC0_IDMA_DONE))
-		वापस -EINPROGRESS;
+{
+	if (!(status & CESA_SA_INT_ACC0_IDMA_DONE))
+		return -EINPROGRESS;
 
-	अगर (status & CESA_SA_INT_IDMA_OWN_ERR)
-		वापस -EINVAL;
+	if (status & CESA_SA_INT_IDMA_OWN_ERR)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mv_cesa_dma_prepare(काष्ठा mv_cesa_req *dreq,
-			 काष्ठा mv_cesa_engine *engine);
-व्योम mv_cesa_dma_cleanup(काष्ठा mv_cesa_req *dreq);
-व्योम mv_cesa_tdma_chain(काष्ठा mv_cesa_engine *engine,
-			काष्ठा mv_cesa_req *dreq);
-पूर्णांक mv_cesa_tdma_process(काष्ठा mv_cesa_engine *engine, u32 status);
+void mv_cesa_dma_prepare(struct mv_cesa_req *dreq,
+			 struct mv_cesa_engine *engine);
+void mv_cesa_dma_cleanup(struct mv_cesa_req *dreq);
+void mv_cesa_tdma_chain(struct mv_cesa_engine *engine,
+			struct mv_cesa_req *dreq);
+int mv_cesa_tdma_process(struct mv_cesa_engine *engine, u32 status);
 
 
-अटल अंतरभूत व्योम
-mv_cesa_tdma_desc_iter_init(काष्ठा mv_cesa_tdma_chain *chain)
-अणु
-	स_रखो(chain, 0, माप(*chain));
-पूर्ण
+static inline void
+mv_cesa_tdma_desc_iter_init(struct mv_cesa_tdma_chain *chain)
+{
+	memset(chain, 0, sizeof(*chain));
+}
 
-पूर्णांक mv_cesa_dma_add_result_op(काष्ठा mv_cesa_tdma_chain *chain, dma_addr_t src,
+int mv_cesa_dma_add_result_op(struct mv_cesa_tdma_chain *chain, dma_addr_t src,
 			  u32 size, u32 flags, gfp_t gfp_flags);
 
-काष्ठा mv_cesa_op_ctx *mv_cesa_dma_add_op(काष्ठा mv_cesa_tdma_chain *chain,
-					स्थिर काष्ठा mv_cesa_op_ctx *op_templ,
+struct mv_cesa_op_ctx *mv_cesa_dma_add_op(struct mv_cesa_tdma_chain *chain,
+					const struct mv_cesa_op_ctx *op_templ,
 					bool skip_ctx,
 					gfp_t flags);
 
-पूर्णांक mv_cesa_dma_add_data_transfer(काष्ठा mv_cesa_tdma_chain *chain,
+int mv_cesa_dma_add_data_transfer(struct mv_cesa_tdma_chain *chain,
 				  dma_addr_t dst, dma_addr_t src, u32 size,
 				  u32 flags, gfp_t gfp_flags);
 
-पूर्णांक mv_cesa_dma_add_dummy_launch(काष्ठा mv_cesa_tdma_chain *chain, gfp_t flags);
-पूर्णांक mv_cesa_dma_add_dummy_end(काष्ठा mv_cesa_tdma_chain *chain, gfp_t flags);
+int mv_cesa_dma_add_dummy_launch(struct mv_cesa_tdma_chain *chain, gfp_t flags);
+int mv_cesa_dma_add_dummy_end(struct mv_cesa_tdma_chain *chain, gfp_t flags);
 
-पूर्णांक mv_cesa_dma_add_op_transfers(काष्ठा mv_cesa_tdma_chain *chain,
-				 काष्ठा mv_cesa_dma_iter *dma_iter,
-				 काष्ठा mv_cesa_sg_dma_iter *sgiter,
+int mv_cesa_dma_add_op_transfers(struct mv_cesa_tdma_chain *chain,
+				 struct mv_cesa_dma_iter *dma_iter,
+				 struct mv_cesa_sg_dma_iter *sgiter,
 				 gfp_t gfp_flags);
 
-माप_प्रकार mv_cesa_sg_copy(काष्ठा mv_cesa_engine *engine,
-		       काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक nents,
-		       अचिन्हित पूर्णांक sram_off, माप_प्रकार buflen, off_t skip,
+size_t mv_cesa_sg_copy(struct mv_cesa_engine *engine,
+		       struct scatterlist *sgl, unsigned int nents,
+		       unsigned int sram_off, size_t buflen, off_t skip,
 		       bool to_sram);
 
-अटल अंतरभूत माप_प्रकार mv_cesa_sg_copy_to_sram(काष्ठा mv_cesa_engine *engine,
-					     काष्ठा scatterlist *sgl,
-					     अचिन्हित पूर्णांक nents,
-					     अचिन्हित पूर्णांक sram_off,
-					     माप_प्रकार buflen, off_t skip)
-अणु
-	वापस mv_cesa_sg_copy(engine, sgl, nents, sram_off, buflen, skip,
+static inline size_t mv_cesa_sg_copy_to_sram(struct mv_cesa_engine *engine,
+					     struct scatterlist *sgl,
+					     unsigned int nents,
+					     unsigned int sram_off,
+					     size_t buflen, off_t skip)
+{
+	return mv_cesa_sg_copy(engine, sgl, nents, sram_off, buflen, skip,
 			       true);
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार mv_cesa_sg_copy_from_sram(काष्ठा mv_cesa_engine *engine,
-					       काष्ठा scatterlist *sgl,
-					       अचिन्हित पूर्णांक nents,
-					       अचिन्हित पूर्णांक sram_off,
-					       माप_प्रकार buflen, off_t skip)
-अणु
-	वापस mv_cesa_sg_copy(engine, sgl, nents, sram_off, buflen, skip,
+static inline size_t mv_cesa_sg_copy_from_sram(struct mv_cesa_engine *engine,
+					       struct scatterlist *sgl,
+					       unsigned int nents,
+					       unsigned int sram_off,
+					       size_t buflen, off_t skip)
+{
+	return mv_cesa_sg_copy(engine, sgl, nents, sram_off, buflen, skip,
 			       false);
-पूर्ण
+}
 
 /* Algorithm definitions */
 
-बाह्य काष्ठा ahash_alg mv_md5_alg;
-बाह्य काष्ठा ahash_alg mv_sha1_alg;
-बाह्य काष्ठा ahash_alg mv_sha256_alg;
-बाह्य काष्ठा ahash_alg mv_ahmac_md5_alg;
-बाह्य काष्ठा ahash_alg mv_ahmac_sha1_alg;
-बाह्य काष्ठा ahash_alg mv_ahmac_sha256_alg;
+extern struct ahash_alg mv_md5_alg;
+extern struct ahash_alg mv_sha1_alg;
+extern struct ahash_alg mv_sha256_alg;
+extern struct ahash_alg mv_ahmac_md5_alg;
+extern struct ahash_alg mv_ahmac_sha1_alg;
+extern struct ahash_alg mv_ahmac_sha256_alg;
 
-बाह्य काष्ठा skcipher_alg mv_cesa_ecb_des_alg;
-बाह्य काष्ठा skcipher_alg mv_cesa_cbc_des_alg;
-बाह्य काष्ठा skcipher_alg mv_cesa_ecb_des3_ede_alg;
-बाह्य काष्ठा skcipher_alg mv_cesa_cbc_des3_ede_alg;
-बाह्य काष्ठा skcipher_alg mv_cesa_ecb_aes_alg;
-बाह्य काष्ठा skcipher_alg mv_cesa_cbc_aes_alg;
+extern struct skcipher_alg mv_cesa_ecb_des_alg;
+extern struct skcipher_alg mv_cesa_cbc_des_alg;
+extern struct skcipher_alg mv_cesa_ecb_des3_ede_alg;
+extern struct skcipher_alg mv_cesa_cbc_des3_ede_alg;
+extern struct skcipher_alg mv_cesa_ecb_aes_alg;
+extern struct skcipher_alg mv_cesa_cbc_aes_alg;
 
-#पूर्ण_अगर /* __MARVELL_CESA_H__ */
+#endif /* __MARVELL_CESA_H__ */

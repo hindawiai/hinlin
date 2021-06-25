@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2009 Samsung Electronics Co. Ltd
  * Author: Jaswinder Singh <jassi.brar@samsung.com>
@@ -7,43 +6,43 @@
 
 /* The machine init code calls s3c*_ac97_setup_gpio with
  * one of these defines in order to select appropriate bank
- * of GPIO क्रम AC97 pins
+ * of GPIO for AC97 pins
  */
-#घोषणा S3C64XX_AC97_GPD  0
-#घोषणा S3C64XX_AC97_GPE  1
+#define S3C64XX_AC97_GPD  0
+#define S3C64XX_AC97_GPE  1
 
-#समावेश <linux/dmaengine.h>
+#include <linux/dmaengine.h>
 
-बाह्य व्योम s3c64xx_ac97_setup_gpio(पूर्णांक);
+extern void s3c64xx_ac97_setup_gpio(int);
 
-काष्ठा samsung_i2s_type अणु
+struct samsung_i2s_type {
 /* If the Primary DAI has 5.1 Channels */
-#घोषणा QUIRK_PRI_6CHAN		(1 << 0)
+#define QUIRK_PRI_6CHAN		(1 << 0)
 /* If the I2S block has a Stereo Overlay Channel */
-#घोषणा QUIRK_SEC_DAI		(1 << 1)
+#define QUIRK_SEC_DAI		(1 << 1)
 /*
- * If the I2S block has no पूर्णांकernal prescalar or MUX (I2SMOD[10] bit)
- * The Machine driver must provide suitably set घड़ी to the I2S block.
+ * If the I2S block has no internal prescalar or MUX (I2SMOD[10] bit)
+ * The Machine driver must provide suitably set clock to the I2S block.
  */
-#घोषणा QUIRK_NO_MUXPSR		(1 << 2)
-#घोषणा QUIRK_NEED_RSTCLR	(1 << 3)
-#घोषणा QUIRK_SUPPORTS_TDM	(1 << 4)
-#घोषणा QUIRK_SUPPORTS_IDMA	(1 << 5)
+#define QUIRK_NO_MUXPSR		(1 << 2)
+#define QUIRK_NEED_RSTCLR	(1 << 3)
+#define QUIRK_SUPPORTS_TDM	(1 << 4)
+#define QUIRK_SUPPORTS_IDMA	(1 << 5)
 	/* Quirks of the I2S controller */
 	u32 quirks;
 	dma_addr_t idma_addr;
-पूर्ण;
+};
 
 /**
- * काष्ठा s3c_audio_pdata - common platक्रमm data क्रम audio device drivers
+ * struct s3c_audio_pdata - common platform data for audio device drivers
  * @cfg_gpio: Callback function to setup mux'ed pins in I2S/PCM/AC97 mode
  */
-काष्ठा s3c_audio_pdata अणु
-	पूर्णांक (*cfg_gpio)(काष्ठा platक्रमm_device *);
+struct s3c_audio_pdata {
+	int (*cfg_gpio)(struct platform_device *);
 	dma_filter_fn dma_filter;
-	व्योम *dma_playback;
-	व्योम *dma_capture;
-	व्योम *dma_play_sec;
-	व्योम *dma_capture_mic;
-	काष्ठा samsung_i2s_type type;
-पूर्ण;
+	void *dma_playback;
+	void *dma_capture;
+	void *dma_play_sec;
+	void *dma_capture_mic;
+	struct samsung_i2s_type type;
+};

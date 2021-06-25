@@ -1,2 +1,1 @@
-<शैली गुरु>
-अटल अंतरभूत व्योम kmemleak_update_trace(स्थिर व्योम *ptr) अणु पूर्ण
+static inline void kmemleak_update_trace(const void *ptr) { }

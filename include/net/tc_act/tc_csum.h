@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_TC_CSUM_H
-#घोषणा __NET_TC_CSUM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_TC_CSUM_H
+#define __NET_TC_CSUM_H
 
-#समावेश <linux/types.h>
-#समावेश <net/act_api.h>
-#समावेश <linux/tc_act/tc_csum.h>
+#include <linux/types.h>
+#include <net/act_api.h>
+#include <linux/tc_act/tc_csum.h>
 
-काष्ठा tcf_csum_params अणु
+struct tcf_csum_params {
 	u32 update_flags;
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	struct rcu_head rcu;
+};
 
-काष्ठा tcf_csum अणु
-	काष्ठा tc_action common;
+struct tcf_csum {
+	struct tc_action common;
 
-	काष्ठा tcf_csum_params __rcu *params;
-पूर्ण;
-#घोषणा to_tcf_csum(a) ((काष्ठा tcf_csum *)a)
+	struct tcf_csum_params __rcu *params;
+};
+#define to_tcf_csum(a) ((struct tcf_csum *)a)
 
-अटल अंतरभूत bool is_tcf_csum(स्थिर काष्ठा tc_action *a)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	अगर (a->ops && a->ops->id == TCA_ID_CSUM)
-		वापस true;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+static inline bool is_tcf_csum(const struct tc_action *a)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	if (a->ops && a->ops->id == TCA_ID_CSUM)
+		return true;
+#endif
+	return false;
+}
 
-अटल अंतरभूत u32 tcf_csum_update_flags(स्थिर काष्ठा tc_action *a)
-अणु
+static inline u32 tcf_csum_update_flags(const struct tc_action *a)
+{
 	u32 update_flags;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	update_flags = rcu_dereference(to_tcf_csum(a)->params)->update_flags;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस update_flags;
-पूर्ण
+	return update_flags;
+}
 
-#पूर्ण_अगर /* __NET_TC_CSUM_H */
+#endif /* __NET_TC_CSUM_H */

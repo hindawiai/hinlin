@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * Copyright(c) 2018 Intel Corporation.
  *
  */
-#अगर !defined(__HFI1_TRACE_IOWAIT_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा __HFI1_TRACE_IOWAIT_H
+#if !defined(__HFI1_TRACE_IOWAIT_H) || defined(TRACE_HEADER_MULTI_READ)
+#define __HFI1_TRACE_IOWAIT_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश "iowait.h"
-#समावेश "verbs.h"
+#include <linux/tracepoint.h>
+#include "iowait.h"
+#include "verbs.h"
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM hfi1_ioरुको
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM hfi1_iowait
 
-DECLARE_EVENT_CLASS(hfi1_ioरुको_ढाँचा,
-		    TP_PROTO(काष्ठा ioरुको *रुको, u32 flag),
-		    TP_ARGS(रुको, flag),
+DECLARE_EVENT_CLASS(hfi1_iowait_template,
+		    TP_PROTO(struct iowait *wait, u32 flag),
+		    TP_ARGS(wait, flag),
 		    TP_STRUCT__entry(/* entry */
-			    __field(अचिन्हित दीर्घ, addr)
-			    __field(अचिन्हित दीर्घ, flags)
+			    __field(unsigned long, addr)
+			    __field(unsigned long, flags)
 			    __field(u32, flag)
 			    __field(u32, qpn)
 			    ),
 		    TP_fast_assign(/* assign */
-			    __entry->addr = (अचिन्हित दीर्घ)रुको;
-			    __entry->flags = रुको->flags;
+			    __entry->addr = (unsigned long)wait;
+			    __entry->flags = wait->flags;
 			    __entry->flag = (1 << flag);
-			    __entry->qpn = ioरुको_to_qp(रुको)->ibqp.qp_num;
+			    __entry->qpn = iowait_to_qp(wait)->ibqp.qp_num;
 			    ),
-		    TP_prपूर्णांकk(/* prपूर्णांक */
+		    TP_printk(/* print */
 			    "iowait 0x%lx qp %u flags 0x%lx flag 0x%x",
 			    __entry->addr,
 			    __entry->qpn,
@@ -38,18 +37,18 @@ DECLARE_EVENT_CLASS(hfi1_ioरुको_ढाँचा,
 			    )
 	);
 
-DEFINE_EVENT(hfi1_ioरुको_ढाँचा, hfi1_ioरुको_set,
-	     TP_PROTO(काष्ठा ioरुको *रुको, u32 flag),
-	     TP_ARGS(रुको, flag));
+DEFINE_EVENT(hfi1_iowait_template, hfi1_iowait_set,
+	     TP_PROTO(struct iowait *wait, u32 flag),
+	     TP_ARGS(wait, flag));
 
-DEFINE_EVENT(hfi1_ioरुको_ढाँचा, hfi1_ioरुको_clear,
-	     TP_PROTO(काष्ठा ioरुको *रुको, u32 flag),
-	     TP_ARGS(रुको, flag));
+DEFINE_EVENT(hfi1_iowait_template, hfi1_iowait_clear,
+	     TP_PROTO(struct iowait *wait, u32 flag),
+	     TP_ARGS(wait, flag));
 
-#पूर्ण_अगर /* __HFI1_TRACE_IOWAIT_H */
+#endif /* __HFI1_TRACE_IOWAIT_H */
 
-#अघोषित TRACE_INCLUDE_PATH
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_PATH .
-#घोषणा TRACE_INCLUDE_खाता trace_ioरुको
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE trace_iowait
+#include <trace/define_trace.h>

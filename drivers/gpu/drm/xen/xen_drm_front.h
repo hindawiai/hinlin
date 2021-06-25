@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 
 /*
- *  Xen para-भव DRM device
+ *  Xen para-virtual DRM device
  *
  * Copyright (C) 2016-2018 EPAM Systems Inc.
  *
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#अगर_अघोषित __XEN_DRM_FRONT_H_
-#घोषणा __XEN_DRM_FRONT_H_
+#ifndef __XEN_DRM_FRONT_H_
+#define __XEN_DRM_FRONT_H_
 
-#समावेश <linux/scatterlist.h>
+#include <linux/scatterlist.h>
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "xen_drm_front_cfg.h"
+#include "xen_drm_front_cfg.h"
 
-काष्ठा drm_device;
-काष्ठा drm_framebuffer;
-काष्ठा drm_gem_object;
-काष्ठा drm_pending_vblank_event;
+struct drm_device;
+struct drm_framebuffer;
+struct drm_gem_object;
+struct drm_pending_vblank_event;
 
 /**
  * DOC: Driver modes of operation in terms of display buffers used
  *
- * Depending on the requirements क्रम the para-भवized environment, namely
+ * Depending on the requirements for the para-virtualized environment, namely
  * requirements dictated by the accompanying DRM/(v)GPU drivers running in both
  * host and guest environments, display buffers can be allocated by either
  * frontend driver or backend.
@@ -36,30 +35,30 @@
 /**
  * DOC: Buffers allocated by the frontend driver
  *
- * In this mode of operation driver allocates buffers from प्रणाली memory.
+ * In this mode of operation driver allocates buffers from system memory.
  *
  * Note! If used with accompanying DRM/(v)GPU drivers this mode of operation
- * may require IOMMU support on the platक्रमm, so accompanying DRM/vGPU
- * hardware can still reach display buffer memory जबतक importing PRIME
+ * may require IOMMU support on the platform, so accompanying DRM/vGPU
+ * hardware can still reach display buffer memory while importing PRIME
  * buffers from the frontend driver.
  */
 
 /**
  * DOC: Buffers allocated by the backend
  *
- * This mode of operation is run-समय configured via guest करोमुख्य configuration
+ * This mode of operation is run-time configured via guest domain configuration
  * through XenStore entries.
  *
- * For प्रणालीs which करो not provide IOMMU support, but having specअगरic
- * requirements क्रम display buffers it is possible to allocate such buffers
+ * For systems which do not provide IOMMU support, but having specific
+ * requirements for display buffers it is possible to allocate such buffers
  * at backend side and share those with the frontend.
- * For example, अगर host करोमुख्य is 1:1 mapped and has DRM/GPU hardware expecting
+ * For example, if host domain is 1:1 mapped and has DRM/GPU hardware expecting
  * physically contiguous memory, this allows implementing zero-copying
- * use-हालs.
+ * use-cases.
  *
- * Note, जबतक using this scenario the following should be considered:
+ * Note, while using this scenario the following should be considered:
  *
- * #. If guest करोमुख्य dies then pages/grants received from the backend
+ * #. If guest domain dies then pages/grants received from the backend
  *    cannot be claimed back
  *
  * #. Misbehaving guest may send too many requests to the
@@ -78,89 +77,89 @@
  * #. All CRTCs operate at fixed frequency of 60Hz.
  */
 
-/* समयout in ms to रुको क्रम backend to respond */
-#घोषणा XEN_DRM_FRONT_WAIT_BACK_MS	3000
+/* timeout in ms to wait for backend to respond */
+#define XEN_DRM_FRONT_WAIT_BACK_MS	3000
 
-#अगर_अघोषित GRANT_INVALID_REF
+#ifndef GRANT_INVALID_REF
 /*
  * Note on usage of grant reference 0 as invalid grant reference:
  * grant reference 0 is valid, but never exposed to a PV driver,
- * because of the fact it is alपढ़ोy in use/reserved by the PV console.
+ * because of the fact it is already in use/reserved by the PV console.
  */
-#घोषणा GRANT_INVALID_REF	0
-#पूर्ण_अगर
+#define GRANT_INVALID_REF	0
+#endif
 
-काष्ठा xen_drm_front_info अणु
-	काष्ठा xenbus_device *xb_dev;
-	काष्ठा xen_drm_front_drm_info *drm_info;
+struct xen_drm_front_info {
+	struct xenbus_device *xb_dev;
+	struct xen_drm_front_drm_info *drm_info;
 
-	/* to protect data between backend IO code and पूर्णांकerrupt handler */
+	/* to protect data between backend IO code and interrupt handler */
 	spinlock_t io_lock;
 
-	पूर्णांक num_evt_pairs;
-	काष्ठा xen_drm_front_evtchnl_pair *evt_pairs;
-	काष्ठा xen_drm_front_cfg cfg;
+	int num_evt_pairs;
+	struct xen_drm_front_evtchnl_pair *evt_pairs;
+	struct xen_drm_front_cfg cfg;
 
 	/* display buffers */
-	काष्ठा list_head dbuf_list;
-पूर्ण;
+	struct list_head dbuf_list;
+};
 
-काष्ठा xen_drm_front_drm_pipeline अणु
-	काष्ठा xen_drm_front_drm_info *drm_info;
+struct xen_drm_front_drm_pipeline {
+	struct xen_drm_front_drm_info *drm_info;
 
-	पूर्णांक index;
+	int index;
 
-	काष्ठा drm_simple_display_pipe pipe;
+	struct drm_simple_display_pipe pipe;
 
-	काष्ठा drm_connector conn;
-	/* These are only क्रम connector mode checking */
-	पूर्णांक width, height;
+	struct drm_connector conn;
+	/* These are only for connector mode checking */
+	int width, height;
 
-	काष्ठा drm_pending_vblank_event *pending_event;
+	struct drm_pending_vblank_event *pending_event;
 
-	काष्ठा delayed_work pflip_to_worker;
+	struct delayed_work pflip_to_worker;
 
 	bool conn_connected;
-पूर्ण;
+};
 
-काष्ठा xen_drm_front_drm_info अणु
-	काष्ठा xen_drm_front_info *front_info;
-	काष्ठा drm_device *drm_dev;
+struct xen_drm_front_drm_info {
+	struct xen_drm_front_info *front_info;
+	struct drm_device *drm_dev;
 
-	काष्ठा xen_drm_front_drm_pipeline pipeline[XEN_DRM_FRONT_MAX_CRTCS];
-पूर्ण;
+	struct xen_drm_front_drm_pipeline pipeline[XEN_DRM_FRONT_MAX_CRTCS];
+};
 
-अटल अंतरभूत u64 xen_drm_front_fb_to_cookie(काष्ठा drm_framebuffer *fb)
-अणु
-	वापस (uपूर्णांकptr_t)fb;
-पूर्ण
+static inline u64 xen_drm_front_fb_to_cookie(struct drm_framebuffer *fb)
+{
+	return (uintptr_t)fb;
+}
 
-अटल अंतरभूत u64 xen_drm_front_dbuf_to_cookie(काष्ठा drm_gem_object *gem_obj)
-अणु
-	वापस (uपूर्णांकptr_t)gem_obj;
-पूर्ण
+static inline u64 xen_drm_front_dbuf_to_cookie(struct drm_gem_object *gem_obj)
+{
+	return (uintptr_t)gem_obj;
+}
 
-पूर्णांक xen_drm_front_mode_set(काष्ठा xen_drm_front_drm_pipeline *pipeline,
+int xen_drm_front_mode_set(struct xen_drm_front_drm_pipeline *pipeline,
 			   u32 x, u32 y, u32 width, u32 height,
 			   u32 bpp, u64 fb_cookie);
 
-पूर्णांक xen_drm_front_dbuf_create(काष्ठा xen_drm_front_info *front_info,
+int xen_drm_front_dbuf_create(struct xen_drm_front_info *front_info,
 			      u64 dbuf_cookie, u32 width, u32 height,
-			      u32 bpp, u64 size, u32 offset, काष्ठा page **pages);
+			      u32 bpp, u64 size, u32 offset, struct page **pages);
 
-पूर्णांक xen_drm_front_fb_attach(काष्ठा xen_drm_front_info *front_info,
+int xen_drm_front_fb_attach(struct xen_drm_front_info *front_info,
 			    u64 dbuf_cookie, u64 fb_cookie, u32 width,
-			    u32 height, u32 pixel_क्रमmat);
+			    u32 height, u32 pixel_format);
 
-पूर्णांक xen_drm_front_fb_detach(काष्ठा xen_drm_front_info *front_info,
+int xen_drm_front_fb_detach(struct xen_drm_front_info *front_info,
 			    u64 fb_cookie);
 
-पूर्णांक xen_drm_front_page_flip(काष्ठा xen_drm_front_info *front_info,
-			    पूर्णांक conn_idx, u64 fb_cookie);
+int xen_drm_front_page_flip(struct xen_drm_front_info *front_info,
+			    int conn_idx, u64 fb_cookie);
 
-व्योम xen_drm_front_on_frame_करोne(काष्ठा xen_drm_front_info *front_info,
-				 पूर्णांक conn_idx, u64 fb_cookie);
+void xen_drm_front_on_frame_done(struct xen_drm_front_info *front_info,
+				 int conn_idx, u64 fb_cookie);
 
-व्योम xen_drm_front_gem_object_मुक्त(काष्ठा drm_gem_object *obj);
+void xen_drm_front_gem_object_free(struct drm_gem_object *obj);
 
-#पूर्ण_अगर /* __XEN_DRM_FRONT_H_ */
+#endif /* __XEN_DRM_FRONT_H_ */

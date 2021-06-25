@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * AMD Trusted Execution Environment (TEE) पूर्णांकerface
+ * AMD Trusted Execution Environment (TEE) interface
  *
  * Author: Rijo Thomas <Rijo-john.Thomas@amd.com>
  *
@@ -9,20 +8,20 @@
  *
  */
 
-#अगर_अघोषित __PSP_TEE_H_
-#घोषणा __PSP_TEE_H_
+#ifndef __PSP_TEE_H_
+#define __PSP_TEE_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/types.h>
+#include <linux/errno.h>
 
-/* This file defines the Trusted Execution Environment (TEE) पूर्णांकerface commands
+/* This file defines the Trusted Execution Environment (TEE) interface commands
  * and the API exported by AMD Secure Processor driver to communicate with
  * AMD-TEE Trusted OS.
  */
 
 /**
- * क्रमागत tee_cmd_id - TEE Interface Command IDs
- * @TEE_CMD_ID_LOAD_TA:          Load Trusted Application (TA) binary पूर्णांकo
+ * enum tee_cmd_id - TEE Interface Command IDs
+ * @TEE_CMD_ID_LOAD_TA:          Load Trusted Application (TA) binary into
  *                               TEE environment
  * @TEE_CMD_ID_UNLOAD_TA:        Unload TA binary from TEE environment
  * @TEE_CMD_ID_OPEN_SESSION:     Open session with loaded TA
@@ -31,7 +30,7 @@
  * @TEE_CMD_ID_MAP_SHARED_MEM:   Map shared memory
  * @TEE_CMD_ID_UNMAP_SHARED_MEM: Unmap shared memory
  */
-क्रमागत tee_cmd_id अणु
+enum tee_cmd_id {
 	TEE_CMD_ID_LOAD_TA = 1,
 	TEE_CMD_ID_UNLOAD_TA,
 	TEE_CMD_ID_OPEN_SESSION,
@@ -39,54 +38,54 @@
 	TEE_CMD_ID_INVOKE_CMD,
 	TEE_CMD_ID_MAP_SHARED_MEM,
 	TEE_CMD_ID_UNMAP_SHARED_MEM,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_SP_PSP
+#ifdef CONFIG_CRYPTO_DEV_SP_PSP
 /**
  * psp_tee_process_cmd() - Process command in Trusted Execution Environment
- * @cmd_id:     TEE command ID (&क्रमागत tee_cmd_id)
- * @buf:        Command buffer क्रम TEE processing. On success, is updated
+ * @cmd_id:     TEE command ID (&enum tee_cmd_id)
+ * @buf:        Command buffer for TEE processing. On success, is updated
  *              with the response
  * @len:        Length of command buffer in bytes
  * @status:     On success, holds the TEE command execution status
  *
- * This function submits a command to the Trusted OS क्रम processing in the
- * TEE environment and रुकोs क्रम a response or until the command बार out.
+ * This function submits a command to the Trusted OS for processing in the
+ * TEE environment and waits for a response or until the command times out.
  *
  * Returns:
- * 0 अगर TEE successfully processed the command
- * -%ENODEV    अगर PSP device not available
- * -%EINVAL    अगर invalid input
- * -%ETIMEDOUT अगर TEE command समयd out
- * -%EBUSY     अगर PSP device is not responsive
+ * 0 if TEE successfully processed the command
+ * -%ENODEV    if PSP device not available
+ * -%EINVAL    if invalid input
+ * -%ETIMEDOUT if TEE command timed out
+ * -%EBUSY     if PSP device is not responsive
  */
-पूर्णांक psp_tee_process_cmd(क्रमागत tee_cmd_id cmd_id, व्योम *buf, माप_प्रकार len,
+int psp_tee_process_cmd(enum tee_cmd_id cmd_id, void *buf, size_t len,
 			u32 *status);
 
 /**
  * psp_check_tee_status() - Checks whether there is a TEE which a driver can
  * talk to.
  *
- * This function can be used by AMD-TEE driver to query अगर there is TEE with
+ * This function can be used by AMD-TEE driver to query if there is TEE with
  * which it can communicate.
  *
  * Returns:
- * 0          अगर the device has TEE
- * -%ENODEV   अगर there is no TEE available
+ * 0          if the device has TEE
+ * -%ENODEV   if there is no TEE available
  */
-पूर्णांक psp_check_tee_status(व्योम);
+int psp_check_tee_status(void);
 
-#अन्यथा /* !CONFIG_CRYPTO_DEV_SP_PSP */
+#else /* !CONFIG_CRYPTO_DEV_SP_PSP */
 
-अटल अंतरभूत पूर्णांक psp_tee_process_cmd(क्रमागत tee_cmd_id cmd_id, व्योम *buf,
-				      माप_प्रकार len, u32 *status)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static inline int psp_tee_process_cmd(enum tee_cmd_id cmd_id, void *buf,
+				      size_t len, u32 *status)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत पूर्णांक psp_check_tee_status(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CRYPTO_DEV_SP_PSP */
-#पूर्ण_अगर /* __PSP_TEE_H_ */
+static inline int psp_check_tee_status(void)
+{
+	return -ENODEV;
+}
+#endif /* CONFIG_CRYPTO_DEV_SP_PSP */
+#endif /* __PSP_TEE_H_ */

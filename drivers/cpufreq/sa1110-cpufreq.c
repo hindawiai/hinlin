@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-sa1100/cpu-sa1110.c
  *
  *  Copyright (C) 2001 Russell King
  *
  * Note: there are two erratas that apply to the SA1110 here:
- *  7 - SDRAM स्वतः-घातer-up failure (rev A0)
- * 13 - Corruption of पूर्णांकernal रेजिस्टर पढ़ोs/ग_लिखोs following
- *      SDRAM पढ़ोs (rev A0, B0, B1)
+ *  7 - SDRAM auto-power-up failure (rev A0)
+ * 13 - Corruption of internal register reads/writes following
+ *      SDRAM reads (rev A0, B0, B1)
  *
- * We ignore rev. A0 and B0 devices; I करोn't think they're worth supporting.
+ * We ignore rev. A0 and B0 devices; I don't think they're worth supporting.
  *
  * The SDRAM type can be passed on the command line as cpu_sa1110.sdram=type
  */
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
+#include <linux/cpufreq.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/mach-types.h>
+#include <asm/cputype.h>
+#include <asm/mach-types.h>
 
-#समावेश <mach/generic.h>
-#समावेश <mach/hardware.h>
+#include <mach/generic.h>
+#include <mach/hardware.h>
 
-#अघोषित DEBUG
+#undef DEBUG
 
-काष्ठा sdram_params अणु
-	स्थिर अक्षर name[20];
-	u_अक्षर  rows;		/* bits				 */
-	u_अक्षर  cas_latency;	/* cycles			 */
-	u_अक्षर  tck;		/* घड़ी cycle समय (ns)	 */
-	u_अक्षर  trcd;		/* activate to r/w (ns)		 */
-	u_अक्षर  trp;		/* preअक्षरge to activate (ns)	 */
-	u_अक्षर  twr;		/* ग_लिखो recovery समय (ns)	 */
-	u_लघु refresh;	/* refresh समय क्रम array (us)	 */
-पूर्ण;
+struct sdram_params {
+	const char name[20];
+	u_char  rows;		/* bits				 */
+	u_char  cas_latency;	/* cycles			 */
+	u_char  tck;		/* clock cycle time (ns)	 */
+	u_char  trcd;		/* activate to r/w (ns)		 */
+	u_char  trp;		/* precharge to activate (ns)	 */
+	u_char  twr;		/* write recovery time (ns)	 */
+	u_short refresh;	/* refresh time for array (us)	 */
+};
 
-काष्ठा sdram_info अणु
-	u_पूर्णांक	mdcnfg;
-	u_पूर्णांक	mdrefr;
-	u_पूर्णांक	mdcas[3];
-पूर्ण;
+struct sdram_info {
+	u_int	mdcnfg;
+	u_int	mdrefr;
+	u_int	mdcas[3];
+};
 
-अटल काष्ठा sdram_params sdram_tbl[] __initdata = अणु
-	अणु	/* Toshiba TC59SM716 CL2 */
+static struct sdram_params sdram_tbl[] __initdata = {
+	{	/* Toshiba TC59SM716 CL2 */
 		.name		= "TC59SM716-CL2",
 		.rows		= 12,
 		.tck		= 10,
@@ -57,7 +56,7 @@
 		.twr		= 10,
 		.refresh	= 64000,
 		.cas_latency	= 2,
-	पूर्ण, अणु	/* Toshiba TC59SM716 CL3 */
+	}, {	/* Toshiba TC59SM716 CL3 */
 		.name		= "TC59SM716-CL3",
 		.rows		= 12,
 		.tck		= 8,
@@ -66,7 +65,7 @@
 		.twr		= 8,
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण, अणु	/* Samsung K4S641632D TC75 */
+	}, {	/* Samsung K4S641632D TC75 */
 		.name		= "K4S641632D",
 		.rows		= 14,
 		.tck		= 9,
@@ -75,7 +74,7 @@
 		.twr		= 9,
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण, अणु	/* Samsung K4S281632B-1H */
+	}, {	/* Samsung K4S281632B-1H */
 		.name           = "K4S281632B-1H",
 		.rows		= 12,
 		.tck		= 10,
@@ -83,7 +82,7 @@
 		.twr		= 10,
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण, अणु	/* Samsung KM416S4030CT */
+	}, {	/* Samsung KM416S4030CT */
 		.name		= "KM416S4030CT",
 		.rows		= 13,
 		.tck		= 8,
@@ -92,7 +91,7 @@
 		.twr		= 16,	/* Trdl: 2 CLKs */
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण, अणु	/* Winbond W982516AH75L CL3 */
+	}, {	/* Winbond W982516AH75L CL3 */
 		.name		= "W982516AH75L",
 		.rows		= 16,
 		.tck		= 8,
@@ -101,7 +100,7 @@
 		.twr		= 8,
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण, अणु	/* Micron MT48LC8M16A2TG-75 */
+	}, {	/* Micron MT48LC8M16A2TG-75 */
 		.name		= "MT48LC8M16A2TG-75",
 		.rows		= 12,
 		.tck		= 8,
@@ -110,41 +109,41 @@
 		.twr		= 8,
 		.refresh	= 64000,
 		.cas_latency	= 3,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा sdram_params sdram_params;
+static struct sdram_params sdram_params;
 
 /*
  * Given a period in ns and frequency in khz, calculate the number of
  * cycles of frequency in period.  Note that we round up to the next
- * cycle, even अगर we are only slightly over.
+ * cycle, even if we are only slightly over.
  */
-अटल अंतरभूत u_पूर्णांक ns_to_cycles(u_पूर्णांक ns, u_पूर्णांक khz)
-अणु
-	वापस (ns * khz + 999999) / 1000000;
-पूर्ण
+static inline u_int ns_to_cycles(u_int ns, u_int khz)
+{
+	return (ns * khz + 999999) / 1000000;
+}
 
 /*
- * Create the MDCAS रेजिस्टर bit pattern.
+ * Create the MDCAS register bit pattern.
  */
-अटल अंतरभूत व्योम set_mdcas(u_पूर्णांक *mdcas, पूर्णांक delayed, u_पूर्णांक rcd)
-अणु
-	u_पूर्णांक shअगरt;
+static inline void set_mdcas(u_int *mdcas, int delayed, u_int rcd)
+{
+	u_int shift;
 
 	rcd = 2 * rcd - 1;
-	shअगरt = delayed + 1 + rcd;
+	shift = delayed + 1 + rcd;
 
 	mdcas[0]  = (1 << rcd) - 1;
-	mdcas[0] |= 0x55555555 << shअगरt;
-	mdcas[1]  = mdcas[2] = 0x55555555 << (shअगरt & 1);
-पूर्ण
+	mdcas[0] |= 0x55555555 << shift;
+	mdcas[1]  = mdcas[2] = 0x55555555 << (shift & 1);
+}
 
-अटल व्योम
-sdram_calculate_timing(काष्ठा sdram_info *sd, u_पूर्णांक cpu_khz,
-		       काष्ठा sdram_params *sdram)
-अणु
-	u_पूर्णांक mem_khz, sd_khz, trp, twr;
+static void
+sdram_calculate_timing(struct sdram_info *sd, u_int cpu_khz,
+		       struct sdram_params *sdram)
+{
+	u_int mem_khz, sd_khz, trp, twr;
 
 	mem_khz = cpu_khz / 2;
 	sd_khz = mem_khz;
@@ -154,10 +153,10 @@ sdram_calculate_timing(काष्ठा sdram_info *sd, u_पूर्णा�
 	 * run SDCLK at half speed.
 	 *
 	 * CPU steppings prior to B2 must either run the memory at
-	 * half speed or use delayed पढ़ो latching (errata 13).
+	 * half speed or use delayed read latching (errata 13).
 	 */
-	अगर ((ns_to_cycles(sdram->tck, sd_khz) > 1) ||
-	    (पढ़ो_cpuid_revision() < ARM_CPU_REV_SA1110_B2 && sd_khz < 62000))
+	if ((ns_to_cycles(sdram->tck, sd_khz) > 1) ||
+	    (read_cpuid_revision() < ARM_CPU_REV_SA1110_B2 && sd_khz < 62000))
 		sd_khz /= 2;
 
 	sd->mdcnfg = MDCNFG & 0x007f007f;
@@ -166,7 +165,7 @@ sdram_calculate_timing(काष्ठा sdram_info *sd, u_पूर्णा�
 
 	/* trp should always be >1 */
 	trp = ns_to_cycles(sdram->trp, mem_khz) - 1;
-	अगर (trp < 1)
+	if (trp < 1)
 		trp = 1;
 
 	sd->mdcnfg |= trp << 8;
@@ -179,114 +178,114 @@ sdram_calculate_timing(काष्ठा sdram_info *sd, u_पूर्णा�
 	sd->mdrefr = MDREFR & 0xffbffff0;
 	sd->mdrefr |= 7;
 
-	अगर (sd_khz != mem_khz)
+	if (sd_khz != mem_khz)
 		sd->mdrefr |= MDREFR_K1DB2;
 
 	/* initial number of '1's in MDCAS + 1 */
 	set_mdcas(sd->mdcas, sd_khz >= 62000,
 		ns_to_cycles(sdram->trcd, mem_khz));
 
-#अगर_घोषित DEBUG
-	prपूर्णांकk(KERN_DEBUG "MDCNFG: %08x MDREFR: %08x MDCAS0: %08x MDCAS1: %08x MDCAS2: %08x\n",
+#ifdef DEBUG
+	printk(KERN_DEBUG "MDCNFG: %08x MDREFR: %08x MDCAS0: %08x MDCAS1: %08x MDCAS2: %08x\n",
 		sd->mdcnfg, sd->mdrefr, sd->mdcas[0], sd->mdcas[1],
 		sd->mdcas[2]);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * Set the SDRAM refresh rate.
  */
-अटल अंतरभूत व्योम sdram_set_refresh(u_पूर्णांक dri)
-अणु
+static inline void sdram_set_refresh(u_int dri)
+{
 	MDREFR = (MDREFR & 0xffff000f) | (dri << 4);
-	(व्योम) MDREFR;
-पूर्ण
+	(void) MDREFR;
+}
 
 /*
- * Update the refresh period.  We करो this such that we always refresh
+ * Update the refresh period.  We do this such that we always refresh
  * the SDRAMs within their permissible period.  The refresh period is
- * always a multiple of the memory घड़ी (fixed at cpu_घड़ी / 2).
+ * always a multiple of the memory clock (fixed at cpu_clock / 2).
  *
- * FIXME: we करोn't currently take account of burst accesses here,
- * but neither करो Intels DM nor Angel.
+ * FIXME: we don't currently take account of burst accesses here,
+ * but neither do Intels DM nor Angel.
  */
-अटल व्योम
-sdram_update_refresh(u_पूर्णांक cpu_khz, काष्ठा sdram_params *sdram)
-अणु
-	u_पूर्णांक ns_row = (sdram->refresh * 1000) >> sdram->rows;
-	u_पूर्णांक dri = ns_to_cycles(ns_row, cpu_khz / 2) / 32;
+static void
+sdram_update_refresh(u_int cpu_khz, struct sdram_params *sdram)
+{
+	u_int ns_row = (sdram->refresh * 1000) >> sdram->rows;
+	u_int dri = ns_to_cycles(ns_row, cpu_khz / 2) / 32;
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	mdelay(250);
-	prपूर्णांकk(KERN_DEBUG "new dri value = %d\n", dri);
-#पूर्ण_अगर
+	printk(KERN_DEBUG "new dri value = %d\n", dri);
+#endif
 
 	sdram_set_refresh(dri);
-पूर्ण
+}
 
 /*
  * Ok, set the CPU frequency.
  */
-अटल पूर्णांक sa1110_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक ppcr)
-अणु
-	काष्ठा sdram_params *sdram = &sdram_params;
-	काष्ठा sdram_info sd;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक unused;
+static int sa1110_target(struct cpufreq_policy *policy, unsigned int ppcr)
+{
+	struct sdram_params *sdram = &sdram_params;
+	struct sdram_info sd;
+	unsigned long flags;
+	unsigned int unused;
 
 	sdram_calculate_timing(&sd, sa11x0_freq_table[ppcr].frequency, sdram);
 
-#अगर 0
+#if 0
 	/*
-	 * These values are wrong according to the SA1110 करोcumentation
+	 * These values are wrong according to the SA1110 documentation
 	 * and errata, but they seem to work.  Need to get a storage
-	 * scope on to the SDRAM संकेतs to work out why.
+	 * scope on to the SDRAM signals to work out why.
 	 */
-	अगर (policy->max < 147500) अणु
+	if (policy->max < 147500) {
 		sd.mdrefr |= MDREFR_K1DB2;
 		sd.mdcas[0] = 0xaaaaaa7f;
-	पूर्ण अन्यथा अणु
+	} else {
 		sd.mdrefr &= ~MDREFR_K1DB2;
 		sd.mdcas[0] = 0xaaaaaa9f;
-	पूर्ण
+	}
 	sd.mdcas[1] = 0xaaaaaaaa;
 	sd.mdcas[2] = 0xaaaaaaaa;
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * The घड़ी could be going away क्रम some समय.  Set the SDRAMs
-	 * to refresh rapidly (every 64 memory घड़ी cycles).  To get
-	 * through the whole array, we need to रुको 262144 mclk cycles.
-	 * We रुको 20ms to be safe.
+	 * The clock could be going away for some time.  Set the SDRAMs
+	 * to refresh rapidly (every 64 memory clock cycles).  To get
+	 * through the whole array, we need to wait 262144 mclk cycles.
+	 * We wait 20ms to be safe.
 	 */
 	sdram_set_refresh(2);
-	अगर (!irqs_disabled())
+	if (!irqs_disabled())
 		msleep(20);
-	अन्यथा
+	else
 		mdelay(20);
 
 	/*
-	 * Reprogram the DRAM timings with पूर्णांकerrupts disabled, and
-	 * ensure that we are करोing this within a complete cache line.
-	 * This means that we won't access SDRAM क्रम the duration of
+	 * Reprogram the DRAM timings with interrupts disabled, and
+	 * ensure that we are doing this within a complete cache line.
+	 * This means that we won't access SDRAM for the duration of
 	 * the programming.
 	 */
 	local_irq_save(flags);
-	यंत्र("mcr p15, 0, %0, c7, c10, 4" : : "r" (0));
+	asm("mcr p15, 0, %0, c7, c10, 4" : : "r" (0));
 	udelay(10);
-	__यंत्र__ __अस्थिर__("\न\
-		b	2f					\न\
-		.align	5					\न\
-1:		str	%3, [%1, #0]		@ MDCNFG	\न\
-		str	%4, [%1, #28]		@ MDREFR	\न\
-		str	%5, [%1, #4]		@ MDCAS0	\न\
-		str	%6, [%1, #8]		@ MDCAS1	\न\
-		str	%7, [%1, #12]		@ MDCAS2	\न\
-		str	%8, [%2, #0]		@ PPCR		\न\
-		ldr	%0, [%1, #0]				\न\
-		b	3f					\न\
-2:		b	1b					\न\
-3:		nop						\न\
+	__asm__ __volatile__("\n\
+		b	2f					\n\
+		.align	5					\n\
+1:		str	%3, [%1, #0]		@ MDCNFG	\n\
+		str	%4, [%1, #28]		@ MDREFR	\n\
+		str	%5, [%1, #4]		@ MDCAS0	\n\
+		str	%6, [%1, #8]		@ MDCAS1	\n\
+		str	%7, [%1, #12]		@ MDCAS2	\n\
+		str	%8, [%2, #0]		@ PPCR		\n\
+		ldr	%0, [%1, #0]				\n\
+		b	3f					\n\
+2:		b	1b					\n\
+3:		nop						\n\
 		nop"
 		: "=&r" (unused)
 		: "r" (&MDCNFG), "r" (&PPCR), "0" (sd.mdcnfg),
@@ -295,80 +294,80 @@ sdram_update_refresh(u_पूर्णांक cpu_khz, काष्ठा sdra
 	local_irq_restore(flags);
 
 	/*
-	 * Now, वापस the SDRAM refresh back to normal.
+	 * Now, return the SDRAM refresh back to normal.
 	 */
 	sdram_update_refresh(sa11x0_freq_table[ppcr].frequency, sdram);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init sa1110_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
+static int __init sa1110_cpu_init(struct cpufreq_policy *policy)
+{
 	cpufreq_generic_init(policy, sa11x0_freq_table, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* sa1110_driver needs __refdata because it must reमुख्य after init रेजिस्टरs
- * it with cpufreq_रेजिस्टर_driver() */
-अटल काष्ठा cpufreq_driver sa1110_driver __refdata = अणु
+/* sa1110_driver needs __refdata because it must remain after init registers
+ * it with cpufreq_register_driver() */
+static struct cpufreq_driver sa1110_driver __refdata = {
 	.flags		= CPUFREQ_NEED_INITIAL_FREQ_CHECK |
 			  CPUFREQ_NO_AUTO_DYNAMIC_SWITCHING,
-	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
+	.verify		= cpufreq_generic_frequency_table_verify,
 	.target_index	= sa1110_target,
-	.get		= sa11x0_माला_लोpeed,
+	.get		= sa11x0_getspeed,
 	.init		= sa1110_cpu_init,
 	.name		= "sa1110",
-पूर्ण;
+};
 
-अटल काष्ठा sdram_params *sa1110_find_sdram(स्थिर अक्षर *name)
-अणु
-	काष्ठा sdram_params *sdram;
+static struct sdram_params *sa1110_find_sdram(const char *name)
+{
+	struct sdram_params *sdram;
 
-	क्रम (sdram = sdram_tbl; sdram < sdram_tbl + ARRAY_SIZE(sdram_tbl);
+	for (sdram = sdram_tbl; sdram < sdram_tbl + ARRAY_SIZE(sdram_tbl);
 	     sdram++)
-		अगर (म_भेद(name, sdram->name) == 0)
-			वापस sdram;
+		if (strcmp(name, sdram->name) == 0)
+			return sdram;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अक्षर sdram_name[16];
+static char sdram_name[16];
 
-अटल पूर्णांक __init sa1110_clk_init(व्योम)
-अणु
-	काष्ठा sdram_params *sdram;
-	स्थिर अक्षर *name = sdram_name;
+static int __init sa1110_clk_init(void)
+{
+	struct sdram_params *sdram;
+	const char *name = sdram_name;
 
-	अगर (!cpu_is_sa1110())
-		वापस -ENODEV;
+	if (!cpu_is_sa1110())
+		return -ENODEV;
 
-	अगर (!name[0]) अणु
-		अगर (machine_is_assabet())
+	if (!name[0]) {
+		if (machine_is_assabet())
 			name = "TC59SM716-CL3";
-		अगर (machine_is_pt_प्रणाली3())
+		if (machine_is_pt_system3())
 			name = "K4S641632D";
-		अगर (machine_is_h3100())
+		if (machine_is_h3100())
 			name = "KM416S4030CT";
-		अगर (machine_is_jornada720() || machine_is_h3600())
+		if (machine_is_jornada720() || machine_is_h3600())
 			name = "K4S281632B-1H";
-		अगर (machine_is_nanoengine())
+		if (machine_is_nanoengine())
 			name = "MT48LC8M16A2TG-75";
-	पूर्ण
+	}
 
 	sdram = sa1110_find_sdram(name);
-	अगर (sdram) अणु
-		prपूर्णांकk(KERN_DEBUG "SDRAM: tck: %d trcd: %d trp: %d"
+	if (sdram) {
+		printk(KERN_DEBUG "SDRAM: tck: %d trcd: %d trp: %d"
 			" twr: %d refresh: %d cas_latency: %d\n",
 			sdram->tck, sdram->trcd, sdram->trp,
 			sdram->twr, sdram->refresh, sdram->cas_latency);
 
-		स_नकल(&sdram_params, sdram, माप(sdram_params));
+		memcpy(&sdram_params, sdram, sizeof(sdram_params));
 
-		वापस cpufreq_रेजिस्टर_driver(&sa1110_driver);
-	पूर्ण
+		return cpufreq_register_driver(&sa1110_driver);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-module_param_string(sdram, sdram_name, माप(sdram_name), 0);
+module_param_string(sdram, sdram_name, sizeof(sdram_name), 0);
 arch_initcall(sa1110_clk_init);

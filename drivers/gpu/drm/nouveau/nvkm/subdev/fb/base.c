@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,188 +21,188 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
-#समावेश "ram.h"
+#include "priv.h"
+#include "ram.h"
 
-#समावेश <core/memory.h>
-#समावेश <core/option.h>
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/M0203.h>
-#समावेश <engine/gr.h>
-#समावेश <engine/mpeg.h>
+#include <core/memory.h>
+#include <core/option.h>
+#include <subdev/bios.h>
+#include <subdev/bios/M0203.h>
+#include <engine/gr.h>
+#include <engine/mpeg.h>
 
-व्योम
-nvkm_fb_tile_fini(काष्ठा nvkm_fb *fb, पूर्णांक region, काष्ठा nvkm_fb_tile *tile)
-अणु
+void
+nvkm_fb_tile_fini(struct nvkm_fb *fb, int region, struct nvkm_fb_tile *tile)
+{
 	fb->func->tile.fini(fb, region, tile);
-पूर्ण
+}
 
-व्योम
-nvkm_fb_tile_init(काष्ठा nvkm_fb *fb, पूर्णांक region, u32 addr, u32 size,
-		  u32 pitch, u32 flags, काष्ठा nvkm_fb_tile *tile)
-अणु
+void
+nvkm_fb_tile_init(struct nvkm_fb *fb, int region, u32 addr, u32 size,
+		  u32 pitch, u32 flags, struct nvkm_fb_tile *tile)
+{
 	fb->func->tile.init(fb, region, addr, size, pitch, flags, tile);
-पूर्ण
+}
 
-व्योम
-nvkm_fb_tile_prog(काष्ठा nvkm_fb *fb, पूर्णांक region, काष्ठा nvkm_fb_tile *tile)
-अणु
-	काष्ठा nvkm_device *device = fb->subdev.device;
-	अगर (fb->func->tile.prog) अणु
+void
+nvkm_fb_tile_prog(struct nvkm_fb *fb, int region, struct nvkm_fb_tile *tile)
+{
+	struct nvkm_device *device = fb->subdev.device;
+	if (fb->func->tile.prog) {
 		fb->func->tile.prog(fb, region, tile);
-		अगर (device->gr)
+		if (device->gr)
 			nvkm_engine_tile(&device->gr->engine, region);
-		अगर (device->mpeg)
+		if (device->mpeg)
 			nvkm_engine_tile(device->mpeg, region);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक
-nvkm_fb_bios_memtype(काष्ठा nvkm_bios *bios)
-अणु
-	काष्ठा nvkm_subdev *subdev = &bios->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर u8 ramcfg = (nvkm_rd32(device, 0x101000) & 0x0000003c) >> 2;
-	काष्ठा nvbios_M0203E M0203E;
+int
+nvkm_fb_bios_memtype(struct nvkm_bios *bios)
+{
+	struct nvkm_subdev *subdev = &bios->subdev;
+	struct nvkm_device *device = subdev->device;
+	const u8 ramcfg = (nvkm_rd32(device, 0x101000) & 0x0000003c) >> 2;
+	struct nvbios_M0203E M0203E;
 	u8 ver, hdr;
 
-	अगर (nvbios_M0203Em(bios, ramcfg, &ver, &hdr, &M0203E)) अणु
-		चयन (M0203E.type) अणु
-		हाल M0203E_TYPE_DDR2  : वापस NVKM_RAM_TYPE_DDR2;
-		हाल M0203E_TYPE_DDR3  : वापस NVKM_RAM_TYPE_DDR3;
-		हाल M0203E_TYPE_GDDR3 : वापस NVKM_RAM_TYPE_GDDR3;
-		हाल M0203E_TYPE_GDDR5 : वापस NVKM_RAM_TYPE_GDDR5;
-		हाल M0203E_TYPE_GDDR5X: वापस NVKM_RAM_TYPE_GDDR5X;
-		हाल M0203E_TYPE_GDDR6 : वापस NVKM_RAM_TYPE_GDDR6;
-		हाल M0203E_TYPE_HBM2  : वापस NVKM_RAM_TYPE_HBM2;
-		शेष:
+	if (nvbios_M0203Em(bios, ramcfg, &ver, &hdr, &M0203E)) {
+		switch (M0203E.type) {
+		case M0203E_TYPE_DDR2  : return NVKM_RAM_TYPE_DDR2;
+		case M0203E_TYPE_DDR3  : return NVKM_RAM_TYPE_DDR3;
+		case M0203E_TYPE_GDDR3 : return NVKM_RAM_TYPE_GDDR3;
+		case M0203E_TYPE_GDDR5 : return NVKM_RAM_TYPE_GDDR5;
+		case M0203E_TYPE_GDDR5X: return NVKM_RAM_TYPE_GDDR5X;
+		case M0203E_TYPE_GDDR6 : return NVKM_RAM_TYPE_GDDR6;
+		case M0203E_TYPE_HBM2  : return NVKM_RAM_TYPE_HBM2;
+		default:
 			nvkm_warn(subdev, "M0203E type %02x\n", M0203E.type);
-			वापस NVKM_RAM_TYPE_UNKNOWN;
-		पूर्ण
-	पूर्ण
+			return NVKM_RAM_TYPE_UNKNOWN;
+		}
+	}
 
 	nvkm_warn(subdev, "M0203E not matched!\n");
-	वापस NVKM_RAM_TYPE_UNKNOWN;
-पूर्ण
+	return NVKM_RAM_TYPE_UNKNOWN;
+}
 
-अटल व्योम
-nvkm_fb_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_fb *fb = nvkm_fb(subdev);
-	अगर (fb->func->पूर्णांकr)
-		fb->func->पूर्णांकr(fb);
-पूर्ण
+static void
+nvkm_fb_intr(struct nvkm_subdev *subdev)
+{
+	struct nvkm_fb *fb = nvkm_fb(subdev);
+	if (fb->func->intr)
+		fb->func->intr(fb);
+}
 
-अटल पूर्णांक
-nvkm_fb_oneinit(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_fb *fb = nvkm_fb(subdev);
+static int
+nvkm_fb_oneinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_fb *fb = nvkm_fb(subdev);
 	u32 tags = 0;
 
-	अगर (fb->func->ram_new) अणु
-		पूर्णांक ret = fb->func->ram_new(fb, &fb->ram);
-		अगर (ret) अणु
+	if (fb->func->ram_new) {
+		int ret = fb->func->ram_new(fb, &fb->ram);
+		if (ret) {
 			nvkm_error(subdev, "vram setup failed, %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (fb->func->oneinit) अणु
-		पूर्णांक ret = fb->func->oneinit(fb);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (fb->func->oneinit) {
+		int ret = fb->func->oneinit(fb);
+		if (ret)
+			return ret;
+	}
 
 	/* Initialise compression tag allocator.
 	 *
 	 * LTC oneinit() will override this on Fermi and newer.
 	 */
-	अगर (fb->func->tags) अणु
+	if (fb->func->tags) {
 		tags = fb->func->tags(fb);
 		nvkm_debug(subdev, "%d comptags\n", tags);
-	पूर्ण
+	}
 
-	वापस nvkm_mm_init(&fb->tags.mm, 0, 0, tags, 1);
-पूर्ण
+	return nvkm_mm_init(&fb->tags.mm, 0, 0, tags, 1);
+}
 
-अटल पूर्णांक
-nvkm_fb_init_scrub_vpr(काष्ठा nvkm_fb *fb)
-अणु
-	काष्ठा nvkm_subdev *subdev = &fb->subdev;
-	पूर्णांक ret;
+static int
+nvkm_fb_init_scrub_vpr(struct nvkm_fb *fb)
+{
+	struct nvkm_subdev *subdev = &fb->subdev;
+	int ret;
 
 	nvkm_debug(subdev, "VPR locked, running scrubber binary\n");
 
-	अगर (!fb->vpr_scrubber.size) अणु
+	if (!fb->vpr_scrubber.size) {
 		nvkm_warn(subdev, "VPR locked, but no scrubber binary!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = fb->func->vpr.scrub(fb);
-	अगर (ret) अणु
+	if (ret) {
 		nvkm_error(subdev, "VPR scrubber binary failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (fb->func->vpr.scrub_required(fb)) अणु
+	if (fb->func->vpr.scrub_required(fb)) {
 		nvkm_error(subdev, "VPR still locked after scrub!\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	nvkm_debug(subdev, "VPR scrubber binary successful\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_fb_init(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_fb *fb = nvkm_fb(subdev);
-	पूर्णांक ret, i;
+static int
+nvkm_fb_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_fb *fb = nvkm_fb(subdev);
+	int ret, i;
 
-	अगर (fb->ram) अणु
+	if (fb->ram) {
 		ret = nvkm_ram_init(fb->ram);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < fb->tile.regions; i++)
+	for (i = 0; i < fb->tile.regions; i++)
 		fb->func->tile.prog(fb, i, &fb->tile.region[i]);
 
-	अगर (fb->func->init)
+	if (fb->func->init)
 		fb->func->init(fb);
 
-	अगर (fb->func->init_remapper)
+	if (fb->func->init_remapper)
 		fb->func->init_remapper(fb);
 
-	अगर (fb->func->init_page) अणु
+	if (fb->func->init_page) {
 		ret = fb->func->init_page(fb);
-		अगर (WARN_ON(ret))
-			वापस ret;
-	पूर्ण
+		if (WARN_ON(ret))
+			return ret;
+	}
 
-	अगर (fb->func->init_unkn)
+	if (fb->func->init_unkn)
 		fb->func->init_unkn(fb);
 
-	अगर (fb->func->vpr.scrub_required &&
-	    fb->func->vpr.scrub_required(fb)) अणु
+	if (fb->func->vpr.scrub_required &&
+	    fb->func->vpr.scrub_required(fb)) {
 		ret = nvkm_fb_init_scrub_vpr(fb);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_fb_dtor(काष्ठा nvkm_subdev *subdev)
-अणु
-	काष्ठा nvkm_fb *fb = nvkm_fb(subdev);
-	पूर्णांक i;
+static void *
+nvkm_fb_dtor(struct nvkm_subdev *subdev)
+{
+	struct nvkm_fb *fb = nvkm_fb(subdev);
+	int i;
 
 	nvkm_memory_unref(&fb->mmu_wr);
 	nvkm_memory_unref(&fb->mmu_rd);
 
-	क्रम (i = 0; i < fb->tile.regions; i++)
+	for (i = 0; i < fb->tile.regions; i++)
 		fb->func->tile.fini(fb, i, &fb->tile.region[i]);
 
 	nvkm_mm_fini(&fb->tags.mm);
@@ -213,36 +212,36 @@ nvkm_fb_dtor(काष्ठा nvkm_subdev *subdev)
 
 	nvkm_blob_dtor(&fb->vpr_scrubber);
 
-	अगर (fb->func->dtor)
-		वापस fb->func->dtor(fb);
-	वापस fb;
-पूर्ण
+	if (fb->func->dtor)
+		return fb->func->dtor(fb);
+	return fb;
+}
 
-अटल स्थिर काष्ठा nvkm_subdev_func
-nvkm_fb = अणु
+static const struct nvkm_subdev_func
+nvkm_fb = {
 	.dtor = nvkm_fb_dtor,
 	.oneinit = nvkm_fb_oneinit,
 	.init = nvkm_fb_init,
-	.पूर्णांकr = nvkm_fb_पूर्णांकr,
-पूर्ण;
+	.intr = nvkm_fb_intr,
+};
 
-व्योम
-nvkm_fb_ctor(स्थिर काष्ठा nvkm_fb_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb *fb)
-अणु
+void
+nvkm_fb_ctor(const struct nvkm_fb_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, struct nvkm_fb *fb)
+{
 	nvkm_subdev_ctor(&nvkm_fb, device, type, inst, &fb->subdev);
 	fb->func = func;
 	fb->tile.regions = fb->func->tile.regions;
-	fb->page = nvkm_दीर्घopt(device->cfgopt, "NvFbBigPage", fb->func->शेष_bigpage);
+	fb->page = nvkm_longopt(device->cfgopt, "NvFbBigPage", fb->func->default_bigpage);
 	mutex_init(&fb->tags.mutex);
-पूर्ण
+}
 
-पूर्णांक
-nvkm_fb_new_(स्थिर काष्ठा nvkm_fb_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
-अणु
-	अगर (!(*pfb = kzalloc(माप(**pfb), GFP_KERNEL)))
-		वापस -ENOMEM;
+int
+nvkm_fb_new_(const struct nvkm_fb_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
+{
+	if (!(*pfb = kzalloc(sizeof(**pfb), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_fb_ctor(func, device, type, inst, *pfb);
-	वापस 0;
-पूर्ण
+	return 0;
+}

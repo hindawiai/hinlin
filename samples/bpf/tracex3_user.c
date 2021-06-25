@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2013-2015 PLUMgrid, http://plumgrid.com
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <sys/resource.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+#include <stdbool.h>
+#include <string.h>
+#include <sys/resource.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश "bpf_util.h"
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include "bpf_util.h"
 
-#घोषणा SLOTS 100
+#define SLOTS 100
 
-अटल व्योम clear_stats(पूर्णांक fd)
-अणु
-	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
+static void clear_stats(int fd)
+{
+	unsigned int nr_cpus = bpf_num_possible_cpus();
 	__u64 values[nr_cpus];
 	__u32 key;
 
-	स_रखो(values, 0, माप(values));
-	क्रम (key = 0; key < SLOTS; key++)
+	memset(values, 0, sizeof(values));
+	for (key = 0; key < SLOTS; key++)
 		bpf_map_update_elem(fd, &key, values, BPF_ANY);
-पूर्ण
+}
 
-स्थिर अक्षर *color[] = अणु
+const char *color[] = {
 	"\033[48;5;255m",
 	"\033[48;5;252m",
 	"\033[48;5;250m",
@@ -40,12 +39,12 @@
 	"\033[48;5;236m",
 	"\033[48;5;234m",
 	"\033[48;5;232m",
-पूर्ण;
-स्थिर पूर्णांक num_colors = ARRAY_SIZE(color);
+};
+const int num_colors = ARRAY_SIZE(color);
 
-स्थिर अक्षर nocolor[] = "\033[00m";
+const char nocolor[] = "\033[00m";
 
-स्थिर अक्षर *sym[] = अणु
+const char *sym[] = {
 	" ",
 	" ",
 	".",
@@ -58,128 +57,128 @@
 	"O",
 	"#",
 	"#",
-पूर्ण;
+};
 
 bool full_range = false;
 bool text_only = false;
 
-अटल व्योम prपूर्णांक_banner(व्योम)
-अणु
-	अगर (full_range)
-		म_लिखो("|1ns     |10ns     |100ns    |1us      |10us     |100us"
+static void print_banner(void)
+{
+	if (full_range)
+		printf("|1ns     |10ns     |100ns    |1us      |10us     |100us"
 		       "    |1ms      |10ms     |100ms    |1s       |10s\n");
-	अन्यथा
-		म_लिखो("|1us      |10us     |100us    |1ms      |10ms     "
+	else
+		printf("|1us      |10us     |100us    |1ms      |10ms     "
 		       "|100ms    |1s       |10s\n");
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_hist(पूर्णांक fd)
-अणु
-	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
+static void print_hist(int fd)
+{
+	unsigned int nr_cpus = bpf_num_possible_cpus();
 	__u64 total_events = 0;
-	दीर्घ values[nr_cpus];
+	long values[nr_cpus];
 	__u64 max_cnt = 0;
 	__u64 cnt[SLOTS];
 	__u64 value;
 	__u32 key;
-	पूर्णांक i;
+	int i;
 
-	क्रम (key = 0; key < SLOTS; key++) अणु
+	for (key = 0; key < SLOTS; key++) {
 		bpf_map_lookup_elem(fd, &key, values);
 		value = 0;
-		क्रम (i = 0; i < nr_cpus; i++)
+		for (i = 0; i < nr_cpus; i++)
 			value += values[i];
 		cnt[key] = value;
 		total_events += value;
-		अगर (value > max_cnt)
+		if (value > max_cnt)
 			max_cnt = value;
-	पूर्ण
+	}
 	clear_stats(fd);
-	क्रम (key = full_range ? 0 : 29; key < SLOTS; key++) अणु
-		पूर्णांक c = num_colors * cnt[key] / (max_cnt + 1);
+	for (key = full_range ? 0 : 29; key < SLOTS; key++) {
+		int c = num_colors * cnt[key] / (max_cnt + 1);
 
-		अगर (text_only)
-			म_लिखो("%s", sym[c]);
-		अन्यथा
-			म_लिखो("%s %s", color[c], nocolor);
-	पूर्ण
-	म_लिखो(" # %lld\n", total_events);
-पूर्ण
+		if (text_only)
+			printf("%s", sym[c]);
+		else
+			printf("%s %s", color[c], nocolor);
+	}
+	printf(" # %lld\n", total_events);
+}
 
-पूर्णांक मुख्य(पूर्णांक ac, अक्षर **argv)
-अणु
-	काष्ठा bpf_link *links[2];
-	काष्ठा bpf_program *prog;
-	काष्ठा bpf_object *obj;
-	अक्षर filename[256];
-	पूर्णांक map_fd, i, j = 0;
+int main(int ac, char **argv)
+{
+	struct bpf_link *links[2];
+	struct bpf_program *prog;
+	struct bpf_object *obj;
+	char filename[256];
+	int map_fd, i, j = 0;
 
-	क्रम (i = 1; i < ac; i++) अणु
-		अगर (म_भेद(argv[i], "-a") == 0) अणु
+	for (i = 1; i < ac; i++) {
+		if (strcmp(argv[i], "-a") == 0) {
 			full_range = true;
-		पूर्ण अन्यथा अगर (म_भेद(argv[i], "-t") == 0) अणु
+		} else if (strcmp(argv[i], "-t") == 0) {
 			text_only = true;
-		पूर्ण अन्यथा अगर (म_भेद(argv[i], "-h") == 0) अणु
-			म_लिखो("Usage:\n"
+		} else if (strcmp(argv[i], "-h") == 0) {
+			printf("Usage:\n"
 			       "  -a display wider latency range\n"
 			       "  -t text only\n");
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__खोलो_file(filename, शून्य);
-	अगर (libbpf_get_error(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
-		वापस 0;
-	पूर्ण
+	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__open_file(filename, NULL);
+	if (libbpf_get_error(obj)) {
+		fprintf(stderr, "ERROR: opening BPF object file failed\n");
+		return 0;
+	}
 
 	/* load BPF program */
-	अगर (bpf_object__load(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (bpf_object__load(obj)) {
+		fprintf(stderr, "ERROR: loading BPF object file failed\n");
+		goto cleanup;
+	}
 
 	map_fd = bpf_object__find_map_fd_by_name(obj, "lat_map");
-	अगर (map_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: finding a map in obj file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (map_fd < 0) {
+		fprintf(stderr, "ERROR: finding a map in obj file failed\n");
+		goto cleanup;
+	}
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
+	bpf_object__for_each_program(prog, obj) {
 		links[j] = bpf_program__attach(prog);
-		अगर (libbpf_get_error(links[j])) अणु
-			ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
-			links[j] = शून्य;
-			जाओ cleanup;
-		पूर्ण
+		if (libbpf_get_error(links[j])) {
+			fprintf(stderr, "ERROR: bpf_program__attach failed\n");
+			links[j] = NULL;
+			goto cleanup;
+		}
 		j++;
-	पूर्ण
+	}
 
-	म_लिखो("  heatmap of IO latency\n");
-	अगर (text_only)
-		म_लिखो("  %s", sym[num_colors - 1]);
-	अन्यथा
-		म_लिखो("  %s %s", color[num_colors - 1], nocolor);
-	म_लिखो(" - many events with this latency\n");
+	printf("  heatmap of IO latency\n");
+	if (text_only)
+		printf("  %s", sym[num_colors - 1]);
+	else
+		printf("  %s %s", color[num_colors - 1], nocolor);
+	printf(" - many events with this latency\n");
 
-	अगर (text_only)
-		म_लिखो("  %s", sym[0]);
-	अन्यथा
-		म_लिखो("  %s %s", color[0], nocolor);
-	म_लिखो(" - few events\n");
+	if (text_only)
+		printf("  %s", sym[0]);
+	else
+		printf("  %s %s", color[0], nocolor);
+	printf(" - few events\n");
 
-	क्रम (i = 0; ; i++) अणु
-		अगर (i % 20 == 0)
-			prपूर्णांक_banner();
-		prपूर्णांक_hist(map_fd);
+	for (i = 0; ; i++) {
+		if (i % 20 == 0)
+			print_banner();
+		print_hist(map_fd);
 		sleep(2);
-	पूर्ण
+	}
 
 cleanup:
-	क्रम (j--; j >= 0; j--)
+	for (j--; j >= 0; j--)
 		bpf_link__destroy(links[j]);
 
-	bpf_object__बंद(obj);
-	वापस 0;
-पूर्ण
+	bpf_object__close(obj);
+	return 0;
+}

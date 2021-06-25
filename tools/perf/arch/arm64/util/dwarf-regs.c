@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
+ * Mapping of DWARF debug register numbers into register names.
  *
  * Copyright (C) 2010 Will Deacon, ARM Ltd.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकघोष.स>
-#समावेश <माला.स>
-#समावेश <dwarf-regs.h>
-#समावेश <linux/ptrace.h> /* क्रम काष्ठा user_pt_regs */
-#समावेश <linux/stringअगरy.h>
+#include <errno.h>
+#include <stddef.h>
+#include <string.h>
+#include <dwarf-regs.h>
+#include <linux/ptrace.h> /* for struct user_pt_regs */
+#include <linux/stringify.h>
 
-काष्ठा pt_regs_dwarfnum अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक dwarfnum;
-पूर्ण;
+struct pt_regs_dwarfnum {
+	const char *name;
+	unsigned int dwarfnum;
+};
 
-#घोषणा REG_DWARFNUM_NAME(r, num) अणु.name = r, .dwarfnum = numपूर्ण
-#घोषणा GPR_DWARFNUM_NAME(num) \
-	अणु.name = __stringअगरy(%x##num), .dwarfnum = numपूर्ण
-#घोषणा REG_DWARFNUM_END अणु.name = शून्य, .dwarfnum = 0पूर्ण
-#घोषणा DWARFNUM2OFFSET(index) \
-	(index * माप((काष्ठा user_pt_regs *)0)->regs[0])
+#define REG_DWARFNUM_NAME(r, num) {.name = r, .dwarfnum = num}
+#define GPR_DWARFNUM_NAME(num) \
+	{.name = __stringify(%x##num), .dwarfnum = num}
+#define REG_DWARFNUM_END {.name = NULL, .dwarfnum = 0}
+#define DWARFNUM2OFFSET(index) \
+	(index * sizeof((struct user_pt_regs *)0)->regs[0])
 
 /*
  * Reference:
- * http://infocenter.arm.com/help/topic/com.arm.करोc.ihi0057b/IHI0057B_aadwarf64.pdf
+ * http://infocenter.arm.com/help/topic/com.arm.doc.ihi0057b/IHI0057B_aadwarf64.pdf
  */
-अटल स्थिर काष्ठा pt_regs_dwarfnum regdwarfnum_table[] = अणु
+static const struct pt_regs_dwarfnum regdwarfnum_table[] = {
 	GPR_DWARFNUM_NAME(0),
 	GPR_DWARFNUM_NAME(1),
 	GPR_DWARFNUM_NAME(2),
@@ -63,31 +62,31 @@
 	REG_DWARFNUM_NAME("%lr", 30),
 	REG_DWARFNUM_NAME("%sp", 31),
 	REG_DWARFNUM_END,
-पूर्ण;
+};
 
 /**
- * get_arch_regstr() - lookup रेजिस्टर name from it's DWARF रेजिस्टर number
- * @n:	the DWARF रेजिस्टर number
+ * get_arch_regstr() - lookup register name from it's DWARF register number
+ * @n:	the DWARF register number
  *
- * get_arch_regstr() वापसs the name of the रेजिस्टर in काष्ठा
- * regdwarfnum_table from it's DWARF रेजिस्टर number. If the रेजिस्टर is not
- * found in the table, this वापसs शून्य;
+ * get_arch_regstr() returns the name of the register in struct
+ * regdwarfnum_table from it's DWARF register number. If the register is not
+ * found in the table, this returns NULL;
  */
-स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
-अणु
-	स्थिर काष्ठा pt_regs_dwarfnum *roff;
-	क्रम (roff = regdwarfnum_table; roff->name != शून्य; roff++)
-		अगर (roff->dwarfnum == n)
-			वापस roff->name;
-	वापस शून्य;
-पूर्ण
+const char *get_arch_regstr(unsigned int n)
+{
+	const struct pt_regs_dwarfnum *roff;
+	for (roff = regdwarfnum_table; roff->name != NULL; roff++)
+		if (roff->dwarfnum == n)
+			return roff->name;
+	return NULL;
+}
 
-पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा pt_regs_dwarfnum *roff;
+int regs_query_register_offset(const char *name)
+{
+	const struct pt_regs_dwarfnum *roff;
 
-	क्रम (roff = regdwarfnum_table; roff->name != शून्य; roff++)
-		अगर (!म_भेद(roff->name, name))
-			वापस DWARFNUM2OFFSET(roff->dwarfnum);
-	वापस -EINVAL;
-पूर्ण
+	for (roff = regdwarfnum_table; roff->name != NULL; roff++)
+		if (!strcmp(roff->name, name))
+			return DWARFNUM2OFFSET(roff->dwarfnum);
+	return -EINVAL;
+}

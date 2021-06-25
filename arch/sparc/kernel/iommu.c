@@ -1,403 +1,402 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* iommu.c: Generic sparc64 IOMMU support.
  *
  * Copyright (C) 1999, 2007, 2008 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1999, 2000 Jakub Jelinek (jakub@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/iommu-helper.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <यंत्र/iommu-common.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-map-ops.h>
+#include <linux/errno.h>
+#include <linux/iommu-helper.h>
+#include <linux/bitmap.h>
+#include <asm/iommu-common.h>
 
-#अगर_घोषित CONFIG_PCI
-#समावेश <linux/pci.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PCI
+#include <linux/pci.h>
+#endif
 
-#समावेश <यंत्र/iommu.h>
+#include <asm/iommu.h>
 
-#समावेश "iommu_common.h"
-#समावेश "kernel.h"
+#include "iommu_common.h"
+#include "kernel.h"
 
-#घोषणा STC_CTXMATCH_ADDR(STC, CTX)	\
+#define STC_CTXMATCH_ADDR(STC, CTX)	\
 	((STC)->strbuf_ctxmatch_base + ((CTX) << 3))
-#घोषणा STC_FLUSHFLAG_INIT(STC) \
+#define STC_FLUSHFLAG_INIT(STC) \
 	(*((STC)->strbuf_flushflag) = 0UL)
-#घोषणा STC_FLUSHFLAG_SET(STC) \
+#define STC_FLUSHFLAG_SET(STC) \
 	(*((STC)->strbuf_flushflag) != 0UL)
 
-#घोषणा iommu_पढ़ो(__reg) \
-(अणु	u64 __ret; \
-	__यंत्र__ __अस्थिर__("ldxa [%1] %2, %0" \
+#define iommu_read(__reg) \
+({	u64 __ret; \
+	__asm__ __volatile__("ldxa [%1] %2, %0" \
 			     : "=r" (__ret) \
 			     : "r" (__reg), "i" (ASI_PHYS_BYPASS_EC_E) \
 			     : "memory"); \
 	__ret; \
-पूर्ण)
-#घोषणा iommu_ग_लिखो(__reg, __val) \
-	__यंत्र__ __अस्थिर__("stxa %0, [%1] %2" \
-			     : /* no outमाला_दो */ \
+})
+#define iommu_write(__reg, __val) \
+	__asm__ __volatile__("stxa %0, [%1] %2" \
+			     : /* no outputs */ \
 			     : "r" (__val), "r" (__reg), \
 			       "i" (ASI_PHYS_BYPASS_EC_E))
 
 /* Must be invoked under the IOMMU lock. */
-अटल व्योम iommu_flushall(काष्ठा iommu_map_table *iommu_map_table)
-अणु
-	काष्ठा iommu *iommu = container_of(iommu_map_table, काष्ठा iommu, tbl);
-	अगर (iommu->iommu_flushinv) अणु
-		iommu_ग_लिखो(iommu->iommu_flushinv, ~(u64)0);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ tag;
-		पूर्णांक entry;
+static void iommu_flushall(struct iommu_map_table *iommu_map_table)
+{
+	struct iommu *iommu = container_of(iommu_map_table, struct iommu, tbl);
+	if (iommu->iommu_flushinv) {
+		iommu_write(iommu->iommu_flushinv, ~(u64)0);
+	} else {
+		unsigned long tag;
+		int entry;
 
 		tag = iommu->iommu_tags;
-		क्रम (entry = 0; entry < 16; entry++) अणु
-			iommu_ग_लिखो(tag, 0);
+		for (entry = 0; entry < 16; entry++) {
+			iommu_write(tag, 0);
 			tag += 8;
-		पूर्ण
+		}
 
-		/* Ensure completion of previous PIO ग_लिखोs. */
-		(व्योम) iommu_पढ़ो(iommu->ग_लिखो_complete_reg);
-	पूर्ण
-पूर्ण
+		/* Ensure completion of previous PIO writes. */
+		(void) iommu_read(iommu->write_complete_reg);
+	}
+}
 
-#घोषणा IOPTE_CONSISTENT(CTX) \
+#define IOPTE_CONSISTENT(CTX) \
 	(IOPTE_VALID | IOPTE_CACHE | \
 	 (((CTX) << 47) & IOPTE_CONTEXT))
 
-#घोषणा IOPTE_STREAMING(CTX) \
+#define IOPTE_STREAMING(CTX) \
 	(IOPTE_CONSISTENT(CTX) | IOPTE_STBUF)
 
 /* Existing mappings are never marked invalid, instead they
- * are poपूर्णांकed to a dummy page.
+ * are pointed to a dummy page.
  */
-#घोषणा IOPTE_IS_DUMMY(iommu, iopte)	\
+#define IOPTE_IS_DUMMY(iommu, iopte)	\
 	((iopte_val(*iopte) & IOPTE_PAGE) == (iommu)->dummy_page_pa)
 
-अटल अंतरभूत व्योम iopte_make_dummy(काष्ठा iommu *iommu, iopte_t *iopte)
-अणु
-	अचिन्हित दीर्घ val = iopte_val(*iopte);
+static inline void iopte_make_dummy(struct iommu *iommu, iopte_t *iopte)
+{
+	unsigned long val = iopte_val(*iopte);
 
 	val &= ~IOPTE_PAGE;
 	val |= iommu->dummy_page_pa;
 
 	iopte_val(*iopte) = val;
-पूर्ण
+}
 
-पूर्णांक iommu_table_init(काष्ठा iommu *iommu, पूर्णांक tsbsize,
+int iommu_table_init(struct iommu *iommu, int tsbsize,
 		     u32 dma_offset, u32 dma_addr_mask,
-		     पूर्णांक numa_node)
-अणु
-	अचिन्हित दीर्घ i, order, sz, num_tsb_entries;
-	काष्ठा page *page;
+		     int numa_node)
+{
+	unsigned long i, order, sz, num_tsb_entries;
+	struct page *page;
 
-	num_tsb_entries = tsbsize / माप(iopte_t);
+	num_tsb_entries = tsbsize / sizeof(iopte_t);
 
 	/* Setup initial software IOMMU state. */
 	spin_lock_init(&iommu->lock);
-	iommu->ctx_lowest_मुक्त = 1;
+	iommu->ctx_lowest_free = 1;
 	iommu->tbl.table_map_base = dma_offset;
 	iommu->dma_addr_mask = dma_addr_mask;
 
-	/* Allocate and initialize the मुक्त area map.  */
+	/* Allocate and initialize the free area map.  */
 	sz = num_tsb_entries / 8;
 	sz = (sz + 7UL) & ~7UL;
 	iommu->tbl.map = kzalloc_node(sz, GFP_KERNEL, numa_node);
-	अगर (!iommu->tbl.map)
-		वापस -ENOMEM;
+	if (!iommu->tbl.map)
+		return -ENOMEM;
 
 	iommu_tbl_pool_init(&iommu->tbl, num_tsb_entries, IO_PAGE_SHIFT,
-			    (tlb_type != hypervisor ? iommu_flushall : शून्य),
+			    (tlb_type != hypervisor ? iommu_flushall : NULL),
 			    false, 1, false);
 
 	/* Allocate and initialize the dummy page which we
-	 * set inactive IO PTEs to poपूर्णांक to.
+	 * set inactive IO PTEs to point to.
 	 */
 	page = alloc_pages_node(numa_node, GFP_KERNEL, 0);
-	अगर (!page) अणु
-		prपूर्णांकk(KERN_ERR "IOMMU: Error, gfp(dummy_page) failed.\n");
-		जाओ out_मुक्त_map;
-	पूर्ण
-	iommu->dummy_page = (अचिन्हित दीर्घ) page_address(page);
-	स_रखो((व्योम *)iommu->dummy_page, 0, PAGE_SIZE);
-	iommu->dummy_page_pa = (अचिन्हित दीर्घ) __pa(iommu->dummy_page);
+	if (!page) {
+		printk(KERN_ERR "IOMMU: Error, gfp(dummy_page) failed.\n");
+		goto out_free_map;
+	}
+	iommu->dummy_page = (unsigned long) page_address(page);
+	memset((void *)iommu->dummy_page, 0, PAGE_SIZE);
+	iommu->dummy_page_pa = (unsigned long) __pa(iommu->dummy_page);
 
 	/* Now allocate and setup the IOMMU page table itself.  */
 	order = get_order(tsbsize);
 	page = alloc_pages_node(numa_node, GFP_KERNEL, order);
-	अगर (!page) अणु
-		prपूर्णांकk(KERN_ERR "IOMMU: Error, gfp(tsb) failed.\n");
-		जाओ out_मुक्त_dummy_page;
-	पूर्ण
+	if (!page) {
+		printk(KERN_ERR "IOMMU: Error, gfp(tsb) failed.\n");
+		goto out_free_dummy_page;
+	}
 	iommu->page_table = (iopte_t *)page_address(page);
 
-	क्रम (i = 0; i < num_tsb_entries; i++)
+	for (i = 0; i < num_tsb_entries; i++)
 		iopte_make_dummy(iommu, &iommu->page_table[i]);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_dummy_page:
-	मुक्त_page(iommu->dummy_page);
+out_free_dummy_page:
+	free_page(iommu->dummy_page);
 	iommu->dummy_page = 0UL;
 
-out_मुक्त_map:
-	kमुक्त(iommu->tbl.map);
-	iommu->tbl.map = शून्य;
+out_free_map:
+	kfree(iommu->tbl.map);
+	iommu->tbl.map = NULL;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल अंतरभूत iopte_t *alloc_npages(काष्ठा device *dev,
-				    काष्ठा iommu *iommu,
-				    अचिन्हित दीर्घ npages)
-अणु
-	अचिन्हित दीर्घ entry;
+static inline iopte_t *alloc_npages(struct device *dev,
+				    struct iommu *iommu,
+				    unsigned long npages)
+{
+	unsigned long entry;
 
-	entry = iommu_tbl_range_alloc(dev, &iommu->tbl, npages, शून्य,
-				      (अचिन्हित दीर्घ)(-1), 0);
-	अगर (unlikely(entry == IOMMU_ERROR_CODE))
-		वापस शून्य;
+	entry = iommu_tbl_range_alloc(dev, &iommu->tbl, npages, NULL,
+				      (unsigned long)(-1), 0);
+	if (unlikely(entry == IOMMU_ERROR_CODE))
+		return NULL;
 
-	वापस iommu->page_table + entry;
-पूर्ण
+	return iommu->page_table + entry;
+}
 
-अटल पूर्णांक iommu_alloc_ctx(काष्ठा iommu *iommu)
-अणु
-	पूर्णांक lowest = iommu->ctx_lowest_मुक्त;
-	पूर्णांक n = find_next_zero_bit(iommu->ctx_biपंचांगap, IOMMU_NUM_CTXS, lowest);
+static int iommu_alloc_ctx(struct iommu *iommu)
+{
+	int lowest = iommu->ctx_lowest_free;
+	int n = find_next_zero_bit(iommu->ctx_bitmap, IOMMU_NUM_CTXS, lowest);
 
-	अगर (unlikely(n == IOMMU_NUM_CTXS)) अणु
-		n = find_next_zero_bit(iommu->ctx_biपंचांगap, lowest, 1);
-		अगर (unlikely(n == lowest)) अणु
-			prपूर्णांकk(KERN_WARNING "IOMMU: Ran out of contexts.\n");
+	if (unlikely(n == IOMMU_NUM_CTXS)) {
+		n = find_next_zero_bit(iommu->ctx_bitmap, lowest, 1);
+		if (unlikely(n == lowest)) {
+			printk(KERN_WARNING "IOMMU: Ran out of contexts.\n");
 			n = 0;
-		पूर्ण
-	पूर्ण
-	अगर (n)
-		__set_bit(n, iommu->ctx_biपंचांगap);
+		}
+	}
+	if (n)
+		__set_bit(n, iommu->ctx_bitmap);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल अंतरभूत व्योम iommu_मुक्त_ctx(काष्ठा iommu *iommu, पूर्णांक ctx)
-अणु
-	अगर (likely(ctx)) अणु
-		__clear_bit(ctx, iommu->ctx_biपंचांगap);
-		अगर (ctx < iommu->ctx_lowest_मुक्त)
-			iommu->ctx_lowest_मुक्त = ctx;
-	पूर्ण
-पूर्ण
+static inline void iommu_free_ctx(struct iommu *iommu, int ctx)
+{
+	if (likely(ctx)) {
+		__clear_bit(ctx, iommu->ctx_bitmap);
+		if (ctx < iommu->ctx_lowest_free)
+			iommu->ctx_lowest_free = ctx;
+	}
+}
 
-अटल व्योम *dma_4u_alloc_coherent(काष्ठा device *dev, माप_प्रकार size,
+static void *dma_4u_alloc_coherent(struct device *dev, size_t size,
 				   dma_addr_t *dma_addrp, gfp_t gfp,
-				   अचिन्हित दीर्घ attrs)
-अणु
-	अचिन्हित दीर्घ order, first_page;
-	काष्ठा iommu *iommu;
-	काष्ठा page *page;
-	पूर्णांक npages, nid;
+				   unsigned long attrs)
+{
+	unsigned long order, first_page;
+	struct iommu *iommu;
+	struct page *page;
+	int npages, nid;
 	iopte_t *iopte;
-	व्योम *ret;
+	void *ret;
 
 	size = IO_PAGE_ALIGN(size);
 	order = get_order(size);
-	अगर (order >= 10)
-		वापस शून्य;
+	if (order >= 10)
+		return NULL;
 
 	nid = dev->archdata.numa_node;
 	page = alloc_pages_node(nid, gfp, order);
-	अगर (unlikely(!page))
-		वापस शून्य;
+	if (unlikely(!page))
+		return NULL;
 
-	first_page = (अचिन्हित दीर्घ) page_address(page);
-	स_रखो((अक्षर *)first_page, 0, PAGE_SIZE << order);
+	first_page = (unsigned long) page_address(page);
+	memset((char *)first_page, 0, PAGE_SIZE << order);
 
 	iommu = dev->archdata.iommu;
 
 	iopte = alloc_npages(dev, iommu, size >> IO_PAGE_SHIFT);
 
-	अगर (unlikely(iopte == शून्य)) अणु
-		मुक्त_pages(first_page, order);
-		वापस शून्य;
-	पूर्ण
+	if (unlikely(iopte == NULL)) {
+		free_pages(first_page, order);
+		return NULL;
+	}
 
 	*dma_addrp = (iommu->tbl.table_map_base +
 		      ((iopte - iommu->page_table) << IO_PAGE_SHIFT));
-	ret = (व्योम *) first_page;
+	ret = (void *) first_page;
 	npages = size >> IO_PAGE_SHIFT;
 	first_page = __pa(first_page);
-	जबतक (npages--) अणु
+	while (npages--) {
 		iopte_val(*iopte) = (IOPTE_CONSISTENT(0UL) |
 				     IOPTE_WRITE |
 				     (first_page & IOPTE_PAGE));
 		iopte++;
 		first_page += IO_PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dma_4u_मुक्त_coherent(काष्ठा device *dev, माप_प्रकार size,
-				 व्योम *cpu, dma_addr_t dvma,
-				 अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा iommu *iommu;
-	अचिन्हित दीर्घ order, npages;
+static void dma_4u_free_coherent(struct device *dev, size_t size,
+				 void *cpu, dma_addr_t dvma,
+				 unsigned long attrs)
+{
+	struct iommu *iommu;
+	unsigned long order, npages;
 
 	npages = IO_PAGE_ALIGN(size) >> IO_PAGE_SHIFT;
 	iommu = dev->archdata.iommu;
 
-	iommu_tbl_range_मुक्त(&iommu->tbl, dvma, npages, IOMMU_ERROR_CODE);
+	iommu_tbl_range_free(&iommu->tbl, dvma, npages, IOMMU_ERROR_CODE);
 
 	order = get_order(size);
-	अगर (order < 10)
-		मुक्त_pages((अचिन्हित दीर्घ)cpu, order);
-पूर्ण
+	if (order < 10)
+		free_pages((unsigned long)cpu, order);
+}
 
-अटल dma_addr_t dma_4u_map_page(काष्ठा device *dev, काष्ठा page *page,
-				  अचिन्हित दीर्घ offset, माप_प्रकार sz,
-				  क्रमागत dma_data_direction direction,
-				  अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा iommu *iommu;
-	काष्ठा strbuf *strbuf;
+static dma_addr_t dma_4u_map_page(struct device *dev, struct page *page,
+				  unsigned long offset, size_t sz,
+				  enum dma_data_direction direction,
+				  unsigned long attrs)
+{
+	struct iommu *iommu;
+	struct strbuf *strbuf;
 	iopte_t *base;
-	अचिन्हित दीर्घ flags, npages, oaddr;
-	अचिन्हित दीर्घ i, base_paddr, ctx;
+	unsigned long flags, npages, oaddr;
+	unsigned long i, base_paddr, ctx;
 	u32 bus_addr, ret;
-	अचिन्हित दीर्घ iopte_protection;
+	unsigned long iopte_protection;
 
 	iommu = dev->archdata.iommu;
 	strbuf = dev->archdata.stc;
 
-	अगर (unlikely(direction == DMA_NONE))
-		जाओ bad_no_ctx;
+	if (unlikely(direction == DMA_NONE))
+		goto bad_no_ctx;
 
-	oaddr = (अचिन्हित दीर्घ)(page_address(page) + offset);
+	oaddr = (unsigned long)(page_address(page) + offset);
 	npages = IO_PAGE_ALIGN(oaddr + sz) - (oaddr & IO_PAGE_MASK);
 	npages >>= IO_PAGE_SHIFT;
 
 	base = alloc_npages(dev, iommu, npages);
 	spin_lock_irqsave(&iommu->lock, flags);
 	ctx = 0;
-	अगर (iommu->iommu_ctxflush)
+	if (iommu->iommu_ctxflush)
 		ctx = iommu_alloc_ctx(iommu);
 	spin_unlock_irqrestore(&iommu->lock, flags);
 
-	अगर (unlikely(!base))
-		जाओ bad;
+	if (unlikely(!base))
+		goto bad;
 
 	bus_addr = (iommu->tbl.table_map_base +
 		    ((base - iommu->page_table) << IO_PAGE_SHIFT));
 	ret = bus_addr | (oaddr & ~IO_PAGE_MASK);
 	base_paddr = __pa(oaddr & IO_PAGE_MASK);
-	अगर (strbuf->strbuf_enabled)
+	if (strbuf->strbuf_enabled)
 		iopte_protection = IOPTE_STREAMING(ctx);
-	अन्यथा
+	else
 		iopte_protection = IOPTE_CONSISTENT(ctx);
-	अगर (direction != DMA_TO_DEVICE)
+	if (direction != DMA_TO_DEVICE)
 		iopte_protection |= IOPTE_WRITE;
 
-	क्रम (i = 0; i < npages; i++, base++, base_paddr += IO_PAGE_SIZE)
+	for (i = 0; i < npages; i++, base++, base_paddr += IO_PAGE_SIZE)
 		iopte_val(*base) = iopte_protection | base_paddr;
 
-	वापस ret;
+	return ret;
 
 bad:
-	iommu_मुक्त_ctx(iommu, ctx);
+	iommu_free_ctx(iommu, ctx);
 bad_no_ctx:
-	अगर (prपूर्णांकk_ratelimit())
+	if (printk_ratelimit())
 		WARN_ON(1);
-	वापस DMA_MAPPING_ERROR;
-पूर्ण
+	return DMA_MAPPING_ERROR;
+}
 
-अटल व्योम strbuf_flush(काष्ठा strbuf *strbuf, काष्ठा iommu *iommu,
-			 u32 vaddr, अचिन्हित दीर्घ ctx, अचिन्हित दीर्घ npages,
-			 क्रमागत dma_data_direction direction)
-अणु
-	पूर्णांक limit;
+static void strbuf_flush(struct strbuf *strbuf, struct iommu *iommu,
+			 u32 vaddr, unsigned long ctx, unsigned long npages,
+			 enum dma_data_direction direction)
+{
+	int limit;
 
-	अगर (strbuf->strbuf_ctxflush &&
-	    iommu->iommu_ctxflush) अणु
-		अचिन्हित दीर्घ matchreg, flushreg;
+	if (strbuf->strbuf_ctxflush &&
+	    iommu->iommu_ctxflush) {
+		unsigned long matchreg, flushreg;
 		u64 val;
 
 		flushreg = strbuf->strbuf_ctxflush;
 		matchreg = STC_CTXMATCH_ADDR(strbuf, ctx);
 
-		iommu_ग_लिखो(flushreg, ctx);
-		val = iommu_पढ़ो(matchreg);
+		iommu_write(flushreg, ctx);
+		val = iommu_read(matchreg);
 		val &= 0xffff;
-		अगर (!val)
-			जाओ करो_flush_sync;
+		if (!val)
+			goto do_flush_sync;
 
-		जबतक (val) अणु
-			अगर (val & 0x1)
-				iommu_ग_लिखो(flushreg, ctx);
+		while (val) {
+			if (val & 0x1)
+				iommu_write(flushreg, ctx);
 			val >>= 1;
-		पूर्ण
-		val = iommu_पढ़ो(matchreg);
-		अगर (unlikely(val)) अणु
-			prपूर्णांकk(KERN_WARNING "strbuf_flush: ctx flush "
+		}
+		val = iommu_read(matchreg);
+		if (unlikely(val)) {
+			printk(KERN_WARNING "strbuf_flush: ctx flush "
 			       "timeout matchreg[%llx] ctx[%lx]\n",
 			       val, ctx);
-			जाओ करो_page_flush;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ i;
+			goto do_page_flush;
+		}
+	} else {
+		unsigned long i;
 
-	करो_page_flush:
-		क्रम (i = 0; i < npages; i++, vaddr += IO_PAGE_SIZE)
-			iommu_ग_लिखो(strbuf->strbuf_pflush, vaddr);
-	पूर्ण
+	do_page_flush:
+		for (i = 0; i < npages; i++, vaddr += IO_PAGE_SIZE)
+			iommu_write(strbuf->strbuf_pflush, vaddr);
+	}
 
-करो_flush_sync:
-	/* If the device could not have possibly put dirty data पूर्णांकo
+do_flush_sync:
+	/* If the device could not have possibly put dirty data into
 	 * the streaming cache, no flush-flag synchronization needs
-	 * to be perक्रमmed.
+	 * to be performed.
 	 */
-	अगर (direction == DMA_TO_DEVICE)
-		वापस;
+	if (direction == DMA_TO_DEVICE)
+		return;
 
 	STC_FLUSHFLAG_INIT(strbuf);
-	iommu_ग_लिखो(strbuf->strbuf_fsync, strbuf->strbuf_flushflag_pa);
-	(व्योम) iommu_पढ़ो(iommu->ग_लिखो_complete_reg);
+	iommu_write(strbuf->strbuf_fsync, strbuf->strbuf_flushflag_pa);
+	(void) iommu_read(iommu->write_complete_reg);
 
 	limit = 100000;
-	जबतक (!STC_FLUSHFLAG_SET(strbuf)) अणु
+	while (!STC_FLUSHFLAG_SET(strbuf)) {
 		limit--;
-		अगर (!limit)
-			अवरोध;
+		if (!limit)
+			break;
 		udelay(1);
 		rmb();
-	पूर्ण
-	अगर (!limit)
-		prपूर्णांकk(KERN_WARNING "strbuf_flush: flushflag timeout "
+	}
+	if (!limit)
+		printk(KERN_WARNING "strbuf_flush: flushflag timeout "
 		       "vaddr[%08x] ctx[%lx] npages[%ld]\n",
 		       vaddr, ctx, npages);
-पूर्ण
+}
 
-अटल व्योम dma_4u_unmap_page(काष्ठा device *dev, dma_addr_t bus_addr,
-			      माप_प्रकार sz, क्रमागत dma_data_direction direction,
-			      अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा iommu *iommu;
-	काष्ठा strbuf *strbuf;
+static void dma_4u_unmap_page(struct device *dev, dma_addr_t bus_addr,
+			      size_t sz, enum dma_data_direction direction,
+			      unsigned long attrs)
+{
+	struct iommu *iommu;
+	struct strbuf *strbuf;
 	iopte_t *base;
-	अचिन्हित दीर्घ flags, npages, ctx, i;
+	unsigned long flags, npages, ctx, i;
 
-	अगर (unlikely(direction == DMA_NONE)) अणु
-		अगर (prपूर्णांकk_ratelimit())
+	if (unlikely(direction == DMA_NONE)) {
+		if (printk_ratelimit())
 			WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	iommu = dev->archdata.iommu;
 	strbuf = dev->archdata.stc;
@@ -410,58 +409,58 @@ bad_no_ctx:
 
 	spin_lock_irqsave(&iommu->lock, flags);
 
-	/* Record the context, अगर any. */
+	/* Record the context, if any. */
 	ctx = 0;
-	अगर (iommu->iommu_ctxflush)
+	if (iommu->iommu_ctxflush)
 		ctx = (iopte_val(*base) & IOPTE_CONTEXT) >> 47UL;
 
-	/* Step 1: Kick data out of streaming buffers अगर necessary. */
-	अगर (strbuf->strbuf_enabled && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
+	/* Step 1: Kick data out of streaming buffers if necessary. */
+	if (strbuf->strbuf_enabled && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
 		strbuf_flush(strbuf, iommu, bus_addr, ctx,
 			     npages, direction);
 
 	/* Step 2: Clear out TSB entries. */
-	क्रम (i = 0; i < npages; i++)
+	for (i = 0; i < npages; i++)
 		iopte_make_dummy(iommu, base + i);
 
-	iommu_मुक्त_ctx(iommu, ctx);
+	iommu_free_ctx(iommu, ctx);
 	spin_unlock_irqrestore(&iommu->lock, flags);
 
-	iommu_tbl_range_मुक्त(&iommu->tbl, bus_addr, npages, IOMMU_ERROR_CODE);
-पूर्ण
+	iommu_tbl_range_free(&iommu->tbl, bus_addr, npages, IOMMU_ERROR_CODE);
+}
 
-अटल पूर्णांक dma_4u_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
-			 पूर्णांक nelems, क्रमागत dma_data_direction direction,
-			 अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा scatterlist *s, *outs, *segstart;
-	अचिन्हित दीर्घ flags, handle, prot, ctx;
+static int dma_4u_map_sg(struct device *dev, struct scatterlist *sglist,
+			 int nelems, enum dma_data_direction direction,
+			 unsigned long attrs)
+{
+	struct scatterlist *s, *outs, *segstart;
+	unsigned long flags, handle, prot, ctx;
 	dma_addr_t dma_next = 0, dma_addr;
-	अचिन्हित पूर्णांक max_seg_size;
-	अचिन्हित दीर्घ seg_boundary_size;
-	पूर्णांक outcount, incount, i;
-	काष्ठा strbuf *strbuf;
-	काष्ठा iommu *iommu;
-	अचिन्हित दीर्घ base_shअगरt;
+	unsigned int max_seg_size;
+	unsigned long seg_boundary_size;
+	int outcount, incount, i;
+	struct strbuf *strbuf;
+	struct iommu *iommu;
+	unsigned long base_shift;
 
 	BUG_ON(direction == DMA_NONE);
 
 	iommu = dev->archdata.iommu;
 	strbuf = dev->archdata.stc;
-	अगर (nelems == 0 || !iommu)
-		वापस 0;
+	if (nelems == 0 || !iommu)
+		return 0;
 
 	spin_lock_irqsave(&iommu->lock, flags);
 
 	ctx = 0;
-	अगर (iommu->iommu_ctxflush)
+	if (iommu->iommu_ctxflush)
 		ctx = iommu_alloc_ctx(iommu);
 
-	अगर (strbuf->strbuf_enabled)
+	if (strbuf->strbuf_enabled)
 		prot = IOPTE_STREAMING(ctx);
-	अन्यथा
+	else
 		prot = IOPTE_CONSISTENT(ctx);
-	अगर (direction != DMA_TO_DEVICE)
+	if (direction != DMA_TO_DEVICE)
 		prot |= IOPTE_WRITE;
 
 	outs = s = segstart = &sglist[0];
@@ -469,35 +468,35 @@ bad_no_ctx:
 	incount = nelems;
 	handle = 0;
 
-	/* Init first segment length क्रम backout at failure */
+	/* Init first segment length for backout at failure */
 	outs->dma_length = 0;
 
 	max_seg_size = dma_get_max_seg_size(dev);
 	seg_boundary_size = dma_get_seg_boundary_nr_pages(dev, IO_PAGE_SHIFT);
-	base_shअगरt = iommu->tbl.table_map_base >> IO_PAGE_SHIFT;
-	क्रम_each_sg(sglist, s, nelems, i) अणु
-		अचिन्हित दीर्घ paddr, npages, entry, out_entry = 0, slen;
+	base_shift = iommu->tbl.table_map_base >> IO_PAGE_SHIFT;
+	for_each_sg(sglist, s, nelems, i) {
+		unsigned long paddr, npages, entry, out_entry = 0, slen;
 		iopte_t *base;
 
 		slen = s->length;
 		/* Sanity check */
-		अगर (slen == 0) अणु
+		if (slen == 0) {
 			dma_next = 0;
-			जारी;
-		पूर्ण
-		/* Allocate iommu entries क्रम that segment */
-		paddr = (अचिन्हित दीर्घ) SG_ENT_PHYS_ADDRESS(s);
+			continue;
+		}
+		/* Allocate iommu entries for that segment */
+		paddr = (unsigned long) SG_ENT_PHYS_ADDRESS(s);
 		npages = iommu_num_pages(paddr, slen, IO_PAGE_SIZE);
 		entry = iommu_tbl_range_alloc(dev, &iommu->tbl, npages,
-					      &handle, (अचिन्हित दीर्घ)(-1), 0);
+					      &handle, (unsigned long)(-1), 0);
 
 		/* Handle failure */
-		अगर (unlikely(entry == IOMMU_ERROR_CODE)) अणु
-			अगर (prपूर्णांकk_ratelimit())
-				prपूर्णांकk(KERN_INFO "iommu_alloc failed, iommu %p paddr %lx"
+		if (unlikely(entry == IOMMU_ERROR_CODE)) {
+			if (printk_ratelimit())
+				printk(KERN_INFO "iommu_alloc failed, iommu %p paddr %lx"
 				       " npages %lx\n", iommu, paddr, npages);
-			जाओ iommu_map_failed;
-		पूर्ण
+			goto iommu_map_failed;
+		}
 
 		base = iommu->page_table + entry;
 
@@ -506,57 +505,57 @@ bad_no_ctx:
 			(entry << IO_PAGE_SHIFT);
 		dma_addr |= (s->offset & ~IO_PAGE_MASK);
 
-		/* Insert पूर्णांकo HW table */
+		/* Insert into HW table */
 		paddr &= IO_PAGE_MASK;
-		जबतक (npages--) अणु
+		while (npages--) {
 			iopte_val(*base) = prot | paddr;
 			base++;
 			paddr += IO_PAGE_SIZE;
-		पूर्ण
+		}
 
-		/* If we are in an खोलो segment, try merging */
-		अगर (segstart != s) अणु
-			/* We cannot merge अगर:
+		/* If we are in an open segment, try merging */
+		if (segstart != s) {
+			/* We cannot merge if:
 			 * - allocated dma_addr isn't contiguous to previous allocation
 			 */
-			अगर ((dma_addr != dma_next) ||
+			if ((dma_addr != dma_next) ||
 			    (outs->dma_length + s->length > max_seg_size) ||
-			    (is_span_boundary(out_entry, base_shअगरt,
-					      seg_boundary_size, outs, s))) अणु
+			    (is_span_boundary(out_entry, base_shift,
+					      seg_boundary_size, outs, s))) {
 				/* Can't merge: create a new segment */
 				segstart = s;
 				outcount++;
 				outs = sg_next(outs);
-			पूर्ण अन्यथा अणु
+			} else {
 				outs->dma_length += s->length;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (segstart == s) अणु
+		if (segstart == s) {
 			/* This is a new segment, fill entries */
 			outs->dma_address = dma_addr;
 			outs->dma_length = slen;
 			out_entry = entry;
-		पूर्ण
+		}
 
-		/* Calculate next page poपूर्णांकer क्रम contiguous check */
+		/* Calculate next page pointer for contiguous check */
 		dma_next = dma_addr + slen;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&iommu->lock, flags);
 
-	अगर (outcount < incount) अणु
+	if (outcount < incount) {
 		outs = sg_next(outs);
 		outs->dma_address = DMA_MAPPING_ERROR;
 		outs->dma_length = 0;
-	पूर्ण
+	}
 
-	वापस outcount;
+	return outcount;
 
 iommu_map_failed:
-	क्रम_each_sg(sglist, s, nelems, i) अणु
-		अगर (s->dma_length != 0) अणु
-			अचिन्हित दीर्घ vaddr, npages, entry, j;
+	for_each_sg(sglist, s, nelems, i) {
+		if (s->dma_length != 0) {
+			unsigned long vaddr, npages, entry, j;
 			iopte_t *base;
 
 			vaddr = s->dma_address & IO_PAGE_MASK;
@@ -567,52 +566,52 @@ iommu_map_failed:
 				>> IO_PAGE_SHIFT;
 			base = iommu->page_table + entry;
 
-			क्रम (j = 0; j < npages; j++)
+			for (j = 0; j < npages; j++)
 				iopte_make_dummy(iommu, base + j);
 
-			iommu_tbl_range_मुक्त(&iommu->tbl, vaddr, npages,
+			iommu_tbl_range_free(&iommu->tbl, vaddr, npages,
 					     IOMMU_ERROR_CODE);
 
 			s->dma_address = DMA_MAPPING_ERROR;
 			s->dma_length = 0;
-		पूर्ण
-		अगर (s == outs)
-			अवरोध;
-	पूर्ण
+		}
+		if (s == outs)
+			break;
+	}
 	spin_unlock_irqrestore(&iommu->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* If contexts are being used, they are the same in all of the mappings
- * we make क्रम a particular SG.
+ * we make for a particular SG.
  */
-अटल अचिन्हित दीर्घ fetch_sg_ctx(काष्ठा iommu *iommu, काष्ठा scatterlist *sg)
-अणु
-	अचिन्हित दीर्घ ctx = 0;
+static unsigned long fetch_sg_ctx(struct iommu *iommu, struct scatterlist *sg)
+{
+	unsigned long ctx = 0;
 
-	अगर (iommu->iommu_ctxflush) अणु
+	if (iommu->iommu_ctxflush) {
 		iopte_t *base;
 		u32 bus_addr;
-		काष्ठा iommu_map_table *tbl = &iommu->tbl;
+		struct iommu_map_table *tbl = &iommu->tbl;
 
 		bus_addr = sg->dma_address & IO_PAGE_MASK;
 		base = iommu->page_table +
 			((bus_addr - tbl->table_map_base) >> IO_PAGE_SHIFT);
 
 		ctx = (iopte_val(*base) & IOPTE_CONTEXT) >> 47UL;
-	पूर्ण
-	वापस ctx;
-पूर्ण
+	}
+	return ctx;
+}
 
-अटल व्योम dma_4u_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sglist,
-			    पूर्णांक nelems, क्रमागत dma_data_direction direction,
-			    अचिन्हित दीर्घ attrs)
-अणु
-	अचिन्हित दीर्घ flags, ctx;
-	काष्ठा scatterlist *sg;
-	काष्ठा strbuf *strbuf;
-	काष्ठा iommu *iommu;
+static void dma_4u_unmap_sg(struct device *dev, struct scatterlist *sglist,
+			    int nelems, enum dma_data_direction direction,
+			    unsigned long attrs)
+{
+	unsigned long flags, ctx;
+	struct scatterlist *sg;
+	struct strbuf *strbuf;
+	struct iommu *iommu;
 
 	BUG_ON(direction == DMA_NONE);
 
@@ -624,15 +623,15 @@ iommu_map_failed:
 	spin_lock_irqsave(&iommu->lock, flags);
 
 	sg = sglist;
-	जबतक (nelems--) अणु
+	while (nelems--) {
 		dma_addr_t dma_handle = sg->dma_address;
-		अचिन्हित पूर्णांक len = sg->dma_length;
-		अचिन्हित दीर्घ npages, entry;
+		unsigned int len = sg->dma_length;
+		unsigned long npages, entry;
 		iopte_t *base;
-		पूर्णांक i;
+		int i;
 
-		अगर (!len)
-			अवरोध;
+		if (!len)
+			break;
 		npages = iommu_num_pages(dma_handle, len, IO_PAGE_SIZE);
 
 		entry = ((dma_handle - iommu->tbl.table_map_base)
@@ -640,36 +639,36 @@ iommu_map_failed:
 		base = iommu->page_table + entry;
 
 		dma_handle &= IO_PAGE_MASK;
-		अगर (strbuf->strbuf_enabled && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
+		if (strbuf->strbuf_enabled && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
 			strbuf_flush(strbuf, iommu, dma_handle, ctx,
 				     npages, direction);
 
-		क्रम (i = 0; i < npages; i++)
+		for (i = 0; i < npages; i++)
 			iopte_make_dummy(iommu, base + i);
 
-		iommu_tbl_range_मुक्त(&iommu->tbl, dma_handle, npages,
+		iommu_tbl_range_free(&iommu->tbl, dma_handle, npages,
 				     IOMMU_ERROR_CODE);
 		sg = sg_next(sg);
-	पूर्ण
+	}
 
-	iommu_मुक्त_ctx(iommu, ctx);
+	iommu_free_ctx(iommu, ctx);
 
 	spin_unlock_irqrestore(&iommu->lock, flags);
-पूर्ण
+}
 
-अटल व्योम dma_4u_sync_single_क्रम_cpu(काष्ठा device *dev,
-				       dma_addr_t bus_addr, माप_प्रकार sz,
-				       क्रमागत dma_data_direction direction)
-अणु
-	काष्ठा iommu *iommu;
-	काष्ठा strbuf *strbuf;
-	अचिन्हित दीर्घ flags, ctx, npages;
+static void dma_4u_sync_single_for_cpu(struct device *dev,
+				       dma_addr_t bus_addr, size_t sz,
+				       enum dma_data_direction direction)
+{
+	struct iommu *iommu;
+	struct strbuf *strbuf;
+	unsigned long flags, ctx, npages;
 
 	iommu = dev->archdata.iommu;
 	strbuf = dev->archdata.stc;
 
-	अगर (!strbuf->strbuf_enabled)
-		वापस;
+	if (!strbuf->strbuf_enabled)
+		return;
 
 	spin_lock_irqsave(&iommu->lock, flags);
 
@@ -677,93 +676,93 @@ iommu_map_failed:
 	npages >>= IO_PAGE_SHIFT;
 	bus_addr &= IO_PAGE_MASK;
 
-	/* Step 1: Record the context, अगर any. */
+	/* Step 1: Record the context, if any. */
 	ctx = 0;
-	अगर (iommu->iommu_ctxflush &&
-	    strbuf->strbuf_ctxflush) अणु
+	if (iommu->iommu_ctxflush &&
+	    strbuf->strbuf_ctxflush) {
 		iopte_t *iopte;
-		काष्ठा iommu_map_table *tbl = &iommu->tbl;
+		struct iommu_map_table *tbl = &iommu->tbl;
 
 		iopte = iommu->page_table +
 			((bus_addr - tbl->table_map_base)>>IO_PAGE_SHIFT);
 		ctx = (iopte_val(*iopte) & IOPTE_CONTEXT) >> 47UL;
-	पूर्ण
+	}
 
 	/* Step 2: Kick data out of streaming buffers. */
 	strbuf_flush(strbuf, iommu, bus_addr, ctx, npages, direction);
 
 	spin_unlock_irqrestore(&iommu->lock, flags);
-पूर्ण
+}
 
-अटल व्योम dma_4u_sync_sg_क्रम_cpu(काष्ठा device *dev,
-				   काष्ठा scatterlist *sglist, पूर्णांक nelems,
-				   क्रमागत dma_data_direction direction)
-अणु
-	काष्ठा iommu *iommu;
-	काष्ठा strbuf *strbuf;
-	अचिन्हित दीर्घ flags, ctx, npages, i;
-	काष्ठा scatterlist *sg, *sgprv;
+static void dma_4u_sync_sg_for_cpu(struct device *dev,
+				   struct scatterlist *sglist, int nelems,
+				   enum dma_data_direction direction)
+{
+	struct iommu *iommu;
+	struct strbuf *strbuf;
+	unsigned long flags, ctx, npages, i;
+	struct scatterlist *sg, *sgprv;
 	u32 bus_addr;
 
 	iommu = dev->archdata.iommu;
 	strbuf = dev->archdata.stc;
 
-	अगर (!strbuf->strbuf_enabled)
-		वापस;
+	if (!strbuf->strbuf_enabled)
+		return;
 
 	spin_lock_irqsave(&iommu->lock, flags);
 
-	/* Step 1: Record the context, अगर any. */
+	/* Step 1: Record the context, if any. */
 	ctx = 0;
-	अगर (iommu->iommu_ctxflush &&
-	    strbuf->strbuf_ctxflush) अणु
+	if (iommu->iommu_ctxflush &&
+	    strbuf->strbuf_ctxflush) {
 		iopte_t *iopte;
-		काष्ठा iommu_map_table *tbl = &iommu->tbl;
+		struct iommu_map_table *tbl = &iommu->tbl;
 
 		iopte = iommu->page_table + ((sglist[0].dma_address -
 			tbl->table_map_base) >> IO_PAGE_SHIFT);
 		ctx = (iopte_val(*iopte) & IOPTE_CONTEXT) >> 47UL;
-	पूर्ण
+	}
 
 	/* Step 2: Kick data out of streaming buffers. */
 	bus_addr = sglist[0].dma_address & IO_PAGE_MASK;
-	sgprv = शून्य;
-	क्रम_each_sg(sglist, sg, nelems, i) अणु
-		अगर (sg->dma_length == 0)
-			अवरोध;
+	sgprv = NULL;
+	for_each_sg(sglist, sg, nelems, i) {
+		if (sg->dma_length == 0)
+			break;
 		sgprv = sg;
-	पूर्ण
+	}
 
 	npages = (IO_PAGE_ALIGN(sgprv->dma_address + sgprv->dma_length)
 		  - bus_addr) >> IO_PAGE_SHIFT;
 	strbuf_flush(strbuf, iommu, bus_addr, ctx, npages, direction);
 
 	spin_unlock_irqrestore(&iommu->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक dma_4u_supported(काष्ठा device *dev, u64 device_mask)
-अणु
-	काष्ठा iommu *iommu = dev->archdata.iommu;
+static int dma_4u_supported(struct device *dev, u64 device_mask)
+{
+	struct iommu *iommu = dev->archdata.iommu;
 
-	अगर (ali_sound_dma_hack(dev, device_mask))
-		वापस 1;
+	if (ali_sound_dma_hack(dev, device_mask))
+		return 1;
 
-	अगर (device_mask < iommu->dma_addr_mask)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (device_mask < iommu->dma_addr_mask)
+		return 0;
+	return 1;
+}
 
-अटल स्थिर काष्ठा dma_map_ops sun4u_dma_ops = अणु
+static const struct dma_map_ops sun4u_dma_ops = {
 	.alloc			= dma_4u_alloc_coherent,
-	.मुक्त			= dma_4u_मुक्त_coherent,
+	.free			= dma_4u_free_coherent,
 	.map_page		= dma_4u_map_page,
 	.unmap_page		= dma_4u_unmap_page,
 	.map_sg			= dma_4u_map_sg,
 	.unmap_sg		= dma_4u_unmap_sg,
-	.sync_single_क्रम_cpu	= dma_4u_sync_single_क्रम_cpu,
-	.sync_sg_क्रम_cpu	= dma_4u_sync_sg_क्रम_cpu,
+	.sync_single_for_cpu	= dma_4u_sync_single_for_cpu,
+	.sync_sg_for_cpu	= dma_4u_sync_sg_for_cpu,
 	.dma_supported		= dma_4u_supported,
-पूर्ण;
+};
 
-स्थिर काष्ठा dma_map_ops *dma_ops = &sun4u_dma_ops;
+const struct dma_map_ops *dma_ops = &sun4u_dma_ops;
 EXPORT_SYMBOL(dma_ops);

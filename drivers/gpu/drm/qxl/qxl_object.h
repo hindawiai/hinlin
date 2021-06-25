@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,59 +22,59 @@
  * Authors: Dave Airlie
  *          Alon Levy
  */
-#अगर_अघोषित QXL_OBJECT_H
-#घोषणा QXL_OBJECT_H
+#ifndef QXL_OBJECT_H
+#define QXL_OBJECT_H
 
-#समावेश "qxl_drv.h"
+#include "qxl_drv.h"
 
-अटल अंतरभूत पूर्णांक qxl_bo_reserve(काष्ठा qxl_bo *bo)
-अणु
-	पूर्णांक r;
+static inline int qxl_bo_reserve(struct qxl_bo *bo)
+{
+	int r;
 
-	r = tपंचांग_bo_reserve(&bo->tbo, true, false, शून्य);
-	अगर (unlikely(r != 0)) अणु
-		अगर (r != -ERESTARTSYS) अणु
-			काष्ठा drm_device *ddev = bo->tbo.base.dev;
+	r = ttm_bo_reserve(&bo->tbo, true, false, NULL);
+	if (unlikely(r != 0)) {
+		if (r != -ERESTARTSYS) {
+			struct drm_device *ddev = bo->tbo.base.dev;
 
 			dev_err(ddev->dev, "%p reserve failed\n", bo);
-		पूर्ण
-		वापस r;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return r;
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम qxl_bo_unreserve(काष्ठा qxl_bo *bo)
-अणु
-	tपंचांग_bo_unreserve(&bo->tbo);
-पूर्ण
+static inline void qxl_bo_unreserve(struct qxl_bo *bo)
+{
+	ttm_bo_unreserve(&bo->tbo);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ qxl_bo_size(काष्ठा qxl_bo *bo)
-अणु
-	वापस bo->tbo.base.size;
-पूर्ण
+static inline unsigned long qxl_bo_size(struct qxl_bo *bo)
+{
+	return bo->tbo.base.size;
+}
 
-अटल अंतरभूत u64 qxl_bo_mmap_offset(काष्ठा qxl_bo *bo)
-अणु
-	वापस drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
-पूर्ण
+static inline u64 qxl_bo_mmap_offset(struct qxl_bo *bo)
+{
+	return drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
+}
 
-बाह्य पूर्णांक qxl_bo_create(काष्ठा qxl_device *qdev,
-			 अचिन्हित दीर्घ size,
-			 bool kernel, bool pinned, u32 करोमुख्य,
+extern int qxl_bo_create(struct qxl_device *qdev,
+			 unsigned long size,
+			 bool kernel, bool pinned, u32 domain,
 			 u32 priority,
-			 काष्ठा qxl_surface *surf,
-			 काष्ठा qxl_bo **bo_ptr);
-पूर्णांक qxl_bo_vmap(काष्ठा qxl_bo *bo, काष्ठा dma_buf_map *map);
-पूर्णांक qxl_bo_vmap_locked(काष्ठा qxl_bo *bo, काष्ठा dma_buf_map *map);
-पूर्णांक qxl_bo_vunmap(काष्ठा qxl_bo *bo);
-व्योम qxl_bo_vunmap_locked(काष्ठा qxl_bo *bo);
-व्योम *qxl_bo_kmap_atomic_page(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *bo, पूर्णांक page_offset);
-व्योम qxl_bo_kunmap_atomic_page(काष्ठा qxl_device *qdev, काष्ठा qxl_bo *bo, व्योम *map);
-बाह्य काष्ठा qxl_bo *qxl_bo_ref(काष्ठा qxl_bo *bo);
-बाह्य व्योम qxl_bo_unref(काष्ठा qxl_bo **bo);
-बाह्य पूर्णांक qxl_bo_pin(काष्ठा qxl_bo *bo);
-बाह्य पूर्णांक qxl_bo_unpin(काष्ठा qxl_bo *bo);
-बाह्य व्योम qxl_tपंचांग_placement_from_करोमुख्य(काष्ठा qxl_bo *qbo, u32 करोमुख्य);
-बाह्य bool qxl_tपंचांग_bo_is_qxl_bo(काष्ठा tपंचांग_buffer_object *bo);
+			 struct qxl_surface *surf,
+			 struct qxl_bo **bo_ptr);
+int qxl_bo_vmap(struct qxl_bo *bo, struct dma_buf_map *map);
+int qxl_bo_vmap_locked(struct qxl_bo *bo, struct dma_buf_map *map);
+int qxl_bo_vunmap(struct qxl_bo *bo);
+void qxl_bo_vunmap_locked(struct qxl_bo *bo);
+void *qxl_bo_kmap_atomic_page(struct qxl_device *qdev, struct qxl_bo *bo, int page_offset);
+void qxl_bo_kunmap_atomic_page(struct qxl_device *qdev, struct qxl_bo *bo, void *map);
+extern struct qxl_bo *qxl_bo_ref(struct qxl_bo *bo);
+extern void qxl_bo_unref(struct qxl_bo **bo);
+extern int qxl_bo_pin(struct qxl_bo *bo);
+extern int qxl_bo_unpin(struct qxl_bo *bo);
+extern void qxl_ttm_placement_from_domain(struct qxl_bo *qbo, u32 domain);
+extern bool qxl_ttm_bo_is_qxl_bo(struct ttm_buffer_object *bo);
 
-#पूर्ण_अगर
+#endif

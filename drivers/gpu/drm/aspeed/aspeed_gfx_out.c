@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright 2018 IBM Corporation
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "aspeed_gfx.h"
+#include "aspeed_gfx.h"
 
-अटल पूर्णांक aspeed_gfx_get_modes(काष्ठा drm_connector *connector)
-अणु
-	वापस drm_add_modes_noedid(connector, 800, 600);
-पूर्ण
+static int aspeed_gfx_get_modes(struct drm_connector *connector)
+{
+	return drm_add_modes_noedid(connector, 800, 600);
+}
 
-अटल स्थिर काष्ठा
-drm_connector_helper_funcs aspeed_gfx_connector_helper_funcs = अणु
+static const struct
+drm_connector_helper_funcs aspeed_gfx_connector_helper_funcs = {
 	.get_modes = aspeed_gfx_get_modes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_funcs aspeed_gfx_connector_funcs = अणु
+static const struct drm_connector_funcs aspeed_gfx_connector_funcs = {
 	.fill_modes		= drm_helper_probe_single_connector_modes,
 	.destroy		= drm_connector_cleanup,
 	.reset			= drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state	= drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state	= drm_atomic_helper_connector_destroy_state,
-पूर्ण;
+};
 
-पूर्णांक aspeed_gfx_create_output(काष्ठा drm_device *drm)
-अणु
-	काष्ठा aspeed_gfx *priv = to_aspeed_gfx(drm);
-	पूर्णांक ret;
+int aspeed_gfx_create_output(struct drm_device *drm)
+{
+	struct aspeed_gfx *priv = to_aspeed_gfx(drm);
+	int ret;
 
 	priv->connector.dpms = DRM_MODE_DPMS_OFF;
 	priv->connector.polled = 0;
@@ -39,5 +38,5 @@ drm_connector_helper_funcs aspeed_gfx_connector_helper_funcs = अणु
 	ret = drm_connector_init(drm, &priv->connector,
 				 &aspeed_gfx_connector_funcs,
 				 DRM_MODE_CONNECTOR_Unknown);
-	वापस ret;
-पूर्ण
+	return ret;
+}

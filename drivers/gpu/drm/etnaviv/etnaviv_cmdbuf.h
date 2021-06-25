@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2017 Etnaviv Project
  */
 
-#अगर_अघोषित __ETNAVIV_CMDBUF_H__
-#घोषणा __ETNAVIV_CMDBUF_H__
+#ifndef __ETNAVIV_CMDBUF_H__
+#define __ETNAVIV_CMDBUF_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा device;
-काष्ठा etnaviv_iommu_context;
-काष्ठा etnaviv_vram_mapping;
-काष्ठा etnaviv_cmdbuf_suballoc;
-काष्ठा etnaviv_perfmon_request;
+struct device;
+struct etnaviv_iommu_context;
+struct etnaviv_vram_mapping;
+struct etnaviv_cmdbuf_suballoc;
+struct etnaviv_perfmon_request;
 
-काष्ठा etnaviv_cmdbuf अणु
+struct etnaviv_cmdbuf {
 	/* suballocator this cmdbuf is allocated from */
-	काष्ठा etnaviv_cmdbuf_suballoc *suballoc;
+	struct etnaviv_cmdbuf_suballoc *suballoc;
 	/* cmdbuf properties */
-	पूर्णांक suballoc_offset;
-	व्योम *vaddr;
+	int suballoc_offset;
+	void *vaddr;
 	u32 size;
 	u32 user_size;
-पूर्ण;
+};
 
-काष्ठा etnaviv_cmdbuf_suballoc *
-etnaviv_cmdbuf_suballoc_new(काष्ठा device *dev);
-व्योम etnaviv_cmdbuf_suballoc_destroy(काष्ठा etnaviv_cmdbuf_suballoc *suballoc);
-पूर्णांक etnaviv_cmdbuf_suballoc_map(काष्ठा etnaviv_cmdbuf_suballoc *suballoc,
-				काष्ठा etnaviv_iommu_context *context,
-				काष्ठा etnaviv_vram_mapping *mapping,
+struct etnaviv_cmdbuf_suballoc *
+etnaviv_cmdbuf_suballoc_new(struct device *dev);
+void etnaviv_cmdbuf_suballoc_destroy(struct etnaviv_cmdbuf_suballoc *suballoc);
+int etnaviv_cmdbuf_suballoc_map(struct etnaviv_cmdbuf_suballoc *suballoc,
+				struct etnaviv_iommu_context *context,
+				struct etnaviv_vram_mapping *mapping,
 				u32 memory_base);
-व्योम etnaviv_cmdbuf_suballoc_unmap(काष्ठा etnaviv_iommu_context *context,
-				   काष्ठा etnaviv_vram_mapping *mapping);
+void etnaviv_cmdbuf_suballoc_unmap(struct etnaviv_iommu_context *context,
+				   struct etnaviv_vram_mapping *mapping);
 
 
-पूर्णांक etnaviv_cmdbuf_init(काष्ठा etnaviv_cmdbuf_suballoc *suballoc,
-		काष्ठा etnaviv_cmdbuf *cmdbuf, u32 size);
-व्योम etnaviv_cmdbuf_मुक्त(काष्ठा etnaviv_cmdbuf *cmdbuf);
+int etnaviv_cmdbuf_init(struct etnaviv_cmdbuf_suballoc *suballoc,
+		struct etnaviv_cmdbuf *cmdbuf, u32 size);
+void etnaviv_cmdbuf_free(struct etnaviv_cmdbuf *cmdbuf);
 
-u32 etnaviv_cmdbuf_get_va(काष्ठा etnaviv_cmdbuf *buf,
-			  काष्ठा etnaviv_vram_mapping *mapping);
-dma_addr_t etnaviv_cmdbuf_get_pa(काष्ठा etnaviv_cmdbuf *buf);
+u32 etnaviv_cmdbuf_get_va(struct etnaviv_cmdbuf *buf,
+			  struct etnaviv_vram_mapping *mapping);
+dma_addr_t etnaviv_cmdbuf_get_pa(struct etnaviv_cmdbuf *buf);
 
-#पूर्ण_अगर /* __ETNAVIV_CMDBUF_H__ */
+#endif /* __ETNAVIV_CMDBUF_H__ */

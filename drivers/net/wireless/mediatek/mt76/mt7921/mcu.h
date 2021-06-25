@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#अगर_अघोषित __MT7921_MCU_H
-#घोषणा __MT7921_MCU_H
+#ifndef __MT7921_MCU_H
+#define __MT7921_MCU_H
 
-#समावेश "../mt76_connac_mcu.h"
+#include "../mt76_connac_mcu.h"
 
-काष्ठा mt7921_mcu_txd अणु
+struct mt7921_mcu_txd {
 	__le32 txd[8];
 
 	__le16 len;
@@ -15,7 +14,7 @@
 
 	u8 cid;
 	u8 pkt_type;
-	u8 set_query; /* FW करोn't care */
+	u8 set_query; /* FW don't care */
 	u8 seq;
 
 	u8 uc_d2b0_rev;
@@ -24,18 +23,18 @@
 	u8 ext_cid_ack;
 
 	u32 reserved[5];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
 /**
- * काष्ठा mt7921_uni_txd - mcu command descriptor क्रम firmware v3
+ * struct mt7921_uni_txd - mcu command descriptor for firmware v3
  * @txd: hardware descriptor
  * @len: total length not including txd
- * @cid: command identअगरier
- * @pkt_type: must be 0xa0 (cmd packet by दीर्घ क्रमmat)
+ * @cid: command identifier
+ * @pkt_type: must be 0xa0 (cmd packet by long format)
  * @frag_n: fragment number
  * @seq: sequence number
  * @checksum: 0 mean there is no checksum
- * @s2d_index: index क्रम command source and destination
+ * @s2d_index: index for command source and destination
  *  Definition              | value | note
  *  CMD_S2D_IDX_H2N         | 0x00  | command from HOST to WM
  *  CMD_S2D_IDX_C2N         | 0x01  | command from WA to WM
@@ -45,17 +44,17 @@
  * @option: command option
  *  BIT[0]: UNI_CMD_OPT_BIT_ACK
  *          set to 1 to request a fw reply
- *          अगर UNI_CMD_OPT_BIT_0_ACK is set and UNI_CMD_OPT_BIT_2_SET_QUERY
+ *          if UNI_CMD_OPT_BIT_0_ACK is set and UNI_CMD_OPT_BIT_2_SET_QUERY
  *          is set, mcu firmware will send response event EID = 0x01
  *          (UNI_EVENT_ID_CMD_RESULT) to the host.
  *  BIT[1]: UNI_CMD_OPT_BIT_UNI_CMD
  *          0: original command
- *          1: unअगरied command
+ *          1: unified command
  *  BIT[2]: UNI_CMD_OPT_BIT_SET_QUERY
  *          0: QUERY command
  *          1: SET command
  */
-काष्ठा mt7921_uni_txd अणु
+struct mt7921_uni_txd {
 	__le32 txd[8];
 
 	/* DW1 */
@@ -75,10 +74,10 @@
 
 	/* DW4 */
 	u8 reserved2[4];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
 /* event table */
-क्रमागत अणु
+enum {
 	MCU_EVENT_REG_ACCESS = 0x05,
 	MCU_EVENT_LP_INFO = 0x07,
 	MCU_EVENT_SCAN_DONE = 0x0d,
@@ -89,14 +88,14 @@
 	MCU_EVENT_DBG_MSG = 0x27,
 	MCU_EVENT_TXPWR = 0xd0,
 	MCU_EVENT_COREDUMP = 0xf0,
-पूर्ण;
+};
 
 /* ext event table */
-क्रमागत अणु
+enum {
 	MCU_EXT_EVENT_RATE_REPORT = 0x87,
-पूर्ण;
+};
 
-काष्ठा mt7921_mcu_rxd अणु
+struct mt7921_mcu_rxd {
 	__le32 rxd[6];
 
 	__le16 len;
@@ -109,96 +108,96 @@
 	u8 ext_eid;
 	u8 __rsv1[2];
 	u8 s2d_index;
-पूर्ण;
+};
 
-काष्ठा mt7921_mcu_eeprom_info अणु
+struct mt7921_mcu_eeprom_info {
 	__le32 addr;
 	__le32 valid;
 	u8 data[16];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MT_RA_RATE_NSS			GENMASK(8, 6)
-#घोषणा MT_RA_RATE_MCS			GENMASK(3, 0)
-#घोषणा MT_RA_RATE_TX_MODE		GENMASK(12, 9)
-#घोषणा MT_RA_RATE_DCM_EN		BIT(4)
-#घोषणा MT_RA_RATE_BW			GENMASK(14, 13)
+#define MT_RA_RATE_NSS			GENMASK(8, 6)
+#define MT_RA_RATE_MCS			GENMASK(3, 0)
+#define MT_RA_RATE_TX_MODE		GENMASK(12, 9)
+#define MT_RA_RATE_DCM_EN		BIT(4)
+#define MT_RA_RATE_BW			GENMASK(14, 13)
 
-#घोषणा MCU_PQ_ID(p, q)			(((p) << 15) | ((q) << 10))
-#घोषणा MCU_PKT_ID			0xa0
+#define MCU_PQ_ID(p, q)			(((p) << 15) | ((q) << 10))
+#define MCU_PKT_ID			0xa0
 
-क्रमागत अणु
+enum {
 	MCU_Q_QUERY,
 	MCU_Q_SET,
 	MCU_Q_RESERVED,
 	MCU_Q_NA
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_S2D_H2N,
 	MCU_S2D_C2N,
 	MCU_S2D_H2C,
 	MCU_S2D_H2CN
-पूर्ण;
+};
 
-काष्ठा mt7921_mcu_uni_event अणु
+struct mt7921_mcu_uni_event {
 	u8 cid;
 	u8 pad[3];
 	__le32 status; /* 0: success, others: fail */
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	PATCH_NOT_DL_SEM_FAIL,
 	PATCH_IS_DL,
 	PATCH_NOT_DL_SEM_SUCCESS,
 	PATCH_REL_SEM_SUCCESS
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	FW_STATE_INITIAL,
 	FW_STATE_FW_DOWNLOAD,
 	FW_STATE_NORMAL_OPERATION,
 	FW_STATE_NORMAL_TRX,
 	FW_STATE_WACPU_RDY        = 7
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EE_MODE_EFUSE,
 	EE_MODE_BUFFER,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EE_FORMAT_BIN,
 	EE_FORMAT_WHOLE,
 	EE_FORMAT_MULTIPLE,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_PHY_STATE_TX_RATE,
 	MCU_PHY_STATE_RX_RATE,
 	MCU_PHY_STATE_RSSI,
 	MCU_PHY_STATE_CONTENTION_RX_RATE,
 	MCU_PHY_STATE_OFDMLQ_CNINFO,
-पूर्ण;
+};
 
-काष्ठा sec_key अणु
+struct sec_key {
 	u8 cipher_id;
 	u8 cipher_len;
 	u8 key_id;
 	u8 key_len;
 	u8 key[32];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा sta_rec_sec अणु
+struct sta_rec_sec {
 	__le16 tag;
 	__le16 len;
 	u8 add;
 	u8 n_cipher;
 	u8 rsv[2];
 
-	काष्ठा sec_key key[2];
-पूर्ण __packed;
+	struct sec_key key[2];
+} __packed;
 
-क्रमागत mt7921_cipher_type अणु
+enum mt7921_cipher_type {
 	MT_CIPHER_NONE,
 	MT_CIPHER_WEP40,
 	MT_CIPHER_WEP104,
@@ -210,9 +209,9 @@
 	MT_CIPHER_GCMP_256,
 	MT_CIPHER_WAPI,
 	MT_CIPHER_BIP_CMAC_128,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CH_SWITCH_NORMAL = 0,
 	CH_SWITCH_SCAN = 3,
 	CH_SWITCH_MCC = 4,
@@ -221,41 +220,41 @@
 	CH_SWITCH_BACKGROUND_SCAN_RUNNING = 7,
 	CH_SWITCH_BACKGROUND_SCAN_STOP = 8,
 	CH_SWITCH_SCAN_BYPASS_DPD = 9
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	THERMAL_SENSOR_TEMP_QUERY,
 	THERMAL_SENSOR_MANUAL_CTRL,
 	THERMAL_SENSOR_INFO_QUERY,
 	THERMAL_SENSOR_TASK_CTRL,
-पूर्ण;
+};
 
-क्रमागत अणु
-	MT_EBF = BIT(0),	/* explicit beamक्रमming */
-	MT_IBF = BIT(1)		/* implicit beamक्रमming */
-पूर्ण;
+enum {
+	MT_EBF = BIT(0),	/* explicit beamforming */
+	MT_IBF = BIT(1)		/* implicit beamforming */
+};
 
-#घोषणा STA_CAP_WMM			BIT(0)
-#घोषणा STA_CAP_SGI_20			BIT(4)
-#घोषणा STA_CAP_SGI_40			BIT(5)
-#घोषणा STA_CAP_TX_STBC			BIT(6)
-#घोषणा STA_CAP_RX_STBC			BIT(7)
-#घोषणा STA_CAP_VHT_SGI_80		BIT(16)
-#घोषणा STA_CAP_VHT_SGI_160		BIT(17)
-#घोषणा STA_CAP_VHT_TX_STBC		BIT(18)
-#घोषणा STA_CAP_VHT_RX_STBC		BIT(19)
-#घोषणा STA_CAP_VHT_LDPC		BIT(23)
-#घोषणा STA_CAP_LDPC			BIT(24)
-#घोषणा STA_CAP_HT			BIT(26)
-#घोषणा STA_CAP_VHT			BIT(27)
-#घोषणा STA_CAP_HE			BIT(28)
+#define STA_CAP_WMM			BIT(0)
+#define STA_CAP_SGI_20			BIT(4)
+#define STA_CAP_SGI_40			BIT(5)
+#define STA_CAP_TX_STBC			BIT(6)
+#define STA_CAP_RX_STBC			BIT(7)
+#define STA_CAP_VHT_SGI_80		BIT(16)
+#define STA_CAP_VHT_SGI_160		BIT(17)
+#define STA_CAP_VHT_TX_STBC		BIT(18)
+#define STA_CAP_VHT_RX_STBC		BIT(19)
+#define STA_CAP_VHT_LDPC		BIT(23)
+#define STA_CAP_LDPC			BIT(24)
+#define STA_CAP_HT			BIT(26)
+#define STA_CAP_VHT			BIT(27)
+#define STA_CAP_HE			BIT(28)
 
-काष्ठा mt7921_mcu_reg_event अणु
+struct mt7921_mcu_reg_event {
 	__le32 reg;
 	__le32 val;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_tx_config अणु
+struct mt7921_mcu_tx_config {
 	u8 peer_addr[ETH_ALEN];
 	u8 sw;
 	u8 dis_rx_hdr_tran;
@@ -298,9 +297,9 @@
 	u8 vht_ebf;
 	u8 vht_ldpc;
 	u8 he_ldpc;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_sec_config अणु
+struct mt7921_mcu_sec_config {
 	u8 wpi_flag;
 	u8 rv;
 	u8 ikv;
@@ -315,34 +314,34 @@
 	u8 muar_idx;
 	u8 cipher_suit;
 	u8 rsv[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_key_config अणु
+struct mt7921_mcu_key_config {
 	u8 key[32];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_rate_info अणु
+struct mt7921_mcu_rate_info {
 	u8 mpdu_fail;
 	u8 mpdu_tx;
 	u8 rate_idx;
 	u8 rsv[1];
 	__le16 rate[8];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_ba_config अणु
+struct mt7921_mcu_ba_config {
 	u8 ba_en;
 	u8 rsv[3];
 	__le32 ba_winsize;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_ant_id_config अणु
+struct mt7921_mcu_ant_id_config {
 	u8 ant_id[4];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_peer_cap अणु
-	काष्ठा mt7921_mcu_ant_id_config ant_id_config;
+struct mt7921_mcu_peer_cap {
+	struct mt7921_mcu_ant_id_config ant_id_config;
 
-	u8 घातer_offset;
+	u8 power_offset;
 	u8 bw_selector;
 	u8 change_bw_rate_n;
 	u8 bw;
@@ -356,17 +355,17 @@
 	u8 mmss;
 	u8 ampdu_factor;
 	u8 rsv[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_rx_cnt अणु
+struct mt7921_mcu_rx_cnt {
 	u8 rx_rcpi[4];
 	u8 rx_cc[4];
 	u8 rx_cc_sel;
 	u8 ce_rmsd;
 	u8 rsv[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_tx_cnt अणु
+struct mt7921_mcu_tx_cnt {
 	__le16 rate1_cnt;
 	__le16 rate1_fail_cnt;
 	__le16 rate2_cnt;
@@ -375,37 +374,37 @@
 	__le16 cur_bw_tx_fail_cnt;
 	__le16 other_bw_tx_cnt;
 	__le16 other_bw_tx_fail_cnt;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_mcu_wlan_info_event अणु
-	काष्ठा mt7921_mcu_tx_config tx_config;
-	काष्ठा mt7921_mcu_sec_config sec_config;
-	काष्ठा mt7921_mcu_key_config key_config;
-	काष्ठा mt7921_mcu_rate_info rate_info;
-	काष्ठा mt7921_mcu_ba_config ba_config;
-	काष्ठा mt7921_mcu_peer_cap peer_cap;
-	काष्ठा mt7921_mcu_rx_cnt rx_cnt;
-	काष्ठा mt7921_mcu_tx_cnt tx_cnt;
-पूर्ण __packed;
+struct mt7921_mcu_wlan_info_event {
+	struct mt7921_mcu_tx_config tx_config;
+	struct mt7921_mcu_sec_config sec_config;
+	struct mt7921_mcu_key_config key_config;
+	struct mt7921_mcu_rate_info rate_info;
+	struct mt7921_mcu_ba_config ba_config;
+	struct mt7921_mcu_peer_cap peer_cap;
+	struct mt7921_mcu_rx_cnt rx_cnt;
+	struct mt7921_mcu_tx_cnt tx_cnt;
+} __packed;
 
-काष्ठा mt7921_mcu_wlan_info अणु
+struct mt7921_mcu_wlan_info {
 	__le32 wlan_idx;
-	काष्ठा mt7921_mcu_wlan_info_event event;
-पूर्ण __packed;
+	struct mt7921_mcu_wlan_info_event event;
+} __packed;
 
-काष्ठा mt7921_txpwr_req अणु
+struct mt7921_txpwr_req {
 	u8 ver;
 	u8 action;
 	__le16 len;
 	u8 dbdc_idx;
 	u8 rsv[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mt7921_txpwr_event अणु
+struct mt7921_txpwr_event {
 	u8 ver;
 	u8 action;
 	__le16 len;
-	काष्ठा mt7921_txpwr txpwr;
-पूर्ण __packed;
+	struct mt7921_txpwr txpwr;
+} __packed;
 
-#पूर्ण_अगर
+#endif

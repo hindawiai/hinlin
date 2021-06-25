@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Copyright (C) 2015 Karol Kosik <karo9@पूर्णांकeria.eu>
+ * Copyright (C) 2015 Karol Kosik <karo9@interia.eu>
  *		 2015 Samsung Electronics
  * Author:	 Igor Kotrasinski <i.kotrasinsk@samsung.com>
  *
@@ -10,14 +9,14 @@
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#अगर_अघोषित __USBIP_DEVICE_DRIVER_H
-#घोषणा __USBIP_DEVICE_DRIVER_H
+#ifndef __USBIP_DEVICE_DRIVER_H
+#define __USBIP_DEVICE_DRIVER_H
 
-#समावेश <मानक_निवेशt.h>
-#समावेश "usbip_common.h"
-#समावेश "usbip_host_common.h"
-#समावेश "list.h"
+#include <stdint.h>
+#include "usbip_common.h"
+#include "usbip_host_common.h"
+#include "list.h"
 
-बाह्य काष्ठा usbip_host_driver device_driver;
+extern struct usbip_host_driver device_driver;
 
-#पूर्ण_अगर /* __USBIP_DEVICE_DRIVER_H */
+#endif /* __USBIP_DEVICE_DRIVER_H */

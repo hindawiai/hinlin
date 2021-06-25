@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
  * Copyright 2008-2015 Freescale Semiconductor Inc.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       करोcumentation and/or other materials provided with the distribution.
+ *       documentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *       names of its contributors may be used to enकरोrse or promote products
- *       derived from this software without specअगरic prior written permission.
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -23,7 +22,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -31,95 +30,95 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश "fman_tgec.h"
-#समावेश "fman.h"
+#include "fman_tgec.h"
+#include "fman.h"
 
-#समावेश <linux/slab.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/crc32.h>
+#include <linux/slab.h>
+#include <linux/bitrev.h>
+#include <linux/io.h>
+#include <linux/crc32.h>
 
 /* Transmit Inter-Packet Gap Length Register (TX_IPG_LENGTH) */
-#घोषणा TGEC_TX_IPG_LENGTH_MASK	0x000003ff
+#define TGEC_TX_IPG_LENGTH_MASK	0x000003ff
 
 /* Command and Configuration Register (COMMAND_CONFIG) */
-#घोषणा CMD_CFG_EN_TIMESTAMP		0x00100000
-#घोषणा CMD_CFG_NO_LEN_CHK		0x00020000
-#घोषणा CMD_CFG_PAUSE_IGNORE		0x00000100
-#घोषणा CMF_CFG_CRC_FWD			0x00000040
-#घोषणा CMD_CFG_PROMIS_EN		0x00000010
-#घोषणा CMD_CFG_RX_EN			0x00000002
-#घोषणा CMD_CFG_TX_EN			0x00000001
+#define CMD_CFG_EN_TIMESTAMP		0x00100000
+#define CMD_CFG_NO_LEN_CHK		0x00020000
+#define CMD_CFG_PAUSE_IGNORE		0x00000100
+#define CMF_CFG_CRC_FWD			0x00000040
+#define CMD_CFG_PROMIS_EN		0x00000010
+#define CMD_CFG_RX_EN			0x00000002
+#define CMD_CFG_TX_EN			0x00000001
 
 /* Interrupt Mask Register (IMASK) */
-#घोषणा TGEC_IMASK_MDIO_SCAN_EVENT	0x00010000
-#घोषणा TGEC_IMASK_MDIO_CMD_CMPL	0x00008000
-#घोषणा TGEC_IMASK_REM_FAULT		0x00004000
-#घोषणा TGEC_IMASK_LOC_FAULT		0x00002000
-#घोषणा TGEC_IMASK_TX_ECC_ER		0x00001000
-#घोषणा TGEC_IMASK_TX_FIFO_UNFL	0x00000800
-#घोषणा TGEC_IMASK_TX_FIFO_OVFL	0x00000400
-#घोषणा TGEC_IMASK_TX_ER		0x00000200
-#घोषणा TGEC_IMASK_RX_FIFO_OVFL	0x00000100
-#घोषणा TGEC_IMASK_RX_ECC_ER		0x00000080
-#घोषणा TGEC_IMASK_RX_JAB_FRM		0x00000040
-#घोषणा TGEC_IMASK_RX_OVRSZ_FRM	0x00000020
-#घोषणा TGEC_IMASK_RX_RUNT_FRM		0x00000010
-#घोषणा TGEC_IMASK_RX_FRAG_FRM		0x00000008
-#घोषणा TGEC_IMASK_RX_LEN_ER		0x00000004
-#घोषणा TGEC_IMASK_RX_CRC_ER		0x00000002
-#घोषणा TGEC_IMASK_RX_ALIGN_ER		0x00000001
+#define TGEC_IMASK_MDIO_SCAN_EVENT	0x00010000
+#define TGEC_IMASK_MDIO_CMD_CMPL	0x00008000
+#define TGEC_IMASK_REM_FAULT		0x00004000
+#define TGEC_IMASK_LOC_FAULT		0x00002000
+#define TGEC_IMASK_TX_ECC_ER		0x00001000
+#define TGEC_IMASK_TX_FIFO_UNFL	0x00000800
+#define TGEC_IMASK_TX_FIFO_OVFL	0x00000400
+#define TGEC_IMASK_TX_ER		0x00000200
+#define TGEC_IMASK_RX_FIFO_OVFL	0x00000100
+#define TGEC_IMASK_RX_ECC_ER		0x00000080
+#define TGEC_IMASK_RX_JAB_FRM		0x00000040
+#define TGEC_IMASK_RX_OVRSZ_FRM	0x00000020
+#define TGEC_IMASK_RX_RUNT_FRM		0x00000010
+#define TGEC_IMASK_RX_FRAG_FRM		0x00000008
+#define TGEC_IMASK_RX_LEN_ER		0x00000004
+#define TGEC_IMASK_RX_CRC_ER		0x00000002
+#define TGEC_IMASK_RX_ALIGN_ER		0x00000001
 
 /* Hashtable Control Register (HASHTABLE_CTRL) */
-#घोषणा TGEC_HASH_MCAST_SHIFT		23
-#घोषणा TGEC_HASH_MCAST_EN		0x00000200
-#घोषणा TGEC_HASH_ADR_MSK		0x000001ff
+#define TGEC_HASH_MCAST_SHIFT		23
+#define TGEC_HASH_MCAST_EN		0x00000200
+#define TGEC_HASH_ADR_MSK		0x000001ff
 
-#घोषणा DEFAULT_TX_IPG_LENGTH			12
-#घोषणा DEFAULT_MAX_FRAME_LENGTH		0x600
-#घोषणा DEFAULT_PAUSE_QUANT			0xf000
+#define DEFAULT_TX_IPG_LENGTH			12
+#define DEFAULT_MAX_FRAME_LENGTH		0x600
+#define DEFAULT_PAUSE_QUANT			0xf000
 
-/* number of pattern match रेजिस्टरs (entries) */
-#घोषणा TGEC_NUM_OF_PADDRS          1
+/* number of pattern match registers (entries) */
+#define TGEC_NUM_OF_PADDRS          1
 
 /* Group address bit indication */
-#घोषणा GROUP_ADDRESS               0x0000010000000000LL
+#define GROUP_ADDRESS               0x0000010000000000LL
 
 /* Hash table size (= 32 bits*8 regs) */
-#घोषणा TGEC_HASH_TABLE_SIZE             512
+#define TGEC_HASH_TABLE_SIZE             512
 
 /* tGEC memory map */
-काष्ठा tgec_regs अणु
+struct tgec_regs {
 	u32 tgec_id;		/* 0x000 Controller ID */
 	u32 reserved001[1];	/* 0x004 */
 	u32 command_config;	/* 0x008 Control and configuration */
 	u32 mac_addr_0;		/* 0x00c Lower 32 bits of the MAC adr */
 	u32 mac_addr_1;		/* 0x010 Upper 16 bits of the MAC adr */
 	u32 maxfrm;		/* 0x014 Maximum frame length */
-	u32 छोड़ो_quant;	/* 0x018 Pause quanta */
-	u32 rx_fअगरo_sections;	/* 0x01c  */
-	u32 tx_fअगरo_sections;	/* 0x020  */
-	u32 rx_fअगरo_almost_f_e;	/* 0x024  */
-	u32 tx_fअगरo_almost_f_e;	/* 0x028  */
+	u32 pause_quant;	/* 0x018 Pause quanta */
+	u32 rx_fifo_sections;	/* 0x01c  */
+	u32 tx_fifo_sections;	/* 0x020  */
+	u32 rx_fifo_almost_f_e;	/* 0x024  */
+	u32 tx_fifo_almost_f_e;	/* 0x028  */
 	u32 hashtable_ctrl;	/* 0x02c Hash table control */
 	u32 mdio_cfg_status;	/* 0x030  */
 	u32 mdio_command;	/* 0x034  */
 	u32 mdio_data;		/* 0x038  */
 	u32 mdio_regaddr;	/* 0x03c  */
 	u32 status;		/* 0x040  */
-	u32 tx_ipg_len;		/* 0x044 Transmitter पूर्णांकer-packet-gap */
+	u32 tx_ipg_len;		/* 0x044 Transmitter inter-packet-gap */
 	u32 mac_addr_2;		/* 0x048 Lower 32 bits of 2nd MAC adr */
 	u32 mac_addr_3;		/* 0x04c Upper 16 bits of 2nd MAC adr */
-	u32 rx_fअगरo_ptr_rd;	/* 0x050  */
-	u32 rx_fअगरo_ptr_wr;	/* 0x054  */
-	u32 tx_fअगरo_ptr_rd;	/* 0x058  */
-	u32 tx_fअगरo_ptr_wr;	/* 0x05c  */
+	u32 rx_fifo_ptr_rd;	/* 0x050  */
+	u32 rx_fifo_ptr_wr;	/* 0x054  */
+	u32 tx_fifo_ptr_rd;	/* 0x058  */
+	u32 tx_fifo_ptr_wr;	/* 0x05c  */
 	u32 imask;		/* 0x060 Interrupt mask */
 	u32 ievent;		/* 0x064 Interrupt event */
 	u32 udp_port;		/* 0x068 Defines a UDP Port number */
-	u32 type_1588v2;	/* 0x06c Type field क्रम 1588v2 */
+	u32 type_1588v2;	/* 0x06c Type field for 1588v2 */
 	u32 reserved070[4];	/* 0x070 */
 	/* 10Ge Statistics Counter */
 	u32 tfrm_u;		/* 80 aFramesTransmittedOK */
@@ -134,33 +133,33 @@
 	u32 txpf_l;		/* A4 aPAUSEMACCtrlFramesTransmitted */
 	u32 rxpf_u;		/* A8 aPAUSEMACCtrlFramesReceived */
 	u32 rxpf_l;		/* Ac aPAUSEMACCtrlFramesReceived */
-	u32 rदीर्घ_u;		/* B0 aFrameTooLongErrors */
-	u32 rदीर्घ_l;		/* B4 aFrameTooLongErrors */
+	u32 rlong_u;		/* B0 aFrameTooLongErrors */
+	u32 rlong_l;		/* B4 aFrameTooLongErrors */
 	u32 rflr_u;		/* B8 aInRangeLengthErrors */
 	u32 rflr_l;		/* Bc aInRangeLengthErrors */
 	u32 tvlan_u;		/* C0 VLANTransmittedOK */
 	u32 tvlan_l;		/* C4 VLANTransmittedOK */
 	u32 rvlan_u;		/* C8 VLANReceivedOK */
 	u32 rvlan_l;		/* Cc VLANReceivedOK */
-	u32 toct_u;		/* D0 अगर_out_octets */
-	u32 toct_l;		/* D4 अगर_out_octets */
-	u32 roct_u;		/* D8 अगर_in_octets */
-	u32 roct_l;		/* Dc अगर_in_octets */
-	u32 ruca_u;		/* E0 अगर_in_ucast_pkts */
-	u32 ruca_l;		/* E4 अगर_in_ucast_pkts */
-	u32 rmca_u;		/* E8 अगरInMulticastPkts */
-	u32 rmca_l;		/* Ec अगरInMulticastPkts */
-	u32 rbca_u;		/* F0 अगरInBroadcastPkts */
-	u32 rbca_l;		/* F4 अगरInBroadcastPkts */
-	u32 terr_u;		/* F8 अगर_out_errors */
-	u32 terr_l;		/* Fc अगर_out_errors */
+	u32 toct_u;		/* D0 if_out_octets */
+	u32 toct_l;		/* D4 if_out_octets */
+	u32 roct_u;		/* D8 if_in_octets */
+	u32 roct_l;		/* Dc if_in_octets */
+	u32 ruca_u;		/* E0 if_in_ucast_pkts */
+	u32 ruca_l;		/* E4 if_in_ucast_pkts */
+	u32 rmca_u;		/* E8 ifInMulticastPkts */
+	u32 rmca_l;		/* Ec ifInMulticastPkts */
+	u32 rbca_u;		/* F0 ifInBroadcastPkts */
+	u32 rbca_l;		/* F4 ifInBroadcastPkts */
+	u32 terr_u;		/* F8 if_out_errors */
+	u32 terr_l;		/* Fc if_out_errors */
 	u32 reserved100[2];	/* 100-108 */
-	u32 tuca_u;		/* 108 अगर_out_ucast_pkts */
-	u32 tuca_l;		/* 10c अगर_out_ucast_pkts */
-	u32 पंचांगca_u;		/* 110 अगरOutMulticastPkts */
-	u32 पंचांगca_l;		/* 114 अगरOutMulticastPkts */
-	u32 tbca_u;		/* 118 अगरOutBroadcastPkts */
-	u32 tbca_l;		/* 11c अगरOutBroadcastPkts */
+	u32 tuca_u;		/* 108 if_out_ucast_pkts */
+	u32 tuca_l;		/* 10c if_out_ucast_pkts */
+	u32 tmca_u;		/* 110 ifOutMulticastPkts */
+	u32 tmca_l;		/* 114 ifOutMulticastPkts */
+	u32 tbca_u;		/* 118 ifOutBroadcastPkts */
+	u32 tbca_l;		/* 11c ifOutBroadcastPkts */
 	u32 rdrp_u;		/* 120 etherStatsDropEvents */
 	u32 rdrp_l;		/* 124 etherStatsDropEvents */
 	u32 reoct_u;		/* 128 etherStatsOctets */
@@ -189,360 +188,360 @@
 	u32 trjbr_l;		/* 184 etherStatsJabbers */
 	u32 trfrg_u;		/* 188 etherStatsFragments */
 	u32 trfrg_l;		/* 18C etherStatsFragments */
-	u32 rerr_u;		/* 190 अगर_in_errors */
-	u32 rerr_l;		/* 194 अगर_in_errors */
-पूर्ण;
+	u32 rerr_u;		/* 190 if_in_errors */
+	u32 rerr_l;		/* 194 if_in_errors */
+};
 
-काष्ठा tgec_cfg अणु
-	bool छोड़ो_ignore;
+struct tgec_cfg {
+	bool pause_ignore;
 	bool promiscuous_mode_enable;
 	u16 max_frame_length;
-	u16 छोड़ो_quant;
+	u16 pause_quant;
 	u32 tx_ipg_length;
-पूर्ण;
+};
 
-काष्ठा fman_mac अणु
-	/* Poपूर्णांकer to the memory mapped रेजिस्टरs. */
-	काष्ठा tgec_regs __iomem *regs;
+struct fman_mac {
+	/* Pointer to the memory mapped registers. */
+	struct tgec_regs __iomem *regs;
 	/* MAC address of device; */
 	u64 addr;
 	u16 max_speed;
-	व्योम *dev_id; /* device cookie used by the exception cbs */
+	void *dev_id; /* device cookie used by the exception cbs */
 	fman_mac_exception_cb *exception_cb;
 	fman_mac_exception_cb *event_cb;
-	/* poपूर्णांकer to driver's global address hash table  */
-	काष्ठा eth_hash_t *multicast_addr_hash;
-	/* poपूर्णांकer to driver's inभागidual address hash table  */
-	काष्ठा eth_hash_t *unicast_addr_hash;
+	/* pointer to driver's global address hash table  */
+	struct eth_hash_t *multicast_addr_hash;
+	/* pointer to driver's individual address hash table  */
+	struct eth_hash_t *unicast_addr_hash;
 	u8 mac_id;
 	u32 exceptions;
-	काष्ठा tgec_cfg *cfg;
-	व्योम *fm;
-	काष्ठा fman_rev_info fm_rev_info;
+	struct tgec_cfg *cfg;
+	void *fm;
+	struct fman_rev_info fm_rev_info;
 	bool allmulti_enabled;
-पूर्ण;
+};
 
-अटल व्योम set_mac_address(काष्ठा tgec_regs __iomem *regs, u8 *adr)
-अणु
-	u32 पंचांगp0, पंचांगp1;
+static void set_mac_address(struct tgec_regs __iomem *regs, u8 *adr)
+{
+	u32 tmp0, tmp1;
 
-	पंचांगp0 = (u32)(adr[0] | adr[1] << 8 | adr[2] << 16 | adr[3] << 24);
-	पंचांगp1 = (u32)(adr[4] | adr[5] << 8);
-	ioग_लिखो32be(पंचांगp0, &regs->mac_addr_0);
-	ioग_लिखो32be(पंचांगp1, &regs->mac_addr_1);
-पूर्ण
+	tmp0 = (u32)(adr[0] | adr[1] << 8 | adr[2] << 16 | adr[3] << 24);
+	tmp1 = (u32)(adr[4] | adr[5] << 8);
+	iowrite32be(tmp0, &regs->mac_addr_0);
+	iowrite32be(tmp1, &regs->mac_addr_1);
+}
 
-अटल व्योम set_dflts(काष्ठा tgec_cfg *cfg)
-अणु
+static void set_dflts(struct tgec_cfg *cfg)
+{
 	cfg->promiscuous_mode_enable = false;
-	cfg->छोड़ो_ignore = false;
+	cfg->pause_ignore = false;
 	cfg->tx_ipg_length = DEFAULT_TX_IPG_LENGTH;
 	cfg->max_frame_length = DEFAULT_MAX_FRAME_LENGTH;
-	cfg->छोड़ो_quant = DEFAULT_PAUSE_QUANT;
-पूर्ण
+	cfg->pause_quant = DEFAULT_PAUSE_QUANT;
+}
 
-अटल पूर्णांक init(काष्ठा tgec_regs __iomem *regs, काष्ठा tgec_cfg *cfg,
+static int init(struct tgec_regs __iomem *regs, struct tgec_cfg *cfg,
 		u32 exception_mask)
-अणु
-	u32 पंचांगp;
+{
+	u32 tmp;
 
 	/* Config */
-	पंचांगp = CMF_CFG_CRC_FWD;
-	अगर (cfg->promiscuous_mode_enable)
-		पंचांगp |= CMD_CFG_PROMIS_EN;
-	अगर (cfg->छोड़ो_ignore)
-		पंचांगp |= CMD_CFG_PAUSE_IGNORE;
+	tmp = CMF_CFG_CRC_FWD;
+	if (cfg->promiscuous_mode_enable)
+		tmp |= CMD_CFG_PROMIS_EN;
+	if (cfg->pause_ignore)
+		tmp |= CMD_CFG_PAUSE_IGNORE;
 	/* Payload length check disable */
-	पंचांगp |= CMD_CFG_NO_LEN_CHK;
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	tmp |= CMD_CFG_NO_LEN_CHK;
+	iowrite32be(tmp, &regs->command_config);
 
 	/* Max Frame Length */
-	ioग_लिखो32be((u32)cfg->max_frame_length, &regs->maxfrm);
+	iowrite32be((u32)cfg->max_frame_length, &regs->maxfrm);
 	/* Pause Time */
-	ioग_लिखो32be(cfg->छोड़ो_quant, &regs->छोड़ो_quant);
+	iowrite32be(cfg->pause_quant, &regs->pause_quant);
 
-	/* clear all pending events and set-up पूर्णांकerrupts */
-	ioग_लिखो32be(0xffffffff, &regs->ievent);
-	ioग_लिखो32be(ioपढ़ो32be(&regs->imask) | exception_mask, &regs->imask);
+	/* clear all pending events and set-up interrupts */
+	iowrite32be(0xffffffff, &regs->ievent);
+	iowrite32be(ioread32be(&regs->imask) | exception_mask, &regs->imask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_init_parameters(काष्ठा fman_mac *tgec)
-अणु
-	अगर (tgec->max_speed < SPEED_10000) अणु
+static int check_init_parameters(struct fman_mac *tgec)
+{
+	if (tgec->max_speed < SPEED_10000) {
 		pr_err("10G MAC driver only support 10G speed\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!tgec->exception_cb) अणु
+		return -EINVAL;
+	}
+	if (!tgec->exception_cb) {
 		pr_err("uninitialized exception_cb\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!tgec->event_cb) अणु
+		return -EINVAL;
+	}
+	if (!tgec->event_cb) {
 		pr_err("uninitialized event_cb\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_exception_flag(क्रमागत fman_mac_exceptions exception)
-अणु
+static int get_exception_flag(enum fman_mac_exceptions exception)
+{
 	u32 bit_mask;
 
-	चयन (exception) अणु
-	हाल FM_MAC_EX_10G_MDIO_SCAN_EVENT:
+	switch (exception) {
+	case FM_MAC_EX_10G_MDIO_SCAN_EVENT:
 		bit_mask = TGEC_IMASK_MDIO_SCAN_EVENT;
-		अवरोध;
-	हाल FM_MAC_EX_10G_MDIO_CMD_CMPL:
+		break;
+	case FM_MAC_EX_10G_MDIO_CMD_CMPL:
 		bit_mask = TGEC_IMASK_MDIO_CMD_CMPL;
-		अवरोध;
-	हाल FM_MAC_EX_10G_REM_FAULT:
+		break;
+	case FM_MAC_EX_10G_REM_FAULT:
 		bit_mask = TGEC_IMASK_REM_FAULT;
-		अवरोध;
-	हाल FM_MAC_EX_10G_LOC_FAULT:
+		break;
+	case FM_MAC_EX_10G_LOC_FAULT:
 		bit_mask = TGEC_IMASK_LOC_FAULT;
-		अवरोध;
-	हाल FM_MAC_EX_10G_TX_ECC_ER:
+		break;
+	case FM_MAC_EX_10G_TX_ECC_ER:
 		bit_mask = TGEC_IMASK_TX_ECC_ER;
-		अवरोध;
-	हाल FM_MAC_EX_10G_TX_FIFO_UNFL:
+		break;
+	case FM_MAC_EX_10G_TX_FIFO_UNFL:
 		bit_mask = TGEC_IMASK_TX_FIFO_UNFL;
-		अवरोध;
-	हाल FM_MAC_EX_10G_TX_FIFO_OVFL:
+		break;
+	case FM_MAC_EX_10G_TX_FIFO_OVFL:
 		bit_mask = TGEC_IMASK_TX_FIFO_OVFL;
-		अवरोध;
-	हाल FM_MAC_EX_10G_TX_ER:
+		break;
+	case FM_MAC_EX_10G_TX_ER:
 		bit_mask = TGEC_IMASK_TX_ER;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_FIFO_OVFL:
+		break;
+	case FM_MAC_EX_10G_RX_FIFO_OVFL:
 		bit_mask = TGEC_IMASK_RX_FIFO_OVFL;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_ECC_ER:
+		break;
+	case FM_MAC_EX_10G_RX_ECC_ER:
 		bit_mask = TGEC_IMASK_RX_ECC_ER;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_JAB_FRM:
+		break;
+	case FM_MAC_EX_10G_RX_JAB_FRM:
 		bit_mask = TGEC_IMASK_RX_JAB_FRM;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_OVRSZ_FRM:
+		break;
+	case FM_MAC_EX_10G_RX_OVRSZ_FRM:
 		bit_mask = TGEC_IMASK_RX_OVRSZ_FRM;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_RUNT_FRM:
+		break;
+	case FM_MAC_EX_10G_RX_RUNT_FRM:
 		bit_mask = TGEC_IMASK_RX_RUNT_FRM;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_FRAG_FRM:
+		break;
+	case FM_MAC_EX_10G_RX_FRAG_FRM:
 		bit_mask = TGEC_IMASK_RX_FRAG_FRM;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_LEN_ER:
+		break;
+	case FM_MAC_EX_10G_RX_LEN_ER:
 		bit_mask = TGEC_IMASK_RX_LEN_ER;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_CRC_ER:
+		break;
+	case FM_MAC_EX_10G_RX_CRC_ER:
 		bit_mask = TGEC_IMASK_RX_CRC_ER;
-		अवरोध;
-	हाल FM_MAC_EX_10G_RX_ALIGN_ER:
+		break;
+	case FM_MAC_EX_10G_RX_ALIGN_ER:
 		bit_mask = TGEC_IMASK_RX_ALIGN_ER;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bit_mask = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस bit_mask;
-पूर्ण
+	return bit_mask;
+}
 
-अटल व्योम tgec_err_exception(व्योम *handle)
-अणु
-	काष्ठा fman_mac *tgec = (काष्ठा fman_mac *)handle;
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
+static void tgec_err_exception(void *handle)
+{
+	struct fman_mac *tgec = (struct fman_mac *)handle;
+	struct tgec_regs __iomem *regs = tgec->regs;
 	u32 event;
 
-	/* करो not handle MDIO events */
-	event = ioपढ़ो32be(&regs->ievent) &
+	/* do not handle MDIO events */
+	event = ioread32be(&regs->ievent) &
 			   ~(TGEC_IMASK_MDIO_SCAN_EVENT |
 			   TGEC_IMASK_MDIO_CMD_CMPL);
 
-	event &= ioपढ़ो32be(&regs->imask);
+	event &= ioread32be(&regs->imask);
 
-	ioग_लिखो32be(event, &regs->ievent);
+	iowrite32be(event, &regs->ievent);
 
-	अगर (event & TGEC_IMASK_REM_FAULT)
+	if (event & TGEC_IMASK_REM_FAULT)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_REM_FAULT);
-	अगर (event & TGEC_IMASK_LOC_FAULT)
+	if (event & TGEC_IMASK_LOC_FAULT)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_LOC_FAULT);
-	अगर (event & TGEC_IMASK_TX_ECC_ER)
+	if (event & TGEC_IMASK_TX_ECC_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_TX_ECC_ER);
-	अगर (event & TGEC_IMASK_TX_FIFO_UNFL)
+	if (event & TGEC_IMASK_TX_FIFO_UNFL)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_TX_FIFO_UNFL);
-	अगर (event & TGEC_IMASK_TX_FIFO_OVFL)
+	if (event & TGEC_IMASK_TX_FIFO_OVFL)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_TX_FIFO_OVFL);
-	अगर (event & TGEC_IMASK_TX_ER)
+	if (event & TGEC_IMASK_TX_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_TX_ER);
-	अगर (event & TGEC_IMASK_RX_FIFO_OVFL)
+	if (event & TGEC_IMASK_RX_FIFO_OVFL)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_FIFO_OVFL);
-	अगर (event & TGEC_IMASK_RX_ECC_ER)
+	if (event & TGEC_IMASK_RX_ECC_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_ECC_ER);
-	अगर (event & TGEC_IMASK_RX_JAB_FRM)
+	if (event & TGEC_IMASK_RX_JAB_FRM)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_JAB_FRM);
-	अगर (event & TGEC_IMASK_RX_OVRSZ_FRM)
+	if (event & TGEC_IMASK_RX_OVRSZ_FRM)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_OVRSZ_FRM);
-	अगर (event & TGEC_IMASK_RX_RUNT_FRM)
+	if (event & TGEC_IMASK_RX_RUNT_FRM)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_RUNT_FRM);
-	अगर (event & TGEC_IMASK_RX_FRAG_FRM)
+	if (event & TGEC_IMASK_RX_FRAG_FRM)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_FRAG_FRM);
-	अगर (event & TGEC_IMASK_RX_LEN_ER)
+	if (event & TGEC_IMASK_RX_LEN_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_LEN_ER);
-	अगर (event & TGEC_IMASK_RX_CRC_ER)
+	if (event & TGEC_IMASK_RX_CRC_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_CRC_ER);
-	अगर (event & TGEC_IMASK_RX_ALIGN_ER)
+	if (event & TGEC_IMASK_RX_ALIGN_ER)
 		tgec->exception_cb(tgec->dev_id, FM_MAC_EX_10G_RX_ALIGN_ER);
-पूर्ण
+}
 
-अटल व्योम मुक्त_init_resources(काष्ठा fman_mac *tgec)
-अणु
-	fman_unरेजिस्टर_पूर्णांकr(tgec->fm, FMAN_MOD_MAC, tgec->mac_id,
+static void free_init_resources(struct fman_mac *tgec)
+{
+	fman_unregister_intr(tgec->fm, FMAN_MOD_MAC, tgec->mac_id,
 			     FMAN_INTR_TYPE_ERR);
 
 	/* release the driver's group hash table */
-	मुक्त_hash_table(tgec->multicast_addr_hash);
-	tgec->multicast_addr_hash = शून्य;
+	free_hash_table(tgec->multicast_addr_hash);
+	tgec->multicast_addr_hash = NULL;
 
-	/* release the driver's inभागidual hash table */
-	मुक्त_hash_table(tgec->unicast_addr_hash);
-	tgec->unicast_addr_hash = शून्य;
-पूर्ण
+	/* release the driver's individual hash table */
+	free_hash_table(tgec->unicast_addr_hash);
+	tgec->unicast_addr_hash = NULL;
+}
 
-अटल bool is_init_करोne(काष्ठा tgec_cfg *cfg)
-अणु
-	/* Checks अगर tGEC driver parameters were initialized */
-	अगर (!cfg)
-		वापस true;
+static bool is_init_done(struct tgec_cfg *cfg)
+{
+	/* Checks if tGEC driver parameters were initialized */
+	if (!cfg)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक tgec_enable(काष्ठा fman_mac *tgec, क्रमागत comm_mode mode)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	u32 पंचांगp;
+int tgec_enable(struct fman_mac *tgec, enum comm_mode mode)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	u32 tmp;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	पंचांगp = ioपढ़ो32be(&regs->command_config);
-	अगर (mode & COMM_MODE_RX)
-		पंचांगp |= CMD_CFG_RX_EN;
-	अगर (mode & COMM_MODE_TX)
-		पंचांगp |= CMD_CFG_TX_EN;
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	tmp = ioread32be(&regs->command_config);
+	if (mode & COMM_MODE_RX)
+		tmp |= CMD_CFG_RX_EN;
+	if (mode & COMM_MODE_TX)
+		tmp |= CMD_CFG_TX_EN;
+	iowrite32be(tmp, &regs->command_config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_disable(काष्ठा fman_mac *tgec, क्रमागत comm_mode mode)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	u32 पंचांगp;
+int tgec_disable(struct fman_mac *tgec, enum comm_mode mode)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	u32 tmp;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	पंचांगp = ioपढ़ो32be(&regs->command_config);
-	अगर (mode & COMM_MODE_RX)
-		पंचांगp &= ~CMD_CFG_RX_EN;
-	अगर (mode & COMM_MODE_TX)
-		पंचांगp &= ~CMD_CFG_TX_EN;
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	tmp = ioread32be(&regs->command_config);
+	if (mode & COMM_MODE_RX)
+		tmp &= ~CMD_CFG_RX_EN;
+	if (mode & COMM_MODE_TX)
+		tmp &= ~CMD_CFG_TX_EN;
+	iowrite32be(tmp, &regs->command_config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_set_promiscuous(काष्ठा fman_mac *tgec, bool new_val)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	u32 पंचांगp;
+int tgec_set_promiscuous(struct fman_mac *tgec, bool new_val)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	u32 tmp;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	पंचांगp = ioपढ़ो32be(&regs->command_config);
-	अगर (new_val)
-		पंचांगp |= CMD_CFG_PROMIS_EN;
-	अन्यथा
-		पंचांगp &= ~CMD_CFG_PROMIS_EN;
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	tmp = ioread32be(&regs->command_config);
+	if (new_val)
+		tmp |= CMD_CFG_PROMIS_EN;
+	else
+		tmp &= ~CMD_CFG_PROMIS_EN;
+	iowrite32be(tmp, &regs->command_config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_cfg_max_frame_len(काष्ठा fman_mac *tgec, u16 new_val)
-अणु
-	अगर (is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+int tgec_cfg_max_frame_len(struct fman_mac *tgec, u16 new_val)
+{
+	if (is_init_done(tgec->cfg))
+		return -EINVAL;
 
 	tgec->cfg->max_frame_length = new_val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_set_tx_छोड़ो_frames(काष्ठा fman_mac *tgec, u8 __maybe_unused priority,
-			     u16 छोड़ो_समय, u16 __maybe_unused thresh_समय)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
+int tgec_set_tx_pause_frames(struct fman_mac *tgec, u8 __maybe_unused priority,
+			     u16 pause_time, u16 __maybe_unused thresh_time)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	ioग_लिखो32be((u32)छोड़ो_समय, &regs->छोड़ो_quant);
+	iowrite32be((u32)pause_time, &regs->pause_quant);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_accept_rx_छोड़ो_frames(काष्ठा fman_mac *tgec, bool en)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	u32 पंचांगp;
+int tgec_accept_rx_pause_frames(struct fman_mac *tgec, bool en)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	u32 tmp;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	पंचांगp = ioपढ़ो32be(&regs->command_config);
-	अगर (!en)
-		पंचांगp |= CMD_CFG_PAUSE_IGNORE;
-	अन्यथा
-		पंचांगp &= ~CMD_CFG_PAUSE_IGNORE;
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	tmp = ioread32be(&regs->command_config);
+	if (!en)
+		tmp |= CMD_CFG_PAUSE_IGNORE;
+	else
+		tmp &= ~CMD_CFG_PAUSE_IGNORE;
+	iowrite32be(tmp, &regs->command_config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_modअगरy_mac_address(काष्ठा fman_mac *tgec, enet_addr_t *p_enet_addr)
-अणु
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+int tgec_modify_mac_address(struct fman_mac *tgec, enet_addr_t *p_enet_addr)
+{
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
 	tgec->addr = ENET_ADDR_TO_UINT64(*p_enet_addr);
 	set_mac_address(tgec->regs, (u8 *)(*p_enet_addr));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_add_hash_mac_address(काष्ठा fman_mac *tgec, enet_addr_t *eth_addr)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	काष्ठा eth_hash_entry *hash_entry;
+int tgec_add_hash_mac_address(struct fman_mac *tgec, enet_addr_t *eth_addr)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	struct eth_hash_entry *hash_entry;
 	u32 crc = 0xFFFFFFFF, hash;
 	u64 addr;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
 	addr = ENET_ADDR_TO_UINT64(*eth_addr);
 
-	अगर (!(addr & GROUP_ADDRESS)) अणु
+	if (!(addr & GROUP_ADDRESS)) {
 		/* Unicast addresses not supported in hash */
 		pr_err("Unicast Address\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	/* CRC calculation */
 	crc = crc32_le(crc, (u8 *)eth_addr, ETH_ALEN);
 	crc = bitrev32(crc);
@@ -550,72 +549,72 @@
 	hash = (crc >> TGEC_HASH_MCAST_SHIFT) & TGEC_HASH_ADR_MSK;
 
 	/* Create element to be added to the driver hash table */
-	hash_entry = kदो_स्मृति(माप(*hash_entry), GFP_ATOMIC);
-	अगर (!hash_entry)
-		वापस -ENOMEM;
+	hash_entry = kmalloc(sizeof(*hash_entry), GFP_ATOMIC);
+	if (!hash_entry)
+		return -ENOMEM;
 	hash_entry->addr = addr;
 	INIT_LIST_HEAD(&hash_entry->node);
 
 	list_add_tail(&hash_entry->node,
 		      &tgec->multicast_addr_hash->lsts[hash]);
-	ioग_लिखो32be((hash | TGEC_HASH_MCAST_EN), &regs->hashtable_ctrl);
+	iowrite32be((hash | TGEC_HASH_MCAST_EN), &regs->hashtable_ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_set_allmulti(काष्ठा fman_mac *tgec, bool enable)
-अणु
+int tgec_set_allmulti(struct fman_mac *tgec, bool enable)
+{
 	u32 entry;
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
+	struct tgec_regs __iomem *regs = tgec->regs;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	अगर (enable) अणु
-		क्रम (entry = 0; entry < TGEC_HASH_TABLE_SIZE; entry++)
-			ioग_लिखो32be(entry | TGEC_HASH_MCAST_EN,
+	if (enable) {
+		for (entry = 0; entry < TGEC_HASH_TABLE_SIZE; entry++)
+			iowrite32be(entry | TGEC_HASH_MCAST_EN,
 				    &regs->hashtable_ctrl);
-	पूर्ण अन्यथा अणु
-		क्रम (entry = 0; entry < TGEC_HASH_TABLE_SIZE; entry++)
-			ioग_लिखो32be(entry & ~TGEC_HASH_MCAST_EN,
+	} else {
+		for (entry = 0; entry < TGEC_HASH_TABLE_SIZE; entry++)
+			iowrite32be(entry & ~TGEC_HASH_MCAST_EN,
 				    &regs->hashtable_ctrl);
-	पूर्ण
+	}
 
 	tgec->allmulti_enabled = enable;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_set_tstamp(काष्ठा fman_mac *tgec, bool enable)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	u32 पंचांगp;
+int tgec_set_tstamp(struct fman_mac *tgec, bool enable)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	u32 tmp;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	पंचांगp = ioपढ़ो32be(&regs->command_config);
+	tmp = ioread32be(&regs->command_config);
 
-	अगर (enable)
-		पंचांगp |= CMD_CFG_EN_TIMESTAMP;
-	अन्यथा
-		पंचांगp &= ~CMD_CFG_EN_TIMESTAMP;
+	if (enable)
+		tmp |= CMD_CFG_EN_TIMESTAMP;
+	else
+		tmp &= ~CMD_CFG_EN_TIMESTAMP;
 
-	ioग_लिखो32be(पंचांगp, &regs->command_config);
+	iowrite32be(tmp, &regs->command_config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_del_hash_mac_address(काष्ठा fman_mac *tgec, enet_addr_t *eth_addr)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
-	काष्ठा eth_hash_entry *hash_entry = शून्य;
-	काष्ठा list_head *pos;
+int tgec_del_hash_mac_address(struct fman_mac *tgec, enet_addr_t *eth_addr)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
+	struct eth_hash_entry *hash_entry = NULL;
+	struct list_head *pos;
 	u32 crc = 0xFFFFFFFF, hash;
 	u64 addr;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
 	addr = ((*(u64 *)eth_addr) >> 16);
 
@@ -625,176 +624,176 @@
 	/* Take 9 MSB bits */
 	hash = (crc >> TGEC_HASH_MCAST_SHIFT) & TGEC_HASH_ADR_MSK;
 
-	list_क्रम_each(pos, &tgec->multicast_addr_hash->lsts[hash]) अणु
+	list_for_each(pos, &tgec->multicast_addr_hash->lsts[hash]) {
 		hash_entry = ETH_HASH_ENTRY_OBJ(pos);
-		अगर (hash_entry && hash_entry->addr == addr) अणु
+		if (hash_entry && hash_entry->addr == addr) {
 			list_del_init(&hash_entry->node);
-			kमुक्त(hash_entry);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			kfree(hash_entry);
+			break;
+		}
+	}
 
-	अगर (!tgec->allmulti_enabled) अणु
-		अगर (list_empty(&tgec->multicast_addr_hash->lsts[hash]))
-			ioग_लिखो32be((hash & ~TGEC_HASH_MCAST_EN),
+	if (!tgec->allmulti_enabled) {
+		if (list_empty(&tgec->multicast_addr_hash->lsts[hash]))
+			iowrite32be((hash & ~TGEC_HASH_MCAST_EN),
 				    &regs->hashtable_ctrl);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_get_version(काष्ठा fman_mac *tgec, u32 *mac_version)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
+int tgec_get_version(struct fman_mac *tgec, u32 *mac_version)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	*mac_version = ioपढ़ो32be(&regs->tgec_id);
+	*mac_version = ioread32be(&regs->tgec_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_set_exception(काष्ठा fman_mac *tgec,
-		       क्रमागत fman_mac_exceptions exception, bool enable)
-अणु
-	काष्ठा tgec_regs __iomem *regs = tgec->regs;
+int tgec_set_exception(struct fman_mac *tgec,
+		       enum fman_mac_exceptions exception, bool enable)
+{
+	struct tgec_regs __iomem *regs = tgec->regs;
 	u32 bit_mask = 0;
 
-	अगर (!is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (!is_init_done(tgec->cfg))
+		return -EINVAL;
 
 	bit_mask = get_exception_flag(exception);
-	अगर (bit_mask) अणु
-		अगर (enable)
+	if (bit_mask) {
+		if (enable)
 			tgec->exceptions |= bit_mask;
-		अन्यथा
+		else
 			tgec->exceptions &= ~bit_mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("Undefined exception\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (enable)
-		ioग_लिखो32be(ioपढ़ो32be(&regs->imask) | bit_mask, &regs->imask);
-	अन्यथा
-		ioग_लिखो32be(ioपढ़ो32be(&regs->imask) & ~bit_mask, &regs->imask);
+		return -EINVAL;
+	}
+	if (enable)
+		iowrite32be(ioread32be(&regs->imask) | bit_mask, &regs->imask);
+	else
+		iowrite32be(ioread32be(&regs->imask) & ~bit_mask, &regs->imask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_init(काष्ठा fman_mac *tgec)
-अणु
-	काष्ठा tgec_cfg *cfg;
+int tgec_init(struct fman_mac *tgec)
+{
+	struct tgec_cfg *cfg;
 	enet_addr_t eth_addr;
-	पूर्णांक err;
+	int err;
 
-	अगर (is_init_करोne(tgec->cfg))
-		वापस -EINVAL;
+	if (is_init_done(tgec->cfg))
+		return -EINVAL;
 
-	अगर (DEFAULT_RESET_ON_INIT &&
-	    (fman_reset_mac(tgec->fm, tgec->mac_id) != 0)) अणु
+	if (DEFAULT_RESET_ON_INIT &&
+	    (fman_reset_mac(tgec->fm, tgec->mac_id) != 0)) {
 		pr_err("Can't reset MAC!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = check_init_parameters(tgec);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	cfg = tgec->cfg;
 
-	अगर (tgec->addr) अणु
+	if (tgec->addr) {
 		MAKE_ENET_ADDR_FROM_UINT64(tgec->addr, eth_addr);
 		set_mac_address(tgec->regs, (u8 *)eth_addr);
-	पूर्ण
+	}
 
-	/* पूर्णांकerrupts */
+	/* interrupts */
 	/* FM_10G_REM_N_LCL_FLT_EX_10GMAC_ERRATA_SW005 Errata workaround */
-	अगर (tgec->fm_rev_info.major <= 2)
+	if (tgec->fm_rev_info.major <= 2)
 		tgec->exceptions &= ~(TGEC_IMASK_REM_FAULT |
 				      TGEC_IMASK_LOC_FAULT);
 
 	err = init(tgec->regs, cfg, tgec->exceptions);
-	अगर (err) अणु
-		मुक्त_init_resources(tgec);
+	if (err) {
+		free_init_resources(tgec);
 		pr_err("TGEC version doesn't support this i/f mode\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Max Frame Length */
 	err = fman_set_mac_max_frame(tgec->fm, tgec->mac_id,
 				     cfg->max_frame_length);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Setting max frame length FAILED\n");
-		मुक्त_init_resources(tgec);
-		वापस -EINVAL;
-	पूर्ण
+		free_init_resources(tgec);
+		return -EINVAL;
+	}
 
 	/* FM_TX_FIFO_CORRUPTION_ERRATA_10GMAC_A007 Errata workaround */
-	अगर (tgec->fm_rev_info.major == 2) अणु
-		काष्ठा tgec_regs __iomem *regs = tgec->regs;
-		u32 पंचांगp;
+	if (tgec->fm_rev_info.major == 2) {
+		struct tgec_regs __iomem *regs = tgec->regs;
+		u32 tmp;
 
-		/* restore the शेष tx ipg Length */
-		पंचांगp = (ioपढ़ो32be(&regs->tx_ipg_len) &
+		/* restore the default tx ipg Length */
+		tmp = (ioread32be(&regs->tx_ipg_len) &
 		       ~TGEC_TX_IPG_LENGTH_MASK) | 12;
 
-		ioग_लिखो32be(पंचांगp, &regs->tx_ipg_len);
-	पूर्ण
+		iowrite32be(tmp, &regs->tx_ipg_len);
+	}
 
 	tgec->multicast_addr_hash = alloc_hash_table(TGEC_HASH_TABLE_SIZE);
-	अगर (!tgec->multicast_addr_hash) अणु
-		मुक्त_init_resources(tgec);
+	if (!tgec->multicast_addr_hash) {
+		free_init_resources(tgec);
 		pr_err("allocation hash table is FAILED\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	tgec->unicast_addr_hash = alloc_hash_table(TGEC_HASH_TABLE_SIZE);
-	अगर (!tgec->unicast_addr_hash) अणु
-		मुक्त_init_resources(tgec);
+	if (!tgec->unicast_addr_hash) {
+		free_init_resources(tgec);
 		pr_err("allocation hash table is FAILED\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	fman_रेजिस्टर_पूर्णांकr(tgec->fm, FMAN_MOD_MAC, tgec->mac_id,
+	fman_register_intr(tgec->fm, FMAN_MOD_MAC, tgec->mac_id,
 			   FMAN_INTR_TYPE_ERR, tgec_err_exception, tgec);
 
-	kमुक्त(cfg);
-	tgec->cfg = शून्य;
+	kfree(cfg);
+	tgec->cfg = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tgec_मुक्त(काष्ठा fman_mac *tgec)
-अणु
-	मुक्त_init_resources(tgec);
+int tgec_free(struct fman_mac *tgec)
+{
+	free_init_resources(tgec);
 
-	kमुक्त(tgec->cfg);
-	kमुक्त(tgec);
+	kfree(tgec->cfg);
+	kfree(tgec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा fman_mac *tgec_config(काष्ठा fman_mac_params *params)
-अणु
-	काष्ठा fman_mac *tgec;
-	काष्ठा tgec_cfg *cfg;
-	व्योम __iomem *base_addr;
+struct fman_mac *tgec_config(struct fman_mac_params *params)
+{
+	struct fman_mac *tgec;
+	struct tgec_cfg *cfg;
+	void __iomem *base_addr;
 
 	base_addr = params->base_addr;
-	/* allocate memory क्रम the UCC GETH data काष्ठाure. */
-	tgec = kzalloc(माप(*tgec), GFP_KERNEL);
-	अगर (!tgec)
-		वापस शून्य;
+	/* allocate memory for the UCC GETH data structure. */
+	tgec = kzalloc(sizeof(*tgec), GFP_KERNEL);
+	if (!tgec)
+		return NULL;
 
-	/* allocate memory क्रम the 10G MAC driver parameters data काष्ठाure. */
-	cfg = kzalloc(माप(*cfg), GFP_KERNEL);
-	अगर (!cfg) अणु
-		tgec_मुक्त(tgec);
-		वापस शून्य;
-	पूर्ण
+	/* allocate memory for the 10G MAC driver parameters data structure. */
+	cfg = kzalloc(sizeof(*cfg), GFP_KERNEL);
+	if (!cfg) {
+		tgec_free(tgec);
+		return NULL;
+	}
 
-	/* Plant parameter काष्ठाure poपूर्णांकer */
+	/* Plant parameter structure pointer */
 	tgec->cfg = cfg;
 
 	set_dflts(cfg);
@@ -826,5 +825,5 @@
 	/* Save FMan revision */
 	fman_get_revision(tgec->fm, &tgec->fm_rev_info);
 
-	वापस tgec;
-पूर्ण
+	return tgec;
+}

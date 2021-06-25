@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,28 +31,28 @@
  *
  */
 
-#अगर_अघोषित _MLX4_EN_PORT_H_
-#घोषणा _MLX4_EN_PORT_H_
+#ifndef _MLX4_EN_PORT_H_
+#define _MLX4_EN_PORT_H_
 
 
-#घोषणा SET_PORT_PROMISC_SHIFT	31
-#घोषणा SET_PORT_MC_PROMISC_SHIFT	30
+#define SET_PORT_PROMISC_SHIFT	31
+#define SET_PORT_MC_PROMISC_SHIFT	30
 
-#घोषणा MLX4_EN_NUM_TC		8
+#define MLX4_EN_NUM_TC		8
 
-#घोषणा VLAN_FLTR_SIZE	128
-काष्ठा mlx4_set_vlan_fltr_mbox अणु
+#define VLAN_FLTR_SIZE	128
+struct mlx4_set_vlan_fltr_mbox {
 	__be32 entry[VLAN_FLTR_SIZE];
-पूर्ण;
+};
 
 
-क्रमागत अणु
+enum {
 	MLX4_MCAST_CONFIG       = 0,
 	MLX4_MCAST_DISABLE      = 1,
 	MLX4_MCAST_ENABLE       = 2,
-पूर्ण;
+};
 
-क्रमागत mlx4_link_mode अणु
+enum mlx4_link_mode {
 	MLX4_1000BASE_CX_SGMII	 = 0,
 	MLX4_1000BASE_KX	 = 1,
 	MLX4_10GBASE_CX4	 = 2,
@@ -71,11 +70,11 @@
 	MLX4_100BASE_TX		 = 24,
 	MLX4_1000BASE_T		 = 25,
 	MLX4_10GBASE_T		 = 26,
-पूर्ण;
+};
 
-#घोषणा MLX4_PROT_MASK(link_mode) (1<<link_mode)
+#define MLX4_PROT_MASK(link_mode) (1<<link_mode)
 
-क्रमागत अणु
+enum {
 	MLX4_EN_100M_SPEED	= 0x04,
 	MLX4_EN_10G_SPEED_XAUI	= 0x00,
 	MLX4_EN_10G_SPEED_XFI	= 0x01,
@@ -84,25 +83,25 @@
 	MLX4_EN_40G_SPEED	= 0x40,
 	MLX4_EN_56G_SPEED	= 0x20,
 	MLX4_EN_OTHER_SPEED	= 0x0f,
-पूर्ण;
+};
 
-काष्ठा mlx4_en_query_port_context अणु
+struct mlx4_en_query_port_context {
 	u8 link_up;
-#घोषणा MLX4_EN_LINK_UP_MASK	0x80
-#घोषणा MLX4_EN_ANC_MASK	0x40
-	u8 स्वतःneg;
-#घोषणा MLX4_EN_AUTONEG_MASK	0x80
+#define MLX4_EN_LINK_UP_MASK	0x80
+#define MLX4_EN_ANC_MASK	0x40
+	u8 autoneg;
+#define MLX4_EN_AUTONEG_MASK	0x80
 	__be16 mtu;
 	u8 reserved2;
 	u8 link_speed;
-#घोषणा MLX4_EN_SPEED_MASK	0x6f
+#define MLX4_EN_SPEED_MASK	0x6f
 	u16 reserved3[5];
 	__be64 mac;
 	u8 transceiver;
-पूर्ण;
+};
 
 
-काष्ठा mlx4_en_stat_out_mbox अणु
+struct mlx4_en_stat_out_mbox {
 	/* Received frames with a length of 64 octets */
 	__be64 R64_prio_0;
 	__be64 R64_prio_1;
@@ -223,7 +222,7 @@
 	__be64 MCAST_prio_6;
 	__be64 MCAST_prio_7;
 	__be64 MCAST_novlan;
-	/* Received unicast not लघु or GIANT frames with good CRC */
+	/* Received unicast not short or GIANT frames with good CRC */
 	__be64 RTOTG_prio_0;
 	__be64 RTOTG_prio_1;
 	__be64 RTOTG_prio_2;
@@ -234,13 +233,13 @@
 	__be64 RTOTG_prio_7;
 	__be64 RTOTG_novlan;
 
-	/* Count of total octets of received frames, includes framing अक्षरacters */
+	/* Count of total octets of received frames, includes framing characters */
 	__be64 RTTLOCT_prio_0;
 	/* Count of total octets of received frames, not including framing
-	   अक्षरacters */
+	   characters */
 	__be64 RTTLOCT_NOFRM_prio_0;
 	/* Count of Total number of octets received
-	   (only क्रम frames without errors) */
+	   (only for frames without errors) */
 	__be64 ROCT_prio_0;
 
 	__be64 RTTLOCT_prio_1;
@@ -319,13 +318,13 @@
 	__be64 reserved11;
 	__be64 reserved12;
 	/* Count of received frames with a length/type field  value between 46
-	   (42 क्रम VLANtagged frames) and 1500 (also 1500 क्रम VLAN-tagged frames),
+	   (42 for VLANtagged frames) and 1500 (also 1500 for VLAN-tagged frames),
 	   inclusive */
 	__be64 RInRangeLengthErr;
 	/* Count of received frames with length/type field between 1501 and 1535
 	   decimal, inclusive */
 	__be64 ROutRangeLengthErr;
-	/* Count of received frames that are दीर्घer than max allowed size क्रम
+	/* Count of received frames that are longer than max allowed size for
 	   802.3 frames (1518/1522) */
 	__be64 RFrmTooLong;
 	/* Count frames received with PCS error */
@@ -475,11 +474,11 @@
 	__be64 TTOTG_novlan;
 	__be64 TTOTG_loopbk;
 
-	/* total octets of transmitted frames, including framing अक्षरacters */
+	/* total octets of transmitted frames, including framing characters */
 	__be64 TTTLOCT_prio_0;
-	/* total octets of transmitted frames, not including framing अक्षरacters */
+	/* total octets of transmitted frames, not including framing characters */
 	__be64 TTTLOCT_NOFRM_prio_0;
-	/* अगरOutOctets */
+	/* ifOutOctets */
 	__be64 TOCT_prio_0;
 
 	__be64 TTTLOCT_prio_1;
@@ -518,7 +517,7 @@
 	__be64 TTTLOCT_NOFRM_loopbk;
 	__be64 TOCT_loopbk;
 
-	/* Total frames transmitted with a good CRC that are not पातed  */
+	/* Total frames transmitted with a good CRC that are not aborted  */
 	__be64 TTOT_prio_0;
 	/* Total number of frames transmitted with 802.1Q encapsulation */
 	__be64 T1Q_prio_0;
@@ -577,11 +576,11 @@
 	/* Drop due to overflow */
 	__be32 RdropLength;
 	/* Total of good frames. Does not include frames received with
-	   frame-too-दीर्घ, FCS, or length errors */
+	   frame-too-long, FCS, or length errors */
 	__be32 RTOTFRMS;
 	/* Total dropped Xmited packets */
 	__be32 TDROP;
-पूर्ण;
+};
 
 
-#पूर्ण_अगर
+#endif

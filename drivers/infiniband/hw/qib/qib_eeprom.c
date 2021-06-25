@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2012 Intel Corporation. All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,126 +32,126 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
 
-#समावेश "qib.h"
+#include "qib.h"
 
 /*
- * Functions specअगरic to the serial EEPROM on cards handled by ib_qib.
- * The actual serail पूर्णांकerface code is in qib_twsi.c. This file is a client
+ * Functions specific to the serial EEPROM on cards handled by ib_qib.
+ * The actual serail interface code is in qib_twsi.c. This file is a client
  */
 
 /**
- * qib_eeprom_पढ़ो - receives bytes from the eeprom via I2C
+ * qib_eeprom_read - receives bytes from the eeprom via I2C
  * @dd: the qlogic_ib device
- * @eeprom_offset: address to पढ़ो from
+ * @eeprom_offset: address to read from
  * @buff: where to store result
  * @len: number of bytes to receive
  */
-पूर्णांक qib_eeprom_पढ़ो(काष्ठा qib_devdata *dd, u8 eeprom_offset,
-		    व्योम *buff, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+int qib_eeprom_read(struct qib_devdata *dd, u8 eeprom_offset,
+		    void *buff, int len)
+{
+	int ret;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dd->eep_lock);
-	अगर (!ret) अणु
+	ret = mutex_lock_interruptible(&dd->eep_lock);
+	if (!ret) {
 		ret = qib_twsi_reset(dd);
-		अगर (ret)
+		if (ret)
 			qib_dev_err(dd, "EEPROM Reset for read failed\n");
-		अन्यथा
+		else
 			ret = qib_twsi_blk_rd(dd, dd->twsi_eeprom_dev,
 					      eeprom_offset, buff, len);
 		mutex_unlock(&dd->eep_lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Actually update the eeprom, first करोing ग_लिखो enable अगर
- * needed, then restoring ग_लिखो enable state.
+ * Actually update the eeprom, first doing write enable if
+ * needed, then restoring write enable state.
  * Must be called with eep_lock held
  */
-अटल पूर्णांक eeprom_ग_लिखो_with_enable(काष्ठा qib_devdata *dd, u8 offset,
-		     स्थिर व्योम *buf, पूर्णांक len)
-अणु
-	पूर्णांक ret, pwen;
+static int eeprom_write_with_enable(struct qib_devdata *dd, u8 offset,
+		     const void *buf, int len)
+{
+	int ret, pwen;
 
 	pwen = dd->f_eeprom_wen(dd, 1);
 	ret = qib_twsi_reset(dd);
-	अगर (ret)
+	if (ret)
 		qib_dev_err(dd, "EEPROM Reset for write failed\n");
-	अन्यथा
+	else
 		ret = qib_twsi_blk_wr(dd, dd->twsi_eeprom_dev,
 				      offset, buf, len);
 	dd->f_eeprom_wen(dd, pwen);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * qib_eeprom_ग_लिखो - ग_लिखोs data to the eeprom via I2C
+ * qib_eeprom_write - writes data to the eeprom via I2C
  * @dd: the qlogic_ib device
  * @eeprom_offset: where to place data
- * @buff: data to ग_लिखो
- * @len: number of bytes to ग_लिखो
+ * @buff: data to write
+ * @len: number of bytes to write
  */
-पूर्णांक qib_eeprom_ग_लिखो(काष्ठा qib_devdata *dd, u8 eeprom_offset,
-		     स्थिर व्योम *buff, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+int qib_eeprom_write(struct qib_devdata *dd, u8 eeprom_offset,
+		     const void *buff, int len)
+{
+	int ret;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dd->eep_lock);
-	अगर (!ret) अणु
-		ret = eeprom_ग_लिखो_with_enable(dd, eeprom_offset, buff, len);
+	ret = mutex_lock_interruptible(&dd->eep_lock);
+	if (!ret) {
+		ret = eeprom_write_with_enable(dd, eeprom_offset, buff, len);
 		mutex_unlock(&dd->eep_lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 flash_csum(काष्ठा qib_flash *अगरp, पूर्णांक adjust)
-अणु
-	u8 *ip = (u8 *) अगरp;
+static u8 flash_csum(struct qib_flash *ifp, int adjust)
+{
+	u8 *ip = (u8 *) ifp;
 	u8 csum = 0, len;
 
 	/*
 	 * Limit length checksummed to max length of actual data.
-	 * Checksum of erased eeprom will still be bad, but we aव्योम
-	 * पढ़ोing past the end of the buffer we were passed.
+	 * Checksum of erased eeprom will still be bad, but we avoid
+	 * reading past the end of the buffer we were passed.
 	 */
-	len = अगरp->अगर_length;
-	अगर (len > माप(काष्ठा qib_flash))
-		len = माप(काष्ठा qib_flash);
-	जबतक (len--)
+	len = ifp->if_length;
+	if (len > sizeof(struct qib_flash))
+		len = sizeof(struct qib_flash);
+	while (len--)
 		csum += *ip++;
-	csum -= अगरp->अगर_csum;
+	csum -= ifp->if_csum;
 	csum = ~csum;
-	अगर (adjust)
-		अगरp->अगर_csum = csum;
+	if (adjust)
+		ifp->if_csum = csum;
 
-	वापस csum;
-पूर्ण
+	return csum;
+}
 
 /**
  * qib_get_eeprom_info- get the GUID et al. from the TSWI EEPROM device
  * @dd: the qlogic_ib device
  *
  * We have the capability to use the nguid field, and get
- * the guid from the first chip's flash, to use क्रम all of them.
+ * the guid from the first chip's flash, to use for all of them.
  */
-व्योम qib_get_eeprom_info(काष्ठा qib_devdata *dd)
-अणु
-	व्योम *buf;
-	काष्ठा qib_flash *अगरp;
+void qib_get_eeprom_info(struct qib_devdata *dd)
+{
+	void *buf;
+	struct qib_flash *ifp;
 	__be64 guid;
-	पूर्णांक len, eep_stat;
+	int len, eep_stat;
 	u8 csum, *bguid;
-	पूर्णांक t = dd->unit;
-	काष्ठा qib_devdata *dd0 = qib_lookup(0);
+	int t = dd->unit;
+	struct qib_devdata *dd0 = qib_lookup(0);
 
-	अगर (t && dd0->nguid > 1 && t <= dd0->nguid) अणु
+	if (t && dd0->nguid > 1 && t <= dd0->nguid) {
 		u8 oguid;
 
 		dd->base_guid = dd0->base_guid;
@@ -160,113 +159,113 @@
 
 		oguid = bguid[7];
 		bguid[7] += t;
-		अगर (oguid > bguid[7]) अणु
-			अगर (bguid[6] == 0xff) अणु
-				अगर (bguid[5] == 0xff) अणु
+		if (oguid > bguid[7]) {
+			if (bguid[6] == 0xff) {
+				if (bguid[5] == 0xff) {
 					qib_dev_err(dd,
 						    "Can't set GUID from base, wraps to OUI!\n");
 					dd->base_guid = 0;
-					जाओ bail;
-				पूर्ण
+					goto bail;
+				}
 				bguid[5]++;
-			पूर्ण
+			}
 			bguid[6]++;
-		पूर्ण
+		}
 		dd->nguid = 1;
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/*
 	 * Read full flash, not just currently used part, since it may have
 	 * been written with a newer definition.
 	 * */
-	len = माप(काष्ठा qib_flash);
-	buf = vदो_स्मृति(len);
-	अगर (!buf)
-		जाओ bail;
+	len = sizeof(struct qib_flash);
+	buf = vmalloc(len);
+	if (!buf)
+		goto bail;
 
 	/*
-	 * Use "public" eeprom पढ़ो function, which करोes locking and
-	 * figures out device. This will migrate to chip-specअगरic.
+	 * Use "public" eeprom read function, which does locking and
+	 * figures out device. This will migrate to chip-specific.
 	 */
-	eep_stat = qib_eeprom_पढ़ो(dd, 0, buf, len);
+	eep_stat = qib_eeprom_read(dd, 0, buf, len);
 
-	अगर (eep_stat) अणु
+	if (eep_stat) {
 		qib_dev_err(dd, "Failed reading GUID from eeprom\n");
-		जाओ करोne;
-	पूर्ण
-	अगरp = (काष्ठा qib_flash *)buf;
+		goto done;
+	}
+	ifp = (struct qib_flash *)buf;
 
-	csum = flash_csum(अगरp, 0);
-	अगर (csum != अगरp->अगर_csum) अणु
+	csum = flash_csum(ifp, 0);
+	if (csum != ifp->if_csum) {
 		qib_devinfo(dd->pcidev,
 			"Bad I2C flash checksum: 0x%x, not 0x%x\n",
-			csum, अगरp->अगर_csum);
-		जाओ करोne;
-	पूर्ण
-	अगर (*(__be64 *) अगरp->अगर_guid == cpu_to_be64(0) ||
-	    *(__be64 *) अगरp->अगर_guid == ~cpu_to_be64(0)) अणु
+			csum, ifp->if_csum);
+		goto done;
+	}
+	if (*(__be64 *) ifp->if_guid == cpu_to_be64(0) ||
+	    *(__be64 *) ifp->if_guid == ~cpu_to_be64(0)) {
 		qib_dev_err(dd,
 			"Invalid GUID %llx from flash; ignoring\n",
-			*(अचिन्हित दीर्घ दीर्घ *) अगरp->अगर_guid);
-		/* करोn't allow GUID if all 0 or all 1's */
-		जाओ करोne;
-	पूर्ण
+			*(unsigned long long *) ifp->if_guid);
+		/* don't allow GUID if all 0 or all 1's */
+		goto done;
+	}
 
 	/* complain, but allow it */
-	अगर (*(u64 *) अगरp->अगर_guid == 0x100007511000000ULL)
+	if (*(u64 *) ifp->if_guid == 0x100007511000000ULL)
 		qib_devinfo(dd->pcidev,
 			"Warning, GUID %llx is default, probably not correct!\n",
-			*(अचिन्हित दीर्घ दीर्घ *) अगरp->अगर_guid);
+			*(unsigned long long *) ifp->if_guid);
 
-	bguid = अगरp->अगर_guid;
-	अगर (!bguid[0] && !bguid[1] && !bguid[2]) अणु
+	bguid = ifp->if_guid;
+	if (!bguid[0] && !bguid[1] && !bguid[2]) {
 		/*
-		 * Original incorrect GUID क्रमmat in flash; fix in
-		 * core copy, by shअगरting up 2 octets; करोn't need to
-		 * change top octet, since both it and shअगरted are 0.
+		 * Original incorrect GUID format in flash; fix in
+		 * core copy, by shifting up 2 octets; don't need to
+		 * change top octet, since both it and shifted are 0.
 		 */
 		bguid[1] = bguid[3];
 		bguid[2] = bguid[4];
 		bguid[3] = 0;
 		bguid[4] = 0;
-		guid = *(__be64 *) अगरp->अगर_guid;
-	पूर्ण अन्यथा
-		guid = *(__be64 *) अगरp->अगर_guid;
+		guid = *(__be64 *) ifp->if_guid;
+	} else
+		guid = *(__be64 *) ifp->if_guid;
 	dd->base_guid = guid;
-	dd->nguid = अगरp->अगर_numguid;
+	dd->nguid = ifp->if_numguid;
 	/*
 	 * Things are slightly complicated by the desire to transparently
 	 * support both the Pathscale 10-digit serial number and the QLogic
-	 * 13-अक्षरacter version.
+	 * 13-character version.
 	 */
-	अगर ((अगरp->अगर_fversion > 1) && अगरp->अगर_sprefix[0] &&
-	    ((u8 *) अगरp->अगर_sprefix)[0] != 0xFF) अणु
-		अक्षर *snp = dd->serial;
+	if ((ifp->if_fversion > 1) && ifp->if_sprefix[0] &&
+	    ((u8 *) ifp->if_sprefix)[0] != 0xFF) {
+		char *snp = dd->serial;
 
 		/*
 		 * This board has a Serial-prefix, which is stored
-		 * अन्यथाwhere क्रम backward-compatibility.
+		 * elsewhere for backward-compatibility.
 		 */
-		स_नकल(snp, अगरp->अगर_sprefix, माप(अगरp->अगर_sprefix));
-		snp[माप(अगरp->अगर_sprefix)] = '\0';
-		len = म_माप(snp);
+		memcpy(snp, ifp->if_sprefix, sizeof(ifp->if_sprefix));
+		snp[sizeof(ifp->if_sprefix)] = '\0';
+		len = strlen(snp);
 		snp += len;
-		len = माप(dd->serial) - len;
-		अगर (len > माप(अगरp->अगर_serial))
-			len = माप(अगरp->अगर_serial);
-		स_नकल(snp, अगरp->अगर_serial, len);
-	पूर्ण अन्यथा अणु
-		स_नकल(dd->serial, अगरp->अगर_serial, माप(अगरp->अगर_serial));
-	पूर्ण
-	अगर (!म_माला(अगरp->अगर_comment, "Tested successfully"))
+		len = sizeof(dd->serial) - len;
+		if (len > sizeof(ifp->if_serial))
+			len = sizeof(ifp->if_serial);
+		memcpy(snp, ifp->if_serial, len);
+	} else {
+		memcpy(dd->serial, ifp->if_serial, sizeof(ifp->if_serial));
+	}
+	if (!strstr(ifp->if_comment, "Tested successfully"))
 		qib_dev_err(dd,
 			"Board SN %s did not pass functional test: %s\n",
-			dd->serial, अगरp->अगर_comment);
+			dd->serial, ifp->if_comment);
 
-करोne:
-	vमुक्त(buf);
+done:
+	vfree(buf);
 
 bail:;
-पूर्ण
+}
 

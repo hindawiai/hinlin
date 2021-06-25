@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Oracle and/or its affiliates. */
 
-#समावेश <test_progs.h>
+#include <test_progs.h>
 
-#समावेश "trace_printk.skel.h"
+#include "trace_printk.skel.h"
 
-#घोषणा TRACEBUF	"/sys/kernel/debug/tracing/trace_pipe"
-#घोषणा SEARCHMSG	"testing,testing"
+#define TRACEBUF	"/sys/kernel/debug/tracing/trace_pipe"
+#define SEARCHMSG	"testing,testing"
 
-व्योम test_trace_prपूर्णांकk(व्योम)
-अणु
-	पूर्णांक err, iter = 0, duration = 0, found = 0;
-	काष्ठा trace_prपूर्णांकk__bss *bss;
-	काष्ठा trace_prपूर्णांकk *skel;
-	अक्षर *buf = शून्य;
-	खाता *fp = शून्य;
-	माप_प्रकार buflen;
+void test_trace_printk(void)
+{
+	int err, iter = 0, duration = 0, found = 0;
+	struct trace_printk__bss *bss;
+	struct trace_printk *skel;
+	char *buf = NULL;
+	FILE *fp = NULL;
+	size_t buflen;
 
-	skel = trace_prपूर्णांकk__खोलो();
-	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		वापस;
+	skel = trace_printk__open();
+	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		return;
 
-	err = trace_prपूर्णांकk__load(skel);
-	अगर (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
-		जाओ cleanup;
+	err = trace_printk__load(skel);
+	if (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
+		goto cleanup;
 
 	bss = skel->bss;
 
-	err = trace_prपूर्णांकk__attach(skel);
-	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		जाओ cleanup;
+	err = trace_printk__attach(skel);
+	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		goto cleanup;
 
-	fp = ख_खोलो(TRACEBUF, "r");
-	अगर (CHECK(fp == शून्य, "could not open trace buffer",
-		  "error %d opening %s", त्रुटि_सं, TRACEBUF))
-		जाओ cleanup;
+	fp = fopen(TRACEBUF, "r");
+	if (CHECK(fp == NULL, "could not open trace buffer",
+		  "error %d opening %s", errno, TRACEBUF))
+		goto cleanup;
 
-	/* We करो not want to रुको क्रमever अगर this test fails... */
+	/* We do not want to wait forever if this test fails... */
 	fcntl(fileno(fp), F_SETFL, O_NONBLOCK);
 
-	/* रुको क्रम tracepoपूर्णांक to trigger */
+	/* wait for tracepoint to trigger */
 	usleep(1);
-	trace_prपूर्णांकk__detach(skel);
+	trace_printk__detach(skel);
 
-	अगर (CHECK(bss->trace_prपूर्णांकk_ran == 0,
+	if (CHECK(bss->trace_printk_ran == 0,
 		  "bpf_trace_printk never ran",
-		  "ran == %d", bss->trace_prपूर्णांकk_ran))
-		जाओ cleanup;
+		  "ran == %d", bss->trace_printk_ran))
+		goto cleanup;
 
-	अगर (CHECK(bss->trace_prपूर्णांकk_ret <= 0,
+	if (CHECK(bss->trace_printk_ret <= 0,
 		  "bpf_trace_printk returned <= 0 value",
-		  "got %d", bss->trace_prपूर्णांकk_ret))
-		जाओ cleanup;
+		  "got %d", bss->trace_printk_ret))
+		goto cleanup;
 
-	/* verअगरy our search string is in the trace buffer */
-	जबतक (getline(&buf, &buflen, fp) >= 0 || त्रुटि_सं == EAGAIN) अणु
-		अगर (म_माला(buf, SEARCHMSG) != शून्य)
+	/* verify our search string is in the trace buffer */
+	while (getline(&buf, &buflen, fp) >= 0 || errno == EAGAIN) {
+		if (strstr(buf, SEARCHMSG) != NULL)
 			found++;
-		अगर (found == bss->trace_prपूर्णांकk_ran)
-			अवरोध;
-		अगर (++iter > 1000)
-			अवरोध;
-	पूर्ण
+		if (found == bss->trace_printk_ran)
+			break;
+		if (++iter > 1000)
+			break;
+	}
 
-	अगर (CHECK(!found, "message from bpf_trace_printk not found",
+	if (CHECK(!found, "message from bpf_trace_printk not found",
 		  "no instance of %s in %s", SEARCHMSG, TRACEBUF))
-		जाओ cleanup;
+		goto cleanup;
 
 cleanup:
-	trace_prपूर्णांकk__destroy(skel);
-	मुक्त(buf);
-	अगर (fp)
-		ख_बंद(fp);
-पूर्ण
+	trace_printk__destroy(skel);
+	free(buf);
+	if (fp)
+		fclose(fp);
+}

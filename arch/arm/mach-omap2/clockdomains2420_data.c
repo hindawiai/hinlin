@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * OMAP2420 घड़ीकरोमुख्यs
+ * OMAP2420 clockdomains
  *
  * Copyright (C) 2008-2011 Texas Instruments, Inc.
  * Copyright (C) 2008-2010 Nokia Corporation
  *
- * Paul Walmsley, Jouni Hथघgander
+ * Paul Walmsley, Jouni Högander
  *
- * This file contains घड़ीकरोमुख्यs and घड़ीकरोमुख्य wakeup dependencies
- * क्रम OMAP2420 chips.  Some notes:
+ * This file contains clockdomains and clockdomain wakeup dependencies
+ * for OMAP2420 chips.  Some notes:
  *
- * A useful validation rule क्रम काष्ठा घड़ीकरोमुख्य: Any घड़ीकरोमुख्य
- * referenced by a wkdep_srcs must have a dep_bit asचिन्हित.  So
+ * A useful validation rule for struct clockdomain: Any clockdomain
+ * referenced by a wkdep_srcs must have a dep_bit assigned.  So
  * wkdep_srcs are really just software-controllable dependencies.
- * Non-software-controllable dependencies करो exist, but they are not
+ * Non-software-controllable dependencies do exist, but they are not
  * encoded below (yet).
  *
- * 24xx करोes not support programmable sleep dependencies (SLEEPDEP)
+ * 24xx does not support programmable sleep dependencies (SLEEPDEP)
  *
- * The overly-specअगरic dep_bit names are due to a bit name collision
- * with CM_FCLKEN_अणुDSP,IVA2पूर्ण.  The DSP/IVA2 PM_WKDEP and CM_SLEEPDEP shअगरt
- * value are the same क्रम all घातerकरोमुख्यs: 2
+ * The overly-specific dep_bit names are due to a bit name collision
+ * with CM_FCLKEN_{DSP,IVA2}.  The DSP/IVA2 PM_WKDEP and CM_SLEEPDEP shift
+ * value are the same for all powerdomains: 2
  *
- * XXX should dep_bit be a mask, so we can test to see अगर it is 0 as a
+ * XXX should dep_bit be a mask, so we can test to see if it is 0 as a
  * sanity check?
- * XXX encode hardware fixed wakeup dependencies -- esp. क्रम 3430 CORE
+ * XXX encode hardware fixed wakeup dependencies -- esp. for 3430 CORE
  */
 
 /*
  * To-Do List
- * -> Port the Sleep/Wakeup dependencies क्रम the करोमुख्यs
- *    from the Power करोमुख्य framework
+ * -> Port the Sleep/Wakeup dependencies for the domains
+ *    from the Power domain framework
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/io.h>
 
-#समावेश "soc.h"
-#समावेश "clockdomain.h"
-#समावेश "prm2xxx_3xxx.h"
-#समावेश "cm2xxx_3xxx.h"
-#समावेश "cm-regbits-24xx.h"
-#समावेश "prm-regbits-24xx.h"
+#include "soc.h"
+#include "clockdomain.h"
+#include "prm2xxx_3xxx.h"
+#include "cm2xxx_3xxx.h"
+#include "cm-regbits-24xx.h"
+#include "prm-regbits-24xx.h"
 
 /*
- * Clockकरोमुख्य dependencies क्रम wkdeps
+ * Clockdomain dependencies for wkdeps
  *
  * XXX Hardware dependencies (e.g., dependencies that cannot be
  * changed in software) are not included here yet, but should be.
@@ -53,86 +52,86 @@
 
 /* Wakeup dependency source arrays */
 
-/* 2420-specअगरic possible wakeup dependencies */
+/* 2420-specific possible wakeup dependencies */
 
 /* 2420 PM_WKDEP_MPU: CORE, DSP, WKUP */
-अटल काष्ठा clkdm_dep mpu_2420_wkdeps[] = अणु
-	अणु .clkdm_name = "core_l3_clkdm" पूर्ण,
-	अणु .clkdm_name = "core_l4_clkdm" पूर्ण,
-	अणु .clkdm_name = "dsp_clkdm" पूर्ण,
-	अणु .clkdm_name = "wkup_clkdm" पूर्ण,
-	अणु शून्य पूर्ण,
-पूर्ण;
+static struct clkdm_dep mpu_2420_wkdeps[] = {
+	{ .clkdm_name = "core_l3_clkdm" },
+	{ .clkdm_name = "core_l4_clkdm" },
+	{ .clkdm_name = "dsp_clkdm" },
+	{ .clkdm_name = "wkup_clkdm" },
+	{ NULL },
+};
 
 /* 2420 PM_WKDEP_CORE: DSP, GFX, MPU, WKUP */
-अटल काष्ठा clkdm_dep core_2420_wkdeps[] = अणु
-	अणु .clkdm_name = "dsp_clkdm" पूर्ण,
-	अणु .clkdm_name = "gfx_clkdm" पूर्ण,
-	अणु .clkdm_name = "mpu_clkdm" पूर्ण,
-	अणु .clkdm_name = "wkup_clkdm" पूर्ण,
-	अणु शून्य पूर्ण,
-पूर्ण;
+static struct clkdm_dep core_2420_wkdeps[] = {
+	{ .clkdm_name = "dsp_clkdm" },
+	{ .clkdm_name = "gfx_clkdm" },
+	{ .clkdm_name = "mpu_clkdm" },
+	{ .clkdm_name = "wkup_clkdm" },
+	{ NULL },
+};
 
 /*
- * 2420-only घड़ीकरोमुख्यs
+ * 2420-only clockdomains
  */
 
-अटल काष्ठा घड़ीकरोमुख्य mpu_2420_clkdm = अणु
+static struct clockdomain mpu_2420_clkdm = {
 	.name		= "mpu_clkdm",
-	.pwrdm		= अणु .name = "mpu_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "mpu_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP,
 	.wkdep_srcs	= mpu_2420_wkdeps,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_MPU_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य iva1_2420_clkdm = अणु
+static struct clockdomain iva1_2420_clkdm = {
 	.name		= "iva1_clkdm",
-	.pwrdm		= अणु .name = "dsp_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "dsp_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP_SWSUP,
 	.dep_bit	= OMAP24XX_PM_WKDEP_MPU_EN_DSP_SHIFT,
 	.wkdep_srcs	= dsp_24xx_wkdeps,
 	.clktrctrl_mask = OMAP2420_AUTOSTATE_IVA_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य dsp_2420_clkdm = अणु
+static struct clockdomain dsp_2420_clkdm = {
 	.name		= "dsp_clkdm",
-	.pwrdm		= अणु .name = "dsp_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "dsp_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP_SWSUP,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_DSP_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य gfx_2420_clkdm = अणु
+static struct clockdomain gfx_2420_clkdm = {
 	.name		= "gfx_clkdm",
-	.pwrdm		= अणु .name = "gfx_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "gfx_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP_SWSUP,
 	.wkdep_srcs	= gfx_24xx_wkdeps,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_GFX_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य core_l3_2420_clkdm = अणु
+static struct clockdomain core_l3_2420_clkdm = {
 	.name		= "core_l3_clkdm",
-	.pwrdm		= अणु .name = "core_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "core_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP,
 	.wkdep_srcs	= core_2420_wkdeps,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_L3_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य core_l4_2420_clkdm = अणु
+static struct clockdomain core_l4_2420_clkdm = {
 	.name		= "core_l4_clkdm",
-	.pwrdm		= अणु .name = "core_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "core_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP,
 	.wkdep_srcs	= core_2420_wkdeps,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_L4_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य dss_2420_clkdm = अणु
+static struct clockdomain dss_2420_clkdm = {
 	.name		= "dss_clkdm",
-	.pwrdm		= अणु .name = "core_pwrdm" पूर्ण,
+	.pwrdm		= { .name = "core_pwrdm" },
 	.flags		= CLKDM_CAN_HWSUP,
 	.clktrctrl_mask = OMAP24XX_AUTOSTATE_DSS_MASK,
-पूर्ण;
+};
 
-अटल काष्ठा घड़ीकरोमुख्य *घड़ीकरोमुख्यs_omap242x[] __initdata = अणु
+static struct clockdomain *clockdomains_omap242x[] __initdata = {
 	&wkup_common_clkdm,
 	&mpu_2420_clkdm,
 	&iva1_2420_clkdm,
@@ -141,15 +140,15 @@
 	&core_l3_2420_clkdm,
 	&core_l4_2420_clkdm,
 	&dss_2420_clkdm,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-व्योम __init omap242x_घड़ीकरोमुख्यs_init(व्योम)
-अणु
-	अगर (!cpu_is_omap242x())
-		वापस;
+void __init omap242x_clockdomains_init(void)
+{
+	if (!cpu_is_omap242x())
+		return;
 
-	clkdm_रेजिस्टर_platक्रमm_funcs(&omap2_clkdm_operations);
-	clkdm_रेजिस्टर_clkdms(घड़ीकरोमुख्यs_omap242x);
+	clkdm_register_platform_funcs(&omap2_clkdm_operations);
+	clkdm_register_clkdms(clockdomains_omap242x);
 	clkdm_complete_init();
-पूर्ण
+}

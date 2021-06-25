@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#घोषणा PRISM2_PCCARD
+// SPDX-License-Identifier: GPL-2.0-only
+#define PRISM2_PCCARD
 
-#समावेश <linux/module.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/wireless.h>
-#समावेश <net/iw_handler.h>
+#include <linux/module.h>
+#include <linux/if.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/timer.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/workqueue.h>
+#include <linux/wireless.h>
+#include <net/iw_handler.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ds.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश "hostap_wlan.h"
+#include "hostap_wlan.h"
 
 
-अटल अक्षर *dev_info = "hostap_cs";
+static char *dev_info = "hostap_cs";
 
 MODULE_AUTHOR("Jouni Malinen");
 MODULE_DESCRIPTION("Support for Intersil Prism2-based 802.11 wireless LAN "
@@ -30,185 +29,185 @@ MODULE_DESCRIPTION("Support for Intersil Prism2-based 802.11 wireless LAN "
 MODULE_LICENSE("GPL");
 
 
-अटल पूर्णांक ignore_cis_vcc;
-module_param(ignore_cis_vcc, पूर्णांक, 0444);
+static int ignore_cis_vcc;
+module_param(ignore_cis_vcc, int, 0444);
 MODULE_PARM_DESC(ignore_cis_vcc, "Ignore broken CIS VCC entry");
 
 
-/* काष्ठा local_info::hw_priv */
-काष्ठा hostap_cs_priv अणु
-	काष्ठा pcmcia_device *link;
-	पूर्णांक sandisk_connectplus;
-पूर्ण;
+/* struct local_info::hw_priv */
+struct hostap_cs_priv {
+	struct pcmcia_device *link;
+	int sandisk_connectplus;
+};
 
 
-#अगर_घोषित PRISM2_IO_DEBUG
+#ifdef PRISM2_IO_DEBUG
 
-अटल अंतरभूत व्योम hfa384x_outb_debug(काष्ठा net_device *dev, पूर्णांक a, u8 v)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline void hfa384x_outb_debug(struct net_device *dev, int a, u8 v)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_OUTB, a, v);
 	outb(v, dev->base_addr + a);
 	spin_unlock_irqrestore(&local->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत u8 hfa384x_inb_debug(काष्ठा net_device *dev, पूर्णांक a)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline u8 hfa384x_inb_debug(struct net_device *dev, int a)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u8 v;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	v = inb(dev->base_addr + a);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_INB, a, v);
 	spin_unlock_irqrestore(&local->lock, flags);
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल अंतरभूत व्योम hfa384x_outw_debug(काष्ठा net_device *dev, पूर्णांक a, u16 v)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline void hfa384x_outw_debug(struct net_device *dev, int a, u16 v)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_OUTW, a, v);
 	outw(v, dev->base_addr + a);
 	spin_unlock_irqrestore(&local->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत u16 hfa384x_inw_debug(काष्ठा net_device *dev, पूर्णांक a)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline u16 hfa384x_inw_debug(struct net_device *dev, int a)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u16 v;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	v = inw(dev->base_addr + a);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_INW, a, v);
 	spin_unlock_irqrestore(&local->lock, flags);
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल अंतरभूत व्योम hfa384x_outsw_debug(काष्ठा net_device *dev, पूर्णांक a,
-				       u8 *buf, पूर्णांक wc)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline void hfa384x_outsw_debug(struct net_device *dev, int a,
+				       u8 *buf, int wc)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_OUTSW, a, wc);
 	outsw(dev->base_addr + a, buf, wc);
 	spin_unlock_irqrestore(&local->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम hfa384x_insw_debug(काष्ठा net_device *dev, पूर्णांक a,
-				      u8 *buf, पूर्णांक wc)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline void hfa384x_insw_debug(struct net_device *dev, int a,
+				      u8 *buf, int wc)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	spin_lock_irqsave(&local->lock, flags);
 	prism2_io_debug_add(dev, PRISM2_IO_DEBUG_CMD_INSW, a, wc);
 	insw(dev->base_addr + a, buf, wc);
 	spin_unlock_irqrestore(&local->lock, flags);
-पूर्ण
+}
 
-#घोषणा HFA384X_OUTB(v,a) hfa384x_outb_debug(dev, (a), (v))
-#घोषणा HFA384X_INB(a) hfa384x_inb_debug(dev, (a))
-#घोषणा HFA384X_OUTW(v,a) hfa384x_outw_debug(dev, (a), (v))
-#घोषणा HFA384X_INW(a) hfa384x_inw_debug(dev, (a))
-#घोषणा HFA384X_OUTSW(a, buf, wc) hfa384x_outsw_debug(dev, (a), (buf), (wc))
-#घोषणा HFA384X_INSW(a, buf, wc) hfa384x_insw_debug(dev, (a), (buf), (wc))
+#define HFA384X_OUTB(v,a) hfa384x_outb_debug(dev, (a), (v))
+#define HFA384X_INB(a) hfa384x_inb_debug(dev, (a))
+#define HFA384X_OUTW(v,a) hfa384x_outw_debug(dev, (a), (v))
+#define HFA384X_INW(a) hfa384x_inw_debug(dev, (a))
+#define HFA384X_OUTSW(a, buf, wc) hfa384x_outsw_debug(dev, (a), (buf), (wc))
+#define HFA384X_INSW(a, buf, wc) hfa384x_insw_debug(dev, (a), (buf), (wc))
 
-#अन्यथा /* PRISM2_IO_DEBUG */
+#else /* PRISM2_IO_DEBUG */
 
-#घोषणा HFA384X_OUTB(v,a) outb((v), dev->base_addr + (a))
-#घोषणा HFA384X_INB(a) inb(dev->base_addr + (a))
-#घोषणा HFA384X_OUTW(v,a) outw((v), dev->base_addr + (a))
-#घोषणा HFA384X_INW(a) inw(dev->base_addr + (a))
-#घोषणा HFA384X_INSW(a, buf, wc) insw(dev->base_addr + (a), buf, wc)
-#घोषणा HFA384X_OUTSW(a, buf, wc) outsw(dev->base_addr + (a), buf, wc)
+#define HFA384X_OUTB(v,a) outb((v), dev->base_addr + (a))
+#define HFA384X_INB(a) inb(dev->base_addr + (a))
+#define HFA384X_OUTW(v,a) outw((v), dev->base_addr + (a))
+#define HFA384X_INW(a) inw(dev->base_addr + (a))
+#define HFA384X_INSW(a, buf, wc) insw(dev->base_addr + (a), buf, wc)
+#define HFA384X_OUTSW(a, buf, wc) outsw(dev->base_addr + (a), buf, wc)
 
-#पूर्ण_अगर /* PRISM2_IO_DEBUG */
+#endif /* PRISM2_IO_DEBUG */
 
 
-अटल पूर्णांक hfa384x_from_bap(काष्ठा net_device *dev, u16 bap, व्योम *buf,
-			    पूर्णांक len)
-अणु
+static int hfa384x_from_bap(struct net_device *dev, u16 bap, void *buf,
+			    int len)
+{
 	u16 d_off;
 	u16 *pos;
 
 	d_off = (bap == 1) ? HFA384X_DATA1_OFF : HFA384X_DATA0_OFF;
 	pos = (u16 *) buf;
 
-	अगर (len / 2)
+	if (len / 2)
 		HFA384X_INSW(d_off, buf, len / 2);
 	pos += len / 2;
 
-	अगर (len & 1)
-		*((अक्षर *) pos) = HFA384X_INB(d_off);
+	if (len & 1)
+		*((char *) pos) = HFA384X_INB(d_off);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक hfa384x_to_bap(काष्ठा net_device *dev, u16 bap, व्योम *buf, पूर्णांक len)
-अणु
+static int hfa384x_to_bap(struct net_device *dev, u16 bap, void *buf, int len)
+{
 	u16 d_off;
 	u16 *pos;
 
 	d_off = (bap == 1) ? HFA384X_DATA1_OFF : HFA384X_DATA0_OFF;
 	pos = (u16 *) buf;
 
-	अगर (len / 2)
+	if (len / 2)
 		HFA384X_OUTSW(d_off, buf, len / 2);
 	pos += len / 2;
 
-	अगर (len & 1)
-		HFA384X_OUTB(*((अक्षर *) pos), d_off);
+	if (len & 1)
+		HFA384X_OUTB(*((char *) pos), d_off);
 
-	वापस 0;
-पूर्ण
-
-
-/* FIX: This might change at some poपूर्णांक.. */
-#समावेश "hostap_hw.c"
+	return 0;
+}
 
 
-
-अटल व्योम prism2_detach(काष्ठा pcmcia_device *p_dev);
-अटल व्योम prism2_release(u_दीर्घ arg);
-अटल पूर्णांक prism2_config(काष्ठा pcmcia_device *link);
+/* FIX: This might change at some point.. */
+#include "hostap_hw.c"
 
 
-अटल पूर्णांक prism2_pccard_card_present(local_info_t *local)
-अणु
-	काष्ठा hostap_cs_priv *hw_priv = local->hw_priv;
-	अगर (hw_priv != शून्य && hw_priv->link != शून्य && pcmcia_dev_present(hw_priv->link))
-		वापस 1;
-	वापस 0;
-पूर्ण
+
+static void prism2_detach(struct pcmcia_device *p_dev);
+static void prism2_release(u_long arg);
+static int prism2_config(struct pcmcia_device *link);
+
+
+static int prism2_pccard_card_present(local_info_t *local)
+{
+	struct hostap_cs_priv *hw_priv = local->hw_priv;
+	if (hw_priv != NULL && hw_priv->link != NULL && pcmcia_dev_present(hw_priv->link))
+		return 1;
+	return 0;
+}
 
 
 /*
@@ -216,97 +215,97 @@ MODULE_PARM_DESC(ignore_cis_vcc, "Ignore broken CIS VCC entry");
  * Document No. 20-10-00058, January 2004
  * http://www.sandisk.com/pdf/industrial/ProdManualCFWLANv1.0.pdf
  */
-#घोषणा SANDISK_WLAN_ACTIVATION_OFF 0x40
-#घोषणा SANDISK_HCR_OFF 0x42
+#define SANDISK_WLAN_ACTIVATION_OFF 0x40
+#define SANDISK_HCR_OFF 0x42
 
 
-अटल व्योम sandisk_set_iobase(local_info_t *local)
-अणु
-	पूर्णांक res;
-	काष्ठा hostap_cs_priv *hw_priv = local->hw_priv;
+static void sandisk_set_iobase(local_info_t *local)
+{
+	int res;
+	struct hostap_cs_priv *hw_priv = local->hw_priv;
 
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, 0x10,
+	res = pcmcia_write_config_byte(hw_priv->link, 0x10,
 				hw_priv->link->resource[0]->start & 0x00ff);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "Prism3 SanDisk - failed to set I/O base 0 -"
+	if (res != 0) {
+		printk(KERN_DEBUG "Prism3 SanDisk - failed to set I/O base 0 -"
 		       " res=%d\n", res);
-	पूर्ण
+	}
 	udelay(10);
 
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, 0x12,
+	res = pcmcia_write_config_byte(hw_priv->link, 0x12,
 				(hw_priv->link->resource[0]->start >> 8) & 0x00ff);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "Prism3 SanDisk - failed to set I/O base 1 -"
+	if (res != 0) {
+		printk(KERN_DEBUG "Prism3 SanDisk - failed to set I/O base 1 -"
 		       " res=%d\n", res);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम sandisk_ग_लिखो_hcr(local_info_t *local, पूर्णांक hcr)
-अणु
-	काष्ठा net_device *dev = local->dev;
-	पूर्णांक i;
+static void sandisk_write_hcr(local_info_t *local, int hcr)
+{
+	struct net_device *dev = local->dev;
+	int i;
 
 	HFA384X_OUTB(0x80, SANDISK_WLAN_ACTIVATION_OFF);
 	udelay(50);
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		HFA384X_OUTB(hcr, SANDISK_HCR_OFF);
-	पूर्ण
+	}
 	udelay(55);
 	HFA384X_OUTB(0x45, SANDISK_WLAN_ACTIVATION_OFF);
-पूर्ण
+}
 
 
-अटल पूर्णांक sandisk_enable_wireless(काष्ठा net_device *dev)
-अणु
-	पूर्णांक res, ret = 0;
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
-	काष्ठा hostap_cs_priv *hw_priv = local->hw_priv;
+static int sandisk_enable_wireless(struct net_device *dev)
+{
+	int res, ret = 0;
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
+	struct hostap_cs_priv *hw_priv = local->hw_priv;
 
-	अगर (resource_size(hw_priv->link->resource[0]) < 0x42) अणु
+	if (resource_size(hw_priv->link->resource[0]) < 0x42) {
 		/* Not enough ports to be SanDisk multi-function card */
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (hw_priv->link->manf_id != 0xd601 || hw_priv->link->card_id != 0x0101) अणु
+	if (hw_priv->link->manf_id != 0xd601 || hw_priv->link->card_id != 0x0101) {
 		/* No SanDisk manfid found */
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (hw_priv->link->socket->functions < 2) अणु
+	if (hw_priv->link->socket->functions < 2) {
 		/* No multi-function links found */
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "%s: Multi-function SanDisk ConnectPlus detected"
+	printk(KERN_DEBUG "%s: Multi-function SanDisk ConnectPlus detected"
 	       " - using vendor-specific initialization\n", dev->name);
 	hw_priv->sandisk_connectplus = 1;
 
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR,
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR,
 				COR_SOFT_RESET);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: SanDisk - COR sreset failed (%d)\n",
+	if (res != 0) {
+		printk(KERN_DEBUG "%s: SanDisk - COR sreset failed (%d)\n",
 		       dev->name, res);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	mdelay(5);
 
 	/*
-	 * Do not enable पूर्णांकerrupts here to aव्योम some bogus events. Interrupts
+	 * Do not enable interrupts here to avoid some bogus events. Interrupts
 	 * will be enabled during the first cor_sreset call.
 	 */
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR,
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR,
 				(COR_LEVEL_REQ | 0x8 | COR_ADDR_DECODE |
 					COR_FUNC_ENA));
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: SanDisk - COR sreset failed (%d)\n",
+	if (res != 0) {
+		printk(KERN_DEBUG "%s: SanDisk - COR sreset failed (%d)\n",
 		       dev->name, res);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	mdelay(5);
 
 	sandisk_set_iobase(local);
@@ -316,308 +315,308 @@ MODULE_PARM_DESC(ignore_cis_vcc, "Ignore broken CIS VCC entry");
 	HFA384X_OUTB(0x4b, SANDISK_WLAN_ACTIVATION_OFF);
 	udelay(10);
 
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
 
-अटल व्योम prism2_pccard_cor_sreset(local_info_t *local)
-अणु
-	पूर्णांक res;
+static void prism2_pccard_cor_sreset(local_info_t *local)
+{
+	int res;
 	u8 val;
-	काष्ठा hostap_cs_priv *hw_priv = local->hw_priv;
+	struct hostap_cs_priv *hw_priv = local->hw_priv;
 
-	अगर (!prism2_pccard_card_present(local))
-	       वापस;
+	if (!prism2_pccard_card_present(local))
+	       return;
 
-	res = pcmcia_पढ़ो_config_byte(hw_priv->link, CISREG_COR, &val);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "prism2_pccard_cor_sreset failed 1 (%d)\n",
+	res = pcmcia_read_config_byte(hw_priv->link, CISREG_COR, &val);
+	if (res != 0) {
+		printk(KERN_DEBUG "prism2_pccard_cor_sreset failed 1 (%d)\n",
 		       res);
-		वापस;
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "prism2_pccard_cor_sreset: original COR %02x\n",
+		return;
+	}
+	printk(KERN_DEBUG "prism2_pccard_cor_sreset: original COR %02x\n",
 		val);
 
 	val |= COR_SOFT_RESET;
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR, val);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "prism2_pccard_cor_sreset failed 2 (%d)\n",
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR, val);
+	if (res != 0) {
+		printk(KERN_DEBUG "prism2_pccard_cor_sreset failed 2 (%d)\n",
 		       res);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mdelay(hw_priv->sandisk_connectplus ? 5 : 2);
 
 	val &= ~COR_SOFT_RESET;
-	अगर (hw_priv->sandisk_connectplus)
+	if (hw_priv->sandisk_connectplus)
 		val |= COR_IREQ_ENA;
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR, val);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "prism2_pccard_cor_sreset failed 3 (%d)\n",
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR, val);
+	if (res != 0) {
+		printk(KERN_DEBUG "prism2_pccard_cor_sreset failed 3 (%d)\n",
 		       res);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mdelay(hw_priv->sandisk_connectplus ? 5 : 2);
 
-	अगर (hw_priv->sandisk_connectplus)
+	if (hw_priv->sandisk_connectplus)
 		sandisk_set_iobase(local);
-पूर्ण
+}
 
 
-अटल व्योम prism2_pccard_genesis_reset(local_info_t *local, पूर्णांक hcr)
-अणु
-	पूर्णांक res;
+static void prism2_pccard_genesis_reset(local_info_t *local, int hcr)
+{
+	int res;
 	u8 old_cor;
-	काष्ठा hostap_cs_priv *hw_priv = local->hw_priv;
+	struct hostap_cs_priv *hw_priv = local->hw_priv;
 
-	अगर (!prism2_pccard_card_present(local))
-	       वापस;
+	if (!prism2_pccard_card_present(local))
+	       return;
 
-	अगर (hw_priv->sandisk_connectplus) अणु
-		sandisk_ग_लिखो_hcr(local, hcr);
-		वापस;
-	पूर्ण
+	if (hw_priv->sandisk_connectplus) {
+		sandisk_write_hcr(local, hcr);
+		return;
+	}
 
-	res = pcmcia_पढ़ो_config_byte(hw_priv->link, CISREG_COR, &old_cor);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s failed 1 (%d)\n", __func__, res);
-		वापस;
-	पूर्ण
-	prपूर्णांकk(KERN_DEBUG "%s: original COR %02x\n", __func__, old_cor);
+	res = pcmcia_read_config_byte(hw_priv->link, CISREG_COR, &old_cor);
+	if (res != 0) {
+		printk(KERN_DEBUG "%s failed 1 (%d)\n", __func__, res);
+		return;
+	}
+	printk(KERN_DEBUG "%s: original COR %02x\n", __func__, old_cor);
 
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR,
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR,
 				old_cor | COR_SOFT_RESET);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s failed 2 (%d)\n", __func__, res);
-		वापस;
-	पूर्ण
+	if (res != 0) {
+		printk(KERN_DEBUG "%s failed 2 (%d)\n", __func__, res);
+		return;
+	}
 
 	mdelay(10);
 
 	/* Setup Genesis mode */
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_CCSR, hcr);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s failed 3 (%d)\n", __func__, res);
-		वापस;
-	पूर्ण
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_CCSR, hcr);
+	if (res != 0) {
+		printk(KERN_DEBUG "%s failed 3 (%d)\n", __func__, res);
+		return;
+	}
 	mdelay(10);
 
-	res = pcmcia_ग_लिखो_config_byte(hw_priv->link, CISREG_COR,
+	res = pcmcia_write_config_byte(hw_priv->link, CISREG_COR,
 				old_cor & ~COR_SOFT_RESET);
-	अगर (res != 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s failed 4 (%d)\n", __func__, res);
-		वापस;
-	पूर्ण
+	if (res != 0) {
+		printk(KERN_DEBUG "%s failed 4 (%d)\n", __func__, res);
+		return;
+	}
 
 	mdelay(10);
-पूर्ण
+}
 
 
-अटल काष्ठा prism2_helper_functions prism2_pccard_funcs =
-अणु
+static struct prism2_helper_functions prism2_pccard_funcs =
+{
 	.card_present	= prism2_pccard_card_present,
 	.cor_sreset	= prism2_pccard_cor_sreset,
 	.genesis_reset	= prism2_pccard_genesis_reset,
 	.hw_type	= HOSTAP_HW_PCCARD,
-पूर्ण;
+};
 
 
-/* allocate local data and रेजिस्टर with CardServices
- * initialize dev_link काष्ठाure, but करो not configure the card yet */
-अटल पूर्णांक hostap_cs_probe(काष्ठा pcmcia_device *p_dev)
-अणु
-	पूर्णांक ret;
+/* allocate local data and register with CardServices
+ * initialize dev_link structure, but do not configure the card yet */
+static int hostap_cs_probe(struct pcmcia_device *p_dev)
+{
+	int ret;
 
 	PDEBUG(DEBUG_HW, "%s: setting Vcc=33 (constant)\n", dev_info);
 
 	ret = prism2_config(p_dev);
-	अगर (ret) अणु
+	if (ret) {
 		PDEBUG(DEBUG_EXTRA, "prism2_config() failed\n");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम prism2_detach(काष्ठा pcmcia_device *link)
-अणु
+static void prism2_detach(struct pcmcia_device *link)
+{
 	PDEBUG(DEBUG_FLOW, "prism2_detach\n");
 
-	prism2_release((u_दीर्घ)link);
+	prism2_release((u_long)link);
 
 	/* release net devices */
-	अगर (link->priv) अणु
-		काष्ठा hostap_cs_priv *hw_priv;
-		काष्ठा net_device *dev;
-		काष्ठा hostap_पूर्णांकerface *अगरace;
+	if (link->priv) {
+		struct hostap_cs_priv *hw_priv;
+		struct net_device *dev;
+		struct hostap_interface *iface;
 		dev = link->priv;
-		अगरace = netdev_priv(dev);
-		hw_priv = अगरace->local->hw_priv;
-		prism2_मुक्त_local_data(dev);
-		kमुक्त(hw_priv);
-	पूर्ण
-पूर्ण
+		iface = netdev_priv(dev);
+		hw_priv = iface->local->hw_priv;
+		prism2_free_local_data(dev);
+		kfree(hw_priv);
+	}
+}
 
 
-अटल पूर्णांक prism2_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
-अणु
-	अगर (p_dev->config_index == 0)
-		वापस -EINVAL;
+static int prism2_config_check(struct pcmcia_device *p_dev, void *priv_data)
+{
+	if (p_dev->config_index == 0)
+		return -EINVAL;
 
-	वापस pcmcia_request_io(p_dev);
-पूर्ण
+	return pcmcia_request_io(p_dev);
+}
 
-अटल पूर्णांक prism2_config(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_config(struct pcmcia_device *link)
+{
+	struct net_device *dev;
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret;
-	काष्ठा hostap_cs_priv *hw_priv;
-	अचिन्हित दीर्घ flags;
+	int ret;
+	struct hostap_cs_priv *hw_priv;
+	unsigned long flags;
 
 	PDEBUG(DEBUG_FLOW, "prism2_config()\n");
 
-	hw_priv = kzalloc(माप(*hw_priv), GFP_KERNEL);
-	अगर (hw_priv == शून्य) अणु
+	hw_priv = kzalloc(sizeof(*hw_priv), GFP_KERNEL);
+	if (hw_priv == NULL) {
 		ret = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	/* Look क्रम an appropriate configuration table entry in the CIS */
+	/* Look for an appropriate configuration table entry in the CIS */
 	link->config_flags |= CONF_AUTO_SET_VPP | CONF_AUTO_AUDIO |
 		CONF_AUTO_CHECK_VCC | CONF_AUTO_SET_IO | CONF_ENABLE_IRQ;
-	अगर (ignore_cis_vcc)
+	if (ignore_cis_vcc)
 		link->config_flags &= ~CONF_AUTO_CHECK_VCC;
-	ret = pcmcia_loop_config(link, prism2_config_check, शून्य);
-	अगर (ret) अणु
-		अगर (!ignore_cis_vcc)
-			prपूर्णांकk(KERN_ERR "GetNextTuple(): No matching "
+	ret = pcmcia_loop_config(link, prism2_config_check, NULL);
+	if (ret) {
+		if (!ignore_cis_vcc)
+			printk(KERN_ERR "GetNextTuple(): No matching "
 			       "CIS configuration.  Maybe you need the "
 			       "ignore_cis_vcc=1 parameter.\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	/* Need to allocate net_device beक्रमe requesting IRQ handler */
+	/* Need to allocate net_device before requesting IRQ handler */
 	dev = prism2_init_local_data(&prism2_pccard_funcs, 0,
 				     &link->dev);
-	अगर (!dev) अणु
+	if (!dev) {
 		ret = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	link->priv = dev;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 	local->hw_priv = hw_priv;
 	hw_priv->link = link;
 
 	/*
 	 * We enable IRQ here, but IRQ handler will not proceed
 	 * until dev->base_addr is set below. This protect us from
-	 * receive पूर्णांकerrupts when driver is not initialized.
+	 * receive interrupts when driver is not initialized.
 	 */
-	ret = pcmcia_request_irq(link, prism2_पूर्णांकerrupt);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_irq(link, prism2_interrupt);
+	if (ret)
+		goto failed;
 
 	ret = pcmcia_enable_device(link);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 
 	spin_lock_irqsave(&local->irq_init_lock, flags);
 	dev->irq = link->irq;
 	dev->base_addr = link->resource[0]->start;
 	spin_unlock_irqrestore(&local->irq_init_lock, flags);
 
-	local->shutकरोwn = 0;
+	local->shutdown = 0;
 
 	sandisk_enable_wireless(dev);
 
 	ret = prism2_hw_config(dev, 1);
-	अगर (!ret)
-		ret = hostap_hw_पढ़ोy(dev);
+	if (!ret)
+		ret = hostap_hw_ready(dev);
 
-	वापस ret;
+	return ret;
 
  failed:
-	kमुक्त(hw_priv);
-	prism2_release((u_दीर्घ)link);
-	वापस ret;
-पूर्ण
+	kfree(hw_priv);
+	prism2_release((u_long)link);
+	return ret;
+}
 
 
-अटल व्योम prism2_release(u_दीर्घ arg)
-अणु
-	काष्ठा pcmcia_device *link = (काष्ठा pcmcia_device *)arg;
+static void prism2_release(u_long arg)
+{
+	struct pcmcia_device *link = (struct pcmcia_device *)arg;
 
 	PDEBUG(DEBUG_FLOW, "prism2_release\n");
 
-	अगर (link->priv) अणु
-		काष्ठा net_device *dev = link->priv;
-		काष्ठा hostap_पूर्णांकerface *अगरace;
+	if (link->priv) {
+		struct net_device *dev = link->priv;
+		struct hostap_interface *iface;
 
-		अगरace = netdev_priv(dev);
-		prism2_hw_shutकरोwn(dev, 0);
-		अगरace->local->shutकरोwn = 1;
-	पूर्ण
+		iface = netdev_priv(dev);
+		prism2_hw_shutdown(dev, 0);
+		iface->local->shutdown = 1;
+	}
 
 	pcmcia_disable_device(link);
 	PDEBUG(DEBUG_FLOW, "release - done\n");
-पूर्ण
+}
 
-अटल पूर्णांक hostap_cs_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) link->priv;
-	पूर्णांक dev_खोलो = 0;
-	काष्ठा hostap_पूर्णांकerface *अगरace = शून्य;
+static int hostap_cs_suspend(struct pcmcia_device *link)
+{
+	struct net_device *dev = (struct net_device *) link->priv;
+	int dev_open = 0;
+	struct hostap_interface *iface = NULL;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
-	अगरace = netdev_priv(dev);
+	iface = netdev_priv(dev);
 
 	PDEBUG(DEBUG_EXTRA, "%s: CS_EVENT_PM_SUSPEND\n", dev_info);
-	अगर (अगरace && अगरace->local)
-		dev_खोलो = अगरace->local->num_dev_खोलो > 0;
-	अगर (dev_खोलो) अणु
-		netअगर_stop_queue(dev);
-		netअगर_device_detach(dev);
-	पूर्ण
+	if (iface && iface->local)
+		dev_open = iface->local->num_dev_open > 0;
+	if (dev_open) {
+		netif_stop_queue(dev);
+		netif_device_detach(dev);
+	}
 	prism2_suspend(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hostap_cs_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *) link->priv;
-	पूर्णांक dev_खोलो = 0;
-	काष्ठा hostap_पूर्णांकerface *अगरace = शून्य;
+static int hostap_cs_resume(struct pcmcia_device *link)
+{
+	struct net_device *dev = (struct net_device *) link->priv;
+	int dev_open = 0;
+	struct hostap_interface *iface = NULL;
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
-	अगरace = netdev_priv(dev);
+	iface = netdev_priv(dev);
 
 	PDEBUG(DEBUG_EXTRA, "%s: CS_EVENT_PM_RESUME\n", dev_info);
 
-	अगर (अगरace && अगरace->local)
-		dev_खोलो = अगरace->local->num_dev_खोलो > 0;
+	if (iface && iface->local)
+		dev_open = iface->local->num_dev_open > 0;
 
-	prism2_hw_shutकरोwn(dev, 1);
-	prism2_hw_config(dev, dev_खोलो ? 0 : 1);
-	अगर (dev_खोलो) अणु
-		netअगर_device_attach(dev);
-		netअगर_start_queue(dev);
-	पूर्ण
+	prism2_hw_shutdown(dev, 1);
+	prism2_hw_config(dev, dev_open ? 0 : 1);
+	if (dev_open) {
+		netif_device_attach(dev);
+		netif_start_queue(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pcmcia_device_id hostap_cs_ids[] = अणु
+static const struct pcmcia_device_id hostap_cs_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x000b, 0x7100),
 	PCMCIA_DEVICE_MANF_CARD(0x000b, 0x7300),
 	PCMCIA_DEVICE_MANF_CARD(0x0101, 0x0777),
@@ -694,18 +693,18 @@ MODULE_PARM_DESC(ignore_cis_vcc, "Ignore broken CIS VCC entry");
 	PCMCIA_DEVICE_PROD_ID3("ISL37100P", 0x630d52b2),
 	PCMCIA_DEVICE_PROD_ID3("ISL37101P-10", 0xdd97a26b),
 	PCMCIA_DEVICE_PROD_ID3("ISL37300P", 0xc9049a39),
-	PCMCIA_DEVICE_शून्य
-पूर्ण;
+	PCMCIA_DEVICE_NULL
+};
 MODULE_DEVICE_TABLE(pcmcia, hostap_cs_ids);
 
 
-अटल काष्ठा pcmcia_driver hostap_driver = अणु
+static struct pcmcia_driver hostap_driver = {
 	.name		= "hostap_cs",
 	.probe		= hostap_cs_probe,
-	.हटाओ		= prism2_detach,
+	.remove		= prism2_detach,
 	.owner		= THIS_MODULE,
 	.id_table	= hostap_cs_ids,
 	.suspend	= hostap_cs_suspend,
 	.resume		= hostap_cs_resume,
-पूर्ण;
+};
 module_pcmcia_driver(hostap_driver);

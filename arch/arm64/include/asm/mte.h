@@ -1,137 +1,136 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2020 ARM Ltd.
  */
-#अगर_अघोषित __ASM_MTE_H
-#घोषणा __ASM_MTE_H
+#ifndef __ASM_MTE_H
+#define __ASM_MTE_H
 
-#समावेश <यंत्र/compiler.h>
-#समावेश <यंत्र/mte-def.h>
+#include <asm/compiler.h>
+#include <asm/mte-def.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/types.h>
+#include <linux/bitfield.h>
+#include <linux/page-flags.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/pgtable-types.h>
+#include <asm/pgtable-types.h>
 
-बाह्य u64 gcr_kernel_excl;
+extern u64 gcr_kernel_excl;
 
-व्योम mte_clear_page_tags(व्योम *addr);
-अचिन्हित दीर्घ mte_copy_tags_from_user(व्योम *to, स्थिर व्योम __user *from,
-				      अचिन्हित दीर्घ n);
-अचिन्हित दीर्घ mte_copy_tags_to_user(व्योम __user *to, व्योम *from,
-				    अचिन्हित दीर्घ n);
-पूर्णांक mte_save_tags(काष्ठा page *page);
-व्योम mte_save_page_tags(स्थिर व्योम *page_addr, व्योम *tag_storage);
-bool mte_restore_tags(swp_entry_t entry, काष्ठा page *page);
-व्योम mte_restore_page_tags(व्योम *page_addr, स्थिर व्योम *tag_storage);
-व्योम mte_invalidate_tags(पूर्णांक type, pgoff_t offset);
-व्योम mte_invalidate_tags_area(पूर्णांक type);
-व्योम *mte_allocate_tag_storage(व्योम);
-व्योम mte_मुक्त_tag_storage(अक्षर *storage);
+void mte_clear_page_tags(void *addr);
+unsigned long mte_copy_tags_from_user(void *to, const void __user *from,
+				      unsigned long n);
+unsigned long mte_copy_tags_to_user(void __user *to, void *from,
+				    unsigned long n);
+int mte_save_tags(struct page *page);
+void mte_save_page_tags(const void *page_addr, void *tag_storage);
+bool mte_restore_tags(swp_entry_t entry, struct page *page);
+void mte_restore_page_tags(void *page_addr, const void *tag_storage);
+void mte_invalidate_tags(int type, pgoff_t offset);
+void mte_invalidate_tags_area(int type);
+void *mte_allocate_tag_storage(void);
+void mte_free_tag_storage(char *storage);
 
-#अगर_घोषित CONFIG_ARM64_MTE
+#ifdef CONFIG_ARM64_MTE
 
 /* track which pages have valid allocation tags */
-#घोषणा PG_mte_tagged	PG_arch_2
+#define PG_mte_tagged	PG_arch_2
 
-व्योम mte_sync_tags(pte_t *ptep, pte_t pte);
-व्योम mte_copy_page_tags(व्योम *kto, स्थिर व्योम *kfrom);
-व्योम mte_thपढ़ो_init_user(व्योम);
-व्योम mte_thपढ़ो_चयन(काष्ठा task_काष्ठा *next);
-व्योम mte_suspend_enter(व्योम);
-व्योम mte_suspend_निकास(व्योम);
-दीर्घ set_mte_ctrl(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ arg);
-दीर्घ get_mte_ctrl(काष्ठा task_काष्ठा *task);
-पूर्णांक mte_ptrace_copy_tags(काष्ठा task_काष्ठा *child, दीर्घ request,
-			 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data);
+void mte_sync_tags(pte_t *ptep, pte_t pte);
+void mte_copy_page_tags(void *kto, const void *kfrom);
+void mte_thread_init_user(void);
+void mte_thread_switch(struct task_struct *next);
+void mte_suspend_enter(void);
+void mte_suspend_exit(void);
+long set_mte_ctrl(struct task_struct *task, unsigned long arg);
+long get_mte_ctrl(struct task_struct *task);
+int mte_ptrace_copy_tags(struct task_struct *child, long request,
+			 unsigned long addr, unsigned long data);
 
-#अन्यथा /* CONFIG_ARM64_MTE */
+#else /* CONFIG_ARM64_MTE */
 
-/* unused अगर !CONFIG_ARM64_MTE, silence the compiler */
-#घोषणा PG_mte_tagged	0
+/* unused if !CONFIG_ARM64_MTE, silence the compiler */
+#define PG_mte_tagged	0
 
-अटल अंतरभूत व्योम mte_sync_tags(pte_t *ptep, pte_t pte)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_copy_page_tags(व्योम *kto, स्थिर व्योम *kfrom)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_thपढ़ो_init_user(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_thपढ़ो_चयन(काष्ठा task_काष्ठा *next)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_suspend_enter(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_suspend_निकास(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत दीर्घ set_mte_ctrl(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ arg)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत दीर्घ get_mte_ctrl(काष्ठा task_काष्ठा *task)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक mte_ptrace_copy_tags(काष्ठा task_काष्ठा *child,
-				       दीर्घ request, अचिन्हित दीर्घ addr,
-				       अचिन्हित दीर्घ data)
-अणु
-	वापस -EIO;
-पूर्ण
+static inline void mte_sync_tags(pte_t *ptep, pte_t pte)
+{
+}
+static inline void mte_copy_page_tags(void *kto, const void *kfrom)
+{
+}
+static inline void mte_thread_init_user(void)
+{
+}
+static inline void mte_thread_switch(struct task_struct *next)
+{
+}
+static inline void mte_suspend_enter(void)
+{
+}
+static inline void mte_suspend_exit(void)
+{
+}
+static inline long set_mte_ctrl(struct task_struct *task, unsigned long arg)
+{
+	return 0;
+}
+static inline long get_mte_ctrl(struct task_struct *task)
+{
+	return 0;
+}
+static inline int mte_ptrace_copy_tags(struct task_struct *child,
+				       long request, unsigned long addr,
+				       unsigned long data)
+{
+	return -EIO;
+}
 
-#पूर्ण_अगर /* CONFIG_ARM64_MTE */
+#endif /* CONFIG_ARM64_MTE */
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
+#ifdef CONFIG_KASAN_HW_TAGS
 /* Whether the MTE asynchronous mode is enabled. */
 DECLARE_STATIC_KEY_FALSE(mte_async_mode);
 
-अटल अंतरभूत bool प्रणाली_uses_mte_async_mode(व्योम)
-अणु
-	वापस अटल_branch_unlikely(&mte_async_mode);
-पूर्ण
+static inline bool system_uses_mte_async_mode(void)
+{
+	return static_branch_unlikely(&mte_async_mode);
+}
 
-व्योम mte_check_tfsr_el1(व्योम);
+void mte_check_tfsr_el1(void);
 
-अटल अंतरभूत व्योम mte_check_tfsr_entry(व्योम)
-अणु
+static inline void mte_check_tfsr_entry(void)
+{
 	mte_check_tfsr_el1();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mte_check_tfsr_निकास(व्योम)
-अणु
+static inline void mte_check_tfsr_exit(void)
+{
 	/*
-	 * The asynchronous faults are sync'ed स्वतःmatically with
-	 * TFSR_EL1 on kernel entry but क्रम निकास an explicit dsb()
+	 * The asynchronous faults are sync'ed automatically with
+	 * TFSR_EL1 on kernel entry but for exit an explicit dsb()
 	 * is required.
 	 */
 	dsb(nsh);
 	isb();
 
 	mte_check_tfsr_el1();
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool प्रणाली_uses_mte_async_mode(व्योम)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम mte_check_tfsr_el1(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_check_tfsr_entry(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम mte_check_tfsr_निकास(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KASAN_HW_TAGS */
+}
+#else
+static inline bool system_uses_mte_async_mode(void)
+{
+	return false;
+}
+static inline void mte_check_tfsr_el1(void)
+{
+}
+static inline void mte_check_tfsr_entry(void)
+{
+}
+static inline void mte_check_tfsr_exit(void)
+{
+}
+#endif /* CONFIG_KASAN_HW_TAGS */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_MTE_H  */
+#endif /* __ASSEMBLY__ */
+#endif /* __ASM_MTE_H  */

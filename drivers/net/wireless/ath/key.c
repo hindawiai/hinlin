@@ -1,55 +1,54 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2009 Atheros Communications Inc.
- * Copyright (c) 2010 Bruno Ranकरोlf <br1@einfach.org>
+ * Copyright (c) 2010 Bruno Randolf <br1@einfach.org>
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/export.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <net/mac80211.h>
+#include <linux/export.h>
+#include <asm/unaligned.h>
+#include <net/mac80211.h>
 
-#समावेश "ath.h"
-#समावेश "reg.h"
+#include "ath.h"
+#include "reg.h"
 
-#घोषणा REG_READ			(common->ops->पढ़ो)
-#घोषणा REG_WRITE(_ah, _reg, _val)	(common->ops->ग_लिखो)(_ah, _val, _reg)
-#घोषणा ENABLE_REGWRITE_BUFFER(_ah)			\
-	अगर (common->ops->enable_ग_लिखो_buffer)		\
-		common->ops->enable_ग_लिखो_buffer((_ah));
+#define REG_READ			(common->ops->read)
+#define REG_WRITE(_ah, _reg, _val)	(common->ops->write)(_ah, _val, _reg)
+#define ENABLE_REGWRITE_BUFFER(_ah)			\
+	if (common->ops->enable_write_buffer)		\
+		common->ops->enable_write_buffer((_ah));
 
-#घोषणा REGWRITE_BUFFER_FLUSH(_ah)			\
-	अगर (common->ops->ग_लिखो_flush)			\
-		common->ops->ग_लिखो_flush((_ah));
+#define REGWRITE_BUFFER_FLUSH(_ah)			\
+	if (common->ops->write_flush)			\
+		common->ops->write_flush((_ah));
 
 
-#घोषणा IEEE80211_WEP_NKID      4       /* number of key ids */
+#define IEEE80211_WEP_NKID      4       /* number of key ids */
 
 /************************/
 /* Key Cache Management */
 /************************/
 
-bool ath_hw_keyreset(काष्ठा ath_common *common, u16 entry)
-अणु
+bool ath_hw_keyreset(struct ath_common *common, u16 entry)
+{
 	u32 keyType;
-	व्योम *ah = common->ah;
+	void *ah = common->ah;
 
-	अगर (entry >= common->keymax) अणु
+	if (entry >= common->keymax) {
 		ath_err(common, "keyreset: keycache entry %u out of range\n",
 			entry);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	keyType = REG_READ(ah, AR_KEYTABLE_TYPE(entry));
 
@@ -64,48 +63,48 @@ bool ath_hw_keyreset(काष्ठा ath_common *common, u16 entry)
 	REG_WRITE(ah, AR_KEYTABLE_MAC0(entry), 0);
 	REG_WRITE(ah, AR_KEYTABLE_MAC1(entry), 0);
 
-	अगर (keyType == AR_KEYTABLE_TYPE_TKIP) अणु
+	if (keyType == AR_KEYTABLE_TYPE_TKIP) {
 		u16 micentry = entry + 64;
 
 		REG_WRITE(ah, AR_KEYTABLE_KEY0(micentry), 0);
 		REG_WRITE(ah, AR_KEYTABLE_KEY1(micentry), 0);
 		REG_WRITE(ah, AR_KEYTABLE_KEY2(micentry), 0);
 		REG_WRITE(ah, AR_KEYTABLE_KEY3(micentry), 0);
-		अगर (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) अणु
+		if (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) {
 			REG_WRITE(ah, AR_KEYTABLE_KEY4(micentry), 0);
 			REG_WRITE(ah, AR_KEYTABLE_TYPE(micentry),
 				  AR_KEYTABLE_TYPE_CLR);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 	REGWRITE_BUFFER_FLUSH(ah);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(ath_hw_keyreset);
 
-bool ath_hw_keyseपंचांगac(काष्ठा ath_common *common, u16 entry, स्थिर u8 *mac)
-अणु
+bool ath_hw_keysetmac(struct ath_common *common, u16 entry, const u8 *mac)
+{
 	u32 macHi, macLo;
 	u32 unicast_flag = AR_KEYTABLE_VALID;
-	व्योम *ah = common->ah;
+	void *ah = common->ah;
 
-	अगर (entry >= common->keymax) अणु
+	if (entry >= common->keymax) {
 		ath_err(common, "keysetmac: keycache entry %u out of range\n",
 			entry);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (mac != शून्य) अणु
+	if (mac != NULL) {
 		/*
 		 * AR_KEYTABLE_VALID indicates that the address is a unicast
-		 * address, which must match the transmitter address क्रम
+		 * address, which must match the transmitter address for
 		 * decrypting frames.
 		 * Not setting this bit allows the hardware to use the key
-		 * क्रम multicast frame decryption.
+		 * for multicast frame decryption.
 		 */
-		अगर (mac[0] & 0x01)
+		if (mac[0] & 0x01)
 			unicast_flag = 0;
 
 		macLo = get_unaligned_le32(mac);
@@ -113,9 +112,9 @@ bool ath_hw_keyseपंचांगac(काष्ठा ath_common *common, u16
 		macLo >>= 1;
 		macLo |= (macHi & 1) << 31;
 		macHi >>= 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		macLo = macHi = 0;
-	पूर्ण
+	}
 	ENABLE_REGWRITE_BUFFER(ah);
 
 	REG_WRITE(ah, AR_KEYTABLE_MAC0(entry), macLo);
@@ -123,88 +122,88 @@ bool ath_hw_keyseपंचांगac(काष्ठा ath_common *common, u16
 
 	REGWRITE_BUFFER_FLUSH(ah);
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
+	return true;
+}
+EXPORT_SYMBOL(ath_hw_keysetmac);
 
-अटल bool ath_hw_set_keycache_entry(काष्ठा ath_common *common, u16 entry,
-				      स्थिर काष्ठा ath_keyval *k,
-				      स्थिर u8 *mac)
-अणु
-	व्योम *ah = common->ah;
+static bool ath_hw_set_keycache_entry(struct ath_common *common, u16 entry,
+				      const struct ath_keyval *k,
+				      const u8 *mac)
+{
+	void *ah = common->ah;
 	u32 key0, key1, key2, key3, key4;
 	u32 keyType;
 
-	अगर (entry >= common->keymax) अणु
+	if (entry >= common->keymax) {
 		ath_err(common, "set-entry: keycache entry %u out of range\n",
 			entry);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	चयन (k->kv_type) अणु
-	हाल ATH_CIPHER_AES_OCB:
+	switch (k->kv_type) {
+	case ATH_CIPHER_AES_OCB:
 		keyType = AR_KEYTABLE_TYPE_AES;
-		अवरोध;
-	हाल ATH_CIPHER_AES_CCM:
-		अगर (!(common->crypt_caps & ATH_CRYPT_CAP_CIPHER_AESCCM)) अणु
+		break;
+	case ATH_CIPHER_AES_CCM:
+		if (!(common->crypt_caps & ATH_CRYPT_CAP_CIPHER_AESCCM)) {
 			ath_dbg(common, ANY,
 				"AES-CCM not supported by this mac rev\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		keyType = AR_KEYTABLE_TYPE_CCM;
-		अवरोध;
-	हाल ATH_CIPHER_TKIP:
+		break;
+	case ATH_CIPHER_TKIP:
 		keyType = AR_KEYTABLE_TYPE_TKIP;
-		अगर (entry + 64 >= common->keymax) अणु
+		if (entry + 64 >= common->keymax) {
 			ath_dbg(common, ANY,
 				"entry %u inappropriate for TKIP\n", entry);
-			वापस false;
-		पूर्ण
-		अवरोध;
-	हाल ATH_CIPHER_WEP:
-		अगर (k->kv_len < WLAN_KEY_LEN_WEP40) अणु
+			return false;
+		}
+		break;
+	case ATH_CIPHER_WEP:
+		if (k->kv_len < WLAN_KEY_LEN_WEP40) {
 			ath_dbg(common, ANY, "WEP key length %u too small\n",
 				k->kv_len);
-			वापस false;
-		पूर्ण
-		अगर (k->kv_len <= WLAN_KEY_LEN_WEP40)
+			return false;
+		}
+		if (k->kv_len <= WLAN_KEY_LEN_WEP40)
 			keyType = AR_KEYTABLE_TYPE_40;
-		अन्यथा अगर (k->kv_len <= WLAN_KEY_LEN_WEP104)
+		else if (k->kv_len <= WLAN_KEY_LEN_WEP104)
 			keyType = AR_KEYTABLE_TYPE_104;
-		अन्यथा
+		else
 			keyType = AR_KEYTABLE_TYPE_128;
-		अवरोध;
-	हाल ATH_CIPHER_CLR:
+		break;
+	case ATH_CIPHER_CLR:
 		keyType = AR_KEYTABLE_TYPE_CLR;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ath_err(common, "cipher %u not supported\n", k->kv_type);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	key0 = get_unaligned_le32(k->kv_val + 0);
 	key1 = get_unaligned_le16(k->kv_val + 4);
 	key2 = get_unaligned_le32(k->kv_val + 6);
 	key3 = get_unaligned_le16(k->kv_val + 10);
 	key4 = get_unaligned_le32(k->kv_val + 12);
-	अगर (k->kv_len <= WLAN_KEY_LEN_WEP104)
+	if (k->kv_len <= WLAN_KEY_LEN_WEP104)
 		key4 &= 0xff;
 
 	/*
-	 * Note: Key cache रेजिस्टरs access special memory area that requires
-	 * two 32-bit ग_लिखोs to actually update the values in the पूर्णांकernal
+	 * Note: Key cache registers access special memory area that requires
+	 * two 32-bit writes to actually update the values in the internal
 	 * memory. Consequently, the exact order and pairs used here must be
-	 * मुख्यtained.
+	 * maintained.
 	 */
 
-	अगर (keyType == AR_KEYTABLE_TYPE_TKIP) अणु
+	if (keyType == AR_KEYTABLE_TYPE_TKIP) {
 		u16 micentry = entry + 64;
 
 		/*
-		 * Write inverted key[47:0] first to aव्योम Michael MIC errors
-		 * on frames that could be sent or received at the same समय.
+		 * Write inverted key[47:0] first to avoid Michael MIC errors
+		 * on frames that could be sent or received at the same time.
 		 * The correct key will be written in the end once everything
-		 * अन्यथा is पढ़ोy.
+		 * else is ready.
 		 */
 		REG_WRITE(ah, AR_KEYTABLE_KEY0(entry), ~key0);
 		REG_WRITE(ah, AR_KEYTABLE_KEY1(entry), ~key1);
@@ -217,14 +216,14 @@ EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
 		REG_WRITE(ah, AR_KEYTABLE_KEY4(entry), key4);
 		REG_WRITE(ah, AR_KEYTABLE_TYPE(entry), keyType);
 
-		/* Write MAC address क्रम the entry */
-		(व्योम) ath_hw_keyseपंचांगac(common, entry, mac);
+		/* Write MAC address for the entry */
+		(void) ath_hw_keysetmac(common, entry, mac);
 
-		अगर (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) अणु
+		if (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) {
 			/*
 			 * TKIP uses two key cache entries:
 			 * Michael MIC TX/RX keys in the same key cache entry
-			 * (idx = मुख्य index + 64):
+			 * (idx = main index + 64):
 			 * key0 [31:0] = RX key [31:0]
 			 * key1 [15:0] = TX key [31:16]
 			 * key1 [31:16] = reserved
@@ -258,13 +257,13 @@ EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
 
 			REGWRITE_BUFFER_FLUSH(ah);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * TKIP uses four key cache entries (two क्रम group
+			 * TKIP uses four key cache entries (two for group
 			 * keys):
-			 * Michael MIC TX/RX keys are in dअगरferent key cache
-			 * entries (idx = मुख्य index + 64 क्रम TX and
-			 * मुख्य index + 32 + 96 क्रम RX):
+			 * Michael MIC TX/RX keys are in different key cache
+			 * entries (idx = main index + 64 for TX and
+			 * main index + 32 + 96 for RX):
 			 * key0 [31:0] = TX/RX MIC key [31:0]
 			 * key1 [31:0] = reserved
 			 * key2 [31:0] = TX/RX MIC key [63:32]
@@ -272,7 +271,7 @@ EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
 			 * key4 [31:0] = reserved
 			 *
 			 * Upper layer code will call this function separately
-			 * क्रम TX and RX keys when these रेजिस्टरs offsets are
+			 * for TX and RX keys when these registers offsets are
 			 * used.
 			 */
 			u32 mic0, mic2;
@@ -296,24 +295,24 @@ EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
 				  AR_KEYTABLE_TYPE_CLR);
 
 			REGWRITE_BUFFER_FLUSH(ah);
-		पूर्ण
+		}
 
 		ENABLE_REGWRITE_BUFFER(ah);
 
-		/* MAC address रेजिस्टरs are reserved क्रम the MIC entry */
+		/* MAC address registers are reserved for the MIC entry */
 		REG_WRITE(ah, AR_KEYTABLE_MAC0(micentry), 0);
 		REG_WRITE(ah, AR_KEYTABLE_MAC1(micentry), 0);
 
 		/*
 		 * Write the correct (un-inverted) key[47:0] last to enable
-		 * TKIP now that all other रेजिस्टरs are set with correct
+		 * TKIP now that all other registers are set with correct
 		 * values.
 		 */
 		REG_WRITE(ah, AR_KEYTABLE_KEY0(entry), key0);
 		REG_WRITE(ah, AR_KEYTABLE_KEY1(entry), key1);
 
 		REGWRITE_BUFFER_FLUSH(ah);
-	पूर्ण अन्यथा अणु
+	} else {
 		ENABLE_REGWRITE_BUFFER(ah);
 
 		/* Write key[47:0] */
@@ -330,290 +329,290 @@ EXPORT_SYMBOL(ath_hw_keyseपंचांगac);
 
 		REGWRITE_BUFFER_FLUSH(ah);
 
-		/* Write MAC address क्रम the entry */
-		(व्योम) ath_hw_keyseपंचांगac(common, entry, mac);
-	पूर्ण
+		/* Write MAC address for the entry */
+		(void) ath_hw_keysetmac(common, entry, mac);
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक ath_setkey_tkip(काष्ठा ath_common *common, u16 keyix, स्थिर u8 *key,
-			   काष्ठा ath_keyval *hk, स्थिर u8 *addr,
+static int ath_setkey_tkip(struct ath_common *common, u16 keyix, const u8 *key,
+			   struct ath_keyval *hk, const u8 *addr,
 			   bool authenticator)
-अणु
-	स्थिर u8 *key_rxmic;
-	स्थिर u8 *key_txmic;
+{
+	const u8 *key_rxmic;
+	const u8 *key_txmic;
 
 	key_txmic = key + NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY;
 	key_rxmic = key + NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY;
 
-	अगर (addr == शून्य) अणु
+	if (addr == NULL) {
 		/*
 		 * Group key installation - only two key cache entries are used
-		 * regardless of spliपंचांगic capability since group key is only
-		 * used either क्रम TX or RX.
+		 * regardless of splitmic capability since group key is only
+		 * used either for TX or RX.
 		 */
-		अगर (authenticator) अणु
-			स_नकल(hk->kv_mic, key_txmic, माप(hk->kv_mic));
-			स_नकल(hk->kv_txmic, key_txmic, माप(hk->kv_mic));
-		पूर्ण अन्यथा अणु
-			स_नकल(hk->kv_mic, key_rxmic, माप(hk->kv_mic));
-			स_नकल(hk->kv_txmic, key_rxmic, माप(hk->kv_mic));
-		पूर्ण
-		वापस ath_hw_set_keycache_entry(common, keyix, hk, addr);
-	पूर्ण
-	अगर (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) अणु
+		if (authenticator) {
+			memcpy(hk->kv_mic, key_txmic, sizeof(hk->kv_mic));
+			memcpy(hk->kv_txmic, key_txmic, sizeof(hk->kv_mic));
+		} else {
+			memcpy(hk->kv_mic, key_rxmic, sizeof(hk->kv_mic));
+			memcpy(hk->kv_txmic, key_rxmic, sizeof(hk->kv_mic));
+		}
+		return ath_hw_set_keycache_entry(common, keyix, hk, addr);
+	}
+	if (common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) {
 		/* TX and RX keys share the same key cache entry. */
-		स_नकल(hk->kv_mic, key_rxmic, माप(hk->kv_mic));
-		स_नकल(hk->kv_txmic, key_txmic, माप(hk->kv_txmic));
-		वापस ath_hw_set_keycache_entry(common, keyix, hk, addr);
-	पूर्ण
+		memcpy(hk->kv_mic, key_rxmic, sizeof(hk->kv_mic));
+		memcpy(hk->kv_txmic, key_txmic, sizeof(hk->kv_txmic));
+		return ath_hw_set_keycache_entry(common, keyix, hk, addr);
+	}
 
-	/* Separate key cache entries क्रम TX and RX */
+	/* Separate key cache entries for TX and RX */
 
 	/* TX key goes at first index, RX key at +32. */
-	स_नकल(hk->kv_mic, key_txmic, माप(hk->kv_mic));
-	अगर (!ath_hw_set_keycache_entry(common, keyix, hk, शून्य)) अणु
+	memcpy(hk->kv_mic, key_txmic, sizeof(hk->kv_mic));
+	if (!ath_hw_set_keycache_entry(common, keyix, hk, NULL)) {
 		/* TX MIC entry failed. No need to proceed further */
 		ath_err(common, "Setting TX MIC Key Failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_नकल(hk->kv_mic, key_rxmic, माप(hk->kv_mic));
+	memcpy(hk->kv_mic, key_rxmic, sizeof(hk->kv_mic));
 	/* XXX delete tx key on failure? */
-	वापस ath_hw_set_keycache_entry(common, keyix + 32, hk, addr);
-पूर्ण
+	return ath_hw_set_keycache_entry(common, keyix + 32, hk, addr);
+}
 
-अटल पूर्णांक ath_reserve_key_cache_slot_tkip(काष्ठा ath_common *common)
-अणु
-	पूर्णांक i;
+static int ath_reserve_key_cache_slot_tkip(struct ath_common *common)
+{
+	int i;
 
-	क्रम (i = IEEE80211_WEP_NKID; i < common->keymax / 2; i++) अणु
-		अगर (test_bit(i, common->keymap) ||
+	for (i = IEEE80211_WEP_NKID; i < common->keymax / 2; i++) {
+		if (test_bit(i, common->keymap) ||
 		    test_bit(i + 64, common->keymap))
-			जारी; /* At least one part of TKIP key allocated */
-		अगर (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) &&
+			continue; /* At least one part of TKIP key allocated */
+		if (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED) &&
 		    (test_bit(i + 32, common->keymap) ||
 		     test_bit(i + 64 + 32, common->keymap)))
-			जारी; /* At least one part of TKIP key allocated */
+			continue; /* At least one part of TKIP key allocated */
 
-		/* Found a मुक्त slot क्रम a TKIP key */
-		वापस i;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		/* Found a free slot for a TKIP key */
+		return i;
+	}
+	return -1;
+}
 
-अटल पूर्णांक ath_reserve_key_cache_slot(काष्ठा ath_common *common,
+static int ath_reserve_key_cache_slot(struct ath_common *common,
 				      u32 cipher)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (cipher == WLAN_CIPHER_SUITE_TKIP)
-		वापस ath_reserve_key_cache_slot_tkip(common);
+	if (cipher == WLAN_CIPHER_SUITE_TKIP)
+		return ath_reserve_key_cache_slot_tkip(common);
 
-	/* First, try to find slots that would not be available क्रम TKIP. */
-	अगर (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) अणु
-		क्रम (i = IEEE80211_WEP_NKID; i < common->keymax / 4; i++) अणु
-			अगर (!test_bit(i, common->keymap) &&
+	/* First, try to find slots that would not be available for TKIP. */
+	if (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) {
+		for (i = IEEE80211_WEP_NKID; i < common->keymax / 4; i++) {
+			if (!test_bit(i, common->keymap) &&
 			    (test_bit(i + 32, common->keymap) ||
 			     test_bit(i + 64, common->keymap) ||
 			     test_bit(i + 64 + 32, common->keymap)))
-				वापस i;
-			अगर (!test_bit(i + 32, common->keymap) &&
+				return i;
+			if (!test_bit(i + 32, common->keymap) &&
 			    (test_bit(i, common->keymap) ||
 			     test_bit(i + 64, common->keymap) ||
 			     test_bit(i + 64 + 32, common->keymap)))
-				वापस i + 32;
-			अगर (!test_bit(i + 64, common->keymap) &&
+				return i + 32;
+			if (!test_bit(i + 64, common->keymap) &&
 			    (test_bit(i , common->keymap) ||
 			     test_bit(i + 32, common->keymap) ||
 			     test_bit(i + 64 + 32, common->keymap)))
-				वापस i + 64;
-			अगर (!test_bit(i + 64 + 32, common->keymap) &&
+				return i + 64;
+			if (!test_bit(i + 64 + 32, common->keymap) &&
 			    (test_bit(i, common->keymap) ||
 			     test_bit(i + 32, common->keymap) ||
 			     test_bit(i + 64, common->keymap)))
-				वापस i + 64 + 32;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = IEEE80211_WEP_NKID; i < common->keymax / 2; i++) अणु
-			अगर (!test_bit(i, common->keymap) &&
+				return i + 64 + 32;
+		}
+	} else {
+		for (i = IEEE80211_WEP_NKID; i < common->keymax / 2; i++) {
+			if (!test_bit(i, common->keymap) &&
 			    test_bit(i + 64, common->keymap))
-				वापस i;
-			अगर (test_bit(i, common->keymap) &&
+				return i;
+			if (test_bit(i, common->keymap) &&
 			    !test_bit(i + 64, common->keymap))
-				वापस i + 64;
-		पूर्ण
-	पूर्ण
+				return i + 64;
+		}
+	}
 
 	/* No partially used TKIP slots, pick any available slot */
-	क्रम (i = IEEE80211_WEP_NKID; i < common->keymax; i++) अणु
-		/* Do not allow slots that could be needed क्रम TKIP group keys
-		 * to be used. This limitation could be हटाओd अगर we know that
+	for (i = IEEE80211_WEP_NKID; i < common->keymax; i++) {
+		/* Do not allow slots that could be needed for TKIP group keys
+		 * to be used. This limitation could be removed if we know that
 		 * TKIP will not be used. */
-		अगर (i >= 64 && i < 64 + IEEE80211_WEP_NKID)
-			जारी;
-		अगर (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) अणु
-			अगर (i >= 32 && i < 32 + IEEE80211_WEP_NKID)
-				जारी;
-			अगर (i >= 64 + 32 && i < 64 + 32 + IEEE80211_WEP_NKID)
-				जारी;
-		पूर्ण
+		if (i >= 64 && i < 64 + IEEE80211_WEP_NKID)
+			continue;
+		if (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) {
+			if (i >= 32 && i < 32 + IEEE80211_WEP_NKID)
+				continue;
+			if (i >= 64 + 32 && i < 64 + 32 + IEEE80211_WEP_NKID)
+				continue;
+		}
 
-		अगर (!test_bit(i, common->keymap))
-			वापस i; /* Found a मुक्त slot क्रम a key */
-	पूर्ण
+		if (!test_bit(i, common->keymap))
+			return i; /* Found a free slot for a key */
+	}
 
-	/* No मुक्त slot found */
-	वापस -1;
-पूर्ण
+	/* No free slot found */
+	return -1;
+}
 
 /*
  * Configure encryption in the HW.
  */
-पूर्णांक ath_key_config(काष्ठा ath_common *common,
-			  काष्ठा ieee80211_vअगर *vअगर,
-			  काष्ठा ieee80211_sta *sta,
-			  काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा ath_keyval hk;
-	स्थिर u8 *mac = शून्य;
+int ath_key_config(struct ath_common *common,
+			  struct ieee80211_vif *vif,
+			  struct ieee80211_sta *sta,
+			  struct ieee80211_key_conf *key)
+{
+	struct ath_keyval hk;
+	const u8 *mac = NULL;
 	u8 gmac[ETH_ALEN];
-	पूर्णांक ret = 0;
-	पूर्णांक idx;
+	int ret = 0;
+	int idx;
 
-	स_रखो(&hk, 0, माप(hk));
+	memset(&hk, 0, sizeof(hk));
 
-	चयन (key->cipher) अणु
-	हाल 0:
+	switch (key->cipher) {
+	case 0:
 		hk.kv_type = ATH_CIPHER_CLR;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_WEP40:
-	हाल WLAN_CIPHER_SUITE_WEP104:
+		break;
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
 		hk.kv_type = ATH_CIPHER_WEP;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		hk.kv_type = ATH_CIPHER_TKIP;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		hk.kv_type = ATH_CIPHER_AES_CCM;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	hk.kv_len = key->keylen;
-	अगर (key->keylen)
-		स_नकल(hk.kv_val, key->key, key->keylen);
+	if (key->keylen)
+		memcpy(hk.kv_val, key->key, key->keylen);
 
-	अगर (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)) अणु
-		चयन (vअगर->type) अणु
-		हाल NL80211_IFTYPE_AP:
-			स_नकल(gmac, vअगर->addr, ETH_ALEN);
+	if (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)) {
+		switch (vif->type) {
+		case NL80211_IFTYPE_AP:
+			memcpy(gmac, vif->addr, ETH_ALEN);
 			gmac[0] |= 0x01;
 			mac = gmac;
 			idx = ath_reserve_key_cache_slot(common, key->cipher);
-			अवरोध;
-		हाल NL80211_IFTYPE_ADHOC:
-			अगर (!sta) अणु
+			break;
+		case NL80211_IFTYPE_ADHOC:
+			if (!sta) {
 				idx = key->keyidx;
-				अवरोध;
-			पूर्ण
-			स_नकल(gmac, sta->addr, ETH_ALEN);
+				break;
+			}
+			memcpy(gmac, sta->addr, ETH_ALEN);
 			gmac[0] |= 0x01;
 			mac = gmac;
 			idx = ath_reserve_key_cache_slot(common, key->cipher);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			idx = key->keyidx;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (key->keyidx) अणु
-		अगर (WARN_ON(!sta))
-			वापस -EOPNOTSUPP;
+			break;
+		}
+	} else if (key->keyidx) {
+		if (WARN_ON(!sta))
+			return -EOPNOTSUPP;
 		mac = sta->addr;
 
-		अगर (vअगर->type != NL80211_IFTYPE_AP) अणु
+		if (vif->type != NL80211_IFTYPE_AP) {
 			/* Only keyidx 0 should be used with unicast key, but
-			 * allow this क्रम client mode क्रम now. */
+			 * allow this for client mode for now. */
 			idx = key->keyidx;
-		पूर्ण अन्यथा
-			वापस -EIO;
-	पूर्ण अन्यथा अणु
-		अगर (WARN_ON(!sta))
-			वापस -EOPNOTSUPP;
+		} else
+			return -EIO;
+	} else {
+		if (WARN_ON(!sta))
+			return -EOPNOTSUPP;
 		mac = sta->addr;
 
 		idx = ath_reserve_key_cache_slot(common, key->cipher);
-	पूर्ण
+	}
 
-	अगर (idx < 0)
-		वापस -ENOSPC; /* no मुक्त key cache entries */
+	if (idx < 0)
+		return -ENOSPC; /* no free key cache entries */
 
-	अगर (key->cipher == WLAN_CIPHER_SUITE_TKIP)
+	if (key->cipher == WLAN_CIPHER_SUITE_TKIP)
 		ret = ath_setkey_tkip(common, idx, key->key, &hk, mac,
-				      vअगर->type == NL80211_IFTYPE_AP);
-	अन्यथा
+				      vif->type == NL80211_IFTYPE_AP);
+	else
 		ret = ath_hw_set_keycache_entry(common, idx, &hk, mac);
 
-	अगर (!ret)
-		वापस -EIO;
+	if (!ret)
+		return -EIO;
 
 	set_bit(idx, common->keymap);
-	अगर (key->cipher == WLAN_CIPHER_SUITE_CCMP)
+	if (key->cipher == WLAN_CIPHER_SUITE_CCMP)
 		set_bit(idx, common->ccmp_keymap);
 
-	अगर (key->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+	if (key->cipher == WLAN_CIPHER_SUITE_TKIP) {
 		set_bit(idx + 64, common->keymap);
 		set_bit(idx, common->tkip_keymap);
 		set_bit(idx + 64, common->tkip_keymap);
-		अगर (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) अणु
+		if (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) {
 			set_bit(idx + 32, common->keymap);
 			set_bit(idx + 64 + 32, common->keymap);
 			set_bit(idx + 32, common->tkip_keymap);
 			set_bit(idx + 64 + 32, common->tkip_keymap);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 EXPORT_SYMBOL(ath_key_config);
 
 /*
  * Delete Key.
  */
-व्योम ath_key_delete(काष्ठा ath_common *common, u8 hw_key_idx)
-अणु
-	/* Leave CCMP and TKIP (मुख्य key) configured to aव्योम disabling
-	 * encryption क्रम potentially pending frames alपढ़ोy in a TXQ with the
-	 * keyix poपूर्णांकing to this key entry. Instead, only clear the MAC address
+void ath_key_delete(struct ath_common *common, u8 hw_key_idx)
+{
+	/* Leave CCMP and TKIP (main key) configured to avoid disabling
+	 * encryption for potentially pending frames already in a TXQ with the
+	 * keyix pointing to this key entry. Instead, only clear the MAC address
 	 * to prevent RX processing from using this key cache entry.
 	 */
-	अगर (test_bit(hw_key_idx, common->ccmp_keymap) ||
+	if (test_bit(hw_key_idx, common->ccmp_keymap) ||
 	    test_bit(hw_key_idx, common->tkip_keymap))
-		ath_hw_keyseपंचांगac(common, hw_key_idx, शून्य);
-	अन्यथा
+		ath_hw_keysetmac(common, hw_key_idx, NULL);
+	else
 		ath_hw_keyreset(common, hw_key_idx);
-	अगर (hw_key_idx < IEEE80211_WEP_NKID)
-		वापस;
+	if (hw_key_idx < IEEE80211_WEP_NKID)
+		return;
 
 	clear_bit(hw_key_idx, common->keymap);
 	clear_bit(hw_key_idx, common->ccmp_keymap);
-	अगर (!test_bit(hw_key_idx, common->tkip_keymap))
-		वापस;
+	if (!test_bit(hw_key_idx, common->tkip_keymap))
+		return;
 
 	clear_bit(hw_key_idx + 64, common->keymap);
 
 	clear_bit(hw_key_idx, common->tkip_keymap);
 	clear_bit(hw_key_idx + 64, common->tkip_keymap);
 
-	अगर (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) अणु
+	if (!(common->crypt_caps & ATH_CRYPT_CAP_MIC_COMBINED)) {
 		ath_hw_keyreset(common, hw_key_idx + 32);
 		clear_bit(hw_key_idx + 32, common->keymap);
 		clear_bit(hw_key_idx + 64 + 32, common->keymap);
 
 		clear_bit(hw_key_idx + 32, common->tkip_keymap);
 		clear_bit(hw_key_idx + 64 + 32, common->tkip_keymap);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(ath_key_delete);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,19 +21,19 @@
  *
  */
 
-#अगर_अघोषित __NV_H__
-#घोषणा __NV_H__
+#ifndef __NV_H__
+#define __NV_H__
 
-#समावेश "nbio_v2_3.h"
+#include "nbio_v2_3.h"
 
-व्योम nv_grbm_select(काष्ठा amdgpu_device *adev,
+void nv_grbm_select(struct amdgpu_device *adev,
 		    u32 me, u32 pipe, u32 queue, u32 vmid);
-व्योम nv_set_virt_ops(काष्ठा amdgpu_device *adev);
-पूर्णांक nv_set_ip_blocks(काष्ठा amdgpu_device *adev);
-पूर्णांक navi10_reg_base_init(काष्ठा amdgpu_device *adev);
-पूर्णांक navi14_reg_base_init(काष्ठा amdgpu_device *adev);
-पूर्णांक navi12_reg_base_init(काष्ठा amdgpu_device *adev);
-पूर्णांक sienna_cichlid_reg_base_init(काष्ठा amdgpu_device *adev);
-व्योम vangogh_reg_base_init(काष्ठा amdgpu_device *adev);
-पूर्णांक dimgrey_cavefish_reg_base_init(काष्ठा amdgpu_device *adev);
-#पूर्ण_अगर
+void nv_set_virt_ops(struct amdgpu_device *adev);
+int nv_set_ip_blocks(struct amdgpu_device *adev);
+int navi10_reg_base_init(struct amdgpu_device *adev);
+int navi14_reg_base_init(struct amdgpu_device *adev);
+int navi12_reg_base_init(struct amdgpu_device *adev);
+int sienna_cichlid_reg_base_init(struct amdgpu_device *adev);
+void vangogh_reg_base_init(struct amdgpu_device *adev);
+int dimgrey_cavefish_reg_base_init(struct amdgpu_device *adev);
+#endif

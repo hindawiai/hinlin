@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * u_prपूर्णांकer.h
+ * u_printer.h
  *
- * Utility definitions क्रम the prपूर्णांकer function
+ * Utility definitions for the printer function
  *
  * Copyright (c) 2015 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -11,24 +10,24 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#अगर_अघोषित U_PRINTER_H
-#घोषणा U_PRINTER_H
+#ifndef U_PRINTER_H
+#define U_PRINTER_H
 
-#समावेश <linux/usb/composite.h>
+#include <linux/usb/composite.h>
 
-काष्ठा f_prपूर्णांकer_opts अणु
-	काष्ठा usb_function_instance	func_inst;
-	पूर्णांक				minor;
-	अक्षर				*pnp_string;
+struct f_printer_opts {
+	struct usb_function_instance	func_inst;
+	int				minor;
+	char				*pnp_string;
 	bool				pnp_string_allocated;
-	अचिन्हित			q_len;
+	unsigned			q_len;
 
 	/*
-	 * Protect the data from concurrent access by पढ़ो/ग_लिखो
-	 * and create symlink/हटाओ symlink
+	 * Protect the data from concurrent access by read/write
+	 * and create symlink/remove symlink
 	 */
-	काष्ठा mutex			lock;
-	पूर्णांक				refcnt;
-पूर्ण;
+	struct mutex			lock;
+	int				refcnt;
+};
 
-#पूर्ण_अगर /* U_PRINTER_H */
+#endif /* U_PRINTER_H */

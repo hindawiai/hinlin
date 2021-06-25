@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित __MDP5_CFG_H__
-#घोषणा __MDP5_CFG_H__
+#ifndef __MDP5_CFG_H__
+#define __MDP5_CFG_H__
 
-#समावेश "msm_drv.h"
+#include "msm_drv.h"
 
 /*
  * mdp5_cfg
@@ -15,112 +14,112 @@
  * This module configures the dynamic offsets used by mdp5.xml.h
  * (initialized in mdp5_cfg.c)
  */
-बाह्य स्थिर काष्ठा mdp5_cfg_hw *mdp5_cfg;
+extern const struct mdp5_cfg_hw *mdp5_cfg;
 
-#घोषणा MAX_CTL			8
-#घोषणा MAX_BASES		8
-#घोषणा MAX_SMP_BLOCKS		44
-#घोषणा MAX_CLIENTS		32
+#define MAX_CTL			8
+#define MAX_BASES		8
+#define MAX_SMP_BLOCKS		44
+#define MAX_CLIENTS		32
 
-प्रकार DECLARE_BITMAP(mdp5_smp_state_t, MAX_SMP_BLOCKS);
+typedef DECLARE_BITMAP(mdp5_smp_state_t, MAX_SMP_BLOCKS);
 
-#घोषणा MDP5_SUB_BLOCK_DEFINITION \
-	अचिन्हित पूर्णांक count; \
-	uपूर्णांक32_t base[MAX_BASES]
+#define MDP5_SUB_BLOCK_DEFINITION \
+	unsigned int count; \
+	uint32_t base[MAX_BASES]
 
-काष्ठा mdp5_sub_block अणु
+struct mdp5_sub_block {
 	MDP5_SUB_BLOCK_DEFINITION;
-पूर्ण;
+};
 
-काष्ठा mdp5_lm_instance अणु
-	पूर्णांक id;
-	पूर्णांक pp;
-	पूर्णांक dspp;
-	uपूर्णांक32_t caps;
-पूर्ण;
+struct mdp5_lm_instance {
+	int id;
+	int pp;
+	int dspp;
+	uint32_t caps;
+};
 
-काष्ठा mdp5_lm_block अणु
+struct mdp5_lm_block {
 	MDP5_SUB_BLOCK_DEFINITION;
-	काष्ठा mdp5_lm_instance instances[MAX_BASES];
-	uपूर्णांक32_t nb_stages;		/* number of stages per blender */
-	uपूर्णांक32_t max_width;		/* Maximum output resolution */
-	uपूर्णांक32_t max_height;
-पूर्ण;
+	struct mdp5_lm_instance instances[MAX_BASES];
+	uint32_t nb_stages;		/* number of stages per blender */
+	uint32_t max_width;		/* Maximum output resolution */
+	uint32_t max_height;
+};
 
-काष्ठा mdp5_pipe_block अणु
+struct mdp5_pipe_block {
 	MDP5_SUB_BLOCK_DEFINITION;
-	uपूर्णांक32_t caps;			/* pipe capabilities */
-पूर्ण;
+	uint32_t caps;			/* pipe capabilities */
+};
 
-काष्ठा mdp5_ctl_block अणु
+struct mdp5_ctl_block {
 	MDP5_SUB_BLOCK_DEFINITION;
-	uपूर्णांक32_t flush_hw_mask;		/* FLUSH रेजिस्टर's hardware mask */
-पूर्ण;
+	uint32_t flush_hw_mask;		/* FLUSH register's hardware mask */
+};
 
-काष्ठा mdp5_smp_block अणु
-	पूर्णांक mmb_count;			/* number of SMP MMBs */
-	पूर्णांक mmb_size;			/* MMB: size in bytes */
-	uपूर्णांक32_t clients[MAX_CLIENTS];	/* SMP port allocation /pipe */
-	mdp5_smp_state_t reserved_state;/* SMP MMBs अटलally allocated */
-	uपूर्णांक8_t reserved[MAX_CLIENTS];	/* # of MMBs allocated per client */
-पूर्ण;
+struct mdp5_smp_block {
+	int mmb_count;			/* number of SMP MMBs */
+	int mmb_size;			/* MMB: size in bytes */
+	uint32_t clients[MAX_CLIENTS];	/* SMP port allocation /pipe */
+	mdp5_smp_state_t reserved_state;/* SMP MMBs statically allocated */
+	uint8_t reserved[MAX_CLIENTS];	/* # of MMBs allocated per client */
+};
 
-काष्ठा mdp5_mdp_block अणु
+struct mdp5_mdp_block {
 	MDP5_SUB_BLOCK_DEFINITION;
-	uपूर्णांक32_t caps;			/* MDP capabilities: MDP_CAP_xxx bits */
-पूर्ण;
+	uint32_t caps;			/* MDP capabilities: MDP_CAP_xxx bits */
+};
 
-#घोषणा MDP5_INTF_NUM_MAX	5
+#define MDP5_INTF_NUM_MAX	5
 
-काष्ठा mdp5_पूर्णांकf_block अणु
-	uपूर्णांक32_t base[MAX_BASES];
-	u32 connect[MDP5_INTF_NUM_MAX]; /* array of क्रमागत mdp5_पूर्णांकf_type */
-पूर्ण;
+struct mdp5_intf_block {
+	uint32_t base[MAX_BASES];
+	u32 connect[MDP5_INTF_NUM_MAX]; /* array of enum mdp5_intf_type */
+};
 
-काष्ठा mdp5_cfg_hw अणु
-	अक्षर  *name;
+struct mdp5_cfg_hw {
+	char  *name;
 
-	काष्ठा mdp5_mdp_block mdp;
-	काष्ठा mdp5_smp_block smp;
-	काष्ठा mdp5_ctl_block ctl;
-	काष्ठा mdp5_pipe_block pipe_vig;
-	काष्ठा mdp5_pipe_block pipe_rgb;
-	काष्ठा mdp5_pipe_block pipe_dma;
-	काष्ठा mdp5_pipe_block pipe_cursor;
-	काष्ठा mdp5_lm_block  lm;
-	काष्ठा mdp5_sub_block dspp;
-	काष्ठा mdp5_sub_block ad;
-	काष्ठा mdp5_sub_block pp;
-	काष्ठा mdp5_sub_block dsc;
-	काष्ठा mdp5_sub_block cdm;
-	काष्ठा mdp5_पूर्णांकf_block पूर्णांकf;
+	struct mdp5_mdp_block mdp;
+	struct mdp5_smp_block smp;
+	struct mdp5_ctl_block ctl;
+	struct mdp5_pipe_block pipe_vig;
+	struct mdp5_pipe_block pipe_rgb;
+	struct mdp5_pipe_block pipe_dma;
+	struct mdp5_pipe_block pipe_cursor;
+	struct mdp5_lm_block  lm;
+	struct mdp5_sub_block dspp;
+	struct mdp5_sub_block ad;
+	struct mdp5_sub_block pp;
+	struct mdp5_sub_block dsc;
+	struct mdp5_sub_block cdm;
+	struct mdp5_intf_block intf;
 
-	uपूर्णांक32_t max_clk;
-पूर्ण;
+	uint32_t max_clk;
+};
 
-/* platक्रमm config data (ie. from DT, or pdata) */
-काष्ठा mdp5_cfg_platक्रमm अणु
-	काष्ठा iommu_करोमुख्य *iommu;
-पूर्ण;
+/* platform config data (ie. from DT, or pdata) */
+struct mdp5_cfg_platform {
+	struct iommu_domain *iommu;
+};
 
-काष्ठा mdp5_cfg अणु
-	स्थिर काष्ठा mdp5_cfg_hw *hw;
-	काष्ठा mdp5_cfg_platक्रमm platक्रमm;
-पूर्ण;
+struct mdp5_cfg {
+	const struct mdp5_cfg_hw *hw;
+	struct mdp5_cfg_platform platform;
+};
 
-काष्ठा mdp5_kms;
-काष्ठा mdp5_cfg_handler;
+struct mdp5_kms;
+struct mdp5_cfg_handler;
 
-स्थिर काष्ठा mdp5_cfg_hw *mdp5_cfg_get_hw_config(काष्ठा mdp5_cfg_handler *cfg_hnd);
-काष्ठा mdp5_cfg *mdp5_cfg_get_config(काष्ठा mdp5_cfg_handler *cfg_hnd);
-पूर्णांक mdp5_cfg_get_hw_rev(काष्ठा mdp5_cfg_handler *cfg_hnd);
+const struct mdp5_cfg_hw *mdp5_cfg_get_hw_config(struct mdp5_cfg_handler *cfg_hnd);
+struct mdp5_cfg *mdp5_cfg_get_config(struct mdp5_cfg_handler *cfg_hnd);
+int mdp5_cfg_get_hw_rev(struct mdp5_cfg_handler *cfg_hnd);
 
-#घोषणा mdp5_cfg_पूर्णांकf_is_भव(पूर्णांकf_type) (अणु	\
-	typeof(पूर्णांकf_type) __val = (पूर्णांकf_type);	\
-	(__val) >= INTF_VIRTUAL ? true : false; पूर्ण)
+#define mdp5_cfg_intf_is_virtual(intf_type) ({	\
+	typeof(intf_type) __val = (intf_type);	\
+	(__val) >= INTF_VIRTUAL ? true : false; })
 
-काष्ठा mdp5_cfg_handler *mdp5_cfg_init(काष्ठा mdp5_kms *mdp5_kms,
-		uपूर्णांक32_t major, uपूर्णांक32_t minor);
-व्योम mdp5_cfg_destroy(काष्ठा mdp5_cfg_handler *cfg_hnd);
+struct mdp5_cfg_handler *mdp5_cfg_init(struct mdp5_kms *mdp5_kms,
+		uint32_t major, uint32_t minor);
+void mdp5_cfg_destroy(struct mdp5_cfg_handler *cfg_hnd);
 
-#पूर्ण_अगर /* __MDP5_CFG_H__ */
+#endif /* __MDP5_CFG_H__ */

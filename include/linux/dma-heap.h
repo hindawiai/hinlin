@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * DMABUF Heaps Allocation Infraकाष्ठाure
+ * DMABUF Heaps Allocation Infrastructure
  *
  * Copyright (C) 2011 Google, Inc.
  * Copyright (C) 2019 Linaro Ltd.
  */
 
-#अगर_अघोषित _DMA_HEAPS_H
-#घोषणा _DMA_HEAPS_H
+#ifndef _DMA_HEAPS_H
+#define _DMA_HEAPS_H
 
-#समावेश <linux/cdev.h>
-#समावेश <linux/types.h>
+#include <linux/cdev.h>
+#include <linux/types.h>
 
-काष्ठा dma_heap;
-
-/**
- * काष्ठा dma_heap_ops - ops to operate on a given heap
- * @allocate:		allocate dmabuf and वापस काष्ठा dma_buf ptr
- *
- * allocate वापसs dmabuf on success, ERR_PTR(-त्रुटि_सं) on error.
- */
-काष्ठा dma_heap_ops अणु
-	काष्ठा dma_buf *(*allocate)(काष्ठा dma_heap *heap,
-				    अचिन्हित दीर्घ len,
-				    अचिन्हित दीर्घ fd_flags,
-				    अचिन्हित दीर्घ heap_flags);
-पूर्ण;
+struct dma_heap;
 
 /**
- * काष्ठा dma_heap_export_info - inक्रमmation needed to export a new dmabuf heap
- * @name:	used क्रम debugging/device-node name
- * @ops:	ops काष्ठा क्रम this heap
- * @priv:	heap exporter निजी data
+ * struct dma_heap_ops - ops to operate on a given heap
+ * @allocate:		allocate dmabuf and return struct dma_buf ptr
  *
- * Inक्रमmation needed to export a new dmabuf heap.
+ * allocate returns dmabuf on success, ERR_PTR(-errno) on error.
  */
-काष्ठा dma_heap_export_info अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा dma_heap_ops *ops;
-	व्योम *priv;
-पूर्ण;
+struct dma_heap_ops {
+	struct dma_buf *(*allocate)(struct dma_heap *heap,
+				    unsigned long len,
+				    unsigned long fd_flags,
+				    unsigned long heap_flags);
+};
+
+/**
+ * struct dma_heap_export_info - information needed to export a new dmabuf heap
+ * @name:	used for debugging/device-node name
+ * @ops:	ops struct for this heap
+ * @priv:	heap exporter private data
+ *
+ * Information needed to export a new dmabuf heap.
+ */
+struct dma_heap_export_info {
+	const char *name;
+	const struct dma_heap_ops *ops;
+	void *priv;
+};
 
 /**
  * dma_heap_get_drvdata() - get per-heap driver data
- * @heap: DMA-Heap to retrieve निजी data क्रम
+ * @heap: DMA-Heap to retrieve private data for
  *
  * Returns:
- * The per-heap data क्रम the heap.
+ * The per-heap data for the heap.
  */
-व्योम *dma_heap_get_drvdata(काष्ठा dma_heap *heap);
+void *dma_heap_get_drvdata(struct dma_heap *heap);
 
 /**
  * dma_heap_get_name() - get heap name
- * @heap: DMA-Heap to retrieve निजी data क्रम
+ * @heap: DMA-Heap to retrieve private data for
  *
  * Returns:
- * The अक्षर* क्रम the heap name.
+ * The char* for the heap name.
  */
-स्थिर अक्षर *dma_heap_get_name(काष्ठा dma_heap *heap);
+const char *dma_heap_get_name(struct dma_heap *heap);
 
 /**
  * dma_heap_add - adds a heap to dmabuf heaps
- * @exp_info:		inक्रमmation needed to रेजिस्टर this heap
+ * @exp_info:		information needed to register this heap
  */
-काष्ठा dma_heap *dma_heap_add(स्थिर काष्ठा dma_heap_export_info *exp_info);
+struct dma_heap *dma_heap_add(const struct dma_heap_export_info *exp_info);
 
-#पूर्ण_अगर /* _DMA_HEAPS_H */
+#endif /* _DMA_HEAPS_H */

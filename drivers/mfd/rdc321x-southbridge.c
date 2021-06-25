@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * RDC321x MFD southbridge driver
  *
- * Copyright (C) 2007-2010 Florian Fainelli <florian@खोलोwrt.org>
+ * Copyright (C) 2007-2010 Florian Fainelli <florian@openwrt.org>
  * Copyright (C) 2010 Bernhard Loos <bernhardloos@googlemail.com>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/rdc321x.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/pci.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/rdc321x.h>
 
-अटल काष्ठा rdc321x_wdt_pdata rdc321x_wdt_pdata;
+static struct rdc321x_wdt_pdata rdc321x_wdt_pdata;
 
-अटल स्थिर काष्ठा resource rdc321x_wdt_resource[] = अणु
-	अणु
+static const struct resource rdc321x_wdt_resource[] = {
+	{
 		.name	= "wdt-reg",
 		.start	= RDC321X_WDT_CTRL,
 		.end	= RDC321X_WDT_CTRL + 0x3,
 		.flags	= IORESOURCE_IO,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा rdc321x_gpio_pdata rdc321x_gpio_pdata = अणु
+static struct rdc321x_gpio_pdata rdc321x_gpio_pdata = {
 	.max_gpios	= RDC321X_NUM_GPIO,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा resource rdc321x_gpio_resources[] = अणु
-	अणु
+static const struct resource rdc321x_gpio_resources[] = {
+	{
 		.name	= "gpio-reg1",
 		.start	= RDC321X_GPIO_CTRL_REG1,
 		.end	= RDC321X_GPIO_CTRL_REG1 + 0x7,
 		.flags	= IORESOURCE_IO,
-	पूर्ण, अणु
+	}, {
 		.name	= "gpio-reg2",
 		.start	= RDC321X_GPIO_CTRL_REG2,
 		.end	= RDC321X_GPIO_CTRL_REG2 + 0x7,
 		.flags	= IORESOURCE_IO,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा mfd_cell rdc321x_sb_cells[] = अणु
-	अणु
+static const struct mfd_cell rdc321x_sb_cells[] = {
+	{
 		.name		= "rdc321x-wdt",
 		.resources	= rdc321x_wdt_resource,
 		.num_resources	= ARRAY_SIZE(rdc321x_wdt_resource),
-		.platक्रमm_data	= &rdc321x_wdt_pdata,
-		.pdata_size	= माप(rdc321x_wdt_pdata),
-	पूर्ण, अणु
+		.platform_data	= &rdc321x_wdt_pdata,
+		.pdata_size	= sizeof(rdc321x_wdt_pdata),
+	}, {
 		.name		= "rdc321x-gpio",
 		.resources	= rdc321x_gpio_resources,
 		.num_resources	= ARRAY_SIZE(rdc321x_gpio_resources),
-		.platक्रमm_data	= &rdc321x_gpio_pdata,
-		.pdata_size	= माप(rdc321x_gpio_pdata),
-	पूर्ण,
-पूर्ण;
+		.platform_data	= &rdc321x_gpio_pdata,
+		.pdata_size	= sizeof(rdc321x_gpio_pdata),
+	},
+};
 
-अटल पूर्णांक rdc321x_sb_probe(काष्ठा pci_dev *pdev,
-					स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक err;
+static int rdc321x_sb_probe(struct pci_dev *pdev,
+					const struct pci_device_id *ent)
+{
+	int err;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	rdc321x_gpio_pdata.sb_pdev = pdev;
 	rdc321x_wdt_pdata.sb_pdev = pdev;
 
-	वापस devm_mfd_add_devices(&pdev->dev, -1,
+	return devm_mfd_add_devices(&pdev->dev, -1,
 				    rdc321x_sb_cells,
 				    ARRAY_SIZE(rdc321x_sb_cells),
-				    शून्य, 0, शून्य);
-पूर्ण
+				    NULL, 0, NULL);
+}
 
-अटल स्थिर काष्ठा pci_device_id rdc321x_sb_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_RDC, PCI_DEVICE_ID_RDC_R6030) पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id rdc321x_sb_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_RDC, PCI_DEVICE_ID_RDC_R6030) },
+	{}
+};
 MODULE_DEVICE_TABLE(pci, rdc321x_sb_table);
 
-अटल काष्ठा pci_driver rdc321x_sb_driver = अणु
+static struct pci_driver rdc321x_sb_driver = {
 	.name		= "RDC321x Southbridge",
 	.id_table	= rdc321x_sb_table,
 	.probe		= rdc321x_sb_probe,
-पूर्ण;
+};
 
 module_pci_driver(rdc321x_sb_driver);
 

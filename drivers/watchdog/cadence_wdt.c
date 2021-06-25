@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Cadence WDT driver - Used by Xilinx Zynq
  *
@@ -7,432 +6,432 @@
  *
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/clk.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/watchdog.h>
 
-#घोषणा CDNS_WDT_DEFAULT_TIMEOUT	10
+#define CDNS_WDT_DEFAULT_TIMEOUT	10
 /* Supports 1 - 516 sec */
-#घोषणा CDNS_WDT_MIN_TIMEOUT	1
-#घोषणा CDNS_WDT_MAX_TIMEOUT	516
+#define CDNS_WDT_MIN_TIMEOUT	1
+#define CDNS_WDT_MAX_TIMEOUT	516
 
 /* Restart key */
-#घोषणा CDNS_WDT_RESTART_KEY 0x00001999
+#define CDNS_WDT_RESTART_KEY 0x00001999
 
-/* Counter रेजिस्टर access key */
-#घोषणा CDNS_WDT_REGISTER_ACCESS_KEY 0x00920000
+/* Counter register access key */
+#define CDNS_WDT_REGISTER_ACCESS_KEY 0x00920000
 
-/* Counter value भागisor */
-#घोषणा CDNS_WDT_COUNTER_VALUE_DIVISOR 0x1000
+/* Counter value divisor */
+#define CDNS_WDT_COUNTER_VALUE_DIVISOR 0x1000
 
 /* Clock prescaler value and selection */
-#घोषणा CDNS_WDT_PRESCALE_64	64
-#घोषणा CDNS_WDT_PRESCALE_512	512
-#घोषणा CDNS_WDT_PRESCALE_4096	4096
-#घोषणा CDNS_WDT_PRESCALE_SELECT_64	1
-#घोषणा CDNS_WDT_PRESCALE_SELECT_512	2
-#घोषणा CDNS_WDT_PRESCALE_SELECT_4096	3
+#define CDNS_WDT_PRESCALE_64	64
+#define CDNS_WDT_PRESCALE_512	512
+#define CDNS_WDT_PRESCALE_4096	4096
+#define CDNS_WDT_PRESCALE_SELECT_64	1
+#define CDNS_WDT_PRESCALE_SELECT_512	2
+#define CDNS_WDT_PRESCALE_SELECT_4096	3
 
-/* Input घड़ी frequency */
-#घोषणा CDNS_WDT_CLK_10MHZ	10000000
-#घोषणा CDNS_WDT_CLK_75MHZ	75000000
+/* Input clock frequency */
+#define CDNS_WDT_CLK_10MHZ	10000000
+#define CDNS_WDT_CLK_75MHZ	75000000
 
 /* Counter maximum value */
-#घोषणा CDNS_WDT_COUNTER_MAX 0xFFF
+#define CDNS_WDT_COUNTER_MAX 0xFFF
 
-अटल पूर्णांक wdt_समयout;
-अटल पूर्णांक nowayout = WATCHDOG_NOWAYOUT;
+static int wdt_timeout;
+static int nowayout = WATCHDOG_NOWAYOUT;
 
-module_param(wdt_समयout, पूर्णांक, 0644);
-MODULE_PARM_DESC(wdt_समयout,
+module_param(wdt_timeout, int, 0644);
+MODULE_PARM_DESC(wdt_timeout,
 		 "Watchdog time in seconds. (default="
 		 __MODULE_STRING(CDNS_WDT_DEFAULT_TIMEOUT) ")");
 
-module_param(nowayout, पूर्णांक, 0644);
+module_param(nowayout, int, 0644);
 MODULE_PARM_DESC(nowayout,
 		 "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /**
- * काष्ठा cdns_wdt - Watchकरोg device काष्ठाure
+ * struct cdns_wdt - Watchdog device structure
  * @regs: baseaddress of device
  * @rst: reset flag
- * @clk: काष्ठा clk * of a घड़ी source
- * @prescaler: क्रम saving prescaler value
- * @ctrl_clksel: counter घड़ी prescaler selection
- * @io_lock: spinlock क्रम IO रेजिस्टर access
- * @cdns_wdt_device: watchकरोg device काष्ठाure
+ * @clk: struct clk * of a clock source
+ * @prescaler: for saving prescaler value
+ * @ctrl_clksel: counter clock prescaler selection
+ * @io_lock: spinlock for IO register access
+ * @cdns_wdt_device: watchdog device structure
  *
- * Structure containing parameters specअगरic to cadence watchकरोg.
+ * Structure containing parameters specific to cadence watchdog.
  */
-काष्ठा cdns_wdt अणु
-	व्योम __iomem		*regs;
+struct cdns_wdt {
+	void __iomem		*regs;
 	bool			rst;
-	काष्ठा clk		*clk;
+	struct clk		*clk;
 	u32			prescaler;
 	u32			ctrl_clksel;
 	spinlock_t		io_lock;
-	काष्ठा watchकरोg_device	cdns_wdt_device;
-पूर्ण;
+	struct watchdog_device	cdns_wdt_device;
+};
 
 /* Write access to Registers */
-अटल अंतरभूत व्योम cdns_wdt_ग_लिखोreg(काष्ठा cdns_wdt *wdt, u32 offset, u32 val)
-अणु
-	ग_लिखोl_relaxed(val, wdt->regs + offset);
-पूर्ण
+static inline void cdns_wdt_writereg(struct cdns_wdt *wdt, u32 offset, u32 val)
+{
+	writel_relaxed(val, wdt->regs + offset);
+}
 
 /*************************Register Map**************************************/
 
-/* Register Offsets क्रम the WDT */
-#घोषणा CDNS_WDT_ZMR_OFFSET	0x0	/* Zero Mode Register */
-#घोषणा CDNS_WDT_CCR_OFFSET	0x4	/* Counter Control Register */
-#घोषणा CDNS_WDT_RESTART_OFFSET	0x8	/* Restart Register */
-#घोषणा CDNS_WDT_SR_OFFSET	0xC	/* Status Register */
+/* Register Offsets for the WDT */
+#define CDNS_WDT_ZMR_OFFSET	0x0	/* Zero Mode Register */
+#define CDNS_WDT_CCR_OFFSET	0x4	/* Counter Control Register */
+#define CDNS_WDT_RESTART_OFFSET	0x8	/* Restart Register */
+#define CDNS_WDT_SR_OFFSET	0xC	/* Status Register */
 
 /*
- * Zero Mode Register - This रेजिस्टर controls how the समय out is indicated
- * and also contains the access code to allow ग_लिखोs to the रेजिस्टर (0xABC).
+ * Zero Mode Register - This register controls how the time out is indicated
+ * and also contains the access code to allow writes to the register (0xABC).
  */
-#घोषणा CDNS_WDT_ZMR_WDEN_MASK	0x00000001 /* Enable the WDT */
-#घोषणा CDNS_WDT_ZMR_RSTEN_MASK	0x00000002 /* Enable the reset output */
-#घोषणा CDNS_WDT_ZMR_IRQEN_MASK	0x00000004 /* Enable IRQ output */
-#घोषणा CDNS_WDT_ZMR_RSTLEN_16	0x00000030 /* Reset pulse of 16 pclk cycles */
-#घोषणा CDNS_WDT_ZMR_ZKEY_VAL	0x00ABC000 /* Access key, 0xABC << 12 */
+#define CDNS_WDT_ZMR_WDEN_MASK	0x00000001 /* Enable the WDT */
+#define CDNS_WDT_ZMR_RSTEN_MASK	0x00000002 /* Enable the reset output */
+#define CDNS_WDT_ZMR_IRQEN_MASK	0x00000004 /* Enable IRQ output */
+#define CDNS_WDT_ZMR_RSTLEN_16	0x00000030 /* Reset pulse of 16 pclk cycles */
+#define CDNS_WDT_ZMR_ZKEY_VAL	0x00ABC000 /* Access key, 0xABC << 12 */
 /*
- * Counter Control रेजिस्टर - This रेजिस्टर controls how fast the समयr runs
- * and the reset value and also contains the access code to allow ग_लिखोs to
- * the रेजिस्टर.
+ * Counter Control register - This register controls how fast the timer runs
+ * and the reset value and also contains the access code to allow writes to
+ * the register.
  */
-#घोषणा CDNS_WDT_CCR_CRV_MASK	0x00003FFC /* Counter reset value */
+#define CDNS_WDT_CCR_CRV_MASK	0x00003FFC /* Counter reset value */
 
 /**
- * cdns_wdt_stop - Stop the watchकरोg.
+ * cdns_wdt_stop - Stop the watchdog.
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
- * Read the contents of the ZMR रेजिस्टर, clear the WDEN bit
- * in the रेजिस्टर and set the access key क्रम successful ग_लिखो.
+ * Read the contents of the ZMR register, clear the WDEN bit
+ * in the register and set the access key for successful write.
  *
  * Return: always 0
  */
-अटल पूर्णांक cdns_wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा cdns_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int cdns_wdt_stop(struct watchdog_device *wdd)
+{
+	struct cdns_wdt *wdt = watchdog_get_drvdata(wdd);
 
 	spin_lock(&wdt->io_lock);
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_ZMR_OFFSET,
+	cdns_wdt_writereg(wdt, CDNS_WDT_ZMR_OFFSET,
 			  CDNS_WDT_ZMR_ZKEY_VAL & (~CDNS_WDT_ZMR_WDEN_MASK));
 	spin_unlock(&wdt->io_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cdns_wdt_reload - Reload the watchकरोg समयr (i.e. pat the watchकरोg).
+ * cdns_wdt_reload - Reload the watchdog timer (i.e. pat the watchdog).
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
- * Write the restart key value (0x00001999) to the restart रेजिस्टर.
+ * Write the restart key value (0x00001999) to the restart register.
  *
  * Return: always 0
  */
-अटल पूर्णांक cdns_wdt_reload(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा cdns_wdt *wdt = watchकरोg_get_drvdata(wdd);
+static int cdns_wdt_reload(struct watchdog_device *wdd)
+{
+	struct cdns_wdt *wdt = watchdog_get_drvdata(wdd);
 
 	spin_lock(&wdt->io_lock);
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_RESTART_OFFSET,
+	cdns_wdt_writereg(wdt, CDNS_WDT_RESTART_OFFSET,
 			  CDNS_WDT_RESTART_KEY);
 	spin_unlock(&wdt->io_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cdns_wdt_start - Enable and start the watchकरोg.
+ * cdns_wdt_start - Enable and start the watchdog.
  *
- * @wdd: watchकरोg device
+ * @wdd: watchdog device
  *
- * The counter value is calculated according to the क्रमmula:
- *		calculated count = (समयout * घड़ी) / prescaler + 1.
- * The calculated count is भागided by 0x1000 to obtain the field value
- * to ग_लिखो to counter control रेजिस्टर.
+ * The counter value is calculated according to the formula:
+ *		calculated count = (timeout * clock) / prescaler + 1.
+ * The calculated count is divided by 0x1000 to obtain the field value
+ * to write to counter control register.
  * Clears the contents of prescaler and counter reset value. Sets the
  * prescaler to 4096 and the calculated count and access key
- * to ग_लिखो to CCR Register.
- * Sets the WDT (WDEN bit) and either the Reset संकेत(RSTEN bit)
- * or Interrupt संकेत(IRQEN) with a specअगरied cycles and the access
- * key to ग_लिखो to ZMR Register.
+ * to write to CCR Register.
+ * Sets the WDT (WDEN bit) and either the Reset signal(RSTEN bit)
+ * or Interrupt signal(IRQEN) with a specified cycles and the access
+ * key to write to ZMR Register.
  *
  * Return: always 0
  */
-अटल पूर्णांक cdns_wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा cdns_wdt *wdt = watchकरोg_get_drvdata(wdd);
-	अचिन्हित पूर्णांक data = 0;
-	अचिन्हित लघु count;
-	अचिन्हित दीर्घ घड़ी_f = clk_get_rate(wdt->clk);
+static int cdns_wdt_start(struct watchdog_device *wdd)
+{
+	struct cdns_wdt *wdt = watchdog_get_drvdata(wdd);
+	unsigned int data = 0;
+	unsigned short count;
+	unsigned long clock_f = clk_get_rate(wdt->clk);
 
 	/*
-	 * Counter value भागisor to obtain the value of
-	 * counter reset to be written to control रेजिस्टर.
+	 * Counter value divisor to obtain the value of
+	 * counter reset to be written to control register.
 	 */
-	count = (wdd->समयout * (घड़ी_f / wdt->prescaler)) /
+	count = (wdd->timeout * (clock_f / wdt->prescaler)) /
 		 CDNS_WDT_COUNTER_VALUE_DIVISOR + 1;
 
-	अगर (count > CDNS_WDT_COUNTER_MAX)
+	if (count > CDNS_WDT_COUNTER_MAX)
 		count = CDNS_WDT_COUNTER_MAX;
 
 	spin_lock(&wdt->io_lock);
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_ZMR_OFFSET,
+	cdns_wdt_writereg(wdt, CDNS_WDT_ZMR_OFFSET,
 			  CDNS_WDT_ZMR_ZKEY_VAL);
 
 	count = (count << 2) & CDNS_WDT_CCR_CRV_MASK;
 
-	/* Write counter access key first to be able ग_लिखो to रेजिस्टर */
+	/* Write counter access key first to be able write to register */
 	data = count | CDNS_WDT_REGISTER_ACCESS_KEY | wdt->ctrl_clksel;
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_CCR_OFFSET, data);
+	cdns_wdt_writereg(wdt, CDNS_WDT_CCR_OFFSET, data);
 	data = CDNS_WDT_ZMR_WDEN_MASK | CDNS_WDT_ZMR_RSTLEN_16 |
 	       CDNS_WDT_ZMR_ZKEY_VAL;
 
-	/* Reset on समयout अगर specअगरied in device tree. */
-	अगर (wdt->rst) अणु
+	/* Reset on timeout if specified in device tree. */
+	if (wdt->rst) {
 		data |= CDNS_WDT_ZMR_RSTEN_MASK;
 		data &= ~CDNS_WDT_ZMR_IRQEN_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		data &= ~CDNS_WDT_ZMR_RSTEN_MASK;
 		data |= CDNS_WDT_ZMR_IRQEN_MASK;
-	पूर्ण
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_ZMR_OFFSET, data);
-	cdns_wdt_ग_लिखोreg(wdt, CDNS_WDT_RESTART_OFFSET,
+	}
+	cdns_wdt_writereg(wdt, CDNS_WDT_ZMR_OFFSET, data);
+	cdns_wdt_writereg(wdt, CDNS_WDT_RESTART_OFFSET,
 			  CDNS_WDT_RESTART_KEY);
 	spin_unlock(&wdt->io_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * cdns_wdt_समय_रखोout - Set a new समयout value क्रम the watchकरोg device.
+ * cdns_wdt_settimeout - Set a new timeout value for the watchdog device.
  *
- * @wdd: watchकरोg device
- * @new_समय: new समयout value that needs to be set
+ * @wdd: watchdog device
+ * @new_time: new timeout value that needs to be set
  * Return: 0 on success
  *
- * Update the watchकरोg_device समयout with new value which is used when
+ * Update the watchdog_device timeout with new value which is used when
  * cdns_wdt_start is called.
  */
-अटल पूर्णांक cdns_wdt_समय_रखोout(काष्ठा watchकरोg_device *wdd,
-			       अचिन्हित पूर्णांक new_समय)
-अणु
-	wdd->समयout = new_समय;
+static int cdns_wdt_settimeout(struct watchdog_device *wdd,
+			       unsigned int new_time)
+{
+	wdd->timeout = new_time;
 
-	वापस cdns_wdt_start(wdd);
-पूर्ण
+	return cdns_wdt_start(wdd);
+}
 
 /**
- * cdns_wdt_irq_handler - Notअगरies of watchकरोg समयout.
+ * cdns_wdt_irq_handler - Notifies of watchdog timeout.
  *
- * @irq: पूर्णांकerrupt number
- * @dev_id: poपूर्णांकer to a platक्रमm device काष्ठाure
+ * @irq: interrupt number
+ * @dev_id: pointer to a platform device structure
  * Return: IRQ_HANDLED
  *
- * The handler is invoked when the watchकरोg बार out and a
- * reset on समयout has not been enabled.
+ * The handler is invoked when the watchdog times out and a
+ * reset on timeout has not been enabled.
  */
-अटल irqवापस_t cdns_wdt_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
+static irqreturn_t cdns_wdt_irq_handler(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
 
 	dev_info(&pdev->dev,
 		 "Watchdog timed out. Internal reset not enabled\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Info काष्ठाure used to indicate the features supported by the device
- * to the upper layers. This is defined in watchकरोg.h header file.
+ * Info structure used to indicate the features supported by the device
+ * to the upper layers. This is defined in watchdog.h header file.
  */
-अटल स्थिर काष्ठा watchकरोg_info cdns_wdt_info = अणु
+static const struct watchdog_info cdns_wdt_info = {
 	.identity	= "cdns_wdt watchdog",
 	.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE,
-पूर्ण;
+};
 
-/* Watchकरोg Core Ops */
-अटल स्थिर काष्ठा watchकरोg_ops cdns_wdt_ops = अणु
+/* Watchdog Core Ops */
+static const struct watchdog_ops cdns_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = cdns_wdt_start,
 	.stop = cdns_wdt_stop,
 	.ping = cdns_wdt_reload,
-	.set_समयout = cdns_wdt_समय_रखोout,
-पूर्ण;
+	.set_timeout = cdns_wdt_settimeout,
+};
 
-अटल व्योम cdns_clk_disable_unprepare(व्योम *data)
-अणु
+static void cdns_clk_disable_unprepare(void *data)
+{
 	clk_disable_unprepare(data);
-पूर्ण
+}
 
-/************************Platक्रमm Operations*****************************/
+/************************Platform Operations*****************************/
 /**
- * cdns_wdt_probe - Probe call क्रम the device.
+ * cdns_wdt_probe - Probe call for the device.
  *
- * @pdev: handle to the platक्रमm device काष्ठाure.
+ * @pdev: handle to the platform device structure.
  * Return: 0 on success, negative error otherwise.
  *
- * It करोes all the memory allocation and registration क्रम the device.
+ * It does all the memory allocation and registration for the device.
  */
-अटल पूर्णांक cdns_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret, irq;
-	अचिन्हित दीर्घ घड़ी_f;
-	काष्ठा cdns_wdt *wdt;
-	काष्ठा watchकरोg_device *cdns_wdt_device;
+static int cdns_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int ret, irq;
+	unsigned long clock_f;
+	struct cdns_wdt *wdt;
+	struct watchdog_device *cdns_wdt_device;
 
-	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
 	cdns_wdt_device = &wdt->cdns_wdt_device;
 	cdns_wdt_device->info = &cdns_wdt_info;
 	cdns_wdt_device->ops = &cdns_wdt_ops;
-	cdns_wdt_device->समयout = CDNS_WDT_DEFAULT_TIMEOUT;
-	cdns_wdt_device->min_समयout = CDNS_WDT_MIN_TIMEOUT;
-	cdns_wdt_device->max_समयout = CDNS_WDT_MAX_TIMEOUT;
+	cdns_wdt_device->timeout = CDNS_WDT_DEFAULT_TIMEOUT;
+	cdns_wdt_device->min_timeout = CDNS_WDT_MIN_TIMEOUT;
+	cdns_wdt_device->max_timeout = CDNS_WDT_MAX_TIMEOUT;
 
-	wdt->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wdt->regs))
-		वापस PTR_ERR(wdt->regs);
+	wdt->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wdt->regs))
+		return PTR_ERR(wdt->regs);
 
-	/* Register the पूर्णांकerrupt */
-	wdt->rst = of_property_पढ़ो_bool(dev->of_node, "reset-on-timeout");
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (!wdt->rst && irq >= 0) अणु
+	/* Register the interrupt */
+	wdt->rst = of_property_read_bool(dev->of_node, "reset-on-timeout");
+	irq = platform_get_irq(pdev, 0);
+	if (!wdt->rst && irq >= 0) {
 		ret = devm_request_irq(dev, irq, cdns_wdt_irq_handler, 0,
 				       pdev->name, pdev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev,
 				"cannot register interrupt handler err=%d\n",
 				ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* Initialize the members of cdns_wdt काष्ठाure */
+	/* Initialize the members of cdns_wdt structure */
 	cdns_wdt_device->parent = dev;
 
-	watchकरोg_init_समयout(cdns_wdt_device, wdt_समयout, dev);
-	watchकरोg_set_nowayout(cdns_wdt_device, nowayout);
-	watchकरोg_stop_on_reboot(cdns_wdt_device);
-	watchकरोg_set_drvdata(cdns_wdt_device, wdt);
+	watchdog_init_timeout(cdns_wdt_device, wdt_timeout, dev);
+	watchdog_set_nowayout(cdns_wdt_device, nowayout);
+	watchdog_stop_on_reboot(cdns_wdt_device);
+	watchdog_set_drvdata(cdns_wdt_device, wdt);
 
-	wdt->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(wdt->clk))
-		वापस dev_err_probe(dev, PTR_ERR(wdt->clk),
+	wdt->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(wdt->clk))
+		return dev_err_probe(dev, PTR_ERR(wdt->clk),
 				     "input clock not found\n");
 
 	ret = clk_prepare_enable(wdt->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = devm_add_action_or_reset(dev, cdns_clk_disable_unprepare,
 				       wdt->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	घड़ी_f = clk_get_rate(wdt->clk);
-	अगर (घड़ी_f <= CDNS_WDT_CLK_75MHZ) अणु
+	clock_f = clk_get_rate(wdt->clk);
+	if (clock_f <= CDNS_WDT_CLK_75MHZ) {
 		wdt->prescaler = CDNS_WDT_PRESCALE_512;
 		wdt->ctrl_clksel = CDNS_WDT_PRESCALE_SELECT_512;
-	पूर्ण अन्यथा अणु
+	} else {
 		wdt->prescaler = CDNS_WDT_PRESCALE_4096;
 		wdt->ctrl_clksel = CDNS_WDT_PRESCALE_SELECT_4096;
-	पूर्ण
+	}
 
 	spin_lock_init(&wdt->io_lock);
 
-	watchकरोg_stop_on_reboot(cdns_wdt_device);
-	watchकरोg_stop_on_unरेजिस्टर(cdns_wdt_device);
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, cdns_wdt_device);
-	अगर (ret)
-		वापस ret;
-	platक्रमm_set_drvdata(pdev, wdt);
+	watchdog_stop_on_reboot(cdns_wdt_device);
+	watchdog_stop_on_unregister(cdns_wdt_device);
+	ret = devm_watchdog_register_device(dev, cdns_wdt_device);
+	if (ret)
+		return ret;
+	platform_set_drvdata(pdev, wdt);
 
 	dev_info(dev, "Xilinx Watchdog Timer with timeout %ds%s\n",
-		 cdns_wdt_device->समयout, nowayout ? ", nowayout" : "");
+		 cdns_wdt_device->timeout, nowayout ? ", nowayout" : "");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * cdns_wdt_suspend - Stop the device.
  *
- * @dev: handle to the device काष्ठाure.
+ * @dev: handle to the device structure.
  * Return: 0 always.
  */
-अटल पूर्णांक __maybe_unused cdns_wdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा cdns_wdt *wdt = dev_get_drvdata(dev);
+static int __maybe_unused cdns_wdt_suspend(struct device *dev)
+{
+	struct cdns_wdt *wdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&wdt->cdns_wdt_device)) अणु
+	if (watchdog_active(&wdt->cdns_wdt_device)) {
 		cdns_wdt_stop(&wdt->cdns_wdt_device);
 		clk_disable_unprepare(wdt->clk);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * cdns_wdt_resume - Resume the device.
  *
- * @dev: handle to the device काष्ठाure.
- * Return: 0 on success, त्रुटि_सं otherwise.
+ * @dev: handle to the device structure.
+ * Return: 0 on success, errno otherwise.
  */
-अटल पूर्णांक __maybe_unused cdns_wdt_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा cdns_wdt *wdt = dev_get_drvdata(dev);
+static int __maybe_unused cdns_wdt_resume(struct device *dev)
+{
+	int ret;
+	struct cdns_wdt *wdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&wdt->cdns_wdt_device)) अणु
+	if (watchdog_active(&wdt->cdns_wdt_device)) {
 		ret = clk_prepare_enable(wdt->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "unable to enable clock\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		cdns_wdt_start(&wdt->cdns_wdt_device);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(cdns_wdt_pm_ops, cdns_wdt_suspend, cdns_wdt_resume);
+static SIMPLE_DEV_PM_OPS(cdns_wdt_pm_ops, cdns_wdt_suspend, cdns_wdt_resume);
 
-अटल स्थिर काष्ठा of_device_id cdns_wdt_of_match[] = अणु
-	अणु .compatible = "cdns,wdt-r1p2", पूर्ण,
-	अणु /* end of table */ पूर्ण
-पूर्ण;
+static const struct of_device_id cdns_wdt_of_match[] = {
+	{ .compatible = "cdns,wdt-r1p2", },
+	{ /* end of table */ }
+};
 MODULE_DEVICE_TABLE(of, cdns_wdt_of_match);
 
 /* Driver Structure */
-अटल काष्ठा platक्रमm_driver cdns_wdt_driver = अणु
+static struct platform_driver cdns_wdt_driver = {
 	.probe		= cdns_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "cdns-wdt",
 		.of_match_table = cdns_wdt_of_match,
 		.pm	= &cdns_wdt_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cdns_wdt_driver);
+module_platform_driver(cdns_wdt_driver);
 
 MODULE_AUTHOR("Xilinx, Inc.");
 MODULE_DESCRIPTION("Watchdog driver for Cadence WDT");

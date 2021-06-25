@@ -1,204 +1,203 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * tps65910.c  --  TI TPS6591x chip family multi-function driver
  *
  * Copyright 2010 Texas Instruments Inc.
  *
  * Author: Graeme Gregory <gg@slimlogic.co.uk>
- * Author: Jorge Eduarकरो Candelaria <jedu@slimlogic.co.uk>
+ * Author: Jorge Eduardo Candelaria <jedu@slimlogic.co.uk>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/tps65910.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/mfd/core.h>
+#include <linux/regmap.h>
+#include <linux/mfd/tps65910.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-अटल स्थिर काष्ठा resource rtc_resources[] = अणु
-	अणु
+static const struct resource rtc_resources[] = {
+	{
 		.start  = TPS65910_IRQ_RTC_ALARM,
 		.end    = TPS65910_IRQ_RTC_ALARM,
 		.flags  = IORESOURCE_IRQ,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा mfd_cell tps65910s[] = अणु
-	अणु
+static const struct mfd_cell tps65910s[] = {
+	{
 		.name = "tps65910-gpio",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "tps65910-pmic",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "tps65910-rtc",
 		.num_resources = ARRAY_SIZE(rtc_resources),
 		.resources = &rtc_resources[0],
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "tps65910-power",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
-अटल स्थिर काष्ठा regmap_irq tps65911_irqs[] = अणु
+static const struct regmap_irq tps65911_irqs[] = {
 	/* INT_STS */
-	[TPS65911_IRQ_PWRHOLD_F] = अणु
+	[TPS65911_IRQ_PWRHOLD_F] = {
 		.mask = INT_MSK_PWRHOLD_F_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_VBAT_VMHI] = अणु
+	},
+	[TPS65911_IRQ_VBAT_VMHI] = {
 		.mask = INT_MSK_VMBHI_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_PWRON] = अणु
+	},
+	[TPS65911_IRQ_PWRON] = {
 		.mask = INT_MSK_PWRON_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_PWRON_LP] = अणु
+	},
+	[TPS65911_IRQ_PWRON_LP] = {
 		.mask = INT_MSK_PWRON_LP_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_PWRHOLD_R] = अणु
+	},
+	[TPS65911_IRQ_PWRHOLD_R] = {
 		.mask = INT_MSK_PWRHOLD_R_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_HOTDIE] = अणु
+	},
+	[TPS65911_IRQ_HOTDIE] = {
 		.mask = INT_MSK_HOTDIE_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_RTC_ALARM] = अणु
+	},
+	[TPS65911_IRQ_RTC_ALARM] = {
 		.mask = INT_MSK_RTC_ALARM_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65911_IRQ_RTC_PERIOD] = अणु
+	},
+	[TPS65911_IRQ_RTC_PERIOD] = {
 		.mask = INT_MSK_RTC_PERIOD_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
+	},
 
 	/* INT_STS2 */
-	[TPS65911_IRQ_GPIO0_R] = अणु
+	[TPS65911_IRQ_GPIO0_R] = {
 		.mask = INT_MSK2_GPIO0_R_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO0_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO0_F] = {
 		.mask = INT_MSK2_GPIO0_F_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO1_R] = अणु
+	},
+	[TPS65911_IRQ_GPIO1_R] = {
 		.mask = INT_MSK2_GPIO1_R_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO1_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO1_F] = {
 		.mask = INT_MSK2_GPIO1_F_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO2_R] = अणु
+	},
+	[TPS65911_IRQ_GPIO2_R] = {
 		.mask = INT_MSK2_GPIO2_R_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO2_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO2_F] = {
 		.mask = INT_MSK2_GPIO2_F_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO3_R] = अणु
+	},
+	[TPS65911_IRQ_GPIO3_R] = {
 		.mask = INT_MSK2_GPIO3_R_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO3_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO3_F] = {
 		.mask = INT_MSK2_GPIO3_F_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
+	},
 
 	/* INT_STS2 */
-	[TPS65911_IRQ_GPIO4_R] = अणु
+	[TPS65911_IRQ_GPIO4_R] = {
 		.mask = INT_MSK3_GPIO4_R_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO4_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO4_F] = {
 		.mask = INT_MSK3_GPIO4_F_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO5_R] = अणु
+	},
+	[TPS65911_IRQ_GPIO5_R] = {
 		.mask = INT_MSK3_GPIO5_R_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_GPIO5_F] = अणु
+	},
+	[TPS65911_IRQ_GPIO5_F] = {
 		.mask = INT_MSK3_GPIO5_F_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_WTCHDG] = अणु
+	},
+	[TPS65911_IRQ_WTCHDG] = {
 		.mask = INT_MSK3_WTCHDG_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_VMBCH2_H] = अणु
+	},
+	[TPS65911_IRQ_VMBCH2_H] = {
 		.mask = INT_MSK3_VMBCH2_H_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_VMBCH2_L] = अणु
+	},
+	[TPS65911_IRQ_VMBCH2_L] = {
 		.mask = INT_MSK3_VMBCH2_L_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-	[TPS65911_IRQ_PWRDN] = अणु
+	},
+	[TPS65911_IRQ_PWRDN] = {
 		.mask = INT_MSK3_PWRDN_IT_MSK_MASK,
 		.reg_offset = 2,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा regmap_irq tps65910_irqs[] = अणु
+static const struct regmap_irq tps65910_irqs[] = {
 	/* INT_STS */
-	[TPS65910_IRQ_VBAT_VMBDCH] = अणु
+	[TPS65910_IRQ_VBAT_VMBDCH] = {
 		.mask = TPS65910_INT_MSK_VMBDCH_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_VBAT_VMHI] = अणु
+	},
+	[TPS65910_IRQ_VBAT_VMHI] = {
 		.mask = TPS65910_INT_MSK_VMBHI_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_PWRON] = अणु
+	},
+	[TPS65910_IRQ_PWRON] = {
 		.mask = TPS65910_INT_MSK_PWRON_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_PWRON_LP] = अणु
+	},
+	[TPS65910_IRQ_PWRON_LP] = {
 		.mask = TPS65910_INT_MSK_PWRON_LP_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_PWRHOLD] = अणु
+	},
+	[TPS65910_IRQ_PWRHOLD] = {
 		.mask = TPS65910_INT_MSK_PWRHOLD_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_HOTDIE] = अणु
+	},
+	[TPS65910_IRQ_HOTDIE] = {
 		.mask = TPS65910_INT_MSK_HOTDIE_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_RTC_ALARM] = अणु
+	},
+	[TPS65910_IRQ_RTC_ALARM] = {
 		.mask = TPS65910_INT_MSK_RTC_ALARM_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
-	[TPS65910_IRQ_RTC_PERIOD] = अणु
+	},
+	[TPS65910_IRQ_RTC_PERIOD] = {
 		.mask = TPS65910_INT_MSK_RTC_PERIOD_IT_MSK_MASK,
 		.reg_offset = 0,
-	पूर्ण,
+	},
 
 	/* INT_STS2 */
-	[TPS65910_IRQ_GPIO_R] = अणु
+	[TPS65910_IRQ_GPIO_R] = {
 		.mask = TPS65910_INT_MSK2_GPIO0_F_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-	[TPS65910_IRQ_GPIO_F] = अणु
+	},
+	[TPS65910_IRQ_GPIO_F] = {
 		.mask = TPS65910_INT_MSK2_GPIO0_R_IT_MSK_MASK,
 		.reg_offset = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा regmap_irq_chip tps65911_irq_chip = अणु
+static struct regmap_irq_chip tps65911_irq_chip = {
 	.name = "tps65910",
 	.irqs = tps65911_irqs,
 	.num_irqs = ARRAY_SIZE(tps65911_irqs),
@@ -207,9 +206,9 @@
 	.status_base = TPS65910_INT_STS,
 	.mask_base = TPS65910_INT_MSK,
 	.ack_base = TPS65910_INT_STS,
-पूर्ण;
+};
 
-अटल काष्ठा regmap_irq_chip tps65910_irq_chip = अणु
+static struct regmap_irq_chip tps65910_irq_chip = {
 	.name = "tps65910",
 	.irqs = tps65910_irqs,
 	.num_irqs = ARRAY_SIZE(tps65910_irqs),
@@ -218,266 +217,266 @@
 	.status_base = TPS65910_INT_STS,
 	.mask_base = TPS65910_INT_MSK,
 	.ack_base = TPS65910_INT_STS,
-पूर्ण;
+};
 
-अटल पूर्णांक tps65910_irq_init(काष्ठा tps65910 *tps65910, पूर्णांक irq,
-		    काष्ठा tps65910_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
-	अटल काष्ठा regmap_irq_chip *tps6591x_irqs_chip;
+static int tps65910_irq_init(struct tps65910 *tps65910, int irq,
+		    struct tps65910_platform_data *pdata)
+{
+	int ret;
+	static struct regmap_irq_chip *tps6591x_irqs_chip;
 
-	अगर (!irq) अणु
+	if (!irq) {
 		dev_warn(tps65910->dev, "No interrupt support, no core IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_warn(tps65910->dev, "No interrupt support, no pdata\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (tps65910_chip_id(tps65910)) अणु
-	हाल TPS65910:
+	switch (tps65910_chip_id(tps65910)) {
+	case TPS65910:
 		tps6591x_irqs_chip = &tps65910_irq_chip;
-		अवरोध;
-	हाल TPS65911:
+		break;
+	case TPS65911:
 		tps6591x_irqs_chip = &tps65911_irq_chip;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	tps65910->chip_irq = irq;
 	ret = devm_regmap_add_irq_chip(tps65910->dev, tps65910->regmap,
 				       tps65910->chip_irq,
 				       IRQF_ONESHOT, pdata->irq_base,
 				       tps6591x_irqs_chip, &tps65910->irq_data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(tps65910->dev, "Failed to add irq_chip %d\n", ret);
 		tps65910->chip_irq = 0;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल bool is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा tps65910 *tps65910 = dev_get_drvdata(dev);
+static bool is_volatile_reg(struct device *dev, unsigned int reg)
+{
+	struct tps65910 *tps65910 = dev_get_drvdata(dev);
 
 	/*
-	 * Caching all regulator रेजिस्टरs.
-	 * All regualator रेजिस्टर address range is same क्रम
+	 * Caching all regulator registers.
+	 * All regualator register address range is same for
 	 * TPS65910 and TPS65911
 	 */
-	अगर ((reg >= TPS65910_VIO) && (reg <= TPS65910_VDAC)) अणु
-		/* Check क्रम non-existing रेजिस्टर */
-		अगर (tps65910_chip_id(tps65910) == TPS65910)
-			अगर ((reg == TPS65911_VDDCTRL_OP) ||
+	if ((reg >= TPS65910_VIO) && (reg <= TPS65910_VDAC)) {
+		/* Check for non-existing register */
+		if (tps65910_chip_id(tps65910) == TPS65910)
+			if ((reg == TPS65911_VDDCTRL_OP) ||
 				(reg == TPS65911_VDDCTRL_SR))
-				वापस true;
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+				return true;
+		return false;
+	}
+	return true;
+}
 
-अटल स्थिर काष्ठा regmap_config tps65910_regmap_config = अणु
+static const struct regmap_config tps65910_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.अस्थिर_reg = is_अस्थिर_reg,
-	.max_रेजिस्टर = TPS65910_MAX_REGISTER - 1,
+	.volatile_reg = is_volatile_reg,
+	.max_register = TPS65910_MAX_REGISTER - 1,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
-अटल पूर्णांक tps65910_ck32k_init(काष्ठा tps65910 *tps65910,
-					काष्ठा tps65910_board *pmic_pdata)
-अणु
-	पूर्णांक ret;
+static int tps65910_ck32k_init(struct tps65910 *tps65910,
+					struct tps65910_board *pmic_pdata)
+{
+	int ret;
 
-	अगर (!pmic_pdata->en_ck32k_xtal)
-		वापस 0;
+	if (!pmic_pdata->en_ck32k_xtal)
+		return 0;
 
 	ret = regmap_clear_bits(tps65910->regmap, TPS65910_DEVCTRL,
 				DEVCTRL_CK32K_CTRL_MASK);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(tps65910->dev, "clear ck32k_ctrl failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tps65910_sleepinit(काष्ठा tps65910 *tps65910,
-		काष्ठा tps65910_board *pmic_pdata)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक ret;
+static int tps65910_sleepinit(struct tps65910 *tps65910,
+		struct tps65910_board *pmic_pdata)
+{
+	struct device *dev;
+	int ret;
 
-	अगर (!pmic_pdata->en_dev_slp)
-		वापस 0;
+	if (!pmic_pdata->en_dev_slp)
+		return 0;
 
 	dev = tps65910->dev;
 
 	/* enabling SLEEP device state */
 	ret = regmap_set_bits(tps65910->regmap, TPS65910_DEVCTRL,
 			      DEVCTRL_DEV_SLP_MASK);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "set dev_slp failed: %d\n", ret);
-		जाओ err_sleep_init;
-	पूर्ण
+		goto err_sleep_init;
+	}
 
-	अगर (pmic_pdata->slp_keepon.therm_keepon) अणु
+	if (pmic_pdata->slp_keepon.therm_keepon) {
 		ret = regmap_set_bits(tps65910->regmap,
 				      TPS65910_SLEEP_KEEP_RES_ON,
 				      SLEEP_KEEP_RES_ON_THERM_KEEPON_MASK);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "set therm_keepon failed: %d\n", ret);
-			जाओ disable_dev_slp;
-		पूर्ण
-	पूर्ण
+			goto disable_dev_slp;
+		}
+	}
 
-	अगर (pmic_pdata->slp_keepon.clkout32k_keepon) अणु
+	if (pmic_pdata->slp_keepon.clkout32k_keepon) {
 		ret = regmap_set_bits(tps65910->regmap,
 				      TPS65910_SLEEP_KEEP_RES_ON,
 				      SLEEP_KEEP_RES_ON_CLKOUT32K_KEEPON_MASK);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "set clkout32k_keepon failed: %d\n", ret);
-			जाओ disable_dev_slp;
-		पूर्ण
-	पूर्ण
+			goto disable_dev_slp;
+		}
+	}
 
-	अगर (pmic_pdata->slp_keepon.i2chs_keepon) अणु
+	if (pmic_pdata->slp_keepon.i2chs_keepon) {
 		ret = regmap_set_bits(tps65910->regmap,
 				      TPS65910_SLEEP_KEEP_RES_ON,
 				      SLEEP_KEEP_RES_ON_I2CHS_KEEPON_MASK);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "set i2chs_keepon failed: %d\n", ret);
-			जाओ disable_dev_slp;
-		पूर्ण
-	पूर्ण
+			goto disable_dev_slp;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 disable_dev_slp:
 	regmap_clear_bits(tps65910->regmap, TPS65910_DEVCTRL,
 			  DEVCTRL_DEV_SLP_MASK);
 
 err_sleep_init:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id tps65910_of_match[] = अणु
-	अणु .compatible = "ti,tps65910", .data = (व्योम *)TPS65910पूर्ण,
-	अणु .compatible = "ti,tps65911", .data = (व्योम *)TPS65911पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id tps65910_of_match[] = {
+	{ .compatible = "ti,tps65910", .data = (void *)TPS65910},
+	{ .compatible = "ti,tps65911", .data = (void *)TPS65911},
+	{ },
+};
 
-अटल काष्ठा tps65910_board *tps65910_parse_dt(काष्ठा i2c_client *client,
-						अचिन्हित दीर्घ *chip_id)
-अणु
-	काष्ठा device_node *np = client->dev.of_node;
-	काष्ठा tps65910_board *board_info;
-	अचिन्हित पूर्णांक prop;
-	स्थिर काष्ठा of_device_id *match;
-	पूर्णांक ret;
+static struct tps65910_board *tps65910_parse_dt(struct i2c_client *client,
+						unsigned long *chip_id)
+{
+	struct device_node *np = client->dev.of_node;
+	struct tps65910_board *board_info;
+	unsigned int prop;
+	const struct of_device_id *match;
+	int ret;
 
 	match = of_match_device(tps65910_of_match, &client->dev);
-	अगर (!match) अणु
+	if (!match) {
 		dev_err(&client->dev, "Failed to find matching dt id\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	*chip_id  = (अचिन्हित दीर्घ)match->data;
+	*chip_id  = (unsigned long)match->data;
 
-	board_info = devm_kzalloc(&client->dev, माप(*board_info),
+	board_info = devm_kzalloc(&client->dev, sizeof(*board_info),
 			GFP_KERNEL);
-	अगर (!board_info)
-		वापस शून्य;
+	if (!board_info)
+		return NULL;
 
-	ret = of_property_पढ़ो_u32(np, "ti,vmbch-threshold", &prop);
-	अगर (!ret)
+	ret = of_property_read_u32(np, "ti,vmbch-threshold", &prop);
+	if (!ret)
 		board_info->vmbch_threshold = prop;
 
-	ret = of_property_पढ़ो_u32(np, "ti,vmbch2-threshold", &prop);
-	अगर (!ret)
+	ret = of_property_read_u32(np, "ti,vmbch2-threshold", &prop);
+	if (!ret)
 		board_info->vmbch2_threshold = prop;
 
-	prop = of_property_पढ़ो_bool(np, "ti,en-ck32k-xtal");
+	prop = of_property_read_bool(np, "ti,en-ck32k-xtal");
 	board_info->en_ck32k_xtal = prop;
 
-	prop = of_property_पढ़ो_bool(np, "ti,sleep-enable");
+	prop = of_property_read_bool(np, "ti,sleep-enable");
 	board_info->en_dev_slp = prop;
 
-	prop = of_property_पढ़ो_bool(np, "ti,sleep-keep-therm");
+	prop = of_property_read_bool(np, "ti,sleep-keep-therm");
 	board_info->slp_keepon.therm_keepon = prop;
 
-	prop = of_property_पढ़ो_bool(np, "ti,sleep-keep-ck32k");
+	prop = of_property_read_bool(np, "ti,sleep-keep-ck32k");
 	board_info->slp_keepon.clkout32k_keepon = prop;
 
-	prop = of_property_पढ़ो_bool(np, "ti,sleep-keep-hsclk");
+	prop = of_property_read_bool(np, "ti,sleep-keep-hsclk");
 	board_info->slp_keepon.i2chs_keepon = prop;
 
 	board_info->irq = client->irq;
 	board_info->irq_base = -1;
-	board_info->pm_off = of_property_पढ़ो_bool(np,
+	board_info->pm_off = of_property_read_bool(np,
 			"ti,system-power-controller");
 
-	वापस board_info;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत
-काष्ठा tps65910_board *tps65910_parse_dt(काष्ठा i2c_client *client,
-					 अचिन्हित दीर्घ *chip_id)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	return board_info;
+}
+#else
+static inline
+struct tps65910_board *tps65910_parse_dt(struct i2c_client *client,
+					 unsigned long *chip_id)
+{
+	return NULL;
+}
+#endif
 
-अटल काष्ठा i2c_client *tps65910_i2c_client;
-अटल व्योम tps65910_घातer_off(व्योम)
-अणु
-	काष्ठा tps65910 *tps65910;
+static struct i2c_client *tps65910_i2c_client;
+static void tps65910_power_off(void)
+{
+	struct tps65910 *tps65910;
 
 	tps65910 = dev_get_drvdata(&tps65910_i2c_client->dev);
 
 	/*
-	 * The PWR_OFF bit needs to be set separately, beक्रमe transitioning
-	 * to the OFF state. It enables the "sequential" घातer-off mode on
+	 * The PWR_OFF bit needs to be set separately, before transitioning
+	 * to the OFF state. It enables the "sequential" power-off mode on
 	 * TPS65911, it's a NO-OP on TPS65910.
 	 */
-	अगर (regmap_set_bits(tps65910->regmap, TPS65910_DEVCTRL,
+	if (regmap_set_bits(tps65910->regmap, TPS65910_DEVCTRL,
 			    DEVCTRL_PWR_OFF_MASK) < 0)
-		वापस;
+		return;
 
 	regmap_update_bits(tps65910->regmap, TPS65910_DEVCTRL,
 			   DEVCTRL_DEV_OFF_MASK | DEVCTRL_DEV_ON_MASK,
 			   DEVCTRL_DEV_OFF_MASK);
-पूर्ण
+}
 
-अटल पूर्णांक tps65910_i2c_probe(काष्ठा i2c_client *i2c,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tps65910 *tps65910;
-	काष्ठा tps65910_board *pmic_plat_data;
-	काष्ठा tps65910_board *of_pmic_plat_data = शून्य;
-	काष्ठा tps65910_platक्रमm_data *init_data;
-	अचिन्हित दीर्घ chip_id = id->driver_data;
-	पूर्णांक ret;
+static int tps65910_i2c_probe(struct i2c_client *i2c,
+			      const struct i2c_device_id *id)
+{
+	struct tps65910 *tps65910;
+	struct tps65910_board *pmic_plat_data;
+	struct tps65910_board *of_pmic_plat_data = NULL;
+	struct tps65910_platform_data *init_data;
+	unsigned long chip_id = id->driver_data;
+	int ret;
 
 	pmic_plat_data = dev_get_platdata(&i2c->dev);
 
-	अगर (!pmic_plat_data && i2c->dev.of_node) अणु
+	if (!pmic_plat_data && i2c->dev.of_node) {
 		pmic_plat_data = tps65910_parse_dt(i2c, &chip_id);
 		of_pmic_plat_data = pmic_plat_data;
-	पूर्ण
+	}
 
-	अगर (!pmic_plat_data)
-		वापस -EINVAL;
+	if (!pmic_plat_data)
+		return -EINVAL;
 
-	init_data = devm_kzalloc(&i2c->dev, माप(*init_data), GFP_KERNEL);
-	अगर (init_data == शून्य)
-		वापस -ENOMEM;
+	init_data = devm_kzalloc(&i2c->dev, sizeof(*init_data), GFP_KERNEL);
+	if (init_data == NULL)
+		return -ENOMEM;
 
-	tps65910 = devm_kzalloc(&i2c->dev, माप(*tps65910), GFP_KERNEL);
-	अगर (tps65910 == शून्य)
-		वापस -ENOMEM;
+	tps65910 = devm_kzalloc(&i2c->dev, sizeof(*tps65910), GFP_KERNEL);
+	if (tps65910 == NULL)
+		return -ENOMEM;
 
 	tps65910->of_plat_data = of_pmic_plat_data;
 	i2c_set_clientdata(i2c, tps65910);
@@ -486,16 +485,16 @@ err_sleep_init:
 	tps65910->id = chip_id;
 
 	/* Work around silicon erratum SWCZ010: the tps65910 may miss the
-	 * first I2C transfer. So issue a dummy transfer beक्रमe the first
+	 * first I2C transfer. So issue a dummy transfer before the first
 	 * real transfer.
 	 */
 	i2c_master_send(i2c, "", 1);
 	tps65910->regmap = devm_regmap_init_i2c(i2c, &tps65910_regmap_config);
-	अगर (IS_ERR(tps65910->regmap)) अणु
+	if (IS_ERR(tps65910->regmap)) {
 		ret = PTR_ERR(tps65910->regmap);
 		dev_err(&i2c->dev, "regmap initialization failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	init_data->irq = pmic_plat_data->irq;
 	init_data->irq_base = pmic_plat_data->irq_base;
@@ -504,41 +503,41 @@ err_sleep_init:
 	tps65910_ck32k_init(tps65910, pmic_plat_data);
 	tps65910_sleepinit(tps65910, pmic_plat_data);
 
-	अगर (pmic_plat_data->pm_off && !pm_घातer_off) अणु
+	if (pmic_plat_data->pm_off && !pm_power_off) {
 		tps65910_i2c_client = i2c;
-		pm_घातer_off = tps65910_घातer_off;
-	पूर्ण
+		pm_power_off = tps65910_power_off;
+	}
 
 	ret = devm_mfd_add_devices(tps65910->dev, -1,
 				   tps65910s, ARRAY_SIZE(tps65910s),
-				   शून्य, 0,
-				   regmap_irq_get_करोमुख्य(tps65910->irq_data));
-	अगर (ret < 0) अणु
+				   NULL, 0,
+				   regmap_irq_get_domain(tps65910->irq_data));
+	if (ret < 0) {
 		dev_err(&i2c->dev, "mfd_add_devices failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tps65910_i2c_id[] = अणु
-       अणु "tps65910", TPS65910 पूर्ण,
-       अणु "tps65911", TPS65911 पूर्ण,
-       अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tps65910_i2c_id[] = {
+       { "tps65910", TPS65910 },
+       { "tps65911", TPS65911 },
+       { }
+};
 
-अटल काष्ठा i2c_driver tps65910_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver tps65910_i2c_driver = {
+	.driver = {
 		   .name = "tps65910",
 		   .of_match_table = of_match_ptr(tps65910_of_match),
-	पूर्ण,
+	},
 	.probe = tps65910_i2c_probe,
 	.id_table = tps65910_i2c_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tps65910_i2c_init(व्योम)
-अणु
-	वापस i2c_add_driver(&tps65910_i2c_driver);
-पूर्ण
-/* init early so consumer devices can complete प्रणाली boot */
+static int __init tps65910_i2c_init(void)
+{
+	return i2c_add_driver(&tps65910_i2c_driver);
+}
+/* init early so consumer devices can complete system boot */
 subsys_initcall(tps65910_i2c_init);

@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Unअगरied UUID/GUID definition
+ * Unified UUID/GUID definition
  *
  * Copyright (C) 2009, 2016 Intel Corp.
- *	Huang Ying <ying.huang@पूर्णांकel.com>
+ *	Huang Ying <ying.huang@intel.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/kernel.h>
+#include <linux/ctype.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/uuid.h>
+#include <linux/random.h>
 
-स्थिर guid_t guid_null;
+const guid_t guid_null;
 EXPORT_SYMBOL(guid_null);
-स्थिर uuid_t uuid_null;
+const uuid_t uuid_null;
 EXPORT_SYMBOL(uuid_null);
 
-स्थिर u8 guid_index[16] = अणु3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15पूर्ण;
-स्थिर u8 uuid_index[16] = अणु0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15पूर्ण;
+const u8 guid_index[16] = {3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15};
+const u8 uuid_index[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
 /**
- * generate_अक्रमom_uuid - generate a अक्रमom UUID
+ * generate_random_uuid - generate a random UUID
  * @uuid: where to put the generated UUID
  *
- * Ranकरोm UUID पूर्णांकerface
+ * Random UUID interface
  *
- * Used to create a Boot ID or a fileप्रणाली UUID/GUID, but can be
- * useful क्रम other kernel drivers.
+ * Used to create a Boot ID or a filesystem UUID/GUID, but can be
+ * useful for other kernel drivers.
  */
-व्योम generate_अक्रमom_uuid(अचिन्हित अक्षर uuid[16])
-अणु
-	get_अक्रमom_bytes(uuid, 16);
-	/* Set UUID version to 4 --- truly अक्रमom generation */
+void generate_random_uuid(unsigned char uuid[16])
+{
+	get_random_bytes(uuid, 16);
+	/* Set UUID version to 4 --- truly random generation */
 	uuid[6] = (uuid[6] & 0x0F) | 0x40;
 	/* Set the UUID variant to DCE */
 	uuid[8] = (uuid[8] & 0x3F) | 0x80;
-पूर्ण
-EXPORT_SYMBOL(generate_अक्रमom_uuid);
+}
+EXPORT_SYMBOL(generate_random_uuid);
 
-व्योम generate_अक्रमom_guid(अचिन्हित अक्षर guid[16])
-अणु
-	get_अक्रमom_bytes(guid, 16);
-	/* Set GUID version to 4 --- truly अक्रमom generation */
+void generate_random_guid(unsigned char guid[16])
+{
+	get_random_bytes(guid, 16);
+	/* Set GUID version to 4 --- truly random generation */
 	guid[7] = (guid[7] & 0x0F) | 0x40;
 	/* Set the GUID variant to DCE */
 	guid[8] = (guid[8] & 0x3F) | 0x80;
-पूर्ण
-EXPORT_SYMBOL(generate_अक्रमom_guid);
+}
+EXPORT_SYMBOL(generate_random_guid);
 
-अटल व्योम __uuid_gen_common(__u8 b[16])
-अणु
-	pअक्रमom_bytes(b, 16);
+static void __uuid_gen_common(__u8 b[16])
+{
+	prandom_bytes(b, 16);
 	/* reversion 0b10 */
 	b[8] = (b[8] & 0x3F) | 0x80;
-पूर्ण
+}
 
-व्योम guid_gen(guid_t *lu)
-अणु
+void guid_gen(guid_t *lu)
+{
 	__uuid_gen_common(lu->b);
-	/* version 4 : अक्रमom generation */
+	/* version 4 : random generation */
 	lu->b[7] = (lu->b[7] & 0x0F) | 0x40;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(guid_gen);
 
-व्योम uuid_gen(uuid_t *bu)
-अणु
+void uuid_gen(uuid_t *bu)
+{
 	__uuid_gen_common(bu->b);
-	/* version 4 : अक्रमom generation */
+	/* version 4 : random generation */
 	bu->b[6] = (bu->b[6] & 0x0F) | 0x40;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(uuid_gen);
 
 /**
- * uuid_is_valid - checks अगर a UUID string is valid
+ * uuid_is_valid - checks if a UUID string is valid
  * @uuid:	UUID string to check
  *
  * Description:
- * It checks अगर the UUID string is following the क्रमmat:
+ * It checks if the UUID string is following the format:
  *	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
  *
  * where x is a hex digit.
  *
- * Return: true अगर input is valid UUID string.
+ * Return: true if input is valid UUID string.
  */
-bool uuid_is_valid(स्थिर अक्षर *uuid)
-अणु
-	अचिन्हित पूर्णांक i;
+bool uuid_is_valid(const char *uuid)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < UUID_STRING_LEN; i++) अणु
-		अगर (i == 8 || i == 13 || i == 18 || i == 23) अणु
-			अगर (uuid[i] != '-')
-				वापस false;
-		पूर्ण अन्यथा अगर (!है_षष्ठादशक(uuid[i])) अणु
-			वापस false;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < UUID_STRING_LEN; i++) {
+		if (i == 8 || i == 13 || i == 18 || i == 23) {
+			if (uuid[i] != '-')
+				return false;
+		} else if (!isxdigit(uuid[i])) {
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(uuid_is_valid);
 
-अटल पूर्णांक __uuid_parse(स्थिर अक्षर *uuid, __u8 b[16], स्थिर u8 ei[16])
-अणु
-	अटल स्थिर u8 si[16] = अणु0,2,4,6,9,11,14,16,19,21,24,26,28,30,32,34पूर्ण;
-	अचिन्हित पूर्णांक i;
+static int __uuid_parse(const char *uuid, __u8 b[16], const u8 ei[16])
+{
+	static const u8 si[16] = {0,2,4,6,9,11,14,16,19,21,24,26,28,30,32,34};
+	unsigned int i;
 
-	अगर (!uuid_is_valid(uuid))
-		वापस -EINVAL;
+	if (!uuid_is_valid(uuid))
+		return -EINVAL;
 
-	क्रम (i = 0; i < 16; i++) अणु
-		पूर्णांक hi = hex_to_bin(uuid[si[i] + 0]);
-		पूर्णांक lo = hex_to_bin(uuid[si[i] + 1]);
+	for (i = 0; i < 16; i++) {
+		int hi = hex_to_bin(uuid[si[i] + 0]);
+		int lo = hex_to_bin(uuid[si[i] + 1]);
 
 		b[ei[i]] = (hi << 4) | lo;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक guid_parse(स्थिर अक्षर *uuid, guid_t *u)
-अणु
-	वापस __uuid_parse(uuid, u->b, guid_index);
-पूर्ण
+int guid_parse(const char *uuid, guid_t *u)
+{
+	return __uuid_parse(uuid, u->b, guid_index);
+}
 EXPORT_SYMBOL(guid_parse);
 
-पूर्णांक uuid_parse(स्थिर अक्षर *uuid, uuid_t *u)
-अणु
-	वापस __uuid_parse(uuid, u->b, uuid_index);
-पूर्ण
+int uuid_parse(const char *uuid, uuid_t *u)
+{
+	return __uuid_parse(uuid, u->b, uuid_index);
+}
 EXPORT_SYMBOL(uuid_parse);

@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
- * Broadcom specअगरic AMBA
+ * Broadcom specific AMBA
  * GBIT MAC COMMON Core
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#समावेश "bcma_private.h"
-#समावेश <linux/bcma/bcma.h>
+#include "bcma_private.h"
+#include <linux/bcma/bcma.h>
 
-व्योम bcma_core_gmac_cmn_init(काष्ठा bcma_drv_gmac_cmn *gc)
-अणु
+void bcma_core_gmac_cmn_init(struct bcma_drv_gmac_cmn *gc)
+{
 	mutex_init(&gc->phy_mutex);
-पूर्ण
+}

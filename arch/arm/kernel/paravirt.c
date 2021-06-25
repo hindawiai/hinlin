@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2013 Citrix Systems
@@ -7,18 +6,18 @@
  * Author: Stefano Stabellini <stefano.stabellini@eu.citrix.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/types.h>
-#समावेश <linux/अटल_call.h>
-#समावेश <यंत्र/paravirt.h>
+#include <linux/export.h>
+#include <linux/jump_label.h>
+#include <linux/types.h>
+#include <linux/static_call.h>
+#include <asm/paravirt.h>
 
-काष्ठा अटल_key paravirt_steal_enabled;
-काष्ठा अटल_key paravirt_steal_rq_enabled;
+struct static_key paravirt_steal_enabled;
+struct static_key paravirt_steal_rq_enabled;
 
-अटल u64 native_steal_घड़ी(पूर्णांक cpu)
-अणु
-	वापस 0;
-पूर्ण
+static u64 native_steal_clock(int cpu)
+{
+	return 0;
+}
 
-DEFINE_STATIC_CALL(pv_steal_घड़ी, native_steal_घड़ी);
+DEFINE_STATIC_CALL(pv_steal_clock, native_steal_clock);

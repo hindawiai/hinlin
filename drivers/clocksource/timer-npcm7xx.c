@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2014-2018 Nuvoton Technologies tomer.maimon@nuvoton.com
  * All rights reserved.
@@ -7,208 +6,208 @@
  * Copyright 2017 Google, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश "timer-of.h"
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/clockchips.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include "timer-of.h"
 
-/* Timers रेजिस्टरs */
-#घोषणा NPCM7XX_REG_TCSR0	0x0 /* Timer 0 Control and Status Register */
-#घोषणा NPCM7XX_REG_TICR0	0x8 /* Timer 0 Initial Count Register */
-#घोषणा NPCM7XX_REG_TCSR1	0x4 /* Timer 1 Control and Status Register */
-#घोषणा NPCM7XX_REG_TICR1	0xc /* Timer 1 Initial Count Register */
-#घोषणा NPCM7XX_REG_TDR1	0x14 /* Timer 1 Data Register */
-#घोषणा NPCM7XX_REG_TISR	0x18 /* Timer Interrupt Status Register */
+/* Timers registers */
+#define NPCM7XX_REG_TCSR0	0x0 /* Timer 0 Control and Status Register */
+#define NPCM7XX_REG_TICR0	0x8 /* Timer 0 Initial Count Register */
+#define NPCM7XX_REG_TCSR1	0x4 /* Timer 1 Control and Status Register */
+#define NPCM7XX_REG_TICR1	0xc /* Timer 1 Initial Count Register */
+#define NPCM7XX_REG_TDR1	0x14 /* Timer 1 Data Register */
+#define NPCM7XX_REG_TISR	0x18 /* Timer Interrupt Status Register */
 
 /* Timers control */
-#घोषणा NPCM7XX_Tx_RESETINT		0x1f
-#घोषणा NPCM7XX_Tx_PERIOD		BIT(27)
-#घोषणा NPCM7XX_Tx_INTEN		BIT(29)
-#घोषणा NPCM7XX_Tx_COUNTEN		BIT(30)
-#घोषणा NPCM7XX_Tx_ONESHOT		0x0
-#घोषणा NPCM7XX_Tx_OPER			GENMASK(28, 27)
-#घोषणा NPCM7XX_Tx_MIN_PRESCALE		0x1
-#घोषणा NPCM7XX_Tx_TDR_MASK_BITS	24
-#घोषणा NPCM7XX_Tx_MAX_CNT		0xFFFFFF
-#घोषणा NPCM7XX_T0_CLR_INT		0x1
-#घोषणा NPCM7XX_Tx_CLR_CSR		0x0
+#define NPCM7XX_Tx_RESETINT		0x1f
+#define NPCM7XX_Tx_PERIOD		BIT(27)
+#define NPCM7XX_Tx_INTEN		BIT(29)
+#define NPCM7XX_Tx_COUNTEN		BIT(30)
+#define NPCM7XX_Tx_ONESHOT		0x0
+#define NPCM7XX_Tx_OPER			GENMASK(28, 27)
+#define NPCM7XX_Tx_MIN_PRESCALE		0x1
+#define NPCM7XX_Tx_TDR_MASK_BITS	24
+#define NPCM7XX_Tx_MAX_CNT		0xFFFFFF
+#define NPCM7XX_T0_CLR_INT		0x1
+#define NPCM7XX_Tx_CLR_CSR		0x0
 
 /* Timers operating mode */
-#घोषणा NPCM7XX_START_PERIODIC_Tx (NPCM7XX_Tx_PERIOD | NPCM7XX_Tx_COUNTEN | \
+#define NPCM7XX_START_PERIODIC_Tx (NPCM7XX_Tx_PERIOD | NPCM7XX_Tx_COUNTEN | \
 					NPCM7XX_Tx_INTEN | \
 					NPCM7XX_Tx_MIN_PRESCALE)
 
-#घोषणा NPCM7XX_START_ONESHOT_Tx (NPCM7XX_Tx_ONESHOT | NPCM7XX_Tx_COUNTEN | \
+#define NPCM7XX_START_ONESHOT_Tx (NPCM7XX_Tx_ONESHOT | NPCM7XX_Tx_COUNTEN | \
 					NPCM7XX_Tx_INTEN | \
 					NPCM7XX_Tx_MIN_PRESCALE)
 
-#घोषणा NPCM7XX_START_Tx (NPCM7XX_Tx_COUNTEN | NPCM7XX_Tx_PERIOD | \
+#define NPCM7XX_START_Tx (NPCM7XX_Tx_COUNTEN | NPCM7XX_Tx_PERIOD | \
 				NPCM7XX_Tx_MIN_PRESCALE)
 
-#घोषणा NPCM7XX_DEFAULT_CSR (NPCM7XX_Tx_CLR_CSR | NPCM7XX_Tx_MIN_PRESCALE)
+#define NPCM7XX_DEFAULT_CSR (NPCM7XX_Tx_CLR_CSR | NPCM7XX_Tx_MIN_PRESCALE)
 
-अटल पूर्णांक npcm7xx_समयr_resume(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(evt);
+static int npcm7xx_timer_resume(struct clock_event_device *evt)
+{
+	struct timer_of *to = to_timer_of(evt);
 	u32 val;
 
-	val = पढ़ोl(समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	val = readl(timer_of_base(to) + NPCM7XX_REG_TCSR0);
 	val |= NPCM7XX_Tx_COUNTEN;
-	ग_लिखोl(val, समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(val, timer_of_base(to) + NPCM7XX_REG_TCSR0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npcm7xx_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(evt);
+static int npcm7xx_timer_shutdown(struct clock_event_device *evt)
+{
+	struct timer_of *to = to_timer_of(evt);
 	u32 val;
 
-	val = पढ़ोl(समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	val = readl(timer_of_base(to) + NPCM7XX_REG_TCSR0);
 	val &= ~NPCM7XX_Tx_COUNTEN;
-	ग_लिखोl(val, समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(val, timer_of_base(to) + NPCM7XX_REG_TCSR0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npcm7xx_समयr_oneshot(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(evt);
+static int npcm7xx_timer_oneshot(struct clock_event_device *evt)
+{
+	struct timer_of *to = to_timer_of(evt);
 	u32 val;
 
-	val = पढ़ोl(समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	val = readl(timer_of_base(to) + NPCM7XX_REG_TCSR0);
 	val &= ~NPCM7XX_Tx_OPER;
 	val |= NPCM7XX_START_ONESHOT_Tx;
-	ग_लिखोl(val, समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(val, timer_of_base(to) + NPCM7XX_REG_TCSR0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npcm7xx_समयr_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(evt);
+static int npcm7xx_timer_periodic(struct clock_event_device *evt)
+{
+	struct timer_of *to = to_timer_of(evt);
 	u32 val;
 
-	ग_लिखोl(समयr_of_period(to), समयr_of_base(to) + NPCM7XX_REG_TICR0);
+	writel(timer_of_period(to), timer_of_base(to) + NPCM7XX_REG_TICR0);
 
-	val = पढ़ोl(समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	val = readl(timer_of_base(to) + NPCM7XX_REG_TCSR0);
 	val &= ~NPCM7XX_Tx_OPER;
 	val |= NPCM7XX_START_PERIODIC_Tx;
-	ग_लिखोl(val, समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(val, timer_of_base(to) + NPCM7XX_REG_TCSR0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक npcm7xx_घड़ीevent_set_next_event(अचिन्हित दीर्घ evt,
-		काष्ठा घड़ी_event_device *clk)
-अणु
-	काष्ठा समयr_of *to = to_समयr_of(clk);
+static int npcm7xx_clockevent_set_next_event(unsigned long evt,
+		struct clock_event_device *clk)
+{
+	struct timer_of *to = to_timer_of(clk);
 	u32 val;
 
-	ग_लिखोl(evt, समयr_of_base(to) + NPCM7XX_REG_TICR0);
-	val = पढ़ोl(समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(evt, timer_of_base(to) + NPCM7XX_REG_TICR0);
+	val = readl(timer_of_base(to) + NPCM7XX_REG_TCSR0);
 	val |= NPCM7XX_START_Tx;
-	ग_लिखोl(val, समयr_of_base(to) + NPCM7XX_REG_TCSR0);
+	writel(val, timer_of_base(to) + NPCM7XX_REG_TCSR0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t npcm7xx_समयr0_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *evt = (काष्ठा घड़ी_event_device *)dev_id;
-	काष्ठा समयr_of *to = to_समयr_of(evt);
+static irqreturn_t npcm7xx_timer0_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *evt = (struct clock_event_device *)dev_id;
+	struct timer_of *to = to_timer_of(evt);
 
-	ग_लिखोl(NPCM7XX_T0_CLR_INT, समयr_of_base(to) + NPCM7XX_REG_TISR);
+	writel(NPCM7XX_T0_CLR_INT, timer_of_base(to) + NPCM7XX_REG_TISR);
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा समयr_of npcm7xx_to = अणु
+static struct timer_of npcm7xx_to = {
 	.flags = TIMER_OF_IRQ | TIMER_OF_BASE | TIMER_OF_CLOCK,
 
-	.clkevt = अणु
+	.clkevt = {
 		.name		    = "npcm7xx-timer0",
 		.features	    = CLOCK_EVT_FEAT_PERIODIC |
 				      CLOCK_EVT_FEAT_ONESHOT,
-		.set_next_event	    = npcm7xx_घड़ीevent_set_next_event,
-		.set_state_shutकरोwn = npcm7xx_समयr_shutकरोwn,
-		.set_state_periodic = npcm7xx_समयr_periodic,
-		.set_state_oneshot  = npcm7xx_समयr_oneshot,
-		.tick_resume	    = npcm7xx_समयr_resume,
+		.set_next_event	    = npcm7xx_clockevent_set_next_event,
+		.set_state_shutdown = npcm7xx_timer_shutdown,
+		.set_state_periodic = npcm7xx_timer_periodic,
+		.set_state_oneshot  = npcm7xx_timer_oneshot,
+		.tick_resume	    = npcm7xx_timer_resume,
 		.rating		    = 300,
-	पूर्ण,
+	},
 
-	.of_irq = अणु
-		.handler = npcm7xx_समयr0_पूर्णांकerrupt,
+	.of_irq = {
+		.handler = npcm7xx_timer0_interrupt,
 		.flags = IRQF_TIMER | IRQF_IRQPOLL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init npcm7xx_घड़ीevents_init(व्योम)
-अणु
-	ग_लिखोl(NPCM7XX_DEFAULT_CSR,
-		समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR0);
+static void __init npcm7xx_clockevents_init(void)
+{
+	writel(NPCM7XX_DEFAULT_CSR,
+		timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR0);
 
-	ग_लिखोl(NPCM7XX_Tx_RESETINT,
-		समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TISR);
+	writel(NPCM7XX_Tx_RESETINT,
+		timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TISR);
 
 	npcm7xx_to.clkevt.cpumask = cpumask_of(0);
-	घड़ीevents_config_and_रेजिस्टर(&npcm7xx_to.clkevt,
-					समयr_of_rate(&npcm7xx_to),
+	clockevents_config_and_register(&npcm7xx_to.clkevt,
+					timer_of_rate(&npcm7xx_to),
 					0x1, NPCM7XX_Tx_MAX_CNT);
-पूर्ण
+}
 
-अटल व्योम __init npcm7xx_घड़ीsource_init(व्योम)
-अणु
+static void __init npcm7xx_clocksource_init(void)
+{
 	u32 val;
 
-	ग_लिखोl(NPCM7XX_DEFAULT_CSR,
-		समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
-	ग_लिखोl(NPCM7XX_Tx_MAX_CNT,
-		समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TICR1);
+	writel(NPCM7XX_DEFAULT_CSR,
+		timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
+	writel(NPCM7XX_Tx_MAX_CNT,
+		timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TICR1);
 
-	val = पढ़ोl(समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
+	val = readl(timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
 	val |= NPCM7XX_START_Tx;
-	ग_लिखोl(val, समयr_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
+	writel(val, timer_of_base(&npcm7xx_to) + NPCM7XX_REG_TCSR1);
 
-	घड़ीsource_mmio_init(समयr_of_base(&npcm7xx_to) +
+	clocksource_mmio_init(timer_of_base(&npcm7xx_to) +
 				NPCM7XX_REG_TDR1,
-				"npcm7xx-timer1", समयr_of_rate(&npcm7xx_to),
-				200, (अचिन्हित पूर्णांक)NPCM7XX_Tx_TDR_MASK_BITS,
-				घड़ीsource_mmio_पढ़ोl_करोwn);
-पूर्ण
+				"npcm7xx-timer1", timer_of_rate(&npcm7xx_to),
+				200, (unsigned int)NPCM7XX_Tx_TDR_MASK_BITS,
+				clocksource_mmio_readl_down);
+}
 
-अटल पूर्णांक __init npcm7xx_समयr_init(काष्ठा device_node *np)
-अणु
-	पूर्णांक ret;
+static int __init npcm7xx_timer_init(struct device_node *np)
+{
+	int ret;
 
-	ret = समयr_of_init(np, &npcm7xx_to);
-	अगर (ret)
-		वापस ret;
+	ret = timer_of_init(np, &npcm7xx_to);
+	if (ret)
+		return ret;
 
-	/* Clock input is भागided by PRESCALE + 1 beक्रमe it is fed */
+	/* Clock input is divided by PRESCALE + 1 before it is fed */
 	/* to the counter */
 	npcm7xx_to.of_clk.rate = npcm7xx_to.of_clk.rate /
 		(NPCM7XX_Tx_MIN_PRESCALE + 1);
 
-	npcm7xx_घड़ीsource_init();
-	npcm7xx_घड़ीevents_init();
+	npcm7xx_clocksource_init();
+	npcm7xx_clockevents_init();
 
 	pr_info("Enabling NPCM7xx clocksource timer base: %px, IRQ: %d ",
-		समयr_of_base(&npcm7xx_to), समयr_of_irq(&npcm7xx_to));
+		timer_of_base(&npcm7xx_to), timer_of_irq(&npcm7xx_to));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-TIMER_OF_DECLARE(wpcm450, "nuvoton,wpcm450-timer", npcm7xx_समयr_init);
-TIMER_OF_DECLARE(npcm7xx, "nuvoton,npcm750-timer", npcm7xx_समयr_init);
+TIMER_OF_DECLARE(wpcm450, "nuvoton,wpcm450-timer", npcm7xx_timer_init);
+TIMER_OF_DECLARE(npcm7xx, "nuvoton,npcm750-timer", npcm7xx_timer_init);
 

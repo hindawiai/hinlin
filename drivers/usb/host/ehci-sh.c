@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SuperH EHCI host controller driver
  *
  * Copyright (C) 2010  Paul Mundt
  *
- * Based on ohci-sh.c and ehci-aपंचांगel.c.
+ * Based on ohci-sh.c and ehci-atmel.c.
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
 
-काष्ठा ehci_sh_priv अणु
-	काष्ठा clk *iclk, *fclk;
-	काष्ठा usb_hcd *hcd;
-पूर्ण;
+struct ehci_sh_priv {
+	struct clk *iclk, *fclk;
+	struct usb_hcd *hcd;
+};
 
-अटल पूर्णांक ehci_sh_reset(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ehci_hcd	*ehci = hcd_to_ehci(hcd);
+static int ehci_sh_reset(struct usb_hcd *hcd)
+{
+	struct ehci_hcd	*ehci = hcd_to_ehci(hcd);
 
 	ehci->caps = hcd->regs;
 
-	वापस ehci_setup(hcd);
-पूर्ण
+	return ehci_setup(hcd);
+}
 
-अटल स्थिर काष्ठा hc_driver ehci_sh_hc_driver = अणु
+static const struct hc_driver ehci_sh_hc_driver = {
 	.description			= hcd_name,
 	.product_desc			= "SuperH EHCI",
-	.hcd_priv_size			= माप(काष्ठा ehci_hcd),
+	.hcd_priv_size			= sizeof(struct ehci_hcd),
 
 	/*
 	 * generic hardware linkage
@@ -36,20 +35,20 @@
 	.flags				= HCD_USB2 | HCD_DMA | HCD_MEMORY | HCD_BH,
 
 	/*
-	 * basic lअगरecycle operations
+	 * basic lifecycle operations
 	 */
 	.reset				= ehci_sh_reset,
 	.start				= ehci_run,
 	.stop				= ehci_stop,
-	.shutकरोwn			= ehci_shutकरोwn,
+	.shutdown			= ehci_shutdown,
 
 	/*
 	 * managing i/o requests and associated device resources
 	 */
 	.urb_enqueue			= ehci_urb_enqueue,
 	.urb_dequeue			= ehci_urb_dequeue,
-	.endpoपूर्णांक_disable		= ehci_endpoपूर्णांक_disable,
-	.endpoपूर्णांक_reset			= ehci_endpoपूर्णांक_reset,
+	.endpoint_disable		= ehci_endpoint_disable,
+	.endpoint_reset			= ehci_endpoint_reset,
 
 	/*
 	 * scheduling support
@@ -62,79 +61,79 @@
 	.hub_status_data		= ehci_hub_status_data,
 	.hub_control			= ehci_hub_control,
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.bus_suspend			= ehci_bus_suspend,
 	.bus_resume			= ehci_bus_resume,
-#पूर्ण_अगर
+#endif
 
 	.relinquish_port		= ehci_relinquish_port,
 	.port_handed_over		= ehci_port_handed_over,
 	.clear_tt_buffer_complete	= ehci_clear_tt_buffer_complete,
-पूर्ण;
+};
 
-अटल पूर्णांक ehci_hcd_sh_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा ehci_sh_priv *priv;
-	काष्ठा usb_hcd *hcd;
-	पूर्णांक irq, ret;
+static int ehci_hcd_sh_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct ehci_sh_priv *priv;
+	struct usb_hcd *hcd;
+	int irq, ret;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0) {
 		ret = -ENODEV;
-		जाओ fail_create_hcd;
-	पूर्ण
+		goto fail_create_hcd;
+	}
 
 	/* initialize hcd */
 	hcd = usb_create_hcd(&ehci_sh_hc_driver, &pdev->dev,
 			     dev_name(&pdev->dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		ret = -ENOMEM;
-		जाओ fail_create_hcd;
-	पूर्ण
+		goto fail_create_hcd;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	if (IS_ERR(hcd->regs)) {
 		ret = PTR_ERR(hcd->regs);
-		जाओ fail_request_resource;
-	पूर्ण
+		goto fail_request_resource;
+	}
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
-	priv = devm_kzalloc(&pdev->dev, माप(काष्ठा ehci_sh_priv),
+	priv = devm_kzalloc(&pdev->dev, sizeof(struct ehci_sh_priv),
 			    GFP_KERNEL);
-	अगर (!priv) अणु
+	if (!priv) {
 		ret = -ENOMEM;
-		जाओ fail_request_resource;
-	पूर्ण
+		goto fail_request_resource;
+	}
 
-	/* These are optional, we करोn't care अगर they fail */
+	/* These are optional, we don't care if they fail */
 	priv->fclk = devm_clk_get(&pdev->dev, "usb_fck");
-	अगर (IS_ERR(priv->fclk))
-		priv->fclk = शून्य;
+	if (IS_ERR(priv->fclk))
+		priv->fclk = NULL;
 
 	priv->iclk = devm_clk_get(&pdev->dev, "usb_ick");
-	अगर (IS_ERR(priv->iclk))
-		priv->iclk = शून्य;
+	if (IS_ERR(priv->iclk))
+		priv->iclk = NULL;
 
 	clk_enable(priv->fclk);
 	clk_enable(priv->iclk);
 
 	ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&pdev->dev, "Failed to add hcd");
-		जाओ fail_add_hcd;
-	पूर्ण
+		goto fail_add_hcd;
+	}
 	device_wakeup_enable(hcd->self.controller);
 
 	priv->hcd = hcd;
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस ret;
+	return ret;
 
 fail_add_hcd:
 	clk_disable(priv->iclk);
@@ -145,39 +144,39 @@ fail_request_resource:
 fail_create_hcd:
 	dev_err(&pdev->dev, "init %s fail, %d\n", dev_name(&pdev->dev), ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ehci_hcd_sh_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ehci_sh_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा usb_hcd *hcd = priv->hcd;
+static int ehci_hcd_sh_remove(struct platform_device *pdev)
+{
+	struct ehci_sh_priv *priv = platform_get_drvdata(pdev);
+	struct usb_hcd *hcd = priv->hcd;
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 	usb_put_hcd(hcd);
 
 	clk_disable(priv->fclk);
 	clk_disable(priv->iclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ehci_hcd_sh_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ehci_sh_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा usb_hcd *hcd = priv->hcd;
+static void ehci_hcd_sh_shutdown(struct platform_device *pdev)
+{
+	struct ehci_sh_priv *priv = platform_get_drvdata(pdev);
+	struct usb_hcd *hcd = priv->hcd;
 
-	अगर (hcd->driver->shutकरोwn)
-		hcd->driver->shutकरोwn(hcd);
-पूर्ण
+	if (hcd->driver->shutdown)
+		hcd->driver->shutdown(hcd);
+}
 
-अटल काष्ठा platक्रमm_driver ehci_hcd_sh_driver = अणु
+static struct platform_driver ehci_hcd_sh_driver = {
 	.probe		= ehci_hcd_sh_probe,
-	.हटाओ		= ehci_hcd_sh_हटाओ,
-	.shutकरोwn	= ehci_hcd_sh_shutकरोwn,
-	.driver		= अणु
+	.remove		= ehci_hcd_sh_remove,
+	.shutdown	= ehci_hcd_sh_shutdown,
+	.driver		= {
 		.name	= "sh_ehci",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 MODULE_ALIAS("platform:sh_ehci");

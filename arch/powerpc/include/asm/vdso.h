@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_VDSO_H
-#घोषणा _ASM_POWERPC_VDSO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_VDSO_H
+#define _ASM_POWERPC_VDSO_H
 
-/* Default map addresses क्रम 32bit vDSO */
-#घोषणा VDSO32_MBASE	0x100000
+/* Default map addresses for 32bit vDSO */
+#define VDSO32_MBASE	0x100000
 
-#घोषणा VDSO_VERSION_STRING	LINUX_2.6.15
+#define VDSO_VERSION_STRING	LINUX_2.6.15
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#अगर_घोषित CONFIG_PPC64
-#समावेश <generated/vdso64-offsets.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#include <generated/vdso64-offsets.h>
+#endif
 
-#अगर_घोषित CONFIG_VDSO32
-#समावेश <generated/vdso32-offsets.h>
-#पूर्ण_अगर
+#ifdef CONFIG_VDSO32
+#include <generated/vdso32-offsets.h>
+#endif
 
-#घोषणा VDSO64_SYMBOL(base, name) ((अचिन्हित दीर्घ)(base) + (vdso64_offset_##name))
+#define VDSO64_SYMBOL(base, name) ((unsigned long)(base) + (vdso64_offset_##name))
 
-#घोषणा VDSO32_SYMBOL(base, name) ((अचिन्हित दीर्घ)(base) + (vdso32_offset_##name))
+#define VDSO32_SYMBOL(base, name) ((unsigned long)(base) + (vdso32_offset_##name))
 
-पूर्णांक vdso_अ_लोpu_init(व्योम);
+int vdso_getcpu_init(void);
 
-#अन्यथा /* __ASSEMBLY__ */
+#else /* __ASSEMBLY__ */
 
-#अगर_घोषित __VDSO64__
-#घोषणा V_FUNCTION_BEGIN(name)		\
+#ifdef __VDSO64__
+#define V_FUNCTION_BEGIN(name)		\
 	.globl name;			\
 	name:				\
 
-#घोषणा V_FUNCTION_END(name)		\
+#define V_FUNCTION_END(name)		\
 	.size name,.-name;
 
-#घोषणा V_LOCAL_FUNC(name) (name)
-#पूर्ण_अगर /* __VDSO64__ */
+#define V_LOCAL_FUNC(name) (name)
+#endif /* __VDSO64__ */
 
-#अगर_घोषित __VDSO32__
+#ifdef __VDSO32__
 
-#घोषणा V_FUNCTION_BEGIN(name)		\
+#define V_FUNCTION_BEGIN(name)		\
 	.globl name;			\
 	.type name,@function; 		\
 	name:				\
 
-#घोषणा V_FUNCTION_END(name)		\
+#define V_FUNCTION_END(name)		\
 	.size name,.-name;
 
-#घोषणा V_LOCAL_FUNC(name) (name)
+#define V_LOCAL_FUNC(name) (name)
 
-#पूर्ण_अगर /* __VDSO32__ */
+#endif /* __VDSO32__ */
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_POWERPC_VDSO_H */
+#endif /* _ASM_POWERPC_VDSO_H */

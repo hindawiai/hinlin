@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <मानकघोष.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <termios.h>
-#समावेश "chan_user.h"
-#समावेश <os.h>
-#समावेश <um_दो_स्मृति.h>
-#समावेश "xterm.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <termios.h>
+#include "chan_user.h"
+#include <os.h>
+#include <um_malloc.h>
+#include "xterm.h"
 
-काष्ठा xterm_chan अणु
-	पूर्णांक pid;
-	पूर्णांक helper_pid;
-	पूर्णांक chan_fd;
-	अक्षर *title;
-	पूर्णांक device;
-	पूर्णांक raw;
-	काष्ठा termios tt;
-पूर्ण;
+struct xterm_chan {
+	int pid;
+	int helper_pid;
+	int chan_fd;
+	char *title;
+	int device;
+	int raw;
+	struct termios tt;
+};
 
-अटल व्योम *xterm_init(अक्षर *str, पूर्णांक device, स्थिर काष्ठा chan_opts *opts)
-अणु
-	काष्ठा xterm_chan *data;
+static void *xterm_init(char *str, int device, const struct chan_opts *opts)
+{
+	struct xterm_chan *data;
 
-	data = uml_kदो_स्मृति(माप(*data), UM_GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस शून्य;
-	*data = ((काष्ठा xterm_chan) अणु .pid 		= -1,
+	data = uml_kmalloc(sizeof(*data), UM_GFP_KERNEL);
+	if (data == NULL)
+		return NULL;
+	*data = ((struct xterm_chan) { .pid 		= -1,
 				       .helper_pid 	= -1,
 				       .chan_fd		= -1,
 				       .device 		= device,
 				       .title 		= opts->xterm_title,
-				       .raw  		= opts->raw पूर्ण );
-	वापस data;
-पूर्ण
+				       .raw  		= opts->raw } );
+	return data;
+}
 
 /* Only changed by xterm_setup, which is a setup */
-अटल अक्षर *terminal_emulator = "xterm";
-अटल अक्षर *title_चयन = "-T";
-अटल अक्षर *exec_चयन = "-e";
+static char *terminal_emulator = "xterm";
+static char *title_switch = "-T";
+static char *exec_switch = "-e";
 
-अटल पूर्णांक __init xterm_setup(अक्षर *line, पूर्णांक *add)
-अणु
+static int __init xterm_setup(char *line, int *add)
+{
 	*add = 0;
 	terminal_emulator = line;
 
-	line = म_अक्षर(line, ',');
-	अगर (line == शून्य)
-		वापस 0;
+	line = strchr(line, ',');
+	if (line == NULL)
+		return 0;
 
 	*line++ = '\0';
-	अगर (*line)
-		title_चयन = line;
+	if (*line)
+		title_switch = line;
 
-	line = म_अक्षर(line, ',');
-	अगर (line == शून्य)
-		वापस 0;
+	line = strchr(line, ',');
+	if (line == NULL)
+		return 0;
 
 	*line++ = '\0';
-	अगर (*line)
-		exec_चयन = line;
+	if (*line)
+		exec_switch = line;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __uml_setup("xterm=", xterm_setup,
 "xterm=<terminal emulator>,<title switch>,<exec switch>\n"
@@ -84,146 +83,146 @@ __uml_setup("xterm=", xterm_setup,
 "    are 'xterm=gnome-terminal,-t,-x'.\n\n"
 );
 
-अटल पूर्णांक xterm_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d,
-		      अक्षर **dev_out)
-अणु
-	काष्ठा xterm_chan *data = d;
-	पूर्णांक pid, fd, new, err;
-	अक्षर title[256], file[] = "/tmp/xterm-pipeXXXXXX";
-	अक्षर *argv[] = अणु terminal_emulator, title_चयन, title, exec_चयन,
+static int xterm_open(int input, int output, int primary, void *d,
+		      char **dev_out)
+{
+	struct xterm_chan *data = d;
+	int pid, fd, new, err;
+	char title[256], file[] = "/tmp/xterm-pipeXXXXXX";
+	char *argv[] = { terminal_emulator, title_switch, title, exec_switch,
 			 OS_LIB_PATH "/uml/port-helper", "-uml-socket",
-			 file, शून्य पूर्ण;
+			 file, NULL };
 
-	अगर (access(argv[4], X_OK) < 0)
+	if (access(argv[4], X_OK) < 0)
 		argv[4] = "port-helper";
 
 	/*
-	 * Check that DISPLAY is set, this करोesn't guarantee the xterm
+	 * Check that DISPLAY is set, this doesn't guarantee the xterm
 	 * will work but w/o it we can be pretty sure it won't.
 	 */
-	अगर (दो_पर्या("DISPLAY") == शून्य) अणु
-		prपूर्णांकk(UM_KERN_ERR "xterm_open: $DISPLAY not set.\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (getenv("DISPLAY") == NULL) {
+		printk(UM_KERN_ERR "xterm_open: $DISPLAY not set.\n");
+		return -ENODEV;
+	}
 
 	/*
 	 * This business of getting a descriptor to a temp file,
 	 * deleting the file and closing the descriptor is just to get
-	 * a known-unused name क्रम the Unix socket that we really
+	 * a known-unused name for the Unix socket that we really
 	 * want.
 	 */
 	fd = mkstemp(file);
-	अगर (fd < 0) अणु
-		err = -त्रुटि_सं;
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : mkstemp failed, errno = %d\n",
-		       त्रुटि_सं);
-		वापस err;
-	पूर्ण
+	if (fd < 0) {
+		err = -errno;
+		printk(UM_KERN_ERR "xterm_open : mkstemp failed, errno = %d\n",
+		       errno);
+		return err;
+	}
 
-	अगर (unlink(file)) अणु
-		err = -त्रुटि_सं;
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : unlink failed, errno = %d\n",
-		       त्रुटि_सं);
-		बंद(fd);
-		वापस err;
-	पूर्ण
-	बंद(fd);
+	if (unlink(file)) {
+		err = -errno;
+		printk(UM_KERN_ERR "xterm_open : unlink failed, errno = %d\n",
+		       errno);
+		close(fd);
+		return err;
+	}
+	close(fd);
 
-	fd = os_create_unix_socket(file, माप(file), 1);
-	अगर (fd < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : create_unix_socket failed, "
+	fd = os_create_unix_socket(file, sizeof(file), 1);
+	if (fd < 0) {
+		printk(UM_KERN_ERR "xterm_open : create_unix_socket failed, "
 		       "errno = %d\n", -fd);
-		वापस fd;
-	पूर्ण
+		return fd;
+	}
 
-	प्र_लिखो(title, data->title, data->device);
-	pid = run_helper(शून्य, शून्य, argv);
-	अगर (pid < 0) अणु
+	sprintf(title, data->title, data->device);
+	pid = run_helper(NULL, NULL, argv);
+	if (pid < 0) {
 		err = pid;
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : run_helper failed, "
+		printk(UM_KERN_ERR "xterm_open : run_helper failed, "
 		       "errno = %d\n", -err);
-		जाओ out_बंद1;
-	पूर्ण
+		goto out_close1;
+	}
 
 	err = os_set_fd_block(fd, 0);
-	अगर (err < 0) अणु
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : failed to set descriptor "
+	if (err < 0) {
+		printk(UM_KERN_ERR "xterm_open : failed to set descriptor "
 		       "non-blocking, err = %d\n", -err);
-		जाओ out_समाप्त;
-	पूर्ण
+		goto out_kill;
+	}
 
 	data->chan_fd = fd;
 	new = xterm_fd(fd, &data->helper_pid);
-	अगर (new < 0) अणु
+	if (new < 0) {
 		err = new;
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : os_rcv_fd failed, err = %d\n",
+		printk(UM_KERN_ERR "xterm_open : os_rcv_fd failed, err = %d\n",
 		       -err);
-		जाओ out_समाप्त;
-	पूर्ण
+		goto out_kill;
+	}
 
 	err = os_set_fd_block(new, 0);
-	अगर (err) अणु
-		prपूर्णांकk(UM_KERN_ERR "xterm_open : failed to set xterm "
+	if (err) {
+		printk(UM_KERN_ERR "xterm_open : failed to set xterm "
 		       "descriptor non-blocking, err = %d\n", -err);
-		जाओ out_बंद2;
-	पूर्ण
+		goto out_close2;
+	}
 
 	CATCH_EINTR(err = tcgetattr(new, &data->tt));
-	अगर (err) अणु
+	if (err) {
 		new = err;
-		जाओ out_बंद2;
-	पूर्ण
+		goto out_close2;
+	}
 
-	अगर (data->raw) अणु
+	if (data->raw) {
 		err = raw(new);
-		अगर (err) अणु
+		if (err) {
 			new = err;
-			जाओ out_बंद2;
-		पूर्ण
-	पूर्ण
+			goto out_close2;
+		}
+	}
 
 	unlink(file);
 	data->pid = pid;
-	*dev_out = शून्य;
+	*dev_out = NULL;
 
-	वापस new;
+	return new;
 
- out_बंद2:
-	बंद(new);
- out_समाप्त:
-	os_समाप्त_process(pid, 1);
- out_बंद1:
-	बंद(fd);
+ out_close2:
+	close(new);
+ out_kill:
+	os_kill_process(pid, 1);
+ out_close1:
+	close(fd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xterm_बंद(पूर्णांक fd, व्योम *d)
-अणु
-	काष्ठा xterm_chan *data = d;
+static void xterm_close(int fd, void *d)
+{
+	struct xterm_chan *data = d;
 
-	अगर (data->pid != -1)
-		os_समाप्त_process(data->pid, 1);
+	if (data->pid != -1)
+		os_kill_process(data->pid, 1);
 	data->pid = -1;
 
-	अगर (data->helper_pid != -1)
-		os_समाप्त_process(data->helper_pid, 0);
+	if (data->helper_pid != -1)
+		os_kill_process(data->helper_pid, 0);
 	data->helper_pid = -1;
 
-	अगर (data->chan_fd != -1)
-		os_बंद_file(data->chan_fd);
-	os_बंद_file(fd);
-पूर्ण
+	if (data->chan_fd != -1)
+		os_close_file(data->chan_fd);
+	os_close_file(fd);
+}
 
-स्थिर काष्ठा chan_ops xterm_ops = अणु
+const struct chan_ops xterm_ops = {
 	.type		= "xterm",
 	.init		= xterm_init,
-	.खोलो		= xterm_खोलो,
-	.बंद		= xterm_बंद,
-	.पढ़ो		= generic_पढ़ो,
-	.ग_लिखो		= generic_ग_लिखो,
-	.console_ग_लिखो	= generic_console_ग_लिखो,
-	.winकरोw_size	= generic_winकरोw_size,
-	.मुक्त		= generic_मुक्त,
+	.open		= xterm_open,
+	.close		= xterm_close,
+	.read		= generic_read,
+	.write		= generic_write,
+	.console_write	= generic_console_write,
+	.window_size	= generic_window_size,
+	.free		= generic_free,
 	.winch		= 1,
-पूर्ण;
+};

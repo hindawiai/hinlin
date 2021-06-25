@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Marvell Dove SoC घड़ीs
+ * Marvell Dove SoC clocks
  *
  * Copyright (C) 2012 Marvell
  *
- * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  * Andrew Lunn <andrew@lunn.ch>
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश "common.h"
-#समावेश "dove-divider.h"
+#include <linux/kernel.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include "common.h"
+#include "dove-divider.h"
 
 /*
  * Core Clocks
@@ -37,14 +36,14 @@
  *		 15 =  333 MHz
  *		 others reserved.
  *
- * SAR0[11:9]  : CPU to L2 Clock भागider ratio
+ * SAR0[11:9]  : CPU to L2 Clock divider ratio
  *		 0 = (1/1) * CPU
  *		 2 = (1/2) * CPU
  *		 4 = (1/3) * CPU
  *		 6 = (1/4) * CPU
  *		 others reserved.
  *
- * SAR0[15:12] : CPU to DDR DRAM Clock भागider ratio
+ * SAR0[15:12] : CPU to DDR DRAM Clock divider ratio
  *		 0  = (1/1) * CPU
  *		 2  = (1/2) * CPU
  *		 3  = (2/5) * CPU
@@ -63,36 +62,36 @@
  *		 others reserved.
  */
 
-#घोषणा SAR_DOVE_CPU_FREQ		5
-#घोषणा SAR_DOVE_CPU_FREQ_MASK		0xf
-#घोषणा SAR_DOVE_L2_RATIO		9
-#घोषणा SAR_DOVE_L2_RATIO_MASK		0x7
-#घोषणा SAR_DOVE_DDR_RATIO		12
-#घोषणा SAR_DOVE_DDR_RATIO_MASK		0xf
-#घोषणा SAR_DOVE_TCLK_FREQ		23
-#घोषणा SAR_DOVE_TCLK_FREQ_MASK		0x3
+#define SAR_DOVE_CPU_FREQ		5
+#define SAR_DOVE_CPU_FREQ_MASK		0xf
+#define SAR_DOVE_L2_RATIO		9
+#define SAR_DOVE_L2_RATIO_MASK		0x7
+#define SAR_DOVE_DDR_RATIO		12
+#define SAR_DOVE_DDR_RATIO_MASK		0xf
+#define SAR_DOVE_TCLK_FREQ		23
+#define SAR_DOVE_TCLK_FREQ_MASK		0x3
 
-क्रमागत अणु DOVE_CPU_TO_L2, DOVE_CPU_TO_DDR पूर्ण;
+enum { DOVE_CPU_TO_L2, DOVE_CPU_TO_DDR };
 
-अटल स्थिर काष्ठा coreclk_ratio करोve_coreclk_ratios[] __initस्थिर = अणु
-	अणु .id = DOVE_CPU_TO_L2, .name = "l2clk", पूर्ण,
-	अणु .id = DOVE_CPU_TO_DDR, .name = "ddrclk", पूर्ण
-पूर्ण;
+static const struct coreclk_ratio dove_coreclk_ratios[] __initconst = {
+	{ .id = DOVE_CPU_TO_L2, .name = "l2clk", },
+	{ .id = DOVE_CPU_TO_DDR, .name = "ddrclk", }
+};
 
-अटल स्थिर u32 करोve_tclk_freqs[] __initस्थिर = अणु
+static const u32 dove_tclk_freqs[] __initconst = {
 	166666667,
 	125000000,
 	0, 0
-पूर्ण;
+};
 
-अटल u32 __init करोve_get_tclk_freq(व्योम __iomem *sar)
-अणु
-	u32 opt = (पढ़ोl(sar) >> SAR_DOVE_TCLK_FREQ) &
+static u32 __init dove_get_tclk_freq(void __iomem *sar)
+{
+	u32 opt = (readl(sar) >> SAR_DOVE_TCLK_FREQ) &
 		SAR_DOVE_TCLK_FREQ_MASK;
-	वापस करोve_tclk_freqs[opt];
-पूर्ण
+	return dove_tclk_freqs[opt];
+}
 
-अटल स्थिर u32 करोve_cpu_freqs[] __initस्थिर = अणु
+static const u32 dove_cpu_freqs[] __initconst = {
 	0, 0, 0, 0, 0,
 	1000000000,
 	933333333, 933333333,
@@ -102,101 +101,101 @@
 	533333333,
 	400000000,
 	333333333
-पूर्ण;
+};
 
-अटल u32 __init करोve_get_cpu_freq(व्योम __iomem *sar)
-अणु
-	u32 opt = (पढ़ोl(sar) >> SAR_DOVE_CPU_FREQ) &
+static u32 __init dove_get_cpu_freq(void __iomem *sar)
+{
+	u32 opt = (readl(sar) >> SAR_DOVE_CPU_FREQ) &
 		SAR_DOVE_CPU_FREQ_MASK;
-	वापस करोve_cpu_freqs[opt];
-पूर्ण
+	return dove_cpu_freqs[opt];
+}
 
-अटल स्थिर पूर्णांक करोve_cpu_l2_ratios[8][2] __initस्थिर = अणु
-	अणु 1, 1 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 0, 1 पूर्ण,
-	अणु 1, 3 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 4 पूर्ण, अणु 0, 1 पूर्ण
-पूर्ण;
+static const int dove_cpu_l2_ratios[8][2] __initconst = {
+	{ 1, 1 }, { 0, 1 }, { 1, 2 }, { 0, 1 },
+	{ 1, 3 }, { 0, 1 }, { 1, 4 }, { 0, 1 }
+};
 
-अटल स्थिर पूर्णांक करोve_cpu_ddr_ratios[16][2] __initस्थिर = अणु
-	अणु 1, 1 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 2 पूर्ण, अणु 2, 5 पूर्ण,
-	अणु 1, 3 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 4 पूर्ण, अणु 0, 1 पूर्ण,
-	अणु 1, 5 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 6 पूर्ण, अणु 0, 1 पूर्ण,
-	अणु 1, 7 पूर्ण, अणु 0, 1 पूर्ण, अणु 1, 8 पूर्ण, अणु 1, 10 पूर्ण
-पूर्ण;
+static const int dove_cpu_ddr_ratios[16][2] __initconst = {
+	{ 1, 1 }, { 0, 1 }, { 1, 2 }, { 2, 5 },
+	{ 1, 3 }, { 0, 1 }, { 1, 4 }, { 0, 1 },
+	{ 1, 5 }, { 0, 1 }, { 1, 6 }, { 0, 1 },
+	{ 1, 7 }, { 0, 1 }, { 1, 8 }, { 1, 10 }
+};
 
-अटल व्योम __init करोve_get_clk_ratio(
-	व्योम __iomem *sar, पूर्णांक id, पूर्णांक *mult, पूर्णांक *भाग)
-अणु
-	चयन (id) अणु
-	हाल DOVE_CPU_TO_L2:
-	अणु
-		u32 opt = (पढ़ोl(sar) >> SAR_DOVE_L2_RATIO) &
+static void __init dove_get_clk_ratio(
+	void __iomem *sar, int id, int *mult, int *div)
+{
+	switch (id) {
+	case DOVE_CPU_TO_L2:
+	{
+		u32 opt = (readl(sar) >> SAR_DOVE_L2_RATIO) &
 			SAR_DOVE_L2_RATIO_MASK;
-		*mult = करोve_cpu_l2_ratios[opt][0];
-		*भाग = करोve_cpu_l2_ratios[opt][1];
-		अवरोध;
-	पूर्ण
-	हाल DOVE_CPU_TO_DDR:
-	अणु
-		u32 opt = (पढ़ोl(sar) >> SAR_DOVE_DDR_RATIO) &
+		*mult = dove_cpu_l2_ratios[opt][0];
+		*div = dove_cpu_l2_ratios[opt][1];
+		break;
+	}
+	case DOVE_CPU_TO_DDR:
+	{
+		u32 opt = (readl(sar) >> SAR_DOVE_DDR_RATIO) &
 			SAR_DOVE_DDR_RATIO_MASK;
-		*mult = करोve_cpu_ddr_ratios[opt][0];
-		*भाग = करोve_cpu_ddr_ratios[opt][1];
-		अवरोध;
-	पूर्ण
-	पूर्ण
-पूर्ण
+		*mult = dove_cpu_ddr_ratios[opt][0];
+		*div = dove_cpu_ddr_ratios[opt][1];
+		break;
+	}
+	}
+}
 
-अटल स्थिर काष्ठा coreclk_soc_desc करोve_coreclks = अणु
-	.get_tclk_freq = करोve_get_tclk_freq,
-	.get_cpu_freq = करोve_get_cpu_freq,
-	.get_clk_ratio = करोve_get_clk_ratio,
-	.ratios = करोve_coreclk_ratios,
-	.num_ratios = ARRAY_SIZE(करोve_coreclk_ratios),
-पूर्ण;
+static const struct coreclk_soc_desc dove_coreclks = {
+	.get_tclk_freq = dove_get_tclk_freq,
+	.get_cpu_freq = dove_get_cpu_freq,
+	.get_clk_ratio = dove_get_clk_ratio,
+	.ratios = dove_coreclk_ratios,
+	.num_ratios = ARRAY_SIZE(dove_coreclk_ratios),
+};
 
 /*
  * Clock Gating Control
  */
 
-अटल स्थिर काष्ठा clk_gating_soc_desc करोve_gating_desc[] __initस्थिर = अणु
-	अणु "usb0", शून्य, 0, 0 पूर्ण,
-	अणु "usb1", शून्य, 1, 0 पूर्ण,
-	अणु "ge",	"gephy", 2, 0 पूर्ण,
-	अणु "sata", शून्य, 3, 0 पूर्ण,
-	अणु "pex0", शून्य, 4, 0 पूर्ण,
-	अणु "pex1", शून्य, 5, 0 पूर्ण,
-	अणु "sdio0", शून्य, 8, 0 पूर्ण,
-	अणु "sdio1", शून्य, 9, 0 पूर्ण,
-	अणु "nand", शून्य, 10, 0 पूर्ण,
-	अणु "camera", शून्य, 11, 0 पूर्ण,
-	अणु "i2s0", शून्य, 12, 0 पूर्ण,
-	अणु "i2s1", शून्य, 13, 0 पूर्ण,
-	अणु "crypto", शून्य, 15, 0 पूर्ण,
-	अणु "ac97", शून्य, 21, 0 पूर्ण,
-	अणु "pdma", शून्य, 22, 0 पूर्ण,
-	अणु "xor0", शून्य, 23, 0 पूर्ण,
-	अणु "xor1", शून्य, 24, 0 पूर्ण,
-	अणु "gephy", शून्य, 30, 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_gating_soc_desc dove_gating_desc[] __initconst = {
+	{ "usb0", NULL, 0, 0 },
+	{ "usb1", NULL, 1, 0 },
+	{ "ge",	"gephy", 2, 0 },
+	{ "sata", NULL, 3, 0 },
+	{ "pex0", NULL, 4, 0 },
+	{ "pex1", NULL, 5, 0 },
+	{ "sdio0", NULL, 8, 0 },
+	{ "sdio1", NULL, 9, 0 },
+	{ "nand", NULL, 10, 0 },
+	{ "camera", NULL, 11, 0 },
+	{ "i2s0", NULL, 12, 0 },
+	{ "i2s1", NULL, 13, 0 },
+	{ "crypto", NULL, 15, 0 },
+	{ "ac97", NULL, 21, 0 },
+	{ "pdma", NULL, 22, 0 },
+	{ "xor0", NULL, 23, 0 },
+	{ "xor1", NULL, 24, 0 },
+	{ "gephy", NULL, 30, 0 },
+	{ }
+};
 
-अटल व्योम __init करोve_clk_init(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *cgnp =
-		of_find_compatible_node(शून्य, शून्य, "marvell,dove-gating-clock");
-	काष्ठा device_node *ddnp =
-		of_find_compatible_node(शून्य, शून्य, "marvell,dove-divider-clock");
+static void __init dove_clk_init(struct device_node *np)
+{
+	struct device_node *cgnp =
+		of_find_compatible_node(NULL, NULL, "marvell,dove-gating-clock");
+	struct device_node *ddnp =
+		of_find_compatible_node(NULL, NULL, "marvell,dove-divider-clock");
 
-	mvebu_coreclk_setup(np, &करोve_coreclks);
+	mvebu_coreclk_setup(np, &dove_coreclks);
 
-	अगर (ddnp) अणु
-		करोve_भागider_clk_init(ddnp);
+	if (ddnp) {
+		dove_divider_clk_init(ddnp);
 		of_node_put(ddnp);
-	पूर्ण
+	}
 
-	अगर (cgnp) अणु
-		mvebu_clk_gating_setup(cgnp, करोve_gating_desc);
+	if (cgnp) {
+		mvebu_clk_gating_setup(cgnp, dove_gating_desc);
 		of_node_put(cgnp);
-	पूर्ण
-पूर्ण
-CLK_OF_DECLARE(करोve_clk, "marvell,dove-core-clock", करोve_clk_init);
+	}
+}
+CLK_OF_DECLARE(dove_clk, "marvell,dove-core-clock", dove_clk_init);

@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश "wil6210.h"
-#समावेश "txrx_edma.h"
-#समावेश "txrx.h"
-#समावेश "trace.h"
+#include <linux/etherdevice.h>
+#include <linux/moduleparam.h>
+#include <linux/prefetch.h>
+#include <linux/types.h>
+#include <linux/list.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include "wil6210.h"
+#include "txrx_edma.h"
+#include "txrx.h"
+#include "trace.h"
 
 /* Max number of entries (packets to complete) to update the hwtail of tx
- * status ring. Should be घातer of 2
+ * status ring. Should be power of 2
  */
-#घोषणा WIL_EDMA_TX_SRING_UPDATE_HW_TAIL 128
-#घोषणा WIL_EDMA_MAX_DATA_OFFSET (2)
+#define WIL_EDMA_TX_SRING_UPDATE_HW_TAIL 128
+#define WIL_EDMA_MAX_DATA_OFFSET (2)
 /* RX buffer size must be aligned to 4 bytes */
-#घोषणा WIL_EDMA_RX_BUF_LEN_DEFAULT (2048)
-#घोषणा MAX_INVALID_BUFF_ID_RETRY (3)
+#define WIL_EDMA_RX_BUF_LEN_DEFAULT (2048)
+#define MAX_INVALID_BUFF_ID_RETRY (3)
 
-अटल व्योम wil_tx_desc_unmap_edma(काष्ठा device *dev,
-				   जोड़ wil_tx_desc *desc,
-				   काष्ठा wil_ctx *ctx)
-अणु
-	काष्ठा wil_tx_enhanced_desc *d = (काष्ठा wil_tx_enhanced_desc *)desc;
+static void wil_tx_desc_unmap_edma(struct device *dev,
+				   union wil_tx_desc *desc,
+				   struct wil_ctx *ctx)
+{
+	struct wil_tx_enhanced_desc *d = (struct wil_tx_enhanced_desc *)desc;
 	dma_addr_t pa = wil_tx_desc_get_addr_edma(&d->dma);
 	u16 dmalen = le16_to_cpu(d->dma.length);
 
-	चयन (ctx->mapped_as) अणु
-	हाल wil_mapped_as_single:
+	switch (ctx->mapped_as) {
+	case wil_mapped_as_single:
 		dma_unmap_single(dev, pa, dmalen, DMA_TO_DEVICE);
-		अवरोध;
-	हाल wil_mapped_as_page:
+		break;
+	case wil_mapped_as_page:
 		dma_unmap_page(dev, pa, dmalen, DMA_TO_DEVICE);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक wil_find_मुक्त_sring(काष्ठा wil6210_priv *wil)
-अणु
-	पूर्णांक i;
+static int wil_find_free_sring(struct wil6210_priv *wil)
+{
+	int i;
 
-	क्रम (i = 0; i < WIL6210_MAX_STATUS_RINGS; i++) अणु
-		अगर (!wil->srings[i].va)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < WIL6210_MAX_STATUS_RINGS; i++) {
+		if (!wil->srings[i].va)
+			return i;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम wil_sring_मुक्त(काष्ठा wil6210_priv *wil,
-			   काष्ठा wil_status_ring *sring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	माप_प्रकार sz;
+static void wil_sring_free(struct wil6210_priv *wil,
+			   struct wil_status_ring *sring)
+{
+	struct device *dev = wil_to_dev(wil);
+	size_t sz;
 
-	अगर (!sring || !sring->va)
-		वापस;
+	if (!sring || !sring->va)
+		return;
 
 	sz = sring->elem_size * sring->size;
 
 	wil_dbg_misc(wil, "status_ring_free, size(bytes)=%zu, 0x%p:%pad\n",
 		     sz, sring->va, &sring->pa);
 
-	dma_मुक्त_coherent(dev, sz, (व्योम *)sring->va, sring->pa);
+	dma_free_coherent(dev, sz, (void *)sring->va, sring->pa);
 	sring->pa = 0;
-	sring->va = शून्य;
-पूर्ण
+	sring->va = NULL;
+}
 
-अटल पूर्णांक wil_sring_alloc(काष्ठा wil6210_priv *wil,
-			   काष्ठा wil_status_ring *sring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	माप_प्रकार sz = sring->elem_size * sring->size;
+static int wil_sring_alloc(struct wil6210_priv *wil,
+			   struct wil_status_ring *sring)
+{
+	struct device *dev = wil_to_dev(wil);
+	size_t sz = sring->elem_size * sring->size;
 
 	wil_dbg_misc(wil, "status_ring_alloc: size=%zu\n", sz);
 
-	अगर (sz == 0) अणु
+	if (sz == 0) {
 		wil_err(wil, "Cannot allocate a zero size status ring\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sring->swhead = 0;
 
@@ -95,23 +94,23 @@
 	 * since DR bit should be initialized to 0.
 	 */
 	sring->va = dma_alloc_coherent(dev, sz, &sring->pa, GFP_KERNEL);
-	अगर (!sring->va)
-		वापस -ENOMEM;
+	if (!sring->va)
+		return -ENOMEM;
 
 	wil_dbg_misc(wil, "status_ring[%d] 0x%p:%pad\n", sring->size, sring->va,
 		     &sring->pa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wil_tx_init_edma(काष्ठा wil6210_priv *wil)
-अणु
-	पूर्णांक ring_id = wil_find_मुक्त_sring(wil);
-	काष्ठा wil_status_ring *sring;
-	पूर्णांक rc;
+static int wil_tx_init_edma(struct wil6210_priv *wil)
+{
+	int ring_id = wil_find_free_sring(wil);
+	struct wil_status_ring *sring;
+	int rc;
 	u16 status_ring_size;
 
-	अगर (wil->tx_status_ring_order < WIL_SRING_SIZE_ORDER_MIN ||
+	if (wil->tx_status_ring_order < WIL_SRING_SIZE_ORDER_MIN ||
 	    wil->tx_status_ring_order > WIL_SRING_SIZE_ORDER_MAX)
 		wil->tx_status_ring_order = WIL_TX_SRING_SIZE_ORDER_DEFAULT;
 
@@ -120,8 +119,8 @@
 	wil_dbg_misc(wil, "init TX sring: size=%u, ring_id=%u\n",
 		     status_ring_size, ring_id);
 
-	अगर (ring_id < 0)
-		वापस ring_id;
+	if (ring_id < 0)
+		return ring_id;
 
 	/* Allocate Tx status ring. Tx descriptor rings will be
 	 * allocated on WMI connect event
@@ -130,69 +129,69 @@
 
 	sring->is_rx = false;
 	sring->size = status_ring_size;
-	sring->elem_size = माप(काष्ठा wil_ring_tx_status);
+	sring->elem_size = sizeof(struct wil_ring_tx_status);
 	rc = wil_sring_alloc(wil, sring);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = wil_wmi_tx_sring_cfg(wil, ring_id);
-	अगर (rc)
-		जाओ out_मुक्त;
+	if (rc)
+		goto out_free;
 
 	sring->desc_rdy_pol = 1;
 	wil->tx_sring_idx = ring_id;
 
-	वापस 0;
-out_मुक्त:
-	wil_sring_मुक्त(wil, sring);
-	वापस rc;
-पूर्ण
+	return 0;
+out_free:
+	wil_sring_free(wil, sring);
+	return rc;
+}
 
-/* Allocate one skb क्रम Rx descriptor RING */
-अटल पूर्णांक wil_ring_alloc_skb_edma(काष्ठा wil6210_priv *wil,
-				   काष्ठा wil_ring *ring, u32 i)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	अचिन्हित पूर्णांक sz = wil->rx_buf_len;
+/* Allocate one skb for Rx descriptor RING */
+static int wil_ring_alloc_skb_edma(struct wil6210_priv *wil,
+				   struct wil_ring *ring, u32 i)
+{
+	struct device *dev = wil_to_dev(wil);
+	unsigned int sz = wil->rx_buf_len;
 	dma_addr_t pa;
 	u16 buff_id;
-	काष्ठा list_head *active = &wil->rx_buff_mgmt.active;
-	काष्ठा list_head *मुक्त = &wil->rx_buff_mgmt.मुक्त;
-	काष्ठा wil_rx_buff *rx_buff;
-	काष्ठा wil_rx_buff *buff_arr = wil->rx_buff_mgmt.buff_arr;
-	काष्ठा sk_buff *skb;
-	काष्ठा wil_rx_enhanced_desc dd, *d = &dd;
-	काष्ठा wil_rx_enhanced_desc *_d = (काष्ठा wil_rx_enhanced_desc *)
+	struct list_head *active = &wil->rx_buff_mgmt.active;
+	struct list_head *free = &wil->rx_buff_mgmt.free;
+	struct wil_rx_buff *rx_buff;
+	struct wil_rx_buff *buff_arr = wil->rx_buff_mgmt.buff_arr;
+	struct sk_buff *skb;
+	struct wil_rx_enhanced_desc dd, *d = &dd;
+	struct wil_rx_enhanced_desc *_d = (struct wil_rx_enhanced_desc *)
 		&ring->va[i].rx.enhanced;
 
-	अगर (unlikely(list_empty(मुक्त))) अणु
-		wil->rx_buff_mgmt.मुक्त_list_empty_cnt++;
-		वापस -EAGAIN;
-	पूर्ण
+	if (unlikely(list_empty(free))) {
+		wil->rx_buff_mgmt.free_list_empty_cnt++;
+		return -EAGAIN;
+	}
 
 	skb = dev_alloc_skb(sz);
-	अगर (unlikely(!skb))
-		वापस -ENOMEM;
+	if (unlikely(!skb))
+		return -ENOMEM;
 
 	skb_put(skb, sz);
 
 	/**
-	 * Make sure that the network stack calculates checksum क्रम packets
+	 * Make sure that the network stack calculates checksum for packets
 	 * which failed the HW checksum calculation
 	 */
 	skb->ip_summed = CHECKSUM_NONE;
 
 	pa = dma_map_single(dev, skb->data, skb->len, DMA_FROM_DEVICE);
-	अगर (unlikely(dma_mapping_error(dev, pa))) अणु
-		kमुक्त_skb(skb);
-		वापस -ENOMEM;
-	पूर्ण
+	if (unlikely(dma_mapping_error(dev, pa))) {
+		kfree_skb(skb);
+		return -ENOMEM;
+	}
 
 	/* Get the buffer ID - the index of the rx buffer in the buff_arr */
-	rx_buff = list_first_entry(मुक्त, काष्ठा wil_rx_buff, list);
+	rx_buff = list_first_entry(free, struct wil_rx_buff, list);
 	buff_id = rx_buff->id;
 
-	/* Move a buffer from the मुक्त list to the active list */
+	/* Move a buffer from the free list to the active list */
 	list_move(&rx_buff->list, active);
 
 	buff_arr[buff_id].skb = skb;
@@ -202,243 +201,243 @@ out_मुक्त:
 	d->mac.buff_id = cpu_to_le16(buff_id);
 	*_d = *d;
 
-	/* Save the physical address in skb->cb क्रम later use in dma_unmap */
-	स_नकल(skb->cb, &pa, माप(pa));
+	/* Save the physical address in skb->cb for later use in dma_unmap */
+	memcpy(skb->cb, &pa, sizeof(pa));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत
-व्योम wil_get_next_rx_status_msg(काष्ठा wil_status_ring *sring, u8 *dr_bit,
-				व्योम *msg)
-अणु
-	काष्ठा wil_rx_status_compressed *_msg;
+static inline
+void wil_get_next_rx_status_msg(struct wil_status_ring *sring, u8 *dr_bit,
+				void *msg)
+{
+	struct wil_rx_status_compressed *_msg;
 
-	_msg = (काष्ठा wil_rx_status_compressed *)
+	_msg = (struct wil_rx_status_compressed *)
 		(sring->va + (sring->elem_size * sring->swhead));
 	*dr_bit = WIL_GET_BITS(_msg->d0, 31, 31);
-	/* make sure dr_bit is पढ़ो beक्रमe the rest of status msg */
+	/* make sure dr_bit is read before the rest of status msg */
 	rmb();
-	स_नकल(msg, (व्योम *)_msg, sring->elem_size);
-पूर्ण
+	memcpy(msg, (void *)_msg, sring->elem_size);
+}
 
-अटल अंतरभूत व्योम wil_sring_advance_swhead(काष्ठा wil_status_ring *sring)
-अणु
+static inline void wil_sring_advance_swhead(struct wil_status_ring *sring)
+{
 	sring->swhead = (sring->swhead + 1) % sring->size;
-	अगर (sring->swhead == 0)
+	if (sring->swhead == 0)
 		sring->desc_rdy_pol = 1 - sring->desc_rdy_pol;
-पूर्ण
+}
 
-अटल पूर्णांक wil_rx_refill_edma(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wil_ring *ring = &wil->ring_rx;
+static int wil_rx_refill_edma(struct wil6210_priv *wil)
+{
+	struct wil_ring *ring = &wil->ring_rx;
 	u32 next_head;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	ring->swtail = *ring->edma_rx_swtail.va;
 
-	क्रम (; next_head = wil_ring_next_head(ring),
+	for (; next_head = wil_ring_next_head(ring),
 	     (next_head != ring->swtail);
-	     ring->swhead = next_head) अणु
+	     ring->swhead = next_head) {
 		rc = wil_ring_alloc_skb_edma(wil, ring, ring->swhead);
-		अगर (unlikely(rc)) अणु
-			अगर (rc == -EAGAIN)
+		if (unlikely(rc)) {
+			if (rc == -EAGAIN)
 				wil_dbg_txrx(wil, "No free buffer ID found\n");
-			अन्यथा
+			else
 				wil_err_ratelimited(wil,
 						    "Error %d in refill desc[%d]\n",
 						    rc, ring->swhead);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* make sure all ग_लिखोs to descriptors (shared memory) are करोne beक्रमe
+	/* make sure all writes to descriptors (shared memory) are done before
 	 * committing them to HW
 	 */
 	wmb();
 
 	wil_w(wil, ring->hwtail, ring->swhead);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम wil_move_all_rx_buff_to_मुक्त_list(काष्ठा wil6210_priv *wil,
-					      काष्ठा wil_ring *ring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा list_head *active = &wil->rx_buff_mgmt.active;
+static void wil_move_all_rx_buff_to_free_list(struct wil6210_priv *wil,
+					      struct wil_ring *ring)
+{
+	struct device *dev = wil_to_dev(wil);
+	struct list_head *active = &wil->rx_buff_mgmt.active;
 	dma_addr_t pa;
 
-	अगर (!wil->rx_buff_mgmt.buff_arr)
-		वापस;
+	if (!wil->rx_buff_mgmt.buff_arr)
+		return;
 
-	जबतक (!list_empty(active)) अणु
-		काष्ठा wil_rx_buff *rx_buff =
-			list_first_entry(active, काष्ठा wil_rx_buff, list);
-		काष्ठा sk_buff *skb = rx_buff->skb;
+	while (!list_empty(active)) {
+		struct wil_rx_buff *rx_buff =
+			list_first_entry(active, struct wil_rx_buff, list);
+		struct sk_buff *skb = rx_buff->skb;
 
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			wil_err(wil, "No Rx skb at buff_id %d\n", rx_buff->id);
-		पूर्ण अन्यथा अणु
-			rx_buff->skb = शून्य;
-			स_नकल(&pa, skb->cb, माप(pa));
+		} else {
+			rx_buff->skb = NULL;
+			memcpy(&pa, skb->cb, sizeof(pa));
 			dma_unmap_single(dev, pa, wil->rx_buf_len,
 					 DMA_FROM_DEVICE);
-			kमुक्त_skb(skb);
-		पूर्ण
+			kfree_skb(skb);
+		}
 
-		/* Move the buffer from the active to the मुक्त list */
-		list_move(&rx_buff->list, &wil->rx_buff_mgmt.मुक्त);
-	पूर्ण
-पूर्ण
+		/* Move the buffer from the active to the free list */
+		list_move(&rx_buff->list, &wil->rx_buff_mgmt.free);
+	}
+}
 
-अटल व्योम wil_मुक्त_rx_buff_arr(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wil_ring *ring = &wil->ring_rx;
+static void wil_free_rx_buff_arr(struct wil6210_priv *wil)
+{
+	struct wil_ring *ring = &wil->ring_rx;
 
-	अगर (!wil->rx_buff_mgmt.buff_arr)
-		वापस;
+	if (!wil->rx_buff_mgmt.buff_arr)
+		return;
 
-	/* Move all the buffers to the मुक्त list in हाल active list is
-	 * not empty in order to release all SKBs beक्रमe deleting the array
+	/* Move all the buffers to the free list in case active list is
+	 * not empty in order to release all SKBs before deleting the array
 	 */
-	wil_move_all_rx_buff_to_मुक्त_list(wil, ring);
+	wil_move_all_rx_buff_to_free_list(wil, ring);
 
-	kमुक्त(wil->rx_buff_mgmt.buff_arr);
-	wil->rx_buff_mgmt.buff_arr = शून्य;
-पूर्ण
+	kfree(wil->rx_buff_mgmt.buff_arr);
+	wil->rx_buff_mgmt.buff_arr = NULL;
+}
 
-अटल पूर्णांक wil_init_rx_buff_arr(काष्ठा wil6210_priv *wil,
-				माप_प्रकार size)
-अणु
-	काष्ठा wil_rx_buff *buff_arr;
-	काष्ठा list_head *active = &wil->rx_buff_mgmt.active;
-	काष्ठा list_head *मुक्त = &wil->rx_buff_mgmt.मुक्त;
-	पूर्णांक i;
+static int wil_init_rx_buff_arr(struct wil6210_priv *wil,
+				size_t size)
+{
+	struct wil_rx_buff *buff_arr;
+	struct list_head *active = &wil->rx_buff_mgmt.active;
+	struct list_head *free = &wil->rx_buff_mgmt.free;
+	int i;
 
-	wil->rx_buff_mgmt.buff_arr = kसुस्मृति(size + 1,
-					     माप(काष्ठा wil_rx_buff),
+	wil->rx_buff_mgmt.buff_arr = kcalloc(size + 1,
+					     sizeof(struct wil_rx_buff),
 					     GFP_KERNEL);
-	अगर (!wil->rx_buff_mgmt.buff_arr)
-		वापस -ENOMEM;
+	if (!wil->rx_buff_mgmt.buff_arr)
+		return -ENOMEM;
 
 	/* Set list heads */
 	INIT_LIST_HEAD(active);
-	INIT_LIST_HEAD(मुक्त);
+	INIT_LIST_HEAD(free);
 
-	/* Linkअगरy the list.
+	/* Linkify the list.
 	 * buffer id 0 should not be used (marks invalid id).
 	 */
 	buff_arr = wil->rx_buff_mgmt.buff_arr;
-	क्रम (i = 1; i <= size; i++) अणु
-		list_add(&buff_arr[i].list, मुक्त);
+	for (i = 1; i <= size; i++) {
+		list_add(&buff_arr[i].list, free);
 		buff_arr[i].id = i;
-	पूर्ण
+	}
 
 	wil->rx_buff_mgmt.size = size + 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wil_init_rx_sring(काष्ठा wil6210_priv *wil,
+static int wil_init_rx_sring(struct wil6210_priv *wil,
 			     u16 status_ring_size,
-			     माप_प्रकार elem_size,
+			     size_t elem_size,
 			     u16 ring_id)
-अणु
-	काष्ठा wil_status_ring *sring = &wil->srings[ring_id];
-	पूर्णांक rc;
+{
+	struct wil_status_ring *sring = &wil->srings[ring_id];
+	int rc;
 
 	wil_dbg_misc(wil, "init RX sring: size=%u, ring_id=%u\n",
 		     status_ring_size, ring_id);
 
-	स_रखो(&sring->rx_data, 0, माप(sring->rx_data));
+	memset(&sring->rx_data, 0, sizeof(sring->rx_data));
 
 	sring->is_rx = true;
 	sring->size = status_ring_size;
 	sring->elem_size = elem_size;
 	rc = wil_sring_alloc(wil, sring);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = wil_wmi_rx_sring_add(wil, ring_id);
-	अगर (rc)
-		जाओ out_मुक्त;
+	if (rc)
+		goto out_free;
 
 	sring->desc_rdy_pol = 1;
 
-	वापस 0;
-out_मुक्त:
-	wil_sring_मुक्त(wil, sring);
-	वापस rc;
-पूर्ण
+	return 0;
+out_free:
+	wil_sring_free(wil, sring);
+	return rc;
+}
 
-अटल पूर्णांक wil_ring_alloc_desc_ring(काष्ठा wil6210_priv *wil,
-				    काष्ठा wil_ring *ring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	माप_प्रकार sz = ring->size * माप(ring->va[0]);
+static int wil_ring_alloc_desc_ring(struct wil6210_priv *wil,
+				    struct wil_ring *ring)
+{
+	struct device *dev = wil_to_dev(wil);
+	size_t sz = ring->size * sizeof(ring->va[0]);
 
 	wil_dbg_misc(wil, "alloc_desc_ring:\n");
 
-	BUILD_BUG_ON(माप(ring->va[0]) != 32);
+	BUILD_BUG_ON(sizeof(ring->va[0]) != 32);
 
 	ring->swhead = 0;
 	ring->swtail = 0;
-	ring->ctx = kसुस्मृति(ring->size, माप(ring->ctx[0]), GFP_KERNEL);
-	अगर (!ring->ctx)
-		जाओ err;
+	ring->ctx = kcalloc(ring->size, sizeof(ring->ctx[0]), GFP_KERNEL);
+	if (!ring->ctx)
+		goto err;
 
 	ring->va = dma_alloc_coherent(dev, sz, &ring->pa, GFP_KERNEL);
-	अगर (!ring->va)
-		जाओ err_मुक्त_ctx;
+	if (!ring->va)
+		goto err_free_ctx;
 
-	अगर (ring->is_rx) अणु
-		sz = माप(*ring->edma_rx_swtail.va);
+	if (ring->is_rx) {
+		sz = sizeof(*ring->edma_rx_swtail.va);
 		ring->edma_rx_swtail.va =
 			dma_alloc_coherent(dev, sz, &ring->edma_rx_swtail.pa,
 					   GFP_KERNEL);
-		अगर (!ring->edma_rx_swtail.va)
-			जाओ err_मुक्त_va;
-	पूर्ण
+		if (!ring->edma_rx_swtail.va)
+			goto err_free_va;
+	}
 
 	wil_dbg_misc(wil, "%s ring[%d] 0x%p:%pad 0x%p\n",
 		     ring->is_rx ? "RX" : "TX",
 		     ring->size, ring->va, &ring->pa, ring->ctx);
 
-	वापस 0;
-err_मुक्त_va:
-	dma_मुक्त_coherent(dev, ring->size * माप(ring->va[0]),
-			  (व्योम *)ring->va, ring->pa);
-	ring->va = शून्य;
-err_मुक्त_ctx:
-	kमुक्त(ring->ctx);
-	ring->ctx = शून्य;
+	return 0;
+err_free_va:
+	dma_free_coherent(dev, ring->size * sizeof(ring->va[0]),
+			  (void *)ring->va, ring->pa);
+	ring->va = NULL;
+err_free_ctx:
+	kfree(ring->ctx);
+	ring->ctx = NULL;
 err:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम wil_ring_मुक्त_edma(काष्ठा wil6210_priv *wil, काष्ठा wil_ring *ring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	माप_प्रकार sz;
-	पूर्णांक ring_index = 0;
+static void wil_ring_free_edma(struct wil6210_priv *wil, struct wil_ring *ring)
+{
+	struct device *dev = wil_to_dev(wil);
+	size_t sz;
+	int ring_index = 0;
 
-	अगर (!ring->va)
-		वापस;
+	if (!ring->va)
+		return;
 
-	sz = ring->size * माप(ring->va[0]);
+	sz = ring->size * sizeof(ring->va[0]);
 
-	lockdep_निश्चित_held(&wil->mutex);
-	अगर (ring->is_rx) अणु
+	lockdep_assert_held(&wil->mutex);
+	if (ring->is_rx) {
 		wil_dbg_misc(wil, "free Rx ring [%d] 0x%p:%pad 0x%p\n",
 			     ring->size, ring->va,
 			     &ring->pa, ring->ctx);
 
-		wil_move_all_rx_buff_to_मुक्त_list(wil, ring);
-		dma_मुक्त_coherent(dev, माप(*ring->edma_rx_swtail.va),
+		wil_move_all_rx_buff_to_free_list(wil, ring);
+		dma_free_coherent(dev, sizeof(*ring->edma_rx_swtail.va),
 				  ring->edma_rx_swtail.va,
 				  ring->edma_rx_swtail.pa);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* TX ring */
 	ring_index = ring - wil->ring_tx;
@@ -447,67 +446,67 @@ err:
 		     ring_index, ring->size, ring->va,
 		     &ring->pa, ring->ctx);
 
-	जबतक (!wil_ring_is_empty(ring)) अणु
-		काष्ठा wil_ctx *ctx;
+	while (!wil_ring_is_empty(ring)) {
+		struct wil_ctx *ctx;
 
-		काष्ठा wil_tx_enhanced_desc dd, *d = &dd;
-		काष्ठा wil_tx_enhanced_desc *_d =
-			(काष्ठा wil_tx_enhanced_desc *)
+		struct wil_tx_enhanced_desc dd, *d = &dd;
+		struct wil_tx_enhanced_desc *_d =
+			(struct wil_tx_enhanced_desc *)
 			&ring->va[ring->swtail].tx.enhanced;
 
 		ctx = &ring->ctx[ring->swtail];
-		अगर (!ctx) अणु
+		if (!ctx) {
 			wil_dbg_txrx(wil,
 				     "ctx(%d) was already completed\n",
 				     ring->swtail);
 			ring->swtail = wil_ring_next_tail(ring);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		*d = *_d;
-		wil_tx_desc_unmap_edma(dev, (जोड़ wil_tx_desc *)d, ctx);
-		अगर (ctx->skb)
-			dev_kमुक्त_skb_any(ctx->skb);
+		wil_tx_desc_unmap_edma(dev, (union wil_tx_desc *)d, ctx);
+		if (ctx->skb)
+			dev_kfree_skb_any(ctx->skb);
 		ring->swtail = wil_ring_next_tail(ring);
-	पूर्ण
+	}
 
 out:
-	dma_मुक्त_coherent(dev, sz, (व्योम *)ring->va, ring->pa);
-	kमुक्त(ring->ctx);
+	dma_free_coherent(dev, sz, (void *)ring->va, ring->pa);
+	kfree(ring->ctx);
 	ring->pa = 0;
-	ring->va = शून्य;
-	ring->ctx = शून्य;
-पूर्ण
+	ring->va = NULL;
+	ring->ctx = NULL;
+}
 
-अटल पूर्णांक wil_init_rx_desc_ring(काष्ठा wil6210_priv *wil, u16 desc_ring_size,
-				 पूर्णांक status_ring_id)
-अणु
-	काष्ठा wil_ring *ring = &wil->ring_rx;
-	पूर्णांक rc;
+static int wil_init_rx_desc_ring(struct wil6210_priv *wil, u16 desc_ring_size,
+				 int status_ring_id)
+{
+	struct wil_ring *ring = &wil->ring_rx;
+	int rc;
 
 	wil_dbg_misc(wil, "init RX desc ring\n");
 
 	ring->size = desc_ring_size;
 	ring->is_rx = true;
 	rc = wil_ring_alloc_desc_ring(wil, ring);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = wil_wmi_rx_desc_ring_add(wil, status_ring_id);
-	अगर (rc)
-		जाओ out_मुक्त;
+	if (rc)
+		goto out_free;
 
-	वापस 0;
-out_मुक्त:
-	wil_ring_मुक्त_edma(wil, ring);
-	वापस rc;
-पूर्ण
+	return 0;
+out_free:
+	wil_ring_free_edma(wil, ring);
+	return rc;
+}
 
-अटल व्योम wil_get_reorder_params_edma(काष्ठा wil6210_priv *wil,
-					काष्ठा sk_buff *skb, पूर्णांक *tid,
-					पूर्णांक *cid, पूर्णांक *mid, u16 *seq,
-					पूर्णांक *mcast, पूर्णांक *retry)
-अणु
-	काष्ठा wil_rx_status_extended *s = wil_skb_rxstatus(skb);
+static void wil_get_reorder_params_edma(struct wil6210_priv *wil,
+					struct sk_buff *skb, int *tid,
+					int *cid, int *mid, u16 *seq,
+					int *mcast, int *retry)
+{
+	struct wil_rx_status_extended *s = wil_skb_rxstatus(skb);
 
 	*tid = wil_rx_status_get_tid(s);
 	*cid = wil_rx_status_get_cid(s);
@@ -515,30 +514,30 @@ out_मुक्त:
 	*seq = le16_to_cpu(wil_rx_status_get_seq(wil, s));
 	*mcast = wil_rx_status_get_mcast(s);
 	*retry = wil_rx_status_get_retry(s);
-पूर्ण
+}
 
-अटल व्योम wil_get_netअगर_rx_params_edma(काष्ठा sk_buff *skb, पूर्णांक *cid,
-					 पूर्णांक *security)
-अणु
-	काष्ठा wil_rx_status_extended *s = wil_skb_rxstatus(skb);
+static void wil_get_netif_rx_params_edma(struct sk_buff *skb, int *cid,
+					 int *security)
+{
+	struct wil_rx_status_extended *s = wil_skb_rxstatus(skb);
 
 	*cid = wil_rx_status_get_cid(s);
 	*security = wil_rx_status_get_security(s);
-पूर्ण
+}
 
-अटल पूर्णांक wil_rx_crypto_check_edma(काष्ठा wil6210_priv *wil,
-				    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा wil_rx_status_extended *st;
-	पूर्णांक cid, tid, key_id, mc;
-	काष्ठा wil_sta_info *s;
-	काष्ठा wil_tid_crypto_rx *c;
-	काष्ठा wil_tid_crypto_rx_single *cc;
-	स्थिर u8 *pn;
+static int wil_rx_crypto_check_edma(struct wil6210_priv *wil,
+				    struct sk_buff *skb)
+{
+	struct wil_rx_status_extended *st;
+	int cid, tid, key_id, mc;
+	struct wil_sta_info *s;
+	struct wil_tid_crypto_rx *c;
+	struct wil_tid_crypto_rx_single *cc;
+	const u8 *pn;
 
-	/* In HW reorder, HW is responsible क्रम crypto check */
-	अगर (wil->use_rx_hw_reordering)
-		वापस 0;
+	/* In HW reorder, HW is responsible for crypto check */
+	if (wil->use_rx_hw_reordering)
+		return 0;
 
 	st = wil_skb_rxstatus(skb);
 
@@ -551,77 +550,77 @@ out_मुक्त:
 	cc = &c->key_id[key_id];
 	pn = (u8 *)&st->ext.pn_15_0;
 
-	अगर (!cc->key_set) अणु
+	if (!cc->key_set) {
 		wil_err_ratelimited(wil,
 				    "Key missing. CID %d TID %d MCast %d KEY_ID %d\n",
 				    cid, tid, mc, key_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (reverse_स_भेद(pn, cc->pn, IEEE80211_GCMP_PN_LEN) <= 0) अणु
+	if (reverse_memcmp(pn, cc->pn, IEEE80211_GCMP_PN_LEN) <= 0) {
 		wil_err_ratelimited(wil,
 				    "Replay attack. CID %d TID %d MCast %d KEY_ID %d PN %6phN last %6phN\n",
 				    cid, tid, mc, key_id, pn, cc->pn);
-		वापस -EINVAL;
-	पूर्ण
-	स_नकल(cc->pn, pn, IEEE80211_GCMP_PN_LEN);
+		return -EINVAL;
+	}
+	memcpy(cc->pn, pn, IEEE80211_GCMP_PN_LEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool wil_is_rx_idle_edma(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wil_status_ring *sring;
-	काष्ठा wil_rx_status_extended msg1;
-	व्योम *msg = &msg1;
+static bool wil_is_rx_idle_edma(struct wil6210_priv *wil)
+{
+	struct wil_status_ring *sring;
+	struct wil_rx_status_extended msg1;
+	void *msg = &msg1;
 	u8 dr_bit;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < wil->num_rx_status_rings; i++) अणु
+	for (i = 0; i < wil->num_rx_status_rings; i++) {
 		sring = &wil->srings[i];
-		अगर (!sring->va)
-			जारी;
+		if (!sring->va)
+			continue;
 
 		wil_get_next_rx_status_msg(sring, &dr_bit, msg);
 
-		/* Check अगर there are unhandled RX status messages */
-		अगर (dr_bit == sring->desc_rdy_pol)
-			वापस false;
-	पूर्ण
+		/* Check if there are unhandled RX status messages */
+		if (dr_bit == sring->desc_rdy_pol)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम wil_rx_buf_len_init_edma(काष्ठा wil6210_priv *wil)
-अणु
+static void wil_rx_buf_len_init_edma(struct wil6210_priv *wil)
+{
 	/* RX buffer size must be aligned to 4 bytes */
 	wil->rx_buf_len = rx_large_buf ?
 		WIL_MAX_ETH_MTU : WIL_EDMA_RX_BUF_LEN_DEFAULT;
-पूर्ण
+}
 
-अटल पूर्णांक wil_rx_init_edma(काष्ठा wil6210_priv *wil, uपूर्णांक desc_ring_order)
-अणु
+static int wil_rx_init_edma(struct wil6210_priv *wil, uint desc_ring_order)
+{
 	u16 status_ring_size, desc_ring_size = 1 << desc_ring_order;
-	काष्ठा wil_ring *ring = &wil->ring_rx;
-	पूर्णांक rc;
-	माप_प्रकार elem_size = wil->use_compressed_rx_status ?
-		माप(काष्ठा wil_rx_status_compressed) :
-		माप(काष्ठा wil_rx_status_extended);
-	पूर्णांक i;
+	struct wil_ring *ring = &wil->ring_rx;
+	int rc;
+	size_t elem_size = wil->use_compressed_rx_status ?
+		sizeof(struct wil_rx_status_compressed) :
+		sizeof(struct wil_rx_status_extended);
+	int i;
 
 	/* In SW reorder one must use extended status messages */
-	अगर (wil->use_compressed_rx_status && !wil->use_rx_hw_reordering) अणु
+	if (wil->use_compressed_rx_status && !wil->use_rx_hw_reordering) {
 		wil_err(wil,
 			"compressed RX status cannot be used with SW reorder\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (wil->rx_status_ring_order <= desc_ring_order)
+		return -EINVAL;
+	}
+	if (wil->rx_status_ring_order <= desc_ring_order)
 		/* make sure sring is larger than desc ring */
 		wil->rx_status_ring_order = desc_ring_order + 1;
-	अगर (wil->rx_buff_id_count <= desc_ring_size)
+	if (wil->rx_buff_id_count <= desc_ring_size)
 		/* make sure we will not run out of buff_ids */
 		wil->rx_buff_id_count = desc_ring_size + 512;
-	अगर (wil->rx_status_ring_order < WIL_SRING_SIZE_ORDER_MIN ||
+	if (wil->rx_status_ring_order < WIL_SRING_SIZE_ORDER_MIN ||
 	    wil->rx_status_ring_order > WIL_SRING_SIZE_ORDER_MAX)
 		wil->rx_status_ring_order = WIL_RX_SRING_SIZE_ORDER_DEFAULT;
 
@@ -633,76 +632,76 @@ out_मुक्त:
 
 	wil_rx_buf_len_init_edma(wil);
 
-	/* Use debugfs dbg_num_rx_srings अगर set, reserve one sring क्रम TX */
-	अगर (wil->num_rx_status_rings > WIL6210_MAX_STATUS_RINGS - 1)
+	/* Use debugfs dbg_num_rx_srings if set, reserve one sring for TX */
+	if (wil->num_rx_status_rings > WIL6210_MAX_STATUS_RINGS - 1)
 		wil->num_rx_status_rings = WIL6210_MAX_STATUS_RINGS - 1;
 
 	wil_dbg_misc(wil, "rx_init: allocate %d status rings\n",
 		     wil->num_rx_status_rings);
 
 	rc = wil_wmi_cfg_def_rx_offload(wil, wil->rx_buf_len);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/* Allocate status ring */
-	क्रम (i = 0; i < wil->num_rx_status_rings; i++) अणु
-		पूर्णांक sring_id = wil_find_मुक्त_sring(wil);
+	for (i = 0; i < wil->num_rx_status_rings; i++) {
+		int sring_id = wil_find_free_sring(wil);
 
-		अगर (sring_id < 0) अणु
+		if (sring_id < 0) {
 			rc = -EFAULT;
-			जाओ err_मुक्त_status;
-		पूर्ण
+			goto err_free_status;
+		}
 		rc = wil_init_rx_sring(wil, status_ring_size, elem_size,
 				       sring_id);
-		अगर (rc)
-			जाओ err_मुक्त_status;
-	पूर्ण
+		if (rc)
+			goto err_free_status;
+	}
 
 	/* Allocate descriptor ring */
 	rc = wil_init_rx_desc_ring(wil, desc_ring_size,
 				   WIL_DEFAULT_RX_STATUS_RING_ID);
-	अगर (rc)
-		जाओ err_मुक्त_status;
+	if (rc)
+		goto err_free_status;
 
-	अगर (wil->rx_buff_id_count >= status_ring_size) अणु
+	if (wil->rx_buff_id_count >= status_ring_size) {
 		wil_info(wil,
 			 "rx_buff_id_count %d exceeds sring_size %d. set it to %d\n",
 			 wil->rx_buff_id_count, status_ring_size,
 			 status_ring_size - 1);
 		wil->rx_buff_id_count = status_ring_size - 1;
-	पूर्ण
+	}
 
 	/* Allocate Rx buffer array */
 	rc = wil_init_rx_buff_arr(wil, wil->rx_buff_id_count);
-	अगर (rc)
-		जाओ err_मुक्त_desc;
+	if (rc)
+		goto err_free_desc;
 
 	/* Fill descriptor ring with credits */
 	rc = wil_rx_refill_edma(wil);
-	अगर (rc)
-		जाओ err_मुक्त_rx_buff_arr;
+	if (rc)
+		goto err_free_rx_buff_arr;
 
-	वापस 0;
-err_मुक्त_rx_buff_arr:
-	wil_मुक्त_rx_buff_arr(wil);
-err_मुक्त_desc:
-	wil_ring_मुक्त_edma(wil, ring);
-err_मुक्त_status:
-	क्रम (i = 0; i < wil->num_rx_status_rings; i++)
-		wil_sring_मुक्त(wil, &wil->srings[i]);
+	return 0;
+err_free_rx_buff_arr:
+	wil_free_rx_buff_arr(wil);
+err_free_desc:
+	wil_ring_free_edma(wil, ring);
+err_free_status:
+	for (i = 0; i < wil->num_rx_status_rings; i++)
+		wil_sring_free(wil, &wil->srings[i]);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wil_ring_init_tx_edma(काष्ठा wil6210_vअगर *vअगर, पूर्णांक ring_id,
-				 पूर्णांक size, पूर्णांक cid, पूर्णांक tid)
-अणु
-	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
-	पूर्णांक rc;
-	काष्ठा wil_ring *ring = &wil->ring_tx[ring_id];
-	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
+static int wil_ring_init_tx_edma(struct wil6210_vif *vif, int ring_id,
+				 int size, int cid, int tid)
+{
+	struct wil6210_priv *wil = vif_to_wil(vif);
+	int rc;
+	struct wil_ring *ring = &wil->ring_tx[ring_id];
+	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
 
-	lockdep_निश्चित_held(&wil->mutex);
+	lockdep_assert_held(&wil->mutex);
 
 	wil_dbg_misc(wil,
 		     "init TX ring: ring_id=%u, cid=%u, tid=%u, sring_id=%u\n",
@@ -711,226 +710,226 @@ err_मुक्त_status:
 	wil_tx_data_init(txdata);
 	ring->size = size;
 	rc = wil_ring_alloc_desc_ring(wil, ring);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	wil->ring2cid_tid[ring_id][0] = cid;
 	wil->ring2cid_tid[ring_id][1] = tid;
-	अगर (!vअगर->privacy)
-		txdata->करोt1x_खोलो = true;
+	if (!vif->privacy)
+		txdata->dot1x_open = true;
 
-	rc = wil_wmi_tx_desc_ring_add(vअगर, ring_id, cid, tid);
-	अगर (rc) अणु
+	rc = wil_wmi_tx_desc_ring_add(vif, ring_id, cid, tid);
+	if (rc) {
 		wil_err(wil, "WMI_TX_DESC_RING_ADD_CMD failed\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (txdata->करोt1x_खोलो && agg_wsize >= 0)
+	if (txdata->dot1x_open && agg_wsize >= 0)
 		wil_addba_tx_request(wil, ring_id, agg_wsize);
 
-	वापस 0;
- out_मुक्त:
+	return 0;
+ out_free:
 	spin_lock_bh(&txdata->lock);
-	txdata->करोt1x_खोलो = false;
+	txdata->dot1x_open = false;
 	txdata->enabled = 0;
 	spin_unlock_bh(&txdata->lock);
-	wil_ring_मुक्त_edma(wil, ring);
+	wil_ring_free_edma(wil, ring);
 	wil->ring2cid_tid[ring_id][0] = wil->max_assoc_sta;
 	wil->ring2cid_tid[ring_id][1] = 0;
 
  out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wil_tx_ring_modअगरy_edma(काष्ठा wil6210_vअगर *vअगर, पूर्णांक ring_id,
-				   पूर्णांक cid, पूर्णांक tid)
-अणु
-	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+static int wil_tx_ring_modify_edma(struct wil6210_vif *vif, int ring_id,
+				   int cid, int tid)
+{
+	struct wil6210_priv *wil = vif_to_wil(vif);
 
 	wil_err(wil, "ring modify is not supported for EDMA\n");
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-/* This function is used only क्रम RX SW reorder */
-अटल पूर्णांक wil_check_bar(काष्ठा wil6210_priv *wil, व्योम *msg, पूर्णांक cid,
-			 काष्ठा sk_buff *skb, काष्ठा wil_net_stats *stats)
-अणु
+/* This function is used only for RX SW reorder */
+static int wil_check_bar(struct wil6210_priv *wil, void *msg, int cid,
+			 struct sk_buff *skb, struct wil_net_stats *stats)
+{
 	u8 ftype;
 	u8 fc1;
-	पूर्णांक mid;
-	पूर्णांक tid;
+	int mid;
+	int tid;
 	u16 seq;
-	काष्ठा wil6210_vअगर *vअगर;
+	struct wil6210_vif *vif;
 
 	ftype = wil_rx_status_get_frame_type(wil, msg);
-	अगर (ftype == IEEE80211_FTYPE_DATA)
-		वापस 0;
+	if (ftype == IEEE80211_FTYPE_DATA)
+		return 0;
 
 	fc1 = wil_rx_status_get_fc1(wil, msg);
 	mid = wil_rx_status_get_mid(msg);
 	tid = wil_rx_status_get_tid(msg);
 	seq = le16_to_cpu(wil_rx_status_get_seq(wil, msg));
-	vअगर = wil->vअगरs[mid];
+	vif = wil->vifs[mid];
 
-	अगर (unlikely(!vअगर)) अणु
+	if (unlikely(!vif)) {
 		wil_dbg_txrx(wil, "RX descriptor with invalid mid %d", mid);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	wil_dbg_txrx(wil,
 		     "Non-data frame FC[7:0] 0x%02x MID %d CID %d TID %d Seq 0x%03x\n",
 		     fc1, mid, cid, tid, seq);
-	अगर (stats)
+	if (stats)
 		stats->rx_non_data_frame++;
-	अगर (wil_is_back_req(fc1)) अणु
+	if (wil_is_back_req(fc1)) {
 		wil_dbg_txrx(wil,
 			     "BAR: MID %d CID %d TID %d Seq 0x%03x\n",
 			     mid, cid, tid, seq);
-		wil_rx_bar(wil, vअगर, cid, tid, seq);
-	पूर्ण अन्यथा अणु
+		wil_rx_bar(wil, vif, cid, tid, seq);
+	} else {
 		u32 sz = wil->use_compressed_rx_status ?
-			माप(काष्ठा wil_rx_status_compressed) :
-			माप(काष्ठा wil_rx_status_extended);
+			sizeof(struct wil_rx_status_compressed) :
+			sizeof(struct wil_rx_status_extended);
 
-		/* prपूर्णांक again all info. One can enable only this
-		 * without overhead क्रम prपूर्णांकing every Rx frame
+		/* print again all info. One can enable only this
+		 * without overhead for printing every Rx frame
 		 */
 		wil_dbg_txrx(wil,
 			     "Unhandled non-data frame FC[7:0] 0x%02x MID %d CID %d TID %d Seq 0x%03x\n",
 			     fc1, mid, cid, tid, seq);
 		wil_hex_dump_txrx("RxS ", DUMP_PREFIX_NONE, 32, 4,
-				  (स्थिर व्योम *)msg, sz, false);
+				  (const void *)msg, sz, false);
 		wil_hex_dump_txrx("Rx ", DUMP_PREFIX_OFFSET, 16, 1,
 				  skb->data, skb_headlen(skb), false);
-	पूर्ण
+	}
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक wil_rx_error_check_edma(काष्ठा wil6210_priv *wil,
-				   काष्ठा sk_buff *skb,
-				   काष्ठा wil_net_stats *stats)
-अणु
-	पूर्णांक l2_rx_status;
-	व्योम *msg = wil_skb_rxstatus(skb);
+static int wil_rx_error_check_edma(struct wil6210_priv *wil,
+				   struct sk_buff *skb,
+				   struct wil_net_stats *stats)
+{
+	int l2_rx_status;
+	void *msg = wil_skb_rxstatus(skb);
 
 	l2_rx_status = wil_rx_status_get_l2_rx_status(msg);
-	अगर (l2_rx_status != 0) अणु
+	if (l2_rx_status != 0) {
 		wil_dbg_txrx(wil, "L2 RX error, l2_rx_status=0x%x\n",
 			     l2_rx_status);
 		/* Due to HW issue, KEY error will trigger a MIC error */
-		अगर (l2_rx_status == WIL_RX_EDMA_ERROR_MIC) अणु
+		if (l2_rx_status == WIL_RX_EDMA_ERROR_MIC) {
 			wil_err_ratelimited(wil,
 					    "L2 MIC/KEY error, dropping packet\n");
 			stats->rx_mic_error++;
-		पूर्ण
-		अगर (l2_rx_status == WIL_RX_EDMA_ERROR_KEY) अणु
+		}
+		if (l2_rx_status == WIL_RX_EDMA_ERROR_KEY) {
 			wil_err_ratelimited(wil,
 					    "L2 KEY error, dropping packet\n");
 			stats->rx_key_error++;
-		पूर्ण
-		अगर (l2_rx_status == WIL_RX_EDMA_ERROR_REPLAY) अणु
+		}
+		if (l2_rx_status == WIL_RX_EDMA_ERROR_REPLAY) {
 			wil_err_ratelimited(wil,
 					    "L2 REPLAY error, dropping packet\n");
 			stats->rx_replay++;
-		पूर्ण
-		अगर (l2_rx_status == WIL_RX_EDMA_ERROR_AMSDU) अणु
+		}
+		if (l2_rx_status == WIL_RX_EDMA_ERROR_AMSDU) {
 			wil_err_ratelimited(wil,
 					    "L2 AMSDU error, dropping packet\n");
 			stats->rx_amsdu_error++;
-		पूर्ण
-		वापस -EFAULT;
-	पूर्ण
+		}
+		return -EFAULT;
+	}
 
 	skb->ip_summed = wil_rx_status_get_checksum(msg, stats);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff *wil_sring_reap_rx_edma(काष्ठा wil6210_priv *wil,
-					      काष्ठा wil_status_ring *sring)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा wil_rx_status_extended msg1;
-	व्योम *msg = &msg1;
+static struct sk_buff *wil_sring_reap_rx_edma(struct wil6210_priv *wil,
+					      struct wil_status_ring *sring)
+{
+	struct device *dev = wil_to_dev(wil);
+	struct wil_rx_status_extended msg1;
+	void *msg = &msg1;
 	u16 buff_id;
-	काष्ठा sk_buff *skb;
+	struct sk_buff *skb;
 	dma_addr_t pa;
-	काष्ठा wil_ring_rx_data *rxdata = &sring->rx_data;
-	अचिन्हित पूर्णांक sz = wil->rx_buf_len;
-	काष्ठा wil_net_stats *stats = शून्य;
+	struct wil_ring_rx_data *rxdata = &sring->rx_data;
+	unsigned int sz = wil->rx_buf_len;
+	struct wil_net_stats *stats = NULL;
 	u16 dmalen;
-	पूर्णांक cid;
+	int cid;
 	bool eop, headstolen;
-	पूर्णांक delta;
+	int delta;
 	u8 dr_bit;
 	u8 data_offset;
-	काष्ठा wil_rx_status_extended *s;
+	struct wil_rx_status_extended *s;
 	u16 sring_idx = sring - wil->srings;
-	पूर्णांक invalid_buff_id_retry;
+	int invalid_buff_id_retry;
 
-	BUILD_BUG_ON(माप(काष्ठा wil_rx_status_extended) > माप(skb->cb));
+	BUILD_BUG_ON(sizeof(struct wil_rx_status_extended) > sizeof(skb->cb));
 
 again:
 	wil_get_next_rx_status_msg(sring, &dr_bit, msg);
 
-	/* Completed handling all the पढ़ोy status messages */
-	अगर (dr_bit != sring->desc_rdy_pol)
-		वापस शून्य;
+	/* Completed handling all the ready status messages */
+	if (dr_bit != sring->desc_rdy_pol)
+		return NULL;
 
 	/* Extract the buffer ID from the status message */
 	buff_id = le16_to_cpu(wil_rx_status_get_buff_id(msg));
 
 	invalid_buff_id_retry = 0;
-	जबतक (!buff_id) अणु
-		काष्ठा wil_rx_status_extended *s;
+	while (!buff_id) {
+		struct wil_rx_status_extended *s;
 
 		wil_dbg_txrx(wil,
 			     "buff_id is not updated yet by HW, (swhead 0x%x)\n",
 			     sring->swhead);
-		अगर (++invalid_buff_id_retry > MAX_INVALID_BUFF_ID_RETRY)
-			अवरोध;
+		if (++invalid_buff_id_retry > MAX_INVALID_BUFF_ID_RETRY)
+			break;
 
 		/* Read the status message again */
-		s = (काष्ठा wil_rx_status_extended *)
+		s = (struct wil_rx_status_extended *)
 			(sring->va + (sring->elem_size * sring->swhead));
-		*(काष्ठा wil_rx_status_extended *)msg = *s;
+		*(struct wil_rx_status_extended *)msg = *s;
 		buff_id = le16_to_cpu(wil_rx_status_get_buff_id(msg));
-	पूर्ण
+	}
 
-	अगर (unlikely(!wil_val_in_range(buff_id, 1, wil->rx_buff_mgmt.size))) अणु
+	if (unlikely(!wil_val_in_range(buff_id, 1, wil->rx_buff_mgmt.size))) {
 		wil_err(wil, "Corrupt buff_id=%d, sring->swhead=%d\n",
 			buff_id, sring->swhead);
-		prपूर्णांक_hex_dump(KERN_ERR, "RxS ", DUMP_PREFIX_OFFSET, 16, 1,
+		print_hex_dump(KERN_ERR, "RxS ", DUMP_PREFIX_OFFSET, 16, 1,
 			       msg, wil->use_compressed_rx_status ?
-			       माप(काष्ठा wil_rx_status_compressed) :
-			       माप(काष्ठा wil_rx_status_extended), false);
+			       sizeof(struct wil_rx_status_compressed) :
+			       sizeof(struct wil_rx_status_extended), false);
 
 		wil_rx_status_reset_buff_id(sring);
 		wil_sring_advance_swhead(sring);
 		sring->invalid_buff_id_cnt++;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	/* Extract the SKB from the rx_buff management array */
 	skb = wil->rx_buff_mgmt.buff_arr[buff_id].skb;
-	wil->rx_buff_mgmt.buff_arr[buff_id].skb = शून्य;
-	अगर (!skb) अणु
+	wil->rx_buff_mgmt.buff_arr[buff_id].skb = NULL;
+	if (!skb) {
 		wil_err(wil, "No Rx skb at buff_id %d\n", buff_id);
 		wil_rx_status_reset_buff_id(sring);
-		/* Move the buffer from the active list to the मुक्त list */
+		/* Move the buffer from the active list to the free list */
 		list_move_tail(&wil->rx_buff_mgmt.buff_arr[buff_id].list,
-			       &wil->rx_buff_mgmt.मुक्त);
+			       &wil->rx_buff_mgmt.free);
 		wil_sring_advance_swhead(sring);
 		sring->invalid_buff_id_cnt++;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	wil_rx_status_reset_buff_id(sring);
 	wil_sring_advance_swhead(sring);
 
-	स_नकल(&pa, skb->cb, माप(pa));
+	memcpy(&pa, skb->cb, sizeof(pa));
 	dma_unmap_single(dev, pa, sz, DMA_FROM_DEVICE);
 	dmalen = le16_to_cpu(wil_rx_status_get_length(msg));
 
@@ -939,298 +938,298 @@ again:
 	wil_dbg_txrx(wil, "Rx, buff_id=%u, sring_idx=%u, dmalen=%u bytes\n",
 		     buff_id, sring_idx, dmalen);
 	wil_hex_dump_txrx("RxS ", DUMP_PREFIX_NONE, 32, 4,
-			  (स्थिर व्योम *)msg, wil->use_compressed_rx_status ?
-			  माप(काष्ठा wil_rx_status_compressed) :
-			  माप(काष्ठा wil_rx_status_extended), false);
+			  (const void *)msg, wil->use_compressed_rx_status ?
+			  sizeof(struct wil_rx_status_compressed) :
+			  sizeof(struct wil_rx_status_extended), false);
 
-	/* Move the buffer from the active list to the मुक्त list */
+	/* Move the buffer from the active list to the free list */
 	list_move_tail(&wil->rx_buff_mgmt.buff_arr[buff_id].list,
-		       &wil->rx_buff_mgmt.मुक्त);
+		       &wil->rx_buff_mgmt.free);
 
 	eop = wil_rx_status_get_eop(msg);
 
 	cid = wil_rx_status_get_cid(msg);
-	अगर (unlikely(!wil_val_in_range(cid, 0, wil->max_assoc_sta))) अणु
+	if (unlikely(!wil_val_in_range(cid, 0, wil->max_assoc_sta))) {
 		wil_err(wil, "Corrupt cid=%d, sring->swhead=%d\n",
 			cid, sring->swhead);
 		rxdata->skipping = true;
-		जाओ skipping;
-	पूर्ण
+		goto skipping;
+	}
 	stats = &wil->sta[cid].stats;
 
-	अगर (unlikely(dmalen < ETH_HLEN)) अणु
+	if (unlikely(dmalen < ETH_HLEN)) {
 		wil_dbg_txrx(wil, "Short frame, len = %d\n", dmalen);
-		stats->rx_लघु_frame++;
+		stats->rx_short_frame++;
 		rxdata->skipping = true;
-		जाओ skipping;
-	पूर्ण
+		goto skipping;
+	}
 
-	अगर (unlikely(dmalen > sz)) अणु
+	if (unlikely(dmalen > sz)) {
 		wil_err(wil, "Rx size too large: %d bytes!\n", dmalen);
-		prपूर्णांक_hex_dump(KERN_ERR, "RxS ", DUMP_PREFIX_OFFSET, 16, 1,
+		print_hex_dump(KERN_ERR, "RxS ", DUMP_PREFIX_OFFSET, 16, 1,
 			       msg, wil->use_compressed_rx_status ?
-			       माप(काष्ठा wil_rx_status_compressed) :
-			       माप(काष्ठा wil_rx_status_extended), false);
+			       sizeof(struct wil_rx_status_compressed) :
+			       sizeof(struct wil_rx_status_extended), false);
 
 		stats->rx_large_frame++;
 		rxdata->skipping = true;
-	पूर्ण
+	}
 
 skipping:
-	/* skipping indicates अगर a certain SKB should be dropped.
-	 * It is set in हाल there is an error on the current SKB or in हाल
-	 * of RX chaining: as दीर्घ as we manage to merge the SKBs it will
-	 * be false. once we have a bad SKB or we करोn't manage to merge SKBs
+	/* skipping indicates if a certain SKB should be dropped.
+	 * It is set in case there is an error on the current SKB or in case
+	 * of RX chaining: as long as we manage to merge the SKBs it will
+	 * be false. once we have a bad SKB or we don't manage to merge SKBs
 	 * it will be set to the !EOP value of the current SKB.
 	 * This guarantees that all the following SKBs until EOP will also
 	 * get dropped.
 	 */
-	अगर (unlikely(rxdata->skipping)) अणु
-		kमुक्त_skb(skb);
-		अगर (rxdata->skb) अणु
-			kमुक्त_skb(rxdata->skb);
-			rxdata->skb = शून्य;
-		पूर्ण
+	if (unlikely(rxdata->skipping)) {
+		kfree_skb(skb);
+		if (rxdata->skb) {
+			kfree_skb(rxdata->skb);
+			rxdata->skb = NULL;
+		}
 		rxdata->skipping = !eop;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	skb_trim(skb, dmalen);
 
 	prefetch(skb->data);
 
-	अगर (!rxdata->skb) अणु
+	if (!rxdata->skb) {
 		rxdata->skb = skb;
-	पूर्ण अन्यथा अणु
-		अगर (likely(skb_try_coalesce(rxdata->skb, skb, &headstolen,
-					    &delta))) अणु
-			kमुक्त_skb_partial(skb, headstolen);
-		पूर्ण अन्यथा अणु
+	} else {
+		if (likely(skb_try_coalesce(rxdata->skb, skb, &headstolen,
+					    &delta))) {
+			kfree_skb_partial(skb, headstolen);
+		} else {
 			wil_err(wil, "failed to merge skbs!\n");
-			kमुक्त_skb(skb);
-			kमुक्त_skb(rxdata->skb);
-			rxdata->skb = शून्य;
+			kfree_skb(skb);
+			kfree_skb(rxdata->skb);
+			rxdata->skb = NULL;
 			rxdata->skipping = !eop;
-			जाओ again;
-		पूर्ण
-	पूर्ण
+			goto again;
+		}
+	}
 
-	अगर (!eop)
-		जाओ again;
+	if (!eop)
+		goto again;
 
 	/* reaching here rxdata->skb always contains a full packet */
 	skb = rxdata->skb;
-	rxdata->skb = शून्य;
+	rxdata->skb = NULL;
 	rxdata->skipping = false;
 
-	अगर (stats) अणु
+	if (stats) {
 		stats->last_mcs_rx = wil_rx_status_get_mcs(msg);
-		अगर (stats->last_mcs_rx < ARRAY_SIZE(stats->rx_per_mcs))
+		if (stats->last_mcs_rx < ARRAY_SIZE(stats->rx_per_mcs))
 			stats->rx_per_mcs[stats->last_mcs_rx]++;
-		अन्यथा अगर (stats->last_mcs_rx == WIL_EXTENDED_MCS_26)
+		else if (stats->last_mcs_rx == WIL_EXTENDED_MCS_26)
 			stats->rx_per_mcs[WIL_BASE_MCS_FOR_EXTENDED_26]++;
 
 		stats->last_cb_mode_rx  = wil_rx_status_get_cb_mode(msg);
-	पूर्ण
+	}
 
-	अगर (!wil->use_rx_hw_reordering && !wil->use_compressed_rx_status &&
-	    wil_check_bar(wil, msg, cid, skb, stats) == -EAGAIN) अणु
-		kमुक्त_skb(skb);
-		जाओ again;
-	पूर्ण
+	if (!wil->use_rx_hw_reordering && !wil->use_compressed_rx_status &&
+	    wil_check_bar(wil, msg, cid, skb, stats) == -EAGAIN) {
+		kfree_skb(skb);
+		goto again;
+	}
 
-	/* Compensate क्रम the HW data alignment according to the status
+	/* Compensate for the HW data alignment according to the status
 	 * message
 	 */
 	data_offset = wil_rx_status_get_data_offset(msg);
-	अगर (data_offset == 0xFF ||
-	    data_offset > WIL_EDMA_MAX_DATA_OFFSET) अणु
+	if (data_offset == 0xFF ||
+	    data_offset > WIL_EDMA_MAX_DATA_OFFSET) {
 		wil_err(wil, "Unexpected data offset %d\n", data_offset);
-		kमुक्त_skb(skb);
-		जाओ again;
-	पूर्ण
+		kfree_skb(skb);
+		goto again;
+	}
 
 	skb_pull(skb, data_offset);
 
 	wil_hex_dump_txrx("Rx ", DUMP_PREFIX_OFFSET, 16, 1,
 			  skb->data, skb_headlen(skb), false);
 
-	/* Has to be करोne after dma_unmap_single as skb->cb is also
-	 * used क्रम holding the pa
+	/* Has to be done after dma_unmap_single as skb->cb is also
+	 * used for holding the pa
 	 */
 	s = wil_skb_rxstatus(skb);
-	स_नकल(s, msg, sring->elem_size);
+	memcpy(s, msg, sring->elem_size);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-व्योम wil_rx_handle_edma(काष्ठा wil6210_priv *wil, पूर्णांक *quota)
-अणु
-	काष्ठा net_device *ndev;
-	काष्ठा wil_ring *ring = &wil->ring_rx;
-	काष्ठा wil_status_ring *sring;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+void wil_rx_handle_edma(struct wil6210_priv *wil, int *quota)
+{
+	struct net_device *ndev;
+	struct wil_ring *ring = &wil->ring_rx;
+	struct wil_status_ring *sring;
+	struct sk_buff *skb;
+	int i;
 
-	अगर (unlikely(!ring->va)) अणु
+	if (unlikely(!ring->va)) {
 		wil_err(wil, "Rx IRQ while Rx not yet initialized\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	wil_dbg_txrx(wil, "rx_handle\n");
 
-	क्रम (i = 0; i < wil->num_rx_status_rings; i++) अणु
+	for (i = 0; i < wil->num_rx_status_rings; i++) {
 		sring = &wil->srings[i];
-		अगर (unlikely(!sring->va)) अणु
+		if (unlikely(!sring->va)) {
 			wil_err(wil,
 				"Rx IRQ while Rx status ring %d not yet initialized\n",
 				i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		जबतक ((*quota > 0) &&
-		       (शून्य != (skb =
-			wil_sring_reap_rx_edma(wil, sring)))) अणु
+		while ((*quota > 0) &&
+		       (NULL != (skb =
+			wil_sring_reap_rx_edma(wil, sring)))) {
 			(*quota)--;
-			अगर (wil->use_rx_hw_reordering) अणु
-				व्योम *msg = wil_skb_rxstatus(skb);
-				पूर्णांक mid = wil_rx_status_get_mid(msg);
-				काष्ठा wil6210_vअगर *vअगर = wil->vअगरs[mid];
+			if (wil->use_rx_hw_reordering) {
+				void *msg = wil_skb_rxstatus(skb);
+				int mid = wil_rx_status_get_mid(msg);
+				struct wil6210_vif *vif = wil->vifs[mid];
 
-				अगर (unlikely(!vअगर)) अणु
+				if (unlikely(!vif)) {
 					wil_dbg_txrx(wil,
 						     "RX desc invalid mid %d",
 						     mid);
-					kमुक्त_skb(skb);
-					जारी;
-				पूर्ण
-				ndev = vअगर_to_ndev(vअगर);
-				wil_netअगर_rx_any(skb, ndev);
-			पूर्ण अन्यथा अणु
+					kfree_skb(skb);
+					continue;
+				}
+				ndev = vif_to_ndev(vif);
+				wil_netif_rx_any(skb, ndev);
+			} else {
 				wil_rx_reorder(wil, skb);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		wil_w(wil, sring->hwtail, (sring->swhead - 1) % sring->size);
-	पूर्ण
+	}
 
 	wil_rx_refill_edma(wil);
-पूर्ण
+}
 
-अटल पूर्णांक wil_tx_desc_map_edma(जोड़ wil_tx_desc *desc,
+static int wil_tx_desc_map_edma(union wil_tx_desc *desc,
 				dma_addr_t pa,
 				u32 len,
-				पूर्णांक ring_index)
-अणु
-	काष्ठा wil_tx_enhanced_desc *d =
-		(काष्ठा wil_tx_enhanced_desc *)&desc->enhanced;
+				int ring_index)
+{
+	struct wil_tx_enhanced_desc *d =
+		(struct wil_tx_enhanced_desc *)&desc->enhanced;
 
-	स_रखो(d, 0, माप(काष्ठा wil_tx_enhanced_desc));
+	memset(d, 0, sizeof(struct wil_tx_enhanced_desc));
 
 	wil_desc_set_addr_edma(&d->dma.addr, &d->dma.addr_high_high, pa);
 
 	/* 0..6: mac_length; 7:ip_version 0-IP6 1-IP4*/
 	d->dma.length = cpu_to_le16((u16)len);
 	d->mac.d[0] = (ring_index << WIL_EDMA_DESC_TX_MAC_CFG_0_QID_POS);
-	/* translation type:  0 - bypass; 1 - 802.3; 2 - native wअगरi;
+	/* translation type:  0 - bypass; 1 - 802.3; 2 - native wifi;
 	 * 3 - eth mode
 	 */
 	d->mac.d[2] = BIT(MAC_CFG_DESC_TX_2_SNAP_HDR_INSERTION_EN_POS) |
 		      (0x3 << MAC_CFG_DESC_TX_2_L2_TRANSLATION_TYPE_POS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-wil_get_next_tx_status_msg(काष्ठा wil_status_ring *sring, u8 *dr_bit,
-			   काष्ठा wil_ring_tx_status *msg)
-अणु
-	काष्ठा wil_ring_tx_status *_msg = (काष्ठा wil_ring_tx_status *)
+static inline void
+wil_get_next_tx_status_msg(struct wil_status_ring *sring, u8 *dr_bit,
+			   struct wil_ring_tx_status *msg)
+{
+	struct wil_ring_tx_status *_msg = (struct wil_ring_tx_status *)
 		(sring->va + (sring->elem_size * sring->swhead));
 
-	*dr_bit = _msg->desc_पढ़ोy >> TX_STATUS_DESC_READY_POS;
-	/* make sure dr_bit is पढ़ो beक्रमe the rest of status msg */
+	*dr_bit = _msg->desc_ready >> TX_STATUS_DESC_READY_POS;
+	/* make sure dr_bit is read before the rest of status msg */
 	rmb();
 	*msg = *_msg;
-पूर्ण
+}
 
 /* Clean up transmitted skb's from the Tx descriptor RING.
  * Return number of descriptors cleared.
  */
-पूर्णांक wil_tx_sring_handler(काष्ठा wil6210_priv *wil,
-			 काष्ठा wil_status_ring *sring)
-अणु
-	काष्ठा net_device *ndev;
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा wil_ring *ring = शून्य;
-	काष्ठा wil_ring_tx_data *txdata;
+int wil_tx_sring_handler(struct wil6210_priv *wil,
+			 struct wil_status_ring *sring)
+{
+	struct net_device *ndev;
+	struct device *dev = wil_to_dev(wil);
+	struct wil_ring *ring = NULL;
+	struct wil_ring_tx_data *txdata;
 	/* Total number of completed descriptors in all descriptor rings */
-	पूर्णांक desc_cnt = 0;
-	पूर्णांक cid;
-	काष्ठा wil_net_stats *stats;
-	काष्ठा wil_tx_enhanced_desc *_d;
-	अचिन्हित पूर्णांक ring_id;
-	अचिन्हित पूर्णांक num_descs, num_statuses = 0;
-	पूर्णांक i;
+	int desc_cnt = 0;
+	int cid;
+	struct wil_net_stats *stats;
+	struct wil_tx_enhanced_desc *_d;
+	unsigned int ring_id;
+	unsigned int num_descs, num_statuses = 0;
+	int i;
 	u8 dr_bit; /* Descriptor Ready bit */
-	काष्ठा wil_ring_tx_status msg;
-	काष्ठा wil6210_vअगर *vअगर;
-	पूर्णांक used_beक्रमe_complete;
-	पूर्णांक used_new;
+	struct wil_ring_tx_status msg;
+	struct wil6210_vif *vif;
+	int used_before_complete;
+	int used_new;
 
 	wil_get_next_tx_status_msg(sring, &dr_bit, &msg);
 
-	/* Process completion messages जबतक DR bit has the expected polarity */
-	जबतक (dr_bit == sring->desc_rdy_pol) अणु
+	/* Process completion messages while DR bit has the expected polarity */
+	while (dr_bit == sring->desc_rdy_pol) {
 		num_descs = msg.num_descriptors;
-		अगर (!num_descs) अणु
+		if (!num_descs) {
 			wil_err(wil, "invalid num_descs 0\n");
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
 		/* Find the corresponding descriptor ring */
 		ring_id = msg.ring_id;
 
-		अगर (unlikely(ring_id >= WIL6210_MAX_TX_RINGS)) अणु
+		if (unlikely(ring_id >= WIL6210_MAX_TX_RINGS)) {
 			wil_err(wil, "invalid ring id %d\n", ring_id);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		ring = &wil->ring_tx[ring_id];
-		अगर (unlikely(!ring->va)) अणु
+		if (unlikely(!ring->va)) {
 			wil_err(wil, "Tx irq[%d]: ring not initialized\n",
 				ring_id);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 		txdata = &wil->ring_tx_data[ring_id];
-		अगर (unlikely(!txdata->enabled)) अणु
+		if (unlikely(!txdata->enabled)) {
 			wil_info(wil, "Tx irq[%d]: ring disabled\n", ring_id);
-			जाओ again;
-		पूर्ण
-		vअगर = wil->vअगरs[txdata->mid];
-		अगर (unlikely(!vअगर)) अणु
+			goto again;
+		}
+		vif = wil->vifs[txdata->mid];
+		if (unlikely(!vif)) {
 			wil_dbg_txrx(wil, "invalid MID %d for ring %d\n",
 				     txdata->mid, ring_id);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
-		ndev = vअगर_to_ndev(vअगर);
+		ndev = vif_to_ndev(vif);
 
 		cid = wil->ring2cid_tid[ring_id][0];
 		stats = (cid < wil->max_assoc_sta) ? &wil->sta[cid].stats :
-						     शून्य;
+						     NULL;
 
 		wil_dbg_txrx(wil,
 			     "tx_status: completed desc_ring (%d), num_descs (%d)\n",
 			     ring_id, num_descs);
 
-		used_beक्रमe_complete = wil_ring_used_tx(ring);
+		used_before_complete = wil_ring_used_tx(ring);
 
-		क्रम (i = 0 ; i < num_descs; ++i) अणु
-			काष्ठा wil_ctx *ctx = &ring->ctx[ring->swtail];
-			काष्ठा wil_tx_enhanced_desc dd, *d = &dd;
+		for (i = 0 ; i < num_descs; ++i) {
+			struct wil_ctx *ctx = &ring->ctx[ring->swtail];
+			struct wil_tx_enhanced_desc dd, *d = &dd;
 			u16 dmalen;
-			काष्ठा sk_buff *skb = ctx->skb;
+			struct sk_buff *skb = ctx->skb;
 
-			_d = (काष्ठा wil_tx_enhanced_desc *)
+			_d = (struct wil_tx_enhanced_desc *)
 				&ring->va[ring->swtail].tx.enhanced;
 			*d = *_d;
 
@@ -1241,39 +1240,39 @@ wil_get_next_tx_status_msg(काष्ठा wil_status_ring *sring, u8 *dr_bit
 				     ring_id, ring->swtail, dmalen,
 				     msg.status);
 			wil_hex_dump_txrx("TxS ", DUMP_PREFIX_NONE, 32, 4,
-					  (स्थिर व्योम *)&msg, माप(msg),
+					  (const void *)&msg, sizeof(msg),
 					  false);
 
 			wil_tx_desc_unmap_edma(dev,
-					       (जोड़ wil_tx_desc *)d,
+					       (union wil_tx_desc *)d,
 					       ctx);
 
-			अगर (skb) अणु
-				अगर (likely(msg.status == 0)) अणु
+			if (skb) {
+				if (likely(msg.status == 0)) {
 					ndev->stats.tx_packets++;
 					ndev->stats.tx_bytes += skb->len;
-					अगर (stats) अणु
+					if (stats) {
 						stats->tx_packets++;
 						stats->tx_bytes += skb->len;
 
 						wil_tx_latency_calc(wil, skb,
 							&wil->sta[cid]);
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					ndev->stats.tx_errors++;
-					अगर (stats)
+					if (stats)
 						stats->tx_errors++;
-				पूर्ण
+				}
 
-				अगर (skb->protocol == cpu_to_be16(ETH_P_PAE))
-					wil_tx_complete_handle_eapol(vअगर, skb);
+				if (skb->protocol == cpu_to_be16(ETH_P_PAE))
+					wil_tx_complete_handle_eapol(vif, skb);
 
 				wil_consume_skb(skb, msg.status == 0);
-			पूर्ण
-			स_रखो(ctx, 0, माप(*ctx));
-			/* Make sure the ctx is zeroed beक्रमe updating the tail
-			 * to prevent a हाल where wil_tx_ring will see
-			 * this descriptor as used and handle it beक्रमe ctx zero
+			}
+			memset(ctx, 0, sizeof(*ctx));
+			/* Make sure the ctx is zeroed before updating the tail
+			 * to prevent a case where wil_tx_ring will see
+			 * this descriptor as used and handle it before ctx zero
 			 * is completed.
 			 */
 			wmb();
@@ -1281,50 +1280,50 @@ wil_get_next_tx_status_msg(काष्ठा wil_status_ring *sring, u8 *dr_bit
 			ring->swtail = wil_ring_next_tail(ring);
 
 			desc_cnt++;
-		पूर्ण
+		}
 
-		/* perक्रमmance monitoring */
+		/* performance monitoring */
 		used_new = wil_ring_used_tx(ring);
-		अगर (wil_val_in_range(wil->ring_idle_trsh,
-				     used_new, used_beक्रमe_complete)) अणु
+		if (wil_val_in_range(wil->ring_idle_trsh,
+				     used_new, used_before_complete)) {
 			wil_dbg_txrx(wil, "Ring[%2d] idle %d -> %d\n",
-				     ring_id, used_beक्रमe_complete, used_new);
+				     ring_id, used_before_complete, used_new);
 			txdata->last_idle = get_cycles();
-		पूर्ण
+		}
 
 again:
 		num_statuses++;
-		अगर (num_statuses % WIL_EDMA_TX_SRING_UPDATE_HW_TAIL == 0)
+		if (num_statuses % WIL_EDMA_TX_SRING_UPDATE_HW_TAIL == 0)
 			/* update HW tail to allow HW to push new statuses */
 			wil_w(wil, sring->hwtail, sring->swhead);
 
 		wil_sring_advance_swhead(sring);
 
 		wil_get_next_tx_status_msg(sring, &dr_bit, &msg);
-	पूर्ण
+	}
 
 	/* shall we wake net queues? */
-	अगर (desc_cnt)
-		wil_update_net_queues(wil, vअगर, शून्य, false);
+	if (desc_cnt)
+		wil_update_net_queues(wil, vif, NULL, false);
 
-	अगर (num_statuses % WIL_EDMA_TX_SRING_UPDATE_HW_TAIL != 0)
+	if (num_statuses % WIL_EDMA_TX_SRING_UPDATE_HW_TAIL != 0)
 		/* Update the HW tail ptr (RD ptr) */
 		wil_w(wil, sring->hwtail, (sring->swhead - 1) % sring->size);
 
-	वापस desc_cnt;
-पूर्ण
+	return desc_cnt;
+}
 
-/* Sets the descriptor @d up क्रम csum and/or TSO offloading. The corresponding
+/* Sets the descriptor @d up for csum and/or TSO offloading. The corresponding
  * @skb is used to obtain the protocol and headers length.
- * @tso_desc_type is a descriptor type क्रम TSO: 0 - a header, 1 - first data,
+ * @tso_desc_type is a descriptor type for TSO: 0 - a header, 1 - first data,
  * 2 - middle, 3 - last descriptor.
  */
-अटल व्योम wil_tx_desc_offload_setup_tso_edma(काष्ठा wil_tx_enhanced_desc *d,
-					       पूर्णांक tso_desc_type, bool is_ipv4,
-					       पूर्णांक tcp_hdr_len,
-					       पूर्णांक skb_net_hdr_len,
-					       पूर्णांक mss)
-अणु
+static void wil_tx_desc_offload_setup_tso_edma(struct wil_tx_enhanced_desc *d,
+					       int tso_desc_type, bool is_ipv4,
+					       int tcp_hdr_len,
+					       int skb_net_hdr_len,
+					       int mss)
+{
 	/* Number of descriptors */
 	d->mac.d[2] |= 1;
 	/* Maximum Segment Size */
@@ -1339,7 +1338,7 @@ again:
 		      BIT(WIL_EDMA_DESC_TX_CFG_SEG_EN_POS) |
 		      BIT(WIL_EDMA_DESC_TX_CFG_INSERT_IP_CHKSUM_POS) |
 		      BIT(WIL_EDMA_DESC_TX_CFG_INSERT_TCP_CHKSUM_POS);
-	/* Calculate pseuकरो-header */
+	/* Calculate pseudo-header */
 	d->dma.w1 |= BIT(WIL_EDMA_DESC_TX_CFG_PSEUDO_HEADER_CALC_EN_POS) |
 		     BIT(WIL_EDMA_DESC_TX_CFG_L4_TYPE_POS);
 	/* IP Header Length */
@@ -1347,109 +1346,109 @@ again:
 	/* MAC header length and IP address family*/
 	d->dma.b11 |= ETH_HLEN |
 		      is_ipv4 << DMA_CFG_DESC_TX_OFFLOAD_CFG_L3T_IPV4_POS;
-पूर्ण
+}
 
-अटल पूर्णांक wil_tx_tso_gen_desc(काष्ठा wil6210_priv *wil, व्योम *buff_addr,
-			       पूर्णांक len, uपूर्णांक i, पूर्णांक tso_desc_type,
-			       skb_frag_t *frag, काष्ठा wil_ring *ring,
-			       काष्ठा sk_buff *skb, bool is_ipv4,
-			       पूर्णांक tcp_hdr_len, पूर्णांक skb_net_hdr_len,
-			       पूर्णांक mss, पूर्णांक *descs_used)
-अणु
-	काष्ठा device *dev = wil_to_dev(wil);
-	काष्ठा wil_tx_enhanced_desc *_desc = (काष्ठा wil_tx_enhanced_desc *)
+static int wil_tx_tso_gen_desc(struct wil6210_priv *wil, void *buff_addr,
+			       int len, uint i, int tso_desc_type,
+			       skb_frag_t *frag, struct wil_ring *ring,
+			       struct sk_buff *skb, bool is_ipv4,
+			       int tcp_hdr_len, int skb_net_hdr_len,
+			       int mss, int *descs_used)
+{
+	struct device *dev = wil_to_dev(wil);
+	struct wil_tx_enhanced_desc *_desc = (struct wil_tx_enhanced_desc *)
 		&ring->va[i].tx.enhanced;
-	काष्ठा wil_tx_enhanced_desc desc_mem, *d = &desc_mem;
-	पूर्णांक ring_index = ring - wil->ring_tx;
+	struct wil_tx_enhanced_desc desc_mem, *d = &desc_mem;
+	int ring_index = ring - wil->ring_tx;
 	dma_addr_t pa;
 
-	अगर (len == 0)
-		वापस 0;
+	if (len == 0)
+		return 0;
 
-	अगर (!frag) अणु
+	if (!frag) {
 		pa = dma_map_single(dev, buff_addr, len, DMA_TO_DEVICE);
 		ring->ctx[i].mapped_as = wil_mapped_as_single;
-	पूर्ण अन्यथा अणु
+	} else {
 		pa = skb_frag_dma_map(dev, frag, 0, len, DMA_TO_DEVICE);
 		ring->ctx[i].mapped_as = wil_mapped_as_page;
-	पूर्ण
-	अगर (unlikely(dma_mapping_error(dev, pa))) अणु
+	}
+	if (unlikely(dma_mapping_error(dev, pa))) {
 		wil_err(wil, "TSO: Skb DMA map error\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	wil->txrx_ops.tx_desc_map((जोड़ wil_tx_desc *)d, pa,
+	wil->txrx_ops.tx_desc_map((union wil_tx_desc *)d, pa,
 				   len, ring_index);
 	wil_tx_desc_offload_setup_tso_edma(d, tso_desc_type, is_ipv4,
 					   tcp_hdr_len,
 					   skb_net_hdr_len, mss);
 
 	/* hold reference to skb
-	 * to prevent skb release beक्रमe accounting
-	 * in हाल of immediate "tx done"
+	 * to prevent skb release before accounting
+	 * in case of immediate "tx done"
 	 */
-	अगर (tso_desc_type == wil_tso_type_lst)
+	if (tso_desc_type == wil_tso_type_lst)
 		ring->ctx[i].skb = skb_get(skb);
 
 	wil_hex_dump_txrx("TxD ", DUMP_PREFIX_NONE, 32, 4,
-			  (स्थिर व्योम *)d, माप(*d), false);
+			  (const void *)d, sizeof(*d), false);
 
 	*_desc = *d;
 	(*descs_used)++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __wil_tx_ring_tso_edma(काष्ठा wil6210_priv *wil,
-				  काष्ठा wil6210_vअगर *vअगर,
-				  काष्ठा wil_ring *ring,
-				  काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ring_index = ring - wil->ring_tx;
-	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_index];
-	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
-	पूर्णांक min_desc_required = nr_frags + 2; /* Headers, Head, Fragments */
-	पूर्णांक used, avail = wil_ring_avail_tx(ring);
-	पूर्णांक f, hdrlen, headlen;
-	पूर्णांक gso_type;
+static int __wil_tx_ring_tso_edma(struct wil6210_priv *wil,
+				  struct wil6210_vif *vif,
+				  struct wil_ring *ring,
+				  struct sk_buff *skb)
+{
+	int ring_index = ring - wil->ring_tx;
+	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_index];
+	int nr_frags = skb_shinfo(skb)->nr_frags;
+	int min_desc_required = nr_frags + 2; /* Headers, Head, Fragments */
+	int used, avail = wil_ring_avail_tx(ring);
+	int f, hdrlen, headlen;
+	int gso_type;
 	bool is_ipv4;
 	u32 swhead = ring->swhead;
-	पूर्णांक descs_used = 0; /* total number of used descriptors */
-	पूर्णांक rc = -EINVAL;
-	पूर्णांक tcp_hdr_len;
-	पूर्णांक skb_net_hdr_len;
-	पूर्णांक mss = skb_shinfo(skb)->gso_size;
+	int descs_used = 0; /* total number of used descriptors */
+	int rc = -EINVAL;
+	int tcp_hdr_len;
+	int skb_net_hdr_len;
+	int mss = skb_shinfo(skb)->gso_size;
 
 	wil_dbg_txrx(wil, "tx_ring_tso: %d bytes to ring %d\n", skb->len,
 		     ring_index);
 
-	अगर (unlikely(!txdata->enabled))
-		वापस -EINVAL;
+	if (unlikely(!txdata->enabled))
+		return -EINVAL;
 
-	अगर (unlikely(avail < min_desc_required)) अणु
+	if (unlikely(avail < min_desc_required)) {
 		wil_err_ratelimited(wil,
 				    "TSO: Tx ring[%2d] full. No space for %d fragments\n",
 				    ring_index, min_desc_required);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	gso_type = skb_shinfo(skb)->gso_type & (SKB_GSO_TCPV6 | SKB_GSO_TCPV4);
-	चयन (gso_type) अणु
-	हाल SKB_GSO_TCPV4:
+	switch (gso_type) {
+	case SKB_GSO_TCPV4:
 		is_ipv4 = true;
-		अवरोध;
-	हाल SKB_GSO_TCPV6:
+		break;
+	case SKB_GSO_TCPV6:
 		is_ipv4 = false;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
-		वापस -EINVAL;
+	if (skb->ip_summed != CHECKSUM_PARTIAL)
+		return -EINVAL;
 
-	/* tcp header length and skb network header length are fixed क्रम all
-	 * packet's descriptors - पढ़ो them once here
+	/* tcp header length and skb network header length are fixed for all
+	 * packet's descriptors - read them once here
 	 */
 	tcp_hdr_len = tcp_hdrlen(skb);
 	skb_net_hdr_len = skb_network_header_len(skb);
@@ -1461,11 +1460,11 @@ again:
 	wil_dbg_txrx(wil, "TSO: process header descriptor, hdrlen %u\n",
 		     hdrlen);
 	rc = wil_tx_tso_gen_desc(wil, skb->data, hdrlen, swhead,
-				 wil_tso_type_hdr, शून्य, ring, skb,
+				 wil_tso_type_hdr, NULL, ring, skb,
 				 is_ipv4, tcp_hdr_len, skb_net_hdr_len,
 				 mss, &descs_used);
-	अगर (rc)
-		वापस -EINVAL;
+	if (rc)
+		return -EINVAL;
 
 	/* Second descriptor contains the head */
 	headlen = skb_headlen(skb) - hdrlen;
@@ -1473,176 +1472,176 @@ again:
 	rc = wil_tx_tso_gen_desc(wil, skb->data + hdrlen, headlen,
 				 (swhead + descs_used) % ring->size,
 				 (nr_frags != 0) ? wil_tso_type_first :
-				 wil_tso_type_lst, शून्य, ring, skb,
+				 wil_tso_type_lst, NULL, ring, skb,
 				 is_ipv4, tcp_hdr_len, skb_net_hdr_len,
 				 mss, &descs_used);
-	अगर (rc)
-		जाओ mem_error;
+	if (rc)
+		goto mem_error;
 
 	/* Rest of the descriptors are from the SKB fragments */
-	क्रम (f = 0; f < nr_frags; f++) अणु
+	for (f = 0; f < nr_frags; f++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
-		पूर्णांक len = skb_frag_size(frag);
+		int len = skb_frag_size(frag);
 
 		wil_dbg_txrx(wil, "TSO: frag[%d]: len %u, descs_used %d\n", f,
 			     len, descs_used);
 
-		rc = wil_tx_tso_gen_desc(wil, शून्य, len,
+		rc = wil_tx_tso_gen_desc(wil, NULL, len,
 					 (swhead + descs_used) % ring->size,
 					 (f != nr_frags - 1) ?
 					 wil_tso_type_mid : wil_tso_type_lst,
 					 frag, ring, skb, is_ipv4,
 					 tcp_hdr_len, skb_net_hdr_len,
 					 mss, &descs_used);
-		अगर (rc)
-			जाओ mem_error;
-	पूर्ण
+		if (rc)
+			goto mem_error;
+	}
 
-	/* perक्रमmance monitoring */
+	/* performance monitoring */
 	used = wil_ring_used_tx(ring);
-	अगर (wil_val_in_range(wil->ring_idle_trsh,
-			     used, used + descs_used)) अणु
+	if (wil_val_in_range(wil->ring_idle_trsh,
+			     used, used + descs_used)) {
 		txdata->idle += get_cycles() - txdata->last_idle;
 		wil_dbg_txrx(wil,  "Ring[%2d] not idle %d -> %d\n",
 			     ring_index, used, used + descs_used);
-	पूर्ण
+	}
 
 	/* advance swhead */
 	wil_ring_advance_head(ring, descs_used);
 	wil_dbg_txrx(wil, "TSO: Tx swhead %d -> %d\n", swhead, ring->swhead);
 
-	/* make sure all ग_लिखोs to descriptors (shared memory) are करोne beक्रमe
+	/* make sure all writes to descriptors (shared memory) are done before
 	 * committing them to HW
 	 */
 	wmb();
 
-	अगर (wil->tx_latency)
-		*(kसमय_प्रकार *)&skb->cb = kसमय_get();
-	अन्यथा
-		स_रखो(skb->cb, 0, माप(kसमय_प्रकार));
+	if (wil->tx_latency)
+		*(ktime_t *)&skb->cb = ktime_get();
+	else
+		memset(skb->cb, 0, sizeof(ktime_t));
 
 	wil_w(wil, ring->hwtail, ring->swhead);
 
-	वापस 0;
+	return 0;
 
 mem_error:
-	जबतक (descs_used > 0) अणु
-		काष्ठा device *dev = wil_to_dev(wil);
-		काष्ठा wil_ctx *ctx;
-		पूर्णांक i = (swhead + descs_used - 1) % ring->size;
-		काष्ठा wil_tx_enhanced_desc dd, *d = &dd;
-		काष्ठा wil_tx_enhanced_desc *_desc =
-			(काष्ठा wil_tx_enhanced_desc *)
+	while (descs_used > 0) {
+		struct device *dev = wil_to_dev(wil);
+		struct wil_ctx *ctx;
+		int i = (swhead + descs_used - 1) % ring->size;
+		struct wil_tx_enhanced_desc dd, *d = &dd;
+		struct wil_tx_enhanced_desc *_desc =
+			(struct wil_tx_enhanced_desc *)
 			&ring->va[i].tx.enhanced;
 
 		*d = *_desc;
 		ctx = &ring->ctx[i];
-		wil_tx_desc_unmap_edma(dev, (जोड़ wil_tx_desc *)d, ctx);
-		स_रखो(ctx, 0, माप(*ctx));
+		wil_tx_desc_unmap_edma(dev, (union wil_tx_desc *)d, ctx);
+		memset(ctx, 0, sizeof(*ctx));
 		descs_used--;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक wil_ring_init_bcast_edma(काष्ठा wil6210_vअगर *vअगर, पूर्णांक ring_id,
-				    पूर्णांक size)
-अणु
-	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
-	काष्ठा wil_ring *ring = &wil->ring_tx[ring_id];
-	पूर्णांक rc;
-	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
+static int wil_ring_init_bcast_edma(struct wil6210_vif *vif, int ring_id,
+				    int size)
+{
+	struct wil6210_priv *wil = vif_to_wil(vif);
+	struct wil_ring *ring = &wil->ring_tx[ring_id];
+	int rc;
+	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
 
 	wil_dbg_misc(wil, "init bcast: ring_id=%d, sring_id=%d\n",
 		     ring_id, wil->tx_sring_idx);
 
-	lockdep_निश्चित_held(&wil->mutex);
+	lockdep_assert_held(&wil->mutex);
 
 	wil_tx_data_init(txdata);
 	ring->size = size;
 	ring->is_rx = false;
 	rc = wil_ring_alloc_desc_ring(wil, ring);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	wil->ring2cid_tid[ring_id][0] = WIL6210_MAX_CID; /* CID */
 	wil->ring2cid_tid[ring_id][1] = 0; /* TID */
-	अगर (!vअगर->privacy)
-		txdata->करोt1x_खोलो = true;
+	if (!vif->privacy)
+		txdata->dot1x_open = true;
 
-	rc = wil_wmi_bcast_desc_ring_add(vअगर, ring_id);
-	अगर (rc)
-		जाओ out_मुक्त;
+	rc = wil_wmi_bcast_desc_ring_add(vif, ring_id);
+	if (rc)
+		goto out_free;
 
-	वापस 0;
+	return 0;
 
- out_मुक्त:
+ out_free:
 	spin_lock_bh(&txdata->lock);
 	txdata->enabled = 0;
-	txdata->करोt1x_खोलो = false;
+	txdata->dot1x_open = false;
 	spin_unlock_bh(&txdata->lock);
-	wil_ring_मुक्त_edma(wil, ring);
+	wil_ring_free_edma(wil, ring);
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम wil_tx_fini_edma(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wil_status_ring *sring = &wil->srings[wil->tx_sring_idx];
+static void wil_tx_fini_edma(struct wil6210_priv *wil)
+{
+	struct wil_status_ring *sring = &wil->srings[wil->tx_sring_idx];
 
 	wil_dbg_misc(wil, "free TX sring\n");
 
-	wil_sring_मुक्त(wil, sring);
-पूर्ण
+	wil_sring_free(wil, sring);
+}
 
-अटल व्योम wil_rx_data_मुक्त(काष्ठा wil_status_ring *sring)
-अणु
-	अगर (!sring)
-		वापस;
+static void wil_rx_data_free(struct wil_status_ring *sring)
+{
+	if (!sring)
+		return;
 
-	kमुक्त_skb(sring->rx_data.skb);
-	sring->rx_data.skb = शून्य;
-पूर्ण
+	kfree_skb(sring->rx_data.skb);
+	sring->rx_data.skb = NULL;
+}
 
-अटल व्योम wil_rx_fini_edma(काष्ठा wil6210_priv *wil)
-अणु
-	काष्ठा wil_ring *ring = &wil->ring_rx;
-	पूर्णांक i;
+static void wil_rx_fini_edma(struct wil6210_priv *wil)
+{
+	struct wil_ring *ring = &wil->ring_rx;
+	int i;
 
 	wil_dbg_misc(wil, "rx_fini_edma\n");
 
-	wil_ring_मुक्त_edma(wil, ring);
+	wil_ring_free_edma(wil, ring);
 
-	क्रम (i = 0; i < wil->num_rx_status_rings; i++) अणु
-		wil_rx_data_मुक्त(&wil->srings[i]);
-		wil_sring_मुक्त(wil, &wil->srings[i]);
-	पूर्ण
+	for (i = 0; i < wil->num_rx_status_rings; i++) {
+		wil_rx_data_free(&wil->srings[i]);
+		wil_sring_free(wil, &wil->srings[i]);
+	}
 
-	wil_मुक्त_rx_buff_arr(wil);
-पूर्ण
+	wil_free_rx_buff_arr(wil);
+}
 
-व्योम wil_init_txrx_ops_edma(काष्ठा wil6210_priv *wil)
-अणु
-	wil->txrx_ops.configure_पूर्णांकerrupt_moderation =
-		wil_configure_पूर्णांकerrupt_moderation_edma;
+void wil_init_txrx_ops_edma(struct wil6210_priv *wil)
+{
+	wil->txrx_ops.configure_interrupt_moderation =
+		wil_configure_interrupt_moderation_edma;
 	/* TX ops */
 	wil->txrx_ops.ring_init_tx = wil_ring_init_tx_edma;
-	wil->txrx_ops.ring_fini_tx = wil_ring_मुक्त_edma;
+	wil->txrx_ops.ring_fini_tx = wil_ring_free_edma;
 	wil->txrx_ops.ring_init_bcast = wil_ring_init_bcast_edma;
 	wil->txrx_ops.tx_init = wil_tx_init_edma;
 	wil->txrx_ops.tx_fini = wil_tx_fini_edma;
 	wil->txrx_ops.tx_desc_map = wil_tx_desc_map_edma;
 	wil->txrx_ops.tx_desc_unmap = wil_tx_desc_unmap_edma;
 	wil->txrx_ops.tx_ring_tso = __wil_tx_ring_tso_edma;
-	wil->txrx_ops.tx_ring_modअगरy = wil_tx_ring_modअगरy_edma;
+	wil->txrx_ops.tx_ring_modify = wil_tx_ring_modify_edma;
 	/* RX ops */
 	wil->txrx_ops.rx_init = wil_rx_init_edma;
 	wil->txrx_ops.wmi_addba_rx_resp = wmi_addba_rx_resp_edma;
 	wil->txrx_ops.get_reorder_params = wil_get_reorder_params_edma;
-	wil->txrx_ops.get_netअगर_rx_params = wil_get_netअगर_rx_params_edma;
+	wil->txrx_ops.get_netif_rx_params = wil_get_netif_rx_params_edma;
 	wil->txrx_ops.rx_crypto_check = wil_rx_crypto_check_edma;
 	wil->txrx_ops.rx_error_check = wil_rx_error_check_edma;
 	wil->txrx_ops.is_rx_idle = wil_is_rx_idle_edma;
 	wil->txrx_ops.rx_fini = wil_rx_fini_edma;
-पूर्ण
+}
 

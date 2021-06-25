@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Hisilicon's Hi6220 mailbox driver
  *
@@ -9,306 +8,306 @@
  * Author: Leo Yan <leo.yan@linaro.org>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/mailbox_controller.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kfifo.h>
+#include <linux/mailbox_controller.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#घोषणा MBOX_CHAN_MAX			32
+#define MBOX_CHAN_MAX			32
 
-#घोषणा MBOX_TX				0x1
+#define MBOX_TX				0x1
 
 /* Mailbox message length: 8 words */
-#घोषणा MBOX_MSG_LEN			8
+#define MBOX_MSG_LEN			8
 
 /* Mailbox Registers */
-#घोषणा MBOX_OFF(m)			(0x40 * (m))
-#घोषणा MBOX_MODE_REG(m)		(MBOX_OFF(m) + 0x0)
-#घोषणा MBOX_DATA_REG(m)		(MBOX_OFF(m) + 0x4)
+#define MBOX_OFF(m)			(0x40 * (m))
+#define MBOX_MODE_REG(m)		(MBOX_OFF(m) + 0x0)
+#define MBOX_DATA_REG(m)		(MBOX_OFF(m) + 0x4)
 
-#घोषणा MBOX_STATE_MASK			(0xF << 4)
-#घोषणा MBOX_STATE_IDLE			(0x1 << 4)
-#घोषणा MBOX_STATE_TX			(0x2 << 4)
-#घोषणा MBOX_STATE_RX			(0x4 << 4)
-#घोषणा MBOX_STATE_ACK			(0x8 << 4)
-#घोषणा MBOX_ACK_CONFIG_MASK		(0x1 << 0)
-#घोषणा MBOX_ACK_AUTOMATIC		(0x1 << 0)
-#घोषणा MBOX_ACK_IRQ			(0x0 << 0)
+#define MBOX_STATE_MASK			(0xF << 4)
+#define MBOX_STATE_IDLE			(0x1 << 4)
+#define MBOX_STATE_TX			(0x2 << 4)
+#define MBOX_STATE_RX			(0x4 << 4)
+#define MBOX_STATE_ACK			(0x8 << 4)
+#define MBOX_ACK_CONFIG_MASK		(0x1 << 0)
+#define MBOX_ACK_AUTOMATIC		(0x1 << 0)
+#define MBOX_ACK_IRQ			(0x0 << 0)
 
-/* IPC रेजिस्टरs */
-#घोषणा ACK_INT_RAW_REG(i)		((i) + 0x400)
-#घोषणा ACK_INT_MSK_REG(i)		((i) + 0x404)
-#घोषणा ACK_INT_STAT_REG(i)		((i) + 0x408)
-#घोषणा ACK_INT_CLR_REG(i)		((i) + 0x40c)
-#घोषणा ACK_INT_ENA_REG(i)		((i) + 0x500)
-#घोषणा ACK_INT_DIS_REG(i)		((i) + 0x504)
-#घोषणा DST_INT_RAW_REG(i)		((i) + 0x420)
+/* IPC registers */
+#define ACK_INT_RAW_REG(i)		((i) + 0x400)
+#define ACK_INT_MSK_REG(i)		((i) + 0x404)
+#define ACK_INT_STAT_REG(i)		((i) + 0x408)
+#define ACK_INT_CLR_REG(i)		((i) + 0x40c)
+#define ACK_INT_ENA_REG(i)		((i) + 0x500)
+#define ACK_INT_DIS_REG(i)		((i) + 0x504)
+#define DST_INT_RAW_REG(i)		((i) + 0x420)
 
 
-काष्ठा hi6220_mbox_chan अणु
+struct hi6220_mbox_chan {
 
 	/*
-	 * Description क्रम channel's hardware info:
+	 * Description for channel's hardware info:
 	 *  - direction: tx or rx
 	 *  - dst irq: peer core's irq number
 	 *  - ack irq: local irq number
 	 *  - slot number
 	 */
-	अचिन्हित पूर्णांक dir, dst_irq, ack_irq;
-	अचिन्हित पूर्णांक slot;
+	unsigned int dir, dst_irq, ack_irq;
+	unsigned int slot;
 
-	काष्ठा hi6220_mbox *parent;
-पूर्ण;
+	struct hi6220_mbox *parent;
+};
 
-काष्ठा hi6220_mbox अणु
-	काष्ठा device *dev;
+struct hi6220_mbox {
+	struct device *dev;
 
-	पूर्णांक irq;
+	int irq;
 
 	/* flag of enabling tx's irq mode */
 	bool tx_irq_mode;
 
-	/* region क्रम ipc event */
-	व्योम __iomem *ipc;
+	/* region for ipc event */
+	void __iomem *ipc;
 
-	/* region क्रम mailbox */
-	व्योम __iomem *base;
+	/* region for mailbox */
+	void __iomem *base;
 
-	अचिन्हित पूर्णांक chan_num;
-	काष्ठा hi6220_mbox_chan *mchan;
+	unsigned int chan_num;
+	struct hi6220_mbox_chan *mchan;
 
-	व्योम *irq_map_chan[MBOX_CHAN_MAX];
-	काष्ठा mbox_chan *chan;
-	काष्ठा mbox_controller controller;
-पूर्ण;
+	void *irq_map_chan[MBOX_CHAN_MAX];
+	struct mbox_chan *chan;
+	struct mbox_controller controller;
+};
 
-अटल व्योम mbox_set_state(काष्ठा hi6220_mbox *mbox,
-			   अचिन्हित पूर्णांक slot, u32 val)
-अणु
+static void mbox_set_state(struct hi6220_mbox *mbox,
+			   unsigned int slot, u32 val)
+{
 	u32 status;
 
-	status = पढ़ोl(mbox->base + MBOX_MODE_REG(slot));
+	status = readl(mbox->base + MBOX_MODE_REG(slot));
 	status = (status & ~MBOX_STATE_MASK) | val;
-	ग_लिखोl(status, mbox->base + MBOX_MODE_REG(slot));
-पूर्ण
+	writel(status, mbox->base + MBOX_MODE_REG(slot));
+}
 
-अटल व्योम mbox_set_mode(काष्ठा hi6220_mbox *mbox,
-			  अचिन्हित पूर्णांक slot, u32 val)
-अणु
+static void mbox_set_mode(struct hi6220_mbox *mbox,
+			  unsigned int slot, u32 val)
+{
 	u32 mode;
 
-	mode = पढ़ोl(mbox->base + MBOX_MODE_REG(slot));
+	mode = readl(mbox->base + MBOX_MODE_REG(slot));
 	mode = (mode & ~MBOX_ACK_CONFIG_MASK) | val;
-	ग_लिखोl(mode, mbox->base + MBOX_MODE_REG(slot));
-पूर्ण
+	writel(mode, mbox->base + MBOX_MODE_REG(slot));
+}
 
-अटल bool hi6220_mbox_last_tx_करोne(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा hi6220_mbox_chan *mchan = chan->con_priv;
-	काष्ठा hi6220_mbox *mbox = mchan->parent;
+static bool hi6220_mbox_last_tx_done(struct mbox_chan *chan)
+{
+	struct hi6220_mbox_chan *mchan = chan->con_priv;
+	struct hi6220_mbox *mbox = mchan->parent;
 	u32 state;
 
-	/* Only set idle state क्रम polling mode */
+	/* Only set idle state for polling mode */
 	BUG_ON(mbox->tx_irq_mode);
 
-	state = पढ़ोl(mbox->base + MBOX_MODE_REG(mchan->slot));
-	वापस ((state & MBOX_STATE_MASK) == MBOX_STATE_IDLE);
-पूर्ण
+	state = readl(mbox->base + MBOX_MODE_REG(mchan->slot));
+	return ((state & MBOX_STATE_MASK) == MBOX_STATE_IDLE);
+}
 
-अटल पूर्णांक hi6220_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *msg)
-अणु
-	काष्ठा hi6220_mbox_chan *mchan = chan->con_priv;
-	काष्ठा hi6220_mbox *mbox = mchan->parent;
-	अचिन्हित पूर्णांक slot = mchan->slot;
+static int hi6220_mbox_send_data(struct mbox_chan *chan, void *msg)
+{
+	struct hi6220_mbox_chan *mchan = chan->con_priv;
+	struct hi6220_mbox *mbox = mchan->parent;
+	unsigned int slot = mchan->slot;
 	u32 *buf = msg;
-	पूर्णांक i;
+	int i;
 
 	/* indicate as a TX channel */
 	mchan->dir = MBOX_TX;
 
 	mbox_set_state(mbox, slot, MBOX_STATE_TX);
 
-	अगर (mbox->tx_irq_mode)
+	if (mbox->tx_irq_mode)
 		mbox_set_mode(mbox, slot, MBOX_ACK_IRQ);
-	अन्यथा
+	else
 		mbox_set_mode(mbox, slot, MBOX_ACK_AUTOMATIC);
 
-	क्रम (i = 0; i < MBOX_MSG_LEN; i++)
-		ग_लिखोl(buf[i], mbox->base + MBOX_DATA_REG(slot) + i * 4);
+	for (i = 0; i < MBOX_MSG_LEN; i++)
+		writel(buf[i], mbox->base + MBOX_DATA_REG(slot) + i * 4);
 
 	/* trigger remote request */
-	ग_लिखोl(BIT(mchan->dst_irq), DST_INT_RAW_REG(mbox->ipc));
-	वापस 0;
-पूर्ण
+	writel(BIT(mchan->dst_irq), DST_INT_RAW_REG(mbox->ipc));
+	return 0;
+}
 
-अटल irqवापस_t hi6220_mbox_पूर्णांकerrupt(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा hi6220_mbox *mbox = p;
-	काष्ठा hi6220_mbox_chan *mchan;
-	काष्ठा mbox_chan *chan;
-	अचिन्हित पूर्णांक state, पूर्णांकr_bit, i;
+static irqreturn_t hi6220_mbox_interrupt(int irq, void *p)
+{
+	struct hi6220_mbox *mbox = p;
+	struct hi6220_mbox_chan *mchan;
+	struct mbox_chan *chan;
+	unsigned int state, intr_bit, i;
 	u32 msg[MBOX_MSG_LEN];
 
-	state = पढ़ोl(ACK_INT_STAT_REG(mbox->ipc));
-	अगर (!state) अणु
+	state = readl(ACK_INT_STAT_REG(mbox->ipc));
+	if (!state) {
 		dev_warn(mbox->dev, "%s: spurious interrupt\n",
 			 __func__);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	जबतक (state) अणु
-		पूर्णांकr_bit = __ffs(state);
+	while (state) {
+		intr_bit = __ffs(state);
 		state &= (state - 1);
 
-		chan = mbox->irq_map_chan[पूर्णांकr_bit];
-		अगर (!chan) अणु
+		chan = mbox->irq_map_chan[intr_bit];
+		if (!chan) {
 			dev_warn(mbox->dev, "%s: unexpected irq vector %d\n",
-				 __func__, पूर्णांकr_bit);
-			जारी;
-		पूर्ण
+				 __func__, intr_bit);
+			continue;
+		}
 
 		mchan = chan->con_priv;
-		अगर (mchan->dir == MBOX_TX)
-			mbox_chan_txकरोne(chan, 0);
-		अन्यथा अणु
-			क्रम (i = 0; i < MBOX_MSG_LEN; i++)
-				msg[i] = पढ़ोl(mbox->base +
+		if (mchan->dir == MBOX_TX)
+			mbox_chan_txdone(chan, 0);
+		else {
+			for (i = 0; i < MBOX_MSG_LEN; i++)
+				msg[i] = readl(mbox->base +
 					MBOX_DATA_REG(mchan->slot) + i * 4);
 
-			mbox_chan_received_data(chan, (व्योम *)msg);
-		पूर्ण
+			mbox_chan_received_data(chan, (void *)msg);
+		}
 
 		/* clear IRQ source */
-		ग_लिखोl(BIT(mchan->ack_irq), ACK_INT_CLR_REG(mbox->ipc));
+		writel(BIT(mchan->ack_irq), ACK_INT_CLR_REG(mbox->ipc));
 		mbox_set_state(mbox, mchan->slot, MBOX_STATE_IDLE);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक hi6220_mbox_startup(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा hi6220_mbox_chan *mchan = chan->con_priv;
-	काष्ठा hi6220_mbox *mbox = mchan->parent;
+static int hi6220_mbox_startup(struct mbox_chan *chan)
+{
+	struct hi6220_mbox_chan *mchan = chan->con_priv;
+	struct hi6220_mbox *mbox = mchan->parent;
 
 	mchan->dir = 0;
 
-	/* enable पूर्णांकerrupt */
-	ग_लिखोl(BIT(mchan->ack_irq), ACK_INT_ENA_REG(mbox->ipc));
-	वापस 0;
-पूर्ण
+	/* enable interrupt */
+	writel(BIT(mchan->ack_irq), ACK_INT_ENA_REG(mbox->ipc));
+	return 0;
+}
 
-अटल व्योम hi6220_mbox_shutकरोwn(काष्ठा mbox_chan *chan)
-अणु
-	काष्ठा hi6220_mbox_chan *mchan = chan->con_priv;
-	काष्ठा hi6220_mbox *mbox = mchan->parent;
+static void hi6220_mbox_shutdown(struct mbox_chan *chan)
+{
+	struct hi6220_mbox_chan *mchan = chan->con_priv;
+	struct hi6220_mbox *mbox = mchan->parent;
 
-	/* disable पूर्णांकerrupt */
-	ग_लिखोl(BIT(mchan->ack_irq), ACK_INT_DIS_REG(mbox->ipc));
-	mbox->irq_map_chan[mchan->ack_irq] = शून्य;
-पूर्ण
+	/* disable interrupt */
+	writel(BIT(mchan->ack_irq), ACK_INT_DIS_REG(mbox->ipc));
+	mbox->irq_map_chan[mchan->ack_irq] = NULL;
+}
 
-अटल स्थिर काष्ठा mbox_chan_ops hi6220_mbox_ops = अणु
+static const struct mbox_chan_ops hi6220_mbox_ops = {
 	.send_data    = hi6220_mbox_send_data,
 	.startup      = hi6220_mbox_startup,
-	.shutकरोwn     = hi6220_mbox_shutकरोwn,
-	.last_tx_करोne = hi6220_mbox_last_tx_करोne,
-पूर्ण;
+	.shutdown     = hi6220_mbox_shutdown,
+	.last_tx_done = hi6220_mbox_last_tx_done,
+};
 
-अटल काष्ठा mbox_chan *hi6220_mbox_xlate(काष्ठा mbox_controller *controller,
-					   स्थिर काष्ठा of_phandle_args *spec)
-अणु
-	काष्ठा hi6220_mbox *mbox = dev_get_drvdata(controller->dev);
-	काष्ठा hi6220_mbox_chan *mchan;
-	काष्ठा mbox_chan *chan;
-	अचिन्हित पूर्णांक i = spec->args[0];
-	अचिन्हित पूर्णांक dst_irq = spec->args[1];
-	अचिन्हित पूर्णांक ack_irq = spec->args[2];
+static struct mbox_chan *hi6220_mbox_xlate(struct mbox_controller *controller,
+					   const struct of_phandle_args *spec)
+{
+	struct hi6220_mbox *mbox = dev_get_drvdata(controller->dev);
+	struct hi6220_mbox_chan *mchan;
+	struct mbox_chan *chan;
+	unsigned int i = spec->args[0];
+	unsigned int dst_irq = spec->args[1];
+	unsigned int ack_irq = spec->args[2];
 
 	/* Bounds checking */
-	अगर (i >= mbox->chan_num || dst_irq >= mbox->chan_num ||
-	    ack_irq >= mbox->chan_num) अणु
+	if (i >= mbox->chan_num || dst_irq >= mbox->chan_num ||
+	    ack_irq >= mbox->chan_num) {
 		dev_err(mbox->dev,
 			"Invalid channel idx %d dst_irq %d ack_irq %d\n",
 			i, dst_irq, ack_irq);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* Is requested channel मुक्त? */
+	/* Is requested channel free? */
 	chan = &mbox->chan[i];
-	अगर (mbox->irq_map_chan[ack_irq] == (व्योम *)chan) अणु
+	if (mbox->irq_map_chan[ack_irq] == (void *)chan) {
 		dev_err(mbox->dev, "Channel in use\n");
-		वापस ERR_PTR(-EBUSY);
-	पूर्ण
+		return ERR_PTR(-EBUSY);
+	}
 
 	mchan = chan->con_priv;
 	mchan->dst_irq = dst_irq;
 	mchan->ack_irq = ack_irq;
 
-	mbox->irq_map_chan[ack_irq] = (व्योम *)chan;
-	वापस chan;
-पूर्ण
+	mbox->irq_map_chan[ack_irq] = (void *)chan;
+	return chan;
+}
 
-अटल स्थिर काष्ठा of_device_id hi6220_mbox_of_match[] = अणु
-	अणु .compatible = "hisilicon,hi6220-mbox", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id hi6220_mbox_of_match[] = {
+	{ .compatible = "hisilicon,hi6220-mbox", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, hi6220_mbox_of_match);
 
-अटल पूर्णांक hi6220_mbox_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा hi6220_mbox *mbox;
-	काष्ठा resource *res;
-	पूर्णांक i, err;
+static int hi6220_mbox_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct device *dev = &pdev->dev;
+	struct hi6220_mbox *mbox;
+	struct resource *res;
+	int i, err;
 
-	mbox = devm_kzalloc(dev, माप(*mbox), GFP_KERNEL);
-	अगर (!mbox)
-		वापस -ENOMEM;
+	mbox = devm_kzalloc(dev, sizeof(*mbox), GFP_KERNEL);
+	if (!mbox)
+		return -ENOMEM;
 
 	mbox->dev = dev;
 	mbox->chan_num = MBOX_CHAN_MAX;
-	mbox->mchan = devm_kसुस्मृति(dev,
-		mbox->chan_num, माप(*mbox->mchan), GFP_KERNEL);
-	अगर (!mbox->mchan)
-		वापस -ENOMEM;
+	mbox->mchan = devm_kcalloc(dev,
+		mbox->chan_num, sizeof(*mbox->mchan), GFP_KERNEL);
+	if (!mbox->mchan)
+		return -ENOMEM;
 
-	mbox->chan = devm_kसुस्मृति(dev,
-		mbox->chan_num, माप(*mbox->chan), GFP_KERNEL);
-	अगर (!mbox->chan)
-		वापस -ENOMEM;
+	mbox->chan = devm_kcalloc(dev,
+		mbox->chan_num, sizeof(*mbox->chan), GFP_KERNEL);
+	if (!mbox->chan)
+		return -ENOMEM;
 
-	mbox->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (mbox->irq < 0)
-		वापस mbox->irq;
+	mbox->irq = platform_get_irq(pdev, 0);
+	if (mbox->irq < 0)
+		return mbox->irq;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	mbox->ipc = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(mbox->ipc)) अणु
+	if (IS_ERR(mbox->ipc)) {
 		dev_err(dev, "ioremap ipc failed\n");
-		वापस PTR_ERR(mbox->ipc);
-	पूर्ण
+		return PTR_ERR(mbox->ipc);
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	mbox->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(mbox->base)) अणु
+	if (IS_ERR(mbox->base)) {
 		dev_err(dev, "ioremap buffer failed\n");
-		वापस PTR_ERR(mbox->base);
-	पूर्ण
+		return PTR_ERR(mbox->base);
+	}
 
-	err = devm_request_irq(dev, mbox->irq, hi6220_mbox_पूर्णांकerrupt, 0,
+	err = devm_request_irq(dev, mbox->irq, hi6220_mbox_interrupt, 0,
 			dev_name(dev), mbox);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to register a mailbox IRQ handler: %d\n",
 			err);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mbox->controller.dev = dev;
 	mbox->controller.chans = &mbox->chan[0];
@@ -316,61 +315,61 @@ MODULE_DEVICE_TABLE(of, hi6220_mbox_of_match);
 	mbox->controller.ops = &hi6220_mbox_ops;
 	mbox->controller.of_xlate = hi6220_mbox_xlate;
 
-	क्रम (i = 0; i < mbox->chan_num; i++) अणु
+	for (i = 0; i < mbox->chan_num; i++) {
 		mbox->chan[i].con_priv = &mbox->mchan[i];
-		mbox->irq_map_chan[i] = शून्य;
+		mbox->irq_map_chan[i] = NULL;
 
 		mbox->mchan[i].parent = mbox;
 		mbox->mchan[i].slot   = i;
-	पूर्ण
+	}
 
-	/* mask and clear all पूर्णांकerrupt vectors */
-	ग_लिखोl(0x0,  ACK_INT_MSK_REG(mbox->ipc));
-	ग_लिखोl(~0x0, ACK_INT_CLR_REG(mbox->ipc));
+	/* mask and clear all interrupt vectors */
+	writel(0x0,  ACK_INT_MSK_REG(mbox->ipc));
+	writel(~0x0, ACK_INT_CLR_REG(mbox->ipc));
 
-	/* use पूर्णांकerrupt क्रम tx's ack */
-	अगर (of_find_property(node, "hi6220,mbox-tx-noirq", शून्य))
+	/* use interrupt for tx's ack */
+	if (of_find_property(node, "hi6220,mbox-tx-noirq", NULL))
 		mbox->tx_irq_mode = false;
-	अन्यथा
+	else
 		mbox->tx_irq_mode = true;
 
-	अगर (mbox->tx_irq_mode)
-		mbox->controller.txकरोne_irq = true;
-	अन्यथा अणु
-		mbox->controller.txकरोne_poll = true;
+	if (mbox->tx_irq_mode)
+		mbox->controller.txdone_irq = true;
+	else {
+		mbox->controller.txdone_poll = true;
 		mbox->controller.txpoll_period = 5;
-	पूर्ण
+	}
 
-	err = devm_mbox_controller_रेजिस्टर(dev, &mbox->controller);
-	अगर (err) अणु
+	err = devm_mbox_controller_register(dev, &mbox->controller);
+	if (err) {
 		dev_err(dev, "Failed to register mailbox %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, mbox);
+	platform_set_drvdata(pdev, mbox);
 	dev_info(dev, "Mailbox enabled\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver hi6220_mbox_driver = अणु
-	.driver = अणु
+static struct platform_driver hi6220_mbox_driver = {
+	.driver = {
 		.name = "hi6220-mbox",
 		.of_match_table = hi6220_mbox_of_match,
-	पूर्ण,
+	},
 	.probe	= hi6220_mbox_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init hi6220_mbox_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&hi6220_mbox_driver);
-पूर्ण
+static int __init hi6220_mbox_init(void)
+{
+	return platform_driver_register(&hi6220_mbox_driver);
+}
 core_initcall(hi6220_mbox_init);
 
-अटल व्योम __निकास hi6220_mbox_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&hi6220_mbox_driver);
-पूर्ण
-module_निकास(hi6220_mbox_निकास);
+static void __exit hi6220_mbox_exit(void)
+{
+	platform_driver_unregister(&hi6220_mbox_driver);
+}
+module_exit(hi6220_mbox_exit);
 
 MODULE_AUTHOR("Leo Yan <leo.yan@linaro.org>");
 MODULE_DESCRIPTION("Hi6220 mailbox driver");

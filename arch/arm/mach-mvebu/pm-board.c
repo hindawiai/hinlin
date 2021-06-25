@@ -1,59 +1,58 @@
-<शैली गुरु>
 /*
  * Board-level suspend/resume support.
  *
  * Copyright (C) 2014-2015 Marvell
  *
- * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/slab.h>
-#समावेश "common.h"
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_gpio.h>
+#include <linux/slab.h>
+#include "common.h"
 
-#घोषणा ARMADA_PIC_NR_GPIOS 3
+#define ARMADA_PIC_NR_GPIOS 3
 
-अटल व्योम __iomem *gpio_ctrl;
-अटल पूर्णांक pic_gpios[ARMADA_PIC_NR_GPIOS];
-अटल पूर्णांक pic_raw_gpios[ARMADA_PIC_NR_GPIOS];
+static void __iomem *gpio_ctrl;
+static int pic_gpios[ARMADA_PIC_NR_GPIOS];
+static int pic_raw_gpios[ARMADA_PIC_NR_GPIOS];
 
-अटल व्योम mvebu_armada_pm_enter(व्योम __iomem *sdram_reg, u32 srcmd)
-अणु
+static void mvebu_armada_pm_enter(void __iomem *sdram_reg, u32 srcmd)
+{
 	u32 reg, ackcmd;
-	पूर्णांक i;
+	int i;
 
 	/* Put 001 as value on the GPIOs */
-	reg = पढ़ोl(gpio_ctrl);
-	क्रम (i = 0; i < ARMADA_PIC_NR_GPIOS; i++)
+	reg = readl(gpio_ctrl);
+	for (i = 0; i < ARMADA_PIC_NR_GPIOS; i++)
 		reg &= ~BIT(pic_raw_gpios[i]);
 	reg |= BIT(pic_raw_gpios[0]);
-	ग_लिखोl(reg, gpio_ctrl);
+	writel(reg, gpio_ctrl);
 
 	/* Prepare writing 111 to the GPIOs */
-	ackcmd = पढ़ोl(gpio_ctrl);
-	क्रम (i = 0; i < ARMADA_PIC_NR_GPIOS; i++)
+	ackcmd = readl(gpio_ctrl);
+	for (i = 0; i < ARMADA_PIC_NR_GPIOS; i++)
 		ackcmd |= BIT(pic_raw_gpios[i]);
 
 	srcmd = cpu_to_le32(srcmd);
 	ackcmd = cpu_to_le32(ackcmd);
 
 	/*
-	 * Wait a जबतक, the PIC needs quite a bit of समय between the
+	 * Wait a while, the PIC needs quite a bit of time between the
 	 * two GPIO commands.
 	 */
 	mdelay(3000);
 
-	यंत्र अस्थिर (
+	asm volatile (
 		/* Align to a cache line */
 		".balign 32\n\t"
 
@@ -61,8 +60,8 @@
 		"str %[srcmd], [%[sdram_reg]]\n\t"
 
 		/*
-		 * Wait 100 cycles क्रम DDR to enter self refresh, by
-		 * करोing 50 बार two inकाष्ठाions.
+		 * Wait 100 cycles for DDR to enter self refresh, by
+		 * doing 50 times two instructions.
 		 */
 		"mov r1, #50\n\t"
 		"1: subs r1, r1, #1\n\t"
@@ -75,84 +74,84 @@
 		"b .\n\t"
 		: : [srcmd] "r" (srcmd), [sdram_reg] "r" (sdram_reg),
 		  [ackcmd] "r" (ackcmd), [gpio_ctrl] "r" (gpio_ctrl) : "r1");
-पूर्ण
+}
 
-अटल पूर्णांक __init mvebu_armada_pm_init(व्योम)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा device_node *gpio_ctrl_np = शून्य;
-	पूर्णांक ret = 0, i;
+static int __init mvebu_armada_pm_init(void)
+{
+	struct device_node *np;
+	struct device_node *gpio_ctrl_np = NULL;
+	int ret = 0, i;
 
-	अगर (!of_machine_is_compatible("marvell,axp-gp"))
-		वापस -ENODEV;
+	if (!of_machine_is_compatible("marvell,axp-gp"))
+		return -ENODEV;
 
-	np = of_find_node_by_name(शून्य, "pm_pic");
-	अगर (!np)
-		वापस -ENODEV;
+	np = of_find_node_by_name(NULL, "pm_pic");
+	if (!np)
+		return -ENODEV;
 
-	क्रम (i = 0; i < ARMADA_PIC_NR_GPIOS; i++) अणु
-		अक्षर *name;
-		काष्ठा of_phandle_args args;
+	for (i = 0; i < ARMADA_PIC_NR_GPIOS; i++) {
+		char *name;
+		struct of_phandle_args args;
 
 		pic_gpios[i] = of_get_named_gpio(np, "ctrl-gpios", i);
-		अगर (pic_gpios[i] < 0) अणु
+		if (pic_gpios[i] < 0) {
 			ret = -ENODEV;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		name = kaप्र_लिखो(GFP_KERNEL, "pic-pin%d", i);
-		अगर (!name) अणु
+		name = kasprintf(GFP_KERNEL, "pic-pin%d", i);
+		if (!name) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = gpio_request(pic_gpios[i], name);
-		अगर (ret < 0) अणु
-			kमुक्त(name);
-			जाओ out;
-		पूर्ण
+		if (ret < 0) {
+			kfree(name);
+			goto out;
+		}
 
 		ret = gpio_direction_output(pic_gpios[i], 0);
-		अगर (ret < 0) अणु
-			gpio_मुक्त(pic_gpios[i]);
-			kमुक्त(name);
-			जाओ out;
-		पूर्ण
+		if (ret < 0) {
+			gpio_free(pic_gpios[i]);
+			kfree(name);
+			goto out;
+		}
 
 		ret = of_parse_phandle_with_fixed_args(np, "ctrl-gpios", 2,
 						       i, &args);
-		अगर (ret < 0) अणु
-			gpio_मुक्त(pic_gpios[i]);
-			kमुक्त(name);
-			जाओ out;
-		पूर्ण
+		if (ret < 0) {
+			gpio_free(pic_gpios[i]);
+			kfree(name);
+			goto out;
+		}
 
-		अगर (gpio_ctrl_np)
+		if (gpio_ctrl_np)
 			of_node_put(gpio_ctrl_np);
 		gpio_ctrl_np = args.np;
 		pic_raw_gpios[i] = args.args[0];
-	पूर्ण
+	}
 
 	gpio_ctrl = of_iomap(gpio_ctrl_np, 0);
-	अगर (!gpio_ctrl) अणु
+	if (!gpio_ctrl) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mvebu_pm_suspend_init(mvebu_armada_pm_enter);
 
 out:
 	of_node_put(np);
 	of_node_put(gpio_ctrl_np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Registering the mvebu_board_pm_enter callback must be करोne beक्रमe
- * the platक्रमm_suspend_ops will be रेजिस्टरed. In the same समय we
- * also need to have the gpio devices रेजिस्टरed. That's why we use a
+ * Registering the mvebu_board_pm_enter callback must be done before
+ * the platform_suspend_ops will be registered. In the same time we
+ * also need to have the gpio devices registered. That's why we use a
  * device_initcall_sync which is called after all the device_initcall
- * (used by the gpio device) but beक्रमe the late_initcall (used to
- * रेजिस्टर the platक्रमm_suspend_ops)
+ * (used by the gpio device) but before the late_initcall (used to
+ * register the platform_suspend_ops)
  */
 device_initcall_sync(mvebu_armada_pm_init);

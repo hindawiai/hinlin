@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
-#अगर_अघोषित _LINUX_OF_PRIVATE_H
-#घोषणा _LINUX_OF_PRIVATE_H
+/* SPDX-License-Identifier: GPL-2.0+ */
+#ifndef _LINUX_OF_PRIVATE_H
+#define _LINUX_OF_PRIVATE_H
 /*
  * Private symbols used by OF support code
  *
@@ -9,167 +8,167 @@
  * Copyright (C) 1996-2005 Paul Mackerras.
  */
 
-#घोषणा FDT_ALIGN_SIZE 8
+#define FDT_ALIGN_SIZE 8
 
 /**
- * काष्ठा alias_prop - Alias property in 'aliases' node
- * @link:	List node to link the काष्ठाure in aliases_lookup list
+ * struct alias_prop - Alias property in 'aliases' node
+ * @link:	List node to link the structure in aliases_lookup list
  * @alias:	Alias property name
- * @np:		Poपूर्णांकer to device_node that the alias stands क्रम
+ * @np:		Pointer to device_node that the alias stands for
  * @id:		Index value from end of alias name
  * @stem:	Alias string without the index
  *
- * The काष्ठाure represents one alias property of 'aliases' node as
+ * The structure represents one alias property of 'aliases' node as
  * an entry in aliases_lookup list.
  */
-काष्ठा alias_prop अणु
-	काष्ठा list_head link;
-	स्थिर अक्षर *alias;
-	काष्ठा device_node *np;
-	पूर्णांक id;
-	अक्षर stem[];
-पूर्ण;
+struct alias_prop {
+	struct list_head link;
+	const char *alias;
+	struct device_node *np;
+	int id;
+	char stem[];
+};
 
-#अगर defined(CONFIG_SPARC)
-#घोषणा OF_ROOT_NODE_ADDR_CELLS_DEFAULT 2
-#अन्यथा
-#घोषणा OF_ROOT_NODE_ADDR_CELLS_DEFAULT 1
-#पूर्ण_अगर
+#if defined(CONFIG_SPARC)
+#define OF_ROOT_NODE_ADDR_CELLS_DEFAULT 2
+#else
+#define OF_ROOT_NODE_ADDR_CELLS_DEFAULT 1
+#endif
 
-#घोषणा OF_ROOT_NODE_SIZE_CELLS_DEFAULT 1
+#define OF_ROOT_NODE_SIZE_CELLS_DEFAULT 1
 
-बाह्य काष्ठा mutex of_mutex;
-बाह्य काष्ठा list_head aliases_lookup;
-बाह्य काष्ठा kset *of_kset;
+extern struct mutex of_mutex;
+extern struct list_head aliases_lookup;
+extern struct kset *of_kset;
 
-#अगर defined(CONFIG_OF_DYNAMIC)
-बाह्य पूर्णांक of_property_notअगरy(पूर्णांक action, काष्ठा device_node *np,
-			      काष्ठा property *prop, काष्ठा property *old_prop);
-बाह्य व्योम of_node_release(काष्ठा kobject *kobj);
-बाह्य पूर्णांक __of_changeset_apply_entries(काष्ठा of_changeset *ocs,
-					पूर्णांक *ret_revert);
-बाह्य पूर्णांक __of_changeset_apply_notअगरy(काष्ठा of_changeset *ocs);
-बाह्य पूर्णांक __of_changeset_revert_entries(काष्ठा of_changeset *ocs,
-					 पूर्णांक *ret_apply);
-बाह्य पूर्णांक __of_changeset_revert_notअगरy(काष्ठा of_changeset *ocs);
-#अन्यथा /* CONFIG_OF_DYNAMIC */
-अटल अंतरभूत पूर्णांक of_property_notअगरy(पूर्णांक action, काष्ठा device_node *np,
-				     काष्ठा property *prop, काष्ठा property *old_prop)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF_DYNAMIC */
+#if defined(CONFIG_OF_DYNAMIC)
+extern int of_property_notify(int action, struct device_node *np,
+			      struct property *prop, struct property *old_prop);
+extern void of_node_release(struct kobject *kobj);
+extern int __of_changeset_apply_entries(struct of_changeset *ocs,
+					int *ret_revert);
+extern int __of_changeset_apply_notify(struct of_changeset *ocs);
+extern int __of_changeset_revert_entries(struct of_changeset *ocs,
+					 int *ret_apply);
+extern int __of_changeset_revert_notify(struct of_changeset *ocs);
+#else /* CONFIG_OF_DYNAMIC */
+static inline int of_property_notify(int action, struct device_node *np,
+				     struct property *prop, struct property *old_prop)
+{
+	return 0;
+}
+#endif /* CONFIG_OF_DYNAMIC */
 
-#अगर defined(CONFIG_OF_KOBJ)
-पूर्णांक of_node_is_attached(काष्ठा device_node *node);
-पूर्णांक __of_add_property_sysfs(काष्ठा device_node *np, काष्ठा property *pp);
-व्योम __of_हटाओ_property_sysfs(काष्ठा device_node *np, काष्ठा property *prop);
-व्योम __of_update_property_sysfs(काष्ठा device_node *np, काष्ठा property *newprop,
-		काष्ठा property *oldprop);
-पूर्णांक __of_attach_node_sysfs(काष्ठा device_node *np);
-व्योम __of_detach_node_sysfs(काष्ठा device_node *np);
-#अन्यथा
-अटल अंतरभूत पूर्णांक __of_add_property_sysfs(काष्ठा device_node *np, काष्ठा property *pp)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम __of_हटाओ_property_sysfs(काष्ठा device_node *np, काष्ठा property *prop) अणुपूर्ण
-अटल अंतरभूत व्योम __of_update_property_sysfs(काष्ठा device_node *np,
-		काष्ठा property *newprop, काष्ठा property *oldprop) अणुपूर्ण
-अटल अंतरभूत पूर्णांक __of_attach_node_sysfs(काष्ठा device_node *np)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम __of_detach_node_sysfs(काष्ठा device_node *np) अणुपूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_OF_KOBJ)
+int of_node_is_attached(struct device_node *node);
+int __of_add_property_sysfs(struct device_node *np, struct property *pp);
+void __of_remove_property_sysfs(struct device_node *np, struct property *prop);
+void __of_update_property_sysfs(struct device_node *np, struct property *newprop,
+		struct property *oldprop);
+int __of_attach_node_sysfs(struct device_node *np);
+void __of_detach_node_sysfs(struct device_node *np);
+#else
+static inline int __of_add_property_sysfs(struct device_node *np, struct property *pp)
+{
+	return 0;
+}
+static inline void __of_remove_property_sysfs(struct device_node *np, struct property *prop) {}
+static inline void __of_update_property_sysfs(struct device_node *np,
+		struct property *newprop, struct property *oldprop) {}
+static inline int __of_attach_node_sysfs(struct device_node *np)
+{
+	return 0;
+}
+static inline void __of_detach_node_sysfs(struct device_node *np) {}
+#endif
 
-#अगर defined(CONFIG_OF_RESOLVE)
-पूर्णांक of_resolve_phandles(काष्ठा device_node *tree);
-#पूर्ण_अगर
+#if defined(CONFIG_OF_RESOLVE)
+int of_resolve_phandles(struct device_node *tree);
+#endif
 
-व्योम __of_phandle_cache_inv_entry(phandle handle);
+void __of_phandle_cache_inv_entry(phandle handle);
 
-#अगर defined(CONFIG_OF_OVERLAY)
-व्योम of_overlay_mutex_lock(व्योम);
-व्योम of_overlay_mutex_unlock(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम of_overlay_mutex_lock(व्योम) अणुपूर्ण;
-अटल अंतरभूत व्योम of_overlay_mutex_unlock(व्योम) अणुपूर्ण;
-#पूर्ण_अगर
+#if defined(CONFIG_OF_OVERLAY)
+void of_overlay_mutex_lock(void);
+void of_overlay_mutex_unlock(void);
+#else
+static inline void of_overlay_mutex_lock(void) {};
+static inline void of_overlay_mutex_unlock(void) {};
+#endif
 
-#अगर defined(CONFIG_OF_UNITTEST) && defined(CONFIG_OF_OVERLAY)
-बाह्य व्योम __init unittest_unflatten_overlay_base(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम unittest_unflatten_overlay_base(व्योम) अणुपूर्ण;
-#पूर्ण_अगर
+#if defined(CONFIG_OF_UNITTEST) && defined(CONFIG_OF_OVERLAY)
+extern void __init unittest_unflatten_overlay_base(void);
+#else
+static inline void unittest_unflatten_overlay_base(void) {};
+#endif
 
-बाह्य व्योम *__unflatten_device_tree(स्थिर व्योम *blob,
-			      काष्ठा device_node *dad,
-			      काष्ठा device_node **mynodes,
-			      व्योम *(*dt_alloc)(u64 size, u64 align),
+extern void *__unflatten_device_tree(const void *blob,
+			      struct device_node *dad,
+			      struct device_node **mynodes,
+			      void *(*dt_alloc)(u64 size, u64 align),
 			      bool detached);
 
 /**
- * General utilities क्रम working with live trees.
+ * General utilities for working with live trees.
  *
  * All functions with two leading underscores operate
  * without taking node references, so you either have to
  * own the devtree lock or work on detached trees only.
  */
-काष्ठा property *__of_prop_dup(स्थिर काष्ठा property *prop, gfp_t allocflags);
-काष्ठा device_node *__of_node_dup(स्थिर काष्ठा device_node *np,
-				  स्थिर अक्षर *full_name);
+struct property *__of_prop_dup(const struct property *prop, gfp_t allocflags);
+struct device_node *__of_node_dup(const struct device_node *np,
+				  const char *full_name);
 
-काष्ठा device_node *__of_find_node_by_path(काष्ठा device_node *parent,
-						स्थिर अक्षर *path);
-काष्ठा device_node *__of_find_node_by_full_path(काष्ठा device_node *node,
-						स्थिर अक्षर *path);
+struct device_node *__of_find_node_by_path(struct device_node *parent,
+						const char *path);
+struct device_node *__of_find_node_by_full_path(struct device_node *node,
+						const char *path);
 
-बाह्य स्थिर व्योम *__of_get_property(स्थिर काष्ठा device_node *np,
-				     स्थिर अक्षर *name, पूर्णांक *lenp);
-बाह्य पूर्णांक __of_add_property(काष्ठा device_node *np, काष्ठा property *prop);
-बाह्य पूर्णांक __of_add_property_sysfs(काष्ठा device_node *np,
-		काष्ठा property *prop);
-बाह्य पूर्णांक __of_हटाओ_property(काष्ठा device_node *np, काष्ठा property *prop);
-बाह्य व्योम __of_हटाओ_property_sysfs(काष्ठा device_node *np,
-		काष्ठा property *prop);
-बाह्य पूर्णांक __of_update_property(काष्ठा device_node *np,
-		काष्ठा property *newprop, काष्ठा property **oldprop);
-बाह्य व्योम __of_update_property_sysfs(काष्ठा device_node *np,
-		काष्ठा property *newprop, काष्ठा property *oldprop);
+extern const void *__of_get_property(const struct device_node *np,
+				     const char *name, int *lenp);
+extern int __of_add_property(struct device_node *np, struct property *prop);
+extern int __of_add_property_sysfs(struct device_node *np,
+		struct property *prop);
+extern int __of_remove_property(struct device_node *np, struct property *prop);
+extern void __of_remove_property_sysfs(struct device_node *np,
+		struct property *prop);
+extern int __of_update_property(struct device_node *np,
+		struct property *newprop, struct property **oldprop);
+extern void __of_update_property_sysfs(struct device_node *np,
+		struct property *newprop, struct property *oldprop);
 
-बाह्य पूर्णांक __of_attach_node_sysfs(काष्ठा device_node *np);
-बाह्य व्योम __of_detach_node(काष्ठा device_node *np);
-बाह्य व्योम __of_detach_node_sysfs(काष्ठा device_node *np);
+extern int __of_attach_node_sysfs(struct device_node *np);
+extern void __of_detach_node(struct device_node *np);
+extern void __of_detach_node_sysfs(struct device_node *np);
 
-बाह्य व्योम __of_sysfs_हटाओ_bin_file(काष्ठा device_node *np,
-				       काष्ठा property *prop);
+extern void __of_sysfs_remove_bin_file(struct device_node *np,
+				       struct property *prop);
 
 /* illegal phandle value (set when unresolved) */
-#घोषणा OF_PHANDLE_ILLEGAL	0xdeadbeef
+#define OF_PHANDLE_ILLEGAL	0xdeadbeef
 
-/* iterators क्रम transactions, used क्रम overlays */
-/* क्रमward iterator */
-#घोषणा क्रम_each_transaction_entry(_oft, _te) \
-	list_क्रम_each_entry(_te, &(_oft)->te_list, node)
+/* iterators for transactions, used for overlays */
+/* forward iterator */
+#define for_each_transaction_entry(_oft, _te) \
+	list_for_each_entry(_te, &(_oft)->te_list, node)
 
 /* reverse iterator */
-#घोषणा क्रम_each_transaction_entry_reverse(_oft, _te) \
-	list_क्रम_each_entry_reverse(_te, &(_oft)->te_list, node)
+#define for_each_transaction_entry_reverse(_oft, _te) \
+	list_for_each_entry_reverse(_te, &(_oft)->te_list, node)
 
-बाह्य पूर्णांक of_bus_n_addr_cells(काष्ठा device_node *np);
-बाह्य पूर्णांक of_bus_n_size_cells(काष्ठा device_node *np);
+extern int of_bus_n_addr_cells(struct device_node *np);
+extern int of_bus_n_size_cells(struct device_node *np);
 
-काष्ठा bus_dma_region;
-#अगर defined(CONFIG_OF_ADDRESS) && defined(CONFIG_HAS_DMA)
-पूर्णांक of_dma_get_range(काष्ठा device_node *np,
-		स्थिर काष्ठा bus_dma_region **map);
-#अन्यथा
-अटल अंतरभूत पूर्णांक of_dma_get_range(काष्ठा device_node *np,
-		स्थिर काष्ठा bus_dma_region **map)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+struct bus_dma_region;
+#if defined(CONFIG_OF_ADDRESS) && defined(CONFIG_HAS_DMA)
+int of_dma_get_range(struct device_node *np,
+		const struct bus_dma_region **map);
+#else
+static inline int of_dma_get_range(struct device_node *np,
+		const struct bus_dma_region **map)
+{
+	return -ENODEV;
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_OF_PRIVATE_H */
+#endif /* _LINUX_OF_PRIVATE_H */

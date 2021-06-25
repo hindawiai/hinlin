@@ -1,83 +1,82 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) 2018-2020, Intel Corporation. */
 
-#अगर_अघोषित _ICE_ARFS_H_
-#घोषणा _ICE_ARFS_H_
-क्रमागत ice_arfs_fltr_state अणु
+#ifndef _ICE_ARFS_H_
+#define _ICE_ARFS_H_
+enum ice_arfs_fltr_state {
 	ICE_ARFS_INACTIVE,
 	ICE_ARFS_ACTIVE,
 	ICE_ARFS_TODEL,
-पूर्ण;
+};
 
-काष्ठा ice_arfs_entry अणु
-	काष्ठा ice_fdir_fltr fltr_info;
-	काष्ठा hlist_node list_entry;
-	u64 समय_activated;	/* only valid क्रम UDP flows */
+struct ice_arfs_entry {
+	struct ice_fdir_fltr fltr_info;
+	struct hlist_node list_entry;
+	u64 time_activated;	/* only valid for UDP flows */
 	u32 flow_id;
 	/* fltr_state = 0 - ICE_ARFS_INACTIVE:
 	 *	filter needs to be updated or programmed in HW.
 	 * fltr_state = 1 - ICE_ARFS_ACTIVE:
 	 *	filter is active and programmed in HW.
 	 * fltr_state = 2 - ICE_ARFS_TODEL:
-	 *	filter has been deleted from HW and needs to be हटाओd from
+	 *	filter has been deleted from HW and needs to be removed from
 	 *	the aRFS hash table.
 	 */
 	u8 fltr_state;
-पूर्ण;
+};
 
-काष्ठा ice_arfs_entry_ptr अणु
-	काष्ठा ice_arfs_entry *arfs_entry;
-	काष्ठा hlist_node list_entry;
-पूर्ण;
+struct ice_arfs_entry_ptr {
+	struct ice_arfs_entry *arfs_entry;
+	struct hlist_node list_entry;
+};
 
-काष्ठा ice_arfs_active_fltr_cntrs अणु
+struct ice_arfs_active_fltr_cntrs {
 	atomic_t active_tcpv4_cnt;
 	atomic_t active_tcpv6_cnt;
 	atomic_t active_udpv4_cnt;
 	atomic_t active_udpv6_cnt;
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_RFS_ACCEL
-पूर्णांक
-ice_rx_flow_steer(काष्ठा net_device *netdev, स्थिर काष्ठा sk_buff *skb,
+#ifdef CONFIG_RFS_ACCEL
+int
+ice_rx_flow_steer(struct net_device *netdev, const struct sk_buff *skb,
 		  u16 rxq_idx, u32 flow_id);
-व्योम ice_clear_arfs(काष्ठा ice_vsi *vsi);
-व्योम ice_मुक्त_cpu_rx_rmap(काष्ठा ice_vsi *vsi);
-व्योम ice_init_arfs(काष्ठा ice_vsi *vsi);
-व्योम ice_sync_arfs_fltrs(काष्ठा ice_pf *pf);
-पूर्णांक ice_set_cpu_rx_rmap(काष्ठा ice_vsi *vsi);
-व्योम ice_हटाओ_arfs(काष्ठा ice_pf *pf);
-व्योम ice_rebuild_arfs(काष्ठा ice_pf *pf);
+void ice_clear_arfs(struct ice_vsi *vsi);
+void ice_free_cpu_rx_rmap(struct ice_vsi *vsi);
+void ice_init_arfs(struct ice_vsi *vsi);
+void ice_sync_arfs_fltrs(struct ice_pf *pf);
+int ice_set_cpu_rx_rmap(struct ice_vsi *vsi);
+void ice_remove_arfs(struct ice_pf *pf);
+void ice_rebuild_arfs(struct ice_pf *pf);
 bool
-ice_is_arfs_using_perfect_flow(काष्ठा ice_hw *hw,
-			       क्रमागत ice_fltr_ptype flow_type);
-#अन्यथा
-#घोषणा ice_sync_arfs_fltrs(pf) करो अणुपूर्ण जबतक (0)
-#घोषणा ice_init_arfs(vsi) करो अणुपूर्ण जबतक (0)
-#घोषणा ice_clear_arfs(vsi) करो अणुपूर्ण जबतक (0)
-#घोषणा ice_हटाओ_arfs(pf) करो अणुपूर्ण जबतक (0)
-#घोषणा ice_मुक्त_cpu_rx_rmap(vsi) करो अणुपूर्ण जबतक (0)
-#घोषणा ice_rebuild_arfs(pf) करो अणुपूर्ण जबतक (0)
+ice_is_arfs_using_perfect_flow(struct ice_hw *hw,
+			       enum ice_fltr_ptype flow_type);
+#else
+#define ice_sync_arfs_fltrs(pf) do {} while (0)
+#define ice_init_arfs(vsi) do {} while (0)
+#define ice_clear_arfs(vsi) do {} while (0)
+#define ice_remove_arfs(pf) do {} while (0)
+#define ice_free_cpu_rx_rmap(vsi) do {} while (0)
+#define ice_rebuild_arfs(pf) do {} while (0)
 
-अटल अंतरभूत पूर्णांक ice_set_cpu_rx_rmap(काष्ठा ice_vsi __always_unused *vsi)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ice_set_cpu_rx_rmap(struct ice_vsi __always_unused *vsi)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ice_rx_flow_steer(काष्ठा net_device __always_unused *netdev,
-		  स्थिर काष्ठा sk_buff __always_unused *skb,
+static inline int
+ice_rx_flow_steer(struct net_device __always_unused *netdev,
+		  const struct sk_buff __always_unused *skb,
 		  u16 __always_unused rxq_idx, u32 __always_unused flow_id)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत bool
-ice_is_arfs_using_perfect_flow(काष्ठा ice_hw __always_unused *hw,
-			       क्रमागत ice_fltr_ptype __always_unused flow_type)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_RFS_ACCEL */
-#पूर्ण_अगर /* _ICE_ARFS_H_ */
+static inline bool
+ice_is_arfs_using_perfect_flow(struct ice_hw __always_unused *hw,
+			       enum ice_fltr_ptype __always_unused flow_type)
+{
+	return false;
+}
+#endif /* CONFIG_RFS_ACCEL */
+#endif /* _ICE_ARFS_H_ */

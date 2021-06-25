@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * LED Heartbeat Trigger
  *
  * Copyright (C) 2006 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  *
- * Based on Riअक्षरd Purdie's ledtrig-timer.c and some arch's
+ * Based on Richard Purdie's ledtrig-timer.c and some arch's
  * CONFIG_HEARTBEAT code.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/loadavg.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/reboot.h>
-#समावेश "../leds.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/sched.h>
+#include <linux/sched/loadavg.h>
+#include <linux/leds.h>
+#include <linux/reboot.h>
+#include "../leds.h"
 
-अटल पूर्णांक panic_heartbeats;
+static int panic_heartbeats;
 
-काष्ठा heartbeat_trig_data अणु
-	काष्ठा led_classdev *led_cdev;
-	अचिन्हित पूर्णांक phase;
-	अचिन्हित पूर्णांक period;
-	काष्ठा समयr_list समयr;
-	अचिन्हित पूर्णांक invert;
-पूर्ण;
+struct heartbeat_trig_data {
+	struct led_classdev *led_cdev;
+	unsigned int phase;
+	unsigned int period;
+	struct timer_list timer;
+	unsigned int invert;
+};
 
-अटल व्योम led_heartbeat_function(काष्ठा समयr_list *t)
-अणु
-	काष्ठा heartbeat_trig_data *heartbeat_data =
-		from_समयr(heartbeat_data, t, समयr);
-	काष्ठा led_classdev *led_cdev;
-	अचिन्हित दीर्घ brightness = LED_OFF;
-	अचिन्हित दीर्घ delay = 0;
+static void led_heartbeat_function(struct timer_list *t)
+{
+	struct heartbeat_trig_data *heartbeat_data =
+		from_timer(heartbeat_data, t, timer);
+	struct led_classdev *led_cdev;
+	unsigned long brightness = LED_OFF;
+	unsigned long delay = 0;
 
 	led_cdev = heartbeat_data->led_cdev;
 
-	अगर (unlikely(panic_heartbeats)) अणु
+	if (unlikely(panic_heartbeats)) {
 		led_set_brightness_nosleep(led_cdev, LED_OFF);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_and_clear_bit(LED_BLINK_BRIGHTNESS_CHANGE, &led_cdev->work_flags))
+	if (test_and_clear_bit(LED_BLINK_BRIGHTNESS_CHANGE, &led_cdev->work_flags))
 		led_cdev->blink_brightness = led_cdev->new_blink_brightness;
 
-	/* acts like an actual heart beat -- ie thump-thump-छोड़ो... */
-	चयन (heartbeat_data->phase) अणु
-	हाल 0:
+	/* acts like an actual heart beat -- ie thump-thump-pause... */
+	switch (heartbeat_data->phase) {
+	case 0:
 		/*
-		 * The hyperbolic function below modअगरies the
+		 * The hyperbolic function below modifies the
 		 * heartbeat period length in dependency of the
-		 * current (1min) load. It goes through the poपूर्णांकs
+		 * current (1min) load. It goes through the points
 		 * f(0)=1260, f(1)=860, f(5)=510, f(inf)->300.
 		 */
 		heartbeat_data->period = 300 +
 			(6720 << FSHIFT) / (5 * avenrun[0] + (7 << FSHIFT));
 		heartbeat_data->period =
-			msecs_to_jअगरfies(heartbeat_data->period);
-		delay = msecs_to_jअगरfies(70);
+			msecs_to_jiffies(heartbeat_data->period);
+		delay = msecs_to_jiffies(70);
 		heartbeat_data->phase++;
-		अगर (!heartbeat_data->invert)
+		if (!heartbeat_data->invert)
 			brightness = led_cdev->blink_brightness;
-		अवरोध;
-	हाल 1:
-		delay = heartbeat_data->period / 4 - msecs_to_jअगरfies(70);
+		break;
+	case 1:
+		delay = heartbeat_data->period / 4 - msecs_to_jiffies(70);
 		heartbeat_data->phase++;
-		अगर (heartbeat_data->invert)
+		if (heartbeat_data->invert)
 			brightness = led_cdev->blink_brightness;
-		अवरोध;
-	हाल 2:
-		delay = msecs_to_jअगरfies(70);
+		break;
+	case 2:
+		delay = msecs_to_jiffies(70);
 		heartbeat_data->phase++;
-		अगर (!heartbeat_data->invert)
+		if (!heartbeat_data->invert)
 			brightness = led_cdev->blink_brightness;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		delay = heartbeat_data->period - heartbeat_data->period / 4 -
-			msecs_to_jअगरfies(70);
+			msecs_to_jiffies(70);
 		heartbeat_data->phase = 0;
-		अगर (heartbeat_data->invert)
+		if (heartbeat_data->invert)
 			brightness = led_cdev->blink_brightness;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	led_set_brightness_nosleep(led_cdev, brightness);
-	mod_समयr(&heartbeat_data->समयr, jअगरfies + delay);
-पूर्ण
+	mod_timer(&heartbeat_data->timer, jiffies + delay);
+}
 
-अटल sमाप_प्रकार led_invert_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा heartbeat_trig_data *heartbeat_data =
+static ssize_t led_invert_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct heartbeat_trig_data *heartbeat_data =
 		led_trigger_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", heartbeat_data->invert);
-पूर्ण
+	return sprintf(buf, "%u\n", heartbeat_data->invert);
+}
 
-अटल sमाप_प्रकार led_invert_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा heartbeat_trig_data *heartbeat_data =
+static ssize_t led_invert_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct heartbeat_trig_data *heartbeat_data =
 		led_trigger_get_drvdata(dev);
-	अचिन्हित दीर्घ state;
-	पूर्णांक ret;
+	unsigned long state;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 0, &state);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 0, &state);
+	if (ret)
+		return ret;
 
 	heartbeat_data->invert = !!state;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल DEVICE_ATTR(invert, 0644, led_invert_show, led_invert_store);
+static DEVICE_ATTR(invert, 0644, led_invert_show, led_invert_store);
 
-अटल काष्ठा attribute *heartbeat_trig_attrs[] = अणु
+static struct attribute *heartbeat_trig_attrs[] = {
 	&dev_attr_invert.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(heartbeat_trig);
 
-अटल पूर्णांक heartbeat_trig_activate(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा heartbeat_trig_data *heartbeat_data;
+static int heartbeat_trig_activate(struct led_classdev *led_cdev)
+{
+	struct heartbeat_trig_data *heartbeat_data;
 
-	heartbeat_data = kzalloc(माप(*heartbeat_data), GFP_KERNEL);
-	अगर (!heartbeat_data)
-		वापस -ENOMEM;
+	heartbeat_data = kzalloc(sizeof(*heartbeat_data), GFP_KERNEL);
+	if (!heartbeat_data)
+		return -ENOMEM;
 
 	led_set_trigger_data(led_cdev, heartbeat_data);
 	heartbeat_data->led_cdev = led_cdev;
 
-	समयr_setup(&heartbeat_data->समयr, led_heartbeat_function, 0);
+	timer_setup(&heartbeat_data->timer, led_heartbeat_function, 0);
 	heartbeat_data->phase = 0;
-	अगर (!led_cdev->blink_brightness)
+	if (!led_cdev->blink_brightness)
 		led_cdev->blink_brightness = led_cdev->max_brightness;
-	led_heartbeat_function(&heartbeat_data->समयr);
+	led_heartbeat_function(&heartbeat_data->timer);
 	set_bit(LED_BLINK_SW, &led_cdev->work_flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम heartbeat_trig_deactivate(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा heartbeat_trig_data *heartbeat_data =
+static void heartbeat_trig_deactivate(struct led_classdev *led_cdev)
+{
+	struct heartbeat_trig_data *heartbeat_data =
 		led_get_trigger_data(led_cdev);
 
-	del_समयr_sync(&heartbeat_data->समयr);
-	kमुक्त(heartbeat_data);
+	del_timer_sync(&heartbeat_data->timer);
+	kfree(heartbeat_data);
 	clear_bit(LED_BLINK_SW, &led_cdev->work_flags);
-पूर्ण
+}
 
-अटल काष्ठा led_trigger heartbeat_led_trigger = अणु
+static struct led_trigger heartbeat_led_trigger = {
 	.name     = "heartbeat",
 	.activate = heartbeat_trig_activate,
 	.deactivate = heartbeat_trig_deactivate,
 	.groups = heartbeat_trig_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक heartbeat_reboot_notअगरier(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ code, व्योम *unused)
-अणु
-	led_trigger_unरेजिस्टर(&heartbeat_led_trigger);
-	वापस NOTIFY_DONE;
-पूर्ण
+static int heartbeat_reboot_notifier(struct notifier_block *nb,
+				     unsigned long code, void *unused)
+{
+	led_trigger_unregister(&heartbeat_led_trigger);
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक heartbeat_panic_notअगरier(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ code, व्योम *unused)
-अणु
+static int heartbeat_panic_notifier(struct notifier_block *nb,
+				     unsigned long code, void *unused)
+{
 	panic_heartbeats = 1;
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block heartbeat_reboot_nb = अणु
-	.notअगरier_call = heartbeat_reboot_notअगरier,
-पूर्ण;
+static struct notifier_block heartbeat_reboot_nb = {
+	.notifier_call = heartbeat_reboot_notifier,
+};
 
-अटल काष्ठा notअगरier_block heartbeat_panic_nb = अणु
-	.notअगरier_call = heartbeat_panic_notअगरier,
-पूर्ण;
+static struct notifier_block heartbeat_panic_nb = {
+	.notifier_call = heartbeat_panic_notifier,
+};
 
-अटल पूर्णांक __init heartbeat_trig_init(व्योम)
-अणु
-	पूर्णांक rc = led_trigger_रेजिस्टर(&heartbeat_led_trigger);
+static int __init heartbeat_trig_init(void)
+{
+	int rc = led_trigger_register(&heartbeat_led_trigger);
 
-	अगर (!rc) अणु
-		atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+	if (!rc) {
+		atomic_notifier_chain_register(&panic_notifier_list,
 					       &heartbeat_panic_nb);
-		रेजिस्टर_reboot_notअगरier(&heartbeat_reboot_nb);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		register_reboot_notifier(&heartbeat_reboot_nb);
+	}
+	return rc;
+}
 
-अटल व्योम __निकास heartbeat_trig_निकास(व्योम)
-अणु
-	unरेजिस्टर_reboot_notअगरier(&heartbeat_reboot_nb);
-	atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
+static void __exit heartbeat_trig_exit(void)
+{
+	unregister_reboot_notifier(&heartbeat_reboot_nb);
+	atomic_notifier_chain_unregister(&panic_notifier_list,
 					 &heartbeat_panic_nb);
-	led_trigger_unरेजिस्टर(&heartbeat_led_trigger);
-पूर्ण
+	led_trigger_unregister(&heartbeat_led_trigger);
+}
 
 module_init(heartbeat_trig_init);
-module_निकास(heartbeat_trig_निकास);
+module_exit(heartbeat_trig_exit);
 
 MODULE_AUTHOR("Atsushi Nemoto <anemo@mba.ocn.ne.jp>");
 MODULE_DESCRIPTION("Heartbeat LED trigger");

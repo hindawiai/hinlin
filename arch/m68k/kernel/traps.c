@@ -1,46 +1,45 @@
-<शैली गुरु>
 /*
  *  linux/arch/m68k/kernel/traps.c
  *
- *  Copyright (C) 1993, 1994 by Hamish Macकरोnald
+ *  Copyright (C) 1993, 1994 by Hamish Macdonald
  *
  *  68040 fixes by Michael Rausch
  *  68040 fixes by Martin Apel
- *  68040 fixes and ग_लिखोback by Riअक्षरd Zidlicky
+ *  68040 fixes and writeback by Richard Zidlicky
  *  68060 fixes by Roman Hodek
  *  68060 fixes by Jesper Skov
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
 /*
  * Sets up all exception vectors
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/user.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/linkage.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/kallsyms.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/signal.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/user.h>
+#include <linux/string.h>
+#include <linux/linkage.h>
+#include <linux/init.h>
+#include <linux/ptrace.h>
+#include <linux/kallsyms.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/siginfo.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/setup.h>
+#include <asm/fpu.h>
+#include <linux/uaccess.h>
+#include <asm/traps.h>
+#include <asm/machdep.h>
+#include <asm/siginfo.h>
+#include <asm/tlbflush.h>
 
-अटल स्थिर अक्षर *vec_names[] = अणु
+static const char *vec_names[] = {
 	[VEC_RESETSP]	= "RESET SP",
 	[VEC_RESETPC]	= "RESET PC",
 	[VEC_BUSERR]	= "BUS ERROR",
@@ -95,7 +94,7 @@
 	[VEC_FPUNDER]	= "FPCP UNDERFLOW",
 	[VEC_FPOE]	= "FPCP OPERAND ERROR",
 	[VEC_FPOVER]	= "FPCP OVERFLOW",
-	[VEC_FPन_अंक]	= "FPCP SNAN",
+	[VEC_FPNAN]	= "FPCP SNAN",
 	[VEC_FPUNSUP]	= "FPCP UNSUPPORTED OPERATION",
 	[VEC_MMUCFG]	= "MMU CONFIGURATION ERROR",
 	[VEC_MMUILL]	= "MMU ILLEGAL OPERATION ERROR",
@@ -105,119 +104,119 @@
 	[VEC_UNIMPII]	= "UNASSIGNED RESERVED 61",
 	[VEC_RESV62]	= "UNASSIGNED RESERVED 62",
 	[VEC_RESV63]	= "UNASSIGNED RESERVED 63",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *space_names[] = अणु
+static const char *space_names[] = {
 	[0]		= "Space 0",
 	[USER_DATA]	= "User Data",
 	[USER_PROGRAM]	= "User Program",
-#अगर_अघोषित CONFIG_SUN3
+#ifndef CONFIG_SUN3
 	[3]		= "Space 3",
-#अन्यथा
+#else
 	[FC_CONTROL]	= "Control",
-#पूर्ण_अगर
+#endif
 	[4]		= "Space 4",
 	[SUPER_DATA]	= "Super Data",
 	[SUPER_PROGRAM]	= "Super Program",
 	[CPU_SPACE]	= "CPU"
-पूर्ण;
+};
 
-व्योम die_अगर_kernel(अक्षर *,काष्ठा pt_regs *,पूर्णांक);
-यंत्रlinkage पूर्णांक करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address,
-                             अचिन्हित दीर्घ error_code);
-पूर्णांक send_fault_sig(काष्ठा pt_regs *regs);
+void die_if_kernel(char *,struct pt_regs *,int);
+asmlinkage int do_page_fault(struct pt_regs *regs, unsigned long address,
+                             unsigned long error_code);
+int send_fault_sig(struct pt_regs *regs);
 
-यंत्रlinkage व्योम trap_c(काष्ठा frame *fp);
+asmlinkage void trap_c(struct frame *fp);
 
-#अगर defined (CONFIG_M68060)
-अटल अंतरभूत व्योम access_error060 (काष्ठा frame *fp)
-अणु
-	अचिन्हित दीर्घ fslw = fp->un.fmt4.pc; /* is really FSLW क्रम access error */
+#if defined (CONFIG_M68060)
+static inline void access_error060 (struct frame *fp)
+{
+	unsigned long fslw = fp->un.fmt4.pc; /* is really FSLW for access error */
 
 	pr_debug("fslw=%#lx, fa=%#lx\n", fslw, fp->un.fmt4.effaddr);
 
-	अगर (fslw & MMU060_BPE) अणु
+	if (fslw & MMU060_BPE) {
 		/* branch prediction error -> clear branch cache */
-		__यंत्र__ __अस्थिर__ ("movec %/cacr,%/d0\n\t"
+		__asm__ __volatile__ ("movec %/cacr,%/d0\n\t"
 				      "orl   #0x00400000,%/d0\n\t"
 				      "movec %/d0,%/cacr"
 				      : : : "d0" );
-		/* वापस अगर there's no other error */
-		अगर (!(fslw & MMU060_ERR_BITS) && !(fslw & MMU060_SEE))
-			वापस;
-	पूर्ण
+		/* return if there's no other error */
+		if (!(fslw & MMU060_ERR_BITS) && !(fslw & MMU060_SEE))
+			return;
+	}
 
-	अगर (fslw & (MMU060_DESC_ERR | MMU060_WP | MMU060_SP)) अणु
-		अचिन्हित दीर्घ errorcode;
-		अचिन्हित दीर्घ addr = fp->un.fmt4.effaddr;
+	if (fslw & (MMU060_DESC_ERR | MMU060_WP | MMU060_SP)) {
+		unsigned long errorcode;
+		unsigned long addr = fp->un.fmt4.effaddr;
 
-		अगर (fslw & MMU060_MA)
+		if (fslw & MMU060_MA)
 			addr = (addr + PAGE_SIZE - 1) & PAGE_MASK;
 
 		errorcode = 1;
-		अगर (fslw & MMU060_DESC_ERR) अणु
+		if (fslw & MMU060_DESC_ERR) {
 			__flush_tlb040_one(addr);
 			errorcode = 0;
-		पूर्ण
-		अगर (fslw & MMU060_W)
+		}
+		if (fslw & MMU060_W)
 			errorcode |= 2;
 		pr_debug("errorcode = %ld\n", errorcode);
-		करो_page_fault(&fp->ptregs, addr, errorcode);
-	पूर्ण अन्यथा अगर (fslw & (MMU060_SEE))अणु
+		do_page_fault(&fp->ptregs, addr, errorcode);
+	} else if (fslw & (MMU060_SEE)){
 		/* Software Emulation Error.
-		 * fault during mem_पढ़ो/mem_ग_लिखो in अगरpsp060/os.S
+		 * fault during mem_read/mem_write in ifpsp060/os.S
 		 */
 		send_fault_sig(&fp->ptregs);
-	पूर्ण अन्यथा अगर (!(fslw & (MMU060_RE|MMU060_WE)) ||
-		   send_fault_sig(&fp->ptregs) > 0) अणु
+	} else if (!(fslw & (MMU060_RE|MMU060_WE)) ||
+		   send_fault_sig(&fp->ptregs) > 0) {
 		pr_err("pc=%#lx, fa=%#lx\n", fp->ptregs.pc,
 		       fp->un.fmt4.effaddr);
 		pr_err("68060 access error, fslw=%lx\n", fslw);
 		trap_c( fp );
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_M68060 */
+	}
+}
+#endif /* CONFIG_M68060 */
 
-#अगर defined (CONFIG_M68040)
-अटल अंतरभूत अचिन्हित दीर्घ probe040(पूर्णांक isग_लिखो, अचिन्हित दीर्घ addr, पूर्णांक wbs)
-अणु
-	अचिन्हित दीर्घ mmusr;
+#if defined (CONFIG_M68040)
+static inline unsigned long probe040(int iswrite, unsigned long addr, int wbs)
+{
+	unsigned long mmusr;
 	mm_segment_t old_fs = get_fs();
 
 	set_fs(MAKE_MM_SEG(wbs));
 
-	अगर (isग_लिखो)
-		यंत्र अस्थिर (".chip 68040; ptestw (%0); .chip 68k" : : "a" (addr));
-	अन्यथा
-		यंत्र अस्थिर (".chip 68040; ptestr (%0); .chip 68k" : : "a" (addr));
+	if (iswrite)
+		asm volatile (".chip 68040; ptestw (%0); .chip 68k" : : "a" (addr));
+	else
+		asm volatile (".chip 68040; ptestr (%0); .chip 68k" : : "a" (addr));
 
-	यंत्र अस्थिर (".chip 68040; movec %%mmusr,%0; .chip 68k" : "=r" (mmusr));
+	asm volatile (".chip 68040; movec %%mmusr,%0; .chip 68k" : "=r" (mmusr));
 
 	set_fs(old_fs);
 
-	वापस mmusr;
-पूर्ण
+	return mmusr;
+}
 
-अटल अंतरभूत पूर्णांक करो_040ग_लिखोback1(अचिन्हित लघु wbs, अचिन्हित दीर्घ wba,
-				   अचिन्हित दीर्घ wbd)
-अणु
-	पूर्णांक res = 0;
+static inline int do_040writeback1(unsigned short wbs, unsigned long wba,
+				   unsigned long wbd)
+{
+	int res = 0;
 	mm_segment_t old_fs = get_fs();
 
 	/* set_fs can not be moved, otherwise put_user() may oops */
 	set_fs(MAKE_MM_SEG(wbs));
 
-	चयन (wbs & WBSIZ_040) अणु
-	हाल BA_SIZE_BYTE:
-		res = put_user(wbd & 0xff, (अक्षर __user *)wba);
-		अवरोध;
-	हाल BA_SIZE_WORD:
-		res = put_user(wbd & 0xffff, (लघु __user *)wba);
-		अवरोध;
-	हाल BA_SIZE_LONG:
-		res = put_user(wbd, (पूर्णांक __user *)wba);
-		अवरोध;
-	पूर्ण
+	switch (wbs & WBSIZ_040) {
+	case BA_SIZE_BYTE:
+		res = put_user(wbd & 0xff, (char __user *)wba);
+		break;
+	case BA_SIZE_WORD:
+		res = put_user(wbd & 0xffff, (short __user *)wba);
+		break;
+	case BA_SIZE_LONG:
+		res = put_user(wbd, (int __user *)wba);
+		break;
+	}
 
 	/* set_fs can not be moved, otherwise put_user() may oops */
 	set_fs(old_fs);
@@ -225,78 +224,78 @@
 
 	pr_debug("do_040writeback1, res=%d\n", res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-/* after an exception in a ग_लिखोback the stack frame corresponding
+/* after an exception in a writeback the stack frame corresponding
  * to that exception is discarded, set a few bits in the old frame
  * to simulate what it should look like
  */
-अटल अंतरभूत व्योम fix_xframe040(काष्ठा frame *fp, अचिन्हित दीर्घ wba, अचिन्हित लघु wbs)
-अणु
+static inline void fix_xframe040(struct frame *fp, unsigned long wba, unsigned short wbs)
+{
 	fp->un.fmt7.faddr = wba;
 	fp->un.fmt7.ssw = wbs & 0xff;
-	अगर (wba != current->thपढ़ो.faddr)
+	if (wba != current->thread.faddr)
 	    fp->un.fmt7.ssw |= MA_040;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम करो_040ग_लिखोbacks(काष्ठा frame *fp)
-अणु
-	पूर्णांक res = 0;
-#अगर 0
-	अगर (fp->un.fmt7.wb1s & WBV_040)
+static inline void do_040writebacks(struct frame *fp)
+{
+	int res = 0;
+#if 0
+	if (fp->un.fmt7.wb1s & WBV_040)
 		pr_err("access_error040: cannot handle 1st writeback. oops.\n");
-#पूर्ण_अगर
+#endif
 
-	अगर ((fp->un.fmt7.wb2s & WBV_040) &&
-	    !(fp->un.fmt7.wb2s & WBTT_040)) अणु
-		res = करो_040ग_लिखोback1(fp->un.fmt7.wb2s, fp->un.fmt7.wb2a,
+	if ((fp->un.fmt7.wb2s & WBV_040) &&
+	    !(fp->un.fmt7.wb2s & WBTT_040)) {
+		res = do_040writeback1(fp->un.fmt7.wb2s, fp->un.fmt7.wb2a,
 				       fp->un.fmt7.wb2d);
-		अगर (res)
+		if (res)
 			fix_xframe040(fp, fp->un.fmt7.wb2a, fp->un.fmt7.wb2s);
-		अन्यथा
+		else
 			fp->un.fmt7.wb2s = 0;
-	पूर्ण
+	}
 
-	/* करो the 2nd wb only अगर the first one was successful (except क्रम a kernel wb) */
-	अगर (fp->un.fmt7.wb3s & WBV_040 && (!res || fp->un.fmt7.wb3s & 4)) अणु
-		res = करो_040ग_लिखोback1(fp->un.fmt7.wb3s, fp->un.fmt7.wb3a,
+	/* do the 2nd wb only if the first one was successful (except for a kernel wb) */
+	if (fp->un.fmt7.wb3s & WBV_040 && (!res || fp->un.fmt7.wb3s & 4)) {
+		res = do_040writeback1(fp->un.fmt7.wb3s, fp->un.fmt7.wb3a,
 				       fp->un.fmt7.wb3d);
-		अगर (res)
-		    अणु
+		if (res)
+		    {
 			fix_xframe040(fp, fp->un.fmt7.wb3a, fp->un.fmt7.wb3s);
 
 			fp->un.fmt7.wb2s = fp->un.fmt7.wb3s;
 			fp->un.fmt7.wb3s &= (~WBV_040);
 			fp->un.fmt7.wb2a = fp->un.fmt7.wb3a;
 			fp->un.fmt7.wb2d = fp->un.fmt7.wb3d;
-		    पूर्ण
-		अन्यथा
+		    }
+		else
 			fp->un.fmt7.wb3s = 0;
-	पूर्ण
+	}
 
-	अगर (res)
+	if (res)
 		send_fault_sig(&fp->ptregs);
-पूर्ण
+}
 
 /*
- * called from sigवापस(), must ensure userspace code didn't
+ * called from sigreturn(), must ensure userspace code didn't
  * manipulate exception frame to circumvent protection, then complete
- * pending ग_लिखोbacks
- * we just clear TM2 to turn it पूर्णांकo a userspace access
+ * pending writebacks
+ * we just clear TM2 to turn it into a userspace access
  */
-यंत्रlinkage व्योम berr_040cleanup(काष्ठा frame *fp)
-अणु
+asmlinkage void berr_040cleanup(struct frame *fp)
+{
 	fp->un.fmt7.wb2s &= ~4;
 	fp->un.fmt7.wb3s &= ~4;
 
-	करो_040ग_लिखोbacks(fp);
-पूर्ण
+	do_040writebacks(fp);
+}
 
-अटल अंतरभूत व्योम access_error040(काष्ठा frame *fp)
-अणु
-	अचिन्हित लघु ssw = fp->un.fmt7.ssw;
-	अचिन्हित दीर्घ mmusr;
+static inline void access_error040(struct frame *fp)
+{
+	unsigned short ssw = fp->un.fmt7.ssw;
+	unsigned long mmusr;
 
 	pr_debug("ssw=%#x, fa=%#lx\n", ssw, fp->un.fmt7.faddr);
 	pr_debug("wb1s=%#x, wb2s=%#x, wb3s=%#x\n", fp->un.fmt7.wb1s,
@@ -305,382 +304,382 @@
 		fp->un.fmt7.wb2a, fp->un.fmt7.wb3a,
 		fp->un.fmt7.wb2d, fp->un.fmt7.wb3d);
 
-	अगर (ssw & ATC_040) अणु
-		अचिन्हित दीर्घ addr = fp->un.fmt7.faddr;
-		अचिन्हित दीर्घ errorcode;
+	if (ssw & ATC_040) {
+		unsigned long addr = fp->un.fmt7.faddr;
+		unsigned long errorcode;
 
 		/*
 		 * The MMU status has to be determined AFTER the address
-		 * has been corrected अगर there was a misaligned access (MA).
+		 * has been corrected if there was a misaligned access (MA).
 		 */
-		अगर (ssw & MA_040)
+		if (ssw & MA_040)
 			addr = (addr + 7) & -8;
 
-		/* MMU error, get the MMUSR info क्रम this access */
+		/* MMU error, get the MMUSR info for this access */
 		mmusr = probe040(!(ssw & RW_040), addr, ssw);
 		pr_debug("mmusr = %lx\n", mmusr);
 		errorcode = 1;
-		अगर (!(mmusr & MMU_R_040)) अणु
+		if (!(mmusr & MMU_R_040)) {
 			/* clear the invalid atc entry */
 			__flush_tlb040_one(addr);
 			errorcode = 0;
-		पूर्ण
+		}
 
-		/* despite what करोcumentation seems to say, RMW
+		/* despite what documentation seems to say, RMW
 		 * accesses have always both the LK and RW bits set */
-		अगर (!(ssw & RW_040) || (ssw & LK_040))
+		if (!(ssw & RW_040) || (ssw & LK_040))
 			errorcode |= 2;
 
-		अगर (करो_page_fault(&fp->ptregs, addr, errorcode)) अणु
+		if (do_page_fault(&fp->ptregs, addr, errorcode)) {
 			pr_debug("do_page_fault() !=0\n");
-			अगर (user_mode(&fp->ptregs))अणु
-				/* delay ग_लिखोbacks after संकेत delivery */
+			if (user_mode(&fp->ptregs)){
+				/* delay writebacks after signal delivery */
 				pr_debug(".. was usermode - return\n");
-				वापस;
-			पूर्ण
-			/* disable ग_लिखोback पूर्णांकo user space from kernel
-			 * (अगर करो_page_fault didn't fix the mapping,
-                         * the ग_लिखोback won't करो good)
+				return;
+			}
+			/* disable writeback into user space from kernel
+			 * (if do_page_fault didn't fix the mapping,
+                         * the writeback won't do good)
 			 */
 disable_wb:
 			pr_debug(".. disabling wb2\n");
-			अगर (fp->un.fmt7.wb2a == fp->un.fmt7.faddr)
+			if (fp->un.fmt7.wb2a == fp->un.fmt7.faddr)
 				fp->un.fmt7.wb2s &= ~WBV_040;
-			अगर (fp->un.fmt7.wb3a == fp->un.fmt7.faddr)
+			if (fp->un.fmt7.wb3a == fp->un.fmt7.faddr)
 				fp->un.fmt7.wb3s &= ~WBV_040;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* In हाल of a bus error we either समाप्त the process or expect
+		}
+	} else {
+		/* In case of a bus error we either kill the process or expect
 		 * the kernel to catch the fault, which then is also responsible
-		 * क्रम cleaning up the mess.
+		 * for cleaning up the mess.
 		 */
-		current->thपढ़ो.signo = SIGBUS;
-		current->thपढ़ो.faddr = fp->un.fmt7.faddr;
-		अगर (send_fault_sig(&fp->ptregs) >= 0)
+		current->thread.signo = SIGBUS;
+		current->thread.faddr = fp->un.fmt7.faddr;
+		if (send_fault_sig(&fp->ptregs) >= 0)
 			pr_err("68040 bus error (ssw=%x, faddr=%lx)\n", ssw,
 			       fp->un.fmt7.faddr);
-		जाओ disable_wb;
-	पूर्ण
+		goto disable_wb;
+	}
 
-	करो_040ग_लिखोbacks(fp);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_M68040 */
+	do_040writebacks(fp);
+}
+#endif /* CONFIG_M68040 */
 
-#अगर defined(CONFIG_SUN3)
-#समावेश <यंत्र/sun3mmu.h>
+#if defined(CONFIG_SUN3)
+#include <asm/sun3mmu.h>
 
-बाह्य पूर्णांक mmu_emu_handle_fault (अचिन्हित दीर्घ, पूर्णांक, पूर्णांक);
+extern int mmu_emu_handle_fault (unsigned long, int, int);
 
 /* sun3 version of bus_error030 */
 
-अटल अंतरभूत व्योम bus_error030 (काष्ठा frame *fp)
-अणु
-	अचिन्हित अक्षर buserr_type = sun3_get_buserr ();
-	अचिन्हित दीर्घ addr, errorcode;
-	अचिन्हित लघु ssw = fp->un.fmtb.ssw;
-	बाह्य अचिन्हित दीर्घ _sun3_map_test_start, _sun3_map_test_end;
+static inline void bus_error030 (struct frame *fp)
+{
+	unsigned char buserr_type = sun3_get_buserr ();
+	unsigned long addr, errorcode;
+	unsigned short ssw = fp->un.fmtb.ssw;
+	extern unsigned long _sun3_map_test_start, _sun3_map_test_end;
 
-	अगर (ssw & (FC | FB))
+	if (ssw & (FC | FB))
 		pr_debug("Instruction fault at %#010lx\n",
 			ssw & FC ?
-			fp->ptregs.क्रमmat == 0xa ? fp->ptregs.pc + 2 : fp->un.fmtb.baddr - 2
+			fp->ptregs.format == 0xa ? fp->ptregs.pc + 2 : fp->un.fmtb.baddr - 2
 			:
-			fp->ptregs.क्रमmat == 0xa ? fp->ptregs.pc + 4 : fp->un.fmtb.baddr);
-	अगर (ssw & DF)
+			fp->ptregs.format == 0xa ? fp->ptregs.pc + 4 : fp->un.fmtb.baddr);
+	if (ssw & DF)
 		pr_debug("Data %s fault at %#010lx in %s (pc=%#lx)\n",
 			ssw & RW ? "read" : "write",
 			fp->un.fmtb.daddr,
 			space_names[ssw & DFC], fp->ptregs.pc);
 
 	/*
-	 * Check अगर this page should be demand-mapped. This needs to go beक्रमe
-	 * the testing क्रम a bad kernel-space access (demand-mapping applies
+	 * Check if this page should be demand-mapped. This needs to go before
+	 * the testing for a bad kernel-space access (demand-mapping applies
 	 * to kernel accesses too).
 	 */
 
-	अगर ((ssw & DF)
-	    && (buserr_type & (SUN3_BUSERR_PROTERR | SUN3_BUSERR_INVALID))) अणु
-		अगर (mmu_emu_handle_fault (fp->un.fmtb.daddr, ssw & RW, 0))
-			वापस;
-	पूर्ण
+	if ((ssw & DF)
+	    && (buserr_type & (SUN3_BUSERR_PROTERR | SUN3_BUSERR_INVALID))) {
+		if (mmu_emu_handle_fault (fp->un.fmtb.daddr, ssw & RW, 0))
+			return;
+	}
 
-	/* Check क्रम kernel-space pagefault (BAD). */
-	अगर (fp->ptregs.sr & PS_S) अणु
+	/* Check for kernel-space pagefault (BAD). */
+	if (fp->ptregs.sr & PS_S) {
 		/* kernel fault must be a data fault to user space */
-		अगर (! ((ssw & DF) && ((ssw & DFC) == USER_DATA))) अणु
-		     // try checking the kernel mappings beक्रमe surrender
-		     अगर (mmu_emu_handle_fault (fp->un.fmtb.daddr, ssw & RW, 1))
-			  वापस;
-			/* inकाष्ठाion fault or kernel data fault! */
-			अगर (ssw & (FC | FB))
+		if (! ((ssw & DF) && ((ssw & DFC) == USER_DATA))) {
+		     // try checking the kernel mappings before surrender
+		     if (mmu_emu_handle_fault (fp->un.fmtb.daddr, ssw & RW, 1))
+			  return;
+			/* instruction fault or kernel data fault! */
+			if (ssw & (FC | FB))
 				pr_err("Instruction fault at %#010lx\n",
 					fp->ptregs.pc);
-			अगर (ssw & DF) अणु
+			if (ssw & DF) {
 				/* was this fault incurred testing bus mappings? */
-				अगर((fp->ptregs.pc >= (अचिन्हित दीर्घ)&_sun3_map_test_start) &&
-				   (fp->ptregs.pc <= (अचिन्हित दीर्घ)&_sun3_map_test_end)) अणु
+				if((fp->ptregs.pc >= (unsigned long)&_sun3_map_test_start) &&
+				   (fp->ptregs.pc <= (unsigned long)&_sun3_map_test_end)) {
 					send_fault_sig(&fp->ptregs);
-					वापस;
-				पूर्ण
+					return;
+				}
 
 				pr_err("Data %s fault at %#010lx in %s (pc=%#lx)\n",
 					ssw & RW ? "read" : "write",
 					fp->un.fmtb.daddr,
 					space_names[ssw & DFC], fp->ptregs.pc);
-			पूर्ण
+			}
 			pr_err("BAD KERNEL BUSERR\n");
 
-			die_अगर_kernel("Oops", &fp->ptregs,0);
-			क्रमce_sig(SIGKILL);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			die_if_kernel("Oops", &fp->ptregs,0);
+			force_sig(SIGKILL);
+			return;
+		}
+	} else {
 		/* user fault */
-		अगर (!(ssw & (FC | FB)) && !(ssw & DF))
-			/* not an inकाष्ठाion fault or data fault! BAD */
+		if (!(ssw & (FC | FB)) && !(ssw & DF))
+			/* not an instruction fault or data fault! BAD */
 			panic ("USER BUSERR w/o instruction or data fault");
-	पूर्ण
+	}
 
 
-	/* First handle the data fault, अगर any.  */
-	अगर (ssw & DF) अणु
+	/* First handle the data fault, if any.  */
+	if (ssw & DF) {
 		addr = fp->un.fmtb.daddr;
 
 // errorcode bit 0:	0 -> no page		1 -> protection fault
-// errorcode bit 1:	0 -> पढ़ो fault		1 -> ग_लिखो fault
+// errorcode bit 1:	0 -> read fault		1 -> write fault
 
 // (buserr_type & SUN3_BUSERR_PROTERR)	-> protection fault
 // (buserr_type & SUN3_BUSERR_INVALID)	-> invalid page fault
 
-		अगर (buserr_type & SUN3_BUSERR_PROTERR)
+		if (buserr_type & SUN3_BUSERR_PROTERR)
 			errorcode = 0x01;
-		अन्यथा अगर (buserr_type & SUN3_BUSERR_INVALID)
+		else if (buserr_type & SUN3_BUSERR_INVALID)
 			errorcode = 0x00;
-		अन्यथा अणु
+		else {
 			pr_debug("*** unexpected busfault type=%#04x\n",
 				 buserr_type);
 			pr_debug("invalid %s access at %#lx from pc %#lx\n",
 				 !(ssw & RW) ? "write" : "read", addr,
 				 fp->ptregs.pc);
-			die_अगर_kernel ("Oops", &fp->ptregs, buserr_type);
-			क्रमce_sig (SIGBUS);
-			वापस;
-		पूर्ण
+			die_if_kernel ("Oops", &fp->ptregs, buserr_type);
+			force_sig (SIGBUS);
+			return;
+		}
 
-//toकरो: wtf is RM bit? --m
-		अगर (!(ssw & RW) || ssw & RM)
+//todo: wtf is RM bit? --m
+		if (!(ssw & RW) || ssw & RM)
 			errorcode |= 0x02;
 
 		/* Handle page fault. */
-		करो_page_fault (&fp->ptregs, addr, errorcode);
+		do_page_fault (&fp->ptregs, addr, errorcode);
 
 		/* Retry the data fault now. */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Now handle the inकाष्ठाion fault. */
+	/* Now handle the instruction fault. */
 
 	/* Get the fault address. */
-	अगर (fp->ptregs.क्रमmat == 0xA)
+	if (fp->ptregs.format == 0xA)
 		addr = fp->ptregs.pc + 4;
-	अन्यथा
+	else
 		addr = fp->un.fmtb.baddr;
-	अगर (ssw & FC)
+	if (ssw & FC)
 		addr -= 2;
 
-	अगर (buserr_type & SUN3_BUSERR_INVALID) अणु
-		अगर (!mmu_emu_handle_fault(addr, 1, 0))
-			करो_page_fault (&fp->ptregs, addr, 0);
-       पूर्ण अन्यथा अणु
+	if (buserr_type & SUN3_BUSERR_INVALID) {
+		if (!mmu_emu_handle_fault(addr, 1, 0))
+			do_page_fault (&fp->ptregs, addr, 0);
+       } else {
 		pr_debug("protection fault on insn access (segv).\n");
-		क्रमce_sig (संक_अंश);
-       पूर्ण
-पूर्ण
-#अन्यथा
-#अगर defined(CPU_M68020_OR_M68030)
-अटल अंतरभूत व्योम bus_error030 (काष्ठा frame *fp)
-अणु
-	अस्थिर अचिन्हित लघु temp;
-	अचिन्हित लघु mmusr;
-	अचिन्हित दीर्घ addr, errorcode;
-	अचिन्हित लघु ssw = fp->un.fmtb.ssw;
-#अगर_घोषित DEBUG
-	अचिन्हित दीर्घ desc;
-#पूर्ण_अगर
+		force_sig (SIGSEGV);
+       }
+}
+#else
+#if defined(CPU_M68020_OR_M68030)
+static inline void bus_error030 (struct frame *fp)
+{
+	volatile unsigned short temp;
+	unsigned short mmusr;
+	unsigned long addr, errorcode;
+	unsigned short ssw = fp->un.fmtb.ssw;
+#ifdef DEBUG
+	unsigned long desc;
+#endif
 
 	pr_debug("pid = %x  ", current->pid);
 	pr_debug("SSW=%#06x  ", ssw);
 
-	अगर (ssw & (FC | FB))
+	if (ssw & (FC | FB))
 		pr_debug("Instruction fault at %#010lx\n",
 			ssw & FC ?
-			fp->ptregs.क्रमmat == 0xa ? fp->ptregs.pc + 2 : fp->un.fmtb.baddr - 2
+			fp->ptregs.format == 0xa ? fp->ptregs.pc + 2 : fp->un.fmtb.baddr - 2
 			:
-			fp->ptregs.क्रमmat == 0xa ? fp->ptregs.pc + 4 : fp->un.fmtb.baddr);
-	अगर (ssw & DF)
+			fp->ptregs.format == 0xa ? fp->ptregs.pc + 4 : fp->un.fmtb.baddr);
+	if (ssw & DF)
 		pr_debug("Data %s fault at %#010lx in %s (pc=%#lx)\n",
 			ssw & RW ? "read" : "write",
 			fp->un.fmtb.daddr,
 			space_names[ssw & DFC], fp->ptregs.pc);
 
-	/* ++andreas: If a data fault and an inकाष्ठाion fault happen
-	   at the same समय map in both pages.  */
+	/* ++andreas: If a data fault and an instruction fault happen
+	   at the same time map in both pages.  */
 
-	/* First handle the data fault, अगर any.  */
-	अगर (ssw & DF) अणु
+	/* First handle the data fault, if any.  */
+	if (ssw & DF) {
 		addr = fp->un.fmtb.daddr;
 
-#अगर_घोषित DEBUG
-		यंत्र अस्थिर ("ptestr %3,%2@,#7,%0\n\t"
+#ifdef DEBUG
+		asm volatile ("ptestr %3,%2@,#7,%0\n\t"
 			      "pmove %%psr,%1"
 			      : "=a&" (desc), "=m" (temp)
 			      : "a" (addr), "d" (ssw));
 		pr_debug("mmusr is %#x for addr %#lx in task %p\n",
 			 temp, addr, current);
 		pr_debug("descriptor address is 0x%p, contents %#lx\n",
-			 __va(desc), *(अचिन्हित दीर्घ *)__va(desc));
-#अन्यथा
-		यंत्र अस्थिर ("ptestr %2,%1@,#7\n\t"
+			 __va(desc), *(unsigned long *)__va(desc));
+#else
+		asm volatile ("ptestr %2,%1@,#7\n\t"
 			      "pmove %%psr,%0"
 			      : "=m" (temp) : "a" (addr), "d" (ssw));
-#पूर्ण_अगर
+#endif
 		mmusr = temp;
 		errorcode = (mmusr & MMU_I) ? 0 : 1;
-		अगर (!(ssw & RW) || (ssw & RM))
+		if (!(ssw & RW) || (ssw & RM))
 			errorcode |= 2;
 
-		अगर (mmusr & (MMU_I | MMU_WP)) अणु
-			अगर (ssw & 4) अणु
+		if (mmusr & (MMU_I | MMU_WP)) {
+			if (ssw & 4) {
 				pr_err("Data %s fault at %#010lx in %s (pc=%#lx)\n",
 				       ssw & RW ? "read" : "write",
 				       fp->un.fmtb.daddr,
 				       space_names[ssw & DFC], fp->ptregs.pc);
-				जाओ buserr;
-			पूर्ण
-			/* Don't try to करो anything further अगर an exception was
+				goto buserr;
+			}
+			/* Don't try to do anything further if an exception was
 			   handled. */
-			अगर (करो_page_fault (&fp->ptregs, addr, errorcode) < 0)
-				वापस;
-		पूर्ण अन्यथा अगर (!(mmusr & MMU_I)) अणु
+			if (do_page_fault (&fp->ptregs, addr, errorcode) < 0)
+				return;
+		} else if (!(mmusr & MMU_I)) {
 			/* probably a 020 cas fault */
-			अगर (!(ssw & RM) && send_fault_sig(&fp->ptregs) > 0)
+			if (!(ssw & RM) && send_fault_sig(&fp->ptregs) > 0)
 				pr_err("unexpected bus error (%#x,%#x)\n", ssw,
 				       mmusr);
-		पूर्ण अन्यथा अगर (mmusr & (MMU_B|MMU_L|MMU_S)) अणु
+		} else if (mmusr & (MMU_B|MMU_L|MMU_S)) {
 			pr_err("invalid %s access at %#lx from pc %#lx\n",
 			       !(ssw & RW) ? "write" : "read", addr,
 			       fp->ptregs.pc);
-			die_अगर_kernel("Oops",&fp->ptregs,mmusr);
-			क्रमce_sig(संक_अंश);
-			वापस;
-		पूर्ण अन्यथा अणु
-#अगर 0
-			अटल अस्थिर दीर्घ tदीर्घ;
-#पूर्ण_अगर
+			die_if_kernel("Oops",&fp->ptregs,mmusr);
+			force_sig(SIGSEGV);
+			return;
+		} else {
+#if 0
+			static volatile long tlong;
+#endif
 
 			pr_err("weird %s access at %#lx from pc %#lx (ssw is %#x)\n",
 			       !(ssw & RW) ? "write" : "read", addr,
 			       fp->ptregs.pc, ssw);
-			यंत्र अस्थिर ("ptestr #1,%1@,#0\n\t"
+			asm volatile ("ptestr #1,%1@,#0\n\t"
 				      "pmove %%psr,%0"
 				      : "=m" (temp)
 				      : "a" (addr));
 			mmusr = temp;
 
 			pr_err("level 0 mmusr is %#x\n", mmusr);
-#अगर 0
-			यंत्र अस्थिर ("pmove %%tt0,%0"
-				      : "=m" (tदीर्घ));
-			pr_debug("tt0 is %#lx, ", tदीर्घ);
-			यंत्र अस्थिर ("pmove %%tt1,%0"
-				      : "=m" (tदीर्घ));
-			pr_debug("tt1 is %#lx\n", tदीर्घ);
-#पूर्ण_अगर
+#if 0
+			asm volatile ("pmove %%tt0,%0"
+				      : "=m" (tlong));
+			pr_debug("tt0 is %#lx, ", tlong);
+			asm volatile ("pmove %%tt1,%0"
+				      : "=m" (tlong));
+			pr_debug("tt1 is %#lx\n", tlong);
+#endif
 			pr_debug("Unknown SIGSEGV - 1\n");
-			die_अगर_kernel("Oops",&fp->ptregs,mmusr);
-			क्रमce_sig(संक_अंश);
-			वापस;
-		पूर्ण
+			die_if_kernel("Oops",&fp->ptregs,mmusr);
+			force_sig(SIGSEGV);
+			return;
+		}
 
-		/* setup an ATC entry क्रम the access about to be retried */
-		अगर (!(ssw & RW) || (ssw & RM))
-			यंत्र अस्थिर ("ploadw %1,%0@" : /* no outमाला_दो */
+		/* setup an ATC entry for the access about to be retried */
+		if (!(ssw & RW) || (ssw & RM))
+			asm volatile ("ploadw %1,%0@" : /* no outputs */
 				      : "a" (addr), "d" (ssw));
-		अन्यथा
-			यंत्र अस्थिर ("ploadr %1,%0@" : /* no outमाला_दो */
+		else
+			asm volatile ("ploadr %1,%0@" : /* no outputs */
 				      : "a" (addr), "d" (ssw));
-	पूर्ण
+	}
 
-	/* Now handle the inकाष्ठाion fault. */
+	/* Now handle the instruction fault. */
 
-	अगर (!(ssw & (FC|FB)))
-		वापस;
+	if (!(ssw & (FC|FB)))
+		return;
 
-	अगर (fp->ptregs.sr & PS_S) अणु
+	if (fp->ptregs.sr & PS_S) {
 		pr_err("Instruction fault at %#010lx\n", fp->ptregs.pc);
 	buserr:
 		pr_err("BAD KERNEL BUSERR\n");
-		die_अगर_kernel("Oops",&fp->ptregs,0);
-		क्रमce_sig(SIGKILL);
-		वापस;
-	पूर्ण
+		die_if_kernel("Oops",&fp->ptregs,0);
+		force_sig(SIGKILL);
+		return;
+	}
 
 	/* get the fault address */
-	अगर (fp->ptregs.क्रमmat == 10)
+	if (fp->ptregs.format == 10)
 		addr = fp->ptregs.pc + 4;
-	अन्यथा
+	else
 		addr = fp->un.fmtb.baddr;
-	अगर (ssw & FC)
+	if (ssw & FC)
 		addr -= 2;
 
-	अगर ((ssw & DF) && ((addr ^ fp->un.fmtb.daddr) & PAGE_MASK) == 0)
+	if ((ssw & DF) && ((addr ^ fp->un.fmtb.daddr) & PAGE_MASK) == 0)
 		/* Insn fault on same page as data fault.  But we
 		   should still create the ATC entry.  */
-		जाओ create_atc_entry;
+		goto create_atc_entry;
 
-#अगर_घोषित DEBUG
-	यंत्र अस्थिर ("ptestr #1,%2@,#7,%0\n\t"
+#ifdef DEBUG
+	asm volatile ("ptestr #1,%2@,#7,%0\n\t"
 		      "pmove %%psr,%1"
 		      : "=a&" (desc), "=m" (temp)
 		      : "a" (addr));
 	pr_debug("mmusr is %#x for addr %#lx in task %p\n",
 		temp, addr, current);
 	pr_debug("descriptor address is 0x%p, contents %#lx\n",
-		__va(desc), *(अचिन्हित दीर्घ *)__va(desc));
-#अन्यथा
-	यंत्र अस्थिर ("ptestr #1,%1@,#7\n\t"
+		__va(desc), *(unsigned long *)__va(desc));
+#else
+	asm volatile ("ptestr #1,%1@,#7\n\t"
 		      "pmove %%psr,%0"
 		      : "=m" (temp) : "a" (addr));
-#पूर्ण_अगर
+#endif
 	mmusr = temp;
-	अगर (mmusr & MMU_I)
-		करो_page_fault (&fp->ptregs, addr, 0);
-	अन्यथा अगर (mmusr & (MMU_B|MMU_L|MMU_S)) अणु
+	if (mmusr & MMU_I)
+		do_page_fault (&fp->ptregs, addr, 0);
+	else if (mmusr & (MMU_B|MMU_L|MMU_S)) {
 		pr_err("invalid insn access at %#lx from pc %#lx\n",
 			addr, fp->ptregs.pc);
 		pr_debug("Unknown SIGSEGV - 2\n");
-		die_अगर_kernel("Oops",&fp->ptregs,mmusr);
-		क्रमce_sig(संक_अंश);
-		वापस;
-	पूर्ण
+		die_if_kernel("Oops",&fp->ptregs,mmusr);
+		force_sig(SIGSEGV);
+		return;
+	}
 
 create_atc_entry:
-	/* setup an ATC entry क्रम the access about to be retried */
-	यंत्र अस्थिर ("ploadr #2,%0@" : /* no outमाला_दो */
+	/* setup an ATC entry for the access about to be retried */
+	asm volatile ("ploadr #2,%0@" : /* no outputs */
 		      : "a" (addr));
-पूर्ण
-#पूर्ण_अगर /* CPU_M68020_OR_M68030 */
-#पूर्ण_अगर /* !CONFIG_SUN3 */
+}
+#endif /* CPU_M68020_OR_M68030 */
+#endif /* !CONFIG_SUN3 */
 
-#अगर defined(CONFIG_COLDFIRE) && defined(CONFIG_MMU)
-#समावेश <यंत्र/mcfmmu.h>
+#if defined(CONFIG_COLDFIRE) && defined(CONFIG_MMU)
+#include <asm/mcfmmu.h>
 
 /*
  *	The following table converts the FS encoding of a ColdFire
- *	exception stack frame पूर्णांकo the error_code value needed by
- *	करो_fault.
+ *	exception stack frame into the error_code value needed by
+ *	do_fault.
 */
-अटल स्थिर अचिन्हित अक्षर fs_err_code[] = अणु
+static const unsigned char fs_err_code[] = {
 	0,  /* 0000 */
 	0,  /* 0001 */
 	0,  /* 0010 */
@@ -697,38 +696,38 @@ create_atc_entry:
 	1,  /* 1101 */
 	0,  /* 1110 */
 	0   /* 1111 */
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम access_errorcf(अचिन्हित पूर्णांक fs, काष्ठा frame *fp)
-अणु
-	अचिन्हित दीर्घ mmusr, addr;
-	अचिन्हित पूर्णांक err_code;
-	पूर्णांक need_page_fault;
+static inline void access_errorcf(unsigned int fs, struct frame *fp)
+{
+	unsigned long mmusr, addr;
+	unsigned int err_code;
+	int need_page_fault;
 
-	mmusr = mmu_पढ़ो(MMUSR);
-	addr = mmu_पढ़ो(MMUAR);
+	mmusr = mmu_read(MMUSR);
+	addr = mmu_read(MMUAR);
 
 	/*
 	 * error_code:
 	 *	bit 0 == 0 means no page found, 1 means protection fault
-	 *	bit 1 == 0 means पढ़ो, 1 means ग_लिखो
+	 *	bit 1 == 0 means read, 1 means write
 	 */
-	चयन (fs) अणु
-	हाल  5:  /* 0101 TLB opword X miss */
+	switch (fs) {
+	case  5:  /* 0101 TLB opword X miss */
 		need_page_fault = cf_tlb_miss(&fp->ptregs, 0, 0, 0);
 		addr = fp->ptregs.pc;
-		अवरोध;
-	हाल  6:  /* 0110 TLB extension word X miss */
+		break;
+	case  6:  /* 0110 TLB extension word X miss */
 		need_page_fault = cf_tlb_miss(&fp->ptregs, 0, 0, 1);
-		addr = fp->ptregs.pc + माप(दीर्घ);
-		अवरोध;
-	हाल 10:  /* 1010 TLB W miss */
+		addr = fp->ptregs.pc + sizeof(long);
+		break;
+	case 10:  /* 1010 TLB W miss */
 		need_page_fault = cf_tlb_miss(&fp->ptregs, 1, 1, 0);
-		अवरोध;
-	हाल 14: /* 1110 TLB R miss */
+		break;
+	case 14: /* 1110 TLB R miss */
 		need_page_fault = cf_tlb_miss(&fp->ptregs, 0, 1, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* 0000 Normal  */
 		/* 0001 Reserved */
 		/* 0010 Interrupt during debug service routine */
@@ -742,116 +741,116 @@ create_atc_entry:
 		/* 1101 R Protection*/
 		/* 1111 OEP in emulator mode*/
 		need_page_fault = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (need_page_fault) अणु
+	if (need_page_fault) {
 		err_code = fs_err_code[fs];
-		अगर ((fs == 13) && (mmusr & MMUSR_WF)) /* rd-mod-wr access */
-			err_code |= 2; /* bit1 - ग_लिखो, bit0 - protection */
-		करो_page_fault(&fp->ptregs, addr, err_code);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COLDFIRE CONFIG_MMU */
+		if ((fs == 13) && (mmusr & MMUSR_WF)) /* rd-mod-wr access */
+			err_code |= 2; /* bit1 - write, bit0 - protection */
+		do_page_fault(&fp->ptregs, addr, err_code);
+	}
+}
+#endif /* CONFIG_COLDFIRE CONFIG_MMU */
 
-यंत्रlinkage व्योम buserr_c(काष्ठा frame *fp)
-अणु
-	/* Only set esp0 अगर coming from user mode */
-	अगर (user_mode(&fp->ptregs))
-		current->thपढ़ो.esp0 = (अचिन्हित दीर्घ) fp;
+asmlinkage void buserr_c(struct frame *fp)
+{
+	/* Only set esp0 if coming from user mode */
+	if (user_mode(&fp->ptregs))
+		current->thread.esp0 = (unsigned long) fp;
 
-	pr_debug("*** Bus Error *** Format is %x\n", fp->ptregs.क्रमmat);
+	pr_debug("*** Bus Error *** Format is %x\n", fp->ptregs.format);
 
-#अगर defined(CONFIG_COLDFIRE) && defined(CONFIG_MMU)
-	अगर (CPU_IS_COLDFIRE) अणु
-		अचिन्हित पूर्णांक fs;
+#if defined(CONFIG_COLDFIRE) && defined(CONFIG_MMU)
+	if (CPU_IS_COLDFIRE) {
+		unsigned int fs;
 		fs = (fp->ptregs.vector & 0x3) |
 			((fp->ptregs.vector & 0xc00) >> 8);
-		चयन (fs) अणु
-		हाल 0x5:
-		हाल 0x6:
-		हाल 0x7:
-		हाल 0x9:
-		हाल 0xa:
-		हाल 0xd:
-		हाल 0xe:
-		हाल 0xf:
+		switch (fs) {
+		case 0x5:
+		case 0x6:
+		case 0x7:
+		case 0x9:
+		case 0xa:
+		case 0xd:
+		case 0xe:
+		case 0xf:
 			access_errorcf(fs, fp);
-			वापस;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_COLDFIRE && CONFIG_MMU */
+			return;
+		default:
+			break;
+		}
+	}
+#endif /* CONFIG_COLDFIRE && CONFIG_MMU */
 
-	चयन (fp->ptregs.क्रमmat) अणु
-#अगर defined (CONFIG_M68060)
-	हाल 4:				/* 68060 access error */
+	switch (fp->ptregs.format) {
+#if defined (CONFIG_M68060)
+	case 4:				/* 68060 access error */
 	  access_error060 (fp);
-	  अवरोध;
-#पूर्ण_अगर
-#अगर defined (CONFIG_M68040)
-	हाल 0x7:			/* 68040 access error */
+	  break;
+#endif
+#if defined (CONFIG_M68040)
+	case 0x7:			/* 68040 access error */
 	  access_error040 (fp);
-	  अवरोध;
-#पूर्ण_अगर
-#अगर defined (CPU_M68020_OR_M68030)
-	हाल 0xa:
-	हाल 0xb:
+	  break;
+#endif
+#if defined (CPU_M68020_OR_M68030)
+	case 0xa:
+	case 0xb:
 	  bus_error030 (fp);
-	  अवरोध;
-#पूर्ण_अगर
-	शेष:
-	  die_अगर_kernel("bad frame format",&fp->ptregs,0);
+	  break;
+#endif
+	default:
+	  die_if_kernel("bad frame format",&fp->ptregs,0);
 	  pr_debug("Unknown SIGSEGV - 4\n");
-	  क्रमce_sig(संक_अंश);
-	पूर्ण
-पूर्ण
+	  force_sig(SIGSEGV);
+	}
+}
 
 
-अटल पूर्णांक kstack_depth_to_prपूर्णांक = 48;
+static int kstack_depth_to_print = 48;
 
-अटल व्योम show_trace(अचिन्हित दीर्घ *stack, स्थिर अक्षर *loglvl)
-अणु
-	अचिन्हित दीर्घ *endstack;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक i;
+static void show_trace(unsigned long *stack, const char *loglvl)
+{
+	unsigned long *endstack;
+	unsigned long addr;
+	int i;
 
-	prपूर्णांकk("%sCall Trace:", loglvl);
-	addr = (अचिन्हित दीर्घ)stack + THREAD_SIZE - 1;
-	endstack = (अचिन्हित दीर्घ *)(addr & -THREAD_SIZE);
+	printk("%sCall Trace:", loglvl);
+	addr = (unsigned long)stack + THREAD_SIZE - 1;
+	endstack = (unsigned long *)(addr & -THREAD_SIZE);
 	i = 0;
-	जबतक (stack + 1 <= endstack) अणु
+	while (stack + 1 <= endstack) {
 		addr = *stack++;
 		/*
 		 * If the address is either in the text segment of the
-		 * kernel, or in the region which contains vदो_स्मृति'ed
+		 * kernel, or in the region which contains vmalloc'ed
 		 * memory, it *may* be the address of a calling
-		 * routine; अगर so, prपूर्णांक it so that someone tracing
-		 * करोwn the cause of the crash will be able to figure
+		 * routine; if so, print it so that someone tracing
+		 * down the cause of the crash will be able to figure
 		 * out the call path that was taken.
 		 */
-		अगर (__kernel_text_address(addr)) अणु
-#अगर_अघोषित CONFIG_KALLSYMS
-			अगर (i % 5 == 0)
+		if (__kernel_text_address(addr)) {
+#ifndef CONFIG_KALLSYMS
+			if (i % 5 == 0)
 				pr_cont("\n       ");
-#पूर्ण_अगर
-			pr_cont(" [<%08lx>] %pS\n", addr, (व्योम *)addr);
+#endif
+			pr_cont(" [<%08lx>] %pS\n", addr, (void *)addr);
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pr_cont("\n");
-पूर्ण
+}
 
-व्योम show_रेजिस्टरs(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा frame *fp = (काष्ठा frame *)regs;
+void show_registers(struct pt_regs *regs)
+{
+	struct frame *fp = (struct frame *)regs;
 	u16 c, *cp;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक i;
+	unsigned long addr;
+	int i;
 
-	prपूर्णांक_modules();
-	pr_info("PC: [<%08lx>] %pS\n", regs->pc, (व्योम *)regs->pc);
+	print_modules();
+	pr_info("PC: [<%08lx>] %pS\n", regs->pc, (void *)regs->pc);
 	pr_info("SR: %04x  SP: %p  a2: %08lx\n", regs->sr, regs, regs->a2);
 	pr_info("d0: %08lx    d1: %08lx    d2: %08lx    d3: %08lx\n",
 	       regs->d0, regs->d1, regs->d2, regs->d3);
@@ -860,27 +859,27 @@ create_atc_entry:
 
 	pr_info("Process %s (pid: %d, task=%p)\n",
 		current->comm, task_pid_nr(current), current);
-	addr = (अचिन्हित दीर्घ)&fp->un;
-	pr_info("Frame format=%X ", regs->क्रमmat);
-	चयन (regs->क्रमmat) अणु
-	हाल 0x2:
+	addr = (unsigned long)&fp->un;
+	pr_info("Frame format=%X ", regs->format);
+	switch (regs->format) {
+	case 0x2:
 		pr_cont("instr addr=%08lx\n", fp->un.fmt2.iaddr);
-		addr += माप(fp->un.fmt2);
-		अवरोध;
-	हाल 0x3:
+		addr += sizeof(fp->un.fmt2);
+		break;
+	case 0x3:
 		pr_cont("eff addr=%08lx\n", fp->un.fmt3.effaddr);
-		addr += माप(fp->un.fmt3);
-		अवरोध;
-	हाल 0x4:
-		अगर (CPU_IS_060)
+		addr += sizeof(fp->un.fmt3);
+		break;
+	case 0x4:
+		if (CPU_IS_060)
 			pr_cont("fault addr=%08lx fslw=%08lx\n",
 				fp->un.fmt4.effaddr, fp->un.fmt4.pc);
-		अन्यथा
+		else
 			pr_cont("eff addr=%08lx pc=%08lx\n",
 				fp->un.fmt4.effaddr, fp->un.fmt4.pc);
-		addr += माप(fp->un.fmt4);
-		अवरोध;
-	हाल 0x7:
+		addr += sizeof(fp->un.fmt4);
+		break;
+	case 0x7:
 		pr_cont("eff addr=%08lx ssw=%04x faddr=%08lx\n",
 			fp->un.fmt7.effaddr, fp->un.fmt7.ssw, fp->un.fmt7.faddr);
 		pr_info("wb 1 stat/addr/data: %04x %08lx %08lx\n",
@@ -892,271 +891,271 @@ create_atc_entry:
 		pr_info("push data: %08lx %08lx %08lx %08lx\n",
 			fp->un.fmt7.wb1dpd0, fp->un.fmt7.pd1, fp->un.fmt7.pd2,
 			fp->un.fmt7.pd3);
-		addr += माप(fp->un.fmt7);
-		अवरोध;
-	हाल 0x9:
+		addr += sizeof(fp->un.fmt7);
+		break;
+	case 0x9:
 		pr_cont("instr addr=%08lx\n", fp->un.fmt9.iaddr);
-		addr += माप(fp->un.fmt9);
-		अवरोध;
-	हाल 0xa:
+		addr += sizeof(fp->un.fmt9);
+		break;
+	case 0xa:
 		pr_cont("ssw=%04x isc=%04x isb=%04x daddr=%08lx dobuf=%08lx\n",
 			fp->un.fmta.ssw, fp->un.fmta.isc, fp->un.fmta.isb,
-			fp->un.fmta.daddr, fp->un.fmta.करोbuf);
-		addr += माप(fp->un.fmta);
-		अवरोध;
-	हाल 0xb:
+			fp->un.fmta.daddr, fp->un.fmta.dobuf);
+		addr += sizeof(fp->un.fmta);
+		break;
+	case 0xb:
 		pr_cont("ssw=%04x isc=%04x isb=%04x daddr=%08lx dobuf=%08lx\n",
 			fp->un.fmtb.ssw, fp->un.fmtb.isc, fp->un.fmtb.isb,
-			fp->un.fmtb.daddr, fp->un.fmtb.करोbuf);
+			fp->un.fmtb.daddr, fp->un.fmtb.dobuf);
 		pr_info("baddr=%08lx dibuf=%08lx ver=%x\n",
 			fp->un.fmtb.baddr, fp->un.fmtb.dibuf, fp->un.fmtb.ver);
-		addr += माप(fp->un.fmtb);
-		अवरोध;
-	शेष:
+		addr += sizeof(fp->un.fmtb);
+		break;
+	default:
 		pr_cont("\n");
-	पूर्ण
-	show_stack(शून्य, (अचिन्हित दीर्घ *)addr, KERN_INFO);
+	}
+	show_stack(NULL, (unsigned long *)addr, KERN_INFO);
 
 	pr_info("Code:");
 	cp = (u16 *)regs->pc;
-	क्रम (i = -8; i < 16; i++) अणु
-		अगर (get_kernel_nofault(c, cp + i) && i >= 0) अणु
+	for (i = -8; i < 16; i++) {
+		if (get_kernel_nofault(c, cp + i) && i >= 0) {
 			pr_cont(" Bad PC value.");
-			अवरोध;
-		पूर्ण
-		अगर (i)
+			break;
+		}
+		if (i)
 			pr_cont(" %04x", c);
-		अन्यथा
+		else
 			pr_cont(" <%04x>", c);
-	पूर्ण
+	}
 	pr_cont("\n");
-पूर्ण
+}
 
-व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *stack,
-		स्थिर अक्षर *loglvl)
-अणु
-	अचिन्हित दीर्घ *p;
-	अचिन्हित दीर्घ *endstack;
-	पूर्णांक i;
+void show_stack(struct task_struct *task, unsigned long *stack,
+		const char *loglvl)
+{
+	unsigned long *p;
+	unsigned long *endstack;
+	int i;
 
-	अगर (!stack) अणु
-		अगर (task)
-			stack = (अचिन्हित दीर्घ *)task->thपढ़ो.esp0;
-		अन्यथा
-			stack = (अचिन्हित दीर्घ *)&stack;
-	पूर्ण
-	endstack = (अचिन्हित दीर्घ *)(((अचिन्हित दीर्घ)stack + THREAD_SIZE - 1) & -THREAD_SIZE);
+	if (!stack) {
+		if (task)
+			stack = (unsigned long *)task->thread.esp0;
+		else
+			stack = (unsigned long *)&stack;
+	}
+	endstack = (unsigned long *)(((unsigned long)stack + THREAD_SIZE - 1) & -THREAD_SIZE);
 
-	prपूर्णांकk("%sStack from %08lx:", loglvl, (अचिन्हित दीर्घ)stack);
+	printk("%sStack from %08lx:", loglvl, (unsigned long)stack);
 	p = stack;
-	क्रम (i = 0; i < kstack_depth_to_prपूर्णांक; i++) अणु
-		अगर (p + 1 > endstack)
-			अवरोध;
-		अगर (i % 8 == 0)
+	for (i = 0; i < kstack_depth_to_print; i++) {
+		if (p + 1 > endstack)
+			break;
+		if (i % 8 == 0)
 			pr_cont("\n       ");
 		pr_cont(" %08lx", *p++);
-	पूर्ण
+	}
 	pr_cont("\n");
 	show_trace(stack, loglvl);
-पूर्ण
+}
 
 /*
- * The vector number वापसed in the frame poपूर्णांकer may also contain
+ * The vector number returned in the frame pointer may also contain
  * the "fs" (Fault Status) bits on ColdFire. These are in the bottom
  * 2 bits, and upper 2 bits. So we need to mask out the real vector
- * number beक्रमe using it in comparisons. You करोn't need to करो this on
+ * number before using it in comparisons. You don't need to do this on
  * real 68k parts, but it won't hurt either.
  */
 
-व्योम bad_super_trap (काष्ठा frame *fp)
-अणु
-	पूर्णांक vector = (fp->ptregs.vector >> 2) & 0xff;
+void bad_super_trap (struct frame *fp)
+{
+	int vector = (fp->ptregs.vector >> 2) & 0xff;
 
 	console_verbose();
-	अगर (vector < ARRAY_SIZE(vec_names))
+	if (vector < ARRAY_SIZE(vec_names))
 		pr_err("*** %s ***   FORMAT=%X\n",
 			vec_names[vector],
-			fp->ptregs.क्रमmat);
-	अन्यथा
+			fp->ptregs.format);
+	else
 		pr_err("*** Exception %d ***   FORMAT=%X\n",
-			vector, fp->ptregs.क्रमmat);
-	अगर (vector == VEC_ADDRERR && CPU_IS_020_OR_030) अणु
-		अचिन्हित लघु ssw = fp->un.fmtb.ssw;
+			vector, fp->ptregs.format);
+	if (vector == VEC_ADDRERR && CPU_IS_020_OR_030) {
+		unsigned short ssw = fp->un.fmtb.ssw;
 
 		pr_err("SSW=%#06x  ", ssw);
 
-		अगर (ssw & RC)
+		if (ssw & RC)
 			pr_err("Pipe stage C instruction fault at %#010lx\n",
-				(fp->ptregs.क्रमmat) == 0xA ?
+				(fp->ptregs.format) == 0xA ?
 				fp->ptregs.pc + 2 : fp->un.fmtb.baddr - 2);
-		अगर (ssw & RB)
+		if (ssw & RB)
 			pr_err("Pipe stage B instruction fault at %#010lx\n",
-				(fp->ptregs.क्रमmat) == 0xA ?
+				(fp->ptregs.format) == 0xA ?
 				fp->ptregs.pc + 4 : fp->un.fmtb.baddr);
-		अगर (ssw & DF)
+		if (ssw & DF)
 			pr_err("Data %s fault at %#010lx in %s (pc=%#lx)\n",
 				ssw & RW ? "read" : "write",
 				fp->un.fmtb.daddr, space_names[ssw & DFC],
 				fp->ptregs.pc);
-	पूर्ण
+	}
 	pr_err("Current process id is %d\n", task_pid_nr(current));
-	die_अगर_kernel("BAD KERNEL TRAP", &fp->ptregs, 0);
-पूर्ण
+	die_if_kernel("BAD KERNEL TRAP", &fp->ptregs, 0);
+}
 
-यंत्रlinkage व्योम trap_c(काष्ठा frame *fp)
-अणु
-	पूर्णांक sig, si_code;
-	व्योम __user *addr;
-	पूर्णांक vector = (fp->ptregs.vector >> 2) & 0xff;
+asmlinkage void trap_c(struct frame *fp)
+{
+	int sig, si_code;
+	void __user *addr;
+	int vector = (fp->ptregs.vector >> 2) & 0xff;
 
-	अगर (fp->ptregs.sr & PS_S) अणु
-		अगर (vector == VEC_TRACE) अणु
-			/* traced a trapping inकाष्ठाion on a 68020/30,
+	if (fp->ptregs.sr & PS_S) {
+		if (vector == VEC_TRACE) {
+			/* traced a trapping instruction on a 68020/30,
 			 * real exception will be executed afterwards.
 			 */
-			वापस;
-		पूर्ण
-#अगर_घोषित CONFIG_MMU
-		अगर (fixup_exception(&fp->ptregs))
-			वापस;
-#पूर्ण_अगर
+			return;
+		}
+#ifdef CONFIG_MMU
+		if (fixup_exception(&fp->ptregs))
+			return;
+#endif
 		bad_super_trap(fp);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* send the appropriate संकेत to the user program */
-	चयन (vector) अणु
-	    हाल VEC_ADDRERR:
+	/* send the appropriate signal to the user program */
+	switch (vector) {
+	    case VEC_ADDRERR:
 		si_code = BUS_ADRALN;
 		sig = SIGBUS;
-		अवरोध;
-	    हाल VEC_ILLEGAL:
-	    हाल VEC_LINE10:
-	    हाल VEC_LINE11:
+		break;
+	    case VEC_ILLEGAL:
+	    case VEC_LINE10:
+	    case VEC_LINE11:
 		si_code = ILL_ILLOPC;
-		sig = संक_अवैध;
-		अवरोध;
-	    हाल VEC_PRIV:
+		sig = SIGILL;
+		break;
+	    case VEC_PRIV:
 		si_code = ILL_PRVOPC;
-		sig = संक_अवैध;
-		अवरोध;
-	    हाल VEC_COPROC:
+		sig = SIGILL;
+		break;
+	    case VEC_COPROC:
 		si_code = ILL_COPROC;
-		sig = संक_अवैध;
-		अवरोध;
-	    हाल VEC_TRAP1:
-	    हाल VEC_TRAP2:
-	    हाल VEC_TRAP3:
-	    हाल VEC_TRAP4:
-	    हाल VEC_TRAP5:
-	    हाल VEC_TRAP6:
-	    हाल VEC_TRAP7:
-	    हाल VEC_TRAP8:
-	    हाल VEC_TRAP9:
-	    हाल VEC_TRAP10:
-	    हाल VEC_TRAP11:
-	    हाल VEC_TRAP12:
-	    हाल VEC_TRAP13:
-	    हाल VEC_TRAP14:
+		sig = SIGILL;
+		break;
+	    case VEC_TRAP1:
+	    case VEC_TRAP2:
+	    case VEC_TRAP3:
+	    case VEC_TRAP4:
+	    case VEC_TRAP5:
+	    case VEC_TRAP6:
+	    case VEC_TRAP7:
+	    case VEC_TRAP8:
+	    case VEC_TRAP9:
+	    case VEC_TRAP10:
+	    case VEC_TRAP11:
+	    case VEC_TRAP12:
+	    case VEC_TRAP13:
+	    case VEC_TRAP14:
 		si_code = ILL_ILLTRP;
-		sig = संक_अवैध;
-		अवरोध;
-	    हाल VEC_FPBRUC:
-	    हाल VEC_FPOE:
-	    हाल VEC_FPन_अंक:
+		sig = SIGILL;
+		break;
+	    case VEC_FPBRUC:
+	    case VEC_FPOE:
+	    case VEC_FPNAN:
 		si_code = FPE_FLTINV;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_FPIR:
+		sig = SIGFPE;
+		break;
+	    case VEC_FPIR:
 		si_code = FPE_FLTRES;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_FPDIVZ:
+		sig = SIGFPE;
+		break;
+	    case VEC_FPDIVZ:
 		si_code = FPE_FLTDIV;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_FPUNDER:
+		sig = SIGFPE;
+		break;
+	    case VEC_FPUNDER:
 		si_code = FPE_FLTUND;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_FPOVER:
+		sig = SIGFPE;
+		break;
+	    case VEC_FPOVER:
 		si_code = FPE_FLTOVF;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_ZERODIV:
+		sig = SIGFPE;
+		break;
+	    case VEC_ZERODIV:
 		si_code = FPE_INTDIV;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_CHK:
-	    हाल VEC_TRAP:
+		sig = SIGFPE;
+		break;
+	    case VEC_CHK:
+	    case VEC_TRAP:
 		si_code = FPE_INTOVF;
-		sig = संक_भ_त्रुटि;
-		अवरोध;
-	    हाल VEC_TRACE:		/* ptrace single step */
+		sig = SIGFPE;
+		break;
+	    case VEC_TRACE:		/* ptrace single step */
 		si_code = TRAP_TRACE;
 		sig = SIGTRAP;
-		अवरोध;
-	    हाल VEC_TRAP15:		/* अवरोधpoपूर्णांक */
+		break;
+	    case VEC_TRAP15:		/* breakpoint */
 		si_code = TRAP_BRKPT;
 		sig = SIGTRAP;
-		अवरोध;
-	    शेष:
+		break;
+	    default:
 		si_code = ILL_ILLOPC;
-		sig = संक_अवैध;
-		अवरोध;
-	पूर्ण
-	चयन (fp->ptregs.क्रमmat) अणु
-	    शेष:
-		addr = (व्योम __user *) fp->ptregs.pc;
-		अवरोध;
-	    हाल 2:
-		addr = (व्योम __user *) fp->un.fmt2.iaddr;
-		अवरोध;
-	    हाल 7:
-		addr = (व्योम __user *) fp->un.fmt7.effaddr;
-		अवरोध;
-	    हाल 9:
-		addr = (व्योम __user *) fp->un.fmt9.iaddr;
-		अवरोध;
-	    हाल 10:
-		addr = (व्योम __user *) fp->un.fmta.daddr;
-		अवरोध;
-	    हाल 11:
-		addr = (व्योम __user*) fp->un.fmtb.daddr;
-		अवरोध;
-	पूर्ण
-	क्रमce_sig_fault(sig, si_code, addr);
-पूर्ण
+		sig = SIGILL;
+		break;
+	}
+	switch (fp->ptregs.format) {
+	    default:
+		addr = (void __user *) fp->ptregs.pc;
+		break;
+	    case 2:
+		addr = (void __user *) fp->un.fmt2.iaddr;
+		break;
+	    case 7:
+		addr = (void __user *) fp->un.fmt7.effaddr;
+		break;
+	    case 9:
+		addr = (void __user *) fp->un.fmt9.iaddr;
+		break;
+	    case 10:
+		addr = (void __user *) fp->un.fmta.daddr;
+		break;
+	    case 11:
+		addr = (void __user*) fp->un.fmtb.daddr;
+		break;
+	}
+	force_sig_fault(sig, si_code, addr);
+}
 
-व्योम die_अगर_kernel (अक्षर *str, काष्ठा pt_regs *fp, पूर्णांक nr)
-अणु
-	अगर (!(fp->sr & PS_S))
-		वापस;
+void die_if_kernel (char *str, struct pt_regs *fp, int nr)
+{
+	if (!(fp->sr & PS_S))
+		return;
 
 	console_verbose();
 	pr_crit("%s: %08x\n", str, nr);
-	show_रेजिस्टरs(fp);
-	add_taपूर्णांक(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
-	करो_निकास(संक_अंश);
-पूर्ण
+	show_registers(fp);
+	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
+	do_exit(SIGSEGV);
+}
 
-यंत्रlinkage व्योम set_esp0(अचिन्हित दीर्घ ssp)
-अणु
-	current->thपढ़ो.esp0 = ssp;
-पूर्ण
+asmlinkage void set_esp0(unsigned long ssp)
+{
+	current->thread.esp0 = ssp;
+}
 
 /*
- * This function is called अगर an error occur जबतक accessing
+ * This function is called if an error occur while accessing
  * user-space from the fpsp040 code.
  */
-यंत्रlinkage व्योम fpsp040_die(व्योम)
-अणु
-	करो_निकास(संक_अंश);
-पूर्ण
+asmlinkage void fpsp040_die(void)
+{
+	do_exit(SIGSEGV);
+}
 
-#अगर_घोषित CONFIG_M68KFPU_EMU
-यंत्रlinkage व्योम fpemu_संकेत(पूर्णांक संकेत, पूर्णांक code, व्योम *addr)
-अणु
-	क्रमce_sig_fault(संकेत, code, addr);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_M68KFPU_EMU
+asmlinkage void fpemu_signal(int signal, int code, void *addr)
+{
+	force_sig_fault(signal, code, addr);
+}
+#endif

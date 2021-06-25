@@ -1,300 +1,299 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
-#समावेश <uapi/linux/btf.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/bpf_verअगरier.h>
-#समावेश <linux/filter.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/file.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/द्वा_खोज.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/error-injection.h>
-#समावेश <linux/bpf_lsm.h>
-#समावेश <linux/btf_ids.h>
+#include <uapi/linux/btf.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/bpf_verifier.h>
+#include <linux/filter.h>
+#include <net/netlink.h>
+#include <linux/file.h>
+#include <linux/vmalloc.h>
+#include <linux/stringify.h>
+#include <linux/bsearch.h>
+#include <linux/sort.h>
+#include <linux/perf_event.h>
+#include <linux/ctype.h>
+#include <linux/error-injection.h>
+#include <linux/bpf_lsm.h>
+#include <linux/btf_ids.h>
 
-#समावेश "disasm.h"
+#include "disasm.h"
 
-अटल स्थिर काष्ठा bpf_verअगरier_ops * स्थिर bpf_verअगरier_ops[] = अणु
-#घोषणा BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
-	[_id] = & _name ## _verअगरier_ops,
-#घोषणा BPF_MAP_TYPE(_id, _ops)
-#घोषणा BPF_LINK_TYPE(_id, _name)
-#समावेश <linux/bpf_types.h>
-#अघोषित BPF_PROG_TYPE
-#अघोषित BPF_MAP_TYPE
-#अघोषित BPF_LINK_TYPE
-पूर्ण;
+static const struct bpf_verifier_ops * const bpf_verifier_ops[] = {
+#define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
+	[_id] = & _name ## _verifier_ops,
+#define BPF_MAP_TYPE(_id, _ops)
+#define BPF_LINK_TYPE(_id, _name)
+#include <linux/bpf_types.h>
+#undef BPF_PROG_TYPE
+#undef BPF_MAP_TYPE
+#undef BPF_LINK_TYPE
+};
 
-/* bpf_check() is a अटल code analyzer that walks eBPF program
- * inकाष्ठाion by inकाष्ठाion and updates रेजिस्टर/stack state.
+/* bpf_check() is a static code analyzer that walks eBPF program
+ * instruction by instruction and updates register/stack state.
  * All paths of conditional branches are analyzed until 'bpf_exit' insn.
  *
  * The first pass is depth-first-search to check that the program is a DAG.
  * It rejects the following programs:
  * - larger than BPF_MAXINSNS insns
- * - अगर loop is present (detected via back-edge)
- * - unreachable insns exist (shouldn't be a क्रमest. program = one function)
- * - out of bounds or malक्रमmed jumps
+ * - if loop is present (detected via back-edge)
+ * - unreachable insns exist (shouldn't be a forest. program = one function)
+ * - out of bounds or malformed jumps
  * The second pass is all possible path descent from the 1st insn.
  * Since it's analyzing all pathes through the program, the length of the
- * analysis is limited to 64k insn, which may be hit even अगर total number of
+ * analysis is limited to 64k insn, which may be hit even if total number of
  * insn is less then 4K, but there are too many branches that change stack/regs.
  * Number of 'branches to be analyzed' is limited to 1k
  *
- * On entry to each inकाष्ठाion, each रेजिस्टर has a type, and the inकाष्ठाion
- * changes the types of the रेजिस्टरs depending on inकाष्ठाion semantics.
- * If inकाष्ठाion is BPF_MOV64_REG(BPF_REG_1, BPF_REG_5), then type of R5 is
+ * On entry to each instruction, each register has a type, and the instruction
+ * changes the types of the registers depending on instruction semantics.
+ * If instruction is BPF_MOV64_REG(BPF_REG_1, BPF_REG_5), then type of R5 is
  * copied to R1.
  *
- * All रेजिस्टरs are 64-bit.
- * R0 - वापस रेजिस्टर
- * R1-R5 argument passing रेजिस्टरs
- * R6-R9 callee saved रेजिस्टरs
- * R10 - frame poपूर्णांकer पढ़ो-only
+ * All registers are 64-bit.
+ * R0 - return register
+ * R1-R5 argument passing registers
+ * R6-R9 callee saved registers
+ * R10 - frame pointer read-only
  *
- * At the start of BPF program the रेजिस्टर R1 contains a poपूर्णांकer to bpf_context
+ * At the start of BPF program the register R1 contains a pointer to bpf_context
  * and has type PTR_TO_CTX.
  *
- * Verअगरier tracks arithmetic operations on poपूर्णांकers in हाल:
+ * Verifier tracks arithmetic operations on pointers in case:
  *    BPF_MOV64_REG(BPF_REG_1, BPF_REG_10),
  *    BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, -20),
- * 1st insn copies R10 (which has FRAME_PTR) type पूर्णांकo R1
- * and 2nd arithmetic inकाष्ठाion is pattern matched to recognize
- * that it wants to स्थिरruct a poपूर्णांकer to some element within stack.
- * So after 2nd insn, the रेजिस्टर R1 has type PTR_TO_STACK
- * (and -20 स्थिरant is saved क्रम further stack bounds checking).
- * Meaning that this reg is a poपूर्णांकer to stack plus known immediate स्थिरant.
+ * 1st insn copies R10 (which has FRAME_PTR) type into R1
+ * and 2nd arithmetic instruction is pattern matched to recognize
+ * that it wants to construct a pointer to some element within stack.
+ * So after 2nd insn, the register R1 has type PTR_TO_STACK
+ * (and -20 constant is saved for further stack bounds checking).
+ * Meaning that this reg is a pointer to stack plus known immediate constant.
  *
- * Most of the समय the रेजिस्टरs have SCALAR_VALUE type, which
- * means the रेजिस्टर has some value, but it's not a valid poपूर्णांकer.
- * (like poपूर्णांकer plus poपूर्णांकer becomes SCALAR_VALUE type)
+ * Most of the time the registers have SCALAR_VALUE type, which
+ * means the register has some value, but it's not a valid pointer.
+ * (like pointer plus pointer becomes SCALAR_VALUE type)
  *
- * When verअगरier sees load or store inकाष्ठाions the type of base रेजिस्टर
+ * When verifier sees load or store instructions the type of base register
  * can be: PTR_TO_MAP_VALUE, PTR_TO_CTX, PTR_TO_STACK, PTR_TO_SOCKET. These are
- * four poपूर्णांकer types recognized by check_mem_access() function.
+ * four pointer types recognized by check_mem_access() function.
  *
- * PTR_TO_MAP_VALUE means that this रेजिस्टर is poपूर्णांकing to 'map element value'
+ * PTR_TO_MAP_VALUE means that this register is pointing to 'map element value'
  * and the range of [ptr, ptr + map's value_size) is accessible.
  *
- * रेजिस्टरs used to pass values to function calls are checked against
- * function argument स्थिरraपूर्णांकs.
+ * registers used to pass values to function calls are checked against
+ * function argument constraints.
  *
- * ARG_PTR_TO_MAP_KEY is one of such argument स्थिरraपूर्णांकs.
- * It means that the रेजिस्टर type passed to this function must be
+ * ARG_PTR_TO_MAP_KEY is one of such argument constraints.
+ * It means that the register type passed to this function must be
  * PTR_TO_STACK and it will be used inside the function as
  * 'pointer to map element key'
  *
- * For example the argument स्थिरraपूर्णांकs क्रम bpf_map_lookup_elem():
- *   .ret_type = RET_PTR_TO_MAP_VALUE_OR_शून्य,
+ * For example the argument constraints for bpf_map_lookup_elem():
+ *   .ret_type = RET_PTR_TO_MAP_VALUE_OR_NULL,
  *   .arg1_type = ARG_CONST_MAP_PTR,
  *   .arg2_type = ARG_PTR_TO_MAP_KEY,
  *
- * ret_type says that this function वापसs 'pointer to map elem value or null'
- * function expects 1st argument to be a स्थिर poपूर्णांकer to 'struct bpf_map' and
- * 2nd argument should be a poपूर्णांकer to stack, which will be used inside
- * the helper function as a poपूर्णांकer to map element key.
+ * ret_type says that this function returns 'pointer to map elem value or null'
+ * function expects 1st argument to be a const pointer to 'struct bpf_map' and
+ * 2nd argument should be a pointer to stack, which will be used inside
+ * the helper function as a pointer to map element key.
  *
  * On the kernel side the helper function looks like:
  * u64 bpf_map_lookup_elem(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
- * अणु
- *    काष्ठा bpf_map *map = (काष्ठा bpf_map *) (अचिन्हित दीर्घ) r1;
- *    व्योम *key = (व्योम *) (अचिन्हित दीर्घ) r2;
- *    व्योम *value;
+ * {
+ *    struct bpf_map *map = (struct bpf_map *) (unsigned long) r1;
+ *    void *key = (void *) (unsigned long) r2;
+ *    void *value;
  *
- *    here kernel can access 'key' and 'map' poपूर्णांकers safely, knowing that
+ *    here kernel can access 'key' and 'map' pointers safely, knowing that
  *    [key, key + map->key_size) bytes are valid and were initialized on
  *    the stack of eBPF program.
- * पूर्ण
+ * }
  *
  * Corresponding eBPF program may look like:
  *    BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),  // after this insn R2 type is FRAME_PTR
  *    BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4), // after this insn R2 type is PTR_TO_STACK
  *    BPF_LD_MAP_FD(BPF_REG_1, map_fd),      // after this insn R1 type is CONST_PTR_TO_MAP
  *    BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
- * here verअगरier looks at prototype of map_lookup_elem() and sees:
+ * here verifier looks at prototype of map_lookup_elem() and sees:
  * .arg1_type == ARG_CONST_MAP_PTR and R1->type == CONST_PTR_TO_MAP, which is ok,
- * Now verअगरier knows that this map has key of R1->map_ptr->key_size bytes
+ * Now verifier knows that this map has key of R1->map_ptr->key_size bytes
  *
  * Then .arg2_type == ARG_PTR_TO_MAP_KEY and R2->type == PTR_TO_STACK, ok so far,
- * Now verअगरier checks that [R2, R2 + map's key_size) are within stack limits
+ * Now verifier checks that [R2, R2 + map's key_size) are within stack limits
  * and were initialized prior to this call.
- * If it's ok, then verअगरier allows this BPF_CALL insn and looks at
- * .ret_type which is RET_PTR_TO_MAP_VALUE_OR_शून्य, so it sets
- * R0->type = PTR_TO_MAP_VALUE_OR_शून्य which means bpf_map_lookup_elem() function
- * वापसs ether poपूर्णांकer to map value or शून्य.
+ * If it's ok, then verifier allows this BPF_CALL insn and looks at
+ * .ret_type which is RET_PTR_TO_MAP_VALUE_OR_NULL, so it sets
+ * R0->type = PTR_TO_MAP_VALUE_OR_NULL which means bpf_map_lookup_elem() function
+ * returns ether pointer to map value or NULL.
  *
- * When type PTR_TO_MAP_VALUE_OR_शून्य passes through 'if (reg != 0) goto +off'
- * insn, the रेजिस्टर holding that poपूर्णांकer in the true branch changes state to
- * PTR_TO_MAP_VALUE and the same रेजिस्टर changes state to CONST_IMM in the false
+ * When type PTR_TO_MAP_VALUE_OR_NULL passes through 'if (reg != 0) goto +off'
+ * insn, the register holding that pointer in the true branch changes state to
+ * PTR_TO_MAP_VALUE and the same register changes state to CONST_IMM in the false
  * branch. See check_cond_jmp_op().
  *
- * After the call R0 is set to वापस type of the function and रेजिस्टरs R1-R5
- * are set to NOT_INIT to indicate that they are no दीर्घer पढ़ोable.
+ * After the call R0 is set to return type of the function and registers R1-R5
+ * are set to NOT_INIT to indicate that they are no longer readable.
  *
  * The following reference types represent a potential reference to a kernel
- * resource which, after first being allocated, must be checked and मुक्तd by
+ * resource which, after first being allocated, must be checked and freed by
  * the BPF program:
- * - PTR_TO_SOCKET_OR_शून्य, PTR_TO_SOCKET
+ * - PTR_TO_SOCKET_OR_NULL, PTR_TO_SOCKET
  *
- * When the verअगरier sees a helper call वापस a reference type, it allocates a
- * poपूर्णांकer id क्रम the reference and stores it in the current function state.
- * Similar to the way that PTR_TO_MAP_VALUE_OR_शून्य is converted पूर्णांकo
- * PTR_TO_MAP_VALUE, PTR_TO_SOCKET_OR_शून्य becomes PTR_TO_SOCKET when the type
- * passes through a शून्य-check conditional. For the branch wherein the state is
- * changed to CONST_IMM, the verअगरier releases the reference.
+ * When the verifier sees a helper call return a reference type, it allocates a
+ * pointer id for the reference and stores it in the current function state.
+ * Similar to the way that PTR_TO_MAP_VALUE_OR_NULL is converted into
+ * PTR_TO_MAP_VALUE, PTR_TO_SOCKET_OR_NULL becomes PTR_TO_SOCKET when the type
+ * passes through a NULL-check conditional. For the branch wherein the state is
+ * changed to CONST_IMM, the verifier releases the reference.
  *
  * For each helper function that allocates a reference, such as
  * bpf_sk_lookup_tcp(), there is a corresponding release function, such as
- * bpf_sk_release(). When a reference type passes पूर्णांकo the release function,
- * the verअगरier also releases the reference. If any unchecked or unreleased
- * reference reमुख्यs at the end of the program, the verअगरier rejects it.
+ * bpf_sk_release(). When a reference type passes into the release function,
+ * the verifier also releases the reference. If any unchecked or unreleased
+ * reference remains at the end of the program, the verifier rejects it.
  */
 
-/* verअगरier_state + insn_idx are pushed to stack when branch is encountered */
-काष्ठा bpf_verअगरier_stack_elem अणु
-	/* verअगरer state is 'st'
-	 * beक्रमe processing inकाष्ठाion 'insn_idx'
-	 * and after processing inकाष्ठाion 'prev_insn_idx'
+/* verifier_state + insn_idx are pushed to stack when branch is encountered */
+struct bpf_verifier_stack_elem {
+	/* verifer state is 'st'
+	 * before processing instruction 'insn_idx'
+	 * and after processing instruction 'prev_insn_idx'
 	 */
-	काष्ठा bpf_verअगरier_state st;
-	पूर्णांक insn_idx;
-	पूर्णांक prev_insn_idx;
-	काष्ठा bpf_verअगरier_stack_elem *next;
-	/* length of verअगरier log at the समय this state was pushed on stack */
+	struct bpf_verifier_state st;
+	int insn_idx;
+	int prev_insn_idx;
+	struct bpf_verifier_stack_elem *next;
+	/* length of verifier log at the time this state was pushed on stack */
 	u32 log_pos;
-पूर्ण;
+};
 
-#घोषणा BPF_COMPLEXITY_LIMIT_JMP_SEQ	8192
-#घोषणा BPF_COMPLEXITY_LIMIT_STATES	64
+#define BPF_COMPLEXITY_LIMIT_JMP_SEQ	8192
+#define BPF_COMPLEXITY_LIMIT_STATES	64
 
-#घोषणा BPF_MAP_KEY_POISON	(1ULL << 63)
-#घोषणा BPF_MAP_KEY_SEEN	(1ULL << 62)
+#define BPF_MAP_KEY_POISON	(1ULL << 63)
+#define BPF_MAP_KEY_SEEN	(1ULL << 62)
 
-#घोषणा BPF_MAP_PTR_UNPRIV	1UL
-#घोषणा BPF_MAP_PTR_POISON	((व्योम *)((0xeB9FUL << 1) +	\
+#define BPF_MAP_PTR_UNPRIV	1UL
+#define BPF_MAP_PTR_POISON	((void *)((0xeB9FUL << 1) +	\
 					  POISON_POINTER_DELTA))
-#घोषणा BPF_MAP_PTR(X)		((काष्ठा bpf_map *)((X) & ~BPF_MAP_PTR_UNPRIV))
+#define BPF_MAP_PTR(X)		((struct bpf_map *)((X) & ~BPF_MAP_PTR_UNPRIV))
 
-अटल bool bpf_map_ptr_poisoned(स्थिर काष्ठा bpf_insn_aux_data *aux)
-अणु
-	वापस BPF_MAP_PTR(aux->map_ptr_state) == BPF_MAP_PTR_POISON;
-पूर्ण
+static bool bpf_map_ptr_poisoned(const struct bpf_insn_aux_data *aux)
+{
+	return BPF_MAP_PTR(aux->map_ptr_state) == BPF_MAP_PTR_POISON;
+}
 
-अटल bool bpf_map_ptr_unpriv(स्थिर काष्ठा bpf_insn_aux_data *aux)
-अणु
-	वापस aux->map_ptr_state & BPF_MAP_PTR_UNPRIV;
-पूर्ण
+static bool bpf_map_ptr_unpriv(const struct bpf_insn_aux_data *aux)
+{
+	return aux->map_ptr_state & BPF_MAP_PTR_UNPRIV;
+}
 
-अटल व्योम bpf_map_ptr_store(काष्ठा bpf_insn_aux_data *aux,
-			      स्थिर काष्ठा bpf_map *map, bool unpriv)
-अणु
-	BUILD_BUG_ON((अचिन्हित दीर्घ)BPF_MAP_PTR_POISON & BPF_MAP_PTR_UNPRIV);
+static void bpf_map_ptr_store(struct bpf_insn_aux_data *aux,
+			      const struct bpf_map *map, bool unpriv)
+{
+	BUILD_BUG_ON((unsigned long)BPF_MAP_PTR_POISON & BPF_MAP_PTR_UNPRIV);
 	unpriv |= bpf_map_ptr_unpriv(aux);
-	aux->map_ptr_state = (अचिन्हित दीर्घ)map |
+	aux->map_ptr_state = (unsigned long)map |
 			     (unpriv ? BPF_MAP_PTR_UNPRIV : 0UL);
-पूर्ण
+}
 
-अटल bool bpf_map_key_poisoned(स्थिर काष्ठा bpf_insn_aux_data *aux)
-अणु
-	वापस aux->map_key_state & BPF_MAP_KEY_POISON;
-पूर्ण
+static bool bpf_map_key_poisoned(const struct bpf_insn_aux_data *aux)
+{
+	return aux->map_key_state & BPF_MAP_KEY_POISON;
+}
 
-अटल bool bpf_map_key_unseen(स्थिर काष्ठा bpf_insn_aux_data *aux)
-अणु
-	वापस !(aux->map_key_state & BPF_MAP_KEY_SEEN);
-पूर्ण
+static bool bpf_map_key_unseen(const struct bpf_insn_aux_data *aux)
+{
+	return !(aux->map_key_state & BPF_MAP_KEY_SEEN);
+}
 
-अटल u64 bpf_map_key_immediate(स्थिर काष्ठा bpf_insn_aux_data *aux)
-अणु
-	वापस aux->map_key_state & ~(BPF_MAP_KEY_SEEN | BPF_MAP_KEY_POISON);
-पूर्ण
+static u64 bpf_map_key_immediate(const struct bpf_insn_aux_data *aux)
+{
+	return aux->map_key_state & ~(BPF_MAP_KEY_SEEN | BPF_MAP_KEY_POISON);
+}
 
-अटल व्योम bpf_map_key_store(काष्ठा bpf_insn_aux_data *aux, u64 state)
-अणु
+static void bpf_map_key_store(struct bpf_insn_aux_data *aux, u64 state)
+{
 	bool poisoned = bpf_map_key_poisoned(aux);
 
 	aux->map_key_state = state | BPF_MAP_KEY_SEEN |
 			     (poisoned ? BPF_MAP_KEY_POISON : 0ULL);
-पूर्ण
+}
 
-अटल bool bpf_pseuकरो_call(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस insn->code == (BPF_JMP | BPF_CALL) &&
+static bool bpf_pseudo_call(const struct bpf_insn *insn)
+{
+	return insn->code == (BPF_JMP | BPF_CALL) &&
 	       insn->src_reg == BPF_PSEUDO_CALL;
-पूर्ण
+}
 
-अटल bool bpf_pseuकरो_kfunc_call(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस insn->code == (BPF_JMP | BPF_CALL) &&
+static bool bpf_pseudo_kfunc_call(const struct bpf_insn *insn)
+{
+	return insn->code == (BPF_JMP | BPF_CALL) &&
 	       insn->src_reg == BPF_PSEUDO_KFUNC_CALL;
-पूर्ण
+}
 
-अटल bool bpf_pseuकरो_func(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस insn->code == (BPF_LD | BPF_IMM | BPF_DW) &&
+static bool bpf_pseudo_func(const struct bpf_insn *insn)
+{
+	return insn->code == (BPF_LD | BPF_IMM | BPF_DW) &&
 	       insn->src_reg == BPF_PSEUDO_FUNC;
-पूर्ण
+}
 
-काष्ठा bpf_call_arg_meta अणु
-	काष्ठा bpf_map *map_ptr;
+struct bpf_call_arg_meta {
+	struct bpf_map *map_ptr;
 	bool raw_mode;
 	bool pkt_access;
-	पूर्णांक regno;
-	पूर्णांक access_size;
-	पूर्णांक mem_size;
+	int regno;
+	int access_size;
+	int mem_size;
 	u64 msize_max_value;
-	पूर्णांक ref_obj_id;
-	पूर्णांक func_id;
-	काष्ठा btf *btf;
+	int ref_obj_id;
+	int func_id;
+	struct btf *btf;
 	u32 btf_id;
-	काष्ठा btf *ret_btf;
+	struct btf *ret_btf;
 	u32 ret_btf_id;
 	u32 subprogno;
-पूर्ण;
+};
 
-काष्ठा btf *btf_vmlinux;
+struct btf *btf_vmlinux;
 
-अटल DEFINE_MUTEX(bpf_verअगरier_lock);
+static DEFINE_MUTEX(bpf_verifier_lock);
 
-अटल स्थिर काष्ठा bpf_line_info *
-find_linfo(स्थिर काष्ठा bpf_verअगरier_env *env, u32 insn_off)
-अणु
-	स्थिर काष्ठा bpf_line_info *linfo;
-	स्थिर काष्ठा bpf_prog *prog;
+static const struct bpf_line_info *
+find_linfo(const struct bpf_verifier_env *env, u32 insn_off)
+{
+	const struct bpf_line_info *linfo;
+	const struct bpf_prog *prog;
 	u32 i, nr_linfo;
 
 	prog = env->prog;
 	nr_linfo = prog->aux->nr_linfo;
 
-	अगर (!nr_linfo || insn_off >= prog->len)
-		वापस शून्य;
+	if (!nr_linfo || insn_off >= prog->len)
+		return NULL;
 
 	linfo = prog->aux->linfo;
-	क्रम (i = 1; i < nr_linfo; i++)
-		अगर (insn_off < linfo[i].insn_off)
-			अवरोध;
+	for (i = 1; i < nr_linfo; i++)
+		if (insn_off < linfo[i].insn_off)
+			break;
 
-	वापस &linfo[i - 1];
-पूर्ण
+	return &linfo[i - 1];
+}
 
-व्योम bpf_verअगरier_vlog(काष्ठा bpf_verअगरier_log *log, स्थिर अक्षर *fmt,
-		       बहु_सूची args)
-अणु
-	अचिन्हित पूर्णांक n;
+void bpf_verifier_vlog(struct bpf_verifier_log *log, const char *fmt,
+		       va_list args)
+{
+	unsigned int n;
 
-	n = vscnम_लिखो(log->kbuf, BPF_VERIFIER_TMP_LOG_SIZE, fmt, args);
+	n = vscnprintf(log->kbuf, BPF_VERIFIER_TMP_LOG_SIZE, fmt, args);
 
 	WARN_ONCE(n >= BPF_VERIFIER_TMP_LOG_SIZE - 1,
 		  "verifier log line truncated - local buffer too short\n");
@@ -302,641 +301,641 @@ find_linfo(स्थिर काष्ठा bpf_verअगरier_env *env, u32 
 	n = min(log->len_total - log->len_used - 1, n);
 	log->kbuf[n] = '\0';
 
-	अगर (log->level == BPF_LOG_KERNEL) अणु
+	if (log->level == BPF_LOG_KERNEL) {
 		pr_err("BPF:%s\n", log->kbuf);
-		वापस;
-	पूर्ण
-	अगर (!copy_to_user(log->ubuf + log->len_used, log->kbuf, n + 1))
+		return;
+	}
+	if (!copy_to_user(log->ubuf + log->len_used, log->kbuf, n + 1))
 		log->len_used += n;
-	अन्यथा
-		log->ubuf = शून्य;
-पूर्ण
+	else
+		log->ubuf = NULL;
+}
 
-अटल व्योम bpf_vlog_reset(काष्ठा bpf_verअगरier_log *log, u32 new_pos)
-अणु
-	अक्षर zero = 0;
+static void bpf_vlog_reset(struct bpf_verifier_log *log, u32 new_pos)
+{
+	char zero = 0;
 
-	अगर (!bpf_verअगरier_log_needed(log))
-		वापस;
+	if (!bpf_verifier_log_needed(log))
+		return;
 
 	log->len_used = new_pos;
-	अगर (put_user(zero, log->ubuf + new_pos))
-		log->ubuf = शून्य;
-पूर्ण
+	if (put_user(zero, log->ubuf + new_pos))
+		log->ubuf = NULL;
+}
 
-/* log_level controls verbosity level of eBPF verअगरier.
- * bpf_verअगरier_log_ग_लिखो() is used to dump the verअगरication trace to the log,
+/* log_level controls verbosity level of eBPF verifier.
+ * bpf_verifier_log_write() is used to dump the verification trace to the log,
  * so the user can figure out what's wrong with the program
  */
-__म_लिखो(2, 3) व्योम bpf_verअगरier_log_ग_लिखो(काष्ठा bpf_verअगरier_env *env,
-					   स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+__printf(2, 3) void bpf_verifier_log_write(struct bpf_verifier_env *env,
+					   const char *fmt, ...)
+{
+	va_list args;
 
-	अगर (!bpf_verअगरier_log_needed(&env->log))
-		वापस;
+	if (!bpf_verifier_log_needed(&env->log))
+		return;
 
-	बहु_शुरू(args, fmt);
-	bpf_verअगरier_vlog(&env->log, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
-EXPORT_SYMBOL_GPL(bpf_verअगरier_log_ग_लिखो);
+	va_start(args, fmt);
+	bpf_verifier_vlog(&env->log, fmt, args);
+	va_end(args);
+}
+EXPORT_SYMBOL_GPL(bpf_verifier_log_write);
 
-__म_लिखो(2, 3) अटल व्योम verbose(व्योम *निजी_data, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा bpf_verअगरier_env *env = निजी_data;
-	बहु_सूची args;
+__printf(2, 3) static void verbose(void *private_data, const char *fmt, ...)
+{
+	struct bpf_verifier_env *env = private_data;
+	va_list args;
 
-	अगर (!bpf_verअगरier_log_needed(&env->log))
-		वापस;
+	if (!bpf_verifier_log_needed(&env->log))
+		return;
 
-	बहु_शुरू(args, fmt);
-	bpf_verअगरier_vlog(&env->log, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, fmt);
+	bpf_verifier_vlog(&env->log, fmt, args);
+	va_end(args);
+}
 
-__म_लिखो(2, 3) व्योम bpf_log(काष्ठा bpf_verअगरier_log *log,
-			    स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+__printf(2, 3) void bpf_log(struct bpf_verifier_log *log,
+			    const char *fmt, ...)
+{
+	va_list args;
 
-	अगर (!bpf_verअगरier_log_needed(log))
-		वापस;
+	if (!bpf_verifier_log_needed(log))
+		return;
 
-	बहु_शुरू(args, fmt);
-	bpf_verअगरier_vlog(log, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, fmt);
+	bpf_verifier_vlog(log, fmt, args);
+	va_end(args);
+}
 
-अटल स्थिर अक्षर *ltrim(स्थिर अक्षर *s)
-अणु
-	जबतक (है_खाली(*s))
+static const char *ltrim(const char *s)
+{
+	while (isspace(*s))
 		s++;
 
-	वापस s;
-पूर्ण
+	return s;
+}
 
-__म_लिखो(3, 4) अटल व्योम verbose_linfo(काष्ठा bpf_verअगरier_env *env,
+__printf(3, 4) static void verbose_linfo(struct bpf_verifier_env *env,
 					 u32 insn_off,
-					 स्थिर अक्षर *prefix_fmt, ...)
-अणु
-	स्थिर काष्ठा bpf_line_info *linfo;
+					 const char *prefix_fmt, ...)
+{
+	const struct bpf_line_info *linfo;
 
-	अगर (!bpf_verअगरier_log_needed(&env->log))
-		वापस;
+	if (!bpf_verifier_log_needed(&env->log))
+		return;
 
 	linfo = find_linfo(env, insn_off);
-	अगर (!linfo || linfo == env->prev_linfo)
-		वापस;
+	if (!linfo || linfo == env->prev_linfo)
+		return;
 
-	अगर (prefix_fmt) अणु
-		बहु_सूची args;
+	if (prefix_fmt) {
+		va_list args;
 
-		बहु_शुरू(args, prefix_fmt);
-		bpf_verअगरier_vlog(&env->log, prefix_fmt, args);
-		बहु_पूर्ण(args);
-	पूर्ण
+		va_start(args, prefix_fmt);
+		bpf_verifier_vlog(&env->log, prefix_fmt, args);
+		va_end(args);
+	}
 
 	verbose(env, "%s\n",
 		ltrim(btf_name_by_offset(env->prog->aux->btf,
 					 linfo->line_off)));
 
 	env->prev_linfo = linfo;
-पूर्ण
+}
 
-अटल व्योम verbose_invalid_scalar(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_reg_state *reg,
-				   काष्ठा tnum *range, स्थिर अक्षर *ctx,
-				   स्थिर अक्षर *reg_name)
-अणु
-	अक्षर tn_buf[48];
+static void verbose_invalid_scalar(struct bpf_verifier_env *env,
+				   struct bpf_reg_state *reg,
+				   struct tnum *range, const char *ctx,
+				   const char *reg_name)
+{
+	char tn_buf[48];
 
 	verbose(env, "At %s the register %s ", ctx, reg_name);
-	अगर (!tnum_is_unknown(reg->var_off)) अणु
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+	if (!tnum_is_unknown(reg->var_off)) {
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "has value %s", tn_buf);
-	पूर्ण अन्यथा अणु
+	} else {
 		verbose(env, "has unknown scalar value");
-	पूर्ण
-	tnum_strn(tn_buf, माप(tn_buf), *range);
+	}
+	tnum_strn(tn_buf, sizeof(tn_buf), *range);
 	verbose(env, " should have been in %s\n", tn_buf);
-पूर्ण
+}
 
-अटल bool type_is_pkt_poपूर्णांकer(क्रमागत bpf_reg_type type)
-अणु
-	वापस type == PTR_TO_PACKET ||
+static bool type_is_pkt_pointer(enum bpf_reg_type type)
+{
+	return type == PTR_TO_PACKET ||
 	       type == PTR_TO_PACKET_META;
-पूर्ण
+}
 
-अटल bool type_is_sk_poपूर्णांकer(क्रमागत bpf_reg_type type)
-अणु
-	वापस type == PTR_TO_SOCKET ||
+static bool type_is_sk_pointer(enum bpf_reg_type type)
+{
+	return type == PTR_TO_SOCKET ||
 		type == PTR_TO_SOCK_COMMON ||
 		type == PTR_TO_TCP_SOCK ||
 		type == PTR_TO_XDP_SOCK;
-पूर्ण
+}
 
-अटल bool reg_type_not_null(क्रमागत bpf_reg_type type)
-अणु
-	वापस type == PTR_TO_SOCKET ||
+static bool reg_type_not_null(enum bpf_reg_type type)
+{
+	return type == PTR_TO_SOCKET ||
 		type == PTR_TO_TCP_SOCK ||
 		type == PTR_TO_MAP_VALUE ||
 		type == PTR_TO_MAP_KEY ||
 		type == PTR_TO_SOCK_COMMON;
-पूर्ण
+}
 
-अटल bool reg_type_may_be_null(क्रमागत bpf_reg_type type)
-अणु
-	वापस type == PTR_TO_MAP_VALUE_OR_शून्य ||
-	       type == PTR_TO_SOCKET_OR_शून्य ||
-	       type == PTR_TO_SOCK_COMMON_OR_शून्य ||
-	       type == PTR_TO_TCP_SOCK_OR_शून्य ||
-	       type == PTR_TO_BTF_ID_OR_शून्य ||
-	       type == PTR_TO_MEM_OR_शून्य ||
-	       type == PTR_TO_RDONLY_BUF_OR_शून्य ||
-	       type == PTR_TO_RDWR_BUF_OR_शून्य;
-पूर्ण
+static bool reg_type_may_be_null(enum bpf_reg_type type)
+{
+	return type == PTR_TO_MAP_VALUE_OR_NULL ||
+	       type == PTR_TO_SOCKET_OR_NULL ||
+	       type == PTR_TO_SOCK_COMMON_OR_NULL ||
+	       type == PTR_TO_TCP_SOCK_OR_NULL ||
+	       type == PTR_TO_BTF_ID_OR_NULL ||
+	       type == PTR_TO_MEM_OR_NULL ||
+	       type == PTR_TO_RDONLY_BUF_OR_NULL ||
+	       type == PTR_TO_RDWR_BUF_OR_NULL;
+}
 
-अटल bool reg_may_poपूर्णांक_to_spin_lock(स्थिर काष्ठा bpf_reg_state *reg)
-अणु
-	वापस reg->type == PTR_TO_MAP_VALUE &&
+static bool reg_may_point_to_spin_lock(const struct bpf_reg_state *reg)
+{
+	return reg->type == PTR_TO_MAP_VALUE &&
 		map_value_has_spin_lock(reg->map_ptr);
-पूर्ण
+}
 
-अटल bool reg_type_may_be_refcounted_or_null(क्रमागत bpf_reg_type type)
-अणु
-	वापस type == PTR_TO_SOCKET ||
-		type == PTR_TO_SOCKET_OR_शून्य ||
+static bool reg_type_may_be_refcounted_or_null(enum bpf_reg_type type)
+{
+	return type == PTR_TO_SOCKET ||
+		type == PTR_TO_SOCKET_OR_NULL ||
 		type == PTR_TO_TCP_SOCK ||
-		type == PTR_TO_TCP_SOCK_OR_शून्य ||
+		type == PTR_TO_TCP_SOCK_OR_NULL ||
 		type == PTR_TO_MEM ||
-		type == PTR_TO_MEM_OR_शून्य;
-पूर्ण
+		type == PTR_TO_MEM_OR_NULL;
+}
 
-अटल bool arg_type_may_be_refcounted(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_PTR_TO_SOCK_COMMON;
-पूर्ण
+static bool arg_type_may_be_refcounted(enum bpf_arg_type type)
+{
+	return type == ARG_PTR_TO_SOCK_COMMON;
+}
 
-अटल bool arg_type_may_be_null(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_PTR_TO_MAP_VALUE_OR_शून्य ||
-	       type == ARG_PTR_TO_MEM_OR_शून्य ||
-	       type == ARG_PTR_TO_CTX_OR_शून्य ||
-	       type == ARG_PTR_TO_SOCKET_OR_शून्य ||
-	       type == ARG_PTR_TO_ALLOC_MEM_OR_शून्य ||
-	       type == ARG_PTR_TO_STACK_OR_शून्य;
-पूर्ण
+static bool arg_type_may_be_null(enum bpf_arg_type type)
+{
+	return type == ARG_PTR_TO_MAP_VALUE_OR_NULL ||
+	       type == ARG_PTR_TO_MEM_OR_NULL ||
+	       type == ARG_PTR_TO_CTX_OR_NULL ||
+	       type == ARG_PTR_TO_SOCKET_OR_NULL ||
+	       type == ARG_PTR_TO_ALLOC_MEM_OR_NULL ||
+	       type == ARG_PTR_TO_STACK_OR_NULL;
+}
 
 /* Determine whether the function releases some resources allocated by another
  * function call. The first reference type argument will be assumed to be
  * released by release_reference().
  */
-अटल bool is_release_function(क्रमागत bpf_func_id func_id)
-अणु
-	वापस func_id == BPF_FUNC_sk_release ||
+static bool is_release_function(enum bpf_func_id func_id)
+{
+	return func_id == BPF_FUNC_sk_release ||
 	       func_id == BPF_FUNC_ringbuf_submit ||
 	       func_id == BPF_FUNC_ringbuf_discard;
-पूर्ण
+}
 
-अटल bool may_be_acquire_function(क्रमागत bpf_func_id func_id)
-अणु
-	वापस func_id == BPF_FUNC_sk_lookup_tcp ||
+static bool may_be_acquire_function(enum bpf_func_id func_id)
+{
+	return func_id == BPF_FUNC_sk_lookup_tcp ||
 		func_id == BPF_FUNC_sk_lookup_udp ||
 		func_id == BPF_FUNC_skc_lookup_tcp ||
 		func_id == BPF_FUNC_map_lookup_elem ||
 	        func_id == BPF_FUNC_ringbuf_reserve;
-पूर्ण
+}
 
-अटल bool is_acquire_function(क्रमागत bpf_func_id func_id,
-				स्थिर काष्ठा bpf_map *map)
-अणु
-	क्रमागत bpf_map_type map_type = map ? map->map_type : BPF_MAP_TYPE_UNSPEC;
+static bool is_acquire_function(enum bpf_func_id func_id,
+				const struct bpf_map *map)
+{
+	enum bpf_map_type map_type = map ? map->map_type : BPF_MAP_TYPE_UNSPEC;
 
-	अगर (func_id == BPF_FUNC_sk_lookup_tcp ||
+	if (func_id == BPF_FUNC_sk_lookup_tcp ||
 	    func_id == BPF_FUNC_sk_lookup_udp ||
 	    func_id == BPF_FUNC_skc_lookup_tcp ||
 	    func_id == BPF_FUNC_ringbuf_reserve)
-		वापस true;
+		return true;
 
-	अगर (func_id == BPF_FUNC_map_lookup_elem &&
+	if (func_id == BPF_FUNC_map_lookup_elem &&
 	    (map_type == BPF_MAP_TYPE_SOCKMAP ||
 	     map_type == BPF_MAP_TYPE_SOCKHASH))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool is_ptr_cast_function(क्रमागत bpf_func_id func_id)
-अणु
-	वापस func_id == BPF_FUNC_tcp_sock ||
+static bool is_ptr_cast_function(enum bpf_func_id func_id)
+{
+	return func_id == BPF_FUNC_tcp_sock ||
 		func_id == BPF_FUNC_sk_fullsock ||
 		func_id == BPF_FUNC_skc_to_tcp_sock ||
 		func_id == BPF_FUNC_skc_to_tcp6_sock ||
 		func_id == BPF_FUNC_skc_to_udp6_sock ||
-		func_id == BPF_FUNC_skc_to_tcp_समयरुको_sock ||
+		func_id == BPF_FUNC_skc_to_tcp_timewait_sock ||
 		func_id == BPF_FUNC_skc_to_tcp_request_sock;
-पूर्ण
+}
 
-अटल bool is_cmpxchg_insn(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस BPF_CLASS(insn->code) == BPF_STX &&
+static bool is_cmpxchg_insn(const struct bpf_insn *insn)
+{
+	return BPF_CLASS(insn->code) == BPF_STX &&
 	       BPF_MODE(insn->code) == BPF_ATOMIC &&
 	       insn->imm == BPF_CMPXCHG;
-पूर्ण
+}
 
 /* string representation of 'enum bpf_reg_type' */
-अटल स्थिर अक्षर * स्थिर reg_type_str[] = अणु
+static const char * const reg_type_str[] = {
 	[NOT_INIT]		= "?",
 	[SCALAR_VALUE]		= "inv",
 	[PTR_TO_CTX]		= "ctx",
 	[CONST_PTR_TO_MAP]	= "map_ptr",
 	[PTR_TO_MAP_VALUE]	= "map_value",
-	[PTR_TO_MAP_VALUE_OR_शून्य] = "map_value_or_null",
+	[PTR_TO_MAP_VALUE_OR_NULL] = "map_value_or_null",
 	[PTR_TO_STACK]		= "fp",
 	[PTR_TO_PACKET]		= "pkt",
 	[PTR_TO_PACKET_META]	= "pkt_meta",
 	[PTR_TO_PACKET_END]	= "pkt_end",
 	[PTR_TO_FLOW_KEYS]	= "flow_keys",
 	[PTR_TO_SOCKET]		= "sock",
-	[PTR_TO_SOCKET_OR_शून्य] = "sock_or_null",
+	[PTR_TO_SOCKET_OR_NULL] = "sock_or_null",
 	[PTR_TO_SOCK_COMMON]	= "sock_common",
-	[PTR_TO_SOCK_COMMON_OR_शून्य] = "sock_common_or_null",
+	[PTR_TO_SOCK_COMMON_OR_NULL] = "sock_common_or_null",
 	[PTR_TO_TCP_SOCK]	= "tcp_sock",
-	[PTR_TO_TCP_SOCK_OR_शून्य] = "tcp_sock_or_null",
+	[PTR_TO_TCP_SOCK_OR_NULL] = "tcp_sock_or_null",
 	[PTR_TO_TP_BUFFER]	= "tp_buffer",
 	[PTR_TO_XDP_SOCK]	= "xdp_sock",
 	[PTR_TO_BTF_ID]		= "ptr_",
-	[PTR_TO_BTF_ID_OR_शून्य]	= "ptr_or_null_",
+	[PTR_TO_BTF_ID_OR_NULL]	= "ptr_or_null_",
 	[PTR_TO_PERCPU_BTF_ID]	= "percpu_ptr_",
 	[PTR_TO_MEM]		= "mem",
-	[PTR_TO_MEM_OR_शून्य]	= "mem_or_null",
+	[PTR_TO_MEM_OR_NULL]	= "mem_or_null",
 	[PTR_TO_RDONLY_BUF]	= "rdonly_buf",
-	[PTR_TO_RDONLY_BUF_OR_शून्य] = "rdonly_buf_or_null",
+	[PTR_TO_RDONLY_BUF_OR_NULL] = "rdonly_buf_or_null",
 	[PTR_TO_RDWR_BUF]	= "rdwr_buf",
-	[PTR_TO_RDWR_BUF_OR_शून्य] = "rdwr_buf_or_null",
+	[PTR_TO_RDWR_BUF_OR_NULL] = "rdwr_buf_or_null",
 	[PTR_TO_FUNC]		= "func",
 	[PTR_TO_MAP_KEY]	= "map_key",
-पूर्ण;
+};
 
-अटल अक्षर slot_type_अक्षर[] = अणु
+static char slot_type_char[] = {
 	[STACK_INVALID]	= '?',
 	[STACK_SPILL]	= 'r',
 	[STACK_MISC]	= 'm',
 	[STACK_ZERO]	= '0',
-पूर्ण;
+};
 
-अटल व्योम prपूर्णांक_liveness(काष्ठा bpf_verअगरier_env *env,
-			   क्रमागत bpf_reg_liveness live)
-अणु
-	अगर (live & (REG_LIVE_READ | REG_LIVE_WRITTEN | REG_LIVE_DONE))
+static void print_liveness(struct bpf_verifier_env *env,
+			   enum bpf_reg_liveness live)
+{
+	if (live & (REG_LIVE_READ | REG_LIVE_WRITTEN | REG_LIVE_DONE))
 	    verbose(env, "_");
-	अगर (live & REG_LIVE_READ)
+	if (live & REG_LIVE_READ)
 		verbose(env, "r");
-	अगर (live & REG_LIVE_WRITTEN)
+	if (live & REG_LIVE_WRITTEN)
 		verbose(env, "w");
-	अगर (live & REG_LIVE_DONE)
+	if (live & REG_LIVE_DONE)
 		verbose(env, "D");
-पूर्ण
+}
 
-अटल काष्ठा bpf_func_state *func(काष्ठा bpf_verअगरier_env *env,
-				   स्थिर काष्ठा bpf_reg_state *reg)
-अणु
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state;
+static struct bpf_func_state *func(struct bpf_verifier_env *env,
+				   const struct bpf_reg_state *reg)
+{
+	struct bpf_verifier_state *cur = env->cur_state;
 
-	वापस cur->frame[reg->frameno];
-पूर्ण
+	return cur->frame[reg->frameno];
+}
 
-अटल स्थिर अक्षर *kernel_type_name(स्थिर काष्ठा btf* btf, u32 id)
-अणु
-	वापस btf_name_by_offset(btf, btf_type_by_id(btf, id)->name_off);
-पूर्ण
+static const char *kernel_type_name(const struct btf* btf, u32 id)
+{
+	return btf_name_by_offset(btf, btf_type_by_id(btf, id)->name_off);
+}
 
-अटल व्योम prपूर्णांक_verअगरier_state(काष्ठा bpf_verअगरier_env *env,
-				 स्थिर काष्ठा bpf_func_state *state)
-अणु
-	स्थिर काष्ठा bpf_reg_state *reg;
-	क्रमागत bpf_reg_type t;
-	पूर्णांक i;
+static void print_verifier_state(struct bpf_verifier_env *env,
+				 const struct bpf_func_state *state)
+{
+	const struct bpf_reg_state *reg;
+	enum bpf_reg_type t;
+	int i;
 
-	अगर (state->frameno)
+	if (state->frameno)
 		verbose(env, " frame%d:", state->frameno);
-	क्रम (i = 0; i < MAX_BPF_REG; i++) अणु
+	for (i = 0; i < MAX_BPF_REG; i++) {
 		reg = &state->regs[i];
 		t = reg->type;
-		अगर (t == NOT_INIT)
-			जारी;
+		if (t == NOT_INIT)
+			continue;
 		verbose(env, " R%d", i);
-		prपूर्णांक_liveness(env, reg->live);
+		print_liveness(env, reg->live);
 		verbose(env, "=%s", reg_type_str[t]);
-		अगर (t == SCALAR_VALUE && reg->precise)
+		if (t == SCALAR_VALUE && reg->precise)
 			verbose(env, "P");
-		अगर ((t == SCALAR_VALUE || t == PTR_TO_STACK) &&
-		    tnum_is_स्थिर(reg->var_off)) अणु
-			/* reg->off should be 0 क्रम SCALAR_VALUE */
+		if ((t == SCALAR_VALUE || t == PTR_TO_STACK) &&
+		    tnum_is_const(reg->var_off)) {
+			/* reg->off should be 0 for SCALAR_VALUE */
 			verbose(env, "%lld", reg->var_off.value + reg->off);
-		पूर्ण अन्यथा अणु
-			अगर (t == PTR_TO_BTF_ID ||
-			    t == PTR_TO_BTF_ID_OR_शून्य ||
+		} else {
+			if (t == PTR_TO_BTF_ID ||
+			    t == PTR_TO_BTF_ID_OR_NULL ||
 			    t == PTR_TO_PERCPU_BTF_ID)
 				verbose(env, "%s", kernel_type_name(reg->btf, reg->btf_id));
 			verbose(env, "(id=%d", reg->id);
-			अगर (reg_type_may_be_refcounted_or_null(t))
+			if (reg_type_may_be_refcounted_or_null(t))
 				verbose(env, ",ref_obj_id=%d", reg->ref_obj_id);
-			अगर (t != SCALAR_VALUE)
+			if (t != SCALAR_VALUE)
 				verbose(env, ",off=%d", reg->off);
-			अगर (type_is_pkt_poपूर्णांकer(t))
+			if (type_is_pkt_pointer(t))
 				verbose(env, ",r=%d", reg->range);
-			अन्यथा अगर (t == CONST_PTR_TO_MAP ||
+			else if (t == CONST_PTR_TO_MAP ||
 				 t == PTR_TO_MAP_KEY ||
 				 t == PTR_TO_MAP_VALUE ||
-				 t == PTR_TO_MAP_VALUE_OR_शून्य)
+				 t == PTR_TO_MAP_VALUE_OR_NULL)
 				verbose(env, ",ks=%d,vs=%d",
 					reg->map_ptr->key_size,
 					reg->map_ptr->value_size);
-			अगर (tnum_is_स्थिर(reg->var_off)) अणु
+			if (tnum_is_const(reg->var_off)) {
 				/* Typically an immediate SCALAR_VALUE, but
-				 * could be a poपूर्णांकer whose offset is too big
-				 * क्रम reg->off
+				 * could be a pointer whose offset is too big
+				 * for reg->off
 				 */
 				verbose(env, ",imm=%llx", reg->var_off.value);
-			पूर्ण अन्यथा अणु
-				अगर (reg->smin_value != reg->umin_value &&
+			} else {
+				if (reg->smin_value != reg->umin_value &&
 				    reg->smin_value != S64_MIN)
 					verbose(env, ",smin_value=%lld",
-						(दीर्घ दीर्घ)reg->smin_value);
-				अगर (reg->smax_value != reg->umax_value &&
+						(long long)reg->smin_value);
+				if (reg->smax_value != reg->umax_value &&
 				    reg->smax_value != S64_MAX)
 					verbose(env, ",smax_value=%lld",
-						(दीर्घ दीर्घ)reg->smax_value);
-				अगर (reg->umin_value != 0)
+						(long long)reg->smax_value);
+				if (reg->umin_value != 0)
 					verbose(env, ",umin_value=%llu",
-						(अचिन्हित दीर्घ दीर्घ)reg->umin_value);
-				अगर (reg->umax_value != U64_MAX)
+						(unsigned long long)reg->umin_value);
+				if (reg->umax_value != U64_MAX)
 					verbose(env, ",umax_value=%llu",
-						(अचिन्हित दीर्घ दीर्घ)reg->umax_value);
-				अगर (!tnum_is_unknown(reg->var_off)) अणु
-					अक्षर tn_buf[48];
+						(unsigned long long)reg->umax_value);
+				if (!tnum_is_unknown(reg->var_off)) {
+					char tn_buf[48];
 
-					tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+					tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 					verbose(env, ",var_off=%s", tn_buf);
-				पूर्ण
-				अगर (reg->s32_min_value != reg->smin_value &&
+				}
+				if (reg->s32_min_value != reg->smin_value &&
 				    reg->s32_min_value != S32_MIN)
 					verbose(env, ",s32_min_value=%d",
-						(पूर्णांक)(reg->s32_min_value));
-				अगर (reg->s32_max_value != reg->smax_value &&
+						(int)(reg->s32_min_value));
+				if (reg->s32_max_value != reg->smax_value &&
 				    reg->s32_max_value != S32_MAX)
 					verbose(env, ",s32_max_value=%d",
-						(पूर्णांक)(reg->s32_max_value));
-				अगर (reg->u32_min_value != reg->umin_value &&
+						(int)(reg->s32_max_value));
+				if (reg->u32_min_value != reg->umin_value &&
 				    reg->u32_min_value != U32_MIN)
 					verbose(env, ",u32_min_value=%d",
-						(पूर्णांक)(reg->u32_min_value));
-				अगर (reg->u32_max_value != reg->umax_value &&
+						(int)(reg->u32_min_value));
+				if (reg->u32_max_value != reg->umax_value &&
 				    reg->u32_max_value != U32_MAX)
 					verbose(env, ",u32_max_value=%d",
-						(पूर्णांक)(reg->u32_max_value));
-			पूर्ण
+						(int)(reg->u32_max_value));
+			}
 			verbose(env, ")");
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < state->allocated_stack / BPF_REG_SIZE; i++) अणु
-		अक्षर types_buf[BPF_REG_SIZE + 1];
+		}
+	}
+	for (i = 0; i < state->allocated_stack / BPF_REG_SIZE; i++) {
+		char types_buf[BPF_REG_SIZE + 1];
 		bool valid = false;
-		पूर्णांक j;
+		int j;
 
-		क्रम (j = 0; j < BPF_REG_SIZE; j++) अणु
-			अगर (state->stack[i].slot_type[j] != STACK_INVALID)
+		for (j = 0; j < BPF_REG_SIZE; j++) {
+			if (state->stack[i].slot_type[j] != STACK_INVALID)
 				valid = true;
-			types_buf[j] = slot_type_अक्षर[
+			types_buf[j] = slot_type_char[
 					state->stack[i].slot_type[j]];
-		पूर्ण
+		}
 		types_buf[BPF_REG_SIZE] = 0;
-		अगर (!valid)
-			जारी;
+		if (!valid)
+			continue;
 		verbose(env, " fp%d", (-i - 1) * BPF_REG_SIZE);
-		prपूर्णांक_liveness(env, state->stack[i].spilled_ptr.live);
-		अगर (state->stack[i].slot_type[0] == STACK_SPILL) अणु
+		print_liveness(env, state->stack[i].spilled_ptr.live);
+		if (state->stack[i].slot_type[0] == STACK_SPILL) {
 			reg = &state->stack[i].spilled_ptr;
 			t = reg->type;
 			verbose(env, "=%s", reg_type_str[t]);
-			अगर (t == SCALAR_VALUE && reg->precise)
+			if (t == SCALAR_VALUE && reg->precise)
 				verbose(env, "P");
-			अगर (t == SCALAR_VALUE && tnum_is_स्थिर(reg->var_off))
+			if (t == SCALAR_VALUE && tnum_is_const(reg->var_off))
 				verbose(env, "%lld", reg->var_off.value + reg->off);
-		पूर्ण अन्यथा अणु
+		} else {
 			verbose(env, "=%s", types_buf);
-		पूर्ण
-	पूर्ण
-	अगर (state->acquired_refs && state->refs[0].id) अणु
+		}
+	}
+	if (state->acquired_refs && state->refs[0].id) {
 		verbose(env, " refs=%d", state->refs[0].id);
-		क्रम (i = 1; i < state->acquired_refs; i++)
-			अगर (state->refs[i].id)
+		for (i = 1; i < state->acquired_refs; i++)
+			if (state->refs[i].id)
 				verbose(env, ",%d", state->refs[i].id);
-	पूर्ण
+	}
 	verbose(env, "\n");
-पूर्ण
+}
 
-#घोषणा COPY_STATE_FN(NAME, COUNT, FIELD, SIZE)				\
-अटल पूर्णांक copy_##NAME##_state(काष्ठा bpf_func_state *dst,		\
-			       स्थिर काष्ठा bpf_func_state *src)	\
-अणु									\
-	अगर (!src->FIELD)						\
-		वापस 0;						\
-	अगर (WARN_ON_ONCE(dst->COUNT < src->COUNT)) अणु			\
-		/* पूर्णांकernal bug, make state invalid to reject the program */ \
-		स_रखो(dst, 0, माप(*dst));				\
-		वापस -EFAULT;						\
-	पूर्ण								\
-	स_नकल(dst->FIELD, src->FIELD,					\
-	       माप(*src->FIELD) * (src->COUNT / SIZE));		\
-	वापस 0;							\
-पूर्ण
+#define COPY_STATE_FN(NAME, COUNT, FIELD, SIZE)				\
+static int copy_##NAME##_state(struct bpf_func_state *dst,		\
+			       const struct bpf_func_state *src)	\
+{									\
+	if (!src->FIELD)						\
+		return 0;						\
+	if (WARN_ON_ONCE(dst->COUNT < src->COUNT)) {			\
+		/* internal bug, make state invalid to reject the program */ \
+		memset(dst, 0, sizeof(*dst));				\
+		return -EFAULT;						\
+	}								\
+	memcpy(dst->FIELD, src->FIELD,					\
+	       sizeof(*src->FIELD) * (src->COUNT / SIZE));		\
+	return 0;							\
+}
 /* copy_reference_state() */
 COPY_STATE_FN(reference, acquired_refs, refs, 1)
 /* copy_stack_state() */
 COPY_STATE_FN(stack, allocated_stack, stack, BPF_REG_SIZE)
-#अघोषित COPY_STATE_FN
+#undef COPY_STATE_FN
 
-#घोषणा REALLOC_STATE_FN(NAME, COUNT, FIELD, SIZE)			\
-अटल पूर्णांक पुनः_स्मृति_##NAME##_state(काष्ठा bpf_func_state *state, पूर्णांक size, \
+#define REALLOC_STATE_FN(NAME, COUNT, FIELD, SIZE)			\
+static int realloc_##NAME##_state(struct bpf_func_state *state, int size, \
 				  bool copy_old)			\
-अणु									\
+{									\
 	u32 old_size = state->COUNT;					\
-	काष्ठा bpf_##NAME##_state *new_##FIELD;				\
-	पूर्णांक slot = size / SIZE;						\
+	struct bpf_##NAME##_state *new_##FIELD;				\
+	int slot = size / SIZE;						\
 									\
-	अगर (size <= old_size || !size) अणु				\
-		अगर (copy_old)						\
-			वापस 0;					\
+	if (size <= old_size || !size) {				\
+		if (copy_old)						\
+			return 0;					\
 		state->COUNT = slot * SIZE;				\
-		अगर (!size && old_size) अणु				\
-			kमुक्त(state->FIELD);				\
-			state->FIELD = शून्य;				\
-		पूर्ण							\
-		वापस 0;						\
-	पूर्ण								\
-	new_##FIELD = kदो_स्मृति_array(slot, माप(काष्ठा bpf_##NAME##_state), \
+		if (!size && old_size) {				\
+			kfree(state->FIELD);				\
+			state->FIELD = NULL;				\
+		}							\
+		return 0;						\
+	}								\
+	new_##FIELD = kmalloc_array(slot, sizeof(struct bpf_##NAME##_state), \
 				    GFP_KERNEL);			\
-	अगर (!new_##FIELD)						\
-		वापस -ENOMEM;						\
-	अगर (copy_old) अणु							\
-		अगर (state->FIELD)					\
-			स_नकल(new_##FIELD, state->FIELD,		\
-			       माप(*new_##FIELD) * (old_size / SIZE)); \
-		स_रखो(new_##FIELD + old_size / SIZE, 0,		\
-		       माप(*new_##FIELD) * (size - old_size) / SIZE); \
-	पूर्ण								\
+	if (!new_##FIELD)						\
+		return -ENOMEM;						\
+	if (copy_old) {							\
+		if (state->FIELD)					\
+			memcpy(new_##FIELD, state->FIELD,		\
+			       sizeof(*new_##FIELD) * (old_size / SIZE)); \
+		memset(new_##FIELD + old_size / SIZE, 0,		\
+		       sizeof(*new_##FIELD) * (size - old_size) / SIZE); \
+	}								\
 	state->COUNT = slot * SIZE;					\
-	kमुक्त(state->FIELD);						\
+	kfree(state->FIELD);						\
 	state->FIELD = new_##FIELD;					\
-	वापस 0;							\
-पूर्ण
-/* पुनः_स्मृति_reference_state() */
+	return 0;							\
+}
+/* realloc_reference_state() */
 REALLOC_STATE_FN(reference, acquired_refs, refs, 1)
-/* पुनः_स्मृति_stack_state() */
+/* realloc_stack_state() */
 REALLOC_STATE_FN(stack, allocated_stack, stack, BPF_REG_SIZE)
-#अघोषित REALLOC_STATE_FN
+#undef REALLOC_STATE_FN
 
-/* करो_check() starts with zero-sized stack in काष्ठा bpf_verअगरier_state to
- * make it consume minimal amount of memory. check_stack_ग_लिखो() access from
- * the program calls पूर्णांकo पुनः_स्मृति_func_state() to grow the stack size.
- * Note there is a non-zero 'parent' poपूर्णांकer inside bpf_verअगरier_state
- * which पुनः_स्मृति_stack_state() copies over. It poपूर्णांकs to previous
- * bpf_verअगरier_state which is never पुनः_स्मृतिated.
+/* do_check() starts with zero-sized stack in struct bpf_verifier_state to
+ * make it consume minimal amount of memory. check_stack_write() access from
+ * the program calls into realloc_func_state() to grow the stack size.
+ * Note there is a non-zero 'parent' pointer inside bpf_verifier_state
+ * which realloc_stack_state() copies over. It points to previous
+ * bpf_verifier_state which is never reallocated.
  */
-अटल पूर्णांक पुनः_स्मृति_func_state(काष्ठा bpf_func_state *state, पूर्णांक stack_size,
-			      पूर्णांक refs_size, bool copy_old)
-अणु
-	पूर्णांक err = पुनः_स्मृति_reference_state(state, refs_size, copy_old);
-	अगर (err)
-		वापस err;
-	वापस पुनः_स्मृति_stack_state(state, stack_size, copy_old);
-पूर्ण
+static int realloc_func_state(struct bpf_func_state *state, int stack_size,
+			      int refs_size, bool copy_old)
+{
+	int err = realloc_reference_state(state, refs_size, copy_old);
+	if (err)
+		return err;
+	return realloc_stack_state(state, stack_size, copy_old);
+}
 
-/* Acquire a poपूर्णांकer id from the env and update the state->refs to include
- * this new poपूर्णांकer reference.
- * On success, वापसs a valid poपूर्णांकer id to associate with the रेजिस्टर
- * On failure, वापसs a negative त्रुटि_सं.
+/* Acquire a pointer id from the env and update the state->refs to include
+ * this new pointer reference.
+ * On success, returns a valid pointer id to associate with the register
+ * On failure, returns a negative errno.
  */
-अटल पूर्णांक acquire_reference_state(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_func_state *state = cur_func(env);
-	पूर्णांक new_ofs = state->acquired_refs;
-	पूर्णांक id, err;
+static int acquire_reference_state(struct bpf_verifier_env *env, int insn_idx)
+{
+	struct bpf_func_state *state = cur_func(env);
+	int new_ofs = state->acquired_refs;
+	int id, err;
 
-	err = पुनः_स्मृति_reference_state(state, state->acquired_refs + 1, true);
-	अगर (err)
-		वापस err;
+	err = realloc_reference_state(state, state->acquired_refs + 1, true);
+	if (err)
+		return err;
 	id = ++env->id_gen;
 	state->refs[new_ofs].id = id;
 	state->refs[new_ofs].insn_idx = insn_idx;
 
-	वापस id;
-पूर्ण
+	return id;
+}
 
 /* release function corresponding to acquire_reference_state(). Idempotent. */
-अटल पूर्णांक release_reference_state(काष्ठा bpf_func_state *state, पूर्णांक ptr_id)
-अणु
-	पूर्णांक i, last_idx;
+static int release_reference_state(struct bpf_func_state *state, int ptr_id)
+{
+	int i, last_idx;
 
 	last_idx = state->acquired_refs - 1;
-	क्रम (i = 0; i < state->acquired_refs; i++) अणु
-		अगर (state->refs[i].id == ptr_id) अणु
-			अगर (last_idx && i != last_idx)
-				स_नकल(&state->refs[i], &state->refs[last_idx],
-				       माप(*state->refs));
-			स_रखो(&state->refs[last_idx], 0, माप(*state->refs));
+	for (i = 0; i < state->acquired_refs; i++) {
+		if (state->refs[i].id == ptr_id) {
+			if (last_idx && i != last_idx)
+				memcpy(&state->refs[i], &state->refs[last_idx],
+				       sizeof(*state->refs));
+			memset(&state->refs[last_idx], 0, sizeof(*state->refs));
 			state->acquired_refs--;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक transfer_reference_state(काष्ठा bpf_func_state *dst,
-				    काष्ठा bpf_func_state *src)
-अणु
-	पूर्णांक err = पुनः_स्मृति_reference_state(dst, src->acquired_refs, false);
-	अगर (err)
-		वापस err;
+static int transfer_reference_state(struct bpf_func_state *dst,
+				    struct bpf_func_state *src)
+{
+	int err = realloc_reference_state(dst, src->acquired_refs, false);
+	if (err)
+		return err;
 	err = copy_reference_state(dst, src);
-	अगर (err)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err)
+		return err;
+	return 0;
+}
 
-अटल व्योम मुक्त_func_state(काष्ठा bpf_func_state *state)
-अणु
-	अगर (!state)
-		वापस;
-	kमुक्त(state->refs);
-	kमुक्त(state->stack);
-	kमुक्त(state);
-पूर्ण
+static void free_func_state(struct bpf_func_state *state)
+{
+	if (!state)
+		return;
+	kfree(state->refs);
+	kfree(state->stack);
+	kfree(state);
+}
 
-अटल व्योम clear_jmp_history(काष्ठा bpf_verअगरier_state *state)
-अणु
-	kमुक्त(state->jmp_history);
-	state->jmp_history = शून्य;
+static void clear_jmp_history(struct bpf_verifier_state *state)
+{
+	kfree(state->jmp_history);
+	state->jmp_history = NULL;
 	state->jmp_history_cnt = 0;
-पूर्ण
+}
 
-अटल व्योम मुक्त_verअगरier_state(काष्ठा bpf_verअगरier_state *state,
-				bool मुक्त_self)
-अणु
-	पूर्णांक i;
+static void free_verifier_state(struct bpf_verifier_state *state,
+				bool free_self)
+{
+	int i;
 
-	क्रम (i = 0; i <= state->curframe; i++) अणु
-		मुक्त_func_state(state->frame[i]);
-		state->frame[i] = शून्य;
-	पूर्ण
+	for (i = 0; i <= state->curframe; i++) {
+		free_func_state(state->frame[i]);
+		state->frame[i] = NULL;
+	}
 	clear_jmp_history(state);
-	अगर (मुक्त_self)
-		kमुक्त(state);
-पूर्ण
+	if (free_self)
+		kfree(state);
+}
 
-/* copy verअगरier state from src to dst growing dst stack space
+/* copy verifier state from src to dst growing dst stack space
  * when necessary to accommodate larger src stack
  */
-अटल पूर्णांक copy_func_state(काष्ठा bpf_func_state *dst,
-			   स्थिर काष्ठा bpf_func_state *src)
-अणु
-	पूर्णांक err;
+static int copy_func_state(struct bpf_func_state *dst,
+			   const struct bpf_func_state *src)
+{
+	int err;
 
-	err = पुनः_स्मृति_func_state(dst, src->allocated_stack, src->acquired_refs,
+	err = realloc_func_state(dst, src->allocated_stack, src->acquired_refs,
 				 false);
-	अगर (err)
-		वापस err;
-	स_नकल(dst, src, दुरत्व(काष्ठा bpf_func_state, acquired_refs));
+	if (err)
+		return err;
+	memcpy(dst, src, offsetof(struct bpf_func_state, acquired_refs));
 	err = copy_reference_state(dst, src);
-	अगर (err)
-		वापस err;
-	वापस copy_stack_state(dst, src);
-पूर्ण
+	if (err)
+		return err;
+	return copy_stack_state(dst, src);
+}
 
-अटल पूर्णांक copy_verअगरier_state(काष्ठा bpf_verअगरier_state *dst_state,
-			       स्थिर काष्ठा bpf_verअगरier_state *src)
-अणु
-	काष्ठा bpf_func_state *dst;
-	u32 jmp_sz = माप(काष्ठा bpf_idx_pair) * src->jmp_history_cnt;
-	पूर्णांक i, err;
+static int copy_verifier_state(struct bpf_verifier_state *dst_state,
+			       const struct bpf_verifier_state *src)
+{
+	struct bpf_func_state *dst;
+	u32 jmp_sz = sizeof(struct bpf_idx_pair) * src->jmp_history_cnt;
+	int i, err;
 
-	अगर (dst_state->jmp_history_cnt < src->jmp_history_cnt) अणु
-		kमुक्त(dst_state->jmp_history);
-		dst_state->jmp_history = kदो_स्मृति(jmp_sz, GFP_USER);
-		अगर (!dst_state->jmp_history)
-			वापस -ENOMEM;
-	पूर्ण
-	स_नकल(dst_state->jmp_history, src->jmp_history, jmp_sz);
+	if (dst_state->jmp_history_cnt < src->jmp_history_cnt) {
+		kfree(dst_state->jmp_history);
+		dst_state->jmp_history = kmalloc(jmp_sz, GFP_USER);
+		if (!dst_state->jmp_history)
+			return -ENOMEM;
+	}
+	memcpy(dst_state->jmp_history, src->jmp_history, jmp_sz);
 	dst_state->jmp_history_cnt = src->jmp_history_cnt;
 
-	/* अगर dst has more stack frames then src frame, मुक्त them */
-	क्रम (i = src->curframe + 1; i <= dst_state->curframe; i++) अणु
-		मुक्त_func_state(dst_state->frame[i]);
-		dst_state->frame[i] = शून्य;
-	पूर्ण
+	/* if dst has more stack frames then src frame, free them */
+	for (i = src->curframe + 1; i <= dst_state->curframe; i++) {
+		free_func_state(dst_state->frame[i]);
+		dst_state->frame[i] = NULL;
+	}
 	dst_state->speculative = src->speculative;
 	dst_state->curframe = src->curframe;
 	dst_state->active_spin_lock = src->active_spin_lock;
@@ -944,78 +943,78 @@ REALLOC_STATE_FN(stack, allocated_stack, stack, BPF_REG_SIZE)
 	dst_state->parent = src->parent;
 	dst_state->first_insn_idx = src->first_insn_idx;
 	dst_state->last_insn_idx = src->last_insn_idx;
-	क्रम (i = 0; i <= src->curframe; i++) अणु
+	for (i = 0; i <= src->curframe; i++) {
 		dst = dst_state->frame[i];
-		अगर (!dst) अणु
-			dst = kzalloc(माप(*dst), GFP_KERNEL);
-			अगर (!dst)
-				वापस -ENOMEM;
+		if (!dst) {
+			dst = kzalloc(sizeof(*dst), GFP_KERNEL);
+			if (!dst)
+				return -ENOMEM;
 			dst_state->frame[i] = dst;
-		पूर्ण
+		}
 		err = copy_func_state(dst, src->frame[i]);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-अटल व्योम update_branch_counts(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_verअगरier_state *st)
-अणु
-	जबतक (st) अणु
+static void update_branch_counts(struct bpf_verifier_env *env, struct bpf_verifier_state *st)
+{
+	while (st) {
 		u32 br = --st->branches;
 
 		/* WARN_ON(br > 1) technically makes sense here,
 		 * but see comment in push_stack(), hence:
 		 */
-		WARN_ONCE((पूर्णांक)br < 0,
+		WARN_ONCE((int)br < 0,
 			  "BUG update_branch_counts:branches_to_explore=%d\n",
 			  br);
-		अगर (br)
-			अवरोध;
+		if (br)
+			break;
 		st = st->parent;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pop_stack(काष्ठा bpf_verअगरier_env *env, पूर्णांक *prev_insn_idx,
-		     पूर्णांक *insn_idx, bool pop_log)
-अणु
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state;
-	काष्ठा bpf_verअगरier_stack_elem *elem, *head = env->head;
-	पूर्णांक err;
+static int pop_stack(struct bpf_verifier_env *env, int *prev_insn_idx,
+		     int *insn_idx, bool pop_log)
+{
+	struct bpf_verifier_state *cur = env->cur_state;
+	struct bpf_verifier_stack_elem *elem, *head = env->head;
+	int err;
 
-	अगर (env->head == शून्य)
-		वापस -ENOENT;
+	if (env->head == NULL)
+		return -ENOENT;
 
-	अगर (cur) अणु
-		err = copy_verअगरier_state(cur, &head->st);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	अगर (pop_log)
+	if (cur) {
+		err = copy_verifier_state(cur, &head->st);
+		if (err)
+			return err;
+	}
+	if (pop_log)
 		bpf_vlog_reset(&env->log, head->log_pos);
-	अगर (insn_idx)
+	if (insn_idx)
 		*insn_idx = head->insn_idx;
-	अगर (prev_insn_idx)
+	if (prev_insn_idx)
 		*prev_insn_idx = head->prev_insn_idx;
 	elem = head->next;
-	मुक्त_verअगरier_state(&head->st, false);
-	kमुक्त(head);
+	free_verifier_state(&head->st, false);
+	kfree(head);
 	env->head = elem;
 	env->stack_size--;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bpf_verअगरier_state *push_stack(काष्ठा bpf_verअगरier_env *env,
-					     पूर्णांक insn_idx, पूर्णांक prev_insn_idx,
+static struct bpf_verifier_state *push_stack(struct bpf_verifier_env *env,
+					     int insn_idx, int prev_insn_idx,
 					     bool speculative)
-अणु
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state;
-	काष्ठा bpf_verअगरier_stack_elem *elem;
-	पूर्णांक err;
+{
+	struct bpf_verifier_state *cur = env->cur_state;
+	struct bpf_verifier_stack_elem *elem;
+	int err;
 
-	elem = kzalloc(माप(काष्ठा bpf_verअगरier_stack_elem), GFP_KERNEL);
-	अगर (!elem)
-		जाओ err;
+	elem = kzalloc(sizeof(struct bpf_verifier_stack_elem), GFP_KERNEL);
+	if (!elem)
+		goto err;
 
 	elem->insn_idx = insn_idx;
 	elem->prev_insn_idx = prev_insn_idx;
@@ -1023,48 +1022,48 @@ REALLOC_STATE_FN(stack, allocated_stack, stack, BPF_REG_SIZE)
 	elem->log_pos = env->log.len_used;
 	env->head = elem;
 	env->stack_size++;
-	err = copy_verअगरier_state(&elem->st, cur);
-	अगर (err)
-		जाओ err;
+	err = copy_verifier_state(&elem->st, cur);
+	if (err)
+		goto err;
 	elem->st.speculative |= speculative;
-	अगर (env->stack_size > BPF_COMPLEXITY_LIMIT_JMP_SEQ) अणु
+	if (env->stack_size > BPF_COMPLEXITY_LIMIT_JMP_SEQ) {
 		verbose(env, "The sequence of %d jumps is too complex.\n",
 			env->stack_size);
-		जाओ err;
-	पूर्ण
-	अगर (elem->st.parent) अणु
+		goto err;
+	}
+	if (elem->st.parent) {
 		++elem->st.parent->branches;
 		/* WARN_ON(branches > 2) technically makes sense here,
 		 * but
-		 * 1. speculative states will bump 'branches' क्रम non-branch
-		 * inकाष्ठाions
+		 * 1. speculative states will bump 'branches' for non-branch
+		 * instructions
 		 * 2. is_state_visited() heuristics may decide not to create
-		 * a new state क्रम a sequence of branches and all such current
-		 * and cloned states will be poपूर्णांकing to a single parent state
+		 * a new state for a sequence of branches and all such current
+		 * and cloned states will be pointing to a single parent state
 		 * which might have large 'branches' count.
 		 */
-	पूर्ण
-	वापस &elem->st;
+	}
+	return &elem->st;
 err:
-	मुक्त_verअगरier_state(env->cur_state, true);
-	env->cur_state = शून्य;
-	/* pop all elements and वापस */
-	जबतक (!pop_stack(env, शून्य, शून्य, false));
-	वापस शून्य;
-पूर्ण
+	free_verifier_state(env->cur_state, true);
+	env->cur_state = NULL;
+	/* pop all elements and return */
+	while (!pop_stack(env, NULL, NULL, false));
+	return NULL;
+}
 
-#घोषणा CALLER_SAVED_REGS 6
-अटल स्थिर पूर्णांक caller_saved[CALLER_SAVED_REGS] = अणु
+#define CALLER_SAVED_REGS 6
+static const int caller_saved[CALLER_SAVED_REGS] = {
 	BPF_REG_0, BPF_REG_1, BPF_REG_2, BPF_REG_3, BPF_REG_4, BPF_REG_5
-पूर्ण;
+};
 
-अटल व्योम __mark_reg_not_init(स्थिर काष्ठा bpf_verअगरier_env *env,
-				काष्ठा bpf_reg_state *reg);
+static void __mark_reg_not_init(const struct bpf_verifier_env *env,
+				struct bpf_reg_state *reg);
 
-/* This helper करोesn't clear reg->id */
-अटल व्योम ___mark_reg_known(काष्ठा bpf_reg_state *reg, u64 imm)
-अणु
-	reg->var_off = tnum_स्थिर(imm);
+/* This helper doesn't clear reg->id */
+static void ___mark_reg_known(struct bpf_reg_state *reg, u64 imm)
+{
+	reg->var_off = tnum_const(imm);
 	reg->smin_value = (s64)imm;
 	reg->smax_value = (s64)imm;
 	reg->umin_value = imm;
@@ -1074,128 +1073,128 @@ err:
 	reg->s32_max_value = (s32)imm;
 	reg->u32_min_value = (u32)imm;
 	reg->u32_max_value = (u32)imm;
-पूर्ण
+}
 
-/* Mark the unknown part of a रेजिस्टर (variable offset or scalar value) as
+/* Mark the unknown part of a register (variable offset or scalar value) as
  * known to have the value @imm.
  */
-अटल व्योम __mark_reg_known(काष्ठा bpf_reg_state *reg, u64 imm)
-अणु
-	/* Clear id, off, and जोड़(map_ptr, range) */
-	स_रखो(((u8 *)reg) + माप(reg->type), 0,
-	       दुरत्व(काष्ठा bpf_reg_state, var_off) - माप(reg->type));
+static void __mark_reg_known(struct bpf_reg_state *reg, u64 imm)
+{
+	/* Clear id, off, and union(map_ptr, range) */
+	memset(((u8 *)reg) + sizeof(reg->type), 0,
+	       offsetof(struct bpf_reg_state, var_off) - sizeof(reg->type));
 	___mark_reg_known(reg, imm);
-पूर्ण
+}
 
-अटल व्योम __mark_reg32_known(काष्ठा bpf_reg_state *reg, u64 imm)
-अणु
-	reg->var_off = tnum_स्थिर_subreg(reg->var_off, imm);
+static void __mark_reg32_known(struct bpf_reg_state *reg, u64 imm)
+{
+	reg->var_off = tnum_const_subreg(reg->var_off, imm);
 	reg->s32_min_value = (s32)imm;
 	reg->s32_max_value = (s32)imm;
 	reg->u32_min_value = (u32)imm;
 	reg->u32_max_value = (u32)imm;
-पूर्ण
+}
 
-/* Mark the 'variable offset' part of a रेजिस्टर as zero.  This should be
- * used only on रेजिस्टरs holding a poपूर्णांकer type.
+/* Mark the 'variable offset' part of a register as zero.  This should be
+ * used only on registers holding a pointer type.
  */
-अटल व्योम __mark_reg_known_zero(काष्ठा bpf_reg_state *reg)
-अणु
+static void __mark_reg_known_zero(struct bpf_reg_state *reg)
+{
 	__mark_reg_known(reg, 0);
-पूर्ण
+}
 
-अटल व्योम __mark_reg_स्थिर_zero(काष्ठा bpf_reg_state *reg)
-अणु
+static void __mark_reg_const_zero(struct bpf_reg_state *reg)
+{
 	__mark_reg_known(reg, 0);
 	reg->type = SCALAR_VALUE;
-पूर्ण
+}
 
-अटल व्योम mark_reg_known_zero(काष्ठा bpf_verअगरier_env *env,
-				काष्ठा bpf_reg_state *regs, u32 regno)
-अणु
-	अगर (WARN_ON(regno >= MAX_BPF_REG)) अणु
+static void mark_reg_known_zero(struct bpf_verifier_env *env,
+				struct bpf_reg_state *regs, u32 regno)
+{
+	if (WARN_ON(regno >= MAX_BPF_REG)) {
 		verbose(env, "mark_reg_known_zero(regs, %u)\n", regno);
-		/* Something bad happened, let's समाप्त all regs */
-		क्रम (regno = 0; regno < MAX_BPF_REG; regno++)
+		/* Something bad happened, let's kill all regs */
+		for (regno = 0; regno < MAX_BPF_REG; regno++)
 			__mark_reg_not_init(env, regs + regno);
-		वापस;
-	पूर्ण
+		return;
+	}
 	__mark_reg_known_zero(regs + regno);
-पूर्ण
+}
 
-अटल व्योम mark_ptr_not_null_reg(काष्ठा bpf_reg_state *reg)
-अणु
-	चयन (reg->type) अणु
-	हाल PTR_TO_MAP_VALUE_OR_शून्य: अणु
-		स्थिर काष्ठा bpf_map *map = reg->map_ptr;
+static void mark_ptr_not_null_reg(struct bpf_reg_state *reg)
+{
+	switch (reg->type) {
+	case PTR_TO_MAP_VALUE_OR_NULL: {
+		const struct bpf_map *map = reg->map_ptr;
 
-		अगर (map->inner_map_meta) अणु
+		if (map->inner_map_meta) {
 			reg->type = CONST_PTR_TO_MAP;
 			reg->map_ptr = map->inner_map_meta;
-		पूर्ण अन्यथा अगर (map->map_type == BPF_MAP_TYPE_XSKMAP) अणु
+		} else if (map->map_type == BPF_MAP_TYPE_XSKMAP) {
 			reg->type = PTR_TO_XDP_SOCK;
-		पूर्ण अन्यथा अगर (map->map_type == BPF_MAP_TYPE_SOCKMAP ||
-			   map->map_type == BPF_MAP_TYPE_SOCKHASH) अणु
+		} else if (map->map_type == BPF_MAP_TYPE_SOCKMAP ||
+			   map->map_type == BPF_MAP_TYPE_SOCKHASH) {
 			reg->type = PTR_TO_SOCKET;
-		पूर्ण अन्यथा अणु
+		} else {
 			reg->type = PTR_TO_MAP_VALUE;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल PTR_TO_SOCKET_OR_शून्य:
+		}
+		break;
+	}
+	case PTR_TO_SOCKET_OR_NULL:
 		reg->type = PTR_TO_SOCKET;
-		अवरोध;
-	हाल PTR_TO_SOCK_COMMON_OR_शून्य:
+		break;
+	case PTR_TO_SOCK_COMMON_OR_NULL:
 		reg->type = PTR_TO_SOCK_COMMON;
-		अवरोध;
-	हाल PTR_TO_TCP_SOCK_OR_शून्य:
+		break;
+	case PTR_TO_TCP_SOCK_OR_NULL:
 		reg->type = PTR_TO_TCP_SOCK;
-		अवरोध;
-	हाल PTR_TO_BTF_ID_OR_शून्य:
+		break;
+	case PTR_TO_BTF_ID_OR_NULL:
 		reg->type = PTR_TO_BTF_ID;
-		अवरोध;
-	हाल PTR_TO_MEM_OR_शून्य:
+		break;
+	case PTR_TO_MEM_OR_NULL:
 		reg->type = PTR_TO_MEM;
-		अवरोध;
-	हाल PTR_TO_RDONLY_BUF_OR_शून्य:
+		break;
+	case PTR_TO_RDONLY_BUF_OR_NULL:
 		reg->type = PTR_TO_RDONLY_BUF;
-		अवरोध;
-	हाल PTR_TO_RDWR_BUF_OR_शून्य:
+		break;
+	case PTR_TO_RDWR_BUF_OR_NULL:
 		reg->type = PTR_TO_RDWR_BUF;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(1, "unknown nullable register type");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool reg_is_pkt_poपूर्णांकer(स्थिर काष्ठा bpf_reg_state *reg)
-अणु
-	वापस type_is_pkt_poपूर्णांकer(reg->type);
-पूर्ण
+static bool reg_is_pkt_pointer(const struct bpf_reg_state *reg)
+{
+	return type_is_pkt_pointer(reg->type);
+}
 
-अटल bool reg_is_pkt_poपूर्णांकer_any(स्थिर काष्ठा bpf_reg_state *reg)
-अणु
-	वापस reg_is_pkt_poपूर्णांकer(reg) ||
+static bool reg_is_pkt_pointer_any(const struct bpf_reg_state *reg)
+{
+	return reg_is_pkt_pointer(reg) ||
 	       reg->type == PTR_TO_PACKET_END;
-पूर्ण
+}
 
-/* Unmodअगरied PTR_TO_PACKET[_META,_END] रेजिस्टर from ctx access. */
-अटल bool reg_is_init_pkt_poपूर्णांकer(स्थिर काष्ठा bpf_reg_state *reg,
-				    क्रमागत bpf_reg_type which)
-अणु
-	/* The रेजिस्टर can alपढ़ोy have a range from prior markings.
-	 * This is fine as दीर्घ as it hasn't been advanced from its
+/* Unmodified PTR_TO_PACKET[_META,_END] register from ctx access. */
+static bool reg_is_init_pkt_pointer(const struct bpf_reg_state *reg,
+				    enum bpf_reg_type which)
+{
+	/* The register can already have a range from prior markings.
+	 * This is fine as long as it hasn't been advanced from its
 	 * origin.
 	 */
-	वापस reg->type == which &&
+	return reg->type == which &&
 	       reg->id == 0 &&
 	       reg->off == 0 &&
-	       tnum_equals_स्थिर(reg->var_off, 0);
-पूर्ण
+	       tnum_equals_const(reg->var_off, 0);
+}
 
-/* Reset the min/max bounds of a रेजिस्टर */
-अटल व्योम __mark_reg_unbounded(काष्ठा bpf_reg_state *reg)
-अणु
+/* Reset the min/max bounds of a register */
+static void __mark_reg_unbounded(struct bpf_reg_state *reg)
+{
 	reg->smin_value = S64_MIN;
 	reg->smax_value = S64_MAX;
 	reg->umin_value = 0;
@@ -1205,468 +1204,468 @@ err:
 	reg->s32_max_value = S32_MAX;
 	reg->u32_min_value = 0;
 	reg->u32_max_value = U32_MAX;
-पूर्ण
+}
 
-अटल व्योम __mark_reg64_unbounded(काष्ठा bpf_reg_state *reg)
-अणु
+static void __mark_reg64_unbounded(struct bpf_reg_state *reg)
+{
 	reg->smin_value = S64_MIN;
 	reg->smax_value = S64_MAX;
 	reg->umin_value = 0;
 	reg->umax_value = U64_MAX;
-पूर्ण
+}
 
-अटल व्योम __mark_reg32_unbounded(काष्ठा bpf_reg_state *reg)
-अणु
+static void __mark_reg32_unbounded(struct bpf_reg_state *reg)
+{
 	reg->s32_min_value = S32_MIN;
 	reg->s32_max_value = S32_MAX;
 	reg->u32_min_value = 0;
 	reg->u32_max_value = U32_MAX;
-पूर्ण
+}
 
-अटल व्योम __update_reg32_bounds(काष्ठा bpf_reg_state *reg)
-अणु
-	काष्ठा tnum var32_off = tnum_subreg(reg->var_off);
+static void __update_reg32_bounds(struct bpf_reg_state *reg)
+{
+	struct tnum var32_off = tnum_subreg(reg->var_off);
 
-	/* min चिन्हित is max(sign bit) | min(other bits) */
+	/* min signed is max(sign bit) | min(other bits) */
 	reg->s32_min_value = max_t(s32, reg->s32_min_value,
 			var32_off.value | (var32_off.mask & S32_MIN));
-	/* max चिन्हित is min(sign bit) | max(other bits) */
+	/* max signed is min(sign bit) | max(other bits) */
 	reg->s32_max_value = min_t(s32, reg->s32_max_value,
 			var32_off.value | (var32_off.mask & S32_MAX));
 	reg->u32_min_value = max_t(u32, reg->u32_min_value, (u32)var32_off.value);
 	reg->u32_max_value = min(reg->u32_max_value,
 				 (u32)(var32_off.value | var32_off.mask));
-पूर्ण
+}
 
-अटल व्योम __update_reg64_bounds(काष्ठा bpf_reg_state *reg)
-अणु
-	/* min चिन्हित is max(sign bit) | min(other bits) */
+static void __update_reg64_bounds(struct bpf_reg_state *reg)
+{
+	/* min signed is max(sign bit) | min(other bits) */
 	reg->smin_value = max_t(s64, reg->smin_value,
 				reg->var_off.value | (reg->var_off.mask & S64_MIN));
-	/* max चिन्हित is min(sign bit) | max(other bits) */
+	/* max signed is min(sign bit) | max(other bits) */
 	reg->smax_value = min_t(s64, reg->smax_value,
 				reg->var_off.value | (reg->var_off.mask & S64_MAX));
 	reg->umin_value = max(reg->umin_value, reg->var_off.value);
 	reg->umax_value = min(reg->umax_value,
 			      reg->var_off.value | reg->var_off.mask);
-पूर्ण
+}
 
-अटल व्योम __update_reg_bounds(काष्ठा bpf_reg_state *reg)
-अणु
+static void __update_reg_bounds(struct bpf_reg_state *reg)
+{
 	__update_reg32_bounds(reg);
 	__update_reg64_bounds(reg);
-पूर्ण
+}
 
-/* Uses चिन्हित min/max values to inक्रमm अचिन्हित, and vice-versa */
-अटल व्योम __reg32_deduce_bounds(काष्ठा bpf_reg_state *reg)
-अणु
-	/* Learn sign from चिन्हित bounds.
-	 * If we cannot cross the sign boundary, then चिन्हित and अचिन्हित bounds
-	 * are the same, so combine.  This works even in the negative हाल, e.g.
+/* Uses signed min/max values to inform unsigned, and vice-versa */
+static void __reg32_deduce_bounds(struct bpf_reg_state *reg)
+{
+	/* Learn sign from signed bounds.
+	 * If we cannot cross the sign boundary, then signed and unsigned bounds
+	 * are the same, so combine.  This works even in the negative case, e.g.
 	 * -3 s<= x s<= -1 implies 0xf...fd u<= x u<= 0xf...ff.
 	 */
-	अगर (reg->s32_min_value >= 0 || reg->s32_max_value < 0) अणु
+	if (reg->s32_min_value >= 0 || reg->s32_max_value < 0) {
 		reg->s32_min_value = reg->u32_min_value =
 			max_t(u32, reg->s32_min_value, reg->u32_min_value);
 		reg->s32_max_value = reg->u32_max_value =
 			min_t(u32, reg->s32_max_value, reg->u32_max_value);
-		वापस;
-	पूर्ण
-	/* Learn sign from अचिन्हित bounds.  Signed bounds cross the sign
+		return;
+	}
+	/* Learn sign from unsigned bounds.  Signed bounds cross the sign
 	 * boundary, so we must be careful.
 	 */
-	अगर ((s32)reg->u32_max_value >= 0) अणु
+	if ((s32)reg->u32_max_value >= 0) {
 		/* Positive.  We can't learn anything from the smin, but smax
 		 * is positive, hence safe.
 		 */
 		reg->s32_min_value = reg->u32_min_value;
 		reg->s32_max_value = reg->u32_max_value =
 			min_t(u32, reg->s32_max_value, reg->u32_max_value);
-	पूर्ण अन्यथा अगर ((s32)reg->u32_min_value < 0) अणु
+	} else if ((s32)reg->u32_min_value < 0) {
 		/* Negative.  We can't learn anything from the smax, but smin
 		 * is negative, hence safe.
 		 */
 		reg->s32_min_value = reg->u32_min_value =
 			max_t(u32, reg->s32_min_value, reg->u32_min_value);
 		reg->s32_max_value = reg->u32_max_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __reg64_deduce_bounds(काष्ठा bpf_reg_state *reg)
-अणु
-	/* Learn sign from चिन्हित bounds.
-	 * If we cannot cross the sign boundary, then चिन्हित and अचिन्हित bounds
-	 * are the same, so combine.  This works even in the negative हाल, e.g.
+static void __reg64_deduce_bounds(struct bpf_reg_state *reg)
+{
+	/* Learn sign from signed bounds.
+	 * If we cannot cross the sign boundary, then signed and unsigned bounds
+	 * are the same, so combine.  This works even in the negative case, e.g.
 	 * -3 s<= x s<= -1 implies 0xf...fd u<= x u<= 0xf...ff.
 	 */
-	अगर (reg->smin_value >= 0 || reg->smax_value < 0) अणु
+	if (reg->smin_value >= 0 || reg->smax_value < 0) {
 		reg->smin_value = reg->umin_value = max_t(u64, reg->smin_value,
 							  reg->umin_value);
 		reg->smax_value = reg->umax_value = min_t(u64, reg->smax_value,
 							  reg->umax_value);
-		वापस;
-	पूर्ण
-	/* Learn sign from अचिन्हित bounds.  Signed bounds cross the sign
+		return;
+	}
+	/* Learn sign from unsigned bounds.  Signed bounds cross the sign
 	 * boundary, so we must be careful.
 	 */
-	अगर ((s64)reg->umax_value >= 0) अणु
+	if ((s64)reg->umax_value >= 0) {
 		/* Positive.  We can't learn anything from the smin, but smax
 		 * is positive, hence safe.
 		 */
 		reg->smin_value = reg->umin_value;
 		reg->smax_value = reg->umax_value = min_t(u64, reg->smax_value,
 							  reg->umax_value);
-	पूर्ण अन्यथा अगर ((s64)reg->umin_value < 0) अणु
+	} else if ((s64)reg->umin_value < 0) {
 		/* Negative.  We can't learn anything from the smax, but smin
 		 * is negative, hence safe.
 		 */
 		reg->smin_value = reg->umin_value = max_t(u64, reg->smin_value,
 							  reg->umin_value);
 		reg->smax_value = reg->umax_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __reg_deduce_bounds(काष्ठा bpf_reg_state *reg)
-अणु
+static void __reg_deduce_bounds(struct bpf_reg_state *reg)
+{
 	__reg32_deduce_bounds(reg);
 	__reg64_deduce_bounds(reg);
-पूर्ण
+}
 
-/* Attempts to improve var_off based on अचिन्हित min/max inक्रमmation */
-अटल व्योम __reg_bound_offset(काष्ठा bpf_reg_state *reg)
-अणु
-	काष्ठा tnum var64_off = tnum_पूर्णांकersect(reg->var_off,
+/* Attempts to improve var_off based on unsigned min/max information */
+static void __reg_bound_offset(struct bpf_reg_state *reg)
+{
+	struct tnum var64_off = tnum_intersect(reg->var_off,
 					       tnum_range(reg->umin_value,
 							  reg->umax_value));
-	काष्ठा tnum var32_off = tnum_पूर्णांकersect(tnum_subreg(reg->var_off),
+	struct tnum var32_off = tnum_intersect(tnum_subreg(reg->var_off),
 						tnum_range(reg->u32_min_value,
 							   reg->u32_max_value));
 
 	reg->var_off = tnum_or(tnum_clear_subreg(var64_off), var32_off);
-पूर्ण
+}
 
-अटल व्योम __reg_assign_32_पूर्णांकo_64(काष्ठा bpf_reg_state *reg)
-अणु
+static void __reg_assign_32_into_64(struct bpf_reg_state *reg)
+{
 	reg->umin_value = reg->u32_min_value;
 	reg->umax_value = reg->u32_max_value;
-	/* Attempt to pull 32-bit चिन्हित bounds पूर्णांकo 64-bit bounds
-	 * but must be positive otherwise set to worse हाल bounds
+	/* Attempt to pull 32-bit signed bounds into 64-bit bounds
+	 * but must be positive otherwise set to worse case bounds
 	 * and refine later from tnum.
 	 */
-	अगर (reg->s32_min_value >= 0 && reg->s32_max_value >= 0)
+	if (reg->s32_min_value >= 0 && reg->s32_max_value >= 0)
 		reg->smax_value = reg->s32_max_value;
-	अन्यथा
+	else
 		reg->smax_value = U32_MAX;
-	अगर (reg->s32_min_value >= 0)
+	if (reg->s32_min_value >= 0)
 		reg->smin_value = reg->s32_min_value;
-	अन्यथा
+	else
 		reg->smin_value = 0;
-पूर्ण
+}
 
-अटल व्योम __reg_combine_32_पूर्णांकo_64(काष्ठा bpf_reg_state *reg)
-अणु
-	/* special हाल when 64-bit रेजिस्टर has upper 32-bit रेजिस्टर
+static void __reg_combine_32_into_64(struct bpf_reg_state *reg)
+{
+	/* special case when 64-bit register has upper 32-bit register
 	 * zeroed. Typically happens after zext or <<32, >>32 sequence
 	 * allowing us to use 32-bit bounds directly,
 	 */
-	अगर (tnum_equals_स्थिर(tnum_clear_subreg(reg->var_off), 0)) अणु
-		__reg_assign_32_पूर्णांकo_64(reg);
-	पूर्ण अन्यथा अणु
-		/* Otherwise the best we can करो is push lower 32bit known and
-		 * unknown bits पूर्णांकo रेजिस्टर (var_off set from jmp logic)
+	if (tnum_equals_const(tnum_clear_subreg(reg->var_off), 0)) {
+		__reg_assign_32_into_64(reg);
+	} else {
+		/* Otherwise the best we can do is push lower 32bit known and
+		 * unknown bits into register (var_off set from jmp logic)
 		 * then learn as much as possible from the 64-bit tnum
 		 * known and unknown bits. The previous smin/smax bounds are
 		 * invalid here because of jmp32 compare so mark them unknown
-		 * so they करो not impact tnum bounds calculation.
+		 * so they do not impact tnum bounds calculation.
 		 */
 		__mark_reg64_unbounded(reg);
 		__update_reg_bounds(reg);
-	पूर्ण
+	}
 
 	/* Intersecting with the old var_off might have improved our bounds
-	 * slightly.  e.g. अगर umax was 0x7f...f and var_off was (0; 0xf...fc),
+	 * slightly.  e.g. if umax was 0x7f...f and var_off was (0; 0xf...fc),
 	 * then new var_off is (0; 0x7f...fc) which improves our umax.
 	 */
 	__reg_deduce_bounds(reg);
 	__reg_bound_offset(reg);
 	__update_reg_bounds(reg);
-पूर्ण
+}
 
-अटल bool __reg64_bound_s32(s64 a)
-अणु
-	वापस a > S32_MIN && a < S32_MAX;
-पूर्ण
+static bool __reg64_bound_s32(s64 a)
+{
+	return a > S32_MIN && a < S32_MAX;
+}
 
-अटल bool __reg64_bound_u32(u64 a)
-अणु
-	वापस a > U32_MIN && a < U32_MAX;
-पूर्ण
+static bool __reg64_bound_u32(u64 a)
+{
+	return a > U32_MIN && a < U32_MAX;
+}
 
-अटल व्योम __reg_combine_64_पूर्णांकo_32(काष्ठा bpf_reg_state *reg)
-अणु
+static void __reg_combine_64_into_32(struct bpf_reg_state *reg)
+{
 	__mark_reg32_unbounded(reg);
 
-	अगर (__reg64_bound_s32(reg->smin_value) && __reg64_bound_s32(reg->smax_value)) अणु
+	if (__reg64_bound_s32(reg->smin_value) && __reg64_bound_s32(reg->smax_value)) {
 		reg->s32_min_value = (s32)reg->smin_value;
 		reg->s32_max_value = (s32)reg->smax_value;
-	पूर्ण
-	अगर (__reg64_bound_u32(reg->umin_value) && __reg64_bound_u32(reg->umax_value)) अणु
+	}
+	if (__reg64_bound_u32(reg->umin_value) && __reg64_bound_u32(reg->umax_value)) {
 		reg->u32_min_value = (u32)reg->umin_value;
 		reg->u32_max_value = (u32)reg->umax_value;
-	पूर्ण
+	}
 
 	/* Intersecting with the old var_off might have improved our bounds
-	 * slightly.  e.g. अगर umax was 0x7f...f and var_off was (0; 0xf...fc),
+	 * slightly.  e.g. if umax was 0x7f...f and var_off was (0; 0xf...fc),
 	 * then new var_off is (0; 0x7f...fc) which improves our umax.
 	 */
 	__reg_deduce_bounds(reg);
 	__reg_bound_offset(reg);
 	__update_reg_bounds(reg);
-पूर्ण
+}
 
-/* Mark a रेजिस्टर as having a completely unknown (scalar) value. */
-अटल व्योम __mark_reg_unknown(स्थिर काष्ठा bpf_verअगरier_env *env,
-			       काष्ठा bpf_reg_state *reg)
-अणु
+/* Mark a register as having a completely unknown (scalar) value. */
+static void __mark_reg_unknown(const struct bpf_verifier_env *env,
+			       struct bpf_reg_state *reg)
+{
 	/*
-	 * Clear type, id, off, and जोड़(map_ptr, range) and
-	 * padding between 'type' and जोड़
+	 * Clear type, id, off, and union(map_ptr, range) and
+	 * padding between 'type' and union
 	 */
-	स_रखो(reg, 0, दुरत्व(काष्ठा bpf_reg_state, var_off));
+	memset(reg, 0, offsetof(struct bpf_reg_state, var_off));
 	reg->type = SCALAR_VALUE;
 	reg->var_off = tnum_unknown;
 	reg->frameno = 0;
 	reg->precise = env->subprog_cnt > 1 || !env->bpf_capable;
 	__mark_reg_unbounded(reg);
-पूर्ण
+}
 
-अटल व्योम mark_reg_unknown(काष्ठा bpf_verअगरier_env *env,
-			     काष्ठा bpf_reg_state *regs, u32 regno)
-अणु
-	अगर (WARN_ON(regno >= MAX_BPF_REG)) अणु
+static void mark_reg_unknown(struct bpf_verifier_env *env,
+			     struct bpf_reg_state *regs, u32 regno)
+{
+	if (WARN_ON(regno >= MAX_BPF_REG)) {
 		verbose(env, "mark_reg_unknown(regs, %u)\n", regno);
-		/* Something bad happened, let's समाप्त all regs except FP */
-		क्रम (regno = 0; regno < BPF_REG_FP; regno++)
+		/* Something bad happened, let's kill all regs except FP */
+		for (regno = 0; regno < BPF_REG_FP; regno++)
 			__mark_reg_not_init(env, regs + regno);
-		वापस;
-	पूर्ण
+		return;
+	}
 	__mark_reg_unknown(env, regs + regno);
-पूर्ण
+}
 
-अटल व्योम __mark_reg_not_init(स्थिर काष्ठा bpf_verअगरier_env *env,
-				काष्ठा bpf_reg_state *reg)
-अणु
+static void __mark_reg_not_init(const struct bpf_verifier_env *env,
+				struct bpf_reg_state *reg)
+{
 	__mark_reg_unknown(env, reg);
 	reg->type = NOT_INIT;
-पूर्ण
+}
 
-अटल व्योम mark_reg_not_init(काष्ठा bpf_verअगरier_env *env,
-			      काष्ठा bpf_reg_state *regs, u32 regno)
-अणु
-	अगर (WARN_ON(regno >= MAX_BPF_REG)) अणु
+static void mark_reg_not_init(struct bpf_verifier_env *env,
+			      struct bpf_reg_state *regs, u32 regno)
+{
+	if (WARN_ON(regno >= MAX_BPF_REG)) {
 		verbose(env, "mark_reg_not_init(regs, %u)\n", regno);
-		/* Something bad happened, let's समाप्त all regs except FP */
-		क्रम (regno = 0; regno < BPF_REG_FP; regno++)
+		/* Something bad happened, let's kill all regs except FP */
+		for (regno = 0; regno < BPF_REG_FP; regno++)
 			__mark_reg_not_init(env, regs + regno);
-		वापस;
-	पूर्ण
+		return;
+	}
 	__mark_reg_not_init(env, regs + regno);
-पूर्ण
+}
 
-अटल व्योम mark_btf_ld_reg(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_reg_state *regs, u32 regno,
-			    क्रमागत bpf_reg_type reg_type,
-			    काष्ठा btf *btf, u32 btf_id)
-अणु
-	अगर (reg_type == SCALAR_VALUE) अणु
+static void mark_btf_ld_reg(struct bpf_verifier_env *env,
+			    struct bpf_reg_state *regs, u32 regno,
+			    enum bpf_reg_type reg_type,
+			    struct btf *btf, u32 btf_id)
+{
+	if (reg_type == SCALAR_VALUE) {
 		mark_reg_unknown(env, regs, regno);
-		वापस;
-	पूर्ण
+		return;
+	}
 	mark_reg_known_zero(env, regs, regno);
 	regs[regno].type = PTR_TO_BTF_ID;
 	regs[regno].btf = btf;
 	regs[regno].btf_id = btf_id;
-पूर्ण
+}
 
-#घोषणा DEF_NOT_SUBREG	(0)
-अटल व्योम init_reg_state(काष्ठा bpf_verअगरier_env *env,
-			   काष्ठा bpf_func_state *state)
-अणु
-	काष्ठा bpf_reg_state *regs = state->regs;
-	पूर्णांक i;
+#define DEF_NOT_SUBREG	(0)
+static void init_reg_state(struct bpf_verifier_env *env,
+			   struct bpf_func_state *state)
+{
+	struct bpf_reg_state *regs = state->regs;
+	int i;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++) अणु
+	for (i = 0; i < MAX_BPF_REG; i++) {
 		mark_reg_not_init(env, regs, i);
 		regs[i].live = REG_LIVE_NONE;
-		regs[i].parent = शून्य;
+		regs[i].parent = NULL;
 		regs[i].subreg_def = DEF_NOT_SUBREG;
-	पूर्ण
+	}
 
-	/* frame poपूर्णांकer */
+	/* frame pointer */
 	regs[BPF_REG_FP].type = PTR_TO_STACK;
 	mark_reg_known_zero(env, regs, BPF_REG_FP);
 	regs[BPF_REG_FP].frameno = state->frameno;
-पूर्ण
+}
 
-#घोषणा BPF_MAIN_FUNC (-1)
-अटल व्योम init_func_state(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_func_state *state,
-			    पूर्णांक callsite, पूर्णांक frameno, पूर्णांक subprogno)
-अणु
+#define BPF_MAIN_FUNC (-1)
+static void init_func_state(struct bpf_verifier_env *env,
+			    struct bpf_func_state *state,
+			    int callsite, int frameno, int subprogno)
+{
 	state->callsite = callsite;
 	state->frameno = frameno;
 	state->subprogno = subprogno;
 	init_reg_state(env, state);
-पूर्ण
+}
 
-क्रमागत reg_arg_type अणु
-	SRC_OP,		/* रेजिस्टर is used as source opeअक्रम */
-	DST_OP,		/* रेजिस्टर is used as destination opeअक्रम */
-	DST_OP_NO_MARK	/* same as above, check only, करोn't mark */
-पूर्ण;
+enum reg_arg_type {
+	SRC_OP,		/* register is used as source operand */
+	DST_OP,		/* register is used as destination operand */
+	DST_OP_NO_MARK	/* same as above, check only, don't mark */
+};
 
-अटल पूर्णांक cmp_subprogs(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	वापस ((काष्ठा bpf_subprog_info *)a)->start -
-	       ((काष्ठा bpf_subprog_info *)b)->start;
-पूर्ण
+static int cmp_subprogs(const void *a, const void *b)
+{
+	return ((struct bpf_subprog_info *)a)->start -
+	       ((struct bpf_subprog_info *)b)->start;
+}
 
-अटल पूर्णांक find_subprog(काष्ठा bpf_verअगरier_env *env, पूर्णांक off)
-अणु
-	काष्ठा bpf_subprog_info *p;
+static int find_subprog(struct bpf_verifier_env *env, int off)
+{
+	struct bpf_subprog_info *p;
 
-	p = द्वा_खोज(&off, env->subprog_info, env->subprog_cnt,
-		    माप(env->subprog_info[0]), cmp_subprogs);
-	अगर (!p)
-		वापस -ENOENT;
-	वापस p - env->subprog_info;
+	p = bsearch(&off, env->subprog_info, env->subprog_cnt,
+		    sizeof(env->subprog_info[0]), cmp_subprogs);
+	if (!p)
+		return -ENOENT;
+	return p - env->subprog_info;
 
-पूर्ण
+}
 
-अटल पूर्णांक add_subprog(काष्ठा bpf_verअगरier_env *env, पूर्णांक off)
-अणु
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक ret;
+static int add_subprog(struct bpf_verifier_env *env, int off)
+{
+	int insn_cnt = env->prog->len;
+	int ret;
 
-	अगर (off >= insn_cnt || off < 0) अणु
+	if (off >= insn_cnt || off < 0) {
 		verbose(env, "call to invalid destination\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	ret = find_subprog(env, off);
-	अगर (ret >= 0)
-		वापस ret;
-	अगर (env->subprog_cnt >= BPF_MAX_SUBPROGS) अणु
+	if (ret >= 0)
+		return ret;
+	if (env->subprog_cnt >= BPF_MAX_SUBPROGS) {
 		verbose(env, "too many subprograms\n");
-		वापस -E2BIG;
-	पूर्ण
-	/* determine subprog starts. The end is one beक्रमe the next starts */
+		return -E2BIG;
+	}
+	/* determine subprog starts. The end is one before the next starts */
 	env->subprog_info[env->subprog_cnt++].start = off;
 	sort(env->subprog_info, env->subprog_cnt,
-	     माप(env->subprog_info[0]), cmp_subprogs, शून्य);
-	वापस env->subprog_cnt - 1;
-पूर्ण
+	     sizeof(env->subprog_info[0]), cmp_subprogs, NULL);
+	return env->subprog_cnt - 1;
+}
 
-काष्ठा bpf_kfunc_desc अणु
-	काष्ठा btf_func_model func_model;
+struct bpf_kfunc_desc {
+	struct btf_func_model func_model;
 	u32 func_id;
 	s32 imm;
-पूर्ण;
+};
 
-#घोषणा MAX_KFUNC_DESCS 256
-काष्ठा bpf_kfunc_desc_tab अणु
-	काष्ठा bpf_kfunc_desc descs[MAX_KFUNC_DESCS];
+#define MAX_KFUNC_DESCS 256
+struct bpf_kfunc_desc_tab {
+	struct bpf_kfunc_desc descs[MAX_KFUNC_DESCS];
 	u32 nr_descs;
-पूर्ण;
+};
 
-अटल पूर्णांक kfunc_desc_cmp_by_id(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा bpf_kfunc_desc *d0 = a;
-	स्थिर काष्ठा bpf_kfunc_desc *d1 = b;
+static int kfunc_desc_cmp_by_id(const void *a, const void *b)
+{
+	const struct bpf_kfunc_desc *d0 = a;
+	const struct bpf_kfunc_desc *d1 = b;
 
 	/* func_id is not greater than BTF_MAX_TYPE */
-	वापस d0->func_id - d1->func_id;
-पूर्ण
+	return d0->func_id - d1->func_id;
+}
 
-अटल स्थिर काष्ठा bpf_kfunc_desc *
-find_kfunc_desc(स्थिर काष्ठा bpf_prog *prog, u32 func_id)
-अणु
-	काष्ठा bpf_kfunc_desc desc = अणु
+static const struct bpf_kfunc_desc *
+find_kfunc_desc(const struct bpf_prog *prog, u32 func_id)
+{
+	struct bpf_kfunc_desc desc = {
 		.func_id = func_id,
-	पूर्ण;
-	काष्ठा bpf_kfunc_desc_tab *tab;
+	};
+	struct bpf_kfunc_desc_tab *tab;
 
 	tab = prog->aux->kfunc_tab;
-	वापस द्वा_खोज(&desc, tab->descs, tab->nr_descs,
-		       माप(tab->descs[0]), kfunc_desc_cmp_by_id);
-पूर्ण
+	return bsearch(&desc, tab->descs, tab->nr_descs,
+		       sizeof(tab->descs[0]), kfunc_desc_cmp_by_id);
+}
 
-अटल पूर्णांक add_kfunc_call(काष्ठा bpf_verअगरier_env *env, u32 func_id)
-अणु
-	स्थिर काष्ठा btf_type *func, *func_proto;
-	काष्ठा bpf_kfunc_desc_tab *tab;
-	काष्ठा bpf_prog_aux *prog_aux;
-	काष्ठा bpf_kfunc_desc *desc;
-	स्थिर अक्षर *func_name;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक err;
+static int add_kfunc_call(struct bpf_verifier_env *env, u32 func_id)
+{
+	const struct btf_type *func, *func_proto;
+	struct bpf_kfunc_desc_tab *tab;
+	struct bpf_prog_aux *prog_aux;
+	struct bpf_kfunc_desc *desc;
+	const char *func_name;
+	unsigned long addr;
+	int err;
 
 	prog_aux = env->prog->aux;
 	tab = prog_aux->kfunc_tab;
-	अगर (!tab) अणु
-		अगर (!btf_vmlinux) अणु
+	if (!tab) {
+		if (!btf_vmlinux) {
 			verbose(env, "calling kernel function is not supported without CONFIG_DEBUG_INFO_BTF\n");
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 
-		अगर (!env->prog->jit_requested) अणु
+		if (!env->prog->jit_requested) {
 			verbose(env, "JIT is required for calling kernel function\n");
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 
-		अगर (!bpf_jit_supports_kfunc_call()) अणु
+		if (!bpf_jit_supports_kfunc_call()) {
 			verbose(env, "JIT does not support calling kernel function\n");
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 
-		अगर (!env->prog->gpl_compatible) अणु
+		if (!env->prog->gpl_compatible) {
 			verbose(env, "cannot call kernel function from non-GPL compatible program\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		tab = kzalloc(माप(*tab), GFP_KERNEL);
-		अगर (!tab)
-			वापस -ENOMEM;
+		tab = kzalloc(sizeof(*tab), GFP_KERNEL);
+		if (!tab)
+			return -ENOMEM;
 		prog_aux->kfunc_tab = tab;
-	पूर्ण
+	}
 
-	अगर (find_kfunc_desc(env->prog, func_id))
-		वापस 0;
+	if (find_kfunc_desc(env->prog, func_id))
+		return 0;
 
-	अगर (tab->nr_descs == MAX_KFUNC_DESCS) अणु
+	if (tab->nr_descs == MAX_KFUNC_DESCS) {
 		verbose(env, "too many different kernel function calls\n");
-		वापस -E2BIG;
-	पूर्ण
+		return -E2BIG;
+	}
 
 	func = btf_type_by_id(btf_vmlinux, func_id);
-	अगर (!func || !btf_type_is_func(func)) अणु
+	if (!func || !btf_type_is_func(func)) {
 		verbose(env, "kernel btf_id %u is not a function\n",
 			func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	func_proto = btf_type_by_id(btf_vmlinux, func->type);
-	अगर (!func_proto || !btf_type_is_func_proto(func_proto)) अणु
+	if (!func_proto || !btf_type_is_func_proto(func_proto)) {
 		verbose(env, "kernel function btf_id %u does not have a valid func_proto\n",
 			func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	func_name = btf_name_by_offset(btf_vmlinux, func->name_off);
 	addr = kallsyms_lookup_name(func_name);
-	अगर (!addr) अणु
+	if (!addr) {
 		verbose(env, "cannot find address for kernel function %s\n",
 			func_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	desc = &tab->descs[tab->nr_descs++];
 	desc->func_id = func_id;
@@ -1674,445 +1673,445 @@ find_kfunc_desc(स्थिर काष्ठा bpf_prog *prog, u32 func_id)
 	err = btf_distill_func_proto(&env->log, btf_vmlinux,
 				     func_proto, func_name,
 				     &desc->func_model);
-	अगर (!err)
-		sort(tab->descs, tab->nr_descs, माप(tab->descs[0]),
-		     kfunc_desc_cmp_by_id, शून्य);
-	वापस err;
-पूर्ण
+	if (!err)
+		sort(tab->descs, tab->nr_descs, sizeof(tab->descs[0]),
+		     kfunc_desc_cmp_by_id, NULL);
+	return err;
+}
 
-अटल पूर्णांक kfunc_desc_cmp_by_imm(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा bpf_kfunc_desc *d0 = a;
-	स्थिर काष्ठा bpf_kfunc_desc *d1 = b;
+static int kfunc_desc_cmp_by_imm(const void *a, const void *b)
+{
+	const struct bpf_kfunc_desc *d0 = a;
+	const struct bpf_kfunc_desc *d1 = b;
 
-	अगर (d0->imm > d1->imm)
-		वापस 1;
-	अन्यथा अगर (d0->imm < d1->imm)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (d0->imm > d1->imm)
+		return 1;
+	else if (d0->imm < d1->imm)
+		return -1;
+	return 0;
+}
 
-अटल व्योम sort_kfunc_descs_by_imm(काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा bpf_kfunc_desc_tab *tab;
+static void sort_kfunc_descs_by_imm(struct bpf_prog *prog)
+{
+	struct bpf_kfunc_desc_tab *tab;
 
 	tab = prog->aux->kfunc_tab;
-	अगर (!tab)
-		वापस;
+	if (!tab)
+		return;
 
-	sort(tab->descs, tab->nr_descs, माप(tab->descs[0]),
-	     kfunc_desc_cmp_by_imm, शून्य);
-पूर्ण
+	sort(tab->descs, tab->nr_descs, sizeof(tab->descs[0]),
+	     kfunc_desc_cmp_by_imm, NULL);
+}
 
-bool bpf_prog_has_kfunc_call(स्थिर काष्ठा bpf_prog *prog)
-अणु
-	वापस !!prog->aux->kfunc_tab;
-पूर्ण
+bool bpf_prog_has_kfunc_call(const struct bpf_prog *prog)
+{
+	return !!prog->aux->kfunc_tab;
+}
 
-स्थिर काष्ठा btf_func_model *
-bpf_jit_find_kfunc_model(स्थिर काष्ठा bpf_prog *prog,
-			 स्थिर काष्ठा bpf_insn *insn)
-अणु
-	स्थिर काष्ठा bpf_kfunc_desc desc = अणु
+const struct btf_func_model *
+bpf_jit_find_kfunc_model(const struct bpf_prog *prog,
+			 const struct bpf_insn *insn)
+{
+	const struct bpf_kfunc_desc desc = {
 		.imm = insn->imm,
-	पूर्ण;
-	स्थिर काष्ठा bpf_kfunc_desc *res;
-	काष्ठा bpf_kfunc_desc_tab *tab;
+	};
+	const struct bpf_kfunc_desc *res;
+	struct bpf_kfunc_desc_tab *tab;
 
 	tab = prog->aux->kfunc_tab;
-	res = द्वा_खोज(&desc, tab->descs, tab->nr_descs,
-		      माप(tab->descs[0]), kfunc_desc_cmp_by_imm);
+	res = bsearch(&desc, tab->descs, tab->nr_descs,
+		      sizeof(tab->descs[0]), kfunc_desc_cmp_by_imm);
 
-	वापस res ? &res->func_model : शून्य;
-पूर्ण
+	return res ? &res->func_model : NULL;
+}
 
-अटल पूर्णांक add_subprog_and_kfunc(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_subprog_info *subprog = env->subprog_info;
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	पूर्णांक i, ret, insn_cnt = env->prog->len;
+static int add_subprog_and_kfunc(struct bpf_verifier_env *env)
+{
+	struct bpf_subprog_info *subprog = env->subprog_info;
+	struct bpf_insn *insn = env->prog->insnsi;
+	int i, ret, insn_cnt = env->prog->len;
 
 	/* Add entry function. */
 	ret = add_subprog(env, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
-		अगर (!bpf_pseuकरो_func(insn) && !bpf_pseuकरो_call(insn) &&
-		    !bpf_pseuकरो_kfunc_call(insn))
-			जारी;
+	for (i = 0; i < insn_cnt; i++, insn++) {
+		if (!bpf_pseudo_func(insn) && !bpf_pseudo_call(insn) &&
+		    !bpf_pseudo_kfunc_call(insn))
+			continue;
 
-		अगर (!env->bpf_capable) अणु
+		if (!env->bpf_capable) {
 			verbose(env, "loading/calling other bpf or kernel functions are allowed for CAP_BPF and CAP_SYS_ADMIN\n");
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 
-		अगर (bpf_pseuकरो_func(insn)) अणु
+		if (bpf_pseudo_func(insn)) {
 			ret = add_subprog(env, i + insn->imm + 1);
-			अगर (ret >= 0)
+			if (ret >= 0)
 				/* remember subprog */
 				insn[1].imm = ret;
-		पूर्ण अन्यथा अगर (bpf_pseuकरो_call(insn)) अणु
+		} else if (bpf_pseudo_call(insn)) {
 			ret = add_subprog(env, i + insn->imm + 1);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = add_kfunc_call(env, insn->imm);
-		पूर्ण
+		}
 
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	/* Add a fake 'exit' subprog which could simplअगरy subprog iteration
+	/* Add a fake 'exit' subprog which could simplify subprog iteration
 	 * logic. 'subprog_cnt' should not be increased.
 	 */
 	subprog[env->subprog_cnt].start = insn_cnt;
 
-	अगर (env->log.level & BPF_LOG_LEVEL2)
-		क्रम (i = 0; i < env->subprog_cnt; i++)
+	if (env->log.level & BPF_LOG_LEVEL2)
+		for (i = 0; i < env->subprog_cnt; i++)
 			verbose(env, "func#%d @%d\n", i, subprog[i].start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_subprogs(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक i, subprog_start, subprog_end, off, cur_subprog = 0;
-	काष्ठा bpf_subprog_info *subprog = env->subprog_info;
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	पूर्णांक insn_cnt = env->prog->len;
+static int check_subprogs(struct bpf_verifier_env *env)
+{
+	int i, subprog_start, subprog_end, off, cur_subprog = 0;
+	struct bpf_subprog_info *subprog = env->subprog_info;
+	struct bpf_insn *insn = env->prog->insnsi;
+	int insn_cnt = env->prog->len;
 
 	/* now check that all jumps are within the same subprog */
 	subprog_start = subprog[cur_subprog].start;
 	subprog_end = subprog[cur_subprog + 1].start;
-	क्रम (i = 0; i < insn_cnt; i++) अणु
+	for (i = 0; i < insn_cnt; i++) {
 		u8 code = insn[i].code;
 
-		अगर (code == (BPF_JMP | BPF_CALL) &&
+		if (code == (BPF_JMP | BPF_CALL) &&
 		    insn[i].imm == BPF_FUNC_tail_call &&
 		    insn[i].src_reg != BPF_PSEUDO_CALL)
 			subprog[cur_subprog].has_tail_call = true;
-		अगर (BPF_CLASS(code) == BPF_LD &&
+		if (BPF_CLASS(code) == BPF_LD &&
 		    (BPF_MODE(code) == BPF_ABS || BPF_MODE(code) == BPF_IND))
-			subprog[cur_subprog].has_ld_असल = true;
-		अगर (BPF_CLASS(code) != BPF_JMP && BPF_CLASS(code) != BPF_JMP32)
-			जाओ next;
-		अगर (BPF_OP(code) == BPF_EXIT || BPF_OP(code) == BPF_CALL)
-			जाओ next;
+			subprog[cur_subprog].has_ld_abs = true;
+		if (BPF_CLASS(code) != BPF_JMP && BPF_CLASS(code) != BPF_JMP32)
+			goto next;
+		if (BPF_OP(code) == BPF_EXIT || BPF_OP(code) == BPF_CALL)
+			goto next;
 		off = i + insn[i].off + 1;
-		अगर (off < subprog_start || off >= subprog_end) अणु
+		if (off < subprog_start || off >= subprog_end) {
 			verbose(env, "jump out of range from insn %d to %d\n", i, off);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 next:
-		अगर (i == subprog_end - 1) अणु
-			/* to aव्योम fall-through from one subprog पूर्णांकo another
-			 * the last insn of the subprog should be either निकास
+		if (i == subprog_end - 1) {
+			/* to avoid fall-through from one subprog into another
+			 * the last insn of the subprog should be either exit
 			 * or unconditional jump back
 			 */
-			अगर (code != (BPF_JMP | BPF_EXIT) &&
-			    code != (BPF_JMP | BPF_JA)) अणु
+			if (code != (BPF_JMP | BPF_EXIT) &&
+			    code != (BPF_JMP | BPF_JA)) {
 				verbose(env, "last insn is not an exit or jmp\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			subprog_start = subprog_end;
 			cur_subprog++;
-			अगर (cur_subprog < env->subprog_cnt)
+			if (cur_subprog < env->subprog_cnt)
 				subprog_end = subprog[cur_subprog + 1].start;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-/* Parentage chain of this रेजिस्टर (or stack slot) should take care of all
- * issues like callee-saved रेजिस्टरs, stack slot allocation समय, etc.
+/* Parentage chain of this register (or stack slot) should take care of all
+ * issues like callee-saved registers, stack slot allocation time, etc.
  */
-अटल पूर्णांक mark_reg_पढ़ो(काष्ठा bpf_verअगरier_env *env,
-			 स्थिर काष्ठा bpf_reg_state *state,
-			 काष्ठा bpf_reg_state *parent, u8 flag)
-अणु
-	bool ग_लिखोs = parent == state->parent; /* Observe ग_लिखो marks */
-	पूर्णांक cnt = 0;
+static int mark_reg_read(struct bpf_verifier_env *env,
+			 const struct bpf_reg_state *state,
+			 struct bpf_reg_state *parent, u8 flag)
+{
+	bool writes = parent == state->parent; /* Observe write marks */
+	int cnt = 0;
 
-	जबतक (parent) अणु
-		/* अगर पढ़ो wasn't screened by an earlier ग_लिखो ... */
-		अगर (ग_लिखोs && state->live & REG_LIVE_WRITTEN)
-			अवरोध;
-		अगर (parent->live & REG_LIVE_DONE) अणु
+	while (parent) {
+		/* if read wasn't screened by an earlier write ... */
+		if (writes && state->live & REG_LIVE_WRITTEN)
+			break;
+		if (parent->live & REG_LIVE_DONE) {
 			verbose(env, "verifier BUG type %s var_off %lld off %d\n",
 				reg_type_str[parent->type],
 				parent->var_off.value, parent->off);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		/* The first condition is more likely to be true than the
 		 * second, checked it first.
 		 */
-		अगर ((parent->live & REG_LIVE_READ) == flag ||
+		if ((parent->live & REG_LIVE_READ) == flag ||
 		    parent->live & REG_LIVE_READ64)
 			/* The parentage chain never changes and
-			 * this parent was alपढ़ोy marked as LIVE_READ.
+			 * this parent was already marked as LIVE_READ.
 			 * There is no need to keep walking the chain again and
 			 * keep re-marking all parents as LIVE_READ.
-			 * This हाल happens when the same रेजिस्टर is पढ़ो
-			 * multiple बार without ग_लिखोs पूर्णांकo it in-between.
-			 * Also, अगर parent has the stronger REG_LIVE_READ64 set,
+			 * This case happens when the same register is read
+			 * multiple times without writes into it in-between.
+			 * Also, if parent has the stronger REG_LIVE_READ64 set,
 			 * then no need to set the weak REG_LIVE_READ32.
 			 */
-			अवरोध;
+			break;
 		/* ... then we depend on parent's value */
 		parent->live |= flag;
 		/* REG_LIVE_READ64 overrides REG_LIVE_READ32. */
-		अगर (flag == REG_LIVE_READ64)
+		if (flag == REG_LIVE_READ64)
 			parent->live &= ~REG_LIVE_READ32;
 		state = parent;
 		parent = state->parent;
-		ग_लिखोs = true;
+		writes = true;
 		cnt++;
-	पूर्ण
+	}
 
-	अगर (env->दीर्घest_mark_पढ़ो_walk < cnt)
-		env->दीर्घest_mark_पढ़ो_walk = cnt;
-	वापस 0;
-पूर्ण
+	if (env->longest_mark_read_walk < cnt)
+		env->longest_mark_read_walk = cnt;
+	return 0;
+}
 
 /* This function is supposed to be used by the following 32-bit optimization
- * code only. It वापसs TRUE अगर the source or destination रेजिस्टर operates
- * on 64-bit, otherwise वापस FALSE.
+ * code only. It returns TRUE if the source or destination register operates
+ * on 64-bit, otherwise return FALSE.
  */
-अटल bool is_reg64(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn,
-		     u32 regno, काष्ठा bpf_reg_state *reg, क्रमागत reg_arg_type t)
-अणु
+static bool is_reg64(struct bpf_verifier_env *env, struct bpf_insn *insn,
+		     u32 regno, struct bpf_reg_state *reg, enum reg_arg_type t)
+{
 	u8 code, class, op;
 
 	code = insn->code;
 	class = BPF_CLASS(code);
 	op = BPF_OP(code);
-	अगर (class == BPF_JMP) अणु
-		/* BPF_EXIT क्रम "main" will reach here. Return TRUE
+	if (class == BPF_JMP) {
+		/* BPF_EXIT for "main" will reach here. Return TRUE
 		 * conservatively.
 		 */
-		अगर (op == BPF_EXIT)
-			वापस true;
-		अगर (op == BPF_CALL) अणु
+		if (op == BPF_EXIT)
+			return true;
+		if (op == BPF_CALL) {
 			/* BPF to BPF call will reach here because of marking
-			 * caller saved clobber with DST_OP_NO_MARK क्रम which we
-			 * करोn't care the रेजिस्टर def because they are anyway
-			 * marked as NOT_INIT alपढ़ोy.
+			 * caller saved clobber with DST_OP_NO_MARK for which we
+			 * don't care the register def because they are anyway
+			 * marked as NOT_INIT already.
 			 */
-			अगर (insn->src_reg == BPF_PSEUDO_CALL)
-				वापस false;
+			if (insn->src_reg == BPF_PSEUDO_CALL)
+				return false;
 			/* Helper call will reach here because of arg type
-			 * check, conservatively वापस TRUE.
+			 * check, conservatively return TRUE.
 			 */
-			अगर (t == SRC_OP)
-				वापस true;
+			if (t == SRC_OP)
+				return true;
 
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	अगर (class == BPF_ALU64 || class == BPF_JMP ||
+	if (class == BPF_ALU64 || class == BPF_JMP ||
 	    /* BPF_END always use BPF_ALU class. */
 	    (class == BPF_ALU && op == BPF_END && insn->imm == 64))
-		वापस true;
+		return true;
 
-	अगर (class == BPF_ALU || class == BPF_JMP32)
-		वापस false;
+	if (class == BPF_ALU || class == BPF_JMP32)
+		return false;
 
-	अगर (class == BPF_LDX) अणु
-		अगर (t != SRC_OP)
-			वापस BPF_SIZE(code) == BPF_DW;
+	if (class == BPF_LDX) {
+		if (t != SRC_OP)
+			return BPF_SIZE(code) == BPF_DW;
 		/* LDX source must be ptr. */
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (class == BPF_STX) अणु
+	if (class == BPF_STX) {
 		/* BPF_STX (including atomic variants) has multiple source
-		 * opeअक्रमs, one of which is a ptr. Check whether the caller is
+		 * operands, one of which is a ptr. Check whether the caller is
 		 * asking about it.
 		 */
-		अगर (t == SRC_OP && reg->type != SCALAR_VALUE)
-			वापस true;
-		वापस BPF_SIZE(code) == BPF_DW;
-	पूर्ण
+		if (t == SRC_OP && reg->type != SCALAR_VALUE)
+			return true;
+		return BPF_SIZE(code) == BPF_DW;
+	}
 
-	अगर (class == BPF_LD) अणु
+	if (class == BPF_LD) {
 		u8 mode = BPF_MODE(code);
 
 		/* LD_IMM64 */
-		अगर (mode == BPF_IMM)
-			वापस true;
+		if (mode == BPF_IMM)
+			return true;
 
-		/* Both LD_IND and LD_ABS वापस 32-bit data. */
-		अगर (t != SRC_OP)
-			वापस  false;
+		/* Both LD_IND and LD_ABS return 32-bit data. */
+		if (t != SRC_OP)
+			return  false;
 
 		/* Implicit ctx ptr. */
-		अगर (regno == BPF_REG_6)
-			वापस true;
+		if (regno == BPF_REG_6)
+			return true;
 
 		/* Explicit source could be any width. */
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (class == BPF_ST)
-		/* The only source रेजिस्टर क्रम BPF_ST is a ptr. */
-		वापस true;
+	if (class == BPF_ST)
+		/* The only source register for BPF_ST is a ptr. */
+		return true;
 
-	/* Conservatively वापस true at शेष. */
-	वापस true;
-पूर्ण
+	/* Conservatively return true at default. */
+	return true;
+}
 
 /* Return the regno defined by the insn, or -1. */
-अटल पूर्णांक insn_def_regno(स्थिर काष्ठा bpf_insn *insn)
-अणु
-	चयन (BPF_CLASS(insn->code)) अणु
-	हाल BPF_JMP:
-	हाल BPF_JMP32:
-	हाल BPF_ST:
-		वापस -1;
-	हाल BPF_STX:
-		अगर (BPF_MODE(insn->code) == BPF_ATOMIC &&
-		    (insn->imm & BPF_FETCH)) अणु
-			अगर (insn->imm == BPF_CMPXCHG)
-				वापस BPF_REG_0;
-			अन्यथा
-				वापस insn->src_reg;
-		पूर्ण अन्यथा अणु
-			वापस -1;
-		पूर्ण
-	शेष:
-		वापस insn->dst_reg;
-	पूर्ण
-पूर्ण
+static int insn_def_regno(const struct bpf_insn *insn)
+{
+	switch (BPF_CLASS(insn->code)) {
+	case BPF_JMP:
+	case BPF_JMP32:
+	case BPF_ST:
+		return -1;
+	case BPF_STX:
+		if (BPF_MODE(insn->code) == BPF_ATOMIC &&
+		    (insn->imm & BPF_FETCH)) {
+			if (insn->imm == BPF_CMPXCHG)
+				return BPF_REG_0;
+			else
+				return insn->src_reg;
+		} else {
+			return -1;
+		}
+	default:
+		return insn->dst_reg;
+	}
+}
 
-/* Return TRUE अगर INSN has defined any 32-bit value explicitly. */
-अटल bool insn_has_def32(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn)
-अणु
-	पूर्णांक dst_reg = insn_def_regno(insn);
+/* Return TRUE if INSN has defined any 32-bit value explicitly. */
+static bool insn_has_def32(struct bpf_verifier_env *env, struct bpf_insn *insn)
+{
+	int dst_reg = insn_def_regno(insn);
 
-	अगर (dst_reg == -1)
-		वापस false;
+	if (dst_reg == -1)
+		return false;
 
-	वापस !is_reg64(env, insn, dst_reg, शून्य, DST_OP);
-पूर्ण
+	return !is_reg64(env, insn, dst_reg, NULL, DST_OP);
+}
 
-अटल व्योम mark_insn_zext(काष्ठा bpf_verअगरier_env *env,
-			   काष्ठा bpf_reg_state *reg)
-अणु
+static void mark_insn_zext(struct bpf_verifier_env *env,
+			   struct bpf_reg_state *reg)
+{
 	s32 def_idx = reg->subreg_def;
 
-	अगर (def_idx == DEF_NOT_SUBREG)
-		वापस;
+	if (def_idx == DEF_NOT_SUBREG)
+		return;
 
 	env->insn_aux_data[def_idx - 1].zext_dst = true;
-	/* The dst will be zero extended, so won't be sub-रेजिस्टर anymore. */
+	/* The dst will be zero extended, so won't be sub-register anymore. */
 	reg->subreg_def = DEF_NOT_SUBREG;
-पूर्ण
+}
 
-अटल पूर्णांक check_reg_arg(काष्ठा bpf_verअगरier_env *env, u32 regno,
-			 क्रमागत reg_arg_type t)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_insn *insn = env->prog->insnsi + env->insn_idx;
-	काष्ठा bpf_reg_state *reg, *regs = state->regs;
+static int check_reg_arg(struct bpf_verifier_env *env, u32 regno,
+			 enum reg_arg_type t)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_insn *insn = env->prog->insnsi + env->insn_idx;
+	struct bpf_reg_state *reg, *regs = state->regs;
 	bool rw64;
 
-	अगर (regno >= MAX_BPF_REG) अणु
+	if (regno >= MAX_BPF_REG) {
 		verbose(env, "R%d is invalid\n", regno);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	reg = &regs[regno];
 	rw64 = is_reg64(env, insn, regno, reg, t);
-	अगर (t == SRC_OP) अणु
-		/* check whether रेजिस्टर used as source opeअक्रम can be पढ़ो */
-		अगर (reg->type == NOT_INIT) अणु
+	if (t == SRC_OP) {
+		/* check whether register used as source operand can be read */
+		if (reg->type == NOT_INIT) {
 			verbose(env, "R%d !read_ok\n", regno);
-			वापस -EACCES;
-		पूर्ण
-		/* We करोn't need to worry about FP liveness because it's पढ़ो-only */
-		अगर (regno == BPF_REG_FP)
-			वापस 0;
+			return -EACCES;
+		}
+		/* We don't need to worry about FP liveness because it's read-only */
+		if (regno == BPF_REG_FP)
+			return 0;
 
-		अगर (rw64)
+		if (rw64)
 			mark_insn_zext(env, reg);
 
-		वापस mark_reg_पढ़ो(env, reg, reg->parent,
+		return mark_reg_read(env, reg, reg->parent,
 				     rw64 ? REG_LIVE_READ64 : REG_LIVE_READ32);
-	पूर्ण अन्यथा अणु
-		/* check whether रेजिस्टर used as dest opeअक्रम can be written to */
-		अगर (regno == BPF_REG_FP) अणु
+	} else {
+		/* check whether register used as dest operand can be written to */
+		if (regno == BPF_REG_FP) {
 			verbose(env, "frame pointer is read only\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		reg->live |= REG_LIVE_WRITTEN;
 		reg->subreg_def = rw64 ? DEF_NOT_SUBREG : env->insn_idx + 1;
-		अगर (t == DST_OP)
+		if (t == DST_OP)
 			mark_reg_unknown(env, regs, regno);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* क्रम any branch, call, निकास record the history of jmps in the given state */
-अटल पूर्णांक push_jmp_history(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_verअगरier_state *cur)
-अणु
+/* for any branch, call, exit record the history of jmps in the given state */
+static int push_jmp_history(struct bpf_verifier_env *env,
+			    struct bpf_verifier_state *cur)
+{
 	u32 cnt = cur->jmp_history_cnt;
-	काष्ठा bpf_idx_pair *p;
+	struct bpf_idx_pair *p;
 
 	cnt++;
-	p = kपुनः_स्मृति(cur->jmp_history, cnt * माप(*p), GFP_USER);
-	अगर (!p)
-		वापस -ENOMEM;
+	p = krealloc(cur->jmp_history, cnt * sizeof(*p), GFP_USER);
+	if (!p)
+		return -ENOMEM;
 	p[cnt - 1].idx = env->insn_idx;
 	p[cnt - 1].prev_idx = env->prev_insn_idx;
 	cur->jmp_history = p;
 	cur->jmp_history_cnt = cnt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Backtrack one insn at a समय. If idx is not at the top of recorded
- * history then previous inकाष्ठाion came from straight line execution.
+/* Backtrack one insn at a time. If idx is not at the top of recorded
+ * history then previous instruction came from straight line execution.
  */
-अटल पूर्णांक get_prev_insn_idx(काष्ठा bpf_verअगरier_state *st, पूर्णांक i,
+static int get_prev_insn_idx(struct bpf_verifier_state *st, int i,
 			     u32 *history)
-अणु
+{
 	u32 cnt = *history;
 
-	अगर (cnt && st->jmp_history[cnt - 1].idx == i) अणु
+	if (cnt && st->jmp_history[cnt - 1].idx == i) {
 		i = st->jmp_history[cnt - 1].prev_idx;
 		(*history)--;
-	पूर्ण अन्यथा अणु
+	} else {
 		i--;
-	पूर्ण
-	वापस i;
-पूर्ण
+	}
+	return i;
+}
 
-अटल स्थिर अक्षर *disयंत्र_kfunc_name(व्योम *data, स्थिर काष्ठा bpf_insn *insn)
-अणु
-	स्थिर काष्ठा btf_type *func;
+static const char *disasm_kfunc_name(void *data, const struct bpf_insn *insn)
+{
+	const struct btf_type *func;
 
-	अगर (insn->src_reg != BPF_PSEUDO_KFUNC_CALL)
-		वापस शून्य;
+	if (insn->src_reg != BPF_PSEUDO_KFUNC_CALL)
+		return NULL;
 
 	func = btf_type_by_id(btf_vmlinux, insn->imm);
-	वापस btf_name_by_offset(btf_vmlinux, func->name_off);
-पूर्ण
+	return btf_name_by_offset(btf_vmlinux, func->name_off);
+}
 
-/* For given verअगरier state backtrack_insn() is called from the last insn to
- * the first insn. Its purpose is to compute a biपंचांगask of रेजिस्टरs and
- * stack slots that needs precision in the parent verअगरier state.
+/* For given verifier state backtrack_insn() is called from the last insn to
+ * the first insn. Its purpose is to compute a bitmask of registers and
+ * stack slots that needs precision in the parent verifier state.
  */
-अटल पूर्णांक backtrack_insn(काष्ठा bpf_verअगरier_env *env, पूर्णांक idx,
+static int backtrack_insn(struct bpf_verifier_env *env, int idx,
 			  u32 *reg_mask, u64 *stack_mask)
-अणु
-	स्थिर काष्ठा bpf_insn_cbs cbs = अणु
-		.cb_call	= disयंत्र_kfunc_name,
-		.cb_prपूर्णांक	= verbose,
-		.निजी_data	= env,
-	पूर्ण;
-	काष्ठा bpf_insn *insn = env->prog->insnsi + idx;
+{
+	const struct bpf_insn_cbs cbs = {
+		.cb_call	= disasm_kfunc_name,
+		.cb_print	= verbose,
+		.private_data	= env,
+	};
+	struct bpf_insn *insn = env->prog->insnsi + idx;
 	u8 class = BPF_CLASS(insn->code);
 	u8 opcode = BPF_OP(insn->code);
 	u8 mode = BPF_MODE(insn->code);
@@ -2120,628 +2119,628 @@ next:
 	u32 sreg = 1u << insn->src_reg;
 	u32 spi;
 
-	अगर (insn->code == 0)
-		वापस 0;
-	अगर (env->log.level & BPF_LOG_LEVEL) अणु
+	if (insn->code == 0)
+		return 0;
+	if (env->log.level & BPF_LOG_LEVEL) {
 		verbose(env, "regs=%x stack=%llx before ", *reg_mask, *stack_mask);
 		verbose(env, "%d: ", idx);
-		prपूर्णांक_bpf_insn(&cbs, insn, env->allow_ptr_leaks);
-	पूर्ण
+		print_bpf_insn(&cbs, insn, env->allow_ptr_leaks);
+	}
 
-	अगर (class == BPF_ALU || class == BPF_ALU64) अणु
-		अगर (!(*reg_mask & dreg))
-			वापस 0;
-		अगर (opcode == BPF_MOV) अणु
-			अगर (BPF_SRC(insn->code) == BPF_X) अणु
+	if (class == BPF_ALU || class == BPF_ALU64) {
+		if (!(*reg_mask & dreg))
+			return 0;
+		if (opcode == BPF_MOV) {
+			if (BPF_SRC(insn->code) == BPF_X) {
 				/* dreg = sreg
 				 * dreg needs precision after this insn
-				 * sreg needs precision beक्रमe this insn
+				 * sreg needs precision before this insn
 				 */
 				*reg_mask &= ~dreg;
 				*reg_mask |= sreg;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* dreg = K
 				 * dreg needs precision after this insn.
-				 * Corresponding रेजिस्टर is alपढ़ोy marked
-				 * as precise=true in this verअगरier state.
+				 * Corresponding register is already marked
+				 * as precise=true in this verifier state.
 				 * No further markings in parent are necessary
 				 */
 				*reg_mask &= ~dreg;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (BPF_SRC(insn->code) == BPF_X) अणु
+			}
+		} else {
+			if (BPF_SRC(insn->code) == BPF_X) {
 				/* dreg += sreg
 				 * both dreg and sreg need precision
-				 * beक्रमe this insn
+				 * before this insn
 				 */
 				*reg_mask |= sreg;
-			पूर्ण /* अन्यथा dreg += K
-			   * dreg still needs precision beक्रमe this insn
+			} /* else dreg += K
+			   * dreg still needs precision before this insn
 			   */
-		पूर्ण
-	पूर्ण अन्यथा अगर (class == BPF_LDX) अणु
-		अगर (!(*reg_mask & dreg))
-			वापस 0;
+		}
+	} else if (class == BPF_LDX) {
+		if (!(*reg_mask & dreg))
+			return 0;
 		*reg_mask &= ~dreg;
 
-		/* scalars can only be spilled पूर्णांकo stack w/o losing precision.
+		/* scalars can only be spilled into stack w/o losing precision.
 		 * Load from any other memory can be zero extended.
-		 * The desire to keep that precision is alपढ़ोy indicated
-		 * by 'precise' mark in corresponding रेजिस्टर of this state.
+		 * The desire to keep that precision is already indicated
+		 * by 'precise' mark in corresponding register of this state.
 		 * No further tracking necessary.
 		 */
-		अगर (insn->src_reg != BPF_REG_FP)
-			वापस 0;
-		अगर (BPF_SIZE(insn->code) != BPF_DW)
-			वापस 0;
+		if (insn->src_reg != BPF_REG_FP)
+			return 0;
+		if (BPF_SIZE(insn->code) != BPF_DW)
+			return 0;
 
 		/* dreg = *(u64 *)[fp - off] was a fill from the stack.
 		 * that [fp - off] slot contains scalar that needs to be
 		 * tracked with precision
 		 */
 		spi = (-insn->off - 1) / BPF_REG_SIZE;
-		अगर (spi >= 64) अणु
+		if (spi >= 64) {
 			verbose(env, "BUG spi %d\n", spi);
 			WARN_ONCE(1, "verifier backtracking bug");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		*stack_mask |= 1ull << spi;
-	पूर्ण अन्यथा अगर (class == BPF_STX || class == BPF_ST) अणु
-		अगर (*reg_mask & dreg)
+	} else if (class == BPF_STX || class == BPF_ST) {
+		if (*reg_mask & dreg)
 			/* stx & st shouldn't be using _scalar_ dst_reg
 			 * to access memory. It means backtracking
-			 * encountered a हाल of poपूर्णांकer subtraction.
+			 * encountered a case of pointer subtraction.
 			 */
-			वापस -ENOTSUPP;
-		/* scalars can only be spilled पूर्णांकo stack */
-		अगर (insn->dst_reg != BPF_REG_FP)
-			वापस 0;
-		अगर (BPF_SIZE(insn->code) != BPF_DW)
-			वापस 0;
+			return -ENOTSUPP;
+		/* scalars can only be spilled into stack */
+		if (insn->dst_reg != BPF_REG_FP)
+			return 0;
+		if (BPF_SIZE(insn->code) != BPF_DW)
+			return 0;
 		spi = (-insn->off - 1) / BPF_REG_SIZE;
-		अगर (spi >= 64) अणु
+		if (spi >= 64) {
 			verbose(env, "BUG spi %d\n", spi);
 			WARN_ONCE(1, "verifier backtracking bug");
-			वापस -EFAULT;
-		पूर्ण
-		अगर (!(*stack_mask & (1ull << spi)))
-			वापस 0;
+			return -EFAULT;
+		}
+		if (!(*stack_mask & (1ull << spi)))
+			return 0;
 		*stack_mask &= ~(1ull << spi);
-		अगर (class == BPF_STX)
+		if (class == BPF_STX)
 			*reg_mask |= sreg;
-	पूर्ण अन्यथा अगर (class == BPF_JMP || class == BPF_JMP32) अणु
-		अगर (opcode == BPF_CALL) अणु
-			अगर (insn->src_reg == BPF_PSEUDO_CALL)
-				वापस -ENOTSUPP;
+	} else if (class == BPF_JMP || class == BPF_JMP32) {
+		if (opcode == BPF_CALL) {
+			if (insn->src_reg == BPF_PSEUDO_CALL)
+				return -ENOTSUPP;
 			/* regular helper call sets R0 */
 			*reg_mask &= ~1;
-			अगर (*reg_mask & 0x3f) अणु
-				/* अगर backtracing was looking क्रम रेजिस्टरs R1-R5
-				 * they should have been found alपढ़ोy.
+			if (*reg_mask & 0x3f) {
+				/* if backtracing was looking for registers R1-R5
+				 * they should have been found already.
 				 */
 				verbose(env, "BUG regs %x\n", *reg_mask);
 				WARN_ONCE(1, "verifier backtracking bug");
-				वापस -EFAULT;
-			पूर्ण
-		पूर्ण अन्यथा अगर (opcode == BPF_EXIT) अणु
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण अन्यथा अगर (class == BPF_LD) अणु
-		अगर (!(*reg_mask & dreg))
-			वापस 0;
+				return -EFAULT;
+			}
+		} else if (opcode == BPF_EXIT) {
+			return -ENOTSUPP;
+		}
+	} else if (class == BPF_LD) {
+		if (!(*reg_mask & dreg))
+			return 0;
 		*reg_mask &= ~dreg;
-		/* It's ld_imm64 or ld_असल or ld_ind.
+		/* It's ld_imm64 or ld_abs or ld_ind.
 		 * For ld_imm64 no further tracking of precision
-		 * पूर्णांकo parent is necessary
+		 * into parent is necessary
 		 */
-		अगर (mode == BPF_IND || mode == BPF_ABS)
+		if (mode == BPF_IND || mode == BPF_ABS)
 			/* to be analyzed */
-			वापस -ENOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -ENOTSUPP;
+	}
+	return 0;
+}
 
 /* the scalar precision tracking algorithm:
- * . at the start all रेजिस्टरs have precise=false.
+ * . at the start all registers have precise=false.
  * . scalar ranges are tracked as normal through alu and jmp insns.
- * . once precise value of the scalar रेजिस्टर is used in:
+ * . once precise value of the scalar register is used in:
  *   .  ptr + scalar alu
- *   . अगर (scalar cond K|scalar)
+ *   . if (scalar cond K|scalar)
  *   .  helper_call(.., scalar, ...) where ARG_CONST is expected
- *   backtrack through the verअगरier states and mark all रेजिस्टरs and
- *   stack slots with spilled स्थिरants that these scalar regisers
+ *   backtrack through the verifier states and mark all registers and
+ *   stack slots with spilled constants that these scalar regisers
  *   should be precise.
- * . during state pruning two रेजिस्टरs (or spilled stack slots)
- *   are equivalent अगर both are not precise.
+ * . during state pruning two registers (or spilled stack slots)
+ *   are equivalent if both are not precise.
  *
- * Note the verअगरier cannot simply walk रेजिस्टर parentage chain,
- * since many dअगरferent रेजिस्टरs and stack slots could have been
+ * Note the verifier cannot simply walk register parentage chain,
+ * since many different registers and stack slots could have been
  * used to compute single precise scalar.
  *
- * The approach of starting with precise=true क्रम all रेजिस्टरs and then
- * backtrack to mark a रेजिस्टर as not precise when the verअगरier detects
- * that program करोesn't care about specअगरic value (e.g., when helper
- * takes रेजिस्टर as ARG_ANYTHING parameter) is not safe.
+ * The approach of starting with precise=true for all registers and then
+ * backtrack to mark a register as not precise when the verifier detects
+ * that program doesn't care about specific value (e.g., when helper
+ * takes register as ARG_ANYTHING parameter) is not safe.
  *
- * It's ok to walk single parentage chain of the verअगरier states.
+ * It's ok to walk single parentage chain of the verifier states.
  * It's possible that this backtracking will go all the way till 1st insn.
- * All other branches will be explored क्रम needing precision later.
+ * All other branches will be explored for needing precision later.
  *
- * The backtracking needs to deal with हालs like:
+ * The backtracking needs to deal with cases like:
  *   R8=map_value(id=0,off=0,ks=4,vs=1952,imm=0) R9_w=map_value(id=0,off=40,ks=4,vs=1952,imm=0)
  * r9 -= r8
  * r5 = r9
- * अगर r5 > 0x79f जाओ pc+7
+ * if r5 > 0x79f goto pc+7
  *    R5_w=inv(id=0,umax_value=1951,var_off=(0x0; 0x7ff))
  * r5 += 1
  * ...
  * call bpf_perf_event_output#25
  *   where .arg5_type = ARG_CONST_SIZE_OR_ZERO
  *
- * and this हाल:
+ * and this case:
  * r6 = 1
  * call foo // uses callee's r6 inside to compute r0
  * r0 += r6
- * अगर r0 == 0 जाओ
+ * if r0 == 0 goto
  *
- * to track above reg_mask/stack_mask needs to be independent क्रम each frame.
+ * to track above reg_mask/stack_mask needs to be independent for each frame.
  *
- * Also अगर parent's curframe > frame where backtracking started,
- * the verअगरier need to mark रेजिस्टरs in both frames, otherwise callees
+ * Also if parent's curframe > frame where backtracking started,
+ * the verifier need to mark registers in both frames, otherwise callees
  * may incorrectly prune callers. This is similar to
  * commit 7640ead93924 ("bpf: verifier: make sure callees don't prune with caller differences")
  *
- * For now backtracking falls back पूर्णांकo conservative marking.
+ * For now backtracking falls back into conservative marking.
  */
-अटल व्योम mark_all_scalars_precise(काष्ठा bpf_verअगरier_env *env,
-				     काष्ठा bpf_verअगरier_state *st)
-अणु
-	काष्ठा bpf_func_state *func;
-	काष्ठा bpf_reg_state *reg;
-	पूर्णांक i, j;
+static void mark_all_scalars_precise(struct bpf_verifier_env *env,
+				     struct bpf_verifier_state *st)
+{
+	struct bpf_func_state *func;
+	struct bpf_reg_state *reg;
+	int i, j;
 
 	/* big hammer: mark all scalars precise in this path.
 	 * pop_stack may still get !precise scalars.
 	 */
-	क्रम (; st; st = st->parent)
-		क्रम (i = 0; i <= st->curframe; i++) अणु
+	for (; st; st = st->parent)
+		for (i = 0; i <= st->curframe; i++) {
 			func = st->frame[i];
-			क्रम (j = 0; j < BPF_REG_FP; j++) अणु
+			for (j = 0; j < BPF_REG_FP; j++) {
 				reg = &func->regs[j];
-				अगर (reg->type != SCALAR_VALUE)
-					जारी;
+				if (reg->type != SCALAR_VALUE)
+					continue;
 				reg->precise = true;
-			पूर्ण
-			क्रम (j = 0; j < func->allocated_stack / BPF_REG_SIZE; j++) अणु
-				अगर (func->stack[j].slot_type[0] != STACK_SPILL)
-					जारी;
+			}
+			for (j = 0; j < func->allocated_stack / BPF_REG_SIZE; j++) {
+				if (func->stack[j].slot_type[0] != STACK_SPILL)
+					continue;
 				reg = &func->stack[j].spilled_ptr;
-				अगर (reg->type != SCALAR_VALUE)
-					जारी;
+				if (reg->type != SCALAR_VALUE)
+					continue;
 				reg->precise = true;
-			पूर्ण
-		पूर्ण
-पूर्ण
+			}
+		}
+}
 
-अटल पूर्णांक __mark_chain_precision(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno,
-				  पूर्णांक spi)
-अणु
-	काष्ठा bpf_verअगरier_state *st = env->cur_state;
-	पूर्णांक first_idx = st->first_insn_idx;
-	पूर्णांक last_idx = env->insn_idx;
-	काष्ठा bpf_func_state *func;
-	काष्ठा bpf_reg_state *reg;
+static int __mark_chain_precision(struct bpf_verifier_env *env, int regno,
+				  int spi)
+{
+	struct bpf_verifier_state *st = env->cur_state;
+	int first_idx = st->first_insn_idx;
+	int last_idx = env->insn_idx;
+	struct bpf_func_state *func;
+	struct bpf_reg_state *reg;
 	u32 reg_mask = regno >= 0 ? 1u << regno : 0;
 	u64 stack_mask = spi >= 0 ? 1ull << spi : 0;
 	bool skip_first = true;
 	bool new_marks = false;
-	पूर्णांक i, err;
+	int i, err;
 
-	अगर (!env->bpf_capable)
-		वापस 0;
+	if (!env->bpf_capable)
+		return 0;
 
 	func = st->frame[st->curframe];
-	अगर (regno >= 0) अणु
+	if (regno >= 0) {
 		reg = &func->regs[regno];
-		अगर (reg->type != SCALAR_VALUE) अणु
+		if (reg->type != SCALAR_VALUE) {
 			WARN_ONCE(1, "backtracing misuse");
-			वापस -EFAULT;
-		पूर्ण
-		अगर (!reg->precise)
+			return -EFAULT;
+		}
+		if (!reg->precise)
 			new_marks = true;
-		अन्यथा
+		else
 			reg_mask = 0;
 		reg->precise = true;
-	पूर्ण
+	}
 
-	जबतक (spi >= 0) अणु
-		अगर (func->stack[spi].slot_type[0] != STACK_SPILL) अणु
+	while (spi >= 0) {
+		if (func->stack[spi].slot_type[0] != STACK_SPILL) {
 			stack_mask = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		reg = &func->stack[spi].spilled_ptr;
-		अगर (reg->type != SCALAR_VALUE) अणु
+		if (reg->type != SCALAR_VALUE) {
 			stack_mask = 0;
-			अवरोध;
-		पूर्ण
-		अगर (!reg->precise)
+			break;
+		}
+		if (!reg->precise)
 			new_marks = true;
-		अन्यथा
+		else
 			stack_mask = 0;
 		reg->precise = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!new_marks)
-		वापस 0;
-	अगर (!reg_mask && !stack_mask)
-		वापस 0;
-	क्रम (;;) अणु
+	if (!new_marks)
+		return 0;
+	if (!reg_mask && !stack_mask)
+		return 0;
+	for (;;) {
 		DECLARE_BITMAP(mask, 64);
 		u32 history = st->jmp_history_cnt;
 
-		अगर (env->log.level & BPF_LOG_LEVEL)
+		if (env->log.level & BPF_LOG_LEVEL)
 			verbose(env, "last_idx %d first_idx %d\n", last_idx, first_idx);
-		क्रम (i = last_idx;;) अणु
-			अगर (skip_first) अणु
+		for (i = last_idx;;) {
+			if (skip_first) {
 				err = 0;
 				skip_first = false;
-			पूर्ण अन्यथा अणु
+			} else {
 				err = backtrack_insn(env, i, &reg_mask, &stack_mask);
-			पूर्ण
-			अगर (err == -ENOTSUPP) अणु
+			}
+			if (err == -ENOTSUPP) {
 				mark_all_scalars_precise(env, st);
-				वापस 0;
-			पूर्ण अन्यथा अगर (err) अणु
-				वापस err;
-			पूर्ण
-			अगर (!reg_mask && !stack_mask)
-				/* Found assignment(s) पूर्णांकo tracked रेजिस्टर in this state.
-				 * Since this state is alपढ़ोy marked, just वापस.
+				return 0;
+			} else if (err) {
+				return err;
+			}
+			if (!reg_mask && !stack_mask)
+				/* Found assignment(s) into tracked register in this state.
+				 * Since this state is already marked, just return.
 				 * Nothing to be tracked further in the parent state.
 				 */
-				वापस 0;
-			अगर (i == first_idx)
-				अवरोध;
+				return 0;
+			if (i == first_idx)
+				break;
 			i = get_prev_insn_idx(st, i, &history);
-			अगर (i >= env->prog->len) अणु
-				/* This can happen अगर backtracking reached insn 0
+			if (i >= env->prog->len) {
+				/* This can happen if backtracking reached insn 0
 				 * and there are still reg_mask or stack_mask
 				 * to backtrack.
 				 * It means the backtracking missed the spot where
-				 * particular रेजिस्टर was initialized with a स्थिरant.
+				 * particular register was initialized with a constant.
 				 */
 				verbose(env, "BUG backtracking idx %d\n", i);
 				WARN_ONCE(1, "verifier backtracking bug");
-				वापस -EFAULT;
-			पूर्ण
-		पूर्ण
+				return -EFAULT;
+			}
+		}
 		st = st->parent;
-		अगर (!st)
-			अवरोध;
+		if (!st)
+			break;
 
 		new_marks = false;
 		func = st->frame[st->curframe];
-		biपंचांगap_from_u64(mask, reg_mask);
-		क्रम_each_set_bit(i, mask, 32) अणु
+		bitmap_from_u64(mask, reg_mask);
+		for_each_set_bit(i, mask, 32) {
 			reg = &func->regs[i];
-			अगर (reg->type != SCALAR_VALUE) अणु
+			if (reg->type != SCALAR_VALUE) {
 				reg_mask &= ~(1u << i);
-				जारी;
-			पूर्ण
-			अगर (!reg->precise)
+				continue;
+			}
+			if (!reg->precise)
 				new_marks = true;
 			reg->precise = true;
-		पूर्ण
+		}
 
-		biपंचांगap_from_u64(mask, stack_mask);
-		क्रम_each_set_bit(i, mask, 64) अणु
-			अगर (i >= func->allocated_stack / BPF_REG_SIZE) अणु
-				/* the sequence of inकाष्ठाions:
+		bitmap_from_u64(mask, stack_mask);
+		for_each_set_bit(i, mask, 64) {
+			if (i >= func->allocated_stack / BPF_REG_SIZE) {
+				/* the sequence of instructions:
 				 * 2: (bf) r3 = r10
 				 * 3: (7b) *(u64 *)(r3 -8) = r0
 				 * 4: (79) r4 = *(u64 *)(r10 -8)
-				 * करोesn't contain jmps. It's backtracked
+				 * doesn't contain jmps. It's backtracked
 				 * as a single block.
 				 * During backtracking insn 3 is not recognized as
 				 * stack access, so at the end of backtracking
 				 * stack slot fp-8 is still marked in stack_mask.
 				 * However the parent state may not have accessed
 				 * fp-8 and it's "unallocated" stack space.
-				 * In such हाल fallback to conservative.
+				 * In such case fallback to conservative.
 				 */
 				mark_all_scalars_precise(env, st);
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
-			अगर (func->stack[i].slot_type[0] != STACK_SPILL) अणु
+			if (func->stack[i].slot_type[0] != STACK_SPILL) {
 				stack_mask &= ~(1ull << i);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			reg = &func->stack[i].spilled_ptr;
-			अगर (reg->type != SCALAR_VALUE) अणु
+			if (reg->type != SCALAR_VALUE) {
 				stack_mask &= ~(1ull << i);
-				जारी;
-			पूर्ण
-			अगर (!reg->precise)
+				continue;
+			}
+			if (!reg->precise)
 				new_marks = true;
 			reg->precise = true;
-		पूर्ण
-		अगर (env->log.level & BPF_LOG_LEVEL) अणु
-			prपूर्णांक_verअगरier_state(env, func);
+		}
+		if (env->log.level & BPF_LOG_LEVEL) {
+			print_verifier_state(env, func);
 			verbose(env, "parent %s regs=%x stack=%llx marks\n",
 				new_marks ? "didn't have" : "already had",
 				reg_mask, stack_mask);
-		पूर्ण
+		}
 
-		अगर (!reg_mask && !stack_mask)
-			अवरोध;
-		अगर (!new_marks)
-			अवरोध;
+		if (!reg_mask && !stack_mask)
+			break;
+		if (!new_marks)
+			break;
 
 		last_idx = st->last_insn_idx;
 		first_idx = st->first_insn_idx;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mark_chain_precision(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	वापस __mark_chain_precision(env, regno, -1);
-पूर्ण
+static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
+{
+	return __mark_chain_precision(env, regno, -1);
+}
 
-अटल पूर्णांक mark_chain_precision_stack(काष्ठा bpf_verअगरier_env *env, पूर्णांक spi)
-अणु
-	वापस __mark_chain_precision(env, -1, spi);
-पूर्ण
+static int mark_chain_precision_stack(struct bpf_verifier_env *env, int spi)
+{
+	return __mark_chain_precision(env, -1, spi);
+}
 
-अटल bool is_spillable_regtype(क्रमागत bpf_reg_type type)
-अणु
-	चयन (type) अणु
-	हाल PTR_TO_MAP_VALUE:
-	हाल PTR_TO_MAP_VALUE_OR_शून्य:
-	हाल PTR_TO_STACK:
-	हाल PTR_TO_CTX:
-	हाल PTR_TO_PACKET:
-	हाल PTR_TO_PACKET_META:
-	हाल PTR_TO_PACKET_END:
-	हाल PTR_TO_FLOW_KEYS:
-	हाल CONST_PTR_TO_MAP:
-	हाल PTR_TO_SOCKET:
-	हाल PTR_TO_SOCKET_OR_शून्य:
-	हाल PTR_TO_SOCK_COMMON:
-	हाल PTR_TO_SOCK_COMMON_OR_शून्य:
-	हाल PTR_TO_TCP_SOCK:
-	हाल PTR_TO_TCP_SOCK_OR_शून्य:
-	हाल PTR_TO_XDP_SOCK:
-	हाल PTR_TO_BTF_ID:
-	हाल PTR_TO_BTF_ID_OR_शून्य:
-	हाल PTR_TO_RDONLY_BUF:
-	हाल PTR_TO_RDONLY_BUF_OR_शून्य:
-	हाल PTR_TO_RDWR_BUF:
-	हाल PTR_TO_RDWR_BUF_OR_शून्य:
-	हाल PTR_TO_PERCPU_BTF_ID:
-	हाल PTR_TO_MEM:
-	हाल PTR_TO_MEM_OR_शून्य:
-	हाल PTR_TO_FUNC:
-	हाल PTR_TO_MAP_KEY:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool is_spillable_regtype(enum bpf_reg_type type)
+{
+	switch (type) {
+	case PTR_TO_MAP_VALUE:
+	case PTR_TO_MAP_VALUE_OR_NULL:
+	case PTR_TO_STACK:
+	case PTR_TO_CTX:
+	case PTR_TO_PACKET:
+	case PTR_TO_PACKET_META:
+	case PTR_TO_PACKET_END:
+	case PTR_TO_FLOW_KEYS:
+	case CONST_PTR_TO_MAP:
+	case PTR_TO_SOCKET:
+	case PTR_TO_SOCKET_OR_NULL:
+	case PTR_TO_SOCK_COMMON:
+	case PTR_TO_SOCK_COMMON_OR_NULL:
+	case PTR_TO_TCP_SOCK:
+	case PTR_TO_TCP_SOCK_OR_NULL:
+	case PTR_TO_XDP_SOCK:
+	case PTR_TO_BTF_ID:
+	case PTR_TO_BTF_ID_OR_NULL:
+	case PTR_TO_RDONLY_BUF:
+	case PTR_TO_RDONLY_BUF_OR_NULL:
+	case PTR_TO_RDWR_BUF:
+	case PTR_TO_RDWR_BUF_OR_NULL:
+	case PTR_TO_PERCPU_BTF_ID:
+	case PTR_TO_MEM:
+	case PTR_TO_MEM_OR_NULL:
+	case PTR_TO_FUNC:
+	case PTR_TO_MAP_KEY:
+		return true;
+	default:
+		return false;
+	}
+}
 
-/* Does this रेजिस्टर contain a स्थिरant zero? */
-अटल bool रेजिस्टर_is_null(काष्ठा bpf_reg_state *reg)
-अणु
-	वापस reg->type == SCALAR_VALUE && tnum_equals_स्थिर(reg->var_off, 0);
-पूर्ण
+/* Does this register contain a constant zero? */
+static bool register_is_null(struct bpf_reg_state *reg)
+{
+	return reg->type == SCALAR_VALUE && tnum_equals_const(reg->var_off, 0);
+}
 
-अटल bool रेजिस्टर_is_स्थिर(काष्ठा bpf_reg_state *reg)
-अणु
-	वापस reg->type == SCALAR_VALUE && tnum_is_स्थिर(reg->var_off);
-पूर्ण
+static bool register_is_const(struct bpf_reg_state *reg)
+{
+	return reg->type == SCALAR_VALUE && tnum_is_const(reg->var_off);
+}
 
-अटल bool __is_scalar_unbounded(काष्ठा bpf_reg_state *reg)
-अणु
-	वापस tnum_is_unknown(reg->var_off) &&
+static bool __is_scalar_unbounded(struct bpf_reg_state *reg)
+{
+	return tnum_is_unknown(reg->var_off) &&
 	       reg->smin_value == S64_MIN && reg->smax_value == S64_MAX &&
 	       reg->umin_value == 0 && reg->umax_value == U64_MAX &&
 	       reg->s32_min_value == S32_MIN && reg->s32_max_value == S32_MAX &&
 	       reg->u32_min_value == 0 && reg->u32_max_value == U32_MAX;
-पूर्ण
+}
 
-अटल bool रेजिस्टर_is_bounded(काष्ठा bpf_reg_state *reg)
-अणु
-	वापस reg->type == SCALAR_VALUE && !__is_scalar_unbounded(reg);
-पूर्ण
+static bool register_is_bounded(struct bpf_reg_state *reg)
+{
+	return reg->type == SCALAR_VALUE && !__is_scalar_unbounded(reg);
+}
 
-अटल bool __is_poपूर्णांकer_value(bool allow_ptr_leaks,
-			       स्थिर काष्ठा bpf_reg_state *reg)
-अणु
-	अगर (allow_ptr_leaks)
-		वापस false;
+static bool __is_pointer_value(bool allow_ptr_leaks,
+			       const struct bpf_reg_state *reg)
+{
+	if (allow_ptr_leaks)
+		return false;
 
-	वापस reg->type != SCALAR_VALUE;
-पूर्ण
+	return reg->type != SCALAR_VALUE;
+}
 
-अटल व्योम save_रेजिस्टर_state(काष्ठा bpf_func_state *state,
-				पूर्णांक spi, काष्ठा bpf_reg_state *reg)
-अणु
-	पूर्णांक i;
+static void save_register_state(struct bpf_func_state *state,
+				int spi, struct bpf_reg_state *reg)
+{
+	int i;
 
 	state->stack[spi].spilled_ptr = *reg;
 	state->stack[spi].spilled_ptr.live |= REG_LIVE_WRITTEN;
 
-	क्रम (i = 0; i < BPF_REG_SIZE; i++)
+	for (i = 0; i < BPF_REG_SIZE; i++)
 		state->stack[spi].slot_type[i] = STACK_SPILL;
-पूर्ण
+}
 
-/* check_stack_अणुपढ़ो,ग_लिखोपूर्ण_fixed_off functions track spill/fill of रेजिस्टरs,
+/* check_stack_{read,write}_fixed_off functions track spill/fill of registers,
  * stack boundary and alignment are checked in check_mem_access()
  */
-अटल पूर्णांक check_stack_ग_लिखो_fixed_off(काष्ठा bpf_verअगरier_env *env,
+static int check_stack_write_fixed_off(struct bpf_verifier_env *env,
 				       /* stack frame we're writing to */
-				       काष्ठा bpf_func_state *state,
-				       पूर्णांक off, पूर्णांक size, पूर्णांक value_regno,
-				       पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_func_state *cur; /* state of the current function */
-	पूर्णांक i, slot = -off - 1, spi = slot / BPF_REG_SIZE, err;
+				       struct bpf_func_state *state,
+				       int off, int size, int value_regno,
+				       int insn_idx)
+{
+	struct bpf_func_state *cur; /* state of the current function */
+	int i, slot = -off - 1, spi = slot / BPF_REG_SIZE, err;
 	u32 dst_reg = env->prog->insnsi[insn_idx].dst_reg;
-	काष्ठा bpf_reg_state *reg = शून्य;
+	struct bpf_reg_state *reg = NULL;
 
-	err = पुनः_स्मृति_func_state(state, round_up(slot + 1, BPF_REG_SIZE),
+	err = realloc_func_state(state, round_up(slot + 1, BPF_REG_SIZE),
 				 state->acquired_refs, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	/* caller checked that off % size == 0 and -MAX_BPF_STACK <= off < 0,
 	 * so it's aligned access and [off, off + size) are within stack limits
 	 */
-	अगर (!env->allow_ptr_leaks &&
+	if (!env->allow_ptr_leaks &&
 	    state->stack[spi].slot_type[0] == STACK_SPILL &&
-	    size != BPF_REG_SIZE) अणु
+	    size != BPF_REG_SIZE) {
 		verbose(env, "attempt to corrupt spilled pointer on stack\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
 	cur = env->cur_state->frame[env->cur_state->curframe];
-	अगर (value_regno >= 0)
+	if (value_regno >= 0)
 		reg = &cur->regs[value_regno];
 
-	अगर (reg && size == BPF_REG_SIZE && रेजिस्टर_is_bounded(reg) &&
-	    !रेजिस्टर_is_null(reg) && env->bpf_capable) अणु
-		अगर (dst_reg != BPF_REG_FP) अणु
+	if (reg && size == BPF_REG_SIZE && register_is_bounded(reg) &&
+	    !register_is_null(reg) && env->bpf_capable) {
+		if (dst_reg != BPF_REG_FP) {
 			/* The backtracking logic can only recognize explicit
 			 * stack slot address like [fp - 8]. Other spill of
-			 * scalar via dअगरferent रेजिस्टर has to be conervative.
-			 * Backtrack from here and mark all रेजिस्टरs as precise
-			 * that contributed पूर्णांकo 'reg' being a स्थिरant.
+			 * scalar via different register has to be conervative.
+			 * Backtrack from here and mark all registers as precise
+			 * that contributed into 'reg' being a constant.
 			 */
 			err = mark_chain_precision(env, value_regno);
-			अगर (err)
-				वापस err;
-		पूर्ण
-		save_रेजिस्टर_state(state, spi, reg);
-	पूर्ण अन्यथा अगर (reg && is_spillable_regtype(reg->type)) अणु
-		/* रेजिस्टर containing poपूर्णांकer is being spilled पूर्णांकo stack */
-		अगर (size != BPF_REG_SIZE) अणु
+			if (err)
+				return err;
+		}
+		save_register_state(state, spi, reg);
+	} else if (reg && is_spillable_regtype(reg->type)) {
+		/* register containing pointer is being spilled into stack */
+		if (size != BPF_REG_SIZE) {
 			verbose_linfo(env, insn_idx, "; ");
 			verbose(env, "invalid size of register spill\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		अगर (state != cur && reg->type == PTR_TO_STACK) अणु
+		if (state != cur && reg->type == PTR_TO_STACK) {
 			verbose(env, "cannot spill pointers to stack into stack frame of the caller\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (!env->bypass_spec_v4) अणु
+		if (!env->bypass_spec_v4) {
 			bool sanitize = false;
 
-			अगर (state->stack[spi].slot_type[0] == STACK_SPILL &&
-			    रेजिस्टर_is_स्थिर(&state->stack[spi].spilled_ptr))
+			if (state->stack[spi].slot_type[0] == STACK_SPILL &&
+			    register_is_const(&state->stack[spi].spilled_ptr))
 				sanitize = true;
-			क्रम (i = 0; i < BPF_REG_SIZE; i++)
-				अगर (state->stack[spi].slot_type[i] == STACK_MISC) अणु
+			for (i = 0; i < BPF_REG_SIZE; i++)
+				if (state->stack[spi].slot_type[i] == STACK_MISC) {
 					sanitize = true;
-					अवरोध;
-				पूर्ण
-			अगर (sanitize) अणु
-				पूर्णांक *poff = &env->insn_aux_data[insn_idx].sanitize_stack_off;
-				पूर्णांक soff = (-spi - 1) * BPF_REG_SIZE;
+					break;
+				}
+			if (sanitize) {
+				int *poff = &env->insn_aux_data[insn_idx].sanitize_stack_off;
+				int soff = (-spi - 1) * BPF_REG_SIZE;
 
-				/* detected reuse of पूर्णांकeger stack slot with a poपूर्णांकer
+				/* detected reuse of integer stack slot with a pointer
 				 * which means either llvm is reusing stack slot or
 				 * an attacker is trying to exploit CVE-2018-3639
 				 * (speculative store bypass)
 				 * Have to sanitize that slot with preemptive
 				 * store of zero.
 				 */
-				अगर (*poff && *poff != soff) अणु
+				if (*poff && *poff != soff) {
 					/* disallow programs where single insn stores
-					 * पूर्णांकo two dअगरferent stack slots, since verअगरier
+					 * into two different stack slots, since verifier
 					 * cannot sanitize them
 					 */
 					verbose(env,
 						"insn %d cannot access two stack slots fp%d and fp%d",
 						insn_idx, *poff, soff);
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 				*poff = soff;
-			पूर्ण
-		पूर्ण
-		save_रेजिस्टर_state(state, spi, reg);
-	पूर्ण अन्यथा अणु
+			}
+		}
+		save_register_state(state, spi, reg);
+	} else {
 		u8 type = STACK_MISC;
 
-		/* regular ग_लिखो of data पूर्णांकo stack destroys any spilled ptr */
+		/* regular write of data into stack destroys any spilled ptr */
 		state->stack[spi].spilled_ptr.type = NOT_INIT;
-		/* Mark slots as STACK_MISC अगर they beदीर्घed to spilled ptr. */
-		अगर (state->stack[spi].slot_type[0] == STACK_SPILL)
-			क्रम (i = 0; i < BPF_REG_SIZE; i++)
+		/* Mark slots as STACK_MISC if they belonged to spilled ptr. */
+		if (state->stack[spi].slot_type[0] == STACK_SPILL)
+			for (i = 0; i < BPF_REG_SIZE; i++)
 				state->stack[spi].slot_type[i] = STACK_MISC;
 
-		/* only mark the slot as written अगर all 8 bytes were written
-		 * otherwise पढ़ो propagation may incorrectly stop too soon
+		/* only mark the slot as written if all 8 bytes were written
+		 * otherwise read propagation may incorrectly stop too soon
 		 * when stack slots are partially written.
-		 * This heuristic means that पढ़ो propagation will be
-		 * conservative, since it will add reg_live_पढ़ो marks
+		 * This heuristic means that read propagation will be
+		 * conservative, since it will add reg_live_read marks
 		 * to stack slots all the way to first state when programs
-		 * ग_लिखोs+पढ़ोs less than 8 bytes
+		 * writes+reads less than 8 bytes
 		 */
-		अगर (size == BPF_REG_SIZE)
+		if (size == BPF_REG_SIZE)
 			state->stack[spi].spilled_ptr.live |= REG_LIVE_WRITTEN;
 
 		/* when we zero initialize stack slots mark them as such */
-		अगर (reg && रेजिस्टर_is_null(reg)) अणु
-			/* backtracking करोesn't work क्रम STACK_ZERO yet. */
+		if (reg && register_is_null(reg)) {
+			/* backtracking doesn't work for STACK_ZERO yet. */
 			err = mark_chain_precision(env, value_regno);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			type = STACK_ZERO;
-		पूर्ण
+		}
 
-		/* Mark slots affected by this stack ग_लिखो. */
-		क्रम (i = 0; i < size; i++)
+		/* Mark slots affected by this stack write. */
+		for (i = 0; i < size; i++)
 			state->stack[spi].slot_type[(slot - i) % BPF_REG_SIZE] =
 				type;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* Write the stack: 'stack[ptr_regno + off] = value_regno'. 'ptr_regno' is
  * known to contain a variable offset.
- * This function checks whether the ग_लिखो is permitted and conservatively
- * tracks the effects of the ग_लिखो, considering that each stack slot in the
+ * This function checks whether the write is permitted and conservatively
+ * tracks the effects of the write, considering that each stack slot in the
  * dynamic range is potentially written to.
  *
  * 'off' includes 'regno->off'.
  * 'value_regno' can be -1, meaning that an unknown value is being written to
  * the stack.
  *
- * Spilled poपूर्णांकers in range are not marked as written because we करोn't know
- * what's going to be actually written. This means that पढ़ो propagation क्रम
- * future पढ़ोs cannot be terminated by this ग_लिखो.
+ * Spilled pointers in range are not marked as written because we don't know
+ * what's going to be actually written. This means that read propagation for
+ * future reads cannot be terminated by this write.
  *
  * For privileged programs, uninitialized stack slots are considered
- * initialized by this ग_लिखो (even though we करोn't know exactly what offsets
- * are going to be written to). The idea is that we करोn't want the verअगरier to
- * reject future पढ़ोs that access slots written to through variable offsets.
+ * initialized by this write (even though we don't know exactly what offsets
+ * are going to be written to). The idea is that we don't want the verifier to
+ * reject future reads that access slots written to through variable offsets.
  */
-अटल पूर्णांक check_stack_ग_लिखो_var_off(काष्ठा bpf_verअगरier_env *env,
-				     /* func where रेजिस्टर poपूर्णांकs to */
-				     काष्ठा bpf_func_state *state,
-				     पूर्णांक ptr_regno, पूर्णांक off, पूर्णांक size,
-				     पूर्णांक value_regno, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_func_state *cur; /* state of the current function */
-	पूर्णांक min_off, max_off;
-	पूर्णांक i, err;
-	काष्ठा bpf_reg_state *ptr_reg = शून्य, *value_reg = शून्य;
+static int check_stack_write_var_off(struct bpf_verifier_env *env,
+				     /* func where register points to */
+				     struct bpf_func_state *state,
+				     int ptr_regno, int off, int size,
+				     int value_regno, int insn_idx)
+{
+	struct bpf_func_state *cur; /* state of the current function */
+	int min_off, max_off;
+	int i, err;
+	struct bpf_reg_state *ptr_reg = NULL, *value_reg = NULL;
 	bool writing_zero = false;
-	/* set अगर the fact that we're writing a zero is used to let any
-	 * stack slots reमुख्य STACK_ZERO
+	/* set if the fact that we're writing a zero is used to let any
+	 * stack slots remain STACK_ZERO
 	 */
 	bool zero_used = false;
 
@@ -2749,865 +2748,865 @@ next:
 	ptr_reg = &cur->regs[ptr_regno];
 	min_off = ptr_reg->smin_value + off;
 	max_off = ptr_reg->smax_value + off + size;
-	अगर (value_regno >= 0)
+	if (value_regno >= 0)
 		value_reg = &cur->regs[value_regno];
-	अगर (value_reg && रेजिस्टर_is_null(value_reg))
+	if (value_reg && register_is_null(value_reg))
 		writing_zero = true;
 
-	err = पुनः_स्मृति_func_state(state, round_up(-min_off, BPF_REG_SIZE),
+	err = realloc_func_state(state, round_up(-min_off, BPF_REG_SIZE),
 				 state->acquired_refs, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 
-	/* Variable offset ग_लिखोs destroy any spilled poपूर्णांकers in range. */
-	क्रम (i = min_off; i < max_off; i++) अणु
+	/* Variable offset writes destroy any spilled pointers in range. */
+	for (i = min_off; i < max_off; i++) {
 		u8 new_type, *stype;
-		पूर्णांक slot, spi;
+		int slot, spi;
 
 		slot = -i - 1;
 		spi = slot / BPF_REG_SIZE;
 		stype = &state->stack[spi].slot_type[slot % BPF_REG_SIZE];
 
-		अगर (!env->allow_ptr_leaks
+		if (!env->allow_ptr_leaks
 				&& *stype != NOT_INIT
-				&& *stype != SCALAR_VALUE) अणु
-			/* Reject the ग_लिखो अगर there's are spilled poपूर्णांकers in
+				&& *stype != SCALAR_VALUE) {
+			/* Reject the write if there's are spilled pointers in
 			 * range. If we didn't reject here, the ptr status
 			 * would be erased below (even though not all slots are
-			 * actually overwritten), possibly खोलोing the करोor to
+			 * actually overwritten), possibly opening the door to
 			 * leaks.
 			 */
 			verbose(env, "spilled ptr in range of var-offset stack write; insn %d, ptr off: %d",
 				insn_idx, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* Erase all spilled poपूर्णांकers. */
+		/* Erase all spilled pointers. */
 		state->stack[spi].spilled_ptr.type = NOT_INIT;
 
 		/* Update the slot type. */
 		new_type = STACK_MISC;
-		अगर (writing_zero && *stype == STACK_ZERO) अणु
+		if (writing_zero && *stype == STACK_ZERO) {
 			new_type = STACK_ZERO;
 			zero_used = true;
-		पूर्ण
+		}
 		/* If the slot is STACK_INVALID, we check whether it's OK to
-		 * pretend that it will be initialized by this ग_लिखो. The slot
-		 * might not actually be written to, and so अगर we mark it as
-		 * initialized future पढ़ोs might leak uninitialized memory.
-		 * For privileged programs, we will accept such पढ़ोs to slots
-		 * that may or may not be written because, अगर we're reject
+		 * pretend that it will be initialized by this write. The slot
+		 * might not actually be written to, and so if we mark it as
+		 * initialized future reads might leak uninitialized memory.
+		 * For privileged programs, we will accept such reads to slots
+		 * that may or may not be written because, if we're reject
 		 * them, the error would be too confusing.
 		 */
-		अगर (*stype == STACK_INVALID && !env->allow_uninit_stack) अणु
+		if (*stype == STACK_INVALID && !env->allow_uninit_stack) {
 			verbose(env, "uninit stack in range of var-offset write prohibited for !root; insn %d, off: %d",
 					insn_idx, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		*stype = new_type;
-	पूर्ण
-	अगर (zero_used) अणु
-		/* backtracking करोesn't work क्रम STACK_ZERO yet. */
+	}
+	if (zero_used) {
+		/* backtracking doesn't work for STACK_ZERO yet. */
 		err = mark_chain_precision(env, value_regno);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	}
+	return 0;
+}
 
-/* When रेजिस्टर 'dst_regno' is asचिन्हित some values from stack[min_off,
- * max_off), we set the रेजिस्टर's type according to the types of the
+/* When register 'dst_regno' is assigned some values from stack[min_off,
+ * max_off), we set the register's type according to the types of the
  * respective stack slots. If all the stack values are known to be zeros, then
- * so is the destination reg. Otherwise, the रेजिस्टर is considered to be
- * SCALAR. This function करोes not deal with रेजिस्टर filling; the caller must
- * ensure that all spilled रेजिस्टरs in the stack range have been marked as
- * पढ़ो.
+ * so is the destination reg. Otherwise, the register is considered to be
+ * SCALAR. This function does not deal with register filling; the caller must
+ * ensure that all spilled registers in the stack range have been marked as
+ * read.
  */
-अटल व्योम mark_reg_stack_पढ़ो(काष्ठा bpf_verअगरier_env *env,
-				/* func where src रेजिस्टर poपूर्णांकs to */
-				काष्ठा bpf_func_state *ptr_state,
-				पूर्णांक min_off, पूर्णांक max_off, पूर्णांक dst_regno)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	पूर्णांक i, slot, spi;
+static void mark_reg_stack_read(struct bpf_verifier_env *env,
+				/* func where src register points to */
+				struct bpf_func_state *ptr_state,
+				int min_off, int max_off, int dst_regno)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	int i, slot, spi;
 	u8 *stype;
-	पूर्णांक zeros = 0;
+	int zeros = 0;
 
-	क्रम (i = min_off; i < max_off; i++) अणु
+	for (i = min_off; i < max_off; i++) {
 		slot = -i - 1;
 		spi = slot / BPF_REG_SIZE;
 		stype = ptr_state->stack[spi].slot_type;
-		अगर (stype[slot % BPF_REG_SIZE] != STACK_ZERO)
-			अवरोध;
+		if (stype[slot % BPF_REG_SIZE] != STACK_ZERO)
+			break;
 		zeros++;
-	पूर्ण
-	अगर (zeros == max_off - min_off) अणु
-		/* any access_size पढ़ो पूर्णांकo रेजिस्टर is zero extended,
-		 * so the whole रेजिस्टर == स्थिर_zero
+	}
+	if (zeros == max_off - min_off) {
+		/* any access_size read into register is zero extended,
+		 * so the whole register == const_zero
 		 */
-		__mark_reg_स्थिर_zero(&state->regs[dst_regno]);
-		/* backtracking करोesn't support STACK_ZERO yet,
+		__mark_reg_const_zero(&state->regs[dst_regno]);
+		/* backtracking doesn't support STACK_ZERO yet,
 		 * so mark it precise here, so that later
 		 * backtracking can stop here.
-		 * Backtracking may not need this अगर this रेजिस्टर
-		 * करोesn't participate in poपूर्णांकer adjusपंचांगent.
+		 * Backtracking may not need this if this register
+		 * doesn't participate in pointer adjustment.
 		 * Forward propagation of precise flag is not
 		 * necessary either. This mark is only to stop
-		 * backtracking. Any रेजिस्टर that contributed
-		 * to स्थिर 0 was marked precise beक्रमe spill.
+		 * backtracking. Any register that contributed
+		 * to const 0 was marked precise before spill.
 		 */
 		state->regs[dst_regno].precise = true;
-	पूर्ण अन्यथा अणु
-		/* have पढ़ो misc data from the stack */
+	} else {
+		/* have read misc data from the stack */
 		mark_reg_unknown(env, state->regs, dst_regno);
-	पूर्ण
+	}
 	state->regs[dst_regno].live |= REG_LIVE_WRITTEN;
-पूर्ण
+}
 
-/* Read the stack at 'off' and put the results पूर्णांकo the रेजिस्टर indicated by
- * 'dst_regno'. It handles reg filling अगर the addressed stack slot is a
+/* Read the stack at 'off' and put the results into the register indicated by
+ * 'dst_regno'. It handles reg filling if the addressed stack slot is a
  * spilled reg.
  *
- * 'dst_regno' can be -1, meaning that the पढ़ो value is not going to a
- * रेजिस्टर.
+ * 'dst_regno' can be -1, meaning that the read value is not going to a
+ * register.
  *
  * The access is assumed to be within the current stack bounds.
  */
-अटल पूर्णांक check_stack_पढ़ो_fixed_off(काष्ठा bpf_verअगरier_env *env,
-				      /* func where src रेजिस्टर poपूर्णांकs to */
-				      काष्ठा bpf_func_state *reg_state,
-				      पूर्णांक off, पूर्णांक size, पूर्णांक dst_regno)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	पूर्णांक i, slot = -off - 1, spi = slot / BPF_REG_SIZE;
-	काष्ठा bpf_reg_state *reg;
+static int check_stack_read_fixed_off(struct bpf_verifier_env *env,
+				      /* func where src register points to */
+				      struct bpf_func_state *reg_state,
+				      int off, int size, int dst_regno)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	int i, slot = -off - 1, spi = slot / BPF_REG_SIZE;
+	struct bpf_reg_state *reg;
 	u8 *stype;
 
 	stype = reg_state->stack[spi].slot_type;
 	reg = &reg_state->stack[spi].spilled_ptr;
 
-	अगर (stype[0] == STACK_SPILL) अणु
-		अगर (size != BPF_REG_SIZE) अणु
-			अगर (reg->type != SCALAR_VALUE) अणु
+	if (stype[0] == STACK_SPILL) {
+		if (size != BPF_REG_SIZE) {
+			if (reg->type != SCALAR_VALUE) {
 				verbose_linfo(env, env->insn_idx, "; ");
 				verbose(env, "invalid size of register fill\n");
-				वापस -EACCES;
-			पूर्ण
-			अगर (dst_regno >= 0) अणु
+				return -EACCES;
+			}
+			if (dst_regno >= 0) {
 				mark_reg_unknown(env, state->regs, dst_regno);
 				state->regs[dst_regno].live |= REG_LIVE_WRITTEN;
-			पूर्ण
-			mark_reg_पढ़ो(env, reg, reg->parent, REG_LIVE_READ64);
-			वापस 0;
-		पूर्ण
-		क्रम (i = 1; i < BPF_REG_SIZE; i++) अणु
-			अगर (stype[(slot - i) % BPF_REG_SIZE] != STACK_SPILL) अणु
+			}
+			mark_reg_read(env, reg, reg->parent, REG_LIVE_READ64);
+			return 0;
+		}
+		for (i = 1; i < BPF_REG_SIZE; i++) {
+			if (stype[(slot - i) % BPF_REG_SIZE] != STACK_SPILL) {
 				verbose(env, "corrupted spill memory\n");
-				वापस -EACCES;
-			पूर्ण
-		पूर्ण
+				return -EACCES;
+			}
+		}
 
-		अगर (dst_regno >= 0) अणु
-			/* restore रेजिस्टर state from stack */
+		if (dst_regno >= 0) {
+			/* restore register state from stack */
 			state->regs[dst_regno] = *reg;
-			/* mark reg as written since spilled poपूर्णांकer state likely
+			/* mark reg as written since spilled pointer state likely
 			 * has its liveness marks cleared by is_state_visited()
-			 * which resets stack/reg liveness क्रम state transitions
+			 * which resets stack/reg liveness for state transitions
 			 */
 			state->regs[dst_regno].live |= REG_LIVE_WRITTEN;
-		पूर्ण अन्यथा अगर (__is_poपूर्णांकer_value(env->allow_ptr_leaks, reg)) अणु
+		} else if (__is_pointer_value(env->allow_ptr_leaks, reg)) {
 			/* If dst_regno==-1, the caller is asking us whether
 			 * it is acceptable to use this value as a SCALAR_VALUE
-			 * (e.g. क्रम XADD).
-			 * We must not allow unprivileged callers to करो that
-			 * with spilled poपूर्णांकers.
+			 * (e.g. for XADD).
+			 * We must not allow unprivileged callers to do that
+			 * with spilled pointers.
 			 */
 			verbose(env, "leaking pointer from stack off %d\n",
 				off);
-			वापस -EACCES;
-		पूर्ण
-		mark_reg_पढ़ो(env, reg, reg->parent, REG_LIVE_READ64);
-	पूर्ण अन्यथा अणु
+			return -EACCES;
+		}
+		mark_reg_read(env, reg, reg->parent, REG_LIVE_READ64);
+	} else {
 		u8 type;
 
-		क्रम (i = 0; i < size; i++) अणु
+		for (i = 0; i < size; i++) {
 			type = stype[(slot - i) % BPF_REG_SIZE];
-			अगर (type == STACK_MISC)
-				जारी;
-			अगर (type == STACK_ZERO)
-				जारी;
+			if (type == STACK_MISC)
+				continue;
+			if (type == STACK_ZERO)
+				continue;
 			verbose(env, "invalid read from stack off %d+%d size %d\n",
 				off, i, size);
-			वापस -EACCES;
-		पूर्ण
-		mark_reg_पढ़ो(env, reg, reg->parent, REG_LIVE_READ64);
-		अगर (dst_regno >= 0)
-			mark_reg_stack_पढ़ो(env, reg_state, off, off + size, dst_regno);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EACCES;
+		}
+		mark_reg_read(env, reg, reg->parent, REG_LIVE_READ64);
+		if (dst_regno >= 0)
+			mark_reg_stack_read(env, reg_state, off, off + size, dst_regno);
+	}
+	return 0;
+}
 
-क्रमागत stack_access_src अणु
-	ACCESS_सूचीECT = 1,  /* the access is perक्रमmed by an inकाष्ठाion */
-	ACCESS_HELPER = 2,  /* the access is perक्रमmed by a helper */
-पूर्ण;
+enum stack_access_src {
+	ACCESS_DIRECT = 1,  /* the access is performed by an instruction */
+	ACCESS_HELPER = 2,  /* the access is performed by a helper */
+};
 
-अटल पूर्णांक check_stack_range_initialized(काष्ठा bpf_verअगरier_env *env,
-					 पूर्णांक regno, पूर्णांक off, पूर्णांक access_size,
+static int check_stack_range_initialized(struct bpf_verifier_env *env,
+					 int regno, int off, int access_size,
 					 bool zero_size_allowed,
-					 क्रमागत stack_access_src type,
-					 काष्ठा bpf_call_arg_meta *meta);
+					 enum stack_access_src type,
+					 struct bpf_call_arg_meta *meta);
 
-अटल काष्ठा bpf_reg_state *reg_state(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	वापस cur_regs(env) + regno;
-पूर्ण
+static struct bpf_reg_state *reg_state(struct bpf_verifier_env *env, int regno)
+{
+	return cur_regs(env) + regno;
+}
 
-/* Read the stack at 'ptr_regno + off' and put the result पूर्णांकo the रेजिस्टर
+/* Read the stack at 'ptr_regno + off' and put the result into the register
  * 'dst_regno'.
  * 'off' includes the pointer register's fixed offset(i.e. 'ptr_regno.off'),
  * but not its variable offset.
  * 'size' is assumed to be <= reg size and the access is assumed to be aligned.
  *
- * As opposed to check_stack_पढ़ो_fixed_off, this function करोesn't deal with
- * filling रेजिस्टरs (i.e. पढ़ोs of spilled रेजिस्टर cannot be detected when
+ * As opposed to check_stack_read_fixed_off, this function doesn't deal with
+ * filling registers (i.e. reads of spilled register cannot be detected when
  * the offset is not fixed). We conservatively mark 'dst_regno' as containing
  * SCALAR_VALUE. That's why we assert that the 'ptr_regno' has a variable
- * offset; क्रम a fixed offset check_stack_पढ़ो_fixed_off should be used
+ * offset; for a fixed offset check_stack_read_fixed_off should be used
  * instead.
  */
-अटल पूर्णांक check_stack_पढ़ो_var_off(काष्ठा bpf_verअगरier_env *env,
-				    पूर्णांक ptr_regno, पूर्णांक off, पूर्णांक size, पूर्णांक dst_regno)
-अणु
-	/* The state of the source रेजिस्टर. */
-	काष्ठा bpf_reg_state *reg = reg_state(env, ptr_regno);
-	काष्ठा bpf_func_state *ptr_state = func(env, reg);
-	पूर्णांक err;
-	पूर्णांक min_off, max_off;
+static int check_stack_read_var_off(struct bpf_verifier_env *env,
+				    int ptr_regno, int off, int size, int dst_regno)
+{
+	/* The state of the source register. */
+	struct bpf_reg_state *reg = reg_state(env, ptr_regno);
+	struct bpf_func_state *ptr_state = func(env, reg);
+	int err;
+	int min_off, max_off;
 
-	/* Note that we pass a शून्य meta, so raw access will not be permitted.
+	/* Note that we pass a NULL meta, so raw access will not be permitted.
 	 */
 	err = check_stack_range_initialized(env, ptr_regno, off, size,
-					    false, ACCESS_सूचीECT, शून्य);
-	अगर (err)
-		वापस err;
+					    false, ACCESS_DIRECT, NULL);
+	if (err)
+		return err;
 
 	min_off = reg->smin_value + off;
 	max_off = reg->smax_value + off;
-	mark_reg_stack_पढ़ो(env, ptr_state, min_off, max_off + size, dst_regno);
-	वापस 0;
-पूर्ण
+	mark_reg_stack_read(env, ptr_state, min_off, max_off + size, dst_regno);
+	return 0;
+}
 
-/* check_stack_पढ़ो dispatches to check_stack_पढ़ो_fixed_off or
- * check_stack_पढ़ो_var_off.
+/* check_stack_read dispatches to check_stack_read_fixed_off or
+ * check_stack_read_var_off.
  *
  * The caller must ensure that the offset falls within the allocated stack
  * bounds.
  *
- * 'dst_regno' is a रेजिस्टर which will receive the value from the stack. It
- * can be -1, meaning that the पढ़ो value is not going to a रेजिस्टर.
+ * 'dst_regno' is a register which will receive the value from the stack. It
+ * can be -1, meaning that the read value is not going to a register.
  */
-अटल पूर्णांक check_stack_पढ़ो(काष्ठा bpf_verअगरier_env *env,
-			    पूर्णांक ptr_regno, पूर्णांक off, पूर्णांक size,
-			    पूर्णांक dst_regno)
-अणु
-	काष्ठा bpf_reg_state *reg = reg_state(env, ptr_regno);
-	काष्ठा bpf_func_state *state = func(env, reg);
-	पूर्णांक err;
-	/* Some accesses are only permitted with a अटल offset. */
-	bool var_off = !tnum_is_स्थिर(reg->var_off);
+static int check_stack_read(struct bpf_verifier_env *env,
+			    int ptr_regno, int off, int size,
+			    int dst_regno)
+{
+	struct bpf_reg_state *reg = reg_state(env, ptr_regno);
+	struct bpf_func_state *state = func(env, reg);
+	int err;
+	/* Some accesses are only permitted with a static offset. */
+	bool var_off = !tnum_is_const(reg->var_off);
 
-	/* The offset is required to be अटल when पढ़ोs करोn't go to a
-	 * रेजिस्टर, in order to not leak poपूर्णांकers (see
-	 * check_stack_पढ़ो_fixed_off).
+	/* The offset is required to be static when reads don't go to a
+	 * register, in order to not leak pointers (see
+	 * check_stack_read_fixed_off).
 	 */
-	अगर (dst_regno < 0 && var_off) अणु
-		अक्षर tn_buf[48];
+	if (dst_regno < 0 && var_off) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "variable offset stack pointer cannot be passed into helper function; var_off=%s off=%d size=%d\n",
 			tn_buf, off, size);
-		वापस -EACCES;
-	पूर्ण
-	/* Variable offset is prohibited क्रम unprivileged mode क्रम simplicity
-	 * since it requires corresponding support in Spectre masking क्रम stack
+		return -EACCES;
+	}
+	/* Variable offset is prohibited for unprivileged mode for simplicity
+	 * since it requires corresponding support in Spectre masking for stack
 	 * ALU. See also retrieve_ptr_limit().
 	 */
-	अगर (!env->bypass_spec_v1 && var_off) अणु
-		अक्षर tn_buf[48];
+	if (!env->bypass_spec_v1 && var_off) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "R%d variable offset stack access prohibited for !root, var_off=%s\n",
 				ptr_regno, tn_buf);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (!var_off) अणु
+	if (!var_off) {
 		off += reg->var_off.value;
-		err = check_stack_पढ़ो_fixed_off(env, state, off, size,
+		err = check_stack_read_fixed_off(env, state, off, size,
 						 dst_regno);
-	पूर्ण अन्यथा अणु
-		/* Variable offset stack पढ़ोs need more conservative handling
+	} else {
+		/* Variable offset stack reads need more conservative handling
 		 * than fixed offset ones. Note that dst_regno >= 0 on this
 		 * branch.
 		 */
-		err = check_stack_पढ़ो_var_off(env, ptr_regno, off, size,
+		err = check_stack_read_var_off(env, ptr_regno, off, size,
 					       dst_regno);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 
-/* check_stack_ग_लिखो dispatches to check_stack_ग_लिखो_fixed_off or
- * check_stack_ग_लिखो_var_off.
+/* check_stack_write dispatches to check_stack_write_fixed_off or
+ * check_stack_write_var_off.
  *
- * 'ptr_regno' is the रेजिस्टर used as a poपूर्णांकer पूर्णांकo the stack.
- * 'off' includes 'ptr_regno->off', but not its variable offset (अगर any).
+ * 'ptr_regno' is the register used as a pointer into the stack.
+ * 'off' includes 'ptr_regno->off', but not its variable offset (if any).
  * 'value_regno' is the register whose value we're writing to the stack. It can
- * be -1, meaning that we're not writing from a रेजिस्टर.
+ * be -1, meaning that we're not writing from a register.
  *
  * The caller must ensure that the offset falls within the maximum stack size.
  */
-अटल पूर्णांक check_stack_ग_लिखो(काष्ठा bpf_verअगरier_env *env,
-			     पूर्णांक ptr_regno, पूर्णांक off, पूर्णांक size,
-			     पूर्णांक value_regno, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_reg_state *reg = reg_state(env, ptr_regno);
-	काष्ठा bpf_func_state *state = func(env, reg);
-	पूर्णांक err;
+static int check_stack_write(struct bpf_verifier_env *env,
+			     int ptr_regno, int off, int size,
+			     int value_regno, int insn_idx)
+{
+	struct bpf_reg_state *reg = reg_state(env, ptr_regno);
+	struct bpf_func_state *state = func(env, reg);
+	int err;
 
-	अगर (tnum_is_स्थिर(reg->var_off)) अणु
+	if (tnum_is_const(reg->var_off)) {
 		off += reg->var_off.value;
-		err = check_stack_ग_लिखो_fixed_off(env, state, off, size,
+		err = check_stack_write_fixed_off(env, state, off, size,
 						  value_regno, insn_idx);
-	पूर्ण अन्यथा अणु
-		/* Variable offset stack पढ़ोs need more conservative handling
+	} else {
+		/* Variable offset stack reads need more conservative handling
 		 * than fixed offset ones.
 		 */
-		err = check_stack_ग_लिखो_var_off(env, state,
+		err = check_stack_write_var_off(env, state,
 						ptr_regno, off, size,
 						value_regno, insn_idx);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक check_map_access_type(काष्ठा bpf_verअगरier_env *env, u32 regno,
-				 पूर्णांक off, पूर्णांक size, क्रमागत bpf_access_type type)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_map *map = regs[regno].map_ptr;
+static int check_map_access_type(struct bpf_verifier_env *env, u32 regno,
+				 int off, int size, enum bpf_access_type type)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_map *map = regs[regno].map_ptr;
 	u32 cap = bpf_map_flags_to_cap(map);
 
-	अगर (type == BPF_WRITE && !(cap & BPF_MAP_CAN_WRITE)) अणु
+	if (type == BPF_WRITE && !(cap & BPF_MAP_CAN_WRITE)) {
 		verbose(env, "write into map forbidden, value_size=%d off=%d size=%d\n",
 			map->value_size, off, size);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (type == BPF_READ && !(cap & BPF_MAP_CAN_READ)) अणु
+	if (type == BPF_READ && !(cap & BPF_MAP_CAN_READ)) {
 		verbose(env, "read from map forbidden, value_size=%d off=%d size=%d\n",
 			map->value_size, off, size);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* check पढ़ो/ग_लिखो पूर्णांकo memory region (e.g., map value, ringbuf sample, etc) */
-अटल पूर्णांक __check_mem_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno,
-			      पूर्णांक off, पूर्णांक size, u32 mem_size,
+/* check read/write into memory region (e.g., map value, ringbuf sample, etc) */
+static int __check_mem_access(struct bpf_verifier_env *env, int regno,
+			      int off, int size, u32 mem_size,
 			      bool zero_size_allowed)
-अणु
+{
 	bool size_ok = size > 0 || (size == 0 && zero_size_allowed);
-	काष्ठा bpf_reg_state *reg;
+	struct bpf_reg_state *reg;
 
-	अगर (off >= 0 && size_ok && (u64)off + size <= mem_size)
-		वापस 0;
+	if (off >= 0 && size_ok && (u64)off + size <= mem_size)
+		return 0;
 
 	reg = &cur_regs(env)[regno];
-	चयन (reg->type) अणु
-	हाल PTR_TO_MAP_KEY:
+	switch (reg->type) {
+	case PTR_TO_MAP_KEY:
 		verbose(env, "invalid access to map key, key_size=%d off=%d size=%d\n",
 			mem_size, off, size);
-		अवरोध;
-	हाल PTR_TO_MAP_VALUE:
+		break;
+	case PTR_TO_MAP_VALUE:
 		verbose(env, "invalid access to map value, value_size=%d off=%d size=%d\n",
 			mem_size, off, size);
-		अवरोध;
-	हाल PTR_TO_PACKET:
-	हाल PTR_TO_PACKET_META:
-	हाल PTR_TO_PACKET_END:
+		break;
+	case PTR_TO_PACKET:
+	case PTR_TO_PACKET_META:
+	case PTR_TO_PACKET_END:
 		verbose(env, "invalid access to packet, off=%d size=%d, R%d(id=%d,off=%d,r=%d)\n",
 			off, size, regno, reg->id, off, mem_size);
-		अवरोध;
-	हाल PTR_TO_MEM:
-	शेष:
+		break;
+	case PTR_TO_MEM:
+	default:
 		verbose(env, "invalid access to memory, mem_size=%u off=%d size=%d\n",
 			mem_size, off, size);
-	पूर्ण
+	}
 
-	वापस -EACCES;
-पूर्ण
+	return -EACCES;
+}
 
-/* check पढ़ो/ग_लिखो पूर्णांकo a memory region with possible variable offset */
-अटल पूर्णांक check_mem_region_access(काष्ठा bpf_verअगरier_env *env, u32 regno,
-				   पूर्णांक off, पूर्णांक size, u32 mem_size,
+/* check read/write into a memory region with possible variable offset */
+static int check_mem_region_access(struct bpf_verifier_env *env, u32 regno,
+				   int off, int size, u32 mem_size,
 				   bool zero_size_allowed)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *reg = &state->regs[regno];
-	पूर्णांक err;
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *reg = &state->regs[regno];
+	int err;
 
-	/* We may have adjusted the रेजिस्टर poपूर्णांकing to memory region, so we
+	/* We may have adjusted the register pointing to memory region, so we
 	 * need to try adding each of min_value and max_value to off
 	 * to make sure our theoretical access will be safe.
 	 */
-	अगर (env->log.level & BPF_LOG_LEVEL)
-		prपूर्णांक_verअगरier_state(env, state);
+	if (env->log.level & BPF_LOG_LEVEL)
+		print_verifier_state(env, state);
 
-	/* The minimum value is only important with चिन्हित
-	 * comparisons where we can't assume the न्यूनमान of a
-	 * value is 0.  If we are using चिन्हित variables क्रम our
+	/* The minimum value is only important with signed
+	 * comparisons where we can't assume the floor of a
+	 * value is 0.  If we are using signed variables for our
 	 * index'es we need to make sure that whatever we use
-	 * will have a set न्यूनमान within our range.
+	 * will have a set floor within our range.
 	 */
-	अगर (reg->smin_value < 0 &&
+	if (reg->smin_value < 0 &&
 	    (reg->smin_value == S64_MIN ||
 	     (off + reg->smin_value != (s64)(s32)(off + reg->smin_value)) ||
-	      reg->smin_value + off < 0)) अणु
+	      reg->smin_value + off < 0)) {
 		verbose(env, "R%d min value is negative, either use unsigned index or do a if (index >=0) check.\n",
 			regno);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 	err = __check_mem_access(env, regno, reg->smin_value + off, size,
 				 mem_size, zero_size_allowed);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "R%d min value is outside of the allowed memory range\n",
 			regno);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* If we haven't set a max value then we need to bail since we can't be
-	 * sure we won't करो bad things.
+	 * sure we won't do bad things.
 	 * If reg->umax_value + off could overflow, treat that as unbounded too.
 	 */
-	अगर (reg->umax_value >= BPF_MAX_VAR_OFF) अणु
+	if (reg->umax_value >= BPF_MAX_VAR_OFF) {
 		verbose(env, "R%d unbounded memory access, make sure to bounds check any such access\n",
 			regno);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 	err = __check_mem_access(env, regno, reg->umax_value + off, size,
 				 mem_size, zero_size_allowed);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "R%d max value is outside of the allowed memory range\n",
 			regno);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* check पढ़ो/ग_लिखो पूर्णांकo a map element with possible variable offset */
-अटल पूर्णांक check_map_access(काष्ठा bpf_verअगरier_env *env, u32 regno,
-			    पूर्णांक off, पूर्णांक size, bool zero_size_allowed)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *reg = &state->regs[regno];
-	काष्ठा bpf_map *map = reg->map_ptr;
-	पूर्णांक err;
+/* check read/write into a map element with possible variable offset */
+static int check_map_access(struct bpf_verifier_env *env, u32 regno,
+			    int off, int size, bool zero_size_allowed)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *reg = &state->regs[regno];
+	struct bpf_map *map = reg->map_ptr;
+	int err;
 
 	err = check_mem_region_access(env, regno, off, size, map->value_size,
 				      zero_size_allowed);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (map_value_has_spin_lock(map)) अणु
+	if (map_value_has_spin_lock(map)) {
 		u32 lock = map->spin_lock_off;
 
-		/* अगर any part of काष्ठा bpf_spin_lock can be touched by
+		/* if any part of struct bpf_spin_lock can be touched by
 		 * load/store reject this program.
 		 * To check that [x1, x2) overlaps with [y1, y2)
 		 * it is sufficient to check x1 < y2 && y1 < x2.
 		 */
-		अगर (reg->smin_value + off < lock + माप(काष्ठा bpf_spin_lock) &&
-		     lock < reg->umax_value + off + size) अणु
+		if (reg->smin_value + off < lock + sizeof(struct bpf_spin_lock) &&
+		     lock < reg->umax_value + off + size) {
 			verbose(env, "bpf_spin_lock cannot be accessed directly by load/store\n");
-			वापस -EACCES;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			return -EACCES;
+		}
+	}
+	return err;
+}
 
-#घोषणा MAX_PACKET_OFF 0xffff
+#define MAX_PACKET_OFF 0xffff
 
-अटल क्रमागत bpf_prog_type resolve_prog_type(काष्ठा bpf_prog *prog)
-अणु
-	वापस prog->aux->dst_prog ? prog->aux->dst_prog->type : prog->type;
-पूर्ण
+static enum bpf_prog_type resolve_prog_type(struct bpf_prog *prog)
+{
+	return prog->aux->dst_prog ? prog->aux->dst_prog->type : prog->type;
+}
 
-अटल bool may_access_direct_pkt_data(काष्ठा bpf_verअगरier_env *env,
-				       स्थिर काष्ठा bpf_call_arg_meta *meta,
-				       क्रमागत bpf_access_type t)
-अणु
-	क्रमागत bpf_prog_type prog_type = resolve_prog_type(env->prog);
+static bool may_access_direct_pkt_data(struct bpf_verifier_env *env,
+				       const struct bpf_call_arg_meta *meta,
+				       enum bpf_access_type t)
+{
+	enum bpf_prog_type prog_type = resolve_prog_type(env->prog);
 
-	चयन (prog_type) अणु
-	/* Program types only with direct पढ़ो access go here! */
-	हाल BPF_PROG_TYPE_LWT_IN:
-	हाल BPF_PROG_TYPE_LWT_OUT:
-	हाल BPF_PROG_TYPE_LWT_SEG6LOCAL:
-	हाल BPF_PROG_TYPE_SK_REUSEPORT:
-	हाल BPF_PROG_TYPE_FLOW_DISSECTOR:
-	हाल BPF_PROG_TYPE_CGROUP_SKB:
-		अगर (t == BPF_WRITE)
-			वापस false;
+	switch (prog_type) {
+	/* Program types only with direct read access go here! */
+	case BPF_PROG_TYPE_LWT_IN:
+	case BPF_PROG_TYPE_LWT_OUT:
+	case BPF_PROG_TYPE_LWT_SEG6LOCAL:
+	case BPF_PROG_TYPE_SK_REUSEPORT:
+	case BPF_PROG_TYPE_FLOW_DISSECTOR:
+	case BPF_PROG_TYPE_CGROUP_SKB:
+		if (t == BPF_WRITE)
+			return false;
 		fallthrough;
 
-	/* Program types with direct पढ़ो + ग_लिखो access go here! */
-	हाल BPF_PROG_TYPE_SCHED_CLS:
-	हाल BPF_PROG_TYPE_SCHED_ACT:
-	हाल BPF_PROG_TYPE_XDP:
-	हाल BPF_PROG_TYPE_LWT_XMIT:
-	हाल BPF_PROG_TYPE_SK_SKB:
-	हाल BPF_PROG_TYPE_SK_MSG:
-		अगर (meta)
-			वापस meta->pkt_access;
+	/* Program types with direct read + write access go here! */
+	case BPF_PROG_TYPE_SCHED_CLS:
+	case BPF_PROG_TYPE_SCHED_ACT:
+	case BPF_PROG_TYPE_XDP:
+	case BPF_PROG_TYPE_LWT_XMIT:
+	case BPF_PROG_TYPE_SK_SKB:
+	case BPF_PROG_TYPE_SK_MSG:
+		if (meta)
+			return meta->pkt_access;
 
-		env->seen_direct_ग_लिखो = true;
-		वापस true;
+		env->seen_direct_write = true;
+		return true;
 
-	हाल BPF_PROG_TYPE_CGROUP_SOCKOPT:
-		अगर (t == BPF_WRITE)
-			env->seen_direct_ग_लिखो = true;
+	case BPF_PROG_TYPE_CGROUP_SOCKOPT:
+		if (t == BPF_WRITE)
+			env->seen_direct_write = true;
 
-		वापस true;
+		return true;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक check_packet_access(काष्ठा bpf_verअगरier_env *env, u32 regno, पूर्णांक off,
-			       पूर्णांक size, bool zero_size_allowed)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_reg_state *reg = &regs[regno];
-	पूर्णांक err;
+static int check_packet_access(struct bpf_verifier_env *env, u32 regno, int off,
+			       int size, bool zero_size_allowed)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_reg_state *reg = &regs[regno];
+	int err;
 
-	/* We may have added a variable offset to the packet poपूर्णांकer; but any
+	/* We may have added a variable offset to the packet pointer; but any
 	 * reg->range we have comes after that.  We are only checking the fixed
 	 * offset.
 	 */
 
-	/* We करोn't allow negative numbers, because we aren't tracking enough
+	/* We don't allow negative numbers, because we aren't tracking enough
 	 * detail to prove they're safe.
 	 */
-	अगर (reg->smin_value < 0) अणु
+	if (reg->smin_value < 0) {
 		verbose(env, "R%d min value is negative, either use unsigned index or do a if (index >=0) check.\n",
 			regno);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
 	err = reg->range < 0 ? -EINVAL :
 	      __check_mem_access(env, regno, off, size, reg->range,
 				 zero_size_allowed);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "R%d offset is outside of the packet\n", regno);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* __check_mem_access has made sure "off + size - 1" is within u16.
 	 * reg->umax_value can't be bigger than MAX_PACKET_OFF which is 0xffff,
-	 * otherwise find_good_pkt_poपूर्णांकers would have refused to set range info
+	 * otherwise find_good_pkt_pointers would have refused to set range info
 	 * that __check_mem_access would have rejected this pkt access.
-	 * Thereक्रमe, "off + reg->umax_value + size - 1" won't overflow u32.
+	 * Therefore, "off + reg->umax_value + size - 1" won't overflow u32.
 	 */
 	env->prog->aux->max_pkt_offset =
 		max_t(u32, env->prog->aux->max_pkt_offset,
 		      off + reg->umax_value + size - 1);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* check access to 'struct bpf_context' fields.  Supports fixed offsets only */
-अटल पूर्णांक check_ctx_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx, पूर्णांक off, पूर्णांक size,
-			    क्रमागत bpf_access_type t, क्रमागत bpf_reg_type *reg_type,
-			    काष्ठा btf **btf, u32 *btf_id)
-अणु
-	काष्ठा bpf_insn_access_aux info = अणु
+static int check_ctx_access(struct bpf_verifier_env *env, int insn_idx, int off, int size,
+			    enum bpf_access_type t, enum bpf_reg_type *reg_type,
+			    struct btf **btf, u32 *btf_id)
+{
+	struct bpf_insn_access_aux info = {
 		.reg_type = *reg_type,
 		.log = &env->log,
-	पूर्ण;
+	};
 
-	अगर (env->ops->is_valid_access &&
-	    env->ops->is_valid_access(off, size, t, env->prog, &info)) अणु
+	if (env->ops->is_valid_access &&
+	    env->ops->is_valid_access(off, size, t, env->prog, &info)) {
 		/* A non zero info.ctx_field_size indicates that this field is a
-		 * candidate क्रम later verअगरier transक्रमmation to load the whole
+		 * candidate for later verifier transformation to load the whole
 		 * field and then apply a mask when accessed with a narrower
 		 * access than actual ctx access size. A zero info.ctx_field_size
-		 * will only allow क्रम whole field access and rejects any other
+		 * will only allow for whole field access and rejects any other
 		 * type of narrower access.
 		 */
 		*reg_type = info.reg_type;
 
-		अगर (*reg_type == PTR_TO_BTF_ID || *reg_type == PTR_TO_BTF_ID_OR_शून्य) अणु
+		if (*reg_type == PTR_TO_BTF_ID || *reg_type == PTR_TO_BTF_ID_OR_NULL) {
 			*btf = info.btf;
 			*btf_id = info.btf_id;
-		पूर्ण अन्यथा अणु
+		} else {
 			env->insn_aux_data[insn_idx].ctx_field_size = info.ctx_field_size;
-		पूर्ण
+		}
 		/* remember the offset of last byte accessed in ctx */
-		अगर (env->prog->aux->max_ctx_offset < off + size)
+		if (env->prog->aux->max_ctx_offset < off + size)
 			env->prog->aux->max_ctx_offset = off + size;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	verbose(env, "invalid bpf_context access off=%d size=%d\n", off, size);
-	वापस -EACCES;
-पूर्ण
+	return -EACCES;
+}
 
-अटल पूर्णांक check_flow_keys_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक off,
-				  पूर्णांक size)
-अणु
-	अगर (size < 0 || off < 0 ||
-	    (u64)off + size > माप(काष्ठा bpf_flow_keys)) अणु
+static int check_flow_keys_access(struct bpf_verifier_env *env, int off,
+				  int size)
+{
+	if (size < 0 || off < 0 ||
+	    (u64)off + size > sizeof(struct bpf_flow_keys)) {
 		verbose(env, "invalid access to flow keys off=%d size=%d\n",
 			off, size);
-		वापस -EACCES;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EACCES;
+	}
+	return 0;
+}
 
-अटल पूर्णांक check_sock_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx,
-			     u32 regno, पूर्णांक off, पूर्णांक size,
-			     क्रमागत bpf_access_type t)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_reg_state *reg = &regs[regno];
-	काष्ठा bpf_insn_access_aux info = अणुपूर्ण;
+static int check_sock_access(struct bpf_verifier_env *env, int insn_idx,
+			     u32 regno, int off, int size,
+			     enum bpf_access_type t)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_reg_state *reg = &regs[regno];
+	struct bpf_insn_access_aux info = {};
 	bool valid;
 
-	अगर (reg->smin_value < 0) अणु
+	if (reg->smin_value < 0) {
 		verbose(env, "R%d min value is negative, either use unsigned index or do a if (index >=0) check.\n",
 			regno);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	चयन (reg->type) अणु
-	हाल PTR_TO_SOCK_COMMON:
+	switch (reg->type) {
+	case PTR_TO_SOCK_COMMON:
 		valid = bpf_sock_common_is_valid_access(off, size, t, &info);
-		अवरोध;
-	हाल PTR_TO_SOCKET:
+		break;
+	case PTR_TO_SOCKET:
 		valid = bpf_sock_is_valid_access(off, size, t, &info);
-		अवरोध;
-	हाल PTR_TO_TCP_SOCK:
+		break;
+	case PTR_TO_TCP_SOCK:
 		valid = bpf_tcp_sock_is_valid_access(off, size, t, &info);
-		अवरोध;
-	हाल PTR_TO_XDP_SOCK:
+		break;
+	case PTR_TO_XDP_SOCK:
 		valid = bpf_xdp_sock_is_valid_access(off, size, t, &info);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		valid = false;
-	पूर्ण
+	}
 
 
-	अगर (valid) अणु
+	if (valid) {
 		env->insn_aux_data[insn_idx].ctx_field_size =
 			info.ctx_field_size;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	verbose(env, "R%d invalid %s access off=%d size=%d\n",
 		regno, reg_type_str[reg->type], off, size);
 
-	वापस -EACCES;
-पूर्ण
+	return -EACCES;
+}
 
-अटल bool is_poपूर्णांकer_value(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	वापस __is_poपूर्णांकer_value(env->allow_ptr_leaks, reg_state(env, regno));
-पूर्ण
+static bool is_pointer_value(struct bpf_verifier_env *env, int regno)
+{
+	return __is_pointer_value(env->allow_ptr_leaks, reg_state(env, regno));
+}
 
-अटल bool is_ctx_reg(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	स्थिर काष्ठा bpf_reg_state *reg = reg_state(env, regno);
+static bool is_ctx_reg(struct bpf_verifier_env *env, int regno)
+{
+	const struct bpf_reg_state *reg = reg_state(env, regno);
 
-	वापस reg->type == PTR_TO_CTX;
-पूर्ण
+	return reg->type == PTR_TO_CTX;
+}
 
-अटल bool is_sk_reg(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	स्थिर काष्ठा bpf_reg_state *reg = reg_state(env, regno);
+static bool is_sk_reg(struct bpf_verifier_env *env, int regno)
+{
+	const struct bpf_reg_state *reg = reg_state(env, regno);
 
-	वापस type_is_sk_poपूर्णांकer(reg->type);
-पूर्ण
+	return type_is_sk_pointer(reg->type);
+}
 
-अटल bool is_pkt_reg(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	स्थिर काष्ठा bpf_reg_state *reg = reg_state(env, regno);
+static bool is_pkt_reg(struct bpf_verifier_env *env, int regno)
+{
+	const struct bpf_reg_state *reg = reg_state(env, regno);
 
-	वापस type_is_pkt_poपूर्णांकer(reg->type);
-पूर्ण
+	return type_is_pkt_pointer(reg->type);
+}
 
-अटल bool is_flow_key_reg(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno)
-अणु
-	स्थिर काष्ठा bpf_reg_state *reg = reg_state(env, regno);
+static bool is_flow_key_reg(struct bpf_verifier_env *env, int regno)
+{
+	const struct bpf_reg_state *reg = reg_state(env, regno);
 
 	/* Separate to is_ctx_reg() since we still want to allow BPF_ST here. */
-	वापस reg->type == PTR_TO_FLOW_KEYS;
-पूर्ण
+	return reg->type == PTR_TO_FLOW_KEYS;
+}
 
-अटल पूर्णांक check_pkt_ptr_alignment(काष्ठा bpf_verअगरier_env *env,
-				   स्थिर काष्ठा bpf_reg_state *reg,
-				   पूर्णांक off, पूर्णांक size, bool strict)
-अणु
-	काष्ठा tnum reg_off;
-	पूर्णांक ip_align;
+static int check_pkt_ptr_alignment(struct bpf_verifier_env *env,
+				   const struct bpf_reg_state *reg,
+				   int off, int size, bool strict)
+{
+	struct tnum reg_off;
+	int ip_align;
 
 	/* Byte size accesses are always allowed. */
-	अगर (!strict || size == 1)
-		वापस 0;
+	if (!strict || size == 1)
+		return 0;
 
-	/* For platक्रमms that करो not have a Kconfig enabling
+	/* For platforms that do not have a Kconfig enabling
 	 * CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS the value of
-	 * NET_IP_ALIGN is universally set to '2'.  And on platक्रमms
-	 * that करो set CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS, we get
+	 * NET_IP_ALIGN is universally set to '2'.  And on platforms
+	 * that do set CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS, we get
 	 * to this code only in strict mode where we want to emulate
-	 * the NET_IP_ALIGN==2 checking.  Thereक्रमe use an
+	 * the NET_IP_ALIGN==2 checking.  Therefore use an
 	 * unconditional IP align value of '2'.
 	 */
 	ip_align = 2;
 
-	reg_off = tnum_add(reg->var_off, tnum_स्थिर(ip_align + reg->off + off));
-	अगर (!tnum_is_aligned(reg_off, size)) अणु
-		अक्षर tn_buf[48];
+	reg_off = tnum_add(reg->var_off, tnum_const(ip_align + reg->off + off));
+	if (!tnum_is_aligned(reg_off, size)) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env,
 			"misaligned packet access off %d+%s+%d+%d size %d\n",
 			ip_align, tn_buf, reg->off, off, size);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_generic_ptr_alignment(काष्ठा bpf_verअगरier_env *env,
-				       स्थिर काष्ठा bpf_reg_state *reg,
-				       स्थिर अक्षर *poपूर्णांकer_desc,
-				       पूर्णांक off, पूर्णांक size, bool strict)
-अणु
-	काष्ठा tnum reg_off;
+static int check_generic_ptr_alignment(struct bpf_verifier_env *env,
+				       const struct bpf_reg_state *reg,
+				       const char *pointer_desc,
+				       int off, int size, bool strict)
+{
+	struct tnum reg_off;
 
 	/* Byte size accesses are always allowed. */
-	अगर (!strict || size == 1)
-		वापस 0;
+	if (!strict || size == 1)
+		return 0;
 
-	reg_off = tnum_add(reg->var_off, tnum_स्थिर(reg->off + off));
-	अगर (!tnum_is_aligned(reg_off, size)) अणु
-		अक्षर tn_buf[48];
+	reg_off = tnum_add(reg->var_off, tnum_const(reg->off + off));
+	if (!tnum_is_aligned(reg_off, size)) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "misaligned %saccess off %s+%d+%d size %d\n",
-			poपूर्णांकer_desc, tn_buf, reg->off, off, size);
-		वापस -EACCES;
-	पूर्ण
+			pointer_desc, tn_buf, reg->off, off, size);
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_ptr_alignment(काष्ठा bpf_verअगरier_env *env,
-			       स्थिर काष्ठा bpf_reg_state *reg, पूर्णांक off,
-			       पूर्णांक size, bool strict_alignment_once)
-अणु
+static int check_ptr_alignment(struct bpf_verifier_env *env,
+			       const struct bpf_reg_state *reg, int off,
+			       int size, bool strict_alignment_once)
+{
 	bool strict = env->strict_alignment || strict_alignment_once;
-	स्थिर अक्षर *poपूर्णांकer_desc = "";
+	const char *pointer_desc = "";
 
-	चयन (reg->type) अणु
-	हाल PTR_TO_PACKET:
-	हाल PTR_TO_PACKET_META:
-		/* Special हाल, because of NET_IP_ALIGN. Given metadata sits
+	switch (reg->type) {
+	case PTR_TO_PACKET:
+	case PTR_TO_PACKET_META:
+		/* Special case, because of NET_IP_ALIGN. Given metadata sits
 		 * right in front, treat it the very same way.
 		 */
-		वापस check_pkt_ptr_alignment(env, reg, off, size, strict);
-	हाल PTR_TO_FLOW_KEYS:
-		poपूर्णांकer_desc = "flow keys ";
-		अवरोध;
-	हाल PTR_TO_MAP_KEY:
-		poपूर्णांकer_desc = "key ";
-		अवरोध;
-	हाल PTR_TO_MAP_VALUE:
-		poपूर्णांकer_desc = "value ";
-		अवरोध;
-	हाल PTR_TO_CTX:
-		poपूर्णांकer_desc = "context ";
-		अवरोध;
-	हाल PTR_TO_STACK:
-		poपूर्णांकer_desc = "stack ";
-		/* The stack spill tracking logic in check_stack_ग_लिखो_fixed_off()
-		 * and check_stack_पढ़ो_fixed_off() relies on stack accesses being
+		return check_pkt_ptr_alignment(env, reg, off, size, strict);
+	case PTR_TO_FLOW_KEYS:
+		pointer_desc = "flow keys ";
+		break;
+	case PTR_TO_MAP_KEY:
+		pointer_desc = "key ";
+		break;
+	case PTR_TO_MAP_VALUE:
+		pointer_desc = "value ";
+		break;
+	case PTR_TO_CTX:
+		pointer_desc = "context ";
+		break;
+	case PTR_TO_STACK:
+		pointer_desc = "stack ";
+		/* The stack spill tracking logic in check_stack_write_fixed_off()
+		 * and check_stack_read_fixed_off() relies on stack accesses being
 		 * aligned.
 		 */
 		strict = true;
-		अवरोध;
-	हाल PTR_TO_SOCKET:
-		poपूर्णांकer_desc = "sock ";
-		अवरोध;
-	हाल PTR_TO_SOCK_COMMON:
-		poपूर्णांकer_desc = "sock_common ";
-		अवरोध;
-	हाल PTR_TO_TCP_SOCK:
-		poपूर्णांकer_desc = "tcp_sock ";
-		अवरोध;
-	हाल PTR_TO_XDP_SOCK:
-		poपूर्णांकer_desc = "xdp_sock ";
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस check_generic_ptr_alignment(env, reg, poपूर्णांकer_desc, off, size,
+		break;
+	case PTR_TO_SOCKET:
+		pointer_desc = "sock ";
+		break;
+	case PTR_TO_SOCK_COMMON:
+		pointer_desc = "sock_common ";
+		break;
+	case PTR_TO_TCP_SOCK:
+		pointer_desc = "tcp_sock ";
+		break;
+	case PTR_TO_XDP_SOCK:
+		pointer_desc = "xdp_sock ";
+		break;
+	default:
+		break;
+	}
+	return check_generic_ptr_alignment(env, reg, pointer_desc, off, size,
 					   strict);
-पूर्ण
+}
 
-अटल पूर्णांक update_stack_depth(काष्ठा bpf_verअगरier_env *env,
-			      स्थिर काष्ठा bpf_func_state *func,
-			      पूर्णांक off)
-अणु
+static int update_stack_depth(struct bpf_verifier_env *env,
+			      const struct bpf_func_state *func,
+			      int off)
+{
 	u16 stack = env->subprog_info[func->subprogno].stack_depth;
 
-	अगर (stack >= -off)
-		वापस 0;
+	if (stack >= -off)
+		return 0;
 
-	/* update known max क्रम given subprogram */
+	/* update known max for given subprogram */
 	env->subprog_info[func->subprogno].stack_depth = -off;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* starting from मुख्य bpf function walk all inकाष्ठाions of the function
+/* starting from main bpf function walk all instructions of the function
  * and recursively walk all callees that given function can call.
- * Ignore jump and निकास insns.
+ * Ignore jump and exit insns.
  * Since recursion is prevented by check_cfg() this algorithm
  * only needs a local stack of MAX_CALL_FRAMES to remember callsites
  */
-अटल पूर्णांक check_max_stack_depth(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक depth = 0, frame = 0, idx = 0, i = 0, subprog_end;
-	काष्ठा bpf_subprog_info *subprog = env->subprog_info;
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
+static int check_max_stack_depth(struct bpf_verifier_env *env)
+{
+	int depth = 0, frame = 0, idx = 0, i = 0, subprog_end;
+	struct bpf_subprog_info *subprog = env->subprog_info;
+	struct bpf_insn *insn = env->prog->insnsi;
 	bool tail_call_reachable = false;
-	पूर्णांक ret_insn[MAX_CALL_FRAMES];
-	पूर्णांक ret_prog[MAX_CALL_FRAMES];
-	पूर्णांक j;
+	int ret_insn[MAX_CALL_FRAMES];
+	int ret_prog[MAX_CALL_FRAMES];
+	int j;
 
 process_func:
 	/* protect against potential stack overflow that might happen when
 	 * bpf2bpf calls get combined with tailcalls. Limit the caller's stack
-	 * depth क्रम such हाल करोwn to 256 so that the worst हाल scenario
+	 * depth for such case down to 256 so that the worst case scenario
 	 * would result in 8k stack size (32 which is tailcall limit * 256 =
 	 * 8k).
 	 *
@@ -3624,182 +3623,182 @@ process_func:
 	 * tailcall will unwind the current stack frame but it will not get rid
 	 * of caller's stack as shown on the example above.
 	 */
-	अगर (idx && subprog[idx].has_tail_call && depth >= 256) अणु
+	if (idx && subprog[idx].has_tail_call && depth >= 256) {
 		verbose(env,
 			"tail_calls are not allowed when call stack of previous frames is %d bytes. Too large\n",
 			depth);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 	/* round up to 32-bytes, since this is granularity
-	 * of पूर्णांकerpreter stack size
+	 * of interpreter stack size
 	 */
 	depth += round_up(max_t(u32, subprog[idx].stack_depth, 1), 32);
-	अगर (depth > MAX_BPF_STACK) अणु
+	if (depth > MAX_BPF_STACK) {
 		verbose(env, "combined stack size of %d calls is %d. Too large\n",
 			frame + 1, depth);
-		वापस -EACCES;
-	पूर्ण
-जारी_func:
+		return -EACCES;
+	}
+continue_func:
 	subprog_end = subprog[idx + 1].start;
-	क्रम (; i < subprog_end; i++) अणु
-		अगर (!bpf_pseuकरो_call(insn + i) && !bpf_pseuकरो_func(insn + i))
-			जारी;
-		/* remember insn and function to वापस to */
+	for (; i < subprog_end; i++) {
+		if (!bpf_pseudo_call(insn + i) && !bpf_pseudo_func(insn + i))
+			continue;
+		/* remember insn and function to return to */
 		ret_insn[frame] = i + 1;
 		ret_prog[frame] = idx;
 
 		/* find the callee */
 		i = i + insn[i].imm + 1;
 		idx = find_subprog(env, i);
-		अगर (idx < 0) अणु
+		if (idx < 0) {
 			WARN_ONCE(1, "verifier bug. No program starts at insn %d\n",
 				  i);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
-		अगर (subprog[idx].has_tail_call)
+		if (subprog[idx].has_tail_call)
 			tail_call_reachable = true;
 
 		frame++;
-		अगर (frame >= MAX_CALL_FRAMES) अणु
+		if (frame >= MAX_CALL_FRAMES) {
 			verbose(env, "the call stack of %d frames is too deep !\n",
 				frame);
-			वापस -E2BIG;
-		पूर्ण
-		जाओ process_func;
-	पूर्ण
-	/* अगर tail call got detected across bpf2bpf calls then mark each of the
+			return -E2BIG;
+		}
+		goto process_func;
+	}
+	/* if tail call got detected across bpf2bpf calls then mark each of the
 	 * currently present subprog frames as tail call reachable subprogs;
 	 * this info will be utilized by JIT so that we will be preserving the
 	 * tail call counter throughout bpf2bpf calls combined with tailcalls
 	 */
-	अगर (tail_call_reachable)
-		क्रम (j = 0; j < frame; j++)
+	if (tail_call_reachable)
+		for (j = 0; j < frame; j++)
 			subprog[ret_prog[j]].tail_call_reachable = true;
 
-	/* end of क्रम() loop means the last insn of the 'subprog'
+	/* end of for() loop means the last insn of the 'subprog'
 	 * was reached. Doesn't matter whether it was JA or EXIT
 	 */
-	अगर (frame == 0)
-		वापस 0;
+	if (frame == 0)
+		return 0;
 	depth -= round_up(max_t(u32, subprog[idx].stack_depth, 1), 32);
 	frame--;
 	i = ret_insn[frame];
 	idx = ret_prog[frame];
-	जाओ जारी_func;
-पूर्ण
+	goto continue_func;
+}
 
-#अगर_अघोषित CONFIG_BPF_JIT_ALWAYS_ON
-अटल पूर्णांक get_callee_stack_depth(काष्ठा bpf_verअगरier_env *env,
-				  स्थिर काष्ठा bpf_insn *insn, पूर्णांक idx)
-अणु
-	पूर्णांक start = idx + insn->imm + 1, subprog;
+#ifndef CONFIG_BPF_JIT_ALWAYS_ON
+static int get_callee_stack_depth(struct bpf_verifier_env *env,
+				  const struct bpf_insn *insn, int idx)
+{
+	int start = idx + insn->imm + 1, subprog;
 
 	subprog = find_subprog(env, start);
-	अगर (subprog < 0) अणु
+	if (subprog < 0) {
 		WARN_ONCE(1, "verifier bug. No program starts at insn %d\n",
 			  start);
-		वापस -EFAULT;
-	पूर्ण
-	वापस env->subprog_info[subprog].stack_depth;
-पूर्ण
-#पूर्ण_अगर
+		return -EFAULT;
+	}
+	return env->subprog_info[subprog].stack_depth;
+}
+#endif
 
-पूर्णांक check_ctx_reg(काष्ठा bpf_verअगरier_env *env,
-		  स्थिर काष्ठा bpf_reg_state *reg, पूर्णांक regno)
-अणु
+int check_ctx_reg(struct bpf_verifier_env *env,
+		  const struct bpf_reg_state *reg, int regno)
+{
 	/* Access to ctx or passing it to a helper is only allowed in
-	 * its original, unmodअगरied क्रमm.
+	 * its original, unmodified form.
 	 */
 
-	अगर (reg->off) अणु
+	if (reg->off) {
 		verbose(env, "dereference of modified ctx ptr R%d off=%d disallowed\n",
 			regno, reg->off);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (!tnum_is_स्थिर(reg->var_off) || reg->var_off.value) अणु
-		अक्षर tn_buf[48];
+	if (!tnum_is_const(reg->var_off) || reg->var_off.value) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "variable ctx access var_off=%s disallowed\n", tn_buf);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __check_buffer_access(काष्ठा bpf_verअगरier_env *env,
-				 स्थिर अक्षर *buf_info,
-				 स्थिर काष्ठा bpf_reg_state *reg,
-				 पूर्णांक regno, पूर्णांक off, पूर्णांक size)
-अणु
-	अगर (off < 0) अणु
+static int __check_buffer_access(struct bpf_verifier_env *env,
+				 const char *buf_info,
+				 const struct bpf_reg_state *reg,
+				 int regno, int off, int size)
+{
+	if (off < 0) {
 		verbose(env,
 			"R%d invalid %s buffer access: off=%d, size=%d\n",
 			regno, buf_info, off, size);
-		वापस -EACCES;
-	पूर्ण
-	अगर (!tnum_is_स्थिर(reg->var_off) || reg->var_off.value) अणु
-		अक्षर tn_buf[48];
+		return -EACCES;
+	}
+	if (!tnum_is_const(reg->var_off) || reg->var_off.value) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env,
 			"R%d invalid variable buffer offset: off=%d, var_off=%s\n",
 			regno, off, tn_buf);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_tp_buffer_access(काष्ठा bpf_verअगरier_env *env,
-				  स्थिर काष्ठा bpf_reg_state *reg,
-				  पूर्णांक regno, पूर्णांक off, पूर्णांक size)
-अणु
-	पूर्णांक err;
+static int check_tp_buffer_access(struct bpf_verifier_env *env,
+				  const struct bpf_reg_state *reg,
+				  int regno, int off, int size)
+{
+	int err;
 
 	err = __check_buffer_access(env, "tracepoint", reg, regno, off, size);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (off + size > env->prog->aux->max_tp_access)
+	if (off + size > env->prog->aux->max_tp_access)
 		env->prog->aux->max_tp_access = off + size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_buffer_access(काष्ठा bpf_verअगरier_env *env,
-			       स्थिर काष्ठा bpf_reg_state *reg,
-			       पूर्णांक regno, पूर्णांक off, पूर्णांक size,
+static int check_buffer_access(struct bpf_verifier_env *env,
+			       const struct bpf_reg_state *reg,
+			       int regno, int off, int size,
 			       bool zero_size_allowed,
-			       स्थिर अक्षर *buf_info,
+			       const char *buf_info,
 			       u32 *max_access)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = __check_buffer_access(env, buf_info, reg, regno, off, size);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (off + size > *max_access)
+	if (off + size > *max_access)
 		*max_access = off + size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* BPF architecture zero extends alu32 ops पूर्णांकo 64-bit registesr */
-अटल व्योम zext_32_to_64(काष्ठा bpf_reg_state *reg)
-अणु
+/* BPF architecture zero extends alu32 ops into 64-bit registesr */
+static void zext_32_to_64(struct bpf_reg_state *reg)
+{
 	reg->var_off = tnum_subreg(reg->var_off);
-	__reg_assign_32_पूर्णांकo_64(reg);
-पूर्ण
+	__reg_assign_32_into_64(reg);
+}
 
-/* truncate रेजिस्टर to smaller size (in bytes)
+/* truncate register to smaller size (in bytes)
  * must be called with size < BPF_REG_SIZE
  */
-अटल व्योम coerce_reg_to_size(काष्ठा bpf_reg_state *reg, पूर्णांक size)
-अणु
+static void coerce_reg_to_size(struct bpf_reg_state *reg, int size)
+{
 	u64 mask;
 
 	/* clear high bits in bit representation */
@@ -3807,954 +3806,954 @@ process_func:
 
 	/* fix arithmetic bounds */
 	mask = ((u64)1 << (size * 8)) - 1;
-	अगर ((reg->umin_value & ~mask) == (reg->umax_value & ~mask)) अणु
+	if ((reg->umin_value & ~mask) == (reg->umax_value & ~mask)) {
 		reg->umin_value &= mask;
 		reg->umax_value &= mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg->umin_value = 0;
 		reg->umax_value = mask;
-	पूर्ण
+	}
 	reg->smin_value = reg->umin_value;
 	reg->smax_value = reg->umax_value;
 
-	/* If size is smaller than 32bit रेजिस्टर the 32bit रेजिस्टर
-	 * values are also truncated so we push 64-bit bounds पूर्णांकo
-	 * 32-bit bounds. Above were truncated < 32-bits alपढ़ोy.
+	/* If size is smaller than 32bit register the 32bit register
+	 * values are also truncated so we push 64-bit bounds into
+	 * 32-bit bounds. Above were truncated < 32-bits already.
 	 */
-	अगर (size >= 4)
-		वापस;
-	__reg_combine_64_पूर्णांकo_32(reg);
-पूर्ण
+	if (size >= 4)
+		return;
+	__reg_combine_64_into_32(reg);
+}
 
-अटल bool bpf_map_is_rकरोnly(स्थिर काष्ठा bpf_map *map)
-अणु
-	वापस (map->map_flags & BPF_F_RDONLY_PROG) && map->frozen;
-पूर्ण
+static bool bpf_map_is_rdonly(const struct bpf_map *map)
+{
+	return (map->map_flags & BPF_F_RDONLY_PROG) && map->frozen;
+}
 
-अटल पूर्णांक bpf_map_direct_पढ़ो(काष्ठा bpf_map *map, पूर्णांक off, पूर्णांक size, u64 *val)
-अणु
-	व्योम *ptr;
+static int bpf_map_direct_read(struct bpf_map *map, int off, int size, u64 *val)
+{
+	void *ptr;
 	u64 addr;
-	पूर्णांक err;
+	int err;
 
 	err = map->ops->map_direct_value_addr(map, &addr, off);
-	अगर (err)
-		वापस err;
-	ptr = (व्योम *)(दीर्घ)addr + off;
+	if (err)
+		return err;
+	ptr = (void *)(long)addr + off;
 
-	चयन (size) अणु
-	हाल माप(u8):
+	switch (size) {
+	case sizeof(u8):
 		*val = (u64)*(u8 *)ptr;
-		अवरोध;
-	हाल माप(u16):
+		break;
+	case sizeof(u16):
 		*val = (u64)*(u16 *)ptr;
-		अवरोध;
-	हाल माप(u32):
+		break;
+	case sizeof(u32):
 		*val = (u64)*(u32 *)ptr;
-		अवरोध;
-	हाल माप(u64):
+		break;
+	case sizeof(u64):
 		*val = *(u64 *)ptr;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक check_ptr_to_btf_access(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_reg_state *regs,
-				   पूर्णांक regno, पूर्णांक off, पूर्णांक size,
-				   क्रमागत bpf_access_type atype,
-				   पूर्णांक value_regno)
-अणु
-	काष्ठा bpf_reg_state *reg = regs + regno;
-	स्थिर काष्ठा btf_type *t = btf_type_by_id(reg->btf, reg->btf_id);
-	स्थिर अक्षर *tname = btf_name_by_offset(reg->btf, t->name_off);
+static int check_ptr_to_btf_access(struct bpf_verifier_env *env,
+				   struct bpf_reg_state *regs,
+				   int regno, int off, int size,
+				   enum bpf_access_type atype,
+				   int value_regno)
+{
+	struct bpf_reg_state *reg = regs + regno;
+	const struct btf_type *t = btf_type_by_id(reg->btf, reg->btf_id);
+	const char *tname = btf_name_by_offset(reg->btf, t->name_off);
 	u32 btf_id;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (off < 0) अणु
+	if (off < 0) {
 		verbose(env,
 			"R%d is ptr_%s invalid negative access: off=%d\n",
 			regno, tname, off);
-		वापस -EACCES;
-	पूर्ण
-	अगर (!tnum_is_स्थिर(reg->var_off) || reg->var_off.value) अणु
-		अक्षर tn_buf[48];
+		return -EACCES;
+	}
+	if (!tnum_is_const(reg->var_off) || reg->var_off.value) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env,
 			"R%d is ptr_%s invalid variable offset: off=%d, var_off=%s\n",
 			regno, tname, off, tn_buf);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (env->ops->btf_काष्ठा_access) अणु
-		ret = env->ops->btf_काष्ठा_access(&env->log, reg->btf, t,
+	if (env->ops->btf_struct_access) {
+		ret = env->ops->btf_struct_access(&env->log, reg->btf, t,
 						  off, size, atype, &btf_id);
-	पूर्ण अन्यथा अणु
-		अगर (atype != BPF_READ) अणु
+	} else {
+		if (atype != BPF_READ) {
 			verbose(env, "only read is supported\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		ret = btf_काष्ठा_access(&env->log, reg->btf, t, off, size,
+		ret = btf_struct_access(&env->log, reg->btf, t, off, size,
 					atype, &btf_id);
-	पूर्ण
+	}
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (atype == BPF_READ && value_regno >= 0)
+	if (atype == BPF_READ && value_regno >= 0)
 		mark_btf_ld_reg(env, regs, value_regno, ret, reg->btf, btf_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_ptr_to_map_access(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_reg_state *regs,
-				   पूर्णांक regno, पूर्णांक off, पूर्णांक size,
-				   क्रमागत bpf_access_type atype,
-				   पूर्णांक value_regno)
-अणु
-	काष्ठा bpf_reg_state *reg = regs + regno;
-	काष्ठा bpf_map *map = reg->map_ptr;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *tname;
+static int check_ptr_to_map_access(struct bpf_verifier_env *env,
+				   struct bpf_reg_state *regs,
+				   int regno, int off, int size,
+				   enum bpf_access_type atype,
+				   int value_regno)
+{
+	struct bpf_reg_state *reg = regs + regno;
+	struct bpf_map *map = reg->map_ptr;
+	const struct btf_type *t;
+	const char *tname;
 	u32 btf_id;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!btf_vmlinux) अणु
+	if (!btf_vmlinux) {
 		verbose(env, "map_ptr access not supported without CONFIG_DEBUG_INFO_BTF\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	अगर (!map->ops->map_btf_id || !*map->ops->map_btf_id) अणु
+	if (!map->ops->map_btf_id || !*map->ops->map_btf_id) {
 		verbose(env, "map_ptr access not supported for map type %d\n",
 			map->map_type);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
 	t = btf_type_by_id(btf_vmlinux, *map->ops->map_btf_id);
 	tname = btf_name_by_offset(btf_vmlinux, t->name_off);
 
-	अगर (!env->allow_ptr_to_map_access) अणु
+	if (!env->allow_ptr_to_map_access) {
 		verbose(env,
 			"%s access is allowed only to CAP_PERFMON and CAP_SYS_ADMIN\n",
 			tname);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर (off < 0) अणु
+	if (off < 0) {
 		verbose(env, "R%d is %s invalid negative access: off=%d\n",
 			regno, tname, off);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (atype != BPF_READ) अणु
+	if (atype != BPF_READ) {
 		verbose(env, "only read from %s is supported\n", tname);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	ret = btf_काष्ठा_access(&env->log, btf_vmlinux, t, off, size, atype, &btf_id);
-	अगर (ret < 0)
-		वापस ret;
+	ret = btf_struct_access(&env->log, btf_vmlinux, t, off, size, atype, &btf_id);
+	if (ret < 0)
+		return ret;
 
-	अगर (value_regno >= 0)
+	if (value_regno >= 0)
 		mark_btf_ld_reg(env, regs, value_regno, ret, btf_vmlinux, btf_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Check that the stack access at the given offset is within bounds. The
  * maximum valid offset is -1.
  *
- * The minimum valid offset is -MAX_BPF_STACK क्रम ग_लिखोs, and
- * -state->allocated_stack क्रम पढ़ोs.
+ * The minimum valid offset is -MAX_BPF_STACK for writes, and
+ * -state->allocated_stack for reads.
  */
-अटल पूर्णांक check_stack_slot_within_bounds(पूर्णांक off,
-					  काष्ठा bpf_func_state *state,
-					  क्रमागत bpf_access_type t)
-अणु
-	पूर्णांक min_valid_off;
+static int check_stack_slot_within_bounds(int off,
+					  struct bpf_func_state *state,
+					  enum bpf_access_type t)
+{
+	int min_valid_off;
 
-	अगर (t == BPF_WRITE)
+	if (t == BPF_WRITE)
 		min_valid_off = -MAX_BPF_STACK;
-	अन्यथा
+	else
 		min_valid_off = -state->allocated_stack;
 
-	अगर (off < min_valid_off || off > -1)
-		वापस -EACCES;
-	वापस 0;
-पूर्ण
+	if (off < min_valid_off || off > -1)
+		return -EACCES;
+	return 0;
+}
 
 /* Check that the stack access at 'regno + off' falls within the maximum stack
  * bounds.
  *
- * 'off' includes `regno->offset`, but not its dynamic part (अगर any).
+ * 'off' includes `regno->offset`, but not its dynamic part (if any).
  */
-अटल पूर्णांक check_stack_access_within_bounds(
-		काष्ठा bpf_verअगरier_env *env,
-		पूर्णांक regno, पूर्णांक off, पूर्णांक access_size,
-		क्रमागत stack_access_src src, क्रमागत bpf_access_type type)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_reg_state *reg = regs + regno;
-	काष्ठा bpf_func_state *state = func(env, reg);
-	पूर्णांक min_off, max_off;
-	पूर्णांक err;
-	अक्षर *err_extra;
+static int check_stack_access_within_bounds(
+		struct bpf_verifier_env *env,
+		int regno, int off, int access_size,
+		enum stack_access_src src, enum bpf_access_type type)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_reg_state *reg = regs + regno;
+	struct bpf_func_state *state = func(env, reg);
+	int min_off, max_off;
+	int err;
+	char *err_extra;
 
-	अगर (src == ACCESS_HELPER)
-		/* We करोn't know अगर helpers are पढ़ोing or writing (or both). */
+	if (src == ACCESS_HELPER)
+		/* We don't know if helpers are reading or writing (or both). */
 		err_extra = " indirect access to";
-	अन्यथा अगर (type == BPF_READ)
+	else if (type == BPF_READ)
 		err_extra = " read from";
-	अन्यथा
+	else
 		err_extra = " write to";
 
-	अगर (tnum_is_स्थिर(reg->var_off)) अणु
+	if (tnum_is_const(reg->var_off)) {
 		min_off = reg->var_off.value + off;
-		अगर (access_size > 0)
+		if (access_size > 0)
 			max_off = min_off + access_size - 1;
-		अन्यथा
+		else
 			max_off = min_off;
-	पूर्ण अन्यथा अणु
-		अगर (reg->smax_value >= BPF_MAX_VAR_OFF ||
-		    reg->smin_value <= -BPF_MAX_VAR_OFF) अणु
+	} else {
+		if (reg->smax_value >= BPF_MAX_VAR_OFF ||
+		    reg->smin_value <= -BPF_MAX_VAR_OFF) {
 			verbose(env, "invalid unbounded variable-offset%s stack R%d\n",
 				err_extra, regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		min_off = reg->smin_value + off;
-		अगर (access_size > 0)
+		if (access_size > 0)
 			max_off = reg->smax_value + off + access_size - 1;
-		अन्यथा
+		else
 			max_off = min_off;
-	पूर्ण
+	}
 
 	err = check_stack_slot_within_bounds(min_off, state, type);
-	अगर (!err)
+	if (!err)
 		err = check_stack_slot_within_bounds(max_off, state, type);
 
-	अगर (err) अणु
-		अगर (tnum_is_स्थिर(reg->var_off)) अणु
+	if (err) {
+		if (tnum_is_const(reg->var_off)) {
 			verbose(env, "invalid%s stack R%d off=%d size=%d\n",
 				err_extra, regno, off, access_size);
-		पूर्ण अन्यथा अणु
-			अक्षर tn_buf[48];
+		} else {
+			char tn_buf[48];
 
-			tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+			tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 			verbose(env, "invalid variable-offset%s stack R%d var_off=%s size=%d\n",
 				err_extra, regno, tn_buf, access_size);
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+		}
+	}
+	return err;
+}
 
-/* check whether memory at (regno + off) is accessible क्रम t = (पढ़ो | ग_लिखो)
- * अगर t==ग_लिखो, value_regno is a रेजिस्टर which value is stored पूर्णांकo memory
- * अगर t==पढ़ो, value_regno is a रेजिस्टर which will receive the value from memory
- * अगर t==ग_लिखो && value_regno==-1, some unknown value is stored पूर्णांकo memory
- * अगर t==पढ़ो && value_regno==-1, करोn't care what we पढ़ो from memory
+/* check whether memory at (regno + off) is accessible for t = (read | write)
+ * if t==write, value_regno is a register which value is stored into memory
+ * if t==read, value_regno is a register which will receive the value from memory
+ * if t==write && value_regno==-1, some unknown value is stored into memory
+ * if t==read && value_regno==-1, don't care what we read from memory
  */
-अटल पूर्णांक check_mem_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx, u32 regno,
-			    पूर्णांक off, पूर्णांक bpf_size, क्रमागत bpf_access_type t,
-			    पूर्णांक value_regno, bool strict_alignment_once)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_reg_state *reg = regs + regno;
-	काष्ठा bpf_func_state *state;
-	पूर्णांक size, err = 0;
+static int check_mem_access(struct bpf_verifier_env *env, int insn_idx, u32 regno,
+			    int off, int bpf_size, enum bpf_access_type t,
+			    int value_regno, bool strict_alignment_once)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_reg_state *reg = regs + regno;
+	struct bpf_func_state *state;
+	int size, err = 0;
 
-	size = bpf_माप_प्रकारo_bytes(bpf_size);
-	अगर (size < 0)
-		वापस size;
+	size = bpf_size_to_bytes(bpf_size);
+	if (size < 0)
+		return size;
 
 	/* alignment checks will add in reg->off themselves */
 	err = check_ptr_alignment(env, reg, off, size, strict_alignment_once);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* क्रम access checks, reg->off is just part of off */
+	/* for access checks, reg->off is just part of off */
 	off += reg->off;
 
-	अगर (reg->type == PTR_TO_MAP_KEY) अणु
-		अगर (t == BPF_WRITE) अणु
+	if (reg->type == PTR_TO_MAP_KEY) {
+		if (t == BPF_WRITE) {
 			verbose(env, "write to change key R%d not allowed\n", regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
 		err = check_mem_region_access(env, regno, off, size,
 					      reg->map_ptr->key_size, false);
-		अगर (err)
-			वापस err;
-		अगर (value_regno >= 0)
+		if (err)
+			return err;
+		if (value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_MAP_VALUE) अणु
-		अगर (t == BPF_WRITE && value_regno >= 0 &&
-		    is_poपूर्णांकer_value(env, value_regno)) अणु
+	} else if (reg->type == PTR_TO_MAP_VALUE) {
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
 			verbose(env, "R%d leaks addr into map\n", value_regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_map_access_type(env, regno, off, size, t);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = check_map_access(env, regno, off, size, false);
-		अगर (!err && t == BPF_READ && value_regno >= 0) अणु
-			काष्ठा bpf_map *map = reg->map_ptr;
+		if (!err && t == BPF_READ && value_regno >= 0) {
+			struct bpf_map *map = reg->map_ptr;
 
-			/* अगर map is पढ़ो-only, track its contents as scalars */
-			अगर (tnum_is_स्थिर(reg->var_off) &&
-			    bpf_map_is_rकरोnly(map) &&
-			    map->ops->map_direct_value_addr) अणु
-				पूर्णांक map_off = off + reg->var_off.value;
+			/* if map is read-only, track its contents as scalars */
+			if (tnum_is_const(reg->var_off) &&
+			    bpf_map_is_rdonly(map) &&
+			    map->ops->map_direct_value_addr) {
+				int map_off = off + reg->var_off.value;
 				u64 val = 0;
 
-				err = bpf_map_direct_पढ़ो(map, map_off, size,
+				err = bpf_map_direct_read(map, map_off, size,
 							  &val);
-				अगर (err)
-					वापस err;
+				if (err)
+					return err;
 
 				regs[value_regno].type = SCALAR_VALUE;
 				__mark_reg_known(&regs[value_regno], val);
-			पूर्ण अन्यथा अणु
+			} else {
 				mark_reg_unknown(env, regs, value_regno);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_MEM) अणु
-		अगर (t == BPF_WRITE && value_regno >= 0 &&
-		    is_poपूर्णांकer_value(env, value_regno)) अणु
+			}
+		}
+	} else if (reg->type == PTR_TO_MEM) {
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
 			verbose(env, "R%d leaks addr into mem\n", value_regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_mem_region_access(env, regno, off, size,
 					      reg->mem_size, false);
-		अगर (!err && t == BPF_READ && value_regno >= 0)
+		if (!err && t == BPF_READ && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_CTX) अणु
-		क्रमागत bpf_reg_type reg_type = SCALAR_VALUE;
-		काष्ठा btf *btf = शून्य;
+	} else if (reg->type == PTR_TO_CTX) {
+		enum bpf_reg_type reg_type = SCALAR_VALUE;
+		struct btf *btf = NULL;
 		u32 btf_id = 0;
 
-		अगर (t == BPF_WRITE && value_regno >= 0 &&
-		    is_poपूर्णांकer_value(env, value_regno)) अणु
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
 			verbose(env, "R%d leaks addr into ctx\n", value_regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
 		err = check_ctx_reg(env, reg, regno);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		err = check_ctx_access(env, insn_idx, off, size, t, &reg_type, &btf, &btf_id);
-		अगर (err)
+		if (err)
 			verbose_linfo(env, insn_idx, "; ");
-		अगर (!err && t == BPF_READ && value_regno >= 0) अणु
-			/* ctx access वापसs either a scalar, or a
+		if (!err && t == BPF_READ && value_regno >= 0) {
+			/* ctx access returns either a scalar, or a
 			 * PTR_TO_PACKET[_META,_END]. In the latter
-			 * हाल, we know the offset is zero.
+			 * case, we know the offset is zero.
 			 */
-			अगर (reg_type == SCALAR_VALUE) अणु
+			if (reg_type == SCALAR_VALUE) {
 				mark_reg_unknown(env, regs, value_regno);
-			पूर्ण अन्यथा अणु
+			} else {
 				mark_reg_known_zero(env, regs,
 						    value_regno);
-				अगर (reg_type_may_be_null(reg_type))
+				if (reg_type_may_be_null(reg_type))
 					regs[value_regno].id = ++env->id_gen;
-				/* A load of ctx field could have dअगरferent
+				/* A load of ctx field could have different
 				 * actual load size with the one encoded in the
-				 * insn. When the dst is PTR, it is क्रम sure not
-				 * a sub-रेजिस्टर.
+				 * insn. When the dst is PTR, it is for sure not
+				 * a sub-register.
 				 */
 				regs[value_regno].subreg_def = DEF_NOT_SUBREG;
-				अगर (reg_type == PTR_TO_BTF_ID ||
-				    reg_type == PTR_TO_BTF_ID_OR_शून्य) अणु
+				if (reg_type == PTR_TO_BTF_ID ||
+				    reg_type == PTR_TO_BTF_ID_OR_NULL) {
 					regs[value_regno].btf = btf;
 					regs[value_regno].btf_id = btf_id;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			regs[value_regno].type = reg_type;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_STACK) अणु
+	} else if (reg->type == PTR_TO_STACK) {
 		/* Basic bounds checks. */
-		err = check_stack_access_within_bounds(env, regno, off, size, ACCESS_सूचीECT, t);
-		अगर (err)
-			वापस err;
+		err = check_stack_access_within_bounds(env, regno, off, size, ACCESS_DIRECT, t);
+		if (err)
+			return err;
 
 		state = func(env, reg);
 		err = update_stack_depth(env, state, off);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (t == BPF_READ)
-			err = check_stack_पढ़ो(env, regno, off, size,
+		if (t == BPF_READ)
+			err = check_stack_read(env, regno, off, size,
 					       value_regno);
-		अन्यथा
-			err = check_stack_ग_लिखो(env, regno, off, size,
+		else
+			err = check_stack_write(env, regno, off, size,
 						value_regno, insn_idx);
-	पूर्ण अन्यथा अगर (reg_is_pkt_poपूर्णांकer(reg)) अणु
-		अगर (t == BPF_WRITE && !may_access_direct_pkt_data(env, शून्य, t)) अणु
+	} else if (reg_is_pkt_pointer(reg)) {
+		if (t == BPF_WRITE && !may_access_direct_pkt_data(env, NULL, t)) {
 			verbose(env, "cannot write into packet\n");
-			वापस -EACCES;
-		पूर्ण
-		अगर (t == BPF_WRITE && value_regno >= 0 &&
-		    is_poपूर्णांकer_value(env, value_regno)) अणु
+			return -EACCES;
+		}
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
 			verbose(env, "R%d leaks addr into packet\n",
 				value_regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_packet_access(env, regno, off, size, false);
-		अगर (!err && t == BPF_READ && value_regno >= 0)
+		if (!err && t == BPF_READ && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_FLOW_KEYS) अणु
-		अगर (t == BPF_WRITE && value_regno >= 0 &&
-		    is_poपूर्णांकer_value(env, value_regno)) अणु
+	} else if (reg->type == PTR_TO_FLOW_KEYS) {
+		if (t == BPF_WRITE && value_regno >= 0 &&
+		    is_pointer_value(env, value_regno)) {
 			verbose(env, "R%d leaks addr into flow keys\n",
 				value_regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
 		err = check_flow_keys_access(env, off, size);
-		अगर (!err && t == BPF_READ && value_regno >= 0)
+		if (!err && t == BPF_READ && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (type_is_sk_poपूर्णांकer(reg->type)) अणु
-		अगर (t == BPF_WRITE) अणु
+	} else if (type_is_sk_pointer(reg->type)) {
+		if (t == BPF_WRITE) {
 			verbose(env, "R%d cannot write into %s\n",
 				regno, reg_type_str[reg->type]);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_sock_access(env, insn_idx, regno, off, size, t);
-		अगर (!err && value_regno >= 0)
+		if (!err && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_TP_BUFFER) अणु
+	} else if (reg->type == PTR_TO_TP_BUFFER) {
 		err = check_tp_buffer_access(env, reg, regno, off, size);
-		अगर (!err && t == BPF_READ && value_regno >= 0)
+		if (!err && t == BPF_READ && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_BTF_ID) अणु
+	} else if (reg->type == PTR_TO_BTF_ID) {
 		err = check_ptr_to_btf_access(env, regs, regno, off, size, t,
 					      value_regno);
-	पूर्ण अन्यथा अगर (reg->type == CONST_PTR_TO_MAP) अणु
+	} else if (reg->type == CONST_PTR_TO_MAP) {
 		err = check_ptr_to_map_access(env, regs, regno, off, size, t,
 					      value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_RDONLY_BUF) अणु
-		अगर (t == BPF_WRITE) अणु
+	} else if (reg->type == PTR_TO_RDONLY_BUF) {
+		if (t == BPF_WRITE) {
 			verbose(env, "R%d cannot write into %s\n",
 				regno, reg_type_str[reg->type]);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_buffer_access(env, reg, regno, off, size, false,
 					  "rdonly",
-					  &env->prog->aux->max_rकरोnly_access);
-		अगर (!err && value_regno >= 0)
+					  &env->prog->aux->max_rdonly_access);
+		if (!err && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अगर (reg->type == PTR_TO_RDWR_BUF) अणु
+	} else if (reg->type == PTR_TO_RDWR_BUF) {
 		err = check_buffer_access(env, reg, regno, off, size, false,
 					  "rdwr",
 					  &env->prog->aux->max_rdwr_access);
-		अगर (!err && t == BPF_READ && value_regno >= 0)
+		if (!err && t == BPF_READ && value_regno >= 0)
 			mark_reg_unknown(env, regs, value_regno);
-	पूर्ण अन्यथा अणु
+	} else {
 		verbose(env, "R%d invalid mem access '%s'\n", regno,
 			reg_type_str[reg->type]);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (!err && size < BPF_REG_SIZE && value_regno >= 0 && t == BPF_READ &&
-	    regs[value_regno].type == SCALAR_VALUE) अणु
+	if (!err && size < BPF_REG_SIZE && value_regno >= 0 && t == BPF_READ &&
+	    regs[value_regno].type == SCALAR_VALUE) {
 		/* b/h/w load zero-extends, mark upper bits as known 0 */
 		coerce_reg_to_size(&regs[value_regno], size);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक check_atomic(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx, काष्ठा bpf_insn *insn)
-अणु
-	पूर्णांक load_reg;
-	पूर्णांक err;
+static int check_atomic(struct bpf_verifier_env *env, int insn_idx, struct bpf_insn *insn)
+{
+	int load_reg;
+	int err;
 
-	चयन (insn->imm) अणु
-	हाल BPF_ADD:
-	हाल BPF_ADD | BPF_FETCH:
-	हाल BPF_AND:
-	हाल BPF_AND | BPF_FETCH:
-	हाल BPF_OR:
-	हाल BPF_OR | BPF_FETCH:
-	हाल BPF_XOR:
-	हाल BPF_XOR | BPF_FETCH:
-	हाल BPF_XCHG:
-	हाल BPF_CMPXCHG:
-		अवरोध;
-	शेष:
+	switch (insn->imm) {
+	case BPF_ADD:
+	case BPF_ADD | BPF_FETCH:
+	case BPF_AND:
+	case BPF_AND | BPF_FETCH:
+	case BPF_OR:
+	case BPF_OR | BPF_FETCH:
+	case BPF_XOR:
+	case BPF_XOR | BPF_FETCH:
+	case BPF_XCHG:
+	case BPF_CMPXCHG:
+		break;
+	default:
 		verbose(env, "BPF_ATOMIC uses invalid atomic opcode %02x\n", insn->imm);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (BPF_SIZE(insn->code) != BPF_W && BPF_SIZE(insn->code) != BPF_DW) अणु
+	if (BPF_SIZE(insn->code) != BPF_W && BPF_SIZE(insn->code) != BPF_DW) {
 		verbose(env, "invalid atomic operand size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* check src1 opeअक्रम */
+	/* check src1 operand */
 	err = check_reg_arg(env, insn->src_reg, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* check src2 opeअक्रम */
+	/* check src2 operand */
 	err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (insn->imm == BPF_CMPXCHG) अणु
+	if (insn->imm == BPF_CMPXCHG) {
 		/* Check comparison of R0 with memory location */
 		err = check_reg_arg(env, BPF_REG_0, SRC_OP);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (is_poपूर्णांकer_value(env, insn->src_reg)) अणु
+	if (is_pointer_value(env, insn->src_reg)) {
 		verbose(env, "R%d leaks addr into mem\n", insn->src_reg);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (is_ctx_reg(env, insn->dst_reg) ||
+	if (is_ctx_reg(env, insn->dst_reg) ||
 	    is_pkt_reg(env, insn->dst_reg) ||
 	    is_flow_key_reg(env, insn->dst_reg) ||
-	    is_sk_reg(env, insn->dst_reg)) अणु
+	    is_sk_reg(env, insn->dst_reg)) {
 		verbose(env, "BPF_ATOMIC stores into R%d %s is not allowed\n",
 			insn->dst_reg,
 			reg_type_str[reg_state(env, insn->dst_reg)->type]);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (insn->imm & BPF_FETCH) अणु
-		अगर (insn->imm == BPF_CMPXCHG)
+	if (insn->imm & BPF_FETCH) {
+		if (insn->imm == BPF_CMPXCHG)
 			load_reg = BPF_REG_0;
-		अन्यथा
+		else
 			load_reg = insn->src_reg;
 
 		/* check and record load of old value */
 		err = check_reg_arg(env, load_reg, DST_OP);
-		अगर (err)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		/* This inकाष्ठाion accesses a memory location but करोesn't
-		 * actually load it पूर्णांकo a रेजिस्टर.
+		if (err)
+			return err;
+	} else {
+		/* This instruction accesses a memory location but doesn't
+		 * actually load it into a register.
 		 */
 		load_reg = -1;
-	पूर्ण
+	}
 
-	/* check whether we can पढ़ो the memory */
+	/* check whether we can read the memory */
 	err = check_mem_access(env, insn_idx, insn->dst_reg, insn->off,
 			       BPF_SIZE(insn->code), BPF_READ, load_reg, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* check whether we can ग_लिखो पूर्णांकo the same memory */
+	/* check whether we can write into the same memory */
 	err = check_mem_access(env, insn_idx, insn->dst_reg, insn->off,
 			       BPF_SIZE(insn->code), BPF_WRITE, -1, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* When रेजिस्टर 'regno' is used to पढ़ो the stack (either directly or through
+/* When register 'regno' is used to read the stack (either directly or through
  * a helper function) make sure that it's within stack boundary and, depending
  * on the access type, that all elements of the stack are initialized.
  *
- * 'off' includes 'regno->off', but not its dynamic part (अगर any).
+ * 'off' includes 'regno->off', but not its dynamic part (if any).
  *
- * All रेजिस्टरs that have been spilled on the stack in the slots within the
- * पढ़ो offsets are marked as पढ़ो.
+ * All registers that have been spilled on the stack in the slots within the
+ * read offsets are marked as read.
  */
-अटल पूर्णांक check_stack_range_initialized(
-		काष्ठा bpf_verअगरier_env *env, पूर्णांक regno, पूर्णांक off,
-		पूर्णांक access_size, bool zero_size_allowed,
-		क्रमागत stack_access_src type, काष्ठा bpf_call_arg_meta *meta)
-अणु
-	काष्ठा bpf_reg_state *reg = reg_state(env, regno);
-	काष्ठा bpf_func_state *state = func(env, reg);
-	पूर्णांक err, min_off, max_off, i, j, slot, spi;
-	अक्षर *err_extra = type == ACCESS_HELPER ? " indirect" : "";
-	क्रमागत bpf_access_type bounds_check_type;
-	/* Some accesses can ग_लिखो anything पूर्णांकo the stack, others are
-	 * पढ़ो-only.
+static int check_stack_range_initialized(
+		struct bpf_verifier_env *env, int regno, int off,
+		int access_size, bool zero_size_allowed,
+		enum stack_access_src type, struct bpf_call_arg_meta *meta)
+{
+	struct bpf_reg_state *reg = reg_state(env, regno);
+	struct bpf_func_state *state = func(env, reg);
+	int err, min_off, max_off, i, j, slot, spi;
+	char *err_extra = type == ACCESS_HELPER ? " indirect" : "";
+	enum bpf_access_type bounds_check_type;
+	/* Some accesses can write anything into the stack, others are
+	 * read-only.
 	 */
 	bool clobber = false;
 
-	अगर (access_size == 0 && !zero_size_allowed) अणु
+	if (access_size == 0 && !zero_size_allowed) {
 		verbose(env, "invalid zero-sized read\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (type == ACCESS_HELPER) अणु
-		/* The bounds checks क्रम ग_लिखोs are more permissive than क्रम
-		 * पढ़ोs. However, अगर raw_mode is not set, we'll करो extra
+	if (type == ACCESS_HELPER) {
+		/* The bounds checks for writes are more permissive than for
+		 * reads. However, if raw_mode is not set, we'll do extra
 		 * checks below.
 		 */
 		bounds_check_type = BPF_WRITE;
 		clobber = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		bounds_check_type = BPF_READ;
-	पूर्ण
+	}
 	err = check_stack_access_within_bounds(env, regno, off, access_size,
 					       type, bounds_check_type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 
-	अगर (tnum_is_स्थिर(reg->var_off)) अणु
+	if (tnum_is_const(reg->var_off)) {
 		min_off = max_off = reg->var_off.value + off;
-	पूर्ण अन्यथा अणु
-		/* Variable offset is prohibited क्रम unprivileged mode क्रम
+	} else {
+		/* Variable offset is prohibited for unprivileged mode for
 		 * simplicity since it requires corresponding support in
-		 * Spectre masking क्रम stack ALU.
+		 * Spectre masking for stack ALU.
 		 * See also retrieve_ptr_limit().
 		 */
-		अगर (!env->bypass_spec_v1) अणु
-			अक्षर tn_buf[48];
+		if (!env->bypass_spec_v1) {
+			char tn_buf[48];
 
-			tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+			tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 			verbose(env, "R%d%s variable offset stack access prohibited for !root, var_off=%s\n",
 				regno, err_extra, tn_buf);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		/* Only initialized buffer on stack is allowed to be accessed
 		 * with variable offset. With uninitialized buffer it's hard to
 		 * guarantee that whole memory is marked as initialized on
-		 * helper वापस since specअगरic bounds are unknown what may
+		 * helper return since specific bounds are unknown what may
 		 * cause uninitialized stack leaking.
 		 */
-		अगर (meta && meta->raw_mode)
-			meta = शून्य;
+		if (meta && meta->raw_mode)
+			meta = NULL;
 
 		min_off = reg->smin_value + off;
 		max_off = reg->smax_value + off;
-	पूर्ण
+	}
 
-	अगर (meta && meta->raw_mode) अणु
+	if (meta && meta->raw_mode) {
 		meta->access_size = access_size;
 		meta->regno = regno;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (i = min_off; i < max_off + access_size; i++) अणु
+	for (i = min_off; i < max_off + access_size; i++) {
 		u8 *stype;
 
 		slot = -i - 1;
 		spi = slot / BPF_REG_SIZE;
-		अगर (state->allocated_stack <= slot)
-			जाओ err;
+		if (state->allocated_stack <= slot)
+			goto err;
 		stype = &state->stack[spi].slot_type[slot % BPF_REG_SIZE];
-		अगर (*stype == STACK_MISC)
-			जाओ mark;
-		अगर (*stype == STACK_ZERO) अणु
-			अगर (clobber) अणु
-				/* helper can ग_लिखो anything पूर्णांकo the stack */
+		if (*stype == STACK_MISC)
+			goto mark;
+		if (*stype == STACK_ZERO) {
+			if (clobber) {
+				/* helper can write anything into the stack */
 				*stype = STACK_MISC;
-			पूर्ण
-			जाओ mark;
-		पूर्ण
+			}
+			goto mark;
+		}
 
-		अगर (state->stack[spi].slot_type[0] == STACK_SPILL &&
+		if (state->stack[spi].slot_type[0] == STACK_SPILL &&
 		    state->stack[spi].spilled_ptr.type == PTR_TO_BTF_ID)
-			जाओ mark;
+			goto mark;
 
-		अगर (state->stack[spi].slot_type[0] == STACK_SPILL &&
+		if (state->stack[spi].slot_type[0] == STACK_SPILL &&
 		    (state->stack[spi].spilled_ptr.type == SCALAR_VALUE ||
-		     env->allow_ptr_leaks)) अणु
-			अगर (clobber) अणु
+		     env->allow_ptr_leaks)) {
+			if (clobber) {
 				__mark_reg_unknown(env, &state->stack[spi].spilled_ptr);
-				क्रम (j = 0; j < BPF_REG_SIZE; j++)
+				for (j = 0; j < BPF_REG_SIZE; j++)
 					state->stack[spi].slot_type[j] = STACK_MISC;
-			पूर्ण
-			जाओ mark;
-		पूर्ण
+			}
+			goto mark;
+		}
 
 err:
-		अगर (tnum_is_स्थिर(reg->var_off)) अणु
+		if (tnum_is_const(reg->var_off)) {
 			verbose(env, "invalid%s read from stack R%d off %d+%d size %d\n",
 				err_extra, regno, min_off, i - min_off, access_size);
-		पूर्ण अन्यथा अणु
-			अक्षर tn_buf[48];
+		} else {
+			char tn_buf[48];
 
-			tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+			tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 			verbose(env, "invalid%s read from stack R%d var_off %s+%d size %d\n",
 				err_extra, regno, tn_buf, i - min_off, access_size);
-		पूर्ण
-		वापस -EACCES;
+		}
+		return -EACCES;
 mark:
-		/* पढ़ोing any byte out of 8-byte 'spill_slot' will cause
+		/* reading any byte out of 8-byte 'spill_slot' will cause
 		 * the whole slot to be marked as 'read'
 		 */
-		mark_reg_पढ़ो(env, &state->stack[spi].spilled_ptr,
+		mark_reg_read(env, &state->stack[spi].spilled_ptr,
 			      state->stack[spi].spilled_ptr.parent,
 			      REG_LIVE_READ64);
-	पूर्ण
-	वापस update_stack_depth(env, state, min_off);
-पूर्ण
+	}
+	return update_stack_depth(env, state, min_off);
+}
 
-अटल पूर्णांक check_helper_mem_access(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno,
-				   पूर्णांक access_size, bool zero_size_allowed,
-				   काष्ठा bpf_call_arg_meta *meta)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
+static int check_helper_mem_access(struct bpf_verifier_env *env, int regno,
+				   int access_size, bool zero_size_allowed,
+				   struct bpf_call_arg_meta *meta)
+{
+	struct bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
 
-	चयन (reg->type) अणु
-	हाल PTR_TO_PACKET:
-	हाल PTR_TO_PACKET_META:
-		वापस check_packet_access(env, regno, reg->off, access_size,
+	switch (reg->type) {
+	case PTR_TO_PACKET:
+	case PTR_TO_PACKET_META:
+		return check_packet_access(env, regno, reg->off, access_size,
 					   zero_size_allowed);
-	हाल PTR_TO_MAP_KEY:
-		वापस check_mem_region_access(env, regno, reg->off, access_size,
+	case PTR_TO_MAP_KEY:
+		return check_mem_region_access(env, regno, reg->off, access_size,
 					       reg->map_ptr->key_size, false);
-	हाल PTR_TO_MAP_VALUE:
-		अगर (check_map_access_type(env, regno, reg->off, access_size,
+	case PTR_TO_MAP_VALUE:
+		if (check_map_access_type(env, regno, reg->off, access_size,
 					  meta && meta->raw_mode ? BPF_WRITE :
 					  BPF_READ))
-			वापस -EACCES;
-		वापस check_map_access(env, regno, reg->off, access_size,
+			return -EACCES;
+		return check_map_access(env, regno, reg->off, access_size,
 					zero_size_allowed);
-	हाल PTR_TO_MEM:
-		वापस check_mem_region_access(env, regno, reg->off,
+	case PTR_TO_MEM:
+		return check_mem_region_access(env, regno, reg->off,
 					       access_size, reg->mem_size,
 					       zero_size_allowed);
-	हाल PTR_TO_RDONLY_BUF:
-		अगर (meta && meta->raw_mode)
-			वापस -EACCES;
-		वापस check_buffer_access(env, reg, regno, reg->off,
+	case PTR_TO_RDONLY_BUF:
+		if (meta && meta->raw_mode)
+			return -EACCES;
+		return check_buffer_access(env, reg, regno, reg->off,
 					   access_size, zero_size_allowed,
 					   "rdonly",
-					   &env->prog->aux->max_rकरोnly_access);
-	हाल PTR_TO_RDWR_BUF:
-		वापस check_buffer_access(env, reg, regno, reg->off,
+					   &env->prog->aux->max_rdonly_access);
+	case PTR_TO_RDWR_BUF:
+		return check_buffer_access(env, reg, regno, reg->off,
 					   access_size, zero_size_allowed,
 					   "rdwr",
 					   &env->prog->aux->max_rdwr_access);
-	हाल PTR_TO_STACK:
-		वापस check_stack_range_initialized(
+	case PTR_TO_STACK:
+		return check_stack_range_initialized(
 				env,
 				regno, reg->off, access_size,
 				zero_size_allowed, ACCESS_HELPER, meta);
-	शेष: /* scalar_value or invalid ptr */
-		/* Allow zero-byte पढ़ो from शून्य, regardless of poपूर्णांकer type */
-		अगर (zero_size_allowed && access_size == 0 &&
-		    रेजिस्टर_is_null(reg))
-			वापस 0;
+	default: /* scalar_value or invalid ptr */
+		/* Allow zero-byte read from NULL, regardless of pointer type */
+		if (zero_size_allowed && access_size == 0 &&
+		    register_is_null(reg))
+			return 0;
 
 		verbose(env, "R%d type=%s expected=%s\n", regno,
 			reg_type_str[reg->type],
 			reg_type_str[PTR_TO_STACK]);
-		वापस -EACCES;
-	पूर्ण
-पूर्ण
+		return -EACCES;
+	}
+}
 
-पूर्णांक check_mem_reg(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_reg_state *reg,
+int check_mem_reg(struct bpf_verifier_env *env, struct bpf_reg_state *reg,
 		   u32 regno, u32 mem_size)
-अणु
-	अगर (रेजिस्टर_is_null(reg))
-		वापस 0;
+{
+	if (register_is_null(reg))
+		return 0;
 
-	अगर (reg_type_may_be_null(reg->type)) अणु
-		/* Assuming that the रेजिस्टर contains a value check अगर the memory
-		 * access is safe. Temporarily save and restore the रेजिस्टर's state as
+	if (reg_type_may_be_null(reg->type)) {
+		/* Assuming that the register contains a value check if the memory
+		 * access is safe. Temporarily save and restore the register's state as
 		 * the conversion shouldn't be visible to a caller.
 		 */
-		स्थिर काष्ठा bpf_reg_state saved_reg = *reg;
-		पूर्णांक rv;
+		const struct bpf_reg_state saved_reg = *reg;
+		int rv;
 
 		mark_ptr_not_null_reg(reg);
-		rv = check_helper_mem_access(env, regno, mem_size, true, शून्य);
+		rv = check_helper_mem_access(env, regno, mem_size, true, NULL);
 		*reg = saved_reg;
-		वापस rv;
-	पूर्ण
+		return rv;
+	}
 
-	वापस check_helper_mem_access(env, regno, mem_size, true, शून्य);
-पूर्ण
+	return check_helper_mem_access(env, regno, mem_size, true, NULL);
+}
 
 /* Implementation details:
- * bpf_map_lookup वापसs PTR_TO_MAP_VALUE_OR_शून्य
- * Two bpf_map_lookups (even with the same key) will have dअगरferent reg->id.
- * For traditional PTR_TO_MAP_VALUE the verअगरier clears reg->id after
- * value_or_null->value transition, since the verअगरier only cares about
- * the range of access to valid map value poपूर्णांकer and करोesn't care about actual
+ * bpf_map_lookup returns PTR_TO_MAP_VALUE_OR_NULL
+ * Two bpf_map_lookups (even with the same key) will have different reg->id.
+ * For traditional PTR_TO_MAP_VALUE the verifier clears reg->id after
+ * value_or_null->value transition, since the verifier only cares about
+ * the range of access to valid map value pointer and doesn't care about actual
  * address of the map element.
- * For maps with 'struct bpf_spin_lock' inside map value the verअगरier keeps
- * reg->id > 0 after value_or_null->value transition. By करोing so
- * two bpf_map_lookups will be considered two dअगरferent poपूर्णांकers that
- * poपूर्णांक to dअगरferent bpf_spin_locks.
- * The verअगरier allows taking only one bpf_spin_lock at a समय to aव्योम
+ * For maps with 'struct bpf_spin_lock' inside map value the verifier keeps
+ * reg->id > 0 after value_or_null->value transition. By doing so
+ * two bpf_map_lookups will be considered two different pointers that
+ * point to different bpf_spin_locks.
+ * The verifier allows taking only one bpf_spin_lock at a time to avoid
  * dead-locks.
  * Since only one bpf_spin_lock is allowed the checks are simpler than
- * reg_is_refcounted() logic. The verअगरier needs to remember only
+ * reg_is_refcounted() logic. The verifier needs to remember only
  * one spin_lock instead of array of acquired_refs.
  * cur_state->active_spin_lock remembers which map value element got locked
  * and clears it after bpf_spin_unlock.
  */
-अटल पूर्णांक process_spin_lock(काष्ठा bpf_verअगरier_env *env, पूर्णांक regno,
+static int process_spin_lock(struct bpf_verifier_env *env, int regno,
 			     bool is_lock)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state;
-	bool is_स्थिर = tnum_is_स्थिर(reg->var_off);
-	काष्ठा bpf_map *map = reg->map_ptr;
+{
+	struct bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
+	struct bpf_verifier_state *cur = env->cur_state;
+	bool is_const = tnum_is_const(reg->var_off);
+	struct bpf_map *map = reg->map_ptr;
 	u64 val = reg->var_off.value;
 
-	अगर (!is_स्थिर) अणु
+	if (!is_const) {
 		verbose(env,
 			"R%d doesn't have constant offset. bpf_spin_lock has to be at the constant offset\n",
 			regno);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!map->btf) अणु
+		return -EINVAL;
+	}
+	if (!map->btf) {
 		verbose(env,
 			"map '%s' has to have BTF in order to use bpf_spin_lock\n",
 			map->name);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!map_value_has_spin_lock(map)) अणु
-		अगर (map->spin_lock_off == -E2BIG)
+		return -EINVAL;
+	}
+	if (!map_value_has_spin_lock(map)) {
+		if (map->spin_lock_off == -E2BIG)
 			verbose(env,
 				"map '%s' has more than one 'struct bpf_spin_lock'\n",
 				map->name);
-		अन्यथा अगर (map->spin_lock_off == -ENOENT)
+		else if (map->spin_lock_off == -ENOENT)
 			verbose(env,
 				"map '%s' doesn't have 'struct bpf_spin_lock'\n",
 				map->name);
-		अन्यथा
+		else
 			verbose(env,
 				"map '%s' is not a struct type or bpf_spin_lock is mangled\n",
 				map->name);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (map->spin_lock_off != val + reg->off) अणु
+		return -EINVAL;
+	}
+	if (map->spin_lock_off != val + reg->off) {
 		verbose(env, "off %lld doesn't point to 'struct bpf_spin_lock'\n",
 			val + reg->off);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (is_lock) अणु
-		अगर (cur->active_spin_lock) अणु
+		return -EINVAL;
+	}
+	if (is_lock) {
+		if (cur->active_spin_lock) {
 			verbose(env,
 				"Locking two bpf_spin_locks are not allowed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cur->active_spin_lock = reg->id;
-	पूर्ण अन्यथा अणु
-		अगर (!cur->active_spin_lock) अणु
+	} else {
+		if (!cur->active_spin_lock) {
 			verbose(env, "bpf_spin_unlock without taking a lock\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (cur->active_spin_lock != reg->id) अणु
+			return -EINVAL;
+		}
+		if (cur->active_spin_lock != reg->id) {
 			verbose(env, "bpf_spin_unlock of different lock\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cur->active_spin_lock = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल bool arg_type_is_mem_ptr(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_PTR_TO_MEM ||
-	       type == ARG_PTR_TO_MEM_OR_शून्य ||
+static bool arg_type_is_mem_ptr(enum bpf_arg_type type)
+{
+	return type == ARG_PTR_TO_MEM ||
+	       type == ARG_PTR_TO_MEM_OR_NULL ||
 	       type == ARG_PTR_TO_UNINIT_MEM;
-पूर्ण
+}
 
-अटल bool arg_type_is_mem_size(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_CONST_SIZE ||
+static bool arg_type_is_mem_size(enum bpf_arg_type type)
+{
+	return type == ARG_CONST_SIZE ||
 	       type == ARG_CONST_SIZE_OR_ZERO;
-पूर्ण
+}
 
-अटल bool arg_type_is_alloc_size(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_CONST_ALLOC_SIZE_OR_ZERO;
-पूर्ण
+static bool arg_type_is_alloc_size(enum bpf_arg_type type)
+{
+	return type == ARG_CONST_ALLOC_SIZE_OR_ZERO;
+}
 
-अटल bool arg_type_is_पूर्णांक_ptr(क्रमागत bpf_arg_type type)
-अणु
-	वापस type == ARG_PTR_TO_INT ||
+static bool arg_type_is_int_ptr(enum bpf_arg_type type)
+{
+	return type == ARG_PTR_TO_INT ||
 	       type == ARG_PTR_TO_LONG;
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांक_ptr_type_to_size(क्रमागत bpf_arg_type type)
-अणु
-	अगर (type == ARG_PTR_TO_INT)
-		वापस माप(u32);
-	अन्यथा अगर (type == ARG_PTR_TO_LONG)
-		वापस माप(u64);
+static int int_ptr_type_to_size(enum bpf_arg_type type)
+{
+	if (type == ARG_PTR_TO_INT)
+		return sizeof(u32);
+	else if (type == ARG_PTR_TO_LONG)
+		return sizeof(u64);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक resolve_map_arg_type(काष्ठा bpf_verअगरier_env *env,
-				 स्थिर काष्ठा bpf_call_arg_meta *meta,
-				 क्रमागत bpf_arg_type *arg_type)
-अणु
-	अगर (!meta->map_ptr) अणु
-		/* kernel subप्रणाली misconfigured verअगरier */
+static int resolve_map_arg_type(struct bpf_verifier_env *env,
+				 const struct bpf_call_arg_meta *meta,
+				 enum bpf_arg_type *arg_type)
+{
+	if (!meta->map_ptr) {
+		/* kernel subsystem misconfigured verifier */
 		verbose(env, "invalid map_ptr to access map->type\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	चयन (meta->map_ptr->map_type) अणु
-	हाल BPF_MAP_TYPE_SOCKMAP:
-	हाल BPF_MAP_TYPE_SOCKHASH:
-		अगर (*arg_type == ARG_PTR_TO_MAP_VALUE) अणु
+	switch (meta->map_ptr->map_type) {
+	case BPF_MAP_TYPE_SOCKMAP:
+	case BPF_MAP_TYPE_SOCKHASH:
+		if (*arg_type == ARG_PTR_TO_MAP_VALUE) {
 			*arg_type = ARG_PTR_TO_BTF_ID_SOCK_COMMON;
-		पूर्ण अन्यथा अणु
+		} else {
 			verbose(env, "invalid arg_type for sockmap/sockhash\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+			return -EINVAL;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		break;
+	}
+	return 0;
+}
 
-काष्ठा bpf_reg_types अणु
-	स्थिर क्रमागत bpf_reg_type types[10];
+struct bpf_reg_types {
+	const enum bpf_reg_type types[10];
 	u32 *btf_id;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bpf_reg_types map_key_value_types = अणु
-	.types = अणु
+static const struct bpf_reg_types map_key_value_types = {
+	.types = {
 		PTR_TO_STACK,
 		PTR_TO_PACKET,
 		PTR_TO_PACKET_META,
 		PTR_TO_MAP_KEY,
 		PTR_TO_MAP_VALUE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bpf_reg_types sock_types = अणु
-	.types = अणु
+static const struct bpf_reg_types sock_types = {
+	.types = {
 		PTR_TO_SOCK_COMMON,
 		PTR_TO_SOCKET,
 		PTR_TO_TCP_SOCK,
 		PTR_TO_XDP_SOCK,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_NET
-अटल स्थिर काष्ठा bpf_reg_types btf_id_sock_common_types = अणु
-	.types = अणु
+#ifdef CONFIG_NET
+static const struct bpf_reg_types btf_id_sock_common_types = {
+	.types = {
 		PTR_TO_SOCK_COMMON,
 		PTR_TO_SOCKET,
 		PTR_TO_TCP_SOCK,
 		PTR_TO_XDP_SOCK,
 		PTR_TO_BTF_ID,
-	पूर्ण,
+	},
 	.btf_id = &btf_sock_ids[BTF_SOCK_TYPE_SOCK_COMMON],
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा bpf_reg_types mem_types = अणु
-	.types = अणु
+static const struct bpf_reg_types mem_types = {
+	.types = {
 		PTR_TO_STACK,
 		PTR_TO_PACKET,
 		PTR_TO_PACKET_META,
@@ -4763,880 +4762,880 @@ mark:
 		PTR_TO_MEM,
 		PTR_TO_RDONLY_BUF,
 		PTR_TO_RDWR_BUF,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bpf_reg_types पूर्णांक_ptr_types = अणु
-	.types = अणु
+static const struct bpf_reg_types int_ptr_types = {
+	.types = {
 		PTR_TO_STACK,
 		PTR_TO_PACKET,
 		PTR_TO_PACKET_META,
 		PTR_TO_MAP_KEY,
 		PTR_TO_MAP_VALUE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bpf_reg_types fullsock_types = अणु .types = अणु PTR_TO_SOCKET पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types scalar_types = अणु .types = अणु SCALAR_VALUE पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types context_types = अणु .types = अणु PTR_TO_CTX पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types alloc_mem_types = अणु .types = अणु PTR_TO_MEM पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types स्थिर_map_ptr_types = अणु .types = अणु CONST_PTR_TO_MAP पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types btf_ptr_types = अणु .types = अणु PTR_TO_BTF_ID पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types spin_lock_types = अणु .types = अणु PTR_TO_MAP_VALUE पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types percpu_btf_ptr_types = अणु .types = अणु PTR_TO_PERCPU_BTF_ID पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types func_ptr_types = अणु .types = अणु PTR_TO_FUNC पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types stack_ptr_types = अणु .types = अणु PTR_TO_STACK पूर्ण पूर्ण;
-अटल स्थिर काष्ठा bpf_reg_types स्थिर_str_ptr_types = अणु .types = अणु PTR_TO_MAP_VALUE पूर्ण पूर्ण;
+static const struct bpf_reg_types fullsock_types = { .types = { PTR_TO_SOCKET } };
+static const struct bpf_reg_types scalar_types = { .types = { SCALAR_VALUE } };
+static const struct bpf_reg_types context_types = { .types = { PTR_TO_CTX } };
+static const struct bpf_reg_types alloc_mem_types = { .types = { PTR_TO_MEM } };
+static const struct bpf_reg_types const_map_ptr_types = { .types = { CONST_PTR_TO_MAP } };
+static const struct bpf_reg_types btf_ptr_types = { .types = { PTR_TO_BTF_ID } };
+static const struct bpf_reg_types spin_lock_types = { .types = { PTR_TO_MAP_VALUE } };
+static const struct bpf_reg_types percpu_btf_ptr_types = { .types = { PTR_TO_PERCPU_BTF_ID } };
+static const struct bpf_reg_types func_ptr_types = { .types = { PTR_TO_FUNC } };
+static const struct bpf_reg_types stack_ptr_types = { .types = { PTR_TO_STACK } };
+static const struct bpf_reg_types const_str_ptr_types = { .types = { PTR_TO_MAP_VALUE } };
 
-अटल स्थिर काष्ठा bpf_reg_types *compatible_reg_types[__BPF_ARG_TYPE_MAX] = अणु
+static const struct bpf_reg_types *compatible_reg_types[__BPF_ARG_TYPE_MAX] = {
 	[ARG_PTR_TO_MAP_KEY]		= &map_key_value_types,
 	[ARG_PTR_TO_MAP_VALUE]		= &map_key_value_types,
 	[ARG_PTR_TO_UNINIT_MAP_VALUE]	= &map_key_value_types,
-	[ARG_PTR_TO_MAP_VALUE_OR_शून्य]	= &map_key_value_types,
+	[ARG_PTR_TO_MAP_VALUE_OR_NULL]	= &map_key_value_types,
 	[ARG_CONST_SIZE]		= &scalar_types,
 	[ARG_CONST_SIZE_OR_ZERO]	= &scalar_types,
 	[ARG_CONST_ALLOC_SIZE_OR_ZERO]	= &scalar_types,
-	[ARG_CONST_MAP_PTR]		= &स्थिर_map_ptr_types,
+	[ARG_CONST_MAP_PTR]		= &const_map_ptr_types,
 	[ARG_PTR_TO_CTX]		= &context_types,
-	[ARG_PTR_TO_CTX_OR_शून्य]	= &context_types,
+	[ARG_PTR_TO_CTX_OR_NULL]	= &context_types,
 	[ARG_PTR_TO_SOCK_COMMON]	= &sock_types,
-#अगर_घोषित CONFIG_NET
+#ifdef CONFIG_NET
 	[ARG_PTR_TO_BTF_ID_SOCK_COMMON]	= &btf_id_sock_common_types,
-#पूर्ण_अगर
+#endif
 	[ARG_PTR_TO_SOCKET]		= &fullsock_types,
-	[ARG_PTR_TO_SOCKET_OR_शून्य]	= &fullsock_types,
+	[ARG_PTR_TO_SOCKET_OR_NULL]	= &fullsock_types,
 	[ARG_PTR_TO_BTF_ID]		= &btf_ptr_types,
 	[ARG_PTR_TO_SPIN_LOCK]		= &spin_lock_types,
 	[ARG_PTR_TO_MEM]		= &mem_types,
-	[ARG_PTR_TO_MEM_OR_शून्य]	= &mem_types,
+	[ARG_PTR_TO_MEM_OR_NULL]	= &mem_types,
 	[ARG_PTR_TO_UNINIT_MEM]		= &mem_types,
 	[ARG_PTR_TO_ALLOC_MEM]		= &alloc_mem_types,
-	[ARG_PTR_TO_ALLOC_MEM_OR_शून्य]	= &alloc_mem_types,
-	[ARG_PTR_TO_INT]		= &पूर्णांक_ptr_types,
-	[ARG_PTR_TO_LONG]		= &पूर्णांक_ptr_types,
+	[ARG_PTR_TO_ALLOC_MEM_OR_NULL]	= &alloc_mem_types,
+	[ARG_PTR_TO_INT]		= &int_ptr_types,
+	[ARG_PTR_TO_LONG]		= &int_ptr_types,
 	[ARG_PTR_TO_PERCPU_BTF_ID]	= &percpu_btf_ptr_types,
 	[ARG_PTR_TO_FUNC]		= &func_ptr_types,
-	[ARG_PTR_TO_STACK_OR_शून्य]	= &stack_ptr_types,
-	[ARG_PTR_TO_CONST_STR]		= &स्थिर_str_ptr_types,
-पूर्ण;
+	[ARG_PTR_TO_STACK_OR_NULL]	= &stack_ptr_types,
+	[ARG_PTR_TO_CONST_STR]		= &const_str_ptr_types,
+};
 
-अटल पूर्णांक check_reg_type(काष्ठा bpf_verअगरier_env *env, u32 regno,
-			  क्रमागत bpf_arg_type arg_type,
-			  स्थिर u32 *arg_btf_id)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
-	क्रमागत bpf_reg_type expected, type = reg->type;
-	स्थिर काष्ठा bpf_reg_types *compatible;
-	पूर्णांक i, j;
+static int check_reg_type(struct bpf_verifier_env *env, u32 regno,
+			  enum bpf_arg_type arg_type,
+			  const u32 *arg_btf_id)
+{
+	struct bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
+	enum bpf_reg_type expected, type = reg->type;
+	const struct bpf_reg_types *compatible;
+	int i, j;
 
 	compatible = compatible_reg_types[arg_type];
-	अगर (!compatible) अणु
+	if (!compatible) {
 		verbose(env, "verifier internal error: unsupported arg type %d\n", arg_type);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(compatible->types); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(compatible->types); i++) {
 		expected = compatible->types[i];
-		अगर (expected == NOT_INIT)
-			अवरोध;
+		if (expected == NOT_INIT)
+			break;
 
-		अगर (type == expected)
-			जाओ found;
-	पूर्ण
+		if (type == expected)
+			goto found;
+	}
 
 	verbose(env, "R%d type=%s expected=", regno, reg_type_str[type]);
-	क्रम (j = 0; j + 1 < i; j++)
+	for (j = 0; j + 1 < i; j++)
 		verbose(env, "%s, ", reg_type_str[compatible->types[j]]);
 	verbose(env, "%s\n", reg_type_str[compatible->types[j]]);
-	वापस -EACCES;
+	return -EACCES;
 
 found:
-	अगर (type == PTR_TO_BTF_ID) अणु
-		अगर (!arg_btf_id) अणु
-			अगर (!compatible->btf_id) अणु
+	if (type == PTR_TO_BTF_ID) {
+		if (!arg_btf_id) {
+			if (!compatible->btf_id) {
 				verbose(env, "verifier internal error: missing arg compatible BTF ID\n");
-				वापस -EFAULT;
-			पूर्ण
+				return -EFAULT;
+			}
 			arg_btf_id = compatible->btf_id;
-		पूर्ण
+		}
 
-		अगर (!btf_काष्ठा_ids_match(&env->log, reg->btf, reg->btf_id, reg->off,
-					  btf_vmlinux, *arg_btf_id)) अणु
+		if (!btf_struct_ids_match(&env->log, reg->btf, reg->btf_id, reg->off,
+					  btf_vmlinux, *arg_btf_id)) {
 			verbose(env, "R%d is of type %s but %s is expected\n",
 				regno, kernel_type_name(reg->btf, reg->btf_id),
 				kernel_type_name(btf_vmlinux, *arg_btf_id));
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		अगर (!tnum_is_स्थिर(reg->var_off) || reg->var_off.value) अणु
+		if (!tnum_is_const(reg->var_off) || reg->var_off.value) {
 			verbose(env, "R%d is a pointer to in-kernel struct with non-zero offset\n",
 				regno);
-			वापस -EACCES;
-		पूर्ण
-	पूर्ण
+			return -EACCES;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_func_arg(काष्ठा bpf_verअगरier_env *env, u32 arg,
-			  काष्ठा bpf_call_arg_meta *meta,
-			  स्थिर काष्ठा bpf_func_proto *fn)
-अणु
+static int check_func_arg(struct bpf_verifier_env *env, u32 arg,
+			  struct bpf_call_arg_meta *meta,
+			  const struct bpf_func_proto *fn)
+{
 	u32 regno = BPF_REG_1 + arg;
-	काष्ठा bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
-	क्रमागत bpf_arg_type arg_type = fn->arg_type[arg];
-	क्रमागत bpf_reg_type type = reg->type;
-	पूर्णांक err = 0;
+	struct bpf_reg_state *regs = cur_regs(env), *reg = &regs[regno];
+	enum bpf_arg_type arg_type = fn->arg_type[arg];
+	enum bpf_reg_type type = reg->type;
+	int err = 0;
 
-	अगर (arg_type == ARG_DONTCARE)
-		वापस 0;
+	if (arg_type == ARG_DONTCARE)
+		return 0;
 
 	err = check_reg_arg(env, regno, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (arg_type == ARG_ANYTHING) अणु
-		अगर (is_poपूर्णांकer_value(env, regno)) अणु
+	if (arg_type == ARG_ANYTHING) {
+		if (is_pointer_value(env, regno)) {
 			verbose(env, "R%d leaks addr into helper function\n",
 				regno);
-			वापस -EACCES;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EACCES;
+		}
+		return 0;
+	}
 
-	अगर (type_is_pkt_poपूर्णांकer(type) &&
-	    !may_access_direct_pkt_data(env, meta, BPF_READ)) अणु
+	if (type_is_pkt_pointer(type) &&
+	    !may_access_direct_pkt_data(env, meta, BPF_READ)) {
 		verbose(env, "helper access to the packet is not allowed\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (arg_type == ARG_PTR_TO_MAP_VALUE ||
+	if (arg_type == ARG_PTR_TO_MAP_VALUE ||
 	    arg_type == ARG_PTR_TO_UNINIT_MAP_VALUE ||
-	    arg_type == ARG_PTR_TO_MAP_VALUE_OR_शून्य) अणु
+	    arg_type == ARG_PTR_TO_MAP_VALUE_OR_NULL) {
 		err = resolve_map_arg_type(env, meta, &arg_type);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (रेजिस्टर_is_null(reg) && arg_type_may_be_null(arg_type))
-		/* A शून्य रेजिस्टर has a SCALAR_VALUE type, so skip
+	if (register_is_null(reg) && arg_type_may_be_null(arg_type))
+		/* A NULL register has a SCALAR_VALUE type, so skip
 		 * type checking.
 		 */
-		जाओ skip_type_check;
+		goto skip_type_check;
 
 	err = check_reg_type(env, regno, arg_type, fn->arg_btf_id[arg]);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (type == PTR_TO_CTX) अणु
+	if (type == PTR_TO_CTX) {
 		err = check_ctx_reg(env, reg, regno);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 skip_type_check:
-	अगर (reg->ref_obj_id) अणु
-		अगर (meta->ref_obj_id) अणु
+	if (reg->ref_obj_id) {
+		if (meta->ref_obj_id) {
 			verbose(env, "verifier internal error: more than one arg with ref_obj_id R%d %u %u\n",
 				regno, reg->ref_obj_id,
 				meta->ref_obj_id);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		meta->ref_obj_id = reg->ref_obj_id;
-	पूर्ण
+	}
 
-	अगर (arg_type == ARG_CONST_MAP_PTR) अणु
+	if (arg_type == ARG_CONST_MAP_PTR) {
 		/* bpf_map_xxx(map_ptr) call: remember that map_ptr */
 		meta->map_ptr = reg->map_ptr;
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_MAP_KEY) अणु
+	} else if (arg_type == ARG_PTR_TO_MAP_KEY) {
 		/* bpf_map_xxx(..., map_ptr, ..., key) call:
 		 * check that [key, key + map->key_size) are within
 		 * stack limits and initialized
 		 */
-		अगर (!meta->map_ptr) अणु
-			/* in function declaration map_ptr must come beक्रमe
-			 * map_key, so that it's verअगरied and known beक्रमe
+		if (!meta->map_ptr) {
+			/* in function declaration map_ptr must come before
+			 * map_key, so that it's verified and known before
 			 * we have to check map_key here. Otherwise it means
-			 * that kernel subप्रणाली misconfigured verअगरier
+			 * that kernel subsystem misconfigured verifier
 			 */
 			verbose(env, "invalid map_ptr to access map->key\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_helper_mem_access(env, regno,
 					      meta->map_ptr->key_size, false,
-					      शून्य);
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_MAP_VALUE ||
-		   (arg_type == ARG_PTR_TO_MAP_VALUE_OR_शून्य &&
-		    !रेजिस्टर_is_null(reg)) ||
-		   arg_type == ARG_PTR_TO_UNINIT_MAP_VALUE) अणु
+					      NULL);
+	} else if (arg_type == ARG_PTR_TO_MAP_VALUE ||
+		   (arg_type == ARG_PTR_TO_MAP_VALUE_OR_NULL &&
+		    !register_is_null(reg)) ||
+		   arg_type == ARG_PTR_TO_UNINIT_MAP_VALUE) {
 		/* bpf_map_xxx(..., map_ptr, ..., value) call:
 		 * check [value, value + map->value_size) validity
 		 */
-		अगर (!meta->map_ptr) अणु
-			/* kernel subप्रणाली misconfigured verअगरier */
+		if (!meta->map_ptr) {
+			/* kernel subsystem misconfigured verifier */
 			verbose(env, "invalid map_ptr to access map->value\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		meta->raw_mode = (arg_type == ARG_PTR_TO_UNINIT_MAP_VALUE);
 		err = check_helper_mem_access(env, regno,
 					      meta->map_ptr->value_size, false,
 					      meta);
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_PERCPU_BTF_ID) अणु
-		अगर (!reg->btf_id) अणु
+	} else if (arg_type == ARG_PTR_TO_PERCPU_BTF_ID) {
+		if (!reg->btf_id) {
 			verbose(env, "Helper has invalid btf_id in R%d\n", regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		meta->ret_btf = reg->btf;
 		meta->ret_btf_id = reg->btf_id;
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_SPIN_LOCK) अणु
-		अगर (meta->func_id == BPF_FUNC_spin_lock) अणु
-			अगर (process_spin_lock(env, regno, true))
-				वापस -EACCES;
-		पूर्ण अन्यथा अगर (meta->func_id == BPF_FUNC_spin_unlock) अणु
-			अगर (process_spin_lock(env, regno, false))
-				वापस -EACCES;
-		पूर्ण अन्यथा अणु
+	} else if (arg_type == ARG_PTR_TO_SPIN_LOCK) {
+		if (meta->func_id == BPF_FUNC_spin_lock) {
+			if (process_spin_lock(env, regno, true))
+				return -EACCES;
+		} else if (meta->func_id == BPF_FUNC_spin_unlock) {
+			if (process_spin_lock(env, regno, false))
+				return -EACCES;
+		} else {
 			verbose(env, "verifier internal error\n");
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_FUNC) अणु
+			return -EFAULT;
+		}
+	} else if (arg_type == ARG_PTR_TO_FUNC) {
 		meta->subprogno = reg->subprogno;
-	पूर्ण अन्यथा अगर (arg_type_is_mem_ptr(arg_type)) अणु
-		/* The access to this poपूर्णांकer is only checked when we hit the
+	} else if (arg_type_is_mem_ptr(arg_type)) {
+		/* The access to this pointer is only checked when we hit the
 		 * next is_mem_size argument below.
 		 */
 		meta->raw_mode = (arg_type == ARG_PTR_TO_UNINIT_MEM);
-	पूर्ण अन्यथा अगर (arg_type_is_mem_size(arg_type)) अणु
+	} else if (arg_type_is_mem_size(arg_type)) {
 		bool zero_size_allowed = (arg_type == ARG_CONST_SIZE_OR_ZERO);
 
-		/* This is used to refine r0 वापस value bounds क्रम helpers
-		 * that enक्रमce this value as an upper bound on वापस values.
-		 * See करो_refine_retval_range() क्रम helpers that can refine
-		 * the वापस value. C type of helper is u32 so we pull रेजिस्टर
-		 * bound from umax_value however, अगर negative verअगरier errors
+		/* This is used to refine r0 return value bounds for helpers
+		 * that enforce this value as an upper bound on return values.
+		 * See do_refine_retval_range() for helpers that can refine
+		 * the return value. C type of helper is u32 so we pull register
+		 * bound from umax_value however, if negative verifier errors
 		 * out. Only upper bounds can be learned because retval is an
-		 * पूर्णांक type and negative retvals are allowed.
+		 * int type and negative retvals are allowed.
 		 */
 		meta->msize_max_value = reg->umax_value;
 
-		/* The रेजिस्टर is SCALAR_VALUE; the access check
+		/* The register is SCALAR_VALUE; the access check
 		 * happens using its boundaries.
 		 */
-		अगर (!tnum_is_स्थिर(reg->var_off))
+		if (!tnum_is_const(reg->var_off))
 			/* For unprivileged variable accesses, disable raw
 			 * mode so that the program is required to
 			 * initialize all the memory that the helper could
 			 * just partially fill up.
 			 */
-			meta = शून्य;
+			meta = NULL;
 
-		अगर (reg->smin_value < 0) अणु
+		if (reg->smin_value < 0) {
 			verbose(env, "R%d min value is negative, either use unsigned or 'var &= const'\n",
 				regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		अगर (reg->umin_value == 0) अणु
+		if (reg->umin_value == 0) {
 			err = check_helper_mem_access(env, regno - 1, 0,
 						      zero_size_allowed,
 						      meta);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
-		अगर (reg->umax_value >= BPF_MAX_VAR_SIZ) अणु
+		if (reg->umax_value >= BPF_MAX_VAR_SIZ) {
 			verbose(env, "R%d unbounded memory access, use 'var &= const' or 'if (var < const)'\n",
 				regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		err = check_helper_mem_access(env, regno - 1,
 					      reg->umax_value,
 					      zero_size_allowed, meta);
-		अगर (!err)
+		if (!err)
 			err = mark_chain_precision(env, regno);
-	पूर्ण अन्यथा अगर (arg_type_is_alloc_size(arg_type)) अणु
-		अगर (!tnum_is_स्थिर(reg->var_off)) अणु
+	} else if (arg_type_is_alloc_size(arg_type)) {
+		if (!tnum_is_const(reg->var_off)) {
 			verbose(env, "R%d is not a known constant'\n",
 				regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		meta->mem_size = reg->var_off.value;
-	पूर्ण अन्यथा अगर (arg_type_is_पूर्णांक_ptr(arg_type)) अणु
-		पूर्णांक size = पूर्णांक_ptr_type_to_size(arg_type);
+	} else if (arg_type_is_int_ptr(arg_type)) {
+		int size = int_ptr_type_to_size(arg_type);
 
 		err = check_helper_mem_access(env, regno, size, false, meta);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = check_ptr_alignment(env, reg, 0, size, true);
-	पूर्ण अन्यथा अगर (arg_type == ARG_PTR_TO_CONST_STR) अणु
-		काष्ठा bpf_map *map = reg->map_ptr;
-		पूर्णांक map_off;
+	} else if (arg_type == ARG_PTR_TO_CONST_STR) {
+		struct bpf_map *map = reg->map_ptr;
+		int map_off;
 		u64 map_addr;
-		अक्षर *str_ptr;
+		char *str_ptr;
 
-		अगर (!bpf_map_is_rकरोnly(map)) अणु
+		if (!bpf_map_is_rdonly(map)) {
 			verbose(env, "R%d does not point to a readonly map'\n", regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		अगर (!tnum_is_स्थिर(reg->var_off)) अणु
+		if (!tnum_is_const(reg->var_off)) {
 			verbose(env, "R%d is not a constant address'\n", regno);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		अगर (!map->ops->map_direct_value_addr) अणु
+		if (!map->ops->map_direct_value_addr) {
 			verbose(env, "no direct value access support for this map type\n");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
 		err = check_map_access(env, regno, reg->off,
 				       map->value_size - reg->off, false);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		map_off = reg->off + reg->var_off.value;
 		err = map->ops->map_direct_value_addr(map, &map_addr, map_off);
-		अगर (err) अणु
+		if (err) {
 			verbose(env, "direct value access on string failed\n");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		str_ptr = (अक्षर *)(दीर्घ)(map_addr);
-		अगर (!strnchr(str_ptr + map_off, map->value_size - map_off, 0)) अणु
+		str_ptr = (char *)(long)(map_addr);
+		if (!strnchr(str_ptr + map_off, map->value_size - map_off, 0)) {
 			verbose(env, "string is not zero-terminated\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool may_update_sockmap(काष्ठा bpf_verअगरier_env *env, पूर्णांक func_id)
-अणु
-	क्रमागत bpf_attach_type eatype = env->prog->expected_attach_type;
-	क्रमागत bpf_prog_type type = resolve_prog_type(env->prog);
+static bool may_update_sockmap(struct bpf_verifier_env *env, int func_id)
+{
+	enum bpf_attach_type eatype = env->prog->expected_attach_type;
+	enum bpf_prog_type type = resolve_prog_type(env->prog);
 
-	अगर (func_id != BPF_FUNC_map_update_elem)
-		वापस false;
+	if (func_id != BPF_FUNC_map_update_elem)
+		return false;
 
-	/* It's not possible to get access to a locked काष्ठा sock in these
+	/* It's not possible to get access to a locked struct sock in these
 	 * contexts, so updating is safe.
 	 */
-	चयन (type) अणु
-	हाल BPF_PROG_TYPE_TRACING:
-		अगर (eatype == BPF_TRACE_ITER)
-			वापस true;
-		अवरोध;
-	हाल BPF_PROG_TYPE_SOCKET_FILTER:
-	हाल BPF_PROG_TYPE_SCHED_CLS:
-	हाल BPF_PROG_TYPE_SCHED_ACT:
-	हाल BPF_PROG_TYPE_XDP:
-	हाल BPF_PROG_TYPE_SK_REUSEPORT:
-	हाल BPF_PROG_TYPE_FLOW_DISSECTOR:
-	हाल BPF_PROG_TYPE_SK_LOOKUP:
-		वापस true;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (type) {
+	case BPF_PROG_TYPE_TRACING:
+		if (eatype == BPF_TRACE_ITER)
+			return true;
+		break;
+	case BPF_PROG_TYPE_SOCKET_FILTER:
+	case BPF_PROG_TYPE_SCHED_CLS:
+	case BPF_PROG_TYPE_SCHED_ACT:
+	case BPF_PROG_TYPE_XDP:
+	case BPF_PROG_TYPE_SK_REUSEPORT:
+	case BPF_PROG_TYPE_FLOW_DISSECTOR:
+	case BPF_PROG_TYPE_SK_LOOKUP:
+		return true;
+	default:
+		break;
+	}
 
 	verbose(env, "cannot update sockmap in this context\n");
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool allow_tail_call_in_subprogs(काष्ठा bpf_verअगरier_env *env)
-अणु
-	वापस env->prog->jit_requested && IS_ENABLED(CONFIG_X86_64);
-पूर्ण
+static bool allow_tail_call_in_subprogs(struct bpf_verifier_env *env)
+{
+	return env->prog->jit_requested && IS_ENABLED(CONFIG_X86_64);
+}
 
-अटल पूर्णांक check_map_func_compatibility(काष्ठा bpf_verअगरier_env *env,
-					काष्ठा bpf_map *map, पूर्णांक func_id)
-अणु
-	अगर (!map)
-		वापस 0;
+static int check_map_func_compatibility(struct bpf_verifier_env *env,
+					struct bpf_map *map, int func_id)
+{
+	if (!map)
+		return 0;
 
 	/* We need a two way check, first is from map perspective ... */
-	चयन (map->map_type) अणु
-	हाल BPF_MAP_TYPE_PROG_ARRAY:
-		अगर (func_id != BPF_FUNC_tail_call)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_PERF_EVENT_ARRAY:
-		अगर (func_id != BPF_FUNC_perf_event_पढ़ो &&
+	switch (map->map_type) {
+	case BPF_MAP_TYPE_PROG_ARRAY:
+		if (func_id != BPF_FUNC_tail_call)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_PERF_EVENT_ARRAY:
+		if (func_id != BPF_FUNC_perf_event_read &&
 		    func_id != BPF_FUNC_perf_event_output &&
 		    func_id != BPF_FUNC_skb_output &&
-		    func_id != BPF_FUNC_perf_event_पढ़ो_value &&
+		    func_id != BPF_FUNC_perf_event_read_value &&
 		    func_id != BPF_FUNC_xdp_output)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_RINGBUF:
-		अगर (func_id != BPF_FUNC_ringbuf_output &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_RINGBUF:
+		if (func_id != BPF_FUNC_ringbuf_output &&
 		    func_id != BPF_FUNC_ringbuf_reserve &&
 		    func_id != BPF_FUNC_ringbuf_submit &&
 		    func_id != BPF_FUNC_ringbuf_discard &&
 		    func_id != BPF_FUNC_ringbuf_query)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_STACK_TRACE:
-		अगर (func_id != BPF_FUNC_get_stackid)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_CGROUP_ARRAY:
-		अगर (func_id != BPF_FUNC_skb_under_cgroup &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_STACK_TRACE:
+		if (func_id != BPF_FUNC_get_stackid)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_CGROUP_ARRAY:
+		if (func_id != BPF_FUNC_skb_under_cgroup &&
 		    func_id != BPF_FUNC_current_task_under_cgroup)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_CGROUP_STORAGE:
-	हाल BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE:
-		अगर (func_id != BPF_FUNC_get_local_storage)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_DEVMAP:
-	हाल BPF_MAP_TYPE_DEVMAP_HASH:
-		अगर (func_id != BPF_FUNC_redirect_map &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_CGROUP_STORAGE:
+	case BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE:
+		if (func_id != BPF_FUNC_get_local_storage)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_DEVMAP:
+	case BPF_MAP_TYPE_DEVMAP_HASH:
+		if (func_id != BPF_FUNC_redirect_map &&
 		    func_id != BPF_FUNC_map_lookup_elem)
-			जाओ error;
-		अवरोध;
-	/* Restrict bpf side of cpumap and xskmap, खोलो when use-हालs
+			goto error;
+		break;
+	/* Restrict bpf side of cpumap and xskmap, open when use-cases
 	 * appear.
 	 */
-	हाल BPF_MAP_TYPE_CPUMAP:
-		अगर (func_id != BPF_FUNC_redirect_map)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_XSKMAP:
-		अगर (func_id != BPF_FUNC_redirect_map &&
+	case BPF_MAP_TYPE_CPUMAP:
+		if (func_id != BPF_FUNC_redirect_map)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_XSKMAP:
+		if (func_id != BPF_FUNC_redirect_map &&
 		    func_id != BPF_FUNC_map_lookup_elem)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_ARRAY_OF_MAPS:
-	हाल BPF_MAP_TYPE_HASH_OF_MAPS:
-		अगर (func_id != BPF_FUNC_map_lookup_elem)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_SOCKMAP:
-		अगर (func_id != BPF_FUNC_sk_redirect_map &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_ARRAY_OF_MAPS:
+	case BPF_MAP_TYPE_HASH_OF_MAPS:
+		if (func_id != BPF_FUNC_map_lookup_elem)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_SOCKMAP:
+		if (func_id != BPF_FUNC_sk_redirect_map &&
 		    func_id != BPF_FUNC_sock_map_update &&
 		    func_id != BPF_FUNC_map_delete_elem &&
 		    func_id != BPF_FUNC_msg_redirect_map &&
 		    func_id != BPF_FUNC_sk_select_reuseport &&
 		    func_id != BPF_FUNC_map_lookup_elem &&
 		    !may_update_sockmap(env, func_id))
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_SOCKHASH:
-		अगर (func_id != BPF_FUNC_sk_redirect_hash &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_SOCKHASH:
+		if (func_id != BPF_FUNC_sk_redirect_hash &&
 		    func_id != BPF_FUNC_sock_hash_update &&
 		    func_id != BPF_FUNC_map_delete_elem &&
 		    func_id != BPF_FUNC_msg_redirect_hash &&
 		    func_id != BPF_FUNC_sk_select_reuseport &&
 		    func_id != BPF_FUNC_map_lookup_elem &&
 		    !may_update_sockmap(env, func_id))
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_REUSEPORT_SOCKARRAY:
-		अगर (func_id != BPF_FUNC_sk_select_reuseport)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_QUEUE:
-	हाल BPF_MAP_TYPE_STACK:
-		अगर (func_id != BPF_FUNC_map_peek_elem &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_REUSEPORT_SOCKARRAY:
+		if (func_id != BPF_FUNC_sk_select_reuseport)
+			goto error;
+		break;
+	case BPF_MAP_TYPE_QUEUE:
+	case BPF_MAP_TYPE_STACK:
+		if (func_id != BPF_FUNC_map_peek_elem &&
 		    func_id != BPF_FUNC_map_pop_elem &&
 		    func_id != BPF_FUNC_map_push_elem)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_SK_STORAGE:
-		अगर (func_id != BPF_FUNC_sk_storage_get &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_SK_STORAGE:
+		if (func_id != BPF_FUNC_sk_storage_get &&
 		    func_id != BPF_FUNC_sk_storage_delete)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_INODE_STORAGE:
-		अगर (func_id != BPF_FUNC_inode_storage_get &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_INODE_STORAGE:
+		if (func_id != BPF_FUNC_inode_storage_get &&
 		    func_id != BPF_FUNC_inode_storage_delete)
-			जाओ error;
-		अवरोध;
-	हाल BPF_MAP_TYPE_TASK_STORAGE:
-		अगर (func_id != BPF_FUNC_task_storage_get &&
+			goto error;
+		break;
+	case BPF_MAP_TYPE_TASK_STORAGE:
+		if (func_id != BPF_FUNC_task_storage_get &&
 		    func_id != BPF_FUNC_task_storage_delete)
-			जाओ error;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			goto error;
+		break;
+	default:
+		break;
+	}
 
 	/* ... and second from the function itself. */
-	चयन (func_id) अणु
-	हाल BPF_FUNC_tail_call:
-		अगर (map->map_type != BPF_MAP_TYPE_PROG_ARRAY)
-			जाओ error;
-		अगर (env->subprog_cnt > 1 && !allow_tail_call_in_subprogs(env)) अणु
+	switch (func_id) {
+	case BPF_FUNC_tail_call:
+		if (map->map_type != BPF_MAP_TYPE_PROG_ARRAY)
+			goto error;
+		if (env->subprog_cnt > 1 && !allow_tail_call_in_subprogs(env)) {
 			verbose(env, "tail_calls are not allowed in non-JITed programs with bpf-to-bpf calls\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	हाल BPF_FUNC_perf_event_पढ़ो:
-	हाल BPF_FUNC_perf_event_output:
-	हाल BPF_FUNC_perf_event_पढ़ो_value:
-	हाल BPF_FUNC_skb_output:
-	हाल BPF_FUNC_xdp_output:
-		अगर (map->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_get_stackid:
-		अगर (map->map_type != BPF_MAP_TYPE_STACK_TRACE)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_current_task_under_cgroup:
-	हाल BPF_FUNC_skb_under_cgroup:
-		अगर (map->map_type != BPF_MAP_TYPE_CGROUP_ARRAY)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_redirect_map:
-		अगर (map->map_type != BPF_MAP_TYPE_DEVMAP &&
+			return -EINVAL;
+		}
+		break;
+	case BPF_FUNC_perf_event_read:
+	case BPF_FUNC_perf_event_output:
+	case BPF_FUNC_perf_event_read_value:
+	case BPF_FUNC_skb_output:
+	case BPF_FUNC_xdp_output:
+		if (map->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY)
+			goto error;
+		break;
+	case BPF_FUNC_get_stackid:
+		if (map->map_type != BPF_MAP_TYPE_STACK_TRACE)
+			goto error;
+		break;
+	case BPF_FUNC_current_task_under_cgroup:
+	case BPF_FUNC_skb_under_cgroup:
+		if (map->map_type != BPF_MAP_TYPE_CGROUP_ARRAY)
+			goto error;
+		break;
+	case BPF_FUNC_redirect_map:
+		if (map->map_type != BPF_MAP_TYPE_DEVMAP &&
 		    map->map_type != BPF_MAP_TYPE_DEVMAP_HASH &&
 		    map->map_type != BPF_MAP_TYPE_CPUMAP &&
 		    map->map_type != BPF_MAP_TYPE_XSKMAP)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_sk_redirect_map:
-	हाल BPF_FUNC_msg_redirect_map:
-	हाल BPF_FUNC_sock_map_update:
-		अगर (map->map_type != BPF_MAP_TYPE_SOCKMAP)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_sk_redirect_hash:
-	हाल BPF_FUNC_msg_redirect_hash:
-	हाल BPF_FUNC_sock_hash_update:
-		अगर (map->map_type != BPF_MAP_TYPE_SOCKHASH)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_get_local_storage:
-		अगर (map->map_type != BPF_MAP_TYPE_CGROUP_STORAGE &&
+			goto error;
+		break;
+	case BPF_FUNC_sk_redirect_map:
+	case BPF_FUNC_msg_redirect_map:
+	case BPF_FUNC_sock_map_update:
+		if (map->map_type != BPF_MAP_TYPE_SOCKMAP)
+			goto error;
+		break;
+	case BPF_FUNC_sk_redirect_hash:
+	case BPF_FUNC_msg_redirect_hash:
+	case BPF_FUNC_sock_hash_update:
+		if (map->map_type != BPF_MAP_TYPE_SOCKHASH)
+			goto error;
+		break;
+	case BPF_FUNC_get_local_storage:
+		if (map->map_type != BPF_MAP_TYPE_CGROUP_STORAGE &&
 		    map->map_type != BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_sk_select_reuseport:
-		अगर (map->map_type != BPF_MAP_TYPE_REUSEPORT_SOCKARRAY &&
+			goto error;
+		break;
+	case BPF_FUNC_sk_select_reuseport:
+		if (map->map_type != BPF_MAP_TYPE_REUSEPORT_SOCKARRAY &&
 		    map->map_type != BPF_MAP_TYPE_SOCKMAP &&
 		    map->map_type != BPF_MAP_TYPE_SOCKHASH)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_map_peek_elem:
-	हाल BPF_FUNC_map_pop_elem:
-	हाल BPF_FUNC_map_push_elem:
-		अगर (map->map_type != BPF_MAP_TYPE_QUEUE &&
+			goto error;
+		break;
+	case BPF_FUNC_map_peek_elem:
+	case BPF_FUNC_map_pop_elem:
+	case BPF_FUNC_map_push_elem:
+		if (map->map_type != BPF_MAP_TYPE_QUEUE &&
 		    map->map_type != BPF_MAP_TYPE_STACK)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_sk_storage_get:
-	हाल BPF_FUNC_sk_storage_delete:
-		अगर (map->map_type != BPF_MAP_TYPE_SK_STORAGE)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_inode_storage_get:
-	हाल BPF_FUNC_inode_storage_delete:
-		अगर (map->map_type != BPF_MAP_TYPE_INODE_STORAGE)
-			जाओ error;
-		अवरोध;
-	हाल BPF_FUNC_task_storage_get:
-	हाल BPF_FUNC_task_storage_delete:
-		अगर (map->map_type != BPF_MAP_TYPE_TASK_STORAGE)
-			जाओ error;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			goto error;
+		break;
+	case BPF_FUNC_sk_storage_get:
+	case BPF_FUNC_sk_storage_delete:
+		if (map->map_type != BPF_MAP_TYPE_SK_STORAGE)
+			goto error;
+		break;
+	case BPF_FUNC_inode_storage_get:
+	case BPF_FUNC_inode_storage_delete:
+		if (map->map_type != BPF_MAP_TYPE_INODE_STORAGE)
+			goto error;
+		break;
+	case BPF_FUNC_task_storage_get:
+	case BPF_FUNC_task_storage_delete:
+		if (map->map_type != BPF_MAP_TYPE_TASK_STORAGE)
+			goto error;
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
+	return 0;
 error:
 	verbose(env, "cannot pass map_type %d into func %s#%d\n",
 		map->map_type, func_id_name(func_id), func_id);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल bool check_raw_mode_ok(स्थिर काष्ठा bpf_func_proto *fn)
-अणु
-	पूर्णांक count = 0;
+static bool check_raw_mode_ok(const struct bpf_func_proto *fn)
+{
+	int count = 0;
 
-	अगर (fn->arg1_type == ARG_PTR_TO_UNINIT_MEM)
+	if (fn->arg1_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
-	अगर (fn->arg2_type == ARG_PTR_TO_UNINIT_MEM)
+	if (fn->arg2_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
-	अगर (fn->arg3_type == ARG_PTR_TO_UNINIT_MEM)
+	if (fn->arg3_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
-	अगर (fn->arg4_type == ARG_PTR_TO_UNINIT_MEM)
+	if (fn->arg4_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
-	अगर (fn->arg5_type == ARG_PTR_TO_UNINIT_MEM)
+	if (fn->arg5_type == ARG_PTR_TO_UNINIT_MEM)
 		count++;
 
 	/* We only support one arg being in raw mode at the moment,
-	 * which is sufficient क्रम the helper functions we have
+	 * which is sufficient for the helper functions we have
 	 * right now.
 	 */
-	वापस count <= 1;
-पूर्ण
+	return count <= 1;
+}
 
-अटल bool check_args_pair_invalid(क्रमागत bpf_arg_type arg_curr,
-				    क्रमागत bpf_arg_type arg_next)
-अणु
-	वापस (arg_type_is_mem_ptr(arg_curr) &&
+static bool check_args_pair_invalid(enum bpf_arg_type arg_curr,
+				    enum bpf_arg_type arg_next)
+{
+	return (arg_type_is_mem_ptr(arg_curr) &&
 	        !arg_type_is_mem_size(arg_next)) ||
 	       (!arg_type_is_mem_ptr(arg_curr) &&
 		arg_type_is_mem_size(arg_next));
-पूर्ण
+}
 
-अटल bool check_arg_pair_ok(स्थिर काष्ठा bpf_func_proto *fn)
-अणु
+static bool check_arg_pair_ok(const struct bpf_func_proto *fn)
+{
 	/* bpf_xxx(..., buf, len) call will access 'len'
 	 * bytes from memory 'buf'. Both arg types need
 	 * to be paired, so make sure there's no buggy
-	 * helper function specअगरication.
+	 * helper function specification.
 	 */
-	अगर (arg_type_is_mem_size(fn->arg1_type) ||
+	if (arg_type_is_mem_size(fn->arg1_type) ||
 	    arg_type_is_mem_ptr(fn->arg5_type)  ||
 	    check_args_pair_invalid(fn->arg1_type, fn->arg2_type) ||
 	    check_args_pair_invalid(fn->arg2_type, fn->arg3_type) ||
 	    check_args_pair_invalid(fn->arg3_type, fn->arg4_type) ||
 	    check_args_pair_invalid(fn->arg4_type, fn->arg5_type))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool check_refcount_ok(स्थिर काष्ठा bpf_func_proto *fn, पूर्णांक func_id)
-अणु
-	पूर्णांक count = 0;
+static bool check_refcount_ok(const struct bpf_func_proto *fn, int func_id)
+{
+	int count = 0;
 
-	अगर (arg_type_may_be_refcounted(fn->arg1_type))
+	if (arg_type_may_be_refcounted(fn->arg1_type))
 		count++;
-	अगर (arg_type_may_be_refcounted(fn->arg2_type))
+	if (arg_type_may_be_refcounted(fn->arg2_type))
 		count++;
-	अगर (arg_type_may_be_refcounted(fn->arg3_type))
+	if (arg_type_may_be_refcounted(fn->arg3_type))
 		count++;
-	अगर (arg_type_may_be_refcounted(fn->arg4_type))
+	if (arg_type_may_be_refcounted(fn->arg4_type))
 		count++;
-	अगर (arg_type_may_be_refcounted(fn->arg5_type))
+	if (arg_type_may_be_refcounted(fn->arg5_type))
 		count++;
 
 	/* A reference acquiring function cannot acquire
 	 * another refcounted ptr.
 	 */
-	अगर (may_be_acquire_function(func_id) && count)
-		वापस false;
+	if (may_be_acquire_function(func_id) && count)
+		return false;
 
 	/* We only support one arg being unreferenced at the moment,
-	 * which is sufficient क्रम the helper functions we have right now.
+	 * which is sufficient for the helper functions we have right now.
 	 */
-	वापस count <= 1;
-पूर्ण
+	return count <= 1;
+}
 
-अटल bool check_btf_id_ok(स्थिर काष्ठा bpf_func_proto *fn)
-अणु
-	पूर्णांक i;
+static bool check_btf_id_ok(const struct bpf_func_proto *fn)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(fn->arg_type); i++) अणु
-		अगर (fn->arg_type[i] == ARG_PTR_TO_BTF_ID && !fn->arg_btf_id[i])
-			वापस false;
+	for (i = 0; i < ARRAY_SIZE(fn->arg_type); i++) {
+		if (fn->arg_type[i] == ARG_PTR_TO_BTF_ID && !fn->arg_btf_id[i])
+			return false;
 
-		अगर (fn->arg_type[i] != ARG_PTR_TO_BTF_ID && fn->arg_btf_id[i])
-			वापस false;
-	पूर्ण
+		if (fn->arg_type[i] != ARG_PTR_TO_BTF_ID && fn->arg_btf_id[i])
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक check_func_proto(स्थिर काष्ठा bpf_func_proto *fn, पूर्णांक func_id)
-अणु
-	वापस check_raw_mode_ok(fn) &&
+static int check_func_proto(const struct bpf_func_proto *fn, int func_id)
+{
+	return check_raw_mode_ok(fn) &&
 	       check_arg_pair_ok(fn) &&
 	       check_btf_id_ok(fn) &&
 	       check_refcount_ok(fn, func_id) ? 0 : -EINVAL;
-पूर्ण
+}
 
 /* Packet data might have moved, any old PTR_TO_PACKET[_META,_END]
- * are now invalid, so turn them पूर्णांकo unknown SCALAR_VALUE.
+ * are now invalid, so turn them into unknown SCALAR_VALUE.
  */
-अटल व्योम __clear_all_pkt_poपूर्णांकers(काष्ठा bpf_verअगरier_env *env,
-				     काष्ठा bpf_func_state *state)
-अणु
-	काष्ठा bpf_reg_state *regs = state->regs, *reg;
-	पूर्णांक i;
+static void __clear_all_pkt_pointers(struct bpf_verifier_env *env,
+				     struct bpf_func_state *state)
+{
+	struct bpf_reg_state *regs = state->regs, *reg;
+	int i;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++)
-		अगर (reg_is_pkt_poपूर्णांकer_any(&regs[i]))
+	for (i = 0; i < MAX_BPF_REG; i++)
+		if (reg_is_pkt_pointer_any(&regs[i]))
 			mark_reg_unknown(env, regs, i);
 
-	bpf_क्रम_each_spilled_reg(i, state, reg) अणु
-		अगर (!reg)
-			जारी;
-		अगर (reg_is_pkt_poपूर्णांकer_any(reg))
+	bpf_for_each_spilled_reg(i, state, reg) {
+		if (!reg)
+			continue;
+		if (reg_is_pkt_pointer_any(reg))
 			__mark_reg_unknown(env, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम clear_all_pkt_poपूर्णांकers(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	पूर्णांक i;
+static void clear_all_pkt_pointers(struct bpf_verifier_env *env)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	int i;
 
-	क्रम (i = 0; i <= vstate->curframe; i++)
-		__clear_all_pkt_poपूर्णांकers(env, vstate->frame[i]);
-पूर्ण
+	for (i = 0; i <= vstate->curframe; i++)
+		__clear_all_pkt_pointers(env, vstate->frame[i]);
+}
 
-क्रमागत अणु
+enum {
 	AT_PKT_END = -1,
 	BEYOND_PKT_END = -2,
-पूर्ण;
+};
 
-अटल व्योम mark_pkt_end(काष्ठा bpf_verअगरier_state *vstate, पूर्णांक regn, bool range_खोलो)
-अणु
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *reg = &state->regs[regn];
+static void mark_pkt_end(struct bpf_verifier_state *vstate, int regn, bool range_open)
+{
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *reg = &state->regs[regn];
 
-	अगर (reg->type != PTR_TO_PACKET)
+	if (reg->type != PTR_TO_PACKET)
 		/* PTR_TO_PACKET_META is not supported yet */
-		वापस;
+		return;
 
 	/* The 'reg' is pkt > pkt_end or pkt >= pkt_end.
 	 * How far beyond pkt_end it goes is unknown.
-	 * अगर (!range_खोलो) it's the हाल of pkt >= pkt_end
-	 * अगर (range_खोलो) it's the हाल of pkt > pkt_end
-	 * hence this poपूर्णांकer is at least 1 byte bigger than pkt_end
+	 * if (!range_open) it's the case of pkt >= pkt_end
+	 * if (range_open) it's the case of pkt > pkt_end
+	 * hence this pointer is at least 1 byte bigger than pkt_end
 	 */
-	अगर (range_खोलो)
+	if (range_open)
 		reg->range = BEYOND_PKT_END;
-	अन्यथा
+	else
 		reg->range = AT_PKT_END;
-पूर्ण
+}
 
-अटल व्योम release_reg_references(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_func_state *state,
-				   पूर्णांक ref_obj_id)
-अणु
-	काष्ठा bpf_reg_state *regs = state->regs, *reg;
-	पूर्णांक i;
+static void release_reg_references(struct bpf_verifier_env *env,
+				   struct bpf_func_state *state,
+				   int ref_obj_id)
+{
+	struct bpf_reg_state *regs = state->regs, *reg;
+	int i;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++)
-		अगर (regs[i].ref_obj_id == ref_obj_id)
+	for (i = 0; i < MAX_BPF_REG; i++)
+		if (regs[i].ref_obj_id == ref_obj_id)
 			mark_reg_unknown(env, regs, i);
 
-	bpf_क्रम_each_spilled_reg(i, state, reg) अणु
-		अगर (!reg)
-			जारी;
-		अगर (reg->ref_obj_id == ref_obj_id)
+	bpf_for_each_spilled_reg(i, state, reg) {
+		if (!reg)
+			continue;
+		if (reg->ref_obj_id == ref_obj_id)
 			__mark_reg_unknown(env, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* The poपूर्णांकer with the specअगरied id has released its reference to kernel
- * resources. Identअगरy all copies of the same poपूर्णांकer and clear the reference.
+/* The pointer with the specified id has released its reference to kernel
+ * resources. Identify all copies of the same pointer and clear the reference.
  */
-अटल पूर्णांक release_reference(काष्ठा bpf_verअगरier_env *env,
-			     पूर्णांक ref_obj_id)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	पूर्णांक err;
-	पूर्णांक i;
+static int release_reference(struct bpf_verifier_env *env,
+			     int ref_obj_id)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	int err;
+	int i;
 
 	err = release_reference_state(cur_func(env), ref_obj_id);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i <= vstate->curframe; i++)
+	for (i = 0; i <= vstate->curframe; i++)
 		release_reg_references(env, vstate->frame[i], ref_obj_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clear_caller_saved_regs(काष्ठा bpf_verअगरier_env *env,
-				    काष्ठा bpf_reg_state *regs)
-अणु
-	पूर्णांक i;
+static void clear_caller_saved_regs(struct bpf_verifier_env *env,
+				    struct bpf_reg_state *regs)
+{
+	int i;
 
-	/* after the call रेजिस्टरs r0 - r5 were scratched */
-	क्रम (i = 0; i < CALLER_SAVED_REGS; i++) अणु
+	/* after the call registers r0 - r5 were scratched */
+	for (i = 0; i < CALLER_SAVED_REGS; i++) {
 		mark_reg_not_init(env, regs, caller_saved[i]);
 		check_reg_arg(env, caller_saved[i], DST_OP_NO_MARK);
-	पूर्ण
-पूर्ण
+	}
+}
 
-प्रकार पूर्णांक (*set_callee_state_fn)(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_func_state *caller,
-				   काष्ठा bpf_func_state *callee,
-				   पूर्णांक insn_idx);
+typedef int (*set_callee_state_fn)(struct bpf_verifier_env *env,
+				   struct bpf_func_state *caller,
+				   struct bpf_func_state *callee,
+				   int insn_idx);
 
-अटल पूर्णांक __check_func_call(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn,
-			     पूर्णांक *insn_idx, पूर्णांक subprog,
+static int __check_func_call(struct bpf_verifier_env *env, struct bpf_insn *insn,
+			     int *insn_idx, int subprog,
 			     set_callee_state_fn set_callee_state_cb)
-अणु
-	काष्ठा bpf_verअगरier_state *state = env->cur_state;
-	काष्ठा bpf_func_info_aux *func_info_aux;
-	काष्ठा bpf_func_state *caller, *callee;
-	पूर्णांक err;
+{
+	struct bpf_verifier_state *state = env->cur_state;
+	struct bpf_func_info_aux *func_info_aux;
+	struct bpf_func_state *caller, *callee;
+	int err;
 	bool is_global = false;
 
-	अगर (state->curframe + 1 >= MAX_CALL_FRAMES) अणु
+	if (state->curframe + 1 >= MAX_CALL_FRAMES) {
 		verbose(env, "the call stack of %d frames is too deep\n",
 			state->curframe + 2);
-		वापस -E2BIG;
-	पूर्ण
+		return -E2BIG;
+	}
 
 	caller = state->frame[state->curframe];
-	अगर (state->frame[state->curframe + 1]) अणु
+	if (state->frame[state->curframe + 1]) {
 		verbose(env, "verifier bug. Frame %d already allocated\n",
 			state->curframe + 1);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	func_info_aux = env->prog->aux->func_info_aux;
-	अगर (func_info_aux)
+	if (func_info_aux)
 		is_global = func_info_aux[subprog].linkage == BTF_FUNC_GLOBAL;
 	err = btf_check_subprog_arg_match(env, subprog, caller->regs);
-	अगर (err == -EFAULT)
-		वापस err;
-	अगर (is_global) अणु
-		अगर (err) अणु
+	if (err == -EFAULT)
+		return err;
+	if (is_global) {
+		if (err) {
 			verbose(env, "Caller passes invalid args into func#%d\n",
 				subprog);
-			वापस err;
-		पूर्ण अन्यथा अणु
-			अगर (env->log.level & BPF_LOG_LEVEL)
+			return err;
+		} else {
+			if (env->log.level & BPF_LOG_LEVEL)
 				verbose(env,
 					"Func#%d is global and valid. Skipping.\n",
 					subprog);
 			clear_caller_saved_regs(env, caller->regs);
 
-			/* All global functions वापस a 64-bit SCALAR_VALUE */
+			/* All global functions return a 64-bit SCALAR_VALUE */
 			mark_reg_unknown(env, caller->regs, BPF_REG_0);
 			caller->regs[BPF_REG_0].subreg_def = DEF_NOT_SUBREG;
 
-			/* जारी with next insn after call */
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			/* continue with next insn after call */
+			return 0;
+		}
+	}
 
-	callee = kzalloc(माप(*callee), GFP_KERNEL);
-	अगर (!callee)
-		वापस -ENOMEM;
+	callee = kzalloc(sizeof(*callee), GFP_KERNEL);
+	if (!callee)
+		return -ENOMEM;
 	state->frame[state->curframe + 1] = callee;
 
-	/* callee cannot access r0, r6 - r9 क्रम पढ़ोing and has to ग_लिखो
-	 * पूर्णांकo its own stack beक्रमe पढ़ोing from it.
-	 * callee can पढ़ो/ग_लिखो पूर्णांकo caller's stack
+	/* callee cannot access r0, r6 - r9 for reading and has to write
+	 * into its own stack before reading from it.
+	 * callee can read/write into caller's stack
 	 */
 	init_func_state(env, callee,
-			/* remember the callsite, it will be used by bpf_निकास */
+			/* remember the callsite, it will be used by bpf_exit */
 			*insn_idx /* callsite */,
 			state->curframe + 1 /* frameno within this callchain */,
 			subprog /* subprog number within this prog */);
 
 	/* Transfer references to the callee */
 	err = transfer_reference_state(callee, caller);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = set_callee_state_cb(env, caller, callee, *insn_idx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	clear_caller_saved_regs(env, caller->regs);
 
@@ -5646,23 +5645,23 @@ error:
 	/* and go analyze first insn of the callee */
 	*insn_idx = env->subprog_info[subprog].start - 1;
 
-	अगर (env->log.level & BPF_LOG_LEVEL) अणु
+	if (env->log.level & BPF_LOG_LEVEL) {
 		verbose(env, "caller:\n");
-		prपूर्णांक_verअगरier_state(env, caller);
+		print_verifier_state(env, caller);
 		verbose(env, "callee:\n");
-		prपूर्णांक_verअगरier_state(env, callee);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		print_verifier_state(env, callee);
+	}
+	return 0;
+}
 
-पूर्णांक map_set_क्रम_each_callback_args(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_func_state *caller,
-				   काष्ठा bpf_func_state *callee)
-अणु
-	/* bpf_क्रम_each_map_elem(काष्ठा bpf_map *map, व्योम *callback_fn,
-	 *      व्योम *callback_ctx, u64 flags);
-	 * callback_fn(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
-	 *      व्योम *callback_ctx);
+int map_set_for_each_callback_args(struct bpf_verifier_env *env,
+				   struct bpf_func_state *caller,
+				   struct bpf_func_state *callee)
+{
+	/* bpf_for_each_map_elem(struct bpf_map *map, void *callback_fn,
+	 *      void *callback_ctx, u64 flags);
+	 * callback_fn(struct bpf_map *map, void *key, void *value,
+	 *      void *callback_ctx);
 	 */
 	callee->regs[BPF_REG_1] = caller->regs[BPF_REG_1];
 
@@ -5674,143 +5673,143 @@ error:
 	__mark_reg_known_zero(&callee->regs[BPF_REG_3]);
 	callee->regs[BPF_REG_3].map_ptr = caller->regs[BPF_REG_1].map_ptr;
 
-	/* poपूर्णांकer to stack or null */
+	/* pointer to stack or null */
 	callee->regs[BPF_REG_4] = caller->regs[BPF_REG_3];
 
 	/* unused */
 	__mark_reg_not_init(env, &callee->regs[BPF_REG_5]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_callee_state(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_func_state *caller,
-			    काष्ठा bpf_func_state *callee, पूर्णांक insn_idx)
-अणु
-	पूर्णांक i;
+static int set_callee_state(struct bpf_verifier_env *env,
+			    struct bpf_func_state *caller,
+			    struct bpf_func_state *callee, int insn_idx)
+{
+	int i;
 
 	/* copy r1 - r5 args that callee can access.  The copy includes parent
-	 * poपूर्णांकers, which connects us up to the liveness chain
+	 * pointers, which connects us up to the liveness chain
 	 */
-	क्रम (i = BPF_REG_1; i <= BPF_REG_5; i++)
+	for (i = BPF_REG_1; i <= BPF_REG_5; i++)
 		callee->regs[i] = caller->regs[i];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_func_call(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn,
-			   पूर्णांक *insn_idx)
-अणु
-	पूर्णांक subprog, target_insn;
+static int check_func_call(struct bpf_verifier_env *env, struct bpf_insn *insn,
+			   int *insn_idx)
+{
+	int subprog, target_insn;
 
 	target_insn = *insn_idx + insn->imm + 1;
 	subprog = find_subprog(env, target_insn);
-	अगर (subprog < 0) अणु
+	if (subprog < 0) {
 		verbose(env, "verifier bug. No program starts at insn %d\n",
 			target_insn);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस __check_func_call(env, insn, insn_idx, subprog, set_callee_state);
-पूर्ण
+	return __check_func_call(env, insn, insn_idx, subprog, set_callee_state);
+}
 
-अटल पूर्णांक set_map_elem_callback_state(काष्ठा bpf_verअगरier_env *env,
-				       काष्ठा bpf_func_state *caller,
-				       काष्ठा bpf_func_state *callee,
-				       पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_insn_aux_data *insn_aux = &env->insn_aux_data[insn_idx];
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+static int set_map_elem_callback_state(struct bpf_verifier_env *env,
+				       struct bpf_func_state *caller,
+				       struct bpf_func_state *callee,
+				       int insn_idx)
+{
+	struct bpf_insn_aux_data *insn_aux = &env->insn_aux_data[insn_idx];
+	struct bpf_map *map;
+	int err;
 
-	अगर (bpf_map_ptr_poisoned(insn_aux)) अणु
+	if (bpf_map_ptr_poisoned(insn_aux)) {
 		verbose(env, "tail_call abusing map_ptr\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	map = BPF_MAP_PTR(insn_aux->map_ptr_state);
-	अगर (!map->ops->map_set_क्रम_each_callback_args ||
-	    !map->ops->map_क्रम_each_callback) अणु
+	if (!map->ops->map_set_for_each_callback_args ||
+	    !map->ops->map_for_each_callback) {
 		verbose(env, "callback function not allowed for map\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	err = map->ops->map_set_क्रम_each_callback_args(env, caller, callee);
-	अगर (err)
-		वापस err;
+	err = map->ops->map_set_for_each_callback_args(env, caller, callee);
+	if (err)
+		return err;
 
 	callee->in_callback_fn = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prepare_func_निकास(काष्ठा bpf_verअगरier_env *env, पूर्णांक *insn_idx)
-अणु
-	काष्ठा bpf_verअगरier_state *state = env->cur_state;
-	काष्ठा bpf_func_state *caller, *callee;
-	काष्ठा bpf_reg_state *r0;
-	पूर्णांक err;
+static int prepare_func_exit(struct bpf_verifier_env *env, int *insn_idx)
+{
+	struct bpf_verifier_state *state = env->cur_state;
+	struct bpf_func_state *caller, *callee;
+	struct bpf_reg_state *r0;
+	int err;
 
 	callee = state->frame[state->curframe];
 	r0 = &callee->regs[BPF_REG_0];
-	अगर (r0->type == PTR_TO_STACK) अणु
-		/* technically it's ok to return caller's stack poपूर्णांकer
-		 * (or caller's caller's poपूर्णांकer) back to the caller,
-		 * since these poपूर्णांकers are valid. Only current stack
-		 * poपूर्णांकer will be invalid as soon as function निकासs,
+	if (r0->type == PTR_TO_STACK) {
+		/* technically it's ok to return caller's stack pointer
+		 * (or caller's caller's pointer) back to the caller,
+		 * since these pointers are valid. Only current stack
+		 * pointer will be invalid as soon as function exits,
 		 * but let's be conservative
 		 */
 		verbose(env, "cannot return stack pointer to the caller\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	state->curframe--;
 	caller = state->frame[state->curframe];
-	अगर (callee->in_callback_fn) अणु
-		/* enक्रमce R0 वापस value range [0, 1]. */
-		काष्ठा tnum range = tnum_range(0, 1);
+	if (callee->in_callback_fn) {
+		/* enforce R0 return value range [0, 1]. */
+		struct tnum range = tnum_range(0, 1);
 
-		अगर (r0->type != SCALAR_VALUE) अणु
+		if (r0->type != SCALAR_VALUE) {
 			verbose(env, "R0 not a scalar value\n");
-			वापस -EACCES;
-		पूर्ण
-		अगर (!tnum_in(range, r0->var_off)) अणु
+			return -EACCES;
+		}
+		if (!tnum_in(range, r0->var_off)) {
 			verbose_invalid_scalar(env, r0, &range, "callback return", "R0");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* वापस to the caller whatever r0 had in the callee */
+			return -EINVAL;
+		}
+	} else {
+		/* return to the caller whatever r0 had in the callee */
 		caller->regs[BPF_REG_0] = *r0;
-	पूर्ण
+	}
 
 	/* Transfer references to the caller */
 	err = transfer_reference_state(caller, callee);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*insn_idx = callee->callsite + 1;
-	अगर (env->log.level & BPF_LOG_LEVEL) अणु
+	if (env->log.level & BPF_LOG_LEVEL) {
 		verbose(env, "returning from callee:\n");
-		prपूर्णांक_verअगरier_state(env, callee);
+		print_verifier_state(env, callee);
 		verbose(env, "to caller at %d:\n", *insn_idx);
-		prपूर्णांक_verअगरier_state(env, caller);
-	पूर्ण
+		print_verifier_state(env, caller);
+	}
 	/* clear everything in the callee */
-	मुक्त_func_state(callee);
-	state->frame[state->curframe + 1] = शून्य;
-	वापस 0;
-पूर्ण
+	free_func_state(callee);
+	state->frame[state->curframe + 1] = NULL;
+	return 0;
+}
 
-अटल व्योम करो_refine_retval_range(काष्ठा bpf_reg_state *regs, पूर्णांक ret_type,
-				   पूर्णांक func_id,
-				   काष्ठा bpf_call_arg_meta *meta)
-अणु
-	काष्ठा bpf_reg_state *ret_reg = &regs[BPF_REG_0];
+static void do_refine_retval_range(struct bpf_reg_state *regs, int ret_type,
+				   int func_id,
+				   struct bpf_call_arg_meta *meta)
+{
+	struct bpf_reg_state *ret_reg = &regs[BPF_REG_0];
 
-	अगर (ret_type != RET_INTEGER ||
+	if (ret_type != RET_INTEGER ||
 	    (func_id != BPF_FUNC_get_stack &&
 	     func_id != BPF_FUNC_get_task_stack &&
-	     func_id != BPF_FUNC_probe_पढ़ो_str &&
-	     func_id != BPF_FUNC_probe_पढ़ो_kernel_str &&
-	     func_id != BPF_FUNC_probe_पढ़ो_user_str))
-		वापस;
+	     func_id != BPF_FUNC_probe_read_str &&
+	     func_id != BPF_FUNC_probe_read_kernel_str &&
+	     func_id != BPF_FUNC_probe_read_user_str))
+		return;
 
 	ret_reg->smax_value = meta->msize_max_value;
 	ret_reg->s32_max_value = meta->msize_max_value;
@@ -5819,1000 +5818,1000 @@ error:
 	__reg_deduce_bounds(ret_reg);
 	__reg_bound_offset(ret_reg);
 	__update_reg_bounds(ret_reg);
-पूर्ण
+}
 
-अटल पूर्णांक
-record_func_map(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_call_arg_meta *meta,
-		पूर्णांक func_id, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_insn_aux_data *aux = &env->insn_aux_data[insn_idx];
-	काष्ठा bpf_map *map = meta->map_ptr;
+static int
+record_func_map(struct bpf_verifier_env *env, struct bpf_call_arg_meta *meta,
+		int func_id, int insn_idx)
+{
+	struct bpf_insn_aux_data *aux = &env->insn_aux_data[insn_idx];
+	struct bpf_map *map = meta->map_ptr;
 
-	अगर (func_id != BPF_FUNC_tail_call &&
+	if (func_id != BPF_FUNC_tail_call &&
 	    func_id != BPF_FUNC_map_lookup_elem &&
 	    func_id != BPF_FUNC_map_update_elem &&
 	    func_id != BPF_FUNC_map_delete_elem &&
 	    func_id != BPF_FUNC_map_push_elem &&
 	    func_id != BPF_FUNC_map_pop_elem &&
 	    func_id != BPF_FUNC_map_peek_elem &&
-	    func_id != BPF_FUNC_क्रम_each_map_elem &&
+	    func_id != BPF_FUNC_for_each_map_elem &&
 	    func_id != BPF_FUNC_redirect_map)
-		वापस 0;
+		return 0;
 
-	अगर (map == शून्य) अणु
+	if (map == NULL) {
 		verbose(env, "kernel subsystem misconfigured verifier\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* In हाल of पढ़ो-only, some additional restrictions
+	/* In case of read-only, some additional restrictions
 	 * need to be applied in order to prevent altering the
 	 * state of the map from program side.
 	 */
-	अगर ((map->map_flags & BPF_F_RDONLY_PROG) &&
+	if ((map->map_flags & BPF_F_RDONLY_PROG) &&
 	    (func_id == BPF_FUNC_map_delete_elem ||
 	     func_id == BPF_FUNC_map_update_elem ||
 	     func_id == BPF_FUNC_map_push_elem ||
-	     func_id == BPF_FUNC_map_pop_elem)) अणु
+	     func_id == BPF_FUNC_map_pop_elem)) {
 		verbose(env, "write into map forbidden\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (!BPF_MAP_PTR(aux->map_ptr_state))
+	if (!BPF_MAP_PTR(aux->map_ptr_state))
 		bpf_map_ptr_store(aux, meta->map_ptr,
 				  !meta->map_ptr->bypass_spec_v1);
-	अन्यथा अगर (BPF_MAP_PTR(aux->map_ptr_state) != meta->map_ptr)
+	else if (BPF_MAP_PTR(aux->map_ptr_state) != meta->map_ptr)
 		bpf_map_ptr_store(aux, BPF_MAP_PTR_POISON,
 				  !meta->map_ptr->bypass_spec_v1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-record_func_key(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_call_arg_meta *meta,
-		पूर्णांक func_id, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_insn_aux_data *aux = &env->insn_aux_data[insn_idx];
-	काष्ठा bpf_reg_state *regs = cur_regs(env), *reg;
-	काष्ठा bpf_map *map = meta->map_ptr;
-	काष्ठा tnum range;
+static int
+record_func_key(struct bpf_verifier_env *env, struct bpf_call_arg_meta *meta,
+		int func_id, int insn_idx)
+{
+	struct bpf_insn_aux_data *aux = &env->insn_aux_data[insn_idx];
+	struct bpf_reg_state *regs = cur_regs(env), *reg;
+	struct bpf_map *map = meta->map_ptr;
+	struct tnum range;
 	u64 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (func_id != BPF_FUNC_tail_call)
-		वापस 0;
-	अगर (!map || map->map_type != BPF_MAP_TYPE_PROG_ARRAY) अणु
+	if (func_id != BPF_FUNC_tail_call)
+		return 0;
+	if (!map || map->map_type != BPF_MAP_TYPE_PROG_ARRAY) {
 		verbose(env, "kernel subsystem misconfigured verifier\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	range = tnum_range(0, map->max_entries - 1);
 	reg = &regs[BPF_REG_3];
 
-	अगर (!रेजिस्टर_is_स्थिर(reg) || !tnum_in(range, reg->var_off)) अणु
+	if (!register_is_const(reg) || !tnum_in(range, reg->var_off)) {
 		bpf_map_key_store(aux, BPF_MAP_KEY_POISON);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = mark_chain_precision(env, BPF_REG_3);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	val = reg->var_off.value;
-	अगर (bpf_map_key_unseen(aux))
+	if (bpf_map_key_unseen(aux))
 		bpf_map_key_store(aux, val);
-	अन्यथा अगर (!bpf_map_key_poisoned(aux) &&
+	else if (!bpf_map_key_poisoned(aux) &&
 		  bpf_map_key_immediate(aux) != val)
 		bpf_map_key_store(aux, BPF_MAP_KEY_POISON);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_reference_leak(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_func_state *state = cur_func(env);
-	पूर्णांक i;
+static int check_reference_leak(struct bpf_verifier_env *env)
+{
+	struct bpf_func_state *state = cur_func(env);
+	int i;
 
-	क्रम (i = 0; i < state->acquired_refs; i++) अणु
+	for (i = 0; i < state->acquired_refs; i++) {
 		verbose(env, "Unreleased reference id=%d alloc_insn=%d\n",
 			state->refs[i].id, state->refs[i].insn_idx);
-	पूर्ण
-	वापस state->acquired_refs ? -EINVAL : 0;
-पूर्ण
+	}
+	return state->acquired_refs ? -EINVAL : 0;
+}
 
-अटल पूर्णांक check_bpf_snम_लिखो_call(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_reg_state *regs)
-अणु
-	काष्ठा bpf_reg_state *fmt_reg = &regs[BPF_REG_3];
-	काष्ठा bpf_reg_state *data_len_reg = &regs[BPF_REG_5];
-	काष्ठा bpf_map *fmt_map = fmt_reg->map_ptr;
-	पूर्णांक err, fmt_map_off, num_args;
+static int check_bpf_snprintf_call(struct bpf_verifier_env *env,
+				   struct bpf_reg_state *regs)
+{
+	struct bpf_reg_state *fmt_reg = &regs[BPF_REG_3];
+	struct bpf_reg_state *data_len_reg = &regs[BPF_REG_5];
+	struct bpf_map *fmt_map = fmt_reg->map_ptr;
+	int err, fmt_map_off, num_args;
 	u64 fmt_addr;
-	अक्षर *fmt;
+	char *fmt;
 
 	/* data must be an array of u64 */
-	अगर (data_len_reg->var_off.value % 8)
-		वापस -EINVAL;
+	if (data_len_reg->var_off.value % 8)
+		return -EINVAL;
 	num_args = data_len_reg->var_off.value / 8;
 
-	/* fmt being ARG_PTR_TO_CONST_STR guarantees that var_off is स्थिर
+	/* fmt being ARG_PTR_TO_CONST_STR guarantees that var_off is const
 	 * and map_direct_value_addr is set.
 	 */
 	fmt_map_off = fmt_reg->off + fmt_reg->var_off.value;
 	err = fmt_map->ops->map_direct_value_addr(fmt_map, &fmt_addr,
 						  fmt_map_off);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "verifier bug\n");
-		वापस -EFAULT;
-	पूर्ण
-	fmt = (अक्षर *)(दीर्घ)fmt_addr + fmt_map_off;
+		return -EFAULT;
+	}
+	fmt = (char *)(long)fmt_addr + fmt_map_off;
 
-	/* We are also guaranteed that fmt+fmt_map_off is शून्य terminated, we
-	 * can focus on validating the क्रमmat specअगरiers.
+	/* We are also guaranteed that fmt+fmt_map_off is NULL terminated, we
+	 * can focus on validating the format specifiers.
 	 */
-	err = bpf_bम_लिखो_prepare(fmt, अच_पूर्णांक_उच्च, शून्य, शून्य, num_args);
-	अगर (err < 0)
+	err = bpf_bprintf_prepare(fmt, UINT_MAX, NULL, NULL, num_args);
+	if (err < 0)
 		verbose(env, "Invalid format string\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक check_helper_call(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn,
-			     पूर्णांक *insn_idx_p)
-अणु
-	स्थिर काष्ठा bpf_func_proto *fn = शून्य;
-	काष्ठा bpf_reg_state *regs;
-	काष्ठा bpf_call_arg_meta meta;
-	पूर्णांक insn_idx = *insn_idx_p;
+static int check_helper_call(struct bpf_verifier_env *env, struct bpf_insn *insn,
+			     int *insn_idx_p)
+{
+	const struct bpf_func_proto *fn = NULL;
+	struct bpf_reg_state *regs;
+	struct bpf_call_arg_meta meta;
+	int insn_idx = *insn_idx_p;
 	bool changes_data;
-	पूर्णांक i, err, func_id;
+	int i, err, func_id;
 
 	/* find function prototype */
 	func_id = insn->imm;
-	अगर (func_id < 0 || func_id >= __BPF_FUNC_MAX_ID) अणु
+	if (func_id < 0 || func_id >= __BPF_FUNC_MAX_ID) {
 		verbose(env, "invalid func %s#%d\n", func_id_name(func_id),
 			func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (env->ops->get_func_proto)
+	if (env->ops->get_func_proto)
 		fn = env->ops->get_func_proto(func_id, env->prog);
-	अगर (!fn) अणु
+	if (!fn) {
 		verbose(env, "unknown func %s#%d\n", func_id_name(func_id),
 			func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* eBPF programs must be GPL compatible to use GPL-ed functions */
-	अगर (!env->prog->gpl_compatible && fn->gpl_only) अणु
+	if (!env->prog->gpl_compatible && fn->gpl_only) {
 		verbose(env, "cannot call GPL-restricted function from non-GPL compatible program\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fn->allowed && !fn->allowed(env->prog)) अणु
+	if (fn->allowed && !fn->allowed(env->prog)) {
 		verbose(env, "helper call is not allowed in probe\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* With LD_ABS/IND some JITs save/restore skb from r1. */
 	changes_data = bpf_helper_changes_pkt_data(fn->func);
-	अगर (changes_data && fn->arg1_type != ARG_PTR_TO_CTX) अणु
+	if (changes_data && fn->arg1_type != ARG_PTR_TO_CTX) {
 		verbose(env, "kernel subsystem misconfigured func %s#%d: r1 != ctx\n",
 			func_id_name(func_id), func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(&meta, 0, माप(meta));
+	memset(&meta, 0, sizeof(meta));
 	meta.pkt_access = fn->pkt_access;
 
 	err = check_func_proto(fn, func_id);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "kernel subsystem misconfigured func %s#%d\n",
 			func_id_name(func_id), func_id);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	meta.func_id = func_id;
 	/* check args */
-	क्रम (i = 0; i < MAX_BPF_FUNC_REG_ARGS; i++) अणु
+	for (i = 0; i < MAX_BPF_FUNC_REG_ARGS; i++) {
 		err = check_func_arg(env, i, &meta, fn);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = record_func_map(env, &meta, func_id, insn_idx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = record_func_key(env, &meta, func_id, insn_idx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Mark slots with STACK_MISC in हाल of raw mode, stack offset
-	 * is inferred from रेजिस्टर state.
+	/* Mark slots with STACK_MISC in case of raw mode, stack offset
+	 * is inferred from register state.
 	 */
-	क्रम (i = 0; i < meta.access_size; i++) अणु
+	for (i = 0; i < meta.access_size; i++) {
 		err = check_mem_access(env, insn_idx, meta.regno, i, BPF_B,
 				       BPF_WRITE, -1, false);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (func_id == BPF_FUNC_tail_call) अणु
+	if (func_id == BPF_FUNC_tail_call) {
 		err = check_reference_leak(env);
-		अगर (err) अणु
+		if (err) {
 			verbose(env, "tail_call would lead to reference leak\n");
-			वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अगर (is_release_function(func_id)) अणु
+			return err;
+		}
+	} else if (is_release_function(func_id)) {
 		err = release_reference(env, meta.ref_obj_id);
-		अगर (err) अणु
+		if (err) {
 			verbose(env, "func %s#%d reference has not been acquired before\n",
 				func_id_name(func_id), func_id);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	regs = cur_regs(env);
 
 	/* check that flags argument in get_local_storage(map, flags) is 0,
-	 * this is required because get_local_storage() can't वापस an error.
+	 * this is required because get_local_storage() can't return an error.
 	 */
-	अगर (func_id == BPF_FUNC_get_local_storage &&
-	    !रेजिस्टर_is_null(&regs[BPF_REG_2])) अणु
+	if (func_id == BPF_FUNC_get_local_storage &&
+	    !register_is_null(&regs[BPF_REG_2])) {
 		verbose(env, "get_local_storage() doesn't support non-zero flags\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (func_id == BPF_FUNC_क्रम_each_map_elem) अणु
+	if (func_id == BPF_FUNC_for_each_map_elem) {
 		err = __check_func_call(env, insn, insn_idx_p, meta.subprogno,
 					set_map_elem_callback_state);
-		अगर (err < 0)
-			वापस -EINVAL;
-	पूर्ण
+		if (err < 0)
+			return -EINVAL;
+	}
 
-	अगर (func_id == BPF_FUNC_snम_लिखो) अणु
-		err = check_bpf_snम_लिखो_call(env, regs);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (func_id == BPF_FUNC_snprintf) {
+		err = check_bpf_snprintf_call(env, regs);
+		if (err < 0)
+			return err;
+	}
 
 	/* reset caller saved regs */
-	क्रम (i = 0; i < CALLER_SAVED_REGS; i++) अणु
+	for (i = 0; i < CALLER_SAVED_REGS; i++) {
 		mark_reg_not_init(env, regs, caller_saved[i]);
 		check_reg_arg(env, caller_saved[i], DST_OP_NO_MARK);
-	पूर्ण
+	}
 
-	/* helper call वापसs 64-bit value. */
+	/* helper call returns 64-bit value. */
 	regs[BPF_REG_0].subreg_def = DEF_NOT_SUBREG;
 
-	/* update वापस रेजिस्टर (alपढ़ोy marked as written above) */
-	अगर (fn->ret_type == RET_INTEGER) अणु
+	/* update return register (already marked as written above) */
+	if (fn->ret_type == RET_INTEGER) {
 		/* sets type to SCALAR_VALUE */
 		mark_reg_unknown(env, regs, BPF_REG_0);
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_VOID) अणु
+	} else if (fn->ret_type == RET_VOID) {
 		regs[BPF_REG_0].type = NOT_INIT;
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_MAP_VALUE_OR_शून्य ||
-		   fn->ret_type == RET_PTR_TO_MAP_VALUE) अणु
+	} else if (fn->ret_type == RET_PTR_TO_MAP_VALUE_OR_NULL ||
+		   fn->ret_type == RET_PTR_TO_MAP_VALUE) {
 		/* There is no offset yet applied, variable or fixed */
 		mark_reg_known_zero(env, regs, BPF_REG_0);
 		/* remember map_ptr, so that check_map_access()
 		 * can check 'value_size' boundary of memory access
-		 * to map element वापसed from bpf_map_lookup_elem()
+		 * to map element returned from bpf_map_lookup_elem()
 		 */
-		अगर (meta.map_ptr == शून्य) अणु
+		if (meta.map_ptr == NULL) {
 			verbose(env,
 				"kernel subsystem misconfigured verifier\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		regs[BPF_REG_0].map_ptr = meta.map_ptr;
-		अगर (fn->ret_type == RET_PTR_TO_MAP_VALUE) अणु
+		if (fn->ret_type == RET_PTR_TO_MAP_VALUE) {
 			regs[BPF_REG_0].type = PTR_TO_MAP_VALUE;
-			अगर (map_value_has_spin_lock(meta.map_ptr))
+			if (map_value_has_spin_lock(meta.map_ptr))
 				regs[BPF_REG_0].id = ++env->id_gen;
-		पूर्ण अन्यथा अणु
-			regs[BPF_REG_0].type = PTR_TO_MAP_VALUE_OR_शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_SOCKET_OR_शून्य) अणु
+		} else {
+			regs[BPF_REG_0].type = PTR_TO_MAP_VALUE_OR_NULL;
+		}
+	} else if (fn->ret_type == RET_PTR_TO_SOCKET_OR_NULL) {
 		mark_reg_known_zero(env, regs, BPF_REG_0);
-		regs[BPF_REG_0].type = PTR_TO_SOCKET_OR_शून्य;
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_SOCK_COMMON_OR_शून्य) अणु
+		regs[BPF_REG_0].type = PTR_TO_SOCKET_OR_NULL;
+	} else if (fn->ret_type == RET_PTR_TO_SOCK_COMMON_OR_NULL) {
 		mark_reg_known_zero(env, regs, BPF_REG_0);
-		regs[BPF_REG_0].type = PTR_TO_SOCK_COMMON_OR_शून्य;
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_TCP_SOCK_OR_शून्य) अणु
+		regs[BPF_REG_0].type = PTR_TO_SOCK_COMMON_OR_NULL;
+	} else if (fn->ret_type == RET_PTR_TO_TCP_SOCK_OR_NULL) {
 		mark_reg_known_zero(env, regs, BPF_REG_0);
-		regs[BPF_REG_0].type = PTR_TO_TCP_SOCK_OR_शून्य;
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_ALLOC_MEM_OR_शून्य) अणु
+		regs[BPF_REG_0].type = PTR_TO_TCP_SOCK_OR_NULL;
+	} else if (fn->ret_type == RET_PTR_TO_ALLOC_MEM_OR_NULL) {
 		mark_reg_known_zero(env, regs, BPF_REG_0);
-		regs[BPF_REG_0].type = PTR_TO_MEM_OR_शून्य;
+		regs[BPF_REG_0].type = PTR_TO_MEM_OR_NULL;
 		regs[BPF_REG_0].mem_size = meta.mem_size;
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID_OR_शून्य ||
-		   fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID) अणु
-		स्थिर काष्ठा btf_type *t;
+	} else if (fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID_OR_NULL ||
+		   fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID) {
+		const struct btf_type *t;
 
 		mark_reg_known_zero(env, regs, BPF_REG_0);
-		t = btf_type_skip_modअगरiers(meta.ret_btf, meta.ret_btf_id, शून्य);
-		अगर (!btf_type_is_काष्ठा(t)) अणु
+		t = btf_type_skip_modifiers(meta.ret_btf, meta.ret_btf_id, NULL);
+		if (!btf_type_is_struct(t)) {
 			u32 tsize;
-			स्थिर काष्ठा btf_type *ret;
-			स्थिर अक्षर *tname;
+			const struct btf_type *ret;
+			const char *tname;
 
 			/* resolve the type size of ksym. */
 			ret = btf_resolve_size(meta.ret_btf, t, &tsize);
-			अगर (IS_ERR(ret)) अणु
+			if (IS_ERR(ret)) {
 				tname = btf_name_by_offset(meta.ret_btf, t->name_off);
 				verbose(env, "unable to resolve the size of type '%s': %ld\n",
 					tname, PTR_ERR(ret));
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			regs[BPF_REG_0].type =
 				fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID ?
-				PTR_TO_MEM : PTR_TO_MEM_OR_शून्य;
+				PTR_TO_MEM : PTR_TO_MEM_OR_NULL;
 			regs[BPF_REG_0].mem_size = tsize;
-		पूर्ण अन्यथा अणु
+		} else {
 			regs[BPF_REG_0].type =
 				fn->ret_type == RET_PTR_TO_MEM_OR_BTF_ID ?
-				PTR_TO_BTF_ID : PTR_TO_BTF_ID_OR_शून्य;
+				PTR_TO_BTF_ID : PTR_TO_BTF_ID_OR_NULL;
 			regs[BPF_REG_0].btf = meta.ret_btf;
 			regs[BPF_REG_0].btf_id = meta.ret_btf_id;
-		पूर्ण
-	पूर्ण अन्यथा अगर (fn->ret_type == RET_PTR_TO_BTF_ID_OR_शून्य ||
-		   fn->ret_type == RET_PTR_TO_BTF_ID) अणु
-		पूर्णांक ret_btf_id;
+		}
+	} else if (fn->ret_type == RET_PTR_TO_BTF_ID_OR_NULL ||
+		   fn->ret_type == RET_PTR_TO_BTF_ID) {
+		int ret_btf_id;
 
 		mark_reg_known_zero(env, regs, BPF_REG_0);
 		regs[BPF_REG_0].type = fn->ret_type == RET_PTR_TO_BTF_ID ?
 						     PTR_TO_BTF_ID :
-						     PTR_TO_BTF_ID_OR_शून्य;
+						     PTR_TO_BTF_ID_OR_NULL;
 		ret_btf_id = *fn->ret_btf_id;
-		अगर (ret_btf_id == 0) अणु
+		if (ret_btf_id == 0) {
 			verbose(env, "invalid return type %d of func %s#%d\n",
 				fn->ret_type, func_id_name(func_id), func_id);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		/* current BPF helper definitions are only coming from
 		 * built-in code with type IDs from  vmlinux BTF
 		 */
 		regs[BPF_REG_0].btf = btf_vmlinux;
 		regs[BPF_REG_0].btf_id = ret_btf_id;
-	पूर्ण अन्यथा अणु
+	} else {
 		verbose(env, "unknown return type %d of func %s#%d\n",
 			fn->ret_type, func_id_name(func_id), func_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (reg_type_may_be_null(regs[BPF_REG_0].type))
+	if (reg_type_may_be_null(regs[BPF_REG_0].type))
 		regs[BPF_REG_0].id = ++env->id_gen;
 
-	अगर (is_ptr_cast_function(func_id)) अणु
+	if (is_ptr_cast_function(func_id)) {
 		/* For release_reference() */
 		regs[BPF_REG_0].ref_obj_id = meta.ref_obj_id;
-	पूर्ण अन्यथा अगर (is_acquire_function(func_id, meta.map_ptr)) अणु
-		पूर्णांक id = acquire_reference_state(env, insn_idx);
+	} else if (is_acquire_function(func_id, meta.map_ptr)) {
+		int id = acquire_reference_state(env, insn_idx);
 
-		अगर (id < 0)
-			वापस id;
+		if (id < 0)
+			return id;
 		/* For mark_ptr_or_null_reg() */
 		regs[BPF_REG_0].id = id;
 		/* For release_reference() */
 		regs[BPF_REG_0].ref_obj_id = id;
-	पूर्ण
+	}
 
-	करो_refine_retval_range(regs, fn->ret_type, func_id, &meta);
+	do_refine_retval_range(regs, fn->ret_type, func_id, &meta);
 
 	err = check_map_func_compatibility(env, meta.map_ptr, func_id);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर ((func_id == BPF_FUNC_get_stack ||
+	if ((func_id == BPF_FUNC_get_stack ||
 	     func_id == BPF_FUNC_get_task_stack) &&
-	    !env->prog->has_callchain_buf) अणु
-		स्थिर अक्षर *err_str;
+	    !env->prog->has_callchain_buf) {
+		const char *err_str;
 
-#अगर_घोषित CONFIG_PERF_EVENTS
+#ifdef CONFIG_PERF_EVENTS
 		err = get_callchain_buffers(sysctl_perf_event_max_stack);
 		err_str = "cannot get callchain buffer for func %s#%d\n";
-#अन्यथा
+#else
 		err = -ENOTSUPP;
 		err_str = "func %s#%d not supported without CONFIG_PERF_EVENTS\n";
-#पूर्ण_अगर
-		अगर (err) अणु
+#endif
+		if (err) {
 			verbose(env, err_str, func_id_name(func_id), func_id);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		env->prog->has_callchain_buf = true;
-	पूर्ण
+	}
 
-	अगर (func_id == BPF_FUNC_get_stackid || func_id == BPF_FUNC_get_stack)
+	if (func_id == BPF_FUNC_get_stackid || func_id == BPF_FUNC_get_stack)
 		env->prog->call_get_stack = true;
 
-	अगर (changes_data)
-		clear_all_pkt_poपूर्णांकers(env);
-	वापस 0;
-पूर्ण
+	if (changes_data)
+		clear_all_pkt_pointers(env);
+	return 0;
+}
 
 /* mark_btf_func_reg_size() is used when the reg size is determined by
- * the BTF func_proto's वापस value size and argument.
+ * the BTF func_proto's return value size and argument.
  */
-अटल व्योम mark_btf_func_reg_size(काष्ठा bpf_verअगरier_env *env, u32 regno,
-				   माप_प्रकार reg_size)
-अणु
-	काष्ठा bpf_reg_state *reg = &cur_regs(env)[regno];
+static void mark_btf_func_reg_size(struct bpf_verifier_env *env, u32 regno,
+				   size_t reg_size)
+{
+	struct bpf_reg_state *reg = &cur_regs(env)[regno];
 
-	अगर (regno == BPF_REG_0) अणु
-		/* Function वापस value */
+	if (regno == BPF_REG_0) {
+		/* Function return value */
 		reg->live |= REG_LIVE_WRITTEN;
-		reg->subreg_def = reg_size == माप(u64) ?
+		reg->subreg_def = reg_size == sizeof(u64) ?
 			DEF_NOT_SUBREG : env->insn_idx + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Function argument */
-		अगर (reg_size == माप(u64)) अणु
+		if (reg_size == sizeof(u64)) {
 			mark_insn_zext(env, reg);
-			mark_reg_पढ़ो(env, reg, reg->parent, REG_LIVE_READ64);
-		पूर्ण अन्यथा अणु
-			mark_reg_पढ़ो(env, reg, reg->parent, REG_LIVE_READ32);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			mark_reg_read(env, reg, reg->parent, REG_LIVE_READ64);
+		} else {
+			mark_reg_read(env, reg, reg->parent, REG_LIVE_READ32);
+		}
+	}
+}
 
-अटल पूर्णांक check_kfunc_call(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn)
-अणु
-	स्थिर काष्ठा btf_type *t, *func, *func_proto, *ptr_type;
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	स्थिर अक्षर *func_name, *ptr_type_name;
+static int check_kfunc_call(struct bpf_verifier_env *env, struct bpf_insn *insn)
+{
+	const struct btf_type *t, *func, *func_proto, *ptr_type;
+	struct bpf_reg_state *regs = cur_regs(env);
+	const char *func_name, *ptr_type_name;
 	u32 i, nargs, func_id, ptr_type_id;
-	स्थिर काष्ठा btf_param *args;
-	पूर्णांक err;
+	const struct btf_param *args;
+	int err;
 
 	func_id = insn->imm;
 	func = btf_type_by_id(btf_vmlinux, func_id);
 	func_name = btf_name_by_offset(btf_vmlinux, func->name_off);
 	func_proto = btf_type_by_id(btf_vmlinux, func->type);
 
-	अगर (!env->ops->check_kfunc_call ||
-	    !env->ops->check_kfunc_call(func_id)) अणु
+	if (!env->ops->check_kfunc_call ||
+	    !env->ops->check_kfunc_call(func_id)) {
 		verbose(env, "calling kernel function %s is not allowed\n",
 			func_name);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
 	/* Check the arguments */
 	err = btf_check_kfunc_arg_match(env, btf_vmlinux, func_id, regs);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < CALLER_SAVED_REGS; i++)
+	for (i = 0; i < CALLER_SAVED_REGS; i++)
 		mark_reg_not_init(env, regs, caller_saved[i]);
 
-	/* Check वापस type */
-	t = btf_type_skip_modअगरiers(btf_vmlinux, func_proto->type, शून्य);
-	अगर (btf_type_is_scalar(t)) अणु
+	/* Check return type */
+	t = btf_type_skip_modifiers(btf_vmlinux, func_proto->type, NULL);
+	if (btf_type_is_scalar(t)) {
 		mark_reg_unknown(env, regs, BPF_REG_0);
 		mark_btf_func_reg_size(env, BPF_REG_0, t->size);
-	पूर्ण अन्यथा अगर (btf_type_is_ptr(t)) अणु
-		ptr_type = btf_type_skip_modअगरiers(btf_vmlinux, t->type,
+	} else if (btf_type_is_ptr(t)) {
+		ptr_type = btf_type_skip_modifiers(btf_vmlinux, t->type,
 						   &ptr_type_id);
-		अगर (!btf_type_is_काष्ठा(ptr_type)) अणु
+		if (!btf_type_is_struct(ptr_type)) {
 			ptr_type_name = btf_name_by_offset(btf_vmlinux,
 							   ptr_type->name_off);
 			verbose(env, "kernel function %s returns pointer type %s %s is not supported\n",
 				func_name, btf_type_str(ptr_type),
 				ptr_type_name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		mark_reg_known_zero(env, regs, BPF_REG_0);
 		regs[BPF_REG_0].btf = btf_vmlinux;
 		regs[BPF_REG_0].type = PTR_TO_BTF_ID;
 		regs[BPF_REG_0].btf_id = ptr_type_id;
-		mark_btf_func_reg_size(env, BPF_REG_0, माप(व्योम *));
-	पूर्ण /* अन्यथा अणु add_kfunc_call() ensures it is btf_type_is_व्योम(t) पूर्ण */
+		mark_btf_func_reg_size(env, BPF_REG_0, sizeof(void *));
+	} /* else { add_kfunc_call() ensures it is btf_type_is_void(t) } */
 
 	nargs = btf_type_vlen(func_proto);
-	args = (स्थिर काष्ठा btf_param *)(func_proto + 1);
-	क्रम (i = 0; i < nargs; i++) अणु
+	args = (const struct btf_param *)(func_proto + 1);
+	for (i = 0; i < nargs; i++) {
 		u32 regno = i + 1;
 
-		t = btf_type_skip_modअगरiers(btf_vmlinux, args[i].type, शून्य);
-		अगर (btf_type_is_ptr(t))
-			mark_btf_func_reg_size(env, regno, माप(व्योम *));
-		अन्यथा
+		t = btf_type_skip_modifiers(btf_vmlinux, args[i].type, NULL);
+		if (btf_type_is_ptr(t))
+			mark_btf_func_reg_size(env, regno, sizeof(void *));
+		else
 			/* scalar. ensured by btf_check_kfunc_arg_match() */
 			mark_btf_func_reg_size(env, regno, t->size);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool चिन्हित_add_overflows(s64 a, s64 b)
-अणु
+static bool signed_add_overflows(s64 a, s64 b)
+{
 	/* Do the add in u64, where overflow is well-defined */
 	s64 res = (s64)((u64)a + (u64)b);
 
-	अगर (b < 0)
-		वापस res > a;
-	वापस res < a;
-पूर्ण
+	if (b < 0)
+		return res > a;
+	return res < a;
+}
 
-अटल bool चिन्हित_add32_overflows(s32 a, s32 b)
-अणु
+static bool signed_add32_overflows(s32 a, s32 b)
+{
 	/* Do the add in u32, where overflow is well-defined */
 	s32 res = (s32)((u32)a + (u32)b);
 
-	अगर (b < 0)
-		वापस res > a;
-	वापस res < a;
-पूर्ण
+	if (b < 0)
+		return res > a;
+	return res < a;
+}
 
-अटल bool चिन्हित_sub_overflows(s64 a, s64 b)
-अणु
+static bool signed_sub_overflows(s64 a, s64 b)
+{
 	/* Do the sub in u64, where overflow is well-defined */
 	s64 res = (s64)((u64)a - (u64)b);
 
-	अगर (b < 0)
-		वापस res < a;
-	वापस res > a;
-पूर्ण
+	if (b < 0)
+		return res < a;
+	return res > a;
+}
 
-अटल bool चिन्हित_sub32_overflows(s32 a, s32 b)
-अणु
+static bool signed_sub32_overflows(s32 a, s32 b)
+{
 	/* Do the sub in u32, where overflow is well-defined */
 	s32 res = (s32)((u32)a - (u32)b);
 
-	अगर (b < 0)
-		वापस res < a;
-	वापस res > a;
-पूर्ण
+	if (b < 0)
+		return res < a;
+	return res > a;
+}
 
-अटल bool check_reg_sane_offset(काष्ठा bpf_verअगरier_env *env,
-				  स्थिर काष्ठा bpf_reg_state *reg,
-				  क्रमागत bpf_reg_type type)
-अणु
-	bool known = tnum_is_स्थिर(reg->var_off);
+static bool check_reg_sane_offset(struct bpf_verifier_env *env,
+				  const struct bpf_reg_state *reg,
+				  enum bpf_reg_type type)
+{
+	bool known = tnum_is_const(reg->var_off);
 	s64 val = reg->var_off.value;
 	s64 smin = reg->smin_value;
 
-	अगर (known && (val >= BPF_MAX_VAR_OFF || val <= -BPF_MAX_VAR_OFF)) अणु
+	if (known && (val >= BPF_MAX_VAR_OFF || val <= -BPF_MAX_VAR_OFF)) {
 		verbose(env, "math between %s pointer and %lld is not allowed\n",
 			reg_type_str[type], val);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (reg->off >= BPF_MAX_VAR_OFF || reg->off <= -BPF_MAX_VAR_OFF) अणु
+	if (reg->off >= BPF_MAX_VAR_OFF || reg->off <= -BPF_MAX_VAR_OFF) {
 		verbose(env, "%s pointer offset %d is not allowed\n",
 			reg_type_str[type], reg->off);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (smin == S64_MIN) अणु
+	if (smin == S64_MIN) {
 		verbose(env, "math between %s pointer and register with unbounded min value is not allowed\n",
 			reg_type_str[type]);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (smin >= BPF_MAX_VAR_OFF || smin <= -BPF_MAX_VAR_OFF) अणु
+	if (smin >= BPF_MAX_VAR_OFF || smin <= -BPF_MAX_VAR_OFF) {
 		verbose(env, "value %lld makes %s pointer be out of bounds\n",
 			smin, reg_type_str[type]);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा bpf_insn_aux_data *cur_aux(काष्ठा bpf_verअगरier_env *env)
-अणु
-	वापस &env->insn_aux_data[env->insn_idx];
-पूर्ण
+static struct bpf_insn_aux_data *cur_aux(struct bpf_verifier_env *env)
+{
+	return &env->insn_aux_data[env->insn_idx];
+}
 
-क्रमागत अणु
+enum {
 	REASON_BOUNDS	= -1,
 	REASON_TYPE	= -2,
 	REASON_PATHS	= -3,
 	REASON_LIMIT	= -4,
 	REASON_STACK	= -5,
-पूर्ण;
+};
 
-अटल पूर्णांक retrieve_ptr_limit(स्थिर काष्ठा bpf_reg_state *ptr_reg,
+static int retrieve_ptr_limit(const struct bpf_reg_state *ptr_reg,
 			      u32 *alu_limit, bool mask_to_left)
-अणु
+{
 	u32 max = 0, ptr_limit = 0;
 
-	चयन (ptr_reg->type) अणु
-	हाल PTR_TO_STACK:
-		/* Offset 0 is out-of-bounds, but acceptable start क्रम the
+	switch (ptr_reg->type) {
+	case PTR_TO_STACK:
+		/* Offset 0 is out-of-bounds, but acceptable start for the
 		 * left direction, see BPF_REG_FP. Also, unknown scalar
 		 * offset where we would need to deal with min/max bounds is
-		 * currently prohibited क्रम unprivileged.
+		 * currently prohibited for unprivileged.
 		 */
 		max = MAX_BPF_STACK + mask_to_left;
 		ptr_limit = -(ptr_reg->var_off.value + ptr_reg->off);
-		अवरोध;
-	हाल PTR_TO_MAP_VALUE:
+		break;
+	case PTR_TO_MAP_VALUE:
 		max = ptr_reg->map_ptr->value_size;
 		ptr_limit = (mask_to_left ?
 			     ptr_reg->smin_value :
 			     ptr_reg->umax_value) + ptr_reg->off;
-		अवरोध;
-	शेष:
-		वापस REASON_TYPE;
-	पूर्ण
+		break;
+	default:
+		return REASON_TYPE;
+	}
 
-	अगर (ptr_limit >= max)
-		वापस REASON_LIMIT;
+	if (ptr_limit >= max)
+		return REASON_LIMIT;
 	*alu_limit = ptr_limit;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool can_skip_alu_sanitation(स्थिर काष्ठा bpf_verअगरier_env *env,
-				    स्थिर काष्ठा bpf_insn *insn)
-अणु
-	वापस env->bypass_spec_v1 || BPF_SRC(insn->code) == BPF_K;
-पूर्ण
+static bool can_skip_alu_sanitation(const struct bpf_verifier_env *env,
+				    const struct bpf_insn *insn)
+{
+	return env->bypass_spec_v1 || BPF_SRC(insn->code) == BPF_K;
+}
 
-अटल पूर्णांक update_alu_sanitation_state(काष्ठा bpf_insn_aux_data *aux,
+static int update_alu_sanitation_state(struct bpf_insn_aux_data *aux,
 				       u32 alu_state, u32 alu_limit)
-अणु
-	/* If we arrived here from dअगरferent branches with dअगरferent
+{
+	/* If we arrived here from different branches with different
 	 * state or limits to sanitize, then this won't work.
 	 */
-	अगर (aux->alu_state &&
+	if (aux->alu_state &&
 	    (aux->alu_state != alu_state ||
 	     aux->alu_limit != alu_limit))
-		वापस REASON_PATHS;
+		return REASON_PATHS;
 
-	/* Corresponding fixup करोne in करो_misc_fixups(). */
+	/* Corresponding fixup done in do_misc_fixups(). */
 	aux->alu_state = alu_state;
 	aux->alu_limit = alu_limit;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sanitize_val_alu(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_insn *insn)
-अणु
-	काष्ठा bpf_insn_aux_data *aux = cur_aux(env);
+static int sanitize_val_alu(struct bpf_verifier_env *env,
+			    struct bpf_insn *insn)
+{
+	struct bpf_insn_aux_data *aux = cur_aux(env);
 
-	अगर (can_skip_alu_sanitation(env, insn))
-		वापस 0;
+	if (can_skip_alu_sanitation(env, insn))
+		return 0;
 
-	वापस update_alu_sanitation_state(aux, BPF_ALU_NON_POINTER, 0);
-पूर्ण
+	return update_alu_sanitation_state(aux, BPF_ALU_NON_POINTER, 0);
+}
 
-अटल bool sanitize_needed(u8 opcode)
-अणु
-	वापस opcode == BPF_ADD || opcode == BPF_SUB;
-पूर्ण
+static bool sanitize_needed(u8 opcode)
+{
+	return opcode == BPF_ADD || opcode == BPF_SUB;
+}
 
-काष्ठा bpf_sanitize_info अणु
-	काष्ठा bpf_insn_aux_data aux;
+struct bpf_sanitize_info {
+	struct bpf_insn_aux_data aux;
 	bool mask_to_left;
-पूर्ण;
+};
 
-अटल काष्ठा bpf_verअगरier_state *
-sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
-			  स्थिर काष्ठा bpf_insn *insn,
+static struct bpf_verifier_state *
+sanitize_speculative_path(struct bpf_verifier_env *env,
+			  const struct bpf_insn *insn,
 			  u32 next_idx, u32 curr_idx)
-अणु
-	काष्ठा bpf_verअगरier_state *branch;
-	काष्ठा bpf_reg_state *regs;
+{
+	struct bpf_verifier_state *branch;
+	struct bpf_reg_state *regs;
 
 	branch = push_stack(env, next_idx, curr_idx, true);
-	अगर (branch && insn) अणु
+	if (branch && insn) {
 		regs = branch->frame[branch->curframe]->regs;
-		अगर (BPF_SRC(insn->code) == BPF_K) अणु
+		if (BPF_SRC(insn->code) == BPF_K) {
 			mark_reg_unknown(env, regs, insn->dst_reg);
-		पूर्ण अन्यथा अगर (BPF_SRC(insn->code) == BPF_X) अणु
+		} else if (BPF_SRC(insn->code) == BPF_X) {
 			mark_reg_unknown(env, regs, insn->dst_reg);
 			mark_reg_unknown(env, regs, insn->src_reg);
-		पूर्ण
-	पूर्ण
-	वापस branch;
-पूर्ण
+		}
+	}
+	return branch;
+}
 
-अटल पूर्णांक sanitize_ptr_alu(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_insn *insn,
-			    स्थिर काष्ठा bpf_reg_state *ptr_reg,
-			    स्थिर काष्ठा bpf_reg_state *off_reg,
-			    काष्ठा bpf_reg_state *dst_reg,
-			    काष्ठा bpf_sanitize_info *info,
-			    स्थिर bool commit_winकरोw)
-अणु
-	काष्ठा bpf_insn_aux_data *aux = commit_winकरोw ? cur_aux(env) : &info->aux;
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	bool off_is_imm = tnum_is_स्थिर(off_reg->var_off);
+static int sanitize_ptr_alu(struct bpf_verifier_env *env,
+			    struct bpf_insn *insn,
+			    const struct bpf_reg_state *ptr_reg,
+			    const struct bpf_reg_state *off_reg,
+			    struct bpf_reg_state *dst_reg,
+			    struct bpf_sanitize_info *info,
+			    const bool commit_window)
+{
+	struct bpf_insn_aux_data *aux = commit_window ? cur_aux(env) : &info->aux;
+	struct bpf_verifier_state *vstate = env->cur_state;
+	bool off_is_imm = tnum_is_const(off_reg->var_off);
 	bool off_is_neg = off_reg->smin_value < 0;
 	bool ptr_is_dst_reg = ptr_reg == dst_reg;
 	u8 opcode = BPF_OP(insn->code);
 	u32 alu_state, alu_limit;
-	काष्ठा bpf_reg_state पंचांगp;
+	struct bpf_reg_state tmp;
 	bool ret;
-	पूर्णांक err;
+	int err;
 
-	अगर (can_skip_alu_sanitation(env, insn))
-		वापस 0;
+	if (can_skip_alu_sanitation(env, insn))
+		return 0;
 
-	/* We alपढ़ोy marked aux क्रम masking from non-speculative
+	/* We already marked aux for masking from non-speculative
 	 * paths, thus we got here in the first place. We only care
 	 * to explore bad access from here.
 	 */
-	अगर (vstate->speculative)
-		जाओ करो_sim;
+	if (vstate->speculative)
+		goto do_sim;
 
-	अगर (!commit_winकरोw) अणु
-		अगर (!tnum_is_स्थिर(off_reg->var_off) &&
+	if (!commit_window) {
+		if (!tnum_is_const(off_reg->var_off) &&
 		    (off_reg->smin_value < 0) != (off_reg->smax_value < 0))
-			वापस REASON_BOUNDS;
+			return REASON_BOUNDS;
 
 		info->mask_to_left = (opcode == BPF_ADD &&  off_is_neg) ||
 				     (opcode == BPF_SUB && !off_is_neg);
-	पूर्ण
+	}
 
 	err = retrieve_ptr_limit(ptr_reg, &alu_limit, info->mask_to_left);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (commit_winकरोw) अणु
-		/* In commit phase we narrow the masking winकरोw based on
-		 * the observed poपूर्णांकer move after the simulated operation.
+	if (commit_window) {
+		/* In commit phase we narrow the masking window based on
+		 * the observed pointer move after the simulated operation.
 		 */
 		alu_state = info->aux.alu_state;
-		alu_limit = असल(info->aux.alu_limit - alu_limit);
-	पूर्ण अन्यथा अणु
+		alu_limit = abs(info->aux.alu_limit - alu_limit);
+	} else {
 		alu_state  = off_is_neg ? BPF_ALU_NEG_VALUE : 0;
 		alu_state |= off_is_imm ? BPF_ALU_IMMEDIATE : 0;
 		alu_state |= ptr_is_dst_reg ?
 			     BPF_ALU_SANITIZE_SRC : BPF_ALU_SANITIZE_DST;
-	पूर्ण
+	}
 
 	err = update_alu_sanitation_state(aux, alu_state, alu_limit);
-	अगर (err < 0)
-		वापस err;
-करो_sim:
-	/* If we're in commit phase, we're करोne here given we alपढ़ोy
-	 * pushed the truncated dst_reg पूर्णांकo the speculative verअगरication
+	if (err < 0)
+		return err;
+do_sim:
+	/* If we're in commit phase, we're done here given we already
+	 * pushed the truncated dst_reg into the speculative verification
 	 * stack.
 	 *
-	 * Also, when रेजिस्टर is a known स्थिरant, we reग_लिखो रेजिस्टर-based
-	 * operation to immediate-based, and thus करो not need masking (and as
-	 * a consequence, करो not need to simulate the zero-truncation either).
+	 * Also, when register is a known constant, we rewrite register-based
+	 * operation to immediate-based, and thus do not need masking (and as
+	 * a consequence, do not need to simulate the zero-truncation either).
 	 */
-	अगर (commit_winकरोw || off_is_imm)
-		वापस 0;
+	if (commit_window || off_is_imm)
+		return 0;
 
 	/* Simulate and find potential out-of-bounds access under
 	 * speculative execution from truncation as a result of
 	 * masking when off was not within expected range. If off
 	 * sits in dst, then we temporarily need to move ptr there
-	 * to simulate dst (== 0) +/-= ptr. Needed, क्रम example,
-	 * क्रम हालs where we use K-based arithmetic in one direction
+	 * to simulate dst (== 0) +/-= ptr. Needed, for example,
+	 * for cases where we use K-based arithmetic in one direction
 	 * and truncated reg-based in the other in order to explore
 	 * bad access.
 	 */
-	अगर (!ptr_is_dst_reg) अणु
-		पंचांगp = *dst_reg;
+	if (!ptr_is_dst_reg) {
+		tmp = *dst_reg;
 		*dst_reg = *ptr_reg;
-	पूर्ण
-	ret = sanitize_speculative_path(env, शून्य, env->insn_idx + 1,
+	}
+	ret = sanitize_speculative_path(env, NULL, env->insn_idx + 1,
 					env->insn_idx);
-	अगर (!ptr_is_dst_reg && ret)
-		*dst_reg = पंचांगp;
-	वापस !ret ? REASON_STACK : 0;
-पूर्ण
+	if (!ptr_is_dst_reg && ret)
+		*dst_reg = tmp;
+	return !ret ? REASON_STACK : 0;
+}
 
-अटल व्योम sanitize_mark_insn_seen(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
+static void sanitize_mark_insn_seen(struct bpf_verifier_env *env)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
 
-	/* If we simulate paths under speculation, we करोn't update the
-	 * insn as 'seen' such that when we verअगरy unreachable paths in
-	 * the non-speculative करोमुख्य, sanitize_dead_code() can still
-	 * reग_लिखो/sanitize them.
+	/* If we simulate paths under speculation, we don't update the
+	 * insn as 'seen' such that when we verify unreachable paths in
+	 * the non-speculative domain, sanitize_dead_code() can still
+	 * rewrite/sanitize them.
 	 */
-	अगर (!vstate->speculative)
+	if (!vstate->speculative)
 		env->insn_aux_data[env->insn_idx].seen = env->pass_cnt;
-पूर्ण
+}
 
-अटल पूर्णांक sanitize_err(काष्ठा bpf_verअगरier_env *env,
-			स्थिर काष्ठा bpf_insn *insn, पूर्णांक reason,
-			स्थिर काष्ठा bpf_reg_state *off_reg,
-			स्थिर काष्ठा bpf_reg_state *dst_reg)
-अणु
-	अटल स्थिर अक्षर *err = "pointer arithmetic with it prohibited for !root";
-	स्थिर अक्षर *op = BPF_OP(insn->code) == BPF_ADD ? "add" : "sub";
+static int sanitize_err(struct bpf_verifier_env *env,
+			const struct bpf_insn *insn, int reason,
+			const struct bpf_reg_state *off_reg,
+			const struct bpf_reg_state *dst_reg)
+{
+	static const char *err = "pointer arithmetic with it prohibited for !root";
+	const char *op = BPF_OP(insn->code) == BPF_ADD ? "add" : "sub";
 	u32 dst = insn->dst_reg, src = insn->src_reg;
 
-	चयन (reason) अणु
-	हाल REASON_BOUNDS:
+	switch (reason) {
+	case REASON_BOUNDS:
 		verbose(env, "R%d has unknown scalar with mixed signed bounds, %s\n",
 			off_reg == dst_reg ? dst : src, err);
-		अवरोध;
-	हाल REASON_TYPE:
+		break;
+	case REASON_TYPE:
 		verbose(env, "R%d has pointer with unsupported alu operation, %s\n",
 			off_reg == dst_reg ? src : dst, err);
-		अवरोध;
-	हाल REASON_PATHS:
+		break;
+	case REASON_PATHS:
 		verbose(env, "R%d tried to %s from different maps, paths or scalars, %s\n",
 			dst, op, err);
-		अवरोध;
-	हाल REASON_LIMIT:
+		break;
+	case REASON_LIMIT:
 		verbose(env, "R%d tried to %s beyond pointer bounds, %s\n",
 			dst, op, err);
-		अवरोध;
-	हाल REASON_STACK:
+		break;
+	case REASON_STACK:
 		verbose(env, "R%d could not be pushed for speculative verification, %s\n",
 			dst, err);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		verbose(env, "verifier internal error: unknown reason (%d)\n",
 			reason);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस -EACCES;
-पूर्ण
+	return -EACCES;
+}
 
 /* check that stack access falls within stack limits and that 'reg' doesn't
  * have a variable offset.
  *
- * Variable offset is prohibited क्रम unprivileged mode क्रम simplicity since it
- * requires corresponding support in Spectre masking क्रम stack ALU.  See also
+ * Variable offset is prohibited for unprivileged mode for simplicity since it
+ * requires corresponding support in Spectre masking for stack ALU.  See also
  * retrieve_ptr_limit().
  *
  *
  * 'off' includes 'reg->off'.
  */
-अटल पूर्णांक check_stack_access_क्रम_ptr_arithmetic(
-				काष्ठा bpf_verअगरier_env *env,
-				पूर्णांक regno,
-				स्थिर काष्ठा bpf_reg_state *reg,
-				पूर्णांक off)
-अणु
-	अगर (!tnum_is_स्थिर(reg->var_off)) अणु
-		अक्षर tn_buf[48];
+static int check_stack_access_for_ptr_arithmetic(
+				struct bpf_verifier_env *env,
+				int regno,
+				const struct bpf_reg_state *reg,
+				int off)
+{
+	if (!tnum_is_const(reg->var_off)) {
+		char tn_buf[48];
 
-		tnum_strn(tn_buf, माप(tn_buf), reg->var_off);
+		tnum_strn(tn_buf, sizeof(tn_buf), reg->var_off);
 		verbose(env, "R%d variable stack access prohibited for !root, var_off=%s off=%d\n",
 			regno, tn_buf, off);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (off >= 0 || off < -MAX_BPF_STACK) अणु
+	if (off >= 0 || off < -MAX_BPF_STACK) {
 		verbose(env, "R%d stack pointer arithmetic goes out of range, "
 			"prohibited for !root; off=%d\n", regno, off);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sanitize_check_bounds(काष्ठा bpf_verअगरier_env *env,
-				 स्थिर काष्ठा bpf_insn *insn,
-				 स्थिर काष्ठा bpf_reg_state *dst_reg)
-अणु
+static int sanitize_check_bounds(struct bpf_verifier_env *env,
+				 const struct bpf_insn *insn,
+				 const struct bpf_reg_state *dst_reg)
+{
 	u32 dst = insn->dst_reg;
 
 	/* For unprivileged we require that resulting offset must be in bounds
 	 * in order to be able to sanitize access later on.
 	 */
-	अगर (env->bypass_spec_v1)
-		वापस 0;
+	if (env->bypass_spec_v1)
+		return 0;
 
-	चयन (dst_reg->type) अणु
-	हाल PTR_TO_STACK:
-		अगर (check_stack_access_क्रम_ptr_arithmetic(env, dst, dst_reg,
+	switch (dst_reg->type) {
+	case PTR_TO_STACK:
+		if (check_stack_access_for_ptr_arithmetic(env, dst, dst_reg,
 					dst_reg->off + dst_reg->var_off.value))
-			वापस -EACCES;
-		अवरोध;
-	हाल PTR_TO_MAP_VALUE:
-		अगर (check_map_access(env, dst, dst_reg->off, 1, false)) अणु
+			return -EACCES;
+		break;
+	case PTR_TO_MAP_VALUE:
+		if (check_map_access(env, dst, dst_reg->off, 1, false)) {
 			verbose(env, "R%d pointer arithmetic of map value goes out of range, "
 				"prohibited for !root\n", dst);
-			वापस -EACCES;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return -EACCES;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Handles arithmetic on a poपूर्णांकer and a scalar: computes new min/max and var_off.
- * Caller should also handle BPF_MOV हाल separately.
- * If we वापस -EACCES, caller may want to try again treating poपूर्णांकer as a
- * scalar.  So we only emit a diagnostic अगर !env->allow_ptr_leaks.
+/* Handles arithmetic on a pointer and a scalar: computes new min/max and var_off.
+ * Caller should also handle BPF_MOV case separately.
+ * If we return -EACCES, caller may want to try again treating pointer as a
+ * scalar.  So we only emit a diagnostic if !env->allow_ptr_leaks.
  */
-अटल पूर्णांक adjust_ptr_min_max_vals(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_insn *insn,
-				   स्थिर काष्ठा bpf_reg_state *ptr_reg,
-				   स्थिर काष्ठा bpf_reg_state *off_reg)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *regs = state->regs, *dst_reg;
-	bool known = tnum_is_स्थिर(off_reg->var_off);
+static int adjust_ptr_min_max_vals(struct bpf_verifier_env *env,
+				   struct bpf_insn *insn,
+				   const struct bpf_reg_state *ptr_reg,
+				   const struct bpf_reg_state *off_reg)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *regs = state->regs, *dst_reg;
+	bool known = tnum_is_const(off_reg->var_off);
 	s64 smin_val = off_reg->smin_value, smax_val = off_reg->smax_value,
 	    smin_ptr = ptr_reg->smin_value, smax_ptr = ptr_reg->smax_value;
 	u64 umin_val = off_reg->umin_value, umax_val = off_reg->umax_value,
 	    umin_ptr = ptr_reg->umin_value, umax_ptr = ptr_reg->umax_value;
-	काष्ठा bpf_sanitize_info info = अणुपूर्ण;
+	struct bpf_sanitize_info info = {};
 	u8 opcode = BPF_OP(insn->code);
 	u32 dst = insn->dst_reg;
-	पूर्णांक ret;
+	int ret;
 
 	dst_reg = &regs[dst];
 
-	अगर ((known && (smin_val != smax_val || umin_val != umax_val)) ||
-	    smin_val > smax_val || umin_val > umax_val) अणु
-		/* Taपूर्णांक dst रेजिस्टर अगर offset had invalid bounds derived from
+	if ((known && (smin_val != smax_val || umin_val != umax_val)) ||
+	    smin_val > smax_val || umin_val > umax_val) {
+		/* Taint dst register if offset had invalid bounds derived from
 		 * e.g. dead branches.
 		 */
 		__mark_reg_unknown(env, dst_reg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (BPF_CLASS(insn->code) != BPF_ALU64) अणु
-		/* 32-bit ALU ops on poपूर्णांकers produce (meaningless) scalars */
-		अगर (opcode == BPF_SUB && env->allow_ptr_leaks) अणु
+	if (BPF_CLASS(insn->code) != BPF_ALU64) {
+		/* 32-bit ALU ops on pointers produce (meaningless) scalars */
+		if (opcode == BPF_SUB && env->allow_ptr_leaks) {
 			__mark_reg_unknown(env, dst_reg);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		verbose(env,
 			"R%d 32-bit pointer arithmetic prohibited\n",
 			dst);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	चयन (ptr_reg->type) अणु
-	हाल PTR_TO_MAP_VALUE_OR_शून्य:
+	switch (ptr_reg->type) {
+	case PTR_TO_MAP_VALUE_OR_NULL:
 		verbose(env, "R%d pointer arithmetic on %s prohibited, null-check it first\n",
 			dst, reg_type_str[ptr_reg->type]);
-		वापस -EACCES;
-	हाल CONST_PTR_TO_MAP:
+		return -EACCES;
+	case CONST_PTR_TO_MAP:
 		/* smin_val represents the known value */
-		अगर (known && smin_val == 0 && opcode == BPF_ADD)
-			अवरोध;
+		if (known && smin_val == 0 && opcode == BPF_ADD)
+			break;
 		fallthrough;
-	हाल PTR_TO_PACKET_END:
-	हाल PTR_TO_SOCKET:
-	हाल PTR_TO_SOCKET_OR_शून्य:
-	हाल PTR_TO_SOCK_COMMON:
-	हाल PTR_TO_SOCK_COMMON_OR_शून्य:
-	हाल PTR_TO_TCP_SOCK:
-	हाल PTR_TO_TCP_SOCK_OR_शून्य:
-	हाल PTR_TO_XDP_SOCK:
+	case PTR_TO_PACKET_END:
+	case PTR_TO_SOCKET:
+	case PTR_TO_SOCKET_OR_NULL:
+	case PTR_TO_SOCK_COMMON:
+	case PTR_TO_SOCK_COMMON_OR_NULL:
+	case PTR_TO_TCP_SOCK:
+	case PTR_TO_TCP_SOCK_OR_NULL:
+	case PTR_TO_XDP_SOCK:
 		verbose(env, "R%d pointer arithmetic on %s prohibited\n",
 			dst, reg_type_str[ptr_reg->type]);
-		वापस -EACCES;
-	शेष:
-		अवरोध;
-	पूर्ण
+		return -EACCES;
+	default:
+		break;
+	}
 
-	/* In हाल of 'scalar += pointer', dst_reg inherits poपूर्णांकer type and id.
-	 * The id may be overwritten later अगर we create a new variable offset.
+	/* In case of 'scalar += pointer', dst_reg inherits pointer type and id.
+	 * The id may be overwritten later if we create a new variable offset.
 	 */
 	dst_reg->type = ptr_reg->type;
 	dst_reg->id = ptr_reg->id;
 
-	अगर (!check_reg_sane_offset(env, off_reg, ptr_reg->type) ||
+	if (!check_reg_sane_offset(env, off_reg, ptr_reg->type) ||
 	    !check_reg_sane_offset(env, ptr_reg, ptr_reg->type))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* poपूर्णांकer types करो not carry 32-bit bounds at the moment. */
+	/* pointer types do not carry 32-bit bounds at the moment. */
 	__mark_reg32_unbounded(dst_reg);
 
-	अगर (sanitize_needed(opcode)) अणु
+	if (sanitize_needed(opcode)) {
 		ret = sanitize_ptr_alu(env, insn, ptr_reg, off_reg, dst_reg,
 				       &info, false);
-		अगर (ret < 0)
-			वापस sanitize_err(env, insn, ret, off_reg, dst_reg);
-	पूर्ण
+		if (ret < 0)
+			return sanitize_err(env, insn, ret, off_reg, dst_reg);
+	}
 
-	चयन (opcode) अणु
-	हाल BPF_ADD:
-		/* We can take a fixed offset as दीर्घ as it करोesn't overflow
+	switch (opcode) {
+	case BPF_ADD:
+		/* We can take a fixed offset as long as it doesn't overflow
 		 * the s32 'off' field
 		 */
-		अगर (known && (ptr_reg->off + smin_val ==
-			      (s64)(s32)(ptr_reg->off + smin_val))) अणु
-			/* poपूर्णांकer += K.  Accumulate it पूर्णांकo fixed offset */
+		if (known && (ptr_reg->off + smin_val ==
+			      (s64)(s32)(ptr_reg->off + smin_val))) {
+			/* pointer += K.  Accumulate it into fixed offset */
 			dst_reg->smin_value = smin_ptr;
 			dst_reg->smax_value = smax_ptr;
 			dst_reg->umin_value = umin_ptr;
@@ -6820,61 +6819,61 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 			dst_reg->var_off = ptr_reg->var_off;
 			dst_reg->off = ptr_reg->off + smin_val;
 			dst_reg->raw = ptr_reg->raw;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* A new variable offset is created.  Note that off_reg->off
 		 * == 0, since it's a scalar.
-		 * dst_reg माला_लो the poपूर्णांकer type and since some positive
-		 * पूर्णांकeger value was added to the poपूर्णांकer, give it a new 'id'
-		 * अगर it's a PTR_TO_PACKET.
-		 * this creates a new 'base' poपूर्णांकer, off_reg (variable) माला_लो
-		 * added पूर्णांकo the variable offset, and we copy the fixed offset
+		 * dst_reg gets the pointer type and since some positive
+		 * integer value was added to the pointer, give it a new 'id'
+		 * if it's a PTR_TO_PACKET.
+		 * this creates a new 'base' pointer, off_reg (variable) gets
+		 * added into the variable offset, and we copy the fixed offset
 		 * from ptr_reg.
 		 */
-		अगर (चिन्हित_add_overflows(smin_ptr, smin_val) ||
-		    चिन्हित_add_overflows(smax_ptr, smax_val)) अणु
+		if (signed_add_overflows(smin_ptr, smin_val) ||
+		    signed_add_overflows(smax_ptr, smax_val)) {
 			dst_reg->smin_value = S64_MIN;
 			dst_reg->smax_value = S64_MAX;
-		पूर्ण अन्यथा अणु
+		} else {
 			dst_reg->smin_value = smin_ptr + smin_val;
 			dst_reg->smax_value = smax_ptr + smax_val;
-		पूर्ण
-		अगर (umin_ptr + umin_val < umin_ptr ||
-		    umax_ptr + umax_val < umax_ptr) अणु
+		}
+		if (umin_ptr + umin_val < umin_ptr ||
+		    umax_ptr + umax_val < umax_ptr) {
 			dst_reg->umin_value = 0;
 			dst_reg->umax_value = U64_MAX;
-		पूर्ण अन्यथा अणु
+		} else {
 			dst_reg->umin_value = umin_ptr + umin_val;
 			dst_reg->umax_value = umax_ptr + umax_val;
-		पूर्ण
+		}
 		dst_reg->var_off = tnum_add(ptr_reg->var_off, off_reg->var_off);
 		dst_reg->off = ptr_reg->off;
 		dst_reg->raw = ptr_reg->raw;
-		अगर (reg_is_pkt_poपूर्णांकer(ptr_reg)) अणु
+		if (reg_is_pkt_pointer(ptr_reg)) {
 			dst_reg->id = ++env->id_gen;
 			/* something was added to pkt_ptr, set range to zero */
-			स_रखो(&dst_reg->raw, 0, माप(dst_reg->raw));
-		पूर्ण
-		अवरोध;
-	हाल BPF_SUB:
-		अगर (dst_reg == off_reg) अणु
-			/* scalar -= poपूर्णांकer.  Creates an unknown scalar */
+			memset(&dst_reg->raw, 0, sizeof(dst_reg->raw));
+		}
+		break;
+	case BPF_SUB:
+		if (dst_reg == off_reg) {
+			/* scalar -= pointer.  Creates an unknown scalar */
 			verbose(env, "R%d tried to subtract pointer from scalar\n",
 				dst);
-			वापस -EACCES;
-		पूर्ण
-		/* We करोn't allow subtraction from FP, because (according to
-		 * test_verअगरier.c test "invalid fp arithmetic", JITs might not
+			return -EACCES;
+		}
+		/* We don't allow subtraction from FP, because (according to
+		 * test_verifier.c test "invalid fp arithmetic", JITs might not
 		 * be able to deal with it.
 		 */
-		अगर (ptr_reg->type == PTR_TO_STACK) अणु
+		if (ptr_reg->type == PTR_TO_STACK) {
 			verbose(env, "R%d subtraction from stack pointer prohibited\n",
 				dst);
-			वापस -EACCES;
-		पूर्ण
-		अगर (known && (ptr_reg->off - smin_val ==
-			      (s64)(s32)(ptr_reg->off - smin_val))) अणु
-			/* poपूर्णांकer -= K.  Subtract it from fixed offset */
+			return -EACCES;
+		}
+		if (known && (ptr_reg->off - smin_val ==
+			      (s64)(s32)(ptr_reg->off - smin_val))) {
+			/* pointer -= K.  Subtract it from fixed offset */
 			dst_reg->smin_value = smin_ptr;
 			dst_reg->smax_value = smax_ptr;
 			dst_reg->umin_value = umin_ptr;
@@ -6883,592 +6882,592 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 			dst_reg->id = ptr_reg->id;
 			dst_reg->off = ptr_reg->off - smin_val;
 			dst_reg->raw = ptr_reg->raw;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* A new variable offset is created.  If the subtrahend is known
-		 * nonnegative, then any reg->range we had beक्रमe is still good.
+		 * nonnegative, then any reg->range we had before is still good.
 		 */
-		अगर (चिन्हित_sub_overflows(smin_ptr, smax_val) ||
-		    चिन्हित_sub_overflows(smax_ptr, smin_val)) अणु
+		if (signed_sub_overflows(smin_ptr, smax_val) ||
+		    signed_sub_overflows(smax_ptr, smin_val)) {
 			/* Overflow possible, we know nothing */
 			dst_reg->smin_value = S64_MIN;
 			dst_reg->smax_value = S64_MAX;
-		पूर्ण अन्यथा अणु
+		} else {
 			dst_reg->smin_value = smin_ptr - smax_val;
 			dst_reg->smax_value = smax_ptr - smin_val;
-		पूर्ण
-		अगर (umin_ptr < umax_val) अणु
+		}
+		if (umin_ptr < umax_val) {
 			/* Overflow possible, we know nothing */
 			dst_reg->umin_value = 0;
 			dst_reg->umax_value = U64_MAX;
-		पूर्ण अन्यथा अणु
-			/* Cannot overflow (as दीर्घ as bounds are consistent) */
+		} else {
+			/* Cannot overflow (as long as bounds are consistent) */
 			dst_reg->umin_value = umin_ptr - umax_val;
 			dst_reg->umax_value = umax_ptr - umin_val;
-		पूर्ण
+		}
 		dst_reg->var_off = tnum_sub(ptr_reg->var_off, off_reg->var_off);
 		dst_reg->off = ptr_reg->off;
 		dst_reg->raw = ptr_reg->raw;
-		अगर (reg_is_pkt_poपूर्णांकer(ptr_reg)) अणु
+		if (reg_is_pkt_pointer(ptr_reg)) {
 			dst_reg->id = ++env->id_gen;
 			/* something was added to pkt_ptr, set range to zero */
-			अगर (smin_val < 0)
-				स_रखो(&dst_reg->raw, 0, माप(dst_reg->raw));
-		पूर्ण
-		अवरोध;
-	हाल BPF_AND:
-	हाल BPF_OR:
-	हाल BPF_XOR:
-		/* bitwise ops on poपूर्णांकers are troublesome, prohibit. */
+			if (smin_val < 0)
+				memset(&dst_reg->raw, 0, sizeof(dst_reg->raw));
+		}
+		break;
+	case BPF_AND:
+	case BPF_OR:
+	case BPF_XOR:
+		/* bitwise ops on pointers are troublesome, prohibit. */
 		verbose(env, "R%d bitwise operator %s on pointer prohibited\n",
 			dst, bpf_alu_string[opcode >> 4]);
-		वापस -EACCES;
-	शेष:
-		/* other चालकs (e.g. MUL,LSH) produce non-poपूर्णांकer results */
+		return -EACCES;
+	default:
+		/* other operators (e.g. MUL,LSH) produce non-pointer results */
 		verbose(env, "R%d pointer arithmetic with %s operator prohibited\n",
 			dst, bpf_alu_string[opcode >> 4]);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	अगर (!check_reg_sane_offset(env, dst_reg, ptr_reg->type))
-		वापस -EINVAL;
+	if (!check_reg_sane_offset(env, dst_reg, ptr_reg->type))
+		return -EINVAL;
 
 	__update_reg_bounds(dst_reg);
 	__reg_deduce_bounds(dst_reg);
 	__reg_bound_offset(dst_reg);
 
-	अगर (sanitize_check_bounds(env, insn, dst_reg) < 0)
-		वापस -EACCES;
-	अगर (sanitize_needed(opcode)) अणु
+	if (sanitize_check_bounds(env, insn, dst_reg) < 0)
+		return -EACCES;
+	if (sanitize_needed(opcode)) {
 		ret = sanitize_ptr_alu(env, insn, dst_reg, off_reg, dst_reg,
 				       &info, true);
-		अगर (ret < 0)
-			वापस sanitize_err(env, insn, ret, off_reg, dst_reg);
-	पूर्ण
+		if (ret < 0)
+			return sanitize_err(env, insn, ret, off_reg, dst_reg);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम scalar32_min_max_add(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar32_min_max_add(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
 	s32 smin_val = src_reg->s32_min_value;
 	s32 smax_val = src_reg->s32_max_value;
 	u32 umin_val = src_reg->u32_min_value;
 	u32 umax_val = src_reg->u32_max_value;
 
-	अगर (चिन्हित_add32_overflows(dst_reg->s32_min_value, smin_val) ||
-	    चिन्हित_add32_overflows(dst_reg->s32_max_value, smax_val)) अणु
+	if (signed_add32_overflows(dst_reg->s32_min_value, smin_val) ||
+	    signed_add32_overflows(dst_reg->s32_max_value, smax_val)) {
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->s32_min_value += smin_val;
 		dst_reg->s32_max_value += smax_val;
-	पूर्ण
-	अगर (dst_reg->u32_min_value + umin_val < umin_val ||
-	    dst_reg->u32_max_value + umax_val < umax_val) अणु
+	}
+	if (dst_reg->u32_min_value + umin_val < umin_val ||
+	    dst_reg->u32_max_value + umax_val < umax_val) {
 		dst_reg->u32_min_value = 0;
 		dst_reg->u32_max_value = U32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->u32_min_value += umin_val;
 		dst_reg->u32_max_value += umax_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_add(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_add(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
 	s64 smin_val = src_reg->smin_value;
 	s64 smax_val = src_reg->smax_value;
 	u64 umin_val = src_reg->umin_value;
 	u64 umax_val = src_reg->umax_value;
 
-	अगर (चिन्हित_add_overflows(dst_reg->smin_value, smin_val) ||
-	    चिन्हित_add_overflows(dst_reg->smax_value, smax_val)) अणु
+	if (signed_add_overflows(dst_reg->smin_value, smin_val) ||
+	    signed_add_overflows(dst_reg->smax_value, smax_val)) {
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->smin_value += smin_val;
 		dst_reg->smax_value += smax_val;
-	पूर्ण
-	अगर (dst_reg->umin_value + umin_val < umin_val ||
-	    dst_reg->umax_value + umax_val < umax_val) अणु
+	}
+	if (dst_reg->umin_value + umin_val < umin_val ||
+	    dst_reg->umax_value + umax_val < umax_val) {
 		dst_reg->umin_value = 0;
 		dst_reg->umax_value = U64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->umin_value += umin_val;
 		dst_reg->umax_value += umax_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar32_min_max_sub(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar32_min_max_sub(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
 	s32 smin_val = src_reg->s32_min_value;
 	s32 smax_val = src_reg->s32_max_value;
 	u32 umin_val = src_reg->u32_min_value;
 	u32 umax_val = src_reg->u32_max_value;
 
-	अगर (चिन्हित_sub32_overflows(dst_reg->s32_min_value, smax_val) ||
-	    चिन्हित_sub32_overflows(dst_reg->s32_max_value, smin_val)) अणु
+	if (signed_sub32_overflows(dst_reg->s32_min_value, smax_val) ||
+	    signed_sub32_overflows(dst_reg->s32_max_value, smin_val)) {
 		/* Overflow possible, we know nothing */
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->s32_min_value -= smax_val;
 		dst_reg->s32_max_value -= smin_val;
-	पूर्ण
-	अगर (dst_reg->u32_min_value < umax_val) अणु
+	}
+	if (dst_reg->u32_min_value < umax_val) {
 		/* Overflow possible, we know nothing */
 		dst_reg->u32_min_value = 0;
 		dst_reg->u32_max_value = U32_MAX;
-	पूर्ण अन्यथा अणु
-		/* Cannot overflow (as दीर्घ as bounds are consistent) */
+	} else {
+		/* Cannot overflow (as long as bounds are consistent) */
 		dst_reg->u32_min_value -= umax_val;
 		dst_reg->u32_max_value -= umin_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_sub(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_sub(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
 	s64 smin_val = src_reg->smin_value;
 	s64 smax_val = src_reg->smax_value;
 	u64 umin_val = src_reg->umin_value;
 	u64 umax_val = src_reg->umax_value;
 
-	अगर (चिन्हित_sub_overflows(dst_reg->smin_value, smax_val) ||
-	    चिन्हित_sub_overflows(dst_reg->smax_value, smin_val)) अणु
+	if (signed_sub_overflows(dst_reg->smin_value, smax_val) ||
+	    signed_sub_overflows(dst_reg->smax_value, smin_val)) {
 		/* Overflow possible, we know nothing */
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->smin_value -= smax_val;
 		dst_reg->smax_value -= smin_val;
-	पूर्ण
-	अगर (dst_reg->umin_value < umax_val) अणु
+	}
+	if (dst_reg->umin_value < umax_val) {
 		/* Overflow possible, we know nothing */
 		dst_reg->umin_value = 0;
 		dst_reg->umax_value = U64_MAX;
-	पूर्ण अन्यथा अणु
-		/* Cannot overflow (as दीर्घ as bounds are consistent) */
+	} else {
+		/* Cannot overflow (as long as bounds are consistent) */
 		dst_reg->umin_value -= umax_val;
 		dst_reg->umax_value -= umin_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar32_min_max_mul(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar32_min_max_mul(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
 	s32 smin_val = src_reg->s32_min_value;
 	u32 umin_val = src_reg->u32_min_value;
 	u32 umax_val = src_reg->u32_max_value;
 
-	अगर (smin_val < 0 || dst_reg->s32_min_value < 0) अणु
-		/* Ain't nobody got समय to multiply that sign */
+	if (smin_val < 0 || dst_reg->s32_min_value < 0) {
+		/* Ain't nobody got time to multiply that sign */
 		__mark_reg32_unbounded(dst_reg);
-		वापस;
-	पूर्ण
-	/* Both values are positive, so we can work with अचिन्हित and
-	 * copy the result to चिन्हित (unless it exceeds S32_MAX).
+		return;
+	}
+	/* Both values are positive, so we can work with unsigned and
+	 * copy the result to signed (unless it exceeds S32_MAX).
 	 */
-	अगर (umax_val > U16_MAX || dst_reg->u32_max_value > U16_MAX) अणु
+	if (umax_val > U16_MAX || dst_reg->u32_max_value > U16_MAX) {
 		/* Potential overflow, we know nothing */
 		__mark_reg32_unbounded(dst_reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 	dst_reg->u32_min_value *= umin_val;
 	dst_reg->u32_max_value *= umax_val;
-	अगर (dst_reg->u32_max_value > S32_MAX) अणु
+	if (dst_reg->u32_max_value > S32_MAX) {
 		/* Overflow possible, we know nothing */
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->s32_min_value = dst_reg->u32_min_value;
 		dst_reg->s32_max_value = dst_reg->u32_max_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_mul(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_mul(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
 	s64 smin_val = src_reg->smin_value;
 	u64 umin_val = src_reg->umin_value;
 	u64 umax_val = src_reg->umax_value;
 
-	अगर (smin_val < 0 || dst_reg->smin_value < 0) अणु
-		/* Ain't nobody got समय to multiply that sign */
+	if (smin_val < 0 || dst_reg->smin_value < 0) {
+		/* Ain't nobody got time to multiply that sign */
 		__mark_reg64_unbounded(dst_reg);
-		वापस;
-	पूर्ण
-	/* Both values are positive, so we can work with अचिन्हित and
-	 * copy the result to चिन्हित (unless it exceeds S64_MAX).
+		return;
+	}
+	/* Both values are positive, so we can work with unsigned and
+	 * copy the result to signed (unless it exceeds S64_MAX).
 	 */
-	अगर (umax_val > U32_MAX || dst_reg->umax_value > U32_MAX) अणु
+	if (umax_val > U32_MAX || dst_reg->umax_value > U32_MAX) {
 		/* Potential overflow, we know nothing */
 		__mark_reg64_unbounded(dst_reg);
-		वापस;
-	पूर्ण
+		return;
+	}
 	dst_reg->umin_value *= umin_val;
 	dst_reg->umax_value *= umax_val;
-	अगर (dst_reg->umax_value > S64_MAX) अणु
+	if (dst_reg->umax_value > S64_MAX) {
 		/* Overflow possible, we know nothing */
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->smin_value = dst_reg->umin_value;
 		dst_reg->smax_value = dst_reg->umax_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar32_min_max_and(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_subreg_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_subreg_is_स्थिर(dst_reg->var_off);
-	काष्ठा tnum var32_off = tnum_subreg(dst_reg->var_off);
+static void scalar32_min_max_and(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_subreg_is_const(src_reg->var_off);
+	bool dst_known = tnum_subreg_is_const(dst_reg->var_off);
+	struct tnum var32_off = tnum_subreg(dst_reg->var_off);
 	s32 smin_val = src_reg->s32_min_value;
 	u32 umax_val = src_reg->u32_max_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		__mark_reg32_known(dst_reg, var32_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get our minimum from the var_off, since that's inherently
-	 * bitwise.  Our maximum is the minimum of the opeअक्रमs' maxima.
+	 * bitwise.  Our maximum is the minimum of the operands' maxima.
 	 */
 	dst_reg->u32_min_value = var32_off.value;
 	dst_reg->u32_max_value = min(dst_reg->u32_max_value, umax_val);
-	अगर (dst_reg->s32_min_value < 0 || smin_val < 0) अणु
-		/* Lose चिन्हित bounds when ANDing negative numbers,
-		 * ain't nobody got समय क्रम that.
+	if (dst_reg->s32_min_value < 0 || smin_val < 0) {
+		/* Lose signed bounds when ANDing negative numbers,
+		 * ain't nobody got time for that.
 		 */
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ANDing two positives gives a positive, so safe to
-		 * cast result पूर्णांकo s64.
+		 * cast result into s64.
 		 */
 		dst_reg->s32_min_value = dst_reg->u32_min_value;
 		dst_reg->s32_max_value = dst_reg->u32_max_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_and(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_is_स्थिर(dst_reg->var_off);
+static void scalar_min_max_and(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_is_const(src_reg->var_off);
+	bool dst_known = tnum_is_const(dst_reg->var_off);
 	s64 smin_val = src_reg->smin_value;
 	u64 umax_val = src_reg->umax_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		__mark_reg_known(dst_reg, dst_reg->var_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get our minimum from the var_off, since that's inherently
-	 * bitwise.  Our maximum is the minimum of the opeअक्रमs' maxima.
+	 * bitwise.  Our maximum is the minimum of the operands' maxima.
 	 */
 	dst_reg->umin_value = dst_reg->var_off.value;
 	dst_reg->umax_value = min(dst_reg->umax_value, umax_val);
-	अगर (dst_reg->smin_value < 0 || smin_val < 0) अणु
-		/* Lose चिन्हित bounds when ANDing negative numbers,
-		 * ain't nobody got समय क्रम that.
+	if (dst_reg->smin_value < 0 || smin_val < 0) {
+		/* Lose signed bounds when ANDing negative numbers,
+		 * ain't nobody got time for that.
 		 */
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ANDing two positives gives a positive, so safe to
-		 * cast result पूर्णांकo s64.
+		 * cast result into s64.
 		 */
 		dst_reg->smin_value = dst_reg->umin_value;
 		dst_reg->smax_value = dst_reg->umax_value;
-	पूर्ण
+	}
 	/* We may learn something more from the var_off */
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar32_min_max_or(काष्ठा bpf_reg_state *dst_reg,
-				काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_subreg_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_subreg_is_स्थिर(dst_reg->var_off);
-	काष्ठा tnum var32_off = tnum_subreg(dst_reg->var_off);
+static void scalar32_min_max_or(struct bpf_reg_state *dst_reg,
+				struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_subreg_is_const(src_reg->var_off);
+	bool dst_known = tnum_subreg_is_const(dst_reg->var_off);
+	struct tnum var32_off = tnum_subreg(dst_reg->var_off);
 	s32 smin_val = src_reg->s32_min_value;
 	u32 umin_val = src_reg->u32_min_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		__mark_reg32_known(dst_reg, var32_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get our maximum from the var_off, and our minimum is the
-	 * maximum of the opeअक्रमs' minima
+	 * maximum of the operands' minima
 	 */
 	dst_reg->u32_min_value = max(dst_reg->u32_min_value, umin_val);
 	dst_reg->u32_max_value = var32_off.value | var32_off.mask;
-	अगर (dst_reg->s32_min_value < 0 || smin_val < 0) अणु
-		/* Lose चिन्हित bounds when ORing negative numbers,
-		 * ain't nobody got समय क्रम that.
+	if (dst_reg->s32_min_value < 0 || smin_val < 0) {
+		/* Lose signed bounds when ORing negative numbers,
+		 * ain't nobody got time for that.
 		 */
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ORing two positives gives a positive, so safe to
-		 * cast result पूर्णांकo s64.
+		 * cast result into s64.
 		 */
 		dst_reg->s32_min_value = dst_reg->u32_min_value;
 		dst_reg->s32_max_value = dst_reg->u32_max_value;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_or(काष्ठा bpf_reg_state *dst_reg,
-			      काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_is_स्थिर(dst_reg->var_off);
+static void scalar_min_max_or(struct bpf_reg_state *dst_reg,
+			      struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_is_const(src_reg->var_off);
+	bool dst_known = tnum_is_const(dst_reg->var_off);
 	s64 smin_val = src_reg->smin_value;
 	u64 umin_val = src_reg->umin_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		__mark_reg_known(dst_reg, dst_reg->var_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get our maximum from the var_off, and our minimum is the
-	 * maximum of the opeअक्रमs' minima
+	 * maximum of the operands' minima
 	 */
 	dst_reg->umin_value = max(dst_reg->umin_value, umin_val);
 	dst_reg->umax_value = dst_reg->var_off.value | dst_reg->var_off.mask;
-	अगर (dst_reg->smin_value < 0 || smin_val < 0) अणु
-		/* Lose चिन्हित bounds when ORing negative numbers,
-		 * ain't nobody got समय क्रम that.
+	if (dst_reg->smin_value < 0 || smin_val < 0) {
+		/* Lose signed bounds when ORing negative numbers,
+		 * ain't nobody got time for that.
 		 */
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* ORing two positives gives a positive, so safe to
-		 * cast result पूर्णांकo s64.
+		 * cast result into s64.
 		 */
 		dst_reg->smin_value = dst_reg->umin_value;
 		dst_reg->smax_value = dst_reg->umax_value;
-	पूर्ण
+	}
 	/* We may learn something more from the var_off */
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar32_min_max_xor(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_subreg_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_subreg_is_स्थिर(dst_reg->var_off);
-	काष्ठा tnum var32_off = tnum_subreg(dst_reg->var_off);
+static void scalar32_min_max_xor(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_subreg_is_const(src_reg->var_off);
+	bool dst_known = tnum_subreg_is_const(dst_reg->var_off);
+	struct tnum var32_off = tnum_subreg(dst_reg->var_off);
 	s32 smin_val = src_reg->s32_min_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		__mark_reg32_known(dst_reg, var32_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get both minimum and maximum from the var32_off. */
 	dst_reg->u32_min_value = var32_off.value;
 	dst_reg->u32_max_value = var32_off.value | var32_off.mask;
 
-	अगर (dst_reg->s32_min_value >= 0 && smin_val >= 0) अणु
+	if (dst_reg->s32_min_value >= 0 && smin_val >= 0) {
 		/* XORing two positive sign numbers gives a positive,
-		 * so safe to cast u32 result पूर्णांकo s32.
+		 * so safe to cast u32 result into s32.
 		 */
 		dst_reg->s32_min_value = dst_reg->u32_min_value;
 		dst_reg->s32_max_value = dst_reg->u32_max_value;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->s32_min_value = S32_MIN;
 		dst_reg->s32_max_value = S32_MAX;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_xor(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
-	bool src_known = tnum_is_स्थिर(src_reg->var_off);
-	bool dst_known = tnum_is_स्थिर(dst_reg->var_off);
+static void scalar_min_max_xor(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
+	bool src_known = tnum_is_const(src_reg->var_off);
+	bool dst_known = tnum_is_const(dst_reg->var_off);
 	s64 smin_val = src_reg->smin_value;
 
-	अगर (src_known && dst_known) अणु
+	if (src_known && dst_known) {
 		/* dst_reg->var_off.value has been updated earlier */
 		__mark_reg_known(dst_reg, dst_reg->var_off.value);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* We get both minimum and maximum from the var_off. */
 	dst_reg->umin_value = dst_reg->var_off.value;
 	dst_reg->umax_value = dst_reg->var_off.value | dst_reg->var_off.mask;
 
-	अगर (dst_reg->smin_value >= 0 && smin_val >= 0) अणु
+	if (dst_reg->smin_value >= 0 && smin_val >= 0) {
 		/* XORing two positive sign numbers gives a positive,
-		 * so safe to cast u64 result पूर्णांकo s64.
+		 * so safe to cast u64 result into s64.
 		 */
 		dst_reg->smin_value = dst_reg->umin_value;
 		dst_reg->smax_value = dst_reg->umax_value;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->smin_value = S64_MIN;
 		dst_reg->smax_value = S64_MAX;
-	पूर्ण
+	}
 
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम __scalar32_min_max_lsh(काष्ठा bpf_reg_state *dst_reg,
+static void __scalar32_min_max_lsh(struct bpf_reg_state *dst_reg,
 				   u64 umin_val, u64 umax_val)
-अणु
-	/* We lose all sign bit inक्रमmation (except what we can pick
+{
+	/* We lose all sign bit information (except what we can pick
 	 * up from var_off)
 	 */
 	dst_reg->s32_min_value = S32_MIN;
 	dst_reg->s32_max_value = S32_MAX;
-	/* If we might shअगरt our top bit out, then we know nothing */
-	अगर (umax_val > 31 || dst_reg->u32_max_value > 1ULL << (31 - umax_val)) अणु
+	/* If we might shift our top bit out, then we know nothing */
+	if (umax_val > 31 || dst_reg->u32_max_value > 1ULL << (31 - umax_val)) {
 		dst_reg->u32_min_value = 0;
 		dst_reg->u32_max_value = U32_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->u32_min_value <<= umin_val;
 		dst_reg->u32_max_value <<= umax_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar32_min_max_lsh(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar32_min_max_lsh(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
 	u32 umax_val = src_reg->u32_max_value;
 	u32 umin_val = src_reg->u32_min_value;
 	/* u32 alu operation will zext upper bits */
-	काष्ठा tnum subreg = tnum_subreg(dst_reg->var_off);
+	struct tnum subreg = tnum_subreg(dst_reg->var_off);
 
 	__scalar32_min_max_lsh(dst_reg, umin_val, umax_val);
-	dst_reg->var_off = tnum_subreg(tnum_lshअगरt(subreg, umin_val));
+	dst_reg->var_off = tnum_subreg(tnum_lshift(subreg, umin_val));
 	/* Not required but being careful mark reg64 bounds as unknown so
-	 * that we are क्रमced to pick them up from tnum and zext later and
-	 * अगर some path skips this step we are still safe.
+	 * that we are forced to pick them up from tnum and zext later and
+	 * if some path skips this step we are still safe.
 	 */
 	__mark_reg64_unbounded(dst_reg);
 	__update_reg32_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम __scalar64_min_max_lsh(काष्ठा bpf_reg_state *dst_reg,
+static void __scalar64_min_max_lsh(struct bpf_reg_state *dst_reg,
 				   u64 umin_val, u64 umax_val)
-अणु
-	/* Special हाल <<32 because it is a common compiler pattern to sign
-	 * extend subreg by करोing <<32 s>>32. In this हाल अगर 32bit bounds are
-	 * positive we know this shअगरt will also be positive so we can track
-	 * bounds correctly. Otherwise we lose all sign bit inक्रमmation except
+{
+	/* Special case <<32 because it is a common compiler pattern to sign
+	 * extend subreg by doing <<32 s>>32. In this case if 32bit bounds are
+	 * positive we know this shift will also be positive so we can track
+	 * bounds correctly. Otherwise we lose all sign bit information except
 	 * what we can pick up from var_off. Perhaps we can generalize this
-	 * later to shअगरts of any length.
+	 * later to shifts of any length.
 	 */
-	अगर (umin_val == 32 && umax_val == 32 && dst_reg->s32_max_value >= 0)
+	if (umin_val == 32 && umax_val == 32 && dst_reg->s32_max_value >= 0)
 		dst_reg->smax_value = (s64)dst_reg->s32_max_value << 32;
-	अन्यथा
+	else
 		dst_reg->smax_value = S64_MAX;
 
-	अगर (umin_val == 32 && umax_val == 32 && dst_reg->s32_min_value >= 0)
+	if (umin_val == 32 && umax_val == 32 && dst_reg->s32_min_value >= 0)
 		dst_reg->smin_value = (s64)dst_reg->s32_min_value << 32;
-	अन्यथा
+	else
 		dst_reg->smin_value = S64_MIN;
 
-	/* If we might shअगरt our top bit out, then we know nothing */
-	अगर (dst_reg->umax_value > 1ULL << (63 - umax_val)) अणु
+	/* If we might shift our top bit out, then we know nothing */
+	if (dst_reg->umax_value > 1ULL << (63 - umax_val)) {
 		dst_reg->umin_value = 0;
 		dst_reg->umax_value = U64_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_reg->umin_value <<= umin_val;
 		dst_reg->umax_value <<= umax_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम scalar_min_max_lsh(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_lsh(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
 	u64 umax_val = src_reg->umax_value;
 	u64 umin_val = src_reg->umin_value;
 
-	/* scalar64 calc uses 32bit unshअगरted bounds so must be called first */
+	/* scalar64 calc uses 32bit unshifted bounds so must be called first */
 	__scalar64_min_max_lsh(dst_reg, umin_val, umax_val);
 	__scalar32_min_max_lsh(dst_reg, umin_val, umax_val);
 
-	dst_reg->var_off = tnum_lshअगरt(dst_reg->var_off, umin_val);
+	dst_reg->var_off = tnum_lshift(dst_reg->var_off, umin_val);
 	/* We may learn something more from the var_off */
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar32_min_max_rsh(काष्ठा bpf_reg_state *dst_reg,
-				 काष्ठा bpf_reg_state *src_reg)
-अणु
-	काष्ठा tnum subreg = tnum_subreg(dst_reg->var_off);
+static void scalar32_min_max_rsh(struct bpf_reg_state *dst_reg,
+				 struct bpf_reg_state *src_reg)
+{
+	struct tnum subreg = tnum_subreg(dst_reg->var_off);
 	u32 umax_val = src_reg->u32_max_value;
 	u32 umin_val = src_reg->u32_min_value;
 
-	/* BPF_RSH is an अचिन्हित shअगरt.  If the value in dst_reg might
+	/* BPF_RSH is an unsigned shift.  If the value in dst_reg might
 	 * be negative, then either:
 	 * 1) src_reg might be zero, so the sign bit of the result is
-	 *    unknown, so we lose our चिन्हित bounds
-	 * 2) it's known negative, thus the अचिन्हित bounds capture the
-	 *    चिन्हित bounds
-	 * 3) the चिन्हित bounds cross zero, so they tell us nothing
+	 *    unknown, so we lose our signed bounds
+	 * 2) it's known negative, thus the unsigned bounds capture the
+	 *    signed bounds
+	 * 3) the signed bounds cross zero, so they tell us nothing
 	 *    about the result
 	 * If the value in dst_reg is known nonnegative, then again the
-	 * अचिन्हित bounds capture the चिन्हित bounds.
-	 * Thus, in all हालs it suffices to blow away our चिन्हित bounds
-	 * and rely on inferring new ones from the अचिन्हित bounds and
+	 * unsigned bounds capture the signed bounds.
+	 * Thus, in all cases it suffices to blow away our signed bounds
+	 * and rely on inferring new ones from the unsigned bounds and
 	 * var_off of the result.
 	 */
 	dst_reg->s32_min_value = S32_MIN;
 	dst_reg->s32_max_value = S32_MAX;
 
-	dst_reg->var_off = tnum_rshअगरt(subreg, umin_val);
+	dst_reg->var_off = tnum_rshift(subreg, umin_val);
 	dst_reg->u32_min_value >>= umax_val;
 	dst_reg->u32_max_value >>= umin_val;
 
 	__mark_reg64_unbounded(dst_reg);
 	__update_reg32_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar_min_max_rsh(काष्ठा bpf_reg_state *dst_reg,
-			       काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_rsh(struct bpf_reg_state *dst_reg,
+			       struct bpf_reg_state *src_reg)
+{
 	u64 umax_val = src_reg->umax_value;
 	u64 umin_val = src_reg->umin_value;
 
-	/* BPF_RSH is an अचिन्हित shअगरt.  If the value in dst_reg might
+	/* BPF_RSH is an unsigned shift.  If the value in dst_reg might
 	 * be negative, then either:
 	 * 1) src_reg might be zero, so the sign bit of the result is
-	 *    unknown, so we lose our चिन्हित bounds
-	 * 2) it's known negative, thus the अचिन्हित bounds capture the
-	 *    चिन्हित bounds
-	 * 3) the चिन्हित bounds cross zero, so they tell us nothing
+	 *    unknown, so we lose our signed bounds
+	 * 2) it's known negative, thus the unsigned bounds capture the
+	 *    signed bounds
+	 * 3) the signed bounds cross zero, so they tell us nothing
 	 *    about the result
 	 * If the value in dst_reg is known nonnegative, then again the
-	 * अचिन्हित bounds capture the चिन्हित bounds.
-	 * Thus, in all हालs it suffices to blow away our चिन्हित bounds
-	 * and rely on inferring new ones from the अचिन्हित bounds and
+	 * unsigned bounds capture the signed bounds.
+	 * Thus, in all cases it suffices to blow away our signed bounds
+	 * and rely on inferring new ones from the unsigned bounds and
 	 * var_off of the result.
 	 */
 	dst_reg->smin_value = S64_MIN;
 	dst_reg->smax_value = S64_MAX;
-	dst_reg->var_off = tnum_rshअगरt(dst_reg->var_off, umin_val);
+	dst_reg->var_off = tnum_rshift(dst_reg->var_off, umin_val);
 	dst_reg->umin_value >>= umax_val;
 	dst_reg->umax_value >>= umin_val;
 
 	/* Its not easy to operate on alu32 bounds here because it depends
-	 * on bits being shअगरted in. Take easy way out and mark unbounded
+	 * on bits being shifted in. Take easy way out and mark unbounded
 	 * so we can recalculate later from tnum.
 	 */
 	__mark_reg32_unbounded(dst_reg);
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar32_min_max_arsh(काष्ठा bpf_reg_state *dst_reg,
-				  काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar32_min_max_arsh(struct bpf_reg_state *dst_reg,
+				  struct bpf_reg_state *src_reg)
+{
 	u64 umin_val = src_reg->u32_min_value;
 
 	/* Upon reaching here, src_known is true and
@@ -7477,7 +7476,7 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	dst_reg->s32_min_value = (u32)(((s32)dst_reg->s32_min_value) >> umin_val);
 	dst_reg->s32_max_value = (u32)(((s32)dst_reg->s32_max_value) >> umin_val);
 
-	dst_reg->var_off = tnum_arshअगरt(tnum_subreg(dst_reg->var_off), umin_val, 32);
+	dst_reg->var_off = tnum_arshift(tnum_subreg(dst_reg->var_off), umin_val, 32);
 
 	/* blow away the dst_reg umin_value/umax_value and rely on
 	 * dst_reg var_off to refine the result.
@@ -7487,11 +7486,11 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 
 	__mark_reg64_unbounded(dst_reg);
 	__update_reg32_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम scalar_min_max_arsh(काष्ठा bpf_reg_state *dst_reg,
-				काष्ठा bpf_reg_state *src_reg)
-अणु
+static void scalar_min_max_arsh(struct bpf_reg_state *dst_reg,
+				struct bpf_reg_state *src_reg)
+{
 	u64 umin_val = src_reg->umin_value;
 
 	/* Upon reaching here, src_known is true and umax_val is equal
@@ -7500,7 +7499,7 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	dst_reg->smin_value >>= umin_val;
 	dst_reg->smax_value >>= umin_val;
 
-	dst_reg->var_off = tnum_arshअगरt(dst_reg->var_off, umin_val, 64);
+	dst_reg->var_off = tnum_arshift(dst_reg->var_off, umin_val, 64);
 
 	/* blow away the dst_reg umin_value/umax_value and rely on
 	 * dst_reg var_off to refine the result.
@@ -7509,23 +7508,23 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	dst_reg->umax_value = U64_MAX;
 
 	/* Its not easy to operate on alu32 bounds here because it depends
-	 * on bits being shअगरted in from upper 32-bits. Take easy way out
+	 * on bits being shifted in from upper 32-bits. Take easy way out
 	 * and mark unbounded so we can recalculate later from tnum.
 	 */
 	__mark_reg32_unbounded(dst_reg);
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-/* WARNING: This function करोes calculations on 64-bit values, but the actual
- * execution may occur on 32-bit values. Thereक्रमe, things like bitshअगरts
- * need extra checks in the 32-bit हाल.
+/* WARNING: This function does calculations on 64-bit values, but the actual
+ * execution may occur on 32-bit values. Therefore, things like bitshifts
+ * need extra checks in the 32-bit case.
  */
-अटल पूर्णांक adjust_scalar_min_max_vals(काष्ठा bpf_verअगरier_env *env,
-				      काष्ठा bpf_insn *insn,
-				      काष्ठा bpf_reg_state *dst_reg,
-				      काष्ठा bpf_reg_state src_reg)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
+static int adjust_scalar_min_max_vals(struct bpf_verifier_env *env,
+				      struct bpf_insn *insn,
+				      struct bpf_reg_state *dst_reg,
+				      struct bpf_reg_state src_reg)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
 	u8 opcode = BPF_OP(insn->code);
 	bool src_known;
 	s64 smin_val, smax_val;
@@ -7534,7 +7533,7 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	u32 u32_min_val, u32_max_val;
 	u64 insn_bitness = (BPF_CLASS(insn->code) == BPF_ALU64) ? 64 : 32;
 	bool alu32 = (BPF_CLASS(insn->code) != BPF_ALU64);
-	पूर्णांक ret;
+	int ret;
 
 	smin_val = src_reg.smin_value;
 	smax_val = src_reg.smax_value;
@@ -7546,298 +7545,298 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	u32_min_val = src_reg.u32_min_value;
 	u32_max_val = src_reg.u32_max_value;
 
-	अगर (alu32) अणु
-		src_known = tnum_subreg_is_स्थिर(src_reg.var_off);
-		अगर ((src_known &&
+	if (alu32) {
+		src_known = tnum_subreg_is_const(src_reg.var_off);
+		if ((src_known &&
 		     (s32_min_val != s32_max_val || u32_min_val != u32_max_val)) ||
-		    s32_min_val > s32_max_val || u32_min_val > u32_max_val) अणु
-			/* Taपूर्णांक dst रेजिस्टर अगर offset had invalid bounds
+		    s32_min_val > s32_max_val || u32_min_val > u32_max_val) {
+			/* Taint dst register if offset had invalid bounds
 			 * derived from e.g. dead branches.
 			 */
 			__mark_reg_unknown(env, dst_reg);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		src_known = tnum_is_स्थिर(src_reg.var_off);
-		अगर ((src_known &&
+			return 0;
+		}
+	} else {
+		src_known = tnum_is_const(src_reg.var_off);
+		if ((src_known &&
 		     (smin_val != smax_val || umin_val != umax_val)) ||
-		    smin_val > smax_val || umin_val > umax_val) अणु
-			/* Taपूर्णांक dst रेजिस्टर अगर offset had invalid bounds
+		    smin_val > smax_val || umin_val > umax_val) {
+			/* Taint dst register if offset had invalid bounds
 			 * derived from e.g. dead branches.
 			 */
 			__mark_reg_unknown(env, dst_reg);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (!src_known &&
-	    opcode != BPF_ADD && opcode != BPF_SUB && opcode != BPF_AND) अणु
+	if (!src_known &&
+	    opcode != BPF_ADD && opcode != BPF_SUB && opcode != BPF_AND) {
 		__mark_reg_unknown(env, dst_reg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (sanitize_needed(opcode)) अणु
+	if (sanitize_needed(opcode)) {
 		ret = sanitize_val_alu(env, insn);
-		अगर (ret < 0)
-			वापस sanitize_err(env, insn, ret, शून्य, शून्य);
-	पूर्ण
+		if (ret < 0)
+			return sanitize_err(env, insn, ret, NULL, NULL);
+	}
 
-	/* Calculate sign/अचिन्हित bounds and tnum क्रम alu32 and alu64 bit ops.
-	 * There are two classes of inकाष्ठाions: The first class we track both
-	 * alu32 and alu64 sign/अचिन्हित bounds independently this provides the
+	/* Calculate sign/unsigned bounds and tnum for alu32 and alu64 bit ops.
+	 * There are two classes of instructions: The first class we track both
+	 * alu32 and alu64 sign/unsigned bounds independently this provides the
 	 * greatest amount of precision when alu operations are mixed with jmp32
 	 * operations. These operations are BPF_ADD, BPF_SUB, BPF_MUL, BPF_ADD,
 	 * and BPF_OR. This is possible because these ops have fairly easy to
 	 * understand and calculate behavior in both 32-bit and 64-bit alu ops.
-	 * See alu32 verअगरier tests क्रम examples. The second class of
+	 * See alu32 verifier tests for examples. The second class of
 	 * operations, BPF_LSH, BPF_RSH, and BPF_ARSH, however are not so easy
-	 * with regards to tracking sign/अचिन्हित bounds because the bits may
-	 * cross subreg boundaries in the alu64 हाल. When this happens we mark
+	 * with regards to tracking sign/unsigned bounds because the bits may
+	 * cross subreg boundaries in the alu64 case. When this happens we mark
 	 * the reg unbounded in the subreg bound space and use the resulting
-	 * tnum to calculate an approximation of the sign/अचिन्हित bounds.
+	 * tnum to calculate an approximation of the sign/unsigned bounds.
 	 */
-	चयन (opcode) अणु
-	हाल BPF_ADD:
+	switch (opcode) {
+	case BPF_ADD:
 		scalar32_min_max_add(dst_reg, &src_reg);
 		scalar_min_max_add(dst_reg, &src_reg);
 		dst_reg->var_off = tnum_add(dst_reg->var_off, src_reg.var_off);
-		अवरोध;
-	हाल BPF_SUB:
+		break;
+	case BPF_SUB:
 		scalar32_min_max_sub(dst_reg, &src_reg);
 		scalar_min_max_sub(dst_reg, &src_reg);
 		dst_reg->var_off = tnum_sub(dst_reg->var_off, src_reg.var_off);
-		अवरोध;
-	हाल BPF_MUL:
+		break;
+	case BPF_MUL:
 		dst_reg->var_off = tnum_mul(dst_reg->var_off, src_reg.var_off);
 		scalar32_min_max_mul(dst_reg, &src_reg);
 		scalar_min_max_mul(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_AND:
+		break;
+	case BPF_AND:
 		dst_reg->var_off = tnum_and(dst_reg->var_off, src_reg.var_off);
 		scalar32_min_max_and(dst_reg, &src_reg);
 		scalar_min_max_and(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_OR:
+		break;
+	case BPF_OR:
 		dst_reg->var_off = tnum_or(dst_reg->var_off, src_reg.var_off);
 		scalar32_min_max_or(dst_reg, &src_reg);
 		scalar_min_max_or(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_XOR:
+		break;
+	case BPF_XOR:
 		dst_reg->var_off = tnum_xor(dst_reg->var_off, src_reg.var_off);
 		scalar32_min_max_xor(dst_reg, &src_reg);
 		scalar_min_max_xor(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_LSH:
-		अगर (umax_val >= insn_bitness) अणु
-			/* Shअगरts greater than 31 or 63 are undefined.
-			 * This includes shअगरts by a negative number.
+		break;
+	case BPF_LSH:
+		if (umax_val >= insn_bitness) {
+			/* Shifts greater than 31 or 63 are undefined.
+			 * This includes shifts by a negative number.
 			 */
 			mark_reg_unknown(env, regs, insn->dst_reg);
-			अवरोध;
-		पूर्ण
-		अगर (alu32)
+			break;
+		}
+		if (alu32)
 			scalar32_min_max_lsh(dst_reg, &src_reg);
-		अन्यथा
+		else
 			scalar_min_max_lsh(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_RSH:
-		अगर (umax_val >= insn_bitness) अणु
-			/* Shअगरts greater than 31 or 63 are undefined.
-			 * This includes shअगरts by a negative number.
+		break;
+	case BPF_RSH:
+		if (umax_val >= insn_bitness) {
+			/* Shifts greater than 31 or 63 are undefined.
+			 * This includes shifts by a negative number.
 			 */
 			mark_reg_unknown(env, regs, insn->dst_reg);
-			अवरोध;
-		पूर्ण
-		अगर (alu32)
+			break;
+		}
+		if (alu32)
 			scalar32_min_max_rsh(dst_reg, &src_reg);
-		अन्यथा
+		else
 			scalar_min_max_rsh(dst_reg, &src_reg);
-		अवरोध;
-	हाल BPF_ARSH:
-		अगर (umax_val >= insn_bitness) अणु
-			/* Shअगरts greater than 31 or 63 are undefined.
-			 * This includes shअगरts by a negative number.
+		break;
+	case BPF_ARSH:
+		if (umax_val >= insn_bitness) {
+			/* Shifts greater than 31 or 63 are undefined.
+			 * This includes shifts by a negative number.
 			 */
 			mark_reg_unknown(env, regs, insn->dst_reg);
-			अवरोध;
-		पूर्ण
-		अगर (alu32)
+			break;
+		}
+		if (alu32)
 			scalar32_min_max_arsh(dst_reg, &src_reg);
-		अन्यथा
+		else
 			scalar_min_max_arsh(dst_reg, &src_reg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mark_reg_unknown(env, regs, insn->dst_reg);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* ALU32 ops are zero extended पूर्णांकo 64bit रेजिस्टर */
-	अगर (alu32)
+	/* ALU32 ops are zero extended into 64bit register */
+	if (alu32)
 		zext_32_to_64(dst_reg);
 
 	__update_reg_bounds(dst_reg);
 	__reg_deduce_bounds(dst_reg);
 	__reg_bound_offset(dst_reg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Handles ALU ops other than BPF_END, BPF_NEG and BPF_MOV: computes new min/max
  * and var_off.
  */
-अटल पूर्णांक adjust_reg_min_max_vals(काष्ठा bpf_verअगरier_env *env,
-				   काष्ठा bpf_insn *insn)
-अणु
-	काष्ठा bpf_verअगरier_state *vstate = env->cur_state;
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *regs = state->regs, *dst_reg, *src_reg;
-	काष्ठा bpf_reg_state *ptr_reg = शून्य, off_reg = अणु0पूर्ण;
+static int adjust_reg_min_max_vals(struct bpf_verifier_env *env,
+				   struct bpf_insn *insn)
+{
+	struct bpf_verifier_state *vstate = env->cur_state;
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *regs = state->regs, *dst_reg, *src_reg;
+	struct bpf_reg_state *ptr_reg = NULL, off_reg = {0};
 	u8 opcode = BPF_OP(insn->code);
-	पूर्णांक err;
+	int err;
 
 	dst_reg = &regs[insn->dst_reg];
-	src_reg = शून्य;
-	अगर (dst_reg->type != SCALAR_VALUE)
+	src_reg = NULL;
+	if (dst_reg->type != SCALAR_VALUE)
 		ptr_reg = dst_reg;
-	अन्यथा
+	else
 		/* Make sure ID is cleared otherwise dst_reg min/max could be
-		 * incorrectly propagated पूर्णांकo other रेजिस्टरs by find_equal_scalars()
+		 * incorrectly propagated into other registers by find_equal_scalars()
 		 */
 		dst_reg->id = 0;
-	अगर (BPF_SRC(insn->code) == BPF_X) अणु
+	if (BPF_SRC(insn->code) == BPF_X) {
 		src_reg = &regs[insn->src_reg];
-		अगर (src_reg->type != SCALAR_VALUE) अणु
-			अगर (dst_reg->type != SCALAR_VALUE) अणु
-				/* Combining two poपूर्णांकers by any ALU op yields
+		if (src_reg->type != SCALAR_VALUE) {
+			if (dst_reg->type != SCALAR_VALUE) {
+				/* Combining two pointers by any ALU op yields
 				 * an arbitrary scalar. Disallow all math except
-				 * poपूर्णांकer subtraction
+				 * pointer subtraction
 				 */
-				अगर (opcode == BPF_SUB && env->allow_ptr_leaks) अणु
+				if (opcode == BPF_SUB && env->allow_ptr_leaks) {
 					mark_reg_unknown(env, regs, insn->dst_reg);
-					वापस 0;
-				पूर्ण
+					return 0;
+				}
 				verbose(env, "R%d pointer %s pointer prohibited\n",
 					insn->dst_reg,
 					bpf_alu_string[opcode >> 4]);
-				वापस -EACCES;
-			पूर्ण अन्यथा अणु
-				/* scalar += poपूर्णांकer
+				return -EACCES;
+			} else {
+				/* scalar += pointer
 				 * This is legal, but we have to reverse our
 				 * src/dest handling in computing the range
 				 */
 				err = mark_chain_precision(env, insn->dst_reg);
-				अगर (err)
-					वापस err;
-				वापस adjust_ptr_min_max_vals(env, insn,
+				if (err)
+					return err;
+				return adjust_ptr_min_max_vals(env, insn,
 							       src_reg, dst_reg);
-			पूर्ण
-		पूर्ण अन्यथा अगर (ptr_reg) अणु
-			/* poपूर्णांकer += scalar */
+			}
+		} else if (ptr_reg) {
+			/* pointer += scalar */
 			err = mark_chain_precision(env, insn->src_reg);
-			अगर (err)
-				वापस err;
-			वापस adjust_ptr_min_max_vals(env, insn,
+			if (err)
+				return err;
+			return adjust_ptr_min_max_vals(env, insn,
 						       dst_reg, src_reg);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Pretend the src is a reg with a known value, since we only
-		 * need to be able to पढ़ो from this state.
+		 * need to be able to read from this state.
 		 */
 		off_reg.type = SCALAR_VALUE;
 		__mark_reg_known(&off_reg, insn->imm);
 		src_reg = &off_reg;
-		अगर (ptr_reg) /* poपूर्णांकer += K */
-			वापस adjust_ptr_min_max_vals(env, insn,
+		if (ptr_reg) /* pointer += K */
+			return adjust_ptr_min_max_vals(env, insn,
 						       ptr_reg, src_reg);
-	पूर्ण
+	}
 
 	/* Got here implies adding two SCALAR_VALUEs */
-	अगर (WARN_ON_ONCE(ptr_reg)) अणु
-		prपूर्णांक_verअगरier_state(env, state);
+	if (WARN_ON_ONCE(ptr_reg)) {
+		print_verifier_state(env, state);
 		verbose(env, "verifier internal error: unexpected ptr_reg\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (WARN_ON(!src_reg)) अणु
-		prपूर्णांक_verअगरier_state(env, state);
+		return -EINVAL;
+	}
+	if (WARN_ON(!src_reg)) {
+		print_verifier_state(env, state);
 		verbose(env, "verifier internal error: no src_reg\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस adjust_scalar_min_max_vals(env, insn, dst_reg, *src_reg);
-पूर्ण
+		return -EINVAL;
+	}
+	return adjust_scalar_min_max_vals(env, insn, dst_reg, *src_reg);
+}
 
 /* check validity of 32-bit and 64-bit arithmetic operations */
-अटल पूर्णांक check_alu_op(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
+static int check_alu_op(struct bpf_verifier_env *env, struct bpf_insn *insn)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
 	u8 opcode = BPF_OP(insn->code);
-	पूर्णांक err;
+	int err;
 
-	अगर (opcode == BPF_END || opcode == BPF_NEG) अणु
-		अगर (opcode == BPF_NEG) अणु
-			अगर (BPF_SRC(insn->code) != 0 ||
+	if (opcode == BPF_END || opcode == BPF_NEG) {
+		if (opcode == BPF_NEG) {
+			if (BPF_SRC(insn->code) != 0 ||
 			    insn->src_reg != BPF_REG_0 ||
-			    insn->off != 0 || insn->imm != 0) अणु
+			    insn->off != 0 || insn->imm != 0) {
 				verbose(env, "BPF_NEG uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (insn->src_reg != BPF_REG_0 || insn->off != 0 ||
+				return -EINVAL;
+			}
+		} else {
+			if (insn->src_reg != BPF_REG_0 || insn->off != 0 ||
 			    (insn->imm != 16 && insn->imm != 32 && insn->imm != 64) ||
-			    BPF_CLASS(insn->code) == BPF_ALU64) अणु
+			    BPF_CLASS(insn->code) == BPF_ALU64) {
 				verbose(env, "BPF_END uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		/* check src opeअक्रम */
+		/* check src operand */
 		err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (is_poपूर्णांकer_value(env, insn->dst_reg)) अणु
+		if (is_pointer_value(env, insn->dst_reg)) {
 			verbose(env, "R%d pointer arithmetic prohibited\n",
 				insn->dst_reg);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 
-		/* check dest opeअक्रम */
+		/* check dest operand */
 		err = check_reg_arg(env, insn->dst_reg, DST_OP);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-	पूर्ण अन्यथा अगर (opcode == BPF_MOV) अणु
+	} else if (opcode == BPF_MOV) {
 
-		अगर (BPF_SRC(insn->code) == BPF_X) अणु
-			अगर (insn->imm != 0 || insn->off != 0) अणु
+		if (BPF_SRC(insn->code) == BPF_X) {
+			if (insn->imm != 0 || insn->off != 0) {
 				verbose(env, "BPF_MOV uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			/* check src opeअक्रम */
+			/* check src operand */
 			err = check_reg_arg(env, insn->src_reg, SRC_OP);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अणु
-			अगर (insn->src_reg != BPF_REG_0 || insn->off != 0) अणु
+			if (err)
+				return err;
+		} else {
+			if (insn->src_reg != BPF_REG_0 || insn->off != 0) {
 				verbose(env, "BPF_MOV uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		/* check dest opeअक्रम, mark as required later */
+		/* check dest operand, mark as required later */
 		err = check_reg_arg(env, insn->dst_reg, DST_OP_NO_MARK);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (BPF_SRC(insn->code) == BPF_X) अणु
-			काष्ठा bpf_reg_state *src_reg = regs + insn->src_reg;
-			काष्ठा bpf_reg_state *dst_reg = regs + insn->dst_reg;
+		if (BPF_SRC(insn->code) == BPF_X) {
+			struct bpf_reg_state *src_reg = regs + insn->src_reg;
+			struct bpf_reg_state *dst_reg = regs + insn->dst_reg;
 
-			अगर (BPF_CLASS(insn->code) == BPF_ALU64) अणु
-				/* हाल: R1 = R2
-				 * copy रेजिस्टर state to dest reg
+			if (BPF_CLASS(insn->code) == BPF_ALU64) {
+				/* case: R1 = R2
+				 * copy register state to dest reg
 				 */
-				अगर (src_reg->type == SCALAR_VALUE && !src_reg->id)
-					/* Assign src and dst रेजिस्टरs the same ID
+				if (src_reg->type == SCALAR_VALUE && !src_reg->id)
+					/* Assign src and dst registers the same ID
 					 * that will be used by find_equal_scalars()
 					 * to propagate min/max range.
 					 */
@@ -7845,155 +7844,155 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 				*dst_reg = *src_reg;
 				dst_reg->live |= REG_LIVE_WRITTEN;
 				dst_reg->subreg_def = DEF_NOT_SUBREG;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* R1 = (u32) R2 */
-				अगर (is_poपूर्णांकer_value(env, insn->src_reg)) अणु
+				if (is_pointer_value(env, insn->src_reg)) {
 					verbose(env,
 						"R%d partial copy of pointer\n",
 						insn->src_reg);
-					वापस -EACCES;
-				पूर्ण अन्यथा अगर (src_reg->type == SCALAR_VALUE) अणु
+					return -EACCES;
+				} else if (src_reg->type == SCALAR_VALUE) {
 					*dst_reg = *src_reg;
 					/* Make sure ID is cleared otherwise
 					 * dst_reg min/max could be incorrectly
-					 * propagated पूर्णांकo src_reg by find_equal_scalars()
+					 * propagated into src_reg by find_equal_scalars()
 					 */
 					dst_reg->id = 0;
 					dst_reg->live |= REG_LIVE_WRITTEN;
 					dst_reg->subreg_def = env->insn_idx + 1;
-				पूर्ण अन्यथा अणु
+				} else {
 					mark_reg_unknown(env, regs,
 							 insn->dst_reg);
-				पूर्ण
+				}
 				zext_32_to_64(dst_reg);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* हाल: R = imm
-			 * remember the value we stored पूर्णांकo this reg
+			}
+		} else {
+			/* case: R = imm
+			 * remember the value we stored into this reg
 			 */
-			/* clear any state __mark_reg_known करोesn't set */
+			/* clear any state __mark_reg_known doesn't set */
 			mark_reg_unknown(env, regs, insn->dst_reg);
 			regs[insn->dst_reg].type = SCALAR_VALUE;
-			अगर (BPF_CLASS(insn->code) == BPF_ALU64) अणु
+			if (BPF_CLASS(insn->code) == BPF_ALU64) {
 				__mark_reg_known(regs + insn->dst_reg,
 						 insn->imm);
-			पूर्ण अन्यथा अणु
+			} else {
 				__mark_reg_known(regs + insn->dst_reg,
 						 (u32)insn->imm);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण अन्यथा अगर (opcode > BPF_END) अणु
+	} else if (opcode > BPF_END) {
 		verbose(env, "invalid BPF_ALU opcode %x\n", opcode);
-		वापस -EINVAL;
+		return -EINVAL;
 
-	पूर्ण अन्यथा अणु	/* all other ALU ops: and, sub, xor, add, ... */
+	} else {	/* all other ALU ops: and, sub, xor, add, ... */
 
-		अगर (BPF_SRC(insn->code) == BPF_X) अणु
-			अगर (insn->imm != 0 || insn->off != 0) अणु
+		if (BPF_SRC(insn->code) == BPF_X) {
+			if (insn->imm != 0 || insn->off != 0) {
 				verbose(env, "BPF_ALU uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-			/* check src1 opeअक्रम */
+				return -EINVAL;
+			}
+			/* check src1 operand */
 			err = check_reg_arg(env, insn->src_reg, SRC_OP);
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अणु
-			अगर (insn->src_reg != BPF_REG_0 || insn->off != 0) अणु
+			if (err)
+				return err;
+		} else {
+			if (insn->src_reg != BPF_REG_0 || insn->off != 0) {
 				verbose(env, "BPF_ALU uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		/* check src2 opeअक्रम */
+		/* check src2 operand */
 		err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर ((opcode == BPF_MOD || opcode == BPF_DIV) &&
-		    BPF_SRC(insn->code) == BPF_K && insn->imm == 0) अणु
+		if ((opcode == BPF_MOD || opcode == BPF_DIV) &&
+		    BPF_SRC(insn->code) == BPF_K && insn->imm == 0) {
 			verbose(env, "div by zero\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर ((opcode == BPF_LSH || opcode == BPF_RSH ||
-		     opcode == BPF_ARSH) && BPF_SRC(insn->code) == BPF_K) अणु
-			पूर्णांक size = BPF_CLASS(insn->code) == BPF_ALU64 ? 64 : 32;
+		if ((opcode == BPF_LSH || opcode == BPF_RSH ||
+		     opcode == BPF_ARSH) && BPF_SRC(insn->code) == BPF_K) {
+			int size = BPF_CLASS(insn->code) == BPF_ALU64 ? 64 : 32;
 
-			अगर (insn->imm < 0 || insn->imm >= size) अणु
+			if (insn->imm < 0 || insn->imm >= size) {
 				verbose(env, "invalid shift %d\n", insn->imm);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		/* check dest opeअक्रम */
+		/* check dest operand */
 		err = check_reg_arg(env, insn->dst_reg, DST_OP_NO_MARK);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		वापस adjust_reg_min_max_vals(env, insn);
-	पूर्ण
+		return adjust_reg_min_max_vals(env, insn);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __find_good_pkt_poपूर्णांकers(काष्ठा bpf_func_state *state,
-				     काष्ठा bpf_reg_state *dst_reg,
-				     क्रमागत bpf_reg_type type, पूर्णांक new_range)
-अणु
-	काष्ठा bpf_reg_state *reg;
-	पूर्णांक i;
+static void __find_good_pkt_pointers(struct bpf_func_state *state,
+				     struct bpf_reg_state *dst_reg,
+				     enum bpf_reg_type type, int new_range)
+{
+	struct bpf_reg_state *reg;
+	int i;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++) अणु
+	for (i = 0; i < MAX_BPF_REG; i++) {
 		reg = &state->regs[i];
-		अगर (reg->type == type && reg->id == dst_reg->id)
-			/* keep the maximum range alपढ़ोy checked */
+		if (reg->type == type && reg->id == dst_reg->id)
+			/* keep the maximum range already checked */
 			reg->range = max(reg->range, new_range);
-	पूर्ण
+	}
 
-	bpf_क्रम_each_spilled_reg(i, state, reg) अणु
-		अगर (!reg)
-			जारी;
-		अगर (reg->type == type && reg->id == dst_reg->id)
+	bpf_for_each_spilled_reg(i, state, reg) {
+		if (!reg)
+			continue;
+		if (reg->type == type && reg->id == dst_reg->id)
 			reg->range = max(reg->range, new_range);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम find_good_pkt_poपूर्णांकers(काष्ठा bpf_verअगरier_state *vstate,
-				   काष्ठा bpf_reg_state *dst_reg,
-				   क्रमागत bpf_reg_type type,
-				   bool range_right_खोलो)
-अणु
-	पूर्णांक new_range, i;
+static void find_good_pkt_pointers(struct bpf_verifier_state *vstate,
+				   struct bpf_reg_state *dst_reg,
+				   enum bpf_reg_type type,
+				   bool range_right_open)
+{
+	int new_range, i;
 
-	अगर (dst_reg->off < 0 ||
-	    (dst_reg->off == 0 && range_right_खोलो))
-		/* This करोesn't give us any range */
-		वापस;
+	if (dst_reg->off < 0 ||
+	    (dst_reg->off == 0 && range_right_open))
+		/* This doesn't give us any range */
+		return;
 
-	अगर (dst_reg->umax_value > MAX_PACKET_OFF ||
+	if (dst_reg->umax_value > MAX_PACKET_OFF ||
 	    dst_reg->umax_value + dst_reg->off > MAX_PACKET_OFF)
 		/* Risk of overflow.  For instance, ptr + (1<<63) may be less
 		 * than pkt_end, but that's because it's also less than pkt.
 		 */
-		वापस;
+		return;
 
 	new_range = dst_reg->off;
-	अगर (range_right_खोलो)
+	if (range_right_open)
 		new_range--;
 
-	/* Examples क्रम रेजिस्टर markings:
+	/* Examples for register markings:
 	 *
-	 * pkt_data in dst रेजिस्टर:
+	 * pkt_data in dst register:
 	 *
 	 *   r2 = r3;
 	 *   r2 += 8;
-	 *   अगर (r2 > pkt_end) जाओ <handle exception>
+	 *   if (r2 > pkt_end) goto <handle exception>
 	 *   <access okay>
 	 *
 	 *   r2 = r3;
 	 *   r2 += 8;
-	 *   अगर (r2 < pkt_end) जाओ <access okay>
+	 *   if (r2 < pkt_end) goto <access okay>
 	 *   <handle exception>
 	 *
 	 *   Where:
@@ -8001,16 +8000,16 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	 *     r2=pkt(id=n,off=8,r=0)
 	 *     r3=pkt(id=n,off=0,r=0)
 	 *
-	 * pkt_data in src रेजिस्टर:
+	 * pkt_data in src register:
 	 *
 	 *   r2 = r3;
 	 *   r2 += 8;
-	 *   अगर (pkt_end >= r2) जाओ <access okay>
+	 *   if (pkt_end >= r2) goto <access okay>
 	 *   <handle exception>
 	 *
 	 *   r2 = r3;
 	 *   r2 += 8;
-	 *   अगर (pkt_end <= r2) जाओ <handle exception>
+	 *   if (pkt_end <= r2) goto <handle exception>
 	 *   <access okay>
 	 *
 	 *   Where:
@@ -8018,207 +8017,207 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	 *     r2=pkt(id=n,off=8,r=0)
 	 *     r3=pkt(id=n,off=0,r=0)
 	 *
-	 * Find रेजिस्टर r3 and mark its range as r3=pkt(id=n,off=0,r=8)
+	 * Find register r3 and mark its range as r3=pkt(id=n,off=0,r=8)
 	 * or r3=pkt(id=n,off=0,r=8-1), so that range of bytes [r3, r3 + 8)
 	 * and [r3, r3 + 8-1) respectively is safe to access depending on
 	 * the check.
 	 */
 
 	/* If our ids match, then we must have the same max_value.  And we
-	 * करोn't care about the other reg's fixed offset, since if it's too big
+	 * don't care about the other reg's fixed offset, since if it's too big
 	 * the range won't allow anything.
-	 * dst_reg->off is known < MAX_PACKET_OFF, thereक्रमe it fits in a u16.
+	 * dst_reg->off is known < MAX_PACKET_OFF, therefore it fits in a u16.
 	 */
-	क्रम (i = 0; i <= vstate->curframe; i++)
-		__find_good_pkt_poपूर्णांकers(vstate->frame[i], dst_reg, type,
+	for (i = 0; i <= vstate->curframe; i++)
+		__find_good_pkt_pointers(vstate->frame[i], dst_reg, type,
 					 new_range);
-पूर्ण
+}
 
-अटल पूर्णांक is_branch32_taken(काष्ठा bpf_reg_state *reg, u32 val, u8 opcode)
-अणु
-	काष्ठा tnum subreg = tnum_subreg(reg->var_off);
+static int is_branch32_taken(struct bpf_reg_state *reg, u32 val, u8 opcode)
+{
+	struct tnum subreg = tnum_subreg(reg->var_off);
 	s32 sval = (s32)val;
 
-	चयन (opcode) अणु
-	हाल BPF_JEQ:
-		अगर (tnum_is_स्थिर(subreg))
-			वापस !!tnum_equals_स्थिर(subreg, val);
-		अवरोध;
-	हाल BPF_JNE:
-		अगर (tnum_is_स्थिर(subreg))
-			वापस !tnum_equals_स्थिर(subreg, val);
-		अवरोध;
-	हाल BPF_JSET:
-		अगर ((~subreg.mask & subreg.value) & val)
-			वापस 1;
-		अगर (!((subreg.mask | subreg.value) & val))
-			वापस 0;
-		अवरोध;
-	हाल BPF_JGT:
-		अगर (reg->u32_min_value > val)
-			वापस 1;
-		अन्यथा अगर (reg->u32_max_value <= val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSGT:
-		अगर (reg->s32_min_value > sval)
-			वापस 1;
-		अन्यथा अगर (reg->s32_max_value <= sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JLT:
-		अगर (reg->u32_max_value < val)
-			वापस 1;
-		अन्यथा अगर (reg->u32_min_value >= val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSLT:
-		अगर (reg->s32_max_value < sval)
-			वापस 1;
-		अन्यथा अगर (reg->s32_min_value >= sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JGE:
-		अगर (reg->u32_min_value >= val)
-			वापस 1;
-		अन्यथा अगर (reg->u32_max_value < val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSGE:
-		अगर (reg->s32_min_value >= sval)
-			वापस 1;
-		अन्यथा अगर (reg->s32_max_value < sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JLE:
-		अगर (reg->u32_max_value <= val)
-			वापस 1;
-		अन्यथा अगर (reg->u32_min_value > val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSLE:
-		अगर (reg->s32_max_value <= sval)
-			वापस 1;
-		अन्यथा अगर (reg->s32_min_value > sval)
-			वापस 0;
-		अवरोध;
-	पूर्ण
+	switch (opcode) {
+	case BPF_JEQ:
+		if (tnum_is_const(subreg))
+			return !!tnum_equals_const(subreg, val);
+		break;
+	case BPF_JNE:
+		if (tnum_is_const(subreg))
+			return !tnum_equals_const(subreg, val);
+		break;
+	case BPF_JSET:
+		if ((~subreg.mask & subreg.value) & val)
+			return 1;
+		if (!((subreg.mask | subreg.value) & val))
+			return 0;
+		break;
+	case BPF_JGT:
+		if (reg->u32_min_value > val)
+			return 1;
+		else if (reg->u32_max_value <= val)
+			return 0;
+		break;
+	case BPF_JSGT:
+		if (reg->s32_min_value > sval)
+			return 1;
+		else if (reg->s32_max_value <= sval)
+			return 0;
+		break;
+	case BPF_JLT:
+		if (reg->u32_max_value < val)
+			return 1;
+		else if (reg->u32_min_value >= val)
+			return 0;
+		break;
+	case BPF_JSLT:
+		if (reg->s32_max_value < sval)
+			return 1;
+		else if (reg->s32_min_value >= sval)
+			return 0;
+		break;
+	case BPF_JGE:
+		if (reg->u32_min_value >= val)
+			return 1;
+		else if (reg->u32_max_value < val)
+			return 0;
+		break;
+	case BPF_JSGE:
+		if (reg->s32_min_value >= sval)
+			return 1;
+		else if (reg->s32_max_value < sval)
+			return 0;
+		break;
+	case BPF_JLE:
+		if (reg->u32_max_value <= val)
+			return 1;
+		else if (reg->u32_min_value > val)
+			return 0;
+		break;
+	case BPF_JSLE:
+		if (reg->s32_max_value <= sval)
+			return 1;
+		else if (reg->s32_min_value > sval)
+			return 0;
+		break;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
-अटल पूर्णांक is_branch64_taken(काष्ठा bpf_reg_state *reg, u64 val, u8 opcode)
-अणु
+static int is_branch64_taken(struct bpf_reg_state *reg, u64 val, u8 opcode)
+{
 	s64 sval = (s64)val;
 
-	चयन (opcode) अणु
-	हाल BPF_JEQ:
-		अगर (tnum_is_स्थिर(reg->var_off))
-			वापस !!tnum_equals_स्थिर(reg->var_off, val);
-		अवरोध;
-	हाल BPF_JNE:
-		अगर (tnum_is_स्थिर(reg->var_off))
-			वापस !tnum_equals_स्थिर(reg->var_off, val);
-		अवरोध;
-	हाल BPF_JSET:
-		अगर ((~reg->var_off.mask & reg->var_off.value) & val)
-			वापस 1;
-		अगर (!((reg->var_off.mask | reg->var_off.value) & val))
-			वापस 0;
-		अवरोध;
-	हाल BPF_JGT:
-		अगर (reg->umin_value > val)
-			वापस 1;
-		अन्यथा अगर (reg->umax_value <= val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSGT:
-		अगर (reg->smin_value > sval)
-			वापस 1;
-		अन्यथा अगर (reg->smax_value <= sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JLT:
-		अगर (reg->umax_value < val)
-			वापस 1;
-		अन्यथा अगर (reg->umin_value >= val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSLT:
-		अगर (reg->smax_value < sval)
-			वापस 1;
-		अन्यथा अगर (reg->smin_value >= sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JGE:
-		अगर (reg->umin_value >= val)
-			वापस 1;
-		अन्यथा अगर (reg->umax_value < val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSGE:
-		अगर (reg->smin_value >= sval)
-			वापस 1;
-		अन्यथा अगर (reg->smax_value < sval)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JLE:
-		अगर (reg->umax_value <= val)
-			वापस 1;
-		अन्यथा अगर (reg->umin_value > val)
-			वापस 0;
-		अवरोध;
-	हाल BPF_JSLE:
-		अगर (reg->smax_value <= sval)
-			वापस 1;
-		अन्यथा अगर (reg->smin_value > sval)
-			वापस 0;
-		अवरोध;
-	पूर्ण
+	switch (opcode) {
+	case BPF_JEQ:
+		if (tnum_is_const(reg->var_off))
+			return !!tnum_equals_const(reg->var_off, val);
+		break;
+	case BPF_JNE:
+		if (tnum_is_const(reg->var_off))
+			return !tnum_equals_const(reg->var_off, val);
+		break;
+	case BPF_JSET:
+		if ((~reg->var_off.mask & reg->var_off.value) & val)
+			return 1;
+		if (!((reg->var_off.mask | reg->var_off.value) & val))
+			return 0;
+		break;
+	case BPF_JGT:
+		if (reg->umin_value > val)
+			return 1;
+		else if (reg->umax_value <= val)
+			return 0;
+		break;
+	case BPF_JSGT:
+		if (reg->smin_value > sval)
+			return 1;
+		else if (reg->smax_value <= sval)
+			return 0;
+		break;
+	case BPF_JLT:
+		if (reg->umax_value < val)
+			return 1;
+		else if (reg->umin_value >= val)
+			return 0;
+		break;
+	case BPF_JSLT:
+		if (reg->smax_value < sval)
+			return 1;
+		else if (reg->smin_value >= sval)
+			return 0;
+		break;
+	case BPF_JGE:
+		if (reg->umin_value >= val)
+			return 1;
+		else if (reg->umax_value < val)
+			return 0;
+		break;
+	case BPF_JSGE:
+		if (reg->smin_value >= sval)
+			return 1;
+		else if (reg->smax_value < sval)
+			return 0;
+		break;
+	case BPF_JLE:
+		if (reg->umax_value <= val)
+			return 1;
+		else if (reg->umin_value > val)
+			return 0;
+		break;
+	case BPF_JSLE:
+		if (reg->smax_value <= sval)
+			return 1;
+		else if (reg->smin_value > sval)
+			return 0;
+		break;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /* compute branch direction of the expression "if (reg opcode val) goto target;"
- * and वापस:
+ * and return:
  *  1 - branch will be taken and "goto target" will be executed
  *  0 - branch will not be taken and fall-through to next insn
- * -1 - unknown. Example: "if (reg < 5)" is unknown when रेजिस्टर value
+ * -1 - unknown. Example: "if (reg < 5)" is unknown when register value
  *      range [0,10]
  */
-अटल पूर्णांक is_branch_taken(काष्ठा bpf_reg_state *reg, u64 val, u8 opcode,
+static int is_branch_taken(struct bpf_reg_state *reg, u64 val, u8 opcode,
 			   bool is_jmp32)
-अणु
-	अगर (__is_poपूर्णांकer_value(false, reg)) अणु
-		अगर (!reg_type_not_null(reg->type))
-			वापस -1;
+{
+	if (__is_pointer_value(false, reg)) {
+		if (!reg_type_not_null(reg->type))
+			return -1;
 
-		/* If poपूर्णांकer is valid tests against zero will fail so we can
+		/* If pointer is valid tests against zero will fail so we can
 		 * use this to direct branch taken.
 		 */
-		अगर (val != 0)
-			वापस -1;
+		if (val != 0)
+			return -1;
 
-		चयन (opcode) अणु
-		हाल BPF_JEQ:
-			वापस 0;
-		हाल BPF_JNE:
-			वापस 1;
-		शेष:
-			वापस -1;
-		पूर्ण
-	पूर्ण
+		switch (opcode) {
+		case BPF_JEQ:
+			return 0;
+		case BPF_JNE:
+			return 1;
+		default:
+			return -1;
+		}
+	}
 
-	अगर (is_jmp32)
-		वापस is_branch32_taken(reg, val, opcode);
-	वापस is_branch64_taken(reg, val, opcode);
-पूर्ण
+	if (is_jmp32)
+		return is_branch32_taken(reg, val, opcode);
+	return is_branch64_taken(reg, val, opcode);
+}
 
-अटल पूर्णांक flip_opcode(u32 opcode)
-अणु
-	/* How can we transक्रमm "a <op> b" पूर्णांकo "b <op> a"? */
-	अटल स्थिर u8 opcode_flip[16] = अणु
+static int flip_opcode(u32 opcode)
+{
+	/* How can we transform "a <op> b" into "b <op> a"? */
+	static const u8 opcode_flip[16] = {
 		/* these stay the same */
 		[BPF_JEQ  >> 4] = BPF_JEQ,
 		[BPF_JNE  >> 4] = BPF_JNE,
@@ -8232,114 +8231,114 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 		[BPF_JSGT >> 4] = BPF_JSLT,
 		[BPF_JSLE >> 4] = BPF_JSGE,
 		[BPF_JSLT >> 4] = BPF_JSGT
-	पूर्ण;
-	वापस opcode_flip[opcode >> 4];
-पूर्ण
+	};
+	return opcode_flip[opcode >> 4];
+}
 
-अटल पूर्णांक is_pkt_ptr_branch_taken(काष्ठा bpf_reg_state *dst_reg,
-				   काष्ठा bpf_reg_state *src_reg,
+static int is_pkt_ptr_branch_taken(struct bpf_reg_state *dst_reg,
+				   struct bpf_reg_state *src_reg,
 				   u8 opcode)
-अणु
-	काष्ठा bpf_reg_state *pkt;
+{
+	struct bpf_reg_state *pkt;
 
-	अगर (src_reg->type == PTR_TO_PACKET_END) अणु
+	if (src_reg->type == PTR_TO_PACKET_END) {
 		pkt = dst_reg;
-	पूर्ण अन्यथा अगर (dst_reg->type == PTR_TO_PACKET_END) अणु
+	} else if (dst_reg->type == PTR_TO_PACKET_END) {
 		pkt = src_reg;
 		opcode = flip_opcode(opcode);
-	पूर्ण अन्यथा अणु
-		वापस -1;
-	पूर्ण
+	} else {
+		return -1;
+	}
 
-	अगर (pkt->range >= 0)
-		वापस -1;
+	if (pkt->range >= 0)
+		return -1;
 
-	चयन (opcode) अणु
-	हाल BPF_JLE:
+	switch (opcode) {
+	case BPF_JLE:
 		/* pkt <= pkt_end */
 		fallthrough;
-	हाल BPF_JGT:
+	case BPF_JGT:
 		/* pkt > pkt_end */
-		अगर (pkt->range == BEYOND_PKT_END)
+		if (pkt->range == BEYOND_PKT_END)
 			/* pkt has at last one extra byte beyond pkt_end */
-			वापस opcode == BPF_JGT;
-		अवरोध;
-	हाल BPF_JLT:
+			return opcode == BPF_JGT;
+		break;
+	case BPF_JLT:
 		/* pkt < pkt_end */
 		fallthrough;
-	हाल BPF_JGE:
+	case BPF_JGE:
 		/* pkt >= pkt_end */
-		अगर (pkt->range == BEYOND_PKT_END || pkt->range == AT_PKT_END)
-			वापस opcode == BPF_JGE;
-		अवरोध;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		if (pkt->range == BEYOND_PKT_END || pkt->range == AT_PKT_END)
+			return opcode == BPF_JGE;
+		break;
+	}
+	return -1;
+}
 
-/* Adjusts the रेजिस्टर min/max values in the हाल that the dst_reg is the
- * variable रेजिस्टर that we are working on, and src_reg is a स्थिरant or we're
- * simply करोing a BPF_K check.
- * In JEQ/JNE हालs we also adjust the var_off values.
+/* Adjusts the register min/max values in the case that the dst_reg is the
+ * variable register that we are working on, and src_reg is a constant or we're
+ * simply doing a BPF_K check.
+ * In JEQ/JNE cases we also adjust the var_off values.
  */
-अटल व्योम reg_set_min_max(काष्ठा bpf_reg_state *true_reg,
-			    काष्ठा bpf_reg_state *false_reg,
+static void reg_set_min_max(struct bpf_reg_state *true_reg,
+			    struct bpf_reg_state *false_reg,
 			    u64 val, u32 val32,
 			    u8 opcode, bool is_jmp32)
-अणु
-	काष्ठा tnum false_32off = tnum_subreg(false_reg->var_off);
-	काष्ठा tnum false_64off = false_reg->var_off;
-	काष्ठा tnum true_32off = tnum_subreg(true_reg->var_off);
-	काष्ठा tnum true_64off = true_reg->var_off;
+{
+	struct tnum false_32off = tnum_subreg(false_reg->var_off);
+	struct tnum false_64off = false_reg->var_off;
+	struct tnum true_32off = tnum_subreg(true_reg->var_off);
+	struct tnum true_64off = true_reg->var_off;
 	s64 sval = (s64)val;
 	s32 sval32 = (s32)val32;
 
-	/* If the dst_reg is a poपूर्णांकer, we can't learn anything about its
-	 * variable offset from the compare (unless src_reg were a poपूर्णांकer पूर्णांकo
-	 * the same object, but we करोn't bother with that.
-	 * Since false_reg and true_reg have the same type by स्थिरruction, we
-	 * only need to check one of them क्रम poपूर्णांकerness.
+	/* If the dst_reg is a pointer, we can't learn anything about its
+	 * variable offset from the compare (unless src_reg were a pointer into
+	 * the same object, but we don't bother with that.
+	 * Since false_reg and true_reg have the same type by construction, we
+	 * only need to check one of them for pointerness.
 	 */
-	अगर (__is_poपूर्णांकer_value(false, false_reg))
-		वापस;
+	if (__is_pointer_value(false, false_reg))
+		return;
 
-	चयन (opcode) अणु
-	हाल BPF_JEQ:
-	हाल BPF_JNE:
-	अणु
-		काष्ठा bpf_reg_state *reg =
+	switch (opcode) {
+	case BPF_JEQ:
+	case BPF_JNE:
+	{
+		struct bpf_reg_state *reg =
 			opcode == BPF_JEQ ? true_reg : false_reg;
 
-		/* JEQ/JNE comparison करोesn't change the रेजिस्टर equivalence.
+		/* JEQ/JNE comparison doesn't change the register equivalence.
 		 * r1 = r2;
-		 * अगर (r1 == 42) जाओ label;
+		 * if (r1 == 42) goto label;
 		 * ...
 		 * label: // here both r1 and r2 are known to be 42.
 		 *
-		 * Hence when marking रेजिस्टर as known preserve it's ID.
+		 * Hence when marking register as known preserve it's ID.
 		 */
-		अगर (is_jmp32)
+		if (is_jmp32)
 			__mark_reg32_known(reg, val32);
-		अन्यथा
+		else
 			___mark_reg_known(reg, val);
-		अवरोध;
-	पूर्ण
-	हाल BPF_JSET:
-		अगर (is_jmp32) अणु
-			false_32off = tnum_and(false_32off, tnum_स्थिर(~val32));
-			अगर (is_घातer_of_2(val32))
+		break;
+	}
+	case BPF_JSET:
+		if (is_jmp32) {
+			false_32off = tnum_and(false_32off, tnum_const(~val32));
+			if (is_power_of_2(val32))
 				true_32off = tnum_or(true_32off,
-						     tnum_स्थिर(val32));
-		पूर्ण अन्यथा अणु
-			false_64off = tnum_and(false_64off, tnum_स्थिर(~val));
-			अगर (is_घातer_of_2(val))
+						     tnum_const(val32));
+		} else {
+			false_64off = tnum_and(false_64off, tnum_const(~val));
+			if (is_power_of_2(val))
 				true_64off = tnum_or(true_64off,
-						     tnum_स्थिर(val));
-		पूर्ण
-		अवरोध;
-	हाल BPF_JGE:
-	हाल BPF_JGT:
-	अणु
-		अगर (is_jmp32) अणु
+						     tnum_const(val));
+		}
+		break;
+	case BPF_JGE:
+	case BPF_JGT:
+	{
+		if (is_jmp32) {
 			u32 false_umax = opcode == BPF_JGT ? val32  : val32 - 1;
 			u32 true_umin = opcode == BPF_JGT ? val32 + 1 : val32;
 
@@ -8347,37 +8346,37 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 						       false_umax);
 			true_reg->u32_min_value = max(true_reg->u32_min_value,
 						      true_umin);
-		पूर्ण अन्यथा अणु
+		} else {
 			u64 false_umax = opcode == BPF_JGT ? val    : val - 1;
 			u64 true_umin = opcode == BPF_JGT ? val + 1 : val;
 
 			false_reg->umax_value = min(false_reg->umax_value, false_umax);
 			true_reg->umin_value = max(true_reg->umin_value, true_umin);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल BPF_JSGE:
-	हाल BPF_JSGT:
-	अणु
-		अगर (is_jmp32) अणु
+		}
+		break;
+	}
+	case BPF_JSGE:
+	case BPF_JSGT:
+	{
+		if (is_jmp32) {
 			s32 false_smax = opcode == BPF_JSGT ? sval32    : sval32 - 1;
 			s32 true_smin = opcode == BPF_JSGT ? sval32 + 1 : sval32;
 
 			false_reg->s32_max_value = min(false_reg->s32_max_value, false_smax);
 			true_reg->s32_min_value = max(true_reg->s32_min_value, true_smin);
-		पूर्ण अन्यथा अणु
+		} else {
 			s64 false_smax = opcode == BPF_JSGT ? sval    : sval - 1;
 			s64 true_smin = opcode == BPF_JSGT ? sval + 1 : sval;
 
 			false_reg->smax_value = min(false_reg->smax_value, false_smax);
 			true_reg->smin_value = max(true_reg->smin_value, true_smin);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल BPF_JLE:
-	हाल BPF_JLT:
-	अणु
-		अगर (is_jmp32) अणु
+		}
+		break;
+	}
+	case BPF_JLE:
+	case BPF_JLT:
+	{
+		if (is_jmp32) {
 			u32 false_umin = opcode == BPF_JLT ? val32  : val32 + 1;
 			u32 true_umax = opcode == BPF_JLT ? val32 - 1 : val32;
 
@@ -8385,72 +8384,72 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 						       false_umin);
 			true_reg->u32_max_value = min(true_reg->u32_max_value,
 						      true_umax);
-		पूर्ण अन्यथा अणु
+		} else {
 			u64 false_umin = opcode == BPF_JLT ? val    : val + 1;
 			u64 true_umax = opcode == BPF_JLT ? val - 1 : val;
 
 			false_reg->umin_value = max(false_reg->umin_value, false_umin);
 			true_reg->umax_value = min(true_reg->umax_value, true_umax);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल BPF_JSLE:
-	हाल BPF_JSLT:
-	अणु
-		अगर (is_jmp32) अणु
+		}
+		break;
+	}
+	case BPF_JSLE:
+	case BPF_JSLT:
+	{
+		if (is_jmp32) {
 			s32 false_smin = opcode == BPF_JSLT ? sval32    : sval32 + 1;
 			s32 true_smax = opcode == BPF_JSLT ? sval32 - 1 : sval32;
 
 			false_reg->s32_min_value = max(false_reg->s32_min_value, false_smin);
 			true_reg->s32_max_value = min(true_reg->s32_max_value, true_smax);
-		पूर्ण अन्यथा अणु
+		} else {
 			s64 false_smin = opcode == BPF_JSLT ? sval    : sval + 1;
 			s64 true_smax = opcode == BPF_JSLT ? sval - 1 : sval;
 
 			false_reg->smin_value = max(false_reg->smin_value, false_smin);
 			true_reg->smax_value = min(true_reg->smax_value, true_smax);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	शेष:
-		वापस;
-	पूर्ण
+		}
+		break;
+	}
+	default:
+		return;
+	}
 
-	अगर (is_jmp32) अणु
+	if (is_jmp32) {
 		false_reg->var_off = tnum_or(tnum_clear_subreg(false_64off),
 					     tnum_subreg(false_32off));
 		true_reg->var_off = tnum_or(tnum_clear_subreg(true_64off),
 					    tnum_subreg(true_32off));
-		__reg_combine_32_पूर्णांकo_64(false_reg);
-		__reg_combine_32_पूर्णांकo_64(true_reg);
-	पूर्ण अन्यथा अणु
+		__reg_combine_32_into_64(false_reg);
+		__reg_combine_32_into_64(true_reg);
+	} else {
 		false_reg->var_off = false_64off;
 		true_reg->var_off = true_64off;
-		__reg_combine_64_पूर्णांकo_32(false_reg);
-		__reg_combine_64_पूर्णांकo_32(true_reg);
-	पूर्ण
-पूर्ण
+		__reg_combine_64_into_32(false_reg);
+		__reg_combine_64_into_32(true_reg);
+	}
+}
 
-/* Same as above, but क्रम the हाल that dst_reg holds a स्थिरant and src_reg is
+/* Same as above, but for the case that dst_reg holds a constant and src_reg is
  * the variable reg.
  */
-अटल व्योम reg_set_min_max_inv(काष्ठा bpf_reg_state *true_reg,
-				काष्ठा bpf_reg_state *false_reg,
+static void reg_set_min_max_inv(struct bpf_reg_state *true_reg,
+				struct bpf_reg_state *false_reg,
 				u64 val, u32 val32,
 				u8 opcode, bool is_jmp32)
-अणु
+{
 	opcode = flip_opcode(opcode);
 	/* This uses zero as "not present in table"; luckily the zero opcode,
 	 * BPF_JA, can't get here.
 	 */
-	अगर (opcode)
+	if (opcode)
 		reg_set_min_max(true_reg, false_reg, val, val32, opcode, is_jmp32);
-पूर्ण
+}
 
-/* Regs are known to be equal, so पूर्णांकersect their min/max/var_off */
-अटल व्योम __reg_combine_min_max(काष्ठा bpf_reg_state *src_reg,
-				  काष्ठा bpf_reg_state *dst_reg)
-अणु
+/* Regs are known to be equal, so intersect their min/max/var_off */
+static void __reg_combine_min_max(struct bpf_reg_state *src_reg,
+				  struct bpf_reg_state *dst_reg)
+{
 	src_reg->umin_value = dst_reg->umin_value = max(src_reg->umin_value,
 							dst_reg->umin_value);
 	src_reg->umax_value = dst_reg->umax_value = min(src_reg->umax_value,
@@ -8459,7 +8458,7 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 							dst_reg->smin_value);
 	src_reg->smax_value = dst_reg->smax_value = min(src_reg->smax_value,
 							dst_reg->smax_value);
-	src_reg->var_off = dst_reg->var_off = tnum_पूर्णांकersect(src_reg->var_off,
+	src_reg->var_off = dst_reg->var_off = tnum_intersect(src_reg->var_off,
 							     dst_reg->var_off);
 	/* We might have learned new bounds from the var_off. */
 	__update_reg_bounds(src_reg);
@@ -8471,761 +8470,761 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
 	__reg_bound_offset(src_reg);
 	__reg_bound_offset(dst_reg);
 	/* Intersecting with the old var_off might have improved our bounds
-	 * slightly.  e.g. अगर umax was 0x7f...f and var_off was (0; 0xf...fc),
+	 * slightly.  e.g. if umax was 0x7f...f and var_off was (0; 0xf...fc),
 	 * then new var_off is (0; 0x7f...fc) which improves our umax.
 	 */
 	__update_reg_bounds(src_reg);
 	__update_reg_bounds(dst_reg);
-पूर्ण
+}
 
-अटल व्योम reg_combine_min_max(काष्ठा bpf_reg_state *true_src,
-				काष्ठा bpf_reg_state *true_dst,
-				काष्ठा bpf_reg_state *false_src,
-				काष्ठा bpf_reg_state *false_dst,
+static void reg_combine_min_max(struct bpf_reg_state *true_src,
+				struct bpf_reg_state *true_dst,
+				struct bpf_reg_state *false_src,
+				struct bpf_reg_state *false_dst,
 				u8 opcode)
-अणु
-	चयन (opcode) अणु
-	हाल BPF_JEQ:
+{
+	switch (opcode) {
+	case BPF_JEQ:
 		__reg_combine_min_max(true_src, true_dst);
-		अवरोध;
-	हाल BPF_JNE:
+		break;
+	case BPF_JNE:
 		__reg_combine_min_max(false_src, false_dst);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम mark_ptr_or_null_reg(काष्ठा bpf_func_state *state,
-				 काष्ठा bpf_reg_state *reg, u32 id,
+static void mark_ptr_or_null_reg(struct bpf_func_state *state,
+				 struct bpf_reg_state *reg, u32 id,
 				 bool is_null)
-अणु
-	अगर (reg_type_may_be_null(reg->type) && reg->id == id &&
-	    !WARN_ON_ONCE(!reg->id)) अणु
+{
+	if (reg_type_may_be_null(reg->type) && reg->id == id &&
+	    !WARN_ON_ONCE(!reg->id)) {
 		/* Old offset (both fixed and variable parts) should
-		 * have been known-zero, because we करोn't allow poपूर्णांकer
-		 * arithmetic on poपूर्णांकers that might be शून्य.
+		 * have been known-zero, because we don't allow pointer
+		 * arithmetic on pointers that might be NULL.
 		 */
-		अगर (WARN_ON_ONCE(reg->smin_value || reg->smax_value ||
-				 !tnum_equals_स्थिर(reg->var_off, 0) ||
-				 reg->off)) अणु
+		if (WARN_ON_ONCE(reg->smin_value || reg->smax_value ||
+				 !tnum_equals_const(reg->var_off, 0) ||
+				 reg->off)) {
 			__mark_reg_known_zero(reg);
 			reg->off = 0;
-		पूर्ण
-		अगर (is_null) अणु
+		}
+		if (is_null) {
 			reg->type = SCALAR_VALUE;
-			/* We करोn't need id and ref_obj_id from this poपूर्णांक
+			/* We don't need id and ref_obj_id from this point
 			 * onwards anymore, thus we should better reset it,
 			 * so that state pruning has chances to take effect.
 			 */
 			reg->id = 0;
 			reg->ref_obj_id = 0;
 
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		mark_ptr_not_null_reg(reg);
 
-		अगर (!reg_may_poपूर्णांक_to_spin_lock(reg)) अणु
-			/* For not-शून्य ptr, reg->ref_obj_id will be reset
+		if (!reg_may_point_to_spin_lock(reg)) {
+			/* For not-NULL ptr, reg->ref_obj_id will be reset
 			 * in release_reg_references().
 			 *
 			 * reg->id is still used by spin_lock ptr. Other
 			 * than spin_lock ptr type, reg->id can be reset.
 			 */
 			reg->id = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम __mark_ptr_or_null_regs(काष्ठा bpf_func_state *state, u32 id,
+static void __mark_ptr_or_null_regs(struct bpf_func_state *state, u32 id,
 				    bool is_null)
-अणु
-	काष्ठा bpf_reg_state *reg;
-	पूर्णांक i;
+{
+	struct bpf_reg_state *reg;
+	int i;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++)
+	for (i = 0; i < MAX_BPF_REG; i++)
 		mark_ptr_or_null_reg(state, &state->regs[i], id, is_null);
 
-	bpf_क्रम_each_spilled_reg(i, state, reg) अणु
-		अगर (!reg)
-			जारी;
+	bpf_for_each_spilled_reg(i, state, reg) {
+		if (!reg)
+			continue;
 		mark_ptr_or_null_reg(state, reg, id, is_null);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* The logic is similar to find_good_pkt_poपूर्णांकers(), both could eventually
- * be folded together at some poपूर्णांक.
+/* The logic is similar to find_good_pkt_pointers(), both could eventually
+ * be folded together at some point.
  */
-अटल व्योम mark_ptr_or_null_regs(काष्ठा bpf_verअगरier_state *vstate, u32 regno,
+static void mark_ptr_or_null_regs(struct bpf_verifier_state *vstate, u32 regno,
 				  bool is_null)
-अणु
-	काष्ठा bpf_func_state *state = vstate->frame[vstate->curframe];
-	काष्ठा bpf_reg_state *regs = state->regs;
+{
+	struct bpf_func_state *state = vstate->frame[vstate->curframe];
+	struct bpf_reg_state *regs = state->regs;
 	u32 ref_obj_id = regs[regno].ref_obj_id;
 	u32 id = regs[regno].id;
-	पूर्णांक i;
+	int i;
 
-	अगर (ref_obj_id && ref_obj_id == id && is_null)
+	if (ref_obj_id && ref_obj_id == id && is_null)
 		/* regs[regno] is in the " == NULL" branch.
-		 * No one could have मुक्तd the reference state beक्रमe
-		 * करोing the शून्य check.
+		 * No one could have freed the reference state before
+		 * doing the NULL check.
 		 */
 		WARN_ON_ONCE(release_reference_state(state, id));
 
-	क्रम (i = 0; i <= vstate->curframe; i++)
+	for (i = 0; i <= vstate->curframe; i++)
 		__mark_ptr_or_null_regs(vstate->frame[i], id, is_null);
-पूर्ण
+}
 
-अटल bool try_match_pkt_poपूर्णांकers(स्थिर काष्ठा bpf_insn *insn,
-				   काष्ठा bpf_reg_state *dst_reg,
-				   काष्ठा bpf_reg_state *src_reg,
-				   काष्ठा bpf_verअगरier_state *this_branch,
-				   काष्ठा bpf_verअगरier_state *other_branch)
-अणु
-	अगर (BPF_SRC(insn->code) != BPF_X)
-		वापस false;
+static bool try_match_pkt_pointers(const struct bpf_insn *insn,
+				   struct bpf_reg_state *dst_reg,
+				   struct bpf_reg_state *src_reg,
+				   struct bpf_verifier_state *this_branch,
+				   struct bpf_verifier_state *other_branch)
+{
+	if (BPF_SRC(insn->code) != BPF_X)
+		return false;
 
-	/* Poपूर्णांकers are always 64-bit. */
-	अगर (BPF_CLASS(insn->code) == BPF_JMP32)
-		वापस false;
+	/* Pointers are always 64-bit. */
+	if (BPF_CLASS(insn->code) == BPF_JMP32)
+		return false;
 
-	चयन (BPF_OP(insn->code)) अणु
-	हाल BPF_JGT:
-		अगर ((dst_reg->type == PTR_TO_PACKET &&
+	switch (BPF_OP(insn->code)) {
+	case BPF_JGT:
+		if ((dst_reg->type == PTR_TO_PACKET &&
 		     src_reg->type == PTR_TO_PACKET_END) ||
 		    (dst_reg->type == PTR_TO_PACKET_META &&
-		     reg_is_init_pkt_poपूर्णांकer(src_reg, PTR_TO_PACKET))) अणु
+		     reg_is_init_pkt_pointer(src_reg, PTR_TO_PACKET))) {
 			/* pkt_data' > pkt_end, pkt_meta' > pkt_data */
-			find_good_pkt_poपूर्णांकers(this_branch, dst_reg,
+			find_good_pkt_pointers(this_branch, dst_reg,
 					       dst_reg->type, false);
 			mark_pkt_end(other_branch, insn->dst_reg, true);
-		पूर्ण अन्यथा अगर ((dst_reg->type == PTR_TO_PACKET_END &&
+		} else if ((dst_reg->type == PTR_TO_PACKET_END &&
 			    src_reg->type == PTR_TO_PACKET) ||
-			   (reg_is_init_pkt_poपूर्णांकer(dst_reg, PTR_TO_PACKET) &&
-			    src_reg->type == PTR_TO_PACKET_META)) अणु
+			   (reg_is_init_pkt_pointer(dst_reg, PTR_TO_PACKET) &&
+			    src_reg->type == PTR_TO_PACKET_META)) {
 			/* pkt_end > pkt_data', pkt_data > pkt_meta' */
-			find_good_pkt_poपूर्णांकers(other_branch, src_reg,
+			find_good_pkt_pointers(other_branch, src_reg,
 					       src_reg->type, true);
 			mark_pkt_end(this_branch, insn->src_reg, false);
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-		अवरोध;
-	हाल BPF_JLT:
-		अगर ((dst_reg->type == PTR_TO_PACKET &&
+		} else {
+			return false;
+		}
+		break;
+	case BPF_JLT:
+		if ((dst_reg->type == PTR_TO_PACKET &&
 		     src_reg->type == PTR_TO_PACKET_END) ||
 		    (dst_reg->type == PTR_TO_PACKET_META &&
-		     reg_is_init_pkt_poपूर्णांकer(src_reg, PTR_TO_PACKET))) अणु
+		     reg_is_init_pkt_pointer(src_reg, PTR_TO_PACKET))) {
 			/* pkt_data' < pkt_end, pkt_meta' < pkt_data */
-			find_good_pkt_poपूर्णांकers(other_branch, dst_reg,
+			find_good_pkt_pointers(other_branch, dst_reg,
 					       dst_reg->type, true);
 			mark_pkt_end(this_branch, insn->dst_reg, false);
-		पूर्ण अन्यथा अगर ((dst_reg->type == PTR_TO_PACKET_END &&
+		} else if ((dst_reg->type == PTR_TO_PACKET_END &&
 			    src_reg->type == PTR_TO_PACKET) ||
-			   (reg_is_init_pkt_poपूर्णांकer(dst_reg, PTR_TO_PACKET) &&
-			    src_reg->type == PTR_TO_PACKET_META)) अणु
+			   (reg_is_init_pkt_pointer(dst_reg, PTR_TO_PACKET) &&
+			    src_reg->type == PTR_TO_PACKET_META)) {
 			/* pkt_end < pkt_data', pkt_data > pkt_meta' */
-			find_good_pkt_poपूर्णांकers(this_branch, src_reg,
+			find_good_pkt_pointers(this_branch, src_reg,
 					       src_reg->type, false);
 			mark_pkt_end(other_branch, insn->src_reg, true);
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-		अवरोध;
-	हाल BPF_JGE:
-		अगर ((dst_reg->type == PTR_TO_PACKET &&
+		} else {
+			return false;
+		}
+		break;
+	case BPF_JGE:
+		if ((dst_reg->type == PTR_TO_PACKET &&
 		     src_reg->type == PTR_TO_PACKET_END) ||
 		    (dst_reg->type == PTR_TO_PACKET_META &&
-		     reg_is_init_pkt_poपूर्णांकer(src_reg, PTR_TO_PACKET))) अणु
+		     reg_is_init_pkt_pointer(src_reg, PTR_TO_PACKET))) {
 			/* pkt_data' >= pkt_end, pkt_meta' >= pkt_data */
-			find_good_pkt_poपूर्णांकers(this_branch, dst_reg,
+			find_good_pkt_pointers(this_branch, dst_reg,
 					       dst_reg->type, true);
 			mark_pkt_end(other_branch, insn->dst_reg, false);
-		पूर्ण अन्यथा अगर ((dst_reg->type == PTR_TO_PACKET_END &&
+		} else if ((dst_reg->type == PTR_TO_PACKET_END &&
 			    src_reg->type == PTR_TO_PACKET) ||
-			   (reg_is_init_pkt_poपूर्णांकer(dst_reg, PTR_TO_PACKET) &&
-			    src_reg->type == PTR_TO_PACKET_META)) अणु
+			   (reg_is_init_pkt_pointer(dst_reg, PTR_TO_PACKET) &&
+			    src_reg->type == PTR_TO_PACKET_META)) {
 			/* pkt_end >= pkt_data', pkt_data >= pkt_meta' */
-			find_good_pkt_poपूर्णांकers(other_branch, src_reg,
+			find_good_pkt_pointers(other_branch, src_reg,
 					       src_reg->type, false);
 			mark_pkt_end(this_branch, insn->src_reg, true);
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-		अवरोध;
-	हाल BPF_JLE:
-		अगर ((dst_reg->type == PTR_TO_PACKET &&
+		} else {
+			return false;
+		}
+		break;
+	case BPF_JLE:
+		if ((dst_reg->type == PTR_TO_PACKET &&
 		     src_reg->type == PTR_TO_PACKET_END) ||
 		    (dst_reg->type == PTR_TO_PACKET_META &&
-		     reg_is_init_pkt_poपूर्णांकer(src_reg, PTR_TO_PACKET))) अणु
+		     reg_is_init_pkt_pointer(src_reg, PTR_TO_PACKET))) {
 			/* pkt_data' <= pkt_end, pkt_meta' <= pkt_data */
-			find_good_pkt_poपूर्णांकers(other_branch, dst_reg,
+			find_good_pkt_pointers(other_branch, dst_reg,
 					       dst_reg->type, false);
 			mark_pkt_end(this_branch, insn->dst_reg, true);
-		पूर्ण अन्यथा अगर ((dst_reg->type == PTR_TO_PACKET_END &&
+		} else if ((dst_reg->type == PTR_TO_PACKET_END &&
 			    src_reg->type == PTR_TO_PACKET) ||
-			   (reg_is_init_pkt_poपूर्णांकer(dst_reg, PTR_TO_PACKET) &&
-			    src_reg->type == PTR_TO_PACKET_META)) अणु
+			   (reg_is_init_pkt_pointer(dst_reg, PTR_TO_PACKET) &&
+			    src_reg->type == PTR_TO_PACKET_META)) {
 			/* pkt_end <= pkt_data', pkt_data <= pkt_meta' */
-			find_good_pkt_poपूर्णांकers(this_branch, src_reg,
+			find_good_pkt_pointers(this_branch, src_reg,
 					       src_reg->type, true);
 			mark_pkt_end(other_branch, insn->src_reg, false);
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		} else {
+			return false;
+		}
+		break;
+	default:
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम find_equal_scalars(काष्ठा bpf_verअगरier_state *vstate,
-			       काष्ठा bpf_reg_state *known_reg)
-अणु
-	काष्ठा bpf_func_state *state;
-	काष्ठा bpf_reg_state *reg;
-	पूर्णांक i, j;
+static void find_equal_scalars(struct bpf_verifier_state *vstate,
+			       struct bpf_reg_state *known_reg)
+{
+	struct bpf_func_state *state;
+	struct bpf_reg_state *reg;
+	int i, j;
 
-	क्रम (i = 0; i <= vstate->curframe; i++) अणु
+	for (i = 0; i <= vstate->curframe; i++) {
 		state = vstate->frame[i];
-		क्रम (j = 0; j < MAX_BPF_REG; j++) अणु
+		for (j = 0; j < MAX_BPF_REG; j++) {
 			reg = &state->regs[j];
-			अगर (reg->type == SCALAR_VALUE && reg->id == known_reg->id)
+			if (reg->type == SCALAR_VALUE && reg->id == known_reg->id)
 				*reg = *known_reg;
-		पूर्ण
+		}
 
-		bpf_क्रम_each_spilled_reg(j, state, reg) अणु
-			अगर (!reg)
-				जारी;
-			अगर (reg->type == SCALAR_VALUE && reg->id == known_reg->id)
+		bpf_for_each_spilled_reg(j, state, reg) {
+			if (!reg)
+				continue;
+			if (reg->type == SCALAR_VALUE && reg->id == known_reg->id)
 				*reg = *known_reg;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक check_cond_jmp_op(काष्ठा bpf_verअगरier_env *env,
-			     काष्ठा bpf_insn *insn, पूर्णांक *insn_idx)
-अणु
-	काष्ठा bpf_verअगरier_state *this_branch = env->cur_state;
-	काष्ठा bpf_verअगरier_state *other_branch;
-	काष्ठा bpf_reg_state *regs = this_branch->frame[this_branch->curframe]->regs;
-	काष्ठा bpf_reg_state *dst_reg, *other_branch_regs, *src_reg = शून्य;
+static int check_cond_jmp_op(struct bpf_verifier_env *env,
+			     struct bpf_insn *insn, int *insn_idx)
+{
+	struct bpf_verifier_state *this_branch = env->cur_state;
+	struct bpf_verifier_state *other_branch;
+	struct bpf_reg_state *regs = this_branch->frame[this_branch->curframe]->regs;
+	struct bpf_reg_state *dst_reg, *other_branch_regs, *src_reg = NULL;
 	u8 opcode = BPF_OP(insn->code);
 	bool is_jmp32;
-	पूर्णांक pred = -1;
-	पूर्णांक err;
+	int pred = -1;
+	int err;
 
 	/* Only conditional jumps are expected to reach here. */
-	अगर (opcode == BPF_JA || opcode > BPF_JSLE) अणु
+	if (opcode == BPF_JA || opcode > BPF_JSLE) {
 		verbose(env, "invalid BPF_JMP/JMP32 opcode %x\n", opcode);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (BPF_SRC(insn->code) == BPF_X) अणु
-		अगर (insn->imm != 0) अणु
+	if (BPF_SRC(insn->code) == BPF_X) {
+		if (insn->imm != 0) {
 			verbose(env, "BPF_JMP/JMP32 uses reserved fields\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* check src1 opeअक्रम */
+		/* check src1 operand */
 		err = check_reg_arg(env, insn->src_reg, SRC_OP);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (is_poपूर्णांकer_value(env, insn->src_reg)) अणु
+		if (is_pointer_value(env, insn->src_reg)) {
 			verbose(env, "R%d pointer comparison prohibited\n",
 				insn->src_reg);
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		src_reg = &regs[insn->src_reg];
-	पूर्ण अन्यथा अणु
-		अगर (insn->src_reg != BPF_REG_0) अणु
+	} else {
+		if (insn->src_reg != BPF_REG_0) {
 			verbose(env, "BPF_JMP/JMP32 uses reserved fields\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* check src2 opeअक्रम */
+	/* check src2 operand */
 	err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dst_reg = &regs[insn->dst_reg];
 	is_jmp32 = BPF_CLASS(insn->code) == BPF_JMP32;
 
-	अगर (BPF_SRC(insn->code) == BPF_K) अणु
+	if (BPF_SRC(insn->code) == BPF_K) {
 		pred = is_branch_taken(dst_reg, insn->imm, opcode, is_jmp32);
-	पूर्ण अन्यथा अगर (src_reg->type == SCALAR_VALUE &&
-		   is_jmp32 && tnum_is_स्थिर(tnum_subreg(src_reg->var_off))) अणु
+	} else if (src_reg->type == SCALAR_VALUE &&
+		   is_jmp32 && tnum_is_const(tnum_subreg(src_reg->var_off))) {
 		pred = is_branch_taken(dst_reg,
 				       tnum_subreg(src_reg->var_off).value,
 				       opcode,
 				       is_jmp32);
-	पूर्ण अन्यथा अगर (src_reg->type == SCALAR_VALUE &&
-		   !is_jmp32 && tnum_is_स्थिर(src_reg->var_off)) अणु
+	} else if (src_reg->type == SCALAR_VALUE &&
+		   !is_jmp32 && tnum_is_const(src_reg->var_off)) {
 		pred = is_branch_taken(dst_reg,
 				       src_reg->var_off.value,
 				       opcode,
 				       is_jmp32);
-	पूर्ण अन्यथा अगर (reg_is_pkt_poपूर्णांकer_any(dst_reg) &&
-		   reg_is_pkt_poपूर्णांकer_any(src_reg) &&
-		   !is_jmp32) अणु
+	} else if (reg_is_pkt_pointer_any(dst_reg) &&
+		   reg_is_pkt_pointer_any(src_reg) &&
+		   !is_jmp32) {
 		pred = is_pkt_ptr_branch_taken(dst_reg, src_reg, opcode);
-	पूर्ण
+	}
 
-	अगर (pred >= 0) अणु
-		/* If we get here with a dst_reg poपूर्णांकer type it is because
-		 * above is_branch_taken() special हालd the 0 comparison.
+	if (pred >= 0) {
+		/* If we get here with a dst_reg pointer type it is because
+		 * above is_branch_taken() special cased the 0 comparison.
 		 */
-		अगर (!__is_poपूर्णांकer_value(false, dst_reg))
+		if (!__is_pointer_value(false, dst_reg))
 			err = mark_chain_precision(env, insn->dst_reg);
-		अगर (BPF_SRC(insn->code) == BPF_X && !err &&
-		    !__is_poपूर्णांकer_value(false, src_reg))
+		if (BPF_SRC(insn->code) == BPF_X && !err &&
+		    !__is_pointer_value(false, src_reg))
 			err = mark_chain_precision(env, insn->src_reg);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (pred == 1) अणु
-		/* Only follow the जाओ, ignore fall-through. If needed, push
-		 * the fall-through branch क्रम simulation under speculative
+	if (pred == 1) {
+		/* Only follow the goto, ignore fall-through. If needed, push
+		 * the fall-through branch for simulation under speculative
 		 * execution.
 		 */
-		अगर (!env->bypass_spec_v1 &&
+		if (!env->bypass_spec_v1 &&
 		    !sanitize_speculative_path(env, insn, *insn_idx + 1,
 					       *insn_idx))
-			वापस -EFAULT;
+			return -EFAULT;
 		*insn_idx += insn->off;
-		वापस 0;
-	पूर्ण अन्यथा अगर (pred == 0) अणु
+		return 0;
+	} else if (pred == 0) {
 		/* Only follow the fall-through branch, since that's where the
-		 * program will go. If needed, push the जाओ branch क्रम
+		 * program will go. If needed, push the goto branch for
 		 * simulation under speculative execution.
 		 */
-		अगर (!env->bypass_spec_v1 &&
+		if (!env->bypass_spec_v1 &&
 		    !sanitize_speculative_path(env, insn,
 					       *insn_idx + insn->off + 1,
 					       *insn_idx))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+			return -EFAULT;
+		return 0;
+	}
 
 	other_branch = push_stack(env, *insn_idx + insn->off + 1, *insn_idx,
 				  false);
-	अगर (!other_branch)
-		वापस -EFAULT;
+	if (!other_branch)
+		return -EFAULT;
 	other_branch_regs = other_branch->frame[other_branch->curframe]->regs;
 
-	/* detect अगर we are comparing against a स्थिरant value so we can adjust
-	 * our min/max values क्रम our dst रेजिस्टर.
-	 * this is only legit अगर both are scalars (or poपूर्णांकers to the same
-	 * object, I suppose, but we करोn't support that right now), because
-	 * otherwise the dअगरferent base poपूर्णांकers mean the offsets aren't
+	/* detect if we are comparing against a constant value so we can adjust
+	 * our min/max values for our dst register.
+	 * this is only legit if both are scalars (or pointers to the same
+	 * object, I suppose, but we don't support that right now), because
+	 * otherwise the different base pointers mean the offsets aren't
 	 * comparable.
 	 */
-	अगर (BPF_SRC(insn->code) == BPF_X) अणु
-		काष्ठा bpf_reg_state *src_reg = &regs[insn->src_reg];
+	if (BPF_SRC(insn->code) == BPF_X) {
+		struct bpf_reg_state *src_reg = &regs[insn->src_reg];
 
-		अगर (dst_reg->type == SCALAR_VALUE &&
-		    src_reg->type == SCALAR_VALUE) अणु
-			अगर (tnum_is_स्थिर(src_reg->var_off) ||
+		if (dst_reg->type == SCALAR_VALUE &&
+		    src_reg->type == SCALAR_VALUE) {
+			if (tnum_is_const(src_reg->var_off) ||
 			    (is_jmp32 &&
-			     tnum_is_स्थिर(tnum_subreg(src_reg->var_off))))
+			     tnum_is_const(tnum_subreg(src_reg->var_off))))
 				reg_set_min_max(&other_branch_regs[insn->dst_reg],
 						dst_reg,
 						src_reg->var_off.value,
 						tnum_subreg(src_reg->var_off).value,
 						opcode, is_jmp32);
-			अन्यथा अगर (tnum_is_स्थिर(dst_reg->var_off) ||
+			else if (tnum_is_const(dst_reg->var_off) ||
 				 (is_jmp32 &&
-				  tnum_is_स्थिर(tnum_subreg(dst_reg->var_off))))
+				  tnum_is_const(tnum_subreg(dst_reg->var_off))))
 				reg_set_min_max_inv(&other_branch_regs[insn->src_reg],
 						    src_reg,
 						    dst_reg->var_off.value,
 						    tnum_subreg(dst_reg->var_off).value,
 						    opcode, is_jmp32);
-			अन्यथा अगर (!is_jmp32 &&
+			else if (!is_jmp32 &&
 				 (opcode == BPF_JEQ || opcode == BPF_JNE))
-				/* Comparing क्रम equality, we can combine knowledge */
+				/* Comparing for equality, we can combine knowledge */
 				reg_combine_min_max(&other_branch_regs[insn->src_reg],
 						    &other_branch_regs[insn->dst_reg],
 						    src_reg, dst_reg, opcode);
-			अगर (src_reg->id &&
-			    !WARN_ON_ONCE(src_reg->id != other_branch_regs[insn->src_reg].id)) अणु
+			if (src_reg->id &&
+			    !WARN_ON_ONCE(src_reg->id != other_branch_regs[insn->src_reg].id)) {
 				find_equal_scalars(this_branch, src_reg);
 				find_equal_scalars(other_branch, &other_branch_regs[insn->src_reg]);
-			पूर्ण
+			}
 
-		पूर्ण
-	पूर्ण अन्यथा अगर (dst_reg->type == SCALAR_VALUE) अणु
+		}
+	} else if (dst_reg->type == SCALAR_VALUE) {
 		reg_set_min_max(&other_branch_regs[insn->dst_reg],
 					dst_reg, insn->imm, (u32)insn->imm,
 					opcode, is_jmp32);
-	पूर्ण
+	}
 
-	अगर (dst_reg->type == SCALAR_VALUE && dst_reg->id &&
-	    !WARN_ON_ONCE(dst_reg->id != other_branch_regs[insn->dst_reg].id)) अणु
+	if (dst_reg->type == SCALAR_VALUE && dst_reg->id &&
+	    !WARN_ON_ONCE(dst_reg->id != other_branch_regs[insn->dst_reg].id)) {
 		find_equal_scalars(this_branch, dst_reg);
 		find_equal_scalars(other_branch, &other_branch_regs[insn->dst_reg]);
-	पूर्ण
+	}
 
-	/* detect अगर R == 0 where R is वापसed from bpf_map_lookup_elem().
-	 * NOTE: these optimizations below are related with poपूर्णांकer comparison
+	/* detect if R == 0 where R is returned from bpf_map_lookup_elem().
+	 * NOTE: these optimizations below are related with pointer comparison
 	 *       which will never be JMP32.
 	 */
-	अगर (!is_jmp32 && BPF_SRC(insn->code) == BPF_K &&
+	if (!is_jmp32 && BPF_SRC(insn->code) == BPF_K &&
 	    insn->imm == 0 && (opcode == BPF_JEQ || opcode == BPF_JNE) &&
-	    reg_type_may_be_null(dst_reg->type)) अणु
-		/* Mark all identical रेजिस्टरs in each branch as either
+	    reg_type_may_be_null(dst_reg->type)) {
+		/* Mark all identical registers in each branch as either
 		 * safe or unknown depending R == 0 or R != 0 conditional.
 		 */
 		mark_ptr_or_null_regs(this_branch, insn->dst_reg,
 				      opcode == BPF_JNE);
 		mark_ptr_or_null_regs(other_branch, insn->dst_reg,
 				      opcode == BPF_JEQ);
-	पूर्ण अन्यथा अगर (!try_match_pkt_poपूर्णांकers(insn, dst_reg, &regs[insn->src_reg],
+	} else if (!try_match_pkt_pointers(insn, dst_reg, &regs[insn->src_reg],
 					   this_branch, other_branch) &&
-		   is_poपूर्णांकer_value(env, insn->dst_reg)) अणु
+		   is_pointer_value(env, insn->dst_reg)) {
 		verbose(env, "R%d pointer comparison prohibited\n",
 			insn->dst_reg);
-		वापस -EACCES;
-	पूर्ण
-	अगर (env->log.level & BPF_LOG_LEVEL)
-		prपूर्णांक_verअगरier_state(env, this_branch->frame[this_branch->curframe]);
-	वापस 0;
-पूर्ण
+		return -EACCES;
+	}
+	if (env->log.level & BPF_LOG_LEVEL)
+		print_verifier_state(env, this_branch->frame[this_branch->curframe]);
+	return 0;
+}
 
-/* verअगरy BPF_LD_IMM64 inकाष्ठाion */
-अटल पूर्णांक check_ld_imm(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn)
-अणु
-	काष्ठा bpf_insn_aux_data *aux = cur_aux(env);
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	काष्ठा bpf_reg_state *dst_reg;
-	काष्ठा bpf_map *map;
-	पूर्णांक err;
+/* verify BPF_LD_IMM64 instruction */
+static int check_ld_imm(struct bpf_verifier_env *env, struct bpf_insn *insn)
+{
+	struct bpf_insn_aux_data *aux = cur_aux(env);
+	struct bpf_reg_state *regs = cur_regs(env);
+	struct bpf_reg_state *dst_reg;
+	struct bpf_map *map;
+	int err;
 
-	अगर (BPF_SIZE(insn->code) != BPF_DW) अणु
+	if (BPF_SIZE(insn->code) != BPF_DW) {
 		verbose(env, "invalid BPF_LD_IMM insn\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (insn->off != 0) अणु
+		return -EINVAL;
+	}
+	if (insn->off != 0) {
 		verbose(env, "BPF_LD_IMM64 uses reserved fields\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = check_reg_arg(env, insn->dst_reg, DST_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dst_reg = &regs[insn->dst_reg];
-	अगर (insn->src_reg == 0) अणु
+	if (insn->src_reg == 0) {
 		u64 imm = ((u64)(insn + 1)->imm << 32) | (u32)insn->imm;
 
 		dst_reg->type = SCALAR_VALUE;
 		__mark_reg_known(&regs[insn->dst_reg], imm);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (insn->src_reg == BPF_PSEUDO_BTF_ID) अणु
+	if (insn->src_reg == BPF_PSEUDO_BTF_ID) {
 		mark_reg_known_zero(env, regs, insn->dst_reg);
 
 		dst_reg->type = aux->btf_var.reg_type;
-		चयन (dst_reg->type) अणु
-		हाल PTR_TO_MEM:
+		switch (dst_reg->type) {
+		case PTR_TO_MEM:
 			dst_reg->mem_size = aux->btf_var.mem_size;
-			अवरोध;
-		हाल PTR_TO_BTF_ID:
-		हाल PTR_TO_PERCPU_BTF_ID:
+			break;
+		case PTR_TO_BTF_ID:
+		case PTR_TO_PERCPU_BTF_ID:
 			dst_reg->btf = aux->btf_var.btf;
 			dst_reg->btf_id = aux->btf_var.btf_id;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			verbose(env, "bpf verifier is misconfigured\n");
-			वापस -EFAULT;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EFAULT;
+		}
+		return 0;
+	}
 
-	अगर (insn->src_reg == BPF_PSEUDO_FUNC) अणु
-		काष्ठा bpf_prog_aux *aux = env->prog->aux;
+	if (insn->src_reg == BPF_PSEUDO_FUNC) {
+		struct bpf_prog_aux *aux = env->prog->aux;
 		u32 subprogno = insn[1].imm;
 
-		अगर (!aux->func_info) अणु
+		if (!aux->func_info) {
 			verbose(env, "missing btf func_info\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (aux->func_info_aux[subprogno].linkage != BTF_FUNC_STATIC) अणु
+			return -EINVAL;
+		}
+		if (aux->func_info_aux[subprogno].linkage != BTF_FUNC_STATIC) {
 			verbose(env, "callback function not static\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		dst_reg->type = PTR_TO_FUNC;
 		dst_reg->subprogno = subprogno;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	map = env->used_maps[aux->map_index];
 	mark_reg_known_zero(env, regs, insn->dst_reg);
 	dst_reg->map_ptr = map;
 
-	अगर (insn->src_reg == BPF_PSEUDO_MAP_VALUE) अणु
+	if (insn->src_reg == BPF_PSEUDO_MAP_VALUE) {
 		dst_reg->type = PTR_TO_MAP_VALUE;
 		dst_reg->off = aux->map_off;
-		अगर (map_value_has_spin_lock(map))
+		if (map_value_has_spin_lock(map))
 			dst_reg->id = ++env->id_gen;
-	पूर्ण अन्यथा अगर (insn->src_reg == BPF_PSEUDO_MAP_FD) अणु
+	} else if (insn->src_reg == BPF_PSEUDO_MAP_FD) {
 		dst_reg->type = CONST_PTR_TO_MAP;
-	पूर्ण अन्यथा अणु
+	} else {
 		verbose(env, "bpf verifier is misconfigured\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool may_access_skb(क्रमागत bpf_prog_type type)
-अणु
-	चयन (type) अणु
-	हाल BPF_PROG_TYPE_SOCKET_FILTER:
-	हाल BPF_PROG_TYPE_SCHED_CLS:
-	हाल BPF_PROG_TYPE_SCHED_ACT:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool may_access_skb(enum bpf_prog_type type)
+{
+	switch (type) {
+	case BPF_PROG_TYPE_SOCKET_FILTER:
+	case BPF_PROG_TYPE_SCHED_CLS:
+	case BPF_PROG_TYPE_SCHED_ACT:
+		return true;
+	default:
+		return false;
+	}
+}
 
-/* verअगरy safety of LD_ABS|LD_IND inकाष्ठाions:
+/* verify safety of LD_ABS|LD_IND instructions:
  * - they can only appear in the programs where ctx == skb
- * - since they are wrappers of function calls, they scratch R1-R5 रेजिस्टरs,
- *   preserve R6-R9, and store वापस value पूर्णांकo R0
+ * - since they are wrappers of function calls, they scratch R1-R5 registers,
+ *   preserve R6-R9, and store return value into R0
  *
  * Implicit input:
  *   ctx == skb == R6 == CTX
  *
  * Explicit input:
- *   SRC == any रेजिस्टर
+ *   SRC == any register
  *   IMM == 32-bit immediate
  *
  * Output:
  *   R0 - 8/16/32-bit skb data converted to cpu endianness
  */
-अटल पूर्णांक check_ld_असल(काष्ठा bpf_verअगरier_env *env, काष्ठा bpf_insn *insn)
-अणु
-	काष्ठा bpf_reg_state *regs = cur_regs(env);
-	अटल स्थिर पूर्णांक ctx_reg = BPF_REG_6;
+static int check_ld_abs(struct bpf_verifier_env *env, struct bpf_insn *insn)
+{
+	struct bpf_reg_state *regs = cur_regs(env);
+	static const int ctx_reg = BPF_REG_6;
 	u8 mode = BPF_MODE(insn->code);
-	पूर्णांक i, err;
+	int i, err;
 
-	अगर (!may_access_skb(resolve_prog_type(env->prog))) अणु
+	if (!may_access_skb(resolve_prog_type(env->prog))) {
 		verbose(env, "BPF_LD_[ABS|IND] instructions not allowed for this program type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!env->ops->gen_ld_असल) अणु
+	if (!env->ops->gen_ld_abs) {
 		verbose(env, "bpf verifier is misconfigured\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (insn->dst_reg != BPF_REG_0 || insn->off != 0 ||
+	if (insn->dst_reg != BPF_REG_0 || insn->off != 0 ||
 	    BPF_SIZE(insn->code) == BPF_DW ||
-	    (mode == BPF_ABS && insn->src_reg != BPF_REG_0)) अणु
+	    (mode == BPF_ABS && insn->src_reg != BPF_REG_0)) {
 		verbose(env, "BPF_LD_[ABS|IND] uses reserved fields\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* check whether implicit source opeअक्रम (रेजिस्टर R6) is पढ़ोable */
+	/* check whether implicit source operand (register R6) is readable */
 	err = check_reg_arg(env, ctx_reg, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Disallow usage of BPF_LD_[ABS|IND] with reference tracking, as
-	 * gen_ld_असल() may terminate the program at runसमय, leading to
+	 * gen_ld_abs() may terminate the program at runtime, leading to
 	 * reference leak.
 	 */
 	err = check_reference_leak(env);
-	अगर (err) अणु
+	if (err) {
 		verbose(env, "BPF_LD_[ABS|IND] cannot be mixed with socket references\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (env->cur_state->active_spin_lock) अणु
+	if (env->cur_state->active_spin_lock) {
 		verbose(env, "BPF_LD_[ABS|IND] cannot be used inside bpf_spin_lock-ed region\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (regs[ctx_reg].type != PTR_TO_CTX) अणु
+	if (regs[ctx_reg].type != PTR_TO_CTX) {
 		verbose(env,
 			"at the time of BPF_LD_ABS|IND R6 != pointer to skb\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mode == BPF_IND) अणु
-		/* check explicit source opeअक्रम */
+	if (mode == BPF_IND) {
+		/* check explicit source operand */
 		err = check_reg_arg(env, insn->src_reg, SRC_OP);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = check_ctx_reg(env, &regs[ctx_reg], ctx_reg);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* reset caller saved regs to unपढ़ोable */
-	क्रम (i = 0; i < CALLER_SAVED_REGS; i++) अणु
+	/* reset caller saved regs to unreadable */
+	for (i = 0; i < CALLER_SAVED_REGS; i++) {
 		mark_reg_not_init(env, regs, caller_saved[i]);
 		check_reg_arg(env, caller_saved[i], DST_OP_NO_MARK);
-	पूर्ण
+	}
 
-	/* mark destination R0 रेजिस्टर as पढ़ोable, since it contains
+	/* mark destination R0 register as readable, since it contains
 	 * the value fetched from the packet.
-	 * Alपढ़ोy marked as written above.
+	 * Already marked as written above.
 	 */
 	mark_reg_unknown(env, regs, BPF_REG_0);
-	/* ld_असल load up to 32-bit skb data. */
+	/* ld_abs load up to 32-bit skb data. */
 	regs[BPF_REG_0].subreg_def = env->insn_idx + 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_वापस_code(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा tnum enक्रमce_attach_type_range = tnum_unknown;
-	स्थिर काष्ठा bpf_prog *prog = env->prog;
-	काष्ठा bpf_reg_state *reg;
-	काष्ठा tnum range = tnum_range(0, 1);
-	क्रमागत bpf_prog_type prog_type = resolve_prog_type(env->prog);
-	पूर्णांक err;
-	स्थिर bool is_subprog = env->cur_state->frame[0]->subprogno;
+static int check_return_code(struct bpf_verifier_env *env)
+{
+	struct tnum enforce_attach_type_range = tnum_unknown;
+	const struct bpf_prog *prog = env->prog;
+	struct bpf_reg_state *reg;
+	struct tnum range = tnum_range(0, 1);
+	enum bpf_prog_type prog_type = resolve_prog_type(env->prog);
+	int err;
+	const bool is_subprog = env->cur_state->frame[0]->subprogno;
 
-	/* LSM and काष्ठा_ops func-ptr's वापस type could be "void" */
-	अगर (!is_subprog &&
+	/* LSM and struct_ops func-ptr's return type could be "void" */
+	if (!is_subprog &&
 	    (prog_type == BPF_PROG_TYPE_STRUCT_OPS ||
 	     prog_type == BPF_PROG_TYPE_LSM) &&
 	    !prog->aux->attach_func_proto->type)
-		वापस 0;
+		return 0;
 
 	/* eBPF calling convetion is such that R0 is used
-	 * to वापस the value from eBPF program.
-	 * Make sure that it's पढ़ोable at this समय
-	 * of bpf_निकास, which means that program wrote
-	 * something पूर्णांकo it earlier
+	 * to return the value from eBPF program.
+	 * Make sure that it's readable at this time
+	 * of bpf_exit, which means that program wrote
+	 * something into it earlier
 	 */
 	err = check_reg_arg(env, BPF_REG_0, SRC_OP);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (is_poपूर्णांकer_value(env, BPF_REG_0)) अणु
+	if (is_pointer_value(env, BPF_REG_0)) {
 		verbose(env, "R0 leaks addr as return value\n");
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
 	reg = cur_regs(env) + BPF_REG_0;
-	अगर (is_subprog) अणु
-		अगर (reg->type != SCALAR_VALUE) अणु
+	if (is_subprog) {
+		if (reg->type != SCALAR_VALUE) {
 			verbose(env, "At subprogram exit the register R0 is not a scalar value (%s)\n",
 				reg_type_str[reg->type]);
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		}
+		return 0;
+	}
 
-	चयन (prog_type) अणु
-	हाल BPF_PROG_TYPE_CGROUP_SOCK_ADDR:
-		अगर (env->prog->expected_attach_type == BPF_CGROUP_UDP4_RECVMSG ||
+	switch (prog_type) {
+	case BPF_PROG_TYPE_CGROUP_SOCK_ADDR:
+		if (env->prog->expected_attach_type == BPF_CGROUP_UDP4_RECVMSG ||
 		    env->prog->expected_attach_type == BPF_CGROUP_UDP6_RECVMSG ||
 		    env->prog->expected_attach_type == BPF_CGROUP_INET4_GETPEERNAME ||
 		    env->prog->expected_attach_type == BPF_CGROUP_INET6_GETPEERNAME ||
 		    env->prog->expected_attach_type == BPF_CGROUP_INET4_GETSOCKNAME ||
 		    env->prog->expected_attach_type == BPF_CGROUP_INET6_GETSOCKNAME)
 			range = tnum_range(1, 1);
-		अगर (env->prog->expected_attach_type == BPF_CGROUP_INET4_BIND ||
+		if (env->prog->expected_attach_type == BPF_CGROUP_INET4_BIND ||
 		    env->prog->expected_attach_type == BPF_CGROUP_INET6_BIND)
 			range = tnum_range(0, 3);
-		अवरोध;
-	हाल BPF_PROG_TYPE_CGROUP_SKB:
-		अगर (env->prog->expected_attach_type == BPF_CGROUP_INET_EGRESS) अणु
+		break;
+	case BPF_PROG_TYPE_CGROUP_SKB:
+		if (env->prog->expected_attach_type == BPF_CGROUP_INET_EGRESS) {
 			range = tnum_range(0, 3);
-			enक्रमce_attach_type_range = tnum_range(2, 3);
-		पूर्ण
-		अवरोध;
-	हाल BPF_PROG_TYPE_CGROUP_SOCK:
-	हाल BPF_PROG_TYPE_SOCK_OPS:
-	हाल BPF_PROG_TYPE_CGROUP_DEVICE:
-	हाल BPF_PROG_TYPE_CGROUP_SYSCTL:
-	हाल BPF_PROG_TYPE_CGROUP_SOCKOPT:
-		अवरोध;
-	हाल BPF_PROG_TYPE_RAW_TRACEPOINT:
-		अगर (!env->prog->aux->attach_btf_id)
-			वापस 0;
-		range = tnum_स्थिर(0);
-		अवरोध;
-	हाल BPF_PROG_TYPE_TRACING:
-		चयन (env->prog->expected_attach_type) अणु
-		हाल BPF_TRACE_FENTRY:
-		हाल BPF_TRACE_FEXIT:
-			range = tnum_स्थिर(0);
-			अवरोध;
-		हाल BPF_TRACE_RAW_TP:
-		हाल BPF_MODIFY_RETURN:
-			वापस 0;
-		हाल BPF_TRACE_ITER:
-			अवरोध;
-		शेष:
-			वापस -ENOTSUPP;
-		पूर्ण
-		अवरोध;
-	हाल BPF_PROG_TYPE_SK_LOOKUP:
+			enforce_attach_type_range = tnum_range(2, 3);
+		}
+		break;
+	case BPF_PROG_TYPE_CGROUP_SOCK:
+	case BPF_PROG_TYPE_SOCK_OPS:
+	case BPF_PROG_TYPE_CGROUP_DEVICE:
+	case BPF_PROG_TYPE_CGROUP_SYSCTL:
+	case BPF_PROG_TYPE_CGROUP_SOCKOPT:
+		break;
+	case BPF_PROG_TYPE_RAW_TRACEPOINT:
+		if (!env->prog->aux->attach_btf_id)
+			return 0;
+		range = tnum_const(0);
+		break;
+	case BPF_PROG_TYPE_TRACING:
+		switch (env->prog->expected_attach_type) {
+		case BPF_TRACE_FENTRY:
+		case BPF_TRACE_FEXIT:
+			range = tnum_const(0);
+			break;
+		case BPF_TRACE_RAW_TP:
+		case BPF_MODIFY_RETURN:
+			return 0;
+		case BPF_TRACE_ITER:
+			break;
+		default:
+			return -ENOTSUPP;
+		}
+		break;
+	case BPF_PROG_TYPE_SK_LOOKUP:
 		range = tnum_range(SK_DROP, SK_PASS);
-		अवरोध;
-	हाल BPF_PROG_TYPE_EXT:
-		/* freplace program can वापस anything as its वापस value
+		break;
+	case BPF_PROG_TYPE_EXT:
+		/* freplace program can return anything as its return value
 		 * depends on the to-be-replaced kernel func or bpf program.
 		 */
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
-	अगर (reg->type != SCALAR_VALUE) अणु
+	if (reg->type != SCALAR_VALUE) {
 		verbose(env, "At program exit the register R0 is not a known value (%s)\n",
 			reg_type_str[reg->type]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!tnum_in(range, reg->var_off)) अणु
+	if (!tnum_in(range, reg->var_off)) {
 		verbose_invalid_scalar(env, reg, &range, "program exit", "R0");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!tnum_is_unknown(enक्रमce_attach_type_range) &&
-	    tnum_in(enक्रमce_attach_type_range, reg->var_off))
-		env->prog->enक्रमce_expected_attach_type = 1;
-	वापस 0;
-पूर्ण
+	if (!tnum_is_unknown(enforce_attach_type_range) &&
+	    tnum_in(enforce_attach_type_range, reg->var_off))
+		env->prog->enforce_expected_attach_type = 1;
+	return 0;
+}
 
-/* non-recursive DFS pseuकरो code
+/* non-recursive DFS pseudo code
  * 1  procedure DFS-iterative(G,v):
  * 2      label v as discovered
  * 3      let S be a stack
  * 4      S.push(v)
- * 5      जबतक S is not empty
+ * 5      while S is not empty
  * 6            t <- S.pop()
- * 7            अगर t is what we're looking क्रम:
- * 8                वापस t
- * 9            क्रम all edges e in G.adjacentEdges(t) करो
- * 10               अगर edge e is alपढ़ोy labelled
- * 11                   जारी with the next edge
+ * 7            if t is what we're looking for:
+ * 8                return t
+ * 9            for all edges e in G.adjacentEdges(t) do
+ * 10               if edge e is already labelled
+ * 11                   continue with the next edge
  * 12               w <- G.adjacentVertex(t,e)
- * 13               अगर vertex w is not discovered and not explored
+ * 13               if vertex w is not discovered and not explored
  * 14                   label e as tree-edge
  * 15                   label w as discovered
  * 16                   S.push(w)
- * 17                   जारी at 5
- * 18               अन्यथा अगर vertex w is discovered
+ * 17                   continue at 5
+ * 18               else if vertex w is discovered
  * 19                   label e as back-edge
- * 20               अन्यथा
+ * 20               else
  * 21                   // vertex w is explored
- * 22                   label e as क्रमward- or cross-edge
+ * 22                   label e as forward- or cross-edge
  * 23           label t as explored
  * 24           S.pop()
  *
@@ -9236,293 +9235,293 @@ sanitize_speculative_path(काष्ठा bpf_verअगरier_env *env,
  * 0x20 - explored
  */
 
-क्रमागत अणु
+enum {
 	DISCOVERED = 0x10,
 	EXPLORED = 0x20,
 	FALLTHROUGH = 1,
 	BRANCH = 2,
-पूर्ण;
+};
 
-अटल u32 state_htab_size(काष्ठा bpf_verअगरier_env *env)
-अणु
-	वापस env->prog->len;
-पूर्ण
+static u32 state_htab_size(struct bpf_verifier_env *env)
+{
+	return env->prog->len;
+}
 
-अटल काष्ठा bpf_verअगरier_state_list **explored_state(
-					काष्ठा bpf_verअगरier_env *env,
-					पूर्णांक idx)
-अणु
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state;
-	काष्ठा bpf_func_state *state = cur->frame[cur->curframe];
+static struct bpf_verifier_state_list **explored_state(
+					struct bpf_verifier_env *env,
+					int idx)
+{
+	struct bpf_verifier_state *cur = env->cur_state;
+	struct bpf_func_state *state = cur->frame[cur->curframe];
 
-	वापस &env->explored_states[(idx ^ state->callsite) % state_htab_size(env)];
-पूर्ण
+	return &env->explored_states[(idx ^ state->callsite) % state_htab_size(env)];
+}
 
-अटल व्योम init_explored_state(काष्ठा bpf_verअगरier_env *env, पूर्णांक idx)
-अणु
-	env->insn_aux_data[idx].prune_poपूर्णांक = true;
-पूर्ण
+static void init_explored_state(struct bpf_verifier_env *env, int idx)
+{
+	env->insn_aux_data[idx].prune_point = true;
+}
 
-क्रमागत अणु
+enum {
 	DONE_EXPLORING = 0,
 	KEEP_EXPLORING = 1,
-पूर्ण;
+};
 
-/* t, w, e - match pseuकरो-code above:
- * t - index of current inकाष्ठाion
- * w - next inकाष्ठाion
+/* t, w, e - match pseudo-code above:
+ * t - index of current instruction
+ * w - next instruction
  * e - edge
  */
-अटल पूर्णांक push_insn(पूर्णांक t, पूर्णांक w, पूर्णांक e, काष्ठा bpf_verअगरier_env *env,
+static int push_insn(int t, int w, int e, struct bpf_verifier_env *env,
 		     bool loop_ok)
-अणु
-	पूर्णांक *insn_stack = env->cfg.insn_stack;
-	पूर्णांक *insn_state = env->cfg.insn_state;
+{
+	int *insn_stack = env->cfg.insn_stack;
+	int *insn_state = env->cfg.insn_state;
 
-	अगर (e == FALLTHROUGH && insn_state[t] >= (DISCOVERED | FALLTHROUGH))
-		वापस DONE_EXPLORING;
+	if (e == FALLTHROUGH && insn_state[t] >= (DISCOVERED | FALLTHROUGH))
+		return DONE_EXPLORING;
 
-	अगर (e == BRANCH && insn_state[t] >= (DISCOVERED | BRANCH))
-		वापस DONE_EXPLORING;
+	if (e == BRANCH && insn_state[t] >= (DISCOVERED | BRANCH))
+		return DONE_EXPLORING;
 
-	अगर (w < 0 || w >= env->prog->len) अणु
+	if (w < 0 || w >= env->prog->len) {
 		verbose_linfo(env, t, "%d: ", t);
 		verbose(env, "jump out of range from insn %d to %d\n", t, w);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (e == BRANCH)
-		/* mark branch target क्रम state pruning */
+	if (e == BRANCH)
+		/* mark branch target for state pruning */
 		init_explored_state(env, w);
 
-	अगर (insn_state[w] == 0) अणु
+	if (insn_state[w] == 0) {
 		/* tree-edge */
 		insn_state[t] = DISCOVERED | e;
 		insn_state[w] = DISCOVERED;
-		अगर (env->cfg.cur_stack >= env->prog->len)
-			वापस -E2BIG;
+		if (env->cfg.cur_stack >= env->prog->len)
+			return -E2BIG;
 		insn_stack[env->cfg.cur_stack++] = w;
-		वापस KEEP_EXPLORING;
-	पूर्ण अन्यथा अगर ((insn_state[w] & 0xF0) == DISCOVERED) अणु
-		अगर (loop_ok && env->bpf_capable)
-			वापस DONE_EXPLORING;
+		return KEEP_EXPLORING;
+	} else if ((insn_state[w] & 0xF0) == DISCOVERED) {
+		if (loop_ok && env->bpf_capable)
+			return DONE_EXPLORING;
 		verbose_linfo(env, t, "%d: ", t);
 		verbose_linfo(env, w, "%d: ", w);
 		verbose(env, "back-edge from insn %d to %d\n", t, w);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (insn_state[w] == EXPLORED) अणु
-		/* क्रमward- or cross-edge */
+		return -EINVAL;
+	} else if (insn_state[w] == EXPLORED) {
+		/* forward- or cross-edge */
 		insn_state[t] = DISCOVERED | e;
-	पूर्ण अन्यथा अणु
+	} else {
 		verbose(env, "insn state internal bug\n");
-		वापस -EFAULT;
-	पूर्ण
-	वापस DONE_EXPLORING;
-पूर्ण
+		return -EFAULT;
+	}
+	return DONE_EXPLORING;
+}
 
-अटल पूर्णांक visit_func_call_insn(पूर्णांक t, पूर्णांक insn_cnt,
-				काष्ठा bpf_insn *insns,
-				काष्ठा bpf_verअगरier_env *env,
+static int visit_func_call_insn(int t, int insn_cnt,
+				struct bpf_insn *insns,
+				struct bpf_verifier_env *env,
 				bool visit_callee)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	ret = push_insn(t, t + 1, FALLTHROUGH, env, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (t + 1 < insn_cnt)
+	if (t + 1 < insn_cnt)
 		init_explored_state(env, t + 1);
-	अगर (visit_callee) अणु
+	if (visit_callee) {
 		init_explored_state(env, t);
 		ret = push_insn(t, t + insns[t].imm + 1, BRANCH,
 				env, false);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* Visits the inकाष्ठाion at index t and वापसs one of the following:
+/* Visits the instruction at index t and returns one of the following:
  *  < 0 - an error occurred
- *  DONE_EXPLORING - the inकाष्ठाion was fully explored
- *  KEEP_EXPLORING - there is still work to be करोne beक्रमe it is fully explored
+ *  DONE_EXPLORING - the instruction was fully explored
+ *  KEEP_EXPLORING - there is still work to be done before it is fully explored
  */
-अटल पूर्णांक visit_insn(पूर्णांक t, पूर्णांक insn_cnt, काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn *insns = env->prog->insnsi;
-	पूर्णांक ret;
+static int visit_insn(int t, int insn_cnt, struct bpf_verifier_env *env)
+{
+	struct bpf_insn *insns = env->prog->insnsi;
+	int ret;
 
-	अगर (bpf_pseuकरो_func(insns + t))
-		वापस visit_func_call_insn(t, insn_cnt, insns, env, true);
+	if (bpf_pseudo_func(insns + t))
+		return visit_func_call_insn(t, insn_cnt, insns, env, true);
 
-	/* All non-branch inकाष्ठाions have a single fall-through edge. */
-	अगर (BPF_CLASS(insns[t].code) != BPF_JMP &&
+	/* All non-branch instructions have a single fall-through edge. */
+	if (BPF_CLASS(insns[t].code) != BPF_JMP &&
 	    BPF_CLASS(insns[t].code) != BPF_JMP32)
-		वापस push_insn(t, t + 1, FALLTHROUGH, env, false);
+		return push_insn(t, t + 1, FALLTHROUGH, env, false);
 
-	चयन (BPF_OP(insns[t].code)) अणु
-	हाल BPF_EXIT:
-		वापस DONE_EXPLORING;
+	switch (BPF_OP(insns[t].code)) {
+	case BPF_EXIT:
+		return DONE_EXPLORING;
 
-	हाल BPF_CALL:
-		वापस visit_func_call_insn(t, insn_cnt, insns, env,
+	case BPF_CALL:
+		return visit_func_call_insn(t, insn_cnt, insns, env,
 					    insns[t].src_reg == BPF_PSEUDO_CALL);
 
-	हाल BPF_JA:
-		अगर (BPF_SRC(insns[t].code) != BPF_K)
-			वापस -EINVAL;
+	case BPF_JA:
+		if (BPF_SRC(insns[t].code) != BPF_K)
+			return -EINVAL;
 
 		/* unconditional jump with single edge */
 		ret = push_insn(t, t + insns[t].off + 1, FALLTHROUGH, env,
 				true);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		/* unconditional jmp is not a good pruning poपूर्णांक,
+		/* unconditional jmp is not a good pruning point,
 		 * but it's marked, since backtracking needs
 		 * to record jmp history in is_state_visited().
 		 */
 		init_explored_state(env, t + insns[t].off + 1);
-		/* tell verअगरier to check क्रम equivalent states
+		/* tell verifier to check for equivalent states
 		 * after every call and jump
 		 */
-		अगर (t + 1 < insn_cnt)
+		if (t + 1 < insn_cnt)
 			init_explored_state(env, t + 1);
 
-		वापस ret;
+		return ret;
 
-	शेष:
+	default:
 		/* conditional jump with two edges */
 		init_explored_state(env, t);
 		ret = push_insn(t, t + 1, FALLTHROUGH, env, true);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		वापस push_insn(t, t + insns[t].off + 1, BRANCH, env, true);
-	पूर्ण
-पूर्ण
+		return push_insn(t, t + insns[t].off + 1, BRANCH, env, true);
+	}
+}
 
 /* non-recursive depth-first-search to detect loops in BPF program
  * loop == back-edge in directed graph
  */
-अटल पूर्णांक check_cfg(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक *insn_stack, *insn_state;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int check_cfg(struct bpf_verifier_env *env)
+{
+	int insn_cnt = env->prog->len;
+	int *insn_stack, *insn_state;
+	int ret = 0;
+	int i;
 
-	insn_state = env->cfg.insn_state = kvसुस्मृति(insn_cnt, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!insn_state)
-		वापस -ENOMEM;
+	insn_state = env->cfg.insn_state = kvcalloc(insn_cnt, sizeof(int), GFP_KERNEL);
+	if (!insn_state)
+		return -ENOMEM;
 
-	insn_stack = env->cfg.insn_stack = kvसुस्मृति(insn_cnt, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!insn_stack) अणु
-		kvमुक्त(insn_state);
-		वापस -ENOMEM;
-	पूर्ण
+	insn_stack = env->cfg.insn_stack = kvcalloc(insn_cnt, sizeof(int), GFP_KERNEL);
+	if (!insn_stack) {
+		kvfree(insn_state);
+		return -ENOMEM;
+	}
 
 	insn_state[0] = DISCOVERED; /* mark 1st insn as discovered */
-	insn_stack[0] = 0; /* 0 is the first inकाष्ठाion */
+	insn_stack[0] = 0; /* 0 is the first instruction */
 	env->cfg.cur_stack = 1;
 
-	जबतक (env->cfg.cur_stack > 0) अणु
-		पूर्णांक t = insn_stack[env->cfg.cur_stack - 1];
+	while (env->cfg.cur_stack > 0) {
+		int t = insn_stack[env->cfg.cur_stack - 1];
 
 		ret = visit_insn(t, insn_cnt, env);
-		चयन (ret) अणु
-		हाल DONE_EXPLORING:
+		switch (ret) {
+		case DONE_EXPLORING:
 			insn_state[t] = EXPLORED;
 			env->cfg.cur_stack--;
-			अवरोध;
-		हाल KEEP_EXPLORING:
-			अवरोध;
-		शेष:
-			अगर (ret > 0) अणु
+			break;
+		case KEEP_EXPLORING:
+			break;
+		default:
+			if (ret > 0) {
 				verbose(env, "visit_insn internal bug\n");
 				ret = -EFAULT;
-			पूर्ण
-			जाओ err_मुक्त;
-		पूर्ण
-	पूर्ण
+			}
+			goto err_free;
+		}
+	}
 
-	अगर (env->cfg.cur_stack < 0) अणु
+	if (env->cfg.cur_stack < 0) {
 		verbose(env, "pop stack internal bug\n");
 		ret = -EFAULT;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	क्रम (i = 0; i < insn_cnt; i++) अणु
-		अगर (insn_state[i] != EXPLORED) अणु
+	for (i = 0; i < insn_cnt; i++) {
+		if (insn_state[i] != EXPLORED) {
 			verbose(env, "unreachable insn %d\n", i);
 			ret = -EINVAL;
-			जाओ err_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto err_free;
+		}
+	}
 	ret = 0; /* cfg looks good */
 
-err_मुक्त:
-	kvमुक्त(insn_state);
-	kvमुक्त(insn_stack);
-	env->cfg.insn_state = env->cfg.insn_stack = शून्य;
-	वापस ret;
-पूर्ण
+err_free:
+	kvfree(insn_state);
+	kvfree(insn_stack);
+	env->cfg.insn_state = env->cfg.insn_stack = NULL;
+	return ret;
+}
 
-अटल पूर्णांक check_abnormal_वापस(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक i;
+static int check_abnormal_return(struct bpf_verifier_env *env)
+{
+	int i;
 
-	क्रम (i = 1; i < env->subprog_cnt; i++) अणु
-		अगर (env->subprog_info[i].has_ld_असल) अणु
+	for (i = 1; i < env->subprog_cnt; i++) {
+		if (env->subprog_info[i].has_ld_abs) {
 			verbose(env, "LD_ABS is not allowed in subprogs without BTF\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (env->subprog_info[i].has_tail_call) अणु
+			return -EINVAL;
+		}
+		if (env->subprog_info[i].has_tail_call) {
 			verbose(env, "tail_call is not allowed in subprogs without BTF\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
 
 /* The minimum supported BTF func info size */
-#घोषणा MIN_BPF_FUNCINFO_SIZE	8
-#घोषणा MAX_FUNCINFO_REC_SIZE	252
+#define MIN_BPF_FUNCINFO_SIZE	8
+#define MAX_FUNCINFO_REC_SIZE	252
 
-अटल पूर्णांक check_btf_func(काष्ठा bpf_verअगरier_env *env,
-			  स्थिर जोड़ bpf_attr *attr,
-			  जोड़ bpf_attr __user *uattr)
-अणु
-	स्थिर काष्ठा btf_type *type, *func_proto, *ret_type;
+static int check_btf_func(struct bpf_verifier_env *env,
+			  const union bpf_attr *attr,
+			  union bpf_attr __user *uattr)
+{
+	const struct btf_type *type, *func_proto, *ret_type;
 	u32 i, nfuncs, urec_size, min_size;
-	u32 krec_size = माप(काष्ठा bpf_func_info);
-	काष्ठा bpf_func_info *krecord;
-	काष्ठा bpf_func_info_aux *info_aux = शून्य;
-	काष्ठा bpf_prog *prog;
-	स्थिर काष्ठा btf *btf;
-	व्योम __user *urecord;
+	u32 krec_size = sizeof(struct bpf_func_info);
+	struct bpf_func_info *krecord;
+	struct bpf_func_info_aux *info_aux = NULL;
+	struct bpf_prog *prog;
+	const struct btf *btf;
+	void __user *urecord;
 	u32 prev_offset = 0;
-	bool scalar_वापस;
-	पूर्णांक ret = -ENOMEM;
+	bool scalar_return;
+	int ret = -ENOMEM;
 
 	nfuncs = attr->func_info_cnt;
-	अगर (!nfuncs) अणु
-		अगर (check_abnormal_वापस(env))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+	if (!nfuncs) {
+		if (check_abnormal_return(env))
+			return -EINVAL;
+		return 0;
+	}
 
-	अगर (nfuncs != env->subprog_cnt) अणु
+	if (nfuncs != env->subprog_cnt) {
 		verbose(env, "number of funcs in func_info doesn't match number of subprogs\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	urec_size = attr->func_info_rec_size;
-	अगर (urec_size < MIN_BPF_FUNCINFO_SIZE ||
+	if (urec_size < MIN_BPF_FUNCINFO_SIZE ||
 	    urec_size > MAX_FUNCINFO_REC_SIZE ||
-	    urec_size % माप(u32)) अणु
+	    urec_size % sizeof(u32)) {
 		verbose(env, "invalid func info rec size %u\n", urec_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	prog = env->prog;
 	btf = prog->aux->btf;
@@ -9530,138 +9529,138 @@ err_मुक्त:
 	urecord = u64_to_user_ptr(attr->func_info);
 	min_size = min_t(u32, krec_size, urec_size);
 
-	krecord = kvसुस्मृति(nfuncs, krec_size, GFP_KERNEL | __GFP_NOWARN);
-	अगर (!krecord)
-		वापस -ENOMEM;
-	info_aux = kसुस्मृति(nfuncs, माप(*info_aux), GFP_KERNEL | __GFP_NOWARN);
-	अगर (!info_aux)
-		जाओ err_मुक्त;
+	krecord = kvcalloc(nfuncs, krec_size, GFP_KERNEL | __GFP_NOWARN);
+	if (!krecord)
+		return -ENOMEM;
+	info_aux = kcalloc(nfuncs, sizeof(*info_aux), GFP_KERNEL | __GFP_NOWARN);
+	if (!info_aux)
+		goto err_free;
 
-	क्रम (i = 0; i < nfuncs; i++) अणु
+	for (i = 0; i < nfuncs; i++) {
 		ret = bpf_check_uarg_tail_zero(urecord, krec_size, urec_size);
-		अगर (ret) अणु
-			अगर (ret == -E2BIG) अणु
+		if (ret) {
+			if (ret == -E2BIG) {
 				verbose(env, "nonzero tailing record in func info");
 				/* set the size kernel expects so loader can zero
 				 * out the rest of the record.
 				 */
-				अगर (put_user(min_size, &uattr->func_info_rec_size))
+				if (put_user(min_size, &uattr->func_info_rec_size))
 					ret = -EFAULT;
-			पूर्ण
-			जाओ err_मुक्त;
-		पूर्ण
+			}
+			goto err_free;
+		}
 
-		अगर (copy_from_user(&krecord[i], urecord, min_size)) अणु
+		if (copy_from_user(&krecord[i], urecord, min_size)) {
 			ret = -EFAULT;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		/* check insn_off */
 		ret = -EINVAL;
-		अगर (i == 0) अणु
-			अगर (krecord[i].insn_off) अणु
+		if (i == 0) {
+			if (krecord[i].insn_off) {
 				verbose(env,
 					"nonzero insn_off %u for the first func info record",
 					krecord[i].insn_off);
-				जाओ err_मुक्त;
-			पूर्ण
-		पूर्ण अन्यथा अगर (krecord[i].insn_off <= prev_offset) अणु
+				goto err_free;
+			}
+		} else if (krecord[i].insn_off <= prev_offset) {
 			verbose(env,
 				"same or smaller insn offset (%u) than previous func info record (%u)",
 				krecord[i].insn_off, prev_offset);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (env->subprog_info[i].start != krecord[i].insn_off) अणु
+		if (env->subprog_info[i].start != krecord[i].insn_off) {
 			verbose(env, "func_info BTF section doesn't match subprog layout in BPF program\n");
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		/* check type_id */
 		type = btf_type_by_id(btf, krecord[i].type_id);
-		अगर (!type || !btf_type_is_func(type)) अणु
+		if (!type || !btf_type_is_func(type)) {
 			verbose(env, "invalid type id %d in func info",
 				krecord[i].type_id);
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 		info_aux[i].linkage = BTF_INFO_VLEN(type->info);
 
 		func_proto = btf_type_by_id(btf, type->type);
-		अगर (unlikely(!func_proto || !btf_type_is_func_proto(func_proto)))
-			/* btf_func_check() alपढ़ोy verअगरied it during BTF load */
-			जाओ err_मुक्त;
-		ret_type = btf_type_skip_modअगरiers(btf, func_proto->type, शून्य);
-		scalar_वापस =
-			btf_type_is_small_पूर्णांक(ret_type) || btf_type_is_क्रमागत(ret_type);
-		अगर (i && !scalar_वापस && env->subprog_info[i].has_ld_असल) अणु
+		if (unlikely(!func_proto || !btf_type_is_func_proto(func_proto)))
+			/* btf_func_check() already verified it during BTF load */
+			goto err_free;
+		ret_type = btf_type_skip_modifiers(btf, func_proto->type, NULL);
+		scalar_return =
+			btf_type_is_small_int(ret_type) || btf_type_is_enum(ret_type);
+		if (i && !scalar_return && env->subprog_info[i].has_ld_abs) {
 			verbose(env, "LD_ABS is only allowed in functions that return 'int'.\n");
-			जाओ err_मुक्त;
-		पूर्ण
-		अगर (i && !scalar_वापस && env->subprog_info[i].has_tail_call) अणु
+			goto err_free;
+		}
+		if (i && !scalar_return && env->subprog_info[i].has_tail_call) {
 			verbose(env, "tail_call is only allowed in functions that return 'int'.\n");
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		prev_offset = krecord[i].insn_off;
 		urecord += urec_size;
-	पूर्ण
+	}
 
 	prog->aux->func_info = krecord;
 	prog->aux->func_info_cnt = nfuncs;
 	prog->aux->func_info_aux = info_aux;
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kvमुक्त(krecord);
-	kमुक्त(info_aux);
-	वापस ret;
-पूर्ण
+err_free:
+	kvfree(krecord);
+	kfree(info_aux);
+	return ret;
+}
 
-अटल व्योम adjust_btf_func(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_prog_aux *aux = env->prog->aux;
-	पूर्णांक i;
+static void adjust_btf_func(struct bpf_verifier_env *env)
+{
+	struct bpf_prog_aux *aux = env->prog->aux;
+	int i;
 
-	अगर (!aux->func_info)
-		वापस;
+	if (!aux->func_info)
+		return;
 
-	क्रम (i = 0; i < env->subprog_cnt; i++)
+	for (i = 0; i < env->subprog_cnt; i++)
 		aux->func_info[i].insn_off = env->subprog_info[i].start;
-पूर्ण
+}
 
-#घोषणा MIN_BPF_LINEINFO_SIZE	(दुरत्व(काष्ठा bpf_line_info, line_col) + \
-		माप(((काष्ठा bpf_line_info *)(0))->line_col))
-#घोषणा MAX_LINEINFO_REC_SIZE	MAX_FUNCINFO_REC_SIZE
+#define MIN_BPF_LINEINFO_SIZE	(offsetof(struct bpf_line_info, line_col) + \
+		sizeof(((struct bpf_line_info *)(0))->line_col))
+#define MAX_LINEINFO_REC_SIZE	MAX_FUNCINFO_REC_SIZE
 
-अटल पूर्णांक check_btf_line(काष्ठा bpf_verअगरier_env *env,
-			  स्थिर जोड़ bpf_attr *attr,
-			  जोड़ bpf_attr __user *uattr)
-अणु
+static int check_btf_line(struct bpf_verifier_env *env,
+			  const union bpf_attr *attr,
+			  union bpf_attr __user *uattr)
+{
 	u32 i, s, nr_linfo, ncopy, expected_size, rec_size, prev_offset = 0;
-	काष्ठा bpf_subprog_info *sub;
-	काष्ठा bpf_line_info *linfo;
-	काष्ठा bpf_prog *prog;
-	स्थिर काष्ठा btf *btf;
-	व्योम __user *ulinfo;
-	पूर्णांक err;
+	struct bpf_subprog_info *sub;
+	struct bpf_line_info *linfo;
+	struct bpf_prog *prog;
+	const struct btf *btf;
+	void __user *ulinfo;
+	int err;
 
 	nr_linfo = attr->line_info_cnt;
-	अगर (!nr_linfo)
-		वापस 0;
+	if (!nr_linfo)
+		return 0;
 
 	rec_size = attr->line_info_rec_size;
-	अगर (rec_size < MIN_BPF_LINEINFO_SIZE ||
+	if (rec_size < MIN_BPF_LINEINFO_SIZE ||
 	    rec_size > MAX_LINEINFO_REC_SIZE ||
-	    rec_size & (माप(u32) - 1))
-		वापस -EINVAL;
+	    rec_size & (sizeof(u32) - 1))
+		return -EINVAL;
 
-	/* Need to zero it in हाल the userspace may
+	/* Need to zero it in case the userspace may
 	 * pass in a smaller bpf_line_info object.
 	 */
-	linfo = kvसुस्मृति(nr_linfo, माप(काष्ठा bpf_line_info),
+	linfo = kvcalloc(nr_linfo, sizeof(struct bpf_line_info),
 			 GFP_KERNEL | __GFP_NOWARN);
-	अगर (!linfo)
-		वापस -ENOMEM;
+	if (!linfo)
+		return -ENOMEM;
 
 	prog = env->prog;
 	btf = prog->aux->btf;
@@ -9669,130 +9668,130 @@ err_मुक्त:
 	s = 0;
 	sub = env->subprog_info;
 	ulinfo = u64_to_user_ptr(attr->line_info);
-	expected_size = माप(काष्ठा bpf_line_info);
+	expected_size = sizeof(struct bpf_line_info);
 	ncopy = min_t(u32, expected_size, rec_size);
-	क्रम (i = 0; i < nr_linfo; i++) अणु
+	for (i = 0; i < nr_linfo; i++) {
 		err = bpf_check_uarg_tail_zero(ulinfo, expected_size, rec_size);
-		अगर (err) अणु
-			अगर (err == -E2BIG) अणु
+		if (err) {
+			if (err == -E2BIG) {
 				verbose(env, "nonzero tailing record in line_info");
-				अगर (put_user(expected_size,
+				if (put_user(expected_size,
 					     &uattr->line_info_rec_size))
 					err = -EFAULT;
-			पूर्ण
-			जाओ err_मुक्त;
-		पूर्ण
+			}
+			goto err_free;
+		}
 
-		अगर (copy_from_user(&linfo[i], ulinfo, ncopy)) अणु
+		if (copy_from_user(&linfo[i], ulinfo, ncopy)) {
 			err = -EFAULT;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
 		/*
 		 * Check insn_off to ensure
 		 * 1) strictly increasing AND
 		 * 2) bounded by prog->len
 		 *
-		 * The linfo[0].insn_off == 0 check logically falls पूर्णांकo
-		 * the later "missing bpf_line_info for func..." हाल
+		 * The linfo[0].insn_off == 0 check logically falls into
+		 * the later "missing bpf_line_info for func..." case
 		 * because the first linfo[0].insn_off must be the
 		 * first sub also and the first sub must have
 		 * subprog_info[0].start == 0.
 		 */
-		अगर ((i && linfo[i].insn_off <= prev_offset) ||
-		    linfo[i].insn_off >= prog->len) अणु
+		if ((i && linfo[i].insn_off <= prev_offset) ||
+		    linfo[i].insn_off >= prog->len) {
 			verbose(env, "Invalid line_info[%u].insn_off:%u (prev_offset:%u prog->len:%u)\n",
 				i, linfo[i].insn_off, prev_offset,
 				prog->len);
 			err = -EINVAL;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (!prog->insnsi[linfo[i].insn_off].code) अणु
+		if (!prog->insnsi[linfo[i].insn_off].code) {
 			verbose(env,
 				"Invalid insn code at line_info[%u].insn_off\n",
 				i);
 			err = -EINVAL;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (!btf_name_by_offset(btf, linfo[i].line_off) ||
-		    !btf_name_by_offset(btf, linfo[i].file_name_off)) अणु
+		if (!btf_name_by_offset(btf, linfo[i].line_off) ||
+		    !btf_name_by_offset(btf, linfo[i].file_name_off)) {
 			verbose(env, "Invalid line_info[%u].line_off or .file_name_off\n", i);
 			err = -EINVAL;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (s != env->subprog_cnt) अणु
-			अगर (linfo[i].insn_off == sub[s].start) अणु
+		if (s != env->subprog_cnt) {
+			if (linfo[i].insn_off == sub[s].start) {
 				sub[s].linfo_idx = i;
 				s++;
-			पूर्ण अन्यथा अगर (sub[s].start < linfo[i].insn_off) अणु
+			} else if (sub[s].start < linfo[i].insn_off) {
 				verbose(env, "missing bpf_line_info for func#%u\n", s);
 				err = -EINVAL;
-				जाओ err_मुक्त;
-			पूर्ण
-		पूर्ण
+				goto err_free;
+			}
+		}
 
 		prev_offset = linfo[i].insn_off;
 		ulinfo += rec_size;
-	पूर्ण
+	}
 
-	अगर (s != env->subprog_cnt) अणु
+	if (s != env->subprog_cnt) {
 		verbose(env, "missing bpf_line_info for %u funcs starting from func#%u\n",
 			env->subprog_cnt - s, s);
 		err = -EINVAL;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	prog->aux->linfo = linfo;
 	prog->aux->nr_linfo = nr_linfo;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kvमुक्त(linfo);
-	वापस err;
-पूर्ण
+err_free:
+	kvfree(linfo);
+	return err;
+}
 
-अटल पूर्णांक check_btf_info(काष्ठा bpf_verअगरier_env *env,
-			  स्थिर जोड़ bpf_attr *attr,
-			  जोड़ bpf_attr __user *uattr)
-अणु
-	काष्ठा btf *btf;
-	पूर्णांक err;
+static int check_btf_info(struct bpf_verifier_env *env,
+			  const union bpf_attr *attr,
+			  union bpf_attr __user *uattr)
+{
+	struct btf *btf;
+	int err;
 
-	अगर (!attr->func_info_cnt && !attr->line_info_cnt) अणु
-		अगर (check_abnormal_वापस(env))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+	if (!attr->func_info_cnt && !attr->line_info_cnt) {
+		if (check_abnormal_return(env))
+			return -EINVAL;
+		return 0;
+	}
 
 	btf = btf_get_by_fd(attr->prog_btf_fd);
-	अगर (IS_ERR(btf))
-		वापस PTR_ERR(btf);
-	अगर (btf_is_kernel(btf)) अणु
+	if (IS_ERR(btf))
+		return PTR_ERR(btf);
+	if (btf_is_kernel(btf)) {
 		btf_put(btf);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 	env->prog->aux->btf = btf;
 
 	err = check_btf_func(env, attr, uattr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = check_btf_line(env, attr, uattr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* check %cur's range satisfies %old's */
-अटल bool range_within(काष्ठा bpf_reg_state *old,
-			 काष्ठा bpf_reg_state *cur)
-अणु
-	वापस old->umin_value <= cur->umin_value &&
+static bool range_within(struct bpf_reg_state *old,
+			 struct bpf_reg_state *cur)
+{
+	return old->umin_value <= cur->umin_value &&
 	       old->umax_value >= cur->umax_value &&
 	       old->smin_value <= cur->smin_value &&
 	       old->smax_value >= cur->smax_value &&
@@ -9800,578 +9799,578 @@ err_मुक्त:
 	       old->u32_max_value >= cur->u32_max_value &&
 	       old->s32_min_value <= cur->s32_min_value &&
 	       old->s32_max_value >= cur->s32_max_value;
-पूर्ण
+}
 
-/* Maximum number of रेजिस्टर states that can exist at once */
-#घोषणा ID_MAP_SIZE	(MAX_BPF_REG + MAX_BPF_STACK / BPF_REG_SIZE)
-काष्ठा idpair अणु
+/* Maximum number of register states that can exist at once */
+#define ID_MAP_SIZE	(MAX_BPF_REG + MAX_BPF_STACK / BPF_REG_SIZE)
+struct idpair {
 	u32 old;
 	u32 cur;
-पूर्ण;
+};
 
-/* If in the old state two रेजिस्टरs had the same id, then they need to have
- * the same id in the new state as well.  But that id could be dअगरferent from
+/* If in the old state two registers had the same id, then they need to have
+ * the same id in the new state as well.  But that id could be different from
  * the old state, so we need to track the mapping from old to new ids.
  * Once we have seen that, say, a reg with old id 5 had new id 9, any subsequent
- * regs with old id 5 must also have new id 9 क्रम the new state to be safe.  But
- * regs with a dअगरferent old id could still have new id 9, we करोn't care about
+ * regs with old id 5 must also have new id 9 for the new state to be safe.  But
+ * regs with a different old id could still have new id 9, we don't care about
  * that.
- * So we look through our idmap to see अगर this old id has been seen beक्रमe.  If
+ * So we look through our idmap to see if this old id has been seen before.  If
  * so, we require the new id to match; otherwise, we add the id pair to the map.
  */
-अटल bool check_ids(u32 old_id, u32 cur_id, काष्ठा idpair *idmap)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool check_ids(u32 old_id, u32 cur_id, struct idpair *idmap)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ID_MAP_SIZE; i++) अणु
-		अगर (!idmap[i].old) अणु
-			/* Reached an empty slot; haven't seen this id beक्रमe */
+	for (i = 0; i < ID_MAP_SIZE; i++) {
+		if (!idmap[i].old) {
+			/* Reached an empty slot; haven't seen this id before */
 			idmap[i].old = old_id;
 			idmap[i].cur = cur_id;
-			वापस true;
-		पूर्ण
-		अगर (idmap[i].old == old_id)
-			वापस idmap[i].cur == cur_id;
-	पूर्ण
+			return true;
+		}
+		if (idmap[i].old == old_id)
+			return idmap[i].cur == cur_id;
+	}
 	/* We ran out of idmap slots, which should be impossible */
 	WARN_ON_ONCE(1);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम clean_func_state(काष्ठा bpf_verअगरier_env *env,
-			     काष्ठा bpf_func_state *st)
-अणु
-	क्रमागत bpf_reg_liveness live;
-	पूर्णांक i, j;
+static void clean_func_state(struct bpf_verifier_env *env,
+			     struct bpf_func_state *st)
+{
+	enum bpf_reg_liveness live;
+	int i, j;
 
-	क्रम (i = 0; i < BPF_REG_FP; i++) अणु
+	for (i = 0; i < BPF_REG_FP; i++) {
 		live = st->regs[i].live;
-		/* liveness must not touch this रेजिस्टर anymore */
+		/* liveness must not touch this register anymore */
 		st->regs[i].live |= REG_LIVE_DONE;
-		अगर (!(live & REG_LIVE_READ))
-			/* since the रेजिस्टर is unused, clear its state
+		if (!(live & REG_LIVE_READ))
+			/* since the register is unused, clear its state
 			 * to make further comparison simpler
 			 */
 			__mark_reg_not_init(env, &st->regs[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < st->allocated_stack / BPF_REG_SIZE; i++) अणु
+	for (i = 0; i < st->allocated_stack / BPF_REG_SIZE; i++) {
 		live = st->stack[i].spilled_ptr.live;
 		/* liveness must not touch this stack slot anymore */
 		st->stack[i].spilled_ptr.live |= REG_LIVE_DONE;
-		अगर (!(live & REG_LIVE_READ)) अणु
+		if (!(live & REG_LIVE_READ)) {
 			__mark_reg_not_init(env, &st->stack[i].spilled_ptr);
-			क्रम (j = 0; j < BPF_REG_SIZE; j++)
+			for (j = 0; j < BPF_REG_SIZE; j++)
 				st->stack[i].slot_type[j] = STACK_INVALID;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम clean_verअगरier_state(काष्ठा bpf_verअगरier_env *env,
-				 काष्ठा bpf_verअगरier_state *st)
-अणु
-	पूर्णांक i;
+static void clean_verifier_state(struct bpf_verifier_env *env,
+				 struct bpf_verifier_state *st)
+{
+	int i;
 
-	अगर (st->frame[0]->regs[0].live & REG_LIVE_DONE)
-		/* all regs in this state in all frames were alपढ़ोy marked */
-		वापस;
+	if (st->frame[0]->regs[0].live & REG_LIVE_DONE)
+		/* all regs in this state in all frames were already marked */
+		return;
 
-	क्रम (i = 0; i <= st->curframe; i++)
+	for (i = 0; i <= st->curframe; i++)
 		clean_func_state(env, st->frame[i]);
-पूर्ण
+}
 
-/* the parentage chains क्रमm a tree.
- * the verअगरier states are added to state lists at given insn and
- * pushed पूर्णांकo state stack क्रम future exploration.
- * when the verअगरier reaches bpf_निकास insn some of the verअगरer states
- * stored in the state lists have their final liveness state alपढ़ोy,
- * but a lot of states will get revised from liveness poपूर्णांक of view when
- * the verअगरier explores other branches.
+/* the parentage chains form a tree.
+ * the verifier states are added to state lists at given insn and
+ * pushed into state stack for future exploration.
+ * when the verifier reaches bpf_exit insn some of the verifer states
+ * stored in the state lists have their final liveness state already,
+ * but a lot of states will get revised from liveness point of view when
+ * the verifier explores other branches.
  * Example:
  * 1: r0 = 1
- * 2: अगर r1 == 100 जाओ pc+1
+ * 2: if r1 == 100 goto pc+1
  * 3: r0 = 2
- * 4: निकास
- * when the verअगरier reaches निकास insn the रेजिस्टर r0 in the state list of
- * insn 2 will be seen as !REG_LIVE_READ. Then the verअगरier pops the other_branch
+ * 4: exit
+ * when the verifier reaches exit insn the register r0 in the state list of
+ * insn 2 will be seen as !REG_LIVE_READ. Then the verifier pops the other_branch
  * of insn 2 and goes exploring further. At the insn 4 it will walk the
- * parentage chain from insn 4 पूर्णांकo insn 2 and will mark r0 as REG_LIVE_READ.
+ * parentage chain from insn 4 into insn 2 and will mark r0 as REG_LIVE_READ.
  *
- * Since the verअगरier pushes the branch states as it sees them जबतक exploring
- * the program the condition of walking the branch inकाष्ठाion क्रम the second
- * समय means that all states below this branch were alपढ़ोy explored and
- * their final liveness markes are alपढ़ोy propagated.
- * Hence when the verअगरier completes the search of state list in is_state_visited()
+ * Since the verifier pushes the branch states as it sees them while exploring
+ * the program the condition of walking the branch instruction for the second
+ * time means that all states below this branch were already explored and
+ * their final liveness markes are already propagated.
+ * Hence when the verifier completes the search of state list in is_state_visited()
  * we can call this clean_live_states() function to mark all liveness states
  * as REG_LIVE_DONE to indicate that 'parent' pointers of 'struct bpf_reg_state'
  * will not be used.
- * This function also clears the रेजिस्टरs and stack क्रम states that !READ
- * to simplअगरy state merging.
+ * This function also clears the registers and stack for states that !READ
+ * to simplify state merging.
  *
- * Important note here that walking the same branch inकाष्ठाion in the callee
- * करोesn't meant that the states are DONE. The verअगरier has to compare
+ * Important note here that walking the same branch instruction in the callee
+ * doesn't meant that the states are DONE. The verifier has to compare
  * the callsites
  */
-अटल व्योम clean_live_states(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn,
-			      काष्ठा bpf_verअगरier_state *cur)
-अणु
-	काष्ठा bpf_verअगरier_state_list *sl;
-	पूर्णांक i;
+static void clean_live_states(struct bpf_verifier_env *env, int insn,
+			      struct bpf_verifier_state *cur)
+{
+	struct bpf_verifier_state_list *sl;
+	int i;
 
 	sl = *explored_state(env, insn);
-	जबतक (sl) अणु
-		अगर (sl->state.branches)
-			जाओ next;
-		अगर (sl->state.insn_idx != insn ||
+	while (sl) {
+		if (sl->state.branches)
+			goto next;
+		if (sl->state.insn_idx != insn ||
 		    sl->state.curframe != cur->curframe)
-			जाओ next;
-		क्रम (i = 0; i <= cur->curframe; i++)
-			अगर (sl->state.frame[i]->callsite != cur->frame[i]->callsite)
-				जाओ next;
-		clean_verअगरier_state(env, &sl->state);
+			goto next;
+		for (i = 0; i <= cur->curframe; i++)
+			if (sl->state.frame[i]->callsite != cur->frame[i]->callsite)
+				goto next;
+		clean_verifier_state(env, &sl->state);
 next:
 		sl = sl->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Returns true अगर (rold safe implies rcur safe) */
-अटल bool regsafe(काष्ठा bpf_reg_state *rold, काष्ठा bpf_reg_state *rcur,
-		    काष्ठा idpair *idmap)
-अणु
+/* Returns true if (rold safe implies rcur safe) */
+static bool regsafe(struct bpf_reg_state *rold, struct bpf_reg_state *rcur,
+		    struct idpair *idmap)
+{
 	bool equal;
 
-	अगर (!(rold->live & REG_LIVE_READ))
+	if (!(rold->live & REG_LIVE_READ))
 		/* explored state didn't use this */
-		वापस true;
+		return true;
 
-	equal = स_भेद(rold, rcur, दुरत्व(काष्ठा bpf_reg_state, parent)) == 0;
+	equal = memcmp(rold, rcur, offsetof(struct bpf_reg_state, parent)) == 0;
 
-	अगर (rold->type == PTR_TO_STACK)
-		/* two stack poपूर्णांकers are equal only अगर they're poपूर्णांकing to
+	if (rold->type == PTR_TO_STACK)
+		/* two stack pointers are equal only if they're pointing to
 		 * the same stack frame, since fp-8 in foo != fp-8 in bar
 		 */
-		वापस equal && rold->frameno == rcur->frameno;
+		return equal && rold->frameno == rcur->frameno;
 
-	अगर (equal)
-		वापस true;
+	if (equal)
+		return true;
 
-	अगर (rold->type == NOT_INIT)
+	if (rold->type == NOT_INIT)
 		/* explored state can't have used this */
-		वापस true;
-	अगर (rcur->type == NOT_INIT)
-		वापस false;
-	चयन (rold->type) अणु
-	हाल SCALAR_VALUE:
-		अगर (rcur->type == SCALAR_VALUE) अणु
-			अगर (!rold->precise && !rcur->precise)
-				वापस true;
+		return true;
+	if (rcur->type == NOT_INIT)
+		return false;
+	switch (rold->type) {
+	case SCALAR_VALUE:
+		if (rcur->type == SCALAR_VALUE) {
+			if (!rold->precise && !rcur->precise)
+				return true;
 			/* new val must satisfy old val knowledge */
-			वापस range_within(rold, rcur) &&
+			return range_within(rold, rcur) &&
 			       tnum_in(rold->var_off, rcur->var_off);
-		पूर्ण अन्यथा अणु
-			/* We're trying to use a poपूर्णांकer in place of a scalar.
-			 * Even अगर the scalar was unbounded, this could lead to
-			 * poपूर्णांकer leaks because scalars are allowed to leak
-			 * जबतक poपूर्णांकers are not. We could make this safe in
-			 * special हालs अगर root is calling us, but it's
+		} else {
+			/* We're trying to use a pointer in place of a scalar.
+			 * Even if the scalar was unbounded, this could lead to
+			 * pointer leaks because scalars are allowed to leak
+			 * while pointers are not. We could make this safe in
+			 * special cases if root is calling us, but it's
 			 * probably not worth the hassle.
 			 */
-			वापस false;
-		पूर्ण
-	हाल PTR_TO_MAP_KEY:
-	हाल PTR_TO_MAP_VALUE:
+			return false;
+		}
+	case PTR_TO_MAP_KEY:
+	case PTR_TO_MAP_VALUE:
 		/* If the new min/max/var_off satisfy the old ones and
-		 * everything अन्यथा matches, we are OK.
-		 * 'id' is not compared, since it's only used क्रम maps with
-		 * bpf_spin_lock inside map element and in such हालs अगर
-		 * the rest of the prog is valid क्रम one map element then
-		 * it's valid क्रम all map elements regardless of the key
+		 * everything else matches, we are OK.
+		 * 'id' is not compared, since it's only used for maps with
+		 * bpf_spin_lock inside map element and in such cases if
+		 * the rest of the prog is valid for one map element then
+		 * it's valid for all map elements regardless of the key
 		 * used in bpf_map_lookup()
 		 */
-		वापस स_भेद(rold, rcur, दुरत्व(काष्ठा bpf_reg_state, id)) == 0 &&
+		return memcmp(rold, rcur, offsetof(struct bpf_reg_state, id)) == 0 &&
 		       range_within(rold, rcur) &&
 		       tnum_in(rold->var_off, rcur->var_off);
-	हाल PTR_TO_MAP_VALUE_OR_शून्य:
+	case PTR_TO_MAP_VALUE_OR_NULL:
 		/* a PTR_TO_MAP_VALUE could be safe to use as a
-		 * PTR_TO_MAP_VALUE_OR_शून्य पूर्णांकo the same map.
-		 * However, अगर the old PTR_TO_MAP_VALUE_OR_शून्य then got शून्य-
-		 * checked, करोing so could have affected others with the same
-		 * id, and we can't check क्रम that because we lost the id when
+		 * PTR_TO_MAP_VALUE_OR_NULL into the same map.
+		 * However, if the old PTR_TO_MAP_VALUE_OR_NULL then got NULL-
+		 * checked, doing so could have affected others with the same
+		 * id, and we can't check for that because we lost the id when
 		 * we converted to a PTR_TO_MAP_VALUE.
 		 */
-		अगर (rcur->type != PTR_TO_MAP_VALUE_OR_शून्य)
-			वापस false;
-		अगर (स_भेद(rold, rcur, दुरत्व(काष्ठा bpf_reg_state, id)))
-			वापस false;
+		if (rcur->type != PTR_TO_MAP_VALUE_OR_NULL)
+			return false;
+		if (memcmp(rold, rcur, offsetof(struct bpf_reg_state, id)))
+			return false;
 		/* Check our ids match any regs they're supposed to */
-		वापस check_ids(rold->id, rcur->id, idmap);
-	हाल PTR_TO_PACKET_META:
-	हाल PTR_TO_PACKET:
-		अगर (rcur->type != rold->type)
-			वापस false;
+		return check_ids(rold->id, rcur->id, idmap);
+	case PTR_TO_PACKET_META:
+	case PTR_TO_PACKET:
+		if (rcur->type != rold->type)
+			return false;
 		/* We must have at least as much range as the old ptr
-		 * did, so that any accesses which were safe beक्रमe are
-		 * still safe.  This is true even अगर old range < old off,
+		 * did, so that any accesses which were safe before are
+		 * still safe.  This is true even if old range < old off,
 		 * since someone could have accessed through (ptr - k), or
-		 * even करोne ptr -= k in a रेजिस्टर, to get a safe access.
+		 * even done ptr -= k in a register, to get a safe access.
 		 */
-		अगर (rold->range > rcur->range)
-			वापस false;
-		/* If the offsets करोn't match, we can't trust our alignment;
+		if (rold->range > rcur->range)
+			return false;
+		/* If the offsets don't match, we can't trust our alignment;
 		 * nor can we be sure that we won't fall out of range.
 		 */
-		अगर (rold->off != rcur->off)
-			वापस false;
+		if (rold->off != rcur->off)
+			return false;
 		/* id relations must be preserved */
-		अगर (rold->id && !check_ids(rold->id, rcur->id, idmap))
-			वापस false;
+		if (rold->id && !check_ids(rold->id, rcur->id, idmap))
+			return false;
 		/* new val must satisfy old val knowledge */
-		वापस range_within(rold, rcur) &&
+		return range_within(rold, rcur) &&
 		       tnum_in(rold->var_off, rcur->var_off);
-	हाल PTR_TO_CTX:
-	हाल CONST_PTR_TO_MAP:
-	हाल PTR_TO_PACKET_END:
-	हाल PTR_TO_FLOW_KEYS:
-	हाल PTR_TO_SOCKET:
-	हाल PTR_TO_SOCKET_OR_शून्य:
-	हाल PTR_TO_SOCK_COMMON:
-	हाल PTR_TO_SOCK_COMMON_OR_शून्य:
-	हाल PTR_TO_TCP_SOCK:
-	हाल PTR_TO_TCP_SOCK_OR_शून्य:
-	हाल PTR_TO_XDP_SOCK:
-		/* Only valid matches are exact, which स_भेद() above
+	case PTR_TO_CTX:
+	case CONST_PTR_TO_MAP:
+	case PTR_TO_PACKET_END:
+	case PTR_TO_FLOW_KEYS:
+	case PTR_TO_SOCKET:
+	case PTR_TO_SOCKET_OR_NULL:
+	case PTR_TO_SOCK_COMMON:
+	case PTR_TO_SOCK_COMMON_OR_NULL:
+	case PTR_TO_TCP_SOCK:
+	case PTR_TO_TCP_SOCK_OR_NULL:
+	case PTR_TO_XDP_SOCK:
+		/* Only valid matches are exact, which memcmp() above
 		 * would have accepted
 		 */
-	शेष:
+	default:
 		/* Don't know what's going on, just say it's not safe */
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* Shouldn't get here; if we do, say it's not safe */
 	WARN_ON_ONCE(1);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool stacksafe(काष्ठा bpf_func_state *old,
-		      काष्ठा bpf_func_state *cur,
-		      काष्ठा idpair *idmap)
-अणु
-	पूर्णांक i, spi;
+static bool stacksafe(struct bpf_func_state *old,
+		      struct bpf_func_state *cur,
+		      struct idpair *idmap)
+{
+	int i, spi;
 
 	/* walk slots of the explored stack and ignore any additional
 	 * slots in the current stack, since explored(safe) state
 	 * didn't use them
 	 */
-	क्रम (i = 0; i < old->allocated_stack; i++) अणु
+	for (i = 0; i < old->allocated_stack; i++) {
 		spi = i / BPF_REG_SIZE;
 
-		अगर (!(old->stack[spi].spilled_ptr.live & REG_LIVE_READ)) अणु
+		if (!(old->stack[spi].spilled_ptr.live & REG_LIVE_READ)) {
 			i += BPF_REG_SIZE - 1;
 			/* explored state didn't use this */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (old->stack[spi].slot_type[i % BPF_REG_SIZE] == STACK_INVALID)
-			जारी;
+		if (old->stack[spi].slot_type[i % BPF_REG_SIZE] == STACK_INVALID)
+			continue;
 
 		/* explored stack has more populated slots than current stack
 		 * and these slots were used
 		 */
-		अगर (i >= cur->allocated_stack)
-			वापस false;
+		if (i >= cur->allocated_stack)
+			return false;
 
-		/* अगर old state was safe with misc data in the stack
+		/* if old state was safe with misc data in the stack
 		 * it will be safe with zero-initialized stack.
 		 * The opposite is not true
 		 */
-		अगर (old->stack[spi].slot_type[i % BPF_REG_SIZE] == STACK_MISC &&
+		if (old->stack[spi].slot_type[i % BPF_REG_SIZE] == STACK_MISC &&
 		    cur->stack[spi].slot_type[i % BPF_REG_SIZE] == STACK_ZERO)
-			जारी;
-		अगर (old->stack[spi].slot_type[i % BPF_REG_SIZE] !=
+			continue;
+		if (old->stack[spi].slot_type[i % BPF_REG_SIZE] !=
 		    cur->stack[spi].slot_type[i % BPF_REG_SIZE])
 			/* Ex: old explored (safe) state has STACK_SPILL in
 			 * this stack slot, but current has STACK_MISC ->
-			 * this verअगरier states are not equivalent,
-			 * वापस false to जारी verअगरication of this path
+			 * this verifier states are not equivalent,
+			 * return false to continue verification of this path
 			 */
-			वापस false;
-		अगर (i % BPF_REG_SIZE)
-			जारी;
-		अगर (old->stack[spi].slot_type[0] != STACK_SPILL)
-			जारी;
-		अगर (!regsafe(&old->stack[spi].spilled_ptr,
+			return false;
+		if (i % BPF_REG_SIZE)
+			continue;
+		if (old->stack[spi].slot_type[0] != STACK_SPILL)
+			continue;
+		if (!regsafe(&old->stack[spi].spilled_ptr,
 			     &cur->stack[spi].spilled_ptr,
 			     idmap))
 			/* when explored and current stack slot are both storing
-			 * spilled रेजिस्टरs, check that stored poपूर्णांकers types
+			 * spilled registers, check that stored pointers types
 			 * are the same as well.
 			 * Ex: explored safe path could have stored
-			 * (bpf_reg_state) अणु.type = PTR_TO_STACK, .off = -8पूर्ण
+			 * (bpf_reg_state) {.type = PTR_TO_STACK, .off = -8}
 			 * but current path has stored:
-			 * (bpf_reg_state) अणु.type = PTR_TO_STACK, .off = -16पूर्ण
-			 * such verअगरier states are not equivalent.
-			 * वापस false to जारी verअगरication of this path
+			 * (bpf_reg_state) {.type = PTR_TO_STACK, .off = -16}
+			 * such verifier states are not equivalent.
+			 * return false to continue verification of this path
 			 */
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	return true;
+}
 
-अटल bool refsafe(काष्ठा bpf_func_state *old, काष्ठा bpf_func_state *cur)
-अणु
-	अगर (old->acquired_refs != cur->acquired_refs)
-		वापस false;
-	वापस !स_भेद(old->refs, cur->refs,
-		       माप(*old->refs) * old->acquired_refs);
-पूर्ण
+static bool refsafe(struct bpf_func_state *old, struct bpf_func_state *cur)
+{
+	if (old->acquired_refs != cur->acquired_refs)
+		return false;
+	return !memcmp(old->refs, cur->refs,
+		       sizeof(*old->refs) * old->acquired_refs);
+}
 
-/* compare two verअगरier states
+/* compare two verifier states
  *
  * all states stored in state_list are known to be valid, since
- * verअगरier reached 'bpf_exit' inकाष्ठाion through them
+ * verifier reached 'bpf_exit' instruction through them
  *
- * this function is called when verअगरier exploring dअगरferent branches of
+ * this function is called when verifier exploring different branches of
  * execution popped from the state stack. If it sees an old state that has
- * more strict रेजिस्टर state and more strict stack state then this execution
- * branch करोesn't need to be explored further, since verअगरier alपढ़ोy
+ * more strict register state and more strict stack state then this execution
+ * branch doesn't need to be explored further, since verifier already
  * concluded that more strict state leads to valid finish.
  *
- * Thereक्रमe two states are equivalent अगर रेजिस्टर state is more conservative
+ * Therefore two states are equivalent if register state is more conservative
  * and explored stack state is more conservative than the current one.
  * Example:
  *       explored                   current
  * (slot1=INV slot2=MISC) == (slot1=MISC slot2=MISC)
  * (slot1=MISC slot2=MISC) != (slot1=INV slot2=MISC)
  *
- * In other words अगर current stack state (one being explored) has more
- * valid slots than old one that alपढ़ोy passed validation, it means
- * the verअगरier can stop exploring and conclude that current state is valid too
+ * In other words if current stack state (one being explored) has more
+ * valid slots than old one that already passed validation, it means
+ * the verifier can stop exploring and conclude that current state is valid too
  *
- * Similarly with रेजिस्टरs. If explored state has रेजिस्टर type as invalid
- * whereas रेजिस्टर type in current state is meaningful, it means that
- * the current state will reach 'bpf_exit' inकाष्ठाion safely
+ * Similarly with registers. If explored state has register type as invalid
+ * whereas register type in current state is meaningful, it means that
+ * the current state will reach 'bpf_exit' instruction safely
  */
-अटल bool func_states_equal(काष्ठा bpf_func_state *old,
-			      काष्ठा bpf_func_state *cur)
-अणु
-	काष्ठा idpair *idmap;
+static bool func_states_equal(struct bpf_func_state *old,
+			      struct bpf_func_state *cur)
+{
+	struct idpair *idmap;
 	bool ret = false;
-	पूर्णांक i;
+	int i;
 
-	idmap = kसुस्मृति(ID_MAP_SIZE, माप(काष्ठा idpair), GFP_KERNEL);
+	idmap = kcalloc(ID_MAP_SIZE, sizeof(struct idpair), GFP_KERNEL);
 	/* If we failed to allocate the idmap, just say it's not safe */
-	अगर (!idmap)
-		वापस false;
+	if (!idmap)
+		return false;
 
-	क्रम (i = 0; i < MAX_BPF_REG; i++) अणु
-		अगर (!regsafe(&old->regs[i], &cur->regs[i], idmap))
-			जाओ out_मुक्त;
-	पूर्ण
+	for (i = 0; i < MAX_BPF_REG; i++) {
+		if (!regsafe(&old->regs[i], &cur->regs[i], idmap))
+			goto out_free;
+	}
 
-	अगर (!stacksafe(old, cur, idmap))
-		जाओ out_मुक्त;
+	if (!stacksafe(old, cur, idmap))
+		goto out_free;
 
-	अगर (!refsafe(old, cur))
-		जाओ out_मुक्त;
+	if (!refsafe(old, cur))
+		goto out_free;
 	ret = true;
-out_मुक्त:
-	kमुक्त(idmap);
-	वापस ret;
-पूर्ण
+out_free:
+	kfree(idmap);
+	return ret;
+}
 
-अटल bool states_equal(काष्ठा bpf_verअगरier_env *env,
-			 काष्ठा bpf_verअगरier_state *old,
-			 काष्ठा bpf_verअगरier_state *cur)
-अणु
-	पूर्णांक i;
+static bool states_equal(struct bpf_verifier_env *env,
+			 struct bpf_verifier_state *old,
+			 struct bpf_verifier_state *cur)
+{
+	int i;
 
-	अगर (old->curframe != cur->curframe)
-		वापस false;
+	if (old->curframe != cur->curframe)
+		return false;
 
-	/* Verअगरication state from speculative execution simulation
+	/* Verification state from speculative execution simulation
 	 * must never prune a non-speculative execution one.
 	 */
-	अगर (old->speculative && !cur->speculative)
-		वापस false;
+	if (old->speculative && !cur->speculative)
+		return false;
 
-	अगर (old->active_spin_lock != cur->active_spin_lock)
-		वापस false;
+	if (old->active_spin_lock != cur->active_spin_lock)
+		return false;
 
-	/* क्रम states to be equal callsites have to be the same
+	/* for states to be equal callsites have to be the same
 	 * and all frame states need to be equivalent
 	 */
-	क्रम (i = 0; i <= old->curframe; i++) अणु
-		अगर (old->frame[i]->callsite != cur->frame[i]->callsite)
-			वापस false;
-		अगर (!func_states_equal(old->frame[i], cur->frame[i]))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	for (i = 0; i <= old->curframe; i++) {
+		if (old->frame[i]->callsite != cur->frame[i]->callsite)
+			return false;
+		if (!func_states_equal(old->frame[i], cur->frame[i]))
+			return false;
+	}
+	return true;
+}
 
-/* Return 0 अगर no propagation happened. Return negative error code अगर error
- * happened. Otherwise, वापस the propagated bit.
+/* Return 0 if no propagation happened. Return negative error code if error
+ * happened. Otherwise, return the propagated bit.
  */
-अटल पूर्णांक propagate_liveness_reg(काष्ठा bpf_verअगरier_env *env,
-				  काष्ठा bpf_reg_state *reg,
-				  काष्ठा bpf_reg_state *parent_reg)
-अणु
+static int propagate_liveness_reg(struct bpf_verifier_env *env,
+				  struct bpf_reg_state *reg,
+				  struct bpf_reg_state *parent_reg)
+{
 	u8 parent_flag = parent_reg->live & REG_LIVE_READ;
 	u8 flag = reg->live & REG_LIVE_READ;
-	पूर्णांक err;
+	int err;
 
-	/* When comes here, पढ़ो flags of PARENT_REG or REG could be any of
+	/* When comes here, read flags of PARENT_REG or REG could be any of
 	 * REG_LIVE_READ64, REG_LIVE_READ32, REG_LIVE_NONE. There is no need
-	 * of propagation अगर PARENT_REG has strongest REG_LIVE_READ64.
+	 * of propagation if PARENT_REG has strongest REG_LIVE_READ64.
 	 */
-	अगर (parent_flag == REG_LIVE_READ64 ||
-	    /* Or अगर there is no पढ़ो flag from REG. */
+	if (parent_flag == REG_LIVE_READ64 ||
+	    /* Or if there is no read flag from REG. */
 	    !flag ||
-	    /* Or अगर the पढ़ो flag from REG is the same as PARENT_REG. */
+	    /* Or if the read flag from REG is the same as PARENT_REG. */
 	    parent_flag == flag)
-		वापस 0;
+		return 0;
 
-	err = mark_reg_पढ़ो(env, reg, parent_reg, flag);
-	अगर (err)
-		वापस err;
+	err = mark_reg_read(env, reg, parent_reg, flag);
+	if (err)
+		return err;
 
-	वापस flag;
-पूर्ण
+	return flag;
+}
 
-/* A ग_लिखो screens off any subsequent पढ़ोs; but ग_लिखो marks come from the
+/* A write screens off any subsequent reads; but write marks come from the
  * straight-line code between a state and its parent.  When we arrive at an
  * equivalent state (jump target or such) we didn't arrive by the straight-line
- * code, so पढ़ो marks in the state must propagate to the parent regardless
+ * code, so read marks in the state must propagate to the parent regardless
  * of the state's write marks. That's what 'parent == state->parent' comparison
- * in mark_reg_पढ़ो() is क्रम.
+ * in mark_reg_read() is for.
  */
-अटल पूर्णांक propagate_liveness(काष्ठा bpf_verअगरier_env *env,
-			      स्थिर काष्ठा bpf_verअगरier_state *vstate,
-			      काष्ठा bpf_verअगरier_state *vparent)
-अणु
-	काष्ठा bpf_reg_state *state_reg, *parent_reg;
-	काष्ठा bpf_func_state *state, *parent;
-	पूर्णांक i, frame, err = 0;
+static int propagate_liveness(struct bpf_verifier_env *env,
+			      const struct bpf_verifier_state *vstate,
+			      struct bpf_verifier_state *vparent)
+{
+	struct bpf_reg_state *state_reg, *parent_reg;
+	struct bpf_func_state *state, *parent;
+	int i, frame, err = 0;
 
-	अगर (vparent->curframe != vstate->curframe) अणु
+	if (vparent->curframe != vstate->curframe) {
 		WARN(1, "propagate_live: parent frame %d current frame %d\n",
 		     vparent->curframe, vstate->curframe);
-		वापस -EFAULT;
-	पूर्ण
-	/* Propagate पढ़ो liveness of रेजिस्टरs... */
+		return -EFAULT;
+	}
+	/* Propagate read liveness of registers... */
 	BUILD_BUG_ON(BPF_REG_FP + 1 != MAX_BPF_REG);
-	क्रम (frame = 0; frame <= vstate->curframe; frame++) अणु
+	for (frame = 0; frame <= vstate->curframe; frame++) {
 		parent = vparent->frame[frame];
 		state = vstate->frame[frame];
 		parent_reg = parent->regs;
 		state_reg = state->regs;
-		/* We करोn't need to worry about FP liveness, it's पढ़ो-only */
-		क्रम (i = frame < vstate->curframe ? BPF_REG_6 : 0; i < BPF_REG_FP; i++) अणु
+		/* We don't need to worry about FP liveness, it's read-only */
+		for (i = frame < vstate->curframe ? BPF_REG_6 : 0; i < BPF_REG_FP; i++) {
 			err = propagate_liveness_reg(env, &state_reg[i],
 						     &parent_reg[i]);
-			अगर (err < 0)
-				वापस err;
-			अगर (err == REG_LIVE_READ64)
+			if (err < 0)
+				return err;
+			if (err == REG_LIVE_READ64)
 				mark_insn_zext(env, &parent_reg[i]);
-		पूर्ण
+		}
 
 		/* Propagate stack slots. */
-		क्रम (i = 0; i < state->allocated_stack / BPF_REG_SIZE &&
-			    i < parent->allocated_stack / BPF_REG_SIZE; i++) अणु
+		for (i = 0; i < state->allocated_stack / BPF_REG_SIZE &&
+			    i < parent->allocated_stack / BPF_REG_SIZE; i++) {
 			parent_reg = &parent->stack[i].spilled_ptr;
 			state_reg = &state->stack[i].spilled_ptr;
 			err = propagate_liveness_reg(env, state_reg,
 						     parent_reg);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (err < 0)
+				return err;
+		}
+	}
+	return 0;
+}
 
 /* find precise scalars in the previous equivalent state and
- * propagate them पूर्णांकo the current state
+ * propagate them into the current state
  */
-अटल पूर्णांक propagate_precision(काष्ठा bpf_verअगरier_env *env,
-			       स्थिर काष्ठा bpf_verअगरier_state *old)
-अणु
-	काष्ठा bpf_reg_state *state_reg;
-	काष्ठा bpf_func_state *state;
-	पूर्णांक i, err = 0;
+static int propagate_precision(struct bpf_verifier_env *env,
+			       const struct bpf_verifier_state *old)
+{
+	struct bpf_reg_state *state_reg;
+	struct bpf_func_state *state;
+	int i, err = 0;
 
 	state = old->frame[old->curframe];
 	state_reg = state->regs;
-	क्रम (i = 0; i < BPF_REG_FP; i++, state_reg++) अणु
-		अगर (state_reg->type != SCALAR_VALUE ||
+	for (i = 0; i < BPF_REG_FP; i++, state_reg++) {
+		if (state_reg->type != SCALAR_VALUE ||
 		    !state_reg->precise)
-			जारी;
-		अगर (env->log.level & BPF_LOG_LEVEL2)
+			continue;
+		if (env->log.level & BPF_LOG_LEVEL2)
 			verbose(env, "propagating r%d\n", i);
 		err = mark_chain_precision(env, i);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	क्रम (i = 0; i < state->allocated_stack / BPF_REG_SIZE; i++) अणु
-		अगर (state->stack[i].slot_type[0] != STACK_SPILL)
-			जारी;
+	for (i = 0; i < state->allocated_stack / BPF_REG_SIZE; i++) {
+		if (state->stack[i].slot_type[0] != STACK_SPILL)
+			continue;
 		state_reg = &state->stack[i].spilled_ptr;
-		अगर (state_reg->type != SCALAR_VALUE ||
+		if (state_reg->type != SCALAR_VALUE ||
 		    !state_reg->precise)
-			जारी;
-		अगर (env->log.level & BPF_LOG_LEVEL2)
+			continue;
+		if (env->log.level & BPF_LOG_LEVEL2)
 			verbose(env, "propagating fp%d\n",
 				(-i - 1) * BPF_REG_SIZE);
 		err = mark_chain_precision_stack(env, i);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-अटल bool states_maybe_looping(काष्ठा bpf_verअगरier_state *old,
-				 काष्ठा bpf_verअगरier_state *cur)
-अणु
-	काष्ठा bpf_func_state *fold, *fcur;
-	पूर्णांक i, fr = cur->curframe;
+static bool states_maybe_looping(struct bpf_verifier_state *old,
+				 struct bpf_verifier_state *cur)
+{
+	struct bpf_func_state *fold, *fcur;
+	int i, fr = cur->curframe;
 
-	अगर (old->curframe != fr)
-		वापस false;
+	if (old->curframe != fr)
+		return false;
 
 	fold = old->frame[fr];
 	fcur = cur->frame[fr];
-	क्रम (i = 0; i < MAX_BPF_REG; i++)
-		अगर (स_भेद(&fold->regs[i], &fcur->regs[i],
-			   दुरत्व(काष्ठा bpf_reg_state, parent)))
-			वापस false;
-	वापस true;
-पूर्ण
+	for (i = 0; i < MAX_BPF_REG; i++)
+		if (memcmp(&fold->regs[i], &fcur->regs[i],
+			   offsetof(struct bpf_reg_state, parent)))
+			return false;
+	return true;
+}
 
 
-अटल पूर्णांक is_state_visited(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx)
-अणु
-	काष्ठा bpf_verअगरier_state_list *new_sl;
-	काष्ठा bpf_verअगरier_state_list *sl, **pprev;
-	काष्ठा bpf_verअगरier_state *cur = env->cur_state, *new;
-	पूर्णांक i, j, err, states_cnt = 0;
+static int is_state_visited(struct bpf_verifier_env *env, int insn_idx)
+{
+	struct bpf_verifier_state_list *new_sl;
+	struct bpf_verifier_state_list *sl, **pprev;
+	struct bpf_verifier_state *cur = env->cur_state, *new;
+	int i, j, err, states_cnt = 0;
 	bool add_new_state = env->test_state_freq ? true : false;
 
 	cur->last_insn_idx = env->prev_insn_idx;
-	अगर (!env->insn_aux_data[insn_idx].prune_poपूर्णांक)
+	if (!env->insn_aux_data[insn_idx].prune_point)
 		/* this 'insn_idx' instruction wasn't marked, so we will not
-		 * be करोing state search here
+		 * be doing state search here
 		 */
-		वापस 0;
+		return 0;
 
-	/* bpf progs typically have pruning poपूर्णांक every 4 inकाष्ठाions
-	 * http://vger.kernel.org/bpfconf2019.hपंचांगl#session-1
-	 * Do not add new state क्रम future pruning अगर the verअगरier hasn't seen
-	 * at least 2 jumps and at least 8 inकाष्ठाions.
+	/* bpf progs typically have pruning point every 4 instructions
+	 * http://vger.kernel.org/bpfconf2019.html#session-1
+	 * Do not add new state for future pruning if the verifier hasn't seen
+	 * at least 2 jumps and at least 8 instructions.
 	 * This heuristics helps decrease 'total_states' and 'peak_states' metric.
-	 * In tests that amounts to up to 50% reduction पूर्णांकo total verअगरier
-	 * memory consumption and 20% verअगरier समय speedup.
+	 * In tests that amounts to up to 50% reduction into total verifier
+	 * memory consumption and 20% verifier time speedup.
 	 */
-	अगर (env->jmps_processed - env->prev_jmps_processed >= 2 &&
+	if (env->jmps_processed - env->prev_jmps_processed >= 2 &&
 	    env->insn_processed - env->prev_insn_processed >= 8)
 		add_new_state = true;
 
@@ -10380,124 +10379,124 @@ out_मुक्त:
 
 	clean_live_states(env, insn_idx, cur);
 
-	जबतक (sl) अणु
+	while (sl) {
 		states_cnt++;
-		अगर (sl->state.insn_idx != insn_idx)
-			जाओ next;
-		अगर (sl->state.branches) अणु
-			अगर (states_maybe_looping(&sl->state, cur) &&
-			    states_equal(env, &sl->state, cur)) अणु
+		if (sl->state.insn_idx != insn_idx)
+			goto next;
+		if (sl->state.branches) {
+			if (states_maybe_looping(&sl->state, cur) &&
+			    states_equal(env, &sl->state, cur)) {
 				verbose_linfo(env, insn_idx, "; ");
 				verbose(env, "infinite loop detected at insn %d\n", insn_idx);
-				वापस -EINVAL;
-			पूर्ण
-			/* अगर the verअगरier is processing a loop, aव्योम adding new state
-			 * too often, since dअगरferent loop iterations have distinct
+				return -EINVAL;
+			}
+			/* if the verifier is processing a loop, avoid adding new state
+			 * too often, since different loop iterations have distinct
 			 * states and may not help future pruning.
 			 * This threshold shouldn't be too low to make sure that
 			 * a loop with large bound will be rejected quickly.
 			 * The most abusive loop will be:
 			 * r1 += 1
-			 * अगर r1 < 1000000 जाओ pc-2
+			 * if r1 < 1000000 goto pc-2
 			 * 1M insn_procssed limit / 100 == 10k peak states.
 			 * This threshold shouldn't be too high either, since states
 			 * at the end of the loop are likely to be useful in pruning.
 			 */
-			अगर (env->jmps_processed - env->prev_jmps_processed < 20 &&
+			if (env->jmps_processed - env->prev_jmps_processed < 20 &&
 			    env->insn_processed - env->prev_insn_processed < 100)
 				add_new_state = false;
-			जाओ miss;
-		पूर्ण
-		अगर (states_equal(env, &sl->state, cur)) अणु
+			goto miss;
+		}
+		if (states_equal(env, &sl->state, cur)) {
 			sl->hit_cnt++;
-			/* reached equivalent रेजिस्टर/stack state,
+			/* reached equivalent register/stack state,
 			 * prune the search.
-			 * Registers पढ़ो by the continuation are पढ़ो by us.
-			 * If we have any ग_लिखो marks in env->cur_state, they
-			 * will prevent corresponding पढ़ोs in the continuation
+			 * Registers read by the continuation are read by us.
+			 * If we have any write marks in env->cur_state, they
+			 * will prevent corresponding reads in the continuation
 			 * from reaching our parent (an explored_state).  Our
-			 * own state will get the पढ़ो marks recorded, but
+			 * own state will get the read marks recorded, but
 			 * they'll be immediately forgotten as we're pruning
 			 * this state and will pop a new one.
 			 */
 			err = propagate_liveness(env, &sl->state, cur);
 
-			/* अगर previous state reached the निकास with precision and
+			/* if previous state reached the exit with precision and
 			 * current state is equivalent to it (except precsion marks)
 			 * the precision needs to be propagated back in
 			 * the current state.
 			 */
 			err = err ? : push_jmp_history(env, cur);
 			err = err ? : propagate_precision(env, &sl->state);
-			अगर (err)
-				वापस err;
-			वापस 1;
-		पूर्ण
+			if (err)
+				return err;
+			return 1;
+		}
 miss:
-		/* when new state is not going to be added करो not increase miss count.
-		 * Otherwise several loop iterations will हटाओ the state
+		/* when new state is not going to be added do not increase miss count.
+		 * Otherwise several loop iterations will remove the state
 		 * recorded earlier. The goal of these heuristics is to have
 		 * states from some iterations of the loop (some in the beginning
 		 * and some at the end) to help pruning.
 		 */
-		अगर (add_new_state)
+		if (add_new_state)
 			sl->miss_cnt++;
 		/* heuristic to determine whether this state is beneficial
-		 * to keep checking from state equivalence poपूर्णांक of view.
-		 * Higher numbers increase max_states_per_insn and verअगरication समय,
-		 * but करो not meaningfully decrease insn_processed.
+		 * to keep checking from state equivalence point of view.
+		 * Higher numbers increase max_states_per_insn and verification time,
+		 * but do not meaningfully decrease insn_processed.
 		 */
-		अगर (sl->miss_cnt > sl->hit_cnt * 3 + 3) अणु
+		if (sl->miss_cnt > sl->hit_cnt * 3 + 3) {
 			/* the state is unlikely to be useful. Remove it to
-			 * speed up verअगरication
+			 * speed up verification
 			 */
 			*pprev = sl->next;
-			अगर (sl->state.frame[0]->regs[0].live & REG_LIVE_DONE) अणु
+			if (sl->state.frame[0]->regs[0].live & REG_LIVE_DONE) {
 				u32 br = sl->state.branches;
 
 				WARN_ONCE(br,
 					  "BUG live_done but branches_to_explore %d\n",
 					  br);
-				मुक्त_verअगरier_state(&sl->state, false);
-				kमुक्त(sl);
+				free_verifier_state(&sl->state, false);
+				kfree(sl);
 				env->peak_states--;
-			पूर्ण अन्यथा अणु
-				/* cannot मुक्त this state, since parentage chain may
-				 * walk it later. Add it क्रम मुक्त_list instead to
-				 * be मुक्तd at the end of verअगरication
+			} else {
+				/* cannot free this state, since parentage chain may
+				 * walk it later. Add it for free_list instead to
+				 * be freed at the end of verification
 				 */
-				sl->next = env->मुक्त_list;
-				env->मुक्त_list = sl;
-			पूर्ण
+				sl->next = env->free_list;
+				env->free_list = sl;
+			}
 			sl = *pprev;
-			जारी;
-		पूर्ण
+			continue;
+		}
 next:
 		pprev = &sl->next;
 		sl = *pprev;
-	पूर्ण
+	}
 
-	अगर (env->max_states_per_insn < states_cnt)
+	if (env->max_states_per_insn < states_cnt)
 		env->max_states_per_insn = states_cnt;
 
-	अगर (!env->bpf_capable && states_cnt > BPF_COMPLEXITY_LIMIT_STATES)
-		वापस push_jmp_history(env, cur);
+	if (!env->bpf_capable && states_cnt > BPF_COMPLEXITY_LIMIT_STATES)
+		return push_jmp_history(env, cur);
 
-	अगर (!add_new_state)
-		वापस push_jmp_history(env, cur);
+	if (!add_new_state)
+		return push_jmp_history(env, cur);
 
 	/* There were no equivalent states, remember the current one.
 	 * Technically the current state is not proven to be safe yet,
-	 * but it will either reach outer most bpf_निकास (which means it's safe)
-	 * or it will be rejected. When there are no loops the verअगरier won't be
+	 * but it will either reach outer most bpf_exit (which means it's safe)
+	 * or it will be rejected. When there are no loops the verifier won't be
 	 * seeing this tuple (frame[0].callsite, frame[1].callsite, .. insn_idx)
-	 * again on the way to bpf_निकास.
+	 * again on the way to bpf_exit.
 	 * When looping the sl->state.branches will be > 0 and this state
-	 * will not be considered क्रम equivalence until branches == 0.
+	 * will not be considered for equivalence until branches == 0.
 	 */
-	new_sl = kzalloc(माप(काष्ठा bpf_verअगरier_state_list), GFP_KERNEL);
-	अगर (!new_sl)
-		वापस -ENOMEM;
+	new_sl = kzalloc(sizeof(struct bpf_verifier_state_list), GFP_KERNEL);
+	if (!new_sl)
+		return -ENOMEM;
 	env->total_states++;
 	env->peak_states++;
 	env->prev_jmps_processed = env->jmps_processed;
@@ -10505,12 +10504,12 @@ next:
 
 	/* add new state to the head of linked list */
 	new = &new_sl->state;
-	err = copy_verअगरier_state(new, cur);
-	अगर (err) अणु
-		मुक्त_verअगरier_state(new, false);
-		kमुक्त(new_sl);
-		वापस err;
-	पूर्ण
+	err = copy_verifier_state(new, cur);
+	if (err) {
+		free_verifier_state(new, false);
+		kfree(new_sl);
+		return err;
+	}
 	new->insn_idx = insn_idx;
 	WARN_ONCE(new->branches != 1,
 		  "BUG is_state_visited:branches_to_explore=%d insn %d\n", new->branches, insn_idx);
@@ -10521,1243 +10520,1243 @@ next:
 	new_sl->next = *explored_state(env, insn_idx);
 	*explored_state(env, insn_idx) = new_sl;
 	/* connect new state to parentage chain. Current frame needs all
-	 * रेजिस्टरs connected. Only r6 - r9 of the callers are alive (pushed
+	 * registers connected. Only r6 - r9 of the callers are alive (pushed
 	 * to the stack implicitly by JITs) so in callers' frames connect just
 	 * r6 - r9 as an optimization. Callers will have r1 - r5 connected to
-	 * the state of the call inकाष्ठाion (with WRITTEN set), and r0 comes
+	 * the state of the call instruction (with WRITTEN set), and r0 comes
 	 * from callee with its full parentage chain, anyway.
 	 */
-	/* clear ग_लिखो marks in current state: the ग_लिखोs we did are not ग_लिखोs
-	 * our child did, so they करोn't screen off its पढ़ोs from us.
-	 * (There are no पढ़ो marks in current state, because पढ़ोs always mark
+	/* clear write marks in current state: the writes we did are not writes
+	 * our child did, so they don't screen off its reads from us.
+	 * (There are no read marks in current state, because reads always mark
 	 * their parent and current state never has children yet.  Only
-	 * explored_states can get पढ़ो marks.)
+	 * explored_states can get read marks.)
 	 */
-	क्रम (j = 0; j <= cur->curframe; j++) अणु
-		क्रम (i = j < cur->curframe ? BPF_REG_6 : 0; i < BPF_REG_FP; i++)
+	for (j = 0; j <= cur->curframe; j++) {
+		for (i = j < cur->curframe ? BPF_REG_6 : 0; i < BPF_REG_FP; i++)
 			cur->frame[j]->regs[i].parent = &new->frame[j]->regs[i];
-		क्रम (i = 0; i < BPF_REG_FP; i++)
+		for (i = 0; i < BPF_REG_FP; i++)
 			cur->frame[j]->regs[i].live = REG_LIVE_NONE;
-	पूर्ण
+	}
 
 	/* all stack frames are accessible from callee, clear them all */
-	क्रम (j = 0; j <= cur->curframe; j++) अणु
-		काष्ठा bpf_func_state *frame = cur->frame[j];
-		काष्ठा bpf_func_state *newframe = new->frame[j];
+	for (j = 0; j <= cur->curframe; j++) {
+		struct bpf_func_state *frame = cur->frame[j];
+		struct bpf_func_state *newframe = new->frame[j];
 
-		क्रम (i = 0; i < frame->allocated_stack / BPF_REG_SIZE; i++) अणु
+		for (i = 0; i < frame->allocated_stack / BPF_REG_SIZE; i++) {
 			frame->stack[i].spilled_ptr.live = REG_LIVE_NONE;
 			frame->stack[i].spilled_ptr.parent =
 						&newframe->stack[i].spilled_ptr;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-/* Return true अगर it's OK to have the same insn वापस a dअगरferent type. */
-अटल bool reg_type_mismatch_ok(क्रमागत bpf_reg_type type)
-अणु
-	चयन (type) अणु
-	हाल PTR_TO_CTX:
-	हाल PTR_TO_SOCKET:
-	हाल PTR_TO_SOCKET_OR_शून्य:
-	हाल PTR_TO_SOCK_COMMON:
-	हाल PTR_TO_SOCK_COMMON_OR_शून्य:
-	हाल PTR_TO_TCP_SOCK:
-	हाल PTR_TO_TCP_SOCK_OR_शून्य:
-	हाल PTR_TO_XDP_SOCK:
-	हाल PTR_TO_BTF_ID:
-	हाल PTR_TO_BTF_ID_OR_शून्य:
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+/* Return true if it's OK to have the same insn return a different type. */
+static bool reg_type_mismatch_ok(enum bpf_reg_type type)
+{
+	switch (type) {
+	case PTR_TO_CTX:
+	case PTR_TO_SOCKET:
+	case PTR_TO_SOCKET_OR_NULL:
+	case PTR_TO_SOCK_COMMON:
+	case PTR_TO_SOCK_COMMON_OR_NULL:
+	case PTR_TO_TCP_SOCK:
+	case PTR_TO_TCP_SOCK_OR_NULL:
+	case PTR_TO_XDP_SOCK:
+	case PTR_TO_BTF_ID:
+	case PTR_TO_BTF_ID_OR_NULL:
+		return false;
+	default:
+		return true;
+	}
+}
 
-/* If an inकाष्ठाion was previously used with particular poपूर्णांकer types, then we
- * need to be careful to aव्योम हालs such as the below, where it may be ok
- * क्रम one branch accessing the poपूर्णांकer, but not ok क्रम the other branch:
+/* If an instruction was previously used with particular pointer types, then we
+ * need to be careful to avoid cases such as the below, where it may be ok
+ * for one branch accessing the pointer, but not ok for the other branch:
  *
  * R1 = sock_ptr
- * जाओ X;
+ * goto X;
  * ...
  * R1 = some_other_valid_ptr;
- * जाओ X;
+ * goto X;
  * ...
  * R2 = *(u32 *)(R1 + 0);
  */
-अटल bool reg_type_mismatch(क्रमागत bpf_reg_type src, क्रमागत bpf_reg_type prev)
-अणु
-	वापस src != prev && (!reg_type_mismatch_ok(src) ||
+static bool reg_type_mismatch(enum bpf_reg_type src, enum bpf_reg_type prev)
+{
+	return src != prev && (!reg_type_mismatch_ok(src) ||
 			       !reg_type_mismatch_ok(prev));
-पूर्ण
+}
 
-अटल पूर्णांक करो_check(काष्ठा bpf_verअगरier_env *env)
-अणु
+static int do_check(struct bpf_verifier_env *env)
+{
 	bool pop_log = !(env->log.level & BPF_LOG_LEVEL2);
-	काष्ठा bpf_verअगरier_state *state = env->cur_state;
-	काष्ठा bpf_insn *insns = env->prog->insnsi;
-	काष्ठा bpf_reg_state *regs;
-	पूर्णांक insn_cnt = env->prog->len;
-	bool करो_prपूर्णांक_state = false;
-	पूर्णांक prev_insn_idx = -1;
+	struct bpf_verifier_state *state = env->cur_state;
+	struct bpf_insn *insns = env->prog->insnsi;
+	struct bpf_reg_state *regs;
+	int insn_cnt = env->prog->len;
+	bool do_print_state = false;
+	int prev_insn_idx = -1;
 
-	क्रम (;;) अणु
-		काष्ठा bpf_insn *insn;
+	for (;;) {
+		struct bpf_insn *insn;
 		u8 class;
-		पूर्णांक err;
+		int err;
 
 		env->prev_insn_idx = prev_insn_idx;
-		अगर (env->insn_idx >= insn_cnt) अणु
+		if (env->insn_idx >= insn_cnt) {
 			verbose(env, "invalid insn idx %d insn_cnt %d\n",
 				env->insn_idx, insn_cnt);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		insn = &insns[env->insn_idx];
 		class = BPF_CLASS(insn->code);
 
-		अगर (++env->insn_processed > BPF_COMPLEXITY_LIMIT_INSNS) अणु
+		if (++env->insn_processed > BPF_COMPLEXITY_LIMIT_INSNS) {
 			verbose(env,
 				"BPF program is too large. Processed %d insn\n",
 				env->insn_processed);
-			वापस -E2BIG;
-		पूर्ण
+			return -E2BIG;
+		}
 
 		err = is_state_visited(env, env->insn_idx);
-		अगर (err < 0)
-			वापस err;
-		अगर (err == 1) अणु
+		if (err < 0)
+			return err;
+		if (err == 1) {
 			/* found equivalent state, can prune the search */
-			अगर (env->log.level & BPF_LOG_LEVEL) अणु
-				अगर (करो_prपूर्णांक_state)
+			if (env->log.level & BPF_LOG_LEVEL) {
+				if (do_print_state)
 					verbose(env, "\nfrom %d to %d%s: safe\n",
 						env->prev_insn_idx, env->insn_idx,
 						env->cur_state->speculative ?
 						" (speculative execution)" : "");
-				अन्यथा
+				else
 					verbose(env, "%d: safe\n", env->insn_idx);
-			पूर्ण
-			जाओ process_bpf_निकास;
-		पूर्ण
+			}
+			goto process_bpf_exit;
+		}
 
-		अगर (संकेत_pending(current))
-			वापस -EAGAIN;
+		if (signal_pending(current))
+			return -EAGAIN;
 
-		अगर (need_resched())
+		if (need_resched())
 			cond_resched();
 
-		अगर (env->log.level & BPF_LOG_LEVEL2 ||
-		    (env->log.level & BPF_LOG_LEVEL && करो_prपूर्णांक_state)) अणु
-			अगर (env->log.level & BPF_LOG_LEVEL2)
+		if (env->log.level & BPF_LOG_LEVEL2 ||
+		    (env->log.level & BPF_LOG_LEVEL && do_print_state)) {
+			if (env->log.level & BPF_LOG_LEVEL2)
 				verbose(env, "%d:", env->insn_idx);
-			अन्यथा
+			else
 				verbose(env, "\nfrom %d to %d%s:",
 					env->prev_insn_idx, env->insn_idx,
 					env->cur_state->speculative ?
 					" (speculative execution)" : "");
-			prपूर्णांक_verअगरier_state(env, state->frame[state->curframe]);
-			करो_prपूर्णांक_state = false;
-		पूर्ण
+			print_verifier_state(env, state->frame[state->curframe]);
+			do_print_state = false;
+		}
 
-		अगर (env->log.level & BPF_LOG_LEVEL) अणु
-			स्थिर काष्ठा bpf_insn_cbs cbs = अणु
-				.cb_call	= disयंत्र_kfunc_name,
-				.cb_prपूर्णांक	= verbose,
-				.निजी_data	= env,
-			पूर्ण;
+		if (env->log.level & BPF_LOG_LEVEL) {
+			const struct bpf_insn_cbs cbs = {
+				.cb_call	= disasm_kfunc_name,
+				.cb_print	= verbose,
+				.private_data	= env,
+			};
 
 			verbose_linfo(env, env->insn_idx, "; ");
 			verbose(env, "%d: ", env->insn_idx);
-			prपूर्णांक_bpf_insn(&cbs, insn, env->allow_ptr_leaks);
-		पूर्ण
+			print_bpf_insn(&cbs, insn, env->allow_ptr_leaks);
+		}
 
-		अगर (bpf_prog_is_dev_bound(env->prog->aux)) अणु
-			err = bpf_prog_offload_verअगरy_insn(env, env->insn_idx,
+		if (bpf_prog_is_dev_bound(env->prog->aux)) {
+			err = bpf_prog_offload_verify_insn(env, env->insn_idx,
 							   env->prev_insn_idx);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
 		regs = cur_regs(env);
 		sanitize_mark_insn_seen(env);
 		prev_insn_idx = env->insn_idx;
 
-		अगर (class == BPF_ALU || class == BPF_ALU64) अणु
+		if (class == BPF_ALU || class == BPF_ALU64) {
 			err = check_alu_op(env, insn);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-		पूर्ण अन्यथा अगर (class == BPF_LDX) अणु
-			क्रमागत bpf_reg_type *prev_src_type, src_reg_type;
+		} else if (class == BPF_LDX) {
+			enum bpf_reg_type *prev_src_type, src_reg_type;
 
-			/* check क्रम reserved fields is alपढ़ोy करोne */
+			/* check for reserved fields is already done */
 
-			/* check src opeअक्रम */
+			/* check src operand */
 			err = check_reg_arg(env, insn->src_reg, SRC_OP);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			err = check_reg_arg(env, insn->dst_reg, DST_OP_NO_MARK);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			src_reg_type = regs[insn->src_reg].type;
 
-			/* check that memory (src_reg + off) is पढ़ोable,
+			/* check that memory (src_reg + off) is readable,
 			 * the state of dst_reg will be updated by this func
 			 */
 			err = check_mem_access(env, env->insn_idx, insn->src_reg,
 					       insn->off, BPF_SIZE(insn->code),
 					       BPF_READ, insn->dst_reg, false);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			prev_src_type = &env->insn_aux_data[env->insn_idx].ptr_type;
 
-			अगर (*prev_src_type == NOT_INIT) अणु
+			if (*prev_src_type == NOT_INIT) {
 				/* saw a valid insn
 				 * dst_reg = *(u32 *)(src_reg + off)
-				 * save type to validate पूर्णांकersecting paths
+				 * save type to validate intersecting paths
 				 */
 				*prev_src_type = src_reg_type;
 
-			पूर्ण अन्यथा अगर (reg_type_mismatch(src_reg_type, *prev_src_type)) अणु
+			} else if (reg_type_mismatch(src_reg_type, *prev_src_type)) {
 				/* ABuser program is trying to use the same insn
 				 * dst_reg = *(u32*) (src_reg + off)
-				 * with dअगरferent poपूर्णांकer types:
+				 * with different pointer types:
 				 * src_reg == ctx in one branch and
 				 * src_reg == stack|map in some other branch.
 				 * Reject it.
 				 */
 				verbose(env, "same insn cannot be used with different pointers\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-		पूर्ण अन्यथा अगर (class == BPF_STX) अणु
-			क्रमागत bpf_reg_type *prev_dst_type, dst_reg_type;
+		} else if (class == BPF_STX) {
+			enum bpf_reg_type *prev_dst_type, dst_reg_type;
 
-			अगर (BPF_MODE(insn->code) == BPF_ATOMIC) अणु
+			if (BPF_MODE(insn->code) == BPF_ATOMIC) {
 				err = check_atomic(env, env->insn_idx, insn);
-				अगर (err)
-					वापस err;
+				if (err)
+					return err;
 				env->insn_idx++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (BPF_MODE(insn->code) != BPF_MEM || insn->imm != 0) अणु
+			if (BPF_MODE(insn->code) != BPF_MEM || insn->imm != 0) {
 				verbose(env, "BPF_STX uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			/* check src1 opeअक्रम */
+			/* check src1 operand */
 			err = check_reg_arg(env, insn->src_reg, SRC_OP);
-			अगर (err)
-				वापस err;
-			/* check src2 opeअक्रम */
+			if (err)
+				return err;
+			/* check src2 operand */
 			err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			dst_reg_type = regs[insn->dst_reg].type;
 
-			/* check that memory (dst_reg + off) is ग_लिखोable */
+			/* check that memory (dst_reg + off) is writeable */
 			err = check_mem_access(env, env->insn_idx, insn->dst_reg,
 					       insn->off, BPF_SIZE(insn->code),
 					       BPF_WRITE, insn->src_reg, false);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
 			prev_dst_type = &env->insn_aux_data[env->insn_idx].ptr_type;
 
-			अगर (*prev_dst_type == NOT_INIT) अणु
+			if (*prev_dst_type == NOT_INIT) {
 				*prev_dst_type = dst_reg_type;
-			पूर्ण अन्यथा अगर (reg_type_mismatch(dst_reg_type, *prev_dst_type)) अणु
+			} else if (reg_type_mismatch(dst_reg_type, *prev_dst_type)) {
 				verbose(env, "same insn cannot be used with different pointers\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-		पूर्ण अन्यथा अगर (class == BPF_ST) अणु
-			अगर (BPF_MODE(insn->code) != BPF_MEM ||
-			    insn->src_reg != BPF_REG_0) अणु
+		} else if (class == BPF_ST) {
+			if (BPF_MODE(insn->code) != BPF_MEM ||
+			    insn->src_reg != BPF_REG_0) {
 				verbose(env, "BPF_ST uses reserved fields\n");
-				वापस -EINVAL;
-			पूर्ण
-			/* check src opeअक्रम */
+				return -EINVAL;
+			}
+			/* check src operand */
 			err = check_reg_arg(env, insn->dst_reg, SRC_OP);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			अगर (is_ctx_reg(env, insn->dst_reg)) अणु
+			if (is_ctx_reg(env, insn->dst_reg)) {
 				verbose(env, "BPF_ST stores into R%d %s is not allowed\n",
 					insn->dst_reg,
 					reg_type_str[reg_state(env, insn->dst_reg)->type]);
-				वापस -EACCES;
-			पूर्ण
+				return -EACCES;
+			}
 
-			/* check that memory (dst_reg + off) is ग_लिखोable */
+			/* check that memory (dst_reg + off) is writeable */
 			err = check_mem_access(env, env->insn_idx, insn->dst_reg,
 					       insn->off, BPF_SIZE(insn->code),
 					       BPF_WRITE, -1, false);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-		पूर्ण अन्यथा अगर (class == BPF_JMP || class == BPF_JMP32) अणु
+		} else if (class == BPF_JMP || class == BPF_JMP32) {
 			u8 opcode = BPF_OP(insn->code);
 
 			env->jmps_processed++;
-			अगर (opcode == BPF_CALL) अणु
-				अगर (BPF_SRC(insn->code) != BPF_K ||
+			if (opcode == BPF_CALL) {
+				if (BPF_SRC(insn->code) != BPF_K ||
 				    insn->off != 0 ||
 				    (insn->src_reg != BPF_REG_0 &&
 				     insn->src_reg != BPF_PSEUDO_CALL &&
 				     insn->src_reg != BPF_PSEUDO_KFUNC_CALL) ||
 				    insn->dst_reg != BPF_REG_0 ||
-				    class == BPF_JMP32) अणु
+				    class == BPF_JMP32) {
 					verbose(env, "BPF_CALL uses reserved fields\n");
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
-				अगर (env->cur_state->active_spin_lock &&
+				if (env->cur_state->active_spin_lock &&
 				    (insn->src_reg == BPF_PSEUDO_CALL ||
-				     insn->imm != BPF_FUNC_spin_unlock)) अणु
+				     insn->imm != BPF_FUNC_spin_unlock)) {
 					verbose(env, "function calls are not allowed while holding a lock\n");
-					वापस -EINVAL;
-				पूर्ण
-				अगर (insn->src_reg == BPF_PSEUDO_CALL)
+					return -EINVAL;
+				}
+				if (insn->src_reg == BPF_PSEUDO_CALL)
 					err = check_func_call(env, insn, &env->insn_idx);
-				अन्यथा अगर (insn->src_reg == BPF_PSEUDO_KFUNC_CALL)
+				else if (insn->src_reg == BPF_PSEUDO_KFUNC_CALL)
 					err = check_kfunc_call(env, insn);
-				अन्यथा
+				else
 					err = check_helper_call(env, insn, &env->insn_idx);
-				अगर (err)
-					वापस err;
-			पूर्ण अन्यथा अगर (opcode == BPF_JA) अणु
-				अगर (BPF_SRC(insn->code) != BPF_K ||
+				if (err)
+					return err;
+			} else if (opcode == BPF_JA) {
+				if (BPF_SRC(insn->code) != BPF_K ||
 				    insn->imm != 0 ||
 				    insn->src_reg != BPF_REG_0 ||
 				    insn->dst_reg != BPF_REG_0 ||
-				    class == BPF_JMP32) अणु
+				    class == BPF_JMP32) {
 					verbose(env, "BPF_JA uses reserved fields\n");
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
 				env->insn_idx += insn->off + 1;
-				जारी;
+				continue;
 
-			पूर्ण अन्यथा अगर (opcode == BPF_EXIT) अणु
-				अगर (BPF_SRC(insn->code) != BPF_K ||
+			} else if (opcode == BPF_EXIT) {
+				if (BPF_SRC(insn->code) != BPF_K ||
 				    insn->imm != 0 ||
 				    insn->src_reg != BPF_REG_0 ||
 				    insn->dst_reg != BPF_REG_0 ||
-				    class == BPF_JMP32) अणु
+				    class == BPF_JMP32) {
 					verbose(env, "BPF_EXIT uses reserved fields\n");
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
-				अगर (env->cur_state->active_spin_lock) अणु
+				if (env->cur_state->active_spin_lock) {
 					verbose(env, "bpf_spin_unlock is missing\n");
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
-				अगर (state->curframe) अणु
-					/* निकास from nested function */
-					err = prepare_func_निकास(env, &env->insn_idx);
-					अगर (err)
-						वापस err;
-					करो_prपूर्णांक_state = true;
-					जारी;
-				पूर्ण
+				if (state->curframe) {
+					/* exit from nested function */
+					err = prepare_func_exit(env, &env->insn_idx);
+					if (err)
+						return err;
+					do_print_state = true;
+					continue;
+				}
 
 				err = check_reference_leak(env);
-				अगर (err)
-					वापस err;
+				if (err)
+					return err;
 
-				err = check_वापस_code(env);
-				अगर (err)
-					वापस err;
-process_bpf_निकास:
+				err = check_return_code(env);
+				if (err)
+					return err;
+process_bpf_exit:
 				update_branch_counts(env, env->cur_state);
 				err = pop_stack(env, &prev_insn_idx,
 						&env->insn_idx, pop_log);
-				अगर (err < 0) अणु
-					अगर (err != -ENOENT)
-						वापस err;
-					अवरोध;
-				पूर्ण अन्यथा अणु
-					करो_prपूर्णांक_state = true;
-					जारी;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				if (err < 0) {
+					if (err != -ENOENT)
+						return err;
+					break;
+				} else {
+					do_print_state = true;
+					continue;
+				}
+			} else {
 				err = check_cond_jmp_op(env, insn, &env->insn_idx);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण अन्यथा अगर (class == BPF_LD) अणु
+				if (err)
+					return err;
+			}
+		} else if (class == BPF_LD) {
 			u8 mode = BPF_MODE(insn->code);
 
-			अगर (mode == BPF_ABS || mode == BPF_IND) अणु
-				err = check_ld_असल(env, insn);
-				अगर (err)
-					वापस err;
+			if (mode == BPF_ABS || mode == BPF_IND) {
+				err = check_ld_abs(env, insn);
+				if (err)
+					return err;
 
-			पूर्ण अन्यथा अगर (mode == BPF_IMM) अणु
+			} else if (mode == BPF_IMM) {
 				err = check_ld_imm(env, insn);
-				अगर (err)
-					वापस err;
+				if (err)
+					return err;
 
 				env->insn_idx++;
 				sanitize_mark_insn_seen(env);
-			पूर्ण अन्यथा अणु
+			} else {
 				verbose(env, "invalid BPF_LD mode\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		} else {
 			verbose(env, "unknown insn class %d\n", class);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		env->insn_idx++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_btf_percpu_datasec(काष्ठा btf *btf)
-अणु
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *tname;
-	पूर्णांक i, n;
+static int find_btf_percpu_datasec(struct btf *btf)
+{
+	const struct btf_type *t;
+	const char *tname;
+	int i, n;
 
 	/*
 	 * Both vmlinux and module each have their own ".data..percpu"
-	 * DATASECs in BTF. So क्रम module's हाल, we need to skip vmlinux BTF
+	 * DATASECs in BTF. So for module's case, we need to skip vmlinux BTF
 	 * types to look at only module's own BTF types.
 	 */
 	n = btf_nr_types(btf);
-	अगर (btf_is_module(btf))
+	if (btf_is_module(btf))
 		i = btf_nr_types(btf_vmlinux);
-	अन्यथा
+	else
 		i = 1;
 
-	क्रम(; i < n; i++) अणु
+	for(; i < n; i++) {
 		t = btf_type_by_id(btf, i);
-		अगर (BTF_INFO_KIND(t->info) != BTF_KIND_DATASEC)
-			जारी;
+		if (BTF_INFO_KIND(t->info) != BTF_KIND_DATASEC)
+			continue;
 
 		tname = btf_name_by_offset(btf, t->name_off);
-		अगर (!म_भेद(tname, ".data..percpu"))
-			वापस i;
-	पूर्ण
+		if (!strcmp(tname, ".data..percpu"))
+			return i;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-/* replace pseuकरो btf_id with kernel symbol address */
-अटल पूर्णांक check_pseuकरो_btf_id(काष्ठा bpf_verअगरier_env *env,
-			       काष्ठा bpf_insn *insn,
-			       काष्ठा bpf_insn_aux_data *aux)
-अणु
-	स्थिर काष्ठा btf_var_secinfo *vsi;
-	स्थिर काष्ठा btf_type *datasec;
-	काष्ठा btf_mod_pair *btf_mod;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *sym_name;
+/* replace pseudo btf_id with kernel symbol address */
+static int check_pseudo_btf_id(struct bpf_verifier_env *env,
+			       struct bpf_insn *insn,
+			       struct bpf_insn_aux_data *aux)
+{
+	const struct btf_var_secinfo *vsi;
+	const struct btf_type *datasec;
+	struct btf_mod_pair *btf_mod;
+	const struct btf_type *t;
+	const char *sym_name;
 	bool percpu = false;
 	u32 type, id = insn->imm;
-	काष्ठा btf *btf;
+	struct btf *btf;
 	s32 datasec_id;
 	u64 addr;
-	पूर्णांक i, btf_fd, err;
+	int i, btf_fd, err;
 
 	btf_fd = insn[1].imm;
-	अगर (btf_fd) अणु
+	if (btf_fd) {
 		btf = btf_get_by_fd(btf_fd);
-		अगर (IS_ERR(btf)) अणु
+		if (IS_ERR(btf)) {
 			verbose(env, "invalid module BTF object FD specified.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!btf_vmlinux) अणु
+			return -EINVAL;
+		}
+	} else {
+		if (!btf_vmlinux) {
 			verbose(env, "kernel is missing BTF, make sure CONFIG_DEBUG_INFO_BTF=y is specified in Kconfig.\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		btf = btf_vmlinux;
 		btf_get(btf);
-	पूर्ण
+	}
 
 	t = btf_type_by_id(btf, id);
-	अगर (!t) अणु
+	if (!t) {
 		verbose(env, "ldimm64 insn specifies invalid btf_id %d.\n", id);
 		err = -ENOENT;
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
-	अगर (!btf_type_is_var(t)) अणु
+	if (!btf_type_is_var(t)) {
 		verbose(env, "pseudo btf_id %d in ldimm64 isn't KIND_VAR.\n", id);
 		err = -EINVAL;
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
 	sym_name = btf_name_by_offset(btf, t->name_off);
 	addr = kallsyms_lookup_name(sym_name);
-	अगर (!addr) अणु
+	if (!addr) {
 		verbose(env, "ldimm64 failed to find the address for kernel symbol '%s'.\n",
 			sym_name);
 		err = -ENOENT;
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
 	datasec_id = find_btf_percpu_datasec(btf);
-	अगर (datasec_id > 0) अणु
+	if (datasec_id > 0) {
 		datasec = btf_type_by_id(btf, datasec_id);
-		क्रम_each_vsi(i, datasec, vsi) अणु
-			अगर (vsi->type == id) अणु
+		for_each_vsi(i, datasec, vsi) {
+			if (vsi->type == id) {
 				percpu = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	insn[0].imm = (u32)addr;
 	insn[1].imm = addr >> 32;
 
 	type = t->type;
-	t = btf_type_skip_modअगरiers(btf, type, शून्य);
-	अगर (percpu) अणु
+	t = btf_type_skip_modifiers(btf, type, NULL);
+	if (percpu) {
 		aux->btf_var.reg_type = PTR_TO_PERCPU_BTF_ID;
 		aux->btf_var.btf = btf;
 		aux->btf_var.btf_id = type;
-	पूर्ण अन्यथा अगर (!btf_type_is_काष्ठा(t)) अणु
-		स्थिर काष्ठा btf_type *ret;
-		स्थिर अक्षर *tname;
+	} else if (!btf_type_is_struct(t)) {
+		const struct btf_type *ret;
+		const char *tname;
 		u32 tsize;
 
 		/* resolve the type size of ksym. */
 		ret = btf_resolve_size(btf, t, &tsize);
-		अगर (IS_ERR(ret)) अणु
+		if (IS_ERR(ret)) {
 			tname = btf_name_by_offset(btf, t->name_off);
 			verbose(env, "ldimm64 unable to resolve the size of type '%s': %ld\n",
 				tname, PTR_ERR(ret));
 			err = -EINVAL;
-			जाओ err_put;
-		पूर्ण
+			goto err_put;
+		}
 		aux->btf_var.reg_type = PTR_TO_MEM;
 		aux->btf_var.mem_size = tsize;
-	पूर्ण अन्यथा अणु
+	} else {
 		aux->btf_var.reg_type = PTR_TO_BTF_ID;
 		aux->btf_var.btf = btf;
 		aux->btf_var.btf_id = type;
-	पूर्ण
+	}
 
-	/* check whether we recorded this BTF (and maybe module) alपढ़ोy */
-	क्रम (i = 0; i < env->used_btf_cnt; i++) अणु
-		अगर (env->used_btfs[i].btf == btf) अणु
+	/* check whether we recorded this BTF (and maybe module) already */
+	for (i = 0; i < env->used_btf_cnt; i++) {
+		if (env->used_btfs[i].btf == btf) {
 			btf_put(btf);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (env->used_btf_cnt >= MAX_USED_BTFS) अणु
+	if (env->used_btf_cnt >= MAX_USED_BTFS) {
 		err = -E2BIG;
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
 	btf_mod = &env->used_btfs[env->used_btf_cnt];
 	btf_mod->btf = btf;
-	btf_mod->module = शून्य;
+	btf_mod->module = NULL;
 
-	/* अगर we reference variables from kernel module, bump its refcount */
-	अगर (btf_is_module(btf)) अणु
+	/* if we reference variables from kernel module, bump its refcount */
+	if (btf_is_module(btf)) {
 		btf_mod->module = btf_try_get_module(btf);
-		अगर (!btf_mod->module) अणु
+		if (!btf_mod->module) {
 			err = -ENXIO;
-			जाओ err_put;
-		पूर्ण
-	पूर्ण
+			goto err_put;
+		}
+	}
 
 	env->used_btf_cnt++;
 
-	वापस 0;
+	return 0;
 err_put:
 	btf_put(btf);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक check_map_pपुनः_स्मृति(काष्ठा bpf_map *map)
-अणु
-	वापस (map->map_type != BPF_MAP_TYPE_HASH &&
+static int check_map_prealloc(struct bpf_map *map)
+{
+	return (map->map_type != BPF_MAP_TYPE_HASH &&
 		map->map_type != BPF_MAP_TYPE_PERCPU_HASH &&
 		map->map_type != BPF_MAP_TYPE_HASH_OF_MAPS) ||
 		!(map->map_flags & BPF_F_NO_PREALLOC);
-पूर्ण
+}
 
-अटल bool is_tracing_prog_type(क्रमागत bpf_prog_type type)
-अणु
-	चयन (type) अणु
-	हाल BPF_PROG_TYPE_KPROBE:
-	हाल BPF_PROG_TYPE_TRACEPOINT:
-	हाल BPF_PROG_TYPE_PERF_EVENT:
-	हाल BPF_PROG_TYPE_RAW_TRACEPOINT:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool is_tracing_prog_type(enum bpf_prog_type type)
+{
+	switch (type) {
+	case BPF_PROG_TYPE_KPROBE:
+	case BPF_PROG_TYPE_TRACEPOINT:
+	case BPF_PROG_TYPE_PERF_EVENT:
+	case BPF_PROG_TYPE_RAW_TRACEPOINT:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool is_pपुनः_स्मृतिated_map(काष्ठा bpf_map *map)
-अणु
-	अगर (!check_map_pपुनः_स्मृति(map))
-		वापस false;
-	अगर (map->inner_map_meta && !check_map_pपुनः_स्मृति(map->inner_map_meta))
-		वापस false;
-	वापस true;
-पूर्ण
+static bool is_preallocated_map(struct bpf_map *map)
+{
+	if (!check_map_prealloc(map))
+		return false;
+	if (map->inner_map_meta && !check_map_prealloc(map->inner_map_meta))
+		return false;
+	return true;
+}
 
-अटल पूर्णांक check_map_prog_compatibility(काष्ठा bpf_verअगरier_env *env,
-					काष्ठा bpf_map *map,
-					काष्ठा bpf_prog *prog)
+static int check_map_prog_compatibility(struct bpf_verifier_env *env,
+					struct bpf_map *map,
+					struct bpf_prog *prog)
 
-अणु
-	क्रमागत bpf_prog_type prog_type = resolve_prog_type(prog);
+{
+	enum bpf_prog_type prog_type = resolve_prog_type(prog);
 	/*
-	 * Validate that trace type programs use pपुनः_स्मृतिated hash maps.
+	 * Validate that trace type programs use preallocated hash maps.
 	 *
 	 * For programs attached to PERF events this is mandatory as the
 	 * perf NMI can hit any arbitrary code sequence.
 	 *
-	 * All other trace types using pपुनः_स्मृतिated hash maps are unsafe as
-	 * well because tracepoपूर्णांक or kprobes can be inside locked regions
-	 * of the memory allocator or at a place where a recursion पूर्णांकo the
+	 * All other trace types using preallocated hash maps are unsafe as
+	 * well because tracepoint or kprobes can be inside locked regions
+	 * of the memory allocator or at a place where a recursion into the
 	 * memory allocator would see inconsistent state.
 	 *
-	 * On RT enabled kernels run-समय allocation of all trace type
-	 * programs is strictly prohibited due to lock type स्थिरraपूर्णांकs. On
-	 * !RT kernels it is allowed क्रम backwards compatibility reasons क्रम
+	 * On RT enabled kernels run-time allocation of all trace type
+	 * programs is strictly prohibited due to lock type constraints. On
+	 * !RT kernels it is allowed for backwards compatibility reasons for
 	 * now, but warnings are emitted so developers are made aware of
-	 * the unsafety and can fix their programs beक्रमe this is enक्रमced.
+	 * the unsafety and can fix their programs before this is enforced.
 	 */
-	अगर (is_tracing_prog_type(prog_type) && !is_pपुनः_स्मृतिated_map(map)) अणु
-		अगर (prog_type == BPF_PROG_TYPE_PERF_EVENT) अणु
+	if (is_tracing_prog_type(prog_type) && !is_preallocated_map(map)) {
+		if (prog_type == BPF_PROG_TYPE_PERF_EVENT) {
 			verbose(env, "perf_event programs can only use preallocated hash map\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (IS_ENABLED(CONFIG_PREEMPT_RT)) अणु
+			return -EINVAL;
+		}
+		if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
 			verbose(env, "trace type programs can only use preallocated hash map\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		WARN_ONCE(1, "trace type BPF program uses run-time allocation\n");
 		verbose(env, "trace type programs with run-time allocated hash maps are unsafe. Switch to preallocated hash maps.\n");
-	पूर्ण
+	}
 
-	अगर (map_value_has_spin_lock(map)) अणु
-		अगर (prog_type == BPF_PROG_TYPE_SOCKET_FILTER) अणु
+	if (map_value_has_spin_lock(map)) {
+		if (prog_type == BPF_PROG_TYPE_SOCKET_FILTER) {
 			verbose(env, "socket filter progs cannot use bpf_spin_lock yet\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (is_tracing_prog_type(prog_type)) अणु
+		if (is_tracing_prog_type(prog_type)) {
 			verbose(env, "tracing progs cannot use bpf_spin_lock yet\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (prog->aux->sleepable) अणु
+		if (prog->aux->sleepable) {
 			verbose(env, "sleepable progs cannot use bpf_spin_lock yet\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर ((bpf_prog_is_dev_bound(prog->aux) || bpf_map_is_dev_bound(map)) &&
-	    !bpf_offload_prog_map_match(prog, map)) अणु
+	if ((bpf_prog_is_dev_bound(prog->aux) || bpf_map_is_dev_bound(map)) &&
+	    !bpf_offload_prog_map_match(prog, map)) {
 		verbose(env, "offload device mismatch between prog and map\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (map->map_type == BPF_MAP_TYPE_STRUCT_OPS) अणु
+	if (map->map_type == BPF_MAP_TYPE_STRUCT_OPS) {
 		verbose(env, "bpf_struct_ops map cannot be used in prog\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->aux->sleepable)
-		चयन (map->map_type) अणु
-		हाल BPF_MAP_TYPE_HASH:
-		हाल BPF_MAP_TYPE_LRU_HASH:
-		हाल BPF_MAP_TYPE_ARRAY:
-		हाल BPF_MAP_TYPE_PERCPU_HASH:
-		हाल BPF_MAP_TYPE_PERCPU_ARRAY:
-		हाल BPF_MAP_TYPE_LRU_PERCPU_HASH:
-		हाल BPF_MAP_TYPE_ARRAY_OF_MAPS:
-		हाल BPF_MAP_TYPE_HASH_OF_MAPS:
-			अगर (!is_pपुनः_स्मृतिated_map(map)) अणु
+	if (prog->aux->sleepable)
+		switch (map->map_type) {
+		case BPF_MAP_TYPE_HASH:
+		case BPF_MAP_TYPE_LRU_HASH:
+		case BPF_MAP_TYPE_ARRAY:
+		case BPF_MAP_TYPE_PERCPU_HASH:
+		case BPF_MAP_TYPE_PERCPU_ARRAY:
+		case BPF_MAP_TYPE_LRU_PERCPU_HASH:
+		case BPF_MAP_TYPE_ARRAY_OF_MAPS:
+		case BPF_MAP_TYPE_HASH_OF_MAPS:
+			if (!is_preallocated_map(map)) {
 				verbose(env,
 					"Sleepable programs can only use preallocated maps\n");
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल BPF_MAP_TYPE_RINGBUF:
-			अवरोध;
-		शेष:
+				return -EINVAL;
+			}
+			break;
+		case BPF_MAP_TYPE_RINGBUF:
+			break;
+		default:
 			verbose(env,
 				"Sleepable programs can only use array, hash, and ringbuf maps\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool bpf_map_is_cgroup_storage(काष्ठा bpf_map *map)
-अणु
-	वापस (map->map_type == BPF_MAP_TYPE_CGROUP_STORAGE ||
+static bool bpf_map_is_cgroup_storage(struct bpf_map *map)
+{
+	return (map->map_type == BPF_MAP_TYPE_CGROUP_STORAGE ||
 		map->map_type == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE);
-पूर्ण
+}
 
-/* find and reग_लिखो pseuकरो imm in ld_imm64 inकाष्ठाions:
+/* find and rewrite pseudo imm in ld_imm64 instructions:
  *
- * 1. अगर it accesses map FD, replace it with actual map poपूर्णांकer.
- * 2. अगर it accesses btf_id of a VAR, replace it with poपूर्णांकer to the var.
+ * 1. if it accesses map FD, replace it with actual map pointer.
+ * 2. if it accesses btf_id of a VAR, replace it with pointer to the var.
  *
- * NOTE: btf_vmlinux is required क्रम converting pseuकरो btf_id.
+ * NOTE: btf_vmlinux is required for converting pseudo btf_id.
  */
-अटल पूर्णांक resolve_pseuकरो_ldimm64(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i, j, err;
+static int resolve_pseudo_ldimm64(struct bpf_verifier_env *env)
+{
+	struct bpf_insn *insn = env->prog->insnsi;
+	int insn_cnt = env->prog->len;
+	int i, j, err;
 
 	err = bpf_prog_calc_tag(env->prog);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
-		अगर (BPF_CLASS(insn->code) == BPF_LDX &&
-		    (BPF_MODE(insn->code) != BPF_MEM || insn->imm != 0)) अणु
+	for (i = 0; i < insn_cnt; i++, insn++) {
+		if (BPF_CLASS(insn->code) == BPF_LDX &&
+		    (BPF_MODE(insn->code) != BPF_MEM || insn->imm != 0)) {
 			verbose(env, "BPF_LDX uses reserved fields\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (insn[0].code == (BPF_LD | BPF_IMM | BPF_DW)) अणु
-			काष्ठा bpf_insn_aux_data *aux;
-			काष्ठा bpf_map *map;
-			काष्ठा fd f;
+		if (insn[0].code == (BPF_LD | BPF_IMM | BPF_DW)) {
+			struct bpf_insn_aux_data *aux;
+			struct bpf_map *map;
+			struct fd f;
 			u64 addr;
 
-			अगर (i == insn_cnt - 1 || insn[1].code != 0 ||
+			if (i == insn_cnt - 1 || insn[1].code != 0 ||
 			    insn[1].dst_reg != 0 || insn[1].src_reg != 0 ||
-			    insn[1].off != 0) अणु
+			    insn[1].off != 0) {
 				verbose(env, "invalid bpf_ld_imm64 insn\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			अगर (insn[0].src_reg == 0)
+			if (insn[0].src_reg == 0)
 				/* valid generic load 64-bit imm */
-				जाओ next_insn;
+				goto next_insn;
 
-			अगर (insn[0].src_reg == BPF_PSEUDO_BTF_ID) अणु
+			if (insn[0].src_reg == BPF_PSEUDO_BTF_ID) {
 				aux = &env->insn_aux_data[i];
-				err = check_pseuकरो_btf_id(env, insn, aux);
-				अगर (err)
-					वापस err;
-				जाओ next_insn;
-			पूर्ण
+				err = check_pseudo_btf_id(env, insn, aux);
+				if (err)
+					return err;
+				goto next_insn;
+			}
 
-			अगर (insn[0].src_reg == BPF_PSEUDO_FUNC) अणु
+			if (insn[0].src_reg == BPF_PSEUDO_FUNC) {
 				aux = &env->insn_aux_data[i];
 				aux->ptr_type = PTR_TO_FUNC;
-				जाओ next_insn;
-			पूर्ण
+				goto next_insn;
+			}
 
-			/* In final convert_pseuकरो_ld_imm64() step, this is
-			 * converted पूर्णांकo regular 64-bit imm load insn.
+			/* In final convert_pseudo_ld_imm64() step, this is
+			 * converted into regular 64-bit imm load insn.
 			 */
-			अगर ((insn[0].src_reg != BPF_PSEUDO_MAP_FD &&
+			if ((insn[0].src_reg != BPF_PSEUDO_MAP_FD &&
 			     insn[0].src_reg != BPF_PSEUDO_MAP_VALUE) ||
 			    (insn[0].src_reg == BPF_PSEUDO_MAP_FD &&
-			     insn[1].imm != 0)) अणु
+			     insn[1].imm != 0)) {
 				verbose(env,
 					"unrecognized bpf_ld_imm64 insn\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			f = fdget(insn[0].imm);
 			map = __bpf_map_get(f);
-			अगर (IS_ERR(map)) अणु
+			if (IS_ERR(map)) {
 				verbose(env, "fd %d is not pointing to valid bpf_map\n",
 					insn[0].imm);
-				वापस PTR_ERR(map);
-			पूर्ण
+				return PTR_ERR(map);
+			}
 
 			err = check_map_prog_compatibility(env, map, env->prog);
-			अगर (err) अणु
+			if (err) {
 				fdput(f);
-				वापस err;
-			पूर्ण
+				return err;
+			}
 
 			aux = &env->insn_aux_data[i];
-			अगर (insn->src_reg == BPF_PSEUDO_MAP_FD) अणु
-				addr = (अचिन्हित दीर्घ)map;
-			पूर्ण अन्यथा अणु
+			if (insn->src_reg == BPF_PSEUDO_MAP_FD) {
+				addr = (unsigned long)map;
+			} else {
 				u32 off = insn[1].imm;
 
-				अगर (off >= BPF_MAX_VAR_OFF) अणु
+				if (off >= BPF_MAX_VAR_OFF) {
 					verbose(env, "direct value offset of %u is not allowed\n", off);
 					fdput(f);
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
-				अगर (!map->ops->map_direct_value_addr) अणु
+				if (!map->ops->map_direct_value_addr) {
 					verbose(env, "no direct value access support for this map type\n");
 					fdput(f);
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
 				err = map->ops->map_direct_value_addr(map, &addr, off);
-				अगर (err) अणु
+				if (err) {
 					verbose(env, "invalid access to map value pointer, value_size=%u off=%u\n",
 						map->value_size, off);
 					fdput(f);
-					वापस err;
-				पूर्ण
+					return err;
+				}
 
 				aux->map_off = off;
 				addr += off;
-			पूर्ण
+			}
 
 			insn[0].imm = (u32)addr;
 			insn[1].imm = addr >> 32;
 
-			/* check whether we recorded this map alपढ़ोy */
-			क्रम (j = 0; j < env->used_map_cnt; j++) अणु
-				अगर (env->used_maps[j] == map) अणु
+			/* check whether we recorded this map already */
+			for (j = 0; j < env->used_map_cnt; j++) {
+				if (env->used_maps[j] == map) {
 					aux->map_index = j;
 					fdput(f);
-					जाओ next_insn;
-				पूर्ण
-			पूर्ण
+					goto next_insn;
+				}
+			}
 
-			अगर (env->used_map_cnt >= MAX_USED_MAPS) अणु
+			if (env->used_map_cnt >= MAX_USED_MAPS) {
 				fdput(f);
-				वापस -E2BIG;
-			पूर्ण
+				return -E2BIG;
+			}
 
-			/* hold the map. If the program is rejected by verअगरier,
+			/* hold the map. If the program is rejected by verifier,
 			 * the map will be released by release_maps() or it
 			 * will be used by the valid program until it's unloaded
-			 * and all maps are released in मुक्त_used_maps()
+			 * and all maps are released in free_used_maps()
 			 */
 			bpf_map_inc(map);
 
 			aux->map_index = env->used_map_cnt;
 			env->used_maps[env->used_map_cnt++] = map;
 
-			अगर (bpf_map_is_cgroup_storage(map) &&
-			    bpf_cgroup_storage_assign(env->prog->aux, map)) अणु
+			if (bpf_map_is_cgroup_storage(map) &&
+			    bpf_cgroup_storage_assign(env->prog->aux, map)) {
 				verbose(env, "only one cgroup storage of each type is allowed\n");
 				fdput(f);
-				वापस -EBUSY;
-			पूर्ण
+				return -EBUSY;
+			}
 
 			fdput(f);
 next_insn:
 			insn++;
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Basic sanity check beक्रमe we invest more work here. */
-		अगर (!bpf_opcode_in_insntable(insn->code)) अणु
+		/* Basic sanity check before we invest more work here. */
+		if (!bpf_opcode_in_insntable(insn->code)) {
 			verbose(env, "unknown opcode %02x\n", insn->code);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* now all pseuकरो BPF_LD_IMM64 inकाष्ठाions load valid
-	 * 'struct bpf_map *' पूर्णांकo a रेजिस्टर instead of user map_fd.
-	 * These poपूर्णांकers will be used later by verअगरier to validate map access.
+	/* now all pseudo BPF_LD_IMM64 instructions load valid
+	 * 'struct bpf_map *' into a register instead of user map_fd.
+	 * These pointers will be used later by verifier to validate map access.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* drop refcnt of maps used by the rejected program */
-अटल व्योम release_maps(काष्ठा bpf_verअगरier_env *env)
-अणु
-	__bpf_मुक्त_used_maps(env->prog->aux, env->used_maps,
+static void release_maps(struct bpf_verifier_env *env)
+{
+	__bpf_free_used_maps(env->prog->aux, env->used_maps,
 			     env->used_map_cnt);
-पूर्ण
+}
 
 /* drop refcnt of maps used by the rejected program */
-अटल व्योम release_btfs(काष्ठा bpf_verअगरier_env *env)
-अणु
-	__bpf_मुक्त_used_btfs(env->prog->aux, env->used_btfs,
+static void release_btfs(struct bpf_verifier_env *env)
+{
+	__bpf_free_used_btfs(env->prog->aux, env->used_btfs,
 			     env->used_btf_cnt);
-पूर्ण
+}
 
-/* convert pseuकरो BPF_LD_IMM64 पूर्णांकo generic BPF_LD_IMM64 */
-अटल व्योम convert_pseuकरो_ld_imm64(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i;
+/* convert pseudo BPF_LD_IMM64 into generic BPF_LD_IMM64 */
+static void convert_pseudo_ld_imm64(struct bpf_verifier_env *env)
+{
+	struct bpf_insn *insn = env->prog->insnsi;
+	int insn_cnt = env->prog->len;
+	int i;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
-		अगर (insn->code != (BPF_LD | BPF_IMM | BPF_DW))
-			जारी;
-		अगर (insn->src_reg == BPF_PSEUDO_FUNC)
-			जारी;
+	for (i = 0; i < insn_cnt; i++, insn++) {
+		if (insn->code != (BPF_LD | BPF_IMM | BPF_DW))
+			continue;
+		if (insn->src_reg == BPF_PSEUDO_FUNC)
+			continue;
 		insn->src_reg = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* single env->prog->insni[off] inकाष्ठाion was replaced with the range
+/* single env->prog->insni[off] instruction was replaced with the range
  * insni[off, off + cnt).  Adjust corresponding insn_aux_data by copying
  * [0, off) and [off, end) to new locations, so the patched range stays zero
  */
-अटल पूर्णांक adjust_insn_aux_data(काष्ठा bpf_verअगरier_env *env,
-				काष्ठा bpf_prog *new_prog, u32 off, u32 cnt)
-अणु
-	काष्ठा bpf_insn_aux_data *new_data, *old_data = env->insn_aux_data;
-	काष्ठा bpf_insn *insn = new_prog->insnsi;
+static int adjust_insn_aux_data(struct bpf_verifier_env *env,
+				struct bpf_prog *new_prog, u32 off, u32 cnt)
+{
+	struct bpf_insn_aux_data *new_data, *old_data = env->insn_aux_data;
+	struct bpf_insn *insn = new_prog->insnsi;
 	u32 old_seen = old_data[off].seen;
 	u32 prog_len;
-	पूर्णांक i;
+	int i;
 
-	/* aux info at OFF always needs adjusपंचांगent, no matter fast path
+	/* aux info at OFF always needs adjustment, no matter fast path
 	 * (cnt == 1) is taken or not. There is no guarantee INSN at OFF is the
 	 * original insn at old prog.
 	 */
 	old_data[off].zext_dst = insn_has_def32(env, insn + off + cnt - 1);
 
-	अगर (cnt == 1)
-		वापस 0;
+	if (cnt == 1)
+		return 0;
 	prog_len = new_prog->len;
 	new_data = vzalloc(array_size(prog_len,
-				      माप(काष्ठा bpf_insn_aux_data)));
-	अगर (!new_data)
-		वापस -ENOMEM;
-	स_नकल(new_data, old_data, माप(काष्ठा bpf_insn_aux_data) * off);
-	स_नकल(new_data + off + cnt - 1, old_data + off,
-	       माप(काष्ठा bpf_insn_aux_data) * (prog_len - off - cnt + 1));
-	क्रम (i = off; i < off + cnt - 1; i++) अणु
+				      sizeof(struct bpf_insn_aux_data)));
+	if (!new_data)
+		return -ENOMEM;
+	memcpy(new_data, old_data, sizeof(struct bpf_insn_aux_data) * off);
+	memcpy(new_data + off + cnt - 1, old_data + off,
+	       sizeof(struct bpf_insn_aux_data) * (prog_len - off - cnt + 1));
+	for (i = off; i < off + cnt - 1; i++) {
 		/* Expand insni[off]'s seen count to the patched range. */
 		new_data[i].seen = old_seen;
 		new_data[i].zext_dst = insn_has_def32(env, insn + i);
-	पूर्ण
+	}
 	env->insn_aux_data = new_data;
-	vमुक्त(old_data);
-	वापस 0;
-पूर्ण
+	vfree(old_data);
+	return 0;
+}
 
-अटल व्योम adjust_subprog_starts(काष्ठा bpf_verअगरier_env *env, u32 off, u32 len)
-अणु
-	पूर्णांक i;
+static void adjust_subprog_starts(struct bpf_verifier_env *env, u32 off, u32 len)
+{
+	int i;
 
-	अगर (len == 1)
-		वापस;
+	if (len == 1)
+		return;
 	/* NOTE: fake 'exit' subprog should be updated as well. */
-	क्रम (i = 0; i <= env->subprog_cnt; i++) अणु
-		अगर (env->subprog_info[i].start <= off)
-			जारी;
+	for (i = 0; i <= env->subprog_cnt; i++) {
+		if (env->subprog_info[i].start <= off)
+			continue;
 		env->subprog_info[i].start += len - 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम adjust_poke_descs(काष्ठा bpf_prog *prog, u32 len)
-अणु
-	काष्ठा bpf_jit_poke_descriptor *tab = prog->aux->poke_tab;
-	पूर्णांक i, sz = prog->aux->size_poke_tab;
-	काष्ठा bpf_jit_poke_descriptor *desc;
+static void adjust_poke_descs(struct bpf_prog *prog, u32 len)
+{
+	struct bpf_jit_poke_descriptor *tab = prog->aux->poke_tab;
+	int i, sz = prog->aux->size_poke_tab;
+	struct bpf_jit_poke_descriptor *desc;
 
-	क्रम (i = 0; i < sz; i++) अणु
+	for (i = 0; i < sz; i++) {
 		desc = &tab[i];
 		desc->insn_idx += len - 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा bpf_prog *bpf_patch_insn_data(काष्ठा bpf_verअगरier_env *env, u32 off,
-					    स्थिर काष्ठा bpf_insn *patch, u32 len)
-अणु
-	काष्ठा bpf_prog *new_prog;
+static struct bpf_prog *bpf_patch_insn_data(struct bpf_verifier_env *env, u32 off,
+					    const struct bpf_insn *patch, u32 len)
+{
+	struct bpf_prog *new_prog;
 
 	new_prog = bpf_patch_insn_single(env->prog, off, patch, len);
-	अगर (IS_ERR(new_prog)) अणु
-		अगर (PTR_ERR(new_prog) == -दुस्फल)
+	if (IS_ERR(new_prog)) {
+		if (PTR_ERR(new_prog) == -ERANGE)
 			verbose(env,
 				"insn %d cannot be patched due to 16-bit range\n",
 				env->insn_aux_data[off].orig_idx);
-		वापस शून्य;
-	पूर्ण
-	अगर (adjust_insn_aux_data(env, new_prog, off, len))
-		वापस शून्य;
+		return NULL;
+	}
+	if (adjust_insn_aux_data(env, new_prog, off, len))
+		return NULL;
 	adjust_subprog_starts(env, off, len);
 	adjust_poke_descs(new_prog, len);
-	वापस new_prog;
-पूर्ण
+	return new_prog;
+}
 
-अटल पूर्णांक adjust_subprog_starts_after_हटाओ(काष्ठा bpf_verअगरier_env *env,
+static int adjust_subprog_starts_after_remove(struct bpf_verifier_env *env,
 					      u32 off, u32 cnt)
-अणु
-	पूर्णांक i, j;
+{
+	int i, j;
 
-	/* find first prog starting at or after off (first to हटाओ) */
-	क्रम (i = 0; i < env->subprog_cnt; i++)
-		अगर (env->subprog_info[i].start >= off)
-			अवरोध;
+	/* find first prog starting at or after off (first to remove) */
+	for (i = 0; i < env->subprog_cnt; i++)
+		if (env->subprog_info[i].start >= off)
+			break;
 	/* find first prog starting at or after off + cnt (first to stay) */
-	क्रम (j = i; j < env->subprog_cnt; j++)
-		अगर (env->subprog_info[j].start >= off + cnt)
-			अवरोध;
-	/* अगर j करोesn't start exactly at off + cnt, we are just removing
+	for (j = i; j < env->subprog_cnt; j++)
+		if (env->subprog_info[j].start >= off + cnt)
+			break;
+	/* if j doesn't start exactly at off + cnt, we are just removing
 	 * the front of previous prog
 	 */
-	अगर (env->subprog_info[j].start != off + cnt)
+	if (env->subprog_info[j].start != off + cnt)
 		j--;
 
-	अगर (j > i) अणु
-		काष्ठा bpf_prog_aux *aux = env->prog->aux;
-		पूर्णांक move;
+	if (j > i) {
+		struct bpf_prog_aux *aux = env->prog->aux;
+		int move;
 
 		/* move fake 'exit' subprog as well */
 		move = env->subprog_cnt + 1 - j;
 
-		स_हटाओ(env->subprog_info + i,
+		memmove(env->subprog_info + i,
 			env->subprog_info + j,
-			माप(*env->subprog_info) * move);
+			sizeof(*env->subprog_info) * move);
 		env->subprog_cnt -= j - i;
 
-		/* हटाओ func_info */
-		अगर (aux->func_info) अणु
+		/* remove func_info */
+		if (aux->func_info) {
 			move = aux->func_info_cnt - j;
 
-			स_हटाओ(aux->func_info + i,
+			memmove(aux->func_info + i,
 				aux->func_info + j,
-				माप(*aux->func_info) * move);
+				sizeof(*aux->func_info) * move);
 			aux->func_info_cnt -= j - i;
-			/* func_info->insn_off is set after all code reग_लिखोs,
+			/* func_info->insn_off is set after all code rewrites,
 			 * in adjust_btf_func() - no need to adjust
 			 */
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* convert i from "first prog to remove" to "first to adjust" */
-		अगर (env->subprog_info[i].start == off)
+		if (env->subprog_info[i].start == off)
 			i++;
-	पूर्ण
+	}
 
 	/* update fake 'exit' subprog as well */
-	क्रम (; i <= env->subprog_cnt; i++)
+	for (; i <= env->subprog_cnt; i++)
 		env->subprog_info[i].start -= cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_adj_linfo_after_हटाओ(काष्ठा bpf_verअगरier_env *env, u32 off,
+static int bpf_adj_linfo_after_remove(struct bpf_verifier_env *env, u32 off,
 				      u32 cnt)
-अणु
-	काष्ठा bpf_prog *prog = env->prog;
+{
+	struct bpf_prog *prog = env->prog;
 	u32 i, l_off, l_cnt, nr_linfo;
-	काष्ठा bpf_line_info *linfo;
+	struct bpf_line_info *linfo;
 
 	nr_linfo = prog->aux->nr_linfo;
-	अगर (!nr_linfo)
-		वापस 0;
+	if (!nr_linfo)
+		return 0;
 
 	linfo = prog->aux->linfo;
 
-	/* find first line info to हटाओ, count lines to be हटाओd */
-	क्रम (i = 0; i < nr_linfo; i++)
-		अगर (linfo[i].insn_off >= off)
-			अवरोध;
+	/* find first line info to remove, count lines to be removed */
+	for (i = 0; i < nr_linfo; i++)
+		if (linfo[i].insn_off >= off)
+			break;
 
 	l_off = i;
 	l_cnt = 0;
-	क्रम (; i < nr_linfo; i++)
-		अगर (linfo[i].insn_off < off + cnt)
+	for (; i < nr_linfo; i++)
+		if (linfo[i].insn_off < off + cnt)
 			l_cnt++;
-		अन्यथा
-			अवरोध;
+		else
+			break;
 
-	/* First live insn करोesn't match first live linfo, it needs to "inherit"
-	 * last हटाओd linfo.  prog is alपढ़ोy modअगरied, so prog->len == off
-	 * means no live inकाष्ठाions after (tail of the program was हटाओd).
+	/* First live insn doesn't match first live linfo, it needs to "inherit"
+	 * last removed linfo.  prog is already modified, so prog->len == off
+	 * means no live instructions after (tail of the program was removed).
 	 */
-	अगर (prog->len != off && l_cnt &&
-	    (i == nr_linfo || linfo[i].insn_off != off + cnt)) अणु
+	if (prog->len != off && l_cnt &&
+	    (i == nr_linfo || linfo[i].insn_off != off + cnt)) {
 		l_cnt--;
 		linfo[--i].insn_off = off + cnt;
-	पूर्ण
+	}
 
-	/* हटाओ the line info which refer to the हटाओd inकाष्ठाions */
-	अगर (l_cnt) अणु
-		स_हटाओ(linfo + l_off, linfo + i,
-			माप(*linfo) * (nr_linfo - i));
+	/* remove the line info which refer to the removed instructions */
+	if (l_cnt) {
+		memmove(linfo + l_off, linfo + i,
+			sizeof(*linfo) * (nr_linfo - i));
 
 		prog->aux->nr_linfo -= l_cnt;
 		nr_linfo = prog->aux->nr_linfo;
-	पूर्ण
+	}
 
 	/* pull all linfo[i].insn_off >= off + cnt in by cnt */
-	क्रम (i = l_off; i < nr_linfo; i++)
+	for (i = l_off; i < nr_linfo; i++)
 		linfo[i].insn_off -= cnt;
 
 	/* fix up all subprogs (incl. 'exit') which start >= off */
-	क्रम (i = 0; i <= env->subprog_cnt; i++)
-		अगर (env->subprog_info[i].linfo_idx > l_off) अणु
-			/* program may have started in the हटाओd region but
-			 * may not be fully हटाओd
+	for (i = 0; i <= env->subprog_cnt; i++)
+		if (env->subprog_info[i].linfo_idx > l_off) {
+			/* program may have started in the removed region but
+			 * may not be fully removed
 			 */
-			अगर (env->subprog_info[i].linfo_idx >= l_off + l_cnt)
+			if (env->subprog_info[i].linfo_idx >= l_off + l_cnt)
 				env->subprog_info[i].linfo_idx -= l_cnt;
-			अन्यथा
+			else
 				env->subprog_info[i].linfo_idx = l_off;
-		पूर्ण
+		}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक verअगरier_हटाओ_insns(काष्ठा bpf_verअगरier_env *env, u32 off, u32 cnt)
-अणु
-	काष्ठा bpf_insn_aux_data *aux_data = env->insn_aux_data;
-	अचिन्हित पूर्णांक orig_prog_len = env->prog->len;
-	पूर्णांक err;
+static int verifier_remove_insns(struct bpf_verifier_env *env, u32 off, u32 cnt)
+{
+	struct bpf_insn_aux_data *aux_data = env->insn_aux_data;
+	unsigned int orig_prog_len = env->prog->len;
+	int err;
 
-	अगर (bpf_prog_is_dev_bound(env->prog->aux))
-		bpf_prog_offload_हटाओ_insns(env, off, cnt);
+	if (bpf_prog_is_dev_bound(env->prog->aux))
+		bpf_prog_offload_remove_insns(env, off, cnt);
 
-	err = bpf_हटाओ_insns(env->prog, off, cnt);
-	अगर (err)
-		वापस err;
+	err = bpf_remove_insns(env->prog, off, cnt);
+	if (err)
+		return err;
 
-	err = adjust_subprog_starts_after_हटाओ(env, off, cnt);
-	अगर (err)
-		वापस err;
+	err = adjust_subprog_starts_after_remove(env, off, cnt);
+	if (err)
+		return err;
 
-	err = bpf_adj_linfo_after_हटाओ(env, off, cnt);
-	अगर (err)
-		वापस err;
+	err = bpf_adj_linfo_after_remove(env, off, cnt);
+	if (err)
+		return err;
 
-	स_हटाओ(aux_data + off,	aux_data + off + cnt,
-		माप(*aux_data) * (orig_prog_len - off - cnt));
+	memmove(aux_data + off,	aux_data + off + cnt,
+		sizeof(*aux_data) * (orig_prog_len - off - cnt));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* The verअगरier करोes more data flow analysis than llvm and will not
- * explore branches that are dead at run समय. Malicious programs can
- * have dead code too. Thereक्रमe replace all dead at-run-समय code
+/* The verifier does more data flow analysis than llvm and will not
+ * explore branches that are dead at run time. Malicious programs can
+ * have dead code too. Therefore replace all dead at-run-time code
  * with 'ja -1'.
  *
- * Just nops are not optimal, e.g. अगर they would sit at the end of the
+ * Just nops are not optimal, e.g. if they would sit at the end of the
  * program and through another bug we would manage to jump there, then
  * we'd execute beyond program memory otherwise. Returning exception
  * code also wouldn't work since we can have subprogs where the dead
  * code could be located.
  */
-अटल व्योम sanitize_dead_code(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn_aux_data *aux_data = env->insn_aux_data;
-	काष्ठा bpf_insn trap = BPF_JMP_IMM(BPF_JA, 0, 0, -1);
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	स्थिर पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i;
+static void sanitize_dead_code(struct bpf_verifier_env *env)
+{
+	struct bpf_insn_aux_data *aux_data = env->insn_aux_data;
+	struct bpf_insn trap = BPF_JMP_IMM(BPF_JA, 0, 0, -1);
+	struct bpf_insn *insn = env->prog->insnsi;
+	const int insn_cnt = env->prog->len;
+	int i;
 
-	क्रम (i = 0; i < insn_cnt; i++) अणु
-		अगर (aux_data[i].seen)
-			जारी;
-		स_नकल(insn + i, &trap, माप(trap));
-	पूर्ण
-पूर्ण
+	for (i = 0; i < insn_cnt; i++) {
+		if (aux_data[i].seen)
+			continue;
+		memcpy(insn + i, &trap, sizeof(trap));
+	}
+}
 
-अटल bool insn_is_cond_jump(u8 code)
-अणु
+static bool insn_is_cond_jump(u8 code)
+{
 	u8 op;
 
-	अगर (BPF_CLASS(code) == BPF_JMP32)
-		वापस true;
+	if (BPF_CLASS(code) == BPF_JMP32)
+		return true;
 
-	अगर (BPF_CLASS(code) != BPF_JMP)
-		वापस false;
+	if (BPF_CLASS(code) != BPF_JMP)
+		return false;
 
 	op = BPF_OP(code);
-	वापस op != BPF_JA && op != BPF_EXIT && op != BPF_CALL;
-पूर्ण
+	return op != BPF_JA && op != BPF_EXIT && op != BPF_CALL;
+}
 
-अटल व्योम opt_hard_wire_dead_code_branches(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn_aux_data *aux_data = env->insn_aux_data;
-	काष्ठा bpf_insn ja = BPF_JMP_IMM(BPF_JA, 0, 0, 0);
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	स्थिर पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i;
+static void opt_hard_wire_dead_code_branches(struct bpf_verifier_env *env)
+{
+	struct bpf_insn_aux_data *aux_data = env->insn_aux_data;
+	struct bpf_insn ja = BPF_JMP_IMM(BPF_JA, 0, 0, 0);
+	struct bpf_insn *insn = env->prog->insnsi;
+	const int insn_cnt = env->prog->len;
+	int i;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
-		अगर (!insn_is_cond_jump(insn->code))
-			जारी;
+	for (i = 0; i < insn_cnt; i++, insn++) {
+		if (!insn_is_cond_jump(insn->code))
+			continue;
 
-		अगर (!aux_data[i + 1].seen)
+		if (!aux_data[i + 1].seen)
 			ja.off = insn->off;
-		अन्यथा अगर (!aux_data[i + 1 + insn->off].seen)
+		else if (!aux_data[i + 1 + insn->off].seen)
 			ja.off = 0;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
-		अगर (bpf_prog_is_dev_bound(env->prog->aux))
+		if (bpf_prog_is_dev_bound(env->prog->aux))
 			bpf_prog_offload_replace_insn(env, i, &ja);
 
-		स_नकल(insn, &ja, माप(ja));
-	पूर्ण
-पूर्ण
+		memcpy(insn, &ja, sizeof(ja));
+	}
+}
 
-अटल पूर्णांक opt_हटाओ_dead_code(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn_aux_data *aux_data = env->insn_aux_data;
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i, err;
+static int opt_remove_dead_code(struct bpf_verifier_env *env)
+{
+	struct bpf_insn_aux_data *aux_data = env->insn_aux_data;
+	int insn_cnt = env->prog->len;
+	int i, err;
 
-	क्रम (i = 0; i < insn_cnt; i++) अणु
-		पूर्णांक j;
+	for (i = 0; i < insn_cnt; i++) {
+		int j;
 
 		j = 0;
-		जबतक (i + j < insn_cnt && !aux_data[i + j].seen)
+		while (i + j < insn_cnt && !aux_data[i + j].seen)
 			j++;
-		अगर (!j)
-			जारी;
+		if (!j)
+			continue;
 
-		err = verअगरier_हटाओ_insns(env, i, j);
-		अगर (err)
-			वापस err;
+		err = verifier_remove_insns(env, i, j);
+		if (err)
+			return err;
 		insn_cnt = env->prog->len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opt_हटाओ_nops(काष्ठा bpf_verअगरier_env *env)
-अणु
-	स्थिर काष्ठा bpf_insn ja = BPF_JMP_IMM(BPF_JA, 0, 0, 0);
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	पूर्णांक insn_cnt = env->prog->len;
-	पूर्णांक i, err;
+static int opt_remove_nops(struct bpf_verifier_env *env)
+{
+	const struct bpf_insn ja = BPF_JMP_IMM(BPF_JA, 0, 0, 0);
+	struct bpf_insn *insn = env->prog->insnsi;
+	int insn_cnt = env->prog->len;
+	int i, err;
 
-	क्रम (i = 0; i < insn_cnt; i++) अणु
-		अगर (स_भेद(&insn[i], &ja, माप(ja)))
-			जारी;
+	for (i = 0; i < insn_cnt; i++) {
+		if (memcmp(&insn[i], &ja, sizeof(ja)))
+			continue;
 
-		err = verअगरier_हटाओ_insns(env, i, 1);
-		अगर (err)
-			वापस err;
+		err = verifier_remove_insns(env, i, 1);
+		if (err)
+			return err;
 		insn_cnt--;
 		i--;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक opt_subreg_zext_lo32_rnd_hi32(काष्ठा bpf_verअगरier_env *env,
-					 स्थिर जोड़ bpf_attr *attr)
-अणु
-	काष्ठा bpf_insn *patch, zext_patch[2], rnd_hi32_patch[4];
-	काष्ठा bpf_insn_aux_data *aux = env->insn_aux_data;
-	पूर्णांक i, patch_len, delta = 0, len = env->prog->len;
-	काष्ठा bpf_insn *insns = env->prog->insnsi;
-	काष्ठा bpf_prog *new_prog;
+static int opt_subreg_zext_lo32_rnd_hi32(struct bpf_verifier_env *env,
+					 const union bpf_attr *attr)
+{
+	struct bpf_insn *patch, zext_patch[2], rnd_hi32_patch[4];
+	struct bpf_insn_aux_data *aux = env->insn_aux_data;
+	int i, patch_len, delta = 0, len = env->prog->len;
+	struct bpf_insn *insns = env->prog->insnsi;
+	struct bpf_prog *new_prog;
 	bool rnd_hi32;
 
 	rnd_hi32 = attr->prog_flags & BPF_F_TEST_RND_HI32;
@@ -11765,67 +11764,67 @@ next_insn:
 	rnd_hi32_patch[1] = BPF_ALU64_IMM(BPF_MOV, BPF_REG_AX, 0);
 	rnd_hi32_patch[2] = BPF_ALU64_IMM(BPF_LSH, BPF_REG_AX, 32);
 	rnd_hi32_patch[3] = BPF_ALU64_REG(BPF_OR, 0, BPF_REG_AX);
-	क्रम (i = 0; i < len; i++) अणु
-		पूर्णांक adj_idx = i + delta;
-		काष्ठा bpf_insn insn;
-		पूर्णांक load_reg;
+	for (i = 0; i < len; i++) {
+		int adj_idx = i + delta;
+		struct bpf_insn insn;
+		int load_reg;
 
 		insn = insns[adj_idx];
 		load_reg = insn_def_regno(&insn);
-		अगर (!aux[adj_idx].zext_dst) अणु
+		if (!aux[adj_idx].zext_dst) {
 			u8 code, class;
 			u32 imm_rnd;
 
-			अगर (!rnd_hi32)
-				जारी;
+			if (!rnd_hi32)
+				continue;
 
 			code = insn.code;
 			class = BPF_CLASS(code);
-			अगर (load_reg == -1)
-				जारी;
+			if (load_reg == -1)
+				continue;
 
-			/* NOTE: arg "reg" (the fourth one) is only used क्रम
-			 *       BPF_STX + SRC_OP, so it is safe to pass शून्य
+			/* NOTE: arg "reg" (the fourth one) is only used for
+			 *       BPF_STX + SRC_OP, so it is safe to pass NULL
 			 *       here.
 			 */
-			अगर (is_reg64(env, &insn, load_reg, शून्य, DST_OP)) अणु
-				अगर (class == BPF_LD &&
+			if (is_reg64(env, &insn, load_reg, NULL, DST_OP)) {
+				if (class == BPF_LD &&
 				    BPF_MODE(code) == BPF_IMM)
 					i++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			/* ctx load could be transक्रमmed पूर्णांकo wider load. */
-			अगर (class == BPF_LDX &&
+			/* ctx load could be transformed into wider load. */
+			if (class == BPF_LDX &&
 			    aux[adj_idx].ptr_type == PTR_TO_CTX)
-				जारी;
+				continue;
 
-			imm_rnd = get_अक्रमom_पूर्णांक();
+			imm_rnd = get_random_int();
 			rnd_hi32_patch[0] = insn;
 			rnd_hi32_patch[1].imm = imm_rnd;
 			rnd_hi32_patch[3].dst_reg = load_reg;
 			patch = rnd_hi32_patch;
 			patch_len = 4;
-			जाओ apply_patch_buffer;
-		पूर्ण
+			goto apply_patch_buffer;
+		}
 
-		/* Add in an zero-extend inकाष्ठाion अगर a) the JIT has requested
+		/* Add in an zero-extend instruction if a) the JIT has requested
 		 * it or b) it's a CMPXCHG.
 		 *
-		 * The latter is because: BPF_CMPXCHG always loads a value पूर्णांकo
-		 * R0, thereक्रमe always zero-extends. However some archs'
-		 * equivalent inकाष्ठाion only करोes this load when the
+		 * The latter is because: BPF_CMPXCHG always loads a value into
+		 * R0, therefore always zero-extends. However some archs'
+		 * equivalent instruction only does this load when the
 		 * comparison is successful. This detail of CMPXCHG is
 		 * orthogonal to the general zero-extension behaviour of the
 		 * CPU, so it's treated independently of bpf_jit_needs_zext.
 		 */
-		अगर (!bpf_jit_needs_zext() && !is_cmpxchg_insn(&insn))
-			जारी;
+		if (!bpf_jit_needs_zext() && !is_cmpxchg_insn(&insn))
+			continue;
 
-		अगर (WARN_ON(load_reg == -1)) अणु
+		if (WARN_ON(load_reg == -1)) {
 			verbose(env, "verifier bug. zext_dst is set, but no reg is defined\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		zext_patch[0] = insn;
 		zext_patch[1].dst_reg = load_reg;
@@ -11834,305 +11833,305 @@ next_insn:
 		patch_len = 2;
 apply_patch_buffer:
 		new_prog = bpf_patch_insn_data(env, adj_idx, patch, patch_len);
-		अगर (!new_prog)
-			वापस -ENOMEM;
+		if (!new_prog)
+			return -ENOMEM;
 		env->prog = new_prog;
 		insns = new_prog->insnsi;
 		aux = env->insn_aux_data;
 		delta += patch_len - 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* convert load inकाष्ठाions that access fields of a context type पूर्णांकo a
- * sequence of inकाष्ठाions that access fields of the underlying काष्ठाure:
- *     काष्ठा __sk_buff    -> काष्ठा sk_buff
- *     काष्ठा bpf_sock_ops -> काष्ठा sock
+/* convert load instructions that access fields of a context type into a
+ * sequence of instructions that access fields of the underlying structure:
+ *     struct __sk_buff    -> struct sk_buff
+ *     struct bpf_sock_ops -> struct sock
  */
-अटल पूर्णांक convert_ctx_accesses(काष्ठा bpf_verअगरier_env *env)
-अणु
-	स्थिर काष्ठा bpf_verअगरier_ops *ops = env->ops;
-	पूर्णांक i, cnt, size, ctx_field_size, delta = 0;
-	स्थिर पूर्णांक insn_cnt = env->prog->len;
-	काष्ठा bpf_insn insn_buf[16], *insn;
-	u32 target_size, size_शेष, off;
-	काष्ठा bpf_prog *new_prog;
-	क्रमागत bpf_access_type type;
+static int convert_ctx_accesses(struct bpf_verifier_env *env)
+{
+	const struct bpf_verifier_ops *ops = env->ops;
+	int i, cnt, size, ctx_field_size, delta = 0;
+	const int insn_cnt = env->prog->len;
+	struct bpf_insn insn_buf[16], *insn;
+	u32 target_size, size_default, off;
+	struct bpf_prog *new_prog;
+	enum bpf_access_type type;
 	bool is_narrower_load;
 
-	अगर (ops->gen_prologue || env->seen_direct_ग_लिखो) अणु
-		अगर (!ops->gen_prologue) अणु
+	if (ops->gen_prologue || env->seen_direct_write) {
+		if (!ops->gen_prologue) {
 			verbose(env, "bpf verifier is misconfigured\n");
-			वापस -EINVAL;
-		पूर्ण
-		cnt = ops->gen_prologue(insn_buf, env->seen_direct_ग_लिखो,
+			return -EINVAL;
+		}
+		cnt = ops->gen_prologue(insn_buf, env->seen_direct_write,
 					env->prog);
-		अगर (cnt >= ARRAY_SIZE(insn_buf)) अणु
+		if (cnt >= ARRAY_SIZE(insn_buf)) {
 			verbose(env, "bpf verifier is misconfigured\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (cnt) अणु
+			return -EINVAL;
+		} else if (cnt) {
 			new_prog = bpf_patch_insn_data(env, 0, insn_buf, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			env->prog = new_prog;
 			delta += cnt - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bpf_prog_is_dev_bound(env->prog->aux))
-		वापस 0;
+	if (bpf_prog_is_dev_bound(env->prog->aux))
+		return 0;
 
 	insn = env->prog->insnsi + delta;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
+	for (i = 0; i < insn_cnt; i++, insn++) {
 		bpf_convert_ctx_access_t convert_ctx_access;
 
-		अगर (insn->code == (BPF_LDX | BPF_MEM | BPF_B) ||
+		if (insn->code == (BPF_LDX | BPF_MEM | BPF_B) ||
 		    insn->code == (BPF_LDX | BPF_MEM | BPF_H) ||
 		    insn->code == (BPF_LDX | BPF_MEM | BPF_W) ||
 		    insn->code == (BPF_LDX | BPF_MEM | BPF_DW))
 			type = BPF_READ;
-		अन्यथा अगर (insn->code == (BPF_STX | BPF_MEM | BPF_B) ||
+		else if (insn->code == (BPF_STX | BPF_MEM | BPF_B) ||
 			 insn->code == (BPF_STX | BPF_MEM | BPF_H) ||
 			 insn->code == (BPF_STX | BPF_MEM | BPF_W) ||
 			 insn->code == (BPF_STX | BPF_MEM | BPF_DW))
 			type = BPF_WRITE;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
-		अगर (type == BPF_WRITE &&
-		    env->insn_aux_data[i + delta].sanitize_stack_off) अणु
-			काष्ठा bpf_insn patch[] = अणु
+		if (type == BPF_WRITE &&
+		    env->insn_aux_data[i + delta].sanitize_stack_off) {
+			struct bpf_insn patch[] = {
 				/* Sanitize suspicious stack slot with zero.
-				 * There are no memory dependencies क्रम this store,
-				 * since it's only using frame poपूर्णांकer and immediate
-				 * स्थिरant of zero
+				 * There are no memory dependencies for this store,
+				 * since it's only using frame pointer and immediate
+				 * constant of zero
 				 */
 				BPF_ST_MEM(BPF_DW, BPF_REG_FP,
 					   env->insn_aux_data[i + delta].sanitize_stack_off,
 					   0),
-				/* the original STX inकाष्ठाion will immediately
-				 * overग_लिखो the same stack slot with appropriate value
+				/* the original STX instruction will immediately
+				 * overwrite the same stack slot with appropriate value
 				 */
 				*insn,
-			पूर्ण;
+			};
 
 			cnt = ARRAY_SIZE(patch);
 			new_prog = bpf_patch_insn_data(env, i + delta, patch, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (env->insn_aux_data[i + delta].ptr_type) अणु
-		हाल PTR_TO_CTX:
-			अगर (!ops->convert_ctx_access)
-				जारी;
+		switch (env->insn_aux_data[i + delta].ptr_type) {
+		case PTR_TO_CTX:
+			if (!ops->convert_ctx_access)
+				continue;
 			convert_ctx_access = ops->convert_ctx_access;
-			अवरोध;
-		हाल PTR_TO_SOCKET:
-		हाल PTR_TO_SOCK_COMMON:
+			break;
+		case PTR_TO_SOCKET:
+		case PTR_TO_SOCK_COMMON:
 			convert_ctx_access = bpf_sock_convert_ctx_access;
-			अवरोध;
-		हाल PTR_TO_TCP_SOCK:
+			break;
+		case PTR_TO_TCP_SOCK:
 			convert_ctx_access = bpf_tcp_sock_convert_ctx_access;
-			अवरोध;
-		हाल PTR_TO_XDP_SOCK:
+			break;
+		case PTR_TO_XDP_SOCK:
 			convert_ctx_access = bpf_xdp_sock_convert_ctx_access;
-			अवरोध;
-		हाल PTR_TO_BTF_ID:
-			अगर (type == BPF_READ) अणु
+			break;
+		case PTR_TO_BTF_ID:
+			if (type == BPF_READ) {
 				insn->code = BPF_LDX | BPF_PROBE_MEM |
 					BPF_SIZE((insn)->code);
 				env->prog->aux->num_exentries++;
-			पूर्ण अन्यथा अगर (resolve_prog_type(env->prog) != BPF_PROG_TYPE_STRUCT_OPS) अणु
+			} else if (resolve_prog_type(env->prog) != BPF_PROG_TYPE_STRUCT_OPS) {
 				verbose(env, "Writes through BTF pointers are not allowed\n");
-				वापस -EINVAL;
-			पूर्ण
-			जारी;
-		शेष:
-			जारी;
-		पूर्ण
+				return -EINVAL;
+			}
+			continue;
+		default:
+			continue;
+		}
 
 		ctx_field_size = env->insn_aux_data[i + delta].ctx_field_size;
 		size = BPF_LDST_BYTES(insn);
 
-		/* If the पढ़ो access is a narrower load of the field,
-		 * convert to a 4/8-byte load, to minimum program type specअगरic
+		/* If the read access is a narrower load of the field,
+		 * convert to a 4/8-byte load, to minimum program type specific
 		 * convert_ctx_access changes. If conversion is successful,
 		 * we will apply proper mask to the result.
 		 */
 		is_narrower_load = size < ctx_field_size;
-		size_शेष = bpf_ctx_off_adjust_machine(ctx_field_size);
+		size_default = bpf_ctx_off_adjust_machine(ctx_field_size);
 		off = insn->off;
-		अगर (is_narrower_load) अणु
+		if (is_narrower_load) {
 			u8 size_code;
 
-			अगर (type == BPF_WRITE) अणु
+			if (type == BPF_WRITE) {
 				verbose(env, "bpf verifier narrow ctx access misconfigured\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			size_code = BPF_H;
-			अगर (ctx_field_size == 4)
+			if (ctx_field_size == 4)
 				size_code = BPF_W;
-			अन्यथा अगर (ctx_field_size == 8)
+			else if (ctx_field_size == 8)
 				size_code = BPF_DW;
 
-			insn->off = off & ~(size_शेष - 1);
+			insn->off = off & ~(size_default - 1);
 			insn->code = BPF_LDX | BPF_MEM | size_code;
-		पूर्ण
+		}
 
 		target_size = 0;
 		cnt = convert_ctx_access(type, insn, insn_buf, env->prog,
 					 &target_size);
-		अगर (cnt == 0 || cnt >= ARRAY_SIZE(insn_buf) ||
-		    (ctx_field_size && !target_size)) अणु
+		if (cnt == 0 || cnt >= ARRAY_SIZE(insn_buf) ||
+		    (ctx_field_size && !target_size)) {
 			verbose(env, "bpf verifier is misconfigured\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (is_narrower_load && size < target_size) अणु
-			u8 shअगरt = bpf_ctx_narrow_access_offset(
-				off, size, size_शेष) * 8;
-			अगर (ctx_field_size <= 4) अणु
-				अगर (shअगरt)
+		if (is_narrower_load && size < target_size) {
+			u8 shift = bpf_ctx_narrow_access_offset(
+				off, size, size_default) * 8;
+			if (ctx_field_size <= 4) {
+				if (shift)
 					insn_buf[cnt++] = BPF_ALU32_IMM(BPF_RSH,
 									insn->dst_reg,
-									shअगरt);
+									shift);
 				insn_buf[cnt++] = BPF_ALU32_IMM(BPF_AND, insn->dst_reg,
 								(1 << size * 8) - 1);
-			पूर्ण अन्यथा अणु
-				अगर (shअगरt)
+			} else {
+				if (shift)
 					insn_buf[cnt++] = BPF_ALU64_IMM(BPF_RSH,
 									insn->dst_reg,
-									shअगरt);
+									shift);
 				insn_buf[cnt++] = BPF_ALU64_IMM(BPF_AND, insn->dst_reg,
 								(1ULL << size * 8) - 1);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		new_prog = bpf_patch_insn_data(env, i + delta, insn_buf, cnt);
-		अगर (!new_prog)
-			वापस -ENOMEM;
+		if (!new_prog)
+			return -ENOMEM;
 
 		delta += cnt - 1;
 
 		/* keep walking new program and skip insns we just inserted */
 		env->prog = new_prog;
 		insn      = new_prog->insnsi + i + delta;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jit_subprogs(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_prog *prog = env->prog, **func, *पंचांगp;
-	पूर्णांक i, j, subprog_start, subprog_end = 0, len, subprog;
-	काष्ठा bpf_map *map_ptr;
-	काष्ठा bpf_insn *insn;
-	व्योम *old_bpf_func;
-	पूर्णांक err, num_exentries;
+static int jit_subprogs(struct bpf_verifier_env *env)
+{
+	struct bpf_prog *prog = env->prog, **func, *tmp;
+	int i, j, subprog_start, subprog_end = 0, len, subprog;
+	struct bpf_map *map_ptr;
+	struct bpf_insn *insn;
+	void *old_bpf_func;
+	int err, num_exentries;
 
-	अगर (env->subprog_cnt <= 1)
-		वापस 0;
+	if (env->subprog_cnt <= 1)
+		return 0;
 
-	क्रम (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) अणु
-		अगर (bpf_pseuकरो_func(insn)) अणु
+	for (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) {
+		if (bpf_pseudo_func(insn)) {
 			env->insn_aux_data[i].call_imm = insn->imm;
 			/* subprog is encoded in insn[1].imm */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!bpf_pseuकरो_call(insn))
-			जारी;
-		/* Upon error here we cannot fall back to पूर्णांकerpreter but
+		if (!bpf_pseudo_call(insn))
+			continue;
+		/* Upon error here we cannot fall back to interpreter but
 		 * need a hard reject of the program. Thus -EFAULT is
-		 * propagated in any हाल.
+		 * propagated in any case.
 		 */
 		subprog = find_subprog(env, i + insn->imm + 1);
-		अगर (subprog < 0) अणु
+		if (subprog < 0) {
 			WARN_ONCE(1, "verifier bug. No program starts at insn %d\n",
 				  i + insn->imm + 1);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		/* temporarily remember subprog id inside insn instead of
-		 * aux_data, since next loop will split up all insns पूर्णांकo funcs
+		 * aux_data, since next loop will split up all insns into funcs
 		 */
 		insn->off = subprog;
-		/* remember original imm in हाल JIT fails and fallback
-		 * to पूर्णांकerpreter will be needed
+		/* remember original imm in case JIT fails and fallback
+		 * to interpreter will be needed
 		 */
 		env->insn_aux_data[i].call_imm = insn->imm;
-		/* poपूर्णांक imm to __bpf_call_base+1 from JITs poपूर्णांक of view */
+		/* point imm to __bpf_call_base+1 from JITs point of view */
 		insn->imm = 1;
-	पूर्ण
+	}
 
 	err = bpf_prog_alloc_jited_linfo(prog);
-	अगर (err)
-		जाओ out_unकरो_insn;
+	if (err)
+		goto out_undo_insn;
 
 	err = -ENOMEM;
-	func = kसुस्मृति(env->subprog_cnt, माप(prog), GFP_KERNEL);
-	अगर (!func)
-		जाओ out_unकरो_insn;
+	func = kcalloc(env->subprog_cnt, sizeof(prog), GFP_KERNEL);
+	if (!func)
+		goto out_undo_insn;
 
-	क्रम (i = 0; i < env->subprog_cnt; i++) अणु
+	for (i = 0; i < env->subprog_cnt; i++) {
 		subprog_start = subprog_end;
 		subprog_end = env->subprog_info[i + 1].start;
 
 		len = subprog_end - subprog_start;
-		/* BPF_PROG_RUN करोesn't call subprogs directly,
-		 * hence मुख्य prog stats include the runसमय of subprogs.
-		 * subprogs करोn't have IDs and not reachable via prog_get_next_id
-		 * func[i]->stats will never be accessed and stays शून्य
+		/* BPF_PROG_RUN doesn't call subprogs directly,
+		 * hence main prog stats include the runtime of subprogs.
+		 * subprogs don't have IDs and not reachable via prog_get_next_id
+		 * func[i]->stats will never be accessed and stays NULL
 		 */
 		func[i] = bpf_prog_alloc_no_stats(bpf_prog_size(len), GFP_USER);
-		अगर (!func[i])
-			जाओ out_मुक्त;
-		स_नकल(func[i]->insnsi, &prog->insnsi[subprog_start],
-		       len * माप(काष्ठा bpf_insn));
+		if (!func[i])
+			goto out_free;
+		memcpy(func[i]->insnsi, &prog->insnsi[subprog_start],
+		       len * sizeof(struct bpf_insn));
 		func[i]->type = prog->type;
 		func[i]->len = len;
-		अगर (bpf_prog_calc_tag(func[i]))
-			जाओ out_मुक्त;
+		if (bpf_prog_calc_tag(func[i]))
+			goto out_free;
 		func[i]->is_func = 1;
 		func[i]->aux->func_idx = i;
-		/* the btf and func_info will be मुक्तd only at prog->aux */
+		/* the btf and func_info will be freed only at prog->aux */
 		func[i]->aux->btf = prog->aux->btf;
 		func[i]->aux->func_info = prog->aux->func_info;
 
-		क्रम (j = 0; j < prog->aux->size_poke_tab; j++) अणु
+		for (j = 0; j < prog->aux->size_poke_tab; j++) {
 			u32 insn_idx = prog->aux->poke_tab[j].insn_idx;
-			पूर्णांक ret;
+			int ret;
 
-			अगर (!(insn_idx >= subprog_start &&
+			if (!(insn_idx >= subprog_start &&
 			      insn_idx <= subprog_end))
-				जारी;
+				continue;
 
 			ret = bpf_jit_add_poke_descriptor(func[i],
 							  &prog->aux->poke_tab[j]);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				verbose(env, "adding tail call poke descriptor failed\n");
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 
 			func[i]->insnsi[insn_idx - subprog_start].imm = ret + 1;
 
 			map_ptr = func[i]->aux->poke_tab[ret].tail_call.map;
 			ret = map_ptr->ops->map_poke_track(map_ptr, func[i]->aux);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				verbose(env, "tracking tail call prog failed\n");
-				जाओ out_मुक्त;
-			पूर्ण
-		पूर्ण
+				goto out_free;
+			}
+		}
 
 		/* Use bpf_prog_F_tag to indicate functions in stack traces.
 		 * Long term would need debug info to populate names
@@ -12147,241 +12146,241 @@ apply_patch_buffer:
 		func[i]->aux->linfo_idx = env->subprog_info[i].linfo_idx;
 		num_exentries = 0;
 		insn = func[i]->insnsi;
-		क्रम (j = 0; j < func[i]->len; j++, insn++) अणु
-			अगर (BPF_CLASS(insn->code) == BPF_LDX &&
+		for (j = 0; j < func[i]->len; j++, insn++) {
+			if (BPF_CLASS(insn->code) == BPF_LDX &&
 			    BPF_MODE(insn->code) == BPF_PROBE_MEM)
 				num_exentries++;
-		पूर्ण
+		}
 		func[i]->aux->num_exentries = num_exentries;
 		func[i]->aux->tail_call_reachable = env->subprog_info[i].tail_call_reachable;
-		func[i] = bpf_पूर्णांक_jit_compile(func[i]);
-		अगर (!func[i]->jited) अणु
+		func[i] = bpf_int_jit_compile(func[i]);
+		if (!func[i]->jited) {
 			err = -ENOTSUPP;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	/* Untrack मुख्य program's aux काष्ठाs so that during map_poke_run()
+	/* Untrack main program's aux structs so that during map_poke_run()
 	 * we will not stumble upon the unfilled poke descriptors; each
-	 * of the मुख्य program's poke descs got distributed across subprogs
+	 * of the main program's poke descs got distributed across subprogs
 	 * and got tracked onto map, so we are sure that none of them will
 	 * be missed after the operation below
 	 */
-	क्रम (i = 0; i < prog->aux->size_poke_tab; i++) अणु
+	for (i = 0; i < prog->aux->size_poke_tab; i++) {
 		map_ptr = prog->aux->poke_tab[i].tail_call.map;
 
 		map_ptr->ops->map_poke_untrack(map_ptr, prog->aux);
-	पूर्ण
+	}
 
-	/* at this poपूर्णांक all bpf functions were successfully JITed
+	/* at this point all bpf functions were successfully JITed
 	 * now populate all bpf_calls with correct addresses and
 	 * run last pass of JIT
 	 */
-	क्रम (i = 0; i < env->subprog_cnt; i++) अणु
+	for (i = 0; i < env->subprog_cnt; i++) {
 		insn = func[i]->insnsi;
-		क्रम (j = 0; j < func[i]->len; j++, insn++) अणु
-			अगर (bpf_pseuकरो_func(insn)) अणु
+		for (j = 0; j < func[i]->len; j++, insn++) {
+			if (bpf_pseudo_func(insn)) {
 				subprog = insn[1].imm;
-				insn[0].imm = (u32)(दीर्घ)func[subprog]->bpf_func;
-				insn[1].imm = ((u64)(दीर्घ)func[subprog]->bpf_func) >> 32;
-				जारी;
-			पूर्ण
-			अगर (!bpf_pseuकरो_call(insn))
-				जारी;
+				insn[0].imm = (u32)(long)func[subprog]->bpf_func;
+				insn[1].imm = ((u64)(long)func[subprog]->bpf_func) >> 32;
+				continue;
+			}
+			if (!bpf_pseudo_call(insn))
+				continue;
 			subprog = insn->off;
 			insn->imm = BPF_CAST_CALL(func[subprog]->bpf_func) -
 				    __bpf_call_base;
-		पूर्ण
+		}
 
 		/* we use the aux data to keep a list of the start addresses
-		 * of the JITed images क्रम each function in the program
+		 * of the JITed images for each function in the program
 		 *
-		 * क्रम some architectures, such as घातerpc64, the imm field
+		 * for some architectures, such as powerpc64, the imm field
 		 * might not be large enough to hold the offset of the start
 		 * address of the callee's JITed image from __bpf_call_base
 		 *
-		 * in such हालs, we can lookup the start address of a callee
+		 * in such cases, we can lookup the start address of a callee
 		 * by using its subprog id, available from the off field of
-		 * the call inकाष्ठाion, as an index क्रम this list
+		 * the call instruction, as an index for this list
 		 */
 		func[i]->aux->func = func;
 		func[i]->aux->func_cnt = env->subprog_cnt;
-	पूर्ण
-	क्रम (i = 0; i < env->subprog_cnt; i++) अणु
+	}
+	for (i = 0; i < env->subprog_cnt; i++) {
 		old_bpf_func = func[i]->bpf_func;
-		पंचांगp = bpf_पूर्णांक_jit_compile(func[i]);
-		अगर (पंचांगp != func[i] || func[i]->bpf_func != old_bpf_func) अणु
+		tmp = bpf_int_jit_compile(func[i]);
+		if (tmp != func[i] || func[i]->bpf_func != old_bpf_func) {
 			verbose(env, "JIT doesn't support bpf-to-bpf calls\n");
 			err = -ENOTSUPP;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	/* finally lock prog and jit images क्रम all functions and
+	/* finally lock prog and jit images for all functions and
 	 * populate kallsysm
 	 */
-	क्रम (i = 0; i < env->subprog_cnt; i++) अणु
+	for (i = 0; i < env->subprog_cnt; i++) {
 		bpf_prog_lock_ro(func[i]);
 		bpf_prog_kallsyms_add(func[i]);
-	पूर्ण
+	}
 
-	/* Last step: make now unused पूर्णांकerpreter insns from मुख्य
-	 * prog consistent क्रम later dump requests, so they can
-	 * later look the same as अगर they were पूर्णांकerpreted only.
+	/* Last step: make now unused interpreter insns from main
+	 * prog consistent for later dump requests, so they can
+	 * later look the same as if they were interpreted only.
 	 */
-	क्रम (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) अणु
-		अगर (bpf_pseuकरो_func(insn)) अणु
+	for (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) {
+		if (bpf_pseudo_func(insn)) {
 			insn[0].imm = env->insn_aux_data[i].call_imm;
 			insn[1].imm = find_subprog(env, i + insn[0].imm + 1);
-			जारी;
-		पूर्ण
-		अगर (!bpf_pseuकरो_call(insn))
-			जारी;
+			continue;
+		}
+		if (!bpf_pseudo_call(insn))
+			continue;
 		insn->off = env->insn_aux_data[i].call_imm;
 		subprog = find_subprog(env, i + insn->off + 1);
 		insn->imm = subprog;
-	पूर्ण
+	}
 
 	prog->jited = 1;
 	prog->bpf_func = func[0]->bpf_func;
 	prog->aux->func = func;
 	prog->aux->func_cnt = env->subprog_cnt;
-	bpf_prog_jit_attempt_करोne(prog);
-	वापस 0;
-out_मुक्त:
-	क्रम (i = 0; i < env->subprog_cnt; i++) अणु
-		अगर (!func[i])
-			जारी;
+	bpf_prog_jit_attempt_done(prog);
+	return 0;
+out_free:
+	for (i = 0; i < env->subprog_cnt; i++) {
+		if (!func[i])
+			continue;
 
-		क्रम (j = 0; j < func[i]->aux->size_poke_tab; j++) अणु
+		for (j = 0; j < func[i]->aux->size_poke_tab; j++) {
 			map_ptr = func[i]->aux->poke_tab[j].tail_call.map;
 			map_ptr->ops->map_poke_untrack(map_ptr, func[i]->aux);
-		पूर्ण
-		bpf_jit_मुक्त(func[i]);
-	पूर्ण
-	kमुक्त(func);
-out_unकरो_insn:
-	/* cleanup मुख्य prog to be पूर्णांकerpreted */
+		}
+		bpf_jit_free(func[i]);
+	}
+	kfree(func);
+out_undo_insn:
+	/* cleanup main prog to be interpreted */
 	prog->jit_requested = 0;
-	क्रम (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) अणु
-		अगर (!bpf_pseuकरो_call(insn))
-			जारी;
+	for (i = 0, insn = prog->insnsi; i < prog->len; i++, insn++) {
+		if (!bpf_pseudo_call(insn))
+			continue;
 		insn->off = 0;
 		insn->imm = env->insn_aux_data[i].call_imm;
-	पूर्ण
-	bpf_prog_jit_attempt_करोne(prog);
-	वापस err;
-पूर्ण
+	}
+	bpf_prog_jit_attempt_done(prog);
+	return err;
+}
 
-अटल पूर्णांक fixup_call_args(काष्ठा bpf_verअगरier_env *env)
-अणु
-#अगर_अघोषित CONFIG_BPF_JIT_ALWAYS_ON
-	काष्ठा bpf_prog *prog = env->prog;
-	काष्ठा bpf_insn *insn = prog->insnsi;
+static int fixup_call_args(struct bpf_verifier_env *env)
+{
+#ifndef CONFIG_BPF_JIT_ALWAYS_ON
+	struct bpf_prog *prog = env->prog;
+	struct bpf_insn *insn = prog->insnsi;
 	bool has_kfunc_call = bpf_prog_has_kfunc_call(prog);
-	पूर्णांक i, depth;
-#पूर्ण_अगर
-	पूर्णांक err = 0;
+	int i, depth;
+#endif
+	int err = 0;
 
-	अगर (env->prog->jit_requested &&
-	    !bpf_prog_is_dev_bound(env->prog->aux)) अणु
+	if (env->prog->jit_requested &&
+	    !bpf_prog_is_dev_bound(env->prog->aux)) {
 		err = jit_subprogs(env);
-		अगर (err == 0)
-			वापस 0;
-		अगर (err == -EFAULT)
-			वापस err;
-	पूर्ण
-#अगर_अघोषित CONFIG_BPF_JIT_ALWAYS_ON
-	अगर (has_kfunc_call) अणु
+		if (err == 0)
+			return 0;
+		if (err == -EFAULT)
+			return err;
+	}
+#ifndef CONFIG_BPF_JIT_ALWAYS_ON
+	if (has_kfunc_call) {
 		verbose(env, "calling kernel functions are not allowed in non-JITed programs\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (env->subprog_cnt > 1 && env->prog->aux->tail_call_reachable) अणु
+		return -EINVAL;
+	}
+	if (env->subprog_cnt > 1 && env->prog->aux->tail_call_reachable) {
 		/* When JIT fails the progs with bpf2bpf calls and tail_calls
-		 * have to be rejected, since पूर्णांकerpreter करोesn't support them yet.
+		 * have to be rejected, since interpreter doesn't support them yet.
 		 */
 		verbose(env, "tail_calls are not allowed in non-JITed programs with bpf-to-bpf calls\n");
-		वापस -EINVAL;
-	पूर्ण
-	क्रम (i = 0; i < prog->len; i++, insn++) अणु
-		अगर (bpf_pseuकरो_func(insn)) अणु
+		return -EINVAL;
+	}
+	for (i = 0; i < prog->len; i++, insn++) {
+		if (bpf_pseudo_func(insn)) {
 			/* When JIT fails the progs with callback calls
-			 * have to be rejected, since पूर्णांकerpreter करोesn't support them yet.
+			 * have to be rejected, since interpreter doesn't support them yet.
 			 */
 			verbose(env, "callbacks are not allowed in non-JITed programs\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (!bpf_pseuकरो_call(insn))
-			जारी;
+		if (!bpf_pseudo_call(insn))
+			continue;
 		depth = get_callee_stack_depth(env, insn, i);
-		अगर (depth < 0)
-			वापस depth;
+		if (depth < 0)
+			return depth;
 		bpf_patch_call_args(insn, depth);
-	पूर्ण
+	}
 	err = 0;
-#पूर्ण_अगर
-	वापस err;
-पूर्ण
+#endif
+	return err;
+}
 
-अटल पूर्णांक fixup_kfunc_call(काष्ठा bpf_verअगरier_env *env,
-			    काष्ठा bpf_insn *insn)
-अणु
-	स्थिर काष्ठा bpf_kfunc_desc *desc;
+static int fixup_kfunc_call(struct bpf_verifier_env *env,
+			    struct bpf_insn *insn)
+{
+	const struct bpf_kfunc_desc *desc;
 
 	/* insn->imm has the btf func_id. Replace it with
 	 * an address (relative to __bpf_base_call).
 	 */
 	desc = find_kfunc_desc(env->prog, insn->imm);
-	अगर (!desc) अणु
+	if (!desc) {
 		verbose(env, "verifier internal error: kernel function descriptor not found for func_id %u\n",
 			insn->imm);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	insn->imm = desc->imm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Do various post-verअगरication reग_लिखोs in a single program pass.
- * These reग_लिखोs simplअगरy JIT and पूर्णांकerpreter implementations.
+/* Do various post-verification rewrites in a single program pass.
+ * These rewrites simplify JIT and interpreter implementations.
  */
-अटल पूर्णांक करो_misc_fixups(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_prog *prog = env->prog;
+static int do_misc_fixups(struct bpf_verifier_env *env)
+{
+	struct bpf_prog *prog = env->prog;
 	bool expect_blinding = bpf_jit_blinding_enabled(prog);
-	काष्ठा bpf_insn *insn = prog->insnsi;
-	स्थिर काष्ठा bpf_func_proto *fn;
-	स्थिर पूर्णांक insn_cnt = prog->len;
-	स्थिर काष्ठा bpf_map_ops *ops;
-	काष्ठा bpf_insn_aux_data *aux;
-	काष्ठा bpf_insn insn_buf[16];
-	काष्ठा bpf_prog *new_prog;
-	काष्ठा bpf_map *map_ptr;
-	पूर्णांक i, ret, cnt, delta = 0;
+	struct bpf_insn *insn = prog->insnsi;
+	const struct bpf_func_proto *fn;
+	const int insn_cnt = prog->len;
+	const struct bpf_map_ops *ops;
+	struct bpf_insn_aux_data *aux;
+	struct bpf_insn insn_buf[16];
+	struct bpf_prog *new_prog;
+	struct bpf_map *map_ptr;
+	int i, ret, cnt, delta = 0;
 
-	क्रम (i = 0; i < insn_cnt; i++, insn++) अणु
-		/* Make भागide-by-zero exceptions impossible. */
-		अगर (insn->code == (BPF_ALU64 | BPF_MOD | BPF_X) ||
+	for (i = 0; i < insn_cnt; i++, insn++) {
+		/* Make divide-by-zero exceptions impossible. */
+		if (insn->code == (BPF_ALU64 | BPF_MOD | BPF_X) ||
 		    insn->code == (BPF_ALU64 | BPF_DIV | BPF_X) ||
 		    insn->code == (BPF_ALU | BPF_MOD | BPF_X) ||
-		    insn->code == (BPF_ALU | BPF_DIV | BPF_X)) अणु
+		    insn->code == (BPF_ALU | BPF_DIV | BPF_X)) {
 			bool is64 = BPF_CLASS(insn->code) == BPF_ALU64;
-			bool isभाग = BPF_OP(insn->code) == BPF_DIV;
-			काष्ठा bpf_insn *patchlet;
-			काष्ठा bpf_insn chk_and_भाग[] = अणु
-				/* [R,W]x भाग 0 -> 0 */
+			bool isdiv = BPF_OP(insn->code) == BPF_DIV;
+			struct bpf_insn *patchlet;
+			struct bpf_insn chk_and_div[] = {
+				/* [R,W]x div 0 -> 0 */
 				BPF_RAW_INSN((is64 ? BPF_JMP : BPF_JMP32) |
 					     BPF_JNE | BPF_K, insn->src_reg,
 					     0, 2, 0),
 				BPF_ALU32_REG(BPF_XOR, insn->dst_reg, insn->dst_reg),
 				BPF_JMP_IMM(BPF_JA, 0, 0, 1),
 				*insn,
-			पूर्ण;
-			काष्ठा bpf_insn chk_and_mod[] = अणु
+			};
+			struct bpf_insn chk_and_mod[] = {
 				/* [R,W]x mod 0 -> [R,W]x */
 				BPF_RAW_INSN((is64 ? BPF_JMP : BPF_JMP32) |
 					     BPF_JEQ | BPF_K, insn->src_reg,
@@ -12389,55 +12388,55 @@ out_unकरो_insn:
 				*insn,
 				BPF_JMP_IMM(BPF_JA, 0, 0, 1),
 				BPF_MOV32_REG(insn->dst_reg, insn->dst_reg),
-			पूर्ण;
+			};
 
-			patchlet = isभाग ? chk_and_भाग : chk_and_mod;
-			cnt = isभाग ? ARRAY_SIZE(chk_and_भाग) :
+			patchlet = isdiv ? chk_and_div : chk_and_mod;
+			cnt = isdiv ? ARRAY_SIZE(chk_and_div) :
 				      ARRAY_SIZE(chk_and_mod) - (is64 ? 2 : 0);
 
 			new_prog = bpf_patch_insn_data(env, i + delta, patchlet, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Implement LD_ABS and LD_IND with a reग_लिखो, अगर supported by the program type. */
-		अगर (BPF_CLASS(insn->code) == BPF_LD &&
+		/* Implement LD_ABS and LD_IND with a rewrite, if supported by the program type. */
+		if (BPF_CLASS(insn->code) == BPF_LD &&
 		    (BPF_MODE(insn->code) == BPF_ABS ||
-		     BPF_MODE(insn->code) == BPF_IND)) अणु
-			cnt = env->ops->gen_ld_असल(insn, insn_buf);
-			अगर (cnt == 0 || cnt >= ARRAY_SIZE(insn_buf)) अणु
+		     BPF_MODE(insn->code) == BPF_IND)) {
+			cnt = env->ops->gen_ld_abs(insn, insn_buf);
+			if (cnt == 0 || cnt >= ARRAY_SIZE(insn_buf)) {
 				verbose(env, "bpf verifier is misconfigured\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			new_prog = bpf_patch_insn_data(env, i + delta, insn_buf, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Reग_लिखो poपूर्णांकer arithmetic to mitigate speculation attacks. */
-		अगर (insn->code == (BPF_ALU64 | BPF_ADD | BPF_X) ||
-		    insn->code == (BPF_ALU64 | BPF_SUB | BPF_X)) अणु
-			स्थिर u8 code_add = BPF_ALU64 | BPF_ADD | BPF_X;
-			स्थिर u8 code_sub = BPF_ALU64 | BPF_SUB | BPF_X;
-			काष्ठा bpf_insn *patch = &insn_buf[0];
+		/* Rewrite pointer arithmetic to mitigate speculation attacks. */
+		if (insn->code == (BPF_ALU64 | BPF_ADD | BPF_X) ||
+		    insn->code == (BPF_ALU64 | BPF_SUB | BPF_X)) {
+			const u8 code_add = BPF_ALU64 | BPF_ADD | BPF_X;
+			const u8 code_sub = BPF_ALU64 | BPF_SUB | BPF_X;
+			struct bpf_insn *patch = &insn_buf[0];
 			bool issrc, isneg, isimm;
 			u32 off_reg;
 
 			aux = &env->insn_aux_data[i + delta];
-			अगर (!aux->alu_state ||
+			if (!aux->alu_state ||
 			    aux->alu_state == BPF_ALU_NON_POINTER)
-				जारी;
+				continue;
 
 			isneg = aux->alu_state & BPF_ALU_NEG_VALUE;
 			issrc = (aux->alu_state & BPF_ALU_SANITIZE) ==
@@ -12445,10 +12444,10 @@ out_unकरो_insn:
 			isimm = aux->alu_state & BPF_ALU_IMMEDIATE;
 
 			off_reg = issrc ? insn->src_reg : insn->dst_reg;
-			अगर (isimm) अणु
+			if (isimm) {
 				*patch++ = BPF_MOV32_IMM(BPF_REG_AX, aux->alu_limit);
-			पूर्ण अन्यथा अणु
-				अगर (isneg)
+			} else {
+				if (isneg)
 					*patch++ = BPF_ALU64_IMM(BPF_MUL, off_reg, -1);
 				*patch++ = BPF_MOV32_IMM(BPF_REG_AX, aux->alu_limit);
 				*patch++ = BPF_ALU64_REG(BPF_SUB, BPF_REG_AX, off_reg);
@@ -12456,354 +12455,354 @@ out_unकरो_insn:
 				*patch++ = BPF_ALU64_IMM(BPF_NEG, BPF_REG_AX, 0);
 				*patch++ = BPF_ALU64_IMM(BPF_ARSH, BPF_REG_AX, 63);
 				*patch++ = BPF_ALU64_REG(BPF_AND, BPF_REG_AX, off_reg);
-			पूर्ण
-			अगर (!issrc)
+			}
+			if (!issrc)
 				*patch++ = BPF_MOV64_REG(insn->dst_reg, insn->src_reg);
 			insn->src_reg = BPF_REG_AX;
-			अगर (isneg)
+			if (isneg)
 				insn->code = insn->code == code_add ?
 					     code_sub : code_add;
 			*patch++ = *insn;
-			अगर (issrc && isneg && !isimm)
+			if (issrc && isneg && !isimm)
 				*patch++ = BPF_ALU64_IMM(BPF_MUL, off_reg, -1);
 			cnt = patch - insn_buf;
 
 			new_prog = bpf_patch_insn_data(env, i + delta, insn_buf, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (insn->code != (BPF_JMP | BPF_CALL))
-			जारी;
-		अगर (insn->src_reg == BPF_PSEUDO_CALL)
-			जारी;
-		अगर (insn->src_reg == BPF_PSEUDO_KFUNC_CALL) अणु
+		if (insn->code != (BPF_JMP | BPF_CALL))
+			continue;
+		if (insn->src_reg == BPF_PSEUDO_CALL)
+			continue;
+		if (insn->src_reg == BPF_PSEUDO_KFUNC_CALL) {
 			ret = fixup_kfunc_call(env, insn);
-			अगर (ret)
-				वापस ret;
-			जारी;
-		पूर्ण
+			if (ret)
+				return ret;
+			continue;
+		}
 
-		अगर (insn->imm == BPF_FUNC_get_route_realm)
+		if (insn->imm == BPF_FUNC_get_route_realm)
 			prog->dst_needed = 1;
-		अगर (insn->imm == BPF_FUNC_get_pअक्रमom_u32)
+		if (insn->imm == BPF_FUNC_get_prandom_u32)
 			bpf_user_rnd_init_once();
-		अगर (insn->imm == BPF_FUNC_override_वापस)
+		if (insn->imm == BPF_FUNC_override_return)
 			prog->kprobe_override = 1;
-		अगर (insn->imm == BPF_FUNC_tail_call) अणु
-			/* If we tail call पूर्णांकo other programs, we
+		if (insn->imm == BPF_FUNC_tail_call) {
+			/* If we tail call into other programs, we
 			 * cannot make any assumptions since they can
-			 * be replaced dynamically during runसमय in
+			 * be replaced dynamically during runtime in
 			 * the program array.
 			 */
 			prog->cb_access = 1;
-			अगर (!allow_tail_call_in_subprogs(env))
+			if (!allow_tail_call_in_subprogs(env))
 				prog->aux->stack_depth = MAX_BPF_STACK;
 			prog->aux->max_pkt_offset = MAX_PACKET_OFF;
 
-			/* mark bpf_tail_call as dअगरferent opcode to aव्योम
-			 * conditional branch in the पूर्णांकerpeter क्रम every normal
+			/* mark bpf_tail_call as different opcode to avoid
+			 * conditional branch in the interpeter for every normal
 			 * call and to prevent accidental JITing by JIT compiler
-			 * that करोesn't support bpf_tail_call yet
+			 * that doesn't support bpf_tail_call yet
 			 */
 			insn->imm = 0;
 			insn->code = BPF_JMP | BPF_TAIL_CALL;
 
 			aux = &env->insn_aux_data[i + delta];
-			अगर (env->bpf_capable && !expect_blinding &&
+			if (env->bpf_capable && !expect_blinding &&
 			    prog->jit_requested &&
 			    !bpf_map_key_poisoned(aux) &&
 			    !bpf_map_ptr_poisoned(aux) &&
-			    !bpf_map_ptr_unpriv(aux)) अणु
-				काष्ठा bpf_jit_poke_descriptor desc = अणु
+			    !bpf_map_ptr_unpriv(aux)) {
+				struct bpf_jit_poke_descriptor desc = {
 					.reason = BPF_POKE_REASON_TAIL_CALL,
 					.tail_call.map = BPF_MAP_PTR(aux->map_ptr_state),
 					.tail_call.key = bpf_map_key_immediate(aux),
 					.insn_idx = i + delta,
-				पूर्ण;
+				};
 
 				ret = bpf_jit_add_poke_descriptor(prog, &desc);
-				अगर (ret < 0) अणु
+				if (ret < 0) {
 					verbose(env, "adding tail call poke descriptor failed\n");
-					वापस ret;
-				पूर्ण
+					return ret;
+				}
 
 				insn->imm = ret + 1;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (!bpf_map_ptr_unpriv(aux))
-				जारी;
+			if (!bpf_map_ptr_unpriv(aux))
+				continue;
 
 			/* instead of changing every JIT dealing with tail_call
 			 * emit two extra insns:
-			 * अगर (index >= max_entries) जाओ out;
+			 * if (index >= max_entries) goto out;
 			 * index &= array->index_mask;
-			 * to aव्योम out-of-bounds cpu speculation
+			 * to avoid out-of-bounds cpu speculation
 			 */
-			अगर (bpf_map_ptr_poisoned(aux)) अणु
+			if (bpf_map_ptr_poisoned(aux)) {
 				verbose(env, "tail_call abusing map_ptr\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			map_ptr = BPF_MAP_PTR(aux->map_ptr_state);
 			insn_buf[0] = BPF_JMP_IMM(BPF_JGE, BPF_REG_3,
 						  map_ptr->max_entries, 2);
 			insn_buf[1] = BPF_ALU32_IMM(BPF_AND, BPF_REG_3,
 						    container_of(map_ptr,
-								 काष्ठा bpf_array,
+								 struct bpf_array,
 								 map)->index_mask);
 			insn_buf[2] = *insn;
 			cnt = 3;
 			new_prog = bpf_patch_insn_data(env, i + delta, insn_buf, cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* BPF_EMIT_CALL() assumptions in some of the map_gen_lookup
 		 * and other inlining handlers are currently limited to 64 bit
 		 * only.
 		 */
-		अगर (prog->jit_requested && BITS_PER_LONG == 64 &&
+		if (prog->jit_requested && BITS_PER_LONG == 64 &&
 		    (insn->imm == BPF_FUNC_map_lookup_elem ||
 		     insn->imm == BPF_FUNC_map_update_elem ||
 		     insn->imm == BPF_FUNC_map_delete_elem ||
 		     insn->imm == BPF_FUNC_map_push_elem   ||
 		     insn->imm == BPF_FUNC_map_pop_elem    ||
 		     insn->imm == BPF_FUNC_map_peek_elem   ||
-		     insn->imm == BPF_FUNC_redirect_map)) अणु
+		     insn->imm == BPF_FUNC_redirect_map)) {
 			aux = &env->insn_aux_data[i + delta];
-			अगर (bpf_map_ptr_poisoned(aux))
-				जाओ patch_call_imm;
+			if (bpf_map_ptr_poisoned(aux))
+				goto patch_call_imm;
 
 			map_ptr = BPF_MAP_PTR(aux->map_ptr_state);
 			ops = map_ptr->ops;
-			अगर (insn->imm == BPF_FUNC_map_lookup_elem &&
-			    ops->map_gen_lookup) अणु
+			if (insn->imm == BPF_FUNC_map_lookup_elem &&
+			    ops->map_gen_lookup) {
 				cnt = ops->map_gen_lookup(map_ptr, insn_buf);
-				अगर (cnt == -EOPNOTSUPP)
-					जाओ patch_map_ops_generic;
-				अगर (cnt <= 0 || cnt >= ARRAY_SIZE(insn_buf)) अणु
+				if (cnt == -EOPNOTSUPP)
+					goto patch_map_ops_generic;
+				if (cnt <= 0 || cnt >= ARRAY_SIZE(insn_buf)) {
 					verbose(env, "bpf verifier is misconfigured\n");
-					वापस -EINVAL;
-				पूर्ण
+					return -EINVAL;
+				}
 
 				new_prog = bpf_patch_insn_data(env, i + delta,
 							       insn_buf, cnt);
-				अगर (!new_prog)
-					वापस -ENOMEM;
+				if (!new_prog)
+					return -ENOMEM;
 
 				delta    += cnt - 1;
 				env->prog = prog = new_prog;
 				insn      = new_prog->insnsi + i + delta;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			BUILD_BUG_ON(!__same_type(ops->map_lookup_elem,
-				     (व्योम *(*)(काष्ठा bpf_map *map, व्योम *key))शून्य));
+				     (void *(*)(struct bpf_map *map, void *key))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_delete_elem,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, व्योम *key))शून्य));
+				     (int (*)(struct bpf_map *map, void *key))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_update_elem,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
-					      u64 flags))शून्य));
+				     (int (*)(struct bpf_map *map, void *key, void *value,
+					      u64 flags))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_push_elem,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, व्योम *value,
-					      u64 flags))शून्य));
+				     (int (*)(struct bpf_map *map, void *value,
+					      u64 flags))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_pop_elem,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, व्योम *value))शून्य));
+				     (int (*)(struct bpf_map *map, void *value))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_peek_elem,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, व्योम *value))शून्य));
+				     (int (*)(struct bpf_map *map, void *value))NULL));
 			BUILD_BUG_ON(!__same_type(ops->map_redirect,
-				     (पूर्णांक (*)(काष्ठा bpf_map *map, u32 अगरindex, u64 flags))शून्य));
+				     (int (*)(struct bpf_map *map, u32 ifindex, u64 flags))NULL));
 
 patch_map_ops_generic:
-			चयन (insn->imm) अणु
-			हाल BPF_FUNC_map_lookup_elem:
+			switch (insn->imm) {
+			case BPF_FUNC_map_lookup_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_lookup_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_map_update_elem:
+				continue;
+			case BPF_FUNC_map_update_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_update_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_map_delete_elem:
+				continue;
+			case BPF_FUNC_map_delete_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_delete_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_map_push_elem:
+				continue;
+			case BPF_FUNC_map_push_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_push_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_map_pop_elem:
+				continue;
+			case BPF_FUNC_map_pop_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_pop_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_map_peek_elem:
+				continue;
+			case BPF_FUNC_map_peek_elem:
 				insn->imm = BPF_CAST_CALL(ops->map_peek_elem) -
 					    __bpf_call_base;
-				जारी;
-			हाल BPF_FUNC_redirect_map:
+				continue;
+			case BPF_FUNC_redirect_map:
 				insn->imm = BPF_CAST_CALL(ops->map_redirect) -
 					    __bpf_call_base;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			जाओ patch_call_imm;
-		पूर्ण
+			goto patch_call_imm;
+		}
 
-		/* Implement bpf_jअगरfies64 अंतरभूत. */
-		अगर (prog->jit_requested && BITS_PER_LONG == 64 &&
-		    insn->imm == BPF_FUNC_jअगरfies64) अणु
-			काष्ठा bpf_insn ld_jअगरfies_addr[2] = अणु
+		/* Implement bpf_jiffies64 inline. */
+		if (prog->jit_requested && BITS_PER_LONG == 64 &&
+		    insn->imm == BPF_FUNC_jiffies64) {
+			struct bpf_insn ld_jiffies_addr[2] = {
 				BPF_LD_IMM64(BPF_REG_0,
-					     (अचिन्हित दीर्घ)&jअगरfies),
-			पूर्ण;
+					     (unsigned long)&jiffies),
+			};
 
-			insn_buf[0] = ld_jअगरfies_addr[0];
-			insn_buf[1] = ld_jअगरfies_addr[1];
+			insn_buf[0] = ld_jiffies_addr[0];
+			insn_buf[1] = ld_jiffies_addr[1];
 			insn_buf[2] = BPF_LDX_MEM(BPF_DW, BPF_REG_0,
 						  BPF_REG_0, 0);
 			cnt = 3;
 
 			new_prog = bpf_patch_insn_data(env, i + delta, insn_buf,
 						       cnt);
-			अगर (!new_prog)
-				वापस -ENOMEM;
+			if (!new_prog)
+				return -ENOMEM;
 
 			delta    += cnt - 1;
 			env->prog = prog = new_prog;
 			insn      = new_prog->insnsi + i + delta;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 patch_call_imm:
 		fn = env->ops->get_func_proto(insn->imm, env->prog);
-		/* all functions that have prototype and verअगरier allowed
+		/* all functions that have prototype and verifier allowed
 		 * programs to call them, must be real in-kernel functions
 		 */
-		अगर (!fn->func) अणु
+		if (!fn->func) {
 			verbose(env,
 				"kernel subsystem misconfigured func %s#%d\n",
 				func_id_name(insn->imm), insn->imm);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		insn->imm = fn->func - __bpf_call_base;
-	पूर्ण
+	}
 
 	/* Since poke tab is now finalized, publish aux to tracker. */
-	क्रम (i = 0; i < prog->aux->size_poke_tab; i++) अणु
+	for (i = 0; i < prog->aux->size_poke_tab; i++) {
 		map_ptr = prog->aux->poke_tab[i].tail_call.map;
-		अगर (!map_ptr->ops->map_poke_track ||
+		if (!map_ptr->ops->map_poke_track ||
 		    !map_ptr->ops->map_poke_untrack ||
-		    !map_ptr->ops->map_poke_run) अणु
+		    !map_ptr->ops->map_poke_run) {
 			verbose(env, "bpf verifier is misconfigured\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = map_ptr->ops->map_poke_track(map_ptr, prog->aux);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			verbose(env, "tracking tail call prog failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	sort_kfunc_descs_by_imm(env->prog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_states(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_verअगरier_state_list *sl, *sln;
-	पूर्णांक i;
+static void free_states(struct bpf_verifier_env *env)
+{
+	struct bpf_verifier_state_list *sl, *sln;
+	int i;
 
-	sl = env->मुक्त_list;
-	जबतक (sl) अणु
+	sl = env->free_list;
+	while (sl) {
 		sln = sl->next;
-		मुक्त_verअगरier_state(&sl->state, false);
-		kमुक्त(sl);
+		free_verifier_state(&sl->state, false);
+		kfree(sl);
 		sl = sln;
-	पूर्ण
-	env->मुक्त_list = शून्य;
+	}
+	env->free_list = NULL;
 
-	अगर (!env->explored_states)
-		वापस;
+	if (!env->explored_states)
+		return;
 
-	क्रम (i = 0; i < state_htab_size(env); i++) अणु
+	for (i = 0; i < state_htab_size(env); i++) {
 		sl = env->explored_states[i];
 
-		जबतक (sl) अणु
+		while (sl) {
 			sln = sl->next;
-			मुक्त_verअगरier_state(&sl->state, false);
-			kमुक्त(sl);
+			free_verifier_state(&sl->state, false);
+			kfree(sl);
 			sl = sln;
-		पूर्ण
-		env->explored_states[i] = शून्य;
-	पूर्ण
-पूर्ण
+		}
+		env->explored_states[i] = NULL;
+	}
+}
 
-/* The verअगरier is using insn_aux_data[] to store temporary data during
- * verअगरication and to store inक्रमmation क्रम passes that run after the
- * verअगरication like dead code sanitization. करो_check_common() क्रम subprogram N
+/* The verifier is using insn_aux_data[] to store temporary data during
+ * verification and to store information for passes that run after the
+ * verification like dead code sanitization. do_check_common() for subprogram N
  * may analyze many other subprograms. sanitize_insn_aux_data() clears all
- * temporary data after करो_check_common() finds that subprogram N cannot be
- * verअगरied independently. pass_cnt counts the number of बार
- * करो_check_common() was run and insn->aux->seen tells the pass number
+ * temporary data after do_check_common() finds that subprogram N cannot be
+ * verified independently. pass_cnt counts the number of times
+ * do_check_common() was run and insn->aux->seen tells the pass number
  * insn_aux_data was touched. These variables are compared to clear temporary
- * data from failed pass. For testing and experiments करो_check_common() can be
- * run multiple बार even when prior attempt to verअगरy is unsuccessful.
+ * data from failed pass. For testing and experiments do_check_common() can be
+ * run multiple times even when prior attempt to verify is unsuccessful.
  *
- * Note that special handling is needed on !env->bypass_spec_v1 अगर this is
+ * Note that special handling is needed on !env->bypass_spec_v1 if this is
  * ever called outside of error path with subsequent program rejection.
  */
-अटल व्योम sanitize_insn_aux_data(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_insn *insn = env->prog->insnsi;
-	काष्ठा bpf_insn_aux_data *aux;
-	पूर्णांक i, class;
+static void sanitize_insn_aux_data(struct bpf_verifier_env *env)
+{
+	struct bpf_insn *insn = env->prog->insnsi;
+	struct bpf_insn_aux_data *aux;
+	int i, class;
 
-	क्रम (i = 0; i < env->prog->len; i++) अणु
+	for (i = 0; i < env->prog->len; i++) {
 		class = BPF_CLASS(insn[i].code);
-		अगर (class != BPF_LDX && class != BPF_STX)
-			जारी;
+		if (class != BPF_LDX && class != BPF_STX)
+			continue;
 		aux = &env->insn_aux_data[i];
-		अगर (aux->seen != env->pass_cnt)
-			जारी;
-		स_रखो(aux, 0, दुरत्व(typeof(*aux), orig_idx));
-	पूर्ण
-पूर्ण
+		if (aux->seen != env->pass_cnt)
+			continue;
+		memset(aux, 0, offsetof(typeof(*aux), orig_idx));
+	}
+}
 
-अटल पूर्णांक करो_check_common(काष्ठा bpf_verअगरier_env *env, पूर्णांक subprog)
-अणु
+static int do_check_common(struct bpf_verifier_env *env, int subprog)
+{
 	bool pop_log = !(env->log.level & BPF_LOG_LEVEL2);
-	काष्ठा bpf_verअगरier_state *state;
-	काष्ठा bpf_reg_state *regs;
-	पूर्णांक ret, i;
+	struct bpf_verifier_state *state;
+	struct bpf_reg_state *regs;
+	int ret, i;
 
-	env->prev_linfo = शून्य;
+	env->prev_linfo = NULL;
 	env->pass_cnt++;
 
-	state = kzalloc(माप(काष्ठा bpf_verअगरier_state), GFP_KERNEL);
-	अगर (!state)
-		वापस -ENOMEM;
+	state = kzalloc(sizeof(struct bpf_verifier_state), GFP_KERNEL);
+	if (!state)
+		return -ENOMEM;
 	state->curframe = 0;
 	state->speculative = false;
 	state->branches = 1;
-	state->frame[0] = kzalloc(माप(काष्ठा bpf_func_state), GFP_KERNEL);
-	अगर (!state->frame[0]) अणु
-		kमुक्त(state);
-		वापस -ENOMEM;
-	पूर्ण
+	state->frame[0] = kzalloc(sizeof(struct bpf_func_state), GFP_KERNEL);
+	if (!state->frame[0]) {
+		kfree(state);
+		return -ENOMEM;
+	}
 	env->cur_state = state;
 	init_func_state(env, state->frame[0],
 			BPF_MAIN_FUNC /* callsite */,
@@ -12811,616 +12810,616 @@ patch_call_imm:
 			subprog);
 
 	regs = state->frame[state->curframe]->regs;
-	अगर (subprog || env->prog->type == BPF_PROG_TYPE_EXT) अणु
+	if (subprog || env->prog->type == BPF_PROG_TYPE_EXT) {
 		ret = btf_prepare_func_args(env, subprog, regs);
-		अगर (ret)
-			जाओ out;
-		क्रम (i = BPF_REG_1; i <= BPF_REG_5; i++) अणु
-			अगर (regs[i].type == PTR_TO_CTX)
+		if (ret)
+			goto out;
+		for (i = BPF_REG_1; i <= BPF_REG_5; i++) {
+			if (regs[i].type == PTR_TO_CTX)
 				mark_reg_known_zero(env, regs, i);
-			अन्यथा अगर (regs[i].type == SCALAR_VALUE)
+			else if (regs[i].type == SCALAR_VALUE)
 				mark_reg_unknown(env, regs, i);
-			अन्यथा अगर (regs[i].type == PTR_TO_MEM_OR_शून्य) अणु
-				स्थिर u32 mem_size = regs[i].mem_size;
+			else if (regs[i].type == PTR_TO_MEM_OR_NULL) {
+				const u32 mem_size = regs[i].mem_size;
 
 				mark_reg_known_zero(env, regs, i);
 				regs[i].mem_size = mem_size;
 				regs[i].id = ++env->id_gen;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* 1st arg to a function */
 		regs[BPF_REG_1].type = PTR_TO_CTX;
 		mark_reg_known_zero(env, regs, BPF_REG_1);
 		ret = btf_check_subprog_arg_match(env, subprog, regs);
-		अगर (ret == -EFAULT)
-			/* unlikely verअगरier bug. पात.
-			 * ret == 0 and ret < 0 are sadly acceptable क्रम
-			 * मुख्य() function due to backward compatibility.
+		if (ret == -EFAULT)
+			/* unlikely verifier bug. abort.
+			 * ret == 0 and ret < 0 are sadly acceptable for
+			 * main() function due to backward compatibility.
 			 * Like socket filter program may be written as:
-			 * पूर्णांक bpf_prog(काष्ठा pt_regs *ctx)
+			 * int bpf_prog(struct pt_regs *ctx)
 			 * and never dereference that ctx in the program.
-			 * 'struct pt_regs' is a type mismatch क्रम socket
+			 * 'struct pt_regs' is a type mismatch for socket
 			 * filter that should be using 'struct __sk_buff'.
 			 */
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
-	ret = करो_check(env);
+	ret = do_check(env);
 out:
-	/* check क्रम शून्य is necessary, since cur_state can be मुक्तd inside
-	 * करो_check() under memory pressure.
+	/* check for NULL is necessary, since cur_state can be freed inside
+	 * do_check() under memory pressure.
 	 */
-	अगर (env->cur_state) अणु
-		मुक्त_verअगरier_state(env->cur_state, true);
-		env->cur_state = शून्य;
-	पूर्ण
-	जबतक (!pop_stack(env, शून्य, शून्य, false));
-	अगर (!ret && pop_log)
+	if (env->cur_state) {
+		free_verifier_state(env->cur_state, true);
+		env->cur_state = NULL;
+	}
+	while (!pop_stack(env, NULL, NULL, false));
+	if (!ret && pop_log)
 		bpf_vlog_reset(&env->log, 0);
-	मुक्त_states(env);
-	अगर (ret)
-		/* clean aux data in हाल subprog was rejected */
+	free_states(env);
+	if (ret)
+		/* clean aux data in case subprog was rejected */
 		sanitize_insn_aux_data(env);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Verअगरy all global functions in a BPF program one by one based on their BTF.
- * All global functions must pass verअगरication. Otherwise the whole program is rejected.
+/* Verify all global functions in a BPF program one by one based on their BTF.
+ * All global functions must pass verification. Otherwise the whole program is rejected.
  * Consider:
- * पूर्णांक bar(पूर्णांक);
- * पूर्णांक foo(पूर्णांक f)
- * अणु
- *    वापस bar(f);
- * पूर्ण
- * पूर्णांक bar(पूर्णांक b)
- * अणु
+ * int bar(int);
+ * int foo(int f)
+ * {
+ *    return bar(f);
+ * }
+ * int bar(int b)
+ * {
  *    ...
- * पूर्ण
- * foo() will be verअगरied first क्रम R1=any_scalar_value. During verअगरication it
- * will be assumed that bar() alपढ़ोy verअगरied successfully and call to bar()
- * from foo() will be checked क्रम type match only. Later bar() will be verअगरied
- * independently to check that it's safe क्रम R1=any_scalar_value.
+ * }
+ * foo() will be verified first for R1=any_scalar_value. During verification it
+ * will be assumed that bar() already verified successfully and call to bar()
+ * from foo() will be checked for type match only. Later bar() will be verified
+ * independently to check that it's safe for R1=any_scalar_value.
  */
-अटल पूर्णांक करो_check_subprogs(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_prog_aux *aux = env->prog->aux;
-	पूर्णांक i, ret;
+static int do_check_subprogs(struct bpf_verifier_env *env)
+{
+	struct bpf_prog_aux *aux = env->prog->aux;
+	int i, ret;
 
-	अगर (!aux->func_info)
-		वापस 0;
+	if (!aux->func_info)
+		return 0;
 
-	क्रम (i = 1; i < env->subprog_cnt; i++) अणु
-		अगर (aux->func_info_aux[i].linkage != BTF_FUNC_GLOBAL)
-			जारी;
+	for (i = 1; i < env->subprog_cnt; i++) {
+		if (aux->func_info_aux[i].linkage != BTF_FUNC_GLOBAL)
+			continue;
 		env->insn_idx = env->subprog_info[i].start;
 		WARN_ON_ONCE(env->insn_idx == 0);
-		ret = करो_check_common(env, i);
-		अगर (ret) अणु
-			वापस ret;
-		पूर्ण अन्यथा अगर (env->log.level & BPF_LOG_LEVEL) अणु
+		ret = do_check_common(env, i);
+		if (ret) {
+			return ret;
+		} else if (env->log.level & BPF_LOG_LEVEL) {
 			verbose(env,
 				"Func#%d is safe for any args that match its prototype\n",
 				i);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक करो_check_मुख्य(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक ret;
+static int do_check_main(struct bpf_verifier_env *env)
+{
+	int ret;
 
 	env->insn_idx = 0;
-	ret = करो_check_common(env, 0);
-	अगर (!ret)
+	ret = do_check_common(env, 0);
+	if (!ret)
 		env->prog->aux->stack_depth = env->subprog_info[0].stack_depth;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल व्योम prपूर्णांक_verअगरication_stats(काष्ठा bpf_verअगरier_env *env)
-अणु
-	पूर्णांक i;
+static void print_verification_stats(struct bpf_verifier_env *env)
+{
+	int i;
 
-	अगर (env->log.level & BPF_LOG_STATS) अणु
+	if (env->log.level & BPF_LOG_STATS) {
 		verbose(env, "verification time %lld usec\n",
-			भाग_u64(env->verअगरication_समय, 1000));
+			div_u64(env->verification_time, 1000));
 		verbose(env, "stack depth ");
-		क्रम (i = 0; i < env->subprog_cnt; i++) अणु
+		for (i = 0; i < env->subprog_cnt; i++) {
 			u32 depth = env->subprog_info[i].stack_depth;
 
 			verbose(env, "%d", depth);
-			अगर (i + 1 < env->subprog_cnt)
+			if (i + 1 < env->subprog_cnt)
 				verbose(env, "+");
-		पूर्ण
+		}
 		verbose(env, "\n");
-	पूर्ण
+	}
 	verbose(env, "processed %d insns (limit %d) max_states_per_insn %d "
 		"total_states %d peak_states %d mark_read %d\n",
 		env->insn_processed, BPF_COMPLEXITY_LIMIT_INSNS,
 		env->max_states_per_insn, env->total_states,
-		env->peak_states, env->दीर्घest_mark_पढ़ो_walk);
-पूर्ण
+		env->peak_states, env->longest_mark_read_walk);
+}
 
-अटल पूर्णांक check_काष्ठा_ops_btf_id(काष्ठा bpf_verअगरier_env *env)
-अणु
-	स्थिर काष्ठा btf_type *t, *func_proto;
-	स्थिर काष्ठा bpf_काष्ठा_ops *st_ops;
-	स्थिर काष्ठा btf_member *member;
-	काष्ठा bpf_prog *prog = env->prog;
+static int check_struct_ops_btf_id(struct bpf_verifier_env *env)
+{
+	const struct btf_type *t, *func_proto;
+	const struct bpf_struct_ops *st_ops;
+	const struct btf_member *member;
+	struct bpf_prog *prog = env->prog;
 	u32 btf_id, member_idx;
-	स्थिर अक्षर *mname;
+	const char *mname;
 
-	अगर (!prog->gpl_compatible) अणु
+	if (!prog->gpl_compatible) {
 		verbose(env, "struct ops programs must have a GPL compatible license\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	btf_id = prog->aux->attach_btf_id;
-	st_ops = bpf_काष्ठा_ops_find(btf_id);
-	अगर (!st_ops) अणु
+	st_ops = bpf_struct_ops_find(btf_id);
+	if (!st_ops) {
 		verbose(env, "attach_btf_id %u is not a supported struct\n",
 			btf_id);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
 	t = st_ops->type;
 	member_idx = prog->expected_attach_type;
-	अगर (member_idx >= btf_type_vlen(t)) अणु
+	if (member_idx >= btf_type_vlen(t)) {
 		verbose(env, "attach to invalid member idx %u of struct %s\n",
 			member_idx, st_ops->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	member = &btf_type_member(t)[member_idx];
 	mname = btf_name_by_offset(btf_vmlinux, member->name_off);
 	func_proto = btf_type_resolve_func_ptr(btf_vmlinux, member->type,
-					       शून्य);
-	अगर (!func_proto) अणु
+					       NULL);
+	if (!func_proto) {
 		verbose(env, "attach to invalid member %s(@idx %u) of struct %s\n",
 			mname, member_idx, st_ops->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (st_ops->check_member) अणु
-		पूर्णांक err = st_ops->check_member(t, member);
+	if (st_ops->check_member) {
+		int err = st_ops->check_member(t, member);
 
-		अगर (err) अणु
+		if (err) {
 			verbose(env, "attach to unsupported member %s of struct %s\n",
 				mname, st_ops->name);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	prog->aux->attach_func_proto = func_proto;
 	prog->aux->attach_func_name = mname;
-	env->ops = st_ops->verअगरier_ops;
+	env->ops = st_ops->verifier_ops;
 
-	वापस 0;
-पूर्ण
-#घोषणा SECURITY_PREFIX "security_"
+	return 0;
+}
+#define SECURITY_PREFIX "security_"
 
-अटल पूर्णांक check_attach_modअगरy_वापस(अचिन्हित दीर्घ addr, स्थिर अक्षर *func_name)
-अणु
-	अगर (within_error_injection_list(addr) ||
-	    !म_भेदन(SECURITY_PREFIX, func_name, माप(SECURITY_PREFIX) - 1))
-		वापस 0;
+static int check_attach_modify_return(unsigned long addr, const char *func_name)
+{
+	if (within_error_injection_list(addr) ||
+	    !strncmp(SECURITY_PREFIX, func_name, sizeof(SECURITY_PREFIX) - 1))
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /* list of non-sleepable functions that are otherwise on
  * ALLOW_ERROR_INJECTION list
  */
 BTF_SET_START(btf_non_sleepable_error_inject)
 /* Three functions below can be called from sleepable and non-sleepable context.
- * Assume non-sleepable from bpf safety poपूर्णांक of view.
+ * Assume non-sleepable from bpf safety point of view.
  */
 BTF_ID(func, __add_to_page_cache_locked)
 BTF_ID(func, should_fail_alloc_page)
 BTF_ID(func, should_failslab)
 BTF_SET_END(btf_non_sleepable_error_inject)
 
-अटल पूर्णांक check_non_sleepable_error_inject(u32 btf_id)
-अणु
-	वापस btf_id_set_contains(&btf_non_sleepable_error_inject, btf_id);
-पूर्ण
+static int check_non_sleepable_error_inject(u32 btf_id)
+{
+	return btf_id_set_contains(&btf_non_sleepable_error_inject, btf_id);
+}
 
-पूर्णांक bpf_check_attach_target(काष्ठा bpf_verअगरier_log *log,
-			    स्थिर काष्ठा bpf_prog *prog,
-			    स्थिर काष्ठा bpf_prog *tgt_prog,
+int bpf_check_attach_target(struct bpf_verifier_log *log,
+			    const struct bpf_prog *prog,
+			    const struct bpf_prog *tgt_prog,
 			    u32 btf_id,
-			    काष्ठा bpf_attach_target_info *tgt_info)
-अणु
+			    struct bpf_attach_target_info *tgt_info)
+{
 	bool prog_extension = prog->type == BPF_PROG_TYPE_EXT;
-	स्थिर अक्षर prefix[] = "btf_trace_";
-	पूर्णांक ret = 0, subprog = -1, i;
-	स्थिर काष्ठा btf_type *t;
+	const char prefix[] = "btf_trace_";
+	int ret = 0, subprog = -1, i;
+	const struct btf_type *t;
 	bool conservative = true;
-	स्थिर अक्षर *tname;
-	काष्ठा btf *btf;
-	दीर्घ addr = 0;
+	const char *tname;
+	struct btf *btf;
+	long addr = 0;
 
-	अगर (!btf_id) अणु
+	if (!btf_id) {
 		bpf_log(log, "Tracing programs must provide btf_id\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	btf = tgt_prog ? tgt_prog->aux->btf : prog->aux->attach_btf;
-	अगर (!btf) अणु
+	if (!btf) {
 		bpf_log(log,
 			"FENTRY/FEXIT program can only be attached to another program annotated with BTF\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	t = btf_type_by_id(btf, btf_id);
-	अगर (!t) अणु
+	if (!t) {
 		bpf_log(log, "attach_btf_id %u is invalid\n", btf_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	tname = btf_name_by_offset(btf, t->name_off);
-	अगर (!tname) अणु
+	if (!tname) {
 		bpf_log(log, "attach_btf_id %u doesn't have a name\n", btf_id);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (tgt_prog) अणु
-		काष्ठा bpf_prog_aux *aux = tgt_prog->aux;
+		return -EINVAL;
+	}
+	if (tgt_prog) {
+		struct bpf_prog_aux *aux = tgt_prog->aux;
 
-		क्रम (i = 0; i < aux->func_info_cnt; i++)
-			अगर (aux->func_info[i].type_id == btf_id) अणु
+		for (i = 0; i < aux->func_info_cnt; i++)
+			if (aux->func_info[i].type_id == btf_id) {
 				subprog = i;
-				अवरोध;
-			पूर्ण
-		अगर (subprog == -1) अणु
+				break;
+			}
+		if (subprog == -1) {
 			bpf_log(log, "Subprog %s doesn't exist\n", tname);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		conservative = aux->func_info_aux[subprog].unreliable;
-		अगर (prog_extension) अणु
-			अगर (conservative) अणु
+		if (prog_extension) {
+			if (conservative) {
 				bpf_log(log,
 					"Cannot replace static functions\n");
-				वापस -EINVAL;
-			पूर्ण
-			अगर (!prog->jit_requested) अणु
+				return -EINVAL;
+			}
+			if (!prog->jit_requested) {
 				bpf_log(log,
 					"Extension programs should be JITed\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-		अगर (!tgt_prog->jited) अणु
+				return -EINVAL;
+			}
+		}
+		if (!tgt_prog->jited) {
 			bpf_log(log, "Can attach to only JITed progs\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (tgt_prog->type == prog->type) अणु
-			/* Cannot fentry/fनिकास another fentry/fनिकास program.
+			return -EINVAL;
+		}
+		if (tgt_prog->type == prog->type) {
+			/* Cannot fentry/fexit another fentry/fexit program.
 			 * Cannot attach program extension to another extension.
-			 * It's ok to attach fentry/fनिकास to extension program.
+			 * It's ok to attach fentry/fexit to extension program.
 			 */
 			bpf_log(log, "Cannot recursively attach\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (tgt_prog->type == BPF_PROG_TYPE_TRACING &&
+			return -EINVAL;
+		}
+		if (tgt_prog->type == BPF_PROG_TYPE_TRACING &&
 		    prog_extension &&
 		    (tgt_prog->expected_attach_type == BPF_TRACE_FENTRY ||
-		     tgt_prog->expected_attach_type == BPF_TRACE_FEXIT)) अणु
+		     tgt_prog->expected_attach_type == BPF_TRACE_FEXIT)) {
 			/* Program extensions can extend all program types
-			 * except fentry/fनिकास. The reason is the following.
-			 * The fentry/fनिकास programs are used क्रम perक्रमmance
+			 * except fentry/fexit. The reason is the following.
+			 * The fentry/fexit programs are used for performance
 			 * analysis, stats and can be attached to any program
 			 * type except themselves. When extension program is
 			 * replacing XDP function it is necessary to allow
-			 * perक्रमmance analysis of all functions. Both original
+			 * performance analysis of all functions. Both original
 			 * XDP program and its program extension. Hence
-			 * attaching fentry/fनिकास to BPF_PROG_TYPE_EXT is
-			 * allowed. If extending of fentry/fनिकास was allowed it
-			 * would be possible to create दीर्घ call chain
+			 * attaching fentry/fexit to BPF_PROG_TYPE_EXT is
+			 * allowed. If extending of fentry/fexit was allowed it
+			 * would be possible to create long call chain
 			 * fentry->extension->fentry->extension beyond
 			 * reasonable stack size. Hence extending fentry is not
 			 * allowed.
 			 */
 			bpf_log(log, "Cannot extend fentry/fexit\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (prog_extension) अणु
+			return -EINVAL;
+		}
+	} else {
+		if (prog_extension) {
 			bpf_log(log, "Cannot replace kernel functions\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	चयन (prog->expected_attach_type) अणु
-	हाल BPF_TRACE_RAW_TP:
-		अगर (tgt_prog) अणु
+	switch (prog->expected_attach_type) {
+	case BPF_TRACE_RAW_TP:
+		if (tgt_prog) {
 			bpf_log(log,
 				"Only FENTRY/FEXIT progs are attachable to another BPF prog\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!btf_type_is_प्रकार(t)) अणु
+			return -EINVAL;
+		}
+		if (!btf_type_is_typedef(t)) {
 			bpf_log(log, "attach_btf_id %u is not a typedef\n",
 				btf_id);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (म_भेदन(prefix, tname, माप(prefix) - 1)) अणु
+			return -EINVAL;
+		}
+		if (strncmp(prefix, tname, sizeof(prefix) - 1)) {
 			bpf_log(log, "attach_btf_id %u points to wrong type name %s\n",
 				btf_id, tname);
-			वापस -EINVAL;
-		पूर्ण
-		tname += माप(prefix) - 1;
+			return -EINVAL;
+		}
+		tname += sizeof(prefix) - 1;
 		t = btf_type_by_id(btf, t->type);
-		अगर (!btf_type_is_ptr(t))
+		if (!btf_type_is_ptr(t))
 			/* should never happen in valid vmlinux build */
-			वापस -EINVAL;
+			return -EINVAL;
 		t = btf_type_by_id(btf, t->type);
-		अगर (!btf_type_is_func_proto(t))
+		if (!btf_type_is_func_proto(t))
 			/* should never happen in valid vmlinux build */
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अवरोध;
-	हाल BPF_TRACE_ITER:
-		अगर (!btf_type_is_func(t)) अणु
+		break;
+	case BPF_TRACE_ITER:
+		if (!btf_type_is_func(t)) {
 			bpf_log(log, "attach_btf_id %u is not a function\n",
 				btf_id);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		t = btf_type_by_id(btf, t->type);
-		अगर (!btf_type_is_func_proto(t))
-			वापस -EINVAL;
-		ret = btf_distill_func_proto(log, btf, t, tname, &tgt_info->भ_शेषel);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
-		अगर (!prog_extension)
-			वापस -EINVAL;
+		if (!btf_type_is_func_proto(t))
+			return -EINVAL;
+		ret = btf_distill_func_proto(log, btf, t, tname, &tgt_info->fmodel);
+		if (ret)
+			return ret;
+		break;
+	default:
+		if (!prog_extension)
+			return -EINVAL;
 		fallthrough;
-	हाल BPF_MODIFY_RETURN:
-	हाल BPF_LSM_MAC:
-	हाल BPF_TRACE_FENTRY:
-	हाल BPF_TRACE_FEXIT:
-		अगर (!btf_type_is_func(t)) अणु
+	case BPF_MODIFY_RETURN:
+	case BPF_LSM_MAC:
+	case BPF_TRACE_FENTRY:
+	case BPF_TRACE_FEXIT:
+		if (!btf_type_is_func(t)) {
 			bpf_log(log, "attach_btf_id %u is not a function\n",
 				btf_id);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (prog_extension &&
+			return -EINVAL;
+		}
+		if (prog_extension &&
 		    btf_check_type_match(log, prog, btf, t))
-			वापस -EINVAL;
+			return -EINVAL;
 		t = btf_type_by_id(btf, t->type);
-		अगर (!btf_type_is_func_proto(t))
-			वापस -EINVAL;
+		if (!btf_type_is_func_proto(t))
+			return -EINVAL;
 
-		अगर ((prog->aux->saved_dst_prog_type || prog->aux->saved_dst_attach_type) &&
+		if ((prog->aux->saved_dst_prog_type || prog->aux->saved_dst_attach_type) &&
 		    (!tgt_prog || prog->aux->saved_dst_prog_type != tgt_prog->type ||
 		     prog->aux->saved_dst_attach_type != tgt_prog->expected_attach_type))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (tgt_prog && conservative)
-			t = शून्य;
+		if (tgt_prog && conservative)
+			t = NULL;
 
-		ret = btf_distill_func_proto(log, btf, t, tname, &tgt_info->भ_शेषel);
-		अगर (ret < 0)
-			वापस ret;
+		ret = btf_distill_func_proto(log, btf, t, tname, &tgt_info->fmodel);
+		if (ret < 0)
+			return ret;
 
-		अगर (tgt_prog) अणु
-			अगर (subprog == 0)
-				addr = (दीर्घ) tgt_prog->bpf_func;
-			अन्यथा
-				addr = (दीर्घ) tgt_prog->aux->func[subprog]->bpf_func;
-		पूर्ण अन्यथा अणु
+		if (tgt_prog) {
+			if (subprog == 0)
+				addr = (long) tgt_prog->bpf_func;
+			else
+				addr = (long) tgt_prog->aux->func[subprog]->bpf_func;
+		} else {
 			addr = kallsyms_lookup_name(tname);
-			अगर (!addr) अणु
+			if (!addr) {
 				bpf_log(log,
 					"The address of function %s cannot be found\n",
 					tname);
-				वापस -ENOENT;
-			पूर्ण
-		पूर्ण
+				return -ENOENT;
+			}
+		}
 
-		अगर (prog->aux->sleepable) अणु
+		if (prog->aux->sleepable) {
 			ret = -EINVAL;
-			चयन (prog->type) अणु
-			हाल BPF_PROG_TYPE_TRACING:
-				/* fentry/fनिकास/भ_शेष_ret progs can be sleepable only अगर they are
+			switch (prog->type) {
+			case BPF_PROG_TYPE_TRACING:
+				/* fentry/fexit/fmod_ret progs can be sleepable only if they are
 				 * attached to ALLOW_ERROR_INJECTION and are not in denylist.
 				 */
-				अगर (!check_non_sleepable_error_inject(btf_id) &&
+				if (!check_non_sleepable_error_inject(btf_id) &&
 				    within_error_injection_list(addr))
 					ret = 0;
-				अवरोध;
-			हाल BPF_PROG_TYPE_LSM:
+				break;
+			case BPF_PROG_TYPE_LSM:
 				/* LSM progs check that they are attached to bpf_lsm_*() funcs.
 				 * Only some of them are sleepable.
 				 */
-				अगर (bpf_lsm_is_sleepable_hook(btf_id))
+				if (bpf_lsm_is_sleepable_hook(btf_id))
 					ret = 0;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-			अगर (ret) अणु
+				break;
+			default:
+				break;
+			}
+			if (ret) {
 				bpf_log(log, "%s is not sleepable\n", tname);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अगर (prog->expected_attach_type == BPF_MODIFY_RETURN) अणु
-			अगर (tgt_prog) अणु
+				return ret;
+			}
+		} else if (prog->expected_attach_type == BPF_MODIFY_RETURN) {
+			if (tgt_prog) {
 				bpf_log(log, "can't modify return codes of BPF programs\n");
-				वापस -EINVAL;
-			पूर्ण
-			ret = check_attach_modअगरy_वापस(addr, tname);
-			अगर (ret) अणु
+				return -EINVAL;
+			}
+			ret = check_attach_modify_return(addr, tname);
+			if (ret) {
 				bpf_log(log, "%s() is not modifiable\n", tname);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	tgt_info->tgt_addr = addr;
 	tgt_info->tgt_name = tname;
 	tgt_info->tgt_type = t;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 BTF_SET_START(btf_id_deny)
 BTF_ID_UNUSED
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 BTF_ID(func, migrate_disable)
 BTF_ID(func, migrate_enable)
-#पूर्ण_अगर
-#अगर !defined CONFIG_PREEMPT_RCU && !defined CONFIG_TINY_RCU
-BTF_ID(func, rcu_पढ़ो_unlock_strict)
-#पूर्ण_अगर
+#endif
+#if !defined CONFIG_PREEMPT_RCU && !defined CONFIG_TINY_RCU
+BTF_ID(func, rcu_read_unlock_strict)
+#endif
 BTF_SET_END(btf_id_deny)
 
-अटल पूर्णांक check_attach_btf_id(काष्ठा bpf_verअगरier_env *env)
-अणु
-	काष्ठा bpf_prog *prog = env->prog;
-	काष्ठा bpf_prog *tgt_prog = prog->aux->dst_prog;
-	काष्ठा bpf_attach_target_info tgt_info = अणुपूर्ण;
+static int check_attach_btf_id(struct bpf_verifier_env *env)
+{
+	struct bpf_prog *prog = env->prog;
+	struct bpf_prog *tgt_prog = prog->aux->dst_prog;
+	struct bpf_attach_target_info tgt_info = {};
 	u32 btf_id = prog->aux->attach_btf_id;
-	काष्ठा bpf_trampoline *tr;
-	पूर्णांक ret;
+	struct bpf_trampoline *tr;
+	int ret;
 	u64 key;
 
-	अगर (prog->aux->sleepable && prog->type != BPF_PROG_TYPE_TRACING &&
-	    prog->type != BPF_PROG_TYPE_LSM) अणु
+	if (prog->aux->sleepable && prog->type != BPF_PROG_TYPE_TRACING &&
+	    prog->type != BPF_PROG_TYPE_LSM) {
 		verbose(env, "Only fentry/fexit/fmod_ret and lsm programs can be sleepable\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (prog->type == BPF_PROG_TYPE_STRUCT_OPS)
-		वापस check_काष्ठा_ops_btf_id(env);
+	if (prog->type == BPF_PROG_TYPE_STRUCT_OPS)
+		return check_struct_ops_btf_id(env);
 
-	अगर (prog->type != BPF_PROG_TYPE_TRACING &&
+	if (prog->type != BPF_PROG_TYPE_TRACING &&
 	    prog->type != BPF_PROG_TYPE_LSM &&
 	    prog->type != BPF_PROG_TYPE_EXT)
-		वापस 0;
+		return 0;
 
 	ret = bpf_check_attach_target(&env->log, prog, tgt_prog, btf_id, &tgt_info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (tgt_prog && prog->type == BPF_PROG_TYPE_EXT) अणु
-		/* to make freplace equivalent to their tarमाला_लो, they need to
-		 * inherit env->ops and expected_attach_type क्रम the rest of the
-		 * verअगरication
+	if (tgt_prog && prog->type == BPF_PROG_TYPE_EXT) {
+		/* to make freplace equivalent to their targets, they need to
+		 * inherit env->ops and expected_attach_type for the rest of the
+		 * verification
 		 */
-		env->ops = bpf_verअगरier_ops[tgt_prog->type];
+		env->ops = bpf_verifier_ops[tgt_prog->type];
 		prog->expected_attach_type = tgt_prog->expected_attach_type;
-	पूर्ण
+	}
 
 	/* store info about the attachment target that will be used later */
 	prog->aux->attach_func_proto = tgt_info.tgt_type;
 	prog->aux->attach_func_name = tgt_info.tgt_name;
 
-	अगर (tgt_prog) अणु
+	if (tgt_prog) {
 		prog->aux->saved_dst_prog_type = tgt_prog->type;
 		prog->aux->saved_dst_attach_type = tgt_prog->expected_attach_type;
-	पूर्ण
+	}
 
-	अगर (prog->expected_attach_type == BPF_TRACE_RAW_TP) अणु
+	if (prog->expected_attach_type == BPF_TRACE_RAW_TP) {
 		prog->aux->attach_btf_trace = true;
-		वापस 0;
-	पूर्ण अन्यथा अगर (prog->expected_attach_type == BPF_TRACE_ITER) अणु
-		अगर (!bpf_iter_prog_supported(prog))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+		return 0;
+	} else if (prog->expected_attach_type == BPF_TRACE_ITER) {
+		if (!bpf_iter_prog_supported(prog))
+			return -EINVAL;
+		return 0;
+	}
 
-	अगर (prog->type == BPF_PROG_TYPE_LSM) अणु
-		ret = bpf_lsm_verअगरy_prog(&env->log, prog);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अगर (prog->type == BPF_PROG_TYPE_TRACING &&
-		   btf_id_set_contains(&btf_id_deny, btf_id)) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (prog->type == BPF_PROG_TYPE_LSM) {
+		ret = bpf_lsm_verify_prog(&env->log, prog);
+		if (ret < 0)
+			return ret;
+	} else if (prog->type == BPF_PROG_TYPE_TRACING &&
+		   btf_id_set_contains(&btf_id_deny, btf_id)) {
+		return -EINVAL;
+	}
 
 	key = bpf_trampoline_compute_key(tgt_prog, prog->aux->attach_btf, btf_id);
 	tr = bpf_trampoline_get(key, &tgt_info);
-	अगर (!tr)
-		वापस -ENOMEM;
+	if (!tr)
+		return -ENOMEM;
 
 	prog->aux->dst_trampoline = tr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा btf *bpf_get_btf_vmlinux(व्योम)
-अणु
-	अगर (!btf_vmlinux && IS_ENABLED(CONFIG_DEBUG_INFO_BTF)) अणु
-		mutex_lock(&bpf_verअगरier_lock);
-		अगर (!btf_vmlinux)
+struct btf *bpf_get_btf_vmlinux(void)
+{
+	if (!btf_vmlinux && IS_ENABLED(CONFIG_DEBUG_INFO_BTF)) {
+		mutex_lock(&bpf_verifier_lock);
+		if (!btf_vmlinux)
 			btf_vmlinux = btf_parse_vmlinux();
-		mutex_unlock(&bpf_verअगरier_lock);
-	पूर्ण
-	वापस btf_vmlinux;
-पूर्ण
+		mutex_unlock(&bpf_verifier_lock);
+	}
+	return btf_vmlinux;
+}
 
-पूर्णांक bpf_check(काष्ठा bpf_prog **prog, जोड़ bpf_attr *attr,
-	      जोड़ bpf_attr __user *uattr)
-अणु
-	u64 start_समय = kसमय_get_ns();
-	काष्ठा bpf_verअगरier_env *env;
-	काष्ठा bpf_verअगरier_log *log;
-	पूर्णांक i, len, ret = -EINVAL;
+int bpf_check(struct bpf_prog **prog, union bpf_attr *attr,
+	      union bpf_attr __user *uattr)
+{
+	u64 start_time = ktime_get_ns();
+	struct bpf_verifier_env *env;
+	struct bpf_verifier_log *log;
+	int i, len, ret = -EINVAL;
 	bool is_priv;
 
 	/* no program is valid */
-	अगर (ARRAY_SIZE(bpf_verअगरier_ops) == 0)
-		वापस -EINVAL;
+	if (ARRAY_SIZE(bpf_verifier_ops) == 0)
+		return -EINVAL;
 
 	/* 'struct bpf_verifier_env' can be global, but since it's not small,
-	 * allocate/मुक्त it every समय bpf_check() is called
+	 * allocate/free it every time bpf_check() is called
 	 */
-	env = kzalloc(माप(काष्ठा bpf_verअगरier_env), GFP_KERNEL);
-	अगर (!env)
-		वापस -ENOMEM;
+	env = kzalloc(sizeof(struct bpf_verifier_env), GFP_KERNEL);
+	if (!env)
+		return -ENOMEM;
 	log = &env->log;
 
 	len = (*prog)->len;
 	env->insn_aux_data =
-		vzalloc(array_size(माप(काष्ठा bpf_insn_aux_data), len));
+		vzalloc(array_size(sizeof(struct bpf_insn_aux_data), len));
 	ret = -ENOMEM;
-	अगर (!env->insn_aux_data)
-		जाओ err_मुक्त_env;
-	क्रम (i = 0; i < len; i++)
+	if (!env->insn_aux_data)
+		goto err_free_env;
+	for (i = 0; i < len; i++)
 		env->insn_aux_data[i].orig_idx = i;
 	env->prog = *prog;
-	env->ops = bpf_verअगरier_ops[env->prog->type];
+	env->ops = bpf_verifier_ops[env->prog->type];
 	is_priv = bpf_capable();
 
 	bpf_get_btf_vmlinux();
 
-	/* grab the mutex to protect few globals used by verअगरier */
-	अगर (!is_priv)
-		mutex_lock(&bpf_verअगरier_lock);
+	/* grab the mutex to protect few globals used by verifier */
+	if (!is_priv)
+		mutex_lock(&bpf_verifier_lock);
 
-	अगर (attr->log_level || attr->log_buf || attr->log_size) अणु
-		/* user requested verbose verअगरier output
-		 * and supplied buffer to store the verअगरication trace
+	if (attr->log_level || attr->log_buf || attr->log_size) {
+		/* user requested verbose verifier output
+		 * and supplied buffer to store the verification trace
 		 */
 		log->level = attr->log_level;
-		log->ubuf = (अक्षर __user *) (अचिन्हित दीर्घ) attr->log_buf;
+		log->ubuf = (char __user *) (unsigned long) attr->log_buf;
 		log->len_total = attr->log_size;
 
 		ret = -EINVAL;
 		/* log attributes have to be sane */
-		अगर (log->len_total < 128 || log->len_total > अच_पूर्णांक_उच्च >> 2 ||
+		if (log->len_total < 128 || log->len_total > UINT_MAX >> 2 ||
 		    !log->level || !log->ubuf || log->level & ~BPF_LOG_MASK)
-			जाओ err_unlock;
-	पूर्ण
+			goto err_unlock;
+	}
 
-	अगर (IS_ERR(btf_vmlinux)) अणु
+	if (IS_ERR(btf_vmlinux)) {
 		/* Either gcc or pahole or kernel are broken. */
 		verbose(env, "in-kernel BTF is malformed\n");
 		ret = PTR_ERR(btf_vmlinux);
-		जाओ skip_full_check;
-	पूर्ण
+		goto skip_full_check;
+	}
 
 	env->strict_alignment = !!(attr->prog_flags & BPF_F_STRICT_ALIGNMENT);
-	अगर (!IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS))
+	if (!IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS))
 		env->strict_alignment = true;
-	अगर (attr->prog_flags & BPF_F_ANY_ALIGNMENT)
+	if (attr->prog_flags & BPF_F_ANY_ALIGNMENT)
 		env->strict_alignment = false;
 
 	env->allow_ptr_leaks = bpf_allow_ptr_leaks();
@@ -13430,162 +13429,162 @@ BTF_SET_END(btf_id_deny)
 	env->bypass_spec_v4 = bpf_bypass_spec_v4();
 	env->bpf_capable = bpf_capable();
 
-	अगर (is_priv)
+	if (is_priv)
 		env->test_state_freq = attr->prog_flags & BPF_F_TEST_STATE_FREQ;
 
-	env->explored_states = kvसुस्मृति(state_htab_size(env),
-				       माप(काष्ठा bpf_verअगरier_state_list *),
+	env->explored_states = kvcalloc(state_htab_size(env),
+				       sizeof(struct bpf_verifier_state_list *),
 				       GFP_USER);
 	ret = -ENOMEM;
-	अगर (!env->explored_states)
-		जाओ skip_full_check;
+	if (!env->explored_states)
+		goto skip_full_check;
 
 	ret = add_subprog_and_kfunc(env);
-	अगर (ret < 0)
-		जाओ skip_full_check;
+	if (ret < 0)
+		goto skip_full_check;
 
 	ret = check_subprogs(env);
-	अगर (ret < 0)
-		जाओ skip_full_check;
+	if (ret < 0)
+		goto skip_full_check;
 
 	ret = check_btf_info(env, attr, uattr);
-	अगर (ret < 0)
-		जाओ skip_full_check;
+	if (ret < 0)
+		goto skip_full_check;
 
 	ret = check_attach_btf_id(env);
-	अगर (ret)
-		जाओ skip_full_check;
+	if (ret)
+		goto skip_full_check;
 
-	ret = resolve_pseuकरो_ldimm64(env);
-	अगर (ret < 0)
-		जाओ skip_full_check;
+	ret = resolve_pseudo_ldimm64(env);
+	if (ret < 0)
+		goto skip_full_check;
 
-	अगर (bpf_prog_is_dev_bound(env->prog->aux)) अणु
-		ret = bpf_prog_offload_verअगरier_prep(env->prog);
-		अगर (ret)
-			जाओ skip_full_check;
-	पूर्ण
+	if (bpf_prog_is_dev_bound(env->prog->aux)) {
+		ret = bpf_prog_offload_verifier_prep(env->prog);
+		if (ret)
+			goto skip_full_check;
+	}
 
 	ret = check_cfg(env);
-	अगर (ret < 0)
-		जाओ skip_full_check;
+	if (ret < 0)
+		goto skip_full_check;
 
-	ret = करो_check_subprogs(env);
-	ret = ret ?: करो_check_मुख्य(env);
+	ret = do_check_subprogs(env);
+	ret = ret ?: do_check_main(env);
 
-	अगर (ret == 0 && bpf_prog_is_dev_bound(env->prog->aux))
+	if (ret == 0 && bpf_prog_is_dev_bound(env->prog->aux))
 		ret = bpf_prog_offload_finalize(env);
 
 skip_full_check:
-	kvमुक्त(env->explored_states);
+	kvfree(env->explored_states);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = check_max_stack_depth(env);
 
-	/* inकाष्ठाion reग_लिखोs happen after this poपूर्णांक */
-	अगर (is_priv) अणु
-		अगर (ret == 0)
+	/* instruction rewrites happen after this point */
+	if (is_priv) {
+		if (ret == 0)
 			opt_hard_wire_dead_code_branches(env);
-		अगर (ret == 0)
-			ret = opt_हटाओ_dead_code(env);
-		अगर (ret == 0)
-			ret = opt_हटाओ_nops(env);
-	पूर्ण अन्यथा अणु
-		अगर (ret == 0)
+		if (ret == 0)
+			ret = opt_remove_dead_code(env);
+		if (ret == 0)
+			ret = opt_remove_nops(env);
+	} else {
+		if (ret == 0)
 			sanitize_dead_code(env);
-	पूर्ण
+	}
 
-	अगर (ret == 0)
+	if (ret == 0)
 		/* program is valid, convert *(u32*)(ctx + off) accesses */
 		ret = convert_ctx_accesses(env);
 
-	अगर (ret == 0)
-		ret = करो_misc_fixups(env);
+	if (ret == 0)
+		ret = do_misc_fixups(env);
 
-	/* करो 32-bit optimization after insn patching has करोne so those patched
+	/* do 32-bit optimization after insn patching has done so those patched
 	 * insns could be handled correctly.
 	 */
-	अगर (ret == 0 && !bpf_prog_is_dev_bound(env->prog->aux)) अणु
+	if (ret == 0 && !bpf_prog_is_dev_bound(env->prog->aux)) {
 		ret = opt_subreg_zext_lo32_rnd_hi32(env, attr);
-		env->prog->aux->verअगरier_zext = bpf_jit_needs_zext() ? !ret
+		env->prog->aux->verifier_zext = bpf_jit_needs_zext() ? !ret
 								     : false;
-	पूर्ण
+	}
 
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = fixup_call_args(env);
 
-	env->verअगरication_समय = kसमय_get_ns() - start_समय;
-	prपूर्णांक_verअगरication_stats(env);
+	env->verification_time = ktime_get_ns() - start_time;
+	print_verification_stats(env);
 
-	अगर (log->level && bpf_verअगरier_log_full(log))
+	if (log->level && bpf_verifier_log_full(log))
 		ret = -ENOSPC;
-	अगर (log->level && !log->ubuf) अणु
+	if (log->level && !log->ubuf) {
 		ret = -EFAULT;
-		जाओ err_release_maps;
-	पूर्ण
+		goto err_release_maps;
+	}
 
-	अगर (ret)
-		जाओ err_release_maps;
+	if (ret)
+		goto err_release_maps;
 
-	अगर (env->used_map_cnt) अणु
-		/* अगर program passed verअगरier, update used_maps in bpf_prog_info */
-		env->prog->aux->used_maps = kदो_स्मृति_array(env->used_map_cnt,
-							  माप(env->used_maps[0]),
+	if (env->used_map_cnt) {
+		/* if program passed verifier, update used_maps in bpf_prog_info */
+		env->prog->aux->used_maps = kmalloc_array(env->used_map_cnt,
+							  sizeof(env->used_maps[0]),
 							  GFP_KERNEL);
 
-		अगर (!env->prog->aux->used_maps) अणु
+		if (!env->prog->aux->used_maps) {
 			ret = -ENOMEM;
-			जाओ err_release_maps;
-		पूर्ण
+			goto err_release_maps;
+		}
 
-		स_नकल(env->prog->aux->used_maps, env->used_maps,
-		       माप(env->used_maps[0]) * env->used_map_cnt);
+		memcpy(env->prog->aux->used_maps, env->used_maps,
+		       sizeof(env->used_maps[0]) * env->used_map_cnt);
 		env->prog->aux->used_map_cnt = env->used_map_cnt;
-	पूर्ण
-	अगर (env->used_btf_cnt) अणु
-		/* अगर program passed verअगरier, update used_btfs in bpf_prog_aux */
-		env->prog->aux->used_btfs = kदो_स्मृति_array(env->used_btf_cnt,
-							  माप(env->used_btfs[0]),
+	}
+	if (env->used_btf_cnt) {
+		/* if program passed verifier, update used_btfs in bpf_prog_aux */
+		env->prog->aux->used_btfs = kmalloc_array(env->used_btf_cnt,
+							  sizeof(env->used_btfs[0]),
 							  GFP_KERNEL);
-		अगर (!env->prog->aux->used_btfs) अणु
+		if (!env->prog->aux->used_btfs) {
 			ret = -ENOMEM;
-			जाओ err_release_maps;
-		पूर्ण
+			goto err_release_maps;
+		}
 
-		स_नकल(env->prog->aux->used_btfs, env->used_btfs,
-		       माप(env->used_btfs[0]) * env->used_btf_cnt);
+		memcpy(env->prog->aux->used_btfs, env->used_btfs,
+		       sizeof(env->used_btfs[0]) * env->used_btf_cnt);
 		env->prog->aux->used_btf_cnt = env->used_btf_cnt;
-	पूर्ण
-	अगर (env->used_map_cnt || env->used_btf_cnt) अणु
-		/* program is valid. Convert pseuकरो bpf_ld_imm64 पूर्णांकo generic
-		 * bpf_ld_imm64 inकाष्ठाions
+	}
+	if (env->used_map_cnt || env->used_btf_cnt) {
+		/* program is valid. Convert pseudo bpf_ld_imm64 into generic
+		 * bpf_ld_imm64 instructions
 		 */
-		convert_pseuकरो_ld_imm64(env);
-	पूर्ण
+		convert_pseudo_ld_imm64(env);
+	}
 
 	adjust_btf_func(env);
 
 err_release_maps:
-	अगर (!env->prog->aux->used_maps)
-		/* अगर we didn't copy map poपूर्णांकers पूर्णांकo bpf_prog_info, release
-		 * them now. Otherwise मुक्त_used_maps() will release them.
+	if (!env->prog->aux->used_maps)
+		/* if we didn't copy map pointers into bpf_prog_info, release
+		 * them now. Otherwise free_used_maps() will release them.
 		 */
 		release_maps(env);
-	अगर (!env->prog->aux->used_btfs)
+	if (!env->prog->aux->used_btfs)
 		release_btfs(env);
 
-	/* extension progs temporarily inherit the attach_type of their tarमाला_लो
-	   क्रम verअगरication purposes, so set it back to zero beक्रमe वापसing
+	/* extension progs temporarily inherit the attach_type of their targets
+	   for verification purposes, so set it back to zero before returning
 	 */
-	अगर (env->prog->type == BPF_PROG_TYPE_EXT)
+	if (env->prog->type == BPF_PROG_TYPE_EXT)
 		env->prog->expected_attach_type = 0;
 
 	*prog = env->prog;
 err_unlock:
-	अगर (!is_priv)
-		mutex_unlock(&bpf_verअगरier_lock);
-	vमुक्त(env->insn_aux_data);
-err_मुक्त_env:
-	kमुक्त(env);
-	वापस ret;
-पूर्ण
+	if (!is_priv)
+		mutex_unlock(&bpf_verifier_lock);
+	vfree(env->insn_aux_data);
+err_free_env:
+	kfree(env);
+	return ret;
+}

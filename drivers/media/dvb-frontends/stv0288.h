@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
-	Driver क्रम ST STV0288 demodulator
+	Driver for ST STV0288 demodulator
 
-	Copyright (C) 2006 Georg Acher, BayCom GmbH, acher (at) baycom (करोt) de
-		क्रम Reel Mulसमयdia
+	Copyright (C) 2006 Georg Acher, BayCom GmbH, acher (at) baycom (dot) de
+		for Reel Multimedia
 	Copyright (C) 2008 TurboSight.com, <bob@turbosight.com>
 	Copyright (C) 2008 Igor M. Liplianin <liplianin@me.by>
-		Removed stb6000 specअगरic tuner code and revised some
+		Removed stb6000 specific tuner code and revised some
 		procedures.
 
 
 */
 
-#अगर_अघोषित STV0288_H
-#घोषणा STV0288_H
+#ifndef STV0288_H
+#define STV0288_H
 
-#समावेश <linux/dvb/frontend.h>
-#समावेश <media/dvb_frontend.h>
+#include <linux/dvb/frontend.h>
+#include <media/dvb_frontend.h>
 
-काष्ठा stv0288_config अणु
+struct stv0288_config {
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
 	u8* inittab;
 
-	/* minimum delay beक्रमe retuning */
-	पूर्णांक min_delay_ms;
+	/* minimum delay before retuning */
+	int min_delay_ms;
 
-	पूर्णांक (*set_ts_params)(काष्ठा dvb_frontend *fe, पूर्णांक is_punctured);
-पूर्ण;
+	int (*set_ts_params)(struct dvb_frontend *fe, int is_punctured);
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_STV0288)
-बाह्य काष्ठा dvb_frontend *stv0288_attach(स्थिर काष्ठा stv0288_config *config,
-					   काष्ठा i2c_adapter *i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *stv0288_attach(स्थिर काष्ठा stv0288_config *config,
-					   काष्ठा i2c_adapter *i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DVB_STV0288 */
+#if IS_REACHABLE(CONFIG_DVB_STV0288)
+extern struct dvb_frontend *stv0288_attach(const struct stv0288_config *config,
+					   struct i2c_adapter *i2c);
+#else
+static inline struct dvb_frontend *stv0288_attach(const struct stv0288_config *config,
+					   struct i2c_adapter *i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif /* CONFIG_DVB_STV0288 */
 
-अटल अंतरभूत पूर्णांक stv0288_ग_लिखोreg(काष्ठा dvb_frontend *fe, u8 reg, u8 val)
-अणु
-	पूर्णांक r = 0;
-	u8 buf[] = अणु reg, val पूर्ण;
-	अगर (fe->ops.ग_लिखो)
-		r = fe->ops.ग_लिखो(fe, buf, 2);
-	वापस r;
-पूर्ण
+static inline int stv0288_writereg(struct dvb_frontend *fe, u8 reg, u8 val)
+{
+	int r = 0;
+	u8 buf[] = { reg, val };
+	if (fe->ops.write)
+		r = fe->ops.write(fe, buf, 2);
+	return r;
+}
 
-#पूर्ण_अगर /* STV0288_H */
+#endif /* STV0288_H */

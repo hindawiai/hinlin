@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
+ * Squashfs - a compressed read only filesystem for Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -10,119 +9,119 @@
  */
 
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/zlib.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/mutex.h>
+#include <linux/bio.h>
+#include <linux/slab.h>
+#include <linux/zlib.h>
+#include <linux/vmalloc.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "squashfs.h"
-#समावेश "decompressor.h"
-#समावेश "page_actor.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "squashfs.h"
+#include "decompressor.h"
+#include "page_actor.h"
 
-अटल व्योम *zlib_init(काष्ठा squashfs_sb_info *dummy, व्योम *buff)
-अणु
-	z_stream *stream = kदो_स्मृति(माप(z_stream), GFP_KERNEL);
-	अगर (stream == शून्य)
-		जाओ failed;
-	stream->workspace = vदो_स्मृति(zlib_inflate_workspacesize());
-	अगर (stream->workspace == शून्य)
-		जाओ failed;
+static void *zlib_init(struct squashfs_sb_info *dummy, void *buff)
+{
+	z_stream *stream = kmalloc(sizeof(z_stream), GFP_KERNEL);
+	if (stream == NULL)
+		goto failed;
+	stream->workspace = vmalloc(zlib_inflate_workspacesize());
+	if (stream->workspace == NULL)
+		goto failed;
 
-	वापस stream;
+	return stream;
 
 failed:
 	ERROR("Failed to allocate zlib workspace\n");
-	kमुक्त(stream);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	kfree(stream);
+	return ERR_PTR(-ENOMEM);
+}
 
 
-अटल व्योम zlib_मुक्त(व्योम *strm)
-अणु
+static void zlib_free(void *strm)
+{
 	z_stream *stream = strm;
 
-	अगर (stream)
-		vमुक्त(stream->workspace);
-	kमुक्त(stream);
-पूर्ण
+	if (stream)
+		vfree(stream->workspace);
+	kfree(stream);
+}
 
 
-अटल पूर्णांक zlib_uncompress(काष्ठा squashfs_sb_info *msblk, व्योम *strm,
-	काष्ठा bio *bio, पूर्णांक offset, पूर्णांक length,
-	काष्ठा squashfs_page_actor *output)
-अणु
-	काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
-	काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
-	पूर्णांक zlib_init = 0, error = 0;
+static int zlib_uncompress(struct squashfs_sb_info *msblk, void *strm,
+	struct bio *bio, int offset, int length,
+	struct squashfs_page_actor *output)
+{
+	struct bvec_iter_all iter_all = {};
+	struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
+	int zlib_init = 0, error = 0;
 	z_stream *stream = strm;
 
 	stream->avail_out = PAGE_SIZE;
 	stream->next_out = squashfs_first_page(output);
 	stream->avail_in = 0;
 
-	क्रम (;;) अणु
-		पूर्णांक zlib_err;
+	for (;;) {
+		int zlib_err;
 
-		अगर (stream->avail_in == 0) अणु
-			स्थिर व्योम *data;
-			पूर्णांक avail;
+		if (stream->avail_in == 0) {
+			const void *data;
+			int avail;
 
-			अगर (!bio_next_segment(bio, &iter_all)) अणु
+			if (!bio_next_segment(bio, &iter_all)) {
 				/* Z_STREAM_END must be reached. */
 				error = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			avail = min(length, ((पूर्णांक)bvec->bv_len) - offset);
+			avail = min(length, ((int)bvec->bv_len) - offset);
 			data = page_address(bvec->bv_page) + bvec->bv_offset;
 			length -= avail;
 			stream->next_in = data + offset;
 			stream->avail_in = avail;
 			offset = 0;
-		पूर्ण
+		}
 
-		अगर (stream->avail_out == 0) अणु
+		if (stream->avail_out == 0) {
 			stream->next_out = squashfs_next_page(output);
-			अगर (stream->next_out != शून्य)
+			if (stream->next_out != NULL)
 				stream->avail_out = PAGE_SIZE;
-		पूर्ण
+		}
 
-		अगर (!zlib_init) अणु
+		if (!zlib_init) {
 			zlib_err = zlib_inflateInit(stream);
-			अगर (zlib_err != Z_OK) अणु
+			if (zlib_err != Z_OK) {
 				error = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			zlib_init = 1;
-		पूर्ण
+		}
 
 		zlib_err = zlib_inflate(stream, Z_SYNC_FLUSH);
-		अगर (zlib_err == Z_STREAM_END)
-			अवरोध;
-		अगर (zlib_err != Z_OK) अणु
+		if (zlib_err == Z_STREAM_END)
+			break;
+		if (zlib_err != Z_OK) {
 			error = -EIO;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	squashfs_finish_page(output);
 
-	अगर (!error)
-		अगर (zlib_inflateEnd(stream) != Z_OK)
+	if (!error)
+		if (zlib_inflateEnd(stream) != Z_OK)
 			error = -EIO;
 
-	वापस error ? error : stream->total_out;
-पूर्ण
+	return error ? error : stream->total_out;
+}
 
-स्थिर काष्ठा squashfs_decompressor squashfs_zlib_comp_ops = अणु
+const struct squashfs_decompressor squashfs_zlib_comp_ops = {
 	.init = zlib_init,
-	.मुक्त = zlib_मुक्त,
+	.free = zlib_free,
 	.decompress = zlib_uncompress,
 	.id = ZLIB_COMPRESSION,
 	.name = "zlib",
 	.supported = 1
-पूर्ण;
+};
 

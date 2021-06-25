@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/user-वापस-notअगरier.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/export.h>
+#include <linux/user-return-notifier.h>
+#include <linux/percpu.h>
+#include <linux/sched.h>
+#include <linux/export.h>
 
-अटल DEFINE_PER_CPU(काष्ठा hlist_head, वापस_notअगरier_list);
+static DEFINE_PER_CPU(struct hlist_head, return_notifier_list);
 
 /*
- * Request a notअगरication when the current cpu वापसs to userspace.  Must be
- * called in atomic context.  The notअगरier will also be called in atomic
+ * Request a notification when the current cpu returns to userspace.  Must be
+ * called in atomic context.  The notifier will also be called in atomic
  * context.
  */
-व्योम user_वापस_notअगरier_रेजिस्टर(काष्ठा user_वापस_notअगरier *urn)
-अणु
-	set_tsk_thपढ़ो_flag(current, TIF_USER_RETURN_NOTIFY);
-	hlist_add_head(&urn->link, this_cpu_ptr(&वापस_notअगरier_list));
-पूर्ण
-EXPORT_SYMBOL_GPL(user_वापस_notअगरier_रेजिस्टर);
+void user_return_notifier_register(struct user_return_notifier *urn)
+{
+	set_tsk_thread_flag(current, TIF_USER_RETURN_NOTIFY);
+	hlist_add_head(&urn->link, this_cpu_ptr(&return_notifier_list));
+}
+EXPORT_SYMBOL_GPL(user_return_notifier_register);
 
 /*
- * Removes a रेजिस्टरed user वापस notअगरier.  Must be called from atomic
+ * Removes a registered user return notifier.  Must be called from atomic
  * context, and from the same cpu registration occurred in.
  */
-व्योम user_वापस_notअगरier_unरेजिस्टर(काष्ठा user_वापस_notअगरier *urn)
-अणु
+void user_return_notifier_unregister(struct user_return_notifier *urn)
+{
 	hlist_del(&urn->link);
-	अगर (hlist_empty(this_cpu_ptr(&वापस_notअगरier_list)))
-		clear_tsk_thपढ़ो_flag(current, TIF_USER_RETURN_NOTIFY);
-पूर्ण
-EXPORT_SYMBOL_GPL(user_वापस_notअगरier_unरेजिस्टर);
+	if (hlist_empty(this_cpu_ptr(&return_notifier_list)))
+		clear_tsk_thread_flag(current, TIF_USER_RETURN_NOTIFY);
+}
+EXPORT_SYMBOL_GPL(user_return_notifier_unregister);
 
-/* Calls रेजिस्टरed user वापस notअगरiers */
-व्योम fire_user_वापस_notअगरiers(व्योम)
-अणु
-	काष्ठा user_वापस_notअगरier *urn;
-	काष्ठा hlist_node *पंचांगp2;
-	काष्ठा hlist_head *head;
+/* Calls registered user return notifiers */
+void fire_user_return_notifiers(void)
+{
+	struct user_return_notifier *urn;
+	struct hlist_node *tmp2;
+	struct hlist_head *head;
 
-	head = &get_cpu_var(वापस_notअगरier_list);
-	hlist_क्रम_each_entry_safe(urn, पंचांगp2, head, link)
-		urn->on_user_वापस(urn);
-	put_cpu_var(वापस_notअगरier_list);
-पूर्ण
+	head = &get_cpu_var(return_notifier_list);
+	hlist_for_each_entry_safe(urn, tmp2, head, link)
+		urn->on_user_return(urn);
+	put_cpu_var(return_notifier_list);
+}

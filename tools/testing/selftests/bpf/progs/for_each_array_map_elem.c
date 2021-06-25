@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
-#समावेश "vmlinux.h"
-#समावेश <bpf/bpf_helpers.h>
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
-	__uपूर्णांक(max_entries, 3);
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	__uint(max_entries, 3);
 	__type(key, __u32);
 	__type(value, __u64);
-पूर्ण arraymap SEC(".maps");
+} arraymap SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uपूर्णांक(max_entries, 1);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u64);
-पूर्ण percpu_map SEC(".maps");
+} percpu_map SEC(".maps");
 
-काष्ठा callback_ctx अणु
-	पूर्णांक output;
-पूर्ण;
+struct callback_ctx {
+	int output;
+};
 
-अटल __u64
-check_array_elem(काष्ठा bpf_map *map, __u32 *key, __u64 *val,
-		 काष्ठा callback_ctx *data)
-अणु
+static __u64
+check_array_elem(struct bpf_map *map, __u32 *key, __u64 *val,
+		 struct callback_ctx *data)
+{
 	data->output += *val;
-	अगर (*key == 1)
-		वापस 1; /* stop the iteration */
-	वापस 0;
-पूर्ण
+	if (*key == 1)
+		return 1; /* stop the iteration */
+	return 0;
+}
 
 __u32 cpu = 0;
 __u64 percpu_val = 0;
 
-अटल __u64
-check_percpu_elem(काष्ठा bpf_map *map, __u32 *key, __u64 *val,
-		  काष्ठा callback_ctx *data)
-अणु
+static __u64
+check_percpu_elem(struct bpf_map *map, __u32 *key, __u64 *val,
+		  struct callback_ctx *data)
+{
 	cpu = bpf_get_smp_processor_id();
 	percpu_val = *val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 u32 arraymap_output = 0;
 
 SEC("classifier")
-पूर्णांक test_pkt_access(काष्ठा __sk_buff *skb)
-अणु
-	काष्ठा callback_ctx data;
+int test_pkt_access(struct __sk_buff *skb)
+{
+	struct callback_ctx data;
 
 	data.output = 0;
-	bpf_क्रम_each_map_elem(&arraymap, check_array_elem, &data, 0);
+	bpf_for_each_map_elem(&arraymap, check_array_elem, &data, 0);
 	arraymap_output = data.output;
 
-	bpf_क्रम_each_map_elem(&percpu_map, check_percpu_elem, (व्योम *)0, 0);
-	वापस 0;
-पूर्ण
+	bpf_for_each_map_elem(&percpu_map, check_percpu_elem, (void *)0, 0);
+	return 0;
+}

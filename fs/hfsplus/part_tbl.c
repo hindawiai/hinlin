@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * linux/fs/hfsplus/part_tbl.c
  *
@@ -9,35 +8,35 @@
  * Original code to handle the new style Mac partition table based on
  * a patch contributed by Holger Schemel (aeglos@valinor.owl.de).
  *
- * In function preconditions the term "valid" applied to a poपूर्णांकer to
- * a काष्ठाure means that the poपूर्णांकer is non-शून्य and the काष्ठाure it
- * poपूर्णांकs to has all fields initialized to consistent values.
+ * In function preconditions the term "valid" applied to a pointer to
+ * a structure means that the pointer is non-NULL and the structure it
+ * points to has all fields initialized to consistent values.
  *
  */
 
-#समावेश <linux/slab.h>
-#समावेश "hfsplus_fs.h"
+#include <linux/slab.h>
+#include "hfsplus_fs.h"
 
 /* offsets to various blocks */
-#घोषणा HFS_DD_BLK		0 /* Driver Descriptor block */
-#घोषणा HFS_PMAP_BLK		1 /* First block of partition map */
-#घोषणा HFS_MDB_BLK		2 /* Block (w/i partition) of MDB */
+#define HFS_DD_BLK		0 /* Driver Descriptor block */
+#define HFS_PMAP_BLK		1 /* First block of partition map */
+#define HFS_MDB_BLK		2 /* Block (w/i partition) of MDB */
 
-/* magic numbers क्रम various disk blocks */
-#घोषणा HFS_DRVR_DESC_MAGIC	0x4552 /* "ER": driver descriptor map */
-#घोषणा HFS_OLD_PMAP_MAGIC	0x5453 /* "TS": old-type partition map */
-#घोषणा HFS_NEW_PMAP_MAGIC	0x504D /* "PM": new-type partition map */
-#घोषणा HFS_SUPER_MAGIC		0x4244 /* "BD": HFS MDB (super block) */
-#घोषणा HFS_MFS_SUPER_MAGIC	0xD2D7 /* MFS MDB (super block) */
+/* magic numbers for various disk blocks */
+#define HFS_DRVR_DESC_MAGIC	0x4552 /* "ER": driver descriptor map */
+#define HFS_OLD_PMAP_MAGIC	0x5453 /* "TS": old-type partition map */
+#define HFS_NEW_PMAP_MAGIC	0x504D /* "PM": new-type partition map */
+#define HFS_SUPER_MAGIC		0x4244 /* "BD": HFS MDB (super block) */
+#define HFS_MFS_SUPER_MAGIC	0xD2D7 /* MFS MDB (super block) */
 
 /*
  * The new style Mac partition map
  *
  * For each partition on the media there is a physical block (512-byte
- * block) containing one of these काष्ठाures.  These blocks are
+ * block) containing one of these structures.  These blocks are
  * contiguous starting at block 1.
  */
-काष्ठा new_pmap अणु
+struct new_pmap {
 	__be16	pmSig;		/* signature */
 	__be16	reSigPad;	/* padding */
 	__be32	pmMapBlkCnt;	/* partition blocks count */
@@ -49,111 +48,111 @@
 	u8	pmPartType[32];	/* (null terminated?) string
 				   giving the type of this
 				   partition */
-	/* a bunch more stuff we करोn't need */
-पूर्ण __packed;
+	/* a bunch more stuff we don't need */
+} __packed;
 
 /*
  * The old style Mac partition map
  *
- * The partition map consists क्रम a 2-byte signature followed by an
- * array of these काष्ठाures.  The map is terminated with an all-zero
+ * The partition map consists for a 2-byte signature followed by an
+ * array of these structures.  The map is terminated with an all-zero
  * one of these.
  */
-काष्ठा old_pmap अणु
+struct old_pmap {
 	__be16		pdSig;	/* Signature bytes */
-	काष्ठा old_pmap_entry अणु
+	struct old_pmap_entry {
 		__be32	pdStart;
 		__be32	pdSize;
 		__be32	pdFSID;
-	पूर्ण	pdEntry[42];
-पूर्ण __packed;
+	}	pdEntry[42];
+} __packed;
 
-अटल पूर्णांक hfs_parse_old_pmap(काष्ठा super_block *sb, काष्ठा old_pmap *pm,
+static int hfs_parse_old_pmap(struct super_block *sb, struct old_pmap *pm,
 		sector_t *part_start, sector_t *part_size)
-अणु
-	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	पूर्णांक i;
+{
+	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	int i;
 
-	क्रम (i = 0; i < 42; i++) अणु
-		काष्ठा old_pmap_entry *p = &pm->pdEntry[i];
+	for (i = 0; i < 42; i++) {
+		struct old_pmap_entry *p = &pm->pdEntry[i];
 
-		अगर (p->pdStart && p->pdSize &&
+		if (p->pdStart && p->pdSize &&
 		    p->pdFSID == cpu_to_be32(0x54465331)/*"TFS1"*/ &&
-		    (sbi->part < 0 || sbi->part == i)) अणु
+		    (sbi->part < 0 || sbi->part == i)) {
 			*part_start += be32_to_cpu(p->pdStart);
 			*part_size = be32_to_cpu(p->pdSize);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक hfs_parse_new_pmap(काष्ठा super_block *sb, व्योम *buf,
-		काष्ठा new_pmap *pm, sector_t *part_start, sector_t *part_size)
-अणु
-	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
-	पूर्णांक size = be32_to_cpu(pm->pmMapBlkCnt);
-	पूर्णांक buf_size = hfsplus_min_io_size(sb);
-	पूर्णांक res;
-	पूर्णांक i = 0;
+static int hfs_parse_new_pmap(struct super_block *sb, void *buf,
+		struct new_pmap *pm, sector_t *part_start, sector_t *part_size)
+{
+	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
+	int size = be32_to_cpu(pm->pmMapBlkCnt);
+	int buf_size = hfsplus_min_io_size(sb);
+	int res;
+	int i = 0;
 
-	करो अणु
-		अगर (!स_भेद(pm->pmPartType, "Apple_HFS", 9) &&
-		    (sbi->part < 0 || sbi->part == i)) अणु
+	do {
+		if (!memcmp(pm->pmPartType, "Apple_HFS", 9) &&
+		    (sbi->part < 0 || sbi->part == i)) {
 			*part_start += be32_to_cpu(pm->pmPyPartStart);
 			*part_size = be32_to_cpu(pm->pmPartBlkCnt);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (++i >= size)
-			वापस -ENOENT;
+		if (++i >= size)
+			return -ENOENT;
 
-		pm = (काष्ठा new_pmap *)((u8 *)pm + HFSPLUS_SECTOR_SIZE);
-		अगर ((u8 *)pm - (u8 *)buf >= buf_size) अणु
+		pm = (struct new_pmap *)((u8 *)pm + HFSPLUS_SECTOR_SIZE);
+		if ((u8 *)pm - (u8 *)buf >= buf_size) {
 			res = hfsplus_submit_bio(sb,
 						 *part_start + HFS_PMAP_BLK + i,
-						 buf, (व्योम **)&pm, REQ_OP_READ,
+						 buf, (void **)&pm, REQ_OP_READ,
 						 0);
-			अगर (res)
-				वापस res;
-		पूर्ण
-	पूर्ण जबतक (pm->pmSig == cpu_to_be16(HFS_NEW_PMAP_MAGIC));
+			if (res)
+				return res;
+		}
+	} while (pm->pmSig == cpu_to_be16(HFS_NEW_PMAP_MAGIC));
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
 /*
- * Parse the partition map looking क्रम the start and length of a
+ * Parse the partition map looking for the start and length of a
  * HFS/HFS+ partition.
  */
-पूर्णांक hfs_part_find(काष्ठा super_block *sb,
+int hfs_part_find(struct super_block *sb,
 		sector_t *part_start, sector_t *part_size)
-अणु
-	व्योम *buf, *data;
-	पूर्णांक res;
+{
+	void *buf, *data;
+	int res;
 
-	buf = kदो_स्मृति(hfsplus_min_io_size(sb), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(hfsplus_min_io_size(sb), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	res = hfsplus_submit_bio(sb, *part_start + HFS_PMAP_BLK,
 				 buf, &data, REQ_OP_READ, 0);
-	अगर (res)
-		जाओ out;
+	if (res)
+		goto out;
 
-	चयन (be16_to_cpu(*((__be16 *)data))) अणु
-	हाल HFS_OLD_PMAP_MAGIC:
+	switch (be16_to_cpu(*((__be16 *)data))) {
+	case HFS_OLD_PMAP_MAGIC:
 		res = hfs_parse_old_pmap(sb, data, part_start, part_size);
-		अवरोध;
-	हाल HFS_NEW_PMAP_MAGIC:
+		break;
+	case HFS_NEW_PMAP_MAGIC:
 		res = hfs_parse_new_pmap(sb, buf, data, part_start, part_size);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = -ENOENT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	kमुक्त(buf);
-	वापस res;
-पूर्ण
+	kfree(buf);
+	return res;
+}

@@ -1,82 +1,81 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _INET_ECN_H_
-#घोषणा _INET_ECN_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _INET_ECN_H_
+#define _INET_ECN_H_
 
-#समावेश <linux/ip.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_vlan.h>
+#include <linux/ip.h>
+#include <linux/skbuff.h>
+#include <linux/if_vlan.h>
 
-#समावेश <net/inet_sock.h>
-#समावेश <net/dsfield.h>
-#समावेश <net/checksum.h>
+#include <net/inet_sock.h>
+#include <net/dsfield.h>
+#include <net/checksum.h>
 
-क्रमागत अणु
+enum {
 	INET_ECN_NOT_ECT = 0,
 	INET_ECN_ECT_1 = 1,
 	INET_ECN_ECT_0 = 2,
 	INET_ECN_CE = 3,
 	INET_ECN_MASK = 3,
-पूर्ण;
+};
 
-बाह्य पूर्णांक sysctl_tunnel_ecn_log;
+extern int sysctl_tunnel_ecn_log;
 
-अटल अंतरभूत पूर्णांक INET_ECN_is_ce(__u8 dsfield)
-अणु
-	वापस (dsfield & INET_ECN_MASK) == INET_ECN_CE;
-पूर्ण
+static inline int INET_ECN_is_ce(__u8 dsfield)
+{
+	return (dsfield & INET_ECN_MASK) == INET_ECN_CE;
+}
 
-अटल अंतरभूत पूर्णांक INET_ECN_is_not_ect(__u8 dsfield)
-अणु
-	वापस (dsfield & INET_ECN_MASK) == INET_ECN_NOT_ECT;
-पूर्ण
+static inline int INET_ECN_is_not_ect(__u8 dsfield)
+{
+	return (dsfield & INET_ECN_MASK) == INET_ECN_NOT_ECT;
+}
 
-अटल अंतरभूत पूर्णांक INET_ECN_is_capable(__u8 dsfield)
-अणु
-	वापस dsfield & INET_ECN_ECT_0;
-पूर्ण
+static inline int INET_ECN_is_capable(__u8 dsfield)
+{
+	return dsfield & INET_ECN_ECT_0;
+}
 
 /*
  * RFC 3168 9.1.1
- *  The full-functionality option क्रम ECN encapsulation is to copy the
- *  ECN codepoपूर्णांक of the inside header to the outside header on
- *  encapsulation अगर the inside header is not-ECT or ECT, and to set the
- *  ECN codepoपूर्णांक of the outside header to ECT(0) अगर the ECN codepoपूर्णांक of
+ *  The full-functionality option for ECN encapsulation is to copy the
+ *  ECN codepoint of the inside header to the outside header on
+ *  encapsulation if the inside header is not-ECT or ECT, and to set the
+ *  ECN codepoint of the outside header to ECT(0) if the ECN codepoint of
  *  the inside header is CE.
  */
-अटल अंतरभूत __u8 INET_ECN_encapsulate(__u8 outer, __u8 inner)
-अणु
+static inline __u8 INET_ECN_encapsulate(__u8 outer, __u8 inner)
+{
 	outer &= ~INET_ECN_MASK;
 	outer |= !INET_ECN_is_ce(inner) ? (inner & INET_ECN_MASK) :
 					  INET_ECN_ECT_0;
-	वापस outer;
-पूर्ण
+	return outer;
+}
 
-अटल अंतरभूत व्योम INET_ECN_xmit(काष्ठा sock *sk)
-अणु
+static inline void INET_ECN_xmit(struct sock *sk)
+{
 	inet_sk(sk)->tos |= INET_ECN_ECT_0;
-	अगर (inet6_sk(sk) != शून्य)
+	if (inet6_sk(sk) != NULL)
 		inet6_sk(sk)->tclass |= INET_ECN_ECT_0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम INET_ECN_करोntxmit(काष्ठा sock *sk)
-अणु
+static inline void INET_ECN_dontxmit(struct sock *sk)
+{
 	inet_sk(sk)->tos &= ~INET_ECN_MASK;
-	अगर (inet6_sk(sk) != शून्य)
+	if (inet6_sk(sk) != NULL)
 		inet6_sk(sk)->tclass &= ~INET_ECN_MASK;
-पूर्ण
+}
 
-#घोषणा IP6_ECN_flow_init(label) करो अणु		\
+#define IP6_ECN_flow_init(label) do {		\
       (label) &= ~htonl(INET_ECN_MASK << 20);	\
-    पूर्ण जबतक (0)
+    } while (0)
 
-#घोषणा	IP6_ECN_flow_xmit(sk, label) करो अणु				\
-	अगर (INET_ECN_is_capable(inet6_sk(sk)->tclass))			\
+#define	IP6_ECN_flow_xmit(sk, label) do {				\
+	if (INET_ECN_is_capable(inet6_sk(sk)->tclass))			\
 		(label) |= htonl(INET_ECN_ECT_0 << 20);			\
-    पूर्ण जबतक (0)
+    } while (0)
 
-अटल अंतरभूत पूर्णांक IP_ECN_set_ce(काष्ठा iphdr *iph)
-अणु
+static inline int IP_ECN_set_ce(struct iphdr *iph)
+{
 	u32 ecn = (iph->tos + 1) & INET_ECN_MASK;
 	__be16 check_add;
 
@@ -87,132 +86,132 @@
 	 * INET_ECN_ECT_0   => 11
 	 * INET_ECN_CE      => 00
 	 */
-	अगर (!(ecn & 2))
-		वापस !ecn;
+	if (!(ecn & 2))
+		return !ecn;
 
 	/*
 	 * The following gives us:
 	 * INET_ECN_ECT_1 => check += htons(0xFFFD)
 	 * INET_ECN_ECT_0 => check += htons(0xFFFE)
 	 */
-	check_add = (__क्रमce __be16)((__क्रमce u16)htons(0xFFFB) +
-				     (__क्रमce u16)htons(ecn));
+	check_add = (__force __be16)((__force u16)htons(0xFFFB) +
+				     (__force u16)htons(ecn));
 
 	iph->check = csum16_add(iph->check, check_add);
 	iph->tos |= INET_ECN_CE;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक IP_ECN_set_ect1(काष्ठा iphdr *iph)
-अणु
-	अगर ((iph->tos & INET_ECN_MASK) != INET_ECN_ECT_0)
-		वापस 0;
+static inline int IP_ECN_set_ect1(struct iphdr *iph)
+{
+	if ((iph->tos & INET_ECN_MASK) != INET_ECN_ECT_0)
+		return 0;
 
 	iph->check = csum16_add(iph->check, htons(0x1));
 	iph->tos ^= INET_ECN_MASK;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल अंतरभूत व्योम IP_ECN_clear(काष्ठा iphdr *iph)
-अणु
+static inline void IP_ECN_clear(struct iphdr *iph)
+{
 	iph->tos &= ~INET_ECN_MASK;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ipv4_copy_dscp(अचिन्हित पूर्णांक dscp, काष्ठा iphdr *inner)
-अणु
+static inline void ipv4_copy_dscp(unsigned int dscp, struct iphdr *inner)
+{
 	dscp &= ~INET_ECN_MASK;
 	ipv4_change_dsfield(inner, INET_ECN_MASK, dscp);
-पूर्ण
+}
 
-काष्ठा ipv6hdr;
+struct ipv6hdr;
 
 /* Note:
  * IP_ECN_set_ce() has to tweak IPV4 checksum when setting CE,
- * meaning both changes have no effect on skb->csum अगर/when CHECKSUM_COMPLETE
- * In IPv6 हाल, no checksum compensates the change in IPv6 header,
+ * meaning both changes have no effect on skb->csum if/when CHECKSUM_COMPLETE
+ * In IPv6 case, no checksum compensates the change in IPv6 header,
  * so we have to update skb->csum.
  */
-अटल अंतरभूत पूर्णांक IP6_ECN_set_ce(काष्ठा sk_buff *skb, काष्ठा ipv6hdr *iph)
-अणु
+static inline int IP6_ECN_set_ce(struct sk_buff *skb, struct ipv6hdr *iph)
+{
 	__be32 from, to;
 
-	अगर (INET_ECN_is_not_ect(ipv6_get_dsfield(iph)))
-		वापस 0;
+	if (INET_ECN_is_not_ect(ipv6_get_dsfield(iph)))
+		return 0;
 
 	from = *(__be32 *)iph;
 	to = from | htonl(INET_ECN_CE << 20);
 	*(__be32 *)iph = to;
-	अगर (skb->ip_summed == CHECKSUM_COMPLETE)
-		skb->csum = csum_add(csum_sub(skb->csum, (__क्रमce __wsum)from),
-				     (__क्रमce __wsum)to);
-	वापस 1;
-पूर्ण
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_add(csum_sub(skb->csum, (__force __wsum)from),
+				     (__force __wsum)to);
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक IP6_ECN_set_ect1(काष्ठा sk_buff *skb, काष्ठा ipv6hdr *iph)
-अणु
+static inline int IP6_ECN_set_ect1(struct sk_buff *skb, struct ipv6hdr *iph)
+{
 	__be32 from, to;
 
-	अगर ((ipv6_get_dsfield(iph) & INET_ECN_MASK) != INET_ECN_ECT_0)
-		वापस 0;
+	if ((ipv6_get_dsfield(iph) & INET_ECN_MASK) != INET_ECN_ECT_0)
+		return 0;
 
 	from = *(__be32 *)iph;
 	to = from ^ htonl(INET_ECN_MASK << 20);
 	*(__be32 *)iph = to;
-	अगर (skb->ip_summed == CHECKSUM_COMPLETE)
-		skb->csum = csum_add(csum_sub(skb->csum, (__क्रमce __wsum)from),
-				     (__क्रमce __wsum)to);
-	वापस 1;
-पूर्ण
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_add(csum_sub(skb->csum, (__force __wsum)from),
+				     (__force __wsum)to);
+	return 1;
+}
 
-अटल अंतरभूत व्योम ipv6_copy_dscp(अचिन्हित पूर्णांक dscp, काष्ठा ipv6hdr *inner)
-अणु
+static inline void ipv6_copy_dscp(unsigned int dscp, struct ipv6hdr *inner)
+{
 	dscp &= ~INET_ECN_MASK;
 	ipv6_change_dsfield(inner, INET_ECN_MASK, dscp);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक INET_ECN_set_ce(काष्ठा sk_buff *skb)
-अणु
-	चयन (skb_protocol(skb, true)) अणु
-	हाल cpu_to_be16(ETH_P_IP):
-		अगर (skb_network_header(skb) + माप(काष्ठा iphdr) <=
-		    skb_tail_poपूर्णांकer(skb))
-			वापस IP_ECN_set_ce(ip_hdr(skb));
-		अवरोध;
+static inline int INET_ECN_set_ce(struct sk_buff *skb)
+{
+	switch (skb_protocol(skb, true)) {
+	case cpu_to_be16(ETH_P_IP):
+		if (skb_network_header(skb) + sizeof(struct iphdr) <=
+		    skb_tail_pointer(skb))
+			return IP_ECN_set_ce(ip_hdr(skb));
+		break;
 
-	हाल cpu_to_be16(ETH_P_IPV6):
-		अगर (skb_network_header(skb) + माप(काष्ठा ipv6hdr) <=
-		    skb_tail_poपूर्णांकer(skb))
-			वापस IP6_ECN_set_ce(skb, ipv6_hdr(skb));
-		अवरोध;
-	पूर्ण
+	case cpu_to_be16(ETH_P_IPV6):
+		if (skb_network_header(skb) + sizeof(struct ipv6hdr) <=
+		    skb_tail_pointer(skb))
+			return IP6_ECN_set_ce(skb, ipv6_hdr(skb));
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक INET_ECN_set_ect1(काष्ठा sk_buff *skb)
-अणु
-	चयन (skb_protocol(skb, true)) अणु
-	हाल cpu_to_be16(ETH_P_IP):
-		अगर (skb_network_header(skb) + माप(काष्ठा iphdr) <=
-		    skb_tail_poपूर्णांकer(skb))
-			वापस IP_ECN_set_ect1(ip_hdr(skb));
-		अवरोध;
+static inline int INET_ECN_set_ect1(struct sk_buff *skb)
+{
+	switch (skb_protocol(skb, true)) {
+	case cpu_to_be16(ETH_P_IP):
+		if (skb_network_header(skb) + sizeof(struct iphdr) <=
+		    skb_tail_pointer(skb))
+			return IP_ECN_set_ect1(ip_hdr(skb));
+		break;
 
-	हाल cpu_to_be16(ETH_P_IPV6):
-		अगर (skb_network_header(skb) + माप(काष्ठा ipv6hdr) <=
-		    skb_tail_poपूर्णांकer(skb))
-			वापस IP6_ECN_set_ect1(skb, ipv6_hdr(skb));
-		अवरोध;
-	पूर्ण
+	case cpu_to_be16(ETH_P_IPV6):
+		if (skb_network_header(skb) + sizeof(struct ipv6hdr) <=
+		    skb_tail_pointer(skb))
+			return IP6_ECN_set_ect1(skb, ipv6_hdr(skb));
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * RFC 6040 4.2
  *  To decapsulate the inner header at the tunnel egress, a compliant
- *  tunnel egress MUST set the outgoing ECN field to the codepoपूर्णांक at the
- *  पूर्णांकersection of the appropriate arriving inner header (row) and outer
+ *  tunnel egress MUST set the outgoing ECN field to the codepoint at the
+ *  intersection of the appropriate arriving inner header (row) and outer
  *  header (column) in Figure 4
  *
  *      +---------+------------------------------------------------+
@@ -228,80 +227,80 @@
  *
  *             Figure 4: New IP in IP Decapsulation Behaviour
  *
- *  वापसs 0 on success
- *          1 अगर something is broken and should be logged (!!! above)
- *          2 अगर packet should be dropped
+ *  returns 0 on success
+ *          1 if something is broken and should be logged (!!! above)
+ *          2 if packet should be dropped
  */
-अटल अंतरभूत पूर्णांक __INET_ECN_decapsulate(__u8 outer, __u8 inner, bool *set_ce)
-अणु
-	अगर (INET_ECN_is_not_ect(inner)) अणु
-		चयन (outer & INET_ECN_MASK) अणु
-		हाल INET_ECN_NOT_ECT:
-			वापस 0;
-		हाल INET_ECN_ECT_0:
-		हाल INET_ECN_ECT_1:
-			वापस 1;
-		हाल INET_ECN_CE:
-			वापस 2;
-		पूर्ण
-	पूर्ण
+static inline int __INET_ECN_decapsulate(__u8 outer, __u8 inner, bool *set_ce)
+{
+	if (INET_ECN_is_not_ect(inner)) {
+		switch (outer & INET_ECN_MASK) {
+		case INET_ECN_NOT_ECT:
+			return 0;
+		case INET_ECN_ECT_0:
+		case INET_ECN_ECT_1:
+			return 1;
+		case INET_ECN_CE:
+			return 2;
+		}
+	}
 
 	*set_ce = INET_ECN_is_ce(outer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक INET_ECN_decapsulate(काष्ठा sk_buff *skb,
+static inline int INET_ECN_decapsulate(struct sk_buff *skb,
 				       __u8 outer, __u8 inner)
-अणु
+{
 	bool set_ce = false;
-	पूर्णांक rc;
+	int rc;
 
 	rc = __INET_ECN_decapsulate(outer, inner, &set_ce);
-	अगर (!rc) अणु
-		अगर (set_ce)
+	if (!rc) {
+		if (set_ce)
 			INET_ECN_set_ce(skb);
-		अन्यथा अगर ((outer & INET_ECN_MASK) == INET_ECN_ECT_1)
+		else if ((outer & INET_ECN_MASK) == INET_ECN_ECT_1)
 			INET_ECN_set_ect1(skb);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत पूर्णांक IP_ECN_decapsulate(स्थिर काष्ठा iphdr *oiph,
-				     काष्ठा sk_buff *skb)
-अणु
+static inline int IP_ECN_decapsulate(const struct iphdr *oiph,
+				     struct sk_buff *skb)
+{
 	__u8 inner;
 
-	चयन (skb_protocol(skb, true)) अणु
-	हाल htons(ETH_P_IP):
+	switch (skb_protocol(skb, true)) {
+	case htons(ETH_P_IP):
 		inner = ip_hdr(skb)->tos;
-		अवरोध;
-	हाल htons(ETH_P_IPV6):
+		break;
+	case htons(ETH_P_IPV6):
 		inner = ipv6_get_dsfield(ipv6_hdr(skb));
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	वापस INET_ECN_decapsulate(skb, oiph->tos, inner);
-पूर्ण
+	return INET_ECN_decapsulate(skb, oiph->tos, inner);
+}
 
-अटल अंतरभूत पूर्णांक IP6_ECN_decapsulate(स्थिर काष्ठा ipv6hdr *oipv6h,
-				      काष्ठा sk_buff *skb)
-अणु
+static inline int IP6_ECN_decapsulate(const struct ipv6hdr *oipv6h,
+				      struct sk_buff *skb)
+{
 	__u8 inner;
 
-	चयन (skb_protocol(skb, true)) अणु
-	हाल htons(ETH_P_IP):
+	switch (skb_protocol(skb, true)) {
+	case htons(ETH_P_IP):
 		inner = ip_hdr(skb)->tos;
-		अवरोध;
-	हाल htons(ETH_P_IPV6):
+		break;
+	case htons(ETH_P_IPV6):
 		inner = ipv6_get_dsfield(ipv6_hdr(skb));
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	वापस INET_ECN_decapsulate(skb, ipv6_get_dsfield(oipv6h), inner);
-पूर्ण
-#पूर्ण_अगर
+	return INET_ECN_decapsulate(skb, ipv6_get_dsfield(oipv6h), inner);
+}
+#endif

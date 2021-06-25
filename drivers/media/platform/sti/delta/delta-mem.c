@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2015
- * Author: Hugues Fruchet <hugues.fruchet@st.com> क्रम STMicroelectronics.
+ * Author: Hugues Fruchet <hugues.fruchet@st.com> for STMicroelectronics.
  */
 
-#समावेश "delta.h"
-#समावेश "delta-mem.h"
+#include "delta.h"
+#include "delta-mem.h"
 
-पूर्णांक hw_alloc(काष्ठा delta_ctx *ctx, u32 size, स्थिर अक्षर *name,
-	     काष्ठा delta_buf *buf)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
+int hw_alloc(struct delta_ctx *ctx, u32 size, const char *name,
+	     struct delta_buf *buf)
+{
+	struct delta_dev *delta = ctx->dev;
 	dma_addr_t dma_addr;
-	व्योम *addr;
-	अचिन्हित दीर्घ attrs = DMA_ATTR_WRITE_COMBINE;
+	void *addr;
+	unsigned long attrs = DMA_ATTR_WRITE_COMBINE;
 
 	addr = dma_alloc_attrs(delta->dev, size, &dma_addr,
 			       GFP_KERNEL | __GFP_NOWARN, attrs);
-	अगर (!addr) अणु
+	if (!addr) {
 		dev_err(delta->dev,
 			"%s hw_alloc:dma_alloc_coherent failed for %s (size=%d)\n",
 			ctx->name, name, size);
 		ctx->sys_errors++;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	buf->size = size;
 	buf->paddr = dma_addr;
@@ -36,17 +35,17 @@
 		"%s allocate %d bytes of HW memory @(virt=0x%p, phy=0x%pad): %s\n",
 		ctx->name, size, buf->vaddr, &buf->paddr, buf->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hw_मुक्त(काष्ठा delta_ctx *ctx, काष्ठा delta_buf *buf)
-अणु
-	काष्ठा delta_dev *delta = ctx->dev;
+void hw_free(struct delta_ctx *ctx, struct delta_buf *buf)
+{
+	struct delta_dev *delta = ctx->dev;
 
 	dev_dbg(delta->dev,
 		"%s     free %d bytes of HW memory @(virt=0x%p, phy=0x%pad): %s\n",
 		ctx->name, buf->size, buf->vaddr, &buf->paddr, buf->name);
 
-	dma_मुक्त_attrs(delta->dev, buf->size,
+	dma_free_attrs(delta->dev, buf->size,
 		       buf->vaddr, buf->paddr, buf->attrs);
-पूर्ण
+}

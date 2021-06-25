@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_SPINLOCK_H
-#घोषणा __LINUX_SPINLOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_SPINLOCK_H
+#define __LINUX_SPINLOCK_H
 
 /*
  * include/linux/spinlock.h - generic spinlock/rwlock declarations
@@ -10,27 +9,27 @@
  *
  * on SMP builds:
  *
- *  यंत्र/spinlock_types.h: contains the arch_spinlock_t/arch_rwlock_t and the
+ *  asm/spinlock_types.h: contains the arch_spinlock_t/arch_rwlock_t and the
  *                        initializers
  *
  *  linux/spinlock_types.h:
  *                        defines the generic type and initializers
  *
- *  यंत्र/spinlock.h:       contains the arch_spin_*()/etc. lowlevel
- *                        implementations, mostly अंतरभूत assembly code
+ *  asm/spinlock.h:       contains the arch_spin_*()/etc. lowlevel
+ *                        implementations, mostly inline assembly code
  *
  *   (also included on UP-debug builds:)
  *
  *  linux/spinlock_api_smp.h:
- *                        contains the prototypes क्रम the _spin_*() APIs.
+ *                        contains the prototypes for the _spin_*() APIs.
  *
  *  linux/spinlock.h:     builds the final spin_*() APIs.
  *
  * on UP builds:
  *
  *  linux/spinlock_type_up.h:
- *                        contains the generic, simplअगरied UP spinlock type.
- *                        (which is an empty काष्ठाure on non-debug builds)
+ *                        contains the generic, simplified UP spinlock type.
+ *                        (which is an empty structure on non-debug builds)
  *
  *  linux/spinlock_types.h:
  *                        defines the generic type and initializers
@@ -48,74 +47,74 @@
  *  linux/spinlock.h:     builds the final spin_*() APIs.
  */
 
-#समावेश <linux/typecheck.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/bottom_half.h>
-#समावेश <linux/lockdep.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/mmiowb.h>
+#include <linux/typecheck.h>
+#include <linux/preempt.h>
+#include <linux/linkage.h>
+#include <linux/compiler.h>
+#include <linux/irqflags.h>
+#include <linux/thread_info.h>
+#include <linux/kernel.h>
+#include <linux/stringify.h>
+#include <linux/bottom_half.h>
+#include <linux/lockdep.h>
+#include <asm/barrier.h>
+#include <asm/mmiowb.h>
 
 
 /*
- * Must define these beक्रमe including other files, अंतरभूत functions need them
+ * Must define these before including other files, inline functions need them
  */
-#घोषणा LOCK_SECTION_NAME ".text..lock."KBUILD_BASENAME
+#define LOCK_SECTION_NAME ".text..lock."KBUILD_BASENAME
 
-#घोषणा LOCK_SECTION_START(extra)               \
+#define LOCK_SECTION_START(extra)               \
         ".subsection 1\n\t"                     \
         extra                                   \
         ".ifndef " LOCK_SECTION_NAME "\n\t"     \
         LOCK_SECTION_NAME ":\n\t"               \
         ".endif\n"
 
-#घोषणा LOCK_SECTION_END                        \
+#define LOCK_SECTION_END                        \
         ".previous\n\t"
 
-#घोषणा __lockfunc __section(".spinlock.text")
+#define __lockfunc __section(".spinlock.text")
 
 /*
  * Pull the arch_spinlock_t and arch_rwlock_t definitions:
  */
-#समावेश <linux/spinlock_types.h>
+#include <linux/spinlock_types.h>
 
 /*
- * Pull the arch_spin*() functions/declarations (UP-nondebug करोesn't need them):
+ * Pull the arch_spin*() functions/declarations (UP-nondebug doesn't need them):
  */
-#अगर_घोषित CONFIG_SMP
-# include <यंत्र/spinlock.h>
-#अन्यथा
+#ifdef CONFIG_SMP
+# include <asm/spinlock.h>
+#else
 # include <linux/spinlock_up.h>
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_SPINLOCK
-  बाह्य व्योम __raw_spin_lock_init(raw_spinlock_t *lock, स्थिर अक्षर *name,
-				   काष्ठा lock_class_key *key, लघु inner);
+#ifdef CONFIG_DEBUG_SPINLOCK
+  extern void __raw_spin_lock_init(raw_spinlock_t *lock, const char *name,
+				   struct lock_class_key *key, short inner);
 
 # define raw_spin_lock_init(lock)					\
-करो अणु									\
-	अटल काष्ठा lock_class_key __key;				\
+do {									\
+	static struct lock_class_key __key;				\
 									\
 	__raw_spin_lock_init((lock), #lock, &__key, LD_WAIT_SPIN);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
+#else
 # define raw_spin_lock_init(lock)				\
-	करो अणु *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); पूर्ण जबतक (0)
-#पूर्ण_अगर
+	do { *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); } while (0)
+#endif
 
-#घोषणा raw_spin_is_locked(lock)	arch_spin_is_locked(&(lock)->raw_lock)
+#define raw_spin_is_locked(lock)	arch_spin_is_locked(&(lock)->raw_lock)
 
-#अगर_घोषित arch_spin_is_contended
-#घोषणा raw_spin_is_contended(lock)	arch_spin_is_contended(&(lock)->raw_lock)
-#अन्यथा
-#घोषणा raw_spin_is_contended(lock)	(((व्योम)(lock), 0))
-#पूर्ण_अगर /*arch_spin_is_contended*/
+#ifdef arch_spin_is_contended
+#define raw_spin_is_contended(lock)	arch_spin_is_contended(&(lock)->raw_lock)
+#else
+#define raw_spin_is_contended(lock)	(((void)(lock), 0))
+#endif /*arch_spin_is_contended*/
 
 /*
  * smp_mb__after_spinlock() provides the equivalent of a full memory barrier
@@ -126,7 +125,7 @@
  *
  *   1) Given the snippet:
  *
- *	  अणु X = 0;  Y = 0; पूर्ण
+ *	  { X = 0;  Y = 0; }
  *
  *	  CPU0				CPU1
  *
@@ -136,14 +135,14 @@
  *	  r0 = READ_ONCE(Y);
  *	  spin_unlock(S);
  *
- *      it is क्रमbidden that CPU0 करोes not observe CPU1's store to Y (r0 = 0)
- *      and CPU1 करोes not observe CPU0's store to X (r1 = 0); see the comments
+ *      it is forbidden that CPU0 does not observe CPU1's store to Y (r0 = 0)
+ *      and CPU1 does not observe CPU0's store to X (r1 = 0); see the comments
  *      preceding the call to smp_mb__after_spinlock() in __schedule() and in
  *      try_to_wake_up().
  *
  *   2) Given the snippet:
  *
- *  अणु X = 0;  Y = 0; पूर्ण
+ *  { X = 0;  Y = 0; }
  *
  *  CPU0		CPU1				CPU2
  *
@@ -153,345 +152,345 @@
  *			WRITE_ONCE(Y, 1);
  *			spin_unlock(S);
  *
- *      it is क्रमbidden that CPU0's critical section executes before CPU1's
+ *      it is forbidden that CPU0's critical section executes before CPU1's
  *      critical section (r0 = 1), CPU2 observes CPU1's store to Y (r1 = 1)
- *      and CPU2 करोes not observe CPU0's store to X (r2 = 0); see the comments
- *      preceding the calls to smp_rmb() in try_to_wake_up() क्रम similar
+ *      and CPU2 does not observe CPU0's store to X (r2 = 0); see the comments
+ *      preceding the calls to smp_rmb() in try_to_wake_up() for similar
  *      snippets but "projected" onto two CPUs.
  *
  * Property (2) upgrades the lock to an RCsc lock.
  *
  * Since most load-store architectures implement ACQUIRE with an smp_mb() after
  * the LL/SC loop, they need no further barriers. Similarly all our TSO
- * architectures imply an smp_mb() क्रम each atomic inकाष्ठाion and equally करोn't
+ * architectures imply an smp_mb() for each atomic instruction and equally don't
  * need more.
  *
  * Architectures that can implement ACQUIRE better need to take care.
  */
-#अगर_अघोषित smp_mb__after_spinlock
-#घोषणा smp_mb__after_spinlock()	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifndef smp_mb__after_spinlock
+#define smp_mb__after_spinlock()	do { } while (0)
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_SPINLOCK
- बाह्य व्योम करो_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock);
-#घोषणा करो_raw_spin_lock_flags(lock, flags) करो_raw_spin_lock(lock)
- बाह्य पूर्णांक करो_raw_spin_trylock(raw_spinlock_t *lock);
- बाह्य व्योम करो_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock);
-#अन्यथा
-अटल अंतरभूत व्योम करो_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock)
-अणु
+#ifdef CONFIG_DEBUG_SPINLOCK
+ extern void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock);
+#define do_raw_spin_lock_flags(lock, flags) do_raw_spin_lock(lock)
+ extern int do_raw_spin_trylock(raw_spinlock_t *lock);
+ extern void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock);
+#else
+static inline void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock)
+{
 	__acquire(lock);
 	arch_spin_lock(&lock->raw_lock);
 	mmiowb_spin_lock();
-पूर्ण
+}
 
-#अगर_अघोषित arch_spin_lock_flags
-#घोषणा arch_spin_lock_flags(lock, flags)	arch_spin_lock(lock)
-#पूर्ण_अगर
+#ifndef arch_spin_lock_flags
+#define arch_spin_lock_flags(lock, flags)	arch_spin_lock(lock)
+#endif
 
-अटल अंतरभूत व्योम
-करो_raw_spin_lock_flags(raw_spinlock_t *lock, अचिन्हित दीर्घ *flags) __acquires(lock)
-अणु
+static inline void
+do_raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long *flags) __acquires(lock)
+{
 	__acquire(lock);
 	arch_spin_lock_flags(&lock->raw_lock, *flags);
 	mmiowb_spin_lock();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक करो_raw_spin_trylock(raw_spinlock_t *lock)
-अणु
-	पूर्णांक ret = arch_spin_trylock(&(lock)->raw_lock);
+static inline int do_raw_spin_trylock(raw_spinlock_t *lock)
+{
+	int ret = arch_spin_trylock(&(lock)->raw_lock);
 
-	अगर (ret)
+	if (ret)
 		mmiowb_spin_lock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम करो_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
-अणु
+static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
+{
 	mmiowb_spin_unlock();
 	arch_spin_unlock(&lock->raw_lock);
 	__release(lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
  * Define the various spin_lock methods.  Note we define these
  * regardless of whether CONFIG_SMP or CONFIG_PREEMPTION are set. The
- * various methods are defined as nops in the हाल they are not
+ * various methods are defined as nops in the case they are not
  * required.
  */
-#घोषणा raw_spin_trylock(lock)	__cond_lock(lock, _raw_spin_trylock(lock))
+#define raw_spin_trylock(lock)	__cond_lock(lock, _raw_spin_trylock(lock))
 
-#घोषणा raw_spin_lock(lock)	_raw_spin_lock(lock)
+#define raw_spin_lock(lock)	_raw_spin_lock(lock)
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 # define raw_spin_lock_nested(lock, subclass) \
 	_raw_spin_lock_nested(lock, subclass)
 
 # define raw_spin_lock_nest_lock(lock, nest_lock)			\
-	 करो अणु								\
-		 typecheck(काष्ठा lockdep_map *, &(nest_lock)->dep_map);\
+	 do {								\
+		 typecheck(struct lockdep_map *, &(nest_lock)->dep_map);\
 		 _raw_spin_lock_nest_lock(lock, &(nest_lock)->dep_map);	\
-	 पूर्ण जबतक (0)
-#अन्यथा
+	 } while (0)
+#else
 /*
- * Always evaluate the 'subclass' argument to aव्योम that the compiler
+ * Always evaluate the 'subclass' argument to avoid that the compiler
  * warns about set-but-not-used variables when building with
  * CONFIG_DEBUG_LOCK_ALLOC=n and with W=1.
  */
 # define raw_spin_lock_nested(lock, subclass)		\
-	_raw_spin_lock(((व्योम)(subclass), (lock)))
+	_raw_spin_lock(((void)(subclass), (lock)))
 # define raw_spin_lock_nest_lock(lock, nest_lock)	_raw_spin_lock(lock)
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 
-#घोषणा raw_spin_lock_irqsave(lock, flags)			\
-	करो अणु						\
-		typecheck(अचिन्हित दीर्घ, flags);	\
+#define raw_spin_lock_irqsave(lock, flags)			\
+	do {						\
+		typecheck(unsigned long, flags);	\
 		flags = _raw_spin_lock_irqsave(lock);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-#घोषणा raw_spin_lock_irqsave_nested(lock, flags, subclass)		\
-	करो अणु								\
-		typecheck(अचिन्हित दीर्घ, flags);			\
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#define raw_spin_lock_irqsave_nested(lock, flags, subclass)		\
+	do {								\
+		typecheck(unsigned long, flags);			\
 		flags = _raw_spin_lock_irqsave_nested(lock, subclass);	\
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा raw_spin_lock_irqsave_nested(lock, flags, subclass)		\
-	करो अणु								\
-		typecheck(अचिन्हित दीर्घ, flags);			\
+	} while (0)
+#else
+#define raw_spin_lock_irqsave_nested(lock, flags, subclass)		\
+	do {								\
+		typecheck(unsigned long, flags);			\
 		flags = _raw_spin_lock_irqsave(lock);			\
-	पूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#endif
 
-#अन्यथा
+#else
 
-#घोषणा raw_spin_lock_irqsave(lock, flags)		\
-	करो अणु						\
-		typecheck(अचिन्हित दीर्घ, flags);	\
+#define raw_spin_lock_irqsave(lock, flags)		\
+	do {						\
+		typecheck(unsigned long, flags);	\
 		_raw_spin_lock_irqsave(lock, flags);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा raw_spin_lock_irqsave_nested(lock, flags, subclass)	\
+#define raw_spin_lock_irqsave_nested(lock, flags, subclass)	\
 	raw_spin_lock_irqsave(lock, flags)
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा raw_spin_lock_irq(lock)		_raw_spin_lock_irq(lock)
-#घोषणा raw_spin_lock_bh(lock)		_raw_spin_lock_bh(lock)
-#घोषणा raw_spin_unlock(lock)		_raw_spin_unlock(lock)
-#घोषणा raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
+#define raw_spin_lock_irq(lock)		_raw_spin_lock_irq(lock)
+#define raw_spin_lock_bh(lock)		_raw_spin_lock_bh(lock)
+#define raw_spin_unlock(lock)		_raw_spin_unlock(lock)
+#define raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
 
-#घोषणा raw_spin_unlock_irqrestore(lock, flags)		\
-	करो अणु							\
-		typecheck(अचिन्हित दीर्घ, flags);		\
+#define raw_spin_unlock_irqrestore(lock, flags)		\
+	do {							\
+		typecheck(unsigned long, flags);		\
 		_raw_spin_unlock_irqrestore(lock, flags);	\
-	पूर्ण जबतक (0)
-#घोषणा raw_spin_unlock_bh(lock)	_raw_spin_unlock_bh(lock)
+	} while (0)
+#define raw_spin_unlock_bh(lock)	_raw_spin_unlock_bh(lock)
 
-#घोषणा raw_spin_trylock_bh(lock) \
+#define raw_spin_trylock_bh(lock) \
 	__cond_lock(lock, _raw_spin_trylock_bh(lock))
 
-#घोषणा raw_spin_trylock_irq(lock) \
-(अणु \
+#define raw_spin_trylock_irq(lock) \
+({ \
 	local_irq_disable(); \
 	raw_spin_trylock(lock) ? \
-	1 : (अणु local_irq_enable(); 0;  पूर्ण); \
-पूर्ण)
+	1 : ({ local_irq_enable(); 0;  }); \
+})
 
-#घोषणा raw_spin_trylock_irqsave(lock, flags) \
-(अणु \
+#define raw_spin_trylock_irqsave(lock, flags) \
+({ \
 	local_irq_save(flags); \
 	raw_spin_trylock(lock) ? \
-	1 : (अणु local_irq_restore(flags); 0; पूर्ण); \
-पूर्ण)
+	1 : ({ local_irq_restore(flags); 0; }); \
+})
 
 /* Include rwlock functions */
-#समावेश <linux/rwlock.h>
+#include <linux/rwlock.h>
 
 /*
- * Pull the _spin_*()/_पढ़ो_*()/_ग_लिखो_*() functions/declarations:
+ * Pull the _spin_*()/_read_*()/_write_*() functions/declarations:
  */
-#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 # include <linux/spinlock_api_smp.h>
-#अन्यथा
+#else
 # include <linux/spinlock_api_up.h>
-#पूर्ण_अगर
+#endif
 
 /*
- * Map the spin_lock functions to the raw variants क्रम PREEMPT_RT=n
+ * Map the spin_lock functions to the raw variants for PREEMPT_RT=n
  */
 
-अटल __always_अंतरभूत raw_spinlock_t *spinlock_check(spinlock_t *lock)
-अणु
-	वापस &lock->rlock;
-पूर्ण
+static __always_inline raw_spinlock_t *spinlock_check(spinlock_t *lock)
+{
+	return &lock->rlock;
+}
 
-#अगर_घोषित CONFIG_DEBUG_SPINLOCK
+#ifdef CONFIG_DEBUG_SPINLOCK
 
 # define spin_lock_init(lock)					\
-करो अणु								\
-	अटल काष्ठा lock_class_key __key;			\
+do {								\
+	static struct lock_class_key __key;			\
 								\
 	__raw_spin_lock_init(spinlock_check(lock),		\
 			     #lock, &__key, LD_WAIT_CONFIG);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#अन्यथा
+#else
 
 # define spin_lock_init(_lock)			\
-करो अणु						\
+do {						\
 	spinlock_check(_lock);			\
 	*(_lock) = __SPIN_LOCK_UNLOCKED(_lock);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#पूर्ण_अगर
+#endif
 
-अटल __always_अंतरभूत व्योम spin_lock(spinlock_t *lock)
-अणु
+static __always_inline void spin_lock(spinlock_t *lock)
+{
 	raw_spin_lock(&lock->rlock);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम spin_lock_bh(spinlock_t *lock)
-अणु
+static __always_inline void spin_lock_bh(spinlock_t *lock)
+{
 	raw_spin_lock_bh(&lock->rlock);
-पूर्ण
+}
 
-अटल __always_अंतरभूत पूर्णांक spin_trylock(spinlock_t *lock)
-अणु
-	वापस raw_spin_trylock(&lock->rlock);
-पूर्ण
+static __always_inline int spin_trylock(spinlock_t *lock)
+{
+	return raw_spin_trylock(&lock->rlock);
+}
 
-#घोषणा spin_lock_nested(lock, subclass)			\
-करो अणु								\
+#define spin_lock_nested(lock, subclass)			\
+do {								\
 	raw_spin_lock_nested(spinlock_check(lock), subclass);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा spin_lock_nest_lock(lock, nest_lock)				\
-करो अणु									\
+#define spin_lock_nest_lock(lock, nest_lock)				\
+do {									\
 	raw_spin_lock_nest_lock(spinlock_check(lock), nest_lock);	\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल __always_अंतरभूत व्योम spin_lock_irq(spinlock_t *lock)
-अणु
+static __always_inline void spin_lock_irq(spinlock_t *lock)
+{
 	raw_spin_lock_irq(&lock->rlock);
-पूर्ण
+}
 
-#घोषणा spin_lock_irqsave(lock, flags)				\
-करो अणु								\
+#define spin_lock_irqsave(lock, flags)				\
+do {								\
 	raw_spin_lock_irqsave(spinlock_check(lock), flags);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा spin_lock_irqsave_nested(lock, flags, subclass)			\
-करो अणु									\
+#define spin_lock_irqsave_nested(lock, flags, subclass)			\
+do {									\
 	raw_spin_lock_irqsave_nested(spinlock_check(lock), flags, subclass); \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल __always_अंतरभूत व्योम spin_unlock(spinlock_t *lock)
-अणु
+static __always_inline void spin_unlock(spinlock_t *lock)
+{
 	raw_spin_unlock(&lock->rlock);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम spin_unlock_bh(spinlock_t *lock)
-अणु
+static __always_inline void spin_unlock_bh(spinlock_t *lock)
+{
 	raw_spin_unlock_bh(&lock->rlock);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम spin_unlock_irq(spinlock_t *lock)
-अणु
+static __always_inline void spin_unlock_irq(spinlock_t *lock)
+{
 	raw_spin_unlock_irq(&lock->rlock);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम spin_unlock_irqrestore(spinlock_t *lock, अचिन्हित दीर्घ flags)
-अणु
+static __always_inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
+{
 	raw_spin_unlock_irqrestore(&lock->rlock, flags);
-पूर्ण
+}
 
-अटल __always_अंतरभूत पूर्णांक spin_trylock_bh(spinlock_t *lock)
-अणु
-	वापस raw_spin_trylock_bh(&lock->rlock);
-पूर्ण
+static __always_inline int spin_trylock_bh(spinlock_t *lock)
+{
+	return raw_spin_trylock_bh(&lock->rlock);
+}
 
-अटल __always_अंतरभूत पूर्णांक spin_trylock_irq(spinlock_t *lock)
-अणु
-	वापस raw_spin_trylock_irq(&lock->rlock);
-पूर्ण
+static __always_inline int spin_trylock_irq(spinlock_t *lock)
+{
+	return raw_spin_trylock_irq(&lock->rlock);
+}
 
-#घोषणा spin_trylock_irqsave(lock, flags)			\
-(अणु								\
+#define spin_trylock_irqsave(lock, flags)			\
+({								\
 	raw_spin_trylock_irqsave(spinlock_check(lock), flags); \
-पूर्ण)
+})
 
 /**
  * spin_is_locked() - Check whether a spinlock is locked.
- * @lock: Poपूर्णांकer to the spinlock.
+ * @lock: Pointer to the spinlock.
  *
  * This function is NOT required to provide any memory ordering
- * guarantees; it could be used क्रम debugging purposes or, when
+ * guarantees; it could be used for debugging purposes or, when
  * additional synchronization is needed, accompanied with other
- * स्थिरructs (memory barriers) enक्रमcing the synchronization.
+ * constructs (memory barriers) enforcing the synchronization.
  *
- * Returns: 1 अगर @lock is locked, 0 otherwise.
+ * Returns: 1 if @lock is locked, 0 otherwise.
  *
  * Note that the function only tells you that the spinlock is
  * seen to be locked, not that it is locked on your CPU.
  *
  * Further, on CONFIG_SMP=n builds with CONFIG_DEBUG_SPINLOCK=n,
- * the वापस value is always 0 (see include/linux/spinlock_up.h).
- * Thereक्रमe you should not rely heavily on the वापस value.
+ * the return value is always 0 (see include/linux/spinlock_up.h).
+ * Therefore you should not rely heavily on the return value.
  */
-अटल __always_अंतरभूत पूर्णांक spin_is_locked(spinlock_t *lock)
-अणु
-	वापस raw_spin_is_locked(&lock->rlock);
-पूर्ण
+static __always_inline int spin_is_locked(spinlock_t *lock)
+{
+	return raw_spin_is_locked(&lock->rlock);
+}
 
-अटल __always_अंतरभूत पूर्णांक spin_is_contended(spinlock_t *lock)
-अणु
-	वापस raw_spin_is_contended(&lock->rlock);
-पूर्ण
+static __always_inline int spin_is_contended(spinlock_t *lock)
+{
+	return raw_spin_is_contended(&lock->rlock);
+}
 
-#घोषणा निश्चित_spin_locked(lock)	निश्चित_raw_spin_locked(&(lock)->rlock)
+#define assert_spin_locked(lock)	assert_raw_spin_locked(&(lock)->rlock)
 
 /*
  * Pull the atomic_t declaration:
- * (यंत्र-mips/atomic.h needs above definitions)
+ * (asm-mips/atomic.h needs above definitions)
  */
-#समावेश <linux/atomic.h>
+#include <linux/atomic.h>
 /**
  * atomic_dec_and_lock - lock on reaching reference count zero
  * @atomic: the atomic counter
  * @lock: the spinlock in question
  *
- * Decrements @atomic by 1.  If the result is 0, वापसs true and locks
- * @lock.  Returns false क्रम all other हालs.
+ * Decrements @atomic by 1.  If the result is 0, returns true and locks
+ * @lock.  Returns false for all other cases.
  */
-बाह्य पूर्णांक _atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock);
-#घोषणा atomic_dec_and_lock(atomic, lock) \
+extern int _atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock);
+#define atomic_dec_and_lock(atomic, lock) \
 		__cond_lock(lock, _atomic_dec_and_lock(atomic, lock))
 
-बाह्य पूर्णांक _atomic_dec_and_lock_irqsave(atomic_t *atomic, spinlock_t *lock,
-					अचिन्हित दीर्घ *flags);
-#घोषणा atomic_dec_and_lock_irqsave(atomic, lock, flags) \
+extern int _atomic_dec_and_lock_irqsave(atomic_t *atomic, spinlock_t *lock,
+					unsigned long *flags);
+#define atomic_dec_and_lock_irqsave(atomic, lock, flags) \
 		__cond_lock(lock, _atomic_dec_and_lock_irqsave(atomic, lock, &(flags)))
 
-पूर्णांक __alloc_bucket_spinlocks(spinlock_t **locks, अचिन्हित पूर्णांक *lock_mask,
-			     माप_प्रकार max_size, अचिन्हित पूर्णांक cpu_mult,
-			     gfp_t gfp, स्थिर अक्षर *name,
-			     काष्ठा lock_class_key *key);
+int __alloc_bucket_spinlocks(spinlock_t **locks, unsigned int *lock_mask,
+			     size_t max_size, unsigned int cpu_mult,
+			     gfp_t gfp, const char *name,
+			     struct lock_class_key *key);
 
-#घोषणा alloc_bucket_spinlocks(locks, lock_mask, max_size, cpu_mult, gfp)    \
-	(अणु								     \
-		अटल काष्ठा lock_class_key key;			     \
-		पूर्णांक ret;						     \
+#define alloc_bucket_spinlocks(locks, lock_mask, max_size, cpu_mult, gfp)    \
+	({								     \
+		static struct lock_class_key key;			     \
+		int ret;						     \
 									     \
 		ret = __alloc_bucket_spinlocks(locks, lock_mask, max_size,   \
 					       cpu_mult, gfp, #locks, &key); \
 		ret;							     \
-	पूर्ण)
+	})
 
-व्योम मुक्त_bucket_spinlocks(spinlock_t *locks);
+void free_bucket_spinlocks(spinlock_t *locks);
 
-#पूर्ण_अगर /* __LINUX_SPINLOCK_H */
+#endif /* __LINUX_SPINLOCK_H */

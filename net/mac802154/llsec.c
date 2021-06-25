@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Fraunhofer ITWM
  *
@@ -7,1045 +6,1045 @@
  * Phoebe Buckheister <phoebe.buckheister@itwm.fraunhofer.de>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/ieee802154.h>
-#समावेश <linux/rculist.h>
+#include <linux/err.h>
+#include <linux/bug.h>
+#include <linux/completion.h>
+#include <linux/ieee802154.h>
+#include <linux/rculist.h>
 
-#समावेश <crypto/aead.h>
-#समावेश <crypto/skcipher.h>
+#include <crypto/aead.h>
+#include <crypto/skcipher.h>
 
-#समावेश "ieee802154_i.h"
-#समावेश "llsec.h"
+#include "ieee802154_i.h"
+#include "llsec.h"
 
-अटल व्योम llsec_key_put(काष्ठा mac802154_llsec_key *key);
-अटल bool llsec_key_id_equal(स्थिर काष्ठा ieee802154_llsec_key_id *a,
-			       स्थिर काष्ठा ieee802154_llsec_key_id *b);
+static void llsec_key_put(struct mac802154_llsec_key *key);
+static bool llsec_key_id_equal(const struct ieee802154_llsec_key_id *a,
+			       const struct ieee802154_llsec_key_id *b);
 
-अटल व्योम llsec_dev_मुक्त(काष्ठा mac802154_llsec_device *dev);
+static void llsec_dev_free(struct mac802154_llsec_device *dev);
 
-व्योम mac802154_llsec_init(काष्ठा mac802154_llsec *sec)
-अणु
-	स_रखो(sec, 0, माप(*sec));
+void mac802154_llsec_init(struct mac802154_llsec *sec)
+{
+	memset(sec, 0, sizeof(*sec));
 
-	स_रखो(&sec->params.शेष_key_source, 0xFF, IEEE802154_ADDR_LEN);
+	memset(&sec->params.default_key_source, 0xFF, IEEE802154_ADDR_LEN);
 
 	INIT_LIST_HEAD(&sec->table.security_levels);
 	INIT_LIST_HEAD(&sec->table.devices);
 	INIT_LIST_HEAD(&sec->table.keys);
-	hash_init(sec->devices_लघु);
+	hash_init(sec->devices_short);
 	hash_init(sec->devices_hw);
 	rwlock_init(&sec->lock);
-पूर्ण
+}
 
-व्योम mac802154_llsec_destroy(काष्ठा mac802154_llsec *sec)
-अणु
-	काष्ठा ieee802154_llsec_seclevel *sl, *sn;
-	काष्ठा ieee802154_llsec_device *dev, *dn;
-	काष्ठा ieee802154_llsec_key_entry *key, *kn;
+void mac802154_llsec_destroy(struct mac802154_llsec *sec)
+{
+	struct ieee802154_llsec_seclevel *sl, *sn;
+	struct ieee802154_llsec_device *dev, *dn;
+	struct ieee802154_llsec_key_entry *key, *kn;
 
-	list_क्रम_each_entry_safe(sl, sn, &sec->table.security_levels, list) अणु
-		काष्ठा mac802154_llsec_seclevel *msl;
+	list_for_each_entry_safe(sl, sn, &sec->table.security_levels, list) {
+		struct mac802154_llsec_seclevel *msl;
 
-		msl = container_of(sl, काष्ठा mac802154_llsec_seclevel, level);
+		msl = container_of(sl, struct mac802154_llsec_seclevel, level);
 		list_del(&sl->list);
-		kमुक्त_sensitive(msl);
-	पूर्ण
+		kfree_sensitive(msl);
+	}
 
-	list_क्रम_each_entry_safe(dev, dn, &sec->table.devices, list) अणु
-		काष्ठा mac802154_llsec_device *mdev;
+	list_for_each_entry_safe(dev, dn, &sec->table.devices, list) {
+		struct mac802154_llsec_device *mdev;
 
-		mdev = container_of(dev, काष्ठा mac802154_llsec_device, dev);
+		mdev = container_of(dev, struct mac802154_llsec_device, dev);
 		list_del(&dev->list);
-		llsec_dev_मुक्त(mdev);
-	पूर्ण
+		llsec_dev_free(mdev);
+	}
 
-	list_क्रम_each_entry_safe(key, kn, &sec->table.keys, list) अणु
-		काष्ठा mac802154_llsec_key *mkey;
+	list_for_each_entry_safe(key, kn, &sec->table.keys, list) {
+		struct mac802154_llsec_key *mkey;
 
-		mkey = container_of(key->key, काष्ठा mac802154_llsec_key, key);
+		mkey = container_of(key->key, struct mac802154_llsec_key, key);
 		list_del(&key->list);
 		llsec_key_put(mkey);
-		kमुक्त_sensitive(key);
-	पूर्ण
-पूर्ण
+		kfree_sensitive(key);
+	}
+}
 
-पूर्णांक mac802154_llsec_get_params(काष्ठा mac802154_llsec *sec,
-			       काष्ठा ieee802154_llsec_params *params)
-अणु
-	पढ़ो_lock_bh(&sec->lock);
+int mac802154_llsec_get_params(struct mac802154_llsec *sec,
+			       struct ieee802154_llsec_params *params)
+{
+	read_lock_bh(&sec->lock);
 	*params = sec->params;
-	पढ़ो_unlock_bh(&sec->lock);
+	read_unlock_bh(&sec->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mac802154_llsec_set_params(काष्ठा mac802154_llsec *sec,
-			       स्थिर काष्ठा ieee802154_llsec_params *params,
-			       पूर्णांक changed)
-अणु
-	ग_लिखो_lock_bh(&sec->lock);
+int mac802154_llsec_set_params(struct mac802154_llsec *sec,
+			       const struct ieee802154_llsec_params *params,
+			       int changed)
+{
+	write_lock_bh(&sec->lock);
 
-	अगर (changed & IEEE802154_LLSEC_PARAM_ENABLED)
+	if (changed & IEEE802154_LLSEC_PARAM_ENABLED)
 		sec->params.enabled = params->enabled;
-	अगर (changed & IEEE802154_LLSEC_PARAM_FRAME_COUNTER)
+	if (changed & IEEE802154_LLSEC_PARAM_FRAME_COUNTER)
 		sec->params.frame_counter = params->frame_counter;
-	अगर (changed & IEEE802154_LLSEC_PARAM_OUT_LEVEL)
+	if (changed & IEEE802154_LLSEC_PARAM_OUT_LEVEL)
 		sec->params.out_level = params->out_level;
-	अगर (changed & IEEE802154_LLSEC_PARAM_OUT_KEY)
+	if (changed & IEEE802154_LLSEC_PARAM_OUT_KEY)
 		sec->params.out_key = params->out_key;
-	अगर (changed & IEEE802154_LLSEC_PARAM_KEY_SOURCE)
-		sec->params.शेष_key_source = params->शेष_key_source;
-	अगर (changed & IEEE802154_LLSEC_PARAM_PAN_ID)
+	if (changed & IEEE802154_LLSEC_PARAM_KEY_SOURCE)
+		sec->params.default_key_source = params->default_key_source;
+	if (changed & IEEE802154_LLSEC_PARAM_PAN_ID)
 		sec->params.pan_id = params->pan_id;
-	अगर (changed & IEEE802154_LLSEC_PARAM_HWADDR)
+	if (changed & IEEE802154_LLSEC_PARAM_HWADDR)
 		sec->params.hwaddr = params->hwaddr;
-	अगर (changed & IEEE802154_LLSEC_PARAM_COORD_HWADDR)
+	if (changed & IEEE802154_LLSEC_PARAM_COORD_HWADDR)
 		sec->params.coord_hwaddr = params->coord_hwaddr;
-	अगर (changed & IEEE802154_LLSEC_PARAM_COORD_SHORTADDR)
-		sec->params.coord_लघुaddr = params->coord_लघुaddr;
+	if (changed & IEEE802154_LLSEC_PARAM_COORD_SHORTADDR)
+		sec->params.coord_shortaddr = params->coord_shortaddr;
 
-	ग_लिखो_unlock_bh(&sec->lock);
+	write_unlock_bh(&sec->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mac802154_llsec_key*
-llsec_key_alloc(स्थिर काष्ठा ieee802154_llsec_key *ढाँचा)
-अणु
-	स्थिर पूर्णांक authsizes[3] = अणु 4, 8, 16 पूर्ण;
-	काष्ठा mac802154_llsec_key *key;
-	पूर्णांक i;
+static struct mac802154_llsec_key*
+llsec_key_alloc(const struct ieee802154_llsec_key *template)
+{
+	const int authsizes[3] = { 4, 8, 16 };
+	struct mac802154_llsec_key *key;
+	int i;
 
-	key = kzalloc(माप(*key), GFP_KERNEL);
-	अगर (!key)
-		वापस शून्य;
+	key = kzalloc(sizeof(*key), GFP_KERNEL);
+	if (!key)
+		return NULL;
 
 	kref_init(&key->ref);
-	key->key = *ढाँचा;
+	key->key = *template;
 
 	BUILD_BUG_ON(ARRAY_SIZE(authsizes) != ARRAY_SIZE(key->tfm));
 
-	क्रम (i = 0; i < ARRAY_SIZE(key->tfm); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(key->tfm); i++) {
 		key->tfm[i] = crypto_alloc_aead("ccm(aes)", 0,
 						CRYPTO_ALG_ASYNC);
-		अगर (IS_ERR(key->tfm[i]))
-			जाओ err_tfm;
-		अगर (crypto_aead_setkey(key->tfm[i], ढाँचा->key,
+		if (IS_ERR(key->tfm[i]))
+			goto err_tfm;
+		if (crypto_aead_setkey(key->tfm[i], template->key,
 				       IEEE802154_LLSEC_KEY_SIZE))
-			जाओ err_tfm;
-		अगर (crypto_aead_setauthsize(key->tfm[i], authsizes[i]))
-			जाओ err_tfm;
-	पूर्ण
+			goto err_tfm;
+		if (crypto_aead_setauthsize(key->tfm[i], authsizes[i]))
+			goto err_tfm;
+	}
 
 	key->tfm0 = crypto_alloc_sync_skcipher("ctr(aes)", 0, 0);
-	अगर (IS_ERR(key->tfm0))
-		जाओ err_tfm;
+	if (IS_ERR(key->tfm0))
+		goto err_tfm;
 
-	अगर (crypto_sync_skcipher_setkey(key->tfm0, ढाँचा->key,
+	if (crypto_sync_skcipher_setkey(key->tfm0, template->key,
 				   IEEE802154_LLSEC_KEY_SIZE))
-		जाओ err_tfm0;
+		goto err_tfm0;
 
-	वापस key;
+	return key;
 
 err_tfm0:
-	crypto_मुक्त_sync_skcipher(key->tfm0);
+	crypto_free_sync_skcipher(key->tfm0);
 err_tfm:
-	क्रम (i = 0; i < ARRAY_SIZE(key->tfm); i++)
-		अगर (!IS_ERR_OR_शून्य(key->tfm[i]))
-			crypto_मुक्त_aead(key->tfm[i]);
+	for (i = 0; i < ARRAY_SIZE(key->tfm); i++)
+		if (!IS_ERR_OR_NULL(key->tfm[i]))
+			crypto_free_aead(key->tfm[i]);
 
-	kमुक्त_sensitive(key);
-	वापस शून्य;
-पूर्ण
+	kfree_sensitive(key);
+	return NULL;
+}
 
-अटल व्योम llsec_key_release(काष्ठा kref *ref)
-अणु
-	काष्ठा mac802154_llsec_key *key;
-	पूर्णांक i;
+static void llsec_key_release(struct kref *ref)
+{
+	struct mac802154_llsec_key *key;
+	int i;
 
-	key = container_of(ref, काष्ठा mac802154_llsec_key, ref);
+	key = container_of(ref, struct mac802154_llsec_key, ref);
 
-	क्रम (i = 0; i < ARRAY_SIZE(key->tfm); i++)
-		crypto_मुक्त_aead(key->tfm[i]);
+	for (i = 0; i < ARRAY_SIZE(key->tfm); i++)
+		crypto_free_aead(key->tfm[i]);
 
-	crypto_मुक्त_sync_skcipher(key->tfm0);
-	kमुक्त_sensitive(key);
-पूर्ण
+	crypto_free_sync_skcipher(key->tfm0);
+	kfree_sensitive(key);
+}
 
-अटल काष्ठा mac802154_llsec_key*
-llsec_key_get(काष्ठा mac802154_llsec_key *key)
-अणु
+static struct mac802154_llsec_key*
+llsec_key_get(struct mac802154_llsec_key *key)
+{
 	kref_get(&key->ref);
-	वापस key;
-पूर्ण
+	return key;
+}
 
-अटल व्योम llsec_key_put(काष्ठा mac802154_llsec_key *key)
-अणु
+static void llsec_key_put(struct mac802154_llsec_key *key)
+{
 	kref_put(&key->ref, llsec_key_release);
-पूर्ण
+}
 
-अटल bool llsec_key_id_equal(स्थिर काष्ठा ieee802154_llsec_key_id *a,
-			       स्थिर काष्ठा ieee802154_llsec_key_id *b)
-अणु
-	अगर (a->mode != b->mode)
-		वापस false;
+static bool llsec_key_id_equal(const struct ieee802154_llsec_key_id *a,
+			       const struct ieee802154_llsec_key_id *b)
+{
+	if (a->mode != b->mode)
+		return false;
 
-	अगर (a->mode == IEEE802154_SCF_KEY_IMPLICIT)
-		वापस ieee802154_addr_equal(&a->device_addr, &b->device_addr);
+	if (a->mode == IEEE802154_SCF_KEY_IMPLICIT)
+		return ieee802154_addr_equal(&a->device_addr, &b->device_addr);
 
-	अगर (a->id != b->id)
-		वापस false;
+	if (a->id != b->id)
+		return false;
 
-	चयन (a->mode) अणु
-	हाल IEEE802154_SCF_KEY_INDEX:
-		वापस true;
-	हाल IEEE802154_SCF_KEY_SHORT_INDEX:
-		वापस a->लघु_source == b->लघु_source;
-	हाल IEEE802154_SCF_KEY_HW_INDEX:
-		वापस a->extended_source == b->extended_source;
-	पूर्ण
+	switch (a->mode) {
+	case IEEE802154_SCF_KEY_INDEX:
+		return true;
+	case IEEE802154_SCF_KEY_SHORT_INDEX:
+		return a->short_source == b->short_source;
+	case IEEE802154_SCF_KEY_HW_INDEX:
+		return a->extended_source == b->extended_source;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक mac802154_llsec_key_add(काष्ठा mac802154_llsec *sec,
-			    स्थिर काष्ठा ieee802154_llsec_key_id *id,
-			    स्थिर काष्ठा ieee802154_llsec_key *key)
-अणु
-	काष्ठा mac802154_llsec_key *mkey = शून्य;
-	काष्ठा ieee802154_llsec_key_entry *pos, *new;
+int mac802154_llsec_key_add(struct mac802154_llsec *sec,
+			    const struct ieee802154_llsec_key_id *id,
+			    const struct ieee802154_llsec_key *key)
+{
+	struct mac802154_llsec_key *mkey = NULL;
+	struct ieee802154_llsec_key_entry *pos, *new;
 
-	अगर (!(key->frame_types & (1 << IEEE802154_FC_TYPE_MAC_CMD)) &&
+	if (!(key->frame_types & (1 << IEEE802154_FC_TYPE_MAC_CMD)) &&
 	    key->cmd_frame_ids)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	list_क्रम_each_entry(pos, &sec->table.keys, list) अणु
-		अगर (llsec_key_id_equal(&pos->id, id))
-			वापस -EEXIST;
+	list_for_each_entry(pos, &sec->table.keys, list) {
+		if (llsec_key_id_equal(&pos->id, id))
+			return -EEXIST;
 
-		अगर (स_भेद(pos->key->key, key->key,
+		if (memcmp(pos->key->key, key->key,
 			   IEEE802154_LLSEC_KEY_SIZE))
-			जारी;
+			continue;
 
-		mkey = container_of(pos->key, काष्ठा mac802154_llsec_key, key);
+		mkey = container_of(pos->key, struct mac802154_llsec_key, key);
 
 		/* Don't allow multiple instances of the same AES key to have
-		 * dअगरferent allowed frame types/command frame ids, as this is
+		 * different allowed frame types/command frame ids, as this is
 		 * not possible in the 802.15.4 PIB.
 		 */
-		अगर (pos->key->frame_types != key->frame_types ||
+		if (pos->key->frame_types != key->frame_types ||
 		    pos->key->cmd_frame_ids != key->cmd_frame_ids)
-			वापस -EEXIST;
+			return -EEXIST;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	new = kzalloc(माप(*new), GFP_KERNEL);
-	अगर (!new)
-		वापस -ENOMEM;
+	new = kzalloc(sizeof(*new), GFP_KERNEL);
+	if (!new)
+		return -ENOMEM;
 
-	अगर (!mkey)
+	if (!mkey)
 		mkey = llsec_key_alloc(key);
-	अन्यथा
+	else
 		mkey = llsec_key_get(mkey);
 
-	अगर (!mkey)
-		जाओ fail;
+	if (!mkey)
+		goto fail;
 
 	new->id = *id;
 	new->key = &mkey->key;
 
 	list_add_rcu(&new->list, &sec->table.keys);
 
-	वापस 0;
+	return 0;
 
 fail:
-	kमुक्त_sensitive(new);
-	वापस -ENOMEM;
-पूर्ण
+	kfree_sensitive(new);
+	return -ENOMEM;
+}
 
-पूर्णांक mac802154_llsec_key_del(काष्ठा mac802154_llsec *sec,
-			    स्थिर काष्ठा ieee802154_llsec_key_id *key)
-अणु
-	काष्ठा ieee802154_llsec_key_entry *pos;
+int mac802154_llsec_key_del(struct mac802154_llsec *sec,
+			    const struct ieee802154_llsec_key_id *key)
+{
+	struct ieee802154_llsec_key_entry *pos;
 
-	list_क्रम_each_entry(pos, &sec->table.keys, list) अणु
-		काष्ठा mac802154_llsec_key *mkey;
+	list_for_each_entry(pos, &sec->table.keys, list) {
+		struct mac802154_llsec_key *mkey;
 
-		mkey = container_of(pos->key, काष्ठा mac802154_llsec_key, key);
+		mkey = container_of(pos->key, struct mac802154_llsec_key, key);
 
-		अगर (llsec_key_id_equal(&pos->id, key)) अणु
+		if (llsec_key_id_equal(&pos->id, key)) {
 			list_del_rcu(&pos->list);
 			llsec_key_put(mkey);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल bool llsec_dev_use_लघुaddr(__le16 लघु_addr)
-अणु
-	वापस लघु_addr != cpu_to_le16(IEEE802154_ADDR_UNDEF) &&
-		लघु_addr != cpu_to_le16(0xffff);
-पूर्ण
+static bool llsec_dev_use_shortaddr(__le16 short_addr)
+{
+	return short_addr != cpu_to_le16(IEEE802154_ADDR_UNDEF) &&
+		short_addr != cpu_to_le16(0xffff);
+}
 
-अटल u32 llsec_dev_hash_लघु(__le16 लघु_addr, __le16 pan_id)
-अणु
-	वापस ((__क्रमce u16)लघु_addr) << 16 | (__क्रमce u16)pan_id;
-पूर्ण
+static u32 llsec_dev_hash_short(__le16 short_addr, __le16 pan_id)
+{
+	return ((__force u16)short_addr) << 16 | (__force u16)pan_id;
+}
 
-अटल u64 llsec_dev_hash_दीर्घ(__le64 hwaddr)
-अणु
-	वापस (__क्रमce u64)hwaddr;
-पूर्ण
+static u64 llsec_dev_hash_long(__le64 hwaddr)
+{
+	return (__force u64)hwaddr;
+}
 
-अटल काष्ठा mac802154_llsec_device*
-llsec_dev_find_लघु(काष्ठा mac802154_llsec *sec, __le16 लघु_addr,
+static struct mac802154_llsec_device*
+llsec_dev_find_short(struct mac802154_llsec *sec, __le16 short_addr,
 		     __le16 pan_id)
-अणु
-	काष्ठा mac802154_llsec_device *dev;
-	u32 key = llsec_dev_hash_लघु(लघु_addr, pan_id);
+{
+	struct mac802154_llsec_device *dev;
+	u32 key = llsec_dev_hash_short(short_addr, pan_id);
 
-	hash_क्रम_each_possible_rcu(sec->devices_लघु, dev, bucket_s, key) अणु
-		अगर (dev->dev.लघु_addr == लघु_addr &&
+	hash_for_each_possible_rcu(sec->devices_short, dev, bucket_s, key) {
+		if (dev->dev.short_addr == short_addr &&
 		    dev->dev.pan_id == pan_id)
-			वापस dev;
-	पूर्ण
+			return dev;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा mac802154_llsec_device*
-llsec_dev_find_दीर्घ(काष्ठा mac802154_llsec *sec, __le64 hwaddr)
-अणु
-	काष्ठा mac802154_llsec_device *dev;
-	u64 key = llsec_dev_hash_दीर्घ(hwaddr);
+static struct mac802154_llsec_device*
+llsec_dev_find_long(struct mac802154_llsec *sec, __le64 hwaddr)
+{
+	struct mac802154_llsec_device *dev;
+	u64 key = llsec_dev_hash_long(hwaddr);
 
-	hash_क्रम_each_possible_rcu(sec->devices_hw, dev, bucket_hw, key) अणु
-		अगर (dev->dev.hwaddr == hwaddr)
-			वापस dev;
-	पूर्ण
+	hash_for_each_possible_rcu(sec->devices_hw, dev, bucket_hw, key) {
+		if (dev->dev.hwaddr == hwaddr)
+			return dev;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम llsec_dev_मुक्त(काष्ठा mac802154_llsec_device *dev)
-अणु
-	काष्ठा ieee802154_llsec_device_key *pos, *pn;
-	काष्ठा mac802154_llsec_device_key *devkey;
+static void llsec_dev_free(struct mac802154_llsec_device *dev)
+{
+	struct ieee802154_llsec_device_key *pos, *pn;
+	struct mac802154_llsec_device_key *devkey;
 
-	list_क्रम_each_entry_safe(pos, pn, &dev->dev.keys, list) अणु
-		devkey = container_of(pos, काष्ठा mac802154_llsec_device_key,
+	list_for_each_entry_safe(pos, pn, &dev->dev.keys, list) {
+		devkey = container_of(pos, struct mac802154_llsec_device_key,
 				      devkey);
 
 		list_del(&pos->list);
-		kमुक्त_sensitive(devkey);
-	पूर्ण
+		kfree_sensitive(devkey);
+	}
 
-	kमुक्त_sensitive(dev);
-पूर्ण
+	kfree_sensitive(dev);
+}
 
-पूर्णांक mac802154_llsec_dev_add(काष्ठा mac802154_llsec *sec,
-			    स्थिर काष्ठा ieee802154_llsec_device *dev)
-अणु
-	काष्ठा mac802154_llsec_device *entry;
-	u32 skey = llsec_dev_hash_लघु(dev->लघु_addr, dev->pan_id);
-	u64 hwkey = llsec_dev_hash_दीर्घ(dev->hwaddr);
+int mac802154_llsec_dev_add(struct mac802154_llsec *sec,
+			    const struct ieee802154_llsec_device *dev)
+{
+	struct mac802154_llsec_device *entry;
+	u32 skey = llsec_dev_hash_short(dev->short_addr, dev->pan_id);
+	u64 hwkey = llsec_dev_hash_long(dev->hwaddr);
 
-	BUILD_BUG_ON(माप(hwkey) != IEEE802154_ADDR_LEN);
+	BUILD_BUG_ON(sizeof(hwkey) != IEEE802154_ADDR_LEN);
 
-	अगर ((llsec_dev_use_लघुaddr(dev->लघु_addr) &&
-	     llsec_dev_find_लघु(sec, dev->लघु_addr, dev->pan_id)) ||
-	     llsec_dev_find_दीर्घ(sec, dev->hwaddr))
-		वापस -EEXIST;
+	if ((llsec_dev_use_shortaddr(dev->short_addr) &&
+	     llsec_dev_find_short(sec, dev->short_addr, dev->pan_id)) ||
+	     llsec_dev_find_long(sec, dev->hwaddr))
+		return -EEXIST;
 
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
 
 	entry->dev = *dev;
 	spin_lock_init(&entry->lock);
 	INIT_LIST_HEAD(&entry->dev.keys);
 
-	अगर (llsec_dev_use_लघुaddr(dev->लघु_addr))
-		hash_add_rcu(sec->devices_लघु, &entry->bucket_s, skey);
-	अन्यथा
+	if (llsec_dev_use_shortaddr(dev->short_addr))
+		hash_add_rcu(sec->devices_short, &entry->bucket_s, skey);
+	else
 		INIT_HLIST_NODE(&entry->bucket_s);
 
 	hash_add_rcu(sec->devices_hw, &entry->bucket_hw, hwkey);
 	list_add_tail_rcu(&entry->dev.list, &sec->table.devices);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम llsec_dev_मुक्त_rcu(काष्ठा rcu_head *rcu)
-अणु
-	llsec_dev_मुक्त(container_of(rcu, काष्ठा mac802154_llsec_device, rcu));
-पूर्ण
+static void llsec_dev_free_rcu(struct rcu_head *rcu)
+{
+	llsec_dev_free(container_of(rcu, struct mac802154_llsec_device, rcu));
+}
 
-पूर्णांक mac802154_llsec_dev_del(काष्ठा mac802154_llsec *sec, __le64 device_addr)
-अणु
-	काष्ठा mac802154_llsec_device *pos;
+int mac802154_llsec_dev_del(struct mac802154_llsec *sec, __le64 device_addr)
+{
+	struct mac802154_llsec_device *pos;
 
-	pos = llsec_dev_find_दीर्घ(sec, device_addr);
-	अगर (!pos)
-		वापस -ENOENT;
+	pos = llsec_dev_find_long(sec, device_addr);
+	if (!pos)
+		return -ENOENT;
 
 	hash_del_rcu(&pos->bucket_s);
 	hash_del_rcu(&pos->bucket_hw);
 	list_del_rcu(&pos->dev.list);
-	call_rcu(&pos->rcu, llsec_dev_मुक्त_rcu);
+	call_rcu(&pos->rcu, llsec_dev_free_rcu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mac802154_llsec_device_key*
-llsec_devkey_find(काष्ठा mac802154_llsec_device *dev,
-		  स्थिर काष्ठा ieee802154_llsec_key_id *key)
-अणु
-	काष्ठा ieee802154_llsec_device_key *devkey;
+static struct mac802154_llsec_device_key*
+llsec_devkey_find(struct mac802154_llsec_device *dev,
+		  const struct ieee802154_llsec_key_id *key)
+{
+	struct ieee802154_llsec_device_key *devkey;
 
-	list_क्रम_each_entry_rcu(devkey, &dev->dev.keys, list) अणु
-		अगर (!llsec_key_id_equal(key, &devkey->key_id))
-			जारी;
+	list_for_each_entry_rcu(devkey, &dev->dev.keys, list) {
+		if (!llsec_key_id_equal(key, &devkey->key_id))
+			continue;
 
-		वापस container_of(devkey, काष्ठा mac802154_llsec_device_key,
+		return container_of(devkey, struct mac802154_llsec_device_key,
 				    devkey);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक mac802154_llsec_devkey_add(काष्ठा mac802154_llsec *sec,
+int mac802154_llsec_devkey_add(struct mac802154_llsec *sec,
 			       __le64 dev_addr,
-			       स्थिर काष्ठा ieee802154_llsec_device_key *key)
-अणु
-	काष्ठा mac802154_llsec_device *dev;
-	काष्ठा mac802154_llsec_device_key *devkey;
+			       const struct ieee802154_llsec_device_key *key)
+{
+	struct mac802154_llsec_device *dev;
+	struct mac802154_llsec_device_key *devkey;
 
-	dev = llsec_dev_find_दीर्घ(sec, dev_addr);
+	dev = llsec_dev_find_long(sec, dev_addr);
 
-	अगर (!dev)
-		वापस -ENOENT;
+	if (!dev)
+		return -ENOENT;
 
-	अगर (llsec_devkey_find(dev, &key->key_id))
-		वापस -EEXIST;
+	if (llsec_devkey_find(dev, &key->key_id))
+		return -EEXIST;
 
-	devkey = kदो_स्मृति(माप(*devkey), GFP_KERNEL);
-	अगर (!devkey)
-		वापस -ENOMEM;
+	devkey = kmalloc(sizeof(*devkey), GFP_KERNEL);
+	if (!devkey)
+		return -ENOMEM;
 
 	devkey->devkey = *key;
 	list_add_tail_rcu(&devkey->devkey.list, &dev->dev.keys);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mac802154_llsec_devkey_del(काष्ठा mac802154_llsec *sec,
+int mac802154_llsec_devkey_del(struct mac802154_llsec *sec,
 			       __le64 dev_addr,
-			       स्थिर काष्ठा ieee802154_llsec_device_key *key)
-अणु
-	काष्ठा mac802154_llsec_device *dev;
-	काष्ठा mac802154_llsec_device_key *devkey;
+			       const struct ieee802154_llsec_device_key *key)
+{
+	struct mac802154_llsec_device *dev;
+	struct mac802154_llsec_device_key *devkey;
 
-	dev = llsec_dev_find_दीर्घ(sec, dev_addr);
+	dev = llsec_dev_find_long(sec, dev_addr);
 
-	अगर (!dev)
-		वापस -ENOENT;
+	if (!dev)
+		return -ENOENT;
 
 	devkey = llsec_devkey_find(dev, &key->key_id);
-	अगर (!devkey)
-		वापस -ENOENT;
+	if (!devkey)
+		return -ENOENT;
 
 	list_del_rcu(&devkey->devkey.list);
-	kमुक्त_rcu(devkey, rcu);
-	वापस 0;
-पूर्ण
+	kfree_rcu(devkey, rcu);
+	return 0;
+}
 
-अटल काष्ठा mac802154_llsec_seclevel*
-llsec_find_seclevel(स्थिर काष्ठा mac802154_llsec *sec,
-		    स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
-अणु
-	काष्ठा ieee802154_llsec_seclevel *pos;
+static struct mac802154_llsec_seclevel*
+llsec_find_seclevel(const struct mac802154_llsec *sec,
+		    const struct ieee802154_llsec_seclevel *sl)
+{
+	struct ieee802154_llsec_seclevel *pos;
 
-	list_क्रम_each_entry(pos, &sec->table.security_levels, list) अणु
-		अगर (pos->frame_type != sl->frame_type ||
+	list_for_each_entry(pos, &sec->table.security_levels, list) {
+		if (pos->frame_type != sl->frame_type ||
 		    (pos->frame_type == IEEE802154_FC_TYPE_MAC_CMD &&
 		     pos->cmd_frame_id != sl->cmd_frame_id) ||
 		    pos->device_override != sl->device_override ||
 		    pos->sec_levels != sl->sec_levels)
-			जारी;
+			continue;
 
-		वापस container_of(pos, काष्ठा mac802154_llsec_seclevel,
+		return container_of(pos, struct mac802154_llsec_seclevel,
 				    level);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक mac802154_llsec_seclevel_add(काष्ठा mac802154_llsec *sec,
-				 स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
-अणु
-	काष्ठा mac802154_llsec_seclevel *entry;
+int mac802154_llsec_seclevel_add(struct mac802154_llsec *sec,
+				 const struct ieee802154_llsec_seclevel *sl)
+{
+	struct mac802154_llsec_seclevel *entry;
 
-	अगर (llsec_find_seclevel(sec, sl))
-		वापस -EEXIST;
+	if (llsec_find_seclevel(sec, sl))
+		return -EEXIST;
 
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
 
 	entry->level = *sl;
 
 	list_add_tail_rcu(&entry->level.list, &sec->table.security_levels);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mac802154_llsec_seclevel_del(काष्ठा mac802154_llsec *sec,
-				 स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
-अणु
-	काष्ठा mac802154_llsec_seclevel *pos;
+int mac802154_llsec_seclevel_del(struct mac802154_llsec *sec,
+				 const struct ieee802154_llsec_seclevel *sl)
+{
+	struct mac802154_llsec_seclevel *pos;
 
 	pos = llsec_find_seclevel(sec, sl);
-	अगर (!pos)
-		वापस -ENOENT;
+	if (!pos)
+		return -ENOENT;
 
 	list_del_rcu(&pos->level.list);
-	kमुक्त_rcu(pos, rcu);
+	kfree_rcu(pos, rcu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक llsec_recover_addr(काष्ठा mac802154_llsec *sec,
-			      काष्ठा ieee802154_addr *addr)
-अणु
-	__le16 caddr = sec->params.coord_लघुaddr;
+static int llsec_recover_addr(struct mac802154_llsec *sec,
+			      struct ieee802154_addr *addr)
+{
+	__le16 caddr = sec->params.coord_shortaddr;
 
 	addr->pan_id = sec->params.pan_id;
 
-	अगर (caddr == cpu_to_le16(IEEE802154_ADDR_BROADCAST)) अणु
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (caddr == cpu_to_le16(IEEE802154_ADDR_UNDEF)) अणु
+	if (caddr == cpu_to_le16(IEEE802154_ADDR_BROADCAST)) {
+		return -EINVAL;
+	} else if (caddr == cpu_to_le16(IEEE802154_ADDR_UNDEF)) {
 		addr->extended_addr = sec->params.coord_hwaddr;
 		addr->mode = IEEE802154_ADDR_LONG;
-	पूर्ण अन्यथा अणु
-		addr->लघु_addr = sec->params.coord_लघुaddr;
+	} else {
+		addr->short_addr = sec->params.coord_shortaddr;
 		addr->mode = IEEE802154_ADDR_SHORT;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा mac802154_llsec_key*
-llsec_lookup_key(काष्ठा mac802154_llsec *sec,
-		 स्थिर काष्ठा ieee802154_hdr *hdr,
-		 स्थिर काष्ठा ieee802154_addr *addr,
-		 काष्ठा ieee802154_llsec_key_id *key_id)
-अणु
-	काष्ठा ieee802154_addr devaddr = *addr;
+static struct mac802154_llsec_key*
+llsec_lookup_key(struct mac802154_llsec *sec,
+		 const struct ieee802154_hdr *hdr,
+		 const struct ieee802154_addr *addr,
+		 struct ieee802154_llsec_key_id *key_id)
+{
+	struct ieee802154_addr devaddr = *addr;
 	u8 key_id_mode = hdr->sec.key_id_mode;
-	काष्ठा ieee802154_llsec_key_entry *key_entry;
-	काष्ठा mac802154_llsec_key *key;
+	struct ieee802154_llsec_key_entry *key_entry;
+	struct mac802154_llsec_key *key;
 
-	अगर (key_id_mode == IEEE802154_SCF_KEY_IMPLICIT &&
-	    devaddr.mode == IEEE802154_ADDR_NONE) अणु
-		अगर (hdr->fc.type == IEEE802154_FC_TYPE_BEACON) अणु
+	if (key_id_mode == IEEE802154_SCF_KEY_IMPLICIT &&
+	    devaddr.mode == IEEE802154_ADDR_NONE) {
+		if (hdr->fc.type == IEEE802154_FC_TYPE_BEACON) {
 			devaddr.extended_addr = sec->params.coord_hwaddr;
 			devaddr.mode = IEEE802154_ADDR_LONG;
-		पूर्ण अन्यथा अगर (llsec_recover_addr(sec, &devaddr) < 0) अणु
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		} else if (llsec_recover_addr(sec, &devaddr) < 0) {
+			return NULL;
+		}
+	}
 
-	list_क्रम_each_entry_rcu(key_entry, &sec->table.keys, list) अणु
-		स्थिर काष्ठा ieee802154_llsec_key_id *id = &key_entry->id;
+	list_for_each_entry_rcu(key_entry, &sec->table.keys, list) {
+		const struct ieee802154_llsec_key_id *id = &key_entry->id;
 
-		अगर (!(key_entry->key->frame_types & BIT(hdr->fc.type)))
-			जारी;
+		if (!(key_entry->key->frame_types & BIT(hdr->fc.type)))
+			continue;
 
-		अगर (id->mode != key_id_mode)
-			जारी;
+		if (id->mode != key_id_mode)
+			continue;
 
-		अगर (key_id_mode == IEEE802154_SCF_KEY_IMPLICIT) अणु
-			अगर (ieee802154_addr_equal(&devaddr, &id->device_addr))
-				जाओ found;
-		पूर्ण अन्यथा अणु
-			अगर (id->id != hdr->sec.key_id)
-				जारी;
+		if (key_id_mode == IEEE802154_SCF_KEY_IMPLICIT) {
+			if (ieee802154_addr_equal(&devaddr, &id->device_addr))
+				goto found;
+		} else {
+			if (id->id != hdr->sec.key_id)
+				continue;
 
-			अगर ((key_id_mode == IEEE802154_SCF_KEY_INDEX) ||
+			if ((key_id_mode == IEEE802154_SCF_KEY_INDEX) ||
 			    (key_id_mode == IEEE802154_SCF_KEY_SHORT_INDEX &&
-			     id->लघु_source == hdr->sec.लघु_src) ||
+			     id->short_source == hdr->sec.short_src) ||
 			    (key_id_mode == IEEE802154_SCF_KEY_HW_INDEX &&
 			     id->extended_source == hdr->sec.extended_src))
-				जाओ found;
-		पूर्ण
-	पूर्ण
+				goto found;
+		}
+	}
 
-	वापस शून्य;
+	return NULL;
 
 found:
-	key = container_of(key_entry->key, काष्ठा mac802154_llsec_key, key);
-	अगर (key_id)
+	key = container_of(key_entry->key, struct mac802154_llsec_key, key);
+	if (key_id)
 		*key_id = key_entry->id;
-	वापस llsec_key_get(key);
-पूर्ण
+	return llsec_key_get(key);
+}
 
-अटल व्योम llsec_geniv(u8 iv[16], __le64 addr,
-			स्थिर काष्ठा ieee802154_sechdr *sec)
-अणु
-	__be64 addr_bytes = (__क्रमce __be64) swab64((__क्रमce u64) addr);
-	__be32 frame_counter = (__क्रमce __be32) swab32((__क्रमce u32) sec->frame_counter);
+static void llsec_geniv(u8 iv[16], __le64 addr,
+			const struct ieee802154_sechdr *sec)
+{
+	__be64 addr_bytes = (__force __be64) swab64((__force u64) addr);
+	__be32 frame_counter = (__force __be32) swab32((__force u32) sec->frame_counter);
 
 	iv[0] = 1; /* L' = L - 1 = 1 */
-	स_नकल(iv + 1, &addr_bytes, माप(addr_bytes));
-	स_नकल(iv + 9, &frame_counter, माप(frame_counter));
+	memcpy(iv + 1, &addr_bytes, sizeof(addr_bytes));
+	memcpy(iv + 9, &frame_counter, sizeof(frame_counter));
 	iv[13] = sec->level;
 	iv[14] = 0;
 	iv[15] = 1;
-पूर्ण
+}
 
-अटल पूर्णांक
-llsec_करो_encrypt_unauth(काष्ठा sk_buff *skb, स्थिर काष्ठा mac802154_llsec *sec,
-			स्थिर काष्ठा ieee802154_hdr *hdr,
-			काष्ठा mac802154_llsec_key *key)
-अणु
+static int
+llsec_do_encrypt_unauth(struct sk_buff *skb, const struct mac802154_llsec *sec,
+			const struct ieee802154_hdr *hdr,
+			struct mac802154_llsec_key *key)
+{
 	u8 iv[16];
-	काष्ठा scatterlist src;
+	struct scatterlist src;
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, key->tfm0);
-	पूर्णांक err, datalen;
-	अचिन्हित अक्षर *data;
+	int err, datalen;
+	unsigned char *data;
 
 	llsec_geniv(iv, sec->params.hwaddr, &hdr->sec);
 	/* Compute data payload offset and data length */
 	data = skb_mac_header(skb) + skb->mac_len;
-	datalen = skb_tail_poपूर्णांकer(skb) - data;
+	datalen = skb_tail_pointer(skb) - data;
 	sg_init_one(&src, data, datalen);
 
 	skcipher_request_set_sync_tfm(req, key->tfm0);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, &src, &src, datalen, iv);
 	err = crypto_skcipher_encrypt(req);
 	skcipher_request_zero(req);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा crypto_aead*
-llsec_tfm_by_len(काष्ठा mac802154_llsec_key *key, पूर्णांक authlen)
-अणु
-	पूर्णांक i;
+static struct crypto_aead*
+llsec_tfm_by_len(struct mac802154_llsec_key *key, int authlen)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(key->tfm); i++)
-		अगर (crypto_aead_authsize(key->tfm[i]) == authlen)
-			वापस key->tfm[i];
+	for (i = 0; i < ARRAY_SIZE(key->tfm); i++)
+		if (crypto_aead_authsize(key->tfm[i]) == authlen)
+			return key->tfm[i];
 
 	BUG();
-पूर्ण
+}
 
-अटल पूर्णांक
-llsec_करो_encrypt_auth(काष्ठा sk_buff *skb, स्थिर काष्ठा mac802154_llsec *sec,
-		      स्थिर काष्ठा ieee802154_hdr *hdr,
-		      काष्ठा mac802154_llsec_key *key)
-अणु
+static int
+llsec_do_encrypt_auth(struct sk_buff *skb, const struct mac802154_llsec *sec,
+		      const struct ieee802154_hdr *hdr,
+		      struct mac802154_llsec_key *key)
+{
 	u8 iv[16];
-	अचिन्हित अक्षर *data;
-	पूर्णांक authlen, assoclen, datalen, rc;
-	काष्ठा scatterlist sg;
-	काष्ठा aead_request *req;
+	unsigned char *data;
+	int authlen, assoclen, datalen, rc;
+	struct scatterlist sg;
+	struct aead_request *req;
 
 	authlen = ieee802154_sechdr_authtag_len(&hdr->sec);
 	llsec_geniv(iv, sec->params.hwaddr, &hdr->sec);
 
 	req = aead_request_alloc(llsec_tfm_by_len(key, authlen), GFP_ATOMIC);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
 	assoclen = skb->mac_len;
 
 	data = skb_mac_header(skb) + skb->mac_len;
-	datalen = skb_tail_poपूर्णांकer(skb) - data;
+	datalen = skb_tail_pointer(skb) - data;
 
 	skb_put(skb, authlen);
 
 	sg_init_one(&sg, skb_mac_header(skb), assoclen + datalen + authlen);
 
-	अगर (!(hdr->sec.level & IEEE802154_SCF_SECLEVEL_ENC)) अणु
+	if (!(hdr->sec.level & IEEE802154_SCF_SECLEVEL_ENC)) {
 		assoclen += datalen;
 		datalen = 0;
-	पूर्ण
+	}
 
-	aead_request_set_callback(req, 0, शून्य, शून्य);
+	aead_request_set_callback(req, 0, NULL, NULL);
 	aead_request_set_crypt(req, &sg, &sg, datalen, iv);
 	aead_request_set_ad(req, assoclen);
 
 	rc = crypto_aead_encrypt(req);
 
-	kमुक्त_sensitive(req);
+	kfree_sensitive(req);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक llsec_करो_encrypt(काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा mac802154_llsec *sec,
-			    स्थिर काष्ठा ieee802154_hdr *hdr,
-			    काष्ठा mac802154_llsec_key *key)
-अणु
-	अगर (hdr->sec.level == IEEE802154_SCF_SECLEVEL_ENC)
-		वापस llsec_करो_encrypt_unauth(skb, sec, hdr, key);
-	अन्यथा
-		वापस llsec_करो_encrypt_auth(skb, sec, hdr, key);
-पूर्ण
+static int llsec_do_encrypt(struct sk_buff *skb,
+			    const struct mac802154_llsec *sec,
+			    const struct ieee802154_hdr *hdr,
+			    struct mac802154_llsec_key *key)
+{
+	if (hdr->sec.level == IEEE802154_SCF_SECLEVEL_ENC)
+		return llsec_do_encrypt_unauth(skb, sec, hdr, key);
+	else
+		return llsec_do_encrypt_auth(skb, sec, hdr, key);
+}
 
-पूर्णांक mac802154_llsec_encrypt(काष्ठा mac802154_llsec *sec, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee802154_hdr hdr;
-	पूर्णांक rc, authlen, hlen;
-	काष्ठा mac802154_llsec_key *key;
+int mac802154_llsec_encrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
+{
+	struct ieee802154_hdr hdr;
+	int rc, authlen, hlen;
+	struct mac802154_llsec_key *key;
 	u32 frame_ctr;
 
 	hlen = ieee802154_hdr_pull(skb, &hdr);
 
-	अगर (hlen < 0 || hdr.fc.type != IEEE802154_FC_TYPE_DATA)
-		वापस -EINVAL;
+	if (hlen < 0 || hdr.fc.type != IEEE802154_FC_TYPE_DATA)
+		return -EINVAL;
 
-	अगर (!hdr.fc.security_enabled ||
-	    (hdr.sec.level == IEEE802154_SCF_SECLEVEL_NONE)) अणु
+	if (!hdr.fc.security_enabled ||
+	    (hdr.sec.level == IEEE802154_SCF_SECLEVEL_NONE)) {
 		skb_push(skb, hlen);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	authlen = ieee802154_sechdr_authtag_len(&hdr.sec);
 
-	अगर (skb->len + hlen + authlen + IEEE802154_MFR_SIZE > IEEE802154_MTU)
-		वापस -EMSGSIZE;
+	if (skb->len + hlen + authlen + IEEE802154_MFR_SIZE > IEEE802154_MTU)
+		return -EMSGSIZE;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	पढ़ो_lock_bh(&sec->lock);
+	read_lock_bh(&sec->lock);
 
-	अगर (!sec->params.enabled) अणु
+	if (!sec->params.enabled) {
 		rc = -EINVAL;
-		जाओ fail_पढ़ो;
-	पूर्ण
+		goto fail_read;
+	}
 
-	key = llsec_lookup_key(sec, &hdr, &hdr.dest, शून्य);
-	अगर (!key) अणु
+	key = llsec_lookup_key(sec, &hdr, &hdr.dest, NULL);
+	if (!key) {
 		rc = -ENOKEY;
-		जाओ fail_पढ़ो;
-	पूर्ण
+		goto fail_read;
+	}
 
-	पढ़ो_unlock_bh(&sec->lock);
+	read_unlock_bh(&sec->lock);
 
-	ग_लिखो_lock_bh(&sec->lock);
+	write_lock_bh(&sec->lock);
 
 	frame_ctr = be32_to_cpu(sec->params.frame_counter);
 	hdr.sec.frame_counter = cpu_to_le32(frame_ctr);
-	अगर (frame_ctr == 0xFFFFFFFF) अणु
-		ग_लिखो_unlock_bh(&sec->lock);
+	if (frame_ctr == 0xFFFFFFFF) {
+		write_unlock_bh(&sec->lock);
 		llsec_key_put(key);
 		rc = -EOVERFLOW;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	sec->params.frame_counter = cpu_to_be32(frame_ctr + 1);
 
-	ग_लिखो_unlock_bh(&sec->lock);
+	write_unlock_bh(&sec->lock);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	skb->mac_len = ieee802154_hdr_push(skb, &hdr);
 	skb_reset_mac_header(skb);
 
-	rc = llsec_करो_encrypt(skb, sec, &hdr, key);
+	rc = llsec_do_encrypt(skb, sec, &hdr, key);
 	llsec_key_put(key);
 
-	वापस rc;
+	return rc;
 
-fail_पढ़ो:
-	पढ़ो_unlock_bh(&sec->lock);
+fail_read:
+	read_unlock_bh(&sec->lock);
 fail:
-	rcu_पढ़ो_unlock();
-	वापस rc;
-पूर्ण
+	rcu_read_unlock();
+	return rc;
+}
 
-अटल काष्ठा mac802154_llsec_device*
-llsec_lookup_dev(काष्ठा mac802154_llsec *sec,
-		 स्थिर काष्ठा ieee802154_addr *addr)
-अणु
-	काष्ठा ieee802154_addr devaddr = *addr;
-	काष्ठा mac802154_llsec_device *dev = शून्य;
+static struct mac802154_llsec_device*
+llsec_lookup_dev(struct mac802154_llsec *sec,
+		 const struct ieee802154_addr *addr)
+{
+	struct ieee802154_addr devaddr = *addr;
+	struct mac802154_llsec_device *dev = NULL;
 
-	अगर (devaddr.mode == IEEE802154_ADDR_NONE &&
+	if (devaddr.mode == IEEE802154_ADDR_NONE &&
 	    llsec_recover_addr(sec, &devaddr) < 0)
-		वापस शून्य;
+		return NULL;
 
-	अगर (devaddr.mode == IEEE802154_ADDR_SHORT) अणु
-		u32 key = llsec_dev_hash_लघु(devaddr.लघु_addr,
+	if (devaddr.mode == IEEE802154_ADDR_SHORT) {
+		u32 key = llsec_dev_hash_short(devaddr.short_addr,
 					       devaddr.pan_id);
 
-		hash_क्रम_each_possible_rcu(sec->devices_लघु, dev,
-					   bucket_s, key) अणु
-			अगर (dev->dev.pan_id == devaddr.pan_id &&
-			    dev->dev.लघु_addr == devaddr.लघु_addr)
-				वापस dev;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		u64 key = llsec_dev_hash_दीर्घ(devaddr.extended_addr);
+		hash_for_each_possible_rcu(sec->devices_short, dev,
+					   bucket_s, key) {
+			if (dev->dev.pan_id == devaddr.pan_id &&
+			    dev->dev.short_addr == devaddr.short_addr)
+				return dev;
+		}
+	} else {
+		u64 key = llsec_dev_hash_long(devaddr.extended_addr);
 
-		hash_क्रम_each_possible_rcu(sec->devices_hw, dev,
-					   bucket_hw, key) अणु
-			अगर (dev->dev.hwaddr == devaddr.extended_addr)
-				वापस dev;
-		पूर्ण
-	पूर्ण
+		hash_for_each_possible_rcu(sec->devices_hw, dev,
+					   bucket_hw, key) {
+			if (dev->dev.hwaddr == devaddr.extended_addr)
+				return dev;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक
-llsec_lookup_seclevel(स्थिर काष्ठा mac802154_llsec *sec,
+static int
+llsec_lookup_seclevel(const struct mac802154_llsec *sec,
 		      u8 frame_type, u8 cmd_frame_id,
-		      काष्ठा ieee802154_llsec_seclevel *rlevel)
-अणु
-	काष्ठा ieee802154_llsec_seclevel *level;
+		      struct ieee802154_llsec_seclevel *rlevel)
+{
+	struct ieee802154_llsec_seclevel *level;
 
-	list_क्रम_each_entry_rcu(level, &sec->table.security_levels, list) अणु
-		अगर (level->frame_type == frame_type &&
+	list_for_each_entry_rcu(level, &sec->table.security_levels, list) {
+		if (level->frame_type == frame_type &&
 		    (frame_type != IEEE802154_FC_TYPE_MAC_CMD ||
-		     level->cmd_frame_id == cmd_frame_id)) अणु
+		     level->cmd_frame_id == cmd_frame_id)) {
 			*rlevel = *level;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-llsec_करो_decrypt_unauth(काष्ठा sk_buff *skb, स्थिर काष्ठा mac802154_llsec *sec,
-			स्थिर काष्ठा ieee802154_hdr *hdr,
-			काष्ठा mac802154_llsec_key *key, __le64 dev_addr)
-अणु
+static int
+llsec_do_decrypt_unauth(struct sk_buff *skb, const struct mac802154_llsec *sec,
+			const struct ieee802154_hdr *hdr,
+			struct mac802154_llsec_key *key, __le64 dev_addr)
+{
 	u8 iv[16];
-	अचिन्हित अक्षर *data;
-	पूर्णांक datalen;
-	काष्ठा scatterlist src;
+	unsigned char *data;
+	int datalen;
+	struct scatterlist src;
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, key->tfm0);
-	पूर्णांक err;
+	int err;
 
 	llsec_geniv(iv, dev_addr, &hdr->sec);
 	data = skb_mac_header(skb) + skb->mac_len;
-	datalen = skb_tail_poपूर्णांकer(skb) - data;
+	datalen = skb_tail_pointer(skb) - data;
 
 	sg_init_one(&src, data, datalen);
 
 	skcipher_request_set_sync_tfm(req, key->tfm0);
-	skcipher_request_set_callback(req, 0, शून्य, शून्य);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
 	skcipher_request_set_crypt(req, &src, &src, datalen, iv);
 
 	err = crypto_skcipher_decrypt(req);
 	skcipher_request_zero(req);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-llsec_करो_decrypt_auth(काष्ठा sk_buff *skb, स्थिर काष्ठा mac802154_llsec *sec,
-		      स्थिर काष्ठा ieee802154_hdr *hdr,
-		      काष्ठा mac802154_llsec_key *key, __le64 dev_addr)
-अणु
+static int
+llsec_do_decrypt_auth(struct sk_buff *skb, const struct mac802154_llsec *sec,
+		      const struct ieee802154_hdr *hdr,
+		      struct mac802154_llsec_key *key, __le64 dev_addr)
+{
 	u8 iv[16];
-	अचिन्हित अक्षर *data;
-	पूर्णांक authlen, datalen, assoclen, rc;
-	काष्ठा scatterlist sg;
-	काष्ठा aead_request *req;
+	unsigned char *data;
+	int authlen, datalen, assoclen, rc;
+	struct scatterlist sg;
+	struct aead_request *req;
 
 	authlen = ieee802154_sechdr_authtag_len(&hdr->sec);
 	llsec_geniv(iv, dev_addr, &hdr->sec);
 
 	req = aead_request_alloc(llsec_tfm_by_len(key, authlen), GFP_ATOMIC);
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
 	assoclen = skb->mac_len;
 
 	data = skb_mac_header(skb) + skb->mac_len;
-	datalen = skb_tail_poपूर्णांकer(skb) - data;
+	datalen = skb_tail_pointer(skb) - data;
 
 	sg_init_one(&sg, skb_mac_header(skb), assoclen + datalen);
 
-	अगर (!(hdr->sec.level & IEEE802154_SCF_SECLEVEL_ENC)) अणु
+	if (!(hdr->sec.level & IEEE802154_SCF_SECLEVEL_ENC)) {
 		assoclen += datalen - authlen;
 		datalen = authlen;
-	पूर्ण
+	}
 
-	aead_request_set_callback(req, 0, शून्य, शून्य);
+	aead_request_set_callback(req, 0, NULL, NULL);
 	aead_request_set_crypt(req, &sg, &sg, datalen, iv);
 	aead_request_set_ad(req, assoclen);
 
 	rc = crypto_aead_decrypt(req);
 
-	kमुक्त_sensitive(req);
+	kfree_sensitive(req);
 	skb_trim(skb, skb->len - authlen);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-llsec_करो_decrypt(काष्ठा sk_buff *skb, स्थिर काष्ठा mac802154_llsec *sec,
-		 स्थिर काष्ठा ieee802154_hdr *hdr,
-		 काष्ठा mac802154_llsec_key *key, __le64 dev_addr)
-अणु
-	अगर (hdr->sec.level == IEEE802154_SCF_SECLEVEL_ENC)
-		वापस llsec_करो_decrypt_unauth(skb, sec, hdr, key, dev_addr);
-	अन्यथा
-		वापस llsec_करो_decrypt_auth(skb, sec, hdr, key, dev_addr);
-पूर्ण
+static int
+llsec_do_decrypt(struct sk_buff *skb, const struct mac802154_llsec *sec,
+		 const struct ieee802154_hdr *hdr,
+		 struct mac802154_llsec_key *key, __le64 dev_addr)
+{
+	if (hdr->sec.level == IEEE802154_SCF_SECLEVEL_ENC)
+		return llsec_do_decrypt_unauth(skb, sec, hdr, key, dev_addr);
+	else
+		return llsec_do_decrypt_auth(skb, sec, hdr, key, dev_addr);
+}
 
-अटल पूर्णांक
-llsec_update_devkey_record(काष्ठा mac802154_llsec_device *dev,
-			   स्थिर काष्ठा ieee802154_llsec_key_id *in_key)
-अणु
-	काष्ठा mac802154_llsec_device_key *devkey;
+static int
+llsec_update_devkey_record(struct mac802154_llsec_device *dev,
+			   const struct ieee802154_llsec_key_id *in_key)
+{
+	struct mac802154_llsec_device_key *devkey;
 
 	devkey = llsec_devkey_find(dev, in_key);
 
-	अगर (!devkey) अणु
-		काष्ठा mac802154_llsec_device_key *next;
+	if (!devkey) {
+		struct mac802154_llsec_device_key *next;
 
-		next = kzalloc(माप(*devkey), GFP_ATOMIC);
-		अगर (!next)
-			वापस -ENOMEM;
+		next = kzalloc(sizeof(*devkey), GFP_ATOMIC);
+		if (!next)
+			return -ENOMEM;
 
 		next->devkey.key_id = *in_key;
 
 		spin_lock_bh(&dev->lock);
 
 		devkey = llsec_devkey_find(dev, in_key);
-		अगर (!devkey)
+		if (!devkey)
 			list_add_rcu(&next->devkey.list, &dev->dev.keys);
-		अन्यथा
-			kमुक्त_sensitive(next);
+		else
+			kfree_sensitive(next);
 
 		spin_unlock_bh(&dev->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-llsec_update_devkey_info(काष्ठा mac802154_llsec_device *dev,
-			 स्थिर काष्ठा ieee802154_llsec_key_id *in_key,
+static int
+llsec_update_devkey_info(struct mac802154_llsec_device *dev,
+			 const struct ieee802154_llsec_key_id *in_key,
 			 u32 frame_counter)
-अणु
-	काष्ठा mac802154_llsec_device_key *devkey = शून्य;
+{
+	struct mac802154_llsec_device_key *devkey = NULL;
 
-	अगर (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RESTRICT) अणु
+	if (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RESTRICT) {
 		devkey = llsec_devkey_find(dev, in_key);
-		अगर (!devkey)
-			वापस -ENOENT;
-	पूर्ण
+		if (!devkey)
+			return -ENOENT;
+	}
 
-	अगर (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RECORD) अणु
-		पूर्णांक rc = llsec_update_devkey_record(dev, in_key);
+	if (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RECORD) {
+		int rc = llsec_update_devkey_record(dev, in_key);
 
-		अगर (rc < 0)
-			वापस rc;
-	पूर्ण
+		if (rc < 0)
+			return rc;
+	}
 
 	spin_lock_bh(&dev->lock);
 
-	अगर ((!devkey && frame_counter < dev->dev.frame_counter) ||
-	    (devkey && frame_counter < devkey->devkey.frame_counter)) अणु
+	if ((!devkey && frame_counter < dev->dev.frame_counter) ||
+	    (devkey && frame_counter < devkey->devkey.frame_counter)) {
 		spin_unlock_bh(&dev->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (devkey)
+	if (devkey)
 		devkey->devkey.frame_counter = frame_counter + 1;
-	अन्यथा
+	else
 		dev->dev.frame_counter = frame_counter + 1;
 
 	spin_unlock_bh(&dev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mac802154_llsec_decrypt(काष्ठा mac802154_llsec *sec, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee802154_hdr hdr;
-	काष्ठा mac802154_llsec_key *key;
-	काष्ठा ieee802154_llsec_key_id key_id;
-	काष्ठा mac802154_llsec_device *dev;
-	काष्ठा ieee802154_llsec_seclevel seclevel;
-	पूर्णांक err;
+int mac802154_llsec_decrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
+{
+	struct ieee802154_hdr hdr;
+	struct mac802154_llsec_key *key;
+	struct ieee802154_llsec_key_id key_id;
+	struct mac802154_llsec_device *dev;
+	struct ieee802154_llsec_seclevel seclevel;
+	int err;
 	__le64 dev_addr;
 	u32 frame_ctr;
 
-	अगर (ieee802154_hdr_peek(skb, &hdr) < 0)
-		वापस -EINVAL;
-	अगर (!hdr.fc.security_enabled)
-		वापस 0;
-	अगर (hdr.fc.version == 0)
-		वापस -EINVAL;
+	if (ieee802154_hdr_peek(skb, &hdr) < 0)
+		return -EINVAL;
+	if (!hdr.fc.security_enabled)
+		return 0;
+	if (hdr.fc.version == 0)
+		return -EINVAL;
 
-	पढ़ो_lock_bh(&sec->lock);
-	अगर (!sec->params.enabled) अणु
-		पढ़ो_unlock_bh(&sec->lock);
-		वापस -EINVAL;
-	पूर्ण
-	पढ़ो_unlock_bh(&sec->lock);
+	read_lock_bh(&sec->lock);
+	if (!sec->params.enabled) {
+		read_unlock_bh(&sec->lock);
+		return -EINVAL;
+	}
+	read_unlock_bh(&sec->lock);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	key = llsec_lookup_key(sec, &hdr, &hdr.source, &key_id);
-	अगर (!key) अणु
+	if (!key) {
 		err = -ENOKEY;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dev = llsec_lookup_dev(sec, &hdr.source);
-	अगर (!dev) अणु
+	if (!dev) {
 		err = -EINVAL;
-		जाओ fail_dev;
-	पूर्ण
+		goto fail_dev;
+	}
 
-	अगर (llsec_lookup_seclevel(sec, hdr.fc.type, 0, &seclevel) < 0) अणु
+	if (llsec_lookup_seclevel(sec, hdr.fc.type, 0, &seclevel) < 0) {
 		err = -EINVAL;
-		जाओ fail_dev;
-	पूर्ण
+		goto fail_dev;
+	}
 
-	अगर (!(seclevel.sec_levels & BIT(hdr.sec.level)) &&
+	if (!(seclevel.sec_levels & BIT(hdr.sec.level)) &&
 	    (hdr.sec.level == 0 && seclevel.device_override &&
-	     !dev->dev.seclevel_exempt)) अणु
+	     !dev->dev.seclevel_exempt)) {
 		err = -EINVAL;
-		जाओ fail_dev;
-	पूर्ण
+		goto fail_dev;
+	}
 
 	frame_ctr = le32_to_cpu(hdr.sec.frame_counter);
 
-	अगर (frame_ctr == 0xffffffff) अणु
+	if (frame_ctr == 0xffffffff) {
 		err = -EOVERFLOW;
-		जाओ fail_dev;
-	पूर्ण
+		goto fail_dev;
+	}
 
 	err = llsec_update_devkey_info(dev, &key_id, frame_ctr);
-	अगर (err)
-		जाओ fail_dev;
+	if (err)
+		goto fail_dev;
 
 	dev_addr = dev->dev.hwaddr;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	err = llsec_करो_decrypt(skb, sec, &hdr, key, dev_addr);
+	err = llsec_do_decrypt(skb, sec, &hdr, key, dev_addr);
 	llsec_key_put(key);
-	वापस err;
+	return err;
 
 fail_dev:
 	llsec_key_put(key);
 fail:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}

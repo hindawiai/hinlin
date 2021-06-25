@@ -1,211 +1,210 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-2-Clause OR GPL-2.0-or-later
+// SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 /*
  * ENE KB3930 Embedded Controller Driver
  *
- * Copyright (C) 2020 Lubomir Rपूर्णांकel
+ * Copyright (C) 2020 Lubomir Rintel
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/module.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/regmap.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/mfd/core.h>
+#include <linux/module.h>
+#include <linux/reboot.h>
+#include <linux/regmap.h>
 
-/* I2C रेजिस्टरs that are multiplexing access to the EC RAM. */
-क्रमागत अणु
+/* I2C registers that are multiplexing access to the EC RAM. */
+enum {
 	EC_DATA_IN	= 0x00,
 	EC_RAM_OUT	= 0x80,
 	EC_RAM_IN	= 0x81,
-पूर्ण;
+};
 
-/* EC RAM रेजिस्टरs. */
-क्रमागत अणु
+/* EC RAM registers. */
+enum {
 	EC_MODEL	= 0x30,
 	EC_VERSION_MAJ	= 0x31,
 	EC_VERSION_MIN	= 0x32,
-पूर्ण;
+};
 
-काष्ठा kb3930 अणु
-	काष्ठा i2c_client *client;
-	काष्ठा regmap *ram_regmap;
-	काष्ठा gpio_descs *off_gpios;
-पूर्ण;
+struct kb3930 {
+	struct i2c_client *client;
+	struct regmap *ram_regmap;
+	struct gpio_descs *off_gpios;
+};
 
-अटल काष्ठा kb3930 *kb3930_घातer_off;
+static struct kb3930 *kb3930_power_off;
 
-#घोषणा EC_GPIO_WAVE		0
-#घोषणा EC_GPIO_OFF_MODE	1
+#define EC_GPIO_WAVE		0
+#define EC_GPIO_OFF_MODE	1
 
-#घोषणा EC_OFF_MODE_REBOOT	0
-#घोषणा EC_OFF_MODE_POWER	1
+#define EC_OFF_MODE_REBOOT	0
+#define EC_OFF_MODE_POWER	1
 
-अटल व्योम kb3930_off(काष्ठा kb3930 *ddata, पूर्णांक off_mode)
-अणु
+static void kb3930_off(struct kb3930 *ddata, int off_mode)
+{
 	gpiod_direction_output(ddata->off_gpios->desc[EC_GPIO_OFF_MODE],
 			       off_mode);
 
 	/*
-	 * This creates a 10 Hz wave on EC_GPIO_WAVE that संकेतs a
-	 * shutकरोwn request to the EC. Once the EC detects it, it will
-	 * proceed to turn the घातer off or reset the board depending on
+	 * This creates a 10 Hz wave on EC_GPIO_WAVE that signals a
+	 * shutdown request to the EC. Once the EC detects it, it will
+	 * proceed to turn the power off or reset the board depending on
 	 * the value of EC_GPIO_OFF_MODE.
 	 */
-	जबतक (1) अणु
+	while (1) {
 		mdelay(50);
 		gpiod_direction_output(ddata->off_gpios->desc[EC_GPIO_WAVE], 0);
 		mdelay(50);
 		gpiod_direction_output(ddata->off_gpios->desc[EC_GPIO_WAVE], 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक kb3930_restart(काष्ठा notअगरier_block *this,
-			  अचिन्हित दीर्घ mode, व्योम *cmd)
-अणु
-	kb3930_off(kb3930_घातer_off, EC_OFF_MODE_REBOOT);
-	वापस NOTIFY_DONE;
-पूर्ण
+static int kb3930_restart(struct notifier_block *this,
+			  unsigned long mode, void *cmd)
+{
+	kb3930_off(kb3930_power_off, EC_OFF_MODE_REBOOT);
+	return NOTIFY_DONE;
+}
 
-अटल व्योम kb3930_pm_घातer_off(व्योम)
-अणु
-	kb3930_off(kb3930_घातer_off, EC_OFF_MODE_POWER);
-पूर्ण
+static void kb3930_pm_power_off(void)
+{
+	kb3930_off(kb3930_power_off, EC_OFF_MODE_POWER);
+}
 
-अटल काष्ठा notअगरier_block kb3930_restart_nb = अणु
-	.notअगरier_call = kb3930_restart,
-पूर्ण;
+static struct notifier_block kb3930_restart_nb = {
+	.notifier_call = kb3930_restart,
+};
 
-अटल स्थिर काष्ठा mfd_cell ariel_ec_cells[] = अणु
-	अणु .name = "dell-wyse-ariel-led", पूर्ण,
-	अणु .name = "dell-wyse-ariel-power", पूर्ण,
-पूर्ण;
+static const struct mfd_cell ariel_ec_cells[] = {
+	{ .name = "dell-wyse-ariel-led", },
+	{ .name = "dell-wyse-ariel-power", },
+};
 
-अटल पूर्णांक kb3930_ec_ram_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
-				   अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा kb3930 *ddata = context;
+static int kb3930_ec_ram_reg_write(void *context, unsigned int reg,
+				   unsigned int val)
+{
+	struct kb3930 *ddata = context;
 
-	वापस i2c_smbus_ग_लिखो_word_data(ddata->client, EC_RAM_OUT,
+	return i2c_smbus_write_word_data(ddata->client, EC_RAM_OUT,
 					 (val << 8) | reg);
-पूर्ण
+}
 
-अटल पूर्णांक kb3930_ec_ram_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
-				  अचिन्हित पूर्णांक *val)
-अणु
-	काष्ठा kb3930 *ddata = context;
-	पूर्णांक ret;
+static int kb3930_ec_ram_reg_read(void *context, unsigned int reg,
+				  unsigned int *val)
+{
+	struct kb3930 *ddata = context;
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_word_data(ddata->client, EC_RAM_IN, reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_word_data(ddata->client, EC_RAM_IN, reg);
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_पढ़ो_word_data(ddata->client, EC_DATA_IN);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_word_data(ddata->client, EC_DATA_IN);
+	if (ret < 0)
+		return ret;
 
 	*val = ret >> 8;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा regmap_config kb3930_ram_regmap_config = अणु
+static const struct regmap_config kb3930_ram_regmap_config = {
 	.name = "ec_ram",
 	.reg_bits = 8,
 	.val_bits = 8,
 	.reg_stride = 1,
-	.max_रेजिस्टर = 0xff,
-	.reg_ग_लिखो = kb3930_ec_ram_reg_ग_लिखो,
-	.reg_पढ़ो = kb3930_ec_ram_reg_पढ़ो,
+	.max_register = 0xff,
+	.reg_write = kb3930_ec_ram_reg_write,
+	.reg_read = kb3930_ec_ram_reg_read,
 	.fast_io = false,
-पूर्ण;
+};
 
-अटल पूर्णांक kb3930_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा kb3930 *ddata;
-	अचिन्हित पूर्णांक model;
-	पूर्णांक ret;
+static int kb3930_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct device_node *np = dev->of_node;
+	struct kb3930 *ddata;
+	unsigned int model;
+	int ret;
 
-	ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	kb3930_घातer_off = ddata;
+	kb3930_power_off = ddata;
 	ddata->client = client;
 	i2c_set_clientdata(client, ddata);
 
-	ddata->ram_regmap = devm_regmap_init(dev, शून्य, ddata,
+	ddata->ram_regmap = devm_regmap_init(dev, NULL, ddata,
 					     &kb3930_ram_regmap_config);
-	अगर (IS_ERR(ddata->ram_regmap))
-		वापस PTR_ERR(ddata->ram_regmap);
+	if (IS_ERR(ddata->ram_regmap))
+		return PTR_ERR(ddata->ram_regmap);
 
-	ret = regmap_पढ़ो(ddata->ram_regmap, EC_MODEL, &model);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(ddata->ram_regmap, EC_MODEL, &model);
+	if (ret < 0)
+		return ret;
 
 	/* Currently we only support the cells present on Dell Ariel model. */
-	अगर (model != 'J') अणु
+	if (model != 'J') {
 		dev_err(dev, "unknown board model: %02x\n", model);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = devm_mfd_add_devices(dev, PLATFORM_DEVID_AUTO,
 				   ariel_ec_cells,
 				   ARRAY_SIZE(ariel_ec_cells),
-				   शून्य, 0, शून्य);
-	अगर (ret)
-		वापस ret;
+				   NULL, 0, NULL);
+	if (ret)
+		return ret;
 
-	अगर (of_property_पढ़ो_bool(np, "system-power-controller")) अणु
+	if (of_property_read_bool(np, "system-power-controller")) {
 		ddata->off_gpios =
 			devm_gpiod_get_array_optional(dev, "off", GPIOD_IN);
-		अगर (IS_ERR(ddata->off_gpios))
-			वापस PTR_ERR(ddata->off_gpios);
-		अगर (ddata->off_gpios->ndescs < 2) अणु
+		if (IS_ERR(ddata->off_gpios))
+			return PTR_ERR(ddata->off_gpios);
+		if (ddata->off_gpios->ndescs < 2) {
 			dev_err(dev, "invalid off-gpios property\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (ddata->off_gpios) अणु
-		रेजिस्टर_restart_handler(&kb3930_restart_nb);
-		अगर (!pm_घातer_off)
-			pm_घातer_off = kb3930_pm_घातer_off;
-	पूर्ण
+	if (ddata->off_gpios) {
+		register_restart_handler(&kb3930_restart_nb);
+		if (!pm_power_off)
+			pm_power_off = kb3930_pm_power_off;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kb3930_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा kb3930 *ddata = i2c_get_clientdata(client);
+static int kb3930_remove(struct i2c_client *client)
+{
+	struct kb3930 *ddata = i2c_get_clientdata(client);
 
-	अगर (ddata->off_gpios) अणु
-		अगर (pm_घातer_off == kb3930_pm_घातer_off)
-			pm_घातer_off = शून्य;
-		unरेजिस्टर_restart_handler(&kb3930_restart_nb);
-	पूर्ण
-	kb3930_घातer_off = शून्य;
+	if (ddata->off_gpios) {
+		if (pm_power_off == kb3930_pm_power_off)
+			pm_power_off = NULL;
+		unregister_restart_handler(&kb3930_restart_nb);
+	}
+	kb3930_power_off = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id kb3930_dt_ids[] = अणु
-	अणु .compatible = "ene,kb3930" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id kb3930_dt_ids[] = {
+	{ .compatible = "ene,kb3930" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, kb3930_dt_ids);
 
-अटल काष्ठा i2c_driver kb3930_driver = अणु
+static struct i2c_driver kb3930_driver = {
 	.probe_new = kb3930_probe,
-	.हटाओ = kb3930_हटाओ,
-	.driver = अणु
+	.remove = kb3930_remove,
+	.driver = {
 		.name = "ene-kb3930",
 		.of_match_table = kb3930_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_i2c_driver(kb3930_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");

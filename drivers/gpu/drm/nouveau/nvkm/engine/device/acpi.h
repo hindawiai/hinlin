@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_DEVICE_ACPI_H__
-#घोषणा __NVKM_DEVICE_ACPI_H__
-#समावेश <core/os.h>
-काष्ठा nvkm_device;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_DEVICE_ACPI_H__
+#define __NVKM_DEVICE_ACPI_H__
+#include <core/os.h>
+struct nvkm_device;
 
-व्योम nvkm_acpi_init(काष्ठा nvkm_device *);
-व्योम nvkm_acpi_fini(काष्ठा nvkm_device *);
-#पूर्ण_अगर
+void nvkm_acpi_init(struct nvkm_device *);
+void nvkm_acpi_fini(struct nvkm_device *);
+#endif

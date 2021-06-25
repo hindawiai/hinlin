@@ -1,313 +1,312 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Facebook
  * Copyright 2020 Google LLC.
  */
 
-#समावेश <linux/pid.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/bpf_local_storage.h>
-#समावेश <linux/filter.h>
-#समावेश <uapi/linux/btf.h>
-#समावेश <linux/btf_ids.h>
-#समावेश <linux/fdtable.h>
+#include <linux/pid.h>
+#include <linux/sched.h>
+#include <linux/rculist.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/bpf.h>
+#include <linux/bpf_local_storage.h>
+#include <linux/filter.h>
+#include <uapi/linux/btf.h>
+#include <linux/btf_ids.h>
+#include <linux/fdtable.h>
 
 DEFINE_BPF_STORAGE_CACHE(task_cache);
 
-अटल DEFINE_PER_CPU(पूर्णांक, bpf_task_storage_busy);
+static DEFINE_PER_CPU(int, bpf_task_storage_busy);
 
-अटल व्योम bpf_task_storage_lock(व्योम)
-अणु
+static void bpf_task_storage_lock(void)
+{
 	migrate_disable();
 	__this_cpu_inc(bpf_task_storage_busy);
-पूर्ण
+}
 
-अटल व्योम bpf_task_storage_unlock(व्योम)
-अणु
+static void bpf_task_storage_unlock(void)
+{
 	__this_cpu_dec(bpf_task_storage_busy);
 	migrate_enable();
-पूर्ण
+}
 
-अटल bool bpf_task_storage_trylock(व्योम)
-अणु
+static bool bpf_task_storage_trylock(void)
+{
 	migrate_disable();
-	अगर (unlikely(__this_cpu_inc_वापस(bpf_task_storage_busy) != 1)) अणु
+	if (unlikely(__this_cpu_inc_return(bpf_task_storage_busy) != 1)) {
 		__this_cpu_dec(bpf_task_storage_busy);
 		migrate_enable();
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल काष्ठा bpf_local_storage __rcu **task_storage_ptr(व्योम *owner)
-अणु
-	काष्ठा task_काष्ठा *task = owner;
+static struct bpf_local_storage __rcu **task_storage_ptr(void *owner)
+{
+	struct task_struct *task = owner;
 
-	वापस &task->bpf_storage;
-पूर्ण
+	return &task->bpf_storage;
+}
 
-अटल काष्ठा bpf_local_storage_data *
-task_storage_lookup(काष्ठा task_काष्ठा *task, काष्ठा bpf_map *map,
+static struct bpf_local_storage_data *
+task_storage_lookup(struct task_struct *task, struct bpf_map *map,
 		    bool cacheit_lockit)
-अणु
-	काष्ठा bpf_local_storage *task_storage;
-	काष्ठा bpf_local_storage_map *smap;
+{
+	struct bpf_local_storage *task_storage;
+	struct bpf_local_storage_map *smap;
 
 	task_storage = rcu_dereference(task->bpf_storage);
-	अगर (!task_storage)
-		वापस शून्य;
+	if (!task_storage)
+		return NULL;
 
-	smap = (काष्ठा bpf_local_storage_map *)map;
-	वापस bpf_local_storage_lookup(task_storage, smap, cacheit_lockit);
-पूर्ण
+	smap = (struct bpf_local_storage_map *)map;
+	return bpf_local_storage_lookup(task_storage, smap, cacheit_lockit);
+}
 
-व्योम bpf_task_storage_मुक्त(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा bpf_local_storage_elem *selem;
-	काष्ठा bpf_local_storage *local_storage;
-	bool मुक्त_task_storage = false;
-	काष्ठा hlist_node *n;
-	अचिन्हित दीर्घ flags;
+void bpf_task_storage_free(struct task_struct *task)
+{
+	struct bpf_local_storage_elem *selem;
+	struct bpf_local_storage *local_storage;
+	bool free_task_storage = false;
+	struct hlist_node *n;
+	unsigned long flags;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	local_storage = rcu_dereference(task->bpf_storage);
-	अगर (!local_storage) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+	if (!local_storage) {
+		rcu_read_unlock();
+		return;
+	}
 
 	/* Neither the bpf_prog nor the bpf-map's syscall
-	 * could be modअगरying the local_storage->list now.
+	 * could be modifying the local_storage->list now.
 	 * Thus, no elem can be added-to or deleted-from the
 	 * local_storage->list by the bpf_prog or by the bpf-map's syscall.
 	 *
-	 * It is racing with bpf_local_storage_map_मुक्त() alone
+	 * It is racing with bpf_local_storage_map_free() alone
 	 * when unlinking elem from the local_storage->list and
 	 * the map's bucket->list.
 	 */
 	bpf_task_storage_lock();
 	raw_spin_lock_irqsave(&local_storage->lock, flags);
-	hlist_क्रम_each_entry_safe(selem, n, &local_storage->list, snode) अणु
-		/* Always unlink from map beक्रमe unlinking from
+	hlist_for_each_entry_safe(selem, n, &local_storage->list, snode) {
+		/* Always unlink from map before unlinking from
 		 * local_storage.
 		 */
 		bpf_selem_unlink_map(selem);
-		मुक्त_task_storage = bpf_selem_unlink_storage_nolock(
+		free_task_storage = bpf_selem_unlink_storage_nolock(
 			local_storage, selem, false);
-	पूर्ण
+	}
 	raw_spin_unlock_irqrestore(&local_storage->lock, flags);
 	bpf_task_storage_unlock();
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* मुक्त_task_storage should always be true as दीर्घ as
+	/* free_task_storage should always be true as long as
 	 * local_storage->list was non-empty.
 	 */
-	अगर (मुक्त_task_storage)
-		kमुक्त_rcu(local_storage, rcu);
-पूर्ण
+	if (free_task_storage)
+		kfree_rcu(local_storage, rcu);
+}
 
-अटल व्योम *bpf_pid_task_storage_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
-	काष्ठा task_काष्ठा *task;
-	अचिन्हित पूर्णांक f_flags;
-	काष्ठा pid *pid;
-	पूर्णांक fd, err;
+static void *bpf_pid_task_storage_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_local_storage_data *sdata;
+	struct task_struct *task;
+	unsigned int f_flags;
+	struct pid *pid;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	pid = pidfd_get_pid(fd, &f_flags);
-	अगर (IS_ERR(pid))
-		वापस ERR_CAST(pid);
+	if (IS_ERR(pid))
+		return ERR_CAST(pid);
 
-	/* We should be in an RCU पढ़ो side critical section, it should be safe
+	/* We should be in an RCU read side critical section, it should be safe
 	 * to call pid_task.
 	 */
-	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	WARN_ON_ONCE(!rcu_read_lock_held());
 	task = pid_task(pid, PIDTYPE_PID);
-	अगर (!task) अणु
+	if (!task) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	bpf_task_storage_lock();
 	sdata = task_storage_lookup(task, map, true);
 	bpf_task_storage_unlock();
 	put_pid(pid);
-	वापस sdata ? sdata->data : शून्य;
+	return sdata ? sdata->data : NULL;
 out:
 	put_pid(pid);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक bpf_pid_task_storage_update_elem(काष्ठा bpf_map *map, व्योम *key,
-					    व्योम *value, u64 map_flags)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
-	काष्ठा task_काष्ठा *task;
-	अचिन्हित पूर्णांक f_flags;
-	काष्ठा pid *pid;
-	पूर्णांक fd, err;
+static int bpf_pid_task_storage_update_elem(struct bpf_map *map, void *key,
+					    void *value, u64 map_flags)
+{
+	struct bpf_local_storage_data *sdata;
+	struct task_struct *task;
+	unsigned int f_flags;
+	struct pid *pid;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	pid = pidfd_get_pid(fd, &f_flags);
-	अगर (IS_ERR(pid))
-		वापस PTR_ERR(pid);
+	if (IS_ERR(pid))
+		return PTR_ERR(pid);
 
-	/* We should be in an RCU पढ़ो side critical section, it should be safe
+	/* We should be in an RCU read side critical section, it should be safe
 	 * to call pid_task.
 	 */
-	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	WARN_ON_ONCE(!rcu_read_lock_held());
 	task = pid_task(pid, PIDTYPE_PID);
-	अगर (!task) अणु
+	if (!task) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	bpf_task_storage_lock();
 	sdata = bpf_local_storage_update(
-		task, (काष्ठा bpf_local_storage_map *)map, value, map_flags);
+		task, (struct bpf_local_storage_map *)map, value, map_flags);
 	bpf_task_storage_unlock();
 
 	err = PTR_ERR_OR_ZERO(sdata);
 out:
 	put_pid(pid);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक task_storage_delete(काष्ठा task_काष्ठा *task, काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
+static int task_storage_delete(struct task_struct *task, struct bpf_map *map)
+{
+	struct bpf_local_storage_data *sdata;
 
 	sdata = task_storage_lookup(task, map, false);
-	अगर (!sdata)
-		वापस -ENOENT;
+	if (!sdata)
+		return -ENOENT;
 
 	bpf_selem_unlink(SELEM(sdata));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_pid_task_storage_delete_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा task_काष्ठा *task;
-	अचिन्हित पूर्णांक f_flags;
-	काष्ठा pid *pid;
-	पूर्णांक fd, err;
+static int bpf_pid_task_storage_delete_elem(struct bpf_map *map, void *key)
+{
+	struct task_struct *task;
+	unsigned int f_flags;
+	struct pid *pid;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	pid = pidfd_get_pid(fd, &f_flags);
-	अगर (IS_ERR(pid))
-		वापस PTR_ERR(pid);
+	if (IS_ERR(pid))
+		return PTR_ERR(pid);
 
-	/* We should be in an RCU पढ़ो side critical section, it should be safe
+	/* We should be in an RCU read side critical section, it should be safe
 	 * to call pid_task.
 	 */
-	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	WARN_ON_ONCE(!rcu_read_lock_held());
 	task = pid_task(pid, PIDTYPE_PID);
-	अगर (!task) अणु
+	if (!task) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	bpf_task_storage_lock();
 	err = task_storage_delete(task, map);
 	bpf_task_storage_unlock();
 out:
 	put_pid(pid);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-BPF_CALL_4(bpf_task_storage_get, काष्ठा bpf_map *, map, काष्ठा task_काष्ठा *,
-	   task, व्योम *, value, u64, flags)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
+BPF_CALL_4(bpf_task_storage_get, struct bpf_map *, map, struct task_struct *,
+	   task, void *, value, u64, flags)
+{
+	struct bpf_local_storage_data *sdata;
 
-	अगर (flags & ~(BPF_LOCAL_STORAGE_GET_F_CREATE))
-		वापस (अचिन्हित दीर्घ)शून्य;
+	if (flags & ~(BPF_LOCAL_STORAGE_GET_F_CREATE))
+		return (unsigned long)NULL;
 
-	अगर (!task)
-		वापस (अचिन्हित दीर्घ)शून्य;
+	if (!task)
+		return (unsigned long)NULL;
 
-	अगर (!bpf_task_storage_trylock())
-		वापस (अचिन्हित दीर्घ)शून्य;
+	if (!bpf_task_storage_trylock())
+		return (unsigned long)NULL;
 
 	sdata = task_storage_lookup(task, map, true);
-	अगर (sdata)
-		जाओ unlock;
+	if (sdata)
+		goto unlock;
 
 	/* only allocate new storage, when the task is refcounted */
-	अगर (refcount_पढ़ो(&task->usage) &&
+	if (refcount_read(&task->usage) &&
 	    (flags & BPF_LOCAL_STORAGE_GET_F_CREATE))
 		sdata = bpf_local_storage_update(
-			task, (काष्ठा bpf_local_storage_map *)map, value,
+			task, (struct bpf_local_storage_map *)map, value,
 			BPF_NOEXIST);
 
 unlock:
 	bpf_task_storage_unlock();
-	वापस IS_ERR_OR_शून्य(sdata) ? (अचिन्हित दीर्घ)शून्य :
-		(अचिन्हित दीर्घ)sdata->data;
-पूर्ण
+	return IS_ERR_OR_NULL(sdata) ? (unsigned long)NULL :
+		(unsigned long)sdata->data;
+}
 
-BPF_CALL_2(bpf_task_storage_delete, काष्ठा bpf_map *, map, काष्ठा task_काष्ठा *,
+BPF_CALL_2(bpf_task_storage_delete, struct bpf_map *, map, struct task_struct *,
 	   task)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (!task)
-		वापस -EINVAL;
+	if (!task)
+		return -EINVAL;
 
-	अगर (!bpf_task_storage_trylock())
-		वापस -EBUSY;
+	if (!bpf_task_storage_trylock())
+		return -EBUSY;
 
-	/* This helper must only be called from places where the lअगरeसमय of the task
-	 * is guaranteed. Either by being refcounted or by being रक्षित
-	 * by an RCU पढ़ो-side critical section.
+	/* This helper must only be called from places where the lifetime of the task
+	 * is guaranteed. Either by being refcounted or by being protected
+	 * by an RCU read-side critical section.
 	 */
 	ret = task_storage_delete(task, map);
 	bpf_task_storage_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक notsupp_get_next_key(काष्ठा bpf_map *map, व्योम *key, व्योम *next_key)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int notsupp_get_next_key(struct bpf_map *map, void *key, void *next_key)
+{
+	return -ENOTSUPP;
+}
 
-अटल काष्ठा bpf_map *task_storage_map_alloc(जोड़ bpf_attr *attr)
-अणु
-	काष्ठा bpf_local_storage_map *smap;
+static struct bpf_map *task_storage_map_alloc(union bpf_attr *attr)
+{
+	struct bpf_local_storage_map *smap;
 
 	smap = bpf_local_storage_map_alloc(attr);
-	अगर (IS_ERR(smap))
-		वापस ERR_CAST(smap);
+	if (IS_ERR(smap))
+		return ERR_CAST(smap);
 
 	smap->cache_idx = bpf_local_storage_cache_idx_get(&task_cache);
-	वापस &smap->map;
-पूर्ण
+	return &smap->map;
+}
 
-अटल व्योम task_storage_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_local_storage_map *smap;
+static void task_storage_map_free(struct bpf_map *map)
+{
+	struct bpf_local_storage_map *smap;
 
-	smap = (काष्ठा bpf_local_storage_map *)map;
-	bpf_local_storage_cache_idx_मुक्त(&task_cache, smap->cache_idx);
-	bpf_local_storage_map_मुक्त(smap, &bpf_task_storage_busy);
-पूर्ण
+	smap = (struct bpf_local_storage_map *)map;
+	bpf_local_storage_cache_idx_free(&task_cache, smap->cache_idx);
+	bpf_local_storage_map_free(smap, &bpf_task_storage_busy);
+}
 
-अटल पूर्णांक task_storage_map_btf_id;
-स्थिर काष्ठा bpf_map_ops task_storage_map_ops = अणु
+static int task_storage_map_btf_id;
+const struct bpf_map_ops task_storage_map_ops = {
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = bpf_local_storage_map_alloc_check,
 	.map_alloc = task_storage_map_alloc,
-	.map_मुक्त = task_storage_map_मुक्त,
+	.map_free = task_storage_map_free,
 	.map_get_next_key = notsupp_get_next_key,
 	.map_lookup_elem = bpf_pid_task_storage_lookup_elem,
 	.map_update_elem = bpf_pid_task_storage_update_elem,
@@ -316,26 +315,26 @@ BPF_CALL_2(bpf_task_storage_delete, काष्ठा bpf_map *, map, काष
 	.map_btf_name = "bpf_local_storage_map",
 	.map_btf_id = &task_storage_map_btf_id,
 	.map_owner_storage_ptr = task_storage_ptr,
-पूर्ण;
+};
 
-BTF_ID_LIST_SINGLE(bpf_task_storage_btf_ids, काष्ठा, task_काष्ठा)
+BTF_ID_LIST_SINGLE(bpf_task_storage_btf_ids, struct, task_struct)
 
-स्थिर काष्ठा bpf_func_proto bpf_task_storage_get_proto = अणु
+const struct bpf_func_proto bpf_task_storage_get_proto = {
 	.func = bpf_task_storage_get,
 	.gpl_only = false,
-	.ret_type = RET_PTR_TO_MAP_VALUE_OR_शून्य,
+	.ret_type = RET_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg1_type = ARG_CONST_MAP_PTR,
 	.arg2_type = ARG_PTR_TO_BTF_ID,
 	.arg2_btf_id = &bpf_task_storage_btf_ids[0],
-	.arg3_type = ARG_PTR_TO_MAP_VALUE_OR_शून्य,
+	.arg3_type = ARG_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg4_type = ARG_ANYTHING,
-पूर्ण;
+};
 
-स्थिर काष्ठा bpf_func_proto bpf_task_storage_delete_proto = अणु
+const struct bpf_func_proto bpf_task_storage_delete_proto = {
 	.func = bpf_task_storage_delete,
 	.gpl_only = false,
 	.ret_type = RET_INTEGER,
 	.arg1_type = ARG_CONST_MAP_PTR,
 	.arg2_type = ARG_PTR_TO_BTF_ID,
 	.arg2_btf_id = &bpf_task_storage_btf_ids[0],
-पूर्ण;
+};

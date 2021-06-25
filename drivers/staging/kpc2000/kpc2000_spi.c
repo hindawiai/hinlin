@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * KP2000 SPI controller driver
  *
@@ -8,291 +7,291 @@
  * Very loosely based on spi-omap2-mcspi.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/gcd.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/flash.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/gcd.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/flash.h>
+#include <linux/mtd/partitions.h>
 
-#समावेश "kpc.h"
+#include "kpc.h"
 
-अटल काष्ठा mtd_partition p2kr0_spi0_parts[] = अणु
-	अणु .name = "SLOT_0",	.size = 7798784,		.offset = 0,                पूर्ण,
-	अणु .name = "SLOT_1",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "SLOT_2",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "SLOT_3",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "CS0_EXTRA",	.size = MTDPART_SIZ_FULL,	.offset = MTDPART_OFS_NXTBLKपूर्ण,
-पूर्ण;
+static struct mtd_partition p2kr0_spi0_parts[] = {
+	{ .name = "SLOT_0",	.size = 7798784,		.offset = 0,                },
+	{ .name = "SLOT_1",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "SLOT_2",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "SLOT_3",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "CS0_EXTRA",	.size = MTDPART_SIZ_FULL,	.offset = MTDPART_OFS_NXTBLK},
+};
 
-अटल काष्ठा mtd_partition p2kr0_spi1_parts[] = अणु
-	अणु .name = "SLOT_4",	.size = 7798784,		.offset = 0,                पूर्ण,
-	अणु .name = "SLOT_5",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "SLOT_6",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "SLOT_7",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLKपूर्ण,
-	अणु .name = "CS1_EXTRA",	.size = MTDPART_SIZ_FULL,	.offset = MTDPART_OFS_NXTBLKपूर्ण,
-पूर्ण;
+static struct mtd_partition p2kr0_spi1_parts[] = {
+	{ .name = "SLOT_4",	.size = 7798784,		.offset = 0,                },
+	{ .name = "SLOT_5",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "SLOT_6",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "SLOT_7",	.size = 7798784,		.offset = MTDPART_OFS_NXTBLK},
+	{ .name = "CS1_EXTRA",	.size = MTDPART_SIZ_FULL,	.offset = MTDPART_OFS_NXTBLK},
+};
 
-अटल काष्ठा flash_platक्रमm_data p2kr0_spi0_pdata = अणु
+static struct flash_platform_data p2kr0_spi0_pdata = {
 	.name =		"SPI0",
 	.nr_parts =	ARRAY_SIZE(p2kr0_spi0_parts),
 	.parts =	p2kr0_spi0_parts,
-पूर्ण;
+};
 
-अटल काष्ठा flash_platक्रमm_data p2kr0_spi1_pdata = अणु
+static struct flash_platform_data p2kr0_spi1_pdata = {
 	.name =		"SPI1",
 	.nr_parts =	ARRAY_SIZE(p2kr0_spi1_parts),
 	.parts =	p2kr0_spi1_parts,
-पूर्ण;
+};
 
-अटल काष्ठा spi_board_info p2kr0_board_info[] = अणु
-	अणु
+static struct spi_board_info p2kr0_board_info[] = {
+	{
 		.modalias =		"n25q256a11",
 		.bus_num =		1,
 		.chip_select =		0,
 		.mode =			SPI_MODE_0,
-		.platक्रमm_data =	&p2kr0_spi0_pdata
-	पूर्ण,
-	अणु
+		.platform_data =	&p2kr0_spi0_pdata
+	},
+	{
 		.modalias =		"n25q256a11",
 		.bus_num =		1,
 		.chip_select =		1,
 		.mode =			SPI_MODE_0,
-		.platक्रमm_data =	&p2kr0_spi1_pdata
-	पूर्ण,
-पूर्ण;
+		.platform_data =	&p2kr0_spi1_pdata
+	},
+};
 
 /***************
  * SPI Defines *
  ***************/
-#घोषणा KP_SPI_REG_CONFIG 0x0 /* 0x00 */
-#घोषणा KP_SPI_REG_STATUS 0x1 /* 0x08 */
-#घोषणा KP_SPI_REG_FFCTRL 0x2 /* 0x10 */
-#घोषणा KP_SPI_REG_TXDATA 0x3 /* 0x18 */
-#घोषणा KP_SPI_REG_RXDATA 0x4 /* 0x20 */
+#define KP_SPI_REG_CONFIG 0x0 /* 0x00 */
+#define KP_SPI_REG_STATUS 0x1 /* 0x08 */
+#define KP_SPI_REG_FFCTRL 0x2 /* 0x10 */
+#define KP_SPI_REG_TXDATA 0x3 /* 0x18 */
+#define KP_SPI_REG_RXDATA 0x4 /* 0x20 */
 
-#घोषणा KP_SPI_CLK           48000000
-#घोषणा KP_SPI_MAX_FIFODEPTH 64
-#घोषणा KP_SPI_MAX_FIFOWCNT  0xFFFF
+#define KP_SPI_CLK           48000000
+#define KP_SPI_MAX_FIFODEPTH 64
+#define KP_SPI_MAX_FIFOWCNT  0xFFFF
 
-#घोषणा KP_SPI_REG_CONFIG_TRM_TXRX 0
-#घोषणा KP_SPI_REG_CONFIG_TRM_RX   1
-#घोषणा KP_SPI_REG_CONFIG_TRM_TX   2
+#define KP_SPI_REG_CONFIG_TRM_TXRX 0
+#define KP_SPI_REG_CONFIG_TRM_RX   1
+#define KP_SPI_REG_CONFIG_TRM_TX   2
 
-#घोषणा KP_SPI_REG_STATUS_RXS   0x01
-#घोषणा KP_SPI_REG_STATUS_TXS   0x02
-#घोषणा KP_SPI_REG_STATUS_EOT   0x04
-#घोषणा KP_SPI_REG_STATUS_TXFFE 0x10
-#घोषणा KP_SPI_REG_STATUS_TXFFF 0x20
-#घोषणा KP_SPI_REG_STATUS_RXFFE 0x40
-#घोषणा KP_SPI_REG_STATUS_RXFFF 0x80
+#define KP_SPI_REG_STATUS_RXS   0x01
+#define KP_SPI_REG_STATUS_TXS   0x02
+#define KP_SPI_REG_STATUS_EOT   0x04
+#define KP_SPI_REG_STATUS_TXFFE 0x10
+#define KP_SPI_REG_STATUS_TXFFF 0x20
+#define KP_SPI_REG_STATUS_RXFFE 0x40
+#define KP_SPI_REG_STATUS_RXFFF 0x80
 
 /******************
  * SPI Structures *
  ******************/
-काष्ठा kp_spi अणु
-	काष्ठा spi_master  *master;
+struct kp_spi {
+	struct spi_master  *master;
 	u64 __iomem        *base;
-	काष्ठा device      *dev;
-पूर्ण;
+	struct device      *dev;
+};
 
-काष्ठा kp_spi_controller_state अणु
-	व्योम __iomem   *base;
+struct kp_spi_controller_state {
+	void __iomem   *base;
 	s64             conf_cache;
-पूर्ण;
+};
 
-जोड़ kp_spi_config अणु
-	/* use this to access inभागidual elements */
-	काष्ठा __packed spi_config_bitfield अणु
-		अचिन्हित पूर्णांक pha       : 1; /* spim_clk Phase      */
-		अचिन्हित पूर्णांक pol       : 1; /* spim_clk Polarity   */
-		अचिन्हित पूर्णांक epol      : 1; /* spim_csx Polarity   */
-		अचिन्हित पूर्णांक dpe       : 1; /* Transmission Enable */
-		अचिन्हित पूर्णांक wl        : 5; /* Word Length         */
-		अचिन्हित पूर्णांक           : 3;
-		अचिन्हित पूर्णांक trm       : 2; /* TxRx Mode           */
-		अचिन्हित पूर्णांक cs        : 4; /* Chip Select         */
-		अचिन्हित पूर्णांक wcnt      : 7; /* Word Count          */
-		अचिन्हित पूर्णांक ffen      : 1; /* FIFO Enable         */
-		अचिन्हित पूर्णांक spi_en    : 1; /* SPI Enable          */
-		अचिन्हित पूर्णांक           : 5;
-	पूर्ण bitfield;
-	/* use this to grab the whole रेजिस्टर */
+union kp_spi_config {
+	/* use this to access individual elements */
+	struct __packed spi_config_bitfield {
+		unsigned int pha       : 1; /* spim_clk Phase      */
+		unsigned int pol       : 1; /* spim_clk Polarity   */
+		unsigned int epol      : 1; /* spim_csx Polarity   */
+		unsigned int dpe       : 1; /* Transmission Enable */
+		unsigned int wl        : 5; /* Word Length         */
+		unsigned int           : 3;
+		unsigned int trm       : 2; /* TxRx Mode           */
+		unsigned int cs        : 4; /* Chip Select         */
+		unsigned int wcnt      : 7; /* Word Count          */
+		unsigned int ffen      : 1; /* FIFO Enable         */
+		unsigned int spi_en    : 1; /* SPI Enable          */
+		unsigned int           : 5;
+	} bitfield;
+	/* use this to grab the whole register */
 	u32 reg;
-पूर्ण;
+};
 
-जोड़ kp_spi_status अणु
-	काष्ठा __packed spi_status_bitfield अणु
-		अचिन्हित पूर्णांक rx    :  1; /* Rx Status       */
-		अचिन्हित पूर्णांक tx    :  1; /* Tx Status       */
-		अचिन्हित पूर्णांक eo    :  1; /* End of Transfer */
-		अचिन्हित पूर्णांक       :  1;
-		अचिन्हित पूर्णांक txffe :  1; /* Tx FIFO Empty   */
-		अचिन्हित पूर्णांक txfff :  1; /* Tx FIFO Full    */
-		अचिन्हित पूर्णांक rxffe :  1; /* Rx FIFO Empty   */
-		अचिन्हित पूर्णांक rxfff :  1; /* Rx FIFO Full    */
-		अचिन्हित पूर्णांक       : 24;
-	पूर्ण bitfield;
+union kp_spi_status {
+	struct __packed spi_status_bitfield {
+		unsigned int rx    :  1; /* Rx Status       */
+		unsigned int tx    :  1; /* Tx Status       */
+		unsigned int eo    :  1; /* End of Transfer */
+		unsigned int       :  1;
+		unsigned int txffe :  1; /* Tx FIFO Empty   */
+		unsigned int txfff :  1; /* Tx FIFO Full    */
+		unsigned int rxffe :  1; /* Rx FIFO Empty   */
+		unsigned int rxfff :  1; /* Rx FIFO Full    */
+		unsigned int       : 24;
+	} bitfield;
 	u32 reg;
-पूर्ण;
+};
 
-जोड़ kp_spi_ffctrl अणु
-	काष्ठा __packed spi_ffctrl_bitfield अणु
-		अचिन्हित पूर्णांक ffstart :  1; /* FIFO Start */
-		अचिन्हित पूर्णांक         : 31;
-	पूर्ण bitfield;
+union kp_spi_ffctrl {
+	struct __packed spi_ffctrl_bitfield {
+		unsigned int ffstart :  1; /* FIFO Start */
+		unsigned int         : 31;
+	} bitfield;
 	u32 reg;
-पूर्ण;
+};
 
 /***************
  * SPI Helpers *
  ***************/
-	अटल अंतरभूत u64
-kp_spi_पढ़ो_reg(काष्ठा kp_spi_controller_state *cs, पूर्णांक idx)
-अणु
+	static inline u64
+kp_spi_read_reg(struct kp_spi_controller_state *cs, int idx)
+{
 	u64 __iomem *addr = cs->base;
 
 	addr += idx;
-	अगर ((idx == KP_SPI_REG_CONFIG) && (cs->conf_cache >= 0))
-		वापस cs->conf_cache;
+	if ((idx == KP_SPI_REG_CONFIG) && (cs->conf_cache >= 0))
+		return cs->conf_cache;
 
-	वापस पढ़ोq(addr);
-पूर्ण
+	return readq(addr);
+}
 
-	अटल अंतरभूत व्योम
-kp_spi_ग_लिखो_reg(काष्ठा kp_spi_controller_state *cs, पूर्णांक idx, u64 val)
-अणु
+	static inline void
+kp_spi_write_reg(struct kp_spi_controller_state *cs, int idx, u64 val)
+{
 	u64 __iomem *addr = cs->base;
 
 	addr += idx;
-	ग_लिखोq(val, addr);
-	अगर (idx == KP_SPI_REG_CONFIG)
+	writeq(val, addr);
+	if (idx == KP_SPI_REG_CONFIG)
 		cs->conf_cache = val;
-पूर्ण
+}
 
-	अटल पूर्णांक
-kp_spi_रुको_क्रम_reg_bit(काष्ठा kp_spi_controller_state *cs, पूर्णांक idx,
-			अचिन्हित दीर्घ bit)
-अणु
-	अचिन्हित दीर्घ समयout;
+	static int
+kp_spi_wait_for_reg_bit(struct kp_spi_controller_state *cs, int idx,
+			unsigned long bit)
+{
+	unsigned long timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(1000);
-	जबतक (!(kp_spi_पढ़ो_reg(cs, idx) & bit)) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
-			अगर (!(kp_spi_पढ़ो_reg(cs, idx) & bit))
-				वापस -ETIMEDOUT;
-			अन्यथा
-				वापस 0;
-		पूर्ण
+	timeout = jiffies + msecs_to_jiffies(1000);
+	while (!(kp_spi_read_reg(cs, idx) & bit)) {
+		if (time_after(jiffies, timeout)) {
+			if (!(kp_spi_read_reg(cs, idx) & bit))
+				return -ETIMEDOUT;
+			else
+				return 0;
+		}
 		cpu_relax();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-	अटल अचिन्हित
-kp_spi_txrx_pio(काष्ठा spi_device *spidev, काष्ठा spi_transfer *transfer)
-अणु
-	काष्ठा kp_spi_controller_state *cs = spidev->controller_state;
-	अचिन्हित पूर्णांक count = transfer->len;
-	अचिन्हित पूर्णांक c = count;
+	static unsigned
+kp_spi_txrx_pio(struct spi_device *spidev, struct spi_transfer *transfer)
+{
+	struct kp_spi_controller_state *cs = spidev->controller_state;
+	unsigned int count = transfer->len;
+	unsigned int c = count;
 
-	पूर्णांक i;
-	पूर्णांक res;
+	int i;
+	int res;
 	u8 *rx       = transfer->rx_buf;
-	स्थिर u8 *tx = transfer->tx_buf;
-	पूर्णांक processed = 0;
+	const u8 *tx = transfer->tx_buf;
+	int processed = 0;
 
-	अगर (tx) अणु
-		क्रम (i = 0 ; i < c ; i++) अणु
-			अक्षर val = *tx++;
+	if (tx) {
+		for (i = 0 ; i < c ; i++) {
+			char val = *tx++;
 
-			res = kp_spi_रुको_क्रम_reg_bit(cs, KP_SPI_REG_STATUS,
+			res = kp_spi_wait_for_reg_bit(cs, KP_SPI_REG_STATUS,
 						      KP_SPI_REG_STATUS_TXS);
-			अगर (res < 0)
-				जाओ out;
+			if (res < 0)
+				goto out;
 
-			kp_spi_ग_लिखो_reg(cs, KP_SPI_REG_TXDATA, val);
+			kp_spi_write_reg(cs, KP_SPI_REG_TXDATA, val);
 			processed++;
-		पूर्ण
-	पूर्ण अन्यथा अगर (rx) अणु
-		क्रम (i = 0 ; i < c ; i++) अणु
-			अक्षर test = 0;
+		}
+	} else if (rx) {
+		for (i = 0 ; i < c ; i++) {
+			char test = 0;
 
-			kp_spi_ग_लिखो_reg(cs, KP_SPI_REG_TXDATA, 0x00);
-			res = kp_spi_रुको_क्रम_reg_bit(cs, KP_SPI_REG_STATUS,
+			kp_spi_write_reg(cs, KP_SPI_REG_TXDATA, 0x00);
+			res = kp_spi_wait_for_reg_bit(cs, KP_SPI_REG_STATUS,
 						      KP_SPI_REG_STATUS_RXS);
-			अगर (res < 0)
-				जाओ out;
+			if (res < 0)
+				goto out;
 
-			test = kp_spi_पढ़ो_reg(cs, KP_SPI_REG_RXDATA);
+			test = kp_spi_read_reg(cs, KP_SPI_REG_RXDATA);
 			*rx++ = test;
 			processed++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (kp_spi_रुको_क्रम_reg_bit(cs, KP_SPI_REG_STATUS,
-				    KP_SPI_REG_STATUS_EOT) < 0) अणु
-		//TODO: Figure out how to पात transaction??
+	if (kp_spi_wait_for_reg_bit(cs, KP_SPI_REG_STATUS,
+				    KP_SPI_REG_STATUS_EOT) < 0) {
+		//TODO: Figure out how to abort transaction??
 		//Ths has never happened in practice though...
-	पूर्ण
+	}
 
 out:
-	वापस processed;
-पूर्ण
+	return processed;
+}
 
 /*****************
  * SPI Functions *
  *****************/
-	अटल पूर्णांक
-kp_spi_setup(काष्ठा spi_device *spidev)
-अणु
-	जोड़ kp_spi_config sc;
-	काष्ठा kp_spi *kpspi = spi_master_get_devdata(spidev->master);
-	काष्ठा kp_spi_controller_state *cs;
+	static int
+kp_spi_setup(struct spi_device *spidev)
+{
+	union kp_spi_config sc;
+	struct kp_spi *kpspi = spi_master_get_devdata(spidev->master);
+	struct kp_spi_controller_state *cs;
 
 	/* setup controller state */
 	cs = spidev->controller_state;
-	अगर (!cs) अणु
-		cs = kzalloc(माप(*cs), GFP_KERNEL);
-		अगर (!cs)
-			वापस -ENOMEM;
+	if (!cs) {
+		cs = kzalloc(sizeof(*cs), GFP_KERNEL);
+		if (!cs)
+			return -ENOMEM;
 		cs->base = kpspi->base;
 		cs->conf_cache = -1;
 		spidev->controller_state = cs;
-	पूर्ण
+	}
 
-	/* set config रेजिस्टर */
+	/* set config register */
 	sc.bitfield.wl = spidev->bits_per_word - 1;
 	sc.bitfield.cs = spidev->chip_select;
 	sc.bitfield.spi_en = 0;
 	sc.bitfield.trm = 0;
 	sc.bitfield.ffen = 0;
-	kp_spi_ग_लिखो_reg(spidev->controller_state, KP_SPI_REG_CONFIG, sc.reg);
-	वापस 0;
-पूर्ण
+	kp_spi_write_reg(spidev->controller_state, KP_SPI_REG_CONFIG, sc.reg);
+	return 0;
+}
 
-	अटल पूर्णांक
-kp_spi_transfer_one_message(काष्ठा spi_master *master, काष्ठा spi_message *m)
-अणु
-	काष्ठा kp_spi_controller_state *cs;
-	काष्ठा spi_device   *spidev;
-	काष्ठा kp_spi       *kpspi;
-	काष्ठा spi_transfer *transfer;
-	जोड़ kp_spi_config sc;
-	पूर्णांक status = 0;
+	static int
+kp_spi_transfer_one_message(struct spi_master *master, struct spi_message *m)
+{
+	struct kp_spi_controller_state *cs;
+	struct spi_device   *spidev;
+	struct kp_spi       *kpspi;
+	struct spi_transfer *transfer;
+	union kp_spi_config sc;
+	int status = 0;
 
 	spidev = m->spi;
 	kpspi = spi_master_get_devdata(master);
@@ -302,17 +301,17 @@ kp_spi_transfer_one_message(काष्ठा spi_master *master, काष्�
 	cs = spidev->controller_state;
 
 	/* reject invalid messages and transfers */
-	अगर (list_empty(&m->transfers))
-		वापस -EINVAL;
+	if (list_empty(&m->transfers))
+		return -EINVAL;
 
 	/* validate input */
-	list_क्रम_each_entry(transfer, &m->transfers, transfer_list) अणु
-		स्थिर व्योम *tx_buf = transfer->tx_buf;
-		व्योम       *rx_buf = transfer->rx_buf;
-		अचिन्हित पूर्णांक len = transfer->len;
+	list_for_each_entry(transfer, &m->transfers, transfer_list) {
+		const void *tx_buf = transfer->tx_buf;
+		void       *rx_buf = transfer->rx_buf;
+		unsigned int len = transfer->len;
 
-		अगर (transfer->speed_hz > KP_SPI_CLK ||
-		    (len && !(rx_buf || tx_buf))) अणु
+		if (transfer->speed_hz > KP_SPI_CLK ||
+		    (len && !(rx_buf || tx_buf))) {
 			dev_dbg(kpspi->dev, "  transfer: %d Hz, %d %s%s, %d bpw\n",
 				transfer->speed_hz,
 				len,
@@ -320,199 +319,199 @@ kp_spi_transfer_one_message(काष्ठा spi_master *master, काष्�
 				rx_buf ? "rx" : "",
 				transfer->bits_per_word);
 			dev_dbg(kpspi->dev, "  transfer -EINVAL\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (transfer->speed_hz &&
-		    transfer->speed_hz < (KP_SPI_CLK >> 15)) अणु
+			return -EINVAL;
+		}
+		if (transfer->speed_hz &&
+		    transfer->speed_hz < (KP_SPI_CLK >> 15)) {
 			dev_dbg(kpspi->dev, "speed_hz %d below minimum %d Hz\n",
 				transfer->speed_hz,
 				KP_SPI_CLK >> 15);
 			dev_dbg(kpspi->dev, "  speed_hz -EINVAL\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* निश्चित chip select to start the sequence*/
-	sc.reg = kp_spi_पढ़ो_reg(cs, KP_SPI_REG_CONFIG);
+	/* assert chip select to start the sequence*/
+	sc.reg = kp_spi_read_reg(cs, KP_SPI_REG_CONFIG);
 	sc.bitfield.spi_en = 1;
-	kp_spi_ग_लिखो_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
+	kp_spi_write_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
 
 	/* work */
-	अगर (kp_spi_रुको_क्रम_reg_bit(cs, KP_SPI_REG_STATUS,
-				    KP_SPI_REG_STATUS_EOT) < 0) अणु
+	if (kp_spi_wait_for_reg_bit(cs, KP_SPI_REG_STATUS,
+				    KP_SPI_REG_STATUS_EOT) < 0) {
 		dev_info(kpspi->dev, "EOT timed out\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* करो the transfers क्रम this message */
-	list_क्रम_each_entry(transfer, &m->transfers, transfer_list) अणु
-		अगर (!transfer->tx_buf && !transfer->rx_buf &&
-		    transfer->len) अणु
+	/* do the transfers for this message */
+	list_for_each_entry(transfer, &m->transfers, transfer_list) {
+		if (!transfer->tx_buf && !transfer->rx_buf &&
+		    transfer->len) {
 			status = -EINVAL;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		/* transfer */
-		अगर (transfer->len) अणु
-			अचिन्हित पूर्णांक word_len = spidev->bits_per_word;
-			अचिन्हित पूर्णांक count;
+		if (transfer->len) {
+			unsigned int word_len = spidev->bits_per_word;
+			unsigned int count;
 
 			/* set up the transfer... */
-			sc.reg = kp_spi_पढ़ो_reg(cs, KP_SPI_REG_CONFIG);
+			sc.reg = kp_spi_read_reg(cs, KP_SPI_REG_CONFIG);
 
 			/* ...direction */
-			अगर (transfer->tx_buf)
+			if (transfer->tx_buf)
 				sc.bitfield.trm = KP_SPI_REG_CONFIG_TRM_TX;
-			अन्यथा अगर (transfer->rx_buf)
+			else if (transfer->rx_buf)
 				sc.bitfield.trm = KP_SPI_REG_CONFIG_TRM_RX;
 
 			/* ...word length */
-			अगर (transfer->bits_per_word)
+			if (transfer->bits_per_word)
 				word_len = transfer->bits_per_word;
 			sc.bitfield.wl = word_len - 1;
 
 			/* ...chip select */
 			sc.bitfield.cs = spidev->chip_select;
 
-			/* ...and ग_लिखो the new settings */
-			kp_spi_ग_लिखो_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
+			/* ...and write the new settings */
+			kp_spi_write_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
 
-			/* करो the transfer */
+			/* do the transfer */
 			count = kp_spi_txrx_pio(spidev, transfer);
 			m->actual_length += count;
 
-			अगर (count != transfer->len) अणु
+			if (count != transfer->len) {
 				status = -EIO;
-				जाओ error;
-			पूर्ण
-		पूर्ण
+				goto error;
+			}
+		}
 
-		अगर (transfer->delay.value)
+		if (transfer->delay.value)
 			ndelay(spi_delay_to_ns(&transfer->delay, transfer));
-	पूर्ण
+	}
 
-	/* de-निश्चित chip select to end the sequence */
-	sc.reg = kp_spi_पढ़ो_reg(cs, KP_SPI_REG_CONFIG);
+	/* de-assert chip select to end the sequence */
+	sc.reg = kp_spi_read_reg(cs, KP_SPI_REG_CONFIG);
 	sc.bitfield.spi_en = 0;
-	kp_spi_ग_लिखो_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
+	kp_spi_write_reg(cs, KP_SPI_REG_CONFIG, sc.reg);
 
 out:
-	/* करोne work */
+	/* done work */
 	spi_finalize_current_message(master);
-	वापस 0;
+	return 0;
 
 error:
 	m->status = status;
-	वापस status;
-पूर्ण
+	return status;
+}
 
-	अटल व्योम
-kp_spi_cleanup(काष्ठा spi_device *spidev)
-अणु
-	काष्ठा kp_spi_controller_state *cs = spidev->controller_state;
+	static void
+kp_spi_cleanup(struct spi_device *spidev)
+{
+	struct kp_spi_controller_state *cs = spidev->controller_state;
 
-	kमुक्त(cs);
-पूर्ण
+	kfree(cs);
+}
 
 /******************
  * Probe / Remove *
  ******************/
-	अटल पूर्णांक
-kp_spi_probe(काष्ठा platक्रमm_device *pldev)
-अणु
-	काष्ठा kpc_core_device_platdata *drvdata;
-	काष्ठा spi_master *master;
-	काष्ठा kp_spi *kpspi;
-	काष्ठा resource *r;
-	पूर्णांक status = 0;
-	पूर्णांक i;
+	static int
+kp_spi_probe(struct platform_device *pldev)
+{
+	struct kpc_core_device_platdata *drvdata;
+	struct spi_master *master;
+	struct kp_spi *kpspi;
+	struct resource *r;
+	int status = 0;
+	int i;
 
-	drvdata = pldev->dev.platक्रमm_data;
-	अगर (!drvdata) अणु
+	drvdata = pldev->dev.platform_data;
+	if (!drvdata) {
 		dev_err(&pldev->dev, "%s: platform_data is NULL\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	master = spi_alloc_master(&pldev->dev, माप(काष्ठा kp_spi));
-	अगर (!master) अणु
+	master = spi_alloc_master(&pldev->dev, sizeof(struct kp_spi));
+	if (!master) {
 		dev_err(&pldev->dev, "%s: master allocation failed\n",
 			__func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* set up the spi functions */
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH;
-	master->bits_per_word_mask = (अचिन्हित पूर्णांक)SPI_BPW_RANGE_MASK(4, 32);
+	master->bits_per_word_mask = (unsigned int)SPI_BPW_RANGE_MASK(4, 32);
 	master->setup = kp_spi_setup;
 	master->transfer_one_message = kp_spi_transfer_one_message;
 	master->cleanup = kp_spi_cleanup;
 
-	platक्रमm_set_drvdata(pldev, master);
+	platform_set_drvdata(pldev, master);
 
 	kpspi = spi_master_get_devdata(master);
 	kpspi->master = master;
 	kpspi->dev = &pldev->dev;
 
 	master->num_chipselect = 4;
-	अगर (pldev->id != -1)
+	if (pldev->id != -1)
 		master->bus_num = pldev->id;
 
-	r = platक्रमm_get_resource(pldev, IORESOURCE_MEM, 0);
-	अगर (!r) अणु
+	r = platform_get_resource(pldev, IORESOURCE_MEM, 0);
+	if (!r) {
 		dev_err(&pldev->dev, "%s: Unable to get platform resources\n",
 			__func__);
 		status = -ENODEV;
-		जाओ मुक्त_master;
-	पूर्ण
+		goto free_master;
+	}
 
 	kpspi->base = devm_ioremap(&pldev->dev, r->start,
 				   resource_size(r));
 
-	status = spi_रेजिस्टर_master(master);
-	अगर (status < 0) अणु
+	status = spi_register_master(master);
+	if (status < 0) {
 		dev_err(&pldev->dev, "Unable to register SPI device\n");
-		जाओ मुक्त_master;
-	पूर्ण
+		goto free_master;
+	}
 
-	/* रेजिस्टर the slave boards */
-#घोषणा NEW_SPI_DEVICE_FROM_BOARD_INFO_TABLE(table) \
-	क्रम (i = 0 ; i < ARRAY_SIZE(table) ; i++) अणु \
+	/* register the slave boards */
+#define NEW_SPI_DEVICE_FROM_BOARD_INFO_TABLE(table) \
+	for (i = 0 ; i < ARRAY_SIZE(table) ; i++) { \
 		spi_new_device(master, &table[i]); \
-	पूर्ण
+	}
 
-	चयन ((drvdata->card_id & 0xFFFF0000) >> 16) अणु
-	हाल PCI_DEVICE_ID_DAKTRONICS_KADOKA_P2KR0:
+	switch ((drvdata->card_id & 0xFFFF0000) >> 16) {
+	case PCI_DEVICE_ID_DAKTRONICS_KADOKA_P2KR0:
 		NEW_SPI_DEVICE_FROM_BOARD_INFO_TABLE(p2kr0_board_info);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pldev->dev, "Unknown hardware, cant know what partition table to use!\n");
-		जाओ मुक्त_master;
-	पूर्ण
+		goto free_master;
+	}
 
-	वापस status;
+	return status;
 
-मुक्त_master:
+free_master:
 	spi_master_put(master);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-	अटल पूर्णांक
-kp_spi_हटाओ(काष्ठा platक्रमm_device *pldev)
-अणु
-	काष्ठा spi_master *master = platक्रमm_get_drvdata(pldev);
+	static int
+kp_spi_remove(struct platform_device *pldev)
+{
+	struct spi_master *master = platform_get_drvdata(pldev);
 
-	spi_unरेजिस्टर_master(master);
-	वापस 0;
-पूर्ण
+	spi_unregister_master(master);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver kp_spi_driver = अणु
-	.driver = अणु
+static struct platform_driver kp_spi_driver = {
+	.driver = {
 		.name =     KP_DRIVER_NAME_SPI,
-	पूर्ण,
+	},
 	.probe =    kp_spi_probe,
-	.हटाओ =   kp_spi_हटाओ,
-पूर्ण;
+	.remove =   kp_spi_remove,
+};
 
-module_platक्रमm_driver(kp_spi_driver);
+module_platform_driver(kp_spi_driver);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:kp_spi");

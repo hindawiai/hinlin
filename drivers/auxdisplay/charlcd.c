@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Character LCD driver क्रम Linux
+ * Character LCD driver for Linux
  *
  * Copyright (C) 2000-2008, Willy Tarreau <w@1wt.eu>
  * Copyright (C) 2016-2017 Glider bvba
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/workqueue.h>
+#include <linux/atomic.h>
+#include <linux/ctype.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/workqueue.h>
 
-#समावेश <generated/utsrelease.h>
+#include <generated/utsrelease.h>
 
-#समावेश "charlcd.h"
+#include "charlcd.h"
 
-/* Keep the backlight on this many seconds क्रम each flash */
-#घोषणा LCD_BL_TEMPO_PERIOD	4
+/* Keep the backlight on this many seconds for each flash */
+#define LCD_BL_TEMPO_PERIOD	4
 
-#घोषणा LCD_ESCAPE_LEN		24	/* Max अक्षरs क्रम LCD escape command */
-#घोषणा LCD_ESCAPE_CHAR		27	/* Use अक्षर 27 क्रम escape command */
+#define LCD_ESCAPE_LEN		24	/* Max chars for LCD escape command */
+#define LCD_ESCAPE_CHAR		27	/* Use char 27 for escape command */
 
-काष्ठा अक्षरlcd_priv अणु
-	काष्ठा अक्षरlcd lcd;
+struct charlcd_priv {
+	struct charlcd lcd;
 
-	काष्ठा delayed_work bl_work;
-	काष्ठा mutex bl_tempo_lock;	/* Protects access to bl_tempo */
+	struct delayed_work bl_work;
+	struct mutex bl_tempo_lock;	/* Protects access to bl_tempo */
 	bool bl_tempo;
 
 	bool must_clear;
 
 	/* contains the LCD config state */
-	अचिन्हित दीर्घ पूर्णांक flags;
+	unsigned long int flags;
 
-	/* Current escape sequence and it's length or -1 अगर outside */
-	काष्ठा अणु
-		अक्षर buf[LCD_ESCAPE_LEN + 1];
-		पूर्णांक len;
-	पूर्ण esc_seq;
+	/* Current escape sequence and it's length or -1 if outside */
+	struct {
+		char buf[LCD_ESCAPE_LEN + 1];
+		int len;
+	} esc_seq;
 
-	अचिन्हित दीर्घ दीर्घ drvdata[];
-पूर्ण;
+	unsigned long long drvdata[];
+};
 
-#घोषणा अक्षरlcd_to_priv(p)	container_of(p, काष्ठा अक्षरlcd_priv, lcd)
+#define charlcd_to_priv(p)	container_of(p, struct charlcd_priv, lcd)
 
-/* Device single-खोलो policy control */
-अटल atomic_t अक्षरlcd_available = ATOMIC_INIT(1);
+/* Device single-open policy control */
+static atomic_t charlcd_available = ATOMIC_INIT(1);
 
 /* turn the backlight on or off */
-व्योम अक्षरlcd_backlight(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
+void charlcd_backlight(struct charlcd *lcd, enum charlcd_onoff on)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
 
-	अगर (!lcd->ops->backlight)
-		वापस;
+	if (!lcd->ops->backlight)
+		return;
 
 	mutex_lock(&priv->bl_tempo_lock);
-	अगर (!priv->bl_tempo)
+	if (!priv->bl_tempo)
 		lcd->ops->backlight(lcd, on);
 	mutex_unlock(&priv->bl_tempo_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_backlight);
+}
+EXPORT_SYMBOL_GPL(charlcd_backlight);
 
-अटल व्योम अक्षरlcd_bl_off(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा अक्षरlcd_priv *priv =
-		container_of(dwork, काष्ठा अक्षरlcd_priv, bl_work);
+static void charlcd_bl_off(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct charlcd_priv *priv =
+		container_of(dwork, struct charlcd_priv, bl_work);
 
 	mutex_lock(&priv->bl_tempo_lock);
-	अगर (priv->bl_tempo) अणु
+	if (priv->bl_tempo) {
 		priv->bl_tempo = false;
-		अगर (!(priv->flags & LCD_FLAG_L))
+		if (!(priv->flags & LCD_FLAG_L))
 			priv->lcd.ops->backlight(&priv->lcd, CHARLCD_OFF);
-	पूर्ण
+	}
 	mutex_unlock(&priv->bl_tempo_lock);
-पूर्ण
+}
 
-/* turn the backlight on क्रम a little जबतक */
-व्योम अक्षरlcd_poke(काष्ठा अक्षरlcd *lcd)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
+/* turn the backlight on for a little while */
+void charlcd_poke(struct charlcd *lcd)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
 
-	अगर (!lcd->ops->backlight)
-		वापस;
+	if (!lcd->ops->backlight)
+		return;
 
 	cancel_delayed_work_sync(&priv->bl_work);
 
 	mutex_lock(&priv->bl_tempo_lock);
-	अगर (!priv->bl_tempo && !(priv->flags & LCD_FLAG_L))
+	if (!priv->bl_tempo && !(priv->flags & LCD_FLAG_L))
 		lcd->ops->backlight(lcd, CHARLCD_ON);
 	priv->bl_tempo = true;
 	schedule_delayed_work(&priv->bl_work, LCD_BL_TEMPO_PERIOD * HZ);
 	mutex_unlock(&priv->bl_tempo_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_poke);
+}
+EXPORT_SYMBOL_GPL(charlcd_poke);
 
-अटल व्योम अक्षरlcd_home(काष्ठा अक्षरlcd *lcd)
-अणु
+static void charlcd_home(struct charlcd *lcd)
+{
 	lcd->addr.x = 0;
 	lcd->addr.y = 0;
 	lcd->ops->home(lcd);
-पूर्ण
+}
 
-अटल व्योम अक्षरlcd_prपूर्णांक(काष्ठा अक्षरlcd *lcd, अक्षर c)
-अणु
-	अगर (lcd->addr.x >= lcd->width)
-		वापस;
+static void charlcd_print(struct charlcd *lcd, char c)
+{
+	if (lcd->addr.x >= lcd->width)
+		return;
 
-	अगर (lcd->अक्षर_conv)
-		c = lcd->अक्षर_conv[(अचिन्हित अक्षर)c];
+	if (lcd->char_conv)
+		c = lcd->char_conv[(unsigned char)c];
 
-	अगर (!lcd->ops->prपूर्णांक(lcd, c))
+	if (!lcd->ops->print(lcd, c))
 		lcd->addr.x++;
 
 	/* prevents the cursor from wrapping onto the next line */
-	अगर (lcd->addr.x == lcd->width)
-		lcd->ops->जाओxy(lcd, lcd->addr.x - 1, lcd->addr.y);
-पूर्ण
+	if (lcd->addr.x == lcd->width)
+		lcd->ops->gotoxy(lcd, lcd->addr.x - 1, lcd->addr.y);
+}
 
-अटल व्योम अक्षरlcd_clear_display(काष्ठा अक्षरlcd *lcd)
-अणु
+static void charlcd_clear_display(struct charlcd *lcd)
+{
 	lcd->ops->clear_display(lcd);
 	lcd->addr.x = 0;
 	lcd->addr.y = 0;
-पूर्ण
+}
 
 /*
- * Parses a movement command of the क्रमm "(.*);", where the group can be
- * any number of subcommands of the क्रमm "(x|y)[0-9]+".
+ * Parses a movement command of the form "(.*);", where the group can be
+ * any number of subcommands of the form "(x|y)[0-9]+".
  *
  * Returns whether the command is valid. The position arguments are
- * only written अगर the parsing was successful.
+ * only written if the parsing was successful.
  *
  * For instance:
- *   - ";"          वापसs (<original x>, <original y>).
- *   - "x1;"        वापसs (1, <original y>).
- *   - "y2x1;"      वापसs (1, 2).
- *   - "x12y34x56;" वापसs (56, 34).
+ *   - ";"          returns (<original x>, <original y>).
+ *   - "x1;"        returns (1, <original y>).
+ *   - "y2x1;"      returns (1, 2).
+ *   - "x12y34x56;" returns (56, 34).
  *   - ""           fails.
  *   - "x"          fails.
  *   - "x;"         fails.
@@ -153,529 +152,529 @@ EXPORT_SYMBOL_GPL(अक्षरlcd_poke);
  *   - "x12yy12;"   fails.
  *   - "xx"         fails.
  */
-अटल bool parse_xy(स्थिर अक्षर *s, अचिन्हित दीर्घ *x, अचिन्हित दीर्घ *y)
-अणु
-	अचिन्हित दीर्घ new_x = *x;
-	अचिन्हित दीर्घ new_y = *y;
-	अक्षर *p;
+static bool parse_xy(const char *s, unsigned long *x, unsigned long *y)
+{
+	unsigned long new_x = *x;
+	unsigned long new_y = *y;
+	char *p;
 
-	क्रम (;;) अणु
-		अगर (!*s)
-			वापस false;
+	for (;;) {
+		if (!*s)
+			return false;
 
-		अगर (*s == ';')
-			अवरोध;
+		if (*s == ';')
+			break;
 
-		अगर (*s == 'x') अणु
-			new_x = simple_म_से_अदीर्घ(s + 1, &p, 10);
-			अगर (p == s + 1)
-				वापस false;
+		if (*s == 'x') {
+			new_x = simple_strtoul(s + 1, &p, 10);
+			if (p == s + 1)
+				return false;
 			s = p;
-		पूर्ण अन्यथा अगर (*s == 'y') अणु
-			new_y = simple_म_से_अदीर्घ(s + 1, &p, 10);
-			अगर (p == s + 1)
-				वापस false;
+		} else if (*s == 'y') {
+			new_y = simple_strtoul(s + 1, &p, 10);
+			if (p == s + 1)
+				return false;
 			s = p;
-		पूर्ण अन्यथा अणु
-			वापस false;
-		पूर्ण
-	पूर्ण
+		} else {
+			return false;
+		}
+	}
 
 	*x = new_x;
 	*y = new_y;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * These are the file operation function क्रम user access to /dev/lcd
+ * These are the file operation function for user access to /dev/lcd
  * This function can also be called from inside the kernel, by
- * setting file and ppos to शून्य.
+ * setting file and ppos to NULL.
  *
  */
 
-अटल अंतरभूत पूर्णांक handle_lcd_special_code(काष्ठा अक्षरlcd *lcd)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
+static inline int handle_lcd_special_code(struct charlcd *lcd)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
 
 	/* LCD special codes */
 
-	पूर्णांक processed = 0;
+	int processed = 0;
 
-	अक्षर *esc = priv->esc_seq.buf + 2;
-	पूर्णांक oldflags = priv->flags;
+	char *esc = priv->esc_seq.buf + 2;
+	int oldflags = priv->flags;
 
-	/* check क्रम display mode flags */
-	चयन (*esc) अणु
-	हाल 'D':	/* Display ON */
+	/* check for display mode flags */
+	switch (*esc) {
+	case 'D':	/* Display ON */
 		priv->flags |= LCD_FLAG_D;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->display(lcd, CHARLCD_ON);
 
 		processed = 1;
-		अवरोध;
-	हाल 'd':	/* Display OFF */
+		break;
+	case 'd':	/* Display OFF */
 		priv->flags &= ~LCD_FLAG_D;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->display(lcd, CHARLCD_OFF);
 
 		processed = 1;
-		अवरोध;
-	हाल 'C':	/* Cursor ON */
+		break;
+	case 'C':	/* Cursor ON */
 		priv->flags |= LCD_FLAG_C;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->cursor(lcd, CHARLCD_ON);
 
 		processed = 1;
-		अवरोध;
-	हाल 'c':	/* Cursor OFF */
+		break;
+	case 'c':	/* Cursor OFF */
 		priv->flags &= ~LCD_FLAG_C;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->cursor(lcd, CHARLCD_OFF);
 
 		processed = 1;
-		अवरोध;
-	हाल 'B':	/* Blink ON */
+		break;
+	case 'B':	/* Blink ON */
 		priv->flags |= LCD_FLAG_B;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->blink(lcd, CHARLCD_ON);
 
 		processed = 1;
-		अवरोध;
-	हाल 'b':	/* Blink OFF */
+		break;
+	case 'b':	/* Blink OFF */
 		priv->flags &= ~LCD_FLAG_B;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->blink(lcd, CHARLCD_OFF);
 
 		processed = 1;
-		अवरोध;
-	हाल '+':	/* Back light ON */
+		break;
+	case '+':	/* Back light ON */
 		priv->flags |= LCD_FLAG_L;
-		अगर (priv->flags != oldflags)
-			अक्षरlcd_backlight(lcd, CHARLCD_ON);
+		if (priv->flags != oldflags)
+			charlcd_backlight(lcd, CHARLCD_ON);
 
 		processed = 1;
-		अवरोध;
-	हाल '-':	/* Back light OFF */
+		break;
+	case '-':	/* Back light OFF */
 		priv->flags &= ~LCD_FLAG_L;
-		अगर (priv->flags != oldflags)
-			अक्षरlcd_backlight(lcd, CHARLCD_OFF);
+		if (priv->flags != oldflags)
+			charlcd_backlight(lcd, CHARLCD_OFF);
 
 		processed = 1;
-		अवरोध;
-	हाल '*':	/* Flash back light */
-		अक्षरlcd_poke(lcd);
+		break;
+	case '*':	/* Flash back light */
+		charlcd_poke(lcd);
 		processed = 1;
-		अवरोध;
-	हाल 'f':	/* Small Font */
+		break;
+	case 'f':	/* Small Font */
 		priv->flags &= ~LCD_FLAG_F;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->fontsize(lcd, CHARLCD_FONTSIZE_SMALL);
 
 		processed = 1;
-		अवरोध;
-	हाल 'F':	/* Large Font */
+		break;
+	case 'F':	/* Large Font */
 		priv->flags |= LCD_FLAG_F;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->fontsize(lcd, CHARLCD_FONTSIZE_LARGE);
 
 		processed = 1;
-		अवरोध;
-	हाल 'n':	/* One Line */
+		break;
+	case 'n':	/* One Line */
 		priv->flags &= ~LCD_FLAG_N;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->lines(lcd, CHARLCD_LINES_1);
 
 		processed = 1;
-		अवरोध;
-	हाल 'N':	/* Two Lines */
+		break;
+	case 'N':	/* Two Lines */
 		priv->flags |= LCD_FLAG_N;
-		अगर (priv->flags != oldflags)
+		if (priv->flags != oldflags)
 			lcd->ops->lines(lcd, CHARLCD_LINES_2);
 
 		processed = 1;
-		अवरोध;
-	हाल 'l':	/* Shअगरt Cursor Left */
-		अगर (lcd->addr.x > 0) अणु
-			अगर (!lcd->ops->shअगरt_cursor(lcd, CHARLCD_SHIFT_LEFT))
+		break;
+	case 'l':	/* Shift Cursor Left */
+		if (lcd->addr.x > 0) {
+			if (!lcd->ops->shift_cursor(lcd, CHARLCD_SHIFT_LEFT))
 				lcd->addr.x--;
-		पूर्ण
+		}
 
 		processed = 1;
-		अवरोध;
-	हाल 'r':	/* shअगरt cursor right */
-		अगर (lcd->addr.x < lcd->width) अणु
-			अगर (!lcd->ops->shअगरt_cursor(lcd, CHARLCD_SHIFT_RIGHT))
+		break;
+	case 'r':	/* shift cursor right */
+		if (lcd->addr.x < lcd->width) {
+			if (!lcd->ops->shift_cursor(lcd, CHARLCD_SHIFT_RIGHT))
 				lcd->addr.x++;
-		पूर्ण
+		}
 
 		processed = 1;
-		अवरोध;
-	हाल 'L':	/* shअगरt display left */
-		lcd->ops->shअगरt_display(lcd, CHARLCD_SHIFT_LEFT);
+		break;
+	case 'L':	/* shift display left */
+		lcd->ops->shift_display(lcd, CHARLCD_SHIFT_LEFT);
 		processed = 1;
-		अवरोध;
-	हाल 'R':	/* shअगरt display right */
-		lcd->ops->shअगरt_display(lcd, CHARLCD_SHIFT_RIGHT);
+		break;
+	case 'R':	/* shift display right */
+		lcd->ops->shift_display(lcd, CHARLCD_SHIFT_RIGHT);
 		processed = 1;
-		अवरोध;
-	हाल 'k': अणु	/* समाप्त end of line */
-		पूर्णांक x, xs, ys;
+		break;
+	case 'k': {	/* kill end of line */
+		int x, xs, ys;
 
 		xs = lcd->addr.x;
 		ys = lcd->addr.y;
-		क्रम (x = lcd->addr.x; x < lcd->width; x++)
-			lcd->ops->prपूर्णांक(lcd, ' ');
+		for (x = lcd->addr.x; x < lcd->width; x++)
+			lcd->ops->print(lcd, ' ');
 
 		/* restore cursor position */
 		lcd->addr.x = xs;
 		lcd->addr.y = ys;
-		lcd->ops->जाओxy(lcd, lcd->addr.x, lcd->addr.y);
+		lcd->ops->gotoxy(lcd, lcd->addr.x, lcd->addr.y);
 		processed = 1;
-		अवरोध;
-	पूर्ण
-	हाल 'I':	/* reinitialize display */
+		break;
+	}
+	case 'I':	/* reinitialize display */
 		lcd->ops->init_display(lcd);
 		priv->flags = ((lcd->height > 1) ? LCD_FLAG_N : 0) | LCD_FLAG_D |
 			LCD_FLAG_C | LCD_FLAG_B;
 		processed = 1;
-		अवरोध;
-	हाल 'G':
-		अगर (lcd->ops->redefine_अक्षर)
-			processed = lcd->ops->redefine_अक्षर(lcd, esc);
-		अन्यथा
+		break;
+	case 'G':
+		if (lcd->ops->redefine_char)
+			processed = lcd->ops->redefine_char(lcd, esc);
+		else
 			processed = 1;
-		अवरोध;
+		break;
 
-	हाल 'x':	/* जाओxy : LxXXX[yYYY]; */
-	हाल 'y':	/* जाओxy : LyYYY[xXXX]; */
-		अगर (priv->esc_seq.buf[priv->esc_seq.len - 1] != ';')
-			अवरोध;
+	case 'x':	/* gotoxy : LxXXX[yYYY]; */
+	case 'y':	/* gotoxy : LyYYY[xXXX]; */
+		if (priv->esc_seq.buf[priv->esc_seq.len - 1] != ';')
+			break;
 
 		/* If the command is valid, move to the new address */
-		अगर (parse_xy(esc, &lcd->addr.x, &lcd->addr.y))
-			lcd->ops->जाओxy(lcd, lcd->addr.x, lcd->addr.y);
+		if (parse_xy(esc, &lcd->addr.x, &lcd->addr.y))
+			lcd->ops->gotoxy(lcd, lcd->addr.x, lcd->addr.y);
 
 		/* Regardless of its validity, mark as processed */
 		processed = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस processed;
-पूर्ण
+	return processed;
+}
 
-अटल व्योम अक्षरlcd_ग_लिखो_अक्षर(काष्ठा अक्षरlcd *lcd, अक्षर c)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
+static void charlcd_write_char(struct charlcd *lcd, char c)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
 
 	/* first, we'll test if we're in escape mode */
-	अगर ((c != '\n') && priv->esc_seq.len >= 0) अणु
-		/* yes, let's add this अक्षर to the buffer */
+	if ((c != '\n') && priv->esc_seq.len >= 0) {
+		/* yes, let's add this char to the buffer */
 		priv->esc_seq.buf[priv->esc_seq.len++] = c;
 		priv->esc_seq.buf[priv->esc_seq.len] = '\0';
-	पूर्ण अन्यथा अणु
-		/* पातs any previous escape sequence */
+	} else {
+		/* aborts any previous escape sequence */
 		priv->esc_seq.len = -1;
 
-		चयन (c) अणु
-		हाल LCD_ESCAPE_CHAR:
+		switch (c) {
+		case LCD_ESCAPE_CHAR:
 			/* start of an escape sequence */
 			priv->esc_seq.len = 0;
 			priv->esc_seq.buf[priv->esc_seq.len] = '\0';
-			अवरोध;
-		हाल '\b':
-			/* go back one अक्षर and clear it */
-			अगर (lcd->addr.x > 0) अणु
-				/* back one अक्षर */
-				अगर (!lcd->ops->shअगरt_cursor(lcd,
+			break;
+		case '\b':
+			/* go back one char and clear it */
+			if (lcd->addr.x > 0) {
+				/* back one char */
+				if (!lcd->ops->shift_cursor(lcd,
 							CHARLCD_SHIFT_LEFT))
 					lcd->addr.x--;
-			पूर्ण
+			}
 			/* replace with a space */
-			अक्षरlcd_prपूर्णांक(lcd, ' ');
-			/* back one अक्षर again */
-			अगर (!lcd->ops->shअगरt_cursor(lcd, CHARLCD_SHIFT_LEFT))
+			charlcd_print(lcd, ' ');
+			/* back one char again */
+			if (!lcd->ops->shift_cursor(lcd, CHARLCD_SHIFT_LEFT))
 				lcd->addr.x--;
 
-			अवरोध;
-		हाल '\f':
+			break;
+		case '\f':
 			/* quickly clear the display */
-			अक्षरlcd_clear_display(lcd);
-			अवरोध;
-		हाल '\n':
+			charlcd_clear_display(lcd);
+			break;
+		case '\n':
 			/*
-			 * flush the reमुख्यder of the current line and
+			 * flush the remainder of the current line and
 			 * go to the beginning of the next line
 			 */
-			क्रम (; lcd->addr.x < lcd->width; lcd->addr.x++)
-				lcd->ops->prपूर्णांक(lcd, ' ');
+			for (; lcd->addr.x < lcd->width; lcd->addr.x++)
+				lcd->ops->print(lcd, ' ');
 
 			lcd->addr.x = 0;
 			lcd->addr.y = (lcd->addr.y + 1) % lcd->height;
-			lcd->ops->जाओxy(lcd, lcd->addr.x, lcd->addr.y);
-			अवरोध;
-		हाल '\r':
+			lcd->ops->gotoxy(lcd, lcd->addr.x, lcd->addr.y);
+			break;
+		case '\r':
 			/* go to the beginning of the same line */
 			lcd->addr.x = 0;
-			lcd->ops->जाओxy(lcd, lcd->addr.x, lcd->addr.y);
-			अवरोध;
-		हाल '\t':
-			/* prपूर्णांक a space instead of the tab */
-			अक्षरlcd_prपूर्णांक(lcd, ' ');
-			अवरोध;
-		शेष:
-			/* simply prपूर्णांक this अक्षर */
-			अक्षरlcd_prपूर्णांक(lcd, c);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			lcd->ops->gotoxy(lcd, lcd->addr.x, lcd->addr.y);
+			break;
+		case '\t':
+			/* print a space instead of the tab */
+			charlcd_print(lcd, ' ');
+			break;
+		default:
+			/* simply print this char */
+			charlcd_print(lcd, c);
+			break;
+		}
+	}
 
 	/*
-	 * now we'll see if we're in an escape mode and अगर the current
+	 * now we'll see if we're in an escape mode and if the current
 	 * escape sequence can be understood.
 	 */
-	अगर (priv->esc_seq.len >= 2) अणु
-		पूर्णांक processed = 0;
+	if (priv->esc_seq.len >= 2) {
+		int processed = 0;
 
-		अगर (!म_भेद(priv->esc_seq.buf, "[2J")) अणु
+		if (!strcmp(priv->esc_seq.buf, "[2J")) {
 			/* clear the display */
-			अक्षरlcd_clear_display(lcd);
+			charlcd_clear_display(lcd);
 			processed = 1;
-		पूर्ण अन्यथा अगर (!म_भेद(priv->esc_seq.buf, "[H")) अणु
+		} else if (!strcmp(priv->esc_seq.buf, "[H")) {
 			/* cursor to home */
-			अक्षरlcd_home(lcd);
+			charlcd_home(lcd);
 			processed = 1;
-		पूर्ण
+		}
 		/* codes starting with ^[[L */
-		अन्यथा अगर ((priv->esc_seq.len >= 3) &&
+		else if ((priv->esc_seq.len >= 3) &&
 			 (priv->esc_seq.buf[0] == '[') &&
-			 (priv->esc_seq.buf[1] == 'L')) अणु
+			 (priv->esc_seq.buf[1] == 'L')) {
 			processed = handle_lcd_special_code(lcd);
-		पूर्ण
+		}
 
 		/* LCD special escape codes */
 		/*
-		 * flush the escape sequence अगर it's been processed
-		 * or अगर it is getting too दीर्घ.
+		 * flush the escape sequence if it's been processed
+		 * or if it is getting too long.
 		 */
-		अगर (processed || (priv->esc_seq.len >= LCD_ESCAPE_LEN))
+		if (processed || (priv->esc_seq.len >= LCD_ESCAPE_LEN))
 			priv->esc_seq.len = -1;
-	पूर्ण /* escape codes */
-पूर्ण
+	} /* escape codes */
+}
 
-अटल काष्ठा अक्षरlcd *the_अक्षरlcd;
+static struct charlcd *the_charlcd;
 
-अटल sमाप_प्रकार अक्षरlcd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			     माप_प्रकार count, loff_t *ppos)
-अणु
-	स्थिर अक्षर __user *पंचांगp = buf;
-	अक्षर c;
+static ssize_t charlcd_write(struct file *file, const char __user *buf,
+			     size_t count, loff_t *ppos)
+{
+	const char __user *tmp = buf;
+	char c;
 
-	क्रम (; count-- > 0; (*ppos)++, पंचांगp++) अणु
-		अगर (((count + 1) & 0x1f) == 0) अणु
+	for (; count-- > 0; (*ppos)++, tmp++) {
+		if (((count + 1) & 0x1f) == 0) {
 			/*
-			 * अक्षरlcd_ग_लिखो() is invoked as a VFS->ग_लिखो() callback
+			 * charlcd_write() is invoked as a VFS->write() callback
 			 * and as such it is always invoked from preemptible
 			 * context and may sleep.
 			 */
 			cond_resched();
-		पूर्ण
+		}
 
-		अगर (get_user(c, पंचांगp))
-			वापस -EFAULT;
+		if (get_user(c, tmp))
+			return -EFAULT;
 
-		अक्षरlcd_ग_लिखो_अक्षर(the_अक्षरlcd, c);
-	पूर्ण
+		charlcd_write_char(the_charlcd, c);
+	}
 
-	वापस पंचांगp - buf;
-पूर्ण
+	return tmp - buf;
+}
 
-अटल पूर्णांक अक्षरlcd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(the_अक्षरlcd);
-	पूर्णांक ret;
+static int charlcd_open(struct inode *inode, struct file *file)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(the_charlcd);
+	int ret;
 
 	ret = -EBUSY;
-	अगर (!atomic_dec_and_test(&अक्षरlcd_available))
-		जाओ fail;	/* खोलो only once at a समय */
+	if (!atomic_dec_and_test(&charlcd_available))
+		goto fail;	/* open only once at a time */
 
 	ret = -EPERM;
-	अगर (file->f_mode & FMODE_READ)	/* device is ग_लिखो-only */
-		जाओ fail;
+	if (file->f_mode & FMODE_READ)	/* device is write-only */
+		goto fail;
 
-	अगर (priv->must_clear) अणु
+	if (priv->must_clear) {
 		priv->lcd.ops->clear_display(&priv->lcd);
 		priv->must_clear = false;
 		priv->lcd.addr.x = 0;
 		priv->lcd.addr.y = 0;
-	पूर्ण
-	वापस nonseekable_खोलो(inode, file);
+	}
+	return nonseekable_open(inode, file);
 
  fail:
-	atomic_inc(&अक्षरlcd_available);
-	वापस ret;
-पूर्ण
+	atomic_inc(&charlcd_available);
+	return ret;
+}
 
-अटल पूर्णांक अक्षरlcd_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	atomic_inc(&अक्षरlcd_available);
-	वापस 0;
-पूर्ण
+static int charlcd_release(struct inode *inode, struct file *file)
+{
+	atomic_inc(&charlcd_available);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations अक्षरlcd_fops = अणु
-	.ग_लिखो   = अक्षरlcd_ग_लिखो,
-	.खोलो    = अक्षरlcd_खोलो,
-	.release = अक्षरlcd_release,
+static const struct file_operations charlcd_fops = {
+	.write   = charlcd_write,
+	.open    = charlcd_open,
+	.release = charlcd_release,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice अक्षरlcd_dev = अणु
+static struct miscdevice charlcd_dev = {
 	.minor	= LCD_MINOR,
 	.name	= "lcd",
-	.fops	= &अक्षरlcd_fops,
-पूर्ण;
+	.fops	= &charlcd_fops,
+};
 
-अटल व्योम अक्षरlcd_माला_दो(काष्ठा अक्षरlcd *lcd, स्थिर अक्षर *s)
-अणु
-	स्थिर अक्षर *पंचांगp = s;
-	पूर्णांक count = म_माप(s);
+static void charlcd_puts(struct charlcd *lcd, const char *s)
+{
+	const char *tmp = s;
+	int count = strlen(s);
 
-	क्रम (; count-- > 0; पंचांगp++) अणु
-		अगर (((count + 1) & 0x1f) == 0)
+	for (; count-- > 0; tmp++) {
+		if (((count + 1) & 0x1f) == 0)
 			cond_resched();
 
-		अक्षरlcd_ग_लिखो_अक्षर(lcd, *पंचांगp);
-	पूर्ण
-पूर्ण
+		charlcd_write_char(lcd, *tmp);
+	}
+}
 
-#अगर_घोषित CONFIG_PANEL_BOOT_MESSAGE
-#घोषणा LCD_INIT_TEXT CONFIG_PANEL_BOOT_MESSAGE
-#अन्यथा
-#घोषणा LCD_INIT_TEXT "Linux-" UTS_RELEASE "\n"
-#पूर्ण_अगर
+#ifdef CONFIG_PANEL_BOOT_MESSAGE
+#define LCD_INIT_TEXT CONFIG_PANEL_BOOT_MESSAGE
+#else
+#define LCD_INIT_TEXT "Linux-" UTS_RELEASE "\n"
+#endif
 
-#अगर_घोषित CONFIG_CHARLCD_BL_ON
-#घोषणा LCD_INIT_BL "\x1b[L+"
-#या_अगर defined(CONFIG_CHARLCD_BL_FLASH)
-#घोषणा LCD_INIT_BL "\x1b[L*"
-#अन्यथा
-#घोषणा LCD_INIT_BL "\x1b[L-"
-#पूर्ण_अगर
+#ifdef CONFIG_CHARLCD_BL_ON
+#define LCD_INIT_BL "\x1b[L+"
+#elif defined(CONFIG_CHARLCD_BL_FLASH)
+#define LCD_INIT_BL "\x1b[L*"
+#else
+#define LCD_INIT_BL "\x1b[L-"
+#endif
 
 /* initialize the LCD driver */
-अटल पूर्णांक अक्षरlcd_init(काष्ठा अक्षरlcd *lcd)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
-	पूर्णांक ret;
+static int charlcd_init(struct charlcd *lcd)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
+	int ret;
 
 	priv->flags = ((lcd->height > 1) ? LCD_FLAG_N : 0) | LCD_FLAG_D |
 		      LCD_FLAG_C | LCD_FLAG_B;
-	अगर (lcd->ops->backlight) अणु
+	if (lcd->ops->backlight) {
 		mutex_init(&priv->bl_tempo_lock);
-		INIT_DELAYED_WORK(&priv->bl_work, अक्षरlcd_bl_off);
-	पूर्ण
+		INIT_DELAYED_WORK(&priv->bl_work, charlcd_bl_off);
+	}
 
 	/*
-	 * beक्रमe this line, we must NOT send anything to the display.
-	 * Since अक्षरlcd_init_display() needs to ग_लिखो data, we have to
-	 * enable mark the LCD initialized just beक्रमe.
+	 * before this line, we must NOT send anything to the display.
+	 * Since charlcd_init_display() needs to write data, we have to
+	 * enable mark the LCD initialized just before.
 	 */
 	ret = lcd->ops->init_display(lcd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* display a लघु message */
-	अक्षरlcd_माला_दो(lcd, "\x1b[Lc\x1b[Lb" LCD_INIT_BL LCD_INIT_TEXT);
+	/* display a short message */
+	charlcd_puts(lcd, "\x1b[Lc\x1b[Lb" LCD_INIT_BL LCD_INIT_TEXT);
 
-	/* clear the display on the next device खोलोing */
+	/* clear the display on the next device opening */
 	priv->must_clear = true;
-	अक्षरlcd_home(lcd);
-	वापस 0;
-पूर्ण
+	charlcd_home(lcd);
+	return 0;
+}
 
-काष्ठा अक्षरlcd *अक्षरlcd_alloc(व्योम)
-अणु
-	काष्ठा अक्षरlcd_priv *priv;
-	काष्ठा अक्षरlcd *lcd;
+struct charlcd *charlcd_alloc(void)
+{
+	struct charlcd_priv *priv;
+	struct charlcd *lcd;
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस शून्य;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return NULL;
 
 	priv->esc_seq.len = -1;
 
 	lcd = &priv->lcd;
 
-	वापस lcd;
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_alloc);
+	return lcd;
+}
+EXPORT_SYMBOL_GPL(charlcd_alloc);
 
-व्योम अक्षरlcd_मुक्त(काष्ठा अक्षरlcd *lcd)
-अणु
-	kमुक्त(अक्षरlcd_to_priv(lcd));
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_मुक्त);
+void charlcd_free(struct charlcd *lcd)
+{
+	kfree(charlcd_to_priv(lcd));
+}
+EXPORT_SYMBOL_GPL(charlcd_free);
 
-अटल पूर्णांक panel_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
-			    व्योम *unused)
-अणु
-	काष्ठा अक्षरlcd *lcd = the_अक्षरlcd;
+static int panel_notify_sys(struct notifier_block *this, unsigned long code,
+			    void *unused)
+{
+	struct charlcd *lcd = the_charlcd;
 
-	चयन (code) अणु
-	हाल SYS_DOWN:
-		अक्षरlcd_माला_दो(lcd,
+	switch (code) {
+	case SYS_DOWN:
+		charlcd_puts(lcd,
 			     "\x0cReloading\nSystem...\x1b[Lc\x1b[Lb\x1b[L+");
-		अवरोध;
-	हाल SYS_HALT:
-		अक्षरlcd_माला_दो(lcd, "\x0cSystem Halted.\x1b[Lc\x1b[Lb\x1b[L+");
-		अवरोध;
-	हाल SYS_POWER_OFF:
-		अक्षरlcd_माला_दो(lcd, "\x0cPower off.\x1b[Lc\x1b[Lb\x1b[L+");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_DONE;
-पूर्ण
+		break;
+	case SYS_HALT:
+		charlcd_puts(lcd, "\x0cSystem Halted.\x1b[Lc\x1b[Lb\x1b[L+");
+		break;
+	case SYS_POWER_OFF:
+		charlcd_puts(lcd, "\x0cPower off.\x1b[Lc\x1b[Lb\x1b[L+");
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block panel_notअगरier = अणु
-	panel_notअगरy_sys,
-	शून्य,
+static struct notifier_block panel_notifier = {
+	panel_notify_sys,
+	NULL,
 	0
-पूर्ण;
+};
 
-पूर्णांक अक्षरlcd_रेजिस्टर(काष्ठा अक्षरlcd *lcd)
-अणु
-	पूर्णांक ret;
+int charlcd_register(struct charlcd *lcd)
+{
+	int ret;
 
-	ret = अक्षरlcd_init(lcd);
-	अगर (ret)
-		वापस ret;
+	ret = charlcd_init(lcd);
+	if (ret)
+		return ret;
 
-	ret = misc_रेजिस्टर(&अक्षरlcd_dev);
-	अगर (ret)
-		वापस ret;
+	ret = misc_register(&charlcd_dev);
+	if (ret)
+		return ret;
 
-	the_अक्षरlcd = lcd;
-	रेजिस्टर_reboot_notअगरier(&panel_notअगरier);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_रेजिस्टर);
+	the_charlcd = lcd;
+	register_reboot_notifier(&panel_notifier);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(charlcd_register);
 
-पूर्णांक अक्षरlcd_unरेजिस्टर(काष्ठा अक्षरlcd *lcd)
-अणु
-	काष्ठा अक्षरlcd_priv *priv = अक्षरlcd_to_priv(lcd);
+int charlcd_unregister(struct charlcd *lcd)
+{
+	struct charlcd_priv *priv = charlcd_to_priv(lcd);
 
-	unरेजिस्टर_reboot_notअगरier(&panel_notअगरier);
-	अक्षरlcd_माला_दो(lcd, "\x0cLCD driver unloaded.\x1b[Lc\x1b[Lb\x1b[L-");
-	misc_deरेजिस्टर(&अक्षरlcd_dev);
-	the_अक्षरlcd = शून्य;
-	अगर (lcd->ops->backlight) अणु
+	unregister_reboot_notifier(&panel_notifier);
+	charlcd_puts(lcd, "\x0cLCD driver unloaded.\x1b[Lc\x1b[Lb\x1b[L-");
+	misc_deregister(&charlcd_dev);
+	the_charlcd = NULL;
+	if (lcd->ops->backlight) {
 		cancel_delayed_work_sync(&priv->bl_work);
 		priv->lcd.ops->backlight(&priv->lcd, CHARLCD_OFF);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(अक्षरlcd_unरेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(charlcd_unregister);
 
 MODULE_LICENSE("GPL");

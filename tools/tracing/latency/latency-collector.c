@@ -1,610 +1,609 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017, 2018, 2019, 2021 BMW Car IT GmbH
  * Author: Viktor Rosendahl (viktor.rosendahl@bmw.de)
  */
 
-#घोषणा _GNU_SOURCE
-#घोषणा _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
+#define _POSIX_C_SOURCE 200809L
 
-#समावेश <प्रकार.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <err.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <getopt.h>
-#समावेश <sched.h>
-#समावेश <linux/unistd.h>
-#समावेश <संकेत.स>
-#समावेश <sys/inotअगरy.h>
-#समावेश <unistd.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <tracefs.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <sched.h>
+#include <linux/unistd.h>
+#include <signal.h>
+#include <sys/inotify.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <tracefs.h>
 
-अटल स्थिर अक्षर *prg_name;
-अटल स्थिर अक्षर *prg_unknown = "unknown program name";
+static const char *prg_name;
+static const char *prg_unknown = "unknown program name";
 
-अटल पूर्णांक fd_मानक_निकास;
+static int fd_stdout;
 
-अटल पूर्णांक sched_policy;
-अटल bool sched_policy_set;
+static int sched_policy;
+static bool sched_policy_set;
 
-अटल पूर्णांक sched_pri;
-अटल bool sched_pri_set;
+static int sched_pri;
+static bool sched_pri_set;
 
-अटल bool trace_enable = true;
-अटल bool setup_ftrace = true;
-अटल bool use_अक्रमom_sleep;
+static bool trace_enable = true;
+static bool setup_ftrace = true;
+static bool use_random_sleep;
 
-#घोषणा TRACE_OPTS				\
+#define TRACE_OPTS				\
 	C(FUNC_TR, "function-trace"),		\
 	C(DISP_GR, "display-graph"),		\
-	C(NR,       शून्य)
+	C(NR,       NULL)
 
-#अघोषित C
-#घोषणा C(a, b) OPTIDX_##a
+#undef C
+#define C(a, b) OPTIDX_##a
 
-क्रमागत traceopt अणु
+enum traceopt {
 	TRACE_OPTS
-पूर्ण;
+};
 
-#अघोषित C
-#घोषणा C(a, b)  b
+#undef C
+#define C(a, b)  b
 
-अटल स्थिर अक्षर *स्थिर optstr[] = अणु
+static const char *const optstr[] = {
 	TRACE_OPTS
-पूर्ण;
+};
 
-क्रमागत errhandling अणु
+enum errhandling {
 	ERR_EXIT = 0,
 	ERR_WARN,
 	ERR_CLEANUP,
-पूर्ण;
+};
 
-अटल bool use_options[OPTIDX_NR];
+static bool use_options[OPTIDX_NR];
 
-अटल अक्षर inotअगरy_buffer[655360];
+static char inotify_buffer[655360];
 
-#घोषणा likely(x)      __builtin_expect(!!(x), 1)
-#घोषणा unlikely(x)    __builtin_expect(!!(x), 0)
-#घोषणा bool2str(x)    (x ? "true":"false")
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define bool2str(x)    (x ? "true":"false")
 
-#घोषणा DEFAULT_NR_PRINTER_THREADS (3)
-अटल अचिन्हित पूर्णांक nr_thपढ़ोs = DEFAULT_NR_PRINTER_THREADS;
+#define DEFAULT_NR_PRINTER_THREADS (3)
+static unsigned int nr_threads = DEFAULT_NR_PRINTER_THREADS;
 
-#घोषणा DEFAULT_TABLE_SIZE (2)
-अटल अचिन्हित पूर्णांक table_startsize = DEFAULT_TABLE_SIZE;
+#define DEFAULT_TABLE_SIZE (2)
+static unsigned int table_startsize = DEFAULT_TABLE_SIZE;
 
-अटल पूर्णांक verbosity;
+static int verbosity;
 
-#घोषणा verbose_sizechange() (verbosity >= 1)
-#घोषणा verbose_lostevent()  (verbosity >= 2)
-#घोषणा verbose_ftrace()     (verbosity >= 1)
+#define verbose_sizechange() (verbosity >= 1)
+#define verbose_lostevent()  (verbosity >= 2)
+#define verbose_ftrace()     (verbosity >= 1)
 
-#घोषणा was_changed(ORIG, CUR) (म_भेद(ORIG, CUR) != 0)
-#घोषणा needs_change(CUR, WANTED) (म_भेद(CUR, WANTED) != 0)
+#define was_changed(ORIG, CUR) (strcmp(ORIG, CUR) != 0)
+#define needs_change(CUR, WANTED) (strcmp(CUR, WANTED) != 0)
 
-अटल स्थिर अक्षर *debug_tracefile;
-अटल स्थिर अक्षर *debug_tracefile_dflt;
-अटल स्थिर अक्षर *debug_maxlat;
-अटल स्थिर अक्षर *debug_maxlat_dflt;
-अटल स्थिर अक्षर * स्थिर DEBUG_NOखाता = "[file not found]";
+static const char *debug_tracefile;
+static const char *debug_tracefile_dflt;
+static const char *debug_maxlat;
+static const char *debug_maxlat_dflt;
+static const char * const DEBUG_NOFILE = "[file not found]";
 
-अटल स्थिर अक्षर * स्थिर TR_MAXLAT  = "tracing_max_latency";
-अटल स्थिर अक्षर * स्थिर TR_THRESH  = "tracing_thresh";
-अटल स्थिर अक्षर * स्थिर TR_CURRENT = "current_tracer";
-अटल स्थिर अक्षर * स्थिर TR_OPTIONS = "trace_options";
+static const char * const TR_MAXLAT  = "tracing_max_latency";
+static const char * const TR_THRESH  = "tracing_thresh";
+static const char * const TR_CURRENT = "current_tracer";
+static const char * const TR_OPTIONS = "trace_options";
 
-अटल स्थिर अक्षर * स्थिर NOP_TRACER = "nop";
+static const char * const NOP_TRACER = "nop";
 
-अटल स्थिर अक्षर * स्थिर OPT_NO_PREFIX = "no";
+static const char * const OPT_NO_PREFIX = "no";
 
-#घोषणा DFLT_THRESHOLD_US "0"
-अटल स्थिर अक्षर *threshold = DFLT_THRESHOLD_US;
+#define DFLT_THRESHOLD_US "0"
+static const char *threshold = DFLT_THRESHOLD_US;
 
-#घोषणा DEV_URANDOM     "/dev/urandom"
-#घोषणा RT_DEFAULT_PRI (99)
-#घोषणा DEFAULT_PRI    (0)
+#define DEV_URANDOM     "/dev/urandom"
+#define RT_DEFAULT_PRI (99)
+#define DEFAULT_PRI    (0)
 
-#घोषणा USEC_PER_MSEC (1000L)
-#घोषणा NSEC_PER_USEC (1000L)
-#घोषणा NSEC_PER_MSEC (USEC_PER_MSEC * NSEC_PER_USEC)
+#define USEC_PER_MSEC (1000L)
+#define NSEC_PER_USEC (1000L)
+#define NSEC_PER_MSEC (USEC_PER_MSEC * NSEC_PER_USEC)
 
-#घोषणा MSEC_PER_SEC (1000L)
-#घोषणा USEC_PER_SEC (USEC_PER_MSEC * MSEC_PER_SEC)
-#घोषणा NSEC_PER_SEC (NSEC_PER_MSEC * MSEC_PER_SEC)
+#define MSEC_PER_SEC (1000L)
+#define USEC_PER_SEC (USEC_PER_MSEC * MSEC_PER_SEC)
+#define NSEC_PER_SEC (NSEC_PER_MSEC * MSEC_PER_SEC)
 
-#घोषणा SLEEP_TIME_MS_DEFAULT (1000L)
-#घोषणा TRY_PRINTMUTEX_MS (1000)
+#define SLEEP_TIME_MS_DEFAULT (1000L)
+#define TRY_PRINTMUTEX_MS (1000)
 
-अटल दीर्घ sleep_समय = (USEC_PER_MSEC * SLEEP_TIME_MS_DEFAULT);
+static long sleep_time = (USEC_PER_MSEC * SLEEP_TIME_MS_DEFAULT);
 
-अटल स्थिर अक्षर * स्थिर queue_full_warning =
+static const char * const queue_full_warning =
 "Could not queue trace for printing. It is likely that events happen faster\n"
 "than what they can be printed. Probably partly because of random sleeping\n";
 
-अटल स्थिर अक्षर * स्थिर no_tracer_msg =
+static const char * const no_tracer_msg =
 "Could not find any tracers! Running this program as root may help!\n";
 
-अटल स्थिर अक्षर * स्थिर no_latency_tr_msg =
+static const char * const no_latency_tr_msg =
 "No latency tracers are supported by your kernel!\n";
 
-काष्ठा policy अणु
-	स्थिर अक्षर *name;
-	पूर्णांक policy;
-	पूर्णांक शेष_pri;
-पूर्ण;
+struct policy {
+	const char *name;
+	int policy;
+	int default_pri;
+};
 
-अटल स्थिर काष्ठा policy policies[] = अणु
-	अणु "other", SCHED_OTHER, DEFAULT_PRI    पूर्ण,
-	अणु "batch", SCHED_BATCH, DEFAULT_PRI    पूर्ण,
-	अणु "idle",  SCHED_IDLE,  DEFAULT_PRI    पूर्ण,
-	अणु "rr",    SCHED_RR,    RT_DEFAULT_PRI पूर्ण,
-	अणु "fifo",  SCHED_FIFO,  RT_DEFAULT_PRI पूर्ण,
-	अणु शून्य,    0,           DEFAULT_PRI    पूर्ण
-पूर्ण;
+static const struct policy policies[] = {
+	{ "other", SCHED_OTHER, DEFAULT_PRI    },
+	{ "batch", SCHED_BATCH, DEFAULT_PRI    },
+	{ "idle",  SCHED_IDLE,  DEFAULT_PRI    },
+	{ "rr",    SCHED_RR,    RT_DEFAULT_PRI },
+	{ "fifo",  SCHED_FIFO,  RT_DEFAULT_PRI },
+	{ NULL,    0,           DEFAULT_PRI    }
+};
 
 /*
- * The शेष tracer will be the first on this list that is supported by the
+ * The default tracer will be the first on this list that is supported by the
  * currently running Linux kernel.
  */
-अटल स्थिर अक्षर * स्थिर relevant_tracers[] = अणु
+static const char * const relevant_tracers[] = {
 	"preemptirqsoff",
 	"preemptoff",
 	"irqsoff",
 	"wakeup",
 	"wakeup_rt",
 	"wakeup_dl",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-/* This is the list of tracers क्रम which अक्रमom sleep makes sense */
-अटल स्थिर अक्षर * स्थिर अक्रमom_tracers[] = अणु
+/* This is the list of tracers for which random sleep makes sense */
+static const char * const random_tracers[] = {
 	"preemptirqsoff",
 	"preemptoff",
 	"irqsoff",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर अक्षर *current_tracer;
-अटल bool क्रमce_tracer;
+static const char *current_tracer;
+static bool force_tracer;
 
-काष्ठा ftrace_state अणु
-	अक्षर *tracer;
-	अक्षर *thresh;
+struct ftrace_state {
+	char *tracer;
+	char *thresh;
 	bool opt[OPTIDX_NR];
 	bool opt_valid[OPTIDX_NR];
-	pthपढ़ो_mutex_t mutex;
-पूर्ण;
+	pthread_mutex_t mutex;
+};
 
-काष्ठा entry अणु
-	पूर्णांक ticket;
-	पूर्णांक ticket_completed_ref;
-पूर्ण;
+struct entry {
+	int ticket;
+	int ticket_completed_ref;
+};
 
-काष्ठा prपूर्णांक_state अणु
-	पूर्णांक ticket_counter;
-	पूर्णांक ticket_completed;
-	pthपढ़ो_mutex_t mutex;
-	pthपढ़ो_cond_t cond;
-	पूर्णांक cnt;
-	pthपढ़ो_mutex_t cnt_mutex;
-पूर्ण;
+struct print_state {
+	int ticket_counter;
+	int ticket_completed;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	int cnt;
+	pthread_mutex_t cnt_mutex;
+};
 
-काष्ठा लघु_msg अणु
-	अक्षर buf[160];
-	पूर्णांक len;
-पूर्ण;
+struct short_msg {
+	char buf[160];
+	int len;
+};
 
-अटल काष्ठा prपूर्णांक_state prपूर्णांकstate;
-अटल काष्ठा ftrace_state save_state;
-अस्थिर संक_पूर्ण_प्रकार संकेत_flag;
+static struct print_state printstate;
+static struct ftrace_state save_state;
+volatile sig_atomic_t signal_flag;
 
-#घोषणा PROB_TABLE_MAX_SIZE (1000)
+#define PROB_TABLE_MAX_SIZE (1000)
 
-पूर्णांक probabilities[PROB_TABLE_MAX_SIZE];
+int probabilities[PROB_TABLE_MAX_SIZE];
 
-काष्ठा sleep_table अणु
-	पूर्णांक *table;
-	पूर्णांक size;
-	pthपढ़ो_mutex_t mutex;
-पूर्ण;
+struct sleep_table {
+	int *table;
+	int size;
+	pthread_mutex_t mutex;
+};
 
-अटल काष्ठा sleep_table sleeptable;
+static struct sleep_table sleeptable;
 
-#घोषणा QUEUE_SIZE (10)
+#define QUEUE_SIZE (10)
 
-काष्ठा queue अणु
-	काष्ठा entry entries[QUEUE_SIZE];
-	पूर्णांक next_prod_idx;
-	पूर्णांक next_cons_idx;
-	pthपढ़ो_mutex_t mutex;
-	pthपढ़ो_cond_t cond;
-पूर्ण;
+struct queue {
+	struct entry entries[QUEUE_SIZE];
+	int next_prod_idx;
+	int next_cons_idx;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+};
 
-#घोषणा MAX_THREADS (40)
+#define MAX_THREADS (40)
 
-काष्ठा queue prपूर्णांकqueue;
-pthपढ़ो_t prपूर्णांकthपढ़ो[MAX_THREADS];
-pthपढ़ो_mutex_t prपूर्णांक_mtx;
-#घोषणा PRINT_BUFFER_SIZE (16 * 1024 * 1024)
+struct queue printqueue;
+pthread_t printthread[MAX_THREADS];
+pthread_mutex_t print_mtx;
+#define PRINT_BUFFER_SIZE (16 * 1024 * 1024)
 
-अटल व्योम cleanup_निकास(पूर्णांक status);
-अटल पूर्णांक set_trace_opt(स्थिर अक्षर *opt, bool value);
+static void cleanup_exit(int status);
+static int set_trace_opt(const char *opt, bool value);
 
-अटल __always_अंतरभूत व्योम *दो_स्मृति_or_die(माप_प्रकार size)
-अणु
-	व्योम *ptr = दो_स्मृति(size);
+static __always_inline void *malloc_or_die(size_t size)
+{
+	void *ptr = malloc(size);
 
-	अगर (unlikely(ptr == शून्य)) अणु
+	if (unlikely(ptr == NULL)) {
 		warn("malloc() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-	वापस ptr;
-पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
+	return ptr;
+}
 
-अटल __always_अंतरभूत व्योम *दो_स्मृति_or_die_nocleanup(माप_प्रकार size)
-अणु
-	व्योम *ptr = दो_स्मृति(size);
+static __always_inline void *malloc_or_die_nocleanup(size_t size)
+{
+	void *ptr = malloc(size);
 
-	अगर (unlikely(ptr == शून्य))
+	if (unlikely(ptr == NULL))
 		err(0, "malloc() failed");
-	वापस ptr;
-पूर्ण
+	return ptr;
+}
 
-अटल __always_अंतरभूत व्योम ग_लिखो_or_die(पूर्णांक fd, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	sमाप_प्रकार r;
+static __always_inline void write_or_die(int fd, const char *buf, size_t count)
+{
+	ssize_t r;
 
-	करो अणु
-		r = ग_लिखो(fd, buf, count);
-		अगर (unlikely(r < 0)) अणु
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
+	do {
+		r = write(fd, buf, count);
+		if (unlikely(r < 0)) {
+			if (errno == EINTR)
+				continue;
 			warn("write() failed");
-			cleanup_निकास(निकास_त्रुटि);
-		पूर्ण
+			cleanup_exit(EXIT_FAILURE);
+		}
 		count -= r;
 		buf += r;
-	पूर्ण जबतक (count > 0);
-पूर्ण
+	} while (count > 0);
+}
 
-अटल __always_अंतरभूत व्योम घड़ी_समय_लो_or_die(घड़ीid_t clk_id,
-						 काष्ठा बारpec *tp)
-अणु
-	पूर्णांक r = घड़ी_समय_लो(clk_id, tp);
+static __always_inline void clock_gettime_or_die(clockid_t clk_id,
+						 struct timespec *tp)
+{
+	int r = clock_gettime(clk_id, tp);
 
-	अगर (unlikely(r != 0))
-		err(निकास_त्रुटि, "clock_gettime() failed");
-पूर्ण
+	if (unlikely(r != 0))
+		err(EXIT_FAILURE, "clock_gettime() failed");
+}
 
-अटल __always_अंतरभूत व्योम sigemptyset_or_die(sigset_t *s)
-अणु
-	अगर (unlikely(sigemptyset(s) != 0)) अणु
+static __always_inline void sigemptyset_or_die(sigset_t *s)
+{
+	if (unlikely(sigemptyset(s) != 0)) {
 		warn("sigemptyset() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
+}
 
-अटल __always_अंतरभूत व्योम sigaddset_or_die(sigset_t *s, पूर्णांक signum)
-अणु
-	अगर (unlikely(sigaddset(s, signum) != 0)) अणु
+static __always_inline void sigaddset_or_die(sigset_t *s, int signum)
+{
+	if (unlikely(sigaddset(s, signum) != 0)) {
 		warn("sigemptyset() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
+}
 
-अटल __always_अंतरभूत व्योम sigaction_or_die(पूर्णांक signum,
-					     स्थिर काष्ठा sigaction *act,
-					     काष्ठा sigaction *oldact)
-अणु
-	अगर (unlikely(sigaction(signum, act, oldact) != 0)) अणु
+static __always_inline void sigaction_or_die(int signum,
+					     const struct sigaction *act,
+					     struct sigaction *oldact)
+{
+	if (unlikely(sigaction(signum, act, oldact) != 0)) {
 		warn("sigaction() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
+}
 
-अटल व्योम खोलो_मानक_निकास(व्योम)
-अणु
-	अगर (रखो_भबफ(मानक_निकास, शून्य, _IONBF, 0) != 0)
-		err(निकास_त्रुटि, "setvbuf() failed");
-	fd_मानक_निकास = fileno(मानक_निकास);
-	अगर (fd_मानक_निकास < 0)
-		err(निकास_त्रुटि, "fileno() failed");
-पूर्ण
+static void open_stdout(void)
+{
+	if (setvbuf(stdout, NULL, _IONBF, 0) != 0)
+		err(EXIT_FAILURE, "setvbuf() failed");
+	fd_stdout = fileno(stdout);
+	if (fd_stdout < 0)
+		err(EXIT_FAILURE, "fileno() failed");
+}
 
 /*
- * It's not worth it to call cleanup_निकास() from mutex functions because
- * cleanup_निकास() uses mutexes.
+ * It's not worth it to call cleanup_exit() from mutex functions because
+ * cleanup_exit() uses mutexes.
  */
-अटल __always_अंतरभूत व्योम mutex_lock(pthपढ़ो_mutex_t *mtx)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutex_lock(mtx);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_mutex_lock() failed");
-पूर्ण
+static __always_inline void mutex_lock(pthread_mutex_t *mtx)
+{
+	errno = pthread_mutex_lock(mtx);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_mutex_lock() failed");
+}
 
 
-अटल __always_अंतरभूत व्योम mutex_unlock(pthपढ़ो_mutex_t *mtx)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutex_unlock(mtx);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_mutex_unlock() failed");
-पूर्ण
+static __always_inline void mutex_unlock(pthread_mutex_t *mtx)
+{
+	errno = pthread_mutex_unlock(mtx);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_mutex_unlock() failed");
+}
 
-अटल __always_अंतरभूत व्योम cond_संकेत(pthपढ़ो_cond_t *cond)
-अणु
-	त्रुटि_सं = pthपढ़ो_cond_संकेत(cond);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_cond_signal() failed");
-पूर्ण
+static __always_inline void cond_signal(pthread_cond_t *cond)
+{
+	errno = pthread_cond_signal(cond);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_cond_signal() failed");
+}
 
-अटल __always_अंतरभूत व्योम cond_रुको(pthपढ़ो_cond_t *restrict cond,
-				      pthपढ़ो_mutex_t *restrict mutex)
-अणु
-	त्रुटि_सं = pthपढ़ो_cond_रुको(cond, mutex);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_cond_wait() failed");
-पूर्ण
+static __always_inline void cond_wait(pthread_cond_t *restrict cond,
+				      pthread_mutex_t *restrict mutex)
+{
+	errno = pthread_cond_wait(cond, mutex);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_cond_wait() failed");
+}
 
-अटल __always_अंतरभूत व्योम cond_broadcast(pthपढ़ो_cond_t *cond)
-अणु
-	त्रुटि_सं = pthपढ़ो_cond_broadcast(cond);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_cond_broadcast() failed");
-पूर्ण
+static __always_inline void cond_broadcast(pthread_cond_t *cond)
+{
+	errno = pthread_cond_broadcast(cond);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_cond_broadcast() failed");
+}
 
-अटल __always_अंतरभूत व्योम
-mutex_init(pthपढ़ो_mutex_t *mutex,
-	   स्थिर pthपढ़ो_mutexattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutex_init(mutex, attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_mutex_init() failed");
-पूर्ण
+static __always_inline void
+mutex_init(pthread_mutex_t *mutex,
+	   const pthread_mutexattr_t *attr)
+{
+	errno = pthread_mutex_init(mutex, attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_mutex_init() failed");
+}
 
-अटल __always_अंतरभूत व्योम mutexattr_init(pthपढ़ो_mutexattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutexattr_init(attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_mutexattr_init() failed");
-पूर्ण
+static __always_inline void mutexattr_init(pthread_mutexattr_t *attr)
+{
+	errno = pthread_mutexattr_init(attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_mutexattr_init() failed");
+}
 
-अटल __always_अंतरभूत व्योम mutexattr_destroy(pthपढ़ो_mutexattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutexattr_destroy(attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_mutexattr_destroy() failed");
-पूर्ण
+static __always_inline void mutexattr_destroy(pthread_mutexattr_t *attr)
+{
+	errno = pthread_mutexattr_destroy(attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_mutexattr_destroy() failed");
+}
 
-अटल __always_अंतरभूत व्योम mutexattr_settype(pthपढ़ो_mutexattr_t *attr,
-					      पूर्णांक type)
-अणु
-	त्रुटि_सं = pthपढ़ो_mutexattr_settype(attr, type);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_mutexattr_settype() failed");
-पूर्ण
+static __always_inline void mutexattr_settype(pthread_mutexattr_t *attr,
+					      int type)
+{
+	errno = pthread_mutexattr_settype(attr, type);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_mutexattr_settype() failed");
+}
 
-अटल __always_अंतरभूत व्योम condattr_init(pthपढ़ो_condattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_condattr_init(attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_condattr_init() failed");
-पूर्ण
+static __always_inline void condattr_init(pthread_condattr_t *attr)
+{
+	errno = pthread_condattr_init(attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_condattr_init() failed");
+}
 
-अटल __always_अंतरभूत व्योम condattr_destroy(pthपढ़ो_condattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_condattr_destroy(attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_condattr_destroy() failed");
-पूर्ण
+static __always_inline void condattr_destroy(pthread_condattr_t *attr)
+{
+	errno = pthread_condattr_destroy(attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_condattr_destroy() failed");
+}
 
-अटल __always_अंतरभूत व्योम condattr_setघड़ी(pthपढ़ो_condattr_t *attr,
-					      घड़ीid_t घड़ी_id)
-अणु
-	त्रुटि_सं = pthपढ़ो_condattr_setघड़ी(attr, घड़ी_id);
-	अगर (unlikely(त्रुटि_सं))
-		err(निकास_त्रुटि, "pthread_condattr_setclock() failed");
-पूर्ण
+static __always_inline void condattr_setclock(pthread_condattr_t *attr,
+					      clockid_t clock_id)
+{
+	errno = pthread_condattr_setclock(attr, clock_id);
+	if (unlikely(errno))
+		err(EXIT_FAILURE, "pthread_condattr_setclock() failed");
+}
 
-अटल __always_अंतरभूत व्योम cond_init(pthपढ़ो_cond_t *cond,
-				      स्थिर pthपढ़ो_condattr_t *attr)
-अणु
-	त्रुटि_सं = pthपढ़ो_cond_init(cond, attr);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_cond_init() failed");
-पूर्ण
+static __always_inline void cond_init(pthread_cond_t *cond,
+				      const pthread_condattr_t *attr)
+{
+	errno = pthread_cond_init(cond, attr);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_cond_init() failed");
+}
 
-अटल __always_अंतरभूत पूर्णांक
-cond_समयdरुको(pthपढ़ो_cond_t *restrict cond,
-	       pthपढ़ो_mutex_t *restrict mutex,
-	       स्थिर काष्ठा बारpec *restrict असलसमय)
-अणु
-	त्रुटि_सं = pthपढ़ो_cond_समयdरुको(cond, mutex, असलसमय);
-	अगर (त्रुटि_सं && त्रुटि_सं != ETIMEDOUT)
-		err(निकास_त्रुटि, "pthread_cond_timedwait() failed");
-	वापस त्रुटि_सं;
-पूर्ण
+static __always_inline int
+cond_timedwait(pthread_cond_t *restrict cond,
+	       pthread_mutex_t *restrict mutex,
+	       const struct timespec *restrict abstime)
+{
+	errno = pthread_cond_timedwait(cond, mutex, abstime);
+	if (errno && errno != ETIMEDOUT)
+		err(EXIT_FAILURE, "pthread_cond_timedwait() failed");
+	return errno;
+}
 
-अटल व्योम init_prपूर्णांकstate(व्योम)
-अणु
-	pthपढ़ो_condattr_t cattr;
+static void init_printstate(void)
+{
+	pthread_condattr_t cattr;
 
-	prपूर्णांकstate.ticket_counter = 0;
-	prपूर्णांकstate.ticket_completed = 0;
-	prपूर्णांकstate.cnt = 0;
+	printstate.ticket_counter = 0;
+	printstate.ticket_completed = 0;
+	printstate.cnt = 0;
 
-	mutex_init(&prपूर्णांकstate.mutex, शून्य);
+	mutex_init(&printstate.mutex, NULL);
 
 	condattr_init(&cattr);
-	condattr_setघड़ी(&cattr, CLOCK_MONOTONIC);
-	cond_init(&prपूर्णांकstate.cond, &cattr);
+	condattr_setclock(&cattr, CLOCK_MONOTONIC);
+	cond_init(&printstate.cond, &cattr);
 	condattr_destroy(&cattr);
-पूर्ण
+}
 
-अटल व्योम init_prपूर्णांक_mtx(व्योम)
-अणु
-	pthपढ़ो_mutexattr_t mattr;
+static void init_print_mtx(void)
+{
+	pthread_mutexattr_t mattr;
 
 	mutexattr_init(&mattr);
 	mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-	mutex_init(&prपूर्णांक_mtx, &mattr);
+	mutex_init(&print_mtx, &mattr);
 	mutexattr_destroy(&mattr);
 
-पूर्ण
+}
 
-अटल व्योम संकेत_blocking(पूर्णांक how)
-अणु
+static void signal_blocking(int how)
+{
 	sigset_t s;
 
 	sigemptyset_or_die(&s);
 	sigaddset_or_die(&s, SIGHUP);
-	sigaddset_or_die(&s, संक_इति);
-	sigaddset_or_die(&s, संक_विघ्न);
+	sigaddset_or_die(&s, SIGTERM);
+	sigaddset_or_die(&s, SIGINT);
 
-	त्रुटि_सं = pthपढ़ो_sigmask(how, &s, शून्य);
-	अगर (unlikely(त्रुटि_सं)) अणु
+	errno = pthread_sigmask(how, &s, NULL);
+	if (unlikely(errno)) {
 		warn("pthread_sigmask() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
+}
 
-अटल व्योम संकेत_handler(पूर्णांक num)
-अणु
-	संकेत_flag = num;
-पूर्ण
+static void signal_handler(int num)
+{
+	signal_flag = num;
+}
 
-अटल व्योम setup_sig_handler(व्योम)
-अणु
-	काष्ठा sigaction sa;
+static void setup_sig_handler(void)
+{
+	struct sigaction sa;
 
-	स_रखो(&sa, 0, माप(sa));
-	sa.sa_handler = संकेत_handler;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = signal_handler;
 
-	sigaction_or_die(SIGHUP, &sa, शून्य);
-	sigaction_or_die(संक_इति, &sa, शून्य);
-	sigaction_or_die(संक_विघ्न, &sa, शून्य);
-पूर्ण
+	sigaction_or_die(SIGHUP, &sa, NULL);
+	sigaction_or_die(SIGTERM, &sa, NULL);
+	sigaction_or_die(SIGINT, &sa, NULL);
+}
 
-अटल व्योम process_संकेत(पूर्णांक संकेत)
-अणु
-	अक्षर *name;
+static void process_signal(int signal)
+{
+	char *name;
 
-	name = strसंकेत(संकेत);
-	अगर (name == शून्य)
-		म_लिखो("Received signal %d\n", संकेत);
-	अन्यथा
-		म_लिखो("Received signal %d (%s)\n", संकेत, name);
-	cleanup_निकास(निकास_सफल);
-पूर्ण
+	name = strsignal(signal);
+	if (name == NULL)
+		printf("Received signal %d\n", signal);
+	else
+		printf("Received signal %d (%s)\n", signal, name);
+	cleanup_exit(EXIT_SUCCESS);
+}
 
-अटल __always_अंतरभूत व्योम check_संकेतs(व्योम)
-अणु
-	पूर्णांक संकेत = संकेत_flag;
+static __always_inline void check_signals(void)
+{
+	int signal = signal_flag;
 
-	अगर (unlikely(संकेत))
-		process_संकेत(संकेत);
-पूर्ण
+	if (unlikely(signal))
+		process_signal(signal);
+}
 
-अटल __always_अंतरभूत व्योम get_समय_in_future(काष्ठा बारpec *future,
-					       दीर्घ समय_us)
-अणु
-	दीर्घ nsec;
+static __always_inline void get_time_in_future(struct timespec *future,
+					       long time_us)
+{
+	long nsec;
 
-	घड़ी_समय_लो_or_die(CLOCK_MONOTONIC, future);
-	future->tv_sec += समय_us / USEC_PER_SEC;
-	nsec = future->tv_nsec + (समय_us * NSEC_PER_USEC) % NSEC_PER_SEC;
-	अगर (nsec >= NSEC_PER_SEC) अणु
+	clock_gettime_or_die(CLOCK_MONOTONIC, future);
+	future->tv_sec += time_us / USEC_PER_SEC;
+	nsec = future->tv_nsec + (time_us * NSEC_PER_USEC) % NSEC_PER_SEC;
+	if (nsec >= NSEC_PER_SEC) {
 		future->tv_nsec = nsec % NSEC_PER_SEC;
 		future->tv_sec += 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __always_अंतरभूत bool समय_has_passed(स्थिर काष्ठा बारpec *समय)
-अणु
-	काष्ठा बारpec now;
+static __always_inline bool time_has_passed(const struct timespec *time)
+{
+	struct timespec now;
 
-	घड़ी_समय_लो_or_die(CLOCK_MONOTONIC, &now);
-	अगर (now.tv_sec > समय->tv_sec)
-		वापस true;
-	अगर (now.tv_sec < समय->tv_sec)
-		वापस false;
-	वापस (now.tv_nsec >= समय->tv_nsec);
-पूर्ण
+	clock_gettime_or_die(CLOCK_MONOTONIC, &now);
+	if (now.tv_sec > time->tv_sec)
+		return true;
+	if (now.tv_sec < time->tv_sec)
+		return false;
+	return (now.tv_nsec >= time->tv_nsec);
+}
 
-अटल bool mutex_trylock_limit(pthपढ़ो_mutex_t *mutex, पूर्णांक समय_ms)
-अणु
-	दीर्घ समय_us = समय_ms * USEC_PER_MSEC;
-	काष्ठा बारpec limit;
+static bool mutex_trylock_limit(pthread_mutex_t *mutex, int time_ms)
+{
+	long time_us = time_ms * USEC_PER_MSEC;
+	struct timespec limit;
 
-	get_समय_in_future(&limit, समय_us);
-	करो अणु
-		त्रुटि_सं =  pthपढ़ो_mutex_trylock(mutex);
-		अगर (त्रुटि_सं && त्रुटि_सं != EBUSY)
-			err(निकास_त्रुटि, "pthread_mutex_trylock() failed");
-	पूर्ण जबतक (त्रुटि_सं && !समय_has_passed(&limit));
-	वापस त्रुटि_सं == 0;
-पूर्ण
+	get_time_in_future(&limit, time_us);
+	do {
+		errno =  pthread_mutex_trylock(mutex);
+		if (errno && errno != EBUSY)
+			err(EXIT_FAILURE, "pthread_mutex_trylock() failed");
+	} while (errno && !time_has_passed(&limit));
+	return errno == 0;
+}
 
-अटल व्योम restore_trace_opts(स्थिर काष्ठा ftrace_state *state,
-				स्थिर bool *cur)
-अणु
-	पूर्णांक i;
-	पूर्णांक r;
+static void restore_trace_opts(const struct ftrace_state *state,
+				const bool *cur)
+{
+	int i;
+	int r;
 
-	क्रम (i = 0; i < OPTIDX_NR; i++)
-		अगर (state->opt_valid[i] && state->opt[i] != cur[i]) अणु
+	for (i = 0; i < OPTIDX_NR; i++)
+		if (state->opt_valid[i] && state->opt[i] != cur[i]) {
 			r = set_trace_opt(optstr[i], state->opt[i]);
-			अगर (r < 0)
+			if (r < 0)
 				warnx("Failed to restore the %s option to %s",
 				      optstr[i], bool2str(state->opt[i]));
-			अन्यथा अगर (verbose_ftrace())
-				म_लिखो("Restored the %s option in %s to %s\n",
+			else if (verbose_ftrace())
+				printf("Restored the %s option in %s to %s\n",
 				       optstr[i], TR_OPTIONS,
 				       bool2str(state->opt[i]));
-		पूर्ण
-पूर्ण
+		}
+}
 
-अटल अक्षर *पढ़ो_file(स्थिर अक्षर *file, क्रमागत errhandling h)
-अणु
-	पूर्णांक psize;
-	अक्षर *r;
-	अटल स्थिर अक्षर *emsg = "Failed to read the %s file";
+static char *read_file(const char *file, enum errhandling h)
+{
+	int psize;
+	char *r;
+	static const char *emsg = "Failed to read the %s file";
 
-	r = tracefs_instance_file_पढ़ो(शून्य, file, &psize);
-	अगर (!r) अणु
-		अगर (h) अणु
+	r = tracefs_instance_file_read(NULL, file, &psize);
+	if (!r) {
+		if (h) {
 			warn(emsg, file);
-			अगर (h == ERR_CLEANUP)
-				cleanup_निकास(निकास_त्रुटि);
-		पूर्ण अन्यथा
-			errx(निकास_त्रुटि, emsg, file);
-	पूर्ण
+			if (h == ERR_CLEANUP)
+				cleanup_exit(EXIT_FAILURE);
+		} else
+			errx(EXIT_FAILURE, emsg, file);
+	}
 
-	अगर (r && r[psize - 1] == '\n')
+	if (r && r[psize - 1] == '\n')
 		r[psize - 1] = '\0';
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम restore_file(स्थिर अक्षर *file, अक्षर **saved, स्थिर अक्षर *cur)
-अणु
-	अगर (*saved && was_changed(*saved, cur)) अणु
-		अगर (tracefs_instance_file_ग_लिखो(शून्य, file, *saved) < 0)
+static void restore_file(const char *file, char **saved, const char *cur)
+{
+	if (*saved && was_changed(*saved, cur)) {
+		if (tracefs_instance_file_write(NULL, file, *saved) < 0)
 			warnx("Failed to restore %s to %s!", file, *saved);
-		अन्यथा अगर (verbose_ftrace())
-			म_लिखो("Restored %s to %s\n", file, *saved);
-		मुक्त(*saved);
-		*saved = शून्य;
-	पूर्ण
-पूर्ण
+		else if (verbose_ftrace())
+			printf("Restored %s to %s\n", file, *saved);
+		free(*saved);
+		*saved = NULL;
+	}
+}
 
-अटल व्योम restore_ftrace(व्योम)
-अणु
+static void restore_ftrace(void)
+{
 	mutex_lock(&save_state.mutex);
 
 	restore_file(TR_CURRENT, &save_state.tracer, current_tracer);
@@ -612,1062 +611,1062 @@ cond_समयdरुको(pthपढ़ो_cond_t *restrict cond,
 	restore_trace_opts(&save_state, use_options);
 
 	mutex_unlock(&save_state.mutex);
-पूर्ण
+}
 
-अटल व्योम cleanup_निकास(पूर्णांक status)
-अणु
-	अक्षर *maxlat;
+static void cleanup_exit(int status)
+{
+	char *maxlat;
 
-	अगर (!setup_ftrace)
-		निकास(status);
+	if (!setup_ftrace)
+		exit(status);
 
 	/*
-	 * We try the prपूर्णांक_mtx क्रम 1 sec in order to aव्योम garbled
-	 * output अगर possible, but अगर it cannot be obtained we proceed anyway.
+	 * We try the print_mtx for 1 sec in order to avoid garbled
+	 * output if possible, but if it cannot be obtained we proceed anyway.
 	 */
-	mutex_trylock_limit(&prपूर्णांक_mtx, TRY_PRINTMUTEX_MS);
+	mutex_trylock_limit(&print_mtx, TRY_PRINTMUTEX_MS);
 
-	maxlat = पढ़ो_file(TR_MAXLAT, ERR_WARN);
-	अगर (maxlat) अणु
-		म_लिखो("The maximum detected latency was: %sus\n", maxlat);
-		मुक्त(maxlat);
-	पूर्ण
+	maxlat = read_file(TR_MAXLAT, ERR_WARN);
+	if (maxlat) {
+		printf("The maximum detected latency was: %sus\n", maxlat);
+		free(maxlat);
+	}
 
 	restore_ftrace();
 	/*
-	 * We करो not need to unlock the prपूर्णांक_mtx here because we will निकास at
-	 * the end of this function. Unlocking prपूर्णांक_mtx causes problems अगर a
-	 * prपूर्णांक thपढ़ो happens to be रुकोing क्रम the mutex because we have
+	 * We do not need to unlock the print_mtx here because we will exit at
+	 * the end of this function. Unlocking print_mtx causes problems if a
+	 * print thread happens to be waiting for the mutex because we have
 	 * just changed the ftrace settings to the original and thus the
-	 * prपूर्णांक thपढ़ो would output incorrect data from ftrace.
+	 * print thread would output incorrect data from ftrace.
 	 */
-	निकास(status);
-पूर्ण
+	exit(status);
+}
 
-अटल व्योम init_save_state(व्योम)
-अणु
-	pthपढ़ो_mutexattr_t mattr;
+static void init_save_state(void)
+{
+	pthread_mutexattr_t mattr;
 
 	mutexattr_init(&mattr);
 	mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 	mutex_init(&save_state.mutex, &mattr);
 	mutexattr_destroy(&mattr);
 
-	save_state.tracer = शून्य;
-	save_state.thresh = शून्य;
+	save_state.tracer = NULL;
+	save_state.thresh = NULL;
 	save_state.opt_valid[OPTIDX_FUNC_TR] = false;
 	save_state.opt_valid[OPTIDX_DISP_GR] = false;
-पूर्ण
+}
 
-अटल पूर्णांक prपूर्णांकstate_next_ticket(काष्ठा entry *req)
-अणु
-	पूर्णांक r;
+static int printstate_next_ticket(struct entry *req)
+{
+	int r;
 
-	r = ++(prपूर्णांकstate.ticket_counter);
+	r = ++(printstate.ticket_counter);
 	req->ticket = r;
-	req->ticket_completed_ref = prपूर्णांकstate.ticket_completed;
-	cond_broadcast(&prपूर्णांकstate.cond);
-	वापस r;
-पूर्ण
+	req->ticket_completed_ref = printstate.ticket_completed;
+	cond_broadcast(&printstate.cond);
+	return r;
+}
 
-अटल __always_अंतरभूत
-व्योम prपूर्णांकstate_mark_req_completed(स्थिर काष्ठा entry *req)
-अणु
-	अगर (req->ticket > prपूर्णांकstate.ticket_completed)
-		prपूर्णांकstate.ticket_completed = req->ticket;
-पूर्ण
+static __always_inline
+void printstate_mark_req_completed(const struct entry *req)
+{
+	if (req->ticket > printstate.ticket_completed)
+		printstate.ticket_completed = req->ticket;
+}
 
-अटल __always_अंतरभूत
-bool prपूर्णांकstate_has_new_req_arrived(स्थिर काष्ठा entry *req)
-अणु
-	वापस (prपूर्णांकstate.ticket_counter != req->ticket);
-पूर्ण
+static __always_inline
+bool printstate_has_new_req_arrived(const struct entry *req)
+{
+	return (printstate.ticket_counter != req->ticket);
+}
 
-अटल __always_अंतरभूत पूर्णांक prपूर्णांकstate_cnt_inc(व्योम)
-अणु
-	पूर्णांक value;
+static __always_inline int printstate_cnt_inc(void)
+{
+	int value;
 
-	mutex_lock(&prपूर्णांकstate.cnt_mutex);
-	value = ++prपूर्णांकstate.cnt;
-	mutex_unlock(&prपूर्णांकstate.cnt_mutex);
-	वापस value;
-पूर्ण
+	mutex_lock(&printstate.cnt_mutex);
+	value = ++printstate.cnt;
+	mutex_unlock(&printstate.cnt_mutex);
+	return value;
+}
 
-अटल __always_अंतरभूत पूर्णांक prपूर्णांकstate_cnt_dec(व्योम)
-अणु
-	पूर्णांक value;
+static __always_inline int printstate_cnt_dec(void)
+{
+	int value;
 
-	mutex_lock(&prपूर्णांकstate.cnt_mutex);
-	value = --prपूर्णांकstate.cnt;
-	mutex_unlock(&prपूर्णांकstate.cnt_mutex);
-	वापस value;
-पूर्ण
+	mutex_lock(&printstate.cnt_mutex);
+	value = --printstate.cnt;
+	mutex_unlock(&printstate.cnt_mutex);
+	return value;
+}
 
-अटल __always_अंतरभूत पूर्णांक prपूर्णांकstate_cnt_पढ़ो(व्योम)
-अणु
-	पूर्णांक value;
+static __always_inline int printstate_cnt_read(void)
+{
+	int value;
 
-	mutex_lock(&prपूर्णांकstate.cnt_mutex);
-	value = prपूर्णांकstate.cnt;
-	mutex_unlock(&prपूर्णांकstate.cnt_mutex);
-	वापस value;
-पूर्ण
+	mutex_lock(&printstate.cnt_mutex);
+	value = printstate.cnt;
+	mutex_unlock(&printstate.cnt_mutex);
+	return value;
+}
 
-अटल __always_अंतरभूत
-bool prev_req_won_race(स्थिर काष्ठा entry *req)
-अणु
-	वापस (prपूर्णांकstate.ticket_completed != req->ticket_completed_ref);
-पूर्ण
+static __always_inline
+bool prev_req_won_race(const struct entry *req)
+{
+	return (printstate.ticket_completed != req->ticket_completed_ref);
+}
 
-अटल व्योम sleeptable_resize(पूर्णांक size, bool prपूर्णांकout, काष्ठा लघु_msg *msg)
-अणु
-	पूर्णांक bytes;
+static void sleeptable_resize(int size, bool printout, struct short_msg *msg)
+{
+	int bytes;
 
-	अगर (prपूर्णांकout) अणु
+	if (printout) {
 		msg->len = 0;
-		अगर (unlikely(size > PROB_TABLE_MAX_SIZE))
-			bytes = snम_लिखो(msg->buf, माप(msg->buf),
+		if (unlikely(size > PROB_TABLE_MAX_SIZE))
+			bytes = snprintf(msg->buf, sizeof(msg->buf),
 "Cannot increase probability table to %d (maximum size reached)\n", size);
-		अन्यथा
-			bytes = snम_लिखो(msg->buf, माप(msg->buf),
+		else
+			bytes = snprintf(msg->buf, sizeof(msg->buf),
 "Increasing probability table to %d\n", size);
-		अगर (bytes < 0)
+		if (bytes < 0)
 			warn("snprintf() failed");
-		अन्यथा
+		else
 			msg->len = bytes;
-	पूर्ण
+	}
 
-	अगर (unlikely(size < 0)) अणु
+	if (unlikely(size < 0)) {
 		/* Should never happen */
-		warnx("Bad program state at %s:%d", __खाता__, __LINE__);
-		cleanup_निकास(निकास_त्रुटि);
-		वापस;
-	पूर्ण
+		warnx("Bad program state at %s:%d", __FILE__, __LINE__);
+		cleanup_exit(EXIT_FAILURE);
+		return;
+	}
 	sleeptable.size = size;
 	sleeptable.table = &probabilities[PROB_TABLE_MAX_SIZE - size];
-पूर्ण
+}
 
-अटल व्योम init_probabilities(व्योम)
-अणु
-	पूर्णांक i;
-	पूर्णांक j = 1000;
+static void init_probabilities(void)
+{
+	int i;
+	int j = 1000;
 
-	क्रम (i = 0; i < PROB_TABLE_MAX_SIZE; i++) अणु
+	for (i = 0; i < PROB_TABLE_MAX_SIZE; i++) {
 		probabilities[i] = 1000 / j;
 		j--;
-	पूर्ण
-	mutex_init(&sleeptable.mutex, शून्य);
-पूर्ण
+	}
+	mutex_init(&sleeptable.mutex, NULL);
+}
 
-अटल पूर्णांक table_get_probability(स्थिर काष्ठा entry *req,
-				 काष्ठा लघु_msg *msg)
-अणु
-	पूर्णांक dअगरf = req->ticket - req->ticket_completed_ref;
-	पूर्णांक rval = 0;
+static int table_get_probability(const struct entry *req,
+				 struct short_msg *msg)
+{
+	int diff = req->ticket - req->ticket_completed_ref;
+	int rval = 0;
 
 	msg->len = 0;
-	dअगरf--;
+	diff--;
 	/* Should never happen...*/
-	अगर (unlikely(dअगरf < 0)) अणु
-		warnx("Programmer assumption error at %s:%d\n", __खाता__,
+	if (unlikely(diff < 0)) {
+		warnx("Programmer assumption error at %s:%d\n", __FILE__,
 		      __LINE__);
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
 	mutex_lock(&sleeptable.mutex);
-	अगर (dअगरf >= (sleeptable.size - 1)) अणु
+	if (diff >= (sleeptable.size - 1)) {
 		rval = sleeptable.table[sleeptable.size - 1];
 		sleeptable_resize(sleeptable.size + 1, verbose_sizechange(),
 				  msg);
-	पूर्ण अन्यथा अणु
-		rval = sleeptable.table[dअगरf];
-	पूर्ण
+	} else {
+		rval = sleeptable.table[diff];
+	}
 	mutex_unlock(&sleeptable.mutex);
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल व्योम init_queue(काष्ठा queue *q)
-अणु
+static void init_queue(struct queue *q)
+{
 	q->next_prod_idx = 0;
 	q->next_cons_idx = 0;
-	mutex_init(&q->mutex, शून्य);
-	त्रुटि_सं = pthपढ़ो_cond_init(&q->cond, शून्य);
-	अगर (त्रुटि_सं)
-		err(निकास_त्रुटि, "pthread_cond_init() failed");
-पूर्ण
+	mutex_init(&q->mutex, NULL);
+	errno = pthread_cond_init(&q->cond, NULL);
+	if (errno)
+		err(EXIT_FAILURE, "pthread_cond_init() failed");
+}
 
-अटल __always_अंतरभूत पूर्णांक queue_len(स्थिर काष्ठा queue *q)
-अणु
-	अगर (q->next_prod_idx >= q->next_cons_idx)
-		वापस q->next_prod_idx - q->next_cons_idx;
-	अन्यथा
-		वापस QUEUE_SIZE - q->next_cons_idx + q->next_prod_idx;
-पूर्ण
+static __always_inline int queue_len(const struct queue *q)
+{
+	if (q->next_prod_idx >= q->next_cons_idx)
+		return q->next_prod_idx - q->next_cons_idx;
+	else
+		return QUEUE_SIZE - q->next_cons_idx + q->next_prod_idx;
+}
 
-अटल __always_अंतरभूत पूर्णांक queue_nr_मुक्त(स्थिर काष्ठा queue *q)
-अणु
-	पूर्णांक nr_मुक्त = QUEUE_SIZE - queue_len(q);
+static __always_inline int queue_nr_free(const struct queue *q)
+{
+	int nr_free = QUEUE_SIZE - queue_len(q);
 
 	/*
 	 * If there is only one slot left we will anyway lie and claim that the
 	 * queue is full because adding an element will make it appear empty
 	 */
-	अगर (nr_मुक्त == 1)
-		nr_मुक्त = 0;
-	वापस nr_मुक्त;
-पूर्ण
+	if (nr_free == 1)
+		nr_free = 0;
+	return nr_free;
+}
 
-अटल __always_अंतरभूत व्योम queue_idx_inc(पूर्णांक *idx)
-अणु
+static __always_inline void queue_idx_inc(int *idx)
+{
 	*idx = (*idx + 1) % QUEUE_SIZE;
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम queue_push_to_back(काष्ठा queue *q,
-					      स्थिर काष्ठा entry *e)
-अणु
+static __always_inline void queue_push_to_back(struct queue *q,
+					      const struct entry *e)
+{
 	q->entries[q->next_prod_idx] = *e;
 	queue_idx_inc(&q->next_prod_idx);
-पूर्ण
+}
 
-अटल __always_अंतरभूत काष्ठा entry queue_pop_from_front(काष्ठा queue *q)
-अणु
-	काष्ठा entry e = q->entries[q->next_cons_idx];
+static __always_inline struct entry queue_pop_from_front(struct queue *q)
+{
+	struct entry e = q->entries[q->next_cons_idx];
 
 	queue_idx_inc(&q->next_cons_idx);
-	वापस e;
-पूर्ण
+	return e;
+}
 
-अटल __always_अंतरभूत व्योम queue_cond_संकेत(काष्ठा queue *q)
-अणु
-	cond_संकेत(&q->cond);
-पूर्ण
+static __always_inline void queue_cond_signal(struct queue *q)
+{
+	cond_signal(&q->cond);
+}
 
-अटल __always_अंतरभूत व्योम queue_cond_रुको(काष्ठा queue *q)
-अणु
-	cond_रुको(&q->cond, &q->mutex);
-पूर्ण
+static __always_inline void queue_cond_wait(struct queue *q)
+{
+	cond_wait(&q->cond, &q->mutex);
+}
 
-अटल __always_अंतरभूत पूर्णांक queue_try_to_add_entry(काष्ठा queue *q,
-						  स्थिर काष्ठा entry *e)
-अणु
-	पूर्णांक r = 0;
+static __always_inline int queue_try_to_add_entry(struct queue *q,
+						  const struct entry *e)
+{
+	int r = 0;
 
 	mutex_lock(&q->mutex);
-	अगर (queue_nr_मुक्त(q) > 0) अणु
+	if (queue_nr_free(q) > 0) {
 		queue_push_to_back(q, e);
-		cond_संकेत(&q->cond);
-	पूर्ण अन्यथा
+		cond_signal(&q->cond);
+	} else
 		r = -1;
 	mutex_unlock(&q->mutex);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा entry queue_रुको_क्रम_entry(काष्ठा queue *q)
-अणु
-	काष्ठा entry e;
+static struct entry queue_wait_for_entry(struct queue *q)
+{
+	struct entry e;
 
 	mutex_lock(&q->mutex);
-	जबतक (true) अणु
-		अगर (queue_len(&prपूर्णांकqueue) > 0) अणु
+	while (true) {
+		if (queue_len(&printqueue) > 0) {
 			e = queue_pop_from_front(q);
-			अवरोध;
-		पूर्ण
-		queue_cond_रुको(q);
-	पूर्ण
+			break;
+		}
+		queue_cond_wait(q);
+	}
 	mutex_unlock(&q->mutex);
 
-	वापस e;
-पूर्ण
+	return e;
+}
 
-अटल स्थिर काष्ठा policy *policy_from_name(स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा policy *p = &policies[0];
+static const struct policy *policy_from_name(const char *name)
+{
+	const struct policy *p = &policies[0];
 
-	जबतक (p->name != शून्य) अणु
-		अगर (!म_भेद(name, p->name))
-			वापस p;
+	while (p->name != NULL) {
+		if (!strcmp(name, p->name))
+			return p;
 		p++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल स्थिर अक्षर *policy_name(पूर्णांक policy)
-अणु
-	स्थिर काष्ठा policy *p = &policies[0];
-	अटल स्थिर अक्षर *rval = "unknown";
+static const char *policy_name(int policy)
+{
+	const struct policy *p = &policies[0];
+	static const char *rval = "unknown";
 
-	जबतक (p->name != शून्य) अणु
-		अगर (p->policy == policy)
-			वापस p->name;
+	while (p->name != NULL) {
+		if (p->policy == policy)
+			return p->name;
 		p++;
-	पूर्ण
-	वापस rval;
-पूर्ण
+	}
+	return rval;
+}
 
-अटल bool is_relevant_tracer(स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool is_relevant_tracer(const char *name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; relevant_tracers[i]; i++)
-		अगर (!म_भेद(name, relevant_tracers[i]))
-			वापस true;
-	वापस false;
-पूर्ण
+	for (i = 0; relevant_tracers[i]; i++)
+		if (!strcmp(name, relevant_tracers[i]))
+			return true;
+	return false;
+}
 
-अटल bool अक्रमom_makes_sense(स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool random_makes_sense(const char *name)
+{
+	unsigned int i;
 
-	क्रम (i = 0; अक्रमom_tracers[i]; i++)
-		अगर (!म_भेद(name, अक्रमom_tracers[i]))
-			वापस true;
-	वापस false;
-पूर्ण
+	for (i = 0; random_tracers[i]; i++)
+		if (!strcmp(name, random_tracers[i]))
+			return true;
+	return false;
+}
 
-अटल व्योम show_available(व्योम)
-अणु
-	अक्षर **tracers;
-	पूर्णांक found = 0;
-	पूर्णांक i;
+static void show_available(void)
+{
+	char **tracers;
+	int found = 0;
+	int i;
 
-	tracers = tracefs_tracers(शून्य);
-	क्रम (i = 0; tracers && tracers[i]; i++) अणु
-		अगर (is_relevant_tracer(tracers[i]))
+	tracers = tracefs_tracers(NULL);
+	for (i = 0; tracers && tracers[i]; i++) {
+		if (is_relevant_tracer(tracers[i]))
 			found++;
-	पूर्ण
+	}
 
-	अगर (!tracers) अणु
+	if (!tracers) {
 		warnx(no_tracer_msg);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		warnx(no_latency_tr_msg);
-		tracefs_list_मुक्त(tracers);
-		वापस;
-	पूर्ण
+		tracefs_list_free(tracers);
+		return;
+	}
 
-	म_लिखो("The following latency tracers are available on your system:\n");
-	क्रम (i = 0; tracers[i]; i++) अणु
-		अगर (is_relevant_tracer(tracers[i]))
-			म_लिखो("%s\n", tracers[i]);
-	पूर्ण
-	tracefs_list_मुक्त(tracers);
-पूर्ण
+	printf("The following latency tracers are available on your system:\n");
+	for (i = 0; tracers[i]; i++) {
+		if (is_relevant_tracer(tracers[i]))
+			printf("%s\n", tracers[i]);
+	}
+	tracefs_list_free(tracers);
+}
 
-अटल bool tracer_valid(स्थिर अक्षर *name, bool *notracer)
-अणु
-	अक्षर **tracers;
-	पूर्णांक i;
+static bool tracer_valid(const char *name, bool *notracer)
+{
+	char **tracers;
+	int i;
 	bool rval = false;
 
 	*notracer = false;
-	tracers = tracefs_tracers(शून्य);
-	अगर (!tracers) अणु
+	tracers = tracefs_tracers(NULL);
+	if (!tracers) {
 		*notracer = true;
-		वापस false;
-	पूर्ण
-	क्रम (i = 0; tracers[i]; i++)
-		अगर (!म_भेद(tracers[i], name)) अणु
+		return false;
+	}
+	for (i = 0; tracers[i]; i++)
+		if (!strcmp(tracers[i], name)) {
 			rval = true;
-			अवरोध;
-		पूर्ण
-	tracefs_list_मुक्त(tracers);
-	वापस rval;
-पूर्ण
+			break;
+		}
+	tracefs_list_free(tracers);
+	return rval;
+}
 
-अटल स्थिर अक्षर *find_शेष_tracer(व्योम)
-अणु
-	पूर्णांक i;
+static const char *find_default_tracer(void)
+{
+	int i;
 	bool notracer;
 	bool valid;
 
-	क्रम (i = 0; relevant_tracers[i]; i++) अणु
+	for (i = 0; relevant_tracers[i]; i++) {
 		valid = tracer_valid(relevant_tracers[i], &notracer);
-		अगर (notracer)
-			errx(निकास_त्रुटि, no_tracer_msg);
-		अगर (valid)
-			वापस relevant_tracers[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (notracer)
+			errx(EXIT_FAILURE, no_tracer_msg);
+		if (valid)
+			return relevant_tracers[i];
+	}
+	return NULL;
+}
 
-अटल bool toss_coin(काष्ठा dअक्रम48_data *buffer, अचिन्हित पूर्णांक prob)
-अणु
-	दीर्घ r;
+static bool toss_coin(struct drand48_data *buffer, unsigned int prob)
+{
+	long r;
 
-	अगर (unlikely(lअक्रम48_r(buffer, &r))) अणु
+	if (unlikely(lrand48_r(buffer, &r))) {
 		warnx("lrand48_r() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
 	r = r % 1000L;
-	अगर (r < prob)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (r < prob)
+		return true;
+	else
+		return false;
+}
 
 
-अटल दीर्घ go_to_sleep(स्थिर काष्ठा entry *req)
-अणु
-	काष्ठा बारpec future;
-	दीर्घ delay = sleep_समय;
+static long go_to_sleep(const struct entry *req)
+{
+	struct timespec future;
+	long delay = sleep_time;
 
-	get_समय_in_future(&future, delay);
+	get_time_in_future(&future, delay);
 
-	mutex_lock(&prपूर्णांकstate.mutex);
-	जबतक (!prपूर्णांकstate_has_new_req_arrived(req)) अणु
-		cond_समयdरुको(&prपूर्णांकstate.cond, &prपूर्णांकstate.mutex, &future);
-		अगर (समय_has_passed(&future))
-			अवरोध;
-	पूर्ण
+	mutex_lock(&printstate.mutex);
+	while (!printstate_has_new_req_arrived(req)) {
+		cond_timedwait(&printstate.cond, &printstate.mutex, &future);
+		if (time_has_passed(&future))
+			break;
+	}
 
-	अगर (prपूर्णांकstate_has_new_req_arrived(req))
+	if (printstate_has_new_req_arrived(req))
 		delay = -1;
-	mutex_unlock(&prपूर्णांकstate.mutex);
+	mutex_unlock(&printstate.mutex);
 
-	वापस delay;
-पूर्ण
+	return delay;
+}
 
 
-अटल व्योम set_priority(व्योम)
-अणु
-	पूर्णांक r;
+static void set_priority(void)
+{
+	int r;
 	pid_t pid;
-	काष्ठा sched_param param;
+	struct sched_param param;
 
-	स_रखो(&param, 0, माप(param));
+	memset(&param, 0, sizeof(param));
 	param.sched_priority = sched_pri;
 
 	pid = getpid();
 	r = sched_setscheduler(pid, sched_policy, &param);
 
-	अगर (r != 0)
-		err(निकास_त्रुटि, "sched_setscheduler() failed");
-पूर्ण
+	if (r != 0)
+		err(EXIT_FAILURE, "sched_setscheduler() failed");
+}
 
-pid_t latency_collector_gettid(व्योम)
-अणु
-	वापस (pid_t) syscall(__NR_gettid);
-पूर्ण
+pid_t latency_collector_gettid(void)
+{
+	return (pid_t) syscall(__NR_gettid);
+}
 
-अटल व्योम prपूर्णांक_priority(व्योम)
-अणु
+static void print_priority(void)
+{
 	pid_t tid;
-	पूर्णांक policy;
-	पूर्णांक r;
-	काष्ठा sched_param param;
+	int policy;
+	int r;
+	struct sched_param param;
 
 	tid = latency_collector_gettid();
-	r = pthपढ़ो_माला_लोchedparam(pthपढ़ो_self(), &policy, &param);
-	अगर (r != 0) अणु
+	r = pthread_getschedparam(pthread_self(), &policy, &param);
+	if (r != 0) {
 		warn("pthread_getschedparam() failed");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
-	mutex_lock(&prपूर्णांक_mtx);
-	म_लिखो("Thread %d runs with scheduling policy %s and priority %d\n",
+		cleanup_exit(EXIT_FAILURE);
+	}
+	mutex_lock(&print_mtx);
+	printf("Thread %d runs with scheduling policy %s and priority %d\n",
 	       tid, policy_name(policy), param.sched_priority);
-	mutex_unlock(&prपूर्णांक_mtx);
-पूर्ण
+	mutex_unlock(&print_mtx);
+}
 
-अटल __always_अंतरभूत
-व्योम __prपूर्णांक_skipmessage(स्थिर काष्ठा लघु_msg *resize_msg,
-			 स्थिर काष्ठा बारpec *बारtamp, अक्षर *buffer,
-			 माप_प्रकार bufspace, स्थिर काष्ठा entry *req, bool excuse,
-			 स्थिर अक्षर *str)
-अणु
-	sमाप_प्रकार bytes = 0;
-	अक्षर *p = &buffer[0];
-	दीर्घ us, sec;
-	पूर्णांक r;
+static __always_inline
+void __print_skipmessage(const struct short_msg *resize_msg,
+			 const struct timespec *timestamp, char *buffer,
+			 size_t bufspace, const struct entry *req, bool excuse,
+			 const char *str)
+{
+	ssize_t bytes = 0;
+	char *p = &buffer[0];
+	long us, sec;
+	int r;
 
-	sec = बारtamp->tv_sec;
-	us = बारtamp->tv_nsec / 1000;
+	sec = timestamp->tv_sec;
+	us = timestamp->tv_nsec / 1000;
 
-	अगर (resize_msg != शून्य && resize_msg->len > 0) अणु
-		म_नकलन(p, resize_msg->buf, resize_msg->len);
+	if (resize_msg != NULL && resize_msg->len > 0) {
+		strncpy(p, resize_msg->buf, resize_msg->len);
 		bytes += resize_msg->len;
 		p += resize_msg->len;
 		bufspace -= resize_msg->len;
-	पूर्ण
+	}
 
-	अगर (excuse)
-		r = snम_लिखो(p, bufspace,
+	if (excuse)
+		r = snprintf(p, bufspace,
 "%ld.%06ld Latency %d printout skipped due to %s\n",
 			     sec, us, req->ticket, str);
-	अन्यथा
-		r = snम_लिखो(p, bufspace, "%ld.%06ld Latency %d detected\n",
+	else
+		r = snprintf(p, bufspace, "%ld.%06ld Latency %d detected\n",
 			    sec, us, req->ticket);
 
-	अगर (r < 0)
+	if (r < 0)
 		warn("snprintf() failed");
-	अन्यथा
+	else
 		bytes += r;
 
-	/* These prपूर्णांकs could happen concurrently */
-	mutex_lock(&prपूर्णांक_mtx);
-	ग_लिखो_or_die(fd_मानक_निकास, buffer, bytes);
-	mutex_unlock(&prपूर्णांक_mtx);
-पूर्ण
+	/* These prints could happen concurrently */
+	mutex_lock(&print_mtx);
+	write_or_die(fd_stdout, buffer, bytes);
+	mutex_unlock(&print_mtx);
+}
 
-अटल व्योम prपूर्णांक_skipmessage(स्थिर काष्ठा लघु_msg *resize_msg,
-			      स्थिर काष्ठा बारpec *बारtamp, अक्षर *buffer,
-			      माप_प्रकार bufspace, स्थिर काष्ठा entry *req,
+static void print_skipmessage(const struct short_msg *resize_msg,
+			      const struct timespec *timestamp, char *buffer,
+			      size_t bufspace, const struct entry *req,
 			      bool excuse)
-अणु
-	__prपूर्णांक_skipmessage(resize_msg, बारtamp, buffer, bufspace, req,
+{
+	__print_skipmessage(resize_msg, timestamp, buffer, bufspace, req,
 			    excuse, "random delay");
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_losपंचांगessage(स्थिर काष्ठा बारpec *बारtamp, अक्षर *buffer,
-			      माप_प्रकार bufspace, स्थिर काष्ठा entry *req,
-			      स्थिर अक्षर *reason)
-अणु
-	__prपूर्णांक_skipmessage(शून्य, बारtamp, buffer, bufspace, req, true,
+static void print_lostmessage(const struct timespec *timestamp, char *buffer,
+			      size_t bufspace, const struct entry *req,
+			      const char *reason)
+{
+	__print_skipmessage(NULL, timestamp, buffer, bufspace, req, true,
 			    reason);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_tracefile(स्थिर काष्ठा लघु_msg *resize_msg,
-			    स्थिर काष्ठा बारpec *बारtamp, अक्षर *buffer,
-			    माप_प्रकार bufspace, दीर्घ slept,
-			    स्थिर काष्ठा entry *req)
-अणु
-	अटल स्थिर पूर्णांक reserve = 256;
-	अक्षर *p = &buffer[0];
-	sमाप_प्रकार bytes = 0;
-	sमाप_प्रकार bytes_tot = 0;
-	दीर्घ us, sec;
-	दीर्घ slept_ms;
-	पूर्णांक trace_fd;
+static void print_tracefile(const struct short_msg *resize_msg,
+			    const struct timespec *timestamp, char *buffer,
+			    size_t bufspace, long slept,
+			    const struct entry *req)
+{
+	static const int reserve = 256;
+	char *p = &buffer[0];
+	ssize_t bytes = 0;
+	ssize_t bytes_tot = 0;
+	long us, sec;
+	long slept_ms;
+	int trace_fd;
 
-	/* Save some space क्रम the final string and final null अक्षर */
+	/* Save some space for the final string and final null char */
 	bufspace = bufspace - reserve - 1;
 
-	अगर (resize_msg != शून्य && resize_msg->len > 0) अणु
+	if (resize_msg != NULL && resize_msg->len > 0) {
 		bytes = resize_msg->len;
-		म_नकलन(p, resize_msg->buf, bytes);
+		strncpy(p, resize_msg->buf, bytes);
 		bytes_tot += bytes;
 		p += bytes;
 		bufspace -= bytes;
-	पूर्ण
+	}
 
-	trace_fd = खोलो(debug_tracefile, O_RDONLY);
+	trace_fd = open(debug_tracefile, O_RDONLY);
 
-	अगर (trace_fd < 0) अणु
+	if (trace_fd < 0) {
 		warn("open() failed on %s", debug_tracefile);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	sec = बारtamp->tv_sec;
-	us = बारtamp->tv_nsec / 1000;
+	sec = timestamp->tv_sec;
+	us = timestamp->tv_nsec / 1000;
 
-	अगर (slept != 0) अणु
+	if (slept != 0) {
 		slept_ms = slept / 1000;
-		bytes = snम_लिखो(p, bufspace,
+		bytes = snprintf(p, bufspace,
 "%ld.%06ld Latency %d randomly sleep for %ld ms before print\n",
 				 sec, us, req->ticket, slept_ms);
-	पूर्ण अन्यथा अणु
-		bytes = snम_लिखो(p, bufspace,
+	} else {
+		bytes = snprintf(p, bufspace,
 				 "%ld.%06ld Latency %d immediate print\n", sec,
 				 us, req->ticket);
-	पूर्ण
+	}
 
-	अगर (bytes < 0) अणु
+	if (bytes < 0) {
 		warn("snprintf() failed");
-		वापस;
-	पूर्ण
+		return;
+	}
 	p += bytes;
 	bufspace -= bytes;
 	bytes_tot += bytes;
 
-	bytes = snम_लिखो(p, bufspace,
+	bytes = snprintf(p, bufspace,
 ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BEGIN <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
 		);
 
-	अगर (bytes < 0) अणु
+	if (bytes < 0) {
 		warn("snprintf() failed");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	p += bytes;
 	bufspace -= bytes;
 	bytes_tot += bytes;
 
-	करो अणु
-		bytes = पढ़ो(trace_fd, p, bufspace);
-		अगर (bytes < 0) अणु
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
+	do {
+		bytes = read(trace_fd, p, bufspace);
+		if (bytes < 0) {
+			if (errno == EINTR)
+				continue;
 			warn("read() failed on %s", debug_tracefile);
-			अगर (unlikely(बंद(trace_fd) != 0))
+			if (unlikely(close(trace_fd) != 0))
 				warn("close() failed on %s", debug_tracefile);
-			वापस;
-		पूर्ण
-		अगर (bytes == 0)
-			अवरोध;
+			return;
+		}
+		if (bytes == 0)
+			break;
 		p += bytes;
 		bufspace -= bytes;
 		bytes_tot += bytes;
-	पूर्ण जबतक (true);
+	} while (true);
 
-	अगर (unlikely(बंद(trace_fd) != 0))
+	if (unlikely(close(trace_fd) != 0))
 		warn("close() failed on %s", debug_tracefile);
 
-	prपूर्णांकstate_cnt_dec();
-	/* Add the reserve space back to the budget क्रम the final string */
+	printstate_cnt_dec();
+	/* Add the reserve space back to the budget for the final string */
 	bufspace += reserve;
 
-	bytes = snम_लिखो(p, bufspace,
+	bytes = snprintf(p, bufspace,
 			 ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> END <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
 
-	अगर (bytes < 0) अणु
+	if (bytes < 0) {
 		warn("snprintf() failed");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bytes_tot += bytes;
 
-	/* These prपूर्णांकs could happen concurrently */
-	mutex_lock(&prपूर्णांक_mtx);
-	ग_लिखो_or_die(fd_मानक_निकास, buffer, bytes_tot);
-	mutex_unlock(&prपूर्णांक_mtx);
-पूर्ण
+	/* These prints could happen concurrently */
+	mutex_lock(&print_mtx);
+	write_or_die(fd_stdout, buffer, bytes_tot);
+	mutex_unlock(&print_mtx);
+}
 
-अटल अक्षर *get_no_opt(स्थिर अक्षर *opt)
-अणु
-	अक्षर *no_opt;
-	पूर्णांक s;
+static char *get_no_opt(const char *opt)
+{
+	char *no_opt;
+	int s;
 
-	s = म_माप(opt) + म_माप(OPT_NO_PREFIX) + 1;
-	/* We may be called from cleanup_निकास() via set_trace_opt() */
-	no_opt = दो_स्मृति_or_die_nocleanup(s);
-	म_नकल(no_opt, OPT_NO_PREFIX);
-	म_जोड़ो(no_opt, opt);
-	वापस no_opt;
-पूर्ण
+	s = strlen(opt) + strlen(OPT_NO_PREFIX) + 1;
+	/* We may be called from cleanup_exit() via set_trace_opt() */
+	no_opt = malloc_or_die_nocleanup(s);
+	strcpy(no_opt, OPT_NO_PREFIX);
+	strcat(no_opt, opt);
+	return no_opt;
+}
 
-अटल अक्षर *find_next_optstr(स्थिर अक्षर *allopt, स्थिर अक्षर **next)
-अणु
-	स्थिर अक्षर *begin;
-	स्थिर अक्षर *end;
-	अक्षर *r;
-	पूर्णांक s = 0;
+static char *find_next_optstr(const char *allopt, const char **next)
+{
+	const char *begin;
+	const char *end;
+	char *r;
+	int s = 0;
 
-	अगर (allopt == शून्य)
-		वापस शून्य;
+	if (allopt == NULL)
+		return NULL;
 
-	क्रम (begin = allopt; *begin != '\0'; begin++) अणु
-		अगर (है_चित्र(*begin))
-			अवरोध;
-	पूर्ण
+	for (begin = allopt; *begin != '\0'; begin++) {
+		if (isgraph(*begin))
+			break;
+	}
 
-	अगर (*begin == '\0')
-		वापस शून्य;
+	if (*begin == '\0')
+		return NULL;
 
-	क्रम (end = begin; *end != '\0' && है_चित्र(*end); end++)
+	for (end = begin; *end != '\0' && isgraph(*end); end++)
 		s++;
 
-	r = दो_स्मृति_or_die_nocleanup(s + 1);
-	म_नकलन(r, begin, s);
+	r = malloc_or_die_nocleanup(s + 1);
+	strncpy(r, begin, s);
 	r[s] = '\0';
 	*next = begin + s;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool get_trace_opt(स्थिर अक्षर *allopt, स्थिर अक्षर *opt, bool *found)
-अणु
+static bool get_trace_opt(const char *allopt, const char *opt, bool *found)
+{
 	*found = false;
-	अक्षर *no_opt;
-	अक्षर *str;
-	स्थिर अक्षर *next = allopt;
+	char *no_opt;
+	char *str;
+	const char *next = allopt;
 	bool rval = false;
 
 	no_opt = get_no_opt(opt);
 
-	करो अणु
+	do {
 		str = find_next_optstr(next, &next);
-		अगर (str == शून्य)
-			अवरोध;
-		अगर (!म_भेद(str, opt)) अणु
+		if (str == NULL)
+			break;
+		if (!strcmp(str, opt)) {
 			*found = true;
 			rval = true;
-			मुक्त(str);
-			अवरोध;
-		पूर्ण
-		अगर (!म_भेद(str, no_opt)) अणु
+			free(str);
+			break;
+		}
+		if (!strcmp(str, no_opt)) {
 			*found = true;
 			rval = false;
-			मुक्त(str);
-			अवरोध;
-		पूर्ण
-		मुक्त(str);
-	पूर्ण जबतक (true);
-	मुक्त(no_opt);
+			free(str);
+			break;
+		}
+		free(str);
+	} while (true);
+	free(no_opt);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल पूर्णांक set_trace_opt(स्थिर अक्षर *opt, bool value)
-अणु
-	अक्षर *str;
-	पूर्णांक r;
+static int set_trace_opt(const char *opt, bool value)
+{
+	char *str;
+	int r;
 
-	अगर (value)
+	if (value)
 		str = strdup(opt);
-	अन्यथा
+	else
 		str = get_no_opt(opt);
 
-	r = tracefs_instance_file_ग_लिखो(शून्य, TR_OPTIONS, str);
-	मुक्त(str);
-	वापस r;
-पूर्ण
+	r = tracefs_instance_file_write(NULL, TR_OPTIONS, str);
+	free(str);
+	return r;
+}
 
-व्योम save_trace_opts(काष्ठा ftrace_state *state)
-अणु
-	अक्षर *allopt;
-	पूर्णांक psize;
-	पूर्णांक i;
+void save_trace_opts(struct ftrace_state *state)
+{
+	char *allopt;
+	int psize;
+	int i;
 
-	allopt = tracefs_instance_file_पढ़ो(शून्य, TR_OPTIONS, &psize);
-	अगर (!allopt)
-		errx(निकास_त्रुटि, "Failed to read the %s file\n", TR_OPTIONS);
+	allopt = tracefs_instance_file_read(NULL, TR_OPTIONS, &psize);
+	if (!allopt)
+		errx(EXIT_FAILURE, "Failed to read the %s file\n", TR_OPTIONS);
 
-	क्रम (i = 0; i < OPTIDX_NR; i++)
+	for (i = 0; i < OPTIDX_NR; i++)
 		state->opt[i] = get_trace_opt(allopt, optstr[i],
 					      &state->opt_valid[i]);
 
-	मुक्त(allopt);
-पूर्ण
+	free(allopt);
+}
 
-अटल व्योम ग_लिखो_file(स्थिर अक्षर *file, स्थिर अक्षर *cur, स्थिर अक्षर *new,
-		       क्रमागत errhandling h)
-अणु
-	पूर्णांक r;
-	अटल स्थिर अक्षर *emsg = "Failed to write to the %s file!";
+static void write_file(const char *file, const char *cur, const char *new,
+		       enum errhandling h)
+{
+	int r;
+	static const char *emsg = "Failed to write to the %s file!";
 
-	/* Do nothing अगर we now that the current and new value are equal */
-	अगर (cur && !needs_change(cur, new))
-		वापस;
+	/* Do nothing if we now that the current and new value are equal */
+	if (cur && !needs_change(cur, new))
+		return;
 
-	r = tracefs_instance_file_ग_लिखो(शून्य, file, new);
-	अगर (r < 0) अणु
-		अगर (h) अणु
+	r = tracefs_instance_file_write(NULL, file, new);
+	if (r < 0) {
+		if (h) {
 			warnx(emsg, file);
-			अगर (h == ERR_CLEANUP)
-				cleanup_निकास(निकास_त्रुटि);
-		पूर्ण अन्यथा
-			errx(निकास_त्रुटि, emsg, file);
-	पूर्ण
-	अगर (verbose_ftrace()) अणु
-		mutex_lock(&prपूर्णांक_mtx);
-		म_लिखो("%s was set to %s\n", file, new);
-		mutex_unlock(&prपूर्णांक_mtx);
-	पूर्ण
-पूर्ण
+			if (h == ERR_CLEANUP)
+				cleanup_exit(EXIT_FAILURE);
+		} else
+			errx(EXIT_FAILURE, emsg, file);
+	}
+	if (verbose_ftrace()) {
+		mutex_lock(&print_mtx);
+		printf("%s was set to %s\n", file, new);
+		mutex_unlock(&print_mtx);
+	}
+}
 
-अटल व्योम reset_max_latency(व्योम)
-अणु
-	ग_लिखो_file(TR_MAXLAT, शून्य, "0", ERR_CLEANUP);
-पूर्ण
+static void reset_max_latency(void)
+{
+	write_file(TR_MAXLAT, NULL, "0", ERR_CLEANUP);
+}
 
-अटल व्योम save_and_disable_tracer(व्योम)
-अणु
-	अक्षर *orig_th;
-	अक्षर *tracer;
+static void save_and_disable_tracer(void)
+{
+	char *orig_th;
+	char *tracer;
 	bool need_nop = false;
 
 	mutex_lock(&save_state.mutex);
 
 	save_trace_opts(&save_state);
-	tracer = पढ़ो_file(TR_CURRENT, ERR_EXIT);
-	orig_th = पढ़ो_file(TR_THRESH, ERR_EXIT);
+	tracer = read_file(TR_CURRENT, ERR_EXIT);
+	orig_th = read_file(TR_THRESH, ERR_EXIT);
 
-	अगर (needs_change(tracer, NOP_TRACER)) अणु
-		mutex_lock(&prपूर्णांक_mtx);
-		अगर (क्रमce_tracer) अणु
-			म_लिखो(
+	if (needs_change(tracer, NOP_TRACER)) {
+		mutex_lock(&print_mtx);
+		if (force_tracer) {
+			printf(
 				"The %s tracer is already in use but proceeding anyway!\n",
 				tracer);
-		पूर्ण अन्यथा अणु
-			म_लिखो(
+		} else {
+			printf(
 				"The %s tracer is already in use, cowardly bailing out!\n"
 				"This could indicate that another program or instance is tracing.\n"
 				"Use the -F [--force] option to disregard the current tracer.\n", tracer);
-			निकास(0);
-		पूर्ण
-		mutex_unlock(&prपूर्णांक_mtx);
+			exit(0);
+		}
+		mutex_unlock(&print_mtx);
 		need_nop = true;
-	पूर्ण
+	}
 
 	save_state.tracer =  tracer;
 	save_state.thresh = orig_th;
 
-	अगर (need_nop)
-		ग_लिखो_file(TR_CURRENT, शून्य, NOP_TRACER, ERR_EXIT);
+	if (need_nop)
+		write_file(TR_CURRENT, NULL, NOP_TRACER, ERR_EXIT);
 
 	mutex_unlock(&save_state.mutex);
-पूर्ण
+}
 
-व्योम set_trace_opts(काष्ठा ftrace_state *state, bool *new)
-अणु
-	पूर्णांक i;
-	पूर्णांक r;
+void set_trace_opts(struct ftrace_state *state, bool *new)
+{
+	int i;
+	int r;
 
 	/*
-	 * We only set options अगर we earlier detected that the option exists in
-	 * the trace_options file and that the wanted setting is dअगरferent from
+	 * We only set options if we earlier detected that the option exists in
+	 * the trace_options file and that the wanted setting is different from
 	 * the one we saw in save_and_disable_tracer()
 	 */
-	क्रम (i = 0; i < OPTIDX_NR; i++)
-		अगर (state->opt_valid[i] &&
-		    state->opt[i] != new[i]) अणु
+	for (i = 0; i < OPTIDX_NR; i++)
+		if (state->opt_valid[i] &&
+		    state->opt[i] != new[i]) {
 			r = set_trace_opt(optstr[i], new[i]);
-			अगर (r < 0) अणु
+			if (r < 0) {
 				warnx("Failed to set the %s option to %s",
 				      optstr[i], bool2str(new[i]));
-				cleanup_निकास(निकास_त्रुटि);
-			पूर्ण
-			अगर (verbose_ftrace()) अणु
-				mutex_lock(&prपूर्णांक_mtx);
-				म_लिखो("%s in %s was set to %s\n", optstr[i],
+				cleanup_exit(EXIT_FAILURE);
+			}
+			if (verbose_ftrace()) {
+				mutex_lock(&print_mtx);
+				printf("%s in %s was set to %s\n", optstr[i],
 				       TR_OPTIONS, bool2str(new[i]));
-				mutex_unlock(&prपूर्णांक_mtx);
-			पूर्ण
-		पूर्ण
-पूर्ण
+				mutex_unlock(&print_mtx);
+			}
+		}
+}
 
-अटल व्योम enable_tracer(व्योम)
-अणु
+static void enable_tracer(void)
+{
 	mutex_lock(&save_state.mutex);
 	set_trace_opts(&save_state, use_options);
 
-	ग_लिखो_file(TR_THRESH, save_state.thresh, threshold, ERR_CLEANUP);
-	ग_लिखो_file(TR_CURRENT, NOP_TRACER, current_tracer, ERR_CLEANUP);
+	write_file(TR_THRESH, save_state.thresh, threshold, ERR_CLEANUP);
+	write_file(TR_CURRENT, NOP_TRACER, current_tracer, ERR_CLEANUP);
 
 	mutex_unlock(&save_state.mutex);
-पूर्ण
+}
 
-अटल व्योम tracing_loop(व्योम)
-अणु
-	पूर्णांक अगरd = inotअगरy_init();
-	पूर्णांक wd;
-	स्थिर sमाप_प्रकार bufsize = माप(inotअगरy_buffer);
-	स्थिर sमाप_प्रकार iकाष्ठाsize = माप(काष्ठा inotअगरy_event);
-	अक्षर *buf = &inotअगरy_buffer[0];
-	sमाप_प्रकार nr_पढ़ो;
-	अक्षर *p;
-	पूर्णांक modअगरied;
-	काष्ठा inotअगरy_event *event;
-	काष्ठा entry req;
-	अक्षर *buffer;
-	स्थिर माप_प्रकार bufspace = PRINT_BUFFER_SIZE;
-	काष्ठा बारpec बारtamp;
+static void tracing_loop(void)
+{
+	int ifd = inotify_init();
+	int wd;
+	const ssize_t bufsize = sizeof(inotify_buffer);
+	const ssize_t istructsize = sizeof(struct inotify_event);
+	char *buf = &inotify_buffer[0];
+	ssize_t nr_read;
+	char *p;
+	int modified;
+	struct inotify_event *event;
+	struct entry req;
+	char *buffer;
+	const size_t bufspace = PRINT_BUFFER_SIZE;
+	struct timespec timestamp;
 
-	prपूर्णांक_priority();
+	print_priority();
 
-	buffer = दो_स्मृति_or_die(bufspace);
+	buffer = malloc_or_die(bufspace);
 
-	अगर (अगरd < 0)
-		err(निकास_त्रुटि, "inotify_init() failed!");
+	if (ifd < 0)
+		err(EXIT_FAILURE, "inotify_init() failed!");
 
 
-	अगर (setup_ftrace) अणु
+	if (setup_ftrace) {
 		/*
-		 * We must disable the tracer beक्रमe resetting the max_latency
+		 * We must disable the tracer before resetting the max_latency
 		 */
 		save_and_disable_tracer();
 		/*
-		 * We must reset the max_latency beक्रमe the inotअगरy_add_watch()
+		 * We must reset the max_latency before the inotify_add_watch()
 		 * call.
 		 */
 		reset_max_latency();
-	पूर्ण
+	}
 
-	wd = inotअगरy_add_watch(अगरd, debug_maxlat, IN_MODIFY);
-	अगर (wd < 0)
-		err(निकास_त्रुटि, "inotify_add_watch() failed!");
+	wd = inotify_add_watch(ifd, debug_maxlat, IN_MODIFY);
+	if (wd < 0)
+		err(EXIT_FAILURE, "inotify_add_watch() failed!");
 
-	अगर (setup_ftrace)
+	if (setup_ftrace)
 		enable_tracer();
 
-	संकेत_blocking(SIG_UNBLOCK);
+	signal_blocking(SIG_UNBLOCK);
 
-	जबतक (true) अणु
-		modअगरied = 0;
-		check_संकेतs();
-		nr_पढ़ो = पढ़ो(अगरd, buf, bufsize);
-		check_संकेतs();
-		अगर (nr_पढ़ो < 0) अणु
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
+	while (true) {
+		modified = 0;
+		check_signals();
+		nr_read = read(ifd, buf, bufsize);
+		check_signals();
+		if (nr_read < 0) {
+			if (errno == EINTR)
+				continue;
 			warn("read() failed on inotify fd!");
-			cleanup_निकास(निकास_त्रुटि);
-		पूर्ण
-		अगर (nr_पढ़ो == bufsize)
+			cleanup_exit(EXIT_FAILURE);
+		}
+		if (nr_read == bufsize)
 			warnx("inotify() buffer filled, skipping events");
-		अगर (nr_पढ़ो < iकाष्ठाsize) अणु
+		if (nr_read < istructsize) {
 			warnx("read() returned too few bytes on inotify fd");
-			cleanup_निकास(निकास_त्रुटि);
-		पूर्ण
+			cleanup_exit(EXIT_FAILURE);
+		}
 
-		क्रम (p = buf; p < buf + nr_पढ़ो;) अणु
-			event = (काष्ठा inotअगरy_event *) p;
-			अगर ((event->mask & IN_MODIFY) != 0)
-				modअगरied++;
-			p += iकाष्ठाsize + event->len;
-		पूर्ण
-		जबतक (modअगरied > 0) अणु
-			check_संकेतs();
-			mutex_lock(&prपूर्णांकstate.mutex);
-			check_संकेतs();
-			prपूर्णांकstate_next_ticket(&req);
-			अगर (prपूर्णांकstate_cnt_पढ़ो() > 0) अणु
-				prपूर्णांकstate_mark_req_completed(&req);
-				mutex_unlock(&prपूर्णांकstate.mutex);
-				अगर (verbose_lostevent()) अणु
-					घड़ी_समय_लो_or_die(CLOCK_MONOTONIC,
-							     &बारtamp);
-					prपूर्णांक_losपंचांगessage(&बारtamp, buffer,
+		for (p = buf; p < buf + nr_read;) {
+			event = (struct inotify_event *) p;
+			if ((event->mask & IN_MODIFY) != 0)
+				modified++;
+			p += istructsize + event->len;
+		}
+		while (modified > 0) {
+			check_signals();
+			mutex_lock(&printstate.mutex);
+			check_signals();
+			printstate_next_ticket(&req);
+			if (printstate_cnt_read() > 0) {
+				printstate_mark_req_completed(&req);
+				mutex_unlock(&printstate.mutex);
+				if (verbose_lostevent()) {
+					clock_gettime_or_die(CLOCK_MONOTONIC,
+							     &timestamp);
+					print_lostmessage(&timestamp, buffer,
 							  bufspace, &req,
 							  "inotify loop");
-				पूर्ण
-				अवरोध;
-			पूर्ण
-			mutex_unlock(&prपूर्णांकstate.mutex);
-			अगर (queue_try_to_add_entry(&prपूर्णांकqueue, &req) != 0) अणु
-				/* These prपूर्णांकs could happen concurrently */
-				check_संकेतs();
-				mutex_lock(&prपूर्णांक_mtx);
-				check_संकेतs();
-				ग_लिखो_or_die(fd_मानक_निकास, queue_full_warning,
-					     माप(queue_full_warning));
-				mutex_unlock(&prपूर्णांक_mtx);
-			पूर्ण
-			modअगरied--;
-		पूर्ण
-	पूर्ण
-पूर्ण
+				}
+				break;
+			}
+			mutex_unlock(&printstate.mutex);
+			if (queue_try_to_add_entry(&printqueue, &req) != 0) {
+				/* These prints could happen concurrently */
+				check_signals();
+				mutex_lock(&print_mtx);
+				check_signals();
+				write_or_die(fd_stdout, queue_full_warning,
+					     sizeof(queue_full_warning));
+				mutex_unlock(&print_mtx);
+			}
+			modified--;
+		}
+	}
+}
 
-अटल व्योम *करो_prपूर्णांकloop(व्योम *arg)
-अणु
-	स्थिर माप_प्रकार bufspace = PRINT_BUFFER_SIZE;
-	अक्षर *buffer;
-	दीर्घ *rseed = (दीर्घ *) arg;
-	काष्ठा dअक्रम48_data dअक्रमbuf;
-	दीर्घ slept = 0;
-	काष्ठा entry req;
-	पूर्णांक prob = 0;
-	काष्ठा बारpec बारtamp;
-	काष्ठा लघु_msg resize_msg;
+static void *do_printloop(void *arg)
+{
+	const size_t bufspace = PRINT_BUFFER_SIZE;
+	char *buffer;
+	long *rseed = (long *) arg;
+	struct drand48_data drandbuf;
+	long slept = 0;
+	struct entry req;
+	int prob = 0;
+	struct timespec timestamp;
+	struct short_msg resize_msg;
 
-	prपूर्णांक_priority();
+	print_priority();
 
-	अगर (बेक्रम48_r(*rseed, &dअक्रमbuf) != 0) अणु
+	if (srand48_r(*rseed, &drandbuf) != 0) {
 		warn("srand48_r() failed!\n");
-		cleanup_निकास(निकास_त्रुटि);
-	पूर्ण
+		cleanup_exit(EXIT_FAILURE);
+	}
 
-	buffer = दो_स्मृति_or_die(bufspace);
+	buffer = malloc_or_die(bufspace);
 
-	जबतक (true) अणु
-		req = queue_रुको_क्रम_entry(&prपूर्णांकqueue);
-		घड़ी_समय_लो_or_die(CLOCK_MONOTONIC, &बारtamp);
-		mutex_lock(&prपूर्णांकstate.mutex);
-		अगर (prev_req_won_race(&req)) अणु
-			prपूर्णांकstate_mark_req_completed(&req);
-			mutex_unlock(&prपूर्णांकstate.mutex);
-			अगर (verbose_lostevent())
-				prपूर्णांक_losपंचांगessage(&बारtamp, buffer, bufspace,
+	while (true) {
+		req = queue_wait_for_entry(&printqueue);
+		clock_gettime_or_die(CLOCK_MONOTONIC, &timestamp);
+		mutex_lock(&printstate.mutex);
+		if (prev_req_won_race(&req)) {
+			printstate_mark_req_completed(&req);
+			mutex_unlock(&printstate.mutex);
+			if (verbose_lostevent())
+				print_lostmessage(&timestamp, buffer, bufspace,
 						  &req, "print loop");
-			जारी;
-		पूर्ण
-		mutex_unlock(&prपूर्णांकstate.mutex);
+			continue;
+		}
+		mutex_unlock(&printstate.mutex);
 
 		/*
-		 * Toss a coin to decide अगर we want to sleep beक्रमe prपूर्णांकing
-		 * out the backtrace. The reason क्रम this is that खोलोing
+		 * Toss a coin to decide if we want to sleep before printing
+		 * out the backtrace. The reason for this is that opening
 		 * /sys/kernel/debug/tracing/trace will cause a blackout of
 		 * hundreds of ms, where no latencies will be noted by the
-		 * latency tracer. Thus by अक्रमomly sleeping we try to aव्योम
-		 * missing traces प्रणालीatically due to this. With this option
-		 * we will someबार get the first latency, some other बार
-		 * some of the later ones, in हाल of बंदly spaced traces.
+		 * latency tracer. Thus by randomly sleeping we try to avoid
+		 * missing traces systematically due to this. With this option
+		 * we will sometimes get the first latency, some other times
+		 * some of the later ones, in case of closely spaced traces.
 		 */
-		अगर (trace_enable && use_अक्रमom_sleep) अणु
+		if (trace_enable && use_random_sleep) {
 			slept = 0;
 			prob = table_get_probability(&req, &resize_msg);
-			अगर (!toss_coin(&dअक्रमbuf, prob))
+			if (!toss_coin(&drandbuf, prob))
 				slept = go_to_sleep(&req);
-			अगर (slept >= 0) अणु
-				/* A prपूर्णांक is ongoing */
-				prपूर्णांकstate_cnt_inc();
+			if (slept >= 0) {
+				/* A print is ongoing */
+				printstate_cnt_inc();
 				/*
-				 * We will करो the prपूर्णांकout below so we have to
-				 * mark it as completed जबतक we still have the
+				 * We will do the printout below so we have to
+				 * mark it as completed while we still have the
 				 * mutex.
 				 */
-				mutex_lock(&prपूर्णांकstate.mutex);
-				prपूर्णांकstate_mark_req_completed(&req);
-				mutex_unlock(&prपूर्णांकstate.mutex);
-			पूर्ण
-		पूर्ण
-		अगर (trace_enable) अणु
+				mutex_lock(&printstate.mutex);
+				printstate_mark_req_completed(&req);
+				mutex_unlock(&printstate.mutex);
+			}
+		}
+		if (trace_enable) {
 			/*
 			 * slept < 0  means that we detected another
-			 * notअगरication in go_to_sleep() above
+			 * notification in go_to_sleep() above
 			 */
-			अगर (slept >= 0)
+			if (slept >= 0)
 				/*
-				 * N.B. prपूर्णांकstate_cnt_dec(); will be called
-				 * inside prपूर्णांक_tracefile()
+				 * N.B. printstate_cnt_dec(); will be called
+				 * inside print_tracefile()
 				 */
-				prपूर्णांक_tracefile(&resize_msg, &बारtamp, buffer,
+				print_tracefile(&resize_msg, &timestamp, buffer,
 						bufspace, slept, &req);
-			अन्यथा
-				prपूर्णांक_skipmessage(&resize_msg, &बारtamp,
+			else
+				print_skipmessage(&resize_msg, &timestamp,
 						  buffer, bufspace, &req, true);
-		पूर्ण अन्यथा अणु
-			prपूर्णांक_skipmessage(&resize_msg, &बारtamp, buffer,
+		} else {
+			print_skipmessage(&resize_msg, &timestamp, buffer,
 					  bufspace, &req, false);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		}
+	}
+	return NULL;
+}
 
-अटल व्योम start_prपूर्णांकthपढ़ो(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	दीर्घ *seed;
-	पूर्णांक ufd;
+static void start_printthread(void)
+{
+	unsigned int i;
+	long *seed;
+	int ufd;
 
-	ufd = खोलो(DEV_URANDOM, O_RDONLY);
-	अगर (nr_thपढ़ोs > MAX_THREADS) अणु
+	ufd = open(DEV_URANDOM, O_RDONLY);
+	if (nr_threads > MAX_THREADS) {
 		warnx(
 "Number of requested print threads was %d, max number is %d\n",
-		      nr_thपढ़ोs, MAX_THREADS);
-		nr_thपढ़ोs = MAX_THREADS;
-	पूर्ण
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		seed = दो_स्मृति_or_die(माप(*seed));
-		अगर (ufd <  0 ||
-		    पढ़ो(ufd, seed, माप(*seed)) != माप(*seed)) अणु
-			म_लिखो(
+		      nr_threads, MAX_THREADS);
+		nr_threads = MAX_THREADS;
+	}
+	for (i = 0; i < nr_threads; i++) {
+		seed = malloc_or_die(sizeof(*seed));
+		if (ufd <  0 ||
+		    read(ufd, seed, sizeof(*seed)) != sizeof(*seed)) {
+			printf(
 "Warning! Using trivial random number seed, since %s not available\n",
 			DEV_URANDOM);
-			ख_साफ(मानक_निकास);
+			fflush(stdout);
 			*seed = i;
-		पूर्ण
-		त्रुटि_सं = pthपढ़ो_create(&prपूर्णांकthपढ़ो[i], शून्य, करो_prपूर्णांकloop,
+		}
+		errno = pthread_create(&printthread[i], NULL, do_printloop,
 				       seed);
-		अगर (त्रुटि_सं)
-			err(निकास_त्रुटि, "pthread_create()");
-	पूर्ण
-	अगर (ufd > 0 && बंद(ufd) != 0)
+		if (errno)
+			err(EXIT_FAILURE, "pthread_create()");
+	}
+	if (ufd > 0 && close(ufd) != 0)
 		warn("close() failed");
-पूर्ण
+}
 
-अटल व्योम show_usage(व्योम)
-अणु
-	म_लिखो(
+static void show_usage(void)
+{
+	printf(
 "Usage: %s [OPTION]...\n\n"
 "Collect closely occurring latencies from %s\n"
 "with any of the following tracers: preemptirqsoff, preemptoff, irqsoff, "
@@ -1787,261 +1786,261 @@ pid_t latency_collector_gettid(व्योम)
 prg_name, debug_tracefile_dflt, debug_maxlat_dflt, DEFAULT_NR_PRINTER_THREADS,
 SLEEP_TIME_MS_DEFAULT, DEFAULT_TABLE_SIZE, SLEEP_TIME_MS_DEFAULT,
 debug_tracefile_dflt, debug_maxlat_dflt);
-पूर्ण
+}
 
-अटल व्योम find_tracefiles(व्योम)
-अणु
+static void find_tracefiles(void)
+{
 	debug_tracefile_dflt = tracefs_get_tracing_file("trace");
-	अगर (debug_tracefile_dflt == शून्य) अणु
+	if (debug_tracefile_dflt == NULL) {
 		/* This is needed in show_usage() */
-		debug_tracefile_dflt = DEBUG_NOखाता;
-	पूर्ण
+		debug_tracefile_dflt = DEBUG_NOFILE;
+	}
 
 	debug_maxlat_dflt = tracefs_get_tracing_file("tracing_max_latency");
-	अगर (debug_maxlat_dflt == शून्य) अणु
+	if (debug_maxlat_dflt == NULL) {
 		/* This is needed in show_usage() */
-		debug_maxlat_dflt = DEBUG_NOखाता;
-	पूर्ण
+		debug_maxlat_dflt = DEBUG_NOFILE;
+	}
 
 	debug_tracefile = debug_tracefile_dflt;
 	debug_maxlat = debug_maxlat_dflt;
-पूर्ण
+}
 
-bool alldigits(स्थिर अक्षर *s)
-अणु
-	क्रम (; *s != '\0'; s++)
-		अगर (!है_अंक(*s))
-			वापस false;
-	वापस true;
-पूर्ण
+bool alldigits(const char *s)
+{
+	for (; *s != '\0'; s++)
+		if (!isdigit(*s))
+			return false;
+	return true;
+}
 
-व्योम check_alldigits(स्थिर अक्षर *optarg, स्थिर अक्षर *argname)
-अणु
-	अगर (!alldigits(optarg))
-		errx(निकास_त्रुटि,
+void check_alldigits(const char *optarg, const char *argname)
+{
+	if (!alldigits(optarg))
+		errx(EXIT_FAILURE,
 		     "The %s parameter expects a decimal argument\n", argname);
-पूर्ण
+}
 
-अटल व्योम scan_arguments(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक c;
-	पूर्णांक i;
-	पूर्णांक option_idx = 0;
+static void scan_arguments(int argc, char *argv[])
+{
+	int c;
+	int i;
+	int option_idx = 0;
 
-	अटल काष्ठा option दीर्घ_options[] = अणु
-		अणु "list",       no_argument,            0, 'l' पूर्ण,
-		अणु "tracer",	required_argument,	0, 't' पूर्ण,
-		अणु "force",      no_argument,            0, 'F' पूर्ण,
-		अणु "threshold",  required_argument,      0, 's' पूर्ण,
-		अणु "function",   no_argument,            0, 'f' पूर्ण,
-		अणु "graph",      no_argument,            0, 'g' पूर्ण,
-		अणु "policy",	required_argument,	0, 'c' पूर्ण,
-		अणु "priority",	required_argument,	0, 'p' पूर्ण,
-		अणु "help",	no_argument,		0, 'h' पूर्ण,
-		अणु "notrace",	no_argument,		0, 'n' पूर्ण,
-		अणु "random",	no_argument,		0, 'r' पूर्ण,
-		अणु "nrlat",	required_argument,	0, 'a' पूर्ण,
-		अणु "threads",	required_argument,	0, 'e' पूर्ण,
-		अणु "time",	required_argument,	0, 'u' पूर्ण,
-		अणु "verbose",	no_argument,		0, 'v' पूर्ण,
-		अणु "no-ftrace",  no_argument,            0, 'x' पूर्ण,
-		अणु "tracefile",	required_argument,	0, 'i' पूर्ण,
-		अणु "max-lat",	required_argument,	0, 'm' पूर्ण,
-		अणु 0,		0,			0,  0  पूर्ण
-	पूर्ण;
-	स्थिर काष्ठा policy *p;
-	पूर्णांक max, min;
-	पूर्णांक value;
+	static struct option long_options[] = {
+		{ "list",       no_argument,            0, 'l' },
+		{ "tracer",	required_argument,	0, 't' },
+		{ "force",      no_argument,            0, 'F' },
+		{ "threshold",  required_argument,      0, 's' },
+		{ "function",   no_argument,            0, 'f' },
+		{ "graph",      no_argument,            0, 'g' },
+		{ "policy",	required_argument,	0, 'c' },
+		{ "priority",	required_argument,	0, 'p' },
+		{ "help",	no_argument,		0, 'h' },
+		{ "notrace",	no_argument,		0, 'n' },
+		{ "random",	no_argument,		0, 'r' },
+		{ "nrlat",	required_argument,	0, 'a' },
+		{ "threads",	required_argument,	0, 'e' },
+		{ "time",	required_argument,	0, 'u' },
+		{ "verbose",	no_argument,		0, 'v' },
+		{ "no-ftrace",  no_argument,            0, 'x' },
+		{ "tracefile",	required_argument,	0, 'i' },
+		{ "max-lat",	required_argument,	0, 'm' },
+		{ 0,		0,			0,  0  }
+	};
+	const struct policy *p;
+	int max, min;
+	int value;
 	bool notracer, valid;
 
 	/*
-	 * We must करो this beक्रमe parsing the arguments because show_usage()
+	 * We must do this before parsing the arguments because show_usage()
 	 * needs to display these.
 	 */
 	find_tracefiles();
 
-	जबतक (true) अणु
-		c = getopt_दीर्घ(argc, argv, "lt:Fs:fgc:p:hnra:e:u:vxi:m:",
-				दीर्घ_options, &option_idx);
-		अगर (c == -1)
-			अवरोध;
+	while (true) {
+		c = getopt_long(argc, argv, "lt:Fs:fgc:p:hnra:e:u:vxi:m:",
+				long_options, &option_idx);
+		if (c == -1)
+			break;
 
-		चयन (c) अणु
-		हाल 'l':
+		switch (c) {
+		case 'l':
 			show_available();
-			निकास(0);
-			अवरोध;
-		हाल 't':
+			exit(0);
+			break;
+		case 't':
 			current_tracer = strdup(optarg);
-			अगर (!is_relevant_tracer(current_tracer)) अणु
+			if (!is_relevant_tracer(current_tracer)) {
 				warnx("%s is not a known latency tracer!\n",
 				      current_tracer);
-			पूर्ण
+			}
 			valid = tracer_valid(current_tracer, &notracer);
-			अगर (notracer)
-				errx(निकास_त्रुटि, no_tracer_msg);
-			अगर (!valid)
-				errx(निकास_त्रुटि,
+			if (notracer)
+				errx(EXIT_FAILURE, no_tracer_msg);
+			if (!valid)
+				errx(EXIT_FAILURE,
 "The tracer %s is not supported by your kernel!\n", current_tracer);
-			अवरोध;
-		हाल 'F':
-			क्रमce_tracer = true;
-			अवरोध;
-		हाल 's':
+			break;
+		case 'F':
+			force_tracer = true;
+			break;
+		case 's':
 			check_alldigits(optarg, "-s [--threshold]");
 			threshold = strdup(optarg);
-			अवरोध;
-		हाल 'f':
+			break;
+		case 'f':
 			use_options[OPTIDX_FUNC_TR] = true;
-			अवरोध;
-		हाल 'g':
+			break;
+		case 'g':
 			use_options[OPTIDX_DISP_GR] = true;
-			अवरोध;
-		हाल 'c':
+			break;
+		case 'c':
 			p = policy_from_name(optarg);
-			अगर (p != शून्य) अणु
+			if (p != NULL) {
 				sched_policy = p->policy;
 				sched_policy_set = true;
-				अगर (!sched_pri_set) अणु
-					sched_pri = p->शेष_pri;
+				if (!sched_pri_set) {
+					sched_pri = p->default_pri;
 					sched_pri_set = true;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				warnx("Unknown scheduling %s\n", optarg);
 				show_usage();
-				निकास(0);
-			पूर्ण
-			अवरोध;
-		हाल 'p':
+				exit(0);
+			}
+			break;
+		case 'p':
 			check_alldigits(optarg, "-p [--priority]");
-			sched_pri = म_से_प(optarg);
+			sched_pri = atoi(optarg);
 			sched_pri_set = true;
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			show_usage();
-			निकास(0);
-			अवरोध;
-		हाल 'n':
+			exit(0);
+			break;
+		case 'n':
 			trace_enable = false;
-			use_अक्रमom_sleep = false;
-			अवरोध;
-		हाल 'e':
+			use_random_sleep = false;
+			break;
+		case 'e':
 			check_alldigits(optarg, "-e [--threads]");
-			value = म_से_प(optarg);
-			अगर (value > 0)
-				nr_thपढ़ोs = value;
-			अन्यथा अणु
+			value = atoi(optarg);
+			if (value > 0)
+				nr_threads = value;
+			else {
 				warnx("NRTHR must be > 0\n");
 				show_usage();
-				निकास(0);
-			पूर्ण
-			अवरोध;
-		हाल 'u':
+				exit(0);
+			}
+			break;
+		case 'u':
 			check_alldigits(optarg, "-u [--time]");
-			value = म_से_प(optarg);
-			अगर (value < 0) अणु
+			value = atoi(optarg);
+			if (value < 0) {
 				warnx("TIME must be >= 0\n");
 				show_usage();
-				निकास(0);
-			पूर्ण
+				exit(0);
+			}
 			trace_enable = true;
-			use_अक्रमom_sleep = true;
-			sleep_समय = value * USEC_PER_MSEC;
-			अवरोध;
-		हाल 'v':
+			use_random_sleep = true;
+			sleep_time = value * USEC_PER_MSEC;
+			break;
+		case 'v':
 			verbosity++;
-			अवरोध;
-		हाल 'r':
+			break;
+		case 'r':
 			trace_enable = true;
-			use_अक्रमom_sleep = true;
-			अवरोध;
-		हाल 'a':
+			use_random_sleep = true;
+			break;
+		case 'a':
 			check_alldigits(optarg, "-a [--nrlat]");
-			value = म_से_प(optarg);
-			अगर (value <= 0) अणु
+			value = atoi(optarg);
+			if (value <= 0) {
 				warnx("NRLAT must be > 0\n");
 				show_usage();
-				निकास(0);
-			पूर्ण
+				exit(0);
+			}
 			trace_enable = true;
-			use_अक्रमom_sleep = true;
+			use_random_sleep = true;
 			table_startsize = value;
-			अवरोध;
-		हाल 'x':
+			break;
+		case 'x':
 			setup_ftrace = false;
-			अवरोध;
-		हाल 'i':
+			break;
+		case 'i':
 			setup_ftrace = false;
 			debug_tracefile = strdup(optarg);
-			अवरोध;
-		हाल 'm':
+			break;
+		case 'm':
 			setup_ftrace = false;
 			debug_maxlat = strdup(optarg);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			show_usage();
-			निकास(0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			exit(0);
+			break;
+		}
+	}
 
-	अगर (setup_ftrace) अणु
-		अगर (!current_tracer) अणु
-			current_tracer = find_शेष_tracer();
-			अगर (!current_tracer)
-				errx(निकास_त्रुटि,
+	if (setup_ftrace) {
+		if (!current_tracer) {
+			current_tracer = find_default_tracer();
+			if (!current_tracer)
+				errx(EXIT_FAILURE,
 "No default tracer found and tracer not specified\n");
-		पूर्ण
+		}
 
-		अगर (use_अक्रमom_sleep && !अक्रमom_makes_sense(current_tracer)) अणु
+		if (use_random_sleep && !random_makes_sense(current_tracer)) {
 			warnx("WARNING: The tracer is %s and random sleep has",
 			      current_tracer);
-			ख_लिखो(मानक_त्रुटि,
+			fprintf(stderr,
 "been enabled. Random sleep is intended for the following tracers:\n");
-			क्रम (i = 0; अक्रमom_tracers[i]; i++)
-				ख_लिखो(मानक_त्रुटि, "%s\n", अक्रमom_tracers[i]);
-			ख_लिखो(मानक_त्रुटि, "\n");
-		पूर्ण
-	पूर्ण
+			for (i = 0; random_tracers[i]; i++)
+				fprintf(stderr, "%s\n", random_tracers[i]);
+			fprintf(stderr, "\n");
+		}
+	}
 
-	अगर (debug_tracefile == DEBUG_NOखाता ||
-	    debug_maxlat == DEBUG_NOखाता)
-		errx(निकास_त्रुटि,
+	if (debug_tracefile == DEBUG_NOFILE ||
+	    debug_maxlat == DEBUG_NOFILE)
+		errx(EXIT_FAILURE,
 "Could not find tracing directory e.g. /sys/kernel/tracing\n");
 
-	अगर (!sched_policy_set) अणु
+	if (!sched_policy_set) {
 		sched_policy = SCHED_RR;
 		sched_policy_set = true;
-		अगर (!sched_pri_set) अणु
+		if (!sched_pri_set) {
 			sched_pri = RT_DEFAULT_PRI;
 			sched_pri_set = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	max = sched_get_priority_max(sched_policy);
 	min = sched_get_priority_min(sched_policy);
 
-	अगर (sched_pri < min) अणु
-		म_लिखो(
+	if (sched_pri < min) {
+		printf(
 "ATTENTION: Increasing priority to minimum, which is %d\n", min);
 		sched_pri = min;
-	पूर्ण
-	अगर (sched_pri > max) अणु
-		म_लिखो(
+	}
+	if (sched_pri > max) {
+		printf(
 "ATTENTION: Reducing priority to maximum, which is %d\n", max);
 		sched_pri = max;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम show_params(व्योम)
-अणु
-	म_लिखो(
+static void show_params(void)
+{
+	printf(
 "\n"
 "Running with scheduling policy %s and priority %d. Using %d print threads.\n",
-		policy_name(sched_policy), sched_pri, nr_thपढ़ोs);
-	अगर (trace_enable) अणु
-		अगर (use_अक्रमom_sleep) अणु
-			म_लिखो(
+		policy_name(sched_policy), sched_pri, nr_threads);
+	if (trace_enable) {
+		if (use_random_sleep) {
+			printf(
 "%s will be printed with random delay\n"
 "Start size of the probability table:\t\t\t%d\n"
 "Print a message when the prob. table changes size:\t%s\n"
@@ -2051,17 +2050,17 @@ debug_tracefile,
 table_startsize,
 bool2str(verbose_sizechange()),
 bool2str(verbose_lostevent()),
-sleep_समय / USEC_PER_MSEC);
-		पूर्ण अन्यथा अणु
-			म_लिखो("%s will be printed immediately\n",
+sleep_time / USEC_PER_MSEC);
+		} else {
+			printf("%s will be printed immediately\n",
 			       debug_tracefile);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		म_लिखो("%s will not be printed\n",
+		}
+	} else {
+		printf("%s will not be printed\n",
 		       debug_tracefile);
-	पूर्ण
-	अगर (setup_ftrace) अणु
-		म_लिखो("Tracer:\t\t\t\t\t\t\t%s\n"
+	}
+	if (setup_ftrace) {
+		printf("Tracer:\t\t\t\t\t\t\t%s\n"
 		       "%s option:\t\t\t\t\t%s\n"
 		       "%s option:\t\t\t\t\t%s\n",
 		       current_tracer,
@@ -2069,41 +2068,41 @@ sleep_समय / USEC_PER_MSEC);
 		       bool2str(use_options[OPTIDX_FUNC_TR]),
 		       optstr[OPTIDX_DISP_GR],
 		       bool2str(use_options[OPTIDX_DISP_GR]));
-		अगर (!म_भेद(threshold, "0"))
-			म_लिखो("Threshold:\t\t\t\t\t\ttracing_max_latency\n");
-		अन्यथा
-			म_लिखो("Threshold:\t\t\t\t\t\t%s\n", threshold);
-	पूर्ण
-	म_लिखो("\n");
-पूर्ण
+		if (!strcmp(threshold, "0"))
+			printf("Threshold:\t\t\t\t\t\ttracing_max_latency\n");
+		else
+			printf("Threshold:\t\t\t\t\t\t%s\n", threshold);
+	}
+	printf("\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
+int main(int argc, char *argv[])
+{
 	init_save_state();
-	संकेत_blocking(SIG_BLOCK);
+	signal_blocking(SIG_BLOCK);
 	setup_sig_handler();
-	खोलो_मानक_निकास();
+	open_stdout();
 
-	अगर (argc >= 1)
+	if (argc >= 1)
 		prg_name = argv[0];
-	अन्यथा
+	else
 		prg_name = prg_unknown;
 
 	scan_arguments(argc, argv);
 	show_params();
 
-	init_prपूर्णांकstate();
-	init_prपूर्णांक_mtx();
-	अगर (use_अक्रमom_sleep) अणु
+	init_printstate();
+	init_print_mtx();
+	if (use_random_sleep) {
 		init_probabilities();
-		अगर (verbose_sizechange())
-			म_लिखो("Initializing probability table to %d\n",
+		if (verbose_sizechange())
+			printf("Initializing probability table to %d\n",
 			       table_startsize);
-		sleeptable_resize(table_startsize, false, शून्य);
-	पूर्ण
+		sleeptable_resize(table_startsize, false, NULL);
+	}
 	set_priority();
-	init_queue(&prपूर्णांकqueue);
-	start_prपूर्णांकthपढ़ो();
+	init_queue(&printqueue);
+	start_printthread();
 	tracing_loop();
-	वापस 0;
-पूर्ण
+	return 0;
+}

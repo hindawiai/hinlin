@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम USB Mass Storage devices
- * Usual Tables File क्रम usb-storage and libusual
+ * Driver for USB Mass Storage devices
+ * Usual Tables File for usb-storage and libusual
  *
  * Copyright (C) 2009 Alan Stern (stern@rowland.harvard.edu)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb_usual.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/usb_usual.h>
 
 
 /*
  * The table of devices
  */
-#घोषणा UNUSUAL_DEV(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax, \
-		    venकरोrName, productName, useProtocol, useTransport, \
+#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    vendorName, productName, useProtocol, useTransport, \
 		    initFunction, flags) \
-अणु USB_DEVICE_VER(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax), \
-  .driver_info = (flags) पूर्ण
+{ USB_DEVICE_VER(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax), \
+  .driver_info = (flags) }
 
-#घोषणा COMPLIANT_DEV	UNUSUAL_DEV
+#define COMPLIANT_DEV	UNUSUAL_DEV
 
-#घोषणा USUAL_DEV(useProto, useTrans) \
-अणु USB_INTERFACE_INFO(USB_CLASS_MASS_STORAGE, useProto, useTrans) पूर्ण
+#define USUAL_DEV(useProto, useTrans) \
+{ USB_INTERFACE_INFO(USB_CLASS_MASS_STORAGE, useProto, useTrans) }
 
-/* Define the device is matched with Venकरोr ID and पूर्णांकerface descriptors */
-#घोषणा UNUSUAL_VENDOR_INTF(id_venकरोr, cl, sc, pr, \
-			venकरोrName, productName, useProtocol, useTransport, \
+/* Define the device is matched with Vendor ID and interface descriptors */
+#define UNUSUAL_VENDOR_INTF(id_vendor, cl, sc, pr, \
+			vendorName, productName, useProtocol, useTransport, \
 			initFunction, flags) \
-अणु \
+{ \
 	.match_flags = USB_DEVICE_ID_MATCH_INT_INFO \
 				| USB_DEVICE_ID_MATCH_VENDOR, \
-	.idVenकरोr    = (id_venकरोr), \
+	.idVendor    = (id_vendor), \
 	.bInterfaceClass = (cl), \
 	.bInterfaceSubClass = (sc), \
 	.bInterfaceProtocol = (pr), \
 	.driver_info = (flags) \
-पूर्ण
+}
 
-स्थिर काष्ठा usb_device_id usb_storage_usb_ids[] = अणु
+const struct usb_device_id usb_storage_usb_ids[] = {
 #	include "unusual_devs.h"
-	अणु पूर्ण		/* Terminating entry */
-पूर्ण;
+	{ }		/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(usb, usb_storage_usb_ids);
 
-#अघोषित UNUSUAL_DEV
-#अघोषित COMPLIANT_DEV
-#अघोषित USUAL_DEV
-#अघोषित UNUSUAL_VENDOR_INTF
+#undef UNUSUAL_DEV
+#undef COMPLIANT_DEV
+#undef USUAL_DEV
+#undef UNUSUAL_VENDOR_INTF
 
 /*
  * The table of devices to ignore
  */
-काष्ठा ignore_entry अणु
+struct ignore_entry {
 	u16	vid, pid, bcdmin, bcdmax;
-पूर्ण;
+};
 
-#घोषणा UNUSUAL_DEV(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax, \
-		    venकरोrName, productName, useProtocol, useTransport, \
+#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    vendorName, productName, useProtocol, useTransport, \
 		    initFunction, flags) \
-अणु					\
-	.vid	= id_venकरोr,		\
+{					\
+	.vid	= id_vendor,		\
 	.pid 	= id_product,		\
 	.bcdmin	= bcdDeviceMin,		\
 	.bcdmax = bcdDeviceMax,		\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ignore_entry ignore_ids[] = अणु
+static const struct ignore_entry ignore_ids[] = {
 #	include "unusual_alauda.h"
 #	include "unusual_cypress.h"
 #	include "unusual_datafab.h"
@@ -83,27 +82,27 @@ MODULE_DEVICE_TABLE(usb, usb_storage_usb_ids);
 #	include "unusual_sddr09.h"
 #	include "unusual_sddr55.h"
 #	include "unusual_usbat.h"
-	अणु पूर्ण		/* Terminating entry */
-पूर्ण;
+	{ }		/* Terminating entry */
+};
 
-#अघोषित UNUSUAL_DEV
+#undef UNUSUAL_DEV
 
-/* Return an error अगर a device is in the ignore_ids list */
-पूर्णांक usb_usual_ignore_device(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *udev;
-	अचिन्हित vid, pid, bcd;
-	स्थिर काष्ठा ignore_entry *p;
+/* Return an error if a device is in the ignore_ids list */
+int usb_usual_ignore_device(struct usb_interface *intf)
+{
+	struct usb_device *udev;
+	unsigned vid, pid, bcd;
+	const struct ignore_entry *p;
 
-	udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	vid = le16_to_cpu(udev->descriptor.idVenकरोr);
+	udev = interface_to_usbdev(intf);
+	vid = le16_to_cpu(udev->descriptor.idVendor);
 	pid = le16_to_cpu(udev->descriptor.idProduct);
 	bcd = le16_to_cpu(udev->descriptor.bcdDevice);
 
-	क्रम (p = ignore_ids; p->vid; ++p) अणु
-		अगर (p->vid == vid && p->pid == pid &&
+	for (p = ignore_ids; p->vid; ++p) {
+		if (p->vid == vid && p->pid == pid &&
 				p->bcdmin <= bcd && p->bcdmax >= bcd)
-			वापस -ENXIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -ENXIO;
+	}
+	return 0;
+}

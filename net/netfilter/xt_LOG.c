@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * This is a module which is used क्रम logging packets.
+ * This is a module which is used for logging packets.
  */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/icmp.h>
-#समावेश <net/udp.h>
-#समावेश <net/tcp.h>
-#समावेश <net/route.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/skbuff.h>
+#include <linux/if_arp.h>
+#include <linux/ip.h>
+#include <net/ipv6.h>
+#include <net/icmp.h>
+#include <net/udp.h>
+#include <net/tcp.h>
+#include <net/route.h>
 
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_LOG.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <net/netfilter/nf_log.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_LOG.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <net/netfilter/nf_log.h>
 
-अटल अचिन्हित पूर्णांक
-log_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_log_info *loginfo = par->targinfo;
-	काष्ठा net *net = xt_net(par);
-	काष्ठा nf_loginfo li;
+static unsigned int
+log_tg(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_log_info *loginfo = par->targinfo;
+	struct net *net = xt_net(par);
+	struct nf_loginfo li;
 
 	li.type = NF_LOG_TYPE_LOG;
 	li.u.log.level = loginfo->level;
@@ -39,69 +38,69 @@ log_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_ac
 
 	nf_log_packet(net, xt_family(par), xt_hooknum(par), skb, xt_in(par),
 		      xt_out(par), &li, "%s", loginfo->prefix);
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक log_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	स्थिर काष्ठा xt_log_info *loginfo = par->targinfo;
+static int log_tg_check(const struct xt_tgchk_param *par)
+{
+	const struct xt_log_info *loginfo = par->targinfo;
 
-	अगर (par->family != NFPROTO_IPV4 && par->family != NFPROTO_IPV6)
-		वापस -EINVAL;
+	if (par->family != NFPROTO_IPV4 && par->family != NFPROTO_IPV6)
+		return -EINVAL;
 
-	अगर (loginfo->level >= 8) अणु
+	if (loginfo->level >= 8) {
 		pr_debug("level %u >= 8\n", loginfo->level);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (loginfo->prefix[माप(loginfo->prefix)-1] != '\0') अणु
+	if (loginfo->prefix[sizeof(loginfo->prefix)-1] != '\0') {
 		pr_debug("prefix is not null-terminated\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस nf_logger_find_get(par->family, NF_LOG_TYPE_LOG);
-पूर्ण
+	return nf_logger_find_get(par->family, NF_LOG_TYPE_LOG);
+}
 
-अटल व्योम log_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
+static void log_tg_destroy(const struct xt_tgdtor_param *par)
+{
 	nf_logger_put(par->family, NF_LOG_TYPE_LOG);
-पूर्ण
+}
 
-अटल काष्ठा xt_target log_tg_regs[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_target log_tg_regs[] __read_mostly = {
+	{
 		.name		= "LOG",
 		.family		= NFPROTO_IPV4,
 		.target		= log_tg,
-		.tarमाला_लोize	= माप(काष्ठा xt_log_info),
+		.targetsize	= sizeof(struct xt_log_info),
 		.checkentry	= log_tg_check,
 		.destroy	= log_tg_destroy,
 		.me		= THIS_MODULE,
-	पूर्ण,
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-	अणु
+	},
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+	{
 		.name		= "LOG",
 		.family		= NFPROTO_IPV6,
 		.target		= log_tg,
-		.tarमाला_लोize	= माप(काष्ठा xt_log_info),
+		.targetsize	= sizeof(struct xt_log_info),
 		.checkentry	= log_tg_check,
 		.destroy	= log_tg_destroy,
 		.me		= THIS_MODULE,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल पूर्णांक __init log_tg_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_tarमाला_लो(log_tg_regs, ARRAY_SIZE(log_tg_regs));
-पूर्ण
+static int __init log_tg_init(void)
+{
+	return xt_register_targets(log_tg_regs, ARRAY_SIZE(log_tg_regs));
+}
 
-अटल व्योम __निकास log_tg_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_tarमाला_लो(log_tg_regs, ARRAY_SIZE(log_tg_regs));
-पूर्ण
+static void __exit log_tg_exit(void)
+{
+	xt_unregister_targets(log_tg_regs, ARRAY_SIZE(log_tg_regs));
+}
 
 module_init(log_tg_init);
-module_निकास(log_tg_निकास);
+module_exit(log_tg_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Netfilter Core Team <coreteam@netfilter.org>");

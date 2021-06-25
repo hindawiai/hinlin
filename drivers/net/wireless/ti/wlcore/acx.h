@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This file is part of wl1271
  *
@@ -9,83 +8,83 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#अगर_अघोषित __ACX_H__
-#घोषणा __ACX_H__
+#ifndef __ACX_H__
+#define __ACX_H__
 
-#समावेश "wlcore.h"
-#समावेश "cmd.h"
+#include "wlcore.h"
+#include "cmd.h"
 
 /*************************************************************************
 
     Host Interrupt Register (WiLink -> Host)
 
 **************************************************************************/
-/* HW Initiated पूर्णांकerrupt Watchकरोg समयr expiration */
-#घोषणा WL1271_ACX_INTR_WATCHDOG           BIT(0)
-/* Init sequence is करोne (masked पूर्णांकerrupt, detection through polling only ) */
-#घोषणा WL1271_ACX_INTR_INIT_COMPLETE      BIT(1)
+/* HW Initiated interrupt Watchdog timer expiration */
+#define WL1271_ACX_INTR_WATCHDOG           BIT(0)
+/* Init sequence is done (masked interrupt, detection through polling only ) */
+#define WL1271_ACX_INTR_INIT_COMPLETE      BIT(1)
 /* Event was entered to Event MBOX #A*/
-#घोषणा WL1271_ACX_INTR_EVENT_A            BIT(2)
+#define WL1271_ACX_INTR_EVENT_A            BIT(2)
 /* Event was entered to Event MBOX #B*/
-#घोषणा WL1271_ACX_INTR_EVENT_B            BIT(3)
+#define WL1271_ACX_INTR_EVENT_B            BIT(3)
 /* Command processing completion*/
-#घोषणा WL1271_ACX_INTR_CMD_COMPLETE       BIT(4)
+#define WL1271_ACX_INTR_CMD_COMPLETE       BIT(4)
 /* Signaling the host on HW wakeup */
-#घोषणा WL1271_ACX_INTR_HW_AVAILABLE       BIT(5)
-/* The MISC bit is used क्रम aggregation of RX, TxComplete and TX rate update */
-#घोषणा WL1271_ACX_INTR_DATA               BIT(6)
+#define WL1271_ACX_INTR_HW_AVAILABLE       BIT(5)
+/* The MISC bit is used for aggregation of RX, TxComplete and TX rate update */
+#define WL1271_ACX_INTR_DATA               BIT(6)
 /* Trace message on MBOX #A */
-#घोषणा WL1271_ACX_INTR_TRACE_A            BIT(7)
+#define WL1271_ACX_INTR_TRACE_A            BIT(7)
 /* Trace message on MBOX #B */
-#घोषणा WL1271_ACX_INTR_TRACE_B            BIT(8)
-/* SW FW Initiated पूर्णांकerrupt Watchकरोg समयr expiration */
-#घोषणा WL1271_ACX_SW_INTR_WATCHDOG        BIT(9)
+#define WL1271_ACX_INTR_TRACE_B            BIT(8)
+/* SW FW Initiated interrupt Watchdog timer expiration */
+#define WL1271_ACX_SW_INTR_WATCHDOG        BIT(9)
 
-#घोषणा WL1271_ACX_INTR_ALL             0xFFFFFFFF
+#define WL1271_ACX_INTR_ALL             0xFFFFFFFF
 
-/* all possible पूर्णांकerrupts - only appropriate ones will be masked in */
-#घोषणा WLCORE_ALL_INTR_MASK		(WL1271_ACX_INTR_WATCHDOG     | \
+/* all possible interrupts - only appropriate ones will be masked in */
+#define WLCORE_ALL_INTR_MASK		(WL1271_ACX_INTR_WATCHDOG     | \
 					WL1271_ACX_INTR_EVENT_A       | \
 					WL1271_ACX_INTR_EVENT_B       | \
 					WL1271_ACX_INTR_HW_AVAILABLE  | \
 					WL1271_ACX_INTR_DATA          | \
 					WL1271_ACX_SW_INTR_WATCHDOG)
 
-/* Target's inक्रमmation element */
-काष्ठा acx_header अणु
-	काष्ठा wl1271_cmd_header cmd;
+/* Target's information element */
+struct acx_header {
+	struct wl1271_cmd_header cmd;
 
-	/* acx (or inक्रमmation element) header */
+	/* acx (or information element) header */
 	__le16 id;
 
 	/* payload length (not including headers */
 	__le16 len;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_error_counter अणु
-	काष्ठा acx_header header;
+struct acx_error_counter {
+	struct acx_header header;
 
-	/* The number of PLCP errors since the last समय this */
-	/* inक्रमmation element was पूर्णांकerrogated. This field is */
-	/* स्वतःmatically cleared when it is पूर्णांकerrogated.*/
+	/* The number of PLCP errors since the last time this */
+	/* information element was interrogated. This field is */
+	/* automatically cleared when it is interrogated.*/
 	__le32 PLCP_error;
 
-	/* The number of FCS errors since the last समय this */
-	/* inक्रमmation element was पूर्णांकerrogated. This field is */
-	/* स्वतःmatically cleared when it is पूर्णांकerrogated.*/
+	/* The number of FCS errors since the last time this */
+	/* information element was interrogated. This field is */
+	/* automatically cleared when it is interrogated.*/
 	__le32 FCS_error;
 
 	/* The number of MPDUs without PLCP header errors received*/
-	/* since the last समय this inक्रमmation element was पूर्णांकerrogated. */
-	/* This field is स्वतःmatically cleared when it is पूर्णांकerrogated.*/
+	/* since the last time this information element was interrogated. */
+	/* This field is automatically cleared when it is interrogated.*/
 	__le32 valid_frame;
 
 	/* the number of missed sequence numbers in the squentially */
 	/* values of frames seq numbers */
 	__le32 seq_num_miss;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत wl12xx_role अणु
+enum wl12xx_role {
 	WL1271_ROLE_STA = 0,
 	WL1271_ROLE_IBSS,
 	WL1271_ROLE_AP,
@@ -95,280 +94,280 @@
 	WL1271_ROLE_MESH_POINT,
 
 	WL12XX_INVALID_ROLE_TYPE = 0xff
-पूर्ण;
+};
 
-क्रमागत wl1271_psm_mode अणु
+enum wl1271_psm_mode {
 	/* Active mode */
 	WL1271_PSM_CAM = 0,
 
 	/* Power save mode */
 	WL1271_PSM_PS = 1,
 
-	/* Extreme low घातer */
+	/* Extreme low power */
 	WL1271_PSM_ELP = 2,
 
 	WL1271_PSM_MAX = WL1271_PSM_ELP,
 
 	/* illegal out of band value of PSM mode */
 	WL1271_PSM_ILLEGAL = 0xff
-पूर्ण;
+};
 
-काष्ठा acx_sleep_auth अणु
-	काष्ठा acx_header header;
+struct acx_sleep_auth {
+	struct acx_header header;
 
 	/* The sleep level authorization of the device. */
 	/* 0 - Always active*/
-	/* 1 - Power करोwn mode: light / fast sleep*/
+	/* 1 - Power down mode: light / fast sleep*/
 	/* 2 - ELP mode: Deep / Max sleep*/
 	u8  sleep_auth;
 	u8  padding[3];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
-	HOSTIF_PCI_MASTER_HOST_INसूचीECT,
-	HOSTIF_PCI_MASTER_HOST_सूचीECT,
+enum {
+	HOSTIF_PCI_MASTER_HOST_INDIRECT,
+	HOSTIF_PCI_MASTER_HOST_DIRECT,
 	HOSTIF_SLAVE,
 	HOSTIF_PKT_RING,
 	HOSTIF_DONTCARE = 0xFF
-पूर्ण;
+};
 
-#घोषणा DEFAULT_UCAST_PRIORITY          0
-#घोषणा DEFAULT_RX_Q_PRIORITY           0
-#घोषणा DEFAULT_RXQ_PRIORITY            0 /* low 0 .. 15 high  */
-#घोषणा DEFAULT_RXQ_TYPE                0x07    /* All frames, Data/Ctrl/Mgmt */
-#घोषणा TRACE_BUFFER_MAX_SIZE           256
+#define DEFAULT_UCAST_PRIORITY          0
+#define DEFAULT_RX_Q_PRIORITY           0
+#define DEFAULT_RXQ_PRIORITY            0 /* low 0 .. 15 high  */
+#define DEFAULT_RXQ_TYPE                0x07    /* All frames, Data/Ctrl/Mgmt */
+#define TRACE_BUFFER_MAX_SIZE           256
 
-#घोषणा  DP_RX_PACKET_RING_CHUNK_SIZE 1600
-#घोषणा  DP_TX_PACKET_RING_CHUNK_SIZE 1600
-#घोषणा  DP_RX_PACKET_RING_CHUNK_NUM 2
-#घोषणा  DP_TX_PACKET_RING_CHUNK_NUM 2
-#घोषणा  DP_TX_COMPLETE_TIME_OUT 20
+#define  DP_RX_PACKET_RING_CHUNK_SIZE 1600
+#define  DP_TX_PACKET_RING_CHUNK_SIZE 1600
+#define  DP_RX_PACKET_RING_CHUNK_NUM 2
+#define  DP_TX_PACKET_RING_CHUNK_NUM 2
+#define  DP_TX_COMPLETE_TIME_OUT 20
 
-#घोषणा TX_MSDU_LIFETIME_MIN       0
-#घोषणा TX_MSDU_LIFETIME_MAX       3000
-#घोषणा TX_MSDU_LIFETIME_DEF       512
-#घोषणा RX_MSDU_LIFETIME_MIN       0
-#घोषणा RX_MSDU_LIFETIME_MAX       0xFFFFFFFF
-#घोषणा RX_MSDU_LIFETIME_DEF       512000
+#define TX_MSDU_LIFETIME_MIN       0
+#define TX_MSDU_LIFETIME_MAX       3000
+#define TX_MSDU_LIFETIME_DEF       512
+#define RX_MSDU_LIFETIME_MIN       0
+#define RX_MSDU_LIFETIME_MAX       0xFFFFFFFF
+#define RX_MSDU_LIFETIME_DEF       512000
 
-काष्ठा acx_rx_msdu_lअगरeसमय अणु
-	काष्ठा acx_header header;
+struct acx_rx_msdu_lifetime {
+	struct acx_header header;
 
 	/*
-	 * The maximum amount of समय, in TU, beक्रमe the
+	 * The maximum amount of time, in TU, before the
 	 * firmware discards the MSDU.
 	 */
-	__le32 lअगरeसमय;
-पूर्ण __packed;
+	__le32 lifetime;
+} __packed;
 
-क्रमागत acx_slot_type अणु
+enum acx_slot_type {
 	SLOT_TIME_LONG = 0,
 	SLOT_TIME_SHORT = 1,
 	DEFAULT_SLOT_TIME = SLOT_TIME_SHORT,
 	MAX_SLOT_TIMES = 0xFF
-पूर्ण;
+};
 
-#घोषणा STATION_WONE_INDEX 0
+#define STATION_WONE_INDEX 0
 
-काष्ठा acx_slot अणु
-	काष्ठा acx_header header;
+struct acx_slot {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 wone_index; /* Reserved */
-	u8 slot_समय;
+	u8 slot_time;
 	u8 reserved[5];
-पूर्ण __packed;
+} __packed;
 
 
-#घोषणा ACX_MC_ADDRESS_GROUP_MAX	(8)
-#घोषणा ADDRESS_GROUP_MAX_LEN	        (ETH_ALEN * ACX_MC_ADDRESS_GROUP_MAX)
+#define ACX_MC_ADDRESS_GROUP_MAX	(8)
+#define ADDRESS_GROUP_MAX_LEN	        (ETH_ALEN * ACX_MC_ADDRESS_GROUP_MAX)
 
-काष्ठा acx_करोt11_grp_addr_tbl अणु
-	काष्ठा acx_header header;
+struct acx_dot11_grp_addr_tbl {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 enabled;
 	u8 num_groups;
 	u8 pad[1];
 	u8 mac_table[ADDRESS_GROUP_MAX_LEN];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_rx_समयout अणु
-	काष्ठा acx_header header;
+struct acx_rx_timeout {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 reserved;
-	__le16 ps_poll_समयout;
-	__le16 upsd_समयout;
+	__le16 ps_poll_timeout;
+	__le16 upsd_timeout;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_rts_threshold अणु
-	काष्ठा acx_header header;
+struct acx_rts_threshold {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 reserved;
 	__le16 threshold;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_beacon_filter_option अणु
-	काष्ठा acx_header header;
+struct acx_beacon_filter_option {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 enable;
 	/*
 	 * The number of beacons without the unicast TIM
-	 * bit set that the firmware buffers beक्रमe
-	 * संकेतing the host about पढ़ोy frames.
+	 * bit set that the firmware buffers before
+	 * signaling the host about ready frames.
 	 * When set to 0 and the filter is enabled, beacons
 	 * without the unicast TIM bit set are dropped.
 	 */
 	u8 max_num_beacons;
 	u8 pad[1];
-पूर्ण __packed;
+} __packed;
 
 /*
  * ACXBeaconFilterEntry (not 221)
  * Byte Offset     Size (Bytes)    Definition
  * ===========     ============    ==========
- * 0               1               IE identअगरier
- * 1               1               Treaपंचांगent bit mask
+ * 0               1               IE identifier
+ * 1               1               Treatment bit mask
  *
  * ACXBeaconFilterEntry (221)
  * Byte Offset     Size (Bytes)    Definition
  * ===========     ============    ==========
- * 0               1               IE identअगरier
- * 1               1               Treaपंचांगent bit mask
+ * 0               1               IE identifier
+ * 1               1               Treatment bit mask
  * 2               3               OUI
  * 5               1               Type
  * 6               2               Version
  *
  *
- * Treaपंचांगent bit mask - The inक्रमmation element handling:
- * bit 0 - The inक्रमmation element is compared and transferred
- * in हाल of change.
- * bit 1 - The inक्रमmation element is transferred to the host
+ * Treatment bit mask - The information element handling:
+ * bit 0 - The information element is compared and transferred
+ * in case of change.
+ * bit 1 - The information element is transferred to the host
  * with each appearance or disappearance.
- * Note that both bits can be set at the same समय.
+ * Note that both bits can be set at the same time.
  */
-#घोषणा	BEACON_FILTER_TABLE_MAX_IE_NUM		       (32)
-#घोषणा BEACON_FILTER_TABLE_MAX_VENDOR_SPECIFIC_IE_NUM (6)
-#घोषणा BEACON_FILTER_TABLE_IE_ENTRY_SIZE	       (2)
-#घोषणा BEACON_FILTER_TABLE_EXTRA_VENDOR_SPECIFIC_IE_SIZE (6)
-#घोषणा BEACON_FILTER_TABLE_MAX_SIZE ((BEACON_FILTER_TABLE_MAX_IE_NUM * \
+#define	BEACON_FILTER_TABLE_MAX_IE_NUM		       (32)
+#define BEACON_FILTER_TABLE_MAX_VENDOR_SPECIFIC_IE_NUM (6)
+#define BEACON_FILTER_TABLE_IE_ENTRY_SIZE	       (2)
+#define BEACON_FILTER_TABLE_EXTRA_VENDOR_SPECIFIC_IE_SIZE (6)
+#define BEACON_FILTER_TABLE_MAX_SIZE ((BEACON_FILTER_TABLE_MAX_IE_NUM * \
 			    BEACON_FILTER_TABLE_IE_ENTRY_SIZE) + \
 			   (BEACON_FILTER_TABLE_MAX_VENDOR_SPECIFIC_IE_NUM * \
 			    BEACON_FILTER_TABLE_EXTRA_VENDOR_SPECIFIC_IE_SIZE))
 
-काष्ठा acx_beacon_filter_ie_table अणु
-	काष्ठा acx_header header;
+struct acx_beacon_filter_ie_table {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 num_ie;
 	u8 pad[2];
 	u8 table[BEACON_FILTER_TABLE_MAX_SIZE];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_conn_monit_params अणु
-       काष्ठा acx_header header;
+struct acx_conn_monit_params {
+       struct acx_header header;
 
 	   u8 role_id;
 	   u8 padding[3];
        __le32 synch_fail_thold; /* number of beacons missed */
-       __le32 bss_lose_समयout; /* number of TU's from synch fail */
-पूर्ण __packed;
+       __le32 bss_lose_timeout; /* number of TU's from synch fail */
+} __packed;
 
-काष्ठा acx_bt_wlan_coex अणु
-	काष्ठा acx_header header;
+struct acx_bt_wlan_coex {
+	struct acx_header header;
 
 	u8 enable;
 	u8 pad[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_bt_wlan_coex_param अणु
-	काष्ठा acx_header header;
+struct acx_bt_wlan_coex_param {
+	struct acx_header header;
 
 	__le32 params[WLCORE_CONF_SG_PARAMS_MAX];
 	u8 param_idx;
 	u8 padding[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_dco_itrim_params अणु
-	काष्ठा acx_header header;
+struct acx_dco_itrim_params {
+	struct acx_header header;
 
 	u8 enable;
 	u8 padding[3];
-	__le32 समयout;
-पूर्ण __packed;
+	__le32 timeout;
+} __packed;
 
-काष्ठा acx_energy_detection अणु
-	काष्ठा acx_header header;
+struct acx_energy_detection {
+	struct acx_header header;
 
 	/* The RX Clear Channel Assessment threshold in the PHY */
 	__le16 rx_cca_threshold;
 	u8 tx_energy_detection;
 	u8 pad;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_beacon_broadcast अणु
-	काष्ठा acx_header header;
+struct acx_beacon_broadcast {
+	struct acx_header header;
 
 	u8 role_id;
 	/* Enables receiving of broadcast packets in PS mode */
 	u8 rx_broadcast_in_ps;
 
-	__le16 beacon_rx_समयout;
-	__le16 broadcast_समयout;
+	__le16 beacon_rx_timeout;
+	__le16 broadcast_timeout;
 
-	/* Consecutive PS Poll failures beक्रमe updating the host */
+	/* Consecutive PS Poll failures before updating the host */
 	u8 ps_poll_threshold;
 	u8 pad[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_event_mask अणु
-	काष्ठा acx_header header;
+struct acx_event_mask {
+	struct acx_header header;
 
 	__le32 event_mask;
 	__le32 high_event_mask; /* Unused */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा SCAN_PASSIVE		BIT(0)
-#घोषणा SCAN_5GHZ_BAND		BIT(1)
-#घोषणा SCAN_TRIGGERED		BIT(2)
-#घोषणा SCAN_PRIORITY_HIGH	BIT(3)
+#define SCAN_PASSIVE		BIT(0)
+#define SCAN_5GHZ_BAND		BIT(1)
+#define SCAN_TRIGGERED		BIT(2)
+#define SCAN_PRIORITY_HIGH	BIT(3)
 
 /* When set, disable HW encryption */
-#घोषणा DF_ENCRYPTION_DISABLE      0x01
-#घोषणा DF_SNIFF_MODE_ENABLE       0x80
+#define DF_ENCRYPTION_DISABLE      0x01
+#define DF_SNIFF_MODE_ENABLE       0x80
 
-काष्ठा acx_feature_config अणु
-	काष्ठा acx_header header;
+struct acx_feature_config {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 padding[3];
 	__le32 options;
 	__le32 data_flow_options;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_current_tx_घातer अणु
-	काष्ठा acx_header header;
+struct acx_current_tx_power {
+	struct acx_header header;
 
 	u8  role_id;
-	u8  current_tx_घातer;
+	u8  current_tx_power;
 	u8  padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_wake_up_condition अणु
-	काष्ठा acx_header header;
+struct acx_wake_up_condition {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 wake_up_event; /* Only one bit can be set */
-	u8 listen_पूर्णांकerval;
+	u8 listen_interval;
 	u8 pad[1];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_aid अणु
-	काष्ठा acx_header header;
+struct acx_aid {
+	struct acx_header header;
 
 	/*
 	 * To be set when associated with an AP.
@@ -376,64 +375,64 @@
 	u8 role_id;
 	u8 reserved;
 	__le16 aid;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत acx_preamble_type अणु
+enum acx_preamble_type {
 	ACX_PREAMBLE_LONG = 0,
 	ACX_PREAMBLE_SHORT = 1
-पूर्ण;
+};
 
-काष्ठा acx_preamble अणु
-	काष्ठा acx_header header;
+struct acx_preamble {
+	struct acx_header header;
 
 	/*
-	 * When set, the WiLink transmits the frames with a लघु preamble and
-	 * when cleared, the WiLink transmits the frames with a दीर्घ preamble.
+	 * When set, the WiLink transmits the frames with a short preamble and
+	 * when cleared, the WiLink transmits the frames with a long preamble.
 	 */
 	u8 role_id;
 	u8 preamble;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत acx_ctsprotect_type अणु
+enum acx_ctsprotect_type {
 	CTSPROTECT_DISABLE = 0,
 	CTSPROTECT_ENABLE = 1
-पूर्ण;
+};
 
-काष्ठा acx_ctsprotect अणु
-	काष्ठा acx_header header;
+struct acx_ctsprotect {
+	struct acx_header header;
 	u8 role_id;
 	u8 ctsprotect;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_rate_class अणु
+struct acx_rate_class {
 	__le32 enabled_rates;
-	u8 लघु_retry_limit;
-	u8 दीर्घ_retry_limit;
+	u8 short_retry_limit;
+	u8 long_retry_limit;
 	u8 aflags;
 	u8 reserved;
-पूर्ण;
+};
 
-काष्ठा acx_rate_policy अणु
-	काष्ठा acx_header header;
+struct acx_rate_policy {
+	struct acx_header header;
 
 	__le32 rate_policy_idx;
-	काष्ठा acx_rate_class rate_policy;
-पूर्ण __packed;
+	struct acx_rate_class rate_policy;
+} __packed;
 
-काष्ठा acx_ac_cfg अणु
-	काष्ठा acx_header header;
+struct acx_ac_cfg {
+	struct acx_header header;
 	u8 role_id;
 	u8 ac;
-	u8 aअगरsn;
+	u8 aifsn;
 	u8 cw_min;
 	__le16 cw_max;
 	__le16 tx_op_limit;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_tid_config अणु
-	काष्ठा acx_header header;
+struct acx_tid_config {
+	struct acx_header header;
 	u8 role_id;
 	u8 queue_id;
 	u8 channel_type;
@@ -442,22 +441,22 @@
 	u8 ack_policy;
 	u8 padding[2];
 	__le32 apsd_conf[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_frag_threshold अणु
-	काष्ठा acx_header header;
+struct acx_frag_threshold {
+	struct acx_header header;
 	__le16 frag_threshold;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_tx_config_options अणु
-	काष्ठा acx_header header;
-	__le16 tx_compl_समयout;     /* msec */
+struct acx_tx_config_options {
+	struct acx_header header;
+	__le16 tx_compl_timeout;     /* msec */
 	__le16 tx_compl_threshold;   /* number of packets */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl12xx_acx_config_memory अणु
-	काष्ठा acx_header header;
+struct wl12xx_acx_config_memory {
+	struct acx_header header;
 
 	u8 rx_mem_block_num;
 	u8 tx_min_mem_block_num;
@@ -465,15 +464,15 @@
 	u8 num_ssid_profiles;
 	__le32 total_tx_descriptors;
 	u8 dyn_mem_enable;
-	u8 tx_मुक्त_req;
-	u8 rx_मुक्त_req;
+	u8 tx_free_req;
+	u8 rx_free_req;
 	u8 tx_min;
 	u8 fwlog_blocks;
 	u8 padding[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_mem_map अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_mem_map {
+	struct acx_header header;
 
 	__le32 code_start;
 	__le32 code_end;
@@ -484,10 +483,10 @@
 	__le32 sta_table_start;
 	__le32 sta_table_end;
 
-	__le32 packet_ढाँचा_start;
-	__le32 packet_ढाँचा_end;
+	__le32 packet_template_start;
+	__le32 packet_template_end;
 
-	/* Address of the TX result पूर्णांकerface (control block) */
+	/* Address of the TX result interface (control block) */
 	__le32 tx_result;
 	__le32 tx_result_queue_start;
 
@@ -503,10 +502,10 @@
 	__le32 debug_buffer2_start;
 	__le32 debug_buffer2_end;
 
-	/* Number of blocks FW allocated क्रम TX packets */
+	/* Number of blocks FW allocated for TX packets */
 	__le32 num_tx_mem_blocks;
 
-	/* Number of blocks FW allocated क्रम RX packets */
+	/* Number of blocks FW allocated for RX packets */
 	__le32 num_rx_mem_blocks;
 
 	/* the following 4 fields are valid in SLAVE mode only */
@@ -514,121 +513,121 @@
 	u8 *rx_cbuf;
 	__le32 rx_ctrl;
 	__le32 tx_ctrl;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_rx_config_opt अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_rx_config_opt {
+	struct acx_header header;
 
 	__le16 mblk_threshold;
 	__le16 threshold;
-	__le16 समयout;
+	__le16 timeout;
 	u8 queue_type;
 	u8 reserved;
-पूर्ण __packed;
+} __packed;
 
 
-काष्ठा wl1271_acx_bet_enable अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_bet_enable {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 enable;
 	u8 max_consecutive;
 	u8 padding[1];
-पूर्ण __packed;
+} __packed;
 
-#घोषणा ACX_IPV4_VERSION 4
-#घोषणा ACX_IPV6_VERSION 6
-#घोषणा ACX_IPV4_ADDR_SIZE 4
+#define ACX_IPV4_VERSION 4
+#define ACX_IPV6_VERSION 6
+#define ACX_IPV4_ADDR_SIZE 4
 
-/* biपंचांगap of enabled arp_filter features */
-#घोषणा ACX_ARP_FILTER_ARP_FILTERING	BIT(0)
-#घोषणा ACX_ARP_FILTER_AUTO_ARP		BIT(1)
+/* bitmap of enabled arp_filter features */
+#define ACX_ARP_FILTER_ARP_FILTERING	BIT(0)
+#define ACX_ARP_FILTER_AUTO_ARP		BIT(1)
 
-काष्ठा wl1271_acx_arp_filter अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_arp_filter {
+	struct acx_header header;
 	u8 role_id;
 	u8 version;         /* ACX_IPV4_VERSION, ACX_IPV6_VERSION */
-	u8 enable;          /* biपंचांगap of enabled ARP filtering features */
+	u8 enable;          /* bitmap of enabled ARP filtering features */
 	u8 padding[1];
 	u8 address[16];     /* The configured device IP address - all ARP
 			       requests directed to this IP address will pass
 			       through. For IPv4, the first four bytes are
 			       used. */
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_pm_config अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_pm_config {
+	struct acx_header header;
 
-	__le32 host_clk_settling_समय;
+	__le32 host_clk_settling_time;
 	u8 host_fast_wakeup_support;
 	u8 padding[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_keep_alive_mode अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_keep_alive_mode {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 enabled;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	ACX_KEEP_ALIVE_NO_TX = 0,
 	ACX_KEEP_ALIVE_PERIOD_ONLY
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ACX_KEEP_ALIVE_TPL_INVALID = 0,
 	ACX_KEEP_ALIVE_TPL_VALID
-पूर्ण;
+};
 
-काष्ठा wl1271_acx_keep_alive_config अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_keep_alive_config {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 index;
 	u8 tpl_validation;
 	u8 trigger;
 	__le32 period;
-पूर्ण __packed;
+} __packed;
 
-/* TODO: maybe this needs to be moved somewhere अन्यथा? */
-#घोषणा HOST_IF_CFG_RX_FIFO_ENABLE     BIT(0)
-#घोषणा HOST_IF_CFG_TX_EXTRA_BLKS_SWAP BIT(1)
-#घोषणा HOST_IF_CFG_TX_PAD_TO_SDIO_BLK BIT(3)
-#घोषणा HOST_IF_CFG_RX_PAD_TO_SDIO_BLK BIT(4)
-#घोषणा HOST_IF_CFG_ADD_RX_ALIGNMENT   BIT(6)
+/* TODO: maybe this needs to be moved somewhere else? */
+#define HOST_IF_CFG_RX_FIFO_ENABLE     BIT(0)
+#define HOST_IF_CFG_TX_EXTRA_BLKS_SWAP BIT(1)
+#define HOST_IF_CFG_TX_PAD_TO_SDIO_BLK BIT(3)
+#define HOST_IF_CFG_RX_PAD_TO_SDIO_BLK BIT(4)
+#define HOST_IF_CFG_ADD_RX_ALIGNMENT   BIT(6)
 
-क्रमागत अणु
+enum {
 	WL1271_ACX_TRIG_TYPE_LEVEL = 0,
 	WL1271_ACX_TRIG_TYPE_EDGE,
-पूर्ण;
+};
 
-क्रमागत अणु
-	WL1271_ACX_TRIG_सूची_LOW = 0,
-	WL1271_ACX_TRIG_सूची_HIGH,
-	WL1271_ACX_TRIG_सूची_BIसूची,
-पूर्ण;
+enum {
+	WL1271_ACX_TRIG_DIR_LOW = 0,
+	WL1271_ACX_TRIG_DIR_HIGH,
+	WL1271_ACX_TRIG_DIR_BIDIR,
+};
 
-क्रमागत अणु
+enum {
 	WL1271_ACX_TRIG_ENABLE = 1,
 	WL1271_ACX_TRIG_DISABLE,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WL1271_ACX_TRIG_METRIC_RSSI_BEACON = 0,
 	WL1271_ACX_TRIG_METRIC_RSSI_DATA,
 	WL1271_ACX_TRIG_METRIC_SNR_BEACON,
 	WL1271_ACX_TRIG_METRIC_SNR_DATA,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WL1271_ACX_TRIG_IDX_RSSI = 0,
 	WL1271_ACX_TRIG_COUNT = 8,
-पूर्ण;
+};
 
-काष्ठा wl1271_acx_rssi_snr_trigger अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_rssi_snr_trigger {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 metric;
@@ -640,10 +639,10 @@
 	u8 index;
 	u8 enable;
 	u8 padding[1];
-पूर्ण;
+};
 
-काष्ठा wl1271_acx_rssi_snr_avg_weights अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_rssi_snr_avg_weights {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 padding[3];
@@ -651,21 +650,21 @@
 	u8 rssi_data;
 	u8 snr_beacon;
 	u8 snr_data;
-पूर्ण;
+};
 
 
 /* special capability bit (not employed by the 802.11n spec) */
-#घोषणा WL12XX_HT_CAP_HT_OPERATION BIT(16)
+#define WL12XX_HT_CAP_HT_OPERATION BIT(16)
 
 /*
  * ACX_PEER_HT_CAP
  * Configure HT capabilities - declare the capabilities of the peer
  * we are connected to.
  */
-काष्ठा wl1271_acx_ht_capabilities अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ht_capabilities {
+	struct acx_header header;
 
-	/* biपंचांगask of capability bits supported by the peer */
+	/* bitmask of capability bits supported by the peer */
 	__le32 ht_capabilites;
 
 	/* Indicates to which link these capabilities apply. */
@@ -681,19 +680,19 @@
 	u8 ampdu_min_spacing;
 
 	u8 padding;
-पूर्ण __packed;
+} __packed;
 
 /*
  * ACX_HT_BSS_OPERATION
- * Configure HT capabilities - AP rules क्रम behavior in the BSS.
+ * Configure HT capabilities - AP rules for behavior in the BSS.
  */
-काष्ठा wl1271_acx_ht_inक्रमmation अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ht_information {
+	struct acx_header header;
 
 	u8 role_id;
 
 	/* Values: 0 - RIFS not allowed, 1 - RIFS allowed */
-	u8 rअगरs_mode;
+	u8 rifs_mode;
 
 	/* Values: 0 - 3 like in spec */
 	u8 ht_protection;
@@ -709,57 +708,57 @@
 	 *         1 - Dual CTS Protection required
 	 * Note: When this value is set to 1 FW will protect all TXOP with RTS
 	 * frame and will not use CTS-to-self regardless of the value of the
-	 * ACX_CTS_PROTECTION inक्रमmation element
+	 * ACX_CTS_PROTECTION information element
 	 */
 	u8 dual_cts_protection;
 
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_ba_initiator_policy अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ba_initiator_policy {
+	struct acx_header header;
 
-	/* Specअगरies role Id, Range 0-7, 0xFF means ANY role. */
+	/* Specifies role Id, Range 0-7, 0xFF means ANY role. */
 	u8 role_id;
 
 	/*
-	 * Per TID setting क्रम allowing TX BA. Set a bit to 1 to allow
-	 * TX BA sessions क्रम the corresponding TID.
+	 * Per TID setting for allowing TX BA. Set a bit to 1 to allow
+	 * TX BA sessions for the corresponding TID.
 	 */
-	u8 tid_biपंचांगap;
+	u8 tid_bitmap;
 
-	/* Winकरोws size in number of packets */
+	/* Windows size in number of packets */
 	u8 win_size;
 
 	u8 padding1[1];
 
-	/* As initiator inactivity समयout in समय units(TU) of 1024us */
-	u16 inactivity_समयout;
+	/* As initiator inactivity timeout in time units(TU) of 1024us */
+	u16 inactivity_timeout;
 
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_ba_receiver_setup अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ba_receiver_setup {
+	struct acx_header header;
 
-	/* Specअगरies link id, range 0-31 */
+	/* Specifies link id, range 0-31 */
 	u8 hlid;
 
 	u8 tid;
 
 	u8 enable;
 
-	/* Winकरोws size in number of packets */
+	/* Windows size in number of packets */
 	u8 win_size;
 
 	/* BA session starting sequence number.  RANGE 0-FFF */
 	u16 ssn;
 
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl12xx_acx_fw_tsf_inक्रमmation अणु
-	काष्ठा acx_header header;
+struct wl12xx_acx_fw_tsf_information {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 padding1[3];
@@ -769,115 +768,115 @@
 	__le32 last_tbtt_low;
 	u8 last_dtim_count;
 	u8 padding2[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_ps_rx_streaming अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ps_rx_streaming {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 tid;
 	u8 enable;
 
-	/* पूर्णांकerval between triggers (10-100 msec) */
+	/* interval between triggers (10-100 msec) */
 	u8 period;
 
-	/* समयout beक्रमe first trigger (0-200 msec) */
-	u8 समयout;
+	/* timeout before first trigger (0-200 msec) */
+	u8 timeout;
 	u8 padding[3];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_ap_max_tx_retry अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_ap_max_tx_retry {
+	struct acx_header header;
 
 	u8 role_id;
 	u8 padding_1;
 
 	/*
-	 * the number of frames transmission failures beक्रमe
+	 * the number of frames transmission failures before
 	 * issuing the aging event.
 	 */
 	__le16 max_tx_retry;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_config_ps अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_config_ps {
+	struct acx_header header;
 
-	u8 निकास_retries;
+	u8 exit_retries;
 	u8 enter_retries;
 	u8 padding[2];
 	__le32 null_data_rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl1271_acx_inconnection_sta अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_inconnection_sta {
+	struct acx_header header;
 
 	u8 addr[ETH_ALEN];
 	u8 role_id;
 	u8 padding;
-पूर्ण __packed;
+} __packed;
 
 /*
  * ACX_FM_COEX_CFG
  * set the FM co-existence parameters.
  */
-काष्ठा wl1271_acx_fm_coex अणु
-	काष्ठा acx_header header;
+struct wl1271_acx_fm_coex {
+	struct acx_header header;
 	/* enable(1) / disable(0) the FM Coex feature */
 	u8 enable;
 	/*
 	 * Swallow period used in COEX PLL swallowing mechanism.
-	 * 0xFF = use FW शेष
+	 * 0xFF = use FW default
 	 */
 	u8 swallow_period;
 	/*
-	 * The N भागider used in COEX PLL swallowing mechanism क्रम Fref of
-	 * 38.4/19.2 Mhz. 0xFF = use FW शेष
+	 * The N divider used in COEX PLL swallowing mechanism for Fref of
+	 * 38.4/19.2 Mhz. 0xFF = use FW default
 	 */
-	u8 n_भागider_fref_set_1;
+	u8 n_divider_fref_set_1;
 	/*
-	 * The N भागider used in COEX PLL swallowing mechanism क्रम Fref of
-	 * 26/52 Mhz. 0xFF = use FW शेष
+	 * The N divider used in COEX PLL swallowing mechanism for Fref of
+	 * 26/52 Mhz. 0xFF = use FW default
 	 */
-	u8 n_भागider_fref_set_2;
+	u8 n_divider_fref_set_2;
 	/*
-	 * The M भागider used in COEX PLL swallowing mechanism क्रम Fref of
-	 * 38.4/19.2 Mhz. 0xFFFF = use FW शेष
+	 * The M divider used in COEX PLL swallowing mechanism for Fref of
+	 * 38.4/19.2 Mhz. 0xFFFF = use FW default
 	 */
-	__le16 m_भागider_fref_set_1;
+	__le16 m_divider_fref_set_1;
 	/*
-	 * The M भागider used in COEX PLL swallowing mechanism क्रम Fref of
-	 * 26/52 Mhz. 0xFFFF = use FW शेष
+	 * The M divider used in COEX PLL swallowing mechanism for Fref of
+	 * 26/52 Mhz. 0xFFFF = use FW default
 	 */
-	__le16 m_भागider_fref_set_2;
+	__le16 m_divider_fref_set_2;
 	/*
-	 * The समय duration in uSec required क्रम COEX PLL to stabilize.
-	 * 0xFFFFFFFF = use FW शेष
+	 * The time duration in uSec required for COEX PLL to stabilize.
+	 * 0xFFFFFFFF = use FW default
 	 */
-	__le32 coex_pll_stabilization_समय;
+	__le32 coex_pll_stabilization_time;
 	/*
-	 * The समय duration in uSec required क्रम LDO to stabilize.
-	 * 0xFFFFFFFF = use FW शेष
+	 * The time duration in uSec required for LDO to stabilize.
+	 * 0xFFFFFFFF = use FW default
 	 */
-	__le16 lकरो_stabilization_समय;
+	__le16 ldo_stabilization_time;
 	/*
 	 * The disturbed frequency band margin around the disturbed frequency
 	 * center (single sided).
-	 * For example, अगर 2 is configured, the following channels will be
+	 * For example, if 2 is configured, the following channels will be
 	 * considered disturbed channel:
 	 *   80 +- 0.1 MHz, 91 +- 0.1 MHz, 98 +- 0.1 MHz, 102 +- 0.1 MH
-	 * 0xFF = use FW शेष
+	 * 0xFF = use FW default
 	 */
 	u8 fm_disturbed_band_margin;
 	/*
-	 * The swallow घड़ी dअगरference of the swallowing mechanism.
-	 * 0xFF = use FW शेष
+	 * The swallow clock difference of the swallowing mechanism.
+	 * 0xFF = use FW default
 	 */
-	u8 swallow_clk_dअगरf;
-पूर्ण __packed;
+	u8 swallow_clk_diff;
+} __packed;
 
-#घोषणा ACX_RATE_MGMT_ALL_PARAMS 0xff
-काष्ठा wl12xx_acx_set_rate_mgmt_params अणु
-	काष्ठा acx_header header;
+#define ACX_RATE_MGMT_ALL_PARAMS 0xff
+struct wl12xx_acx_set_rate_mgmt_params {
+	struct acx_header header;
 
 	u8 index; /* 0xff to configure all params */
 	u8 padding1;
@@ -889,20 +888,20 @@
 	u8 inverse_curiosity_factor;
 	u8 tx_fail_low_th;
 	u8 tx_fail_high_th;
-	u8 per_alpha_shअगरt;
-	u8 per_add_shअगरt;
-	u8 per_beta1_shअगरt;
-	u8 per_beta2_shअगरt;
+	u8 per_alpha_shift;
+	u8 per_add_shift;
+	u8 per_beta1_shift;
+	u8 per_beta2_shift;
 	u8 rate_check_up;
-	u8 rate_check_करोwn;
+	u8 rate_check_down;
 	u8 rate_retry_policy[ACX_RATE_MGMT_NUM_OF_RATES];
 	u8 padding2[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा wl12xx_acx_config_hangover अणु
-	काष्ठा acx_header header;
+struct wl12xx_acx_config_hangover {
+	struct acx_header header;
 
-	__le32 recover_समय;
+	__le32 recover_time;
 	u8 hangover_period;
 	u8 dynamic_mode;
 	u8 early_termination_mode;
@@ -910,26 +909,26 @@
 	u8 min_period;
 	u8 increase_delta;
 	u8 decrease_delta;
-	u8 quiet_समय;
-	u8 increase_समय;
-	u8 winकरोw_size;
+	u8 quiet_time;
+	u8 increase_time;
+	u8 window_size;
 	u8 padding[2];
-पूर्ण __packed;
+} __packed;
 
 
-काष्ठा acx_शेष_rx_filter अणु
-	काष्ठा acx_header header;
+struct acx_default_rx_filter {
+	struct acx_header header;
 	u8 enable;
 
 	/* action of type FILTER_XXX */
-	u8 शेष_action;
+	u8 default_action;
 
 	u8 pad[2];
-पूर्ण __packed;
+} __packed;
 
 
-काष्ठा acx_rx_filter_cfg अणु
-	काष्ठा acx_header header;
+struct acx_rx_filter_cfg {
+	struct acx_header header;
 
 	u8 enable;
 
@@ -940,10 +939,10 @@
 
 	u8 num_fields;
 	u8 fields[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा acx_roaming_stats अणु
-	काष्ठा acx_header header;
+struct acx_roaming_stats {
+	struct acx_header header;
 
 	u8	role_id;
 	u8	pad[3];
@@ -952,9 +951,9 @@
 	u8	snr_bacon;
 	s8	rssi_data;
 	s8	rssi_beacon;
-पूर्ण __packed;
+} __packed;
 
-क्रमागत अणु
+enum {
 	ACX_WAKE_UP_CONDITIONS           = 0x0000,
 	ACX_MEM_CFG                      = 0x0001,
 	ACX_SLOT                         = 0x0002,
@@ -1024,100 +1023,100 @@
 	ACX_CONFIG_HANGOVER              = 0x0042,
 	ACX_FEATURE_CFG                  = 0x0043,
 	ACX_PROTECTION_CFG               = 0x0044,
-पूर्ण;
+};
 
 
-पूर्णांक wl1271_acx_wake_up_conditions(काष्ठा wl1271 *wl,
-				  काष्ठा wl12xx_vअगर *wlvअगर,
-				  u8 wake_up_event, u8 listen_पूर्णांकerval);
-पूर्णांक wl1271_acx_sleep_auth(काष्ठा wl1271 *wl, u8 sleep_auth);
-पूर्णांक wl1271_acx_tx_घातer(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			पूर्णांक घातer);
-पूर्णांक wl1271_acx_feature_cfg(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_mem_map(काष्ठा wl1271 *wl,
-		       काष्ठा acx_header *mem_map, माप_प्रकार len);
-पूर्णांक wl1271_acx_rx_msdu_lअगरe_समय(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_slot(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		    क्रमागत acx_slot_type slot_समय);
-पूर्णांक wl1271_acx_group_address_tbl(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-				 bool enable, व्योम *mc_list, u32 mc_list_len);
-पूर्णांक wl1271_acx_service_period_समयout(काष्ठा wl1271 *wl,
-				      काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_rts_threshold(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_wake_up_conditions(struct wl1271 *wl,
+				  struct wl12xx_vif *wlvif,
+				  u8 wake_up_event, u8 listen_interval);
+int wl1271_acx_sleep_auth(struct wl1271 *wl, u8 sleep_auth);
+int wl1271_acx_tx_power(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			int power);
+int wl1271_acx_feature_cfg(struct wl1271 *wl, struct wl12xx_vif *wlvif);
+int wl1271_acx_mem_map(struct wl1271 *wl,
+		       struct acx_header *mem_map, size_t len);
+int wl1271_acx_rx_msdu_life_time(struct wl1271 *wl);
+int wl1271_acx_slot(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		    enum acx_slot_type slot_time);
+int wl1271_acx_group_address_tbl(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+				 bool enable, void *mc_list, u32 mc_list_len);
+int wl1271_acx_service_period_timeout(struct wl1271 *wl,
+				      struct wl12xx_vif *wlvif);
+int wl1271_acx_rts_threshold(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			     u32 rts_threshold);
-पूर्णांक wl1271_acx_dco_itrim_params(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_beacon_filter_opt(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_dco_itrim_params(struct wl1271 *wl);
+int wl1271_acx_beacon_filter_opt(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				 bool enable_filter);
-पूर्णांक wl1271_acx_beacon_filter_table(काष्ठा wl1271 *wl,
-				   काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_conn_monit_params(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_beacon_filter_table(struct wl1271 *wl,
+				   struct wl12xx_vif *wlvif);
+int wl1271_acx_conn_monit_params(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				 bool enable);
-पूर्णांक wl1271_acx_sg_enable(काष्ठा wl1271 *wl, bool enable);
-पूर्णांक wl12xx_acx_sg_cfg(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_cca_threshold(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_bcn_dtim_options(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_aid(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u16 aid);
-पूर्णांक wl1271_acx_event_mbox_mask(काष्ठा wl1271 *wl, u32 event_mask);
-पूर्णांक wl1271_acx_set_preamble(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			    क्रमागत acx_preamble_type preamble);
-पूर्णांक wl1271_acx_cts_protect(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			   क्रमागत acx_ctsprotect_type ctsprotect);
-पूर्णांक wl1271_acx_statistics(काष्ठा wl1271 *wl, व्योम *stats);
-पूर्णांक wl1271_acx_sta_rate_policies(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_ap_rate_policy(काष्ठा wl1271 *wl, काष्ठा conf_tx_rate_class *c,
+int wl1271_acx_sg_enable(struct wl1271 *wl, bool enable);
+int wl12xx_acx_sg_cfg(struct wl1271 *wl);
+int wl1271_acx_cca_threshold(struct wl1271 *wl);
+int wl1271_acx_bcn_dtim_options(struct wl1271 *wl, struct wl12xx_vif *wlvif);
+int wl1271_acx_aid(struct wl1271 *wl, struct wl12xx_vif *wlvif, u16 aid);
+int wl1271_acx_event_mbox_mask(struct wl1271 *wl, u32 event_mask);
+int wl1271_acx_set_preamble(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			    enum acx_preamble_type preamble);
+int wl1271_acx_cts_protect(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			   enum acx_ctsprotect_type ctsprotect);
+int wl1271_acx_statistics(struct wl1271 *wl, void *stats);
+int wl1271_acx_sta_rate_policies(struct wl1271 *wl, struct wl12xx_vif *wlvif);
+int wl1271_acx_ap_rate_policy(struct wl1271 *wl, struct conf_tx_rate_class *c,
 		      u8 idx);
-पूर्णांक wl1271_acx_ac_cfg(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-		      u8 ac, u8 cw_min, u16 cw_max, u8 aअगरsn, u16 txop);
-पूर्णांक wl1271_acx_tid_cfg(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_ac_cfg(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+		      u8 ac, u8 cw_min, u16 cw_max, u8 aifsn, u16 txop);
+int wl1271_acx_tid_cfg(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 		       u8 queue_id, u8 channel_type,
 		       u8 tsid, u8 ps_scheme, u8 ack_policy,
 		       u32 apsd_conf0, u32 apsd_conf1);
-पूर्णांक wl1271_acx_frag_threshold(काष्ठा wl1271 *wl, u32 frag_threshold);
-पूर्णांक wl1271_acx_tx_config_options(काष्ठा wl1271 *wl);
-पूर्णांक wl12xx_acx_mem_cfg(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_init_mem_config(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_init_rx_पूर्णांकerrupt(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_smart_reflex(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_bet_enable(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_frag_threshold(struct wl1271 *wl, u32 frag_threshold);
+int wl1271_acx_tx_config_options(struct wl1271 *wl);
+int wl12xx_acx_mem_cfg(struct wl1271 *wl);
+int wl1271_acx_init_mem_config(struct wl1271 *wl);
+int wl1271_acx_init_rx_interrupt(struct wl1271 *wl);
+int wl1271_acx_smart_reflex(struct wl1271 *wl);
+int wl1271_acx_bet_enable(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			  bool enable);
-पूर्णांक wl1271_acx_arp_ip_filter(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_arp_ip_filter(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			     u8 enable, __be32 address);
-पूर्णांक wl1271_acx_pm_config(काष्ठा wl1271 *wl);
-पूर्णांक wl1271_acx_keep_alive_mode(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *vअगर,
+int wl1271_acx_pm_config(struct wl1271 *wl);
+int wl1271_acx_keep_alive_mode(struct wl1271 *wl, struct wl12xx_vif *vif,
 			       bool enable);
-पूर्णांक wl1271_acx_keep_alive_config(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_keep_alive_config(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				 u8 index, u8 tpl_valid);
-पूर्णांक wl1271_acx_rssi_snr_trigger(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_rssi_snr_trigger(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				bool enable, s16 thold, u8 hyst);
-पूर्णांक wl1271_acx_rssi_snr_avg_weights(काष्ठा wl1271 *wl,
-				    काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_set_ht_capabilities(काष्ठा wl1271 *wl,
-				    काष्ठा ieee80211_sta_ht_cap *ht_cap,
+int wl1271_acx_rssi_snr_avg_weights(struct wl1271 *wl,
+				    struct wl12xx_vif *wlvif);
+int wl1271_acx_set_ht_capabilities(struct wl1271 *wl,
+				    struct ieee80211_sta_ht_cap *ht_cap,
 				    bool allow_ht_operation, u8 hlid);
-पूर्णांक wl1271_acx_set_ht_inक्रमmation(काष्ठा wl1271 *wl,
-				   काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_set_ht_information(struct wl1271 *wl,
+				   struct wl12xx_vif *wlvif,
 				   u16 ht_operation_mode);
-पूर्णांक wl12xx_acx_set_ba_initiator_policy(काष्ठा wl1271 *wl,
-				       काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl12xx_acx_set_ba_receiver_session(काष्ठा wl1271 *wl, u8 tid_index,
+int wl12xx_acx_set_ba_initiator_policy(struct wl1271 *wl,
+				       struct wl12xx_vif *wlvif);
+int wl12xx_acx_set_ba_receiver_session(struct wl1271 *wl, u8 tid_index,
 				       u16 ssn, bool enable, u8 peer_hlid,
 				       u8 win_size);
-पूर्णांक wl12xx_acx_tsf_info(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			u64 *maस_समय);
-पूर्णांक wl1271_acx_ps_rx_streaming(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl12xx_acx_tsf_info(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			u64 *mactime);
+int wl1271_acx_ps_rx_streaming(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			       bool enable);
-पूर्णांक wl1271_acx_ap_max_tx_retry(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl12xx_acx_config_ps(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
-पूर्णांक wl1271_acx_set_inconnection_sta(काष्ठा wl1271 *wl,
-				    काष्ठा wl12xx_vअगर *wlvअगर, u8 *addr);
-पूर्णांक wl1271_acx_fm_coex(काष्ठा wl1271 *wl);
-पूर्णांक wl12xx_acx_set_rate_mgmt_params(काष्ठा wl1271 *wl);
-पूर्णांक wl12xx_acx_config_hangover(काष्ठा wl1271 *wl);
-पूर्णांक wlcore_acx_average_rssi(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+int wl1271_acx_ap_max_tx_retry(struct wl1271 *wl, struct wl12xx_vif *wlvif);
+int wl12xx_acx_config_ps(struct wl1271 *wl, struct wl12xx_vif *wlvif);
+int wl1271_acx_set_inconnection_sta(struct wl1271 *wl,
+				    struct wl12xx_vif *wlvif, u8 *addr);
+int wl1271_acx_fm_coex(struct wl1271 *wl);
+int wl12xx_acx_set_rate_mgmt_params(struct wl1271 *wl);
+int wl12xx_acx_config_hangover(struct wl1271 *wl);
+int wlcore_acx_average_rssi(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 			    s8 *avg_rssi);
 
-पूर्णांक wl1271_acx_शेष_rx_filter_enable(काष्ठा wl1271 *wl, bool enable,
-					क्रमागत rx_filter_action action);
-पूर्णांक wl1271_acx_set_rx_filter(काष्ठा wl1271 *wl, u8 index, bool enable,
-			     काष्ठा wl12xx_rx_filter *filter);
-#पूर्ण_अगर /* __WL1271_ACX_H__ */
+int wl1271_acx_default_rx_filter_enable(struct wl1271 *wl, bool enable,
+					enum rx_filter_action action);
+int wl1271_acx_set_rx_filter(struct wl1271 *wl, u8 index, bool enable,
+			     struct wl12xx_rx_filter *filter);
+#endif /* __WL1271_ACX_H__ */

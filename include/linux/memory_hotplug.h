@@ -1,169 +1,168 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_MEMORY_HOTPLUG_H
-#घोषणा __LINUX_MEMORY_HOTPLUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_MEMORY_HOTPLUG_H
+#define __LINUX_MEMORY_HOTPLUG_H
 
-#समावेश <linux/mmzone.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/bug.h>
+#include <linux/mmzone.h>
+#include <linux/spinlock.h>
+#include <linux/notifier.h>
+#include <linux/bug.h>
 
-काष्ठा page;
-काष्ठा zone;
-काष्ठा pglist_data;
-काष्ठा mem_section;
-काष्ठा memory_block;
-काष्ठा resource;
-काष्ठा vmem_alपंचांगap;
+struct page;
+struct zone;
+struct pglist_data;
+struct mem_section;
+struct memory_block;
+struct resource;
+struct vmem_altmap;
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
-काष्ठा page *pfn_to_online_page(अचिन्हित दीर्घ pfn);
+#ifdef CONFIG_MEMORY_HOTPLUG
+struct page *pfn_to_online_page(unsigned long pfn);
 
 /*
- * Types क्रम मुक्त booपंचांगem stored in page->lru.next. These have to be in
- * some अक्रमom range in अचिन्हित दीर्घ space क्रम debugging purposes.
+ * Types for free bootmem stored in page->lru.next. These have to be in
+ * some random range in unsigned long space for debugging purposes.
  */
-क्रमागत अणु
+enum {
 	MEMORY_HOTPLUG_MIN_BOOTMEM_TYPE = 12,
 	SECTION_INFO = MEMORY_HOTPLUG_MIN_BOOTMEM_TYPE,
 	MIX_SECTION_INFO,
 	NODE_INFO,
 	MEMORY_HOTPLUG_MAX_BOOTMEM_TYPE = NODE_INFO,
-पूर्ण;
+};
 
-/* Types क्रम control the zone type of onlined and offlined memory */
-क्रमागत अणु
+/* Types for control the zone type of onlined and offlined memory */
+enum {
 	/* Offline the memory. */
 	MMOP_OFFLINE = 0,
-	/* Online the memory. Zone depends, see शेष_zone_क्रम_pfn(). */
+	/* Online the memory. Zone depends, see default_zone_for_pfn(). */
 	MMOP_ONLINE,
 	/* Online the memory to ZONE_NORMAL. */
 	MMOP_ONLINE_KERNEL,
 	/* Online the memory to ZONE_MOVABLE. */
 	MMOP_ONLINE_MOVABLE,
-पूर्ण;
+};
 
-/* Flags क्रम add_memory() and मित्रs to specअगरy memory hotplug details. */
-प्रकार पूर्णांक __bitwise mhp_t;
+/* Flags for add_memory() and friends to specify memory hotplug details. */
+typedef int __bitwise mhp_t;
 
 /* No special request */
-#घोषणा MHP_NONE		((__क्रमce mhp_t)0)
+#define MHP_NONE		((__force mhp_t)0)
 /*
  * Allow merging of the added System RAM resource with adjacent,
  * mergeable resources. After a successful call to add_memory_resource()
- * with this flag set, the resource poपूर्णांकer must no दीर्घer be used as it
+ * with this flag set, the resource pointer must no longer be used as it
  * might be stale, or the resource might have changed.
  */
-#घोषणा MHP_MERGE_RESOURCE	((__क्रमce mhp_t)BIT(0))
+#define MHP_MERGE_RESOURCE	((__force mhp_t)BIT(0))
 
 /*
- * We want memmap (काष्ठा page array) to be self contained.
- * To करो so, we will use the beginning of the hot-added range to build
- * the page tables क्रम the memmap array that describes the entire range.
+ * We want memmap (struct page array) to be self contained.
+ * To do so, we will use the beginning of the hot-added range to build
+ * the page tables for the memmap array that describes the entire range.
  * Only selected architectures support it with SPARSE_VMEMMAP.
  */
-#घोषणा MHP_MEMMAP_ON_MEMORY   ((__क्रमce mhp_t)BIT(1))
+#define MHP_MEMMAP_ON_MEMORY   ((__force mhp_t)BIT(1))
 
 /*
- * Extended parameters क्रम memory hotplug:
- * alपंचांगap: alternative allocator क्रम memmap array (optional)
+ * Extended parameters for memory hotplug:
+ * altmap: alternative allocator for memmap array (optional)
  * pgprot: page protection flags to apply to newly created page tables
  *	(required)
  */
-काष्ठा mhp_params अणु
-	काष्ठा vmem_alपंचांगap *alपंचांगap;
+struct mhp_params {
+	struct vmem_altmap *altmap;
 	pgprot_t pgprot;
-पूर्ण;
+};
 
 bool mhp_range_allowed(u64 start, u64 size, bool need_mapping);
-काष्ठा range mhp_get_pluggable_range(bool need_mapping);
+struct range mhp_get_pluggable_range(bool need_mapping);
 
 /*
  * Zone resizing functions
  *
  * Note: any attempt to resize a zone should has pgdat_resize_lock()
- * zone_span_ग_लिखोlock() both held. This ensure the size of a zone
- * can't be changed जबतक pgdat_resize_lock() held.
+ * zone_span_writelock() both held. This ensure the size of a zone
+ * can't be changed while pgdat_resize_lock() held.
  */
-अटल अंतरभूत अचिन्हित zone_span_seqbegin(काष्ठा zone *zone)
-अणु
-	वापस पढ़ो_seqbegin(&zone->span_seqlock);
-पूर्ण
-अटल अंतरभूत पूर्णांक zone_span_seqretry(काष्ठा zone *zone, अचिन्हित iv)
-अणु
-	वापस पढ़ो_seqretry(&zone->span_seqlock, iv);
-पूर्ण
-अटल अंतरभूत व्योम zone_span_ग_लिखोlock(काष्ठा zone *zone)
-अणु
-	ग_लिखो_seqlock(&zone->span_seqlock);
-पूर्ण
-अटल अंतरभूत व्योम zone_span_ग_लिखोunlock(काष्ठा zone *zone)
-अणु
-	ग_लिखो_sequnlock(&zone->span_seqlock);
-पूर्ण
-अटल अंतरभूत व्योम zone_seqlock_init(काष्ठा zone *zone)
-अणु
+static inline unsigned zone_span_seqbegin(struct zone *zone)
+{
+	return read_seqbegin(&zone->span_seqlock);
+}
+static inline int zone_span_seqretry(struct zone *zone, unsigned iv)
+{
+	return read_seqretry(&zone->span_seqlock, iv);
+}
+static inline void zone_span_writelock(struct zone *zone)
+{
+	write_seqlock(&zone->span_seqlock);
+}
+static inline void zone_span_writeunlock(struct zone *zone)
+{
+	write_sequnlock(&zone->span_seqlock);
+}
+static inline void zone_seqlock_init(struct zone *zone)
+{
 	seqlock_init(&zone->span_seqlock);
-पूर्ण
-बाह्य पूर्णांक zone_grow_मुक्त_lists(काष्ठा zone *zone, अचिन्हित दीर्घ new_nr_pages);
-बाह्य पूर्णांक zone_grow_रुकोqueues(काष्ठा zone *zone, अचिन्हित दीर्घ nr_pages);
-बाह्य पूर्णांक add_one_highpage(काष्ठा page *page, पूर्णांक pfn, पूर्णांक bad_ppro);
-बाह्य व्योम adjust_present_page_count(काष्ठा zone *zone, दीर्घ nr_pages);
-/* VM पूर्णांकerface that may be used by firmware पूर्णांकerface */
-बाह्य पूर्णांक mhp_init_memmap_on_memory(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
-				     काष्ठा zone *zone);
-बाह्य व्योम mhp_deinit_memmap_on_memory(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages);
-बाह्य पूर्णांक online_pages(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
-			काष्ठा zone *zone);
-बाह्य काष्ठा zone *test_pages_in_a_zone(अचिन्हित दीर्घ start_pfn,
-					 अचिन्हित दीर्घ end_pfn);
-बाह्य व्योम __offline_isolated_pages(अचिन्हित दीर्घ start_pfn,
-				     अचिन्हित दीर्घ end_pfn);
+}
+extern int zone_grow_free_lists(struct zone *zone, unsigned long new_nr_pages);
+extern int zone_grow_waitqueues(struct zone *zone, unsigned long nr_pages);
+extern int add_one_highpage(struct page *page, int pfn, int bad_ppro);
+extern void adjust_present_page_count(struct zone *zone, long nr_pages);
+/* VM interface that may be used by firmware interface */
+extern int mhp_init_memmap_on_memory(unsigned long pfn, unsigned long nr_pages,
+				     struct zone *zone);
+extern void mhp_deinit_memmap_on_memory(unsigned long pfn, unsigned long nr_pages);
+extern int online_pages(unsigned long pfn, unsigned long nr_pages,
+			struct zone *zone);
+extern struct zone *test_pages_in_a_zone(unsigned long start_pfn,
+					 unsigned long end_pfn);
+extern void __offline_isolated_pages(unsigned long start_pfn,
+				     unsigned long end_pfn);
 
-प्रकार व्योम (*online_page_callback_t)(काष्ठा page *page, अचिन्हित पूर्णांक order);
+typedef void (*online_page_callback_t)(struct page *page, unsigned int order);
 
-बाह्य व्योम generic_online_page(काष्ठा page *page, अचिन्हित पूर्णांक order);
-बाह्य पूर्णांक set_online_page_callback(online_page_callback_t callback);
-बाह्य पूर्णांक restore_online_page_callback(online_page_callback_t callback);
+extern void generic_online_page(struct page *page, unsigned int order);
+extern int set_online_page_callback(online_page_callback_t callback);
+extern int restore_online_page_callback(online_page_callback_t callback);
 
-बाह्य पूर्णांक try_online_node(पूर्णांक nid);
+extern int try_online_node(int nid);
 
-बाह्य पूर्णांक arch_add_memory(पूर्णांक nid, u64 start, u64 size,
-			   काष्ठा mhp_params *params);
-बाह्य u64 max_mem_size;
+extern int arch_add_memory(int nid, u64 start, u64 size,
+			   struct mhp_params *params);
+extern u64 max_mem_size;
 
-बाह्य पूर्णांक mhp_online_type_from_str(स्थिर अक्षर *str);
+extern int mhp_online_type_from_str(const char *str);
 
 /* Default online_type (MMOP_*) when new memory blocks are added. */
-बाह्य पूर्णांक mhp_शेष_online_type;
-/* If movable_node boot option specअगरied */
-बाह्य bool movable_node_enabled;
-अटल अंतरभूत bool movable_node_is_enabled(व्योम)
-अणु
-	वापस movable_node_enabled;
-पूर्ण
+extern int mhp_default_online_type;
+/* If movable_node boot option specified */
+extern bool movable_node_enabled;
+static inline bool movable_node_is_enabled(void)
+{
+	return movable_node_enabled;
+}
 
-बाह्य व्योम arch_हटाओ_memory(पूर्णांक nid, u64 start, u64 size,
-			       काष्ठा vmem_alपंचांगap *alपंचांगap);
-बाह्य व्योम __हटाओ_pages(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
-			   काष्ठा vmem_alपंचांगap *alपंचांगap);
+extern void arch_remove_memory(int nid, u64 start, u64 size,
+			       struct vmem_altmap *altmap);
+extern void __remove_pages(unsigned long start_pfn, unsigned long nr_pages,
+			   struct vmem_altmap *altmap);
 
-/* reasonably generic पूर्णांकerface to expand the physical pages */
-बाह्य पूर्णांक __add_pages(पूर्णांक nid, अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
-		       काष्ठा mhp_params *params);
+/* reasonably generic interface to expand the physical pages */
+extern int __add_pages(int nid, unsigned long start_pfn, unsigned long nr_pages,
+		       struct mhp_params *params);
 
-#अगर_अघोषित CONFIG_ARCH_HAS_ADD_PAGES
-अटल अंतरभूत पूर्णांक add_pages(पूर्णांक nid, अचिन्हित दीर्घ start_pfn,
-		अचिन्हित दीर्घ nr_pages, काष्ठा mhp_params *params)
-अणु
-	वापस __add_pages(nid, start_pfn, nr_pages, params);
-पूर्ण
-#अन्यथा /* ARCH_HAS_ADD_PAGES */
-पूर्णांक add_pages(पूर्णांक nid, अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
-	      काष्ठा mhp_params *params);
-#पूर्ण_अगर /* ARCH_HAS_ADD_PAGES */
+#ifndef CONFIG_ARCH_HAS_ADD_PAGES
+static inline int add_pages(int nid, unsigned long start_pfn,
+		unsigned long nr_pages, struct mhp_params *params)
+{
+	return __add_pages(nid, start_pfn, nr_pages, params);
+}
+#else /* ARCH_HAS_ADD_PAGES */
+int add_pages(int nid, unsigned long start_pfn, unsigned long nr_pages,
+	      struct mhp_params *params);
+#endif /* ARCH_HAS_ADD_PAGES */
 
-#अगर_घोषित CONFIG_HAVE_ARCH_NODEDATA_EXTENSION
+#ifdef CONFIG_HAVE_ARCH_NODEDATA_EXTENSION
 /*
  * For supporting node-hotadd, we have to allocate a new pgdat.
  *
@@ -171,208 +170,208 @@ bool mhp_range_allowed(u64 start, u64 size, bool need_mapping);
  * node_data[nid] = kzalloc() works well. But it depends on the architecture.
  *
  * In general, generic_alloc_nodedata() is used.
- * Now, arch_मुक्त_nodedata() is just defined क्रम error path of node_hot_add.
+ * Now, arch_free_nodedata() is just defined for error path of node_hot_add.
  *
  */
-बाह्य pg_data_t *arch_alloc_nodedata(पूर्णांक nid);
-बाह्य व्योम arch_मुक्त_nodedata(pg_data_t *pgdat);
-बाह्य व्योम arch_refresh_nodedata(पूर्णांक nid, pg_data_t *pgdat);
+extern pg_data_t *arch_alloc_nodedata(int nid);
+extern void arch_free_nodedata(pg_data_t *pgdat);
+extern void arch_refresh_nodedata(int nid, pg_data_t *pgdat);
 
-#अन्यथा /* CONFIG_HAVE_ARCH_NODEDATA_EXTENSION */
+#else /* CONFIG_HAVE_ARCH_NODEDATA_EXTENSION */
 
-#घोषणा arch_alloc_nodedata(nid)	generic_alloc_nodedata(nid)
-#घोषणा arch_मुक्त_nodedata(pgdat)	generic_मुक्त_nodedata(pgdat)
+#define arch_alloc_nodedata(nid)	generic_alloc_nodedata(nid)
+#define arch_free_nodedata(pgdat)	generic_free_nodedata(pgdat)
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 /*
  * If ARCH_HAS_NODEDATA_EXTENSION=n, this func is used to allocate pgdat.
- * XXX: kदो_स्मृति_node() can't work well to get new node's memory at this समय.
- *	Because, pgdat क्रम the new node is not allocated/initialized yet itself.
+ * XXX: kmalloc_node() can't work well to get new node's memory at this time.
+ *	Because, pgdat for the new node is not allocated/initialized yet itself.
  *	To use new node's memory, more consideration will be necessary.
  */
-#घोषणा generic_alloc_nodedata(nid)				\
-(अणु								\
-	kzalloc(माप(pg_data_t), GFP_KERNEL);			\
-पूर्ण)
+#define generic_alloc_nodedata(nid)				\
+({								\
+	kzalloc(sizeof(pg_data_t), GFP_KERNEL);			\
+})
 /*
- * This definition is just क्रम error path in node hotadd.
- * For node hotहटाओ, we have to replace this.
+ * This definition is just for error path in node hotadd.
+ * For node hotremove, we have to replace this.
  */
-#घोषणा generic_मुक्त_nodedata(pgdat)	kमुक्त(pgdat)
+#define generic_free_nodedata(pgdat)	kfree(pgdat)
 
-बाह्य pg_data_t *node_data[];
-अटल अंतरभूत व्योम arch_refresh_nodedata(पूर्णांक nid, pg_data_t *pgdat)
-अणु
+extern pg_data_t *node_data[];
+static inline void arch_refresh_nodedata(int nid, pg_data_t *pgdat)
+{
 	node_data[nid] = pgdat;
-पूर्ण
+}
 
-#अन्यथा /* !CONFIG_NUMA */
+#else /* !CONFIG_NUMA */
 
 /* never called */
-अटल अंतरभूत pg_data_t *generic_alloc_nodedata(पूर्णांक nid)
-अणु
+static inline pg_data_t *generic_alloc_nodedata(int nid)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत व्योम generic_मुक्त_nodedata(pg_data_t *pgdat)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम arch_refresh_nodedata(पूर्णांक nid, pg_data_t *pgdat)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NUMA */
-#पूर्ण_अगर /* CONFIG_HAVE_ARCH_NODEDATA_EXTENSION */
+	return NULL;
+}
+static inline void generic_free_nodedata(pg_data_t *pgdat)
+{
+}
+static inline void arch_refresh_nodedata(int nid, pg_data_t *pgdat)
+{
+}
+#endif /* CONFIG_NUMA */
+#endif /* CONFIG_HAVE_ARCH_NODEDATA_EXTENSION */
 
-#अगर_घोषित CONFIG_HAVE_BOOTMEM_INFO_NODE
-बाह्य व्योम __init रेजिस्टर_page_booपंचांगem_info_node(काष्ठा pglist_data *pgdat);
-#अन्यथा
-अटल अंतरभूत व्योम रेजिस्टर_page_booपंचांगem_info_node(काष्ठा pglist_data *pgdat)
-अणु
-पूर्ण
-#पूर्ण_अगर
-बाह्य व्योम put_page_booपंचांगem(काष्ठा page *page);
-बाह्य व्योम get_page_booपंचांगem(अचिन्हित दीर्घ ingo, काष्ठा page *page,
-			     अचिन्हित दीर्घ type);
+#ifdef CONFIG_HAVE_BOOTMEM_INFO_NODE
+extern void __init register_page_bootmem_info_node(struct pglist_data *pgdat);
+#else
+static inline void register_page_bootmem_info_node(struct pglist_data *pgdat)
+{
+}
+#endif
+extern void put_page_bootmem(struct page *page);
+extern void get_page_bootmem(unsigned long ingo, struct page *page,
+			     unsigned long type);
 
-व्योम get_online_mems(व्योम);
-व्योम put_online_mems(व्योम);
+void get_online_mems(void);
+void put_online_mems(void);
 
-व्योम mem_hotplug_begin(व्योम);
-व्योम mem_hotplug_करोne(व्योम);
+void mem_hotplug_begin(void);
+void mem_hotplug_done(void);
 
-#अन्यथा /* ! CONFIG_MEMORY_HOTPLUG */
-#घोषणा pfn_to_online_page(pfn)			\
-(अणु						\
-	काष्ठा page *___page = शून्य;		\
-	अगर (pfn_valid(pfn))			\
+#else /* ! CONFIG_MEMORY_HOTPLUG */
+#define pfn_to_online_page(pfn)			\
+({						\
+	struct page *___page = NULL;		\
+	if (pfn_valid(pfn))			\
 		___page = pfn_to_page(pfn);	\
 	___page;				\
- पूर्ण)
+ })
 
-अटल अंतरभूत अचिन्हित zone_span_seqbegin(काष्ठा zone *zone)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत पूर्णांक zone_span_seqretry(काष्ठा zone *zone, अचिन्हित iv)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम zone_span_ग_लिखोlock(काष्ठा zone *zone) अणुपूर्ण
-अटल अंतरभूत व्योम zone_span_ग_लिखोunlock(काष्ठा zone *zone) अणुपूर्ण
-अटल अंतरभूत व्योम zone_seqlock_init(काष्ठा zone *zone) अणुपूर्ण
+static inline unsigned zone_span_seqbegin(struct zone *zone)
+{
+	return 0;
+}
+static inline int zone_span_seqretry(struct zone *zone, unsigned iv)
+{
+	return 0;
+}
+static inline void zone_span_writelock(struct zone *zone) {}
+static inline void zone_span_writeunlock(struct zone *zone) {}
+static inline void zone_seqlock_init(struct zone *zone) {}
 
-अटल अंतरभूत व्योम रेजिस्टर_page_booपंचांगem_info_node(काष्ठा pglist_data *pgdat)
-अणु
-पूर्ण
+static inline void register_page_bootmem_info_node(struct pglist_data *pgdat)
+{
+}
 
-अटल अंतरभूत पूर्णांक try_online_node(पूर्णांक nid)
-अणु
-	वापस 0;
-पूर्ण
+static inline int try_online_node(int nid)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम get_online_mems(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम put_online_mems(व्योम) अणुपूर्ण
+static inline void get_online_mems(void) {}
+static inline void put_online_mems(void) {}
 
-अटल अंतरभूत व्योम mem_hotplug_begin(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम mem_hotplug_करोne(व्योम) अणुपूर्ण
+static inline void mem_hotplug_begin(void) {}
+static inline void mem_hotplug_done(void) {}
 
-अटल अंतरभूत bool movable_node_is_enabled(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* ! CONFIG_MEMORY_HOTPLUG */
+static inline bool movable_node_is_enabled(void)
+{
+	return false;
+}
+#endif /* ! CONFIG_MEMORY_HOTPLUG */
 
 /*
  * Keep this declaration outside CONFIG_MEMORY_HOTPLUG as some
- * platक्रमms might override and use arch_get_mappable_range()
- * क्रम पूर्णांकernal non memory hotplug purposes.
+ * platforms might override and use arch_get_mappable_range()
+ * for internal non memory hotplug purposes.
  */
-काष्ठा range arch_get_mappable_range(व्योम);
+struct range arch_get_mappable_range(void);
 
-#अगर defined(CONFIG_MEMORY_HOTPLUG) || defined(CONFIG_DEFERRED_STRUCT_PAGE_INIT)
+#if defined(CONFIG_MEMORY_HOTPLUG) || defined(CONFIG_DEFERRED_STRUCT_PAGE_INIT)
 /*
  * pgdat resizing functions
  */
-अटल अंतरभूत
-व्योम pgdat_resize_lock(काष्ठा pglist_data *pgdat, अचिन्हित दीर्घ *flags)
-अणु
+static inline
+void pgdat_resize_lock(struct pglist_data *pgdat, unsigned long *flags)
+{
 	spin_lock_irqsave(&pgdat->node_size_lock, *flags);
-पूर्ण
-अटल अंतरभूत
-व्योम pgdat_resize_unlock(काष्ठा pglist_data *pgdat, अचिन्हित दीर्घ *flags)
-अणु
+}
+static inline
+void pgdat_resize_unlock(struct pglist_data *pgdat, unsigned long *flags)
+{
 	spin_unlock_irqrestore(&pgdat->node_size_lock, *flags);
-पूर्ण
-अटल अंतरभूत
-व्योम pgdat_resize_init(काष्ठा pglist_data *pgdat)
-अणु
+}
+static inline
+void pgdat_resize_init(struct pglist_data *pgdat)
+{
 	spin_lock_init(&pgdat->node_size_lock);
-पूर्ण
-#अन्यथा /* !(CONFIG_MEMORY_HOTPLUG || CONFIG_DEFERRED_STRUCT_PAGE_INIT) */
+}
+#else /* !(CONFIG_MEMORY_HOTPLUG || CONFIG_DEFERRED_STRUCT_PAGE_INIT) */
 /*
- * Stub functions क्रम when hotplug is off
+ * Stub functions for when hotplug is off
  */
-अटल अंतरभूत व्योम pgdat_resize_lock(काष्ठा pglist_data *p, अचिन्हित दीर्घ *f) अणुपूर्ण
-अटल अंतरभूत व्योम pgdat_resize_unlock(काष्ठा pglist_data *p, अचिन्हित दीर्घ *f) अणुपूर्ण
-अटल अंतरभूत व्योम pgdat_resize_init(काष्ठा pglist_data *pgdat) अणुपूर्ण
-#पूर्ण_अगर /* !(CONFIG_MEMORY_HOTPLUG || CONFIG_DEFERRED_STRUCT_PAGE_INIT) */
+static inline void pgdat_resize_lock(struct pglist_data *p, unsigned long *f) {}
+static inline void pgdat_resize_unlock(struct pglist_data *p, unsigned long *f) {}
+static inline void pgdat_resize_init(struct pglist_data *pgdat) {}
+#endif /* !(CONFIG_MEMORY_HOTPLUG || CONFIG_DEFERRED_STRUCT_PAGE_INIT) */
 
-#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
+#ifdef CONFIG_MEMORY_HOTREMOVE
 
-बाह्य व्योम try_offline_node(पूर्णांक nid);
-बाह्य पूर्णांक offline_pages(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages);
-बाह्य पूर्णांक हटाओ_memory(पूर्णांक nid, u64 start, u64 size);
-बाह्य व्योम __हटाओ_memory(पूर्णांक nid, u64 start, u64 size);
-बाह्य पूर्णांक offline_and_हटाओ_memory(पूर्णांक nid, u64 start, u64 size);
+extern void try_offline_node(int nid);
+extern int offline_pages(unsigned long start_pfn, unsigned long nr_pages);
+extern int remove_memory(int nid, u64 start, u64 size);
+extern void __remove_memory(int nid, u64 start, u64 size);
+extern int offline_and_remove_memory(int nid, u64 start, u64 size);
 
-#अन्यथा
-अटल अंतरभूत व्योम try_offline_node(पूर्णांक nid) अणुपूर्ण
+#else
+static inline void try_offline_node(int nid) {}
 
-अटल अंतरभूत पूर्णांक offline_pages(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static inline int offline_pages(unsigned long start_pfn, unsigned long nr_pages)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत पूर्णांक हटाओ_memory(पूर्णांक nid, u64 start, u64 size)
-अणु
-	वापस -EBUSY;
-पूर्ण
+static inline int remove_memory(int nid, u64 start, u64 size)
+{
+	return -EBUSY;
+}
 
-अटल अंतरभूत व्योम __हटाओ_memory(पूर्णांक nid, u64 start, u64 size) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_MEMORY_HOTREMOVE */
+static inline void __remove_memory(int nid, u64 start, u64 size) {}
+#endif /* CONFIG_MEMORY_HOTREMOVE */
 
-बाह्य व्योम set_zone_contiguous(काष्ठा zone *zone);
-बाह्य व्योम clear_zone_contiguous(काष्ठा zone *zone);
+extern void set_zone_contiguous(struct zone *zone);
+extern void clear_zone_contiguous(struct zone *zone);
 
-#अगर_घोषित CONFIG_MEMORY_HOTPLUG
-बाह्य व्योम __ref मुक्त_area_init_core_hotplug(पूर्णांक nid);
-बाह्य पूर्णांक __add_memory(पूर्णांक nid, u64 start, u64 size, mhp_t mhp_flags);
-बाह्य पूर्णांक add_memory(पूर्णांक nid, u64 start, u64 size, mhp_t mhp_flags);
-बाह्य पूर्णांक add_memory_resource(पूर्णांक nid, काष्ठा resource *resource,
+#ifdef CONFIG_MEMORY_HOTPLUG
+extern void __ref free_area_init_core_hotplug(int nid);
+extern int __add_memory(int nid, u64 start, u64 size, mhp_t mhp_flags);
+extern int add_memory(int nid, u64 start, u64 size, mhp_t mhp_flags);
+extern int add_memory_resource(int nid, struct resource *resource,
 			       mhp_t mhp_flags);
-बाह्य पूर्णांक add_memory_driver_managed(पूर्णांक nid, u64 start, u64 size,
-				     स्थिर अक्षर *resource_name,
+extern int add_memory_driver_managed(int nid, u64 start, u64 size,
+				     const char *resource_name,
 				     mhp_t mhp_flags);
-बाह्य व्योम move_pfn_range_to_zone(काष्ठा zone *zone, अचिन्हित दीर्घ start_pfn,
-				   अचिन्हित दीर्घ nr_pages,
-				   काष्ठा vmem_alपंचांगap *alपंचांगap, पूर्णांक migratetype);
-बाह्य व्योम हटाओ_pfn_range_from_zone(काष्ठा zone *zone,
-				       अचिन्हित दीर्घ start_pfn,
-				       अचिन्हित दीर्घ nr_pages);
-बाह्य bool is_memblock_offlined(काष्ठा memory_block *mem);
-बाह्य पूर्णांक sparse_add_section(पूर्णांक nid, अचिन्हित दीर्घ pfn,
-		अचिन्हित दीर्घ nr_pages, काष्ठा vmem_alपंचांगap *alपंचांगap);
-बाह्य व्योम sparse_हटाओ_section(काष्ठा mem_section *ms,
-		अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
-		अचिन्हित दीर्घ map_offset, काष्ठा vmem_alपंचांगap *alपंचांगap);
-बाह्य काष्ठा page *sparse_decode_mem_map(अचिन्हित दीर्घ coded_mem_map,
-					  अचिन्हित दीर्घ pnum);
-बाह्य काष्ठा zone *zone_क्रम_pfn_range(पूर्णांक online_type, पूर्णांक nid, अचिन्हित start_pfn,
-		अचिन्हित दीर्घ nr_pages);
-बाह्य पूर्णांक arch_create_linear_mapping(पूर्णांक nid, u64 start, u64 size,
-				      काष्ठा mhp_params *params);
-व्योम arch_हटाओ_linear_mapping(u64 start, u64 size);
-बाह्य bool mhp_supports_memmap_on_memory(अचिन्हित दीर्घ size);
-#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */
+extern void move_pfn_range_to_zone(struct zone *zone, unsigned long start_pfn,
+				   unsigned long nr_pages,
+				   struct vmem_altmap *altmap, int migratetype);
+extern void remove_pfn_range_from_zone(struct zone *zone,
+				       unsigned long start_pfn,
+				       unsigned long nr_pages);
+extern bool is_memblock_offlined(struct memory_block *mem);
+extern int sparse_add_section(int nid, unsigned long pfn,
+		unsigned long nr_pages, struct vmem_altmap *altmap);
+extern void sparse_remove_section(struct mem_section *ms,
+		unsigned long pfn, unsigned long nr_pages,
+		unsigned long map_offset, struct vmem_altmap *altmap);
+extern struct page *sparse_decode_mem_map(unsigned long coded_mem_map,
+					  unsigned long pnum);
+extern struct zone *zone_for_pfn_range(int online_type, int nid, unsigned start_pfn,
+		unsigned long nr_pages);
+extern int arch_create_linear_mapping(int nid, u64 start, u64 size,
+				      struct mhp_params *params);
+void arch_remove_linear_mapping(u64 start, u64 size);
+extern bool mhp_supports_memmap_on_memory(unsigned long size);
+#endif /* CONFIG_MEMORY_HOTPLUG */
 
-#पूर्ण_अगर /* __LINUX_MEMORY_HOTPLUG_H */
+#endif /* __LINUX_MEMORY_HOTPLUG_H */

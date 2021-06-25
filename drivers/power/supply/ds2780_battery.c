@@ -1,434 +1,433 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * 1-wire client/driver क्रम the Maxim/Dallas DS2780 Stand-Alone Fuel Gauge IC
+ * 1-wire client/driver for the Maxim/Dallas DS2780 Stand-Alone Fuel Gauge IC
  *
  * Copyright (C) 2010 Indesign, LLC
  *
- * Author: Clअगरton Barnes <cabarnes@indesign-llc.com>
+ * Author: Clifton Barnes <cabarnes@indesign-llc.com>
  *
  * Based on ds2760_battery and ds2782_battery drivers
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/param.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/idr.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/param.h>
+#include <linux/pm.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/idr.h>
 
-#समावेश <linux/w1.h>
-#समावेश "../../w1/slaves/w1_ds2780.h"
+#include <linux/w1.h>
+#include "../../w1/slaves/w1_ds2780.h"
 
-/* Current unit measurement in uA क्रम a 1 milli-ohm sense resistor */
-#घोषणा DS2780_CURRENT_UNITS	1563
-/* Charge unit measurement in uAh क्रम a 1 milli-ohm sense resistor */
-#घोषणा DS2780_CHARGE_UNITS		6250
+/* Current unit measurement in uA for a 1 milli-ohm sense resistor */
+#define DS2780_CURRENT_UNITS	1563
+/* Charge unit measurement in uAh for a 1 milli-ohm sense resistor */
+#define DS2780_CHARGE_UNITS		6250
 /* Number of bytes in user EEPROM space */
-#घोषणा DS2780_USER_EEPROM_SIZE		(DS2780_EEPROM_BLOCK0_END - \
+#define DS2780_USER_EEPROM_SIZE		(DS2780_EEPROM_BLOCK0_END - \
 					DS2780_EEPROM_BLOCK0_START + 1)
 /* Number of bytes in parameter EEPROM space */
-#घोषणा DS2780_PARAM_EEPROM_SIZE	(DS2780_EEPROM_BLOCK1_END - \
+#define DS2780_PARAM_EEPROM_SIZE	(DS2780_EEPROM_BLOCK1_END - \
 					DS2780_EEPROM_BLOCK1_START + 1)
 
-काष्ठा ds2780_device_info अणु
-	काष्ठा device *dev;
-	काष्ठा घातer_supply *bat;
-	काष्ठा घातer_supply_desc bat_desc;
-	काष्ठा device *w1_dev;
-पूर्ण;
+struct ds2780_device_info {
+	struct device *dev;
+	struct power_supply *bat;
+	struct power_supply_desc bat_desc;
+	struct device *w1_dev;
+};
 
-क्रमागत current_types अणु
+enum current_types {
 	CURRENT_NOW,
 	CURRENT_AVG,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर model[] = "DS2780";
-अटल स्थिर अक्षर manufacturer[] = "Maxim/Dallas";
+static const char model[] = "DS2780";
+static const char manufacturer[] = "Maxim/Dallas";
 
-अटल अंतरभूत काष्ठा ds2780_device_info *
-to_ds2780_device_info(काष्ठा घातer_supply *psy)
-अणु
-	वापस घातer_supply_get_drvdata(psy);
-पूर्ण
+static inline struct ds2780_device_info *
+to_ds2780_device_info(struct power_supply *psy)
+{
+	return power_supply_get_drvdata(psy);
+}
 
-अटल अंतरभूत पूर्णांक ds2780_battery_io(काष्ठा ds2780_device_info *dev_info,
-	अक्षर *buf, पूर्णांक addr, माप_प्रकार count, पूर्णांक io)
-अणु
-	वापस w1_ds2780_io(dev_info->w1_dev, buf, addr, count, io);
-पूर्ण
+static inline int ds2780_battery_io(struct ds2780_device_info *dev_info,
+	char *buf, int addr, size_t count, int io)
+{
+	return w1_ds2780_io(dev_info->w1_dev, buf, addr, count, io);
+}
 
-अटल अंतरभूत पूर्णांक ds2780_पढ़ो8(काष्ठा ds2780_device_info *dev_info, u8 *val,
-	पूर्णांक addr)
-अणु
-	वापस ds2780_battery_io(dev_info, val, addr, माप(u8), 0);
-पूर्ण
+static inline int ds2780_read8(struct ds2780_device_info *dev_info, u8 *val,
+	int addr)
+{
+	return ds2780_battery_io(dev_info, val, addr, sizeof(u8), 0);
+}
 
-अटल पूर्णांक ds2780_पढ़ो16(काष्ठा ds2780_device_info *dev_info, s16 *val,
-	पूर्णांक addr)
-अणु
-	पूर्णांक ret;
+static int ds2780_read16(struct ds2780_device_info *dev_info, s16 *val,
+	int addr)
+{
+	int ret;
 	u8 raw[2];
 
-	ret = ds2780_battery_io(dev_info, raw, addr, माप(raw), 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_battery_io(dev_info, raw, addr, sizeof(raw), 0);
+	if (ret < 0)
+		return ret;
 
 	*val = (raw[0] << 8) | raw[1];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ds2780_पढ़ो_block(काष्ठा ds2780_device_info *dev_info,
-	u8 *val, पूर्णांक addr, माप_प्रकार count)
-अणु
-	वापस ds2780_battery_io(dev_info, val, addr, count, 0);
-पूर्ण
+static inline int ds2780_read_block(struct ds2780_device_info *dev_info,
+	u8 *val, int addr, size_t count)
+{
+	return ds2780_battery_io(dev_info, val, addr, count, 0);
+}
 
-अटल अंतरभूत पूर्णांक ds2780_ग_लिखो(काष्ठा ds2780_device_info *dev_info, u8 *val,
-	पूर्णांक addr, माप_प्रकार count)
-अणु
-	वापस ds2780_battery_io(dev_info, val, addr, count, 1);
-पूर्ण
+static inline int ds2780_write(struct ds2780_device_info *dev_info, u8 *val,
+	int addr, size_t count)
+{
+	return ds2780_battery_io(dev_info, val, addr, count, 1);
+}
 
-अटल अंतरभूत पूर्णांक ds2780_store_eeprom(काष्ठा device *dev, पूर्णांक addr)
-अणु
-	वापस w1_ds2780_eeprom_cmd(dev, addr, W1_DS2780_COPY_DATA);
-पूर्ण
+static inline int ds2780_store_eeprom(struct device *dev, int addr)
+{
+	return w1_ds2780_eeprom_cmd(dev, addr, W1_DS2780_COPY_DATA);
+}
 
-अटल अंतरभूत पूर्णांक ds2780_recall_eeprom(काष्ठा device *dev, पूर्णांक addr)
-अणु
-	वापस w1_ds2780_eeprom_cmd(dev, addr, W1_DS2780_RECALL_DATA);
-पूर्ण
+static inline int ds2780_recall_eeprom(struct device *dev, int addr)
+{
+	return w1_ds2780_eeprom_cmd(dev, addr, W1_DS2780_RECALL_DATA);
+}
 
-अटल पूर्णांक ds2780_save_eeprom(काष्ठा ds2780_device_info *dev_info, पूर्णांक reg)
-अणु
-	पूर्णांक ret;
+static int ds2780_save_eeprom(struct ds2780_device_info *dev_info, int reg)
+{
+	int ret;
 
 	ret = ds2780_store_eeprom(dev_info->w1_dev, reg);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = ds2780_recall_eeprom(dev_info->w1_dev, reg);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Set sense resistor value in mhos */
-अटल पूर्णांक ds2780_set_sense_रेजिस्टर(काष्ठा ds2780_device_info *dev_info,
+static int ds2780_set_sense_register(struct ds2780_device_info *dev_info,
 	u8 conductance)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = ds2780_ग_लिखो(dev_info, &conductance,
-				DS2780_RSNSP_REG, माप(u8));
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_write(dev_info, &conductance,
+				DS2780_RSNSP_REG, sizeof(u8));
+	if (ret < 0)
+		return ret;
 
-	वापस ds2780_save_eeprom(dev_info, DS2780_RSNSP_REG);
-पूर्ण
+	return ds2780_save_eeprom(dev_info, DS2780_RSNSP_REG);
+}
 
 /* Get RSGAIN value from 0 to 1.999 in steps of 0.001 */
-अटल पूर्णांक ds2780_get_rsgain_रेजिस्टर(काष्ठा ds2780_device_info *dev_info,
+static int ds2780_get_rsgain_register(struct ds2780_device_info *dev_info,
 	u16 *rsgain)
-अणु
-	वापस ds2780_पढ़ो16(dev_info, rsgain, DS2780_RSGAIN_MSB_REG);
-पूर्ण
+{
+	return ds2780_read16(dev_info, rsgain, DS2780_RSGAIN_MSB_REG);
+}
 
 /* Set RSGAIN value from 0 to 1.999 in steps of 0.001 */
-अटल पूर्णांक ds2780_set_rsgain_रेजिस्टर(काष्ठा ds2780_device_info *dev_info,
+static int ds2780_set_rsgain_register(struct ds2780_device_info *dev_info,
 	u16 rsgain)
-अणु
-	पूर्णांक ret;
-	u8 raw[] = अणुrsgain >> 8, rsgain & 0xFFपूर्ण;
+{
+	int ret;
+	u8 raw[] = {rsgain >> 8, rsgain & 0xFF};
 
-	ret = ds2780_ग_लिखो(dev_info, raw,
-				DS2780_RSGAIN_MSB_REG, माप(raw));
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_write(dev_info, raw,
+				DS2780_RSGAIN_MSB_REG, sizeof(raw));
+	if (ret < 0)
+		return ret;
 
-	वापस ds2780_save_eeprom(dev_info, DS2780_RSGAIN_MSB_REG);
-पूर्ण
+	return ds2780_save_eeprom(dev_info, DS2780_RSGAIN_MSB_REG);
+}
 
-अटल पूर्णांक ds2780_get_voltage(काष्ठा ds2780_device_info *dev_info,
-	पूर्णांक *voltage_uV)
-अणु
-	पूर्णांक ret;
+static int ds2780_get_voltage(struct ds2780_device_info *dev_info,
+	int *voltage_uV)
+{
+	int ret;
 	s16 voltage_raw;
 
 	/*
 	 * The voltage value is located in 10 bits across the voltage MSB
-	 * and LSB रेजिस्टरs in two's complement क्रमm
-	 * Sign bit of the voltage value is in bit 7 of the voltage MSB रेजिस्टर
+	 * and LSB registers in two's complement form
+	 * Sign bit of the voltage value is in bit 7 of the voltage MSB register
 	 * Bits 9 - 3 of the voltage value are in bits 6 - 0 of the
-	 * voltage MSB रेजिस्टर
+	 * voltage MSB register
 	 * Bits 2 - 0 of the voltage value are in bits 7 - 5 of the
-	 * voltage LSB रेजिस्टर
+	 * voltage LSB register
 	 */
-	ret = ds2780_पढ़ो16(dev_info, &voltage_raw,
+	ret = ds2780_read16(dev_info, &voltage_raw,
 				DS2780_VOLT_MSB_REG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * DS2780 reports voltage in units of 4.88mV, but the battery class
 	 * reports in units of uV, so convert by multiplying by 4880.
 	 */
 	*voltage_uV = (voltage_raw / 32) * 4880;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_temperature(काष्ठा ds2780_device_info *dev_info,
-	पूर्णांक *temperature)
-अणु
-	पूर्णांक ret;
+static int ds2780_get_temperature(struct ds2780_device_info *dev_info,
+	int *temperature)
+{
+	int ret;
 	s16 temperature_raw;
 
 	/*
 	 * The temperature value is located in 10 bits across the temperature
-	 * MSB and LSB रेजिस्टरs in two's complement क्रमm
+	 * MSB and LSB registers in two's complement form
 	 * Sign bit of the temperature value is in bit 7 of the temperature
-	 * MSB रेजिस्टर
+	 * MSB register
 	 * Bits 9 - 3 of the temperature value are in bits 6 - 0 of the
-	 * temperature MSB रेजिस्टर
+	 * temperature MSB register
 	 * Bits 2 - 0 of the temperature value are in bits 7 - 5 of the
-	 * temperature LSB रेजिस्टर
+	 * temperature LSB register
 	 */
-	ret = ds2780_पढ़ो16(dev_info, &temperature_raw,
+	ret = ds2780_read16(dev_info, &temperature_raw,
 				DS2780_TEMP_MSB_REG);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Temperature is measured in units of 0.125 degrees celcius, the
-	 * घातer_supply class measures temperature in tenths of degrees
+	 * power_supply class measures temperature in tenths of degrees
 	 * celsius. The temperature value is stored as a 10 bit number, plus
-	 * sign in the upper bits of a 16 bit रेजिस्टर.
+	 * sign in the upper bits of a 16 bit register.
 	 */
 	*temperature = ((temperature_raw / 32) * 125) / 100;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_current(काष्ठा ds2780_device_info *dev_info,
-	क्रमागत current_types type, पूर्णांक *current_uA)
-अणु
-	पूर्णांक ret, sense_res;
+static int ds2780_get_current(struct ds2780_device_info *dev_info,
+	enum current_types type, int *current_uA)
+{
+	int ret, sense_res;
 	s16 current_raw;
 	u8 sense_res_raw, reg_msb;
 
 	/*
-	 * The units of measurement क्रम current are dependent on the value of
+	 * The units of measurement for current are dependent on the value of
 	 * the sense resistor.
 	 */
-	ret = ds2780_पढ़ो8(dev_info, &sense_res_raw, DS2780_RSNSP_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read8(dev_info, &sense_res_raw, DS2780_RSNSP_REG);
+	if (ret < 0)
+		return ret;
 
-	अगर (sense_res_raw == 0) अणु
+	if (sense_res_raw == 0) {
 		dev_err(dev_info->dev, "sense resistor value is 0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sense_res = 1000 / sense_res_raw;
 
-	अगर (type == CURRENT_NOW)
+	if (type == CURRENT_NOW)
 		reg_msb = DS2780_CURRENT_MSB_REG;
-	अन्यथा अगर (type == CURRENT_AVG)
+	else if (type == CURRENT_AVG)
 		reg_msb = DS2780_IAVG_MSB_REG;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	/*
 	 * The current value is located in 16 bits across the current MSB
-	 * and LSB रेजिस्टरs in two's complement क्रमm
-	 * Sign bit of the current value is in bit 7 of the current MSB रेजिस्टर
+	 * and LSB registers in two's complement form
+	 * Sign bit of the current value is in bit 7 of the current MSB register
 	 * Bits 14 - 8 of the current value are in bits 6 - 0 of the current
-	 * MSB रेजिस्टर
+	 * MSB register
 	 * Bits 7 - 0 of the current value are in bits 7 - 0 of the current
-	 * LSB रेजिस्टर
+	 * LSB register
 	 */
-	ret = ds2780_पढ़ो16(dev_info, &current_raw, reg_msb);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read16(dev_info, &current_raw, reg_msb);
+	if (ret < 0)
+		return ret;
 
 	*current_uA = current_raw * (DS2780_CURRENT_UNITS / sense_res);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_accumulated_current(काष्ठा ds2780_device_info *dev_info,
-	पूर्णांक *accumulated_current)
-अणु
-	पूर्णांक ret, sense_res;
+static int ds2780_get_accumulated_current(struct ds2780_device_info *dev_info,
+	int *accumulated_current)
+{
+	int ret, sense_res;
 	s16 current_raw;
 	u8 sense_res_raw;
 
 	/*
-	 * The units of measurement क्रम accumulated current are dependent on
+	 * The units of measurement for accumulated current are dependent on
 	 * the value of the sense resistor.
 	 */
-	ret = ds2780_पढ़ो8(dev_info, &sense_res_raw, DS2780_RSNSP_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read8(dev_info, &sense_res_raw, DS2780_RSNSP_REG);
+	if (ret < 0)
+		return ret;
 
-	अगर (sense_res_raw == 0) अणु
+	if (sense_res_raw == 0) {
 		dev_err(dev_info->dev, "sense resistor value is 0\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 	sense_res = 1000 / sense_res_raw;
 
 	/*
 	 * The ACR value is located in 16 bits across the ACR MSB and
-	 * LSB रेजिस्टरs
+	 * LSB registers
 	 * Bits 15 - 8 of the ACR value are in bits 7 - 0 of the ACR
-	 * MSB रेजिस्टर
+	 * MSB register
 	 * Bits 7 - 0 of the ACR value are in bits 7 - 0 of the ACR
-	 * LSB रेजिस्टर
+	 * LSB register
 	 */
-	ret = ds2780_पढ़ो16(dev_info, &current_raw, DS2780_ACR_MSB_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read16(dev_info, &current_raw, DS2780_ACR_MSB_REG);
+	if (ret < 0)
+		return ret;
 
 	*accumulated_current = current_raw * (DS2780_CHARGE_UNITS / sense_res);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_capacity(काष्ठा ds2780_device_info *dev_info,
-	पूर्णांक *capacity)
-अणु
-	पूर्णांक ret;
+static int ds2780_get_capacity(struct ds2780_device_info *dev_info,
+	int *capacity)
+{
+	int ret;
 	u8 raw;
 
-	ret = ds2780_पढ़ो8(dev_info, &raw, DS2780_RARC_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read8(dev_info, &raw, DS2780_RARC_REG);
+	if (ret < 0)
+		return ret;
 
 	*capacity = raw;
-	वापस raw;
-पूर्ण
+	return raw;
+}
 
-अटल पूर्णांक ds2780_get_status(काष्ठा ds2780_device_info *dev_info, पूर्णांक *status)
-अणु
-	पूर्णांक ret, current_uA, capacity;
+static int ds2780_get_status(struct ds2780_device_info *dev_info, int *status)
+{
+	int ret, current_uA, capacity;
 
 	ret = ds2780_get_current(dev_info, CURRENT_NOW, &current_uA);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = ds2780_get_capacity(dev_info, &capacity);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (capacity == 100)
+	if (capacity == 100)
 		*status = POWER_SUPPLY_STATUS_FULL;
-	अन्यथा अगर (current_uA == 0)
+	else if (current_uA == 0)
 		*status = POWER_SUPPLY_STATUS_NOT_CHARGING;
-	अन्यथा अगर (current_uA < 0)
+	else if (current_uA < 0)
 		*status = POWER_SUPPLY_STATUS_DISCHARGING;
-	अन्यथा
+	else
 		*status = POWER_SUPPLY_STATUS_CHARGING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_अक्षरge_now(काष्ठा ds2780_device_info *dev_info,
-	पूर्णांक *अक्षरge_now)
-अणु
-	पूर्णांक ret;
-	u16 अक्षरge_raw;
+static int ds2780_get_charge_now(struct ds2780_device_info *dev_info,
+	int *charge_now)
+{
+	int ret;
+	u16 charge_raw;
 
 	/*
 	 * The RAAC value is located in 16 bits across the RAAC MSB and
-	 * LSB रेजिस्टरs
+	 * LSB registers
 	 * Bits 15 - 8 of the RAAC value are in bits 7 - 0 of the RAAC
-	 * MSB रेजिस्टर
+	 * MSB register
 	 * Bits 7 - 0 of the RAAC value are in bits 7 - 0 of the RAAC
-	 * LSB रेजिस्टर
+	 * LSB register
 	 */
-	ret = ds2780_पढ़ो16(dev_info, &अक्षरge_raw, DS2780_RAAC_MSB_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read16(dev_info, &charge_raw, DS2780_RAAC_MSB_REG);
+	if (ret < 0)
+		return ret;
 
-	*अक्षरge_now = अक्षरge_raw * 1600;
-	वापस 0;
-पूर्ण
+	*charge_now = charge_raw * 1600;
+	return 0;
+}
 
-अटल पूर्णांक ds2780_get_control_रेजिस्टर(काष्ठा ds2780_device_info *dev_info,
+static int ds2780_get_control_register(struct ds2780_device_info *dev_info,
 	u8 *control_reg)
-अणु
-	वापस ds2780_पढ़ो8(dev_info, control_reg, DS2780_CONTROL_REG);
-पूर्ण
+{
+	return ds2780_read8(dev_info, control_reg, DS2780_CONTROL_REG);
+}
 
-अटल पूर्णांक ds2780_set_control_रेजिस्टर(काष्ठा ds2780_device_info *dev_info,
+static int ds2780_set_control_register(struct ds2780_device_info *dev_info,
 	u8 control_reg)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = ds2780_ग_लिखो(dev_info, &control_reg,
-				DS2780_CONTROL_REG, माप(u8));
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_write(dev_info, &control_reg,
+				DS2780_CONTROL_REG, sizeof(u8));
+	if (ret < 0)
+		return ret;
 
-	वापस ds2780_save_eeprom(dev_info, DS2780_CONTROL_REG);
-पूर्ण
+	return ds2780_save_eeprom(dev_info, DS2780_CONTROL_REG);
+}
 
-अटल पूर्णांक ds2780_battery_get_property(काष्ठा घातer_supply *psy,
-	क्रमागत घातer_supply_property psp,
-	जोड़ घातer_supply_propval *val)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+static int ds2780_battery_get_property(struct power_supply *psy,
+	enum power_supply_property psp,
+	union power_supply_propval *val)
+{
+	int ret = 0;
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = ds2780_get_voltage(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = ds2780_get_voltage(dev_info, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_TEMP:
-		ret = ds2780_get_temperature(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_TEMP:
+		ret = ds2780_get_temperature(dev_info, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = model;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_MANUFACTURER:
+	case POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = manufacturer;
-		अवरोध;
+		break;
 
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		ret = ds2780_get_current(dev_info, CURRENT_NOW, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		ret = ds2780_get_current(dev_info, CURRENT_NOW, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
-		ret = ds2780_get_current(dev_info, CURRENT_AVG, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CURRENT_AVG:
+		ret = ds2780_get_current(dev_info, CURRENT_AVG, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_STATUS:
-		ret = ds2780_get_status(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_STATUS:
+		ret = ds2780_get_status(dev_info, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CAPACITY:
-		ret = ds2780_get_capacity(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CAPACITY:
+		ret = ds2780_get_capacity(dev_info, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CHARGE_COUNTER:
-		ret = ds2780_get_accumulated_current(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		ret = ds2780_get_accumulated_current(dev_info, &val->intval);
+		break;
 
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
-		ret = ds2780_get_अक्षरge_now(dev_info, &val->पूर्णांकval);
-		अवरोध;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+		ret = ds2780_get_charge_now(dev_info, &val->intval);
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल क्रमागत घातer_supply_property ds2780_battery_props[] = अणु
+static enum power_supply_property ds2780_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_TEMP,
@@ -439,320 +438,320 @@ to_ds2780_device_info(काष्ठा घातer_supply *psy)
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_CHARGE_COUNTER,
 	POWER_SUPPLY_PROP_CHARGE_NOW,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार ds2780_get_pmod_enabled(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	अक्षर *buf)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_get_pmod_enabled(struct device *dev,
+	struct device_attribute *attr,
+	char *buf)
+{
+	int ret;
 	u8 control_reg;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	/* Get घातer mode */
-	ret = ds2780_get_control_रेजिस्टर(dev_info, &control_reg);
-	अगर (ret < 0)
-		वापस ret;
+	/* Get power mode */
+	ret = ds2780_get_control_register(dev_info, &control_reg);
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n",
+	return sprintf(buf, "%d\n",
 		 !!(control_reg & DS2780_CONTROL_REG_PMOD));
-पूर्ण
+}
 
-अटल sमाप_प्रकार ds2780_set_pmod_enabled(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	स्थिर अक्षर *buf,
-	माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_set_pmod_enabled(struct device *dev,
+	struct device_attribute *attr,
+	const char *buf,
+	size_t count)
+{
+	int ret;
 	u8 control_reg, new_setting;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	/* Set घातer mode */
-	ret = ds2780_get_control_रेजिस्टर(dev_info, &control_reg);
-	अगर (ret < 0)
-		वापस ret;
+	/* Set power mode */
+	ret = ds2780_get_control_register(dev_info, &control_reg);
+	if (ret < 0)
+		return ret;
 
 	ret = kstrtou8(buf, 0, &new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर ((new_setting != 0) && (new_setting != 1)) अणु
+	if ((new_setting != 0) && (new_setting != 1)) {
 		dev_err(dev_info->dev, "Invalid pmod setting (0 or 1)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (new_setting)
+	if (new_setting)
 		control_reg |= DS2780_CONTROL_REG_PMOD;
-	अन्यथा
+	else
 		control_reg &= ~DS2780_CONTROL_REG_PMOD;
 
-	ret = ds2780_set_control_रेजिस्टर(dev_info, control_reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_set_control_register(dev_info, control_reg);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ds2780_get_sense_resistor_value(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	अक्षर *buf)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_get_sense_resistor_value(struct device *dev,
+	struct device_attribute *attr,
+	char *buf)
+{
+	int ret;
 	u8 sense_resistor;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	ret = ds2780_पढ़ो8(dev_info, &sense_resistor, DS2780_RSNSP_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read8(dev_info, &sense_resistor, DS2780_RSNSP_REG);
+	if (ret < 0)
+		return ret;
 
-	ret = प्र_लिखो(buf, "%d\n", sense_resistor);
-	वापस ret;
-पूर्ण
+	ret = sprintf(buf, "%d\n", sense_resistor);
+	return ret;
+}
 
-अटल sमाप_प्रकार ds2780_set_sense_resistor_value(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	स्थिर अक्षर *buf,
-	माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_set_sense_resistor_value(struct device *dev,
+	struct device_attribute *attr,
+	const char *buf,
+	size_t count)
+{
+	int ret;
 	u8 new_setting;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
 	ret = kstrtou8(buf, 0, &new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = ds2780_set_sense_रेजिस्टर(dev_info, new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_set_sense_register(dev_info, new_setting);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ds2780_get_rsgain_setting(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	अक्षर *buf)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_get_rsgain_setting(struct device *dev,
+	struct device_attribute *attr,
+	char *buf)
+{
+	int ret;
 	u16 rsgain;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	ret = ds2780_get_rsgain_रेजिस्टर(dev_info, &rsgain);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_get_rsgain_register(dev_info, &rsgain);
+	if (ret < 0)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", rsgain);
-पूर्ण
+	return sprintf(buf, "%d\n", rsgain);
+}
 
-अटल sमाप_प्रकार ds2780_set_rsgain_setting(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	स्थिर अक्षर *buf,
-	माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_set_rsgain_setting(struct device *dev,
+	struct device_attribute *attr,
+	const char *buf,
+	size_t count)
+{
+	int ret;
 	u16 new_setting;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
 	ret = kstrtou16(buf, 0, &new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Gain can only be from 0 to 1.999 in steps of .001 */
-	अगर (new_setting > 1999) अणु
+	if (new_setting > 1999) {
 		dev_err(dev_info->dev, "Invalid rsgain setting (0 - 1999)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = ds2780_set_rsgain_रेजिस्टर(dev_info, new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_set_rsgain_register(dev_info, new_setting);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ds2780_get_pio_pin(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	अक्षर *buf)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_get_pio_pin(struct device *dev,
+	struct device_attribute *attr,
+	char *buf)
+{
+	int ret;
 	u8 sfr;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	ret = ds2780_पढ़ो8(dev_info, &sfr, DS2780_SFR_REG);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_read8(dev_info, &sfr, DS2780_SFR_REG);
+	if (ret < 0)
+		return ret;
 
-	ret = प्र_लिखो(buf, "%d\n", sfr & DS2780_SFR_REG_PIOSC);
-	वापस ret;
-पूर्ण
+	ret = sprintf(buf, "%d\n", sfr & DS2780_SFR_REG_PIOSC);
+	return ret;
+}
 
-अटल sमाप_प्रकार ds2780_set_pio_pin(काष्ठा device *dev,
-	काष्ठा device_attribute *attr,
-	स्थिर अक्षर *buf,
-	माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t ds2780_set_pio_pin(struct device *dev,
+	struct device_attribute *attr,
+	const char *buf,
+	size_t count)
+{
+	int ret;
 	u8 new_setting;
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
 	ret = kstrtou8(buf, 0, &new_setting);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर ((new_setting != 0) && (new_setting != 1)) अणु
+	if ((new_setting != 0) && (new_setting != 1)) {
 		dev_err(dev_info->dev, "Invalid pio_pin setting (0 or 1)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = ds2780_ग_लिखो(dev_info, &new_setting,
-				DS2780_SFR_REG, माप(u8));
-	अगर (ret < 0)
-		वापस ret;
+	ret = ds2780_write(dev_info, &new_setting,
+				DS2780_SFR_REG, sizeof(u8));
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार ds2780_पढ़ो_param_eeprom_bin(काष्ठा file *filp,
-				काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+static ssize_t ds2780_read_param_eeprom_bin(struct file *filp,
+				struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	वापस ds2780_पढ़ो_block(dev_info, buf,
+	return ds2780_read_block(dev_info, buf,
 				DS2780_EEPROM_BLOCK1_START + off, count);
-पूर्ण
+}
 
-अटल sमाप_प्रकार ds2780_ग_लिखो_param_eeprom_bin(काष्ठा file *filp,
-				काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
-	पूर्णांक ret;
+static ssize_t ds2780_write_param_eeprom_bin(struct file *filp,
+				struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	int ret;
 
-	ret = ds2780_ग_लिखो(dev_info, buf,
+	ret = ds2780_write(dev_info, buf,
 				DS2780_EEPROM_BLOCK1_START + off, count);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = ds2780_save_eeprom(dev_info, DS2780_EEPROM_BLOCK1_START);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा bin_attribute ds2780_param_eeprom_bin_attr = अणु
-	.attr = अणु
+static struct bin_attribute ds2780_param_eeprom_bin_attr = {
+	.attr = {
 		.name = "param_eeprom",
 		.mode = S_IRUGO | S_IWUSR,
-	पूर्ण,
+	},
 	.size = DS2780_PARAM_EEPROM_SIZE,
-	.पढ़ो = ds2780_पढ़ो_param_eeprom_bin,
-	.ग_लिखो = ds2780_ग_लिखो_param_eeprom_bin,
-पूर्ण;
+	.read = ds2780_read_param_eeprom_bin,
+	.write = ds2780_write_param_eeprom_bin,
+};
 
-अटल sमाप_प्रकार ds2780_पढ़ो_user_eeprom_bin(काष्ठा file *filp,
-				काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+static ssize_t ds2780_read_user_eeprom_bin(struct file *filp,
+				struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
 
-	वापस ds2780_पढ़ो_block(dev_info, buf,
+	return ds2780_read_block(dev_info, buf,
 				DS2780_EEPROM_BLOCK0_START + off, count);
-पूर्ण
+}
 
-अटल sमाप_प्रकार ds2780_ग_लिखो_user_eeprom_bin(काष्ठा file *filp,
-				काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buf, loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
-	काष्ठा ds2780_device_info *dev_info = to_ds2780_device_info(psy);
-	पूर्णांक ret;
+static ssize_t ds2780_write_user_eeprom_bin(struct file *filp,
+				struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buf, loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct power_supply *psy = to_power_supply(dev);
+	struct ds2780_device_info *dev_info = to_ds2780_device_info(psy);
+	int ret;
 
-	ret = ds2780_ग_लिखो(dev_info, buf,
+	ret = ds2780_write(dev_info, buf,
 				DS2780_EEPROM_BLOCK0_START + off, count);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = ds2780_save_eeprom(dev_info, DS2780_EEPROM_BLOCK0_START);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा bin_attribute ds2780_user_eeprom_bin_attr = अणु
-	.attr = अणु
+static struct bin_attribute ds2780_user_eeprom_bin_attr = {
+	.attr = {
 		.name = "user_eeprom",
 		.mode = S_IRUGO | S_IWUSR,
-	पूर्ण,
+	},
 	.size = DS2780_USER_EEPROM_SIZE,
-	.पढ़ो = ds2780_पढ़ो_user_eeprom_bin,
-	.ग_लिखो = ds2780_ग_लिखो_user_eeprom_bin,
-पूर्ण;
+	.read = ds2780_read_user_eeprom_bin,
+	.write = ds2780_write_user_eeprom_bin,
+};
 
-अटल DEVICE_ATTR(pmod_enabled, S_IRUGO | S_IWUSR, ds2780_get_pmod_enabled,
+static DEVICE_ATTR(pmod_enabled, S_IRUGO | S_IWUSR, ds2780_get_pmod_enabled,
 	ds2780_set_pmod_enabled);
-अटल DEVICE_ATTR(sense_resistor_value, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(sense_resistor_value, S_IRUGO | S_IWUSR,
 	ds2780_get_sense_resistor_value, ds2780_set_sense_resistor_value);
-अटल DEVICE_ATTR(rsgain_setting, S_IRUGO | S_IWUSR, ds2780_get_rsgain_setting,
+static DEVICE_ATTR(rsgain_setting, S_IRUGO | S_IWUSR, ds2780_get_rsgain_setting,
 	ds2780_set_rsgain_setting);
-अटल DEVICE_ATTR(pio_pin, S_IRUGO | S_IWUSR, ds2780_get_pio_pin,
+static DEVICE_ATTR(pio_pin, S_IRUGO | S_IWUSR, ds2780_get_pio_pin,
 	ds2780_set_pio_pin);
 
-अटल काष्ठा attribute *ds2780_sysfs_attrs[] = अणु
+static struct attribute *ds2780_sysfs_attrs[] = {
 	&dev_attr_pmod_enabled.attr,
 	&dev_attr_sense_resistor_value.attr,
 	&dev_attr_rsgain_setting.attr,
 	&dev_attr_pio_pin.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा bin_attribute *ds2780_sysfs_bin_attrs[] = अणु
+static struct bin_attribute *ds2780_sysfs_bin_attrs[] = {
 	&ds2780_param_eeprom_bin_attr,
 	&ds2780_user_eeprom_bin_attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group ds2780_sysfs_group = अणु
+static const struct attribute_group ds2780_sysfs_group = {
 	.attrs = ds2780_sysfs_attrs,
 	.bin_attrs = ds2780_sysfs_bin_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *ds2780_sysfs_groups[] = अणु
+static const struct attribute_group *ds2780_sysfs_groups[] = {
 	&ds2780_sysfs_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक ds2780_battery_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा ds2780_device_info *dev_info;
+static int ds2780_battery_probe(struct platform_device *pdev)
+{
+	struct power_supply_config psy_cfg = {};
+	struct ds2780_device_info *dev_info;
 
-	dev_info = devm_kzalloc(&pdev->dev, माप(*dev_info), GFP_KERNEL);
-	अगर (!dev_info)
-		वापस -ENOMEM;
+	dev_info = devm_kzalloc(&pdev->dev, sizeof(*dev_info), GFP_KERNEL);
+	if (!dev_info)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, dev_info);
+	platform_set_drvdata(pdev, dev_info);
 
 	dev_info->dev			= &pdev->dev;
 	dev_info->w1_dev		= pdev->dev.parent;
@@ -765,25 +764,25 @@ to_ds2780_device_info(काष्ठा घातer_supply *psy)
 	psy_cfg.drv_data		= dev_info;
 	psy_cfg.attr_grp		= ds2780_sysfs_groups;
 
-	dev_info->bat = devm_घातer_supply_रेजिस्टर(&pdev->dev,
+	dev_info->bat = devm_power_supply_register(&pdev->dev,
 						   &dev_info->bat_desc,
 						   &psy_cfg);
-	अगर (IS_ERR(dev_info->bat)) अणु
+	if (IS_ERR(dev_info->bat)) {
 		dev_err(dev_info->dev, "failed to register battery\n");
-		वापस PTR_ERR(dev_info->bat);
-	पूर्ण
+		return PTR_ERR(dev_info->bat);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ds2780_battery_driver = अणु
-	.driver = अणु
+static struct platform_driver ds2780_battery_driver = {
+	.driver = {
 		.name = "ds2780-battery",
-	पूर्ण,
+	},
 	.probe	  = ds2780_battery_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(ds2780_battery_driver);
+module_platform_driver(ds2780_battery_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Clifton Barnes <cabarnes@indesign-llc.com>");

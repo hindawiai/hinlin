@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * CAAM/SEC 4.x transport/backend driver
  * JobR backend functionality
@@ -8,33 +7,33 @@
  * Copyright 2019 NXP
  */
 
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
 
-#समावेश "compat.h"
-#समावेश "ctrl.h"
-#समावेश "regs.h"
-#समावेश "jr.h"
-#समावेश "desc.h"
-#समावेश "intern.h"
+#include "compat.h"
+#include "ctrl.h"
+#include "regs.h"
+#include "jr.h"
+#include "desc.h"
+#include "intern.h"
 
-काष्ठा jr_driver_data अणु
+struct jr_driver_data {
 	/* List of Physical JobR's with the Driver */
-	काष्ठा list_head	jr_list;
+	struct list_head	jr_list;
 	spinlock_t		jr_alloc_lock;	/* jr_list lock */
-पूर्ण ____cacheline_aligned;
+} ____cacheline_aligned;
 
-अटल काष्ठा jr_driver_data driver_data;
-अटल DEFINE_MUTEX(algs_lock);
-अटल अचिन्हित पूर्णांक active_devs;
+static struct jr_driver_data driver_data;
+static DEFINE_MUTEX(algs_lock);
+static unsigned int active_devs;
 
-अटल व्योम रेजिस्टर_algs(काष्ठा caam_drv_निजी_jr *jrpriv,
-			  काष्ठा device *dev)
-अणु
+static void register_algs(struct caam_drv_private_jr *jrpriv,
+			  struct device *dev)
+{
 	mutex_lock(&algs_lock);
 
-	अगर (++active_devs != 1)
-		जाओ algs_unlock;
+	if (++active_devs != 1)
+		goto algs_unlock;
 
 	caam_algapi_init(dev);
 	caam_algapi_hash_init(dev);
@@ -44,189 +43,189 @@
 
 algs_unlock:
 	mutex_unlock(&algs_lock);
-पूर्ण
+}
 
-अटल व्योम unरेजिस्टर_algs(व्योम)
-अणु
+static void unregister_algs(void)
+{
 	mutex_lock(&algs_lock);
 
-	अगर (--active_devs != 0)
-		जाओ algs_unlock;
+	if (--active_devs != 0)
+		goto algs_unlock;
 
-	caam_qi_algapi_निकास();
+	caam_qi_algapi_exit();
 
-	caam_pkc_निकास();
-	caam_algapi_hash_निकास();
-	caam_algapi_निकास();
+	caam_pkc_exit();
+	caam_algapi_hash_exit();
+	caam_algapi_exit();
 
 algs_unlock:
 	mutex_unlock(&algs_lock);
-पूर्ण
+}
 
-अटल व्योम caam_jr_crypto_engine_निकास(व्योम *data)
-अणु
-	काष्ठा device *jrdev = data;
-	काष्ठा caam_drv_निजी_jr *jrpriv = dev_get_drvdata(jrdev);
+static void caam_jr_crypto_engine_exit(void *data)
+{
+	struct device *jrdev = data;
+	struct caam_drv_private_jr *jrpriv = dev_get_drvdata(jrdev);
 
 	/* Free the resources of crypto-engine */
-	crypto_engine_निकास(jrpriv->engine);
-पूर्ण
+	crypto_engine_exit(jrpriv->engine);
+}
 
-अटल पूर्णांक caam_reset_hw_jr(काष्ठा device *dev)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक समयout = 100000;
+static int caam_reset_hw_jr(struct device *dev)
+{
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(dev);
+	unsigned int timeout = 100000;
 
 	/*
-	 * mask पूर्णांकerrupts since we are going to poll
-	 * क्रम reset completion status
+	 * mask interrupts since we are going to poll
+	 * for reset completion status
 	 */
 	clrsetbits_32(&jrp->rregs->rconfig_lo, 0, JRCFG_IMSK);
 
 	/* initiate flush (required prior to reset) */
 	wr_reg32(&jrp->rregs->jrcommand, JRCR_RESET);
-	जबतक (((rd_reg32(&jrp->rregs->jrपूर्णांकstatus) & JRINT_ERR_HALT_MASK) ==
-		JRINT_ERR_HALT_INPROGRESS) && --समयout)
+	while (((rd_reg32(&jrp->rregs->jrintstatus) & JRINT_ERR_HALT_MASK) ==
+		JRINT_ERR_HALT_INPROGRESS) && --timeout)
 		cpu_relax();
 
-	अगर ((rd_reg32(&jrp->rregs->jrपूर्णांकstatus) & JRINT_ERR_HALT_MASK) !=
-	    JRINT_ERR_HALT_COMPLETE || समयout == 0) अणु
+	if ((rd_reg32(&jrp->rregs->jrintstatus) & JRINT_ERR_HALT_MASK) !=
+	    JRINT_ERR_HALT_COMPLETE || timeout == 0) {
 		dev_err(dev, "failed to flush job ring %d\n", jrp->ridx);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* initiate reset */
-	समयout = 100000;
+	timeout = 100000;
 	wr_reg32(&jrp->rregs->jrcommand, JRCR_RESET);
-	जबतक ((rd_reg32(&jrp->rregs->jrcommand) & JRCR_RESET) && --समयout)
+	while ((rd_reg32(&jrp->rregs->jrcommand) & JRCR_RESET) && --timeout)
 		cpu_relax();
 
-	अगर (समयout == 0) अणु
+	if (timeout == 0) {
 		dev_err(dev, "failed to reset job ring %d\n", jrp->ridx);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* unmask पूर्णांकerrupts */
+	/* unmask interrupts */
 	clrsetbits_32(&jrp->rregs->rconfig_lo, JRCFG_IMSK, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Shutकरोwn JobR independent of platक्रमm property code
+ * Shutdown JobR independent of platform property code
  */
-अटल पूर्णांक caam_jr_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int caam_jr_shutdown(struct device *dev)
+{
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(dev);
+	int ret;
 
 	ret = caam_reset_hw_jr(dev);
 
-	tasklet_समाप्त(&jrp->irqtask);
+	tasklet_kill(&jrp->irqtask);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक caam_jr_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा device *jrdev;
-	काष्ठा caam_drv_निजी_jr *jrpriv;
+static int caam_jr_remove(struct platform_device *pdev)
+{
+	int ret;
+	struct device *jrdev;
+	struct caam_drv_private_jr *jrpriv;
 
 	jrdev = &pdev->dev;
 	jrpriv = dev_get_drvdata(jrdev);
 
-	अगर (jrpriv->hwrng)
-		caam_rng_निकास(jrdev->parent);
+	if (jrpriv->hwrng)
+		caam_rng_exit(jrdev->parent);
 
 	/*
-	 * Return EBUSY अगर job ring alपढ़ोy allocated.
+	 * Return EBUSY if job ring already allocated.
 	 */
-	अगर (atomic_पढ़ो(&jrpriv->tfm_count)) अणु
+	if (atomic_read(&jrpriv->tfm_count)) {
 		dev_err(jrdev, "Device is busy\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Unरेजिस्टर JR-based RNG & crypto algorithms */
-	unरेजिस्टर_algs();
+	/* Unregister JR-based RNG & crypto algorithms */
+	unregister_algs();
 
-	/* Remove the node from Physical JobR list मुख्यtained by driver */
+	/* Remove the node from Physical JobR list maintained by driver */
 	spin_lock(&driver_data.jr_alloc_lock);
 	list_del(&jrpriv->list_node);
 	spin_unlock(&driver_data.jr_alloc_lock);
 
 	/* Release ring */
-	ret = caam_jr_shutकरोwn(jrdev);
-	अगर (ret)
+	ret = caam_jr_shutdown(jrdev);
+	if (ret)
 		dev_err(jrdev, "Failed to shut down job ring\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Main per-ring पूर्णांकerrupt handler */
-अटल irqवापस_t caam_jr_पूर्णांकerrupt(पूर्णांक irq, व्योम *st_dev)
-अणु
-	काष्ठा device *dev = st_dev;
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(dev);
+/* Main per-ring interrupt handler */
+static irqreturn_t caam_jr_interrupt(int irq, void *st_dev)
+{
+	struct device *dev = st_dev;
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(dev);
 	u32 irqstate;
 
 	/*
-	 * Check the output ring क्रम पढ़ोy responses, kick
-	 * tasklet अगर jobs करोne.
+	 * Check the output ring for ready responses, kick
+	 * tasklet if jobs done.
 	 */
-	irqstate = rd_reg32(&jrp->rregs->jrपूर्णांकstatus);
-	अगर (!irqstate)
-		वापस IRQ_NONE;
+	irqstate = rd_reg32(&jrp->rregs->jrintstatus);
+	if (!irqstate)
+		return IRQ_NONE;
 
 	/*
-	 * If JobR error, we got more development work to करो
-	 * Flag a bug now, but we really need to shut करोwn and
+	 * If JobR error, we got more development work to do
+	 * Flag a bug now, but we really need to shut down and
 	 * restart the queue (and fix code).
 	 */
-	अगर (irqstate & JRINT_JR_ERROR) अणु
+	if (irqstate & JRINT_JR_ERROR) {
 		dev_err(dev, "job ring error: irqstate: %08x\n", irqstate);
 		BUG();
-	पूर्ण
+	}
 
-	/* mask valid पूर्णांकerrupts */
+	/* mask valid interrupts */
 	clrsetbits_32(&jrp->rregs->rconfig_lo, 0, JRCFG_IMSK);
 
-	/* Have valid पूर्णांकerrupt at this poपूर्णांक, just ACK and trigger */
-	wr_reg32(&jrp->rregs->jrपूर्णांकstatus, irqstate);
+	/* Have valid interrupt at this point, just ACK and trigger */
+	wr_reg32(&jrp->rregs->jrintstatus, irqstate);
 
 	preempt_disable();
 	tasklet_schedule(&jrp->irqtask);
 	preempt_enable();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Deferred service handler, run as पूर्णांकerrupt-fired tasklet */
-अटल व्योम caam_jr_dequeue(अचिन्हित दीर्घ devarg)
-अणु
-	पूर्णांक hw_idx, sw_idx, i, head, tail;
-	काष्ठा device *dev = (काष्ठा device *)devarg;
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(dev);
-	व्योम (*usercall)(काष्ठा device *dev, u32 *desc, u32 status, व्योम *arg);
+/* Deferred service handler, run as interrupt-fired tasklet */
+static void caam_jr_dequeue(unsigned long devarg)
+{
+	int hw_idx, sw_idx, i, head, tail;
+	struct device *dev = (struct device *)devarg;
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(dev);
+	void (*usercall)(struct device *dev, u32 *desc, u32 status, void *arg);
 	u32 *userdesc, userstatus;
-	व्योम *userarg;
+	void *userarg;
 	u32 outring_used = 0;
 
-	जबतक (outring_used ||
-	       (outring_used = rd_reg32(&jrp->rregs->outring_used))) अणु
+	while (outring_used ||
+	       (outring_used = rd_reg32(&jrp->rregs->outring_used))) {
 
 		head = READ_ONCE(jrp->head);
 
 		sw_idx = tail = jrp->tail;
-		hw_idx = jrp->out_ring_पढ़ो_index;
+		hw_idx = jrp->out_ring_read_index;
 
-		क्रम (i = 0; CIRC_CNT(head, tail + i, JOBR_DEPTH) >= 1; i++) अणु
+		for (i = 0; CIRC_CNT(head, tail + i, JOBR_DEPTH) >= 1; i++) {
 			sw_idx = (tail + i) & (JOBR_DEPTH - 1);
 
-			अगर (jr_outentry_desc(jrp->outring, hw_idx) ==
+			if (jr_outentry_desc(jrp->outring, hw_idx) ==
 			    caam_dma_to_cpu(jrp->entinfo[sw_idx].desc_addr_dma))
-				अवरोध; /* found */
-		पूर्ण
+				break; /* found */
+		}
 		/* we should never fail to find a matching descriptor */
 		BUG_ON(CIRC_CNT(head, tail + i, JOBR_DEPTH) <= 0);
 
@@ -237,7 +236,7 @@ algs_unlock:
 				 jrp->entinfo[sw_idx].desc_size,
 				 DMA_TO_DEVICE);
 
-		/* mark completed, aव्योम matching on a recycled desc addr */
+		/* mark completed, avoid matching on a recycled desc addr */
 		jrp->entinfo[sw_idx].desc_addr_dma = 0;
 
 		/* Stash callback params */
@@ -248,154 +247,154 @@ algs_unlock:
 								hw_idx));
 
 		/*
-		 * Make sure all inक्रमmation from the job has been obtained
-		 * beक्रमe telling CAAM that the job has been हटाओd from the
+		 * Make sure all information from the job has been obtained
+		 * before telling CAAM that the job has been removed from the
 		 * output ring.
 		 */
 		mb();
 
-		/* set करोne */
+		/* set done */
 		wr_reg32(&jrp->rregs->outring_rmvd, 1);
 
-		jrp->out_ring_पढ़ो_index = (jrp->out_ring_पढ़ो_index + 1) &
+		jrp->out_ring_read_index = (jrp->out_ring_read_index + 1) &
 					   (JOBR_DEPTH - 1);
 
 		/*
-		 * अगर this job completed out-of-order, करो not increment
+		 * if this job completed out-of-order, do not increment
 		 * the tail.  Otherwise, increment tail by 1 plus the
-		 * number of subsequent jobs alपढ़ोy completed out-of-order
+		 * number of subsequent jobs already completed out-of-order
 		 */
-		अगर (sw_idx == tail) अणु
-			करो अणु
+		if (sw_idx == tail) {
+			do {
 				tail = (tail + 1) & (JOBR_DEPTH - 1);
-			पूर्ण जबतक (CIRC_CNT(head, tail, JOBR_DEPTH) >= 1 &&
+			} while (CIRC_CNT(head, tail, JOBR_DEPTH) >= 1 &&
 				 jrp->entinfo[tail].desc_addr_dma == 0);
 
 			jrp->tail = tail;
-		पूर्ण
+		}
 
 		/* Finally, execute user's callback */
 		usercall(dev, userdesc, userstatus, userarg);
 		outring_used--;
-	पूर्ण
+	}
 
 	/* reenable / unmask IRQs */
 	clrsetbits_32(&jrp->rregs->rconfig_lo, JRCFG_IMSK, 0);
-पूर्ण
+}
 
 /**
- * caam_jr_alloc() - Alloc a job ring क्रम someone to use as needed.
+ * caam_jr_alloc() - Alloc a job ring for someone to use as needed.
  *
- * वापसs :  poपूर्णांकer to the newly allocated physical
- *	      JobR dev can be written to अगर successful.
+ * returns :  pointer to the newly allocated physical
+ *	      JobR dev can be written to if successful.
  **/
-काष्ठा device *caam_jr_alloc(व्योम)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrpriv, *min_jrpriv = शून्य;
-	काष्ठा device *dev = ERR_PTR(-ENODEV);
-	पूर्णांक min_tfm_cnt	= पूर्णांक_उच्च;
-	पूर्णांक tfm_cnt;
+struct device *caam_jr_alloc(void)
+{
+	struct caam_drv_private_jr *jrpriv, *min_jrpriv = NULL;
+	struct device *dev = ERR_PTR(-ENODEV);
+	int min_tfm_cnt	= INT_MAX;
+	int tfm_cnt;
 
 	spin_lock(&driver_data.jr_alloc_lock);
 
-	अगर (list_empty(&driver_data.jr_list)) अणु
+	if (list_empty(&driver_data.jr_list)) {
 		spin_unlock(&driver_data.jr_alloc_lock);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
-	list_क्रम_each_entry(jrpriv, &driver_data.jr_list, list_node) अणु
-		tfm_cnt = atomic_पढ़ो(&jrpriv->tfm_count);
-		अगर (tfm_cnt < min_tfm_cnt) अणु
+	list_for_each_entry(jrpriv, &driver_data.jr_list, list_node) {
+		tfm_cnt = atomic_read(&jrpriv->tfm_count);
+		if (tfm_cnt < min_tfm_cnt) {
 			min_tfm_cnt = tfm_cnt;
 			min_jrpriv = jrpriv;
-		पूर्ण
-		अगर (!min_tfm_cnt)
-			अवरोध;
-	पूर्ण
+		}
+		if (!min_tfm_cnt)
+			break;
+	}
 
-	अगर (min_jrpriv) अणु
+	if (min_jrpriv) {
 		atomic_inc(&min_jrpriv->tfm_count);
 		dev = min_jrpriv->dev;
-	पूर्ण
+	}
 	spin_unlock(&driver_data.jr_alloc_lock);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL(caam_jr_alloc);
 
 /**
- * caam_jr_मुक्त() - Free the Job Ring
- * @rdev:      poपूर्णांकs to the dev that identअगरies the Job ring to
+ * caam_jr_free() - Free the Job Ring
+ * @rdev:      points to the dev that identifies the Job ring to
  *             be released.
  **/
-व्योम caam_jr_मुक्त(काष्ठा device *rdev)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrpriv = dev_get_drvdata(rdev);
+void caam_jr_free(struct device *rdev)
+{
+	struct caam_drv_private_jr *jrpriv = dev_get_drvdata(rdev);
 
 	atomic_dec(&jrpriv->tfm_count);
-पूर्ण
-EXPORT_SYMBOL(caam_jr_मुक्त);
+}
+EXPORT_SYMBOL(caam_jr_free);
 
 /**
  * caam_jr_enqueue() - Enqueue a job descriptor head. Returns -EINPROGRESS
- * अगर OK, -ENOSPC अगर the queue is full, -EIO अगर it cannot map the caller's
+ * if OK, -ENOSPC if the queue is full, -EIO if it cannot map the caller's
  * descriptor.
- * @dev:  काष्ठा device of the job ring to be used
- * @desc: poपूर्णांकs to a job descriptor that execute our request. All
+ * @dev:  struct device of the job ring to be used
+ * @desc: points to a job descriptor that execute our request. All
  *        descriptors (and all referenced data) must be in a DMAable
  *        region, and all data references must be physical addresses
- *        accessible to CAAM (i.e. within a PAMU winकरोw granted
+ *        accessible to CAAM (i.e. within a PAMU window granted
  *        to it).
- * @cbk:  poपूर्णांकer to a callback function to be invoked upon completion
- *        of this request. This has the क्रमm:
- *        callback(काष्ठा device *dev, u32 *desc, u32 stat, व्योम *arg)
+ * @cbk:  pointer to a callback function to be invoked upon completion
+ *        of this request. This has the form:
+ *        callback(struct device *dev, u32 *desc, u32 stat, void *arg)
  *        where:
  *        dev:     contains the job ring device that processed this
  *                 response.
  *        desc:    descriptor that initiated the request, same as
  *                 "desc" being argued to caam_jr_enqueue().
  *        status:  untranslated status received from CAAM. See the
- *                 reference manual क्रम a detailed description of
+ *                 reference manual for a detailed description of
  *                 error meaning, or see the JRSTA definitions in the
- *                 रेजिस्टर header file
- *        areq:    optional poपूर्णांकer to an argument passed with the
+ *                 register header file
+ *        areq:    optional pointer to an argument passed with the
  *                 original request
- * @areq: optional poपूर्णांकer to a user argument क्रम use at callback
- *        समय.
+ * @areq: optional pointer to a user argument for use at callback
+ *        time.
  **/
-पूर्णांक caam_jr_enqueue(काष्ठा device *dev, u32 *desc,
-		    व्योम (*cbk)(काष्ठा device *dev, u32 *desc,
-				u32 status, व्योम *areq),
-		    व्योम *areq)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrp = dev_get_drvdata(dev);
-	काष्ठा caam_jrentry_info *head_entry;
-	पूर्णांक head, tail, desc_size;
+int caam_jr_enqueue(struct device *dev, u32 *desc,
+		    void (*cbk)(struct device *dev, u32 *desc,
+				u32 status, void *areq),
+		    void *areq)
+{
+	struct caam_drv_private_jr *jrp = dev_get_drvdata(dev);
+	struct caam_jrentry_info *head_entry;
+	int head, tail, desc_size;
 	dma_addr_t desc_dma;
 
-	desc_size = (caam32_to_cpu(*desc) & HDR_JD_LENGTH_MASK) * माप(u32);
+	desc_size = (caam32_to_cpu(*desc) & HDR_JD_LENGTH_MASK) * sizeof(u32);
 	desc_dma = dma_map_single(dev, desc, desc_size, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(dev, desc_dma)) अणु
+	if (dma_mapping_error(dev, desc_dma)) {
 		dev_err(dev, "caam_jr_enqueue(): can't map jobdesc\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	spin_lock_bh(&jrp->inplock);
 
 	head = jrp->head;
 	tail = READ_ONCE(jrp->tail);
 
-	अगर (!jrp->inpring_avail ||
-	    CIRC_SPACE(head, tail, JOBR_DEPTH) <= 0) अणु
+	if (!jrp->inpring_avail ||
+	    CIRC_SPACE(head, tail, JOBR_DEPTH) <= 0) {
 		spin_unlock_bh(&jrp->inplock);
 		dma_unmap_single(dev, desc_dma, desc_size, DMA_TO_DEVICE);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
 	head_entry = &jrp->entinfo[head];
 	head_entry->desc_addr_virt = desc;
 	head_entry->desc_size = desc_size;
-	head_entry->callbk = (व्योम *)cbk;
+	head_entry->callbk = (void *)cbk;
 	head_entry->cbkarg = areq;
 	head_entry->desc_addr_dma = desc_dma;
 
@@ -403,7 +402,7 @@ EXPORT_SYMBOL(caam_jr_मुक्त);
 
 	/*
 	 * Guarantee that the descriptor's DMA address has been written to
-	 * the next slot in the ring beक्रमe the ग_लिखो index is updated, since
+	 * the next slot in the ring before the write index is updated, since
 	 * other cores may update this index independently.
 	 */
 	smp_wmb();
@@ -411,62 +410,62 @@ EXPORT_SYMBOL(caam_jr_मुक्त);
 	jrp->head = (head + 1) & (JOBR_DEPTH - 1);
 
 	/*
-	 * Ensure that all job inक्रमmation has been written beक्रमe
-	 * notअगरying CAAM that a new job was added to the input ring
-	 * using a memory barrier. The wr_reg32() uses api ioग_लिखो32()
-	 * to करो the रेजिस्टर ग_लिखो. ioग_लिखो32() issues a memory barrier
-	 * beक्रमe the ग_लिखो operation.
+	 * Ensure that all job information has been written before
+	 * notifying CAAM that a new job was added to the input ring
+	 * using a memory barrier. The wr_reg32() uses api iowrite32()
+	 * to do the register write. iowrite32() issues a memory barrier
+	 * before the write operation.
 	 */
 
 	wr_reg32(&jrp->rregs->inpring_jobadd, 1);
 
 	jrp->inpring_avail--;
-	अगर (!jrp->inpring_avail)
+	if (!jrp->inpring_avail)
 		jrp->inpring_avail = rd_reg32(&jrp->rregs->inpring_avail);
 
 	spin_unlock_bh(&jrp->inplock);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 EXPORT_SYMBOL(caam_jr_enqueue);
 
 /*
- * Init JobR independent of platक्रमm property detection
+ * Init JobR independent of platform property detection
  */
-अटल पूर्णांक caam_jr_init(काष्ठा device *dev)
-अणु
-	काष्ठा caam_drv_निजी_jr *jrp;
+static int caam_jr_init(struct device *dev)
+{
+	struct caam_drv_private_jr *jrp;
 	dma_addr_t inpbusaddr, outbusaddr;
-	पूर्णांक i, error;
+	int i, error;
 
 	jrp = dev_get_drvdata(dev);
 
 	error = caam_reset_hw_jr(dev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	jrp->inpring = dmam_alloc_coherent(dev, SIZखातापूर्ण_JR_INPENTRY *
+	jrp->inpring = dmam_alloc_coherent(dev, SIZEOF_JR_INPENTRY *
 					   JOBR_DEPTH, &inpbusaddr,
 					   GFP_KERNEL);
-	अगर (!jrp->inpring)
-		वापस -ENOMEM;
+	if (!jrp->inpring)
+		return -ENOMEM;
 
-	jrp->outring = dmam_alloc_coherent(dev, SIZखातापूर्ण_JR_OUTENTRY *
+	jrp->outring = dmam_alloc_coherent(dev, SIZEOF_JR_OUTENTRY *
 					   JOBR_DEPTH, &outbusaddr,
 					   GFP_KERNEL);
-	अगर (!jrp->outring)
-		वापस -ENOMEM;
+	if (!jrp->outring)
+		return -ENOMEM;
 
-	jrp->entinfo = devm_kसुस्मृति(dev, JOBR_DEPTH, माप(*jrp->entinfo),
+	jrp->entinfo = devm_kcalloc(dev, JOBR_DEPTH, sizeof(*jrp->entinfo),
 				    GFP_KERNEL);
-	अगर (!jrp->entinfo)
-		वापस -ENOMEM;
+	if (!jrp->entinfo)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < JOBR_DEPTH; i++)
+	for (i = 0; i < JOBR_DEPTH; i++)
 		jrp->entinfo[i].desc_addr_dma = !0;
 
 	/* Setup rings */
-	jrp->out_ring_पढ़ो_index = 0;
+	jrp->out_ring_read_index = 0;
 	jrp->head = 0;
 	jrp->tail = 0;
 
@@ -479,47 +478,47 @@ EXPORT_SYMBOL(caam_jr_enqueue);
 
 	spin_lock_init(&jrp->inplock);
 
-	/* Select पूर्णांकerrupt coalescing parameters */
+	/* Select interrupt coalescing parameters */
 	clrsetbits_32(&jrp->rregs->rconfig_lo, 0, JOBR_INTC |
 		      (JOBR_INTC_COUNT_THLD << JRCFG_ICDCT_SHIFT) |
 		      (JOBR_INTC_TIME_THLD << JRCFG_ICTT_SHIFT));
 
-	tasklet_init(&jrp->irqtask, caam_jr_dequeue, (अचिन्हित दीर्घ)dev);
+	tasklet_init(&jrp->irqtask, caam_jr_dequeue, (unsigned long)dev);
 
-	/* Connect job ring पूर्णांकerrupt handler. */
-	error = devm_request_irq(dev, jrp->irq, caam_jr_पूर्णांकerrupt, IRQF_SHARED,
+	/* Connect job ring interrupt handler. */
+	error = devm_request_irq(dev, jrp->irq, caam_jr_interrupt, IRQF_SHARED,
 				 dev_name(dev), dev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "can't connect JobR %d interrupt (%d)\n",
 			jrp->ridx, jrp->irq);
-		tasklet_समाप्त(&jrp->irqtask);
-	पूर्ण
+		tasklet_kill(&jrp->irqtask);
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम caam_jr_irq_dispose_mapping(व्योम *data)
-अणु
-	irq_dispose_mapping((अचिन्हित दीर्घ)data);
-पूर्ण
+static void caam_jr_irq_dispose_mapping(void *data)
+{
+	irq_dispose_mapping((unsigned long)data);
+}
 
 /*
- * Probe routine क्रम each detected JobR subप्रणाली.
+ * Probe routine for each detected JobR subsystem.
  */
-अटल पूर्णांक caam_jr_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *jrdev;
-	काष्ठा device_node *nprop;
-	काष्ठा caam_job_ring __iomem *ctrl;
-	काष्ठा caam_drv_निजी_jr *jrpriv;
-	अटल पूर्णांक total_jobrs;
-	काष्ठा resource *r;
-	पूर्णांक error;
+static int caam_jr_probe(struct platform_device *pdev)
+{
+	struct device *jrdev;
+	struct device_node *nprop;
+	struct caam_job_ring __iomem *ctrl;
+	struct caam_drv_private_jr *jrpriv;
+	static int total_jobrs;
+	struct resource *r;
+	int error;
 
 	jrdev = &pdev->dev;
-	jrpriv = devm_kzalloc(jrdev, माप(*jrpriv), GFP_KERNEL);
-	अगर (!jrpriv)
-		वापस -ENOMEM;
+	jrpriv = devm_kzalloc(jrdev, sizeof(*jrpriv), GFP_KERNEL);
+	if (!jrpriv)
+		return -ENOMEM;
 
 	dev_set_drvdata(jrdev, jrpriv);
 
@@ -528,65 +527,65 @@ EXPORT_SYMBOL(caam_jr_enqueue);
 
 	nprop = pdev->dev.of_node;
 	/* Get configuration properties from device tree */
-	/* First, get रेजिस्टर page */
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!r) अणु
+	/* First, get register page */
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!r) {
 		dev_err(jrdev, "platform_get_resource() failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ctrl = devm_ioremap(jrdev, r->start, resource_size(r));
-	अगर (!ctrl) अणु
+	if (!ctrl) {
 		dev_err(jrdev, "devm_ioremap() failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	jrpriv->rregs = (काष्ठा caam_job_ring __iomem __क्रमce *)ctrl;
+	jrpriv->rregs = (struct caam_job_ring __iomem __force *)ctrl;
 
 	error = dma_set_mask_and_coherent(jrdev, caam_get_dma_mask(jrdev));
-	अगर (error) अणु
+	if (error) {
 		dev_err(jrdev, "dma_set_mask_and_coherent failed (%d)\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	/* Initialize crypto engine */
-	jrpriv->engine = crypto_engine_alloc_init_and_set(jrdev, true, शून्य,
+	jrpriv->engine = crypto_engine_alloc_init_and_set(jrdev, true, NULL,
 							  false,
 							  CRYPTO_ENGINE_MAX_QLEN);
-	अगर (!jrpriv->engine) अणु
+	if (!jrpriv->engine) {
 		dev_err(jrdev, "Could not init crypto-engine\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	error = devm_add_action_or_reset(jrdev, caam_jr_crypto_engine_निकास,
+	error = devm_add_action_or_reset(jrdev, caam_jr_crypto_engine_exit,
 					 jrdev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* Start crypto engine */
 	error = crypto_engine_start(jrpriv->engine);
-	अगर (error) अणु
+	if (error) {
 		dev_err(jrdev, "Could not start crypto-engine\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	/* Identअगरy the पूर्णांकerrupt */
+	/* Identify the interrupt */
 	jrpriv->irq = irq_of_parse_and_map(nprop, 0);
-	अगर (!jrpriv->irq) अणु
+	if (!jrpriv->irq) {
 		dev_err(jrdev, "irq_of_parse_and_map failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	error = devm_add_action_or_reset(jrdev, caam_jr_irq_dispose_mapping,
-					 (व्योम *)(अचिन्हित दीर्घ)jrpriv->irq);
-	अगर (error)
-		वापस error;
+					 (void *)(unsigned long)jrpriv->irq);
+	if (error)
+		return error;
 
-	/* Now करो the platक्रमm independent part */
+	/* Now do the platform independent part */
 	error = caam_jr_init(jrdev); /* now turn on hardware */
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	jrpriv->dev = jrdev;
 	spin_lock(&driver_data.jr_alloc_lock);
@@ -595,45 +594,45 @@ EXPORT_SYMBOL(caam_jr_enqueue);
 
 	atomic_set(&jrpriv->tfm_count, 0);
 
-	रेजिस्टर_algs(jrpriv, jrdev->parent);
+	register_algs(jrpriv, jrdev->parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id caam_jr_match[] = अणु
-	अणु
+static const struct of_device_id caam_jr_match[] = {
+	{
 		.compatible = "fsl,sec-v4.0-job-ring",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,sec4.0-job-ring",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, caam_jr_match);
 
-अटल काष्ठा platक्रमm_driver caam_jr_driver = अणु
-	.driver = अणु
+static struct platform_driver caam_jr_driver = {
+	.driver = {
 		.name = "caam_jr",
 		.of_match_table = caam_jr_match,
-	पूर्ण,
+	},
 	.probe       = caam_jr_probe,
-	.हटाओ      = caam_jr_हटाओ,
-पूर्ण;
+	.remove      = caam_jr_remove,
+};
 
-अटल पूर्णांक __init jr_driver_init(व्योम)
-अणु
+static int __init jr_driver_init(void)
+{
 	spin_lock_init(&driver_data.jr_alloc_lock);
 	INIT_LIST_HEAD(&driver_data.jr_list);
-	वापस platक्रमm_driver_रेजिस्टर(&caam_jr_driver);
-पूर्ण
+	return platform_driver_register(&caam_jr_driver);
+}
 
-अटल व्योम __निकास jr_driver_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&caam_jr_driver);
-पूर्ण
+static void __exit jr_driver_exit(void)
+{
+	platform_driver_unregister(&caam_jr_driver);
+}
 
 module_init(jr_driver_init);
-module_निकास(jr_driver_निकास);
+module_exit(jr_driver_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("FSL CAAM JR request backend");

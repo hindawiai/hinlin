@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Marvell NFC-over-UART driver
  *
@@ -6,231 +5,231 @@
  *
  * This software file (the "File") is distributed by Marvell International
  * Ltd. under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modअगरy this File in
+ * (the "License").  You may use, redistribute and/or modify this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available on the worldwide web at
  * http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <net/nfc/nci.h>
-#समावेश <net/nfc/nci_core.h>
-#समावेश "nfcmrvl.h"
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/of_gpio.h>
+#include <net/nfc/nci.h>
+#include <net/nfc/nci_core.h>
+#include "nfcmrvl.h"
 
-अटल अचिन्हित पूर्णांक hci_muxed;
-अटल अचिन्हित पूर्णांक flow_control;
-अटल अचिन्हित पूर्णांक अवरोध_control;
-अटल पूर्णांक reset_n_io = -EINVAL;
+static unsigned int hci_muxed;
+static unsigned int flow_control;
+static unsigned int break_control;
+static int reset_n_io = -EINVAL;
 
 /*
 ** NFCMRVL NCI OPS
 */
 
-अटल पूर्णांक nfcmrvl_uart_nci_खोलो(काष्ठा nfcmrvl_निजी *priv)
-अणु
-	वापस 0;
-पूर्ण
+static int nfcmrvl_uart_nci_open(struct nfcmrvl_private *priv)
+{
+	return 0;
+}
 
-अटल पूर्णांक nfcmrvl_uart_nci_बंद(काष्ठा nfcmrvl_निजी *priv)
-अणु
-	वापस 0;
-पूर्ण
+static int nfcmrvl_uart_nci_close(struct nfcmrvl_private *priv)
+{
+	return 0;
+}
 
-अटल पूर्णांक nfcmrvl_uart_nci_send(काष्ठा nfcmrvl_निजी *priv,
-				 काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nci_uart *nu = priv->drv_data;
+static int nfcmrvl_uart_nci_send(struct nfcmrvl_private *priv,
+				 struct sk_buff *skb)
+{
+	struct nci_uart *nu = priv->drv_data;
 
-	वापस nu->ops.send(nu, skb);
-पूर्ण
+	return nu->ops.send(nu, skb);
+}
 
-अटल व्योम nfcmrvl_uart_nci_update_config(काष्ठा nfcmrvl_निजी *priv,
-					   स्थिर व्योम *param)
-अणु
-	काष्ठा nci_uart *nu = priv->drv_data;
-	स्थिर काष्ठा nfcmrvl_fw_uart_config *config = param;
+static void nfcmrvl_uart_nci_update_config(struct nfcmrvl_private *priv,
+					   const void *param)
+{
+	struct nci_uart *nu = priv->drv_data;
+	const struct nfcmrvl_fw_uart_config *config = param;
 
 	nci_uart_set_config(nu, le32_to_cpu(config->baudrate),
 			    config->flow_control);
-पूर्ण
+}
 
-अटल काष्ठा nfcmrvl_अगर_ops uart_ops = अणु
-	.nci_खोलो = nfcmrvl_uart_nci_खोलो,
-	.nci_बंद = nfcmrvl_uart_nci_बंद,
+static struct nfcmrvl_if_ops uart_ops = {
+	.nci_open = nfcmrvl_uart_nci_open,
+	.nci_close = nfcmrvl_uart_nci_close,
 	.nci_send = nfcmrvl_uart_nci_send,
 	.nci_update_config = nfcmrvl_uart_nci_update_config
-पूर्ण;
+};
 
-अटल पूर्णांक nfcmrvl_uart_parse_dt(काष्ठा device_node *node,
-				 काष्ठा nfcmrvl_platक्रमm_data *pdata)
-अणु
-	काष्ठा device_node *matched_node;
-	पूर्णांक ret;
+static int nfcmrvl_uart_parse_dt(struct device_node *node,
+				 struct nfcmrvl_platform_data *pdata)
+{
+	struct device_node *matched_node;
+	int ret;
 
 	matched_node = of_get_compatible_child(node, "marvell,nfc-uart");
-	अगर (!matched_node) अणु
+	if (!matched_node) {
 		matched_node = of_get_compatible_child(node, "mrvl,nfc-uart");
-		अगर (!matched_node)
-			वापस -ENODEV;
-	पूर्ण
+		if (!matched_node)
+			return -ENODEV;
+	}
 
 	ret = nfcmrvl_parse_dt(matched_node, pdata);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("Failed to get generic entries\n");
 		of_node_put(matched_node);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (of_find_property(matched_node, "flow-control", शून्य))
+	if (of_find_property(matched_node, "flow-control", NULL))
 		pdata->flow_control = 1;
-	अन्यथा
+	else
 		pdata->flow_control = 0;
 
-	अगर (of_find_property(matched_node, "break-control", शून्य))
-		pdata->अवरोध_control = 1;
-	अन्यथा
-		pdata->अवरोध_control = 0;
+	if (of_find_property(matched_node, "break-control", NULL))
+		pdata->break_control = 1;
+	else
+		pdata->break_control = 0;
 
 	of_node_put(matched_node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
 ** NCI UART OPS
 */
 
-अटल पूर्णांक nfcmrvl_nci_uart_खोलो(काष्ठा nci_uart *nu)
-अणु
-	काष्ठा nfcmrvl_निजी *priv;
-	काष्ठा nfcmrvl_platक्रमm_data *pdata = शून्य;
-	काष्ठा nfcmrvl_platक्रमm_data config;
-	काष्ठा device *dev = nu->tty->dev;
+static int nfcmrvl_nci_uart_open(struct nci_uart *nu)
+{
+	struct nfcmrvl_private *priv;
+	struct nfcmrvl_platform_data *pdata = NULL;
+	struct nfcmrvl_platform_data config;
+	struct device *dev = nu->tty->dev;
 
 	/*
-	 * Platक्रमm data cannot be used here since usually it is alपढ़ोy used
+	 * Platform data cannot be used here since usually it is already used
 	 * by low level serial driver. We can try to retrieve serial device
-	 * and check अगर DT entries were added.
+	 * and check if DT entries were added.
 	 */
 
-	अगर (dev && dev->parent && dev->parent->of_node)
-		अगर (nfcmrvl_uart_parse_dt(dev->parent->of_node, &config) == 0)
+	if (dev && dev->parent && dev->parent->of_node)
+		if (nfcmrvl_uart_parse_dt(dev->parent->of_node, &config) == 0)
 			pdata = &config;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		pr_info("No platform data / DT -> fallback to module params\n");
 		config.hci_muxed = hci_muxed;
 		config.reset_n_io = reset_n_io;
 		config.flow_control = flow_control;
-		config.अवरोध_control = अवरोध_control;
+		config.break_control = break_control;
 		pdata = &config;
-	पूर्ण
+	}
 
-	priv = nfcmrvl_nci_रेजिस्टर_dev(NFCMRVL_PHY_UART, nu, &uart_ops,
+	priv = nfcmrvl_nci_register_dev(NFCMRVL_PHY_UART, nu, &uart_ops,
 					dev, pdata);
-	अगर (IS_ERR(priv))
-		वापस PTR_ERR(priv);
+	if (IS_ERR(priv))
+		return PTR_ERR(priv);
 
 	priv->support_fw_dnld = true;
 
 	nu->drv_data = priv;
 	nu->ndev = priv->ndev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nfcmrvl_nci_uart_बंद(काष्ठा nci_uart *nu)
-अणु
-	nfcmrvl_nci_unरेजिस्टर_dev((काष्ठा nfcmrvl_निजी *)nu->drv_data);
-पूर्ण
+static void nfcmrvl_nci_uart_close(struct nci_uart *nu)
+{
+	nfcmrvl_nci_unregister_dev((struct nfcmrvl_private *)nu->drv_data);
+}
 
-अटल पूर्णांक nfcmrvl_nci_uart_recv(काष्ठा nci_uart *nu, काष्ठा sk_buff *skb)
-अणु
-	वापस nfcmrvl_nci_recv_frame((काष्ठा nfcmrvl_निजी *)nu->drv_data,
+static int nfcmrvl_nci_uart_recv(struct nci_uart *nu, struct sk_buff *skb)
+{
+	return nfcmrvl_nci_recv_frame((struct nfcmrvl_private *)nu->drv_data,
 				      skb);
-पूर्ण
+}
 
-अटल व्योम nfcmrvl_nci_uart_tx_start(काष्ठा nci_uart *nu)
-अणु
-	काष्ठा nfcmrvl_निजी *priv = (काष्ठा nfcmrvl_निजी *)nu->drv_data;
+static void nfcmrvl_nci_uart_tx_start(struct nci_uart *nu)
+{
+	struct nfcmrvl_private *priv = (struct nfcmrvl_private *)nu->drv_data;
 
-	अगर (priv->ndev->nfc_dev->fw_करोwnload_in_progress)
-		वापस;
+	if (priv->ndev->nfc_dev->fw_download_in_progress)
+		return;
 
 	/* Remove BREAK to wake up the NFCC */
-	अगर (priv->config.अवरोध_control && nu->tty->ops->अवरोध_ctl) अणु
-		nu->tty->ops->अवरोध_ctl(nu->tty, 0);
+	if (priv->config.break_control && nu->tty->ops->break_ctl) {
+		nu->tty->ops->break_ctl(nu->tty, 0);
 		usleep_range(3000, 5000);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nfcmrvl_nci_uart_tx_करोne(काष्ठा nci_uart *nu)
-अणु
-	काष्ठा nfcmrvl_निजी *priv = (काष्ठा nfcmrvl_निजी *)nu->drv_data;
+static void nfcmrvl_nci_uart_tx_done(struct nci_uart *nu)
+{
+	struct nfcmrvl_private *priv = (struct nfcmrvl_private *)nu->drv_data;
 
-	अगर (priv->ndev->nfc_dev->fw_करोwnload_in_progress)
-		वापस;
+	if (priv->ndev->nfc_dev->fw_download_in_progress)
+		return;
 
 	/*
-	** To ensure that अगर the NFCC goes in DEEP SLEEP sate we can wake him
-	** up. we set BREAK. Once we will be पढ़ोy to send again we will हटाओ
+	** To ensure that if the NFCC goes in DEEP SLEEP sate we can wake him
+	** up. we set BREAK. Once we will be ready to send again we will remove
 	** it.
 	*/
-	अगर (priv->config.अवरोध_control && nu->tty->ops->अवरोध_ctl) अणु
-		nu->tty->ops->अवरोध_ctl(nu->tty, -1);
+	if (priv->config.break_control && nu->tty->ops->break_ctl) {
+		nu->tty->ops->break_ctl(nu->tty, -1);
 		usleep_range(1000, 3000);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा nci_uart nfcmrvl_nci_uart = अणु
+static struct nci_uart nfcmrvl_nci_uart = {
 	.owner  = THIS_MODULE,
 	.name   = "nfcmrvl_uart",
 	.driver = NCI_UART_DRIVER_MARVELL,
-	.ops	= अणु
-		.खोलो		= nfcmrvl_nci_uart_खोलो,
-		.बंद		= nfcmrvl_nci_uart_बंद,
+	.ops	= {
+		.open		= nfcmrvl_nci_uart_open,
+		.close		= nfcmrvl_nci_uart_close,
 		.recv		= nfcmrvl_nci_uart_recv,
 		.tx_start	= nfcmrvl_nci_uart_tx_start,
-		.tx_करोne	= nfcmrvl_nci_uart_tx_करोne,
-	पूर्ण
-पूर्ण;
+		.tx_done	= nfcmrvl_nci_uart_tx_done,
+	}
+};
 
 /*
 ** Module init
 */
 
-अटल पूर्णांक nfcmrvl_uart_init_module(व्योम)
-अणु
-	वापस nci_uart_रेजिस्टर(&nfcmrvl_nci_uart);
-पूर्ण
+static int nfcmrvl_uart_init_module(void)
+{
+	return nci_uart_register(&nfcmrvl_nci_uart);
+}
 
-अटल व्योम nfcmrvl_uart_निकास_module(व्योम)
-अणु
-	nci_uart_unरेजिस्टर(&nfcmrvl_nci_uart);
-पूर्ण
+static void nfcmrvl_uart_exit_module(void)
+{
+	nci_uart_unregister(&nfcmrvl_nci_uart);
+}
 
 module_init(nfcmrvl_uart_init_module);
-module_निकास(nfcmrvl_uart_निकास_module);
+module_exit(nfcmrvl_uart_exit_module);
 
 MODULE_AUTHOR("Marvell International Ltd.");
 MODULE_DESCRIPTION("Marvell NFC-over-UART");
 MODULE_LICENSE("GPL v2");
 
-module_param(flow_control, uपूर्णांक, 0);
+module_param(flow_control, uint, 0);
 MODULE_PARM_DESC(flow_control, "Tell if UART needs flow control at init.");
 
-module_param(अवरोध_control, uपूर्णांक, 0);
-MODULE_PARM_DESC(अवरोध_control, "Tell if UART driver must drive break signal.");
+module_param(break_control, uint, 0);
+MODULE_PARM_DESC(break_control, "Tell if UART driver must drive break signal.");
 
-module_param(hci_muxed, uपूर्णांक, 0);
+module_param(hci_muxed, uint, 0);
 MODULE_PARM_DESC(hci_muxed, "Tell if transport is muxed in HCI one.");
 
-module_param(reset_n_io, पूर्णांक, 0);
+module_param(reset_n_io, int, 0);
 MODULE_PARM_DESC(reset_n_io, "GPIO that is wired to RESET_N signal.");

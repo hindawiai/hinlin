@@ -1,380 +1,379 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
  *			   Martin Josefsson <gandalf@wlug.westbo.se>
  */
 
-/* Kernel module implementing an IP set type: the biपंचांगap:ip,mac type */
+/* Kernel module implementing an IP set type: the bitmap:ip,mac type */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समयr.h>
-#समावेश <net/netlink.h>
+#include <linux/module.h>
+#include <linux/ip.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/errno.h>
+#include <linux/if_ether.h>
+#include <linux/netlink.h>
+#include <linux/jiffies.h>
+#include <linux/timer.h>
+#include <net/netlink.h>
 
-#समावेश <linux/netfilter/ipset/pfxlen.h>
-#समावेश <linux/netfilter/ipset/ip_set.h>
-#समावेश <linux/netfilter/ipset/ip_set_biपंचांगap.h>
+#include <linux/netfilter/ipset/pfxlen.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set_bitmap.h>
 
-#घोषणा IPSET_TYPE_REV_MIN	0
+#define IPSET_TYPE_REV_MIN	0
 /*				1	   Counter support added */
 /*				2	   Comment support added */
-#घोषणा IPSET_TYPE_REV_MAX	3	/* skbinfo support added */
+#define IPSET_TYPE_REV_MAX	3	/* skbinfo support added */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@netfilter.org>");
 IP_SET_MODULE_DESC("bitmap:ip,mac", IPSET_TYPE_REV_MIN, IPSET_TYPE_REV_MAX);
 MODULE_ALIAS("ip_set_bitmap:ip,mac");
 
-#घोषणा MTYPE		biपंचांगap_ipmac
-#घोषणा HOST_MASK	32
-#घोषणा IP_SET_BITMAP_STORED_TIMEOUT
+#define MTYPE		bitmap_ipmac
+#define HOST_MASK	32
+#define IP_SET_BITMAP_STORED_TIMEOUT
 
-क्रमागत अणु
+enum {
 	MAC_UNSET,		/* element is set, without MAC */
 	MAC_FILLED,		/* element is set with MAC */
-पूर्ण;
+};
 
-/* Type काष्ठाure */
-काष्ठा biपंचांगap_ipmac अणु
-	अचिन्हित दीर्घ *members;	/* the set members */
+/* Type structure */
+struct bitmap_ipmac {
+	unsigned long *members;	/* the set members */
 	u32 first_ip;		/* host byte order, included in range */
 	u32 last_ip;		/* host byte order, included in range */
 	u32 elements;		/* number of max elements in the set */
-	माप_प्रकार memsize;		/* members size */
-	काष्ठा समयr_list gc;	/* garbage collector */
-	काष्ठा ip_set *set;	/* attached to this ip_set */
-	अचिन्हित अक्षर extensions[]	/* MAC + data extensions */
+	size_t memsize;		/* members size */
+	struct timer_list gc;	/* garbage collector */
+	struct ip_set *set;	/* attached to this ip_set */
+	unsigned char extensions[]	/* MAC + data extensions */
 		__aligned(__alignof__(u64));
-पूर्ण;
+};
 
-/* ADT काष्ठाure क्रम generic function args */
-काष्ठा biपंचांगap_ipmac_adt_elem अणु
-	अचिन्हित अक्षर ether[ETH_ALEN] __aligned(2);
+/* ADT structure for generic function args */
+struct bitmap_ipmac_adt_elem {
+	unsigned char ether[ETH_ALEN] __aligned(2);
 	u16 id;
 	u16 add_mac;
-पूर्ण;
+};
 
-काष्ठा biपंचांगap_ipmac_elem अणु
-	अचिन्हित अक्षर ether[ETH_ALEN];
-	अचिन्हित अक्षर filled;
-पूर्ण __aligned(__alignof__(u64));
+struct bitmap_ipmac_elem {
+	unsigned char ether[ETH_ALEN];
+	unsigned char filled;
+} __aligned(__alignof__(u64));
 
-अटल u32
-ip_to_id(स्थिर काष्ठा biपंचांगap_ipmac *m, u32 ip)
-अणु
-	वापस ip - m->first_ip;
-पूर्ण
+static u32
+ip_to_id(const struct bitmap_ipmac *m, u32 ip)
+{
+	return ip - m->first_ip;
+}
 
-#घोषणा get_elem(extensions, id, dsize)		\
-	(काष्ठा biपंचांगap_ipmac_elem *)(extensions + (id) * (dsize))
+#define get_elem(extensions, id, dsize)		\
+	(struct bitmap_ipmac_elem *)(extensions + (id) * (dsize))
 
-#घोषणा get_स्थिर_elem(extensions, id, dsize)	\
-	(स्थिर काष्ठा biपंचांगap_ipmac_elem *)(extensions + (id) * (dsize))
+#define get_const_elem(extensions, id, dsize)	\
+	(const struct bitmap_ipmac_elem *)(extensions + (id) * (dsize))
 
 /* Common functions */
 
-अटल पूर्णांक
-biपंचांगap_ipmac_करो_test(स्थिर काष्ठा biपंचांगap_ipmac_adt_elem *e,
-		     स्थिर काष्ठा biपंचांगap_ipmac *map, माप_प्रकार dsize)
-अणु
-	स्थिर काष्ठा biपंचांगap_ipmac_elem *elem;
+static int
+bitmap_ipmac_do_test(const struct bitmap_ipmac_adt_elem *e,
+		     const struct bitmap_ipmac *map, size_t dsize)
+{
+	const struct bitmap_ipmac_elem *elem;
 
-	अगर (!test_bit(e->id, map->members))
-		वापस 0;
-	elem = get_स्थिर_elem(map->extensions, e->id, dsize);
-	अगर (e->add_mac && elem->filled == MAC_FILLED)
-		वापस ether_addr_equal(e->ether, elem->ether);
+	if (!test_bit(e->id, map->members))
+		return 0;
+	elem = get_const_elem(map->extensions, e->id, dsize);
+	if (e->add_mac && elem->filled == MAC_FILLED)
+		return ether_addr_equal(e->ether, elem->ether);
 	/* Trigger kernel to fill out the ethernet address */
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_gc_test(u16 id, स्थिर काष्ठा biपंचांगap_ipmac *map, माप_प्रकार dsize)
-अणु
-	स्थिर काष्ठा biपंचांगap_ipmac_elem *elem;
+static int
+bitmap_ipmac_gc_test(u16 id, const struct bitmap_ipmac *map, size_t dsize)
+{
+	const struct bitmap_ipmac_elem *elem;
 
-	अगर (!test_bit(id, map->members))
-		वापस 0;
-	elem = get_स्थिर_elem(map->extensions, id, dsize);
-	/* Timer not started क्रम the incomplete elements */
-	वापस elem->filled == MAC_FILLED;
-पूर्ण
+	if (!test_bit(id, map->members))
+		return 0;
+	elem = get_const_elem(map->extensions, id, dsize);
+	/* Timer not started for the incomplete elements */
+	return elem->filled == MAC_FILLED;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_is_filled(स्थिर काष्ठा biपंचांगap_ipmac_elem *elem)
-अणु
-	वापस elem->filled == MAC_FILLED;
-पूर्ण
+static int
+bitmap_ipmac_is_filled(const struct bitmap_ipmac_elem *elem)
+{
+	return elem->filled == MAC_FILLED;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_add_समयout(अचिन्हित दीर्घ *समयout,
-			 स्थिर काष्ठा biपंचांगap_ipmac_adt_elem *e,
-			 स्थिर काष्ठा ip_set_ext *ext, काष्ठा ip_set *set,
-			 काष्ठा biपंचांगap_ipmac *map, पूर्णांक mode)
-अणु
-	u32 t = ext->समयout;
+static int
+bitmap_ipmac_add_timeout(unsigned long *timeout,
+			 const struct bitmap_ipmac_adt_elem *e,
+			 const struct ip_set_ext *ext, struct ip_set *set,
+			 struct bitmap_ipmac *map, int mode)
+{
+	u32 t = ext->timeout;
 
-	अगर (mode == IPSET_ADD_START_STORED_TIMEOUT) अणु
-		अगर (t == set->समयout)
-			/* Timeout was not specअगरied, get stored one */
-			t = *समयout;
-		ip_set_समयout_set(समयout, t);
-	पूर्ण अन्यथा अणु
-		/* If MAC is unset yet, we store plain समयout value
-		 * because the समयr is not activated yet
+	if (mode == IPSET_ADD_START_STORED_TIMEOUT) {
+		if (t == set->timeout)
+			/* Timeout was not specified, get stored one */
+			t = *timeout;
+		ip_set_timeout_set(timeout, t);
+	} else {
+		/* If MAC is unset yet, we store plain timeout value
+		 * because the timer is not activated yet
 		 * and we can reuse it later when MAC is filled out,
 		 * possibly by the kernel
 		 */
-		अगर (e->add_mac)
-			ip_set_समयout_set(समयout, t);
-		अन्यथा
-			*समयout = t;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (e->add_mac)
+			ip_set_timeout_set(timeout, t);
+		else
+			*timeout = t;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_करो_add(स्थिर काष्ठा biपंचांगap_ipmac_adt_elem *e,
-		    काष्ठा biपंचांगap_ipmac *map, u32 flags, माप_प्रकार dsize)
-अणु
-	काष्ठा biपंचांगap_ipmac_elem *elem;
+static int
+bitmap_ipmac_do_add(const struct bitmap_ipmac_adt_elem *e,
+		    struct bitmap_ipmac *map, u32 flags, size_t dsize)
+{
+	struct bitmap_ipmac_elem *elem;
 
 	elem = get_elem(map->extensions, e->id, dsize);
-	अगर (test_bit(e->id, map->members)) अणु
-		अगर (elem->filled == MAC_FILLED) अणु
-			अगर (e->add_mac &&
+	if (test_bit(e->id, map->members)) {
+		if (elem->filled == MAC_FILLED) {
+			if (e->add_mac &&
 			    (flags & IPSET_FLAG_EXIST) &&
-			    !ether_addr_equal(e->ether, elem->ether)) अणु
-				/* स_नकल isn't atomic */
+			    !ether_addr_equal(e->ether, elem->ether)) {
+				/* memcpy isn't atomic */
 				clear_bit(e->id, map->members);
 				smp_mb__after_atomic();
 				ether_addr_copy(elem->ether, e->ether);
-			पूर्ण
-			वापस IPSET_ADD_FAILED;
-		पूर्ण अन्यथा अगर (!e->add_mac)
-			/* Alपढ़ोy added without ethernet address */
-			वापस IPSET_ADD_FAILED;
-		/* Fill the MAC address and trigger the समयr activation */
+			}
+			return IPSET_ADD_FAILED;
+		} else if (!e->add_mac)
+			/* Already added without ethernet address */
+			return IPSET_ADD_FAILED;
+		/* Fill the MAC address and trigger the timer activation */
 		clear_bit(e->id, map->members);
 		smp_mb__after_atomic();
 		ether_addr_copy(elem->ether, e->ether);
 		elem->filled = MAC_FILLED;
-		वापस IPSET_ADD_START_STORED_TIMEOUT;
-	पूर्ण अन्यथा अगर (e->add_mac) अणु
+		return IPSET_ADD_START_STORED_TIMEOUT;
+	} else if (e->add_mac) {
 		/* We can store MAC too */
 		ether_addr_copy(elem->ether, e->ether);
 		elem->filled = MAC_FILLED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	elem->filled = MAC_UNSET;
-	/* MAC is not stored yet, करोn't start समयr */
-	वापस IPSET_ADD_STORE_PLAIN_TIMEOUT;
-पूर्ण
+	/* MAC is not stored yet, don't start timer */
+	return IPSET_ADD_STORE_PLAIN_TIMEOUT;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_करो_del(स्थिर काष्ठा biपंचांगap_ipmac_adt_elem *e,
-		    काष्ठा biपंचांगap_ipmac *map)
-अणु
-	वापस !test_and_clear_bit(e->id, map->members);
-पूर्ण
+static int
+bitmap_ipmac_do_del(const struct bitmap_ipmac_adt_elem *e,
+		    struct bitmap_ipmac *map)
+{
+	return !test_and_clear_bit(e->id, map->members);
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_करो_list(काष्ठा sk_buff *skb, स्थिर काष्ठा biपंचांगap_ipmac *map,
-		     u32 id, माप_प्रकार dsize)
-अणु
-	स्थिर काष्ठा biपंचांगap_ipmac_elem *elem =
-		get_स्थिर_elem(map->extensions, id, dsize);
+static int
+bitmap_ipmac_do_list(struct sk_buff *skb, const struct bitmap_ipmac *map,
+		     u32 id, size_t dsize)
+{
+	const struct bitmap_ipmac_elem *elem =
+		get_const_elem(map->extensions, id, dsize);
 
-	वापस nla_put_ipaddr4(skb, IPSET_ATTR_IP,
+	return nla_put_ipaddr4(skb, IPSET_ATTR_IP,
 			       htonl(map->first_ip + id)) ||
 	       (elem->filled == MAC_FILLED &&
 		nla_put(skb, IPSET_ATTR_ETHER, ETH_ALEN, elem->ether));
-पूर्ण
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_करो_head(काष्ठा sk_buff *skb, स्थिर काष्ठा biपंचांगap_ipmac *map)
-अणु
-	वापस nla_put_ipaddr4(skb, IPSET_ATTR_IP, htonl(map->first_ip)) ||
+static int
+bitmap_ipmac_do_head(struct sk_buff *skb, const struct bitmap_ipmac *map)
+{
+	return nla_put_ipaddr4(skb, IPSET_ATTR_IP, htonl(map->first_ip)) ||
 	       nla_put_ipaddr4(skb, IPSET_ATTR_IP_TO, htonl(map->last_ip));
-पूर्ण
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
-		  स्थिर काष्ठा xt_action_param *par,
-		  क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
-अणु
-	काष्ठा biपंचांगap_ipmac *map = set->data;
+static int
+bitmap_ipmac_kadt(struct ip_set *set, const struct sk_buff *skb,
+		  const struct xt_action_param *par,
+		  enum ipset_adt adt, struct ip_set_adt_opt *opt)
+{
+	struct bitmap_ipmac *map = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	काष्ठा biपंचांगap_ipmac_adt_elem e = अणु .id = 0, .add_mac = 1 पूर्ण;
-	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	struct bitmap_ipmac_adt_elem e = { .id = 0, .add_mac = 1 };
+	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 	u32 ip;
 
 	ip = ntohl(ip4addr(skb, opt->flags & IPSET_DIM_ONE_SRC));
-	अगर (ip < map->first_ip || ip > map->last_ip)
-		वापस -IPSET_ERR_BITMAP_RANGE;
+	if (ip < map->first_ip || ip > map->last_ip)
+		return -IPSET_ERR_BITMAP_RANGE;
 
-	/* Backward compatibility: we करोn't check the second flag */
-	अगर (skb_mac_header(skb) < skb->head ||
+	/* Backward compatibility: we don't check the second flag */
+	if (skb_mac_header(skb) < skb->head ||
 	    (skb_mac_header(skb) + ETH_HLEN) > skb->data)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	e.id = ip_to_id(map, ip);
 
-	अगर (opt->flags & IPSET_DIM_TWO_SRC)
+	if (opt->flags & IPSET_DIM_TWO_SRC)
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_source);
-	अन्यथा
+	else
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_dest);
 
-	अगर (is_zero_ether_addr(e.ether))
-		वापस -EINVAL;
+	if (is_zero_ether_addr(e.ether))
+		return -EINVAL;
 
-	वापस adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
-पूर्ण
+	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
-		  क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-अणु
-	स्थिर काष्ठा biपंचांगap_ipmac *map = set->data;
+static int
+bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *tb[],
+		  enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+{
+	const struct bitmap_ipmac *map = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	काष्ठा biपंचांगap_ipmac_adt_elem e = अणु .id = 0 पूर्ण;
-	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	struct bitmap_ipmac_adt_elem e = { .id = 0 };
+	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
 	u32 ip = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (tb[IPSET_ATTR_LINENO])
+	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	अगर (unlikely(!tb[IPSET_ATTR_IP]))
-		वापस -IPSET_ERR_PROTOCOL;
+	if (unlikely(!tb[IPSET_ATTR_IP]))
+		return -IPSET_ERR_PROTOCOL;
 
 	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &ip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ip < map->first_ip || ip > map->last_ip)
-		वापस -IPSET_ERR_BITMAP_RANGE;
+	if (ip < map->first_ip || ip > map->last_ip)
+		return -IPSET_ERR_BITMAP_RANGE;
 
 	e.id = ip_to_id(map, ip);
-	अगर (tb[IPSET_ATTR_ETHER]) अणु
-		अगर (nla_len(tb[IPSET_ATTR_ETHER]) != ETH_ALEN)
-			वापस -IPSET_ERR_PROTOCOL;
-		स_नकल(e.ether, nla_data(tb[IPSET_ATTR_ETHER]), ETH_ALEN);
+	if (tb[IPSET_ATTR_ETHER]) {
+		if (nla_len(tb[IPSET_ATTR_ETHER]) != ETH_ALEN)
+			return -IPSET_ERR_PROTOCOL;
+		memcpy(e.ether, nla_data(tb[IPSET_ATTR_ETHER]), ETH_ALEN);
 		e.add_mac = 1;
-	पूर्ण
+	}
 	ret = adtfn(set, &e, &ext, &ext, flags);
 
-	वापस ip_set_eexist(ret, flags) ? 0 : ret;
-पूर्ण
+	return ip_set_eexist(ret, flags) ? 0 : ret;
+}
 
-अटल bool
-biपंचांगap_ipmac_same_set(स्थिर काष्ठा ip_set *a, स्थिर काष्ठा ip_set *b)
-अणु
-	स्थिर काष्ठा biपंचांगap_ipmac *x = a->data;
-	स्थिर काष्ठा biपंचांगap_ipmac *y = b->data;
+static bool
+bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
+{
+	const struct bitmap_ipmac *x = a->data;
+	const struct bitmap_ipmac *y = b->data;
 
-	वापस x->first_ip == y->first_ip &&
+	return x->first_ip == y->first_ip &&
 	       x->last_ip == y->last_ip &&
-	       a->समयout == b->समयout &&
+	       a->timeout == b->timeout &&
 	       a->extensions == b->extensions;
-पूर्ण
+}
 
 /* Plain variant */
 
-#समावेश "ip_set_bitmap_gen.h"
+#include "ip_set_bitmap_gen.h"
 
-/* Create biपंचांगap:ip,mac type of sets */
+/* Create bitmap:ip,mac type of sets */
 
-अटल bool
-init_map_ipmac(काष्ठा ip_set *set, काष्ठा biपंचांगap_ipmac *map,
+static bool
+init_map_ipmac(struct ip_set *set, struct bitmap_ipmac *map,
 	       u32 first_ip, u32 last_ip, u32 elements)
-अणु
-	map->members = biपंचांगap_zalloc(elements, GFP_KERNEL | __GFP_NOWARN);
-	अगर (!map->members)
-		वापस false;
+{
+	map->members = bitmap_zalloc(elements, GFP_KERNEL | __GFP_NOWARN);
+	if (!map->members)
+		return false;
 	map->first_ip = first_ip;
 	map->last_ip = last_ip;
 	map->elements = elements;
-	set->समयout = IPSET_NO_TIMEOUT;
+	set->timeout = IPSET_NO_TIMEOUT;
 
 	map->set = set;
 	set->data = map;
 	set->family = NFPROTO_IPV4;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
-biपंचांगap_ipmac_create(काष्ठा net *net, काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+static int
+bitmap_ipmac_create(struct net *net, struct ip_set *set, struct nlattr *tb[],
 		    u32 flags)
-अणु
+{
 	u32 first_ip = 0, last_ip = 0;
 	u64 elements;
-	काष्ठा biपंचांगap_ipmac *map;
-	पूर्णांक ret;
+	struct bitmap_ipmac *map;
+	int ret;
 
-	अगर (unlikely(!tb[IPSET_ATTR_IP] ||
+	if (unlikely(!tb[IPSET_ATTR_IP] ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		वापस -IPSET_ERR_PROTOCOL;
+		return -IPSET_ERR_PROTOCOL;
 
 	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &first_ip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (tb[IPSET_ATTR_IP_TO]) अणु
+	if (tb[IPSET_ATTR_IP_TO]) {
 		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &last_ip);
-		अगर (ret)
-			वापस ret;
-		अगर (first_ip > last_ip)
+		if (ret)
+			return ret;
+		if (first_ip > last_ip)
 			swap(first_ip, last_ip);
-	पूर्ण अन्यथा अगर (tb[IPSET_ATTR_CIDR]) अणु
+	} else if (tb[IPSET_ATTR_CIDR]) {
 		u8 cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
 
-		अगर (cidr >= HOST_MASK)
-			वापस -IPSET_ERR_INVALID_CIDR;
+		if (cidr >= HOST_MASK)
+			return -IPSET_ERR_INVALID_CIDR;
 		ip_set_mask_from_to(first_ip, last_ip, cidr);
-	पूर्ण अन्यथा अणु
-		वापस -IPSET_ERR_PROTOCOL;
-	पूर्ण
+	} else {
+		return -IPSET_ERR_PROTOCOL;
+	}
 
 	elements = (u64)last_ip - first_ip + 1;
 
-	अगर (elements > IPSET_BITMAP_MAX_RANGE + 1)
-		वापस -IPSET_ERR_BITMAP_RANGE_SIZE;
+	if (elements > IPSET_BITMAP_MAX_RANGE + 1)
+		return -IPSET_ERR_BITMAP_RANGE_SIZE;
 
 	set->dsize = ip_set_elem_len(set, tb,
-				     माप(काष्ठा biपंचांगap_ipmac_elem),
-				     __alignof__(काष्ठा biपंचांगap_ipmac_elem));
-	map = ip_set_alloc(माप(*map) + elements * set->dsize);
-	अगर (!map)
-		वापस -ENOMEM;
+				     sizeof(struct bitmap_ipmac_elem),
+				     __alignof__(struct bitmap_ipmac_elem));
+	map = ip_set_alloc(sizeof(*map) + elements * set->dsize);
+	if (!map)
+		return -ENOMEM;
 
-	map->memsize = BITS_TO_LONGS(elements) * माप(अचिन्हित दीर्घ);
-	set->variant = &biपंचांगap_ipmac;
-	अगर (!init_map_ipmac(set, map, first_ip, last_ip, elements)) अणु
-		ip_set_मुक्त(map);
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (tb[IPSET_ATTR_TIMEOUT]) अणु
-		set->समयout = ip_set_समयout_uget(tb[IPSET_ATTR_TIMEOUT]);
-		biपंचांगap_ipmac_gc_init(set, biपंचांगap_ipmac_gc);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	map->memsize = BITS_TO_LONGS(elements) * sizeof(unsigned long);
+	set->variant = &bitmap_ipmac;
+	if (!init_map_ipmac(set, map, first_ip, last_ip, elements)) {
+		ip_set_free(map);
+		return -ENOMEM;
+	}
+	if (tb[IPSET_ATTR_TIMEOUT]) {
+		set->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
+		bitmap_ipmac_gc_init(set, bitmap_ipmac_gc);
+	}
+	return 0;
+}
 
-अटल काष्ठा ip_set_type biपंचांगap_ipmac_type = अणु
+static struct ip_set_type bitmap_ipmac_type = {
 	.name		= "bitmap:ip,mac",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_MAC,
@@ -382,43 +381,43 @@ biपंचांगap_ipmac_create(काष्ठा net *net, काष्ठ
 	.family		= NFPROTO_IPV4,
 	.revision_min	= IPSET_TYPE_REV_MIN,
 	.revision_max	= IPSET_TYPE_REV_MAX,
-	.create		= biपंचांगap_ipmac_create,
-	.create_policy	= अणु
-		[IPSET_ATTR_IP]		= अणु .type = NLA_NESTED पूर्ण,
-		[IPSET_ATTR_IP_TO]	= अणु .type = NLA_NESTED पूर्ण,
-		[IPSET_ATTR_CIDR]	= अणु .type = NLA_U8 पूर्ण,
-		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
-	पूर्ण,
-	.adt_policy	= अणु
-		[IPSET_ATTR_IP]		= अणु .type = NLA_NESTED पूर्ण,
-		[IPSET_ATTR_ETHER]	= अणु .type = NLA_BINARY,
-					    .len  = ETH_ALEN पूर्ण,
-		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_LINENO]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_BYTES]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_PACKETS]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_COMMENT]	= अणु .type = NLA_NUL_STRING,
-					    .len  = IPSET_MAX_COMMENT_SIZE पूर्ण,
-		[IPSET_ATTR_SKBMARK]	= अणु .type = NLA_U64 पूर्ण,
-		[IPSET_ATTR_SKBPRIO]	= अणु .type = NLA_U32 पूर्ण,
-		[IPSET_ATTR_SKBQUEUE]	= अणु .type = NLA_U16 पूर्ण,
-	पूर्ण,
+	.create		= bitmap_ipmac_create,
+	.create_policy	= {
+		[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
+		[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
+		[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
+	},
+	.adt_policy	= {
+		[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
+		[IPSET_ATTR_ETHER]	= { .type = NLA_BINARY,
+					    .len  = ETH_ALEN },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+		[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
+		[IPSET_ATTR_BYTES]	= { .type = NLA_U64 },
+		[IPSET_ATTR_PACKETS]	= { .type = NLA_U64 },
+		[IPSET_ATTR_COMMENT]	= { .type = NLA_NUL_STRING,
+					    .len  = IPSET_MAX_COMMENT_SIZE },
+		[IPSET_ATTR_SKBMARK]	= { .type = NLA_U64 },
+		[IPSET_ATTR_SKBPRIO]	= { .type = NLA_U32 },
+		[IPSET_ATTR_SKBQUEUE]	= { .type = NLA_U16 },
+	},
 	.me		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-biपंचांगap_ipmac_init(व्योम)
-अणु
-	वापस ip_set_type_रेजिस्टर(&biपंचांगap_ipmac_type);
-पूर्ण
+static int __init
+bitmap_ipmac_init(void)
+{
+	return ip_set_type_register(&bitmap_ipmac_type);
+}
 
-अटल व्योम __निकास
-biपंचांगap_ipmac_fini(व्योम)
-अणु
+static void __exit
+bitmap_ipmac_fini(void)
+{
 	rcu_barrier();
-	ip_set_type_unरेजिस्टर(&biपंचांगap_ipmac_type);
-पूर्ण
+	ip_set_type_unregister(&bitmap_ipmac_type);
+}
 
-module_init(biपंचांगap_ipmac_init);
-module_निकास(biपंचांगap_ipmac_fini);
+module_init(bitmap_ipmac_init);
+module_exit(bitmap_ipmac_fini);

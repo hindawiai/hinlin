@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,86 +31,86 @@
  *
  */
 
-#समावेश <net/addrconf.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/mlx5/vport.h>
+#include <net/addrconf.h>
+#include <linux/etherdevice.h>
+#include <linux/mlx5/vport.h>
 
-#समावेश "mlx5_core.h"
-#समावेश "lib/mlx5.h"
-#समावेश "fpga/conn.h"
+#include "mlx5_core.h"
+#include "lib/mlx5.h"
+#include "fpga/conn.h"
 
-#घोषणा MLX5_FPGA_PKEY 0xFFFF
-#घोषणा MLX5_FPGA_PKEY_INDEX 0 /* RoCE PKEY 0xFFFF is always at index 0 */
-#घोषणा MLX5_FPGA_RECV_SIZE 2048
-#घोषणा MLX5_FPGA_PORT_NUM 1
-#घोषणा MLX5_FPGA_CQ_BUDGET 64
+#define MLX5_FPGA_PKEY 0xFFFF
+#define MLX5_FPGA_PKEY_INDEX 0 /* RoCE PKEY 0xFFFF is always at index 0 */
+#define MLX5_FPGA_RECV_SIZE 2048
+#define MLX5_FPGA_PORT_NUM 1
+#define MLX5_FPGA_CQ_BUDGET 64
 
-अटल पूर्णांक mlx5_fpga_conn_map_buf(काष्ठा mlx5_fpga_conn *conn,
-				  काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	काष्ठा device *dma_device;
-	पूर्णांक err = 0;
+static int mlx5_fpga_conn_map_buf(struct mlx5_fpga_conn *conn,
+				  struct mlx5_fpga_dma_buf *buf)
+{
+	struct device *dma_device;
+	int err = 0;
 
-	अगर (unlikely(!buf->sg[0].data))
-		जाओ out;
+	if (unlikely(!buf->sg[0].data))
+		goto out;
 
 	dma_device = mlx5_core_dma_dev(conn->fdev->mdev);
 	buf->sg[0].dma_addr = dma_map_single(dma_device, buf->sg[0].data,
 					     buf->sg[0].size, buf->dma_dir);
 	err = dma_mapping_error(dma_device, buf->sg[0].dma_addr);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		mlx5_fpga_warn(conn->fdev, "DMA error on sg 0: %d\n", err);
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!buf->sg[1].data)
-		जाओ out;
+	if (!buf->sg[1].data)
+		goto out;
 
 	buf->sg[1].dma_addr = dma_map_single(dma_device, buf->sg[1].data,
 					     buf->sg[1].size, buf->dma_dir);
 	err = dma_mapping_error(dma_device, buf->sg[1].dma_addr);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		mlx5_fpga_warn(conn->fdev, "DMA error on sg 1: %d\n", err);
 		dma_unmap_single(dma_device, buf->sg[0].dma_addr,
 				 buf->sg[0].size, buf->dma_dir);
 		err = -ENOMEM;
-	पूर्ण
+	}
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx5_fpga_conn_unmap_buf(काष्ठा mlx5_fpga_conn *conn,
-				     काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	काष्ठा device *dma_device;
+static void mlx5_fpga_conn_unmap_buf(struct mlx5_fpga_conn *conn,
+				     struct mlx5_fpga_dma_buf *buf)
+{
+	struct device *dma_device;
 
 	dma_device = mlx5_core_dma_dev(conn->fdev->mdev);
-	अगर (buf->sg[1].data)
+	if (buf->sg[1].data)
 		dma_unmap_single(dma_device, buf->sg[1].dma_addr,
 				 buf->sg[1].size, buf->dma_dir);
 
-	अगर (likely(buf->sg[0].data))
+	if (likely(buf->sg[0].data))
 		dma_unmap_single(dma_device, buf->sg[0].dma_addr,
 				 buf->sg[0].size, buf->dma_dir);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5_fpga_conn_post_recv(काष्ठा mlx5_fpga_conn *conn,
-				    काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	काष्ठा mlx5_wqe_data_seg *data;
-	अचिन्हित पूर्णांक ix;
-	पूर्णांक err = 0;
+static int mlx5_fpga_conn_post_recv(struct mlx5_fpga_conn *conn,
+				    struct mlx5_fpga_dma_buf *buf)
+{
+	struct mlx5_wqe_data_seg *data;
+	unsigned int ix;
+	int err = 0;
 
 	err = mlx5_fpga_conn_map_buf(conn, buf);
-	अगर (unlikely(err))
-		जाओ out;
+	if (unlikely(err))
+		goto out;
 
-	अगर (unlikely(conn->qp.rq.pc - conn->qp.rq.cc >= conn->qp.rq.size)) अणु
+	if (unlikely(conn->qp.rq.pc - conn->qp.rq.cc >= conn->qp.rq.size)) {
 		mlx5_fpga_conn_unmap_buf(conn, buf);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ix = conn->qp.rq.pc & (conn->qp.rq.size - 1);
 	data = mlx5_wq_cyc_get_wqe(&conn->qp.wq.rq, ix);
@@ -122,45 +121,45 @@ out:
 	conn->qp.rq.pc++;
 	conn->qp.rq.bufs[ix] = buf;
 
-	/* Make sure that descriptors are written beक्रमe करोorbell record. */
+	/* Make sure that descriptors are written before doorbell record. */
 	dma_wmb();
 	*conn->qp.wq.rq.db = cpu_to_be32(conn->qp.rq.pc & 0xffff);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx5_fpga_conn_notअगरy_hw(काष्ठा mlx5_fpga_conn *conn, व्योम *wqe)
-अणु
-	/* ensure wqe is visible to device beक्रमe updating करोorbell record */
+static void mlx5_fpga_conn_notify_hw(struct mlx5_fpga_conn *conn, void *wqe)
+{
+	/* ensure wqe is visible to device before updating doorbell record */
 	dma_wmb();
 	*conn->qp.wq.sq.db = cpu_to_be32(conn->qp.sq.pc);
-	/* Make sure that करोorbell record is visible beक्रमe ringing */
+	/* Make sure that doorbell record is visible before ringing */
 	wmb();
-	mlx5_ग_लिखो64(wqe, conn->fdev->conn_res.uar->map + MLX5_BF_OFFSET);
-पूर्ण
+	mlx5_write64(wqe, conn->fdev->conn_res.uar->map + MLX5_BF_OFFSET);
+}
 
-अटल व्योम mlx5_fpga_conn_post_send(काष्ठा mlx5_fpga_conn *conn,
-				     काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	काष्ठा mlx5_wqe_ctrl_seg *ctrl;
-	काष्ठा mlx5_wqe_data_seg *data;
-	अचिन्हित पूर्णांक ix, sgi;
-	पूर्णांक size = 1;
+static void mlx5_fpga_conn_post_send(struct mlx5_fpga_conn *conn,
+				     struct mlx5_fpga_dma_buf *buf)
+{
+	struct mlx5_wqe_ctrl_seg *ctrl;
+	struct mlx5_wqe_data_seg *data;
+	unsigned int ix, sgi;
+	int size = 1;
 
 	ix = conn->qp.sq.pc & (conn->qp.sq.size - 1);
 
 	ctrl = mlx5_wq_cyc_get_wqe(&conn->qp.wq.sq, ix);
-	data = (व्योम *)(ctrl + 1);
+	data = (void *)(ctrl + 1);
 
-	क्रम (sgi = 0; sgi < ARRAY_SIZE(buf->sg); sgi++) अणु
-		अगर (!buf->sg[sgi].data)
-			अवरोध;
+	for (sgi = 0; sgi < ARRAY_SIZE(buf->sg); sgi++) {
+		if (!buf->sg[sgi].data)
+			break;
 		data->byte_count = cpu_to_be32(buf->sg[sgi].size);
 		data->lkey = cpu_to_be32(conn->fdev->conn_res.mkey.key);
 		data->addr = cpu_to_be64(buf->sg[sgi].dma_addr);
 		data++;
 		size++;
-	पूर्ण
+	}
 
 	ctrl->imm = 0;
 	ctrl->fm_ce_se = MLX5_WQE_CTRL_CQ_UPDATE;
@@ -170,68 +169,68 @@ out:
 
 	conn->qp.sq.pc++;
 	conn->qp.sq.bufs[ix] = buf;
-	mlx5_fpga_conn_notअगरy_hw(conn, ctrl);
-पूर्ण
+	mlx5_fpga_conn_notify_hw(conn, ctrl);
+}
 
-पूर्णांक mlx5_fpga_conn_send(काष्ठा mlx5_fpga_conn *conn,
-			काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+int mlx5_fpga_conn_send(struct mlx5_fpga_conn *conn,
+			struct mlx5_fpga_dma_buf *buf)
+{
+	unsigned long flags;
+	int err;
 
-	अगर (!conn->qp.active)
-		वापस -ENOTCONN;
+	if (!conn->qp.active)
+		return -ENOTCONN;
 
 	buf->dma_dir = DMA_TO_DEVICE;
 	err = mlx5_fpga_conn_map_buf(conn, buf);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	spin_lock_irqsave(&conn->qp.sq.lock, flags);
 
-	अगर (conn->qp.sq.pc - conn->qp.sq.cc >= conn->qp.sq.size) अणु
+	if (conn->qp.sq.pc - conn->qp.sq.cc >= conn->qp.sq.size) {
 		list_add_tail(&buf->list, &conn->qp.sq.backlog);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	mlx5_fpga_conn_post_send(conn, buf);
 
 out_unlock:
 	spin_unlock_irqrestore(&conn->qp.sq.lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx5_fpga_conn_post_recv_buf(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_fpga_dma_buf *buf;
-	पूर्णांक err;
+static int mlx5_fpga_conn_post_recv_buf(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_fpga_dma_buf *buf;
+	int err;
 
-	buf = kzalloc(माप(*buf) + MLX5_FPGA_RECV_SIZE, 0);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kzalloc(sizeof(*buf) + MLX5_FPGA_RECV_SIZE, 0);
+	if (!buf)
+		return -ENOMEM;
 
-	buf->sg[0].data = (व्योम *)(buf + 1);
+	buf->sg[0].data = (void *)(buf + 1);
 	buf->sg[0].size = MLX5_FPGA_RECV_SIZE;
 	buf->dma_dir = DMA_FROM_DEVICE;
 
 	err = mlx5_fpga_conn_post_recv(conn, buf);
-	अगर (err)
-		kमुक्त(buf);
+	if (err)
+		kfree(buf);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx5_fpga_conn_create_mkey(काष्ठा mlx5_core_dev *mdev, u32 pdn,
-				      काष्ठा mlx5_core_mkey *mkey)
-अणु
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
-	व्योम *mkc;
+static int mlx5_fpga_conn_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
+				      struct mlx5_core_mkey *mkey)
+{
+	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
+	void *mkc;
 	u32 *in;
-	पूर्णांक err;
+	int err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in)
-		वापस -ENOMEM;
+	if (!in)
+		return -ENOMEM;
 
 	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
 	MLX5_SET(mkc, mkc, access_mode_1_0, MLX5_MKC_ACCESS_MODE_PA);
@@ -244,35 +243,35 @@ out_unlock:
 
 	err = mlx5_core_create_mkey(mdev, mkey, in, inlen);
 
-	kvमुक्त(in);
-	वापस err;
-पूर्ण
+	kvfree(in);
+	return err;
+}
 
-अटल व्योम mlx5_fpga_conn_rq_cqe(काष्ठा mlx5_fpga_conn *conn,
-				  काष्ठा mlx5_cqe64 *cqe, u8 status)
-अणु
-	काष्ठा mlx5_fpga_dma_buf *buf;
-	पूर्णांक ix, err;
+static void mlx5_fpga_conn_rq_cqe(struct mlx5_fpga_conn *conn,
+				  struct mlx5_cqe64 *cqe, u8 status)
+{
+	struct mlx5_fpga_dma_buf *buf;
+	int ix, err;
 
 	ix = be16_to_cpu(cqe->wqe_counter) & (conn->qp.rq.size - 1);
 	buf = conn->qp.rq.bufs[ix];
-	conn->qp.rq.bufs[ix] = शून्य;
+	conn->qp.rq.bufs[ix] = NULL;
 	conn->qp.rq.cc++;
 
-	अगर (unlikely(status && (status != MLX5_CQE_SYNDROME_WR_FLUSH_ERR)))
+	if (unlikely(status && (status != MLX5_CQE_SYNDROME_WR_FLUSH_ERR)))
 		mlx5_fpga_warn(conn->fdev, "RQ buf %p on FPGA QP %u completion status %d\n",
 			       buf, conn->fpga_qpn, status);
-	अन्यथा
+	else
 		mlx5_fpga_dbg(conn->fdev, "RQ buf %p on FPGA QP %u completion status %d\n",
 			      buf, conn->fpga_qpn, status);
 
 	mlx5_fpga_conn_unmap_buf(conn, buf);
 
-	अगर (unlikely(status || !conn->qp.active)) अणु
+	if (unlikely(status || !conn->qp.active)) {
 		conn->qp.active = false;
-		kमुक्त(buf);
-		वापस;
-	पूर्ण
+		kfree(buf);
+		return;
+	}
 
 	buf->sg[0].size = be32_to_cpu(cqe->byte_cnt);
 	mlx5_fpga_dbg(conn->fdev, "Message with %u bytes received successfully\n",
@@ -281,149 +280,149 @@ out_unlock:
 
 	buf->sg[0].size = MLX5_FPGA_RECV_SIZE;
 	err = mlx5_fpga_conn_post_recv(conn, buf);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		mlx5_fpga_warn(conn->fdev,
 			       "Failed to re-post recv buf: %d\n", err);
-		kमुक्त(buf);
-	पूर्ण
-पूर्ण
+		kfree(buf);
+	}
+}
 
-अटल व्योम mlx5_fpga_conn_sq_cqe(काष्ठा mlx5_fpga_conn *conn,
-				  काष्ठा mlx5_cqe64 *cqe, u8 status)
-अणु
-	काष्ठा mlx5_fpga_dma_buf *buf, *nextbuf;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ix;
+static void mlx5_fpga_conn_sq_cqe(struct mlx5_fpga_conn *conn,
+				  struct mlx5_cqe64 *cqe, u8 status)
+{
+	struct mlx5_fpga_dma_buf *buf, *nextbuf;
+	unsigned long flags;
+	int ix;
 
 	spin_lock_irqsave(&conn->qp.sq.lock, flags);
 
 	ix = be16_to_cpu(cqe->wqe_counter) & (conn->qp.sq.size - 1);
 	buf = conn->qp.sq.bufs[ix];
-	conn->qp.sq.bufs[ix] = शून्य;
+	conn->qp.sq.bufs[ix] = NULL;
 	conn->qp.sq.cc++;
 
 	/* Handle backlog still under the spinlock to ensure message post order */
-	अगर (unlikely(!list_empty(&conn->qp.sq.backlog))) अणु
-		अगर (likely(conn->qp.active)) अणु
+	if (unlikely(!list_empty(&conn->qp.sq.backlog))) {
+		if (likely(conn->qp.active)) {
 			nextbuf = list_first_entry(&conn->qp.sq.backlog,
-						   काष्ठा mlx5_fpga_dma_buf, list);
+						   struct mlx5_fpga_dma_buf, list);
 			list_del(&nextbuf->list);
 			mlx5_fpga_conn_post_send(conn, nextbuf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&conn->qp.sq.lock, flags);
 
-	अगर (unlikely(status && (status != MLX5_CQE_SYNDROME_WR_FLUSH_ERR)))
+	if (unlikely(status && (status != MLX5_CQE_SYNDROME_WR_FLUSH_ERR)))
 		mlx5_fpga_warn(conn->fdev, "SQ buf %p on FPGA QP %u completion status %d\n",
 			       buf, conn->fpga_qpn, status);
-	अन्यथा
+	else
 		mlx5_fpga_dbg(conn->fdev, "SQ buf %p on FPGA QP %u completion status %d\n",
 			      buf, conn->fpga_qpn, status);
 
 	mlx5_fpga_conn_unmap_buf(conn, buf);
 
-	अगर (likely(buf->complete))
+	if (likely(buf->complete))
 		buf->complete(conn, conn->fdev, buf, status);
 
-	अगर (unlikely(status))
+	if (unlikely(status))
 		conn->qp.active = false;
-पूर्ण
+}
 
-अटल व्योम mlx5_fpga_conn_handle_cqe(काष्ठा mlx5_fpga_conn *conn,
-				      काष्ठा mlx5_cqe64 *cqe)
-अणु
+static void mlx5_fpga_conn_handle_cqe(struct mlx5_fpga_conn *conn,
+				      struct mlx5_cqe64 *cqe)
+{
 	u8 opcode, status = 0;
 
 	opcode = get_cqe_opcode(cqe);
 
-	चयन (opcode) अणु
-	हाल MLX5_CQE_REQ_ERR:
-		status = ((काष्ठा mlx5_err_cqe *)cqe)->syndrome;
+	switch (opcode) {
+	case MLX5_CQE_REQ_ERR:
+		status = ((struct mlx5_err_cqe *)cqe)->syndrome;
 		fallthrough;
-	हाल MLX5_CQE_REQ:
+	case MLX5_CQE_REQ:
 		mlx5_fpga_conn_sq_cqe(conn, cqe, status);
-		अवरोध;
+		break;
 
-	हाल MLX5_CQE_RESP_ERR:
-		status = ((काष्ठा mlx5_err_cqe *)cqe)->syndrome;
+	case MLX5_CQE_RESP_ERR:
+		status = ((struct mlx5_err_cqe *)cqe)->syndrome;
 		fallthrough;
-	हाल MLX5_CQE_RESP_SEND:
+	case MLX5_CQE_RESP_SEND:
 		mlx5_fpga_conn_rq_cqe(conn, cqe, status);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mlx5_fpga_warn(conn->fdev, "Unexpected cqe opcode %u\n",
 			       opcode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx5_fpga_conn_arm_cq(काष्ठा mlx5_fpga_conn *conn)
-अणु
+static void mlx5_fpga_conn_arm_cq(struct mlx5_fpga_conn *conn)
+{
 	mlx5_cq_arm(&conn->cq.mcq, MLX5_CQ_DB_REQ_NOT,
 		    conn->fdev->conn_res.uar->map, conn->cq.wq.cc);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mlx5_fpga_conn_cqes(काष्ठा mlx5_fpga_conn *conn,
-				       अचिन्हित पूर्णांक budget)
-अणु
-	काष्ठा mlx5_cqe64 *cqe;
+static inline void mlx5_fpga_conn_cqes(struct mlx5_fpga_conn *conn,
+				       unsigned int budget)
+{
+	struct mlx5_cqe64 *cqe;
 
-	जबतक (budget) अणु
+	while (budget) {
 		cqe = mlx5_cqwq_get_cqe(&conn->cq.wq);
-		अगर (!cqe)
-			अवरोध;
+		if (!cqe)
+			break;
 
 		budget--;
 		mlx5_cqwq_pop(&conn->cq.wq);
 		mlx5_fpga_conn_handle_cqe(conn, cqe);
 		mlx5_cqwq_update_db_record(&conn->cq.wq);
-	पूर्ण
-	अगर (!budget) अणु
+	}
+	if (!budget) {
 		tasklet_schedule(&conn->cq.tasklet);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mlx5_fpga_dbg(conn->fdev, "Re-arming CQ with cc# %u\n", conn->cq.wq.cc);
-	/* ensure cq space is मुक्तd beक्रमe enabling more cqes */
+	/* ensure cq space is freed before enabling more cqes */
 	wmb();
 	mlx5_fpga_conn_arm_cq(conn);
-पूर्ण
+}
 
-अटल व्योम mlx5_fpga_conn_cq_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा mlx5_fpga_conn *conn = from_tasklet(conn, t, cq.tasklet);
+static void mlx5_fpga_conn_cq_tasklet(struct tasklet_struct *t)
+{
+	struct mlx5_fpga_conn *conn = from_tasklet(conn, t, cq.tasklet);
 
-	अगर (unlikely(!conn->qp.active))
-		वापस;
+	if (unlikely(!conn->qp.active))
+		return;
 	mlx5_fpga_conn_cqes(conn, MLX5_FPGA_CQ_BUDGET);
-पूर्ण
+}
 
-अटल व्योम mlx5_fpga_conn_cq_complete(काष्ठा mlx5_core_cq *mcq,
-				       काष्ठा mlx5_eqe *eqe)
-अणु
-	काष्ठा mlx5_fpga_conn *conn;
+static void mlx5_fpga_conn_cq_complete(struct mlx5_core_cq *mcq,
+				       struct mlx5_eqe *eqe)
+{
+	struct mlx5_fpga_conn *conn;
 
-	conn = container_of(mcq, काष्ठा mlx5_fpga_conn, cq.mcq);
-	अगर (unlikely(!conn->qp.active))
-		वापस;
+	conn = container_of(mcq, struct mlx5_fpga_conn, cq.mcq);
+	if (unlikely(!conn->qp.active))
+		return;
 	mlx5_fpga_conn_cqes(conn, MLX5_FPGA_CQ_BUDGET);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5_fpga_conn_create_cq(काष्ठा mlx5_fpga_conn *conn, पूर्णांक cq_size)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
-	u32 temp_cqc[MLX5_ST_SZ_DW(cqc)] = अणु0पूर्ण;
+static int mlx5_fpga_conn_create_cq(struct mlx5_fpga_conn *conn, int cq_size)
+{
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	struct mlx5_core_dev *mdev = fdev->mdev;
+	u32 temp_cqc[MLX5_ST_SZ_DW(cqc)] = {0};
 	u32 out[MLX5_ST_SZ_DW(create_cq_out)];
-	काष्ठा mlx5_wq_param wqp;
-	काष्ठा mlx5_cqe64 *cqe;
-	पूर्णांक inlen, err, eqn;
-	अचिन्हित पूर्णांक irqn;
-	व्योम *cqc, *in;
+	struct mlx5_wq_param wqp;
+	struct mlx5_cqe64 *cqe;
+	int inlen, err, eqn;
+	unsigned int irqn;
+	void *cqc, *in;
 	__be64 *pas;
 	u32 i;
 
-	cq_size = roundup_घात_of_two(cq_size);
+	cq_size = roundup_pow_of_two(cq_size);
 	MLX5_SET(cqc, temp_cqc, log_cq_size, ilog2(cq_size));
 
 	wqp.buf_numa_node = mdev->priv.numa_node;
@@ -431,44 +430,44 @@ out_unlock:
 
 	err = mlx5_cqwq_create(mdev, &wqp, temp_cqc, &conn->cq.wq,
 			       &conn->cq.wq_ctrl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq); i++) अणु
+	for (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq); i++) {
 		cqe = mlx5_cqwq_get_wqe(&conn->cq.wq, i);
 		cqe->op_own = MLX5_CQE_INVALID << 4 | MLX5_CQE_OWNER_MASK;
-	पूर्ण
+	}
 
 	inlen = MLX5_ST_SZ_BYTES(create_cq_in) +
-		माप(u64) * conn->cq.wq_ctrl.buf.npages;
+		sizeof(u64) * conn->cq.wq_ctrl.buf.npages;
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_cqwq;
-	पूर्ण
+		goto err_cqwq;
+	}
 
 	err = mlx5_vector2eqn(mdev, smp_processor_id(), &eqn, &irqn);
-	अगर (err) अणु
-		kvमुक्त(in);
-		जाओ err_cqwq;
-	पूर्ण
+	if (err) {
+		kvfree(in);
+		goto err_cqwq;
+	}
 
 	cqc = MLX5_ADDR_OF(create_cq_in, in, cq_context);
 	MLX5_SET(cqc, cqc, log_cq_size, ilog2(cq_size));
 	MLX5_SET(cqc, cqc, c_eqn, eqn);
 	MLX5_SET(cqc, cqc, uar_page, fdev->conn_res.uar->index);
-	MLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shअगरt -
+	MLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shift -
 			   MLX5_ADAPTER_PAGE_SHIFT);
 	MLX5_SET64(cqc, cqc, dbr_addr, conn->cq.wq_ctrl.db.dma);
 
 	pas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);
 	mlx5_fill_page_frag_array(&conn->cq.wq_ctrl.buf, pas);
 
-	err = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, माप(out));
-	kvमुक्त(in);
+	err = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, sizeof(out));
+	kvfree(in);
 
-	अगर (err)
-		जाओ err_cqwq;
+	if (err)
+		goto err_cqwq;
 
 	conn->cq.mcq.cqe_sz     = 64;
 	conn->cq.mcq.set_ci_db  = conn->cq.wq_ctrl.db.db;
@@ -483,88 +482,88 @@ out_unlock:
 
 	mlx5_fpga_dbg(fdev, "Created CQ #0x%x\n", conn->cq.mcq.cqn);
 
-	जाओ out;
+	goto out;
 
 err_cqwq:
 	mlx5_wq_destroy(&conn->cq.wq_ctrl);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx5_fpga_conn_destroy_cq(काष्ठा mlx5_fpga_conn *conn)
-अणु
+static void mlx5_fpga_conn_destroy_cq(struct mlx5_fpga_conn *conn)
+{
 	tasklet_disable(&conn->cq.tasklet);
-	tasklet_समाप्त(&conn->cq.tasklet);
+	tasklet_kill(&conn->cq.tasklet);
 	mlx5_core_destroy_cq(conn->fdev->mdev, &conn->cq.mcq);
 	mlx5_wq_destroy(&conn->cq.wq_ctrl);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5_fpga_conn_create_wq(काष्ठा mlx5_fpga_conn *conn, व्योम *qpc)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
-	काष्ठा mlx5_wq_param wqp;
+static int mlx5_fpga_conn_create_wq(struct mlx5_fpga_conn *conn, void *qpc)
+{
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	struct mlx5_core_dev *mdev = fdev->mdev;
+	struct mlx5_wq_param wqp;
 
 	wqp.buf_numa_node = mdev->priv.numa_node;
 	wqp.db_numa_node  = mdev->priv.numa_node;
 
-	वापस mlx5_wq_qp_create(mdev, &wqp, qpc, &conn->qp.wq,
+	return mlx5_wq_qp_create(mdev, &wqp, qpc, &conn->qp.wq,
 				 &conn->qp.wq_ctrl);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5_fpga_conn_create_qp(काष्ठा mlx5_fpga_conn *conn,
-				    अचिन्हित पूर्णांक tx_size, अचिन्हित पूर्णांक rx_size)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	u32 out[MLX5_ST_SZ_DW(create_qp_out)] = अणुपूर्ण;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
-	u32 temp_qpc[MLX5_ST_SZ_DW(qpc)] = अणुपूर्ण;
-	व्योम *in = शून्य, *qpc;
-	पूर्णांक err, inlen;
+static int mlx5_fpga_conn_create_qp(struct mlx5_fpga_conn *conn,
+				    unsigned int tx_size, unsigned int rx_size)
+{
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	u32 out[MLX5_ST_SZ_DW(create_qp_out)] = {};
+	struct mlx5_core_dev *mdev = fdev->mdev;
+	u32 temp_qpc[MLX5_ST_SZ_DW(qpc)] = {};
+	void *in = NULL, *qpc;
+	int err, inlen;
 
 	conn->qp.rq.pc = 0;
 	conn->qp.rq.cc = 0;
-	conn->qp.rq.size = roundup_घात_of_two(rx_size);
+	conn->qp.rq.size = roundup_pow_of_two(rx_size);
 	conn->qp.sq.pc = 0;
 	conn->qp.sq.cc = 0;
-	conn->qp.sq.size = roundup_घात_of_two(tx_size);
+	conn->qp.sq.size = roundup_pow_of_two(tx_size);
 
 	MLX5_SET(qpc, temp_qpc, log_rq_stride, ilog2(MLX5_SEND_WQE_DS) - 4);
 	MLX5_SET(qpc, temp_qpc, log_rq_size, ilog2(conn->qp.rq.size));
 	MLX5_SET(qpc, temp_qpc, log_sq_size, ilog2(conn->qp.sq.size));
 	err = mlx5_fpga_conn_create_wq(conn, temp_qpc);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	conn->qp.rq.bufs = kvसुस्मृति(conn->qp.rq.size,
-				    माप(conn->qp.rq.bufs[0]),
+	conn->qp.rq.bufs = kvcalloc(conn->qp.rq.size,
+				    sizeof(conn->qp.rq.bufs[0]),
 				    GFP_KERNEL);
-	अगर (!conn->qp.rq.bufs) अणु
+	if (!conn->qp.rq.bufs) {
 		err = -ENOMEM;
-		जाओ err_wq;
-	पूर्ण
+		goto err_wq;
+	}
 
-	conn->qp.sq.bufs = kvसुस्मृति(conn->qp.sq.size,
-				    माप(conn->qp.sq.bufs[0]),
+	conn->qp.sq.bufs = kvcalloc(conn->qp.sq.size,
+				    sizeof(conn->qp.sq.bufs[0]),
 				    GFP_KERNEL);
-	अगर (!conn->qp.sq.bufs) अणु
+	if (!conn->qp.sq.bufs) {
 		err = -ENOMEM;
-		जाओ err_rq_bufs;
-	पूर्ण
+		goto err_rq_bufs;
+	}
 
 	inlen = MLX5_ST_SZ_BYTES(create_qp_in) +
 		MLX5_FLD_SZ_BYTES(create_qp_in, pas[0]) *
 		conn->qp.wq_ctrl.buf.npages;
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
-		जाओ err_sq_bufs;
-	पूर्ण
+		goto err_sq_bufs;
+	}
 
 	qpc = MLX5_ADDR_OF(create_qp_in, in, qpc);
 	MLX5_SET(qpc, qpc, uar_page, fdev->conn_res.uar->index);
 	MLX5_SET(qpc, qpc, log_page_size,
-		 conn->qp.wq_ctrl.buf.page_shअगरt - MLX5_ADAPTER_PAGE_SHIFT);
+		 conn->qp.wq_ctrl.buf.page_shift - MLX5_ADAPTER_PAGE_SHIFT);
 	MLX5_SET(qpc, qpc, fre, 1);
 	MLX5_SET(qpc, qpc, rlky, 1);
 	MLX5_SET(qpc, qpc, st, MLX5_QP_ST_RC);
@@ -576,105 +575,105 @@ out:
 	MLX5_SET(qpc, qpc, log_sq_size, ilog2(conn->qp.sq.size));
 	MLX5_SET(qpc, qpc, cqn_snd, conn->cq.mcq.cqn);
 	MLX5_SET(qpc, qpc, cqn_rcv, conn->cq.mcq.cqn);
-	MLX5_SET(qpc, qpc, ts_क्रमmat, mlx5_get_qp_शेष_ts(mdev));
+	MLX5_SET(qpc, qpc, ts_format, mlx5_get_qp_default_ts(mdev));
 	MLX5_SET64(qpc, qpc, dbr_addr, conn->qp.wq_ctrl.db.dma);
-	अगर (MLX5_CAP_GEN(mdev, cqe_version) == 1)
+	if (MLX5_CAP_GEN(mdev, cqe_version) == 1)
 		MLX5_SET(qpc, qpc, user_index, 0xFFFFFF);
 
 	mlx5_fill_page_frag_array(&conn->qp.wq_ctrl.buf,
 				  (__be64 *)MLX5_ADDR_OF(create_qp_in, in, pas));
 
 	MLX5_SET(create_qp_in, in, opcode, MLX5_CMD_OP_CREATE_QP);
-	err = mlx5_cmd_exec(mdev, in, inlen, out, माप(out));
-	अगर (err)
-		जाओ err_sq_bufs;
+	err = mlx5_cmd_exec(mdev, in, inlen, out, sizeof(out));
+	if (err)
+		goto err_sq_bufs;
 
 	conn->qp.qpn = MLX5_GET(create_qp_out, out, qpn);
 	mlx5_fpga_dbg(fdev, "Created QP #0x%x\n", conn->qp.qpn);
 
-	जाओ out;
+	goto out;
 
 err_sq_bufs:
-	kvमुक्त(conn->qp.sq.bufs);
+	kvfree(conn->qp.sq.bufs);
 err_rq_bufs:
-	kvमुक्त(conn->qp.rq.bufs);
+	kvfree(conn->qp.rq.bufs);
 err_wq:
 	mlx5_wq_destroy(&conn->qp.wq_ctrl);
 out:
-	kvमुक्त(in);
-	वापस err;
-पूर्ण
+	kvfree(in);
+	return err;
+}
 
-अटल व्योम mlx5_fpga_conn_मुक्त_recv_bufs(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	पूर्णांक ix;
+static void mlx5_fpga_conn_free_recv_bufs(struct mlx5_fpga_conn *conn)
+{
+	int ix;
 
-	क्रम (ix = 0; ix < conn->qp.rq.size; ix++) अणु
-		अगर (!conn->qp.rq.bufs[ix])
-			जारी;
+	for (ix = 0; ix < conn->qp.rq.size; ix++) {
+		if (!conn->qp.rq.bufs[ix])
+			continue;
 		mlx5_fpga_conn_unmap_buf(conn, conn->qp.rq.bufs[ix]);
-		kमुक्त(conn->qp.rq.bufs[ix]);
-		conn->qp.rq.bufs[ix] = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(conn->qp.rq.bufs[ix]);
+		conn->qp.rq.bufs[ix] = NULL;
+	}
+}
 
-अटल व्योम mlx5_fpga_conn_flush_send_bufs(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_fpga_dma_buf *buf, *temp;
-	पूर्णांक ix;
+static void mlx5_fpga_conn_flush_send_bufs(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_fpga_dma_buf *buf, *temp;
+	int ix;
 
-	क्रम (ix = 0; ix < conn->qp.sq.size; ix++) अणु
+	for (ix = 0; ix < conn->qp.sq.size; ix++) {
 		buf = conn->qp.sq.bufs[ix];
-		अगर (!buf)
-			जारी;
-		conn->qp.sq.bufs[ix] = शून्य;
+		if (!buf)
+			continue;
+		conn->qp.sq.bufs[ix] = NULL;
 		mlx5_fpga_conn_unmap_buf(conn, buf);
-		अगर (!buf->complete)
-			जारी;
+		if (!buf->complete)
+			continue;
 		buf->complete(conn, conn->fdev, buf, MLX5_CQE_SYNDROME_WR_FLUSH_ERR);
-	पूर्ण
-	list_क्रम_each_entry_safe(buf, temp, &conn->qp.sq.backlog, list) अणु
+	}
+	list_for_each_entry_safe(buf, temp, &conn->qp.sq.backlog, list) {
 		mlx5_fpga_conn_unmap_buf(conn, buf);
-		अगर (!buf->complete)
-			जारी;
+		if (!buf->complete)
+			continue;
 		buf->complete(conn, conn->fdev, buf, MLX5_CQE_SYNDROME_WR_FLUSH_ERR);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx5_fpga_conn_destroy_qp(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_core_dev *dev = conn->fdev->mdev;
-	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = अणुपूर्ण;
+static void mlx5_fpga_conn_destroy_qp(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_core_dev *dev = conn->fdev->mdev;
+	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = {};
 
 	MLX5_SET(destroy_qp_in, in, opcode, MLX5_CMD_OP_DESTROY_QP);
 	MLX5_SET(destroy_qp_in, in, qpn, conn->qp.qpn);
 	mlx5_cmd_exec_in(dev, destroy_qp, in);
 
-	mlx5_fpga_conn_मुक्त_recv_bufs(conn);
+	mlx5_fpga_conn_free_recv_bufs(conn);
 	mlx5_fpga_conn_flush_send_bufs(conn);
-	kvमुक्त(conn->qp.sq.bufs);
-	kvमुक्त(conn->qp.rq.bufs);
+	kvfree(conn->qp.sq.bufs);
+	kvfree(conn->qp.rq.bufs);
 	mlx5_wq_destroy(&conn->qp.wq_ctrl);
-पूर्ण
+}
 
-अटल पूर्णांक mlx5_fpga_conn_reset_qp(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_core_dev *mdev = conn->fdev->mdev;
-	u32 in[MLX5_ST_SZ_DW(qp_2rst_in)] = अणुपूर्ण;
+static int mlx5_fpga_conn_reset_qp(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_core_dev *mdev = conn->fdev->mdev;
+	u32 in[MLX5_ST_SZ_DW(qp_2rst_in)] = {};
 
 	mlx5_fpga_dbg(conn->fdev, "Modifying QP %u to RST\n", conn->qp.qpn);
 
 	MLX5_SET(qp_2rst_in, in, opcode, MLX5_CMD_OP_2RST_QP);
 	MLX5_SET(qp_2rst_in, in, qpn, conn->qp.qpn);
 
-	वापस mlx5_cmd_exec_in(mdev, qp_2rst, in);
-पूर्ण
+	return mlx5_cmd_exec_in(mdev, qp_2rst, in);
+}
 
-अटल पूर्णांक mlx5_fpga_conn_init_qp(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	u32 in[MLX5_ST_SZ_DW(rst2init_qp_in)] = अणुपूर्ण;
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
+static int mlx5_fpga_conn_init_qp(struct mlx5_fpga_conn *conn)
+{
+	u32 in[MLX5_ST_SZ_DW(rst2init_qp_in)] = {};
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	struct mlx5_core_dev *mdev = fdev->mdev;
 	u32 *qpc;
 
 	mlx5_fpga_dbg(conn->fdev, "Modifying QP %u to INIT\n", conn->qp.qpn);
@@ -693,14 +692,14 @@ out:
 	MLX5_SET(rst2init_qp_in, in, opcode, MLX5_CMD_OP_RST2INIT_QP);
 	MLX5_SET(rst2init_qp_in, in, qpn, conn->qp.qpn);
 
-	वापस mlx5_cmd_exec_in(mdev, rst2init_qp, in);
-पूर्ण
+	return mlx5_cmd_exec_in(mdev, rst2init_qp, in);
+}
 
-अटल पूर्णांक mlx5_fpga_conn_rtr_qp(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	u32 in[MLX5_ST_SZ_DW(init2rtr_qp_in)] = अणुपूर्ण;
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
+static int mlx5_fpga_conn_rtr_qp(struct mlx5_fpga_conn *conn)
+{
+	u32 in[MLX5_ST_SZ_DW(init2rtr_qp_in)] = {};
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	struct mlx5_core_dev *mdev = fdev->mdev;
 	u32 *qpc;
 
 	mlx5_fpga_dbg(conn->fdev, "QP RTR\n");
@@ -721,21 +720,21 @@ out:
 	MLX5_SET(qpc, qpc, primary_address_path.src_addr_index,
 		 conn->qp.sgid_index);
 	MLX5_SET(qpc, qpc, primary_address_path.hop_limit, 0);
-	स_नकल(MLX5_ADDR_OF(qpc, qpc, primary_address_path.rgid_rip),
+	memcpy(MLX5_ADDR_OF(qpc, qpc, primary_address_path.rgid_rip),
 	       MLX5_ADDR_OF(fpga_qpc, conn->fpga_qpc, fpga_ip),
 	       MLX5_FLD_SZ_BYTES(qpc, primary_address_path.rgid_rip));
 
 	MLX5_SET(init2rtr_qp_in, in, opcode, MLX5_CMD_OP_INIT2RTR_QP);
 	MLX5_SET(init2rtr_qp_in, in, qpn, conn->qp.qpn);
 
-	वापस mlx5_cmd_exec_in(mdev, init2rtr_qp, in);
-पूर्ण
+	return mlx5_cmd_exec_in(mdev, init2rtr_qp, in);
+}
 
-अटल पूर्णांक mlx5_fpga_conn_rts_qp(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	u32 in[MLX5_ST_SZ_DW(rtr2rts_qp_in)] = अणुपूर्ण;
-	काष्ठा mlx5_core_dev *mdev = fdev->mdev;
+static int mlx5_fpga_conn_rts_qp(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	u32 in[MLX5_ST_SZ_DW(rtr2rts_qp_in)] = {};
+	struct mlx5_core_dev *mdev = fdev->mdev;
 	u32 *qpc;
 
 	mlx5_fpga_dbg(conn->fdev, "QP RTS\n");
@@ -744,86 +743,86 @@ out:
 
 	MLX5_SET(qpc, qpc, log_ack_req_freq, 8);
 	MLX5_SET(qpc, qpc, min_rnr_nak, 0x12);
-	MLX5_SET(qpc, qpc, primary_address_path.ack_समयout, 0x12); /* ~1.07s */
+	MLX5_SET(qpc, qpc, primary_address_path.ack_timeout, 0x12); /* ~1.07s */
 	MLX5_SET(qpc, qpc, next_send_psn,
 		 MLX5_GET(fpga_qpc, conn->fpga_qpc, next_rcv_psn));
 	MLX5_SET(qpc, qpc, retry_count, 7);
-	MLX5_SET(qpc, qpc, rnr_retry, 7); /* Infinite retry अगर RNR NACK */
+	MLX5_SET(qpc, qpc, rnr_retry, 7); /* Infinite retry if RNR NACK */
 
 	MLX5_SET(rtr2rts_qp_in, in, opcode, MLX5_CMD_OP_RTR2RTS_QP);
 	MLX5_SET(rtr2rts_qp_in, in, qpn, conn->qp.qpn);
 	MLX5_SET(rtr2rts_qp_in, in, opt_param_mask, MLX5_QP_OPTPAR_RNR_TIMEOUT);
 
-	वापस mlx5_cmd_exec_in(mdev, rtr2rts_qp, in);
-पूर्ण
+	return mlx5_cmd_exec_in(mdev, rtr2rts_qp, in);
+}
 
-अटल पूर्णांक mlx5_fpga_conn_connect(काष्ठा mlx5_fpga_conn *conn)
-अणु
-	काष्ठा mlx5_fpga_device *fdev = conn->fdev;
-	पूर्णांक err;
+static int mlx5_fpga_conn_connect(struct mlx5_fpga_conn *conn)
+{
+	struct mlx5_fpga_device *fdev = conn->fdev;
+	int err;
 
 	MLX5_SET(fpga_qpc, conn->fpga_qpc, state, MLX5_FPGA_QPC_STATE_ACTIVE);
-	err = mlx5_fpga_modअगरy_qp(conn->fdev->mdev, conn->fpga_qpn,
+	err = mlx5_fpga_modify_qp(conn->fdev->mdev, conn->fpga_qpn,
 				  MLX5_FPGA_QPC_STATE, &conn->fpga_qpc);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to activate FPGA RC QP: %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = mlx5_fpga_conn_reset_qp(conn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to change QP state to reset\n");
-		जाओ err_fpga_qp;
-	पूर्ण
+		goto err_fpga_qp;
+	}
 
 	err = mlx5_fpga_conn_init_qp(conn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to modify QP from RESET to INIT\n");
-		जाओ err_fpga_qp;
-	पूर्ण
+		goto err_fpga_qp;
+	}
 	conn->qp.active = true;
 
-	जबतक (!mlx5_fpga_conn_post_recv_buf(conn))
+	while (!mlx5_fpga_conn_post_recv_buf(conn))
 		;
 
 	err = mlx5_fpga_conn_rtr_qp(conn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to change QP state from INIT to RTR\n");
-		जाओ err_recv_bufs;
-	पूर्ण
+		goto err_recv_bufs;
+	}
 
 	err = mlx5_fpga_conn_rts_qp(conn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to change QP state from RTR to RTS\n");
-		जाओ err_recv_bufs;
-	पूर्ण
-	जाओ out;
+		goto err_recv_bufs;
+	}
+	goto out;
 
 err_recv_bufs:
-	mlx5_fpga_conn_मुक्त_recv_bufs(conn);
+	mlx5_fpga_conn_free_recv_bufs(conn);
 err_fpga_qp:
 	MLX5_SET(fpga_qpc, conn->fpga_qpc, state, MLX5_FPGA_QPC_STATE_INIT);
-	अगर (mlx5_fpga_modअगरy_qp(conn->fdev->mdev, conn->fpga_qpn,
+	if (mlx5_fpga_modify_qp(conn->fdev->mdev, conn->fpga_qpn,
 				MLX5_FPGA_QPC_STATE, &conn->fpga_qpc))
 		mlx5_fpga_err(fdev, "Failed to revert FPGA QP to INIT\n");
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा mlx5_fpga_conn *mlx5_fpga_conn_create(काष्ठा mlx5_fpga_device *fdev,
-					     काष्ठा mlx5_fpga_conn_attr *attr,
-					     क्रमागत mlx5_अगरc_fpga_qp_type qp_type)
-अणु
-	काष्ठा mlx5_fpga_conn *ret, *conn;
+struct mlx5_fpga_conn *mlx5_fpga_conn_create(struct mlx5_fpga_device *fdev,
+					     struct mlx5_fpga_conn_attr *attr,
+					     enum mlx5_ifc_fpga_qp_type qp_type)
+{
+	struct mlx5_fpga_conn *ret, *conn;
 	u8 *remote_mac, *remote_ip;
-	पूर्णांक err;
+	int err;
 
-	अगर (!attr->recv_cb)
-		वापस ERR_PTR(-EINVAL);
+	if (!attr->recv_cb)
+		return ERR_PTR(-EINVAL);
 
-	conn = kzalloc(माप(*conn), GFP_KERNEL);
-	अगर (!conn)
-		वापस ERR_PTR(-ENOMEM);
+	conn = kzalloc(sizeof(*conn), GFP_KERNEL);
+	if (!conn)
+		return ERR_PTR(-ENOMEM);
 
 	conn->fdev = fdev;
 	INIT_LIST_HEAD(&conn->qp.sq.backlog);
@@ -835,56 +834,56 @@ out:
 
 	remote_mac = MLX5_ADDR_OF(fpga_qpc, conn->fpga_qpc, remote_mac_47_32);
 	err = mlx5_query_mac_address(fdev->mdev, remote_mac);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to query local MAC: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Build Modअगरied EUI-64 IPv6 address from the MAC address */
+	/* Build Modified EUI-64 IPv6 address from the MAC address */
 	remote_ip = MLX5_ADDR_OF(fpga_qpc, conn->fpga_qpc, remote_ip);
 	remote_ip[0] = 0xfe;
 	remote_ip[1] = 0x80;
 	addrconf_addr_eui48(&remote_ip[8], remote_mac);
 
 	err = mlx5_core_reserved_gid_alloc(fdev->mdev, &conn->qp.sgid_index);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to allocate SGID: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = mlx5_core_roce_gid_set(fdev->mdev, conn->qp.sgid_index,
 				     MLX5_ROCE_VERSION_2,
 				     MLX5_ROCE_L3_TYPE_IPV6,
 				     remote_ip, remote_mac, true, 0,
 				     MLX5_FPGA_PORT_NUM);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to set SGID: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err_rsvd_gid;
-	पूर्ण
+		goto err_rsvd_gid;
+	}
 	mlx5_fpga_dbg(fdev, "Reserved SGID index %u\n", conn->qp.sgid_index);
 
-	/* Allow क्रम one cqe per rx/tx wqe, plus one cqe क्रम the next wqe,
+	/* Allow for one cqe per rx/tx wqe, plus one cqe for the next wqe,
 	 * created during processing of the cqe
 	 */
 	err = mlx5_fpga_conn_create_cq(conn,
 				       (attr->tx_size + attr->rx_size) * 2);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to create CQ: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err_gid;
-	पूर्ण
+		goto err_gid;
+	}
 
 	mlx5_fpga_conn_arm_cq(conn);
 
 	err = mlx5_fpga_conn_create_qp(conn, attr->tx_size, attr->rx_size);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to create QP: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err_cq;
-	पूर्ण
+		goto err_cq;
+	}
 
 	MLX5_SET(fpga_qpc, conn->fpga_qpc, state, MLX5_FPGA_QPC_STATE_INIT);
 	MLX5_SET(fpga_qpc, conn->fpga_qpc, qp_type, qp_type);
@@ -900,21 +899,21 @@ out:
 
 	err = mlx5_fpga_create_qp(fdev->mdev, &conn->fpga_qpc,
 				  &conn->fpga_qpn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to create FPGA RC QP: %d\n", err);
 		ret = ERR_PTR(err);
-		जाओ err_qp;
-	पूर्ण
+		goto err_qp;
+	}
 
 	err = mlx5_fpga_conn_connect(conn);
-	अगर (err) अणु
+	if (err) {
 		ret = ERR_PTR(err);
-		जाओ err_conn;
-	पूर्ण
+		goto err_conn;
+	}
 
 	mlx5_fpga_dbg(fdev, "FPGA QPN is %u\n", conn->fpga_qpn);
 	ret = conn;
-	जाओ out;
+	goto out;
 
 err_conn:
 	mlx5_fpga_destroy_qp(conn->fdev->mdev, conn->fpga_qpn);
@@ -923,18 +922,18 @@ err_qp:
 err_cq:
 	mlx5_fpga_conn_destroy_cq(conn);
 err_gid:
-	mlx5_core_roce_gid_set(fdev->mdev, conn->qp.sgid_index, 0, 0, शून्य,
-			       शून्य, false, 0, MLX5_FPGA_PORT_NUM);
+	mlx5_core_roce_gid_set(fdev->mdev, conn->qp.sgid_index, 0, 0, NULL,
+			       NULL, false, 0, MLX5_FPGA_PORT_NUM);
 err_rsvd_gid:
-	mlx5_core_reserved_gid_मुक्त(fdev->mdev, conn->qp.sgid_index);
+	mlx5_core_reserved_gid_free(fdev->mdev, conn->qp.sgid_index);
 err:
-	kमुक्त(conn);
+	kfree(conn);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mlx5_fpga_conn_destroy(काष्ठा mlx5_fpga_conn *conn)
-अणु
+void mlx5_fpga_conn_destroy(struct mlx5_fpga_conn *conn)
+{
 	conn->qp.active = false;
 	tasklet_disable(&conn->cq.tasklet);
 	synchronize_irq(conn->cq.mcq.irqn);
@@ -944,46 +943,46 @@ out:
 	mlx5_fpga_conn_destroy_cq(conn);
 
 	mlx5_core_roce_gid_set(conn->fdev->mdev, conn->qp.sgid_index, 0, 0,
-			       शून्य, शून्य, false, 0, MLX5_FPGA_PORT_NUM);
-	mlx5_core_reserved_gid_मुक्त(conn->fdev->mdev, conn->qp.sgid_index);
-	kमुक्त(conn);
-पूर्ण
+			       NULL, NULL, false, 0, MLX5_FPGA_PORT_NUM);
+	mlx5_core_reserved_gid_free(conn->fdev->mdev, conn->qp.sgid_index);
+	kfree(conn);
+}
 
-पूर्णांक mlx5_fpga_conn_device_init(काष्ठा mlx5_fpga_device *fdev)
-अणु
-	पूर्णांक err;
+int mlx5_fpga_conn_device_init(struct mlx5_fpga_device *fdev)
+{
+	int err;
 
 	err = mlx5_nic_vport_enable_roce(fdev->mdev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "Failed to enable RoCE: %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fdev->conn_res.uar = mlx5_get_uars_page(fdev->mdev);
-	अगर (IS_ERR(fdev->conn_res.uar)) अणु
+	if (IS_ERR(fdev->conn_res.uar)) {
 		err = PTR_ERR(fdev->conn_res.uar);
 		mlx5_fpga_err(fdev, "get_uars_page failed, %d\n", err);
-		जाओ err_roce;
-	पूर्ण
+		goto err_roce;
+	}
 	mlx5_fpga_dbg(fdev, "Allocated UAR index %u\n",
 		      fdev->conn_res.uar->index);
 
 	err = mlx5_core_alloc_pd(fdev->mdev, &fdev->conn_res.pdn);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "alloc pd failed, %d\n", err);
-		जाओ err_uar;
-	पूर्ण
+		goto err_uar;
+	}
 	mlx5_fpga_dbg(fdev, "Allocated PD %u\n", fdev->conn_res.pdn);
 
 	err = mlx5_fpga_conn_create_mkey(fdev->mdev, fdev->conn_res.pdn,
 					 &fdev->conn_res.mkey);
-	अगर (err) अणु
+	if (err) {
 		mlx5_fpga_err(fdev, "create mkey failed, %d\n", err);
-		जाओ err_dealloc_pd;
-	पूर्ण
+		goto err_dealloc_pd;
+	}
 	mlx5_fpga_dbg(fdev, "Created mkey 0x%x\n", fdev->conn_res.mkey.key);
 
-	वापस 0;
+	return 0;
 
 err_dealloc_pd:
 	mlx5_core_dealloc_pd(fdev->mdev, fdev->conn_res.pdn);
@@ -992,13 +991,13 @@ err_uar:
 err_roce:
 	mlx5_nic_vport_disable_roce(fdev->mdev);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx5_fpga_conn_device_cleanup(काष्ठा mlx5_fpga_device *fdev)
-अणु
+void mlx5_fpga_conn_device_cleanup(struct mlx5_fpga_device *fdev)
+{
 	mlx5_core_destroy_mkey(fdev->mdev, &fdev->conn_res.mkey);
 	mlx5_core_dealloc_pd(fdev->mdev, fdev->conn_res.pdn);
 	mlx5_put_uars_page(fdev->mdev, fdev->conn_res.uar);
 	mlx5_nic_vport_disable_roce(fdev->mdev);
-पूर्ण
+}

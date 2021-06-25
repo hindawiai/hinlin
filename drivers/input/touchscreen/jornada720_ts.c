@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/input/touchscreen/jornada720_ts.c
  *
@@ -11,29 +10,29 @@
  * HP Jornada 710/720/729 Touchscreen Driver
  */
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
+#include <linux/gpio/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
 
-#समावेश <mach/jornada720.h>
+#include <mach/jornada720.h>
 
 MODULE_AUTHOR("Kristoffer Ericson <kristoffer.ericson@gmail.com>");
 MODULE_DESCRIPTION("HP Jornada 710/720/728 touchscreen driver");
 MODULE_LICENSE("GPL v2");
 
-काष्ठा jornada_ts अणु
-	काष्ठा input_dev *dev;
-	काष्ठा gpio_desc *gpio;
-	पूर्णांक x_data[4];		/* X sample values */
-	पूर्णांक y_data[4];		/* Y sample values */
-पूर्ण;
+struct jornada_ts {
+	struct input_dev *dev;
+	struct gpio_desc *gpio;
+	int x_data[4];		/* X sample values */
+	int y_data[4];		/* Y sample values */
+};
 
-अटल व्योम jornada720_ts_collect_data(काष्ठा jornada_ts *jornada_ts)
-अणु
+static void jornada720_ts_collect_data(struct jornada_ts *jornada_ts)
+{
 	/* 3 low word X samples */
 	jornada_ts->x_data[0] = jornada_ssp_byte(TXDUMMY);
 	jornada_ts->x_data[1] = jornada_ssp_byte(TXDUMMY);
@@ -49,75 +48,75 @@ MODULE_LICENSE("GPL v2");
 
 	/* combined y samples bits */
 	jornada_ts->y_data[3] = jornada_ssp_byte(TXDUMMY);
-पूर्ण
+}
 
-अटल पूर्णांक jornada720_ts_average(पूर्णांक coords[4])
-अणु
-	पूर्णांक coord, high_bits = coords[3];
+static int jornada720_ts_average(int coords[4])
+{
+	int coord, high_bits = coords[3];
 
 	coord  = coords[0] | ((high_bits & 0x03) << 8);
 	coord += coords[1] | ((high_bits & 0x0c) << 6);
 	coord += coords[2] | ((high_bits & 0x30) << 4);
 
-	वापस coord / 3;
-पूर्ण
+	return coord / 3;
+}
 
-अटल irqवापस_t jornada720_ts_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
-	काष्ठा jornada_ts *jornada_ts = platक्रमm_get_drvdata(pdev);
-	काष्ठा input_dev *input = jornada_ts->dev;
-	पूर्णांक x, y;
+static irqreturn_t jornada720_ts_interrupt(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
+	struct jornada_ts *jornada_ts = platform_get_drvdata(pdev);
+	struct input_dev *input = jornada_ts->dev;
+	int x, y;
 
 	/* If gpio is high then report pen up */
-	अगर (gpiod_get_value(jornada_ts->gpio)) अणु
+	if (gpiod_get_value(jornada_ts->gpio)) {
 		input_report_key(input, BTN_TOUCH, 0);
 		input_sync(input);
-	पूर्ण अन्यथा अणु
+	} else {
 		jornada_ssp_start();
 
 		/* proper reply to request is always TXDUMMY */
-		अगर (jornada_ssp_inout(GETTOUCHSAMPLES) == TXDUMMY) अणु
+		if (jornada_ssp_inout(GETTOUCHSAMPLES) == TXDUMMY) {
 			jornada720_ts_collect_data(jornada_ts);
 
 			x = jornada720_ts_average(jornada_ts->x_data);
 			y = jornada720_ts_average(jornada_ts->y_data);
 
 			input_report_key(input, BTN_TOUCH, 1);
-			input_report_असल(input, ABS_X, x);
-			input_report_असल(input, ABS_Y, y);
+			input_report_abs(input, ABS_X, x);
+			input_report_abs(input, ABS_Y, y);
 			input_sync(input);
-		पूर्ण
+		}
 
 		jornada_ssp_end();
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक jornada720_ts_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा jornada_ts *jornada_ts;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक error, irq;
+static int jornada720_ts_probe(struct platform_device *pdev)
+{
+	struct jornada_ts *jornada_ts;
+	struct input_dev *input_dev;
+	int error, irq;
 
-	jornada_ts = devm_kzalloc(&pdev->dev, माप(*jornada_ts), GFP_KERNEL);
-	अगर (!jornada_ts)
-		वापस -ENOMEM;
+	jornada_ts = devm_kzalloc(&pdev->dev, sizeof(*jornada_ts), GFP_KERNEL);
+	if (!jornada_ts)
+		return -ENOMEM;
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, jornada_ts);
+	platform_set_drvdata(pdev, jornada_ts);
 
 	jornada_ts->gpio = devm_gpiod_get(&pdev->dev, "penup", GPIOD_IN);
-	अगर (IS_ERR(jornada_ts->gpio))
-		वापस PTR_ERR(jornada_ts->gpio);
+	if (IS_ERR(jornada_ts->gpio))
+		return PTR_ERR(jornada_ts->gpio);
 
 	irq = gpiod_to_irq(jornada_ts->gpio);
-	अगर (irq <= 0)
-		वापस irq < 0 ? irq : -EINVAL;
+	if (irq <= 0)
+		return irq < 0 ? irq : -EINVAL;
 
 	jornada_ts->dev = input_dev;
 
@@ -128,31 +127,31 @@ MODULE_LICENSE("GPL v2");
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
-	input_set_असल_params(input_dev, ABS_X, 270, 3900, 0, 0);
-	input_set_असल_params(input_dev, ABS_Y, 180, 3700, 0, 0);
+	input_set_abs_params(input_dev, ABS_X, 270, 3900, 0, 0);
+	input_set_abs_params(input_dev, ABS_Y, 180, 3700, 0, 0);
 
-	error = devm_request_irq(&pdev->dev, irq, jornada720_ts_पूर्णांकerrupt,
+	error = devm_request_irq(&pdev->dev, irq, jornada720_ts_interrupt,
 				 IRQF_TRIGGER_RISING,
 				 "HP7XX Touchscreen driver", pdev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "HP7XX TS : Unable to acquire irq!\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(jornada_ts->dev);
-	अगर (error)
-		वापस error;
+	error = input_register_device(jornada_ts->dev);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:jornada_ts");
 
-अटल काष्ठा platक्रमm_driver jornada720_ts_driver = अणु
+static struct platform_driver jornada720_ts_driver = {
 	.probe		= jornada720_ts_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "jornada_ts",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(jornada720_ts_driver);
+	},
+};
+module_platform_driver(jornada720_ts_driver);

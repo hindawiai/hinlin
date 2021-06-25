@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,269 +20,269 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "pp_debug.h"
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश "atom-types.h"
-#समावेश "atombios.h"
-#समावेश "processpptables.h"
-#समावेश "cgs_common.h"
-#समावेश "smu/smu_8_0_d.h"
-#समावेश "smu8_fusion.h"
-#समावेश "smu/smu_8_0_sh_mask.h"
-#समावेश "smumgr.h"
-#समावेश "hwmgr.h"
-#समावेश "hardwaremanager.h"
-#समावेश "cz_ppsmc.h"
-#समावेश "smu8_hwmgr.h"
-#समावेश "power_state.h"
-#समावेश "pp_thermal.h"
+#include "pp_debug.h"
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include "atom-types.h"
+#include "atombios.h"
+#include "processpptables.h"
+#include "cgs_common.h"
+#include "smu/smu_8_0_d.h"
+#include "smu8_fusion.h"
+#include "smu/smu_8_0_sh_mask.h"
+#include "smumgr.h"
+#include "hwmgr.h"
+#include "hardwaremanager.h"
+#include "cz_ppsmc.h"
+#include "smu8_hwmgr.h"
+#include "power_state.h"
+#include "pp_thermal.h"
 
-#घोषणा ixSMUSVI_NB_CURRENTVID 0xD8230044
-#घोषणा CURRENT_NB_VID_MASK 0xff000000
-#घोषणा CURRENT_NB_VID__SHIFT 24
-#घोषणा ixSMUSVI_GFX_CURRENTVID  0xD8230048
-#घोषणा CURRENT_GFX_VID_MASK 0xff000000
-#घोषणा CURRENT_GFX_VID__SHIFT 24
+#define ixSMUSVI_NB_CURRENTVID 0xD8230044
+#define CURRENT_NB_VID_MASK 0xff000000
+#define CURRENT_NB_VID__SHIFT 24
+#define ixSMUSVI_GFX_CURRENTVID  0xD8230048
+#define CURRENT_GFX_VID_MASK 0xff000000
+#define CURRENT_GFX_VID__SHIFT 24
 
-अटल स्थिर अचिन्हित दीर्घ smu8_magic = (अचिन्हित दीर्घ) PHM_Cz_Magic;
+static const unsigned long smu8_magic = (unsigned long) PHM_Cz_Magic;
 
-अटल काष्ठा smu8_घातer_state *cast_smu8_घातer_state(काष्ठा pp_hw_घातer_state *hw_ps)
-अणु
-	अगर (smu8_magic != hw_ps->magic)
-		वापस शून्य;
+static struct smu8_power_state *cast_smu8_power_state(struct pp_hw_power_state *hw_ps)
+{
+	if (smu8_magic != hw_ps->magic)
+		return NULL;
 
-	वापस (काष्ठा smu8_घातer_state *)hw_ps;
-पूर्ण
+	return (struct smu8_power_state *)hw_ps;
+}
 
-अटल स्थिर काष्ठा smu8_घातer_state *cast_स्थिर_smu8_घातer_state(
-				स्थिर काष्ठा pp_hw_घातer_state *hw_ps)
-अणु
-	अगर (smu8_magic != hw_ps->magic)
-		वापस शून्य;
+static const struct smu8_power_state *cast_const_smu8_power_state(
+				const struct pp_hw_power_state *hw_ps)
+{
+	if (smu8_magic != hw_ps->magic)
+		return NULL;
 
-	वापस (काष्ठा smu8_घातer_state *)hw_ps;
-पूर्ण
+	return (struct smu8_power_state *)hw_ps;
+}
 
-अटल uपूर्णांक32_t smu8_get_eclk_level(काष्ठा pp_hwmgr *hwmgr,
-					uपूर्णांक32_t घड़ी, uपूर्णांक32_t msg)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *ptable =
-		hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table;
+static uint32_t smu8_get_eclk_level(struct pp_hwmgr *hwmgr,
+					uint32_t clock, uint32_t msg)
+{
+	int i = 0;
+	struct phm_vce_clock_voltage_dependency_table *ptable =
+		hwmgr->dyn_state.vce_clock_voltage_dependency_table;
 
-	चयन (msg) अणु
-	हाल PPSMC_MSG_SetEclkSoftMin:
-	हाल PPSMC_MSG_SetEclkHardMin:
-		क्रम (i = 0; i < (पूर्णांक)ptable->count; i++) अणु
-			अगर (घड़ी <= ptable->entries[i].ecclk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	switch (msg) {
+	case PPSMC_MSG_SetEclkSoftMin:
+	case PPSMC_MSG_SetEclkHardMin:
+		for (i = 0; i < (int)ptable->count; i++) {
+			if (clock <= ptable->entries[i].ecclk)
+				break;
+		}
+		break;
 
-	हाल PPSMC_MSG_SetEclkSoftMax:
-	हाल PPSMC_MSG_SetEclkHardMax:
-		क्रम (i = ptable->count - 1; i >= 0; i--) अणु
-			अगर (घड़ी >= ptable->entries[i].ecclk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	case PPSMC_MSG_SetEclkSoftMax:
+	case PPSMC_MSG_SetEclkHardMax:
+		for (i = ptable->count - 1; i >= 0; i--) {
+			if (clock >= ptable->entries[i].ecclk)
+				break;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल uपूर्णांक32_t smu8_get_sclk_level(काष्ठा pp_hwmgr *hwmgr,
-				uपूर्णांक32_t घड़ी, uपूर्णांक32_t msg)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static uint32_t smu8_get_sclk_level(struct pp_hwmgr *hwmgr,
+				uint32_t clock, uint32_t msg)
+{
+	int i = 0;
+	struct phm_clock_voltage_dependency_table *table =
 				hwmgr->dyn_state.vddc_dependency_on_sclk;
 
-	चयन (msg) अणु
-	हाल PPSMC_MSG_SetSclkSoftMin:
-	हाल PPSMC_MSG_SetSclkHardMin:
-		क्रम (i = 0; i < (पूर्णांक)table->count; i++) अणु
-			अगर (घड़ी <= table->entries[i].clk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	switch (msg) {
+	case PPSMC_MSG_SetSclkSoftMin:
+	case PPSMC_MSG_SetSclkHardMin:
+		for (i = 0; i < (int)table->count; i++) {
+			if (clock <= table->entries[i].clk)
+				break;
+		}
+		break;
 
-	हाल PPSMC_MSG_SetSclkSoftMax:
-	हाल PPSMC_MSG_SetSclkHardMax:
-		क्रम (i = table->count - 1; i >= 0; i--) अणु
-			अगर (घड़ी >= table->entries[i].clk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	case PPSMC_MSG_SetSclkSoftMax:
+	case PPSMC_MSG_SetSclkHardMax:
+		for (i = table->count - 1; i >= 0; i--) {
+			if (clock >= table->entries[i].clk)
+				break;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस i;
-पूर्ण
+	default:
+		break;
+	}
+	return i;
+}
 
-अटल uपूर्णांक32_t smu8_get_uvd_level(काष्ठा pp_hwmgr *hwmgr,
-					uपूर्णांक32_t घड़ी, uपूर्णांक32_t msg)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *ptable =
-		hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table;
+static uint32_t smu8_get_uvd_level(struct pp_hwmgr *hwmgr,
+					uint32_t clock, uint32_t msg)
+{
+	int i = 0;
+	struct phm_uvd_clock_voltage_dependency_table *ptable =
+		hwmgr->dyn_state.uvd_clock_voltage_dependency_table;
 
-	चयन (msg) अणु
-	हाल PPSMC_MSG_SetUvdSoftMin:
-	हाल PPSMC_MSG_SetUvdHardMin:
-		क्रम (i = 0; i < (पूर्णांक)ptable->count; i++) अणु
-			अगर (घड़ी <= ptable->entries[i].vclk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	switch (msg) {
+	case PPSMC_MSG_SetUvdSoftMin:
+	case PPSMC_MSG_SetUvdHardMin:
+		for (i = 0; i < (int)ptable->count; i++) {
+			if (clock <= ptable->entries[i].vclk)
+				break;
+		}
+		break;
 
-	हाल PPSMC_MSG_SetUvdSoftMax:
-	हाल PPSMC_MSG_SetUvdHardMax:
-		क्रम (i = ptable->count - 1; i >= 0; i--) अणु
-			अगर (घड़ी >= ptable->entries[i].vclk)
-				अवरोध;
-		पूर्ण
-		अवरोध;
+	case PPSMC_MSG_SetUvdSoftMax:
+	case PPSMC_MSG_SetUvdHardMax:
+		for (i = ptable->count - 1; i >= 0; i--) {
+			if (clock >= ptable->entries[i].vclk)
+				break;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल uपूर्णांक32_t smu8_get_max_sclk_level(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static uint32_t smu8_get_max_sclk_level(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	अगर (data->max_sclk_level == 0) अणु
+	if (data->max_sclk_level == 0) {
 		smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_GetMaxSclkLevel,
 				&data->max_sclk_level);
 		data->max_sclk_level += 1;
-	पूर्ण
+	}
 
-	वापस data->max_sclk_level;
-पूर्ण
+	return data->max_sclk_level;
+}
 
-अटल पूर्णांक smu8_initialize_dpm_शेषs(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
+static int smu8_initialize_dpm_defaults(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct amdgpu_device *adev = hwmgr->adev;
 
 	data->gfx_ramp_step = 256*25/100;
-	data->gfx_ramp_delay = 1; /* by शेष, we delay 1us */
+	data->gfx_ramp_delay = 1; /* by default, we delay 1us */
 
 	data->mgcg_cgtt_local0 = 0x00000000;
 	data->mgcg_cgtt_local1 = 0x00000000;
-	data->घड़ी_slow_करोwn_freq = 25000;
-	data->skip_घड़ी_slow_करोwn = 1;
-	data->enable_nb_ps_policy = 1; /* disable until UNB is पढ़ोy, Enabled */
-	data->voltage_drop_in_dce_घातer_gating = 0; /* disable until fully verअगरied */
+	data->clock_slow_down_freq = 25000;
+	data->skip_clock_slow_down = 1;
+	data->enable_nb_ps_policy = 1; /* disable until UNB is ready, Enabled */
+	data->voltage_drop_in_dce_power_gating = 0; /* disable until fully verified */
 	data->voting_rights_clients = 0x00C00033;
-	data->अटल_screen_threshold = 8;
-	data->ddi_घातer_gating_disabled = 0;
+	data->static_screen_threshold = 8;
+	data->ddi_power_gating_disabled = 0;
 	data->bapm_enabled = 1;
 	data->voltage_drop_threshold = 0;
-	data->gfx_घातer_gating_threshold = 500;
+	data->gfx_power_gating_threshold = 500;
 	data->vce_slow_sclk_threshold = 20000;
 	data->dce_slow_sclk_threshold = 30000;
 	data->disable_driver_thermal_policy = 1;
 	data->disable_nb_ps3_in_battery = 0;
 
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-							PHM_Platक्रमmCaps_ABM);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+							PHM_PlatformCaps_ABM);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				    PHM_Platक्रमmCaps_NonABMSupportInPPLib);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				    PHM_PlatformCaps_NonABMSupportInPPLib);
 
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_DynamicM3Arbiter);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_DynamicM3Arbiter);
 
 	data->override_dynamic_mgpg = 1;
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				  PHM_Platक्रमmCaps_DynamicPatchPowerState);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				  PHM_PlatformCaps_DynamicPatchPowerState);
 
-	data->thermal_स्वतः_throttling_treshold = 0;
-	data->tdr_घड़ी = 0;
-	data->disable_gfx_घातer_gating_in_uvd = 0;
+	data->thermal_auto_throttling_treshold = 0;
+	data->tdr_clock = 0;
+	data->disable_gfx_power_gating_in_uvd = 0;
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-					PHM_Platक्रमmCaps_DynamicUVDState);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+					PHM_PlatformCaps_DynamicUVDState);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_UVDDPM);
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			PHM_Platक्रमmCaps_VCEDPM);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_UVDDPM);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			PHM_PlatformCaps_VCEDPM);
 
 	data->cc6_settings.cpu_cc6_disable = false;
 	data->cc6_settings.cpu_pstate_disable = false;
-	data->cc6_settings.nb_pstate_चयन_disable = false;
-	data->cc6_settings.cpu_pstate_separation_समय = 0;
+	data->cc6_settings.nb_pstate_switch_disable = false;
+	data->cc6_settings.cpu_pstate_separation_time = 0;
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				   PHM_Platक्रमmCaps_DisableVoltageIsland);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				   PHM_PlatformCaps_DisableVoltageIsland);
 
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		      PHM_Platक्रमmCaps_UVDPowerGating);
-	phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-		      PHM_Platक्रमmCaps_VCEPowerGating);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+		      PHM_PlatformCaps_UVDPowerGating);
+	phm_cap_unset(hwmgr->platform_descriptor.platformCaps,
+		      PHM_PlatformCaps_VCEPowerGating);
 
-	अगर (adev->pg_flags & AMD_PG_SUPPORT_UVD)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			      PHM_Platक्रमmCaps_UVDPowerGating);
-	अगर (adev->pg_flags & AMD_PG_SUPPORT_VCE)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-			      PHM_Platक्रमmCaps_VCEPowerGating);
+	if (adev->pg_flags & AMD_PG_SUPPORT_UVD)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			      PHM_PlatformCaps_UVDPowerGating);
+	if (adev->pg_flags & AMD_PG_SUPPORT_VCE)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+			      PHM_PlatformCaps_VCEPowerGating);
 
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* convert क्रमm 8bit vid to real voltage in mV*4 */
-अटल uपूर्णांक32_t smu8_convert_8Bit_index_to_voltage(
-			काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t voltage)
-अणु
-	वापस 6200 - (voltage * 25);
-पूर्ण
+/* convert form 8bit vid to real voltage in mV*4 */
+static uint32_t smu8_convert_8Bit_index_to_voltage(
+			struct pp_hwmgr *hwmgr, uint16_t voltage)
+{
+	return 6200 - (voltage * 25);
+}
 
-अटल पूर्णांक smu8_स्थिरruct_max_घातer_limits_table(काष्ठा pp_hwmgr *hwmgr,
-			काष्ठा phm_घड़ी_and_voltage_limits *table)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा smu8_sys_info *sys_info = &data->sys_info;
-	काष्ठा phm_घड़ी_voltage_dependency_table *dep_table =
+static int smu8_construct_max_power_limits_table(struct pp_hwmgr *hwmgr,
+			struct phm_clock_and_voltage_limits *table)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct smu8_sys_info *sys_info = &data->sys_info;
+	struct phm_clock_voltage_dependency_table *dep_table =
 				hwmgr->dyn_state.vddc_dependency_on_sclk;
 
-	अगर (dep_table->count > 0) अणु
+	if (dep_table->count > 0) {
 		table->sclk = dep_table->entries[dep_table->count-1].clk;
 		table->vddc = smu8_convert_8Bit_index_to_voltage(hwmgr,
-		   (uपूर्णांक16_t)dep_table->entries[dep_table->count-1].v);
-	पूर्ण
-	table->mclk = sys_info->nbp_memory_घड़ी[0];
-	वापस 0;
-पूर्ण
+		   (uint16_t)dep_table->entries[dep_table->count-1].v);
+	}
+	table->mclk = sys_info->nbp_memory_clock[0];
+	return 0;
+}
 
-अटल पूर्णांक smu8_init_dynamic_state_adjusपंचांगent_rule_settings(
-			काष्ठा pp_hwmgr *hwmgr,
+static int smu8_init_dynamic_state_adjustment_rule_settings(
+			struct pp_hwmgr *hwmgr,
 			ATOM_CLK_VOLT_CAPABILITY *disp_voltage_table)
-अणु
-	काष्ठा phm_घड़ी_voltage_dependency_table *table_clk_vlt;
+{
+	struct phm_clock_voltage_dependency_table *table_clk_vlt;
 
-	table_clk_vlt = kzalloc(काष्ठा_size(table_clk_vlt, entries, 8),
+	table_clk_vlt = kzalloc(struct_size(table_clk_vlt, entries, 8),
 				GFP_KERNEL);
 
-	अगर (शून्य == table_clk_vlt) अणु
+	if (NULL == table_clk_vlt) {
 		pr_err("Can not allocate memory!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	table_clk_vlt->count = 8;
 	table_clk_vlt->entries[0].clk = PP_DAL_POWERLEVEL_0;
@@ -304,42 +303,42 @@
 	table_clk_vlt->entries[7].v = 7;
 	hwmgr->dyn_state.vddc_dep_on_dal_pwrl = table_clk_vlt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_प्रणाली_info_data(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	ATOM_INTEGRATED_SYSTEM_INFO_V1_9 *info = शून्य;
-	uपूर्णांक32_t i;
-	पूर्णांक result = 0;
-	uपूर्णांक8_t frev, crev;
-	uपूर्णांक16_t size;
+static int smu8_get_system_info_data(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	ATOM_INTEGRATED_SYSTEM_INFO_V1_9 *info = NULL;
+	uint32_t i;
+	int result = 0;
+	uint8_t frev, crev;
+	uint16_t size;
 
 	info = (ATOM_INTEGRATED_SYSTEM_INFO_V1_9 *)smu_atom_get_data_table(hwmgr->adev,
 			GetIndexIntoMasterTable(DATA, IntegratedSystemInfo),
 			&size, &frev, &crev);
 
-	अगर (info == शून्य) अणु
+	if (info == NULL) {
 		pr_err("Could not retrieve the Integrated System Info Table!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (crev != 9) अणु
+	if (crev != 9) {
 		pr_err("Unsupported IGP table: %d %d\n", frev, crev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	data->sys_info.bootup_uma_घड़ी =
+	data->sys_info.bootup_uma_clock =
 				   le32_to_cpu(info->ulBootUpUMAClock);
 
-	data->sys_info.bootup_engine_घड़ी =
+	data->sys_info.bootup_engine_clock =
 				le32_to_cpu(info->ulBootUpEngineClock);
 
 	data->sys_info.dentist_vco_freq =
 				   le32_to_cpu(info->ulDentistVCOFreq);
 
-	data->sys_info.प्रणाली_config =
+	data->sys_info.system_config =
 				     le32_to_cpu(info->ulSystemConfig);
 
 	data->sys_info.bootup_nb_voltage_index =
@@ -348,418 +347,418 @@
 	data->sys_info.htc_hyst_lmt =
 			(info->ucHtcHystLmt == 0) ? 5 : info->ucHtcHystLmt;
 
-	data->sys_info.htc_पंचांगp_lmt =
+	data->sys_info.htc_tmp_lmt =
 			(info->ucHtcTmpLmt == 0) ? 203 : info->ucHtcTmpLmt;
 
-	अगर (data->sys_info.htc_पंचांगp_lmt <=
-			data->sys_info.htc_hyst_lmt) अणु
+	if (data->sys_info.htc_tmp_lmt <=
+			data->sys_info.htc_hyst_lmt) {
 		pr_err("The htcTmpLmt should be larger than htcHystLmt.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data->sys_info.nb_dpm_enable =
 				data->enable_nb_ps_policy &&
 				(le32_to_cpu(info->ulSystemConfig) >> 3 & 0x1);
 
-	क्रम (i = 0; i < SMU8_NUM_NBPSTATES; i++) अणु
-		अगर (i < SMU8_NUM_NBPMEMORYCLOCK) अणु
-			data->sys_info.nbp_memory_घड़ी[i] =
+	for (i = 0; i < SMU8_NUM_NBPSTATES; i++) {
+		if (i < SMU8_NUM_NBPMEMORYCLOCK) {
+			data->sys_info.nbp_memory_clock[i] =
 			  le32_to_cpu(info->ulNbpStateMemclkFreq[i]);
-		पूर्ण
-		data->sys_info.nbp_n_घड़ी[i] =
+		}
+		data->sys_info.nbp_n_clock[i] =
 			    le32_to_cpu(info->ulNbpStateNClkFreq[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < MAX_DISPLAY_CLOCK_LEVEL; i++) अणु
-		data->sys_info.display_घड़ी[i] =
+	for (i = 0; i < MAX_DISPLAY_CLOCK_LEVEL; i++) {
+		data->sys_info.display_clock[i] =
 					le32_to_cpu(info->sDispClkVoltageMapping[i].ulMaximumSupportedCLK);
-	पूर्ण
+	}
 
 	/* Here use 4 levels, make sure not exceed */
-	क्रम (i = 0; i < SMU8_NUM_NBPSTATES; i++) अणु
+	for (i = 0; i < SMU8_NUM_NBPSTATES; i++) {
 		data->sys_info.nbp_voltage_index[i] =
 			     le16_to_cpu(info->usNBPStateVoltage[i]);
-	पूर्ण
+	}
 
-	अगर (!data->sys_info.nb_dpm_enable) अणु
-		क्रम (i = 1; i < SMU8_NUM_NBPSTATES; i++) अणु
-			अगर (i < SMU8_NUM_NBPMEMORYCLOCK) अणु
-				data->sys_info.nbp_memory_घड़ी[i] =
-				    data->sys_info.nbp_memory_घड़ी[0];
-			पूर्ण
-			data->sys_info.nbp_n_घड़ी[i] =
-				    data->sys_info.nbp_n_घड़ी[0];
+	if (!data->sys_info.nb_dpm_enable) {
+		for (i = 1; i < SMU8_NUM_NBPSTATES; i++) {
+			if (i < SMU8_NUM_NBPMEMORYCLOCK) {
+				data->sys_info.nbp_memory_clock[i] =
+				    data->sys_info.nbp_memory_clock[0];
+			}
+			data->sys_info.nbp_n_clock[i] =
+				    data->sys_info.nbp_n_clock[0];
 			data->sys_info.nbp_voltage_index[i] =
 				    data->sys_info.nbp_voltage_index[0];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (le32_to_cpu(info->ulGPUCapInfo) &
-		SYS_INFO_GPUCAPS__ENABEL_DFS_BYPASS) अणु
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				    PHM_Platक्रमmCaps_EnableDFSBypass);
-	पूर्ण
+	if (le32_to_cpu(info->ulGPUCapInfo) &
+		SYS_INFO_GPUCAPS__ENABEL_DFS_BYPASS) {
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				    PHM_PlatformCaps_EnableDFSBypass);
+	}
 
 	data->sys_info.uma_channel_number = info->ucUMAChannelNumber;
 
-	smu8_स्थिरruct_max_घातer_limits_table (hwmgr,
-				    &hwmgr->dyn_state.max_घड़ी_voltage_on_ac);
+	smu8_construct_max_power_limits_table (hwmgr,
+				    &hwmgr->dyn_state.max_clock_voltage_on_ac);
 
-	smu8_init_dynamic_state_adjusपंचांगent_rule_settings(hwmgr,
+	smu8_init_dynamic_state_adjustment_rule_settings(hwmgr,
 				    &info->sDISPCLK_Voltage[0]);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक smu8_स्थिरruct_boot_state(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_construct_boot_state(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	data->boot_घातer_level.engineClock =
-				data->sys_info.bootup_engine_घड़ी;
+	data->boot_power_level.engineClock =
+				data->sys_info.bootup_engine_clock;
 
-	data->boot_घातer_level.vddcIndex =
-			(uपूर्णांक8_t)data->sys_info.bootup_nb_voltage_index;
+	data->boot_power_level.vddcIndex =
+			(uint8_t)data->sys_info.bootup_nb_voltage_index;
 
-	data->boot_घातer_level.dsDividerIndex = 0;
-	data->boot_घातer_level.ssDividerIndex = 0;
-	data->boot_घातer_level.allowGnbSlow = 1;
-	data->boot_घातer_level.क्रमceNBPstate = 0;
-	data->boot_घातer_level.hysteresis_up = 0;
-	data->boot_घातer_level.numSIMDToPowerDown = 0;
-	data->boot_घातer_level.display_wm = 0;
-	data->boot_घातer_level.vce_wm = 0;
+	data->boot_power_level.dsDividerIndex = 0;
+	data->boot_power_level.ssDividerIndex = 0;
+	data->boot_power_level.allowGnbSlow = 1;
+	data->boot_power_level.forceNBPstate = 0;
+	data->boot_power_level.hysteresis_up = 0;
+	data->boot_power_level.numSIMDToPowerDown = 0;
+	data->boot_power_level.display_wm = 0;
+	data->boot_power_level.vce_wm = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_upload_pptable_to_smu(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा SMU8_Fusion_ClkTable *घड़ी_प्रकारable;
-	पूर्णांक ret;
-	uपूर्णांक32_t i;
-	व्योम *table = शून्य;
-	pp_atomctrl_घड़ी_भागiders_kong भागiders;
+static int smu8_upload_pptable_to_smu(struct pp_hwmgr *hwmgr)
+{
+	struct SMU8_Fusion_ClkTable *clock_table;
+	int ret;
+	uint32_t i;
+	void *table = NULL;
+	pp_atomctrl_clock_dividers_kong dividers;
 
-	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_table =
+	struct phm_clock_voltage_dependency_table *vddc_table =
 		hwmgr->dyn_state.vddc_dependency_on_sclk;
-	काष्ठा phm_घड़ी_voltage_dependency_table *vdd_gfx_table =
+	struct phm_clock_voltage_dependency_table *vdd_gfx_table =
 		hwmgr->dyn_state.vdd_gfx_dependency_on_sclk;
-	काष्ठा phm_acp_घड़ी_voltage_dependency_table *acp_table =
-		hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table;
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *uvd_table =
-		hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table;
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *vce_table =
-		hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table;
+	struct phm_acp_clock_voltage_dependency_table *acp_table =
+		hwmgr->dyn_state.acp_clock_voltage_dependency_table;
+	struct phm_uvd_clock_voltage_dependency_table *uvd_table =
+		hwmgr->dyn_state.uvd_clock_voltage_dependency_table;
+	struct phm_vce_clock_voltage_dependency_table *vce_table =
+		hwmgr->dyn_state.vce_clock_voltage_dependency_table;
 
-	अगर (!hwmgr->need_pp_table_upload)
-		वापस 0;
+	if (!hwmgr->need_pp_table_upload)
+		return 0;
 
-	ret = smum_करोwnload_घातerplay_table(hwmgr, &table);
+	ret = smum_download_powerplay_table(hwmgr, &table);
 
-	PP_ASSERT_WITH_CODE((0 == ret && शून्य != table),
-			    "Fail to get clock table from SMU!", वापस -EINVAL;);
+	PP_ASSERT_WITH_CODE((0 == ret && NULL != table),
+			    "Fail to get clock table from SMU!", return -EINVAL;);
 
-	घड़ी_प्रकारable = (काष्ठा SMU8_Fusion_ClkTable *)table;
+	clock_table = (struct SMU8_Fusion_ClkTable *)table;
 
-	/* patch घड़ी table */
+	/* patch clock table */
 	PP_ASSERT_WITH_CODE((vddc_table->count <= SMU8_MAX_HARDWARE_POWERLEVELS),
-			    "Dependency table entry exceeds max limit!", वापस -EINVAL;);
+			    "Dependency table entry exceeds max limit!", return -EINVAL;);
 	PP_ASSERT_WITH_CODE((vdd_gfx_table->count <= SMU8_MAX_HARDWARE_POWERLEVELS),
-			    "Dependency table entry exceeds max limit!", वापस -EINVAL;);
+			    "Dependency table entry exceeds max limit!", return -EINVAL;);
 	PP_ASSERT_WITH_CODE((acp_table->count <= SMU8_MAX_HARDWARE_POWERLEVELS),
-			    "Dependency table entry exceeds max limit!", वापस -EINVAL;);
+			    "Dependency table entry exceeds max limit!", return -EINVAL;);
 	PP_ASSERT_WITH_CODE((uvd_table->count <= SMU8_MAX_HARDWARE_POWERLEVELS),
-			    "Dependency table entry exceeds max limit!", वापस -EINVAL;);
+			    "Dependency table entry exceeds max limit!", return -EINVAL;);
 	PP_ASSERT_WITH_CODE((vce_table->count <= SMU8_MAX_HARDWARE_POWERLEVELS),
-			    "Dependency table entry exceeds max limit!", वापस -EINVAL;);
+			    "Dependency table entry exceeds max limit!", return -EINVAL;);
 
-	क्रम (i = 0; i < SMU8_MAX_HARDWARE_POWERLEVELS; i++) अणु
+	for (i = 0; i < SMU8_MAX_HARDWARE_POWERLEVELS; i++) {
 
 		/* vddc_sclk */
-		घड़ी_प्रकारable->SclkBreakकरोwnTable.ClkLevel[i].GnbVid =
-			(i < vddc_table->count) ? (uपूर्णांक8_t)vddc_table->entries[i].v : 0;
-		घड़ी_प्रकारable->SclkBreakकरोwnTable.ClkLevel[i].Frequency =
+		clock_table->SclkBreakdownTable.ClkLevel[i].GnbVid =
+			(i < vddc_table->count) ? (uint8_t)vddc_table->entries[i].v : 0;
+		clock_table->SclkBreakdownTable.ClkLevel[i].Frequency =
 			(i < vddc_table->count) ? vddc_table->entries[i].clk : 0;
 
-		atomctrl_get_engine_pll_भागiders_kong(hwmgr,
-						      घड़ी_प्रकारable->SclkBreakकरोwnTable.ClkLevel[i].Frequency,
-						      &भागiders);
+		atomctrl_get_engine_pll_dividers_kong(hwmgr,
+						      clock_table->SclkBreakdownTable.ClkLevel[i].Frequency,
+						      &dividers);
 
-		घड़ी_प्रकारable->SclkBreakकरोwnTable.ClkLevel[i].DfsDid =
-			(uपूर्णांक8_t)भागiders.pll_post_भागider;
+		clock_table->SclkBreakdownTable.ClkLevel[i].DfsDid =
+			(uint8_t)dividers.pll_post_divider;
 
 		/* vddgfx_sclk */
-		घड़ी_प्रकारable->SclkBreakकरोwnTable.ClkLevel[i].GfxVid =
-			(i < vdd_gfx_table->count) ? (uपूर्णांक8_t)vdd_gfx_table->entries[i].v : 0;
+		clock_table->SclkBreakdownTable.ClkLevel[i].GfxVid =
+			(i < vdd_gfx_table->count) ? (uint8_t)vdd_gfx_table->entries[i].v : 0;
 
-		/* acp अवरोधकरोwn */
-		घड़ी_प्रकारable->AclkBreakकरोwnTable.ClkLevel[i].GfxVid =
-			(i < acp_table->count) ? (uपूर्णांक8_t)acp_table->entries[i].v : 0;
-		घड़ी_प्रकारable->AclkBreakकरोwnTable.ClkLevel[i].Frequency =
+		/* acp breakdown */
+		clock_table->AclkBreakdownTable.ClkLevel[i].GfxVid =
+			(i < acp_table->count) ? (uint8_t)acp_table->entries[i].v : 0;
+		clock_table->AclkBreakdownTable.ClkLevel[i].Frequency =
 			(i < acp_table->count) ? acp_table->entries[i].acpclk : 0;
 
-		atomctrl_get_engine_pll_भागiders_kong(hwmgr,
-						      घड़ी_प्रकारable->AclkBreakकरोwnTable.ClkLevel[i].Frequency,
-						      &भागiders);
+		atomctrl_get_engine_pll_dividers_kong(hwmgr,
+						      clock_table->AclkBreakdownTable.ClkLevel[i].Frequency,
+						      &dividers);
 
-		घड़ी_प्रकारable->AclkBreakकरोwnTable.ClkLevel[i].DfsDid =
-			(uपूर्णांक8_t)भागiders.pll_post_भागider;
+		clock_table->AclkBreakdownTable.ClkLevel[i].DfsDid =
+			(uint8_t)dividers.pll_post_divider;
 
 
-		/* uvd अवरोधकरोwn */
-		घड़ी_प्रकारable->VclkBreakकरोwnTable.ClkLevel[i].GfxVid =
-			(i < uvd_table->count) ? (uपूर्णांक8_t)uvd_table->entries[i].v : 0;
-		घड़ी_प्रकारable->VclkBreakकरोwnTable.ClkLevel[i].Frequency =
+		/* uvd breakdown */
+		clock_table->VclkBreakdownTable.ClkLevel[i].GfxVid =
+			(i < uvd_table->count) ? (uint8_t)uvd_table->entries[i].v : 0;
+		clock_table->VclkBreakdownTable.ClkLevel[i].Frequency =
 			(i < uvd_table->count) ? uvd_table->entries[i].vclk : 0;
 
-		atomctrl_get_engine_pll_भागiders_kong(hwmgr,
-						      घड़ी_प्रकारable->VclkBreakकरोwnTable.ClkLevel[i].Frequency,
-						      &भागiders);
+		atomctrl_get_engine_pll_dividers_kong(hwmgr,
+						      clock_table->VclkBreakdownTable.ClkLevel[i].Frequency,
+						      &dividers);
 
-		घड़ी_प्रकारable->VclkBreakकरोwnTable.ClkLevel[i].DfsDid =
-			(uपूर्णांक8_t)भागiders.pll_post_भागider;
+		clock_table->VclkBreakdownTable.ClkLevel[i].DfsDid =
+			(uint8_t)dividers.pll_post_divider;
 
-		घड़ी_प्रकारable->DclkBreakकरोwnTable.ClkLevel[i].GfxVid =
-			(i < uvd_table->count) ? (uपूर्णांक8_t)uvd_table->entries[i].v : 0;
-		घड़ी_प्रकारable->DclkBreakकरोwnTable.ClkLevel[i].Frequency =
+		clock_table->DclkBreakdownTable.ClkLevel[i].GfxVid =
+			(i < uvd_table->count) ? (uint8_t)uvd_table->entries[i].v : 0;
+		clock_table->DclkBreakdownTable.ClkLevel[i].Frequency =
 			(i < uvd_table->count) ? uvd_table->entries[i].dclk : 0;
 
-		atomctrl_get_engine_pll_भागiders_kong(hwmgr,
-						      घड़ी_प्रकारable->DclkBreakकरोwnTable.ClkLevel[i].Frequency,
-						      &भागiders);
+		atomctrl_get_engine_pll_dividers_kong(hwmgr,
+						      clock_table->DclkBreakdownTable.ClkLevel[i].Frequency,
+						      &dividers);
 
-		घड़ी_प्रकारable->DclkBreakकरोwnTable.ClkLevel[i].DfsDid =
-			(uपूर्णांक8_t)भागiders.pll_post_भागider;
+		clock_table->DclkBreakdownTable.ClkLevel[i].DfsDid =
+			(uint8_t)dividers.pll_post_divider;
 
-		/* vce अवरोधकरोwn */
-		घड़ी_प्रकारable->EclkBreakकरोwnTable.ClkLevel[i].GfxVid =
-			(i < vce_table->count) ? (uपूर्णांक8_t)vce_table->entries[i].v : 0;
-		घड़ी_प्रकारable->EclkBreakकरोwnTable.ClkLevel[i].Frequency =
+		/* vce breakdown */
+		clock_table->EclkBreakdownTable.ClkLevel[i].GfxVid =
+			(i < vce_table->count) ? (uint8_t)vce_table->entries[i].v : 0;
+		clock_table->EclkBreakdownTable.ClkLevel[i].Frequency =
 			(i < vce_table->count) ? vce_table->entries[i].ecclk : 0;
 
 
-		atomctrl_get_engine_pll_भागiders_kong(hwmgr,
-						      घड़ी_प्रकारable->EclkBreakकरोwnTable.ClkLevel[i].Frequency,
-						      &भागiders);
+		atomctrl_get_engine_pll_dividers_kong(hwmgr,
+						      clock_table->EclkBreakdownTable.ClkLevel[i].Frequency,
+						      &dividers);
 
-		घड़ी_प्रकारable->EclkBreakकरोwnTable.ClkLevel[i].DfsDid =
-			(uपूर्णांक8_t)भागiders.pll_post_भागider;
+		clock_table->EclkBreakdownTable.ClkLevel[i].DfsDid =
+			(uint8_t)dividers.pll_post_divider;
 
-	पूर्ण
-	ret = smum_upload_घातerplay_table(hwmgr);
+	}
+	ret = smum_upload_powerplay_table(hwmgr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smu8_init_sclk_limit(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static int smu8_init_sclk_limit(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_clock_voltage_dependency_table *table =
 					hwmgr->dyn_state.vddc_dependency_on_sclk;
-	अचिन्हित दीर्घ घड़ी = 0, level;
+	unsigned long clock = 0, level;
 
-	अगर (शून्य == table || table->count <= 0)
-		वापस -EINVAL;
+	if (NULL == table || table->count <= 0)
+		return -EINVAL;
 
 	data->sclk_dpm.soft_min_clk = table->entries[0].clk;
 	data->sclk_dpm.hard_min_clk = table->entries[0].clk;
 
 	level = smu8_get_max_sclk_level(hwmgr) - 1;
 
-	अगर (level < table->count)
-		घड़ी = table->entries[level].clk;
-	अन्यथा
-		घड़ी = table->entries[table->count - 1].clk;
+	if (level < table->count)
+		clock = table->entries[level].clk;
+	else
+		clock = table->entries[table->count - 1].clk;
 
-	data->sclk_dpm.soft_max_clk = घड़ी;
-	data->sclk_dpm.hard_max_clk = घड़ी;
+	data->sclk_dpm.soft_max_clk = clock;
+	data->sclk_dpm.hard_max_clk = clock;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_init_uvd_limit(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *table =
-				hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table;
-	अचिन्हित दीर्घ घड़ी = 0;
-	uपूर्णांक32_t level;
+static int smu8_init_uvd_limit(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_uvd_clock_voltage_dependency_table *table =
+				hwmgr->dyn_state.uvd_clock_voltage_dependency_table;
+	unsigned long clock = 0;
+	uint32_t level;
 
-	अगर (शून्य == table || table->count <= 0)
-		वापस -EINVAL;
+	if (NULL == table || table->count <= 0)
+		return -EINVAL;
 
 	data->uvd_dpm.soft_min_clk = 0;
 	data->uvd_dpm.hard_min_clk = 0;
 
 	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_GetMaxUvdLevel, &level);
 
-	अगर (level < table->count)
-		घड़ी = table->entries[level].vclk;
-	अन्यथा
-		घड़ी = table->entries[table->count - 1].vclk;
+	if (level < table->count)
+		clock = table->entries[level].vclk;
+	else
+		clock = table->entries[table->count - 1].vclk;
 
-	data->uvd_dpm.soft_max_clk = घड़ी;
-	data->uvd_dpm.hard_max_clk = घड़ी;
+	data->uvd_dpm.soft_max_clk = clock;
+	data->uvd_dpm.hard_max_clk = clock;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_init_vce_limit(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *table =
-				hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table;
-	अचिन्हित दीर्घ घड़ी = 0;
-	uपूर्णांक32_t level;
+static int smu8_init_vce_limit(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_vce_clock_voltage_dependency_table *table =
+				hwmgr->dyn_state.vce_clock_voltage_dependency_table;
+	unsigned long clock = 0;
+	uint32_t level;
 
-	अगर (शून्य == table || table->count <= 0)
-		वापस -EINVAL;
+	if (NULL == table || table->count <= 0)
+		return -EINVAL;
 
 	data->vce_dpm.soft_min_clk = 0;
 	data->vce_dpm.hard_min_clk = 0;
 
 	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_GetMaxEclkLevel, &level);
 
-	अगर (level < table->count)
-		घड़ी = table->entries[level].ecclk;
-	अन्यथा
-		घड़ी = table->entries[table->count - 1].ecclk;
+	if (level < table->count)
+		clock = table->entries[level].ecclk;
+	else
+		clock = table->entries[table->count - 1].ecclk;
 
-	data->vce_dpm.soft_max_clk = घड़ी;
-	data->vce_dpm.hard_max_clk = घड़ी;
+	data->vce_dpm.soft_max_clk = clock;
+	data->vce_dpm.hard_max_clk = clock;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_init_acp_limit(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_acp_घड़ी_voltage_dependency_table *table =
-				hwmgr->dyn_state.acp_घड़ी_voltage_dependency_table;
-	अचिन्हित दीर्घ घड़ी = 0;
-	uपूर्णांक32_t level;
+static int smu8_init_acp_limit(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_acp_clock_voltage_dependency_table *table =
+				hwmgr->dyn_state.acp_clock_voltage_dependency_table;
+	unsigned long clock = 0;
+	uint32_t level;
 
-	अगर (शून्य == table || table->count <= 0)
-		वापस -EINVAL;
+	if (NULL == table || table->count <= 0)
+		return -EINVAL;
 
 	data->acp_dpm.soft_min_clk = 0;
 	data->acp_dpm.hard_min_clk = 0;
 
 	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_GetMaxAclkLevel, &level);
 
-	अगर (level < table->count)
-		घड़ी = table->entries[level].acpclk;
-	अन्यथा
-		घड़ी = table->entries[table->count - 1].acpclk;
+	if (level < table->count)
+		clock = table->entries[level].acpclk;
+	else
+		clock = table->entries[table->count - 1].acpclk;
 
-	data->acp_dpm.soft_max_clk = घड़ी;
-	data->acp_dpm.hard_max_clk = घड़ी;
-	वापस 0;
-पूर्ण
+	data->acp_dpm.soft_max_clk = clock;
+	data->acp_dpm.hard_max_clk = clock;
+	return 0;
+}
 
-अटल व्योम smu8_init_घातer_gate_state(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_init_power_gate_state(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	data->uvd_घातer_gated = false;
-	data->vce_घातer_gated = false;
-	data->samu_घातer_gated = false;
-#अगर_घोषित CONFIG_DRM_AMD_ACP
-	data->acp_घातer_gated = false;
-#अन्यथा
-	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerOFF, शून्य);
-	data->acp_घातer_gated = true;
-#पूर्ण_अगर
+	data->uvd_power_gated = false;
+	data->vce_power_gated = false;
+	data->samu_power_gated = false;
+#ifdef CONFIG_DRM_AMD_ACP
+	data->acp_power_gated = false;
+#else
+	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerOFF, NULL);
+	data->acp_power_gated = true;
+#endif
 
-पूर्ण
+}
 
-अटल व्योम smu8_init_sclk_threshold(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_init_sclk_threshold(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	data->low_sclk_पूर्णांकerrupt_threshold = 0;
-पूर्ण
+	data->low_sclk_interrupt_threshold = 0;
+}
 
-अटल पूर्णांक smu8_update_sclk_limit(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static int smu8_update_sclk_limit(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_clock_voltage_dependency_table *table =
 					hwmgr->dyn_state.vddc_dependency_on_sclk;
 
-	अचिन्हित दीर्घ घड़ी = 0;
-	अचिन्हित दीर्घ level;
-	अचिन्हित दीर्घ stable_pstate_sclk;
-	अचिन्हित दीर्घ percentage;
+	unsigned long clock = 0;
+	unsigned long level;
+	unsigned long stable_pstate_sclk;
+	unsigned long percentage;
 
 	data->sclk_dpm.soft_min_clk = table->entries[0].clk;
 	level = smu8_get_max_sclk_level(hwmgr) - 1;
 
-	अगर (level < table->count)
+	if (level < table->count)
 		data->sclk_dpm.soft_max_clk  = table->entries[level].clk;
-	अन्यथा
+	else
 		data->sclk_dpm.soft_max_clk  = table->entries[table->count - 1].clk;
 
-	घड़ी = hwmgr->display_config->min_core_set_घड़ी;
-	अगर (घड़ी == 0)
+	clock = hwmgr->display_config->min_core_set_clock;
+	if (clock == 0)
 		pr_debug("min_core_set_clock not set\n");
 
-	अगर (data->sclk_dpm.hard_min_clk != घड़ी) अणु
-		data->sclk_dpm.hard_min_clk = घड़ी;
+	if (data->sclk_dpm.hard_min_clk != clock) {
+		data->sclk_dpm.hard_min_clk = clock;
 
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_SetSclkHardMin,
 						 smu8_get_sclk_level(hwmgr,
 					data->sclk_dpm.hard_min_clk,
 					     PPSMC_MSG_SetSclkHardMin),
-						 शून्य);
-	पूर्ण
+						 NULL);
+	}
 
-	घड़ी = data->sclk_dpm.soft_min_clk;
+	clock = data->sclk_dpm.soft_min_clk;
 
-	/* update minimum घड़ीs क्रम Stable P-State feature */
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				     PHM_Platक्रमmCaps_StablePState)) अणु
+	/* update minimum clocks for Stable P-State feature */
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				     PHM_PlatformCaps_StablePState)) {
 		percentage = 75;
 		/*Sclk - calculate sclk value based on percentage and find FLOOR sclk from VddcDependencyOnSCLK table  */
-		stable_pstate_sclk = (hwmgr->dyn_state.max_घड़ी_voltage_on_ac.mclk *
+		stable_pstate_sclk = (hwmgr->dyn_state.max_clock_voltage_on_ac.mclk *
 					percentage) / 100;
 
-		अगर (घड़ी < stable_pstate_sclk)
-			घड़ी = stable_pstate_sclk;
-	पूर्ण
+		if (clock < stable_pstate_sclk)
+			clock = stable_pstate_sclk;
+	}
 
-	अगर (data->sclk_dpm.soft_min_clk != घड़ी) अणु
-		data->sclk_dpm.soft_min_clk = घड़ी;
+	if (data->sclk_dpm.soft_min_clk != clock) {
+		data->sclk_dpm.soft_min_clk = clock;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_SetSclkSoftMin,
 						smu8_get_sclk_level(hwmgr,
 					data->sclk_dpm.soft_min_clk,
 					     PPSMC_MSG_SetSclkSoftMin),
-						शून्य);
-	पूर्ण
+						NULL);
+	}
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				    PHM_Platक्रमmCaps_StablePState) &&
-			 data->sclk_dpm.soft_max_clk != घड़ी) अणु
-		data->sclk_dpm.soft_max_clk = घड़ी;
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				    PHM_PlatformCaps_StablePState) &&
+			 data->sclk_dpm.soft_max_clk != clock) {
+		data->sclk_dpm.soft_max_clk = clock;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_SetSclkSoftMax,
 						smu8_get_sclk_level(hwmgr,
 					data->sclk_dpm.soft_max_clk,
 					PPSMC_MSG_SetSclkSoftMax),
-						शून्य);
-	पूर्ण
+						NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_set_deep_sleep_sclk_threshold(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_SclkDeepSleep)) अणु
-		uपूर्णांक32_t clks = hwmgr->display_config->min_core_set_घड़ी_in_sr;
-		अगर (clks == 0)
+static int smu8_set_deep_sleep_sclk_threshold(struct pp_hwmgr *hwmgr)
+{
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_SclkDeepSleep)) {
+		uint32_t clks = hwmgr->display_config->min_core_set_clock_in_sr;
+		if (clks == 0)
 			clks = SMU8_MIN_DEEP_SLEEP_SCLK;
 
 		PP_DBG_LOG("Setting Deep Sleep Clock: %d\n", clks);
@@ -767,404 +766,404 @@
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetMinDeepSleepSclk,
 				clks,
-				शून्य);
-	पूर्ण
+				NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_set_watermark_threshold(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data =
+static int smu8_set_watermark_threshold(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data =
 				  hwmgr->backend;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_SetWatermarkFrequency,
 					data->sclk_dpm.soft_max_clk,
-					शून्य);
+					NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_nbdpm_pstate_enable_disable(काष्ठा pp_hwmgr *hwmgr, bool enable, bool lock)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
+static int smu8_nbdpm_pstate_enable_disable(struct pp_hwmgr *hwmgr, bool enable, bool lock)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
 
-	अगर (hw_data->is_nb_dpm_enabled) अणु
-		अगर (enable) अणु
+	if (hw_data->is_nb_dpm_enabled) {
+		if (enable) {
 			PP_DBG_LOG("enable Low Memory PState.\n");
 
-			वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+			return smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_EnableLowMemoryPstate,
 						(lock ? 1 : 0),
-						शून्य);
-		पूर्ण अन्यथा अणु
+						NULL);
+		} else {
 			PP_DBG_LOG("disable Low Memory PState.\n");
 
-			वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+			return smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_DisableLowMemoryPstate,
 						(lock ? 1 : 0),
-						शून्य);
-		पूर्ण
-	पूर्ण
+						NULL);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_disable_nb_dpm(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
+static int smu8_disable_nb_dpm(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
 
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	अचिन्हित दीर्घ dpm_features = 0;
+	struct smu8_hwmgr *data = hwmgr->backend;
+	unsigned long dpm_features = 0;
 
-	अगर (data->is_nb_dpm_enabled) अणु
+	if (data->is_nb_dpm_enabled) {
 		smu8_nbdpm_pstate_enable_disable(hwmgr, true, true);
 		dpm_features |= NB_DPM_MASK;
 		ret = smum_send_msg_to_smc_with_parameter(
 							  hwmgr,
 							  PPSMC_MSG_DisableAllSmuFeatures,
 							  dpm_features,
-							  शून्य);
-		अगर (ret == 0)
+							  NULL);
+		if (ret == 0)
 			data->is_nb_dpm_enabled = false;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smu8_enable_nb_dpm(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
+static int smu8_enable_nb_dpm(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
 
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	अचिन्हित दीर्घ dpm_features = 0;
+	struct smu8_hwmgr *data = hwmgr->backend;
+	unsigned long dpm_features = 0;
 
-	अगर (!data->is_nb_dpm_enabled) अणु
+	if (!data->is_nb_dpm_enabled) {
 		PP_DBG_LOG("enabling ALL SMU features.\n");
 		dpm_features |= NB_DPM_MASK;
 		ret = smum_send_msg_to_smc_with_parameter(
 							  hwmgr,
 							  PPSMC_MSG_EnableAllSmuFeatures,
 							  dpm_features,
-							  शून्य);
-		अगर (ret == 0)
+							  NULL);
+		if (ret == 0)
 			data->is_nb_dpm_enabled = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smu8_update_low_mem_pstate(काष्ठा pp_hwmgr *hwmgr, स्थिर व्योम *input)
-अणु
-	bool disable_चयन;
+static int smu8_update_low_mem_pstate(struct pp_hwmgr *hwmgr, const void *input)
+{
+	bool disable_switch;
 	bool enable_low_mem_state;
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
-	स्थिर काष्ठा phm_set_घातer_state_input *states = (काष्ठा phm_set_घातer_state_input *)input;
-	स्थिर काष्ठा smu8_घातer_state *pnew_state = cast_स्थिर_smu8_घातer_state(states->pnew_state);
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
+	const struct phm_set_power_state_input *states = (struct phm_set_power_state_input *)input;
+	const struct smu8_power_state *pnew_state = cast_const_smu8_power_state(states->pnew_state);
 
-	अगर (hw_data->sys_info.nb_dpm_enable) अणु
-		disable_चयन = hw_data->cc6_settings.nb_pstate_चयन_disable ? true : false;
-		enable_low_mem_state = hw_data->cc6_settings.nb_pstate_चयन_disable ? false : true;
+	if (hw_data->sys_info.nb_dpm_enable) {
+		disable_switch = hw_data->cc6_settings.nb_pstate_switch_disable ? true : false;
+		enable_low_mem_state = hw_data->cc6_settings.nb_pstate_switch_disable ? false : true;
 
-		अगर (pnew_state->action == FORCE_HIGH)
-			smu8_nbdpm_pstate_enable_disable(hwmgr, false, disable_चयन);
-		अन्यथा अगर (pnew_state->action == CANCEL_FORCE_HIGH)
-			smu8_nbdpm_pstate_enable_disable(hwmgr, true, disable_चयन);
-		अन्यथा
-			smu8_nbdpm_pstate_enable_disable(hwmgr, enable_low_mem_state, disable_चयन);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (pnew_state->action == FORCE_HIGH)
+			smu8_nbdpm_pstate_enable_disable(hwmgr, false, disable_switch);
+		else if (pnew_state->action == CANCEL_FORCE_HIGH)
+			smu8_nbdpm_pstate_enable_disable(hwmgr, true, disable_switch);
+		else
+			smu8_nbdpm_pstate_enable_disable(hwmgr, enable_low_mem_state, disable_switch);
+	}
+	return 0;
+}
 
-अटल पूर्णांक smu8_set_घातer_state_tasks(काष्ठा pp_hwmgr *hwmgr, स्थिर व्योम *input)
-अणु
-	पूर्णांक ret = 0;
+static int smu8_set_power_state_tasks(struct pp_hwmgr *hwmgr, const void *input)
+{
+	int ret = 0;
 
 	smu8_update_sclk_limit(hwmgr);
 	smu8_set_deep_sleep_sclk_threshold(hwmgr);
 	smu8_set_watermark_threshold(hwmgr);
 	ret = smu8_enable_nb_dpm(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	smu8_update_low_mem_pstate(hwmgr, input);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक smu8_setup_asic_task(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret;
+static int smu8_setup_asic_task(struct pp_hwmgr *hwmgr)
+{
+	int ret;
 
 	ret = smu8_upload_pptable_to_smu(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = smu8_init_sclk_limit(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = smu8_init_uvd_limit(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = smu8_init_vce_limit(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = smu8_init_acp_limit(hwmgr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	smu8_init_घातer_gate_state(hwmgr);
+	smu8_init_power_gate_state(hwmgr);
 	smu8_init_sclk_threshold(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smu8_घातer_up_display_घड़ी_sys_pll(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
+static void smu8_power_up_display_clock_sys_pll(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
 
 	hw_data->disp_clk_bypass_pending = false;
 	hw_data->disp_clk_bypass = false;
-पूर्ण
+}
 
-अटल व्योम smu8_clear_nb_dpm_flag(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
+static void smu8_clear_nb_dpm_flag(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
 
 	hw_data->is_nb_dpm_enabled = false;
-पूर्ण
+}
 
-अटल व्योम smu8_reset_cc6_data(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
+static void smu8_reset_cc6_data(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
 
 	hw_data->cc6_settings.cc6_setting_changed = false;
-	hw_data->cc6_settings.cpu_pstate_separation_समय = 0;
+	hw_data->cc6_settings.cpu_pstate_separation_time = 0;
 	hw_data->cc6_settings.cpu_cc6_disable = false;
 	hw_data->cc6_settings.cpu_pstate_disable = false;
-पूर्ण
+}
 
-अटल व्योम smu8_program_voting_clients(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	cgs_ग_लिखो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC,
+static void smu8_program_voting_clients(struct pp_hwmgr *hwmgr)
+{
+	cgs_write_ind_register(hwmgr->device, CGS_IND_REG__SMC,
 				ixCG_FREQ_TRAN_VOTING_0,
 				SMU8_VOTINGRIGHTSCLIENTS_DFLT0);
-पूर्ण
+}
 
-अटल व्योम smu8_clear_voting_clients(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	cgs_ग_लिखो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC,
+static void smu8_clear_voting_clients(struct pp_hwmgr *hwmgr)
+{
+	cgs_write_ind_register(hwmgr->device, CGS_IND_REG__SMC,
 				ixCG_FREQ_TRAN_VOTING_0, 0);
-पूर्ण
+}
 
-अटल पूर्णांक smu8_start_dpm(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_start_dpm(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
 	data->dpm_flags |= DPMFlags_SCLK_Enabled;
 
-	वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+	return smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_EnableAllSmuFeatures,
 				SCLK_DPM_MASK,
-				शून्य);
-पूर्ण
+				NULL);
+}
 
-अटल पूर्णांक smu8_stop_dpm(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	अचिन्हित दीर्घ dpm_features = 0;
+static int smu8_stop_dpm(struct pp_hwmgr *hwmgr)
+{
+	int ret = 0;
+	struct smu8_hwmgr *data = hwmgr->backend;
+	unsigned long dpm_features = 0;
 
-	अगर (data->dpm_flags & DPMFlags_SCLK_Enabled) अणु
+	if (data->dpm_flags & DPMFlags_SCLK_Enabled) {
 		dpm_features |= SCLK_DPM_MASK;
 		data->dpm_flags &= ~DPMFlags_SCLK_Enabled;
 		ret = smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DisableAllSmuFeatures,
 					dpm_features,
-					शून्य);
-	पूर्ण
-	वापस ret;
-पूर्ण
+					NULL);
+	}
+	return ret;
+}
 
-अटल पूर्णांक smu8_program_bootup_state(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_program_bootup_state(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	data->sclk_dpm.soft_min_clk = data->sys_info.bootup_engine_घड़ी;
-	data->sclk_dpm.soft_max_clk = data->sys_info.bootup_engine_घड़ी;
+	data->sclk_dpm.soft_min_clk = data->sys_info.bootup_engine_clock;
+	data->sclk_dpm.soft_max_clk = data->sys_info.bootup_engine_clock;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMin,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_min_clk,
 				PPSMC_MSG_SetSclkSoftMin),
-				शून्य);
+				NULL);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMax,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_max_clk,
 				PPSMC_MSG_SetSclkSoftMax),
-				शून्य);
+				NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम smu8_reset_acp_boot_level(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_reset_acp_boot_level(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
 	data->acp_boot_level = 0xff;
-पूर्ण
+}
 
-अटल पूर्णांक smu8_enable_dpm_tasks(काष्ठा pp_hwmgr *hwmgr)
-अणु
+static int smu8_enable_dpm_tasks(struct pp_hwmgr *hwmgr)
+{
 	smu8_program_voting_clients(hwmgr);
-	अगर (smu8_start_dpm(hwmgr))
-		वापस -EINVAL;
+	if (smu8_start_dpm(hwmgr))
+		return -EINVAL;
 	smu8_program_bootup_state(hwmgr);
 	smu8_reset_acp_boot_level(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_disable_dpm_tasks(काष्ठा pp_hwmgr *hwmgr)
-अणु
+static int smu8_disable_dpm_tasks(struct pp_hwmgr *hwmgr)
+{
 	smu8_disable_nb_dpm(hwmgr);
 
 	smu8_clear_voting_clients(hwmgr);
-	अगर (smu8_stop_dpm(hwmgr))
-		वापस -EINVAL;
+	if (smu8_stop_dpm(hwmgr))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_घातer_off_asic(काष्ठा pp_hwmgr *hwmgr)
-अणु
+static int smu8_power_off_asic(struct pp_hwmgr *hwmgr)
+{
 	smu8_disable_dpm_tasks(hwmgr);
-	smu8_घातer_up_display_घड़ी_sys_pll(hwmgr);
+	smu8_power_up_display_clock_sys_pll(hwmgr);
 	smu8_clear_nb_dpm_flag(hwmgr);
 	smu8_reset_cc6_data(hwmgr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_apply_state_adjust_rules(काष्ठा pp_hwmgr *hwmgr,
-				काष्ठा pp_घातer_state  *prequest_ps,
-			स्थिर काष्ठा pp_घातer_state *pcurrent_ps)
-अणु
-	काष्ठा smu8_घातer_state *smu8_ps =
-				cast_smu8_घातer_state(&prequest_ps->hardware);
+static int smu8_apply_state_adjust_rules(struct pp_hwmgr *hwmgr,
+				struct pp_power_state  *prequest_ps,
+			const struct pp_power_state *pcurrent_ps)
+{
+	struct smu8_power_state *smu8_ps =
+				cast_smu8_power_state(&prequest_ps->hardware);
 
-	स्थिर काष्ठा smu8_घातer_state *smu8_current_ps =
-				cast_स्थिर_smu8_घातer_state(&pcurrent_ps->hardware);
+	const struct smu8_power_state *smu8_current_ps =
+				cast_const_smu8_power_state(&pcurrent_ps->hardware);
 
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा PP_Clocks घड़ीs = अणु0, 0, 0, 0पूर्ण;
-	bool क्रमce_high;
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct PP_Clocks clocks = {0, 0, 0, 0};
+	bool force_high;
 
 	smu8_ps->need_dfs_bypass = true;
 
-	data->battery_state = (PP_StateUILabel_Battery == prequest_ps->classअगरication.ui_label);
+	data->battery_state = (PP_StateUILabel_Battery == prequest_ps->classification.ui_label);
 
-	घड़ीs.memoryClock = hwmgr->display_config->min_mem_set_घड़ी != 0 ?
-				hwmgr->display_config->min_mem_set_घड़ी :
-				data->sys_info.nbp_memory_घड़ी[1];
+	clocks.memoryClock = hwmgr->display_config->min_mem_set_clock != 0 ?
+				hwmgr->display_config->min_mem_set_clock :
+				data->sys_info.nbp_memory_clock[1];
 
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_StablePState))
-		घड़ीs.memoryClock = hwmgr->dyn_state.max_घड़ी_voltage_on_ac.mclk;
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_StablePState))
+		clocks.memoryClock = hwmgr->dyn_state.max_clock_voltage_on_ac.mclk;
 
-	क्रमce_high = (घड़ीs.memoryClock > data->sys_info.nbp_memory_घड़ी[SMU8_NUM_NBPMEMORYCLOCK - 1])
+	force_high = (clocks.memoryClock > data->sys_info.nbp_memory_clock[SMU8_NUM_NBPMEMORYCLOCK - 1])
 			|| (hwmgr->display_config->num_display >= 3);
 
 	smu8_ps->action = smu8_current_ps->action;
 
-	अगर (hwmgr->request_dpm_level == AMD_DPM_FORCED_LEVEL_PROखाता_PEAK)
+	if (hwmgr->request_dpm_level == AMD_DPM_FORCED_LEVEL_PROFILE_PEAK)
 		smu8_nbdpm_pstate_enable_disable(hwmgr, false, false);
-	अन्यथा अगर (hwmgr->request_dpm_level == AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD)
+	else if (hwmgr->request_dpm_level == AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD)
 		smu8_nbdpm_pstate_enable_disable(hwmgr, false, true);
-	अन्यथा अगर (!क्रमce_high && (smu8_ps->action == FORCE_HIGH))
+	else if (!force_high && (smu8_ps->action == FORCE_HIGH))
 		smu8_ps->action = CANCEL_FORCE_HIGH;
-	अन्यथा अगर (क्रमce_high && (smu8_ps->action != FORCE_HIGH))
+	else if (force_high && (smu8_ps->action != FORCE_HIGH))
 		smu8_ps->action = FORCE_HIGH;
-	अन्यथा
+	else
 		smu8_ps->action = DO_NOTHING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_hwmgr_backend_init(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा smu8_hwmgr *data;
+static int smu8_hwmgr_backend_init(struct pp_hwmgr *hwmgr)
+{
+	int result = 0;
+	struct smu8_hwmgr *data;
 
-	data = kzalloc(माप(काष्ठा smu8_hwmgr), GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस -ENOMEM;
+	data = kzalloc(sizeof(struct smu8_hwmgr), GFP_KERNEL);
+	if (data == NULL)
+		return -ENOMEM;
 
 	hwmgr->backend = data;
 
-	result = smu8_initialize_dpm_शेषs(hwmgr);
-	अगर (result != 0) अणु
+	result = smu8_initialize_dpm_defaults(hwmgr);
+	if (result != 0) {
 		pr_err("smu8_initialize_dpm_defaults failed\n");
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	result = smu8_get_प्रणाली_info_data(hwmgr);
-	अगर (result != 0) अणु
+	result = smu8_get_system_info_data(hwmgr);
+	if (result != 0) {
 		pr_err("smu8_get_system_info_data failed\n");
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	smu8_स्थिरruct_boot_state(hwmgr);
+	smu8_construct_boot_state(hwmgr);
 
-	hwmgr->platक्रमm_descriptor.hardwareActivityPerक्रमmanceLevels =  SMU8_MAX_HARDWARE_POWERLEVELS;
+	hwmgr->platform_descriptor.hardwareActivityPerformanceLevels =  SMU8_MAX_HARDWARE_POWERLEVELS;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक smu8_hwmgr_backend_fini(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (hwmgr != शून्य) अणु
-		kमुक्त(hwmgr->dyn_state.vddc_dep_on_dal_pwrl);
-		hwmgr->dyn_state.vddc_dep_on_dal_pwrl = शून्य;
+static int smu8_hwmgr_backend_fini(struct pp_hwmgr *hwmgr)
+{
+	if (hwmgr != NULL) {
+		kfree(hwmgr->dyn_state.vddc_dep_on_dal_pwrl);
+		hwmgr->dyn_state.vddc_dep_on_dal_pwrl = NULL;
 
-		kमुक्त(hwmgr->backend);
-		hwmgr->backend = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfree(hwmgr->backend);
+		hwmgr->backend = NULL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक smu8_phm_क्रमce_dpm_highest(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_phm_force_dpm_highest(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_SetSclkSoftMin,
 					smu8_get_sclk_level(hwmgr,
 					data->sclk_dpm.soft_max_clk,
 					PPSMC_MSG_SetSclkSoftMin),
-					शून्य);
+					NULL);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMax,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_max_clk,
 				PPSMC_MSG_SetSclkSoftMax),
-				शून्य);
+				NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_phm_unक्रमce_dpm_levels(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static int smu8_phm_unforce_dpm_levels(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_clock_voltage_dependency_table *table =
 				hwmgr->dyn_state.vddc_dependency_on_sclk;
-	अचिन्हित दीर्घ घड़ी = 0, level;
+	unsigned long clock = 0, level;
 
-	अगर (शून्य == table || table->count <= 0)
-		वापस -EINVAL;
+	if (NULL == table || table->count <= 0)
+		return -EINVAL;
 
 	data->sclk_dpm.soft_min_clk = table->entries[0].clk;
 	data->sclk_dpm.hard_min_clk = table->entries[0].clk;
@@ -1173,108 +1172,108 @@
 
 	level = smu8_get_max_sclk_level(hwmgr) - 1;
 
-	अगर (level < table->count)
-		घड़ी = table->entries[level].clk;
-	अन्यथा
-		घड़ी = table->entries[table->count - 1].clk;
+	if (level < table->count)
+		clock = table->entries[level].clk;
+	else
+		clock = table->entries[table->count - 1].clk;
 
-	data->sclk_dpm.soft_max_clk = घड़ी;
-	data->sclk_dpm.hard_max_clk = घड़ी;
+	data->sclk_dpm.soft_max_clk = clock;
+	data->sclk_dpm.hard_max_clk = clock;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMin,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_min_clk,
 				PPSMC_MSG_SetSclkSoftMin),
-				शून्य);
+				NULL);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMax,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_max_clk,
 				PPSMC_MSG_SetSclkSoftMax),
-				शून्य);
+				NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_phm_क्रमce_dpm_lowest(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_phm_force_dpm_lowest(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetSclkSoftMax,
 			smu8_get_sclk_level(hwmgr,
 			data->sclk_dpm.soft_min_clk,
 			PPSMC_MSG_SetSclkSoftMax),
-			शून्य);
+			NULL);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMin,
 				smu8_get_sclk_level(hwmgr,
 				data->sclk_dpm.soft_min_clk,
 				PPSMC_MSG_SetSclkSoftMin),
-				शून्य);
+				NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_क्रमce_dpm_level(काष्ठा pp_hwmgr *hwmgr,
-				क्रमागत amd_dpm_क्रमced_level level)
-अणु
-	पूर्णांक ret = 0;
+static int smu8_dpm_force_dpm_level(struct pp_hwmgr *hwmgr,
+				enum amd_dpm_forced_level level)
+{
+	int ret = 0;
 
-	चयन (level) अणु
-	हाल AMD_DPM_FORCED_LEVEL_HIGH:
-	हाल AMD_DPM_FORCED_LEVEL_PROखाता_PEAK:
-		ret = smu8_phm_क्रमce_dpm_highest(hwmgr);
-		अवरोध;
-	हाल AMD_DPM_FORCED_LEVEL_LOW:
-	हाल AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK:
-	हाल AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD:
-		ret = smu8_phm_क्रमce_dpm_lowest(hwmgr);
-		अवरोध;
-	हाल AMD_DPM_FORCED_LEVEL_AUTO:
-		ret = smu8_phm_unक्रमce_dpm_levels(hwmgr);
-		अवरोध;
-	हाल AMD_DPM_FORCED_LEVEL_MANUAL:
-	हाल AMD_DPM_FORCED_LEVEL_PROखाता_EXIT:
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (level) {
+	case AMD_DPM_FORCED_LEVEL_HIGH:
+	case AMD_DPM_FORCED_LEVEL_PROFILE_PEAK:
+		ret = smu8_phm_force_dpm_highest(hwmgr);
+		break;
+	case AMD_DPM_FORCED_LEVEL_LOW:
+	case AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK:
+	case AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD:
+		ret = smu8_phm_force_dpm_lowest(hwmgr);
+		break;
+	case AMD_DPM_FORCED_LEVEL_AUTO:
+		ret = smu8_phm_unforce_dpm_levels(hwmgr);
+		break;
+	case AMD_DPM_FORCED_LEVEL_MANUAL:
+	case AMD_DPM_FORCED_LEVEL_PROFILE_EXIT:
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक smu8_dpm_घातerकरोwn_uvd(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (PP_CAP(PHM_Platक्रमmCaps_UVDPowerGating))
-		वापस smum_send_msg_to_smc(hwmgr, PPSMC_MSG_UVDPowerOFF, शून्य);
-	वापस 0;
-पूर्ण
+static int smu8_dpm_powerdown_uvd(struct pp_hwmgr *hwmgr)
+{
+	if (PP_CAP(PHM_PlatformCaps_UVDPowerGating))
+		return smum_send_msg_to_smc(hwmgr, PPSMC_MSG_UVDPowerOFF, NULL);
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_घातerup_uvd(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (PP_CAP(PHM_Platक्रमmCaps_UVDPowerGating)) अणु
-		वापस smum_send_msg_to_smc_with_parameter(
+static int smu8_dpm_powerup_uvd(struct pp_hwmgr *hwmgr)
+{
+	if (PP_CAP(PHM_PlatformCaps_UVDPowerGating)) {
+		return smum_send_msg_to_smc_with_parameter(
 			hwmgr,
 			PPSMC_MSG_UVDPowerON,
-			PP_CAP(PHM_Platक्रमmCaps_UVDDynamicPowerGating) ? 1 : 0,
-			शून्य);
-	पूर्ण
+			PP_CAP(PHM_PlatformCaps_UVDDynamicPowerGating) ? 1 : 0,
+			NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक  smu8_dpm_update_vce_dpm(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *ptable =
-		hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table;
+static int  smu8_dpm_update_vce_dpm(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_vce_clock_voltage_dependency_table *ptable =
+		hwmgr->dyn_state.vce_clock_voltage_dependency_table;
 
 	/* Stable Pstate is enabled and we need to set the VCE DPM to highest level */
-	अगर (PP_CAP(PHM_Platक्रमmCaps_StablePState) ||
-	    hwmgr->en_umd_pstate) अणु
+	if (PP_CAP(PHM_PlatformCaps_StablePState) ||
+	    hwmgr->en_umd_pstate) {
 		data->vce_dpm.hard_min_clk =
 				  ptable->entries[ptable->count - 1].ecclk;
 
@@ -1283,150 +1282,150 @@
 			smu8_get_eclk_level(hwmgr,
 				data->vce_dpm.hard_min_clk,
 				PPSMC_MSG_SetEclkHardMin),
-			शून्य);
-	पूर्ण अन्यथा अणु
+			NULL);
+	} else {
 
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_SetEclkHardMin,
 					0,
-					शून्य);
-		/* disable ECLK DPM 0. Otherwise VCE could hang अगर
-		 * चयनing SCLK from DPM 0 to 6/7 */
+					NULL);
+		/* disable ECLK DPM 0. Otherwise VCE could hang if
+		 * switching SCLK from DPM 0 to 6/7 */
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_SetEclkSoftMin,
 					1,
-					शून्य);
-	पूर्ण
-	वापस 0;
-पूर्ण
+					NULL);
+	}
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_घातerकरोwn_vce(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (PP_CAP(PHM_Platक्रमmCaps_VCEPowerGating))
-		वापस smum_send_msg_to_smc(hwmgr,
+static int smu8_dpm_powerdown_vce(struct pp_hwmgr *hwmgr)
+{
+	if (PP_CAP(PHM_PlatformCaps_VCEPowerGating))
+		return smum_send_msg_to_smc(hwmgr,
 					    PPSMC_MSG_VCEPowerOFF,
-					    शून्य);
-	वापस 0;
-पूर्ण
+					    NULL);
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_घातerup_vce(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (PP_CAP(PHM_Platक्रमmCaps_VCEPowerGating))
-		वापस smum_send_msg_to_smc(hwmgr,
+static int smu8_dpm_powerup_vce(struct pp_hwmgr *hwmgr)
+{
+	if (PP_CAP(PHM_PlatformCaps_VCEPowerGating))
+		return smum_send_msg_to_smc(hwmgr,
 					    PPSMC_MSG_VCEPowerON,
-					    शून्य);
-	वापस 0;
-पूर्ण
+					    NULL);
+	return 0;
+}
 
-अटल uपूर्णांक32_t smu8_dpm_get_mclk(काष्ठा pp_hwmgr *hwmgr, bool low)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static uint32_t smu8_dpm_get_mclk(struct pp_hwmgr *hwmgr, bool low)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	वापस data->sys_info.bootup_uma_घड़ी;
-पूर्ण
+	return data->sys_info.bootup_uma_clock;
+}
 
-अटल uपूर्णांक32_t smu8_dpm_get_sclk(काष्ठा pp_hwmgr *hwmgr, bool low)
-अणु
-	काष्ठा pp_घातer_state  *ps;
-	काष्ठा smu8_घातer_state  *smu8_ps;
+static uint32_t smu8_dpm_get_sclk(struct pp_hwmgr *hwmgr, bool low)
+{
+	struct pp_power_state  *ps;
+	struct smu8_power_state  *smu8_ps;
 
-	अगर (hwmgr == शून्य)
-		वापस -EINVAL;
+	if (hwmgr == NULL)
+		return -EINVAL;
 
 	ps = hwmgr->request_ps;
 
-	अगर (ps == शून्य)
-		वापस -EINVAL;
+	if (ps == NULL)
+		return -EINVAL;
 
-	smu8_ps = cast_smu8_घातer_state(&ps->hardware);
+	smu8_ps = cast_smu8_power_state(&ps->hardware);
 
-	अगर (low)
-		वापस smu8_ps->levels[0].engineClock;
-	अन्यथा
-		वापस smu8_ps->levels[smu8_ps->level-1].engineClock;
-पूर्ण
+	if (low)
+		return smu8_ps->levels[0].engineClock;
+	else
+		return smu8_ps->levels[smu8_ps->level-1].engineClock;
+}
 
-अटल पूर्णांक smu8_dpm_patch_boot_state(काष्ठा pp_hwmgr *hwmgr,
-					काष्ठा pp_hw_घातer_state *hw_ps)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा smu8_घातer_state *smu8_ps = cast_smu8_घातer_state(hw_ps);
+static int smu8_dpm_patch_boot_state(struct pp_hwmgr *hwmgr,
+					struct pp_hw_power_state *hw_ps)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct smu8_power_state *smu8_ps = cast_smu8_power_state(hw_ps);
 
 	smu8_ps->level = 1;
 	smu8_ps->nbps_flags = 0;
 	smu8_ps->bapm_flags = 0;
-	smu8_ps->levels[0] = data->boot_घातer_level;
+	smu8_ps->levels[0] = data->boot_power_level;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_get_pp_table_entry_callback(
-						     काष्ठा pp_hwmgr *hwmgr,
-					   काष्ठा pp_hw_घातer_state *hw_ps,
-							  अचिन्हित पूर्णांक index,
-						     स्थिर व्योम *घड़ी_info)
-अणु
-	काष्ठा smu8_घातer_state *smu8_ps = cast_smu8_घातer_state(hw_ps);
+static int smu8_dpm_get_pp_table_entry_callback(
+						     struct pp_hwmgr *hwmgr,
+					   struct pp_hw_power_state *hw_ps,
+							  unsigned int index,
+						     const void *clock_info)
+{
+	struct smu8_power_state *smu8_ps = cast_smu8_power_state(hw_ps);
 
-	स्थिर ATOM_PPLIB_CZ_CLOCK_INFO *smu8_घड़ी_info = घड़ी_info;
+	const ATOM_PPLIB_CZ_CLOCK_INFO *smu8_clock_info = clock_info;
 
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+	struct phm_clock_voltage_dependency_table *table =
 				    hwmgr->dyn_state.vddc_dependency_on_sclk;
-	uपूर्णांक8_t घड़ी_info_index = smu8_घड़ी_info->index;
+	uint8_t clock_info_index = smu8_clock_info->index;
 
-	अगर (घड़ी_info_index > (uपूर्णांक8_t)(hwmgr->platक्रमm_descriptor.hardwareActivityPerक्रमmanceLevels - 1))
-		घड़ी_info_index = (uपूर्णांक8_t)(hwmgr->platक्रमm_descriptor.hardwareActivityPerक्रमmanceLevels - 1);
+	if (clock_info_index > (uint8_t)(hwmgr->platform_descriptor.hardwareActivityPerformanceLevels - 1))
+		clock_info_index = (uint8_t)(hwmgr->platform_descriptor.hardwareActivityPerformanceLevels - 1);
 
-	smu8_ps->levels[index].engineClock = table->entries[घड़ी_info_index].clk;
-	smu8_ps->levels[index].vddcIndex = (uपूर्णांक8_t)table->entries[घड़ी_info_index].v;
+	smu8_ps->levels[index].engineClock = table->entries[clock_info_index].clk;
+	smu8_ps->levels[index].vddcIndex = (uint8_t)table->entries[clock_info_index].v;
 
 	smu8_ps->level = index + 1;
 
-	अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_SclkDeepSleep)) अणु
+	if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_SclkDeepSleep)) {
 		smu8_ps->levels[index].dsDividerIndex = 5;
 		smu8_ps->levels[index].ssDividerIndex = 5;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_get_num_of_pp_table_entries(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ ret = 0;
+static int smu8_dpm_get_num_of_pp_table_entries(struct pp_hwmgr *hwmgr)
+{
+	int result;
+	unsigned long ret = 0;
 
 	result = pp_tables_get_num_of_entries(hwmgr, &ret);
 
-	वापस result ? 0 : ret;
-पूर्ण
+	return result ? 0 : ret;
+}
 
-अटल पूर्णांक smu8_dpm_get_pp_table_entry(काष्ठा pp_hwmgr *hwmgr,
-		    अचिन्हित दीर्घ entry, काष्ठा pp_घातer_state *ps)
-अणु
-	पूर्णांक result;
-	काष्ठा smu8_घातer_state *smu8_ps;
+static int smu8_dpm_get_pp_table_entry(struct pp_hwmgr *hwmgr,
+		    unsigned long entry, struct pp_power_state *ps)
+{
+	int result;
+	struct smu8_power_state *smu8_ps;
 
 	ps->hardware.magic = smu8_magic;
 
-	smu8_ps = cast_smu8_घातer_state(&(ps->hardware));
+	smu8_ps = cast_smu8_power_state(&(ps->hardware));
 
 	result = pp_tables_get_entry(hwmgr, entry, ps,
 			smu8_dpm_get_pp_table_entry_callback);
 
-	smu8_ps->uvd_घड़ीs.vclk = ps->uvd_घड़ीs.VCLK;
-	smu8_ps->uvd_घड़ीs.dclk = ps->uvd_घड़ीs.DCLK;
+	smu8_ps->uvd_clocks.vclk = ps->uvd_clocks.VCLK;
+	smu8_ps->uvd_clocks.dclk = ps->uvd_clocks.DCLK;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक smu8_get_घातer_state_size(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	वापस माप(काष्ठा smu8_घातer_state);
-पूर्ण
+static int smu8_get_power_state_size(struct pp_hwmgr *hwmgr)
+{
+	return sizeof(struct smu8_power_state);
+}
 
-अटल व्योम smu8_hw_prपूर्णांक_display_cfg(
-	स्थिर काष्ठा cc6_settings *cc6_settings)
-अणु
+static void smu8_hw_print_display_cfg(
+	const struct cc6_settings *cc6_settings)
+{
 	PP_DBG_LOG("New Display Configuration:\n");
 
 	PP_DBG_LOG("   cpu_cc6_disable: %d\n",
@@ -1434,23 +1433,23 @@
 	PP_DBG_LOG("   cpu_pstate_disable: %d\n",
 			cc6_settings->cpu_pstate_disable);
 	PP_DBG_LOG("   nb_pstate_switch_disable: %d\n",
-			cc6_settings->nb_pstate_चयन_disable);
+			cc6_settings->nb_pstate_switch_disable);
 	PP_DBG_LOG("   cpu_pstate_separation_time: %d\n\n",
-			cc6_settings->cpu_pstate_separation_समय);
-पूर्ण
+			cc6_settings->cpu_pstate_separation_time);
+}
 
- अटल पूर्णांक smu8_set_cpu_घातer_state(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
-	uपूर्णांक32_t data = 0;
+ static int smu8_set_cpu_power_state(struct pp_hwmgr *hwmgr)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
+	uint32_t data = 0;
 
-	अगर (hw_data->cc6_settings.cc6_setting_changed) अणु
+	if (hw_data->cc6_settings.cc6_setting_changed) {
 
 		hw_data->cc6_settings.cc6_setting_changed = false;
 
-		smu8_hw_prपूर्णांक_display_cfg(&hw_data->cc6_settings);
+		smu8_hw_print_display_cfg(&hw_data->cc6_settings);
 
-		data |= (hw_data->cc6_settings.cpu_pstate_separation_समय
+		data |= (hw_data->cc6_settings.cpu_pstate_separation_time
 			& PWRMGT_SEPARATION_TIME_MASK)
 			<< PWRMGT_SEPARATION_TIME_SHIFT;
 
@@ -1466,429 +1465,429 @@
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 						PPSMC_MSG_SetDisplaySizePowerParams,
 						data,
-						शून्य);
-	पूर्ण
+						NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक smu8_store_cc6_data(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t separation_समय,
-			bool cc6_disable, bool pstate_disable, bool pstate_चयन_disable)
-अणु
-	काष्ठा smu8_hwmgr *hw_data = hwmgr->backend;
+static int smu8_store_cc6_data(struct pp_hwmgr *hwmgr, uint32_t separation_time,
+			bool cc6_disable, bool pstate_disable, bool pstate_switch_disable)
+{
+	struct smu8_hwmgr *hw_data = hwmgr->backend;
 
-	अगर (separation_समय !=
-	    hw_data->cc6_settings.cpu_pstate_separation_समय ||
+	if (separation_time !=
+	    hw_data->cc6_settings.cpu_pstate_separation_time ||
 	    cc6_disable != hw_data->cc6_settings.cpu_cc6_disable ||
 	    pstate_disable != hw_data->cc6_settings.cpu_pstate_disable ||
-	    pstate_चयन_disable != hw_data->cc6_settings.nb_pstate_चयन_disable) अणु
+	    pstate_switch_disable != hw_data->cc6_settings.nb_pstate_switch_disable) {
 
 		hw_data->cc6_settings.cc6_setting_changed = true;
 
-		hw_data->cc6_settings.cpu_pstate_separation_समय =
-			separation_समय;
+		hw_data->cc6_settings.cpu_pstate_separation_time =
+			separation_time;
 		hw_data->cc6_settings.cpu_cc6_disable =
 			cc6_disable;
 		hw_data->cc6_settings.cpu_pstate_disable =
 			pstate_disable;
-		hw_data->cc6_settings.nb_pstate_चयन_disable =
-			pstate_चयन_disable;
+		hw_data->cc6_settings.nb_pstate_switch_disable =
+			pstate_switch_disable;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_dal_घातer_level(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा amd_pp_simple_घड़ी_info *info)
-अणु
-	uपूर्णांक32_t i;
-	स्थिर काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static int smu8_get_dal_power_level(struct pp_hwmgr *hwmgr,
+		struct amd_pp_simple_clock_info *info)
+{
+	uint32_t i;
+	const struct phm_clock_voltage_dependency_table *table =
 			hwmgr->dyn_state.vddc_dep_on_dal_pwrl;
-	स्थिर काष्ठा phm_घड़ी_and_voltage_limits *limits =
-			&hwmgr->dyn_state.max_घड़ी_voltage_on_ac;
+	const struct phm_clock_and_voltage_limits *limits =
+			&hwmgr->dyn_state.max_clock_voltage_on_ac;
 
-	info->engine_max_घड़ी = limits->sclk;
-	info->memory_max_घड़ी = limits->mclk;
+	info->engine_max_clock = limits->sclk;
+	info->memory_max_clock = limits->mclk;
 
-	क्रम (i = table->count - 1; i > 0; i--) अणु
-		अगर (limits->vddc >= table->entries[i].v) अणु
+	for (i = table->count - 1; i > 0; i--) {
+		if (limits->vddc >= table->entries[i].v) {
 			info->level = table->entries[i].clk;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+			return 0;
+		}
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक smu8_क्रमce_घड़ी_level(काष्ठा pp_hwmgr *hwmgr,
-		क्रमागत pp_घड़ी_प्रकारype type, uपूर्णांक32_t mask)
-अणु
-	चयन (type) अणु
-	हाल PP_SCLK:
+static int smu8_force_clock_level(struct pp_hwmgr *hwmgr,
+		enum pp_clock_type type, uint32_t mask)
+{
+	switch (type) {
+	case PP_SCLK:
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMin,
 				mask,
-				शून्य);
+				NULL);
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetSclkSoftMax,
 				mask,
-				शून्य);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+				NULL);
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_prपूर्णांक_घड़ी_levels(काष्ठा pp_hwmgr *hwmgr,
-		क्रमागत pp_घड़ी_प्रकारype type, अक्षर *buf)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_घड़ी_voltage_dependency_table *sclk_table =
+static int smu8_print_clock_levels(struct pp_hwmgr *hwmgr,
+		enum pp_clock_type type, char *buf)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_clock_voltage_dependency_table *sclk_table =
 			hwmgr->dyn_state.vddc_dependency_on_sclk;
-	पूर्णांक i, now, size = 0;
+	int i, now, size = 0;
 
-	चयन (type) अणु
-	हाल PP_SCLK:
-		now = PHM_GET_FIELD(cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device,
+	switch (type) {
+	case PP_SCLK:
+		now = PHM_GET_FIELD(cgs_read_ind_register(hwmgr->device,
 				CGS_IND_REG__SMC,
-				ixTARGET_AND_CURRENT_PROखाता_INDEX),
-				TARGET_AND_CURRENT_PROखाता_INDEX,
+				ixTARGET_AND_CURRENT_PROFILE_INDEX),
+				TARGET_AND_CURRENT_PROFILE_INDEX,
 				CURR_SCLK_INDEX);
 
-		क्रम (i = 0; i < sclk_table->count; i++)
-			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n",
+		for (i = 0; i < sclk_table->count; i++)
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 					i, sclk_table->entries[i].clk / 100,
 					(i == now) ? "*" : "");
-		अवरोध;
-	हाल PP_MCLK:
-		now = PHM_GET_FIELD(cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device,
+		break;
+	case PP_MCLK:
+		now = PHM_GET_FIELD(cgs_read_ind_register(hwmgr->device,
 				CGS_IND_REG__SMC,
-				ixTARGET_AND_CURRENT_PROखाता_INDEX),
-				TARGET_AND_CURRENT_PROखाता_INDEX,
+				ixTARGET_AND_CURRENT_PROFILE_INDEX),
+				TARGET_AND_CURRENT_PROFILE_INDEX,
 				CURR_MCLK_INDEX);
 
-		क्रम (i = SMU8_NUM_NBPMEMORYCLOCK; i > 0; i--)
-			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n",
-					SMU8_NUM_NBPMEMORYCLOCK-i, data->sys_info.nbp_memory_घड़ी[i-1] / 100,
+		for (i = SMU8_NUM_NBPMEMORYCLOCK; i > 0; i--)
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
+					SMU8_NUM_NBPMEMORYCLOCK-i, data->sys_info.nbp_memory_clock[i-1] / 100,
 					(SMU8_NUM_NBPMEMORYCLOCK-i == now) ? "*" : "");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस size;
-पूर्ण
+		break;
+	default:
+		break;
+	}
+	return size;
+}
 
-अटल पूर्णांक smu8_get_perक्रमmance_level(काष्ठा pp_hwmgr *hwmgr, स्थिर काष्ठा pp_hw_घातer_state *state,
-				PHM_Perक्रमmanceLevelDesignation designation, uपूर्णांक32_t index,
-				PHM_Perक्रमmanceLevel *level)
-अणु
-	स्थिर काष्ठा smu8_घातer_state *ps;
-	काष्ठा smu8_hwmgr *data;
-	uपूर्णांक32_t level_index;
-	uपूर्णांक32_t i;
+static int smu8_get_performance_level(struct pp_hwmgr *hwmgr, const struct pp_hw_power_state *state,
+				PHM_PerformanceLevelDesignation designation, uint32_t index,
+				PHM_PerformanceLevel *level)
+{
+	const struct smu8_power_state *ps;
+	struct smu8_hwmgr *data;
+	uint32_t level_index;
+	uint32_t i;
 
-	अगर (level == शून्य || hwmgr == शून्य || state == शून्य)
-		वापस -EINVAL;
+	if (level == NULL || hwmgr == NULL || state == NULL)
+		return -EINVAL;
 
 	data = hwmgr->backend;
-	ps = cast_स्थिर_smu8_घातer_state(state);
+	ps = cast_const_smu8_power_state(state);
 
 	level_index = index > ps->level - 1 ? ps->level - 1 : index;
 	level->coreClock = ps->levels[level_index].engineClock;
 
-	अगर (designation == PHM_Perक्रमmanceLevelDesignation_PowerContainment) अणु
-		क्रम (i = 1; i < ps->level; i++) अणु
-			अगर (ps->levels[i].engineClock > data->dce_slow_sclk_threshold) अणु
+	if (designation == PHM_PerformanceLevelDesignation_PowerContainment) {
+		for (i = 1; i < ps->level; i++) {
+			if (ps->levels[i].engineClock > data->dce_slow_sclk_threshold) {
 				level->coreClock = ps->levels[i].engineClock;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (level_index == 0)
-		level->memory_घड़ी = data->sys_info.nbp_memory_घड़ी[SMU8_NUM_NBPMEMORYCLOCK - 1];
-	अन्यथा
-		level->memory_घड़ी = data->sys_info.nbp_memory_घड़ी[0];
+	if (level_index == 0)
+		level->memory_clock = data->sys_info.nbp_memory_clock[SMU8_NUM_NBPMEMORYCLOCK - 1];
+	else
+		level->memory_clock = data->sys_info.nbp_memory_clock[0];
 
 	level->vddc = (smu8_convert_8Bit_index_to_voltage(hwmgr, ps->levels[level_index].vddcIndex) + 2) / 4;
 	level->nonLocalMemoryFreq = 0;
 	level->nonLocalMemoryWidth = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_current_shallow_sleep_घड़ीs(काष्ठा pp_hwmgr *hwmgr,
-	स्थिर काष्ठा pp_hw_घातer_state *state, काष्ठा pp_घड़ी_info *घड़ी_info)
-अणु
-	स्थिर काष्ठा smu8_घातer_state *ps = cast_स्थिर_smu8_घातer_state(state);
+static int smu8_get_current_shallow_sleep_clocks(struct pp_hwmgr *hwmgr,
+	const struct pp_hw_power_state *state, struct pp_clock_info *clock_info)
+{
+	const struct smu8_power_state *ps = cast_const_smu8_power_state(state);
 
-	घड़ी_info->min_eng_clk = ps->levels[0].engineClock / (1 << (ps->levels[0].ssDividerIndex));
-	घड़ी_info->max_eng_clk = ps->levels[ps->level - 1].engineClock / (1 << (ps->levels[ps->level - 1].ssDividerIndex));
+	clock_info->min_eng_clk = ps->levels[0].engineClock / (1 << (ps->levels[0].ssDividerIndex));
+	clock_info->max_eng_clk = ps->levels[ps->level - 1].engineClock / (1 << (ps->levels[ps->level - 1].ssDividerIndex));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_घड़ी_by_type(काष्ठा pp_hwmgr *hwmgr, क्रमागत amd_pp_घड़ी_प्रकारype type,
-						काष्ठा amd_pp_घड़ीs *घड़ीs)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	पूर्णांक i;
-	काष्ठा phm_घड़ी_voltage_dependency_table *table;
+static int smu8_get_clock_by_type(struct pp_hwmgr *hwmgr, enum amd_pp_clock_type type,
+						struct amd_pp_clocks *clocks)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	int i;
+	struct phm_clock_voltage_dependency_table *table;
 
-	घड़ीs->count = smu8_get_max_sclk_level(hwmgr);
-	चयन (type) अणु
-	हाल amd_pp_disp_घड़ी:
-		क्रम (i = 0; i < घड़ीs->count; i++)
-			घड़ीs->घड़ी[i] = data->sys_info.display_घड़ी[i] * 10;
-		अवरोध;
-	हाल amd_pp_sys_घड़ी:
+	clocks->count = smu8_get_max_sclk_level(hwmgr);
+	switch (type) {
+	case amd_pp_disp_clock:
+		for (i = 0; i < clocks->count; i++)
+			clocks->clock[i] = data->sys_info.display_clock[i] * 10;
+		break;
+	case amd_pp_sys_clock:
 		table = hwmgr->dyn_state.vddc_dependency_on_sclk;
-		क्रम (i = 0; i < घड़ीs->count; i++)
-			घड़ीs->घड़ी[i] = table->entries[i].clk * 10;
-		अवरोध;
-	हाल amd_pp_mem_घड़ी:
-		घड़ीs->count = SMU8_NUM_NBPMEMORYCLOCK;
-		क्रम (i = 0; i < घड़ीs->count; i++)
-			घड़ीs->घड़ी[i] = data->sys_info.nbp_memory_घड़ी[घड़ीs->count - 1 - i] * 10;
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		for (i = 0; i < clocks->count; i++)
+			clocks->clock[i] = table->entries[i].clk * 10;
+		break;
+	case amd_pp_mem_clock:
+		clocks->count = SMU8_NUM_NBPMEMORYCLOCK;
+		for (i = 0; i < clocks->count; i++)
+			clocks->clock[i] = data->sys_info.nbp_memory_clock[clocks->count - 1 - i] * 10;
+		break;
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_max_high_घड़ीs(काष्ठा pp_hwmgr *hwmgr, काष्ठा amd_pp_simple_घड़ी_info *घड़ीs)
-अणु
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+static int smu8_get_max_high_clocks(struct pp_hwmgr *hwmgr, struct amd_pp_simple_clock_info *clocks)
+{
+	struct phm_clock_voltage_dependency_table *table =
 					hwmgr->dyn_state.vddc_dependency_on_sclk;
-	अचिन्हित दीर्घ level;
-	स्थिर काष्ठा phm_घड़ी_and_voltage_limits *limits =
-			&hwmgr->dyn_state.max_घड़ी_voltage_on_ac;
+	unsigned long level;
+	const struct phm_clock_and_voltage_limits *limits =
+			&hwmgr->dyn_state.max_clock_voltage_on_ac;
 
-	अगर ((शून्य == table) || (table->count <= 0) || (घड़ीs == शून्य))
-		वापस -EINVAL;
+	if ((NULL == table) || (table->count <= 0) || (clocks == NULL))
+		return -EINVAL;
 
 	level = smu8_get_max_sclk_level(hwmgr) - 1;
 
-	अगर (level < table->count)
-		घड़ीs->engine_max_घड़ी = table->entries[level].clk;
-	अन्यथा
-		घड़ीs->engine_max_घड़ी = table->entries[table->count - 1].clk;
+	if (level < table->count)
+		clocks->engine_max_clock = table->entries[level].clk;
+	else
+		clocks->engine_max_clock = table->entries[table->count - 1].clk;
 
-	घड़ीs->memory_max_घड़ी = limits->mclk;
+	clocks->memory_max_clock = limits->mclk;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_thermal_get_temperature(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक actual_temp = 0;
-	uपूर्णांक32_t val = cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device,
+static int smu8_thermal_get_temperature(struct pp_hwmgr *hwmgr)
+{
+	int actual_temp = 0;
+	uint32_t val = cgs_read_ind_register(hwmgr->device,
 					     CGS_IND_REG__SMC, ixTHM_TCON_CUR_TMP);
-	uपूर्णांक32_t temp = PHM_GET_FIELD(val, THM_TCON_CUR_TMP, CUR_TEMP);
+	uint32_t temp = PHM_GET_FIELD(val, THM_TCON_CUR_TMP, CUR_TEMP);
 
-	अगर (PHM_GET_FIELD(val, THM_TCON_CUR_TMP, CUR_TEMP_RANGE_SEL))
+	if (PHM_GET_FIELD(val, THM_TCON_CUR_TMP, CUR_TEMP_RANGE_SEL))
 		actual_temp = ((temp / 8) - 49) * PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
-	अन्यथा
+	else
 		actual_temp = (temp / 8) * PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
-	वापस actual_temp;
-पूर्ण
+	return actual_temp;
+}
 
-अटल पूर्णांक smu8_पढ़ो_sensor(काष्ठा pp_hwmgr *hwmgr, पूर्णांक idx,
-			  व्योम *value, पूर्णांक *size)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_read_sensor(struct pp_hwmgr *hwmgr, int idx,
+			  void *value, int *size)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	काष्ठा phm_घड़ी_voltage_dependency_table *table =
+	struct phm_clock_voltage_dependency_table *table =
 				hwmgr->dyn_state.vddc_dependency_on_sclk;
 
-	काष्ठा phm_vce_घड़ी_voltage_dependency_table *vce_table =
-		hwmgr->dyn_state.vce_घड़ी_voltage_dependency_table;
+	struct phm_vce_clock_voltage_dependency_table *vce_table =
+		hwmgr->dyn_state.vce_clock_voltage_dependency_table;
 
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *uvd_table =
-		hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table;
+	struct phm_uvd_clock_voltage_dependency_table *uvd_table =
+		hwmgr->dyn_state.uvd_clock_voltage_dependency_table;
 
-	uपूर्णांक32_t sclk_index = PHM_GET_FIELD(cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROखाता_INDEX),
-					TARGET_AND_CURRENT_PROखाता_INDEX, CURR_SCLK_INDEX);
-	uपूर्णांक32_t uvd_index = PHM_GET_FIELD(cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROखाता_INDEX_2),
-					TARGET_AND_CURRENT_PROखाता_INDEX_2, CURR_UVD_INDEX);
-	uपूर्णांक32_t vce_index = PHM_GET_FIELD(cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROखाता_INDEX_2),
-					TARGET_AND_CURRENT_PROखाता_INDEX_2, CURR_VCE_INDEX);
+	uint32_t sclk_index = PHM_GET_FIELD(cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROFILE_INDEX),
+					TARGET_AND_CURRENT_PROFILE_INDEX, CURR_SCLK_INDEX);
+	uint32_t uvd_index = PHM_GET_FIELD(cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROFILE_INDEX_2),
+					TARGET_AND_CURRENT_PROFILE_INDEX_2, CURR_UVD_INDEX);
+	uint32_t vce_index = PHM_GET_FIELD(cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC, ixTARGET_AND_CURRENT_PROFILE_INDEX_2),
+					TARGET_AND_CURRENT_PROFILE_INDEX_2, CURR_VCE_INDEX);
 
-	uपूर्णांक32_t sclk, vclk, dclk, ecclk, पंचांगp, activity_percent;
-	uपूर्णांक16_t vddnb, vddgfx;
-	पूर्णांक result;
+	uint32_t sclk, vclk, dclk, ecclk, tmp, activity_percent;
+	uint16_t vddnb, vddgfx;
+	int result;
 
-	/* size must be at least 4 bytes क्रम all sensors */
-	अगर (*size < 4)
-		वापस -EINVAL;
+	/* size must be at least 4 bytes for all sensors */
+	if (*size < 4)
+		return -EINVAL;
 	*size = 4;
 
-	चयन (idx) अणु
-	हाल AMDGPU_PP_SENSOR_GFX_SCLK:
-		अगर (sclk_index < NUM_SCLK_LEVELS) अणु
+	switch (idx) {
+	case AMDGPU_PP_SENSOR_GFX_SCLK:
+		if (sclk_index < NUM_SCLK_LEVELS) {
 			sclk = table->entries[sclk_index].clk;
-			*((uपूर्णांक32_t *)value) = sclk;
-			वापस 0;
-		पूर्ण
-		वापस -EINVAL;
-	हाल AMDGPU_PP_SENSOR_VDDNB:
-		पंचांगp = (cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC, ixSMUSVI_NB_CURRENTVID) &
+			*((uint32_t *)value) = sclk;
+			return 0;
+		}
+		return -EINVAL;
+	case AMDGPU_PP_SENSOR_VDDNB:
+		tmp = (cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC, ixSMUSVI_NB_CURRENTVID) &
 			CURRENT_NB_VID_MASK) >> CURRENT_NB_VID__SHIFT;
-		vddnb = smu8_convert_8Bit_index_to_voltage(hwmgr, पंचांगp) / 4;
-		*((uपूर्णांक32_t *)value) = vddnb;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_VDDGFX:
-		पंचांगp = (cgs_पढ़ो_ind_रेजिस्टर(hwmgr->device, CGS_IND_REG__SMC, ixSMUSVI_GFX_CURRENTVID) &
+		vddnb = smu8_convert_8Bit_index_to_voltage(hwmgr, tmp) / 4;
+		*((uint32_t *)value) = vddnb;
+		return 0;
+	case AMDGPU_PP_SENSOR_VDDGFX:
+		tmp = (cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC, ixSMUSVI_GFX_CURRENTVID) &
 			CURRENT_GFX_VID_MASK) >> CURRENT_GFX_VID__SHIFT;
-		vddgfx = smu8_convert_8Bit_index_to_voltage(hwmgr, (u16)पंचांगp) / 4;
-		*((uपूर्णांक32_t *)value) = vddgfx;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_UVD_VCLK:
-		अगर (!data->uvd_घातer_gated) अणु
-			अगर (uvd_index >= SMU8_MAX_HARDWARE_POWERLEVELS) अणु
-				वापस -EINVAL;
-			पूर्ण अन्यथा अणु
+		vddgfx = smu8_convert_8Bit_index_to_voltage(hwmgr, (u16)tmp) / 4;
+		*((uint32_t *)value) = vddgfx;
+		return 0;
+	case AMDGPU_PP_SENSOR_UVD_VCLK:
+		if (!data->uvd_power_gated) {
+			if (uvd_index >= SMU8_MAX_HARDWARE_POWERLEVELS) {
+				return -EINVAL;
+			} else {
 				vclk = uvd_table->entries[uvd_index].vclk;
-				*((uपूर्णांक32_t *)value) = vclk;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		*((uपूर्णांक32_t *)value) = 0;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_UVD_DCLK:
-		अगर (!data->uvd_घातer_gated) अणु
-			अगर (uvd_index >= SMU8_MAX_HARDWARE_POWERLEVELS) अणु
-				वापस -EINVAL;
-			पूर्ण अन्यथा अणु
+				*((uint32_t *)value) = vclk;
+				return 0;
+			}
+		}
+		*((uint32_t *)value) = 0;
+		return 0;
+	case AMDGPU_PP_SENSOR_UVD_DCLK:
+		if (!data->uvd_power_gated) {
+			if (uvd_index >= SMU8_MAX_HARDWARE_POWERLEVELS) {
+				return -EINVAL;
+			} else {
 				dclk = uvd_table->entries[uvd_index].dclk;
-				*((uपूर्णांक32_t *)value) = dclk;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		*((uपूर्णांक32_t *)value) = 0;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_VCE_ECCLK:
-		अगर (!data->vce_घातer_gated) अणु
-			अगर (vce_index >= SMU8_MAX_HARDWARE_POWERLEVELS) अणु
-				वापस -EINVAL;
-			पूर्ण अन्यथा अणु
+				*((uint32_t *)value) = dclk;
+				return 0;
+			}
+		}
+		*((uint32_t *)value) = 0;
+		return 0;
+	case AMDGPU_PP_SENSOR_VCE_ECCLK:
+		if (!data->vce_power_gated) {
+			if (vce_index >= SMU8_MAX_HARDWARE_POWERLEVELS) {
+				return -EINVAL;
+			} else {
 				ecclk = vce_table->entries[vce_index].ecclk;
-				*((uपूर्णांक32_t *)value) = ecclk;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		*((uपूर्णांक32_t *)value) = 0;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_GPU_LOAD:
+				*((uint32_t *)value) = ecclk;
+				return 0;
+			}
+		}
+		*((uint32_t *)value) = 0;
+		return 0;
+	case AMDGPU_PP_SENSOR_GPU_LOAD:
 		result = smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_GetAverageGraphicsActivity,
 				&activity_percent);
-		अगर (0 == result)
+		if (0 == result)
 			activity_percent = activity_percent > 100 ? 100 : activity_percent;
-		अन्यथा
-			वापस -EIO;
-		*((uपूर्णांक32_t *)value) = activity_percent;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_UVD_POWER:
-		*((uपूर्णांक32_t *)value) = data->uvd_घातer_gated ? 0 : 1;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_VCE_POWER:
-		*((uपूर्णांक32_t *)value) = data->vce_घातer_gated ? 0 : 1;
-		वापस 0;
-	हाल AMDGPU_PP_SENSOR_GPU_TEMP:
-		*((uपूर्णांक32_t *)value) = smu8_thermal_get_temperature(hwmgr);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		else
+			return -EIO;
+		*((uint32_t *)value) = activity_percent;
+		return 0;
+	case AMDGPU_PP_SENSOR_UVD_POWER:
+		*((uint32_t *)value) = data->uvd_power_gated ? 0 : 1;
+		return 0;
+	case AMDGPU_PP_SENSOR_VCE_POWER:
+		*((uint32_t *)value) = data->vce_power_gated ? 0 : 1;
+		return 0;
+	case AMDGPU_PP_SENSOR_GPU_TEMP:
+		*((uint32_t *)value) = smu8_thermal_get_temperature(hwmgr);
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक smu8_notअगरy_cac_buffer_info(काष्ठा pp_hwmgr *hwmgr,
-					uपूर्णांक32_t भव_addr_low,
-					uपूर्णांक32_t भव_addr_hi,
-					uपूर्णांक32_t mc_addr_low,
-					uपूर्णांक32_t mc_addr_hi,
-					uपूर्णांक32_t size)
-अणु
+static int smu8_notify_cac_buffer_info(struct pp_hwmgr *hwmgr,
+					uint32_t virtual_addr_low,
+					uint32_t virtual_addr_hi,
+					uint32_t mc_addr_low,
+					uint32_t mc_addr_hi,
+					uint32_t size)
+{
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DramAddrHiVirtual,
 					mc_addr_hi,
-					शून्य);
+					NULL);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DramAddrLoVirtual,
 					mc_addr_low,
-					शून्य);
+					NULL);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DramAddrHiPhysical,
-					भव_addr_hi,
-					शून्य);
+					virtual_addr_hi,
+					NULL);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DramAddrLoPhysical,
-					भव_addr_low,
-					शून्य);
+					virtual_addr_low,
+					NULL);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_DramBufferSize,
 					size,
-					शून्य);
-	वापस 0;
-पूर्ण
+					NULL);
+	return 0;
+}
 
-अटल पूर्णांक smu8_get_thermal_temperature_range(काष्ठा pp_hwmgr *hwmgr,
-		काष्ठा PP_TemperatureRange *thermal_data)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static int smu8_get_thermal_temperature_range(struct pp_hwmgr *hwmgr,
+		struct PP_TemperatureRange *thermal_data)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	स_नकल(thermal_data, &SMU7ThermalPolicy[0], माप(काष्ठा PP_TemperatureRange));
+	memcpy(thermal_data, &SMU7ThermalPolicy[0], sizeof(struct PP_TemperatureRange));
 
-	thermal_data->max = (data->thermal_स्वतः_throttling_treshold +
+	thermal_data->max = (data->thermal_auto_throttling_treshold +
 			data->sys_info.htc_hyst_lmt) *
 			PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_enable_disable_uvd_dpm(काष्ठा pp_hwmgr *hwmgr, bool enable)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	uपूर्णांक32_t dpm_features = 0;
+static int smu8_enable_disable_uvd_dpm(struct pp_hwmgr *hwmgr, bool enable)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	uint32_t dpm_features = 0;
 
-	अगर (enable &&
-		phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				  PHM_Platक्रमmCaps_UVDDPM)) अणु
+	if (enable &&
+		phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				  PHM_PlatformCaps_UVDDPM)) {
 		data->dpm_flags |= DPMFlags_UVD_Enabled;
 		dpm_features |= UVD_DPM_MASK;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 			    PPSMC_MSG_EnableAllSmuFeatures,
 			    dpm_features,
-			    शून्य);
-	पूर्ण अन्यथा अणु
+			    NULL);
+	} else {
 		dpm_features |= UVD_DPM_MASK;
 		data->dpm_flags &= ~DPMFlags_UVD_Enabled;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 			   PPSMC_MSG_DisableAllSmuFeatures,
 			   dpm_features,
-			   शून्य);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			   NULL);
+	}
+	return 0;
+}
 
-अटल पूर्णांक smu8_dpm_update_uvd_dpm(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	काष्ठा phm_uvd_घड़ी_voltage_dependency_table *ptable =
-		hwmgr->dyn_state.uvd_घड़ी_voltage_dependency_table;
+static int smu8_dpm_update_uvd_dpm(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	struct phm_uvd_clock_voltage_dependency_table *ptable =
+		hwmgr->dyn_state.uvd_clock_voltage_dependency_table;
 
-	अगर (!bgate) अणु
+	if (!bgate) {
 		/* Stable Pstate is enabled and we need to set the UVD DPM to highest level */
-		अगर (PP_CAP(PHM_Platक्रमmCaps_StablePState) ||
-		    hwmgr->en_umd_pstate) अणु
+		if (PP_CAP(PHM_PlatformCaps_StablePState) ||
+		    hwmgr->en_umd_pstate) {
 			data->uvd_dpm.hard_min_clk =
 				   ptable->entries[ptable->count - 1].vclk;
 
@@ -1897,153 +1896,153 @@
 				smu8_get_uvd_level(hwmgr,
 					data->uvd_dpm.hard_min_clk,
 					PPSMC_MSG_SetUvdHardMin),
-				शून्य);
+				NULL);
 
 			smu8_enable_disable_uvd_dpm(hwmgr, true);
-		पूर्ण अन्यथा अणु
+		} else {
 			smu8_enable_disable_uvd_dpm(hwmgr, true);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		smu8_enable_disable_uvd_dpm(hwmgr, false);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu8_enable_disable_vce_dpm(काष्ठा pp_hwmgr *hwmgr, bool enable)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
-	uपूर्णांक32_t dpm_features = 0;
+static int smu8_enable_disable_vce_dpm(struct pp_hwmgr *hwmgr, bool enable)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
+	uint32_t dpm_features = 0;
 
-	अगर (enable && phm_cap_enabled(
-				hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_VCEDPM)) अणु
+	if (enable && phm_cap_enabled(
+				hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_VCEDPM)) {
 		data->dpm_flags |= DPMFlags_VCE_Enabled;
 		dpm_features |= VCE_DPM_MASK;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 			    PPSMC_MSG_EnableAllSmuFeatures,
 			    dpm_features,
-			    शून्य);
-	पूर्ण अन्यथा अणु
+			    NULL);
+	} else {
 		dpm_features |= VCE_DPM_MASK;
 		data->dpm_flags &= ~DPMFlags_VCE_Enabled;
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 			   PPSMC_MSG_DisableAllSmuFeatures,
 			   dpm_features,
-			   शून्य);
-	पूर्ण
+			   NULL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम smu8_dpm_घातergate_acp(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_dpm_powergate_acp(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	अगर (data->acp_घातer_gated == bgate)
-		वापस;
+	if (data->acp_power_gated == bgate)
+		return;
 
-	अगर (bgate)
-		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerOFF, शून्य);
-	अन्यथा
-		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerON, शून्य);
-पूर्ण
+	if (bgate)
+		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerOFF, NULL);
+	else
+		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ACPPowerON, NULL);
+}
 
-अटल व्योम smu8_dpm_घातergate_uvd(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_dpm_powergate_uvd(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	data->uvd_घातer_gated = bgate;
+	data->uvd_power_gated = bgate;
 
-	अगर (bgate) अणु
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+	if (bgate) {
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_PG_STATE_GATE);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_CG_STATE_GATE);
 		smu8_dpm_update_uvd_dpm(hwmgr, true);
-		smu8_dpm_घातerकरोwn_uvd(hwmgr);
-	पूर्ण अन्यथा अणु
-		smu8_dpm_घातerup_uvd(hwmgr);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		smu8_dpm_powerdown_uvd(hwmgr);
+	} else {
+		smu8_dpm_powerup_uvd(hwmgr);
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_CG_STATE_UNGATE);
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_PG_STATE_UNGATE);
 		smu8_dpm_update_uvd_dpm(hwmgr, false);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम smu8_dpm_घातergate_vce(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu8_hwmgr *data = hwmgr->backend;
+static void smu8_dpm_powergate_vce(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu8_hwmgr *data = hwmgr->backend;
 
-	अगर (bgate) अणु
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+	if (bgate) {
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_VCE,
 					AMD_PG_STATE_GATE);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_VCE,
 					AMD_CG_STATE_GATE);
 		smu8_enable_disable_vce_dpm(hwmgr, false);
-		smu8_dpm_घातerकरोwn_vce(hwmgr);
-		data->vce_घातer_gated = true;
-	पूर्ण अन्यथा अणु
-		smu8_dpm_घातerup_vce(hwmgr);
-		data->vce_घातer_gated = false;
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		smu8_dpm_powerdown_vce(hwmgr);
+		data->vce_power_gated = true;
+	} else {
+		smu8_dpm_powerup_vce(hwmgr);
+		data->vce_power_gated = false;
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_VCE,
 					AMD_CG_STATE_UNGATE);
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 					AMD_IP_BLOCK_TYPE_VCE,
 					AMD_PG_STATE_UNGATE);
 		smu8_dpm_update_vce_dpm(hwmgr);
 		smu8_enable_disable_vce_dpm(hwmgr, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा pp_hwmgr_func smu8_hwmgr_funcs = अणु
+static const struct pp_hwmgr_func smu8_hwmgr_funcs = {
 	.backend_init = smu8_hwmgr_backend_init,
 	.backend_fini = smu8_hwmgr_backend_fini,
 	.apply_state_adjust_rules = smu8_apply_state_adjust_rules,
-	.क्रमce_dpm_level = smu8_dpm_क्रमce_dpm_level,
-	.get_घातer_state_size = smu8_get_घातer_state_size,
-	.घातerकरोwn_uvd = smu8_dpm_घातerकरोwn_uvd,
-	.घातergate_uvd = smu8_dpm_घातergate_uvd,
-	.घातergate_vce = smu8_dpm_घातergate_vce,
-	.घातergate_acp = smu8_dpm_घातergate_acp,
+	.force_dpm_level = smu8_dpm_force_dpm_level,
+	.get_power_state_size = smu8_get_power_state_size,
+	.powerdown_uvd = smu8_dpm_powerdown_uvd,
+	.powergate_uvd = smu8_dpm_powergate_uvd,
+	.powergate_vce = smu8_dpm_powergate_vce,
+	.powergate_acp = smu8_dpm_powergate_acp,
 	.get_mclk = smu8_dpm_get_mclk,
 	.get_sclk = smu8_dpm_get_sclk,
 	.patch_boot_state = smu8_dpm_patch_boot_state,
 	.get_pp_table_entry = smu8_dpm_get_pp_table_entry,
 	.get_num_of_pp_table_entries = smu8_dpm_get_num_of_pp_table_entries,
-	.set_cpu_घातer_state = smu8_set_cpu_घातer_state,
+	.set_cpu_power_state = smu8_set_cpu_power_state,
 	.store_cc6_data = smu8_store_cc6_data,
-	.क्रमce_घड़ी_level = smu8_क्रमce_घड़ी_level,
-	.prपूर्णांक_घड़ी_levels = smu8_prपूर्णांक_घड़ी_levels,
-	.get_dal_घातer_level = smu8_get_dal_घातer_level,
-	.get_perक्रमmance_level = smu8_get_perक्रमmance_level,
-	.get_current_shallow_sleep_घड़ीs = smu8_get_current_shallow_sleep_घड़ीs,
-	.get_घड़ी_by_type = smu8_get_घड़ी_by_type,
-	.get_max_high_घड़ीs = smu8_get_max_high_घड़ीs,
-	.पढ़ो_sensor = smu8_पढ़ो_sensor,
-	.घातer_off_asic = smu8_घातer_off_asic,
+	.force_clock_level = smu8_force_clock_level,
+	.print_clock_levels = smu8_print_clock_levels,
+	.get_dal_power_level = smu8_get_dal_power_level,
+	.get_performance_level = smu8_get_performance_level,
+	.get_current_shallow_sleep_clocks = smu8_get_current_shallow_sleep_clocks,
+	.get_clock_by_type = smu8_get_clock_by_type,
+	.get_max_high_clocks = smu8_get_max_high_clocks,
+	.read_sensor = smu8_read_sensor,
+	.power_off_asic = smu8_power_off_asic,
 	.asic_setup = smu8_setup_asic_task,
 	.dynamic_state_management_enable = smu8_enable_dpm_tasks,
-	.घातer_state_set = smu8_set_घातer_state_tasks,
+	.power_state_set = smu8_set_power_state_tasks,
 	.dynamic_state_management_disable = smu8_disable_dpm_tasks,
-	.notअगरy_cac_buffer_info = smu8_notअगरy_cac_buffer_info,
+	.notify_cac_buffer_info = smu8_notify_cac_buffer_info,
 	.update_nbdpm_pstate = smu8_nbdpm_pstate_enable_disable,
 	.get_thermal_temperature_range = smu8_get_thermal_temperature_range,
-पूर्ण;
+};
 
-पूर्णांक smu8_init_function_poपूर्णांकers(काष्ठा pp_hwmgr *hwmgr)
-अणु
+int smu8_init_function_pointers(struct pp_hwmgr *hwmgr)
+{
 	hwmgr->hwmgr_func = &smu8_hwmgr_funcs;
 	hwmgr->pptable_func = &pptable_funcs;
-	वापस 0;
-पूर्ण
+	return 0;
+}

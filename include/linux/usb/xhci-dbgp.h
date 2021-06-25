@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Standalone xHCI debug capability driver
  *
  * Copyright (C) 2016 Intel Corporation
  *
- * Author: Lu Baolu <baolu.lu@linux.पूर्णांकel.com>
+ * Author: Lu Baolu <baolu.lu@linux.intel.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#अगर_अघोषित __LINUX_XHCI_DBGP_H
-#घोषणा __LINUX_XHCI_DBGP_H
+#ifndef __LINUX_XHCI_DBGP_H
+#define __LINUX_XHCI_DBGP_H
 
-#अगर_घोषित CONFIG_EARLY_PRINTK_USB_XDBC
-पूर्णांक __init early_xdbc_parse_parameter(अक्षर *s);
-पूर्णांक __init early_xdbc_setup_hardware(व्योम);
-व्योम __init early_xdbc_रेजिस्टर_console(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक __init early_xdbc_setup_hardware(व्योम)
-अणु
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत व्योम __init early_xdbc_रेजिस्टर_console(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_EARLY_PRINTK_USB_XDBC */
-#पूर्ण_अगर /* __LINUX_XHCI_DBGP_H */
+#ifdef CONFIG_EARLY_PRINTK_USB_XDBC
+int __init early_xdbc_parse_parameter(char *s);
+int __init early_xdbc_setup_hardware(void);
+void __init early_xdbc_register_console(void);
+#else
+static inline int __init early_xdbc_setup_hardware(void)
+{
+	return -ENODEV;
+}
+static inline void __init early_xdbc_register_console(void)
+{
+}
+#endif /* CONFIG_EARLY_PRINTK_USB_XDBC */
+#endif /* __LINUX_XHCI_DBGP_H */

@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित DASD_MOD_H
-#घोषणा DASD_MOD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef DASD_MOD_H
+#define DASD_MOD_H
 
-#समावेश <यंत्र/dasd.h>
+#include <asm/dasd.h>
 
-काष्ठा gendisk;
+struct gendisk;
 
-बाह्य पूर्णांक dasd_biodasdinfo(काष्ठा gendisk *disk, dasd_inक्रमmation2_t *info);
+extern int dasd_biodasdinfo(struct gendisk *disk, dasd_information2_t *info);
 
-#पूर्ण_अगर
+#endif

@@ -1,106 +1,105 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#अगर_अघोषित __USBIP_STUB_H
-#घोषणा __USBIP_STUB_H
+#ifndef __USBIP_STUB_H
+#define __USBIP_STUB_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/रुको.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/usb.h>
+#include <linux/wait.h>
 
-#घोषणा STUB_BUSID_OTHER 0
-#घोषणा STUB_BUSID_REMOV 1
-#घोषणा STUB_BUSID_ADDED 2
-#घोषणा STUB_BUSID_ALLOC 3
+#define STUB_BUSID_OTHER 0
+#define STUB_BUSID_REMOV 1
+#define STUB_BUSID_ADDED 2
+#define STUB_BUSID_ALLOC 3
 
-काष्ठा stub_device अणु
-	काष्ठा usb_device *udev;
+struct stub_device {
+	struct usb_device *udev;
 
-	काष्ठा usbip_device ud;
+	struct usbip_device ud;
 	__u32 devid;
 
 	/*
-	 * stub_priv preserves निजी data of each urb.
-	 * It is allocated as stub_priv_cache and asचिन्हित to urb->context.
+	 * stub_priv preserves private data of each urb.
+	 * It is allocated as stub_priv_cache and assigned to urb->context.
 	 *
 	 * stub_priv is always linked to any one of 3 lists;
 	 *	priv_init: linked to this until the comletion of a urb.
 	 *	priv_tx  : linked to this after the completion of a urb.
-	 *	priv_मुक्त: linked to this after the sending of the result.
+	 *	priv_free: linked to this after the sending of the result.
 	 *
 	 * Any of these list operations should be locked by priv_lock.
 	 */
 	spinlock_t priv_lock;
-	काष्ठा list_head priv_init;
-	काष्ठा list_head priv_tx;
-	काष्ठा list_head priv_मुक्त;
+	struct list_head priv_init;
+	struct list_head priv_tx;
+	struct list_head priv_free;
 
-	/* see comments क्रम unlinking in stub_rx.c */
-	काष्ठा list_head unlink_tx;
-	काष्ठा list_head unlink_मुक्त;
+	/* see comments for unlinking in stub_rx.c */
+	struct list_head unlink_tx;
+	struct list_head unlink_free;
 
-	रुको_queue_head_t tx_रुकोq;
-पूर्ण;
+	wait_queue_head_t tx_waitq;
+};
 
-/* निजी data पूर्णांकo urb->priv */
-काष्ठा stub_priv अणु
-	अचिन्हित दीर्घ seqnum;
-	काष्ठा list_head list;
-	काष्ठा stub_device *sdev;
-	काष्ठा urb **urbs;
-	काष्ठा scatterlist *sgl;
-	पूर्णांक num_urbs;
-	पूर्णांक completed_urbs;
-	पूर्णांक urb_status;
+/* private data into urb->priv */
+struct stub_priv {
+	unsigned long seqnum;
+	struct list_head list;
+	struct stub_device *sdev;
+	struct urb **urbs;
+	struct scatterlist *sgl;
+	int num_urbs;
+	int completed_urbs;
+	int urb_status;
 
-	पूर्णांक unlinking;
-पूर्ण;
+	int unlinking;
+};
 
-काष्ठा stub_unlink अणु
-	अचिन्हित दीर्घ seqnum;
-	काष्ठा list_head list;
+struct stub_unlink {
+	unsigned long seqnum;
+	struct list_head list;
 	__u32 status;
-पूर्ण;
+};
 
 /* same as SYSFS_BUS_ID_SIZE */
-#घोषणा BUSID_SIZE 32
+#define BUSID_SIZE 32
 
-काष्ठा bus_id_priv अणु
-	अक्षर name[BUSID_SIZE];
-	अक्षर status;
-	पूर्णांक पूर्णांकerf_count;
-	काष्ठा stub_device *sdev;
-	काष्ठा usb_device *udev;
-	अक्षर shutकरोwn_busid;
+struct bus_id_priv {
+	char name[BUSID_SIZE];
+	char status;
+	int interf_count;
+	struct stub_device *sdev;
+	struct usb_device *udev;
+	char shutdown_busid;
 	spinlock_t busid_lock;
-पूर्ण;
+};
 
 /* stub_priv is allocated from stub_priv_cache */
-बाह्य काष्ठा kmem_cache *stub_priv_cache;
+extern struct kmem_cache *stub_priv_cache;
 
 /* stub_dev.c */
-बाह्य काष्ठा usb_device_driver stub_driver;
+extern struct usb_device_driver stub_driver;
 
-/* stub_मुख्य.c */
-काष्ठा bus_id_priv *get_busid_priv(स्थिर अक्षर *busid);
-व्योम put_busid_priv(काष्ठा bus_id_priv *bid);
-पूर्णांक del_match_busid(अक्षर *busid);
-व्योम stub_मुक्त_priv_and_urb(काष्ठा stub_priv *priv);
-व्योम stub_device_cleanup_urbs(काष्ठा stub_device *sdev);
+/* stub_main.c */
+struct bus_id_priv *get_busid_priv(const char *busid);
+void put_busid_priv(struct bus_id_priv *bid);
+int del_match_busid(char *busid);
+void stub_free_priv_and_urb(struct stub_priv *priv);
+void stub_device_cleanup_urbs(struct stub_device *sdev);
 
 /* stub_rx.c */
-पूर्णांक stub_rx_loop(व्योम *data);
+int stub_rx_loop(void *data);
 
 /* stub_tx.c */
-व्योम stub_enqueue_ret_unlink(काष्ठा stub_device *sdev, __u32 seqnum,
+void stub_enqueue_ret_unlink(struct stub_device *sdev, __u32 seqnum,
 			     __u32 status);
-व्योम stub_complete(काष्ठा urb *urb);
-पूर्णांक stub_tx_loop(व्योम *data);
+void stub_complete(struct urb *urb);
+int stub_tx_loop(void *data);
 
-#पूर्ण_अगर /* __USBIP_STUB_H */
+#endif /* __USBIP_STUB_H */

@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Common Definitions क्रम Janz MODULbus devices
+ * Common Definitions for Janz MODULbus devices
  *
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
-#अगर_अघोषित JANZ_H
-#घोषणा JANZ_H
+#ifndef JANZ_H
+#define JANZ_H
 
-काष्ठा janz_platक्रमm_data अणु
+struct janz_platform_data {
 	/* MODULbus Module Number */
-	अचिन्हित पूर्णांक modno;
-पूर्ण;
+	unsigned int modno;
+};
 
-/* PLX bridge chip onboard रेजिस्टरs */
-काष्ठा janz_cmodio_onboard_regs अणु
+/* PLX bridge chip onboard registers */
+struct janz_cmodio_onboard_regs {
 	u8 unused1;
 
 	/*
-	 * Read access: पूर्णांकerrupt status
-	 * Write access: पूर्णांकerrupt disable
+	 * Read access: interrupt status
+	 * Write access: interrupt disable
 	 */
-	u8 पूर्णांक_disable;
+	u8 int_disable;
 	u8 unused2;
 
 	/*
-	 * Read access: MODULbus number (hex चयन)
-	 * Write access: पूर्णांकerrupt enable
+	 * Read access: MODULbus number (hex switch)
+	 * Write access: interrupt enable
 	 */
-	u8 पूर्णांक_enable;
+	u8 int_enable;
 	u8 unused3;
 
-	/* ग_लिखो-only */
-	u8 reset_निश्चित;
+	/* write-only */
+	u8 reset_assert;
 	u8 unused4;
 
-	/* ग_लिखो-only */
-	u8 reset_deनिश्चित;
+	/* write-only */
+	u8 reset_deassert;
 	u8 unused5;
 
-	/* पढ़ो-ग_लिखो access to serial EEPROM */
+	/* read-write access to serial EEPROM */
 	u8 eep;
 	u8 unused6;
 
-	/* ग_लिखो-only access to EEPROM chip select */
+	/* write-only access to EEPROM chip select */
 	u8 enid;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* JANZ_H */
+#endif /* JANZ_H */

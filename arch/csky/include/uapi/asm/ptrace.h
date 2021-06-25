@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 
-#अगर_अघोषित _CSKY_PTRACE_H
-#घोषणा _CSKY_PTRACE_H
+#ifndef _CSKY_PTRACE_H
+#define _CSKY_PTRACE_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा pt_regs अणु
-	अचिन्हित दीर्घ	tls;
-	अचिन्हित दीर्घ	lr;
-	अचिन्हित दीर्घ	pc;
-	अचिन्हित दीर्घ	sr;
-	अचिन्हित दीर्घ	usp;
+struct pt_regs {
+	unsigned long	tls;
+	unsigned long	lr;
+	unsigned long	pc;
+	unsigned long	sr;
+	unsigned long	usp;
 
 	/*
 	 * a0, a1, a2, a3:
 	 * abiv1: r2, r3, r4, r5
 	 * abiv2: r0, r1, r2, r3
 	 */
-	अचिन्हित दीर्घ	orig_a0;
-	अचिन्हित दीर्घ	a0;
-	अचिन्हित दीर्घ	a1;
-	अचिन्हित दीर्घ	a2;
-	अचिन्हित दीर्घ	a3;
+	unsigned long	orig_a0;
+	unsigned long	a0;
+	unsigned long	a1;
+	unsigned long	a2;
+	unsigned long	a3;
 
 	/*
 	 * ABIV2: r4 ~ r13
 	 * ABIV1: r6 ~ r14, r1
 	 */
-	अचिन्हित दीर्घ	regs[10];
+	unsigned long	regs[10];
 
-#अगर defined(__CSKYABIV2__)
+#if defined(__CSKYABIV2__)
 	/* r16 ~ r30 */
-	अचिन्हित दीर्घ	exregs[15];
+	unsigned long	exregs[15];
 
-	अचिन्हित दीर्घ	rhi;
-	अचिन्हित दीर्घ	rlo;
-	अचिन्हित दीर्घ	dcsr;
-#पूर्ण_अगर
-पूर्ण;
+	unsigned long	rhi;
+	unsigned long	rlo;
+	unsigned long	dcsr;
+#endif
+};
 
-काष्ठा user_fp अणु
-	अचिन्हित दीर्घ	vr[96];
-	अचिन्हित दीर्घ	fcr;
-	अचिन्हित दीर्घ	fesr;
-	अचिन्हित दीर्घ	fid;
-	अचिन्हित दीर्घ	reserved;
-पूर्ण;
+struct user_fp {
+	unsigned long	vr[96];
+	unsigned long	fcr;
+	unsigned long	fesr;
+	unsigned long	fid;
+	unsigned long	reserved;
+};
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* _CSKY_PTRACE_H */
+#endif /* __ASSEMBLY__ */
+#endif /* _CSKY_PTRACE_H */

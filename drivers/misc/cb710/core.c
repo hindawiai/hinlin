@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  cb710/core.c
  *
- *  Copyright by Michaध Mirosधaw, 2008-2009
+ *  Copyright by Michał Mirosław, 2008-2009
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/cb710.h>
-#समावेश <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/idr.h>
+#include <linux/cb710.h>
+#include <linux/gfp.h>
 
-अटल DEFINE_IDA(cb710_ida);
+static DEFINE_IDA(cb710_ida);
 
-व्योम cb710_pci_update_config_reg(काष्ठा pci_dev *pdev,
-	पूर्णांक reg, uपूर्णांक32_t mask, uपूर्णांक32_t xor)
-अणु
+void cb710_pci_update_config_reg(struct pci_dev *pdev,
+	int reg, uint32_t mask, uint32_t xor)
+{
 	u32 rval;
 
-	pci_पढ़ो_config_dword(pdev, reg, &rval);
+	pci_read_config_dword(pdev, reg, &rval);
 	rval = (rval & mask) ^ xor;
-	pci_ग_लिखो_config_dword(pdev, reg, rval);
-पूर्ण
+	pci_write_config_dword(pdev, reg, rval);
+}
 EXPORT_SYMBOL_GPL(cb710_pci_update_config_reg);
 
-/* Some magic ग_लिखोs based on Winकरोws driver init code */
-अटल पूर्णांक cb710_pci_configure(काष्ठा pci_dev *pdev)
-अणु
-	अचिन्हित पूर्णांक devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
-	काष्ठा pci_dev *pdev0;
+/* Some magic writes based on Windows driver init code */
+static int cb710_pci_configure(struct pci_dev *pdev)
+{
+	unsigned int devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
+	struct pci_dev *pdev0;
 	u32 val;
 
 	cb710_pci_update_config_reg(pdev, 0x48,
 		~0x000000FF, 0x0000003F);
 
-	pci_पढ़ो_config_dword(pdev, 0x48, &val);
-	अगर (val & 0x80000000)
-		वापस 0;
+	pci_read_config_dword(pdev, 0x48, &val);
+	if (val & 0x80000000)
+		return 0;
 
 	pdev0 = pci_get_slot(pdev->bus, devfn);
-	अगर (!pdev0)
-		वापस -ENODEV;
+	if (!pdev0)
+		return -ENODEV;
 
-	अगर (pdev0->venकरोr == PCI_VENDOR_ID_ENE
-	    && pdev0->device == PCI_DEVICE_ID_ENE_720) अणु
+	if (pdev0->vendor == PCI_VENDOR_ID_ENE
+	    && pdev0->device == PCI_DEVICE_ID_ENE_720) {
 		cb710_pci_update_config_reg(pdev0, 0x8C,
 			~0x00F00000, 0x00100000);
 		cb710_pci_update_config_reg(pdev0, 0xB0,
 			~0x08000000, 0x08000000);
-	पूर्ण
+	}
 
 	cb710_pci_update_config_reg(pdev0, 0x8C,
 		~0x00000F00, 0x00000200);
@@ -59,174 +58,174 @@ EXPORT_SYMBOL_GPL(cb710_pci_update_config_reg);
 
 	pci_dev_put(pdev0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t cb710_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cb710_chip *chip = data;
-	काष्ठा cb710_slot *slot = &chip->slot[0];
-	irqवापस_t handled = IRQ_NONE;
-	अचिन्हित nr;
+static irqreturn_t cb710_irq_handler(int irq, void *data)
+{
+	struct cb710_chip *chip = data;
+	struct cb710_slot *slot = &chip->slot[0];
+	irqreturn_t handled = IRQ_NONE;
+	unsigned nr;
 
 	spin_lock(&chip->irq_lock); /* incl. smp_rmb() */
 
-	क्रम (nr = chip->slots; nr; ++slot, --nr) अणु
+	for (nr = chip->slots; nr; ++slot, --nr) {
 		cb710_irq_handler_t handler_func = slot->irq_handler;
-		अगर (handler_func && handler_func(slot))
+		if (handler_func && handler_func(slot))
 			handled = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	spin_unlock(&chip->irq_lock);
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल व्योम cb710_release_slot(काष्ठा device *dev)
-अणु
-#अगर_घोषित CONFIG_CB710_DEBUG_ASSUMPTIONS
-	काष्ठा cb710_slot *slot = cb710_pdev_to_slot(to_platक्रमm_device(dev));
-	काष्ठा cb710_chip *chip = cb710_slot_to_chip(slot);
+static void cb710_release_slot(struct device *dev)
+{
+#ifdef CONFIG_CB710_DEBUG_ASSUMPTIONS
+	struct cb710_slot *slot = cb710_pdev_to_slot(to_platform_device(dev));
+	struct cb710_chip *chip = cb710_slot_to_chip(slot);
 
-	/* slot काष्ठा can be मुक्तd now */
+	/* slot struct can be freed now */
 	atomic_dec(&chip->slot_refs_count);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक cb710_रेजिस्टर_slot(काष्ठा cb710_chip *chip,
-	अचिन्हित slot_mask, अचिन्हित io_offset, स्थिर अक्षर *name)
-अणु
-	पूर्णांक nr = chip->slots;
-	काष्ठा cb710_slot *slot = &chip->slot[nr];
-	पूर्णांक err;
+static int cb710_register_slot(struct cb710_chip *chip,
+	unsigned slot_mask, unsigned io_offset, const char *name)
+{
+	int nr = chip->slots;
+	struct cb710_slot *slot = &chip->slot[nr];
+	int err;
 
 	dev_dbg(cb710_chip_dev(chip),
 		"register: %s.%d; slot %d; mask %d; IO offset: 0x%02X\n",
-		name, chip->platक्रमm_id, nr, slot_mask, io_offset);
+		name, chip->platform_id, nr, slot_mask, io_offset);
 
-	/* slot->irq_handler == शून्य here; this needs to be
-	 * seen beक्रमe platक्रमm_device_रेजिस्टर() */
+	/* slot->irq_handler == NULL here; this needs to be
+	 * seen before platform_device_register() */
 	++chip->slots;
 	smp_wmb();
 
 	slot->iobase = chip->iobase + io_offset;
 	slot->pdev.name = name;
-	slot->pdev.id = chip->platक्रमm_id;
+	slot->pdev.id = chip->platform_id;
 	slot->pdev.dev.parent = &chip->pdev->dev;
 	slot->pdev.dev.release = cb710_release_slot;
 
-	err = platक्रमm_device_रेजिस्टर(&slot->pdev);
+	err = platform_device_register(&slot->pdev);
 
-#अगर_घोषित CONFIG_CB710_DEBUG_ASSUMPTIONS
+#ifdef CONFIG_CB710_DEBUG_ASSUMPTIONS
 	atomic_inc(&chip->slot_refs_count);
-#पूर्ण_अगर
+#endif
 
-	अगर (err) अणु
-		/* device_initialize() called from platक्रमm_device_रेजिस्टर()
+	if (err) {
+		/* device_initialize() called from platform_device_register()
 		 * wants this on error path */
-		platक्रमm_device_put(&slot->pdev);
+		platform_device_put(&slot->pdev);
 
-		/* slot->irq_handler == शून्य here anyway, so no lock needed */
+		/* slot->irq_handler == NULL here anyway, so no lock needed */
 		--chip->slots;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	chip->slot_mask |= slot_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cb710_unरेजिस्टर_slot(काष्ठा cb710_chip *chip,
-	अचिन्हित slot_mask)
-अणु
-	पूर्णांक nr = chip->slots - 1;
+static void cb710_unregister_slot(struct cb710_chip *chip,
+	unsigned slot_mask)
+{
+	int nr = chip->slots - 1;
 
-	अगर (!(chip->slot_mask & slot_mask))
-		वापस;
+	if (!(chip->slot_mask & slot_mask))
+		return;
 
-	platक्रमm_device_unरेजिस्टर(&chip->slot[nr].pdev);
+	platform_device_unregister(&chip->slot[nr].pdev);
 
 	/* complementary to spin_unlock() in cb710_set_irq_handler() */
 	smp_rmb();
-	BUG_ON(chip->slot[nr].irq_handler != शून्य);
+	BUG_ON(chip->slot[nr].irq_handler != NULL);
 
-	/* slot->irq_handler == शून्य here, so no lock needed */
+	/* slot->irq_handler == NULL here, so no lock needed */
 	--chip->slots;
 	chip->slot_mask &= ~slot_mask;
-पूर्ण
+}
 
-व्योम cb710_set_irq_handler(काष्ठा cb710_slot *slot,
+void cb710_set_irq_handler(struct cb710_slot *slot,
 	cb710_irq_handler_t handler)
-अणु
-	काष्ठा cb710_chip *chip = cb710_slot_to_chip(slot);
-	अचिन्हित दीर्घ flags;
+{
+	struct cb710_chip *chip = cb710_slot_to_chip(slot);
+	unsigned long flags;
 
 	spin_lock_irqsave(&chip->irq_lock, flags);
 	slot->irq_handler = handler;
 	spin_unlock_irqrestore(&chip->irq_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cb710_set_irq_handler);
 
-अटल पूर्णांक __maybe_unused cb710_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा cb710_chip *chip = pci_get_drvdata(pdev);
+static int __maybe_unused cb710_suspend(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct cb710_chip *chip = pci_get_drvdata(pdev);
 
-	devm_मुक्त_irq(&pdev->dev, pdev->irq, chip);
-	वापस 0;
-पूर्ण
+	devm_free_irq(&pdev->dev, pdev->irq, chip);
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused cb710_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
-	काष्ठा cb710_chip *chip = pci_get_drvdata(pdev);
+static int __maybe_unused cb710_resume(struct device *dev_d)
+{
+	struct pci_dev *pdev = to_pci_dev(dev_d);
+	struct cb710_chip *chip = pci_get_drvdata(pdev);
 
-	वापस devm_request_irq(&pdev->dev, pdev->irq,
+	return devm_request_irq(&pdev->dev, pdev->irq,
 		cb710_irq_handler, IRQF_SHARED, KBUILD_MODNAME, chip);
-पूर्ण
+}
 
-अटल पूर्णांक cb710_probe(काष्ठा pci_dev *pdev,
-	स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा cb710_chip *chip;
+static int cb710_probe(struct pci_dev *pdev,
+	const struct pci_device_id *ent)
+{
+	struct cb710_chip *chip;
 	u32 val;
-	पूर्णांक err;
-	पूर्णांक n = 0;
+	int err;
+	int n = 0;
 
 	err = cb710_pci_configure(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* this is actually magic... */
-	pci_पढ़ो_config_dword(pdev, 0x48, &val);
-	अगर (!(val & 0x80000000)) अणु
-		pci_ग_लिखो_config_dword(pdev, 0x48, val|0x71000000);
-		pci_पढ़ो_config_dword(pdev, 0x48, &val);
-	पूर्ण
+	pci_read_config_dword(pdev, 0x48, &val);
+	if (!(val & 0x80000000)) {
+		pci_write_config_dword(pdev, 0x48, val|0x71000000);
+		pci_read_config_dword(pdev, 0x48, &val);
+	}
 
 	dev_dbg(&pdev->dev, "PCI config[0x48] = 0x%08X\n", val);
-	अगर (!(val & 0x70000000))
-		वापस -ENODEV;
+	if (!(val & 0x70000000))
+		return -ENODEV;
 	val = (val >> 28) & 7;
-	अगर (val & CB710_SLOT_MMC)
+	if (val & CB710_SLOT_MMC)
 		++n;
-	अगर (val & CB710_SLOT_MS)
+	if (val & CB710_SLOT_MS)
 		++n;
-	अगर (val & CB710_SLOT_SM)
+	if (val & CB710_SLOT_SM)
 		++n;
 
-	chip = devm_kzalloc(&pdev->dev, काष्ठा_size(chip, slot, n),
+	chip = devm_kzalloc(&pdev->dev, struct_size(chip, slot, n),
 			    GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	if (!chip)
+		return -ENOMEM;
 
 	err = pcim_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = pcim_iomap_regions(pdev, 0x0001, KBUILD_MODNAME);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	spin_lock_init(&chip->irq_lock);
 	chip->pdev = pdev;
@@ -236,95 +235,95 @@ EXPORT_SYMBOL_GPL(cb710_set_irq_handler);
 
 	err = devm_request_irq(&pdev->dev, pdev->irq,
 		cb710_irq_handler, IRQF_SHARED, KBUILD_MODNAME, chip);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = ida_alloc(&cb710_ida, GFP_KERNEL);
-	अगर (err < 0)
-		वापस err;
-	chip->platक्रमm_id = err;
+	if (err < 0)
+		return err;
+	chip->platform_id = err;
 
 	dev_info(&pdev->dev, "id %d, IO 0x%p, IRQ %d\n",
-		chip->platक्रमm_id, chip->iobase, pdev->irq);
+		chip->platform_id, chip->iobase, pdev->irq);
 
-	अगर (val & CB710_SLOT_MMC) अणु	/* MMC/SD slot */
-		err = cb710_रेजिस्टर_slot(chip,
+	if (val & CB710_SLOT_MMC) {	/* MMC/SD slot */
+		err = cb710_register_slot(chip,
 			CB710_SLOT_MMC, 0x00, "cb710-mmc");
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (val & CB710_SLOT_MS) अणु	/* MemoryStick slot */
-		err = cb710_रेजिस्टर_slot(chip,
+	if (val & CB710_SLOT_MS) {	/* MemoryStick slot */
+		err = cb710_register_slot(chip,
 			CB710_SLOT_MS, 0x40, "cb710-ms");
-		अगर (err)
-			जाओ unreg_mmc;
-	पूर्ण
+		if (err)
+			goto unreg_mmc;
+	}
 
-	अगर (val & CB710_SLOT_SM) अणु	/* SmartMedia slot */
-		err = cb710_रेजिस्टर_slot(chip,
+	if (val & CB710_SLOT_SM) {	/* SmartMedia slot */
+		err = cb710_register_slot(chip,
 			CB710_SLOT_SM, 0x60, "cb710-sm");
-		अगर (err)
-			जाओ unreg_ms;
-	पूर्ण
+		if (err)
+			goto unreg_ms;
+	}
 
-	वापस 0;
+	return 0;
 unreg_ms:
-	cb710_unरेजिस्टर_slot(chip, CB710_SLOT_MS);
+	cb710_unregister_slot(chip, CB710_SLOT_MS);
 unreg_mmc:
-	cb710_unरेजिस्टर_slot(chip, CB710_SLOT_MMC);
+	cb710_unregister_slot(chip, CB710_SLOT_MMC);
 
-#अगर_घोषित CONFIG_CB710_DEBUG_ASSUMPTIONS
-	BUG_ON(atomic_पढ़ो(&chip->slot_refs_count) != 0);
-#पूर्ण_अगर
-	वापस err;
-पूर्ण
+#ifdef CONFIG_CB710_DEBUG_ASSUMPTIONS
+	BUG_ON(atomic_read(&chip->slot_refs_count) != 0);
+#endif
+	return err;
+}
 
-अटल व्योम cb710_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा cb710_chip *chip = pci_get_drvdata(pdev);
+static void cb710_remove_one(struct pci_dev *pdev)
+{
+	struct cb710_chip *chip = pci_get_drvdata(pdev);
 
-	cb710_unरेजिस्टर_slot(chip, CB710_SLOT_SM);
-	cb710_unरेजिस्टर_slot(chip, CB710_SLOT_MS);
-	cb710_unरेजिस्टर_slot(chip, CB710_SLOT_MMC);
-#अगर_घोषित CONFIG_CB710_DEBUG_ASSUMPTIONS
-	BUG_ON(atomic_पढ़ो(&chip->slot_refs_count) != 0);
-#पूर्ण_अगर
+	cb710_unregister_slot(chip, CB710_SLOT_SM);
+	cb710_unregister_slot(chip, CB710_SLOT_MS);
+	cb710_unregister_slot(chip, CB710_SLOT_MMC);
+#ifdef CONFIG_CB710_DEBUG_ASSUMPTIONS
+	BUG_ON(atomic_read(&chip->slot_refs_count) != 0);
+#endif
 
-	ida_मुक्त(&cb710_ida, chip->platक्रमm_id);
-पूर्ण
+	ida_free(&cb710_ida, chip->platform_id);
+}
 
-अटल स्थिर काष्ठा pci_device_id cb710_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_ENE, PCI_DEVICE_ID_ENE_CB710_FLASH,
-		PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id cb710_pci_tbl[] = {
+	{ PCI_VENDOR_ID_ENE, PCI_DEVICE_ID_ENE_CB710_FLASH,
+		PCI_ANY_ID, PCI_ANY_ID, },
+	{ 0, }
+};
 
-अटल SIMPLE_DEV_PM_OPS(cb710_pm_ops, cb710_suspend, cb710_resume);
+static SIMPLE_DEV_PM_OPS(cb710_pm_ops, cb710_suspend, cb710_resume);
 
-अटल काष्ठा pci_driver cb710_driver = अणु
+static struct pci_driver cb710_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = cb710_pci_tbl,
 	.probe = cb710_probe,
-	.हटाओ = cb710_हटाओ_one,
+	.remove = cb710_remove_one,
 	.driver.pm = &cb710_pm_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cb710_init_module(व्योम)
-अणु
-	वापस pci_रेजिस्टर_driver(&cb710_driver);
-पूर्ण
+static int __init cb710_init_module(void)
+{
+	return pci_register_driver(&cb710_driver);
+}
 
-अटल व्योम __निकास cb710_cleanup_module(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&cb710_driver);
+static void __exit cb710_cleanup_module(void)
+{
+	pci_unregister_driver(&cb710_driver);
 	ida_destroy(&cb710_ida);
-पूर्ण
+}
 
 module_init(cb710_init_module);
-module_निकास(cb710_cleanup_module);
+module_exit(cb710_cleanup_module);
 
-MODULE_AUTHOR("Michaध Mirosधaw <mirq-linux@rere.qmqm.pl>");
+MODULE_AUTHOR("Michał Mirosław <mirq-linux@rere.qmqm.pl>");
 MODULE_DESCRIPTION("ENE CB710 memory card reader driver");
 MODULE_LICENSE("GPL");
 MODULE_DEVICE_TABLE(pci, cb710_pci_tbl);

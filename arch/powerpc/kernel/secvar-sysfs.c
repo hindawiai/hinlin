@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2019 IBM Corporation <nayna@linux.ibm.com>
  *
  * This code exposes secure variables to user via sysfs
  */
 
-#घोषणा pr_fmt(fmt) "secvar-sysfs: "fmt
+#define pr_fmt(fmt) "secvar-sysfs: "fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/of.h>
-#समावेश <यंत्र/secvar.h>
+#include <linux/slab.h>
+#include <linux/compat.h>
+#include <linux/string.h>
+#include <linux/of.h>
+#include <asm/secvar.h>
 
-#घोषणा NAME_MAX_SIZE	   1024
+#define NAME_MAX_SIZE	   1024
 
-अटल काष्ठा kobject *secvar_kobj;
-अटल काष्ठा kset *secvar_kset;
+static struct kobject *secvar_kobj;
+static struct kset *secvar_kset;
 
-अटल sमाप_प्रकार क्रमmat_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			   अक्षर *buf)
-अणु
-	sमाप_प्रकार rc = 0;
-	काष्ठा device_node *node;
-	स्थिर अक्षर *क्रमmat;
+static ssize_t format_show(struct kobject *kobj, struct kobj_attribute *attr,
+			   char *buf)
+{
+	ssize_t rc = 0;
+	struct device_node *node;
+	const char *format;
 
-	node = of_find_compatible_node(शून्य, शून्य, "ibm,secvar-backend");
-	अगर (!of_device_is_available(node))
-		वापस -ENODEV;
+	node = of_find_compatible_node(NULL, NULL, "ibm,secvar-backend");
+	if (!of_device_is_available(node))
+		return -ENODEV;
 
-	rc = of_property_पढ़ो_string(node, "format", &क्रमmat);
-	अगर (rc)
-		वापस rc;
+	rc = of_property_read_string(node, "format", &format);
+	if (rc)
+		return rc;
 
-	rc = प्र_लिखो(buf, "%s\n", क्रमmat);
+	rc = sprintf(buf, "%s\n", format);
 
 	of_node_put(node);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल sमाप_प्रकार size_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			 अक्षर *buf)
-अणु
-	uपूर्णांक64_t dsize;
-	पूर्णांक rc;
+static ssize_t size_show(struct kobject *kobj, struct kobj_attribute *attr,
+			 char *buf)
+{
+	uint64_t dsize;
+	int rc;
 
-	rc = secvar_ops->get(kobj->name, म_माप(kobj->name) + 1, शून्य, &dsize);
-	अगर (rc) अणु
+	rc = secvar_ops->get(kobj->name, strlen(kobj->name) + 1, NULL, &dsize);
+	if (rc) {
 		pr_err("Error retrieving %s variable size %d\n", kobj->name,
 		       rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस प्र_लिखो(buf, "%llu\n", dsize);
-पूर्ण
+	return sprintf(buf, "%llu\n", dsize);
+}
 
-अटल sमाप_प्रकार data_पढ़ो(काष्ठा file *filep, काष्ठा kobject *kobj,
-			 काष्ठा bin_attribute *attr, अक्षर *buf, loff_t off,
-			 माप_प्रकार count)
-अणु
-	uपूर्णांक64_t dsize;
-	अक्षर *data;
-	पूर्णांक rc;
+static ssize_t data_read(struct file *filep, struct kobject *kobj,
+			 struct bin_attribute *attr, char *buf, loff_t off,
+			 size_t count)
+{
+	uint64_t dsize;
+	char *data;
+	int rc;
 
-	rc = secvar_ops->get(kobj->name, म_माप(kobj->name) + 1, शून्य, &dsize);
-	अगर (rc) अणु
+	rc = secvar_ops->get(kobj->name, strlen(kobj->name) + 1, NULL, &dsize);
+	if (rc) {
 		pr_err("Error getting %s variable size %d\n", kobj->name, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	pr_debug("dsize is %llu\n", dsize);
 
 	data = kzalloc(dsize, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	rc = secvar_ops->get(kobj->name, म_माप(kobj->name) + 1, data, &dsize);
-	अगर (rc) अणु
+	rc = secvar_ops->get(kobj->name, strlen(kobj->name) + 1, data, &dsize);
+	if (rc) {
 		pr_err("Error getting %s variable %d\n", kobj->name, rc);
-		जाओ data_fail;
-	पूर्ण
+		goto data_fail;
+	}
 
-	rc = memory_पढ़ो_from_buffer(buf, count, &off, data, dsize);
+	rc = memory_read_from_buffer(buf, count, &off, data, dsize);
 
 data_fail:
-	kमुक्त(data);
-	वापस rc;
-पूर्ण
+	kfree(data);
+	return rc;
+}
 
-अटल sमाप_प्रकार update_ग_लिखो(काष्ठा file *filep, काष्ठा kobject *kobj,
-			    काष्ठा bin_attribute *attr, अक्षर *buf, loff_t off,
-			    माप_प्रकार count)
-अणु
-	पूर्णांक rc;
+static ssize_t update_write(struct file *filep, struct kobject *kobj,
+			    struct bin_attribute *attr, char *buf, loff_t off,
+			    size_t count)
+{
+	int rc;
 
 	pr_debug("count is %ld\n", count);
-	rc = secvar_ops->set(kobj->name, म_माप(kobj->name) + 1, buf, count);
-	अगर (rc) अणु
+	rc = secvar_ops->set(kobj->name, strlen(kobj->name) + 1, buf, count);
+	if (rc) {
 		pr_err("Error setting the %s variable %d\n", kobj->name, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा kobj_attribute क्रमmat_attr = __ATTR_RO(क्रमmat);
+static struct kobj_attribute format_attr = __ATTR_RO(format);
 
-अटल काष्ठा kobj_attribute size_attr = __ATTR_RO(size);
+static struct kobj_attribute size_attr = __ATTR_RO(size);
 
-अटल काष्ठा bin_attribute data_attr = __BIN_ATTR_RO(data, 0);
+static struct bin_attribute data_attr = __BIN_ATTR_RO(data, 0);
 
-अटल काष्ठा bin_attribute update_attr = __BIN_ATTR_WO(update, 0);
+static struct bin_attribute update_attr = __BIN_ATTR_WO(update, 0);
 
-अटल काष्ठा bin_attribute *secvar_bin_attrs[] = अणु
+static struct bin_attribute *secvar_bin_attrs[] = {
 	&data_attr,
 	&update_attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute *secvar_attrs[] = अणु
+static struct attribute *secvar_attrs[] = {
 	&size_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group secvar_attr_group = अणु
+static const struct attribute_group secvar_attr_group = {
 	.attrs = secvar_attrs,
 	.bin_attrs = secvar_bin_attrs,
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(secvar_attr);
 
-अटल काष्ठा kobj_type secvar_ktype = अणु
+static struct kobj_type secvar_ktype = {
 	.sysfs_ops	= &kobj_sysfs_ops,
-	.शेष_groups = secvar_attr_groups,
-पूर्ण;
+	.default_groups = secvar_attr_groups,
+};
 
-अटल पूर्णांक update_kobj_size(व्योम)
-अणु
+static int update_kobj_size(void)
+{
 
-	काष्ठा device_node *node;
+	struct device_node *node;
 	u64 varsize;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	node = of_find_compatible_node(शून्य, शून्य, "ibm,secvar-backend");
-	अगर (!of_device_is_available(node)) अणु
+	node = of_find_compatible_node(NULL, NULL, "ibm,secvar-backend");
+	if (!of_device_is_available(node)) {
 		rc = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = of_property_पढ़ो_u64(node, "max-var-size", &varsize);
-	अगर (rc)
-		जाओ out;
+	rc = of_property_read_u64(node, "max-var-size", &varsize);
+	if (rc)
+		goto out;
 
 	data_attr.size = varsize;
 	update_attr.size = varsize;
@@ -159,91 +158,91 @@ __ATTRIBUTE_GROUPS(secvar_attr);
 out:
 	of_node_put(node);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक secvar_sysfs_load(व्योम)
-अणु
-	अक्षर *name;
-	uपूर्णांक64_t namesize = 0;
-	काष्ठा kobject *kobj;
-	पूर्णांक rc;
+static int secvar_sysfs_load(void)
+{
+	char *name;
+	uint64_t namesize = 0;
+	struct kobject *kobj;
+	int rc;
 
 	name = kzalloc(NAME_MAX_SIZE, GFP_KERNEL);
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
-	करो अणु
+	do {
 		rc = secvar_ops->get_next(name, &namesize, NAME_MAX_SIZE);
-		अगर (rc) अणु
-			अगर (rc != -ENOENT)
+		if (rc) {
+			if (rc != -ENOENT)
 				pr_err("error getting secvar from firmware %d\n",
 				       rc);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		kobj = kzalloc(माप(*kobj), GFP_KERNEL);
-		अगर (!kobj) अणु
+		kobj = kzalloc(sizeof(*kobj), GFP_KERNEL);
+		if (!kobj) {
 			rc = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		kobject_init(kobj, &secvar_ktype);
 
 		rc = kobject_add(kobj, &secvar_kset->kobj, "%s", name);
-		अगर (rc) अणु
+		if (rc) {
 			pr_warn("kobject_add error %d for attribute: %s\n", rc,
 				name);
 			kobject_put(kobj);
-			kobj = शून्य;
-		पूर्ण
+			kobj = NULL;
+		}
 
-		अगर (kobj)
+		if (kobj)
 			kobject_uevent(kobj, KOBJ_ADD);
 
-	पूर्ण जबतक (!rc);
+	} while (!rc);
 
-	kमुक्त(name);
-	वापस rc;
-पूर्ण
+	kfree(name);
+	return rc;
+}
 
-अटल पूर्णांक secvar_sysfs_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int secvar_sysfs_init(void)
+{
+	int rc;
 
-	अगर (!secvar_ops) अणु
+	if (!secvar_ops) {
 		pr_warn("secvar: failed to retrieve secvar operations.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	secvar_kobj = kobject_create_and_add("secvar", firmware_kobj);
-	अगर (!secvar_kobj) अणु
+	if (!secvar_kobj) {
 		pr_err("secvar: Failed to create firmware kobj\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rc = sysfs_create_file(secvar_kobj, &क्रमmat_attr.attr);
-	अगर (rc) अणु
+	rc = sysfs_create_file(secvar_kobj, &format_attr.attr);
+	if (rc) {
 		kobject_put(secvar_kobj);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	secvar_kset = kset_create_and_add("vars", शून्य, secvar_kobj);
-	अगर (!secvar_kset) अणु
+	secvar_kset = kset_create_and_add("vars", NULL, secvar_kobj);
+	if (!secvar_kset) {
 		pr_err("secvar: sysfs kobject registration failed.\n");
 		kobject_put(secvar_kobj);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	rc = update_kobj_size();
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("Cannot read the size of the attribute\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	secvar_sysfs_load();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(secvar_sysfs_init);

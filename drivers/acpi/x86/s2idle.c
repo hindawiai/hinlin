@@ -1,369 +1,368 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Architecture-specअगरic ACPI-based support क्रम suspend-to-idle.
+ * Architecture-specific ACPI-based support for suspend-to-idle.
  *
- * Author: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
- * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.पूर्णांकel.com>
+ * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  * Author: Shyam Sundar S K <Shyam-sundar.S-k@amd.com>
  *
- * On platक्रमms supporting the Low Power S0 Idle पूर्णांकerface there is an ACPI
+ * On platforms supporting the Low Power S0 Idle interface there is an ACPI
  * device object with the PNP0D80 compatible device ID (System Power Management
- * Controller) and a specअगरic _DSM method under it.  That method, अगर present,
- * can be used to indicate to the platक्रमm that the OS is transitioning पूर्णांकo a
- * low-घातer state in which certain types of activity are not desirable or that
- * it is leaving such a state, which allows the platक्रमm to adjust its operation
+ * Controller) and a specific _DSM method under it.  That method, if present,
+ * can be used to indicate to the platform that the OS is transitioning into a
+ * low-power state in which certain types of activity are not desirable or that
+ * it is leaving such a state, which allows the platform to adjust its operation
  * mode accordingly.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/device.h>
-#समावेश <linux/suspend.h>
+#include <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/suspend.h>
 
-#समावेश "../sleep.h"
+#include "../sleep.h"
 
-#अगर_घोषित CONFIG_SUSPEND
+#ifdef CONFIG_SUSPEND
 
-अटल bool sleep_no_lps0 __पढ़ो_mostly;
+static bool sleep_no_lps0 __read_mostly;
 module_param(sleep_no_lps0, bool, 0644);
 MODULE_PARM_DESC(sleep_no_lps0, "Do not use the special LPS0 device interface");
 
-अटल स्थिर काष्ठा acpi_device_id lps0_device_ids[] = अणु
-	अणु"PNP0D80", पूर्ण,
-	अणु"", पूर्ण,
-पूर्ण;
+static const struct acpi_device_id lps0_device_ids[] = {
+	{"PNP0D80", },
+	{"", },
+};
 
-#घोषणा ACPI_LPS0_DSM_UUID	"c4eb40a0-6cd2-11e2-bcfd-0800200c9a66"
+#define ACPI_LPS0_DSM_UUID	"c4eb40a0-6cd2-11e2-bcfd-0800200c9a66"
 
-#घोषणा ACPI_LPS0_GET_DEVICE_CONSTRAINTS	1
-#घोषणा ACPI_LPS0_SCREEN_OFF	3
-#घोषणा ACPI_LPS0_SCREEN_ON	4
-#घोषणा ACPI_LPS0_ENTRY		5
-#घोषणा ACPI_LPS0_EXIT		6
+#define ACPI_LPS0_GET_DEVICE_CONSTRAINTS	1
+#define ACPI_LPS0_SCREEN_OFF	3
+#define ACPI_LPS0_SCREEN_ON	4
+#define ACPI_LPS0_ENTRY		5
+#define ACPI_LPS0_EXIT		6
 
 /* AMD */
-#घोषणा ACPI_LPS0_DSM_UUID_AMD      "e3f32452-febc-43ce-9039-932122d37721"
-#घोषणा ACPI_LPS0_SCREEN_OFF_AMD    4
-#घोषणा ACPI_LPS0_SCREEN_ON_AMD     5
+#define ACPI_LPS0_DSM_UUID_AMD      "e3f32452-febc-43ce-9039-932122d37721"
+#define ACPI_LPS0_SCREEN_OFF_AMD    4
+#define ACPI_LPS0_SCREEN_ON_AMD     5
 
-अटल acpi_handle lps0_device_handle;
-अटल guid_t lps0_dsm_guid;
-अटल अक्षर lps0_dsm_func_mask;
+static acpi_handle lps0_device_handle;
+static guid_t lps0_dsm_guid;
+static char lps0_dsm_func_mask;
 
-/* Device स्थिरraपूर्णांक entry काष्ठाure */
-काष्ठा lpi_device_info अणु
-	अक्षर *name;
-	पूर्णांक enabled;
-	जोड़ acpi_object *package;
-पूर्ण;
+/* Device constraint entry structure */
+struct lpi_device_info {
+	char *name;
+	int enabled;
+	union acpi_object *package;
+};
 
-/* Constraपूर्णांक package काष्ठाure */
-काष्ठा lpi_device_स्थिरraपूर्णांक अणु
-	पूर्णांक uid;
-	पूर्णांक min_dstate;
-	पूर्णांक function_states;
-पूर्ण;
+/* Constraint package structure */
+struct lpi_device_constraint {
+	int uid;
+	int min_dstate;
+	int function_states;
+};
 
-काष्ठा lpi_स्थिरraपूर्णांकs अणु
+struct lpi_constraints {
 	acpi_handle handle;
-	पूर्णांक min_dstate;
-पूर्ण;
+	int min_dstate;
+};
 
 /* AMD */
-/* Device स्थिरraपूर्णांक entry काष्ठाure */
-काष्ठा lpi_device_info_amd अणु
-	पूर्णांक revision;
-	पूर्णांक count;
-	जोड़ acpi_object *package;
-पूर्ण;
+/* Device constraint entry structure */
+struct lpi_device_info_amd {
+	int revision;
+	int count;
+	union acpi_object *package;
+};
 
-/* Constraपूर्णांक package काष्ठाure */
-काष्ठा lpi_device_स्थिरraपूर्णांक_amd अणु
-	अक्षर *name;
-	पूर्णांक enabled;
-	पूर्णांक function_states;
-	पूर्णांक min_dstate;
-पूर्ण;
+/* Constraint package structure */
+struct lpi_device_constraint_amd {
+	char *name;
+	int enabled;
+	int function_states;
+	int min_dstate;
+};
 
-अटल काष्ठा lpi_स्थिरraपूर्णांकs *lpi_स्थिरraपूर्णांकs_table;
-अटल पूर्णांक lpi_स्थिरraपूर्णांकs_table_size;
-अटल पूर्णांक rev_id;
+static struct lpi_constraints *lpi_constraints_table;
+static int lpi_constraints_table_size;
+static int rev_id;
 
-अटल व्योम lpi_device_get_स्थिरraपूर्णांकs_amd(व्योम)
-अणु
-	जोड़ acpi_object *out_obj;
-	पूर्णांक i, j, k;
+static void lpi_device_get_constraints_amd(void)
+{
+	union acpi_object *out_obj;
+	int i, j, k;
 
 	out_obj = acpi_evaluate_dsm_typed(lps0_device_handle, &lps0_dsm_guid,
 					  1, ACPI_LPS0_GET_DEVICE_CONSTRAINTS,
-					  शून्य, ACPI_TYPE_PACKAGE);
+					  NULL, ACPI_TYPE_PACKAGE);
 
-	अगर (!out_obj)
-		वापस;
+	if (!out_obj)
+		return;
 
 	acpi_handle_debug(lps0_device_handle, "_DSM function 1 eval %s\n",
 			  out_obj ? "successful" : "failed");
 
-	क्रम (i = 0; i < out_obj->package.count; i++) अणु
-		जोड़ acpi_object *package = &out_obj->package.elements[i];
+	for (i = 0; i < out_obj->package.count; i++) {
+		union acpi_object *package = &out_obj->package.elements[i];
 
-		अगर (package->type == ACPI_TYPE_PACKAGE) अणु
-			lpi_स्थिरraपूर्णांकs_table = kसुस्मृति(package->package.count,
-							माप(*lpi_स्थिरraपूर्णांकs_table),
+		if (package->type == ACPI_TYPE_PACKAGE) {
+			lpi_constraints_table = kcalloc(package->package.count,
+							sizeof(*lpi_constraints_table),
 							GFP_KERNEL);
 
-			अगर (!lpi_स्थिरraपूर्णांकs_table)
-				जाओ मुक्त_acpi_buffer;
+			if (!lpi_constraints_table)
+				goto free_acpi_buffer;
 
 			acpi_handle_debug(lps0_device_handle,
 					  "LPI: constraints list begin:\n");
 
-			क्रम (j = 0; j < package->package.count; ++j) अणु
-				जोड़ acpi_object *info_obj = &package->package.elements[j];
-				काष्ठा lpi_device_स्थिरraपूर्णांक_amd dev_info = अणुपूर्ण;
-				काष्ठा lpi_स्थिरraपूर्णांकs *list;
+			for (j = 0; j < package->package.count; ++j) {
+				union acpi_object *info_obj = &package->package.elements[j];
+				struct lpi_device_constraint_amd dev_info = {};
+				struct lpi_constraints *list;
 				acpi_status status;
 
-				क्रम (k = 0; k < info_obj->package.count; ++k) अणु
-					जोड़ acpi_object *obj = &info_obj->package.elements[k];
+				for (k = 0; k < info_obj->package.count; ++k) {
+					union acpi_object *obj = &info_obj->package.elements[k];
 
-					list = &lpi_स्थिरraपूर्णांकs_table[lpi_स्थिरraपूर्णांकs_table_size];
+					list = &lpi_constraints_table[lpi_constraints_table_size];
 					list->min_dstate = -1;
 
-					चयन (k) अणु
-					हाल 0:
-						dev_info.enabled = obj->पूर्णांकeger.value;
-						अवरोध;
-					हाल 1:
-						dev_info.name = obj->string.poपूर्णांकer;
-						अवरोध;
-					हाल 2:
-						dev_info.function_states = obj->पूर्णांकeger.value;
-						अवरोध;
-					हाल 3:
-						dev_info.min_dstate = obj->पूर्णांकeger.value;
-						अवरोध;
-					पूर्ण
+					switch (k) {
+					case 0:
+						dev_info.enabled = obj->integer.value;
+						break;
+					case 1:
+						dev_info.name = obj->string.pointer;
+						break;
+					case 2:
+						dev_info.function_states = obj->integer.value;
+						break;
+					case 3:
+						dev_info.min_dstate = obj->integer.value;
+						break;
+					}
 
-					अगर (!dev_info.enabled || !dev_info.name ||
+					if (!dev_info.enabled || !dev_info.name ||
 					    !dev_info.min_dstate)
-						जारी;
+						continue;
 
-					status = acpi_get_handle(शून्य, dev_info.name,
+					status = acpi_get_handle(NULL, dev_info.name,
 								 &list->handle);
-					अगर (ACPI_FAILURE(status))
-						जारी;
+					if (ACPI_FAILURE(status))
+						continue;
 
 					acpi_handle_debug(lps0_device_handle,
 							  "Name:%s\n", dev_info.name);
 
 					list->min_dstate = dev_info.min_dstate;
 
-					अगर (list->min_dstate < 0) अणु
+					if (list->min_dstate < 0) {
 						acpi_handle_debug(lps0_device_handle,
 								  "Incomplete constraint defined\n");
-						जारी;
-					पूर्ण
-				पूर्ण
-				lpi_स्थिरraपूर्णांकs_table_size++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+						continue;
+					}
+				}
+				lpi_constraints_table_size++;
+			}
+		}
+	}
 
 	acpi_handle_debug(lps0_device_handle, "LPI: constraints list end\n");
 
-मुक्त_acpi_buffer:
+free_acpi_buffer:
 	ACPI_FREE(out_obj);
-पूर्ण
+}
 
-अटल व्योम lpi_device_get_स्थिरraपूर्णांकs(व्योम)
-अणु
-	जोड़ acpi_object *out_obj;
-	पूर्णांक i;
+static void lpi_device_get_constraints(void)
+{
+	union acpi_object *out_obj;
+	int i;
 
 	out_obj = acpi_evaluate_dsm_typed(lps0_device_handle, &lps0_dsm_guid,
 					  1, ACPI_LPS0_GET_DEVICE_CONSTRAINTS,
-					  शून्य, ACPI_TYPE_PACKAGE);
+					  NULL, ACPI_TYPE_PACKAGE);
 
 	acpi_handle_debug(lps0_device_handle, "_DSM function 1 eval %s\n",
 			  out_obj ? "successful" : "failed");
 
-	अगर (!out_obj)
-		वापस;
+	if (!out_obj)
+		return;
 
-	lpi_स्थिरraपूर्णांकs_table = kसुस्मृति(out_obj->package.count,
-					माप(*lpi_स्थिरraपूर्णांकs_table),
+	lpi_constraints_table = kcalloc(out_obj->package.count,
+					sizeof(*lpi_constraints_table),
 					GFP_KERNEL);
-	अगर (!lpi_स्थिरraपूर्णांकs_table)
-		जाओ मुक्त_acpi_buffer;
+	if (!lpi_constraints_table)
+		goto free_acpi_buffer;
 
 	acpi_handle_debug(lps0_device_handle, "LPI: constraints list begin:\n");
 
-	क्रम (i = 0; i < out_obj->package.count; i++) अणु
-		काष्ठा lpi_स्थिरraपूर्णांकs *स्थिरraपूर्णांक;
+	for (i = 0; i < out_obj->package.count; i++) {
+		struct lpi_constraints *constraint;
 		acpi_status status;
-		जोड़ acpi_object *package = &out_obj->package.elements[i];
-		काष्ठा lpi_device_info info = अणु पूर्ण;
-		पूर्णांक package_count = 0, j;
+		union acpi_object *package = &out_obj->package.elements[i];
+		struct lpi_device_info info = { };
+		int package_count = 0, j;
 
-		अगर (!package)
-			जारी;
+		if (!package)
+			continue;
 
-		क्रम (j = 0; j < package->package.count; ++j) अणु
-			जोड़ acpi_object *element =
+		for (j = 0; j < package->package.count; ++j) {
+			union acpi_object *element =
 					&(package->package.elements[j]);
 
-			चयन (element->type) अणु
-			हाल ACPI_TYPE_INTEGER:
-				info.enabled = element->पूर्णांकeger.value;
-				अवरोध;
-			हाल ACPI_TYPE_STRING:
-				info.name = element->string.poपूर्णांकer;
-				अवरोध;
-			हाल ACPI_TYPE_PACKAGE:
+			switch (element->type) {
+			case ACPI_TYPE_INTEGER:
+				info.enabled = element->integer.value;
+				break;
+			case ACPI_TYPE_STRING:
+				info.name = element->string.pointer;
+				break;
+			case ACPI_TYPE_PACKAGE:
 				package_count = element->package.count;
 				info.package = element->package.elements;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!info.enabled || !info.package || !info.name)
-			जारी;
+		if (!info.enabled || !info.package || !info.name)
+			continue;
 
-		स्थिरraपूर्णांक = &lpi_स्थिरraपूर्णांकs_table[lpi_स्थिरraपूर्णांकs_table_size];
+		constraint = &lpi_constraints_table[lpi_constraints_table_size];
 
-		status = acpi_get_handle(शून्य, info.name, &स्थिरraपूर्णांक->handle);
-		अगर (ACPI_FAILURE(status))
-			जारी;
+		status = acpi_get_handle(NULL, info.name, &constraint->handle);
+		if (ACPI_FAILURE(status))
+			continue;
 
 		acpi_handle_debug(lps0_device_handle,
 				  "index:%d Name:%s\n", i, info.name);
 
-		स्थिरraपूर्णांक->min_dstate = -1;
+		constraint->min_dstate = -1;
 
-		क्रम (j = 0; j < package_count; ++j) अणु
-			जोड़ acpi_object *info_obj = &info.package[j];
-			जोड़ acpi_object *cnstr_pkg;
-			जोड़ acpi_object *obj;
-			काष्ठा lpi_device_स्थिरraपूर्णांक dev_info;
+		for (j = 0; j < package_count; ++j) {
+			union acpi_object *info_obj = &info.package[j];
+			union acpi_object *cnstr_pkg;
+			union acpi_object *obj;
+			struct lpi_device_constraint dev_info;
 
-			चयन (info_obj->type) अणु
-			हाल ACPI_TYPE_INTEGER:
+			switch (info_obj->type) {
+			case ACPI_TYPE_INTEGER:
 				/* version */
-				अवरोध;
-			हाल ACPI_TYPE_PACKAGE:
-				अगर (info_obj->package.count < 2)
-					अवरोध;
+				break;
+			case ACPI_TYPE_PACKAGE:
+				if (info_obj->package.count < 2)
+					break;
 
 				cnstr_pkg = info_obj->package.elements;
 				obj = &cnstr_pkg[0];
-				dev_info.uid = obj->पूर्णांकeger.value;
+				dev_info.uid = obj->integer.value;
 				obj = &cnstr_pkg[1];
-				dev_info.min_dstate = obj->पूर्णांकeger.value;
+				dev_info.min_dstate = obj->integer.value;
 
 				acpi_handle_debug(lps0_device_handle,
 					"uid:%d min_dstate:%s\n",
 					dev_info.uid,
-					acpi_घातer_state_string(dev_info.min_dstate));
+					acpi_power_state_string(dev_info.min_dstate));
 
-				स्थिरraपूर्णांक->min_dstate = dev_info.min_dstate;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				constraint->min_dstate = dev_info.min_dstate;
+				break;
+			}
+		}
 
-		अगर (स्थिरraपूर्णांक->min_dstate < 0) अणु
+		if (constraint->min_dstate < 0) {
 			acpi_handle_debug(lps0_device_handle,
 					  "Incomplete constraint defined\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		lpi_स्थिरraपूर्णांकs_table_size++;
-	पूर्ण
+		lpi_constraints_table_size++;
+	}
 
 	acpi_handle_debug(lps0_device_handle, "LPI: constraints list end\n");
 
-मुक्त_acpi_buffer:
+free_acpi_buffer:
 	ACPI_FREE(out_obj);
-पूर्ण
+}
 
-अटल व्योम lpi_check_स्थिरraपूर्णांकs(व्योम)
-अणु
-	पूर्णांक i;
+static void lpi_check_constraints(void)
+{
+	int i;
 
-	क्रम (i = 0; i < lpi_स्थिरraपूर्णांकs_table_size; ++i) अणु
-		acpi_handle handle = lpi_स्थिरraपूर्णांकs_table[i].handle;
-		काष्ठा acpi_device *adev;
+	for (i = 0; i < lpi_constraints_table_size; ++i) {
+		acpi_handle handle = lpi_constraints_table[i].handle;
+		struct acpi_device *adev;
 
-		अगर (!handle || acpi_bus_get_device(handle, &adev))
-			जारी;
+		if (!handle || acpi_bus_get_device(handle, &adev))
+			continue;
 
 		acpi_handle_debug(handle,
 			"LPI: required min power state:%s current power state:%s\n",
-			acpi_घातer_state_string(lpi_स्थिरraपूर्णांकs_table[i].min_dstate),
-			acpi_घातer_state_string(adev->घातer.state));
+			acpi_power_state_string(lpi_constraints_table[i].min_dstate),
+			acpi_power_state_string(adev->power.state));
 
-		अगर (!adev->flags.घातer_manageable) अणु
+		if (!adev->flags.power_manageable) {
 			acpi_handle_info(handle, "LPI: Device not power manageable\n");
-			lpi_स्थिरraपूर्णांकs_table[i].handle = शून्य;
-			जारी;
-		पूर्ण
+			lpi_constraints_table[i].handle = NULL;
+			continue;
+		}
 
-		अगर (adev->घातer.state < lpi_स्थिरraपूर्णांकs_table[i].min_dstate)
+		if (adev->power.state < lpi_constraints_table[i].min_dstate)
 			acpi_handle_info(handle,
 				"LPI: Constraint not met; min power state:%s current power state:%s\n",
-				acpi_घातer_state_string(lpi_स्थिरraपूर्णांकs_table[i].min_dstate),
-				acpi_घातer_state_string(adev->घातer.state));
-	पूर्ण
-पूर्ण
+				acpi_power_state_string(lpi_constraints_table[i].min_dstate),
+				acpi_power_state_string(adev->power.state));
+	}
+}
 
-अटल व्योम acpi_sleep_run_lps0_dsm(अचिन्हित पूर्णांक func)
-अणु
-	जोड़ acpi_object *out_obj;
+static void acpi_sleep_run_lps0_dsm(unsigned int func)
+{
+	union acpi_object *out_obj;
 
-	अगर (!(lps0_dsm_func_mask & (1 << func)))
-		वापस;
+	if (!(lps0_dsm_func_mask & (1 << func)))
+		return;
 
-	out_obj = acpi_evaluate_dsm(lps0_device_handle, &lps0_dsm_guid, rev_id, func, शून्य);
+	out_obj = acpi_evaluate_dsm(lps0_device_handle, &lps0_dsm_guid, rev_id, func, NULL);
 	ACPI_FREE(out_obj);
 
 	acpi_handle_debug(lps0_device_handle, "_DSM function %u evaluation %s\n",
 			  func, out_obj ? "successful" : "failed");
-पूर्ण
+}
 
-अटल bool acpi_s2idle_venकरोr_amd(व्योम)
-अणु
-	वापस boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD;
-पूर्ण
+static bool acpi_s2idle_vendor_amd(void)
+{
+	return boot_cpu_data.x86_vendor == X86_VENDOR_AMD;
+}
 
-अटल पूर्णांक lps0_device_attach(काष्ठा acpi_device *adev,
-			      स्थिर काष्ठा acpi_device_id *not_used)
-अणु
-	जोड़ acpi_object *out_obj;
+static int lps0_device_attach(struct acpi_device *adev,
+			      const struct acpi_device_id *not_used)
+{
+	union acpi_object *out_obj;
 
-	अगर (lps0_device_handle)
-		वापस 0;
+	if (lps0_device_handle)
+		return 0;
 
-	अगर (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
-		वापस 0;
+	if (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
+		return 0;
 
-	अगर (acpi_s2idle_venकरोr_amd()) अणु
+	if (acpi_s2idle_vendor_amd()) {
 		guid_parse(ACPI_LPS0_DSM_UUID_AMD, &lps0_dsm_guid);
-		out_obj = acpi_evaluate_dsm(adev->handle, &lps0_dsm_guid, 0, 0, शून्य);
+		out_obj = acpi_evaluate_dsm(adev->handle, &lps0_dsm_guid, 0, 0, NULL);
 		rev_id = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		guid_parse(ACPI_LPS0_DSM_UUID, &lps0_dsm_guid);
-		out_obj = acpi_evaluate_dsm(adev->handle, &lps0_dsm_guid, 1, 0, शून्य);
+		out_obj = acpi_evaluate_dsm(adev->handle, &lps0_dsm_guid, 1, 0, NULL);
 		rev_id = 1;
-	पूर्ण
+	}
 
-	/* Check अगर the _DSM is present and as expected. */
-	अगर (!out_obj || out_obj->type != ACPI_TYPE_BUFFER) अणु
+	/* Check if the _DSM is present and as expected. */
+	if (!out_obj || out_obj->type != ACPI_TYPE_BUFFER) {
 		acpi_handle_debug(adev->handle,
 				  "_DSM function 0 evaluation failed\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	lps0_dsm_func_mask = *(अक्षर *)out_obj->buffer.poपूर्णांकer;
+	lps0_dsm_func_mask = *(char *)out_obj->buffer.pointer;
 
 	ACPI_FREE(out_obj);
 
@@ -372,65 +371,65 @@ MODULE_PARM_DESC(sleep_no_lps0, "Do not use the special LPS0 device interface");
 
 	lps0_device_handle = adev->handle;
 
-	अगर (acpi_s2idle_venकरोr_amd())
-		lpi_device_get_स्थिरraपूर्णांकs_amd();
-	अन्यथा
-		lpi_device_get_स्थिरraपूर्णांकs();
+	if (acpi_s2idle_vendor_amd())
+		lpi_device_get_constraints_amd();
+	else
+		lpi_device_get_constraints();
 
 	/*
-	 * Use suspend-to-idle by शेष अगर the शेष suspend mode was not
+	 * Use suspend-to-idle by default if the default suspend mode was not
 	 * set from the command line.
 	 */
-	अगर (mem_sleep_शेष > PM_SUSPEND_MEM && !acpi_sleep_शेष_s3)
+	if (mem_sleep_default > PM_SUSPEND_MEM && !acpi_sleep_default_s3)
 		mem_sleep_current = PM_SUSPEND_TO_IDLE;
 
 	/*
-	 * Some LPS0 प्रणालीs, like ASUS Zenbook UX430UNR/i7-8550U, require the
-	 * EC GPE to be enabled जबतक suspended क्रम certain wakeup devices to
+	 * Some LPS0 systems, like ASUS Zenbook UX430UNR/i7-8550U, require the
+	 * EC GPE to be enabled while suspended for certain wakeup devices to
 	 * work, so mark it as wakeup-capable.
 	 */
-	acpi_ec_mark_gpe_क्रम_wake();
+	acpi_ec_mark_gpe_for_wake();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा acpi_scan_handler lps0_handler = अणु
+static struct acpi_scan_handler lps0_handler = {
 	.ids = lps0_device_ids,
 	.attach = lps0_device_attach,
-पूर्ण;
+};
 
-पूर्णांक acpi_s2idle_prepare_late(व्योम)
-अणु
-	अगर (!lps0_device_handle || sleep_no_lps0)
-		वापस 0;
+int acpi_s2idle_prepare_late(void)
+{
+	if (!lps0_device_handle || sleep_no_lps0)
+		return 0;
 
-	अगर (pm_debug_messages_on)
-		lpi_check_स्थिरraपूर्णांकs();
+	if (pm_debug_messages_on)
+		lpi_check_constraints();
 
-	अगर (acpi_s2idle_venकरोr_amd()) अणु
+	if (acpi_s2idle_vendor_amd()) {
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_SCREEN_OFF_AMD);
-	पूर्ण अन्यथा अणु
+	} else {
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_SCREEN_OFF);
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_ENTRY);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम acpi_s2idle_restore_early(व्योम)
-अणु
-	अगर (!lps0_device_handle || sleep_no_lps0)
-		वापस;
+void acpi_s2idle_restore_early(void)
+{
+	if (!lps0_device_handle || sleep_no_lps0)
+		return;
 
-	अगर (acpi_s2idle_venकरोr_amd()) अणु
+	if (acpi_s2idle_vendor_amd()) {
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_SCREEN_ON_AMD);
-	पूर्ण अन्यथा अणु
+	} else {
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_EXIT);
 		acpi_sleep_run_lps0_dsm(ACPI_LPS0_SCREEN_ON);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा platक्रमm_s2idle_ops acpi_s2idle_ops_lps0 = अणु
+static const struct platform_s2idle_ops acpi_s2idle_ops_lps0 = {
 	.begin = acpi_s2idle_begin,
 	.prepare = acpi_s2idle_prepare,
 	.prepare_late = acpi_s2idle_prepare_late,
@@ -438,12 +437,12 @@ MODULE_PARM_DESC(sleep_no_lps0, "Do not use the special LPS0 device interface");
 	.restore_early = acpi_s2idle_restore_early,
 	.restore = acpi_s2idle_restore,
 	.end = acpi_s2idle_end,
-पूर्ण;
+};
 
-व्योम acpi_s2idle_setup(व्योम)
-अणु
+void acpi_s2idle_setup(void)
+{
 	acpi_scan_add_handler(&lps0_handler);
 	s2idle_set_ops(&acpi_s2idle_ops_lps0);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_SUSPEND */
+#endif /* CONFIG_SUSPEND */

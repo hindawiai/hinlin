@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * UHCI-specअगरic debugging code. Invaluable when something
- * goes wrong, but करोn't get in my face.
+ * UHCI-specific debugging code. Invaluable when something
+ * goes wrong, but don't get in my face.
  *
- * Kernel visible poपूर्णांकers are surrounded in []s and bus
- * visible poपूर्णांकers are surrounded in ()s
+ * Kernel visible pointers are surrounded in []s and bus
+ * visible pointers are surrounded in ()s
  *
  * (C) Copyright 1999 Linus Torvalds
  * (C) Copyright 1999-2001 Johannes Erdfelt
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/debugfs.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/debugfs.h>
+#include <asm/io.h>
 
-#समावेश "uhci-hcd.h"
+#include "uhci-hcd.h"
 
-#घोषणा EXTRA_SPACE	1024
+#define EXTRA_SPACE	1024
 
-अटल काष्ठा dentry *uhci_debugfs_root;
+static struct dentry *uhci_debugfs_root;
 
-#अगर_घोषित CONFIG_DYNAMIC_DEBUG
+#ifdef CONFIG_DYNAMIC_DEBUG
 
-/* Handle REALLY large prपूर्णांकks so we करोn't overflow buffers */
-अटल व्योम lprपूर्णांकk(अक्षर *buf)
-अणु
-	अक्षर *p;
+/* Handle REALLY large printks so we don't overflow buffers */
+static void lprintk(char *buf)
+{
+	char *p;
 
-	/* Just ग_लिखो one line at a समय */
-	जबतक (buf) अणु
-		p = म_अक्षर(buf, '\n');
-		अगर (p)
+	/* Just write one line at a time */
+	while (buf) {
+		p = strchr(buf, '\n');
+		if (p)
 			*p = 0;
-		prपूर्णांकk(KERN_DEBUG "%s\n", buf);
+		printk(KERN_DEBUG "%s\n", buf);
 		buf = p;
-		अगर (buf)
+		if (buf)
 			buf++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक uhci_show_td(काष्ठा uhci_hcd *uhci, काष्ठा uhci_td *td, अक्षर *buf,
-			पूर्णांक len, पूर्णांक space)
-अणु
-	अक्षर *out = buf;
-	अक्षर *spid;
+static int uhci_show_td(struct uhci_hcd *uhci, struct uhci_td *td, char *buf,
+			int len, int space)
+{
+	char *out = buf;
+	char *spid;
 	u32 status, token;
 
 	status = td_status(uhci, td);
-	out += प्र_लिखो(out, "%*s[%p] link (%08x) ", space, "", td,
+	out += sprintf(out, "%*s[%p] link (%08x) ", space, "", td,
 		hc32_to_cpu(uhci, td->link));
-	out += प्र_लिखो(out, "e%d %s%s%s%s%s%s%s%s%s%sLength=%x ",
+	out += sprintf(out, "e%d %s%s%s%s%s%s%s%s%s%sLength=%x ",
 		((status >> 27) & 3),
 		(status & TD_CTRL_SPD) ?      "SPD " : "",
 		(status & TD_CTRL_LS) ?       "LS " : "",
@@ -64,205 +63,205 @@
 		(status & TD_CTRL_CRCTIMEO) ? "CRC/Timeo " : "",
 		(status & TD_CTRL_BITSTUFF) ? "BitStuff " : "",
 		status & 0x7ff);
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
 	token = td_token(uhci, td);
-	चयन (uhci_packetid(token)) अणु
-		हाल USB_PID_SETUP:
+	switch (uhci_packetid(token)) {
+		case USB_PID_SETUP:
 			spid = "SETUP";
-			अवरोध;
-		हाल USB_PID_OUT:
+			break;
+		case USB_PID_OUT:
 			spid = "OUT";
-			अवरोध;
-		हाल USB_PID_IN:
+			break;
+		case USB_PID_IN:
 			spid = "IN";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			spid = "?";
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	out += प्र_लिखो(out, "MaxLen=%x DT%d EndPt=%x Dev=%x, PID=%x(%s) ",
+	out += sprintf(out, "MaxLen=%x DT%d EndPt=%x Dev=%x, PID=%x(%s) ",
 		token >> 21,
 		((token >> 19) & 1),
 		(token >> 15) & 15,
 		(token >> 8) & 127,
 		(token & 0xff),
 		spid);
-	out += प्र_लिखो(out, "(buf=%08x)\n", hc32_to_cpu(uhci, td->buffer));
+	out += sprintf(out, "(buf=%08x)\n", hc32_to_cpu(uhci, td->buffer));
 
-करोne:
-	अगर (out - buf > len)
-		out += प्र_लिखो(out, " ...\n");
-	वापस out - buf;
-पूर्ण
+done:
+	if (out - buf > len)
+		out += sprintf(out, " ...\n");
+	return out - buf;
+}
 
-अटल पूर्णांक uhci_show_urbp(काष्ठा uhci_hcd *uhci, काष्ठा urb_priv *urbp,
-			अक्षर *buf, पूर्णांक len, पूर्णांक space)
-अणु
-	अक्षर *out = buf;
-	काष्ठा uhci_td *td;
-	पूर्णांक i, nactive, ninactive;
-	अक्षर *ptype;
+static int uhci_show_urbp(struct uhci_hcd *uhci, struct urb_priv *urbp,
+			char *buf, int len, int space)
+{
+	char *out = buf;
+	struct uhci_td *td;
+	int i, nactive, ninactive;
+	char *ptype;
 
 
-	out += प्र_लिखो(out, "urb_priv [%p] ", urbp);
-	out += प्र_लिखो(out, "urb [%p] ", urbp->urb);
-	out += प्र_लिखो(out, "qh [%p] ", urbp->qh);
-	out += प्र_लिखो(out, "Dev=%d ", usb_pipedevice(urbp->urb->pipe));
-	out += प्र_लिखो(out, "EP=%x(%s) ", usb_pipeendpoपूर्णांक(urbp->urb->pipe),
+	out += sprintf(out, "urb_priv [%p] ", urbp);
+	out += sprintf(out, "urb [%p] ", urbp->urb);
+	out += sprintf(out, "qh [%p] ", urbp->qh);
+	out += sprintf(out, "Dev=%d ", usb_pipedevice(urbp->urb->pipe));
+	out += sprintf(out, "EP=%x(%s) ", usb_pipeendpoint(urbp->urb->pipe),
 			(usb_pipein(urbp->urb->pipe) ? "IN" : "OUT"));
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	चयन (usb_pipetype(urbp->urb->pipe)) अणु
-	हाल PIPE_ISOCHRONOUS: ptype = "ISO"; अवरोध;
-	हाल PIPE_INTERRUPT: ptype = "INT"; अवरोध;
-	हाल PIPE_BULK: ptype = "BLK"; अवरोध;
-	शेष:
-	हाल PIPE_CONTROL: ptype = "CTL"; अवरोध;
-	पूर्ण
+	switch (usb_pipetype(urbp->urb->pipe)) {
+	case PIPE_ISOCHRONOUS: ptype = "ISO"; break;
+	case PIPE_INTERRUPT: ptype = "INT"; break;
+	case PIPE_BULK: ptype = "BLK"; break;
+	default:
+	case PIPE_CONTROL: ptype = "CTL"; break;
+	}
 
-	out += प्र_लिखो(out, "%s%s", ptype, (urbp->fsbr ? " FSBR" : ""));
-	out += प्र_लिखो(out, " Actlen=%d%s", urbp->urb->actual_length,
+	out += sprintf(out, "%s%s", ptype, (urbp->fsbr ? " FSBR" : ""));
+	out += sprintf(out, " Actlen=%d%s", urbp->urb->actual_length,
 			(urbp->qh->type == USB_ENDPOINT_XFER_CONTROL ?
 				"-8" : ""));
 
-	अगर (urbp->urb->unlinked)
-		out += प्र_लिखो(out, " Unlinked=%d", urbp->urb->unlinked);
-	out += प्र_लिखो(out, "\n");
+	if (urbp->urb->unlinked)
+		out += sprintf(out, " Unlinked=%d", urbp->urb->unlinked);
+	out += sprintf(out, "\n");
 
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
 	i = nactive = ninactive = 0;
-	list_क्रम_each_entry(td, &urbp->td_list, list) अणु
-		अगर (urbp->qh->type != USB_ENDPOINT_XFER_ISOC &&
-				(++i <= 10 || debug > 2)) अणु
-			out += प्र_लिखो(out, "%*s%d: ", space + 2, "", i);
+	list_for_each_entry(td, &urbp->td_list, list) {
+		if (urbp->qh->type != USB_ENDPOINT_XFER_ISOC &&
+				(++i <= 10 || debug > 2)) {
+			out += sprintf(out, "%*s%d: ", space + 2, "", i);
 			out += uhci_show_td(uhci, td, out,
 					len - (out - buf), 0);
-			अगर (out - buf > len)
-				जाओ tail;
-		पूर्ण अन्यथा अणु
-			अगर (td_status(uhci, td) & TD_CTRL_ACTIVE)
+			if (out - buf > len)
+				goto tail;
+		} else {
+			if (td_status(uhci, td) & TD_CTRL_ACTIVE)
 				++nactive;
-			अन्यथा
+			else
 				++ninactive;
-		पूर्ण
-	पूर्ण
-	अगर (nactive + ninactive > 0)
-		out += प्र_लिखो(out,
+		}
+	}
+	if (nactive + ninactive > 0)
+		out += sprintf(out,
 				"%*s[skipped %d inactive and %d active TDs]\n",
 				space, "", ninactive, nactive);
-करोne:
-	अगर (out - buf > len)
-		out += प्र_लिखो(out, " ...\n");
+done:
+	if (out - buf > len)
+		out += sprintf(out, " ...\n");
 tail:
-	वापस out - buf;
-पूर्ण
+	return out - buf;
+}
 
-अटल पूर्णांक uhci_show_qh(काष्ठा uhci_hcd *uhci,
-		काष्ठा uhci_qh *qh, अक्षर *buf, पूर्णांक len, पूर्णांक space)
-अणु
-	अक्षर *out = buf;
-	पूर्णांक i, nurbs;
+static int uhci_show_qh(struct uhci_hcd *uhci,
+		struct uhci_qh *qh, char *buf, int len, int space)
+{
+	char *out = buf;
+	int i, nurbs;
 	__hc32 element = qh_element(qh);
-	अक्षर *qtype;
+	char *qtype;
 
-	चयन (qh->type) अणु
-	हाल USB_ENDPOINT_XFER_ISOC: qtype = "ISO"; अवरोध;
-	हाल USB_ENDPOINT_XFER_INT: qtype = "INT"; अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK: qtype = "BLK"; अवरोध;
-	हाल USB_ENDPOINT_XFER_CONTROL: qtype = "CTL"; अवरोध;
-	शेष: qtype = "Skel" ; अवरोध;
-	पूर्ण
+	switch (qh->type) {
+	case USB_ENDPOINT_XFER_ISOC: qtype = "ISO"; break;
+	case USB_ENDPOINT_XFER_INT: qtype = "INT"; break;
+	case USB_ENDPOINT_XFER_BULK: qtype = "BLK"; break;
+	case USB_ENDPOINT_XFER_CONTROL: qtype = "CTL"; break;
+	default: qtype = "Skel" ; break;
+	}
 
-	out += प्र_लिखो(out, "%*s[%p] %s QH link (%08x) element (%08x)\n",
+	out += sprintf(out, "%*s[%p] %s QH link (%08x) element (%08x)\n",
 			space, "", qh, qtype,
 			hc32_to_cpu(uhci, qh->link),
 			hc32_to_cpu(uhci, element));
-	अगर (qh->type == USB_ENDPOINT_XFER_ISOC)
-		out += प्र_लिखो(out,
+	if (qh->type == USB_ENDPOINT_XFER_ISOC)
+		out += sprintf(out,
 				"%*s    period %d phase %d load %d us, frame %x desc [%p]\n",
 				space, "", qh->period, qh->phase, qh->load,
 				qh->iso_frame, qh->iso_packet_desc);
-	अन्यथा अगर (qh->type == USB_ENDPOINT_XFER_INT)
-		out += प्र_लिखो(out, "%*s    period %d phase %d load %d us\n",
+	else if (qh->type == USB_ENDPOINT_XFER_INT)
+		out += sprintf(out, "%*s    period %d phase %d load %d us\n",
 				space, "", qh->period, qh->phase, qh->load);
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	अगर (element & UHCI_PTR_QH(uhci))
-		out += प्र_लिखो(out, "%*s  Element points to QH (bug?)\n", space, "");
+	if (element & UHCI_PTR_QH(uhci))
+		out += sprintf(out, "%*s  Element points to QH (bug?)\n", space, "");
 
-	अगर (element & UHCI_PTR_DEPTH(uhci))
-		out += प्र_लिखो(out, "%*s  Depth traverse\n", space, "");
+	if (element & UHCI_PTR_DEPTH(uhci))
+		out += sprintf(out, "%*s  Depth traverse\n", space, "");
 
-	अगर (element & cpu_to_hc32(uhci, 8))
-		out += प्र_लिखो(out, "%*s  Bit 3 set (bug?)\n", space, "");
+	if (element & cpu_to_hc32(uhci, 8))
+		out += sprintf(out, "%*s  Bit 3 set (bug?)\n", space, "");
 
-	अगर (!(element & ~(UHCI_PTR_QH(uhci) | UHCI_PTR_DEPTH(uhci))))
-		out += प्र_लिखो(out, "%*s  Element is NULL (bug?)\n", space, "");
+	if (!(element & ~(UHCI_PTR_QH(uhci) | UHCI_PTR_DEPTH(uhci))))
+		out += sprintf(out, "%*s  Element is NULL (bug?)\n", space, "");
 
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	अगर (list_empty(&qh->queue)) अणु
-		out += प्र_लिखो(out, "%*s  queue is empty\n", space, "");
-		अगर (qh == uhci->skel_async_qh) अणु
+	if (list_empty(&qh->queue)) {
+		out += sprintf(out, "%*s  queue is empty\n", space, "");
+		if (qh == uhci->skel_async_qh) {
 			out += uhci_show_td(uhci, uhci->term_td, out,
 					len - (out - buf), 0);
-			अगर (out - buf > len)
-				जाओ tail;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा urb_priv *urbp = list_entry(qh->queue.next,
-				काष्ठा urb_priv, node);
-		काष्ठा uhci_td *td = list_entry(urbp->td_list.next,
-				काष्ठा uhci_td, list);
+			if (out - buf > len)
+				goto tail;
+		}
+	} else {
+		struct urb_priv *urbp = list_entry(qh->queue.next,
+				struct urb_priv, node);
+		struct uhci_td *td = list_entry(urbp->td_list.next,
+				struct uhci_td, list);
 
-		अगर (element != LINK_TO_TD(uhci, td))
-			out += प्र_लिखो(out, "%*s Element != First TD\n",
+		if (element != LINK_TO_TD(uhci, td))
+			out += sprintf(out, "%*s Element != First TD\n",
 					space, "");
 		i = nurbs = 0;
-		list_क्रम_each_entry(urbp, &qh->queue, node) अणु
-			अगर (++i <= 10) अणु
+		list_for_each_entry(urbp, &qh->queue, node) {
+			if (++i <= 10) {
 				out += uhci_show_urbp(uhci, urbp, out,
 						len - (out - buf), space + 2);
-				अगर (out - buf > len)
-					जाओ tail;
-			पूर्ण
-			अन्यथा
+				if (out - buf > len)
+					goto tail;
+			}
+			else
 				++nurbs;
-		पूर्ण
-		अगर (nurbs > 0)
-			out += प्र_लिखो(out, "%*s Skipped %d URBs\n",
+		}
+		if (nurbs > 0)
+			out += sprintf(out, "%*s Skipped %d URBs\n",
 					space, "", nurbs);
-	पूर्ण
+	}
 
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	अगर (qh->dummy_td) अणु
-		out += प्र_लिखो(out, "%*s  Dummy TD\n", space, "");
+	if (qh->dummy_td) {
+		out += sprintf(out, "%*s  Dummy TD\n", space, "");
 		out += uhci_show_td(uhci, qh->dummy_td, out,
 				len - (out - buf), 0);
-		अगर (out - buf > len)
-			जाओ tail;
-	पूर्ण
+		if (out - buf > len)
+			goto tail;
+	}
 
-करोne:
-	अगर (out - buf > len)
-		out += प्र_लिखो(out, " ...\n");
+done:
+	if (out - buf > len)
+		out += sprintf(out, " ...\n");
 tail:
-	वापस out - buf;
-पूर्ण
+	return out - buf;
+}
 
-अटल पूर्णांक uhci_show_sc(पूर्णांक port, अचिन्हित लघु status, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "  stat%d     =     %04x  %s%s%s%s%s%s%s%s%s%s\n",
+static int uhci_show_sc(int port, unsigned short status, char *buf)
+{
+	return sprintf(buf, "  stat%d     =     %04x  %s%s%s%s%s%s%s%s%s%s\n",
 		port,
 		status,
 		(status & USBPORTSC_SUSP) ?	" Suspend" : "",
@@ -275,53 +274,53 @@ tail:
 		(status & USBPORTSC_PE) ?	" Enabled" : "",
 		(status & USBPORTSC_CSC) ?	" ConnectChange" : "",
 		(status & USBPORTSC_CCS) ?	" Connected" : "");
-पूर्ण
+}
 
-अटल पूर्णांक uhci_show_root_hub_state(काष्ठा uhci_hcd *uhci, अक्षर *buf)
-अणु
-	अक्षर *rh_state;
+static int uhci_show_root_hub_state(struct uhci_hcd *uhci, char *buf)
+{
+	char *rh_state;
 
-	चयन (uhci->rh_state) अणु
-	    हाल UHCI_RH_RESET:
-		rh_state = "reset";		अवरोध;
-	    हाल UHCI_RH_SUSPENDED:
-		rh_state = "suspended";		अवरोध;
-	    हाल UHCI_RH_AUTO_STOPPED:
-		rh_state = "auto-stopped";	अवरोध;
-	    हाल UHCI_RH_RESUMING:
-		rh_state = "resuming";		अवरोध;
-	    हाल UHCI_RH_SUSPENDING:
-		rh_state = "suspending";	अवरोध;
-	    हाल UHCI_RH_RUNNING:
-		rh_state = "running";		अवरोध;
-	    हाल UHCI_RH_RUNNING_NODEVS:
-		rh_state = "running, no devs";	अवरोध;
-	    शेष:
-		rh_state = "?";			अवरोध;
-	पूर्ण
-	वापस प्र_लिखो(buf, "Root-hub state: %s   FSBR: %d\n",
+	switch (uhci->rh_state) {
+	    case UHCI_RH_RESET:
+		rh_state = "reset";		break;
+	    case UHCI_RH_SUSPENDED:
+		rh_state = "suspended";		break;
+	    case UHCI_RH_AUTO_STOPPED:
+		rh_state = "auto-stopped";	break;
+	    case UHCI_RH_RESUMING:
+		rh_state = "resuming";		break;
+	    case UHCI_RH_SUSPENDING:
+		rh_state = "suspending";	break;
+	    case UHCI_RH_RUNNING:
+		rh_state = "running";		break;
+	    case UHCI_RH_RUNNING_NODEVS:
+		rh_state = "running, no devs";	break;
+	    default:
+		rh_state = "?";			break;
+	}
+	return sprintf(buf, "Root-hub state: %s   FSBR: %d\n",
 			rh_state, uhci->fsbr_is_on);
-पूर्ण
+}
 
-अटल पूर्णांक uhci_show_status(काष्ठा uhci_hcd *uhci, अक्षर *buf, पूर्णांक len)
-अणु
-	अक्षर *out = buf;
-	अचिन्हित लघु usbcmd, usbstat, usbपूर्णांक, usbfrnum;
-	अचिन्हित पूर्णांक flbaseadd;
-	अचिन्हित अक्षर sof;
-	अचिन्हित लघु portsc1, portsc2;
+static int uhci_show_status(struct uhci_hcd *uhci, char *buf, int len)
+{
+	char *out = buf;
+	unsigned short usbcmd, usbstat, usbint, usbfrnum;
+	unsigned int flbaseadd;
+	unsigned char sof;
+	unsigned short portsc1, portsc2;
 
 
-	usbcmd    = uhci_पढ़ोw(uhci, USBCMD);
-	usbstat   = uhci_पढ़ोw(uhci, USBSTS);
-	usbपूर्णांक    = uhci_पढ़ोw(uhci, USBINTR);
-	usbfrnum  = uhci_पढ़ोw(uhci, USBFRNUM);
-	flbaseadd = uhci_पढ़ोl(uhci, USBFLBASEADD);
-	sof       = uhci_पढ़ोb(uhci, USBSOF);
-	portsc1   = uhci_पढ़ोw(uhci, USBPORTSC1);
-	portsc2   = uhci_पढ़ोw(uhci, USBPORTSC2);
+	usbcmd    = uhci_readw(uhci, USBCMD);
+	usbstat   = uhci_readw(uhci, USBSTS);
+	usbint    = uhci_readw(uhci, USBINTR);
+	usbfrnum  = uhci_readw(uhci, USBFRNUM);
+	flbaseadd = uhci_readl(uhci, USBFLBASEADD);
+	sof       = uhci_readb(uhci, USBSOF);
+	portsc1   = uhci_readw(uhci, USBPORTSC1);
+	portsc2   = uhci_readw(uhci, USBPORTSC2);
 
-	out += प्र_लिखो(out, "  usbcmd    =     %04x   %s%s%s%s%s%s%s%s\n",
+	out += sprintf(out, "  usbcmd    =     %04x   %s%s%s%s%s%s%s%s\n",
 		usbcmd,
 		(usbcmd & USBCMD_MAXP) ?    "Maxp64 " : "Maxp32 ",
 		(usbcmd & USBCMD_CF) ?      "CF " : "",
@@ -331,10 +330,10 @@ tail:
 		(usbcmd & USBCMD_GRESET) ?  "GRESET " : "",
 		(usbcmd & USBCMD_HCRESET) ? "HCRESET " : "",
 		(usbcmd & USBCMD_RS) ?      "RS " : "");
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	out += प्र_लिखो(out, "  usbstat   =     %04x   %s%s%s%s%s%s\n",
+	out += sprintf(out, "  usbstat   =     %04x   %s%s%s%s%s%s\n",
 		usbstat,
 		(usbstat & USBSTS_HCH) ?    "HCHalted " : "",
 		(usbstat & USBSTS_HCPE) ?   "HostControllerProcessError " : "",
@@ -342,297 +341,297 @@ tail:
 		(usbstat & USBSTS_RD) ?     "ResumeDetect " : "",
 		(usbstat & USBSTS_ERROR) ?  "USBError " : "",
 		(usbstat & USBSTS_USBINT) ? "USBINT " : "");
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	out += प्र_लिखो(out, "  usbint    =     %04x\n", usbपूर्णांक);
-	out += प्र_लिखो(out, "  usbfrnum  =   (%d)%03x\n", (usbfrnum >> 10) & 1,
-		0xfff & (4*(अचिन्हित पूर्णांक)usbfrnum));
-	out += प्र_लिखो(out, "  flbaseadd = %08x\n", flbaseadd);
-	out += प्र_लिखो(out, "  sof       =       %02x\n", sof);
-	अगर (out - buf > len)
-		जाओ करोne;
+	out += sprintf(out, "  usbint    =     %04x\n", usbint);
+	out += sprintf(out, "  usbfrnum  =   (%d)%03x\n", (usbfrnum >> 10) & 1,
+		0xfff & (4*(unsigned int)usbfrnum));
+	out += sprintf(out, "  flbaseadd = %08x\n", flbaseadd);
+	out += sprintf(out, "  sof       =       %02x\n", sof);
+	if (out - buf > len)
+		goto done;
 
 	out += uhci_show_sc(1, portsc1, out);
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
 	out += uhci_show_sc(2, portsc2, out);
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
-	out += प्र_लिखो(out,
+	out += sprintf(out,
 			"Most recent frame: %x (%d)   Last ISO frame: %x (%d)\n",
 			uhci->frame_number, uhci->frame_number & 1023,
 			uhci->last_iso_frame, uhci->last_iso_frame & 1023);
 
-करोne:
-	अगर (out - buf > len)
-		out += प्र_लिखो(out, " ...\n");
-	वापस out - buf;
-पूर्ण
+done:
+	if (out - buf > len)
+		out += sprintf(out, " ...\n");
+	return out - buf;
+}
 
-अटल पूर्णांक uhci_sprपूर्णांक_schedule(काष्ठा uhci_hcd *uhci, अक्षर *buf, पूर्णांक len)
-अणु
-	अक्षर *out = buf;
-	पूर्णांक i, j;
-	काष्ठा uhci_qh *qh;
-	काष्ठा uhci_td *td;
-	काष्ठा list_head *पंचांगp, *head;
-	पूर्णांक nframes, nerrs;
+static int uhci_sprint_schedule(struct uhci_hcd *uhci, char *buf, int len)
+{
+	char *out = buf;
+	int i, j;
+	struct uhci_qh *qh;
+	struct uhci_td *td;
+	struct list_head *tmp, *head;
+	int nframes, nerrs;
 	__hc32 link;
 	__hc32 fsbr_link;
 
-	अटल स्थिर अक्षर * स्थिर qh_names[] = अणु
+	static const char * const qh_names[] = {
 		"unlink", "iso", "int128", "int64", "int32", "int16",
 		"int8", "int4", "int2", "async", "term"
-	पूर्ण;
+	};
 
 	out += uhci_show_root_hub_state(uhci, out);
-	अगर (out - buf > len)
-		जाओ करोne;
-	out += प्र_लिखो(out, "HC status\n");
+	if (out - buf > len)
+		goto done;
+	out += sprintf(out, "HC status\n");
 	out += uhci_show_status(uhci, out, len - (out - buf));
-	अगर (out - buf > len)
-		जाओ tail;
+	if (out - buf > len)
+		goto tail;
 
-	out += प्र_लिखो(out, "Periodic load table\n");
-	क्रम (i = 0; i < MAX_PHASE; ++i) अणु
-		out += प्र_लिखो(out, "\t%d", uhci->load[i]);
-		अगर (i % 8 == 7)
+	out += sprintf(out, "Periodic load table\n");
+	for (i = 0; i < MAX_PHASE; ++i) {
+		out += sprintf(out, "\t%d", uhci->load[i]);
+		if (i % 8 == 7)
 			*out++ = '\n';
-	पूर्ण
-	out += प्र_लिखो(out, "Total: %d, #INT: %d, #ISO: %d\n",
+	}
+	out += sprintf(out, "Total: %d, #INT: %d, #ISO: %d\n",
 			uhci->total_load,
-			uhci_to_hcd(uhci)->self.bandwidth_पूर्णांक_reqs,
+			uhci_to_hcd(uhci)->self.bandwidth_int_reqs,
 			uhci_to_hcd(uhci)->self.bandwidth_isoc_reqs);
-	अगर (debug <= 1)
-		जाओ tail;
+	if (debug <= 1)
+		goto tail;
 
-	out += प्र_लिखो(out, "Frame List\n");
+	out += sprintf(out, "Frame List\n");
 	nframes = 10;
 	nerrs = 0;
-	क्रम (i = 0; i < UHCI_NUMFRAMES; ++i) अणु
+	for (i = 0; i < UHCI_NUMFRAMES; ++i) {
 		__hc32 qh_dma;
 
-		अगर (out - buf > len)
-			जाओ करोne;
+		if (out - buf > len)
+			goto done;
 		j = 0;
 		td = uhci->frame_cpu[i];
 		link = uhci->frame[i];
-		अगर (!td)
-			जाओ check_link;
+		if (!td)
+			goto check_link;
 
-		अगर (nframes > 0) अणु
-			out += प्र_लिखो(out, "- Frame %d -> (%08x)\n",
+		if (nframes > 0) {
+			out += sprintf(out, "- Frame %d -> (%08x)\n",
 					i, hc32_to_cpu(uhci, link));
 			j = 1;
-		पूर्ण
+		}
 
 		head = &td->fl_list;
-		पंचांगp = head;
-		करो अणु
-			td = list_entry(पंचांगp, काष्ठा uhci_td, fl_list);
-			पंचांगp = पंचांगp->next;
-			अगर (link != LINK_TO_TD(uhci, td)) अणु
-				अगर (nframes > 0) अणु
-					out += प्र_लिखो(out,
+		tmp = head;
+		do {
+			td = list_entry(tmp, struct uhci_td, fl_list);
+			tmp = tmp->next;
+			if (link != LINK_TO_TD(uhci, td)) {
+				if (nframes > 0) {
+					out += sprintf(out,
 						"    link does not match list entry!\n");
-					अगर (out - buf > len)
-						जाओ करोne;
-				पूर्ण अन्यथा
+					if (out - buf > len)
+						goto done;
+				} else
 					++nerrs;
-			पूर्ण
-			अगर (nframes > 0) अणु
+			}
+			if (nframes > 0) {
 				out += uhci_show_td(uhci, td, out,
 						len - (out - buf), 4);
-				अगर (out - buf > len)
-					जाओ tail;
-			पूर्ण
+				if (out - buf > len)
+					goto tail;
+			}
 			link = td->link;
-		पूर्ण जबतक (पंचांगp != head);
+		} while (tmp != head);
 
 check_link:
 		qh_dma = uhci_frame_skel_link(uhci, i);
-		अगर (link != qh_dma) अणु
-			अगर (nframes > 0) अणु
-				अगर (!j) अणु
-					out += प्र_लिखो(out,
+		if (link != qh_dma) {
+			if (nframes > 0) {
+				if (!j) {
+					out += sprintf(out,
 						"- Frame %d -> (%08x)\n",
 						i, hc32_to_cpu(uhci, link));
 					j = 1;
-				पूर्ण
-				out += प्र_लिखो(out,
+				}
+				out += sprintf(out,
 					"   link does not match QH (%08x)!\n",
 					hc32_to_cpu(uhci, qh_dma));
-				अगर (out - buf > len)
-					जाओ करोne;
-			पूर्ण अन्यथा
+				if (out - buf > len)
+					goto done;
+			} else
 				++nerrs;
-		पूर्ण
+		}
 		nframes -= j;
-	पूर्ण
-	अगर (nerrs > 0)
-		out += प्र_लिखो(out, "Skipped %d bad links\n", nerrs);
+	}
+	if (nerrs > 0)
+		out += sprintf(out, "Skipped %d bad links\n", nerrs);
 
-	out += प्र_लिखो(out, "Skeleton QHs\n");
+	out += sprintf(out, "Skeleton QHs\n");
 
-	अगर (out - buf > len)
-		जाओ करोne;
+	if (out - buf > len)
+		goto done;
 
 	fsbr_link = 0;
-	क्रम (i = 0; i < UHCI_NUM_SKELQH; ++i) अणु
-		पूर्णांक cnt = 0;
+	for (i = 0; i < UHCI_NUM_SKELQH; ++i) {
+		int cnt = 0;
 
 		qh = uhci->skelqh[i];
-		out += प्र_लिखो(out, "- skel_%s_qh\n", qh_names[i]);
+		out += sprintf(out, "- skel_%s_qh\n", qh_names[i]);
 		out += uhci_show_qh(uhci, qh, out, len - (out - buf), 4);
-		अगर (out - buf > len)
-			जाओ tail;
+		if (out - buf > len)
+			goto tail;
 
-		/* Last QH is the Terminating QH, it's dअगरferent */
-		अगर (i == SKEL_TERM) अणु
-			अगर (qh_element(qh) != LINK_TO_TD(uhci, uhci->term_td)) अणु
-				out += प्र_लिखो(out,
+		/* Last QH is the Terminating QH, it's different */
+		if (i == SKEL_TERM) {
+			if (qh_element(qh) != LINK_TO_TD(uhci, uhci->term_td)) {
+				out += sprintf(out,
 					"    skel_term_qh element is not set to term_td!\n");
-				अगर (out - buf > len)
-					जाओ करोne;
-			पूर्ण
+				if (out - buf > len)
+					goto done;
+			}
 			link = fsbr_link;
-			अगर (!link)
+			if (!link)
 				link = LINK_TO_QH(uhci, uhci->skel_term_qh);
-			जाओ check_qh_link;
-		पूर्ण
+			goto check_qh_link;
+		}
 
 		head = &qh->node;
-		पंचांगp = head->next;
+		tmp = head->next;
 
-		जबतक (पंचांगp != head) अणु
-			qh = list_entry(पंचांगp, काष्ठा uhci_qh, node);
-			पंचांगp = पंचांगp->next;
-			अगर (++cnt <= 10) अणु
+		while (tmp != head) {
+			qh = list_entry(tmp, struct uhci_qh, node);
+			tmp = tmp->next;
+			if (++cnt <= 10) {
 				out += uhci_show_qh(uhci, qh, out,
 						len - (out - buf), 4);
-				अगर (out - buf > len)
-					जाओ tail;
-			पूर्ण
-			अगर (!fsbr_link && qh->skel >= SKEL_FSBR)
+				if (out - buf > len)
+					goto tail;
+			}
+			if (!fsbr_link && qh->skel >= SKEL_FSBR)
 				fsbr_link = LINK_TO_QH(uhci, qh);
-		पूर्ण
-		अगर ((cnt -= 10) > 0)
-			out += प्र_लिखो(out, "    Skipped %d QHs\n", cnt);
+		}
+		if ((cnt -= 10) > 0)
+			out += sprintf(out, "    Skipped %d QHs\n", cnt);
 
 		link = UHCI_PTR_TERM(uhci);
-		अगर (i <= SKEL_ISO)
+		if (i <= SKEL_ISO)
 			;
-		अन्यथा अगर (i < SKEL_ASYNC)
+		else if (i < SKEL_ASYNC)
 			link = LINK_TO_QH(uhci, uhci->skel_async_qh);
-		अन्यथा अगर (!uhci->fsbr_is_on)
+		else if (!uhci->fsbr_is_on)
 			;
-		अन्यथा
+		else
 			link = LINK_TO_QH(uhci, uhci->skel_term_qh);
 check_qh_link:
-		अगर (qh->link != link)
-			out += प्र_लिखो(out,
+		if (qh->link != link)
+			out += sprintf(out,
 				"    last QH not linked to next skeleton!\n");
 
-		अगर (out - buf > len)
-			जाओ करोne;
-	पूर्ण
+		if (out - buf > len)
+			goto done;
+	}
 
-करोne:
-	अगर (out - buf > len)
-		out += प्र_लिखो(out, " ...\n");
+done:
+	if (out - buf > len)
+		out += sprintf(out, " ...\n");
 tail:
-	वापस out - buf;
-पूर्ण
+	return out - buf;
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-#घोषणा MAX_OUTPUT	(64 * 1024)
+#define MAX_OUTPUT	(64 * 1024)
 
-काष्ठा uhci_debug अणु
-	पूर्णांक size;
-	अक्षर *data;
-पूर्ण;
+struct uhci_debug {
+	int size;
+	char *data;
+};
 
-अटल पूर्णांक uhci_debug_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा uhci_hcd *uhci = inode->i_निजी;
-	काष्ठा uhci_debug *up;
-	अचिन्हित दीर्घ flags;
+static int uhci_debug_open(struct inode *inode, struct file *file)
+{
+	struct uhci_hcd *uhci = inode->i_private;
+	struct uhci_debug *up;
+	unsigned long flags;
 
-	up = kदो_स्मृति(माप(*up), GFP_KERNEL);
-	अगर (!up)
-		वापस -ENOMEM;
+	up = kmalloc(sizeof(*up), GFP_KERNEL);
+	if (!up)
+		return -ENOMEM;
 
-	up->data = kदो_स्मृति(MAX_OUTPUT, GFP_KERNEL);
-	अगर (!up->data) अणु
-		kमुक्त(up);
-		वापस -ENOMEM;
-	पूर्ण
+	up->data = kmalloc(MAX_OUTPUT, GFP_KERNEL);
+	if (!up->data) {
+		kfree(up);
+		return -ENOMEM;
+	}
 
 	up->size = 0;
 	spin_lock_irqsave(&uhci->lock, flags);
-	अगर (uhci->is_initialized)
-		up->size = uhci_sprपूर्णांक_schedule(uhci, up->data,
+	if (uhci->is_initialized)
+		up->size = uhci_sprint_schedule(uhci, up->data,
 					MAX_OUTPUT - EXTRA_SPACE);
 	spin_unlock_irqrestore(&uhci->lock, flags);
 
-	file->निजी_data = up;
+	file->private_data = up;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल loff_t uhci_debug_lseek(काष्ठा file *file, loff_t off, पूर्णांक whence)
-अणु
-	काष्ठा uhci_debug *up = file->निजी_data;
-	वापस no_seek_end_llseek_size(file, off, whence, up->size);
-पूर्ण
+static loff_t uhci_debug_lseek(struct file *file, loff_t off, int whence)
+{
+	struct uhci_debug *up = file->private_data;
+	return no_seek_end_llseek_size(file, off, whence, up->size);
+}
 
-अटल sमाप_प्रकार uhci_debug_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा uhci_debug *up = file->निजी_data;
-	वापस simple_पढ़ो_from_buffer(buf, nbytes, ppos, up->data, up->size);
-पूर्ण
+static ssize_t uhci_debug_read(struct file *file, char __user *buf,
+				size_t nbytes, loff_t *ppos)
+{
+	struct uhci_debug *up = file->private_data;
+	return simple_read_from_buffer(buf, nbytes, ppos, up->data, up->size);
+}
 
-अटल पूर्णांक uhci_debug_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा uhci_debug *up = file->निजी_data;
+static int uhci_debug_release(struct inode *inode, struct file *file)
+{
+	struct uhci_debug *up = file->private_data;
 
-	kमुक्त(up->data);
-	kमुक्त(up);
+	kfree(up->data);
+	kfree(up);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations uhci_debug_operations = अणु
+static const struct file_operations uhci_debug_operations = {
 	.owner =	THIS_MODULE,
-	.खोलो =		uhci_debug_खोलो,
+	.open =		uhci_debug_open,
 	.llseek =	uhci_debug_lseek,
-	.पढ़ो =		uhci_debug_पढ़ो,
+	.read =		uhci_debug_read,
 	.release =	uhci_debug_release,
-पूर्ण;
-#घोषणा UHCI_DEBUG_OPS
+};
+#define UHCI_DEBUG_OPS
 
-#पूर्ण_अगर	/* CONFIG_DEBUG_FS */
+#endif	/* CONFIG_DEBUG_FS */
 
-#अन्यथा	/* CONFIG_DYNAMIC_DEBUG*/
+#else	/* CONFIG_DYNAMIC_DEBUG*/
 
-अटल अंतरभूत व्योम lprपूर्णांकk(अक्षर *buf)
-अणुपूर्ण
+static inline void lprintk(char *buf)
+{}
 
-अटल अंतरभूत पूर्णांक uhci_show_qh(काष्ठा uhci_hcd *uhci,
-		काष्ठा uhci_qh *qh, अक्षर *buf, पूर्णांक len, पूर्णांक space)
-अणु
-	वापस 0;
-पूर्ण
+static inline int uhci_show_qh(struct uhci_hcd *uhci,
+		struct uhci_qh *qh, char *buf, int len, int space)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक uhci_sprपूर्णांक_schedule(काष्ठा uhci_hcd *uhci,
-		अक्षर *buf, पूर्णांक len)
-अणु
-	वापस 0;
-पूर्ण
+static inline int uhci_sprint_schedule(struct uhci_hcd *uhci,
+		char *buf, int len)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

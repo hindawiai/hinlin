@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,39 +16,39 @@
  *
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/spinlock.h>
+#include <linux/netdevice.h>
+#include <linux/spinlock.h>
 
-#समावेश "vnic_dev.h"
-#समावेश "vnic_devcmd.h"
+#include "vnic_dev.h"
+#include "vnic_devcmd.h"
 
-#समावेश "enic_res.h"
-#समावेश "enic.h"
-#समावेश "enic_api.h"
+#include "enic_res.h"
+#include "enic.h"
+#include "enic_api.h"
 
-पूर्णांक enic_api_devcmd_proxy_by_index(काष्ठा net_device *netdev, पूर्णांक vf,
-	क्रमागत vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, पूर्णांक रुको)
-अणु
-	पूर्णांक err;
-	काष्ठा enic *enic = netdev_priv(netdev);
-	काष्ठा vnic_dev *vdev = enic->vdev;
+int enic_api_devcmd_proxy_by_index(struct net_device *netdev, int vf,
+	enum vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, int wait)
+{
+	int err;
+	struct enic *enic = netdev_priv(netdev);
+	struct vnic_dev *vdev = enic->vdev;
 
 	spin_lock(&enic->enic_api_lock);
-	जबतक (enic->enic_api_busy) अणु
+	while (enic->enic_api_busy) {
 		spin_unlock(&enic->enic_api_lock);
 		cpu_relax();
 		spin_lock(&enic->enic_api_lock);
-	पूर्ण
+	}
 
 	spin_lock_bh(&enic->devcmd_lock);
 
 	vnic_dev_cmd_proxy_by_index_start(vdev, vf);
-	err = vnic_dev_cmd(vdev, cmd, a0, a1, रुको);
+	err = vnic_dev_cmd(vdev, cmd, a0, a1, wait);
 	vnic_dev_cmd_proxy_end(vdev);
 
 	spin_unlock_bh(&enic->devcmd_lock);
 	spin_unlock(&enic->enic_api_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(enic_api_devcmd_proxy_by_index);

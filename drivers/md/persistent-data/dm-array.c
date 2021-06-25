@@ -1,243 +1,242 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm-array.h"
-#समावेश "dm-space-map.h"
-#समावेश "dm-transaction-manager.h"
+#include "dm-array.h"
+#include "dm-space-map.h"
+#include "dm-transaction-manager.h"
 
-#समावेश <linux/export.h>
-#समावेश <linux/device-mapper.h>
+#include <linux/export.h>
+#include <linux/device-mapper.h>
 
-#घोषणा DM_MSG_PREFIX "array"
+#define DM_MSG_PREFIX "array"
 
 /*----------------------------------------------------------------*/
 
 /*
- * The array is implemented as a fully populated btree, which poपूर्णांकs to
+ * The array is implemented as a fully populated btree, which points to
  * blocks that contain the packed values.  This is more space efficient
- * than just using a btree since we करोn't store 1 key per value.
+ * than just using a btree since we don't store 1 key per value.
  */
-काष्ठा array_block अणु
+struct array_block {
 	__le32 csum;
 	__le32 max_entries;
 	__le32 nr_entries;
 	__le32 value_size;
 	__le64 blocknr; /* Block this node is supposed to live in. */
-पूर्ण __packed;
+} __packed;
 
 /*----------------------------------------------------------------*/
 
 /*
- * Validator methods.  As usual we calculate a checksum, and also ग_लिखो the
- * block location पूर्णांकo the header (paranoia about ssds remapping areas by
+ * Validator methods.  As usual we calculate a checksum, and also write the
+ * block location into the header (paranoia about ssds remapping areas by
  * mistake).
  */
-#घोषणा CSUM_XOR 595846735
+#define CSUM_XOR 595846735
 
-अटल व्योम array_block_prepare_क्रम_ग_लिखो(काष्ठा dm_block_validator *v,
-					  काष्ठा dm_block *b,
-					  माप_प्रकार size_of_block)
-अणु
-	काष्ठा array_block *bh_le = dm_block_data(b);
+static void array_block_prepare_for_write(struct dm_block_validator *v,
+					  struct dm_block *b,
+					  size_t size_of_block)
+{
+	struct array_block *bh_le = dm_block_data(b);
 
 	bh_le->blocknr = cpu_to_le64(dm_block_location(b));
 	bh_le->csum = cpu_to_le32(dm_bm_checksum(&bh_le->max_entries,
-						 size_of_block - माप(__le32),
+						 size_of_block - sizeof(__le32),
 						 CSUM_XOR));
-पूर्ण
+}
 
-अटल पूर्णांक array_block_check(काष्ठा dm_block_validator *v,
-			     काष्ठा dm_block *b,
-			     माप_प्रकार size_of_block)
-अणु
-	काष्ठा array_block *bh_le = dm_block_data(b);
+static int array_block_check(struct dm_block_validator *v,
+			     struct dm_block *b,
+			     size_t size_of_block)
+{
+	struct array_block *bh_le = dm_block_data(b);
 	__le32 csum_disk;
 
-	अगर (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) अणु
+	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
 		DMERR_LIMIT("array_block_check failed: blocknr %llu != wanted %llu",
-			    (अचिन्हित दीर्घ दीर्घ) le64_to_cpu(bh_le->blocknr),
-			    (अचिन्हित दीर्घ दीर्घ) dm_block_location(b));
-		वापस -ENOTBLK;
-	पूर्ण
+			    (unsigned long long) le64_to_cpu(bh_le->blocknr),
+			    (unsigned long long) dm_block_location(b));
+		return -ENOTBLK;
+	}
 
 	csum_disk = cpu_to_le32(dm_bm_checksum(&bh_le->max_entries,
-					       size_of_block - माप(__le32),
+					       size_of_block - sizeof(__le32),
 					       CSUM_XOR));
-	अगर (csum_disk != bh_le->csum) अणु
+	if (csum_disk != bh_le->csum) {
 		DMERR_LIMIT("array_block_check failed: csum %u != wanted %u",
-			    (अचिन्हित) le32_to_cpu(csum_disk),
-			    (अचिन्हित) le32_to_cpu(bh_le->csum));
-		वापस -EILSEQ;
-	पूर्ण
+			    (unsigned) le32_to_cpu(csum_disk),
+			    (unsigned) le32_to_cpu(bh_le->csum));
+		return -EILSEQ;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dm_block_validator array_validator = अणु
+static struct dm_block_validator array_validator = {
 	.name = "array",
-	.prepare_क्रम_ग_लिखो = array_block_prepare_क्रम_ग_लिखो,
+	.prepare_for_write = array_block_prepare_for_write,
 	.check = array_block_check
-पूर्ण;
+};
 
 /*----------------------------------------------------------------*/
 
 /*
- * Functions क्रम manipulating the array blocks.
+ * Functions for manipulating the array blocks.
  */
 
 /*
- * Returns a poपूर्णांकer to a value within an array block.
+ * Returns a pointer to a value within an array block.
  *
- * index - The index पूर्णांकo _this_ specअगरic block.
+ * index - The index into _this_ specific block.
  */
-अटल व्योम *element_at(काष्ठा dm_array_info *info, काष्ठा array_block *ab,
-			अचिन्हित index)
-अणु
-	अचिन्हित अक्षर *entry = (अचिन्हित अक्षर *) (ab + 1);
+static void *element_at(struct dm_array_info *info, struct array_block *ab,
+			unsigned index)
+{
+	unsigned char *entry = (unsigned char *) (ab + 1);
 
 	entry += index * info->value_type.size;
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
 /*
  * Utility function that calls one of the value_type methods on every value
  * in an array block.
  */
-अटल व्योम on_entries(काष्ठा dm_array_info *info, काष्ठा array_block *ab,
-		       व्योम (*fn)(व्योम *, स्थिर व्योम *))
-अणु
-	अचिन्हित i, nr_entries = le32_to_cpu(ab->nr_entries);
+static void on_entries(struct dm_array_info *info, struct array_block *ab,
+		       void (*fn)(void *, const void *))
+{
+	unsigned i, nr_entries = le32_to_cpu(ab->nr_entries);
 
-	क्रम (i = 0; i < nr_entries; i++)
+	for (i = 0; i < nr_entries; i++)
 		fn(info->value_type.context, element_at(info, ab, i));
-पूर्ण
+}
 
 /*
  * Increment every value in an array block.
  */
-अटल व्योम inc_ablock_entries(काष्ठा dm_array_info *info, काष्ठा array_block *ab)
-अणु
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static void inc_ablock_entries(struct dm_array_info *info, struct array_block *ab)
+{
+	struct dm_btree_value_type *vt = &info->value_type;
 
-	अगर (vt->inc)
+	if (vt->inc)
 		on_entries(info, ab, vt->inc);
-पूर्ण
+}
 
 /*
  * Decrement every value in an array block.
  */
-अटल व्योम dec_ablock_entries(काष्ठा dm_array_info *info, काष्ठा array_block *ab)
-अणु
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static void dec_ablock_entries(struct dm_array_info *info, struct array_block *ab)
+{
+	struct dm_btree_value_type *vt = &info->value_type;
 
-	अगर (vt->dec)
+	if (vt->dec)
 		on_entries(info, ab, vt->dec);
-पूर्ण
+}
 
 /*
  * Each array block can hold this many values.
  */
-अटल uपूर्णांक32_t calc_max_entries(माप_प्रकार value_size, माप_प्रकार size_of_block)
-अणु
-	वापस (size_of_block - माप(काष्ठा array_block)) / value_size;
-पूर्ण
+static uint32_t calc_max_entries(size_t value_size, size_t size_of_block)
+{
+	return (size_of_block - sizeof(struct array_block)) / value_size;
+}
 
 /*
  * Allocate a new array block.  The caller will need to unlock block.
  */
-अटल पूर्णांक alloc_ablock(काष्ठा dm_array_info *info, माप_प्रकार size_of_block,
-			uपूर्णांक32_t max_entries,
-			काष्ठा dm_block **block, काष्ठा array_block **ab)
-अणु
-	पूर्णांक r;
+static int alloc_ablock(struct dm_array_info *info, size_t size_of_block,
+			uint32_t max_entries,
+			struct dm_block **block, struct array_block **ab)
+{
+	int r;
 
-	r = dm_पंचांग_new_block(info->btree_info.पंचांग, &array_validator, block);
-	अगर (r)
-		वापस r;
+	r = dm_tm_new_block(info->btree_info.tm, &array_validator, block);
+	if (r)
+		return r;
 
 	(*ab) = dm_block_data(*block);
 	(*ab)->max_entries = cpu_to_le32(max_entries);
 	(*ab)->nr_entries = cpu_to_le32(0);
 	(*ab)->value_size = cpu_to_le32(info->value_type.size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Pad an array block out with a particular value.  Every instance will
  * cause an increment of the value_type.  new_nr must always be more than
  * the current number of entries.
  */
-अटल व्योम fill_ablock(काष्ठा dm_array_info *info, काष्ठा array_block *ab,
-			स्थिर व्योम *value, अचिन्हित new_nr)
-अणु
-	अचिन्हित i;
-	uपूर्णांक32_t nr_entries;
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static void fill_ablock(struct dm_array_info *info, struct array_block *ab,
+			const void *value, unsigned new_nr)
+{
+	unsigned i;
+	uint32_t nr_entries;
+	struct dm_btree_value_type *vt = &info->value_type;
 
 	BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
 	BUG_ON(new_nr < le32_to_cpu(ab->nr_entries));
 
 	nr_entries = le32_to_cpu(ab->nr_entries);
-	क्रम (i = nr_entries; i < new_nr; i++) अणु
-		अगर (vt->inc)
+	for (i = nr_entries; i < new_nr; i++) {
+		if (vt->inc)
 			vt->inc(vt->context, value);
-		स_नकल(element_at(info, ab, i), value, vt->size);
-	पूर्ण
+		memcpy(element_at(info, ab, i), value, vt->size);
+	}
 	ab->nr_entries = cpu_to_le32(new_nr);
-पूर्ण
+}
 
 /*
  * Remove some entries from the back of an array block.  Every value
- * हटाओd will be decremented.  new_nr must be <= the current number of
+ * removed will be decremented.  new_nr must be <= the current number of
  * entries.
  */
-अटल व्योम trim_ablock(काष्ठा dm_array_info *info, काष्ठा array_block *ab,
-			अचिन्हित new_nr)
-अणु
-	अचिन्हित i;
-	uपूर्णांक32_t nr_entries;
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static void trim_ablock(struct dm_array_info *info, struct array_block *ab,
+			unsigned new_nr)
+{
+	unsigned i;
+	uint32_t nr_entries;
+	struct dm_btree_value_type *vt = &info->value_type;
 
 	BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
 	BUG_ON(new_nr > le32_to_cpu(ab->nr_entries));
 
 	nr_entries = le32_to_cpu(ab->nr_entries);
-	क्रम (i = nr_entries; i > new_nr; i--)
-		अगर (vt->dec)
+	for (i = nr_entries; i > new_nr; i--)
+		if (vt->dec)
 			vt->dec(vt->context, element_at(info, ab, i - 1));
 	ab->nr_entries = cpu_to_le32(new_nr);
-पूर्ण
+}
 
 /*
  * Read locks a block, and coerces it to an array block.  The caller must
  * unlock 'block' when finished.
  */
-अटल पूर्णांक get_ablock(काष्ठा dm_array_info *info, dm_block_t b,
-		      काष्ठा dm_block **block, काष्ठा array_block **ab)
-अणु
-	पूर्णांक r;
+static int get_ablock(struct dm_array_info *info, dm_block_t b,
+		      struct dm_block **block, struct array_block **ab)
+{
+	int r;
 
-	r = dm_पंचांग_पढ़ो_lock(info->btree_info.पंचांग, b, &array_validator, block);
-	अगर (r)
-		वापस r;
+	r = dm_tm_read_lock(info->btree_info.tm, b, &array_validator, block);
+	if (r)
+		return r;
 
 	*ab = dm_block_data(*block);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Unlocks an array block.
  */
-अटल व्योम unlock_ablock(काष्ठा dm_array_info *info, काष्ठा dm_block *block)
-अणु
-	dm_पंचांग_unlock(info->btree_info.पंचांग, block);
-पूर्ण
+static void unlock_ablock(struct dm_array_info *info, struct dm_block *block)
+{
+	dm_tm_unlock(info->btree_info.tm, block);
+}
 
 /*----------------------------------------------------------------*/
 
@@ -246,155 +245,155 @@
  */
 
 /*
- * Looks up an array block in the btree, and then पढ़ो locks it.
+ * Looks up an array block in the btree, and then read locks it.
  *
  * index is the index of the index of the array_block, (ie. the array index
  * / max_entries).
  */
-अटल पूर्णांक lookup_ablock(काष्ठा dm_array_info *info, dm_block_t root,
-			 अचिन्हित index, काष्ठा dm_block **block,
-			 काष्ठा array_block **ab)
-अणु
-	पूर्णांक r;
-	uपूर्णांक64_t key = index;
+static int lookup_ablock(struct dm_array_info *info, dm_block_t root,
+			 unsigned index, struct dm_block **block,
+			 struct array_block **ab)
+{
+	int r;
+	uint64_t key = index;
 	__le64 block_le;
 
 	r = dm_btree_lookup(&info->btree_info, root, &key, &block_le);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस get_ablock(info, le64_to_cpu(block_le), block, ab);
-पूर्ण
+	return get_ablock(info, le64_to_cpu(block_le), block, ab);
+}
 
 /*
- * Insert an array block पूर्णांकo the btree.  The block is _not_ unlocked.
+ * Insert an array block into the btree.  The block is _not_ unlocked.
  */
-अटल पूर्णांक insert_ablock(काष्ठा dm_array_info *info, uपूर्णांक64_t index,
-			 काष्ठा dm_block *block, dm_block_t *root)
-अणु
+static int insert_ablock(struct dm_array_info *info, uint64_t index,
+			 struct dm_block *block, dm_block_t *root)
+{
 	__le64 block_le = cpu_to_le64(dm_block_location(block));
 
-	__dm_bless_क्रम_disk(block_le);
-	वापस dm_btree_insert(&info->btree_info, *root, &index, &block_le, root);
-पूर्ण
+	__dm_bless_for_disk(block_le);
+	return dm_btree_insert(&info->btree_info, *root, &index, &block_le, root);
+}
 
 /*----------------------------------------------------------------*/
 
-अटल पूर्णांक __shaकरोw_ablock(काष्ठा dm_array_info *info, dm_block_t b,
-			   काष्ठा dm_block **block, काष्ठा array_block **ab)
-अणु
-	पूर्णांक inc;
-	पूर्णांक r = dm_पंचांग_shaकरोw_block(info->btree_info.पंचांग, b,
+static int __shadow_ablock(struct dm_array_info *info, dm_block_t b,
+			   struct dm_block **block, struct array_block **ab)
+{
+	int inc;
+	int r = dm_tm_shadow_block(info->btree_info.tm, b,
 				   &array_validator, block, &inc);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	*ab = dm_block_data(*block);
-	अगर (inc)
+	if (inc)
 		inc_ablock_entries(info, *ab);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The shaकरोw op will often be a noop.  Only insert अगर it really
+ * The shadow op will often be a noop.  Only insert if it really
  * copied data.
  */
-अटल पूर्णांक __reinsert_ablock(काष्ठा dm_array_info *info, अचिन्हित index,
-			     काष्ठा dm_block *block, dm_block_t b,
+static int __reinsert_ablock(struct dm_array_info *info, unsigned index,
+			     struct dm_block *block, dm_block_t b,
 			     dm_block_t *root)
-अणु
-	पूर्णांक r = 0;
+{
+	int r = 0;
 
-	अगर (dm_block_location(block) != b) अणु
+	if (dm_block_location(block) != b) {
 		/*
-		 * dm_पंचांग_shaकरोw_block will have alपढ़ोy decremented the old
+		 * dm_tm_shadow_block will have already decremented the old
 		 * block, but it is still referenced by the btree.  We
 		 * increment to stop the insert decrementing it below zero
 		 * when overwriting the old value.
 		 */
-		dm_पंचांग_inc(info->btree_info.पंचांग, b);
+		dm_tm_inc(info->btree_info.tm, b);
 		r = insert_ablock(info, index, block, root);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
- * Looks up an array block in the btree.  Then shaकरोws it, and updates the
- * btree to poपूर्णांक to this new shaकरोw.  'root' is an input/output parameter
- * क्रम both the current root block, and the new one.
+ * Looks up an array block in the btree.  Then shadows it, and updates the
+ * btree to point to this new shadow.  'root' is an input/output parameter
+ * for both the current root block, and the new one.
  */
-अटल पूर्णांक shaकरोw_ablock(काष्ठा dm_array_info *info, dm_block_t *root,
-			 अचिन्हित index, काष्ठा dm_block **block,
-			 काष्ठा array_block **ab)
-अणु
-	पूर्णांक r;
-	uपूर्णांक64_t key = index;
+static int shadow_ablock(struct dm_array_info *info, dm_block_t *root,
+			 unsigned index, struct dm_block **block,
+			 struct array_block **ab)
+{
+	int r;
+	uint64_t key = index;
 	dm_block_t b;
 	__le64 block_le;
 
 	r = dm_btree_lookup(&info->btree_info, *root, &key, &block_le);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 	b = le64_to_cpu(block_le);
 
-	r = __shaकरोw_ablock(info, b, block, ab);
-	अगर (r)
-		वापस r;
+	r = __shadow_ablock(info, b, block, ab);
+	if (r)
+		return r;
 
-	वापस __reinsert_ablock(info, index, *block, b, root);
-पूर्ण
+	return __reinsert_ablock(info, index, *block, b, root);
+}
 
 /*
  * Allocate an new array block, and fill it with some values.
  */
-अटल पूर्णांक insert_new_ablock(काष्ठा dm_array_info *info, माप_प्रकार size_of_block,
-			     uपूर्णांक32_t max_entries,
-			     अचिन्हित block_index, uपूर्णांक32_t nr,
-			     स्थिर व्योम *value, dm_block_t *root)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
+static int insert_new_ablock(struct dm_array_info *info, size_t size_of_block,
+			     uint32_t max_entries,
+			     unsigned block_index, uint32_t nr,
+			     const void *value, dm_block_t *root)
+{
+	int r;
+	struct dm_block *block;
+	struct array_block *ab;
 
 	r = alloc_ablock(info, size_of_block, max_entries, &block, &ab);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	fill_ablock(info, ab, value, nr);
 	r = insert_ablock(info, block_index, block, root);
 	unlock_ablock(info, block);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक insert_full_ablocks(काष्ठा dm_array_info *info, माप_प्रकार size_of_block,
-			       अचिन्हित begin_block, अचिन्हित end_block,
-			       अचिन्हित max_entries, स्थिर व्योम *value,
+static int insert_full_ablocks(struct dm_array_info *info, size_t size_of_block,
+			       unsigned begin_block, unsigned end_block,
+			       unsigned max_entries, const void *value,
 			       dm_block_t *root)
-अणु
-	पूर्णांक r = 0;
+{
+	int r = 0;
 
-	क्रम (; !r && begin_block != end_block; begin_block++)
+	for (; !r && begin_block != end_block; begin_block++)
 		r = insert_new_ablock(info, size_of_block, max_entries, begin_block, max_entries, value, root);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * There are a bunch of functions involved with resizing an array.  This
- * काष्ठाure holds inक्रमmation that commonly needed by them.  Purely here
+ * structure holds information that commonly needed by them.  Purely here
  * to reduce parameter count.
  */
-काष्ठा resize अणु
+struct resize {
 	/*
 	 * Describes the array.
 	 */
-	काष्ठा dm_array_info *info;
+	struct dm_array_info *info;
 
 	/*
-	 * The current root of the array.  This माला_लो updated.
+	 * The current root of the array.  This gets updated.
 	 */
 	dm_block_t root;
 
@@ -402,272 +401,272 @@
 	 * Metadata block size.  Used to calculate the nr entries in an
 	 * array block.
 	 */
-	माप_प्रकार size_of_block;
+	size_t size_of_block;
 
 	/*
 	 * Maximum nr entries in an array block.
 	 */
-	अचिन्हित max_entries;
+	unsigned max_entries;
 
 	/*
 	 * nr of completely full blocks in the array.
 	 *
 	 * 'old' refers to before the resize, 'new' after.
 	 */
-	अचिन्हित old_nr_full_blocks, new_nr_full_blocks;
+	unsigned old_nr_full_blocks, new_nr_full_blocks;
 
 	/*
-	 * Number of entries in the final block.  0 अगरf only full blocks in
+	 * Number of entries in the final block.  0 iff only full blocks in
 	 * the array.
 	 */
-	अचिन्हित old_nr_entries_in_last_block, new_nr_entries_in_last_block;
+	unsigned old_nr_entries_in_last_block, new_nr_entries_in_last_block;
 
 	/*
-	 * The शेष value used when growing the array.
+	 * The default value used when growing the array.
 	 */
-	स्थिर व्योम *value;
-पूर्ण;
+	const void *value;
+};
 
 /*
  * Removes a consecutive set of array blocks from the btree.  The values
- * in block are decremented as a side effect of the btree हटाओ.
+ * in block are decremented as a side effect of the btree remove.
  *
- * begin_index - the index of the first array block to हटाओ.
- * end_index - the one-past-the-end value.  ie. this block is not हटाओd.
+ * begin_index - the index of the first array block to remove.
+ * end_index - the one-past-the-end value.  ie. this block is not removed.
  */
-अटल पूर्णांक drop_blocks(काष्ठा resize *resize, अचिन्हित begin_index,
-		       अचिन्हित end_index)
-अणु
-	पूर्णांक r;
+static int drop_blocks(struct resize *resize, unsigned begin_index,
+		       unsigned end_index)
+{
+	int r;
 
-	जबतक (begin_index != end_index) अणु
-		uपूर्णांक64_t key = begin_index++;
-		r = dm_btree_हटाओ(&resize->info->btree_info, resize->root,
+	while (begin_index != end_index) {
+		uint64_t key = begin_index++;
+		r = dm_btree_remove(&resize->info->btree_info, resize->root,
 				    &key, &resize->root);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Calculates how many blocks are needed क्रम the array.
+ * Calculates how many blocks are needed for the array.
  */
-अटल अचिन्हित total_nr_blocks_needed(अचिन्हित nr_full_blocks,
-				       अचिन्हित nr_entries_in_last_block)
-अणु
-	वापस nr_full_blocks + (nr_entries_in_last_block ? 1 : 0);
-पूर्ण
+static unsigned total_nr_blocks_needed(unsigned nr_full_blocks,
+				       unsigned nr_entries_in_last_block)
+{
+	return nr_full_blocks + (nr_entries_in_last_block ? 1 : 0);
+}
 
 /*
  * Shrink an array.
  */
-अटल पूर्णांक shrink(काष्ठा resize *resize)
-अणु
-	पूर्णांक r;
-	अचिन्हित begin, end;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
+static int shrink(struct resize *resize)
+{
+	int r;
+	unsigned begin, end;
+	struct dm_block *block;
+	struct array_block *ab;
 
 	/*
 	 * Lose some blocks from the back?
 	 */
-	अगर (resize->new_nr_full_blocks < resize->old_nr_full_blocks) अणु
+	if (resize->new_nr_full_blocks < resize->old_nr_full_blocks) {
 		begin = total_nr_blocks_needed(resize->new_nr_full_blocks,
 					       resize->new_nr_entries_in_last_block);
 		end = total_nr_blocks_needed(resize->old_nr_full_blocks,
 					     resize->old_nr_entries_in_last_block);
 
 		r = drop_blocks(resize, begin, end);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	/*
 	 * Trim the new tail block
 	 */
-	अगर (resize->new_nr_entries_in_last_block) अणु
-		r = shaकरोw_ablock(resize->info, &resize->root,
+	if (resize->new_nr_entries_in_last_block) {
+		r = shadow_ablock(resize->info, &resize->root,
 				  resize->new_nr_full_blocks, &block, &ab);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		trim_ablock(resize->info, ab, resize->new_nr_entries_in_last_block);
 		unlock_ablock(resize->info, block);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Grow an array.
  */
-अटल पूर्णांक grow_extend_tail_block(काष्ठा resize *resize, uपूर्णांक32_t new_nr_entries)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
+static int grow_extend_tail_block(struct resize *resize, uint32_t new_nr_entries)
+{
+	int r;
+	struct dm_block *block;
+	struct array_block *ab;
 
-	r = shaकरोw_ablock(resize->info, &resize->root,
+	r = shadow_ablock(resize->info, &resize->root,
 			  resize->old_nr_full_blocks, &block, &ab);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	fill_ablock(resize->info, ab, resize->value, new_nr_entries);
 	unlock_ablock(resize->info, block);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक grow_add_tail_block(काष्ठा resize *resize)
-अणु
-	वापस insert_new_ablock(resize->info, resize->size_of_block,
+static int grow_add_tail_block(struct resize *resize)
+{
+	return insert_new_ablock(resize->info, resize->size_of_block,
 				 resize->max_entries,
 				 resize->new_nr_full_blocks,
 				 resize->new_nr_entries_in_last_block,
 				 resize->value, &resize->root);
-पूर्ण
+}
 
-अटल पूर्णांक grow_needs_more_blocks(काष्ठा resize *resize)
-अणु
-	पूर्णांक r;
-	अचिन्हित old_nr_blocks = resize->old_nr_full_blocks;
+static int grow_needs_more_blocks(struct resize *resize)
+{
+	int r;
+	unsigned old_nr_blocks = resize->old_nr_full_blocks;
 
-	अगर (resize->old_nr_entries_in_last_block > 0) अणु
+	if (resize->old_nr_entries_in_last_block > 0) {
 		old_nr_blocks++;
 
 		r = grow_extend_tail_block(resize, resize->max_entries);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
 	r = insert_full_ablocks(resize->info, resize->size_of_block,
 				old_nr_blocks,
 				resize->new_nr_full_blocks,
 				resize->max_entries, resize->value,
 				&resize->root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (resize->new_nr_entries_in_last_block)
+	if (resize->new_nr_entries_in_last_block)
 		r = grow_add_tail_block(resize);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक grow(काष्ठा resize *resize)
-अणु
-	अगर (resize->new_nr_full_blocks > resize->old_nr_full_blocks)
-		वापस grow_needs_more_blocks(resize);
+static int grow(struct resize *resize)
+{
+	if (resize->new_nr_full_blocks > resize->old_nr_full_blocks)
+		return grow_needs_more_blocks(resize);
 
-	अन्यथा अगर (resize->old_nr_entries_in_last_block)
-		वापस grow_extend_tail_block(resize, resize->new_nr_entries_in_last_block);
+	else if (resize->old_nr_entries_in_last_block)
+		return grow_extend_tail_block(resize, resize->new_nr_entries_in_last_block);
 
-	अन्यथा
-		वापस grow_add_tail_block(resize);
-पूर्ण
+	else
+		return grow_add_tail_block(resize);
+}
 
 /*----------------------------------------------------------------*/
 
 /*
- * These are the value_type functions क्रम the btree elements, which poपूर्णांक
+ * These are the value_type functions for the btree elements, which point
  * to array blocks.
  */
-अटल व्योम block_inc(व्योम *context, स्थिर व्योम *value)
-अणु
+static void block_inc(void *context, const void *value)
+{
 	__le64 block_le;
-	काष्ठा dm_array_info *info = context;
+	struct dm_array_info *info = context;
 
-	स_नकल(&block_le, value, माप(block_le));
-	dm_पंचांग_inc(info->btree_info.पंचांग, le64_to_cpu(block_le));
-पूर्ण
+	memcpy(&block_le, value, sizeof(block_le));
+	dm_tm_inc(info->btree_info.tm, le64_to_cpu(block_le));
+}
 
-अटल व्योम block_dec(व्योम *context, स्थिर व्योम *value)
-अणु
-	पूर्णांक r;
-	uपूर्णांक64_t b;
+static void block_dec(void *context, const void *value)
+{
+	int r;
+	uint64_t b;
 	__le64 block_le;
-	uपूर्णांक32_t ref_count;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
-	काष्ठा dm_array_info *info = context;
+	uint32_t ref_count;
+	struct dm_block *block;
+	struct array_block *ab;
+	struct dm_array_info *info = context;
 
-	स_नकल(&block_le, value, माप(block_le));
+	memcpy(&block_le, value, sizeof(block_le));
 	b = le64_to_cpu(block_le);
 
-	r = dm_पंचांग_ref(info->btree_info.पंचांग, b, &ref_count);
-	अगर (r) अणु
+	r = dm_tm_ref(info->btree_info.tm, b, &ref_count);
+	if (r) {
 		DMERR_LIMIT("couldn't get reference count for block %llu",
-			    (अचिन्हित दीर्घ दीर्घ) b);
-		वापस;
-	पूर्ण
+			    (unsigned long long) b);
+		return;
+	}
 
-	अगर (ref_count == 1) अणु
+	if (ref_count == 1) {
 		/*
 		 * We're about to drop the last reference to this ablock.
 		 * So we need to decrement the ref count of the contents.
 		 */
 		r = get_ablock(info, b, &block, &ab);
-		अगर (r) अणु
+		if (r) {
 			DMERR_LIMIT("couldn't get array block %llu",
-				    (अचिन्हित दीर्घ दीर्घ) b);
-			वापस;
-		पूर्ण
+				    (unsigned long long) b);
+			return;
+		}
 
 		dec_ablock_entries(info, ab);
 		unlock_ablock(info, block);
-	पूर्ण
+	}
 
-	dm_पंचांग_dec(info->btree_info.पंचांग, b);
-पूर्ण
+	dm_tm_dec(info->btree_info.tm, b);
+}
 
-अटल पूर्णांक block_equal(व्योम *context, स्थिर व्योम *value1, स्थिर व्योम *value2)
-अणु
-	वापस !स_भेद(value1, value2, माप(__le64));
-पूर्ण
+static int block_equal(void *context, const void *value1, const void *value2)
+{
+	return !memcmp(value1, value2, sizeof(__le64));
+}
 
 /*----------------------------------------------------------------*/
 
-व्योम dm_array_info_init(काष्ठा dm_array_info *info,
-			काष्ठा dm_transaction_manager *पंचांग,
-			काष्ठा dm_btree_value_type *vt)
-अणु
-	काष्ठा dm_btree_value_type *bvt = &info->btree_info.value_type;
+void dm_array_info_init(struct dm_array_info *info,
+			struct dm_transaction_manager *tm,
+			struct dm_btree_value_type *vt)
+{
+	struct dm_btree_value_type *bvt = &info->btree_info.value_type;
 
-	स_नकल(&info->value_type, vt, माप(info->value_type));
-	info->btree_info.पंचांग = पंचांग;
+	memcpy(&info->value_type, vt, sizeof(info->value_type));
+	info->btree_info.tm = tm;
 	info->btree_info.levels = 1;
 
 	bvt->context = info;
-	bvt->size = माप(__le64);
+	bvt->size = sizeof(__le64);
 	bvt->inc = block_inc;
 	bvt->dec = block_dec;
 	bvt->equal = block_equal;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_array_info_init);
 
-पूर्णांक dm_array_empty(काष्ठा dm_array_info *info, dm_block_t *root)
-अणु
-	वापस dm_btree_empty(&info->btree_info, root);
-पूर्ण
+int dm_array_empty(struct dm_array_info *info, dm_block_t *root)
+{
+	return dm_btree_empty(&info->btree_info, root);
+}
 EXPORT_SYMBOL_GPL(dm_array_empty);
 
-अटल पूर्णांक array_resize(काष्ठा dm_array_info *info, dm_block_t root,
-			uपूर्णांक32_t old_size, uपूर्णांक32_t new_size,
-			स्थिर व्योम *value, dm_block_t *new_root)
-अणु
-	पूर्णांक r;
-	काष्ठा resize resize;
+static int array_resize(struct dm_array_info *info, dm_block_t root,
+			uint32_t old_size, uint32_t new_size,
+			const void *value, dm_block_t *new_root)
+{
+	int r;
+	struct resize resize;
 
-	अगर (old_size == new_size) अणु
+	if (old_size == new_size) {
 		*new_root = root;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	resize.info = info;
 	resize.root = root;
-	resize.size_of_block = dm_bm_block_size(dm_पंचांग_get_bm(info->btree_info.पंचांग));
+	resize.size_of_block = dm_bm_block_size(dm_tm_get_bm(info->btree_info.tm));
 	resize.max_entries = calc_max_entries(info->value_type.size,
 					      resize.size_of_block);
 
@@ -678,330 +677,330 @@ EXPORT_SYMBOL_GPL(dm_array_empty);
 	resize.value = value;
 
 	r = ((new_size > old_size) ? grow : shrink)(&resize);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	*new_root = resize.root;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_array_resize(काष्ठा dm_array_info *info, dm_block_t root,
-		    uपूर्णांक32_t old_size, uपूर्णांक32_t new_size,
-		    स्थिर व्योम *value, dm_block_t *new_root)
+int dm_array_resize(struct dm_array_info *info, dm_block_t root,
+		    uint32_t old_size, uint32_t new_size,
+		    const void *value, dm_block_t *new_root)
 		    __dm_written_to_disk(value)
-अणु
-	पूर्णांक r = array_resize(info, root, old_size, new_size, value, new_root);
-	__dm_unbless_क्रम_disk(value);
-	वापस r;
-पूर्ण
+{
+	int r = array_resize(info, root, old_size, new_size, value, new_root);
+	__dm_unbless_for_disk(value);
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_array_resize);
 
-अटल पूर्णांक populate_ablock_with_values(काष्ठा dm_array_info *info, काष्ठा array_block *ab,
-				       value_fn fn, व्योम *context, अचिन्हित base, अचिन्हित new_nr)
-अणु
-	पूर्णांक r;
-	अचिन्हित i;
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static int populate_ablock_with_values(struct dm_array_info *info, struct array_block *ab,
+				       value_fn fn, void *context, unsigned base, unsigned new_nr)
+{
+	int r;
+	unsigned i;
+	struct dm_btree_value_type *vt = &info->value_type;
 
 	BUG_ON(le32_to_cpu(ab->nr_entries));
 	BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
 
-	क्रम (i = 0; i < new_nr; i++) अणु
+	for (i = 0; i < new_nr; i++) {
 		r = fn(base + i, element_at(info, ab, i), context);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
-		अगर (vt->inc)
+		if (vt->inc)
 			vt->inc(vt->context, element_at(info, ab, i));
-	पूर्ण
+	}
 
 	ab->nr_entries = cpu_to_le32(new_nr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dm_array_new(काष्ठा dm_array_info *info, dm_block_t *root,
-		 uपूर्णांक32_t size, value_fn fn, व्योम *context)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
-	अचिन्हित block_index, end_block, size_of_block, max_entries;
+int dm_array_new(struct dm_array_info *info, dm_block_t *root,
+		 uint32_t size, value_fn fn, void *context)
+{
+	int r;
+	struct dm_block *block;
+	struct array_block *ab;
+	unsigned block_index, end_block, size_of_block, max_entries;
 
 	r = dm_array_empty(info, root);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	size_of_block = dm_bm_block_size(dm_पंचांग_get_bm(info->btree_info.पंचांग));
+	size_of_block = dm_bm_block_size(dm_tm_get_bm(info->btree_info.tm));
 	max_entries = calc_max_entries(info->value_type.size, size_of_block);
-	end_block = dm_भाग_up(size, max_entries);
+	end_block = dm_div_up(size, max_entries);
 
-	क्रम (block_index = 0; block_index != end_block; block_index++) अणु
+	for (block_index = 0; block_index != end_block; block_index++) {
 		r = alloc_ablock(info, size_of_block, max_entries, &block, &ab);
-		अगर (r)
-			अवरोध;
+		if (r)
+			break;
 
 		r = populate_ablock_with_values(info, ab, fn, context,
 						block_index * max_entries,
 						min(max_entries, size));
-		अगर (r) अणु
+		if (r) {
 			unlock_ablock(info, block);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		r = insert_ablock(info, block_index, block, root);
 		unlock_ablock(info, block);
-		अगर (r)
-			अवरोध;
+		if (r)
+			break;
 
 		size -= max_entries;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_array_new);
 
-पूर्णांक dm_array_del(काष्ठा dm_array_info *info, dm_block_t root)
-अणु
-	वापस dm_btree_del(&info->btree_info, root);
-पूर्ण
+int dm_array_del(struct dm_array_info *info, dm_block_t root)
+{
+	return dm_btree_del(&info->btree_info, root);
+}
 EXPORT_SYMBOL_GPL(dm_array_del);
 
-पूर्णांक dm_array_get_value(काष्ठा dm_array_info *info, dm_block_t root,
-		       uपूर्णांक32_t index, व्योम *value_le)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
-	माप_प्रकार size_of_block;
-	अचिन्हित entry, max_entries;
+int dm_array_get_value(struct dm_array_info *info, dm_block_t root,
+		       uint32_t index, void *value_le)
+{
+	int r;
+	struct dm_block *block;
+	struct array_block *ab;
+	size_t size_of_block;
+	unsigned entry, max_entries;
 
-	size_of_block = dm_bm_block_size(dm_पंचांग_get_bm(info->btree_info.पंचांग));
+	size_of_block = dm_bm_block_size(dm_tm_get_bm(info->btree_info.tm));
 	max_entries = calc_max_entries(info->value_type.size, size_of_block);
 
 	r = lookup_ablock(info, root, index / max_entries, &block, &ab);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	entry = index % max_entries;
-	अगर (entry >= le32_to_cpu(ab->nr_entries))
+	if (entry >= le32_to_cpu(ab->nr_entries))
 		r = -ENODATA;
-	अन्यथा
-		स_नकल(value_le, element_at(info, ab, entry),
+	else
+		memcpy(value_le, element_at(info, ab, entry),
 		       info->value_type.size);
 
 	unlock_ablock(info, block);
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_array_get_value);
 
-अटल पूर्णांक array_set_value(काष्ठा dm_array_info *info, dm_block_t root,
-			   uपूर्णांक32_t index, स्थिर व्योम *value, dm_block_t *new_root)
-अणु
-	पूर्णांक r;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
-	माप_प्रकार size_of_block;
-	अचिन्हित max_entries;
-	अचिन्हित entry;
-	व्योम *old_value;
-	काष्ठा dm_btree_value_type *vt = &info->value_type;
+static int array_set_value(struct dm_array_info *info, dm_block_t root,
+			   uint32_t index, const void *value, dm_block_t *new_root)
+{
+	int r;
+	struct dm_block *block;
+	struct array_block *ab;
+	size_t size_of_block;
+	unsigned max_entries;
+	unsigned entry;
+	void *old_value;
+	struct dm_btree_value_type *vt = &info->value_type;
 
-	size_of_block = dm_bm_block_size(dm_पंचांग_get_bm(info->btree_info.पंचांग));
+	size_of_block = dm_bm_block_size(dm_tm_get_bm(info->btree_info.tm));
 	max_entries = calc_max_entries(info->value_type.size, size_of_block);
 
-	r = shaकरोw_ablock(info, &root, index / max_entries, &block, &ab);
-	अगर (r)
-		वापस r;
+	r = shadow_ablock(info, &root, index / max_entries, &block, &ab);
+	if (r)
+		return r;
 	*new_root = root;
 
 	entry = index % max_entries;
-	अगर (entry >= le32_to_cpu(ab->nr_entries)) अणु
+	if (entry >= le32_to_cpu(ab->nr_entries)) {
 		r = -ENODATA;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	old_value = element_at(info, ab, entry);
-	अगर (vt->dec &&
-	    (!vt->equal || !vt->equal(vt->context, old_value, value))) अणु
+	if (vt->dec &&
+	    (!vt->equal || !vt->equal(vt->context, old_value, value))) {
 		vt->dec(vt->context, old_value);
-		अगर (vt->inc)
+		if (vt->inc)
 			vt->inc(vt->context, value);
-	पूर्ण
+	}
 
-	स_नकल(old_value, value, info->value_type.size);
+	memcpy(old_value, value, info->value_type.size);
 
 out:
 	unlock_ablock(info, block);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_array_set_value(काष्ठा dm_array_info *info, dm_block_t root,
-		 uपूर्णांक32_t index, स्थिर व्योम *value, dm_block_t *new_root)
+int dm_array_set_value(struct dm_array_info *info, dm_block_t root,
+		 uint32_t index, const void *value, dm_block_t *new_root)
 		 __dm_written_to_disk(value)
-अणु
-	पूर्णांक r;
+{
+	int r;
 
 	r = array_set_value(info, root, index, value, new_root);
-	__dm_unbless_क्रम_disk(value);
-	वापस r;
-पूर्ण
+	__dm_unbless_for_disk(value);
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_array_set_value);
 
-काष्ठा walk_info अणु
-	काष्ठा dm_array_info *info;
-	पूर्णांक (*fn)(व्योम *context, uपूर्णांक64_t key, व्योम *leaf);
-	व्योम *context;
-पूर्ण;
+struct walk_info {
+	struct dm_array_info *info;
+	int (*fn)(void *context, uint64_t key, void *leaf);
+	void *context;
+};
 
-अटल पूर्णांक walk_ablock(व्योम *context, uपूर्णांक64_t *keys, व्योम *leaf)
-अणु
-	काष्ठा walk_info *wi = context;
+static int walk_ablock(void *context, uint64_t *keys, void *leaf)
+{
+	struct walk_info *wi = context;
 
-	पूर्णांक r;
-	अचिन्हित i;
+	int r;
+	unsigned i;
 	__le64 block_le;
-	अचिन्हित nr_entries, max_entries;
-	काष्ठा dm_block *block;
-	काष्ठा array_block *ab;
+	unsigned nr_entries, max_entries;
+	struct dm_block *block;
+	struct array_block *ab;
 
-	स_नकल(&block_le, leaf, माप(block_le));
+	memcpy(&block_le, leaf, sizeof(block_le));
 	r = get_ablock(wi->info, le64_to_cpu(block_le), &block, &ab);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	max_entries = le32_to_cpu(ab->max_entries);
 	nr_entries = le32_to_cpu(ab->nr_entries);
-	क्रम (i = 0; i < nr_entries; i++) अणु
+	for (i = 0; i < nr_entries; i++) {
 		r = wi->fn(wi->context, keys[0] * max_entries + i,
 			   element_at(wi->info, ab, i));
 
-		अगर (r)
-			अवरोध;
-	पूर्ण
+		if (r)
+			break;
+	}
 
 	unlock_ablock(wi->info, block);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_array_walk(काष्ठा dm_array_info *info, dm_block_t root,
-		  पूर्णांक (*fn)(व्योम *, uपूर्णांक64_t key, व्योम *leaf),
-		  व्योम *context)
-अणु
-	काष्ठा walk_info wi;
+int dm_array_walk(struct dm_array_info *info, dm_block_t root,
+		  int (*fn)(void *, uint64_t key, void *leaf),
+		  void *context)
+{
+	struct walk_info wi;
 
 	wi.info = info;
 	wi.fn = fn;
 	wi.context = context;
 
-	वापस dm_btree_walk(&info->btree_info, root, walk_ablock, &wi);
-पूर्ण
+	return dm_btree_walk(&info->btree_info, root, walk_ablock, &wi);
+}
 EXPORT_SYMBOL_GPL(dm_array_walk);
 
 /*----------------------------------------------------------------*/
 
-अटल पूर्णांक load_ablock(काष्ठा dm_array_cursor *c)
-अणु
-	पूर्णांक r;
+static int load_ablock(struct dm_array_cursor *c)
+{
+	int r;
 	__le64 value_le;
-	uपूर्णांक64_t key;
+	uint64_t key;
 
-	अगर (c->block)
+	if (c->block)
 		unlock_ablock(c->info, c->block);
 
-	c->block = शून्य;
-	c->ab = शून्य;
+	c->block = NULL;
+	c->ab = NULL;
 	c->index = 0;
 
 	r = dm_btree_cursor_get_value(&c->cursor, &key, &value_le);
-	अगर (r) अणु
+	if (r) {
 		DMERR("dm_btree_cursor_get_value failed");
 		dm_btree_cursor_end(&c->cursor);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		r = get_ablock(c->info, le64_to_cpu(value_le), &c->block, &c->ab);
-		अगर (r) अणु
+		if (r) {
 			DMERR("get_ablock failed");
 			dm_btree_cursor_end(&c->cursor);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक dm_array_cursor_begin(काष्ठा dm_array_info *info, dm_block_t root,
-			  काष्ठा dm_array_cursor *c)
-अणु
-	पूर्णांक r;
+int dm_array_cursor_begin(struct dm_array_info *info, dm_block_t root,
+			  struct dm_array_cursor *c)
+{
+	int r;
 
-	स_रखो(c, 0, माप(*c));
+	memset(c, 0, sizeof(*c));
 	c->info = info;
 	r = dm_btree_cursor_begin(&info->btree_info, root, true, &c->cursor);
-	अगर (r) अणु
+	if (r) {
 		DMERR("couldn't create btree cursor");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस load_ablock(c);
-पूर्ण
+	return load_ablock(c);
+}
 EXPORT_SYMBOL_GPL(dm_array_cursor_begin);
 
-व्योम dm_array_cursor_end(काष्ठा dm_array_cursor *c)
-अणु
-	अगर (c->block) अणु
+void dm_array_cursor_end(struct dm_array_cursor *c)
+{
+	if (c->block) {
 		unlock_ablock(c->info, c->block);
 		dm_btree_cursor_end(&c->cursor);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(dm_array_cursor_end);
 
-पूर्णांक dm_array_cursor_next(काष्ठा dm_array_cursor *c)
-अणु
-	पूर्णांक r;
+int dm_array_cursor_next(struct dm_array_cursor *c)
+{
+	int r;
 
-	अगर (!c->block)
-		वापस -ENODATA;
+	if (!c->block)
+		return -ENODATA;
 
 	c->index++;
 
-	अगर (c->index >= le32_to_cpu(c->ab->nr_entries)) अणु
+	if (c->index >= le32_to_cpu(c->ab->nr_entries)) {
 		r = dm_btree_cursor_next(&c->cursor);
-		अगर (r)
-			वापस r;
+		if (r)
+			return r;
 
 		r = load_ablock(c);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(dm_array_cursor_next);
 
-पूर्णांक dm_array_cursor_skip(काष्ठा dm_array_cursor *c, uपूर्णांक32_t count)
-अणु
-	पूर्णांक r;
+int dm_array_cursor_skip(struct dm_array_cursor *c, uint32_t count)
+{
+	int r;
 
-	करो अणु
-		uपूर्णांक32_t reमुख्यing = le32_to_cpu(c->ab->nr_entries) - c->index;
+	do {
+		uint32_t remaining = le32_to_cpu(c->ab->nr_entries) - c->index;
 
-		अगर (count < reमुख्यing) अणु
+		if (count < remaining) {
 			c->index += count;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		count -= reमुख्यing;
+		count -= remaining;
 		r = dm_array_cursor_next(c);
 
-	पूर्ण जबतक (!r);
+	} while (!r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 EXPORT_SYMBOL_GPL(dm_array_cursor_skip);
 
-व्योम dm_array_cursor_get_value(काष्ठा dm_array_cursor *c, व्योम **value_le)
-अणु
+void dm_array_cursor_get_value(struct dm_array_cursor *c, void **value_le)
+{
 	*value_le = element_at(c->info, c->ab, c->index);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dm_array_cursor_get_value);
 
 /*----------------------------------------------------------------*/

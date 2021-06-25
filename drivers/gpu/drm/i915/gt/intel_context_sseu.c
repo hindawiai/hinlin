@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "i915_drv.h"
-#समावेश "i915_vma.h"
-#समावेश "intel_context.h"
-#समावेश "intel_engine_pm.h"
-#समावेश "intel_gpu_commands.h"
-#समावेश "intel_lrc.h"
-#समावेश "intel_ring.h"
-#समावेश "intel_sseu.h"
+#include "i915_drv.h"
+#include "i915_vma.h"
+#include "intel_context.h"
+#include "intel_engine_pm.h"
+#include "intel_gpu_commands.h"
+#include "intel_lrc.h"
+#include "intel_ring.h"
+#include "intel_sseu.h"
 
-अटल पूर्णांक gen8_emit_rpcs_config(काष्ठा i915_request *rq,
-				 स्थिर काष्ठा पूर्णांकel_context *ce,
-				 स्थिर काष्ठा पूर्णांकel_sseu sseu)
-अणु
+static int gen8_emit_rpcs_config(struct i915_request *rq,
+				 const struct intel_context *ce,
+				 const struct intel_sseu sseu)
+{
 	u64 offset;
 	u32 *cs;
 
-	cs = पूर्णांकel_ring_begin(rq, 4);
-	अगर (IS_ERR(cs))
-		वापस PTR_ERR(cs);
+	cs = intel_ring_begin(rq, 4);
+	if (IS_ERR(cs))
+		return PTR_ERR(cs);
 
 	offset = i915_ggtt_offset(ce->state) +
 		 LRC_STATE_OFFSET + CTX_R_PWR_CLK_STATE * 4;
@@ -30,68 +29,68 @@
 	*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 	*cs++ = lower_32_bits(offset);
 	*cs++ = upper_32_bits(offset);
-	*cs++ = पूर्णांकel_sseu_make_rpcs(rq->engine->gt, &sseu);
+	*cs++ = intel_sseu_make_rpcs(rq->engine->gt, &sseu);
 
-	पूर्णांकel_ring_advance(rq, cs);
+	intel_ring_advance(rq, cs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-gen8_modअगरy_rpcs(काष्ठा पूर्णांकel_context *ce, स्थिर काष्ठा पूर्णांकel_sseu sseu)
-अणु
-	काष्ठा i915_request *rq;
-	पूर्णांक ret;
+static int
+gen8_modify_rpcs(struct intel_context *ce, const struct intel_sseu sseu)
+{
+	struct i915_request *rq;
+	int ret;
 
-	lockdep_निश्चित_held(&ce->pin_mutex);
+	lockdep_assert_held(&ce->pin_mutex);
 
 	/*
 	 * If the context is not idle, we have to submit an ordered request to
-	 * modअगरy its context image via the kernel context (writing to our own
-	 * image, or पूर्णांकo the रेजिस्टरs directory, करोes not stick). Pristine
+	 * modify its context image via the kernel context (writing to our own
+	 * image, or into the registers directory, does not stick). Pristine
 	 * and idle contexts will be configured on pinning.
 	 */
-	अगर (!पूर्णांकel_context_pin_अगर_active(ce))
-		वापस 0;
+	if (!intel_context_pin_if_active(ce))
+		return 0;
 
-	rq = पूर्णांकel_engine_create_kernel_request(ce->engine);
-	अगर (IS_ERR(rq)) अणु
+	rq = intel_engine_create_kernel_request(ce->engine);
+	if (IS_ERR(rq)) {
 		ret = PTR_ERR(rq);
-		जाओ out_unpin;
-	पूर्ण
+		goto out_unpin;
+	}
 
 	/* Serialise with the remote context */
-	ret = पूर्णांकel_context_prepare_remote_request(ce, rq);
-	अगर (ret == 0)
+	ret = intel_context_prepare_remote_request(ce, rq);
+	if (ret == 0)
 		ret = gen8_emit_rpcs_config(rq, ce, sseu);
 
 	i915_request_add(rq);
 out_unpin:
-	पूर्णांकel_context_unpin(ce);
-	वापस ret;
-पूर्ण
+	intel_context_unpin(ce);
+	return ret;
+}
 
-पूर्णांक
-पूर्णांकel_context_reconfigure_sseu(काष्ठा पूर्णांकel_context *ce,
-			       स्थिर काष्ठा पूर्णांकel_sseu sseu)
-अणु
-	पूर्णांक ret;
+int
+intel_context_reconfigure_sseu(struct intel_context *ce,
+			       const struct intel_sseu sseu)
+{
+	int ret;
 
 	GEM_BUG_ON(INTEL_GEN(ce->engine->i915) < 8);
 
-	ret = पूर्णांकel_context_lock_pinned(ce);
-	अगर (ret)
-		वापस ret;
+	ret = intel_context_lock_pinned(ce);
+	if (ret)
+		return ret;
 
-	/* Nothing to करो अगर unmodअगरied. */
-	अगर (!स_भेद(&ce->sseu, &sseu, माप(sseu)))
-		जाओ unlock;
+	/* Nothing to do if unmodified. */
+	if (!memcmp(&ce->sseu, &sseu, sizeof(sseu)))
+		goto unlock;
 
-	ret = gen8_modअगरy_rpcs(ce, sseu);
-	अगर (!ret)
+	ret = gen8_modify_rpcs(ce, sseu);
+	if (!ret)
 		ce->sseu = sseu;
 
 unlock:
-	पूर्णांकel_context_unlock_pinned(ce);
-	वापस ret;
-पूर्ण
+	intel_context_unlock_pinned(ce);
+	return ret;
+}

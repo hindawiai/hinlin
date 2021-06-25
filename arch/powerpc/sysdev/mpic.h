@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _POWERPC_SYSDEV_MPIC_H
-#घोषणा _POWERPC_SYSDEV_MPIC_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _POWERPC_SYSDEV_MPIC_H
+#define _POWERPC_SYSDEV_MPIC_H
 
 /*
  * Copyright 2006-2007, Michael Ellerman, IBM Corporation.
  */
 
-#अगर_घोषित CONFIG_PCI_MSI
-बाह्य व्योम mpic_msi_reserve_hwirq(काष्ठा mpic *mpic, irq_hw_number_t hwirq);
-बाह्य पूर्णांक mpic_msi_init_allocator(काष्ठा mpic *mpic);
-बाह्य पूर्णांक mpic_u3msi_init(काष्ठा mpic *mpic);
-#अन्यथा
-अटल अंतरभूत व्योम mpic_msi_reserve_hwirq(काष्ठा mpic *mpic,
+#ifdef CONFIG_PCI_MSI
+extern void mpic_msi_reserve_hwirq(struct mpic *mpic, irq_hw_number_t hwirq);
+extern int mpic_msi_init_allocator(struct mpic *mpic);
+extern int mpic_u3msi_init(struct mpic *mpic);
+#else
+static inline void mpic_msi_reserve_hwirq(struct mpic *mpic,
 					  irq_hw_number_t hwirq)
-अणु
-	वापस;
-पूर्ण
+{
+	return;
+}
 
-अटल अंतरभूत पूर्णांक mpic_u3msi_init(काष्ठा mpic *mpic)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+static inline int mpic_u3msi_init(struct mpic *mpic)
+{
+	return -1;
+}
+#endif
 
-#अगर defined(CONFIG_PCI_MSI) && defined(CONFIG_PPC_PASEMI)
-पूर्णांक mpic_pasemi_msi_init(काष्ठा mpic *mpic);
-#अन्यथा
-अटल अंतरभूत पूर्णांक mpic_pasemi_msi_init(काष्ठा mpic *mpic) अणु वापस -1; पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_PCI_MSI) && defined(CONFIG_PPC_PASEMI)
+int mpic_pasemi_msi_init(struct mpic *mpic);
+#else
+static inline int mpic_pasemi_msi_init(struct mpic *mpic) { return -1; }
+#endif
 
-बाह्य पूर्णांक mpic_set_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type);
-बाह्य व्योम mpic_set_vector(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक vector);
-बाह्य पूर्णांक mpic_set_affinity(काष्ठा irq_data *d,
-			     स्थिर काष्ठा cpumask *cpumask, bool क्रमce);
-बाह्य व्योम mpic_reset_core(पूर्णांक cpu);
+extern int mpic_set_irq_type(struct irq_data *d, unsigned int flow_type);
+extern void mpic_set_vector(unsigned int virq, unsigned int vector);
+extern int mpic_set_affinity(struct irq_data *d,
+			     const struct cpumask *cpumask, bool force);
+extern void mpic_reset_core(int cpu);
 
-#अगर_घोषित CONFIG_FSL_SOC
-बाह्य पूर्णांक mpic_map_error_पूर्णांक(काष्ठा mpic *mpic, अचिन्हित पूर्णांक virq, irq_hw_number_t  hw);
-बाह्य व्योम mpic_err_पूर्णांक_init(काष्ठा mpic *mpic, irq_hw_number_t irqnum);
-बाह्य पूर्णांक mpic_setup_error_पूर्णांक(काष्ठा mpic *mpic, पूर्णांक पूर्णांकvec);
-#अन्यथा
-अटल अंतरभूत पूर्णांक mpic_map_error_पूर्णांक(काष्ठा mpic *mpic, अचिन्हित पूर्णांक virq, irq_hw_number_t  hw)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_FSL_SOC
+extern int mpic_map_error_int(struct mpic *mpic, unsigned int virq, irq_hw_number_t  hw);
+extern void mpic_err_int_init(struct mpic *mpic, irq_hw_number_t irqnum);
+extern int mpic_setup_error_int(struct mpic *mpic, int intvec);
+#else
+static inline int mpic_map_error_int(struct mpic *mpic, unsigned int virq, irq_hw_number_t  hw)
+{
+	return 0;
+}
 
 
-अटल अंतरभूत व्योम mpic_err_पूर्णांक_init(काष्ठा mpic *mpic, irq_hw_number_t irqnum)
-अणु
-	वापस;
-पूर्ण
+static inline void mpic_err_int_init(struct mpic *mpic, irq_hw_number_t irqnum)
+{
+	return;
+}
 
-अटल अंतरभूत पूर्णांक mpic_setup_error_पूर्णांक(काष्ठा mpic *mpic, पूर्णांक पूर्णांकvec)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+static inline int mpic_setup_error_int(struct mpic *mpic, int intvec)
+{
+	return -1;
+}
+#endif
 
-#पूर्ण_अगर /* _POWERPC_SYSDEV_MPIC_H */
+#endif /* _POWERPC_SYSDEV_MPIC_H */

@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LIBLOCKDEP_RCU_H_
-#घोषणा _LIBLOCKDEP_RCU_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LIBLOCKDEP_RCU_H_
+#define _LIBLOCKDEP_RCU_H_
 
-पूर्णांक rcu_scheduler_active;
+int rcu_scheduler_active;
 
-अटल अंतरभूत पूर्णांक rcu_lockdep_current_cpu_online(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+static inline int rcu_lockdep_current_cpu_online(void)
+{
+	return 1;
+}
 
-अटल अंतरभूत पूर्णांक rcu_is_cpu_idle(व्योम)
-अणु
-	वापस 1;
-पूर्ण
+static inline int rcu_is_cpu_idle(void)
+{
+	return 1;
+}
 
-अटल अंतरभूत bool rcu_is_watching(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool rcu_is_watching(void)
+{
+	return false;
+}
 
-#घोषणा rcu_assign_poपूर्णांकer(p, v)	करो अणु (p) = (v); पूर्ण जबतक (0)
-#घोषणा RCU_INIT_POINTER(p, v)	करो अणु (p) = (v); पूर्ण जबतक (0)
+#define rcu_assign_pointer(p, v)	do { (p) = (v); } while (0)
+#define RCU_INIT_POINTER(p, v)	do { (p) = (v); } while (0)
 
-#पूर्ण_अगर
+#endif

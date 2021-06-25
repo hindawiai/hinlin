@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#समावेश "vhci_driver.h"
-#समावेश "usbip_common.h"
+#include "vhci_driver.h"
+#include "usbip_common.h"
 
-अटल पूर्णांक list_imported_devices(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा usbip_imported_device *idev;
-	पूर्णांक ret;
+static int list_imported_devices(void)
+{
+	int i;
+	struct usbip_imported_device *idev;
+	int ret;
 
-	अगर (usbip_names_init(USBIDS_खाता))
-		err("failed to open %s", USBIDS_खाता);
+	if (usbip_names_init(USBIDS_FILE))
+		err("failed to open %s", USBIDS_FILE);
 
-	ret = usbip_vhci_driver_खोलो();
-	अगर (ret < 0) अणु
+	ret = usbip_vhci_driver_open();
+	if (ret < 0) {
 		err("open vhci_driver");
-		जाओ err_names_मुक्त;
-	पूर्ण
+		goto err_names_free;
+	}
 
-	म_लिखो("Imported USB devices\n");
-	म_लिखो("====================\n");
+	printf("Imported USB devices\n");
+	printf("====================\n");
 
-	क्रम (i = 0; i < vhci_driver->nports; i++) अणु
+	for (i = 0; i < vhci_driver->nports; i++) {
 		idev = &vhci_driver->idev[i];
 
-		अगर (usbip_vhci_imported_device_dump(idev) < 0)
-			जाओ err_driver_बंद;
-	पूर्ण
+		if (usbip_vhci_imported_device_dump(idev) < 0)
+			goto err_driver_close;
+	}
 
-	usbip_vhci_driver_बंद();
-	usbip_names_मुक्त();
+	usbip_vhci_driver_close();
+	usbip_names_free();
 
-	वापस ret;
+	return ret;
 
-err_driver_बंद:
-	usbip_vhci_driver_बंद();
-err_names_मुक्त:
-	usbip_names_मुक्त();
-	वापस -1;
-पूर्ण
+err_driver_close:
+	usbip_vhci_driver_close();
+err_names_free:
+	usbip_names_free();
+	return -1;
+}
 
-पूर्णांक usbip_port_show(__attribute__((unused)) पूर्णांक argc,
-		    __attribute__((unused)) अक्षर *argv[])
-अणु
-	पूर्णांक ret;
+int usbip_port_show(__attribute__((unused)) int argc,
+		    __attribute__((unused)) char *argv[])
+{
+	int ret;
 
 	ret = list_imported_devices();
-	अगर (ret < 0)
+	if (ret < 0)
 		err("list imported devices");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

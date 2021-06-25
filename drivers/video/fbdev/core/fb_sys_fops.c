@@ -1,104 +1,103 @@
-<शैली गुरु>
 /*
- * linux/drivers/video/fb_sys_पढ़ो.c - Generic file operations where
- * framebuffer is in प्रणाली RAM
+ * linux/drivers/video/fb_sys_read.c - Generic file operations where
+ * framebuffer is in system RAM
  *
  * Copyright (C) 2007 Antonino Daplas <adaplas@pol.net>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  *
  */
-#समावेश <linux/fb.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
+#include <linux/fb.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
 
-sमाप_प्रकार fb_sys_पढ़ो(काष्ठा fb_info *info, अक्षर __user *buf, माप_प्रकार count,
+ssize_t fb_sys_read(struct fb_info *info, char __user *buf, size_t count,
 		    loff_t *ppos)
-अणु
-	अचिन्हित दीर्घ p = *ppos;
-	व्योम *src;
-	पूर्णांक err = 0;
-	अचिन्हित दीर्घ total_size;
+{
+	unsigned long p = *ppos;
+	void *src;
+	int err = 0;
+	unsigned long total_size;
 
-	अगर (info->state != FBINFO_STATE_RUNNING)
-		वापस -EPERM;
+	if (info->state != FBINFO_STATE_RUNNING)
+		return -EPERM;
 
 	total_size = info->screen_size;
 
-	अगर (total_size == 0)
+	if (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	अगर (p >= total_size)
-		वापस 0;
+	if (p >= total_size)
+		return 0;
 
-	अगर (count >= total_size)
+	if (count >= total_size)
 		count = total_size;
 
-	अगर (count + p > total_size)
+	if (count + p > total_size)
 		count = total_size - p;
 
-	src = (व्योम __क्रमce *)(info->screen_base + p);
+	src = (void __force *)(info->screen_base + p);
 
-	अगर (info->fbops->fb_sync)
+	if (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	अगर (copy_to_user(buf, src, count))
+	if (copy_to_user(buf, src, count))
 		err = -EFAULT;
 
-	अगर  (!err)
+	if  (!err)
 		*ppos += count;
 
-	वापस (err) ? err : count;
-पूर्ण
-EXPORT_SYMBOL_GPL(fb_sys_पढ़ो);
+	return (err) ? err : count;
+}
+EXPORT_SYMBOL_GPL(fb_sys_read);
 
-sमाप_प्रकार fb_sys_ग_लिखो(काष्ठा fb_info *info, स्थिर अक्षर __user *buf,
-		     माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित दीर्घ p = *ppos;
-	व्योम *dst;
-	पूर्णांक err = 0;
-	अचिन्हित दीर्घ total_size;
+ssize_t fb_sys_write(struct fb_info *info, const char __user *buf,
+		     size_t count, loff_t *ppos)
+{
+	unsigned long p = *ppos;
+	void *dst;
+	int err = 0;
+	unsigned long total_size;
 
-	अगर (info->state != FBINFO_STATE_RUNNING)
-		वापस -EPERM;
+	if (info->state != FBINFO_STATE_RUNNING)
+		return -EPERM;
 
 	total_size = info->screen_size;
 
-	अगर (total_size == 0)
+	if (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	अगर (p > total_size)
-		वापस -EFBIG;
+	if (p > total_size)
+		return -EFBIG;
 
-	अगर (count > total_size) अणु
+	if (count > total_size) {
 		err = -EFBIG;
 		count = total_size;
-	पूर्ण
+	}
 
-	अगर (count + p > total_size) अणु
-		अगर (!err)
+	if (count + p > total_size) {
+		if (!err)
 			err = -ENOSPC;
 
 		count = total_size - p;
-	पूर्ण
+	}
 
-	dst = (व्योम __क्रमce *) (info->screen_base + p);
+	dst = (void __force *) (info->screen_base + p);
 
-	अगर (info->fbops->fb_sync)
+	if (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	अगर (copy_from_user(dst, buf, count))
+	if (copy_from_user(dst, buf, count))
 		err = -EFAULT;
 
-	अगर  (!err)
+	if  (!err)
 		*ppos += count;
 
-	वापस (err) ? err : count;
-पूर्ण
-EXPORT_SYMBOL_GPL(fb_sys_ग_लिखो);
+	return (err) ? err : count;
+}
+EXPORT_SYMBOL_GPL(fb_sys_write);
 
 MODULE_AUTHOR("Antonino Daplas <adaplas@pol.net>");
 MODULE_DESCRIPTION("Generic file read (fb in system RAM)");

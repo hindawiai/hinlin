@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * lib/parser.c - simple parser क्रम mount, etc. options.
+ * lib/parser.c - simple parser for mount, etc. options.
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/types.h>
-#समावेश <linux/export.h>
-#समावेश <linux/parser.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/ctype.h>
+#include <linux/types.h>
+#include <linux/export.h>
+#include <linux/parser.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
 /**
- * match_one - Determines अगर a string matches a simple pattern
- * @s: the string to examine क्रम presence of the pattern
+ * match_one - Determines if a string matches a simple pattern
+ * @s: the string to examine for presence of the pattern
  * @p: the string containing the pattern
- * @args: array of %MAX_OPT_ARGS &substring_t elements. Used to वापस match
+ * @args: array of %MAX_OPT_ARGS &substring_t elements. Used to return match
  * locations.
  *
- * Description: Determines अगर the pattern @p is present in string @s. Can only
+ * Description: Determines if the pattern @p is present in string @s. Can only
  * match extremely simple token=arg style patterns. If the pattern is found,
- * the location(s) of the arguments will be वापसed in the @args array.
+ * the location(s) of the arguments will be returned in the @args array.
  */
-अटल पूर्णांक match_one(अक्षर *s, स्थिर अक्षर *p, substring_t args[])
-अणु
-	अक्षर *meta;
-	पूर्णांक argc = 0;
+static int match_one(char *s, const char *p, substring_t args[])
+{
+	char *meta;
+	int argc = 0;
 
-	अगर (!p)
-		वापस 1;
+	if (!p)
+		return 1;
 
-	जबतक(1) अणु
-		पूर्णांक len = -1;
-		meta = म_अक्षर(p, '%');
-		अगर (!meta)
-			वापस म_भेद(p, s) == 0;
+	while(1) {
+		int len = -1;
+		meta = strchr(p, '%');
+		if (!meta)
+			return strcmp(p, s) == 0;
 
-		अगर (म_भेदन(p, s, meta-p))
-			वापस 0;
+		if (strncmp(p, s, meta-p))
+			return 0;
 
 		s += meta - p;
 		p = meta + 1;
 
-		अगर (है_अंक(*p))
-			len = simple_म_से_अदीर्घ(p, (अक्षर **) &p, 10);
-		अन्यथा अगर (*p == '%') अणु
-			अगर (*s++ != '%')
-				वापस 0;
+		if (isdigit(*p))
+			len = simple_strtoul(p, (char **) &p, 10);
+		else if (*p == '%') {
+			if (*s++ != '%')
+				return 0;
 			p++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (argc >= MAX_OPT_ARGS)
-			वापस 0;
+		if (argc >= MAX_OPT_ARGS)
+			return 0;
 
 		args[argc].from = s;
-		चयन (*p++) अणु
-		हाल 's': अणु
-			माप_प्रकार str_len = म_माप(s);
+		switch (*p++) {
+		case 's': {
+			size_t str_len = strlen(s);
 
-			अगर (str_len == 0)
-				वापस 0;
-			अगर (len == -1 || len > str_len)
+			if (str_len == 0)
+				return 0;
+			if (len == -1 || len > str_len)
 				len = str_len;
 			args[argc].to = s + len;
-			अवरोध;
-		पूर्ण
-		हाल 'd':
-			simple_म_से_दीर्घ(s, &args[argc].to, 0);
-			जाओ num;
-		हाल 'u':
-			simple_म_से_अदीर्घ(s, &args[argc].to, 0);
-			जाओ num;
-		हाल 'o':
-			simple_म_से_अदीर्घ(s, &args[argc].to, 8);
-			जाओ num;
-		हाल 'x':
-			simple_म_से_अदीर्घ(s, &args[argc].to, 16);
+			break;
+		}
+		case 'd':
+			simple_strtol(s, &args[argc].to, 0);
+			goto num;
+		case 'u':
+			simple_strtoul(s, &args[argc].to, 0);
+			goto num;
+		case 'o':
+			simple_strtoul(s, &args[argc].to, 8);
+			goto num;
+		case 'x':
+			simple_strtoul(s, &args[argc].to, 16);
 		num:
-			अगर (args[argc].to == args[argc].from)
-				वापस 0;
-			अवरोध;
-		शेष:
-			वापस 0;
-		पूर्ण
+			if (args[argc].to == args[argc].from)
+				return 0;
+			break;
+		default:
+			return 0;
+		}
 		s = args[argc].to;
 		argc++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * match_token - Find a token (and optional args) in a string
- * @s: the string to examine क्रम token/argument pairs
+ * @s: the string to examine for token/argument pairs
  * @table: match_table_t describing the set of allowed option tokens and the
  * arguments that may be associated with them. Must be terminated with a
- * &काष्ठा match_token whose pattern is set to the शून्य poपूर्णांकer.
- * @args: array of %MAX_OPT_ARGS &substring_t elements. Used to वापस match
+ * &struct match_token whose pattern is set to the NULL pointer.
+ * @args: array of %MAX_OPT_ARGS &substring_t elements. Used to return match
  * locations.
  *
- * Description: Detects which अगर any of a set of token strings has been passed
+ * Description: Detects which if any of a set of token strings has been passed
  * to it. Tokens can include up to %MAX_OPT_ARGS instances of basic c-style
- * क्रमmat identअगरiers which will be taken पूर्णांकo account when matching the
- * tokens, and whose locations will be वापसed in the @args array.
+ * format identifiers which will be taken into account when matching the
+ * tokens, and whose locations will be returned in the @args array.
  */
-पूर्णांक match_token(अक्षर *s, स्थिर match_table_t table, substring_t args[])
-अणु
-	स्थिर काष्ठा match_token *p;
+int match_token(char *s, const match_table_t table, substring_t args[])
+{
+	const struct match_token *p;
 
-	क्रम (p = table; !match_one(s, p->pattern, args) ; p++)
+	for (p = table; !match_one(s, p->pattern, args) ; p++)
 		;
 
-	वापस p->token;
-पूर्ण
+	return p->token;
+}
 EXPORT_SYMBOL(match_token);
 
 /**
  * match_number - scan a number in the given base from a substring_t
  * @s: substring to be scanned
- * @result: resulting पूर्णांकeger on success
+ * @result: resulting integer on success
  * @base: base to use when converting string
  *
  * Description: Given a &substring_t and a base, attempts to parse the substring
  * as a number in that base.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the
- * string and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the
+ * string and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-अटल पूर्णांक match_number(substring_t *s, पूर्णांक *result, पूर्णांक base)
-अणु
-	अक्षर *endp;
-	अक्षर *buf;
-	पूर्णांक ret;
-	दीर्घ val;
+static int match_number(substring_t *s, int *result, int base)
+{
+	char *endp;
+	char *buf;
+	int ret;
+	long val;
 
 	buf = match_strdup(s);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	ret = 0;
-	val = simple_म_से_दीर्घ(buf, &endp, base);
-	अगर (endp == buf)
+	val = simple_strtol(buf, &endp, base);
+	if (endp == buf)
 		ret = -EINVAL;
-	अन्यथा अगर (val < (दीर्घ)पूर्णांक_न्यून || val > (दीर्घ)पूर्णांक_उच्च)
-		ret = -दुस्फल;
-	अन्यथा
-		*result = (पूर्णांक) val;
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	else if (val < (long)INT_MIN || val > (long)INT_MAX)
+		ret = -ERANGE;
+	else
+		*result = (int) val;
+	kfree(buf);
+	return ret;
+}
 
 /**
- * match_u64पूर्णांक - scan a number in the given base from a substring_t
+ * match_u64int - scan a number in the given base from a substring_t
  * @s: substring to be scanned
  * @result: resulting u64 on success
  * @base: base to use when converting string
@@ -158,205 +157,205 @@ EXPORT_SYMBOL(match_token);
  * Description: Given a &substring_t and a base, attempts to parse the substring
  * as a number in that base.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the
- * string and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the
+ * string and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-अटल पूर्णांक match_u64पूर्णांक(substring_t *s, u64 *result, पूर्णांक base)
-अणु
-	अक्षर *buf;
-	पूर्णांक ret;
+static int match_u64int(substring_t *s, u64 *result, int base)
+{
+	char *buf;
+	int ret;
 	u64 val;
 
 	buf = match_strdup(s);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	ret = kम_से_अदीर्घl(buf, base, &val);
-	अगर (!ret)
+	ret = kstrtoull(buf, base, &val);
+	if (!ret)
 		*result = val;
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
 /**
- * match_पूर्णांक - scan a decimal representation of an पूर्णांकeger from a substring_t
+ * match_int - scan a decimal representation of an integer from a substring_t
  * @s: substring_t to be scanned
- * @result: resulting पूर्णांकeger on success
+ * @result: resulting integer on success
  *
- * Description: Attempts to parse the &substring_t @s as a decimal पूर्णांकeger.
+ * Description: Attempts to parse the &substring_t @s as a decimal integer.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the string
- * and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the string
+ * and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-पूर्णांक match_पूर्णांक(substring_t *s, पूर्णांक *result)
-अणु
-	वापस match_number(s, result, 0);
-पूर्ण
-EXPORT_SYMBOL(match_पूर्णांक);
+int match_int(substring_t *s, int *result)
+{
+	return match_number(s, result, 0);
+}
+EXPORT_SYMBOL(match_int);
 
 /**
- * match_uपूर्णांक - scan a decimal representation of an पूर्णांकeger from a substring_t
+ * match_uint - scan a decimal representation of an integer from a substring_t
  * @s: substring_t to be scanned
- * @result: resulting पूर्णांकeger on success
+ * @result: resulting integer on success
  *
- * Description: Attempts to parse the &substring_t @s as a decimal पूर्णांकeger.
+ * Description: Attempts to parse the &substring_t @s as a decimal integer.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the string
- * and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the string
+ * and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-पूर्णांक match_uपूर्णांक(substring_t *s, अचिन्हित पूर्णांक *result)
-अणु
-	पूर्णांक err = -ENOMEM;
-	अक्षर *buf = match_strdup(s);
+int match_uint(substring_t *s, unsigned int *result)
+{
+	int err = -ENOMEM;
+	char *buf = match_strdup(s);
 
-	अगर (buf) अणु
-		err = kstrtouपूर्णांक(buf, 10, result);
-		kमुक्त(buf);
-	पूर्ण
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(match_uपूर्णांक);
+	if (buf) {
+		err = kstrtouint(buf, 10, result);
+		kfree(buf);
+	}
+	return err;
+}
+EXPORT_SYMBOL(match_uint);
 
 /**
  * match_u64 - scan a decimal representation of a u64 from
  *                  a substring_t
  * @s: substring_t to be scanned
- * @result: resulting अचिन्हित दीर्घ दीर्घ on success
+ * @result: resulting unsigned long long on success
  *
- * Description: Attempts to parse the &substring_t @s as a दीर्घ decimal
- * पूर्णांकeger.
+ * Description: Attempts to parse the &substring_t @s as a long decimal
+ * integer.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the string
- * and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the string
+ * and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-पूर्णांक match_u64(substring_t *s, u64 *result)
-अणु
-	वापस match_u64पूर्णांक(s, result, 0);
-पूर्ण
+int match_u64(substring_t *s, u64 *result)
+{
+	return match_u64int(s, result, 0);
+}
 EXPORT_SYMBOL(match_u64);
 
 /**
- * match_octal - scan an octal representation of an पूर्णांकeger from a substring_t
+ * match_octal - scan an octal representation of an integer from a substring_t
  * @s: substring_t to be scanned
- * @result: resulting पूर्णांकeger on success
+ * @result: resulting integer on success
  *
- * Description: Attempts to parse the &substring_t @s as an octal पूर्णांकeger.
+ * Description: Attempts to parse the &substring_t @s as an octal integer.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the string
- * and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the string
+ * and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-पूर्णांक match_octal(substring_t *s, पूर्णांक *result)
-अणु
-	वापस match_number(s, result, 8);
-पूर्ण
+int match_octal(substring_t *s, int *result)
+{
+	return match_number(s, result, 8);
+}
 EXPORT_SYMBOL(match_octal);
 
 /**
- * match_hex - scan a hex representation of an पूर्णांकeger from a substring_t
+ * match_hex - scan a hex representation of an integer from a substring_t
  * @s: substring_t to be scanned
- * @result: resulting पूर्णांकeger on success
+ * @result: resulting integer on success
  *
- * Description: Attempts to parse the &substring_t @s as a hexadecimal पूर्णांकeger.
+ * Description: Attempts to parse the &substring_t @s as a hexadecimal integer.
  *
- * Return: On success, sets @result to the पूर्णांकeger represented by the string
- * and वापसs 0. Returns -ENOMEM, -EINVAL, or -दुस्फल on failure.
+ * Return: On success, sets @result to the integer represented by the string
+ * and returns 0. Returns -ENOMEM, -EINVAL, or -ERANGE on failure.
  */
-पूर्णांक match_hex(substring_t *s, पूर्णांक *result)
-अणु
-	वापस match_number(s, result, 16);
-पूर्ण
+int match_hex(substring_t *s, int *result)
+{
+	return match_number(s, result, 16);
+}
 EXPORT_SYMBOL(match_hex);
 
 /**
- * match_wildcard - parse अगर a string matches given wildcard pattern
+ * match_wildcard - parse if a string matches given wildcard pattern
  * @pattern: wildcard pattern
  * @str: the string to be parsed
  *
- * Description: Parse the string @str to check अगर matches wildcard
+ * Description: Parse the string @str to check if matches wildcard
  * pattern @pattern. The pattern may contain two types of wildcards:
- *   '*' - matches zero or more अक्षरacters
- *   '?' - matches one अक्षरacter
+ *   '*' - matches zero or more characters
+ *   '?' - matches one character
  *
- * Return: If the @str matches the @pattern, वापस true, अन्यथा वापस false.
+ * Return: If the @str matches the @pattern, return true, else return false.
  */
-bool match_wildcard(स्थिर अक्षर *pattern, स्थिर अक्षर *str)
-अणु
-	स्थिर अक्षर *s = str;
-	स्थिर अक्षर *p = pattern;
+bool match_wildcard(const char *pattern, const char *str)
+{
+	const char *s = str;
+	const char *p = pattern;
 	bool star = false;
 
-	जबतक (*s) अणु
-		चयन (*p) अणु
-		हाल '?':
+	while (*s) {
+		switch (*p) {
+		case '?':
 			s++;
 			p++;
-			अवरोध;
-		हाल '*':
+			break;
+		case '*':
 			star = true;
 			str = s;
-			अगर (!*++p)
-				वापस true;
+			if (!*++p)
+				return true;
 			pattern = p;
-			अवरोध;
-		शेष:
-			अगर (*s == *p) अणु
+			break;
+		default:
+			if (*s == *p) {
 				s++;
 				p++;
-			पूर्ण अन्यथा अणु
-				अगर (!star)
-					वापस false;
+			} else {
+				if (!star)
+					return false;
 				str++;
 				s = str;
 				p = pattern;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 
-	अगर (*p == '*')
+	if (*p == '*')
 		++p;
-	वापस !*p;
-पूर्ण
+	return !*p;
+}
 EXPORT_SYMBOL(match_wildcard);
 
 /**
- * match_strlcpy - Copy the अक्षरacters from a substring_t to a sized buffer
+ * match_strlcpy - Copy the characters from a substring_t to a sized buffer
  * @dest: where to copy to
  * @src: &substring_t to copy
  * @size: size of destination buffer
  *
- * Description: Copy the अक्षरacters in &substring_t @src to the
- * c-style string @dest.  Copy no more than @size - 1 अक्षरacters, plus
+ * Description: Copy the characters in &substring_t @src to the
+ * c-style string @dest.  Copy no more than @size - 1 characters, plus
  * the terminating NUL.
  *
  * Return: length of @src.
  */
-माप_प्रकार match_strlcpy(अक्षर *dest, स्थिर substring_t *src, माप_प्रकार size)
-अणु
-	माप_प्रकार ret = src->to - src->from;
+size_t match_strlcpy(char *dest, const substring_t *src, size_t size)
+{
+	size_t ret = src->to - src->from;
 
-	अगर (size) अणु
-		माप_प्रकार len = ret >= size ? size - 1 : ret;
-		स_नकल(dest, src->from, len);
+	if (size) {
+		size_t len = ret >= size ? size - 1 : ret;
+		memcpy(dest, src->from, len);
 		dest[len] = '\0';
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL(match_strlcpy);
 
 /**
  * match_strdup - allocate a new string with the contents of a substring_t
  * @s: &substring_t to copy
  *
- * Description: Allocates and वापसs a string filled with the contents of
- * the &substring_t @s. The caller is responsible क्रम मुक्तing the वापसed
- * string with kमुक्त().
+ * Description: Allocates and returns a string filled with the contents of
+ * the &substring_t @s. The caller is responsible for freeing the returned
+ * string with kfree().
  *
  * Return: the address of the newly allocated NUL-terminated string or
- * %शून्य on error.
+ * %NULL on error.
  */
-अक्षर *match_strdup(स्थिर substring_t *s)
-अणु
-	वापस kmemdup_nul(s->from, s->to - s->from, GFP_KERNEL);
-पूर्ण
+char *match_strdup(const substring_t *s)
+{
+	return kmemdup_nul(s->from, s->to - s->from, GFP_KERNEL);
+}
 EXPORT_SYMBOL(match_strdup);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/display.c
  *
@@ -10,259 +9,259 @@
  * by Imre Deak.
  */
 
-#घोषणा DSS_SUBSYS_NAME "DISPLAY"
+#define DSS_SUBSYS_NAME "DISPLAY"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश "dss.h"
-#समावेश "dss_features.h"
+#include <video/omapfb_dss.h>
+#include "dss.h"
+#include "dss_features.h"
 
-व्योम omapdss_शेष_get_resolution(काष्ठा omap_dss_device *dssdev,
+void omapdss_default_get_resolution(struct omap_dss_device *dssdev,
 			u16 *xres, u16 *yres)
-अणु
+{
 	*xres = dssdev->panel.timings.x_res;
 	*yres = dssdev->panel.timings.y_res;
-पूर्ण
-EXPORT_SYMBOL(omapdss_शेष_get_resolution);
+}
+EXPORT_SYMBOL(omapdss_default_get_resolution);
 
-पूर्णांक omapdss_शेष_get_recommended_bpp(काष्ठा omap_dss_device *dssdev)
-अणु
-	चयन (dssdev->type) अणु
-	हाल OMAP_DISPLAY_TYPE_DPI:
-		अगर (dssdev->phy.dpi.data_lines == 24)
-			वापस 24;
-		अन्यथा
-			वापस 16;
+int omapdss_default_get_recommended_bpp(struct omap_dss_device *dssdev)
+{
+	switch (dssdev->type) {
+	case OMAP_DISPLAY_TYPE_DPI:
+		if (dssdev->phy.dpi.data_lines == 24)
+			return 24;
+		else
+			return 16;
 
-	हाल OMAP_DISPLAY_TYPE_DBI:
-		अगर (dssdev->ctrl.pixel_size == 24)
-			वापस 24;
-		अन्यथा
-			वापस 16;
-	हाल OMAP_DISPLAY_TYPE_DSI:
-		अगर (dsi_get_pixel_size(dssdev->panel.dsi_pix_fmt) > 16)
-			वापस 24;
-		अन्यथा
-			वापस 16;
-	हाल OMAP_DISPLAY_TYPE_VENC:
-	हाल OMAP_DISPLAY_TYPE_SDI:
-	हाल OMAP_DISPLAY_TYPE_HDMI:
-	हाल OMAP_DISPLAY_TYPE_DVI:
-		वापस 24;
-	शेष:
+	case OMAP_DISPLAY_TYPE_DBI:
+		if (dssdev->ctrl.pixel_size == 24)
+			return 24;
+		else
+			return 16;
+	case OMAP_DISPLAY_TYPE_DSI:
+		if (dsi_get_pixel_size(dssdev->panel.dsi_pix_fmt) > 16)
+			return 24;
+		else
+			return 16;
+	case OMAP_DISPLAY_TYPE_VENC:
+	case OMAP_DISPLAY_TYPE_SDI:
+	case OMAP_DISPLAY_TYPE_HDMI:
+	case OMAP_DISPLAY_TYPE_DVI:
+		return 24;
+	default:
 		BUG();
-		वापस 0;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(omapdss_शेष_get_recommended_bpp);
+		return 0;
+	}
+}
+EXPORT_SYMBOL(omapdss_default_get_recommended_bpp);
 
-व्योम omapdss_शेष_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
+void omapdss_default_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
 	*timings = dssdev->panel.timings;
-पूर्ण
-EXPORT_SYMBOL(omapdss_शेष_get_timings);
+}
+EXPORT_SYMBOL(omapdss_default_get_timings);
 
-पूर्णांक dss_suspend_all_devices(व्योम)
-अणु
-	काष्ठा omap_dss_device *dssdev = शून्य;
+int dss_suspend_all_devices(void)
+{
+	struct omap_dss_device *dssdev = NULL;
 
-	क्रम_each_dss_dev(dssdev) अणु
-		अगर (!dssdev->driver)
-			जारी;
+	for_each_dss_dev(dssdev) {
+		if (!dssdev->driver)
+			continue;
 
-		अगर (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE) अणु
+		if (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE) {
 			dssdev->driver->disable(dssdev);
 			dssdev->activate_after_resume = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			dssdev->activate_after_resume = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dss_resume_all_devices(व्योम)
-अणु
-	काष्ठा omap_dss_device *dssdev = शून्य;
+int dss_resume_all_devices(void)
+{
+	struct omap_dss_device *dssdev = NULL;
 
-	क्रम_each_dss_dev(dssdev) अणु
-		अगर (!dssdev->driver)
-			जारी;
+	for_each_dss_dev(dssdev) {
+		if (!dssdev->driver)
+			continue;
 
-		अगर (dssdev->activate_after_resume) अणु
+		if (dssdev->activate_after_resume) {
 			dssdev->driver->enable(dssdev);
 			dssdev->activate_after_resume = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम dss_disable_all_devices(व्योम)
-अणु
-	काष्ठा omap_dss_device *dssdev = शून्य;
+void dss_disable_all_devices(void)
+{
+	struct omap_dss_device *dssdev = NULL;
 
-	क्रम_each_dss_dev(dssdev) अणु
-		अगर (!dssdev->driver)
-			जारी;
+	for_each_dss_dev(dssdev) {
+		if (!dssdev->driver)
+			continue;
 
-		अगर (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
+		if (dssdev->state == OMAP_DSS_DISPLAY_ACTIVE)
 			dssdev->driver->disable(dssdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल LIST_HEAD(panel_list);
-अटल DEFINE_MUTEX(panel_list_mutex);
-अटल पूर्णांक disp_num_counter;
+static LIST_HEAD(panel_list);
+static DEFINE_MUTEX(panel_list_mutex);
+static int disp_num_counter;
 
-पूर्णांक omapdss_रेजिस्टर_display(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा omap_dss_driver *drv = dssdev->driver;
-	पूर्णांक id;
+int omapdss_register_display(struct omap_dss_device *dssdev)
+{
+	struct omap_dss_driver *drv = dssdev->driver;
+	int id;
 
 	/*
 	 * Note: this presumes all the displays are either using DT or non-DT,
-	 * which normally should be the हाल. This also presumes that all
+	 * which normally should be the case. This also presumes that all
 	 * displays either have an DT alias, or none has.
 	 */
 
-	अगर (dssdev->dev->of_node) अणु
+	if (dssdev->dev->of_node) {
 		id = of_alias_get_id(dssdev->dev->of_node, "display");
 
-		अगर (id < 0)
+		if (id < 0)
 			id = disp_num_counter++;
-	पूर्ण अन्यथा अणु
+	} else {
 		id = disp_num_counter++;
-	पूर्ण
+	}
 
-	snम_लिखो(dssdev->alias, माप(dssdev->alias), "display%d", id);
+	snprintf(dssdev->alias, sizeof(dssdev->alias), "display%d", id);
 
-	/* Use 'label' property क्रम name, अगर it exists */
-	अगर (dssdev->dev->of_node)
-		of_property_पढ़ो_string(dssdev->dev->of_node, "label",
+	/* Use 'label' property for name, if it exists */
+	if (dssdev->dev->of_node)
+		of_property_read_string(dssdev->dev->of_node, "label",
 			&dssdev->name);
 
-	अगर (dssdev->name == शून्य)
+	if (dssdev->name == NULL)
 		dssdev->name = dssdev->alias;
 
-	अगर (drv && drv->get_resolution == शून्य)
-		drv->get_resolution = omapdss_शेष_get_resolution;
-	अगर (drv && drv->get_recommended_bpp == शून्य)
-		drv->get_recommended_bpp = omapdss_शेष_get_recommended_bpp;
-	अगर (drv && drv->get_timings == शून्य)
-		drv->get_timings = omapdss_शेष_get_timings;
+	if (drv && drv->get_resolution == NULL)
+		drv->get_resolution = omapdss_default_get_resolution;
+	if (drv && drv->get_recommended_bpp == NULL)
+		drv->get_recommended_bpp = omapdss_default_get_recommended_bpp;
+	if (drv && drv->get_timings == NULL)
+		drv->get_timings = omapdss_default_get_timings;
 
 	mutex_lock(&panel_list_mutex);
 	list_add_tail(&dssdev->panel_list, &panel_list);
 	mutex_unlock(&panel_list_mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(omapdss_रेजिस्टर_display);
+	return 0;
+}
+EXPORT_SYMBOL(omapdss_register_display);
 
-व्योम omapdss_unरेजिस्टर_display(काष्ठा omap_dss_device *dssdev)
-अणु
+void omapdss_unregister_display(struct omap_dss_device *dssdev)
+{
 	mutex_lock(&panel_list_mutex);
 	list_del(&dssdev->panel_list);
 	mutex_unlock(&panel_list_mutex);
-पूर्ण
-EXPORT_SYMBOL(omapdss_unरेजिस्टर_display);
+}
+EXPORT_SYMBOL(omapdss_unregister_display);
 
-काष्ठा omap_dss_device *omap_dss_get_device(काष्ठा omap_dss_device *dssdev)
-अणु
-	अगर (!try_module_get(dssdev->owner))
-		वापस शून्य;
+struct omap_dss_device *omap_dss_get_device(struct omap_dss_device *dssdev)
+{
+	if (!try_module_get(dssdev->owner))
+		return NULL;
 
-	अगर (get_device(dssdev->dev) == शून्य) अणु
+	if (get_device(dssdev->dev) == NULL) {
 		module_put(dssdev->owner);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस dssdev;
-पूर्ण
+	return dssdev;
+}
 EXPORT_SYMBOL(omap_dss_get_device);
 
-व्योम omap_dss_put_device(काष्ठा omap_dss_device *dssdev)
-अणु
+void omap_dss_put_device(struct omap_dss_device *dssdev)
+{
 	put_device(dssdev->dev);
 	module_put(dssdev->owner);
-पूर्ण
+}
 EXPORT_SYMBOL(omap_dss_put_device);
 
 /*
  * ref count of the found device is incremented.
  * ref count of from-device is decremented.
  */
-काष्ठा omap_dss_device *omap_dss_get_next_device(काष्ठा omap_dss_device *from)
-अणु
-	काष्ठा list_head *l;
-	काष्ठा omap_dss_device *dssdev;
+struct omap_dss_device *omap_dss_get_next_device(struct omap_dss_device *from)
+{
+	struct list_head *l;
+	struct omap_dss_device *dssdev;
 
 	mutex_lock(&panel_list_mutex);
 
-	अगर (list_empty(&panel_list)) अणु
-		dssdev = शून्य;
-		जाओ out;
-	पूर्ण
+	if (list_empty(&panel_list)) {
+		dssdev = NULL;
+		goto out;
+	}
 
-	अगर (from == शून्य) अणु
-		dssdev = list_first_entry(&panel_list, काष्ठा omap_dss_device,
+	if (from == NULL) {
+		dssdev = list_first_entry(&panel_list, struct omap_dss_device,
 				panel_list);
 		omap_dss_get_device(dssdev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	omap_dss_put_device(from);
 
-	list_क्रम_each(l, &panel_list) अणु
-		dssdev = list_entry(l, काष्ठा omap_dss_device, panel_list);
-		अगर (dssdev == from) अणु
-			अगर (list_is_last(l, &panel_list)) अणु
-				dssdev = शून्य;
-				जाओ out;
-			पूर्ण
+	list_for_each(l, &panel_list) {
+		dssdev = list_entry(l, struct omap_dss_device, panel_list);
+		if (dssdev == from) {
+			if (list_is_last(l, &panel_list)) {
+				dssdev = NULL;
+				goto out;
+			}
 
-			dssdev = list_entry(l->next, काष्ठा omap_dss_device,
+			dssdev = list_entry(l->next, struct omap_dss_device,
 					panel_list);
 			omap_dss_get_device(dssdev);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	WARN(1, "'from' dssdev not found\n");
 
-	dssdev = शून्य;
+	dssdev = NULL;
 out:
 	mutex_unlock(&panel_list_mutex);
-	वापस dssdev;
-पूर्ण
+	return dssdev;
+}
 EXPORT_SYMBOL(omap_dss_get_next_device);
 
-काष्ठा omap_dss_device *omap_dss_find_device(व्योम *data,
-		पूर्णांक (*match)(काष्ठा omap_dss_device *dssdev, व्योम *data))
-अणु
-	काष्ठा omap_dss_device *dssdev = शून्य;
+struct omap_dss_device *omap_dss_find_device(void *data,
+		int (*match)(struct omap_dss_device *dssdev, void *data))
+{
+	struct omap_dss_device *dssdev = NULL;
 
-	जबतक ((dssdev = omap_dss_get_next_device(dssdev)) != शून्य) अणु
-		अगर (match(dssdev, data))
-			वापस dssdev;
-	पूर्ण
+	while ((dssdev = omap_dss_get_next_device(dssdev)) != NULL) {
+		if (match(dssdev, data))
+			return dssdev;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(omap_dss_find_device);
 
-व्योम videomode_to_omap_video_timings(स्थिर काष्ठा videomode *vm,
-		काष्ठा omap_video_timings *ovt)
-अणु
-	स_रखो(ovt, 0, माप(*ovt));
+void videomode_to_omap_video_timings(const struct videomode *vm,
+		struct omap_video_timings *ovt)
+{
+	memset(ovt, 0, sizeof(*ovt));
 
-	ovt->pixelघड़ी = vm->pixelघड़ी;
+	ovt->pixelclock = vm->pixelclock;
 	ovt->x_res = vm->hactive;
 	ovt->hbp = vm->hback_porch;
 	ovt->hfp = vm->hfront_porch;
@@ -286,15 +285,15 @@ EXPORT_SYMBOL(omap_dss_find_device);
 		OMAPDSS_DRIVE_SIG_FALLING_EDGE;
 
 	ovt->sync_pclk_edge = ovt->data_pclk_edge;
-पूर्ण
+}
 EXPORT_SYMBOL(videomode_to_omap_video_timings);
 
-व्योम omap_video_timings_to_videomode(स्थिर काष्ठा omap_video_timings *ovt,
-		काष्ठा videomode *vm)
-अणु
-	स_रखो(vm, 0, माप(*vm));
+void omap_video_timings_to_videomode(const struct omap_video_timings *ovt,
+		struct videomode *vm)
+{
+	memset(vm, 0, sizeof(*vm));
 
-	vm->pixelघड़ी = ovt->pixelघड़ी;
+	vm->pixelclock = ovt->pixelclock;
 
 	vm->hactive = ovt->x_res;
 	vm->hback_porch = ovt->hbp;
@@ -305,24 +304,24 @@ EXPORT_SYMBOL(videomode_to_omap_video_timings);
 	vm->vfront_porch = ovt->vfp;
 	vm->vsync_len = ovt->vsw;
 
-	अगर (ovt->hsync_level == OMAPDSS_SIG_ACTIVE_HIGH)
+	if (ovt->hsync_level == OMAPDSS_SIG_ACTIVE_HIGH)
 		vm->flags |= DISPLAY_FLAGS_HSYNC_HIGH;
-	अन्यथा
+	else
 		vm->flags |= DISPLAY_FLAGS_HSYNC_LOW;
 
-	अगर (ovt->vsync_level == OMAPDSS_SIG_ACTIVE_HIGH)
+	if (ovt->vsync_level == OMAPDSS_SIG_ACTIVE_HIGH)
 		vm->flags |= DISPLAY_FLAGS_VSYNC_HIGH;
-	अन्यथा
+	else
 		vm->flags |= DISPLAY_FLAGS_VSYNC_LOW;
 
-	अगर (ovt->de_level == OMAPDSS_SIG_ACTIVE_HIGH)
+	if (ovt->de_level == OMAPDSS_SIG_ACTIVE_HIGH)
 		vm->flags |= DISPLAY_FLAGS_DE_HIGH;
-	अन्यथा
+	else
 		vm->flags |= DISPLAY_FLAGS_DE_LOW;
 
-	अगर (ovt->data_pclk_edge == OMAPDSS_DRIVE_SIG_RISING_EDGE)
+	if (ovt->data_pclk_edge == OMAPDSS_DRIVE_SIG_RISING_EDGE)
 		vm->flags |= DISPLAY_FLAGS_PIXDATA_POSEDGE;
-	अन्यथा
+	else
 		vm->flags |= DISPLAY_FLAGS_PIXDATA_NEGEDGE;
-पूर्ण
+}
 EXPORT_SYMBOL(omap_video_timings_to_videomode);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Cryptographic API.
  *
@@ -8,20 +7,20 @@
  * Copyright IBM Corp. 2007
  * Author(s): Jan Glauber (jang@de.ibm.com)
  */
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/sha2.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/cpufeature.h>
-#समावेश <यंत्र/cpacf.h>
+#include <crypto/internal/hash.h>
+#include <crypto/sha2.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/cpufeature.h>
+#include <asm/cpacf.h>
 
-#समावेश "sha.h"
+#include "sha.h"
 
-अटल पूर्णांक sha512_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा s390_sha_ctx *ctx = shash_desc_ctx(desc);
+static int sha512_init(struct shash_desc *desc)
+{
+	struct s390_sha_ctx *ctx = shash_desc_ctx(desc);
 
 	*(__u64 *)&ctx->state[0] = 0x6a09e667f3bcc908ULL;
 	*(__u64 *)&ctx->state[2] = 0xbb67ae8584caa73bULL;
@@ -34,59 +33,59 @@
 	ctx->count = 0;
 	ctx->func = CPACF_KIMD_SHA_512;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sha512_export(काष्ठा shash_desc *desc, व्योम *out)
-अणु
-	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
-	काष्ठा sha512_state *octx = out;
+static int sha512_export(struct shash_desc *desc, void *out)
+{
+	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
+	struct sha512_state *octx = out;
 
 	octx->count[0] = sctx->count;
 	octx->count[1] = 0;
-	स_नकल(octx->state, sctx->state, माप(octx->state));
-	स_नकल(octx->buf, sctx->buf, माप(octx->buf));
-	वापस 0;
-पूर्ण
+	memcpy(octx->state, sctx->state, sizeof(octx->state));
+	memcpy(octx->buf, sctx->buf, sizeof(octx->buf));
+	return 0;
+}
 
-अटल पूर्णांक sha512_import(काष्ठा shash_desc *desc, स्थिर व्योम *in)
-अणु
-	काष्ठा s390_sha_ctx *sctx = shash_desc_ctx(desc);
-	स्थिर काष्ठा sha512_state *ictx = in;
+static int sha512_import(struct shash_desc *desc, const void *in)
+{
+	struct s390_sha_ctx *sctx = shash_desc_ctx(desc);
+	const struct sha512_state *ictx = in;
 
-	अगर (unlikely(ictx->count[1]))
-		वापस -दुस्फल;
+	if (unlikely(ictx->count[1]))
+		return -ERANGE;
 	sctx->count = ictx->count[0];
 
-	स_नकल(sctx->state, ictx->state, माप(ictx->state));
-	स_नकल(sctx->buf, ictx->buf, माप(ictx->buf));
+	memcpy(sctx->state, ictx->state, sizeof(ictx->state));
+	memcpy(sctx->buf, ictx->buf, sizeof(ictx->buf));
 	sctx->func = CPACF_KIMD_SHA_512;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा shash_alg sha512_alg = अणु
+static struct shash_alg sha512_alg = {
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_init,
 	.update		=	s390_sha_update,
 	.final		=	s390_sha_final,
 	.export		=	sha512_export,
 	.import		=	sha512_import,
-	.descsize	=	माप(काष्ठा s390_sha_ctx),
-	.statesize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct s390_sha_ctx),
+	.statesize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha512",
 		.cra_driver_name=	"sha512-s390",
 		.cra_priority	=	300,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 MODULE_ALIAS_CRYPTO("sha512");
 
-अटल पूर्णांक sha384_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा s390_sha_ctx *ctx = shash_desc_ctx(desc);
+static int sha384_init(struct shash_desc *desc)
+{
+	struct s390_sha_ctx *ctx = shash_desc_ctx(desc);
 
 	*(__u64 *)&ctx->state[0] = 0xcbbb9d5dc1059ed8ULL;
 	*(__u64 *)&ctx->state[2] = 0x629a292a367cd507ULL;
@@ -99,52 +98,52 @@ MODULE_ALIAS_CRYPTO("sha512");
 	ctx->count = 0;
 	ctx->func = CPACF_KIMD_SHA_512;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा shash_alg sha384_alg = अणु
+static struct shash_alg sha384_alg = {
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_init,
 	.update		=	s390_sha_update,
 	.final		=	s390_sha_final,
 	.export		=	sha512_export,
 	.import		=	sha512_import,
-	.descsize	=	माप(काष्ठा s390_sha_ctx),
-	.statesize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct s390_sha_ctx),
+	.statesize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha384",
 		.cra_driver_name=	"sha384-s390",
 		.cra_priority	=	300,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
-		.cra_ctxsize	=	माप(काष्ठा s390_sha_ctx),
+		.cra_ctxsize	=	sizeof(struct s390_sha_ctx),
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 MODULE_ALIAS_CRYPTO("sha384");
 
-अटल पूर्णांक __init init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init init(void)
+{
+	int ret;
 
-	अगर (!cpacf_query_func(CPACF_KIMD, CPACF_KIMD_SHA_512))
-		वापस -ENODEV;
-	अगर ((ret = crypto_रेजिस्टर_shash(&sha512_alg)) < 0)
-		जाओ out;
-	अगर ((ret = crypto_रेजिस्टर_shash(&sha384_alg)) < 0)
-		crypto_unरेजिस्टर_shash(&sha512_alg);
+	if (!cpacf_query_func(CPACF_KIMD, CPACF_KIMD_SHA_512))
+		return -ENODEV;
+	if ((ret = crypto_register_shash(&sha512_alg)) < 0)
+		goto out;
+	if ((ret = crypto_register_shash(&sha384_alg)) < 0)
+		crypto_unregister_shash(&sha512_alg);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_shash(&sha512_alg);
-	crypto_unरेजिस्टर_shash(&sha384_alg);
-पूर्ण
+static void __exit fini(void)
+{
+	crypto_unregister_shash(&sha512_alg);
+	crypto_unregister_shash(&sha384_alg);
+}
 
 module_cpu_feature_match(MSA, init);
-module_निकास(fini);
+module_exit(fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA512 and SHA-384 Secure Hash Algorithm");

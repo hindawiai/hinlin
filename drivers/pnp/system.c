@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * प्रणाली.c - a driver क्रम reserving pnp प्रणाली resources
+ * system.c - a driver for reserving pnp system resources
  *
  * Some code is based on pnpbios_core.c
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
@@ -9,106 +8,106 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#समावेश <linux/pnp.h>
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ioport.h>
+#include <linux/pnp.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/ioport.h>
 
-अटल स्थिर काष्ठा pnp_device_id pnp_dev_table[] = अणु
-	/* General ID क्रम reserving resources */
-	अणु"PNP0c02", 0पूर्ण,
+static const struct pnp_device_id pnp_dev_table[] = {
+	/* General ID for reserving resources */
+	{"PNP0c02", 0},
 	/* memory controller */
-	अणु"PNP0c01", 0पूर्ण,
-	अणु"", 0पूर्ण
-पूर्ण;
+	{"PNP0c01", 0},
+	{"", 0}
+};
 
-अटल व्योम reserve_range(काष्ठा pnp_dev *dev, काष्ठा resource *r, पूर्णांक port)
-अणु
-	अक्षर *regionid;
-	स्थिर अक्षर *pnpid = dev_name(&dev->dev);
-	resource_माप_प्रकार start = r->start, end = r->end;
-	काष्ठा resource *res;
+static void reserve_range(struct pnp_dev *dev, struct resource *r, int port)
+{
+	char *regionid;
+	const char *pnpid = dev_name(&dev->dev);
+	resource_size_t start = r->start, end = r->end;
+	struct resource *res;
 
-	regionid = kदो_स्मृति(16, GFP_KERNEL);
-	अगर (!regionid)
-		वापस;
+	regionid = kmalloc(16, GFP_KERNEL);
+	if (!regionid)
+		return;
 
-	snम_लिखो(regionid, 16, "pnp %s", pnpid);
-	अगर (port)
+	snprintf(regionid, 16, "pnp %s", pnpid);
+	if (port)
 		res = request_region(start, end - start + 1, regionid);
-	अन्यथा
+	else
 		res = request_mem_region(start, end - start + 1, regionid);
-	अगर (res)
+	if (res)
 		res->flags &= ~IORESOURCE_BUSY;
-	अन्यथा
-		kमुक्त(regionid);
+	else
+		kfree(regionid);
 
 	/*
-	 * Failures at this poपूर्णांक are usually harmless. pci quirks क्रम
-	 * example करो reserve stuff they know about too, so we may well
-	 * have द्विगुन reservations.
+	 * Failures at this point are usually harmless. pci quirks for
+	 * example do reserve stuff they know about too, so we may well
+	 * have double reservations.
 	 */
 	dev_info(&dev->dev, "%pR %s reserved\n", r,
 		 res ? "has been" : "could not be");
-पूर्ण
+}
 
-अटल व्योम reserve_resources_of_dev(काष्ठा pnp_dev *dev)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक i;
+static void reserve_resources_of_dev(struct pnp_dev *dev)
+{
+	struct resource *res;
+	int i;
 
-	क्रम (i = 0; (res = pnp_get_resource(dev, IORESOURCE_IO, i)); i++) अणु
-		अगर (res->flags & IORESOURCE_DISABLED)
-			जारी;
-		अगर (res->start == 0)
-			जारी;	/* disabled */
-		अगर (res->start < 0x100)
+	for (i = 0; (res = pnp_get_resource(dev, IORESOURCE_IO, i)); i++) {
+		if (res->flags & IORESOURCE_DISABLED)
+			continue;
+		if (res->start == 0)
+			continue;	/* disabled */
+		if (res->start < 0x100)
 			/*
 			 * Below 0x100 is only standard PC hardware
-			 * (pics, kbd, समयr, dma, ...)
+			 * (pics, kbd, timer, dma, ...)
 			 * We should not get resource conflicts there,
 			 * and the kernel reserves these anyway
 			 * (see arch/i386/kernel/setup.c).
-			 * So, करो nothing
+			 * So, do nothing
 			 */
-			जारी;
-		अगर (res->end < res->start)
-			जारी;	/* invalid */
+			continue;
+		if (res->end < res->start)
+			continue;	/* invalid */
 
 		reserve_range(dev, res, 1);
-	पूर्ण
+	}
 
-	क्रम (i = 0; (res = pnp_get_resource(dev, IORESOURCE_MEM, i)); i++) अणु
-		अगर (res->flags & IORESOURCE_DISABLED)
-			जारी;
+	for (i = 0; (res = pnp_get_resource(dev, IORESOURCE_MEM, i)); i++) {
+		if (res->flags & IORESOURCE_DISABLED)
+			continue;
 
 		reserve_range(dev, res, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक प्रणाली_pnp_probe(काष्ठा pnp_dev *dev,
-			    स्थिर काष्ठा pnp_device_id *dev_id)
-अणु
+static int system_pnp_probe(struct pnp_dev *dev,
+			    const struct pnp_device_id *dev_id)
+{
 	reserve_resources_of_dev(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pnp_driver प्रणाली_pnp_driver = अणु
+static struct pnp_driver system_pnp_driver = {
 	.name     = "system",
 	.id_table = pnp_dev_table,
 	.flags    = PNP_DRIVER_RES_DO_NOT_CHANGE,
-	.probe    = प्रणाली_pnp_probe,
-पूर्ण;
+	.probe    = system_pnp_probe,
+};
 
-अटल पूर्णांक __init pnp_प्रणाली_init(व्योम)
-अणु
-	वापस pnp_रेजिस्टर_driver(&प्रणाली_pnp_driver);
-पूर्ण
+static int __init pnp_system_init(void)
+{
+	return pnp_register_driver(&system_pnp_driver);
+}
 
 /**
  * Reserve motherboard resources after PCI claim BARs,
- * but beक्रमe PCI assign resources क्रम uninitialized PCI devices
+ * but before PCI assign resources for uninitialized PCI devices
  */
-fs_initcall(pnp_प्रणाली_init);
+fs_initcall(pnp_system_init);

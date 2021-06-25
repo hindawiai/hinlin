@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	NET3	IP device support routines.
  *
@@ -13,299 +12,299 @@
  *		Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  *	Changes:
- *		Alexey Kuznetsov:	pa_* fields are replaced with अगरaddr
+ *		Alexey Kuznetsov:	pa_* fields are replaced with ifaddr
  *					lists.
- *		Cyrus Durgin:		updated क्रम kmod
+ *		Cyrus Durgin:		updated for kmod
  *		Matthias Andree:	in devinet_ioctl, compare label and
  *					address (4.4BSD alias style support),
  *					fall back to comparing just the label
- *					अगर no match found.
+ *					if no match found.
  */
 
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/in.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/अगर_addr.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/init.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/igmp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hash.h>
-#अगर_घोषित CONFIG_SYSCTL
-#समावेश <linux/sysctl.h>
-#पूर्ण_अगर
-#समावेश <linux/kmod.h>
-#समावेश <linux/netconf.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/socket.h>
+#include <linux/sockios.h>
+#include <linux/in.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/if_addr.h>
+#include <linux/if_ether.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/init.h>
+#include <linux/notifier.h>
+#include <linux/inetdevice.h>
+#include <linux/igmp.h>
+#include <linux/slab.h>
+#include <linux/hash.h>
+#ifdef CONFIG_SYSCTL
+#include <linux/sysctl.h>
+#endif
+#include <linux/kmod.h>
+#include <linux/netconf.h>
 
-#समावेश <net/arp.h>
-#समावेश <net/ip.h>
-#समावेश <net/route.h>
-#समावेश <net/ip_fib.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/addrconf.h>
+#include <net/arp.h>
+#include <net/ip.h>
+#include <net/route.h>
+#include <net/ip_fib.h>
+#include <net/rtnetlink.h>
+#include <net/net_namespace.h>
+#include <net/addrconf.h>
 
-#घोषणा IPV6ONLY_FLAGS	\
+#define IPV6ONLY_FLAGS	\
 		(IFA_F_NODAD | IFA_F_OPTIMISTIC | IFA_F_DADFAILED | \
 		 IFA_F_HOMEADDRESS | IFA_F_TENTATIVE | \
 		 IFA_F_MANAGETEMPADDR | IFA_F_STABLE_PRIVACY)
 
-अटल काष्ठा ipv4_devconf ipv4_devconf = अणु
-	.data = अणु
-		[IPV4_DEVCONF_ACCEPT_REसूचीECTS - 1] = 1,
-		[IPV4_DEVCONF_SEND_REसूचीECTS - 1] = 1,
-		[IPV4_DEVCONF_SECURE_REसूचीECTS - 1] = 1,
+static struct ipv4_devconf ipv4_devconf = {
+	.data = {
+		[IPV4_DEVCONF_ACCEPT_REDIRECTS - 1] = 1,
+		[IPV4_DEVCONF_SEND_REDIRECTS - 1] = 1,
+		[IPV4_DEVCONF_SECURE_REDIRECTS - 1] = 1,
 		[IPV4_DEVCONF_SHARED_MEDIA - 1] = 1,
 		[IPV4_DEVCONF_IGMPV2_UNSOLICITED_REPORT_INTERVAL - 1] = 10000 /*ms*/,
 		[IPV4_DEVCONF_IGMPV3_UNSOLICITED_REPORT_INTERVAL - 1] =  1000 /*ms*/,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा ipv4_devconf ipv4_devconf_dflt = अणु
-	.data = अणु
-		[IPV4_DEVCONF_ACCEPT_REसूचीECTS - 1] = 1,
-		[IPV4_DEVCONF_SEND_REसूचीECTS - 1] = 1,
-		[IPV4_DEVCONF_SECURE_REसूचीECTS - 1] = 1,
+static struct ipv4_devconf ipv4_devconf_dflt = {
+	.data = {
+		[IPV4_DEVCONF_ACCEPT_REDIRECTS - 1] = 1,
+		[IPV4_DEVCONF_SEND_REDIRECTS - 1] = 1,
+		[IPV4_DEVCONF_SECURE_REDIRECTS - 1] = 1,
 		[IPV4_DEVCONF_SHARED_MEDIA - 1] = 1,
 		[IPV4_DEVCONF_ACCEPT_SOURCE_ROUTE - 1] = 1,
 		[IPV4_DEVCONF_IGMPV2_UNSOLICITED_REPORT_INTERVAL - 1] = 10000 /*ms*/,
 		[IPV4_DEVCONF_IGMPV3_UNSOLICITED_REPORT_INTERVAL - 1] =  1000 /*ms*/,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा IPV4_DEVCONF_DFLT(net, attr) \
+#define IPV4_DEVCONF_DFLT(net, attr) \
 	IPV4_DEVCONF((*net->ipv4.devconf_dflt), attr)
 
-अटल स्थिर काष्ठा nla_policy अगरa_ipv4_policy[IFA_MAX+1] = अणु
-	[IFA_LOCAL]     	= अणु .type = NLA_U32 पूर्ण,
-	[IFA_ADDRESS]   	= अणु .type = NLA_U32 पूर्ण,
-	[IFA_BROADCAST] 	= अणु .type = NLA_U32 पूर्ण,
-	[IFA_LABEL]     	= अणु .type = NLA_STRING, .len = IFNAMSIZ - 1 पूर्ण,
-	[IFA_CACHEINFO]		= अणु .len = माप(काष्ठा अगरa_cacheinfo) पूर्ण,
-	[IFA_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
-	[IFA_RT_PRIORITY]	= अणु .type = NLA_U32 पूर्ण,
-	[IFA_TARGET_NETNSID]	= अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+static const struct nla_policy ifa_ipv4_policy[IFA_MAX+1] = {
+	[IFA_LOCAL]     	= { .type = NLA_U32 },
+	[IFA_ADDRESS]   	= { .type = NLA_U32 },
+	[IFA_BROADCAST] 	= { .type = NLA_U32 },
+	[IFA_LABEL]     	= { .type = NLA_STRING, .len = IFNAMSIZ - 1 },
+	[IFA_CACHEINFO]		= { .len = sizeof(struct ifa_cacheinfo) },
+	[IFA_FLAGS]		= { .type = NLA_U32 },
+	[IFA_RT_PRIORITY]	= { .type = NLA_U32 },
+	[IFA_TARGET_NETNSID]	= { .type = NLA_S32 },
+};
 
-काष्ठा inet_fill_args अणु
+struct inet_fill_args {
 	u32 portid;
 	u32 seq;
-	पूर्णांक event;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक netnsid;
-	पूर्णांक अगरindex;
-पूर्ण;
+	int event;
+	unsigned int flags;
+	int netnsid;
+	int ifindex;
+};
 
-#घोषणा IN4_ADDR_HSIZE_SHIFT	8
-#घोषणा IN4_ADDR_HSIZE		(1U << IN4_ADDR_HSIZE_SHIFT)
+#define IN4_ADDR_HSIZE_SHIFT	8
+#define IN4_ADDR_HSIZE		(1U << IN4_ADDR_HSIZE_SHIFT)
 
-अटल काष्ठा hlist_head inet_addr_lst[IN4_ADDR_HSIZE];
+static struct hlist_head inet_addr_lst[IN4_ADDR_HSIZE];
 
-अटल u32 inet_addr_hash(स्थिर काष्ठा net *net, __be32 addr)
-अणु
-	u32 val = (__क्रमce u32) addr ^ net_hash_mix(net);
+static u32 inet_addr_hash(const struct net *net, __be32 addr)
+{
+	u32 val = (__force u32) addr ^ net_hash_mix(net);
 
-	वापस hash_32(val, IN4_ADDR_HSIZE_SHIFT);
-पूर्ण
+	return hash_32(val, IN4_ADDR_HSIZE_SHIFT);
+}
 
-अटल व्योम inet_hash_insert(काष्ठा net *net, काष्ठा in_अगरaddr *अगरa)
-अणु
-	u32 hash = inet_addr_hash(net, अगरa->अगरa_local);
+static void inet_hash_insert(struct net *net, struct in_ifaddr *ifa)
+{
+	u32 hash = inet_addr_hash(net, ifa->ifa_local);
 
 	ASSERT_RTNL();
-	hlist_add_head_rcu(&अगरa->hash, &inet_addr_lst[hash]);
-पूर्ण
+	hlist_add_head_rcu(&ifa->hash, &inet_addr_lst[hash]);
+}
 
-अटल व्योम inet_hash_हटाओ(काष्ठा in_अगरaddr *अगरa)
-अणु
+static void inet_hash_remove(struct in_ifaddr *ifa)
+{
 	ASSERT_RTNL();
-	hlist_del_init_rcu(&अगरa->hash);
-पूर्ण
+	hlist_del_init_rcu(&ifa->hash);
+}
 
 /**
  * __ip_dev_find - find the first device with a given source address.
  * @net: the net namespace
  * @addr: the source address
- * @devref: अगर true, take a reference on the found device
+ * @devref: if true, take a reference on the found device
  *
- * If a caller uses devref=false, it should be रक्षित by RCU, or RTNL
+ * If a caller uses devref=false, it should be protected by RCU, or RTNL
  */
-काष्ठा net_device *__ip_dev_find(काष्ठा net *net, __be32 addr, bool devref)
-अणु
-	काष्ठा net_device *result = शून्य;
-	काष्ठा in_अगरaddr *अगरa;
+struct net_device *__ip_dev_find(struct net *net, __be32 addr, bool devref)
+{
+	struct net_device *result = NULL;
+	struct in_ifaddr *ifa;
 
-	rcu_पढ़ो_lock();
-	अगरa = inet_lookup_अगरaddr_rcu(net, addr);
-	अगर (!अगरa) अणु
-		काष्ठा flowi4 fl4 = अणु .daddr = addr पूर्ण;
-		काष्ठा fib_result res = अणु 0 पूर्ण;
-		काष्ठा fib_table *local;
+	rcu_read_lock();
+	ifa = inet_lookup_ifaddr_rcu(net, addr);
+	if (!ifa) {
+		struct flowi4 fl4 = { .daddr = addr };
+		struct fib_result res = { 0 };
+		struct fib_table *local;
 
 		/* Fallback to FIB local table so that communication
 		 * over loopback subnets work.
 		 */
 		local = fib_get_table(net, RT_TABLE_LOCAL);
-		अगर (local &&
+		if (local &&
 		    !fib_table_lookup(local, &fl4, &res, FIB_LOOKUP_NOREF) &&
 		    res.type == RTN_LOCAL)
 			result = FIB_RES_DEV(res);
-	पूर्ण अन्यथा अणु
-		result = अगरa->अगरa_dev->dev;
-	पूर्ण
-	अगर (result && devref)
+	} else {
+		result = ifa->ifa_dev->dev;
+	}
+	if (result && devref)
 		dev_hold(result);
-	rcu_पढ़ो_unlock();
-	वापस result;
-पूर्ण
+	rcu_read_unlock();
+	return result;
+}
 EXPORT_SYMBOL(__ip_dev_find);
 
 /* called under RCU lock */
-काष्ठा in_अगरaddr *inet_lookup_अगरaddr_rcu(काष्ठा net *net, __be32 addr)
-अणु
+struct in_ifaddr *inet_lookup_ifaddr_rcu(struct net *net, __be32 addr)
+{
 	u32 hash = inet_addr_hash(net, addr);
-	काष्ठा in_अगरaddr *अगरa;
+	struct in_ifaddr *ifa;
 
-	hlist_क्रम_each_entry_rcu(अगरa, &inet_addr_lst[hash], hash)
-		अगर (अगरa->अगरa_local == addr &&
-		    net_eq(dev_net(अगरa->अगरa_dev->dev), net))
-			वापस अगरa;
+	hlist_for_each_entry_rcu(ifa, &inet_addr_lst[hash], hash)
+		if (ifa->ifa_local == addr &&
+		    net_eq(dev_net(ifa->ifa_dev->dev), net))
+			return ifa;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम rपंचांगsg_अगरa(पूर्णांक event, काष्ठा in_अगरaddr *, काष्ठा nlmsghdr *, u32);
+static void rtmsg_ifa(int event, struct in_ifaddr *, struct nlmsghdr *, u32);
 
-अटल BLOCKING_NOTIFIER_HEAD(inetaddr_chain);
-अटल BLOCKING_NOTIFIER_HEAD(inetaddr_validator_chain);
-अटल व्योम inet_del_अगरa(काष्ठा in_device *in_dev,
-			 काष्ठा in_अगरaddr __rcu **अगरap,
-			 पूर्णांक destroy);
-#अगर_घोषित CONFIG_SYSCTL
-अटल पूर्णांक devinet_sysctl_रेजिस्टर(काष्ठा in_device *idev);
-अटल व्योम devinet_sysctl_unरेजिस्टर(काष्ठा in_device *idev);
-#अन्यथा
-अटल पूर्णांक devinet_sysctl_रेजिस्टर(काष्ठा in_device *idev)
-अणु
-	वापस 0;
-पूर्ण
-अटल व्योम devinet_sysctl_unरेजिस्टर(काष्ठा in_device *idev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static BLOCKING_NOTIFIER_HEAD(inetaddr_chain);
+static BLOCKING_NOTIFIER_HEAD(inetaddr_validator_chain);
+static void inet_del_ifa(struct in_device *in_dev,
+			 struct in_ifaddr __rcu **ifap,
+			 int destroy);
+#ifdef CONFIG_SYSCTL
+static int devinet_sysctl_register(struct in_device *idev);
+static void devinet_sysctl_unregister(struct in_device *idev);
+#else
+static int devinet_sysctl_register(struct in_device *idev)
+{
+	return 0;
+}
+static void devinet_sysctl_unregister(struct in_device *idev)
+{
+}
+#endif
 
 /* Locks all the inet devices. */
 
-अटल काष्ठा in_अगरaddr *inet_alloc_अगरa(व्योम)
-अणु
-	वापस kzalloc(माप(काष्ठा in_अगरaddr), GFP_KERNEL);
-पूर्ण
+static struct in_ifaddr *inet_alloc_ifa(void)
+{
+	return kzalloc(sizeof(struct in_ifaddr), GFP_KERNEL);
+}
 
-अटल व्योम inet_rcu_मुक्त_अगरa(काष्ठा rcu_head *head)
-अणु
-	काष्ठा in_अगरaddr *अगरa = container_of(head, काष्ठा in_अगरaddr, rcu_head);
-	अगर (अगरa->अगरa_dev)
-		in_dev_put(अगरa->अगरa_dev);
-	kमुक्त(अगरa);
-पूर्ण
+static void inet_rcu_free_ifa(struct rcu_head *head)
+{
+	struct in_ifaddr *ifa = container_of(head, struct in_ifaddr, rcu_head);
+	if (ifa->ifa_dev)
+		in_dev_put(ifa->ifa_dev);
+	kfree(ifa);
+}
 
-अटल व्योम inet_मुक्त_अगरa(काष्ठा in_अगरaddr *अगरa)
-अणु
-	call_rcu(&अगरa->rcu_head, inet_rcu_मुक्त_अगरa);
-पूर्ण
+static void inet_free_ifa(struct in_ifaddr *ifa)
+{
+	call_rcu(&ifa->rcu_head, inet_rcu_free_ifa);
+}
 
-व्योम in_dev_finish_destroy(काष्ठा in_device *idev)
-अणु
-	काष्ठा net_device *dev = idev->dev;
+void in_dev_finish_destroy(struct in_device *idev)
+{
+	struct net_device *dev = idev->dev;
 
-	WARN_ON(idev->अगरa_list);
+	WARN_ON(idev->ifa_list);
 	WARN_ON(idev->mc_list);
-	kमुक्त(rcu_dereference_रक्षित(idev->mc_hash, 1));
-#अगर_घोषित NET_REFCNT_DEBUG
+	kfree(rcu_dereference_protected(idev->mc_hash, 1));
+#ifdef NET_REFCNT_DEBUG
 	pr_debug("%s: %p=%s\n", __func__, idev, dev ? dev->name : "NIL");
-#पूर्ण_अगर
+#endif
 	dev_put(dev);
-	अगर (!idev->dead)
+	if (!idev->dead)
 		pr_err("Freeing alive in_device %p\n", idev);
-	अन्यथा
-		kमुक्त(idev);
-पूर्ण
+	else
+		kfree(idev);
+}
 EXPORT_SYMBOL(in_dev_finish_destroy);
 
-अटल काष्ठा in_device *inetdev_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा in_device *in_dev;
-	पूर्णांक err = -ENOMEM;
+static struct in_device *inetdev_init(struct net_device *dev)
+{
+	struct in_device *in_dev;
+	int err = -ENOMEM;
 
 	ASSERT_RTNL();
 
-	in_dev = kzalloc(माप(*in_dev), GFP_KERNEL);
-	अगर (!in_dev)
-		जाओ out;
-	स_नकल(&in_dev->cnf, dev_net(dev)->ipv4.devconf_dflt,
-			माप(in_dev->cnf));
-	in_dev->cnf.sysctl = शून्य;
+	in_dev = kzalloc(sizeof(*in_dev), GFP_KERNEL);
+	if (!in_dev)
+		goto out;
+	memcpy(&in_dev->cnf, dev_net(dev)->ipv4.devconf_dflt,
+			sizeof(in_dev->cnf));
+	in_dev->cnf.sysctl = NULL;
 	in_dev->dev = dev;
 	in_dev->arp_parms = neigh_parms_alloc(dev, &arp_tbl);
-	अगर (!in_dev->arp_parms)
-		जाओ out_kमुक्त;
-	अगर (IPV4_DEVCONF(in_dev->cnf, FORWARDING))
+	if (!in_dev->arp_parms)
+		goto out_kfree;
+	if (IPV4_DEVCONF(in_dev->cnf, FORWARDING))
 		dev_disable_lro(dev);
 	/* Reference in_dev->dev */
 	dev_hold(dev);
-	/* Account क्रम reference dev->ip_ptr (below) */
+	/* Account for reference dev->ip_ptr (below) */
 	refcount_set(&in_dev->refcnt, 1);
 
-	err = devinet_sysctl_रेजिस्टर(in_dev);
-	अगर (err) अणु
+	err = devinet_sysctl_register(in_dev);
+	if (err) {
 		in_dev->dead = 1;
 		neigh_parms_release(&arp_tbl, in_dev->arp_parms);
 		in_dev_put(in_dev);
-		in_dev = शून्य;
-		जाओ out;
-	पूर्ण
+		in_dev = NULL;
+		goto out;
+	}
 	ip_mc_init_dev(in_dev);
-	अगर (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP)
 		ip_mc_up(in_dev);
 
-	/* we can receive as soon as ip_ptr is set -- करो this last */
-	rcu_assign_poपूर्णांकer(dev->ip_ptr, in_dev);
+	/* we can receive as soon as ip_ptr is set -- do this last */
+	rcu_assign_pointer(dev->ip_ptr, in_dev);
 out:
-	वापस in_dev ?: ERR_PTR(err);
-out_kमुक्त:
-	kमुक्त(in_dev);
-	in_dev = शून्य;
-	जाओ out;
-पूर्ण
+	return in_dev ?: ERR_PTR(err);
+out_kfree:
+	kfree(in_dev);
+	in_dev = NULL;
+	goto out;
+}
 
-अटल व्योम in_dev_rcu_put(काष्ठा rcu_head *head)
-अणु
-	काष्ठा in_device *idev = container_of(head, काष्ठा in_device, rcu_head);
+static void in_dev_rcu_put(struct rcu_head *head)
+{
+	struct in_device *idev = container_of(head, struct in_device, rcu_head);
 	in_dev_put(idev);
-पूर्ण
+}
 
-अटल व्योम inetdev_destroy(काष्ठा in_device *in_dev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा in_अगरaddr *अगरa;
+static void inetdev_destroy(struct in_device *in_dev)
+{
+	struct net_device *dev;
+	struct in_ifaddr *ifa;
 
 	ASSERT_RTNL();
 
@@ -315,2205 +314,2205 @@ out_kमुक्त:
 
 	ip_mc_destroy_dev(in_dev);
 
-	जबतक ((अगरa = rtnl_dereference(in_dev->अगरa_list)) != शून्य) अणु
-		inet_del_अगरa(in_dev, &in_dev->अगरa_list, 0);
-		inet_मुक्त_अगरa(अगरa);
-	पूर्ण
+	while ((ifa = rtnl_dereference(in_dev->ifa_list)) != NULL) {
+		inet_del_ifa(in_dev, &in_dev->ifa_list, 0);
+		inet_free_ifa(ifa);
+	}
 
-	RCU_INIT_POINTER(dev->ip_ptr, शून्य);
+	RCU_INIT_POINTER(dev->ip_ptr, NULL);
 
-	devinet_sysctl_unरेजिस्टर(in_dev);
+	devinet_sysctl_unregister(in_dev);
 	neigh_parms_release(&arp_tbl, in_dev->arp_parms);
-	arp_अगरकरोwn(dev);
+	arp_ifdown(dev);
 
 	call_rcu(&in_dev->rcu_head, in_dev_rcu_put);
-पूर्ण
+}
 
-पूर्णांक inet_addr_onlink(काष्ठा in_device *in_dev, __be32 a, __be32 b)
-अणु
-	स्थिर काष्ठा in_अगरaddr *अगरa;
+int inet_addr_onlink(struct in_device *in_dev, __be32 a, __be32 b)
+{
+	const struct in_ifaddr *ifa;
 
-	rcu_पढ़ो_lock();
-	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
-		अगर (inet_अगरa_match(a, अगरa)) अणु
-			अगर (!b || inet_अगरa_match(b, अगरa)) अणु
-				rcu_पढ़ो_unlock();
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	rcu_read_lock();
+	in_dev_for_each_ifa_rcu(ifa, in_dev) {
+		if (inet_ifa_match(a, ifa)) {
+			if (!b || inet_ifa_match(b, ifa)) {
+				rcu_read_unlock();
+				return 1;
+			}
+		}
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
-अटल व्योम __inet_del_अगरa(काष्ठा in_device *in_dev,
-			   काष्ठा in_अगरaddr __rcu **अगरap,
-			   पूर्णांक destroy, काष्ठा nlmsghdr *nlh, u32 portid)
-अणु
-	काष्ठा in_अगरaddr *promote = शून्य;
-	काष्ठा in_अगरaddr *अगरa, *अगरa1;
-	काष्ठा in_अगरaddr *last_prim;
-	काष्ठा in_अगरaddr *prev_prom = शून्य;
-	पूर्णांक करो_promote = IN_DEV_PROMOTE_SECONDARIES(in_dev);
+static void __inet_del_ifa(struct in_device *in_dev,
+			   struct in_ifaddr __rcu **ifap,
+			   int destroy, struct nlmsghdr *nlh, u32 portid)
+{
+	struct in_ifaddr *promote = NULL;
+	struct in_ifaddr *ifa, *ifa1;
+	struct in_ifaddr *last_prim;
+	struct in_ifaddr *prev_prom = NULL;
+	int do_promote = IN_DEV_PROMOTE_SECONDARIES(in_dev);
 
 	ASSERT_RTNL();
 
-	अगरa1 = rtnl_dereference(*अगरap);
-	last_prim = rtnl_dereference(in_dev->अगरa_list);
-	अगर (in_dev->dead)
-		जाओ no_promotions;
+	ifa1 = rtnl_dereference(*ifap);
+	last_prim = rtnl_dereference(in_dev->ifa_list);
+	if (in_dev->dead)
+		goto no_promotions;
 
-	/* 1. Deleting primary अगरaddr क्रमces deletion all secondaries
+	/* 1. Deleting primary ifaddr forces deletion all secondaries
 	 * unless alias promotion is set
 	 **/
 
-	अगर (!(अगरa1->अगरa_flags & IFA_F_SECONDARY)) अणु
-		काष्ठा in_अगरaddr __rcu **अगरap1 = &अगरa1->अगरa_next;
+	if (!(ifa1->ifa_flags & IFA_F_SECONDARY)) {
+		struct in_ifaddr __rcu **ifap1 = &ifa1->ifa_next;
 
-		जबतक ((अगरa = rtnl_dereference(*अगरap1)) != शून्य) अणु
-			अगर (!(अगरa->अगरa_flags & IFA_F_SECONDARY) &&
-			    अगरa1->अगरa_scope <= अगरa->अगरa_scope)
-				last_prim = अगरa;
+		while ((ifa = rtnl_dereference(*ifap1)) != NULL) {
+			if (!(ifa->ifa_flags & IFA_F_SECONDARY) &&
+			    ifa1->ifa_scope <= ifa->ifa_scope)
+				last_prim = ifa;
 
-			अगर (!(अगरa->अगरa_flags & IFA_F_SECONDARY) ||
-			    अगरa1->अगरa_mask != अगरa->अगरa_mask ||
-			    !inet_अगरa_match(अगरa1->अगरa_address, अगरa)) अणु
-				अगरap1 = &अगरa->अगरa_next;
-				prev_prom = अगरa;
-				जारी;
-			पूर्ण
+			if (!(ifa->ifa_flags & IFA_F_SECONDARY) ||
+			    ifa1->ifa_mask != ifa->ifa_mask ||
+			    !inet_ifa_match(ifa1->ifa_address, ifa)) {
+				ifap1 = &ifa->ifa_next;
+				prev_prom = ifa;
+				continue;
+			}
 
-			अगर (!करो_promote) अणु
-				inet_hash_हटाओ(अगरa);
-				*अगरap1 = अगरa->अगरa_next;
+			if (!do_promote) {
+				inet_hash_remove(ifa);
+				*ifap1 = ifa->ifa_next;
 
-				rपंचांगsg_अगरa(RTM_DELADDR, अगरa, nlh, portid);
-				blocking_notअगरier_call_chain(&inetaddr_chain,
-						NETDEV_DOWN, अगरa);
-				inet_मुक्त_अगरa(अगरa);
-			पूर्ण अन्यथा अणु
-				promote = अगरa;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				rtmsg_ifa(RTM_DELADDR, ifa, nlh, portid);
+				blocking_notifier_call_chain(&inetaddr_chain,
+						NETDEV_DOWN, ifa);
+				inet_free_ifa(ifa);
+			} else {
+				promote = ifa;
+				break;
+			}
+		}
+	}
 
 	/* On promotion all secondaries from subnet are changing
-	 * the primary IP, we must हटाओ all their routes silently
+	 * the primary IP, we must remove all their routes silently
 	 * and later to add them back with new prefsrc. Do this
-	 * जबतक all addresses are on the device list.
+	 * while all addresses are on the device list.
 	 */
-	क्रम (अगरa = promote; अगरa; अगरa = rtnl_dereference(अगरa->अगरa_next)) अणु
-		अगर (अगरa1->अगरa_mask == अगरa->अगरa_mask &&
-		    inet_अगरa_match(अगरa1->अगरa_address, अगरa))
-			fib_del_अगरaddr(अगरa, अगरa1);
-	पूर्ण
+	for (ifa = promote; ifa; ifa = rtnl_dereference(ifa->ifa_next)) {
+		if (ifa1->ifa_mask == ifa->ifa_mask &&
+		    inet_ifa_match(ifa1->ifa_address, ifa))
+			fib_del_ifaddr(ifa, ifa1);
+	}
 
 no_promotions:
 	/* 2. Unlink it */
 
-	*अगरap = अगरa1->अगरa_next;
-	inet_hash_हटाओ(अगरa1);
+	*ifap = ifa1->ifa_next;
+	inet_hash_remove(ifa1);
 
 	/* 3. Announce address deletion */
 
-	/* Send message first, then call notअगरier.
-	   At first sight, FIB update triggered by notअगरier
-	   will refer to alपढ़ोy deleted अगरaddr, that could confuse
+	/* Send message first, then call notifier.
+	   At first sight, FIB update triggered by notifier
+	   will refer to already deleted ifaddr, that could confuse
 	   netlink listeners. It is not true: look, gated sees
-	   that route deleted and अगर it still thinks that अगरaddr
+	   that route deleted and if it still thinks that ifaddr
 	   is valid, it will try to restore deleted routes... Grr.
 	   So that, this order is correct.
 	 */
-	rपंचांगsg_अगरa(RTM_DELADDR, अगरa1, nlh, portid);
-	blocking_notअगरier_call_chain(&inetaddr_chain, NETDEV_DOWN, अगरa1);
+	rtmsg_ifa(RTM_DELADDR, ifa1, nlh, portid);
+	blocking_notifier_call_chain(&inetaddr_chain, NETDEV_DOWN, ifa1);
 
-	अगर (promote) अणु
-		काष्ठा in_अगरaddr *next_sec;
+	if (promote) {
+		struct in_ifaddr *next_sec;
 
-		next_sec = rtnl_dereference(promote->अगरa_next);
-		अगर (prev_prom) अणु
-			काष्ठा in_अगरaddr *last_sec;
+		next_sec = rtnl_dereference(promote->ifa_next);
+		if (prev_prom) {
+			struct in_ifaddr *last_sec;
 
-			rcu_assign_poपूर्णांकer(prev_prom->अगरa_next, next_sec);
+			rcu_assign_pointer(prev_prom->ifa_next, next_sec);
 
-			last_sec = rtnl_dereference(last_prim->अगरa_next);
-			rcu_assign_poपूर्णांकer(promote->अगरa_next, last_sec);
-			rcu_assign_poपूर्णांकer(last_prim->अगरa_next, promote);
-		पूर्ण
+			last_sec = rtnl_dereference(last_prim->ifa_next);
+			rcu_assign_pointer(promote->ifa_next, last_sec);
+			rcu_assign_pointer(last_prim->ifa_next, promote);
+		}
 
-		promote->अगरa_flags &= ~IFA_F_SECONDARY;
-		rपंचांगsg_अगरa(RTM_NEWADDR, promote, nlh, portid);
-		blocking_notअगरier_call_chain(&inetaddr_chain,
+		promote->ifa_flags &= ~IFA_F_SECONDARY;
+		rtmsg_ifa(RTM_NEWADDR, promote, nlh, portid);
+		blocking_notifier_call_chain(&inetaddr_chain,
 				NETDEV_UP, promote);
-		क्रम (अगरa = next_sec; अगरa;
-		     अगरa = rtnl_dereference(अगरa->अगरa_next)) अणु
-			अगर (अगरa1->अगरa_mask != अगरa->अगरa_mask ||
-			    !inet_अगरa_match(अगरa1->अगरa_address, अगरa))
-					जारी;
-			fib_add_अगरaddr(अगरa);
-		पूर्ण
+		for (ifa = next_sec; ifa;
+		     ifa = rtnl_dereference(ifa->ifa_next)) {
+			if (ifa1->ifa_mask != ifa->ifa_mask ||
+			    !inet_ifa_match(ifa1->ifa_address, ifa))
+					continue;
+			fib_add_ifaddr(ifa);
+		}
 
-	पूर्ण
-	अगर (destroy)
-		inet_मुक्त_अगरa(अगरa1);
-पूर्ण
+	}
+	if (destroy)
+		inet_free_ifa(ifa1);
+}
 
-अटल व्योम inet_del_अगरa(काष्ठा in_device *in_dev,
-			 काष्ठा in_अगरaddr __rcu **अगरap,
-			 पूर्णांक destroy)
-अणु
-	__inet_del_अगरa(in_dev, अगरap, destroy, शून्य, 0);
-पूर्ण
+static void inet_del_ifa(struct in_device *in_dev,
+			 struct in_ifaddr __rcu **ifap,
+			 int destroy)
+{
+	__inet_del_ifa(in_dev, ifap, destroy, NULL, 0);
+}
 
-अटल व्योम check_lअगरeसमय(काष्ठा work_काष्ठा *work);
+static void check_lifetime(struct work_struct *work);
 
-अटल DECLARE_DELAYED_WORK(check_lअगरeसमय_work, check_lअगरeसमय);
+static DECLARE_DELAYED_WORK(check_lifetime_work, check_lifetime);
 
-अटल पूर्णांक __inet_insert_अगरa(काष्ठा in_अगरaddr *अगरa, काष्ठा nlmsghdr *nlh,
-			     u32 portid, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा in_अगरaddr __rcu **last_primary, **अगरap;
-	काष्ठा in_device *in_dev = अगरa->अगरa_dev;
-	काष्ठा in_validator_info ivi;
-	काष्ठा in_अगरaddr *अगरa1;
-	पूर्णांक ret;
+static int __inet_insert_ifa(struct in_ifaddr *ifa, struct nlmsghdr *nlh,
+			     u32 portid, struct netlink_ext_ack *extack)
+{
+	struct in_ifaddr __rcu **last_primary, **ifap;
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct in_validator_info ivi;
+	struct in_ifaddr *ifa1;
+	int ret;
 
 	ASSERT_RTNL();
 
-	अगर (!अगरa->अगरa_local) अणु
-		inet_मुक्त_अगरa(अगरa);
-		वापस 0;
-	पूर्ण
+	if (!ifa->ifa_local) {
+		inet_free_ifa(ifa);
+		return 0;
+	}
 
-	अगरa->अगरa_flags &= ~IFA_F_SECONDARY;
-	last_primary = &in_dev->अगरa_list;
+	ifa->ifa_flags &= ~IFA_F_SECONDARY;
+	last_primary = &in_dev->ifa_list;
 
 	/* Don't set IPv6 only flags to IPv4 addresses */
-	अगरa->अगरa_flags &= ~IPV6ONLY_FLAGS;
+	ifa->ifa_flags &= ~IPV6ONLY_FLAGS;
 
-	अगरap = &in_dev->अगरa_list;
-	अगरa1 = rtnl_dereference(*अगरap);
+	ifap = &in_dev->ifa_list;
+	ifa1 = rtnl_dereference(*ifap);
 
-	जबतक (अगरa1) अणु
-		अगर (!(अगरa1->अगरa_flags & IFA_F_SECONDARY) &&
-		    अगरa->अगरa_scope <= अगरa1->अगरa_scope)
-			last_primary = &अगरa1->अगरa_next;
-		अगर (अगरa1->अगरa_mask == अगरa->अगरa_mask &&
-		    inet_अगरa_match(अगरa1->अगरa_address, अगरa)) अणु
-			अगर (अगरa1->अगरa_local == अगरa->अगरa_local) अणु
-				inet_मुक्त_अगरa(अगरa);
-				वापस -EEXIST;
-			पूर्ण
-			अगर (अगरa1->अगरa_scope != अगरa->अगरa_scope) अणु
-				inet_मुक्त_अगरa(अगरa);
-				वापस -EINVAL;
-			पूर्ण
-			अगरa->अगरa_flags |= IFA_F_SECONDARY;
-		पूर्ण
+	while (ifa1) {
+		if (!(ifa1->ifa_flags & IFA_F_SECONDARY) &&
+		    ifa->ifa_scope <= ifa1->ifa_scope)
+			last_primary = &ifa1->ifa_next;
+		if (ifa1->ifa_mask == ifa->ifa_mask &&
+		    inet_ifa_match(ifa1->ifa_address, ifa)) {
+			if (ifa1->ifa_local == ifa->ifa_local) {
+				inet_free_ifa(ifa);
+				return -EEXIST;
+			}
+			if (ifa1->ifa_scope != ifa->ifa_scope) {
+				inet_free_ifa(ifa);
+				return -EINVAL;
+			}
+			ifa->ifa_flags |= IFA_F_SECONDARY;
+		}
 
-		अगरap = &अगरa1->अगरa_next;
-		अगरa1 = rtnl_dereference(*अगरap);
-	पूर्ण
+		ifap = &ifa1->ifa_next;
+		ifa1 = rtnl_dereference(*ifap);
+	}
 
-	/* Allow any devices that wish to रेजिस्टर अगरaddr validtors to weigh
-	 * in now, beक्रमe changes are committed.  The rntl lock is serializing
+	/* Allow any devices that wish to register ifaddr validtors to weigh
+	 * in now, before changes are committed.  The rntl lock is serializing
 	 * access here, so the state should not change between a validator call
-	 * and a final notअगरy on commit.  This isn't invoked on promotion under
+	 * and a final notify on commit.  This isn't invoked on promotion under
 	 * the assumption that validators are checking the address itself, and
 	 * not the flags.
 	 */
-	ivi.ivi_addr = अगरa->अगरa_address;
-	ivi.ivi_dev = अगरa->अगरa_dev;
+	ivi.ivi_addr = ifa->ifa_address;
+	ivi.ivi_dev = ifa->ifa_dev;
 	ivi.extack = extack;
-	ret = blocking_notअगरier_call_chain(&inetaddr_validator_chain,
+	ret = blocking_notifier_call_chain(&inetaddr_validator_chain,
 					   NETDEV_UP, &ivi);
-	ret = notअगरier_to_त्रुटि_सं(ret);
-	अगर (ret) अणु
-		inet_मुक्त_अगरa(अगरa);
-		वापस ret;
-	पूर्ण
+	ret = notifier_to_errno(ret);
+	if (ret) {
+		inet_free_ifa(ifa);
+		return ret;
+	}
 
-	अगर (!(अगरa->अगरa_flags & IFA_F_SECONDARY)) अणु
-		pअक्रमom_seed((__क्रमce u32) अगरa->अगरa_local);
-		अगरap = last_primary;
-	पूर्ण
+	if (!(ifa->ifa_flags & IFA_F_SECONDARY)) {
+		prandom_seed((__force u32) ifa->ifa_local);
+		ifap = last_primary;
+	}
 
-	rcu_assign_poपूर्णांकer(अगरa->अगरa_next, *अगरap);
-	rcu_assign_poपूर्णांकer(*अगरap, अगरa);
+	rcu_assign_pointer(ifa->ifa_next, *ifap);
+	rcu_assign_pointer(*ifap, ifa);
 
-	inet_hash_insert(dev_net(in_dev->dev), अगरa);
+	inet_hash_insert(dev_net(in_dev->dev), ifa);
 
-	cancel_delayed_work(&check_lअगरeसमय_work);
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &check_lअगरeसमय_work, 0);
+	cancel_delayed_work(&check_lifetime_work);
+	queue_delayed_work(system_power_efficient_wq, &check_lifetime_work, 0);
 
-	/* Send message first, then call notअगरier.
-	   Notअगरier will trigger FIB update, so that
-	   listeners of netlink will know about new अगरaddr */
-	rपंचांगsg_अगरa(RTM_NEWADDR, अगरa, nlh, portid);
-	blocking_notअगरier_call_chain(&inetaddr_chain, NETDEV_UP, अगरa);
+	/* Send message first, then call notifier.
+	   Notifier will trigger FIB update, so that
+	   listeners of netlink will know about new ifaddr */
+	rtmsg_ifa(RTM_NEWADDR, ifa, nlh, portid);
+	blocking_notifier_call_chain(&inetaddr_chain, NETDEV_UP, ifa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_insert_अगरa(काष्ठा in_अगरaddr *अगरa)
-अणु
-	वापस __inet_insert_अगरa(अगरa, शून्य, 0, शून्य);
-पूर्ण
+static int inet_insert_ifa(struct in_ifaddr *ifa)
+{
+	return __inet_insert_ifa(ifa, NULL, 0, NULL);
+}
 
-अटल पूर्णांक inet_set_अगरa(काष्ठा net_device *dev, काष्ठा in_अगरaddr *अगरa)
-अणु
-	काष्ठा in_device *in_dev = __in_dev_get_rtnl(dev);
+static int inet_set_ifa(struct net_device *dev, struct in_ifaddr *ifa)
+{
+	struct in_device *in_dev = __in_dev_get_rtnl(dev);
 
 	ASSERT_RTNL();
 
-	अगर (!in_dev) अणु
-		inet_मुक्त_अगरa(अगरa);
-		वापस -ENOBUFS;
-	पूर्ण
+	if (!in_dev) {
+		inet_free_ifa(ifa);
+		return -ENOBUFS;
+	}
 	ipv4_devconf_setall(in_dev);
 	neigh_parms_data_state_setall(in_dev->arp_parms);
-	अगर (अगरa->अगरa_dev != in_dev) अणु
-		WARN_ON(अगरa->अगरa_dev);
+	if (ifa->ifa_dev != in_dev) {
+		WARN_ON(ifa->ifa_dev);
 		in_dev_hold(in_dev);
-		अगरa->अगरa_dev = in_dev;
-	पूर्ण
-	अगर (ipv4_is_loopback(अगरa->अगरa_local))
-		अगरa->अगरa_scope = RT_SCOPE_HOST;
-	वापस inet_insert_अगरa(अगरa);
-पूर्ण
+		ifa->ifa_dev = in_dev;
+	}
+	if (ipv4_is_loopback(ifa->ifa_local))
+		ifa->ifa_scope = RT_SCOPE_HOST;
+	return inet_insert_ifa(ifa);
+}
 
 /* Caller must hold RCU or RTNL :
- * We करोnt take a reference on found in_device
+ * We dont take a reference on found in_device
  */
-काष्ठा in_device *inetdev_by_index(काष्ठा net *net, पूर्णांक अगरindex)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा in_device *in_dev = शून्य;
+struct in_device *inetdev_by_index(struct net *net, int ifindex)
+{
+	struct net_device *dev;
+	struct in_device *in_dev = NULL;
 
-	rcu_पढ़ो_lock();
-	dev = dev_get_by_index_rcu(net, अगरindex);
-	अगर (dev)
+	rcu_read_lock();
+	dev = dev_get_by_index_rcu(net, ifindex);
+	if (dev)
 		in_dev = rcu_dereference_rtnl(dev->ip_ptr);
-	rcu_पढ़ो_unlock();
-	वापस in_dev;
-पूर्ण
+	rcu_read_unlock();
+	return in_dev;
+}
 EXPORT_SYMBOL(inetdev_by_index);
 
 /* Called only from RTNL semaphored context. No locks. */
 
-काष्ठा in_अगरaddr *inet_अगरa_byprefix(काष्ठा in_device *in_dev, __be32 prefix,
+struct in_ifaddr *inet_ifa_byprefix(struct in_device *in_dev, __be32 prefix,
 				    __be32 mask)
-अणु
-	काष्ठा in_अगरaddr *अगरa;
+{
+	struct in_ifaddr *ifa;
 
 	ASSERT_RTNL();
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-		अगर (अगरa->अगरa_mask == mask && inet_अगरa_match(prefix, अगरa))
-			वापस अगरa;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+		if (ifa->ifa_mask == mask && inet_ifa_match(prefix, ifa))
+			return ifa;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक ip_mc_स्वतःjoin_config(काष्ठा net *net, bool join,
-				 स्थिर काष्ठा in_अगरaddr *अगरa)
-अणु
-#अगर defined(CONFIG_IP_MULTICAST)
-	काष्ठा ip_mreqn mreq = अणु
-		.imr_multiaddr.s_addr = अगरa->अगरa_address,
-		.imr_अगरindex = अगरa->अगरa_dev->dev->अगरindex,
-	पूर्ण;
-	काष्ठा sock *sk = net->ipv4.mc_स्वतःjoin_sk;
-	पूर्णांक ret;
+static int ip_mc_autojoin_config(struct net *net, bool join,
+				 const struct in_ifaddr *ifa)
+{
+#if defined(CONFIG_IP_MULTICAST)
+	struct ip_mreqn mreq = {
+		.imr_multiaddr.s_addr = ifa->ifa_address,
+		.imr_ifindex = ifa->ifa_dev->dev->ifindex,
+	};
+	struct sock *sk = net->ipv4.mc_autojoin_sk;
+	int ret;
 
 	ASSERT_RTNL();
 
 	lock_sock(sk);
-	अगर (join)
+	if (join)
 		ret = ip_mc_join_group(sk, &mreq);
-	अन्यथा
+	else
 		ret = ip_mc_leave_group(sk, &mreq);
 	release_sock(sk);
 
-	वापस ret;
-#अन्यथा
-	वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-पूर्ण
+	return ret;
+#else
+	return -EOPNOTSUPP;
+#endif
+}
 
-अटल पूर्णांक inet_rपंचांग_deladdr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा in_अगरaddr __rcu **अगरap;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा in_device *in_dev;
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा in_अगरaddr *अगरa;
-	पूर्णांक err;
+static int inet_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
+			    struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct in_ifaddr __rcu **ifap;
+	struct nlattr *tb[IFA_MAX+1];
+	struct in_device *in_dev;
+	struct ifaddrmsg *ifm;
+	struct in_ifaddr *ifa;
+	int err;
 
 	ASSERT_RTNL();
 
-	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
-				     अगरa_ipv4_policy, extack);
-	अगर (err < 0)
-		जाओ errout;
+	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
+				     ifa_ipv4_policy, extack);
+	if (err < 0)
+		goto errout;
 
-	अगरm = nlmsg_data(nlh);
-	in_dev = inetdev_by_index(net, अगरm->अगरa_index);
-	अगर (!in_dev) अणु
+	ifm = nlmsg_data(nlh);
+	in_dev = inetdev_by_index(net, ifm->ifa_index);
+	if (!in_dev) {
 		err = -ENODEV;
-		जाओ errout;
-	पूर्ण
+		goto errout;
+	}
 
-	क्रम (अगरap = &in_dev->अगरa_list; (अगरa = rtnl_dereference(*अगरap)) != शून्य;
-	     अगरap = &अगरa->अगरa_next) अणु
-		अगर (tb[IFA_LOCAL] &&
-		    अगरa->अगरa_local != nla_get_in_addr(tb[IFA_LOCAL]))
-			जारी;
+	for (ifap = &in_dev->ifa_list; (ifa = rtnl_dereference(*ifap)) != NULL;
+	     ifap = &ifa->ifa_next) {
+		if (tb[IFA_LOCAL] &&
+		    ifa->ifa_local != nla_get_in_addr(tb[IFA_LOCAL]))
+			continue;
 
-		अगर (tb[IFA_LABEL] && nla_म_भेद(tb[IFA_LABEL], अगरa->अगरa_label))
-			जारी;
+		if (tb[IFA_LABEL] && nla_strcmp(tb[IFA_LABEL], ifa->ifa_label))
+			continue;
 
-		अगर (tb[IFA_ADDRESS] &&
-		    (अगरm->अगरa_prefixlen != अगरa->अगरa_prefixlen ||
-		    !inet_अगरa_match(nla_get_in_addr(tb[IFA_ADDRESS]), अगरa)))
-			जारी;
+		if (tb[IFA_ADDRESS] &&
+		    (ifm->ifa_prefixlen != ifa->ifa_prefixlen ||
+		    !inet_ifa_match(nla_get_in_addr(tb[IFA_ADDRESS]), ifa)))
+			continue;
 
-		अगर (ipv4_is_multicast(अगरa->अगरa_address))
-			ip_mc_स्वतःjoin_config(net, false, अगरa);
-		__inet_del_अगरa(in_dev, अगरap, 1, nlh, NETLINK_CB(skb).portid);
-		वापस 0;
-	पूर्ण
+		if (ipv4_is_multicast(ifa->ifa_address))
+			ip_mc_autojoin_config(net, false, ifa);
+		__inet_del_ifa(in_dev, ifap, 1, nlh, NETLINK_CB(skb).portid);
+		return 0;
+	}
 
 	err = -EADDRNOTAVAIL;
 errout:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा अनन्त_LIFE_TIME	0xFFFFFFFF
+#define INFINITY_LIFE_TIME	0xFFFFFFFF
 
-अटल व्योम check_lअगरeसमय(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित दीर्घ now, next, next_sec, next_sched;
-	काष्ठा in_अगरaddr *अगरa;
-	काष्ठा hlist_node *n;
-	पूर्णांक i;
+static void check_lifetime(struct work_struct *work)
+{
+	unsigned long now, next, next_sec, next_sched;
+	struct in_ifaddr *ifa;
+	struct hlist_node *n;
+	int i;
 
-	now = jअगरfies;
-	next = round_jअगरfies_up(now + ADDR_CHECK_FREQUENCY);
+	now = jiffies;
+	next = round_jiffies_up(now + ADDR_CHECK_FREQUENCY);
 
-	क्रम (i = 0; i < IN4_ADDR_HSIZE; i++) अणु
+	for (i = 0; i < IN4_ADDR_HSIZE; i++) {
 		bool change_needed = false;
 
-		rcu_पढ़ो_lock();
-		hlist_क्रम_each_entry_rcu(अगरa, &inet_addr_lst[i], hash) अणु
-			अचिन्हित दीर्घ age;
+		rcu_read_lock();
+		hlist_for_each_entry_rcu(ifa, &inet_addr_lst[i], hash) {
+			unsigned long age;
 
-			अगर (अगरa->अगरa_flags & IFA_F_PERMANENT)
-				जारी;
+			if (ifa->ifa_flags & IFA_F_PERMANENT)
+				continue;
 
 			/* We try to batch several events at once. */
-			age = (now - अगरa->अगरa_tstamp +
+			age = (now - ifa->ifa_tstamp +
 			       ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
 
-			अगर (अगरa->अगरa_valid_lft != अनन्त_LIFE_TIME &&
-			    age >= अगरa->अगरa_valid_lft) अणु
+			if (ifa->ifa_valid_lft != INFINITY_LIFE_TIME &&
+			    age >= ifa->ifa_valid_lft) {
 				change_needed = true;
-			पूर्ण अन्यथा अगर (अगरa->अगरa_preferred_lft ==
-				   अनन्त_LIFE_TIME) अणु
-				जारी;
-			पूर्ण अन्यथा अगर (age >= अगरa->अगरa_preferred_lft) अणु
-				अगर (समय_beक्रमe(अगरa->अगरa_tstamp +
-						अगरa->अगरa_valid_lft * HZ, next))
-					next = अगरa->अगरa_tstamp +
-					       अगरa->अगरa_valid_lft * HZ;
+			} else if (ifa->ifa_preferred_lft ==
+				   INFINITY_LIFE_TIME) {
+				continue;
+			} else if (age >= ifa->ifa_preferred_lft) {
+				if (time_before(ifa->ifa_tstamp +
+						ifa->ifa_valid_lft * HZ, next))
+					next = ifa->ifa_tstamp +
+					       ifa->ifa_valid_lft * HZ;
 
-				अगर (!(अगरa->अगरa_flags & IFA_F_DEPRECATED))
+				if (!(ifa->ifa_flags & IFA_F_DEPRECATED))
 					change_needed = true;
-			पूर्ण अन्यथा अगर (समय_beक्रमe(अगरa->अगरa_tstamp +
-					       अगरa->अगरa_preferred_lft * HZ,
-					       next)) अणु
-				next = अगरa->अगरa_tstamp +
-				       अगरa->अगरa_preferred_lft * HZ;
-			पूर्ण
-		पूर्ण
-		rcu_पढ़ो_unlock();
-		अगर (!change_needed)
-			जारी;
+			} else if (time_before(ifa->ifa_tstamp +
+					       ifa->ifa_preferred_lft * HZ,
+					       next)) {
+				next = ifa->ifa_tstamp +
+				       ifa->ifa_preferred_lft * HZ;
+			}
+		}
+		rcu_read_unlock();
+		if (!change_needed)
+			continue;
 		rtnl_lock();
-		hlist_क्रम_each_entry_safe(अगरa, n, &inet_addr_lst[i], hash) अणु
-			अचिन्हित दीर्घ age;
+		hlist_for_each_entry_safe(ifa, n, &inet_addr_lst[i], hash) {
+			unsigned long age;
 
-			अगर (अगरa->अगरa_flags & IFA_F_PERMANENT)
-				जारी;
+			if (ifa->ifa_flags & IFA_F_PERMANENT)
+				continue;
 
 			/* We try to batch several events at once. */
-			age = (now - अगरa->अगरa_tstamp +
+			age = (now - ifa->ifa_tstamp +
 			       ADDRCONF_TIMER_FUZZ_MINUS) / HZ;
 
-			अगर (अगरa->अगरa_valid_lft != अनन्त_LIFE_TIME &&
-			    age >= अगरa->अगरa_valid_lft) अणु
-				काष्ठा in_अगरaddr __rcu **अगरap;
-				काष्ठा in_अगरaddr *पंचांगp;
+			if (ifa->ifa_valid_lft != INFINITY_LIFE_TIME &&
+			    age >= ifa->ifa_valid_lft) {
+				struct in_ifaddr __rcu **ifap;
+				struct in_ifaddr *tmp;
 
-				अगरap = &अगरa->अगरa_dev->अगरa_list;
-				पंचांगp = rtnl_dereference(*अगरap);
-				जबतक (पंचांगp) अणु
-					अगर (पंचांगp == अगरa) अणु
-						inet_del_अगरa(अगरa->अगरa_dev,
-							     अगरap, 1);
-						अवरोध;
-					पूर्ण
-					अगरap = &पंचांगp->अगरa_next;
-					पंचांगp = rtnl_dereference(*अगरap);
-				पूर्ण
-			पूर्ण अन्यथा अगर (अगरa->अगरa_preferred_lft !=
-				   अनन्त_LIFE_TIME &&
-				   age >= अगरa->अगरa_preferred_lft &&
-				   !(अगरa->अगरa_flags & IFA_F_DEPRECATED)) अणु
-				अगरa->अगरa_flags |= IFA_F_DEPRECATED;
-				rपंचांगsg_अगरa(RTM_NEWADDR, अगरa, शून्य, 0);
-			पूर्ण
-		पूर्ण
+				ifap = &ifa->ifa_dev->ifa_list;
+				tmp = rtnl_dereference(*ifap);
+				while (tmp) {
+					if (tmp == ifa) {
+						inet_del_ifa(ifa->ifa_dev,
+							     ifap, 1);
+						break;
+					}
+					ifap = &tmp->ifa_next;
+					tmp = rtnl_dereference(*ifap);
+				}
+			} else if (ifa->ifa_preferred_lft !=
+				   INFINITY_LIFE_TIME &&
+				   age >= ifa->ifa_preferred_lft &&
+				   !(ifa->ifa_flags & IFA_F_DEPRECATED)) {
+				ifa->ifa_flags |= IFA_F_DEPRECATED;
+				rtmsg_ifa(RTM_NEWADDR, ifa, NULL, 0);
+			}
+		}
 		rtnl_unlock();
-	पूर्ण
+	}
 
-	next_sec = round_jअगरfies_up(next);
+	next_sec = round_jiffies_up(next);
 	next_sched = next;
 
-	/* If rounded समयout is accurate enough, accept it. */
-	अगर (समय_beक्रमe(next_sec, next + ADDRCONF_TIMER_FUZZ))
+	/* If rounded timeout is accurate enough, accept it. */
+	if (time_before(next_sec, next + ADDRCONF_TIMER_FUZZ))
 		next_sched = next_sec;
 
-	now = jअगरfies;
-	/* And minimum पूर्णांकerval is ADDRCONF_TIMER_FUZZ_MAX. */
-	अगर (समय_beक्रमe(next_sched, now + ADDRCONF_TIMER_FUZZ_MAX))
+	now = jiffies;
+	/* And minimum interval is ADDRCONF_TIMER_FUZZ_MAX. */
+	if (time_before(next_sched, now + ADDRCONF_TIMER_FUZZ_MAX))
 		next_sched = now + ADDRCONF_TIMER_FUZZ_MAX;
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &check_lअगरeसमय_work,
+	queue_delayed_work(system_power_efficient_wq, &check_lifetime_work,
 			next_sched - now);
-पूर्ण
+}
 
-अटल व्योम set_अगरa_lअगरeसमय(काष्ठा in_अगरaddr *अगरa, __u32 valid_lft,
+static void set_ifa_lifetime(struct in_ifaddr *ifa, __u32 valid_lft,
 			     __u32 prefered_lft)
-अणु
-	अचिन्हित दीर्घ समयout;
+{
+	unsigned long timeout;
 
-	अगरa->अगरa_flags &= ~(IFA_F_PERMANENT | IFA_F_DEPRECATED);
+	ifa->ifa_flags &= ~(IFA_F_PERMANENT | IFA_F_DEPRECATED);
 
-	समयout = addrconf_समयout_fixup(valid_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout))
-		अगरa->अगरa_valid_lft = समयout;
-	अन्यथा
-		अगरa->अगरa_flags |= IFA_F_PERMANENT;
+	timeout = addrconf_timeout_fixup(valid_lft, HZ);
+	if (addrconf_finite_timeout(timeout))
+		ifa->ifa_valid_lft = timeout;
+	else
+		ifa->ifa_flags |= IFA_F_PERMANENT;
 
-	समयout = addrconf_समयout_fixup(prefered_lft, HZ);
-	अगर (addrconf_finite_समयout(समयout)) अणु
-		अगर (समयout == 0)
-			अगरa->अगरa_flags |= IFA_F_DEPRECATED;
-		अगरa->अगरa_preferred_lft = समयout;
-	पूर्ण
-	अगरa->अगरa_tstamp = jअगरfies;
-	अगर (!अगरa->अगरa_cstamp)
-		अगरa->अगरa_cstamp = अगरa->अगरa_tstamp;
-पूर्ण
+	timeout = addrconf_timeout_fixup(prefered_lft, HZ);
+	if (addrconf_finite_timeout(timeout)) {
+		if (timeout == 0)
+			ifa->ifa_flags |= IFA_F_DEPRECATED;
+		ifa->ifa_preferred_lft = timeout;
+	}
+	ifa->ifa_tstamp = jiffies;
+	if (!ifa->ifa_cstamp)
+		ifa->ifa_cstamp = ifa->ifa_tstamp;
+}
 
-अटल काष्ठा in_अगरaddr *rपंचांग_to_अगरaddr(काष्ठा net *net, काष्ठा nlmsghdr *nlh,
+static struct in_ifaddr *rtm_to_ifaddr(struct net *net, struct nlmsghdr *nlh,
 				       __u32 *pvalid_lft, __u32 *pprefered_lft,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा in_अगरaddr *अगरa;
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा net_device *dev;
-	काष्ठा in_device *in_dev;
-	पूर्णांक err;
+				       struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[IFA_MAX+1];
+	struct in_ifaddr *ifa;
+	struct ifaddrmsg *ifm;
+	struct net_device *dev;
+	struct in_device *in_dev;
+	int err;
 
-	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
-				     अगरa_ipv4_policy, extack);
-	अगर (err < 0)
-		जाओ errout;
+	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
+				     ifa_ipv4_policy, extack);
+	if (err < 0)
+		goto errout;
 
-	अगरm = nlmsg_data(nlh);
+	ifm = nlmsg_data(nlh);
 	err = -EINVAL;
-	अगर (अगरm->अगरa_prefixlen > 32 || !tb[IFA_LOCAL])
-		जाओ errout;
+	if (ifm->ifa_prefixlen > 32 || !tb[IFA_LOCAL])
+		goto errout;
 
-	dev = __dev_get_by_index(net, अगरm->अगरa_index);
+	dev = __dev_get_by_index(net, ifm->ifa_index);
 	err = -ENODEV;
-	अगर (!dev)
-		जाओ errout;
+	if (!dev)
+		goto errout;
 
 	in_dev = __in_dev_get_rtnl(dev);
 	err = -ENOBUFS;
-	अगर (!in_dev)
-		जाओ errout;
+	if (!in_dev)
+		goto errout;
 
-	अगरa = inet_alloc_अगरa();
-	अगर (!अगरa)
+	ifa = inet_alloc_ifa();
+	if (!ifa)
 		/*
 		 * A potential indev allocation can be left alive, it stays
-		 * asचिन्हित to its device and is destroy with it.
+		 * assigned to its device and is destroy with it.
 		 */
-		जाओ errout;
+		goto errout;
 
 	ipv4_devconf_setall(in_dev);
 	neigh_parms_data_state_setall(in_dev->arp_parms);
 	in_dev_hold(in_dev);
 
-	अगर (!tb[IFA_ADDRESS])
+	if (!tb[IFA_ADDRESS])
 		tb[IFA_ADDRESS] = tb[IFA_LOCAL];
 
-	INIT_HLIST_NODE(&अगरa->hash);
-	अगरa->अगरa_prefixlen = अगरm->अगरa_prefixlen;
-	अगरa->अगरa_mask = inet_make_mask(अगरm->अगरa_prefixlen);
-	अगरa->अगरa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) :
-					 अगरm->अगरa_flags;
-	अगरa->अगरa_scope = अगरm->अगरa_scope;
-	अगरa->अगरa_dev = in_dev;
+	INIT_HLIST_NODE(&ifa->hash);
+	ifa->ifa_prefixlen = ifm->ifa_prefixlen;
+	ifa->ifa_mask = inet_make_mask(ifm->ifa_prefixlen);
+	ifa->ifa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) :
+					 ifm->ifa_flags;
+	ifa->ifa_scope = ifm->ifa_scope;
+	ifa->ifa_dev = in_dev;
 
-	अगरa->अगरa_local = nla_get_in_addr(tb[IFA_LOCAL]);
-	अगरa->अगरa_address = nla_get_in_addr(tb[IFA_ADDRESS]);
+	ifa->ifa_local = nla_get_in_addr(tb[IFA_LOCAL]);
+	ifa->ifa_address = nla_get_in_addr(tb[IFA_ADDRESS]);
 
-	अगर (tb[IFA_BROADCAST])
-		अगरa->अगरa_broadcast = nla_get_in_addr(tb[IFA_BROADCAST]);
+	if (tb[IFA_BROADCAST])
+		ifa->ifa_broadcast = nla_get_in_addr(tb[IFA_BROADCAST]);
 
-	अगर (tb[IFA_LABEL])
-		nla_strscpy(अगरa->अगरa_label, tb[IFA_LABEL], IFNAMSIZ);
-	अन्यथा
-		स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
+	if (tb[IFA_LABEL])
+		nla_strscpy(ifa->ifa_label, tb[IFA_LABEL], IFNAMSIZ);
+	else
+		memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
 
-	अगर (tb[IFA_RT_PRIORITY])
-		अगरa->अगरa_rt_priority = nla_get_u32(tb[IFA_RT_PRIORITY]);
+	if (tb[IFA_RT_PRIORITY])
+		ifa->ifa_rt_priority = nla_get_u32(tb[IFA_RT_PRIORITY]);
 
-	अगर (tb[IFA_CACHEINFO]) अणु
-		काष्ठा अगरa_cacheinfo *ci;
+	if (tb[IFA_CACHEINFO]) {
+		struct ifa_cacheinfo *ci;
 
 		ci = nla_data(tb[IFA_CACHEINFO]);
-		अगर (!ci->अगरa_valid || ci->अगरa_prefered > ci->अगरa_valid) अणु
+		if (!ci->ifa_valid || ci->ifa_prefered > ci->ifa_valid) {
 			err = -EINVAL;
-			जाओ errout_मुक्त;
-		पूर्ण
-		*pvalid_lft = ci->अगरa_valid;
-		*pprefered_lft = ci->अगरa_prefered;
-	पूर्ण
+			goto errout_free;
+		}
+		*pvalid_lft = ci->ifa_valid;
+		*pprefered_lft = ci->ifa_prefered;
+	}
 
-	वापस अगरa;
+	return ifa;
 
-errout_मुक्त:
-	inet_मुक्त_अगरa(अगरa);
+errout_free:
+	inet_free_ifa(ifa);
 errout:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा in_अगरaddr *find_matching_अगरa(काष्ठा in_अगरaddr *अगरa)
-अणु
-	काष्ठा in_device *in_dev = अगरa->अगरa_dev;
-	काष्ठा in_अगरaddr *अगरa1;
+static struct in_ifaddr *find_matching_ifa(struct in_ifaddr *ifa)
+{
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct in_ifaddr *ifa1;
 
-	अगर (!अगरa->अगरa_local)
-		वापस शून्य;
+	if (!ifa->ifa_local)
+		return NULL;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa1, in_dev) अणु
-		अगर (अगरa1->अगरa_mask == अगरa->अगरa_mask &&
-		    inet_अगरa_match(अगरa1->अगरa_address, अगरa) &&
-		    अगरa1->अगरa_local == अगरa->अगरa_local)
-			वापस अगरa1;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	in_dev_for_each_ifa_rtnl(ifa1, in_dev) {
+		if (ifa1->ifa_mask == ifa->ifa_mask &&
+		    inet_ifa_match(ifa1->ifa_address, ifa) &&
+		    ifa1->ifa_local == ifa->ifa_local)
+			return ifa1;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक inet_rपंचांग_newaddr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा in_अगरaddr *अगरa;
-	काष्ठा in_अगरaddr *अगरa_existing;
-	__u32 valid_lft = अनन्त_LIFE_TIME;
-	__u32 prefered_lft = अनन्त_LIFE_TIME;
+static int inet_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
+			    struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct in_ifaddr *ifa;
+	struct in_ifaddr *ifa_existing;
+	__u32 valid_lft = INFINITY_LIFE_TIME;
+	__u32 prefered_lft = INFINITY_LIFE_TIME;
 
 	ASSERT_RTNL();
 
-	अगरa = rपंचांग_to_अगरaddr(net, nlh, &valid_lft, &prefered_lft, extack);
-	अगर (IS_ERR(अगरa))
-		वापस PTR_ERR(अगरa);
+	ifa = rtm_to_ifaddr(net, nlh, &valid_lft, &prefered_lft, extack);
+	if (IS_ERR(ifa))
+		return PTR_ERR(ifa);
 
-	अगरa_existing = find_matching_अगरa(अगरa);
-	अगर (!अगरa_existing) अणु
-		/* It would be best to check क्रम !NLM_F_CREATE here but
-		 * userspace alपढ़ोy relies on not having to provide this.
+	ifa_existing = find_matching_ifa(ifa);
+	if (!ifa_existing) {
+		/* It would be best to check for !NLM_F_CREATE here but
+		 * userspace already relies on not having to provide this.
 		 */
-		set_अगरa_lअगरeसमय(अगरa, valid_lft, prefered_lft);
-		अगर (अगरa->अगरa_flags & IFA_F_MCAUTOJOIN) अणु
-			पूर्णांक ret = ip_mc_स्वतःjoin_config(net, true, अगरa);
+		set_ifa_lifetime(ifa, valid_lft, prefered_lft);
+		if (ifa->ifa_flags & IFA_F_MCAUTOJOIN) {
+			int ret = ip_mc_autojoin_config(net, true, ifa);
 
-			अगर (ret < 0) अणु
-				inet_मुक्त_अगरa(अगरa);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		वापस __inet_insert_अगरa(अगरa, nlh, NETLINK_CB(skb).portid,
+			if (ret < 0) {
+				inet_free_ifa(ifa);
+				return ret;
+			}
+		}
+		return __inet_insert_ifa(ifa, nlh, NETLINK_CB(skb).portid,
 					 extack);
-	पूर्ण अन्यथा अणु
-		u32 new_metric = अगरa->अगरa_rt_priority;
+	} else {
+		u32 new_metric = ifa->ifa_rt_priority;
 
-		inet_मुक्त_अगरa(अगरa);
+		inet_free_ifa(ifa);
 
-		अगर (nlh->nlmsg_flags & NLM_F_EXCL ||
+		if (nlh->nlmsg_flags & NLM_F_EXCL ||
 		    !(nlh->nlmsg_flags & NLM_F_REPLACE))
-			वापस -EEXIST;
-		अगरa = अगरa_existing;
+			return -EEXIST;
+		ifa = ifa_existing;
 
-		अगर (अगरa->अगरa_rt_priority != new_metric) अणु
-			fib_modअगरy_prefix_metric(अगरa, new_metric);
-			अगरa->अगरa_rt_priority = new_metric;
-		पूर्ण
+		if (ifa->ifa_rt_priority != new_metric) {
+			fib_modify_prefix_metric(ifa, new_metric);
+			ifa->ifa_rt_priority = new_metric;
+		}
 
-		set_अगरa_lअगरeसमय(अगरa, valid_lft, prefered_lft);
-		cancel_delayed_work(&check_lअगरeसमय_work);
-		queue_delayed_work(प्रणाली_घातer_efficient_wq,
-				&check_lअगरeसमय_work, 0);
-		rपंचांगsg_अगरa(RTM_NEWADDR, अगरa, nlh, NETLINK_CB(skb).portid);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		set_ifa_lifetime(ifa, valid_lft, prefered_lft);
+		cancel_delayed_work(&check_lifetime_work);
+		queue_delayed_work(system_power_efficient_wq,
+				&check_lifetime_work, 0);
+		rtmsg_ifa(RTM_NEWADDR, ifa, nlh, NETLINK_CB(skb).portid);
+	}
+	return 0;
+}
 
 /*
- *	Determine a शेष network mask, based on the IP address.
+ *	Determine a default network mask, based on the IP address.
  */
 
-अटल पूर्णांक inet_abc_len(__be32 addr)
-अणु
-	पूर्णांक rc = -1;	/* Something अन्यथा, probably a multicast. */
+static int inet_abc_len(__be32 addr)
+{
+	int rc = -1;	/* Something else, probably a multicast. */
 
-	अगर (ipv4_is_zeronet(addr) || ipv4_is_lbcast(addr))
+	if (ipv4_is_zeronet(addr) || ipv4_is_lbcast(addr))
 		rc = 0;
-	अन्यथा अणु
+	else {
 		__u32 haddr = ntohl(addr);
-		अगर (IN_CLASSA(haddr))
+		if (IN_CLASSA(haddr))
 			rc = 8;
-		अन्यथा अगर (IN_CLASSB(haddr))
+		else if (IN_CLASSB(haddr))
 			rc = 16;
-		अन्यथा अगर (IN_CLASSC(haddr))
+		else if (IN_CLASSC(haddr))
 			rc = 24;
-		अन्यथा अगर (IN_CLASSE(haddr))
+		else if (IN_CLASSE(haddr))
 			rc = 32;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-पूर्णांक devinet_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा sockaddr_in sin_orig;
-	काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)&अगरr->अगरr_addr;
-	काष्ठा in_अगरaddr __rcu **अगरap = शून्य;
-	काष्ठा in_device *in_dev;
-	काष्ठा in_अगरaddr *अगरa = शून्य;
-	काष्ठा net_device *dev;
-	अक्षर *colon;
-	पूर्णांक ret = -EFAULT;
-	पूर्णांक tryaddrmatch = 0;
+int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
+{
+	struct sockaddr_in sin_orig;
+	struct sockaddr_in *sin = (struct sockaddr_in *)&ifr->ifr_addr;
+	struct in_ifaddr __rcu **ifap = NULL;
+	struct in_device *in_dev;
+	struct in_ifaddr *ifa = NULL;
+	struct net_device *dev;
+	char *colon;
+	int ret = -EFAULT;
+	int tryaddrmatch = 0;
 
-	अगरr->अगरr_name[IFNAMSIZ - 1] = 0;
+	ifr->ifr_name[IFNAMSIZ - 1] = 0;
 
-	/* save original address क्रम comparison */
-	स_नकल(&sin_orig, sin, माप(*sin));
+	/* save original address for comparison */
+	memcpy(&sin_orig, sin, sizeof(*sin));
 
-	colon = म_अक्षर(अगरr->अगरr_name, ':');
-	अगर (colon)
+	colon = strchr(ifr->ifr_name, ':');
+	if (colon)
 		*colon = 0;
 
-	dev_load(net, अगरr->अगरr_name);
+	dev_load(net, ifr->ifr_name);
 
-	चयन (cmd) अणु
-	हाल SIOCGIFADDR:	/* Get पूर्णांकerface address */
-	हाल SIOCGIFBRDADDR:	/* Get the broadcast address */
-	हाल SIOCGIFDSTADDR:	/* Get the destination address */
-	हाल SIOCGIFNETMASK:	/* Get the neपंचांगask क्रम the पूर्णांकerface */
+	switch (cmd) {
+	case SIOCGIFADDR:	/* Get interface address */
+	case SIOCGIFBRDADDR:	/* Get the broadcast address */
+	case SIOCGIFDSTADDR:	/* Get the destination address */
+	case SIOCGIFNETMASK:	/* Get the netmask for the interface */
 		/* Note that these ioctls will not sleep,
-		   so that we करो not impose a lock.
-		   One day we will be क्रमced to put shlock here (I mean SMP)
+		   so that we do not impose a lock.
+		   One day we will be forced to put shlock here (I mean SMP)
 		 */
 		tryaddrmatch = (sin_orig.sin_family == AF_INET);
-		स_रखो(sin, 0, माप(*sin));
+		memset(sin, 0, sizeof(*sin));
 		sin->sin_family = AF_INET;
-		अवरोध;
+		break;
 
-	हाल SIOCSIFFLAGS:
+	case SIOCSIFFLAGS:
 		ret = -EPERM;
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			जाओ out;
-		अवरोध;
-	हाल SIOCSIFADDR:	/* Set पूर्णांकerface address (and family) */
-	हाल SIOCSIFBRDADDR:	/* Set the broadcast address */
-	हाल SIOCSIFDSTADDR:	/* Set the destination address */
-	हाल SIOCSIFNETMASK: 	/* Set the neपंचांगask क्रम the पूर्णांकerface */
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			goto out;
+		break;
+	case SIOCSIFADDR:	/* Set interface address (and family) */
+	case SIOCSIFBRDADDR:	/* Set the broadcast address */
+	case SIOCSIFDSTADDR:	/* Set the destination address */
+	case SIOCSIFNETMASK: 	/* Set the netmask for the interface */
 		ret = -EPERM;
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			जाओ out;
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			goto out;
 		ret = -EINVAL;
-		अगर (sin->sin_family != AF_INET)
-			जाओ out;
-		अवरोध;
-	शेष:
+		if (sin->sin_family != AF_INET)
+			goto out;
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rtnl_lock();
 
 	ret = -ENODEV;
-	dev = __dev_get_by_name(net, अगरr->अगरr_name);
-	अगर (!dev)
-		जाओ करोne;
+	dev = __dev_get_by_name(net, ifr->ifr_name);
+	if (!dev)
+		goto done;
 
-	अगर (colon)
+	if (colon)
 		*colon = ':';
 
 	in_dev = __in_dev_get_rtnl(dev);
-	अगर (in_dev) अणु
-		अगर (tryaddrmatch) अणु
+	if (in_dev) {
+		if (tryaddrmatch) {
 			/* Matthias Andree */
 			/* compare label and address (4.4BSD style) */
-			/* note: we only करो this क्रम a limited set of ioctls
-			   and only अगर the original address family was AF_INET.
+			/* note: we only do this for a limited set of ioctls
+			   and only if the original address family was AF_INET.
 			   This is checked above. */
 
-			क्रम (अगरap = &in_dev->अगरa_list;
-			     (अगरa = rtnl_dereference(*अगरap)) != शून्य;
-			     अगरap = &अगरa->अगरa_next) अणु
-				अगर (!म_भेद(अगरr->अगरr_name, अगरa->अगरa_label) &&
+			for (ifap = &in_dev->ifa_list;
+			     (ifa = rtnl_dereference(*ifap)) != NULL;
+			     ifap = &ifa->ifa_next) {
+				if (!strcmp(ifr->ifr_name, ifa->ifa_label) &&
 				    sin_orig.sin_addr.s_addr ==
-							अगरa->अगरa_local) अणु
-					अवरोध; /* found */
-				पूर्ण
-			पूर्ण
-		पूर्ण
+							ifa->ifa_local) {
+					break; /* found */
+				}
+			}
+		}
 		/* we didn't get a match, maybe the application is
 		   4.3BSD-style and passed in junk so we fall back to
 		   comparing just the label */
-		अगर (!अगरa) अणु
-			क्रम (अगरap = &in_dev->अगरa_list;
-			     (अगरa = rtnl_dereference(*अगरap)) != शून्य;
-			     अगरap = &अगरa->अगरa_next)
-				अगर (!म_भेद(अगरr->अगरr_name, अगरa->अगरa_label))
-					अवरोध;
-		पूर्ण
-	पूर्ण
+		if (!ifa) {
+			for (ifap = &in_dev->ifa_list;
+			     (ifa = rtnl_dereference(*ifap)) != NULL;
+			     ifap = &ifa->ifa_next)
+				if (!strcmp(ifr->ifr_name, ifa->ifa_label))
+					break;
+		}
+	}
 
 	ret = -EADDRNOTAVAIL;
-	अगर (!अगरa && cmd != SIOCSIFADDR && cmd != SIOCSIFFLAGS)
-		जाओ करोne;
+	if (!ifa && cmd != SIOCSIFADDR && cmd != SIOCSIFFLAGS)
+		goto done;
 
-	चयन (cmd) अणु
-	हाल SIOCGIFADDR:	/* Get पूर्णांकerface address */
+	switch (cmd) {
+	case SIOCGIFADDR:	/* Get interface address */
 		ret = 0;
-		sin->sin_addr.s_addr = अगरa->अगरa_local;
-		अवरोध;
+		sin->sin_addr.s_addr = ifa->ifa_local;
+		break;
 
-	हाल SIOCGIFBRDADDR:	/* Get the broadcast address */
+	case SIOCGIFBRDADDR:	/* Get the broadcast address */
 		ret = 0;
-		sin->sin_addr.s_addr = अगरa->अगरa_broadcast;
-		अवरोध;
+		sin->sin_addr.s_addr = ifa->ifa_broadcast;
+		break;
 
-	हाल SIOCGIFDSTADDR:	/* Get the destination address */
+	case SIOCGIFDSTADDR:	/* Get the destination address */
 		ret = 0;
-		sin->sin_addr.s_addr = अगरa->अगरa_address;
-		अवरोध;
+		sin->sin_addr.s_addr = ifa->ifa_address;
+		break;
 
-	हाल SIOCGIFNETMASK:	/* Get the neपंचांगask क्रम the पूर्णांकerface */
+	case SIOCGIFNETMASK:	/* Get the netmask for the interface */
 		ret = 0;
-		sin->sin_addr.s_addr = अगरa->अगरa_mask;
-		अवरोध;
+		sin->sin_addr.s_addr = ifa->ifa_mask;
+		break;
 
-	हाल SIOCSIFFLAGS:
-		अगर (colon) अणु
+	case SIOCSIFFLAGS:
+		if (colon) {
 			ret = -EADDRNOTAVAIL;
-			अगर (!अगरa)
-				अवरोध;
+			if (!ifa)
+				break;
 			ret = 0;
-			अगर (!(अगरr->अगरr_flags & IFF_UP))
-				inet_del_अगरa(in_dev, अगरap, 1);
-			अवरोध;
-		पूर्ण
-		ret = dev_change_flags(dev, अगरr->अगरr_flags, शून्य);
-		अवरोध;
+			if (!(ifr->ifr_flags & IFF_UP))
+				inet_del_ifa(in_dev, ifap, 1);
+			break;
+		}
+		ret = dev_change_flags(dev, ifr->ifr_flags, NULL);
+		break;
 
-	हाल SIOCSIFADDR:	/* Set पूर्णांकerface address (and family) */
+	case SIOCSIFADDR:	/* Set interface address (and family) */
 		ret = -EINVAL;
-		अगर (inet_abc_len(sin->sin_addr.s_addr) < 0)
-			अवरोध;
+		if (inet_abc_len(sin->sin_addr.s_addr) < 0)
+			break;
 
-		अगर (!अगरa) अणु
+		if (!ifa) {
 			ret = -ENOBUFS;
-			अगरa = inet_alloc_अगरa();
-			अगर (!अगरa)
-				अवरोध;
-			INIT_HLIST_NODE(&अगरa->hash);
-			अगर (colon)
-				स_नकल(अगरa->अगरa_label, अगरr->अगरr_name, IFNAMSIZ);
-			अन्यथा
-				स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
-		पूर्ण अन्यथा अणु
+			ifa = inet_alloc_ifa();
+			if (!ifa)
+				break;
+			INIT_HLIST_NODE(&ifa->hash);
+			if (colon)
+				memcpy(ifa->ifa_label, ifr->ifr_name, IFNAMSIZ);
+			else
+				memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
+		} else {
 			ret = 0;
-			अगर (अगरa->अगरa_local == sin->sin_addr.s_addr)
-				अवरोध;
-			inet_del_अगरa(in_dev, अगरap, 0);
-			अगरa->अगरa_broadcast = 0;
-			अगरa->अगरa_scope = 0;
-		पूर्ण
+			if (ifa->ifa_local == sin->sin_addr.s_addr)
+				break;
+			inet_del_ifa(in_dev, ifap, 0);
+			ifa->ifa_broadcast = 0;
+			ifa->ifa_scope = 0;
+		}
 
-		अगरa->अगरa_address = अगरa->अगरa_local = sin->sin_addr.s_addr;
+		ifa->ifa_address = ifa->ifa_local = sin->sin_addr.s_addr;
 
-		अगर (!(dev->flags & IFF_POINTOPOINT)) अणु
-			अगरa->अगरa_prefixlen = inet_abc_len(अगरa->अगरa_address);
-			अगरa->अगरa_mask = inet_make_mask(अगरa->अगरa_prefixlen);
-			अगर ((dev->flags & IFF_BROADCAST) &&
-			    अगरa->अगरa_prefixlen < 31)
-				अगरa->अगरa_broadcast = अगरa->अगरa_address |
-						     ~अगरa->अगरa_mask;
-		पूर्ण अन्यथा अणु
-			अगरa->अगरa_prefixlen = 32;
-			अगरa->अगरa_mask = inet_make_mask(32);
-		पूर्ण
-		set_अगरa_lअगरeसमय(अगरa, अनन्त_LIFE_TIME, अनन्त_LIFE_TIME);
-		ret = inet_set_अगरa(dev, अगरa);
-		अवरोध;
+		if (!(dev->flags & IFF_POINTOPOINT)) {
+			ifa->ifa_prefixlen = inet_abc_len(ifa->ifa_address);
+			ifa->ifa_mask = inet_make_mask(ifa->ifa_prefixlen);
+			if ((dev->flags & IFF_BROADCAST) &&
+			    ifa->ifa_prefixlen < 31)
+				ifa->ifa_broadcast = ifa->ifa_address |
+						     ~ifa->ifa_mask;
+		} else {
+			ifa->ifa_prefixlen = 32;
+			ifa->ifa_mask = inet_make_mask(32);
+		}
+		set_ifa_lifetime(ifa, INFINITY_LIFE_TIME, INFINITY_LIFE_TIME);
+		ret = inet_set_ifa(dev, ifa);
+		break;
 
-	हाल SIOCSIFBRDADDR:	/* Set the broadcast address */
+	case SIOCSIFBRDADDR:	/* Set the broadcast address */
 		ret = 0;
-		अगर (अगरa->अगरa_broadcast != sin->sin_addr.s_addr) अणु
-			inet_del_अगरa(in_dev, अगरap, 0);
-			अगरa->अगरa_broadcast = sin->sin_addr.s_addr;
-			inet_insert_अगरa(अगरa);
-		पूर्ण
-		अवरोध;
+		if (ifa->ifa_broadcast != sin->sin_addr.s_addr) {
+			inet_del_ifa(in_dev, ifap, 0);
+			ifa->ifa_broadcast = sin->sin_addr.s_addr;
+			inet_insert_ifa(ifa);
+		}
+		break;
 
-	हाल SIOCSIFDSTADDR:	/* Set the destination address */
+	case SIOCSIFDSTADDR:	/* Set the destination address */
 		ret = 0;
-		अगर (अगरa->अगरa_address == sin->sin_addr.s_addr)
-			अवरोध;
+		if (ifa->ifa_address == sin->sin_addr.s_addr)
+			break;
 		ret = -EINVAL;
-		अगर (inet_abc_len(sin->sin_addr.s_addr) < 0)
-			अवरोध;
+		if (inet_abc_len(sin->sin_addr.s_addr) < 0)
+			break;
 		ret = 0;
-		inet_del_अगरa(in_dev, अगरap, 0);
-		अगरa->अगरa_address = sin->sin_addr.s_addr;
-		inet_insert_अगरa(अगरa);
-		अवरोध;
+		inet_del_ifa(in_dev, ifap, 0);
+		ifa->ifa_address = sin->sin_addr.s_addr;
+		inet_insert_ifa(ifa);
+		break;
 
-	हाल SIOCSIFNETMASK: 	/* Set the neपंचांगask क्रम the पूर्णांकerface */
+	case SIOCSIFNETMASK: 	/* Set the netmask for the interface */
 
 		/*
 		 *	The mask we set must be legal.
 		 */
 		ret = -EINVAL;
-		अगर (bad_mask(sin->sin_addr.s_addr, 0))
-			अवरोध;
+		if (bad_mask(sin->sin_addr.s_addr, 0))
+			break;
 		ret = 0;
-		अगर (अगरa->अगरa_mask != sin->sin_addr.s_addr) अणु
-			__be32 old_mask = अगरa->अगरa_mask;
-			inet_del_अगरa(in_dev, अगरap, 0);
-			अगरa->अगरa_mask = sin->sin_addr.s_addr;
-			अगरa->अगरa_prefixlen = inet_mask_len(अगरa->अगरa_mask);
+		if (ifa->ifa_mask != sin->sin_addr.s_addr) {
+			__be32 old_mask = ifa->ifa_mask;
+			inet_del_ifa(in_dev, ifap, 0);
+			ifa->ifa_mask = sin->sin_addr.s_addr;
+			ifa->ifa_prefixlen = inet_mask_len(ifa->ifa_mask);
 
-			/* See अगर current broadcast address matches
-			 * with current neपंचांगask, then recalculate
+			/* See if current broadcast address matches
+			 * with current netmask, then recalculate
 			 * the broadcast address. Otherwise it's a
-			 * funny address, so करोn't touch it since
-			 * the user seems to know what (s)he's करोing...
+			 * funny address, so don't touch it since
+			 * the user seems to know what (s)he's doing...
 			 */
-			अगर ((dev->flags & IFF_BROADCAST) &&
-			    (अगरa->अगरa_prefixlen < 31) &&
-			    (अगरa->अगरa_broadcast ==
-			     (अगरa->अगरa_local|~old_mask))) अणु
-				अगरa->अगरa_broadcast = (अगरa->अगरa_local |
+			if ((dev->flags & IFF_BROADCAST) &&
+			    (ifa->ifa_prefixlen < 31) &&
+			    (ifa->ifa_broadcast ==
+			     (ifa->ifa_local|~old_mask))) {
+				ifa->ifa_broadcast = (ifa->ifa_local |
 						      ~sin->sin_addr.s_addr);
-			पूर्ण
-			inet_insert_अगरa(अगरa);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-करोne:
+			}
+			inet_insert_ifa(ifa);
+		}
+		break;
+	}
+done:
 	rtnl_unlock();
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक inet_gअगरconf(काष्ठा net_device *dev, अक्षर __user *buf, पूर्णांक len, पूर्णांक size)
-अणु
-	काष्ठा in_device *in_dev = __in_dev_get_rtnl(dev);
-	स्थिर काष्ठा in_अगरaddr *अगरa;
-	काष्ठा अगरreq अगरr;
-	पूर्णांक करोne = 0;
+static int inet_gifconf(struct net_device *dev, char __user *buf, int len, int size)
+{
+	struct in_device *in_dev = __in_dev_get_rtnl(dev);
+	const struct in_ifaddr *ifa;
+	struct ifreq ifr;
+	int done = 0;
 
-	अगर (WARN_ON(size > माप(काष्ठा अगरreq)))
-		जाओ out;
+	if (WARN_ON(size > sizeof(struct ifreq)))
+		goto out;
 
-	अगर (!in_dev)
-		जाओ out;
+	if (!in_dev)
+		goto out;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-		अगर (!buf) अणु
-			करोne += size;
-			जारी;
-		पूर्ण
-		अगर (len < size)
-			अवरोध;
-		स_रखो(&अगरr, 0, माप(काष्ठा अगरreq));
-		म_नकल(अगरr.अगरr_name, अगरa->अगरa_label);
+	in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+		if (!buf) {
+			done += size;
+			continue;
+		}
+		if (len < size)
+			break;
+		memset(&ifr, 0, sizeof(struct ifreq));
+		strcpy(ifr.ifr_name, ifa->ifa_label);
 
-		(*(काष्ठा sockaddr_in *)&अगरr.अगरr_addr).sin_family = AF_INET;
-		(*(काष्ठा sockaddr_in *)&अगरr.अगरr_addr).sin_addr.s_addr =
-								अगरa->अगरa_local;
+		(*(struct sockaddr_in *)&ifr.ifr_addr).sin_family = AF_INET;
+		(*(struct sockaddr_in *)&ifr.ifr_addr).sin_addr.s_addr =
+								ifa->ifa_local;
 
-		अगर (copy_to_user(buf + करोne, &अगरr, size)) अणु
-			करोne = -EFAULT;
-			अवरोध;
-		पूर्ण
+		if (copy_to_user(buf + done, &ifr, size)) {
+			done = -EFAULT;
+			break;
+		}
 		len  -= size;
-		करोne += size;
-	पूर्ण
+		done += size;
+	}
 out:
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-अटल __be32 in_dev_select_addr(स्थिर काष्ठा in_device *in_dev,
-				 पूर्णांक scope)
-अणु
-	स्थिर काष्ठा in_अगरaddr *अगरa;
+static __be32 in_dev_select_addr(const struct in_device *in_dev,
+				 int scope)
+{
+	const struct in_ifaddr *ifa;
 
-	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
-		अगर (अगरa->अगरa_flags & IFA_F_SECONDARY)
-			जारी;
-		अगर (अगरa->अगरa_scope != RT_SCOPE_LINK &&
-		    अगरa->अगरa_scope <= scope)
-			वापस अगरa->अगरa_local;
-	पूर्ण
+	in_dev_for_each_ifa_rcu(ifa, in_dev) {
+		if (ifa->ifa_flags & IFA_F_SECONDARY)
+			continue;
+		if (ifa->ifa_scope != RT_SCOPE_LINK &&
+		    ifa->ifa_scope <= scope)
+			return ifa->ifa_local;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__be32 inet_select_addr(स्थिर काष्ठा net_device *dev, __be32 dst, पूर्णांक scope)
-अणु
-	स्थिर काष्ठा in_अगरaddr *अगरa;
+__be32 inet_select_addr(const struct net_device *dev, __be32 dst, int scope)
+{
+	const struct in_ifaddr *ifa;
 	__be32 addr = 0;
-	अचिन्हित अक्षर localnet_scope = RT_SCOPE_HOST;
-	काष्ठा in_device *in_dev;
-	काष्ठा net *net = dev_net(dev);
-	पूर्णांक master_idx;
+	unsigned char localnet_scope = RT_SCOPE_HOST;
+	struct in_device *in_dev;
+	struct net *net = dev_net(dev);
+	int master_idx;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	in_dev = __in_dev_get_rcu(dev);
-	अगर (!in_dev)
-		जाओ no_in_dev;
+	if (!in_dev)
+		goto no_in_dev;
 
-	अगर (unlikely(IN_DEV_ROUTE_LOCALNET(in_dev)))
+	if (unlikely(IN_DEV_ROUTE_LOCALNET(in_dev)))
 		localnet_scope = RT_SCOPE_LINK;
 
-	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
-		अगर (अगरa->अगरa_flags & IFA_F_SECONDARY)
-			जारी;
-		अगर (min(अगरa->अगरa_scope, localnet_scope) > scope)
-			जारी;
-		अगर (!dst || inet_अगरa_match(dst, अगरa)) अणु
-			addr = अगरa->अगरa_local;
-			अवरोध;
-		पूर्ण
-		अगर (!addr)
-			addr = अगरa->अगरa_local;
-	पूर्ण
+	in_dev_for_each_ifa_rcu(ifa, in_dev) {
+		if (ifa->ifa_flags & IFA_F_SECONDARY)
+			continue;
+		if (min(ifa->ifa_scope, localnet_scope) > scope)
+			continue;
+		if (!dst || inet_ifa_match(dst, ifa)) {
+			addr = ifa->ifa_local;
+			break;
+		}
+		if (!addr)
+			addr = ifa->ifa_local;
+	}
 
-	अगर (addr)
-		जाओ out_unlock;
+	if (addr)
+		goto out_unlock;
 no_in_dev:
-	master_idx = l3mdev_master_अगरindex_rcu(dev);
+	master_idx = l3mdev_master_ifindex_rcu(dev);
 
 	/* For VRFs, the VRF device takes the place of the loopback device,
-	 * with addresses on it being preferred.  Note in such हालs the
+	 * with addresses on it being preferred.  Note in such cases the
 	 * loopback device will be among the devices that fail the master_idx
 	 * equality check in the loop below.
 	 */
-	अगर (master_idx &&
+	if (master_idx &&
 	    (dev = dev_get_by_index_rcu(net, master_idx)) &&
-	    (in_dev = __in_dev_get_rcu(dev))) अणु
+	    (in_dev = __in_dev_get_rcu(dev))) {
 		addr = in_dev_select_addr(in_dev, scope);
-		अगर (addr)
-			जाओ out_unlock;
-	पूर्ण
+		if (addr)
+			goto out_unlock;
+	}
 
 	/* Not loopback addresses on loopback should be preferred
-	   in this हाल. It is important that lo is the first पूर्णांकerface
+	   in this case. It is important that lo is the first interface
 	   in dev_base list.
 	 */
-	क्रम_each_netdev_rcu(net, dev) अणु
-		अगर (l3mdev_master_अगरindex_rcu(dev) != master_idx)
-			जारी;
+	for_each_netdev_rcu(net, dev) {
+		if (l3mdev_master_ifindex_rcu(dev) != master_idx)
+			continue;
 
 		in_dev = __in_dev_get_rcu(dev);
-		अगर (!in_dev)
-			जारी;
+		if (!in_dev)
+			continue;
 
 		addr = in_dev_select_addr(in_dev, scope);
-		अगर (addr)
-			जाओ out_unlock;
-	पूर्ण
+		if (addr)
+			goto out_unlock;
+	}
 out_unlock:
-	rcu_पढ़ो_unlock();
-	वापस addr;
-पूर्ण
+	rcu_read_unlock();
+	return addr;
+}
 EXPORT_SYMBOL(inet_select_addr);
 
-अटल __be32 confirm_addr_indev(काष्ठा in_device *in_dev, __be32 dst,
-			      __be32 local, पूर्णांक scope)
-अणु
-	अचिन्हित अक्षर localnet_scope = RT_SCOPE_HOST;
-	स्थिर काष्ठा in_अगरaddr *अगरa;
+static __be32 confirm_addr_indev(struct in_device *in_dev, __be32 dst,
+			      __be32 local, int scope)
+{
+	unsigned char localnet_scope = RT_SCOPE_HOST;
+	const struct in_ifaddr *ifa;
 	__be32 addr = 0;
-	पूर्णांक same = 0;
+	int same = 0;
 
-	अगर (unlikely(IN_DEV_ROUTE_LOCALNET(in_dev)))
+	if (unlikely(IN_DEV_ROUTE_LOCALNET(in_dev)))
 		localnet_scope = RT_SCOPE_LINK;
 
-	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
-		अचिन्हित अक्षर min_scope = min(अगरa->अगरa_scope, localnet_scope);
+	in_dev_for_each_ifa_rcu(ifa, in_dev) {
+		unsigned char min_scope = min(ifa->ifa_scope, localnet_scope);
 
-		अगर (!addr &&
-		    (local == अगरa->अगरa_local || !local) &&
-		    min_scope <= scope) अणु
-			addr = अगरa->अगरa_local;
-			अगर (same)
-				अवरोध;
-		पूर्ण
-		अगर (!same) अणु
-			same = (!local || inet_अगरa_match(local, अगरa)) &&
-				(!dst || inet_अगरa_match(dst, अगरa));
-			अगर (same && addr) अणु
-				अगर (local || !dst)
-					अवरोध;
-				/* Is the selected addr पूर्णांकo dst subnet? */
-				अगर (inet_अगरa_match(addr, अगरa))
-					अवरोध;
+		if (!addr &&
+		    (local == ifa->ifa_local || !local) &&
+		    min_scope <= scope) {
+			addr = ifa->ifa_local;
+			if (same)
+				break;
+		}
+		if (!same) {
+			same = (!local || inet_ifa_match(local, ifa)) &&
+				(!dst || inet_ifa_match(dst, ifa));
+			if (same && addr) {
+				if (local || !dst)
+					break;
+				/* Is the selected addr into dst subnet? */
+				if (inet_ifa_match(addr, ifa))
+					break;
 				/* No, then can we use new local src? */
-				अगर (min_scope <= scope) अणु
-					addr = अगरa->अगरa_local;
-					अवरोध;
-				पूर्ण
-				/* search क्रम large dst subnet क्रम addr */
+				if (min_scope <= scope) {
+					addr = ifa->ifa_local;
+					break;
+				}
+				/* search for large dst subnet for addr */
 				same = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस same ? addr : 0;
-पूर्ण
+	return same ? addr : 0;
+}
 
 /*
  * Confirm that local IP address exists using wildcards:
- * - net: netns to check, cannot be शून्य
- * - in_dev: only on this पूर्णांकerface, शून्य=any पूर्णांकerface
+ * - net: netns to check, cannot be NULL
+ * - in_dev: only on this interface, NULL=any interface
  * - dst: only in the same subnet as dst, 0=any dst
- * - local: address, 0=स्वतःselect the local address
- * - scope: maximum allowed scope value क्रम the local address
+ * - local: address, 0=autoselect the local address
+ * - scope: maximum allowed scope value for the local address
  */
-__be32 inet_confirm_addr(काष्ठा net *net, काष्ठा in_device *in_dev,
-			 __be32 dst, __be32 local, पूर्णांक scope)
-अणु
+__be32 inet_confirm_addr(struct net *net, struct in_device *in_dev,
+			 __be32 dst, __be32 local, int scope)
+{
 	__be32 addr = 0;
-	काष्ठा net_device *dev;
+	struct net_device *dev;
 
-	अगर (in_dev)
-		वापस confirm_addr_indev(in_dev, dst, local, scope);
+	if (in_dev)
+		return confirm_addr_indev(in_dev, dst, local, scope);
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(net, dev) अणु
+	rcu_read_lock();
+	for_each_netdev_rcu(net, dev) {
 		in_dev = __in_dev_get_rcu(dev);
-		अगर (in_dev) अणु
+		if (in_dev) {
 			addr = confirm_addr_indev(in_dev, dst, local, scope);
-			अगर (addr)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			if (addr)
+				break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 EXPORT_SYMBOL(inet_confirm_addr);
 
 /*
- *	Device notअगरier
+ *	Device notifier
  */
 
-पूर्णांक रेजिस्टर_inetaddr_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&inetaddr_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_inetaddr_notअगरier);
+int register_inetaddr_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&inetaddr_chain, nb);
+}
+EXPORT_SYMBOL(register_inetaddr_notifier);
 
-पूर्णांक unरेजिस्टर_inetaddr_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&inetaddr_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_inetaddr_notअगरier);
+int unregister_inetaddr_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&inetaddr_chain, nb);
+}
+EXPORT_SYMBOL(unregister_inetaddr_notifier);
 
-पूर्णांक रेजिस्टर_inetaddr_validator_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_रेजिस्टर(&inetaddr_validator_chain, nb);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_inetaddr_validator_notअगरier);
+int register_inetaddr_validator_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&inetaddr_validator_chain, nb);
+}
+EXPORT_SYMBOL(register_inetaddr_validator_notifier);
 
-पूर्णांक unरेजिस्टर_inetaddr_validator_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&inetaddr_validator_chain,
+int unregister_inetaddr_validator_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&inetaddr_validator_chain,
 	    nb);
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_inetaddr_validator_notअगरier);
+}
+EXPORT_SYMBOL(unregister_inetaddr_validator_notifier);
 
-/* Rename अगरa_labels क्रम a device name change. Make some efक्रमt to preserve
- * existing alias numbering and to create unique labels अगर possible.
+/* Rename ifa_labels for a device name change. Make some effort to preserve
+ * existing alias numbering and to create unique labels if possible.
 */
-अटल व्योम inetdev_changename(काष्ठा net_device *dev, काष्ठा in_device *in_dev)
-अणु
-	काष्ठा in_अगरaddr *अगरa;
-	पूर्णांक named = 0;
+static void inetdev_changename(struct net_device *dev, struct in_device *in_dev)
+{
+	struct in_ifaddr *ifa;
+	int named = 0;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-		अक्षर old[IFNAMSIZ], *करोt;
+	in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+		char old[IFNAMSIZ], *dot;
 
-		स_नकल(old, अगरa->अगरa_label, IFNAMSIZ);
-		स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
-		अगर (named++ == 0)
-			जाओ skip;
-		करोt = म_अक्षर(old, ':');
-		अगर (!करोt) अणु
-			प्र_लिखो(old, ":%d", named);
-			करोt = old;
-		पूर्ण
-		अगर (म_माप(करोt) + म_माप(dev->name) < IFNAMSIZ)
-			म_जोड़ो(अगरa->अगरa_label, करोt);
-		अन्यथा
-			म_नकल(अगरa->अगरa_label + (IFNAMSIZ - म_माप(करोt) - 1), करोt);
+		memcpy(old, ifa->ifa_label, IFNAMSIZ);
+		memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
+		if (named++ == 0)
+			goto skip;
+		dot = strchr(old, ':');
+		if (!dot) {
+			sprintf(old, ":%d", named);
+			dot = old;
+		}
+		if (strlen(dot) + strlen(dev->name) < IFNAMSIZ)
+			strcat(ifa->ifa_label, dot);
+		else
+			strcpy(ifa->ifa_label + (IFNAMSIZ - strlen(dot) - 1), dot);
 skip:
-		rपंचांगsg_अगरa(RTM_NEWADDR, अगरa, शून्य, 0);
-	पूर्ण
-पूर्ण
+		rtmsg_ifa(RTM_NEWADDR, ifa, NULL, 0);
+	}
+}
 
-अटल व्योम inetdev_send_gratuitous_arp(काष्ठा net_device *dev,
-					काष्ठा in_device *in_dev)
+static void inetdev_send_gratuitous_arp(struct net_device *dev,
+					struct in_device *in_dev)
 
-अणु
-	स्थिर काष्ठा in_अगरaddr *अगरa;
+{
+	const struct in_ifaddr *ifa;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
+	in_dev_for_each_ifa_rtnl(ifa, in_dev) {
 		arp_send(ARPOP_REQUEST, ETH_P_ARP,
-			 अगरa->अगरa_local, dev,
-			 अगरa->अगरa_local, शून्य,
-			 dev->dev_addr, शून्य);
-	पूर्ण
-पूर्ण
+			 ifa->ifa_local, dev,
+			 ifa->ifa_local, NULL,
+			 dev->dev_addr, NULL);
+	}
+}
 
 /* Called only under RTNL semaphore */
 
-अटल पूर्णांक inetdev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			 व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा in_device *in_dev = __in_dev_get_rtnl(dev);
+static int inetdev_event(struct notifier_block *this, unsigned long event,
+			 void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct in_device *in_dev = __in_dev_get_rtnl(dev);
 
 	ASSERT_RTNL();
 
-	अगर (!in_dev) अणु
-		अगर (event == NETDEV_REGISTER) अणु
+	if (!in_dev) {
+		if (event == NETDEV_REGISTER) {
 			in_dev = inetdev_init(dev);
-			अगर (IS_ERR(in_dev))
-				वापस notअगरier_from_त्रुटि_सं(PTR_ERR(in_dev));
-			अगर (dev->flags & IFF_LOOPBACK) अणु
+			if (IS_ERR(in_dev))
+				return notifier_from_errno(PTR_ERR(in_dev));
+			if (dev->flags & IFF_LOOPBACK) {
 				IN_DEV_CONF_SET(in_dev, NOXFRM, 1);
 				IN_DEV_CONF_SET(in_dev, NOPOLICY, 1);
-			पूर्ण
-		पूर्ण अन्यथा अगर (event == NETDEV_CHANGEMTU) अणु
+			}
+		} else if (event == NETDEV_CHANGEMTU) {
 			/* Re-enabling IP */
-			अगर (inetdev_valid_mtu(dev->mtu))
+			if (inetdev_valid_mtu(dev->mtu))
 				in_dev = inetdev_init(dev);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	चयन (event) अणु
-	हाल NETDEV_REGISTER:
+	switch (event) {
+	case NETDEV_REGISTER:
 		pr_debug("%s: bug\n", __func__);
-		RCU_INIT_POINTER(dev->ip_ptr, शून्य);
-		अवरोध;
-	हाल NETDEV_UP:
-		अगर (!inetdev_valid_mtu(dev->mtu))
-			अवरोध;
-		अगर (dev->flags & IFF_LOOPBACK) अणु
-			काष्ठा in_अगरaddr *अगरa = inet_alloc_अगरa();
+		RCU_INIT_POINTER(dev->ip_ptr, NULL);
+		break;
+	case NETDEV_UP:
+		if (!inetdev_valid_mtu(dev->mtu))
+			break;
+		if (dev->flags & IFF_LOOPBACK) {
+			struct in_ifaddr *ifa = inet_alloc_ifa();
 
-			अगर (अगरa) अणु
-				INIT_HLIST_NODE(&अगरa->hash);
-				अगरa->अगरa_local =
-				  अगरa->अगरa_address = htonl(INADDR_LOOPBACK);
-				अगरa->अगरa_prefixlen = 8;
-				अगरa->अगरa_mask = inet_make_mask(8);
+			if (ifa) {
+				INIT_HLIST_NODE(&ifa->hash);
+				ifa->ifa_local =
+				  ifa->ifa_address = htonl(INADDR_LOOPBACK);
+				ifa->ifa_prefixlen = 8;
+				ifa->ifa_mask = inet_make_mask(8);
 				in_dev_hold(in_dev);
-				अगरa->अगरa_dev = in_dev;
-				अगरa->अगरa_scope = RT_SCOPE_HOST;
-				स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
-				set_अगरa_lअगरeसमय(अगरa, अनन्त_LIFE_TIME,
-						 अनन्त_LIFE_TIME);
+				ifa->ifa_dev = in_dev;
+				ifa->ifa_scope = RT_SCOPE_HOST;
+				memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
+				set_ifa_lifetime(ifa, INFINITY_LIFE_TIME,
+						 INFINITY_LIFE_TIME);
 				ipv4_devconf_setall(in_dev);
 				neigh_parms_data_state_setall(in_dev->arp_parms);
-				inet_insert_अगरa(अगरa);
-			पूर्ण
-		पूर्ण
+				inet_insert_ifa(ifa);
+			}
+		}
 		ip_mc_up(in_dev);
 		fallthrough;
-	हाल NETDEV_CHANGEADDR:
-		अगर (!IN_DEV_ARP_NOTIFY(in_dev))
-			अवरोध;
+	case NETDEV_CHANGEADDR:
+		if (!IN_DEV_ARP_NOTIFY(in_dev))
+			break;
 		fallthrough;
-	हाल NETDEV_NOTIFY_PEERS:
-		/* Send gratuitous ARP to notअगरy of link change */
+	case NETDEV_NOTIFY_PEERS:
+		/* Send gratuitous ARP to notify of link change */
 		inetdev_send_gratuitous_arp(dev, in_dev);
-		अवरोध;
-	हाल NETDEV_DOWN:
-		ip_mc_करोwn(in_dev);
-		अवरोध;
-	हाल NETDEV_PRE_TYPE_CHANGE:
+		break;
+	case NETDEV_DOWN:
+		ip_mc_down(in_dev);
+		break;
+	case NETDEV_PRE_TYPE_CHANGE:
 		ip_mc_unmap(in_dev);
-		अवरोध;
-	हाल NETDEV_POST_TYPE_CHANGE:
+		break;
+	case NETDEV_POST_TYPE_CHANGE:
 		ip_mc_remap(in_dev);
-		अवरोध;
-	हाल NETDEV_CHANGEMTU:
-		अगर (inetdev_valid_mtu(dev->mtu))
-			अवरोध;
+		break;
+	case NETDEV_CHANGEMTU:
+		if (inetdev_valid_mtu(dev->mtu))
+			break;
 		/* disable IP when MTU is not enough */
 		fallthrough;
-	हाल NETDEV_UNREGISTER:
+	case NETDEV_UNREGISTER:
 		inetdev_destroy(in_dev);
-		अवरोध;
-	हाल NETDEV_CHANGENAME:
-		/* Do not notअगरy about label change, this event is
-		 * not पूर्णांकeresting to applications using netlink.
+		break;
+	case NETDEV_CHANGENAME:
+		/* Do not notify about label change, this event is
+		 * not interesting to applications using netlink.
 		 */
 		inetdev_changename(dev, in_dev);
 
-		devinet_sysctl_unरेजिस्टर(in_dev);
-		devinet_sysctl_रेजिस्टर(in_dev);
-		अवरोध;
-	पूर्ण
+		devinet_sysctl_unregister(in_dev);
+		devinet_sysctl_register(in_dev);
+		break;
+	}
 out:
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block ip_netdev_notअगरier = अणु
-	.notअगरier_call = inetdev_event,
-पूर्ण;
+static struct notifier_block ip_netdev_notifier = {
+	.notifier_call = inetdev_event,
+};
 
-अटल माप_प्रकार inet_nlmsg_size(व्योम)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा अगरaddrmsg))
+static size_t inet_nlmsg_size(void)
+{
+	return NLMSG_ALIGN(sizeof(struct ifaddrmsg))
 	       + nla_total_size(4) /* IFA_ADDRESS */
 	       + nla_total_size(4) /* IFA_LOCAL */
 	       + nla_total_size(4) /* IFA_BROADCAST */
 	       + nla_total_size(IFNAMSIZ) /* IFA_LABEL */
 	       + nla_total_size(4)  /* IFA_FLAGS */
 	       + nla_total_size(4)  /* IFA_RT_PRIORITY */
-	       + nla_total_size(माप(काष्ठा अगरa_cacheinfo)); /* IFA_CACHEINFO */
-पूर्ण
+	       + nla_total_size(sizeof(struct ifa_cacheinfo)); /* IFA_CACHEINFO */
+}
 
-अटल अंतरभूत u32 cstamp_delta(अचिन्हित दीर्घ cstamp)
-अणु
-	वापस (cstamp - INITIAL_JIFFIES) * 100UL / HZ;
-पूर्ण
+static inline u32 cstamp_delta(unsigned long cstamp)
+{
+	return (cstamp - INITIAL_JIFFIES) * 100UL / HZ;
+}
 
-अटल पूर्णांक put_cacheinfo(काष्ठा sk_buff *skb, अचिन्हित दीर्घ cstamp,
-			 अचिन्हित दीर्घ tstamp, u32 preferred, u32 valid)
-अणु
-	काष्ठा अगरa_cacheinfo ci;
+static int put_cacheinfo(struct sk_buff *skb, unsigned long cstamp,
+			 unsigned long tstamp, u32 preferred, u32 valid)
+{
+	struct ifa_cacheinfo ci;
 
 	ci.cstamp = cstamp_delta(cstamp);
 	ci.tstamp = cstamp_delta(tstamp);
-	ci.अगरa_prefered = preferred;
-	ci.अगरa_valid = valid;
+	ci.ifa_prefered = preferred;
+	ci.ifa_valid = valid;
 
-	वापस nla_put(skb, IFA_CACHEINFO, माप(ci), &ci);
-पूर्ण
+	return nla_put(skb, IFA_CACHEINFO, sizeof(ci), &ci);
+}
 
-अटल पूर्णांक inet_fill_अगरaddr(काष्ठा sk_buff *skb, काष्ठा in_अगरaddr *अगरa,
-			    काष्ठा inet_fill_args *args)
-अणु
-	काष्ठा अगरaddrmsg *अगरm;
-	काष्ठा nlmsghdr  *nlh;
+static int inet_fill_ifaddr(struct sk_buff *skb, struct in_ifaddr *ifa,
+			    struct inet_fill_args *args)
+{
+	struct ifaddrmsg *ifm;
+	struct nlmsghdr  *nlh;
 	u32 preferred, valid;
 
-	nlh = nlmsg_put(skb, args->portid, args->seq, args->event, माप(*अगरm),
+	nlh = nlmsg_put(skb, args->portid, args->seq, args->event, sizeof(*ifm),
 			args->flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	if (!nlh)
+		return -EMSGSIZE;
 
-	अगरm = nlmsg_data(nlh);
-	अगरm->अगरa_family = AF_INET;
-	अगरm->अगरa_prefixlen = अगरa->अगरa_prefixlen;
-	अगरm->अगरa_flags = अगरa->अगरa_flags;
-	अगरm->अगरa_scope = अगरa->अगरa_scope;
-	अगरm->अगरa_index = अगरa->अगरa_dev->dev->अगरindex;
+	ifm = nlmsg_data(nlh);
+	ifm->ifa_family = AF_INET;
+	ifm->ifa_prefixlen = ifa->ifa_prefixlen;
+	ifm->ifa_flags = ifa->ifa_flags;
+	ifm->ifa_scope = ifa->ifa_scope;
+	ifm->ifa_index = ifa->ifa_dev->dev->ifindex;
 
-	अगर (args->netnsid >= 0 &&
+	if (args->netnsid >= 0 &&
 	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (!(अगरm->अगरa_flags & IFA_F_PERMANENT)) अणु
-		preferred = अगरa->अगरa_preferred_lft;
-		valid = अगरa->अगरa_valid_lft;
-		अगर (preferred != अनन्त_LIFE_TIME) अणु
-			दीर्घ tval = (jअगरfies - अगरa->अगरa_tstamp) / HZ;
+	if (!(ifm->ifa_flags & IFA_F_PERMANENT)) {
+		preferred = ifa->ifa_preferred_lft;
+		valid = ifa->ifa_valid_lft;
+		if (preferred != INFINITY_LIFE_TIME) {
+			long tval = (jiffies - ifa->ifa_tstamp) / HZ;
 
-			अगर (preferred > tval)
+			if (preferred > tval)
 				preferred -= tval;
-			अन्यथा
+			else
 				preferred = 0;
-			अगर (valid != अनन्त_LIFE_TIME) अणु
-				अगर (valid > tval)
+			if (valid != INFINITY_LIFE_TIME) {
+				if (valid > tval)
 					valid -= tval;
-				अन्यथा
+				else
 					valid = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		preferred = अनन्त_LIFE_TIME;
-		valid = अनन्त_LIFE_TIME;
-	पूर्ण
-	अगर ((अगरa->अगरa_address &&
-	     nla_put_in_addr(skb, IFA_ADDRESS, अगरa->अगरa_address)) ||
-	    (अगरa->अगरa_local &&
-	     nla_put_in_addr(skb, IFA_LOCAL, अगरa->अगरa_local)) ||
-	    (अगरa->अगरa_broadcast &&
-	     nla_put_in_addr(skb, IFA_BROADCAST, अगरa->अगरa_broadcast)) ||
-	    (अगरa->अगरa_label[0] &&
-	     nla_put_string(skb, IFA_LABEL, अगरa->अगरa_label)) ||
-	    nla_put_u32(skb, IFA_FLAGS, अगरa->अगरa_flags) ||
-	    (अगरa->अगरa_rt_priority &&
-	     nla_put_u32(skb, IFA_RT_PRIORITY, अगरa->अगरa_rt_priority)) ||
-	    put_cacheinfo(skb, अगरa->अगरa_cstamp, अगरa->अगरa_tstamp,
+			}
+		}
+	} else {
+		preferred = INFINITY_LIFE_TIME;
+		valid = INFINITY_LIFE_TIME;
+	}
+	if ((ifa->ifa_address &&
+	     nla_put_in_addr(skb, IFA_ADDRESS, ifa->ifa_address)) ||
+	    (ifa->ifa_local &&
+	     nla_put_in_addr(skb, IFA_LOCAL, ifa->ifa_local)) ||
+	    (ifa->ifa_broadcast &&
+	     nla_put_in_addr(skb, IFA_BROADCAST, ifa->ifa_broadcast)) ||
+	    (ifa->ifa_label[0] &&
+	     nla_put_string(skb, IFA_LABEL, ifa->ifa_label)) ||
+	    nla_put_u32(skb, IFA_FLAGS, ifa->ifa_flags) ||
+	    (ifa->ifa_rt_priority &&
+	     nla_put_u32(skb, IFA_RT_PRIORITY, ifa->ifa_rt_priority)) ||
+	    put_cacheinfo(skb, ifa->ifa_cstamp, ifa->ifa_tstamp,
 			  preferred, valid))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक inet_valid_dump_अगरaddr_req(स्थिर काष्ठा nlmsghdr *nlh,
-				      काष्ठा inet_fill_args *fillargs,
-				      काष्ठा net **tgt_net, काष्ठा sock *sk,
-				      काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा netlink_ext_ack *extack = cb->extack;
-	काष्ठा nlattr *tb[IFA_MAX+1];
-	काष्ठा अगरaddrmsg *अगरm;
-	पूर्णांक err, i;
+static int inet_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
+				      struct inet_fill_args *fillargs,
+				      struct net **tgt_net, struct sock *sk,
+				      struct netlink_callback *cb)
+{
+	struct netlink_ext_ack *extack = cb->extack;
+	struct nlattr *tb[IFA_MAX+1];
+	struct ifaddrmsg *ifm;
+	int err, i;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for address dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगरm = nlmsg_data(nlh);
-	अगर (अगरm->अगरa_prefixlen || अगरm->अगरa_flags || अगरm->अगरa_scope) अणु
+	ifm = nlmsg_data(nlh);
+	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid values in header for address dump request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	fillargs->अगरindex = अगरm->अगरa_index;
-	अगर (fillargs->अगरindex) अणु
+	fillargs->ifindex = ifm->ifa_index;
+	if (fillargs->ifindex) {
 		cb->answer_flags |= NLM_F_DUMP_FILTERED;
 		fillargs->flags |= NLM_F_DUMP_FILTERED;
-	पूर्ण
+	}
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(*अगरm), tb, IFA_MAX,
-					    अगरa_ipv4_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb, IFA_MAX,
+					    ifa_ipv4_policy, extack);
+	if (err < 0)
+		return err;
 
-	क्रम (i = 0; i <= IFA_MAX; ++i) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= IFA_MAX; ++i) {
+		if (!tb[i])
+			continue;
 
-		अगर (i == IFA_TARGET_NETNSID) अणु
-			काष्ठा net *net;
+		if (i == IFA_TARGET_NETNSID) {
+			struct net *net;
 
 			fillargs->netnsid = nla_get_s32(tb[i]);
 
 			net = rtnl_get_net_ns_capable(sk, fillargs->netnsid);
-			अगर (IS_ERR(net)) अणु
+			if (IS_ERR(net)) {
 				fillargs->netnsid = -1;
 				NL_SET_ERR_MSG(extack, "ipv4: Invalid target network namespace id");
-				वापस PTR_ERR(net);
-			पूर्ण
+				return PTR_ERR(net);
+			}
 			*tgt_net = net;
-		पूर्ण अन्यथा अणु
+		} else {
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक in_dev_dump_addr(काष्ठा in_device *in_dev, काष्ठा sk_buff *skb,
-			    काष्ठा netlink_callback *cb, पूर्णांक s_ip_idx,
-			    काष्ठा inet_fill_args *fillargs)
-अणु
-	काष्ठा in_अगरaddr *अगरa;
-	पूर्णांक ip_idx = 0;
-	पूर्णांक err;
+static int in_dev_dump_addr(struct in_device *in_dev, struct sk_buff *skb,
+			    struct netlink_callback *cb, int s_ip_idx,
+			    struct inet_fill_args *fillargs)
+{
+	struct in_ifaddr *ifa;
+	int ip_idx = 0;
+	int err;
 
-	in_dev_क्रम_each_अगरa_rtnl(अगरa, in_dev) अणु
-		अगर (ip_idx < s_ip_idx) अणु
+	in_dev_for_each_ifa_rtnl(ifa, in_dev) {
+		if (ip_idx < s_ip_idx) {
 			ip_idx++;
-			जारी;
-		पूर्ण
-		err = inet_fill_अगरaddr(skb, अगरa, fillargs);
-		अगर (err < 0)
-			जाओ करोne;
+			continue;
+		}
+		err = inet_fill_ifaddr(skb, ifa, fillargs);
+		if (err < 0)
+			goto done;
 
 		nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 		ip_idx++;
-	पूर्ण
+	}
 	err = 0;
 
-करोne:
+done:
 	cb->args[2] = ip_idx;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet_dump_अगरaddr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा inet_fill_args fillargs = अणु
+static int inet_dump_ifaddr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct inet_fill_args fillargs = {
 		.portid = NETLINK_CB(cb->skb).portid,
 		.seq = nlh->nlmsg_seq,
 		.event = RTM_NEWADDR,
 		.flags = NLM_F_MULTI,
 		.netnsid = -1,
-	पूर्ण;
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा net *tgt_net = net;
-	पूर्णांक h, s_h;
-	पूर्णांक idx, s_idx;
-	पूर्णांक s_ip_idx;
-	काष्ठा net_device *dev;
-	काष्ठा in_device *in_dev;
-	काष्ठा hlist_head *head;
-	पूर्णांक err = 0;
+	};
+	struct net *net = sock_net(skb->sk);
+	struct net *tgt_net = net;
+	int h, s_h;
+	int idx, s_idx;
+	int s_ip_idx;
+	struct net_device *dev;
+	struct in_device *in_dev;
+	struct hlist_head *head;
+	int err = 0;
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
 	s_ip_idx = cb->args[2];
 
-	अगर (cb->strict_check) अणु
-		err = inet_valid_dump_अगरaddr_req(nlh, &fillargs, &tgt_net,
+	if (cb->strict_check) {
+		err = inet_valid_dump_ifaddr_req(nlh, &fillargs, &tgt_net,
 						 skb->sk, cb);
-		अगर (err < 0)
-			जाओ put_tgt_net;
+		if (err < 0)
+			goto put_tgt_net;
 
 		err = 0;
-		अगर (fillargs.अगरindex) अणु
-			dev = __dev_get_by_index(tgt_net, fillargs.अगरindex);
-			अगर (!dev) अणु
+		if (fillargs.ifindex) {
+			dev = __dev_get_by_index(tgt_net, fillargs.ifindex);
+			if (!dev) {
 				err = -ENODEV;
-				जाओ put_tgt_net;
-			पूर्ण
+				goto put_tgt_net;
+			}
 
 			in_dev = __in_dev_get_rtnl(dev);
-			अगर (in_dev) अणु
+			if (in_dev) {
 				err = in_dev_dump_addr(in_dev, skb, cb, s_ip_idx,
 						       &fillargs);
-			पूर्ण
-			जाओ put_tgt_net;
-		पूर्ण
-	पूर्ण
+			}
+			goto put_tgt_net;
+		}
+	}
 
-	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
+	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
 		idx = 0;
 		head = &tgt_net->dev_index_head[h];
-		rcu_पढ़ो_lock();
-		cb->seq = atomic_पढ़ो(&tgt_net->ipv4.dev_addr_genid) ^
+		rcu_read_lock();
+		cb->seq = atomic_read(&tgt_net->ipv4.dev_addr_genid) ^
 			  tgt_net->dev_base_seq;
-		hlist_क्रम_each_entry_rcu(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
-			अगर (h > s_h || idx > s_idx)
+		hlist_for_each_entry_rcu(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
+			if (h > s_h || idx > s_idx)
 				s_ip_idx = 0;
 			in_dev = __in_dev_get_rcu(dev);
-			अगर (!in_dev)
-				जाओ cont;
+			if (!in_dev)
+				goto cont;
 
 			err = in_dev_dump_addr(in_dev, skb, cb, s_ip_idx,
 					       &fillargs);
-			अगर (err < 0) अणु
-				rcu_पढ़ो_unlock();
-				जाओ करोne;
-			पूर्ण
+			if (err < 0) {
+				rcu_read_unlock();
+				goto done;
+			}
 cont:
 			idx++;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		}
+		rcu_read_unlock();
+	}
 
-करोne:
+done:
 	cb->args[0] = h;
 	cb->args[1] = idx;
 put_tgt_net:
-	अगर (fillargs.netnsid >= 0)
+	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 
-	वापस skb->len ? : err;
-पूर्ण
+	return skb->len ? : err;
+}
 
-अटल व्योम rपंचांगsg_अगरa(पूर्णांक event, काष्ठा in_अगरaddr *अगरa, काष्ठा nlmsghdr *nlh,
+static void rtmsg_ifa(int event, struct in_ifaddr *ifa, struct nlmsghdr *nlh,
 		      u32 portid)
-अणु
-	काष्ठा inet_fill_args fillargs = अणु
+{
+	struct inet_fill_args fillargs = {
 		.portid = portid,
 		.seq = nlh ? nlh->nlmsg_seq : 0,
 		.event = event,
 		.flags = 0,
 		.netnsid = -1,
-	पूर्ण;
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
-	काष्ठा net *net;
+	};
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
+	struct net *net;
 
-	net = dev_net(अगरa->अगरa_dev->dev);
+	net = dev_net(ifa->ifa_dev->dev);
 	skb = nlmsg_new(inet_nlmsg_size(), GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
-	err = inet_fill_अगरaddr(skb, अगरa, &fillargs);
-	अगर (err < 0) अणु
+	err = inet_fill_ifaddr(skb, ifa, &fillargs);
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, portid, RTNLGRP_IPV4_IFADDR, nlh, GFP_KERNEL);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, portid, RTNLGRP_IPV4_IFADDR, nlh, GFP_KERNEL);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV4_IFADDR, err);
-पूर्ण
+}
 
-अटल माप_प्रकार inet_get_link_af_size(स्थिर काष्ठा net_device *dev,
+static size_t inet_get_link_af_size(const struct net_device *dev,
 				    u32 ext_filter_mask)
-अणु
-	काष्ठा in_device *in_dev = rcu_dereference_rtnl(dev->ip_ptr);
+{
+	struct in_device *in_dev = rcu_dereference_rtnl(dev->ip_ptr);
 
-	अगर (!in_dev)
-		वापस 0;
+	if (!in_dev)
+		return 0;
 
-	वापस nla_total_size(IPV4_DEVCONF_MAX * 4); /* IFLA_INET_CONF */
-पूर्ण
+	return nla_total_size(IPV4_DEVCONF_MAX * 4); /* IFLA_INET_CONF */
+}
 
-अटल पूर्णांक inet_fill_link_af(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev,
+static int inet_fill_link_af(struct sk_buff *skb, const struct net_device *dev,
 			     u32 ext_filter_mask)
-अणु
-	काष्ठा in_device *in_dev = rcu_dereference_rtnl(dev->ip_ptr);
-	काष्ठा nlattr *nla;
-	पूर्णांक i;
+{
+	struct in_device *in_dev = rcu_dereference_rtnl(dev->ip_ptr);
+	struct nlattr *nla;
+	int i;
 
-	अगर (!in_dev)
-		वापस -ENODATA;
+	if (!in_dev)
+		return -ENODATA;
 
 	nla = nla_reserve(skb, IFLA_INET_CONF, IPV4_DEVCONF_MAX * 4);
-	अगर (!nla)
-		वापस -EMSGSIZE;
+	if (!nla)
+		return -EMSGSIZE;
 
-	क्रम (i = 0; i < IPV4_DEVCONF_MAX; i++)
+	for (i = 0; i < IPV4_DEVCONF_MAX; i++)
 		((u32 *) nla_data(nla))[i] = in_dev->cnf.data[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy inet_af_policy[IFLA_INET_MAX+1] = अणु
-	[IFLA_INET_CONF]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy inet_af_policy[IFLA_INET_MAX+1] = {
+	[IFLA_INET_CONF]	= { .type = NLA_NESTED },
+};
 
-अटल पूर्णांक inet_validate_link_af(स्थिर काष्ठा net_device *dev,
-				 स्थिर काष्ठा nlattr *nla)
-अणु
-	काष्ठा nlattr *a, *tb[IFLA_INET_MAX+1];
-	पूर्णांक err, rem;
+static int inet_validate_link_af(const struct net_device *dev,
+				 const struct nlattr *nla)
+{
+	struct nlattr *a, *tb[IFLA_INET_MAX+1];
+	int err, rem;
 
-	अगर (dev && !__in_dev_get_rcu(dev))
-		वापस -EAFNOSUPPORT;
+	if (dev && !__in_dev_get_rcu(dev))
+		return -EAFNOSUPPORT;
 
 	err = nla_parse_nested_deprecated(tb, IFLA_INET_MAX, nla,
-					  inet_af_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  inet_af_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (tb[IFLA_INET_CONF]) अणु
-		nla_क्रम_each_nested(a, tb[IFLA_INET_CONF], rem) अणु
-			पूर्णांक cfgid = nla_type(a);
+	if (tb[IFLA_INET_CONF]) {
+		nla_for_each_nested(a, tb[IFLA_INET_CONF], rem) {
+			int cfgid = nla_type(a);
 
-			अगर (nla_len(a) < 4)
-				वापस -EINVAL;
+			if (nla_len(a) < 4)
+				return -EINVAL;
 
-			अगर (cfgid <= 0 || cfgid > IPV4_DEVCONF_MAX)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			if (cfgid <= 0 || cfgid > IPV4_DEVCONF_MAX)
+				return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_set_link_af(काष्ठा net_device *dev, स्थिर काष्ठा nlattr *nla,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा in_device *in_dev = __in_dev_get_rcu(dev);
-	काष्ठा nlattr *a, *tb[IFLA_INET_MAX+1];
-	पूर्णांक rem;
+static int inet_set_link_af(struct net_device *dev, const struct nlattr *nla,
+			    struct netlink_ext_ack *extack)
+{
+	struct in_device *in_dev = __in_dev_get_rcu(dev);
+	struct nlattr *a, *tb[IFLA_INET_MAX+1];
+	int rem;
 
-	अगर (!in_dev)
-		वापस -EAFNOSUPPORT;
+	if (!in_dev)
+		return -EAFNOSUPPORT;
 
-	अगर (nla_parse_nested_deprecated(tb, IFLA_INET_MAX, nla, शून्य, शून्य) < 0)
-		वापस -EINVAL;
+	if (nla_parse_nested_deprecated(tb, IFLA_INET_MAX, nla, NULL, NULL) < 0)
+		return -EINVAL;
 
-	अगर (tb[IFLA_INET_CONF]) अणु
-		nla_क्रम_each_nested(a, tb[IFLA_INET_CONF], rem)
+	if (tb[IFLA_INET_CONF]) {
+		nla_for_each_nested(a, tb[IFLA_INET_CONF], rem)
 			ipv4_devconf_set(in_dev, nla_type(a), nla_get_u32(a));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_netconf_msgsize_devconf(पूर्णांक type)
-अणु
-	पूर्णांक size = NLMSG_ALIGN(माप(काष्ठा netconfmsg))
+static int inet_netconf_msgsize_devconf(int type)
+{
+	int size = NLMSG_ALIGN(sizeof(struct netconfmsg))
 		   + nla_total_size(4);	/* NETCONFA_IFINDEX */
 	bool all = false;
 
-	अगर (type == NETCONFA_ALL)
+	if (type == NETCONFA_ALL)
 		all = true;
 
-	अगर (all || type == NETCONFA_FORWARDING)
+	if (all || type == NETCONFA_FORWARDING)
 		size += nla_total_size(4);
-	अगर (all || type == NETCONFA_RP_FILTER)
+	if (all || type == NETCONFA_RP_FILTER)
 		size += nla_total_size(4);
-	अगर (all || type == NETCONFA_MC_FORWARDING)
+	if (all || type == NETCONFA_MC_FORWARDING)
 		size += nla_total_size(4);
-	अगर (all || type == NETCONFA_BC_FORWARDING)
+	if (all || type == NETCONFA_BC_FORWARDING)
 		size += nla_total_size(4);
-	अगर (all || type == NETCONFA_PROXY_NEIGH)
+	if (all || type == NETCONFA_PROXY_NEIGH)
 		size += nla_total_size(4);
-	अगर (all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN)
+	if (all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN)
 		size += nla_total_size(4);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक inet_netconf_fill_devconf(काष्ठा sk_buff *skb, पूर्णांक अगरindex,
-				     काष्ठा ipv4_devconf *devconf, u32 portid,
-				     u32 seq, पूर्णांक event, अचिन्हित पूर्णांक flags,
-				     पूर्णांक type)
-अणु
-	काष्ठा nlmsghdr  *nlh;
-	काष्ठा netconfmsg *ncm;
+static int inet_netconf_fill_devconf(struct sk_buff *skb, int ifindex,
+				     struct ipv4_devconf *devconf, u32 portid,
+				     u32 seq, int event, unsigned int flags,
+				     int type)
+{
+	struct nlmsghdr  *nlh;
+	struct netconfmsg *ncm;
 	bool all = false;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(काष्ठा netconfmsg),
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(struct netconfmsg),
 			flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	if (!nlh)
+		return -EMSGSIZE;
 
-	अगर (type == NETCONFA_ALL)
+	if (type == NETCONFA_ALL)
 		all = true;
 
 	ncm = nlmsg_data(nlh);
 	ncm->ncm_family = AF_INET;
 
-	अगर (nla_put_s32(skb, NETCONFA_IFINDEX, अगरindex) < 0)
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, NETCONFA_IFINDEX, ifindex) < 0)
+		goto nla_put_failure;
 
-	अगर (!devconf)
-		जाओ out;
+	if (!devconf)
+		goto out;
 
-	अगर ((all || type == NETCONFA_FORWARDING) &&
+	if ((all || type == NETCONFA_FORWARDING) &&
 	    nla_put_s32(skb, NETCONFA_FORWARDING,
 			IPV4_DEVCONF(*devconf, FORWARDING)) < 0)
-		जाओ nla_put_failure;
-	अगर ((all || type == NETCONFA_RP_FILTER) &&
+		goto nla_put_failure;
+	if ((all || type == NETCONFA_RP_FILTER) &&
 	    nla_put_s32(skb, NETCONFA_RP_FILTER,
 			IPV4_DEVCONF(*devconf, RP_FILTER)) < 0)
-		जाओ nla_put_failure;
-	अगर ((all || type == NETCONFA_MC_FORWARDING) &&
+		goto nla_put_failure;
+	if ((all || type == NETCONFA_MC_FORWARDING) &&
 	    nla_put_s32(skb, NETCONFA_MC_FORWARDING,
 			IPV4_DEVCONF(*devconf, MC_FORWARDING)) < 0)
-		जाओ nla_put_failure;
-	अगर ((all || type == NETCONFA_BC_FORWARDING) &&
+		goto nla_put_failure;
+	if ((all || type == NETCONFA_BC_FORWARDING) &&
 	    nla_put_s32(skb, NETCONFA_BC_FORWARDING,
 			IPV4_DEVCONF(*devconf, BC_FORWARDING)) < 0)
-		जाओ nla_put_failure;
-	अगर ((all || type == NETCONFA_PROXY_NEIGH) &&
+		goto nla_put_failure;
+	if ((all || type == NETCONFA_PROXY_NEIGH) &&
 	    nla_put_s32(skb, NETCONFA_PROXY_NEIGH,
 			IPV4_DEVCONF(*devconf, PROXY_ARP)) < 0)
-		जाओ nla_put_failure;
-	अगर ((all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN) &&
+		goto nla_put_failure;
+	if ((all || type == NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN) &&
 	    nla_put_s32(skb, NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
 			IPV4_DEVCONF(*devconf, IGNORE_ROUTES_WITH_LINKDOWN)) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 out:
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-व्योम inet_netconf_notअगरy_devconf(काष्ठा net *net, पूर्णांक event, पूर्णांक type,
-				 पूर्णांक अगरindex, काष्ठा ipv4_devconf *devconf)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक err = -ENOBUFS;
+void inet_netconf_notify_devconf(struct net *net, int event, int type,
+				 int ifindex, struct ipv4_devconf *devconf)
+{
+	struct sk_buff *skb;
+	int err = -ENOBUFS;
 
 	skb = nlmsg_new(inet_netconf_msgsize_devconf(type), GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
-	err = inet_netconf_fill_devconf(skb, अगरindex, devconf, 0, 0,
+	err = inet_netconf_fill_devconf(skb, ifindex, devconf, 0, 0,
 					event, 0, type);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet_netconf_msgsize_devconf() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV4_NETCONF, शून्य, GFP_KERNEL);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, net, 0, RTNLGRP_IPV4_NETCONF, NULL, GFP_KERNEL);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV4_NETCONF, err);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy devconf_ipv4_policy[NETCONFA_MAX+1] = अणु
-	[NETCONFA_IFINDEX]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_FORWARDING]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_RP_FILTER]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_PROXY_NEIGH]	= अणु .len = माप(पूर्णांक) पूर्ण,
-	[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]	= अणु .len = माप(पूर्णांक) पूर्ण,
-पूर्ण;
+static const struct nla_policy devconf_ipv4_policy[NETCONFA_MAX+1] = {
+	[NETCONFA_IFINDEX]	= { .len = sizeof(int) },
+	[NETCONFA_FORWARDING]	= { .len = sizeof(int) },
+	[NETCONFA_RP_FILTER]	= { .len = sizeof(int) },
+	[NETCONFA_PROXY_NEIGH]	= { .len = sizeof(int) },
+	[NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN]	= { .len = sizeof(int) },
+};
 
-अटल पूर्णांक inet_netconf_valid_get_req(काष्ठा sk_buff *skb,
-				      स्थिर काष्ठा nlmsghdr *nlh,
-				      काष्ठा nlattr **tb,
-				      काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक i, err;
+static int inet_netconf_valid_get_req(struct sk_buff *skb,
+				      const struct nlmsghdr *nlh,
+				      struct nlattr **tb,
+				      struct netlink_ext_ack *extack)
+{
+	int i, err;
 
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(काष्ठा netconfmsg))) अणु
+	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(struct netconfmsg))) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for netconf get request");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!netlink_strict_get_check(skb))
-		वापस nlmsg_parse_deprecated(nlh, माप(काष्ठा netconfmsg),
+	if (!netlink_strict_get_check(skb))
+		return nlmsg_parse_deprecated(nlh, sizeof(struct netconfmsg),
 					      tb, NETCONFA_MAX,
 					      devconf_ipv4_policy, extack);
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा netconfmsg),
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct netconfmsg),
 					    tb, NETCONFA_MAX,
 					    devconf_ipv4_policy, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i <= NETCONFA_MAX; i++) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= NETCONFA_MAX; i++) {
+		if (!tb[i])
+			continue;
 
-		चयन (i) अणु
-		हाल NETCONFA_IFINDEX:
-			अवरोध;
-		शेष:
+		switch (i) {
+		case NETCONFA_IFINDEX:
+			break;
+		default:
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in netconf get request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक inet_netconf_get_devconf(काष्ठा sk_buff *in_skb,
-				    काष्ठा nlmsghdr *nlh,
-				    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा nlattr *tb[NETCONFA_MAX+1];
-	काष्ठा sk_buff *skb;
-	काष्ठा ipv4_devconf *devconf;
-	काष्ठा in_device *in_dev;
-	काष्ठा net_device *dev;
-	पूर्णांक अगरindex;
-	पूर्णांक err;
+static int inet_netconf_get_devconf(struct sk_buff *in_skb,
+				    struct nlmsghdr *nlh,
+				    struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct nlattr *tb[NETCONFA_MAX+1];
+	struct sk_buff *skb;
+	struct ipv4_devconf *devconf;
+	struct in_device *in_dev;
+	struct net_device *dev;
+	int ifindex;
+	int err;
 
 	err = inet_netconf_valid_get_req(in_skb, nlh, tb, extack);
-	अगर (err)
-		जाओ errout;
+	if (err)
+		goto errout;
 
 	err = -EINVAL;
-	अगर (!tb[NETCONFA_IFINDEX])
-		जाओ errout;
+	if (!tb[NETCONFA_IFINDEX])
+		goto errout;
 
-	अगरindex = nla_get_s32(tb[NETCONFA_IFINDEX]);
-	चयन (अगरindex) अणु
-	हाल NETCONFA_IFINDEX_ALL:
+	ifindex = nla_get_s32(tb[NETCONFA_IFINDEX]);
+	switch (ifindex) {
+	case NETCONFA_IFINDEX_ALL:
 		devconf = net->ipv4.devconf_all;
-		अवरोध;
-	हाल NETCONFA_IFINDEX_DEFAULT:
+		break;
+	case NETCONFA_IFINDEX_DEFAULT:
 		devconf = net->ipv4.devconf_dflt;
-		अवरोध;
-	शेष:
-		dev = __dev_get_by_index(net, अगरindex);
-		अगर (!dev)
-			जाओ errout;
+		break;
+	default:
+		dev = __dev_get_by_index(net, ifindex);
+		if (!dev)
+			goto errout;
 		in_dev = __in_dev_get_rtnl(dev);
-		अगर (!in_dev)
-			जाओ errout;
+		if (!in_dev)
+			goto errout;
 		devconf = &in_dev->cnf;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	err = -ENOBUFS;
 	skb = nlmsg_new(inet_netconf_msgsize_devconf(NETCONFA_ALL), GFP_KERNEL);
-	अगर (!skb)
-		जाओ errout;
+	if (!skb)
+		goto errout;
 
-	err = inet_netconf_fill_devconf(skb, अगरindex, devconf,
+	err = inet_netconf_fill_devconf(skb, ifindex, devconf,
 					NETLINK_CB(in_skb).portid,
 					nlh->nlmsg_seq, RTM_NEWNETCONF, 0,
 					NETCONFA_ALL);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet_netconf_msgsize_devconf() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
+		kfree_skb(skb);
+		goto errout;
+	}
 	err = rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 errout:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inet_netconf_dump_devconf(काष्ठा sk_buff *skb,
-				     काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
-	काष्ठा net *net = sock_net(skb->sk);
-	पूर्णांक h, s_h;
-	पूर्णांक idx, s_idx;
-	काष्ठा net_device *dev;
-	काष्ठा in_device *in_dev;
-	काष्ठा hlist_head *head;
+static int inet_netconf_dump_devconf(struct sk_buff *skb,
+				     struct netlink_callback *cb)
+{
+	const struct nlmsghdr *nlh = cb->nlh;
+	struct net *net = sock_net(skb->sk);
+	int h, s_h;
+	int idx, s_idx;
+	struct net_device *dev;
+	struct in_device *in_dev;
+	struct hlist_head *head;
 
-	अगर (cb->strict_check) अणु
-		काष्ठा netlink_ext_ack *extack = cb->extack;
-		काष्ठा netconfmsg *ncm;
+	if (cb->strict_check) {
+		struct netlink_ext_ack *extack = cb->extack;
+		struct netconfmsg *ncm;
 
-		अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ncm))) अणु
+		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ncm))) {
 			NL_SET_ERR_MSG(extack, "ipv4: Invalid header for netconf dump request");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (nlmsg_attrlen(nlh, माप(*ncm))) अणु
+		if (nlmsg_attrlen(nlh, sizeof(*ncm))) {
 			NL_SET_ERR_MSG(extack, "ipv4: Invalid data after header in netconf dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
 
-	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
+	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
 		idx = 0;
 		head = &net->dev_index_head[h];
-		rcu_पढ़ो_lock();
-		cb->seq = atomic_पढ़ो(&net->ipv4.dev_addr_genid) ^
+		rcu_read_lock();
+		cb->seq = atomic_read(&net->ipv4.dev_addr_genid) ^
 			  net->dev_base_seq;
-		hlist_क्रम_each_entry_rcu(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
+		hlist_for_each_entry_rcu(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
 			in_dev = __in_dev_get_rcu(dev);
-			अगर (!in_dev)
-				जाओ cont;
+			if (!in_dev)
+				goto cont;
 
-			अगर (inet_netconf_fill_devconf(skb, dev->अगरindex,
+			if (inet_netconf_fill_devconf(skb, dev->ifindex,
 						      &in_dev->cnf,
 						      NETLINK_CB(cb->skb).portid,
 						      nlh->nlmsg_seq,
 						      RTM_NEWNETCONF,
 						      NLM_F_MULTI,
-						      NETCONFA_ALL) < 0) अणु
-				rcu_पढ़ो_unlock();
-				जाओ करोne;
-			पूर्ण
+						      NETCONFA_ALL) < 0) {
+				rcu_read_unlock();
+				goto done;
+			}
 			nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 cont:
 			idx++;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-	पूर्ण
-	अगर (h == NETDEV_HASHENTRIES) अणु
-		अगर (inet_netconf_fill_devconf(skb, NETCONFA_IFINDEX_ALL,
+		}
+		rcu_read_unlock();
+	}
+	if (h == NETDEV_HASHENTRIES) {
+		if (inet_netconf_fill_devconf(skb, NETCONFA_IFINDEX_ALL,
 					      net->ipv4.devconf_all,
 					      NETLINK_CB(cb->skb).portid,
 					      nlh->nlmsg_seq,
 					      RTM_NEWNETCONF, NLM_F_MULTI,
 					      NETCONFA_ALL) < 0)
-			जाओ करोne;
-		अन्यथा
+			goto done;
+		else
 			h++;
-	पूर्ण
-	अगर (h == NETDEV_HASHENTRIES + 1) अणु
-		अगर (inet_netconf_fill_devconf(skb, NETCONFA_IFINDEX_DEFAULT,
+	}
+	if (h == NETDEV_HASHENTRIES + 1) {
+		if (inet_netconf_fill_devconf(skb, NETCONFA_IFINDEX_DEFAULT,
 					      net->ipv4.devconf_dflt,
 					      NETLINK_CB(cb->skb).portid,
 					      nlh->nlmsg_seq,
 					      RTM_NEWNETCONF, NLM_F_MULTI,
 					      NETCONFA_ALL) < 0)
-			जाओ करोne;
-		अन्यथा
+			goto done;
+		else
 			h++;
-	पूर्ण
-करोne:
+	}
+done:
 	cb->args[0] = h;
 	cb->args[1] = idx;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 
-अटल व्योम devinet_copy_dflt_conf(काष्ठा net *net, पूर्णांक i)
-अणु
-	काष्ठा net_device *dev;
+static void devinet_copy_dflt_conf(struct net *net, int i)
+{
+	struct net_device *dev;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(net, dev) अणु
-		काष्ठा in_device *in_dev;
+	rcu_read_lock();
+	for_each_netdev_rcu(net, dev) {
+		struct in_device *in_dev;
 
 		in_dev = __in_dev_get_rcu(dev);
-		अगर (in_dev && !test_bit(i, in_dev->cnf.state))
+		if (in_dev && !test_bit(i, in_dev->cnf.state))
 			in_dev->cnf.data[i] = net->ipv4.devconf_dflt->data[i];
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /* called with RTNL locked */
-अटल व्योम inet_क्रमward_change(काष्ठा net *net)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक on = IPV4_DEVCONF_ALL(net, FORWARDING);
+static void inet_forward_change(struct net *net)
+{
+	struct net_device *dev;
+	int on = IPV4_DEVCONF_ALL(net, FORWARDING);
 
-	IPV4_DEVCONF_ALL(net, ACCEPT_REसूचीECTS) = !on;
+	IPV4_DEVCONF_ALL(net, ACCEPT_REDIRECTS) = !on;
 	IPV4_DEVCONF_DFLT(net, FORWARDING) = on;
-	inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+	inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 				    NETCONFA_FORWARDING,
 				    NETCONFA_IFINDEX_ALL,
 				    net->ipv4.devconf_all);
-	inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+	inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 				    NETCONFA_FORWARDING,
 				    NETCONFA_IFINDEX_DEFAULT,
 				    net->ipv4.devconf_dflt);
 
-	क्रम_each_netdev(net, dev) अणु
-		काष्ठा in_device *in_dev;
+	for_each_netdev(net, dev) {
+		struct in_device *in_dev;
 
-		अगर (on)
+		if (on)
 			dev_disable_lro(dev);
 
 		in_dev = __in_dev_get_rtnl(dev);
-		अगर (in_dev) अणु
+		if (in_dev) {
 			IN_DEV_CONF_SET(in_dev, FORWARDING, on);
-			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_FORWARDING,
-						    dev->अगरindex, &in_dev->cnf);
-		पूर्ण
-	पूर्ण
-पूर्ण
+						    dev->ifindex, &in_dev->cnf);
+		}
+	}
+}
 
-अटल पूर्णांक devinet_conf_अगरindex(काष्ठा net *net, काष्ठा ipv4_devconf *cnf)
-अणु
-	अगर (cnf == net->ipv4.devconf_dflt)
-		वापस NETCONFA_IFINDEX_DEFAULT;
-	अन्यथा अगर (cnf == net->ipv4.devconf_all)
-		वापस NETCONFA_IFINDEX_ALL;
-	अन्यथा अणु
-		काष्ठा in_device *idev
-			= container_of(cnf, काष्ठा in_device, cnf);
-		वापस idev->dev->अगरindex;
-	पूर्ण
-पूर्ण
+static int devinet_conf_ifindex(struct net *net, struct ipv4_devconf *cnf)
+{
+	if (cnf == net->ipv4.devconf_dflt)
+		return NETCONFA_IFINDEX_DEFAULT;
+	else if (cnf == net->ipv4.devconf_all)
+		return NETCONFA_IFINDEX_ALL;
+	else {
+		struct in_device *idev
+			= container_of(cnf, struct in_device, cnf);
+		return idev->dev->ifindex;
+	}
+}
 
-अटल पूर्णांक devinet_conf_proc(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-			     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक old_value = *(पूर्णांक *)ctl->data;
-	पूर्णांक ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
-	पूर्णांक new_value = *(पूर्णांक *)ctl->data;
+static int devinet_conf_proc(struct ctl_table *ctl, int write,
+			     void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int old_value = *(int *)ctl->data;
+	int ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
+	int new_value = *(int *)ctl->data;
 
-	अगर (ग_लिखो) अणु
-		काष्ठा ipv4_devconf *cnf = ctl->extra1;
-		काष्ठा net *net = ctl->extra2;
-		पूर्णांक i = (पूर्णांक *)ctl->data - cnf->data;
-		पूर्णांक अगरindex;
+	if (write) {
+		struct ipv4_devconf *cnf = ctl->extra1;
+		struct net *net = ctl->extra2;
+		int i = (int *)ctl->data - cnf->data;
+		int ifindex;
 
 		set_bit(i, cnf->state);
 
-		अगर (cnf == net->ipv4.devconf_dflt)
+		if (cnf == net->ipv4.devconf_dflt)
 			devinet_copy_dflt_conf(net, i);
-		अगर (i == IPV4_DEVCONF_ACCEPT_LOCAL - 1 ||
+		if (i == IPV4_DEVCONF_ACCEPT_LOCAL - 1 ||
 		    i == IPV4_DEVCONF_ROUTE_LOCALNET - 1)
-			अगर ((new_value == 0) && (old_value != 0))
+			if ((new_value == 0) && (old_value != 0))
 				rt_cache_flush(net);
 
-		अगर (i == IPV4_DEVCONF_BC_FORWARDING - 1 &&
+		if (i == IPV4_DEVCONF_BC_FORWARDING - 1 &&
 		    new_value != old_value)
 			rt_cache_flush(net);
 
-		अगर (i == IPV4_DEVCONF_RP_FILTER - 1 &&
-		    new_value != old_value) अणु
-			अगरindex = devinet_conf_अगरindex(net, cnf);
-			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		if (i == IPV4_DEVCONF_RP_FILTER - 1 &&
+		    new_value != old_value) {
+			ifindex = devinet_conf_ifindex(net, cnf);
+			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_RP_FILTER,
-						    अगरindex, cnf);
-		पूर्ण
-		अगर (i == IPV4_DEVCONF_PROXY_ARP - 1 &&
-		    new_value != old_value) अणु
-			अगरindex = devinet_conf_अगरindex(net, cnf);
-			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+						    ifindex, cnf);
+		}
+		if (i == IPV4_DEVCONF_PROXY_ARP - 1 &&
+		    new_value != old_value) {
+			ifindex = devinet_conf_ifindex(net, cnf);
+			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_PROXY_NEIGH,
-						    अगरindex, cnf);
-		पूर्ण
-		अगर (i == IPV4_DEVCONF_IGNORE_ROUTES_WITH_LINKDOWN - 1 &&
-		    new_value != old_value) अणु
-			अगरindex = devinet_conf_अगरindex(net, cnf);
-			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+						    ifindex, cnf);
+		}
+		if (i == IPV4_DEVCONF_IGNORE_ROUTES_WITH_LINKDOWN - 1 &&
+		    new_value != old_value) {
+			ifindex = devinet_conf_ifindex(net, cnf);
+			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_IGNORE_ROUTES_WITH_LINKDOWN,
-						    अगरindex, cnf);
-		पूर्ण
-	पूर्ण
+						    ifindex, cnf);
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक devinet_sysctl_क्रमward(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-				  व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
+static int devinet_sysctl_forward(struct ctl_table *ctl, int write,
+				  void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int val = *valp;
 	loff_t pos = *ppos;
-	पूर्णांक ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
+	int ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो && *valp != val) अणु
-		काष्ठा net *net = ctl->extra2;
+	if (write && *valp != val) {
+		struct net *net = ctl->extra2;
 
-		अगर (valp != &IPV4_DEVCONF_DFLT(net, FORWARDING)) अणु
-			अगर (!rtnl_trylock()) अणु
-				/* Restore the original values beक्रमe restarting */
+		if (valp != &IPV4_DEVCONF_DFLT(net, FORWARDING)) {
+			if (!rtnl_trylock()) {
+				/* Restore the original values before restarting */
 				*valp = val;
 				*ppos = pos;
-				वापस restart_syscall();
-			पूर्ण
-			अगर (valp == &IPV4_DEVCONF_ALL(net, FORWARDING)) अणु
-				inet_क्रमward_change(net);
-			पूर्ण अन्यथा अणु
-				काष्ठा ipv4_devconf *cnf = ctl->extra1;
-				काष्ठा in_device *idev =
-					container_of(cnf, काष्ठा in_device, cnf);
-				अगर (*valp)
+				return restart_syscall();
+			}
+			if (valp == &IPV4_DEVCONF_ALL(net, FORWARDING)) {
+				inet_forward_change(net);
+			} else {
+				struct ipv4_devconf *cnf = ctl->extra1;
+				struct in_device *idev =
+					container_of(cnf, struct in_device, cnf);
+				if (*valp)
 					dev_disable_lro(idev->dev);
-				inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+				inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 							    NETCONFA_FORWARDING,
-							    idev->dev->अगरindex,
+							    idev->dev->ifindex,
 							    cnf);
-			पूर्ण
+			}
 			rtnl_unlock();
 			rt_cache_flush(net);
-		पूर्ण अन्यथा
-			inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
+		} else
+			inet_netconf_notify_devconf(net, RTM_NEWNETCONF,
 						    NETCONFA_FORWARDING,
 						    NETCONFA_IFINDEX_DEFAULT,
 						    net->ipv4.devconf_dflt);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ipv4_करोपूर्णांक_and_flush(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
-				व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक *valp = ctl->data;
-	पूर्णांक val = *valp;
-	पूर्णांक ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
-	काष्ठा net *net = ctl->extra2;
+static int ipv4_doint_and_flush(struct ctl_table *ctl, int write,
+				void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int *valp = ctl->data;
+	int val = *valp;
+	int ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
+	struct net *net = ctl->extra2;
 
-	अगर (ग_लिखो && *valp != val)
+	if (write && *valp != val)
 		rt_cache_flush(net);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा DEVINET_SYSCTL_ENTRY(attr, name, mval, proc) \
-	अणु \
+#define DEVINET_SYSCTL_ENTRY(attr, name, mval, proc) \
+	{ \
 		.procname	= name, \
 		.data		= ipv4_devconf.data + \
 				  IPV4_DEVCONF_ ## attr - 1, \
-		.maxlen		= माप(पूर्णांक), \
+		.maxlen		= sizeof(int), \
 		.mode		= mval, \
 		.proc_handler	= proc, \
 		.extra1		= &ipv4_devconf, \
-	पूर्ण
+	}
 
-#घोषणा DEVINET_SYSCTL_RW_ENTRY(attr, name) \
+#define DEVINET_SYSCTL_RW_ENTRY(attr, name) \
 	DEVINET_SYSCTL_ENTRY(attr, name, 0644, devinet_conf_proc)
 
-#घोषणा DEVINET_SYSCTL_RO_ENTRY(attr, name) \
+#define DEVINET_SYSCTL_RO_ENTRY(attr, name) \
 	DEVINET_SYSCTL_ENTRY(attr, name, 0444, devinet_conf_proc)
 
-#घोषणा DEVINET_SYSCTL_COMPLEX_ENTRY(attr, name, proc) \
+#define DEVINET_SYSCTL_COMPLEX_ENTRY(attr, name, proc) \
 	DEVINET_SYSCTL_ENTRY(attr, name, 0644, proc)
 
-#घोषणा DEVINET_SYSCTL_FLUSHING_ENTRY(attr, name) \
-	DEVINET_SYSCTL_COMPLEX_ENTRY(attr, name, ipv4_करोपूर्णांक_and_flush)
+#define DEVINET_SYSCTL_FLUSHING_ENTRY(attr, name) \
+	DEVINET_SYSCTL_COMPLEX_ENTRY(attr, name, ipv4_doint_and_flush)
 
-अटल काष्ठा devinet_sysctl_table अणु
-	काष्ठा ctl_table_header *sysctl_header;
-	काष्ठा ctl_table devinet_vars[__IPV4_DEVCONF_MAX];
-पूर्ण devinet_sysctl = अणु
-	.devinet_vars = अणु
+static struct devinet_sysctl_table {
+	struct ctl_table_header *sysctl_header;
+	struct ctl_table devinet_vars[__IPV4_DEVCONF_MAX];
+} devinet_sysctl = {
+	.devinet_vars = {
 		DEVINET_SYSCTL_COMPLEX_ENTRY(FORWARDING, "forwarding",
-					     devinet_sysctl_क्रमward),
+					     devinet_sysctl_forward),
 		DEVINET_SYSCTL_RO_ENTRY(MC_FORWARDING, "mc_forwarding"),
 		DEVINET_SYSCTL_RW_ENTRY(BC_FORWARDING, "bc_forwarding"),
 
-		DEVINET_SYSCTL_RW_ENTRY(ACCEPT_REसूचीECTS, "accept_redirects"),
-		DEVINET_SYSCTL_RW_ENTRY(SECURE_REसूचीECTS, "secure_redirects"),
+		DEVINET_SYSCTL_RW_ENTRY(ACCEPT_REDIRECTS, "accept_redirects"),
+		DEVINET_SYSCTL_RW_ENTRY(SECURE_REDIRECTS, "secure_redirects"),
 		DEVINET_SYSCTL_RW_ENTRY(SHARED_MEDIA, "shared_media"),
 		DEVINET_SYSCTL_RW_ENTRY(RP_FILTER, "rp_filter"),
-		DEVINET_SYSCTL_RW_ENTRY(SEND_REसूचीECTS, "send_redirects"),
+		DEVINET_SYSCTL_RW_ENTRY(SEND_REDIRECTS, "send_redirects"),
 		DEVINET_SYSCTL_RW_ENTRY(ACCEPT_SOURCE_ROUTE,
 					"accept_source_route"),
 		DEVINET_SYSCTL_RW_ENTRY(ACCEPT_LOCAL, "accept_local"),
@@ -2548,232 +2547,232 @@ cont:
 					      "route_localnet"),
 		DEVINET_SYSCTL_FLUSHING_ENTRY(DROP_UNICAST_IN_L2_MULTICAST,
 					      "drop_unicast_in_l2_multicast"),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __devinet_sysctl_रेजिस्टर(काष्ठा net *net, अक्षर *dev_name,
-				     पूर्णांक अगरindex, काष्ठा ipv4_devconf *p)
-अणु
-	पूर्णांक i;
-	काष्ठा devinet_sysctl_table *t;
-	अक्षर path[माप("net/ipv4/conf/") + IFNAMSIZ];
+static int __devinet_sysctl_register(struct net *net, char *dev_name,
+				     int ifindex, struct ipv4_devconf *p)
+{
+	int i;
+	struct devinet_sysctl_table *t;
+	char path[sizeof("net/ipv4/conf/") + IFNAMSIZ];
 
-	t = kmemdup(&devinet_sysctl, माप(*t), GFP_KERNEL);
-	अगर (!t)
-		जाओ out;
+	t = kmemdup(&devinet_sysctl, sizeof(*t), GFP_KERNEL);
+	if (!t)
+		goto out;
 
-	क्रम (i = 0; i < ARRAY_SIZE(t->devinet_vars) - 1; i++) अणु
-		t->devinet_vars[i].data += (अक्षर *)p - (अक्षर *)&ipv4_devconf;
+	for (i = 0; i < ARRAY_SIZE(t->devinet_vars) - 1; i++) {
+		t->devinet_vars[i].data += (char *)p - (char *)&ipv4_devconf;
 		t->devinet_vars[i].extra1 = p;
 		t->devinet_vars[i].extra2 = net;
-	पूर्ण
+	}
 
-	snम_लिखो(path, माप(path), "net/ipv4/conf/%s", dev_name);
+	snprintf(path, sizeof(path), "net/ipv4/conf/%s", dev_name);
 
-	t->sysctl_header = रेजिस्टर_net_sysctl(net, path, t->devinet_vars);
-	अगर (!t->sysctl_header)
-		जाओ मुक्त;
+	t->sysctl_header = register_net_sysctl(net, path, t->devinet_vars);
+	if (!t->sysctl_header)
+		goto free;
 
 	p->sysctl = t;
 
-	inet_netconf_notअगरy_devconf(net, RTM_NEWNETCONF, NETCONFA_ALL,
-				    अगरindex, p);
-	वापस 0;
+	inet_netconf_notify_devconf(net, RTM_NEWNETCONF, NETCONFA_ALL,
+				    ifindex, p);
+	return 0;
 
-मुक्त:
-	kमुक्त(t);
+free:
+	kfree(t);
 out:
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 
-अटल व्योम __devinet_sysctl_unरेजिस्टर(काष्ठा net *net,
-					काष्ठा ipv4_devconf *cnf, पूर्णांक अगरindex)
-अणु
-	काष्ठा devinet_sysctl_table *t = cnf->sysctl;
+static void __devinet_sysctl_unregister(struct net *net,
+					struct ipv4_devconf *cnf, int ifindex)
+{
+	struct devinet_sysctl_table *t = cnf->sysctl;
 
-	अगर (t) अणु
-		cnf->sysctl = शून्य;
-		unरेजिस्टर_net_sysctl_table(t->sysctl_header);
-		kमुक्त(t);
-	पूर्ण
+	if (t) {
+		cnf->sysctl = NULL;
+		unregister_net_sysctl_table(t->sysctl_header);
+		kfree(t);
+	}
 
-	inet_netconf_notअगरy_devconf(net, RTM_DELNETCONF, 0, अगरindex, शून्य);
-पूर्ण
+	inet_netconf_notify_devconf(net, RTM_DELNETCONF, 0, ifindex, NULL);
+}
 
-अटल पूर्णांक devinet_sysctl_रेजिस्टर(काष्ठा in_device *idev)
-अणु
-	पूर्णांक err;
+static int devinet_sysctl_register(struct in_device *idev)
+{
+	int err;
 
-	अगर (!sysctl_dev_name_is_allowed(idev->dev->name))
-		वापस -EINVAL;
+	if (!sysctl_dev_name_is_allowed(idev->dev->name))
+		return -EINVAL;
 
-	err = neigh_sysctl_रेजिस्टर(idev->dev, idev->arp_parms, शून्य);
-	अगर (err)
-		वापस err;
-	err = __devinet_sysctl_रेजिस्टर(dev_net(idev->dev), idev->dev->name,
-					idev->dev->अगरindex, &idev->cnf);
-	अगर (err)
-		neigh_sysctl_unरेजिस्टर(idev->arp_parms);
-	वापस err;
-पूर्ण
+	err = neigh_sysctl_register(idev->dev, idev->arp_parms, NULL);
+	if (err)
+		return err;
+	err = __devinet_sysctl_register(dev_net(idev->dev), idev->dev->name,
+					idev->dev->ifindex, &idev->cnf);
+	if (err)
+		neigh_sysctl_unregister(idev->arp_parms);
+	return err;
+}
 
-अटल व्योम devinet_sysctl_unरेजिस्टर(काष्ठा in_device *idev)
-अणु
-	काष्ठा net *net = dev_net(idev->dev);
+static void devinet_sysctl_unregister(struct in_device *idev)
+{
+	struct net *net = dev_net(idev->dev);
 
-	__devinet_sysctl_unरेजिस्टर(net, &idev->cnf, idev->dev->अगरindex);
-	neigh_sysctl_unरेजिस्टर(idev->arp_parms);
-पूर्ण
+	__devinet_sysctl_unregister(net, &idev->cnf, idev->dev->ifindex);
+	neigh_sysctl_unregister(idev->arp_parms);
+}
 
-अटल काष्ठा ctl_table ctl_क्रमward_entry[] = अणु
-	अणु
+static struct ctl_table ctl_forward_entry[] = {
+	{
 		.procname	= "ip_forward",
 		.data		= &ipv4_devconf.data[
 					IPV4_DEVCONF_FORWARDING - 1],
-		.maxlen		= माप(पूर्णांक),
+		.maxlen		= sizeof(int),
 		.mode		= 0644,
-		.proc_handler	= devinet_sysctl_क्रमward,
+		.proc_handler	= devinet_sysctl_forward,
 		.extra1		= &ipv4_devconf,
 		.extra2		= &init_net,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-#पूर्ण_अगर
+	},
+	{ },
+};
+#endif
 
-अटल __net_init पूर्णांक devinet_init_net(काष्ठा net *net)
-अणु
-	पूर्णांक err;
-	काष्ठा ipv4_devconf *all, *dflt;
-#अगर_घोषित CONFIG_SYSCTL
-	काष्ठा ctl_table *tbl;
-	काष्ठा ctl_table_header *क्रमw_hdr;
-#पूर्ण_अगर
+static __net_init int devinet_init_net(struct net *net)
+{
+	int err;
+	struct ipv4_devconf *all, *dflt;
+#ifdef CONFIG_SYSCTL
+	struct ctl_table *tbl;
+	struct ctl_table_header *forw_hdr;
+#endif
 
 	err = -ENOMEM;
-	all = kmemdup(&ipv4_devconf, माप(ipv4_devconf), GFP_KERNEL);
-	अगर (!all)
-		जाओ err_alloc_all;
+	all = kmemdup(&ipv4_devconf, sizeof(ipv4_devconf), GFP_KERNEL);
+	if (!all)
+		goto err_alloc_all;
 
-	dflt = kmemdup(&ipv4_devconf_dflt, माप(ipv4_devconf_dflt), GFP_KERNEL);
-	अगर (!dflt)
-		जाओ err_alloc_dflt;
+	dflt = kmemdup(&ipv4_devconf_dflt, sizeof(ipv4_devconf_dflt), GFP_KERNEL);
+	if (!dflt)
+		goto err_alloc_dflt;
 
-#अगर_घोषित CONFIG_SYSCTL
-	tbl = kmemdup(ctl_क्रमward_entry, माप(ctl_क्रमward_entry), GFP_KERNEL);
-	अगर (!tbl)
-		जाओ err_alloc_ctl;
+#ifdef CONFIG_SYSCTL
+	tbl = kmemdup(ctl_forward_entry, sizeof(ctl_forward_entry), GFP_KERNEL);
+	if (!tbl)
+		goto err_alloc_ctl;
 
 	tbl[0].data = &all->data[IPV4_DEVCONF_FORWARDING - 1];
 	tbl[0].extra1 = all;
 	tbl[0].extra2 = net;
-#पूर्ण_अगर
+#endif
 
-	अगर (!net_eq(net, &init_net)) अणु
-		अगर (IS_ENABLED(CONFIG_SYSCTL) &&
-		    sysctl_devconf_inherit_init_net == 3) अणु
+	if (!net_eq(net, &init_net)) {
+		if (IS_ENABLED(CONFIG_SYSCTL) &&
+		    sysctl_devconf_inherit_init_net == 3) {
 			/* copy from the current netns */
-			स_नकल(all, current->nsproxy->net_ns->ipv4.devconf_all,
-			       माप(ipv4_devconf));
-			स_नकल(dflt,
+			memcpy(all, current->nsproxy->net_ns->ipv4.devconf_all,
+			       sizeof(ipv4_devconf));
+			memcpy(dflt,
 			       current->nsproxy->net_ns->ipv4.devconf_dflt,
-			       माप(ipv4_devconf_dflt));
-		पूर्ण अन्यथा अगर (!IS_ENABLED(CONFIG_SYSCTL) ||
-			   sysctl_devconf_inherit_init_net != 2) अणु
+			       sizeof(ipv4_devconf_dflt));
+		} else if (!IS_ENABLED(CONFIG_SYSCTL) ||
+			   sysctl_devconf_inherit_init_net != 2) {
 			/* inherit == 0 or 1: copy from init_net */
-			स_नकल(all, init_net.ipv4.devconf_all,
-			       माप(ipv4_devconf));
-			स_नकल(dflt, init_net.ipv4.devconf_dflt,
-			       माप(ipv4_devconf_dflt));
-		पूर्ण
-		/* अन्यथा inherit == 2: use compiled values */
-	पूर्ण
+			memcpy(all, init_net.ipv4.devconf_all,
+			       sizeof(ipv4_devconf));
+			memcpy(dflt, init_net.ipv4.devconf_dflt,
+			       sizeof(ipv4_devconf_dflt));
+		}
+		/* else inherit == 2: use compiled values */
+	}
 
-#अगर_घोषित CONFIG_SYSCTL
-	err = __devinet_sysctl_रेजिस्टर(net, "all", NETCONFA_IFINDEX_ALL, all);
-	अगर (err < 0)
-		जाओ err_reg_all;
+#ifdef CONFIG_SYSCTL
+	err = __devinet_sysctl_register(net, "all", NETCONFA_IFINDEX_ALL, all);
+	if (err < 0)
+		goto err_reg_all;
 
-	err = __devinet_sysctl_रेजिस्टर(net, "default",
+	err = __devinet_sysctl_register(net, "default",
 					NETCONFA_IFINDEX_DEFAULT, dflt);
-	अगर (err < 0)
-		जाओ err_reg_dflt;
+	if (err < 0)
+		goto err_reg_dflt;
 
 	err = -ENOMEM;
-	क्रमw_hdr = रेजिस्टर_net_sysctl(net, "net/ipv4", tbl);
-	अगर (!क्रमw_hdr)
-		जाओ err_reg_ctl;
-	net->ipv4.क्रमw_hdr = क्रमw_hdr;
-#पूर्ण_अगर
+	forw_hdr = register_net_sysctl(net, "net/ipv4", tbl);
+	if (!forw_hdr)
+		goto err_reg_ctl;
+	net->ipv4.forw_hdr = forw_hdr;
+#endif
 
 	net->ipv4.devconf_all = all;
 	net->ipv4.devconf_dflt = dflt;
-	वापस 0;
+	return 0;
 
-#अगर_घोषित CONFIG_SYSCTL
+#ifdef CONFIG_SYSCTL
 err_reg_ctl:
-	__devinet_sysctl_unरेजिस्टर(net, dflt, NETCONFA_IFINDEX_DEFAULT);
+	__devinet_sysctl_unregister(net, dflt, NETCONFA_IFINDEX_DEFAULT);
 err_reg_dflt:
-	__devinet_sysctl_unरेजिस्टर(net, all, NETCONFA_IFINDEX_ALL);
+	__devinet_sysctl_unregister(net, all, NETCONFA_IFINDEX_ALL);
 err_reg_all:
-	kमुक्त(tbl);
+	kfree(tbl);
 err_alloc_ctl:
-#पूर्ण_अगर
-	kमुक्त(dflt);
+#endif
+	kfree(dflt);
 err_alloc_dflt:
-	kमुक्त(all);
+	kfree(all);
 err_alloc_all:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __net_निकास व्योम devinet_निकास_net(काष्ठा net *net)
-अणु
-#अगर_घोषित CONFIG_SYSCTL
-	काष्ठा ctl_table *tbl;
+static __net_exit void devinet_exit_net(struct net *net)
+{
+#ifdef CONFIG_SYSCTL
+	struct ctl_table *tbl;
 
-	tbl = net->ipv4.क्रमw_hdr->ctl_table_arg;
-	unरेजिस्टर_net_sysctl_table(net->ipv4.क्रमw_hdr);
-	__devinet_sysctl_unरेजिस्टर(net, net->ipv4.devconf_dflt,
+	tbl = net->ipv4.forw_hdr->ctl_table_arg;
+	unregister_net_sysctl_table(net->ipv4.forw_hdr);
+	__devinet_sysctl_unregister(net, net->ipv4.devconf_dflt,
 				    NETCONFA_IFINDEX_DEFAULT);
-	__devinet_sysctl_unरेजिस्टर(net, net->ipv4.devconf_all,
+	__devinet_sysctl_unregister(net, net->ipv4.devconf_all,
 				    NETCONFA_IFINDEX_ALL);
-	kमुक्त(tbl);
-#पूर्ण_अगर
-	kमुक्त(net->ipv4.devconf_dflt);
-	kमुक्त(net->ipv4.devconf_all);
-पूर्ण
+	kfree(tbl);
+#endif
+	kfree(net->ipv4.devconf_dflt);
+	kfree(net->ipv4.devconf_all);
+}
 
-अटल __net_initdata काष्ठा pernet_operations devinet_ops = अणु
+static __net_initdata struct pernet_operations devinet_ops = {
 	.init = devinet_init_net,
-	.निकास = devinet_निकास_net,
-पूर्ण;
+	.exit = devinet_exit_net,
+};
 
-अटल काष्ठा rtnl_af_ops inet_af_ops __पढ़ो_mostly = अणु
+static struct rtnl_af_ops inet_af_ops __read_mostly = {
 	.family		  = AF_INET,
 	.fill_link_af	  = inet_fill_link_af,
 	.get_link_af_size = inet_get_link_af_size,
 	.validate_link_af = inet_validate_link_af,
 	.set_link_af	  = inet_set_link_af,
-पूर्ण;
+};
 
-व्योम __init devinet_init(व्योम)
-अणु
-	पूर्णांक i;
+void __init devinet_init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < IN4_ADDR_HSIZE; i++)
+	for (i = 0; i < IN4_ADDR_HSIZE; i++)
 		INIT_HLIST_HEAD(&inet_addr_lst[i]);
 
-	रेजिस्टर_pernet_subsys(&devinet_ops);
+	register_pernet_subsys(&devinet_ops);
 
-	रेजिस्टर_gअगरconf(PF_INET, inet_gअगरconf);
-	रेजिस्टर_netdevice_notअगरier(&ip_netdev_notअगरier);
+	register_gifconf(PF_INET, inet_gifconf);
+	register_netdevice_notifier(&ip_netdev_notifier);
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &check_lअगरeसमय_work, 0);
+	queue_delayed_work(system_power_efficient_wq, &check_lifetime_work, 0);
 
-	rtnl_af_रेजिस्टर(&inet_af_ops);
+	rtnl_af_register(&inet_af_ops);
 
-	rtnl_रेजिस्टर(PF_INET, RTM_NEWADDR, inet_rपंचांग_newaddr, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_DELADDR, inet_rपंचांग_deladdr, शून्य, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_GETADDR, शून्य, inet_dump_अगरaddr, 0);
-	rtnl_रेजिस्टर(PF_INET, RTM_GETNETCONF, inet_netconf_get_devconf,
+	rtnl_register(PF_INET, RTM_NEWADDR, inet_rtm_newaddr, NULL, 0);
+	rtnl_register(PF_INET, RTM_DELADDR, inet_rtm_deladdr, NULL, 0);
+	rtnl_register(PF_INET, RTM_GETADDR, NULL, inet_dump_ifaddr, 0);
+	rtnl_register(PF_INET, RTM_GETNETCONF, inet_netconf_get_devconf,
 		      inet_netconf_dump_devconf, 0);
-पूर्ण
+}

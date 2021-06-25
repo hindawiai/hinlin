@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2000-2001 Christoph Hellwig.
  * Copyright (c) 2016 Krzysztof Blaszkowski
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. The name of the author may not be used to enकरोrse or promote products
- *    derived from this software without specअगरic prior written permission.
+ *    without modification.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -20,7 +19,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -29,13 +28,13 @@
  * SUCH DAMAGE.
  *
  */
-#अगर_अघोषित _VXFS_FSHEAD_H_
-#घोषणा _VXFS_FSHEAD_H_
+#ifndef _VXFS_FSHEAD_H_
+#define _VXFS_FSHEAD_H_
 
 /*
- * Veritas fileप्रणाली driver - fileset header काष्ठाures.
+ * Veritas filesystem driver - fileset header structures.
  *
- * This file contains the physical काष्ठाure of the VxFS
+ * This file contains the physical structure of the VxFS
  * fileset header.
  */
 
@@ -43,11 +42,11 @@
 /*
  * Fileset header 
  */
-काष्ठा vxfs_fsh अणु
+struct vxfs_fsh {
 	__fs32		fsh_version;		/* fileset header version */
 	__fs32		fsh_fsindex;		/* fileset index */
-	__fs32		fsh_समय;		/* modअगरication समय - sec */
-	__fs32		fsh_uसमय;		/* modअगरication समय - usec */
+	__fs32		fsh_time;		/* modification time - sec */
+	__fs32		fsh_utime;		/* modification time - usec */
 	__fs32		fsh_extop;		/* extop flags */
 	__fs32		fsh_ninodes;		/* allocated inodes */
 	__fs32		fsh_nau;		/* number of IAUs */
@@ -61,9 +60,9 @@
 
 	/*
 	 * Slightly more fields follow, but they
-	 *  a) are not of any पूर्णांकerest क्रम us, and
-	 *  b) dअगरfer a lot in dअगरferent vxfs versions/ports
+	 *  a) are not of any interest for us, and
+	 *  b) differ a lot in different vxfs versions/ports
 	 */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _VXFS_FSHEAD_H_ */
+#endif /* _VXFS_FSHEAD_H_ */

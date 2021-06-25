@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2008 Andres Salomon <dilinger@debian.org>
  *
- * Geode GX2 header inक्रमmation
+ * Geode GX2 header information
  */
-#अगर_अघोषित _GXFB_H_
-#घोषणा _GXFB_H_
+#ifndef _GXFB_H_
+#define _GXFB_H_
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#घोषणा GP_REG_COUNT   (0x50 / 4)
-#घोषणा DC_REG_COUNT   (0x90 / 4)
-#घोषणा VP_REG_COUNT   (0x138 / 8)
-#घोषणा FP_REG_COUNT   (0x68 / 8)
+#define GP_REG_COUNT   (0x50 / 4)
+#define DC_REG_COUNT   (0x90 / 4)
+#define VP_REG_COUNT   (0x138 / 8)
+#define FP_REG_COUNT   (0x68 / 8)
 
-#घोषणा DC_PAL_COUNT   0x104
+#define DC_PAL_COUNT   0x104
 
-काष्ठा gxfb_par अणु
-	पूर्णांक enable_crt;
-	व्योम __iomem *dc_regs;
-	व्योम __iomem *vid_regs;
-	व्योम __iomem *gp_regs;
-	पूर्णांक घातered_करोwn;
+struct gxfb_par {
+	int enable_crt;
+	void __iomem *dc_regs;
+	void __iomem *vid_regs;
+	void __iomem *gp_regs;
+	int powered_down;
 
-	/* रेजिस्टर state, क्रम घातer management functionality */
-	काष्ठा अणु
-		uपूर्णांक64_t padsel;
-		uपूर्णांक64_t करोtpll;
-	पूर्ण msr;
+	/* register state, for power management functionality */
+	struct {
+		uint64_t padsel;
+		uint64_t dotpll;
+	} msr;
 
-	uपूर्णांक32_t gp[GP_REG_COUNT];
-	uपूर्णांक32_t dc[DC_REG_COUNT];
-	uपूर्णांक64_t vp[VP_REG_COUNT];
-	uपूर्णांक64_t fp[FP_REG_COUNT];
+	uint32_t gp[GP_REG_COUNT];
+	uint32_t dc[DC_REG_COUNT];
+	uint64_t vp[VP_REG_COUNT];
+	uint64_t fp[FP_REG_COUNT];
 
-	uपूर्णांक32_t pal[DC_PAL_COUNT];
-पूर्ण;
+	uint32_t pal[DC_PAL_COUNT];
+};
 
-अचिन्हित पूर्णांक gx_frame_buffer_size(व्योम);
-पूर्णांक gx_line_delta(पूर्णांक xres, पूर्णांक bpp);
-व्योम gx_set_mode(काष्ठा fb_info *info);
-व्योम gx_set_hw_palette_reg(काष्ठा fb_info *info, अचिन्हित regno,
-		अचिन्हित red, अचिन्हित green, अचिन्हित blue);
+unsigned int gx_frame_buffer_size(void);
+int gx_line_delta(int xres, int bpp);
+void gx_set_mode(struct fb_info *info);
+void gx_set_hw_palette_reg(struct fb_info *info, unsigned regno,
+		unsigned red, unsigned green, unsigned blue);
 
-व्योम gx_set_dclk_frequency(काष्ठा fb_info *info);
-व्योम gx_configure_display(काष्ठा fb_info *info);
-पूर्णांक gx_blank_display(काष्ठा fb_info *info, पूर्णांक blank_mode);
+void gx_set_dclk_frequency(struct fb_info *info);
+void gx_configure_display(struct fb_info *info);
+int gx_blank_display(struct fb_info *info, int blank_mode);
 
-पूर्णांक gx_घातerकरोwn(काष्ठा fb_info *info);
-पूर्णांक gx_घातerup(काष्ठा fb_info *info);
+int gx_powerdown(struct fb_info *info);
+int gx_powerup(struct fb_info *info);
 
-/* Graphics Processor रेजिस्टरs (table 6-23 from the data book) */
-क्रमागत gp_रेजिस्टरs अणु
+/* Graphics Processor registers (table 6-23 from the data book) */
+enum gp_registers {
 	GP_DST_OFFSET = 0,
 	GP_SRC_OFFSET,
 	GP_STRIDE,
@@ -77,14 +76,14 @@
 	GP_BLT_STATUS,
 	GP_HST_SRC,
 	GP_BASE_OFFSET, /* 0x4c */
-पूर्ण;
+};
 
-#घोषणा GP_BLT_STATUS_BLT_PENDING	(1 << 2)
-#घोषणा GP_BLT_STATUS_BLT_BUSY		(1 << 0)
+#define GP_BLT_STATUS_BLT_PENDING	(1 << 2)
+#define GP_BLT_STATUS_BLT_BUSY		(1 << 0)
 
 
-/* Display Controller रेजिस्टरs (table 6-38 from the data book) */
-क्रमागत dc_रेजिस्टरs अणु
+/* Display Controller registers (table 6-38 from the data book) */
+enum dc_registers {
 	DC_UNLOCK = 0,
 	DC_GENERAL_CFG,
 	DC_DISPLAY_CFG,
@@ -129,40 +128,40 @@
 	DC_GLIU0_MEM_OFFSET,
 	DC_RSVD_5,
 	DC_DV_ACC, /* 0x8c */
-पूर्ण;
+};
 
-#घोषणा DC_UNLOCK_LOCK			0x00000000
-#घोषणा DC_UNLOCK_UNLOCK		0x00004758	/* magic value */
+#define DC_UNLOCK_LOCK			0x00000000
+#define DC_UNLOCK_UNLOCK		0x00004758	/* magic value */
 
-#घोषणा DC_GENERAL_CFG_YUVM		(1 << 20)
-#घोषणा DC_GENERAL_CFG_VDSE		(1 << 19)
-#घोषणा DC_GENERAL_CFG_DFHPEL_SHIFT	12
-#घोषणा DC_GENERAL_CFG_DFHPSL_SHIFT	8
-#घोषणा DC_GENERAL_CFG_DECE		(1 << 6)
-#घोषणा DC_GENERAL_CFG_CMPE		(1 << 5)
-#घोषणा DC_GENERAL_CFG_VIDE		(1 << 3)
-#घोषणा DC_GENERAL_CFG_ICNE		(1 << 2)
-#घोषणा DC_GENERAL_CFG_CURE		(1 << 1)
-#घोषणा DC_GENERAL_CFG_DFLE		(1 << 0)
+#define DC_GENERAL_CFG_YUVM		(1 << 20)
+#define DC_GENERAL_CFG_VDSE		(1 << 19)
+#define DC_GENERAL_CFG_DFHPEL_SHIFT	12
+#define DC_GENERAL_CFG_DFHPSL_SHIFT	8
+#define DC_GENERAL_CFG_DECE		(1 << 6)
+#define DC_GENERAL_CFG_CMPE		(1 << 5)
+#define DC_GENERAL_CFG_VIDE		(1 << 3)
+#define DC_GENERAL_CFG_ICNE		(1 << 2)
+#define DC_GENERAL_CFG_CURE		(1 << 1)
+#define DC_GENERAL_CFG_DFLE		(1 << 0)
 
-#घोषणा DC_DISPLAY_CFG_A20M		(1 << 31)
-#घोषणा DC_DISPLAY_CFG_A18M		(1 << 30)
-#घोषणा DC_DISPLAY_CFG_PALB		(1 << 25)
-#घोषणा DC_DISPLAY_CFG_DISP_MODE_24BPP	(1 << 9)
-#घोषणा DC_DISPLAY_CFG_DISP_MODE_16BPP	(1 << 8)
-#घोषणा DC_DISPLAY_CFG_DISP_MODE_8BPP	(0)
-#घोषणा DC_DISPLAY_CFG_VDEN		(1 << 4)
-#घोषणा DC_DISPLAY_CFG_GDEN		(1 << 3)
-#घोषणा DC_DISPLAY_CFG_TGEN		(1 << 0)
+#define DC_DISPLAY_CFG_A20M		(1 << 31)
+#define DC_DISPLAY_CFG_A18M		(1 << 30)
+#define DC_DISPLAY_CFG_PALB		(1 << 25)
+#define DC_DISPLAY_CFG_DISP_MODE_24BPP	(1 << 9)
+#define DC_DISPLAY_CFG_DISP_MODE_16BPP	(1 << 8)
+#define DC_DISPLAY_CFG_DISP_MODE_8BPP	(0)
+#define DC_DISPLAY_CFG_VDEN		(1 << 4)
+#define DC_DISPLAY_CFG_GDEN		(1 << 3)
+#define DC_DISPLAY_CFG_TGEN		(1 << 0)
 
 
 /*
- * Video Processor रेजिस्टरs (table 6-54).
- * There is space क्रम 64 bit values, but we never use more than the
- * lower 32 bits.  The actual रेजिस्टर save/restore code only bothers
+ * Video Processor registers (table 6-54).
+ * There is space for 64 bit values, but we never use more than the
+ * lower 32 bits.  The actual register save/restore code only bothers
  * to restore those 32 bits.
  */
-क्रमागत vp_रेजिस्टरs अणु
+enum vp_registers {
 	VP_VCFG = 0,
 	VP_DCFG,
 
@@ -221,38 +220,38 @@
 	VP_AWT,
 
 	VP_VTM, /* 0x130 */
-पूर्ण;
+};
 
-#घोषणा VP_VCFG_VID_EN			(1 << 0)
+#define VP_VCFG_VID_EN			(1 << 0)
 
-#घोषणा VP_DCFG_DAC_VREF		(1 << 26)
-#घोषणा VP_DCFG_GV_GAM			(1 << 21)
-#घोषणा VP_DCFG_VG_CK			(1 << 20)
-#घोषणा VP_DCFG_CRT_SYNC_SKW_DEFAULT	(1 << 16)
-#घोषणा VP_DCFG_CRT_SYNC_SKW		((1 << 14) | (1 << 15) | (1 << 16))
-#घोषणा VP_DCFG_CRT_VSYNC_POL		(1 << 9)
-#घोषणा VP_DCFG_CRT_HSYNC_POL		(1 << 8)
-#घोषणा VP_DCFG_FP_DATA_EN		(1 << 7)	/* unकरोcumented */
-#घोषणा VP_DCFG_FP_PWR_EN		(1 << 6)	/* unकरोcumented */
-#घोषणा VP_DCFG_DAC_BL_EN		(1 << 3)
-#घोषणा VP_DCFG_VSYNC_EN		(1 << 2)
-#घोषणा VP_DCFG_HSYNC_EN		(1 << 1)
-#घोषणा VP_DCFG_CRT_EN			(1 << 0)
+#define VP_DCFG_DAC_VREF		(1 << 26)
+#define VP_DCFG_GV_GAM			(1 << 21)
+#define VP_DCFG_VG_CK			(1 << 20)
+#define VP_DCFG_CRT_SYNC_SKW_DEFAULT	(1 << 16)
+#define VP_DCFG_CRT_SYNC_SKW		((1 << 14) | (1 << 15) | (1 << 16))
+#define VP_DCFG_CRT_VSYNC_POL		(1 << 9)
+#define VP_DCFG_CRT_HSYNC_POL		(1 << 8)
+#define VP_DCFG_FP_DATA_EN		(1 << 7)	/* undocumented */
+#define VP_DCFG_FP_PWR_EN		(1 << 6)	/* undocumented */
+#define VP_DCFG_DAC_BL_EN		(1 << 3)
+#define VP_DCFG_VSYNC_EN		(1 << 2)
+#define VP_DCFG_HSYNC_EN		(1 << 1)
+#define VP_DCFG_CRT_EN			(1 << 0)
 
-#घोषणा VP_MISC_GAM_EN			(1 << 0)
-#घोषणा VP_MISC_DACPWRDN		(1 << 10)
-#घोषणा VP_MISC_APWRDN			(1 << 11)
+#define VP_MISC_GAM_EN			(1 << 0)
+#define VP_MISC_DACPWRDN		(1 << 10)
+#define VP_MISC_APWRDN			(1 << 11)
 
 
 /*
- * Flat Panel रेजिस्टरs (table 6-55).
- * Also 64 bit रेजिस्टरs; see above note about 32-bit handling.
+ * Flat Panel registers (table 6-55).
+ * Also 64 bit registers; see above note about 32-bit handling.
  */
 
-/* we're actually in the VP रेजिस्टर space, starting at address 0x400 */
-#घोषणा VP_FP_START		0x400
+/* we're actually in the VP register space, starting at address 0x400 */
+#define VP_FP_START		0x400
 
-क्रमागत fp_रेजिस्टरs अणु
+enum fp_registers {
 	FP_PT1 = 0,
 	FP_PT2,
 
@@ -272,79 +271,79 @@
 	FP_CRC,
 
 	FP_FBB, /* 0x460 */
-पूर्ण;
+};
 
-#घोषणा FP_PT1_VSIZE_SHIFT		16		/* unकरोcumented? */
-#घोषणा FP_PT1_VSIZE_MASK		0x7FF0000	/* unकरोcumented? */
+#define FP_PT1_VSIZE_SHIFT		16		/* undocumented? */
+#define FP_PT1_VSIZE_MASK		0x7FF0000	/* undocumented? */
 
-#घोषणा FP_PT2_HSP			(1 << 22)
-#घोषणा FP_PT2_VSP			(1 << 23)
+#define FP_PT2_HSP			(1 << 22)
+#define FP_PT2_VSP			(1 << 23)
 
-#घोषणा FP_PM_P				(1 << 24)       /* panel घातer on */
-#घोषणा FP_PM_PANEL_PWR_UP		(1 << 3)        /* r/o */
-#घोषणा FP_PM_PANEL_PWR_DOWN		(1 << 2)        /* r/o */
-#घोषणा FP_PM_PANEL_OFF			(1 << 1)        /* r/o */
-#घोषणा FP_PM_PANEL_ON			(1 << 0)        /* r/o */
+#define FP_PM_P				(1 << 24)       /* panel power on */
+#define FP_PM_PANEL_PWR_UP		(1 << 3)        /* r/o */
+#define FP_PM_PANEL_PWR_DOWN		(1 << 2)        /* r/o */
+#define FP_PM_PANEL_OFF			(1 << 1)        /* r/o */
+#define FP_PM_PANEL_ON			(1 << 0)        /* r/o */
 
-#घोषणा FP_DFC_NFI			((1 << 4) | (1 << 5) | (1 << 6))
+#define FP_DFC_NFI			((1 << 4) | (1 << 5) | (1 << 6))
 
 
-/* रेजिस्टर access functions */
+/* register access functions */
 
-अटल अंतरभूत uपूर्णांक32_t पढ़ो_gp(काष्ठा gxfb_par *par, पूर्णांक reg)
-अणु
-	वापस पढ़ोl(par->gp_regs + 4*reg);
-पूर्ण
+static inline uint32_t read_gp(struct gxfb_par *par, int reg)
+{
+	return readl(par->gp_regs + 4*reg);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_gp(काष्ठा gxfb_par *par, पूर्णांक reg, uपूर्णांक32_t val)
-अणु
-	ग_लिखोl(val, par->gp_regs + 4*reg);
-पूर्ण
+static inline void write_gp(struct gxfb_par *par, int reg, uint32_t val)
+{
+	writel(val, par->gp_regs + 4*reg);
+}
 
-अटल अंतरभूत uपूर्णांक32_t पढ़ो_dc(काष्ठा gxfb_par *par, पूर्णांक reg)
-अणु
-	वापस पढ़ोl(par->dc_regs + 4*reg);
-पूर्ण
+static inline uint32_t read_dc(struct gxfb_par *par, int reg)
+{
+	return readl(par->dc_regs + 4*reg);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_dc(काष्ठा gxfb_par *par, पूर्णांक reg, uपूर्णांक32_t val)
-अणु
-	ग_लिखोl(val, par->dc_regs + 4*reg);
-पूर्ण
+static inline void write_dc(struct gxfb_par *par, int reg, uint32_t val)
+{
+	writel(val, par->dc_regs + 4*reg);
+}
 
-अटल अंतरभूत uपूर्णांक32_t पढ़ो_vp(काष्ठा gxfb_par *par, पूर्णांक reg)
-अणु
-	वापस पढ़ोl(par->vid_regs + 8*reg);
-पूर्ण
+static inline uint32_t read_vp(struct gxfb_par *par, int reg)
+{
+	return readl(par->vid_regs + 8*reg);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_vp(काष्ठा gxfb_par *par, पूर्णांक reg, uपूर्णांक32_t val)
-अणु
-	ग_लिखोl(val, par->vid_regs + 8*reg);
-पूर्ण
+static inline void write_vp(struct gxfb_par *par, int reg, uint32_t val)
+{
+	writel(val, par->vid_regs + 8*reg);
+}
 
-अटल अंतरभूत uपूर्णांक32_t पढ़ो_fp(काष्ठा gxfb_par *par, पूर्णांक reg)
-अणु
-	वापस पढ़ोl(par->vid_regs + 8*reg + VP_FP_START);
-पूर्ण
+static inline uint32_t read_fp(struct gxfb_par *par, int reg)
+{
+	return readl(par->vid_regs + 8*reg + VP_FP_START);
+}
 
-अटल अंतरभूत व्योम ग_लिखो_fp(काष्ठा gxfb_par *par, पूर्णांक reg, uपूर्णांक32_t val)
-अणु
-	ग_लिखोl(val, par->vid_regs + 8*reg + VP_FP_START);
-पूर्ण
+static inline void write_fp(struct gxfb_par *par, int reg, uint32_t val)
+{
+	writel(val, par->vid_regs + 8*reg + VP_FP_START);
+}
 
 
 /* MSRs are defined in linux/cs5535.h; their bitfields are here */
 
-#घोषणा MSR_GLCP_SYS_RSTPLL_DOTPOSTDIV3	(1 << 3)
-#घोषणा MSR_GLCP_SYS_RSTPLL_DOTPREMULT2	(1 << 2)
-#घोषणा MSR_GLCP_SYS_RSTPLL_DOTPREDIV2	(1 << 1)
+#define MSR_GLCP_SYS_RSTPLL_DOTPOSTDIV3	(1 << 3)
+#define MSR_GLCP_SYS_RSTPLL_DOTPREMULT2	(1 << 2)
+#define MSR_GLCP_SYS_RSTPLL_DOTPREDIV2	(1 << 1)
 
-#घोषणा MSR_GLCP_DOTPLL_LOCK		(1 << 25)	/* r/o */
-#घोषणा MSR_GLCP_DOTPLL_BYPASS		(1 << 15)
-#घोषणा MSR_GLCP_DOTPLL_DOTRESET	(1 << 0)
+#define MSR_GLCP_DOTPLL_LOCK		(1 << 25)	/* r/o */
+#define MSR_GLCP_DOTPLL_BYPASS		(1 << 15)
+#define MSR_GLCP_DOTPLL_DOTRESET	(1 << 0)
 
-#घोषणा MSR_GX_MSR_PADSEL_MASK		0x3FFFFFFF	/* unकरोcumented? */
-#घोषणा MSR_GX_MSR_PADSEL_TFT		0x1FFFFFFF	/* unकरोcumented? */
+#define MSR_GX_MSR_PADSEL_MASK		0x3FFFFFFF	/* undocumented? */
+#define MSR_GX_MSR_PADSEL_TFT		0x1FFFFFFF	/* undocumented? */
 
-#घोषणा MSR_GX_GLD_MSR_CONFIG_FP	(1 << 3)
+#define MSR_GX_GLD_MSR_CONFIG_FP	(1 << 3)
 
-#पूर्ण_अगर
+#endif

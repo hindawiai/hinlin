@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * OWL SoC's Pinctrl definitions
  *
@@ -10,273 +9,273 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
-#अगर_अघोषित __PINCTRL_OWL_H__
-#घोषणा __PINCTRL_OWL_H__
+#ifndef __PINCTRL_OWL_H__
+#define __PINCTRL_OWL_H__
 
-#घोषणा OWL_PINCONF_SLEW_SLOW 0
-#घोषणा OWL_PINCONF_SLEW_FAST 1
+#define OWL_PINCONF_SLEW_SLOW 0
+#define OWL_PINCONF_SLEW_FAST 1
 
-#घोषणा MUX_PG(group_name, reg, shअगरt, width)				\
-	अणु								\
+#define MUX_PG(group_name, reg, shift, width)				\
+	{								\
 		.name = #group_name,					\
 		.pads = group_name##_pads,				\
 		.npads = ARRAY_SIZE(group_name##_pads),			\
 		.funcs = group_name##_funcs,				\
 		.nfuncs = ARRAY_SIZE(group_name##_funcs),		\
 		.mfpctl_reg  = MFCTL##reg,				\
-		.mfpctl_shअगरt = shअगरt,					\
+		.mfpctl_shift = shift,					\
 		.mfpctl_width = width,					\
 		.drv_reg = -1,						\
-		.drv_shअगरt = -1,					\
+		.drv_shift = -1,					\
 		.drv_width = -1,					\
 		.sr_reg = -1,						\
-		.sr_shअगरt = -1,						\
+		.sr_shift = -1,						\
 		.sr_width = -1,						\
-	पूर्ण
+	}
 
-#घोषणा DRV_PG(group_name, reg, shअगरt, width)				\
-	अणु								\
+#define DRV_PG(group_name, reg, shift, width)				\
+	{								\
 		.name = #group_name,					\
 		.pads = group_name##_pads,				\
 		.npads = ARRAY_SIZE(group_name##_pads),			\
 		.mfpctl_reg  = -1,					\
-		.mfpctl_shअगरt = -1,					\
+		.mfpctl_shift = -1,					\
 		.mfpctl_width = -1,					\
 		.drv_reg = PAD_DRV##reg,				\
-		.drv_shअगरt = shअगरt,					\
+		.drv_shift = shift,					\
 		.drv_width = width,					\
 		.sr_reg = -1,						\
-		.sr_shअगरt = -1,						\
+		.sr_shift = -1,						\
 		.sr_width = -1,						\
-	पूर्ण
+	}
 
-#घोषणा SR_PG(group_name, reg, shअगरt, width)				\
-	अणु								\
+#define SR_PG(group_name, reg, shift, width)				\
+	{								\
 		.name = #group_name,					\
 		.pads = group_name##_pads,				\
 		.npads = ARRAY_SIZE(group_name##_pads),			\
 		.mfpctl_reg  = -1,					\
-		.mfpctl_shअगरt = -1,					\
+		.mfpctl_shift = -1,					\
 		.mfpctl_width = -1,					\
 		.drv_reg = -1,						\
-		.drv_shअगरt = -1,					\
+		.drv_shift = -1,					\
 		.drv_width = -1,					\
 		.sr_reg = PAD_SR##reg,					\
-		.sr_shअगरt = shअगरt,					\
+		.sr_shift = shift,					\
 		.sr_width = width,					\
-	पूर्ण
+	}
 
-#घोषणा FUNCTION(fname)					\
-	अणु						\
+#define FUNCTION(fname)					\
+	{						\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
-	पूर्ण
+	}
 
 /* PAD PULL UP/DOWN CONFIGURES */
-#घोषणा PULLCTL_CONF(pull_reg, pull_sft, pull_wdt)	\
-	अणु						\
+#define PULLCTL_CONF(pull_reg, pull_sft, pull_wdt)	\
+	{						\
 		.reg = PAD_PULLCTL##pull_reg,		\
-		.shअगरt = pull_sft,			\
+		.shift = pull_sft,			\
 		.width = pull_wdt,			\
-	पूर्ण
+	}
 
-#घोषणा PAD_PULLCTL_CONF(pad_name, pull_reg, pull_sft, pull_wdt)	\
-	काष्ठा owl_pullctl pad_name##_pullctl_conf			\
+#define PAD_PULLCTL_CONF(pad_name, pull_reg, pull_sft, pull_wdt)	\
+	struct owl_pullctl pad_name##_pullctl_conf			\
 		= PULLCTL_CONF(pull_reg, pull_sft, pull_wdt)
 
-#घोषणा ST_CONF(st_reg, st_sft, st_wdt)			\
-	अणु						\
+#define ST_CONF(st_reg, st_sft, st_wdt)			\
+	{						\
 		.reg = PAD_ST##st_reg,			\
-		.shअगरt = st_sft,			\
+		.shift = st_sft,			\
 		.width = st_wdt,			\
-	पूर्ण
+	}
 
-#घोषणा PAD_ST_CONF(pad_name, st_reg, st_sft, st_wdt)	\
-	काष्ठा owl_st pad_name##_st_conf		\
+#define PAD_ST_CONF(pad_name, st_reg, st_sft, st_wdt)	\
+	struct owl_st pad_name##_st_conf		\
 		= ST_CONF(st_reg, st_sft, st_wdt)
 
-#घोषणा PAD_INFO(name)					\
-	अणु						\
+#define PAD_INFO(name)					\
+	{						\
 		.pad = name,				\
-		.pullctl = शून्य,			\
-		.st = शून्य,				\
-	पूर्ण
+		.pullctl = NULL,			\
+		.st = NULL,				\
+	}
 
-#घोषणा PAD_INFO_ST(name)				\
-	अणु						\
+#define PAD_INFO_ST(name)				\
+	{						\
 		.pad = name,				\
-		.pullctl = शून्य,			\
+		.pullctl = NULL,			\
 		.st = &name##_st_conf,			\
-	पूर्ण
+	}
 
-#घोषणा PAD_INFO_PULLCTL(name)				\
-	अणु						\
+#define PAD_INFO_PULLCTL(name)				\
+	{						\
 		.pad = name,				\
 		.pullctl = &name##_pullctl_conf,	\
-		.st = शून्य,				\
-	पूर्ण
+		.st = NULL,				\
+	}
 
-#घोषणा PAD_INFO_PULLCTL_ST(name)			\
-	अणु						\
+#define PAD_INFO_PULLCTL_ST(name)			\
+	{						\
 		.pad = name,				\
 		.pullctl = &name##_pullctl_conf,	\
 		.st = &name##_st_conf,			\
-	पूर्ण
+	}
 
-#घोषणा OWL_GPIO_PORT_A		0
-#घोषणा OWL_GPIO_PORT_B		1
-#घोषणा OWL_GPIO_PORT_C		2
-#घोषणा OWL_GPIO_PORT_D		3
-#घोषणा OWL_GPIO_PORT_E		4
-#घोषणा OWL_GPIO_PORT_F		5
+#define OWL_GPIO_PORT_A		0
+#define OWL_GPIO_PORT_B		1
+#define OWL_GPIO_PORT_C		2
+#define OWL_GPIO_PORT_D		3
+#define OWL_GPIO_PORT_E		4
+#define OWL_GPIO_PORT_F		5
 
-#घोषणा OWL_GPIO_PORT(port, base, count, _outen, _inen, _dat, _पूर्णांकc_ctl,\
-			_पूर्णांकc_pd, _पूर्णांकc_msk, _पूर्णांकc_type, _share)	\
-	[OWL_GPIO_PORT_##port] = अणु				\
+#define OWL_GPIO_PORT(port, base, count, _outen, _inen, _dat, _intc_ctl,\
+			_intc_pd, _intc_msk, _intc_type, _share)	\
+	[OWL_GPIO_PORT_##port] = {				\
 		.offset = base,					\
 		.pins = count,					\
 		.outen = _outen,				\
 		.inen = _inen,					\
 		.dat = _dat,					\
-		.पूर्णांकc_ctl = _पूर्णांकc_ctl,				\
-		.पूर्णांकc_pd = _पूर्णांकc_pd,				\
-		.पूर्णांकc_msk = _पूर्णांकc_msk,				\
-		.पूर्णांकc_type = _पूर्णांकc_type,			\
+		.intc_ctl = _intc_ctl,				\
+		.intc_pd = _intc_pd,				\
+		.intc_msk = _intc_msk,				\
+		.intc_type = _intc_type,			\
 		.shared_ctl_offset = _share,			\
-	पूर्ण
+	}
 
-क्रमागत owl_pinconf_drv अणु
+enum owl_pinconf_drv {
 	OWL_PINCONF_DRV_2MA,
 	OWL_PINCONF_DRV_4MA,
 	OWL_PINCONF_DRV_8MA,
 	OWL_PINCONF_DRV_12MA,
-पूर्ण;
+};
 
 /* GPIO CTRL Bit Definition */
-#घोषणा OWL_GPIO_CTLR_PENDING		0
-#घोषणा OWL_GPIO_CTLR_ENABLE		1
-#घोषणा OWL_GPIO_CTLR_SAMPLE_CLK_24M	2
+#define OWL_GPIO_CTLR_PENDING		0
+#define OWL_GPIO_CTLR_ENABLE		1
+#define OWL_GPIO_CTLR_SAMPLE_CLK_24M	2
 
 /* GPIO TYPE Bit Definition */
-#घोषणा OWL_GPIO_INT_LEVEL_HIGH		0
-#घोषणा OWL_GPIO_INT_LEVEL_LOW		1
-#घोषणा OWL_GPIO_INT_EDGE_RISING	2
-#घोषणा OWL_GPIO_INT_EDGE_FALLING	3
-#घोषणा OWL_GPIO_INT_MASK		3
+#define OWL_GPIO_INT_LEVEL_HIGH		0
+#define OWL_GPIO_INT_LEVEL_LOW		1
+#define OWL_GPIO_INT_EDGE_RISING	2
+#define OWL_GPIO_INT_EDGE_FALLING	3
+#define OWL_GPIO_INT_MASK		3
 
 /**
- * काष्ठा owl_pullctl - Actions pad pull control रेजिस्टर
- * @reg: offset to the pull control रेजिस्टर
- * @shअगरt: shअगरt value of the रेजिस्टर
- * @width: width of the रेजिस्टर
+ * struct owl_pullctl - Actions pad pull control register
+ * @reg: offset to the pull control register
+ * @shift: shift value of the register
+ * @width: width of the register
  */
-काष्ठा owl_pullctl अणु
-	पूर्णांक reg;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक width;
-पूर्ण;
+struct owl_pullctl {
+	int reg;
+	unsigned int shift;
+	unsigned int width;
+};
 
 /**
- * काष्ठा owl_st - Actions pad schmitt trigger enable रेजिस्टर
- * @reg: offset to the schmitt trigger enable रेजिस्टर
- * @shअगरt: shअगरt value of the रेजिस्टर
- * @width: width of the रेजिस्टर
+ * struct owl_st - Actions pad schmitt trigger enable register
+ * @reg: offset to the schmitt trigger enable register
+ * @shift: shift value of the register
+ * @width: width of the register
  */
-काष्ठा owl_st अणु
-	पूर्णांक reg;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक width;
-पूर्ण;
+struct owl_st {
+	int reg;
+	unsigned int shift;
+	unsigned int width;
+};
 
 /**
- * काष्ठा owl_pingroup - Actions pingroup definition
+ * struct owl_pingroup - Actions pingroup definition
  * @name: name of the  pin group
- * @pads: list of pins asचिन्हित to this pingroup
+ * @pads: list of pins assigned to this pingroup
  * @npads: size of @pads array
- * @funcs: list of pinmux functions क्रम this pingroup
+ * @funcs: list of pinmux functions for this pingroup
  * @nfuncs: size of @funcs array
- * @mfpctl_reg: multiplexing control रेजिस्टर offset
- * @mfpctl_shअगरt: multiplexing control रेजिस्टर bit mask
- * @mfpctl_width: multiplexing control रेजिस्टर width
- * @drv_reg: drive control रेजिस्टर offset
- * @drv_shअगरt: drive control रेजिस्टर bit mask
- * @drv_width: driver control रेजिस्टर width
- * @sr_reg: slew rate control रेजिस्टर offset
- * @sr_shअगरt: slew rate control रेजिस्टर bit mask
- * @sr_width: slew rate control रेजिस्टर width
+ * @mfpctl_reg: multiplexing control register offset
+ * @mfpctl_shift: multiplexing control register bit mask
+ * @mfpctl_width: multiplexing control register width
+ * @drv_reg: drive control register offset
+ * @drv_shift: drive control register bit mask
+ * @drv_width: driver control register width
+ * @sr_reg: slew rate control register offset
+ * @sr_shift: slew rate control register bit mask
+ * @sr_width: slew rate control register width
  */
-काष्ठा owl_pingroup अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक *pads;
-	अचिन्हित पूर्णांक npads;
-	अचिन्हित पूर्णांक *funcs;
-	अचिन्हित पूर्णांक nfuncs;
+struct owl_pingroup {
+	const char *name;
+	unsigned int *pads;
+	unsigned int npads;
+	unsigned int *funcs;
+	unsigned int nfuncs;
 
-	पूर्णांक mfpctl_reg;
-	अचिन्हित पूर्णांक mfpctl_shअगरt;
-	अचिन्हित पूर्णांक mfpctl_width;
+	int mfpctl_reg;
+	unsigned int mfpctl_shift;
+	unsigned int mfpctl_width;
 
-	पूर्णांक drv_reg;
-	अचिन्हित पूर्णांक drv_shअगरt;
-	अचिन्हित पूर्णांक drv_width;
+	int drv_reg;
+	unsigned int drv_shift;
+	unsigned int drv_width;
 
-	पूर्णांक sr_reg;
-	अचिन्हित पूर्णांक sr_shअगरt;
-	अचिन्हित पूर्णांक sr_width;
-पूर्ण;
+	int sr_reg;
+	unsigned int sr_shift;
+	unsigned int sr_width;
+};
 
 /**
- * काष्ठा owl_padinfo - Actions pinctrl pad info
+ * struct owl_padinfo - Actions pinctrl pad info
  * @pad: pad name of the SoC
- * @pullctl: pull control रेजिस्टर info
- * @st: schmitt trigger रेजिस्टर info
+ * @pullctl: pull control register info
+ * @st: schmitt trigger register info
  */
-काष्ठा owl_padinfo अणु
-	पूर्णांक pad;
-	काष्ठा owl_pullctl *pullctl;
-	काष्ठा owl_st *st;
-पूर्ण;
+struct owl_padinfo {
+	int pad;
+	struct owl_pullctl *pullctl;
+	struct owl_st *st;
+};
 
 /**
- * काष्ठा owl_pinmux_func - Actions pinctrl mux functions
+ * struct owl_pinmux_func - Actions pinctrl mux functions
  * @name: name of the pinmux function.
  * @groups: array of pin groups that may select this function.
  * @ngroups: number of entries in @groups.
  */
-काष्ठा owl_pinmux_func अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर * स्थिर *groups;
-	अचिन्हित पूर्णांक ngroups;
-पूर्ण;
+struct owl_pinmux_func {
+	const char *name;
+	const char * const *groups;
+	unsigned int ngroups;
+};
 
 /**
- * काष्ठा owl_gpio_port - Actions GPIO port info
+ * struct owl_gpio_port - Actions GPIO port info
  * @offset: offset of the GPIO port.
- * @pins: number of pins beदीर्घs to the GPIO port.
- * @outen: offset of the output enable रेजिस्टर.
- * @inen: offset of the input enable रेजिस्टर.
- * @dat: offset of the data रेजिस्टर.
- * @पूर्णांकc_ctl: offset of the पूर्णांकerrupt control रेजिस्टर.
- * @पूर्णांकc_pd: offset of the पूर्णांकerrupt pending रेजिस्टर.
- * @पूर्णांकc_msk: offset of the पूर्णांकerrupt mask रेजिस्टर.
- * @पूर्णांकc_type: offset of the पूर्णांकerrupt type रेजिस्टर.
+ * @pins: number of pins belongs to the GPIO port.
+ * @outen: offset of the output enable register.
+ * @inen: offset of the input enable register.
+ * @dat: offset of the data register.
+ * @intc_ctl: offset of the interrupt control register.
+ * @intc_pd: offset of the interrupt pending register.
+ * @intc_msk: offset of the interrupt mask register.
+ * @intc_type: offset of the interrupt type register.
  */
-काष्ठा owl_gpio_port अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक pins;
-	अचिन्हित पूर्णांक outen;
-	अचिन्हित पूर्णांक inen;
-	अचिन्हित पूर्णांक dat;
-	अचिन्हित पूर्णांक पूर्णांकc_ctl;
-	अचिन्हित पूर्णांक पूर्णांकc_pd;
-	अचिन्हित पूर्णांक पूर्णांकc_msk;
-	अचिन्हित पूर्णांक पूर्णांकc_type;
+struct owl_gpio_port {
+	unsigned int offset;
+	unsigned int pins;
+	unsigned int outen;
+	unsigned int inen;
+	unsigned int dat;
+	unsigned int intc_ctl;
+	unsigned int intc_pd;
+	unsigned int intc_msk;
+	unsigned int intc_type;
 	u8 shared_ctl_offset;
-पूर्ण;
+};
 
 /**
- * काष्ठा owl_pinctrl_soc_data - Actions pin controller driver configuration
+ * struct owl_pinctrl_soc_data - Actions pin controller driver configuration
  * @pins: array describing all pins of the pin controller.
  * @npins: number of entries in @pins.
  * @functions: array describing all mux functions of this SoC.
@@ -288,26 +287,26 @@
  * @ports: array describing all GPIO ports of this SoC.
  * @nports: number of GPIO ports in this SoC.
  */
-काष्ठा owl_pinctrl_soc_data अणु
-	स्थिर काष्ठा pinctrl_pin_desc *pins;
-	अचिन्हित पूर्णांक npins;
-	स्थिर काष्ठा owl_pinmux_func *functions;
-	अचिन्हित पूर्णांक nfunctions;
-	स्थिर काष्ठा owl_pingroup *groups;
-	अचिन्हित पूर्णांक ngroups;
-	स्थिर काष्ठा owl_padinfo *padinfo;
-	अचिन्हित पूर्णांक ngpios;
-	स्थिर काष्ठा owl_gpio_port *ports;
-	अचिन्हित पूर्णांक nports;
-	पूर्णांक (*padctl_val2arg)(स्थिर काष्ठा owl_padinfo *padinfo,
-				अचिन्हित पूर्णांक param,
+struct owl_pinctrl_soc_data {
+	const struct pinctrl_pin_desc *pins;
+	unsigned int npins;
+	const struct owl_pinmux_func *functions;
+	unsigned int nfunctions;
+	const struct owl_pingroup *groups;
+	unsigned int ngroups;
+	const struct owl_padinfo *padinfo;
+	unsigned int ngpios;
+	const struct owl_gpio_port *ports;
+	unsigned int nports;
+	int (*padctl_val2arg)(const struct owl_padinfo *padinfo,
+				unsigned int param,
 				u32 *arg);
-	पूर्णांक (*padctl_arg2val)(स्थिर काष्ठा owl_padinfo *info,
-				अचिन्हित पूर्णांक param,
+	int (*padctl_arg2val)(const struct owl_padinfo *info,
+				unsigned int param,
 				u32 *arg);
-पूर्ण;
+};
 
-पूर्णांक owl_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-		काष्ठा owl_pinctrl_soc_data *soc_data);
+int owl_pinctrl_probe(struct platform_device *pdev,
+		struct owl_pinctrl_soc_data *soc_data);
 
-#पूर्ण_अगर /* __PINCTRL_OWL_H__ */
+#endif /* __PINCTRL_OWL_H__ */

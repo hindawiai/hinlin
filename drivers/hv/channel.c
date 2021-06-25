@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2009, Microsoft Corporation.
  *
@@ -7,40 +6,40 @@
  *   Haiyang Zhang <haiyangz@microsoft.com>
  *   Hank Janssen  <hjanssen@microsoft.com>
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/hyperv.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/mshyperv.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/hyperv.h>
+#include <linux/uio.h>
+#include <linux/interrupt.h>
+#include <asm/page.h>
+#include <asm/mshyperv.h>
 
-#समावेश "hyperv_vmbus.h"
+#include "hyperv_vmbus.h"
 
 /*
  * hv_gpadl_size - Return the real size of a gpadl, the size that Hyper-V uses
  *
- * For BUFFER gpadl, Hyper-V uses the exact same size as the guest करोes.
+ * For BUFFER gpadl, Hyper-V uses the exact same size as the guest does.
  *
  * For RING gpadl, in each ring, the guest uses one PAGE_SIZE as the header
  * (because of the alignment requirement), however, the hypervisor only
- * uses the first HV_HYP_PAGE_SIZE as the header, thereक्रमe leaving a
+ * uses the first HV_HYP_PAGE_SIZE as the header, therefore leaving a
  * (PAGE_SIZE - HV_HYP_PAGE_SIZE) gap. And since there are two rings in a
- * ringbuffer, the total size क्रम a RING gpadl that Hyper-V uses is the
+ * ringbuffer, the total size for a RING gpadl that Hyper-V uses is the
  * total size that the guest uses minus twice of the gap size.
  */
-अटल अंतरभूत u32 hv_gpadl_size(क्रमागत hv_gpadl_type type, u32 size)
-अणु
-	चयन (type) अणु
-	हाल HV_GPADL_BUFFER:
-		वापस size;
-	हाल HV_GPADL_RING:
+static inline u32 hv_gpadl_size(enum hv_gpadl_type type, u32 size)
+{
+	switch (type) {
+	case HV_GPADL_BUFFER:
+		return size;
+	case HV_GPADL_RING:
 		/* The size of a ringbuffer must be page-aligned */
 		BUG_ON(size % PAGE_SIZE);
 		/*
@@ -51,11 +50,11 @@
 		 * So we effectively subtract out two guest-size pages, and add
 		 * back two Hyper-V size pages.
 		 */
-		वापस size - 2 * (PAGE_SIZE - HV_HYP_PAGE_SIZE);
-	पूर्ण
+		return size - 2 * (PAGE_SIZE - HV_HYP_PAGE_SIZE);
+	}
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * hv_ring_gpadl_send_hvpgoffset - Calculate the send offset (in unit of
@@ -63,66 +62,66 @@
  *                                 offset in the guest
  *
  * @offset: the offset (in bytes) where the send ringbuffer starts in the
- *               भव address space of the guest
+ *               virtual address space of the guest
  */
-अटल अंतरभूत u32 hv_ring_gpadl_send_hvpgoffset(u32 offset)
-अणु
+static inline u32 hv_ring_gpadl_send_hvpgoffset(u32 offset)
+{
 
 	/*
 	 * For RING gpadl, in each ring, the guest uses one PAGE_SIZE as the
 	 * header (because of the alignment requirement), however, the
 	 * hypervisor only uses the first HV_HYP_PAGE_SIZE as the header,
-	 * thereक्रमe leaving a (PAGE_SIZE - HV_HYP_PAGE_SIZE) gap.
+	 * therefore leaving a (PAGE_SIZE - HV_HYP_PAGE_SIZE) gap.
 	 *
 	 * And to calculate the effective send offset in gpadl, we need to
 	 * substract this gap.
 	 */
-	वापस (offset - (PAGE_SIZE - HV_HYP_PAGE_SIZE)) >> HV_HYP_PAGE_SHIFT;
-पूर्ण
+	return (offset - (PAGE_SIZE - HV_HYP_PAGE_SIZE)) >> HV_HYP_PAGE_SHIFT;
+}
 
 /*
  * hv_gpadl_hvpfn - Return the Hyper-V page PFN of the @i th Hyper-V page in
  *                  the gpadl
  *
  * @type: the type of the gpadl
- * @kbuffer: the poपूर्णांकer to the gpadl in the guest
+ * @kbuffer: the pointer to the gpadl in the guest
  * @size: the total size (in bytes) of the gpadl
  * @send_offset: the offset (in bytes) where the send ringbuffer starts in the
- *               भव address space of the guest
+ *               virtual address space of the guest
  * @i: the index
  */
-अटल अंतरभूत u64 hv_gpadl_hvpfn(क्रमागत hv_gpadl_type type, व्योम *kbuffer,
-				 u32 size, u32 send_offset, पूर्णांक i)
-अणु
-	पूर्णांक send_idx = hv_ring_gpadl_send_hvpgoffset(send_offset);
-	अचिन्हित दीर्घ delta = 0UL;
+static inline u64 hv_gpadl_hvpfn(enum hv_gpadl_type type, void *kbuffer,
+				 u32 size, u32 send_offset, int i)
+{
+	int send_idx = hv_ring_gpadl_send_hvpgoffset(send_offset);
+	unsigned long delta = 0UL;
 
-	चयन (type) अणु
-	हाल HV_GPADL_BUFFER:
-		अवरोध;
-	हाल HV_GPADL_RING:
-		अगर (i == 0)
+	switch (type) {
+	case HV_GPADL_BUFFER:
+		break;
+	case HV_GPADL_RING:
+		if (i == 0)
 			delta = 0;
-		अन्यथा अगर (i <= send_idx)
+		else if (i <= send_idx)
 			delta = PAGE_SIZE - HV_HYP_PAGE_SIZE;
-		अन्यथा
+		else
 			delta = 2 * (PAGE_SIZE - HV_HYP_PAGE_SIZE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस virt_to_hvpfn(kbuffer + delta + (HV_HYP_PAGE_SIZE * i));
-पूर्ण
+	return virt_to_hvpfn(kbuffer + delta + (HV_HYP_PAGE_SIZE * i));
+}
 
 /*
- * vmbus_setevent- Trigger an event notअगरication on the specअगरied
+ * vmbus_setevent- Trigger an event notification on the specified
  * channel.
  */
-व्योम vmbus_setevent(काष्ठा vmbus_channel *channel)
-अणु
-	काष्ठा hv_monitor_page *monitorpage;
+void vmbus_setevent(struct vmbus_channel *channel)
+{
+	struct hv_monitor_page *monitorpage;
 
 	trace_vmbus_setevent(channel);
 
@@ -130,119 +129,119 @@
 	 * For channels marked as in "low latency" mode
 	 * bypass the monitor page mechanism.
 	 */
-	अगर (channel->offermsg.monitor_allocated && !channel->low_latency) अणु
-		vmbus_send_पूर्णांकerrupt(channel->offermsg.child_relid);
+	if (channel->offermsg.monitor_allocated && !channel->low_latency) {
+		vmbus_send_interrupt(channel->offermsg.child_relid);
 
 		/* Get the child to parent monitor page */
 		monitorpage = vmbus_connection.monitor_pages[1];
 
 		sync_set_bit(channel->monitor_bit,
-			(अचिन्हित दीर्घ *)&monitorpage->trigger_group
+			(unsigned long *)&monitorpage->trigger_group
 					[channel->monitor_grp].pending);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		vmbus_set_event(channel);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(vmbus_setevent);
 
-/* vmbus_मुक्त_ring - drop mapping of ring buffer */
-व्योम vmbus_मुक्त_ring(काष्ठा vmbus_channel *channel)
-अणु
+/* vmbus_free_ring - drop mapping of ring buffer */
+void vmbus_free_ring(struct vmbus_channel *channel)
+{
 	hv_ringbuffer_cleanup(&channel->outbound);
 	hv_ringbuffer_cleanup(&channel->inbound);
 
-	अगर (channel->ringbuffer_page) अणु
-		__मुक्त_pages(channel->ringbuffer_page,
+	if (channel->ringbuffer_page) {
+		__free_pages(channel->ringbuffer_page,
 			     get_order(channel->ringbuffer_pagecount
 				       << PAGE_SHIFT));
-		channel->ringbuffer_page = शून्य;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(vmbus_मुक्त_ring);
+		channel->ringbuffer_page = NULL;
+	}
+}
+EXPORT_SYMBOL_GPL(vmbus_free_ring);
 
-/* vmbus_alloc_ring - allocate and map pages क्रम ring buffer */
-पूर्णांक vmbus_alloc_ring(काष्ठा vmbus_channel *newchannel,
+/* vmbus_alloc_ring - allocate and map pages for ring buffer */
+int vmbus_alloc_ring(struct vmbus_channel *newchannel,
 		     u32 send_size, u32 recv_size)
-अणु
-	काष्ठा page *page;
-	पूर्णांक order;
+{
+	struct page *page;
+	int order;
 
-	अगर (send_size % PAGE_SIZE || recv_size % PAGE_SIZE)
-		वापस -EINVAL;
+	if (send_size % PAGE_SIZE || recv_size % PAGE_SIZE)
+		return -EINVAL;
 
 	/* Allocate the ring buffer */
 	order = get_order(send_size + recv_size);
 	page = alloc_pages_node(cpu_to_node(newchannel->target_cpu),
 				GFP_KERNEL|__GFP_ZERO, order);
 
-	अगर (!page)
+	if (!page)
 		page = alloc_pages(GFP_KERNEL|__GFP_ZERO, order);
 
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	newchannel->ringbuffer_page = page;
 	newchannel->ringbuffer_pagecount = (send_size + recv_size) >> PAGE_SHIFT;
 	newchannel->ringbuffer_send_offset = send_size >> PAGE_SHIFT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(vmbus_alloc_ring);
 
-/* Used क्रम Hyper-V Socket: a guest client's connect() to the host */
-पूर्णांक vmbus_send_tl_connect_request(स्थिर guid_t *shv_guest_servie_id,
-				  स्थिर guid_t *shv_host_servie_id)
-अणु
-	काष्ठा vmbus_channel_tl_connect_request conn_msg;
-	पूर्णांक ret;
+/* Used for Hyper-V Socket: a guest client's connect() to the host */
+int vmbus_send_tl_connect_request(const guid_t *shv_guest_servie_id,
+				  const guid_t *shv_host_servie_id)
+{
+	struct vmbus_channel_tl_connect_request conn_msg;
+	int ret;
 
-	स_रखो(&conn_msg, 0, माप(conn_msg));
+	memset(&conn_msg, 0, sizeof(conn_msg));
 	conn_msg.header.msgtype = CHANNELMSG_TL_CONNECT_REQUEST;
-	conn_msg.guest_endpoपूर्णांक_id = *shv_guest_servie_id;
+	conn_msg.guest_endpoint_id = *shv_guest_servie_id;
 	conn_msg.host_service_id = *shv_host_servie_id;
 
-	ret = vmbus_post_msg(&conn_msg, माप(conn_msg), true);
+	ret = vmbus_post_msg(&conn_msg, sizeof(conn_msg), true);
 
 	trace_vmbus_send_tl_connect_request(&conn_msg, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vmbus_send_tl_connect_request);
 
-अटल पूर्णांक send_modअगरychannel_without_ack(काष्ठा vmbus_channel *channel, u32 target_vp)
-अणु
-	काष्ठा vmbus_channel_modअगरychannel msg;
-	पूर्णांक ret;
+static int send_modifychannel_without_ack(struct vmbus_channel *channel, u32 target_vp)
+{
+	struct vmbus_channel_modifychannel msg;
+	int ret;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.header.msgtype = CHANNELMSG_MODIFYCHANNEL;
 	msg.child_relid = channel->offermsg.child_relid;
 	msg.target_vp = target_vp;
 
-	ret = vmbus_post_msg(&msg, माप(msg), true);
-	trace_vmbus_send_modअगरychannel(&msg, ret);
+	ret = vmbus_post_msg(&msg, sizeof(msg), true);
+	trace_vmbus_send_modifychannel(&msg, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक send_modअगरychannel_with_ack(काष्ठा vmbus_channel *channel, u32 target_vp)
-अणु
-	काष्ठा vmbus_channel_modअगरychannel *msg;
-	काष्ठा vmbus_channel_msginfo *info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int send_modifychannel_with_ack(struct vmbus_channel *channel, u32 target_vp)
+{
+	struct vmbus_channel_modifychannel *msg;
+	struct vmbus_channel_msginfo *info;
+	unsigned long flags;
+	int ret;
 
-	info = kzalloc(माप(काष्ठा vmbus_channel_msginfo) +
-				माप(काष्ठा vmbus_channel_modअगरychannel),
+	info = kzalloc(sizeof(struct vmbus_channel_msginfo) +
+				sizeof(struct vmbus_channel_modifychannel),
 		       GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 
-	init_completion(&info->रुकोevent);
-	info->रुकोing_channel = channel;
+	init_completion(&info->waitevent);
+	info->waiting_channel = channel;
 
-	msg = (काष्ठा vmbus_channel_modअगरychannel *)info->msg;
+	msg = (struct vmbus_channel_modifychannel *)info->msg;
 	msg->header.msgtype = CHANNELMSG_MODIFYCHANNEL;
 	msg->child_relid = channel->offermsg.child_relid;
 	msg->target_vp = target_vp;
@@ -251,104 +250,104 @@ EXPORT_SYMBOL_GPL(vmbus_send_tl_connect_request);
 	list_add_tail(&info->msglistentry, &vmbus_connection.chn_msg_list);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	ret = vmbus_post_msg(msg, माप(*msg), true);
-	trace_vmbus_send_modअगरychannel(msg, ret);
-	अगर (ret != 0) अणु
+	ret = vmbus_post_msg(msg, sizeof(*msg), true);
+	trace_vmbus_send_modifychannel(msg, ret);
+	if (ret != 0) {
 		spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
 		list_del(&info->msglistentry);
 		spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
-		जाओ मुक्त_info;
-	पूर्ण
+		goto free_info;
+	}
 
 	/*
 	 * Release channel_mutex; otherwise, vmbus_onoffer_rescind() could block on
-	 * the mutex and be unable to संकेत the completion.
+	 * the mutex and be unable to signal the completion.
 	 *
-	 * See the caller target_cpu_store() क्रम inक्रमmation about the usage of the
+	 * See the caller target_cpu_store() for information about the usage of the
 	 * mutex.
 	 */
 	mutex_unlock(&vmbus_connection.channel_mutex);
-	रुको_क्रम_completion(&info->रुकोevent);
+	wait_for_completion(&info->waitevent);
 	mutex_lock(&vmbus_connection.channel_mutex);
 
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
 	list_del(&info->msglistentry);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	अगर (info->response.modअगरy_response.status)
+	if (info->response.modify_response.status)
 		ret = -EAGAIN;
 
-मुक्त_info:
-	kमुक्त(info);
-	वापस ret;
-पूर्ण
+free_info:
+	kfree(info);
+	return ret;
+}
 
 /*
- * Set/change the vCPU (@target_vp) the channel (@child_relid) will पूर्णांकerrupt.
+ * Set/change the vCPU (@target_vp) the channel (@child_relid) will interrupt.
  *
  * CHANNELMSG_MODIFYCHANNEL messages are aynchronous.  When VMbus version 5.3
  * or later is negotiated, Hyper-V always sends an ACK in response to such a
  * message.  For VMbus version 5.2 and earlier, it never sends an ACK.  With-
- * out an ACK, we can not know when the host will stop पूर्णांकerrupting the "old"
- * vCPU and start पूर्णांकerrupting the "new" vCPU क्रम the given channel.
+ * out an ACK, we can not know when the host will stop interrupting the "old"
+ * vCPU and start interrupting the "new" vCPU for the given channel.
  *
  * The CHANNELMSG_MODIFYCHANNEL message type is supported since VMBus version
  * VERSION_WIN10_V4_1.
  */
-पूर्णांक vmbus_send_modअगरychannel(काष्ठा vmbus_channel *channel, u32 target_vp)
-अणु
-	अगर (vmbus_proto_version >= VERSION_WIN10_V5_3)
-		वापस send_modअगरychannel_with_ack(channel, target_vp);
-	वापस send_modअगरychannel_without_ack(channel, target_vp);
-पूर्ण
-EXPORT_SYMBOL_GPL(vmbus_send_modअगरychannel);
+int vmbus_send_modifychannel(struct vmbus_channel *channel, u32 target_vp)
+{
+	if (vmbus_proto_version >= VERSION_WIN10_V5_3)
+		return send_modifychannel_with_ack(channel, target_vp);
+	return send_modifychannel_without_ack(channel, target_vp);
+}
+EXPORT_SYMBOL_GPL(vmbus_send_modifychannel);
 
 /*
- * create_gpadl_header - Creates a gpadl क्रम the specअगरied buffer
+ * create_gpadl_header - Creates a gpadl for the specified buffer
  */
-अटल पूर्णांक create_gpadl_header(क्रमागत hv_gpadl_type type, व्योम *kbuffer,
+static int create_gpadl_header(enum hv_gpadl_type type, void *kbuffer,
 			       u32 size, u32 send_offset,
-			       काष्ठा vmbus_channel_msginfo **msginfo)
-अणु
-	पूर्णांक i;
-	पूर्णांक pagecount;
-	काष्ठा vmbus_channel_gpadl_header *gpadl_header;
-	काष्ठा vmbus_channel_gpadl_body *gpadl_body;
-	काष्ठा vmbus_channel_msginfo *msgheader;
-	काष्ठा vmbus_channel_msginfo *msgbody = शून्य;
+			       struct vmbus_channel_msginfo **msginfo)
+{
+	int i;
+	int pagecount;
+	struct vmbus_channel_gpadl_header *gpadl_header;
+	struct vmbus_channel_gpadl_body *gpadl_body;
+	struct vmbus_channel_msginfo *msgheader;
+	struct vmbus_channel_msginfo *msgbody = NULL;
 	u32 msgsize;
 
-	पूर्णांक pfnsum, pfncount, pfnleft, pfncurr, pfnsize;
+	int pfnsum, pfncount, pfnleft, pfncurr, pfnsize;
 
 	pagecount = hv_gpadl_size(type, size) >> HV_HYP_PAGE_SHIFT;
 
-	/* करो we need a gpadl body msg */
+	/* do we need a gpadl body msg */
 	pfnsize = MAX_SIZE_CHANNEL_MESSAGE -
-		  माप(काष्ठा vmbus_channel_gpadl_header) -
-		  माप(काष्ठा gpa_range);
-	pfncount = pfnsize / माप(u64);
+		  sizeof(struct vmbus_channel_gpadl_header) -
+		  sizeof(struct gpa_range);
+	pfncount = pfnsize / sizeof(u64);
 
-	अगर (pagecount > pfncount) अणु
+	if (pagecount > pfncount) {
 		/* we need a gpadl body */
 		/* fill in the header */
-		msgsize = माप(काष्ठा vmbus_channel_msginfo) +
-			  माप(काष्ठा vmbus_channel_gpadl_header) +
-			  माप(काष्ठा gpa_range) + pfncount * माप(u64);
+		msgsize = sizeof(struct vmbus_channel_msginfo) +
+			  sizeof(struct vmbus_channel_gpadl_header) +
+			  sizeof(struct gpa_range) + pfncount * sizeof(u64);
 		msgheader =  kzalloc(msgsize, GFP_KERNEL);
-		अगर (!msgheader)
-			जाओ nomem;
+		if (!msgheader)
+			goto nomem;
 
 		INIT_LIST_HEAD(&msgheader->submsglist);
 		msgheader->msgsize = msgsize;
 
-		gpadl_header = (काष्ठा vmbus_channel_gpadl_header *)
+		gpadl_header = (struct vmbus_channel_gpadl_header *)
 			msgheader->msg;
 		gpadl_header->rangecount = 1;
-		gpadl_header->range_buflen = माप(काष्ठा gpa_range) +
-					 pagecount * माप(u64);
+		gpadl_header->range_buflen = sizeof(struct gpa_range) +
+					 pagecount * sizeof(u64);
 		gpadl_header->range[0].byte_offset = 0;
 		gpadl_header->range[0].byte_count = hv_gpadl_size(type, size);
-		क्रम (i = 0; i < pfncount; i++)
+		for (i = 0; i < pfncount; i++)
 			gpadl_header->range[0].pfn_array[i] = hv_gpadl_hvpfn(
 				type, kbuffer, size, send_offset, i);
 		*msginfo = msgheader;
@@ -358,49 +357,49 @@ EXPORT_SYMBOL_GPL(vmbus_send_modअगरychannel);
 
 		/* how many pfns can we fit */
 		pfnsize = MAX_SIZE_CHANNEL_MESSAGE -
-			  माप(काष्ठा vmbus_channel_gpadl_body);
-		pfncount = pfnsize / माप(u64);
+			  sizeof(struct vmbus_channel_gpadl_body);
+		pfncount = pfnsize / sizeof(u64);
 
 		/* fill in the body */
-		जबतक (pfnleft) अणु
-			अगर (pfnleft > pfncount)
+		while (pfnleft) {
+			if (pfnleft > pfncount)
 				pfncurr = pfncount;
-			अन्यथा
+			else
 				pfncurr = pfnleft;
 
-			msgsize = माप(काष्ठा vmbus_channel_msginfo) +
-				  माप(काष्ठा vmbus_channel_gpadl_body) +
-				  pfncurr * माप(u64);
+			msgsize = sizeof(struct vmbus_channel_msginfo) +
+				  sizeof(struct vmbus_channel_gpadl_body) +
+				  pfncurr * sizeof(u64);
 			msgbody = kzalloc(msgsize, GFP_KERNEL);
 
-			अगर (!msgbody) अणु
-				काष्ठा vmbus_channel_msginfo *pos = शून्य;
-				काष्ठा vmbus_channel_msginfo *पंचांगp = शून्य;
+			if (!msgbody) {
+				struct vmbus_channel_msginfo *pos = NULL;
+				struct vmbus_channel_msginfo *tmp = NULL;
 				/*
 				 * Free up all the allocated messages.
 				 */
-				list_क्रम_each_entry_safe(pos, पंचांगp,
+				list_for_each_entry_safe(pos, tmp,
 					&msgheader->submsglist,
-					msglistentry) अणु
+					msglistentry) {
 
 					list_del(&pos->msglistentry);
-					kमुक्त(pos);
-				पूर्ण
+					kfree(pos);
+				}
 
-				जाओ nomem;
-			पूर्ण
+				goto nomem;
+			}
 
 			msgbody->msgsize = msgsize;
 			gpadl_body =
-				(काष्ठा vmbus_channel_gpadl_body *)msgbody->msg;
+				(struct vmbus_channel_gpadl_body *)msgbody->msg;
 
 			/*
-			 * Gpadl is u32 and we are using a poपूर्णांकer which could
+			 * Gpadl is u32 and we are using a pointer which could
 			 * be 64-bit
 			 * This is governed by the guest/host protocol and
 			 * so the hypervisor guarantees that this is ok.
 			 */
-			क्रम (i = 0; i < pfncurr; i++)
+			for (i = 0; i < pfncurr; i++)
 				gpadl_body->pfn[i] = hv_gpadl_hvpfn(type,
 					kbuffer, size, send_offset, pfnsum + i);
 
@@ -409,76 +408,76 @@ EXPORT_SYMBOL_GPL(vmbus_send_modअगरychannel);
 				      &msgheader->submsglist);
 			pfnsum += pfncurr;
 			pfnleft -= pfncurr;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* everything fits in a header */
-		msgsize = माप(काष्ठा vmbus_channel_msginfo) +
-			  माप(काष्ठा vmbus_channel_gpadl_header) +
-			  माप(काष्ठा gpa_range) + pagecount * माप(u64);
+		msgsize = sizeof(struct vmbus_channel_msginfo) +
+			  sizeof(struct vmbus_channel_gpadl_header) +
+			  sizeof(struct gpa_range) + pagecount * sizeof(u64);
 		msgheader = kzalloc(msgsize, GFP_KERNEL);
-		अगर (msgheader == शून्य)
-			जाओ nomem;
+		if (msgheader == NULL)
+			goto nomem;
 
 		INIT_LIST_HEAD(&msgheader->submsglist);
 		msgheader->msgsize = msgsize;
 
-		gpadl_header = (काष्ठा vmbus_channel_gpadl_header *)
+		gpadl_header = (struct vmbus_channel_gpadl_header *)
 			msgheader->msg;
 		gpadl_header->rangecount = 1;
-		gpadl_header->range_buflen = माप(काष्ठा gpa_range) +
-					 pagecount * माप(u64);
+		gpadl_header->range_buflen = sizeof(struct gpa_range) +
+					 pagecount * sizeof(u64);
 		gpadl_header->range[0].byte_offset = 0;
 		gpadl_header->range[0].byte_count = hv_gpadl_size(type, size);
-		क्रम (i = 0; i < pagecount; i++)
+		for (i = 0; i < pagecount; i++)
 			gpadl_header->range[0].pfn_array[i] = hv_gpadl_hvpfn(
 				type, kbuffer, size, send_offset, i);
 
 		*msginfo = msgheader;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 nomem:
-	kमुक्त(msgheader);
-	kमुक्त(msgbody);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(msgheader);
+	kfree(msgbody);
+	return -ENOMEM;
+}
 
 /*
- * __vmbus_establish_gpadl - Establish a GPADL क्रम a buffer or ringbuffer
+ * __vmbus_establish_gpadl - Establish a GPADL for a buffer or ringbuffer
  *
  * @channel: a channel
- * @type: the type of the corresponding GPADL, only meaningful क्रम the guest.
- * @kbuffer: from kदो_स्मृति or vदो_स्मृति
+ * @type: the type of the corresponding GPADL, only meaningful for the guest.
+ * @kbuffer: from kmalloc or vmalloc
  * @size: page-size multiple
  * @send_offset: the offset (in bytes) where the send ring buffer starts,
- *              should be 0 क्रम BUFFER type gpadl
+ *              should be 0 for BUFFER type gpadl
  * @gpadl_handle: some funky thing
  */
-अटल पूर्णांक __vmbus_establish_gpadl(काष्ठा vmbus_channel *channel,
-				   क्रमागत hv_gpadl_type type, व्योम *kbuffer,
+static int __vmbus_establish_gpadl(struct vmbus_channel *channel,
+				   enum hv_gpadl_type type, void *kbuffer,
 				   u32 size, u32 send_offset,
 				   u32 *gpadl_handle)
-अणु
-	काष्ठा vmbus_channel_gpadl_header *gpadlmsg;
-	काष्ठा vmbus_channel_gpadl_body *gpadl_body;
-	काष्ठा vmbus_channel_msginfo *msginfo = शून्य;
-	काष्ठा vmbus_channel_msginfo *submsginfo, *पंचांगp;
-	काष्ठा list_head *curr;
+{
+	struct vmbus_channel_gpadl_header *gpadlmsg;
+	struct vmbus_channel_gpadl_body *gpadl_body;
+	struct vmbus_channel_msginfo *msginfo = NULL;
+	struct vmbus_channel_msginfo *submsginfo, *tmp;
+	struct list_head *curr;
 	u32 next_gpadl_handle;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+	unsigned long flags;
+	int ret = 0;
 
 	next_gpadl_handle =
-		(atomic_inc_वापस(&vmbus_connection.next_gpadl_handle) - 1);
+		(atomic_inc_return(&vmbus_connection.next_gpadl_handle) - 1);
 
 	ret = create_gpadl_header(type, kbuffer, size, send_offset, &msginfo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	init_completion(&msginfo->रुकोevent);
-	msginfo->रुकोing_channel = channel;
+	init_completion(&msginfo->waitevent);
+	msginfo->waiting_channel = channel;
 
-	gpadlmsg = (काष्ठा vmbus_channel_gpadl_header *)msginfo->msg;
+	gpadlmsg = (struct vmbus_channel_gpadl_header *)msginfo->msg;
 	gpadlmsg->header.msgtype = CHANNELMSG_GPADL_HEADER;
 	gpadlmsg->child_relid = channel->offermsg.child_relid;
 	gpadlmsg->gpadl = next_gpadl_handle;
@@ -490,189 +489,189 @@ nomem:
 
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	अगर (channel->rescind) अणु
+	if (channel->rescind) {
 		ret = -ENODEV;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	ret = vmbus_post_msg(gpadlmsg, msginfo->msgsize -
-			     माप(*msginfo), true);
+			     sizeof(*msginfo), true);
 
 	trace_vmbus_establish_gpadl_header(gpadlmsg, ret);
 
-	अगर (ret != 0)
-		जाओ cleanup;
+	if (ret != 0)
+		goto cleanup;
 
-	list_क्रम_each(curr, &msginfo->submsglist) अणु
-		submsginfo = (काष्ठा vmbus_channel_msginfo *)curr;
+	list_for_each(curr, &msginfo->submsglist) {
+		submsginfo = (struct vmbus_channel_msginfo *)curr;
 		gpadl_body =
-			(काष्ठा vmbus_channel_gpadl_body *)submsginfo->msg;
+			(struct vmbus_channel_gpadl_body *)submsginfo->msg;
 
 		gpadl_body->header.msgtype =
 			CHANNELMSG_GPADL_BODY;
 		gpadl_body->gpadl = next_gpadl_handle;
 
 		ret = vmbus_post_msg(gpadl_body,
-				     submsginfo->msgsize - माप(*submsginfo),
+				     submsginfo->msgsize - sizeof(*submsginfo),
 				     true);
 
 		trace_vmbus_establish_gpadl_body(gpadl_body, ret);
 
-		अगर (ret != 0)
-			जाओ cleanup;
+		if (ret != 0)
+			goto cleanup;
 
-	पूर्ण
-	रुको_क्रम_completion(&msginfo->रुकोevent);
+	}
+	wait_for_completion(&msginfo->waitevent);
 
-	अगर (msginfo->response.gpadl_created.creation_status != 0) अणु
+	if (msginfo->response.gpadl_created.creation_status != 0) {
 		pr_err("Failed to establish GPADL: err = 0x%x\n",
 		       msginfo->response.gpadl_created.creation_status);
 
 		ret = -EDQUOT;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	अगर (channel->rescind) अणु
+	if (channel->rescind) {
 		ret = -ENODEV;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* At this poपूर्णांक, we received the gpadl created msg */
+	/* At this point, we received the gpadl created msg */
 	*gpadl_handle = gpadlmsg->gpadl;
 
 cleanup:
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
 	list_del(&msginfo->msglistentry);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
-	list_क्रम_each_entry_safe(submsginfo, पंचांगp, &msginfo->submsglist,
-				 msglistentry) अणु
-		kमुक्त(submsginfo);
-	पूर्ण
+	list_for_each_entry_safe(submsginfo, tmp, &msginfo->submsglist,
+				 msglistentry) {
+		kfree(submsginfo);
+	}
 
-	kमुक्त(msginfo);
-	वापस ret;
-पूर्ण
+	kfree(msginfo);
+	return ret;
+}
 
 /*
- * vmbus_establish_gpadl - Establish a GPADL क्रम the specअगरied buffer
+ * vmbus_establish_gpadl - Establish a GPADL for the specified buffer
  *
  * @channel: a channel
- * @kbuffer: from kदो_स्मृति or vदो_स्मृति
+ * @kbuffer: from kmalloc or vmalloc
  * @size: page-size multiple
  * @gpadl_handle: some funky thing
  */
-पूर्णांक vmbus_establish_gpadl(काष्ठा vmbus_channel *channel, व्योम *kbuffer,
+int vmbus_establish_gpadl(struct vmbus_channel *channel, void *kbuffer,
 			  u32 size, u32 *gpadl_handle)
-अणु
-	वापस __vmbus_establish_gpadl(channel, HV_GPADL_BUFFER, kbuffer, size,
+{
+	return __vmbus_establish_gpadl(channel, HV_GPADL_BUFFER, kbuffer, size,
 				       0U, gpadl_handle);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vmbus_establish_gpadl);
 
 /**
- * request_arr_init - Allocates memory क्रम the requestor array. Each slot
+ * request_arr_init - Allocates memory for the requestor array. Each slot
  * keeps track of the next available slot in the array. Initially, each
- * slot poपूर्णांकs to the next one (as in a Linked List). The last slot
- * करोes not poपूर्णांक to anything, so its value is U64_MAX by शेष.
+ * slot points to the next one (as in a Linked List). The last slot
+ * does not point to anything, so its value is U64_MAX by default.
  * @size The size of the array
  */
-अटल u64 *request_arr_init(u32 size)
-अणु
-	पूर्णांक i;
+static u64 *request_arr_init(u32 size)
+{
+	int i;
 	u64 *req_arr;
 
-	req_arr = kसुस्मृति(size, माप(u64), GFP_KERNEL);
-	अगर (!req_arr)
-		वापस शून्य;
+	req_arr = kcalloc(size, sizeof(u64), GFP_KERNEL);
+	if (!req_arr)
+		return NULL;
 
-	क्रम (i = 0; i < size - 1; i++)
+	for (i = 0; i < size - 1; i++)
 		req_arr[i] = i + 1;
 
 	/* Last slot (no more available slots) */
 	req_arr[i] = U64_MAX;
 
-	वापस req_arr;
-पूर्ण
+	return req_arr;
+}
 
 /*
  * vmbus_alloc_requestor - Initializes @rqstor's fields.
- * Index 0 is the first मुक्त slot
+ * Index 0 is the first free slot
  * @size: Size of the requestor array
  */
-अटल पूर्णांक vmbus_alloc_requestor(काष्ठा vmbus_requestor *rqstor, u32 size)
-अणु
+static int vmbus_alloc_requestor(struct vmbus_requestor *rqstor, u32 size)
+{
 	u64 *rqst_arr;
-	अचिन्हित दीर्घ *biपंचांगap;
+	unsigned long *bitmap;
 
 	rqst_arr = request_arr_init(size);
-	अगर (!rqst_arr)
-		वापस -ENOMEM;
+	if (!rqst_arr)
+		return -ENOMEM;
 
-	biपंचांगap = biपंचांगap_zalloc(size, GFP_KERNEL);
-	अगर (!biपंचांगap) अणु
-		kमुक्त(rqst_arr);
-		वापस -ENOMEM;
-	पूर्ण
+	bitmap = bitmap_zalloc(size, GFP_KERNEL);
+	if (!bitmap) {
+		kfree(rqst_arr);
+		return -ENOMEM;
+	}
 
 	rqstor->req_arr = rqst_arr;
-	rqstor->req_biपंचांगap = biपंचांगap;
+	rqstor->req_bitmap = bitmap;
 	rqstor->size = size;
 	rqstor->next_request_id = 0;
 	spin_lock_init(&rqstor->req_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vmbus_मुक्त_requestor - Frees memory allocated क्रम @rqstor
- * @rqstor: Poपूर्णांकer to the requestor काष्ठा
+ * vmbus_free_requestor - Frees memory allocated for @rqstor
+ * @rqstor: Pointer to the requestor struct
  */
-अटल व्योम vmbus_मुक्त_requestor(काष्ठा vmbus_requestor *rqstor)
-अणु
-	kमुक्त(rqstor->req_arr);
-	biपंचांगap_मुक्त(rqstor->req_biपंचांगap);
-पूर्ण
+static void vmbus_free_requestor(struct vmbus_requestor *rqstor)
+{
+	kfree(rqstor->req_arr);
+	bitmap_free(rqstor->req_bitmap);
+}
 
-अटल पूर्णांक __vmbus_खोलो(काष्ठा vmbus_channel *newchannel,
-		       व्योम *userdata, u32 userdatalen,
-		       व्योम (*onchannelcallback)(व्योम *context), व्योम *context)
-अणु
-	काष्ठा vmbus_channel_खोलो_channel *खोलो_msg;
-	काष्ठा vmbus_channel_msginfo *खोलो_info = शून्य;
-	काष्ठा page *page = newchannel->ringbuffer_page;
+static int __vmbus_open(struct vmbus_channel *newchannel,
+		       void *userdata, u32 userdatalen,
+		       void (*onchannelcallback)(void *context), void *context)
+{
+	struct vmbus_channel_open_channel *open_msg;
+	struct vmbus_channel_msginfo *open_info = NULL;
+	struct page *page = newchannel->ringbuffer_page;
 	u32 send_pages, recv_pages;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+	unsigned long flags;
+	int err;
 
-	अगर (userdatalen > MAX_USER_DEFINED_BYTES)
-		वापस -EINVAL;
+	if (userdatalen > MAX_USER_DEFINED_BYTES)
+		return -EINVAL;
 
 	send_pages = newchannel->ringbuffer_send_offset;
 	recv_pages = newchannel->ringbuffer_pagecount - send_pages;
 
-	अगर (newchannel->state != CHANNEL_OPEN_STATE)
-		वापस -EINVAL;
+	if (newchannel->state != CHANNEL_OPEN_STATE)
+		return -EINVAL;
 
 	/* Create and init requestor */
-	अगर (newchannel->rqstor_size) अणु
-		अगर (vmbus_alloc_requestor(&newchannel->requestor, newchannel->rqstor_size))
-			वापस -ENOMEM;
-	पूर्ण
+	if (newchannel->rqstor_size) {
+		if (vmbus_alloc_requestor(&newchannel->requestor, newchannel->rqstor_size))
+			return -ENOMEM;
+	}
 
 	newchannel->state = CHANNEL_OPENING_STATE;
 	newchannel->onchannel_callback = onchannelcallback;
 	newchannel->channel_callback_context = context;
 
 	err = hv_ringbuffer_init(&newchannel->outbound, page, send_pages);
-	अगर (err)
-		जाओ error_clean_ring;
+	if (err)
+		goto error_clean_ring;
 
 	err = hv_ringbuffer_init(&newchannel->inbound,
 				 &page[send_pages], recv_pages);
-	अगर (err)
-		जाओ error_clean_ring;
+	if (err)
+		goto error_clean_ring;
 
-	/* Establish the gpadl क्रम the ring buffer */
+	/* Establish the gpadl for the ring buffer */
 	newchannel->ringbuffer_gpadlhandle = 0;
 
 	err = __vmbus_establish_gpadl(newchannel, HV_GPADL_RING,
@@ -680,146 +679,146 @@ EXPORT_SYMBOL_GPL(vmbus_establish_gpadl);
 				      (send_pages + recv_pages) << PAGE_SHIFT,
 				      newchannel->ringbuffer_send_offset << PAGE_SHIFT,
 				      &newchannel->ringbuffer_gpadlhandle);
-	अगर (err)
-		जाओ error_clean_ring;
+	if (err)
+		goto error_clean_ring;
 
-	/* Create and init the channel खोलो message */
-	खोलो_info = kzalloc(माप(*खोलो_info) +
-			   माप(काष्ठा vmbus_channel_खोलो_channel),
+	/* Create and init the channel open message */
+	open_info = kzalloc(sizeof(*open_info) +
+			   sizeof(struct vmbus_channel_open_channel),
 			   GFP_KERNEL);
-	अगर (!खोलो_info) अणु
+	if (!open_info) {
 		err = -ENOMEM;
-		जाओ error_मुक्त_gpadl;
-	पूर्ण
+		goto error_free_gpadl;
+	}
 
-	init_completion(&खोलो_info->रुकोevent);
-	खोलो_info->रुकोing_channel = newchannel;
+	init_completion(&open_info->waitevent);
+	open_info->waiting_channel = newchannel;
 
-	खोलो_msg = (काष्ठा vmbus_channel_खोलो_channel *)खोलो_info->msg;
-	खोलो_msg->header.msgtype = CHANNELMSG_OPENCHANNEL;
-	खोलो_msg->खोलोid = newchannel->offermsg.child_relid;
-	खोलो_msg->child_relid = newchannel->offermsg.child_relid;
-	खोलो_msg->ringbuffer_gpadlhandle = newchannel->ringbuffer_gpadlhandle;
+	open_msg = (struct vmbus_channel_open_channel *)open_info->msg;
+	open_msg->header.msgtype = CHANNELMSG_OPENCHANNEL;
+	open_msg->openid = newchannel->offermsg.child_relid;
+	open_msg->child_relid = newchannel->offermsg.child_relid;
+	open_msg->ringbuffer_gpadlhandle = newchannel->ringbuffer_gpadlhandle;
 	/*
-	 * The unit of ->करोwnstream_ringbuffer_pageoffset is HV_HYP_PAGE and
+	 * The unit of ->downstream_ringbuffer_pageoffset is HV_HYP_PAGE and
 	 * the unit of ->ringbuffer_send_offset (i.e. send_pages) is PAGE, so
-	 * here we calculate it पूर्णांकo HV_HYP_PAGE.
+	 * here we calculate it into HV_HYP_PAGE.
 	 */
-	खोलो_msg->करोwnstream_ringbuffer_pageoffset =
+	open_msg->downstream_ringbuffer_pageoffset =
 		hv_ring_gpadl_send_hvpgoffset(send_pages << PAGE_SHIFT);
-	खोलो_msg->target_vp = hv_cpu_number_to_vp_number(newchannel->target_cpu);
+	open_msg->target_vp = hv_cpu_number_to_vp_number(newchannel->target_cpu);
 
-	अगर (userdatalen)
-		स_नकल(खोलो_msg->userdata, userdata, userdatalen);
+	if (userdatalen)
+		memcpy(open_msg->userdata, userdata, userdatalen);
 
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
-	list_add_tail(&खोलो_info->msglistentry,
+	list_add_tail(&open_info->msglistentry,
 		      &vmbus_connection.chn_msg_list);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	अगर (newchannel->rescind) अणु
+	if (newchannel->rescind) {
 		err = -ENODEV;
-		जाओ error_clean_msglist;
-	पूर्ण
+		goto error_clean_msglist;
+	}
 
-	err = vmbus_post_msg(खोलो_msg,
-			     माप(काष्ठा vmbus_channel_खोलो_channel), true);
+	err = vmbus_post_msg(open_msg,
+			     sizeof(struct vmbus_channel_open_channel), true);
 
-	trace_vmbus_खोलो(खोलो_msg, err);
+	trace_vmbus_open(open_msg, err);
 
-	अगर (err != 0)
-		जाओ error_clean_msglist;
+	if (err != 0)
+		goto error_clean_msglist;
 
-	रुको_क्रम_completion(&खोलो_info->रुकोevent);
+	wait_for_completion(&open_info->waitevent);
 
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
-	list_del(&खोलो_info->msglistentry);
+	list_del(&open_info->msglistentry);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	अगर (newchannel->rescind) अणु
+	if (newchannel->rescind) {
 		err = -ENODEV;
-		जाओ error_मुक्त_info;
-	पूर्ण
+		goto error_free_info;
+	}
 
-	अगर (खोलो_info->response.खोलो_result.status) अणु
+	if (open_info->response.open_result.status) {
 		err = -EAGAIN;
-		जाओ error_मुक्त_info;
-	पूर्ण
+		goto error_free_info;
+	}
 
 	newchannel->state = CHANNEL_OPENED_STATE;
-	kमुक्त(खोलो_info);
-	वापस 0;
+	kfree(open_info);
+	return 0;
 
 error_clean_msglist:
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
-	list_del(&खोलो_info->msglistentry);
+	list_del(&open_info->msglistentry);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
-error_मुक्त_info:
-	kमुक्त(खोलो_info);
-error_मुक्त_gpadl:
-	vmbus_tearकरोwn_gpadl(newchannel, newchannel->ringbuffer_gpadlhandle);
+error_free_info:
+	kfree(open_info);
+error_free_gpadl:
+	vmbus_teardown_gpadl(newchannel, newchannel->ringbuffer_gpadlhandle);
 	newchannel->ringbuffer_gpadlhandle = 0;
 error_clean_ring:
 	hv_ringbuffer_cleanup(&newchannel->outbound);
 	hv_ringbuffer_cleanup(&newchannel->inbound);
-	vmbus_मुक्त_requestor(&newchannel->requestor);
+	vmbus_free_requestor(&newchannel->requestor);
 	newchannel->state = CHANNEL_OPEN_STATE;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * vmbus_connect_ring - Open the channel but reuse ring buffer
  */
-पूर्णांक vmbus_connect_ring(काष्ठा vmbus_channel *newchannel,
-		       व्योम (*onchannelcallback)(व्योम *context), व्योम *context)
-अणु
-	वापस  __vmbus_खोलो(newchannel, शून्य, 0, onchannelcallback, context);
-पूर्ण
+int vmbus_connect_ring(struct vmbus_channel *newchannel,
+		       void (*onchannelcallback)(void *context), void *context)
+{
+	return  __vmbus_open(newchannel, NULL, 0, onchannelcallback, context);
+}
 EXPORT_SYMBOL_GPL(vmbus_connect_ring);
 
 /*
- * vmbus_खोलो - Open the specअगरied channel.
+ * vmbus_open - Open the specified channel.
  */
-पूर्णांक vmbus_खोलो(काष्ठा vmbus_channel *newchannel,
+int vmbus_open(struct vmbus_channel *newchannel,
 	       u32 send_ringbuffer_size, u32 recv_ringbuffer_size,
-	       व्योम *userdata, u32 userdatalen,
-	       व्योम (*onchannelcallback)(व्योम *context), व्योम *context)
-अणु
-	पूर्णांक err;
+	       void *userdata, u32 userdatalen,
+	       void (*onchannelcallback)(void *context), void *context)
+{
+	int err;
 
 	err = vmbus_alloc_ring(newchannel, send_ringbuffer_size,
 			       recv_ringbuffer_size);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = __vmbus_खोलो(newchannel, userdata, userdatalen,
+	err = __vmbus_open(newchannel, userdata, userdatalen,
 			   onchannelcallback, context);
-	अगर (err)
-		vmbus_मुक्त_ring(newchannel);
+	if (err)
+		vmbus_free_ring(newchannel);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(vmbus_खोलो);
+	return err;
+}
+EXPORT_SYMBOL_GPL(vmbus_open);
 
 /*
- * vmbus_tearकरोwn_gpadl -Tearकरोwn the specअगरied GPADL handle
+ * vmbus_teardown_gpadl -Teardown the specified GPADL handle
  */
-पूर्णांक vmbus_tearकरोwn_gpadl(काष्ठा vmbus_channel *channel, u32 gpadl_handle)
-अणु
-	काष्ठा vmbus_channel_gpadl_tearकरोwn *msg;
-	काष्ठा vmbus_channel_msginfo *info;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int vmbus_teardown_gpadl(struct vmbus_channel *channel, u32 gpadl_handle)
+{
+	struct vmbus_channel_gpadl_teardown *msg;
+	struct vmbus_channel_msginfo *info;
+	unsigned long flags;
+	int ret;
 
-	info = kzalloc(माप(*info) +
-		       माप(काष्ठा vmbus_channel_gpadl_tearकरोwn), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = kzalloc(sizeof(*info) +
+		       sizeof(struct vmbus_channel_gpadl_teardown), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
-	init_completion(&info->रुकोevent);
-	info->रुकोing_channel = channel;
+	init_completion(&info->waitevent);
+	info->waiting_channel = channel;
 
-	msg = (काष्ठा vmbus_channel_gpadl_tearकरोwn *)info->msg;
+	msg = (struct vmbus_channel_gpadl_teardown *)info->msg;
 
 	msg->header.msgtype = CHANNELMSG_GPADL_TEARDOWN;
 	msg->child_relid = channel->offermsg.child_relid;
@@ -830,178 +829,178 @@ EXPORT_SYMBOL_GPL(vmbus_खोलो);
 		      &vmbus_connection.chn_msg_list);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	अगर (channel->rescind)
-		जाओ post_msg_err;
+	if (channel->rescind)
+		goto post_msg_err;
 
-	ret = vmbus_post_msg(msg, माप(काष्ठा vmbus_channel_gpadl_tearकरोwn),
+	ret = vmbus_post_msg(msg, sizeof(struct vmbus_channel_gpadl_teardown),
 			     true);
 
-	trace_vmbus_tearकरोwn_gpadl(msg, ret);
+	trace_vmbus_teardown_gpadl(msg, ret);
 
-	अगर (ret)
-		जाओ post_msg_err;
+	if (ret)
+		goto post_msg_err;
 
-	रुको_क्रम_completion(&info->रुकोevent);
+	wait_for_completion(&info->waitevent);
 
 post_msg_err:
 	/*
 	 * If the channel has been rescinded;
 	 * we will be awakened by the rescind
-	 * handler; set the error code to zero so we करोn't leak memory.
+	 * handler; set the error code to zero so we don't leak memory.
 	 */
-	अगर (channel->rescind)
+	if (channel->rescind)
 		ret = 0;
 
 	spin_lock_irqsave(&vmbus_connection.channelmsg_lock, flags);
 	list_del(&info->msglistentry);
 	spin_unlock_irqrestore(&vmbus_connection.channelmsg_lock, flags);
 
-	kमुक्त(info);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(vmbus_tearकरोwn_gpadl);
+	kfree(info);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(vmbus_teardown_gpadl);
 
-व्योम vmbus_reset_channel_cb(काष्ठा vmbus_channel *channel)
-अणु
-	अचिन्हित दीर्घ flags;
+void vmbus_reset_channel_cb(struct vmbus_channel *channel)
+{
+	unsigned long flags;
 
 	/*
 	 * vmbus_on_event(), running in the per-channel tasklet, can race
-	 * with vmbus_बंद_पूर्णांकernal() in the हाल of SMP guest, e.g., when
-	 * the क्रमmer is accessing channel->inbound.ring_buffer, the latter
-	 * could be मुक्तing the ring_buffer pages, so here we must stop it
+	 * with vmbus_close_internal() in the case of SMP guest, e.g., when
+	 * the former is accessing channel->inbound.ring_buffer, the latter
+	 * could be freeing the ring_buffer pages, so here we must stop it
 	 * first.
 	 *
 	 * vmbus_chan_sched() might call the netvsc driver callback function
 	 * that ends up scheduling NAPI work that accesses the ring buffer.
-	 * At this poपूर्णांक, we have to ensure that any such work is completed
-	 * and that the channel ring buffer is no दीर्घer being accessed, cf.
-	 * the calls to napi_disable() in netvsc_device_हटाओ().
+	 * At this point, we have to ensure that any such work is completed
+	 * and that the channel ring buffer is no longer being accessed, cf.
+	 * the calls to napi_disable() in netvsc_device_remove().
 	 */
 	tasklet_disable(&channel->callback_event);
 
-	/* See the अंतरभूत comments in vmbus_chan_sched(). */
+	/* See the inline comments in vmbus_chan_sched(). */
 	spin_lock_irqsave(&channel->sched_lock, flags);
-	channel->onchannel_callback = शून्य;
+	channel->onchannel_callback = NULL;
 	spin_unlock_irqrestore(&channel->sched_lock, flags);
 
-	channel->sc_creation_callback = शून्य;
+	channel->sc_creation_callback = NULL;
 
-	/* Re-enable tasklet क्रम use on re-खोलो */
+	/* Re-enable tasklet for use on re-open */
 	tasklet_enable(&channel->callback_event);
-पूर्ण
+}
 
-अटल पूर्णांक vmbus_बंद_पूर्णांकernal(काष्ठा vmbus_channel *channel)
-अणु
-	काष्ठा vmbus_channel_बंद_channel *msg;
-	पूर्णांक ret;
+static int vmbus_close_internal(struct vmbus_channel *channel)
+{
+	struct vmbus_channel_close_channel *msg;
+	int ret;
 
 	vmbus_reset_channel_cb(channel);
 
 	/*
-	 * In हाल a device driver's probe() fails (e.g.,
-	 * util_probe() -> vmbus_खोलो() वापसs -ENOMEM) and the device is
+	 * In case a device driver's probe() fails (e.g.,
+	 * util_probe() -> vmbus_open() returns -ENOMEM) and the device is
 	 * rescinded later (e.g., we dynamically disable an Integrated Service
-	 * in Hyper-V Manager), the driver's हटाओ() invokes vmbus_बंद():
+	 * in Hyper-V Manager), the driver's remove() invokes vmbus_close():
 	 * here we should skip most of the below cleanup work.
 	 */
-	अगर (channel->state != CHANNEL_OPENED_STATE)
-		वापस -EINVAL;
+	if (channel->state != CHANNEL_OPENED_STATE)
+		return -EINVAL;
 
 	channel->state = CHANNEL_OPEN_STATE;
 
 	/* Send a closing message */
 
-	msg = &channel->बंद_msg.msg;
+	msg = &channel->close_msg.msg;
 
 	msg->header.msgtype = CHANNELMSG_CLOSECHANNEL;
 	msg->child_relid = channel->offermsg.child_relid;
 
-	ret = vmbus_post_msg(msg, माप(काष्ठा vmbus_channel_बंद_channel),
+	ret = vmbus_post_msg(msg, sizeof(struct vmbus_channel_close_channel),
 			     true);
 
-	trace_vmbus_बंद_पूर्णांकernal(msg, ret);
+	trace_vmbus_close_internal(msg, ret);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Close failed: close post msg return is %d\n", ret);
 		/*
-		 * If we failed to post the बंद msg,
+		 * If we failed to post the close msg,
 		 * it is perhaps better to leak memory.
 		 */
-	पूर्ण
+	}
 
-	/* Tear करोwn the gpadl क्रम the channel's ring buffer */
-	अन्यथा अगर (channel->ringbuffer_gpadlhandle) अणु
-		ret = vmbus_tearकरोwn_gpadl(channel,
+	/* Tear down the gpadl for the channel's ring buffer */
+	else if (channel->ringbuffer_gpadlhandle) {
+		ret = vmbus_teardown_gpadl(channel,
 					   channel->ringbuffer_gpadlhandle);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Close failed: teardown gpadl return %d\n", ret);
 			/*
-			 * If we failed to tearकरोwn gpadl,
+			 * If we failed to teardown gpadl,
 			 * it is perhaps better to leak memory.
 			 */
-		पूर्ण
+		}
 
 		channel->ringbuffer_gpadlhandle = 0;
-	पूर्ण
+	}
 
-	अगर (!ret)
-		vmbus_मुक्त_requestor(&channel->requestor);
+	if (!ret)
+		vmbus_free_requestor(&channel->requestor);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* disconnect ring - बंद all channels */
-पूर्णांक vmbus_disconnect_ring(काष्ठा vmbus_channel *channel)
-अणु
-	काष्ठा vmbus_channel *cur_channel, *पंचांगp;
-	पूर्णांक ret;
+/* disconnect ring - close all channels */
+int vmbus_disconnect_ring(struct vmbus_channel *channel)
+{
+	struct vmbus_channel *cur_channel, *tmp;
+	int ret;
 
-	अगर (channel->primary_channel != शून्य)
-		वापस -EINVAL;
+	if (channel->primary_channel != NULL)
+		return -EINVAL;
 
-	list_क्रम_each_entry_safe(cur_channel, पंचांगp, &channel->sc_list, sc_list) अणु
-		अगर (cur_channel->rescind)
-			रुको_क्रम_completion(&cur_channel->rescind_event);
+	list_for_each_entry_safe(cur_channel, tmp, &channel->sc_list, sc_list) {
+		if (cur_channel->rescind)
+			wait_for_completion(&cur_channel->rescind_event);
 
 		mutex_lock(&vmbus_connection.channel_mutex);
-		अगर (vmbus_बंद_पूर्णांकernal(cur_channel) == 0) अणु
-			vmbus_मुक्त_ring(cur_channel);
+		if (vmbus_close_internal(cur_channel) == 0) {
+			vmbus_free_ring(cur_channel);
 
-			अगर (cur_channel->rescind)
+			if (cur_channel->rescind)
 				hv_process_channel_removal(cur_channel);
-		पूर्ण
+		}
 		mutex_unlock(&vmbus_connection.channel_mutex);
-	पूर्ण
+	}
 
 	/*
-	 * Now बंद the primary.
+	 * Now close the primary.
 	 */
 	mutex_lock(&vmbus_connection.channel_mutex);
-	ret = vmbus_बंद_पूर्णांकernal(channel);
+	ret = vmbus_close_internal(channel);
 	mutex_unlock(&vmbus_connection.channel_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vmbus_disconnect_ring);
 
 /*
- * vmbus_बंद - Close the specअगरied channel
+ * vmbus_close - Close the specified channel
  */
-व्योम vmbus_बंद(काष्ठा vmbus_channel *channel)
-अणु
-	अगर (vmbus_disconnect_ring(channel) == 0)
-		vmbus_मुक्त_ring(channel);
-पूर्ण
-EXPORT_SYMBOL_GPL(vmbus_बंद);
+void vmbus_close(struct vmbus_channel *channel)
+{
+	if (vmbus_disconnect_ring(channel) == 0)
+		vmbus_free_ring(channel);
+}
+EXPORT_SYMBOL_GPL(vmbus_close);
 
 /**
- * vmbus_sendpacket() - Send the specअगरied buffer on the given channel
- * @channel: Poपूर्णांकer to vmbus_channel काष्ठाure
- * @buffer: Poपूर्णांकer to the buffer you want to send the data from.
+ * vmbus_sendpacket() - Send the specified buffer on the given channel
+ * @channel: Pointer to vmbus_channel structure
+ * @buffer: Pointer to the buffer you want to send the data from.
  * @bufferlen: Maximum size of what the buffer holds.
- * @requestid: Identअगरier of the request
- * @type: Type of packet that is being sent e.g. negotiate, समय
+ * @requestid: Identifier of the request
+ * @type: Type of packet that is being sent e.g. negotiate, time
  *	  packet etc.
  * @flags: 0 or VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED
  *
@@ -1010,84 +1009,84 @@ EXPORT_SYMBOL_GPL(vmbus_बंद);
  *
  * Mainly used by Hyper-V drivers.
  */
-पूर्णांक vmbus_sendpacket(काष्ठा vmbus_channel *channel, व्योम *buffer,
+int vmbus_sendpacket(struct vmbus_channel *channel, void *buffer,
 			   u32 bufferlen, u64 requestid,
-			   क्रमागत vmbus_packet_type type, u32 flags)
-अणु
-	काष्ठा vmpacket_descriptor desc;
-	u32 packetlen = माप(काष्ठा vmpacket_descriptor) + bufferlen;
-	u32 packetlen_aligned = ALIGN(packetlen, माप(u64));
-	काष्ठा kvec bufferlist[3];
+			   enum vmbus_packet_type type, u32 flags)
+{
+	struct vmpacket_descriptor desc;
+	u32 packetlen = sizeof(struct vmpacket_descriptor) + bufferlen;
+	u32 packetlen_aligned = ALIGN(packetlen, sizeof(u64));
+	struct kvec bufferlist[3];
 	u64 aligned_data = 0;
-	पूर्णांक num_vecs = ((bufferlen != 0) ? 3 : 1);
+	int num_vecs = ((bufferlen != 0) ? 3 : 1);
 
 
 	/* Setup the descriptor */
 	desc.type = type; /* VmbusPacketTypeDataInBand; */
 	desc.flags = flags; /* VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED; */
 	/* in 8-bytes granularity */
-	desc.offset8 = माप(काष्ठा vmpacket_descriptor) >> 3;
+	desc.offset8 = sizeof(struct vmpacket_descriptor) >> 3;
 	desc.len8 = (u16)(packetlen_aligned >> 3);
-	desc.trans_id = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_ग_लिखो() */
+	desc.trans_id = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_write() */
 
 	bufferlist[0].iov_base = &desc;
-	bufferlist[0].iov_len = माप(काष्ठा vmpacket_descriptor);
+	bufferlist[0].iov_len = sizeof(struct vmpacket_descriptor);
 	bufferlist[1].iov_base = buffer;
 	bufferlist[1].iov_len = bufferlen;
 	bufferlist[2].iov_base = &aligned_data;
 	bufferlist[2].iov_len = (packetlen_aligned - packetlen);
 
-	वापस hv_ringbuffer_ग_लिखो(channel, bufferlist, num_vecs, requestid);
-पूर्ण
+	return hv_ringbuffer_write(channel, bufferlist, num_vecs, requestid);
+}
 EXPORT_SYMBOL(vmbus_sendpacket);
 
 /*
  * vmbus_sendpacket_pagebuffer - Send a range of single-page buffer
- * packets using a GPADL Direct packet type. This पूर्णांकerface allows you
- * to control notअगरying the host. This will be useful क्रम sending
+ * packets using a GPADL Direct packet type. This interface allows you
+ * to control notifying the host. This will be useful for sending
  * batched data. Also the sender can control the send flags
  * explicitly.
  */
-पूर्णांक vmbus_sendpacket_pagebuffer(काष्ठा vmbus_channel *channel,
-				काष्ठा hv_page_buffer pagebuffers[],
-				u32 pagecount, व्योम *buffer, u32 bufferlen,
+int vmbus_sendpacket_pagebuffer(struct vmbus_channel *channel,
+				struct hv_page_buffer pagebuffers[],
+				u32 pagecount, void *buffer, u32 bufferlen,
 				u64 requestid)
-अणु
-	पूर्णांक i;
-	काष्ठा vmbus_channel_packet_page_buffer desc;
+{
+	int i;
+	struct vmbus_channel_packet_page_buffer desc;
 	u32 descsize;
 	u32 packetlen;
 	u32 packetlen_aligned;
-	काष्ठा kvec bufferlist[3];
+	struct kvec bufferlist[3];
 	u64 aligned_data = 0;
 
-	अगर (pagecount > MAX_PAGE_BUFFER_COUNT)
-		वापस -EINVAL;
+	if (pagecount > MAX_PAGE_BUFFER_COUNT)
+		return -EINVAL;
 
 	/*
-	 * Adjust the size करोwn since vmbus_channel_packet_page_buffer is the
+	 * Adjust the size down since vmbus_channel_packet_page_buffer is the
 	 * largest size we support
 	 */
-	descsize = माप(काष्ठा vmbus_channel_packet_page_buffer) -
+	descsize = sizeof(struct vmbus_channel_packet_page_buffer) -
 			  ((MAX_PAGE_BUFFER_COUNT - pagecount) *
-			  माप(काष्ठा hv_page_buffer));
+			  sizeof(struct hv_page_buffer));
 	packetlen = descsize + bufferlen;
-	packetlen_aligned = ALIGN(packetlen, माप(u64));
+	packetlen_aligned = ALIGN(packetlen, sizeof(u64));
 
 	/* Setup the descriptor */
-	desc.type = VM_PKT_DATA_USING_GPA_सूचीECT;
+	desc.type = VM_PKT_DATA_USING_GPA_DIRECT;
 	desc.flags = VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
 	desc.dataoffset8 = descsize >> 3; /* in 8-bytes granularity */
 	desc.length8 = (u16)(packetlen_aligned >> 3);
-	desc.transactionid = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_ग_लिखो() */
+	desc.transactionid = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_write() */
 	desc.reserved = 0;
 	desc.rangecount = pagecount;
 
-	क्रम (i = 0; i < pagecount; i++) अणु
+	for (i = 0; i < pagecount; i++) {
 		desc.range[i].len = pagebuffers[i].len;
 		desc.range[i].offset = pagebuffers[i].offset;
 		desc.range[i].pfn	 = pagebuffers[i].pfn;
-	पूर्ण
+	}
 
 	bufferlist[0].iov_base = &desc;
 	bufferlist[0].iov_len = descsize;
@@ -1096,8 +1095,8 @@ EXPORT_SYMBOL(vmbus_sendpacket);
 	bufferlist[2].iov_base = &aligned_data;
 	bufferlist[2].iov_len = (packetlen_aligned - packetlen);
 
-	वापस hv_ringbuffer_ग_लिखो(channel, bufferlist, 3, requestid);
-पूर्ण
+	return hv_ringbuffer_write(channel, bufferlist, 3, requestid);
+}
 EXPORT_SYMBOL_GPL(vmbus_sendpacket_pagebuffer);
 
 /*
@@ -1105,25 +1104,25 @@ EXPORT_SYMBOL_GPL(vmbus_sendpacket_pagebuffer);
  * using a GPADL Direct packet type.
  * The buffer includes the vmbus descriptor.
  */
-पूर्णांक vmbus_sendpacket_mpb_desc(काष्ठा vmbus_channel *channel,
-			      काष्ठा vmbus_packet_mpb_array *desc,
+int vmbus_sendpacket_mpb_desc(struct vmbus_channel *channel,
+			      struct vmbus_packet_mpb_array *desc,
 			      u32 desc_size,
-			      व्योम *buffer, u32 bufferlen, u64 requestid)
-अणु
+			      void *buffer, u32 bufferlen, u64 requestid)
+{
 	u32 packetlen;
 	u32 packetlen_aligned;
-	काष्ठा kvec bufferlist[3];
+	struct kvec bufferlist[3];
 	u64 aligned_data = 0;
 
 	packetlen = desc_size + bufferlen;
-	packetlen_aligned = ALIGN(packetlen, माप(u64));
+	packetlen_aligned = ALIGN(packetlen, sizeof(u64));
 
 	/* Setup the descriptor */
-	desc->type = VM_PKT_DATA_USING_GPA_सूचीECT;
+	desc->type = VM_PKT_DATA_USING_GPA_DIRECT;
 	desc->flags = VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
 	desc->dataoffset8 = desc_size >> 3; /* in 8-bytes granularity */
 	desc->length8 = (u16)(packetlen_aligned >> 3);
-	desc->transactionid = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_ग_लिखो() */
+	desc->transactionid = VMBUS_RQST_ERROR; /* will be updated in hv_ringbuffer_write() */
 	desc->reserved = 0;
 	desc->rangecount = 1;
 
@@ -1134,119 +1133,119 @@ EXPORT_SYMBOL_GPL(vmbus_sendpacket_pagebuffer);
 	bufferlist[2].iov_base = &aligned_data;
 	bufferlist[2].iov_len = (packetlen_aligned - packetlen);
 
-	वापस hv_ringbuffer_ग_लिखो(channel, bufferlist, 3, requestid);
-पूर्ण
+	return hv_ringbuffer_write(channel, bufferlist, 3, requestid);
+}
 EXPORT_SYMBOL_GPL(vmbus_sendpacket_mpb_desc);
 
 /**
- * __vmbus_recvpacket() - Retrieve the user packet on the specअगरied channel
- * @channel: Poपूर्णांकer to vmbus_channel काष्ठाure
- * @buffer: Poपूर्णांकer to the buffer you want to receive the data पूर्णांकo.
+ * __vmbus_recvpacket() - Retrieve the user packet on the specified channel
+ * @channel: Pointer to vmbus_channel structure
+ * @buffer: Pointer to the buffer you want to receive the data into.
  * @bufferlen: Maximum size of what the buffer can hold.
  * @buffer_actual_len: The actual size of the data after it was received.
- * @requestid: Identअगरier of the request
+ * @requestid: Identifier of the request
  * @raw: true means keep the vmpacket_descriptor header in the received data.
  *
- * Receives directly from the hyper-v vmbus and माला_दो the data it received
- * पूर्णांकo Buffer. This will receive the data unparsed from hyper-v.
+ * Receives directly from the hyper-v vmbus and puts the data it received
+ * into Buffer. This will receive the data unparsed from hyper-v.
  *
  * Mainly used by Hyper-V drivers.
  */
-अटल अंतरभूत पूर्णांक
-__vmbus_recvpacket(काष्ठा vmbus_channel *channel, व्योम *buffer,
+static inline int
+__vmbus_recvpacket(struct vmbus_channel *channel, void *buffer,
 		   u32 bufferlen, u32 *buffer_actual_len, u64 *requestid,
 		   bool raw)
-अणु
-	वापस hv_ringbuffer_पढ़ो(channel, buffer, bufferlen,
+{
+	return hv_ringbuffer_read(channel, buffer, bufferlen,
 				  buffer_actual_len, requestid, raw);
 
-पूर्ण
+}
 
-पूर्णांक vmbus_recvpacket(काष्ठा vmbus_channel *channel, व्योम *buffer,
+int vmbus_recvpacket(struct vmbus_channel *channel, void *buffer,
 		     u32 bufferlen, u32 *buffer_actual_len,
 		     u64 *requestid)
-अणु
-	वापस __vmbus_recvpacket(channel, buffer, bufferlen,
+{
+	return __vmbus_recvpacket(channel, buffer, bufferlen,
 				  buffer_actual_len, requestid, false);
-पूर्ण
+}
 EXPORT_SYMBOL(vmbus_recvpacket);
 
 /*
- * vmbus_recvpacket_raw - Retrieve the raw packet on the specअगरied channel
+ * vmbus_recvpacket_raw - Retrieve the raw packet on the specified channel
  */
-पूर्णांक vmbus_recvpacket_raw(काष्ठा vmbus_channel *channel, व्योम *buffer,
+int vmbus_recvpacket_raw(struct vmbus_channel *channel, void *buffer,
 			      u32 bufferlen, u32 *buffer_actual_len,
 			      u64 *requestid)
-अणु
-	वापस __vmbus_recvpacket(channel, buffer, bufferlen,
+{
+	return __vmbus_recvpacket(channel, buffer, bufferlen,
 				  buffer_actual_len, requestid, true);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vmbus_recvpacket_raw);
 
 /*
  * vmbus_next_request_id - Returns a new request id. It is also
  * the index at which the guest memory address is stored.
- * Uses a spin lock to aव्योम race conditions.
- * @rqstor: Poपूर्णांकer to the requestor काष्ठा
+ * Uses a spin lock to avoid race conditions.
+ * @rqstor: Pointer to the requestor struct
  * @rqst_add: Guest memory address to be stored in the array
  */
-u64 vmbus_next_request_id(काष्ठा vmbus_requestor *rqstor, u64 rqst_addr)
-अणु
-	अचिन्हित दीर्घ flags;
+u64 vmbus_next_request_id(struct vmbus_requestor *rqstor, u64 rqst_addr)
+{
+	unsigned long flags;
 	u64 current_id;
-	स्थिर काष्ठा vmbus_channel *channel =
-		container_of(rqstor, स्थिर काष्ठा vmbus_channel, requestor);
+	const struct vmbus_channel *channel =
+		container_of(rqstor, const struct vmbus_channel, requestor);
 
 	/* Check rqstor has been initialized */
-	अगर (!channel->rqstor_size)
-		वापस VMBUS_NO_RQSTOR;
+	if (!channel->rqstor_size)
+		return VMBUS_NO_RQSTOR;
 
 	spin_lock_irqsave(&rqstor->req_lock, flags);
 	current_id = rqstor->next_request_id;
 
 	/* Requestor array is full */
-	अगर (current_id >= rqstor->size) अणु
+	if (current_id >= rqstor->size) {
 		spin_unlock_irqrestore(&rqstor->req_lock, flags);
-		वापस VMBUS_RQST_ERROR;
-	पूर्ण
+		return VMBUS_RQST_ERROR;
+	}
 
 	rqstor->next_request_id = rqstor->req_arr[current_id];
 	rqstor->req_arr[current_id] = rqst_addr;
 
-	/* The alपढ़ोy held spin lock provides atomicity */
-	biपंचांगap_set(rqstor->req_biपंचांगap, current_id, 1);
+	/* The already held spin lock provides atomicity */
+	bitmap_set(rqstor->req_bitmap, current_id, 1);
 
 	spin_unlock_irqrestore(&rqstor->req_lock, flags);
 
 	/*
-	 * Cannot वापस an ID of 0, which is reserved क्रम an unsolicited
+	 * Cannot return an ID of 0, which is reserved for an unsolicited
 	 * message from Hyper-V.
 	 */
-	वापस current_id + 1;
-पूर्ण
+	return current_id + 1;
+}
 EXPORT_SYMBOL_GPL(vmbus_next_request_id);
 
 /*
  * vmbus_request_addr - Returns the memory address stored at @trans_id
- * in @rqstor. Uses a spin lock to aव्योम race conditions.
- * @rqstor: Poपूर्णांकer to the requestor काष्ठा
+ * in @rqstor. Uses a spin lock to avoid race conditions.
+ * @rqstor: Pointer to the requestor struct
  * @trans_id: Request id sent back from Hyper-V. Becomes the requestor's
  * next request id.
  */
-u64 vmbus_request_addr(काष्ठा vmbus_requestor *rqstor, u64 trans_id)
-अणु
-	अचिन्हित दीर्घ flags;
+u64 vmbus_request_addr(struct vmbus_requestor *rqstor, u64 trans_id)
+{
+	unsigned long flags;
 	u64 req_addr;
-	स्थिर काष्ठा vmbus_channel *channel =
-		container_of(rqstor, स्थिर काष्ठा vmbus_channel, requestor);
+	const struct vmbus_channel *channel =
+		container_of(rqstor, const struct vmbus_channel, requestor);
 
 	/* Check rqstor has been initialized */
-	अगर (!channel->rqstor_size)
-		वापस VMBUS_NO_RQSTOR;
+	if (!channel->rqstor_size)
+		return VMBUS_NO_RQSTOR;
 
 	/* Hyper-V can send an unsolicited message with ID of 0 */
-	अगर (!trans_id)
-		वापस trans_id;
+	if (!trans_id)
+		return trans_id;
 
 	spin_lock_irqsave(&rqstor->req_lock, flags);
 
@@ -1254,19 +1253,19 @@ u64 vmbus_request_addr(काष्ठा vmbus_requestor *rqstor, u64 trans_id)
 	trans_id--;
 
 	/* Invalid trans_id */
-	अगर (trans_id >= rqstor->size || !test_bit(trans_id, rqstor->req_biपंचांगap)) अणु
+	if (trans_id >= rqstor->size || !test_bit(trans_id, rqstor->req_bitmap)) {
 		spin_unlock_irqrestore(&rqstor->req_lock, flags);
-		वापस VMBUS_RQST_ERROR;
-	पूर्ण
+		return VMBUS_RQST_ERROR;
+	}
 
 	req_addr = rqstor->req_arr[trans_id];
 	rqstor->req_arr[trans_id] = rqstor->next_request_id;
 	rqstor->next_request_id = trans_id;
 
-	/* The alपढ़ोy held spin lock provides atomicity */
-	biपंचांगap_clear(rqstor->req_biपंचांगap, trans_id, 1);
+	/* The already held spin lock provides atomicity */
+	bitmap_clear(rqstor->req_bitmap, trans_id, 1);
 
 	spin_unlock_irqrestore(&rqstor->req_lock, flags);
-	वापस req_addr;
-पूर्ण
+	return req_addr;
+}
 EXPORT_SYMBOL_GPL(vmbus_request_addr);

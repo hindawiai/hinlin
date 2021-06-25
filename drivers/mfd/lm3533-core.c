@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * lm3533-core.c -- LM3533 Core
  *
@@ -8,325 +7,325 @@
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/mfd/core.h>
+#include <linux/regmap.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/mfd/lm3533.h>
-
-
-#घोषणा LM3533_BOOST_OVP_MASK		0x06
-#घोषणा LM3533_BOOST_OVP_SHIFT		1
-
-#घोषणा LM3533_BOOST_FREQ_MASK		0x01
-#घोषणा LM3533_BOOST_FREQ_SHIFT		0
-
-#घोषणा LM3533_BL_ID_MASK		1
-#घोषणा LM3533_LED_ID_MASK		3
-#घोषणा LM3533_BL_ID_MAX		1
-#घोषणा LM3533_LED_ID_MAX		3
-
-#घोषणा LM3533_HVLED_ID_MAX		2
-#घोषणा LM3533_LVLED_ID_MAX		5
-
-#घोषणा LM3533_REG_OUTPUT_CONF1		0x10
-#घोषणा LM3533_REG_OUTPUT_CONF2		0x11
-#घोषणा LM3533_REG_BOOST_PWM		0x2c
-
-#घोषणा LM3533_REG_MAX			0xb2
+#include <linux/mfd/lm3533.h>
 
 
-अटल काष्ठा mfd_cell lm3533_als_devs[] = अणु
-	अणु
+#define LM3533_BOOST_OVP_MASK		0x06
+#define LM3533_BOOST_OVP_SHIFT		1
+
+#define LM3533_BOOST_FREQ_MASK		0x01
+#define LM3533_BOOST_FREQ_SHIFT		0
+
+#define LM3533_BL_ID_MASK		1
+#define LM3533_LED_ID_MASK		3
+#define LM3533_BL_ID_MAX		1
+#define LM3533_LED_ID_MAX		3
+
+#define LM3533_HVLED_ID_MAX		2
+#define LM3533_LVLED_ID_MAX		5
+
+#define LM3533_REG_OUTPUT_CONF1		0x10
+#define LM3533_REG_OUTPUT_CONF2		0x11
+#define LM3533_REG_BOOST_PWM		0x2c
+
+#define LM3533_REG_MAX			0xb2
+
+
+static struct mfd_cell lm3533_als_devs[] = {
+	{
 		.name	= "lm3533-als",
 		.id	= -1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mfd_cell lm3533_bl_devs[] = अणु
-	अणु
+static struct mfd_cell lm3533_bl_devs[] = {
+	{
 		.name	= "lm3533-backlight",
 		.id	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "lm3533-backlight",
 		.id	= 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा mfd_cell lm3533_led_devs[] = अणु
-	अणु
+static struct mfd_cell lm3533_led_devs[] = {
+	{
 		.name	= "lm3533-leds",
 		.id	= 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "lm3533-leds",
 		.id	= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "lm3533-leds",
 		.id	= 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name	= "lm3533-leds",
 		.id	= 3,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक lm3533_पढ़ो(काष्ठा lm3533 *lm3533, u8 reg, u8 *val)
-अणु
-	पूर्णांक पंचांगp;
-	पूर्णांक ret;
+int lm3533_read(struct lm3533 *lm3533, u8 reg, u8 *val)
+{
+	int tmp;
+	int ret;
 
-	ret = regmap_पढ़ो(lm3533->regmap, reg, &पंचांगp);
-	अगर (ret < 0) अणु
+	ret = regmap_read(lm3533->regmap, reg, &tmp);
+	if (ret < 0) {
 		dev_err(lm3533->dev, "failed to read register %02x: %d\n",
 								reg, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	*val = पंचांगp;
+	*val = tmp;
 
 	dev_dbg(lm3533->dev, "read [%02x]: %02x\n", reg, *val);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(lm3533_पढ़ो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(lm3533_read);
 
-पूर्णांक lm3533_ग_लिखो(काष्ठा lm3533 *lm3533, u8 reg, u8 val)
-अणु
-	पूर्णांक ret;
+int lm3533_write(struct lm3533 *lm3533, u8 reg, u8 val)
+{
+	int ret;
 
 	dev_dbg(lm3533->dev, "write [%02x]: %02x\n", reg, val);
 
-	ret = regmap_ग_लिखो(lm3533->regmap, reg, val);
-	अगर (ret < 0) अणु
+	ret = regmap_write(lm3533->regmap, reg, val);
+	if (ret < 0) {
 		dev_err(lm3533->dev, "failed to write register %02x: %d\n",
 								reg, ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(lm3533_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(lm3533_write);
 
-पूर्णांक lm3533_update(काष्ठा lm3533 *lm3533, u8 reg, u8 val, u8 mask)
-अणु
-	पूर्णांक ret;
+int lm3533_update(struct lm3533 *lm3533, u8 reg, u8 val, u8 mask)
+{
+	int ret;
 
 	dev_dbg(lm3533->dev, "update [%02x]: %02x/%02x\n", reg, val, mask);
 
 	ret = regmap_update_bits(lm3533->regmap, reg, mask, val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(lm3533->dev, "failed to update register %02x: %d\n",
 								reg, ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(lm3533_update);
 
-अटल पूर्णांक lm3533_set_boost_freq(काष्ठा lm3533 *lm3533,
-						क्रमागत lm3533_boost_freq freq)
-अणु
-	पूर्णांक ret;
+static int lm3533_set_boost_freq(struct lm3533 *lm3533,
+						enum lm3533_boost_freq freq)
+{
+	int ret;
 
 	ret = lm3533_update(lm3533, LM3533_REG_BOOST_PWM,
 					freq << LM3533_BOOST_FREQ_SHIFT,
 					LM3533_BOOST_FREQ_MASK);
-	अगर (ret)
+	if (ret)
 		dev_err(lm3533->dev, "failed to set boost frequency\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक lm3533_set_boost_ovp(काष्ठा lm3533 *lm3533,
-						क्रमागत lm3533_boost_ovp ovp)
-अणु
-	पूर्णांक ret;
+static int lm3533_set_boost_ovp(struct lm3533 *lm3533,
+						enum lm3533_boost_ovp ovp)
+{
+	int ret;
 
 	ret = lm3533_update(lm3533, LM3533_REG_BOOST_PWM,
 					ovp << LM3533_BOOST_OVP_SHIFT,
 					LM3533_BOOST_OVP_MASK);
-	अगर (ret)
+	if (ret)
 		dev_err(lm3533->dev, "failed to set boost ovp\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * HVLED output config -- output hvled controlled by backlight bl
  */
-अटल पूर्णांक lm3533_set_hvled_config(काष्ठा lm3533 *lm3533, u8 hvled, u8 bl)
-अणु
+static int lm3533_set_hvled_config(struct lm3533 *lm3533, u8 hvled, u8 bl)
+{
 	u8 val;
 	u8 mask;
-	पूर्णांक shअगरt;
-	पूर्णांक ret;
+	int shift;
+	int ret;
 
-	अगर (hvled == 0 || hvled > LM3533_HVLED_ID_MAX)
-		वापस -EINVAL;
+	if (hvled == 0 || hvled > LM3533_HVLED_ID_MAX)
+		return -EINVAL;
 
-	अगर (bl > LM3533_BL_ID_MAX)
-		वापस -EINVAL;
+	if (bl > LM3533_BL_ID_MAX)
+		return -EINVAL;
 
-	shअगरt = hvled - 1;
-	mask = LM3533_BL_ID_MASK << shअगरt;
-	val = bl << shअगरt;
+	shift = hvled - 1;
+	mask = LM3533_BL_ID_MASK << shift;
+	val = bl << shift;
 
 	ret = lm3533_update(lm3533, LM3533_REG_OUTPUT_CONF1, val, mask);
-	अगर (ret)
+	if (ret)
 		dev_err(lm3533->dev, "failed to set hvled config\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * LVLED output config -- output lvled controlled by LED led
  */
-अटल पूर्णांक lm3533_set_lvled_config(काष्ठा lm3533 *lm3533, u8 lvled, u8 led)
-अणु
+static int lm3533_set_lvled_config(struct lm3533 *lm3533, u8 lvled, u8 led)
+{
 	u8 reg;
 	u8 val;
 	u8 mask;
-	पूर्णांक shअगरt;
-	पूर्णांक ret;
+	int shift;
+	int ret;
 
-	अगर (lvled == 0 || lvled > LM3533_LVLED_ID_MAX)
-		वापस -EINVAL;
+	if (lvled == 0 || lvled > LM3533_LVLED_ID_MAX)
+		return -EINVAL;
 
-	अगर (led > LM3533_LED_ID_MAX)
-		वापस -EINVAL;
+	if (led > LM3533_LED_ID_MAX)
+		return -EINVAL;
 
-	अगर (lvled < 4) अणु
+	if (lvled < 4) {
 		reg = LM3533_REG_OUTPUT_CONF1;
-		shअगरt = 2 * lvled;
-	पूर्ण अन्यथा अणु
+		shift = 2 * lvled;
+	} else {
 		reg = LM3533_REG_OUTPUT_CONF2;
-		shअगरt = 2 * (lvled - 4);
-	पूर्ण
+		shift = 2 * (lvled - 4);
+	}
 
-	mask = LM3533_LED_ID_MASK << shअगरt;
-	val = led << shअगरt;
+	mask = LM3533_LED_ID_MASK << shift;
+	val = led << shift;
 
 	ret = lm3533_update(lm3533, reg, val, mask);
-	अगर (ret)
+	if (ret)
 		dev_err(lm3533->dev, "failed to set lvled config\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम lm3533_enable(काष्ठा lm3533 *lm3533)
-अणु
-	अगर (gpio_is_valid(lm3533->gpio_hwen))
+static void lm3533_enable(struct lm3533 *lm3533)
+{
+	if (gpio_is_valid(lm3533->gpio_hwen))
 		gpio_set_value(lm3533->gpio_hwen, 1);
-पूर्ण
+}
 
-अटल व्योम lm3533_disable(काष्ठा lm3533 *lm3533)
-अणु
-	अगर (gpio_is_valid(lm3533->gpio_hwen))
+static void lm3533_disable(struct lm3533 *lm3533)
+{
+	if (gpio_is_valid(lm3533->gpio_hwen))
 		gpio_set_value(lm3533->gpio_hwen, 0);
-पूर्ण
+}
 
-क्रमागत lm3533_attribute_type अणु
+enum lm3533_attribute_type {
 	LM3533_ATTR_TYPE_BACKLIGHT,
 	LM3533_ATTR_TYPE_LED,
-पूर्ण;
+};
 
-काष्ठा lm3533_device_attribute अणु
-	काष्ठा device_attribute dev_attr;
-	क्रमागत lm3533_attribute_type type;
-	जोड़ अणु
-		काष्ठा अणु
+struct lm3533_device_attribute {
+	struct device_attribute dev_attr;
+	enum lm3533_attribute_type type;
+	union {
+		struct {
 			u8 id;
-		पूर्ण output;
-	पूर्ण u;
-पूर्ण;
+		} output;
+	} u;
+};
 
-#घोषणा to_lm3533_dev_attr(_attr) \
-	container_of(_attr, काष्ठा lm3533_device_attribute, dev_attr)
+#define to_lm3533_dev_attr(_attr) \
+	container_of(_attr, struct lm3533_device_attribute, dev_attr)
 
-अटल sमाप_प्रकार show_output(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा lm3533 *lm3533 = dev_get_drvdata(dev);
-	काष्ठा lm3533_device_attribute *lattr = to_lm3533_dev_attr(attr);
-	पूर्णांक id = lattr->u.output.id;
+static ssize_t show_output(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct lm3533 *lm3533 = dev_get_drvdata(dev);
+	struct lm3533_device_attribute *lattr = to_lm3533_dev_attr(attr);
+	int id = lattr->u.output.id;
 	u8 reg;
 	u8 val;
 	u8 mask;
-	पूर्णांक shअगरt;
-	पूर्णांक ret;
+	int shift;
+	int ret;
 
-	अगर (lattr->type == LM3533_ATTR_TYPE_BACKLIGHT) अणु
+	if (lattr->type == LM3533_ATTR_TYPE_BACKLIGHT) {
 		reg = LM3533_REG_OUTPUT_CONF1;
-		shअगरt = id - 1;
-		mask = LM3533_BL_ID_MASK << shअगरt;
-	पूर्ण अन्यथा अणु
-		अगर (id < 4) अणु
+		shift = id - 1;
+		mask = LM3533_BL_ID_MASK << shift;
+	} else {
+		if (id < 4) {
 			reg = LM3533_REG_OUTPUT_CONF1;
-			shअगरt = 2 * id;
-		पूर्ण अन्यथा अणु
+			shift = 2 * id;
+		} else {
 			reg = LM3533_REG_OUTPUT_CONF2;
-			shअगरt = 2 * (id - 4);
-		पूर्ण
-		mask = LM3533_LED_ID_MASK << shअगरt;
-	पूर्ण
+			shift = 2 * (id - 4);
+		}
+		mask = LM3533_LED_ID_MASK << shift;
+	}
 
-	ret = lm3533_पढ़ो(lm3533, reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = lm3533_read(lm3533, reg, &val);
+	if (ret)
+		return ret;
 
-	val = (val & mask) >> shअगरt;
+	val = (val & mask) >> shift;
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", val);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+}
 
-अटल sमाप_प्रकार store_output(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा lm3533 *lm3533 = dev_get_drvdata(dev);
-	काष्ठा lm3533_device_attribute *lattr = to_lm3533_dev_attr(attr);
-	पूर्णांक id = lattr->u.output.id;
+static ssize_t store_output(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t len)
+{
+	struct lm3533 *lm3533 = dev_get_drvdata(dev);
+	struct lm3533_device_attribute *lattr = to_lm3533_dev_attr(attr);
+	int id = lattr->u.output.id;
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kstrtou8(buf, 0, &val))
-		वापस -EINVAL;
+	if (kstrtou8(buf, 0, &val))
+		return -EINVAL;
 
-	अगर (lattr->type == LM3533_ATTR_TYPE_BACKLIGHT)
+	if (lattr->type == LM3533_ATTR_TYPE_BACKLIGHT)
 		ret = lm3533_set_hvled_config(lm3533, id, val);
-	अन्यथा
+	else
 		ret = lm3533_set_lvled_config(lm3533, id, val);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-#घोषणा LM3533_OUTPUT_ATTR(_name, _mode, _show, _store, _type, _id) \
-	काष्ठा lm3533_device_attribute lm3533_dev_attr_##_name = \
-		अणु .dev_attr	= __ATTR(_name, _mode, _show, _store), \
+#define LM3533_OUTPUT_ATTR(_name, _mode, _show, _store, _type, _id) \
+	struct lm3533_device_attribute lm3533_dev_attr_##_name = \
+		{ .dev_attr	= __ATTR(_name, _mode, _show, _store), \
 		  .type		= _type, \
-		  .u.output	= अणु .id = _id पूर्ण, पूर्ण
+		  .u.output	= { .id = _id }, }
 
-#घोषणा LM3533_OUTPUT_ATTR_RW(_name, _type, _id) \
+#define LM3533_OUTPUT_ATTR_RW(_name, _type, _id) \
 	LM3533_OUTPUT_ATTR(output_##_name, S_IRUGO | S_IWUSR, \
 					show_output, store_output, _type, _id)
 
-#घोषणा LM3533_OUTPUT_HVLED_ATTR_RW(_nr) \
+#define LM3533_OUTPUT_HVLED_ATTR_RW(_nr) \
 	LM3533_OUTPUT_ATTR_RW(hvled##_nr, LM3533_ATTR_TYPE_BACKLIGHT, _nr)
-#घोषणा LM3533_OUTPUT_LVLED_ATTR_RW(_nr) \
+#define LM3533_OUTPUT_LVLED_ATTR_RW(_nr) \
 	LM3533_OUTPUT_ATTR_RW(lvled##_nr, LM3533_ATTR_TYPE_LED, _nr)
 /*
  * Output config:
@@ -334,15 +333,15 @@ EXPORT_SYMBOL_GPL(lm3533_update);
  * output_hvled<nr>	0-1
  * output_lvled<nr>	0-3
  */
-अटल LM3533_OUTPUT_HVLED_ATTR_RW(1);
-अटल LM3533_OUTPUT_HVLED_ATTR_RW(2);
-अटल LM3533_OUTPUT_LVLED_ATTR_RW(1);
-अटल LM3533_OUTPUT_LVLED_ATTR_RW(2);
-अटल LM3533_OUTPUT_LVLED_ATTR_RW(3);
-अटल LM3533_OUTPUT_LVLED_ATTR_RW(4);
-अटल LM3533_OUTPUT_LVLED_ATTR_RW(5);
+static LM3533_OUTPUT_HVLED_ATTR_RW(1);
+static LM3533_OUTPUT_HVLED_ATTR_RW(2);
+static LM3533_OUTPUT_LVLED_ATTR_RW(1);
+static LM3533_OUTPUT_LVLED_ATTR_RW(2);
+static LM3533_OUTPUT_LVLED_ATTR_RW(3);
+static LM3533_OUTPUT_LVLED_ATTR_RW(4);
+static LM3533_OUTPUT_LVLED_ATTR_RW(5);
 
-अटल काष्ठा attribute *lm3533_attributes[] = अणु
+static struct attribute *lm3533_attributes[] = {
 	&lm3533_dev_attr_output_hvled1.dev_attr.attr,
 	&lm3533_dev_attr_output_hvled2.dev_attr.attr,
 	&lm3533_dev_attr_output_lvled1.dev_attr.attr,
@@ -350,301 +349,301 @@ EXPORT_SYMBOL_GPL(lm3533_update);
 	&lm3533_dev_attr_output_lvled3.dev_attr.attr,
 	&lm3533_dev_attr_output_lvled4.dev_attr.attr,
 	&lm3533_dev_attr_output_lvled5.dev_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-#घोषणा to_dev_attr(_attr) \
-	container_of(_attr, काष्ठा device_attribute, attr)
+#define to_dev_attr(_attr) \
+	container_of(_attr, struct device_attribute, attr)
 
-अटल umode_t lm3533_attr_is_visible(काष्ठा kobject *kobj,
-					     काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lm3533 *lm3533 = dev_get_drvdata(dev);
-	काष्ठा device_attribute *dattr = to_dev_attr(attr);
-	काष्ठा lm3533_device_attribute *lattr = to_lm3533_dev_attr(dattr);
-	क्रमागत lm3533_attribute_type type = lattr->type;
+static umode_t lm3533_attr_is_visible(struct kobject *kobj,
+					     struct attribute *attr, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lm3533 *lm3533 = dev_get_drvdata(dev);
+	struct device_attribute *dattr = to_dev_attr(attr);
+	struct lm3533_device_attribute *lattr = to_lm3533_dev_attr(dattr);
+	enum lm3533_attribute_type type = lattr->type;
 	umode_t mode = attr->mode;
 
-	अगर (!lm3533->have_backlights && type == LM3533_ATTR_TYPE_BACKLIGHT)
+	if (!lm3533->have_backlights && type == LM3533_ATTR_TYPE_BACKLIGHT)
 		mode = 0;
-	अन्यथा अगर (!lm3533->have_leds && type == LM3533_ATTR_TYPE_LED)
+	else if (!lm3533->have_leds && type == LM3533_ATTR_TYPE_LED)
 		mode = 0;
 
-	वापस mode;
-पूर्ण;
+	return mode;
+};
 
-अटल काष्ठा attribute_group lm3533_attribute_group = अणु
+static struct attribute_group lm3533_attribute_group = {
 	.is_visible	= lm3533_attr_is_visible,
 	.attrs		= lm3533_attributes
-पूर्ण;
+};
 
-अटल पूर्णांक lm3533_device_als_init(काष्ठा lm3533 *lm3533)
-अणु
-	काष्ठा lm3533_platक्रमm_data *pdata = dev_get_platdata(lm3533->dev);
-	पूर्णांक ret;
+static int lm3533_device_als_init(struct lm3533 *lm3533)
+{
+	struct lm3533_platform_data *pdata = dev_get_platdata(lm3533->dev);
+	int ret;
 
-	अगर (!pdata->als)
-		वापस 0;
+	if (!pdata->als)
+		return 0;
 
-	lm3533_als_devs[0].platक्रमm_data = pdata->als;
-	lm3533_als_devs[0].pdata_size = माप(*pdata->als);
+	lm3533_als_devs[0].platform_data = pdata->als;
+	lm3533_als_devs[0].pdata_size = sizeof(*pdata->als);
 
-	ret = mfd_add_devices(lm3533->dev, 0, lm3533_als_devs, 1, शून्य,
-			      0, शून्य);
-	अगर (ret) अणु
+	ret = mfd_add_devices(lm3533->dev, 0, lm3533_als_devs, 1, NULL,
+			      0, NULL);
+	if (ret) {
 		dev_err(lm3533->dev, "failed to add ALS device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	lm3533->have_als = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lm3533_device_bl_init(काष्ठा lm3533 *lm3533)
-अणु
-	काष्ठा lm3533_platक्रमm_data *pdata = dev_get_platdata(lm3533->dev);
-	पूर्णांक i;
-	पूर्णांक ret;
+static int lm3533_device_bl_init(struct lm3533 *lm3533)
+{
+	struct lm3533_platform_data *pdata = dev_get_platdata(lm3533->dev);
+	int i;
+	int ret;
 
-	अगर (!pdata->backlights || pdata->num_backlights == 0)
-		वापस 0;
+	if (!pdata->backlights || pdata->num_backlights == 0)
+		return 0;
 
-	अगर (pdata->num_backlights > ARRAY_SIZE(lm3533_bl_devs))
+	if (pdata->num_backlights > ARRAY_SIZE(lm3533_bl_devs))
 		pdata->num_backlights = ARRAY_SIZE(lm3533_bl_devs);
 
-	क्रम (i = 0; i < pdata->num_backlights; ++i) अणु
-		lm3533_bl_devs[i].platक्रमm_data = &pdata->backlights[i];
-		lm3533_bl_devs[i].pdata_size = माप(pdata->backlights[i]);
-	पूर्ण
+	for (i = 0; i < pdata->num_backlights; ++i) {
+		lm3533_bl_devs[i].platform_data = &pdata->backlights[i];
+		lm3533_bl_devs[i].pdata_size = sizeof(pdata->backlights[i]);
+	}
 
 	ret = mfd_add_devices(lm3533->dev, 0, lm3533_bl_devs,
-			      pdata->num_backlights, शून्य, 0, शून्य);
-	अगर (ret) अणु
+			      pdata->num_backlights, NULL, 0, NULL);
+	if (ret) {
 		dev_err(lm3533->dev, "failed to add backlight devices\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	lm3533->have_backlights = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lm3533_device_led_init(काष्ठा lm3533 *lm3533)
-अणु
-	काष्ठा lm3533_platक्रमm_data *pdata = dev_get_platdata(lm3533->dev);
-	पूर्णांक i;
-	पूर्णांक ret;
+static int lm3533_device_led_init(struct lm3533 *lm3533)
+{
+	struct lm3533_platform_data *pdata = dev_get_platdata(lm3533->dev);
+	int i;
+	int ret;
 
-	अगर (!pdata->leds || pdata->num_leds == 0)
-		वापस 0;
+	if (!pdata->leds || pdata->num_leds == 0)
+		return 0;
 
-	अगर (pdata->num_leds > ARRAY_SIZE(lm3533_led_devs))
+	if (pdata->num_leds > ARRAY_SIZE(lm3533_led_devs))
 		pdata->num_leds = ARRAY_SIZE(lm3533_led_devs);
 
-	क्रम (i = 0; i < pdata->num_leds; ++i) अणु
-		lm3533_led_devs[i].platक्रमm_data = &pdata->leds[i];
-		lm3533_led_devs[i].pdata_size = माप(pdata->leds[i]);
-	पूर्ण
+	for (i = 0; i < pdata->num_leds; ++i) {
+		lm3533_led_devs[i].platform_data = &pdata->leds[i];
+		lm3533_led_devs[i].pdata_size = sizeof(pdata->leds[i]);
+	}
 
 	ret = mfd_add_devices(lm3533->dev, 0, lm3533_led_devs,
-			      pdata->num_leds, शून्य, 0, शून्य);
-	अगर (ret) अणु
+			      pdata->num_leds, NULL, 0, NULL);
+	if (ret) {
 		dev_err(lm3533->dev, "failed to add LED devices\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	lm3533->have_leds = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lm3533_device_setup(काष्ठा lm3533 *lm3533,
-					काष्ठा lm3533_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
+static int lm3533_device_setup(struct lm3533 *lm3533,
+					struct lm3533_platform_data *pdata)
+{
+	int ret;
 
 	ret = lm3533_set_boost_freq(lm3533, pdata->boost_freq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस lm3533_set_boost_ovp(lm3533, pdata->boost_ovp);
-पूर्ण
+	return lm3533_set_boost_ovp(lm3533, pdata->boost_ovp);
+}
 
-अटल पूर्णांक lm3533_device_init(काष्ठा lm3533 *lm3533)
-अणु
-	काष्ठा lm3533_platक्रमm_data *pdata = dev_get_platdata(lm3533->dev);
-	पूर्णांक ret;
+static int lm3533_device_init(struct lm3533 *lm3533)
+{
+	struct lm3533_platform_data *pdata = dev_get_platdata(lm3533->dev);
+	int ret;
 
 	dev_dbg(lm3533->dev, "%s\n", __func__);
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(lm3533->dev, "no platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	lm3533->gpio_hwen = pdata->gpio_hwen;
 
 	dev_set_drvdata(lm3533->dev, lm3533);
 
-	अगर (gpio_is_valid(lm3533->gpio_hwen)) अणु
+	if (gpio_is_valid(lm3533->gpio_hwen)) {
 		ret = devm_gpio_request_one(lm3533->dev, lm3533->gpio_hwen,
 					GPIOF_OUT_INIT_LOW, "lm3533-hwen");
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(lm3533->dev,
 				"failed to request HWEN GPIO %d\n",
 				lm3533->gpio_hwen);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	lm3533_enable(lm3533);
 
 	ret = lm3533_device_setup(lm3533, pdata);
-	अगर (ret)
-		जाओ err_disable;
+	if (ret)
+		goto err_disable;
 
 	lm3533_device_als_init(lm3533);
 	lm3533_device_bl_init(lm3533);
 	lm3533_device_led_init(lm3533);
 
 	ret = sysfs_create_group(&lm3533->dev->kobj, &lm3533_attribute_group);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(lm3533->dev, "failed to create sysfs attributes\n");
-		जाओ err_unरेजिस्टर;
-	पूर्ण
+		goto err_unregister;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर:
-	mfd_हटाओ_devices(lm3533->dev);
+err_unregister:
+	mfd_remove_devices(lm3533->dev);
 err_disable:
 	lm3533_disable(lm3533);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम lm3533_device_निकास(काष्ठा lm3533 *lm3533)
-अणु
+static void lm3533_device_exit(struct lm3533 *lm3533)
+{
 	dev_dbg(lm3533->dev, "%s\n", __func__);
 
-	sysfs_हटाओ_group(&lm3533->dev->kobj, &lm3533_attribute_group);
+	sysfs_remove_group(&lm3533->dev->kobj, &lm3533_attribute_group);
 
-	mfd_हटाओ_devices(lm3533->dev);
+	mfd_remove_devices(lm3533->dev);
 	lm3533_disable(lm3533);
-पूर्ण
+}
 
-अटल bool lm3533_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल 0x10 ... 0x2c:
-	हाल 0x30 ... 0x38:
-	हाल 0x40 ... 0x45:
-	हाल 0x50 ... 0x57:
-	हाल 0x60 ... 0x6e:
-	हाल 0x70 ... 0x75:
-	हाल 0x80 ... 0x85:
-	हाल 0x90 ... 0x95:
-	हाल 0xa0 ... 0xa5:
-	हाल 0xb0 ... 0xb2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool lm3533_readable_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case 0x10 ... 0x2c:
+	case 0x30 ... 0x38:
+	case 0x40 ... 0x45:
+	case 0x50 ... 0x57:
+	case 0x60 ... 0x6e:
+	case 0x70 ... 0x75:
+	case 0x80 ... 0x85:
+	case 0x90 ... 0x95:
+	case 0xa0 ... 0xa5:
+	case 0xb0 ... 0xb2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool lm3533_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल 0x34 ... 0x36:	/* zone */
-	हाल 0x37 ... 0x38:	/* adc */
-	हाल 0xb0 ... 0xb1:	/* fault */
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool lm3533_volatile_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case 0x34 ... 0x36:	/* zone */
+	case 0x37 ... 0x38:	/* adc */
+	case 0xb0 ... 0xb1:	/* fault */
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool lm3533_precious_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल 0x34:		/* zone */
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool lm3533_precious_register(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case 0x34:		/* zone */
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config regmap_config = अणु
+static const struct regmap_config regmap_config = {
 	.reg_bits	= 8,
 	.val_bits	= 8,
-	.max_रेजिस्टर	= LM3533_REG_MAX,
-	.पढ़ोable_reg	= lm3533_पढ़ोable_रेजिस्टर,
-	.अस्थिर_reg	= lm3533_अस्थिर_रेजिस्टर,
-	.precious_reg	= lm3533_precious_रेजिस्टर,
-पूर्ण;
+	.max_register	= LM3533_REG_MAX,
+	.readable_reg	= lm3533_readable_register,
+	.volatile_reg	= lm3533_volatile_register,
+	.precious_reg	= lm3533_precious_register,
+};
 
-अटल पूर्णांक lm3533_i2c_probe(काष्ठा i2c_client *i2c,
-					स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा lm3533 *lm3533;
+static int lm3533_i2c_probe(struct i2c_client *i2c,
+					const struct i2c_device_id *id)
+{
+	struct lm3533 *lm3533;
 
 	dev_dbg(&i2c->dev, "%s\n", __func__);
 
-	lm3533 = devm_kzalloc(&i2c->dev, माप(*lm3533), GFP_KERNEL);
-	अगर (!lm3533)
-		वापस -ENOMEM;
+	lm3533 = devm_kzalloc(&i2c->dev, sizeof(*lm3533), GFP_KERNEL);
+	if (!lm3533)
+		return -ENOMEM;
 
 	i2c_set_clientdata(i2c, lm3533);
 
 	lm3533->regmap = devm_regmap_init_i2c(i2c, &regmap_config);
-	अगर (IS_ERR(lm3533->regmap))
-		वापस PTR_ERR(lm3533->regmap);
+	if (IS_ERR(lm3533->regmap))
+		return PTR_ERR(lm3533->regmap);
 
 	lm3533->dev = &i2c->dev;
 	lm3533->irq = i2c->irq;
 
-	वापस lm3533_device_init(lm3533);
-पूर्ण
+	return lm3533_device_init(lm3533);
+}
 
-अटल पूर्णांक lm3533_i2c_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा lm3533 *lm3533 = i2c_get_clientdata(i2c);
+static int lm3533_i2c_remove(struct i2c_client *i2c)
+{
+	struct lm3533 *lm3533 = i2c_get_clientdata(i2c);
 
 	dev_dbg(&i2c->dev, "%s\n", __func__);
 
-	lm3533_device_निकास(lm3533);
+	lm3533_device_exit(lm3533);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id lm3533_i2c_ids[] = अणु
-	अणु "lm3533", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id lm3533_i2c_ids[] = {
+	{ "lm3533", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, lm3533_i2c_ids);
 
-अटल काष्ठा i2c_driver lm3533_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver lm3533_i2c_driver = {
+	.driver = {
 		   .name = "lm3533",
-	पूर्ण,
+	},
 	.id_table	= lm3533_i2c_ids,
 	.probe		= lm3533_i2c_probe,
-	.हटाओ		= lm3533_i2c_हटाओ,
-पूर्ण;
+	.remove		= lm3533_i2c_remove,
+};
 
-अटल पूर्णांक __init lm3533_i2c_init(व्योम)
-अणु
-	वापस i2c_add_driver(&lm3533_i2c_driver);
-पूर्ण
+static int __init lm3533_i2c_init(void)
+{
+	return i2c_add_driver(&lm3533_i2c_driver);
+}
 subsys_initcall(lm3533_i2c_init);
 
-अटल व्योम __निकास lm3533_i2c_निकास(व्योम)
-अणु
+static void __exit lm3533_i2c_exit(void)
+{
 	i2c_del_driver(&lm3533_i2c_driver);
-पूर्ण
-module_निकास(lm3533_i2c_निकास);
+}
+module_exit(lm3533_i2c_exit);
 
 MODULE_AUTHOR("Johan Hovold <jhovold@gmail.com>");
 MODULE_DESCRIPTION("LM3533 Core");

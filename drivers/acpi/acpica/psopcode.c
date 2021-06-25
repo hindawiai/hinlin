@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: psopcode - Parser/Interpreter opcode inक्रमmation table
+ * Module Name: psopcode - Parser/Interpreter opcode information table
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acopcode.h"
-#समावेश "amlcode.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acopcode.h"
+#include "amlcode.h"
 
-#घोषणा _COMPONENT          ACPI_PARSER
+#define _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psopcode")
 
 /*******************************************************************************
  *
  * NAME:        acpi_gbl_aml_op_info
  *
- * DESCRIPTION: Opcode table. Each entry contains <opcode, type, name, opeअक्रमs>
- *              The name is a simple ascii string, the opeअक्रम specअगरier is an
- *              ascii string with one letter per opeअक्रम. The letter specअगरies
- *              the opeअक्रम type.
+ * DESCRIPTION: Opcode table. Each entry contains <opcode, type, name, operands>
+ *              The name is a simple ascii string, the operand specifier is an
+ *              ascii string with one letter per operand. The letter specifies
+ *              the operand type.
  *
  ******************************************************************************/
 /*
@@ -144,10 +143,10 @@ ACPI_MODULE_NAME("psopcode")
 
  ******************************************************************************/
 /*
- * Master Opcode inक्रमmation table. A summary of everything we know about each
+ * Master Opcode information table. A summary of everything we know about each
  * opcode, all in one place.
  */
-स्थिर काष्ठा acpi_opcode_info acpi_gbl_aml_op_info[AML_NUM_OPCODES] = अणु
+const struct acpi_opcode_info acpi_gbl_aml_op_info[AML_NUM_OPCODES] = {
 /*! [Begin] no source code translation */
 /* Index           Name                 Parser Args               Interpreter Args                ObjectType                    Class                      Type                  Flags */
 
@@ -283,7 +282,7 @@ ACPI_MODULE_NAME("psopcode")
 /* 26 */ ACPI_OP("And", ARGP_BIT_AND_OP, ARGI_BIT_AND_OP, ACPI_TYPE_ANY,
 			 AML_CLASS_EXECUTE, AML_TYPE_EXEC_2A_1T_1R,
 			 AML_FLAGS_EXEC_2A_1T_1R | AML_MATH | AML_CONSTANT),
-/* 27 */ ACPI_OP("NAnd", ARGP_BIT_न_अंकD_OP, ARGI_BIT_न_अंकD_OP,
+/* 27 */ ACPI_OP("NAnd", ARGP_BIT_NAND_OP, ARGI_BIT_NAND_OP,
 			 ACPI_TYPE_ANY, AML_CLASS_EXECUTE,
 			 AML_TYPE_EXEC_2A_1T_1R,
 			 AML_FLAGS_EXEC_2A_1T_1R | AML_MATH | AML_CONSTANT),
@@ -627,4 +626,4 @@ ACPI_MODULE_NAME("psopcode")
 			 AML_TYPE_LITERAL, AML_CONSTANT)
 
 /*! [End] no source code translation !*/
-पूर्ण;
+};

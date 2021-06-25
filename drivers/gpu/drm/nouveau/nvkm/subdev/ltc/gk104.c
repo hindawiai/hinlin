@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,37 +21,37 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल व्योम
-gk104_ltc_init(काष्ठा nvkm_ltc *ltc)
-अणु
-	काष्ठा nvkm_device *device = ltc->subdev.device;
+static void
+gk104_ltc_init(struct nvkm_ltc *ltc)
+{
+	struct nvkm_device *device = ltc->subdev.device;
 	u32 lpg128 = !(nvkm_rd32(device, 0x100c80) & 0x00000001);
 
 	nvkm_wr32(device, 0x17e8d8, ltc->ltc_nr);
 	nvkm_wr32(device, 0x17e000, ltc->ltc_nr);
 	nvkm_wr32(device, 0x17e8d4, ltc->tag_base);
 	nvkm_mask(device, 0x17e8c0, 0x00000002, lpg128 ? 0x00000002 : 0x00000000);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_ltc_func
-gk104_ltc = अणु
+static const struct nvkm_ltc_func
+gk104_ltc = {
 	.oneinit = gf100_ltc_oneinit,
 	.init = gk104_ltc_init,
-	.पूर्णांकr = gf100_ltc_पूर्णांकr,
+	.intr = gf100_ltc_intr,
 	.cbc_clear = gf100_ltc_cbc_clear,
-	.cbc_रुको = gf100_ltc_cbc_रुको,
+	.cbc_wait = gf100_ltc_cbc_wait,
 	.zbc = 16,
 	.zbc_clear_color = gf100_ltc_zbc_clear_color,
 	.zbc_clear_depth = gf100_ltc_zbc_clear_depth,
 	.invalidate = gf100_ltc_invalidate,
 	.flush = gf100_ltc_flush,
-पूर्ण;
+};
 
-पूर्णांक
-gk104_ltc_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_ltc **pltc)
-अणु
-	वापस nvkm_ltc_new_(&gk104_ltc, device, type, inst, pltc);
-पूर्ण
+int
+gk104_ltc_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_ltc **pltc)
+{
+	return nvkm_ltc_new_(&gk104_ltc, device, type, inst, pltc);
+}

@@ -1,167 +1,166 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * GPIO driver क्रम EXAR XRA1403 16-bit GPIO expander
+ * GPIO driver for EXAR XRA1403 16-bit GPIO expander
  *
  * Copyright (c) 2017, General Electric Company
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/regmap.h>
+#include <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/seq_file.h>
+#include <linux/spi/spi.h>
+#include <linux/regmap.h>
 
-/* XRA1403 रेजिस्टरs */
-#घोषणा XRA_GSR   0x00 /* GPIO State */
-#घोषणा XRA_OCR   0x02 /* Output Control */
-#घोषणा XRA_PIR   0x04 /* Input Polarity Inversion */
-#घोषणा XRA_GCR   0x06 /* GPIO Configuration */
-#घोषणा XRA_PUR   0x08 /* Input Internal Pull-up Resistor Enable/Disable */
-#घोषणा XRA_IER   0x0A /* Input Interrupt Enable */
-#घोषणा XRA_TSCR  0x0C /* Output Three-State Control */
-#घोषणा XRA_ISR   0x0E /* Input Interrupt Status */
-#घोषणा XRA_REIR  0x10 /* Input Rising Edge Interrupt Enable */
-#घोषणा XRA_FEIR  0x12 /* Input Falling Edge Interrupt Enable */
-#घोषणा XRA_IFR   0x14 /* Input Filter Enable/Disable */
-#घोषणा XRA_LAST  0x15 /* Bounds */
+/* XRA1403 registers */
+#define XRA_GSR   0x00 /* GPIO State */
+#define XRA_OCR   0x02 /* Output Control */
+#define XRA_PIR   0x04 /* Input Polarity Inversion */
+#define XRA_GCR   0x06 /* GPIO Configuration */
+#define XRA_PUR   0x08 /* Input Internal Pull-up Resistor Enable/Disable */
+#define XRA_IER   0x0A /* Input Interrupt Enable */
+#define XRA_TSCR  0x0C /* Output Three-State Control */
+#define XRA_ISR   0x0E /* Input Interrupt Status */
+#define XRA_REIR  0x10 /* Input Rising Edge Interrupt Enable */
+#define XRA_FEIR  0x12 /* Input Falling Edge Interrupt Enable */
+#define XRA_IFR   0x14 /* Input Filter Enable/Disable */
+#define XRA_LAST  0x15 /* Bounds */
 
-काष्ठा xra1403 अणु
-	काष्ठा gpio_chip  chip;
-	काष्ठा regmap     *regmap;
-पूर्ण;
+struct xra1403 {
+	struct gpio_chip  chip;
+	struct regmap     *regmap;
+};
 
-अटल स्थिर काष्ठा regmap_config xra1403_regmap_cfg = अणु
+static const struct regmap_config xra1403_regmap_cfg = {
 		.reg_bits = 7,
 		.pad_bits = 1,
 		.val_bits = 8,
 
-		.max_रेजिस्टर = XRA_LAST,
-पूर्ण;
+		.max_register = XRA_LAST,
+};
 
-अटल अचिन्हित पूर्णांक to_reg(अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक offset)
-अणु
-	वापस reg + (offset > 7);
-पूर्ण
+static unsigned int to_reg(unsigned int reg, unsigned int offset)
+{
+	return reg + (offset > 7);
+}
 
-अटल पूर्णांक xra1403_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
+static int xra1403_direction_input(struct gpio_chip *chip, unsigned int offset)
+{
+	struct xra1403 *xra = gpiochip_get_data(chip);
 
-	वापस regmap_update_bits(xra->regmap, to_reg(XRA_GCR, offset),
+	return regmap_update_bits(xra->regmap, to_reg(XRA_GCR, offset),
 			BIT(offset % 8), BIT(offset % 8));
-पूर्ण
+}
 
-अटल पूर्णांक xra1403_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-				    पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
+static int xra1403_direction_output(struct gpio_chip *chip, unsigned int offset,
+				    int value)
+{
+	int ret;
+	struct xra1403 *xra = gpiochip_get_data(chip);
 
 	ret = regmap_update_bits(xra->regmap, to_reg(XRA_GCR, offset),
 			BIT(offset % 8), 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(xra->regmap, to_reg(XRA_OCR, offset),
 			BIT(offset % 8), value ? BIT(offset % 8) : 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xra1403_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
+static int xra1403_get_direction(struct gpio_chip *chip, unsigned int offset)
+{
+	int ret;
+	unsigned int val;
+	struct xra1403 *xra = gpiochip_get_data(chip);
 
-	ret = regmap_पढ़ो(xra->regmap, to_reg(XRA_GCR, offset), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(xra->regmap, to_reg(XRA_GCR, offset), &val);
+	if (ret)
+		return ret;
 
-	अगर (val & BIT(offset % 8))
-		वापस GPIO_LINE_सूचीECTION_IN;
+	if (val & BIT(offset % 8))
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक xra1403_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
+static int xra1403_get(struct gpio_chip *chip, unsigned int offset)
+{
+	int ret;
+	unsigned int val;
+	struct xra1403 *xra = gpiochip_get_data(chip);
 
-	ret = regmap_पढ़ो(xra->regmap, to_reg(XRA_GSR, offset), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(xra->regmap, to_reg(XRA_GSR, offset), &val);
+	if (ret)
+		return ret;
 
-	वापस !!(val & BIT(offset % 8));
-पूर्ण
+	return !!(val & BIT(offset % 8));
+}
 
-अटल व्योम xra1403_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
+static void xra1403_set(struct gpio_chip *chip, unsigned int offset, int value)
+{
+	int ret;
+	struct xra1403 *xra = gpiochip_get_data(chip);
 
 	ret = regmap_update_bits(xra->regmap, to_reg(XRA_OCR, offset),
 			BIT(offset % 8), value ? BIT(offset % 8) : 0);
-	अगर (ret)
+	if (ret)
 		dev_err(chip->parent, "Failed to set pin: %d, ret: %d\n",
 				offset, ret);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल व्योम xra1403_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
-अणु
-	पूर्णांक reg;
-	काष्ठा xra1403 *xra = gpiochip_get_data(chip);
-	पूर्णांक value[XRA_LAST];
-	पूर्णांक i;
-	स्थिर अक्षर *label;
-	अचिन्हित पूर्णांक gcr;
-	अचिन्हित पूर्णांक gsr;
+#ifdef CONFIG_DEBUG_FS
+static void xra1403_dbg_show(struct seq_file *s, struct gpio_chip *chip)
+{
+	int reg;
+	struct xra1403 *xra = gpiochip_get_data(chip);
+	int value[XRA_LAST];
+	int i;
+	const char *label;
+	unsigned int gcr;
+	unsigned int gsr;
 
-	seq_माला_दो(s, "xra reg:");
-	क्रम (reg = 0; reg <= XRA_LAST; reg++)
-		seq_म_लिखो(s, " %2.2x", reg);
-	seq_माला_दो(s, "\n  value:");
-	क्रम (reg = 0; reg < XRA_LAST; reg++) अणु
-		regmap_पढ़ो(xra->regmap, reg, &value[reg]);
-		seq_म_लिखो(s, " %2.2x", value[reg]);
-	पूर्ण
-	seq_माला_दो(s, "\n");
+	seq_puts(s, "xra reg:");
+	for (reg = 0; reg <= XRA_LAST; reg++)
+		seq_printf(s, " %2.2x", reg);
+	seq_puts(s, "\n  value:");
+	for (reg = 0; reg < XRA_LAST; reg++) {
+		regmap_read(xra->regmap, reg, &value[reg]);
+		seq_printf(s, " %2.2x", value[reg]);
+	}
+	seq_puts(s, "\n");
 
 	gcr = value[XRA_GCR + 1] << 8 | value[XRA_GCR];
 	gsr = value[XRA_GSR + 1] << 8 | value[XRA_GSR];
-	क्रम_each_requested_gpio(chip, i, label) अणु
-		seq_म_लिखो(s, " gpio-%-3d (%-12s) %s %s\n",
+	for_each_requested_gpio(chip, i, label) {
+		seq_printf(s, " gpio-%-3d (%-12s) %s %s\n",
 			   chip->base + i, label,
 			   (gcr & BIT(i)) ? "in" : "out",
 			   (gsr & BIT(i)) ? "hi" : "lo");
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा xra1403_dbg_show शून्य
-#पूर्ण_अगर
+	}
+}
+#else
+#define xra1403_dbg_show NULL
+#endif
 
-अटल पूर्णांक xra1403_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा xra1403 *xra;
-	काष्ठा gpio_desc *reset_gpio;
-	पूर्णांक ret;
+static int xra1403_probe(struct spi_device *spi)
+{
+	struct xra1403 *xra;
+	struct gpio_desc *reset_gpio;
+	int ret;
 
-	xra = devm_kzalloc(&spi->dev, माप(*xra), GFP_KERNEL);
-	अगर (!xra)
-		वापस -ENOMEM;
+	xra = devm_kzalloc(&spi->dev, sizeof(*xra), GFP_KERNEL);
+	if (!xra)
+		return -ENOMEM;
 
-	/* bring the chip out of reset अगर reset pin is provided*/
+	/* bring the chip out of reset if reset pin is provided*/
 	reset_gpio = devm_gpiod_get_optional(&spi->dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(reset_gpio))
+	if (IS_ERR(reset_gpio))
 		dev_warn(&spi->dev, "Could not get reset-gpios\n");
 
 	xra->chip.direction_input = xra1403_direction_input;
@@ -181,35 +180,35 @@
 	xra->chip.owner = THIS_MODULE;
 
 	xra->regmap = devm_regmap_init_spi(spi, &xra1403_regmap_cfg);
-	अगर (IS_ERR(xra->regmap)) अणु
+	if (IS_ERR(xra->regmap)) {
 		ret = PTR_ERR(xra->regmap);
 		dev_err(&spi->dev, "Failed to allocate regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_gpiochip_add_data(&spi->dev, &xra->chip, xra);
-पूर्ण
+	return devm_gpiochip_add_data(&spi->dev, &xra->chip, xra);
+}
 
-अटल स्थिर काष्ठा spi_device_id xra1403_ids[] = अणु
-	अणु "xra1403" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct spi_device_id xra1403_ids[] = {
+	{ "xra1403" },
+	{},
+};
 MODULE_DEVICE_TABLE(spi, xra1403_ids);
 
-अटल स्थिर काष्ठा of_device_id xra1403_spi_of_match[] = अणु
-	अणु .compatible = "exar,xra1403" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id xra1403_spi_of_match[] = {
+	{ .compatible = "exar,xra1403" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, xra1403_spi_of_match);
 
-अटल काष्ठा spi_driver xra1403_driver = अणु
+static struct spi_driver xra1403_driver = {
 	.probe    = xra1403_probe,
 	.id_table = xra1403_ids,
-	.driver   = अणु
+	.driver   = {
 		.name           = "xra1403",
 		.of_match_table = of_match_ptr(xra1403_spi_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_spi_driver(xra1403_driver);
 

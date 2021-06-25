@@ -1,216 +1,215 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Procedures क्रम drawing on the screen early on in the boot process.
+ * Procedures for drawing on the screen early on in the boot process.
  *
  * Benjamin Herrenschmidt <benh@kernel.crashing.org>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/pgtable.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/memblock.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/btext.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/udbg.h>
+#include <asm/sections.h>
+#include <asm/prom.h>
+#include <asm/btext.h>
+#include <asm/page.h>
+#include <asm/mmu.h>
+#include <asm/io.h>
+#include <asm/processor.h>
+#include <asm/udbg.h>
 
-#घोषणा NO_SCROLL
+#define NO_SCROLL
 
-#अगर_अघोषित NO_SCROLL
-अटल व्योम scrollscreen(व्योम);
-#पूर्ण_अगर
+#ifndef NO_SCROLL
+static void scrollscreen(void);
+#endif
 
-#घोषणा __क्रमce_data __section(".data")
+#define __force_data __section(".data")
 
-अटल पूर्णांक g_loc_X __क्रमce_data;
-अटल पूर्णांक g_loc_Y __क्रमce_data;
-अटल पूर्णांक g_max_loc_X __क्रमce_data;
-अटल पूर्णांक g_max_loc_Y __क्रमce_data;
+static int g_loc_X __force_data;
+static int g_loc_Y __force_data;
+static int g_max_loc_X __force_data;
+static int g_max_loc_Y __force_data;
 
-अटल पूर्णांक dispDeviceRowBytes __क्रमce_data;
-अटल पूर्णांक dispDeviceDepth  __क्रमce_data;
-अटल पूर्णांक dispDeviceRect[4] __क्रमce_data;
-अटल अचिन्हित अक्षर *dispDeviceBase __क्रमce_data;
-अटल अचिन्हित अक्षर *logicalDisplayBase __क्रमce_data;
+static int dispDeviceRowBytes __force_data;
+static int dispDeviceDepth  __force_data;
+static int dispDeviceRect[4] __force_data;
+static unsigned char *dispDeviceBase __force_data;
+static unsigned char *logicalDisplayBase __force_data;
 
-अचिन्हित दीर्घ disp_BAT[2] __initdata = अणु0, 0पूर्ण;
+unsigned long disp_BAT[2] __initdata = {0, 0};
 
-#घोषणा cmapsz	(16*256)
+#define cmapsz	(16*256)
 
-अटल अचिन्हित अक्षर vga_font[cmapsz];
+static unsigned char vga_font[cmapsz];
 
-पूर्णांक boot_text_mapped __क्रमce_data = 0;
-पूर्णांक क्रमce_prपूर्णांकk_to_btext = 0;
+int boot_text_mapped __force_data = 0;
+int force_printk_to_btext = 0;
 
-बाह्य व्योम rmci_on(व्योम);
-बाह्य व्योम rmci_off(व्योम);
+extern void rmci_on(void);
+extern void rmci_off(void);
 
-अटल अंतरभूत व्योम rmci_maybe_on(व्योम)
-अणु
-#अगर defined(CONFIG_PPC_EARLY_DEBUG_BOOTX) && defined(CONFIG_PPC64)
-	अगर (!(mfmsr() & MSR_DR))
+static inline void rmci_maybe_on(void)
+{
+#if defined(CONFIG_PPC_EARLY_DEBUG_BOOTX) && defined(CONFIG_PPC64)
+	if (!(mfmsr() & MSR_DR))
 		rmci_on();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत व्योम rmci_maybe_off(व्योम)
-अणु
-#अगर defined(CONFIG_PPC_EARLY_DEBUG_BOOTX) && defined(CONFIG_PPC64)
-	अगर (!(mfmsr() & MSR_DR))
+static inline void rmci_maybe_off(void)
+{
+#if defined(CONFIG_PPC_EARLY_DEBUG_BOOTX) && defined(CONFIG_PPC64)
+	if (!(mfmsr() & MSR_DR))
 		rmci_off();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 
-#अगर_घोषित CONFIG_PPC32
-/* Calc BAT values क्रम mapping the display and store them
+#ifdef CONFIG_PPC32
+/* Calc BAT values for mapping the display and store them
  * in disp_BAT.  Those values are then used from head.S to map
- * the display during identअगरy_machine() and MMU_Init()
+ * the display during identify_machine() and MMU_Init()
  *
- * The display is mapped to भव address 0xD0000000, rather
+ * The display is mapped to virtual address 0xD0000000, rather
  * than 1:1, because some some CHRP machines put the frame buffer
  * in the region starting at 0xC0000000 (PAGE_OFFSET).
  * This mapping is temporary and will disappear as soon as the
- * setup करोne by MMU_Init() is applied.
+ * setup done by MMU_Init() is applied.
  *
  * For now, we align the BAT and then map 8Mb on 601 and 16Mb
- * on other PPCs. This may cause trouble अगर the framebuffer
- * is really badly aligned, but I didn't encounter this हाल
+ * on other PPCs. This may cause trouble if the framebuffer
+ * is really badly aligned, but I didn't encounter this case
  * yet.
  */
-व्योम __init btext_prepare_BAT(व्योम)
-अणु
-	अचिन्हित दीर्घ vaddr = PAGE_OFFSET + 0x10000000;
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ lowbits;
+void __init btext_prepare_BAT(void)
+{
+	unsigned long vaddr = PAGE_OFFSET + 0x10000000;
+	unsigned long addr;
+	unsigned long lowbits;
 
-	addr = (अचिन्हित दीर्घ)dispDeviceBase;
-	अगर (!addr) अणु
+	addr = (unsigned long)dispDeviceBase;
+	if (!addr) {
 		boot_text_mapped = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 	lowbits = addr & ~0xFF000000UL;
 	addr &= 0xFF000000UL;
 	disp_BAT[0] = vaddr | (BL_16M<<2) | 2;
 	disp_BAT[1] = addr | (_PAGE_NO_CACHE | _PAGE_GUARDED | BPP_RW);
-	logicalDisplayBase = (व्योम *) (vaddr + lowbits);
-पूर्ण
-#पूर्ण_अगर
+	logicalDisplayBase = (void *) (vaddr + lowbits);
+}
+#endif
 
 
-/* This function can be used to enable the early boot text when करोing
+/* This function can be used to enable the early boot text when doing
  * OF booting or within bootx init. It must be followed by a btext_unmap()
- * call beक्रमe the logical address becomes unusable
+ * call before the logical address becomes unusable
  */
-व्योम __init btext_setup_display(पूर्णांक width, पूर्णांक height, पूर्णांक depth, पूर्णांक pitch,
-				अचिन्हित दीर्घ address)
-अणु
+void __init btext_setup_display(int width, int height, int depth, int pitch,
+				unsigned long address)
+{
 	g_loc_X = 0;
 	g_loc_Y = 0;
 	g_max_loc_X = width / 8;
 	g_max_loc_Y = height / 16;
-	logicalDisplayBase = (अचिन्हित अक्षर *)address;
-	dispDeviceBase = (अचिन्हित अक्षर *)address;
+	logicalDisplayBase = (unsigned char *)address;
+	dispDeviceBase = (unsigned char *)address;
 	dispDeviceRowBytes = pitch;
 	dispDeviceDepth = depth == 15 ? 16 : depth;
 	dispDeviceRect[0] = dispDeviceRect[1] = 0;
 	dispDeviceRect[2] = width;
 	dispDeviceRect[3] = height;
 	boot_text_mapped = 1;
-पूर्ण
+}
 
-व्योम __init btext_unmap(व्योम)
-अणु
+void __init btext_unmap(void)
+{
 	boot_text_mapped = 0;
-पूर्ण
+}
 
 /* Here's a small text engine to use during early boot
- * or क्रम debugging purposes
+ * or for debugging purposes
  *
- * toकरो:
+ * todo:
  *
- *  - build some kind of vgacon with it to enable early prपूर्णांकk
+ *  - build some kind of vgacon with it to enable early printk
  *  - move to a separate file
  *  - add a few video driver hooks to keep in sync with display
  *    changes.
  */
 
-व्योम btext_map(व्योम)
-अणु
-	अचिन्हित दीर्घ base, offset, size;
-	अचिन्हित अक्षर *vbase;
+void btext_map(void)
+{
+	unsigned long base, offset, size;
+	unsigned char *vbase;
 
-	/* By शेष, we are no दीर्घer mapped */
+	/* By default, we are no longer mapped */
 	boot_text_mapped = 0;
-	अगर (!dispDeviceBase)
-		वापस;
-	base = ((अचिन्हित दीर्घ) dispDeviceBase) & 0xFFFFF000UL;
-	offset = ((अचिन्हित दीर्घ) dispDeviceBase) - base;
+	if (!dispDeviceBase)
+		return;
+	base = ((unsigned long) dispDeviceBase) & 0xFFFFF000UL;
+	offset = ((unsigned long) dispDeviceBase) - base;
 	size = dispDeviceRowBytes * dispDeviceRect[3] + offset
 		+ dispDeviceRect[0];
 	vbase = ioremap_wc(base, size);
-	अगर (!vbase)
-		वापस;
+	if (!vbase)
+		return;
 	logicalDisplayBase = vbase + offset;
 	boot_text_mapped = 1;
-पूर्ण
+}
 
-अटल पूर्णांक btext_initialize(काष्ठा device_node *np)
-अणु
-	अचिन्हित पूर्णांक width, height, depth, pitch;
-	अचिन्हित दीर्घ address = 0;
-	स्थिर u32 *prop;
+static int btext_initialize(struct device_node *np)
+{
+	unsigned int width, height, depth, pitch;
+	unsigned long address = 0;
+	const u32 *prop;
 
-	prop = of_get_property(np, "linux,bootx-width", शून्य);
-	अगर (prop == शून्य)
-		prop = of_get_property(np, "width", शून्य);
-	अगर (prop == शून्य)
-		वापस -EINVAL;
+	prop = of_get_property(np, "linux,bootx-width", NULL);
+	if (prop == NULL)
+		prop = of_get_property(np, "width", NULL);
+	if (prop == NULL)
+		return -EINVAL;
 	width = *prop;
-	prop = of_get_property(np, "linux,bootx-height", शून्य);
-	अगर (prop == शून्य)
-		prop = of_get_property(np, "height", शून्य);
-	अगर (prop == शून्य)
-		वापस -EINVAL;
+	prop = of_get_property(np, "linux,bootx-height", NULL);
+	if (prop == NULL)
+		prop = of_get_property(np, "height", NULL);
+	if (prop == NULL)
+		return -EINVAL;
 	height = *prop;
-	prop = of_get_property(np, "linux,bootx-depth", शून्य);
-	अगर (prop == शून्य)
-		prop = of_get_property(np, "depth", शून्य);
-	अगर (prop == शून्य)
-		वापस -EINVAL;
+	prop = of_get_property(np, "linux,bootx-depth", NULL);
+	if (prop == NULL)
+		prop = of_get_property(np, "depth", NULL);
+	if (prop == NULL)
+		return -EINVAL;
 	depth = *prop;
 	pitch = width * ((depth + 7) / 8);
-	prop = of_get_property(np, "linux,bootx-linebytes", शून्य);
-	अगर (prop == शून्य)
-		prop = of_get_property(np, "linebytes", शून्य);
-	अगर (prop && *prop != 0xffffffffu)
+	prop = of_get_property(np, "linux,bootx-linebytes", NULL);
+	if (prop == NULL)
+		prop = of_get_property(np, "linebytes", NULL);
+	if (prop && *prop != 0xffffffffu)
 		pitch = *prop;
-	अगर (pitch == 1)
+	if (pitch == 1)
 		pitch = 0x1000;
-	prop = of_get_property(np, "linux,bootx-addr", शून्य);
-	अगर (prop == शून्य)
-		prop = of_get_property(np, "address", शून्य);
-	अगर (prop)
+	prop = of_get_property(np, "linux,bootx-addr", NULL);
+	if (prop == NULL)
+		prop = of_get_property(np, "address", NULL);
+	if (prop)
 		address = *prop;
 
-	/* FIXME: Add support क्रम PCI reg properties. Right now, only
+	/* FIXME: Add support for PCI reg properties. Right now, only
 	 * reliable on macs
 	 */
-	अगर (address == 0)
-		वापस -EINVAL;
+	if (address == 0)
+		return -EINVAL;
 
 	g_loc_X = 0;
 	g_loc_Y = 0;
 	g_max_loc_X = width / 8;
 	g_max_loc_Y = height / 16;
-	dispDeviceBase = (अचिन्हित अक्षर *)address;
+	dispDeviceBase = (unsigned char *)address;
 	dispDeviceRowBytes = pitch;
 	dispDeviceDepth = depth == 15 ? 16 : depth;
 	dispDeviceRect[0] = dispDeviceRect[1] = 0;
@@ -219,58 +218,58 @@
 
 	btext_map();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __init btext_find_display(पूर्णांक allow_nonमानक_निकास)
-अणु
-	काष्ठा device_node *np = of_मानक_निकास;
-	पूर्णांक rc = -ENODEV;
+int __init btext_find_display(int allow_nonstdout)
+{
+	struct device_node *np = of_stdout;
+	int rc = -ENODEV;
 
-	अगर (!of_node_is_type(np, "display")) अणु
-		prपूर्णांकk("boot stdout isn't a display !\n");
-		np = शून्य;
-	पूर्ण
-	अगर (np)
+	if (!of_node_is_type(np, "display")) {
+		printk("boot stdout isn't a display !\n");
+		np = NULL;
+	}
+	if (np)
 		rc = btext_initialize(np);
-	अगर (rc == 0 || !allow_nonमानक_निकास)
-		वापस rc;
+	if (rc == 0 || !allow_nonstdout)
+		return rc;
 
-	क्रम_each_node_by_type(np, "display") अणु
-		अगर (of_get_property(np, "linux,opened", शून्य)) अणु
-			prपूर्णांकk("trying %pOF ...\n", np);
+	for_each_node_by_type(np, "display") {
+		if (of_get_property(np, "linux,opened", NULL)) {
+			printk("trying %pOF ...\n", np);
 			rc = btext_initialize(np);
-			prपूर्णांकk("result: %d\n", rc);
-		पूर्ण
-		अगर (rc == 0)
-			अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+			printk("result: %d\n", rc);
+		}
+		if (rc == 0)
+			break;
+	}
+	return rc;
+}
 
-/* Calc the base address of a given poपूर्णांक (x,y) */
-अटल अचिन्हित अक्षर * calc_base(पूर्णांक x, पूर्णांक y)
-अणु
-	अचिन्हित अक्षर *base;
+/* Calc the base address of a given point (x,y) */
+static unsigned char * calc_base(int x, int y)
+{
+	unsigned char *base;
 
 	base = logicalDisplayBase;
-	अगर (!base)
+	if (!base)
 		base = dispDeviceBase;
 	base += (x + dispDeviceRect[0]) * (dispDeviceDepth >> 3);
 	base += (y + dispDeviceRect[1]) * dispDeviceRowBytes;
-	वापस base;
-पूर्ण
+	return base;
+}
 
 /* Adjust the display to a new resolution */
-व्योम btext_update_display(अचिन्हित दीर्घ phys, पूर्णांक width, पूर्णांक height,
-			  पूर्णांक depth, पूर्णांक pitch)
-अणु
-	अगर (!dispDeviceBase)
-		वापस;
+void btext_update_display(unsigned long phys, int width, int height,
+			  int depth, int pitch)
+{
+	if (!dispDeviceBase)
+		return;
 
 	/* check it's the same frame buffer (within 256MB) */
-	अगर ((phys ^ (अचिन्हित दीर्घ)dispDeviceBase) & 0xf0000000)
-		वापस;
+	if ((phys ^ (unsigned long)dispDeviceBase) & 0xf0000000)
+		return;
 
 	dispDeviceBase = (__u8 *) phys;
 	dispDeviceRect[0] = 0;
@@ -279,108 +278,108 @@
 	dispDeviceRect[3] = height;
 	dispDeviceDepth = depth;
 	dispDeviceRowBytes = pitch;
-	अगर (boot_text_mapped) अणु
+	if (boot_text_mapped) {
 		iounmap(logicalDisplayBase);
 		boot_text_mapped = 0;
-	पूर्ण
+	}
 	btext_map();
 	g_loc_X = 0;
 	g_loc_Y = 0;
 	g_max_loc_X = width / 8;
 	g_max_loc_Y = height / 16;
-पूर्ण
+}
 EXPORT_SYMBOL(btext_update_display);
 
-व्योम btext_clearscreen(व्योम)
-अणु
-	अचिन्हित पूर्णांक *base	= (अचिन्हित पूर्णांक *)calc_base(0, 0);
-	अचिन्हित दीर्घ width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+void btext_clearscreen(void)
+{
+	unsigned int *base	= (unsigned int *)calc_base(0, 0);
+	unsigned long width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 					(dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
 	rmci_maybe_on();
-	क्रम (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1]); i++)
-	अणु
-		अचिन्हित पूर्णांक *ptr = base;
-		क्रम(j=width; j; --j)
+	for (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1]); i++)
+	{
+		unsigned int *ptr = base;
+		for(j=width; j; --j)
 			*(ptr++) = 0;
 		base += (dispDeviceRowBytes >> 2);
-	पूर्ण
+	}
 	rmci_maybe_off();
-पूर्ण
+}
 
-व्योम btext_flushscreen(व्योम)
-अणु
-	अचिन्हित पूर्णांक *base	= (अचिन्हित पूर्णांक *)calc_base(0, 0);
-	अचिन्हित दीर्घ width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+void btext_flushscreen(void)
+{
+	unsigned int *base	= (unsigned int *)calc_base(0, 0);
+	unsigned long width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 					(dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
-	क्रम (i=0; i < (dispDeviceRect[3] - dispDeviceRect[1]); i++)
-	अणु
-		अचिन्हित पूर्णांक *ptr = base;
-		क्रम(j = width; j > 0; j -= 8) अणु
-			__यंत्र__ __अस्थिर__ ("dcbst 0,%0" :: "r" (ptr));
+	for (i=0; i < (dispDeviceRect[3] - dispDeviceRect[1]); i++)
+	{
+		unsigned int *ptr = base;
+		for(j = width; j > 0; j -= 8) {
+			__asm__ __volatile__ ("dcbst 0,%0" :: "r" (ptr));
 			ptr += 8;
-		पूर्ण
+		}
 		base += (dispDeviceRowBytes >> 2);
-	पूर्ण
-	__यंत्र__ __अस्थिर__ ("sync" ::: "memory");
-पूर्ण
+	}
+	__asm__ __volatile__ ("sync" ::: "memory");
+}
 
-व्योम btext_flushline(व्योम)
-अणु
-	अचिन्हित पूर्णांक *base	= (अचिन्हित पूर्णांक *)calc_base(0, g_loc_Y << 4);
-	अचिन्हित दीर्घ width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+void btext_flushline(void)
+{
+	unsigned int *base	= (unsigned int *)calc_base(0, g_loc_Y << 4);
+	unsigned long width 	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 					(dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
-	क्रम (i=0; i < 16; i++)
-	अणु
-		अचिन्हित पूर्णांक *ptr = base;
-		क्रम(j = width; j > 0; j -= 8) अणु
-			__यंत्र__ __अस्थिर__ ("dcbst 0,%0" :: "r" (ptr));
+	for (i=0; i < 16; i++)
+	{
+		unsigned int *ptr = base;
+		for(j = width; j > 0; j -= 8) {
+			__asm__ __volatile__ ("dcbst 0,%0" :: "r" (ptr));
 			ptr += 8;
-		पूर्ण
+		}
 		base += (dispDeviceRowBytes >> 2);
-	पूर्ण
-	__यंत्र__ __अस्थिर__ ("sync" ::: "memory");
-पूर्ण
+	}
+	__asm__ __volatile__ ("sync" ::: "memory");
+}
 
 
-#अगर_अघोषित NO_SCROLL
-अटल व्योम scrollscreen(व्योम)
-अणु
-	अचिन्हित पूर्णांक *src     	= (अचिन्हित पूर्णांक *)calc_base(0,16);
-	अचिन्हित पूर्णांक *dst     	= (अचिन्हित पूर्णांक *)calc_base(0,0);
-	अचिन्हित दीर्घ width    	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
+#ifndef NO_SCROLL
+static void scrollscreen(void)
+{
+	unsigned int *src     	= (unsigned int *)calc_base(0,16);
+	unsigned int *dst     	= (unsigned int *)calc_base(0,0);
+	unsigned long width    	= ((dispDeviceRect[2] - dispDeviceRect[0]) *
 				   (dispDeviceDepth >> 3)) >> 2;
-	पूर्णांक i,j;
+	int i,j;
 
 	rmci_maybe_on();
 
-	क्रम (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1] - 16); i++)
-	अणु
-		अचिन्हित पूर्णांक *src_ptr = src;
-		अचिन्हित पूर्णांक *dst_ptr = dst;
-		क्रम(j=width; j; --j)
+	for (i=0; i<(dispDeviceRect[3] - dispDeviceRect[1] - 16); i++)
+	{
+		unsigned int *src_ptr = src;
+		unsigned int *dst_ptr = dst;
+		for(j=width; j; --j)
 			*(dst_ptr++) = *(src_ptr++);
 		src += (dispDeviceRowBytes >> 2);
 		dst += (dispDeviceRowBytes >> 2);
-	पूर्ण
-	क्रम (i=0; i<16; i++)
-	अणु
-		अचिन्हित पूर्णांक *dst_ptr = dst;
-		क्रम(j=width; j; --j)
+	}
+	for (i=0; i<16; i++)
+	{
+		unsigned int *dst_ptr = dst;
+		for(j=width; j; --j)
 			*(dst_ptr++) = 0;
 		dst += (dispDeviceRowBytes >> 2);
-	पूर्ण
+	}
 
 	rmci_maybe_off();
-पूर्ण
-#पूर्ण_अगर /* ndef NO_SCROLL */
+}
+#endif /* ndef NO_SCROLL */
 
-अटल अचिन्हित पूर्णांक expand_bits_8[16] = अणु
+static unsigned int expand_bits_8[16] = {
 	0x00000000,
 	0x000000ff,
 	0x0000ff00,
@@ -397,24 +396,24 @@ EXPORT_SYMBOL(btext_update_display);
 	0xffff00ff,
 	0xffffff00,
 	0xffffffff
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक expand_bits_16[4] = अणु
+static unsigned int expand_bits_16[4] = {
 	0x00000000,
 	0x0000ffff,
 	0xffff0000,
 	0xffffffff
-पूर्ण;
+};
 
 
-अटल व्योम draw_byte_32(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0xFFFFFFFFUL;
-	पूर्णांक bg = 0x00000000UL;
+static void draw_byte_32(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0xFFFFFFFFUL;
+	int bg = 0x00000000UL;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (-(bits >> 7) & fg) ^ bg;
 		base[1] = (-((bits >> 6) & 1) & fg) ^ bg;
@@ -424,167 +423,167 @@ EXPORT_SYMBOL(btext_update_display);
 		base[5] = (-((bits >> 2) & 1) & fg) ^ bg;
 		base[6] = (-((bits >> 1) & 1) & fg) ^ bg;
 		base[7] = (-(bits & 1) & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल अंतरभूत व्योम draw_byte_16(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0xFFFFFFFFUL;
-	पूर्णांक bg = 0x00000000UL;
-	अचिन्हित पूर्णांक *eb = (पूर्णांक *)expand_bits_16;
+static inline void draw_byte_16(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0xFFFFFFFFUL;
+	int bg = 0x00000000UL;
+	unsigned int *eb = (int *)expand_bits_16;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (eb[bits >> 6] & fg) ^ bg;
 		base[1] = (eb[(bits >> 4) & 3] & fg) ^ bg;
 		base[2] = (eb[(bits >> 2) & 3] & fg) ^ bg;
 		base[3] = (eb[bits & 3] & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल अंतरभूत व्योम draw_byte_8(अचिन्हित अक्षर *font, अचिन्हित पूर्णांक *base, पूर्णांक rb)
-अणु
-	पूर्णांक l, bits;
-	पूर्णांक fg = 0x0F0F0F0FUL;
-	पूर्णांक bg = 0x00000000UL;
-	अचिन्हित पूर्णांक *eb = (पूर्णांक *)expand_bits_8;
+static inline void draw_byte_8(unsigned char *font, unsigned int *base, int rb)
+{
+	int l, bits;
+	int fg = 0x0F0F0F0FUL;
+	int bg = 0x00000000UL;
+	unsigned int *eb = (int *)expand_bits_8;
 
-	क्रम (l = 0; l < 16; ++l)
-	अणु
+	for (l = 0; l < 16; ++l)
+	{
 		bits = *font++;
 		base[0] = (eb[bits >> 4] & fg) ^ bg;
 		base[1] = (eb[bits & 0xf] & fg) ^ bg;
-		base = (अचिन्हित पूर्णांक *) ((अक्षर *)base + rb);
-	पूर्ण
-पूर्ण
+		base = (unsigned int *) ((char *)base + rb);
+	}
+}
 
-अटल noअंतरभूत व्योम draw_byte(अचिन्हित अक्षर c, दीर्घ locX, दीर्घ locY)
-अणु
-	अचिन्हित अक्षर *base	= calc_base(locX << 3, locY << 4);
-	अचिन्हित अक्षर *font	= &vga_font[((अचिन्हित पूर्णांक)c) * 16];
-	पूर्णांक rb			= dispDeviceRowBytes;
+static noinline void draw_byte(unsigned char c, long locX, long locY)
+{
+	unsigned char *base	= calc_base(locX << 3, locY << 4);
+	unsigned char *font	= &vga_font[((unsigned int)c) * 16];
+	int rb			= dispDeviceRowBytes;
 
 	rmci_maybe_on();
-	चयन(dispDeviceDepth) अणु
-	हाल 24:
-	हाल 32:
-		draw_byte_32(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	हाल 15:
-	हाल 16:
-		draw_byte_16(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	हाल 8:
-		draw_byte_8(font, (अचिन्हित पूर्णांक *)base, rb);
-		अवरोध;
-	पूर्ण
+	switch(dispDeviceDepth) {
+	case 24:
+	case 32:
+		draw_byte_32(font, (unsigned int *)base, rb);
+		break;
+	case 15:
+	case 16:
+		draw_byte_16(font, (unsigned int *)base, rb);
+		break;
+	case 8:
+		draw_byte_8(font, (unsigned int *)base, rb);
+		break;
+	}
 	rmci_maybe_off();
-पूर्ण
+}
 
-व्योम btext_drawअक्षर(अक्षर c)
-अणु
-	पूर्णांक cline = 0;
-#अगर_घोषित NO_SCROLL
-	पूर्णांक x;
-#पूर्ण_अगर
-	अगर (!boot_text_mapped)
-		वापस;
+void btext_drawchar(char c)
+{
+	int cline = 0;
+#ifdef NO_SCROLL
+	int x;
+#endif
+	if (!boot_text_mapped)
+		return;
 
-	चयन (c) अणु
-	हाल '\b':
-		अगर (g_loc_X > 0)
+	switch (c) {
+	case '\b':
+		if (g_loc_X > 0)
 			--g_loc_X;
-		अवरोध;
-	हाल '\t':
+		break;
+	case '\t':
 		g_loc_X = (g_loc_X & -8) + 8;
-		अवरोध;
-	हाल '\r':
+		break;
+	case '\r':
 		g_loc_X = 0;
-		अवरोध;
-	हाल '\n':
+		break;
+	case '\n':
 		g_loc_X = 0;
 		g_loc_Y++;
 		cline = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		draw_byte(c, g_loc_X++, g_loc_Y);
-	पूर्ण
-	अगर (g_loc_X >= g_max_loc_X) अणु
+	}
+	if (g_loc_X >= g_max_loc_X) {
 		g_loc_X = 0;
 		g_loc_Y++;
 		cline = 1;
-	पूर्ण
-#अगर_अघोषित NO_SCROLL
-	जबतक (g_loc_Y >= g_max_loc_Y) अणु
+	}
+#ifndef NO_SCROLL
+	while (g_loc_Y >= g_max_loc_Y) {
 		scrollscreen();
 		g_loc_Y--;
-	पूर्ण
-#अन्यथा
-	/* wrap around from bottom to top of screen so we करोn't
-	   waste समय scrolling each line.  -- paulus. */
-	अगर (g_loc_Y >= g_max_loc_Y)
+	}
+#else
+	/* wrap around from bottom to top of screen so we don't
+	   waste time scrolling each line.  -- paulus. */
+	if (g_loc_Y >= g_max_loc_Y)
 		g_loc_Y = 0;
-	अगर (cline) अणु
-		क्रम (x = 0; x < g_max_loc_X; ++x)
+	if (cline) {
+		for (x = 0; x < g_max_loc_X; ++x)
 			draw_byte(' ', x, g_loc_Y);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-व्योम btext_drawstring(स्थिर अक्षर *c)
-अणु
-	अगर (!boot_text_mapped)
-		वापस;
-	जबतक (*c)
-		btext_drawअक्षर(*c++);
-पूर्ण
+void btext_drawstring(const char *c)
+{
+	if (!boot_text_mapped)
+		return;
+	while (*c)
+		btext_drawchar(*c++);
+}
 
-व्योम btext_drawtext(स्थिर अक्षर *c, अचिन्हित पूर्णांक len)
-अणु
-	अगर (!boot_text_mapped)
-		वापस;
-	जबतक (len--)
-		btext_drawअक्षर(*c++);
-पूर्ण
+void btext_drawtext(const char *c, unsigned int len)
+{
+	if (!boot_text_mapped)
+		return;
+	while (len--)
+		btext_drawchar(*c++);
+}
 
-व्योम btext_drawhex(अचिन्हित दीर्घ v)
-अणु
-	अगर (!boot_text_mapped)
-		वापस;
-#अगर_घोषित CONFIG_PPC64
-	btext_drawअक्षर(hex_asc_hi(v >> 56));
-	btext_drawअक्षर(hex_asc_lo(v >> 56));
-	btext_drawअक्षर(hex_asc_hi(v >> 48));
-	btext_drawअक्षर(hex_asc_lo(v >> 48));
-	btext_drawअक्षर(hex_asc_hi(v >> 40));
-	btext_drawअक्षर(hex_asc_lo(v >> 40));
-	btext_drawअक्षर(hex_asc_hi(v >> 32));
-	btext_drawअक्षर(hex_asc_lo(v >> 32));
-#पूर्ण_अगर
-	btext_drawअक्षर(hex_asc_hi(v >> 24));
-	btext_drawअक्षर(hex_asc_lo(v >> 24));
-	btext_drawअक्षर(hex_asc_hi(v >> 16));
-	btext_drawअक्षर(hex_asc_lo(v >> 16));
-	btext_drawअक्षर(hex_asc_hi(v >> 8));
-	btext_drawअक्षर(hex_asc_lo(v >> 8));
-	btext_drawअक्षर(hex_asc_hi(v));
-	btext_drawअक्षर(hex_asc_lo(v));
-	btext_drawअक्षर(' ');
-पूर्ण
+void btext_drawhex(unsigned long v)
+{
+	if (!boot_text_mapped)
+		return;
+#ifdef CONFIG_PPC64
+	btext_drawchar(hex_asc_hi(v >> 56));
+	btext_drawchar(hex_asc_lo(v >> 56));
+	btext_drawchar(hex_asc_hi(v >> 48));
+	btext_drawchar(hex_asc_lo(v >> 48));
+	btext_drawchar(hex_asc_hi(v >> 40));
+	btext_drawchar(hex_asc_lo(v >> 40));
+	btext_drawchar(hex_asc_hi(v >> 32));
+	btext_drawchar(hex_asc_lo(v >> 32));
+#endif
+	btext_drawchar(hex_asc_hi(v >> 24));
+	btext_drawchar(hex_asc_lo(v >> 24));
+	btext_drawchar(hex_asc_hi(v >> 16));
+	btext_drawchar(hex_asc_lo(v >> 16));
+	btext_drawchar(hex_asc_hi(v >> 8));
+	btext_drawchar(hex_asc_lo(v >> 8));
+	btext_drawchar(hex_asc_hi(v));
+	btext_drawchar(hex_asc_lo(v));
+	btext_drawchar(' ');
+}
 
-व्योम __init udbg_init_btext(व्योम)
-अणु
-	/* If btext is enabled, we might have a BAT setup क्रम early display,
-	 * thus we करो enable some very basic udbg output
+void __init udbg_init_btext(void)
+{
+	/* If btext is enabled, we might have a BAT setup for early display,
+	 * thus we do enable some very basic udbg output
 	 */
-	udbg_अ_दो = btext_drawअक्षर;
-पूर्ण
+	udbg_putc = btext_drawchar;
+}
 
-अटल अचिन्हित अक्षर vga_font[cmapsz] = अणु
+static unsigned char vga_font[cmapsz] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0x81, 0xa5, 0x81, 0x81, 0xbd,
 0x99, 0x81, 0x81, 0x7e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7e, 0xff,
@@ -927,5 +926,5 @@ EXPORT_SYMBOL(btext_update_display);
 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x7c, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 

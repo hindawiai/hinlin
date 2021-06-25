@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Provides user-space access to the SSAM EC via the /dev/surface/aggregator
- * misc device. Intended क्रम debugging and development.
+ * misc device. Intended for debugging and development.
  *
  * Copyright (C) 2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/rwsem.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/surface_aggregator/cdev.h>
-#समावेश <linux/surface_aggregator/controller.h>
+#include <linux/surface_aggregator/cdev.h>
+#include <linux/surface_aggregator/controller.h>
 
-#घोषणा SSAM_CDEV_DEVICE_NAME	"surface_aggregator_cdev"
+#define SSAM_CDEV_DEVICE_NAME	"surface_aggregator_cdev"
 
-काष्ठा ssam_cdev अणु
-	काष्ठा kref kref;
-	काष्ठा rw_semaphore lock;
-	काष्ठा ssam_controller *ctrl;
-	काष्ठा miscdevice mdev;
-पूर्ण;
+struct ssam_cdev {
+	struct kref kref;
+	struct rw_semaphore lock;
+	struct ssam_controller *ctrl;
+	struct miscdevice mdev;
+};
 
-अटल व्योम __ssam_cdev_release(काष्ठा kref *kref)
-अणु
-	kमुक्त(container_of(kref, काष्ठा ssam_cdev, kref));
-पूर्ण
+static void __ssam_cdev_release(struct kref *kref)
+{
+	kfree(container_of(kref, struct ssam_cdev, kref));
+}
 
-अटल काष्ठा ssam_cdev *ssam_cdev_get(काष्ठा ssam_cdev *cdev)
-अणु
-	अगर (cdev)
+static struct ssam_cdev *ssam_cdev_get(struct ssam_cdev *cdev)
+{
+	if (cdev)
 		kref_get(&cdev->kref);
 
-	वापस cdev;
-पूर्ण
+	return cdev;
+}
 
-अटल व्योम ssam_cdev_put(काष्ठा ssam_cdev *cdev)
-अणु
-	अगर (cdev)
+static void ssam_cdev_put(struct ssam_cdev *cdev)
+{
+	if (cdev)
 		kref_put(&cdev->kref, __ssam_cdev_release);
-पूर्ण
+}
 
-अटल पूर्णांक ssam_cdev_device_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा miscdevice *mdev = filp->निजी_data;
-	काष्ठा ssam_cdev *cdev = container_of(mdev, काष्ठा ssam_cdev, mdev);
+static int ssam_cdev_device_open(struct inode *inode, struct file *filp)
+{
+	struct miscdevice *mdev = filp->private_data;
+	struct ssam_cdev *cdev = container_of(mdev, struct ssam_cdev, mdev);
 
-	filp->निजी_data = ssam_cdev_get(cdev);
-	वापस stream_खोलो(inode, filp);
-पूर्ण
+	filp->private_data = ssam_cdev_get(cdev);
+	return stream_open(inode, filp);
+}
 
-अटल पूर्णांक ssam_cdev_device_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	ssam_cdev_put(filp->निजी_data);
-	वापस 0;
-पूर्ण
+static int ssam_cdev_device_release(struct inode *inode, struct file *filp)
+{
+	ssam_cdev_put(filp->private_data);
+	return 0;
+}
 
-अटल दीर्घ ssam_cdev_request(काष्ठा ssam_cdev *cdev, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ssam_cdev_request __user *r;
-	काष्ठा ssam_cdev_request rqst;
-	काष्ठा ssam_request spec = अणुपूर्ण;
-	काष्ठा ssam_response rsp = अणुपूर्ण;
-	स्थिर व्योम __user *plddata;
-	व्योम __user *rspdata;
-	पूर्णांक status = 0, ret = 0, पंचांगp;
+static long ssam_cdev_request(struct ssam_cdev *cdev, unsigned long arg)
+{
+	struct ssam_cdev_request __user *r;
+	struct ssam_cdev_request rqst;
+	struct ssam_request spec = {};
+	struct ssam_response rsp = {};
+	const void __user *plddata;
+	void __user *rspdata;
+	int status = 0, ret = 0, tmp;
 
-	r = (काष्ठा ssam_cdev_request __user *)arg;
-	ret = copy_काष्ठा_from_user(&rqst, माप(rqst), r, माप(*r));
-	अगर (ret)
-		जाओ out;
+	r = (struct ssam_cdev_request __user *)arg;
+	ret = copy_struct_from_user(&rqst, sizeof(rqst), r, sizeof(*r));
+	if (ret)
+		goto out;
 
 	plddata = u64_to_user_ptr(rqst.payload.data);
 	rspdata = u64_to_user_ptr(rqst.response.data);
@@ -88,151 +87,151 @@
 	spec.instance_id = rqst.instance_id;
 	spec.flags = 0;
 	spec.length = rqst.payload.length;
-	spec.payload = शून्य;
+	spec.payload = NULL;
 
-	अगर (rqst.flags & SSAM_CDEV_REQUEST_HAS_RESPONSE)
+	if (rqst.flags & SSAM_CDEV_REQUEST_HAS_RESPONSE)
 		spec.flags |= SSAM_REQUEST_HAS_RESPONSE;
 
-	अगर (rqst.flags & SSAM_CDEV_REQUEST_UNSEQUENCED)
+	if (rqst.flags & SSAM_CDEV_REQUEST_UNSEQUENCED)
 		spec.flags |= SSAM_REQUEST_UNSEQUENCED;
 
 	rsp.capacity = rqst.response.length;
 	rsp.length = 0;
-	rsp.poपूर्णांकer = शून्य;
+	rsp.pointer = NULL;
 
 	/* Get request payload from user-space. */
-	अगर (spec.length) अणु
-		अगर (!plddata) अणु
+	if (spec.length) {
+		if (!plddata) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Note: spec.length is limited to U16_MAX bytes via काष्ठा
+		 * Note: spec.length is limited to U16_MAX bytes via struct
 		 * ssam_cdev_request. This is slightly larger than the
 		 * theoretical maximum (SSH_COMMAND_MAX_PAYLOAD_SIZE) of the
 		 * underlying protocol (note that nothing remotely this size
-		 * should ever be allocated in any normal हाल). This size is
-		 * validated later in ssam_request_sync(), क्रम allocation the
+		 * should ever be allocated in any normal case). This size is
+		 * validated later in ssam_request_sync(), for allocation the
 		 * bound imposed by u16 should be enough.
 		 */
 		spec.payload = kzalloc(spec.length, GFP_KERNEL);
-		अगर (!spec.payload) अणु
+		if (!spec.payload) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (copy_from_user((व्योम *)spec.payload, plddata, spec.length)) अणु
+		if (copy_from_user((void *)spec.payload, plddata, spec.length)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Allocate response buffer. */
-	अगर (rsp.capacity) अणु
-		अगर (!rspdata) अणु
+	if (rsp.capacity) {
+		if (!rspdata) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Note: rsp.capacity is limited to U16_MAX bytes via काष्ठा
+		 * Note: rsp.capacity is limited to U16_MAX bytes via struct
 		 * ssam_cdev_request. This is slightly larger than the
 		 * theoretical maximum (SSH_COMMAND_MAX_PAYLOAD_SIZE) of the
 		 * underlying protocol (note that nothing remotely this size
-		 * should ever be allocated in any normal हाल). In later use,
-		 * this capacity करोes not have to be strictly bounded, as it
+		 * should ever be allocated in any normal case). In later use,
+		 * this capacity does not have to be strictly bounded, as it
 		 * is only used as an output buffer to be written to. For
 		 * allocation the bound imposed by u16 should be enough.
 		 */
-		rsp.poपूर्णांकer = kzalloc(rsp.capacity, GFP_KERNEL);
-		अगर (!rsp.poपूर्णांकer) अणु
+		rsp.pointer = kzalloc(rsp.capacity, GFP_KERNEL);
+		if (!rsp.pointer) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	/* Perक्रमm request. */
+	/* Perform request. */
 	status = ssam_request_sync(cdev->ctrl, &spec, &rsp);
-	अगर (status)
-		जाओ out;
+	if (status)
+		goto out;
 
 	/* Copy response to user-space. */
-	अगर (rsp.length && copy_to_user(rspdata, rsp.poपूर्णांकer, rsp.length))
+	if (rsp.length && copy_to_user(rspdata, rsp.pointer, rsp.length))
 		ret = -EFAULT;
 
 out:
 	/* Always try to set response-length and status. */
-	पंचांगp = put_user(rsp.length, &r->response.length);
-	अगर (पंचांगp)
-		ret = पंचांगp;
+	tmp = put_user(rsp.length, &r->response.length);
+	if (tmp)
+		ret = tmp;
 
-	पंचांगp = put_user(status, &r->status);
-	अगर (पंचांगp)
-		ret = पंचांगp;
+	tmp = put_user(status, &r->status);
+	if (tmp)
+		ret = tmp;
 
 	/* Cleanup. */
-	kमुक्त(spec.payload);
-	kमुक्त(rsp.poपूर्णांकer);
+	kfree(spec.payload);
+	kfree(rsp.pointer);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ __ssam_cdev_device_ioctl(काष्ठा ssam_cdev *cdev, अचिन्हित पूर्णांक cmd,
-				     अचिन्हित दीर्घ arg)
-अणु
-	चयन (cmd) अणु
-	हाल SSAM_CDEV_REQUEST:
-		वापस ssam_cdev_request(cdev, arg);
+static long __ssam_cdev_device_ioctl(struct ssam_cdev *cdev, unsigned int cmd,
+				     unsigned long arg)
+{
+	switch (cmd) {
+	case SSAM_CDEV_REQUEST:
+		return ssam_cdev_request(cdev, arg);
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल दीर्घ ssam_cdev_device_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				   अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा ssam_cdev *cdev = file->निजी_data;
-	दीर्घ status;
+static long ssam_cdev_device_ioctl(struct file *file, unsigned int cmd,
+				   unsigned long arg)
+{
+	struct ssam_cdev *cdev = file->private_data;
+	long status;
 
-	/* Ensure that controller is valid क्रम as दीर्घ as we need it. */
-	अगर (करोwn_पढ़ो_समाप्तable(&cdev->lock))
-		वापस -ERESTARTSYS;
+	/* Ensure that controller is valid for as long as we need it. */
+	if (down_read_killable(&cdev->lock))
+		return -ERESTARTSYS;
 
-	अगर (!cdev->ctrl) अणु
-		up_पढ़ो(&cdev->lock);
-		वापस -ENODEV;
-	पूर्ण
+	if (!cdev->ctrl) {
+		up_read(&cdev->lock);
+		return -ENODEV;
+	}
 
 	status = __ssam_cdev_device_ioctl(cdev, cmd, arg);
 
-	up_पढ़ो(&cdev->lock);
-	वापस status;
-पूर्ण
+	up_read(&cdev->lock);
+	return status;
+}
 
-अटल स्थिर काष्ठा file_operations ssam_controller_fops = अणु
+static const struct file_operations ssam_controller_fops = {
 	.owner          = THIS_MODULE,
-	.खोलो           = ssam_cdev_device_खोलो,
+	.open           = ssam_cdev_device_open,
 	.release        = ssam_cdev_device_release,
 	.unlocked_ioctl = ssam_cdev_device_ioctl,
 	.compat_ioctl   = ssam_cdev_device_ioctl,
 	.llseek         = noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक ssam_dbg_device_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ssam_controller *ctrl;
-	काष्ठा ssam_cdev *cdev;
-	पूर्णांक status;
+static int ssam_dbg_device_probe(struct platform_device *pdev)
+{
+	struct ssam_controller *ctrl;
+	struct ssam_cdev *cdev;
+	int status;
 
 	ctrl = ssam_client_bind(&pdev->dev);
-	अगर (IS_ERR(ctrl))
-		वापस PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
+	if (IS_ERR(ctrl))
+		return PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
 
-	cdev = kzalloc(माप(*cdev), GFP_KERNEL);
-	अगर (!cdev)
-		वापस -ENOMEM;
+	cdev = kzalloc(sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		return -ENOMEM;
 
 	kref_init(&cdev->kref);
 	init_rwsem(&cdev->lock);
@@ -244,79 +243,79 @@ out:
 	cdev->mdev.nodename = "surface/aggregator";
 	cdev->mdev.fops     = &ssam_controller_fops;
 
-	status = misc_रेजिस्टर(&cdev->mdev);
-	अगर (status) अणु
-		kमुक्त(cdev);
-		वापस status;
-	पूर्ण
+	status = misc_register(&cdev->mdev);
+	if (status) {
+		kfree(cdev);
+		return status;
+	}
 
-	platक्रमm_set_drvdata(pdev, cdev);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, cdev);
+	return 0;
+}
 
-अटल पूर्णांक ssam_dbg_device_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ssam_cdev *cdev = platक्रमm_get_drvdata(pdev);
+static int ssam_dbg_device_remove(struct platform_device *pdev)
+{
+	struct ssam_cdev *cdev = platform_get_drvdata(pdev);
 
-	misc_deरेजिस्टर(&cdev->mdev);
+	misc_deregister(&cdev->mdev);
 
 	/*
-	 * The controller is only guaranteed to be valid क्रम as दीर्घ as the
-	 * driver is bound. Remove controller so that any lingering खोलो files
+	 * The controller is only guaranteed to be valid for as long as the
+	 * driver is bound. Remove controller so that any lingering open files
 	 * cannot access it any more after we're gone.
 	 */
-	करोwn_ग_लिखो(&cdev->lock);
-	cdev->ctrl = शून्य;
-	up_ग_लिखो(&cdev->lock);
+	down_write(&cdev->lock);
+	cdev->ctrl = NULL;
+	up_write(&cdev->lock);
 
 	ssam_cdev_put(cdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_device *ssam_cdev_device;
+static struct platform_device *ssam_cdev_device;
 
-अटल काष्ठा platक्रमm_driver ssam_cdev_driver = अणु
+static struct platform_driver ssam_cdev_driver = {
 	.probe = ssam_dbg_device_probe,
-	.हटाओ = ssam_dbg_device_हटाओ,
-	.driver = अणु
+	.remove = ssam_dbg_device_remove,
+	.driver = {
 		.name = SSAM_CDEV_DEVICE_NAME,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ssam_debug_init(व्योम)
-अणु
-	पूर्णांक status;
+static int __init ssam_debug_init(void)
+{
+	int status;
 
-	ssam_cdev_device = platक्रमm_device_alloc(SSAM_CDEV_DEVICE_NAME,
+	ssam_cdev_device = platform_device_alloc(SSAM_CDEV_DEVICE_NAME,
 						 PLATFORM_DEVID_NONE);
-	अगर (!ssam_cdev_device)
-		वापस -ENOMEM;
+	if (!ssam_cdev_device)
+		return -ENOMEM;
 
-	status = platक्रमm_device_add(ssam_cdev_device);
-	अगर (status)
-		जाओ err_device;
+	status = platform_device_add(ssam_cdev_device);
+	if (status)
+		goto err_device;
 
-	status = platक्रमm_driver_रेजिस्टर(&ssam_cdev_driver);
-	अगर (status)
-		जाओ err_driver;
+	status = platform_driver_register(&ssam_cdev_driver);
+	if (status)
+		goto err_driver;
 
-	वापस 0;
+	return 0;
 
 err_driver:
-	platक्रमm_device_del(ssam_cdev_device);
+	platform_device_del(ssam_cdev_device);
 err_device:
-	platक्रमm_device_put(ssam_cdev_device);
-	वापस status;
-पूर्ण
+	platform_device_put(ssam_cdev_device);
+	return status;
+}
 module_init(ssam_debug_init);
 
-अटल व्योम __निकास ssam_debug_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ssam_cdev_driver);
-	platक्रमm_device_unरेजिस्टर(ssam_cdev_device);
-पूर्ण
-module_निकास(ssam_debug_निकास);
+static void __exit ssam_debug_exit(void)
+{
+	platform_driver_unregister(&ssam_cdev_driver);
+	platform_device_unregister(ssam_cdev_device);
+}
+module_exit(ssam_debug_exit);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("User-space interface for Surface System Aggregator Module");

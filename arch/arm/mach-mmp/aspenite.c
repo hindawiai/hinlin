@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/aspenite.c
  *
- *  Support क्रम the Marvell PXA168-based Aspenite and Zylonite2
- *  Development Platक्रमm.
+ *  Support for the Marvell PXA168-based Aspenite and Zylonite2
+ *  Development Platform.
  */
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio-pxa.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/smc91x.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_data/mv_usb.h>
+#include <linux/gpio.h>
+#include <linux/gpio-pxa.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/smc91x.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/interrupt.h>
+#include <linux/platform_data/mv_usb.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <video/pxa168fb.h>
-#समावेश <linux/input.h>
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <video/pxa168fb.h>
+#include <linux/input.h>
+#include <linux/platform_data/keypad-pxa27x.h>
 
-#समावेश "addr-map.h"
-#समावेश "mfp-pxa168.h"
-#समावेश "pxa168.h"
-#समावेश "pxa910.h"
-#समावेश "irqs.h"
-#समावेश "common.h"
+#include "addr-map.h"
+#include "mfp-pxa168.h"
+#include "pxa168.h"
+#include "pxa910.h"
+#include "irqs.h"
+#include "common.h"
 
-अटल अचिन्हित दीर्घ common_pin_config[] __initdata = अणु
+static unsigned long common_pin_config[] __initdata = {
 	/* Data Flash Interface */
 	GPIO0_DFI_D15,
 	GPIO1_DFI_D14,
@@ -108,80 +107,80 @@
 	GPIO111_KP_MKOUT7,
 	GPIO112_KP_MKOUT6,
 	GPIO121_KP_MKIN4,
-पूर्ण;
+};
 
-अटल काष्ठा pxa_gpio_platक्रमm_data pxa168_gpio_pdata = अणु
+static struct pxa_gpio_platform_data pxa168_gpio_pdata = {
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-पूर्ण;
+};
 
-अटल काष्ठा smc91x_platdata smc91x_info = अणु
+static struct smc91x_platdata smc91x_info = {
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT,
-पूर्ण;
+};
 
-अटल काष्ठा resource smc91x_resources[] = अणु
-	[0] = अणु
+static struct resource smc91x_resources[] = {
+	[0] = {
 		.start	= SMC_CS1_PHYS_BASE + 0x300,
 		.end	= SMC_CS1_PHYS_BASE + 0xfffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= MMP_GPIO_TO_IRQ(27),
 		.end	= MMP_GPIO_TO_IRQ(27),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_device smc91x_device = अणु
+static struct platform_device smc91x_device = {
 	.name		= "smc91x",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data = &smc91x_info,
-	पूर्ण,
+	.dev		= {
+		.platform_data = &smc91x_info,
+	},
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-पूर्ण;
+};
 
-अटल काष्ठा mtd_partition aspenite_nand_partitions[] = अणु
-	अणु
+static struct mtd_partition aspenite_nand_partitions[] = {
+	{
 		.name		= "bootloader",
 		.offset		= 0,
 		.size		= SZ_1M,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "reserved",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_128K,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "reserved",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_8M,
 		.mask_flags	= MTD_WRITEABLE,
-	पूर्ण, अणु
+	}, {
 		.name		= "kernel",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= (SZ_2M + SZ_1M),
 		.mask_flags	= 0,
-	पूर्ण, अणु
+	}, {
 		.name		= "filesystem",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_32M + SZ_16M,
 		.mask_flags	= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा pxa3xx_nand_platक्रमm_data aspenite_nand_info = अणु
+static struct pxa3xx_nand_platform_data aspenite_nand_info = {
 	.parts		= aspenite_nand_partitions,
 	.nr_parts	= ARRAY_SIZE(aspenite_nand_partitions),
-पूर्ण;
+};
 
-अटल काष्ठा i2c_board_info aspenite_i2c_info[] __initdata = अणु
-	अणु I2C_BOARD_INFO("wm8753", 0x1b), पूर्ण,
-पूर्ण;
+static struct i2c_board_info aspenite_i2c_info[] __initdata = {
+	{ I2C_BOARD_INFO("wm8753", 0x1b), },
+};
 
-अटल काष्ठा fb_videomode video_modes[] = अणु
-	[0] = अणु
-		.pixघड़ी	= 30120,
+static struct fb_videomode video_modes[] = {
+	[0] = {
+		.pixclock	= 30120,
 		.refresh	= 60,
 		.xres		= 800,
 		.yres		= 480,
@@ -192,10 +191,10 @@
 		.upper_margin	= 34,
 		.lower_margin	= 10,
 		.sync		= FB_SYNC_VERT_HIGH_ACT | FB_SYNC_HOR_HIGH_ACT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा pxa168fb_mach_info aspenite_lcd_info = अणु
+struct pxa168fb_mach_info aspenite_lcd_info = {
 	.id			= "Graphic Frame",
 	.modes			= video_modes,
 	.num_modes		= ARRAY_SIZE(video_modes),
@@ -204,73 +203,73 @@
 	.dumb_mode		= DUMB_MODE_RGB888,
 	.active			= 1,
 	.panel_rbswap		= 0,
-	.invert_pixघड़ी	= 0,
-पूर्ण;
+	.invert_pixclock	= 0,
+};
 
-अटल स्थिर अचिन्हित पूर्णांक aspenite_matrix_key_map[] = अणु
+static const unsigned int aspenite_matrix_key_map[] = {
 	KEY(0, 6, KEY_UP),	/* SW 4 */
 	KEY(0, 7, KEY_DOWN),	/* SW 5 */
 	KEY(1, 6, KEY_LEFT),	/* SW 6 */
 	KEY(1, 7, KEY_RIGHT),	/* SW 7 */
 	KEY(4, 6, KEY_ENTER),	/* SW 8 */
 	KEY(4, 7, KEY_ESC),	/* SW 9 */
-पूर्ण;
+};
 
-अटल काष्ठा matrix_keymap_data aspenite_matrix_keymap_data = अणु
+static struct matrix_keymap_data aspenite_matrix_keymap_data = {
 	.keymap			= aspenite_matrix_key_map,
 	.keymap_size		= ARRAY_SIZE(aspenite_matrix_key_map),
-पूर्ण;
+};
 
-अटल काष्ठा pxa27x_keypad_platक्रमm_data aspenite_keypad_info __initdata = अणु
+static struct pxa27x_keypad_platform_data aspenite_keypad_info __initdata = {
 	.matrix_key_rows	= 5,
 	.matrix_key_cols	= 8,
 	.matrix_keymap_data	= &aspenite_matrix_keymap_data,
-	.debounce_पूर्णांकerval	= 30,
-पूर्ण;
+	.debounce_interval	= 30,
+};
 
-#अगर IS_ENABLED(CONFIG_USB_EHCI_MV)
-अटल काष्ठा mv_usb_platक्रमm_data pxa168_sph_pdata = अणु
+#if IS_ENABLED(CONFIG_USB_EHCI_MV)
+static struct mv_usb_platform_data pxa168_sph_pdata = {
 	.mode           = MV_USB_MODE_HOST,
 	.phy_init	= pxa_usb_phy_init,
 	.phy_deinit	= pxa_usb_phy_deinit,
-	.set_vbus	= शून्य,
-पूर्ण;
-#पूर्ण_अगर
+	.set_vbus	= NULL,
+};
+#endif
 
-अटल व्योम __init common_init(व्योम)
-अणु
+static void __init common_init(void)
+{
 	mfp_config(ARRAY_AND_SIZE(common_pin_config));
 
 	/* on-chip devices */
 	pxa168_add_uart(1);
-	pxa168_add_twsi(1, शून्य, ARRAY_AND_SIZE(aspenite_i2c_info));
+	pxa168_add_twsi(1, NULL, ARRAY_AND_SIZE(aspenite_i2c_info));
 	pxa168_add_ssp(1);
 	pxa168_add_nand(&aspenite_nand_info);
 	pxa168_add_fb(&aspenite_lcd_info);
 	pxa168_add_keypad(&aspenite_keypad_info);
-	platक्रमm_device_add_data(&pxa168_device_gpio, &pxa168_gpio_pdata,
-				 माप(काष्ठा pxa_gpio_platक्रमm_data));
-	platक्रमm_device_रेजिस्टर(&pxa168_device_gpio);
+	platform_device_add_data(&pxa168_device_gpio, &pxa168_gpio_pdata,
+				 sizeof(struct pxa_gpio_platform_data));
+	platform_device_register(&pxa168_device_gpio);
 
 	/* off-chip devices */
-	platक्रमm_device_रेजिस्टर(&smc91x_device);
+	platform_device_register(&smc91x_device);
 
-#अगर IS_ENABLED(CONFIG_USB_SUPPORT)
-#अगर IS_ENABLED(CONFIG_PHY_PXA_USB)
-	platक्रमm_device_रेजिस्टर(&pxa168_device_usb_phy);
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_SUPPORT)
+#if IS_ENABLED(CONFIG_PHY_PXA_USB)
+	platform_device_register(&pxa168_device_usb_phy);
+#endif
 
-#अगर IS_ENABLED(CONFIG_USB_EHCI_MV)
+#if IS_ENABLED(CONFIG_USB_EHCI_MV)
 	pxa168_add_usb_host(&pxa168_sph_pdata);
-#पूर्ण_अगर
-#पूर्ण_अगर
-पूर्ण
+#endif
+#endif
+}
 
 MACHINE_START(ASPENITE, "PXA168-based Aspenite Development Platform")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= MMP_NR_IRQS,
 	.init_irq       = pxa168_init_irq,
-	.init_समय	= pxa168_समयr_init,
+	.init_time	= pxa168_timer_init,
 	.init_machine   = common_init,
 	.restart	= pxa168_restart,
 MACHINE_END
@@ -279,7 +278,7 @@ MACHINE_START(ZYLONITE2, "PXA168-based Zylonite2 Development Platform")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= MMP_NR_IRQS,
 	.init_irq       = pxa168_init_irq,
-	.init_समय	= pxa168_समयr_init,
+	.init_time	= pxa168_timer_init,
 	.init_machine   = common_init,
 	.restart	= pxa168_restart,
 MACHINE_END

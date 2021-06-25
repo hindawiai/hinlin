@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
  * Test running multiple EBB using processes at once on a single CPU. They
- * should all run happily without पूर्णांकerfering with each other.
+ * should all run happily without interfering with each other.
  */
 
-अटल bool child_should_निकास;
+static bool child_should_exit;
 
-अटल व्योम sigपूर्णांक_handler(पूर्णांक संकेत)
-अणु
-	child_should_निकास = true;
-पूर्ण
+static void sigint_handler(int signal)
+{
+	child_should_exit = true;
+}
 
-काष्ठा sigaction sigपूर्णांक_action = अणु
-	.sa_handler = sigपूर्णांक_handler,
-पूर्ण;
+struct sigaction sigint_action = {
+	.sa_handler = sigint_handler,
+};
 
-अटल पूर्णांक cycles_child(व्योम)
-अणु
-	काष्ठा event event;
+static int cycles_child(void)
+{
+	struct event event;
 
-	अगर (sigaction(संक_विघ्न, &sigपूर्णांक_action, शून्य)) अणु
-		लिखो_त्रुटि("sigaction");
-		वापस 1;
-	पूर्ण
+	if (sigaction(SIGINT, &sigint_action, NULL)) {
+		perror("sigaction");
+		return 1;
+	}
 
 	event_init_named(&event, 0x1001e, "cycles");
 	event_leader_ebb_init(&event);
@@ -44,7 +43,7 @@
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_खोलो(&event));
+	FAIL_IF(event_open(&event));
 
 	ebb_enable_pmc_counting(1);
 	setup_ebb_handler(standard_ebb_callee);
@@ -54,29 +53,29 @@
 
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	जबतक (!child_should_निकास) अणु
+	while (!child_should_exit) {
 		FAIL_IF(core_busy_loop());
 		FAIL_IF(ebb_check_mmcr0());
-	पूर्ण
+	}
 
 	ebb_global_disable();
-	ebb_मुक्तze_pmcs();
+	ebb_freeze_pmcs();
 
 	dump_summary_ebb_state();
 
-	event_बंद(&event);
+	event_close(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा NR_CHILDREN	4
+#define NR_CHILDREN	4
 
-पूर्णांक multi_ebb_procs(व्योम)
-अणु
+int multi_ebb_procs(void)
+{
 	pid_t pids[NR_CHILDREN];
-	पूर्णांक cpu, rc, i;
+	int cpu, rc, i;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -84,27 +83,27 @@
 	FAIL_IF(cpu < 0);
 	FAIL_IF(bind_to_cpu(cpu));
 
-	क्रम (i = 0; i < NR_CHILDREN; i++) अणु
-		pids[i] = विभाजन();
-		अगर (pids[i] == 0)
-			निकास(cycles_child());
-	पूर्ण
+	for (i = 0; i < NR_CHILDREN; i++) {
+		pids[i] = fork();
+		if (pids[i] == 0)
+			exit(cycles_child());
+	}
 
-	/* Have them all run क्रम "a while" */
+	/* Have them all run for "a while" */
 	sleep(10);
 
 	rc = 0;
-	क्रम (i = 0; i < NR_CHILDREN; i++) अणु
+	for (i = 0; i < NR_CHILDREN; i++) {
 		/* Tell them to stop */
-		समाप्त(pids[i], संक_विघ्न);
-		/* And रुको */
-		rc |= रुको_क्रम_child(pids[i]);
-	पूर्ण
+		kill(pids[i], SIGINT);
+		/* And wait */
+		rc |= wait_for_child(pids[i]);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(multi_ebb_procs, "multi_ebb_procs");
-पूर्ण
+int main(void)
+{
+	return test_harness(multi_ebb_procs, "multi_ebb_procs");
+}

@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * June 2006 Steve Glendinning <steve.glendinning@shawell.net>
  *
- * Polaris-specअगरic resource declaration
+ * Polaris-specific resource declaration
  *
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/fixed.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/smsc911x.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/machvec.h>
-#समावेश <यंत्र/heartbeat.h>
-#समावेश <cpu/gpपन.स>
-#समावेश <mach-se/mach/se.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/fixed.h>
+#include <linux/regulator/machine.h>
+#include <linux/smsc911x.h>
+#include <linux/io.h>
+#include <asm/irq.h>
+#include <asm/machvec.h>
+#include <asm/heartbeat.h>
+#include <cpu/gpio.h>
+#include <mach-se/mach/se.h>
 
-#घोषणा BCR2		(0xFFFFFF62)
-#घोषणा WCR2		(0xFFFFFF66)
-#घोषणा AREA5_WAIT_CTRL	(0x1C00)
-#घोषणा WAIT_STATES_10	(0x7)
+#define BCR2		(0xFFFFFF62)
+#define WCR2		(0xFFFFFF66)
+#define AREA5_WAIT_CTRL	(0x1C00)
+#define WAIT_STATES_10	(0x7)
 
-/* Dummy supplies, where voltage करोesn't matter */
-अटल काष्ठा regulator_consumer_supply dummy_supplies[] = अणु
+/* Dummy supplies, where voltage doesn't matter */
+static struct regulator_consumer_supply dummy_supplies[] = {
 	REGULATOR_SUPPLY("vddvario", "smsc911x.0"),
 	REGULATOR_SUPPLY("vdd33a", "smsc911x.0"),
-पूर्ण;
+};
 
-अटल काष्ठा resource smsc911x_resources[] = अणु
-	[0] = अणु
+static struct resource smsc911x_resources[] = {
+	[0] = {
 		.name		= "smsc911x-memory",
 		.start		= PA_EXT5,
 		.end		= PA_EXT5 + 0x1fff,
 		.flags		= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.name		= "smsc911x-irq",
 		.start		= IRQ0_IRQ,
 		.end		= IRQ0_IRQ,
 		.flags		= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा smsc911x_platक्रमm_config smsc911x_config = अणु
+static struct smsc911x_platform_config smsc911x_config = {
 	.irq_polarity	= SMSC911X_IRQ_POLARITY_ACTIVE_LOW,
 	.irq_type	= SMSC911X_IRQ_TYPE_OPEN_DRAIN,
 	.flags		= SMSC911X_USE_32BIT,
-	.phy_पूर्णांकerface	= PHY_INTERFACE_MODE_MII,
-पूर्ण;
+	.phy_interface	= PHY_INTERFACE_MODE_MII,
+};
 
-अटल काष्ठा platक्रमm_device smsc911x_device = अणु
+static struct platform_device smsc911x_device = {
 	.name		= "smsc911x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smsc911x_resources),
 	.resource	= smsc911x_resources,
-	.dev = अणु
-		.platक्रमm_data = &smsc911x_config,
-	पूर्ण,
-पूर्ण;
+	.dev = {
+		.platform_data = &smsc911x_config,
+	},
+};
 
-अटल अचिन्हित अक्षर heartbeat_bit_pos[] = अणु 0, 1, 2, 3 पूर्ण;
+static unsigned char heartbeat_bit_pos[] = { 0, 1, 2, 3 };
 
-अटल काष्ठा heartbeat_data heartbeat_data = अणु
+static struct heartbeat_data heartbeat_data = {
 	.bit_pos	= heartbeat_bit_pos,
 	.nr_bits	= ARRAY_SIZE(heartbeat_bit_pos),
-पूर्ण;
+};
 
-अटल काष्ठा resource heartbeat_resource = अणु
+static struct resource heartbeat_resource = {
 	.start	= PORT_PCDR,
 	.end	= PORT_PCDR,
 	.flags	= IORESOURCE_MEM | IORESOURCE_MEM_8BIT,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device heartbeat_device = अणु
+static struct platform_device heartbeat_device = {
 	.name		= "heartbeat",
 	.id		= -1,
-	.dev	= अणु
-		.platक्रमm_data	= &heartbeat_data,
-	पूर्ण,
+	.dev	= {
+		.platform_data	= &heartbeat_data,
+	},
 	.num_resources	= 1,
 	.resource	= &heartbeat_resource,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *polaris_devices[] __initdata = अणु
+static struct platform_device *polaris_devices[] __initdata = {
 	&smsc911x_device,
 	&heartbeat_device,
-पूर्ण;
+};
 
-अटल पूर्णांक __init polaris_initialise(व्योम)
-अणु
+static int __init polaris_initialise(void)
+{
 	u16 wcr, bcr_mask;
 
-	prपूर्णांकk(KERN_INFO "Configuring Polaris external bus\n");
+	printk(KERN_INFO "Configuring Polaris external bus\n");
 
-	regulator_रेजिस्टर_fixed(0, dummy_supplies, ARRAY_SIZE(dummy_supplies));
+	regulator_register_fixed(0, dummy_supplies, ARRAY_SIZE(dummy_supplies));
 
-	/* Configure area 5 with 2 रुको states */
-	wcr = __raw_पढ़ोw(WCR2);
+	/* Configure area 5 with 2 wait states */
+	wcr = __raw_readw(WCR2);
 	wcr &= (~AREA5_WAIT_CTRL);
 	wcr |= (WAIT_STATES_10 << 10);
-	__raw_ग_लिखोw(wcr, WCR2);
+	__raw_writew(wcr, WCR2);
 
-	/* Configure area 5 क्रम 32-bit access */
-	bcr_mask = __raw_पढ़ोw(BCR2);
+	/* Configure area 5 for 32-bit access */
+	bcr_mask = __raw_readw(BCR2);
 	bcr_mask |= 1 << 10;
-	__raw_ग_लिखोw(bcr_mask, BCR2);
+	__raw_writew(bcr_mask, BCR2);
 
-	वापस platक्रमm_add_devices(polaris_devices,
+	return platform_add_devices(polaris_devices,
 				    ARRAY_SIZE(polaris_devices));
-पूर्ण
+}
 arch_initcall(polaris_initialise);
 
-अटल काष्ठा ipr_data ipr_irq_table[] = अणु
+static struct ipr_data ipr_irq_table[] = {
 	/* External IRQs */
-	अणु IRQ0_IRQ, 0,  0,  1, पूर्ण,	/* IRQ0 */
-	अणु IRQ1_IRQ, 0,  4,  1, पूर्ण,	/* IRQ1 */
-पूर्ण;
+	{ IRQ0_IRQ, 0,  0,  1, },	/* IRQ0 */
+	{ IRQ1_IRQ, 0,  4,  1, },	/* IRQ1 */
+};
 
-अटल अचिन्हित दीर्घ ipr_offsets[] = अणु
+static unsigned long ipr_offsets[] = {
 	INTC_IPRC
-पूर्ण;
+};
 
-अटल काष्ठा ipr_desc ipr_irq_desc = अणु
+static struct ipr_desc ipr_irq_desc = {
 	.ipr_offsets	= ipr_offsets,
 	.nr_offsets	= ARRAY_SIZE(ipr_offsets),
 
 	.ipr_data	= ipr_irq_table,
 	.nr_irqs	= ARRAY_SIZE(ipr_irq_table),
-	.chip = अणु
+	.chip = {
 		.name	= "sh7709-ext",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init init_polaris_irq(व्योम)
-अणु
-	/* Disable all पूर्णांकerrupts */
-	__raw_ग_लिखोw(0, BCR_ILCRA);
-	__raw_ग_लिखोw(0, BCR_ILCRB);
-	__raw_ग_लिखोw(0, BCR_ILCRC);
-	__raw_ग_लिखोw(0, BCR_ILCRD);
-	__raw_ग_लिखोw(0, BCR_ILCRE);
-	__raw_ग_लिखोw(0, BCR_ILCRF);
-	__raw_ग_लिखोw(0, BCR_ILCRG);
+static void __init init_polaris_irq(void)
+{
+	/* Disable all interrupts */
+	__raw_writew(0, BCR_ILCRA);
+	__raw_writew(0, BCR_ILCRB);
+	__raw_writew(0, BCR_ILCRC);
+	__raw_writew(0, BCR_ILCRD);
+	__raw_writew(0, BCR_ILCRE);
+	__raw_writew(0, BCR_ILCRF);
+	__raw_writew(0, BCR_ILCRG);
 
-	रेजिस्टर_ipr_controller(&ipr_irq_desc);
-पूर्ण
+	register_ipr_controller(&ipr_irq_desc);
+}
 
-अटल काष्ठा sh_machine_vector mv_polaris __iniपंचांगv = अणु
+static struct sh_machine_vector mv_polaris __initmv = {
 	.mv_name		= "Polaris",
 	.mv_init_irq		= init_polaris_irq,
-पूर्ण;
+};

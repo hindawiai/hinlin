@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Google, Inc.
  *
  * Original Code by Pavel Labath <labath@google.com>
  *
- * Code modअगरied by Pratyush Anand <panand@redhat.com>
- * क्रम testing dअगरferent byte select क्रम each access size.
+ * Code modified by Pratyush Anand <panand@redhat.com>
+ * for testing different byte select for each access size.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <यंत्र/ptrace.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <sys/ptrace.h>
-#समावेश <sys/param.h>
-#समावेश <sys/uपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <stdbool.h>
-#समावेश <मानकघोष.स>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <elf.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
+#include <asm/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <sys/param.h>
+#include <sys/uio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <elf.h>
+#include <errno.h>
+#include <signal.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-अटल अस्थिर uपूर्णांक8_t var[96] __attribute__((__aligned__(32)));
+static volatile uint8_t var[96] __attribute__((__aligned__(32)));
 
-अटल व्योम child(पूर्णांक size, पूर्णांक wr)
-अणु
-	अस्थिर uपूर्णांक8_t *addr = &var[32 + wr];
+static void child(int size, int wr)
+{
+	volatile uint8_t *addr = &var[32 + wr];
 
-	अगर (ptrace(PTRACE_TRACEME, 0, शून्य, शून्य) != 0) अणु
-		ksft_prपूर्णांक_msg(
+	if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) != 0) {
+		ksft_print_msg(
 			"ptrace(PTRACE_TRACEME) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-		_निकास(1);
-	पूर्ण
+			strerror(errno));
+		_exit(1);
+	}
 
-	अगर (उठाओ(SIGSTOP) != 0) अणु
-		ksft_prपूर्णांक_msg(
-			"raise(SIGSTOP) failed: %s\n", म_त्रुटि(त्रुटि_सं));
-		_निकास(1);
-	पूर्ण
+	if (raise(SIGSTOP) != 0) {
+		ksft_print_msg(
+			"raise(SIGSTOP) failed: %s\n", strerror(errno));
+		_exit(1);
+	}
 
-	अगर ((uपूर्णांकptr_t) addr % size) अणु
-		ksft_prपूर्णांक_msg(
+	if ((uintptr_t) addr % size) {
+		ksft_print_msg(
 			 "Wrong address write for the given size: %s\n",
-			 म_त्रुटि(त्रुटि_सं));
-		_निकास(1);
-	पूर्ण
+			 strerror(errno));
+		_exit(1);
+	}
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		*addr = 47;
-		अवरोध;
-	हाल 2:
-		*(uपूर्णांक16_t *)addr = 47;
-		अवरोध;
-	हाल 4:
-		*(uपूर्णांक32_t *)addr = 47;
-		अवरोध;
-	हाल 8:
-		*(uपूर्णांक64_t *)addr = 47;
-		अवरोध;
-	हाल 16:
-		__यंत्र__ अस्थिर ("stp x29, x30, %0" : "=m" (addr[0]));
-		अवरोध;
-	हाल 32:
-		__यंत्र__ अस्थिर ("stp q29, q30, %0" : "=m" (addr[0]));
-		अवरोध;
-	पूर्ण
+		break;
+	case 2:
+		*(uint16_t *)addr = 47;
+		break;
+	case 4:
+		*(uint32_t *)addr = 47;
+		break;
+	case 8:
+		*(uint64_t *)addr = 47;
+		break;
+	case 16:
+		__asm__ volatile ("stp x29, x30, %0" : "=m" (addr[0]));
+		break;
+	case 32:
+		__asm__ volatile ("stp q29, q30, %0" : "=m" (addr[0]));
+		break;
+	}
 
-	_निकास(0);
-पूर्ण
+	_exit(0);
+}
 
-अटल bool set_watchpoपूर्णांक(pid_t pid, पूर्णांक size, पूर्णांक wp)
-अणु
-	स्थिर अस्थिर uपूर्णांक8_t *addr = &var[32 + wp];
-	स्थिर पूर्णांक offset = (uपूर्णांकptr_t)addr % 8;
-	स्थिर अचिन्हित पूर्णांक byte_mask = ((1 << size) - 1) << offset;
-	स्थिर अचिन्हित पूर्णांक type = 2; /* Write */
-	स्थिर अचिन्हित पूर्णांक enable = 1;
-	स्थिर अचिन्हित पूर्णांक control = byte_mask << 5 | type << 3 | enable;
-	काष्ठा user_hwdebug_state dreg_state;
-	काष्ठा iovec iov;
+static bool set_watchpoint(pid_t pid, int size, int wp)
+{
+	const volatile uint8_t *addr = &var[32 + wp];
+	const int offset = (uintptr_t)addr % 8;
+	const unsigned int byte_mask = ((1 << size) - 1) << offset;
+	const unsigned int type = 2; /* Write */
+	const unsigned int enable = 1;
+	const unsigned int control = byte_mask << 5 | type << 3 | enable;
+	struct user_hwdebug_state dreg_state;
+	struct iovec iov;
 
-	स_रखो(&dreg_state, 0, माप(dreg_state));
-	dreg_state.dbg_regs[0].addr = (uपूर्णांकptr_t)(addr - offset);
+	memset(&dreg_state, 0, sizeof(dreg_state));
+	dreg_state.dbg_regs[0].addr = (uintptr_t)(addr - offset);
 	dreg_state.dbg_regs[0].ctrl = control;
 	iov.iov_base = &dreg_state;
-	iov.iov_len = दुरत्व(काष्ठा user_hwdebug_state, dbg_regs) +
-				माप(dreg_state.dbg_regs[0]);
-	अगर (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_WATCH, &iov) == 0)
-		वापस true;
+	iov.iov_len = offsetof(struct user_hwdebug_state, dbg_regs) +
+				sizeof(dreg_state.dbg_regs[0]);
+	if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_WATCH, &iov) == 0)
+		return true;
 
-	अगर (त्रुटि_सं == EIO)
-		ksft_prपूर्णांक_msg(
+	if (errno == EIO)
+		ksft_print_msg(
 			"ptrace(PTRACE_SETREGSET, NT_ARM_HW_WATCH) not supported on this hardware: %s\n",
-			म_त्रुटि(त्रुटि_सं));
+			strerror(errno));
 
-	ksft_prपूर्णांक_msg(
+	ksft_print_msg(
 		"ptrace(PTRACE_SETREGSET, NT_ARM_HW_WATCH) failed: %s\n",
-		म_त्रुटि(त्रुटि_सं));
-	वापस false;
-पूर्ण
+		strerror(errno));
+	return false;
+}
 
-अटल bool run_test(पूर्णांक wr_size, पूर्णांक wp_size, पूर्णांक wr, पूर्णांक wp)
-अणु
-	पूर्णांक status;
+static bool run_test(int wr_size, int wp_size, int wr, int wp)
+{
+	int status;
 	siginfo_t siginfo;
-	pid_t pid = विभाजन();
+	pid_t pid = fork();
 	pid_t wpid;
 
-	अगर (pid < 0) अणु
+	if (pid < 0) {
 		ksft_test_result_fail(
-			"fork() failed: %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	अगर (pid == 0)
+			"fork() failed: %s\n", strerror(errno));
+		return false;
+	}
+	if (pid == 0)
 		child(wr_size, wr);
 
-	wpid = रुकोpid(pid, &status, __WALL);
-	अगर (wpid != pid) अणु
-		ksft_prपूर्णांक_msg(
-			"waitpid() failed: %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	अगर (!WIFSTOPPED(status)) अणु
-		ksft_prपूर्णांक_msg(
-			"child did not stop: %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	अगर (WSTOPSIG(status) != SIGSTOP) अणु
-		ksft_prपूर्णांक_msg("child did not stop with SIGSTOP\n");
-		वापस false;
-	पूर्ण
+	wpid = waitpid(pid, &status, __WALL);
+	if (wpid != pid) {
+		ksft_print_msg(
+			"waitpid() failed: %s\n", strerror(errno));
+		return false;
+	}
+	if (!WIFSTOPPED(status)) {
+		ksft_print_msg(
+			"child did not stop: %s\n", strerror(errno));
+		return false;
+	}
+	if (WSTOPSIG(status) != SIGSTOP) {
+		ksft_print_msg("child did not stop with SIGSTOP\n");
+		return false;
+	}
 
-	अगर (!set_watchpoपूर्णांक(pid, wp_size, wp))
-		वापस false;
+	if (!set_watchpoint(pid, wp_size, wp))
+		return false;
 
-	अगर (ptrace(PTRACE_CONT, pid, शून्य, शून्य) < 0) अणु
-		ksft_prपूर्णांक_msg(
+	if (ptrace(PTRACE_CONT, pid, NULL, NULL) < 0) {
+		ksft_print_msg(
 			"ptrace(PTRACE_CONT) failed: %s\n",
-			म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
+			strerror(errno));
+		return false;
+	}
 
 	alarm(3);
-	wpid = रुकोpid(pid, &status, __WALL);
-	अगर (wpid != pid) अणु
-		ksft_prपूर्णांक_msg(
-			"waitpid() failed: %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
+	wpid = waitpid(pid, &status, __WALL);
+	if (wpid != pid) {
+		ksft_print_msg(
+			"waitpid() failed: %s\n", strerror(errno));
+		return false;
+	}
 	alarm(0);
-	अगर (WIFEXITED(status)) अणु
-		ksft_prपूर्णांक_msg("child exited prematurely\n");
-		वापस false;
-	पूर्ण
-	अगर (!WIFSTOPPED(status)) अणु
-		ksft_prपूर्णांक_msg("child did not stop\n");
-		वापस false;
-	पूर्ण
-	अगर (WSTOPSIG(status) != SIGTRAP) अणु
-		ksft_prपूर्णांक_msg("child did not stop with SIGTRAP\n");
-		वापस false;
-	पूर्ण
-	अगर (ptrace(PTRACE_GETSIGINFO, pid, शून्य, &siginfo) != 0) अणु
-		ksft_prपूर्णांक_msg(
+	if (WIFEXITED(status)) {
+		ksft_print_msg("child exited prematurely\n");
+		return false;
+	}
+	if (!WIFSTOPPED(status)) {
+		ksft_print_msg("child did not stop\n");
+		return false;
+	}
+	if (WSTOPSIG(status) != SIGTRAP) {
+		ksft_print_msg("child did not stop with SIGTRAP\n");
+		return false;
+	}
+	if (ptrace(PTRACE_GETSIGINFO, pid, NULL, &siginfo) != 0) {
+		ksft_print_msg(
 			"ptrace(PTRACE_GETSIGINFO): %s\n",
-			म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	अगर (siginfo.si_code != TRAP_HWBKPT) अणु
-		ksft_prपूर्णांक_msg(
+			strerror(errno));
+		return false;
+	}
+	if (siginfo.si_code != TRAP_HWBKPT) {
+		ksft_print_msg(
 			"Unexpected si_code %d\n", siginfo.si_code);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	समाप्त(pid, SIGKILL);
-	wpid = रुकोpid(pid, &status, 0);
-	अगर (wpid != pid) अणु
-		ksft_prपूर्णांक_msg(
-			"waitpid() failed: %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	kill(pid, SIGKILL);
+	wpid = waitpid(pid, &status, 0);
+	if (wpid != pid) {
+		ksft_print_msg(
+			"waitpid() failed: %s\n", strerror(errno));
+		return false;
+	}
+	return true;
+}
 
-अटल व्योम sigalrm(पूर्णांक sig)
-अणु
-पूर्ण
+static void sigalrm(int sig)
+{
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक opt;
+int main(int argc, char **argv)
+{
+	int opt;
 	bool succeeded = true;
-	काष्ठा sigaction act;
-	पूर्णांक wr, wp, size;
+	struct sigaction act;
+	int wr, wp, size;
 	bool result;
 
-	ksft_prपूर्णांक_header();
+	ksft_print_header();
 	ksft_set_plan(213);
 
 	act.sa_handler = sigalrm;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
-	sigaction(SIGALRM, &act, शून्य);
-	क्रम (size = 1; size <= 32; size = size*2) अणु
-		क्रम (wr = 0; wr <= 32; wr = wr + size) अणु
-			क्रम (wp = wr - size; wp <= wr + size; wp = wp + size) अणु
+	sigaction(SIGALRM, &act, NULL);
+	for (size = 1; size <= 32; size = size*2) {
+		for (wr = 0; wr <= 32; wr = wr + size) {
+			for (wp = wr - size; wp <= wr + size; wp = wp + size) {
 				result = run_test(size, MIN(size, 8), wr, wp);
-				अगर ((result && wr == wp) ||
+				if ((result && wr == wp) ||
 				    (!result && wr != wp))
 					ksft_test_result_pass(
 						"Test size = %d write offset = %d watchpoint offset = %d\n",
 						size, wr, wp);
-				अन्यथा अणु
+				else {
 					ksft_test_result_fail(
 						"Test size = %d write offset = %d watchpoint offset = %d\n",
 						size, wr, wp);
 					succeeded = false;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	क्रम (size = 1; size <= 32; size = size*2) अणु
-		अगर (run_test(size, 8, -size, -8))
+	for (size = 1; size <= 32; size = size*2) {
+		if (run_test(size, 8, -size, -8))
 			ksft_test_result_pass(
 				"Test size = %d write offset = %d watchpoint offset = -8\n",
 				size, -size);
-		अन्यथा अणु
+		else {
 			ksft_test_result_fail(
 				"Test size = %d write offset = %d watchpoint offset = -8\n",
 				size, -size);
 			succeeded = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (succeeded)
-		ksft_निकास_pass();
-	अन्यथा
-		ksft_निकास_fail();
-पूर्ण
+	if (succeeded)
+		ksft_exit_pass();
+	else
+		ksft_exit_fail();
+}

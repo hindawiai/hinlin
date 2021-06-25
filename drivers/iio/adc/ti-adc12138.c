@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ADC12130/ADC12132/ADC12138 12-bit plus sign ADC driver
  *
@@ -8,59 +7,59 @@
  * Datasheet: http://www.ti.com/lit/ds/symlink/adc12138.pdf
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/completion.h>
+#include <linux/clk.h>
+#include <linux/spi/spi.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/regulator/consumer.h>
 
-#घोषणा ADC12138_MODE_AUTO_CAL			0x08
-#घोषणा ADC12138_MODE_READ_STATUS		0x0c
-#घोषणा ADC12138_MODE_ACQUISITION_TIME_6	0x0e
-#घोषणा ADC12138_MODE_ACQUISITION_TIME_10	0x4e
-#घोषणा ADC12138_MODE_ACQUISITION_TIME_18	0x8e
-#घोषणा ADC12138_MODE_ACQUISITION_TIME_34	0xce
+#define ADC12138_MODE_AUTO_CAL			0x08
+#define ADC12138_MODE_READ_STATUS		0x0c
+#define ADC12138_MODE_ACQUISITION_TIME_6	0x0e
+#define ADC12138_MODE_ACQUISITION_TIME_10	0x4e
+#define ADC12138_MODE_ACQUISITION_TIME_18	0x8e
+#define ADC12138_MODE_ACQUISITION_TIME_34	0xce
 
-#घोषणा ADC12138_STATUS_CAL			BIT(6)
+#define ADC12138_STATUS_CAL			BIT(6)
 
-क्रमागत अणु
+enum {
 	adc12130,
 	adc12132,
 	adc12138,
-पूर्ण;
+};
 
-काष्ठा adc12138 अणु
-	काष्ठा spi_device *spi;
-	अचिन्हित पूर्णांक id;
-	/* conversion घड़ी */
-	काष्ठा clk *cclk;
+struct adc12138 {
+	struct spi_device *spi;
+	unsigned int id;
+	/* conversion clock */
+	struct clk *cclk;
 	/* positive analog voltage reference */
-	काष्ठा regulator *vref_p;
+	struct regulator *vref_p;
 	/* negative analog voltage reference */
-	काष्ठा regulator *vref_n;
-	काष्ठा mutex lock;
-	काष्ठा completion complete;
-	/* The number of cclk periods क्रम the S/H's acquisition समय */
-	अचिन्हित पूर्णांक acquisition_समय;
+	struct regulator *vref_n;
+	struct mutex lock;
+	struct completion complete;
+	/* The number of cclk periods for the S/H's acquisition time */
+	unsigned int acquisition_time;
 	/*
-	 * Maximum size needed: 16x 2 bytes ADC data + 8 bytes बारtamp.
-	 * Less may be need अगर not all channels are enabled, as दीर्घ as
-	 * the 8 byte alignment of the बारtamp is मुख्यtained.
+	 * Maximum size needed: 16x 2 bytes ADC data + 8 bytes timestamp.
+	 * Less may be need if not all channels are enabled, as long as
+	 * the 8 byte alignment of the timestamp is maintained.
 	 */
 	__be16 data[20] __aligned(8);
 
 	u8 tx_buf[2] ____cacheline_aligned;
 	u8 rx_buf[2];
-पूर्ण;
+};
 
-#घोषणा ADC12138_VOLTAGE_CHANNEL(chan)					\
-	अणु								\
+#define ADC12138_VOLTAGE_CHANNEL(chan)					\
+	{								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
 		.channel = chan,					\
@@ -68,44 +67,44 @@
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE)	\
 					| BIT(IIO_CHAN_INFO_OFFSET),	\
 		.scan_index = chan,					\
-		.scan_type = अणु						\
+		.scan_type = {						\
 			.sign = 's',					\
 			.realbits = 13,					\
 			.storagebits = 16,				\
-			.shअगरt = 3,					\
+			.shift = 3,					\
 			.endianness = IIO_BE,				\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-#घोषणा ADC12138_VOLTAGE_CHANNEL_DIFF(chan1, chan2, si)			\
-	अणु								\
+#define ADC12138_VOLTAGE_CHANNEL_DIFF(chan1, chan2, si)			\
+	{								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
 		.channel = (chan1),					\
 		.channel2 = (chan2),					\
-		.dअगरferential = 1,					\
+		.differential = 1,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE)	\
 					| BIT(IIO_CHAN_INFO_OFFSET),	\
 		.scan_index = si,					\
-		.scan_type = अणु						\
+		.scan_type = {						\
 			.sign = 's',					\
 			.realbits = 13,					\
 			.storagebits = 16,				\
-			.shअगरt = 3,					\
+			.shift = 3,					\
 			.endianness = IIO_BE,				\
-		पूर्ण,							\
-	पूर्ण
+		},							\
+	}
 
-अटल स्थिर काष्ठा iio_chan_spec adc12132_channels[] = अणु
+static const struct iio_chan_spec adc12132_channels[] = {
 	ADC12138_VOLTAGE_CHANNEL(0),
 	ADC12138_VOLTAGE_CHANNEL(1),
 	ADC12138_VOLTAGE_CHANNEL_DIFF(0, 1, 2),
 	ADC12138_VOLTAGE_CHANNEL_DIFF(1, 0, 3),
 	IIO_CHAN_SOFT_TIMESTAMP(4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec adc12138_channels[] = अणु
+static const struct iio_chan_spec adc12138_channels[] = {
 	ADC12138_VOLTAGE_CHANNEL(0),
 	ADC12138_VOLTAGE_CHANNEL(1),
 	ADC12138_VOLTAGE_CHANNEL(2),
@@ -123,288 +122,288 @@
 	ADC12138_VOLTAGE_CHANNEL_DIFF(6, 7, 14),
 	ADC12138_VOLTAGE_CHANNEL_DIFF(7, 6, 15),
 	IIO_CHAN_SOFT_TIMESTAMP(16),
-पूर्ण;
+};
 
-अटल पूर्णांक adc12138_mode_programming(काष्ठा adc12138 *adc, u8 mode,
-				     व्योम *rx_buf, पूर्णांक len)
-अणु
-	काष्ठा spi_transfer xfer = अणु
+static int adc12138_mode_programming(struct adc12138 *adc, u8 mode,
+				     void *rx_buf, int len)
+{
+	struct spi_transfer xfer = {
 		.tx_buf = adc->tx_buf,
 		.rx_buf = adc->rx_buf,
 		.len = len,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	/* Skip unused bits क्रम ADC12130 and ADC12132 */
-	अगर (adc->id != adc12138)
+	/* Skip unused bits for ADC12130 and ADC12132 */
+	if (adc->id != adc12138)
 		mode = (mode & 0xc0) | ((mode & 0x0f) << 2);
 
 	adc->tx_buf[0] = mode;
 
 	ret = spi_sync_transfer(adc->spi, &xfer, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_नकल(rx_buf, adc->rx_buf, len);
+	memcpy(rx_buf, adc->rx_buf, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc12138_पढ़ो_status(काष्ठा adc12138 *adc)
-अणु
+static int adc12138_read_status(struct adc12138 *adc)
+{
 	u8 rx_buf[2];
-	पूर्णांक ret;
+	int ret;
 
 	ret = adc12138_mode_programming(adc, ADC12138_MODE_READ_STATUS,
 					rx_buf, 2);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस (rx_buf[0] << 1) | (rx_buf[1] >> 7);
-पूर्ण
+	return (rx_buf[0] << 1) | (rx_buf[1] >> 7);
+}
 
-अटल पूर्णांक __adc12138_start_conv(काष्ठा adc12138 *adc,
-				 काष्ठा iio_chan_spec स्थिर *channel,
-				 व्योम *data, पूर्णांक len)
+static int __adc12138_start_conv(struct adc12138 *adc,
+				 struct iio_chan_spec const *channel,
+				 void *data, int len)
 
-अणु
-	अटल स्थिर u8 ch_to_mux[] = अणु 0, 4, 1, 5, 2, 6, 3, 7 पूर्ण;
+{
+	static const u8 ch_to_mux[] = { 0, 4, 1, 5, 2, 6, 3, 7 };
 	u8 mode = (ch_to_mux[channel->channel] << 4) |
-		  (channel->dअगरferential ? 0 : 0x80);
+		  (channel->differential ? 0 : 0x80);
 
-	वापस adc12138_mode_programming(adc, mode, data, len);
-पूर्ण
+	return adc12138_mode_programming(adc, mode, data, len);
+}
 
-अटल पूर्णांक adc12138_start_conv(काष्ठा adc12138 *adc,
-			       काष्ठा iio_chan_spec स्थिर *channel)
-अणु
+static int adc12138_start_conv(struct adc12138 *adc,
+			       struct iio_chan_spec const *channel)
+{
 	u8 trash;
 
-	वापस __adc12138_start_conv(adc, channel, &trash, 1);
-पूर्ण
+	return __adc12138_start_conv(adc, channel, &trash, 1);
+}
 
-अटल पूर्णांक adc12138_start_and_पढ़ो_conv(काष्ठा adc12138 *adc,
-					काष्ठा iio_chan_spec स्थिर *channel,
+static int adc12138_start_and_read_conv(struct adc12138 *adc,
+					struct iio_chan_spec const *channel,
 					__be16 *data)
-अणु
-	वापस __adc12138_start_conv(adc, channel, data, 2);
-पूर्ण
+{
+	return __adc12138_start_conv(adc, channel, data, 2);
+}
 
-अटल पूर्णांक adc12138_पढ़ो_conv_data(काष्ठा adc12138 *adc, __be16 *value)
-अणु
-	/* Issue a पढ़ो status inकाष्ठाion and पढ़ो previous conversion data */
-	वापस adc12138_mode_programming(adc, ADC12138_MODE_READ_STATUS,
-					 value, माप(*value));
-पूर्ण
+static int adc12138_read_conv_data(struct adc12138 *adc, __be16 *value)
+{
+	/* Issue a read status instruction and read previous conversion data */
+	return adc12138_mode_programming(adc, ADC12138_MODE_READ_STATUS,
+					 value, sizeof(*value));
+}
 
-अटल पूर्णांक adc12138_रुको_eoc(काष्ठा adc12138 *adc, अचिन्हित दीर्घ समयout)
-अणु
-	अगर (!रुको_क्रम_completion_समयout(&adc->complete, समयout))
-		वापस -ETIMEDOUT;
+static int adc12138_wait_eoc(struct adc12138 *adc, unsigned long timeout)
+{
+	if (!wait_for_completion_timeout(&adc->complete, timeout))
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc12138_adc_conversion(काष्ठा adc12138 *adc,
-				   काष्ठा iio_chan_spec स्थिर *channel,
+static int adc12138_adc_conversion(struct adc12138 *adc,
+				   struct iio_chan_spec const *channel,
 				   __be16 *value)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
 	reinit_completion(&adc->complete);
 
 	ret = adc12138_start_conv(adc, channel);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = adc12138_रुको_eoc(adc, msecs_to_jअगरfies(100));
-	अगर (ret)
-		वापस ret;
+	ret = adc12138_wait_eoc(adc, msecs_to_jiffies(100));
+	if (ret)
+		return ret;
 
-	वापस adc12138_पढ़ो_conv_data(adc, value);
-पूर्ण
+	return adc12138_read_conv_data(adc, value);
+}
 
-अटल पूर्णांक adc12138_पढ़ो_raw(काष्ठा iio_dev *iio,
-			     काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *value,
-			     पूर्णांक *shअगरt, दीर्घ mask)
-अणु
-	काष्ठा adc12138 *adc = iio_priv(iio);
-	पूर्णांक ret;
+static int adc12138_read_raw(struct iio_dev *iio,
+			     struct iio_chan_spec const *channel, int *value,
+			     int *shift, long mask)
+{
+	struct adc12138 *adc = iio_priv(iio);
+	int ret;
 	__be16 data;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&adc->lock);
 		ret = adc12138_adc_conversion(adc, channel, &data);
 		mutex_unlock(&adc->lock);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		*value = sign_extend32(be16_to_cpu(data) >> 3, 12);
 
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		ret = regulator_get_voltage(adc->vref_p);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*value = ret;
 
-		अगर (!IS_ERR(adc->vref_n)) अणु
+		if (!IS_ERR(adc->vref_n)) {
 			ret = regulator_get_voltage(adc->vref_n);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 			*value -= ret;
-		पूर्ण
+		}
 
 		/* convert regulator output voltage to mV */
 		*value /= 1000;
-		*shअगरt = channel->scan_type.realbits - 1;
+		*shift = channel->scan_type.realbits - 1;
 
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	हाल IIO_CHAN_INFO_OFFSET:
-		अगर (!IS_ERR(adc->vref_n)) अणु
+		return IIO_VAL_FRACTIONAL_LOG2;
+	case IIO_CHAN_INFO_OFFSET:
+		if (!IS_ERR(adc->vref_n)) {
 			*value = regulator_get_voltage(adc->vref_n);
-			अगर (*value < 0)
-				वापस *value;
-		पूर्ण अन्यथा अणु
+			if (*value < 0)
+				return *value;
+		} else {
 			*value = 0;
-		पूर्ण
+		}
 
 		/* convert regulator output voltage to mV */
 		*value /= 1000;
 
-		वापस IIO_VAL_INT;
-	पूर्ण
+		return IIO_VAL_INT;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info adc12138_info = अणु
-	.पढ़ो_raw = adc12138_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info adc12138_info = {
+	.read_raw = adc12138_read_raw,
+};
 
-अटल पूर्णांक adc12138_init(काष्ठा adc12138 *adc)
-अणु
-	पूर्णांक ret;
-	पूर्णांक status;
+static int adc12138_init(struct adc12138 *adc)
+{
+	int ret;
+	int status;
 	u8 mode;
 	u8 trash;
 
 	reinit_completion(&adc->complete);
 
 	ret = adc12138_mode_programming(adc, ADC12138_MODE_AUTO_CAL, &trash, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* data output at this समय has no signअगरicance */
-	status = adc12138_पढ़ो_status(adc);
-	अगर (status < 0)
-		वापस status;
+	/* data output at this time has no significance */
+	status = adc12138_read_status(adc);
+	if (status < 0)
+		return status;
 
-	adc12138_रुको_eoc(adc, msecs_to_jअगरfies(100));
+	adc12138_wait_eoc(adc, msecs_to_jiffies(100));
 
-	status = adc12138_पढ़ो_status(adc);
-	अगर (status & ADC12138_STATUS_CAL) अणु
+	status = adc12138_read_status(adc);
+	if (status & ADC12138_STATUS_CAL) {
 		dev_warn(&adc->spi->dev,
 			"Auto Cal sequence is still in progress: %#x\n",
 			status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (adc->acquisition_समय) अणु
-	हाल 6:
+	switch (adc->acquisition_time) {
+	case 6:
 		mode = ADC12138_MODE_ACQUISITION_TIME_6;
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		mode = ADC12138_MODE_ACQUISITION_TIME_10;
-		अवरोध;
-	हाल 18:
+		break;
+	case 18:
 		mode = ADC12138_MODE_ACQUISITION_TIME_18;
-		अवरोध;
-	हाल 34:
+		break;
+	case 34:
 		mode = ADC12138_MODE_ACQUISITION_TIME_34;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस adc12138_mode_programming(adc, mode, &trash, 1);
-पूर्ण
+	return adc12138_mode_programming(adc, mode, &trash, 1);
+}
 
-अटल irqवापस_t adc12138_trigger_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा adc12138 *adc = iio_priv(indio_dev);
+static irqreturn_t adc12138_trigger_handler(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct adc12138 *adc = iio_priv(indio_dev);
 	__be16 trash;
-	पूर्णांक ret;
-	पूर्णांक scan_index;
-	पूर्णांक i = 0;
+	int ret;
+	int scan_index;
+	int i = 0;
 
 	mutex_lock(&adc->lock);
 
-	क्रम_each_set_bit(scan_index, indio_dev->active_scan_mask,
-			 indio_dev->masklength) अणु
-		स्थिर काष्ठा iio_chan_spec *scan_chan =
+	for_each_set_bit(scan_index, indio_dev->active_scan_mask,
+			 indio_dev->masklength) {
+		const struct iio_chan_spec *scan_chan =
 				&indio_dev->channels[scan_index];
 
 		reinit_completion(&adc->complete);
 
-		ret = adc12138_start_and_पढ़ो_conv(adc, scan_chan,
+		ret = adc12138_start_and_read_conv(adc, scan_chan,
 					i ? &adc->data[i - 1] : &trash);
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(&adc->spi->dev,
 				 "failed to start conversion\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = adc12138_रुको_eoc(adc, msecs_to_jअगरfies(100));
-		अगर (ret) अणु
+		ret = adc12138_wait_eoc(adc, msecs_to_jiffies(100));
+		if (ret) {
 			dev_warn(&adc->spi->dev, "wait eoc timeout\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		i++;
-	पूर्ण
+	}
 
-	अगर (i) अणु
-		ret = adc12138_पढ़ो_conv_data(adc, &adc->data[i - 1]);
-		अगर (ret) अणु
+	if (i) {
+		ret = adc12138_read_conv_data(adc, &adc->data[i - 1]);
+		if (ret) {
 			dev_warn(&adc->spi->dev,
 				 "failed to get conversion data\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, adc->data,
-					   iio_get_समय_ns(indio_dev));
+	iio_push_to_buffers_with_timestamp(indio_dev, adc->data,
+					   iio_get_time_ns(indio_dev));
 out:
 	mutex_unlock(&adc->lock);
 
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t adc12138_eoc_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_dev *indio_dev = p;
-	काष्ठा adc12138 *adc = iio_priv(indio_dev);
+static irqreturn_t adc12138_eoc_handler(int irq, void *p)
+{
+	struct iio_dev *indio_dev = p;
+	struct adc12138 *adc = iio_priv(indio_dev);
 
 	complete(&adc->complete);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक adc12138_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा adc12138 *adc;
-	पूर्णांक ret;
+static int adc12138_probe(struct spi_device *spi)
+{
+	struct iio_dev *indio_dev;
+	struct adc12138 *adc;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*adc));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*adc));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	adc = iio_priv(indio_dev);
 	adc->spi = spi;
@@ -414,138 +413,138 @@ out:
 
 	indio_dev->name = spi_get_device_id(spi)->name;
 	indio_dev->info = &adc12138_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	चयन (adc->id) अणु
-	हाल adc12130:
-	हाल adc12132:
+	switch (adc->id) {
+	case adc12130:
+	case adc12132:
 		indio_dev->channels = adc12132_channels;
 		indio_dev->num_channels = ARRAY_SIZE(adc12132_channels);
-		अवरोध;
-	हाल adc12138:
+		break;
+	case adc12138:
 		indio_dev->channels = adc12138_channels;
 		indio_dev->num_channels = ARRAY_SIZE(adc12138_channels);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	ret = of_property_पढ़ो_u32(spi->dev.of_node, "ti,acquisition-time",
-				   &adc->acquisition_समय);
-	अगर (ret)
-		adc->acquisition_समय = 10;
+	ret = of_property_read_u32(spi->dev.of_node, "ti,acquisition-time",
+				   &adc->acquisition_time);
+	if (ret)
+		adc->acquisition_time = 10;
 
-	adc->cclk = devm_clk_get(&spi->dev, शून्य);
-	अगर (IS_ERR(adc->cclk))
-		वापस PTR_ERR(adc->cclk);
+	adc->cclk = devm_clk_get(&spi->dev, NULL);
+	if (IS_ERR(adc->cclk))
+		return PTR_ERR(adc->cclk);
 
 	adc->vref_p = devm_regulator_get(&spi->dev, "vref-p");
-	अगर (IS_ERR(adc->vref_p))
-		वापस PTR_ERR(adc->vref_p);
+	if (IS_ERR(adc->vref_p))
+		return PTR_ERR(adc->vref_p);
 
 	adc->vref_n = devm_regulator_get_optional(&spi->dev, "vref-n");
-	अगर (IS_ERR(adc->vref_n)) अणु
+	if (IS_ERR(adc->vref_n)) {
 		/*
-		 * Assume vref_n is 0V अगर an optional regulator is not
-		 * specअगरied, otherwise वापस the error code.
+		 * Assume vref_n is 0V if an optional regulator is not
+		 * specified, otherwise return the error code.
 		 */
 		ret = PTR_ERR(adc->vref_n);
-		अगर (ret != -ENODEV)
-			वापस ret;
-	पूर्ण
+		if (ret != -ENODEV)
+			return ret;
+	}
 
 	ret = devm_request_irq(&spi->dev, spi->irq, adc12138_eoc_handler,
 			       IRQF_TRIGGER_RISING, indio_dev->name, indio_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_prepare_enable(adc->cclk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regulator_enable(adc->vref_p);
-	अगर (ret)
-		जाओ err_clk_disable;
+	if (ret)
+		goto err_clk_disable;
 
-	अगर (!IS_ERR(adc->vref_n)) अणु
+	if (!IS_ERR(adc->vref_n)) {
 		ret = regulator_enable(adc->vref_n);
-		अगर (ret)
-			जाओ err_vref_p_disable;
-	पूर्ण
+		if (ret)
+			goto err_vref_p_disable;
+	}
 
 	ret = adc12138_init(adc);
-	अगर (ret)
-		जाओ err_vref_n_disable;
+	if (ret)
+		goto err_vref_n_disable;
 
 	spi_set_drvdata(spi, indio_dev);
 
-	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
-					 adc12138_trigger_handler, शून्य);
-	अगर (ret)
-		जाओ err_vref_n_disable;
+	ret = iio_triggered_buffer_setup(indio_dev, NULL,
+					 adc12138_trigger_handler, NULL);
+	if (ret)
+		goto err_vref_n_disable;
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ err_buffer_cleanup;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto err_buffer_cleanup;
 
-	वापस 0;
+	return 0;
 err_buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
 err_vref_n_disable:
-	अगर (!IS_ERR(adc->vref_n))
+	if (!IS_ERR(adc->vref_n))
 		regulator_disable(adc->vref_n);
 err_vref_p_disable:
 	regulator_disable(adc->vref_p);
 err_clk_disable:
 	clk_disable_unprepare(adc->cclk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adc12138_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
-	काष्ठा adc12138 *adc = iio_priv(indio_dev);
+static int adc12138_remove(struct spi_device *spi)
+{
+	struct iio_dev *indio_dev = spi_get_drvdata(spi);
+	struct adc12138 *adc = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-	अगर (!IS_ERR(adc->vref_n))
+	if (!IS_ERR(adc->vref_n))
 		regulator_disable(adc->vref_n);
 	regulator_disable(adc->vref_p);
 	clk_disable_unprepare(adc->cclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 
-अटल स्थिर काष्ठा of_device_id adc12138_dt_ids[] = अणु
-	अणु .compatible = "ti,adc12130", पूर्ण,
-	अणु .compatible = "ti,adc12132", पूर्ण,
-	अणु .compatible = "ti,adc12138", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id adc12138_dt_ids[] = {
+	{ .compatible = "ti,adc12130", },
+	{ .compatible = "ti,adc12132", },
+	{ .compatible = "ti,adc12138", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, adc12138_dt_ids);
 
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा spi_device_id adc12138_id[] = अणु
-	अणु "adc12130", adc12130 पूर्ण,
-	अणु "adc12132", adc12132 पूर्ण,
-	अणु "adc12138", adc12138 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id adc12138_id[] = {
+	{ "adc12130", adc12130 },
+	{ "adc12132", adc12132 },
+	{ "adc12138", adc12138 },
+	{}
+};
 MODULE_DEVICE_TABLE(spi, adc12138_id);
 
-अटल काष्ठा spi_driver adc12138_driver = अणु
-	.driver = अणु
+static struct spi_driver adc12138_driver = {
+	.driver = {
 		.name = "adc12138",
 		.of_match_table = of_match_ptr(adc12138_dt_ids),
-	पूर्ण,
+	},
 	.probe = adc12138_probe,
-	.हटाओ = adc12138_हटाओ,
+	.remove = adc12138_remove,
 	.id_table = adc12138_id,
-पूर्ण;
+};
 module_spi_driver(adc12138_driver);
 
 MODULE_AUTHOR("Akinobu Mita <akinobu.mita@gmail.com>");

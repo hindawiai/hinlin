@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/fault-inject.h>
-#समावेश <linux/fault-inject-usercopy.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/fault-inject.h>
+#include <linux/fault-inject-usercopy.h>
 
-अटल काष्ठा अणु
-	काष्ठा fault_attr attr;
-पूर्ण fail_usercopy = अणु
+static struct {
+	struct fault_attr attr;
+} fail_usercopy = {
 	.attr = FAULT_ATTR_INITIALIZER,
-पूर्ण;
+};
 
-अटल पूर्णांक __init setup_fail_usercopy(अक्षर *str)
-अणु
-	वापस setup_fault_attr(&fail_usercopy.attr, str);
-पूर्ण
+static int __init setup_fail_usercopy(char *str)
+{
+	return setup_fault_attr(&fail_usercopy.attr, str);
+}
 __setup("fail_usercopy=", setup_fail_usercopy);
 
-#अगर_घोषित CONFIG_FAULT_INJECTION_DEBUG_FS
+#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
 
-अटल पूर्णांक __init fail_usercopy_debugfs(व्योम)
-अणु
-	काष्ठा dentry *dir;
+static int __init fail_usercopy_debugfs(void)
+{
+	struct dentry *dir;
 
-	dir = fault_create_debugfs_attr("fail_usercopy", शून्य,
+	dir = fault_create_debugfs_attr("fail_usercopy", NULL,
 					&fail_usercopy.attr);
-	अगर (IS_ERR(dir))
-		वापस PTR_ERR(dir);
+	if (IS_ERR(dir))
+		return PTR_ERR(dir);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(fail_usercopy_debugfs);
 
-#पूर्ण_अगर /* CONFIG_FAULT_INJECTION_DEBUG_FS */
+#endif /* CONFIG_FAULT_INJECTION_DEBUG_FS */
 
-bool should_fail_usercopy(व्योम)
-अणु
-	वापस should_fail(&fail_usercopy.attr, 1);
-पूर्ण
+bool should_fail_usercopy(void)
+{
+	return should_fail(&fail_usercopy.attr, 1);
+}
 EXPORT_SYMBOL_GPL(should_fail_usercopy);

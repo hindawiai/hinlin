@@ -1,617 +1,616 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2019 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <dt-bindings/घातer/meson8-घातer.h>
-#समावेश <dt-bindings/घातer/meson-axg-घातer.h>
-#समावेश <dt-bindings/घातer/meson-g12a-घातer.h>
-#समावेश <dt-bindings/घातer/meson-gxbb-घातer.h>
-#समावेश <dt-bindings/घातer/meson-sm1-घातer.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/bitfield.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of_device.h>
+#include <linux/reset-controller.h>
+#include <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <dt-bindings/power/meson8-power.h>
+#include <dt-bindings/power/meson-axg-power.h>
+#include <dt-bindings/power/meson-g12a-power.h>
+#include <dt-bindings/power/meson-gxbb-power.h>
+#include <dt-bindings/power/meson-sm1-power.h>
 
 /* AO Offsets */
 
-#घोषणा GX_AO_RTI_GEN_PWR_SLEEP0	(0x3a << 2)
-#घोषणा GX_AO_RTI_GEN_PWR_ISO0		(0x3b << 2)
+#define GX_AO_RTI_GEN_PWR_SLEEP0	(0x3a << 2)
+#define GX_AO_RTI_GEN_PWR_ISO0		(0x3b << 2)
 
 /*
- * Meson8/Meson8b/Meson8m2 only expose the घातer management रेजिस्टरs of the
+ * Meson8/Meson8b/Meson8m2 only expose the power management registers of the
  * AO-bus as syscon. 0x3a from GX translates to 0x02, 0x3b translates to 0x03
  * and so on.
  */
-#घोषणा MESON8_AO_RTI_GEN_PWR_SLEEP0	(0x02 << 2)
-#घोषणा MESON8_AO_RTI_GEN_PWR_ISO0	(0x03 << 2)
+#define MESON8_AO_RTI_GEN_PWR_SLEEP0	(0x02 << 2)
+#define MESON8_AO_RTI_GEN_PWR_ISO0	(0x03 << 2)
 
 /* HHI Offsets */
 
-#घोषणा HHI_MEM_PD_REG0			(0x40 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG0		(0x41 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG1		(0x42 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG3		(0x43 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG4		(0x44 << 2)
-#घोषणा HHI_AUDIO_MEM_PD_REG0		(0x45 << 2)
-#घोषणा HHI_न_अंकOQ_MEM_PD_REG0		(0x46 << 2)
-#घोषणा HHI_न_अंकOQ_MEM_PD_REG1		(0x47 << 2)
-#घोषणा HHI_VPU_MEM_PD_REG2		(0x4d << 2)
+#define HHI_MEM_PD_REG0			(0x40 << 2)
+#define HHI_VPU_MEM_PD_REG0		(0x41 << 2)
+#define HHI_VPU_MEM_PD_REG1		(0x42 << 2)
+#define HHI_VPU_MEM_PD_REG3		(0x43 << 2)
+#define HHI_VPU_MEM_PD_REG4		(0x44 << 2)
+#define HHI_AUDIO_MEM_PD_REG0		(0x45 << 2)
+#define HHI_NANOQ_MEM_PD_REG0		(0x46 << 2)
+#define HHI_NANOQ_MEM_PD_REG1		(0x47 << 2)
+#define HHI_VPU_MEM_PD_REG2		(0x4d << 2)
 
-काष्ठा meson_ee_pwrc;
-काष्ठा meson_ee_pwrc_करोमुख्य;
+struct meson_ee_pwrc;
+struct meson_ee_pwrc_domain;
 
-काष्ठा meson_ee_pwrc_mem_करोमुख्य अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक mask;
-पूर्ण;
+struct meson_ee_pwrc_mem_domain {
+	unsigned int reg;
+	unsigned int mask;
+};
 
-काष्ठा meson_ee_pwrc_top_करोमुख्य अणु
-	अचिन्हित पूर्णांक sleep_reg;
-	अचिन्हित पूर्णांक sleep_mask;
-	अचिन्हित पूर्णांक iso_reg;
-	अचिन्हित पूर्णांक iso_mask;
-पूर्ण;
+struct meson_ee_pwrc_top_domain {
+	unsigned int sleep_reg;
+	unsigned int sleep_mask;
+	unsigned int iso_reg;
+	unsigned int iso_mask;
+};
 
-काष्ठा meson_ee_pwrc_करोमुख्य_desc अणु
-	अक्षर *name;
-	अचिन्हित पूर्णांक reset_names_count;
-	अचिन्हित पूर्णांक clk_names_count;
-	काष्ठा meson_ee_pwrc_top_करोमुख्य *top_pd;
-	अचिन्हित पूर्णांक mem_pd_count;
-	काष्ठा meson_ee_pwrc_mem_करोमुख्य *mem_pd;
-	bool (*get_घातer)(काष्ठा meson_ee_pwrc_करोमुख्य *pwrc_करोमुख्य);
-पूर्ण;
+struct meson_ee_pwrc_domain_desc {
+	char *name;
+	unsigned int reset_names_count;
+	unsigned int clk_names_count;
+	struct meson_ee_pwrc_top_domain *top_pd;
+	unsigned int mem_pd_count;
+	struct meson_ee_pwrc_mem_domain *mem_pd;
+	bool (*get_power)(struct meson_ee_pwrc_domain *pwrc_domain);
+};
 
-काष्ठा meson_ee_pwrc_करोमुख्य_data अणु
-	अचिन्हित पूर्णांक count;
-	काष्ठा meson_ee_pwrc_करोमुख्य_desc *करोमुख्यs;
-पूर्ण;
+struct meson_ee_pwrc_domain_data {
+	unsigned int count;
+	struct meson_ee_pwrc_domain_desc *domains;
+};
 
-/* TOP Power Doमुख्यs */
+/* TOP Power Domains */
 
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य gx_pwrc_vpu = अणु
+static struct meson_ee_pwrc_top_domain gx_pwrc_vpu = {
 	.sleep_reg = GX_AO_RTI_GEN_PWR_SLEEP0,
 	.sleep_mask = BIT(8),
 	.iso_reg = GX_AO_RTI_GEN_PWR_SLEEP0,
 	.iso_mask = BIT(9),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य meson8_pwrc_vpu = अणु
+static struct meson_ee_pwrc_top_domain meson8_pwrc_vpu = {
 	.sleep_reg = MESON8_AO_RTI_GEN_PWR_SLEEP0,
 	.sleep_mask = BIT(8),
 	.iso_reg = MESON8_AO_RTI_GEN_PWR_SLEEP0,
 	.iso_mask = BIT(9),
-पूर्ण;
+};
 
-#घोषणा SM1_EE_PD(__bit)					\
-	अणु							\
+#define SM1_EE_PD(__bit)					\
+	{							\
 		.sleep_reg = GX_AO_RTI_GEN_PWR_SLEEP0, 		\
 		.sleep_mask = BIT(__bit), 			\
 		.iso_reg = GX_AO_RTI_GEN_PWR_ISO0, 		\
 		.iso_mask = BIT(__bit), 			\
-	पूर्ण
+	}
 
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य sm1_pwrc_vpu = SM1_EE_PD(8);
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य sm1_pwrc_nna = SM1_EE_PD(16);
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य sm1_pwrc_usb = SM1_EE_PD(17);
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य sm1_pwrc_pci = SM1_EE_PD(18);
-अटल काष्ठा meson_ee_pwrc_top_करोमुख्य sm1_pwrc_ge2d = SM1_EE_PD(19);
+static struct meson_ee_pwrc_top_domain sm1_pwrc_vpu = SM1_EE_PD(8);
+static struct meson_ee_pwrc_top_domain sm1_pwrc_nna = SM1_EE_PD(16);
+static struct meson_ee_pwrc_top_domain sm1_pwrc_usb = SM1_EE_PD(17);
+static struct meson_ee_pwrc_top_domain sm1_pwrc_pci = SM1_EE_PD(18);
+static struct meson_ee_pwrc_top_domain sm1_pwrc_ge2d = SM1_EE_PD(19);
 
-/* Memory PD Doमुख्यs */
+/* Memory PD Domains */
 
-#घोषणा VPU_MEMPD(__reg)					\
-	अणु __reg, GENMASK(1, 0) पूर्ण,				\
-	अणु __reg, GENMASK(3, 2) पूर्ण,				\
-	अणु __reg, GENMASK(5, 4) पूर्ण,				\
-	अणु __reg, GENMASK(7, 6) पूर्ण,				\
-	अणु __reg, GENMASK(9, 8) पूर्ण,				\
-	अणु __reg, GENMASK(11, 10) पूर्ण,				\
-	अणु __reg, GENMASK(13, 12) पूर्ण,				\
-	अणु __reg, GENMASK(15, 14) पूर्ण,				\
-	अणु __reg, GENMASK(17, 16) पूर्ण,				\
-	अणु __reg, GENMASK(19, 18) पूर्ण,				\
-	अणु __reg, GENMASK(21, 20) पूर्ण,				\
-	अणु __reg, GENMASK(23, 22) पूर्ण,				\
-	अणु __reg, GENMASK(25, 24) पूर्ण,				\
-	अणु __reg, GENMASK(27, 26) पूर्ण,				\
-	अणु __reg, GENMASK(29, 28) पूर्ण,				\
-	अणु __reg, GENMASK(31, 30) पूर्ण
+#define VPU_MEMPD(__reg)					\
+	{ __reg, GENMASK(1, 0) },				\
+	{ __reg, GENMASK(3, 2) },				\
+	{ __reg, GENMASK(5, 4) },				\
+	{ __reg, GENMASK(7, 6) },				\
+	{ __reg, GENMASK(9, 8) },				\
+	{ __reg, GENMASK(11, 10) },				\
+	{ __reg, GENMASK(13, 12) },				\
+	{ __reg, GENMASK(15, 14) },				\
+	{ __reg, GENMASK(17, 16) },				\
+	{ __reg, GENMASK(19, 18) },				\
+	{ __reg, GENMASK(21, 20) },				\
+	{ __reg, GENMASK(23, 22) },				\
+	{ __reg, GENMASK(25, 24) },				\
+	{ __reg, GENMASK(27, 26) },				\
+	{ __reg, GENMASK(29, 28) },				\
+	{ __reg, GENMASK(31, 30) }
 
-#घोषणा VPU_HHI_MEMPD(__reg)					\
-	अणु __reg, BIT(8) पूर्ण,					\
-	अणु __reg, BIT(9) पूर्ण,					\
-	अणु __reg, BIT(10) पूर्ण,					\
-	अणु __reg, BIT(11) पूर्ण,					\
-	अणु __reg, BIT(12) पूर्ण,					\
-	अणु __reg, BIT(13) पूर्ण,					\
-	अणु __reg, BIT(14) पूर्ण,					\
-	अणु __reg, BIT(15) पूर्ण
+#define VPU_HHI_MEMPD(__reg)					\
+	{ __reg, BIT(8) },					\
+	{ __reg, BIT(9) },					\
+	{ __reg, BIT(10) },					\
+	{ __reg, BIT(11) },					\
+	{ __reg, BIT(12) },					\
+	{ __reg, BIT(13) },					\
+	{ __reg, BIT(14) },					\
+	{ __reg, BIT(15) }
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य axg_pwrc_mem_vpu[] = अणु
+static struct meson_ee_pwrc_mem_domain axg_pwrc_mem_vpu[] = {
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG0),
 	VPU_HHI_MEMPD(HHI_MEM_PD_REG0),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य g12a_pwrc_mem_vpu[] = अणु
+static struct meson_ee_pwrc_mem_domain g12a_pwrc_mem_vpu[] = {
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG0),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG1),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG2),
 	VPU_HHI_MEMPD(HHI_MEM_PD_REG0),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य gxbb_pwrc_mem_vpu[] = अणु
+static struct meson_ee_pwrc_mem_domain gxbb_pwrc_mem_vpu[] = {
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG0),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG1),
 	VPU_HHI_MEMPD(HHI_MEM_PD_REG0),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य meson_pwrc_mem_eth[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(3, 2) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain meson_pwrc_mem_eth[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(3, 2) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य meson8_pwrc_audio_dsp_mem[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(1, 0) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain meson8_pwrc_audio_dsp_mem[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(1, 0) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य meson8_pwrc_mem_vpu[] = अणु
+static struct meson_ee_pwrc_mem_domain meson8_pwrc_mem_vpu[] = {
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG0),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG1),
 	VPU_HHI_MEMPD(HHI_MEM_PD_REG0),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_vpu[] = अणु
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_vpu[] = {
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG0),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG1),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG2),
 	VPU_MEMPD(HHI_VPU_MEM_PD_REG3),
-	अणु HHI_VPU_MEM_PD_REG4, GENMASK(1, 0) पूर्ण,
-	अणु HHI_VPU_MEM_PD_REG4, GENMASK(3, 2) पूर्ण,
-	अणु HHI_VPU_MEM_PD_REG4, GENMASK(5, 4) पूर्ण,
-	अणु HHI_VPU_MEM_PD_REG4, GENMASK(7, 6) पूर्ण,
+	{ HHI_VPU_MEM_PD_REG4, GENMASK(1, 0) },
+	{ HHI_VPU_MEM_PD_REG4, GENMASK(3, 2) },
+	{ HHI_VPU_MEM_PD_REG4, GENMASK(5, 4) },
+	{ HHI_VPU_MEM_PD_REG4, GENMASK(7, 6) },
 	VPU_HHI_MEMPD(HHI_MEM_PD_REG0),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_nna[] = अणु
-	अणु HHI_न_अंकOQ_MEM_PD_REG0, 0xff पूर्ण,
-	अणु HHI_न_अंकOQ_MEM_PD_REG1, 0xff पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_nna[] = {
+	{ HHI_NANOQ_MEM_PD_REG0, 0xff },
+	{ HHI_NANOQ_MEM_PD_REG1, 0xff },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_usb[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(31, 30) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_usb[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(31, 30) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_pcie[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(29, 26) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_pcie[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(29, 26) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_ge2d[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(25, 18) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_ge2d[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(25, 18) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य axg_pwrc_mem_audio[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(5, 4) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain axg_pwrc_mem_audio[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(5, 4) },
+};
 
-अटल काष्ठा meson_ee_pwrc_mem_करोमुख्य sm1_pwrc_mem_audio[] = अणु
-	अणु HHI_MEM_PD_REG0, GENMASK(5, 4) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(1, 0) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(3, 2) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(5, 4) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(7, 6) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(13, 12) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(15, 14) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(17, 16) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(19, 18) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(21, 20) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(23, 22) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(25, 24) पूर्ण,
-	अणु HHI_AUDIO_MEM_PD_REG0, GENMASK(27, 26) पूर्ण,
-पूर्ण;
+static struct meson_ee_pwrc_mem_domain sm1_pwrc_mem_audio[] = {
+	{ HHI_MEM_PD_REG0, GENMASK(5, 4) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(1, 0) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(3, 2) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(5, 4) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(7, 6) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(13, 12) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(15, 14) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(17, 16) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(19, 18) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(21, 20) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(23, 22) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(25, 24) },
+	{ HHI_AUDIO_MEM_PD_REG0, GENMASK(27, 26) },
+};
 
-#घोषणा VPU_PD(__name, __top_pd, __mem, __get_घातer, __resets, __clks)	\
-	अणु								\
+#define VPU_PD(__name, __top_pd, __mem, __get_power, __resets, __clks)	\
+	{								\
 		.name = __name,						\
 		.reset_names_count = __resets,				\
 		.clk_names_count = __clks,				\
 		.top_pd = __top_pd,					\
 		.mem_pd_count = ARRAY_SIZE(__mem),			\
 		.mem_pd = __mem,					\
-		.get_घातer = __get_घातer,				\
-	पूर्ण
+		.get_power = __get_power,				\
+	}
 
-#घोषणा TOP_PD(__name, __top_pd, __mem, __get_घातer)			\
-	अणु								\
+#define TOP_PD(__name, __top_pd, __mem, __get_power)			\
+	{								\
 		.name = __name,						\
 		.top_pd = __top_pd,					\
 		.mem_pd_count = ARRAY_SIZE(__mem),			\
 		.mem_pd = __mem,					\
-		.get_घातer = __get_घातer,				\
-	पूर्ण
+		.get_power = __get_power,				\
+	}
 
-#घोषणा MEM_PD(__name, __mem)						\
-	TOP_PD(__name, शून्य, __mem, शून्य)
+#define MEM_PD(__name, __mem)						\
+	TOP_PD(__name, NULL, __mem, NULL)
 
-अटल bool pwrc_ee_get_घातer(काष्ठा meson_ee_pwrc_करोमुख्य *pwrc_करोमुख्य);
+static bool pwrc_ee_get_power(struct meson_ee_pwrc_domain *pwrc_domain);
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc axg_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc axg_pwrc_domains[] = {
 	[PWRC_AXG_VPU_ID]  = VPU_PD("VPU", &gx_pwrc_vpu, axg_pwrc_mem_vpu,
-				     pwrc_ee_get_घातer, 5, 2),
+				     pwrc_ee_get_power, 5, 2),
 	[PWRC_AXG_ETHERNET_MEM_ID] = MEM_PD("ETH", meson_pwrc_mem_eth),
 	[PWRC_AXG_AUDIO_ID] = MEM_PD("AUDIO", axg_pwrc_mem_audio),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc g12a_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc g12a_pwrc_domains[] = {
 	[PWRC_G12A_VPU_ID]  = VPU_PD("VPU", &gx_pwrc_vpu, g12a_pwrc_mem_vpu,
-				     pwrc_ee_get_घातer, 11, 2),
+				     pwrc_ee_get_power, 11, 2),
 	[PWRC_G12A_ETH_ID] = MEM_PD("ETH", meson_pwrc_mem_eth),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc gxbb_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc gxbb_pwrc_domains[] = {
 	[PWRC_GXBB_VPU_ID]  = VPU_PD("VPU", &gx_pwrc_vpu, gxbb_pwrc_mem_vpu,
-				     pwrc_ee_get_घातer, 12, 2),
+				     pwrc_ee_get_power, 12, 2),
 	[PWRC_GXBB_ETHERNET_MEM_ID] = MEM_PD("ETH", meson_pwrc_mem_eth),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc meson8_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc meson8_pwrc_domains[] = {
 	[PWRC_MESON8_VPU_ID]  = VPU_PD("VPU", &meson8_pwrc_vpu,
-				       meson8_pwrc_mem_vpu, pwrc_ee_get_घातer,
+				       meson8_pwrc_mem_vpu, pwrc_ee_get_power,
 				       0, 1),
 	[PWRC_MESON8_ETHERNET_MEM_ID] = MEM_PD("ETHERNET_MEM",
 					       meson_pwrc_mem_eth),
 	[PWRC_MESON8_AUDIO_DSP_MEM_ID] = MEM_PD("AUDIO_DSP_MEM",
 						meson8_pwrc_audio_dsp_mem),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc meson8b_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc meson8b_pwrc_domains[] = {
 	[PWRC_MESON8_VPU_ID]  = VPU_PD("VPU", &meson8_pwrc_vpu,
-				       meson8_pwrc_mem_vpu, pwrc_ee_get_घातer,
+				       meson8_pwrc_mem_vpu, pwrc_ee_get_power,
 				       11, 1),
 	[PWRC_MESON8_ETHERNET_MEM_ID] = MEM_PD("ETHERNET_MEM",
 					       meson_pwrc_mem_eth),
 	[PWRC_MESON8_AUDIO_DSP_MEM_ID] = MEM_PD("AUDIO_DSP_MEM",
 						meson8_pwrc_audio_dsp_mem),
-पूर्ण;
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_desc sm1_pwrc_करोमुख्यs[] = अणु
+static struct meson_ee_pwrc_domain_desc sm1_pwrc_domains[] = {
 	[PWRC_SM1_VPU_ID]  = VPU_PD("VPU", &sm1_pwrc_vpu, sm1_pwrc_mem_vpu,
-				    pwrc_ee_get_घातer, 11, 2),
+				    pwrc_ee_get_power, 11, 2),
 	[PWRC_SM1_NNA_ID]  = TOP_PD("NNA", &sm1_pwrc_nna, sm1_pwrc_mem_nna,
-				    pwrc_ee_get_घातer),
+				    pwrc_ee_get_power),
 	[PWRC_SM1_USB_ID]  = TOP_PD("USB", &sm1_pwrc_usb, sm1_pwrc_mem_usb,
-				    pwrc_ee_get_घातer),
+				    pwrc_ee_get_power),
 	[PWRC_SM1_PCIE_ID] = TOP_PD("PCI", &sm1_pwrc_pci, sm1_pwrc_mem_pcie,
-				    pwrc_ee_get_घातer),
+				    pwrc_ee_get_power),
 	[PWRC_SM1_GE2D_ID] = TOP_PD("GE2D", &sm1_pwrc_ge2d, sm1_pwrc_mem_ge2d,
-				    pwrc_ee_get_घातer),
+				    pwrc_ee_get_power),
 	[PWRC_SM1_AUDIO_ID] = MEM_PD("AUDIO", sm1_pwrc_mem_audio),
 	[PWRC_SM1_ETH_ID] = MEM_PD("ETH", meson_pwrc_mem_eth),
-पूर्ण;
+};
 
-काष्ठा meson_ee_pwrc_करोमुख्य अणु
-	काष्ठा generic_pm_करोमुख्य base;
+struct meson_ee_pwrc_domain {
+	struct generic_pm_domain base;
 	bool enabled;
-	काष्ठा meson_ee_pwrc *pwrc;
-	काष्ठा meson_ee_pwrc_करोमुख्य_desc desc;
-	काष्ठा clk_bulk_data *clks;
-	पूर्णांक num_clks;
-	काष्ठा reset_control *rstc;
-	पूर्णांक num_rstc;
-पूर्ण;
+	struct meson_ee_pwrc *pwrc;
+	struct meson_ee_pwrc_domain_desc desc;
+	struct clk_bulk_data *clks;
+	int num_clks;
+	struct reset_control *rstc;
+	int num_rstc;
+};
 
-काष्ठा meson_ee_pwrc अणु
-	काष्ठा regmap *regmap_ao;
-	काष्ठा regmap *regmap_hhi;
-	काष्ठा meson_ee_pwrc_करोमुख्य *करोमुख्यs;
-	काष्ठा genpd_onecell_data xlate;
-पूर्ण;
+struct meson_ee_pwrc {
+	struct regmap *regmap_ao;
+	struct regmap *regmap_hhi;
+	struct meson_ee_pwrc_domain *domains;
+	struct genpd_onecell_data xlate;
+};
 
-अटल bool pwrc_ee_get_घातer(काष्ठा meson_ee_pwrc_करोमुख्य *pwrc_करोमुख्य)
-अणु
+static bool pwrc_ee_get_power(struct meson_ee_pwrc_domain *pwrc_domain)
+{
 	u32 reg;
 
-	regmap_पढ़ो(pwrc_करोमुख्य->pwrc->regmap_ao,
-		    pwrc_करोमुख्य->desc.top_pd->sleep_reg, &reg);
+	regmap_read(pwrc_domain->pwrc->regmap_ao,
+		    pwrc_domain->desc.top_pd->sleep_reg, &reg);
 
-	वापस (reg & pwrc_करोमुख्य->desc.top_pd->sleep_mask);
-पूर्ण
+	return (reg & pwrc_domain->desc.top_pd->sleep_mask);
+}
 
-अटल पूर्णांक meson_ee_pwrc_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा meson_ee_pwrc_करोमुख्य *pwrc_करोमुख्य =
-		container_of(करोमुख्य, काष्ठा meson_ee_pwrc_करोमुख्य, base);
-	पूर्णांक i;
+static int meson_ee_pwrc_off(struct generic_pm_domain *domain)
+{
+	struct meson_ee_pwrc_domain *pwrc_domain =
+		container_of(domain, struct meson_ee_pwrc_domain, base);
+	int i;
 
-	अगर (pwrc_करोमुख्य->desc.top_pd)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_ao,
-				   pwrc_करोमुख्य->desc.top_pd->sleep_reg,
-				   pwrc_करोमुख्य->desc.top_pd->sleep_mask,
-				   pwrc_करोमुख्य->desc.top_pd->sleep_mask);
+	if (pwrc_domain->desc.top_pd)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_ao,
+				   pwrc_domain->desc.top_pd->sleep_reg,
+				   pwrc_domain->desc.top_pd->sleep_mask,
+				   pwrc_domain->desc.top_pd->sleep_mask);
 	udelay(20);
 
-	क्रम (i = 0 ; i < pwrc_करोमुख्य->desc.mem_pd_count ; ++i)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_hhi,
-				   pwrc_करोमुख्य->desc.mem_pd[i].reg,
-				   pwrc_करोमुख्य->desc.mem_pd[i].mask,
-				   pwrc_करोमुख्य->desc.mem_pd[i].mask);
+	for (i = 0 ; i < pwrc_domain->desc.mem_pd_count ; ++i)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_hhi,
+				   pwrc_domain->desc.mem_pd[i].reg,
+				   pwrc_domain->desc.mem_pd[i].mask,
+				   pwrc_domain->desc.mem_pd[i].mask);
 
 	udelay(20);
 
-	अगर (pwrc_करोमुख्य->desc.top_pd)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_ao,
-				   pwrc_करोमुख्य->desc.top_pd->iso_reg,
-				   pwrc_करोमुख्य->desc.top_pd->iso_mask,
-				   pwrc_करोमुख्य->desc.top_pd->iso_mask);
+	if (pwrc_domain->desc.top_pd)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_ao,
+				   pwrc_domain->desc.top_pd->iso_reg,
+				   pwrc_domain->desc.top_pd->iso_mask,
+				   pwrc_domain->desc.top_pd->iso_mask);
 
-	अगर (pwrc_करोमुख्य->num_clks) अणु
+	if (pwrc_domain->num_clks) {
 		msleep(20);
-		clk_bulk_disable_unprepare(pwrc_करोमुख्य->num_clks,
-					   pwrc_करोमुख्य->clks);
-	पूर्ण
+		clk_bulk_disable_unprepare(pwrc_domain->num_clks,
+					   pwrc_domain->clks);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_ee_pwrc_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा meson_ee_pwrc_करोमुख्य *pwrc_करोमुख्य =
-		container_of(करोमुख्य, काष्ठा meson_ee_pwrc_करोमुख्य, base);
-	पूर्णांक i, ret;
+static int meson_ee_pwrc_on(struct generic_pm_domain *domain)
+{
+	struct meson_ee_pwrc_domain *pwrc_domain =
+		container_of(domain, struct meson_ee_pwrc_domain, base);
+	int i, ret;
 
-	अगर (pwrc_करोमुख्य->desc.top_pd)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_ao,
-				   pwrc_करोमुख्य->desc.top_pd->sleep_reg,
-				   pwrc_करोमुख्य->desc.top_pd->sleep_mask, 0);
+	if (pwrc_domain->desc.top_pd)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_ao,
+				   pwrc_domain->desc.top_pd->sleep_reg,
+				   pwrc_domain->desc.top_pd->sleep_mask, 0);
 	udelay(20);
 
-	क्रम (i = 0 ; i < pwrc_करोमुख्य->desc.mem_pd_count ; ++i)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_hhi,
-				   pwrc_करोमुख्य->desc.mem_pd[i].reg,
-				   pwrc_करोमुख्य->desc.mem_pd[i].mask, 0);
+	for (i = 0 ; i < pwrc_domain->desc.mem_pd_count ; ++i)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_hhi,
+				   pwrc_domain->desc.mem_pd[i].reg,
+				   pwrc_domain->desc.mem_pd[i].mask, 0);
 
 	udelay(20);
 
-	ret = reset_control_निश्चित(pwrc_करोमुख्य->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_assert(pwrc_domain->rstc);
+	if (ret)
+		return ret;
 
-	अगर (pwrc_करोमुख्य->desc.top_pd)
-		regmap_update_bits(pwrc_करोमुख्य->pwrc->regmap_ao,
-				   pwrc_करोमुख्य->desc.top_pd->iso_reg,
-				   pwrc_करोमुख्य->desc.top_pd->iso_mask, 0);
+	if (pwrc_domain->desc.top_pd)
+		regmap_update_bits(pwrc_domain->pwrc->regmap_ao,
+				   pwrc_domain->desc.top_pd->iso_reg,
+				   pwrc_domain->desc.top_pd->iso_mask, 0);
 
-	ret = reset_control_deनिश्चित(pwrc_करोमुख्य->rstc);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_deassert(pwrc_domain->rstc);
+	if (ret)
+		return ret;
 
-	वापस clk_bulk_prepare_enable(pwrc_करोमुख्य->num_clks,
-				       pwrc_करोमुख्य->clks);
-पूर्ण
+	return clk_bulk_prepare_enable(pwrc_domain->num_clks,
+				       pwrc_domain->clks);
+}
 
-अटल पूर्णांक meson_ee_pwrc_init_करोमुख्य(काष्ठा platक्रमm_device *pdev,
-				     काष्ठा meson_ee_pwrc *pwrc,
-				     काष्ठा meson_ee_pwrc_करोमुख्य *करोm)
-अणु
-	पूर्णांक ret;
+static int meson_ee_pwrc_init_domain(struct platform_device *pdev,
+				     struct meson_ee_pwrc *pwrc,
+				     struct meson_ee_pwrc_domain *dom)
+{
+	int ret;
 
-	करोm->pwrc = pwrc;
-	करोm->num_rstc = करोm->desc.reset_names_count;
-	करोm->num_clks = करोm->desc.clk_names_count;
+	dom->pwrc = pwrc;
+	dom->num_rstc = dom->desc.reset_names_count;
+	dom->num_clks = dom->desc.clk_names_count;
 
-	अगर (करोm->num_rstc) अणु
-		पूर्णांक count = reset_control_get_count(&pdev->dev);
+	if (dom->num_rstc) {
+		int count = reset_control_get_count(&pdev->dev);
 
-		अगर (count != करोm->num_rstc)
+		if (count != dom->num_rstc)
 			dev_warn(&pdev->dev, "Invalid resets count %d for domain %s\n",
-				 count, करोm->desc.name);
+				 count, dom->desc.name);
 
-		करोm->rstc = devm_reset_control_array_get_exclusive(&pdev->dev);
-		अगर (IS_ERR(करोm->rstc))
-			वापस PTR_ERR(करोm->rstc);
-	पूर्ण
+		dom->rstc = devm_reset_control_array_get_exclusive(&pdev->dev);
+		if (IS_ERR(dom->rstc))
+			return PTR_ERR(dom->rstc);
+	}
 
-	अगर (करोm->num_clks) अणु
-		पूर्णांक ret = devm_clk_bulk_get_all(&pdev->dev, &करोm->clks);
-		अगर (ret < 0)
-			वापस ret;
+	if (dom->num_clks) {
+		int ret = devm_clk_bulk_get_all(&pdev->dev, &dom->clks);
+		if (ret < 0)
+			return ret;
 
-		अगर (करोm->num_clks != ret) अणु
+		if (dom->num_clks != ret) {
 			dev_warn(&pdev->dev, "Invalid clocks count %d for domain %s\n",
-				 ret, करोm->desc.name);
-			करोm->num_clks = ret;
-		पूर्ण
-	पूर्ण
+				 ret, dom->desc.name);
+			dom->num_clks = ret;
+		}
+	}
 
-	करोm->base.name = करोm->desc.name;
-	करोm->base.घातer_on = meson_ee_pwrc_on;
-	करोm->base.घातer_off = meson_ee_pwrc_off;
+	dom->base.name = dom->desc.name;
+	dom->base.power_on = meson_ee_pwrc_on;
+	dom->base.power_off = meson_ee_pwrc_off;
 
 	/*
-         * TOFIX: This is a special हाल क्रम the VPU घातer करोमुख्य, which can
-	 * be enabled previously by the bootloader. In this हाल the VPU
+         * TOFIX: This is a special case for the VPU power domain, which can
+	 * be enabled previously by the bootloader. In this case the VPU
          * pipeline may be functional but no driver maybe never attach
-         * to this घातer करोमुख्य, and अगर the करोमुख्य is disabled it could
-         * cause प्रणाली errors. This is why the pm_करोमुख्य_always_on_gov
+         * to this power domain, and if the domain is disabled it could
+         * cause system errors. This is why the pm_domain_always_on_gov
          * is used here.
-         * For the same reason, the घड़ीs should be enabled in हाल
-         * we need to घातer the करोमुख्य off, otherwise the पूर्णांकernal घड़ीs
+         * For the same reason, the clocks should be enabled in case
+         * we need to power the domain off, otherwise the internal clocks
          * prepare/enable counters won't be in sync.
          */
-	अगर (करोm->num_clks && करोm->desc.get_घातer && !करोm->desc.get_घातer(करोm)) अणु
-		ret = clk_bulk_prepare_enable(करोm->num_clks, करोm->clks);
-		अगर (ret)
-			वापस ret;
+	if (dom->num_clks && dom->desc.get_power && !dom->desc.get_power(dom)) {
+		ret = clk_bulk_prepare_enable(dom->num_clks, dom->clks);
+		if (ret)
+			return ret;
 
-		करोm->base.flags = GENPD_FLAG_ALWAYS_ON;
-		ret = pm_genpd_init(&करोm->base, शून्य, false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		ret = pm_genpd_init(&करोm->base, शून्य,
-				    (करोm->desc.get_घातer ?
-				     करोm->desc.get_घातer(करोm) : true));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		dom->base.flags = GENPD_FLAG_ALWAYS_ON;
+		ret = pm_genpd_init(&dom->base, NULL, false);
+		if (ret)
+			return ret;
+	} else {
+		ret = pm_genpd_init(&dom->base, NULL,
+				    (dom->desc.get_power ?
+				     dom->desc.get_power(dom) : true));
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_ee_pwrc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा meson_ee_pwrc_करोमुख्य_data *match;
-	काष्ठा regmap *regmap_ao, *regmap_hhi;
-	काष्ठा meson_ee_pwrc *pwrc;
-	पूर्णांक i, ret;
+static int meson_ee_pwrc_probe(struct platform_device *pdev)
+{
+	const struct meson_ee_pwrc_domain_data *match;
+	struct regmap *regmap_ao, *regmap_hhi;
+	struct meson_ee_pwrc *pwrc;
+	int i, ret;
 
 	match = of_device_get_match_data(&pdev->dev);
-	अगर (!match) अणु
+	if (!match) {
 		dev_err(&pdev->dev, "failed to get match data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	pwrc = devm_kzalloc(&pdev->dev, माप(*pwrc), GFP_KERNEL);
-	अगर (!pwrc)
-		वापस -ENOMEM;
+	pwrc = devm_kzalloc(&pdev->dev, sizeof(*pwrc), GFP_KERNEL);
+	if (!pwrc)
+		return -ENOMEM;
 
-	pwrc->xlate.करोमुख्यs = devm_kसुस्मृति(&pdev->dev, match->count,
-					   माप(*pwrc->xlate.करोमुख्यs),
+	pwrc->xlate.domains = devm_kcalloc(&pdev->dev, match->count,
+					   sizeof(*pwrc->xlate.domains),
 					   GFP_KERNEL);
-	अगर (!pwrc->xlate.करोमुख्यs)
-		वापस -ENOMEM;
+	if (!pwrc->xlate.domains)
+		return -ENOMEM;
 
-	pwrc->करोमुख्यs = devm_kसुस्मृति(&pdev->dev, match->count,
-				     माप(*pwrc->करोमुख्यs), GFP_KERNEL);
-	अगर (!pwrc->करोमुख्यs)
-		वापस -ENOMEM;
+	pwrc->domains = devm_kcalloc(&pdev->dev, match->count,
+				     sizeof(*pwrc->domains), GFP_KERNEL);
+	if (!pwrc->domains)
+		return -ENOMEM;
 
-	pwrc->xlate.num_करोमुख्यs = match->count;
+	pwrc->xlate.num_domains = match->count;
 
 	regmap_hhi = syscon_node_to_regmap(of_get_parent(pdev->dev.of_node));
-	अगर (IS_ERR(regmap_hhi)) अणु
+	if (IS_ERR(regmap_hhi)) {
 		dev_err(&pdev->dev, "failed to get HHI regmap\n");
-		वापस PTR_ERR(regmap_hhi);
-	पूर्ण
+		return PTR_ERR(regmap_hhi);
+	}
 
 	regmap_ao = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 						    "amlogic,ao-sysctrl");
-	अगर (IS_ERR(regmap_ao)) अणु
+	if (IS_ERR(regmap_ao)) {
 		dev_err(&pdev->dev, "failed to get AO regmap\n");
-		वापस PTR_ERR(regmap_ao);
-	पूर्ण
+		return PTR_ERR(regmap_ao);
+	}
 
 	pwrc->regmap_ao = regmap_ao;
 	pwrc->regmap_hhi = regmap_hhi;
 
-	platक्रमm_set_drvdata(pdev, pwrc);
+	platform_set_drvdata(pdev, pwrc);
 
-	क्रम (i = 0 ; i < match->count ; ++i) अणु
-		काष्ठा meson_ee_pwrc_करोमुख्य *करोm = &pwrc->करोमुख्यs[i];
+	for (i = 0 ; i < match->count ; ++i) {
+		struct meson_ee_pwrc_domain *dom = &pwrc->domains[i];
 
-		स_नकल(&करोm->desc, &match->करोमुख्यs[i], माप(करोm->desc));
+		memcpy(&dom->desc, &match->domains[i], sizeof(dom->desc));
 
-		ret = meson_ee_pwrc_init_करोमुख्य(pdev, pwrc, करोm);
-		अगर (ret)
-			वापस ret;
+		ret = meson_ee_pwrc_init_domain(pdev, pwrc, dom);
+		if (ret)
+			return ret;
 
-		pwrc->xlate.करोमुख्यs[i] = &करोm->base;
-	पूर्ण
+		pwrc->xlate.domains[i] = &dom->base;
+	}
 
-	वापस of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
-पूर्ण
+	return of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
+}
 
-अटल व्योम meson_ee_pwrc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा meson_ee_pwrc *pwrc = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static void meson_ee_pwrc_shutdown(struct platform_device *pdev)
+{
+	struct meson_ee_pwrc *pwrc = platform_get_drvdata(pdev);
+	int i;
 
-	क्रम (i = 0 ; i < pwrc->xlate.num_करोमुख्यs ; ++i) अणु
-		काष्ठा meson_ee_pwrc_करोमुख्य *करोm = &pwrc->करोमुख्यs[i];
+	for (i = 0 ; i < pwrc->xlate.num_domains ; ++i) {
+		struct meson_ee_pwrc_domain *dom = &pwrc->domains[i];
 
-		अगर (करोm->desc.get_घातer && !करोm->desc.get_घातer(करोm))
-			meson_ee_pwrc_off(&करोm->base);
-	पूर्ण
-पूर्ण
+		if (dom->desc.get_power && !dom->desc.get_power(dom))
+			meson_ee_pwrc_off(&dom->base);
+	}
+}
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_g12a_pwrc_data = अणु
-	.count = ARRAY_SIZE(g12a_pwrc_करोमुख्यs),
-	.करोमुख्यs = g12a_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_g12a_pwrc_data = {
+	.count = ARRAY_SIZE(g12a_pwrc_domains),
+	.domains = g12a_pwrc_domains,
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_axg_pwrc_data = अणु
-	.count = ARRAY_SIZE(axg_pwrc_करोमुख्यs),
-	.करोमुख्यs = axg_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_axg_pwrc_data = {
+	.count = ARRAY_SIZE(axg_pwrc_domains),
+	.domains = axg_pwrc_domains,
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_gxbb_pwrc_data = अणु
-	.count = ARRAY_SIZE(gxbb_pwrc_करोमुख्यs),
-	.करोमुख्यs = gxbb_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_gxbb_pwrc_data = {
+	.count = ARRAY_SIZE(gxbb_pwrc_domains),
+	.domains = gxbb_pwrc_domains,
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_m8_pwrc_data = अणु
-	.count = ARRAY_SIZE(meson8_pwrc_करोमुख्यs),
-	.करोमुख्यs = meson8_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_m8_pwrc_data = {
+	.count = ARRAY_SIZE(meson8_pwrc_domains),
+	.domains = meson8_pwrc_domains,
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_m8b_pwrc_data = अणु
-	.count = ARRAY_SIZE(meson8b_pwrc_करोमुख्यs),
-	.करोमुख्यs = meson8b_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_m8b_pwrc_data = {
+	.count = ARRAY_SIZE(meson8b_pwrc_domains),
+	.domains = meson8b_pwrc_domains,
+};
 
-अटल काष्ठा meson_ee_pwrc_करोमुख्य_data meson_ee_sm1_pwrc_data = अणु
-	.count = ARRAY_SIZE(sm1_pwrc_करोमुख्यs),
-	.करोमुख्यs = sm1_pwrc_करोमुख्यs,
-पूर्ण;
+static struct meson_ee_pwrc_domain_data meson_ee_sm1_pwrc_data = {
+	.count = ARRAY_SIZE(sm1_pwrc_domains),
+	.domains = sm1_pwrc_domains,
+};
 
-अटल स्थिर काष्ठा of_device_id meson_ee_pwrc_match_table[] = अणु
-	अणु
+static const struct of_device_id meson_ee_pwrc_match_table[] = {
+	{
 		.compatible = "amlogic,meson8-pwrc",
 		.data = &meson_ee_m8_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson8b-pwrc",
 		.data = &meson_ee_m8b_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson8m2-pwrc",
 		.data = &meson_ee_m8b_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson-axg-pwrc",
 		.data = &meson_ee_axg_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson-gxbb-pwrc",
 		.data = &meson_ee_gxbb_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson-g12a-pwrc",
 		.data = &meson_ee_g12a_pwrc_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "amlogic,meson-sm1-pwrc",
 		.data = &meson_ee_sm1_pwrc_data,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, meson_ee_pwrc_match_table);
 
-अटल काष्ठा platक्रमm_driver meson_ee_pwrc_driver = अणु
+static struct platform_driver meson_ee_pwrc_driver = {
 	.probe = meson_ee_pwrc_probe,
-	.shutकरोwn = meson_ee_pwrc_shutकरोwn,
-	.driver = अणु
+	.shutdown = meson_ee_pwrc_shutdown,
+	.driver = {
 		.name		= "meson_ee_pwrc",
 		.of_match_table	= meson_ee_pwrc_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(meson_ee_pwrc_driver);
+	},
+};
+module_platform_driver(meson_ee_pwrc_driver);
 MODULE_LICENSE("GPL v2");

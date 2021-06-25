@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
-#समावेश <linux/idr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/rpmsg.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/mailbox_client.h>
+#include <linux/idr.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/list.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/rpmsg.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/mailbox_client.h>
 
-#समावेश "rpmsg_internal.h"
-#समावेश "qcom_glink_native.h"
+#include "rpmsg_internal.h"
+#include "qcom_glink_native.h"
 
-#घोषणा GLINK_NAME_SIZE		32
-#घोषणा GLINK_VERSION_1		1
+#define GLINK_NAME_SIZE		32
+#define GLINK_VERSION_1		1
 
-#घोषणा RPM_GLINK_CID_MIN	1
-#घोषणा RPM_GLINK_CID_MAX	65536
+#define RPM_GLINK_CID_MIN	1
+#define RPM_GLINK_CID_MAX	65536
 
-काष्ठा glink_msg अणु
+struct glink_msg {
 	__le16 cmd;
 	__le16 param1;
 	__le32 param2;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा glink_defer_cmd - deferred incoming control message
+ * struct glink_defer_cmd - deferred incoming control message
  * @node:	list node
  * @msg:	message header
  * @data:	payload of the message
@@ -46,281 +45,281 @@
  * Copy of a received control message, to be added to @rx_queue and processed
  * by @rx_work of @qcom_glink.
  */
-काष्ठा glink_defer_cmd अणु
-	काष्ठा list_head node;
+struct glink_defer_cmd {
+	struct list_head node;
 
-	काष्ठा glink_msg msg;
+	struct glink_msg msg;
 	u8 data[];
-पूर्ण;
+};
 
 /**
- * काष्ठा glink_core_rx_पूर्णांकent - RX पूर्णांकent
- * RX पूर्णांकent
+ * struct glink_core_rx_intent - RX intent
+ * RX intent
  *
- * @data: poपूर्णांकer to the data (may be शून्य क्रम zero-copy)
- * @id: remote or local पूर्णांकent ID
- * @size: size of the original पूर्णांकent (करो not modअगरy)
- * @reuse: To mark अगर the पूर्णांकent can be reused after first use
- * @in_use: To mark अगर पूर्णांकent is alपढ़ोy in use क्रम the channel
- * @offset: next ग_लिखो offset (initially 0)
+ * @data: pointer to the data (may be NULL for zero-copy)
+ * @id: remote or local intent ID
+ * @size: size of the original intent (do not modify)
+ * @reuse: To mark if the intent can be reused after first use
+ * @in_use: To mark if intent is already in use for the channel
+ * @offset: next write offset (initially 0)
  * @node:	list node
  */
-काष्ठा glink_core_rx_पूर्णांकent अणु
-	व्योम *data;
+struct glink_core_rx_intent {
+	void *data;
 	u32 id;
-	माप_प्रकार size;
+	size_t size;
 	bool reuse;
 	bool in_use;
 	u32 offset;
 
-	काष्ठा list_head node;
-पूर्ण;
+	struct list_head node;
+};
 
 /**
- * काष्ठा qcom_glink - driver context, relates to one remote subप्रणाली
- * @dev:	reference to the associated काष्ठा device
+ * struct qcom_glink - driver context, relates to one remote subsystem
+ * @dev:	reference to the associated struct device
  * @mbox_client: mailbox client
  * @mbox_chan:  mailbox channel
- * @rx_pipe:	pipe object क्रम receive FIFO
- * @tx_pipe:	pipe object क्रम transmit FIFO
- * @irq:	IRQ क्रम संकेतing incoming events
- * @rx_work:	worker क्रम handling received control messages
+ * @rx_pipe:	pipe object for receive FIFO
+ * @tx_pipe:	pipe object for transmit FIFO
+ * @irq:	IRQ for signaling incoming events
+ * @rx_work:	worker for handling received control messages
  * @rx_lock:	protects the @rx_queue
  * @rx_queue:	queue of received control messages to be processed in @rx_work
- * @tx_lock:	synchronizes operations on the tx fअगरo
- * @idr_lock:	synchronizes @lcids and @rcids modअगरications
+ * @tx_lock:	synchronizes operations on the tx fifo
+ * @idr_lock:	synchronizes @lcids and @rcids modifications
  * @lcids:	idr of all channels with a known local channel id
  * @rcids:	idr of all channels with a known remote channel id
  * @features:	remote features
- * @पूर्णांकentless:	flag to indicate that there is no पूर्णांकent
+ * @intentless:	flag to indicate that there is no intent
  */
-काष्ठा qcom_glink अणु
-	काष्ठा device *dev;
+struct qcom_glink {
+	struct device *dev;
 
-	स्थिर अक्षर *name;
+	const char *name;
 
-	काष्ठा mbox_client mbox_client;
-	काष्ठा mbox_chan *mbox_chan;
+	struct mbox_client mbox_client;
+	struct mbox_chan *mbox_chan;
 
-	काष्ठा qcom_glink_pipe *rx_pipe;
-	काष्ठा qcom_glink_pipe *tx_pipe;
+	struct qcom_glink_pipe *rx_pipe;
+	struct qcom_glink_pipe *tx_pipe;
 
-	पूर्णांक irq;
+	int irq;
 
-	काष्ठा work_काष्ठा rx_work;
+	struct work_struct rx_work;
 	spinlock_t rx_lock;
-	काष्ठा list_head rx_queue;
+	struct list_head rx_queue;
 
 	spinlock_t tx_lock;
 
 	spinlock_t idr_lock;
-	काष्ठा idr lcids;
-	काष्ठा idr rcids;
-	अचिन्हित दीर्घ features;
+	struct idr lcids;
+	struct idr rcids;
+	unsigned long features;
 
-	bool पूर्णांकentless;
-पूर्ण;
+	bool intentless;
+};
 
-क्रमागत अणु
+enum {
 	GLINK_STATE_CLOSED,
 	GLINK_STATE_OPENING,
 	GLINK_STATE_OPEN,
 	GLINK_STATE_CLOSING,
-पूर्ण;
+};
 
 /**
- * काष्ठा glink_channel - पूर्णांकernal representation of a channel
- * @rpdev:	rpdev reference, only used क्रम primary endpoपूर्णांकs
- * @ept:	rpmsg endpoपूर्णांक this channel is associated with
+ * struct glink_channel - internal representation of a channel
+ * @rpdev:	rpdev reference, only used for primary endpoints
+ * @ept:	rpmsg endpoint this channel is associated with
  * @glink:	qcom_glink context handle
- * @refcount:	refcount क्रम the channel object
- * @recv_lock:	guard क्रम @ept.cb
- * @name:	unique channel name/identअगरier
+ * @refcount:	refcount for the channel object
+ * @recv_lock:	guard for @ept.cb
+ * @name:	unique channel name/identifier
  * @lcid:	channel id, in local space
  * @rcid:	channel id, in remote space
- * @पूर्णांकent_lock: lock क्रम protection of @liids, @riids
- * @liids:	idr of all local पूर्णांकents
- * @riids:	idr of all remote पूर्णांकents
- * @पूर्णांकent_work: worker responsible क्रम transmitting rx_करोne packets
- * @करोne_पूर्णांकents: list of पूर्णांकents that needs to be announced rx_करोne
- * @buf:	receive buffer, क्रम gathering fragments
- * @buf_offset:	ग_लिखो offset in @buf
+ * @intent_lock: lock for protection of @liids, @riids
+ * @liids:	idr of all local intents
+ * @riids:	idr of all remote intents
+ * @intent_work: worker responsible for transmitting rx_done packets
+ * @done_intents: list of intents that needs to be announced rx_done
+ * @buf:	receive buffer, for gathering fragments
+ * @buf_offset:	write offset in @buf
  * @buf_size:	size of current @buf
- * @खोलो_ack:	completed once remote has acked the खोलो-request
- * @खोलो_req:	completed once खोलो-request has been received
- * @पूर्णांकent_req_lock: Synchronises multiple पूर्णांकent requests
- * @पूर्णांकent_req_result: Result of पूर्णांकent request
- * @पूर्णांकent_req_comp: Completion क्रम पूर्णांकent_req संकेतling
+ * @open_ack:	completed once remote has acked the open-request
+ * @open_req:	completed once open-request has been received
+ * @intent_req_lock: Synchronises multiple intent requests
+ * @intent_req_result: Result of intent request
+ * @intent_req_comp: Completion for intent_req signalling
  */
-काष्ठा glink_channel अणु
-	काष्ठा rpmsg_endpoपूर्णांक ept;
+struct glink_channel {
+	struct rpmsg_endpoint ept;
 
-	काष्ठा rpmsg_device *rpdev;
-	काष्ठा qcom_glink *glink;
+	struct rpmsg_device *rpdev;
+	struct qcom_glink *glink;
 
-	काष्ठा kref refcount;
+	struct kref refcount;
 
 	spinlock_t recv_lock;
 
-	अक्षर *name;
-	अचिन्हित पूर्णांक lcid;
-	अचिन्हित पूर्णांक rcid;
+	char *name;
+	unsigned int lcid;
+	unsigned int rcid;
 
-	spinlock_t पूर्णांकent_lock;
-	काष्ठा idr liids;
-	काष्ठा idr riids;
-	काष्ठा work_काष्ठा पूर्णांकent_work;
-	काष्ठा list_head करोne_पूर्णांकents;
+	spinlock_t intent_lock;
+	struct idr liids;
+	struct idr riids;
+	struct work_struct intent_work;
+	struct list_head done_intents;
 
-	काष्ठा glink_core_rx_पूर्णांकent *buf;
-	पूर्णांक buf_offset;
-	पूर्णांक buf_size;
+	struct glink_core_rx_intent *buf;
+	int buf_offset;
+	int buf_size;
 
-	काष्ठा completion खोलो_ack;
-	काष्ठा completion खोलो_req;
+	struct completion open_ack;
+	struct completion open_req;
 
-	काष्ठा mutex पूर्णांकent_req_lock;
-	bool पूर्णांकent_req_result;
-	काष्ठा completion पूर्णांकent_req_comp;
-पूर्ण;
+	struct mutex intent_req_lock;
+	bool intent_req_result;
+	struct completion intent_req_comp;
+};
 
-#घोषणा to_glink_channel(_ept) container_of(_ept, काष्ठा glink_channel, ept)
+#define to_glink_channel(_ept) container_of(_ept, struct glink_channel, ept)
 
-अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops glink_endpoपूर्णांक_ops;
+static const struct rpmsg_endpoint_ops glink_endpoint_ops;
 
-#घोषणा RPM_CMD_VERSION			0
-#घोषणा RPM_CMD_VERSION_ACK		1
-#घोषणा RPM_CMD_OPEN			2
-#घोषणा RPM_CMD_CLOSE			3
-#घोषणा RPM_CMD_OPEN_ACK		4
-#घोषणा RPM_CMD_INTENT			5
-#घोषणा RPM_CMD_RX_DONE			6
-#घोषणा RPM_CMD_RX_INTENT_REQ		7
-#घोषणा RPM_CMD_RX_INTENT_REQ_ACK	8
-#घोषणा RPM_CMD_TX_DATA			9
-#घोषणा RPM_CMD_CLOSE_ACK		11
-#घोषणा RPM_CMD_TX_DATA_CONT		12
-#घोषणा RPM_CMD_READ_NOTIF		13
-#घोषणा RPM_CMD_RX_DONE_W_REUSE		14
+#define RPM_CMD_VERSION			0
+#define RPM_CMD_VERSION_ACK		1
+#define RPM_CMD_OPEN			2
+#define RPM_CMD_CLOSE			3
+#define RPM_CMD_OPEN_ACK		4
+#define RPM_CMD_INTENT			5
+#define RPM_CMD_RX_DONE			6
+#define RPM_CMD_RX_INTENT_REQ		7
+#define RPM_CMD_RX_INTENT_REQ_ACK	8
+#define RPM_CMD_TX_DATA			9
+#define RPM_CMD_CLOSE_ACK		11
+#define RPM_CMD_TX_DATA_CONT		12
+#define RPM_CMD_READ_NOTIF		13
+#define RPM_CMD_RX_DONE_W_REUSE		14
 
-#घोषणा GLINK_FEATURE_INTENTLESS	BIT(1)
+#define GLINK_FEATURE_INTENTLESS	BIT(1)
 
-अटल व्योम qcom_glink_rx_करोne_work(काष्ठा work_काष्ठा *work);
+static void qcom_glink_rx_done_work(struct work_struct *work);
 
-अटल काष्ठा glink_channel *qcom_glink_alloc_channel(काष्ठा qcom_glink *glink,
-						      स्थिर अक्षर *name)
-अणु
-	काष्ठा glink_channel *channel;
+static struct glink_channel *qcom_glink_alloc_channel(struct qcom_glink *glink,
+						      const char *name)
+{
+	struct glink_channel *channel;
 
-	channel = kzalloc(माप(*channel), GFP_KERNEL);
-	अगर (!channel)
-		वापस ERR_PTR(-ENOMEM);
+	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
+	if (!channel)
+		return ERR_PTR(-ENOMEM);
 
-	/* Setup glink पूर्णांकernal glink_channel data */
+	/* Setup glink internal glink_channel data */
 	spin_lock_init(&channel->recv_lock);
-	spin_lock_init(&channel->पूर्णांकent_lock);
-	mutex_init(&channel->पूर्णांकent_req_lock);
+	spin_lock_init(&channel->intent_lock);
+	mutex_init(&channel->intent_req_lock);
 
 	channel->glink = glink;
 	channel->name = kstrdup(name, GFP_KERNEL);
 
-	init_completion(&channel->खोलो_req);
-	init_completion(&channel->खोलो_ack);
-	init_completion(&channel->पूर्णांकent_req_comp);
+	init_completion(&channel->open_req);
+	init_completion(&channel->open_ack);
+	init_completion(&channel->intent_req_comp);
 
-	INIT_LIST_HEAD(&channel->करोne_पूर्णांकents);
-	INIT_WORK(&channel->पूर्णांकent_work, qcom_glink_rx_करोne_work);
+	INIT_LIST_HEAD(&channel->done_intents);
+	INIT_WORK(&channel->intent_work, qcom_glink_rx_done_work);
 
 	idr_init(&channel->liids);
 	idr_init(&channel->riids);
 	kref_init(&channel->refcount);
 
-	वापस channel;
-पूर्ण
+	return channel;
+}
 
-अटल व्योम qcom_glink_channel_release(काष्ठा kref *ref)
-अणु
-	काष्ठा glink_channel *channel = container_of(ref, काष्ठा glink_channel,
+static void qcom_glink_channel_release(struct kref *ref)
+{
+	struct glink_channel *channel = container_of(ref, struct glink_channel,
 						     refcount);
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	काष्ठा glink_core_rx_पूर्णांकent *पंचांगp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक iid;
+	struct glink_core_rx_intent *intent;
+	struct glink_core_rx_intent *tmp;
+	unsigned long flags;
+	int iid;
 
-	/* cancel pending rx_करोne work */
-	cancel_work_sync(&channel->पूर्णांकent_work);
+	/* cancel pending rx_done work */
+	cancel_work_sync(&channel->intent_work);
 
-	spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-	/* Free all non-reuse पूर्णांकents pending rx_करोne work */
-	list_क्रम_each_entry_safe(पूर्णांकent, पंचांगp, &channel->करोne_पूर्णांकents, node) अणु
-		अगर (!पूर्णांकent->reuse) अणु
-			kमुक्त(पूर्णांकent->data);
-			kमुक्त(पूर्णांकent);
-		पूर्ण
-	पूर्ण
+	spin_lock_irqsave(&channel->intent_lock, flags);
+	/* Free all non-reuse intents pending rx_done work */
+	list_for_each_entry_safe(intent, tmp, &channel->done_intents, node) {
+		if (!intent->reuse) {
+			kfree(intent->data);
+			kfree(intent);
+		}
+	}
 
-	idr_क्रम_each_entry(&channel->liids, पंचांगp, iid) अणु
-		kमुक्त(पंचांगp->data);
-		kमुक्त(पंचांगp);
-	पूर्ण
+	idr_for_each_entry(&channel->liids, tmp, iid) {
+		kfree(tmp->data);
+		kfree(tmp);
+	}
 	idr_destroy(&channel->liids);
 
-	idr_क्रम_each_entry(&channel->riids, पंचांगp, iid)
-		kमुक्त(पंचांगp);
+	idr_for_each_entry(&channel->riids, tmp, iid)
+		kfree(tmp);
 	idr_destroy(&channel->riids);
-	spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+	spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-	kमुक्त(channel->name);
-	kमुक्त(channel);
-पूर्ण
+	kfree(channel->name);
+	kfree(channel);
+}
 
-अटल माप_प्रकार qcom_glink_rx_avail(काष्ठा qcom_glink *glink)
-अणु
-	वापस glink->rx_pipe->avail(glink->rx_pipe);
-पूर्ण
+static size_t qcom_glink_rx_avail(struct qcom_glink *glink)
+{
+	return glink->rx_pipe->avail(glink->rx_pipe);
+}
 
-अटल व्योम qcom_glink_rx_peak(काष्ठा qcom_glink *glink,
-			       व्योम *data, अचिन्हित पूर्णांक offset, माप_प्रकार count)
-अणु
+static void qcom_glink_rx_peak(struct qcom_glink *glink,
+			       void *data, unsigned int offset, size_t count)
+{
 	glink->rx_pipe->peak(glink->rx_pipe, data, offset, count);
-पूर्ण
+}
 
-अटल व्योम qcom_glink_rx_advance(काष्ठा qcom_glink *glink, माप_प्रकार count)
-अणु
+static void qcom_glink_rx_advance(struct qcom_glink *glink, size_t count)
+{
 	glink->rx_pipe->advance(glink->rx_pipe, count);
-पूर्ण
+}
 
-अटल माप_प्रकार qcom_glink_tx_avail(काष्ठा qcom_glink *glink)
-अणु
-	वापस glink->tx_pipe->avail(glink->tx_pipe);
-पूर्ण
+static size_t qcom_glink_tx_avail(struct qcom_glink *glink)
+{
+	return glink->tx_pipe->avail(glink->tx_pipe);
+}
 
-अटल व्योम qcom_glink_tx_ग_लिखो(काष्ठा qcom_glink *glink,
-				स्थिर व्योम *hdr, माप_प्रकार hlen,
-				स्थिर व्योम *data, माप_प्रकार dlen)
-अणु
-	glink->tx_pipe->ग_लिखो(glink->tx_pipe, hdr, hlen, data, dlen);
-पूर्ण
+static void qcom_glink_tx_write(struct qcom_glink *glink,
+				const void *hdr, size_t hlen,
+				const void *data, size_t dlen)
+{
+	glink->tx_pipe->write(glink->tx_pipe, hdr, hlen, data, dlen);
+}
 
-अटल पूर्णांक qcom_glink_tx(काष्ठा qcom_glink *glink,
-			 स्थिर व्योम *hdr, माप_प्रकार hlen,
-			 स्थिर व्योम *data, माप_प्रकार dlen, bool रुको)
-अणु
-	अचिन्हित पूर्णांक tlen = hlen + dlen;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int qcom_glink_tx(struct qcom_glink *glink,
+			 const void *hdr, size_t hlen,
+			 const void *data, size_t dlen, bool wait)
+{
+	unsigned int tlen = hlen + dlen;
+	unsigned long flags;
+	int ret = 0;
 
 	/* Reject packets that are too big */
-	अगर (tlen >= glink->tx_pipe->length)
-		वापस -EINVAL;
+	if (tlen >= glink->tx_pipe->length)
+		return -EINVAL;
 
 	spin_lock_irqsave(&glink->tx_lock, flags);
 
-	जबतक (qcom_glink_tx_avail(glink) < tlen) अणु
-		अगर (!रुको) अणु
+	while (qcom_glink_tx_avail(glink) < tlen) {
+		if (!wait) {
 			ret = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Wait without holding the tx_lock */
 		spin_unlock_irqrestore(&glink->tx_lock, flags);
@@ -328,92 +327,92 @@
 		usleep_range(10000, 15000);
 
 		spin_lock_irqsave(&glink->tx_lock, flags);
-	पूर्ण
+	}
 
-	qcom_glink_tx_ग_लिखो(glink, hdr, hlen, data, dlen);
+	qcom_glink_tx_write(glink, hdr, hlen, data, dlen);
 
-	mbox_send_message(glink->mbox_chan, शून्य);
-	mbox_client_txकरोne(glink->mbox_chan, 0);
+	mbox_send_message(glink->mbox_chan, NULL);
+	mbox_client_txdone(glink->mbox_chan, 0);
 
 out:
 	spin_unlock_irqrestore(&glink->tx_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_glink_send_version(काष्ठा qcom_glink *glink)
-अणु
-	काष्ठा glink_msg msg;
+static int qcom_glink_send_version(struct qcom_glink *glink)
+{
+	struct glink_msg msg;
 
 	msg.cmd = cpu_to_le16(RPM_CMD_VERSION);
 	msg.param1 = cpu_to_le16(GLINK_VERSION_1);
 	msg.param2 = cpu_to_le32(glink->features);
 
-	वापस qcom_glink_tx(glink, &msg, माप(msg), शून्य, 0, true);
-पूर्ण
+	return qcom_glink_tx(glink, &msg, sizeof(msg), NULL, 0, true);
+}
 
-अटल व्योम qcom_glink_send_version_ack(काष्ठा qcom_glink *glink)
-अणु
-	काष्ठा glink_msg msg;
+static void qcom_glink_send_version_ack(struct qcom_glink *glink)
+{
+	struct glink_msg msg;
 
 	msg.cmd = cpu_to_le16(RPM_CMD_VERSION_ACK);
 	msg.param1 = cpu_to_le16(GLINK_VERSION_1);
 	msg.param2 = cpu_to_le32(glink->features);
 
-	qcom_glink_tx(glink, &msg, माप(msg), शून्य, 0, true);
-पूर्ण
+	qcom_glink_tx(glink, &msg, sizeof(msg), NULL, 0, true);
+}
 
-अटल व्योम qcom_glink_send_खोलो_ack(काष्ठा qcom_glink *glink,
-				     काष्ठा glink_channel *channel)
-अणु
-	काष्ठा glink_msg msg;
+static void qcom_glink_send_open_ack(struct qcom_glink *glink,
+				     struct glink_channel *channel)
+{
+	struct glink_msg msg;
 
 	msg.cmd = cpu_to_le16(RPM_CMD_OPEN_ACK);
 	msg.param1 = cpu_to_le16(channel->rcid);
 	msg.param2 = cpu_to_le32(0);
 
-	qcom_glink_tx(glink, &msg, माप(msg), शून्य, 0, true);
-पूर्ण
+	qcom_glink_tx(glink, &msg, sizeof(msg), NULL, 0, true);
+}
 
-अटल व्योम qcom_glink_handle_पूर्णांकent_req_ack(काष्ठा qcom_glink *glink,
-					     अचिन्हित पूर्णांक cid, bool granted)
-अणु
-	काष्ठा glink_channel *channel;
-	अचिन्हित दीर्घ flags;
+static void qcom_glink_handle_intent_req_ack(struct qcom_glink *glink,
+					     unsigned int cid, bool granted)
+{
+	struct glink_channel *channel;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, cid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (!channel) अणु
+	if (!channel) {
 		dev_err(glink->dev, "unable to find channel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	channel->पूर्णांकent_req_result = granted;
-	complete(&channel->पूर्णांकent_req_comp);
-पूर्ण
+	channel->intent_req_result = granted;
+	complete(&channel->intent_req_comp);
+}
 
 /**
- * qcom_glink_send_खोलो_req() - send a RPM_CMD_OPEN request to the remote
+ * qcom_glink_send_open_req() - send a RPM_CMD_OPEN request to the remote
  * @glink: Ptr to the glink edge
- * @channel: Ptr to the channel that the खोलो req is sent
+ * @channel: Ptr to the channel that the open req is sent
  *
  * Allocates a local channel id and sends a RPM_CMD_OPEN message to the remote.
- * Will वापस with refcount held, regardless of outcome.
+ * Will return with refcount held, regardless of outcome.
  *
- * Returns 0 on success, negative त्रुटि_सं otherwise.
+ * Returns 0 on success, negative errno otherwise.
  */
-अटल पूर्णांक qcom_glink_send_खोलो_req(काष्ठा qcom_glink *glink,
-				    काष्ठा glink_channel *channel)
-अणु
-	काष्ठा अणु
-		काष्ठा glink_msg msg;
+static int qcom_glink_send_open_req(struct qcom_glink *glink,
+				    struct glink_channel *channel)
+{
+	struct {
+		struct glink_msg msg;
 		u8 name[GLINK_NAME_SIZE];
-	पूर्ण __packed req;
-	पूर्णांक name_len = म_माप(channel->name) + 1;
-	पूर्णांक req_len = ALIGN(माप(req.msg) + name_len, 8);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	} __packed req;
+	int name_len = strlen(channel->name) + 1;
+	int req_len = ALIGN(sizeof(req.msg) + name_len, 8);
+	int ret;
+	unsigned long flags;
 
 	kref_get(&channel->refcount);
 
@@ -422,149 +421,149 @@ out:
 			       RPM_GLINK_CID_MIN, RPM_GLINK_CID_MAX,
 			       GFP_ATOMIC);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	channel->lcid = ret;
 
 	req.msg.cmd = cpu_to_le16(RPM_CMD_OPEN);
 	req.msg.param1 = cpu_to_le16(channel->lcid);
 	req.msg.param2 = cpu_to_le32(name_len);
-	म_नकल(req.name, channel->name);
+	strcpy(req.name, channel->name);
 
-	ret = qcom_glink_tx(glink, &req, req_len, शून्य, 0, true);
-	अगर (ret)
-		जाओ हटाओ_idr;
+	ret = qcom_glink_tx(glink, &req, req_len, NULL, 0, true);
+	if (ret)
+		goto remove_idr;
 
-	वापस 0;
+	return 0;
 
-हटाओ_idr:
+remove_idr:
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_हटाओ(&glink->lcids, channel->lcid);
+	idr_remove(&glink->lcids, channel->lcid);
 	channel->lcid = 0;
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qcom_glink_send_बंद_req(काष्ठा qcom_glink *glink,
-				      काष्ठा glink_channel *channel)
-अणु
-	काष्ठा glink_msg req;
+static void qcom_glink_send_close_req(struct qcom_glink *glink,
+				      struct glink_channel *channel)
+{
+	struct glink_msg req;
 
 	req.cmd = cpu_to_le16(RPM_CMD_CLOSE);
 	req.param1 = cpu_to_le16(channel->lcid);
 	req.param2 = 0;
 
-	qcom_glink_tx(glink, &req, माप(req), शून्य, 0, true);
-पूर्ण
+	qcom_glink_tx(glink, &req, sizeof(req), NULL, 0, true);
+}
 
-अटल व्योम qcom_glink_send_बंद_ack(काष्ठा qcom_glink *glink,
-				      अचिन्हित पूर्णांक rcid)
-अणु
-	काष्ठा glink_msg req;
+static void qcom_glink_send_close_ack(struct qcom_glink *glink,
+				      unsigned int rcid)
+{
+	struct glink_msg req;
 
 	req.cmd = cpu_to_le16(RPM_CMD_CLOSE_ACK);
 	req.param1 = cpu_to_le16(rcid);
 	req.param2 = 0;
 
-	qcom_glink_tx(glink, &req, माप(req), शून्य, 0, true);
-पूर्ण
+	qcom_glink_tx(glink, &req, sizeof(req), NULL, 0, true);
+}
 
-अटल व्योम qcom_glink_rx_करोne_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा glink_channel *channel = container_of(work, काष्ठा glink_channel,
-						     पूर्णांकent_work);
-	काष्ठा qcom_glink *glink = channel->glink;
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent, *पंचांगp;
-	काष्ठा अणु
+static void qcom_glink_rx_done_work(struct work_struct *work)
+{
+	struct glink_channel *channel = container_of(work, struct glink_channel,
+						     intent_work);
+	struct qcom_glink *glink = channel->glink;
+	struct glink_core_rx_intent *intent, *tmp;
+	struct {
 		u16 id;
 		u16 lcid;
 		u32 liid;
-	पूर्ण __packed cmd;
+	} __packed cmd;
 
-	अचिन्हित पूर्णांक cid = channel->lcid;
-	अचिन्हित पूर्णांक iid;
+	unsigned int cid = channel->lcid;
+	unsigned int iid;
 	bool reuse;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-	list_क्रम_each_entry_safe(पूर्णांकent, पंचांगp, &channel->करोne_पूर्णांकents, node) अणु
-		list_del(&पूर्णांकent->node);
-		spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
-		iid = पूर्णांकent->id;
-		reuse = पूर्णांकent->reuse;
+	spin_lock_irqsave(&channel->intent_lock, flags);
+	list_for_each_entry_safe(intent, tmp, &channel->done_intents, node) {
+		list_del(&intent->node);
+		spin_unlock_irqrestore(&channel->intent_lock, flags);
+		iid = intent->id;
+		reuse = intent->reuse;
 
 		cmd.id = reuse ? RPM_CMD_RX_DONE_W_REUSE : RPM_CMD_RX_DONE;
 		cmd.lcid = cid;
 		cmd.liid = iid;
 
-		qcom_glink_tx(glink, &cmd, माप(cmd), शून्य, 0, true);
-		अगर (!reuse) अणु
-			kमुक्त(पूर्णांकent->data);
-			kमुक्त(पूर्णांकent);
-		पूर्ण
-		spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-	पूर्ण
-	spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
-पूर्ण
+		qcom_glink_tx(glink, &cmd, sizeof(cmd), NULL, 0, true);
+		if (!reuse) {
+			kfree(intent->data);
+			kfree(intent);
+		}
+		spin_lock_irqsave(&channel->intent_lock, flags);
+	}
+	spin_unlock_irqrestore(&channel->intent_lock, flags);
+}
 
-अटल व्योम qcom_glink_rx_करोne(काष्ठा qcom_glink *glink,
-			       काष्ठा glink_channel *channel,
-			       काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent)
-अणु
-	/* We करोn't send RX_DONE to पूर्णांकentless प्रणालीs */
-	अगर (glink->पूर्णांकentless) अणु
-		kमुक्त(पूर्णांकent->data);
-		kमुक्त(पूर्णांकent);
-		वापस;
-	पूर्ण
+static void qcom_glink_rx_done(struct qcom_glink *glink,
+			       struct glink_channel *channel,
+			       struct glink_core_rx_intent *intent)
+{
+	/* We don't send RX_DONE to intentless systems */
+	if (glink->intentless) {
+		kfree(intent->data);
+		kfree(intent);
+		return;
+	}
 
-	/* Take it off the tree of receive पूर्णांकents */
-	अगर (!पूर्णांकent->reuse) अणु
-		spin_lock(&channel->पूर्णांकent_lock);
-		idr_हटाओ(&channel->liids, पूर्णांकent->id);
-		spin_unlock(&channel->पूर्णांकent_lock);
-	पूर्ण
+	/* Take it off the tree of receive intents */
+	if (!intent->reuse) {
+		spin_lock(&channel->intent_lock);
+		idr_remove(&channel->liids, intent->id);
+		spin_unlock(&channel->intent_lock);
+	}
 
-	/* Schedule the sending of a rx_करोne indication */
-	spin_lock(&channel->पूर्णांकent_lock);
-	list_add_tail(&पूर्णांकent->node, &channel->करोne_पूर्णांकents);
-	spin_unlock(&channel->पूर्णांकent_lock);
+	/* Schedule the sending of a rx_done indication */
+	spin_lock(&channel->intent_lock);
+	list_add_tail(&intent->node, &channel->done_intents);
+	spin_unlock(&channel->intent_lock);
 
-	schedule_work(&channel->पूर्णांकent_work);
-पूर्ण
+	schedule_work(&channel->intent_work);
+}
 
 /**
- * qcom_glink_receive_version() - receive version/features from remote प्रणाली
+ * qcom_glink_receive_version() - receive version/features from remote system
  *
- * @glink:	poपूर्णांकer to transport पूर्णांकerface
+ * @glink:	pointer to transport interface
  * @version:	remote version
  * @features:	remote features
  *
  * This function is called in response to a remote-initiated version/feature
  * negotiation sequence.
  */
-अटल व्योम qcom_glink_receive_version(काष्ठा qcom_glink *glink,
+static void qcom_glink_receive_version(struct qcom_glink *glink,
 				       u32 version,
 				       u32 features)
-अणु
-	चयन (version) अणु
-	हाल 0:
-		अवरोध;
-	हाल GLINK_VERSION_1:
+{
+	switch (version) {
+	case 0:
+		break;
+	case GLINK_VERSION_1:
 		glink->features &= features;
 		fallthrough;
-	शेष:
+	default:
 		qcom_glink_send_version_ack(glink);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /**
- * qcom_glink_receive_version_ack() - receive negotiation ack from remote प्रणाली
+ * qcom_glink_receive_version_ack() - receive negotiation ack from remote system
  *
- * @glink:	poपूर्णांकer to transport पूर्णांकerface
+ * @glink:	pointer to transport interface
  * @version:	remote version response
  * @features:	remote features response
  *
@@ -572,738 +571,738 @@ out:
  * negotiation sequence and is the counter-offer from the remote side based
  * upon the initial version and feature set requested.
  */
-अटल व्योम qcom_glink_receive_version_ack(काष्ठा qcom_glink *glink,
+static void qcom_glink_receive_version_ack(struct qcom_glink *glink,
 					   u32 version,
 					   u32 features)
-अणु
-	चयन (version) अणु
-	हाल 0:
+{
+	switch (version) {
+	case 0:
 		/* Version negotiation failed */
-		अवरोध;
-	हाल GLINK_VERSION_1:
-		अगर (features == glink->features)
-			अवरोध;
+		break;
+	case GLINK_VERSION_1:
+		if (features == glink->features)
+			break;
 
 		glink->features &= features;
 		fallthrough;
-	शेष:
+	default:
 		qcom_glink_send_version(glink);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /**
- * qcom_glink_send_पूर्णांकent_req_ack() - convert an rx पूर्णांकent request ack cmd to
- * 	wire क्रमmat and transmit
+ * qcom_glink_send_intent_req_ack() - convert an rx intent request ack cmd to
+ * 	wire format and transmit
  * @glink:	The transport to transmit on.
  * @channel:	The glink channel
  * @granted:	The request response to encode.
  *
  * Return: 0 on success or standard Linux error code.
  */
-अटल पूर्णांक qcom_glink_send_पूर्णांकent_req_ack(काष्ठा qcom_glink *glink,
-					  काष्ठा glink_channel *channel,
+static int qcom_glink_send_intent_req_ack(struct qcom_glink *glink,
+					  struct glink_channel *channel,
 					  bool granted)
-अणु
-	काष्ठा glink_msg msg;
+{
+	struct glink_msg msg;
 
 	msg.cmd = cpu_to_le16(RPM_CMD_RX_INTENT_REQ_ACK);
 	msg.param1 = cpu_to_le16(channel->lcid);
 	msg.param2 = cpu_to_le32(granted);
 
-	qcom_glink_tx(glink, &msg, माप(msg), शून्य, 0, true);
+	qcom_glink_tx(glink, &msg, sizeof(msg), NULL, 0, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * qcom_glink_advertise_पूर्णांकent - convert an rx पूर्णांकent cmd to wire क्रमmat and
+ * qcom_glink_advertise_intent - convert an rx intent cmd to wire format and
  *			   transmit
  * @glink:	The transport to transmit on.
  * @channel:	The local channel
- * @पूर्णांकent:	The पूर्णांकent to pass on to remote.
+ * @intent:	The intent to pass on to remote.
  *
  * Return: 0 on success or standard Linux error code.
  */
-अटल पूर्णांक qcom_glink_advertise_पूर्णांकent(काष्ठा qcom_glink *glink,
-				       काष्ठा glink_channel *channel,
-				       काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent)
-अणु
-	काष्ठा command अणु
+static int qcom_glink_advertise_intent(struct qcom_glink *glink,
+				       struct glink_channel *channel,
+				       struct glink_core_rx_intent *intent)
+{
+	struct command {
 		__le16 id;
 		__le16 lcid;
 		__le32 count;
 		__le32 size;
 		__le32 liid;
-	पूर्ण __packed;
-	काष्ठा command cmd;
+	} __packed;
+	struct command cmd;
 
 	cmd.id = cpu_to_le16(RPM_CMD_INTENT);
 	cmd.lcid = cpu_to_le16(channel->lcid);
 	cmd.count = cpu_to_le32(1);
-	cmd.size = cpu_to_le32(पूर्णांकent->size);
-	cmd.liid = cpu_to_le32(पूर्णांकent->id);
+	cmd.size = cpu_to_le32(intent->size);
+	cmd.liid = cpu_to_le32(intent->id);
 
-	qcom_glink_tx(glink, &cmd, माप(cmd), शून्य, 0, true);
+	qcom_glink_tx(glink, &cmd, sizeof(cmd), NULL, 0, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा glink_core_rx_पूर्णांकent *
-qcom_glink_alloc_पूर्णांकent(काष्ठा qcom_glink *glink,
-			काष्ठा glink_channel *channel,
-			माप_प्रकार size,
+static struct glink_core_rx_intent *
+qcom_glink_alloc_intent(struct qcom_glink *glink,
+			struct glink_channel *channel,
+			size_t size,
 			bool reuseable)
-अणु
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+{
+	struct glink_core_rx_intent *intent;
+	int ret;
+	unsigned long flags;
 
-	पूर्णांकent = kzalloc(माप(*पूर्णांकent), GFP_KERNEL);
-	अगर (!पूर्णांकent)
-		वापस शून्य;
+	intent = kzalloc(sizeof(*intent), GFP_KERNEL);
+	if (!intent)
+		return NULL;
 
-	पूर्णांकent->data = kzalloc(size, GFP_KERNEL);
-	अगर (!पूर्णांकent->data)
-		जाओ मुक्त_पूर्णांकent;
+	intent->data = kzalloc(size, GFP_KERNEL);
+	if (!intent->data)
+		goto free_intent;
 
-	spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-	ret = idr_alloc_cyclic(&channel->liids, पूर्णांकent, 1, -1, GFP_ATOMIC);
-	अगर (ret < 0) अणु
-		spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
-		जाओ मुक्त_data;
-	पूर्ण
-	spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+	spin_lock_irqsave(&channel->intent_lock, flags);
+	ret = idr_alloc_cyclic(&channel->liids, intent, 1, -1, GFP_ATOMIC);
+	if (ret < 0) {
+		spin_unlock_irqrestore(&channel->intent_lock, flags);
+		goto free_data;
+	}
+	spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-	पूर्णांकent->id = ret;
-	पूर्णांकent->size = size;
-	पूर्णांकent->reuse = reuseable;
+	intent->id = ret;
+	intent->size = size;
+	intent->reuse = reuseable;
 
-	वापस पूर्णांकent;
+	return intent;
 
-मुक्त_data:
-	kमुक्त(पूर्णांकent->data);
-मुक्त_पूर्णांकent:
-	kमुक्त(पूर्णांकent);
-	वापस शून्य;
-पूर्ण
+free_data:
+	kfree(intent->data);
+free_intent:
+	kfree(intent);
+	return NULL;
+}
 
-अटल व्योम qcom_glink_handle_rx_करोne(काष्ठा qcom_glink *glink,
-				      u32 cid, uपूर्णांक32_t iid,
+static void qcom_glink_handle_rx_done(struct qcom_glink *glink,
+				      u32 cid, uint32_t iid,
 				      bool reuse)
-अणु
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	काष्ठा glink_channel *channel;
-	अचिन्हित दीर्घ flags;
+{
+	struct glink_core_rx_intent *intent;
+	struct glink_channel *channel;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, cid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (!channel) अणु
+	if (!channel) {
 		dev_err(glink->dev, "invalid channel id received\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-	पूर्णांकent = idr_find(&channel->riids, iid);
+	spin_lock_irqsave(&channel->intent_lock, flags);
+	intent = idr_find(&channel->riids, iid);
 
-	अगर (!पूर्णांकent) अणु
-		spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+	if (!intent) {
+		spin_unlock_irqrestore(&channel->intent_lock, flags);
 		dev_err(glink->dev, "invalid intent id received\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	पूर्णांकent->in_use = false;
+	intent->in_use = false;
 
-	अगर (!reuse) अणु
-		idr_हटाओ(&channel->riids, पूर्णांकent->id);
-		kमुक्त(पूर्णांकent);
-	पूर्ण
-	spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
-पूर्ण
+	if (!reuse) {
+		idr_remove(&channel->riids, intent->id);
+		kfree(intent);
+	}
+	spin_unlock_irqrestore(&channel->intent_lock, flags);
+}
 
 /**
- * qcom_glink_handle_पूर्णांकent_req() - Receive a request क्रम rx_पूर्णांकent
+ * qcom_glink_handle_intent_req() - Receive a request for rx_intent
  *					    from remote side
- * @glink:      Poपूर्णांकer to the transport पूर्णांकerface
+ * @glink:      Pointer to the transport interface
  * @cid:	Remote channel ID
- * @size:	size of the पूर्णांकent
+ * @size:	size of the intent
  *
- * The function searches क्रम the local channel to which the request क्रम
- * rx_पूर्णांकent has arrived and allocates and notअगरies the remote back
+ * The function searches for the local channel to which the request for
+ * rx_intent has arrived and allocates and notifies the remote back
  */
-अटल व्योम qcom_glink_handle_पूर्णांकent_req(काष्ठा qcom_glink *glink,
-					 u32 cid, माप_प्रकार size)
-अणु
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	काष्ठा glink_channel *channel;
-	अचिन्हित दीर्घ flags;
+static void qcom_glink_handle_intent_req(struct qcom_glink *glink,
+					 u32 cid, size_t size)
+{
+	struct glink_core_rx_intent *intent;
+	struct glink_channel *channel;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, cid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
-	अगर (!channel) अणु
+	if (!channel) {
 		pr_err("%s channel not found for cid %d\n", __func__, cid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	पूर्णांकent = qcom_glink_alloc_पूर्णांकent(glink, channel, size, false);
-	अगर (पूर्णांकent)
-		qcom_glink_advertise_पूर्णांकent(glink, channel, पूर्णांकent);
+	intent = qcom_glink_alloc_intent(glink, channel, size, false);
+	if (intent)
+		qcom_glink_advertise_intent(glink, channel, intent);
 
-	qcom_glink_send_पूर्णांकent_req_ack(glink, channel, !!पूर्णांकent);
-पूर्ण
+	qcom_glink_send_intent_req_ack(glink, channel, !!intent);
+}
 
-अटल पूर्णांक qcom_glink_rx_defer(काष्ठा qcom_glink *glink, माप_प्रकार extra)
-अणु
-	काष्ठा glink_defer_cmd *dcmd;
+static int qcom_glink_rx_defer(struct qcom_glink *glink, size_t extra)
+{
+	struct glink_defer_cmd *dcmd;
 
 	extra = ALIGN(extra, 8);
 
-	अगर (qcom_glink_rx_avail(glink) < माप(काष्ठा glink_msg) + extra) अणु
+	if (qcom_glink_rx_avail(glink) < sizeof(struct glink_msg) + extra) {
 		dev_dbg(glink->dev, "Insufficient data in rx fifo");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	dcmd = kzalloc(माप(*dcmd) + extra, GFP_ATOMIC);
-	अगर (!dcmd)
-		वापस -ENOMEM;
+	dcmd = kzalloc(sizeof(*dcmd) + extra, GFP_ATOMIC);
+	if (!dcmd)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&dcmd->node);
 
-	qcom_glink_rx_peak(glink, &dcmd->msg, 0, माप(dcmd->msg) + extra);
+	qcom_glink_rx_peak(glink, &dcmd->msg, 0, sizeof(dcmd->msg) + extra);
 
 	spin_lock(&glink->rx_lock);
 	list_add_tail(&dcmd->node, &glink->rx_queue);
 	spin_unlock(&glink->rx_lock);
 
 	schedule_work(&glink->rx_work);
-	qcom_glink_rx_advance(glink, माप(dcmd->msg) + extra);
+	qcom_glink_rx_advance(glink, sizeof(dcmd->msg) + extra);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_glink_rx_data(काष्ठा qcom_glink *glink, माप_प्रकार avail)
-अणु
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	काष्ठा glink_channel *channel;
-	काष्ठा अणु
-		काष्ठा glink_msg msg;
+static int qcom_glink_rx_data(struct qcom_glink *glink, size_t avail)
+{
+	struct glink_core_rx_intent *intent;
+	struct glink_channel *channel;
+	struct {
+		struct glink_msg msg;
 		__le32 chunk_size;
 		__le32 left_size;
-	पूर्ण __packed hdr;
-	अचिन्हित पूर्णांक chunk_size;
-	अचिन्हित पूर्णांक left_size;
-	अचिन्हित पूर्णांक rcid;
-	अचिन्हित पूर्णांक liid;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+	} __packed hdr;
+	unsigned int chunk_size;
+	unsigned int left_size;
+	unsigned int rcid;
+	unsigned int liid;
+	int ret = 0;
+	unsigned long flags;
 
-	अगर (avail < माप(hdr)) अणु
+	if (avail < sizeof(hdr)) {
 		dev_dbg(glink->dev, "Not enough data in fifo\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	qcom_glink_rx_peak(glink, &hdr, 0, माप(hdr));
+	qcom_glink_rx_peak(glink, &hdr, 0, sizeof(hdr));
 	chunk_size = le32_to_cpu(hdr.chunk_size);
 	left_size = le32_to_cpu(hdr.left_size);
 
-	अगर (avail < माप(hdr) + chunk_size) अणु
+	if (avail < sizeof(hdr) + chunk_size) {
 		dev_dbg(glink->dev, "Payload not yet in fifo\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	rcid = le16_to_cpu(hdr.msg.param1);
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, rcid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (!channel) अणु
+	if (!channel) {
 		dev_dbg(glink->dev, "Data on non-existing channel\n");
 
 		/* Drop the message */
-		जाओ advance_rx;
-	पूर्ण
+		goto advance_rx;
+	}
 
-	अगर (glink->पूर्णांकentless) अणु
+	if (glink->intentless) {
 		/* Might have an ongoing, fragmented, message to append */
-		अगर (!channel->buf) अणु
-			पूर्णांकent = kzalloc(माप(*पूर्णांकent), GFP_ATOMIC);
-			अगर (!पूर्णांकent)
-				वापस -ENOMEM;
+		if (!channel->buf) {
+			intent = kzalloc(sizeof(*intent), GFP_ATOMIC);
+			if (!intent)
+				return -ENOMEM;
 
-			पूर्णांकent->data = kदो_स्मृति(chunk_size + left_size,
+			intent->data = kmalloc(chunk_size + left_size,
 					       GFP_ATOMIC);
-			अगर (!पूर्णांकent->data) अणु
-				kमुक्त(पूर्णांकent);
-				वापस -ENOMEM;
-			पूर्ण
+			if (!intent->data) {
+				kfree(intent);
+				return -ENOMEM;
+			}
 
-			पूर्णांकent->id = 0xbabababa;
-			पूर्णांकent->size = chunk_size + left_size;
-			पूर्णांकent->offset = 0;
+			intent->id = 0xbabababa;
+			intent->size = chunk_size + left_size;
+			intent->offset = 0;
 
-			channel->buf = पूर्णांकent;
-		पूर्ण अन्यथा अणु
-			पूर्णांकent = channel->buf;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			channel->buf = intent;
+		} else {
+			intent = channel->buf;
+		}
+	} else {
 		liid = le32_to_cpu(hdr.msg.param2);
 
-		spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-		पूर्णांकent = idr_find(&channel->liids, liid);
-		spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+		spin_lock_irqsave(&channel->intent_lock, flags);
+		intent = idr_find(&channel->liids, liid);
+		spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-		अगर (!पूर्णांकent) अणु
+		if (!intent) {
 			dev_err(glink->dev,
 				"no intent found for channel %s intent %d",
 				channel->name, liid);
 			ret = -ENOENT;
-			जाओ advance_rx;
-		पूर्ण
-	पूर्ण
+			goto advance_rx;
+		}
+	}
 
-	अगर (पूर्णांकent->size - पूर्णांकent->offset < chunk_size) अणु
+	if (intent->size - intent->offset < chunk_size) {
 		dev_err(glink->dev, "Insufficient space in intent\n");
 
 		/* The packet header lied, drop payload */
-		जाओ advance_rx;
-	पूर्ण
+		goto advance_rx;
+	}
 
-	qcom_glink_rx_peak(glink, पूर्णांकent->data + पूर्णांकent->offset,
-			   माप(hdr), chunk_size);
-	पूर्णांकent->offset += chunk_size;
+	qcom_glink_rx_peak(glink, intent->data + intent->offset,
+			   sizeof(hdr), chunk_size);
+	intent->offset += chunk_size;
 
-	/* Handle message when no fragments reमुख्य to be received */
-	अगर (!left_size) अणु
+	/* Handle message when no fragments remain to be received */
+	if (!left_size) {
 		spin_lock(&channel->recv_lock);
-		अगर (channel->ept.cb) अणु
+		if (channel->ept.cb) {
 			channel->ept.cb(channel->ept.rpdev,
-					पूर्णांकent->data,
-					पूर्णांकent->offset,
+					intent->data,
+					intent->offset,
 					channel->ept.priv,
 					RPMSG_ADDR_ANY);
-		पूर्ण
+		}
 		spin_unlock(&channel->recv_lock);
 
-		पूर्णांकent->offset = 0;
-		channel->buf = शून्य;
+		intent->offset = 0;
+		channel->buf = NULL;
 
-		qcom_glink_rx_करोne(glink, channel, पूर्णांकent);
-	पूर्ण
+		qcom_glink_rx_done(glink, channel, intent);
+	}
 
 advance_rx:
-	qcom_glink_rx_advance(glink, ALIGN(माप(hdr) + chunk_size, 8));
+	qcom_glink_rx_advance(glink, ALIGN(sizeof(hdr) + chunk_size, 8));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qcom_glink_handle_पूर्णांकent(काष्ठा qcom_glink *glink,
-				     अचिन्हित पूर्णांक cid,
-				     अचिन्हित पूर्णांक count,
-				     माप_प्रकार avail)
-अणु
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	काष्ठा glink_channel *channel;
-	काष्ठा पूर्णांकent_pair अणु
+static void qcom_glink_handle_intent(struct qcom_glink *glink,
+				     unsigned int cid,
+				     unsigned int count,
+				     size_t avail)
+{
+	struct glink_core_rx_intent *intent;
+	struct glink_channel *channel;
+	struct intent_pair {
 		__le32 size;
 		__le32 iid;
-	पूर्ण;
+	};
 
-	काष्ठा अणु
-		काष्ठा glink_msg msg;
-		काष्ठा पूर्णांकent_pair पूर्णांकents[];
-	पूर्ण __packed * msg;
+	struct {
+		struct glink_msg msg;
+		struct intent_pair intents[];
+	} __packed * msg;
 
-	स्थिर माप_प्रकार msglen = काष्ठा_size(msg, पूर्णांकents, count);
-	पूर्णांक ret;
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+	const size_t msglen = struct_size(msg, intents, count);
+	int ret;
+	int i;
+	unsigned long flags;
 
-	अगर (avail < msglen) अणु
+	if (avail < msglen) {
 		dev_dbg(glink->dev, "Not enough data in fifo\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, cid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (!channel) अणु
+	if (!channel) {
 		dev_err(glink->dev, "intents for non-existing channel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	msg = kदो_स्मृति(msglen, GFP_ATOMIC);
-	अगर (!msg)
-		वापस;
+	msg = kmalloc(msglen, GFP_ATOMIC);
+	if (!msg)
+		return;
 
 	qcom_glink_rx_peak(glink, msg, 0, msglen);
 
-	क्रम (i = 0; i < count; ++i) अणु
-		पूर्णांकent = kzalloc(माप(*पूर्णांकent), GFP_ATOMIC);
-		अगर (!पूर्णांकent)
-			अवरोध;
+	for (i = 0; i < count; ++i) {
+		intent = kzalloc(sizeof(*intent), GFP_ATOMIC);
+		if (!intent)
+			break;
 
-		पूर्णांकent->id = le32_to_cpu(msg->पूर्णांकents[i].iid);
-		पूर्णांकent->size = le32_to_cpu(msg->पूर्णांकents[i].size);
+		intent->id = le32_to_cpu(msg->intents[i].iid);
+		intent->size = le32_to_cpu(msg->intents[i].size);
 
-		spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-		ret = idr_alloc(&channel->riids, पूर्णांकent,
-				पूर्णांकent->id, पूर्णांकent->id + 1, GFP_ATOMIC);
-		spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+		spin_lock_irqsave(&channel->intent_lock, flags);
+		ret = idr_alloc(&channel->riids, intent,
+				intent->id, intent->id + 1, GFP_ATOMIC);
+		spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(glink->dev, "failed to store remote intent\n");
-	पूर्ण
+	}
 
-	kमुक्त(msg);
+	kfree(msg);
 	qcom_glink_rx_advance(glink, ALIGN(msglen, 8));
-पूर्ण
+}
 
-अटल पूर्णांक qcom_glink_rx_खोलो_ack(काष्ठा qcom_glink *glink, अचिन्हित पूर्णांक lcid)
-अणु
-	काष्ठा glink_channel *channel;
+static int qcom_glink_rx_open_ack(struct qcom_glink *glink, unsigned int lcid)
+{
+	struct glink_channel *channel;
 
 	spin_lock(&glink->idr_lock);
 	channel = idr_find(&glink->lcids, lcid);
 	spin_unlock(&glink->idr_lock);
-	अगर (!channel) अणु
+	if (!channel) {
 		dev_err(glink->dev, "Invalid open ack packet\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	complete_all(&channel->खोलो_ack);
+	complete_all(&channel->open_ack);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t qcom_glink_native_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_glink *glink = data;
-	काष्ठा glink_msg msg;
-	अचिन्हित पूर्णांक param1;
-	अचिन्हित पूर्णांक param2;
-	अचिन्हित पूर्णांक avail;
-	अचिन्हित पूर्णांक cmd;
-	पूर्णांक ret = 0;
+static irqreturn_t qcom_glink_native_intr(int irq, void *data)
+{
+	struct qcom_glink *glink = data;
+	struct glink_msg msg;
+	unsigned int param1;
+	unsigned int param2;
+	unsigned int avail;
+	unsigned int cmd;
+	int ret = 0;
 
-	क्रम (;;) अणु
+	for (;;) {
 		avail = qcom_glink_rx_avail(glink);
-		अगर (avail < माप(msg))
-			अवरोध;
+		if (avail < sizeof(msg))
+			break;
 
-		qcom_glink_rx_peak(glink, &msg, 0, माप(msg));
+		qcom_glink_rx_peak(glink, &msg, 0, sizeof(msg));
 
 		cmd = le16_to_cpu(msg.cmd);
 		param1 = le16_to_cpu(msg.param1);
 		param2 = le32_to_cpu(msg.param2);
 
-		चयन (cmd) अणु
-		हाल RPM_CMD_VERSION:
-		हाल RPM_CMD_VERSION_ACK:
-		हाल RPM_CMD_CLOSE:
-		हाल RPM_CMD_CLOSE_ACK:
-		हाल RPM_CMD_RX_INTENT_REQ:
+		switch (cmd) {
+		case RPM_CMD_VERSION:
+		case RPM_CMD_VERSION_ACK:
+		case RPM_CMD_CLOSE:
+		case RPM_CMD_CLOSE_ACK:
+		case RPM_CMD_RX_INTENT_REQ:
 			ret = qcom_glink_rx_defer(glink, 0);
-			अवरोध;
-		हाल RPM_CMD_OPEN_ACK:
-			ret = qcom_glink_rx_खोलो_ack(glink, param1);
-			qcom_glink_rx_advance(glink, ALIGN(माप(msg), 8));
-			अवरोध;
-		हाल RPM_CMD_OPEN:
+			break;
+		case RPM_CMD_OPEN_ACK:
+			ret = qcom_glink_rx_open_ack(glink, param1);
+			qcom_glink_rx_advance(glink, ALIGN(sizeof(msg), 8));
+			break;
+		case RPM_CMD_OPEN:
 			ret = qcom_glink_rx_defer(glink, param2);
-			अवरोध;
-		हाल RPM_CMD_TX_DATA:
-		हाल RPM_CMD_TX_DATA_CONT:
+			break;
+		case RPM_CMD_TX_DATA:
+		case RPM_CMD_TX_DATA_CONT:
 			ret = qcom_glink_rx_data(glink, avail);
-			अवरोध;
-		हाल RPM_CMD_READ_NOTIF:
-			qcom_glink_rx_advance(glink, ALIGN(माप(msg), 8));
+			break;
+		case RPM_CMD_READ_NOTIF:
+			qcom_glink_rx_advance(glink, ALIGN(sizeof(msg), 8));
 
-			mbox_send_message(glink->mbox_chan, शून्य);
-			mbox_client_txकरोne(glink->mbox_chan, 0);
-			अवरोध;
-		हाल RPM_CMD_INTENT:
-			qcom_glink_handle_पूर्णांकent(glink, param1, param2, avail);
-			अवरोध;
-		हाल RPM_CMD_RX_DONE:
-			qcom_glink_handle_rx_करोne(glink, param1, param2, false);
-			qcom_glink_rx_advance(glink, ALIGN(माप(msg), 8));
-			अवरोध;
-		हाल RPM_CMD_RX_DONE_W_REUSE:
-			qcom_glink_handle_rx_करोne(glink, param1, param2, true);
-			qcom_glink_rx_advance(glink, ALIGN(माप(msg), 8));
-			अवरोध;
-		हाल RPM_CMD_RX_INTENT_REQ_ACK:
-			qcom_glink_handle_पूर्णांकent_req_ack(glink, param1, param2);
-			qcom_glink_rx_advance(glink, ALIGN(माप(msg), 8));
-			अवरोध;
-		शेष:
+			mbox_send_message(glink->mbox_chan, NULL);
+			mbox_client_txdone(glink->mbox_chan, 0);
+			break;
+		case RPM_CMD_INTENT:
+			qcom_glink_handle_intent(glink, param1, param2, avail);
+			break;
+		case RPM_CMD_RX_DONE:
+			qcom_glink_handle_rx_done(glink, param1, param2, false);
+			qcom_glink_rx_advance(glink, ALIGN(sizeof(msg), 8));
+			break;
+		case RPM_CMD_RX_DONE_W_REUSE:
+			qcom_glink_handle_rx_done(glink, param1, param2, true);
+			qcom_glink_rx_advance(glink, ALIGN(sizeof(msg), 8));
+			break;
+		case RPM_CMD_RX_INTENT_REQ_ACK:
+			qcom_glink_handle_intent_req_ack(glink, param1, param2);
+			qcom_glink_rx_advance(glink, ALIGN(sizeof(msg), 8));
+			break;
+		default:
 			dev_err(glink->dev, "unhandled rx cmd: %d\n", cmd);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* Locally initiated rpmsg_create_ept */
-अटल काष्ठा glink_channel *qcom_glink_create_local(काष्ठा qcom_glink *glink,
-						     स्थिर अक्षर *name)
-अणु
-	काष्ठा glink_channel *channel;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static struct glink_channel *qcom_glink_create_local(struct qcom_glink *glink,
+						     const char *name)
+{
+	struct glink_channel *channel;
+	int ret;
+	unsigned long flags;
 
 	channel = qcom_glink_alloc_channel(glink, name);
-	अगर (IS_ERR(channel))
-		वापस ERR_CAST(channel);
+	if (IS_ERR(channel))
+		return ERR_CAST(channel);
 
-	ret = qcom_glink_send_खोलो_req(glink, channel);
-	अगर (ret)
-		जाओ release_channel;
+	ret = qcom_glink_send_open_req(glink, channel);
+	if (ret)
+		goto release_channel;
 
-	ret = रुको_क्रम_completion_समयout(&channel->खोलो_ack, 5 * HZ);
-	अगर (!ret)
-		जाओ err_समयout;
+	ret = wait_for_completion_timeout(&channel->open_ack, 5 * HZ);
+	if (!ret)
+		goto err_timeout;
 
-	ret = रुको_क्रम_completion_समयout(&channel->खोलो_req, 5 * HZ);
-	अगर (!ret)
-		जाओ err_समयout;
+	ret = wait_for_completion_timeout(&channel->open_req, 5 * HZ);
+	if (!ret)
+		goto err_timeout;
 
-	qcom_glink_send_खोलो_ack(glink, channel);
+	qcom_glink_send_open_ack(glink, channel);
 
-	वापस channel;
+	return channel;
 
-err_समयout:
-	/* qcom_glink_send_खोलो_req() did रेजिस्टर the channel in lcids*/
+err_timeout:
+	/* qcom_glink_send_open_req() did register the channel in lcids*/
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_हटाओ(&glink->lcids, channel->lcid);
+	idr_remove(&glink->lcids, channel->lcid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
 release_channel:
-	/* Release qcom_glink_send_खोलो_req() reference */
+	/* Release qcom_glink_send_open_req() reference */
 	kref_put(&channel->refcount, qcom_glink_channel_release);
 	/* Release qcom_glink_alloc_channel() reference */
 	kref_put(&channel->refcount, qcom_glink_channel_release);
 
-	वापस ERR_PTR(-ETIMEDOUT);
-पूर्ण
+	return ERR_PTR(-ETIMEDOUT);
+}
 
 /* Remote initiated rpmsg_create_ept */
-अटल पूर्णांक qcom_glink_create_remote(काष्ठा qcom_glink *glink,
-				    काष्ठा glink_channel *channel)
-अणु
-	पूर्णांक ret;
+static int qcom_glink_create_remote(struct qcom_glink *glink,
+				    struct glink_channel *channel)
+{
+	int ret;
 
-	qcom_glink_send_खोलो_ack(glink, channel);
+	qcom_glink_send_open_ack(glink, channel);
 
-	ret = qcom_glink_send_खोलो_req(glink, channel);
-	अगर (ret)
-		जाओ बंद_link;
+	ret = qcom_glink_send_open_req(glink, channel);
+	if (ret)
+		goto close_link;
 
-	ret = रुको_क्रम_completion_समयout(&channel->खोलो_ack, 5 * HZ);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(&channel->open_ack, 5 * HZ);
+	if (!ret) {
 		ret = -ETIMEDOUT;
-		जाओ बंद_link;
-	पूर्ण
+		goto close_link;
+	}
 
-	वापस 0;
+	return 0;
 
-बंद_link:
+close_link:
 	/*
-	 * Send a बंद request to "undo" our खोलो-ack. The बंद-ack will
-	 * release qcom_glink_send_खोलो_req() reference and the last reference
-	 * will be relesed after receiving remote_बंद or transport unरेजिस्टर
-	 * by calling qcom_glink_native_हटाओ().
+	 * Send a close request to "undo" our open-ack. The close-ack will
+	 * release qcom_glink_send_open_req() reference and the last reference
+	 * will be relesed after receiving remote_close or transport unregister
+	 * by calling qcom_glink_native_remove().
 	 */
-	qcom_glink_send_बंद_req(glink, channel);
+	qcom_glink_send_close_req(glink, channel);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा rpmsg_endpoपूर्णांक *qcom_glink_create_ept(काष्ठा rpmsg_device *rpdev,
+static struct rpmsg_endpoint *qcom_glink_create_ept(struct rpmsg_device *rpdev,
 						    rpmsg_rx_cb_t cb,
-						    व्योम *priv,
-						    काष्ठा rpmsg_channel_info
+						    void *priv,
+						    struct rpmsg_channel_info
 									chinfo)
-अणु
-	काष्ठा glink_channel *parent = to_glink_channel(rpdev->ept);
-	काष्ठा glink_channel *channel;
-	काष्ठा qcom_glink *glink = parent->glink;
-	काष्ठा rpmsg_endpoपूर्णांक *ept;
-	स्थिर अक्षर *name = chinfo.name;
-	पूर्णांक cid;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+{
+	struct glink_channel *parent = to_glink_channel(rpdev->ept);
+	struct glink_channel *channel;
+	struct qcom_glink *glink = parent->glink;
+	struct rpmsg_endpoint *ept;
+	const char *name = chinfo.name;
+	int cid;
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_क्रम_each_entry(&glink->rcids, channel, cid) अणु
-		अगर (!म_भेद(channel->name, name))
-			अवरोध;
-	पूर्ण
+	idr_for_each_entry(&glink->rcids, channel, cid) {
+		if (!strcmp(channel->name, name))
+			break;
+	}
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
-	अगर (!channel) अणु
+	if (!channel) {
 		channel = qcom_glink_create_local(glink, name);
-		अगर (IS_ERR(channel))
-			वापस शून्य;
-	पूर्ण अन्यथा अणु
+		if (IS_ERR(channel))
+			return NULL;
+	} else {
 		ret = qcom_glink_create_remote(glink, channel);
-		अगर (ret)
-			वापस शून्य;
-	पूर्ण
+		if (ret)
+			return NULL;
+	}
 
 	ept = &channel->ept;
 	ept->rpdev = rpdev;
 	ept->cb = cb;
 	ept->priv = priv;
-	ept->ops = &glink_endpoपूर्णांक_ops;
+	ept->ops = &glink_endpoint_ops;
 
-	वापस ept;
-पूर्ण
+	return ept;
+}
 
-अटल पूर्णांक qcom_glink_announce_create(काष्ठा rpmsg_device *rpdev)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(rpdev->ept);
-	काष्ठा device_node *np = rpdev->dev.of_node;
-	काष्ठा qcom_glink *glink = channel->glink;
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent;
-	स्थिर काष्ठा property *prop = शून्य;
-	__be32 शेषs[] = अणु cpu_to_be32(SZ_1K), cpu_to_be32(5) पूर्ण;
-	पूर्णांक num_पूर्णांकents;
-	पूर्णांक num_groups = 1;
-	__be32 *val = शेषs;
-	पूर्णांक size;
+static int qcom_glink_announce_create(struct rpmsg_device *rpdev)
+{
+	struct glink_channel *channel = to_glink_channel(rpdev->ept);
+	struct device_node *np = rpdev->dev.of_node;
+	struct qcom_glink *glink = channel->glink;
+	struct glink_core_rx_intent *intent;
+	const struct property *prop = NULL;
+	__be32 defaults[] = { cpu_to_be32(SZ_1K), cpu_to_be32(5) };
+	int num_intents;
+	int num_groups = 1;
+	__be32 *val = defaults;
+	int size;
 
-	अगर (glink->पूर्णांकentless || !completion_करोne(&channel->खोलो_ack))
-		वापस 0;
+	if (glink->intentless || !completion_done(&channel->open_ack))
+		return 0;
 
-	prop = of_find_property(np, "qcom,intents", शून्य);
-	अगर (prop) अणु
+	prop = of_find_property(np, "qcom,intents", NULL);
+	if (prop) {
 		val = prop->value;
-		num_groups = prop->length / माप(u32) / 2;
-	पूर्ण
+		num_groups = prop->length / sizeof(u32) / 2;
+	}
 
-	/* Channel is now खोलो, advertise base set of पूर्णांकents */
-	जबतक (num_groups--) अणु
+	/* Channel is now open, advertise base set of intents */
+	while (num_groups--) {
 		size = be32_to_cpup(val++);
-		num_पूर्णांकents = be32_to_cpup(val++);
-		जबतक (num_पूर्णांकents--) अणु
-			पूर्णांकent = qcom_glink_alloc_पूर्णांकent(glink, channel, size,
+		num_intents = be32_to_cpup(val++);
+		while (num_intents--) {
+			intent = qcom_glink_alloc_intent(glink, channel, size,
 							 true);
-			अगर (!पूर्णांकent)
-				अवरोध;
+			if (!intent)
+				break;
 
-			qcom_glink_advertise_पूर्णांकent(glink, channel, पूर्णांकent);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			qcom_glink_advertise_intent(glink, channel, intent);
+		}
+	}
+	return 0;
+}
 
-अटल व्योम qcom_glink_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(ept);
-	काष्ठा qcom_glink *glink = channel->glink;
-	अचिन्हित दीर्घ flags;
+static void qcom_glink_destroy_ept(struct rpmsg_endpoint *ept)
+{
+	struct glink_channel *channel = to_glink_channel(ept);
+	struct qcom_glink *glink = channel->glink;
+	unsigned long flags;
 
 	spin_lock_irqsave(&channel->recv_lock, flags);
-	channel->ept.cb = शून्य;
+	channel->ept.cb = NULL;
 	spin_unlock_irqrestore(&channel->recv_lock, flags);
 
 	/* Decouple the potential rpdev from the channel */
-	channel->rpdev = शून्य;
+	channel->rpdev = NULL;
 
-	qcom_glink_send_बंद_req(glink, channel);
-पूर्ण
+	qcom_glink_send_close_req(glink, channel);
+}
 
-अटल पूर्णांक qcom_glink_request_पूर्णांकent(काष्ठा qcom_glink *glink,
-				     काष्ठा glink_channel *channel,
-				     माप_प्रकार size)
-अणु
-	काष्ठा अणु
+static int qcom_glink_request_intent(struct qcom_glink *glink,
+				     struct glink_channel *channel,
+				     size_t size)
+{
+	struct {
 		u16 id;
 		u16 cid;
 		u32 size;
-	पूर्ण __packed cmd;
+	} __packed cmd;
 
-	पूर्णांक ret;
+	int ret;
 
-	mutex_lock(&channel->पूर्णांकent_req_lock);
+	mutex_lock(&channel->intent_req_lock);
 
-	reinit_completion(&channel->पूर्णांकent_req_comp);
+	reinit_completion(&channel->intent_req_comp);
 
 	cmd.id = RPM_CMD_RX_INTENT_REQ;
 	cmd.cid = channel->lcid;
 	cmd.size = size;
 
-	ret = qcom_glink_tx(glink, &cmd, माप(cmd), शून्य, 0, true);
-	अगर (ret)
-		जाओ unlock;
+	ret = qcom_glink_tx(glink, &cmd, sizeof(cmd), NULL, 0, true);
+	if (ret)
+		goto unlock;
 
-	ret = रुको_क्रम_completion_समयout(&channel->पूर्णांकent_req_comp, 10 * HZ);
-	अगर (!ret) अणु
+	ret = wait_for_completion_timeout(&channel->intent_req_comp, 10 * HZ);
+	if (!ret) {
 		dev_err(glink->dev, "intent request timed out\n");
 		ret = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
-		ret = channel->पूर्णांकent_req_result ? 0 : -ECANCELED;
-	पूर्ण
+	} else {
+		ret = channel->intent_req_result ? 0 : -ECANCELED;
+	}
 
 unlock:
-	mutex_unlock(&channel->पूर्णांकent_req_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&channel->intent_req_lock);
+	return ret;
+}
 
-अटल पूर्णांक __qcom_glink_send(काष्ठा glink_channel *channel,
-			     व्योम *data, पूर्णांक len, bool रुको)
-अणु
-	काष्ठा qcom_glink *glink = channel->glink;
-	काष्ठा glink_core_rx_पूर्णांकent *पूर्णांकent = शून्य;
-	काष्ठा glink_core_rx_पूर्णांकent *पंचांगp;
-	पूर्णांक iid = 0;
-	काष्ठा अणु
-		काष्ठा glink_msg msg;
+static int __qcom_glink_send(struct glink_channel *channel,
+			     void *data, int len, bool wait)
+{
+	struct qcom_glink *glink = channel->glink;
+	struct glink_core_rx_intent *intent = NULL;
+	struct glink_core_rx_intent *tmp;
+	int iid = 0;
+	struct {
+		struct glink_msg msg;
 		__le32 chunk_size;
 		__le32 left_size;
-	पूर्ण __packed req;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	} __packed req;
+	int ret;
+	unsigned long flags;
 
-	अगर (!glink->पूर्णांकentless) अणु
-		जबतक (!पूर्णांकent) अणु
-			spin_lock_irqsave(&channel->पूर्णांकent_lock, flags);
-			idr_क्रम_each_entry(&channel->riids, पंचांगp, iid) अणु
-				अगर (पंचांगp->size >= len && !पंचांगp->in_use) अणु
-					अगर (!पूर्णांकent)
-						पूर्णांकent = पंचांगp;
-					अन्यथा अगर (पूर्णांकent->size > पंचांगp->size)
-						पूर्णांकent = पंचांगp;
-					अगर (पूर्णांकent->size == len)
-						अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (पूर्णांकent)
-				पूर्णांकent->in_use = true;
-			spin_unlock_irqrestore(&channel->पूर्णांकent_lock, flags);
+	if (!glink->intentless) {
+		while (!intent) {
+			spin_lock_irqsave(&channel->intent_lock, flags);
+			idr_for_each_entry(&channel->riids, tmp, iid) {
+				if (tmp->size >= len && !tmp->in_use) {
+					if (!intent)
+						intent = tmp;
+					else if (intent->size > tmp->size)
+						intent = tmp;
+					if (intent->size == len)
+						break;
+				}
+			}
+			if (intent)
+				intent->in_use = true;
+			spin_unlock_irqrestore(&channel->intent_lock, flags);
 
-			/* We found an available पूर्णांकent */
-			अगर (पूर्णांकent)
-				अवरोध;
+			/* We found an available intent */
+			if (intent)
+				break;
 
-			अगर (!रुको)
-				वापस -EBUSY;
+			if (!wait)
+				return -EBUSY;
 
-			ret = qcom_glink_request_पूर्णांकent(glink, channel, len);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+			ret = qcom_glink_request_intent(glink, channel, len);
+			if (ret < 0)
+				return ret;
+		}
 
-		iid = पूर्णांकent->id;
-	पूर्ण
+		iid = intent->id;
+	}
 
 	req.msg.cmd = cpu_to_le16(RPM_CMD_TX_DATA);
 	req.msg.param1 = cpu_to_le16(channel->lcid);
@@ -1311,137 +1310,137 @@ unlock:
 	req.chunk_size = cpu_to_le32(len);
 	req.left_size = cpu_to_le32(0);
 
-	ret = qcom_glink_tx(glink, &req, माप(req), data, len, रुको);
+	ret = qcom_glink_tx(glink, &req, sizeof(req), data, len, wait);
 
-	/* Mark पूर्णांकent available अगर we failed */
-	अगर (ret && पूर्णांकent)
-		पूर्णांकent->in_use = false;
+	/* Mark intent available if we failed */
+	if (ret && intent)
+		intent->in_use = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qcom_glink_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(ept);
+static int qcom_glink_send(struct rpmsg_endpoint *ept, void *data, int len)
+{
+	struct glink_channel *channel = to_glink_channel(ept);
 
-	वापस __qcom_glink_send(channel, data, len, true);
-पूर्ण
+	return __qcom_glink_send(channel, data, len, true);
+}
 
-अटल पूर्णांक qcom_glink_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(ept);
+static int qcom_glink_trysend(struct rpmsg_endpoint *ept, void *data, int len)
+{
+	struct glink_channel *channel = to_glink_channel(ept);
 
-	वापस __qcom_glink_send(channel, data, len, false);
-पूर्ण
+	return __qcom_glink_send(channel, data, len, false);
+}
 
-अटल पूर्णांक qcom_glink_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(ept);
+static int qcom_glink_sendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
+{
+	struct glink_channel *channel = to_glink_channel(ept);
 
-	वापस __qcom_glink_send(channel, data, len, true);
-पूर्ण
+	return __qcom_glink_send(channel, data, len, true);
+}
 
-अटल पूर्णांक qcom_glink_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len, u32 dst)
-अणु
-	काष्ठा glink_channel *channel = to_glink_channel(ept);
+static int qcom_glink_trysendto(struct rpmsg_endpoint *ept, void *data, int len, u32 dst)
+{
+	struct glink_channel *channel = to_glink_channel(ept);
 
-	वापस __qcom_glink_send(channel, data, len, false);
-पूर्ण
+	return __qcom_glink_send(channel, data, len, false);
+}
 
 /*
- * Finds the device_node क्रम the glink child पूर्णांकerested in this channel.
+ * Finds the device_node for the glink child interested in this channel.
  */
-अटल काष्ठा device_node *qcom_glink_match_channel(काष्ठा device_node *node,
-						    स्थिर अक्षर *channel)
-अणु
-	काष्ठा device_node *child;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *key;
-	पूर्णांक ret;
+static struct device_node *qcom_glink_match_channel(struct device_node *node,
+						    const char *channel)
+{
+	struct device_node *child;
+	const char *name;
+	const char *key;
+	int ret;
 
-	क्रम_each_available_child_of_node(node, child) अणु
+	for_each_available_child_of_node(node, child) {
 		key = "qcom,glink-channels";
-		ret = of_property_पढ़ो_string(child, key, &name);
-		अगर (ret)
-			जारी;
+		ret = of_property_read_string(child, key, &name);
+		if (ret)
+			continue;
 
-		अगर (म_भेद(name, channel) == 0)
-			वापस child;
-	पूर्ण
+		if (strcmp(name, channel) == 0)
+			return child;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर काष्ठा rpmsg_device_ops glink_device_ops = अणु
+static const struct rpmsg_device_ops glink_device_ops = {
 	.create_ept = qcom_glink_create_ept,
 	.announce_create = qcom_glink_announce_create,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops glink_endpoपूर्णांक_ops = अणु
+static const struct rpmsg_endpoint_ops glink_endpoint_ops = {
 	.destroy_ept = qcom_glink_destroy_ept,
 	.send = qcom_glink_send,
 	.sendto = qcom_glink_sendto,
 	.trysend = qcom_glink_trysend,
 	.trysendto = qcom_glink_trysendto,
-पूर्ण;
+};
 
-अटल व्योम qcom_glink_rpdev_release(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
-	काष्ठा glink_channel *channel = to_glink_channel(rpdev->ept);
+static void qcom_glink_rpdev_release(struct device *dev)
+{
+	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
+	struct glink_channel *channel = to_glink_channel(rpdev->ept);
 
-	channel->rpdev = शून्य;
-	kमुक्त(rpdev);
-पूर्ण
+	channel->rpdev = NULL;
+	kfree(rpdev);
+}
 
-अटल पूर्णांक qcom_glink_rx_खोलो(काष्ठा qcom_glink *glink, अचिन्हित पूर्णांक rcid,
-			      अक्षर *name)
-अणु
-	काष्ठा glink_channel *channel;
-	काष्ठा rpmsg_device *rpdev;
+static int qcom_glink_rx_open(struct qcom_glink *glink, unsigned int rcid,
+			      char *name)
+{
+	struct glink_channel *channel;
+	struct rpmsg_device *rpdev;
 	bool create_device = false;
-	काष्ठा device_node *node;
-	पूर्णांक lcid;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+	struct device_node *node;
+	int lcid;
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_क्रम_each_entry(&glink->lcids, channel, lcid) अणु
-		अगर (!म_भेद(channel->name, name))
-			अवरोध;
-	पूर्ण
+	idr_for_each_entry(&glink->lcids, channel, lcid) {
+		if (!strcmp(channel->name, name))
+			break;
+	}
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
-	अगर (!channel) अणु
+	if (!channel) {
 		channel = qcom_glink_alloc_channel(glink, name);
-		अगर (IS_ERR(channel))
-			वापस PTR_ERR(channel);
+		if (IS_ERR(channel))
+			return PTR_ERR(channel);
 
-		/* The खोलोing dance was initiated by the remote */
+		/* The opening dance was initiated by the remote */
 		create_device = true;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	ret = idr_alloc(&glink->rcids, channel, rcid, rcid + 1, GFP_ATOMIC);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(glink->dev, "Unable to insert channel into rcid list\n");
 		spin_unlock_irqrestore(&glink->idr_lock, flags);
-		जाओ मुक्त_channel;
-	पूर्ण
+		goto free_channel;
+	}
 	channel->rcid = ret;
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
-	complete_all(&channel->खोलो_req);
+	complete_all(&channel->open_req);
 
-	अगर (create_device) अणु
-		rpdev = kzalloc(माप(*rpdev), GFP_KERNEL);
-		अगर (!rpdev) अणु
+	if (create_device) {
+		rpdev = kzalloc(sizeof(*rpdev), GFP_KERNEL);
+		if (!rpdev) {
 			ret = -ENOMEM;
-			जाओ rcid_हटाओ;
-		पूर्ण
+			goto rcid_remove;
+		}
 
 		rpdev->ept = &channel->ept;
-		म_नकलन(rpdev->id.name, name, RPMSG_NAME_SIZE);
+		strncpy(rpdev->id.name, name, RPMSG_NAME_SIZE);
 		rpdev->src = RPMSG_ADDR_ANY;
 		rpdev->dst = RPMSG_ADDR_ANY;
 		rpdev->ops = &glink_device_ops;
@@ -1451,99 +1450,99 @@ unlock:
 		rpdev->dev.parent = glink->dev;
 		rpdev->dev.release = qcom_glink_rpdev_release;
 
-		ret = rpmsg_रेजिस्टर_device(rpdev);
-		अगर (ret)
-			जाओ rcid_हटाओ;
+		ret = rpmsg_register_device(rpdev);
+		if (ret)
+			goto rcid_remove;
 
 		channel->rpdev = rpdev;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-rcid_हटाओ:
+rcid_remove:
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_हटाओ(&glink->rcids, channel->rcid);
+	idr_remove(&glink->rcids, channel->rcid);
 	channel->rcid = 0;
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-मुक्त_channel:
-	/* Release the reference, अगरf we took it */
-	अगर (create_device)
+free_channel:
+	/* Release the reference, iff we took it */
+	if (create_device)
 		kref_put(&channel->refcount, qcom_glink_channel_release);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम qcom_glink_rx_बंद(काष्ठा qcom_glink *glink, अचिन्हित पूर्णांक rcid)
-अणु
-	काष्ठा rpmsg_channel_info chinfo;
-	काष्ठा glink_channel *channel;
-	अचिन्हित दीर्घ flags;
+static void qcom_glink_rx_close(struct qcom_glink *glink, unsigned int rcid)
+{
+	struct rpmsg_channel_info chinfo;
+	struct glink_channel *channel;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->rcids, rcid);
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
-	अगर (WARN(!channel, "close request on unknown channel\n"))
-		वापस;
+	if (WARN(!channel, "close request on unknown channel\n"))
+		return;
 
-	/* cancel pending rx_करोne work */
-	cancel_work_sync(&channel->पूर्णांकent_work);
+	/* cancel pending rx_done work */
+	cancel_work_sync(&channel->intent_work);
 
-	अगर (channel->rpdev) अणु
-		म_नकलन(chinfo.name, channel->name, माप(chinfo.name));
+	if (channel->rpdev) {
+		strncpy(chinfo.name, channel->name, sizeof(chinfo.name));
 		chinfo.src = RPMSG_ADDR_ANY;
 		chinfo.dst = RPMSG_ADDR_ANY;
 
-		rpmsg_unरेजिस्टर_device(glink->dev, &chinfo);
-	पूर्ण
+		rpmsg_unregister_device(glink->dev, &chinfo);
+	}
 
-	qcom_glink_send_बंद_ack(glink, channel->rcid);
+	qcom_glink_send_close_ack(glink, channel->rcid);
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
-	idr_हटाओ(&glink->rcids, channel->rcid);
+	idr_remove(&glink->rcids, channel->rcid);
 	channel->rcid = 0;
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
 	kref_put(&channel->refcount, qcom_glink_channel_release);
-पूर्ण
+}
 
-अटल व्योम qcom_glink_rx_बंद_ack(काष्ठा qcom_glink *glink, अचिन्हित पूर्णांक lcid)
-अणु
-	काष्ठा glink_channel *channel;
-	अचिन्हित दीर्घ flags;
+static void qcom_glink_rx_close_ack(struct qcom_glink *glink, unsigned int lcid)
+{
+	struct glink_channel *channel;
+	unsigned long flags;
 
 	spin_lock_irqsave(&glink->idr_lock, flags);
 	channel = idr_find(&glink->lcids, lcid);
-	अगर (WARN(!channel, "close ack on unknown channel\n")) अणु
+	if (WARN(!channel, "close ack on unknown channel\n")) {
 		spin_unlock_irqrestore(&glink->idr_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	idr_हटाओ(&glink->lcids, channel->lcid);
+	idr_remove(&glink->lcids, channel->lcid);
 	channel->lcid = 0;
 	spin_unlock_irqrestore(&glink->idr_lock, flags);
 
 	kref_put(&channel->refcount, qcom_glink_channel_release);
-पूर्ण
+}
 
-अटल व्योम qcom_glink_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qcom_glink *glink = container_of(work, काष्ठा qcom_glink,
+static void qcom_glink_work(struct work_struct *work)
+{
+	struct qcom_glink *glink = container_of(work, struct qcom_glink,
 						rx_work);
-	काष्ठा glink_defer_cmd *dcmd;
-	काष्ठा glink_msg *msg;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक param1;
-	अचिन्हित पूर्णांक param2;
-	अचिन्हित पूर्णांक cmd;
+	struct glink_defer_cmd *dcmd;
+	struct glink_msg *msg;
+	unsigned long flags;
+	unsigned int param1;
+	unsigned int param2;
+	unsigned int cmd;
 
-	क्रम (;;) अणु
+	for (;;) {
 		spin_lock_irqsave(&glink->rx_lock, flags);
-		अगर (list_empty(&glink->rx_queue)) अणु
+		if (list_empty(&glink->rx_queue)) {
 			spin_unlock_irqrestore(&glink->rx_lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		dcmd = list_first_entry(&glink->rx_queue,
-					काष्ठा glink_defer_cmd, node);
+					struct glink_defer_cmd, node);
 		list_del(&dcmd->node);
 		spin_unlock_irqrestore(&glink->rx_lock, flags);
 
@@ -1552,90 +1551,90 @@ rcid_हटाओ:
 		param1 = le16_to_cpu(msg->param1);
 		param2 = le32_to_cpu(msg->param2);
 
-		चयन (cmd) अणु
-		हाल RPM_CMD_VERSION:
+		switch (cmd) {
+		case RPM_CMD_VERSION:
 			qcom_glink_receive_version(glink, param1, param2);
-			अवरोध;
-		हाल RPM_CMD_VERSION_ACK:
+			break;
+		case RPM_CMD_VERSION_ACK:
 			qcom_glink_receive_version_ack(glink, param1, param2);
-			अवरोध;
-		हाल RPM_CMD_OPEN:
-			qcom_glink_rx_खोलो(glink, param1, msg->data);
-			अवरोध;
-		हाल RPM_CMD_CLOSE:
-			qcom_glink_rx_बंद(glink, param1);
-			अवरोध;
-		हाल RPM_CMD_CLOSE_ACK:
-			qcom_glink_rx_बंद_ack(glink, param1);
-			अवरोध;
-		हाल RPM_CMD_RX_INTENT_REQ:
-			qcom_glink_handle_पूर्णांकent_req(glink, param1, param2);
-			अवरोध;
-		शेष:
+			break;
+		case RPM_CMD_OPEN:
+			qcom_glink_rx_open(glink, param1, msg->data);
+			break;
+		case RPM_CMD_CLOSE:
+			qcom_glink_rx_close(glink, param1);
+			break;
+		case RPM_CMD_CLOSE_ACK:
+			qcom_glink_rx_close_ack(glink, param1);
+			break;
+		case RPM_CMD_RX_INTENT_REQ:
+			qcom_glink_handle_intent_req(glink, param1, param2);
+			break;
+		default:
 			WARN(1, "Unknown defer object %d\n", cmd);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		kमुक्त(dcmd);
-	पूर्ण
-पूर्ण
+		kfree(dcmd);
+	}
+}
 
-अटल व्योम qcom_glink_cancel_rx_work(काष्ठा qcom_glink *glink)
-अणु
-	काष्ठा glink_defer_cmd *dcmd;
-	काष्ठा glink_defer_cmd *पंचांगp;
+static void qcom_glink_cancel_rx_work(struct qcom_glink *glink)
+{
+	struct glink_defer_cmd *dcmd;
+	struct glink_defer_cmd *tmp;
 
 	/* cancel any pending deferred rx_work */
 	cancel_work_sync(&glink->rx_work);
 
-	list_क्रम_each_entry_safe(dcmd, पंचांगp, &glink->rx_queue, node)
-		kमुक्त(dcmd);
-पूर्ण
+	list_for_each_entry_safe(dcmd, tmp, &glink->rx_queue, node)
+		kfree(dcmd);
+}
 
-अटल sमाप_प्रकार rpmsg_name_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक ret = 0;
-	स्थिर अक्षर *name;
+static ssize_t rpmsg_name_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	int ret = 0;
+	const char *name;
 
-	ret = of_property_पढ़ो_string(dev->of_node, "label", &name);
-	अगर (ret < 0)
+	ret = of_property_read_string(dev->of_node, "label", &name);
+	if (ret < 0)
 		name = dev->of_node->name;
 
-	वापस snम_लिखो(buf, RPMSG_NAME_SIZE, "%s\n", name);
-पूर्ण
-अटल DEVICE_ATTR_RO(rpmsg_name);
+	return snprintf(buf, RPMSG_NAME_SIZE, "%s\n", name);
+}
+static DEVICE_ATTR_RO(rpmsg_name);
 
-अटल काष्ठा attribute *qcom_glink_attrs[] = अणु
+static struct attribute *qcom_glink_attrs[] = {
 	&dev_attr_rpmsg_name.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(qcom_glink);
 
-अटल व्योम qcom_glink_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
-	काष्ठा glink_channel *channel = to_glink_channel(rpdev->ept);
+static void qcom_glink_device_release(struct device *dev)
+{
+	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
+	struct glink_channel *channel = to_glink_channel(rpdev->ept);
 
 	/* Release qcom_glink_alloc_channel() reference */
 	kref_put(&channel->refcount, qcom_glink_channel_release);
-	kमुक्त(rpdev);
-पूर्ण
+	kfree(rpdev);
+}
 
-अटल पूर्णांक qcom_glink_create_chrdev(काष्ठा qcom_glink *glink)
-अणु
-	काष्ठा rpmsg_device *rpdev;
-	काष्ठा glink_channel *channel;
+static int qcom_glink_create_chrdev(struct qcom_glink *glink)
+{
+	struct rpmsg_device *rpdev;
+	struct glink_channel *channel;
 
-	rpdev = kzalloc(माप(*rpdev), GFP_KERNEL);
-	अगर (!rpdev)
-		वापस -ENOMEM;
+	rpdev = kzalloc(sizeof(*rpdev), GFP_KERNEL);
+	if (!rpdev)
+		return -ENOMEM;
 
 	channel = qcom_glink_alloc_channel(glink, "rpmsg_chrdev");
-	अगर (IS_ERR(channel)) अणु
-		kमुक्त(rpdev);
-		वापस PTR_ERR(channel);
-	पूर्ण
+	if (IS_ERR(channel)) {
+		kfree(rpdev);
+		return PTR_ERR(channel);
+	}
 	channel->rpdev = rpdev;
 
 	rpdev->ept = &channel->ept;
@@ -1643,29 +1642,29 @@ ATTRIBUTE_GROUPS(qcom_glink);
 	rpdev->dev.parent = glink->dev;
 	rpdev->dev.release = qcom_glink_device_release;
 
-	वापस rpmsg_chrdev_रेजिस्टर_device(rpdev);
-पूर्ण
+	return rpmsg_chrdev_register_device(rpdev);
+}
 
-काष्ठा qcom_glink *qcom_glink_native_probe(काष्ठा device *dev,
-					   अचिन्हित दीर्घ features,
-					   काष्ठा qcom_glink_pipe *rx,
-					   काष्ठा qcom_glink_pipe *tx,
-					   bool पूर्णांकentless)
-अणु
-	पूर्णांक irq;
-	पूर्णांक ret;
-	काष्ठा qcom_glink *glink;
+struct qcom_glink *qcom_glink_native_probe(struct device *dev,
+					   unsigned long features,
+					   struct qcom_glink_pipe *rx,
+					   struct qcom_glink_pipe *tx,
+					   bool intentless)
+{
+	int irq;
+	int ret;
+	struct qcom_glink *glink;
 
-	glink = devm_kzalloc(dev, माप(*glink), GFP_KERNEL);
-	अगर (!glink)
-		वापस ERR_PTR(-ENOMEM);
+	glink = devm_kzalloc(dev, sizeof(*glink), GFP_KERNEL);
+	if (!glink)
+		return ERR_PTR(-ENOMEM);
 
 	glink->dev = dev;
 	glink->tx_pipe = tx;
 	glink->rx_pipe = rx;
 
 	glink->features = features;
-	glink->पूर्णांकentless = पूर्णांकentless;
+	glink->intentless = intentless;
 
 	spin_lock_init(&glink->tx_lock);
 	spin_lock_init(&glink->rx_lock);
@@ -1679,85 +1678,85 @@ ATTRIBUTE_GROUPS(qcom_glink);
 	glink->dev->groups = qcom_glink_groups;
 
 	ret = device_add_groups(dev, qcom_glink_groups);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to add groups\n");
 
-	ret = of_property_पढ़ो_string(dev->of_node, "label", &glink->name);
-	अगर (ret < 0)
+	ret = of_property_read_string(dev->of_node, "label", &glink->name);
+	if (ret < 0)
 		glink->name = dev->of_node->name;
 
 	glink->mbox_client.dev = dev;
-	glink->mbox_client.knows_txकरोne = true;
+	glink->mbox_client.knows_txdone = true;
 	glink->mbox_chan = mbox_request_channel(&glink->mbox_client, 0);
-	अगर (IS_ERR(glink->mbox_chan)) अणु
-		अगर (PTR_ERR(glink->mbox_chan) != -EPROBE_DEFER)
+	if (IS_ERR(glink->mbox_chan)) {
+		if (PTR_ERR(glink->mbox_chan) != -EPROBE_DEFER)
 			dev_err(dev, "failed to acquire IPC channel\n");
-		वापस ERR_CAST(glink->mbox_chan);
-	पूर्ण
+		return ERR_CAST(glink->mbox_chan);
+	}
 
 	irq = of_irq_get(dev->of_node, 0);
 	ret = devm_request_irq(dev, irq,
-			       qcom_glink_native_पूर्णांकr,
+			       qcom_glink_native_intr,
 			       IRQF_NO_SUSPEND | IRQF_SHARED,
 			       "glink-native", glink);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request IRQ\n");
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
 	glink->irq = irq;
 
 	ret = qcom_glink_send_version(glink);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	ret = qcom_glink_create_chrdev(glink);
-	अगर (ret)
+	if (ret)
 		dev_err(glink->dev, "failed to register chrdev\n");
 
-	वापस glink;
-पूर्ण
+	return glink;
+}
 EXPORT_SYMBOL_GPL(qcom_glink_native_probe);
 
-अटल पूर्णांक qcom_glink_हटाओ_device(काष्ठा device *dev, व्योम *data)
-अणु
-	device_unरेजिस्टर(dev);
+static int qcom_glink_remove_device(struct device *dev, void *data)
+{
+	device_unregister(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम qcom_glink_native_हटाओ(काष्ठा qcom_glink *glink)
-अणु
-	काष्ठा glink_channel *channel;
-	पूर्णांक cid;
-	पूर्णांक ret;
+void qcom_glink_native_remove(struct qcom_glink *glink)
+{
+	struct glink_channel *channel;
+	int cid;
+	int ret;
 
 	disable_irq(glink->irq);
 	qcom_glink_cancel_rx_work(glink);
 
-	ret = device_क्रम_each_child(glink->dev, शून्य, qcom_glink_हटाओ_device);
-	अगर (ret)
+	ret = device_for_each_child(glink->dev, NULL, qcom_glink_remove_device);
+	if (ret)
 		dev_warn(glink->dev, "Can't remove GLINK devices: %d\n", ret);
 
-	/* Release any defunct local channels, रुकोing क्रम बंद-ack */
-	idr_क्रम_each_entry(&glink->lcids, channel, cid)
+	/* Release any defunct local channels, waiting for close-ack */
+	idr_for_each_entry(&glink->lcids, channel, cid)
 		kref_put(&channel->refcount, qcom_glink_channel_release);
 
-	/* Release any defunct local channels, रुकोing क्रम बंद-req */
-	idr_क्रम_each_entry(&glink->rcids, channel, cid)
+	/* Release any defunct local channels, waiting for close-req */
+	idr_for_each_entry(&glink->rcids, channel, cid)
 		kref_put(&channel->refcount, qcom_glink_channel_release);
 
 	idr_destroy(&glink->lcids);
 	idr_destroy(&glink->rcids);
-	mbox_मुक्त_channel(glink->mbox_chan);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_glink_native_हटाओ);
+	mbox_free_channel(glink->mbox_chan);
+}
+EXPORT_SYMBOL_GPL(qcom_glink_native_remove);
 
-व्योम qcom_glink_native_unरेजिस्टर(काष्ठा qcom_glink *glink)
-अणु
-	device_unरेजिस्टर(glink->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_glink_native_unरेजिस्टर);
+void qcom_glink_native_unregister(struct qcom_glink *glink)
+{
+	device_unregister(glink->dev);
+}
+EXPORT_SYMBOL_GPL(qcom_glink_native_unregister);
 
 MODULE_DESCRIPTION("Qualcomm GLINK driver");
 MODULE_LICENSE("GPL v2");

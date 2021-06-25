@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,56 +15,56 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "fnic_io.h"
-#समावेश "fnic.h"
+#include <linux/module.h>
+#include <linux/mempool.h>
+#include <linux/errno.h>
+#include <linux/spinlock.h>
+#include <linux/kallsyms.h>
+#include <linux/time.h>
+#include <linux/vmalloc.h>
+#include "fnic_io.h"
+#include "fnic.h"
 
-अचिन्हित पूर्णांक trace_max_pages;
-अटल पूर्णांक fnic_max_trace_entries;
+unsigned int trace_max_pages;
+static int fnic_max_trace_entries;
 
-अटल अचिन्हित दीर्घ fnic_trace_buf_p;
-अटल DEFINE_SPINLOCK(fnic_trace_lock);
+static unsigned long fnic_trace_buf_p;
+static DEFINE_SPINLOCK(fnic_trace_lock);
 
-अटल fnic_trace_dbg_t fnic_trace_entries;
-पूर्णांक fnic_tracing_enabled = 1;
+static fnic_trace_dbg_t fnic_trace_entries;
+int fnic_tracing_enabled = 1;
 
-/* अटल अक्षर *fnic_fc_ctlr_trace_buf_p; */
+/* static char *fnic_fc_ctlr_trace_buf_p; */
 
-अटल पूर्णांक fc_trace_max_entries;
-अटल अचिन्हित दीर्घ fnic_fc_ctlr_trace_buf_p;
-अटल fnic_trace_dbg_t fc_trace_entries;
-पूर्णांक fnic_fc_tracing_enabled = 1;
-पूर्णांक fnic_fc_trace_cleared = 1;
-अटल DEFINE_SPINLOCK(fnic_fc_trace_lock);
+static int fc_trace_max_entries;
+static unsigned long fnic_fc_ctlr_trace_buf_p;
+static fnic_trace_dbg_t fc_trace_entries;
+int fnic_fc_tracing_enabled = 1;
+int fnic_fc_trace_cleared = 1;
+static DEFINE_SPINLOCK(fnic_fc_trace_lock);
 
 
 /*
- * fnic_trace_get_buf - Give buffer poपूर्णांकer to user to fill up trace inक्रमmation
+ * fnic_trace_get_buf - Give buffer pointer to user to fill up trace information
  *
  * Description:
- * This routine माला_लो next available trace buffer entry location @wr_idx
+ * This routine gets next available trace buffer entry location @wr_idx
  * from allocated trace buffer pages and give that memory location
- * to user to store the trace inक्रमmation.
+ * to user to store the trace information.
  *
  * Return Value:
- * This routine वापसs poपूर्णांकer to next available trace entry
- * @fnic_buf_head क्रम user to fill trace inक्रमmation.
+ * This routine returns pointer to next available trace entry
+ * @fnic_buf_head for user to fill trace information.
  */
-fnic_trace_data_t *fnic_trace_get_buf(व्योम)
-अणु
-	अचिन्हित दीर्घ fnic_buf_head;
-	अचिन्हित दीर्घ flags;
+fnic_trace_data_t *fnic_trace_get_buf(void)
+{
+	unsigned long fnic_buf_head;
+	unsigned long flags;
 
 	spin_lock_irqsave(&fnic_trace_lock, flags);
 
 	/*
-	 * Get next available memory location क्रम writing trace inक्रमmation
+	 * Get next available memory location for writing trace information
 	 * at @wr_idx and increment @wr_idx
 	 */
 	fnic_buf_head =
@@ -73,28 +72,28 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 	fnic_trace_entries.wr_idx++;
 
 	/*
-	 * Verअगरy अगर trace buffer is full then change wd_idx to
+	 * Verify if trace buffer is full then change wd_idx to
 	 * start from zero
 	 */
-	अगर (fnic_trace_entries.wr_idx >= fnic_max_trace_entries)
+	if (fnic_trace_entries.wr_idx >= fnic_max_trace_entries)
 		fnic_trace_entries.wr_idx = 0;
 
 	/*
-	 * Verअगरy अगर ग_लिखो index @wr_idx and पढ़ो index @rd_idx are same then
+	 * Verify if write index @wr_idx and read index @rd_idx are same then
 	 * increment @rd_idx to move to next entry in trace buffer
 	 */
-	अगर (fnic_trace_entries.wr_idx == fnic_trace_entries.rd_idx) अणु
+	if (fnic_trace_entries.wr_idx == fnic_trace_entries.rd_idx) {
 		fnic_trace_entries.rd_idx++;
-		अगर (fnic_trace_entries.rd_idx >= fnic_max_trace_entries)
+		if (fnic_trace_entries.rd_idx >= fnic_max_trace_entries)
 			fnic_trace_entries.rd_idx = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&fnic_trace_lock, flags);
-	वापस (fnic_trace_data_t *)fnic_buf_head;
-पूर्ण
+	return (fnic_trace_data_t *)fnic_buf_head;
+}
 
 /*
  * fnic_get_trace_data - Copy trace buffer to a memory file
- * @fnic_dbgfs_t: poपूर्णांकer to debugfs trace buffer
+ * @fnic_dbgfs_t: pointer to debugfs trace buffer
  *
  * Description:
  * This routine gathers the fnic trace debugfs data from the fnic_trace_data_t
@@ -103,43 +102,43 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
  * from the beginning of the log and process until the current entry @wr_idx.
  *
  * Return Value:
- * This routine वापसs the amount of bytes that were dumped पूर्णांकo fnic_dbgfs_t
+ * This routine returns the amount of bytes that were dumped into fnic_dbgfs_t
  */
-पूर्णांक fnic_get_trace_data(fnic_dbgfs_t *fnic_dbgfs_prt)
-अणु
-	पूर्णांक rd_idx;
-	पूर्णांक wr_idx;
-	पूर्णांक len = 0;
-	अचिन्हित दीर्घ flags;
-	अक्षर str[KSYM_SYMBOL_LEN];
-	काष्ठा बारpec64 val;
+int fnic_get_trace_data(fnic_dbgfs_t *fnic_dbgfs_prt)
+{
+	int rd_idx;
+	int wr_idx;
+	int len = 0;
+	unsigned long flags;
+	char str[KSYM_SYMBOL_LEN];
+	struct timespec64 val;
 	fnic_trace_data_t *tbp;
 
 	spin_lock_irqsave(&fnic_trace_lock, flags);
 	rd_idx = fnic_trace_entries.rd_idx;
 	wr_idx = fnic_trace_entries.wr_idx;
-	अगर (wr_idx < rd_idx) अणु
-		जबतक (1) अणु
-			/* Start from पढ़ो index @rd_idx */
+	if (wr_idx < rd_idx) {
+		while (1) {
+			/* Start from read index @rd_idx */
 			tbp = (fnic_trace_data_t *)
 				  fnic_trace_entries.page_offset[rd_idx];
-			अगर (!tbp) अणु
+			if (!tbp) {
 				spin_unlock_irqrestore(&fnic_trace_lock, flags);
-				वापस 0;
-			पूर्ण
-			/* Convert function poपूर्णांकer to function name */
-			अगर (माप(अचिन्हित दीर्घ) < 8) अणु
-				sprपूर्णांक_symbol(str, tbp->fnaddr.low);
-				jअगरfies_to_बारpec64(tbp->बारtamp.low, &val);
-			पूर्ण अन्यथा अणु
-				sprपूर्णांक_symbol(str, tbp->fnaddr.val);
-				jअगरfies_to_बारpec64(tbp->बारtamp.val, &val);
-			पूर्ण
+				return 0;
+			}
+			/* Convert function pointer to function name */
+			if (sizeof(unsigned long) < 8) {
+				sprint_symbol(str, tbp->fnaddr.low);
+				jiffies_to_timespec64(tbp->timestamp.low, &val);
+			} else {
+				sprint_symbol(str, tbp->fnaddr.val);
+				jiffies_to_timespec64(tbp->timestamp.val, &val);
+			}
 			/*
 			 * Dump trace buffer entry to memory file
-			 * and increment पढ़ो index @rd_idx
+			 * and increment read index @rd_idx
 			 */
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				  (trace_max_pages * PAGE_SIZE * 3) - len,
 				  "%16llu.%09lu %-50s %8x %8x %16llx %16llx "
 				  "%16llx %16llx %16llx\n", (u64)val.tv_sec,
@@ -151,37 +150,37 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 			 * If rd_idx is reached to maximum trace entries
 			 * then move rd_idx to zero
 			 */
-			अगर (rd_idx > (fnic_max_trace_entries-1))
+			if (rd_idx > (fnic_max_trace_entries-1))
 				rd_idx = 0;
 			/*
-			 * Continue dumping trace buffer entries पूर्णांकo
-			 * memory file till rd_idx reaches ग_लिखो index
+			 * Continue dumping trace buffer entries into
+			 * memory file till rd_idx reaches write index
 			 */
-			अगर (rd_idx == wr_idx)
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (wr_idx > rd_idx) अणु
-		जबतक (1) अणु
-			/* Start from पढ़ो index @rd_idx */
+			if (rd_idx == wr_idx)
+				break;
+		}
+	} else if (wr_idx > rd_idx) {
+		while (1) {
+			/* Start from read index @rd_idx */
 			tbp = (fnic_trace_data_t *)
 				  fnic_trace_entries.page_offset[rd_idx];
-			अगर (!tbp) अणु
+			if (!tbp) {
 				spin_unlock_irqrestore(&fnic_trace_lock, flags);
-				वापस 0;
-			पूर्ण
-			/* Convert function poपूर्णांकer to function name */
-			अगर (माप(अचिन्हित दीर्घ) < 8) अणु
-				sprपूर्णांक_symbol(str, tbp->fnaddr.low);
-				jअगरfies_to_बारpec64(tbp->बारtamp.low, &val);
-			पूर्ण अन्यथा अणु
-				sprपूर्णांक_symbol(str, tbp->fnaddr.val);
-				jअगरfies_to_बारpec64(tbp->बारtamp.val, &val);
-			पूर्ण
+				return 0;
+			}
+			/* Convert function pointer to function name */
+			if (sizeof(unsigned long) < 8) {
+				sprint_symbol(str, tbp->fnaddr.low);
+				jiffies_to_timespec64(tbp->timestamp.low, &val);
+			} else {
+				sprint_symbol(str, tbp->fnaddr.val);
+				jiffies_to_timespec64(tbp->timestamp.val, &val);
+			}
 			/*
 			 * Dump trace buffer entry to memory file
-			 * and increment पढ़ो index @rd_idx
+			 * and increment read index @rd_idx
 			 */
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				  (trace_max_pages * PAGE_SIZE * 3) - len,
 				  "%16llu.%09lu %-50s %8x %8x %16llx %16llx "
 				  "%16llx %16llx %16llx\n", (u64)val.tv_sec,
@@ -190,65 +189,65 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 				  tbp->data[3], tbp->data[4]);
 			rd_idx++;
 			/*
-			 * Continue dumping trace buffer entries पूर्णांकo
-			 * memory file till rd_idx reaches ग_लिखो index
+			 * Continue dumping trace buffer entries into
+			 * memory file till rd_idx reaches write index
 			 */
-			अगर (rd_idx == wr_idx)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (rd_idx == wr_idx)
+				break;
+		}
+	}
 	spin_unlock_irqrestore(&fnic_trace_lock, flags);
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
  * fnic_get_stats_data - Copy fnic stats buffer to a memory file
- * @fnic_dbgfs_t: poपूर्णांकer to debugfs fnic stats buffer
+ * @fnic_dbgfs_t: pointer to debugfs fnic stats buffer
  *
  * Description:
- * This routine gathers the fnic stats debugfs data from the fnic_stats काष्ठा
+ * This routine gathers the fnic stats debugfs data from the fnic_stats struct
  * and dumps it to stats_debug_info.
  *
  * Return Value:
- * This routine वापसs the amount of bytes that were dumped पूर्णांकo
+ * This routine returns the amount of bytes that were dumped into
  * stats_debug_info
  */
-पूर्णांक fnic_get_stats_data(काष्ठा stats_debug_info *debug,
-			काष्ठा fnic_stats *stats)
-अणु
-	पूर्णांक len = 0;
-	पूर्णांक buf_size = debug->buf_size;
-	काष्ठा बारpec64 val1, val2;
+int fnic_get_stats_data(struct stats_debug_info *debug,
+			struct fnic_stats *stats)
+{
+	int len = 0;
+	int buf_size = debug->buf_size;
+	struct timespec64 val1, val2;
 
-	kसमय_get_real_ts64(&val1);
-	len = scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	ktime_get_real_ts64(&val1);
+	len = scnprintf(debug->debug_buffer + len, buf_size - len,
 		"------------------------------------------\n"
 		 "\t\tTime\n"
 		"------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		"Current time :          [%lld:%ld]\n"
 		"Last stats reset time:  [%lld:%09ld]\n"
 		"Last stats read time:   [%lld:%ld]\n"
 		"delta since last reset: [%lld:%ld]\n"
 		"delta since last read:  [%lld:%ld]\n",
 	(s64)val1.tv_sec, val1.tv_nsec,
-	(s64)stats->stats_बारtamps.last_reset_समय.tv_sec,
-	stats->stats_बारtamps.last_reset_समय.tv_nsec,
-	(s64)stats->stats_बारtamps.last_पढ़ो_समय.tv_sec,
-	stats->stats_बारtamps.last_पढ़ो_समय.tv_nsec,
-	(s64)बारpec64_sub(val1, stats->stats_बारtamps.last_reset_समय).tv_sec,
-	बारpec64_sub(val1, stats->stats_बारtamps.last_reset_समय).tv_nsec,
-	(s64)बारpec64_sub(val1, stats->stats_बारtamps.last_पढ़ो_समय).tv_sec,
-	बारpec64_sub(val1, stats->stats_बारtamps.last_पढ़ो_समय).tv_nsec);
+	(s64)stats->stats_timestamps.last_reset_time.tv_sec,
+	stats->stats_timestamps.last_reset_time.tv_nsec,
+	(s64)stats->stats_timestamps.last_read_time.tv_sec,
+	stats->stats_timestamps.last_read_time.tv_nsec,
+	(s64)timespec64_sub(val1, stats->stats_timestamps.last_reset_time).tv_sec,
+	timespec64_sub(val1, stats->stats_timestamps.last_reset_time).tv_nsec,
+	(s64)timespec64_sub(val1, stats->stats_timestamps.last_read_time).tv_sec,
+	timespec64_sub(val1, stats->stats_timestamps.last_read_time).tv_nsec);
 
-	stats->stats_बारtamps.last_पढ़ो_समय = val1;
+	stats->stats_timestamps.last_read_time = val1;
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "------------------------------------------\n"
 		  "\t\tIO Statistics\n"
 		  "------------------------------------------\n");
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Active IOs: %lld\nMaximum Active IOs: %lld\n"
 		  "Number of IOs: %lld\nNumber of IO Completions: %lld\n"
 		  "Number of IO Failures: %lld\nNumber of IO NOT Found: %lld\n"
@@ -264,33 +263,33 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 		  "     5 sec -  10 sec: %lld\n"
 		  "    10 sec -  30 sec: %lld\n"
 		  "            > 30 sec: %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->io_stats.active_ios),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.max_active_ios),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.num_ios),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_completions),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_failures),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_not_found),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.alloc_failures),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.ioreq_null),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.sc_null),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_0_to_10_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_10_to_100_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_100_to_500_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_500_to_5000_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_5000_to_10000_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_btw_10000_to_30000_msec),
-		  (u64)atomic64_पढ़ो(&stats->io_stats.io_greater_than_30000_msec));
+		  (u64)atomic64_read(&stats->io_stats.active_ios),
+		  (u64)atomic64_read(&stats->io_stats.max_active_ios),
+		  (u64)atomic64_read(&stats->io_stats.num_ios),
+		  (u64)atomic64_read(&stats->io_stats.io_completions),
+		  (u64)atomic64_read(&stats->io_stats.io_failures),
+		  (u64)atomic64_read(&stats->io_stats.io_not_found),
+		  (u64)atomic64_read(&stats->io_stats.alloc_failures),
+		  (u64)atomic64_read(&stats->io_stats.ioreq_null),
+		  (u64)atomic64_read(&stats->io_stats.sc_null),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_0_to_10_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_10_to_100_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_100_to_500_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_500_to_5000_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_5000_to_10000_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_btw_10000_to_30000_msec),
+		  (u64)atomic64_read(&stats->io_stats.io_greater_than_30000_msec));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\nCurrent Max IO time : %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->io_stats.current_max_io_समय));
+		  (u64)atomic64_read(&stats->io_stats.current_max_io_time));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tAbort Statistics\n"
 		  "------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Aborts: %lld\n"
 		  "Number of Abort Failures: %lld\n"
 		  "Number of Abort Driver Timeouts: %lld\n"
@@ -306,44 +305,44 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 		  "    50 sec - 60 sec : %lld\n"
 		  "            > 60 sec: %lld\n",
 
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पातs),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_failures),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_drv_समयouts),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_fw_समयouts),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_io_not_found),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_0_to_6_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_6_to_20_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_20_to_30_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_30_to_40_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_40_to_50_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_btw_50_to_60_sec),
-		  (u64)atomic64_पढ़ो(&stats->abts_stats.पात_issued_greater_than_60_sec));
+		  (u64)atomic64_read(&stats->abts_stats.aborts),
+		  (u64)atomic64_read(&stats->abts_stats.abort_failures),
+		  (u64)atomic64_read(&stats->abts_stats.abort_drv_timeouts),
+		  (u64)atomic64_read(&stats->abts_stats.abort_fw_timeouts),
+		  (u64)atomic64_read(&stats->abts_stats.abort_io_not_found),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_0_to_6_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_6_to_20_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_20_to_30_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_30_to_40_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_40_to_50_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_btw_50_to_60_sec),
+		  (u64)atomic64_read(&stats->abts_stats.abort_issued_greater_than_60_sec));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tTerminate Statistics\n"
 		  "------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Terminates: %lld\n"
 		  "Maximum Terminates: %lld\n"
 		  "Number of Terminate Driver Timeouts: %lld\n"
 		  "Number of Terminate FW Timeouts: %lld\n"
 		  "Number of Terminate IO NOT Found: %lld\n"
 		  "Number of Terminate Failures: %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->term_stats.terminates),
-		  (u64)atomic64_पढ़ो(&stats->term_stats.max_terminates),
-		  (u64)atomic64_पढ़ो(&stats->term_stats.terminate_drv_समयouts),
-		  (u64)atomic64_पढ़ो(&stats->term_stats.terminate_fw_समयouts),
-		  (u64)atomic64_पढ़ो(&stats->term_stats.terminate_io_not_found),
-		  (u64)atomic64_पढ़ो(&stats->term_stats.terminate_failures));
+		  (u64)atomic64_read(&stats->term_stats.terminates),
+		  (u64)atomic64_read(&stats->term_stats.max_terminates),
+		  (u64)atomic64_read(&stats->term_stats.terminate_drv_timeouts),
+		  (u64)atomic64_read(&stats->term_stats.terminate_fw_timeouts),
+		  (u64)atomic64_read(&stats->term_stats.terminate_io_not_found),
+		  (u64)atomic64_read(&stats->term_stats.terminate_failures));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tReset Statistics\n"
 		  "------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Device Resets: %lld\n"
 		  "Number of Device Reset Failures: %lld\n"
 		  "Number of Device Reset Aborts: %lld\n"
@@ -355,59 +354,59 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 		  "Number of Fnic Reset: %lld\n"
 		  "Number of Fnic Reset Completions: %lld\n"
 		  "Number of Fnic Reset Failures: %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.device_resets),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.device_reset_failures),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.device_reset_पातs),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.device_reset_समयouts),
-		  (u64)atomic64_पढ़ो(
+		  (u64)atomic64_read(&stats->reset_stats.device_resets),
+		  (u64)atomic64_read(&stats->reset_stats.device_reset_failures),
+		  (u64)atomic64_read(&stats->reset_stats.device_reset_aborts),
+		  (u64)atomic64_read(&stats->reset_stats.device_reset_timeouts),
+		  (u64)atomic64_read(
 			  &stats->reset_stats.device_reset_terminates),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.fw_resets),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.fw_reset_completions),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.fw_reset_failures),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.fnic_resets),
-		  (u64)atomic64_पढ़ो(
+		  (u64)atomic64_read(&stats->reset_stats.fw_resets),
+		  (u64)atomic64_read(&stats->reset_stats.fw_reset_completions),
+		  (u64)atomic64_read(&stats->reset_stats.fw_reset_failures),
+		  (u64)atomic64_read(&stats->reset_stats.fnic_resets),
+		  (u64)atomic64_read(
 			  &stats->reset_stats.fnic_reset_completions),
-		  (u64)atomic64_पढ़ो(&stats->reset_stats.fnic_reset_failures));
+		  (u64)atomic64_read(&stats->reset_stats.fnic_reset_failures));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tFirmware Statistics\n"
 		  "------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Active FW Requests %lld\n"
 		  "Maximum FW Requests: %lld\n"
 		  "Number of FW out of resources: %lld\n"
 		  "Number of FW IO errors: %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->fw_stats.active_fw_reqs),
-		  (u64)atomic64_पढ़ो(&stats->fw_stats.max_fw_reqs),
-		  (u64)atomic64_पढ़ो(&stats->fw_stats.fw_out_of_resources),
-		  (u64)atomic64_पढ़ो(&stats->fw_stats.io_fw_errs));
+		  (u64)atomic64_read(&stats->fw_stats.active_fw_reqs),
+		  (u64)atomic64_read(&stats->fw_stats.max_fw_reqs),
+		  (u64)atomic64_read(&stats->fw_stats.fw_out_of_resources),
+		  (u64)atomic64_read(&stats->fw_stats.io_fw_errs));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tVlan Discovery Statistics\n"
 		  "------------------------------------------\n");
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Number of Vlan Discovery Requests Sent %lld\n"
 		  "Vlan Response Received with no FCF VLAN ID: %lld\n"
 		  "No solicitations recvd after vlan set, expiry count: %lld\n"
 		  "Flogi rejects count: %lld\n",
-		  (u64)atomic64_पढ़ो(&stats->vlan_stats.vlan_disc_reqs),
-		  (u64)atomic64_पढ़ो(&stats->vlan_stats.resp_withno_vlanID),
-		  (u64)atomic64_पढ़ो(&stats->vlan_stats.sol_expiry_count),
-		  (u64)atomic64_पढ़ो(&stats->vlan_stats.flogi_rejects));
+		  (u64)atomic64_read(&stats->vlan_stats.vlan_disc_reqs),
+		  (u64)atomic64_read(&stats->vlan_stats.resp_withno_vlanID),
+		  (u64)atomic64_read(&stats->vlan_stats.sol_expiry_count),
+		  (u64)atomic64_read(&stats->vlan_stats.flogi_rejects));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "\n------------------------------------------\n"
 		  "\t\tOther Important Statistics\n"
 		  "------------------------------------------\n");
 
-	jअगरfies_to_बारpec64(stats->misc_stats.last_isr_समय, &val1);
-	jअगरfies_to_बारpec64(stats->misc_stats.last_ack_समय, &val2);
+	jiffies_to_timespec64(stats->misc_stats.last_isr_time, &val1);
+	jiffies_to_timespec64(stats->misc_stats.last_ack_time, &val2);
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 		  "Last ISR time: %llu (%8llu.%09lu)\n"
 		  "Last ACK time: %llu (%8llu.%09lu)\n"
 		  "Max ISR jiffies: %llu\n"
@@ -428,421 +427,421 @@ fnic_trace_data_t *fnic_trace_get_buf(व्योम)
 		  "Number of QUEUE Fulls: %lld\n"
 		  "Number of rport not ready: %lld\n"
 		  "Number of receive frame errors: %lld\n",
-		  (u64)stats->misc_stats.last_isr_समय,
+		  (u64)stats->misc_stats.last_isr_time,
 		  (s64)val1.tv_sec, val1.tv_nsec,
-		  (u64)stats->misc_stats.last_ack_समय,
+		  (u64)stats->misc_stats.last_ack_time,
 		  (s64)val2.tv_sec, val2.tv_nsec,
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.max_isr_jअगरfies),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.max_isr_समय_ms),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.corr_work_करोne),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.isr_count),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.max_cq_entries),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.ack_index_out_of_range),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.data_count_mismatch),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.fcpio_समयout),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.fcpio_पातed),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.sgl_invalid),
-		  (u64)atomic64_पढ़ो(
+		  (u64)atomic64_read(&stats->misc_stats.max_isr_jiffies),
+		  (u64)atomic64_read(&stats->misc_stats.max_isr_time_ms),
+		  (u64)atomic64_read(&stats->misc_stats.corr_work_done),
+		  (u64)atomic64_read(&stats->misc_stats.isr_count),
+		  (u64)atomic64_read(&stats->misc_stats.max_cq_entries),
+		  (u64)atomic64_read(&stats->misc_stats.ack_index_out_of_range),
+		  (u64)atomic64_read(&stats->misc_stats.data_count_mismatch),
+		  (u64)atomic64_read(&stats->misc_stats.fcpio_timeout),
+		  (u64)atomic64_read(&stats->misc_stats.fcpio_aborted),
+		  (u64)atomic64_read(&stats->misc_stats.sgl_invalid),
+		  (u64)atomic64_read(
 			  &stats->misc_stats.abts_cpwq_alloc_failures),
-		  (u64)atomic64_पढ़ो(
+		  (u64)atomic64_read(
 			  &stats->misc_stats.devrst_cpwq_alloc_failures),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.io_cpwq_alloc_failures),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.no_icmnd_iपंचांगf_cmpls),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.check_condition),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.queue_fulls),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.rport_not_पढ़ोy),
-		  (u64)atomic64_पढ़ो(&stats->misc_stats.frame_errors));
+		  (u64)atomic64_read(&stats->misc_stats.io_cpwq_alloc_failures),
+		  (u64)atomic64_read(&stats->misc_stats.no_icmnd_itmf_cmpls),
+		  (u64)atomic64_read(&stats->misc_stats.check_condition),
+		  (u64)atomic64_read(&stats->misc_stats.queue_fulls),
+		  (u64)atomic64_read(&stats->misc_stats.rport_not_ready),
+		  (u64)atomic64_read(&stats->misc_stats.frame_errors));
 
-	len += scnम_लिखो(debug->debug_buffer + len, buf_size - len,
+	len += scnprintf(debug->debug_buffer + len, buf_size - len,
 			"Firmware reported port speed: %llu\n",
-			(u64)atomic64_पढ़ो(
+			(u64)atomic64_read(
 				&stats->misc_stats.current_port_speed));
 
-	वापस len;
+	return len;
 
-पूर्ण
+}
 
 /*
  * fnic_trace_buf_init - Initialize fnic trace buffer logging facility
  *
  * Description:
- * Initialize trace buffer data काष्ठाure by allocating required memory and
- * setting page_offset inक्रमmation क्रम every trace entry by adding trace entry
+ * Initialize trace buffer data structure by allocating required memory and
+ * setting page_offset information for every trace entry by adding trace entry
  * length to previous page_offset value.
  */
-पूर्णांक fnic_trace_buf_init(व्योम)
-अणु
-	अचिन्हित दीर्घ fnic_buf_head;
-	पूर्णांक i;
-	पूर्णांक err = 0;
+int fnic_trace_buf_init(void)
+{
+	unsigned long fnic_buf_head;
+	int i;
+	int err = 0;
 
 	trace_max_pages = fnic_trace_max_pages;
 	fnic_max_trace_entries = (trace_max_pages * PAGE_SIZE)/
 					  FNIC_ENTRY_SIZE_BYTES;
 
-	fnic_trace_buf_p = (अचिन्हित दीर्घ)vzalloc(trace_max_pages * PAGE_SIZE);
-	अगर (!fnic_trace_buf_p) अणु
-		prपूर्णांकk(KERN_ERR PFX "Failed to allocate memory "
+	fnic_trace_buf_p = (unsigned long)vzalloc(trace_max_pages * PAGE_SIZE);
+	if (!fnic_trace_buf_p) {
+		printk(KERN_ERR PFX "Failed to allocate memory "
 				  "for fnic_trace_buf_p\n");
 		err = -ENOMEM;
-		जाओ err_fnic_trace_buf_init;
-	पूर्ण
+		goto err_fnic_trace_buf_init;
+	}
 
 	fnic_trace_entries.page_offset =
-		vदो_स्मृति(array_size(fnic_max_trace_entries,
-				   माप(अचिन्हित दीर्घ)));
-	अगर (!fnic_trace_entries.page_offset) अणु
-		prपूर्णांकk(KERN_ERR PFX "Failed to allocate memory for"
+		vmalloc(array_size(fnic_max_trace_entries,
+				   sizeof(unsigned long)));
+	if (!fnic_trace_entries.page_offset) {
+		printk(KERN_ERR PFX "Failed to allocate memory for"
 				  " page_offset\n");
-		अगर (fnic_trace_buf_p) अणु
-			vमुक्त((व्योम *)fnic_trace_buf_p);
+		if (fnic_trace_buf_p) {
+			vfree((void *)fnic_trace_buf_p);
 			fnic_trace_buf_p = 0;
-		पूर्ण
+		}
 		err = -ENOMEM;
-		जाओ err_fnic_trace_buf_init;
-	पूर्ण
-	स_रखो((व्योम *)fnic_trace_entries.page_offset, 0,
-		  (fnic_max_trace_entries * माप(अचिन्हित दीर्घ)));
+		goto err_fnic_trace_buf_init;
+	}
+	memset((void *)fnic_trace_entries.page_offset, 0,
+		  (fnic_max_trace_entries * sizeof(unsigned long)));
 	fnic_trace_entries.wr_idx = fnic_trace_entries.rd_idx = 0;
 	fnic_buf_head = fnic_trace_buf_p;
 
 	/*
-	 * Set page_offset field of fnic_trace_entries काष्ठा by
-	 * calculating memory location क्रम every trace entry using
+	 * Set page_offset field of fnic_trace_entries struct by
+	 * calculating memory location for every trace entry using
 	 * length of each trace entry
 	 */
-	क्रम (i = 0; i < fnic_max_trace_entries; i++) अणु
+	for (i = 0; i < fnic_max_trace_entries; i++) {
 		fnic_trace_entries.page_offset[i] = fnic_buf_head;
 		fnic_buf_head += FNIC_ENTRY_SIZE_BYTES;
-	पूर्ण
+	}
 	fnic_trace_debugfs_init();
 	pr_info("fnic: Successfully Initialized Trace Buffer\n");
-	वापस err;
+	return err;
 
 err_fnic_trace_buf_init:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * fnic_trace_मुक्त - Free memory of fnic trace data काष्ठाures.
+ * fnic_trace_free - Free memory of fnic trace data structures.
  */
-व्योम fnic_trace_मुक्त(व्योम)
-अणु
+void fnic_trace_free(void)
+{
 	fnic_tracing_enabled = 0;
 	fnic_trace_debugfs_terminate();
-	अगर (fnic_trace_entries.page_offset) अणु
-		vमुक्त((व्योम *)fnic_trace_entries.page_offset);
-		fnic_trace_entries.page_offset = शून्य;
-	पूर्ण
-	अगर (fnic_trace_buf_p) अणु
-		vमुक्त((व्योम *)fnic_trace_buf_p);
+	if (fnic_trace_entries.page_offset) {
+		vfree((void *)fnic_trace_entries.page_offset);
+		fnic_trace_entries.page_offset = NULL;
+	}
+	if (fnic_trace_buf_p) {
+		vfree((void *)fnic_trace_buf_p);
 		fnic_trace_buf_p = 0;
-	पूर्ण
-	prपूर्णांकk(KERN_INFO PFX "Successfully Freed Trace Buffer\n");
-पूर्ण
+	}
+	printk(KERN_INFO PFX "Successfully Freed Trace Buffer\n");
+}
 
 /*
  * fnic_fc_ctlr_trace_buf_init -
  * Initialize trace buffer to log fnic control frames
  * Description:
- * Initialize trace buffer data काष्ठाure by allocating
- * required memory क्रम trace data as well as क्रम Indexes.
+ * Initialize trace buffer data structure by allocating
+ * required memory for trace data as well as for Indexes.
  * Frame size is 256 bytes and
- * memory is allocated क्रम 1024 entries of 256 bytes.
+ * memory is allocated for 1024 entries of 256 bytes.
  * Page_offset(Index) is set to the address of trace entry
  * and page_offset is initialized by adding frame size
  * to the previous page_offset entry.
  */
 
-पूर्णांक fnic_fc_trace_init(व्योम)
-अणु
-	अचिन्हित दीर्घ fc_trace_buf_head;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+int fnic_fc_trace_init(void)
+{
+	unsigned long fc_trace_buf_head;
+	int err = 0;
+	int i;
 
 	fc_trace_max_entries = (fnic_fc_trace_max_pages * PAGE_SIZE)/
 				FC_TRC_SIZE_BYTES;
 	fnic_fc_ctlr_trace_buf_p =
-		(अचिन्हित दीर्घ)vदो_स्मृति(array_size(PAGE_SIZE,
+		(unsigned long)vmalloc(array_size(PAGE_SIZE,
 						  fnic_fc_trace_max_pages));
-	अगर (!fnic_fc_ctlr_trace_buf_p) अणु
+	if (!fnic_fc_ctlr_trace_buf_p) {
 		pr_err("fnic: Failed to allocate memory for "
 		       "FC Control Trace Buf\n");
 		err = -ENOMEM;
-		जाओ err_fnic_fc_ctlr_trace_buf_init;
-	पूर्ण
+		goto err_fnic_fc_ctlr_trace_buf_init;
+	}
 
-	स_रखो((व्योम *)fnic_fc_ctlr_trace_buf_p, 0,
+	memset((void *)fnic_fc_ctlr_trace_buf_p, 0,
 			fnic_fc_trace_max_pages * PAGE_SIZE);
 
-	/* Allocate memory क्रम page offset */
+	/* Allocate memory for page offset */
 	fc_trace_entries.page_offset =
-		vदो_स्मृति(array_size(fc_trace_max_entries,
-				   माप(अचिन्हित दीर्घ)));
-	अगर (!fc_trace_entries.page_offset) अणु
+		vmalloc(array_size(fc_trace_max_entries,
+				   sizeof(unsigned long)));
+	if (!fc_trace_entries.page_offset) {
 		pr_err("fnic:Failed to allocate memory for page_offset\n");
-		अगर (fnic_fc_ctlr_trace_buf_p) अणु
+		if (fnic_fc_ctlr_trace_buf_p) {
 			pr_err("fnic: Freeing FC Control Trace Buf\n");
-			vमुक्त((व्योम *)fnic_fc_ctlr_trace_buf_p);
+			vfree((void *)fnic_fc_ctlr_trace_buf_p);
 			fnic_fc_ctlr_trace_buf_p = 0;
-		पूर्ण
+		}
 		err = -ENOMEM;
-		जाओ err_fnic_fc_ctlr_trace_buf_init;
-	पूर्ण
-	स_रखो((व्योम *)fc_trace_entries.page_offset, 0,
-	       (fc_trace_max_entries * माप(अचिन्हित दीर्घ)));
+		goto err_fnic_fc_ctlr_trace_buf_init;
+	}
+	memset((void *)fc_trace_entries.page_offset, 0,
+	       (fc_trace_max_entries * sizeof(unsigned long)));
 
 	fc_trace_entries.rd_idx = fc_trace_entries.wr_idx = 0;
 	fc_trace_buf_head = fnic_fc_ctlr_trace_buf_p;
 
 	/*
 	* Set up fc_trace_entries.page_offset field with memory location
-	* क्रम every trace entry
+	* for every trace entry
 	*/
-	क्रम (i = 0; i < fc_trace_max_entries; i++) अणु
+	for (i = 0; i < fc_trace_max_entries; i++) {
 		fc_trace_entries.page_offset[i] = fc_trace_buf_head;
 		fc_trace_buf_head += FC_TRC_SIZE_BYTES;
-	पूर्ण
+	}
 	fnic_fc_trace_debugfs_init();
 	pr_info("fnic: Successfully Initialized FC_CTLR Trace Buffer\n");
-	वापस err;
+	return err;
 
 err_fnic_fc_ctlr_trace_buf_init:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Fnic_fc_ctlr_trace_मुक्त - Free memory of fnic_fc_ctlr trace data काष्ठाures.
+ * Fnic_fc_ctlr_trace_free - Free memory of fnic_fc_ctlr trace data structures.
  */
-व्योम fnic_fc_trace_मुक्त(व्योम)
-अणु
+void fnic_fc_trace_free(void)
+{
 	fnic_fc_tracing_enabled = 0;
 	fnic_fc_trace_debugfs_terminate();
-	अगर (fc_trace_entries.page_offset) अणु
-		vमुक्त((व्योम *)fc_trace_entries.page_offset);
-		fc_trace_entries.page_offset = शून्य;
-	पूर्ण
-	अगर (fnic_fc_ctlr_trace_buf_p) अणु
-		vमुक्त((व्योम *)fnic_fc_ctlr_trace_buf_p);
+	if (fc_trace_entries.page_offset) {
+		vfree((void *)fc_trace_entries.page_offset);
+		fc_trace_entries.page_offset = NULL;
+	}
+	if (fnic_fc_ctlr_trace_buf_p) {
+		vfree((void *)fnic_fc_ctlr_trace_buf_p);
 		fnic_fc_ctlr_trace_buf_p = 0;
-	पूर्ण
+	}
 	pr_info("fnic:Successfully FC_CTLR Freed Trace Buffer\n");
-पूर्ण
+}
 
 /*
  * fnic_fc_ctlr_set_trace_data:
- *       Maपूर्णांकain rd & wr idx accordingly and set data
+ *       Maintain rd & wr idx accordingly and set data
  * Passed parameters:
  *       host_no: host number associated with fnic
  *       frame_type: send_frame, rece_frame or link event
- *       fc_frame: poपूर्णांकer to fc_frame
+ *       fc_frame: pointer to fc_frame
  *       frame_len: Length of the fc_frame
  * Description:
  *   This routine will get next available wr_idx and
- *   copy all passed trace data to the buffer poपूर्णांकed by wr_idx
- *   and increment wr_idx. It will also make sure that we करोnt
- *   overग_लिखो the entry which we are पढ़ोing and also
- *   wrap around अगर we reach the maximum entries.
+ *   copy all passed trace data to the buffer pointed by wr_idx
+ *   and increment wr_idx. It will also make sure that we dont
+ *   overwrite the entry which we are reading and also
+ *   wrap around if we reach the maximum entries.
  * Returned Value:
- *   It will वापस 0 क्रम success or -1 क्रम failure
+ *   It will return 0 for success or -1 for failure
  */
-पूर्णांक fnic_fc_trace_set_data(u32 host_no, u8 frame_type,
-				अक्षर *frame, u32 fc_trc_frame_len)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा fc_trace_hdr *fc_buf;
-	अचिन्हित दीर्घ eth_fcoe_hdr_len;
-	अक्षर *fc_trace;
+int fnic_fc_trace_set_data(u32 host_no, u8 frame_type,
+				char *frame, u32 fc_trc_frame_len)
+{
+	unsigned long flags;
+	struct fc_trace_hdr *fc_buf;
+	unsigned long eth_fcoe_hdr_len;
+	char *fc_trace;
 
-	अगर (fnic_fc_tracing_enabled == 0)
-		वापस 0;
+	if (fnic_fc_tracing_enabled == 0)
+		return 0;
 
 	spin_lock_irqsave(&fnic_fc_trace_lock, flags);
 
-	अगर (fnic_fc_trace_cleared == 1) अणु
+	if (fnic_fc_trace_cleared == 1) {
 		fc_trace_entries.rd_idx = fc_trace_entries.wr_idx = 0;
 		pr_info("fnic: Resetting the read idx\n");
-		स_रखो((व्योम *)fnic_fc_ctlr_trace_buf_p, 0,
+		memset((void *)fnic_fc_ctlr_trace_buf_p, 0,
 				fnic_fc_trace_max_pages * PAGE_SIZE);
 		fnic_fc_trace_cleared = 0;
-	पूर्ण
+	}
 
-	fc_buf = (काष्ठा fc_trace_hdr *)
+	fc_buf = (struct fc_trace_hdr *)
 		fc_trace_entries.page_offset[fc_trace_entries.wr_idx];
 
 	fc_trace_entries.wr_idx++;
 
-	अगर (fc_trace_entries.wr_idx >= fc_trace_max_entries)
+	if (fc_trace_entries.wr_idx >= fc_trace_max_entries)
 		fc_trace_entries.wr_idx = 0;
 
-	अगर (fc_trace_entries.wr_idx == fc_trace_entries.rd_idx) अणु
+	if (fc_trace_entries.wr_idx == fc_trace_entries.rd_idx) {
 		fc_trace_entries.rd_idx++;
-		अगर (fc_trace_entries.rd_idx >= fc_trace_max_entries)
+		if (fc_trace_entries.rd_idx >= fc_trace_max_entries)
 			fc_trace_entries.rd_idx = 0;
-	पूर्ण
+	}
 
-	kसमय_get_real_ts64(&fc_buf->समय_stamp);
+	ktime_get_real_ts64(&fc_buf->time_stamp);
 	fc_buf->host_no = host_no;
 	fc_buf->frame_type = frame_type;
 
-	fc_trace = (अक्षर *)FC_TRACE_ADDRESS(fc_buf);
+	fc_trace = (char *)FC_TRACE_ADDRESS(fc_buf);
 
-	/* During the receive path, we करो not have eth hdr as well as fcoe hdr
-	 * at trace entry poपूर्णांक so we will stuff 0xff just to make it generic.
+	/* During the receive path, we do not have eth hdr as well as fcoe hdr
+	 * at trace entry point so we will stuff 0xff just to make it generic.
 	 */
-	अगर (frame_type == FNIC_FC_RECV) अणु
-		eth_fcoe_hdr_len = माप(काष्ठा ethhdr) +
-					माप(काष्ठा fcoe_hdr);
-		स_रखो((अक्षर *)fc_trace, 0xff, eth_fcoe_hdr_len);
+	if (frame_type == FNIC_FC_RECV) {
+		eth_fcoe_hdr_len = sizeof(struct ethhdr) +
+					sizeof(struct fcoe_hdr);
+		memset((char *)fc_trace, 0xff, eth_fcoe_hdr_len);
 		/* Copy the rest of data frame */
-		स_नकल((अक्षर *)(fc_trace + eth_fcoe_hdr_len), (व्योम *)frame,
+		memcpy((char *)(fc_trace + eth_fcoe_hdr_len), (void *)frame,
 		min_t(u8, fc_trc_frame_len,
 			(u8)(FC_TRC_SIZE_BYTES - FC_TRC_HEADER_SIZE
 						- eth_fcoe_hdr_len)));
-	पूर्ण अन्यथा अणु
-		स_नकल((अक्षर *)fc_trace, (व्योम *)frame,
+	} else {
+		memcpy((char *)fc_trace, (void *)frame,
 		min_t(u8, fc_trc_frame_len,
 			(u8)(FC_TRC_SIZE_BYTES - FC_TRC_HEADER_SIZE)));
-	पूर्ण
+	}
 
 	/* Store the actual received length */
 	fc_buf->frame_len = fc_trc_frame_len;
 
 	spin_unlock_irqrestore(&fnic_fc_trace_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * fnic_fc_ctlr_get_trace_data: Copy trace buffer to a memory file
  * Passed parameter:
- *       @fnic_dbgfs_t: poपूर्णांकer to debugfs trace buffer
- *       rdata_flag: 1 => Unक्रमmatted file
- *                   0 => क्रमmatted file
+ *       @fnic_dbgfs_t: pointer to debugfs trace buffer
+ *       rdata_flag: 1 => Unformatted file
+ *                   0 => formatted file
  * Description:
  *       This routine will copy the trace data to memory file with
- *       proper क्रमmatting and also copy to another memory
- *       file without क्रमmatting क्रम further processing.
+ *       proper formatting and also copy to another memory
+ *       file without formatting for further processing.
  * Return Value:
- *       Number of bytes that were dumped पूर्णांकo fnic_dbgfs_t
+ *       Number of bytes that were dumped into fnic_dbgfs_t
  */
 
-पूर्णांक fnic_fc_trace_get_data(fnic_dbgfs_t *fnic_dbgfs_prt, u8 rdata_flag)
-अणु
-	पूर्णांक rd_idx, wr_idx;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक len = 0, j;
-	काष्ठा fc_trace_hdr *tdata;
-	अक्षर *fc_trace;
+int fnic_fc_trace_get_data(fnic_dbgfs_t *fnic_dbgfs_prt, u8 rdata_flag)
+{
+	int rd_idx, wr_idx;
+	unsigned long flags;
+	int len = 0, j;
+	struct fc_trace_hdr *tdata;
+	char *fc_trace;
 
 	spin_lock_irqsave(&fnic_fc_trace_lock, flags);
-	अगर (fc_trace_entries.wr_idx == fc_trace_entries.rd_idx) अणु
+	if (fc_trace_entries.wr_idx == fc_trace_entries.rd_idx) {
 		spin_unlock_irqrestore(&fnic_fc_trace_lock, flags);
 		pr_info("fnic: Buffer is empty\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	rd_idx = fc_trace_entries.rd_idx;
 	wr_idx = fc_trace_entries.wr_idx;
-	अगर (rdata_flag == 0) अणु
-		len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+	if (rdata_flag == 0) {
+		len += scnprintf(fnic_dbgfs_prt->buffer + len,
 			(fnic_fc_trace_max_pages * PAGE_SIZE * 3) - len,
 			"Time Stamp (UTC)\t\t"
 			"Host No:   F Type:  len:     FCoE_FRAME:\n");
-	पूर्ण
+	}
 
-	जबतक (rd_idx != wr_idx) अणु
-		tdata = (काष्ठा fc_trace_hdr *)
+	while (rd_idx != wr_idx) {
+		tdata = (struct fc_trace_hdr *)
 			fc_trace_entries.page_offset[rd_idx];
-		अगर (!tdata) अणु
+		if (!tdata) {
 			pr_info("fnic: Rd data is NULL\n");
 			spin_unlock_irqrestore(&fnic_fc_trace_lock, flags);
-			वापस 0;
-		पूर्ण
-		अगर (rdata_flag == 0) अणु
-			copy_and_क्रमmat_trace_data(tdata,
+			return 0;
+		}
+		if (rdata_flag == 0) {
+			copy_and_format_trace_data(tdata,
 				fnic_dbgfs_prt, &len, rdata_flag);
-		पूर्ण अन्यथा अणु
-			fc_trace = (अक्षर *)tdata;
-			क्रम (j = 0; j < FC_TRC_SIZE_BYTES; j++) अणु
-				len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+		} else {
+			fc_trace = (char *)tdata;
+			for (j = 0; j < FC_TRC_SIZE_BYTES; j++) {
+				len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				(fnic_fc_trace_max_pages * PAGE_SIZE * 3)
 				- len, "%02x", fc_trace[j] & 0xff);
-			पूर्ण /* क्रम loop */
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+			} /* for loop */
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				(fnic_fc_trace_max_pages * PAGE_SIZE * 3) - len,
 				"\n");
-		पूर्ण
+		}
 		rd_idx++;
-		अगर (rd_idx > (fc_trace_max_entries - 1))
+		if (rd_idx > (fc_trace_max_entries - 1))
 			rd_idx = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&fnic_fc_trace_lock, flags);
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * copy_and_क्रमmat_trace_data: Copy क्रमmatted data to अक्षर * buffer
+ * copy_and_format_trace_data: Copy formatted data to char * buffer
  * Passed Parameter:
- *      @fc_trace_hdr_t: poपूर्णांकer to trace data
- *      @fnic_dbgfs_t: poपूर्णांकer to debugfs trace buffer
- *      @orig_len: poपूर्णांकer to len
- *      rdata_flag: 0 => Formatted file, 1 => Unक्रमmatted file
+ *      @fc_trace_hdr_t: pointer to trace data
+ *      @fnic_dbgfs_t: pointer to debugfs trace buffer
+ *      @orig_len: pointer to len
+ *      rdata_flag: 0 => Formatted file, 1 => Unformatted file
  * Description:
- *      This routine will क्रमmat and copy the passed trace data
- *      क्रम क्रमmatted file or unक्रमmatted file accordingly.
+ *      This routine will format and copy the passed trace data
+ *      for formatted file or unformatted file accordingly.
  */
 
-व्योम copy_and_क्रमmat_trace_data(काष्ठा fc_trace_hdr *tdata,
-				fnic_dbgfs_t *fnic_dbgfs_prt, पूर्णांक *orig_len,
+void copy_and_format_trace_data(struct fc_trace_hdr *tdata,
+				fnic_dbgfs_t *fnic_dbgfs_prt, int *orig_len,
 				u8 rdata_flag)
-अणु
-	काष्ठा पंचांग पंचांग;
-	पूर्णांक j, i = 1, len;
-	अक्षर *fc_trace, *fmt;
-	पूर्णांक ethhdr_len = माप(काष्ठा ethhdr) - 1;
-	पूर्णांक fcoehdr_len = माप(काष्ठा fcoe_hdr);
-	पूर्णांक fchdr_len = माप(काष्ठा fc_frame_header);
-	पूर्णांक max_size = fnic_fc_trace_max_pages * PAGE_SIZE * 3;
+{
+	struct tm tm;
+	int j, i = 1, len;
+	char *fc_trace, *fmt;
+	int ethhdr_len = sizeof(struct ethhdr) - 1;
+	int fcoehdr_len = sizeof(struct fcoe_hdr);
+	int fchdr_len = sizeof(struct fc_frame_header);
+	int max_size = fnic_fc_trace_max_pages * PAGE_SIZE * 3;
 
 	tdata->frame_type = tdata->frame_type & 0x7F;
 
 	len = *orig_len;
 
-	समय64_to_पंचांग(tdata->समय_stamp.tv_sec, 0, &पंचांग);
+	time64_to_tm(tdata->time_stamp.tv_sec, 0, &tm);
 
 	fmt = "%02d:%02d:%04ld %02d:%02d:%02d.%09lu ns%8x       %c%8x\t";
-	len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+	len += scnprintf(fnic_dbgfs_prt->buffer + len,
 		max_size - len,
 		fmt,
-		पंचांग.पंचांग_mon + 1, पंचांग.पंचांग_mday, पंचांग.पंचांग_year + 1900,
-		पंचांग.पंचांग_hour, पंचांग.पंचांग_min, पंचांग.पंचांग_sec,
-		tdata->समय_stamp.tv_nsec, tdata->host_no,
+		tm.tm_mon + 1, tm.tm_mday, tm.tm_year + 1900,
+		tm.tm_hour, tm.tm_min, tm.tm_sec,
+		tdata->time_stamp.tv_nsec, tdata->host_no,
 		tdata->frame_type, tdata->frame_len);
 
-	fc_trace = (अक्षर *)FC_TRACE_ADDRESS(tdata);
+	fc_trace = (char *)FC_TRACE_ADDRESS(tdata);
 
-	क्रम (j = 0; j < min_t(u8, tdata->frame_len,
-		(u8)(FC_TRC_SIZE_BYTES - FC_TRC_HEADER_SIZE)); j++) अणु
-		अगर (tdata->frame_type == FNIC_FC_LE) अणु
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+	for (j = 0; j < min_t(u8, tdata->frame_len,
+		(u8)(FC_TRC_SIZE_BYTES - FC_TRC_HEADER_SIZE)); j++) {
+		if (tdata->frame_type == FNIC_FC_LE) {
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				max_size - len, "%c", fc_trace[j]);
-		पूर्ण अन्यथा अणु
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+		} else {
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				max_size - len, "%02x", fc_trace[j] & 0xff);
-			len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+			len += scnprintf(fnic_dbgfs_prt->buffer + len,
 				max_size - len, " ");
-			अगर (j == ethhdr_len ||
+			if (j == ethhdr_len ||
 				j == ethhdr_len + fcoehdr_len ||
 				j == ethhdr_len + fcoehdr_len + fchdr_len ||
-				(i > 3 && j%fchdr_len == 0)) अणु
-				len += scnम_लिखो(fnic_dbgfs_prt->buffer
+				(i > 3 && j%fchdr_len == 0)) {
+				len += scnprintf(fnic_dbgfs_prt->buffer
 					+ len, max_size - len,
 					"\n\t\t\t\t\t\t\t\t");
 				i++;
-			पूर्ण
-		पूर्ण /* end of अन्यथा*/
-	पूर्ण /* End of क्रम loop*/
-	len += scnम_लिखो(fnic_dbgfs_prt->buffer + len,
+			}
+		} /* end of else*/
+	} /* End of for loop*/
+	len += scnprintf(fnic_dbgfs_prt->buffer + len,
 		max_size - len, "\n");
 	*orig_len = len;
-पूर्ण
+}

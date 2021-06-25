@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kmsg_dump.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/console.h>
-#समावेश <linux/माला.स>
-#समावेश <shared/init.h>
-#समावेश <shared/kern.h>
-#समावेश <os.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kmsg_dump.h>
+#include <linux/spinlock.h>
+#include <linux/console.h>
+#include <linux/string.h>
+#include <shared/init.h>
+#include <shared/kern.h>
+#include <os.h>
 
-अटल व्योम kmsg_dumper_मानक_निकास(काष्ठा kmsg_dumper *dumper,
-				क्रमागत kmsg_dump_reason reason)
-अणु
-	अटल काष्ठा kmsg_dump_iter iter;
-	अटल DEFINE_SPINLOCK(lock);
-	अटल अक्षर line[1024];
-	काष्ठा console *con;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार len = 0;
+static void kmsg_dumper_stdout(struct kmsg_dumper *dumper,
+				enum kmsg_dump_reason reason)
+{
+	static struct kmsg_dump_iter iter;
+	static DEFINE_SPINLOCK(lock);
+	static char line[1024];
+	struct console *con;
+	unsigned long flags;
+	size_t len = 0;
 
 	/* only dump kmsg when no console is available */
-	अगर (!console_trylock())
-		वापस;
+	if (!console_trylock())
+		return;
 
-	क्रम_each_console(con) अणु
-		अगर(म_भेद(con->name, "tty") == 0 &&
-		   (con->flags & (CON_ENABLED | CON_CONSDEV)) != 0) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for_each_console(con) {
+		if(strcmp(con->name, "tty") == 0 &&
+		   (con->flags & (CON_ENABLED | CON_CONSDEV)) != 0) {
+			break;
+		}
+	}
 
 	console_unlock();
 
-	अगर (con)
-		वापस;
+	if (con)
+		return;
 
-	अगर (!spin_trylock_irqsave(&lock, flags))
-		वापस;
+	if (!spin_trylock_irqsave(&lock, flags))
+		return;
 
-	kmsg_dump_शुरुआत(&iter);
+	kmsg_dump_rewind(&iter);
 
-	म_लिखो("kmsg_dump:\n");
-	जबतक (kmsg_dump_get_line(&iter, true, line, माप(line), &len)) अणु
+	printf("kmsg_dump:\n");
+	while (kmsg_dump_get_line(&iter, true, line, sizeof(line), &len)) {
 		line[len] = '\0';
-		म_लिखो("%s", line);
-	पूर्ण
+		printf("%s", line);
+	}
 
 	spin_unlock_irqrestore(&lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा kmsg_dumper kmsg_dumper = अणु
-	.dump = kmsg_dumper_मानक_निकास
-पूर्ण;
+static struct kmsg_dumper kmsg_dumper = {
+	.dump = kmsg_dumper_stdout
+};
 
-पूर्णांक __init kmsg_dumper_मानक_निकास_init(व्योम)
-अणु
-	वापस kmsg_dump_रेजिस्टर(&kmsg_dumper);
-पूर्ण
+int __init kmsg_dumper_stdout_init(void)
+{
+	return kmsg_dump_register(&kmsg_dumper);
+}
 
-__uml_postsetup(kmsg_dumper_मानक_निकास_init);
+__uml_postsetup(kmsg_dumper_stdout_init);

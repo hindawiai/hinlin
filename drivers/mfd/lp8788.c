@@ -1,81 +1,80 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * TI LP8788 MFD - core पूर्णांकerface
+ * TI LP8788 MFD - core interface
  *
  * Copyright 2012 Texas Instruments
  *
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/mfd/lp8788.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/mfd/core.h>
+#include <linux/mfd/lp8788.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#घोषणा MAX_LP8788_REGISTERS		0xA2
+#define MAX_LP8788_REGISTERS		0xA2
 
-#घोषणा MFD_DEV_SIMPLE(_name)					\
-अणु								\
+#define MFD_DEV_SIMPLE(_name)					\
+{								\
 	.name = LP8788_DEV_##_name,				\
-पूर्ण
+}
 
-#घोषणा MFD_DEV_WITH_ID(_name, _id)				\
-अणु								\
+#define MFD_DEV_WITH_ID(_name, _id)				\
+{								\
 	.name = LP8788_DEV_##_name,				\
 	.id = _id,						\
-पूर्ण
+}
 
-#घोषणा MFD_DEV_WITH_RESOURCE(_name, _resource, num_resource)	\
-अणु								\
+#define MFD_DEV_WITH_RESOURCE(_name, _resource, num_resource)	\
+{								\
 	.name = LP8788_DEV_##_name,				\
 	.resources = _resource,					\
 	.num_resources = num_resource,				\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा resource chg_irqs[] = अणु
+static const struct resource chg_irqs[] = {
 	/* Charger Interrupts */
-	अणु
+	{
 		.start = LP8788_INT_CHG_INPUT_STATE,
 		.end   = LP8788_INT_PRECHG_TIMEOUT,
 		.name  = LP8788_CHG_IRQ,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
+	},
 	/* Power Routing Switch Interrupts */
-	अणु
+	{
 		.start = LP8788_INT_ENTER_SYS_SUPPORT,
 		.end   = LP8788_INT_EXIT_SYS_SUPPORT,
 		.name  = LP8788_PRSW_IRQ,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
+	},
 	/* Battery Interrupts */
-	अणु
+	{
 		.start = LP8788_INT_BATT_LOW,
 		.end   = LP8788_INT_NO_BATT,
 		.name  = LP8788_BATT_IRQ,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा resource rtc_irqs[] = अणु
-	अणु
+static const struct resource rtc_irqs[] = {
+	{
 		.start = LP8788_INT_RTC_ALARM1,
 		.end   = LP8788_INT_RTC_ALARM2,
 		.name  = LP8788_ALM_IRQ,
 		.flags = IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा mfd_cell lp8788_devs[] = अणु
+static const struct mfd_cell lp8788_devs[] = {
 	/* 4 bucks */
 	MFD_DEV_WITH_ID(BUCK, 1),
 	MFD_DEV_WITH_ID(BUCK, 2),
 	MFD_DEV_WITH_ID(BUCK, 3),
 	MFD_DEV_WITH_ID(BUCK, 4),
 
-	/* 12 digital lकरोs */
+	/* 12 digital ldos */
 	MFD_DEV_WITH_ID(DLDO, 1),
 	MFD_DEV_WITH_ID(DLDO, 2),
 	MFD_DEV_WITH_ID(DLDO, 3),
@@ -89,7 +88,7 @@
 	MFD_DEV_WITH_ID(DLDO, 11),
 	MFD_DEV_WITH_ID(DLDO, 12),
 
-	/* 10 analog lकरोs */
+	/* 10 analog ldos */
 	MFD_DEV_WITH_ID(ALDO, 1),
 	MFD_DEV_WITH_ID(ALDO, 2),
 	MFD_DEV_WITH_ID(ALDO, 3),
@@ -104,7 +103,7 @@
 	/* ADC */
 	MFD_DEV_SIMPLE(ADC),
 
-	/* battery अक्षरger */
+	/* battery charger */
 	MFD_DEV_WITH_RESOURCE(CHARGER, chg_irqs, ARRAY_SIZE(chg_irqs)),
 
 	/* rtc */
@@ -113,128 +112,128 @@
 	/* backlight */
 	MFD_DEV_SIMPLE(BACKLIGHT),
 
-	/* current sink क्रम vibrator */
+	/* current sink for vibrator */
 	MFD_DEV_SIMPLE(VIBRATOR),
 
-	/* current sink क्रम keypad LED */
+	/* current sink for keypad LED */
 	MFD_DEV_SIMPLE(KEYLED),
-पूर्ण;
+};
 
-पूर्णांक lp8788_पढ़ो_byte(काष्ठा lp8788 *lp, u8 reg, u8 *data)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक val;
+int lp8788_read_byte(struct lp8788 *lp, u8 reg, u8 *data)
+{
+	int ret;
+	unsigned int val;
 
-	ret = regmap_पढ़ो(lp->regmap, reg, &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(lp->regmap, reg, &val);
+	if (ret < 0) {
 		dev_err(lp->dev, "failed to read 0x%.2x\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*data = (u8)val;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(lp8788_पढ़ो_byte);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(lp8788_read_byte);
 
-पूर्णांक lp8788_पढ़ो_multi_bytes(काष्ठा lp8788 *lp, u8 reg, u8 *data, माप_प्रकार count)
-अणु
-	वापस regmap_bulk_पढ़ो(lp->regmap, reg, data, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(lp8788_पढ़ो_multi_bytes);
+int lp8788_read_multi_bytes(struct lp8788 *lp, u8 reg, u8 *data, size_t count)
+{
+	return regmap_bulk_read(lp->regmap, reg, data, count);
+}
+EXPORT_SYMBOL_GPL(lp8788_read_multi_bytes);
 
-पूर्णांक lp8788_ग_लिखो_byte(काष्ठा lp8788 *lp, u8 reg, u8 data)
-अणु
-	वापस regmap_ग_लिखो(lp->regmap, reg, data);
-पूर्ण
-EXPORT_SYMBOL_GPL(lp8788_ग_लिखो_byte);
+int lp8788_write_byte(struct lp8788 *lp, u8 reg, u8 data)
+{
+	return regmap_write(lp->regmap, reg, data);
+}
+EXPORT_SYMBOL_GPL(lp8788_write_byte);
 
-पूर्णांक lp8788_update_bits(काष्ठा lp8788 *lp, u8 reg, u8 mask, u8 data)
-अणु
-	वापस regmap_update_bits(lp->regmap, reg, mask, data);
-पूर्ण
+int lp8788_update_bits(struct lp8788 *lp, u8 reg, u8 mask, u8 data)
+{
+	return regmap_update_bits(lp->regmap, reg, mask, data);
+}
 EXPORT_SYMBOL_GPL(lp8788_update_bits);
 
-अटल पूर्णांक lp8788_platक्रमm_init(काष्ठा lp8788 *lp)
-अणु
-	काष्ठा lp8788_platक्रमm_data *pdata = lp->pdata;
+static int lp8788_platform_init(struct lp8788 *lp)
+{
+	struct lp8788_platform_data *pdata = lp->pdata;
 
-	वापस (pdata && pdata->init_func) ? pdata->init_func(lp) : 0;
-पूर्ण
+	return (pdata && pdata->init_func) ? pdata->init_func(lp) : 0;
+}
 
-अटल स्थिर काष्ठा regmap_config lp8788_regmap_config = अणु
+static const struct regmap_config lp8788_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = MAX_LP8788_REGISTERS,
-पूर्ण;
+	.max_register = MAX_LP8788_REGISTERS,
+};
 
-अटल पूर्णांक lp8788_probe(काष्ठा i2c_client *cl, स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा lp8788 *lp;
-	काष्ठा lp8788_platक्रमm_data *pdata = dev_get_platdata(&cl->dev);
-	पूर्णांक ret;
+static int lp8788_probe(struct i2c_client *cl, const struct i2c_device_id *id)
+{
+	struct lp8788 *lp;
+	struct lp8788_platform_data *pdata = dev_get_platdata(&cl->dev);
+	int ret;
 
-	lp = devm_kzalloc(&cl->dev, माप(काष्ठा lp8788), GFP_KERNEL);
-	अगर (!lp)
-		वापस -ENOMEM;
+	lp = devm_kzalloc(&cl->dev, sizeof(struct lp8788), GFP_KERNEL);
+	if (!lp)
+		return -ENOMEM;
 
 	lp->regmap = devm_regmap_init_i2c(cl, &lp8788_regmap_config);
-	अगर (IS_ERR(lp->regmap)) अणु
+	if (IS_ERR(lp->regmap)) {
 		ret = PTR_ERR(lp->regmap);
 		dev_err(&cl->dev, "regmap init i2c err: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	lp->pdata = pdata;
 	lp->dev = &cl->dev;
 	i2c_set_clientdata(cl, lp);
 
-	ret = lp8788_platक्रमm_init(lp);
-	अगर (ret)
-		वापस ret;
+	ret = lp8788_platform_init(lp);
+	if (ret)
+		return ret;
 
 	ret = lp8788_irq_init(lp, cl->irq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mfd_add_devices(lp->dev, -1, lp8788_devs,
-			       ARRAY_SIZE(lp8788_devs), शून्य, 0, शून्य);
-पूर्ण
+	return mfd_add_devices(lp->dev, -1, lp8788_devs,
+			       ARRAY_SIZE(lp8788_devs), NULL, 0, NULL);
+}
 
-अटल पूर्णांक lp8788_हटाओ(काष्ठा i2c_client *cl)
-अणु
-	काष्ठा lp8788 *lp = i2c_get_clientdata(cl);
+static int lp8788_remove(struct i2c_client *cl)
+{
+	struct lp8788 *lp = i2c_get_clientdata(cl);
 
-	mfd_हटाओ_devices(lp->dev);
-	lp8788_irq_निकास(lp);
-	वापस 0;
-पूर्ण
+	mfd_remove_devices(lp->dev);
+	lp8788_irq_exit(lp);
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id lp8788_ids[] = अणु
-	अणु"lp8788", 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id lp8788_ids[] = {
+	{"lp8788", 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, lp8788_ids);
 
-अटल काष्ठा i2c_driver lp8788_driver = अणु
-	.driver = अणु
+static struct i2c_driver lp8788_driver = {
+	.driver = {
 		.name = "lp8788",
-	पूर्ण,
+	},
 	.probe = lp8788_probe,
-	.हटाओ = lp8788_हटाओ,
+	.remove = lp8788_remove,
 	.id_table = lp8788_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init lp8788_init(व्योम)
-अणु
-	वापस i2c_add_driver(&lp8788_driver);
-पूर्ण
+static int __init lp8788_init(void)
+{
+	return i2c_add_driver(&lp8788_driver);
+}
 subsys_initcall(lp8788_init);
 
-अटल व्योम __निकास lp8788_निकास(व्योम)
-अणु
+static void __exit lp8788_exit(void)
+{
 	i2c_del_driver(&lp8788_driver);
-पूर्ण
-module_निकास(lp8788_निकास);
+}
+module_exit(lp8788_exit);
 
 MODULE_DESCRIPTION("TI LP8788 MFD Driver");
 MODULE_AUTHOR("Milo Kim");

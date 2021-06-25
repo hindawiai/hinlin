@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-__noअंतरभूत पूर्णांक foo(काष्ठा __sk_buff *skb)
-अणु
-	वापस bpf_get_pअक्रमom_u32();
-पूर्ण
+__noinline int foo(struct __sk_buff *skb)
+{
+	return bpf_get_prandom_u32();
+}
 
 SEC("cgroup_skb/ingress")
-पूर्णांक test_cls(काष्ठा __sk_buff *skb)
-अणु
-	अगर (!foo(skb))
-		वापस 0;
+int test_cls(struct __sk_buff *skb)
+{
+	if (!foo(skb))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

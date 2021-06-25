@@ -1,98 +1,97 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  *
- * Defines of the Malta board specअगरic address-MAP, रेजिस्टरs, etc.
+ * Defines of the Malta board specific address-MAP, registers, etc.
  */
-#अगर_अघोषित __ASM_MIPS_BOARDS_MALTA_H
-#घोषणा __ASM_MIPS_BOARDS_MALTA_H
+#ifndef __ASM_MIPS_BOARDS_MALTA_H
+#define __ASM_MIPS_BOARDS_MALTA_H
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mips-boards/msc01_pci.h>
-#समावेश <यंत्र/gt64120.h>
+#include <asm/addrspace.h>
+#include <asm/io.h>
+#include <asm/mips-boards/msc01_pci.h>
+#include <asm/gt64120.h>
 
-/* Mips पूर्णांकerrupt controller found in SOCit variations */
-#घोषणा MIPS_MSC01_IC_REG_BASE		0x1bc40000
-#घोषणा MIPS_SOCITSC_IC_REG_BASE	0x1ffa0000
+/* Mips interrupt controller found in SOCit variations */
+#define MIPS_MSC01_IC_REG_BASE		0x1bc40000
+#define MIPS_SOCITSC_IC_REG_BASE	0x1ffa0000
 
 /*
- * Malta I/O ports base address क्रम the Galileo GT64120 and Algorithmics
- * Bonito प्रणाली controllers.
+ * Malta I/O ports base address for the Galileo GT64120 and Algorithmics
+ * Bonito system controllers.
  */
-#घोषणा MALTA_GT_PORT_BASE	get_gt_port_base(GT_PCI0IOLD_OFS)
-#घोषणा MALTA_BONITO_PORT_BASE	((अचिन्हित दीर्घ)ioremap (0x1fd00000, 0x10000))
-#घोषणा MALTA_MSC_PORT_BASE	get_msc_port_base(MSC01_PCI_SC2PIOBASL)
+#define MALTA_GT_PORT_BASE	get_gt_port_base(GT_PCI0IOLD_OFS)
+#define MALTA_BONITO_PORT_BASE	((unsigned long)ioremap (0x1fd00000, 0x10000))
+#define MALTA_MSC_PORT_BASE	get_msc_port_base(MSC01_PCI_SC2PIOBASL)
 
-अटल अंतरभूत अचिन्हित दीर्घ get_gt_port_base(अचिन्हित दीर्घ reg)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline unsigned long get_gt_port_base(unsigned long reg)
+{
+	unsigned long addr;
 	addr = GT_READ(reg);
-	वापस (अचिन्हित दीर्घ) ioremap (((addr & 0xffff) << 21), 0x10000);
-पूर्ण
+	return (unsigned long) ioremap (((addr & 0xffff) << 21), 0x10000);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ get_msc_port_base(अचिन्हित दीर्घ reg)
-अणु
-	अचिन्हित दीर्घ addr;
+static inline unsigned long get_msc_port_base(unsigned long reg)
+{
+	unsigned long addr;
 	MSC_READ(reg, addr);
-	वापस (अचिन्हित दीर्घ) ioremap(addr, 0x10000);
-पूर्ण
+	return (unsigned long) ioremap(addr, 0x10000);
+}
 
 /*
- * GCMP Specअगरic definitions
+ * GCMP Specific definitions
  */
-#घोषणा GCMP_BASE_ADDR			0x1fbf8000
-#घोषणा GCMP_ADDRSPACE_SZ		(256 * 1024)
+#define GCMP_BASE_ADDR			0x1fbf8000
+#define GCMP_ADDRSPACE_SZ		(256 * 1024)
 
 /*
- * GIC Specअगरic definitions
+ * GIC Specific definitions
  */
-#घोषणा GIC_BASE_ADDR			0x1bdc0000
-#घोषणा GIC_ADDRSPACE_SZ		(128 * 1024)
+#define GIC_BASE_ADDR			0x1bdc0000
+#define GIC_ADDRSPACE_SZ		(128 * 1024)
 
 /*
- * CPC Specअगरic definitions
+ * CPC Specific definitions
  */
-#घोषणा CPC_BASE_ADDR			0x1bde0000
+#define CPC_BASE_ADDR			0x1bde0000
 
 /*
- * MSC01 BIU Specअगरic definitions
- * FIXME : These should be अन्यथाwhere ?
+ * MSC01 BIU Specific definitions
+ * FIXME : These should be elsewhere ?
  */
-#घोषणा MSC01_BIU_REG_BASE		0x1bc80000
-#घोषणा MSC01_BIU_ADDRSPACE_SZ		(256 * 1024)
-#घोषणा MSC01_SC_CFG_OFS		0x0110
-#घोषणा MSC01_SC_CFG_GICPRES_MSK	0x00000004
-#घोषणा MSC01_SC_CFG_GICPRES_SHF	2
-#घोषणा MSC01_SC_CFG_GICENA_SHF		3
+#define MSC01_BIU_REG_BASE		0x1bc80000
+#define MSC01_BIU_ADDRSPACE_SZ		(256 * 1024)
+#define MSC01_SC_CFG_OFS		0x0110
+#define MSC01_SC_CFG_GICPRES_MSK	0x00000004
+#define MSC01_SC_CFG_GICPRES_SHF	2
+#define MSC01_SC_CFG_GICENA_SHF		3
 
 /*
- * Malta RTC-device indirect रेजिस्टर access.
+ * Malta RTC-device indirect register access.
  */
-#घोषणा MALTA_RTC_ADR_REG	0x70
-#घोषणा MALTA_RTC_DAT_REG	0x71
+#define MALTA_RTC_ADR_REG	0x70
+#define MALTA_RTC_DAT_REG	0x71
 
 /*
- * Malta SMSC FDC37M817 Super I/O Controller रेजिस्टर.
+ * Malta SMSC FDC37M817 Super I/O Controller register.
  */
-#घोषणा SMSC_CONFIG_REG		0x3f0
-#घोषणा SMSC_DATA_REG		0x3f1
+#define SMSC_CONFIG_REG		0x3f0
+#define SMSC_DATA_REG		0x3f1
 
-#घोषणा SMSC_CONFIG_DEVNUM	0x7
-#घोषणा SMSC_CONFIG_ACTIVATE	0x30
-#घोषणा SMSC_CONFIG_ENTER	0x55
-#घोषणा SMSC_CONFIG_EXIT	0xaa
+#define SMSC_CONFIG_DEVNUM	0x7
+#define SMSC_CONFIG_ACTIVATE	0x30
+#define SMSC_CONFIG_ENTER	0x55
+#define SMSC_CONFIG_EXIT	0xaa
 
-#घोषणा SMSC_CONFIG_DEVNUM_FLOPPY     0
+#define SMSC_CONFIG_DEVNUM_FLOPPY     0
 
-#घोषणा SMSC_CONFIG_ACTIVATE_ENABLE   1
+#define SMSC_CONFIG_ACTIVATE_ENABLE   1
 
-#घोषणा SMSC_WRITE(x, a)     outb(x, a)
+#define SMSC_WRITE(x, a)     outb(x, a)
 
-#घोषणा MALTA_JMPRS_REG		0x1f000210
+#define MALTA_JMPRS_REG		0x1f000210
 
-बाह्य व्योम __init *malta_dt_shim(व्योम *fdt);
+extern void __init *malta_dt_shim(void *fdt);
 
-#पूर्ण_अगर /* __ASM_MIPS_BOARDS_MALTA_H */
+#endif /* __ASM_MIPS_BOARDS_MALTA_H */

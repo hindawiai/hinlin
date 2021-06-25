@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * vsp1_lअगर.h  --  R-Car VSP1 LCD Controller Interface
+ * vsp1_lif.h  --  R-Car VSP1 LCD Controller Interface
  *
  * Copyright (C) 2013-2014 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
+ * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
-#अगर_अघोषित __VSP1_LIF_H__
-#घोषणा __VSP1_LIF_H__
+#ifndef __VSP1_LIF_H__
+#define __VSP1_LIF_H__
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/media-entity.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "vsp1_entity.h"
+#include "vsp1_entity.h"
 
-काष्ठा vsp1_device;
+struct vsp1_device;
 
-#घोषणा LIF_PAD_SINK				0
-#घोषणा LIF_PAD_SOURCE				1
+#define LIF_PAD_SINK				0
+#define LIF_PAD_SOURCE				1
 
-काष्ठा vsp1_lअगर अणु
-	काष्ठा vsp1_entity entity;
-पूर्ण;
+struct vsp1_lif {
+	struct vsp1_entity entity;
+};
 
-अटल अंतरभूत काष्ठा vsp1_lअगर *to_lअगर(काष्ठा v4l2_subdev *subdev)
-अणु
-	वापस container_of(subdev, काष्ठा vsp1_lअगर, entity.subdev);
-पूर्ण
+static inline struct vsp1_lif *to_lif(struct v4l2_subdev *subdev)
+{
+	return container_of(subdev, struct vsp1_lif, entity.subdev);
+}
 
-काष्ठा vsp1_lअगर *vsp1_lअगर_create(काष्ठा vsp1_device *vsp1, अचिन्हित पूर्णांक index);
+struct vsp1_lif *vsp1_lif_create(struct vsp1_device *vsp1, unsigned int index);
 
-#पूर्ण_अगर /* __VSP1_LIF_H__ */
+#endif /* __VSP1_LIF_H__ */

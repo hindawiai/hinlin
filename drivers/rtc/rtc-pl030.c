@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/rtc/rtc-pl030.c
  *
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/rtc.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/amba/bus.h>
+#include <linux/io.h>
+#include <linux/slab.h>
 
-#घोषणा RTC_DR		(0)
-#घोषणा RTC_MR		(4)
-#घोषणा RTC_STAT	(8)
-#घोषणा RTC_EOI		(8)
-#घोषणा RTC_LR		(12)
-#घोषणा RTC_CR		(16)
-#घोषणा RTC_CR_MIE	(1 << 0)
+#define RTC_DR		(0)
+#define RTC_MR		(4)
+#define RTC_STAT	(8)
+#define RTC_EOI		(8)
+#define RTC_LR		(12)
+#define RTC_CR		(16)
+#define RTC_CR_MIE	(1 << 0)
 
-काष्ठा pl030_rtc अणु
-	काष्ठा rtc_device	*rtc;
-	व्योम __iomem		*base;
-पूर्ण;
+struct pl030_rtc {
+	struct rtc_device	*rtc;
+	void __iomem		*base;
+};
 
-अटल irqवापस_t pl030_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pl030_rtc *rtc = dev_id;
-	ग_लिखोl(0, rtc->base + RTC_EOI);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t pl030_interrupt(int irq, void *dev_id)
+{
+	struct pl030_rtc *rtc = dev_id;
+	writel(0, rtc->base + RTC_EOI);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक pl030_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा pl030_rtc *rtc = dev_get_drvdata(dev);
+static int pl030_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct pl030_rtc *rtc = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(पढ़ोl(rtc->base + RTC_MR), &alrm->समय);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(readl(rtc->base + RTC_MR), &alrm->time);
+	return 0;
+}
 
-अटल पूर्णांक pl030_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा pl030_rtc *rtc = dev_get_drvdata(dev);
+static int pl030_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct pl030_rtc *rtc = dev_get_drvdata(dev);
 
-	ग_लिखोl(rtc_पंचांग_to_समय64(&alrm->समय), rtc->base + RTC_MR);
+	writel(rtc_tm_to_time64(&alrm->time), rtc->base + RTC_MR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pl030_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा pl030_rtc *rtc = dev_get_drvdata(dev);
+static int pl030_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct pl030_rtc *rtc = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(पढ़ोl(rtc->base + RTC_DR), पंचांग);
+	rtc_time64_to_tm(readl(rtc->base + RTC_DR), tm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set the RTC समय.  Unक्रमtunately, we can't accurately set
- * the poपूर्णांक at which the counter updates.
+ * Set the RTC time.  Unfortunately, we can't accurately set
+ * the point at which the counter updates.
  *
  * Also, since RTC_LR is transferred to RTC_CR on next rising
- * edge of the 1Hz घड़ी, we must ग_लिखो the समय one second
+ * edge of the 1Hz clock, we must write the time one second
  * in advance.
  */
-अटल पूर्णांक pl030_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा pl030_rtc *rtc = dev_get_drvdata(dev);
+static int pl030_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct pl030_rtc *rtc = dev_get_drvdata(dev);
 
-	ग_लिखोl(rtc_पंचांग_to_समय64(पंचांग) + 1, rtc->base + RTC_LR);
+	writel(rtc_tm_to_time64(tm) + 1, rtc->base + RTC_LR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops pl030_ops = अणु
-	.पढ़ो_समय	= pl030_पढ़ो_समय,
-	.set_समय	= pl030_set_समय,
-	.पढ़ो_alarm	= pl030_पढ़ो_alarm,
+static const struct rtc_class_ops pl030_ops = {
+	.read_time	= pl030_read_time,
+	.set_time	= pl030_set_time,
+	.read_alarm	= pl030_read_alarm,
 	.set_alarm	= pl030_set_alarm,
-पूर्ण;
+};
 
-अटल पूर्णांक pl030_probe(काष्ठा amba_device *dev, स्थिर काष्ठा amba_id *id)
-अणु
-	काष्ठा pl030_rtc *rtc;
-	पूर्णांक ret;
+static int pl030_probe(struct amba_device *dev, const struct amba_id *id)
+{
+	struct pl030_rtc *rtc;
+	int ret;
 
-	ret = amba_request_regions(dev, शून्य);
-	अगर (ret)
-		जाओ err_req;
+	ret = amba_request_regions(dev, NULL);
+	if (ret)
+		goto err_req;
 
-	rtc = devm_kzalloc(&dev->dev, माप(*rtc), GFP_KERNEL);
-	अगर (!rtc) अणु
+	rtc = devm_kzalloc(&dev->dev, sizeof(*rtc), GFP_KERNEL);
+	if (!rtc) {
 		ret = -ENOMEM;
-		जाओ err_rtc;
-	पूर्ण
+		goto err_rtc;
+	}
 
 	rtc->rtc = devm_rtc_allocate_device(&dev->dev);
-	अगर (IS_ERR(rtc->rtc)) अणु
+	if (IS_ERR(rtc->rtc)) {
 		ret = PTR_ERR(rtc->rtc);
-		जाओ err_rtc;
-	पूर्ण
+		goto err_rtc;
+	}
 
 	rtc->rtc->ops = &pl030_ops;
 	rtc->rtc->range_max = U32_MAX;
 	rtc->base = ioremap(dev->res.start, resource_size(&dev->res));
-	अगर (!rtc->base) अणु
+	if (!rtc->base) {
 		ret = -ENOMEM;
-		जाओ err_rtc;
-	पूर्ण
+		goto err_rtc;
+	}
 
-	__raw_ग_लिखोl(0, rtc->base + RTC_CR);
-	__raw_ग_लिखोl(0, rtc->base + RTC_EOI);
+	__raw_writel(0, rtc->base + RTC_CR);
+	__raw_writel(0, rtc->base + RTC_EOI);
 
 	amba_set_drvdata(dev, rtc);
 
-	ret = request_irq(dev->irq[0], pl030_पूर्णांकerrupt, 0,
+	ret = request_irq(dev->irq[0], pl030_interrupt, 0,
 			  "rtc-pl030", rtc);
-	अगर (ret)
-		जाओ err_irq;
+	if (ret)
+		goto err_irq;
 
-	ret = devm_rtc_रेजिस्टर_device(rtc->rtc);
-	अगर (ret)
-		जाओ err_reg;
+	ret = devm_rtc_register_device(rtc->rtc);
+	if (ret)
+		goto err_reg;
 
-	वापस 0;
+	return 0;
 
  err_reg:
-	मुक्त_irq(dev->irq[0], rtc);
+	free_irq(dev->irq[0], rtc);
  err_irq:
 	iounmap(rtc->base);
  err_rtc:
 	amba_release_regions(dev);
  err_req:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pl030_हटाओ(काष्ठा amba_device *dev)
-अणु
-	काष्ठा pl030_rtc *rtc = amba_get_drvdata(dev);
+static void pl030_remove(struct amba_device *dev)
+{
+	struct pl030_rtc *rtc = amba_get_drvdata(dev);
 
-	ग_लिखोl(0, rtc->base + RTC_CR);
+	writel(0, rtc->base + RTC_CR);
 
-	मुक्त_irq(dev->irq[0], rtc);
+	free_irq(dev->irq[0], rtc);
 	iounmap(rtc->base);
 	amba_release_regions(dev);
-पूर्ण
+}
 
-अटल काष्ठा amba_id pl030_ids[] = अणु
-	अणु
+static struct amba_id pl030_ids[] = {
+	{
 		.id	= 0x00041030,
 		.mask	= 0x000fffff,
-	पूर्ण,
-	अणु 0, 0 पूर्ण,
-पूर्ण;
+	},
+	{ 0, 0 },
+};
 
 MODULE_DEVICE_TABLE(amba, pl030_ids);
 
-अटल काष्ठा amba_driver pl030_driver = अणु
-	.drv		= अणु
+static struct amba_driver pl030_driver = {
+	.drv		= {
 		.name	= "rtc-pl030",
-	पूर्ण,
+	},
 	.probe		= pl030_probe,
-	.हटाओ		= pl030_हटाओ,
+	.remove		= pl030_remove,
 	.id_table	= pl030_ids,
-पूर्ण;
+};
 
 module_amba_driver(pl030_driver);
 

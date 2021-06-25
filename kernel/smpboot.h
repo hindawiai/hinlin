@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित SMPBOOT_H
-#घोषणा SMPBOOT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef SMPBOOT_H
+#define SMPBOOT_H
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-#अगर_घोषित CONFIG_GENERIC_SMP_IDLE_THREAD
-काष्ठा task_काष्ठा *idle_thपढ़ो_get(अचिन्हित पूर्णांक cpu);
-व्योम idle_thपढ़ो_set_boot_cpu(व्योम);
-व्योम idle_thपढ़ोs_init(व्योम);
-#अन्यथा
-अटल अंतरभूत काष्ठा task_काष्ठा *idle_thपढ़ो_get(अचिन्हित पूर्णांक cpu) अणु वापस शून्य; पूर्ण
-अटल अंतरभूत व्योम idle_thपढ़ो_set_boot_cpu(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम idle_thपढ़ोs_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_GENERIC_SMP_IDLE_THREAD
+struct task_struct *idle_thread_get(unsigned int cpu);
+void idle_thread_set_boot_cpu(void);
+void idle_threads_init(void);
+#else
+static inline struct task_struct *idle_thread_get(unsigned int cpu) { return NULL; }
+static inline void idle_thread_set_boot_cpu(void) { }
+static inline void idle_threads_init(void) { }
+#endif
 
-पूर्णांक smpboot_create_thपढ़ोs(अचिन्हित पूर्णांक cpu);
-पूर्णांक smpboot_park_thपढ़ोs(अचिन्हित पूर्णांक cpu);
-पूर्णांक smpboot_unpark_thपढ़ोs(अचिन्हित पूर्णांक cpu);
+int smpboot_create_threads(unsigned int cpu);
+int smpboot_park_threads(unsigned int cpu);
+int smpboot_unpark_threads(unsigned int cpu);
 
-व्योम __init cpuhp_thपढ़ोs_init(व्योम);
+void __init cpuhp_threads_init(void);
 
-#पूर्ण_अगर
+#endif

@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_GPIO_PRIV_H__
-#घोषणा __NVKM_GPIO_PRIV_H__
-#घोषणा nvkm_gpio(p) container_of((p), काष्ठा nvkm_gpio, subdev)
-#समावेश <subdev/gpपन.स>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_GPIO_PRIV_H__
+#define __NVKM_GPIO_PRIV_H__
+#define nvkm_gpio(p) container_of((p), struct nvkm_gpio, subdev)
+#include <subdev/gpio.h>
 
-काष्ठा nvkm_gpio_func अणु
-	पूर्णांक lines;
+struct nvkm_gpio_func {
+	int lines;
 
-	/* पढ़ो and ack pending पूर्णांकerrupts, वापसing only data
-	 * क्रम lines that have not been masked off, जबतक still
-	 * perक्रमming the ack क्रम anything that was pending.
+	/* read and ack pending interrupts, returning only data
+	 * for lines that have not been masked off, while still
+	 * performing the ack for anything that was pending.
 	 */
-	व्योम (*पूर्णांकr_stat)(काष्ठा nvkm_gpio *, u32 *, u32 *);
+	void (*intr_stat)(struct nvkm_gpio *, u32 *, u32 *);
 
-	/* mask on/off पूर्णांकerrupts क्रम hi/lo transitions on a
+	/* mask on/off interrupts for hi/lo transitions on a
 	 * given set of gpio lines
 	 */
-	व्योम (*पूर्णांकr_mask)(काष्ठा nvkm_gpio *, u32, u32, u32);
+	void (*intr_mask)(struct nvkm_gpio *, u32, u32, u32);
 
 	/* configure gpio direction and output value */
-	पूर्णांक  (*drive)(काष्ठा nvkm_gpio *, पूर्णांक line, पूर्णांक dir, पूर्णांक out);
+	int  (*drive)(struct nvkm_gpio *, int line, int dir, int out);
 
 	/* sense current state of given gpio line */
-	पूर्णांक  (*sense)(काष्ठा nvkm_gpio *, पूर्णांक line);
+	int  (*sense)(struct nvkm_gpio *, int line);
 
 	/*XXX*/
-	व्योम (*reset)(काष्ठा nvkm_gpio *, u8);
-पूर्ण;
+	void (*reset)(struct nvkm_gpio *, u8);
+};
 
-पूर्णांक nvkm_gpio_new_(स्थिर काष्ठा nvkm_gpio_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
-		   काष्ठा nvkm_gpio **);
+int nvkm_gpio_new_(const struct nvkm_gpio_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
+		   struct nvkm_gpio **);
 
-व्योम nv50_gpio_reset(काष्ठा nvkm_gpio *, u8);
-पूर्णांक  nv50_gpio_drive(काष्ठा nvkm_gpio *, पूर्णांक, पूर्णांक, पूर्णांक);
-पूर्णांक  nv50_gpio_sense(काष्ठा nvkm_gpio *, पूर्णांक);
+void nv50_gpio_reset(struct nvkm_gpio *, u8);
+int  nv50_gpio_drive(struct nvkm_gpio *, int, int, int);
+int  nv50_gpio_sense(struct nvkm_gpio *, int);
 
-व्योम g94_gpio_पूर्णांकr_stat(काष्ठा nvkm_gpio *, u32 *, u32 *);
-व्योम g94_gpio_पूर्णांकr_mask(काष्ठा nvkm_gpio *, u32, u32, u32);
+void g94_gpio_intr_stat(struct nvkm_gpio *, u32 *, u32 *);
+void g94_gpio_intr_mask(struct nvkm_gpio *, u32, u32, u32);
 
-व्योम gf119_gpio_reset(काष्ठा nvkm_gpio *, u8);
-पूर्णांक  gf119_gpio_drive(काष्ठा nvkm_gpio *, पूर्णांक, पूर्णांक, पूर्णांक);
-पूर्णांक  gf119_gpio_sense(काष्ठा nvkm_gpio *, पूर्णांक);
-#पूर्ण_अगर
+void gf119_gpio_reset(struct nvkm_gpio *, u8);
+int  gf119_gpio_drive(struct nvkm_gpio *, int, int, int);
+int  gf119_gpio_sense(struct nvkm_gpio *, int);
+#endif

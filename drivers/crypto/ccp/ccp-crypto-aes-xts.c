@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AMD Cryptographic Coprocessor (CCP) AES XTS crypto API support
  *
@@ -9,144 +8,144 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <crypto/aes.h>
-#समावेश <crypto/xts.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/scatterwalk.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/scatterlist.h>
+#include <crypto/aes.h>
+#include <crypto/xts.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/scatterwalk.h>
 
-#समावेश "ccp-crypto.h"
+#include "ccp-crypto.h"
 
-काष्ठा ccp_aes_xts_def अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *drv_name;
-पूर्ण;
+struct ccp_aes_xts_def {
+	const char *name;
+	const char *drv_name;
+};
 
-अटल स्थिर काष्ठा ccp_aes_xts_def aes_xts_algs[] = अणु
-	अणु
+static const struct ccp_aes_xts_def aes_xts_algs[] = {
+	{
 		.name		= "xts(aes)",
 		.drv_name	= "xts-aes-ccp",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा ccp_unit_size_map अणु
-	अचिन्हित पूर्णांक size;
+struct ccp_unit_size_map {
+	unsigned int size;
 	u32 value;
-पूर्ण;
+};
 
-अटल काष्ठा ccp_unit_size_map xts_unit_sizes[] = अणु
-	अणु
+static struct ccp_unit_size_map xts_unit_sizes[] = {
+	{
 		.size   = 16,
 		.value	= CCP_XTS_AES_UNIT_SIZE_16,
-	पूर्ण,
-	अणु
+	},
+	{
 		.size   = 512,
 		.value	= CCP_XTS_AES_UNIT_SIZE_512,
-	पूर्ण,
-	अणु
+	},
+	{
 		.size   = 1024,
 		.value	= CCP_XTS_AES_UNIT_SIZE_1024,
-	पूर्ण,
-	अणु
+	},
+	{
 		.size   = 2048,
 		.value	= CCP_XTS_AES_UNIT_SIZE_2048,
-	पूर्ण,
-	अणु
+	},
+	{
 		.size   = 4096,
 		.value	= CCP_XTS_AES_UNIT_SIZE_4096,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक ccp_aes_xts_complete(काष्ठा crypto_async_request *async_req, पूर्णांक ret)
-अणु
-	काष्ठा skcipher_request *req = skcipher_request_cast(async_req);
-	काष्ठा ccp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+static int ccp_aes_xts_complete(struct crypto_async_request *async_req, int ret)
+{
+	struct skcipher_request *req = skcipher_request_cast(async_req);
+	struct ccp_aes_req_ctx *rctx = skcipher_request_ctx(req);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_नकल(req->iv, rctx->iv, AES_BLOCK_SIZE);
+	memcpy(req->iv, rctx->iv, AES_BLOCK_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccp_aes_xts_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-			      अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
-	अचिन्हित पूर्णांक ccpversion = ccp_version();
-	पूर्णांक ret;
+static int ccp_aes_xts_setkey(struct crypto_skcipher *tfm, const u8 *key,
+			      unsigned int key_len)
+{
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+	unsigned int ccpversion = ccp_version();
+	int ret;
 
-	ret = xts_verअगरy_key(tfm, key, key_len);
-	अगर (ret)
-		वापस ret;
+	ret = xts_verify_key(tfm, key, key_len);
+	if (ret)
+		return ret;
 
 	/* Version 3 devices support 128-bit keys; version 5 devices can
 	 * accommodate 128- and 256-bit keys.
 	 */
-	चयन (key_len) अणु
-	हाल AES_KEYSIZE_128 * 2:
-		स_नकल(ctx->u.aes.key, key, key_len);
-		अवरोध;
-	हाल AES_KEYSIZE_256 * 2:
-		अगर (ccpversion > CCP_VERSION(3, 0))
-			स_नकल(ctx->u.aes.key, key, key_len);
-		अवरोध;
-	पूर्ण
+	switch (key_len) {
+	case AES_KEYSIZE_128 * 2:
+		memcpy(ctx->u.aes.key, key, key_len);
+		break;
+	case AES_KEYSIZE_256 * 2:
+		if (ccpversion > CCP_VERSION(3, 0))
+			memcpy(ctx->u.aes.key, key, key_len);
+		break;
+	}
 	ctx->u.aes.key_len = key_len / 2;
 	sg_init_one(&ctx->u.aes.key_sg, ctx->u.aes.key, key_len);
 
-	वापस crypto_skcipher_setkey(ctx->u.aes.tfm_skcipher, key, key_len);
-पूर्ण
+	return crypto_skcipher_setkey(ctx->u.aes.tfm_skcipher, key, key_len);
+}
 
-अटल पूर्णांक ccp_aes_xts_crypt(काष्ठा skcipher_request *req,
-			     अचिन्हित पूर्णांक encrypt)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा ccp_aes_req_ctx *rctx = skcipher_request_ctx(req);
-	अचिन्हित पूर्णांक ccpversion = ccp_version();
-	अचिन्हित पूर्णांक fallback = 0;
-	अचिन्हित पूर्णांक unit;
+static int ccp_aes_xts_crypt(struct skcipher_request *req,
+			     unsigned int encrypt)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct ccp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+	unsigned int ccpversion = ccp_version();
+	unsigned int fallback = 0;
+	unsigned int unit;
 	u32 unit_size;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!ctx->u.aes.key_len)
-		वापस -EINVAL;
+	if (!ctx->u.aes.key_len)
+		return -EINVAL;
 
-	अगर (!req->iv)
-		वापस -EINVAL;
+	if (!req->iv)
+		return -EINVAL;
 
 	/* Check conditions under which the CCP can fulfill a request. The
-	 * device can handle input plaपूर्णांकext of a length that is a multiple
+	 * device can handle input plaintext of a length that is a multiple
 	 * of the unit_size, bug the crypto implementation only supports
 	 * the unit_size being equal to the input length. This limits the
 	 * number of scenarios we can handle.
 	 */
 	unit_size = CCP_XTS_AES_UNIT_SIZE__LAST;
-	क्रम (unit = 0; unit < ARRAY_SIZE(xts_unit_sizes); unit++) अणु
-		अगर (req->cryptlen == xts_unit_sizes[unit].size) अणु
+	for (unit = 0; unit < ARRAY_SIZE(xts_unit_sizes); unit++) {
+		if (req->cryptlen == xts_unit_sizes[unit].size) {
 			unit_size = unit;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	/* The CCP has restrictions on block sizes. Also, a version 3 device
 	 * only supports AES-128 operations; version 5 CCPs support both
 	 * AES-128 and -256 operations.
 	 */
-	अगर (unit_size == CCP_XTS_AES_UNIT_SIZE__LAST)
+	if (unit_size == CCP_XTS_AES_UNIT_SIZE__LAST)
 		fallback = 1;
-	अगर ((ccpversion < CCP_VERSION(5, 0)) &&
+	if ((ccpversion < CCP_VERSION(5, 0)) &&
 	    (ctx->u.aes.key_len != AES_KEYSIZE_128))
 		fallback = 1;
-	अगर ((ctx->u.aes.key_len != AES_KEYSIZE_128) &&
+	if ((ctx->u.aes.key_len != AES_KEYSIZE_128) &&
 	    (ctx->u.aes.key_len != AES_KEYSIZE_256))
 		fallback = 1;
-	अगर (fallback) अणु
-		/* Use the fallback to process the request क्रम any
+	if (fallback) {
+		/* Use the fallback to process the request for any
 		 * unsupported unit sizes or key sizes
 		 */
 		skcipher_request_set_tfm(&rctx->fallback_req,
@@ -159,13 +158,13 @@
 					   req->dst, req->cryptlen, req->iv);
 		ret = encrypt ? crypto_skcipher_encrypt(&rctx->fallback_req) :
 				crypto_skcipher_decrypt(&rctx->fallback_req);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	स_नकल(rctx->iv, req->iv, AES_BLOCK_SIZE);
+	memcpy(rctx->iv, req->iv, AES_BLOCK_SIZE);
 	sg_init_one(&rctx->iv_sg, rctx->iv, AES_BLOCK_SIZE);
 
-	स_रखो(&rctx->cmd, 0, माप(rctx->cmd));
+	memset(&rctx->cmd, 0, sizeof(rctx->cmd));
 	INIT_LIST_HEAD(&rctx->cmd.entry);
 	rctx->cmd.engine = CCP_ENGINE_XTS_AES_128;
 	rctx->cmd.u.xts.type = CCP_AES_TYPE_128;
@@ -182,72 +181,72 @@
 
 	ret = ccp_crypto_enqueue_request(&req->base, &rctx->cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccp_aes_xts_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस ccp_aes_xts_crypt(req, 1);
-पूर्ण
+static int ccp_aes_xts_encrypt(struct skcipher_request *req)
+{
+	return ccp_aes_xts_crypt(req, 1);
+}
 
-अटल पूर्णांक ccp_aes_xts_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस ccp_aes_xts_crypt(req, 0);
-पूर्ण
+static int ccp_aes_xts_decrypt(struct skcipher_request *req)
+{
+	return ccp_aes_xts_crypt(req, 0);
+}
 
-अटल पूर्णांक ccp_aes_xts_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा crypto_skcipher *fallback_tfm;
+static int ccp_aes_xts_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct crypto_skcipher *fallback_tfm;
 
 	ctx->complete = ccp_aes_xts_complete;
 	ctx->u.aes.key_len = 0;
 
 	fallback_tfm = crypto_alloc_skcipher("xts(aes)", 0,
 					     CRYPTO_ALG_NEED_FALLBACK);
-	अगर (IS_ERR(fallback_tfm)) अणु
+	if (IS_ERR(fallback_tfm)) {
 		pr_warn("could not load fallback driver xts(aes)\n");
-		वापस PTR_ERR(fallback_tfm);
-	पूर्ण
+		return PTR_ERR(fallback_tfm);
+	}
 	ctx->u.aes.tfm_skcipher = fallback_tfm;
 
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा ccp_aes_req_ctx) +
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct ccp_aes_req_ctx) +
 					 crypto_skcipher_reqsize(fallback_tfm));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ccp_aes_xts_निकास_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+static void ccp_aes_xts_exit_tfm(struct crypto_skcipher *tfm)
+{
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_मुक्त_skcipher(ctx->u.aes.tfm_skcipher);
-पूर्ण
+	crypto_free_skcipher(ctx->u.aes.tfm_skcipher);
+}
 
-अटल पूर्णांक ccp_रेजिस्टर_aes_xts_alg(काष्ठा list_head *head,
-				    स्थिर काष्ठा ccp_aes_xts_def *def)
-अणु
-	काष्ठा ccp_crypto_skcipher_alg *ccp_alg;
-	काष्ठा skcipher_alg *alg;
-	पूर्णांक ret;
+static int ccp_register_aes_xts_alg(struct list_head *head,
+				    const struct ccp_aes_xts_def *def)
+{
+	struct ccp_crypto_skcipher_alg *ccp_alg;
+	struct skcipher_alg *alg;
+	int ret;
 
-	ccp_alg = kzalloc(माप(*ccp_alg), GFP_KERNEL);
-	अगर (!ccp_alg)
-		वापस -ENOMEM;
+	ccp_alg = kzalloc(sizeof(*ccp_alg), GFP_KERNEL);
+	if (!ccp_alg)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&ccp_alg->entry);
 
 	alg = &ccp_alg->alg;
 
-	snम_लिखो(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
-	snम_लिखो(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
+	snprintf(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
+	snprintf(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
 		 def->drv_name);
 	alg->base.cra_flags	= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY |
 				  CRYPTO_ALG_KERN_DRIVER_ONLY |
 				  CRYPTO_ALG_NEED_FALLBACK;
 	alg->base.cra_blocksize	= AES_BLOCK_SIZE;
-	alg->base.cra_ctxsize	= माप(काष्ठा ccp_ctx);
+	alg->base.cra_ctxsize	= sizeof(struct ccp_ctx);
 	alg->base.cra_priority	= CCP_CRA_PRIORITY;
 	alg->base.cra_module	= THIS_MODULE;
 
@@ -258,30 +257,30 @@
 	alg->max_keysize	= AES_MAX_KEY_SIZE * 2;
 	alg->ivsize		= AES_BLOCK_SIZE;
 	alg->init		= ccp_aes_xts_init_tfm;
-	alg->निकास		= ccp_aes_xts_निकास_tfm;
+	alg->exit		= ccp_aes_xts_exit_tfm;
 
-	ret = crypto_रेजिस्टर_skcipher(alg);
-	अगर (ret) अणु
+	ret = crypto_register_skcipher(alg);
+	if (ret) {
 		pr_err("%s skcipher algorithm registration error (%d)\n",
 		       alg->base.cra_name, ret);
-		kमुक्त(ccp_alg);
-		वापस ret;
-	पूर्ण
+		kfree(ccp_alg);
+		return ret;
+	}
 
 	list_add(&ccp_alg->entry, head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ccp_रेजिस्टर_aes_xts_algs(काष्ठा list_head *head)
-अणु
-	पूर्णांक i, ret;
+int ccp_register_aes_xts_algs(struct list_head *head)
+{
+	int i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(aes_xts_algs); i++) अणु
-		ret = ccp_रेजिस्टर_aes_xts_alg(head, &aes_xts_algs[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(aes_xts_algs); i++) {
+		ret = ccp_register_aes_xts_alg(head, &aes_xts_algs[i]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

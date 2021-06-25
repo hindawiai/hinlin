@@ -1,317 +1,316 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * gpio-fan.c - Hwmon driver क्रम fans connected to GPIO lines.
+ * gpio-fan.c - Hwmon driver for fans connected to GPIO lines.
  *
  * Copyright (C) 2010 LaCie
  *
  * Author: Simon Guinot <sguinot@lacie.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/thermal.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/mutex.h>
+#include <linux/hwmon.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/thermal.h>
 
-काष्ठा gpio_fan_speed अणु
-	पूर्णांक rpm;
-	पूर्णांक ctrl_val;
-पूर्ण;
+struct gpio_fan_speed {
+	int rpm;
+	int ctrl_val;
+};
 
-काष्ठा gpio_fan_data अणु
-	काष्ठा device		*dev;
-	काष्ठा device		*hwmon_dev;
-	/* Cooling device अगर any */
-	काष्ठा thermal_cooling_device *cdev;
-	काष्ठा mutex		lock; /* lock GPIOs operations. */
-	पूर्णांक			num_gpios;
-	काष्ठा gpio_desc	**gpios;
-	पूर्णांक			num_speed;
-	काष्ठा gpio_fan_speed	*speed;
-	पूर्णांक			speed_index;
-#अगर_घोषित CONFIG_PM_SLEEP
-	पूर्णांक			resume_speed;
-#पूर्ण_अगर
+struct gpio_fan_data {
+	struct device		*dev;
+	struct device		*hwmon_dev;
+	/* Cooling device if any */
+	struct thermal_cooling_device *cdev;
+	struct mutex		lock; /* lock GPIOs operations. */
+	int			num_gpios;
+	struct gpio_desc	**gpios;
+	int			num_speed;
+	struct gpio_fan_speed	*speed;
+	int			speed_index;
+#ifdef CONFIG_PM_SLEEP
+	int			resume_speed;
+#endif
 	bool			pwm_enable;
-	काष्ठा gpio_desc	*alarm_gpio;
-	काष्ठा work_काष्ठा	alarm_work;
-पूर्ण;
+	struct gpio_desc	*alarm_gpio;
+	struct work_struct	alarm_work;
+};
 
 /*
  * Alarm GPIO.
  */
 
-अटल व्योम fan_alarm_notअगरy(काष्ठा work_काष्ठा *ws)
-अणु
-	काष्ठा gpio_fan_data *fan_data =
-		container_of(ws, काष्ठा gpio_fan_data, alarm_work);
+static void fan_alarm_notify(struct work_struct *ws)
+{
+	struct gpio_fan_data *fan_data =
+		container_of(ws, struct gpio_fan_data, alarm_work);
 
-	sysfs_notअगरy(&fan_data->hwmon_dev->kobj, शून्य, "fan1_alarm");
+	sysfs_notify(&fan_data->hwmon_dev->kobj, NULL, "fan1_alarm");
 	kobject_uevent(&fan_data->hwmon_dev->kobj, KOBJ_CHANGE);
-पूर्ण
+}
 
-अटल irqवापस_t fan_alarm_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_id;
+static irqreturn_t fan_alarm_irq_handler(int irq, void *dev_id)
+{
+	struct gpio_fan_data *fan_data = dev_id;
 
 	schedule_work(&fan_data->alarm_work);
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल sमाप_प्रकार fan1_alarm_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t fan1_alarm_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n",
+	return sprintf(buf, "%d\n",
 		       gpiod_get_value_cansleep(fan_data->alarm_gpio));
-पूर्ण
+}
 
-अटल DEVICE_ATTR_RO(fan1_alarm);
+static DEVICE_ATTR_RO(fan1_alarm);
 
-अटल पूर्णांक fan_alarm_init(काष्ठा gpio_fan_data *fan_data)
-अणु
-	पूर्णांक alarm_irq;
-	काष्ठा device *dev = fan_data->dev;
+static int fan_alarm_init(struct gpio_fan_data *fan_data)
+{
+	int alarm_irq;
+	struct device *dev = fan_data->dev;
 
 	/*
-	 * If the alarm GPIO करोn't support पूर्णांकerrupts, just leave
-	 * without initializing the fail notअगरication support.
+	 * If the alarm GPIO don't support interrupts, just leave
+	 * without initializing the fail notification support.
 	 */
 	alarm_irq = gpiod_to_irq(fan_data->alarm_gpio);
-	अगर (alarm_irq <= 0)
-		वापस 0;
+	if (alarm_irq <= 0)
+		return 0;
 
-	INIT_WORK(&fan_data->alarm_work, fan_alarm_notअगरy);
+	INIT_WORK(&fan_data->alarm_work, fan_alarm_notify);
 	irq_set_irq_type(alarm_irq, IRQ_TYPE_EDGE_BOTH);
-	वापस devm_request_irq(dev, alarm_irq, fan_alarm_irq_handler,
+	return devm_request_irq(dev, alarm_irq, fan_alarm_irq_handler,
 				IRQF_SHARED, "GPIO fan alarm", fan_data);
-पूर्ण
+}
 
 /*
  * Control GPIOs.
  */
 
 /* Must be called with fan_data->lock held, except during initialization. */
-अटल व्योम __set_fan_ctrl(काष्ठा gpio_fan_data *fan_data, पूर्णांक ctrl_val)
-अणु
-	पूर्णांक i;
+static void __set_fan_ctrl(struct gpio_fan_data *fan_data, int ctrl_val)
+{
+	int i;
 
-	क्रम (i = 0; i < fan_data->num_gpios; i++)
+	for (i = 0; i < fan_data->num_gpios; i++)
 		gpiod_set_value_cansleep(fan_data->gpios[i],
 					 (ctrl_val >> i) & 1);
-पूर्ण
+}
 
-अटल पूर्णांक __get_fan_ctrl(काष्ठा gpio_fan_data *fan_data)
-अणु
-	पूर्णांक i;
-	पूर्णांक ctrl_val = 0;
+static int __get_fan_ctrl(struct gpio_fan_data *fan_data)
+{
+	int i;
+	int ctrl_val = 0;
 
-	क्रम (i = 0; i < fan_data->num_gpios; i++) अणु
-		पूर्णांक value;
+	for (i = 0; i < fan_data->num_gpios; i++) {
+		int value;
 
 		value = gpiod_get_value_cansleep(fan_data->gpios[i]);
 		ctrl_val |= (value << i);
-	पूर्ण
-	वापस ctrl_val;
-पूर्ण
+	}
+	return ctrl_val;
+}
 
 /* Must be called with fan_data->lock held, except during initialization. */
-अटल व्योम set_fan_speed(काष्ठा gpio_fan_data *fan_data, पूर्णांक speed_index)
-अणु
-	अगर (fan_data->speed_index == speed_index)
-		वापस;
+static void set_fan_speed(struct gpio_fan_data *fan_data, int speed_index)
+{
+	if (fan_data->speed_index == speed_index)
+		return;
 
 	__set_fan_ctrl(fan_data, fan_data->speed[speed_index].ctrl_val);
 	fan_data->speed_index = speed_index;
-पूर्ण
+}
 
-अटल पूर्णांक get_fan_speed_index(काष्ठा gpio_fan_data *fan_data)
-अणु
-	पूर्णांक ctrl_val = __get_fan_ctrl(fan_data);
-	पूर्णांक i;
+static int get_fan_speed_index(struct gpio_fan_data *fan_data)
+{
+	int ctrl_val = __get_fan_ctrl(fan_data);
+	int i;
 
-	क्रम (i = 0; i < fan_data->num_speed; i++)
-		अगर (fan_data->speed[i].ctrl_val == ctrl_val)
-			वापस i;
+	for (i = 0; i < fan_data->num_speed; i++)
+		if (fan_data->speed[i].ctrl_val == ctrl_val)
+			return i;
 
 	dev_warn(fan_data->dev,
 		 "missing speed array entry for GPIO value 0x%x\n", ctrl_val);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल पूर्णांक rpm_to_speed_index(काष्ठा gpio_fan_data *fan_data, अचिन्हित दीर्घ rpm)
-अणु
-	काष्ठा gpio_fan_speed *speed = fan_data->speed;
-	पूर्णांक i;
+static int rpm_to_speed_index(struct gpio_fan_data *fan_data, unsigned long rpm)
+{
+	struct gpio_fan_speed *speed = fan_data->speed;
+	int i;
 
-	क्रम (i = 0; i < fan_data->num_speed; i++)
-		अगर (speed[i].rpm >= rpm)
-			वापस i;
+	for (i = 0; i < fan_data->num_speed; i++)
+		if (speed[i].rpm >= rpm)
+			return i;
 
-	वापस fan_data->num_speed - 1;
-पूर्ण
+	return fan_data->num_speed - 1;
+}
 
-अटल sमाप_प्रकार pwm1_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t pwm1_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 	u8 pwm = fan_data->speed_index * 255 / (fan_data->num_speed - 1);
 
-	वापस प्र_लिखो(buf, "%d\n", pwm);
-पूर्ण
+	return sprintf(buf, "%d\n", pwm);
+}
 
-अटल sमाप_प्रकार pwm1_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ pwm;
-	पूर्णांक speed_index;
-	पूर्णांक ret = count;
+static ssize_t pwm1_store(struct device *dev, struct device_attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
+	unsigned long pwm;
+	int speed_index;
+	int ret = count;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &pwm) || pwm > 255)
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &pwm) || pwm > 255)
+		return -EINVAL;
 
 	mutex_lock(&fan_data->lock);
 
-	अगर (!fan_data->pwm_enable) अणु
+	if (!fan_data->pwm_enable) {
 		ret = -EPERM;
-		जाओ निकास_unlock;
-	पूर्ण
+		goto exit_unlock;
+	}
 
 	speed_index = DIV_ROUND_UP(pwm * (fan_data->num_speed - 1), 255);
 	set_fan_speed(fan_data, speed_index);
 
-निकास_unlock:
+exit_unlock:
 	mutex_unlock(&fan_data->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार pwm1_enable_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t pwm1_enable_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", fan_data->pwm_enable);
-पूर्ण
+	return sprintf(buf, "%d\n", fan_data->pwm_enable);
+}
 
-अटल sमाप_प्रकार pwm1_enable_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
+static ssize_t pwm1_enable_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
+	unsigned long val;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &val) || val > 1)
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &val) || val > 1)
+		return -EINVAL;
 
-	अगर (fan_data->pwm_enable == val)
-		वापस count;
+	if (fan_data->pwm_enable == val)
+		return count;
 
 	mutex_lock(&fan_data->lock);
 
 	fan_data->pwm_enable = val;
 
 	/* Disable manual control mode: set fan at full speed. */
-	अगर (val == 0)
+	if (val == 0)
 		set_fan_speed(fan_data, fan_data->num_speed - 1);
 
 	mutex_unlock(&fan_data->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार pwm1_mode_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+static ssize_t pwm1_mode_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "0\n");
+}
 
-अटल sमाप_प्रकार fan1_min_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t fan1_min_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", fan_data->speed[0].rpm);
-पूर्ण
+	return sprintf(buf, "%d\n", fan_data->speed[0].rpm);
+}
 
-अटल sमाप_प्रकार fan1_max_show(काष्ठा device *dev,
-			     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t fan1_max_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n",
+	return sprintf(buf, "%d\n",
 		       fan_data->speed[fan_data->num_speed - 1].rpm);
-पूर्ण
+}
 
-अटल sमाप_प्रकार fan1_input_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static ssize_t fan1_input_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", fan_data->speed[fan_data->speed_index].rpm);
-पूर्ण
+	return sprintf(buf, "%d\n", fan_data->speed[fan_data->speed_index].rpm);
+}
 
-अटल sमाप_प्रकार set_rpm(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ rpm;
-	पूर्णांक ret = count;
+static ssize_t set_rpm(struct device *dev, struct device_attribute *attr,
+		       const char *buf, size_t count)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
+	unsigned long rpm;
+	int ret = count;
 
-	अगर (kम_से_अदीर्घ(buf, 10, &rpm))
-		वापस -EINVAL;
+	if (kstrtoul(buf, 10, &rpm))
+		return -EINVAL;
 
 	mutex_lock(&fan_data->lock);
 
-	अगर (!fan_data->pwm_enable) अणु
+	if (!fan_data->pwm_enable) {
 		ret = -EPERM;
-		जाओ निकास_unlock;
-	पूर्ण
+		goto exit_unlock;
+	}
 
 	set_fan_speed(fan_data, rpm_to_speed_index(fan_data, rpm));
 
-निकास_unlock:
+exit_unlock:
 	mutex_unlock(&fan_data->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_ATTR_RW(pwm1);
-अटल DEVICE_ATTR_RW(pwm1_enable);
-अटल DEVICE_ATTR_RO(pwm1_mode);
-अटल DEVICE_ATTR_RO(fan1_min);
-अटल DEVICE_ATTR_RO(fan1_max);
-अटल DEVICE_ATTR_RO(fan1_input);
-अटल DEVICE_ATTR(fan1_target, 0644, fan1_input_show, set_rpm);
+static DEVICE_ATTR_RW(pwm1);
+static DEVICE_ATTR_RW(pwm1_enable);
+static DEVICE_ATTR_RO(pwm1_mode);
+static DEVICE_ATTR_RO(fan1_min);
+static DEVICE_ATTR_RO(fan1_max);
+static DEVICE_ATTR_RO(fan1_input);
+static DEVICE_ATTR(fan1_target, 0644, fan1_input_show, set_rpm);
 
-अटल umode_t gpio_fan_is_visible(काष्ठा kobject *kobj,
-				   काष्ठा attribute *attr, पूर्णांक index)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा gpio_fan_data *data = dev_get_drvdata(dev);
+static umode_t gpio_fan_is_visible(struct kobject *kobj,
+				   struct attribute *attr, int index)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct gpio_fan_data *data = dev_get_drvdata(dev);
 
-	अगर (index == 0 && !data->alarm_gpio)
-		वापस 0;
-	अगर (index > 0 && !data->gpios)
-		वापस 0;
+	if (index == 0 && !data->alarm_gpio)
+		return 0;
+	if (index > 0 && !data->gpios)
+		return 0;
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल काष्ठा attribute *gpio_fan_attributes[] = अणु
+static struct attribute *gpio_fan_attributes[] = {
 	&dev_attr_fan1_alarm.attr,		/* 0 */
 	&dev_attr_pwm1.attr,			/* 1 */
 	&dev_attr_pwm1_enable.attr,
@@ -320,281 +319,281 @@
 	&dev_attr_fan1_target.attr,
 	&dev_attr_fan1_min.attr,
 	&dev_attr_fan1_max.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group gpio_fan_group = अणु
+static const struct attribute_group gpio_fan_group = {
 	.attrs = gpio_fan_attributes,
 	.is_visible = gpio_fan_is_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *gpio_fan_groups[] = अणु
+static const struct attribute_group *gpio_fan_groups[] = {
 	&gpio_fan_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक fan_ctrl_init(काष्ठा gpio_fan_data *fan_data)
-अणु
-	पूर्णांक num_gpios = fan_data->num_gpios;
-	काष्ठा gpio_desc **gpios = fan_data->gpios;
-	पूर्णांक i, err;
+static int fan_ctrl_init(struct gpio_fan_data *fan_data)
+{
+	int num_gpios = fan_data->num_gpios;
+	struct gpio_desc **gpios = fan_data->gpios;
+	int i, err;
 
-	क्रम (i = 0; i < num_gpios; i++) अणु
+	for (i = 0; i < num_gpios; i++) {
 		/*
 		 * The GPIO descriptors were retrieved with GPIOD_ASIS so here
-		 * we set the GPIO पूर्णांकo output mode, carefully preserving the
-		 * current value by setting it to whatever it is alपढ़ोy set
-		 * (no surprise changes in शेष fan speed).
+		 * we set the GPIO into output mode, carefully preserving the
+		 * current value by setting it to whatever it is already set
+		 * (no surprise changes in default fan speed).
 		 */
 		err = gpiod_direction_output(gpios[i],
 					gpiod_get_value_cansleep(gpios[i]));
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	fan_data->pwm_enable = true; /* Enable manual fan speed control. */
 	fan_data->speed_index = get_fan_speed_index(fan_data);
-	अगर (fan_data->speed_index < 0)
-		वापस fan_data->speed_index;
+	if (fan_data->speed_index < 0)
+		return fan_data->speed_index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_fan_get_max_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा gpio_fan_data *fan_data = cdev->devdata;
+static int gpio_fan_get_max_state(struct thermal_cooling_device *cdev,
+				  unsigned long *state)
+{
+	struct gpio_fan_data *fan_data = cdev->devdata;
 
-	अगर (!fan_data)
-		वापस -EINVAL;
+	if (!fan_data)
+		return -EINVAL;
 
 	*state = fan_data->num_speed - 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_fan_get_cur_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ *state)
-अणु
-	काष्ठा gpio_fan_data *fan_data = cdev->devdata;
+static int gpio_fan_get_cur_state(struct thermal_cooling_device *cdev,
+				  unsigned long *state)
+{
+	struct gpio_fan_data *fan_data = cdev->devdata;
 
-	अगर (!fan_data)
-		वापस -EINVAL;
+	if (!fan_data)
+		return -EINVAL;
 
 	*state = fan_data->speed_index;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_fan_set_cur_state(काष्ठा thermal_cooling_device *cdev,
-				  अचिन्हित दीर्घ state)
-अणु
-	काष्ठा gpio_fan_data *fan_data = cdev->devdata;
+static int gpio_fan_set_cur_state(struct thermal_cooling_device *cdev,
+				  unsigned long state)
+{
+	struct gpio_fan_data *fan_data = cdev->devdata;
 
-	अगर (!fan_data)
-		वापस -EINVAL;
+	if (!fan_data)
+		return -EINVAL;
 
 	set_fan_speed(fan_data, state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_cooling_device_ops gpio_fan_cool_ops = अणु
+static const struct thermal_cooling_device_ops gpio_fan_cool_ops = {
 	.get_max_state = gpio_fan_get_max_state,
 	.get_cur_state = gpio_fan_get_cur_state,
 	.set_cur_state = gpio_fan_set_cur_state,
-पूर्ण;
+};
 
 /*
- * Translate OpenFirmware node properties पूर्णांकo platक्रमm_data
+ * Translate OpenFirmware node properties into platform_data
  */
-अटल पूर्णांक gpio_fan_get_of_data(काष्ठा gpio_fan_data *fan_data)
-अणु
-	काष्ठा gpio_fan_speed *speed;
-	काष्ठा device *dev = fan_data->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा gpio_desc **gpios;
-	अचिन्हित i;
+static int gpio_fan_get_of_data(struct gpio_fan_data *fan_data)
+{
+	struct gpio_fan_speed *speed;
+	struct device *dev = fan_data->dev;
+	struct device_node *np = dev->of_node;
+	struct gpio_desc **gpios;
+	unsigned i;
 	u32 u;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
+	struct property *prop;
+	const __be32 *p;
 
-	/* Alarm GPIO अगर one exists */
+	/* Alarm GPIO if one exists */
 	fan_data->alarm_gpio = devm_gpiod_get_optional(dev, "alarm", GPIOD_IN);
-	अगर (IS_ERR(fan_data->alarm_gpio))
-		वापस PTR_ERR(fan_data->alarm_gpio);
+	if (IS_ERR(fan_data->alarm_gpio))
+		return PTR_ERR(fan_data->alarm_gpio);
 
 	/* Fill GPIO pin array */
-	fan_data->num_gpios = gpiod_count(dev, शून्य);
-	अगर (fan_data->num_gpios <= 0) अणु
-		अगर (fan_data->alarm_gpio)
-			वापस 0;
+	fan_data->num_gpios = gpiod_count(dev, NULL);
+	if (fan_data->num_gpios <= 0) {
+		if (fan_data->alarm_gpio)
+			return 0;
 		dev_err(dev, "DT properties empty / missing");
-		वापस -ENODEV;
-	पूर्ण
-	gpios = devm_kसुस्मृति(dev,
-			     fan_data->num_gpios, माप(काष्ठा gpio_desc *),
+		return -ENODEV;
+	}
+	gpios = devm_kcalloc(dev,
+			     fan_data->num_gpios, sizeof(struct gpio_desc *),
 			     GFP_KERNEL);
-	अगर (!gpios)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < fan_data->num_gpios; i++) अणु
-		gpios[i] = devm_gpiod_get_index(dev, शून्य, i, GPIOD_ASIS);
-		अगर (IS_ERR(gpios[i]))
-			वापस PTR_ERR(gpios[i]);
-	पूर्ण
+	if (!gpios)
+		return -ENOMEM;
+	for (i = 0; i < fan_data->num_gpios; i++) {
+		gpios[i] = devm_gpiod_get_index(dev, NULL, i, GPIOD_ASIS);
+		if (IS_ERR(gpios[i]))
+			return PTR_ERR(gpios[i]);
+	}
 	fan_data->gpios = gpios;
 
 	/* Get number of RPM/ctrl_val pairs in speed map */
 	prop = of_find_property(np, "gpio-fan,speed-map", &i);
-	अगर (!prop) अणु
+	if (!prop) {
 		dev_err(dev, "gpio-fan,speed-map DT property missing");
-		वापस -ENODEV;
-	पूर्ण
-	i = i / माप(u32);
-	अगर (i == 0 || i & 1) अणु
+		return -ENODEV;
+	}
+	i = i / sizeof(u32);
+	if (i == 0 || i & 1) {
 		dev_err(dev, "gpio-fan,speed-map contains zero/odd number of entries");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	fan_data->num_speed = i / 2;
 
 	/*
 	 * Populate speed map
-	 * Speed map is in the क्रमm <RPM ctrl_val RPM ctrl_val ...>
-	 * this needs splitting पूर्णांकo pairs to create gpio_fan_speed काष्ठाs
+	 * Speed map is in the form <RPM ctrl_val RPM ctrl_val ...>
+	 * this needs splitting into pairs to create gpio_fan_speed structs
 	 */
-	speed = devm_kसुस्मृति(dev,
-			fan_data->num_speed, माप(काष्ठा gpio_fan_speed),
+	speed = devm_kcalloc(dev,
+			fan_data->num_speed, sizeof(struct gpio_fan_speed),
 			GFP_KERNEL);
-	अगर (!speed)
-		वापस -ENOMEM;
-	p = शून्य;
-	क्रम (i = 0; i < fan_data->num_speed; i++) अणु
+	if (!speed)
+		return -ENOMEM;
+	p = NULL;
+	for (i = 0; i < fan_data->num_speed; i++) {
 		p = of_prop_next_u32(prop, p, &u);
-		अगर (!p)
-			वापस -ENODEV;
+		if (!p)
+			return -ENODEV;
 		speed[i].rpm = u;
 		p = of_prop_next_u32(prop, p, &u);
-		अगर (!p)
-			वापस -ENODEV;
+		if (!p)
+			return -ENODEV;
 		speed[i].ctrl_val = u;
-	पूर्ण
+	}
 	fan_data->speed = speed;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_gpio_fan_match[] = अणु
-	अणु .compatible = "gpio-fan", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_gpio_fan_match[] = {
+	{ .compatible = "gpio-fan", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_gpio_fan_match);
 
-अटल व्योम gpio_fan_stop(व्योम *data)
-अणु
+static void gpio_fan_stop(void *data)
+{
 	set_fan_speed(data, 0);
-पूर्ण
+}
 
-अटल पूर्णांक gpio_fan_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
-	काष्ठा gpio_fan_data *fan_data;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
+static int gpio_fan_probe(struct platform_device *pdev)
+{
+	int err;
+	struct gpio_fan_data *fan_data;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
 
-	fan_data = devm_kzalloc(dev, माप(काष्ठा gpio_fan_data),
+	fan_data = devm_kzalloc(dev, sizeof(struct gpio_fan_data),
 				GFP_KERNEL);
-	अगर (!fan_data)
-		वापस -ENOMEM;
+	if (!fan_data)
+		return -ENOMEM;
 
 	fan_data->dev = dev;
 	err = gpio_fan_get_of_data(fan_data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	platक्रमm_set_drvdata(pdev, fan_data);
+	platform_set_drvdata(pdev, fan_data);
 	mutex_init(&fan_data->lock);
 
-	/* Configure control GPIOs अगर available. */
-	अगर (fan_data->gpios && fan_data->num_gpios > 0) अणु
-		अगर (!fan_data->speed || fan_data->num_speed <= 1)
-			वापस -EINVAL;
+	/* Configure control GPIOs if available. */
+	if (fan_data->gpios && fan_data->num_gpios > 0) {
+		if (!fan_data->speed || fan_data->num_speed <= 1)
+			return -EINVAL;
 		err = fan_ctrl_init(fan_data);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = devm_add_action_or_reset(dev, gpio_fan_stop, fan_data);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* Make this driver part of hwmon class. */
 	fan_data->hwmon_dev =
-		devm_hwmon_device_रेजिस्टर_with_groups(dev,
+		devm_hwmon_device_register_with_groups(dev,
 						       "gpio_fan", fan_data,
 						       gpio_fan_groups);
-	अगर (IS_ERR(fan_data->hwmon_dev))
-		वापस PTR_ERR(fan_data->hwmon_dev);
+	if (IS_ERR(fan_data->hwmon_dev))
+		return PTR_ERR(fan_data->hwmon_dev);
 
-	/* Configure alarm GPIO अगर available. */
-	अगर (fan_data->alarm_gpio) अणु
+	/* Configure alarm GPIO if available. */
+	if (fan_data->alarm_gpio) {
 		err = fan_alarm_init(fan_data);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	/* Optional cooling device रेजिस्टर क्रम Device tree platक्रमms */
-	fan_data->cdev = devm_thermal_of_cooling_device_रेजिस्टर(dev, np,
+	/* Optional cooling device register for Device tree platforms */
+	fan_data->cdev = devm_thermal_of_cooling_device_register(dev, np,
 				"gpio-fan", fan_data, &gpio_fan_cool_ops);
 
 	dev_info(dev, "GPIO fan initialized\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gpio_fan_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gpio_fan_data *fan_data = platक्रमm_get_drvdata(pdev);
+static void gpio_fan_shutdown(struct platform_device *pdev)
+{
+	struct gpio_fan_data *fan_data = platform_get_drvdata(pdev);
 
-	अगर (fan_data->gpios)
+	if (fan_data->gpios)
 		set_fan_speed(fan_data, 0);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक gpio_fan_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int gpio_fan_suspend(struct device *dev)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	अगर (fan_data->gpios) अणु
+	if (fan_data->gpios) {
 		fan_data->resume_speed = fan_data->speed_index;
 		set_fan_speed(fan_data, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_fan_resume(काष्ठा device *dev)
-अणु
-	काष्ठा gpio_fan_data *fan_data = dev_get_drvdata(dev);
+static int gpio_fan_resume(struct device *dev)
+{
+	struct gpio_fan_data *fan_data = dev_get_drvdata(dev);
 
-	अगर (fan_data->gpios)
+	if (fan_data->gpios)
 		set_fan_speed(fan_data, fan_data->resume_speed);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(gpio_fan_pm, gpio_fan_suspend, gpio_fan_resume);
-#घोषणा GPIO_FAN_PM	(&gpio_fan_pm)
-#अन्यथा
-#घोषणा GPIO_FAN_PM	शून्य
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(gpio_fan_pm, gpio_fan_suspend, gpio_fan_resume);
+#define GPIO_FAN_PM	(&gpio_fan_pm)
+#else
+#define GPIO_FAN_PM	NULL
+#endif
 
-अटल काष्ठा platक्रमm_driver gpio_fan_driver = अणु
+static struct platform_driver gpio_fan_driver = {
 	.probe		= gpio_fan_probe,
-	.shutकरोwn	= gpio_fan_shutकरोwn,
-	.driver	= अणु
+	.shutdown	= gpio_fan_shutdown,
+	.driver	= {
 		.name	= "gpio-fan",
 		.pm	= GPIO_FAN_PM,
 		.of_match_table = of_match_ptr(of_gpio_fan_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(gpio_fan_driver);
+module_platform_driver(gpio_fan_driver);
 
 MODULE_AUTHOR("Simon Guinot <sguinot@lacie.com>");
 MODULE_DESCRIPTION("GPIO FAN driver");

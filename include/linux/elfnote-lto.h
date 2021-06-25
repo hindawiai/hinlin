@@ -1,15 +1,14 @@
-<शैली गुरु>
-#अगर_अघोषित __ELFNOTE_LTO_H
-#घोषणा __ELFNOTE_LTO_H
+#ifndef __ELFNOTE_LTO_H
+#define __ELFNOTE_LTO_H
 
-#समावेश <linux/elfnote.h>
+#include <linux/elfnote.h>
 
-#घोषणा LINUX_ELFNOTE_LTO_INFO	0x101
+#define LINUX_ELFNOTE_LTO_INFO	0x101
 
-#अगर_घोषित CONFIG_LTO
-#घोषणा BUILD_LTO_INFO	ELFNOTE32("Linux", LINUX_ELFNOTE_LTO_INFO, 1)
-#अन्यथा
-#घोषणा BUILD_LTO_INFO	ELFNOTE32("Linux", LINUX_ELFNOTE_LTO_INFO, 0)
-#पूर्ण_अगर
+#ifdef CONFIG_LTO
+#define BUILD_LTO_INFO	ELFNOTE32("Linux", LINUX_ELFNOTE_LTO_INFO, 1)
+#else
+#define BUILD_LTO_INFO	ELFNOTE32("Linux", LINUX_ELFNOTE_LTO_INFO, 0)
+#endif
 
-#पूर्ण_अगर /* __ELFNOTE_LTO_H */
+#endif /* __ELFNOTE_LTO_H */

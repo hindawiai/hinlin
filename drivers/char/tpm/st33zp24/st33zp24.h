@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * STMicroelectronics TPM Linux driver क्रम TPM ST33ZP24
+ * STMicroelectronics TPM Linux driver for TPM ST33ZP24
  * Copyright (C) 2009 - 2016  STMicroelectronics
  */
 
-#अगर_अघोषित __LOCAL_ST33ZP24_H__
-#घोषणा __LOCAL_ST33ZP24_H__
+#ifndef __LOCAL_ST33ZP24_H__
+#define __LOCAL_ST33ZP24_H__
 
-#घोषणा TPM_WRITE_सूचीECTION	0x80
-#घोषणा ST33ZP24_बफ_मानE	2048
+#define TPM_WRITE_DIRECTION	0x80
+#define ST33ZP24_BUFSIZE	2048
 
-काष्ठा st33zp24_dev अणु
-	काष्ठा tpm_chip *chip;
-	व्योम *phy_id;
-	स्थिर काष्ठा st33zp24_phy_ops *ops;
-	पूर्णांक locality;
-	पूर्णांक irq;
-	u32 पूर्णांकrs;
-	पूर्णांक io_lpcpd;
-	रुको_queue_head_t पढ़ो_queue;
-पूर्ण;
+struct st33zp24_dev {
+	struct tpm_chip *chip;
+	void *phy_id;
+	const struct st33zp24_phy_ops *ops;
+	int locality;
+	int irq;
+	u32 intrs;
+	int io_lpcpd;
+	wait_queue_head_t read_queue;
+};
 
 
-काष्ठा st33zp24_phy_ops अणु
-	पूर्णांक (*send)(व्योम *phy_id, u8 tpm_रेजिस्टर, u8 *tpm_data, पूर्णांक tpm_size);
-	पूर्णांक (*recv)(व्योम *phy_id, u8 tpm_रेजिस्टर, u8 *tpm_data, पूर्णांक tpm_size);
-पूर्ण;
+struct st33zp24_phy_ops {
+	int (*send)(void *phy_id, u8 tpm_register, u8 *tpm_data, int tpm_size);
+	int (*recv)(void *phy_id, u8 tpm_register, u8 *tpm_data, int tpm_size);
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-पूर्णांक st33zp24_pm_suspend(काष्ठा device *dev);
-पूर्णांक st33zp24_pm_resume(काष्ठा device *dev);
-#पूर्ण_अगर
+#ifdef CONFIG_PM_SLEEP
+int st33zp24_pm_suspend(struct device *dev);
+int st33zp24_pm_resume(struct device *dev);
+#endif
 
-पूर्णांक st33zp24_probe(व्योम *phy_id, स्थिर काष्ठा st33zp24_phy_ops *ops,
-		   काष्ठा device *dev, पूर्णांक irq, पूर्णांक io_lpcpd);
-पूर्णांक st33zp24_हटाओ(काष्ठा tpm_chip *chip);
-#पूर्ण_अगर /* __LOCAL_ST33ZP24_H__ */
+int st33zp24_probe(void *phy_id, const struct st33zp24_phy_ops *ops,
+		   struct device *dev, int irq, int io_lpcpd);
+int st33zp24_remove(struct tpm_chip *chip);
+#endif /* __LOCAL_ST33ZP24_H__ */

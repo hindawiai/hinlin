@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2013 Aeroflex Gaisler
  *
  * This driver supports the APBPS2 PS/2 core available in the GRLIB
  * VHDL IP core library.
  *
- * Full करोcumentation of the APBPS2 core can be found here:
+ * Full documentation of the APBPS2 core can be found here:
  * http://www.gaisler.com/products/grlib/grip.pdf
  *
- * See "Documentation/devicetree/bindings/input/ps2keyb-mouse-apbps2.txt" क्रम
- * inक्रमmation on खोलो firmware properties.
+ * See "Documentation/devicetree/bindings/input/ps2keyb-mouse-apbps2.txt" for
+ * information on open firmware properties.
  *
  * Contributors: Daniel Hellstrom <daniel@gaisler.com>
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/module.h>
+#include <linux/serio.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/of_irq.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
 
-काष्ठा apbps2_regs अणु
+struct apbps2_regs {
 	u32 __iomem data;	/* 0x00 */
 	u32 __iomem status;	/* 0x04 */
 	u32 __iomem ctrl;	/* 0x08 */
 	u32 __iomem reload;	/* 0x0c */
-पूर्ण;
+};
 
-#घोषणा APBPS2_STATUS_DR	(1<<0)
-#घोषणा APBPS2_STATUS_PE	(1<<1)
-#घोषणा APBPS2_STATUS_FE	(1<<2)
-#घोषणा APBPS2_STATUS_KI	(1<<3)
-#घोषणा APBPS2_STATUS_RF	(1<<4)
-#घोषणा APBPS2_STATUS_TF	(1<<5)
-#घोषणा APBPS2_STATUS_TCNT	(0x1f<<22)
-#घोषणा APBPS2_STATUS_RCNT	(0x1f<<27)
+#define APBPS2_STATUS_DR	(1<<0)
+#define APBPS2_STATUS_PE	(1<<1)
+#define APBPS2_STATUS_FE	(1<<2)
+#define APBPS2_STATUS_KI	(1<<3)
+#define APBPS2_STATUS_RF	(1<<4)
+#define APBPS2_STATUS_TF	(1<<5)
+#define APBPS2_STATUS_TCNT	(0x1f<<22)
+#define APBPS2_STATUS_RCNT	(0x1f<<27)
 
-#घोषणा APBPS2_CTRL_RE		(1<<0)
-#घोषणा APBPS2_CTRL_TE		(1<<1)
-#घोषणा APBPS2_CTRL_RI		(1<<2)
-#घोषणा APBPS2_CTRL_TI		(1<<3)
+#define APBPS2_CTRL_RE		(1<<0)
+#define APBPS2_CTRL_TE		(1<<1)
+#define APBPS2_CTRL_RI		(1<<2)
+#define APBPS2_CTRL_TI		(1<<3)
 
-काष्ठा apbps2_priv अणु
-	काष्ठा serio		*io;
-	काष्ठा apbps2_regs	__iomem *regs;
-पूर्ण;
+struct apbps2_priv {
+	struct serio		*io;
+	struct apbps2_regs	__iomem *regs;
+};
 
-अटल पूर्णांक apbps2_idx;
+static int apbps2_idx;
 
-अटल irqवापस_t apbps2_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा apbps2_priv *priv = dev_id;
-	अचिन्हित दीर्घ status, data, rxflags;
-	irqवापस_t ret = IRQ_NONE;
+static irqreturn_t apbps2_isr(int irq, void *dev_id)
+{
+	struct apbps2_priv *priv = dev_id;
+	unsigned long status, data, rxflags;
+	irqreturn_t ret = IRQ_NONE;
 
-	जबतक ((status = ioपढ़ो32be(&priv->regs->status)) & APBPS2_STATUS_DR) अणु
-		data = ioपढ़ो32be(&priv->regs->data);
+	while ((status = ioread32be(&priv->regs->status)) & APBPS2_STATUS_DR) {
+		data = ioread32be(&priv->regs->data);
 		rxflags = (status & APBPS2_STATUS_PE) ? SERIO_PARITY : 0;
 		rxflags |= (status & APBPS2_STATUS_FE) ? SERIO_FRAME : 0;
 
 		/* clear error bits? */
-		अगर (rxflags)
-			ioग_लिखो32be(0, &priv->regs->status);
+		if (rxflags)
+			iowrite32be(0, &priv->regs->status);
 
-		serio_पूर्णांकerrupt(priv->io, data, rxflags);
+		serio_interrupt(priv->io, data, rxflags);
 
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक apbps2_ग_लिखो(काष्ठा serio *io, अचिन्हित अक्षर val)
-अणु
-	काष्ठा apbps2_priv *priv = io->port_data;
-	अचिन्हित पूर्णांक tleft = 10000; /* समयout in 100ms */
+static int apbps2_write(struct serio *io, unsigned char val)
+{
+	struct apbps2_priv *priv = io->port_data;
+	unsigned int tleft = 10000; /* timeout in 100ms */
 
-	/* delay until PS/2 controller has room क्रम more अक्षरs */
-	जबतक ((ioपढ़ो32be(&priv->regs->status) & APBPS2_STATUS_TF) && tleft--)
+	/* delay until PS/2 controller has room for more chars */
+	while ((ioread32be(&priv->regs->status) & APBPS2_STATUS_TF) && tleft--)
 		udelay(10);
 
-	अगर ((ioपढ़ो32be(&priv->regs->status) & APBPS2_STATUS_TF) == 0) अणु
-		ioग_लिखो32be(val, &priv->regs->data);
+	if ((ioread32be(&priv->regs->status) & APBPS2_STATUS_TF) == 0) {
+		iowrite32be(val, &priv->regs->data);
 
-		ioग_लिखो32be(APBPS2_CTRL_RE | APBPS2_CTRL_RI | APBPS2_CTRL_TE,
+		iowrite32be(APBPS2_CTRL_RE | APBPS2_CTRL_RI | APBPS2_CTRL_TE,
 				&priv->regs->ctrl);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक apbps2_खोलो(काष्ठा serio *io)
-अणु
-	काष्ठा apbps2_priv *priv = io->port_data;
-	पूर्णांक limit;
+static int apbps2_open(struct serio *io)
+{
+	struct apbps2_priv *priv = io->port_data;
+	int limit;
 
 	/* clear error flags */
-	ioग_लिखो32be(0, &priv->regs->status);
+	iowrite32be(0, &priv->regs->status);
 
-	/* Clear old data अगर available (unlikely) */
+	/* Clear old data if available (unlikely) */
 	limit = 1024;
-	जबतक ((ioपढ़ो32be(&priv->regs->status) & APBPS2_STATUS_DR) && --limit)
-		ioपढ़ो32be(&priv->regs->data);
+	while ((ioread32be(&priv->regs->status) & APBPS2_STATUS_DR) && --limit)
+		ioread32be(&priv->regs->data);
 
-	/* Enable reciever and it's पूर्णांकerrupt */
-	ioग_लिखो32be(APBPS2_CTRL_RE | APBPS2_CTRL_RI, &priv->regs->ctrl);
+	/* Enable reciever and it's interrupt */
+	iowrite32be(APBPS2_CTRL_RE | APBPS2_CTRL_RI, &priv->regs->ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम apbps2_बंद(काष्ठा serio *io)
-अणु
-	काष्ठा apbps2_priv *priv = io->port_data;
+static void apbps2_close(struct serio *io)
+{
+	struct apbps2_priv *priv = io->port_data;
 
-	/* stop पूर्णांकerrupts at PS/2 HW level */
-	ioग_लिखो32be(0, &priv->regs->ctrl);
-पूर्ण
+	/* stop interrupts at PS/2 HW level */
+	iowrite32be(0, &priv->regs->ctrl);
+}
 
 /* Initialize one APBPS2 PS/2 core */
-अटल पूर्णांक apbps2_of_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा apbps2_priv *priv;
-	पूर्णांक irq, err;
+static int apbps2_of_probe(struct platform_device *ofdev)
+{
+	struct apbps2_priv *priv;
+	int irq, err;
 	u32 freq_hz;
-	काष्ठा resource *res;
+	struct resource *res;
 
-	priv = devm_kzalloc(&ofdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = devm_kzalloc(&ofdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		dev_err(&ofdev->dev, "memory allocation failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Find Device Address */
-	res = platक्रमm_get_resource(ofdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(ofdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(&ofdev->dev, res);
-	अगर (IS_ERR(priv->regs))
-		वापस PTR_ERR(priv->regs);
+	if (IS_ERR(priv->regs))
+		return PTR_ERR(priv->regs);
 
-	/* Reset hardware, disable पूर्णांकerrupt */
-	ioग_लिखो32be(0, &priv->regs->ctrl);
+	/* Reset hardware, disable interrupt */
+	iowrite32be(0, &priv->regs->ctrl);
 
 	/* IRQ */
 	irq = irq_of_parse_and_map(ofdev->dev.of_node, 0);
 	err = devm_request_irq(&ofdev->dev, irq, apbps2_isr,
 				IRQF_SHARED, "apbps2", priv);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&ofdev->dev, "request IRQ%d failed\n", irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Get core frequency */
-	अगर (of_property_पढ़ो_u32(ofdev->dev.of_node, "freq", &freq_hz)) अणु
+	if (of_property_read_u32(ofdev->dev.of_node, "freq", &freq_hz)) {
 		dev_err(&ofdev->dev, "unable to get core frequency\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Set reload रेजिस्टर to core freq in kHz/10 */
-	ioग_लिखो32be(freq_hz / 10000, &priv->regs->reload);
+	/* Set reload register to core freq in kHz/10 */
+	iowrite32be(freq_hz / 10000, &priv->regs->reload);
 
-	priv->io = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!priv->io)
-		वापस -ENOMEM;
+	priv->io = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!priv->io)
+		return -ENOMEM;
 
 	priv->io->id.type = SERIO_8042;
-	priv->io->खोलो = apbps2_खोलो;
-	priv->io->बंद = apbps2_बंद;
-	priv->io->ग_लिखो = apbps2_ग_लिखो;
+	priv->io->open = apbps2_open;
+	priv->io->close = apbps2_close;
+	priv->io->write = apbps2_write;
 	priv->io->port_data = priv;
-	strlcpy(priv->io->name, "APBPS2 PS/2", माप(priv->io->name));
-	snम_लिखो(priv->io->phys, माप(priv->io->phys),
+	strlcpy(priv->io->name, "APBPS2 PS/2", sizeof(priv->io->name));
+	snprintf(priv->io->phys, sizeof(priv->io->phys),
 		 "apbps2_%d", apbps2_idx++);
 
 	dev_info(&ofdev->dev, "irq = %d, base = 0x%p\n", irq, priv->regs);
 
-	serio_रेजिस्टर_port(priv->io);
+	serio_register_port(priv->io);
 
-	platक्रमm_set_drvdata(ofdev, priv);
+	platform_set_drvdata(ofdev, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apbps2_of_हटाओ(काष्ठा platक्रमm_device *of_dev)
-अणु
-	काष्ठा apbps2_priv *priv = platक्रमm_get_drvdata(of_dev);
+static int apbps2_of_remove(struct platform_device *of_dev)
+{
+	struct apbps2_priv *priv = platform_get_drvdata(of_dev);
 
-	serio_unरेजिस्टर_port(priv->io);
+	serio_unregister_port(priv->io);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id apbps2_of_match[] = अणु
-	अणु .name = "GAISLER_APBPS2", पूर्ण,
-	अणु .name = "01_060", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id apbps2_of_match[] = {
+	{ .name = "GAISLER_APBPS2", },
+	{ .name = "01_060", },
+	{}
+};
 
 MODULE_DEVICE_TABLE(of, apbps2_of_match);
 
-अटल काष्ठा platक्रमm_driver apbps2_of_driver = अणु
-	.driver = अणु
+static struct platform_driver apbps2_of_driver = {
+	.driver = {
 		.name = "grlib-apbps2",
 		.of_match_table = apbps2_of_match,
-	पूर्ण,
+	},
 	.probe = apbps2_of_probe,
-	.हटाओ = apbps2_of_हटाओ,
-पूर्ण;
+	.remove = apbps2_of_remove,
+};
 
-module_platक्रमm_driver(apbps2_of_driver);
+module_platform_driver(apbps2_of_driver);
 
 MODULE_AUTHOR("Aeroflex Gaisler AB.");
 MODULE_DESCRIPTION("GRLIB APBPS2 PS/2 serial I/O");

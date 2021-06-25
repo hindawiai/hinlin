@@ -1,342 +1,341 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fs/f2fs/namei.c
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
-#समावेश <linux/fs.h>
-#समावेश <linux/f2fs_fs.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/quotaops.h>
+#include <linux/fs.h>
+#include <linux/f2fs_fs.h>
+#include <linux/pagemap.h>
+#include <linux/sched.h>
+#include <linux/ctype.h>
+#include <linux/random.h>
+#include <linux/dcache.h>
+#include <linux/namei.h>
+#include <linux/quotaops.h>
 
-#समावेश "f2fs.h"
-#समावेश "node.h"
-#समावेश "segment.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
-#समावेश <trace/events/f2fs.h>
+#include "f2fs.h"
+#include "node.h"
+#include "segment.h"
+#include "xattr.h"
+#include "acl.h"
+#include <trace/events/f2fs.h>
 
-अटल काष्ठा inode *f2fs_new_inode(काष्ठा inode *dir, umode_t mode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
+static struct inode *f2fs_new_inode(struct inode *dir, umode_t mode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
 	nid_t ino;
-	काष्ठा inode *inode;
-	bool nid_मुक्त = false;
+	struct inode *inode;
+	bool nid_free = false;
 	bool encrypt = false;
-	पूर्णांक xattr_size = 0;
-	पूर्णांक err;
+	int xattr_size = 0;
+	int err;
 
 	inode = new_inode(dir->i_sb);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
 
 	f2fs_lock_op(sbi);
-	अगर (!f2fs_alloc_nid(sbi, &ino)) अणु
+	if (!f2fs_alloc_nid(sbi, &ino)) {
 		f2fs_unlock_op(sbi);
 		err = -ENOSPC;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	f2fs_unlock_op(sbi);
 
-	nid_मुक्त = true;
+	nid_free = true;
 
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 
 	inode->i_ino = ino;
 	inode->i_blocks = 0;
-	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
-	F2FS_I(inode)->i_crसमय = inode->i_mसमय;
-	inode->i_generation = pअक्रमom_u32();
+	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	F2FS_I(inode)->i_crtime = inode->i_mtime;
+	inode->i_generation = prandom_u32();
 
-	अगर (S_ISसूची(inode->i_mode))
+	if (S_ISDIR(inode->i_mode))
 		F2FS_I(inode)->i_current_depth = 1;
 
 	err = insert_inode_locked(inode);
-	अगर (err) अणु
+	if (err) {
 		err = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (f2fs_sb_has_project_quota(sbi) &&
+	if (f2fs_sb_has_project_quota(sbi) &&
 		(F2FS_I(dir)->i_flags & F2FS_PROJINHERIT_FL))
 		F2FS_I(inode)->i_projid = F2FS_I(dir)->i_projid;
-	अन्यथा
+	else
 		F2FS_I(inode)->i_projid = make_kprojid(&init_user_ns,
 							F2FS_DEF_PROJID);
 
 	err = fscrypt_prepare_new_inode(dir, inode, &encrypt);
-	अगर (err)
-		जाओ fail_drop;
+	if (err)
+		goto fail_drop;
 
 	err = dquot_initialize(inode);
-	अगर (err)
-		जाओ fail_drop;
+	if (err)
+		goto fail_drop;
 
 	set_inode_flag(inode, FI_NEW_INODE);
 
-	अगर (encrypt)
+	if (encrypt)
 		f2fs_set_encrypted_inode(inode);
 
-	अगर (f2fs_sb_has_extra_attr(sbi)) अणु
+	if (f2fs_sb_has_extra_attr(sbi)) {
 		set_inode_flag(inode, FI_EXTRA_ATTR);
 		F2FS_I(inode)->i_extra_isize = F2FS_TOTAL_EXTRA_ATTR_SIZE;
-	पूर्ण
+	}
 
-	अगर (test_opt(sbi, INLINE_XATTR))
+	if (test_opt(sbi, INLINE_XATTR))
 		set_inode_flag(inode, FI_INLINE_XATTR);
 
-	अगर (test_opt(sbi, INLINE_DATA) && f2fs_may_अंतरभूत_data(inode))
+	if (test_opt(sbi, INLINE_DATA) && f2fs_may_inline_data(inode))
 		set_inode_flag(inode, FI_INLINE_DATA);
-	अगर (f2fs_may_अंतरभूत_dentry(inode))
+	if (f2fs_may_inline_dentry(inode))
 		set_inode_flag(inode, FI_INLINE_DENTRY);
 
-	अगर (f2fs_sb_has_flexible_अंतरभूत_xattr(sbi)) अणु
+	if (f2fs_sb_has_flexible_inline_xattr(sbi)) {
 		f2fs_bug_on(sbi, !f2fs_has_extra_attr(inode));
-		अगर (f2fs_has_अंतरभूत_xattr(inode))
-			xattr_size = F2FS_OPTION(sbi).अंतरभूत_xattr_size;
+		if (f2fs_has_inline_xattr(inode))
+			xattr_size = F2FS_OPTION(sbi).inline_xattr_size;
 		/* Otherwise, will be 0 */
-	पूर्ण अन्यथा अगर (f2fs_has_अंतरभूत_xattr(inode) ||
-				f2fs_has_अंतरभूत_dentry(inode)) अणु
+	} else if (f2fs_has_inline_xattr(inode) ||
+				f2fs_has_inline_dentry(inode)) {
 		xattr_size = DEFAULT_INLINE_XATTR_ADDRS;
-	पूर्ण
-	F2FS_I(inode)->i_अंतरभूत_xattr_size = xattr_size;
+	}
+	F2FS_I(inode)->i_inline_xattr_size = xattr_size;
 
-	f2fs_init_extent_tree(inode, शून्य);
+	f2fs_init_extent_tree(inode, NULL);
 
-	stat_inc_अंतरभूत_xattr(inode);
-	stat_inc_अंतरभूत_inode(inode);
-	stat_inc_अंतरभूत_dir(inode);
+	stat_inc_inline_xattr(inode);
+	stat_inc_inline_inode(inode);
+	stat_inc_inline_dir(inode);
 
 	F2FS_I(inode)->i_flags =
 		f2fs_mask_flags(mode, F2FS_I(dir)->i_flags & F2FS_FL_INHERITED);
 
-	अगर (S_ISसूची(inode->i_mode))
+	if (S_ISDIR(inode->i_mode))
 		F2FS_I(inode)->i_flags |= F2FS_INDEX_FL;
 
-	अगर (F2FS_I(inode)->i_flags & F2FS_PROJINHERIT_FL)
+	if (F2FS_I(inode)->i_flags & F2FS_PROJINHERIT_FL)
 		set_inode_flag(inode, FI_PROJ_INHERIT);
 
-	अगर (f2fs_sb_has_compression(sbi)) अणु
+	if (f2fs_sb_has_compression(sbi)) {
 		/* Inherit the compression flag in directory */
-		अगर ((F2FS_I(dir)->i_flags & F2FS_COMPR_FL) &&
+		if ((F2FS_I(dir)->i_flags & F2FS_COMPR_FL) &&
 					f2fs_may_compress(inode))
 			set_compress_context(inode);
-	पूर्ण
+	}
 
 	f2fs_set_inode_flags(inode);
 
 	trace_f2fs_new_inode(inode, 0);
-	वापस inode;
+	return inode;
 
 fail:
 	trace_f2fs_new_inode(inode, err);
 	make_bad_inode(inode);
-	अगर (nid_मुक्त)
+	if (nid_free)
 		set_inode_flag(inode, FI_FREE_NID);
 	iput(inode);
-	वापस ERR_PTR(err);
+	return ERR_PTR(err);
 fail_drop:
 	trace_f2fs_new_inode(inode, err);
 	dquot_drop(inode);
 	inode->i_flags |= S_NOQUOTA;
-	अगर (nid_मुक्त)
+	if (nid_free)
 		set_inode_flag(inode, FI_FREE_NID);
 	clear_nlink(inode);
 	unlock_new_inode(inode);
 	iput(inode);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल अंतरभूत पूर्णांक is_extension_exist(स्थिर अचिन्हित अक्षर *s, स्थिर अक्षर *sub)
-अणु
-	माप_प्रकार slen = म_माप(s);
-	माप_प्रकार sublen = म_माप(sub);
-	पूर्णांक i;
+static inline int is_extension_exist(const unsigned char *s, const char *sub)
+{
+	size_t slen = strlen(s);
+	size_t sublen = strlen(sub);
+	int i;
 
-	अगर (sublen == 1 && *sub == '*')
-		वापस 1;
+	if (sublen == 1 && *sub == '*')
+		return 1;
 
 	/*
-	 * filename क्रमmat of mulसमयdia file should be defined as:
+	 * filename format of multimedia file should be defined as:
 	 * "filename + '.' + extension + (optional: '.' + temp extension)".
 	 */
-	अगर (slen < sublen + 2)
-		वापस 0;
+	if (slen < sublen + 2)
+		return 0;
 
-	क्रम (i = 1; i < slen - sublen; i++) अणु
-		अगर (s[i] != '.')
-			जारी;
-		अगर (!strnहालcmp(s + i + 1, sub, sublen))
-			वापस 1;
-	पूर्ण
+	for (i = 1; i < slen - sublen; i++) {
+		if (s[i] != '.')
+			continue;
+		if (!strncasecmp(s + i + 1, sub, sublen))
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Set file's temperature क्रम hot/cold data separation
+ * Set file's temperature for hot/cold data separation
  */
-अटल अंतरभूत व्योम set_file_temperature(काष्ठा f2fs_sb_info *sbi, काष्ठा inode *inode,
-		स्थिर अचिन्हित अक्षर *name)
-अणु
+static inline void set_file_temperature(struct f2fs_sb_info *sbi, struct inode *inode,
+		const unsigned char *name)
+{
 	__u8 (*extlist)[F2FS_EXTENSION_LEN] = sbi->raw_super->extension_list;
-	पूर्णांक i, cold_count, hot_count;
+	int i, cold_count, hot_count;
 
-	करोwn_पढ़ो(&sbi->sb_lock);
+	down_read(&sbi->sb_lock);
 
 	cold_count = le32_to_cpu(sbi->raw_super->extension_count);
 	hot_count = sbi->raw_super->hot_ext_count;
 
-	क्रम (i = 0; i < cold_count + hot_count; i++) अणु
-		अगर (is_extension_exist(name, extlist[i]))
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < cold_count + hot_count; i++) {
+		if (is_extension_exist(name, extlist[i]))
+			break;
+	}
 
-	up_पढ़ो(&sbi->sb_lock);
+	up_read(&sbi->sb_lock);
 
-	अगर (i == cold_count + hot_count)
-		वापस;
+	if (i == cold_count + hot_count)
+		return;
 
-	अगर (i < cold_count)
+	if (i < cold_count)
 		file_set_cold(inode);
-	अन्यथा
+	else
 		file_set_hot(inode);
-पूर्ण
+}
 
-पूर्णांक f2fs_update_extension_list(काष्ठा f2fs_sb_info *sbi, स्थिर अक्षर *name,
+int f2fs_update_extension_list(struct f2fs_sb_info *sbi, const char *name,
 							bool hot, bool set)
-अणु
+{
 	__u8 (*extlist)[F2FS_EXTENSION_LEN] = sbi->raw_super->extension_list;
-	पूर्णांक cold_count = le32_to_cpu(sbi->raw_super->extension_count);
-	पूर्णांक hot_count = sbi->raw_super->hot_ext_count;
-	पूर्णांक total_count = cold_count + hot_count;
-	पूर्णांक start, count;
-	पूर्णांक i;
+	int cold_count = le32_to_cpu(sbi->raw_super->extension_count);
+	int hot_count = sbi->raw_super->hot_ext_count;
+	int total_count = cold_count + hot_count;
+	int start, count;
+	int i;
 
-	अगर (set) अणु
-		अगर (total_count == F2FS_MAX_EXTENSION)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (!hot && !cold_count)
-			वापस -EINVAL;
-		अगर (hot && !hot_count)
-			वापस -EINVAL;
-	पूर्ण
+	if (set) {
+		if (total_count == F2FS_MAX_EXTENSION)
+			return -EINVAL;
+	} else {
+		if (!hot && !cold_count)
+			return -EINVAL;
+		if (hot && !hot_count)
+			return -EINVAL;
+	}
 
-	अगर (hot) अणु
+	if (hot) {
 		start = cold_count;
 		count = total_count;
-	पूर्ण अन्यथा अणु
+	} else {
 		start = 0;
 		count = cold_count;
-	पूर्ण
+	}
 
-	क्रम (i = start; i < count; i++) अणु
-		अगर (म_भेद(name, extlist[i]))
-			जारी;
+	for (i = start; i < count; i++) {
+		if (strcmp(name, extlist[i]))
+			continue;
 
-		अगर (set)
-			वापस -EINVAL;
+		if (set)
+			return -EINVAL;
 
-		स_नकल(extlist[i], extlist[i + 1],
+		memcpy(extlist[i], extlist[i + 1],
 				F2FS_EXTENSION_LEN * (total_count - i - 1));
-		स_रखो(extlist[total_count - 1], 0, F2FS_EXTENSION_LEN);
-		अगर (hot)
+		memset(extlist[total_count - 1], 0, F2FS_EXTENSION_LEN);
+		if (hot)
 			sbi->raw_super->hot_ext_count = hot_count - 1;
-		अन्यथा
+		else
 			sbi->raw_super->extension_count =
 						cpu_to_le32(cold_count - 1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!set)
-		वापस -EINVAL;
+	if (!set)
+		return -EINVAL;
 
-	अगर (hot) अणु
-		स_नकल(extlist[count], name, म_माप(name));
+	if (hot) {
+		memcpy(extlist[count], name, strlen(name));
 		sbi->raw_super->hot_ext_count = hot_count + 1;
-	पूर्ण अन्यथा अणु
-		अक्षर buf[F2FS_MAX_EXTENSION][F2FS_EXTENSION_LEN];
+	} else {
+		char buf[F2FS_MAX_EXTENSION][F2FS_EXTENSION_LEN];
 
-		स_नकल(buf, &extlist[cold_count],
+		memcpy(buf, &extlist[cold_count],
 				F2FS_EXTENSION_LEN * hot_count);
-		स_रखो(extlist[cold_count], 0, F2FS_EXTENSION_LEN);
-		स_नकल(extlist[cold_count], name, म_माप(name));
-		स_नकल(&extlist[cold_count + 1], buf,
+		memset(extlist[cold_count], 0, F2FS_EXTENSION_LEN);
+		memcpy(extlist[cold_count], name, strlen(name));
+		memcpy(&extlist[cold_count + 1], buf,
 				F2FS_EXTENSION_LEN * hot_count);
 		sbi->raw_super->extension_count = cpu_to_le32(cold_count + 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम set_compress_inode(काष्ठा f2fs_sb_info *sbi, काष्ठा inode *inode,
-						स्थिर अचिन्हित अक्षर *name)
-अणु
+static void set_compress_inode(struct f2fs_sb_info *sbi, struct inode *inode,
+						const unsigned char *name)
+{
 	__u8 (*extlist)[F2FS_EXTENSION_LEN] = sbi->raw_super->extension_list;
-	अचिन्हित अक्षर (*ext)[F2FS_EXTENSION_LEN];
-	अचिन्हित पूर्णांक ext_cnt = F2FS_OPTION(sbi).compress_ext_cnt;
-	पूर्णांक i, cold_count, hot_count;
+	unsigned char (*ext)[F2FS_EXTENSION_LEN];
+	unsigned int ext_cnt = F2FS_OPTION(sbi).compress_ext_cnt;
+	int i, cold_count, hot_count;
 
-	अगर (!f2fs_sb_has_compression(sbi) ||
-			is_inode_flag_set(inode, FI_COMPRESSED_खाता) ||
+	if (!f2fs_sb_has_compression(sbi) ||
+			is_inode_flag_set(inode, FI_COMPRESSED_FILE) ||
 			F2FS_I(inode)->i_flags & F2FS_NOCOMP_FL ||
 			!f2fs_may_compress(inode))
-		वापस;
+		return;
 
-	करोwn_पढ़ो(&sbi->sb_lock);
+	down_read(&sbi->sb_lock);
 
 	cold_count = le32_to_cpu(sbi->raw_super->extension_count);
 	hot_count = sbi->raw_super->hot_ext_count;
 
-	क्रम (i = cold_count; i < cold_count + hot_count; i++) अणु
-		अगर (is_extension_exist(name, extlist[i])) अणु
-			up_पढ़ो(&sbi->sb_lock);
-			वापस;
-		पूर्ण
-	पूर्ण
+	for (i = cold_count; i < cold_count + hot_count; i++) {
+		if (is_extension_exist(name, extlist[i])) {
+			up_read(&sbi->sb_lock);
+			return;
+		}
+	}
 
-	up_पढ़ो(&sbi->sb_lock);
+	up_read(&sbi->sb_lock);
 
 	ext = F2FS_OPTION(sbi).extensions;
 
-	क्रम (i = 0; i < ext_cnt; i++) अणु
-		अगर (!is_extension_exist(name, ext[i]))
-			जारी;
+	for (i = 0; i < ext_cnt; i++) {
+		if (!is_extension_exist(name, ext[i]))
+			continue;
 
 		set_compress_context(inode);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल पूर्णांक f2fs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		       काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode;
+static int f2fs_create(struct user_namespace *mnt_userns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode;
 	nid_t ino = 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = f2fs_new_inode(dir, mode);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	अगर (!test_opt(sbi, DISABLE_EXT_IDENTIFY))
+	if (!test_opt(sbi, DISABLE_EXT_IDENTIFY))
 		set_file_temperature(sbi, inode, dentry->d_name.name);
 
 	set_compress_inode(sbi, inode, dentry->d_name.name);
@@ -348,341 +347,341 @@ fail_drop:
 
 	f2fs_lock_op(sbi);
 	err = f2fs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	f2fs_unlock_op(sbi);
 
-	f2fs_alloc_nid_करोne(sbi, ino);
+	f2fs_alloc_nid_done(sbi, ino);
 
 	d_instantiate_new(dentry, inode);
 
-	अगर (IS_सूचीSYNC(dir))
+	if (IS_DIRSYNC(dir))
 		f2fs_sync_fs(sbi->sb, 1);
 
 	f2fs_balance_fs(sbi, true);
-	वापस 0;
+	return 0;
 out:
 	f2fs_handle_failed_inode(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-		काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(old_dentry);
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	पूर्णांक err;
+static int f2fs_link(struct dentry *old_dentry, struct inode *dir,
+		struct dentry *dentry)
+{
+	struct inode *inode = d_inode(old_dentry);
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
 	err = fscrypt_prepare_link(old_dentry, dir, dentry);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (is_inode_flag_set(dir, FI_PROJ_INHERIT) &&
+	if (is_inode_flag_set(dir, FI_PROJ_INHERIT) &&
 			(!projid_eq(F2FS_I(dir)->i_projid,
 			F2FS_I(old_dentry->d_inode)->i_projid)))
-		वापस -EXDEV;
+		return -EXDEV;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	f2fs_balance_fs(sbi, true);
 
-	inode->i_स_समय = current_समय(inode);
+	inode->i_ctime = current_time(inode);
 	ihold(inode);
 
 	set_inode_flag(inode, FI_INC_LINK);
 	f2fs_lock_op(sbi);
 	err = f2fs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	f2fs_unlock_op(sbi);
 
 	d_instantiate(dentry, inode);
 
-	अगर (IS_सूचीSYNC(dir))
+	if (IS_DIRSYNC(dir))
 		f2fs_sync_fs(sbi->sb, 1);
-	वापस 0;
+	return 0;
 out:
 	clear_inode_flag(inode, FI_INC_LINK);
 	iput(inode);
 	f2fs_unlock_op(sbi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा dentry *f2fs_get_parent(काष्ठा dentry *child)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ ino = f2fs_inode_by_name(d_inode(child), &करोtकरोt_name, &page);
+struct dentry *f2fs_get_parent(struct dentry *child)
+{
+	struct page *page;
+	unsigned long ino = f2fs_inode_by_name(d_inode(child), &dotdot_name, &page);
 
-	अगर (!ino) अणु
-		अगर (IS_ERR(page))
-			वापस ERR_CAST(page);
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
-	वापस d_obtain_alias(f2fs_iget(child->d_sb, ino));
-पूर्ण
+	if (!ino) {
+		if (IS_ERR(page))
+			return ERR_CAST(page);
+		return ERR_PTR(-ENOENT);
+	}
+	return d_obtain_alias(f2fs_iget(child->d_sb, ino));
+}
 
-अटल पूर्णांक __recover_करोt_dentries(काष्ठा inode *dir, nid_t pino)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा qstr करोt = QSTR_INIT(".", 1);
-	काष्ठा qstr करोtकरोt = QSTR_INIT("..", 2);
-	काष्ठा f2fs_dir_entry *de;
-	काष्ठा page *page;
-	पूर्णांक err = 0;
+static int __recover_dot_dentries(struct inode *dir, nid_t pino)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct qstr dot = QSTR_INIT(".", 1);
+	struct qstr dotdot = QSTR_INIT("..", 2);
+	struct f2fs_dir_entry *de;
+	struct page *page;
+	int err = 0;
 
-	अगर (f2fs_पढ़ोonly(sbi->sb)) अणु
+	if (f2fs_readonly(sbi->sb)) {
 		f2fs_info(sbi, "skip recovering inline_dots inode (ino:%lu, pino:%u) in readonly mountpoint",
 			  dir->i_ino, pino);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	f2fs_balance_fs(sbi, true);
 
 	f2fs_lock_op(sbi);
 
-	de = f2fs_find_entry(dir, &करोt, &page);
-	अगर (de) अणु
+	de = f2fs_find_entry(dir, &dot, &page);
+	if (de) {
 		f2fs_put_page(page, 0);
-	पूर्ण अन्यथा अगर (IS_ERR(page)) अणु
+	} else if (IS_ERR(page)) {
 		err = PTR_ERR(page);
-		जाओ out;
-	पूर्ण अन्यथा अणु
-		err = f2fs_करो_add_link(dir, &करोt, शून्य, dir->i_ino, S_IFसूची);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		goto out;
+	} else {
+		err = f2fs_do_add_link(dir, &dot, NULL, dir->i_ino, S_IFDIR);
+		if (err)
+			goto out;
+	}
 
-	de = f2fs_find_entry(dir, &करोtकरोt, &page);
-	अगर (de)
+	de = f2fs_find_entry(dir, &dotdot, &page);
+	if (de)
 		f2fs_put_page(page, 0);
-	अन्यथा अगर (IS_ERR(page))
+	else if (IS_ERR(page))
 		err = PTR_ERR(page);
-	अन्यथा
-		err = f2fs_करो_add_link(dir, &करोtकरोt, शून्य, pino, S_IFसूची);
+	else
+		err = f2fs_do_add_link(dir, &dotdot, NULL, pino, S_IFDIR);
 out:
-	अगर (!err)
+	if (!err)
 		clear_inode_flag(dir, FI_INLINE_DOTS);
 
 	f2fs_unlock_op(sbi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा dentry *f2fs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-		अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा inode *inode = शून्य;
-	काष्ठा f2fs_dir_entry *de;
-	काष्ठा page *page;
-	काष्ठा dentry *new;
+static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
+		unsigned int flags)
+{
+	struct inode *inode = NULL;
+	struct f2fs_dir_entry *de;
+	struct page *page;
+	struct dentry *new;
 	nid_t ino = -1;
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक root_ino = F2FS_ROOT_INO(F2FS_I_SB(dir));
-	काष्ठा f2fs_filename fname;
+	int err = 0;
+	unsigned int root_ino = F2FS_ROOT_INO(F2FS_I_SB(dir));
+	struct f2fs_filename fname;
 
 	trace_f2fs_lookup_start(dir, dentry, flags);
 
-	अगर (dentry->d_name.len > F2FS_NAME_LEN) अणु
+	if (dentry->d_name.len > F2FS_NAME_LEN) {
 		err = -ENAMETOOLONG;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = f2fs_prepare_lookup(dir, dentry, &fname);
 	generic_set_encrypted_ci_d_ops(dentry);
-	अगर (err == -ENOENT)
-		जाओ out_splice;
-	अगर (err)
-		जाओ out;
+	if (err == -ENOENT)
+		goto out_splice;
+	if (err)
+		goto out;
 	de = __f2fs_find_entry(dir, &fname, &page);
-	f2fs_मुक्त_filename(&fname);
+	f2fs_free_filename(&fname);
 
-	अगर (!de) अणु
-		अगर (IS_ERR(page)) अणु
+	if (!de) {
+		if (IS_ERR(page)) {
 			err = PTR_ERR(page);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		err = -ENOENT;
-		जाओ out_splice;
-	पूर्ण
+		goto out_splice;
+	}
 
 	ino = le32_to_cpu(de->ino);
 	f2fs_put_page(page, 0);
 
 	inode = f2fs_iget(dir->i_sb, ino);
-	अगर (IS_ERR(inode)) अणु
+	if (IS_ERR(inode)) {
 		err = PTR_ERR(inode);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((dir->i_ino == root_ino) && f2fs_has_अंतरभूत_करोts(dir)) अणु
-		err = __recover_करोt_dentries(dir, root_ino);
-		अगर (err)
-			जाओ out_iput;
-	पूर्ण
+	if ((dir->i_ino == root_ino) && f2fs_has_inline_dots(dir)) {
+		err = __recover_dot_dentries(dir, root_ino);
+		if (err)
+			goto out_iput;
+	}
 
-	अगर (f2fs_has_अंतरभूत_करोts(inode)) अणु
-		err = __recover_करोt_dentries(inode, dir->i_ino);
-		अगर (err)
-			जाओ out_iput;
-	पूर्ण
-	अगर (IS_ENCRYPTED(dir) &&
-	    (S_ISसूची(inode->i_mode) || S_ISLNK(inode->i_mode)) &&
-	    !fscrypt_has_permitted_context(dir, inode)) अणु
+	if (f2fs_has_inline_dots(inode)) {
+		err = __recover_dot_dentries(inode, dir->i_ino);
+		if (err)
+			goto out_iput;
+	}
+	if (IS_ENCRYPTED(dir) &&
+	    (S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode)) &&
+	    !fscrypt_has_permitted_context(dir, inode)) {
 		f2fs_warn(F2FS_I_SB(inode), "Inconsistent encryption contexts: %lu/%lu",
 			  dir->i_ino, inode->i_ino);
 		err = -EPERM;
-		जाओ out_iput;
-	पूर्ण
+		goto out_iput;
+	}
 out_splice:
-#अगर_घोषित CONFIG_UNICODE
-	अगर (!inode && IS_CASEFOLDED(dir)) अणु
-		/* Eventually we want to call d_add_ci(dentry, शून्य)
-		 * क्रम negative dentries in the encoding हाल as
+#ifdef CONFIG_UNICODE
+	if (!inode && IS_CASEFOLDED(dir)) {
+		/* Eventually we want to call d_add_ci(dentry, NULL)
+		 * for negative dentries in the encoding case as
 		 * well.  For now, prevent the negative dentry
 		 * from being cached.
 		 */
 		trace_f2fs_lookup_end(dir, dentry, ino, err);
-		वापस शून्य;
-	पूर्ण
-#पूर्ण_अगर
+		return NULL;
+	}
+#endif
 	new = d_splice_alias(inode, dentry);
 	err = PTR_ERR_OR_ZERO(new);
 	trace_f2fs_lookup_end(dir, dentry, ino, !new ? -ENOENT : err);
-	वापस new;
+	return new;
 out_iput:
 	iput(inode);
 out:
 	trace_f2fs_lookup_end(dir, dentry, ino, err);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक f2fs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा f2fs_dir_entry *de;
-	काष्ठा page *page;
-	पूर्णांक err;
+static int f2fs_unlink(struct inode *dir, struct dentry *dentry)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode = d_inode(dentry);
+	struct f2fs_dir_entry *de;
+	struct page *page;
+	int err;
 
 	trace_f2fs_unlink_enter(dir, dentry);
 
-	अगर (unlikely(f2fs_cp_error(sbi))) अणु
+	if (unlikely(f2fs_cp_error(sbi))) {
 		err = -EIO;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 	err = dquot_initialize(inode);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
 	de = f2fs_find_entry(dir, &dentry->d_name, &page);
-	अगर (!de) अणु
-		अगर (IS_ERR(page))
+	if (!de) {
+		if (IS_ERR(page))
 			err = PTR_ERR(page);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	f2fs_balance_fs(sbi, true);
 
 	f2fs_lock_op(sbi);
 	err = f2fs_acquire_orphan_inode(sbi);
-	अगर (err) अणु
+	if (err) {
 		f2fs_unlock_op(sbi);
 		f2fs_put_page(page, 0);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	f2fs_delete_entry(de, page, dir, inode);
-#अगर_घोषित CONFIG_UNICODE
+#ifdef CONFIG_UNICODE
 	/* VFS negative dentries are incompatible with Encoding and
-	 * Case-insensitiveness. Eventually we'll want aव्योम
-	 * invalidating the dentries here, aदीर्घside with वापसing the
+	 * Case-insensitiveness. Eventually we'll want avoid
+	 * invalidating the dentries here, alongside with returning the
 	 * negative dentries at f2fs_lookup(), when it is better
-	 * supported by the VFS क्रम the CI हाल.
+	 * supported by the VFS for the CI case.
 	 */
-	अगर (IS_CASEFOLDED(dir))
+	if (IS_CASEFOLDED(dir))
 		d_invalidate(dentry);
-#पूर्ण_अगर
+#endif
 	f2fs_unlock_op(sbi);
 
-	अगर (IS_सूचीSYNC(dir))
+	if (IS_DIRSYNC(dir))
 		f2fs_sync_fs(sbi->sb, 1);
 fail:
-	trace_f2fs_unlink_निकास(inode, err);
-	वापस err;
-पूर्ण
+	trace_f2fs_unlink_exit(inode, err);
+	return err;
+}
 
-अटल स्थिर अक्षर *f2fs_get_link(काष्ठा dentry *dentry,
-				 काष्ठा inode *inode,
-				 काष्ठा delayed_call *करोne)
-अणु
-	स्थिर अक्षर *link = page_get_link(dentry, inode, करोne);
+static const char *f2fs_get_link(struct dentry *dentry,
+				 struct inode *inode,
+				 struct delayed_call *done)
+{
+	const char *link = page_get_link(dentry, inode, done);
 
-	अगर (!IS_ERR(link) && !*link) अणु
-		/* this is broken symlink हाल */
-		करो_delayed_call(करोne);
-		clear_delayed_call(करोne);
+	if (!IS_ERR(link) && !*link) {
+		/* this is broken symlink case */
+		do_delayed_call(done);
+		clear_delayed_call(done);
 		link = ERR_PTR(-ENOENT);
-	पूर्ण
-	वापस link;
-पूर्ण
+	}
+	return link;
+}
 
-अटल पूर्णांक f2fs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			काष्ठा dentry *dentry, स्थिर अक्षर *symname)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode;
-	माप_प्रकार len = म_माप(symname);
-	काष्ठा fscrypt_str disk_link;
-	पूर्णांक err;
+static int f2fs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
+			struct dentry *dentry, const char *symname)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode;
+	size_t len = strlen(symname);
+	struct fscrypt_str disk_link;
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
 	err = fscrypt_prepare_symlink(dir, symname, len, dir->i_sb->s_blocksize,
 				      &disk_link);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = f2fs_new_inode(dir, S_IFLNK | S_IRWXUGO);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	अगर (IS_ENCRYPTED(inode))
+	if (IS_ENCRYPTED(inode))
 		inode->i_op = &f2fs_encrypted_symlink_inode_operations;
-	अन्यथा
+	else
 		inode->i_op = &f2fs_symlink_inode_operations;
 	inode_nohighmem(inode);
 	inode->i_mapping->a_ops = &f2fs_dblock_aops;
 
 	f2fs_lock_op(sbi);
 	err = f2fs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out_f2fs_handle_failed_inode;
+	if (err)
+		goto out_f2fs_handle_failed_inode;
 	f2fs_unlock_op(sbi);
-	f2fs_alloc_nid_करोne(sbi, inode->i_ino);
+	f2fs_alloc_nid_done(sbi, inode->i_ino);
 
 	err = fscrypt_encrypt_symlink(inode, symname, len, &disk_link);
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
 	err = page_symlink(inode, disk_link.name, disk_link.len);
 
@@ -690,52 +689,52 @@ err_out:
 	d_instantiate_new(dentry, inode);
 
 	/*
-	 * Let's flush symlink data in order to aव्योम broken symlink as much as
+	 * Let's flush symlink data in order to avoid broken symlink as much as
 	 * possible. Nevertheless, fsyncing is the best way, but there is no
 	 * way to get a file descriptor in order to flush that.
 	 *
-	 * Note that, it needs to करो dir->fsync to make this recoverable.
-	 * If the symlink path is stored पूर्णांकo अंतरभूत_data, there is no
-	 * perक्रमmance regression.
+	 * Note that, it needs to do dir->fsync to make this recoverable.
+	 * If the symlink path is stored into inline_data, there is no
+	 * performance regression.
 	 */
-	अगर (!err) अणु
-		filemap_ग_लिखो_and_रुको_range(inode->i_mapping, 0,
+	if (!err) {
+		filemap_write_and_wait_range(inode->i_mapping, 0,
 							disk_link.len - 1);
 
-		अगर (IS_सूचीSYNC(dir))
+		if (IS_DIRSYNC(dir))
 			f2fs_sync_fs(sbi->sb, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		f2fs_unlink(dir, dentry);
-	पूर्ण
+	}
 
 	f2fs_balance_fs(sbi, true);
-	जाओ out_मुक्त_encrypted_link;
+	goto out_free_encrypted_link;
 
 out_f2fs_handle_failed_inode:
 	f2fs_handle_failed_inode(inode);
-out_मुक्त_encrypted_link:
-	अगर (disk_link.name != (अचिन्हित अक्षर *)symname)
-		kमुक्त(disk_link.name);
-	वापस err;
-पूर्ण
+out_free_encrypted_link:
+	if (disk_link.name != (unsigned char *)symname)
+		kfree(disk_link.name);
+	return err;
+}
 
-अटल पूर्णांक f2fs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		      काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode;
-	पूर्णांक err;
+static int f2fs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode;
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inode = f2fs_new_inode(dir, S_IFसूची | mode);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	inode = f2fs_new_inode(dir, S_IFDIR | mode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	inode->i_op = &f2fs_dir_inode_operations;
 	inode->i_fop = &f2fs_dir_operations;
@@ -745,585 +744,585 @@ out_मुक्त_encrypted_link:
 	set_inode_flag(inode, FI_INC_LINK);
 	f2fs_lock_op(sbi);
 	err = f2fs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out_fail;
+	if (err)
+		goto out_fail;
 	f2fs_unlock_op(sbi);
 
-	f2fs_alloc_nid_करोne(sbi, inode->i_ino);
+	f2fs_alloc_nid_done(sbi, inode->i_ino);
 
 	d_instantiate_new(dentry, inode);
 
-	अगर (IS_सूचीSYNC(dir))
+	if (IS_DIRSYNC(dir))
 		f2fs_sync_fs(sbi->sb, 1);
 
 	f2fs_balance_fs(sbi, true);
-	वापस 0;
+	return 0;
 
 out_fail:
 	clear_inode_flag(inode, FI_INC_LINK);
 	f2fs_handle_failed_inode(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
+static int f2fs_rmdir(struct inode *dir, struct dentry *dentry)
+{
+	struct inode *inode = d_inode(dentry);
 
-	अगर (f2fs_empty_dir(inode))
-		वापस f2fs_unlink(dir, dentry);
-	वापस -ENOTEMPTY;
-पूर्ण
+	if (f2fs_empty_dir(inode))
+		return f2fs_unlink(dir, dentry);
+	return -ENOTEMPTY;
+}
 
-अटल पूर्णांक f2fs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		      काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode;
-	पूर्णांक err = 0;
+static int f2fs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode, dev_t rdev)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode;
+	int err = 0;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = f2fs_new_inode(dir, mode);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
 	init_special_inode(inode, inode->i_mode, rdev);
 	inode->i_op = &f2fs_special_inode_operations;
 
 	f2fs_lock_op(sbi);
 	err = f2fs_add_link(dentry, inode);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 	f2fs_unlock_op(sbi);
 
-	f2fs_alloc_nid_करोne(sbi, inode->i_ino);
+	f2fs_alloc_nid_done(sbi, inode->i_ino);
 
 	d_instantiate_new(dentry, inode);
 
-	अगर (IS_सूचीSYNC(dir))
+	if (IS_DIRSYNC(dir))
 		f2fs_sync_fs(sbi->sb, 1);
 
 	f2fs_balance_fs(sbi, true);
-	वापस 0;
+	return 0;
 out:
 	f2fs_handle_failed_inode(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __f2fs_क्षणिक_ख(काष्ठा inode *dir, काष्ठा dentry *dentry,
-					umode_t mode, काष्ठा inode **whiteout)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा inode *inode;
-	पूर्णांक err;
+static int __f2fs_tmpfile(struct inode *dir, struct dentry *dentry,
+					umode_t mode, struct inode **whiteout)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct inode *inode;
+	int err;
 
 	err = dquot_initialize(dir);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	inode = f2fs_new_inode(dir, mode);
-	अगर (IS_ERR(inode))
-		वापस PTR_ERR(inode);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
 
-	अगर (whiteout) अणु
+	if (whiteout) {
 		init_special_inode(inode, inode->i_mode, WHITEOUT_DEV);
 		inode->i_op = &f2fs_special_inode_operations;
-	पूर्ण अन्यथा अणु
+	} else {
 		inode->i_op = &f2fs_file_inode_operations;
 		inode->i_fop = &f2fs_file_operations;
 		inode->i_mapping->a_ops = &f2fs_dblock_aops;
-	पूर्ण
+	}
 
 	f2fs_lock_op(sbi);
 	err = f2fs_acquire_orphan_inode(sbi);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	err = f2fs_करो_क्षणिक_ख(inode, dir);
-	अगर (err)
-		जाओ release_out;
+	err = f2fs_do_tmpfile(inode, dir);
+	if (err)
+		goto release_out;
 
 	/*
-	 * add this non-linked क्षणिक_ख to orphan list, in this way we could
-	 * हटाओ all unused data of क्षणिक_ख after abnormal घातer-off.
+	 * add this non-linked tmpfile to orphan list, in this way we could
+	 * remove all unused data of tmpfile after abnormal power-off.
 	 */
 	f2fs_add_orphan_inode(inode);
-	f2fs_alloc_nid_करोne(sbi, inode->i_ino);
+	f2fs_alloc_nid_done(sbi, inode->i_ino);
 
-	अगर (whiteout) अणु
-		f2fs_i_links_ग_लिखो(inode, false);
+	if (whiteout) {
+		f2fs_i_links_write(inode, false);
 
 		spin_lock(&inode->i_lock);
 		inode->i_state |= I_LINKABLE;
 		spin_unlock(&inode->i_lock);
 
 		*whiteout = inode;
-	पूर्ण अन्यथा अणु
-		d_क्षणिक_ख(dentry, inode);
-	पूर्ण
-	/* link_count was changed by d_क्षणिक_ख as well. */
+	} else {
+		d_tmpfile(dentry, inode);
+	}
+	/* link_count was changed by d_tmpfile as well. */
 	f2fs_unlock_op(sbi);
 	unlock_new_inode(inode);
 
 	f2fs_balance_fs(sbi, true);
-	वापस 0;
+	return 0;
 
 release_out:
 	f2fs_release_orphan_inode(sbi);
 out:
 	f2fs_handle_failed_inode(inode);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_क्षणिक_ख(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			काष्ठा dentry *dentry, umode_t mode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
+static int f2fs_tmpfile(struct user_namespace *mnt_userns, struct inode *dir,
+			struct dentry *dentry, umode_t mode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
-	वापस __f2fs_क्षणिक_ख(dir, dentry, mode, शून्य);
-पूर्ण
+	return __f2fs_tmpfile(dir, dentry, mode, NULL);
+}
 
-अटल पूर्णांक f2fs_create_whiteout(काष्ठा inode *dir, काष्ठा inode **whiteout)
-अणु
-	अगर (unlikely(f2fs_cp_error(F2FS_I_SB(dir))))
-		वापस -EIO;
+static int f2fs_create_whiteout(struct inode *dir, struct inode **whiteout)
+{
+	if (unlikely(f2fs_cp_error(F2FS_I_SB(dir))))
+		return -EIO;
 
-	वापस __f2fs_क्षणिक_ख(dir, शून्य, S_IFCHR | WHITEOUT_MODE, whiteout);
-पूर्ण
+	return __f2fs_tmpfile(dir, NULL, S_IFCHR | WHITEOUT_MODE, whiteout);
+}
 
-अटल पूर्णांक f2fs_नाम(काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
-			काष्ठा inode *new_dir, काष्ठा dentry *new_dentry,
-			अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(old_dir);
-	काष्ठा inode *old_inode = d_inode(old_dentry);
-	काष्ठा inode *new_inode = d_inode(new_dentry);
-	काष्ठा inode *whiteout = शून्य;
-	काष्ठा page *old_dir_page = शून्य;
-	काष्ठा page *old_page, *new_page = शून्य;
-	काष्ठा f2fs_dir_entry *old_dir_entry = शून्य;
-	काष्ठा f2fs_dir_entry *old_entry;
-	काष्ठा f2fs_dir_entry *new_entry;
-	पूर्णांक err;
+static int f2fs_rename(struct inode *old_dir, struct dentry *old_dentry,
+			struct inode *new_dir, struct dentry *new_dentry,
+			unsigned int flags)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(old_dir);
+	struct inode *old_inode = d_inode(old_dentry);
+	struct inode *new_inode = d_inode(new_dentry);
+	struct inode *whiteout = NULL;
+	struct page *old_dir_page = NULL;
+	struct page *old_page, *new_page = NULL;
+	struct f2fs_dir_entry *old_dir_entry = NULL;
+	struct f2fs_dir_entry *old_entry;
+	struct f2fs_dir_entry *new_entry;
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
-	अगर (is_inode_flag_set(new_dir, FI_PROJ_INHERIT) &&
+	if (is_inode_flag_set(new_dir, FI_PROJ_INHERIT) &&
 			(!projid_eq(F2FS_I(new_dir)->i_projid,
 			F2FS_I(old_dentry->d_inode)->i_projid)))
-		वापस -EXDEV;
+		return -EXDEV;
 
 	/*
 	 * If new_inode is null, the below renaming flow will
-	 * add a link in old_dir which can conver अंतरभूत_dir.
-	 * After then, अगर we failed to get the entry due to other
-	 * reasons like ENOMEM, we had to हटाओ the new entry.
+	 * add a link in old_dir which can conver inline_dir.
+	 * After then, if we failed to get the entry due to other
+	 * reasons like ENOMEM, we had to remove the new entry.
 	 * Instead of adding such the error handling routine, let's
 	 * simply convert first here.
 	 */
-	अगर (old_dir == new_dir && !new_inode) अणु
-		err = f2fs_try_convert_अंतरभूत_dir(old_dir, new_dentry);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (old_dir == new_dir && !new_inode) {
+		err = f2fs_try_convert_inline_dir(old_dir, new_dentry);
+		if (err)
+			return err;
+	}
 
-	अगर (flags & RENAME_WHITEOUT) अणु
+	if (flags & RENAME_WHITEOUT) {
 		err = f2fs_create_whiteout(old_dir, &whiteout);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = dquot_initialize(old_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = dquot_initialize(new_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (new_inode) अणु
+	if (new_inode) {
 		err = dquot_initialize(new_inode);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	err = -ENOENT;
 	old_entry = f2fs_find_entry(old_dir, &old_dentry->d_name, &old_page);
-	अगर (!old_entry) अणु
-		अगर (IS_ERR(old_page))
+	if (!old_entry) {
+		if (IS_ERR(old_page))
 			err = PTR_ERR(old_page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (S_ISसूची(old_inode->i_mode)) अणु
+	if (S_ISDIR(old_inode->i_mode)) {
 		old_dir_entry = f2fs_parent_dir(old_inode, &old_dir_page);
-		अगर (!old_dir_entry) अणु
-			अगर (IS_ERR(old_dir_page))
+		if (!old_dir_entry) {
+			if (IS_ERR(old_dir_page))
 				err = PTR_ERR(old_dir_page);
-			जाओ out_old;
-		पूर्ण
-	पूर्ण
+			goto out_old;
+		}
+	}
 
-	अगर (new_inode) अणु
+	if (new_inode) {
 
 		err = -ENOTEMPTY;
-		अगर (old_dir_entry && !f2fs_empty_dir(new_inode))
-			जाओ out_dir;
+		if (old_dir_entry && !f2fs_empty_dir(new_inode))
+			goto out_dir;
 
 		err = -ENOENT;
 		new_entry = f2fs_find_entry(new_dir, &new_dentry->d_name,
 						&new_page);
-		अगर (!new_entry) अणु
-			अगर (IS_ERR(new_page))
+		if (!new_entry) {
+			if (IS_ERR(new_page))
 				err = PTR_ERR(new_page);
-			जाओ out_dir;
-		पूर्ण
+			goto out_dir;
+		}
 
 		f2fs_balance_fs(sbi, true);
 
 		f2fs_lock_op(sbi);
 
 		err = f2fs_acquire_orphan_inode(sbi);
-		अगर (err)
-			जाओ put_out_dir;
+		if (err)
+			goto put_out_dir;
 
 		f2fs_set_link(new_dir, new_entry, new_page, old_inode);
-		new_page = शून्य;
+		new_page = NULL;
 
-		new_inode->i_स_समय = current_समय(new_inode);
-		करोwn_ग_लिखो(&F2FS_I(new_inode)->i_sem);
-		अगर (old_dir_entry)
-			f2fs_i_links_ग_लिखो(new_inode, false);
-		f2fs_i_links_ग_लिखो(new_inode, false);
-		up_ग_लिखो(&F2FS_I(new_inode)->i_sem);
+		new_inode->i_ctime = current_time(new_inode);
+		down_write(&F2FS_I(new_inode)->i_sem);
+		if (old_dir_entry)
+			f2fs_i_links_write(new_inode, false);
+		f2fs_i_links_write(new_inode, false);
+		up_write(&F2FS_I(new_inode)->i_sem);
 
-		अगर (!new_inode->i_nlink)
+		if (!new_inode->i_nlink)
 			f2fs_add_orphan_inode(new_inode);
-		अन्यथा
+		else
 			f2fs_release_orphan_inode(sbi);
-	पूर्ण अन्यथा अणु
+	} else {
 		f2fs_balance_fs(sbi, true);
 
 		f2fs_lock_op(sbi);
 
 		err = f2fs_add_link(new_dentry, old_inode);
-		अगर (err) अणु
+		if (err) {
 			f2fs_unlock_op(sbi);
-			जाओ out_dir;
-		पूर्ण
+			goto out_dir;
+		}
 
-		अगर (old_dir_entry)
-			f2fs_i_links_ग_लिखो(new_dir, true);
-	पूर्ण
+		if (old_dir_entry)
+			f2fs_i_links_write(new_dir, true);
+	}
 
-	करोwn_ग_लिखो(&F2FS_I(old_inode)->i_sem);
-	अगर (!old_dir_entry || whiteout)
+	down_write(&F2FS_I(old_inode)->i_sem);
+	if (!old_dir_entry || whiteout)
 		file_lost_pino(old_inode);
-	अन्यथा
+	else
 		/* adjust dir's i_pino to pass fsck check */
-		f2fs_i_pino_ग_लिखो(old_inode, new_dir->i_ino);
-	up_ग_लिखो(&F2FS_I(old_inode)->i_sem);
+		f2fs_i_pino_write(old_inode, new_dir->i_ino);
+	up_write(&F2FS_I(old_inode)->i_sem);
 
-	old_inode->i_स_समय = current_समय(old_inode);
+	old_inode->i_ctime = current_time(old_inode);
 	f2fs_mark_inode_dirty_sync(old_inode, false);
 
-	f2fs_delete_entry(old_entry, old_page, old_dir, शून्य);
-	old_page = शून्य;
+	f2fs_delete_entry(old_entry, old_page, old_dir, NULL);
+	old_page = NULL;
 
-	अगर (whiteout) अणु
+	if (whiteout) {
 		set_inode_flag(whiteout, FI_INC_LINK);
 		err = f2fs_add_link(old_dentry, whiteout);
-		अगर (err)
-			जाओ put_out_dir;
+		if (err)
+			goto put_out_dir;
 
 		spin_lock(&whiteout->i_lock);
 		whiteout->i_state &= ~I_LINKABLE;
 		spin_unlock(&whiteout->i_lock);
 
 		iput(whiteout);
-	पूर्ण
+	}
 
-	अगर (old_dir_entry) अणु
-		अगर (old_dir != new_dir && !whiteout)
+	if (old_dir_entry) {
+		if (old_dir != new_dir && !whiteout)
 			f2fs_set_link(old_inode, old_dir_entry,
 						old_dir_page, new_dir);
-		अन्यथा
+		else
 			f2fs_put_page(old_dir_page, 0);
-		f2fs_i_links_ग_लिखो(old_dir, false);
-	पूर्ण
-	अगर (F2FS_OPTION(sbi).fsync_mode == FSYNC_MODE_STRICT) अणु
-		f2fs_add_ino_entry(sbi, new_dir->i_ino, TRANS_सूची_INO);
-		अगर (S_ISसूची(old_inode->i_mode))
+		f2fs_i_links_write(old_dir, false);
+	}
+	if (F2FS_OPTION(sbi).fsync_mode == FSYNC_MODE_STRICT) {
+		f2fs_add_ino_entry(sbi, new_dir->i_ino, TRANS_DIR_INO);
+		if (S_ISDIR(old_inode->i_mode))
 			f2fs_add_ino_entry(sbi, old_inode->i_ino,
-							TRANS_सूची_INO);
-	पूर्ण
+							TRANS_DIR_INO);
+	}
 
 	f2fs_unlock_op(sbi);
 
-	अगर (IS_सूचीSYNC(old_dir) || IS_सूचीSYNC(new_dir))
+	if (IS_DIRSYNC(old_dir) || IS_DIRSYNC(new_dir))
 		f2fs_sync_fs(sbi->sb, 1);
 
-	f2fs_update_समय(sbi, REQ_TIME);
-	वापस 0;
+	f2fs_update_time(sbi, REQ_TIME);
+	return 0;
 
 put_out_dir:
 	f2fs_unlock_op(sbi);
 	f2fs_put_page(new_page, 0);
 out_dir:
-	अगर (old_dir_entry)
+	if (old_dir_entry)
 		f2fs_put_page(old_dir_page, 0);
 out_old:
 	f2fs_put_page(old_page, 0);
 out:
-	अगर (whiteout)
+	if (whiteout)
 		iput(whiteout);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_cross_नाम(काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
-			     काष्ठा inode *new_dir, काष्ठा dentry *new_dentry)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(old_dir);
-	काष्ठा inode *old_inode = d_inode(old_dentry);
-	काष्ठा inode *new_inode = d_inode(new_dentry);
-	काष्ठा page *old_dir_page, *new_dir_page;
-	काष्ठा page *old_page, *new_page;
-	काष्ठा f2fs_dir_entry *old_dir_entry = शून्य, *new_dir_entry = शून्य;
-	काष्ठा f2fs_dir_entry *old_entry, *new_entry;
-	पूर्णांक old_nlink = 0, new_nlink = 0;
-	पूर्णांक err;
+static int f2fs_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
+			     struct inode *new_dir, struct dentry *new_dentry)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(old_dir);
+	struct inode *old_inode = d_inode(old_dentry);
+	struct inode *new_inode = d_inode(new_dentry);
+	struct page *old_dir_page, *new_dir_page;
+	struct page *old_page, *new_page;
+	struct f2fs_dir_entry *old_dir_entry = NULL, *new_dir_entry = NULL;
+	struct f2fs_dir_entry *old_entry, *new_entry;
+	int old_nlink = 0, new_nlink = 0;
+	int err;
 
-	अगर (unlikely(f2fs_cp_error(sbi)))
-		वापस -EIO;
-	अगर (!f2fs_is_checkpoपूर्णांक_पढ़ोy(sbi))
-		वापस -ENOSPC;
+	if (unlikely(f2fs_cp_error(sbi)))
+		return -EIO;
+	if (!f2fs_is_checkpoint_ready(sbi))
+		return -ENOSPC;
 
-	अगर ((is_inode_flag_set(new_dir, FI_PROJ_INHERIT) &&
+	if ((is_inode_flag_set(new_dir, FI_PROJ_INHERIT) &&
 			!projid_eq(F2FS_I(new_dir)->i_projid,
 			F2FS_I(old_dentry->d_inode)->i_projid)) ||
 	    (is_inode_flag_set(new_dir, FI_PROJ_INHERIT) &&
 			!projid_eq(F2FS_I(old_dir)->i_projid,
 			F2FS_I(new_dentry->d_inode)->i_projid)))
-		वापस -EXDEV;
+		return -EXDEV;
 
 	err = dquot_initialize(old_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = dquot_initialize(new_dir);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = -ENOENT;
 	old_entry = f2fs_find_entry(old_dir, &old_dentry->d_name, &old_page);
-	अगर (!old_entry) अणु
-		अगर (IS_ERR(old_page))
+	if (!old_entry) {
+		if (IS_ERR(old_page))
 			err = PTR_ERR(old_page);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	new_entry = f2fs_find_entry(new_dir, &new_dentry->d_name, &new_page);
-	अगर (!new_entry) अणु
-		अगर (IS_ERR(new_page))
+	if (!new_entry) {
+		if (IS_ERR(new_page))
 			err = PTR_ERR(new_page);
-		जाओ out_old;
-	पूर्ण
+		goto out_old;
+	}
 
-	/* prepare क्रम updating ".." directory entry info later */
-	अगर (old_dir != new_dir) अणु
-		अगर (S_ISसूची(old_inode->i_mode)) अणु
+	/* prepare for updating ".." directory entry info later */
+	if (old_dir != new_dir) {
+		if (S_ISDIR(old_inode->i_mode)) {
 			old_dir_entry = f2fs_parent_dir(old_inode,
 							&old_dir_page);
-			अगर (!old_dir_entry) अणु
-				अगर (IS_ERR(old_dir_page))
+			if (!old_dir_entry) {
+				if (IS_ERR(old_dir_page))
 					err = PTR_ERR(old_dir_page);
-				जाओ out_new;
-			पूर्ण
-		पूर्ण
+				goto out_new;
+			}
+		}
 
-		अगर (S_ISसूची(new_inode->i_mode)) अणु
+		if (S_ISDIR(new_inode->i_mode)) {
 			new_dir_entry = f2fs_parent_dir(new_inode,
 							&new_dir_page);
-			अगर (!new_dir_entry) अणु
-				अगर (IS_ERR(new_dir_page))
+			if (!new_dir_entry) {
+				if (IS_ERR(new_dir_page))
 					err = PTR_ERR(new_dir_page);
-				जाओ out_old_dir;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out_old_dir;
+			}
+		}
+	}
 
 	/*
-	 * If cross नाम between file and directory those are not
+	 * If cross rename between file and directory those are not
 	 * in the same directory, we will inc nlink of file's parent
 	 * later, so we should check upper boundary of its nlink.
 	 */
-	अगर ((!old_dir_entry || !new_dir_entry) &&
-				old_dir_entry != new_dir_entry) अणु
+	if ((!old_dir_entry || !new_dir_entry) &&
+				old_dir_entry != new_dir_entry) {
 		old_nlink = old_dir_entry ? -1 : 1;
 		new_nlink = -old_nlink;
 		err = -EMLINK;
-		अगर ((old_nlink > 0 && old_dir->i_nlink >= F2FS_LINK_MAX) ||
+		if ((old_nlink > 0 && old_dir->i_nlink >= F2FS_LINK_MAX) ||
 			(new_nlink > 0 && new_dir->i_nlink >= F2FS_LINK_MAX))
-			जाओ out_new_dir;
-	पूर्ण
+			goto out_new_dir;
+	}
 
 	f2fs_balance_fs(sbi, true);
 
 	f2fs_lock_op(sbi);
 
 	/* update ".." directory entry info of old dentry */
-	अगर (old_dir_entry)
+	if (old_dir_entry)
 		f2fs_set_link(old_inode, old_dir_entry, old_dir_page, new_dir);
 
 	/* update ".." directory entry info of new dentry */
-	अगर (new_dir_entry)
+	if (new_dir_entry)
 		f2fs_set_link(new_inode, new_dir_entry, new_dir_page, old_dir);
 
 	/* update directory entry info of old dir inode */
 	f2fs_set_link(old_dir, old_entry, old_page, new_inode);
 
-	करोwn_ग_लिखो(&F2FS_I(old_inode)->i_sem);
-	अगर (!old_dir_entry)
+	down_write(&F2FS_I(old_inode)->i_sem);
+	if (!old_dir_entry)
 		file_lost_pino(old_inode);
-	अन्यथा
+	else
 		/* adjust dir's i_pino to pass fsck check */
-		f2fs_i_pino_ग_लिखो(old_inode, new_dir->i_ino);
-	up_ग_लिखो(&F2FS_I(old_inode)->i_sem);
+		f2fs_i_pino_write(old_inode, new_dir->i_ino);
+	up_write(&F2FS_I(old_inode)->i_sem);
 
-	old_dir->i_स_समय = current_समय(old_dir);
-	अगर (old_nlink) अणु
-		करोwn_ग_लिखो(&F2FS_I(old_dir)->i_sem);
-		f2fs_i_links_ग_लिखो(old_dir, old_nlink > 0);
-		up_ग_लिखो(&F2FS_I(old_dir)->i_sem);
-	पूर्ण
+	old_dir->i_ctime = current_time(old_dir);
+	if (old_nlink) {
+		down_write(&F2FS_I(old_dir)->i_sem);
+		f2fs_i_links_write(old_dir, old_nlink > 0);
+		up_write(&F2FS_I(old_dir)->i_sem);
+	}
 	f2fs_mark_inode_dirty_sync(old_dir, false);
 
 	/* update directory entry info of new dir inode */
 	f2fs_set_link(new_dir, new_entry, new_page, old_inode);
 
-	करोwn_ग_लिखो(&F2FS_I(new_inode)->i_sem);
-	अगर (!new_dir_entry)
+	down_write(&F2FS_I(new_inode)->i_sem);
+	if (!new_dir_entry)
 		file_lost_pino(new_inode);
-	अन्यथा
+	else
 		/* adjust dir's i_pino to pass fsck check */
-		f2fs_i_pino_ग_लिखो(new_inode, old_dir->i_ino);
-	up_ग_लिखो(&F2FS_I(new_inode)->i_sem);
+		f2fs_i_pino_write(new_inode, old_dir->i_ino);
+	up_write(&F2FS_I(new_inode)->i_sem);
 
-	new_dir->i_स_समय = current_समय(new_dir);
-	अगर (new_nlink) अणु
-		करोwn_ग_लिखो(&F2FS_I(new_dir)->i_sem);
-		f2fs_i_links_ग_लिखो(new_dir, new_nlink > 0);
-		up_ग_लिखो(&F2FS_I(new_dir)->i_sem);
-	पूर्ण
+	new_dir->i_ctime = current_time(new_dir);
+	if (new_nlink) {
+		down_write(&F2FS_I(new_dir)->i_sem);
+		f2fs_i_links_write(new_dir, new_nlink > 0);
+		up_write(&F2FS_I(new_dir)->i_sem);
+	}
 	f2fs_mark_inode_dirty_sync(new_dir, false);
 
-	अगर (F2FS_OPTION(sbi).fsync_mode == FSYNC_MODE_STRICT) अणु
-		f2fs_add_ino_entry(sbi, old_dir->i_ino, TRANS_सूची_INO);
-		f2fs_add_ino_entry(sbi, new_dir->i_ino, TRANS_सूची_INO);
-	पूर्ण
+	if (F2FS_OPTION(sbi).fsync_mode == FSYNC_MODE_STRICT) {
+		f2fs_add_ino_entry(sbi, old_dir->i_ino, TRANS_DIR_INO);
+		f2fs_add_ino_entry(sbi, new_dir->i_ino, TRANS_DIR_INO);
+	}
 
 	f2fs_unlock_op(sbi);
 
-	अगर (IS_सूचीSYNC(old_dir) || IS_सूचीSYNC(new_dir))
+	if (IS_DIRSYNC(old_dir) || IS_DIRSYNC(new_dir))
 		f2fs_sync_fs(sbi->sb, 1);
 
-	f2fs_update_समय(sbi, REQ_TIME);
-	वापस 0;
+	f2fs_update_time(sbi, REQ_TIME);
+	return 0;
 out_new_dir:
-	अगर (new_dir_entry) अणु
+	if (new_dir_entry) {
 		f2fs_put_page(new_dir_page, 0);
-	पूर्ण
+	}
 out_old_dir:
-	अगर (old_dir_entry) अणु
+	if (old_dir_entry) {
 		f2fs_put_page(old_dir_page, 0);
-	पूर्ण
+	}
 out_new:
 	f2fs_put_page(new_page, 0);
 out_old:
 	f2fs_put_page(old_page, 0);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_नाम2(काष्ठा user_namespace *mnt_userns,
-			काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
-			काष्ठा inode *new_dir, काष्ठा dentry *new_dentry,
-			अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक err;
+static int f2fs_rename2(struct user_namespace *mnt_userns,
+			struct inode *old_dir, struct dentry *old_dentry,
+			struct inode *new_dir, struct dentry *new_dentry,
+			unsigned int flags)
+{
+	int err;
 
-	अगर (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		वापस -EINVAL;
+	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
+		return -EINVAL;
 
-	err = fscrypt_prepare_नाम(old_dir, old_dentry, new_dir, new_dentry,
+	err = fscrypt_prepare_rename(old_dir, old_dentry, new_dir, new_dentry,
 				     flags);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (flags & RENAME_EXCHANGE) अणु
-		वापस f2fs_cross_नाम(old_dir, old_dentry,
+	if (flags & RENAME_EXCHANGE) {
+		return f2fs_cross_rename(old_dir, old_dentry,
 					 new_dir, new_dentry);
-	पूर्ण
+	}
 	/*
-	 * VFS has alपढ़ोy handled the new dentry existence हाल,
-	 * here, we just deal with "RENAME_NOREPLACE" as regular नाम.
+	 * VFS has already handled the new dentry existence case,
+	 * here, we just deal with "RENAME_NOREPLACE" as regular rename.
 	 */
-	वापस f2fs_नाम(old_dir, old_dentry, new_dir, new_dentry, flags);
-पूर्ण
+	return f2fs_rename(old_dir, old_dentry, new_dir, new_dentry, flags);
+}
 
-अटल स्थिर अक्षर *f2fs_encrypted_get_link(काष्ठा dentry *dentry,
-					   काष्ठा inode *inode,
-					   काष्ठा delayed_call *करोne)
-अणु
-	काष्ठा page *page;
-	स्थिर अक्षर *target;
+static const char *f2fs_encrypted_get_link(struct dentry *dentry,
+					   struct inode *inode,
+					   struct delayed_call *done)
+{
+	struct page *page;
+	const char *target;
 
-	अगर (!dentry)
-		वापस ERR_PTR(-ECHILD);
+	if (!dentry)
+		return ERR_PTR(-ECHILD);
 
-	page = पढ़ो_mapping_page(inode->i_mapping, 0, शून्य);
-	अगर (IS_ERR(page))
-		वापस ERR_CAST(page);
+	page = read_mapping_page(inode->i_mapping, 0, NULL);
+	if (IS_ERR(page))
+		return ERR_CAST(page);
 
 	target = fscrypt_get_symlink(inode, page_address(page),
-				     inode->i_sb->s_blocksize, करोne);
+				     inode->i_sb->s_blocksize, done);
 	put_page(page);
-	वापस target;
-पूर्ण
+	return target;
+}
 
-स्थिर काष्ठा inode_operations f2fs_encrypted_symlink_inode_operations = अणु
+const struct inode_operations f2fs_encrypted_symlink_inode_operations = {
 	.get_link	= f2fs_encrypted_get_link,
 	.getattr	= f2fs_getattr,
 	.setattr	= f2fs_setattr,
 	.listxattr	= f2fs_listxattr,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations f2fs_dir_inode_operations = अणु
+const struct inode_operations f2fs_dir_inode_operations = {
 	.create		= f2fs_create,
 	.lookup		= f2fs_lookup,
 	.link		= f2fs_link,
 	.unlink		= f2fs_unlink,
 	.symlink	= f2fs_symlink,
-	.सूची_गढ़ो		= f2fs_सूची_गढ़ो,
-	.सूची_हटाओ		= f2fs_सूची_हटाओ,
+	.mkdir		= f2fs_mkdir,
+	.rmdir		= f2fs_rmdir,
 	.mknod		= f2fs_mknod,
-	.नाम		= f2fs_नाम2,
-	.क्षणिक_ख	= f2fs_क्षणिक_ख,
+	.rename		= f2fs_rename2,
+	.tmpfile	= f2fs_tmpfile,
 	.getattr	= f2fs_getattr,
 	.setattr	= f2fs_setattr,
 	.get_acl	= f2fs_get_acl,
@@ -1332,19 +1331,19 @@ out:
 	.fiemap		= f2fs_fiemap,
 	.fileattr_get	= f2fs_fileattr_get,
 	.fileattr_set	= f2fs_fileattr_set,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations f2fs_symlink_inode_operations = अणु
+const struct inode_operations f2fs_symlink_inode_operations = {
 	.get_link	= f2fs_get_link,
 	.getattr	= f2fs_getattr,
 	.setattr	= f2fs_setattr,
 	.listxattr	= f2fs_listxattr,
-पूर्ण;
+};
 
-स्थिर काष्ठा inode_operations f2fs_special_inode_operations = अणु
+const struct inode_operations f2fs_special_inode_operations = {
 	.getattr	= f2fs_getattr,
 	.setattr	= f2fs_setattr,
 	.get_acl	= f2fs_get_acl,
 	.set_acl	= f2fs_set_acl,
 	.listxattr	= f2fs_listxattr,
-पूर्ण;
+};

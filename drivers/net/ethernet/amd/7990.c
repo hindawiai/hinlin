@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * 7990.c -- LANCE ethernet IC generic routines.
  * This is an attempt to separate out the bits of various ethernet
  * drivers that are common because they all use the AMD 7990 LANCE
- * (Local Area Network Controller क्रम Ethernet) chip.
+ * (Local Area Network Controller for Ethernet) chip.
  *
  * Copyright (C) 05/1998 Peter Maydell <pmaydell@chiark.greenend.org.uk>
  *
@@ -14,110 +13,110 @@
  * most of a2025 and sunlance with the aim of merging them, so the
  * common code was pretty obvious.
  */
-#समावेश <linux/crc32.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/in.h>
-#समावेश <linux/route.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/irq.h>
-/* Used क्रम the temporal inet entries and routing */
-#समावेश <linux/socket.h>
-#समावेश <linux/bitops.h>
+#include <linux/crc32.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/in.h>
+#include <linux/route.h>
+#include <linux/string.h>
+#include <linux/skbuff.h>
+#include <linux/pgtable.h>
+#include <asm/irq.h>
+/* Used for the temporal inet entries and routing */
+#include <linux/socket.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/dma.h>
-#अगर_घोषित CONFIG_HP300
-#समावेश <यंत्र/blinken.h>
-#पूर्ण_अगर
+#include <asm/io.h>
+#include <asm/dma.h>
+#ifdef CONFIG_HP300
+#include <asm/blinken.h>
+#endif
 
-#समावेश "7990.h"
+#include "7990.h"
 
-#घोषणा WRITERAP(lp, x)	out_be16(lp->base + LANCE_RAP, (x))
-#घोषणा WRITERDP(lp, x)	out_be16(lp->base + LANCE_RDP, (x))
-#घोषणा READRDP(lp)	in_be16(lp->base + LANCE_RDP)
+#define WRITERAP(lp, x)	out_be16(lp->base + LANCE_RAP, (x))
+#define WRITERDP(lp, x)	out_be16(lp->base + LANCE_RDP, (x))
+#define READRDP(lp)	in_be16(lp->base + LANCE_RDP)
 
-#अगर IS_ENABLED(CONFIG_HPLANCE)
-#समावेश "hplance.h"
+#if IS_ENABLED(CONFIG_HPLANCE)
+#include "hplance.h"
 
-#अघोषित WRITERAP
-#अघोषित WRITERDP
-#अघोषित READRDP
+#undef WRITERAP
+#undef WRITERDP
+#undef READRDP
 
-#अगर IS_ENABLED(CONFIG_MVME147_NET)
+#if IS_ENABLED(CONFIG_MVME147_NET)
 
 /* Lossage Factor Nine, Mr Sulu. */
-#घोषणा WRITERAP(lp, x)	(lp->ग_लिखोrap(lp, x))
-#घोषणा WRITERDP(lp, x)	(lp->ग_लिखोrdp(lp, x))
-#घोषणा READRDP(lp)	(lp->पढ़ोrdp(lp))
+#define WRITERAP(lp, x)	(lp->writerap(lp, x))
+#define WRITERDP(lp, x)	(lp->writerdp(lp, x))
+#define READRDP(lp)	(lp->readrdp(lp))
 
-#अन्यथा
+#else
 
-/* These अंतरभूतs can be used अगर only CONFIG_HPLANCE is defined */
-अटल अंतरभूत व्योम WRITERAP(काष्ठा lance_निजी *lp, __u16 value)
-अणु
-	करो अणु
+/* These inlines can be used if only CONFIG_HPLANCE is defined */
+static inline void WRITERAP(struct lance_private *lp, __u16 value)
+{
+	do {
 		out_be16(lp->base + HPLANCE_REGOFF + LANCE_RAP, value);
-	पूर्ण जबतक ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
-पूर्ण
+	} while ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
+}
 
-अटल अंतरभूत व्योम WRITERDP(काष्ठा lance_निजी *lp, __u16 value)
-अणु
-	करो अणु
+static inline void WRITERDP(struct lance_private *lp, __u16 value)
+{
+	do {
 		out_be16(lp->base + HPLANCE_REGOFF + LANCE_RDP, value);
-	पूर्ण जबतक ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
-पूर्ण
+	} while ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
+}
 
-अटल अंतरभूत __u16 READRDP(काष्ठा lance_निजी *lp)
-अणु
+static inline __u16 READRDP(struct lance_private *lp)
+{
 	__u16 value;
-	करो अणु
+	do {
 		value = in_be16(lp->base + HPLANCE_REGOFF + LANCE_RDP);
-	पूर्ण जबतक ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
-	वापस value;
-पूर्ण
+	} while ((in_8(lp->base + HPLANCE_STATUS) & LE_ACK) == 0);
+	return value;
+}
 
-#पूर्ण_अगर
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_HPLANCE) */
+#endif
+#endif /* IS_ENABLED(CONFIG_HPLANCE) */
 
 /* debugging output macros, various flavours */
-/* #घोषणा TEST_HITS */
-#अगर_घोषित UNDEF
-#घोषणा PRINT_RINGS() \
-करो अणु \
-	पूर्णांक t; \
-	क्रम (t = 0; t < RX_RING_SIZE; t++) अणु \
-		prपूर्णांकk("R%d: @(%02X %04X) len %04X, mblen %04X, bits %02X\n", \
+/* #define TEST_HITS */
+#ifdef UNDEF
+#define PRINT_RINGS() \
+do { \
+	int t; \
+	for (t = 0; t < RX_RING_SIZE; t++) { \
+		printk("R%d: @(%02X %04X) len %04X, mblen %04X, bits %02X\n", \
 		       t, ib->brx_ring[t].rmd1_hadr, ib->brx_ring[t].rmd0, \
 		       ib->brx_ring[t].length, \
 		       ib->brx_ring[t].mblength, ib->brx_ring[t].rmd1_bits); \
-	पूर्ण \
-	क्रम (t = 0; t < TX_RING_SIZE; t++) अणु \
-		prपूर्णांकk("T%d: @(%02X %04X) len %04X, misc %04X, bits %02X\n", \
-		       t, ib->btx_ring[t].पंचांगd1_hadr, ib->btx_ring[t].पंचांगd0, \
+	} \
+	for (t = 0; t < TX_RING_SIZE; t++) { \
+		printk("T%d: @(%02X %04X) len %04X, misc %04X, bits %02X\n", \
+		       t, ib->btx_ring[t].tmd1_hadr, ib->btx_ring[t].tmd0, \
 		       ib->btx_ring[t].length, \
-		       ib->btx_ring[t].misc, ib->btx_ring[t].पंचांगd1_bits); \
-	पूर्ण \
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा PRINT_RINGS()
-#पूर्ण_अगर
+		       ib->btx_ring[t].misc, ib->btx_ring[t].tmd1_bits); \
+	} \
+} while (0)
+#else
+#define PRINT_RINGS()
+#endif
 
-/* Load the CSR रेजिस्टरs. The LANCE has to be STOPped when we करो this! */
-अटल व्योम load_csrs(काष्ठा lance_निजी *lp)
-अणु
-	अस्थिर काष्ठा lance_init_block *aib = lp->lance_init_block;
-	पूर्णांक leptr;
+/* Load the CSR registers. The LANCE has to be STOPped when we do this! */
+static void load_csrs(struct lance_private *lp)
+{
+	volatile struct lance_init_block *aib = lp->lance_init_block;
+	int leptr;
 
 	leptr = LANCE_ADDR(aib);
 
@@ -128,20 +127,20 @@
 	WRITERAP(lp, LE_CSR3);
 	WRITERDP(lp, lp->busmaster_regval);       /* set byteswap/ALEctrl/byte ctrl */
 
-	/* Poपूर्णांक back to csr0 */
+	/* Point back to csr0 */
 	WRITERAP(lp, LE_CSR0);
-पूर्ण
+}
 
-/* #घोषणा to 0 or 1 appropriately */
-#घोषणा DEBUG_IRING 0
+/* #define to 0 or 1 appropriately */
+#define DEBUG_IRING 0
 /* Set up the Lance Rx and Tx rings and the init block */
-अटल व्योम lance_init_ring(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	अस्थिर काष्ठा lance_init_block *aib; /* क्रम LANCE_ADDR computations */
-	पूर्णांक leptr;
-	पूर्णांक i;
+static void lance_init_ring(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	volatile struct lance_init_block *aib; /* for LANCE_ADDR computations */
+	int leptr;
+	int i;
 
 	aib = lp->lance_init_block;
 
@@ -151,47 +150,47 @@
 	ib->mode = LE_MO_PROM;                             /* normal, enable Tx & Rx */
 
 	/* Copy the ethernet address to the lance init block
-	 * Notice that we करो a byteswap अगर we're big endian.
+	 * Notice that we do a byteswap if we're big endian.
 	 * [I think this is the right criterion; at least, sunlance,
-	 * a2065 and atarilance करो the byteswap and lance.c (PC) करोesn't.
-	 * However, the datasheet says that the BSWAP bit करोesn't affect
-	 * the init block, so surely it should be low byte first क्रम
+	 * a2065 and atarilance do the byteswap and lance.c (PC) doesn't.
+	 * However, the datasheet says that the BSWAP bit doesn't affect
+	 * the init block, so surely it should be low byte first for
 	 * everybody? Um.]
 	 * We could define the ib->physaddr as three 16bit values and
 	 * use (addr[1] << 8) | addr[0] & co, but this is more efficient.
 	 */
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 	ib->phys_addr[0] = dev->dev_addr[1];
 	ib->phys_addr[1] = dev->dev_addr[0];
 	ib->phys_addr[2] = dev->dev_addr[3];
 	ib->phys_addr[3] = dev->dev_addr[2];
 	ib->phys_addr[4] = dev->dev_addr[5];
 	ib->phys_addr[5] = dev->dev_addr[4];
-#अन्यथा
-	क्रम (i = 0; i < 6; i++)
+#else
+	for (i = 0; i < 6; i++)
 	       ib->phys_addr[i] = dev->dev_addr[i];
-#पूर्ण_अगर
+#endif
 
-	अगर (DEBUG_IRING)
-		prपूर्णांकk("TX rings:\n");
+	if (DEBUG_IRING)
+		printk("TX rings:\n");
 
 	lp->tx_full = 0;
 	/* Setup the Tx ring entries */
-	क्रम (i = 0; i < (1 << lp->lance_log_tx_bufs); i++) अणु
+	for (i = 0; i < (1 << lp->lance_log_tx_bufs); i++) {
 		leptr = LANCE_ADDR(&aib->tx_buf[i][0]);
-		ib->btx_ring[i].पंचांगd0      = leptr;
-		ib->btx_ring[i].पंचांगd1_hadr = leptr >> 16;
-		ib->btx_ring[i].पंचांगd1_bits = 0;
-		ib->btx_ring[i].length    = 0xf000; /* The ones required by पंचांगd2 */
+		ib->btx_ring[i].tmd0      = leptr;
+		ib->btx_ring[i].tmd1_hadr = leptr >> 16;
+		ib->btx_ring[i].tmd1_bits = 0;
+		ib->btx_ring[i].length    = 0xf000; /* The ones required by tmd2 */
 		ib->btx_ring[i].misc      = 0;
-		अगर (DEBUG_IRING)
-			prपूर्णांकk("%d: 0x%8.8x\n", i, leptr);
-	पूर्ण
+		if (DEBUG_IRING)
+			printk("%d: 0x%8.8x\n", i, leptr);
+	}
 
 	/* Setup the Rx ring entries */
-	अगर (DEBUG_IRING)
-		prपूर्णांकk("RX rings:\n");
-	क्रम (i = 0; i < (1 << lp->lance_log_rx_bufs); i++) अणु
+	if (DEBUG_IRING)
+		printk("RX rings:\n");
+	for (i = 0; i < (1 << lp->lance_log_rx_bufs); i++) {
 		leptr = LANCE_ADDR(&aib->rx_buf[i][0]);
 
 		ib->brx_ring[i].rmd0      = leptr;
@@ -200,61 +199,61 @@
 		/* 0xf000 == bits that must be one (reserved, presumably) */
 		ib->brx_ring[i].length    = -RX_BUFF_SIZE | 0xf000;
 		ib->brx_ring[i].mblength  = 0;
-		अगर (DEBUG_IRING)
-			prपूर्णांकk("%d: 0x%8.8x\n", i, leptr);
-	पूर्ण
+		if (DEBUG_IRING)
+			printk("%d: 0x%8.8x\n", i, leptr);
+	}
 
 	/* Setup the initialization block */
 
-	/* Setup rx descriptor poपूर्णांकer */
+	/* Setup rx descriptor pointer */
 	leptr = LANCE_ADDR(&aib->brx_ring);
 	ib->rx_len = (lp->lance_log_rx_bufs << 13) | (leptr >> 16);
 	ib->rx_ptr = leptr;
-	अगर (DEBUG_IRING)
-		prपूर्णांकk("RX ptr: %8.8x\n", leptr);
+	if (DEBUG_IRING)
+		printk("RX ptr: %8.8x\n", leptr);
 
-	/* Setup tx descriptor poपूर्णांकer */
+	/* Setup tx descriptor pointer */
 	leptr = LANCE_ADDR(&aib->btx_ring);
 	ib->tx_len = (lp->lance_log_tx_bufs << 13) | (leptr >> 16);
 	ib->tx_ptr = leptr;
-	अगर (DEBUG_IRING)
-		prपूर्णांकk("TX ptr: %8.8x\n", leptr);
+	if (DEBUG_IRING)
+		printk("TX ptr: %8.8x\n", leptr);
 
 	/* Clear the multicast filter */
 	ib->filter[0] = 0;
 	ib->filter[1] = 0;
 	PRINT_RINGS();
-पूर्ण
+}
 
-/* LANCE must be STOPped beक्रमe we करो this, too... */
-अटल पूर्णांक init_restart_lance(काष्ठा lance_निजी *lp)
-अणु
-	पूर्णांक i;
+/* LANCE must be STOPped before we do this, too... */
+static int init_restart_lance(struct lance_private *lp)
+{
+	int i;
 
 	WRITERAP(lp, LE_CSR0);
 	WRITERDP(lp, LE_C0_INIT);
 
-	/* Need a hook here क्रम sunlance ledma stuff */
+	/* Need a hook here for sunlance ledma stuff */
 
-	/* Wait क्रम the lance to complete initialization */
-	क्रम (i = 0; (i < 100) && !(READRDP(lp) & (LE_C0_ERR | LE_C0_IDON)); i++)
+	/* Wait for the lance to complete initialization */
+	for (i = 0; (i < 100) && !(READRDP(lp) & (LE_C0_ERR | LE_C0_IDON)); i++)
 		barrier();
-	अगर ((i == 100) || (READRDP(lp) & LE_C0_ERR)) अणु
-		prपूर्णांकk("LANCE unopened after %d ticks, csr0=%4.4x.\n", i, READRDP(lp));
-		वापस -1;
-	पूर्ण
+	if ((i == 100) || (READRDP(lp) & LE_C0_ERR)) {
+		printk("LANCE unopened after %d ticks, csr0=%4.4x.\n", i, READRDP(lp));
+		return -1;
+	}
 
-	/* Clear IDON by writing a "1", enable पूर्णांकerrupts and start lance */
+	/* Clear IDON by writing a "1", enable interrupts and start lance */
 	WRITERDP(lp, LE_C0_IDON);
 	WRITERDP(lp, LE_C0_INEA | LE_C0_STRT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lance_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	पूर्णांक status;
+static int lance_reset(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	int status;
 
 	/* Stop the lance */
 	WRITERAP(lp, LE_CSR0);
@@ -262,131 +261,131 @@
 
 	load_csrs(lp);
 	lance_init_ring(dev);
-	netअगर_trans_update(dev); /* prevent tx समयout */
+	netif_trans_update(dev); /* prevent tx timeout */
 	status = init_restart_lance(lp);
-#अगर_घोषित DEBUG_DRIVER
-	prपूर्णांकk("Lance restart=%d\n", status);
-#पूर्ण_अगर
-	वापस status;
-पूर्ण
+#ifdef DEBUG_DRIVER
+	printk("Lance restart=%d\n", status);
+#endif
+	return status;
+}
 
-अटल पूर्णांक lance_rx(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	अस्थिर काष्ठा lance_rx_desc *rd;
-	अचिन्हित अक्षर bits;
-#अगर_घोषित TEST_HITS
-	पूर्णांक i;
-#पूर्ण_अगर
+static int lance_rx(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	volatile struct lance_rx_desc *rd;
+	unsigned char bits;
+#ifdef TEST_HITS
+	int i;
+#endif
 
-#अगर_घोषित TEST_HITS
-	prपूर्णांकk("[");
-	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
-		अगर (i == lp->rx_new)
-			prपूर्णांकk("%s",
+#ifdef TEST_HITS
+	printk("[");
+	for (i = 0; i < RX_RING_SIZE; i++) {
+		if (i == lp->rx_new)
+			printk("%s",
 			       ib->brx_ring[i].rmd1_bits & LE_R1_OWN ? "_" : "X");
-		अन्यथा
-			prपूर्णांकk("%s",
+		else
+			printk("%s",
 			      ib->brx_ring[i].rmd1_bits & LE_R1_OWN ? "." : "1");
-	पूर्ण
-	prपूर्णांकk("]");
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HP300
+	}
+	printk("]");
+#endif
+#ifdef CONFIG_HP300
 	blinken_leds(0x40, 0);
-#पूर्ण_अगर
-	WRITERDP(lp, LE_C0_RINT | LE_C0_INEA);     /* ack Rx पूर्णांक, reenable पूर्णांकs */
-	क्रम (rd = &ib->brx_ring[lp->rx_new];     /* For each Rx ring we own... */
+#endif
+	WRITERDP(lp, LE_C0_RINT | LE_C0_INEA);     /* ack Rx int, reenable ints */
+	for (rd = &ib->brx_ring[lp->rx_new];     /* For each Rx ring we own... */
 	     !((bits = rd->rmd1_bits) & LE_R1_OWN);
-	     rd = &ib->brx_ring[lp->rx_new]) अणु
+	     rd = &ib->brx_ring[lp->rx_new]) {
 
 		/* We got an incomplete frame? */
-		अगर ((bits & LE_R1_POK) != LE_R1_POK) अणु
+		if ((bits & LE_R1_POK) != LE_R1_POK) {
 			dev->stats.rx_over_errors++;
 			dev->stats.rx_errors++;
-			जारी;
-		पूर्ण अन्यथा अगर (bits & LE_R1_ERR) अणु
+			continue;
+		} else if (bits & LE_R1_ERR) {
 			/* Count only the end frame as a rx error,
 			 * not the beginning
 			 */
-			अगर (bits & LE_R1_BUF)
-				dev->stats.rx_fअगरo_errors++;
-			अगर (bits & LE_R1_CRC)
+			if (bits & LE_R1_BUF)
+				dev->stats.rx_fifo_errors++;
+			if (bits & LE_R1_CRC)
 				dev->stats.rx_crc_errors++;
-			अगर (bits & LE_R1_OFL)
+			if (bits & LE_R1_OFL)
 				dev->stats.rx_over_errors++;
-			अगर (bits & LE_R1_FRA)
+			if (bits & LE_R1_FRA)
 				dev->stats.rx_frame_errors++;
-			अगर (bits & LE_R1_EOP)
+			if (bits & LE_R1_EOP)
 				dev->stats.rx_errors++;
-		पूर्ण अन्यथा अणु
-			पूर्णांक len = (rd->mblength & 0xfff) - 4;
-			काष्ठा sk_buff *skb = netdev_alloc_skb(dev, len + 2);
+		} else {
+			int len = (rd->mblength & 0xfff) - 4;
+			struct sk_buff *skb = netdev_alloc_skb(dev, len + 2);
 
-			अगर (!skb) अणु
+			if (!skb) {
 				dev->stats.rx_dropped++;
 				rd->mblength = 0;
 				rd->rmd1_bits = LE_R1_OWN;
 				lp->rx_new = (lp->rx_new + 1) & lp->rx_ring_mod_mask;
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
 			skb_reserve(skb, 2);           /* 16 byte align */
 			skb_put(skb, len);             /* make room */
 			skb_copy_to_linear_data(skb,
-					 (अचिन्हित अक्षर *)&(ib->rx_buf[lp->rx_new][0]),
+					 (unsigned char *)&(ib->rx_buf[lp->rx_new][0]),
 					 len);
 			skb->protocol = eth_type_trans(skb, dev);
-			netअगर_rx(skb);
+			netif_rx(skb);
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += len;
-		पूर्ण
+		}
 
 		/* Return the packet to the pool */
 		rd->mblength = 0;
 		rd->rmd1_bits = LE_R1_OWN;
 		lp->rx_new = (lp->rx_new + 1) & lp->rx_ring_mod_mask;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक lance_tx(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	अस्थिर काष्ठा lance_tx_desc *td;
-	पूर्णांक i, j;
-	पूर्णांक status;
+static int lance_tx(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	volatile struct lance_tx_desc *td;
+	int i, j;
+	int status;
 
-#अगर_घोषित CONFIG_HP300
+#ifdef CONFIG_HP300
 	blinken_leds(0x80, 0);
-#पूर्ण_अगर
+#endif
 	/* csr0 is 2f3 */
 	WRITERDP(lp, LE_C0_TINT | LE_C0_INEA);
 	/* csr0 is 73 */
 
 	j = lp->tx_old;
-	क्रम (i = j; i != lp->tx_new; i = j) अणु
+	for (i = j; i != lp->tx_new; i = j) {
 		td = &ib->btx_ring[i];
 
 		/* If we hit a packet not owned by us, stop */
-		अगर (td->पंचांगd1_bits & LE_T1_OWN)
-			अवरोध;
+		if (td->tmd1_bits & LE_T1_OWN)
+			break;
 
-		अगर (td->पंचांगd1_bits & LE_T1_ERR) अणु
+		if (td->tmd1_bits & LE_T1_ERR) {
 			status = td->misc;
 
 			dev->stats.tx_errors++;
-			अगर (status & LE_T3_RTY)
-				dev->stats.tx_पातed_errors++;
-			अगर (status & LE_T3_LCOL)
-				dev->stats.tx_winकरोw_errors++;
+			if (status & LE_T3_RTY)
+				dev->stats.tx_aborted_errors++;
+			if (status & LE_T3_LCOL)
+				dev->stats.tx_window_errors++;
 
-			अगर (status & LE_T3_CLOS) अणु
+			if (status & LE_T3_CLOS) {
 				dev->stats.tx_carrier_errors++;
-				अगर (lp->स्वतः_select) अणु
+				if (lp->auto_select) {
 					lp->tpe = 1 - lp->tpe;
-					prपूर्णांकk("%s: Carrier Lost, trying %s\n",
+					printk("%s: Carrier Lost, trying %s\n",
 					       dev->name,
 					       lp->tpe ? "TPE" : "AUI");
 					/* Stop the lance */
@@ -395,16 +394,16 @@
 					lance_init_ring(dev);
 					load_csrs(lp);
 					init_restart_lance(lp);
-					वापस 0;
-				पूर्ण
-			पूर्ण
+					return 0;
+				}
+			}
 
 			/* buffer errors and underflows turn off the transmitter */
 			/* Restart the adapter */
-			अगर (status & (LE_T3_BUF|LE_T3_UFL)) अणु
-				dev->stats.tx_fअगरo_errors++;
+			if (status & (LE_T3_BUF|LE_T3_UFL)) {
+				dev->stats.tx_fifo_errors++;
 
-				prपूर्णांकk("%s: Tx: ERR_BUF|ERR_UFL, restarting\n",
+				printk("%s: Tx: ERR_BUF|ERR_UFL, restarting\n",
 				       dev->name);
 				/* Stop the lance */
 				WRITERAP(lp, LE_CSR0);
@@ -412,38 +411,38 @@
 				lance_init_ring(dev);
 				load_csrs(lp);
 				init_restart_lance(lp);
-				वापस 0;
-			पूर्ण
-		पूर्ण अन्यथा अगर ((td->पंचांगd1_bits & LE_T1_POK) == LE_T1_POK) अणु
+				return 0;
+			}
+		} else if ((td->tmd1_bits & LE_T1_POK) == LE_T1_POK) {
 			/*
-			 * So we करोn't count the packet more than once.
+			 * So we don't count the packet more than once.
 			 */
-			td->पंचांगd1_bits &= ~(LE_T1_POK);
+			td->tmd1_bits &= ~(LE_T1_POK);
 
-			/* One collision beक्रमe packet was sent. */
-			अगर (td->पंचांगd1_bits & LE_T1_EONE)
+			/* One collision before packet was sent. */
+			if (td->tmd1_bits & LE_T1_EONE)
 				dev->stats.collisions++;
 
 			/* More than one collision, be optimistic. */
-			अगर (td->पंचांगd1_bits & LE_T1_EMORE)
+			if (td->tmd1_bits & LE_T1_EMORE)
 				dev->stats.collisions += 2;
 
 			dev->stats.tx_packets++;
-		पूर्ण
+		}
 
 		j = (j + 1) & lp->tx_ring_mod_mask;
-	पूर्ण
+	}
 	lp->tx_old = j;
 	WRITERDP(lp, LE_C0_TINT | LE_C0_INEA);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t
-lance_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	पूर्णांक csr0;
+static irqreturn_t
+lance_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *)dev_id;
+	struct lance_private *lp = netdev_priv(dev);
+	int csr0;
 
 	spin_lock(&lp->devlock);
 
@@ -452,131 +451,131 @@ lance_पूर्णांकerrupt(पूर्णांक irq, व्यो�
 
 	PRINT_RINGS();
 
-	अगर (!(csr0 & LE_C0_INTR)) अणु     /* Check अगर any पूर्णांकerrupt has */
+	if (!(csr0 & LE_C0_INTR)) {     /* Check if any interrupt has */
 		spin_unlock(&lp->devlock);
-		वापस IRQ_NONE;        /* been generated by the Lance. */
-	पूर्ण
+		return IRQ_NONE;        /* been generated by the Lance. */
+	}
 
-	/* Acknowledge all the पूर्णांकerrupt sources ASAP */
+	/* Acknowledge all the interrupt sources ASAP */
 	WRITERDP(lp, csr0 & ~(LE_C0_INEA|LE_C0_TDMD|LE_C0_STOP|LE_C0_STRT|LE_C0_INIT));
 
-	अगर ((csr0 & LE_C0_ERR)) अणु
+	if ((csr0 & LE_C0_ERR)) {
 		/* Clear the error condition */
 		WRITERDP(lp, LE_C0_BABL|LE_C0_ERR|LE_C0_MISS|LE_C0_INEA);
-	पूर्ण
+	}
 
-	अगर (csr0 & LE_C0_RINT)
+	if (csr0 & LE_C0_RINT)
 		lance_rx(dev);
 
-	अगर (csr0 & LE_C0_TINT)
+	if (csr0 & LE_C0_TINT)
 		lance_tx(dev);
 
 	/* Log misc errors. */
-	अगर (csr0 & LE_C0_BABL)
+	if (csr0 & LE_C0_BABL)
 		dev->stats.tx_errors++;       /* Tx babble. */
-	अगर (csr0 & LE_C0_MISS)
+	if (csr0 & LE_C0_MISS)
 		dev->stats.rx_errors++;       /* Missed a Rx frame. */
-	अगर (csr0 & LE_C0_MERR) अणु
-		prपूर्णांकk("%s: Bus master arbitration failure, status %4.4x.\n",
+	if (csr0 & LE_C0_MERR) {
+		printk("%s: Bus master arbitration failure, status %4.4x.\n",
 		       dev->name, csr0);
 		/* Restart the chip. */
 		WRITERDP(lp, LE_C0_STRT);
-	पूर्ण
+	}
 
-	अगर (lp->tx_full && netअगर_queue_stopped(dev) && (TX_BUFFS_AVAIL >= 0)) अणु
+	if (lp->tx_full && netif_queue_stopped(dev) && (TX_BUFFS_AVAIL >= 0)) {
 		lp->tx_full = 0;
-		netअगर_wake_queue(dev);
-	पूर्ण
+		netif_wake_queue(dev);
+	}
 
 	WRITERAP(lp, LE_CSR0);
 	WRITERDP(lp, LE_C0_BABL|LE_C0_CERR|LE_C0_MISS|LE_C0_MERR|LE_C0_IDON|LE_C0_INEA);
 
 	spin_unlock(&lp->devlock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक lance_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	पूर्णांक res;
+int lance_open(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	int res;
 
-	/* Install the Interrupt handler. Or we could shunt this out to specअगरic drivers? */
-	अगर (request_irq(lp->irq, lance_पूर्णांकerrupt, IRQF_SHARED, lp->name, dev))
-		वापस -EAGAIN;
+	/* Install the Interrupt handler. Or we could shunt this out to specific drivers? */
+	if (request_irq(lp->irq, lance_interrupt, IRQF_SHARED, lp->name, dev))
+		return -EAGAIN;
 
 	res = lance_reset(dev);
 	spin_lock_init(&lp->devlock);
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL_GPL(lance_खोलो);
+	return res;
+}
+EXPORT_SYMBOL_GPL(lance_open);
 
-पूर्णांक lance_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
+int lance_close(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	/* Stop the LANCE */
 	WRITERAP(lp, LE_CSR0);
 	WRITERDP(lp, LE_C0_STOP);
 
-	मुक्त_irq(lp->irq, dev);
+	free_irq(lp->irq, dev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(lance_बंद);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(lance_close);
 
-व्योम lance_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	prपूर्णांकk("lance_tx_timeout\n");
+void lance_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	printk("lance_tx_timeout\n");
 	lance_reset(dev);
-	netअगर_trans_update(dev); /* prevent tx समयout */
-	netअगर_wake_queue(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(lance_tx_समयout);
+	netif_trans_update(dev); /* prevent tx timeout */
+	netif_wake_queue(dev);
+}
+EXPORT_SYMBOL_GPL(lance_tx_timeout);
 
-netdev_tx_t lance_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	पूर्णांक entry, skblen, len;
-	अटल पूर्णांक outs;
-	अचिन्हित दीर्घ flags;
+netdev_tx_t lance_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	int entry, skblen, len;
+	static int outs;
+	unsigned long flags;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (!TX_BUFFS_AVAIL) अणु
+	if (!TX_BUFFS_AVAIL) {
 		dev_consume_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	skblen = skb->len;
 
-#अगर_घोषित DEBUG_DRIVER
+#ifdef DEBUG_DRIVER
 	/* dump the packet */
-	अणु
-		पूर्णांक i;
+	{
+		int i;
 
-		क्रम (i = 0; i < 64; i++) अणु
-			अगर ((i % 16) == 0)
-				prपूर्णांकk("\n");
-			prपूर्णांकk("%2.2x ", skb->data[i]);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		for (i = 0; i < 64; i++) {
+			if ((i % 16) == 0)
+				printk("\n");
+			printk("%2.2x ", skb->data[i]);
+		}
+	}
+#endif
 	len = (skblen <= ETH_ZLEN) ? ETH_ZLEN : skblen;
 	entry = lp->tx_new & lp->tx_ring_mod_mask;
 	ib->btx_ring[entry].length = (-len) | 0xf000;
 	ib->btx_ring[entry].misc = 0;
 
-	अगर (skb->len < ETH_ZLEN)
-		स_रखो((व्योम *)&ib->tx_buf[entry][0], 0, ETH_ZLEN);
-	skb_copy_from_linear_data(skb, (व्योम *)&ib->tx_buf[entry][0], skblen);
+	if (skb->len < ETH_ZLEN)
+		memset((void *)&ib->tx_buf[entry][0], 0, ETH_ZLEN);
+	skb_copy_from_linear_data(skb, (void *)&ib->tx_buf[entry][0], skblen);
 
 	/* Now, give the packet to the lance */
-	ib->btx_ring[entry].पंचांगd1_bits = (LE_T1_POK|LE_T1_OWN);
+	ib->btx_ring[entry].tmd1_bits = (LE_T1_POK|LE_T1_OWN);
 	lp->tx_new = (lp->tx_new + 1) & lp->tx_ring_mod_mask;
 
 	outs++;
@@ -585,87 +584,87 @@ netdev_tx_t lance_start_xmit(काष्ठा sk_buff *skb, काष्ठा
 	dev_consume_skb_any(skb);
 
 	spin_lock_irqsave(&lp->devlock, flags);
-	अगर (TX_BUFFS_AVAIL)
-		netअगर_start_queue(dev);
-	अन्यथा
+	if (TX_BUFFS_AVAIL)
+		netif_start_queue(dev);
+	else
 		lp->tx_full = 1;
 	spin_unlock_irqrestore(&lp->devlock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 EXPORT_SYMBOL_GPL(lance_start_xmit);
 
 /* taken from the depca driver via a2065.c */
-अटल व्योम lance_load_multicast(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	अस्थिर u16 *mcast_table = (u16 *)&ib->filter;
-	काष्ठा netdev_hw_addr *ha;
+static void lance_load_multicast(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	volatile u16 *mcast_table = (u16 *)&ib->filter;
+	struct netdev_hw_addr *ha;
 	u32 crc;
 
 	/* set all multicast bits */
-	अगर (dev->flags & IFF_ALLMULTI) अणु
+	if (dev->flags & IFF_ALLMULTI) {
 		ib->filter[0] = 0xffffffff;
 		ib->filter[1] = 0xffffffff;
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* clear the multicast filter */
 	ib->filter[0] = 0;
 	ib->filter[1] = 0;
 
 	/* Add addresses */
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
+	netdev_for_each_mc_addr(ha, dev) {
 		crc = ether_crc_le(6, ha->addr);
 		crc = crc >> 26;
 		mcast_table[crc >> 4] |= 1 << (crc & 0xf);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-व्योम lance_set_multicast(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
-	अस्थिर काष्ठा lance_init_block *ib = lp->init_block;
-	पूर्णांक stopped;
+void lance_set_multicast(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
+	volatile struct lance_init_block *ib = lp->init_block;
+	int stopped;
 
-	stopped = netअगर_queue_stopped(dev);
-	अगर (!stopped)
-		netअगर_stop_queue(dev);
+	stopped = netif_queue_stopped(dev);
+	if (!stopped)
+		netif_stop_queue(dev);
 
-	जबतक (lp->tx_old != lp->tx_new)
+	while (lp->tx_old != lp->tx_new)
 		schedule();
 
 	WRITERAP(lp, LE_CSR0);
 	WRITERDP(lp, LE_C0_STOP);
 	lance_init_ring(dev);
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		ib->mode |= LE_MO_PROM;
-	पूर्ण अन्यथा अणु
+	} else {
 		ib->mode &= ~LE_MO_PROM;
 		lance_load_multicast(dev);
-	पूर्ण
+	}
 	load_csrs(lp);
 	init_restart_lance(lp);
 
-	अगर (!stopped)
-		netअगर_start_queue(dev);
-पूर्ण
+	if (!stopped)
+		netif_start_queue(dev);
+}
 EXPORT_SYMBOL_GPL(lance_set_multicast);
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-व्योम lance_poll(काष्ठा net_device *dev)
-अणु
-	काष्ठा lance_निजी *lp = netdev_priv(dev);
+#ifdef CONFIG_NET_POLL_CONTROLLER
+void lance_poll(struct net_device *dev)
+{
+	struct lance_private *lp = netdev_priv(dev);
 
 	spin_lock(&lp->devlock);
 	WRITERAP(lp, LE_CSR0);
 	WRITERDP(lp, LE_C0_STRT);
 	spin_unlock(&lp->devlock);
-	lance_पूर्णांकerrupt(dev->irq, dev);
-पूर्ण
+	lance_interrupt(dev->irq, dev);
+}
 EXPORT_SYMBOL_GPL(lance_poll);
-#पूर्ण_अगर
+#endif
 
 MODULE_LICENSE("GPL");

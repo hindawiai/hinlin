@@ -1,342 +1,341 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश "htc.h"
+#include <asm/unaligned.h>
+#include "htc.h"
 
 MODULE_FIRMWARE(HTC_7010_MODULE_FW);
 MODULE_FIRMWARE(HTC_9271_MODULE_FW);
 
-अटल स्थिर काष्ठा usb_device_id ath9k_hअगर_usb_ids[] = अणु
-	अणु USB_DEVICE(0x0cf3, 0x9271) पूर्ण, /* Atheros */
-	अणु USB_DEVICE(0x0cf3, 0x1006) पूर्ण, /* Atheros */
-	अणु USB_DEVICE(0x0846, 0x9030) पूर्ण, /* Netgear N150 */
-	अणु USB_DEVICE(0x07b8, 0x9271) पूर्ण, /* Altai WA1011N-GU */
-	अणु USB_DEVICE(0x07D1, 0x3A10) पूर्ण, /* Dlink Wireless 150 */
-	अणु USB_DEVICE(0x13D3, 0x3327) पूर्ण, /* Azurewave */
-	अणु USB_DEVICE(0x13D3, 0x3328) पूर्ण, /* Azurewave */
-	अणु USB_DEVICE(0x13D3, 0x3346) पूर्ण, /* IMC Networks */
-	अणु USB_DEVICE(0x13D3, 0x3348) पूर्ण, /* Azurewave */
-	अणु USB_DEVICE(0x13D3, 0x3349) पूर्ण, /* Azurewave */
-	अणु USB_DEVICE(0x13D3, 0x3350) पूर्ण, /* Azurewave */
-	अणु USB_DEVICE(0x04CA, 0x4605) पूर्ण, /* Liteon */
-	अणु USB_DEVICE(0x040D, 0x3801) पूर्ण, /* VIA */
-	अणु USB_DEVICE(0x0cf3, 0xb003) पूर्ण, /* Ubiquiti WअगरiStation Ext */
-	अणु USB_DEVICE(0x0cf3, 0xb002) पूर्ण, /* Ubiquiti WअगरiStation */
-	अणु USB_DEVICE(0x057c, 0x8403) पूर्ण, /* AVM FRITZ!WLAN 11N v2 USB */
-	अणु USB_DEVICE(0x0471, 0x209e) पूर्ण, /* Philips (or NXP) PTA01 */
-	अणु USB_DEVICE(0x1eda, 0x2315) पूर्ण, /* AirTies */
+static const struct usb_device_id ath9k_hif_usb_ids[] = {
+	{ USB_DEVICE(0x0cf3, 0x9271) }, /* Atheros */
+	{ USB_DEVICE(0x0cf3, 0x1006) }, /* Atheros */
+	{ USB_DEVICE(0x0846, 0x9030) }, /* Netgear N150 */
+	{ USB_DEVICE(0x07b8, 0x9271) }, /* Altai WA1011N-GU */
+	{ USB_DEVICE(0x07D1, 0x3A10) }, /* Dlink Wireless 150 */
+	{ USB_DEVICE(0x13D3, 0x3327) }, /* Azurewave */
+	{ USB_DEVICE(0x13D3, 0x3328) }, /* Azurewave */
+	{ USB_DEVICE(0x13D3, 0x3346) }, /* IMC Networks */
+	{ USB_DEVICE(0x13D3, 0x3348) }, /* Azurewave */
+	{ USB_DEVICE(0x13D3, 0x3349) }, /* Azurewave */
+	{ USB_DEVICE(0x13D3, 0x3350) }, /* Azurewave */
+	{ USB_DEVICE(0x04CA, 0x4605) }, /* Liteon */
+	{ USB_DEVICE(0x040D, 0x3801) }, /* VIA */
+	{ USB_DEVICE(0x0cf3, 0xb003) }, /* Ubiquiti WifiStation Ext */
+	{ USB_DEVICE(0x0cf3, 0xb002) }, /* Ubiquiti WifiStation */
+	{ USB_DEVICE(0x057c, 0x8403) }, /* AVM FRITZ!WLAN 11N v2 USB */
+	{ USB_DEVICE(0x0471, 0x209e) }, /* Philips (or NXP) PTA01 */
+	{ USB_DEVICE(0x1eda, 0x2315) }, /* AirTies */
 
-	अणु USB_DEVICE(0x0cf3, 0x7015),
-	  .driver_info = AR9287_USB पूर्ण,  /* Atheros */
-	अणु USB_DEVICE(0x1668, 0x1200),
-	  .driver_info = AR9287_USB पूर्ण,  /* Verizon */
+	{ USB_DEVICE(0x0cf3, 0x7015),
+	  .driver_info = AR9287_USB },  /* Atheros */
+	{ USB_DEVICE(0x1668, 0x1200),
+	  .driver_info = AR9287_USB },  /* Verizon */
 
-	अणु USB_DEVICE(0x0cf3, 0x7010),
-	  .driver_info = AR9280_USB पूर्ण,  /* Atheros */
-	अणु USB_DEVICE(0x0846, 0x9018),
-	  .driver_info = AR9280_USB पूर्ण,  /* Netgear WNDA3200 */
-	अणु USB_DEVICE(0x083A, 0xA704),
-	  .driver_info = AR9280_USB पूर्ण,  /* SMC Networks */
-	अणु USB_DEVICE(0x0411, 0x017f),
-	  .driver_info = AR9280_USB पूर्ण,  /* Sony UWA-BR100 */
-	अणु USB_DEVICE(0x0411, 0x0197),
-	  .driver_info = AR9280_USB पूर्ण,  /* Buffalo WLI-UV-AG300P */
-	अणु USB_DEVICE(0x04da, 0x3904),
-	  .driver_info = AR9280_USB पूर्ण,
-	अणु USB_DEVICE(0x0930, 0x0a08),
-	  .driver_info = AR9280_USB पूर्ण,  /* Toshiba WLM-20U2 and GN-1080 */
+	{ USB_DEVICE(0x0cf3, 0x7010),
+	  .driver_info = AR9280_USB },  /* Atheros */
+	{ USB_DEVICE(0x0846, 0x9018),
+	  .driver_info = AR9280_USB },  /* Netgear WNDA3200 */
+	{ USB_DEVICE(0x083A, 0xA704),
+	  .driver_info = AR9280_USB },  /* SMC Networks */
+	{ USB_DEVICE(0x0411, 0x017f),
+	  .driver_info = AR9280_USB },  /* Sony UWA-BR100 */
+	{ USB_DEVICE(0x0411, 0x0197),
+	  .driver_info = AR9280_USB },  /* Buffalo WLI-UV-AG300P */
+	{ USB_DEVICE(0x04da, 0x3904),
+	  .driver_info = AR9280_USB },
+	{ USB_DEVICE(0x0930, 0x0a08),
+	  .driver_info = AR9280_USB },  /* Toshiba WLM-20U2 and GN-1080 */
 
-	अणु USB_DEVICE(0x0cf3, 0x20ff),
-	  .driver_info = STORAGE_DEVICE पूर्ण,
+	{ USB_DEVICE(0x0cf3, 0x20ff),
+	  .driver_info = STORAGE_DEVICE },
 
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-MODULE_DEVICE_TABLE(usb, ath9k_hअगर_usb_ids);
+MODULE_DEVICE_TABLE(usb, ath9k_hif_usb_ids);
 
-अटल पूर्णांक __hअगर_usb_tx(काष्ठा hअगर_device_usb *hअगर_dev);
+static int __hif_usb_tx(struct hif_device_usb *hif_dev);
 
-अटल व्योम hअगर_usb_regout_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा cmd_buf *cmd = (काष्ठा cmd_buf *)urb->context;
+static void hif_usb_regout_cb(struct urb *urb)
+{
+	struct cmd_buf *cmd = (struct cmd_buf *)urb->context;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
-		जाओ मुक्त;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ENODEV:
+	case -ESHUTDOWN:
+		goto free;
+	default:
+		break;
+	}
 
-	अगर (cmd) अणु
-		ath9k_htc_txcompletion_cb(cmd->hअगर_dev->htc_handle,
+	if (cmd) {
+		ath9k_htc_txcompletion_cb(cmd->hif_dev->htc_handle,
 					  cmd->skb, true);
-		kमुक्त(cmd);
-	पूर्ण
+		kfree(cmd);
+	}
 
-	वापस;
-मुक्त:
-	kमुक्त_skb(cmd->skb);
-	kमुक्त(cmd);
-पूर्ण
+	return;
+free:
+	kfree_skb(cmd->skb);
+	kfree(cmd);
+}
 
-अटल पूर्णांक hअगर_usb_send_regout(काष्ठा hअगर_device_usb *hअगर_dev,
-			       काष्ठा sk_buff *skb)
-अणु
-	काष्ठा urb *urb;
-	काष्ठा cmd_buf *cmd;
-	पूर्णांक ret = 0;
+static int hif_usb_send_regout(struct hif_device_usb *hif_dev,
+			       struct sk_buff *skb)
+{
+	struct urb *urb;
+	struct cmd_buf *cmd;
+	int ret = 0;
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (urb == शून्य)
-		वापस -ENOMEM;
+	if (urb == NULL)
+		return -ENOMEM;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (cmd == शून्य) अणु
-		usb_मुक्त_urb(urb);
-		वापस -ENOMEM;
-	पूर्ण
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (cmd == NULL) {
+		usb_free_urb(urb);
+		return -ENOMEM;
+	}
 
 	cmd->skb = skb;
-	cmd->hअगर_dev = hअगर_dev;
+	cmd->hif_dev = hif_dev;
 
-	usb_fill_पूर्णांक_urb(urb, hअगर_dev->udev,
-			 usb_sndपूर्णांकpipe(hअगर_dev->udev, USB_REG_OUT_PIPE),
+	usb_fill_int_urb(urb, hif_dev->udev,
+			 usb_sndintpipe(hif_dev->udev, USB_REG_OUT_PIPE),
 			 skb->data, skb->len,
-			 hअगर_usb_regout_cb, cmd, 1);
+			 hif_usb_regout_cb, cmd, 1);
 
-	usb_anchor_urb(urb, &hअगर_dev->regout_submitted);
+	usb_anchor_urb(urb, &hif_dev->regout_submitted);
 	ret = usb_submit_urb(urb, GFP_KERNEL);
-	अगर (ret) अणु
+	if (ret) {
 		usb_unanchor_urb(urb);
-		kमुक्त(cmd);
-	पूर्ण
-	usb_मुक्त_urb(urb);
+		kfree(cmd);
+	}
+	usb_free_urb(urb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hअगर_usb_mgmt_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा cmd_buf *cmd = (काष्ठा cmd_buf *)urb->context;
-	काष्ठा hअगर_device_usb *hअगर_dev;
-	अचिन्हित दीर्घ flags;
+static void hif_usb_mgmt_cb(struct urb *urb)
+{
+	struct cmd_buf *cmd = (struct cmd_buf *)urb->context;
+	struct hif_device_usb *hif_dev;
+	unsigned long flags;
 	bool txok = true;
 
-	अगर (!cmd || !cmd->skb || !cmd->hअगर_dev)
-		वापस;
+	if (!cmd || !cmd->skb || !cmd->hif_dev)
+		return;
 
-	hअगर_dev = cmd->hअगर_dev;
+	hif_dev = cmd->hif_dev;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ENODEV:
+	case -ESHUTDOWN:
 		txok = false;
 
 		/*
 		 * If the URBs are being flushed, no need to complete
 		 * this packet.
 		 */
-		spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-		अगर (hअगर_dev->tx.flags & HIF_USB_TX_FLUSH) अणु
-			spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-			dev_kमुक्त_skb_any(cmd->skb);
-			kमुक्त(cmd);
-			वापस;
-		पूर्ण
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+		spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+		if (hif_dev->tx.flags & HIF_USB_TX_FLUSH) {
+			spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+			dev_kfree_skb_any(cmd->skb);
+			kfree(cmd);
+			return;
+		}
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		txok = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	skb_pull(cmd->skb, 4);
-	ath9k_htc_txcompletion_cb(cmd->hअगर_dev->htc_handle,
+	ath9k_htc_txcompletion_cb(cmd->hif_dev->htc_handle,
 				  cmd->skb, txok);
-	kमुक्त(cmd);
-पूर्ण
+	kfree(cmd);
+}
 
-अटल पूर्णांक hअगर_usb_send_mgmt(काष्ठा hअगर_device_usb *hअगर_dev,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा urb *urb;
-	काष्ठा cmd_buf *cmd;
-	पूर्णांक ret = 0;
+static int hif_usb_send_mgmt(struct hif_device_usb *hif_dev,
+			     struct sk_buff *skb)
+{
+	struct urb *urb;
+	struct cmd_buf *cmd;
+	int ret = 0;
 	__le16 *hdr;
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (urb == शून्य)
-		वापस -ENOMEM;
+	if (urb == NULL)
+		return -ENOMEM;
 
-	cmd = kzalloc(माप(*cmd), GFP_ATOMIC);
-	अगर (cmd == शून्य) अणु
-		usb_मुक्त_urb(urb);
-		वापस -ENOMEM;
-	पूर्ण
+	cmd = kzalloc(sizeof(*cmd), GFP_ATOMIC);
+	if (cmd == NULL) {
+		usb_free_urb(urb);
+		return -ENOMEM;
+	}
 
 	cmd->skb = skb;
-	cmd->hअगर_dev = hअगर_dev;
+	cmd->hif_dev = hif_dev;
 
 	hdr = skb_push(skb, 4);
 	*hdr++ = cpu_to_le16(skb->len - 4);
 	*hdr++ = cpu_to_le16(ATH_USB_TX_STREAM_MODE_TAG);
 
-	usb_fill_bulk_urb(urb, hअगर_dev->udev,
-			 usb_sndbulkpipe(hअगर_dev->udev, USB_WLAN_TX_PIPE),
+	usb_fill_bulk_urb(urb, hif_dev->udev,
+			 usb_sndbulkpipe(hif_dev->udev, USB_WLAN_TX_PIPE),
 			 skb->data, skb->len,
-			 hअगर_usb_mgmt_cb, cmd);
+			 hif_usb_mgmt_cb, cmd);
 
-	usb_anchor_urb(urb, &hअगर_dev->mgmt_submitted);
+	usb_anchor_urb(urb, &hif_dev->mgmt_submitted);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret) अणु
+	if (ret) {
 		usb_unanchor_urb(urb);
-		kमुक्त(cmd);
-	पूर्ण
-	usb_मुक्त_urb(urb);
+		kfree(cmd);
+	}
+	usb_free_urb(urb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम ath9k_skb_queue_purge(काष्ठा hअगर_device_usb *hअगर_dev,
-					 काष्ठा sk_buff_head *list)
-अणु
-	काष्ठा sk_buff *skb;
+static inline void ath9k_skb_queue_purge(struct hif_device_usb *hif_dev,
+					 struct sk_buff_head *list)
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = __skb_dequeue(list)) != शून्य) अणु
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
-पूर्ण
+	while ((skb = __skb_dequeue(list)) != NULL) {
+		dev_kfree_skb_any(skb);
+	}
+}
 
-अटल अंतरभूत व्योम ath9k_skb_queue_complete(काष्ठा hअगर_device_usb *hअगर_dev,
-					    काष्ठा sk_buff_head *queue,
+static inline void ath9k_skb_queue_complete(struct hif_device_usb *hif_dev,
+					    struct sk_buff_head *queue,
 					    bool txok)
-अणु
-	काष्ठा sk_buff *skb;
+{
+	struct sk_buff *skb;
 
-	जबतक ((skb = __skb_dequeue(queue)) != शून्य) अणु
-#अगर_घोषित CONFIG_ATH9K_HTC_DEBUGFS
-		पूर्णांक ln = skb->len;
-#पूर्ण_अगर
-		ath9k_htc_txcompletion_cb(hअगर_dev->htc_handle,
+	while ((skb = __skb_dequeue(queue)) != NULL) {
+#ifdef CONFIG_ATH9K_HTC_DEBUGFS
+		int ln = skb->len;
+#endif
+		ath9k_htc_txcompletion_cb(hif_dev->htc_handle,
 					  skb, txok);
-		अगर (txok) अणु
+		if (txok) {
 			TX_STAT_INC(skb_success);
 			TX_STAT_ADD(skb_success_bytes, ln);
-		पूर्ण
-		अन्यथा
+		}
+		else
 			TX_STAT_INC(skb_failed);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम hअगर_usb_tx_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा tx_buf *tx_buf = (काष्ठा tx_buf *) urb->context;
-	काष्ठा hअगर_device_usb *hअगर_dev;
+static void hif_usb_tx_cb(struct urb *urb)
+{
+	struct tx_buf *tx_buf = (struct tx_buf *) urb->context;
+	struct hif_device_usb *hif_dev;
 	bool txok = true;
 
-	अगर (!tx_buf || !tx_buf->hअगर_dev)
-		वापस;
+	if (!tx_buf || !tx_buf->hif_dev)
+		return;
 
-	hअगर_dev = tx_buf->hअगर_dev;
+	hif_dev = tx_buf->hif_dev;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ENODEV:
+	case -ESHUTDOWN:
 		txok = false;
 
 		/*
 		 * If the URBs are being flushed, no need to add this
-		 * URB to the मुक्त list.
+		 * URB to the free list.
 		 */
-		spin_lock(&hअगर_dev->tx.tx_lock);
-		अगर (hअगर_dev->tx.flags & HIF_USB_TX_FLUSH) अणु
-			spin_unlock(&hअगर_dev->tx.tx_lock);
-			ath9k_skb_queue_purge(hअगर_dev, &tx_buf->skb_queue);
-			वापस;
-		पूर्ण
-		spin_unlock(&hअगर_dev->tx.tx_lock);
+		spin_lock(&hif_dev->tx.tx_lock);
+		if (hif_dev->tx.flags & HIF_USB_TX_FLUSH) {
+			spin_unlock(&hif_dev->tx.tx_lock);
+			ath9k_skb_queue_purge(hif_dev, &tx_buf->skb_queue);
+			return;
+		}
+		spin_unlock(&hif_dev->tx.tx_lock);
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		txok = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ath9k_skb_queue_complete(hअगर_dev, &tx_buf->skb_queue, txok);
+	ath9k_skb_queue_complete(hif_dev, &tx_buf->skb_queue, txok);
 
 	/* Re-initialize the SKB queue */
 	tx_buf->len = tx_buf->offset = 0;
 	__skb_queue_head_init(&tx_buf->skb_queue);
 
-	/* Add this TX buffer to the मुक्त list */
-	spin_lock(&hअगर_dev->tx.tx_lock);
-	list_move_tail(&tx_buf->list, &hअगर_dev->tx.tx_buf);
-	hअगर_dev->tx.tx_buf_cnt++;
-	अगर (!(hअगर_dev->tx.flags & HIF_USB_TX_STOP))
-		__hअगर_usb_tx(hअगर_dev); /* Check क्रम pending SKBs */
+	/* Add this TX buffer to the free list */
+	spin_lock(&hif_dev->tx.tx_lock);
+	list_move_tail(&tx_buf->list, &hif_dev->tx.tx_buf);
+	hif_dev->tx.tx_buf_cnt++;
+	if (!(hif_dev->tx.flags & HIF_USB_TX_STOP))
+		__hif_usb_tx(hif_dev); /* Check for pending SKBs */
 	TX_STAT_INC(buf_completed);
-	spin_unlock(&hअगर_dev->tx.tx_lock);
-पूर्ण
+	spin_unlock(&hif_dev->tx.tx_lock);
+}
 
 /* TX lock has to be taken */
-अटल पूर्णांक __hअगर_usb_tx(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा tx_buf *tx_buf = शून्य;
-	काष्ठा sk_buff *nskb = शून्य;
-	पूर्णांक ret = 0, i;
+static int __hif_usb_tx(struct hif_device_usb *hif_dev)
+{
+	struct tx_buf *tx_buf = NULL;
+	struct sk_buff *nskb = NULL;
+	int ret = 0, i;
 	u16 tx_skb_cnt = 0;
 	u8 *buf;
 	__le16 *hdr;
 
-	अगर (hअगर_dev->tx.tx_skb_cnt == 0)
-		वापस 0;
+	if (hif_dev->tx.tx_skb_cnt == 0)
+		return 0;
 
-	/* Check अगर a मुक्त TX buffer is available */
-	अगर (list_empty(&hअगर_dev->tx.tx_buf))
-		वापस 0;
+	/* Check if a free TX buffer is available */
+	if (list_empty(&hif_dev->tx.tx_buf))
+		return 0;
 
-	tx_buf = list_first_entry(&hअगर_dev->tx.tx_buf, काष्ठा tx_buf, list);
-	list_move_tail(&tx_buf->list, &hअगर_dev->tx.tx_pending);
-	hअगर_dev->tx.tx_buf_cnt--;
+	tx_buf = list_first_entry(&hif_dev->tx.tx_buf, struct tx_buf, list);
+	list_move_tail(&tx_buf->list, &hif_dev->tx.tx_pending);
+	hif_dev->tx.tx_buf_cnt--;
 
-	tx_skb_cnt = min_t(u16, hअगर_dev->tx.tx_skb_cnt, MAX_TX_AGGR_NUM);
+	tx_skb_cnt = min_t(u16, hif_dev->tx.tx_skb_cnt, MAX_TX_AGGR_NUM);
 
-	क्रम (i = 0; i < tx_skb_cnt; i++) अणु
-		nskb = __skb_dequeue(&hअगर_dev->tx.tx_skb_queue);
+	for (i = 0; i < tx_skb_cnt; i++) {
+		nskb = __skb_dequeue(&hif_dev->tx.tx_skb_queue);
 
-		/* Should never be शून्य */
+		/* Should never be NULL */
 		BUG_ON(!nskb);
 
-		hअगर_dev->tx.tx_skb_cnt--;
+		hif_dev->tx.tx_skb_cnt--;
 
 		buf = tx_buf->buf;
 		buf += tx_buf->offset;
@@ -344,958 +343,958 @@ MODULE_DEVICE_TABLE(usb, ath9k_hअगर_usb_ids);
 		*hdr++ = cpu_to_le16(nskb->len);
 		*hdr++ = cpu_to_le16(ATH_USB_TX_STREAM_MODE_TAG);
 		buf += 4;
-		स_नकल(buf, nskb->data, nskb->len);
+		memcpy(buf, nskb->data, nskb->len);
 		tx_buf->len = nskb->len + 4;
 
-		अगर (i < (tx_skb_cnt - 1))
+		if (i < (tx_skb_cnt - 1))
 			tx_buf->offset += (((tx_buf->len - 1) / 4) + 1) * 4;
 
-		अगर (i == (tx_skb_cnt - 1))
+		if (i == (tx_skb_cnt - 1))
 			tx_buf->len += tx_buf->offset;
 
 		__skb_queue_tail(&tx_buf->skb_queue, nskb);
 		TX_STAT_INC(skb_queued);
-	पूर्ण
+	}
 
-	usb_fill_bulk_urb(tx_buf->urb, hअगर_dev->udev,
-			  usb_sndbulkpipe(hअगर_dev->udev, USB_WLAN_TX_PIPE),
+	usb_fill_bulk_urb(tx_buf->urb, hif_dev->udev,
+			  usb_sndbulkpipe(hif_dev->udev, USB_WLAN_TX_PIPE),
 			  tx_buf->buf, tx_buf->len,
-			  hअगर_usb_tx_cb, tx_buf);
+			  hif_usb_tx_cb, tx_buf);
 
 	ret = usb_submit_urb(tx_buf->urb, GFP_ATOMIC);
-	अगर (ret) अणु
+	if (ret) {
 		tx_buf->len = tx_buf->offset = 0;
-		ath9k_skb_queue_complete(hअगर_dev, &tx_buf->skb_queue, false);
+		ath9k_skb_queue_complete(hif_dev, &tx_buf->skb_queue, false);
 		__skb_queue_head_init(&tx_buf->skb_queue);
-		list_move_tail(&tx_buf->list, &hअगर_dev->tx.tx_buf);
-		hअगर_dev->tx.tx_buf_cnt++;
-	पूर्ण
+		list_move_tail(&tx_buf->list, &hif_dev->tx.tx_buf);
+		hif_dev->tx.tx_buf_cnt++;
+	}
 
-	अगर (!ret)
+	if (!ret)
 		TX_STAT_INC(buf_queued);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hअगर_usb_send_tx(काष्ठा hअगर_device_usb *hअगर_dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath9k_htc_tx_ctl *tx_ctl;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int hif_usb_send_tx(struct hif_device_usb *hif_dev, struct sk_buff *skb)
+{
+	struct ath9k_htc_tx_ctl *tx_ctl;
+	unsigned long flags;
+	int ret = 0;
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
 
-	अगर (hअगर_dev->tx.flags & HIF_USB_TX_STOP) अणु
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+	if (hif_dev->tx.flags & HIF_USB_TX_STOP) {
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+		return -ENODEV;
+	}
 
-	/* Check अगर the max queue count has been reached */
-	अगर (hअगर_dev->tx.tx_skb_cnt > MAX_TX_BUF_NUM) अणु
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-		वापस -ENOMEM;
-	पूर्ण
+	/* Check if the max queue count has been reached */
+	if (hif_dev->tx.tx_skb_cnt > MAX_TX_BUF_NUM) {
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+		return -ENOMEM;
+	}
 
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
 	tx_ctl = HTC_SKB_CB(skb);
 
-	/* Mgmt/Beacon frames करोn't use the TX buffer pool */
-	अगर ((tx_ctl->type == ATH9K_HTC_MGMT) ||
-	    (tx_ctl->type == ATH9K_HTC_BEACON)) अणु
-		ret = hअगर_usb_send_mgmt(hअगर_dev, skb);
-	पूर्ण
+	/* Mgmt/Beacon frames don't use the TX buffer pool */
+	if ((tx_ctl->type == ATH9K_HTC_MGMT) ||
+	    (tx_ctl->type == ATH9K_HTC_BEACON)) {
+		ret = hif_usb_send_mgmt(hif_dev, skb);
+	}
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
 
-	अगर ((tx_ctl->type == ATH9K_HTC_NORMAL) ||
-	    (tx_ctl->type == ATH9K_HTC_AMPDU)) अणु
-		__skb_queue_tail(&hअगर_dev->tx.tx_skb_queue, skb);
-		hअगर_dev->tx.tx_skb_cnt++;
-	पूर्ण
+	if ((tx_ctl->type == ATH9K_HTC_NORMAL) ||
+	    (tx_ctl->type == ATH9K_HTC_AMPDU)) {
+		__skb_queue_tail(&hif_dev->tx.tx_skb_queue, skb);
+		hif_dev->tx.tx_skb_cnt++;
+	}
 
-	/* Check अगर AMPDUs have to be sent immediately */
-	अगर ((hअगर_dev->tx.tx_buf_cnt == MAX_TX_URB_NUM) &&
-	    (hअगर_dev->tx.tx_skb_cnt < 2)) अणु
-		__hअगर_usb_tx(hअगर_dev);
-	पूर्ण
+	/* Check if AMPDUs have to be sent immediately */
+	if ((hif_dev->tx.tx_buf_cnt == MAX_TX_URB_NUM) &&
+	    (hif_dev->tx.tx_skb_cnt < 2)) {
+		__hif_usb_tx(hif_dev);
+	}
 
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hअगर_usb_start(व्योम *hअगर_handle)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = hअगर_handle;
-	अचिन्हित दीर्घ flags;
+static void hif_usb_start(void *hif_handle)
+{
+	struct hif_device_usb *hif_dev = hif_handle;
+	unsigned long flags;
 
-	hअगर_dev->flags |= HIF_USB_START;
+	hif_dev->flags |= HIF_USB_START;
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	hअगर_dev->tx.flags &= ~HIF_USB_TX_STOP;
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-पूर्ण
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	hif_dev->tx.flags &= ~HIF_USB_TX_STOP;
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+}
 
-अटल व्योम hअगर_usb_stop(व्योम *hअगर_handle)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = hअगर_handle;
-	काष्ठा tx_buf *tx_buf = शून्य, *tx_buf_पंचांगp = शून्य;
-	अचिन्हित दीर्घ flags;
+static void hif_usb_stop(void *hif_handle)
+{
+	struct hif_device_usb *hif_dev = hif_handle;
+	struct tx_buf *tx_buf = NULL, *tx_buf_tmp = NULL;
+	unsigned long flags;
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	ath9k_skb_queue_complete(hअगर_dev, &hअगर_dev->tx.tx_skb_queue, false);
-	hअगर_dev->tx.tx_skb_cnt = 0;
-	hअगर_dev->tx.flags |= HIF_USB_TX_STOP;
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	ath9k_skb_queue_complete(hif_dev, &hif_dev->tx.tx_skb_queue, false);
+	hif_dev->tx.tx_skb_cnt = 0;
+	hif_dev->tx.flags |= HIF_USB_TX_STOP;
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
 	/* The pending URBs have to be canceled. */
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	list_क्रम_each_entry_safe(tx_buf, tx_buf_पंचांगp,
-				 &hअगर_dev->tx.tx_pending, list) अणु
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	list_for_each_entry_safe(tx_buf, tx_buf_tmp,
+				 &hif_dev->tx.tx_pending, list) {
 		usb_get_urb(tx_buf->urb);
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-		usb_समाप्त_urb(tx_buf->urb);
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+		usb_kill_urb(tx_buf->urb);
 		list_del(&tx_buf->list);
-		usb_मुक्त_urb(tx_buf->urb);
-		kमुक्त(tx_buf->buf);
-		kमुक्त(tx_buf);
-		spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	पूर्ण
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+		usb_free_urb(tx_buf->urb);
+		kfree(tx_buf->buf);
+		kfree(tx_buf);
+		spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	}
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-	usb_समाप्त_anchored_urbs(&hअगर_dev->mgmt_submitted);
-पूर्ण
+	usb_kill_anchored_urbs(&hif_dev->mgmt_submitted);
+}
 
-अटल पूर्णांक hअगर_usb_send(व्योम *hअगर_handle, u8 pipe_id, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = hअगर_handle;
-	पूर्णांक ret = 0;
+static int hif_usb_send(void *hif_handle, u8 pipe_id, struct sk_buff *skb)
+{
+	struct hif_device_usb *hif_dev = hif_handle;
+	int ret = 0;
 
-	चयन (pipe_id) अणु
-	हाल USB_WLAN_TX_PIPE:
-		ret = hअगर_usb_send_tx(hअगर_dev, skb);
-		अवरोध;
-	हाल USB_REG_OUT_PIPE:
-		ret = hअगर_usb_send_regout(hअगर_dev, skb);
-		अवरोध;
-	शेष:
-		dev_err(&hअगर_dev->udev->dev,
+	switch (pipe_id) {
+	case USB_WLAN_TX_PIPE:
+		ret = hif_usb_send_tx(hif_dev, skb);
+		break;
+	case USB_REG_OUT_PIPE:
+		ret = hif_usb_send_regout(hif_dev, skb);
+		break;
+	default:
+		dev_err(&hif_dev->udev->dev,
 			"ath9k_htc: Invalid TX pipe: %d\n", pipe_id);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool check_index(काष्ठा sk_buff *skb, u8 idx)
-अणु
-	काष्ठा ath9k_htc_tx_ctl *tx_ctl;
+static inline bool check_index(struct sk_buff *skb, u8 idx)
+{
+	struct ath9k_htc_tx_ctl *tx_ctl;
 
 	tx_ctl = HTC_SKB_CB(skb);
 
-	अगर ((tx_ctl->type == ATH9K_HTC_AMPDU) &&
+	if ((tx_ctl->type == ATH9K_HTC_AMPDU) &&
 	    (tx_ctl->sta_idx == idx))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम hअगर_usb_sta_drain(व्योम *hअगर_handle, u8 idx)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = hअगर_handle;
-	काष्ठा sk_buff *skb, *पंचांगp;
-	अचिन्हित दीर्घ flags;
+static void hif_usb_sta_drain(void *hif_handle, u8 idx)
+{
+	struct hif_device_usb *hif_dev = hif_handle;
+	struct sk_buff *skb, *tmp;
+	unsigned long flags;
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
 
-	skb_queue_walk_safe(&hअगर_dev->tx.tx_skb_queue, skb, पंचांगp) अणु
-		अगर (check_index(skb, idx)) अणु
-			__skb_unlink(skb, &hअगर_dev->tx.tx_skb_queue);
-			ath9k_htc_txcompletion_cb(hअगर_dev->htc_handle,
+	skb_queue_walk_safe(&hif_dev->tx.tx_skb_queue, skb, tmp) {
+		if (check_index(skb, idx)) {
+			__skb_unlink(skb, &hif_dev->tx.tx_skb_queue);
+			ath9k_htc_txcompletion_cb(hif_dev->htc_handle,
 						  skb, false);
-			hअगर_dev->tx.tx_skb_cnt--;
+			hif_dev->tx.tx_skb_cnt--;
 			TX_STAT_INC(skb_failed);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+}
 
-अटल काष्ठा ath9k_htc_hअगर hअगर_usb = अणु
+static struct ath9k_htc_hif hif_usb = {
 	.transport = ATH9K_HIF_USB,
 	.name = "ath9k_hif_usb",
 
 	.control_ul_pipe = USB_REG_OUT_PIPE,
 	.control_dl_pipe = USB_REG_IN_PIPE,
 
-	.start = hअगर_usb_start,
-	.stop = hअगर_usb_stop,
-	.sta_drain = hअगर_usb_sta_drain,
-	.send = hअगर_usb_send,
-पूर्ण;
+	.start = hif_usb_start,
+	.stop = hif_usb_stop,
+	.sta_drain = hif_usb_sta_drain,
+	.send = hif_usb_send,
+};
 
-अटल व्योम ath9k_hअगर_usb_rx_stream(काष्ठा hअगर_device_usb *hअगर_dev,
-				    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *nskb, *skb_pool[MAX_PKT_NUM_IN_TRANSFER];
-	पूर्णांक index = 0, i, len = skb->len;
-	पूर्णांक rx_reमुख्य_len, rx_pkt_len;
+static void ath9k_hif_usb_rx_stream(struct hif_device_usb *hif_dev,
+				    struct sk_buff *skb)
+{
+	struct sk_buff *nskb, *skb_pool[MAX_PKT_NUM_IN_TRANSFER];
+	int index = 0, i, len = skb->len;
+	int rx_remain_len, rx_pkt_len;
 	u16 pool_index = 0;
 	u8 *ptr;
 
-	spin_lock(&hअगर_dev->rx_lock);
+	spin_lock(&hif_dev->rx_lock);
 
-	rx_reमुख्य_len = hअगर_dev->rx_reमुख्य_len;
-	rx_pkt_len = hअगर_dev->rx_transfer_len;
+	rx_remain_len = hif_dev->rx_remain_len;
+	rx_pkt_len = hif_dev->rx_transfer_len;
 
-	अगर (rx_reमुख्य_len != 0) अणु
-		काष्ठा sk_buff *reमुख्य_skb = hअगर_dev->reमुख्य_skb;
+	if (rx_remain_len != 0) {
+		struct sk_buff *remain_skb = hif_dev->remain_skb;
 
-		अगर (reमुख्य_skb) अणु
-			ptr = (u8 *) reमुख्य_skb->data;
+		if (remain_skb) {
+			ptr = (u8 *) remain_skb->data;
 
-			index = rx_reमुख्य_len;
-			rx_reमुख्य_len -= hअगर_dev->rx_pad_len;
+			index = rx_remain_len;
+			rx_remain_len -= hif_dev->rx_pad_len;
 			ptr += rx_pkt_len;
 
-			स_नकल(ptr, skb->data, rx_reमुख्य_len);
+			memcpy(ptr, skb->data, rx_remain_len);
 
-			rx_pkt_len += rx_reमुख्य_len;
-			hअगर_dev->rx_reमुख्य_len = 0;
-			skb_put(reमुख्य_skb, rx_pkt_len);
+			rx_pkt_len += rx_remain_len;
+			hif_dev->rx_remain_len = 0;
+			skb_put(remain_skb, rx_pkt_len);
 
-			skb_pool[pool_index++] = reमुख्य_skb;
+			skb_pool[pool_index++] = remain_skb;
 
-		पूर्ण अन्यथा अणु
-			index = rx_reमुख्य_len;
-		पूर्ण
-	पूर्ण
+		} else {
+			index = rx_remain_len;
+		}
+	}
 
-	spin_unlock(&hअगर_dev->rx_lock);
+	spin_unlock(&hif_dev->rx_lock);
 
-	जबतक (index < len) अणु
+	while (index < len) {
 		u16 pkt_len;
 		u16 pkt_tag;
 		u16 pad_len;
-		पूर्णांक chk_idx;
+		int chk_idx;
 
 		ptr = (u8 *) skb->data;
 
 		pkt_len = get_unaligned_le16(ptr + index);
 		pkt_tag = get_unaligned_le16(ptr + index + 2);
 
-		अगर (pkt_tag != ATH_USB_RX_STREAM_MODE_TAG) अणु
+		if (pkt_tag != ATH_USB_RX_STREAM_MODE_TAG) {
 			RX_STAT_INC(skb_dropped);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		pad_len = 4 - (pkt_len & 0x3);
-		अगर (pad_len == 4)
+		if (pad_len == 4)
 			pad_len = 0;
 
 		chk_idx = index;
 		index = index + 4 + pkt_len + pad_len;
 
-		अगर (index > MAX_RX_BUF_SIZE) अणु
-			spin_lock(&hअगर_dev->rx_lock);
-			hअगर_dev->rx_reमुख्य_len = index - MAX_RX_BUF_SIZE;
-			hअगर_dev->rx_transfer_len =
+		if (index > MAX_RX_BUF_SIZE) {
+			spin_lock(&hif_dev->rx_lock);
+			hif_dev->rx_remain_len = index - MAX_RX_BUF_SIZE;
+			hif_dev->rx_transfer_len =
 				MAX_RX_BUF_SIZE - chk_idx - 4;
-			hअगर_dev->rx_pad_len = pad_len;
+			hif_dev->rx_pad_len = pad_len;
 
 			nskb = __dev_alloc_skb(pkt_len + 32, GFP_ATOMIC);
-			अगर (!nskb) अणु
-				dev_err(&hअगर_dev->udev->dev,
+			if (!nskb) {
+				dev_err(&hif_dev->udev->dev,
 					"ath9k_htc: RX memory allocation error\n");
-				spin_unlock(&hअगर_dev->rx_lock);
-				जाओ err;
-			पूर्ण
+				spin_unlock(&hif_dev->rx_lock);
+				goto err;
+			}
 			skb_reserve(nskb, 32);
 			RX_STAT_INC(skb_allocated);
 
-			स_नकल(nskb->data, &(skb->data[chk_idx+4]),
-			       hअगर_dev->rx_transfer_len);
+			memcpy(nskb->data, &(skb->data[chk_idx+4]),
+			       hif_dev->rx_transfer_len);
 
-			/* Record the buffer poपूर्णांकer */
-			hअगर_dev->reमुख्य_skb = nskb;
-			spin_unlock(&hअगर_dev->rx_lock);
-		पूर्ण अन्यथा अणु
-			अगर (pool_index == MAX_PKT_NUM_IN_TRANSFER) अणु
-				dev_err(&hअगर_dev->udev->dev,
+			/* Record the buffer pointer */
+			hif_dev->remain_skb = nskb;
+			spin_unlock(&hif_dev->rx_lock);
+		} else {
+			if (pool_index == MAX_PKT_NUM_IN_TRANSFER) {
+				dev_err(&hif_dev->udev->dev,
 					"ath9k_htc: over RX MAX_PKT_NUM\n");
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 			nskb = __dev_alloc_skb(pkt_len + 32, GFP_ATOMIC);
-			अगर (!nskb) अणु
-				dev_err(&hअगर_dev->udev->dev,
+			if (!nskb) {
+				dev_err(&hif_dev->udev->dev,
 					"ath9k_htc: RX memory allocation error\n");
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 			skb_reserve(nskb, 32);
 			RX_STAT_INC(skb_allocated);
 
-			स_नकल(nskb->data, &(skb->data[chk_idx+4]), pkt_len);
+			memcpy(nskb->data, &(skb->data[chk_idx+4]), pkt_len);
 			skb_put(nskb, pkt_len);
 			skb_pool[pool_index++] = nskb;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 err:
-	क्रम (i = 0; i < pool_index; i++) अणु
+	for (i = 0; i < pool_index; i++) {
 		RX_STAT_ADD(skb_completed_bytes, skb_pool[i]->len);
-		ath9k_htc_rx_msg(hअगर_dev->htc_handle, skb_pool[i],
+		ath9k_htc_rx_msg(hif_dev->htc_handle, skb_pool[i],
 				 skb_pool[i]->len, USB_WLAN_RX_PIPE);
 		RX_STAT_INC(skb_completed);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ath9k_hअगर_usb_rx_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा rx_buf *rx_buf = (काष्ठा rx_buf *)urb->context;
-	काष्ठा hअगर_device_usb *hअगर_dev = rx_buf->hअगर_dev;
-	काष्ठा sk_buff *skb = rx_buf->skb;
-	पूर्णांक ret;
+static void ath9k_hif_usb_rx_cb(struct urb *urb)
+{
+	struct rx_buf *rx_buf = (struct rx_buf *)urb->context;
+	struct hif_device_usb *hif_dev = rx_buf->hif_dev;
+	struct sk_buff *skb = rx_buf->skb;
+	int ret;
 
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
-	अगर (!hअगर_dev)
-		जाओ मुक्त;
+	if (!hif_dev)
+		goto free;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
-		जाओ मुक्त;
-	शेष:
-		जाओ resubmit;
-	पूर्ण
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ENODEV:
+	case -ESHUTDOWN:
+		goto free;
+	default:
+		goto resubmit;
+	}
 
-	अगर (likely(urb->actual_length != 0)) अणु
+	if (likely(urb->actual_length != 0)) {
 		skb_put(skb, urb->actual_length);
-		ath9k_hअगर_usb_rx_stream(hअगर_dev, skb);
-	पूर्ण
+		ath9k_hif_usb_rx_stream(hif_dev, skb);
+	}
 
 resubmit:
-	skb_reset_tail_poपूर्णांकer(skb);
+	skb_reset_tail_pointer(skb);
 	skb_trim(skb, 0);
 
-	usb_anchor_urb(urb, &hअगर_dev->rx_submitted);
+	usb_anchor_urb(urb, &hif_dev->rx_submitted);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret) अणु
+	if (ret) {
 		usb_unanchor_urb(urb);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	वापस;
-मुक्त:
-	kमुक्त_skb(skb);
-	kमुक्त(rx_buf);
-पूर्ण
+	return;
+free:
+	kfree_skb(skb);
+	kfree(rx_buf);
+}
 
-अटल व्योम ath9k_hअगर_usb_reg_in_cb(काष्ठा urb *urb)
-अणु
-	काष्ठा rx_buf *rx_buf = (काष्ठा rx_buf *)urb->context;
-	काष्ठा hअगर_device_usb *hअगर_dev = rx_buf->hअगर_dev;
-	काष्ठा sk_buff *skb = rx_buf->skb;
-	काष्ठा sk_buff *nskb;
-	पूर्णांक ret;
+static void ath9k_hif_usb_reg_in_cb(struct urb *urb)
+{
+	struct rx_buf *rx_buf = (struct rx_buf *)urb->context;
+	struct hif_device_usb *hif_dev = rx_buf->hif_dev;
+	struct sk_buff *skb = rx_buf->skb;
+	struct sk_buff *nskb;
+	int ret;
 
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
-	अगर (!hअगर_dev)
-		जाओ मुक्त;
+	if (!hif_dev)
+		goto free;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ENOENT:
-	हाल -ECONNRESET:
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
-		जाओ मुक्त;
-	शेष:
-		skb_reset_tail_poपूर्णांकer(skb);
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ENOENT:
+	case -ECONNRESET:
+	case -ENODEV:
+	case -ESHUTDOWN:
+		goto free;
+	default:
+		skb_reset_tail_pointer(skb);
 		skb_trim(skb, 0);
 
-		जाओ resubmit;
-	पूर्ण
+		goto resubmit;
+	}
 
-	अगर (likely(urb->actual_length != 0)) अणु
+	if (likely(urb->actual_length != 0)) {
 		skb_put(skb, urb->actual_length);
 
 		/* Process the command first */
-		ath9k_htc_rx_msg(hअगर_dev->htc_handle, skb,
+		ath9k_htc_rx_msg(hif_dev->htc_handle, skb,
 				 skb->len, USB_REG_IN_PIPE);
 
 
 		nskb = alloc_skb(MAX_REG_IN_BUF_SIZE, GFP_ATOMIC);
-		अगर (!nskb) अणु
-			dev_err(&hअगर_dev->udev->dev,
+		if (!nskb) {
+			dev_err(&hif_dev->udev->dev,
 				"ath9k_htc: REG_IN memory allocation failure\n");
-			urb->context = शून्य;
-			वापस;
-		पूर्ण
+			urb->context = NULL;
+			return;
+		}
 
 		rx_buf->skb = nskb;
 
-		usb_fill_पूर्णांक_urb(urb, hअगर_dev->udev,
-				 usb_rcvपूर्णांकpipe(hअगर_dev->udev,
+		usb_fill_int_urb(urb, hif_dev->udev,
+				 usb_rcvintpipe(hif_dev->udev,
 						 USB_REG_IN_PIPE),
 				 nskb->data, MAX_REG_IN_BUF_SIZE,
-				 ath9k_hअगर_usb_reg_in_cb, rx_buf, 1);
-	पूर्ण
+				 ath9k_hif_usb_reg_in_cb, rx_buf, 1);
+	}
 
 resubmit:
-	usb_anchor_urb(urb, &hअगर_dev->reg_in_submitted);
+	usb_anchor_urb(urb, &hif_dev->reg_in_submitted);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (ret) अणु
+	if (ret) {
 		usb_unanchor_urb(urb);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	वापस;
-मुक्त:
-	kमुक्त_skb(skb);
-	kमुक्त(rx_buf);
-	urb->context = शून्य;
-पूर्ण
+	return;
+free:
+	kfree_skb(skb);
+	kfree(rx_buf);
+	urb->context = NULL;
+}
 
-अटल व्योम ath9k_hअगर_usb_dealloc_tx_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा tx_buf *tx_buf = शून्य, *tx_buf_पंचांगp = शून्य;
-	अचिन्हित दीर्घ flags;
+static void ath9k_hif_usb_dealloc_tx_urbs(struct hif_device_usb *hif_dev)
+{
+	struct tx_buf *tx_buf = NULL, *tx_buf_tmp = NULL;
+	unsigned long flags;
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	list_क्रम_each_entry_safe(tx_buf, tx_buf_पंचांगp,
-				 &hअगर_dev->tx.tx_buf, list) अणु
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	list_for_each_entry_safe(tx_buf, tx_buf_tmp,
+				 &hif_dev->tx.tx_buf, list) {
 		usb_get_urb(tx_buf->urb);
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-		usb_समाप्त_urb(tx_buf->urb);
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+		usb_kill_urb(tx_buf->urb);
 		list_del(&tx_buf->list);
-		usb_मुक्त_urb(tx_buf->urb);
-		kमुक्त(tx_buf->buf);
-		kमुक्त(tx_buf);
-		spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	पूर्ण
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+		usb_free_urb(tx_buf->urb);
+		kfree(tx_buf->buf);
+		kfree(tx_buf);
+		spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	}
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	hअगर_dev->tx.flags |= HIF_USB_TX_FLUSH;
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	hif_dev->tx.flags |= HIF_USB_TX_FLUSH;
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-	spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	list_क्रम_each_entry_safe(tx_buf, tx_buf_पंचांगp,
-				 &hअगर_dev->tx.tx_pending, list) अणु
+	spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	list_for_each_entry_safe(tx_buf, tx_buf_tmp,
+				 &hif_dev->tx.tx_pending, list) {
 		usb_get_urb(tx_buf->urb);
-		spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
-		usb_समाप्त_urb(tx_buf->urb);
+		spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
+		usb_kill_urb(tx_buf->urb);
 		list_del(&tx_buf->list);
-		usb_मुक्त_urb(tx_buf->urb);
-		kमुक्त(tx_buf->buf);
-		kमुक्त(tx_buf);
-		spin_lock_irqsave(&hअगर_dev->tx.tx_lock, flags);
-	पूर्ण
-	spin_unlock_irqrestore(&hअगर_dev->tx.tx_lock, flags);
+		usb_free_urb(tx_buf->urb);
+		kfree(tx_buf->buf);
+		kfree(tx_buf);
+		spin_lock_irqsave(&hif_dev->tx.tx_lock, flags);
+	}
+	spin_unlock_irqrestore(&hif_dev->tx.tx_lock, flags);
 
-	usb_समाप्त_anchored_urbs(&hअगर_dev->mgmt_submitted);
-पूर्ण
+	usb_kill_anchored_urbs(&hif_dev->mgmt_submitted);
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_alloc_tx_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा tx_buf *tx_buf;
-	पूर्णांक i;
+static int ath9k_hif_usb_alloc_tx_urbs(struct hif_device_usb *hif_dev)
+{
+	struct tx_buf *tx_buf;
+	int i;
 
-	INIT_LIST_HEAD(&hअगर_dev->tx.tx_buf);
-	INIT_LIST_HEAD(&hअगर_dev->tx.tx_pending);
-	spin_lock_init(&hअगर_dev->tx.tx_lock);
-	__skb_queue_head_init(&hअगर_dev->tx.tx_skb_queue);
-	init_usb_anchor(&hअगर_dev->mgmt_submitted);
+	INIT_LIST_HEAD(&hif_dev->tx.tx_buf);
+	INIT_LIST_HEAD(&hif_dev->tx.tx_pending);
+	spin_lock_init(&hif_dev->tx.tx_lock);
+	__skb_queue_head_init(&hif_dev->tx.tx_skb_queue);
+	init_usb_anchor(&hif_dev->mgmt_submitted);
 
-	क्रम (i = 0; i < MAX_TX_URB_NUM; i++) अणु
-		tx_buf = kzalloc(माप(*tx_buf), GFP_KERNEL);
-		अगर (!tx_buf)
-			जाओ err;
+	for (i = 0; i < MAX_TX_URB_NUM; i++) {
+		tx_buf = kzalloc(sizeof(*tx_buf), GFP_KERNEL);
+		if (!tx_buf)
+			goto err;
 
 		tx_buf->buf = kzalloc(MAX_TX_BUF_SIZE, GFP_KERNEL);
-		अगर (!tx_buf->buf)
-			जाओ err;
+		if (!tx_buf->buf)
+			goto err;
 
 		tx_buf->urb = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (!tx_buf->urb)
-			जाओ err;
+		if (!tx_buf->urb)
+			goto err;
 
-		tx_buf->hअगर_dev = hअगर_dev;
+		tx_buf->hif_dev = hif_dev;
 		__skb_queue_head_init(&tx_buf->skb_queue);
 
-		list_add_tail(&tx_buf->list, &hअगर_dev->tx.tx_buf);
-	पूर्ण
+		list_add_tail(&tx_buf->list, &hif_dev->tx.tx_buf);
+	}
 
-	hअगर_dev->tx.tx_buf_cnt = MAX_TX_URB_NUM;
+	hif_dev->tx.tx_buf_cnt = MAX_TX_URB_NUM;
 
-	वापस 0;
+	return 0;
 err:
-	अगर (tx_buf) अणु
-		kमुक्त(tx_buf->buf);
-		kमुक्त(tx_buf);
-	पूर्ण
-	ath9k_hअगर_usb_dealloc_tx_urbs(hअगर_dev);
-	वापस -ENOMEM;
-पूर्ण
+	if (tx_buf) {
+		kfree(tx_buf->buf);
+		kfree(tx_buf);
+	}
+	ath9k_hif_usb_dealloc_tx_urbs(hif_dev);
+	return -ENOMEM;
+}
 
-अटल व्योम ath9k_hअगर_usb_dealloc_rx_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	usb_समाप्त_anchored_urbs(&hअगर_dev->rx_submitted);
-पूर्ण
+static void ath9k_hif_usb_dealloc_rx_urbs(struct hif_device_usb *hif_dev)
+{
+	usb_kill_anchored_urbs(&hif_dev->rx_submitted);
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_alloc_rx_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा rx_buf *rx_buf = शून्य;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा urb *urb = शून्य;
-	पूर्णांक i, ret;
+static int ath9k_hif_usb_alloc_rx_urbs(struct hif_device_usb *hif_dev)
+{
+	struct rx_buf *rx_buf = NULL;
+	struct sk_buff *skb = NULL;
+	struct urb *urb = NULL;
+	int i, ret;
 
-	init_usb_anchor(&hअगर_dev->rx_submitted);
-	spin_lock_init(&hअगर_dev->rx_lock);
+	init_usb_anchor(&hif_dev->rx_submitted);
+	spin_lock_init(&hif_dev->rx_lock);
 
-	क्रम (i = 0; i < MAX_RX_URB_NUM; i++) अणु
+	for (i = 0; i < MAX_RX_URB_NUM; i++) {
 
-		rx_buf = kzalloc(माप(*rx_buf), GFP_KERNEL);
-		अगर (!rx_buf) अणु
+		rx_buf = kzalloc(sizeof(*rx_buf), GFP_KERNEL);
+		if (!rx_buf) {
 			ret = -ENOMEM;
-			जाओ err_rxb;
-		पूर्ण
+			goto err_rxb;
+		}
 
 		/* Allocate URB */
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (urb == शून्य) अणु
+		if (urb == NULL) {
 			ret = -ENOMEM;
-			जाओ err_urb;
-		पूर्ण
+			goto err_urb;
+		}
 
 		/* Allocate buffer */
 		skb = alloc_skb(MAX_RX_BUF_SIZE, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret = -ENOMEM;
-			जाओ err_skb;
-		पूर्ण
+			goto err_skb;
+		}
 
-		rx_buf->hअगर_dev = hअगर_dev;
+		rx_buf->hif_dev = hif_dev;
 		rx_buf->skb = skb;
 
-		usb_fill_bulk_urb(urb, hअगर_dev->udev,
-				  usb_rcvbulkpipe(hअगर_dev->udev,
+		usb_fill_bulk_urb(urb, hif_dev->udev,
+				  usb_rcvbulkpipe(hif_dev->udev,
 						  USB_WLAN_RX_PIPE),
 				  skb->data, MAX_RX_BUF_SIZE,
-				  ath9k_hअगर_usb_rx_cb, rx_buf);
+				  ath9k_hif_usb_rx_cb, rx_buf);
 
 		/* Anchor URB */
-		usb_anchor_urb(urb, &hअगर_dev->rx_submitted);
+		usb_anchor_urb(urb, &hif_dev->rx_submitted);
 
 		/* Submit URB */
 		ret = usb_submit_urb(urb, GFP_KERNEL);
-		अगर (ret) अणु
+		if (ret) {
 			usb_unanchor_urb(urb);
-			जाओ err_submit;
-		पूर्ण
+			goto err_submit;
+		}
 
 		/*
 		 * Drop reference count.
-		 * This ensures that the URB is मुक्तd when समाप्तing them.
+		 * This ensures that the URB is freed when killing them.
 		 */
-		usb_मुक्त_urb(urb);
-	पूर्ण
+		usb_free_urb(urb);
+	}
 
-	वापस 0;
+	return 0;
 
 err_submit:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 err_skb:
-	usb_मुक्त_urb(urb);
+	usb_free_urb(urb);
 err_urb:
-	kमुक्त(rx_buf);
+	kfree(rx_buf);
 err_rxb:
-	ath9k_hअगर_usb_dealloc_rx_urbs(hअगर_dev);
-	वापस ret;
-पूर्ण
+	ath9k_hif_usb_dealloc_rx_urbs(hif_dev);
+	return ret;
+}
 
-अटल व्योम ath9k_hअगर_usb_dealloc_reg_in_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	usb_समाप्त_anchored_urbs(&hअगर_dev->reg_in_submitted);
-पूर्ण
+static void ath9k_hif_usb_dealloc_reg_in_urbs(struct hif_device_usb *hif_dev)
+{
+	usb_kill_anchored_urbs(&hif_dev->reg_in_submitted);
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_alloc_reg_in_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा rx_buf *rx_buf = शून्य;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा urb *urb = शून्य;
-	पूर्णांक i, ret;
+static int ath9k_hif_usb_alloc_reg_in_urbs(struct hif_device_usb *hif_dev)
+{
+	struct rx_buf *rx_buf = NULL;
+	struct sk_buff *skb = NULL;
+	struct urb *urb = NULL;
+	int i, ret;
 
-	init_usb_anchor(&hअगर_dev->reg_in_submitted);
+	init_usb_anchor(&hif_dev->reg_in_submitted);
 
-	क्रम (i = 0; i < MAX_REG_IN_URB_NUM; i++) अणु
+	for (i = 0; i < MAX_REG_IN_URB_NUM; i++) {
 
-		rx_buf = kzalloc(माप(*rx_buf), GFP_KERNEL);
-		अगर (!rx_buf) अणु
+		rx_buf = kzalloc(sizeof(*rx_buf), GFP_KERNEL);
+		if (!rx_buf) {
 			ret = -ENOMEM;
-			जाओ err_rxb;
-		पूर्ण
+			goto err_rxb;
+		}
 
 		/* Allocate URB */
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (urb == शून्य) अणु
+		if (urb == NULL) {
 			ret = -ENOMEM;
-			जाओ err_urb;
-		पूर्ण
+			goto err_urb;
+		}
 
 		/* Allocate buffer */
 		skb = alloc_skb(MAX_REG_IN_BUF_SIZE, GFP_KERNEL);
-		अगर (!skb) अणु
+		if (!skb) {
 			ret = -ENOMEM;
-			जाओ err_skb;
-		पूर्ण
+			goto err_skb;
+		}
 
-		rx_buf->hअगर_dev = hअगर_dev;
+		rx_buf->hif_dev = hif_dev;
 		rx_buf->skb = skb;
 
-		usb_fill_पूर्णांक_urb(urb, hअगर_dev->udev,
-				  usb_rcvपूर्णांकpipe(hअगर_dev->udev,
+		usb_fill_int_urb(urb, hif_dev->udev,
+				  usb_rcvintpipe(hif_dev->udev,
 						  USB_REG_IN_PIPE),
 				  skb->data, MAX_REG_IN_BUF_SIZE,
-				  ath9k_hअगर_usb_reg_in_cb, rx_buf, 1);
+				  ath9k_hif_usb_reg_in_cb, rx_buf, 1);
 
 		/* Anchor URB */
-		usb_anchor_urb(urb, &hअगर_dev->reg_in_submitted);
+		usb_anchor_urb(urb, &hif_dev->reg_in_submitted);
 
 		/* Submit URB */
 		ret = usb_submit_urb(urb, GFP_KERNEL);
-		अगर (ret) अणु
+		if (ret) {
 			usb_unanchor_urb(urb);
-			जाओ err_submit;
-		पूर्ण
+			goto err_submit;
+		}
 
 		/*
 		 * Drop reference count.
-		 * This ensures that the URB is मुक्तd when समाप्तing them.
+		 * This ensures that the URB is freed when killing them.
 		 */
-		usb_मुक्त_urb(urb);
-	पूर्ण
+		usb_free_urb(urb);
+	}
 
-	वापस 0;
+	return 0;
 
 err_submit:
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 err_skb:
-	usb_मुक्त_urb(urb);
+	usb_free_urb(urb);
 err_urb:
-	kमुक्त(rx_buf);
+	kfree(rx_buf);
 err_rxb:
-	ath9k_hअगर_usb_dealloc_reg_in_urbs(hअगर_dev);
-	वापस ret;
-पूर्ण
+	ath9k_hif_usb_dealloc_reg_in_urbs(hif_dev);
+	return ret;
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_alloc_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
+static int ath9k_hif_usb_alloc_urbs(struct hif_device_usb *hif_dev)
+{
 	/* Register Write */
-	init_usb_anchor(&hअगर_dev->regout_submitted);
+	init_usb_anchor(&hif_dev->regout_submitted);
 
 	/* TX */
-	अगर (ath9k_hअगर_usb_alloc_tx_urbs(hअगर_dev) < 0)
-		जाओ err;
+	if (ath9k_hif_usb_alloc_tx_urbs(hif_dev) < 0)
+		goto err;
 
 	/* RX */
-	अगर (ath9k_hअगर_usb_alloc_rx_urbs(hअगर_dev) < 0)
-		जाओ err_rx;
+	if (ath9k_hif_usb_alloc_rx_urbs(hif_dev) < 0)
+		goto err_rx;
 
 	/* Register Read */
-	अगर (ath9k_hअगर_usb_alloc_reg_in_urbs(hअगर_dev) < 0)
-		जाओ err_reg;
+	if (ath9k_hif_usb_alloc_reg_in_urbs(hif_dev) < 0)
+		goto err_reg;
 
-	वापस 0;
+	return 0;
 err_reg:
-	ath9k_hअगर_usb_dealloc_rx_urbs(hअगर_dev);
+	ath9k_hif_usb_dealloc_rx_urbs(hif_dev);
 err_rx:
-	ath9k_hअगर_usb_dealloc_tx_urbs(hअगर_dev);
+	ath9k_hif_usb_dealloc_tx_urbs(hif_dev);
 err:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम ath9k_hअगर_usb_dealloc_urbs(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	usb_समाप्त_anchored_urbs(&hअगर_dev->regout_submitted);
-	ath9k_hअगर_usb_dealloc_reg_in_urbs(hअगर_dev);
-	ath9k_hअगर_usb_dealloc_tx_urbs(hअगर_dev);
-	ath9k_hअगर_usb_dealloc_rx_urbs(hअगर_dev);
-पूर्ण
+void ath9k_hif_usb_dealloc_urbs(struct hif_device_usb *hif_dev)
+{
+	usb_kill_anchored_urbs(&hif_dev->regout_submitted);
+	ath9k_hif_usb_dealloc_reg_in_urbs(hif_dev);
+	ath9k_hif_usb_dealloc_tx_urbs(hif_dev);
+	ath9k_hif_usb_dealloc_rx_urbs(hif_dev);
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_करोwnload_fw(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	पूर्णांक transfer, err;
-	स्थिर व्योम *data = hअगर_dev->fw_data;
-	माप_प्रकार len = hअगर_dev->fw_size;
+static int ath9k_hif_usb_download_fw(struct hif_device_usb *hif_dev)
+{
+	int transfer, err;
+	const void *data = hif_dev->fw_data;
+	size_t len = hif_dev->fw_size;
 	u32 addr = AR9271_FIRMWARE;
 	u8 *buf = kzalloc(4096, GFP_KERNEL);
 	u32 firm_offset;
 
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	जबतक (len) अणु
-		transfer = min_t(माप_प्रकार, len, 4096);
-		स_नकल(buf, data, transfer);
+	while (len) {
+		transfer = min_t(size_t, len, 4096);
+		memcpy(buf, data, transfer);
 
-		err = usb_control_msg(hअगर_dev->udev,
-				      usb_sndctrlpipe(hअगर_dev->udev, 0),
-				      FIRMWARE_DOWNLOAD, 0x40 | USB_सूची_OUT,
+		err = usb_control_msg(hif_dev->udev,
+				      usb_sndctrlpipe(hif_dev->udev, 0),
+				      FIRMWARE_DOWNLOAD, 0x40 | USB_DIR_OUT,
 				      addr >> 8, 0, buf, transfer,
 				      USB_MSG_TIMEOUT);
-		अगर (err < 0) अणु
-			kमुक्त(buf);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			kfree(buf);
+			return err;
+		}
 
 		len -= transfer;
 		data += transfer;
 		addr += transfer;
-	पूर्ण
-	kमुक्त(buf);
+	}
+	kfree(buf);
 
-	अगर (IS_AR7010_DEVICE(hअगर_dev->usb_device_id->driver_info))
+	if (IS_AR7010_DEVICE(hif_dev->usb_device_id->driver_info))
 		firm_offset = AR7010_FIRMWARE_TEXT;
-	अन्यथा
+	else
 		firm_offset = AR9271_FIRMWARE_TEXT;
 
 	/*
-	 * Issue FW करोwnload complete command to firmware.
+	 * Issue FW download complete command to firmware.
 	 */
-	err = usb_control_msg(hअगर_dev->udev, usb_sndctrlpipe(hअगर_dev->udev, 0),
+	err = usb_control_msg(hif_dev->udev, usb_sndctrlpipe(hif_dev->udev, 0),
 			      FIRMWARE_DOWNLOAD_COMP,
-			      0x40 | USB_सूची_OUT,
-			      firm_offset >> 8, 0, शून्य, 0, USB_MSG_TIMEOUT);
-	अगर (err)
-		वापस -EIO;
+			      0x40 | USB_DIR_OUT,
+			      firm_offset >> 8, 0, NULL, 0, USB_MSG_TIMEOUT);
+	if (err)
+		return -EIO;
 
-	dev_info(&hअगर_dev->udev->dev, "ath9k_htc: Transferred FW: %s, size: %ld\n",
-		 hअगर_dev->fw_name, (अचिन्हित दीर्घ) hअगर_dev->fw_size);
+	dev_info(&hif_dev->udev->dev, "ath9k_htc: Transferred FW: %s, size: %ld\n",
+		 hif_dev->fw_name, (unsigned long) hif_dev->fw_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_dev_init(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	पूर्णांक ret;
+static int ath9k_hif_usb_dev_init(struct hif_device_usb *hif_dev)
+{
+	int ret;
 
-	ret = ath9k_hअगर_usb_करोwnload_fw(hअगर_dev);
-	अगर (ret) अणु
-		dev_err(&hअगर_dev->udev->dev,
+	ret = ath9k_hif_usb_download_fw(hif_dev);
+	if (ret) {
+		dev_err(&hif_dev->udev->dev,
 			"ath9k_htc: Firmware - %s download failed\n",
-			hअगर_dev->fw_name);
-		वापस ret;
-	पूर्ण
+			hif_dev->fw_name);
+		return ret;
+	}
 
 	/* Alloc URBs */
-	ret = ath9k_hअगर_usb_alloc_urbs(hअगर_dev);
-	अगर (ret) अणु
-		dev_err(&hअगर_dev->udev->dev,
+	ret = ath9k_hif_usb_alloc_urbs(hif_dev);
+	if (ret) {
+		dev_err(&hif_dev->udev->dev,
 			"ath9k_htc: Unable to allocate URBs\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ath9k_hअगर_usb_dev_deinit(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	ath9k_hअगर_usb_dealloc_urbs(hअगर_dev);
-पूर्ण
+static void ath9k_hif_usb_dev_deinit(struct hif_device_usb *hif_dev)
+{
+	ath9k_hif_usb_dealloc_urbs(hif_dev);
+}
 
 /*
  * If initialization fails or the FW cannot be retrieved,
  * detach the device.
  */
-अटल व्योम ath9k_hअगर_usb_firmware_fail(काष्ठा hअगर_device_usb *hअगर_dev)
-अणु
-	काष्ठा device *dev = &hअगर_dev->udev->dev;
-	काष्ठा device *parent = dev->parent;
+static void ath9k_hif_usb_firmware_fail(struct hif_device_usb *hif_dev)
+{
+	struct device *dev = &hif_dev->udev->dev;
+	struct device *parent = dev->parent;
 
-	complete_all(&hअगर_dev->fw_करोne);
+	complete_all(&hif_dev->fw_done);
 
-	अगर (parent)
+	if (parent)
 		device_lock(parent);
 
 	device_release_driver(dev);
 
-	अगर (parent)
+	if (parent)
 		device_unlock(parent);
-पूर्ण
+}
 
-अटल व्योम ath9k_hअगर_usb_firmware_cb(स्थिर काष्ठा firmware *fw, व्योम *context);
+static void ath9k_hif_usb_firmware_cb(const struct firmware *fw, void *context);
 
-/* taken from iwlwअगरi */
-अटल पूर्णांक ath9k_hअगर_request_firmware(काष्ठा hअगर_device_usb *hअगर_dev,
+/* taken from iwlwifi */
+static int ath9k_hif_request_firmware(struct hif_device_usb *hif_dev,
 				      bool first)
-अणु
-	अक्षर index[8], *chip;
-	पूर्णांक ret;
+{
+	char index[8], *chip;
+	int ret;
 
-	अगर (first) अणु
-		अगर (htc_use_dev_fw) अणु
-			hअगर_dev->fw_minor_index = FIRMWARE_MINOR_IDX_MAX + 1;
-			प्र_लिखो(index, "%s", "dev");
-		पूर्ण अन्यथा अणु
-			hअगर_dev->fw_minor_index = FIRMWARE_MINOR_IDX_MAX;
-			प्र_लिखो(index, "%d", hअगर_dev->fw_minor_index);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		hअगर_dev->fw_minor_index--;
-		प्र_लिखो(index, "%d", hअगर_dev->fw_minor_index);
-	पूर्ण
+	if (first) {
+		if (htc_use_dev_fw) {
+			hif_dev->fw_minor_index = FIRMWARE_MINOR_IDX_MAX + 1;
+			sprintf(index, "%s", "dev");
+		} else {
+			hif_dev->fw_minor_index = FIRMWARE_MINOR_IDX_MAX;
+			sprintf(index, "%d", hif_dev->fw_minor_index);
+		}
+	} else {
+		hif_dev->fw_minor_index--;
+		sprintf(index, "%d", hif_dev->fw_minor_index);
+	}
 
-	/* test क्रम FW 1.3 */
-	अगर (MAJOR_VERSION_REQ == 1 && hअगर_dev->fw_minor_index == 3) अणु
-		स्थिर अक्षर *filename;
+	/* test for FW 1.3 */
+	if (MAJOR_VERSION_REQ == 1 && hif_dev->fw_minor_index == 3) {
+		const char *filename;
 
-		अगर (IS_AR7010_DEVICE(hअगर_dev->usb_device_id->driver_info))
+		if (IS_AR7010_DEVICE(hif_dev->usb_device_id->driver_info))
 			filename = FIRMWARE_AR7010_1_1;
-		अन्यथा
+		else
 			filename = FIRMWARE_AR9271;
 
 		/* expected fw locations:
 		 * - htc_9271.fw   (stable version 1.3, depricated)
 		 */
-		snम_लिखो(hअगर_dev->fw_name, माप(hअगर_dev->fw_name),
+		snprintf(hif_dev->fw_name, sizeof(hif_dev->fw_name),
 			 "%s", filename);
 
-	पूर्ण अन्यथा अगर (hअगर_dev->fw_minor_index < FIRMWARE_MINOR_IDX_MIN) अणु
-		dev_err(&hअगर_dev->udev->dev, "no suitable firmware found!\n");
+	} else if (hif_dev->fw_minor_index < FIRMWARE_MINOR_IDX_MIN) {
+		dev_err(&hif_dev->udev->dev, "no suitable firmware found!\n");
 
-		वापस -ENOENT;
-	पूर्ण अन्यथा अणु
-		अगर (IS_AR7010_DEVICE(hअगर_dev->usb_device_id->driver_info))
+		return -ENOENT;
+	} else {
+		if (IS_AR7010_DEVICE(hif_dev->usb_device_id->driver_info))
 			chip = "7010";
-		अन्यथा
+		else
 			chip = "9271";
 
 		/* expected fw locations:
 		 * - ath9k_htc/htc_9271-1.dev.0.fw (development version)
 		 * - ath9k_htc/htc_9271-1.4.0.fw   (stable version)
 		 */
-		snम_लिखो(hअगर_dev->fw_name, माप(hअगर_dev->fw_name),
+		snprintf(hif_dev->fw_name, sizeof(hif_dev->fw_name),
 			 "%s/htc_%s-%d.%s.0.fw", HTC_FW_PATH,
 			 chip, MAJOR_VERSION_REQ, index);
-	पूर्ण
+	}
 
-	ret = request_firmware_noरुको(THIS_MODULE, true, hअगर_dev->fw_name,
-				      &hअगर_dev->udev->dev, GFP_KERNEL,
-				      hअगर_dev, ath9k_hअगर_usb_firmware_cb);
-	अगर (ret) अणु
-		dev_err(&hअगर_dev->udev->dev,
+	ret = request_firmware_nowait(THIS_MODULE, true, hif_dev->fw_name,
+				      &hif_dev->udev->dev, GFP_KERNEL,
+				      hif_dev, ath9k_hif_usb_firmware_cb);
+	if (ret) {
+		dev_err(&hif_dev->udev->dev,
 			"ath9k_htc: Async request for firmware %s failed\n",
-			hअगर_dev->fw_name);
-		वापस ret;
-	पूर्ण
+			hif_dev->fw_name);
+		return ret;
+	}
 
-	dev_info(&hअगर_dev->udev->dev, "ath9k_htc: Firmware %s requested\n",
-		 hअगर_dev->fw_name);
+	dev_info(&hif_dev->udev->dev, "ath9k_htc: Firmware %s requested\n",
+		 hif_dev->fw_name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath9k_hअगर_usb_firmware_cb(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = context;
-	पूर्णांक ret;
+static void ath9k_hif_usb_firmware_cb(const struct firmware *fw, void *context)
+{
+	struct hif_device_usb *hif_dev = context;
+	int ret;
 
-	अगर (!fw) अणु
-		ret = ath9k_hअगर_request_firmware(hअगर_dev, false);
-		अगर (!ret)
-			वापस;
+	if (!fw) {
+		ret = ath9k_hif_request_firmware(hif_dev, false);
+		if (!ret)
+			return;
 
-		dev_err(&hअगर_dev->udev->dev,
+		dev_err(&hif_dev->udev->dev,
 			"ath9k_htc: Failed to get firmware %s\n",
-			hअगर_dev->fw_name);
-		जाओ err_fw;
-	पूर्ण
+			hif_dev->fw_name);
+		goto err_fw;
+	}
 
-	hअगर_dev->htc_handle = ath9k_htc_hw_alloc(hअगर_dev, &hअगर_usb,
-						 &hअगर_dev->udev->dev);
-	अगर (hअगर_dev->htc_handle == शून्य)
-		जाओ err_dev_alloc;
+	hif_dev->htc_handle = ath9k_htc_hw_alloc(hif_dev, &hif_usb,
+						 &hif_dev->udev->dev);
+	if (hif_dev->htc_handle == NULL)
+		goto err_dev_alloc;
 
-	hअगर_dev->fw_data = fw->data;
-	hअगर_dev->fw_size = fw->size;
+	hif_dev->fw_data = fw->data;
+	hif_dev->fw_size = fw->size;
 
 	/* Proceed with initialization */
 
-	ret = ath9k_hअगर_usb_dev_init(hअगर_dev);
-	अगर (ret)
-		जाओ err_dev_init;
+	ret = ath9k_hif_usb_dev_init(hif_dev);
+	if (ret)
+		goto err_dev_init;
 
-	ret = ath9k_htc_hw_init(hअगर_dev->htc_handle,
-				&hअगर_dev->पूर्णांकerface->dev,
-				hअगर_dev->usb_device_id->idProduct,
-				hअगर_dev->udev->product,
-				hअगर_dev->usb_device_id->driver_info);
-	अगर (ret) अणु
+	ret = ath9k_htc_hw_init(hif_dev->htc_handle,
+				&hif_dev->interface->dev,
+				hif_dev->usb_device_id->idProduct,
+				hif_dev->udev->product,
+				hif_dev->usb_device_id->driver_info);
+	if (ret) {
 		ret = -EINVAL;
-		जाओ err_htc_hw_init;
-	पूर्ण
+		goto err_htc_hw_init;
+	}
 
 	release_firmware(fw);
-	hअगर_dev->flags |= HIF_USB_READY;
-	complete_all(&hअगर_dev->fw_करोne);
+	hif_dev->flags |= HIF_USB_READY;
+	complete_all(&hif_dev->fw_done);
 
-	वापस;
+	return;
 
 err_htc_hw_init:
-	ath9k_hअगर_usb_dev_deinit(hअगर_dev);
+	ath9k_hif_usb_dev_deinit(hif_dev);
 err_dev_init:
-	ath9k_htc_hw_मुक्त(hअगर_dev->htc_handle);
+	ath9k_htc_hw_free(hif_dev->htc_handle);
 err_dev_alloc:
 	release_firmware(fw);
 err_fw:
-	ath9k_hअगर_usb_firmware_fail(hअगर_dev);
-पूर्ण
+	ath9k_hif_usb_firmware_fail(hif_dev);
+}
 
 /*
  * An exact copy of the function from zd1211rw.
  */
-अटल पूर्णांक send_eject_command(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc = पूर्णांकerface->cur_altsetting;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	अचिन्हित अक्षर *cmd;
+static int send_eject_command(struct usb_interface *interface)
+{
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct usb_host_interface *iface_desc = interface->cur_altsetting;
+	struct usb_endpoint_descriptor *endpoint;
+	unsigned char *cmd;
 	u8 bulk_out_ep;
-	पूर्णांक r;
+	int r;
 
-	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs < 2)
-		वापस -ENODEV;
+	if (iface_desc->desc.bNumEndpoints < 2)
+		return -ENODEV;
 
-	/* Find bulk out endpoपूर्णांक */
-	क्रम (r = 1; r >= 0; r--) अणु
-		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[r].desc;
-		अगर (usb_endpoपूर्णांक_dir_out(endpoपूर्णांक) &&
-		    usb_endpoपूर्णांक_xfer_bulk(endpoपूर्णांक)) अणु
-			bulk_out_ep = endpoपूर्णांक->bEndpoपूर्णांकAddress;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (r == -1) अणु
+	/* Find bulk out endpoint */
+	for (r = 1; r >= 0; r--) {
+		endpoint = &iface_desc->endpoint[r].desc;
+		if (usb_endpoint_dir_out(endpoint) &&
+		    usb_endpoint_xfer_bulk(endpoint)) {
+			bulk_out_ep = endpoint->bEndpointAddress;
+			break;
+		}
+	}
+	if (r == -1) {
 		dev_err(&udev->dev,
 			"ath9k_htc: Could not find bulk out endpoint\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	cmd = kzalloc(31, GFP_KERNEL);
-	अगर (cmd == शून्य)
-		वापस -ENODEV;
+	if (cmd == NULL)
+		return -ENODEV;
 
 	/* USB bulk command block */
 	cmd[0] = 0x55;	/* bulk command signature */
@@ -1309,194 +1308,194 @@ err_fw:
 
 	dev_info(&udev->dev, "Ejecting storage device...\n");
 	r = usb_bulk_msg(udev, usb_sndbulkpipe(udev, bulk_out_ep),
-		cmd, 31, शून्य, 2 * USB_MSG_TIMEOUT);
-	kमुक्त(cmd);
-	अगर (r)
-		वापस r;
+		cmd, 31, NULL, 2 * USB_MSG_TIMEOUT);
+	kfree(cmd);
+	if (r)
+		return r;
 
-	/* At this poपूर्णांक, the device disconnects and reconnects with the real
+	/* At this point, the device disconnects and reconnects with the real
 	 * ID numbers. */
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-	वापस 0;
-पूर्ण
+	usb_set_intfdata(interface, NULL);
+	return 0;
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			       स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
-	काष्ठा hअगर_device_usb *hअगर_dev;
-	पूर्णांक ret = 0;
+static int ath9k_hif_usb_probe(struct usb_interface *interface,
+			       const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct hif_device_usb *hif_dev;
+	int ret = 0;
 
-	अगर (id->driver_info == STORAGE_DEVICE)
-		वापस send_eject_command(पूर्णांकerface);
+	if (id->driver_info == STORAGE_DEVICE)
+		return send_eject_command(interface);
 
-	hअगर_dev = kzalloc(माप(काष्ठा hअगर_device_usb), GFP_KERNEL);
-	अगर (!hअगर_dev) अणु
+	hif_dev = kzalloc(sizeof(struct hif_device_usb), GFP_KERNEL);
+	if (!hif_dev) {
 		ret = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	usb_get_dev(udev);
 
-	hअगर_dev->udev = udev;
-	hअगर_dev->पूर्णांकerface = पूर्णांकerface;
-	hअगर_dev->usb_device_id = id;
-#अगर_घोषित CONFIG_PM
+	hif_dev->udev = udev;
+	hif_dev->interface = interface;
+	hif_dev->usb_device_id = id;
+#ifdef CONFIG_PM
 	udev->reset_resume = 1;
-#पूर्ण_अगर
-	usb_set_पूर्णांकfdata(पूर्णांकerface, hअगर_dev);
+#endif
+	usb_set_intfdata(interface, hif_dev);
 
-	init_completion(&hअगर_dev->fw_करोne);
+	init_completion(&hif_dev->fw_done);
 
-	ret = ath9k_hअगर_request_firmware(hअगर_dev, true);
-	अगर (ret)
-		जाओ err_fw_req;
+	ret = ath9k_hif_request_firmware(hif_dev, true);
+	if (ret)
+		goto err_fw_req;
 
-	वापस ret;
+	return ret;
 
 err_fw_req:
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-	kमुक्त(hअगर_dev);
+	usb_set_intfdata(interface, NULL);
+	kfree(hif_dev);
 	usb_put_dev(udev);
 err_alloc:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ath9k_hअगर_usb_reboot(काष्ठा usb_device *udev)
-अणु
+static void ath9k_hif_usb_reboot(struct usb_device *udev)
+{
 	u32 reboot_cmd = 0xffffffff;
-	व्योम *buf;
-	पूर्णांक ret;
+	void *buf;
+	int ret;
 
 	buf = kmemdup(&reboot_cmd, 4, GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
-	ret = usb_पूर्णांकerrupt_msg(udev, usb_sndपूर्णांकpipe(udev, USB_REG_OUT_PIPE),
-			   buf, 4, शून्य, USB_MSG_TIMEOUT);
-	अगर (ret)
+	ret = usb_interrupt_msg(udev, usb_sndintpipe(udev, USB_REG_OUT_PIPE),
+			   buf, 4, NULL, USB_MSG_TIMEOUT);
+	if (ret)
 		dev_err(&udev->dev, "ath9k_htc: USB reboot failed\n");
 
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
-अटल व्योम ath9k_hअगर_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
-	काष्ठा hअगर_device_usb *hअगर_dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+static void ath9k_hif_usb_disconnect(struct usb_interface *interface)
+{
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct hif_device_usb *hif_dev = usb_get_intfdata(interface);
 	bool unplugged = (udev->state == USB_STATE_NOTATTACHED) ? true : false;
 
-	अगर (!hअगर_dev)
-		वापस;
+	if (!hif_dev)
+		return;
 
-	रुको_क्रम_completion(&hअगर_dev->fw_करोne);
+	wait_for_completion(&hif_dev->fw_done);
 
-	अगर (hअगर_dev->flags & HIF_USB_READY) अणु
-		ath9k_htc_hw_deinit(hअगर_dev->htc_handle, unplugged);
-		ath9k_hअगर_usb_dev_deinit(hअगर_dev);
-		ath9k_destroy_wmi(hअगर_dev->htc_handle->drv_priv);
-		ath9k_htc_hw_मुक्त(hअगर_dev->htc_handle);
-	पूर्ण
+	if (hif_dev->flags & HIF_USB_READY) {
+		ath9k_htc_hw_deinit(hif_dev->htc_handle, unplugged);
+		ath9k_hif_usb_dev_deinit(hif_dev);
+		ath9k_destroy_wmi(hif_dev->htc_handle->drv_priv);
+		ath9k_htc_hw_free(hif_dev->htc_handle);
+	}
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	usb_set_intfdata(interface, NULL);
 
 	/* If firmware was loaded we should drop it
 	 * go back to first stage bootloader. */
-	अगर (!unplugged && (hअगर_dev->flags & HIF_USB_READY))
-		ath9k_hअगर_usb_reboot(udev);
+	if (!unplugged && (hif_dev->flags & HIF_USB_READY))
+		ath9k_hif_usb_reboot(udev);
 
-	kमुक्त(hअगर_dev);
+	kfree(hif_dev);
 	dev_info(&udev->dev, "ath9k_htc: USB layer deinitialized\n");
 	usb_put_dev(udev);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ath9k_hअगर_usb_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+#ifdef CONFIG_PM
+static int ath9k_hif_usb_suspend(struct usb_interface *interface,
 				 pm_message_t message)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+{
+	struct hif_device_usb *hif_dev = usb_get_intfdata(interface);
 
 	/*
-	 * The device has to be set to FULLSLEEP mode in हाल no
-	 * पूर्णांकerface is up.
+	 * The device has to be set to FULLSLEEP mode in case no
+	 * interface is up.
 	 */
-	अगर (!(hअगर_dev->flags & HIF_USB_START))
-		ath9k_htc_suspend(hअगर_dev->htc_handle);
+	if (!(hif_dev->flags & HIF_USB_START))
+		ath9k_htc_suspend(hif_dev->htc_handle);
 
-	रुको_क्रम_completion(&hअगर_dev->fw_करोne);
+	wait_for_completion(&hif_dev->fw_done);
 
-	अगर (hअगर_dev->flags & HIF_USB_READY)
-		ath9k_hअगर_usb_dealloc_urbs(hअगर_dev);
+	if (hif_dev->flags & HIF_USB_READY)
+		ath9k_hif_usb_dealloc_urbs(hif_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ath9k_hअगर_usb_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा hअगर_device_usb *hअगर_dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	काष्ठा htc_target *htc_handle = hअगर_dev->htc_handle;
-	पूर्णांक ret;
-	स्थिर काष्ठा firmware *fw;
+static int ath9k_hif_usb_resume(struct usb_interface *interface)
+{
+	struct hif_device_usb *hif_dev = usb_get_intfdata(interface);
+	struct htc_target *htc_handle = hif_dev->htc_handle;
+	int ret;
+	const struct firmware *fw;
 
-	ret = ath9k_hअगर_usb_alloc_urbs(hअगर_dev);
-	अगर (ret)
-		वापस ret;
+	ret = ath9k_hif_usb_alloc_urbs(hif_dev);
+	if (ret)
+		return ret;
 
-	अगर (hअगर_dev->flags & HIF_USB_READY) अणु
+	if (hif_dev->flags & HIF_USB_READY) {
 		/* request cached firmware during suspend/resume cycle */
-		ret = request_firmware(&fw, hअगर_dev->fw_name,
-				       &hअगर_dev->udev->dev);
-		अगर (ret)
-			जाओ fail_resume;
+		ret = request_firmware(&fw, hif_dev->fw_name,
+				       &hif_dev->udev->dev);
+		if (ret)
+			goto fail_resume;
 
-		hअगर_dev->fw_data = fw->data;
-		hअगर_dev->fw_size = fw->size;
-		ret = ath9k_hअगर_usb_करोwnload_fw(hअगर_dev);
+		hif_dev->fw_data = fw->data;
+		hif_dev->fw_size = fw->size;
+		ret = ath9k_hif_usb_download_fw(hif_dev);
 		release_firmware(fw);
-		अगर (ret)
-			जाओ fail_resume;
-	पूर्ण अन्यथा अणु
-		ath9k_hअगर_usb_dealloc_urbs(hअगर_dev);
-		वापस -EIO;
-	पूर्ण
+		if (ret)
+			goto fail_resume;
+	} else {
+		ath9k_hif_usb_dealloc_urbs(hif_dev);
+		return -EIO;
+	}
 
 	mdelay(100);
 
 	ret = ath9k_htc_resume(htc_handle);
 
-	अगर (ret)
-		जाओ fail_resume;
+	if (ret)
+		goto fail_resume;
 
-	वापस 0;
+	return 0;
 
 fail_resume:
-	ath9k_hअगर_usb_dealloc_urbs(hअगर_dev);
+	ath9k_hif_usb_dealloc_urbs(hif_dev);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल काष्ठा usb_driver ath9k_hअगर_usb_driver = अणु
+static struct usb_driver ath9k_hif_usb_driver = {
 	.name = KBUILD_MODNAME,
-	.probe = ath9k_hअगर_usb_probe,
-	.disconnect = ath9k_hअगर_usb_disconnect,
-#अगर_घोषित CONFIG_PM
-	.suspend = ath9k_hअगर_usb_suspend,
-	.resume = ath9k_hअगर_usb_resume,
-	.reset_resume = ath9k_hअगर_usb_resume,
-#पूर्ण_अगर
-	.id_table = ath9k_hअगर_usb_ids,
+	.probe = ath9k_hif_usb_probe,
+	.disconnect = ath9k_hif_usb_disconnect,
+#ifdef CONFIG_PM
+	.suspend = ath9k_hif_usb_suspend,
+	.resume = ath9k_hif_usb_resume,
+	.reset_resume = ath9k_hif_usb_resume,
+#endif
+	.id_table = ath9k_hif_usb_ids,
 	.soft_unbind = 1,
 	.disable_hub_initiated_lpm = 1,
-पूर्ण;
+};
 
-पूर्णांक ath9k_hअगर_usb_init(व्योम)
-अणु
-	वापस usb_रेजिस्टर(&ath9k_hअगर_usb_driver);
-पूर्ण
+int ath9k_hif_usb_init(void)
+{
+	return usb_register(&ath9k_hif_usb_driver);
+}
 
-व्योम ath9k_hअगर_usb_निकास(व्योम)
-अणु
-	usb_deरेजिस्टर(&ath9k_hअगर_usb_driver);
-पूर्ण
+void ath9k_hif_usb_exit(void)
+{
+	usb_deregister(&ath9k_hif_usb_driver);
+}

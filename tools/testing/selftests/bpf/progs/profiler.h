@@ -1,178 +1,177 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#आशय once
+#pragma once
 
-#घोषणा TASK_COMM_LEN 16
-#घोषणा MAX_ANCESTORS 4
-#घोषणा MAX_PATH 256
-#घोषणा KILL_TARGET_LEN 64
-#घोषणा CTL_MAXNAME 10
-#घोषणा MAX_ARGS_LEN 4096
-#घोषणा MAX_खाताNAME_LEN 512
-#घोषणा MAX_ENVIRON_LEN 8192
-#घोषणा MAX_PATH_DEPTH 32
-#घोषणा MAX_खाताPATH_LENGTH (MAX_PATH_DEPTH * MAX_PATH)
-#घोषणा MAX_CGROUPS_PATH_DEPTH 8
+#define TASK_COMM_LEN 16
+#define MAX_ANCESTORS 4
+#define MAX_PATH 256
+#define KILL_TARGET_LEN 64
+#define CTL_MAXNAME 10
+#define MAX_ARGS_LEN 4096
+#define MAX_FILENAME_LEN 512
+#define MAX_ENVIRON_LEN 8192
+#define MAX_PATH_DEPTH 32
+#define MAX_FILEPATH_LENGTH (MAX_PATH_DEPTH * MAX_PATH)
+#define MAX_CGROUPS_PATH_DEPTH 8
 
-#घोषणा MAX_METADATA_PAYLOAD_LEN TASK_COMM_LEN
+#define MAX_METADATA_PAYLOAD_LEN TASK_COMM_LEN
 
-#घोषणा MAX_CGROUP_PAYLOAD_LEN \
+#define MAX_CGROUP_PAYLOAD_LEN \
 	(MAX_PATH * 2 + (MAX_PATH * MAX_CGROUPS_PATH_DEPTH))
 
-#घोषणा MAX_CAP_PAYLOAD_LEN (MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN)
+#define MAX_CAP_PAYLOAD_LEN (MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN)
 
-#घोषणा MAX_SYSCTL_PAYLOAD_LEN \
+#define MAX_SYSCTL_PAYLOAD_LEN \
 	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + CTL_MAXNAME + MAX_PATH)
 
-#घोषणा MAX_KILL_PAYLOAD_LEN \
+#define MAX_KILL_PAYLOAD_LEN \
 	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + TASK_COMM_LEN + \
 	 KILL_TARGET_LEN)
 
-#घोषणा MAX_EXEC_PAYLOAD_LEN \
-	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + MAX_खाताNAME_LEN + \
+#define MAX_EXEC_PAYLOAD_LEN \
+	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + MAX_FILENAME_LEN + \
 	 MAX_ARGS_LEN + MAX_ENVIRON_LEN)
 
-#घोषणा MAX_खाताMOD_PAYLOAD_LEN \
-	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + MAX_खाताPATH_LENGTH + \
-	 MAX_खाताPATH_LENGTH)
+#define MAX_FILEMOD_PAYLOAD_LEN \
+	(MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN + MAX_FILEPATH_LENGTH + \
+	 MAX_FILEPATH_LENGTH)
 
-क्रमागत data_type अणु
+enum data_type {
 	INVALID_EVENT,
 	EXEC_EVENT,
 	FORK_EVENT,
 	KILL_EVENT,
 	SYSCTL_EVENT,
-	खाताMOD_EVENT,
+	FILEMOD_EVENT,
 	MAX_DATA_TYPE_EVENT
-पूर्ण;
+};
 
-क्रमागत filemod_type अणु
+enum filemod_type {
 	FMOD_OPEN,
 	FMOD_LINK,
 	FMOD_SYMLINK,
-पूर्ण;
+};
 
-काष्ठा ancestors_data_t अणु
+struct ancestors_data_t {
 	pid_t ancestor_pids[MAX_ANCESTORS];
-	uपूर्णांक32_t ancestor_exec_ids[MAX_ANCESTORS];
-	uपूर्णांक64_t ancestor_start_बार[MAX_ANCESTORS];
-	uपूर्णांक32_t num_ancestors;
-पूर्ण;
+	uint32_t ancestor_exec_ids[MAX_ANCESTORS];
+	uint64_t ancestor_start_times[MAX_ANCESTORS];
+	uint32_t num_ancestors;
+};
 
-काष्ठा var_metadata_t अणु
-	क्रमागत data_type type;
+struct var_metadata_t {
+	enum data_type type;
 	pid_t pid;
-	uपूर्णांक32_t exec_id;
+	uint32_t exec_id;
 	uid_t uid;
 	gid_t gid;
-	uपूर्णांक64_t start_समय;
-	uपूर्णांक32_t cpu_id;
-	uपूर्णांक64_t bpf_stats_num_perf_events;
-	uपूर्णांक64_t bpf_stats_start_kसमय_ns;
-	uपूर्णांक8_t comm_length;
-पूर्ण;
+	uint64_t start_time;
+	uint32_t cpu_id;
+	uint64_t bpf_stats_num_perf_events;
+	uint64_t bpf_stats_start_ktime_ns;
+	uint8_t comm_length;
+};
 
-काष्ठा cgroup_data_t अणु
+struct cgroup_data_t {
 	ino_t cgroup_root_inode;
 	ino_t cgroup_proc_inode;
-	uपूर्णांक64_t cgroup_root_mसमय;
-	uपूर्णांक64_t cgroup_proc_mसमय;
-	uपूर्णांक16_t cgroup_root_length;
-	uपूर्णांक16_t cgroup_proc_length;
-	uपूर्णांक16_t cgroup_full_length;
-	पूर्णांक cgroup_full_path_root_pos;
-पूर्ण;
+	uint64_t cgroup_root_mtime;
+	uint64_t cgroup_proc_mtime;
+	uint16_t cgroup_root_length;
+	uint16_t cgroup_proc_length;
+	uint16_t cgroup_full_length;
+	int cgroup_full_path_root_pos;
+};
 
-काष्ठा var_sysctl_data_t अणु
-	काष्ठा var_metadata_t meta;
-	काष्ठा cgroup_data_t cgroup_data;
-	काष्ठा ancestors_data_t ancestors_info;
-	uपूर्णांक8_t sysctl_val_length;
-	uपूर्णांक16_t sysctl_path_length;
-	अक्षर payload[MAX_SYSCTL_PAYLOAD_LEN];
-पूर्ण;
+struct var_sysctl_data_t {
+	struct var_metadata_t meta;
+	struct cgroup_data_t cgroup_data;
+	struct ancestors_data_t ancestors_info;
+	uint8_t sysctl_val_length;
+	uint16_t sysctl_path_length;
+	char payload[MAX_SYSCTL_PAYLOAD_LEN];
+};
 
-काष्ठा var_समाप्त_data_t अणु
-	काष्ठा var_metadata_t meta;
-	काष्ठा cgroup_data_t cgroup_data;
-	काष्ठा ancestors_data_t ancestors_info;
-	pid_t समाप्त_target_pid;
-	पूर्णांक समाप्त_sig;
-	uपूर्णांक32_t समाप्त_count;
-	uपूर्णांक64_t last_समाप्त_समय;
-	uपूर्णांक8_t समाप्त_target_name_length;
-	uपूर्णांक8_t समाप्त_target_cgroup_proc_length;
-	अक्षर payload[MAX_KILL_PAYLOAD_LEN];
-	माप_प्रकार payload_length;
-पूर्ण;
+struct var_kill_data_t {
+	struct var_metadata_t meta;
+	struct cgroup_data_t cgroup_data;
+	struct ancestors_data_t ancestors_info;
+	pid_t kill_target_pid;
+	int kill_sig;
+	uint32_t kill_count;
+	uint64_t last_kill_time;
+	uint8_t kill_target_name_length;
+	uint8_t kill_target_cgroup_proc_length;
+	char payload[MAX_KILL_PAYLOAD_LEN];
+	size_t payload_length;
+};
 
-काष्ठा var_exec_data_t अणु
-	काष्ठा var_metadata_t meta;
-	काष्ठा cgroup_data_t cgroup_data;
+struct var_exec_data_t {
+	struct var_metadata_t meta;
+	struct cgroup_data_t cgroup_data;
 	pid_t parent_pid;
-	uपूर्णांक32_t parent_exec_id;
+	uint32_t parent_exec_id;
 	uid_t parent_uid;
-	uपूर्णांक64_t parent_start_समय;
-	uपूर्णांक16_t bin_path_length;
-	uपूर्णांक16_t cmdline_length;
-	uपूर्णांक16_t environment_length;
-	अक्षर payload[MAX_EXEC_PAYLOAD_LEN];
-पूर्ण;
+	uint64_t parent_start_time;
+	uint16_t bin_path_length;
+	uint16_t cmdline_length;
+	uint16_t environment_length;
+	char payload[MAX_EXEC_PAYLOAD_LEN];
+};
 
-काष्ठा var_विभाजन_data_t अणु
-	काष्ठा var_metadata_t meta;
+struct var_fork_data_t {
+	struct var_metadata_t meta;
 	pid_t parent_pid;
-	uपूर्णांक32_t parent_exec_id;
-	uपूर्णांक64_t parent_start_समय;
-	अक्षर payload[MAX_METADATA_PAYLOAD_LEN];
-पूर्ण;
+	uint32_t parent_exec_id;
+	uint64_t parent_start_time;
+	char payload[MAX_METADATA_PAYLOAD_LEN];
+};
 
-काष्ठा var_filemod_data_t अणु
-	काष्ठा var_metadata_t meta;
-	काष्ठा cgroup_data_t cgroup_data;
-	क्रमागत filemod_type भ_शेष_type;
-	अचिन्हित पूर्णांक dst_flags;
-	uपूर्णांक32_t src_device_id;
-	uपूर्णांक32_t dst_device_id;
+struct var_filemod_data_t {
+	struct var_metadata_t meta;
+	struct cgroup_data_t cgroup_data;
+	enum filemod_type fmod_type;
+	unsigned int dst_flags;
+	uint32_t src_device_id;
+	uint32_t dst_device_id;
 	ino_t src_inode;
 	ino_t dst_inode;
-	uपूर्णांक16_t src_filepath_length;
-	uपूर्णांक16_t dst_filepath_length;
-	अक्षर payload[MAX_खाताMOD_PAYLOAD_LEN];
-पूर्ण;
+	uint16_t src_filepath_length;
+	uint16_t dst_filepath_length;
+	char payload[MAX_FILEMOD_PAYLOAD_LEN];
+};
 
-काष्ठा profiler_config_काष्ठा अणु
+struct profiler_config_struct {
 	bool fetch_cgroups_from_bpf;
 	ino_t cgroup_fs_inode;
 	ino_t cgroup_login_session_inode;
-	uपूर्णांक64_t समाप्त_संकेतs_mask;
+	uint64_t kill_signals_mask;
 	ino_t inode_filter;
-	uपूर्णांक32_t stale_info_secs;
+	uint32_t stale_info_secs;
 	bool use_variable_buffers;
-	bool पढ़ो_environ_from_exec;
+	bool read_environ_from_exec;
 	bool enable_cgroup_v1_resolver;
-पूर्ण;
+};
 
-काष्ठा bpf_func_stats_data अणु
-	uपूर्णांक64_t समय_elapsed_ns;
-	uपूर्णांक64_t num_executions;
-	uपूर्णांक64_t num_perf_events;
-पूर्ण;
+struct bpf_func_stats_data {
+	uint64_t time_elapsed_ns;
+	uint64_t num_executions;
+	uint64_t num_perf_events;
+};
 
-काष्ठा bpf_func_stats_ctx अणु
-	uपूर्णांक64_t start_समय_ns;
-	काष्ठा bpf_func_stats_data* bpf_func_stats_data_val;
-पूर्ण;
+struct bpf_func_stats_ctx {
+	uint64_t start_time_ns;
+	struct bpf_func_stats_data* bpf_func_stats_data_val;
+};
 
-क्रमागत bpf_function_id अणु
-	profiler_bpf_proc_sys_ग_लिखो,
+enum bpf_function_id {
+	profiler_bpf_proc_sys_write,
 	profiler_bpf_sched_process_exec,
-	profiler_bpf_sched_process_निकास,
-	profiler_bpf_sys_enter_समाप्त,
-	profiler_bpf_करो_filp_खोलो_ret,
-	profiler_bpf_sched_process_विभाजन,
+	profiler_bpf_sched_process_exit,
+	profiler_bpf_sys_enter_kill,
+	profiler_bpf_do_filp_open_ret,
+	profiler_bpf_sched_process_fork,
 	profiler_bpf_vfs_link,
 	profiler_bpf_vfs_symlink,
 	profiler_bpf_max_function_id
-पूर्ण;
+};

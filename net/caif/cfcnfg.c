@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/module.h>
-#समावेश <net/caअगर/caअगर_layer.h>
-#समावेश <net/caअगर/cfpkt.h>
-#समावेश <net/caअगर/cfcnfg.h>
-#समावेश <net/caअगर/cfctrl.h>
-#समावेश <net/caअगर/cfmuxl.h>
-#समावेश <net/caअगर/cffrml.h>
-#समावेश <net/caअगर/cfserl.h>
-#समावेश <net/caअगर/cfsrvl.h>
-#समावेश <net/caअगर/caअगर_dev.h>
+#include <linux/kernel.h>
+#include <linux/stddef.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/module.h>
+#include <net/caif/caif_layer.h>
+#include <net/caif/cfpkt.h>
+#include <net/caif/cfcnfg.h>
+#include <net/caif/cfctrl.h>
+#include <net/caif/cfmuxl.h>
+#include <net/caif/cffrml.h>
+#include <net/caif/cfserl.h>
+#include <net/caif/cfsrvl.h>
+#include <net/caif/caif_dev.h>
 
-#घोषणा container_obj(layr) container_of(layr, काष्ठा cfcnfg, layer)
+#define container_obj(layr) container_of(layr, struct cfcnfg, layer)
 
-/* Inक्रमmation about CAIF physical पूर्णांकerfaces held by Config Module in order
- * to manage physical पूर्णांकerfaces
+/* Information about CAIF physical interfaces held by Config Module in order
+ * to manage physical interfaces
  */
-काष्ठा cfcnfg_phyinfo अणु
-	काष्ठा list_head node;
+struct cfcnfg_phyinfo {
+	struct list_head node;
 	bool up;
 
-	/* Poपूर्णांकer to the layer below the MUX (framing layer) */
-	काष्ठा cflayer *frm_layer;
-	/* Poपूर्णांकer to the lowest actual physical layer */
-	काष्ठा cflayer *phy_layer;
-	/* Unique identअगरier of the physical पूर्णांकerface */
-	अचिन्हित पूर्णांक id;
-	/* Preference of the physical in पूर्णांकerface */
-	क्रमागत cfcnfg_phy_preference pref;
+	/* Pointer to the layer below the MUX (framing layer) */
+	struct cflayer *frm_layer;
+	/* Pointer to the lowest actual physical layer */
+	struct cflayer *phy_layer;
+	/* Unique identifier of the physical interface */
+	unsigned int id;
+	/* Preference of the physical in interface */
+	enum cfcnfg_phy_preference pref;
 
-	/* Inक्रमmation about the physical device */
-	काष्ठा dev_info dev_info;
+	/* Information about the physical device */
+	struct dev_info dev_info;
 
 	/* Interface index */
-	पूर्णांक अगरindex;
+	int ifindex;
 
-	/* Protocol head room added क्रम CAIF link layer */
-	पूर्णांक head_room;
+	/* Protocol head room added for CAIF link layer */
+	int head_room;
 
 	/* Use Start of frame checksum */
 	bool use_fcs;
-पूर्ण;
+};
 
-काष्ठा cfcnfg अणु
-	काष्ठा cflayer layer;
-	काष्ठा cflayer *ctrl;
-	काष्ठा cflayer *mux;
-	काष्ठा list_head phys;
-	काष्ठा mutex lock;
-पूर्ण;
+struct cfcnfg {
+	struct cflayer layer;
+	struct cflayer *ctrl;
+	struct cflayer *mux;
+	struct list_head phys;
+	struct mutex lock;
+};
 
-अटल व्योम cfcnfg_linkup_rsp(काष्ठा cflayer *layer, u8 channel_id,
-			      क्रमागत cfctrl_srv serv, u8 phyid,
-			      काष्ठा cflayer *adapt_layer);
-अटल व्योम cfcnfg_linkdestroy_rsp(काष्ठा cflayer *layer, u8 channel_id);
-अटल व्योम cfcnfg_reject_rsp(काष्ठा cflayer *layer, u8 channel_id,
-			      काष्ठा cflayer *adapt_layer);
-अटल व्योम cfctrl_resp_func(व्योम);
-अटल व्योम cfctrl_क्रमागत_resp(व्योम);
+static void cfcnfg_linkup_rsp(struct cflayer *layer, u8 channel_id,
+			      enum cfctrl_srv serv, u8 phyid,
+			      struct cflayer *adapt_layer);
+static void cfcnfg_linkdestroy_rsp(struct cflayer *layer, u8 channel_id);
+static void cfcnfg_reject_rsp(struct cflayer *layer, u8 channel_id,
+			      struct cflayer *adapt_layer);
+static void cfctrl_resp_func(void);
+static void cfctrl_enum_resp(void);
 
-काष्ठा cfcnfg *cfcnfg_create(व्योम)
-अणु
-	काष्ठा cfcnfg *this;
-	काष्ठा cfctrl_rsp *resp;
+struct cfcnfg *cfcnfg_create(void)
+{
+	struct cfcnfg *this;
+	struct cfctrl_rsp *resp;
 
 	might_sleep();
 
 	/* Initiate this layer */
-	this = kzalloc(माप(काष्ठा cfcnfg), GFP_ATOMIC);
-	अगर (!this)
-		वापस शून्य;
+	this = kzalloc(sizeof(struct cfcnfg), GFP_ATOMIC);
+	if (!this)
+		return NULL;
 	this->mux = cfmuxl_create();
-	अगर (!this->mux)
-		जाओ out_of_mem;
+	if (!this->mux)
+		goto out_of_mem;
 	this->ctrl = cfctrl_create();
-	अगर (!this->ctrl)
-		जाओ out_of_mem;
+	if (!this->ctrl)
+		goto out_of_mem;
 	/* Initiate response functions */
 	resp = cfctrl_get_respfuncs(this->ctrl);
-	resp->क्रमागत_rsp = cfctrl_क्रमागत_resp;
+	resp->enum_rsp = cfctrl_enum_resp;
 	resp->linkerror_ind = cfctrl_resp_func;
 	resp->linkdestroy_rsp = cfcnfg_linkdestroy_rsp;
 	resp->sleep_rsp = cfctrl_resp_func;
@@ -105,384 +104,384 @@
 	layer_set_up(this->ctrl, this);
 	mutex_init(&this->lock);
 
-	वापस this;
+	return this;
 out_of_mem:
 	synchronize_rcu();
 
-	kमुक्त(this->mux);
-	kमुक्त(this->ctrl);
-	kमुक्त(this);
-	वापस शून्य;
-पूर्ण
+	kfree(this->mux);
+	kfree(this->ctrl);
+	kfree(this);
+	return NULL;
+}
 
-व्योम cfcnfg_हटाओ(काष्ठा cfcnfg *cfg)
-अणु
+void cfcnfg_remove(struct cfcnfg *cfg)
+{
 	might_sleep();
-	अगर (cfg) अणु
+	if (cfg) {
 		synchronize_rcu();
 
-		kमुक्त(cfg->mux);
-		cfctrl_हटाओ(cfg->ctrl);
-		kमुक्त(cfg);
-	पूर्ण
-पूर्ण
+		kfree(cfg->mux);
+		cfctrl_remove(cfg->ctrl);
+		kfree(cfg);
+	}
+}
 
-अटल व्योम cfctrl_resp_func(व्योम)
-अणु
-पूर्ण
+static void cfctrl_resp_func(void)
+{
+}
 
-अटल काष्ठा cfcnfg_phyinfo *cfcnfg_get_phyinfo_rcu(काष्ठा cfcnfg *cnfg,
+static struct cfcnfg_phyinfo *cfcnfg_get_phyinfo_rcu(struct cfcnfg *cnfg,
 						     u8 phyid)
-अणु
-	काष्ठा cfcnfg_phyinfo *phy;
+{
+	struct cfcnfg_phyinfo *phy;
 
-	list_क्रम_each_entry_rcu(phy, &cnfg->phys, node)
-		अगर (phy->id == phyid)
-			वापस phy;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry_rcu(phy, &cnfg->phys, node)
+		if (phy->id == phyid)
+			return phy;
+	return NULL;
+}
 
-अटल व्योम cfctrl_क्रमागत_resp(व्योम)
-अणु
-पूर्ण
+static void cfctrl_enum_resp(void)
+{
+}
 
-अटल काष्ठा dev_info *cfcnfg_get_phyid(काष्ठा cfcnfg *cnfg,
-				  क्रमागत cfcnfg_phy_preference phy_pref)
-अणु
-	/* Try to match with specअगरied preference */
-	काष्ठा cfcnfg_phyinfo *phy;
+static struct dev_info *cfcnfg_get_phyid(struct cfcnfg *cnfg,
+				  enum cfcnfg_phy_preference phy_pref)
+{
+	/* Try to match with specified preference */
+	struct cfcnfg_phyinfo *phy;
 
-	list_क्रम_each_entry_rcu(phy, &cnfg->phys, node) अणु
-		अगर (phy->up && phy->pref == phy_pref &&
-				phy->frm_layer != शून्य)
+	list_for_each_entry_rcu(phy, &cnfg->phys, node) {
+		if (phy->up && phy->pref == phy_pref &&
+				phy->frm_layer != NULL)
 
-			वापस &phy->dev_info;
-	पूर्ण
+			return &phy->dev_info;
+	}
 
-	/* Otherwise just वापस something */
-	list_क्रम_each_entry_rcu(phy, &cnfg->phys, node)
-		अगर (phy->up)
-			वापस &phy->dev_info;
+	/* Otherwise just return something */
+	list_for_each_entry_rcu(phy, &cnfg->phys, node)
+		if (phy->up)
+			return &phy->dev_info;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक cfcnfg_get_id_from_अगरi(काष्ठा cfcnfg *cnfg, पूर्णांक अगरi)
-अणु
-	काष्ठा cfcnfg_phyinfo *phy;
+static int cfcnfg_get_id_from_ifi(struct cfcnfg *cnfg, int ifi)
+{
+	struct cfcnfg_phyinfo *phy;
 
-	list_क्रम_each_entry_rcu(phy, &cnfg->phys, node)
-		अगर (phy->अगरindex == अगरi && phy->up)
-			वापस phy->id;
-	वापस -ENODEV;
-पूर्ण
+	list_for_each_entry_rcu(phy, &cnfg->phys, node)
+		if (phy->ifindex == ifi && phy->up)
+			return phy->id;
+	return -ENODEV;
+}
 
-पूर्णांक caअगर_disconnect_client(काष्ठा net *net, काष्ठा cflayer *adap_layer)
-अणु
+int caif_disconnect_client(struct net *net, struct cflayer *adap_layer)
+{
 	u8 channel_id;
-	काष्ठा cfcnfg *cfg = get_cfcnfg(net);
+	struct cfcnfg *cfg = get_cfcnfg(net);
 
-	caअगर_निश्चित(adap_layer != शून्य);
+	caif_assert(adap_layer != NULL);
 	cfctrl_cancel_req(cfg->ctrl, adap_layer);
 	channel_id = adap_layer->id;
-	अगर (channel_id != 0) अणु
-		काष्ठा cflayer *servl;
-		servl = cfmuxl_हटाओ_uplayer(cfg->mux, channel_id);
-		cfctrl_linkकरोwn_req(cfg->ctrl, channel_id, adap_layer);
-		अगर (servl != शून्य)
-			layer_set_up(servl, शून्य);
-	पूर्ण अन्यथा
+	if (channel_id != 0) {
+		struct cflayer *servl;
+		servl = cfmuxl_remove_uplayer(cfg->mux, channel_id);
+		cfctrl_linkdown_req(cfg->ctrl, channel_id, adap_layer);
+		if (servl != NULL)
+			layer_set_up(servl, NULL);
+	} else
 		pr_debug("nothing to disconnect\n");
 
-	/* Do RCU sync beक्रमe initiating cleanup */
+	/* Do RCU sync before initiating cleanup */
 	synchronize_rcu();
-	अगर (adap_layer->ctrlcmd != शून्य)
+	if (adap_layer->ctrlcmd != NULL)
 		adap_layer->ctrlcmd(adap_layer, CAIF_CTRLCMD_DEINIT_RSP, 0);
-	वापस 0;
+	return 0;
 
-पूर्ण
-EXPORT_SYMBOL(caअगर_disconnect_client);
+}
+EXPORT_SYMBOL(caif_disconnect_client);
 
-अटल व्योम cfcnfg_linkdestroy_rsp(काष्ठा cflayer *layer, u8 channel_id)
-अणु
-पूर्ण
+static void cfcnfg_linkdestroy_rsp(struct cflayer *layer, u8 channel_id)
+{
+}
 
-अटल स्थिर पूर्णांक protohead[CFCTRL_SRV_MASK] = अणु
+static const int protohead[CFCTRL_SRV_MASK] = {
 	[CFCTRL_SRV_VEI] = 4,
 	[CFCTRL_SRV_DATAGRAM] = 7,
 	[CFCTRL_SRV_UTIL] = 4,
 	[CFCTRL_SRV_RFM] = 3,
 	[CFCTRL_SRV_DBG] = 3,
-पूर्ण;
+};
 
 
-अटल पूर्णांक caअगर_connect_req_to_link_param(काष्ठा cfcnfg *cnfg,
-					  काष्ठा caअगर_connect_request *s,
-					  काष्ठा cfctrl_link_param *l)
-अणु
-	काष्ठा dev_info *dev_info;
-	क्रमागत cfcnfg_phy_preference pref;
-	पूर्णांक res;
+static int caif_connect_req_to_link_param(struct cfcnfg *cnfg,
+					  struct caif_connect_request *s,
+					  struct cfctrl_link_param *l)
+{
+	struct dev_info *dev_info;
+	enum cfcnfg_phy_preference pref;
+	int res;
 
-	स_रखो(l, 0, माप(*l));
-	/* In caअगर protocol low value is high priority */
+	memset(l, 0, sizeof(*l));
+	/* In caif protocol low value is high priority */
 	l->priority = CAIF_PRIO_MAX - s->priority + 1;
 
-	अगर (s->अगरindex != 0) अणु
-		res = cfcnfg_get_id_from_अगरi(cnfg, s->अगरindex);
-		अगर (res < 0)
-			वापस res;
+	if (s->ifindex != 0) {
+		res = cfcnfg_get_id_from_ifi(cnfg, s->ifindex);
+		if (res < 0)
+			return res;
 		l->phyid = res;
-	पूर्ण अन्यथा अणु
-		चयन (s->link_selector) अणु
-		हाल CAIF_LINK_HIGH_BANDW:
+	} else {
+		switch (s->link_selector) {
+		case CAIF_LINK_HIGH_BANDW:
 			pref = CFPHYPREF_HIGH_BW;
-			अवरोध;
-		हाल CAIF_LINK_LOW_LATENCY:
+			break;
+		case CAIF_LINK_LOW_LATENCY:
 			pref = CFPHYPREF_LOW_LAT;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 		dev_info = cfcnfg_get_phyid(cnfg, pref);
-		अगर (dev_info == शून्य)
-			वापस -ENODEV;
+		if (dev_info == NULL)
+			return -ENODEV;
 		l->phyid = dev_info->id;
-	पूर्ण
-	चयन (s->protocol) अणु
-	हाल CAIFPROTO_AT:
+	}
+	switch (s->protocol) {
+	case CAIFPROTO_AT:
 		l->linktype = CFCTRL_SRV_VEI;
-		l->endpoपूर्णांक = (s->sockaddr.u.at.type >> 2) & 0x3;
+		l->endpoint = (s->sockaddr.u.at.type >> 2) & 0x3;
 		l->chtype = s->sockaddr.u.at.type & 0x3;
-		अवरोध;
-	हाल CAIFPROTO_DATAGRAM:
+		break;
+	case CAIFPROTO_DATAGRAM:
 		l->linktype = CFCTRL_SRV_DATAGRAM;
 		l->chtype = 0x00;
 		l->u.datagram.connid = s->sockaddr.u.dgm.connection_id;
-		अवरोध;
-	हाल CAIFPROTO_DATAGRAM_LOOP:
+		break;
+	case CAIFPROTO_DATAGRAM_LOOP:
 		l->linktype = CFCTRL_SRV_DATAGRAM;
 		l->chtype = 0x03;
-		l->endpoपूर्णांक = 0x00;
+		l->endpoint = 0x00;
 		l->u.datagram.connid = s->sockaddr.u.dgm.connection_id;
-		अवरोध;
-	हाल CAIFPROTO_RFM:
+		break;
+	case CAIFPROTO_RFM:
 		l->linktype = CFCTRL_SRV_RFM;
 		l->u.datagram.connid = s->sockaddr.u.rfm.connection_id;
 		strlcpy(l->u.rfm.volume, s->sockaddr.u.rfm.volume,
-			माप(l->u.rfm.volume));
-		अवरोध;
-	हाल CAIFPROTO_UTIL:
+			sizeof(l->u.rfm.volume));
+		break;
+	case CAIFPROTO_UTIL:
 		l->linktype = CFCTRL_SRV_UTIL;
-		l->endpoपूर्णांक = 0x00;
+		l->endpoint = 0x00;
 		l->chtype = 0x00;
 		strlcpy(l->u.utility.name, s->sockaddr.u.util.service,
-			माप(l->u.utility.name));
-		caअगर_निश्चित(माप(l->u.utility.name) > 10);
+			sizeof(l->u.utility.name));
+		caif_assert(sizeof(l->u.utility.name) > 10);
 		l->u.utility.paramlen = s->param.size;
-		अगर (l->u.utility.paramlen > माप(l->u.utility.params))
-			l->u.utility.paramlen = माप(l->u.utility.params);
+		if (l->u.utility.paramlen > sizeof(l->u.utility.params))
+			l->u.utility.paramlen = sizeof(l->u.utility.params);
 
-		स_नकल(l->u.utility.params, s->param.data,
+		memcpy(l->u.utility.params, s->param.data,
 		       l->u.utility.paramlen);
 
-		अवरोध;
-	हाल CAIFPROTO_DEBUG:
+		break;
+	case CAIFPROTO_DEBUG:
 		l->linktype = CFCTRL_SRV_DBG;
-		l->endpoपूर्णांक = s->sockaddr.u.dbg.service;
+		l->endpoint = s->sockaddr.u.dbg.service;
 		l->chtype = s->sockaddr.u.dbg.type;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-पूर्णांक caअगर_connect_client(काष्ठा net *net, काष्ठा caअगर_connect_request *conn_req,
-			काष्ठा cflayer *adap_layer, पूर्णांक *अगरindex,
-			पूर्णांक *proto_head, पूर्णांक *proto_tail)
-अणु
-	काष्ठा cflayer *frml;
-	काष्ठा cfcnfg_phyinfo *phy;
-	पूर्णांक err;
-	काष्ठा cfctrl_link_param param;
-	काष्ठा cfcnfg *cfg = get_cfcnfg(net);
+int caif_connect_client(struct net *net, struct caif_connect_request *conn_req,
+			struct cflayer *adap_layer, int *ifindex,
+			int *proto_head, int *proto_tail)
+{
+	struct cflayer *frml;
+	struct cfcnfg_phyinfo *phy;
+	int err;
+	struct cfctrl_link_param param;
+	struct cfcnfg *cfg = get_cfcnfg(net);
 
-	rcu_पढ़ो_lock();
-	err = caअगर_connect_req_to_link_param(cfg, conn_req, &param);
-	अगर (err)
-		जाओ unlock;
+	rcu_read_lock();
+	err = caif_connect_req_to_link_param(cfg, conn_req, &param);
+	if (err)
+		goto unlock;
 
 	phy = cfcnfg_get_phyinfo_rcu(cfg, param.phyid);
-	अगर (!phy) अणु
+	if (!phy) {
 		err = -ENODEV;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	err = -EINVAL;
 
-	अगर (adap_layer == शून्य) अणु
+	if (adap_layer == NULL) {
 		pr_err("adap_layer is zero\n");
-		जाओ unlock;
-	पूर्ण
-	अगर (adap_layer->receive == शून्य) अणु
+		goto unlock;
+	}
+	if (adap_layer->receive == NULL) {
 		pr_err("adap_layer->receive is NULL\n");
-		जाओ unlock;
-	पूर्ण
-	अगर (adap_layer->ctrlcmd == शून्य) अणु
+		goto unlock;
+	}
+	if (adap_layer->ctrlcmd == NULL) {
 		pr_err("adap_layer->ctrlcmd == NULL\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = -ENODEV;
 	frml = phy->frm_layer;
-	अगर (frml == शून्य) अणु
+	if (frml == NULL) {
 		pr_err("Specified PHY type does not exist!\n");
-		जाओ unlock;
-	पूर्ण
-	caअगर_निश्चित(param.phyid == phy->id);
-	caअगर_निश्चित(phy->frm_layer->id ==
+		goto unlock;
+	}
+	caif_assert(param.phyid == phy->id);
+	caif_assert(phy->frm_layer->id ==
 		     param.phyid);
-	caअगर_निश्चित(phy->phy_layer->id ==
+	caif_assert(phy->phy_layer->id ==
 		     param.phyid);
 
-	*अगरindex = phy->अगरindex;
+	*ifindex = phy->ifindex;
 	*proto_tail = 2;
 	*proto_head = protohead[param.linktype] + phy->head_room;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	/* FIXME: ENUMERATE INITIALLY WHEN ACTIVATING PHYSICAL INTERFACE */
-	cfctrl_क्रमागत_req(cfg->ctrl, param.phyid);
-	वापस cfctrl_linkup_request(cfg->ctrl, &param, adap_layer);
+	cfctrl_enum_req(cfg->ctrl, param.phyid);
+	return cfctrl_linkup_request(cfg->ctrl, &param, adap_layer);
 
 unlock:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(caअगर_connect_client);
+	rcu_read_unlock();
+	return err;
+}
+EXPORT_SYMBOL(caif_connect_client);
 
-अटल व्योम cfcnfg_reject_rsp(काष्ठा cflayer *layer, u8 channel_id,
-			      काष्ठा cflayer *adapt_layer)
-अणु
-	अगर (adapt_layer != शून्य && adapt_layer->ctrlcmd != शून्य)
+static void cfcnfg_reject_rsp(struct cflayer *layer, u8 channel_id,
+			      struct cflayer *adapt_layer)
+{
+	if (adapt_layer != NULL && adapt_layer->ctrlcmd != NULL)
 		adapt_layer->ctrlcmd(adapt_layer,
 				     CAIF_CTRLCMD_INIT_FAIL_RSP, 0);
-पूर्ण
+}
 
-अटल व्योम
-cfcnfg_linkup_rsp(काष्ठा cflayer *layer, u8 channel_id, क्रमागत cfctrl_srv serv,
-		  u8 phyid, काष्ठा cflayer *adapt_layer)
-अणु
-	काष्ठा cfcnfg *cnfg = container_obj(layer);
-	काष्ठा cflayer *servicel = शून्य;
-	काष्ठा cfcnfg_phyinfo *phyinfo;
-	काष्ठा net_device *netdev;
+static void
+cfcnfg_linkup_rsp(struct cflayer *layer, u8 channel_id, enum cfctrl_srv serv,
+		  u8 phyid, struct cflayer *adapt_layer)
+{
+	struct cfcnfg *cnfg = container_obj(layer);
+	struct cflayer *servicel = NULL;
+	struct cfcnfg_phyinfo *phyinfo;
+	struct net_device *netdev;
 
-	अगर (channel_id == 0) अणु
+	if (channel_id == 0) {
 		pr_warn("received channel_id zero\n");
-		अगर (adapt_layer != शून्य && adapt_layer->ctrlcmd != शून्य)
+		if (adapt_layer != NULL && adapt_layer->ctrlcmd != NULL)
 			adapt_layer->ctrlcmd(adapt_layer,
 						CAIF_CTRLCMD_INIT_FAIL_RSP, 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	अगर (adapt_layer == शून्य) अणु
+	if (adapt_layer == NULL) {
 		pr_debug("link setup response but no client exist, send linkdown back\n");
-		cfctrl_linkकरोwn_req(cnfg->ctrl, channel_id, शून्य);
-		जाओ unlock;
-	पूर्ण
+		cfctrl_linkdown_req(cnfg->ctrl, channel_id, NULL);
+		goto unlock;
+	}
 
-	caअगर_निश्चित(cnfg != शून्य);
-	caअगर_निश्चित(phyid != 0);
+	caif_assert(cnfg != NULL);
+	caif_assert(phyid != 0);
 
 	phyinfo = cfcnfg_get_phyinfo_rcu(cnfg, phyid);
-	अगर (phyinfo == शून्य) अणु
+	if (phyinfo == NULL) {
 		pr_err("ERROR: Link Layer Device disappeared while connecting\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	caअगर_निश्चित(phyinfo != शून्य);
-	caअगर_निश्चित(phyinfo->id == phyid);
-	caअगर_निश्चित(phyinfo->phy_layer != शून्य);
-	caअगर_निश्चित(phyinfo->phy_layer->id == phyid);
+	caif_assert(phyinfo != NULL);
+	caif_assert(phyinfo->id == phyid);
+	caif_assert(phyinfo->phy_layer != NULL);
+	caif_assert(phyinfo->phy_layer->id == phyid);
 
 	adapt_layer->id = channel_id;
 
-	चयन (serv) अणु
-	हाल CFCTRL_SRV_VEI:
+	switch (serv) {
+	case CFCTRL_SRV_VEI:
 		servicel = cfvei_create(channel_id, &phyinfo->dev_info);
-		अवरोध;
-	हाल CFCTRL_SRV_DATAGRAM:
+		break;
+	case CFCTRL_SRV_DATAGRAM:
 		servicel = cfdgml_create(channel_id,
 					&phyinfo->dev_info);
-		अवरोध;
-	हाल CFCTRL_SRV_RFM:
+		break;
+	case CFCTRL_SRV_RFM:
 		netdev = phyinfo->dev_info.dev;
 		servicel = cfrfml_create(channel_id, &phyinfo->dev_info,
 						netdev->mtu);
-		अवरोध;
-	हाल CFCTRL_SRV_UTIL:
+		break;
+	case CFCTRL_SRV_UTIL:
 		servicel = cfutill_create(channel_id, &phyinfo->dev_info);
-		अवरोध;
-	हाल CFCTRL_SRV_VIDEO:
+		break;
+	case CFCTRL_SRV_VIDEO:
 		servicel = cfvidl_create(channel_id, &phyinfo->dev_info);
-		अवरोध;
-	हाल CFCTRL_SRV_DBG:
+		break;
+	case CFCTRL_SRV_DBG:
 		servicel = cfdbgl_create(channel_id, &phyinfo->dev_info);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("Protocol error. Link setup response - unknown channel type\n");
-		जाओ unlock;
-	पूर्ण
-	अगर (!servicel)
-		जाओ unlock;
+		goto unlock;
+	}
+	if (!servicel)
+		goto unlock;
 	layer_set_dn(servicel, cnfg->mux);
 	cfmuxl_set_uplayer(cnfg->mux, servicel, channel_id);
 	layer_set_up(servicel, adapt_layer);
 	layer_set_dn(adapt_layer, servicel);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	servicel->ctrlcmd(servicel, CAIF_CTRLCMD_INIT_RSP, 0);
-	वापस;
+	return;
 unlock:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-पूर्णांक
-cfcnfg_add_phy_layer(काष्ठा cfcnfg *cnfg,
-		     काष्ठा net_device *dev, काष्ठा cflayer *phy_layer,
-		     क्रमागत cfcnfg_phy_preference pref,
-		     काष्ठा cflayer *link_support,
-		     bool fcs, पूर्णांक head_room)
-अणु
-	काष्ठा cflayer *frml;
-	काष्ठा cfcnfg_phyinfo *phyinfo = शून्य;
-	पूर्णांक i, res = 0;
+int
+cfcnfg_add_phy_layer(struct cfcnfg *cnfg,
+		     struct net_device *dev, struct cflayer *phy_layer,
+		     enum cfcnfg_phy_preference pref,
+		     struct cflayer *link_support,
+		     bool fcs, int head_room)
+{
+	struct cflayer *frml;
+	struct cfcnfg_phyinfo *phyinfo = NULL;
+	int i, res = 0;
 	u8 phyid;
 
 	mutex_lock(&cnfg->lock);
 
 	/* CAIF protocol allow maximum 6 link-layers */
-	क्रम (i = 0; i < 7; i++) अणु
-		phyid = (dev->अगरindex + i) & 0x7;
-		अगर (phyid == 0)
-			जारी;
-		अगर (cfcnfg_get_phyinfo_rcu(cnfg, phyid) == शून्य)
-			जाओ got_phyid;
-	पूर्ण
+	for (i = 0; i < 7; i++) {
+		phyid = (dev->ifindex + i) & 0x7;
+		if (phyid == 0)
+			continue;
+		if (cfcnfg_get_phyinfo_rcu(cnfg, phyid) == NULL)
+			goto got_phyid;
+	}
 	pr_warn("Too many CAIF Link Layers (max 6)\n");
 	res = -EEXIST;
-	जाओ out;
+	goto out;
 
 got_phyid:
-	phyinfo = kzalloc(माप(काष्ठा cfcnfg_phyinfo), GFP_ATOMIC);
-	अगर (!phyinfo) अणु
+	phyinfo = kzalloc(sizeof(struct cfcnfg_phyinfo), GFP_ATOMIC);
+	if (!phyinfo) {
 		res = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	phy_layer->id = phyid;
 	phyinfo->pref = pref;
@@ -490,79 +489,79 @@ got_phyid:
 	phyinfo->dev_info.id = phyid;
 	phyinfo->dev_info.dev = dev;
 	phyinfo->phy_layer = phy_layer;
-	phyinfo->अगरindex = dev->अगरindex;
+	phyinfo->ifindex = dev->ifindex;
 	phyinfo->head_room = head_room;
 	phyinfo->use_fcs = fcs;
 
 	frml = cffrml_create(phyid, fcs);
 
-	अगर (!frml) अणु
+	if (!frml) {
 		res = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	phyinfo->frm_layer = frml;
 	layer_set_up(frml, cnfg->mux);
 
-	अगर (link_support != शून्य) अणु
+	if (link_support != NULL) {
 		link_support->id = phyid;
 		layer_set_dn(frml, link_support);
 		layer_set_up(link_support, frml);
 		layer_set_dn(link_support, phy_layer);
 		layer_set_up(phy_layer, link_support);
-	पूर्ण अन्यथा अणु
+	} else {
 		layer_set_dn(frml, phy_layer);
 		layer_set_up(phy_layer, frml);
-	पूर्ण
+	}
 
 	list_add_rcu(&phyinfo->node, &cnfg->phys);
 out:
 	mutex_unlock(&cnfg->lock);
-	वापस res;
+	return res;
 
 out_err:
-	kमुक्त(phyinfo);
+	kfree(phyinfo);
 	mutex_unlock(&cnfg->lock);
-	वापस res;
-पूर्ण
+	return res;
+}
 EXPORT_SYMBOL(cfcnfg_add_phy_layer);
 
-पूर्णांक cfcnfg_set_phy_state(काष्ठा cfcnfg *cnfg, काष्ठा cflayer *phy_layer,
+int cfcnfg_set_phy_state(struct cfcnfg *cnfg, struct cflayer *phy_layer,
 			 bool up)
-अणु
-	काष्ठा cfcnfg_phyinfo *phyinfo;
+{
+	struct cfcnfg_phyinfo *phyinfo;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	phyinfo = cfcnfg_get_phyinfo_rcu(cnfg, phy_layer->id);
-	अगर (phyinfo == शून्य) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ENODEV;
-	पूर्ण
+	if (phyinfo == NULL) {
+		rcu_read_unlock();
+		return -ENODEV;
+	}
 
-	अगर (phyinfo->up == up) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
+	if (phyinfo->up == up) {
+		rcu_read_unlock();
+		return 0;
+	}
 	phyinfo->up = up;
 
-	अगर (up) अणु
+	if (up) {
 		cffrml_hold(phyinfo->frm_layer);
 		cfmuxl_set_dnlayer(cnfg->mux, phyinfo->frm_layer,
 					phy_layer->id);
-	पूर्ण अन्यथा अणु
-		cfmuxl_हटाओ_dnlayer(cnfg->mux, phy_layer->id);
+	} else {
+		cfmuxl_remove_dnlayer(cnfg->mux, phy_layer->id);
 		cffrml_put(phyinfo->frm_layer);
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+	rcu_read_unlock();
+	return 0;
+}
 EXPORT_SYMBOL(cfcnfg_set_phy_state);
 
-पूर्णांक cfcnfg_del_phy_layer(काष्ठा cfcnfg *cnfg, काष्ठा cflayer *phy_layer)
-अणु
-	काष्ठा cflayer *frml, *frml_dn;
+int cfcnfg_del_phy_layer(struct cfcnfg *cnfg, struct cflayer *phy_layer)
+{
+	struct cflayer *frml, *frml_dn;
 	u16 phyid;
-	काष्ठा cfcnfg_phyinfo *phyinfo;
+	struct cfcnfg_phyinfo *phyinfo;
 
 	might_sleep();
 
@@ -571,43 +570,43 @@ EXPORT_SYMBOL(cfcnfg_set_phy_state);
 	phyid = phy_layer->id;
 	phyinfo = cfcnfg_get_phyinfo_rcu(cnfg, phyid);
 
-	अगर (phyinfo == शून्य) अणु
+	if (phyinfo == NULL) {
 		mutex_unlock(&cnfg->lock);
-		वापस 0;
-	पूर्ण
-	caअगर_निश्चित(phyid == phyinfo->id);
-	caअगर_निश्चित(phy_layer == phyinfo->phy_layer);
-	caअगर_निश्चित(phy_layer->id == phyid);
-	caअगर_निश्चित(phyinfo->frm_layer->id == phyid);
+		return 0;
+	}
+	caif_assert(phyid == phyinfo->id);
+	caif_assert(phy_layer == phyinfo->phy_layer);
+	caif_assert(phy_layer->id == phyid);
+	caif_assert(phyinfo->frm_layer->id == phyid);
 
 	list_del_rcu(&phyinfo->node);
 	synchronize_rcu();
 
-	/* Fail अगर reference count is not zero */
-	अगर (cffrml_refcnt_पढ़ो(phyinfo->frm_layer) != 0) अणु
+	/* Fail if reference count is not zero */
+	if (cffrml_refcnt_read(phyinfo->frm_layer) != 0) {
 		pr_info("Wait for device inuse\n");
 		list_add_rcu(&phyinfo->node, &cnfg->phys);
 		mutex_unlock(&cnfg->lock);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	frml = phyinfo->frm_layer;
 	frml_dn = frml->dn;
-	cffrml_set_uplayer(frml, शून्य);
-	cffrml_set_dnlayer(frml, शून्य);
-	अगर (phy_layer != frml_dn) अणु
-		layer_set_up(frml_dn, शून्य);
-		layer_set_dn(frml_dn, शून्य);
-	पूर्ण
-	layer_set_up(phy_layer, शून्य);
+	cffrml_set_uplayer(frml, NULL);
+	cffrml_set_dnlayer(frml, NULL);
+	if (phy_layer != frml_dn) {
+		layer_set_up(frml_dn, NULL);
+		layer_set_dn(frml_dn, NULL);
+	}
+	layer_set_up(phy_layer, NULL);
 
-	अगर (phyinfo->phy_layer != frml_dn)
-		kमुक्त(frml_dn);
+	if (phyinfo->phy_layer != frml_dn)
+		kfree(frml_dn);
 
-	cffrml_मुक्त(frml);
-	kमुक्त(phyinfo);
+	cffrml_free(frml);
+	kfree(phyinfo);
 	mutex_unlock(&cnfg->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(cfcnfg_del_phy_layer);

@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016 Hisilicon Limited.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,13 +30,13 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _HNS_ROCE_CMD_H
-#घोषणा _HNS_ROCE_CMD_H
+#ifndef _HNS_ROCE_CMD_H
+#define _HNS_ROCE_CMD_H
 
-#घोषणा HNS_ROCE_MAILBOX_SIZE		4096
-#घोषणा HNS_ROCE_CMD_TIMEOUT_MSECS	10000
+#define HNS_ROCE_MAILBOX_SIZE		4096
+#define HNS_ROCE_CMD_TIMEOUT_MSECS	10000
 
-क्रमागत अणु
+enum {
 	/* QPC BT commands */
 	HNS_ROCE_CMD_WRITE_QPC_BT0	= 0x0,
 	HNS_ROCE_CMD_WRITE_QPC_BT1	= 0x1,
@@ -112,9 +111,9 @@
 	/* SCC CTX BT commands */
 	HNS_ROCE_CMD_READ_SCCC_BT0	= 0xa4,
 	HNS_ROCE_CMD_WRITE_SCCC_BT0	= 0xa5,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* TPT commands */
 	HNS_ROCE_CMD_CREATE_MPT		= 0xd,
 	HNS_ROCE_CMD_DESTROY_MPT	= 0xf,
@@ -138,15 +137,15 @@
 	HNS_ROCE_CMD_MODIFY_SRQC	= 0x72,
 	HNS_ROCE_CMD_QUERY_SRQC		= 0x73,
 	HNS_ROCE_CMD_DESTROY_SRQ	= 0x74,
-पूर्ण;
+};
 
-पूर्णांक hns_roce_cmd_mbox(काष्ठा hns_roce_dev *hr_dev, u64 in_param, u64 out_param,
-		      अचिन्हित दीर्घ in_modअगरier, u8 op_modअगरier, u16 op,
-		      अचिन्हित पूर्णांक समयout);
+int hns_roce_cmd_mbox(struct hns_roce_dev *hr_dev, u64 in_param, u64 out_param,
+		      unsigned long in_modifier, u8 op_modifier, u16 op,
+		      unsigned int timeout);
 
-काष्ठा hns_roce_cmd_mailbox *
-hns_roce_alloc_cmd_mailbox(काष्ठा hns_roce_dev *hr_dev);
-व्योम hns_roce_मुक्त_cmd_mailbox(काष्ठा hns_roce_dev *hr_dev,
-			       काष्ठा hns_roce_cmd_mailbox *mailbox);
+struct hns_roce_cmd_mailbox *
+hns_roce_alloc_cmd_mailbox(struct hns_roce_dev *hr_dev);
+void hns_roce_free_cmd_mailbox(struct hns_roce_dev *hr_dev,
+			       struct hns_roce_cmd_mailbox *mailbox);
 
-#पूर्ण_अगर /* _HNS_ROCE_CMD_H */
+#endif /* _HNS_ROCE_CMD_H */

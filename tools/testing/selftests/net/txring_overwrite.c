@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
- * Verअगरy that consecutive sends over packet tx_ring are mirrored
- * with their original content पूर्णांकact.
+ * Verify that consecutive sends over packet tx_ring are mirrored
+ * with their original content intact.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <arpa/inet.h>
-#समावेश <निश्चित.स>
-#समावेश <error.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/अगर_packet.h>
-#समावेश <net/ethernet.h>
-#समावेश <net/अगर.h>
-#समावेश <netinet/in.h>
-#समावेश <netinet/ip.h>
-#समावेश <netinet/udp.h>
-#समावेश <poll.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <sys/utsname.h>
-#समावेश <stdbool.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <error.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/filter.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <poll.h>
+#include <pthread.h>
+#include <sched.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/utsname.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-स्थिर पूर्णांक eth_off = TPACKET_HDRLEN - माप(काष्ठा sockaddr_ll);
-स्थिर पूर्णांक cfg_frame_size = 1000;
+const int eth_off = TPACKET_HDRLEN - sizeof(struct sockaddr_ll);
+const int cfg_frame_size = 1000;
 
-अटल व्योम build_packet(व्योम *buffer, माप_प्रकार blen, अक्षर payload_अक्षर)
-अणु
-	काष्ठा udphdr *udph;
-	काष्ठा ethhdr *eth;
-	काष्ठा iphdr *iph;
-	माप_प्रकार off = 0;
+static void build_packet(void *buffer, size_t blen, char payload_char)
+{
+	struct udphdr *udph;
+	struct ethhdr *eth;
+	struct iphdr *iph;
+	size_t off = 0;
 
-	स_रखो(buffer, 0, blen);
+	memset(buffer, 0, blen);
 
 	eth = buffer;
 	eth->h_proto = htons(ETH_P_IP);
 
-	off += माप(*eth);
+	off += sizeof(*eth);
 	iph = buffer + off;
 	iph->ttl	= 8;
 	iph->ihl	= 5;
@@ -62,105 +61,105 @@
 	iph->tot_len	= htons(blen - off);
 	iph->check	= 0;
 
-	off += माप(*iph);
+	off += sizeof(*iph);
 	udph = buffer + off;
 	udph->dest	= htons(8000);
 	udph->source	= htons(8001);
 	udph->len	= htons(blen - off);
 	udph->check	= 0;
 
-	off += माप(*udph);
-	स_रखो(buffer + off, payload_अक्षर, blen - off);
-पूर्ण
+	off += sizeof(*udph);
+	memset(buffer + off, payload_char, blen - off);
+}
 
-अटल पूर्णांक setup_rx(व्योम)
-अणु
-	पूर्णांक fdr;
+static int setup_rx(void)
+{
+	int fdr;
 
 	fdr = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP));
-	अगर (fdr == -1)
-		error(1, त्रुटि_सं, "socket r");
+	if (fdr == -1)
+		error(1, errno, "socket r");
 
-	वापस fdr;
-पूर्ण
+	return fdr;
+}
 
-अटल पूर्णांक setup_tx(अक्षर **ring)
-अणु
-	काष्ठा sockaddr_ll laddr = अणुपूर्ण;
-	काष्ठा tpacket_req req = अणुपूर्ण;
-	पूर्णांक fdt;
+static int setup_tx(char **ring)
+{
+	struct sockaddr_ll laddr = {};
+	struct tpacket_req req = {};
+	int fdt;
 
 	fdt = socket(PF_PACKET, SOCK_RAW, 0);
-	अगर (fdt == -1)
-		error(1, त्रुटि_सं, "socket t");
+	if (fdt == -1)
+		error(1, errno, "socket t");
 
 	laddr.sll_family = AF_PACKET;
 	laddr.sll_protocol = htons(0);
-	laddr.sll_अगरindex = अगर_nametoindex("lo");
-	अगर (!laddr.sll_अगरindex)
-		error(1, त्रुटि_सं, "if_nametoindex");
+	laddr.sll_ifindex = if_nametoindex("lo");
+	if (!laddr.sll_ifindex)
+		error(1, errno, "if_nametoindex");
 
-	अगर (bind(fdt, (व्योम *)&laddr, माप(laddr)))
-		error(1, त्रुटि_सं, "bind fdt");
+	if (bind(fdt, (void *)&laddr, sizeof(laddr)))
+		error(1, errno, "bind fdt");
 
 	req.tp_block_size = getpagesize();
 	req.tp_block_nr   = 1;
 	req.tp_frame_size = getpagesize();
 	req.tp_frame_nr   = 1;
 
-	अगर (setsockopt(fdt, SOL_PACKET, PACKET_TX_RING,
-		       (व्योम *)&req, माप(req)))
-		error(1, त्रुटि_सं, "setsockopt ring");
+	if (setsockopt(fdt, SOL_PACKET, PACKET_TX_RING,
+		       (void *)&req, sizeof(req)))
+		error(1, errno, "setsockopt ring");
 
 	*ring = mmap(0, req.tp_block_size * req.tp_block_nr,
 		     PROT_READ | PROT_WRITE, MAP_SHARED, fdt, 0);
-	अगर (*ring == MAP_FAILED)
-		error(1, त्रुटि_सं, "mmap");
+	if (*ring == MAP_FAILED)
+		error(1, errno, "mmap");
 
-	वापस fdt;
-पूर्ण
+	return fdt;
+}
 
-अटल व्योम send_pkt(पूर्णांक fdt, व्योम *slot, अक्षर payload_अक्षर)
-अणु
-	काष्ठा tpacket_hdr *header = slot;
-	पूर्णांक ret;
+static void send_pkt(int fdt, void *slot, char payload_char)
+{
+	struct tpacket_hdr *header = slot;
+	int ret;
 
-	जबतक (header->tp_status != TP_STATUS_AVAILABLE)
+	while (header->tp_status != TP_STATUS_AVAILABLE)
 		usleep(1000);
 
-	build_packet(slot + eth_off, cfg_frame_size, payload_अक्षर);
+	build_packet(slot + eth_off, cfg_frame_size, payload_char);
 
 	header->tp_len = cfg_frame_size;
 	header->tp_status = TP_STATUS_SEND_REQUEST;
 
-	ret = sendto(fdt, शून्य, 0, 0, शून्य, 0);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "kick tx");
-पूर्ण
+	ret = sendto(fdt, NULL, 0, 0, NULL, 0);
+	if (ret == -1)
+		error(1, errno, "kick tx");
+}
 
-अटल पूर्णांक पढ़ो_verअगरy_pkt(पूर्णांक fdr, अक्षर payload_अक्षर)
-अणु
-	अक्षर buf[100];
-	पूर्णांक ret;
+static int read_verify_pkt(int fdr, char payload_char)
+{
+	char buf[100];
+	int ret;
 
-	ret = पढ़ो(fdr, buf, माप(buf));
-	अगर (ret != माप(buf))
-		error(1, त्रुटि_सं, "read");
+	ret = read(fdr, buf, sizeof(buf));
+	if (ret != sizeof(buf))
+		error(1, errno, "read");
 
-	अगर (buf[60] != payload_अक्षर) अणु
-		म_लिखो("wrong pattern: 0x%x != 0x%x\n", buf[60], payload_अक्षर);
-		वापस 1;
-	पूर्ण
+	if (buf[60] != payload_char) {
+		printf("wrong pattern: 0x%x != 0x%x\n", buf[60], payload_char);
+		return 1;
+	}
 
-	म_लिखो("read: %c (0x%x)\n", buf[60], buf[60]);
-	वापस 0;
-पूर्ण
+	printf("read: %c (0x%x)\n", buf[60], buf[60]);
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर payload_patterns[] = "ab";
-	अक्षर *ring;
-	पूर्णांक fdr, fdt, ret = 0;
+int main(int argc, char **argv)
+{
+	const char payload_patterns[] = "ab";
+	char *ring;
+	int fdr, fdt, ret = 0;
 
 	fdr = setup_rx();
 	fdt = setup_tx(&ring);
@@ -168,13 +167,13 @@
 	send_pkt(fdt, ring, payload_patterns[0]);
 	send_pkt(fdt, ring, payload_patterns[1]);
 
-	ret |= पढ़ो_verअगरy_pkt(fdr, payload_patterns[0]);
-	ret |= पढ़ो_verअगरy_pkt(fdr, payload_patterns[1]);
+	ret |= read_verify_pkt(fdr, payload_patterns[0]);
+	ret |= read_verify_pkt(fdr, payload_patterns[1]);
 
-	अगर (बंद(fdt))
-		error(1, त्रुटि_सं, "close t");
-	अगर (बंद(fdr))
-		error(1, त्रुटि_सं, "close r");
+	if (close(fdt))
+		error(1, errno, "close t");
+	if (close(fdr))
+		error(1, errno, "close r");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

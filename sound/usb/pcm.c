@@ -1,634 +1,633 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/audपन.स>
-#समावेश <linux/usb/audio-v2.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/bitrev.h>
+#include <linux/ratelimit.h>
+#include <linux/usb.h>
+#include <linux/usb/audio.h>
+#include <linux/usb/audio-v2.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
 
-#समावेश "usbaudio.h"
-#समावेश "card.h"
-#समावेश "quirks.h"
-#समावेश "endpoint.h"
-#समावेश "helper.h"
-#समावेश "pcm.h"
-#समावेश "clock.h"
-#समावेश "power.h"
-#समावेश "media.h"
-#समावेश "implicit.h"
+#include "usbaudio.h"
+#include "card.h"
+#include "quirks.h"
+#include "endpoint.h"
+#include "helper.h"
+#include "pcm.h"
+#include "clock.h"
+#include "power.h"
+#include "media.h"
+#include "implicit.h"
 
-#घोषणा SUBSTREAM_FLAG_DATA_EP_STARTED	0
-#घोषणा SUBSTREAM_FLAG_SYNC_EP_STARTED	1
+#define SUBSTREAM_FLAG_DATA_EP_STARTED	0
+#define SUBSTREAM_FLAG_SYNC_EP_STARTED	1
 
-/* वापस the estimated delay based on USB frame counters */
-snd_pcm_uframes_t snd_usb_pcm_delay(काष्ठा snd_usb_substream *subs,
-				    अचिन्हित पूर्णांक rate)
-अणु
-	पूर्णांक current_frame_number;
-	पूर्णांक frame_dअगरf;
-	पूर्णांक est_delay;
+/* return the estimated delay based on USB frame counters */
+snd_pcm_uframes_t snd_usb_pcm_delay(struct snd_usb_substream *subs,
+				    unsigned int rate)
+{
+	int current_frame_number;
+	int frame_diff;
+	int est_delay;
 
-	अगर (!subs->last_delay)
-		वापस 0; /* लघु path */
+	if (!subs->last_delay)
+		return 0; /* short path */
 
 	current_frame_number = usb_get_current_frame_number(subs->dev);
 	/*
-	 * HCD implementations use dअगरferent widths, use lower 8 bits.
+	 * HCD implementations use different widths, use lower 8 bits.
 	 * The delay will be managed up to 256ms, which is more than
 	 * enough
 	 */
-	frame_dअगरf = (current_frame_number - subs->last_frame_number) & 0xff;
+	frame_diff = (current_frame_number - subs->last_frame_number) & 0xff;
 
 	/* Approximation based on number of samples per USB frame (ms),
-	   some truncation क्रम 44.1 but the estimate is good enough */
-	est_delay =  frame_dअगरf * rate / 1000;
-	अगर (subs->direction == SNDRV_PCM_STREAM_PLAYBACK)
+	   some truncation for 44.1 but the estimate is good enough */
+	est_delay =  frame_diff * rate / 1000;
+	if (subs->direction == SNDRV_PCM_STREAM_PLAYBACK)
 		est_delay = subs->last_delay - est_delay;
-	अन्यथा
+	else
 		est_delay = subs->last_delay + est_delay;
 
-	अगर (est_delay < 0)
+	if (est_delay < 0)
 		est_delay = 0;
-	वापस est_delay;
-पूर्ण
+	return est_delay;
+}
 
 /*
- * वापस the current pcm poपूर्णांकer.  just based on the hwptr_करोne value.
+ * return the current pcm pointer.  just based on the hwptr_done value.
  */
-अटल snd_pcm_uframes_t snd_usb_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
-	अचिन्हित पूर्णांक hwptr_करोne;
+static snd_pcm_uframes_t snd_usb_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_usb_substream *subs = substream->runtime->private_data;
+	unsigned int hwptr_done;
 
-	अगर (atomic_पढ़ो(&subs->stream->chip->shutकरोwn))
-		वापस SNDRV_PCM_POS_XRUN;
+	if (atomic_read(&subs->stream->chip->shutdown))
+		return SNDRV_PCM_POS_XRUN;
 	spin_lock(&subs->lock);
-	hwptr_करोne = subs->hwptr_करोne;
-	substream->runसमय->delay = snd_usb_pcm_delay(subs,
-						substream->runसमय->rate);
+	hwptr_done = subs->hwptr_done;
+	substream->runtime->delay = snd_usb_pcm_delay(subs,
+						substream->runtime->rate);
 	spin_unlock(&subs->lock);
-	वापस hwptr_करोne / (substream->runसमय->frame_bits >> 3);
-पूर्ण
+	return hwptr_done / (substream->runtime->frame_bits >> 3);
+}
 
 /*
- * find a matching audio क्रमmat
+ * find a matching audio format
  */
-अटल स्थिर काष्ठा audioक्रमmat *
-find_क्रमmat(काष्ठा list_head *fmt_list_head, snd_pcm_क्रमmat_t क्रमmat,
-	    अचिन्हित पूर्णांक rate, अचिन्हित पूर्णांक channels, bool strict_match,
-	    काष्ठा snd_usb_substream *subs)
-अणु
-	स्थिर काष्ठा audioक्रमmat *fp;
-	स्थिर काष्ठा audioक्रमmat *found = शून्य;
-	पूर्णांक cur_attr = 0, attr;
+static const struct audioformat *
+find_format(struct list_head *fmt_list_head, snd_pcm_format_t format,
+	    unsigned int rate, unsigned int channels, bool strict_match,
+	    struct snd_usb_substream *subs)
+{
+	const struct audioformat *fp;
+	const struct audioformat *found = NULL;
+	int cur_attr = 0, attr;
 
-	list_क्रम_each_entry(fp, fmt_list_head, list) अणु
-		अगर (strict_match) अणु
-			अगर (!(fp->क्रमmats & pcm_क्रमmat_to_bits(क्रमmat)))
-				जारी;
-			अगर (fp->channels != channels)
-				जारी;
-		पूर्ण
-		अगर (rate < fp->rate_min || rate > fp->rate_max)
-			जारी;
-		अगर (!(fp->rates & SNDRV_PCM_RATE_CONTINUOUS)) अणु
-			अचिन्हित पूर्णांक i;
-			क्रम (i = 0; i < fp->nr_rates; i++)
-				अगर (fp->rate_table[i] == rate)
-					अवरोध;
-			अगर (i >= fp->nr_rates)
-				जारी;
-		पूर्ण
+	list_for_each_entry(fp, fmt_list_head, list) {
+		if (strict_match) {
+			if (!(fp->formats & pcm_format_to_bits(format)))
+				continue;
+			if (fp->channels != channels)
+				continue;
+		}
+		if (rate < fp->rate_min || rate > fp->rate_max)
+			continue;
+		if (!(fp->rates & SNDRV_PCM_RATE_CONTINUOUS)) {
+			unsigned int i;
+			for (i = 0; i < fp->nr_rates; i++)
+				if (fp->rate_table[i] == rate)
+					break;
+			if (i >= fp->nr_rates)
+				continue;
+		}
 		attr = fp->ep_attr & USB_ENDPOINT_SYNCTYPE;
-		अगर (!found) अणु
+		if (!found) {
 			found = fp;
 			cur_attr = attr;
-			जारी;
-		पूर्ण
-		/* aव्योम async out and adaptive in अगर the other method
-		 * supports the same क्रमmat.
-		 * this is a workaround क्रम the हाल like
+			continue;
+		}
+		/* avoid async out and adaptive in if the other method
+		 * supports the same format.
+		 * this is a workaround for the case like
 		 * M-audio audiophile USB.
 		 */
-		अगर (subs && attr != cur_attr) अणु
-			अगर ((attr == USB_ENDPOINT_SYNC_ASYNC &&
+		if (subs && attr != cur_attr) {
+			if ((attr == USB_ENDPOINT_SYNC_ASYNC &&
 			     subs->direction == SNDRV_PCM_STREAM_PLAYBACK) ||
 			    (attr == USB_ENDPOINT_SYNC_ADAPTIVE &&
 			     subs->direction == SNDRV_PCM_STREAM_CAPTURE))
-				जारी;
-			अगर ((cur_attr == USB_ENDPOINT_SYNC_ASYNC &&
+				continue;
+			if ((cur_attr == USB_ENDPOINT_SYNC_ASYNC &&
 			     subs->direction == SNDRV_PCM_STREAM_PLAYBACK) ||
 			    (cur_attr == USB_ENDPOINT_SYNC_ADAPTIVE &&
-			     subs->direction == SNDRV_PCM_STREAM_CAPTURE)) अणु
+			     subs->direction == SNDRV_PCM_STREAM_CAPTURE)) {
 				found = fp;
 				cur_attr = attr;
-				जारी;
-			पूर्ण
-		पूर्ण
-		/* find the क्रमmat with the largest max. packet size */
-		अगर (fp->maxpacksize > found->maxpacksize) अणु
+				continue;
+			}
+		}
+		/* find the format with the largest max. packet size */
+		if (fp->maxpacksize > found->maxpacksize) {
 			found = fp;
 			cur_attr = attr;
-		पूर्ण
-	पूर्ण
-	वापस found;
-पूर्ण
+		}
+	}
+	return found;
+}
 
-अटल स्थिर काष्ठा audioक्रमmat *
-find_substream_क्रमmat(काष्ठा snd_usb_substream *subs,
-		      स्थिर काष्ठा snd_pcm_hw_params *params)
-अणु
-	वापस find_क्रमmat(&subs->fmt_list, params_क्रमmat(params),
+static const struct audioformat *
+find_substream_format(struct snd_usb_substream *subs,
+		      const struct snd_pcm_hw_params *params)
+{
+	return find_format(&subs->fmt_list, params_format(params),
 			   params_rate(params), params_channels(params),
 			   true, subs);
-पूर्ण
+}
 
-अटल पूर्णांक init_pitch_v1(काष्ठा snd_usb_audio *chip, पूर्णांक ep)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	अचिन्हित अक्षर data[1];
-	पूर्णांक err;
+static int init_pitch_v1(struct snd_usb_audio *chip, int ep)
+{
+	struct usb_device *dev = chip->dev;
+	unsigned char data[1];
+	int err;
 
 	data[0] = 1;
 	err = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0), UAC_SET_CUR,
-			      USB_TYPE_CLASS|USB_RECIP_ENDPOINT|USB_सूची_OUT,
+			      USB_TYPE_CLASS|USB_RECIP_ENDPOINT|USB_DIR_OUT,
 			      UAC_EP_CS_ATTR_PITCH_CONTROL << 8, ep,
-			      data, माप(data));
-	वापस err;
-पूर्ण
+			      data, sizeof(data));
+	return err;
+}
 
-अटल पूर्णांक init_pitch_v2(काष्ठा snd_usb_audio *chip, पूर्णांक ep)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	अचिन्हित अक्षर data[1];
-	पूर्णांक err;
+static int init_pitch_v2(struct snd_usb_audio *chip, int ep)
+{
+	struct usb_device *dev = chip->dev;
+	unsigned char data[1];
+	int err;
 
 	data[0] = 1;
 	err = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0), UAC2_CS_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_सूची_OUT,
+			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_DIR_OUT,
 			      UAC2_EP_CS_PITCH << 8, 0,
-			      data, माप(data));
-	वापस err;
-पूर्ण
+			      data, sizeof(data));
+	return err;
+}
 
 /*
  * initialize the pitch control and sample rate
  */
-पूर्णांक snd_usb_init_pitch(काष्ठा snd_usb_audio *chip,
-		       स्थिर काष्ठा audioक्रमmat *fmt)
-अणु
-	पूर्णांक err;
+int snd_usb_init_pitch(struct snd_usb_audio *chip,
+		       const struct audioformat *fmt)
+{
+	int err;
 
-	/* अगर endpoपूर्णांक करोesn't have pitch control, bail out */
-	अगर (!(fmt->attributes & UAC_EP_CS_ATTR_PITCH_CONTROL))
-		वापस 0;
+	/* if endpoint doesn't have pitch control, bail out */
+	if (!(fmt->attributes & UAC_EP_CS_ATTR_PITCH_CONTROL))
+		return 0;
 
-	usb_audio_dbg(chip, "enable PITCH for EP 0x%x\n", fmt->endpoपूर्णांक);
+	usb_audio_dbg(chip, "enable PITCH for EP 0x%x\n", fmt->endpoint);
 
-	चयन (fmt->protocol) अणु
-	हाल UAC_VERSION_1:
-		err = init_pitch_v1(chip, fmt->endpoपूर्णांक);
-		अवरोध;
-	हाल UAC_VERSION_2:
-		err = init_pitch_v2(chip, fmt->endpoपूर्णांक);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (fmt->protocol) {
+	case UAC_VERSION_1:
+		err = init_pitch_v1(chip, fmt->endpoint);
+		break;
+	case UAC_VERSION_2:
+		err = init_pitch_v2(chip, fmt->endpoint);
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		usb_audio_err(chip, "failed to enable PITCH for EP 0x%x\n",
-			      fmt->endpoपूर्णांक);
-		वापस err;
-	पूर्ण
+			      fmt->endpoint);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool stop_endpoपूर्णांकs(काष्ठा snd_usb_substream *subs)
-अणु
+static bool stop_endpoints(struct snd_usb_substream *subs)
+{
 	bool stopped = 0;
 
-	अगर (test_and_clear_bit(SUBSTREAM_FLAG_SYNC_EP_STARTED, &subs->flags)) अणु
-		snd_usb_endpoपूर्णांक_stop(subs->sync_endpoपूर्णांक);
+	if (test_and_clear_bit(SUBSTREAM_FLAG_SYNC_EP_STARTED, &subs->flags)) {
+		snd_usb_endpoint_stop(subs->sync_endpoint);
 		stopped = true;
-	पूर्ण
-	अगर (test_and_clear_bit(SUBSTREAM_FLAG_DATA_EP_STARTED, &subs->flags)) अणु
-		snd_usb_endpoपूर्णांक_stop(subs->data_endpoपूर्णांक);
+	}
+	if (test_and_clear_bit(SUBSTREAM_FLAG_DATA_EP_STARTED, &subs->flags)) {
+		snd_usb_endpoint_stop(subs->data_endpoint);
 		stopped = true;
-	पूर्ण
-	वापस stopped;
-पूर्ण
+	}
+	return stopped;
+}
 
-अटल पूर्णांक start_endpoपूर्णांकs(काष्ठा snd_usb_substream *subs)
-अणु
-	पूर्णांक err;
+static int start_endpoints(struct snd_usb_substream *subs)
+{
+	int err;
 
-	अगर (!subs->data_endpoपूर्णांक)
-		वापस -EINVAL;
+	if (!subs->data_endpoint)
+		return -EINVAL;
 
-	अगर (!test_and_set_bit(SUBSTREAM_FLAG_DATA_EP_STARTED, &subs->flags)) अणु
-		err = snd_usb_endpoपूर्णांक_start(subs->data_endpoपूर्णांक);
-		अगर (err < 0) अणु
+	if (!test_and_set_bit(SUBSTREAM_FLAG_DATA_EP_STARTED, &subs->flags)) {
+		err = snd_usb_endpoint_start(subs->data_endpoint);
+		if (err < 0) {
 			clear_bit(SUBSTREAM_FLAG_DATA_EP_STARTED, &subs->flags);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	अगर (subs->sync_endpoपूर्णांक &&
-	    !test_and_set_bit(SUBSTREAM_FLAG_SYNC_EP_STARTED, &subs->flags)) अणु
-		err = snd_usb_endpoपूर्णांक_start(subs->sync_endpoपूर्णांक);
-		अगर (err < 0) अणु
+	if (subs->sync_endpoint &&
+	    !test_and_set_bit(SUBSTREAM_FLAG_SYNC_EP_STARTED, &subs->flags)) {
+		err = snd_usb_endpoint_start(subs->sync_endpoint);
+		if (err < 0) {
 			clear_bit(SUBSTREAM_FLAG_SYNC_EP_STARTED, &subs->flags);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
  error:
-	stop_endpoपूर्णांकs(subs);
-	वापस err;
-पूर्ण
+	stop_endpoints(subs);
+	return err;
+}
 
-अटल व्योम sync_pending_stops(काष्ठा snd_usb_substream *subs)
-अणु
-	snd_usb_endpoपूर्णांक_sync_pending_stop(subs->sync_endpoपूर्णांक);
-	snd_usb_endpoपूर्णांक_sync_pending_stop(subs->data_endpoपूर्णांक);
-पूर्ण
+static void sync_pending_stops(struct snd_usb_substream *subs)
+{
+	snd_usb_endpoint_sync_pending_stop(subs->sync_endpoint);
+	snd_usb_endpoint_sync_pending_stop(subs->data_endpoint);
+}
 
 /* PCM sync_stop callback */
-अटल पूर्णांक snd_usb_pcm_sync_stop(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
+static int snd_usb_pcm_sync_stop(struct snd_pcm_substream *substream)
+{
+	struct snd_usb_substream *subs = substream->runtime->private_data;
 
 	sync_pending_stops(subs);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Set up sync endpoपूर्णांक */
-पूर्णांक snd_usb_audioक्रमmat_set_sync_ep(काष्ठा snd_usb_audio *chip,
-				    काष्ठा audioक्रमmat *fmt)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	काष्ठा usb_host_पूर्णांकerface *alts;
-	काष्ठा usb_पूर्णांकerface_descriptor *altsd;
-	अचिन्हित पूर्णांक ep, attr, sync_attr;
+/* Set up sync endpoint */
+int snd_usb_audioformat_set_sync_ep(struct snd_usb_audio *chip,
+				    struct audioformat *fmt)
+{
+	struct usb_device *dev = chip->dev;
+	struct usb_host_interface *alts;
+	struct usb_interface_descriptor *altsd;
+	unsigned int ep, attr, sync_attr;
 	bool is_playback;
-	पूर्णांक err;
+	int err;
 
-	alts = snd_usb_get_host_पूर्णांकerface(chip, fmt->अगरace, fmt->altsetting);
-	अगर (!alts)
-		वापस 0;
-	altsd = get_अगरace_desc(alts);
+	alts = snd_usb_get_host_interface(chip, fmt->iface, fmt->altsetting);
+	if (!alts)
+		return 0;
+	altsd = get_iface_desc(alts);
 
 	err = snd_usb_parse_implicit_fb_quirk(chip, fmt, alts);
-	अगर (err > 0)
-		वापस 0; /* matched */
+	if (err > 0)
+		return 0; /* matched */
 
 	/*
 	 * Generic sync EP handling
 	 */
 
-	अगर (altsd->bNumEndpoपूर्णांकs < 2)
-		वापस 0;
+	if (altsd->bNumEndpoints < 2)
+		return 0;
 
-	is_playback = !(get_endpoपूर्णांक(alts, 0)->bEndpoपूर्णांकAddress & USB_सूची_IN);
+	is_playback = !(get_endpoint(alts, 0)->bEndpointAddress & USB_DIR_IN);
 	attr = fmt->ep_attr & USB_ENDPOINT_SYNCTYPE;
-	अगर ((is_playback && (attr == USB_ENDPOINT_SYNC_SYNC ||
+	if ((is_playback && (attr == USB_ENDPOINT_SYNC_SYNC ||
 			     attr == USB_ENDPOINT_SYNC_ADAPTIVE)) ||
 	    (!is_playback && attr != USB_ENDPOINT_SYNC_ADAPTIVE))
-		वापस 0;
+		return 0;
 
-	sync_attr = get_endpoपूर्णांक(alts, 1)->bmAttributes;
+	sync_attr = get_endpoint(alts, 1)->bmAttributes;
 
 	/*
-	 * In हाल of illegal SYNC_NONE क्रम OUT endpoपूर्णांक, we keep going to see
-	 * अगर we करोn't find a sync endpoपूर्णांक, as on M-Audio Transit. In हाल of
-	 * error fall back to SYNC mode and करोn't create sync endpoपूर्णांक
+	 * In case of illegal SYNC_NONE for OUT endpoint, we keep going to see
+	 * if we don't find a sync endpoint, as on M-Audio Transit. In case of
+	 * error fall back to SYNC mode and don't create sync endpoint
 	 */
 
-	/* check sync-pipe endpoपूर्णांक */
-	/* ... and check descriptor size beक्रमe accessing bSynchAddress
+	/* check sync-pipe endpoint */
+	/* ... and check descriptor size before accessing bSynchAddress
 	   because there is a version of the SB Audigy 2 NX firmware lacking
-	   the audio fields in the endpoपूर्णांक descriptors */
-	अगर ((sync_attr & USB_ENDPOINT_XFERTYPE_MASK) != USB_ENDPOINT_XFER_ISOC ||
-	    (get_endpoपूर्णांक(alts, 1)->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE &&
-	     get_endpoपूर्णांक(alts, 1)->bSynchAddress != 0)) अणु
+	   the audio fields in the endpoint descriptors */
+	if ((sync_attr & USB_ENDPOINT_XFERTYPE_MASK) != USB_ENDPOINT_XFER_ISOC ||
+	    (get_endpoint(alts, 1)->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE &&
+	     get_endpoint(alts, 1)->bSynchAddress != 0)) {
 		dev_err(&dev->dev,
 			"%d:%d : invalid sync pipe. bmAttributes %02x, bLength %d, bSynchAddress %02x\n",
-			   fmt->अगरace, fmt->altsetting,
-			   get_endpoपूर्णांक(alts, 1)->bmAttributes,
-			   get_endpoपूर्णांक(alts, 1)->bLength,
-			   get_endpoपूर्णांक(alts, 1)->bSynchAddress);
-		अगर (is_playback && attr == USB_ENDPOINT_SYNC_NONE)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
-	ep = get_endpoपूर्णांक(alts, 1)->bEndpoपूर्णांकAddress;
-	अगर (get_endpoपूर्णांक(alts, 0)->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE &&
-	    get_endpoपूर्णांक(alts, 0)->bSynchAddress != 0 &&
-	    ((is_playback && ep != (अचिन्हित पूर्णांक)(get_endpoपूर्णांक(alts, 0)->bSynchAddress | USB_सूची_IN)) ||
-	     (!is_playback && ep != (अचिन्हित पूर्णांक)(get_endpoपूर्णांक(alts, 0)->bSynchAddress & ~USB_सूची_IN)))) अणु
+			   fmt->iface, fmt->altsetting,
+			   get_endpoint(alts, 1)->bmAttributes,
+			   get_endpoint(alts, 1)->bLength,
+			   get_endpoint(alts, 1)->bSynchAddress);
+		if (is_playback && attr == USB_ENDPOINT_SYNC_NONE)
+			return 0;
+		return -EINVAL;
+	}
+	ep = get_endpoint(alts, 1)->bEndpointAddress;
+	if (get_endpoint(alts, 0)->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE &&
+	    get_endpoint(alts, 0)->bSynchAddress != 0 &&
+	    ((is_playback && ep != (unsigned int)(get_endpoint(alts, 0)->bSynchAddress | USB_DIR_IN)) ||
+	     (!is_playback && ep != (unsigned int)(get_endpoint(alts, 0)->bSynchAddress & ~USB_DIR_IN)))) {
 		dev_err(&dev->dev,
 			"%d:%d : invalid sync pipe. is_playback %d, ep %02x, bSynchAddress %02x\n",
-			   fmt->अगरace, fmt->altsetting,
-			   is_playback, ep, get_endpoपूर्णांक(alts, 0)->bSynchAddress);
-		अगर (is_playback && attr == USB_ENDPOINT_SYNC_NONE)
-			वापस 0;
-		वापस -EINVAL;
-	पूर्ण
+			   fmt->iface, fmt->altsetting,
+			   is_playback, ep, get_endpoint(alts, 0)->bSynchAddress);
+		if (is_playback && attr == USB_ENDPOINT_SYNC_NONE)
+			return 0;
+		return -EINVAL;
+	}
 
 	fmt->sync_ep = ep;
-	fmt->sync_अगरace = altsd->bInterfaceNumber;
+	fmt->sync_iface = altsd->bInterfaceNumber;
 	fmt->sync_altsetting = altsd->bAlternateSetting;
 	fmt->sync_ep_idx = 1;
-	अगर ((sync_attr & USB_ENDPOINT_USAGE_MASK) == USB_ENDPOINT_USAGE_IMPLICIT_FB)
+	if ((sync_attr & USB_ENDPOINT_USAGE_MASK) == USB_ENDPOINT_USAGE_IMPLICIT_FB)
 		fmt->implicit_fb = 1;
 
 	dev_dbg(&dev->dev, "%d:%d: found sync_ep=0x%x, iface=%d, alt=%d, implicit_fb=%d\n",
-		fmt->अगरace, fmt->altsetting, fmt->sync_ep, fmt->sync_अगरace,
+		fmt->iface, fmt->altsetting, fmt->sync_ep, fmt->sync_iface,
 		fmt->sync_altsetting, fmt->implicit_fb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_pcm_change_state(काष्ठा snd_usb_substream *subs, पूर्णांक state)
-अणु
-	पूर्णांक ret;
+static int snd_usb_pcm_change_state(struct snd_usb_substream *subs, int state)
+{
+	int ret;
 
-	अगर (!subs->str_pd)
-		वापस 0;
+	if (!subs->str_pd)
+		return 0;
 
-	ret = snd_usb_घातer_करोमुख्य_set(subs->stream->chip, subs->str_pd, state);
-	अगर (ret < 0) अणु
+	ret = snd_usb_power_domain_set(subs->stream->chip, subs->str_pd, state);
+	if (ret < 0) {
 		dev_err(&subs->dev->dev,
 			"Cannot change Power Domain ID: %d to state: %d. Err: %d\n",
 			subs->str_pd->pd_id, state, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_usb_pcm_suspend(काष्ठा snd_usb_stream *as)
-अणु
-	पूर्णांक ret;
+int snd_usb_pcm_suspend(struct snd_usb_stream *as)
+{
+	int ret;
 
 	ret = snd_usb_pcm_change_state(&as->substream[0], UAC3_PD_STATE_D2);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = snd_usb_pcm_change_state(&as->substream[1], UAC3_PD_STATE_D2);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_usb_pcm_resume(काष्ठा snd_usb_stream *as)
-अणु
-	पूर्णांक ret;
+int snd_usb_pcm_resume(struct snd_usb_stream *as)
+{
+	int ret;
 
 	ret = snd_usb_pcm_change_state(&as->substream[0], UAC3_PD_STATE_D1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = snd_usb_pcm_change_state(&as->substream[1], UAC3_PD_STATE_D1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम बंद_endpoपूर्णांकs(काष्ठा snd_usb_audio *chip,
-			    काष्ठा snd_usb_substream *subs)
-अणु
-	अगर (subs->data_endpoपूर्णांक) अणु
-		snd_usb_endpoपूर्णांक_set_sync(chip, subs->data_endpoपूर्णांक, शून्य);
-		snd_usb_endpoपूर्णांक_बंद(chip, subs->data_endpoपूर्णांक);
-		subs->data_endpoपूर्णांक = शून्य;
-	पूर्ण
+static void close_endpoints(struct snd_usb_audio *chip,
+			    struct snd_usb_substream *subs)
+{
+	if (subs->data_endpoint) {
+		snd_usb_endpoint_set_sync(chip, subs->data_endpoint, NULL);
+		snd_usb_endpoint_close(chip, subs->data_endpoint);
+		subs->data_endpoint = NULL;
+	}
 
-	अगर (subs->sync_endpoपूर्णांक) अणु
-		snd_usb_endpoपूर्णांक_बंद(chip, subs->sync_endpoपूर्णांक);
-		subs->sync_endpoपूर्णांक = शून्य;
-	पूर्ण
-पूर्ण
+	if (subs->sync_endpoint) {
+		snd_usb_endpoint_close(chip, subs->sync_endpoint);
+		subs->sync_endpoint = NULL;
+	}
+}
 
-अटल पूर्णांक configure_endpoपूर्णांकs(काष्ठा snd_usb_audio *chip,
-			       काष्ठा snd_usb_substream *subs)
-अणु
-	पूर्णांक err;
+static int configure_endpoints(struct snd_usb_audio *chip,
+			       struct snd_usb_substream *subs)
+{
+	int err;
 
-	अगर (subs->data_endpoपूर्णांक->need_setup) अणु
-		/* stop any running stream beक्रमehand */
-		अगर (stop_endpoपूर्णांकs(subs))
+	if (subs->data_endpoint->need_setup) {
+		/* stop any running stream beforehand */
+		if (stop_endpoints(subs))
 			sync_pending_stops(subs);
-		err = snd_usb_endpoपूर्णांक_configure(chip, subs->data_endpoपूर्णांक);
-		अगर (err < 0)
-			वापस err;
-		snd_usb_set_क्रमmat_quirk(subs, subs->cur_audiofmt);
-	पूर्ण
+		err = snd_usb_endpoint_configure(chip, subs->data_endpoint);
+		if (err < 0)
+			return err;
+		snd_usb_set_format_quirk(subs, subs->cur_audiofmt);
+	}
 
-	अगर (subs->sync_endpoपूर्णांक) अणु
-		err = snd_usb_endpoपूर्णांक_configure(chip, subs->sync_endpoपूर्णांक);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (subs->sync_endpoint) {
+		err = snd_usb_endpoint_configure(chip, subs->sync_endpoint);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * hw_params callback
  *
- * allocate a buffer and set the given audio क्रमmat.
+ * allocate a buffer and set the given audio format.
  *
  * so far we use a physically linear buffer although packetize transfer
- * करोesn't need a continuous area.
- * अगर sg buffer is supported on the later version of alsa, we'll follow
+ * doesn't need a continuous area.
+ * if sg buffer is supported on the later version of alsa, we'll follow
  * that.
  */
-अटल पूर्णांक snd_usb_hw_params(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
-	काष्ठा snd_usb_audio *chip = subs->stream->chip;
-	स्थिर काष्ठा audioक्रमmat *fmt;
-	स्थिर काष्ठा audioक्रमmat *sync_fmt;
-	पूर्णांक ret;
+static int snd_usb_hw_params(struct snd_pcm_substream *substream,
+			     struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_usb_substream *subs = substream->runtime->private_data;
+	struct snd_usb_audio *chip = subs->stream->chip;
+	const struct audioformat *fmt;
+	const struct audioformat *sync_fmt;
+	int ret;
 
 	ret = snd_media_start_pipeline(subs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	fmt = find_substream_क्रमmat(subs, hw_params);
-	अगर (!fmt) अणु
+	fmt = find_substream_format(subs, hw_params);
+	if (!fmt) {
 		usb_audio_dbg(chip,
 			      "cannot find format: format=%s, rate=%d, channels=%d\n",
-			      snd_pcm_क्रमmat_name(params_क्रमmat(hw_params)),
+			      snd_pcm_format_name(params_format(hw_params)),
 			      params_rate(hw_params), params_channels(hw_params));
 		ret = -EINVAL;
-		जाओ stop_pipeline;
-	पूर्ण
+		goto stop_pipeline;
+	}
 
-	अगर (fmt->implicit_fb) अणु
-		sync_fmt = snd_usb_find_implicit_fb_sync_क्रमmat(chip, fmt,
+	if (fmt->implicit_fb) {
+		sync_fmt = snd_usb_find_implicit_fb_sync_format(chip, fmt,
 								hw_params,
 								!substream->stream);
-		अगर (!sync_fmt) अणु
+		if (!sync_fmt) {
 			usb_audio_dbg(chip,
 				      "cannot find sync format: ep=0x%x, iface=%d:%d, format=%s, rate=%d, channels=%d\n",
-				      fmt->sync_ep, fmt->sync_अगरace,
+				      fmt->sync_ep, fmt->sync_iface,
 				      fmt->sync_altsetting,
-				      snd_pcm_क्रमmat_name(params_क्रमmat(hw_params)),
+				      snd_pcm_format_name(params_format(hw_params)),
 				      params_rate(hw_params), params_channels(hw_params));
 			ret = -EINVAL;
-			जाओ stop_pipeline;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto stop_pipeline;
+		}
+	} else {
 		sync_fmt = fmt;
-	पूर्ण
+	}
 
-	ret = snd_usb_lock_shutकरोwn(chip);
-	अगर (ret < 0)
-		जाओ stop_pipeline;
+	ret = snd_usb_lock_shutdown(chip);
+	if (ret < 0)
+		goto stop_pipeline;
 
 	ret = snd_usb_pcm_change_state(subs, UAC3_PD_STATE_D0);
-	अगर (ret < 0)
-		जाओ unlock;
+	if (ret < 0)
+		goto unlock;
 
-	अगर (subs->data_endpoपूर्णांक) अणु
-		अगर (snd_usb_endpoपूर्णांक_compatible(chip, subs->data_endpoपूर्णांक,
+	if (subs->data_endpoint) {
+		if (snd_usb_endpoint_compatible(chip, subs->data_endpoint,
 						fmt, hw_params))
-			जाओ unlock;
-		बंद_endpoपूर्णांकs(chip, subs);
-	पूर्ण
+			goto unlock;
+		close_endpoints(chip, subs);
+	}
 
-	subs->data_endpoपूर्णांक = snd_usb_endpoपूर्णांक_खोलो(chip, fmt, hw_params, false);
-	अगर (!subs->data_endpoपूर्णांक) अणु
+	subs->data_endpoint = snd_usb_endpoint_open(chip, fmt, hw_params, false);
+	if (!subs->data_endpoint) {
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (fmt->sync_ep) अणु
-		subs->sync_endpoपूर्णांक = snd_usb_endpoपूर्णांक_खोलो(chip, sync_fmt,
+	if (fmt->sync_ep) {
+		subs->sync_endpoint = snd_usb_endpoint_open(chip, sync_fmt,
 							    hw_params,
 							    fmt == sync_fmt);
-		अगर (!subs->sync_endpoपूर्णांक) अणु
+		if (!subs->sync_endpoint) {
 			ret = -EINVAL;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		snd_usb_endpoपूर्णांक_set_sync(chip, subs->data_endpoपूर्णांक,
-					  subs->sync_endpoपूर्णांक);
-	पूर्ण
+		snd_usb_endpoint_set_sync(chip, subs->data_endpoint,
+					  subs->sync_endpoint);
+	}
 
 	mutex_lock(&chip->mutex);
 	subs->cur_audiofmt = fmt;
 	mutex_unlock(&chip->mutex);
 
-	ret = configure_endpoपूर्णांकs(chip, subs);
+	ret = configure_endpoints(chip, subs);
 
  unlock:
-	अगर (ret < 0)
-		बंद_endpoपूर्णांकs(chip, subs);
+	if (ret < 0)
+		close_endpoints(chip, subs);
 
-	snd_usb_unlock_shutकरोwn(chip);
+	snd_usb_unlock_shutdown(chip);
  stop_pipeline:
-	अगर (ret < 0)
+	if (ret < 0)
 		snd_media_stop_pipeline(subs);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * hw_मुक्त callback
+ * hw_free callback
  *
- * reset the audio क्रमmat and release the buffer
+ * reset the audio format and release the buffer
  */
-अटल पूर्णांक snd_usb_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
-	काष्ठा snd_usb_audio *chip = subs->stream->chip;
+static int snd_usb_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_usb_substream *subs = substream->runtime->private_data;
+	struct snd_usb_audio *chip = subs->stream->chip;
 
 	snd_media_stop_pipeline(subs);
 	mutex_lock(&chip->mutex);
-	subs->cur_audiofmt = शून्य;
+	subs->cur_audiofmt = NULL;
 	mutex_unlock(&chip->mutex);
-	अगर (!snd_usb_lock_shutकरोwn(chip)) अणु
-		अगर (stop_endpoपूर्णांकs(subs))
+	if (!snd_usb_lock_shutdown(chip)) {
+		if (stop_endpoints(subs))
 			sync_pending_stops(subs);
-		बंद_endpoपूर्णांकs(chip, subs);
-		snd_usb_unlock_shutकरोwn(chip);
-	पूर्ण
+		close_endpoints(chip, subs);
+		snd_usb_unlock_shutdown(chip);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * prepare callback
  *
  * only a few subtle things...
  */
-अटल पूर्णांक snd_usb_pcm_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_usb_substream *subs = runसमय->निजी_data;
-	काष्ठा snd_usb_audio *chip = subs->stream->chip;
-	पूर्णांक ret;
+static int snd_usb_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_usb_substream *subs = runtime->private_data;
+	struct snd_usb_audio *chip = subs->stream->chip;
+	int ret;
 
-	ret = snd_usb_lock_shutकरोwn(chip);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (snd_BUG_ON(!subs->data_endpoपूर्णांक)) अणु
+	ret = snd_usb_lock_shutdown(chip);
+	if (ret < 0)
+		return ret;
+	if (snd_BUG_ON(!subs->data_endpoint)) {
 		ret = -EIO;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	ret = configure_endpoपूर्णांकs(chip, subs);
-	अगर (ret < 0)
-		जाओ unlock;
+	ret = configure_endpoints(chip, subs);
+	if (ret < 0)
+		goto unlock;
 
-	/* reset the poपूर्णांकer */
-	subs->hwptr_करोne = 0;
-	subs->transfer_करोne = 0;
+	/* reset the pointer */
+	subs->hwptr_done = 0;
+	subs->transfer_done = 0;
 	subs->last_delay = 0;
 	subs->last_frame_number = 0;
-	runसमय->delay = 0;
+	runtime->delay = 0;
 
-	/* क्रम playback, submit the URBs now; otherwise, the first hwptr_करोne
-	 * updates क्रम all URBs would happen at the same समय when starting */
-	अगर (subs->direction == SNDRV_PCM_STREAM_PLAYBACK)
-		ret = start_endpoपूर्णांकs(subs);
+	/* for playback, submit the URBs now; otherwise, the first hwptr_done
+	 * updates for all URBs would happen at the same time when starting */
+	if (subs->direction == SNDRV_PCM_STREAM_PLAYBACK)
+		ret = start_endpoints(subs);
 
  unlock:
-	snd_usb_unlock_shutकरोwn(chip);
-	वापस ret;
-पूर्ण
+	snd_usb_unlock_shutdown(chip);
+	return ret;
+}
 
 /*
- * h/w स्थिरraपूर्णांकs
+ * h/w constraints
  */
 
-#अगर_घोषित HW_CONST_DEBUG
-#घोषणा hwc_debug(fmt, args...) pr_debug(fmt, ##args)
-#अन्यथा
-#घोषणा hwc_debug(fmt, args...) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef HW_CONST_DEBUG
+#define hwc_debug(fmt, args...) pr_debug(fmt, ##args)
+#else
+#define hwc_debug(fmt, args...) do { } while(0)
+#endif
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_usb_hardware =
-अणु
+static const struct snd_pcm_hardware snd_usb_hardware =
+{
 	.info =			SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_BATCH |
@@ -642,524 +641,524 @@ find_substream_क्रमmat(काष्ठा snd_usb_substream *subs,
 	.period_bytes_max =	512 * 1024,
 	.periods_min =		2,
 	.periods_max =		1024,
-पूर्ण;
+};
 
-अटल पूर्णांक hw_check_valid_क्रमmat(काष्ठा snd_usb_substream *subs,
-				 काष्ठा snd_pcm_hw_params *params,
-				 स्थिर काष्ठा audioक्रमmat *fp)
-अणु
-	काष्ठा snd_पूर्णांकerval *it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
-	काष्ठा snd_पूर्णांकerval *ct = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	काष्ठा snd_mask *fmts = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
-	काष्ठा snd_पूर्णांकerval *pt = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_PERIOD_TIME);
-	काष्ठा snd_mask check_fmts;
-	अचिन्हित पूर्णांक pसमय;
+static int hw_check_valid_format(struct snd_usb_substream *subs,
+				 struct snd_pcm_hw_params *params,
+				 const struct audioformat *fp)
+{
+	struct snd_interval *it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
+	struct snd_interval *ct = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	struct snd_mask *fmts = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
+	struct snd_interval *pt = hw_param_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_TIME);
+	struct snd_mask check_fmts;
+	unsigned int ptime;
 
-	/* check the क्रमmat */
+	/* check the format */
 	snd_mask_none(&check_fmts);
-	check_fmts.bits[0] = (u32)fp->क्रमmats;
-	check_fmts.bits[1] = (u32)(fp->क्रमmats >> 32);
-	snd_mask_पूर्णांकersect(&check_fmts, fmts);
-	अगर (snd_mask_empty(&check_fmts)) अणु
-		hwc_debug("   > check: no supported format 0x%llx\n", fp->क्रमmats);
-		वापस 0;
-	पूर्ण
+	check_fmts.bits[0] = (u32)fp->formats;
+	check_fmts.bits[1] = (u32)(fp->formats >> 32);
+	snd_mask_intersect(&check_fmts, fmts);
+	if (snd_mask_empty(&check_fmts)) {
+		hwc_debug("   > check: no supported format 0x%llx\n", fp->formats);
+		return 0;
+	}
 	/* check the channels */
-	अगर (fp->channels < ct->min || fp->channels > ct->max) अणु
+	if (fp->channels < ct->min || fp->channels > ct->max) {
 		hwc_debug("   > check: no valid channels %d (%d/%d)\n", fp->channels, ct->min, ct->max);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* check the rate is within the range */
-	अगर (fp->rate_min > it->max || (fp->rate_min == it->max && it->खोलोmax)) अणु
+	if (fp->rate_min > it->max || (fp->rate_min == it->max && it->openmax)) {
 		hwc_debug("   > check: rate_min %d > max %d\n", fp->rate_min, it->max);
-		वापस 0;
-	पूर्ण
-	अगर (fp->rate_max < it->min || (fp->rate_max == it->min && it->खोलोmin)) अणु
+		return 0;
+	}
+	if (fp->rate_max < it->min || (fp->rate_max == it->min && it->openmin)) {
 		hwc_debug("   > check: rate_max %d < min %d\n", fp->rate_max, it->min);
-		वापस 0;
-	पूर्ण
-	/* check whether the period समय is >= the data packet पूर्णांकerval */
-	अगर (subs->speed != USB_SPEED_FULL) अणु
-		pसमय = 125 * (1 << fp->dataपूर्णांकerval);
-		अगर (pसमय > pt->max || (pसमय == pt->max && pt->खोलोmax)) अणु
-			hwc_debug("   > check: ptime %u > max %u\n", pसमय, pt->max);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	/* check whether the period time is >= the data packet interval */
+	if (subs->speed != USB_SPEED_FULL) {
+		ptime = 125 * (1 << fp->datainterval);
+		if (ptime > pt->max || (ptime == pt->max && pt->openmax)) {
+			hwc_debug("   > check: ptime %u > max %u\n", ptime, pt->max);
+			return 0;
+		}
+	}
+	return 1;
+}
 
-अटल पूर्णांक apply_hw_params_minmax(काष्ठा snd_पूर्णांकerval *it, अचिन्हित पूर्णांक rmin,
-				  अचिन्हित पूर्णांक rmax)
-अणु
-	पूर्णांक changed;
+static int apply_hw_params_minmax(struct snd_interval *it, unsigned int rmin,
+				  unsigned int rmax)
+{
+	int changed;
 
-	अगर (rmin > rmax) अणु
+	if (rmin > rmax) {
 		hwc_debug("  --> get empty\n");
 		it->empty = 1;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	changed = 0;
-	अगर (it->min < rmin) अणु
+	if (it->min < rmin) {
 		it->min = rmin;
-		it->खोलोmin = 0;
+		it->openmin = 0;
 		changed = 1;
-	पूर्ण
-	अगर (it->max > rmax) अणु
+	}
+	if (it->max > rmax) {
 		it->max = rmax;
-		it->खोलोmax = 0;
+		it->openmax = 0;
 		changed = 1;
-	पूर्ण
-	अगर (snd_पूर्णांकerval_checkempty(it)) अणु
+	}
+	if (snd_interval_checkempty(it)) {
 		it->empty = 1;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	hwc_debug("  --> (%d, %d) (changed = %d)\n", it->min, it->max, changed);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक hw_rule_rate(काष्ठा snd_pcm_hw_params *params,
-			काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा audioक्रमmat *fp;
-	काष्ठा snd_पूर्णांकerval *it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
-	अचिन्हित पूर्णांक rmin, rmax, r;
-	पूर्णांक i;
+static int hw_rule_rate(struct snd_pcm_hw_params *params,
+			struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct audioformat *fp;
+	struct snd_interval *it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
+	unsigned int rmin, rmax, r;
+	int i;
 
 	hwc_debug("hw_rule_rate: (%d,%d)\n", it->min, it->max);
-	rmin = अच_पूर्णांक_उच्च;
+	rmin = UINT_MAX;
 	rmax = 0;
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		अगर (!hw_check_valid_क्रमmat(subs, params, fp))
-			जारी;
-		अगर (fp->rate_table && fp->nr_rates) अणु
-			क्रम (i = 0; i < fp->nr_rates; i++) अणु
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		if (!hw_check_valid_format(subs, params, fp))
+			continue;
+		if (fp->rate_table && fp->nr_rates) {
+			for (i = 0; i < fp->nr_rates; i++) {
 				r = fp->rate_table[i];
-				अगर (!snd_पूर्णांकerval_test(it, r))
-					जारी;
+				if (!snd_interval_test(it, r))
+					continue;
 				rmin = min(rmin, r);
 				rmax = max(rmax, r);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			rmin = min(rmin, fp->rate_min);
 			rmax = max(rmax, fp->rate_max);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस apply_hw_params_minmax(it, rmin, rmax);
-पूर्ण
+	return apply_hw_params_minmax(it, rmin, rmax);
+}
 
 
-अटल पूर्णांक hw_rule_channels(काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा audioक्रमmat *fp;
-	काष्ठा snd_पूर्णांकerval *it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	अचिन्हित पूर्णांक rmin, rmax;
+static int hw_rule_channels(struct snd_pcm_hw_params *params,
+			    struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct audioformat *fp;
+	struct snd_interval *it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	unsigned int rmin, rmax;
 
 	hwc_debug("hw_rule_channels: (%d,%d)\n", it->min, it->max);
-	rmin = अच_पूर्णांक_उच्च;
+	rmin = UINT_MAX;
 	rmax = 0;
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		अगर (!hw_check_valid_क्रमmat(subs, params, fp))
-			जारी;
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		if (!hw_check_valid_format(subs, params, fp))
+			continue;
 		rmin = min(rmin, fp->channels);
 		rmax = max(rmax, fp->channels);
-	पूर्ण
+	}
 
-	वापस apply_hw_params_minmax(it, rmin, rmax);
-पूर्ण
+	return apply_hw_params_minmax(it, rmin, rmax);
+}
 
-अटल पूर्णांक apply_hw_params_क्रमmat_bits(काष्ठा snd_mask *fmt, u64 fbits)
-अणु
+static int apply_hw_params_format_bits(struct snd_mask *fmt, u64 fbits)
+{
 	u32 oldbits[2];
-	पूर्णांक changed;
+	int changed;
 
 	oldbits[0] = fmt->bits[0];
 	oldbits[1] = fmt->bits[1];
 	fmt->bits[0] &= (u32)fbits;
 	fmt->bits[1] &= (u32)(fbits >> 32);
-	अगर (!fmt->bits[0] && !fmt->bits[1]) अणु
+	if (!fmt->bits[0] && !fmt->bits[1]) {
 		hwc_debug("  --> get empty\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	changed = (oldbits[0] != fmt->bits[0] || oldbits[1] != fmt->bits[1]);
 	hwc_debug("  --> %x:%x (changed = %d)\n", fmt->bits[0], fmt->bits[1], changed);
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक hw_rule_क्रमmat(काष्ठा snd_pcm_hw_params *params,
-			  काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा audioक्रमmat *fp;
-	काष्ठा snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
+static int hw_rule_format(struct snd_pcm_hw_params *params,
+			  struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct audioformat *fp;
+	struct snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 	u64 fbits;
 
 	hwc_debug("hw_rule_format: %x:%x\n", fmt->bits[0], fmt->bits[1]);
 	fbits = 0;
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		अगर (!hw_check_valid_क्रमmat(subs, params, fp))
-			जारी;
-		fbits |= fp->क्रमmats;
-	पूर्ण
-	वापस apply_hw_params_क्रमmat_bits(fmt, fbits);
-पूर्ण
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		if (!hw_check_valid_format(subs, params, fp))
+			continue;
+		fbits |= fp->formats;
+	}
+	return apply_hw_params_format_bits(fmt, fbits);
+}
 
-अटल पूर्णांक hw_rule_period_समय(काष्ठा snd_pcm_hw_params *params,
-			       काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा audioक्रमmat *fp;
-	काष्ठा snd_पूर्णांकerval *it;
-	अचिन्हित अक्षर min_dataपूर्णांकerval;
-	अचिन्हित पूर्णांक pmin;
+static int hw_rule_period_time(struct snd_pcm_hw_params *params,
+			       struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct audioformat *fp;
+	struct snd_interval *it;
+	unsigned char min_datainterval;
+	unsigned int pmin;
 
-	it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_PERIOD_TIME);
+	it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_TIME);
 	hwc_debug("hw_rule_period_time: (%u,%u)\n", it->min, it->max);
-	min_dataपूर्णांकerval = 0xff;
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		अगर (!hw_check_valid_क्रमmat(subs, params, fp))
-			जारी;
-		min_dataपूर्णांकerval = min(min_dataपूर्णांकerval, fp->dataपूर्णांकerval);
-	पूर्ण
-	अगर (min_dataपूर्णांकerval == 0xff) अणु
+	min_datainterval = 0xff;
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		if (!hw_check_valid_format(subs, params, fp))
+			continue;
+		min_datainterval = min(min_datainterval, fp->datainterval);
+	}
+	if (min_datainterval == 0xff) {
 		hwc_debug("  --> get empty\n");
 		it->empty = 1;
-		वापस -EINVAL;
-	पूर्ण
-	pmin = 125 * (1 << min_dataपूर्णांकerval);
+		return -EINVAL;
+	}
+	pmin = 125 * (1 << min_datainterval);
 
-	वापस apply_hw_params_minmax(it, pmin, अच_पूर्णांक_उच्च);
-पूर्ण
+	return apply_hw_params_minmax(it, pmin, UINT_MAX);
+}
 
-/* get the EP or the sync EP क्रम implicit fb when it's alपढ़ोy set up */
-अटल स्थिर काष्ठा snd_usb_endpoपूर्णांक *
-get_sync_ep_from_substream(काष्ठा snd_usb_substream *subs)
-अणु
-	काष्ठा snd_usb_audio *chip = subs->stream->chip;
-	स्थिर काष्ठा audioक्रमmat *fp;
-	स्थिर काष्ठा snd_usb_endpoपूर्णांक *ep;
+/* get the EP or the sync EP for implicit fb when it's already set up */
+static const struct snd_usb_endpoint *
+get_sync_ep_from_substream(struct snd_usb_substream *subs)
+{
+	struct snd_usb_audio *chip = subs->stream->chip;
+	const struct audioformat *fp;
+	const struct snd_usb_endpoint *ep;
 
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		ep = snd_usb_get_endpoपूर्णांक(chip, fp->endpoपूर्णांक);
-		अगर (ep && ep->cur_audiofmt) अणु
-			/* अगर EP is alपढ़ोy खोलोed solely क्रम this substream,
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		ep = snd_usb_get_endpoint(chip, fp->endpoint);
+		if (ep && ep->cur_audiofmt) {
+			/* if EP is already opened solely for this substream,
 			 * we still allow us to change the parameter; otherwise
 			 * this substream has to follow the existing parameter
 			 */
-			अगर (ep->cur_audiofmt != subs->cur_audiofmt || ep->खोलोed > 1)
-				वापस ep;
-		पूर्ण
-		अगर (!fp->implicit_fb)
-			जारी;
-		/* क्रम the implicit fb, check the sync ep as well */
-		ep = snd_usb_get_endpoपूर्णांक(chip, fp->sync_ep);
-		अगर (ep && ep->cur_audiofmt)
-			वापस ep;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			if (ep->cur_audiofmt != subs->cur_audiofmt || ep->opened > 1)
+				return ep;
+		}
+		if (!fp->implicit_fb)
+			continue;
+		/* for the implicit fb, check the sync ep as well */
+		ep = snd_usb_get_endpoint(chip, fp->sync_ep);
+		if (ep && ep->cur_audiofmt)
+			return ep;
+	}
+	return NULL;
+}
 
-/* additional hw स्थिरraपूर्णांकs क्रम implicit feedback mode */
-अटल पूर्णांक hw_rule_क्रमmat_implicit_fb(काष्ठा snd_pcm_hw_params *params,
-				      काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा snd_usb_endpoपूर्णांक *ep;
-	काष्ठा snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
-
-	ep = get_sync_ep_from_substream(subs);
-	अगर (!ep)
-		वापस 0;
-
-	hwc_debug("applying %s\n", __func__);
-	वापस apply_hw_params_क्रमmat_bits(fmt, pcm_क्रमmat_to_bits(ep->cur_क्रमmat));
-पूर्ण
-
-अटल पूर्णांक hw_rule_rate_implicit_fb(काष्ठा snd_pcm_hw_params *params,
-				    काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा snd_usb_endpoपूर्णांक *ep;
-	काष्ठा snd_पूर्णांकerval *it;
+/* additional hw constraints for implicit feedback mode */
+static int hw_rule_format_implicit_fb(struct snd_pcm_hw_params *params,
+				      struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct snd_usb_endpoint *ep;
+	struct snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 
 	ep = get_sync_ep_from_substream(subs);
-	अगर (!ep)
-		वापस 0;
+	if (!ep)
+		return 0;
 
 	hwc_debug("applying %s\n", __func__);
-	it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
-	वापस apply_hw_params_minmax(it, ep->cur_rate, ep->cur_rate);
-पूर्ण
+	return apply_hw_params_format_bits(fmt, pcm_format_to_bits(ep->cur_format));
+}
 
-अटल पूर्णांक hw_rule_period_size_implicit_fb(काष्ठा snd_pcm_hw_params *params,
-					   काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा snd_usb_endpoपूर्णांक *ep;
-	काष्ठा snd_पूर्णांकerval *it;
+static int hw_rule_rate_implicit_fb(struct snd_pcm_hw_params *params,
+				    struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct snd_usb_endpoint *ep;
+	struct snd_interval *it;
 
 	ep = get_sync_ep_from_substream(subs);
-	अगर (!ep)
-		वापस 0;
+	if (!ep)
+		return 0;
 
 	hwc_debug("applying %s\n", __func__);
-	it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-	वापस apply_hw_params_minmax(it, ep->cur_period_frames,
+	it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
+	return apply_hw_params_minmax(it, ep->cur_rate, ep->cur_rate);
+}
+
+static int hw_rule_period_size_implicit_fb(struct snd_pcm_hw_params *params,
+					   struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct snd_usb_endpoint *ep;
+	struct snd_interval *it;
+
+	ep = get_sync_ep_from_substream(subs);
+	if (!ep)
+		return 0;
+
+	hwc_debug("applying %s\n", __func__);
+	it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
+	return apply_hw_params_minmax(it, ep->cur_period_frames,
 				      ep->cur_period_frames);
-पूर्ण
+}
 
-अटल पूर्णांक hw_rule_periods_implicit_fb(काष्ठा snd_pcm_hw_params *params,
-				       काष्ठा snd_pcm_hw_rule *rule)
-अणु
-	काष्ठा snd_usb_substream *subs = rule->निजी;
-	स्थिर काष्ठा snd_usb_endpoपूर्णांक *ep;
-	काष्ठा snd_पूर्णांकerval *it;
+static int hw_rule_periods_implicit_fb(struct snd_pcm_hw_params *params,
+				       struct snd_pcm_hw_rule *rule)
+{
+	struct snd_usb_substream *subs = rule->private;
+	const struct snd_usb_endpoint *ep;
+	struct snd_interval *it;
 
 	ep = get_sync_ep_from_substream(subs);
-	अगर (!ep)
-		वापस 0;
+	if (!ep)
+		return 0;
 
 	hwc_debug("applying %s\n", __func__);
-	it = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_PERIODS);
-	वापस apply_hw_params_minmax(it, ep->cur_buffer_periods,
+	it = hw_param_interval(params, SNDRV_PCM_HW_PARAM_PERIODS);
+	return apply_hw_params_minmax(it, ep->cur_buffer_periods,
 				      ep->cur_buffer_periods);
-पूर्ण
+}
 
 /*
- * set up the runसमय hardware inक्रमmation.
+ * set up the runtime hardware information.
  */
 
-अटल पूर्णांक setup_hw_info(काष्ठा snd_pcm_runसमय *runसमय, काष्ठा snd_usb_substream *subs)
-अणु
-	स्थिर काष्ठा audioक्रमmat *fp;
-	अचिन्हित पूर्णांक pt, pपंचांगin;
-	पूर्णांक param_period_समय_अगर_needed = -1;
-	पूर्णांक err;
+static int setup_hw_info(struct snd_pcm_runtime *runtime, struct snd_usb_substream *subs)
+{
+	const struct audioformat *fp;
+	unsigned int pt, ptmin;
+	int param_period_time_if_needed = -1;
+	int err;
 
-	runसमय->hw.क्रमmats = subs->क्रमmats;
+	runtime->hw.formats = subs->formats;
 
-	runसमय->hw.rate_min = 0x7fffffff;
-	runसमय->hw.rate_max = 0;
-	runसमय->hw.channels_min = 256;
-	runसमय->hw.channels_max = 0;
-	runसमय->hw.rates = 0;
-	pपंचांगin = अच_पूर्णांक_उच्च;
+	runtime->hw.rate_min = 0x7fffffff;
+	runtime->hw.rate_max = 0;
+	runtime->hw.channels_min = 256;
+	runtime->hw.channels_max = 0;
+	runtime->hw.rates = 0;
+	ptmin = UINT_MAX;
 	/* check min/max rates and channels */
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		runसमय->hw.rates |= fp->rates;
-		अगर (runसमय->hw.rate_min > fp->rate_min)
-			runसमय->hw.rate_min = fp->rate_min;
-		अगर (runसमय->hw.rate_max < fp->rate_max)
-			runसमय->hw.rate_max = fp->rate_max;
-		अगर (runसमय->hw.channels_min > fp->channels)
-			runसमय->hw.channels_min = fp->channels;
-		अगर (runसमय->hw.channels_max < fp->channels)
-			runसमय->hw.channels_max = fp->channels;
-		अगर (fp->fmt_type == UAC_FORMAT_TYPE_II && fp->frame_size > 0) अणु
-			/* FIXME: there might be more than one audio क्रमmats... */
-			runसमय->hw.period_bytes_min = runसमय->hw.period_bytes_max =
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		runtime->hw.rates |= fp->rates;
+		if (runtime->hw.rate_min > fp->rate_min)
+			runtime->hw.rate_min = fp->rate_min;
+		if (runtime->hw.rate_max < fp->rate_max)
+			runtime->hw.rate_max = fp->rate_max;
+		if (runtime->hw.channels_min > fp->channels)
+			runtime->hw.channels_min = fp->channels;
+		if (runtime->hw.channels_max < fp->channels)
+			runtime->hw.channels_max = fp->channels;
+		if (fp->fmt_type == UAC_FORMAT_TYPE_II && fp->frame_size > 0) {
+			/* FIXME: there might be more than one audio formats... */
+			runtime->hw.period_bytes_min = runtime->hw.period_bytes_max =
 				fp->frame_size;
-		पूर्ण
-		pt = 125 * (1 << fp->dataपूर्णांकerval);
-		pपंचांगin = min(pपंचांगin, pt);
-	पूर्ण
+		}
+		pt = 125 * (1 << fp->datainterval);
+		ptmin = min(ptmin, pt);
+	}
 
-	param_period_समय_अगर_needed = SNDRV_PCM_HW_PARAM_PERIOD_TIME;
-	अगर (subs->speed == USB_SPEED_FULL)
-		/* full speed devices have fixed data packet पूर्णांकerval */
-		pपंचांगin = 1000;
-	अगर (pपंचांगin == 1000)
-		/* अगर period समय करोesn't go below 1 ms, no rules needed */
-		param_period_समय_अगर_needed = -1;
+	param_period_time_if_needed = SNDRV_PCM_HW_PARAM_PERIOD_TIME;
+	if (subs->speed == USB_SPEED_FULL)
+		/* full speed devices have fixed data packet interval */
+		ptmin = 1000;
+	if (ptmin == 1000)
+		/* if period time doesn't go below 1 ms, no rules needed */
+		param_period_time_if_needed = -1;
 
-	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
+	err = snd_pcm_hw_constraint_minmax(runtime,
 					   SNDRV_PCM_HW_PARAM_PERIOD_TIME,
-					   pपंचांगin, अच_पूर्णांक_उच्च);
-	अगर (err < 0)
-		वापस err;
+					   ptmin, UINT_MAX);
+	if (err < 0)
+		return err;
 
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 				  hw_rule_rate, subs,
 				  SNDRV_PCM_HW_PARAM_RATE,
 				  SNDRV_PCM_HW_PARAM_FORMAT,
 				  SNDRV_PCM_HW_PARAM_CHANNELS,
-				  param_period_समय_अगर_needed,
+				  param_period_time_if_needed,
 				  -1);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 				  hw_rule_channels, subs,
 				  SNDRV_PCM_HW_PARAM_CHANNELS,
 				  SNDRV_PCM_HW_PARAM_FORMAT,
 				  SNDRV_PCM_HW_PARAM_RATE,
-				  param_period_समय_अगर_needed,
+				  param_period_time_if_needed,
 				  -1);
-	अगर (err < 0)
-		वापस err;
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FORMAT,
-				  hw_rule_क्रमmat, subs,
+	if (err < 0)
+		return err;
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FORMAT,
+				  hw_rule_format, subs,
 				  SNDRV_PCM_HW_PARAM_FORMAT,
 				  SNDRV_PCM_HW_PARAM_RATE,
 				  SNDRV_PCM_HW_PARAM_CHANNELS,
-				  param_period_समय_अगर_needed,
+				  param_period_time_if_needed,
 				  -1);
-	अगर (err < 0)
-		वापस err;
-	अगर (param_period_समय_अगर_needed >= 0) अणु
-		err = snd_pcm_hw_rule_add(runसमय, 0,
+	if (err < 0)
+		return err;
+	if (param_period_time_if_needed >= 0) {
+		err = snd_pcm_hw_rule_add(runtime, 0,
 					  SNDRV_PCM_HW_PARAM_PERIOD_TIME,
-					  hw_rule_period_समय, subs,
+					  hw_rule_period_time, subs,
 					  SNDRV_PCM_HW_PARAM_FORMAT,
 					  SNDRV_PCM_HW_PARAM_CHANNELS,
 					  SNDRV_PCM_HW_PARAM_RATE,
 					  -1);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	/* additional hw स्थिरraपूर्णांकs क्रम implicit fb */
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FORMAT,
-				  hw_rule_क्रमmat_implicit_fb, subs,
+	/* additional hw constraints for implicit fb */
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FORMAT,
+				  hw_rule_format_implicit_fb, subs,
 				  SNDRV_PCM_HW_PARAM_FORMAT, -1);
-	अगर (err < 0)
-		वापस err;
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
+	if (err < 0)
+		return err;
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 				  hw_rule_rate_implicit_fb, subs,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	अगर (err < 0)
-		वापस err;
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+	if (err < 0)
+		return err;
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 				  hw_rule_period_size_implicit_fb, subs,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, -1);
-	अगर (err < 0)
-		वापस err;
-	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIODS,
+	if (err < 0)
+		return err;
+	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIODS,
 				  hw_rule_periods_implicit_fb, subs,
 				  SNDRV_PCM_HW_PARAM_PERIODS, -1);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक direction = substream->stream;
-	काष्ठा snd_usb_stream *as = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_usb_substream *subs = &as->substream[direction];
-	पूर्णांक ret;
+static int snd_usb_pcm_open(struct snd_pcm_substream *substream)
+{
+	int direction = substream->stream;
+	struct snd_usb_stream *as = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_usb_substream *subs = &as->substream[direction];
+	int ret;
 
-	runसमय->hw = snd_usb_hardware;
-	runसमय->निजी_data = subs;
+	runtime->hw = snd_usb_hardware;
+	runtime->private_data = subs;
 	subs->pcm_substream = substream;
-	/* runसमय PM is also करोne there */
+	/* runtime PM is also done there */
 
 	/* initialize DSD/DOP context */
-	subs->dsd_करोp.byte_idx = 0;
-	subs->dsd_करोp.channel = 0;
-	subs->dsd_करोp.marker = 1;
+	subs->dsd_dop.byte_idx = 0;
+	subs->dsd_dop.channel = 0;
+	subs->dsd_dop.marker = 1;
 
-	ret = setup_hw_info(runसमय, subs);
-	अगर (ret < 0)
-		वापस ret;
-	ret = snd_usb_स्वतःresume(subs->stream->chip);
-	अगर (ret < 0)
-		वापस ret;
+	ret = setup_hw_info(runtime, subs);
+	if (ret < 0)
+		return ret;
+	ret = snd_usb_autoresume(subs->stream->chip);
+	if (ret < 0)
+		return ret;
 	ret = snd_media_stream_init(subs, as->pcm, direction);
-	अगर (ret < 0)
-		snd_usb_स्वतःsuspend(subs->stream->chip);
-	वापस ret;
-पूर्ण
+	if (ret < 0)
+		snd_usb_autosuspend(subs->stream->chip);
+	return ret;
+}
 
-अटल पूर्णांक snd_usb_pcm_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	पूर्णांक direction = substream->stream;
-	काष्ठा snd_usb_stream *as = snd_pcm_substream_chip(substream);
-	काष्ठा snd_usb_substream *subs = &as->substream[direction];
-	पूर्णांक ret;
+static int snd_usb_pcm_close(struct snd_pcm_substream *substream)
+{
+	int direction = substream->stream;
+	struct snd_usb_stream *as = snd_pcm_substream_chip(substream);
+	struct snd_usb_substream *subs = &as->substream[direction];
+	int ret;
 
 	snd_media_stop_pipeline(subs);
 
-	अगर (!snd_usb_lock_shutकरोwn(subs->stream->chip)) अणु
+	if (!snd_usb_lock_shutdown(subs->stream->chip)) {
 		ret = snd_usb_pcm_change_state(subs, UAC3_PD_STATE_D1);
-		snd_usb_unlock_shutकरोwn(subs->stream->chip);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		snd_usb_unlock_shutdown(subs->stream->chip);
+		if (ret < 0)
+			return ret;
+	}
 
-	subs->pcm_substream = शून्य;
-	snd_usb_स्वतःsuspend(subs->stream->chip);
+	subs->pcm_substream = NULL;
+	snd_usb_autosuspend(subs->stream->chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Since a URB can handle only a single linear buffer, we must use द्विगुन
+/* Since a URB can handle only a single linear buffer, we must use double
  * buffering when the data to be transferred overflows the buffer boundary.
- * To aव्योम inconsistencies when updating hwptr_करोne, we use द्विगुन buffering
- * क्रम all URBs.
+ * To avoid inconsistencies when updating hwptr_done, we use double buffering
+ * for all URBs.
  */
-अटल व्योम retire_capture_urb(काष्ठा snd_usb_substream *subs,
-			       काष्ठा urb *urb)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	अचिन्हित पूर्णांक stride, frames, bytes, oldptr;
-	पूर्णांक i, period_elapsed = 0;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर *cp;
-	पूर्णांक current_frame_number;
+static void retire_capture_urb(struct snd_usb_substream *subs,
+			       struct urb *urb)
+{
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	unsigned int stride, frames, bytes, oldptr;
+	int i, period_elapsed = 0;
+	unsigned long flags;
+	unsigned char *cp;
+	int current_frame_number;
 
-	/* पढ़ो frame number here, update poपूर्णांकer in critical section */
+	/* read frame number here, update pointer in critical section */
 	current_frame_number = usb_get_current_frame_number(subs->dev);
 
-	stride = runसमय->frame_bits >> 3;
+	stride = runtime->frame_bits >> 3;
 
-	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
-		cp = (अचिन्हित अक्षर *)urb->transfer_buffer + urb->iso_frame_desc[i].offset + subs->pkt_offset_adj;
-		अगर (urb->iso_frame_desc[i].status && prपूर्णांकk_ratelimit()) अणु
+	for (i = 0; i < urb->number_of_packets; i++) {
+		cp = (unsigned char *)urb->transfer_buffer + urb->iso_frame_desc[i].offset + subs->pkt_offset_adj;
+		if (urb->iso_frame_desc[i].status && printk_ratelimit()) {
 			dev_dbg(&subs->dev->dev, "frame %d active: %d\n",
 				i, urb->iso_frame_desc[i].status);
-			// जारी;
-		पूर्ण
+			// continue;
+		}
 		bytes = urb->iso_frame_desc[i].actual_length;
-		अगर (subs->stream_offset_adj > 0) अणु
-			अचिन्हित पूर्णांक adj = min(subs->stream_offset_adj, bytes);
+		if (subs->stream_offset_adj > 0) {
+			unsigned int adj = min(subs->stream_offset_adj, bytes);
 			cp += adj;
 			bytes -= adj;
 			subs->stream_offset_adj -= adj;
-		पूर्ण
+		}
 		frames = bytes / stride;
-		अगर (!subs->txfr_quirk)
+		if (!subs->txfr_quirk)
 			bytes = frames * stride;
-		अगर (bytes % (runसमय->sample_bits >> 3) != 0) अणु
-			पूर्णांक oldbytes = bytes;
+		if (bytes % (runtime->sample_bits >> 3) != 0) {
+			int oldbytes = bytes;
 			bytes = frames * stride;
 			dev_warn_ratelimited(&subs->dev->dev,
 				 "Corrected urb data len. %d->%d\n",
 							oldbytes, bytes);
-		पूर्ण
-		/* update the current poपूर्णांकer */
+		}
+		/* update the current pointer */
 		spin_lock_irqsave(&subs->lock, flags);
-		oldptr = subs->hwptr_करोne;
-		subs->hwptr_करोne += bytes;
-		अगर (subs->hwptr_करोne >= runसमय->buffer_size * stride)
-			subs->hwptr_करोne -= runसमय->buffer_size * stride;
+		oldptr = subs->hwptr_done;
+		subs->hwptr_done += bytes;
+		if (subs->hwptr_done >= runtime->buffer_size * stride)
+			subs->hwptr_done -= runtime->buffer_size * stride;
 		frames = (bytes + (oldptr % stride)) / stride;
-		subs->transfer_करोne += frames;
-		अगर (subs->transfer_करोne >= runसमय->period_size) अणु
-			subs->transfer_करोne -= runसमय->period_size;
+		subs->transfer_done += frames;
+		if (subs->transfer_done >= runtime->period_size) {
+			subs->transfer_done -= runtime->period_size;
 			period_elapsed = 1;
-		पूर्ण
-		/* capture delay is by स्थिरruction limited to one URB,
+		}
+		/* capture delay is by construction limited to one URB,
 		 * reset delays here
 		 */
-		runसमय->delay = subs->last_delay = 0;
+		runtime->delay = subs->last_delay = 0;
 
 		/* realign last_frame_number */
 		subs->last_frame_number = current_frame_number;
@@ -1167,40 +1166,40 @@ get_sync_ep_from_substream(काष्ठा snd_usb_substream *subs)
 
 		spin_unlock_irqrestore(&subs->lock, flags);
 		/* copy a data chunk */
-		अगर (oldptr + bytes > runसमय->buffer_size * stride) अणु
-			अचिन्हित पूर्णांक bytes1 =
-					runसमय->buffer_size * stride - oldptr;
-			स_नकल(runसमय->dma_area + oldptr, cp, bytes1);
-			स_नकल(runसमय->dma_area, cp + bytes1, bytes - bytes1);
-		पूर्ण अन्यथा अणु
-			स_नकल(runसमय->dma_area + oldptr, cp, bytes);
-		पूर्ण
-	पूर्ण
+		if (oldptr + bytes > runtime->buffer_size * stride) {
+			unsigned int bytes1 =
+					runtime->buffer_size * stride - oldptr;
+			memcpy(runtime->dma_area + oldptr, cp, bytes1);
+			memcpy(runtime->dma_area, cp + bytes1, bytes - bytes1);
+		} else {
+			memcpy(runtime->dma_area + oldptr, cp, bytes);
+		}
+	}
 
-	अगर (period_elapsed)
+	if (period_elapsed)
 		snd_pcm_period_elapsed(subs->pcm_substream);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम fill_playback_urb_dsd_करोp(काष्ठा snd_usb_substream *subs,
-					     काष्ठा urb *urb, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	अचिन्हित पूर्णांक stride = runसमय->frame_bits >> 3;
-	अचिन्हित पूर्णांक dst_idx = 0;
-	अचिन्हित पूर्णांक src_idx = subs->hwptr_करोne;
-	अचिन्हित पूर्णांक wrap = runसमय->buffer_size * stride;
+static inline void fill_playback_urb_dsd_dop(struct snd_usb_substream *subs,
+					     struct urb *urb, unsigned int bytes)
+{
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	unsigned int stride = runtime->frame_bits >> 3;
+	unsigned int dst_idx = 0;
+	unsigned int src_idx = subs->hwptr_done;
+	unsigned int wrap = runtime->buffer_size * stride;
 	u8 *dst = urb->transfer_buffer;
-	u8 *src = runसमय->dma_area;
-	u8 marker[] = अणु 0x05, 0xfa पूर्ण;
+	u8 *src = runtime->dma_area;
+	u8 marker[] = { 0x05, 0xfa };
 
 	/*
-	 * The DSP DOP क्रमmat defines a way to transport DSD samples over
-	 * normal PCM data endpoपूर्णांकs. It requires stuffing of marker bytes
+	 * The DSP DOP format defines a way to transport DSD samples over
+	 * normal PCM data endpoints. It requires stuffing of marker bytes
 	 * (0x05 and 0xfa, alternating per sample frame), and then expects
 	 * 2 additional bytes of actual payload. The whole frame is stored
 	 * LSB.
 	 *
-	 * Hence, क्रम a stereo transport, the buffer layout looks like this,
+	 * Hence, for a stereo transport, the buffer layout looks like this,
 	 * where L refers to left channel samples and R to right.
 	 *
 	 *   L1 L2 0x05   R1 R2 0x05   L3 L4 0xfa  R3 R4 0xfa
@@ -1209,365 +1208,365 @@ get_sync_ep_from_substream(काष्ठा snd_usb_substream *subs)
 	 *
 	 */
 
-	जबतक (bytes--) अणु
-		अगर (++subs->dsd_करोp.byte_idx == 3) अणु
+	while (bytes--) {
+		if (++subs->dsd_dop.byte_idx == 3) {
 			/* frame boundary? */
-			dst[dst_idx++] = marker[subs->dsd_करोp.marker];
+			dst[dst_idx++] = marker[subs->dsd_dop.marker];
 			src_idx += 2;
-			subs->dsd_करोp.byte_idx = 0;
+			subs->dsd_dop.byte_idx = 0;
 
-			अगर (++subs->dsd_करोp.channel % runसमय->channels == 0) अणु
+			if (++subs->dsd_dop.channel % runtime->channels == 0) {
 				/* alternate the marker */
-				subs->dsd_करोp.marker++;
-				subs->dsd_करोp.marker %= ARRAY_SIZE(marker);
-				subs->dsd_करोp.channel = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				subs->dsd_dop.marker++;
+				subs->dsd_dop.marker %= ARRAY_SIZE(marker);
+				subs->dsd_dop.channel = 0;
+			}
+		} else {
 			/* stuff the DSD payload */
-			पूर्णांक idx = (src_idx + subs->dsd_करोp.byte_idx - 1) % wrap;
+			int idx = (src_idx + subs->dsd_dop.byte_idx - 1) % wrap;
 
-			अगर (subs->cur_audiofmt->dsd_bitrev)
+			if (subs->cur_audiofmt->dsd_bitrev)
 				dst[dst_idx++] = bitrev8(src[idx]);
-			अन्यथा
+			else
 				dst[dst_idx++] = src[idx];
 
-			subs->hwptr_करोne++;
-		पूर्ण
-	पूर्ण
-	अगर (subs->hwptr_करोne >= runसमय->buffer_size * stride)
-		subs->hwptr_करोne -= runसमय->buffer_size * stride;
-पूर्ण
+			subs->hwptr_done++;
+		}
+	}
+	if (subs->hwptr_done >= runtime->buffer_size * stride)
+		subs->hwptr_done -= runtime->buffer_size * stride;
+}
 
-अटल व्योम copy_to_urb(काष्ठा snd_usb_substream *subs, काष्ठा urb *urb,
-			पूर्णांक offset, पूर्णांक stride, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
+static void copy_to_urb(struct snd_usb_substream *subs, struct urb *urb,
+			int offset, int stride, unsigned int bytes)
+{
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
 
-	अगर (subs->hwptr_करोne + bytes > runसमय->buffer_size * stride) अणु
+	if (subs->hwptr_done + bytes > runtime->buffer_size * stride) {
 		/* err, the transferred area goes over buffer boundary. */
-		अचिन्हित पूर्णांक bytes1 =
-			runसमय->buffer_size * stride - subs->hwptr_करोne;
-		स_नकल(urb->transfer_buffer + offset,
-		       runसमय->dma_area + subs->hwptr_करोne, bytes1);
-		स_नकल(urb->transfer_buffer + offset + bytes1,
-		       runसमय->dma_area, bytes - bytes1);
-	पूर्ण अन्यथा अणु
-		स_नकल(urb->transfer_buffer + offset,
-		       runसमय->dma_area + subs->hwptr_करोne, bytes);
-	पूर्ण
-	subs->hwptr_करोne += bytes;
-	अगर (subs->hwptr_करोne >= runसमय->buffer_size * stride)
-		subs->hwptr_करोne -= runसमय->buffer_size * stride;
-पूर्ण
+		unsigned int bytes1 =
+			runtime->buffer_size * stride - subs->hwptr_done;
+		memcpy(urb->transfer_buffer + offset,
+		       runtime->dma_area + subs->hwptr_done, bytes1);
+		memcpy(urb->transfer_buffer + offset + bytes1,
+		       runtime->dma_area, bytes - bytes1);
+	} else {
+		memcpy(urb->transfer_buffer + offset,
+		       runtime->dma_area + subs->hwptr_done, bytes);
+	}
+	subs->hwptr_done += bytes;
+	if (subs->hwptr_done >= runtime->buffer_size * stride)
+		subs->hwptr_done -= runtime->buffer_size * stride;
+}
 
-अटल अचिन्हित पूर्णांक copy_to_urb_quirk(काष्ठा snd_usb_substream *subs,
-				      काष्ठा urb *urb, पूर्णांक stride,
-				      अचिन्हित पूर्णांक bytes)
-अणु
+static unsigned int copy_to_urb_quirk(struct snd_usb_substream *subs,
+				      struct urb *urb, int stride,
+				      unsigned int bytes)
+{
 	__le32 packet_length;
-	पूर्णांक i;
+	int i;
 
 	/* Put __le32 length descriptor at start of each packet. */
-	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
-		अचिन्हित पूर्णांक length = urb->iso_frame_desc[i].length;
-		अचिन्हित पूर्णांक offset = urb->iso_frame_desc[i].offset;
+	for (i = 0; i < urb->number_of_packets; i++) {
+		unsigned int length = urb->iso_frame_desc[i].length;
+		unsigned int offset = urb->iso_frame_desc[i].offset;
 
 		packet_length = cpu_to_le32(length);
-		offset += i * माप(packet_length);
+		offset += i * sizeof(packet_length);
 		urb->iso_frame_desc[i].offset = offset;
-		urb->iso_frame_desc[i].length += माप(packet_length);
-		स_नकल(urb->transfer_buffer + offset,
-		       &packet_length, माप(packet_length));
-		copy_to_urb(subs, urb, offset + माप(packet_length),
+		urb->iso_frame_desc[i].length += sizeof(packet_length);
+		memcpy(urb->transfer_buffer + offset,
+		       &packet_length, sizeof(packet_length));
+		copy_to_urb(subs, urb, offset + sizeof(packet_length),
 			    stride, length);
-	पूर्ण
+	}
 	/* Adjust transfer size accordingly. */
-	bytes += urb->number_of_packets * माप(packet_length);
-	वापस bytes;
-पूर्ण
+	bytes += urb->number_of_packets * sizeof(packet_length);
+	return bytes;
+}
 
-अटल व्योम prepare_playback_urb(काष्ठा snd_usb_substream *subs,
-				 काष्ठा urb *urb)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	काष्ठा snd_usb_endpoपूर्णांक *ep = subs->data_endpoपूर्णांक;
-	काष्ठा snd_urb_ctx *ctx = urb->context;
-	अचिन्हित पूर्णांक counts, frames, bytes;
-	पूर्णांक i, stride, period_elapsed = 0;
-	अचिन्हित दीर्घ flags;
+static void prepare_playback_urb(struct snd_usb_substream *subs,
+				 struct urb *urb)
+{
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	struct snd_usb_endpoint *ep = subs->data_endpoint;
+	struct snd_urb_ctx *ctx = urb->context;
+	unsigned int counts, frames, bytes;
+	int i, stride, period_elapsed = 0;
+	unsigned long flags;
 
-	stride = runसमय->frame_bits >> 3;
+	stride = runtime->frame_bits >> 3;
 
 	frames = 0;
 	urb->number_of_packets = 0;
 	spin_lock_irqsave(&subs->lock, flags);
 	subs->frame_limit += ep->max_urb_frames;
-	क्रम (i = 0; i < ctx->packets; i++) अणु
-		counts = snd_usb_endpoपूर्णांक_next_packet_size(ep, ctx, i);
+	for (i = 0; i < ctx->packets; i++) {
+		counts = snd_usb_endpoint_next_packet_size(ep, ctx, i);
 		/* set up descriptor */
 		urb->iso_frame_desc[i].offset = frames * ep->stride;
 		urb->iso_frame_desc[i].length = counts * ep->stride;
 		frames += counts;
 		urb->number_of_packets++;
-		subs->transfer_करोne += counts;
-		अगर (subs->transfer_करोne >= runसमय->period_size) अणु
-			subs->transfer_करोne -= runसमय->period_size;
+		subs->transfer_done += counts;
+		if (subs->transfer_done >= runtime->period_size) {
+			subs->transfer_done -= runtime->period_size;
 			subs->frame_limit = 0;
 			period_elapsed = 1;
-			अगर (subs->fmt_type == UAC_FORMAT_TYPE_II) अणु
-				अगर (subs->transfer_करोne > 0) अणु
+			if (subs->fmt_type == UAC_FORMAT_TYPE_II) {
+				if (subs->transfer_done > 0) {
 					/* FIXME: fill-max mode is not
 					 * supported yet */
-					frames -= subs->transfer_करोne;
-					counts -= subs->transfer_करोne;
+					frames -= subs->transfer_done;
+					counts -= subs->transfer_done;
 					urb->iso_frame_desc[i].length =
 						counts * ep->stride;
-					subs->transfer_करोne = 0;
-				पूर्ण
+					subs->transfer_done = 0;
+				}
 				i++;
-				अगर (i < ctx->packets) अणु
+				if (i < ctx->packets) {
 					/* add a transfer delimiter */
 					urb->iso_frame_desc[i].offset =
 						frames * ep->stride;
 					urb->iso_frame_desc[i].length = 0;
 					urb->number_of_packets++;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				}
+				break;
+			}
+		}
 		/* finish at the period boundary or after enough frames */
-		अगर ((period_elapsed ||
-				subs->transfer_करोne >= subs->frame_limit) &&
-		    !snd_usb_endpoपूर्णांक_implicit_feedback_sink(ep))
-			अवरोध;
-	पूर्ण
+		if ((period_elapsed ||
+				subs->transfer_done >= subs->frame_limit) &&
+		    !snd_usb_endpoint_implicit_feedback_sink(ep))
+			break;
+	}
 	bytes = frames * ep->stride;
 
-	अगर (unlikely(ep->cur_क्रमmat == SNDRV_PCM_FORMAT_DSD_U16_LE &&
-		     subs->cur_audiofmt->dsd_करोp)) अणु
-		fill_playback_urb_dsd_करोp(subs, urb, bytes);
-	पूर्ण अन्यथा अगर (unlikely(ep->cur_क्रमmat == SNDRV_PCM_FORMAT_DSD_U8 &&
-			   subs->cur_audiofmt->dsd_bitrev)) अणु
+	if (unlikely(ep->cur_format == SNDRV_PCM_FORMAT_DSD_U16_LE &&
+		     subs->cur_audiofmt->dsd_dop)) {
+		fill_playback_urb_dsd_dop(subs, urb, bytes);
+	} else if (unlikely(ep->cur_format == SNDRV_PCM_FORMAT_DSD_U8 &&
+			   subs->cur_audiofmt->dsd_bitrev)) {
 		/* bit-reverse the bytes */
 		u8 *buf = urb->transfer_buffer;
-		क्रम (i = 0; i < bytes; i++) अणु
-			पूर्णांक idx = (subs->hwptr_करोne + i)
-				% (runसमय->buffer_size * stride);
-			buf[i] = bitrev8(runसमय->dma_area[idx]);
-		पूर्ण
+		for (i = 0; i < bytes; i++) {
+			int idx = (subs->hwptr_done + i)
+				% (runtime->buffer_size * stride);
+			buf[i] = bitrev8(runtime->dma_area[idx]);
+		}
 
-		subs->hwptr_करोne += bytes;
-		अगर (subs->hwptr_करोne >= runसमय->buffer_size * stride)
-			subs->hwptr_करोne -= runसमय->buffer_size * stride;
-	पूर्ण अन्यथा अणु
+		subs->hwptr_done += bytes;
+		if (subs->hwptr_done >= runtime->buffer_size * stride)
+			subs->hwptr_done -= runtime->buffer_size * stride;
+	} else {
 		/* usual PCM */
-		अगर (!subs->tx_length_quirk)
+		if (!subs->tx_length_quirk)
 			copy_to_urb(subs, urb, 0, stride, bytes);
-		अन्यथा
+		else
 			bytes = copy_to_urb_quirk(subs, urb, stride, bytes);
 			/* bytes is now amount of outgoing data */
-	पूर्ण
+	}
 
 	/* update delay with exact number of samples queued */
-	runसमय->delay = subs->last_delay;
-	runसमय->delay += frames;
-	subs->last_delay = runसमय->delay;
+	runtime->delay = subs->last_delay;
+	runtime->delay += frames;
+	subs->last_delay = runtime->delay;
 
 	/* realign last_frame_number */
 	subs->last_frame_number = usb_get_current_frame_number(subs->dev);
 	subs->last_frame_number &= 0xFF; /* keep 8 LSBs */
 
-	अगर (subs->trigger_tstamp_pending_update) अणु
+	if (subs->trigger_tstamp_pending_update) {
 		/* this is the first actual URB submitted,
-		 * update trigger बारtamp to reflect actual start समय
+		 * update trigger timestamp to reflect actual start time
 		 */
-		snd_pcm_समय_लो(runसमय, &runसमय->trigger_tstamp);
+		snd_pcm_gettime(runtime, &runtime->trigger_tstamp);
 		subs->trigger_tstamp_pending_update = false;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&subs->lock, flags);
 	urb->transfer_buffer_length = bytes;
-	अगर (period_elapsed)
+	if (period_elapsed)
 		snd_pcm_period_elapsed(subs->pcm_substream);
-पूर्ण
+}
 
 /*
  * process after playback data complete
  * - decrease the delay count again
  */
-अटल व्योम retire_playback_urb(काष्ठा snd_usb_substream *subs,
-			       काष्ठा urb *urb)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	काष्ठा snd_usb_endpoपूर्णांक *ep = subs->data_endpoपूर्णांक;
-	पूर्णांक processed = urb->transfer_buffer_length / ep->stride;
-	पूर्णांक est_delay;
+static void retire_playback_urb(struct snd_usb_substream *subs,
+			       struct urb *urb)
+{
+	unsigned long flags;
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	struct snd_usb_endpoint *ep = subs->data_endpoint;
+	int processed = urb->transfer_buffer_length / ep->stride;
+	int est_delay;
 
 	/* ignore the delay accounting when processed=0 is given, i.e.
-	 * silent payloads are processed beक्रमe handling the actual data
+	 * silent payloads are processed before handling the actual data
 	 */
-	अगर (!processed)
-		वापस;
+	if (!processed)
+		return;
 
 	spin_lock_irqsave(&subs->lock, flags);
-	अगर (!subs->last_delay)
-		जाओ out; /* लघु path */
+	if (!subs->last_delay)
+		goto out; /* short path */
 
-	est_delay = snd_usb_pcm_delay(subs, runसमय->rate);
+	est_delay = snd_usb_pcm_delay(subs, runtime->rate);
 	/* update delay with exact number of samples played */
-	अगर (processed > subs->last_delay)
+	if (processed > subs->last_delay)
 		subs->last_delay = 0;
-	अन्यथा
+	else
 		subs->last_delay -= processed;
-	runसमय->delay = subs->last_delay;
+	runtime->delay = subs->last_delay;
 
 	/*
 	 * Report when delay estimate is off by more than 2ms.
 	 * The error should be lower than 2ms since the estimate relies
-	 * on two पढ़ोs of a counter updated every ms.
+	 * on two reads of a counter updated every ms.
 	 */
-	अगर (असल(est_delay - subs->last_delay) * 1000 > runसमय->rate * 2)
+	if (abs(est_delay - subs->last_delay) * 1000 > runtime->rate * 2)
 		dev_dbg_ratelimited(&subs->dev->dev,
 			"delay: estimated %d, actual %d\n",
 			est_delay, subs->last_delay);
 
-	अगर (!subs->running) अणु
-		/* update last_frame_number क्रम delay counting here since
-		 * prepare_playback_urb won't be called during छोड़ो
+	if (!subs->running) {
+		/* update last_frame_number for delay counting here since
+		 * prepare_playback_urb won't be called during pause
 		 */
 		subs->last_frame_number =
 			usb_get_current_frame_number(subs->dev) & 0xff;
-	पूर्ण
+	}
 
  out:
 	spin_unlock_irqrestore(&subs->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक snd_usb_substream_playback_trigger(काष्ठा snd_pcm_substream *substream,
-					      पूर्णांक cmd)
-अणु
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
+static int snd_usb_substream_playback_trigger(struct snd_pcm_substream *substream,
+					      int cmd)
+{
+	struct snd_usb_substream *subs = substream->runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		subs->trigger_tstamp_pending_update = true;
 		fallthrough;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		snd_usb_endpoपूर्णांक_set_callback(subs->data_endpoपूर्णांक,
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		snd_usb_endpoint_set_callback(subs->data_endpoint,
 					      prepare_playback_urb,
 					      retire_playback_urb,
 					      subs);
 		subs->running = 1;
 		dev_dbg(&subs->dev->dev, "%d:%d Start Playback PCM\n",
-			subs->cur_audiofmt->अगरace,
+			subs->cur_audiofmt->iface,
 			subs->cur_audiofmt->altsetting);
-		वापस 0;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		stop_endpoपूर्णांकs(subs);
-		snd_usb_endpoपूर्णांक_set_callback(subs->data_endpoपूर्णांक,
-					      शून्य, शून्य, शून्य);
+		return 0;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
+		stop_endpoints(subs);
+		snd_usb_endpoint_set_callback(subs->data_endpoint,
+					      NULL, NULL, NULL);
 		subs->running = 0;
 		dev_dbg(&subs->dev->dev, "%d:%d Stop Playback PCM\n",
-			subs->cur_audiofmt->अगरace,
+			subs->cur_audiofmt->iface,
 			subs->cur_audiofmt->altsetting);
-		वापस 0;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		/* keep retire_data_urb क्रम delay calculation */
-		snd_usb_endpoपूर्णांक_set_callback(subs->data_endpoपूर्णांक,
-					      शून्य,
+		return 0;
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		/* keep retire_data_urb for delay calculation */
+		snd_usb_endpoint_set_callback(subs->data_endpoint,
+					      NULL,
 					      retire_playback_urb,
 					      subs);
 		subs->running = 0;
 		dev_dbg(&subs->dev->dev, "%d:%d Pause Playback PCM\n",
-			subs->cur_audiofmt->अगरace,
+			subs->cur_audiofmt->iface,
 			subs->cur_audiofmt->altsetting);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक snd_usb_substream_capture_trigger(काष्ठा snd_pcm_substream *substream,
-					     पूर्णांक cmd)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_usb_substream *subs = substream->runसमय->निजी_data;
+static int snd_usb_substream_capture_trigger(struct snd_pcm_substream *substream,
+					     int cmd)
+{
+	int err;
+	struct snd_usb_substream *subs = substream->runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		err = start_endpoपूर्णांकs(subs);
-		अगर (err < 0)
-			वापस err;
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		err = start_endpoints(subs);
+		if (err < 0)
+			return err;
 		fallthrough;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		snd_usb_endpoपूर्णांक_set_callback(subs->data_endpoपूर्णांक,
-					      शून्य, retire_capture_urb,
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		snd_usb_endpoint_set_callback(subs->data_endpoint,
+					      NULL, retire_capture_urb,
 					      subs);
 		subs->running = 1;
 		dev_dbg(&subs->dev->dev, "%d:%d Start Capture PCM\n",
-			subs->cur_audiofmt->अगरace,
+			subs->cur_audiofmt->iface,
 			subs->cur_audiofmt->altsetting);
-		वापस 0;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		stop_endpoपूर्णांकs(subs);
+		return 0;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_STOP:
+		stop_endpoints(subs);
 		fallthrough;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		snd_usb_endpoपूर्णांक_set_callback(subs->data_endpoपूर्णांक,
-					      शून्य, शून्य, शून्य);
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		snd_usb_endpoint_set_callback(subs->data_endpoint,
+					      NULL, NULL, NULL);
 		subs->running = 0;
 		dev_dbg(&subs->dev->dev, "%d:%d Stop Capture PCM\n",
-			subs->cur_audiofmt->अगरace,
+			subs->cur_audiofmt->iface,
 			subs->cur_audiofmt->altsetting);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_usb_playback_ops = अणु
-	.खोलो =		snd_usb_pcm_खोलो,
-	.बंद =	snd_usb_pcm_बंद,
+static const struct snd_pcm_ops snd_usb_playback_ops = {
+	.open =		snd_usb_pcm_open,
+	.close =	snd_usb_pcm_close,
 	.hw_params =	snd_usb_hw_params,
-	.hw_मुक्त =	snd_usb_hw_मुक्त,
+	.hw_free =	snd_usb_hw_free,
 	.prepare =	snd_usb_pcm_prepare,
 	.trigger =	snd_usb_substream_playback_trigger,
 	.sync_stop =	snd_usb_pcm_sync_stop,
-	.poपूर्णांकer =	snd_usb_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_usb_pcm_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_usb_capture_ops = अणु
-	.खोलो =		snd_usb_pcm_खोलो,
-	.बंद =	snd_usb_pcm_बंद,
+static const struct snd_pcm_ops snd_usb_capture_ops = {
+	.open =		snd_usb_pcm_open,
+	.close =	snd_usb_pcm_close,
 	.hw_params =	snd_usb_hw_params,
-	.hw_मुक्त =	snd_usb_hw_मुक्त,
+	.hw_free =	snd_usb_hw_free,
 	.prepare =	snd_usb_pcm_prepare,
 	.trigger =	snd_usb_substream_capture_trigger,
 	.sync_stop =	snd_usb_pcm_sync_stop,
-	.poपूर्णांकer =	snd_usb_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_usb_pcm_pointer,
+};
 
-व्योम snd_usb_set_pcm_ops(काष्ठा snd_pcm *pcm, पूर्णांक stream)
-अणु
-	स्थिर काष्ठा snd_pcm_ops *ops;
+void snd_usb_set_pcm_ops(struct snd_pcm *pcm, int stream)
+{
+	const struct snd_pcm_ops *ops;
 
 	ops = stream == SNDRV_PCM_STREAM_PLAYBACK ?
 			&snd_usb_playback_ops : &snd_usb_capture_ops;
 	snd_pcm_set_ops(pcm, stream, ops);
-पूर्ण
+}
 
-व्योम snd_usb_pपुनः_स्मृतिate_buffer(काष्ठा snd_usb_substream *subs)
-अणु
-	काष्ठा snd_pcm *pcm = subs->stream->pcm;
-	काष्ठा snd_pcm_substream *s = pcm->streams[subs->direction].substream;
-	काष्ठा device *dev = subs->dev->bus->sysdev;
+void snd_usb_preallocate_buffer(struct snd_usb_substream *subs)
+{
+	struct snd_pcm *pcm = subs->stream->pcm;
+	struct snd_pcm_substream *s = pcm->streams[subs->direction].substream;
+	struct device *dev = subs->dev->bus->sysdev;
 
-	अगर (snd_usb_use_vदो_स्मृति)
+	if (snd_usb_use_vmalloc)
 		snd_pcm_set_managed_buffer(s, SNDRV_DMA_TYPE_VMALLOC,
-					   शून्य, 0, 0);
-	अन्यथा
+					   NULL, 0, 0);
+	else
 		snd_pcm_set_managed_buffer(s, SNDRV_DMA_TYPE_DEV_SG,
 					   dev, 64*1024, 512*1024);
-पूर्ण
+}

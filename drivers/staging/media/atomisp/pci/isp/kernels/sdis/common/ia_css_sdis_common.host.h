@@ -1,103 +1,102 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _IA_CSS_SDIS_COMMON_HOST_H
-#घोषणा _IA_CSS_SDIS_COMMON_HOST_H
+#ifndef _IA_CSS_SDIS_COMMON_HOST_H
+#define _IA_CSS_SDIS_COMMON_HOST_H
 
-#घोषणा ISP_MAX_SDIS_HOR_PROJ_NUM_ISP \
+#define ISP_MAX_SDIS_HOR_PROJ_NUM_ISP \
 	__ISP_SDIS_HOR_PROJ_NUM_ISP(ISP_MAX_INTERNAL_WIDTH, ISP_MAX_INTERNAL_HEIGHT, \
 		SH_CSS_DIS_DECI_FACTOR_LOG2, ISP_PIPE_VERSION)
-#घोषणा ISP_MAX_SDIS_VER_PROJ_NUM_ISP \
+#define ISP_MAX_SDIS_VER_PROJ_NUM_ISP \
 	__ISP_SDIS_VER_PROJ_NUM_ISP(ISP_MAX_INTERNAL_WIDTH, \
 		SH_CSS_DIS_DECI_FACTOR_LOG2)
 
-#घोषणा _ISP_SDIS_HOR_COEF_NUM_VECS \
+#define _ISP_SDIS_HOR_COEF_NUM_VECS \
 	__ISP_SDIS_HOR_COEF_NUM_VECS(ISP_INTERNAL_WIDTH)
-#घोषणा ISP_MAX_SDIS_HOR_COEF_NUM_VECS \
+#define ISP_MAX_SDIS_HOR_COEF_NUM_VECS \
 	__ISP_SDIS_HOR_COEF_NUM_VECS(ISP_MAX_INTERNAL_WIDTH)
-#घोषणा ISP_MAX_SDIS_VER_COEF_NUM_VECS \
+#define ISP_MAX_SDIS_VER_COEF_NUM_VECS \
 	__ISP_SDIS_VER_COEF_NUM_VECS(ISP_MAX_INTERNAL_HEIGHT)
 
 /* SDIS Coefficients: */
 /* The ISP uses vectors to store the coefficients, so we round
    the number of coefficients up to vectors. */
-#घोषणा __ISP_SDIS_HOR_COEF_NUM_VECS(in_width)  _ISP_VECS(_ISP_BQS(in_width))
-#घोषणा __ISP_SDIS_VER_COEF_NUM_VECS(in_height) _ISP_VECS(_ISP_BQS(in_height))
+#define __ISP_SDIS_HOR_COEF_NUM_VECS(in_width)  _ISP_VECS(_ISP_BQS(in_width))
+#define __ISP_SDIS_VER_COEF_NUM_VECS(in_height) _ISP_VECS(_ISP_BQS(in_height))
 
 /* SDIS Projections:
- * SDIS1: Horizontal projections are calculated क्रम each line.
- * Vertical projections are calculated क्रम each column.
- * SDIS2: Projections are calculated क्रम each grid cell.
- * Grid cells that करो not fall completely within the image are not
- * valid. The host needs to use the bigger one क्रम the stride but
- * should only वापस the valid ones to the 3A. */
-#घोषणा __ISP_SDIS_HOR_PROJ_NUM_ISP(in_width, in_height, deci_factor_log2, \
+ * SDIS1: Horizontal projections are calculated for each line.
+ * Vertical projections are calculated for each column.
+ * SDIS2: Projections are calculated for each grid cell.
+ * Grid cells that do not fall completely within the image are not
+ * valid. The host needs to use the bigger one for the stride but
+ * should only return the valid ones to the 3A. */
+#define __ISP_SDIS_HOR_PROJ_NUM_ISP(in_width, in_height, deci_factor_log2, \
 	isp_pipe_version) \
 	((isp_pipe_version == 1) ? \
 		CEIL_SHIFT(_ISP_BQS(in_height), deci_factor_log2) : \
 		CEIL_SHIFT(_ISP_BQS(in_width), deci_factor_log2))
 
-#घोषणा __ISP_SDIS_VER_PROJ_NUM_ISP(in_width, deci_factor_log2) \
+#define __ISP_SDIS_VER_PROJ_NUM_ISP(in_width, deci_factor_log2) \
 	CEIL_SHIFT(_ISP_BQS(in_width), deci_factor_log2)
 
-#घोषणा SH_CSS_DIS_VER_NUM_COEF_TYPES(b) \
+#define SH_CSS_DIS_VER_NUM_COEF_TYPES(b) \
   (((b)->info->sp.pipeline.isp_pipe_version == 2) ? \
 	IA_CSS_DVS2_NUM_COEF_TYPES : \
 	IA_CSS_DVS_NUM_COEF_TYPES)
 
-#अगर_अघोषित PIPE_GENERATION
-#अगर defined(__ISP) || defined(MK_FIRMWARE)
+#ifndef PIPE_GENERATION
+#if defined(__ISP) || defined(MK_FIRMWARE)
 
-/* Array cannot be 2-dimensional, since driver ddr allocation करोes not know stride */
-काष्ठा sh_css_isp_sdis_hori_proj_tbl अणु
+/* Array cannot be 2-dimensional, since driver ddr allocation does not know stride */
+struct sh_css_isp_sdis_hori_proj_tbl {
 	s32 tbl[ISP_DVS_NUM_COEF_TYPES * ISP_MAX_SDIS_HOR_PROJ_NUM_ISP];
-#अगर DVS2_PROJ_MARGIN > 0
+#if DVS2_PROJ_MARGIN > 0
 	s32 margin[DVS2_PROJ_MARGIN];
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा sh_css_isp_sdis_vert_proj_tbl अणु
+struct sh_css_isp_sdis_vert_proj_tbl {
 	s32 tbl[ISP_DVS_NUM_COEF_TYPES * ISP_MAX_SDIS_VER_PROJ_NUM_ISP];
-#अगर DVS2_PROJ_MARGIN > 0
+#if DVS2_PROJ_MARGIN > 0
 	s32 margin[DVS2_PROJ_MARGIN];
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा sh_css_isp_sdis_hori_coef_tbl अणु
+struct sh_css_isp_sdis_hori_coef_tbl {
 	VMEM_ARRAY(tbl[ISP_DVS_NUM_COEF_TYPES],
 		   ISP_MAX_SDIS_HOR_COEF_NUM_VECS * ISP_NWAY);
-पूर्ण;
+};
 
-काष्ठा sh_css_isp_sdis_vert_coef_tbl अणु
+struct sh_css_isp_sdis_vert_coef_tbl {
 	VMEM_ARRAY(tbl[ISP_DVS_NUM_COEF_TYPES],
 		   ISP_MAX_SDIS_VER_COEF_NUM_VECS * ISP_NWAY);
-पूर्ण;
+};
 
-#पूर्ण_अगर /* defined(__ISP) || defined (MK_FIRMWARE) */
-#पूर्ण_अगर /* PIPE_GENERATION */
+#endif /* defined(__ISP) || defined (MK_FIRMWARE) */
+#endif /* PIPE_GENERATION */
 
-#अगर_अघोषित PIPE_GENERATION
-काष्ठा s_sdis_config अणु
-	अचिन्हित पूर्णांक horicoef_vectors;
-	अचिन्हित पूर्णांक vertcoef_vectors;
-	अचिन्हित पूर्णांक horiproj_num;
-	अचिन्हित पूर्णांक vertproj_num;
-पूर्ण;
+#ifndef PIPE_GENERATION
+struct s_sdis_config {
+	unsigned int horicoef_vectors;
+	unsigned int vertcoef_vectors;
+	unsigned int horiproj_num;
+	unsigned int vertproj_num;
+};
 
-बाह्य काष्ठा s_sdis_config sdis_config;
-#पूर्ण_अगर
+extern struct s_sdis_config sdis_config;
+#endif
 
-#पूर्ण_अगर /* _IA_CSS_SDIS_COMMON_HOST_H */
+#endif /* _IA_CSS_SDIS_COMMON_HOST_H */

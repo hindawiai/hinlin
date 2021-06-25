@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  cx18 I2C functions
  *
@@ -8,9 +7,9 @@
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-पूर्णांक cx18_i2c_रेजिस्टर(काष्ठा cx18 *cx, अचिन्हित idx);
-काष्ठा v4l2_subdev *cx18_find_hw(काष्ठा cx18 *cx, u32 hw);
+int cx18_i2c_register(struct cx18 *cx, unsigned idx);
+struct v4l2_subdev *cx18_find_hw(struct cx18 *cx, u32 hw);
 
-/* init + रेजिस्टर i2c adapter */
-पूर्णांक init_cx18_i2c(काष्ठा cx18 *cx);
-व्योम निकास_cx18_i2c(काष्ठा cx18 *cx);
+/* init + register i2c adapter */
+int init_cx18_i2c(struct cx18 *cx);
+void exit_cx18_i2c(struct cx18 *cx);

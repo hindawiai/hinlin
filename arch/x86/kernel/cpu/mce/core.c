@@ -1,496 +1,495 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Machine check handler.
  *
- * K8 parts Copyright 2002,2003 Andi Kleen, SuSE Lअसल.
+ * K8 parts Copyright 2002,2003 Andi Kleen, SuSE Labs.
  * Rest from unknown author(s).
  * 2004 Andi Kleen. Rewrote most of it.
  * Copyright 2008 Intel Corporation
  * Author: Andi Kleen
  */
 
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/device.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/ras.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/export.h>
-#समावेश <linux/set_memory.h>
-#समावेश <linux/sync_core.h>
-#समावेश <linux/task_work.h>
-#समावेश <linux/hardirq.h>
+#include <linux/thread_info.h>
+#include <linux/capability.h>
+#include <linux/miscdevice.h>
+#include <linux/ratelimit.h>
+#include <linux/rcupdate.h>
+#include <linux/kobject.h>
+#include <linux/uaccess.h>
+#include <linux/kdebug.h>
+#include <linux/kernel.h>
+#include <linux/percpu.h>
+#include <linux/string.h>
+#include <linux/device.h>
+#include <linux/syscore_ops.h>
+#include <linux/delay.h>
+#include <linux/ctype.h>
+#include <linux/sched.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/kmod.h>
+#include <linux/poll.h>
+#include <linux/nmi.h>
+#include <linux/cpu.h>
+#include <linux/ras.h>
+#include <linux/smp.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/debugfs.h>
+#include <linux/irq_work.h>
+#include <linux/export.h>
+#include <linux/set_memory.h>
+#include <linux/sync_core.h>
+#include <linux/task_work.h>
+#include <linux/hardirq.h>
 
-#समावेश <यंत्र/पूर्णांकel-family.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/mce.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/reboot.h>
+#include <asm/intel-family.h>
+#include <asm/processor.h>
+#include <asm/traps.h>
+#include <asm/tlbflush.h>
+#include <asm/mce.h>
+#include <asm/msr.h>
+#include <asm/reboot.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /* sysfs synchronization */
-अटल DEFINE_MUTEX(mce_sysfs_mutex);
+static DEFINE_MUTEX(mce_sysfs_mutex);
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/mce.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/mce.h>
 
-#घोषणा SPINUNIT		100	/* 100ns */
+#define SPINUNIT		100	/* 100ns */
 
-DEFINE_PER_CPU(अचिन्हित, mce_exception_count);
+DEFINE_PER_CPU(unsigned, mce_exception_count);
 
-DEFINE_PER_CPU_READ_MOSTLY(अचिन्हित पूर्णांक, mce_num_banks);
+DEFINE_PER_CPU_READ_MOSTLY(unsigned int, mce_num_banks);
 
-काष्ठा mce_bank अणु
+struct mce_bank {
 	u64			ctl;			/* subevents to enable */
 	bool			init;			/* initialise bank? */
-पूर्ण;
-अटल DEFINE_PER_CPU_READ_MOSTLY(काष्ठा mce_bank[MAX_NR_BANKS], mce_banks_array);
+};
+static DEFINE_PER_CPU_READ_MOSTLY(struct mce_bank[MAX_NR_BANKS], mce_banks_array);
 
-#घोषणा ATTR_LEN               16
-/* One object क्रम each MCE bank, shared by all CPUs */
-काष्ठा mce_bank_dev अणु
-	काष्ठा device_attribute	attr;			/* device attribute */
-	अक्षर			attrname[ATTR_LEN];	/* attribute name */
+#define ATTR_LEN               16
+/* One object for each MCE bank, shared by all CPUs */
+struct mce_bank_dev {
+	struct device_attribute	attr;			/* device attribute */
+	char			attrname[ATTR_LEN];	/* attribute name */
 	u8			bank;			/* bank number */
-पूर्ण;
-अटल काष्ठा mce_bank_dev mce_bank_devs[MAX_NR_BANKS];
+};
+static struct mce_bank_dev mce_bank_devs[MAX_NR_BANKS];
 
-काष्ठा mce_venकरोr_flags mce_flags __पढ़ो_mostly;
+struct mce_vendor_flags mce_flags __read_mostly;
 
-काष्ठा mca_config mca_cfg __पढ़ो_mostly = अणु
+struct mca_config mca_cfg __read_mostly = {
 	.bootlog  = -1,
 	/*
 	 * Tolerant levels:
 	 * 0: always panic on uncorrected errors, log corrected errors
 	 * 1: panic or SIGBUS on uncorrected errors, log corrected errors
-	 * 2: SIGBUS or log uncorrected errors (अगर possible), log corr. errors
-	 * 3: never panic or SIGBUS, log all errors (क्रम testing only)
+	 * 2: SIGBUS or log uncorrected errors (if possible), log corr. errors
+	 * 3: never panic or SIGBUS, log all errors (for testing only)
 	 */
 	.tolerant = 1,
-	.monarch_समयout = -1
-पूर्ण;
+	.monarch_timeout = -1
+};
 
-अटल DEFINE_PER_CPU(काष्ठा mce, mces_seen);
-अटल अचिन्हित दीर्घ mce_need_notअगरy;
-अटल पूर्णांक cpu_missing;
+static DEFINE_PER_CPU(struct mce, mces_seen);
+static unsigned long mce_need_notify;
+static int cpu_missing;
 
 /*
- * MCA banks polled by the period polling समयr क्रम corrected events.
- * With Intel CMCI, this only has MCA banks which करो not support CMCI (अगर any).
+ * MCA banks polled by the period polling timer for corrected events.
+ * With Intel CMCI, this only has MCA banks which do not support CMCI (if any).
  */
-DEFINE_PER_CPU(mce_banks_t, mce_poll_banks) = अणु
+DEFINE_PER_CPU(mce_banks_t, mce_poll_banks) = {
 	[0 ... BITS_TO_LONGS(MAX_NR_BANKS)-1] = ~0UL
-पूर्ण;
+};
 
 /*
- * MCA banks controlled through firmware first क्रम corrected errors.
- * This is a global list of banks क्रम which we won't enable CMCI and we
- * won't poll. Firmware controls these banks and is responsible क्रम
+ * MCA banks controlled through firmware first for corrected errors.
+ * This is a global list of banks for which we won't enable CMCI and we
+ * won't poll. Firmware controls these banks and is responsible for
  * reporting corrected errors through GHES. Uncorrected/recoverable
- * errors are still notअगरied through a machine check.
+ * errors are still notified through a machine check.
  */
 mce_banks_t mce_banks_ce_disabled;
 
-अटल काष्ठा work_काष्ठा mce_work;
-अटल काष्ठा irq_work mce_irq_work;
+static struct work_struct mce_work;
+static struct irq_work mce_irq_work;
 
-अटल व्योम (*quirk_no_way_out)(पूर्णांक bank, काष्ठा mce *m, काष्ठा pt_regs *regs);
+static void (*quirk_no_way_out)(int bank, struct mce *m, struct pt_regs *regs);
 
 /*
- * CPU/chipset specअगरic EDAC code can रेजिस्टर a notअगरier call here to prपूर्णांक
- * MCE errors in a human-पढ़ोable क्रमm.
+ * CPU/chipset specific EDAC code can register a notifier call here to print
+ * MCE errors in a human-readable form.
  */
 BLOCKING_NOTIFIER_HEAD(x86_mce_decoder_chain);
 
-/* Do initial initialization of a काष्ठा mce */
-noinstr व्योम mce_setup(काष्ठा mce *m)
-अणु
-	स_रखो(m, 0, माप(काष्ठा mce));
+/* Do initial initialization of a struct mce */
+noinstr void mce_setup(struct mce *m)
+{
+	memset(m, 0, sizeof(struct mce));
 	m->cpu = m->extcpu = smp_processor_id();
-	/* need the पूर्णांकernal __ version to aव्योम deadlocks */
-	m->समय = __kसमय_get_real_seconds();
-	m->cpuvenकरोr = boot_cpu_data.x86_venकरोr;
+	/* need the internal __ version to avoid deadlocks */
+	m->time = __ktime_get_real_seconds();
+	m->cpuvendor = boot_cpu_data.x86_vendor;
 	m->cpuid = cpuid_eax(1);
 	m->socketid = cpu_data(m->extcpu).phys_proc_id;
 	m->apicid = cpu_data(m->extcpu).initial_apicid;
 	m->mcgcap = __rdmsr(MSR_IA32_MCG_CAP);
 
-	अगर (this_cpu_has(X86_FEATURE_INTEL_PPIN))
+	if (this_cpu_has(X86_FEATURE_INTEL_PPIN))
 		m->ppin = __rdmsr(MSR_PPIN);
-	अन्यथा अगर (this_cpu_has(X86_FEATURE_AMD_PPIN))
+	else if (this_cpu_has(X86_FEATURE_AMD_PPIN))
 		m->ppin = __rdmsr(MSR_AMD_PPIN);
 
 	m->microcode = boot_cpu_data.microcode;
-पूर्ण
+}
 
-DEFINE_PER_CPU(काष्ठा mce, injecपंचांग);
-EXPORT_PER_CPU_SYMBOL_GPL(injecपंचांग);
+DEFINE_PER_CPU(struct mce, injectm);
+EXPORT_PER_CPU_SYMBOL_GPL(injectm);
 
-व्योम mce_log(काष्ठा mce *m)
-अणु
-	अगर (!mce_gen_pool_add(m))
+void mce_log(struct mce *m)
+{
+	if (!mce_gen_pool_add(m))
 		irq_work_queue(&mce_irq_work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mce_log);
 
-व्योम mce_रेजिस्टर_decode_chain(काष्ठा notअगरier_block *nb)
-अणु
-	अगर (WARN_ON(nb->priority < MCE_PRIO_LOWEST ||
+void mce_register_decode_chain(struct notifier_block *nb)
+{
+	if (WARN_ON(nb->priority < MCE_PRIO_LOWEST ||
 		    nb->priority > MCE_PRIO_HIGHEST))
-		वापस;
+		return;
 
-	blocking_notअगरier_chain_रेजिस्टर(&x86_mce_decoder_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(mce_रेजिस्टर_decode_chain);
+	blocking_notifier_chain_register(&x86_mce_decoder_chain, nb);
+}
+EXPORT_SYMBOL_GPL(mce_register_decode_chain);
 
-व्योम mce_unरेजिस्टर_decode_chain(काष्ठा notअगरier_block *nb)
-अणु
-	blocking_notअगरier_chain_unरेजिस्टर(&x86_mce_decoder_chain, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(mce_unरेजिस्टर_decode_chain);
+void mce_unregister_decode_chain(struct notifier_block *nb)
+{
+	blocking_notifier_chain_unregister(&x86_mce_decoder_chain, nb);
+}
+EXPORT_SYMBOL_GPL(mce_unregister_decode_chain);
 
-अटल अंतरभूत u32 ctl_reg(पूर्णांक bank)
-अणु
-	वापस MSR_IA32_MCx_CTL(bank);
-पूर्ण
+static inline u32 ctl_reg(int bank)
+{
+	return MSR_IA32_MCx_CTL(bank);
+}
 
-अटल अंतरभूत u32 status_reg(पूर्णांक bank)
-अणु
-	वापस MSR_IA32_MCx_STATUS(bank);
-पूर्ण
+static inline u32 status_reg(int bank)
+{
+	return MSR_IA32_MCx_STATUS(bank);
+}
 
-अटल अंतरभूत u32 addr_reg(पूर्णांक bank)
-अणु
-	वापस MSR_IA32_MCx_ADDR(bank);
-पूर्ण
+static inline u32 addr_reg(int bank)
+{
+	return MSR_IA32_MCx_ADDR(bank);
+}
 
-अटल अंतरभूत u32 misc_reg(पूर्णांक bank)
-अणु
-	वापस MSR_IA32_MCx_MISC(bank);
-पूर्ण
+static inline u32 misc_reg(int bank)
+{
+	return MSR_IA32_MCx_MISC(bank);
+}
 
-अटल अंतरभूत u32 smca_ctl_reg(पूर्णांक bank)
-अणु
-	वापस MSR_AMD64_SMCA_MCx_CTL(bank);
-पूर्ण
+static inline u32 smca_ctl_reg(int bank)
+{
+	return MSR_AMD64_SMCA_MCx_CTL(bank);
+}
 
-अटल अंतरभूत u32 smca_status_reg(पूर्णांक bank)
-अणु
-	वापस MSR_AMD64_SMCA_MCx_STATUS(bank);
-पूर्ण
+static inline u32 smca_status_reg(int bank)
+{
+	return MSR_AMD64_SMCA_MCx_STATUS(bank);
+}
 
-अटल अंतरभूत u32 smca_addr_reg(पूर्णांक bank)
-अणु
-	वापस MSR_AMD64_SMCA_MCx_ADDR(bank);
-पूर्ण
+static inline u32 smca_addr_reg(int bank)
+{
+	return MSR_AMD64_SMCA_MCx_ADDR(bank);
+}
 
-अटल अंतरभूत u32 smca_misc_reg(पूर्णांक bank)
-अणु
-	वापस MSR_AMD64_SMCA_MCx_MISC(bank);
-पूर्ण
+static inline u32 smca_misc_reg(int bank)
+{
+	return MSR_AMD64_SMCA_MCx_MISC(bank);
+}
 
-काष्ठा mca_msr_regs msr_ops = अणु
+struct mca_msr_regs msr_ops = {
 	.ctl	= ctl_reg,
 	.status	= status_reg,
 	.addr	= addr_reg,
 	.misc	= misc_reg
-पूर्ण;
+};
 
-अटल व्योम __prपूर्णांक_mce(काष्ठा mce *m)
-अणु
+static void __print_mce(struct mce *m)
+{
 	pr_emerg(HW_ERR "CPU %d: Machine Check%s: %Lx Bank %d: %016Lx\n",
 		 m->extcpu,
 		 (m->mcgstatus & MCG_STATUS_MCIP ? " Exception" : ""),
 		 m->mcgstatus, m->bank, m->status);
 
-	अगर (m->ip) अणु
+	if (m->ip) {
 		pr_emerg(HW_ERR "RIP%s %02x:<%016Lx> ",
 			!(m->mcgstatus & MCG_STATUS_EIPV) ? " !INEXACT!" : "",
 			m->cs, m->ip);
 
-		अगर (m->cs == __KERNEL_CS)
-			pr_cont("{%pS}", (व्योम *)(अचिन्हित दीर्घ)m->ip);
+		if (m->cs == __KERNEL_CS)
+			pr_cont("{%pS}", (void *)(unsigned long)m->ip);
 		pr_cont("\n");
-	पूर्ण
+	}
 
 	pr_emerg(HW_ERR "TSC %llx ", m->tsc);
-	अगर (m->addr)
+	if (m->addr)
 		pr_cont("ADDR %llx ", m->addr);
-	अगर (m->misc)
+	if (m->misc)
 		pr_cont("MISC %llx ", m->misc);
-	अगर (m->ppin)
+	if (m->ppin)
 		pr_cont("PPIN %llx ", m->ppin);
 
-	अगर (mce_flags.smca) अणु
-		अगर (m->synd)
+	if (mce_flags.smca) {
+		if (m->synd)
 			pr_cont("SYND %llx ", m->synd);
-		अगर (m->ipid)
+		if (m->ipid)
 			pr_cont("IPID %llx ", m->ipid);
-	पूर्ण
+	}
 
 	pr_cont("\n");
 
 	/*
-	 * Note this output is parsed by बाह्यal tools and old fields
+	 * Note this output is parsed by external tools and old fields
 	 * should not be changed.
 	 */
 	pr_emerg(HW_ERR "PROCESSOR %u:%x TIME %llu SOCKET %u APIC %x microcode %x\n",
-		m->cpuvenकरोr, m->cpuid, m->समय, m->socketid, m->apicid,
+		m->cpuvendor, m->cpuid, m->time, m->socketid, m->apicid,
 		m->microcode);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_mce(काष्ठा mce *m)
-अणु
-	__prपूर्णांक_mce(m);
+static void print_mce(struct mce *m)
+{
+	__print_mce(m);
 
-	अगर (m->cpuvenकरोr != X86_VENDOR_AMD && m->cpuvenकरोr != X86_VENDOR_HYGON)
+	if (m->cpuvendor != X86_VENDOR_AMD && m->cpuvendor != X86_VENDOR_HYGON)
 		pr_emerg_ratelimited(HW_ERR "Run the above through 'mcelog --ascii'\n");
-पूर्ण
+}
 
-#घोषणा PANIC_TIMEOUT 5 /* 5 seconds */
+#define PANIC_TIMEOUT 5 /* 5 seconds */
 
-अटल atomic_t mce_panicked;
+static atomic_t mce_panicked;
 
-अटल पूर्णांक fake_panic;
-अटल atomic_t mce_fake_panicked;
+static int fake_panic;
+static atomic_t mce_fake_panicked;
 
-/* Panic in progress. Enable पूर्णांकerrupts and रुको क्रम final IPI */
-अटल व्योम रुको_क्रम_panic(व्योम)
-अणु
-	दीर्घ समयout = PANIC_TIMEOUT*USEC_PER_SEC;
+/* Panic in progress. Enable interrupts and wait for final IPI */
+static void wait_for_panic(void)
+{
+	long timeout = PANIC_TIMEOUT*USEC_PER_SEC;
 
 	preempt_disable();
 	local_irq_enable();
-	जबतक (समयout-- > 0)
+	while (timeout-- > 0)
 		udelay(1);
-	अगर (panic_समयout == 0)
-		panic_समयout = mca_cfg.panic_समयout;
+	if (panic_timeout == 0)
+		panic_timeout = mca_cfg.panic_timeout;
 	panic("Panicing machine check CPU died");
-पूर्ण
+}
 
-अटल व्योम mce_panic(स्थिर अक्षर *msg, काष्ठा mce *final, अक्षर *exp)
-अणु
-	पूर्णांक apei_err = 0;
-	काष्ठा llist_node *pending;
-	काष्ठा mce_evt_llist *l;
+static void mce_panic(const char *msg, struct mce *final, char *exp)
+{
+	int apei_err = 0;
+	struct llist_node *pending;
+	struct mce_evt_llist *l;
 
-	अगर (!fake_panic) अणु
+	if (!fake_panic) {
 		/*
 		 * Make sure only one CPU runs in machine check panic
 		 */
-		अगर (atomic_inc_वापस(&mce_panicked) > 1)
-			रुको_क्रम_panic();
+		if (atomic_inc_return(&mce_panicked) > 1)
+			wait_for_panic();
 		barrier();
 
 		bust_spinlocks(1);
 		console_verbose();
-	पूर्ण अन्यथा अणु
-		/* Don't log too much क्रम fake panic */
-		अगर (atomic_inc_वापस(&mce_fake_panicked) > 1)
-			वापस;
-	पूर्ण
+	} else {
+		/* Don't log too much for fake panic */
+		if (atomic_inc_return(&mce_fake_panicked) > 1)
+			return;
+	}
 	pending = mce_gen_pool_prepare_records();
-	/* First prपूर्णांक corrected ones that are still unlogged */
-	llist_क्रम_each_entry(l, pending, llnode) अणु
-		काष्ठा mce *m = &l->mce;
-		अगर (!(m->status & MCI_STATUS_UC)) अणु
-			prपूर्णांक_mce(m);
-			अगर (!apei_err)
-				apei_err = apei_ग_लिखो_mce(m);
-		पूर्ण
-	पूर्ण
-	/* Now prपूर्णांक uncorrected but with the final one last */
-	llist_क्रम_each_entry(l, pending, llnode) अणु
-		काष्ठा mce *m = &l->mce;
-		अगर (!(m->status & MCI_STATUS_UC))
-			जारी;
-		अगर (!final || mce_cmp(m, final)) अणु
-			prपूर्णांक_mce(m);
-			अगर (!apei_err)
-				apei_err = apei_ग_लिखो_mce(m);
-		पूर्ण
-	पूर्ण
-	अगर (final) अणु
-		prपूर्णांक_mce(final);
-		अगर (!apei_err)
-			apei_err = apei_ग_लिखो_mce(final);
-	पूर्ण
-	अगर (cpu_missing)
+	/* First print corrected ones that are still unlogged */
+	llist_for_each_entry(l, pending, llnode) {
+		struct mce *m = &l->mce;
+		if (!(m->status & MCI_STATUS_UC)) {
+			print_mce(m);
+			if (!apei_err)
+				apei_err = apei_write_mce(m);
+		}
+	}
+	/* Now print uncorrected but with the final one last */
+	llist_for_each_entry(l, pending, llnode) {
+		struct mce *m = &l->mce;
+		if (!(m->status & MCI_STATUS_UC))
+			continue;
+		if (!final || mce_cmp(m, final)) {
+			print_mce(m);
+			if (!apei_err)
+				apei_err = apei_write_mce(m);
+		}
+	}
+	if (final) {
+		print_mce(final);
+		if (!apei_err)
+			apei_err = apei_write_mce(final);
+	}
+	if (cpu_missing)
 		pr_emerg(HW_ERR "Some CPUs didn't answer in synchronization\n");
-	अगर (exp)
+	if (exp)
 		pr_emerg(HW_ERR "Machine check: %s\n", exp);
-	अगर (!fake_panic) अणु
-		अगर (panic_समयout == 0)
-			panic_समयout = mca_cfg.panic_समयout;
+	if (!fake_panic) {
+		if (panic_timeout == 0)
+			panic_timeout = mca_cfg.panic_timeout;
 		panic(msg);
-	पूर्ण अन्यथा
+	} else
 		pr_emerg(HW_ERR "Fake kernel panic: %s\n", msg);
-पूर्ण
+}
 
-/* Support code क्रम software error injection */
+/* Support code for software error injection */
 
-अटल पूर्णांक msr_to_offset(u32 msr)
-अणु
-	अचिन्हित bank = __this_cpu_पढ़ो(injecपंचांग.bank);
+static int msr_to_offset(u32 msr)
+{
+	unsigned bank = __this_cpu_read(injectm.bank);
 
-	अगर (msr == mca_cfg.rip_msr)
-		वापस दुरत्व(काष्ठा mce, ip);
-	अगर (msr == msr_ops.status(bank))
-		वापस दुरत्व(काष्ठा mce, status);
-	अगर (msr == msr_ops.addr(bank))
-		वापस दुरत्व(काष्ठा mce, addr);
-	अगर (msr == msr_ops.misc(bank))
-		वापस दुरत्व(काष्ठा mce, misc);
-	अगर (msr == MSR_IA32_MCG_STATUS)
-		वापस दुरत्व(काष्ठा mce, mcgstatus);
-	वापस -1;
-पूर्ण
+	if (msr == mca_cfg.rip_msr)
+		return offsetof(struct mce, ip);
+	if (msr == msr_ops.status(bank))
+		return offsetof(struct mce, status);
+	if (msr == msr_ops.addr(bank))
+		return offsetof(struct mce, addr);
+	if (msr == msr_ops.misc(bank))
+		return offsetof(struct mce, misc);
+	if (msr == MSR_IA32_MCG_STATUS)
+		return offsetof(struct mce, mcgstatus);
+	return -1;
+}
 
-__visible bool ex_handler_rdmsr_fault(स्थिर काष्ठा exception_table_entry *fixup,
-				      काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				      अचिन्हित दीर्घ error_code,
-				      अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_rdmsr_fault(const struct exception_table_entry *fixup,
+				      struct pt_regs *regs, int trapnr,
+				      unsigned long error_code,
+				      unsigned long fault_addr)
+{
 	pr_emerg("MSR access error: RDMSR from 0x%x at rIP: 0x%lx (%pS)\n",
-		 (अचिन्हित पूर्णांक)regs->cx, regs->ip, (व्योम *)regs->ip);
+		 (unsigned int)regs->cx, regs->ip, (void *)regs->ip);
 
 	show_stack_regs(regs);
 
 	panic("MCA architectural violation!\n");
 
-	जबतक (true)
+	while (true)
 		cpu_relax();
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* MSR access wrappers used क्रम error injection */
-अटल noinstr u64 mce_rdmsrl(u32 msr)
-अणु
+/* MSR access wrappers used for error injection */
+static noinstr u64 mce_rdmsrl(u32 msr)
+{
 	DECLARE_ARGS(val, low, high);
 
-	अगर (__this_cpu_पढ़ो(injecपंचांग.finished)) अणु
-		पूर्णांक offset;
+	if (__this_cpu_read(injectm.finished)) {
+		int offset;
 		u64 ret;
 
 		instrumentation_begin();
 
 		offset = msr_to_offset(msr);
-		अगर (offset < 0)
+		if (offset < 0)
 			ret = 0;
-		अन्यथा
-			ret = *(u64 *)((अक्षर *)this_cpu_ptr(&injecपंचांग) + offset);
+		else
+			ret = *(u64 *)((char *)this_cpu_ptr(&injectm) + offset);
 
 		instrumentation_end();
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * RDMSR on MCA MSRs should not fault. If they करो, this is very much an
-	 * architectural violation and needs to be reported to hw venकरोr. Panic
+	 * RDMSR on MCA MSRs should not fault. If they do, this is very much an
+	 * architectural violation and needs to be reported to hw vendor. Panic
 	 * the box to not allow any further progress.
 	 */
-	यंत्र अस्थिर("1: rdmsr\n"
+	asm volatile("1: rdmsr\n"
 		     "2:\n"
 		     _ASM_EXTABLE_HANDLE(1b, 2b, ex_handler_rdmsr_fault)
 		     : EAX_EDX_RET(val, low, high) : "c" (msr));
 
 
-	वापस EAX_EDX_VAL(val, low, high);
-पूर्ण
+	return EAX_EDX_VAL(val, low, high);
+}
 
-__visible bool ex_handler_wrmsr_fault(स्थिर काष्ठा exception_table_entry *fixup,
-				      काष्ठा pt_regs *regs, पूर्णांक trapnr,
-				      अचिन्हित दीर्घ error_code,
-				      अचिन्हित दीर्घ fault_addr)
-अणु
+__visible bool ex_handler_wrmsr_fault(const struct exception_table_entry *fixup,
+				      struct pt_regs *regs, int trapnr,
+				      unsigned long error_code,
+				      unsigned long fault_addr)
+{
 	pr_emerg("MSR access error: WRMSR to 0x%x (tried to write 0x%08x%08x) at rIP: 0x%lx (%pS)\n",
-		 (अचिन्हित पूर्णांक)regs->cx, (अचिन्हित पूर्णांक)regs->dx, (अचिन्हित पूर्णांक)regs->ax,
-		  regs->ip, (व्योम *)regs->ip);
+		 (unsigned int)regs->cx, (unsigned int)regs->dx, (unsigned int)regs->ax,
+		  regs->ip, (void *)regs->ip);
 
 	show_stack_regs(regs);
 
 	panic("MCA architectural violation!\n");
 
-	जबतक (true)
+	while (true)
 		cpu_relax();
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल noinstr व्योम mce_wrmsrl(u32 msr, u64 v)
-अणु
+static noinstr void mce_wrmsrl(u32 msr, u64 v)
+{
 	u32 low, high;
 
-	अगर (__this_cpu_पढ़ो(injecपंचांग.finished)) अणु
-		पूर्णांक offset;
+	if (__this_cpu_read(injectm.finished)) {
+		int offset;
 
 		instrumentation_begin();
 
 		offset = msr_to_offset(msr);
-		अगर (offset >= 0)
-			*(u64 *)((अक्षर *)this_cpu_ptr(&injecपंचांग) + offset) = v;
+		if (offset >= 0)
+			*(u64 *)((char *)this_cpu_ptr(&injectm) + offset) = v;
 
 		instrumentation_end();
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	low  = (u32)v;
 	high = (u32)(v >> 32);
 
 	/* See comment in mce_rdmsrl() */
-	यंत्र अस्थिर("1: wrmsr\n"
+	asm volatile("1: wrmsr\n"
 		     "2:\n"
 		     _ASM_EXTABLE_HANDLE(1b, 2b, ex_handler_wrmsr_fault)
 		     : : "c" (msr), "a"(low), "d" (high) : "memory");
-पूर्ण
+}
 
 /*
  * Collect all global (w.r.t. this processor) status about this machine
- * check पूर्णांकo our "mce" काष्ठा so that we can use it later to assess
- * the severity of the problem as we पढ़ो per-bank specअगरic details.
+ * check into our "mce" struct so that we can use it later to assess
+ * the severity of the problem as we read per-bank specific details.
  */
-अटल अंतरभूत व्योम mce_gather_info(काष्ठा mce *m, काष्ठा pt_regs *regs)
-अणु
+static inline void mce_gather_info(struct mce *m, struct pt_regs *regs)
+{
 	mce_setup(m);
 
 	m->mcgstatus = mce_rdmsrl(MSR_IA32_MCG_STATUS);
-	अगर (regs) अणु
+	if (regs) {
 		/*
-		 * Get the address of the inकाष्ठाion at the समय of
+		 * Get the address of the instruction at the time of
 		 * the machine check error.
 		 */
-		अगर (m->mcgstatus & (MCG_STATUS_RIPV|MCG_STATUS_EIPV)) अणु
+		if (m->mcgstatus & (MCG_STATUS_RIPV|MCG_STATUS_EIPV)) {
 			m->ip = regs->ip;
 			m->cs = regs->cs;
 
@@ -499,260 +498,260 @@ __visible bool ex_handler_wrmsr_fault(स्थिर काष्ठा excepti
 			 * always. This is a lie, but it's better than passing
 			 * the additional vm86 bit around everywhere.
 			 */
-			अगर (v8086_mode(regs))
+			if (v8086_mode(regs))
 				m->cs |= 3;
-		पूर्ण
-		/* Use accurate RIP reporting अगर available. */
-		अगर (mca_cfg.rip_msr)
+		}
+		/* Use accurate RIP reporting if available. */
+		if (mca_cfg.rip_msr)
 			m->ip = mce_rdmsrl(mca_cfg.rip_msr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mce_available(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (mca_cfg.disabled)
-		वापस 0;
-	वापस cpu_has(c, X86_FEATURE_MCE) && cpu_has(c, X86_FEATURE_MCA);
-पूर्ण
+int mce_available(struct cpuinfo_x86 *c)
+{
+	if (mca_cfg.disabled)
+		return 0;
+	return cpu_has(c, X86_FEATURE_MCE) && cpu_has(c, X86_FEATURE_MCA);
+}
 
-अटल व्योम mce_schedule_work(व्योम)
-अणु
-	अगर (!mce_gen_pool_empty())
+static void mce_schedule_work(void)
+{
+	if (!mce_gen_pool_empty())
 		schedule_work(&mce_work);
-पूर्ण
+}
 
-अटल व्योम mce_irq_work_cb(काष्ठा irq_work *entry)
-अणु
+static void mce_irq_work_cb(struct irq_work *entry)
+{
 	mce_schedule_work();
-पूर्ण
+}
 
 /*
- * Check अगर the address reported by the CPU is in a क्रमmat we can parse.
- * It would be possible to add code क्रम most other हालs, but all would
- * be somewhat complicated (e.g. segment offset would require an inकाष्ठाion
- * parser). So only support physical addresses up to page granularity क्रम now.
+ * Check if the address reported by the CPU is in a format we can parse.
+ * It would be possible to add code for most other cases, but all would
+ * be somewhat complicated (e.g. segment offset would require an instruction
+ * parser). So only support physical addresses up to page granularity for now.
  */
-पूर्णांक mce_usable_address(काष्ठा mce *m)
-अणु
-	अगर (!(m->status & MCI_STATUS_ADDRV))
-		वापस 0;
+int mce_usable_address(struct mce *m)
+{
+	if (!(m->status & MCI_STATUS_ADDRV))
+		return 0;
 
-	/* Checks after this one are Intel/Zhaoxin-specअगरic: */
-	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL &&
-	    boot_cpu_data.x86_venकरोr != X86_VENDOR_ZHAOXIN)
-		वापस 1;
+	/* Checks after this one are Intel/Zhaoxin-specific: */
+	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL &&
+	    boot_cpu_data.x86_vendor != X86_VENDOR_ZHAOXIN)
+		return 1;
 
-	अगर (!(m->status & MCI_STATUS_MISCV))
-		वापस 0;
+	if (!(m->status & MCI_STATUS_MISCV))
+		return 0;
 
-	अगर (MCI_MISC_ADDR_LSB(m->misc) > PAGE_SHIFT)
-		वापस 0;
+	if (MCI_MISC_ADDR_LSB(m->misc) > PAGE_SHIFT)
+		return 0;
 
-	अगर (MCI_MISC_ADDR_MODE(m->misc) != MCI_MISC_ADDR_PHYS)
-		वापस 0;
+	if (MCI_MISC_ADDR_MODE(m->misc) != MCI_MISC_ADDR_PHYS)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(mce_usable_address);
 
-bool mce_is_memory_error(काष्ठा mce *m)
-अणु
-	चयन (m->cpuvenकरोr) अणु
-	हाल X86_VENDOR_AMD:
-	हाल X86_VENDOR_HYGON:
-		वापस amd_mce_is_memory_error(m);
+bool mce_is_memory_error(struct mce *m)
+{
+	switch (m->cpuvendor) {
+	case X86_VENDOR_AMD:
+	case X86_VENDOR_HYGON:
+		return amd_mce_is_memory_error(m);
 
-	हाल X86_VENDOR_INTEL:
-	हाल X86_VENDOR_ZHAOXIN:
+	case X86_VENDOR_INTEL:
+	case X86_VENDOR_ZHAOXIN:
 		/*
 		 * Intel SDM Volume 3B - 15.9.2 Compound Error Codes
 		 *
-		 * Bit 7 of the MCACOD field of IA32_MCi_STATUS is used क्रम
-		 * indicating a memory error. Bit 8 is used क्रम indicating a
+		 * Bit 7 of the MCACOD field of IA32_MCi_STATUS is used for
+		 * indicating a memory error. Bit 8 is used for indicating a
 		 * cache hierarchy error. The combination of bit 2 and bit 3
-		 * is used क्रम indicating a `generic' cache hierarchy error
-		 * But we can't just blindly check the above bits, because अगर
-		 * bit 11 is set, then it is a bus/पूर्णांकerconnect error - and
+		 * is used for indicating a `generic' cache hierarchy error
+		 * But we can't just blindly check the above bits, because if
+		 * bit 11 is set, then it is a bus/interconnect error - and
 		 * either way the above bits just gives more detail on what
-		 * bus/पूर्णांकerconnect error happened. Note that bit 12 can be
+		 * bus/interconnect error happened. Note that bit 12 can be
 		 * ignored, as it's the "filter" bit.
 		 */
-		वापस (m->status & 0xef80) == BIT(7) ||
+		return (m->status & 0xef80) == BIT(7) ||
 		       (m->status & 0xef00) == BIT(8) ||
 		       (m->status & 0xeffc) == 0xc;
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 EXPORT_SYMBOL_GPL(mce_is_memory_error);
 
-अटल bool whole_page(काष्ठा mce *m)
-अणु
-	अगर (!mca_cfg.ser || !(m->status & MCI_STATUS_MISCV))
-		वापस true;
+static bool whole_page(struct mce *m)
+{
+	if (!mca_cfg.ser || !(m->status & MCI_STATUS_MISCV))
+		return true;
 
-	वापस MCI_MISC_ADDR_LSB(m->misc) >= PAGE_SHIFT;
-पूर्ण
+	return MCI_MISC_ADDR_LSB(m->misc) >= PAGE_SHIFT;
+}
 
-bool mce_is_correctable(काष्ठा mce *m)
-अणु
-	अगर (m->cpuvenकरोr == X86_VENDOR_AMD && m->status & MCI_STATUS_DEFERRED)
-		वापस false;
+bool mce_is_correctable(struct mce *m)
+{
+	if (m->cpuvendor == X86_VENDOR_AMD && m->status & MCI_STATUS_DEFERRED)
+		return false;
 
-	अगर (m->cpuvenकरोr == X86_VENDOR_HYGON && m->status & MCI_STATUS_DEFERRED)
-		वापस false;
+	if (m->cpuvendor == X86_VENDOR_HYGON && m->status & MCI_STATUS_DEFERRED)
+		return false;
 
-	अगर (m->status & MCI_STATUS_UC)
-		वापस false;
+	if (m->status & MCI_STATUS_UC)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(mce_is_correctable);
 
-अटल पूर्णांक mce_early_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-			      व्योम *data)
-अणु
-	काष्ठा mce *m = (काष्ठा mce *)data;
+static int mce_early_notifier(struct notifier_block *nb, unsigned long val,
+			      void *data)
+{
+	struct mce *m = (struct mce *)data;
 
-	अगर (!m)
-		वापस NOTIFY_DONE;
+	if (!m)
+		return NOTIFY_DONE;
 
 	/* Emit the trace record: */
 	trace_mce_record(m);
 
-	set_bit(0, &mce_need_notअगरy);
+	set_bit(0, &mce_need_notify);
 
-	mce_notअगरy_irq();
+	mce_notify_irq();
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block early_nb = अणु
-	.notअगरier_call	= mce_early_notअगरier,
+static struct notifier_block early_nb = {
+	.notifier_call	= mce_early_notifier,
 	.priority	= MCE_PRIO_EARLY,
-पूर्ण;
+};
 
-अटल पूर्णांक uc_decode_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-			      व्योम *data)
-अणु
-	काष्ठा mce *mce = (काष्ठा mce *)data;
-	अचिन्हित दीर्घ pfn;
+static int uc_decode_notifier(struct notifier_block *nb, unsigned long val,
+			      void *data)
+{
+	struct mce *mce = (struct mce *)data;
+	unsigned long pfn;
 
-	अगर (!mce || !mce_usable_address(mce))
-		वापस NOTIFY_DONE;
+	if (!mce || !mce_usable_address(mce))
+		return NOTIFY_DONE;
 
-	अगर (mce->severity != MCE_AO_SEVERITY &&
+	if (mce->severity != MCE_AO_SEVERITY &&
 	    mce->severity != MCE_DEFERRED_SEVERITY)
-		वापस NOTIFY_DONE;
+		return NOTIFY_DONE;
 
 	pfn = mce->addr >> PAGE_SHIFT;
-	अगर (!memory_failure(pfn, 0)) अणु
+	if (!memory_failure(pfn, 0)) {
 		set_mce_nospec(pfn, whole_page(mce));
 		mce->kflags |= MCE_HANDLED_UC;
-	पूर्ण
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block mce_uc_nb = अणु
-	.notअगरier_call	= uc_decode_notअगरier,
+static struct notifier_block mce_uc_nb = {
+	.notifier_call	= uc_decode_notifier,
 	.priority	= MCE_PRIO_UC,
-पूर्ण;
+};
 
-अटल पूर्णांक mce_शेष_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-				व्योम *data)
-अणु
-	काष्ठा mce *m = (काष्ठा mce *)data;
+static int mce_default_notifier(struct notifier_block *nb, unsigned long val,
+				void *data)
+{
+	struct mce *m = (struct mce *)data;
 
-	अगर (!m)
-		वापस NOTIFY_DONE;
+	if (!m)
+		return NOTIFY_DONE;
 
-	अगर (mca_cfg.prपूर्णांक_all || !m->kflags)
-		__prपूर्णांक_mce(m);
+	if (mca_cfg.print_all || !m->kflags)
+		__print_mce(m);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block mce_शेष_nb = अणु
-	.notअगरier_call	= mce_शेष_notअगरier,
+static struct notifier_block mce_default_nb = {
+	.notifier_call	= mce_default_notifier,
 	/* lowest prio, we want it to run last. */
 	.priority	= MCE_PRIO_LOWEST,
-पूर्ण;
+};
 
 /*
- * Read ADDR and MISC रेजिस्टरs.
+ * Read ADDR and MISC registers.
  */
-अटल व्योम mce_पढ़ो_aux(काष्ठा mce *m, पूर्णांक i)
-अणु
-	अगर (m->status & MCI_STATUS_MISCV)
+static void mce_read_aux(struct mce *m, int i)
+{
+	if (m->status & MCI_STATUS_MISCV)
 		m->misc = mce_rdmsrl(msr_ops.misc(i));
 
-	अगर (m->status & MCI_STATUS_ADDRV) अणु
+	if (m->status & MCI_STATUS_ADDRV) {
 		m->addr = mce_rdmsrl(msr_ops.addr(i));
 
 		/*
 		 * Mask the reported address by the reported granularity.
 		 */
-		अगर (mca_cfg.ser && (m->status & MCI_STATUS_MISCV)) अणु
-			u8 shअगरt = MCI_MISC_ADDR_LSB(m->misc);
-			m->addr >>= shअगरt;
-			m->addr <<= shअगरt;
-		पूर्ण
+		if (mca_cfg.ser && (m->status & MCI_STATUS_MISCV)) {
+			u8 shift = MCI_MISC_ADDR_LSB(m->misc);
+			m->addr >>= shift;
+			m->addr <<= shift;
+		}
 
 		/*
-		 * Extract [55:<lsb>] where lsb is the least signअगरicant
+		 * Extract [55:<lsb>] where lsb is the least significant
 		 * *valid* bit of the address bits.
 		 */
-		अगर (mce_flags.smca) अणु
+		if (mce_flags.smca) {
 			u8 lsb = (m->addr >> 56) & 0x3f;
 
 			m->addr &= GENMASK_ULL(55, lsb);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (mce_flags.smca) अणु
+	if (mce_flags.smca) {
 		m->ipid = mce_rdmsrl(MSR_AMD64_SMCA_MCx_IPID(i));
 
-		अगर (m->status & MCI_STATUS_SYNDV)
+		if (m->status & MCI_STATUS_SYNDV)
 			m->synd = mce_rdmsrl(MSR_AMD64_SMCA_MCx_SYND(i));
-	पूर्ण
-पूर्ण
+	}
+}
 
-DEFINE_PER_CPU(अचिन्हित, mce_poll_count);
+DEFINE_PER_CPU(unsigned, mce_poll_count);
 
 /*
- * Poll क्रम corrected events or events that happened beक्रमe reset.
+ * Poll for corrected events or events that happened before reset.
  * Those are just logged through /dev/mcelog.
  *
- * This is executed in standard पूर्णांकerrupt context.
+ * This is executed in standard interrupt context.
  *
- * Note: spec recommends to panic क्रम fatal unसंकेतled
+ * Note: spec recommends to panic for fatal unsignalled
  * errors here. However this would be quite problematic --
  * we would need to reimplement the Monarch handling and
  * it would mess up the exclusion between exception handler
- * and poll handler -- * so we skip this क्रम now.
- * These हालs should not happen anyways, or only when the CPU
- * is alपढ़ोy totally * confused. In this हाल it's likely it will
+ * and poll handler -- * so we skip this for now.
+ * These cases should not happen anyways, or only when the CPU
+ * is already totally * confused. In this case it's likely it will
  * not fully execute the machine check handler either.
  */
-bool machine_check_poll(क्रमागत mcp_flags flags, mce_banks_t *b)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+bool machine_check_poll(enum mcp_flags flags, mce_banks_t *b)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
 	bool error_seen = false;
-	काष्ठा mce m;
-	पूर्णांक i;
+	struct mce m;
+	int i;
 
 	this_cpu_inc(mce_poll_count);
 
-	mce_gather_info(&m, शून्य);
+	mce_gather_info(&m, NULL);
 
-	अगर (flags & MCP_TIMESTAMP)
+	if (flags & MCP_TIMESTAMP)
 		m.tsc = rdtsc();
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		अगर (!mce_banks[i].ctl || !test_bit(i, *b))
-			जारी;
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		if (!mce_banks[i].ctl || !test_bit(i, *b))
+			continue;
 
 		m.misc = 0;
 		m.addr = 0;
@@ -762,363 +761,363 @@ bool machine_check_poll(क्रमागत mcp_flags flags, mce_banks_t *b)
 		m.status = mce_rdmsrl(msr_ops.status(i));
 
 		/* If this entry is not valid, ignore it */
-		अगर (!(m.status & MCI_STATUS_VAL))
-			जारी;
+		if (!(m.status & MCI_STATUS_VAL))
+			continue;
 
 		/*
 		 * If we are logging everything (at CPU online) or this
 		 * is a corrected error, then we must log it.
 		 */
-		अगर ((flags & MCP_UC) || !(m.status & MCI_STATUS_UC))
-			जाओ log_it;
+		if ((flags & MCP_UC) || !(m.status & MCI_STATUS_UC))
+			goto log_it;
 
 		/*
-		 * Newer Intel प्रणालीs that support software error
+		 * Newer Intel systems that support software error
 		 * recovery need to make additional checks. Other
 		 * CPUs should skip over uncorrected errors, but log
-		 * everything अन्यथा.
+		 * everything else.
 		 */
-		अगर (!mca_cfg.ser) अणु
-			अगर (m.status & MCI_STATUS_UC)
-				जारी;
-			जाओ log_it;
-		पूर्ण
+		if (!mca_cfg.ser) {
+			if (m.status & MCI_STATUS_UC)
+				continue;
+			goto log_it;
+		}
 
 		/* Log "not enabled" (speculative) errors */
-		अगर (!(m.status & MCI_STATUS_EN))
-			जाओ log_it;
+		if (!(m.status & MCI_STATUS_EN))
+			goto log_it;
 
 		/*
 		 * Log UCNA (SDM: 15.6.3 "UCR Error Classification")
 		 * UC == 1 && PCC == 0 && S == 0
 		 */
-		अगर (!(m.status & MCI_STATUS_PCC) && !(m.status & MCI_STATUS_S))
-			जाओ log_it;
+		if (!(m.status & MCI_STATUS_PCC) && !(m.status & MCI_STATUS_S))
+			goto log_it;
 
 		/*
-		 * Skip anything अन्यथा. Presumption is that our पढ़ो of this
+		 * Skip anything else. Presumption is that our read of this
 		 * bank is racing with a machine check. Leave the log alone
-		 * क्रम करो_machine_check() to deal with it.
+		 * for do_machine_check() to deal with it.
 		 */
-		जारी;
+		continue;
 
 log_it:
 		error_seen = true;
 
-		अगर (flags & MCP_DONTLOG)
-			जाओ clear_it;
+		if (flags & MCP_DONTLOG)
+			goto clear_it;
 
-		mce_पढ़ो_aux(&m, i);
-		m.severity = mce_severity(&m, शून्य, mca_cfg.tolerant, शून्य, false);
+		mce_read_aux(&m, i);
+		m.severity = mce_severity(&m, NULL, mca_cfg.tolerant, NULL, false);
 		/*
 		 * Don't get the IP here because it's unlikely to
-		 * have anything to करो with the actual error location.
+		 * have anything to do with the actual error location.
 		 */
 
-		अगर (mca_cfg.करोnt_log_ce && !mce_usable_address(&m))
-			जाओ clear_it;
+		if (mca_cfg.dont_log_ce && !mce_usable_address(&m))
+			goto clear_it;
 
 		mce_log(&m);
 
 clear_it:
 		/*
-		 * Clear state क्रम this bank.
+		 * Clear state for this bank.
 		 */
 		mce_wrmsrl(msr_ops.status(i), 0);
-	पूर्ण
+	}
 
 	/*
-	 * Don't clear MCG_STATUS here because it's only defined क्रम
+	 * Don't clear MCG_STATUS here because it's only defined for
 	 * exceptions.
 	 */
 
 	sync_core();
 
-	वापस error_seen;
-पूर्ण
+	return error_seen;
+}
 EXPORT_SYMBOL_GPL(machine_check_poll);
 
 /*
- * Do a quick check अगर any of the events requires a panic.
- * This decides अगर we keep the events around or clear them.
+ * Do a quick check if any of the events requires a panic.
+ * This decides if we keep the events around or clear them.
  */
-अटल पूर्णांक mce_no_way_out(काष्ठा mce *m, अक्षर **msg, अचिन्हित दीर्घ *validp,
-			  काष्ठा pt_regs *regs)
-अणु
-	अक्षर *पंचांगp = *msg;
-	पूर्णांक i;
+static int mce_no_way_out(struct mce *m, char **msg, unsigned long *validp,
+			  struct pt_regs *regs)
+{
+	char *tmp = *msg;
+	int i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
 		m->status = mce_rdmsrl(msr_ops.status(i));
-		अगर (!(m->status & MCI_STATUS_VAL))
-			जारी;
+		if (!(m->status & MCI_STATUS_VAL))
+			continue;
 
 		__set_bit(i, validp);
-		अगर (quirk_no_way_out)
+		if (quirk_no_way_out)
 			quirk_no_way_out(i, m, regs);
 
 		m->bank = i;
-		अगर (mce_severity(m, regs, mca_cfg.tolerant, &पंचांगp, true) >= MCE_PANIC_SEVERITY) अणु
-			mce_पढ़ो_aux(m, i);
-			*msg = पंचांगp;
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (mce_severity(m, regs, mca_cfg.tolerant, &tmp, true) >= MCE_PANIC_SEVERITY) {
+			mce_read_aux(m, i);
+			*msg = tmp;
+			return 1;
+		}
+	}
+	return 0;
+}
 
 /*
- * Variable to establish order between CPUs जबतक scanning.
+ * Variable to establish order between CPUs while scanning.
  * Each CPU spins initially until executing is equal its number.
  */
-अटल atomic_t mce_executing;
+static atomic_t mce_executing;
 
 /*
  * Defines order of CPUs on entry. First CPU becomes Monarch.
  */
-अटल atomic_t mce_callin;
+static atomic_t mce_callin;
 
 /*
  * Track which CPUs entered the MCA broadcast synchronization and which not in
- * order to prपूर्णांक holकरोuts.
+ * order to print holdouts.
  */
-अटल cpumask_t mce_missing_cpus = CPU_MASK_ALL;
+static cpumask_t mce_missing_cpus = CPU_MASK_ALL;
 
 /*
- * Check अगर a समयout रुकोing क्रम other CPUs happened.
+ * Check if a timeout waiting for other CPUs happened.
  */
-अटल पूर्णांक mce_समयd_out(u64 *t, स्थिर अक्षर *msg)
-अणु
+static int mce_timed_out(u64 *t, const char *msg)
+{
 	/*
-	 * The others alपढ़ोy did panic क्रम some reason.
-	 * Bail out like in a समयout.
-	 * rmb() to tell the compiler that प्रणाली_state
-	 * might have been modअगरied by someone अन्यथा.
+	 * The others already did panic for some reason.
+	 * Bail out like in a timeout.
+	 * rmb() to tell the compiler that system_state
+	 * might have been modified by someone else.
 	 */
 	rmb();
-	अगर (atomic_पढ़ो(&mce_panicked))
-		रुको_क्रम_panic();
-	अगर (!mca_cfg.monarch_समयout)
-		जाओ out;
-	अगर ((s64)*t < SPINUNIT) अणु
-		अगर (mca_cfg.tolerant <= 1) अणु
-			अगर (cpumask_and(&mce_missing_cpus, cpu_online_mask, &mce_missing_cpus))
+	if (atomic_read(&mce_panicked))
+		wait_for_panic();
+	if (!mca_cfg.monarch_timeout)
+		goto out;
+	if ((s64)*t < SPINUNIT) {
+		if (mca_cfg.tolerant <= 1) {
+			if (cpumask_and(&mce_missing_cpus, cpu_online_mask, &mce_missing_cpus))
 				pr_emerg("CPUs not responding to MCE broadcast (may include false positives): %*pbl\n",
 					 cpumask_pr_args(&mce_missing_cpus));
-			mce_panic(msg, शून्य, शून्य);
-		पूर्ण
+			mce_panic(msg, NULL, NULL);
+		}
 		cpu_missing = 1;
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	*t -= SPINUNIT;
 out:
-	touch_nmi_watchकरोg();
-	वापस 0;
-पूर्ण
+	touch_nmi_watchdog();
+	return 0;
+}
 
 /*
  * The Monarch's reign.  The Monarch is the CPU who entered
- * the machine check handler first. It रुकोs क्रम the others to
- * उठाओ the exception too and then grades them. When any
- * error is fatal panic. Only then let the others जारी.
+ * the machine check handler first. It waits for the others to
+ * raise the exception too and then grades them. When any
+ * error is fatal panic. Only then let the others continue.
  *
  * The other CPUs entering the MCE handler will be controlled by the
  * Monarch. They are called Subjects.
  *
- * This way we prevent any potential data corruption in a unrecoverable हाल
+ * This way we prevent any potential data corruption in a unrecoverable case
  * and also makes sure always all CPU's errors are examined.
  *
- * Also this detects the हाल of a machine check event coming from outer
- * space (not detected by any CPUs) In this हाल some बाह्यal agent wants
- * us to shut करोwn, so panic too.
+ * Also this detects the case of a machine check event coming from outer
+ * space (not detected by any CPUs) In this case some external agent wants
+ * us to shut down, so panic too.
  *
- * The other CPUs might still decide to panic अगर the handler happens
- * in a unrecoverable place, but in this हाल the प्रणाली is in a semi-stable
+ * The other CPUs might still decide to panic if the handler happens
+ * in a unrecoverable place, but in this case the system is in a semi-stable
  * state and won't corrupt anything by itself. It's ok to let the others
- * जारी क्रम a bit first.
+ * continue for a bit first.
  *
- * All the spin loops have समयouts; when a समयout happens a CPU
+ * All the spin loops have timeouts; when a timeout happens a CPU
  * typically elects itself to be Monarch.
  */
-अटल व्योम mce_reign(व्योम)
-अणु
-	पूर्णांक cpu;
-	काष्ठा mce *m = शून्य;
-	पूर्णांक global_worst = 0;
-	अक्षर *msg = शून्य;
+static void mce_reign(void)
+{
+	int cpu;
+	struct mce *m = NULL;
+	int global_worst = 0;
+	char *msg = NULL;
 
 	/*
 	 * This CPU is the Monarch and the other CPUs have run
 	 * through their handlers.
 	 * Grade the severity of the errors of all the CPUs.
 	 */
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा mce *mपंचांगp = &per_cpu(mces_seen, cpu);
+	for_each_possible_cpu(cpu) {
+		struct mce *mtmp = &per_cpu(mces_seen, cpu);
 
-		अगर (mपंचांगp->severity > global_worst) अणु
-			global_worst = mपंचांगp->severity;
+		if (mtmp->severity > global_worst) {
+			global_worst = mtmp->severity;
 			m = &per_cpu(mces_seen, cpu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Cannot recover? Panic here then.
 	 * This dumps all the mces in the log buffer and stops the
 	 * other CPUs.
 	 */
-	अगर (m && global_worst >= MCE_PANIC_SEVERITY && mca_cfg.tolerant < 3) अणु
-		/* call mce_severity() to get "msg" क्रम panic */
-		mce_severity(m, शून्य, mca_cfg.tolerant, &msg, true);
+	if (m && global_worst >= MCE_PANIC_SEVERITY && mca_cfg.tolerant < 3) {
+		/* call mce_severity() to get "msg" for panic */
+		mce_severity(m, NULL, mca_cfg.tolerant, &msg, true);
 		mce_panic("Fatal machine check", m, msg);
-	पूर्ण
+	}
 
 	/*
 	 * For UC somewhere we let the CPU who detects it handle it.
-	 * Also must let जारी the others, otherwise the handling
+	 * Also must let continue the others, otherwise the handling
 	 * CPU could deadlock on a lock.
 	 */
 
 	/*
-	 * No machine check event found. Must be some बाह्यal
+	 * No machine check event found. Must be some external
 	 * source or one CPU is hung. Panic.
 	 */
-	अगर (global_worst <= MCE_KEEP_SEVERITY && mca_cfg.tolerant < 3)
-		mce_panic("Fatal machine check from unknown source", शून्य, शून्य);
+	if (global_worst <= MCE_KEEP_SEVERITY && mca_cfg.tolerant < 3)
+		mce_panic("Fatal machine check from unknown source", NULL, NULL);
 
 	/*
-	 * Now clear all the mces_seen so that they करोn't reappear on
+	 * Now clear all the mces_seen so that they don't reappear on
 	 * the next mce.
 	 */
-	क्रम_each_possible_cpu(cpu)
-		स_रखो(&per_cpu(mces_seen, cpu), 0, माप(काष्ठा mce));
-पूर्ण
+	for_each_possible_cpu(cpu)
+		memset(&per_cpu(mces_seen, cpu), 0, sizeof(struct mce));
+}
 
-अटल atomic_t global_nwo;
+static atomic_t global_nwo;
 
 /*
- * Start of Monarch synchronization. This रुकोs until all CPUs have
- * entered the exception handler and then determines अगर any of them
+ * Start of Monarch synchronization. This waits until all CPUs have
+ * entered the exception handler and then determines if any of them
  * saw a fatal event that requires panic. Then it executes them
  * in the entry order.
- * TBD द्विगुन check parallel CPU hotunplug
+ * TBD double check parallel CPU hotunplug
  */
-अटल पूर्णांक mce_start(पूर्णांक *no_way_out)
-अणु
-	पूर्णांक order;
-	पूर्णांक cpus = num_online_cpus();
-	u64 समयout = (u64)mca_cfg.monarch_समयout * NSEC_PER_USEC;
+static int mce_start(int *no_way_out)
+{
+	int order;
+	int cpus = num_online_cpus();
+	u64 timeout = (u64)mca_cfg.monarch_timeout * NSEC_PER_USEC;
 
-	अगर (!समयout)
-		वापस -1;
+	if (!timeout)
+		return -1;
 
 	atomic_add(*no_way_out, &global_nwo);
 	/*
 	 * Rely on the implied barrier below, such that global_nwo
-	 * is updated beक्रमe mce_callin.
+	 * is updated before mce_callin.
 	 */
-	order = atomic_inc_वापस(&mce_callin);
+	order = atomic_inc_return(&mce_callin);
 	cpumask_clear_cpu(smp_processor_id(), &mce_missing_cpus);
 
 	/*
-	 * Wait क्रम everyone.
+	 * Wait for everyone.
 	 */
-	जबतक (atomic_पढ़ो(&mce_callin) != cpus) अणु
-		अगर (mce_समयd_out(&समयout,
-				  "Timeout: Not all CPUs entered broadcast exception handler")) अणु
+	while (atomic_read(&mce_callin) != cpus) {
+		if (mce_timed_out(&timeout,
+				  "Timeout: Not all CPUs entered broadcast exception handler")) {
 			atomic_set(&global_nwo, 0);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		ndelay(SPINUNIT);
-	पूर्ण
+	}
 
 	/*
-	 * mce_callin should be पढ़ो beक्रमe global_nwo
+	 * mce_callin should be read before global_nwo
 	 */
 	smp_rmb();
 
-	अगर (order == 1) अणु
+	if (order == 1) {
 		/*
-		 * Monarch: Starts executing now, the others रुको.
+		 * Monarch: Starts executing now, the others wait.
 		 */
 		atomic_set(&mce_executing, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Subject: Now start the scanning loop one by one in
 		 * the original callin order.
 		 * This way when there are any shared banks it will be
-		 * only seen by one CPU beक्रमe cleared, aव्योमing duplicates.
+		 * only seen by one CPU before cleared, avoiding duplicates.
 		 */
-		जबतक (atomic_पढ़ो(&mce_executing) < order) अणु
-			अगर (mce_समयd_out(&समयout,
-					  "Timeout: Subject CPUs unable to finish machine check processing")) अणु
+		while (atomic_read(&mce_executing) < order) {
+			if (mce_timed_out(&timeout,
+					  "Timeout: Subject CPUs unable to finish machine check processing")) {
 				atomic_set(&global_nwo, 0);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 			ndelay(SPINUNIT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Cache the global no_way_out state.
 	 */
-	*no_way_out = atomic_पढ़ो(&global_nwo);
+	*no_way_out = atomic_read(&global_nwo);
 
-	वापस order;
-पूर्ण
+	return order;
+}
 
 /*
- * Synchronize between CPUs after मुख्य scanning loop.
+ * Synchronize between CPUs after main scanning loop.
  * This invokes the bulk of the Monarch processing.
  */
-अटल पूर्णांक mce_end(पूर्णांक order)
-अणु
-	पूर्णांक ret = -1;
-	u64 समयout = (u64)mca_cfg.monarch_समयout * NSEC_PER_USEC;
+static int mce_end(int order)
+{
+	int ret = -1;
+	u64 timeout = (u64)mca_cfg.monarch_timeout * NSEC_PER_USEC;
 
-	अगर (!समयout)
-		जाओ reset;
-	अगर (order < 0)
-		जाओ reset;
+	if (!timeout)
+		goto reset;
+	if (order < 0)
+		goto reset;
 
 	/*
 	 * Allow others to run.
 	 */
 	atomic_inc(&mce_executing);
 
-	अगर (order == 1) अणु
+	if (order == 1) {
 		/* CHECKME: Can this race with a parallel hotplug? */
-		पूर्णांक cpus = num_online_cpus();
+		int cpus = num_online_cpus();
 
 		/*
-		 * Monarch: Wait क्रम everyone to go through their scanning
+		 * Monarch: Wait for everyone to go through their scanning
 		 * loops.
 		 */
-		जबतक (atomic_पढ़ो(&mce_executing) <= cpus) अणु
-			अगर (mce_समयd_out(&समयout,
+		while (atomic_read(&mce_executing) <= cpus) {
+			if (mce_timed_out(&timeout,
 					  "Timeout: Monarch CPU unable to finish machine check processing"))
-				जाओ reset;
+				goto reset;
 			ndelay(SPINUNIT);
-		पूर्ण
+		}
 
 		mce_reign();
 		barrier();
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Subject: Wait क्रम Monarch to finish.
+		 * Subject: Wait for Monarch to finish.
 		 */
-		जबतक (atomic_पढ़ो(&mce_executing) != 0) अणु
-			अगर (mce_समयd_out(&समयout,
+		while (atomic_read(&mce_executing) != 0) {
+			if (mce_timed_out(&timeout,
 					  "Timeout: Monarch CPU did not finish machine check processing"))
-				जाओ reset;
+				goto reset;
 			ndelay(SPINUNIT);
-		पूर्ण
+		}
 
 		/*
-		 * Don't reset anything. That's करोne by the Monarch.
+		 * Don't reset anything. That's done by the Monarch.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Reset all global state.
@@ -1133,217 +1132,217 @@ reset:
 	 * Let others run again.
 	 */
 	atomic_set(&mce_executing, 0);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mce_clear_state(अचिन्हित दीर्घ *toclear)
-अणु
-	पूर्णांक i;
+static void mce_clear_state(unsigned long *toclear)
+{
+	int i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		अगर (test_bit(i, toclear))
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		if (test_bit(i, toclear))
 			mce_wrmsrl(msr_ops.status(i), 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Cases where we aव्योम rendezvous handler समयout:
+ * Cases where we avoid rendezvous handler timeout:
  * 1) If this CPU is offline.
  *
  * 2) If crashing_cpu was set, e.g. we're entering kdump and we need to
- *  skip those CPUs which reमुख्य looping in the 1st kernel - see
+ *  skip those CPUs which remain looping in the 1st kernel - see
  *  crash_nmi_callback().
  *
- * Note: there still is a small winकरोw between kexec-ing and the new,
+ * Note: there still is a small window between kexec-ing and the new,
  * kdump kernel establishing a new #MC handler where a broadcasted MCE
  * might not get handled properly.
  */
-अटल noinstr bool mce_check_crashing_cpu(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+static noinstr bool mce_check_crashing_cpu(void)
+{
+	unsigned int cpu = smp_processor_id();
 
-	अगर (arch_cpu_is_offline(cpu) ||
-	    (crashing_cpu != -1 && crashing_cpu != cpu)) अणु
+	if (arch_cpu_is_offline(cpu) ||
+	    (crashing_cpu != -1 && crashing_cpu != cpu)) {
 		u64 mcgstatus;
 
 		mcgstatus = __rdmsr(MSR_IA32_MCG_STATUS);
 
-		अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_ZHAOXIN) अणु
-			अगर (mcgstatus & MCG_STATUS_LMCES)
-				वापस false;
-		पूर्ण
+		if (boot_cpu_data.x86_vendor == X86_VENDOR_ZHAOXIN) {
+			if (mcgstatus & MCG_STATUS_LMCES)
+				return false;
+		}
 
-		अगर (mcgstatus & MCG_STATUS_RIPV) अणु
+		if (mcgstatus & MCG_STATUS_RIPV) {
 			__wrmsr(MSR_IA32_MCG_STATUS, 0, 0);
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल व्योम __mc_scan_banks(काष्ठा mce *m, काष्ठा pt_regs *regs, काष्ठा mce *final,
-			    अचिन्हित दीर्घ *toclear, अचिन्हित दीर्घ *valid_banks,
-			    पूर्णांक no_way_out, पूर्णांक *worst)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	काष्ठा mca_config *cfg = &mca_cfg;
-	पूर्णांक severity, i;
+static void __mc_scan_banks(struct mce *m, struct pt_regs *regs, struct mce *final,
+			    unsigned long *toclear, unsigned long *valid_banks,
+			    int no_way_out, int *worst)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	struct mca_config *cfg = &mca_cfg;
+	int severity, i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
 		__clear_bit(i, toclear);
-		अगर (!test_bit(i, valid_banks))
-			जारी;
+		if (!test_bit(i, valid_banks))
+			continue;
 
-		अगर (!mce_banks[i].ctl)
-			जारी;
+		if (!mce_banks[i].ctl)
+			continue;
 
 		m->misc = 0;
 		m->addr = 0;
 		m->bank = i;
 
 		m->status = mce_rdmsrl(msr_ops.status(i));
-		अगर (!(m->status & MCI_STATUS_VAL))
-			जारी;
+		if (!(m->status & MCI_STATUS_VAL))
+			continue;
 
 		/*
-		 * Corrected or non-संकेतed errors are handled by
+		 * Corrected or non-signaled errors are handled by
 		 * machine_check_poll(). Leave them alone, unless this panics.
 		 */
-		अगर (!(m->status & (cfg->ser ? MCI_STATUS_S : MCI_STATUS_UC)) &&
+		if (!(m->status & (cfg->ser ? MCI_STATUS_S : MCI_STATUS_UC)) &&
 			!no_way_out)
-			जारी;
+			continue;
 
-		/* Set taपूर्णांक even when machine check was not enabled. */
-		add_taपूर्णांक(TAINT_MACHINE_CHECK, LOCKDEP_NOW_UNRELIABLE);
+		/* Set taint even when machine check was not enabled. */
+		add_taint(TAINT_MACHINE_CHECK, LOCKDEP_NOW_UNRELIABLE);
 
-		severity = mce_severity(m, regs, cfg->tolerant, शून्य, true);
+		severity = mce_severity(m, regs, cfg->tolerant, NULL, true);
 
 		/*
-		 * When machine check was क्रम corrected/deferred handler करोn't
+		 * When machine check was for corrected/deferred handler don't
 		 * touch, unless we're panicking.
 		 */
-		अगर ((severity == MCE_KEEP_SEVERITY ||
+		if ((severity == MCE_KEEP_SEVERITY ||
 		     severity == MCE_UCNA_SEVERITY) && !no_way_out)
-			जारी;
+			continue;
 
 		__set_bit(i, toclear);
 
 		/* Machine check event was not enabled. Clear, but ignore. */
-		अगर (severity == MCE_NO_SEVERITY)
-			जारी;
+		if (severity == MCE_NO_SEVERITY)
+			continue;
 
-		mce_पढ़ो_aux(m, i);
+		mce_read_aux(m, i);
 
 		/* assuming valid severity level != 0 */
 		m->severity = severity;
 
 		mce_log(m);
 
-		अगर (severity > *worst) अणु
+		if (severity > *worst) {
 			*final = *m;
 			*worst = severity;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* mce_clear_state will clear *final, save locally क्रम use later */
+	/* mce_clear_state will clear *final, save locally for use later */
 	*m = *final;
-पूर्ण
+}
 
-अटल व्योम समाप्त_me_now(काष्ठा callback_head *ch)
-अणु
-	क्रमce_sig(SIGBUS);
-पूर्ण
+static void kill_me_now(struct callback_head *ch)
+{
+	force_sig(SIGBUS);
+}
 
-अटल व्योम समाप्त_me_maybe(काष्ठा callback_head *cb)
-अणु
-	काष्ठा task_काष्ठा *p = container_of(cb, काष्ठा task_काष्ठा, mce_समाप्त_me);
-	पूर्णांक flags = MF_ACTION_REQUIRED;
+static void kill_me_maybe(struct callback_head *cb)
+{
+	struct task_struct *p = container_of(cb, struct task_struct, mce_kill_me);
+	int flags = MF_ACTION_REQUIRED;
 
 	pr_err("Uncorrected hardware memory error in user-access at %llx", p->mce_addr);
 
-	अगर (!p->mce_ripv)
+	if (!p->mce_ripv)
 		flags |= MF_MUST_KILL;
 
-	अगर (!memory_failure(p->mce_addr >> PAGE_SHIFT, flags) &&
-	    !(p->mce_kflags & MCE_IN_KERNEL_COPYIN)) अणु
+	if (!memory_failure(p->mce_addr >> PAGE_SHIFT, flags) &&
+	    !(p->mce_kflags & MCE_IN_KERNEL_COPYIN)) {
 		set_mce_nospec(p->mce_addr >> PAGE_SHIFT, p->mce_whole_page);
 		sync_core();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (p->mce_vaddr != (व्योम __user *)-1l) अणु
-		क्रमce_sig_mceerr(BUS_MCEERR_AR, p->mce_vaddr, PAGE_SHIFT);
-	पूर्ण अन्यथा अणु
+	if (p->mce_vaddr != (void __user *)-1l) {
+		force_sig_mceerr(BUS_MCEERR_AR, p->mce_vaddr, PAGE_SHIFT);
+	} else {
 		pr_err("Memory error not recovered");
-		समाप्त_me_now(cb);
-	पूर्ण
-पूर्ण
+		kill_me_now(cb);
+	}
+}
 
-अटल व्योम queue_task_work(काष्ठा mce *m, पूर्णांक समाप्त_current_task)
-अणु
+static void queue_task_work(struct mce *m, int kill_current_task)
+{
 	current->mce_addr = m->addr;
 	current->mce_kflags = m->kflags;
 	current->mce_ripv = !!(m->mcgstatus & MCG_STATUS_RIPV);
 	current->mce_whole_page = whole_page(m);
 
-	अगर (समाप्त_current_task)
-		current->mce_समाप्त_me.func = समाप्त_me_now;
-	अन्यथा
-		current->mce_समाप्त_me.func = समाप्त_me_maybe;
+	if (kill_current_task)
+		current->mce_kill_me.func = kill_me_now;
+	else
+		current->mce_kill_me.func = kill_me_maybe;
 
-	task_work_add(current, &current->mce_समाप्त_me, TWA_RESUME);
-पूर्ण
+	task_work_add(current, &current->mce_kill_me, TWA_RESUME);
+}
 
 /*
  * The actual machine check handler. This only handles real
- * exceptions when something got corrupted coming in through पूर्णांक 18.
+ * exceptions when something got corrupted coming in through int 18.
  *
  * This is executed in NMI context not subject to normal locking rules. This
  * implies that most kernel services cannot be safely used. Don't even
- * think about putting a prपूर्णांकk in there!
+ * think about putting a printk in there!
  *
- * On Intel प्रणालीs this is entered on all CPUs in parallel through
+ * On Intel systems this is entered on all CPUs in parallel through
  * MCE broadcast. However some CPUs might be broken beyond repair,
  * so be always careful when synchronizing with others.
  *
- * Tracing and kprobes are disabled: अगर we पूर्णांकerrupted a kernel context
+ * Tracing and kprobes are disabled: if we interrupted a kernel context
  * with IF=1, we need to minimize stack usage.  There are also recursion
- * issues: अगर the machine check was due to a failure of the memory
- * backing the user stack, tracing that पढ़ोs the user stack will cause
+ * issues: if the machine check was due to a failure of the memory
+ * backing the user stack, tracing that reads the user stack will cause
  * potentially infinite recursion.
  */
-noinstr व्योम करो_machine_check(काष्ठा pt_regs *regs)
-अणु
+noinstr void do_machine_check(struct pt_regs *regs)
+{
 	DECLARE_BITMAP(valid_banks, MAX_NR_BANKS);
 	DECLARE_BITMAP(toclear, MAX_NR_BANKS);
-	काष्ठा mca_config *cfg = &mca_cfg;
-	काष्ठा mce m, *final;
-	अक्षर *msg = शून्य;
-	पूर्णांक worst = 0;
+	struct mca_config *cfg = &mca_cfg;
+	struct mce m, *final;
+	char *msg = NULL;
+	int worst = 0;
 
 	/*
 	 * Establish sequential order between the CPUs entering the machine
 	 * check handler.
 	 */
-	पूर्णांक order = -1;
+	int order = -1;
 
 	/*
-	 * If no_way_out माला_लो set, there is no safe way to recover from this
+	 * If no_way_out gets set, there is no safe way to recover from this
 	 * MCE.  If mca_cfg.tolerant is cranked up, we'll try anyway.
 	 */
-	पूर्णांक no_way_out = 0;
+	int no_way_out = 0;
 
 	/*
-	 * If समाप्त_current_task is not set, there might be a way to recover from this
+	 * If kill_current_task is not set, there might be a way to recover from this
 	 * error.
 	 */
-	पूर्णांक समाप्त_current_task = 0;
+	int kill_current_task = 0;
 
 	/*
 	 * MCEs are always local on AMD. Same is determined by MCG_STATUS_LMCES
 	 * on Intel.
 	 */
-	पूर्णांक lmce = 1;
+	int lmce = 1;
 
 	this_cpu_inc(mce_exception_count);
 
@@ -1353,249 +1352,249 @@ noinstr व्योम करो_machine_check(काष्ठा pt_regs *regs
 	final = this_cpu_ptr(&mces_seen);
 	*final = m;
 
-	स_रखो(valid_banks, 0, माप(valid_banks));
+	memset(valid_banks, 0, sizeof(valid_banks));
 	no_way_out = mce_no_way_out(&m, &msg, valid_banks, regs);
 
 	barrier();
 
 	/*
-	 * When no restart IP might need to समाप्त or panic.
-	 * Assume the worst क्रम now, but अगर we find the
+	 * When no restart IP might need to kill or panic.
+	 * Assume the worst for now, but if we find the
 	 * severity is MCE_AR_SEVERITY we have other options.
 	 */
-	अगर (!(m.mcgstatus & MCG_STATUS_RIPV))
-		समाप्त_current_task = (cfg->tolerant == 3) ? 0 : 1;
+	if (!(m.mcgstatus & MCG_STATUS_RIPV))
+		kill_current_task = (cfg->tolerant == 3) ? 0 : 1;
 	/*
-	 * Check अगर this MCE is संकेतed to only this logical processor,
+	 * Check if this MCE is signaled to only this logical processor,
 	 * on Intel, Zhaoxin only.
 	 */
-	अगर (m.cpuvenकरोr == X86_VENDOR_INTEL ||
-	    m.cpuvenकरोr == X86_VENDOR_ZHAOXIN)
+	if (m.cpuvendor == X86_VENDOR_INTEL ||
+	    m.cpuvendor == X86_VENDOR_ZHAOXIN)
 		lmce = m.mcgstatus & MCG_STATUS_LMCES;
 
 	/*
-	 * Local machine check may alपढ़ोy know that we have to panic.
+	 * Local machine check may already know that we have to panic.
 	 * Broadcast machine check begins rendezvous in mce_start()
 	 * Go through all banks in exclusion of the other CPUs. This way we
-	 * करोn't report duplicated events on shared banks because the first one
+	 * don't report duplicated events on shared banks because the first one
 	 * to see it will clear it.
 	 */
-	अगर (lmce) अणु
-		अगर (no_way_out && cfg->tolerant < 3)
+	if (lmce) {
+		if (no_way_out && cfg->tolerant < 3)
 			mce_panic("Fatal local machine check", &m, msg);
-	पूर्ण अन्यथा अणु
+	} else {
 		order = mce_start(&no_way_out);
-	पूर्ण
+	}
 
 	__mc_scan_banks(&m, regs, final, toclear, valid_banks, no_way_out, &worst);
 
-	अगर (!no_way_out)
+	if (!no_way_out)
 		mce_clear_state(toclear);
 
 	/*
 	 * Do most of the synchronization with other CPUs.
 	 * When there's any problem use only local no_way_out state.
 	 */
-	अगर (!lmce) अणु
-		अगर (mce_end(order) < 0) अणु
-			अगर (!no_way_out)
+	if (!lmce) {
+		if (mce_end(order) < 0) {
+			if (!no_way_out)
 				no_way_out = worst >= MCE_PANIC_SEVERITY;
 
-			अगर (no_way_out && cfg->tolerant < 3)
+			if (no_way_out && cfg->tolerant < 3)
 				mce_panic("Fatal machine check on current CPU", &m, msg);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
 		 * If there was a fatal machine check we should have
-		 * alपढ़ोy called mce_panic earlier in this function.
-		 * Since we re-पढ़ो the banks, we might have found
-		 * something new. Check again to see अगर we found a
+		 * already called mce_panic earlier in this function.
+		 * Since we re-read the banks, we might have found
+		 * something new. Check again to see if we found a
 		 * fatal error. We call "mce_severity()" again to
 		 * make sure we have the right "msg".
 		 */
-		अगर (worst >= MCE_PANIC_SEVERITY && mca_cfg.tolerant < 3) अणु
+		if (worst >= MCE_PANIC_SEVERITY && mca_cfg.tolerant < 3) {
 			mce_severity(&m, regs, cfg->tolerant, &msg, true);
 			mce_panic("Local fatal machine check!", &m, msg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (worst != MCE_AR_SEVERITY && !समाप्त_current_task)
-		जाओ out;
+	if (worst != MCE_AR_SEVERITY && !kill_current_task)
+		goto out;
 
 	/* Fault was in user mode and we need to take some action */
-	अगर ((m.cs & 3) == 3) अणु
+	if ((m.cs & 3) == 3) {
 		/* If this triggers there is no way to recover. Die hard. */
-		BUG_ON(!on_thपढ़ो_stack() || !user_mode(regs));
+		BUG_ON(!on_thread_stack() || !user_mode(regs));
 
-		queue_task_work(&m, समाप्त_current_task);
+		queue_task_work(&m, kill_current_task);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Handle an MCE which has happened in kernel space but from
 		 * which the kernel can recover: ex_has_fault_handler() has
-		 * alपढ़ोy verअगरied that the rIP at which the error happened is
+		 * already verified that the rIP at which the error happened is
 		 * a rIP from which the kernel can recover (by jumping to
-		 * recovery code specअगरied in _ASM_EXTABLE_FAULT()) and the
-		 * corresponding exception handler which would करो that is the
+		 * recovery code specified in _ASM_EXTABLE_FAULT()) and the
+		 * corresponding exception handler which would do that is the
 		 * proper one.
 		 */
-		अगर (m.kflags & MCE_IN_KERNEL_RECOV) अणु
-			अगर (!fixup_exception(regs, X86_TRAP_MC, 0, 0))
+		if (m.kflags & MCE_IN_KERNEL_RECOV) {
+			if (!fixup_exception(regs, X86_TRAP_MC, 0, 0))
 				mce_panic("Failed kernel mode recovery", &m, msg);
-		पूर्ण
+		}
 
-		अगर (m.kflags & MCE_IN_KERNEL_COPYIN)
-			queue_task_work(&m, समाप्त_current_task);
-	पूर्ण
+		if (m.kflags & MCE_IN_KERNEL_COPYIN)
+			queue_task_work(&m, kill_current_task);
+	}
 out:
 	mce_wrmsrl(MSR_IA32_MCG_STATUS, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(करो_machine_check);
+}
+EXPORT_SYMBOL_GPL(do_machine_check);
 
-#अगर_अघोषित CONFIG_MEMORY_FAILURE
-पूर्णांक memory_failure(अचिन्हित दीर्घ pfn, पूर्णांक flags)
-अणु
+#ifndef CONFIG_MEMORY_FAILURE
+int memory_failure(unsigned long pfn, int flags)
+{
 	/* mce_severity() should not hand us an ACTION_REQUIRED error */
 	BUG_ON(flags & MF_ACTION_REQUIRED);
 	pr_err("Uncorrected memory error in page 0x%lx ignored\n"
 	       "Rebuild kernel with CONFIG_MEMORY_FAILURE=y for smarter handling\n",
 	       pfn);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /*
- * Periodic polling समयr क्रम "silent" machine check errors.  If the
+ * Periodic polling timer for "silent" machine check errors.  If the
  * poller finds an MCE, poll 2x faster.  When the poller finds no more
- * errors, poll 2x slower (up to check_पूर्णांकerval seconds).
+ * errors, poll 2x slower (up to check_interval seconds).
  */
-अटल अचिन्हित दीर्घ check_पूर्णांकerval = INITIAL_CHECK_INTERVAL;
+static unsigned long check_interval = INITIAL_CHECK_INTERVAL;
 
-अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, mce_next_पूर्णांकerval); /* in jअगरfies */
-अटल DEFINE_PER_CPU(काष्ठा समयr_list, mce_समयr);
+static DEFINE_PER_CPU(unsigned long, mce_next_interval); /* in jiffies */
+static DEFINE_PER_CPU(struct timer_list, mce_timer);
 
-अटल अचिन्हित दीर्घ mce_adjust_समयr_शेष(अचिन्हित दीर्घ पूर्णांकerval)
-अणु
-	वापस पूर्णांकerval;
-पूर्ण
+static unsigned long mce_adjust_timer_default(unsigned long interval)
+{
+	return interval;
+}
 
-अटल अचिन्हित दीर्घ (*mce_adjust_समयr)(अचिन्हित दीर्घ पूर्णांकerval) = mce_adjust_समयr_शेष;
+static unsigned long (*mce_adjust_timer)(unsigned long interval) = mce_adjust_timer_default;
 
-अटल व्योम __start_समयr(काष्ठा समयr_list *t, अचिन्हित दीर्घ पूर्णांकerval)
-अणु
-	अचिन्हित दीर्घ when = jअगरfies + पूर्णांकerval;
-	अचिन्हित दीर्घ flags;
+static void __start_timer(struct timer_list *t, unsigned long interval)
+{
+	unsigned long when = jiffies + interval;
+	unsigned long flags;
 
 	local_irq_save(flags);
 
-	अगर (!समयr_pending(t) || समय_beक्रमe(when, t->expires))
-		mod_समयr(t, round_jअगरfies(when));
+	if (!timer_pending(t) || time_before(when, t->expires))
+		mod_timer(t, round_jiffies(when));
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम mce_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा समयr_list *cpu_t = this_cpu_ptr(&mce_समयr);
-	अचिन्हित दीर्घ iv;
+static void mce_timer_fn(struct timer_list *t)
+{
+	struct timer_list *cpu_t = this_cpu_ptr(&mce_timer);
+	unsigned long iv;
 
 	WARN_ON(cpu_t != t);
 
-	iv = __this_cpu_पढ़ो(mce_next_पूर्णांकerval);
+	iv = __this_cpu_read(mce_next_interval);
 
-	अगर (mce_available(this_cpu_ptr(&cpu_info))) अणु
+	if (mce_available(this_cpu_ptr(&cpu_info))) {
 		machine_check_poll(0, this_cpu_ptr(&mce_poll_banks));
 
-		अगर (mce_पूर्णांकel_cmci_poll()) अणु
-			iv = mce_adjust_समयr(iv);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+		if (mce_intel_cmci_poll()) {
+			iv = mce_adjust_timer(iv);
+			goto done;
+		}
+	}
 
 	/*
-	 * Alert userspace अगर needed. If we logged an MCE, reduce the polling
-	 * पूर्णांकerval, otherwise increase the polling पूर्णांकerval.
+	 * Alert userspace if needed. If we logged an MCE, reduce the polling
+	 * interval, otherwise increase the polling interval.
 	 */
-	अगर (mce_notअगरy_irq())
-		iv = max(iv / 2, (अचिन्हित दीर्घ) HZ/100);
-	अन्यथा
-		iv = min(iv * 2, round_jअगरfies_relative(check_पूर्णांकerval * HZ));
+	if (mce_notify_irq())
+		iv = max(iv / 2, (unsigned long) HZ/100);
+	else
+		iv = min(iv * 2, round_jiffies_relative(check_interval * HZ));
 
-करोne:
-	__this_cpu_ग_लिखो(mce_next_पूर्णांकerval, iv);
-	__start_समयr(t, iv);
-पूर्ण
+done:
+	__this_cpu_write(mce_next_interval, iv);
+	__start_timer(t, iv);
+}
 
 /*
- * Ensure that the समयr is firing in @पूर्णांकerval from now.
+ * Ensure that the timer is firing in @interval from now.
  */
-व्योम mce_समयr_kick(अचिन्हित दीर्घ पूर्णांकerval)
-अणु
-	काष्ठा समयr_list *t = this_cpu_ptr(&mce_समयr);
-	अचिन्हित दीर्घ iv = __this_cpu_पढ़ो(mce_next_पूर्णांकerval);
+void mce_timer_kick(unsigned long interval)
+{
+	struct timer_list *t = this_cpu_ptr(&mce_timer);
+	unsigned long iv = __this_cpu_read(mce_next_interval);
 
-	__start_समयr(t, पूर्णांकerval);
+	__start_timer(t, interval);
 
-	अगर (पूर्णांकerval < iv)
-		__this_cpu_ग_लिखो(mce_next_पूर्णांकerval, पूर्णांकerval);
-पूर्ण
+	if (interval < iv)
+		__this_cpu_write(mce_next_interval, interval);
+}
 
-/* Must not be called in IRQ context where del_समयr_sync() can deadlock */
-अटल व्योम mce_समयr_delete_all(व्योम)
-अणु
-	पूर्णांक cpu;
+/* Must not be called in IRQ context where del_timer_sync() can deadlock */
+static void mce_timer_delete_all(void)
+{
+	int cpu;
 
-	क्रम_each_online_cpu(cpu)
-		del_समयr_sync(&per_cpu(mce_समयr, cpu));
-पूर्ण
+	for_each_online_cpu(cpu)
+		del_timer_sync(&per_cpu(mce_timer, cpu));
+}
 
 /*
- * Notअगरy the user(s) about new machine check events.
- * Can be called from पूर्णांकerrupt context, but not from machine check/NMI
+ * Notify the user(s) about new machine check events.
+ * Can be called from interrupt context, but not from machine check/NMI
  * context.
  */
-पूर्णांक mce_notअगरy_irq(व्योम)
-अणु
+int mce_notify_irq(void)
+{
 	/* Not more than two messages every minute */
-	अटल DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
 
-	अगर (test_and_clear_bit(0, &mce_need_notअगरy)) अणु
+	if (test_and_clear_bit(0, &mce_need_notify)) {
 		mce_work_trigger();
 
-		अगर (__ratelimit(&ratelimit))
+		if (__ratelimit(&ratelimit))
 			pr_info(HW_ERR "Machine check events logged\n");
 
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mce_notअगरy_irq);
+		return 1;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(mce_notify_irq);
 
-अटल व्योम __mcheck_cpu_mce_banks_init(व्योम)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	u8 n_banks = this_cpu_पढ़ो(mce_num_banks);
-	पूर्णांक i;
+static void __mcheck_cpu_mce_banks_init(void)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	u8 n_banks = this_cpu_read(mce_num_banks);
+	int i;
 
-	क्रम (i = 0; i < n_banks; i++) अणु
-		काष्ठा mce_bank *b = &mce_banks[i];
+	for (i = 0; i < n_banks; i++) {
+		struct mce_bank *b = &mce_banks[i];
 
 		/*
 		 * Init them all, __mcheck_cpu_apply_quirks() is going to apply
-		 * the required venकरोr quirks beक्रमe
-		 * __mcheck_cpu_init_clear_banks() करोes the final bank setup.
+		 * the required vendor quirks before
+		 * __mcheck_cpu_init_clear_banks() does the final bank setup.
 		 */
 		b->ctl = -1ULL;
 		b->init = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Initialize Machine Checks क्रम a CPU.
+ * Initialize Machine Checks for a CPU.
  */
-अटल व्योम __mcheck_cpu_cap_init(व्योम)
-अणु
+static void __mcheck_cpu_cap_init(void)
+{
 	u64 cap;
 	u8 b;
 
@@ -1603,87 +1602,87 @@ EXPORT_SYMBOL_GPL(mce_notअगरy_irq);
 
 	b = cap & MCG_BANKCNT_MASK;
 
-	अगर (b > MAX_NR_BANKS) अणु
+	if (b > MAX_NR_BANKS) {
 		pr_warn("CPU%d: Using only %u machine check banks out of %u\n",
 			smp_processor_id(), MAX_NR_BANKS, b);
 		b = MAX_NR_BANKS;
-	पूर्ण
+	}
 
-	this_cpu_ग_लिखो(mce_num_banks, b);
+	this_cpu_write(mce_num_banks, b);
 
 	__mcheck_cpu_mce_banks_init();
 
-	/* Use accurate RIP reporting अगर available. */
-	अगर ((cap & MCG_EXT_P) && MCG_EXT_CNT(cap) >= 9)
+	/* Use accurate RIP reporting if available. */
+	if ((cap & MCG_EXT_P) && MCG_EXT_CNT(cap) >= 9)
 		mca_cfg.rip_msr = MSR_IA32_MCG_EIP;
 
-	अगर (cap & MCG_SER_P)
+	if (cap & MCG_SER_P)
 		mca_cfg.ser = 1;
-पूर्ण
+}
 
-अटल व्योम __mcheck_cpu_init_generic(व्योम)
-अणु
-	क्रमागत mcp_flags m_fl = 0;
+static void __mcheck_cpu_init_generic(void)
+{
+	enum mcp_flags m_fl = 0;
 	mce_banks_t all_banks;
 	u64 cap;
 
-	अगर (!mca_cfg.bootlog)
+	if (!mca_cfg.bootlog)
 		m_fl = MCP_DONTLOG;
 
 	/*
 	 * Log the machine checks left over from the previous reset.
 	 */
-	biपंचांगap_fill(all_banks, MAX_NR_BANKS);
+	bitmap_fill(all_banks, MAX_NR_BANKS);
 	machine_check_poll(MCP_UC | m_fl, &all_banks);
 
 	cr4_set_bits(X86_CR4_MCE);
 
 	rdmsrl(MSR_IA32_MCG_CAP, cap);
-	अगर (cap & MCG_CTL_P)
+	if (cap & MCG_CTL_P)
 		wrmsr(MSR_IA32_MCG_CTL, 0xffffffff, 0xffffffff);
-पूर्ण
+}
 
-अटल व्योम __mcheck_cpu_init_clear_banks(व्योम)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	पूर्णांक i;
+static void __mcheck_cpu_init_clear_banks(void)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	int i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		काष्ठा mce_bank *b = &mce_banks[i];
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		struct mce_bank *b = &mce_banks[i];
 
-		अगर (!b->init)
-			जारी;
+		if (!b->init)
+			continue;
 		wrmsrl(msr_ops.ctl(i), b->ctl);
 		wrmsrl(msr_ops.status(i), 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Do a final check to see अगर there are any unused/RAZ banks.
+ * Do a final check to see if there are any unused/RAZ banks.
  *
- * This must be करोne after the banks have been initialized and any quirks have
+ * This must be done after the banks have been initialized and any quirks have
  * been applied.
  *
  * Do not call this from any user-initiated flows, e.g. CPU hotplug or sysfs.
  * Otherwise, a user who disables a bank will not be able to re-enable it
- * without a प्रणाली reboot.
+ * without a system reboot.
  */
-अटल व्योम __mcheck_cpu_check_banks(व्योम)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+static void __mcheck_cpu_check_banks(void)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
 	u64 msrval;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		काष्ठा mce_bank *b = &mce_banks[i];
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		struct mce_bank *b = &mce_banks[i];
 
-		अगर (!b->init)
-			जारी;
+		if (!b->init)
+			continue;
 
 		rdmsrl(msr_ops.ctl(i), msrval);
 		b->init = !!msrval;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * During IFU recovery Sandy Bridge -EP4S processors set the RIPV and
@@ -1693,178 +1692,178 @@ EXPORT_SYMBOL_GPL(mce_notअगरy_irq);
  * the severity assessment code. Pretend that EIPV was set, and take the
  * ip/cs values from the pt_regs that mce_gather_info() ignored earlier.
  */
-अटल व्योम quirk_sandybridge_अगरu(पूर्णांक bank, काष्ठा mce *m, काष्ठा pt_regs *regs)
-अणु
-	अगर (bank != 0)
-		वापस;
-	अगर ((m->mcgstatus & (MCG_STATUS_EIPV|MCG_STATUS_RIPV)) != 0)
-		वापस;
-	अगर ((m->status & (MCI_STATUS_OVER|MCI_STATUS_UC|
+static void quirk_sandybridge_ifu(int bank, struct mce *m, struct pt_regs *regs)
+{
+	if (bank != 0)
+		return;
+	if ((m->mcgstatus & (MCG_STATUS_EIPV|MCG_STATUS_RIPV)) != 0)
+		return;
+	if ((m->status & (MCI_STATUS_OVER|MCI_STATUS_UC|
 		          MCI_STATUS_EN|MCI_STATUS_MISCV|MCI_STATUS_ADDRV|
 			  MCI_STATUS_PCC|MCI_STATUS_S|MCI_STATUS_AR|
 			  MCACOD)) !=
 			 (MCI_STATUS_UC|MCI_STATUS_EN|
 			  MCI_STATUS_MISCV|MCI_STATUS_ADDRV|MCI_STATUS_S|
 			  MCI_STATUS_AR|MCACOD_INSTR))
-		वापस;
+		return;
 
 	m->mcgstatus |= MCG_STATUS_EIPV;
 	m->ip = regs->ip;
 	m->cs = regs->cs;
-पूर्ण
+}
 
-/* Add per CPU specअगरic workarounds here */
-अटल पूर्णांक __mcheck_cpu_apply_quirks(काष्ठा cpuinfo_x86 *c)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	काष्ठा mca_config *cfg = &mca_cfg;
+/* Add per CPU specific workarounds here */
+static int __mcheck_cpu_apply_quirks(struct cpuinfo_x86 *c)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	struct mca_config *cfg = &mca_cfg;
 
-	अगर (c->x86_venकरोr == X86_VENDOR_UNKNOWN) अणु
+	if (c->x86_vendor == X86_VENDOR_UNKNOWN) {
 		pr_info("unknown CPU type - not enabling MCE support\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	/* This should be disabled by the BIOS, but isn't always */
-	अगर (c->x86_venकरोr == X86_VENDOR_AMD) अणु
-		अगर (c->x86 == 15 && this_cpu_पढ़ो(mce_num_banks) > 4) अणु
+	if (c->x86_vendor == X86_VENDOR_AMD) {
+		if (c->x86 == 15 && this_cpu_read(mce_num_banks) > 4) {
 			/*
 			 * disable GART TBL walk error reporting, which
 			 * trips off incorrectly with the IOMMU & 3ware
 			 * & Cerberus:
 			 */
-			clear_bit(10, (अचिन्हित दीर्घ *)&mce_banks[4].ctl);
-		पूर्ण
-		अगर (c->x86 < 0x11 && cfg->bootlog < 0) अणु
+			clear_bit(10, (unsigned long *)&mce_banks[4].ctl);
+		}
+		if (c->x86 < 0x11 && cfg->bootlog < 0) {
 			/*
-			 * Lots of broken BIOS around that करोn't clear them
-			 * by शेष and leave crap in there. Don't log:
+			 * Lots of broken BIOS around that don't clear them
+			 * by default and leave crap in there. Don't log:
 			 */
 			cfg->bootlog = 0;
-		पूर्ण
+		}
 		/*
 		 * Various K7s with broken bank 0 around. Always disable
-		 * by शेष.
+		 * by default.
 		 */
-		अगर (c->x86 == 6 && this_cpu_पढ़ो(mce_num_banks) > 0)
+		if (c->x86 == 6 && this_cpu_read(mce_num_banks) > 0)
 			mce_banks[0].ctl = 0;
 
 		/*
-		 * overflow_recov is supported क्रम F15h Models 00h-0fh
-		 * even though we करोn't have a CPUID bit क्रम it.
+		 * overflow_recov is supported for F15h Models 00h-0fh
+		 * even though we don't have a CPUID bit for it.
 		 */
-		अगर (c->x86 == 0x15 && c->x86_model <= 0xf)
+		if (c->x86 == 0x15 && c->x86_model <= 0xf)
 			mce_flags.overflow_recov = 1;
 
-	पूर्ण
+	}
 
-	अगर (c->x86_venकरोr == X86_VENDOR_INTEL) अणु
+	if (c->x86_vendor == X86_VENDOR_INTEL) {
 		/*
-		 * SDM करोcuments that on family 6 bank 0 should not be written
+		 * SDM documents that on family 6 bank 0 should not be written
 		 * because it aliases to another special BIOS controlled
-		 * रेजिस्टर.
+		 * register.
 		 * But it's not aliased anymore on model 0x1a+
 		 * Don't ignore bank 0 completely because there could be a
-		 * valid event later, merely करोn't ग_लिखो CTL0.
+		 * valid event later, merely don't write CTL0.
 		 */
 
-		अगर (c->x86 == 6 && c->x86_model < 0x1A && this_cpu_पढ़ो(mce_num_banks) > 0)
+		if (c->x86 == 6 && c->x86_model < 0x1A && this_cpu_read(mce_num_banks) > 0)
 			mce_banks[0].init = false;
 
 		/*
-		 * All newer Intel प्रणालीs support MCE broadcasting. Enable
-		 * synchronization with a one second समयout.
+		 * All newer Intel systems support MCE broadcasting. Enable
+		 * synchronization with a one second timeout.
 		 */
-		अगर ((c->x86 > 6 || (c->x86 == 6 && c->x86_model >= 0xe)) &&
-			cfg->monarch_समयout < 0)
-			cfg->monarch_समयout = USEC_PER_SEC;
+		if ((c->x86 > 6 || (c->x86 == 6 && c->x86_model >= 0xe)) &&
+			cfg->monarch_timeout < 0)
+			cfg->monarch_timeout = USEC_PER_SEC;
 
 		/*
 		 * There are also broken BIOSes on some Pentium M and
-		 * earlier प्रणालीs:
+		 * earlier systems:
 		 */
-		अगर (c->x86 == 6 && c->x86_model <= 13 && cfg->bootlog < 0)
+		if (c->x86 == 6 && c->x86_model <= 13 && cfg->bootlog < 0)
 			cfg->bootlog = 0;
 
-		अगर (c->x86 == 6 && c->x86_model == 45)
-			quirk_no_way_out = quirk_sandybridge_अगरu;
-	पूर्ण
+		if (c->x86 == 6 && c->x86_model == 45)
+			quirk_no_way_out = quirk_sandybridge_ifu;
+	}
 
-	अगर (c->x86_venकरोr == X86_VENDOR_ZHAOXIN) अणु
+	if (c->x86_vendor == X86_VENDOR_ZHAOXIN) {
 		/*
 		 * All newer Zhaoxin CPUs support MCE broadcasting. Enable
-		 * synchronization with a one second समयout.
+		 * synchronization with a one second timeout.
 		 */
-		अगर (c->x86 > 6 || (c->x86_model == 0x19 || c->x86_model == 0x1f)) अणु
-			अगर (cfg->monarch_समयout < 0)
-				cfg->monarch_समयout = USEC_PER_SEC;
-		पूर्ण
-	पूर्ण
+		if (c->x86 > 6 || (c->x86_model == 0x19 || c->x86_model == 0x1f)) {
+			if (cfg->monarch_timeout < 0)
+				cfg->monarch_timeout = USEC_PER_SEC;
+		}
+	}
 
-	अगर (cfg->monarch_समयout < 0)
-		cfg->monarch_समयout = 0;
-	अगर (cfg->bootlog != 0)
-		cfg->panic_समयout = 30;
+	if (cfg->monarch_timeout < 0)
+		cfg->monarch_timeout = 0;
+	if (cfg->bootlog != 0)
+		cfg->panic_timeout = 30;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __mcheck_cpu_ancient_init(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (c->x86 != 5)
-		वापस 0;
+static int __mcheck_cpu_ancient_init(struct cpuinfo_x86 *c)
+{
+	if (c->x86 != 5)
+		return 0;
 
-	चयन (c->x86_venकरोr) अणु
-	हाल X86_VENDOR_INTEL:
-		पूर्णांकel_p5_mcheck_init(c);
-		वापस 1;
-	हाल X86_VENDOR_CENTAUR:
+	switch (c->x86_vendor) {
+	case X86_VENDOR_INTEL:
+		intel_p5_mcheck_init(c);
+		return 1;
+	case X86_VENDOR_CENTAUR:
 		winchip_mcheck_init(c);
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
+		return 1;
+	default:
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Init basic CPU features needed क्रम early decoding of MCEs.
+ * Init basic CPU features needed for early decoding of MCEs.
  */
-अटल व्योम __mcheck_cpu_init_early(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (c->x86_venकरोr == X86_VENDOR_AMD || c->x86_venकरोr == X86_VENDOR_HYGON) अणु
+static void __mcheck_cpu_init_early(struct cpuinfo_x86 *c)
+{
+	if (c->x86_vendor == X86_VENDOR_AMD || c->x86_vendor == X86_VENDOR_HYGON) {
 		mce_flags.overflow_recov = !!cpu_has(c, X86_FEATURE_OVERFLOW_RECOV);
 		mce_flags.succor	 = !!cpu_has(c, X86_FEATURE_SUCCOR);
 		mce_flags.smca		 = !!cpu_has(c, X86_FEATURE_SMCA);
 		mce_flags.amd_threshold	 = 1;
 
-		अगर (mce_flags.smca) अणु
+		if (mce_flags.smca) {
 			msr_ops.ctl	= smca_ctl_reg;
 			msr_ops.status	= smca_status_reg;
 			msr_ops.addr	= smca_addr_reg;
 			msr_ops.misc	= smca_misc_reg;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम mce_centaur_feature_init(काष्ठा cpuinfo_x86 *c)
-अणु
-	काष्ठा mca_config *cfg = &mca_cfg;
+static void mce_centaur_feature_init(struct cpuinfo_x86 *c)
+{
+	struct mca_config *cfg = &mca_cfg;
 
 	 /*
 	  * All newer Centaur CPUs support MCE broadcasting. Enable
-	  * synchronization with a one second समयout.
+	  * synchronization with a one second timeout.
 	  */
-	अगर ((c->x86 == 6 && c->x86_model == 0xf && c->x86_stepping >= 0xe) ||
-	     c->x86 > 6) अणु
-		अगर (cfg->monarch_समयout < 0)
-			cfg->monarch_समयout = USEC_PER_SEC;
-	पूर्ण
-पूर्ण
+	if ((c->x86 == 6 && c->x86_model == 0xf && c->x86_stepping >= 0xe) ||
+	     c->x86 > 6) {
+		if (cfg->monarch_timeout < 0)
+			cfg->monarch_timeout = USEC_PER_SEC;
+	}
+}
 
-अटल व्योम mce_zhaoxin_feature_init(काष्ठा cpuinfo_x86 *c)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+static void mce_zhaoxin_feature_init(struct cpuinfo_x86 *c)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
 
 	/*
 	 * These CPUs have MCA bank 8 which reports only one error type called
@@ -1872,136 +1871,136 @@ EXPORT_SYMBOL_GPL(mce_notअगरy_irq);
 	 * controlled by IA32_MC8.CTL.0.
 	 *
 	 * If enabled, prefetching on these CPUs will cause SVAD MCE when
-	 * भव machines start and result in a प्रणाली  panic. Always disable
-	 * bank 8 SVAD error by शेष.
+	 * virtual machines start and result in a system  panic. Always disable
+	 * bank 8 SVAD error by default.
 	 */
-	अगर ((c->x86 == 7 && c->x86_model == 0x1b) ||
-	    (c->x86_model == 0x19 || c->x86_model == 0x1f)) अणु
-		अगर (this_cpu_पढ़ो(mce_num_banks) > 8)
+	if ((c->x86 == 7 && c->x86_model == 0x1b) ||
+	    (c->x86_model == 0x19 || c->x86_model == 0x1f)) {
+		if (this_cpu_read(mce_num_banks) > 8)
 			mce_banks[8].ctl = 0;
-	पूर्ण
+	}
 
-	पूर्णांकel_init_cmci();
-	पूर्णांकel_init_lmce();
-	mce_adjust_समयr = cmci_पूर्णांकel_adjust_समयr;
-पूर्ण
+	intel_init_cmci();
+	intel_init_lmce();
+	mce_adjust_timer = cmci_intel_adjust_timer;
+}
 
-अटल व्योम mce_zhaoxin_feature_clear(काष्ठा cpuinfo_x86 *c)
-अणु
-	पूर्णांकel_clear_lmce();
-पूर्ण
+static void mce_zhaoxin_feature_clear(struct cpuinfo_x86 *c)
+{
+	intel_clear_lmce();
+}
 
-अटल व्योम __mcheck_cpu_init_venकरोr(काष्ठा cpuinfo_x86 *c)
-अणु
-	चयन (c->x86_venकरोr) अणु
-	हाल X86_VENDOR_INTEL:
-		mce_पूर्णांकel_feature_init(c);
-		mce_adjust_समयr = cmci_पूर्णांकel_adjust_समयr;
-		अवरोध;
+static void __mcheck_cpu_init_vendor(struct cpuinfo_x86 *c)
+{
+	switch (c->x86_vendor) {
+	case X86_VENDOR_INTEL:
+		mce_intel_feature_init(c);
+		mce_adjust_timer = cmci_intel_adjust_timer;
+		break;
 
-	हाल X86_VENDOR_AMD: अणु
+	case X86_VENDOR_AMD: {
 		mce_amd_feature_init(c);
-		अवरोध;
-		पूर्ण
+		break;
+		}
 
-	हाल X86_VENDOR_HYGON:
+	case X86_VENDOR_HYGON:
 		mce_hygon_feature_init(c);
-		अवरोध;
+		break;
 
-	हाल X86_VENDOR_CENTAUR:
+	case X86_VENDOR_CENTAUR:
 		mce_centaur_feature_init(c);
-		अवरोध;
+		break;
 
-	हाल X86_VENDOR_ZHAOXIN:
+	case X86_VENDOR_ZHAOXIN:
 		mce_zhaoxin_feature_init(c);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल व्योम __mcheck_cpu_clear_venकरोr(काष्ठा cpuinfo_x86 *c)
-अणु
-	चयन (c->x86_venकरोr) अणु
-	हाल X86_VENDOR_INTEL:
-		mce_पूर्णांकel_feature_clear(c);
-		अवरोध;
+static void __mcheck_cpu_clear_vendor(struct cpuinfo_x86 *c)
+{
+	switch (c->x86_vendor) {
+	case X86_VENDOR_INTEL:
+		mce_intel_feature_clear(c);
+		break;
 
-	हाल X86_VENDOR_ZHAOXIN:
+	case X86_VENDOR_ZHAOXIN:
 		mce_zhaoxin_feature_clear(c);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल व्योम mce_start_समयr(काष्ठा समयr_list *t)
-अणु
-	अचिन्हित दीर्घ iv = check_पूर्णांकerval * HZ;
+static void mce_start_timer(struct timer_list *t)
+{
+	unsigned long iv = check_interval * HZ;
 
-	अगर (mca_cfg.ignore_ce || !iv)
-		वापस;
+	if (mca_cfg.ignore_ce || !iv)
+		return;
 
-	this_cpu_ग_लिखो(mce_next_पूर्णांकerval, iv);
-	__start_समयr(t, iv);
-पूर्ण
+	this_cpu_write(mce_next_interval, iv);
+	__start_timer(t, iv);
+}
 
-अटल व्योम __mcheck_cpu_setup_समयr(व्योम)
-अणु
-	काष्ठा समयr_list *t = this_cpu_ptr(&mce_समयr);
+static void __mcheck_cpu_setup_timer(void)
+{
+	struct timer_list *t = this_cpu_ptr(&mce_timer);
 
-	समयr_setup(t, mce_समयr_fn, TIMER_PINNED);
-पूर्ण
+	timer_setup(t, mce_timer_fn, TIMER_PINNED);
+}
 
-अटल व्योम __mcheck_cpu_init_समयr(व्योम)
-अणु
-	काष्ठा समयr_list *t = this_cpu_ptr(&mce_समयr);
+static void __mcheck_cpu_init_timer(void)
+{
+	struct timer_list *t = this_cpu_ptr(&mce_timer);
 
-	समयr_setup(t, mce_समयr_fn, TIMER_PINNED);
-	mce_start_समयr(t);
-पूर्ण
+	timer_setup(t, mce_timer_fn, TIMER_PINNED);
+	mce_start_timer(t);
+}
 
-bool filter_mce(काष्ठा mce *m)
-अणु
-	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD)
-		वापस amd_filter_mce(m);
-	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL)
-		वापस पूर्णांकel_filter_mce(m);
+bool filter_mce(struct mce *m)
+{
+	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD)
+		return amd_filter_mce(m);
+	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL)
+		return intel_filter_mce(m);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* Handle unconfigured पूर्णांक18 (should never happen) */
-अटल noinstr व्योम unexpected_machine_check(काष्ठा pt_regs *regs)
-अणु
+/* Handle unconfigured int18 (should never happen) */
+static noinstr void unexpected_machine_check(struct pt_regs *regs)
+{
 	instrumentation_begin();
 	pr_err("CPU#%d: Unexpected int18 (Machine Check)\n",
 	       smp_processor_id());
 	instrumentation_end();
-पूर्ण
+}
 
-/* Call the installed machine check handler क्रम this CPU setup. */
-व्योम (*machine_check_vector)(काष्ठा pt_regs *) = unexpected_machine_check;
+/* Call the installed machine check handler for this CPU setup. */
+void (*machine_check_vector)(struct pt_regs *) = unexpected_machine_check;
 
-अटल __always_अंतरभूत व्योम exc_machine_check_kernel(काष्ठा pt_regs *regs)
-अणु
+static __always_inline void exc_machine_check_kernel(struct pt_regs *regs)
+{
 	irqentry_state_t irq_state;
 
 	WARN_ON_ONCE(user_mode(regs));
 
 	/*
 	 * Only required when from kernel mode. See
-	 * mce_check_crashing_cpu() क्रम details.
+	 * mce_check_crashing_cpu() for details.
 	 */
-	अगर (machine_check_vector == करो_machine_check &&
+	if (machine_check_vector == do_machine_check &&
 	    mce_check_crashing_cpu())
-		वापस;
+		return;
 
 	irq_state = irqentry_nmi_enter(regs);
 	/*
-	 * The call tarमाला_लो are marked noinstr, but objtool can't figure
+	 * The call targets are marked noinstr, but objtool can't figure
 	 * that out because it's an indirect call. Annotate it.
 	 */
 	instrumentation_begin();
@@ -2009,629 +2008,629 @@ bool filter_mce(काष्ठा mce *m)
 	machine_check_vector(regs);
 
 	instrumentation_end();
-	irqentry_nmi_निकास(regs, irq_state);
-पूर्ण
+	irqentry_nmi_exit(regs, irq_state);
+}
 
-अटल __always_अंतरभूत व्योम exc_machine_check_user(काष्ठा pt_regs *regs)
-अणु
+static __always_inline void exc_machine_check_user(struct pt_regs *regs)
+{
 	irqentry_enter_from_user_mode(regs);
 	instrumentation_begin();
 
 	machine_check_vector(regs);
 
 	instrumentation_end();
-	irqentry_निकास_to_user_mode(regs);
-पूर्ण
+	irqentry_exit_to_user_mode(regs);
+}
 
-#अगर_घोषित CONFIG_X86_64
+#ifdef CONFIG_X86_64
 /* MCE hit kernel mode */
 DEFINE_IDTENTRY_MCE(exc_machine_check)
-अणु
-	अचिन्हित दीर्घ dr7;
+{
+	unsigned long dr7;
 
 	dr7 = local_db_save();
 	exc_machine_check_kernel(regs);
 	local_db_restore(dr7);
-पूर्ण
+}
 
 /* The user mode variant. */
 DEFINE_IDTENTRY_MCE_USER(exc_machine_check)
-अणु
-	अचिन्हित दीर्घ dr7;
+{
+	unsigned long dr7;
 
 	dr7 = local_db_save();
 	exc_machine_check_user(regs);
 	local_db_restore(dr7);
-पूर्ण
-#अन्यथा
-/* 32bit unअगरied entry poपूर्णांक */
+}
+#else
+/* 32bit unified entry point */
 DEFINE_IDTENTRY_RAW(exc_machine_check)
-अणु
-	अचिन्हित दीर्घ dr7;
+{
+	unsigned long dr7;
 
 	dr7 = local_db_save();
-	अगर (user_mode(regs))
+	if (user_mode(regs))
 		exc_machine_check_user(regs);
-	अन्यथा
+	else
 		exc_machine_check_kernel(regs);
 	local_db_restore(dr7);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- * Called क्रम each booted CPU to set up machine checks.
+ * Called for each booted CPU to set up machine checks.
  * Must be called with preempt off:
  */
-व्योम mcheck_cpu_init(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (mca_cfg.disabled)
-		वापस;
+void mcheck_cpu_init(struct cpuinfo_x86 *c)
+{
+	if (mca_cfg.disabled)
+		return;
 
-	अगर (__mcheck_cpu_ancient_init(c))
-		वापस;
+	if (__mcheck_cpu_ancient_init(c))
+		return;
 
-	अगर (!mce_available(c))
-		वापस;
+	if (!mce_available(c))
+		return;
 
 	__mcheck_cpu_cap_init();
 
-	अगर (__mcheck_cpu_apply_quirks(c) < 0) अणु
+	if (__mcheck_cpu_apply_quirks(c) < 0) {
 		mca_cfg.disabled = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (mce_gen_pool_init()) अणु
+	if (mce_gen_pool_init()) {
 		mca_cfg.disabled = 1;
 		pr_emerg("Couldn't allocate MCE records pool!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	machine_check_vector = करो_machine_check;
+	machine_check_vector = do_machine_check;
 
 	__mcheck_cpu_init_early(c);
 	__mcheck_cpu_init_generic();
-	__mcheck_cpu_init_venकरोr(c);
+	__mcheck_cpu_init_vendor(c);
 	__mcheck_cpu_init_clear_banks();
 	__mcheck_cpu_check_banks();
-	__mcheck_cpu_setup_समयr();
-पूर्ण
+	__mcheck_cpu_setup_timer();
+}
 
 /*
- * Called क्रम each booted CPU to clear some machine checks opt-ins
+ * Called for each booted CPU to clear some machine checks opt-ins
  */
-व्योम mcheck_cpu_clear(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (mca_cfg.disabled)
-		वापस;
+void mcheck_cpu_clear(struct cpuinfo_x86 *c)
+{
+	if (mca_cfg.disabled)
+		return;
 
-	अगर (!mce_available(c))
-		वापस;
+	if (!mce_available(c))
+		return;
 
 	/*
 	 * Possibly to clear general settings generic to x86
 	 * __mcheck_cpu_clear_generic(c);
 	 */
-	__mcheck_cpu_clear_venकरोr(c);
+	__mcheck_cpu_clear_vendor(c);
 
-पूर्ण
+}
 
-अटल व्योम __mce_disable_bank(व्योम *arg)
-अणु
-	पूर्णांक bank = *((पूर्णांक *)arg);
+static void __mce_disable_bank(void *arg)
+{
+	int bank = *((int *)arg);
 	__clear_bit(bank, this_cpu_ptr(mce_poll_banks));
 	cmci_disable_bank(bank);
-पूर्ण
+}
 
-व्योम mce_disable_bank(पूर्णांक bank)
-अणु
-	अगर (bank >= this_cpu_पढ़ो(mce_num_banks)) अणु
+void mce_disable_bank(int bank)
+{
+	if (bank >= this_cpu_read(mce_num_banks)) {
 		pr_warn(FW_BUG
 			"Ignoring request to disable invalid MCA bank %d.\n",
 			bank);
-		वापस;
-	पूर्ण
+		return;
+	}
 	set_bit(bank, mce_banks_ce_disabled);
 	on_each_cpu(__mce_disable_bank, &bank, 1);
-पूर्ण
+}
 
 /*
  * mce=off Disables machine check
  * mce=no_cmci Disables CMCI
  * mce=no_lmce Disables LMCE
- * mce=करोnt_log_ce Clears corrected events silently, no log created क्रम CEs.
- * mce=prपूर्णांक_all Prपूर्णांक all machine check logs to console
+ * mce=dont_log_ce Clears corrected events silently, no log created for CEs.
+ * mce=print_all Print all machine check logs to console
  * mce=ignore_ce Disables polling and CMCI, corrected events are not cleared.
- * mce=TOLERANCELEVEL[,monarchसमयout] (number, see above)
- *	monarchसमयout is how दीर्घ to रुको क्रम other CPUs on machine
- *	check, or 0 to not रुको
- * mce=bootlog Log MCEs from beक्रमe booting. Disabled by शेष on AMD Fam10h
+ * mce=TOLERANCELEVEL[,monarchtimeout] (number, see above)
+ *	monarchtimeout is how long to wait for other CPUs on machine
+ *	check, or 0 to not wait
+ * mce=bootlog Log MCEs from before booting. Disabled by default on AMD Fam10h
 	and older.
- * mce=nobootlog Don't log MCEs from beक्रमe booting.
+ * mce=nobootlog Don't log MCEs from before booting.
  * mce=bios_cmci_threshold Don't program the CMCI threshold
- * mce=recovery क्रमce enable copy_mc_fragile()
+ * mce=recovery force enable copy_mc_fragile()
  */
-अटल पूर्णांक __init mcheck_enable(अक्षर *str)
-अणु
-	काष्ठा mca_config *cfg = &mca_cfg;
+static int __init mcheck_enable(char *str)
+{
+	struct mca_config *cfg = &mca_cfg;
 
-	अगर (*str == 0) अणु
+	if (*str == 0) {
 		enable_p5_mce();
-		वापस 1;
-	पूर्ण
-	अगर (*str == '=')
+		return 1;
+	}
+	if (*str == '=')
 		str++;
-	अगर (!म_भेद(str, "off"))
+	if (!strcmp(str, "off"))
 		cfg->disabled = 1;
-	अन्यथा अगर (!म_भेद(str, "no_cmci"))
+	else if (!strcmp(str, "no_cmci"))
 		cfg->cmci_disabled = true;
-	अन्यथा अगर (!म_भेद(str, "no_lmce"))
+	else if (!strcmp(str, "no_lmce"))
 		cfg->lmce_disabled = 1;
-	अन्यथा अगर (!म_भेद(str, "dont_log_ce"))
-		cfg->करोnt_log_ce = true;
-	अन्यथा अगर (!म_भेद(str, "print_all"))
-		cfg->prपूर्णांक_all = true;
-	अन्यथा अगर (!म_भेद(str, "ignore_ce"))
+	else if (!strcmp(str, "dont_log_ce"))
+		cfg->dont_log_ce = true;
+	else if (!strcmp(str, "print_all"))
+		cfg->print_all = true;
+	else if (!strcmp(str, "ignore_ce"))
 		cfg->ignore_ce = true;
-	अन्यथा अगर (!म_भेद(str, "bootlog") || !म_भेद(str, "nobootlog"))
+	else if (!strcmp(str, "bootlog") || !strcmp(str, "nobootlog"))
 		cfg->bootlog = (str[0] == 'b');
-	अन्यथा अगर (!म_भेद(str, "bios_cmci_threshold"))
+	else if (!strcmp(str, "bios_cmci_threshold"))
 		cfg->bios_cmci_threshold = 1;
-	अन्यथा अगर (!म_भेद(str, "recovery"))
+	else if (!strcmp(str, "recovery"))
 		cfg->recovery = 1;
-	अन्यथा अगर (है_अंक(str[0])) अणु
-		अगर (get_option(&str, &cfg->tolerant) == 2)
-			get_option(&str, &(cfg->monarch_समयout));
-	पूर्ण अन्यथा अणु
+	else if (isdigit(str[0])) {
+		if (get_option(&str, &cfg->tolerant) == 2)
+			get_option(&str, &(cfg->monarch_timeout));
+	} else {
 		pr_info("mce argument %s ignored. Please use /sys\n", str);
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 __setup("mce", mcheck_enable);
 
-पूर्णांक __init mcheck_init(व्योम)
-अणु
-	mce_रेजिस्टर_decode_chain(&early_nb);
-	mce_रेजिस्टर_decode_chain(&mce_uc_nb);
-	mce_रेजिस्टर_decode_chain(&mce_शेष_nb);
-	mcheck_venकरोr_init_severity();
+int __init mcheck_init(void)
+{
+	mce_register_decode_chain(&early_nb);
+	mce_register_decode_chain(&mce_uc_nb);
+	mce_register_decode_chain(&mce_default_nb);
+	mcheck_vendor_init_severity();
 
 	INIT_WORK(&mce_work, mce_gen_pool_process);
 	init_irq_work(&mce_irq_work, mce_irq_work_cb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * mce_syscore: PM support
  */
 
 /*
- * Disable machine checks on suspend and shutकरोwn. We can't really handle
+ * Disable machine checks on suspend and shutdown. We can't really handle
  * them later.
  */
-अटल व्योम mce_disable_error_reporting(व्योम)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	पूर्णांक i;
+static void mce_disable_error_reporting(void)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	int i;
 
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		काष्ठा mce_bank *b = &mce_banks[i];
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		struct mce_bank *b = &mce_banks[i];
 
-		अगर (b->init)
+		if (b->init)
 			wrmsrl(msr_ops.ctl(i), 0);
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
-अटल व्योम venकरोr_disable_error_reporting(व्योम)
-अणु
+static void vendor_disable_error_reporting(void)
+{
 	/*
 	 * Don't clear on Intel or AMD or Hygon or Zhaoxin CPUs. Some of these
-	 * MSRs are socket-wide. Disabling them क्रम just a single offlined CPU
-	 * is bad, since it will inhibit reporting क्रम all shared resources on
-	 * the socket like the last level cache (LLC), the पूर्णांकegrated memory
+	 * MSRs are socket-wide. Disabling them for just a single offlined CPU
+	 * is bad, since it will inhibit reporting for all shared resources on
+	 * the socket like the last level cache (LLC), the integrated memory
 	 * controller (iMC), etc.
 	 */
-	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL ||
-	    boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON ||
-	    boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD ||
-	    boot_cpu_data.x86_venकरोr == X86_VENDOR_ZHAOXIN)
-		वापस;
+	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL ||
+	    boot_cpu_data.x86_vendor == X86_VENDOR_HYGON ||
+	    boot_cpu_data.x86_vendor == X86_VENDOR_AMD ||
+	    boot_cpu_data.x86_vendor == X86_VENDOR_ZHAOXIN)
+		return;
 
 	mce_disable_error_reporting();
-पूर्ण
+}
 
-अटल पूर्णांक mce_syscore_suspend(व्योम)
-अणु
-	venकरोr_disable_error_reporting();
-	वापस 0;
-पूर्ण
+static int mce_syscore_suspend(void)
+{
+	vendor_disable_error_reporting();
+	return 0;
+}
 
-अटल व्योम mce_syscore_shutकरोwn(व्योम)
-अणु
-	venकरोr_disable_error_reporting();
-पूर्ण
+static void mce_syscore_shutdown(void)
+{
+	vendor_disable_error_reporting();
+}
 
 /*
  * On resume clear all MCE state. Don't want to see leftovers from the BIOS.
- * Only one CPU is active at this समय, the others get re-added later using
+ * Only one CPU is active at this time, the others get re-added later using
  * CPU hotplug:
  */
-अटल व्योम mce_syscore_resume(व्योम)
-अणु
+static void mce_syscore_resume(void)
+{
 	__mcheck_cpu_init_generic();
-	__mcheck_cpu_init_venकरोr(raw_cpu_ptr(&cpu_info));
+	__mcheck_cpu_init_vendor(raw_cpu_ptr(&cpu_info));
 	__mcheck_cpu_init_clear_banks();
-पूर्ण
+}
 
-अटल काष्ठा syscore_ops mce_syscore_ops = अणु
+static struct syscore_ops mce_syscore_ops = {
 	.suspend	= mce_syscore_suspend,
-	.shutकरोwn	= mce_syscore_shutकरोwn,
+	.shutdown	= mce_syscore_shutdown,
 	.resume		= mce_syscore_resume,
-पूर्ण;
+};
 
 /*
  * mce_device: Sysfs support
  */
 
-अटल व्योम mce_cpu_restart(व्योम *data)
-अणु
-	अगर (!mce_available(raw_cpu_ptr(&cpu_info)))
-		वापस;
+static void mce_cpu_restart(void *data)
+{
+	if (!mce_available(raw_cpu_ptr(&cpu_info)))
+		return;
 	__mcheck_cpu_init_generic();
 	__mcheck_cpu_init_clear_banks();
-	__mcheck_cpu_init_समयr();
-पूर्ण
+	__mcheck_cpu_init_timer();
+}
 
 /* Reinit MCEs after user configuration changes */
-अटल व्योम mce_restart(व्योम)
-अणु
-	mce_समयr_delete_all();
-	on_each_cpu(mce_cpu_restart, शून्य, 1);
-पूर्ण
+static void mce_restart(void)
+{
+	mce_timer_delete_all();
+	on_each_cpu(mce_cpu_restart, NULL, 1);
+}
 
-/* Toggle features क्रम corrected errors */
-अटल व्योम mce_disable_cmci(व्योम *data)
-अणु
-	अगर (!mce_available(raw_cpu_ptr(&cpu_info)))
-		वापस;
+/* Toggle features for corrected errors */
+static void mce_disable_cmci(void *data)
+{
+	if (!mce_available(raw_cpu_ptr(&cpu_info)))
+		return;
 	cmci_clear();
-पूर्ण
+}
 
-अटल व्योम mce_enable_ce(व्योम *all)
-अणु
-	अगर (!mce_available(raw_cpu_ptr(&cpu_info)))
-		वापस;
+static void mce_enable_ce(void *all)
+{
+	if (!mce_available(raw_cpu_ptr(&cpu_info)))
+		return;
 	cmci_reenable();
 	cmci_recheck();
-	अगर (all)
-		__mcheck_cpu_init_समयr();
-पूर्ण
+	if (all)
+		__mcheck_cpu_init_timer();
+}
 
-अटल काष्ठा bus_type mce_subsys = अणु
+static struct bus_type mce_subsys = {
 	.name		= "machinecheck",
 	.dev_name	= "machinecheck",
-पूर्ण;
+};
 
-DEFINE_PER_CPU(काष्ठा device *, mce_device);
+DEFINE_PER_CPU(struct device *, mce_device);
 
-अटल अंतरभूत काष्ठा mce_bank_dev *attr_to_bank(काष्ठा device_attribute *attr)
-अणु
-	वापस container_of(attr, काष्ठा mce_bank_dev, attr);
-पूर्ण
+static inline struct mce_bank_dev *attr_to_bank(struct device_attribute *attr)
+{
+	return container_of(attr, struct mce_bank_dev, attr);
+}
 
-अटल sमाप_प्रकार show_bank(काष्ठा device *s, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
+static ssize_t show_bank(struct device *s, struct device_attribute *attr,
+			 char *buf)
+{
 	u8 bank = attr_to_bank(attr)->bank;
-	काष्ठा mce_bank *b;
+	struct mce_bank *b;
 
-	अगर (bank >= per_cpu(mce_num_banks, s->id))
-		वापस -EINVAL;
+	if (bank >= per_cpu(mce_num_banks, s->id))
+		return -EINVAL;
 
 	b = &per_cpu(mce_banks_array, s->id)[bank];
 
-	अगर (!b->init)
-		वापस -ENODEV;
+	if (!b->init)
+		return -ENODEV;
 
-	वापस प्र_लिखो(buf, "%llx\n", b->ctl);
-पूर्ण
+	return sprintf(buf, "%llx\n", b->ctl);
+}
 
-अटल sमाप_प्रकार set_bank(काष्ठा device *s, काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
+static ssize_t set_bank(struct device *s, struct device_attribute *attr,
+			const char *buf, size_t size)
+{
 	u8 bank = attr_to_bank(attr)->bank;
-	काष्ठा mce_bank *b;
+	struct mce_bank *b;
 	u64 new;
 
-	अगर (kstrtou64(buf, 0, &new) < 0)
-		वापस -EINVAL;
+	if (kstrtou64(buf, 0, &new) < 0)
+		return -EINVAL;
 
-	अगर (bank >= per_cpu(mce_num_banks, s->id))
-		वापस -EINVAL;
+	if (bank >= per_cpu(mce_num_banks, s->id))
+		return -EINVAL;
 
 	b = &per_cpu(mce_banks_array, s->id)[bank];
 
-	अगर (!b->init)
-		वापस -ENODEV;
+	if (!b->init)
+		return -ENODEV;
 
 	b->ctl = new;
 	mce_restart();
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार set_ignore_ce(काष्ठा device *s,
-			     काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
+static ssize_t set_ignore_ce(struct device *s,
+			     struct device_attribute *attr,
+			     const char *buf, size_t size)
+{
 	u64 new;
 
-	अगर (kstrtou64(buf, 0, &new) < 0)
-		वापस -EINVAL;
+	if (kstrtou64(buf, 0, &new) < 0)
+		return -EINVAL;
 
 	mutex_lock(&mce_sysfs_mutex);
-	अगर (mca_cfg.ignore_ce ^ !!new) अणु
-		अगर (new) अणु
+	if (mca_cfg.ignore_ce ^ !!new) {
+		if (new) {
 			/* disable ce features */
-			mce_समयr_delete_all();
-			on_each_cpu(mce_disable_cmci, शून्य, 1);
+			mce_timer_delete_all();
+			on_each_cpu(mce_disable_cmci, NULL, 1);
 			mca_cfg.ignore_ce = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* enable ce features */
 			mca_cfg.ignore_ce = false;
-			on_each_cpu(mce_enable_ce, (व्योम *)1, 1);
-		पूर्ण
-	पूर्ण
+			on_each_cpu(mce_enable_ce, (void *)1, 1);
+		}
+	}
 	mutex_unlock(&mce_sysfs_mutex);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार set_cmci_disabled(काष्ठा device *s,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
+static ssize_t set_cmci_disabled(struct device *s,
+				 struct device_attribute *attr,
+				 const char *buf, size_t size)
+{
 	u64 new;
 
-	अगर (kstrtou64(buf, 0, &new) < 0)
-		वापस -EINVAL;
+	if (kstrtou64(buf, 0, &new) < 0)
+		return -EINVAL;
 
 	mutex_lock(&mce_sysfs_mutex);
-	अगर (mca_cfg.cmci_disabled ^ !!new) अणु
-		अगर (new) अणु
+	if (mca_cfg.cmci_disabled ^ !!new) {
+		if (new) {
 			/* disable cmci */
-			on_each_cpu(mce_disable_cmci, शून्य, 1);
+			on_each_cpu(mce_disable_cmci, NULL, 1);
 			mca_cfg.cmci_disabled = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* enable cmci */
 			mca_cfg.cmci_disabled = false;
-			on_each_cpu(mce_enable_ce, शून्य, 1);
-		पूर्ण
-	पूर्ण
+			on_each_cpu(mce_enable_ce, NULL, 1);
+		}
+	}
 	mutex_unlock(&mce_sysfs_mutex);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार store_पूर्णांक_with_restart(काष्ठा device *s,
-				      काष्ठा device_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ old_check_पूर्णांकerval = check_पूर्णांकerval;
-	sमाप_प्रकार ret = device_store_uदीर्घ(s, attr, buf, size);
+static ssize_t store_int_with_restart(struct device *s,
+				      struct device_attribute *attr,
+				      const char *buf, size_t size)
+{
+	unsigned long old_check_interval = check_interval;
+	ssize_t ret = device_store_ulong(s, attr, buf, size);
 
-	अगर (check_पूर्णांकerval == old_check_पूर्णांकerval)
-		वापस ret;
+	if (check_interval == old_check_interval)
+		return ret;
 
 	mutex_lock(&mce_sysfs_mutex);
 	mce_restart();
 	mutex_unlock(&mce_sysfs_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल DEVICE_INT_ATTR(tolerant, 0644, mca_cfg.tolerant);
-अटल DEVICE_INT_ATTR(monarch_समयout, 0644, mca_cfg.monarch_समयout);
-अटल DEVICE_BOOL_ATTR(करोnt_log_ce, 0644, mca_cfg.करोnt_log_ce);
-अटल DEVICE_BOOL_ATTR(prपूर्णांक_all, 0644, mca_cfg.prपूर्णांक_all);
+static DEVICE_INT_ATTR(tolerant, 0644, mca_cfg.tolerant);
+static DEVICE_INT_ATTR(monarch_timeout, 0644, mca_cfg.monarch_timeout);
+static DEVICE_BOOL_ATTR(dont_log_ce, 0644, mca_cfg.dont_log_ce);
+static DEVICE_BOOL_ATTR(print_all, 0644, mca_cfg.print_all);
 
-अटल काष्ठा dev_ext_attribute dev_attr_check_पूर्णांकerval = अणु
-	__ATTR(check_पूर्णांकerval, 0644, device_show_पूर्णांक, store_पूर्णांक_with_restart),
-	&check_पूर्णांकerval
-पूर्ण;
+static struct dev_ext_attribute dev_attr_check_interval = {
+	__ATTR(check_interval, 0644, device_show_int, store_int_with_restart),
+	&check_interval
+};
 
-अटल काष्ठा dev_ext_attribute dev_attr_ignore_ce = अणु
+static struct dev_ext_attribute dev_attr_ignore_ce = {
 	__ATTR(ignore_ce, 0644, device_show_bool, set_ignore_ce),
 	&mca_cfg.ignore_ce
-पूर्ण;
+};
 
-अटल काष्ठा dev_ext_attribute dev_attr_cmci_disabled = अणु
+static struct dev_ext_attribute dev_attr_cmci_disabled = {
 	__ATTR(cmci_disabled, 0644, device_show_bool, set_cmci_disabled),
 	&mca_cfg.cmci_disabled
-पूर्ण;
+};
 
-अटल काष्ठा device_attribute *mce_device_attrs[] = अणु
+static struct device_attribute *mce_device_attrs[] = {
 	&dev_attr_tolerant.attr,
-	&dev_attr_check_पूर्णांकerval.attr,
-#अगर_घोषित CONFIG_X86_MCELOG_LEGACY
+	&dev_attr_check_interval.attr,
+#ifdef CONFIG_X86_MCELOG_LEGACY
 	&dev_attr_trigger,
-#पूर्ण_अगर
-	&dev_attr_monarch_समयout.attr,
-	&dev_attr_करोnt_log_ce.attr,
-	&dev_attr_prपूर्णांक_all.attr,
+#endif
+	&dev_attr_monarch_timeout.attr,
+	&dev_attr_dont_log_ce.attr,
+	&dev_attr_print_all.attr,
 	&dev_attr_ignore_ce.attr,
 	&dev_attr_cmci_disabled.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल cpumask_var_t mce_device_initialized;
+static cpumask_var_t mce_device_initialized;
 
-अटल व्योम mce_device_release(काष्ठा device *dev)
-अणु
-	kमुक्त(dev);
-पूर्ण
+static void mce_device_release(struct device *dev)
+{
+	kfree(dev);
+}
 
 /* Per CPU device init. All of the CPUs still share the same bank device: */
-अटल पूर्णांक mce_device_create(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक err;
-	पूर्णांक i, j;
+static int mce_device_create(unsigned int cpu)
+{
+	struct device *dev;
+	int err;
+	int i, j;
 
-	अगर (!mce_available(&boot_cpu_data))
-		वापस -EIO;
+	if (!mce_available(&boot_cpu_data))
+		return -EIO;
 
 	dev = per_cpu(mce_device, cpu);
-	अगर (dev)
-		वापस 0;
+	if (dev)
+		return 0;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 	dev->id  = cpu;
 	dev->bus = &mce_subsys;
 	dev->release = &mce_device_release;
 
-	err = device_रेजिस्टर(dev);
-	अगर (err) अणु
+	err = device_register(dev);
+	if (err) {
 		put_device(dev);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	क्रम (i = 0; mce_device_attrs[i]; i++) अणु
+	for (i = 0; mce_device_attrs[i]; i++) {
 		err = device_create_file(dev, mce_device_attrs[i]);
-		अगर (err)
-			जाओ error;
-	पूर्ण
-	क्रम (j = 0; j < per_cpu(mce_num_banks, cpu); j++) अणु
+		if (err)
+			goto error;
+	}
+	for (j = 0; j < per_cpu(mce_num_banks, cpu); j++) {
 		err = device_create_file(dev, &mce_bank_devs[j].attr);
-		अगर (err)
-			जाओ error2;
-	पूर्ण
+		if (err)
+			goto error2;
+	}
 	cpumask_set_cpu(cpu, mce_device_initialized);
 	per_cpu(mce_device, cpu) = dev;
 
-	वापस 0;
+	return 0;
 error2:
-	जबतक (--j >= 0)
-		device_हटाओ_file(dev, &mce_bank_devs[j].attr);
+	while (--j >= 0)
+		device_remove_file(dev, &mce_bank_devs[j].attr);
 error:
-	जबतक (--i >= 0)
-		device_हटाओ_file(dev, mce_device_attrs[i]);
+	while (--i >= 0)
+		device_remove_file(dev, mce_device_attrs[i]);
 
-	device_unरेजिस्टर(dev);
+	device_unregister(dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mce_device_हटाओ(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev = per_cpu(mce_device, cpu);
-	पूर्णांक i;
+static void mce_device_remove(unsigned int cpu)
+{
+	struct device *dev = per_cpu(mce_device, cpu);
+	int i;
 
-	अगर (!cpumask_test_cpu(cpu, mce_device_initialized))
-		वापस;
+	if (!cpumask_test_cpu(cpu, mce_device_initialized))
+		return;
 
-	क्रम (i = 0; mce_device_attrs[i]; i++)
-		device_हटाओ_file(dev, mce_device_attrs[i]);
+	for (i = 0; mce_device_attrs[i]; i++)
+		device_remove_file(dev, mce_device_attrs[i]);
 
-	क्रम (i = 0; i < per_cpu(mce_num_banks, cpu); i++)
-		device_हटाओ_file(dev, &mce_bank_devs[i].attr);
+	for (i = 0; i < per_cpu(mce_num_banks, cpu); i++)
+		device_remove_file(dev, &mce_bank_devs[i].attr);
 
-	device_unरेजिस्टर(dev);
+	device_unregister(dev);
 	cpumask_clear_cpu(cpu, mce_device_initialized);
-	per_cpu(mce_device, cpu) = शून्य;
-पूर्ण
+	per_cpu(mce_device, cpu) = NULL;
+}
 
 /* Make sure there are no machine checks on offlined CPUs. */
-अटल व्योम mce_disable_cpu(व्योम)
-अणु
-	अगर (!mce_available(raw_cpu_ptr(&cpu_info)))
-		वापस;
+static void mce_disable_cpu(void)
+{
+	if (!mce_available(raw_cpu_ptr(&cpu_info)))
+		return;
 
-	अगर (!cpuhp_tasks_frozen)
+	if (!cpuhp_tasks_frozen)
 		cmci_clear();
 
-	venकरोr_disable_error_reporting();
-पूर्ण
+	vendor_disable_error_reporting();
+}
 
-अटल व्योम mce_reenable_cpu(व्योम)
-अणु
-	काष्ठा mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
-	पूर्णांक i;
+static void mce_reenable_cpu(void)
+{
+	struct mce_bank *mce_banks = this_cpu_ptr(mce_banks_array);
+	int i;
 
-	अगर (!mce_available(raw_cpu_ptr(&cpu_info)))
-		वापस;
+	if (!mce_available(raw_cpu_ptr(&cpu_info)))
+		return;
 
-	अगर (!cpuhp_tasks_frozen)
+	if (!cpuhp_tasks_frozen)
 		cmci_reenable();
-	क्रम (i = 0; i < this_cpu_पढ़ो(mce_num_banks); i++) अणु
-		काष्ठा mce_bank *b = &mce_banks[i];
+	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
+		struct mce_bank *b = &mce_banks[i];
 
-		अगर (b->init)
+		if (b->init)
 			wrmsrl(msr_ops.ctl(i), b->ctl);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mce_cpu_dead(अचिन्हित पूर्णांक cpu)
-अणु
-	mce_पूर्णांकel_hcpu_update(cpu);
+static int mce_cpu_dead(unsigned int cpu)
+{
+	mce_intel_hcpu_update(cpu);
 
-	/* पूर्णांकentionally ignoring frozen here */
-	अगर (!cpuhp_tasks_frozen)
+	/* intentionally ignoring frozen here */
+	if (!cpuhp_tasks_frozen)
 		cmci_rediscover();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mce_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा समयr_list *t = this_cpu_ptr(&mce_समयr);
-	पूर्णांक ret;
+static int mce_cpu_online(unsigned int cpu)
+{
+	struct timer_list *t = this_cpu_ptr(&mce_timer);
+	int ret;
 
 	mce_device_create(cpu);
 
 	ret = mce_threshold_create_device(cpu);
-	अगर (ret) अणु
-		mce_device_हटाओ(cpu);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mce_device_remove(cpu);
+		return ret;
+	}
 	mce_reenable_cpu();
-	mce_start_समयr(t);
-	वापस 0;
-पूर्ण
+	mce_start_timer(t);
+	return 0;
+}
 
-अटल पूर्णांक mce_cpu_pre_करोwn(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा समयr_list *t = this_cpu_ptr(&mce_समयr);
+static int mce_cpu_pre_down(unsigned int cpu)
+{
+	struct timer_list *t = this_cpu_ptr(&mce_timer);
 
 	mce_disable_cpu();
-	del_समयr_sync(t);
-	mce_threshold_हटाओ_device(cpu);
-	mce_device_हटाओ(cpu);
-	वापस 0;
-पूर्ण
+	del_timer_sync(t);
+	mce_threshold_remove_device(cpu);
+	mce_device_remove(cpu);
+	return 0;
+}
 
-अटल __init व्योम mce_init_banks(व्योम)
-अणु
-	पूर्णांक i;
+static __init void mce_init_banks(void)
+{
+	int i;
 
-	क्रम (i = 0; i < MAX_NR_BANKS; i++) अणु
-		काष्ठा mce_bank_dev *b = &mce_bank_devs[i];
-		काष्ठा device_attribute *a = &b->attr;
+	for (i = 0; i < MAX_NR_BANKS; i++) {
+		struct mce_bank_dev *b = &mce_bank_devs[i];
+		struct device_attribute *a = &b->attr;
 
 		b->bank = i;
 
 		sysfs_attr_init(&a->attr);
 		a->attr.name	= b->attrname;
-		snम_लिखो(b->attrname, ATTR_LEN, "bank%d", i);
+		snprintf(b->attrname, ATTR_LEN, "bank%d", i);
 
 		a->attr.mode	= 0644;
 		a->show		= show_bank;
 		a->store	= set_bank;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * When running on XEN, this initcall is ordered against the XEN mcelog
@@ -2640,125 +2639,125 @@ error:
  *   device_initcall(xen_late_init_mcelog);
  *   device_initcall_sync(mcheck_init_device);
  */
-अटल __init पूर्णांक mcheck_init_device(व्योम)
-अणु
-	पूर्णांक err;
+static __init int mcheck_init_device(void)
+{
+	int err;
 
 	/*
-	 * Check अगर we have a spare भव bit. This will only become
-	 * a problem अगर/when we move beyond 5-level page tables.
+	 * Check if we have a spare virtual bit. This will only become
+	 * a problem if/when we move beyond 5-level page tables.
 	 */
 	MAYBE_BUILD_BUG_ON(__VIRTUAL_MASK_SHIFT >= 63);
 
-	अगर (!mce_available(&boot_cpu_data)) अणु
+	if (!mce_available(&boot_cpu_data)) {
 		err = -EIO;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	अगर (!zalloc_cpumask_var(&mce_device_initialized, GFP_KERNEL)) अणु
+	if (!zalloc_cpumask_var(&mce_device_initialized, GFP_KERNEL)) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	mce_init_banks();
 
-	err = subsys_प्रणाली_रेजिस्टर(&mce_subsys, शून्य);
-	अगर (err)
-		जाओ err_out_mem;
+	err = subsys_system_register(&mce_subsys, NULL);
+	if (err)
+		goto err_out_mem;
 
-	err = cpuhp_setup_state(CPUHP_X86_MCE_DEAD, "x86/mce:dead", शून्य,
+	err = cpuhp_setup_state(CPUHP_X86_MCE_DEAD, "x86/mce:dead", NULL,
 				mce_cpu_dead);
-	अगर (err)
-		जाओ err_out_mem;
+	if (err)
+		goto err_out_mem;
 
 	/*
 	 * Invokes mce_cpu_online() on all CPUs which are online when
 	 * the state is installed.
 	 */
 	err = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "x86/mce:online",
-				mce_cpu_online, mce_cpu_pre_करोwn);
-	अगर (err < 0)
-		जाओ err_out_online;
+				mce_cpu_online, mce_cpu_pre_down);
+	if (err < 0)
+		goto err_out_online;
 
-	रेजिस्टर_syscore_ops(&mce_syscore_ops);
+	register_syscore_ops(&mce_syscore_ops);
 
-	वापस 0;
+	return 0;
 
 err_out_online:
-	cpuhp_हटाओ_state(CPUHP_X86_MCE_DEAD);
+	cpuhp_remove_state(CPUHP_X86_MCE_DEAD);
 
 err_out_mem:
-	मुक्त_cpumask_var(mce_device_initialized);
+	free_cpumask_var(mce_device_initialized);
 
 err_out:
 	pr_err("Unable to init MCE device (rc: %d)\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 device_initcall_sync(mcheck_init_device);
 
 /*
- * Old style boot options parsing. Only क्रम compatibility.
+ * Old style boot options parsing. Only for compatibility.
  */
-अटल पूर्णांक __init mcheck_disable(अक्षर *str)
-अणु
+static int __init mcheck_disable(char *str)
+{
 	mca_cfg.disabled = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("nomce", mcheck_disable);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-काष्ठा dentry *mce_get_debugfs_dir(व्योम)
-अणु
-	अटल काष्ठा dentry *dmce;
+#ifdef CONFIG_DEBUG_FS
+struct dentry *mce_get_debugfs_dir(void)
+{
+	static struct dentry *dmce;
 
-	अगर (!dmce)
-		dmce = debugfs_create_dir("mce", शून्य);
+	if (!dmce)
+		dmce = debugfs_create_dir("mce", NULL);
 
-	वापस dmce;
-पूर्ण
+	return dmce;
+}
 
-अटल व्योम mce_reset(व्योम)
-अणु
+static void mce_reset(void)
+{
 	cpu_missing = 0;
 	atomic_set(&mce_fake_panicked, 0);
 	atomic_set(&mce_executing, 0);
 	atomic_set(&mce_callin, 0);
 	atomic_set(&global_nwo, 0);
 	cpumask_setall(&mce_missing_cpus);
-पूर्ण
+}
 
-अटल पूर्णांक fake_panic_get(व्योम *data, u64 *val)
-अणु
+static int fake_panic_get(void *data, u64 *val)
+{
 	*val = fake_panic;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fake_panic_set(व्योम *data, u64 val)
-अणु
+static int fake_panic_set(void *data, u64 val)
+{
 	mce_reset();
 	fake_panic = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_DEBUGFS_ATTRIBUTE(fake_panic_fops, fake_panic_get, fake_panic_set,
 			 "%llu\n");
 
-अटल व्योम __init mcheck_debugfs_init(व्योम)
-अणु
-	काष्ठा dentry *dmce;
+static void __init mcheck_debugfs_init(void)
+{
+	struct dentry *dmce;
 
 	dmce = mce_get_debugfs_dir();
-	debugfs_create_file_unsafe("fake_panic", 0444, dmce, शून्य,
+	debugfs_create_file_unsafe("fake_panic", 0444, dmce, NULL,
 				   &fake_panic_fops);
-पूर्ण
-#अन्यथा
-अटल व्योम __init mcheck_debugfs_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static void __init mcheck_debugfs_init(void) { }
+#endif
 
-अटल पूर्णांक __init mcheck_late_init(व्योम)
-अणु
-	अगर (mca_cfg.recovery)
+static int __init mcheck_late_init(void)
+{
+	if (mca_cfg.recovery)
 		enable_copy_mc_fragile();
 
 	mcheck_debugfs_init();
@@ -2769,6 +2768,6 @@ DEFINE_DEBUGFS_ATTRIBUTE(fake_panic_fops, fake_panic_get, fake_panic_set,
 	 */
 	mce_schedule_work();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(mcheck_late_init);

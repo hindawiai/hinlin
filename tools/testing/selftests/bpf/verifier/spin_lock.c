@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"spin_lock: test1 success",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -20,16 +19,16 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test2 direct ld/st",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -48,17 +47,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "cannot be accessed directly",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test3 direct ld/st",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -77,18 +76,18 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "cannot be accessed directly",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test4 direct ld/st",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -107,18 +106,18 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "cannot be accessed directly",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test5 call within a locked region",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -131,23 +130,23 @@
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 4),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_lock),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 4),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "calls are not allowed",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test6 missing unlock",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -167,17 +166,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "unlock is missing",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test7 unlock without lock",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -197,17 +196,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "without taking a lock",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test8 double lock",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -229,17 +228,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "calls are not allowed",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test9 different lock",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -265,17 +264,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3, 11 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3, 11 },
 	.result = REJECT,
 	.errstr = "unlock of different lock",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test10 lock in subprog without unlock",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -296,17 +295,17 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_lock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 3 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 3 },
 	.result = REJECT,
 	.errstr = "unlock is missing",
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-पूर्ण,
-अणु
+},
+{
 	"spin_lock: test11 ld_abs under lock",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
 	BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -326,9 +325,9 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_spin_unlock),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_spin_lock = अणु 4 पूर्ण,
+	},
+	.fixup_map_spin_lock = { 4 },
 	.result = REJECT,
 	.errstr = "inside bpf_spin_lock",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-पूर्ण,
+},

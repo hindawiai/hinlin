@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित QEDE_ROCE_H
-#घोषणा QEDE_ROCE_H
+#ifndef QEDE_ROCE_H
+#define QEDE_ROCE_H
 
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-काष्ठा qedr_dev;
-काष्ठा qed_dev;
-काष्ठा qede_dev;
+struct qedr_dev;
+struct qed_dev;
+struct qede_dev;
 
-क्रमागत qede_rdma_event अणु
+enum qede_rdma_event {
 	QEDE_UP,
 	QEDE_DOWN,
 	QEDE_CHANGE_ADDR,
 	QEDE_CLOSE,
 	QEDE_CHANGE_MTU,
-पूर्ण;
+};
 
-काष्ठा qede_rdma_event_work अणु
-	काष्ठा list_head list;
-	काष्ठा work_काष्ठा work;
-	व्योम *ptr;
-	क्रमागत qede_rdma_event event;
-पूर्ण;
+struct qede_rdma_event_work {
+	struct list_head list;
+	struct work_struct work;
+	void *ptr;
+	enum qede_rdma_event event;
+};
 
-काष्ठा qedr_driver अणु
-	अचिन्हित अक्षर name[32];
+struct qedr_driver {
+	unsigned char name[32];
 
-	काष्ठा qedr_dev* (*add)(काष्ठा qed_dev *, काष्ठा pci_dev *,
-				काष्ठा net_device *);
+	struct qedr_dev* (*add)(struct qed_dev *, struct pci_dev *,
+				struct net_device *);
 
-	व्योम (*हटाओ)(काष्ठा qedr_dev *);
-	व्योम (*notअगरy)(काष्ठा qedr_dev *, क्रमागत qede_rdma_event);
-पूर्ण;
+	void (*remove)(struct qedr_dev *);
+	void (*notify)(struct qedr_dev *, enum qede_rdma_event);
+};
 
-/* APIs क्रम RDMA driver to रेजिस्टर callback handlers,
- * which will be invoked when device is added, हटाओd, अगरup, अगरकरोwn
+/* APIs for RDMA driver to register callback handlers,
+ * which will be invoked when device is added, removed, ifup, ifdown
  */
-पूर्णांक qede_rdma_रेजिस्टर_driver(काष्ठा qedr_driver *drv);
-व्योम qede_rdma_unरेजिस्टर_driver(काष्ठा qedr_driver *drv);
+int qede_rdma_register_driver(struct qedr_driver *drv);
+void qede_rdma_unregister_driver(struct qedr_driver *drv);
 
-bool qede_rdma_supported(काष्ठा qede_dev *dev);
+bool qede_rdma_supported(struct qede_dev *dev);
 
-#अगर IS_ENABLED(CONFIG_QED_RDMA)
-पूर्णांक qede_rdma_dev_add(काष्ठा qede_dev *dev, bool recovery);
-व्योम qede_rdma_dev_event_खोलो(काष्ठा qede_dev *dev);
-व्योम qede_rdma_dev_event_बंद(काष्ठा qede_dev *dev);
-व्योम qede_rdma_dev_हटाओ(काष्ठा qede_dev *dev, bool recovery);
-व्योम qede_rdma_event_changeaddr(काष्ठा qede_dev *edr);
-व्योम qede_rdma_event_change_mtu(काष्ठा qede_dev *edev);
+#if IS_ENABLED(CONFIG_QED_RDMA)
+int qede_rdma_dev_add(struct qede_dev *dev, bool recovery);
+void qede_rdma_dev_event_open(struct qede_dev *dev);
+void qede_rdma_dev_event_close(struct qede_dev *dev);
+void qede_rdma_dev_remove(struct qede_dev *dev, bool recovery);
+void qede_rdma_event_changeaddr(struct qede_dev *edr);
+void qede_rdma_event_change_mtu(struct qede_dev *edev);
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक qede_rdma_dev_add(काष्ठा qede_dev *dev,
+#else
+static inline int qede_rdma_dev_add(struct qede_dev *dev,
 				    bool recovery)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम qede_rdma_dev_event_खोलो(काष्ठा qede_dev *dev) अणुपूर्ण
-अटल अंतरभूत व्योम qede_rdma_dev_event_बंद(काष्ठा qede_dev *dev) अणुपूर्ण
-अटल अंतरभूत व्योम qede_rdma_dev_हटाओ(काष्ठा qede_dev *dev,
-					bool recovery) अणुपूर्ण
-अटल अंतरभूत व्योम qede_rdma_event_changeaddr(काष्ठा qede_dev *edr) अणुपूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
+static inline void qede_rdma_dev_event_open(struct qede_dev *dev) {}
+static inline void qede_rdma_dev_event_close(struct qede_dev *dev) {}
+static inline void qede_rdma_dev_remove(struct qede_dev *dev,
+					bool recovery) {}
+static inline void qede_rdma_event_changeaddr(struct qede_dev *edr) {}
+#endif
+#endif

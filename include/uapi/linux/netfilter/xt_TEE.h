@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_TEE_TARGET_H
-#घोषणा _XT_TEE_TARGET_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_TEE_TARGET_H
+#define _XT_TEE_TARGET_H
 
-#समावेश <linux/netfilter.h>
+#include <linux/netfilter.h>
 
-काष्ठा xt_tee_tginfo अणु
-	जोड़ nf_inet_addr gw;
-	अक्षर oअगर[16];
+struct xt_tee_tginfo {
+	union nf_inet_addr gw;
+	char oif[16];
 
-	/* used पूर्णांकernally by the kernel */
-	काष्ठा xt_tee_priv *priv __attribute__((aligned(8)));
-पूर्ण;
+	/* used internally by the kernel */
+	struct xt_tee_priv *priv __attribute__((aligned(8)));
+};
 
-#पूर्ण_अगर /* _XT_TEE_TARGET_H */
+#endif /* _XT_TEE_TARGET_H */

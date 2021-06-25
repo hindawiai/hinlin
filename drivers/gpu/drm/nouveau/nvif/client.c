@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,60 +22,60 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
-#समावेश <nvअगर/client.h>
-#समावेश <nvअगर/driver.h>
-#समावेश <nvअगर/ioctl.h>
+#include <nvif/client.h>
+#include <nvif/driver.h>
+#include <nvif/ioctl.h>
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/अगर0000.h>
+#include <nvif/class.h>
+#include <nvif/if0000.h>
 
-पूर्णांक
-nvअगर_client_ioctl(काष्ठा nvअगर_client *client, व्योम *data, u32 size)
-अणु
-	वापस client->driver->ioctl(client->object.priv, client->super, data, size, शून्य);
-पूर्ण
+int
+nvif_client_ioctl(struct nvif_client *client, void *data, u32 size)
+{
+	return client->driver->ioctl(client->object.priv, client->super, data, size, NULL);
+}
 
-पूर्णांक
-nvअगर_client_suspend(काष्ठा nvअगर_client *client)
-अणु
-	वापस client->driver->suspend(client->object.priv);
-पूर्ण
+int
+nvif_client_suspend(struct nvif_client *client)
+{
+	return client->driver->suspend(client->object.priv);
+}
 
-पूर्णांक
-nvअगर_client_resume(काष्ठा nvअगर_client *client)
-अणु
-	वापस client->driver->resume(client->object.priv);
-पूर्ण
+int
+nvif_client_resume(struct nvif_client *client)
+{
+	return client->driver->resume(client->object.priv);
+}
 
-व्योम
-nvअगर_client_dtor(काष्ठा nvअगर_client *client)
-अणु
-	nvअगर_object_dtor(&client->object);
-	अगर (client->driver) अणु
-		अगर (client->driver->fini)
+void
+nvif_client_dtor(struct nvif_client *client)
+{
+	nvif_object_dtor(&client->object);
+	if (client->driver) {
+		if (client->driver->fini)
 			client->driver->fini(client->object.priv);
-		client->driver = शून्य;
-	पूर्ण
-पूर्ण
+		client->driver = NULL;
+	}
+}
 
-पूर्णांक
-nvअगर_client_ctor(काष्ठा nvअगर_client *parent, स्थिर अक्षर *name, u64 device,
-		 काष्ठा nvअगर_client *client)
-अणु
-	काष्ठा nvअगर_client_v0 args = अणु .device = device पूर्ण;
-	काष्ठा अणु
-		काष्ठा nvअगर_ioctl_v0 ioctl;
-		काष्ठा nvअगर_ioctl_nop_v0 nop;
-	पूर्ण nop = अणुपूर्ण;
-	पूर्णांक ret;
+int
+nvif_client_ctor(struct nvif_client *parent, const char *name, u64 device,
+		 struct nvif_client *client)
+{
+	struct nvif_client_v0 args = { .device = device };
+	struct {
+		struct nvif_ioctl_v0 ioctl;
+		struct nvif_ioctl_nop_v0 nop;
+	} nop = {};
+	int ret;
 
-	म_नकलन(args.name, name, माप(args.name));
-	ret = nvअगर_object_ctor(parent != client ? &parent->object : शून्य,
+	strncpy(args.name, name, sizeof(args.name));
+	ret = nvif_object_ctor(parent != client ? &parent->object : NULL,
 			       name ? name : "nvifClient", 0,
-			       NVIF_CLASS_CLIENT, &args, माप(args),
+			       NVIF_CLASS_CLIENT, &args, sizeof(args),
 			       &client->object);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	client->object.client = client;
 	client->object.handle = ~0;
@@ -84,12 +83,12 @@ nvअगर_client_ctor(काष्ठा nvअगर_client *parent, स्थ
 	client->super = true;
 	client->driver = parent->driver;
 
-	अगर (ret == 0) अणु
-		ret = nvअगर_client_ioctl(client, &nop, माप(nop));
+	if (ret == 0) {
+		ret = nvif_client_ioctl(client, &nop, sizeof(nop));
 		client->version = nop.nop.version;
-	पूर्ण
+	}
 
-	अगर (ret)
-		nvअगर_client_dtor(client);
-	वापस ret;
-पूर्ण
+	if (ret)
+		nvif_client_dtor(client);
+	return ret;
+}

@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap2/usb-tusb6010.c
  *
  * Copyright (C) 2006 Nokia Corporation
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/export.h>
-#समावेश <linux/platक्रमm_data/usb-omap.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/gpio.h>
+#include <linux/export.h>
+#include <linux/platform_data/usb-omap.h>
 
-#समावेश <linux/usb/musb.h>
+#include <linux/usb/musb.h>
 
-#समावेश "gpmc.h"
+#include "gpmc.h"
 
-अटल u8		async_cs, sync_cs;
-अटल अचिन्हित		refclk_psec;
+static u8		async_cs, sync_cs;
+static unsigned		refclk_psec;
 
-अटल काष्ठा gpmc_settings tusb_async = अणु
-	.रुको_on_पढ़ो	= true,
-	.रुको_on_ग_लिखो	= true,
+static struct gpmc_settings tusb_async = {
+	.wait_on_read	= true,
+	.wait_on_write	= true,
 	.device_width	= GPMC_DEVWIDTH_16BIT,
 	.mux_add_data	= GPMC_MUX_AD,
-पूर्ण;
+};
 
-अटल काष्ठा gpmc_settings tusb_sync = अणु
-	.burst_पढ़ो	= true,
-	.burst_ग_लिखो	= true,
-	.sync_पढ़ो	= true,
-	.sync_ग_लिखो	= true,
-	.रुको_on_पढ़ो	= true,
-	.रुको_on_ग_लिखो	= true,
+static struct gpmc_settings tusb_sync = {
+	.burst_read	= true,
+	.burst_write	= true,
+	.sync_read	= true,
+	.sync_write	= true,
+	.wait_on_read	= true,
+	.wait_on_write	= true,
 	.burst_len	= GPMC_BURST_16,
 	.device_width	= GPMC_DEVWIDTH_16BIT,
 	.mux_add_data	= GPMC_MUX_AD,
-पूर्ण;
+};
 
 /* NOTE:  timings are from tusb 6010 datasheet Rev 1.8, 12-Sept 2006 */
 
-अटल पूर्णांक tusb_set_async_mode(अचिन्हित sysclk_ps)
-अणु
-	काष्ठा gpmc_device_timings dev_t;
-	काष्ठा gpmc_timings	t;
-	अचिन्हित		t_acsnh_advnh = sysclk_ps + 3000;
+static int tusb_set_async_mode(unsigned sysclk_ps)
+{
+	struct gpmc_device_timings dev_t;
+	struct gpmc_timings	t;
+	unsigned		t_acsnh_advnh = sysclk_ps + 3000;
 
-	स_रखो(&dev_t, 0, माप(dev_t));
+	memset(&dev_t, 0, sizeof(dev_t));
 
 	dev_t.t_ceasu = 8 * 1000;
 	dev_t.t_avdasu = t_acsnh_advnh - 7000;
@@ -67,16 +66,16 @@
 
 	gpmc_calc_timings(&t, &tusb_async, &dev_t);
 
-	वापस gpmc_cs_set_timings(async_cs, &t, &tusb_async);
-पूर्ण
+	return gpmc_cs_set_timings(async_cs, &t, &tusb_async);
+}
 
-अटल पूर्णांक tusb_set_sync_mode(अचिन्हित sysclk_ps)
-अणु
-	काष्ठा gpmc_device_timings dev_t;
-	काष्ठा gpmc_timings	t;
-	अचिन्हित		t_scsnh_advnh = sysclk_ps + 3000;
+static int tusb_set_sync_mode(unsigned sysclk_ps)
+{
+	struct gpmc_device_timings dev_t;
+	struct gpmc_timings	t;
+	unsigned		t_scsnh_advnh = sysclk_ps + 3000;
 
-	स_रखो(&dev_t, 0, माप(dev_t));
+	memset(&dev_t, 0, sizeof(dev_t));
 
 	dev_t.clk = 11100;
 	dev_t.t_bacc = 1000;
@@ -94,139 +93,139 @@
 
 	gpmc_calc_timings(&t, &tusb_sync, &dev_t);
 
-	वापस gpmc_cs_set_timings(sync_cs, &t, &tusb_sync);
-पूर्ण
+	return gpmc_cs_set_timings(sync_cs, &t, &tusb_sync);
+}
 
-/* tusb driver calls this when it changes the chip's घड़ीing */
-पूर्णांक tusb6010_platक्रमm_reसमय(अचिन्हित is_refclk)
-अणु
-	अटल स्थिर अक्षर	error[] =
+/* tusb driver calls this when it changes the chip's clocking */
+int tusb6010_platform_retime(unsigned is_refclk)
+{
+	static const char	error[] =
 		KERN_ERR "tusb6010 %s retime error %d\n";
 
-	अचिन्हित	sysclk_ps;
-	पूर्णांक		status;
+	unsigned	sysclk_ps;
+	int		status;
 
-	अगर (!refclk_psec)
-		वापस -ENODEV;
+	if (!refclk_psec)
+		return -ENODEV;
 
 	sysclk_ps = is_refclk ? refclk_psec : TUSB6010_OSCCLK_60;
 
 	status = tusb_set_async_mode(sysclk_ps);
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, "async", status);
-		जाओ करोne;
-	पूर्ण
+	if (status < 0) {
+		printk(error, "async", status);
+		goto done;
+	}
 	status = tusb_set_sync_mode(sysclk_ps);
-	अगर (status < 0)
-		prपूर्णांकk(error, "sync", status);
-करोne:
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(tusb6010_platक्रमm_reसमय);
+	if (status < 0)
+		printk(error, "sync", status);
+done:
+	return status;
+}
+EXPORT_SYMBOL_GPL(tusb6010_platform_retime);
 
-अटल काष्ठा resource tusb_resources[] = अणु
-	/* Order is signअगरicant!  The start/end fields
+static struct resource tusb_resources[] = {
+	/* Order is significant!  The start/end fields
 	 * are updated during setup..
 	 */
-	अणु /* Asynchronous access */
+	{ /* Asynchronous access */
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु /* Synchronous access */
+	},
+	{ /* Synchronous access */
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	अणु /* IRQ */
+	},
+	{ /* IRQ */
 		.name	= "mc",
 		.flags	= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल u64 tusb_dmamask = ~(u32)0;
+static u64 tusb_dmamask = ~(u32)0;
 
-अटल काष्ठा platक्रमm_device tusb_device = अणु
+static struct platform_device tusb_device = {
 	.name		= "musb-tusb",
 	.id		= -1,
-	.dev = अणु
+	.dev = {
 		.dma_mask		= &tusb_dmamask,
 		.coherent_dma_mask	= 0xffffffff,
-	पूर्ण,
+	},
 	.num_resources	= ARRAY_SIZE(tusb_resources),
 	.resource	= tusb_resources,
-पूर्ण;
+};
 
 
 /* this may be called only from board-*.c setup code */
-पूर्णांक __init
-tusb6010_setup_पूर्णांकerface(काष्ठा musb_hdrc_platक्रमm_data *data,
-		अचिन्हित ps_refclk, अचिन्हित रुकोpin,
-		अचिन्हित async, अचिन्हित sync,
-		अचिन्हित irq, अचिन्हित dmachan)
-अणु
-	पूर्णांक		status;
-	अटल अक्षर	error[] __initdata =
+int __init
+tusb6010_setup_interface(struct musb_hdrc_platform_data *data,
+		unsigned ps_refclk, unsigned waitpin,
+		unsigned async, unsigned sync,
+		unsigned irq, unsigned dmachan)
+{
+	int		status;
+	static char	error[] __initdata =
 		KERN_ERR "tusb6010 init error %d, %d\n";
 
-	/* ASYNC region, primarily क्रम PIO */
-	status = gpmc_cs_request(async, SZ_16M, (अचिन्हित दीर्घ *)
+	/* ASYNC region, primarily for PIO */
+	status = gpmc_cs_request(async, SZ_16M, (unsigned long *)
 				&tusb_resources[0].start);
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, 1, status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		printk(error, 1, status);
+		return status;
+	}
 	tusb_resources[0].end = tusb_resources[0].start + 0x9ff;
-	tusb_async.रुको_pin = रुकोpin;
+	tusb_async.wait_pin = waitpin;
 	async_cs = async;
 
 	status = gpmc_cs_program_settings(async_cs, &tusb_async);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	/* SYNC region, primarily क्रम DMA */
-	status = gpmc_cs_request(sync, SZ_16M, (अचिन्हित दीर्घ *)
+	/* SYNC region, primarily for DMA */
+	status = gpmc_cs_request(sync, SZ_16M, (unsigned long *)
 				&tusb_resources[1].start);
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, 2, status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		printk(error, 2, status);
+		return status;
+	}
 	tusb_resources[1].end = tusb_resources[1].start + 0x9ff;
-	tusb_sync.रुको_pin = रुकोpin;
+	tusb_sync.wait_pin = waitpin;
 	sync_cs = sync;
 
 	status = gpmc_cs_program_settings(sync_cs, &tusb_sync);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
 	/* IRQ */
 	status = gpio_request_one(irq, GPIOF_IN, "TUSB6010 irq");
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, 3, status);
-		वापस status;
-	पूर्ण
+	if (status < 0) {
+		printk(error, 3, status);
+		return status;
+	}
 	tusb_resources[2].start = gpio_to_irq(irq);
 
 	/* set up memory timings ... can speed them up later */
-	अगर (!ps_refclk) अणु
-		prपूर्णांकk(error, 4, status);
-		वापस -ENODEV;
-	पूर्ण
+	if (!ps_refclk) {
+		printk(error, 4, status);
+		return -ENODEV;
+	}
 	refclk_psec = ps_refclk;
-	status = tusb6010_platक्रमm_reसमय(1);
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, 5, status);
-		वापस status;
-	पूर्ण
+	status = tusb6010_platform_retime(1);
+	if (status < 0) {
+		printk(error, 5, status);
+		return status;
+	}
 
 	/* finish device setup ... */
-	अगर (!data) अणु
-		prपूर्णांकk(error, 6, status);
-		वापस -ENODEV;
-	पूर्ण
-	tusb_device.dev.platक्रमm_data = data;
+	if (!data) {
+		printk(error, 6, status);
+		return -ENODEV;
+	}
+	tusb_device.dev.platform_data = data;
 
-	/* so far so good ... रेजिस्टर the device */
-	status = platक्रमm_device_रेजिस्टर(&tusb_device);
-	अगर (status < 0) अणु
-		prपूर्णांकk(error, 7, status);
-		वापस status;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	/* so far so good ... register the device */
+	status = platform_device_register(&tusb_device);
+	if (status < 0) {
+		printk(error, 7, status);
+		return status;
+	}
+	return 0;
+}

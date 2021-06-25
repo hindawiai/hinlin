@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * fl512.c
  * Anders Gnistrup <ex18@kalman.iau.dtu.dk>
@@ -21,23 +20,23 @@
  *   [0] - I/O port base address
  */
 
-#समावेश <linux/module.h>
-#समावेश "../comedidev.h"
+#include <linux/module.h>
+#include "../comedidev.h"
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
 /*
  * Register I/O map
  */
-#घोषणा FL512_AI_LSB_REG		0x02
-#घोषणा FL512_AI_MSB_REG		0x03
-#घोषणा FL512_AI_MUX_REG		0x02
-#घोषणा FL512_AI_START_CONV_REG		0x03
-#घोषणा FL512_AO_DATA_REG(x)		(0x04 + ((x) * 2))
-#घोषणा FL512_AO_TRIG_REG(x)		(0x04 + ((x) * 2))
+#define FL512_AI_LSB_REG		0x02
+#define FL512_AI_MSB_REG		0x03
+#define FL512_AI_MUX_REG		0x02
+#define FL512_AI_START_CONV_REG		0x03
+#define FL512_AO_DATA_REG(x)		(0x04 + ((x) * 2))
+#define FL512_AO_TRIG_REG(x)		(0x04 + ((x) * 2))
 
-अटल स्थिर काष्ठा comedi_lrange range_fl512 = अणु
-	4, अणु
+static const struct comedi_lrange range_fl512 = {
+	4, {
 		BIP_RANGE(0.5),
 		BIP_RANGE(1),
 		BIP_RANGE(5),
@@ -45,21 +44,21 @@
 		UNI_RANGE(1),
 		UNI_RANGE(5),
 		UNI_RANGE(10)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक fl512_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
-			      काष्ठा comedi_subdevice *s,
-			      काष्ठा comedi_insn *insn,
-			      अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक i;
+static int fl512_ai_insn_read(struct comedi_device *dev,
+			      struct comedi_subdevice *s,
+			      struct comedi_insn *insn,
+			      unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int val;
+	int i;
 
 	outb(chan, dev->iobase + FL512_AI_MUX_REG);
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		outb(0, dev->iobase + FL512_AI_START_CONV_REG);
 
 		/* XXX should test "done" flag instead of delay */
@@ -70,45 +69,45 @@
 		val &= s->maxdata;
 
 		data[i] = val;
-	पूर्ण
+	}
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक fl512_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
-	पूर्णांक i;
+static int fl512_ao_insn_write(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int val = s->readback[chan];
+	int i;
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		val = data[i];
 
-		/* ग_लिखो LSB, MSB then trigger conversion */
+		/* write LSB, MSB then trigger conversion */
 		outb(val & 0x0ff, dev->iobase + FL512_AO_DATA_REG(chan));
 		outb((val >> 8) & 0xf, dev->iobase + FL512_AO_DATA_REG(chan));
 		inb(dev->iobase + FL512_AO_TRIG_REG(chan));
-	पूर्ण
-	s->पढ़ोback[chan] = val;
+	}
+	s->readback[chan] = val;
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक fl512_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
-अणु
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int fl512_attach(struct comedi_device *dev, struct comedi_devconfig *it)
+{
+	struct comedi_subdevice *s;
+	int ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x10);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Analog Input subdevice */
 	s = &dev->subdevices[0];
@@ -117,7 +116,7 @@
 	s->n_chan	= 16;
 	s->maxdata	= 0x0fff;
 	s->range_table	= &range_fl512;
-	s->insn_पढ़ो	= fl512_ai_insn_पढ़ो;
+	s->insn_read	= fl512_ai_insn_read;
 
 	/* Analog Output subdevice */
 	s = &dev->subdevices[1];
@@ -126,17 +125,17 @@
 	s->n_chan	= 2;
 	s->maxdata	= 0x0fff;
 	s->range_table	= &range_fl512;
-	s->insn_ग_लिखो	= fl512_ao_insn_ग_लिखो;
+	s->insn_write	= fl512_ao_insn_write;
 
-	वापस comedi_alloc_subdev_पढ़ोback(s);
-पूर्ण
+	return comedi_alloc_subdev_readback(s);
+}
 
-अटल काष्ठा comedi_driver fl512_driver = अणु
+static struct comedi_driver fl512_driver = {
 	.driver_name	= "fl512",
 	.module		= THIS_MODULE,
 	.attach		= fl512_attach,
 	.detach		= comedi_legacy_detach,
-पूर्ण;
+};
 module_comedi_driver(fl512_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: evxface - External पूर्णांकerfaces क्रम ACPI events
+ * Module Name: evxface - External interfaces for ACPI events
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#घोषणा EXPORT_ACPI_INTERFACES
+#define EXPORT_ACPI_INTERFACES
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
-#समावेश "acevents.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
+#include "acevents.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_EVENTS
+#define _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evxface")
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 /* Local prototypes */
-अटल acpi_status
+static acpi_status
 acpi_ev_install_gpe_handler(acpi_handle gpe_device,
 			    u32 gpe_number,
 			    u32 type,
 			    u8 is_raw_handler,
-			    acpi_gpe_handler address, व्योम *context);
+			    acpi_gpe_handler address, void *context);
 
-#पूर्ण_अगर
+#endif
 
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_install_notअगरy_handler
+ * FUNCTION:    acpi_install_notify_handler
  *
- * PARAMETERS:  device          - The device क्रम which notअगरies will be handled
+ * PARAMETERS:  device          - The device for which notifies will be handled
  *              handler_type    - The type of handler:
  *                                  ACPI_SYSTEM_NOTIFY: System Handler (00-7F)
  *                                  ACPI_DEVICE_NOTIFY: Device Handler (80-FF)
@@ -44,159 +43,159 @@ acpi_ev_install_gpe_handler(acpi_handle gpe_device,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler क्रम notअगरications on an ACPI Device,
+ * DESCRIPTION: Install a handler for notifications on an ACPI Device,
  *              thermal_zone, or Processor object.
  *
- * NOTES:       The Root namespace object may have only one handler क्रम each
- *              type of notअगरy (System/Device). Device/Thermal/Processor objects
- *              may have one device notअगरy handler, and multiple प्रणाली notअगरy
+ * NOTES:       The Root namespace object may have only one handler for each
+ *              type of notify (System/Device). Device/Thermal/Processor objects
+ *              may have one device notify handler, and multiple system notify
  *              handlers.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_install_notअगरy_handler(acpi_handle device,
+acpi_install_notify_handler(acpi_handle device,
 			    u32 handler_type,
-			    acpi_notअगरy_handler handler, व्योम *context)
-अणु
-	काष्ठा acpi_namespace_node *node =
-	    ACPI_CAST_PTR(काष्ठा acpi_namespace_node, device);
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_opeअक्रम_object *handler_obj;
+			    acpi_notify_handler handler, void *context)
+{
+	struct acpi_namespace_node *node =
+	    ACPI_CAST_PTR(struct acpi_namespace_node, device);
+	union acpi_operand_object *obj_desc;
+	union acpi_operand_object *handler_obj;
 	acpi_status status;
 	u32 i;
 
-	ACPI_FUNCTION_TRACE(acpi_install_notअगरy_handler);
+	ACPI_FUNCTION_TRACE(acpi_install_notify_handler);
 
 	/* Parameter validation */
 
-	अगर ((!device) || (!handler) || (!handler_type) ||
-	    (handler_type > ACPI_MAX_NOTIFY_HANDLER_TYPE)) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if ((!device) || (!handler) || (!handler_type) ||
+	    (handler_type > ACPI_MAX_NOTIFY_HANDLER_TYPE)) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * Root Object:
-	 * Registering a notअगरy handler on the root object indicates that the
-	 * caller wishes to receive notअगरications क्रम all objects. Note that
-	 * only one global handler can be रेजिस्टरed per notअगरy type.
-	 * Ensure that a handler is not alपढ़ोy installed.
+	 * Registering a notify handler on the root object indicates that the
+	 * caller wishes to receive notifications for all objects. Note that
+	 * only one global handler can be registered per notify type.
+	 * Ensure that a handler is not already installed.
 	 */
-	अगर (device == ACPI_ROOT_OBJECT) अणु
-		क्रम (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) अणु
-			अगर (handler_type & (i + 1)) अणु
-				अगर (acpi_gbl_global_notअगरy[i].handler) अणु
+	if (device == ACPI_ROOT_OBJECT) {
+		for (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) {
+			if (handler_type & (i + 1)) {
+				if (acpi_gbl_global_notify[i].handler) {
 					status = AE_ALREADY_EXISTS;
-					जाओ unlock_and_निकास;
-				पूर्ण
+					goto unlock_and_exit;
+				}
 
-				acpi_gbl_global_notअगरy[i].handler = handler;
-				acpi_gbl_global_notअगरy[i].context = context;
-			पूर्ण
-		पूर्ण
+				acpi_gbl_global_notify[i].handler = handler;
+				acpi_gbl_global_notify[i].context = context;
+			}
+		}
 
-		जाओ unlock_and_निकास;	/* Global notअगरy handler installed, all करोne */
-	पूर्ण
+		goto unlock_and_exit;	/* Global notify handler installed, all done */
+	}
 
 	/*
 	 * All Other Objects:
-	 * Caller will only receive notअगरications specअगरic to the target
+	 * Caller will only receive notifications specific to the target
 	 * object. Note that only certain object types are allowed to
-	 * receive notअगरications.
+	 * receive notifications.
 	 */
 
-	/* Are Notअगरies allowed on this object? */
+	/* Are Notifies allowed on this object? */
 
-	अगर (!acpi_ev_is_notअगरy_object(node)) अणु
+	if (!acpi_ev_is_notify_object(node)) {
 		status = AE_TYPE;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
-	/* Check क्रम an existing पूर्णांकernal object, might not exist */
+	/* Check for an existing internal object, might not exist */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	अगर (!obj_desc) अणु
+	if (!obj_desc) {
 
 		/* Create a new object */
 
-		obj_desc = acpi_ut_create_पूर्णांकernal_object(node->type);
-		अगर (!obj_desc) अणु
+		obj_desc = acpi_ut_create_internal_object(node->type);
+		if (!obj_desc) {
 			status = AE_NO_MEMORY;
-			जाओ unlock_and_निकास;
-		पूर्ण
+			goto unlock_and_exit;
+		}
 
-		/* Attach new object to the Node, हटाओ local reference */
+		/* Attach new object to the Node, remove local reference */
 
 		status = acpi_ns_attach_object(device, obj_desc, node->type);
-		acpi_ut_हटाओ_reference(obj_desc);
-		अगर (ACPI_FAILURE(status)) अणु
-			जाओ unlock_and_निकास;
-		पूर्ण
-	पूर्ण
+		acpi_ut_remove_reference(obj_desc);
+		if (ACPI_FAILURE(status)) {
+			goto unlock_and_exit;
+		}
+	}
 
-	/* Ensure that the handler is not alपढ़ोy installed in the lists */
+	/* Ensure that the handler is not already installed in the lists */
 
-	क्रम (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) अणु
-		अगर (handler_type & (i + 1)) अणु
-			handler_obj = obj_desc->common_notअगरy.notअगरy_list[i];
-			जबतक (handler_obj) अणु
-				अगर (handler_obj->notअगरy.handler == handler) अणु
+	for (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) {
+		if (handler_type & (i + 1)) {
+			handler_obj = obj_desc->common_notify.notify_list[i];
+			while (handler_obj) {
+				if (handler_obj->notify.handler == handler) {
 					status = AE_ALREADY_EXISTS;
-					जाओ unlock_and_निकास;
-				पूर्ण
+					goto unlock_and_exit;
+				}
 
-				handler_obj = handler_obj->notअगरy.next[i];
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				handler_obj = handler_obj->notify.next[i];
+			}
+		}
+	}
 
-	/* Create and populate a new notअगरy handler object */
+	/* Create and populate a new notify handler object */
 
-	handler_obj = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_NOTIFY);
-	अगर (!handler_obj) अणु
+	handler_obj = acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_NOTIFY);
+	if (!handler_obj) {
 		status = AE_NO_MEMORY;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
-	handler_obj->notअगरy.node = node;
-	handler_obj->notअगरy.handler_type = handler_type;
-	handler_obj->notअगरy.handler = handler;
-	handler_obj->notअगरy.context = context;
+	handler_obj->notify.node = node;
+	handler_obj->notify.handler_type = handler_type;
+	handler_obj->notify.handler = handler;
+	handler_obj->notify.context = context;
 
 	/* Install the handler at the list head(s) */
 
-	क्रम (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) अणु
-		अगर (handler_type & (i + 1)) अणु
-			handler_obj->notअगरy.next[i] =
-			    obj_desc->common_notअगरy.notअगरy_list[i];
+	for (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) {
+		if (handler_type & (i + 1)) {
+			handler_obj->notify.next[i] =
+			    obj_desc->common_notify.notify_list[i];
 
-			obj_desc->common_notअगरy.notअगरy_list[i] = handler_obj;
-		पूर्ण
-	पूर्ण
+			obj_desc->common_notify.notify_list[i] = handler_obj;
+		}
+	}
 
-	/* Add an extra reference अगर handler was installed in both lists */
+	/* Add an extra reference if handler was installed in both lists */
 
-	अगर (handler_type == ACPI_ALL_NOTIFY) अणु
+	if (handler_type == ACPI_ALL_NOTIFY) {
 		acpi_ut_add_reference(handler_obj);
-	पूर्ण
+	}
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL(acpi_install_notअगरy_handler)
+ACPI_EXPORT_SYMBOL(acpi_install_notify_handler)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_हटाओ_notअगरy_handler
+ * FUNCTION:    acpi_remove_notify_handler
  *
- * PARAMETERS:  device          - The device क्रम which the handler is installed
+ * PARAMETERS:  device          - The device for which the handler is installed
  *              handler_type    - The type of handler:
  *                                  ACPI_SYSTEM_NOTIFY: System Handler (00-7F)
  *                                  ACPI_DEVICE_NOTIFY: Device Handler (80-FF)
@@ -205,176 +204,176 @@ ACPI_EXPORT_SYMBOL(acpi_install_notअगरy_handler)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Remove a handler क्रम notअगरies on an ACPI device
+ * DESCRIPTION: Remove a handler for notifies on an ACPI device
  *
  ******************************************************************************/
 acpi_status
-acpi_हटाओ_notअगरy_handler(acpi_handle device,
-			   u32 handler_type, acpi_notअगरy_handler handler)
-अणु
-	काष्ठा acpi_namespace_node *node =
-	    ACPI_CAST_PTR(काष्ठा acpi_namespace_node, device);
-	जोड़ acpi_opeअक्रम_object *obj_desc;
-	जोड़ acpi_opeअक्रम_object *handler_obj;
-	जोड़ acpi_opeअक्रम_object *previous_handler_obj;
+acpi_remove_notify_handler(acpi_handle device,
+			   u32 handler_type, acpi_notify_handler handler)
+{
+	struct acpi_namespace_node *node =
+	    ACPI_CAST_PTR(struct acpi_namespace_node, device);
+	union acpi_operand_object *obj_desc;
+	union acpi_operand_object *handler_obj;
+	union acpi_operand_object *previous_handler_obj;
 	acpi_status status = AE_OK;
 	u32 i;
 
-	ACPI_FUNCTION_TRACE(acpi_हटाओ_notअगरy_handler);
+	ACPI_FUNCTION_TRACE(acpi_remove_notify_handler);
 
 	/* Parameter validation */
 
-	अगर ((!device) || (!handler) || (!handler_type) ||
-	    (handler_type > ACPI_MAX_NOTIFY_HANDLER_TYPE)) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if ((!device) || (!handler) || (!handler_type) ||
+	    (handler_type > ACPI_MAX_NOTIFY_HANDLER_TYPE)) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	/* Root Object. Global handlers are हटाओd here */
+	/* Root Object. Global handlers are removed here */
 
-	अगर (device == ACPI_ROOT_OBJECT) अणु
-		क्रम (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) अणु
-			अगर (handler_type & (i + 1)) अणु
+	if (device == ACPI_ROOT_OBJECT) {
+		for (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) {
+			if (handler_type & (i + 1)) {
 				status =
 				    acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-				अगर (ACPI_FAILURE(status)) अणु
-					वापस_ACPI_STATUS(status);
-				पूर्ण
+				if (ACPI_FAILURE(status)) {
+					return_ACPI_STATUS(status);
+				}
 
-				अगर (!acpi_gbl_global_notअगरy[i].handler ||
-				    (acpi_gbl_global_notअगरy[i].handler !=
-				     handler)) अणु
+				if (!acpi_gbl_global_notify[i].handler ||
+				    (acpi_gbl_global_notify[i].handler !=
+				     handler)) {
 					status = AE_NOT_EXIST;
-					जाओ unlock_and_निकास;
-				पूर्ण
+					goto unlock_and_exit;
+				}
 
 				ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 						  "Removing global notify handler\n"));
 
-				acpi_gbl_global_notअगरy[i].handler = शून्य;
-				acpi_gbl_global_notअगरy[i].context = शून्य;
+				acpi_gbl_global_notify[i].handler = NULL;
+				acpi_gbl_global_notify[i].context = NULL;
 
-				(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+				(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
 
-				/* Make sure all deferred notअगरy tasks are completed */
+				/* Make sure all deferred notify tasks are completed */
 
-				acpi_os_रुको_events_complete();
-			पूर्ण
-		पूर्ण
+				acpi_os_wait_events_complete();
+			}
+		}
 
-		वापस_ACPI_STATUS(AE_OK);
-	पूर्ण
+		return_ACPI_STATUS(AE_OK);
+	}
 
-	/* All other objects: Are Notअगरies allowed on this object? */
+	/* All other objects: Are Notifies allowed on this object? */
 
-	अगर (!acpi_ev_is_notअगरy_object(node)) अणु
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+	if (!acpi_ev_is_notify_object(node)) {
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
-	/* Must have an existing पूर्णांकernal object */
+	/* Must have an existing internal object */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	अगर (!obj_desc) अणु
-		वापस_ACPI_STATUS(AE_NOT_EXIST);
-	पूर्ण
+	if (!obj_desc) {
+		return_ACPI_STATUS(AE_NOT_EXIST);
+	}
 
-	/* Internal object exists. Find the handler and हटाओ it */
+	/* Internal object exists. Find the handler and remove it */
 
-	क्रम (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) अणु
-		अगर (handler_type & (i + 1)) अणु
+	for (i = 0; i < ACPI_NUM_NOTIFY_TYPES; i++) {
+		if (handler_type & (i + 1)) {
 			status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस_ACPI_STATUS(status);
-			पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return_ACPI_STATUS(status);
+			}
 
-			handler_obj = obj_desc->common_notअगरy.notअगरy_list[i];
-			previous_handler_obj = शून्य;
+			handler_obj = obj_desc->common_notify.notify_list[i];
+			previous_handler_obj = NULL;
 
 			/* Attempt to find the handler in the handler list */
 
-			जबतक (handler_obj &&
-			       (handler_obj->notअगरy.handler != handler)) अणु
+			while (handler_obj &&
+			       (handler_obj->notify.handler != handler)) {
 				previous_handler_obj = handler_obj;
-				handler_obj = handler_obj->notअगरy.next[i];
-			पूर्ण
+				handler_obj = handler_obj->notify.next[i];
+			}
 
-			अगर (!handler_obj) अणु
+			if (!handler_obj) {
 				status = AE_NOT_EXIST;
-				जाओ unlock_and_निकास;
-			पूर्ण
+				goto unlock_and_exit;
+			}
 
 			/* Remove the handler object from the list */
 
-			अगर (previous_handler_obj) अणु	/* Handler is not at the list head */
-				previous_handler_obj->notअगरy.next[i] =
-				    handler_obj->notअगरy.next[i];
-			पूर्ण अन्यथा अणु	/* Handler is at the list head */
+			if (previous_handler_obj) {	/* Handler is not at the list head */
+				previous_handler_obj->notify.next[i] =
+				    handler_obj->notify.next[i];
+			} else {	/* Handler is at the list head */
 
-				obj_desc->common_notअगरy.notअगरy_list[i] =
-				    handler_obj->notअगरy.next[i];
-			पूर्ण
+				obj_desc->common_notify.notify_list[i] =
+				    handler_obj->notify.next[i];
+			}
 
-			(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+			(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
 
-			/* Make sure all deferred notअगरy tasks are completed */
+			/* Make sure all deferred notify tasks are completed */
 
-			acpi_os_रुको_events_complete();
-			acpi_ut_हटाओ_reference(handler_obj);
-		पूर्ण
-	पूर्ण
+			acpi_os_wait_events_complete();
+			acpi_ut_remove_reference(handler_obj);
+		}
+	}
 
-	वापस_ACPI_STATUS(status);
+	return_ACPI_STATUS(status);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL(acpi_हटाओ_notअगरy_handler)
+ACPI_EXPORT_SYMBOL(acpi_remove_notify_handler)
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_install_exception_handler
  *
- * PARAMETERS:  handler         - Poपूर्णांकer to the handler function क्रम the
+ * PARAMETERS:  handler         - Pointer to the handler function for the
  *                                event
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Saves the poपूर्णांकer to the handler function
+ * DESCRIPTION: Saves the pointer to the handler function
  *
  ******************************************************************************/
-#अगर_घोषित ACPI_FUTURE_USAGE
+#ifdef ACPI_FUTURE_USAGE
 acpi_status acpi_install_exception_handler(acpi_exception_handler handler)
-अणु
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_exception_handler);
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Don't allow two handlers. */
 
-	अगर (acpi_gbl_exception_handler) अणु
+	if (acpi_gbl_exception_handler) {
 		status = AE_ALREADY_EXISTS;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	/* Install the handler */
 
 	acpi_gbl_exception_handler = handler;
 
 cleanup:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_exception_handler)
-#पूर्ण_अगर
+#endif
 
-#अगर (!ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
  * FUNCTION:    acpi_install_sci_handler
@@ -384,185 +383,185 @@ ACPI_EXPORT_SYMBOL(acpi_install_exception_handler)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler क्रम a System Control Interrupt.
+ * DESCRIPTION: Install a handler for a System Control Interrupt.
  *
  ******************************************************************************/
-acpi_status acpi_install_sci_handler(acpi_sci_handler address, व्योम *context)
-अणु
-	काष्ठा acpi_sci_handler_info *new_sci_handler;
-	काष्ठा acpi_sci_handler_info *sci_handler;
+acpi_status acpi_install_sci_handler(acpi_sci_handler address, void *context)
+{
+	struct acpi_sci_handler_info *new_sci_handler;
+	struct acpi_sci_handler_info *sci_handler;
 	acpi_cpu_flags flags;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_sci_handler);
 
-	अगर (!address) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!address) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	/* Allocate and init a handler object */
 
-	new_sci_handler = ACPI_ALLOCATE(माप(काष्ठा acpi_sci_handler_info));
-	अगर (!new_sci_handler) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	new_sci_handler = ACPI_ALLOCATE(sizeof(struct acpi_sci_handler_info));
+	if (!new_sci_handler) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	new_sci_handler->address = address;
 	new_sci_handler->context = context;
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ निकास;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto exit;
+	}
 
 	/* Lock list during installation */
 
 	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
 	sci_handler = acpi_gbl_sci_handler_list;
 
-	/* Ensure handler करोes not alपढ़ोy exist */
+	/* Ensure handler does not already exist */
 
-	जबतक (sci_handler) अणु
-		अगर (address == sci_handler->address) अणु
+	while (sci_handler) {
+		if (address == sci_handler->address) {
 			status = AE_ALREADY_EXISTS;
-			जाओ unlock_and_निकास;
-		पूर्ण
+			goto unlock_and_exit;
+		}
 
 		sci_handler = sci_handler->next;
-	पूर्ण
+	}
 
-	/* Install the new handler पूर्णांकo the global list (at head) */
+	/* Install the new handler into the global list (at head) */
 
 	new_sci_handler->next = acpi_gbl_sci_handler_list;
 	acpi_gbl_sci_handler_list = new_sci_handler;
 
-unlock_and_निकास:
+unlock_and_exit:
 
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
 
-निकास:
-	अगर (ACPI_FAILURE(status)) अणु
+exit:
+	if (ACPI_FAILURE(status)) {
 		ACPI_FREE(new_sci_handler);
-	पूर्ण
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	}
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_sci_handler)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_हटाओ_sci_handler
+ * FUNCTION:    acpi_remove_sci_handler
  *
  * PARAMETERS:  address             - Address of the handler
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Remove a handler क्रम a System Control Interrupt.
+ * DESCRIPTION: Remove a handler for a System Control Interrupt.
  *
  ******************************************************************************/
-acpi_status acpi_हटाओ_sci_handler(acpi_sci_handler address)
-अणु
-	काष्ठा acpi_sci_handler_info *prev_sci_handler;
-	काष्ठा acpi_sci_handler_info *next_sci_handler;
+acpi_status acpi_remove_sci_handler(acpi_sci_handler address)
+{
+	struct acpi_sci_handler_info *prev_sci_handler;
+	struct acpi_sci_handler_info *next_sci_handler;
 	acpi_cpu_flags flags;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(acpi_हटाओ_sci_handler);
+	ACPI_FUNCTION_TRACE(acpi_remove_sci_handler);
 
-	अगर (!address) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!address) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Remove the SCI handler with lock */
 
 	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
 
-	prev_sci_handler = शून्य;
+	prev_sci_handler = NULL;
 	next_sci_handler = acpi_gbl_sci_handler_list;
-	जबतक (next_sci_handler) अणु
-		अगर (next_sci_handler->address == address) अणु
+	while (next_sci_handler) {
+		if (next_sci_handler->address == address) {
 
-			/* Unlink and मुक्त the SCI handler info block */
+			/* Unlink and free the SCI handler info block */
 
-			अगर (prev_sci_handler) अणु
+			if (prev_sci_handler) {
 				prev_sci_handler->next = next_sci_handler->next;
-			पूर्ण अन्यथा अणु
+			} else {
 				acpi_gbl_sci_handler_list =
 				    next_sci_handler->next;
-			पूर्ण
+			}
 
 			acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 			ACPI_FREE(next_sci_handler);
-			जाओ unlock_and_निकास;
-		पूर्ण
+			goto unlock_and_exit;
+		}
 
 		prev_sci_handler = next_sci_handler;
 		next_sci_handler = next_sci_handler->next;
-	पूर्ण
+	}
 
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 	status = AE_NOT_EXIST;
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL(acpi_हटाओ_sci_handler)
+ACPI_EXPORT_SYMBOL(acpi_remove_sci_handler)
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_install_global_event_handler
  *
- * PARAMETERS:  handler         - Poपूर्णांकer to the global event handler function
+ * PARAMETERS:  handler         - Pointer to the global event handler function
  *              context         - Value passed to the handler on each event
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Saves the poपूर्णांकer to the handler function. The global handler
+ * DESCRIPTION: Saves the pointer to the handler function. The global handler
  *              is invoked upon each incoming GPE and Fixed Event. It is
- *              invoked at पूर्णांकerrupt level at the समय of the event dispatch.
+ *              invoked at interrupt level at the time of the event dispatch.
  *              Can be used to update event counters, etc.
  *
  ******************************************************************************/
 acpi_status
-acpi_install_global_event_handler(acpi_gbl_event_handler handler, व्योम *context)
-अणु
+acpi_install_global_event_handler(acpi_gbl_event_handler handler, void *context)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_global_event_handler);
 
 	/* Parameter validation */
 
-	अगर (!handler) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!handler) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Don't allow two handlers. */
 
-	अगर (acpi_gbl_global_event_handler) अणु
+	if (acpi_gbl_global_event_handler) {
 		status = AE_ALREADY_EXISTS;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
 	acpi_gbl_global_event_handler = handler;
 	acpi_gbl_global_event_handler_context = context;
 
 cleanup:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_global_event_handler)
 
@@ -571,137 +570,137 @@ ACPI_EXPORT_SYMBOL(acpi_install_global_event_handler)
  * FUNCTION:    acpi_install_fixed_event_handler
  *
  * PARAMETERS:  event           - Event type to enable.
- *              handler         - Poपूर्णांकer to the handler function क्रम the
+ *              handler         - Pointer to the handler function for the
  *                                event
  *              context         - Value passed to the handler on each GPE
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Saves the poपूर्णांकer to the handler function and then enables the
+ * DESCRIPTION: Saves the pointer to the handler function and then enables the
  *              event.
  *
  ******************************************************************************/
 acpi_status
 acpi_install_fixed_event_handler(u32 event,
-				 acpi_event_handler handler, व्योम *context)
-अणु
+				 acpi_event_handler handler, void *context)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_fixed_event_handler);
 
 	/* Parameter validation */
 
-	अगर (event > ACPI_EVENT_MAX) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (event > ACPI_EVENT_MAX) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Do not allow multiple handlers */
 
-	अगर (acpi_gbl_fixed_event_handlers[event].handler) अणु
+	if (acpi_gbl_fixed_event_handlers[event].handler) {
 		status = AE_ALREADY_EXISTS;
-		जाओ cleanup;
-	पूर्ण
+		goto cleanup;
+	}
 
-	/* Install the handler beक्रमe enabling the event */
+	/* Install the handler before enabling the event */
 
 	acpi_gbl_fixed_event_handlers[event].handler = handler;
 	acpi_gbl_fixed_event_handlers[event].context = context;
 
 	status = acpi_clear_event(event);
-	अगर (ACPI_SUCCESS(status))
+	if (ACPI_SUCCESS(status))
 		status = acpi_enable_event(event, 0);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_WARNING((AE_INFO,
 			      "Could not enable fixed event - %s (%u)",
 			      acpi_ut_get_event_name(event), event));
 
 		/* Remove the handler */
 
-		acpi_gbl_fixed_event_handlers[event].handler = शून्य;
-		acpi_gbl_fixed_event_handlers[event].context = शून्य;
-	पूर्ण अन्यथा अणु
+		acpi_gbl_fixed_event_handlers[event].handler = NULL;
+		acpi_gbl_fixed_event_handlers[event].context = NULL;
+	} else {
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "Enabled fixed event %s (%X), Handler=%p\n",
 				  acpi_ut_get_event_name(event), event,
 				  handler));
-	पूर्ण
+	}
 
 cleanup:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_fixed_event_handler)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_हटाओ_fixed_event_handler
+ * FUNCTION:    acpi_remove_fixed_event_handler
  *
  * PARAMETERS:  event           - Event type to disable.
  *              handler         - Address of the handler
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Disables the event and unरेजिस्टरs the event handler.
+ * DESCRIPTION: Disables the event and unregisters the event handler.
  *
  ******************************************************************************/
 acpi_status
-acpi_हटाओ_fixed_event_handler(u32 event, acpi_event_handler handler)
-अणु
+acpi_remove_fixed_event_handler(u32 event, acpi_event_handler handler)
+{
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE(acpi_हटाओ_fixed_event_handler);
+	ACPI_FUNCTION_TRACE(acpi_remove_fixed_event_handler);
 
 	/* Parameter validation */
 
-	अगर (event > ACPI_EVENT_MAX) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (event > ACPI_EVENT_MAX) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	/* Disable the event beक्रमe removing the handler */
+	/* Disable the event before removing the handler */
 
 	status = acpi_disable_event(event, 0);
 
 	/* Always Remove the handler */
 
-	acpi_gbl_fixed_event_handlers[event].handler = शून्य;
-	acpi_gbl_fixed_event_handlers[event].context = शून्य;
+	acpi_gbl_fixed_event_handlers[event].handler = NULL;
+	acpi_gbl_fixed_event_handlers[event].context = NULL;
 
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		ACPI_WARNING((AE_INFO,
 			      "Could not disable fixed event - %s (%u)",
 			      acpi_ut_get_event_name(event), event));
-	पूर्ण अन्यथा अणु
+	} else {
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "Disabled fixed event - %s (%X)\n",
 				  acpi_ut_get_event_name(event), event));
-	पूर्ण
+	}
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL(acpi_हटाओ_fixed_event_handler)
+ACPI_EXPORT_SYMBOL(acpi_remove_fixed_event_handler)
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_install_gpe_handler
  *
- * PARAMETERS:  gpe_device      - Namespace node क्रम the GPE (शून्य क्रम FADT
+ * PARAMETERS:  gpe_device      - Namespace node for the GPE (NULL for FADT
  *                                defined GPEs)
  *              gpe_number      - The GPE number within the GPE block
  *              type            - Whether this GPE should be treated as an
- *                                edge- or level-triggered पूर्णांकerrupt.
+ *                                edge- or level-triggered interrupt.
  *              is_raw_handler  - Whether this GPE should be handled using
  *                                the special GPE handler mode.
  *              address         - Address of the handler
@@ -709,19 +708,19 @@ ACPI_EXPORT_SYMBOL(acpi_हटाओ_fixed_event_handler)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Internal function to install a handler क्रम a General Purpose
+ * DESCRIPTION: Internal function to install a handler for a General Purpose
  *              Event.
  *
  ******************************************************************************/
-अटल acpi_status
+static acpi_status
 acpi_ev_install_gpe_handler(acpi_handle gpe_device,
 			    u32 gpe_number,
 			    u32 type,
 			    u8 is_raw_handler,
-			    acpi_gpe_handler address, व्योम *context)
-अणु
-	काष्ठा acpi_gpe_event_info *gpe_event_info;
-	काष्ठा acpi_gpe_handler_info *handler;
+			    acpi_gpe_handler address, void *context)
+{
+	struct acpi_gpe_event_info *gpe_event_info;
+	struct acpi_gpe_handler_info *handler;
 	acpi_status status;
 	acpi_cpu_flags flags;
 
@@ -729,42 +728,42 @@ acpi_ev_install_gpe_handler(acpi_handle gpe_device,
 
 	/* Parameter validation */
 
-	अगर ((!address) || (type & ~ACPI_GPE_XRUPT_TYPE_MASK)) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if ((!address) || (type & ~ACPI_GPE_XRUPT_TYPE_MASK)) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
-	/* Allocate and init handler object (beक्रमe lock) */
+	/* Allocate and init handler object (before lock) */
 
-	handler = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_gpe_handler_info));
-	अगर (!handler) अणु
+	handler = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_gpe_handler_info));
+	if (!handler) {
 		status = AE_NO_MEMORY;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
 
 	/* Ensure that we have a valid GPE number */
 
 	gpe_event_info = acpi_ev_get_gpe_event_info(gpe_device, gpe_number);
-	अगर (!gpe_event_info) अणु
+	if (!gpe_event_info) {
 		status = AE_BAD_PARAMETER;
-		जाओ मुक्त_and_निकास;
-	पूर्ण
+		goto free_and_exit;
+	}
 
-	/* Make sure that there isn't a handler there alपढ़ोy */
+	/* Make sure that there isn't a handler there already */
 
-	अगर ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) ==
+	if ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) ==
 	     ACPI_GPE_DISPATCH_HANDLER) ||
 	    (ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) ==
-	     ACPI_GPE_DISPATCH_RAW_HANDLER)) अणु
+	     ACPI_GPE_DISPATCH_RAW_HANDLER)) {
 		status = AE_ALREADY_EXISTS;
-		जाओ मुक्त_and_निकास;
-	पूर्ण
+		goto free_and_exit;
+	}
 
 	handler->address = address;
 	handler->context = context;
@@ -775,30 +774,30 @@ acpi_ev_install_gpe_handler(acpi_handle gpe_device,
 
 	/*
 	 * If the GPE is associated with a method, it may have been enabled
-	 * स्वतःmatically during initialization, in which हाल it has to be
-	 * disabled now to aव्योम spurious execution of the handler.
+	 * automatically during initialization, in which case it has to be
+	 * disabled now to avoid spurious execution of the handler.
 	 */
-	अगर (((ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
+	if (((ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
 	      ACPI_GPE_DISPATCH_METHOD) ||
 	     (ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
-	      ACPI_GPE_DISPATCH_NOTIFY)) && gpe_event_info->runसमय_count) अणु
+	      ACPI_GPE_DISPATCH_NOTIFY)) && gpe_event_info->runtime_count) {
 		handler->originally_enabled = TRUE;
-		(व्योम)acpi_ev_हटाओ_gpe_reference(gpe_event_info);
+		(void)acpi_ev_remove_gpe_reference(gpe_event_info);
 
 		/* Sanity check of original type against new type */
 
-		अगर (type !=
-		    (u32)(gpe_event_info->flags & ACPI_GPE_XRUPT_TYPE_MASK)) अणु
+		if (type !=
+		    (u32)(gpe_event_info->flags & ACPI_GPE_XRUPT_TYPE_MASK)) {
 			ACPI_WARNING((AE_INFO,
 				      "GPE type mismatch (level/edge)"));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Install the handler */
 
 	gpe_event_info->dispatch.handler = handler;
 
-	/* Setup up dispatch flags to indicate handler (vs. method/notअगरy) */
+	/* Setup up dispatch flags to indicate handler (vs. method/notify) */
 
 	gpe_event_info->flags &=
 	    ~(ACPI_GPE_XRUPT_TYPE_MASK | ACPI_GPE_DISPATCH_MASK);
@@ -809,39 +808,39 @@ acpi_ev_install_gpe_handler(acpi_handle gpe_device,
 
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 
-unlock_and_निकास:
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
+unlock_and_exit:
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
 
-मुक्त_and_निकास:
+free_and_exit:
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 	ACPI_FREE(handler);
-	जाओ unlock_and_निकास;
-पूर्ण
+	goto unlock_and_exit;
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_install_gpe_handler
  *
- * PARAMETERS:  gpe_device      - Namespace node क्रम the GPE (शून्य क्रम FADT
+ * PARAMETERS:  gpe_device      - Namespace node for the GPE (NULL for FADT
  *                                defined GPEs)
  *              gpe_number      - The GPE number within the GPE block
  *              type            - Whether this GPE should be treated as an
- *                                edge- or level-triggered पूर्णांकerrupt.
+ *                                edge- or level-triggered interrupt.
  *              address         - Address of the handler
  *              context         - Value passed to the handler on each GPE
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler क्रम a General Purpose Event.
+ * DESCRIPTION: Install a handler for a General Purpose Event.
  *
  ******************************************************************************/
 
 acpi_status
 acpi_install_gpe_handler(acpi_handle gpe_device,
 			 u32 gpe_number,
-			 u32 type, acpi_gpe_handler address, व्योम *context)
-अणु
+			 u32 type, acpi_gpe_handler address, void *context)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_gpe_handler);
@@ -849,8 +848,8 @@ acpi_install_gpe_handler(acpi_handle gpe_device,
 	status = acpi_ev_install_gpe_handler(gpe_device, gpe_number, type,
 					     FALSE, address, context);
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_gpe_handler)
 
@@ -858,24 +857,24 @@ ACPI_EXPORT_SYMBOL(acpi_install_gpe_handler)
  *
  * FUNCTION:    acpi_install_gpe_raw_handler
  *
- * PARAMETERS:  gpe_device      - Namespace node क्रम the GPE (शून्य क्रम FADT
+ * PARAMETERS:  gpe_device      - Namespace node for the GPE (NULL for FADT
  *                                defined GPEs)
  *              gpe_number      - The GPE number within the GPE block
  *              type            - Whether this GPE should be treated as an
- *                                edge- or level-triggered पूर्णांकerrupt.
+ *                                edge- or level-triggered interrupt.
  *              address         - Address of the handler
  *              context         - Value passed to the handler on each GPE
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler क्रम a General Purpose Event.
+ * DESCRIPTION: Install a handler for a General Purpose Event.
  *
  ******************************************************************************/
 acpi_status
 acpi_install_gpe_raw_handler(acpi_handle gpe_device,
 			     u32 gpe_number,
-			     u32 type, acpi_gpe_handler address, व्योम *context)
-अणु
+			     u32 type, acpi_gpe_handler address, void *context)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_gpe_raw_handler);
@@ -883,80 +882,80 @@ acpi_install_gpe_raw_handler(acpi_handle gpe_device,
 	status = acpi_ev_install_gpe_handler(gpe_device, gpe_number, type,
 					     TRUE, address, context);
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_install_gpe_raw_handler)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_हटाओ_gpe_handler
+ * FUNCTION:    acpi_remove_gpe_handler
  *
- * PARAMETERS:  gpe_device      - Namespace node क्रम the GPE (शून्य क्रम FADT
+ * PARAMETERS:  gpe_device      - Namespace node for the GPE (NULL for FADT
  *                                defined GPEs)
- *              gpe_number      - The event to हटाओ a handler
+ *              gpe_number      - The event to remove a handler
  *              address         - Address of the handler
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Remove a handler क्रम a General Purpose acpi_event.
+ * DESCRIPTION: Remove a handler for a General Purpose acpi_event.
  *
  ******************************************************************************/
 acpi_status
-acpi_हटाओ_gpe_handler(acpi_handle gpe_device,
+acpi_remove_gpe_handler(acpi_handle gpe_device,
 			u32 gpe_number, acpi_gpe_handler address)
-अणु
-	काष्ठा acpi_gpe_event_info *gpe_event_info;
-	काष्ठा acpi_gpe_handler_info *handler;
+{
+	struct acpi_gpe_event_info *gpe_event_info;
+	struct acpi_gpe_handler_info *handler;
 	acpi_status status;
 	acpi_cpu_flags flags;
 
-	ACPI_FUNCTION_TRACE(acpi_हटाओ_gpe_handler);
+	ACPI_FUNCTION_TRACE(acpi_remove_gpe_handler);
 
 	/* Parameter validation */
 
-	अगर (!address) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!address) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_EVENTS);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
 
 	/* Ensure that we have a valid GPE number */
 
 	gpe_event_info = acpi_ev_get_gpe_event_info(gpe_device, gpe_number);
-	अगर (!gpe_event_info) अणु
+	if (!gpe_event_info) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	/* Make sure that a handler is indeed installed */
 
-	अगर ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
+	if ((ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
 	     ACPI_GPE_DISPATCH_HANDLER) &&
 	    (ACPI_GPE_DISPATCH_TYPE(gpe_event_info->flags) !=
-	     ACPI_GPE_DISPATCH_RAW_HANDLER)) अणु
+	     ACPI_GPE_DISPATCH_RAW_HANDLER)) {
 		status = AE_NOT_EXIST;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	/* Make sure that the installed handler is the same */
 
-	अगर (gpe_event_info->dispatch.handler->address != address) अणु
+	if (gpe_event_info->dispatch.handler->address != address) {
 		status = AE_BAD_PARAMETER;
-		जाओ unlock_and_निकास;
-	पूर्ण
+		goto unlock_and_exit;
+	}
 
 	/* Remove the handler */
 
 	handler = gpe_event_info->dispatch.handler;
-	gpe_event_info->dispatch.handler = शून्य;
+	gpe_event_info->dispatch.handler = NULL;
 
-	/* Restore Method node (अगर any), set dispatch flags */
+	/* Restore Method node (if any), set dispatch flags */
 
 	gpe_event_info->dispatch.method_node = handler->method_node;
 	gpe_event_info->flags &=
@@ -965,91 +964,91 @@ acpi_हटाओ_gpe_handler(acpi_handle gpe_device,
 
 	/*
 	 * If the GPE was previously associated with a method and it was
-	 * enabled, it should be enabled at this poपूर्णांक to restore the
+	 * enabled, it should be enabled at this point to restore the
 	 * post-initialization configuration.
 	 */
-	अगर (((ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
+	if (((ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
 	      ACPI_GPE_DISPATCH_METHOD) ||
 	     (ACPI_GPE_DISPATCH_TYPE(handler->original_flags) ==
-	      ACPI_GPE_DISPATCH_NOTIFY)) && handler->originally_enabled) अणु
-		(व्योम)acpi_ev_add_gpe_reference(gpe_event_info, FALSE);
-		अगर (ACPI_GPE_IS_POLLING_NEEDED(gpe_event_info)) अणु
+	      ACPI_GPE_DISPATCH_NOTIFY)) && handler->originally_enabled) {
+		(void)acpi_ev_add_gpe_reference(gpe_event_info, FALSE);
+		if (ACPI_GPE_IS_POLLING_NEEDED(gpe_event_info)) {
 
 			/* Poll edge triggered GPEs to handle existing events */
 
 			acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
-			(व्योम)acpi_ev_detect_gpe(gpe_device, gpe_event_info,
+			(void)acpi_ev_detect_gpe(gpe_device, gpe_event_info,
 						 gpe_number);
 			flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
 
 	/* Make sure all deferred GPE tasks are completed */
 
-	acpi_os_रुको_events_complete();
+	acpi_os_wait_events_complete();
 
-	/* Now we can मुक्त the handler object */
+	/* Now we can free the handler object */
 
 	ACPI_FREE(handler);
-	वापस_ACPI_STATUS(status);
+	return_ACPI_STATUS(status);
 
-unlock_and_निकास:
+unlock_and_exit:
 	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
 
-	(व्योम)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	(void)acpi_ut_release_mutex(ACPI_MTX_EVENTS);
+	return_ACPI_STATUS(status);
+}
 
-ACPI_EXPORT_SYMBOL(acpi_हटाओ_gpe_handler)
+ACPI_EXPORT_SYMBOL(acpi_remove_gpe_handler)
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_acquire_global_lock
  *
- * PARAMETERS:  समयout         - How दीर्घ the caller is willing to रुको
- *              handle          - Where the handle to the lock is वापसed
- *                                (अगर acquired)
+ * PARAMETERS:  timeout         - How long the caller is willing to wait
+ *              handle          - Where the handle to the lock is returned
+ *                                (if acquired)
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Acquire the ACPI Global Lock
  *
- * Note: Allows callers with the same thपढ़ो ID to acquire the global lock
- * multiple बार. In other words, बाह्यally, the behavior of the global lock
+ * Note: Allows callers with the same thread ID to acquire the global lock
+ * multiple times. In other words, externally, the behavior of the global lock
  * is identical to an AML mutex. On the first acquire, a new handle is
- * वापसed. On any subsequent calls to acquire by the same thपढ़ो, the same
- * handle is वापसed.
+ * returned. On any subsequent calls to acquire by the same thread, the same
+ * handle is returned.
  *
  ******************************************************************************/
-acpi_status acpi_acquire_global_lock(u16 समयout, u32 *handle)
-अणु
+acpi_status acpi_acquire_global_lock(u16 timeout, u32 *handle)
+{
 	acpi_status status;
 
-	अगर (!handle) अणु
-		वापस (AE_BAD_PARAMETER);
-	पूर्ण
+	if (!handle) {
+		return (AE_BAD_PARAMETER);
+	}
 
-	/* Must lock पूर्णांकerpreter to prevent race conditions */
+	/* Must lock interpreter to prevent race conditions */
 
-	acpi_ex_enter_पूर्णांकerpreter();
+	acpi_ex_enter_interpreter();
 
-	status = acpi_ex_acquire_mutex_object(समयout,
+	status = acpi_ex_acquire_mutex_object(timeout,
 					      acpi_gbl_global_lock_mutex,
-					      acpi_os_get_thपढ़ो_id());
+					      acpi_os_get_thread_id());
 
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 
 		/* Return the global lock handle (updated in acpi_ev_acquire_global_lock) */
 
 		*handle = acpi_gbl_global_lock_handle;
-	पूर्ण
+	}
 
-	acpi_ex_निकास_पूर्णांकerpreter();
-	वापस (status);
-पूर्ण
+	acpi_ex_exit_interpreter();
+	return (status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_acquire_global_lock)
 
@@ -1065,16 +1064,16 @@ ACPI_EXPORT_SYMBOL(acpi_acquire_global_lock)
  *
  ******************************************************************************/
 acpi_status acpi_release_global_lock(u32 handle)
-अणु
+{
 	acpi_status status;
 
-	अगर (!handle || (handle != acpi_gbl_global_lock_handle)) अणु
-		वापस (AE_NOT_ACQUIRED);
-	पूर्ण
+	if (!handle || (handle != acpi_gbl_global_lock_handle)) {
+		return (AE_NOT_ACQUIRED);
+	}
 
 	status = acpi_ex_release_mutex_object(acpi_gbl_global_lock_mutex);
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 ACPI_EXPORT_SYMBOL(acpi_release_global_lock)
-#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
+#endif				/* !ACPI_REDUCED_HARDWARE */

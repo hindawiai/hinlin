@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Handle detection, reporting and mitigation of Spectre v1, v2, v3a and v4, as
  * detailed at:
@@ -7,7 +6,7 @@
  *   https://developer.arm.com/support/arm-security-updates/speculative-processor-vulnerability
  *
  * This code was originally written hastily under an awful lot of stress and so
- * aspects of it are somewhat hacky. Unक्रमtunately, changing anything in here
+ * aspects of it are somewhat hacky. Unfortunately, changing anything in here
  * instantly makes me feel ill. Thanks, Jann. Thann.
  *
  * Copyright (C) 2018 ARM Ltd, All Rights Reserved.
@@ -18,49 +17,49 @@
  * Authors: Will Deacon <will@kernel.org> and Marc Zyngier <maz@kernel.org>
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/device.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/prctl.h>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/arm-smccc.h>
+#include <linux/cpu.h>
+#include <linux/device.h>
+#include <linux/nospec.h>
+#include <linux/prctl.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/spectre.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/virt.h>
+#include <asm/insn.h>
+#include <asm/spectre.h>
+#include <asm/traps.h>
+#include <asm/virt.h>
 
 /*
  * We try to ensure that the mitigation state can never change as the result of
  * onlining a late CPU.
  */
-अटल व्योम update_mitigation_state(क्रमागत mitigation_state *oldp,
-				    क्रमागत mitigation_state new)
-अणु
-	क्रमागत mitigation_state state;
+static void update_mitigation_state(enum mitigation_state *oldp,
+				    enum mitigation_state new)
+{
+	enum mitigation_state state;
 
-	करो अणु
+	do {
 		state = READ_ONCE(*oldp);
-		अगर (new <= state)
-			अवरोध;
+		if (new <= state)
+			break;
 
 		/* Userspace almost certainly can't deal with this. */
-		अगर (WARN_ON(प्रणाली_capabilities_finalized()))
-			अवरोध;
-	पूर्ण जबतक (cmpxchg_relaxed(oldp, state, new) != state);
-पूर्ण
+		if (WARN_ON(system_capabilities_finalized()))
+			break;
+	} while (cmpxchg_relaxed(oldp, state, new) != state);
+}
 
 /*
  * Spectre v1.
  *
- * The kernel can't protect userspace for this one: it's each person क्रम
- * themselves. Advertise what we're करोing and be करोne with it.
+ * The kernel can't protect userspace for this one: it's each person for
+ * themselves. Advertise what we're doing and be done with it.
  */
-sमाप_प्रकार cpu_show_spectre_v1(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "Mitigation: __user pointer sanitization\n");
-पूर्ण
+ssize_t cpu_show_spectre_v1(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	return sprintf(buf, "Mitigation: __user pointer sanitization\n");
+}
 
 /*
  * Spectre v2.
@@ -70,52 +69,52 @@ sमाप_प्रकार cpu_show_spectre_v1(काष्ठा device *dev
  * - Mitigated in hardware and advertised by ID_AA64PFR0_EL1.CSV2.
  * - Mitigated in hardware and listed in our "safe list".
  * - Mitigated in software by firmware.
- * - Mitigated in software by a CPU-specअगरic dance in the kernel and a
+ * - Mitigated in software by a CPU-specific dance in the kernel and a
  *   firmware call at EL2.
  * - Vulnerable.
  *
- * It's not unlikely क्रम dअगरferent CPUs in a big.LITTLE प्रणाली to fall पूर्णांकo
- * dअगरferent camps.
+ * It's not unlikely for different CPUs in a big.LITTLE system to fall into
+ * different camps.
  */
-अटल क्रमागत mitigation_state spectre_v2_state;
+static enum mitigation_state spectre_v2_state;
 
-अटल bool __पढ़ो_mostly __nospectre_v2;
-अटल पूर्णांक __init parse_spectre_v2_param(अक्षर *str)
-अणु
+static bool __read_mostly __nospectre_v2;
+static int __init parse_spectre_v2_param(char *str)
+{
 	__nospectre_v2 = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("nospectre_v2", parse_spectre_v2_param);
 
-अटल bool spectre_v2_mitigations_off(व्योम)
-अणु
+static bool spectre_v2_mitigations_off(void)
+{
 	bool ret = __nospectre_v2 || cpu_mitigations_off();
 
-	अगर (ret)
+	if (ret)
 		pr_info_once("spectre-v2 mitigation disabled by command line option\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-sमाप_प्रकार cpu_show_spectre_v2(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	चयन (spectre_v2_state) अणु
-	हाल SPECTRE_UNAFFECTED:
-		वापस प्र_लिखो(buf, "Not affected\n");
-	हाल SPECTRE_MITIGATED:
-		वापस प्र_लिखो(buf, "Mitigation: Branch predictor hardening\n");
-	हाल SPECTRE_VULNERABLE:
+ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	switch (spectre_v2_state) {
+	case SPECTRE_UNAFFECTED:
+		return sprintf(buf, "Not affected\n");
+	case SPECTRE_MITIGATED:
+		return sprintf(buf, "Mitigation: Branch predictor hardening\n");
+	case SPECTRE_VULNERABLE:
 		fallthrough;
-	शेष:
-		वापस प्र_लिखो(buf, "Vulnerable\n");
-	पूर्ण
-पूर्ण
+	default:
+		return sprintf(buf, "Vulnerable\n");
+	}
+}
 
-अटल क्रमागत mitigation_state spectre_v2_get_cpu_hw_mitigation_state(व्योम)
-अणु
+static enum mitigation_state spectre_v2_get_cpu_hw_mitigation_state(void)
+{
 	u64 pfr0;
-	अटल स्थिर काष्ठा midr_range spectre_v2_safe_list[] = अणु
+	static const struct midr_range spectre_v2_safe_list[] = {
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A35),
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A53),
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A55),
@@ -124,650 +123,650 @@ sमाप_प्रकार cpu_show_spectre_v2(काष्ठा device *dev
 		MIDR_ALL_VERSIONS(MIDR_QCOM_KRYO_2XX_SILVER),
 		MIDR_ALL_VERSIONS(MIDR_QCOM_KRYO_3XX_SILVER),
 		MIDR_ALL_VERSIONS(MIDR_QCOM_KRYO_4XX_SILVER),
-		अणु /* sentinel */ पूर्ण
-	पूर्ण;
+		{ /* sentinel */ }
+	};
 
 	/* If the CPU has CSV2 set, we're safe */
-	pfr0 = पढ़ो_cpuid(ID_AA64PFR0_EL1);
-	अगर (cpuid_feature_extract_अचिन्हित_field(pfr0, ID_AA64PFR0_CSV2_SHIFT))
-		वापस SPECTRE_UNAFFECTED;
+	pfr0 = read_cpuid(ID_AA64PFR0_EL1);
+	if (cpuid_feature_extract_unsigned_field(pfr0, ID_AA64PFR0_CSV2_SHIFT))
+		return SPECTRE_UNAFFECTED;
 
 	/* Alternatively, we have a list of unaffected CPUs */
-	अगर (is_midr_in_range_list(पढ़ो_cpuid_id(), spectre_v2_safe_list))
-		वापस SPECTRE_UNAFFECTED;
+	if (is_midr_in_range_list(read_cpuid_id(), spectre_v2_safe_list))
+		return SPECTRE_UNAFFECTED;
 
-	वापस SPECTRE_VULNERABLE;
-पूर्ण
+	return SPECTRE_VULNERABLE;
+}
 
-अटल क्रमागत mitigation_state spectre_v2_get_cpu_fw_mitigation_state(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा arm_smccc_res res;
+static enum mitigation_state spectre_v2_get_cpu_fw_mitigation_state(void)
+{
+	int ret;
+	struct arm_smccc_res res;
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
 			     ARM_SMCCC_ARCH_WORKAROUND_1, &res);
 
 	ret = res.a0;
-	चयन (ret) अणु
-	हाल SMCCC_RET_SUCCESS:
-		वापस SPECTRE_MITIGATED;
-	हाल SMCCC_ARCH_WORKAROUND_RET_UNAFFECTED:
-		वापस SPECTRE_UNAFFECTED;
-	शेष:
+	switch (ret) {
+	case SMCCC_RET_SUCCESS:
+		return SPECTRE_MITIGATED;
+	case SMCCC_ARCH_WORKAROUND_RET_UNAFFECTED:
+		return SPECTRE_UNAFFECTED;
+	default:
 		fallthrough;
-	हाल SMCCC_RET_NOT_SUPPORTED:
-		वापस SPECTRE_VULNERABLE;
-	पूर्ण
-पूर्ण
+	case SMCCC_RET_NOT_SUPPORTED:
+		return SPECTRE_VULNERABLE;
+	}
+}
 
-bool has_spectre_v2(स्थिर काष्ठा arm64_cpu_capabilities *entry, पूर्णांक scope)
-अणु
+bool has_spectre_v2(const struct arm64_cpu_capabilities *entry, int scope)
+{
 	WARN_ON(scope != SCOPE_LOCAL_CPU || preemptible());
 
-	अगर (spectre_v2_get_cpu_hw_mitigation_state() == SPECTRE_UNAFFECTED)
-		वापस false;
+	if (spectre_v2_get_cpu_hw_mitigation_state() == SPECTRE_UNAFFECTED)
+		return false;
 
-	अगर (spectre_v2_get_cpu_fw_mitigation_state() == SPECTRE_UNAFFECTED)
-		वापस false;
+	if (spectre_v2_get_cpu_fw_mitigation_state() == SPECTRE_UNAFFECTED)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-क्रमागत mitigation_state arm64_get_spectre_v2_state(व्योम)
-अणु
-	वापस spectre_v2_state;
-पूर्ण
+enum mitigation_state arm64_get_spectre_v2_state(void)
+{
+	return spectre_v2_state;
+}
 
-DEFINE_PER_CPU_READ_MOSTLY(काष्ठा bp_hardening_data, bp_hardening_data);
+DEFINE_PER_CPU_READ_MOSTLY(struct bp_hardening_data, bp_hardening_data);
 
-अटल व्योम install_bp_hardening_cb(bp_hardening_cb_t fn)
-अणु
-	__this_cpu_ग_लिखो(bp_hardening_data.fn, fn);
+static void install_bp_hardening_cb(bp_hardening_cb_t fn)
+{
+	__this_cpu_write(bp_hardening_data.fn, fn);
 
 	/*
 	 * Vinz Clortho takes the hyp_vecs start/end "keys" at
-	 * the करोor when we're a guest. Skip the hyp-vectors work.
+	 * the door when we're a guest. Skip the hyp-vectors work.
 	 */
-	अगर (!is_hyp_mode_available())
-		वापस;
+	if (!is_hyp_mode_available())
+		return;
 
-	__this_cpu_ग_लिखो(bp_hardening_data.slot, HYP_VECTOR_SPECTRE_सूचीECT);
-पूर्ण
+	__this_cpu_write(bp_hardening_data.slot, HYP_VECTOR_SPECTRE_DIRECT);
+}
 
-अटल व्योम call_smc_arch_workaround_1(व्योम)
-अणु
-	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_1, शून्य);
-पूर्ण
+static void call_smc_arch_workaround_1(void)
+{
+	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_1, NULL);
+}
 
-अटल व्योम call_hvc_arch_workaround_1(व्योम)
-अणु
-	arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_WORKAROUND_1, शून्य);
-पूर्ण
+static void call_hvc_arch_workaround_1(void)
+{
+	arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_WORKAROUND_1, NULL);
+}
 
-अटल व्योम qcom_link_stack_sanitisation(व्योम)
-अणु
-	u64 पंचांगp;
+static void qcom_link_stack_sanitisation(void)
+{
+	u64 tmp;
 
-	यंत्र अस्थिर("mov	%0, x30		\n"
+	asm volatile("mov	%0, x30		\n"
 		     ".rept	16		\n"
 		     "bl	. + 4		\n"
 		     ".endr			\n"
 		     "mov	x30, %0		\n"
-		     : "=&r" (पंचांगp));
-पूर्ण
+		     : "=&r" (tmp));
+}
 
-अटल bp_hardening_cb_t spectre_v2_get_sw_mitigation_cb(व्योम)
-अणु
-	u32 midr = पढ़ो_cpuid_id();
-	अगर (((midr & MIDR_CPU_MODEL_MASK) != MIDR_QCOM_FALKOR) &&
+static bp_hardening_cb_t spectre_v2_get_sw_mitigation_cb(void)
+{
+	u32 midr = read_cpuid_id();
+	if (((midr & MIDR_CPU_MODEL_MASK) != MIDR_QCOM_FALKOR) &&
 	    ((midr & MIDR_CPU_MODEL_MASK) != MIDR_QCOM_FALKOR_V1))
-		वापस शून्य;
+		return NULL;
 
-	वापस qcom_link_stack_sanitisation;
-पूर्ण
+	return qcom_link_stack_sanitisation;
+}
 
-अटल क्रमागत mitigation_state spectre_v2_enable_fw_mitigation(व्योम)
-अणु
+static enum mitigation_state spectre_v2_enable_fw_mitigation(void)
+{
 	bp_hardening_cb_t cb;
-	क्रमागत mitigation_state state;
+	enum mitigation_state state;
 
 	state = spectre_v2_get_cpu_fw_mitigation_state();
-	अगर (state != SPECTRE_MITIGATED)
-		वापस state;
+	if (state != SPECTRE_MITIGATED)
+		return state;
 
-	अगर (spectre_v2_mitigations_off())
-		वापस SPECTRE_VULNERABLE;
+	if (spectre_v2_mitigations_off())
+		return SPECTRE_VULNERABLE;
 
-	चयन (arm_smccc_1_1_get_conduit()) अणु
-	हाल SMCCC_CONDUIT_HVC:
+	switch (arm_smccc_1_1_get_conduit()) {
+	case SMCCC_CONDUIT_HVC:
 		cb = call_hvc_arch_workaround_1;
-		अवरोध;
+		break;
 
-	हाल SMCCC_CONDUIT_SMC:
+	case SMCCC_CONDUIT_SMC:
 		cb = call_smc_arch_workaround_1;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस SPECTRE_VULNERABLE;
-	पूर्ण
+	default:
+		return SPECTRE_VULNERABLE;
+	}
 
 	/*
-	 * Prefer a CPU-specअगरic workaround अगर it exists. Note that we
-	 * still rely on firmware क्रम the mitigation at EL2.
+	 * Prefer a CPU-specific workaround if it exists. Note that we
+	 * still rely on firmware for the mitigation at EL2.
 	 */
 	cb = spectre_v2_get_sw_mitigation_cb() ?: cb;
 	install_bp_hardening_cb(cb);
-	वापस SPECTRE_MITIGATED;
-पूर्ण
+	return SPECTRE_MITIGATED;
+}
 
-व्योम spectre_v2_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused)
-अणु
-	क्रमागत mitigation_state state;
+void spectre_v2_enable_mitigation(const struct arm64_cpu_capabilities *__unused)
+{
+	enum mitigation_state state;
 
 	WARN_ON(preemptible());
 
 	state = spectre_v2_get_cpu_hw_mitigation_state();
-	अगर (state == SPECTRE_VULNERABLE)
+	if (state == SPECTRE_VULNERABLE)
 		state = spectre_v2_enable_fw_mitigation();
 
 	update_mitigation_state(&spectre_v2_state, state);
-पूर्ण
+}
 
 /*
  * Spectre-v3a.
  *
- * Phew, there's not an awful lot to करो here! We just inकाष्ठा EL2 to use
- * an indirect trampoline क्रम the hyp vectors so that guests can't पढ़ो
- * VBAR_EL2 to defeat अक्रमomisation of the hypervisor VA layout.
+ * Phew, there's not an awful lot to do here! We just instruct EL2 to use
+ * an indirect trampoline for the hyp vectors so that guests can't read
+ * VBAR_EL2 to defeat randomisation of the hypervisor VA layout.
  */
-bool has_spectre_v3a(स्थिर काष्ठा arm64_cpu_capabilities *entry, पूर्णांक scope)
-अणु
-	अटल स्थिर काष्ठा midr_range spectre_v3a_unsafe_list[] = अणु
+bool has_spectre_v3a(const struct arm64_cpu_capabilities *entry, int scope)
+{
+	static const struct midr_range spectre_v3a_unsafe_list[] = {
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A57),
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A72),
-		अणुपूर्ण,
-	पूर्ण;
+		{},
+	};
 
 	WARN_ON(scope != SCOPE_LOCAL_CPU || preemptible());
-	वापस is_midr_in_range_list(पढ़ो_cpuid_id(), spectre_v3a_unsafe_list);
-पूर्ण
+	return is_midr_in_range_list(read_cpuid_id(), spectre_v3a_unsafe_list);
+}
 
-व्योम spectre_v3a_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused)
-अणु
-	काष्ठा bp_hardening_data *data = this_cpu_ptr(&bp_hardening_data);
+void spectre_v3a_enable_mitigation(const struct arm64_cpu_capabilities *__unused)
+{
+	struct bp_hardening_data *data = this_cpu_ptr(&bp_hardening_data);
 
-	अगर (this_cpu_has_cap(ARM64_SPECTRE_V3A))
-		data->slot += HYP_VECTOR_INसूचीECT;
-पूर्ण
+	if (this_cpu_has_cap(ARM64_SPECTRE_V3A))
+		data->slot += HYP_VECTOR_INDIRECT;
+}
 
 /*
  * Spectre v4.
  *
- * If you thought Spectre v2 was nasty, रुको until you see this mess. A CPU is
+ * If you thought Spectre v2 was nasty, wait until you see this mess. A CPU is
  * either:
  *
  * - Mitigated in hardware and listed in our "safe list".
  * - Mitigated in hardware via PSTATE.SSBS.
- * - Mitigated in software by firmware (someबार referred to as SSBD).
+ * - Mitigated in software by firmware (sometimes referred to as SSBD).
  *
- * Wait, that करोesn't sound so bad, करोes it? Keep पढ़ोing...
+ * Wait, that doesn't sound so bad, does it? Keep reading...
  *
  * A major source of headaches is that the software mitigation is enabled both
- * on a per-task basis, but can also be क्रमced on क्रम the kernel, necessitating
- * both context-चयन *and* entry/निकास hooks. To make it even worse, some CPUs
+ * on a per-task basis, but can also be forced on for the kernel, necessitating
+ * both context-switch *and* entry/exit hooks. To make it even worse, some CPUs
  * allow EL0 to toggle SSBS directly, which can end up with the prctl() state
  * being stale when re-entering the kernel. The usual big.LITTLE caveats apply,
- * so you can have प्रणालीs that have both firmware and SSBS mitigations. This
- * means we actually have to reject late onlining of CPUs with mitigations अगर
+ * so you can have systems that have both firmware and SSBS mitigations. This
+ * means we actually have to reject late onlining of CPUs with mitigations if
  * all of the currently onlined CPUs are safelisted, as the mitigation tends to
- * be opt-in क्रम userspace. Yes, really, the cure is worse than the disease.
+ * be opt-in for userspace. Yes, really, the cure is worse than the disease.
  *
- * The only good part is that अगर the firmware mitigation is present, then it is
- * present क्रम all CPUs, meaning we करोn't have to worry about late onlining of a
- * vulnerable CPU अगर one of the boot CPUs is using the firmware mitigation.
+ * The only good part is that if the firmware mitigation is present, then it is
+ * present for all CPUs, meaning we don't have to worry about late onlining of a
+ * vulnerable CPU if one of the boot CPUs is using the firmware mitigation.
  *
  * Give me a VAX-11/780 any day of the week...
  */
-अटल क्रमागत mitigation_state spectre_v4_state;
+static enum mitigation_state spectre_v4_state;
 
 /* This is the per-cpu state tracking whether we need to talk to firmware */
 DEFINE_PER_CPU_READ_MOSTLY(u64, arm64_ssbd_callback_required);
 
-क्रमागत spectre_v4_policy अणु
+enum spectre_v4_policy {
 	SPECTRE_V4_POLICY_MITIGATION_DYNAMIC,
 	SPECTRE_V4_POLICY_MITIGATION_ENABLED,
 	SPECTRE_V4_POLICY_MITIGATION_DISABLED,
-पूर्ण;
+};
 
-अटल क्रमागत spectre_v4_policy __पढ़ो_mostly __spectre_v4_policy;
+static enum spectre_v4_policy __read_mostly __spectre_v4_policy;
 
-अटल स्थिर काष्ठा spectre_v4_param अणु
-	स्थिर अक्षर		*str;
-	क्रमागत spectre_v4_policy	policy;
-पूर्ण spectre_v4_params[] = अणु
-	अणु "force-on",	SPECTRE_V4_POLICY_MITIGATION_ENABLED, पूर्ण,
-	अणु "force-off",	SPECTRE_V4_POLICY_MITIGATION_DISABLED, पूर्ण,
-	अणु "kernel",	SPECTRE_V4_POLICY_MITIGATION_DYNAMIC, पूर्ण,
-पूर्ण;
-अटल पूर्णांक __init parse_spectre_v4_param(अक्षर *str)
-अणु
-	पूर्णांक i;
+static const struct spectre_v4_param {
+	const char		*str;
+	enum spectre_v4_policy	policy;
+} spectre_v4_params[] = {
+	{ "force-on",	SPECTRE_V4_POLICY_MITIGATION_ENABLED, },
+	{ "force-off",	SPECTRE_V4_POLICY_MITIGATION_DISABLED, },
+	{ "kernel",	SPECTRE_V4_POLICY_MITIGATION_DYNAMIC, },
+};
+static int __init parse_spectre_v4_param(char *str)
+{
+	int i;
 
-	अगर (!str || !str[0])
-		वापस -EINVAL;
+	if (!str || !str[0])
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(spectre_v4_params); i++) अणु
-		स्थिर काष्ठा spectre_v4_param *param = &spectre_v4_params[i];
+	for (i = 0; i < ARRAY_SIZE(spectre_v4_params); i++) {
+		const struct spectre_v4_param *param = &spectre_v4_params[i];
 
-		अगर (म_भेदन(str, param->str, म_माप(param->str)))
-			जारी;
+		if (strncmp(str, param->str, strlen(param->str)))
+			continue;
 
 		__spectre_v4_policy = param->policy;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 early_param("ssbd", parse_spectre_v4_param);
 
 /*
- * Because this was all written in a rush by people working in dअगरferent silos,
+ * Because this was all written in a rush by people working in different silos,
  * we've ended up with multiple command line options to control the same thing.
- * Wrap these up in some helpers, which prefer disabling the mitigation अगर faced
+ * Wrap these up in some helpers, which prefer disabling the mitigation if faced
  * with contradictory parameters. The mitigation is always either "off",
  * "dynamic" or "on".
  */
-अटल bool spectre_v4_mitigations_off(व्योम)
-अणु
+static bool spectre_v4_mitigations_off(void)
+{
 	bool ret = cpu_mitigations_off() ||
 		   __spectre_v4_policy == SPECTRE_V4_POLICY_MITIGATION_DISABLED;
 
-	अगर (ret)
+	if (ret)
 		pr_info_once("spectre-v4 mitigation disabled by command-line option\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Do we need to toggle the mitigation state on entry to/निकास from the kernel? */
-अटल bool spectre_v4_mitigations_dynamic(व्योम)
-अणु
-	वापस !spectre_v4_mitigations_off() &&
+/* Do we need to toggle the mitigation state on entry to/exit from the kernel? */
+static bool spectre_v4_mitigations_dynamic(void)
+{
+	return !spectre_v4_mitigations_off() &&
 	       __spectre_v4_policy == SPECTRE_V4_POLICY_MITIGATION_DYNAMIC;
-पूर्ण
+}
 
-अटल bool spectre_v4_mitigations_on(व्योम)
-अणु
-	वापस !spectre_v4_mitigations_off() &&
+static bool spectre_v4_mitigations_on(void)
+{
+	return !spectre_v4_mitigations_off() &&
 	       __spectre_v4_policy == SPECTRE_V4_POLICY_MITIGATION_ENABLED;
-पूर्ण
+}
 
-sमाप_प्रकार cpu_show_spec_store_bypass(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	चयन (spectre_v4_state) अणु
-	हाल SPECTRE_UNAFFECTED:
-		वापस प्र_लिखो(buf, "Not affected\n");
-	हाल SPECTRE_MITIGATED:
-		वापस प्र_लिखो(buf, "Mitigation: Speculative Store Bypass disabled via prctl\n");
-	हाल SPECTRE_VULNERABLE:
+ssize_t cpu_show_spec_store_bypass(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	switch (spectre_v4_state) {
+	case SPECTRE_UNAFFECTED:
+		return sprintf(buf, "Not affected\n");
+	case SPECTRE_MITIGATED:
+		return sprintf(buf, "Mitigation: Speculative Store Bypass disabled via prctl\n");
+	case SPECTRE_VULNERABLE:
 		fallthrough;
-	शेष:
-		वापस प्र_लिखो(buf, "Vulnerable\n");
-	पूर्ण
-पूर्ण
+	default:
+		return sprintf(buf, "Vulnerable\n");
+	}
+}
 
-क्रमागत mitigation_state arm64_get_spectre_v4_state(व्योम)
-अणु
-	वापस spectre_v4_state;
-पूर्ण
+enum mitigation_state arm64_get_spectre_v4_state(void)
+{
+	return spectre_v4_state;
+}
 
-अटल क्रमागत mitigation_state spectre_v4_get_cpu_hw_mitigation_state(व्योम)
-अणु
-	अटल स्थिर काष्ठा midr_range spectre_v4_safe_list[] = अणु
+static enum mitigation_state spectre_v4_get_cpu_hw_mitigation_state(void)
+{
+	static const struct midr_range spectre_v4_safe_list[] = {
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A35),
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A53),
 		MIDR_ALL_VERSIONS(MIDR_CORTEX_A55),
 		MIDR_ALL_VERSIONS(MIDR_BRAHMA_B53),
 		MIDR_ALL_VERSIONS(MIDR_QCOM_KRYO_3XX_SILVER),
 		MIDR_ALL_VERSIONS(MIDR_QCOM_KRYO_4XX_SILVER),
-		अणु /* sentinel */ पूर्ण,
-	पूर्ण;
+		{ /* sentinel */ },
+	};
 
-	अगर (is_midr_in_range_list(पढ़ो_cpuid_id(), spectre_v4_safe_list))
-		वापस SPECTRE_UNAFFECTED;
+	if (is_midr_in_range_list(read_cpuid_id(), spectre_v4_safe_list))
+		return SPECTRE_UNAFFECTED;
 
 	/* CPU features are detected first */
-	अगर (this_cpu_has_cap(ARM64_SSBS))
-		वापस SPECTRE_MITIGATED;
+	if (this_cpu_has_cap(ARM64_SSBS))
+		return SPECTRE_MITIGATED;
 
-	वापस SPECTRE_VULNERABLE;
-पूर्ण
+	return SPECTRE_VULNERABLE;
+}
 
-अटल क्रमागत mitigation_state spectre_v4_get_cpu_fw_mitigation_state(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा arm_smccc_res res;
+static enum mitigation_state spectre_v4_get_cpu_fw_mitigation_state(void)
+{
+	int ret;
+	struct arm_smccc_res res;
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
 			     ARM_SMCCC_ARCH_WORKAROUND_2, &res);
 
 	ret = res.a0;
-	चयन (ret) अणु
-	हाल SMCCC_RET_SUCCESS:
-		वापस SPECTRE_MITIGATED;
-	हाल SMCCC_ARCH_WORKAROUND_RET_UNAFFECTED:
+	switch (ret) {
+	case SMCCC_RET_SUCCESS:
+		return SPECTRE_MITIGATED;
+	case SMCCC_ARCH_WORKAROUND_RET_UNAFFECTED:
 		fallthrough;
-	हाल SMCCC_RET_NOT_REQUIRED:
-		वापस SPECTRE_UNAFFECTED;
-	शेष:
+	case SMCCC_RET_NOT_REQUIRED:
+		return SPECTRE_UNAFFECTED;
+	default:
 		fallthrough;
-	हाल SMCCC_RET_NOT_SUPPORTED:
-		वापस SPECTRE_VULNERABLE;
-	पूर्ण
-पूर्ण
+	case SMCCC_RET_NOT_SUPPORTED:
+		return SPECTRE_VULNERABLE;
+	}
+}
 
-bool has_spectre_v4(स्थिर काष्ठा arm64_cpu_capabilities *cap, पूर्णांक scope)
-अणु
-	क्रमागत mitigation_state state;
+bool has_spectre_v4(const struct arm64_cpu_capabilities *cap, int scope)
+{
+	enum mitigation_state state;
 
 	WARN_ON(scope != SCOPE_LOCAL_CPU || preemptible());
 
 	state = spectre_v4_get_cpu_hw_mitigation_state();
-	अगर (state == SPECTRE_VULNERABLE)
+	if (state == SPECTRE_VULNERABLE)
 		state = spectre_v4_get_cpu_fw_mitigation_state();
 
-	वापस state != SPECTRE_UNAFFECTED;
-पूर्ण
+	return state != SPECTRE_UNAFFECTED;
+}
 
-अटल पूर्णांक ssbs_emulation_handler(काष्ठा pt_regs *regs, u32 instr)
-अणु
-	अगर (user_mode(regs))
-		वापस 1;
+static int ssbs_emulation_handler(struct pt_regs *regs, u32 instr)
+{
+	if (user_mode(regs))
+		return 1;
 
-	अगर (instr & BIT(PSTATE_Imm_shअगरt))
+	if (instr & BIT(PSTATE_Imm_shift))
 		regs->pstate |= PSR_SSBS_BIT;
-	अन्यथा
+	else
 		regs->pstate &= ~PSR_SSBS_BIT;
 
-	arm64_skip_faulting_inकाष्ठाion(regs, 4);
-	वापस 0;
-पूर्ण
+	arm64_skip_faulting_instruction(regs, 4);
+	return 0;
+}
 
-अटल काष्ठा undef_hook ssbs_emulation_hook = अणु
-	.instr_mask	= ~(1U << PSTATE_Imm_shअगरt),
+static struct undef_hook ssbs_emulation_hook = {
+	.instr_mask	= ~(1U << PSTATE_Imm_shift),
 	.instr_val	= 0xd500401f | PSTATE_SSBS,
 	.fn		= ssbs_emulation_handler,
-पूर्ण;
+};
 
-अटल क्रमागत mitigation_state spectre_v4_enable_hw_mitigation(व्योम)
-अणु
-	अटल bool undef_hook_रेजिस्टरed = false;
-	अटल DEFINE_RAW_SPINLOCK(hook_lock);
-	क्रमागत mitigation_state state;
+static enum mitigation_state spectre_v4_enable_hw_mitigation(void)
+{
+	static bool undef_hook_registered = false;
+	static DEFINE_RAW_SPINLOCK(hook_lock);
+	enum mitigation_state state;
 
 	/*
-	 * If the प्रणाली is mitigated but this CPU करोesn't have SSBS, then
-	 * we must be on the safelist and there's nothing more to करो.
+	 * If the system is mitigated but this CPU doesn't have SSBS, then
+	 * we must be on the safelist and there's nothing more to do.
 	 */
 	state = spectre_v4_get_cpu_hw_mitigation_state();
-	अगर (state != SPECTRE_MITIGATED || !this_cpu_has_cap(ARM64_SSBS))
-		वापस state;
+	if (state != SPECTRE_MITIGATED || !this_cpu_has_cap(ARM64_SSBS))
+		return state;
 
 	raw_spin_lock(&hook_lock);
-	अगर (!undef_hook_रेजिस्टरed) अणु
-		रेजिस्टर_undef_hook(&ssbs_emulation_hook);
-		undef_hook_रेजिस्टरed = true;
-	पूर्ण
+	if (!undef_hook_registered) {
+		register_undef_hook(&ssbs_emulation_hook);
+		undef_hook_registered = true;
+	}
 	raw_spin_unlock(&hook_lock);
 
-	अगर (spectre_v4_mitigations_off()) अणु
+	if (spectre_v4_mitigations_off()) {
 		sysreg_clear_set(sctlr_el1, 0, SCTLR_ELx_DSSBS);
 		set_pstate_ssbs(1);
-		वापस SPECTRE_VULNERABLE;
-	पूर्ण
+		return SPECTRE_VULNERABLE;
+	}
 
 	/* SCTLR_EL1.DSSBS was initialised to 0 during boot */
 	set_pstate_ssbs(0);
-	वापस SPECTRE_MITIGATED;
-पूर्ण
+	return SPECTRE_MITIGATED;
+}
 
 /*
  * Patch a branch over the Spectre-v4 mitigation code with a NOP so that
  * we fallthrough and check whether firmware needs to be called on this CPU.
  */
-व्योम __init spectre_v4_patch_fw_mitigation_enable(काष्ठा alt_instr *alt,
+void __init spectre_v4_patch_fw_mitigation_enable(struct alt_instr *alt,
 						  __le32 *origptr,
-						  __le32 *updptr, पूर्णांक nr_inst)
-अणु
+						  __le32 *updptr, int nr_inst)
+{
 	BUG_ON(nr_inst != 1); /* Branch -> NOP */
 
-	अगर (spectre_v4_mitigations_off())
-		वापस;
+	if (spectre_v4_mitigations_off())
+		return;
 
-	अगर (cpus_have_final_cap(ARM64_SSBS))
-		वापस;
+	if (cpus_have_final_cap(ARM64_SSBS))
+		return;
 
-	अगर (spectre_v4_mitigations_dynamic())
+	if (spectre_v4_mitigations_dynamic())
 		*updptr = cpu_to_le32(aarch64_insn_gen_nop());
-पूर्ण
+}
 
 /*
- * Patch a NOP in the Spectre-v4 mitigation code with an SMC/HVC inकाष्ठाion
- * to call पूर्णांकo firmware to adjust the mitigation state.
+ * Patch a NOP in the Spectre-v4 mitigation code with an SMC/HVC instruction
+ * to call into firmware to adjust the mitigation state.
  */
-व्योम __init spectre_v4_patch_fw_mitigation_conduit(काष्ठा alt_instr *alt,
+void __init spectre_v4_patch_fw_mitigation_conduit(struct alt_instr *alt,
 						   __le32 *origptr,
-						   __le32 *updptr, पूर्णांक nr_inst)
-अणु
+						   __le32 *updptr, int nr_inst)
+{
 	u32 insn;
 
 	BUG_ON(nr_inst != 1); /* NOP -> HVC/SMC */
 
-	चयन (arm_smccc_1_1_get_conduit()) अणु
-	हाल SMCCC_CONDUIT_HVC:
+	switch (arm_smccc_1_1_get_conduit()) {
+	case SMCCC_CONDUIT_HVC:
 		insn = aarch64_insn_get_hvc_value();
-		अवरोध;
-	हाल SMCCC_CONDUIT_SMC:
+		break;
+	case SMCCC_CONDUIT_SMC:
 		insn = aarch64_insn_get_smc_value();
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	*updptr = cpu_to_le32(insn);
-पूर्ण
+}
 
-अटल क्रमागत mitigation_state spectre_v4_enable_fw_mitigation(व्योम)
-अणु
-	क्रमागत mitigation_state state;
+static enum mitigation_state spectre_v4_enable_fw_mitigation(void)
+{
+	enum mitigation_state state;
 
 	state = spectre_v4_get_cpu_fw_mitigation_state();
-	अगर (state != SPECTRE_MITIGATED)
-		वापस state;
+	if (state != SPECTRE_MITIGATED)
+		return state;
 
-	अगर (spectre_v4_mitigations_off()) अणु
-		arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_WORKAROUND_2, false, शून्य);
-		वापस SPECTRE_VULNERABLE;
-	पूर्ण
+	if (spectre_v4_mitigations_off()) {
+		arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_WORKAROUND_2, false, NULL);
+		return SPECTRE_VULNERABLE;
+	}
 
-	arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_WORKAROUND_2, true, शून्य);
+	arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_WORKAROUND_2, true, NULL);
 
-	अगर (spectre_v4_mitigations_dynamic())
-		__this_cpu_ग_लिखो(arm64_ssbd_callback_required, 1);
+	if (spectre_v4_mitigations_dynamic())
+		__this_cpu_write(arm64_ssbd_callback_required, 1);
 
-	वापस SPECTRE_MITIGATED;
-पूर्ण
+	return SPECTRE_MITIGATED;
+}
 
-व्योम spectre_v4_enable_mitigation(स्थिर काष्ठा arm64_cpu_capabilities *__unused)
-अणु
-	क्रमागत mitigation_state state;
+void spectre_v4_enable_mitigation(const struct arm64_cpu_capabilities *__unused)
+{
+	enum mitigation_state state;
 
 	WARN_ON(preemptible());
 
 	state = spectre_v4_enable_hw_mitigation();
-	अगर (state == SPECTRE_VULNERABLE)
+	if (state == SPECTRE_VULNERABLE)
 		state = spectre_v4_enable_fw_mitigation();
 
 	update_mitigation_state(&spectre_v4_state, state);
-पूर्ण
+}
 
-अटल व्योम __update_pstate_ssbs(काष्ठा pt_regs *regs, bool state)
-अणु
+static void __update_pstate_ssbs(struct pt_regs *regs, bool state)
+{
 	u64 bit = compat_user_mode(regs) ? PSR_AA32_SSBS_BIT : PSR_SSBS_BIT;
 
-	अगर (state)
+	if (state)
 		regs->pstate |= bit;
-	अन्यथा
+	else
 		regs->pstate &= ~bit;
-पूर्ण
+}
 
-व्योम spectre_v4_enable_task_mitigation(काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा pt_regs *regs = task_pt_regs(tsk);
-	bool ssbs = false, kthपढ़ो = tsk->flags & PF_KTHREAD;
+void spectre_v4_enable_task_mitigation(struct task_struct *tsk)
+{
+	struct pt_regs *regs = task_pt_regs(tsk);
+	bool ssbs = false, kthread = tsk->flags & PF_KTHREAD;
 
-	अगर (spectre_v4_mitigations_off())
+	if (spectre_v4_mitigations_off())
 		ssbs = true;
-	अन्यथा अगर (spectre_v4_mitigations_dynamic() && !kthपढ़ो)
-		ssbs = !test_tsk_thपढ़ो_flag(tsk, TIF_SSBD);
+	else if (spectre_v4_mitigations_dynamic() && !kthread)
+		ssbs = !test_tsk_thread_flag(tsk, TIF_SSBD);
 
 	__update_pstate_ssbs(regs, ssbs);
-पूर्ण
+}
 
 /*
  * The Spectre-v4 mitigation can be controlled via a prctl() from userspace.
- * This is पूर्णांकeresting because the "speculation disabled" behaviour can be
+ * This is interesting because the "speculation disabled" behaviour can be
  * configured so that it is preserved across exec(), which means that the
  * prctl() may be necessary even when PSTATE.SSBS can be toggled directly
  * from userspace.
  */
-अटल व्योम ssbd_prctl_enable_mitigation(काष्ठा task_काष्ठा *task)
-अणु
+static void ssbd_prctl_enable_mitigation(struct task_struct *task)
+{
 	task_clear_spec_ssb_noexec(task);
 	task_set_spec_ssb_disable(task);
-	set_tsk_thपढ़ो_flag(task, TIF_SSBD);
-पूर्ण
+	set_tsk_thread_flag(task, TIF_SSBD);
+}
 
-अटल व्योम ssbd_prctl_disable_mitigation(काष्ठा task_काष्ठा *task)
-अणु
+static void ssbd_prctl_disable_mitigation(struct task_struct *task)
+{
 	task_clear_spec_ssb_noexec(task);
 	task_clear_spec_ssb_disable(task);
-	clear_tsk_thपढ़ो_flag(task, TIF_SSBD);
-पूर्ण
+	clear_tsk_thread_flag(task, TIF_SSBD);
+}
 
-अटल पूर्णांक ssbd_prctl_set(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ ctrl)
-अणु
-	चयन (ctrl) अणु
-	हाल PR_SPEC_ENABLE:
+static int ssbd_prctl_set(struct task_struct *task, unsigned long ctrl)
+{
+	switch (ctrl) {
+	case PR_SPEC_ENABLE:
 		/* Enable speculation: disable mitigation */
 		/*
 		 * Force disabled speculation prevents it from being
 		 * re-enabled.
 		 */
-		अगर (task_spec_ssb_क्रमce_disable(task))
-			वापस -EPERM;
+		if (task_spec_ssb_force_disable(task))
+			return -EPERM;
 
 		/*
-		 * If the mitigation is क्रमced on, then speculation is क्रमced
+		 * If the mitigation is forced on, then speculation is forced
 		 * off and we again prevent it from being re-enabled.
 		 */
-		अगर (spectre_v4_mitigations_on())
-			वापस -EPERM;
+		if (spectre_v4_mitigations_on())
+			return -EPERM;
 
 		ssbd_prctl_disable_mitigation(task);
-		अवरोध;
-	हाल PR_SPEC_FORCE_DISABLE:
-		/* Force disable speculation: क्रमce enable mitigation */
+		break;
+	case PR_SPEC_FORCE_DISABLE:
+		/* Force disable speculation: force enable mitigation */
 		/*
-		 * If the mitigation is क्रमced off, then speculation is क्रमced
+		 * If the mitigation is forced off, then speculation is forced
 		 * on and we prevent it from being disabled.
 		 */
-		अगर (spectre_v4_mitigations_off())
-			वापस -EPERM;
+		if (spectre_v4_mitigations_off())
+			return -EPERM;
 
-		task_set_spec_ssb_क्रमce_disable(task);
+		task_set_spec_ssb_force_disable(task);
 		fallthrough;
-	हाल PR_SPEC_DISABLE:
+	case PR_SPEC_DISABLE:
 		/* Disable speculation: enable mitigation */
 		/* Same as PR_SPEC_FORCE_DISABLE */
-		अगर (spectre_v4_mitigations_off())
-			वापस -EPERM;
+		if (spectre_v4_mitigations_off())
+			return -EPERM;
 
 		ssbd_prctl_enable_mitigation(task);
-		अवरोध;
-	हाल PR_SPEC_DISABLE_NOEXEC:
+		break;
+	case PR_SPEC_DISABLE_NOEXEC:
 		/* Disable speculation until execve(): enable mitigation */
 		/*
-		 * If the mitigation state is क्रमced one way or the other, then
-		 * we must fail now beक्रमe we try to toggle it on execve().
+		 * If the mitigation state is forced one way or the other, then
+		 * we must fail now before we try to toggle it on execve().
 		 */
-		अगर (task_spec_ssb_क्रमce_disable(task) ||
+		if (task_spec_ssb_force_disable(task) ||
 		    spectre_v4_mitigations_off() ||
-		    spectre_v4_mitigations_on()) अणु
-			वापस -EPERM;
-		पूर्ण
+		    spectre_v4_mitigations_on()) {
+			return -EPERM;
+		}
 
 		ssbd_prctl_enable_mitigation(task);
 		task_set_spec_ssb_noexec(task);
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
 	spectre_v4_enable_task_mitigation(task);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arch_prctl_spec_ctrl_set(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ which,
-			     अचिन्हित दीर्घ ctrl)
-अणु
-	चयन (which) अणु
-	हाल PR_SPEC_STORE_BYPASS:
-		वापस ssbd_prctl_set(task, ctrl);
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-पूर्ण
+int arch_prctl_spec_ctrl_set(struct task_struct *task, unsigned long which,
+			     unsigned long ctrl)
+{
+	switch (which) {
+	case PR_SPEC_STORE_BYPASS:
+		return ssbd_prctl_set(task, ctrl);
+	default:
+		return -ENODEV;
+	}
+}
 
-अटल पूर्णांक ssbd_prctl_get(काष्ठा task_काष्ठा *task)
-अणु
-	चयन (spectre_v4_state) अणु
-	हाल SPECTRE_UNAFFECTED:
-		वापस PR_SPEC_NOT_AFFECTED;
-	हाल SPECTRE_MITIGATED:
-		अगर (spectre_v4_mitigations_on())
-			वापस PR_SPEC_NOT_AFFECTED;
+static int ssbd_prctl_get(struct task_struct *task)
+{
+	switch (spectre_v4_state) {
+	case SPECTRE_UNAFFECTED:
+		return PR_SPEC_NOT_AFFECTED;
+	case SPECTRE_MITIGATED:
+		if (spectre_v4_mitigations_on())
+			return PR_SPEC_NOT_AFFECTED;
 
-		अगर (spectre_v4_mitigations_dynamic())
-			अवरोध;
+		if (spectre_v4_mitigations_dynamic())
+			break;
 
 		/* Mitigations are disabled, so we're vulnerable. */
 		fallthrough;
-	हाल SPECTRE_VULNERABLE:
+	case SPECTRE_VULNERABLE:
 		fallthrough;
-	शेष:
-		वापस PR_SPEC_ENABLE;
-	पूर्ण
+	default:
+		return PR_SPEC_ENABLE;
+	}
 
-	/* Check the mitigation state क्रम this task */
-	अगर (task_spec_ssb_क्रमce_disable(task))
-		वापस PR_SPEC_PRCTL | PR_SPEC_FORCE_DISABLE;
+	/* Check the mitigation state for this task */
+	if (task_spec_ssb_force_disable(task))
+		return PR_SPEC_PRCTL | PR_SPEC_FORCE_DISABLE;
 
-	अगर (task_spec_ssb_noexec(task))
-		वापस PR_SPEC_PRCTL | PR_SPEC_DISABLE_NOEXEC;
+	if (task_spec_ssb_noexec(task))
+		return PR_SPEC_PRCTL | PR_SPEC_DISABLE_NOEXEC;
 
-	अगर (task_spec_ssb_disable(task))
-		वापस PR_SPEC_PRCTL | PR_SPEC_DISABLE;
+	if (task_spec_ssb_disable(task))
+		return PR_SPEC_PRCTL | PR_SPEC_DISABLE;
 
-	वापस PR_SPEC_PRCTL | PR_SPEC_ENABLE;
-पूर्ण
+	return PR_SPEC_PRCTL | PR_SPEC_ENABLE;
+}
 
-पूर्णांक arch_prctl_spec_ctrl_get(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ which)
-अणु
-	चयन (which) अणु
-	हाल PR_SPEC_STORE_BYPASS:
-		वापस ssbd_prctl_get(task);
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-पूर्ण
+int arch_prctl_spec_ctrl_get(struct task_struct *task, unsigned long which)
+{
+	switch (which) {
+	case PR_SPEC_STORE_BYPASS:
+		return ssbd_prctl_get(task);
+	default:
+		return -ENODEV;
+	}
+}

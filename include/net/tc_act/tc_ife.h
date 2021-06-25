@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_TC_IFE_H
-#घोषणा __NET_TC_IFE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_TC_IFE_H
+#define __NET_TC_IFE_H
 
-#समावेश <net/act_api.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/rtnetlink.h>
+#include <net/act_api.h>
+#include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
 
-काष्ठा module;
+struct module;
 
-काष्ठा tcf_अगरe_params अणु
+struct tcf_ife_params {
 	u8 eth_dst[ETH_ALEN];
 	u8 eth_src[ETH_ALEN];
 	u16 eth_type;
 	u16 flags;
 
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	struct rcu_head rcu;
+};
 
-काष्ठा tcf_अगरe_info अणु
-	काष्ठा tc_action common;
-	काष्ठा tcf_अगरe_params __rcu *params;
+struct tcf_ife_info {
+	struct tc_action common;
+	struct tcf_ife_params __rcu *params;
 	/* list of metaids allowed */
-	काष्ठा list_head metalist;
-पूर्ण;
-#घोषणा to_अगरe(a) ((काष्ठा tcf_अगरe_info *)a)
+	struct list_head metalist;
+};
+#define to_ife(a) ((struct tcf_ife_info *)a)
 
-काष्ठा tcf_meta_info अणु
-	स्थिर काष्ठा tcf_meta_ops *ops;
-	व्योम *metaval;
+struct tcf_meta_info {
+	const struct tcf_meta_ops *ops;
+	void *metaval;
 	u16 metaid;
-	काष्ठा list_head metalist;
-पूर्ण;
+	struct list_head metalist;
+};
 
-काष्ठा tcf_meta_ops अणु
-	u16 metaid; /*Maपूर्णांकainer provided ID */
+struct tcf_meta_ops {
+	u16 metaid; /*Maintainer provided ID */
 	u16 metatype; /*netlink attribute type (look at net/netlink.h) */
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *synopsis;
-	काष्ठा list_head list;
-	पूर्णांक	(*check_presence)(काष्ठा sk_buff *, काष्ठा tcf_meta_info *);
-	पूर्णांक	(*encode)(काष्ठा sk_buff *, व्योम *, काष्ठा tcf_meta_info *);
-	पूर्णांक	(*decode)(काष्ठा sk_buff *, व्योम *, u16 len);
-	पूर्णांक	(*get)(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *mi);
-	पूर्णांक	(*alloc)(काष्ठा tcf_meta_info *, व्योम *, gfp_t);
-	व्योम	(*release)(काष्ठा tcf_meta_info *);
-	पूर्णांक	(*validate)(व्योम *val, पूर्णांक len);
-	काष्ठा module	*owner;
-पूर्ण;
+	const char *name;
+	const char *synopsis;
+	struct list_head list;
+	int	(*check_presence)(struct sk_buff *, struct tcf_meta_info *);
+	int	(*encode)(struct sk_buff *, void *, struct tcf_meta_info *);
+	int	(*decode)(struct sk_buff *, void *, u16 len);
+	int	(*get)(struct sk_buff *skb, struct tcf_meta_info *mi);
+	int	(*alloc)(struct tcf_meta_info *, void *, gfp_t);
+	void	(*release)(struct tcf_meta_info *);
+	int	(*validate)(void *val, int len);
+	struct module	*owner;
+};
 
-#घोषणा MODULE_ALIAS_IFE_META(metan)   MODULE_ALIAS("ife-meta-" metan)
+#define MODULE_ALIAS_IFE_META(metan)   MODULE_ALIAS("ife-meta-" metan)
 
-पूर्णांक अगरe_get_meta_u32(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *mi);
-पूर्णांक अगरe_get_meta_u16(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *mi);
-पूर्णांक अगरe_alloc_meta_u32(काष्ठा tcf_meta_info *mi, व्योम *metaval, gfp_t gfp);
-पूर्णांक अगरe_alloc_meta_u16(काष्ठा tcf_meta_info *mi, व्योम *metaval, gfp_t gfp);
-पूर्णांक अगरe_check_meta_u32(u32 metaval, काष्ठा tcf_meta_info *mi);
-पूर्णांक अगरe_check_meta_u16(u16 metaval, काष्ठा tcf_meta_info *mi);
-पूर्णांक अगरe_encode_meta_u32(u32 metaval, व्योम *skbdata, काष्ठा tcf_meta_info *mi);
-पूर्णांक अगरe_validate_meta_u32(व्योम *val, पूर्णांक len);
-पूर्णांक अगरe_validate_meta_u16(व्योम *val, पूर्णांक len);
-पूर्णांक अगरe_encode_meta_u16(u16 metaval, व्योम *skbdata, काष्ठा tcf_meta_info *mi);
-व्योम अगरe_release_meta_gen(काष्ठा tcf_meta_info *mi);
-पूर्णांक रेजिस्टर_अगरe_op(काष्ठा tcf_meta_ops *mops);
-पूर्णांक unरेजिस्टर_अगरe_op(काष्ठा tcf_meta_ops *mops);
+int ife_get_meta_u32(struct sk_buff *skb, struct tcf_meta_info *mi);
+int ife_get_meta_u16(struct sk_buff *skb, struct tcf_meta_info *mi);
+int ife_alloc_meta_u32(struct tcf_meta_info *mi, void *metaval, gfp_t gfp);
+int ife_alloc_meta_u16(struct tcf_meta_info *mi, void *metaval, gfp_t gfp);
+int ife_check_meta_u32(u32 metaval, struct tcf_meta_info *mi);
+int ife_check_meta_u16(u16 metaval, struct tcf_meta_info *mi);
+int ife_encode_meta_u32(u32 metaval, void *skbdata, struct tcf_meta_info *mi);
+int ife_validate_meta_u32(void *val, int len);
+int ife_validate_meta_u16(void *val, int len);
+int ife_encode_meta_u16(u16 metaval, void *skbdata, struct tcf_meta_info *mi);
+void ife_release_meta_gen(struct tcf_meta_info *mi);
+int register_ife_op(struct tcf_meta_ops *mops);
+int unregister_ife_op(struct tcf_meta_ops *mops);
 
-#पूर्ण_अगर /* __NET_TC_IFE_H */
+#endif /* __NET_TC_IFE_H */

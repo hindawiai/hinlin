@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/device.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <net/चयनdev.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/slab.h>
+#include <linux/device.h>
+#include <linux/skbuff.h>
+#include <linux/if_vlan.h>
+#include <net/switchdev.h>
 
-#समावेश "pci.h"
-#समावेश "core.h"
-#समावेश "reg.h"
-#समावेश "port.h"
-#समावेश "trap.h"
-#समावेश "txheader.h"
-#समावेश "ib.h"
+#include "pci.h"
+#include "core.h"
+#include "reg.h"
+#include "port.h"
+#include "trap.h"
+#include "txheader.h"
+#include "ib.h"
 
-अटल स्थिर अक्षर mlxsw_sib_driver_name[] = "mlxsw_switchib";
-अटल स्थिर अक्षर mlxsw_sib2_driver_name[] = "mlxsw_switchib2";
+static const char mlxsw_sib_driver_name[] = "mlxsw_switchib";
+static const char mlxsw_sib2_driver_name[] = "mlxsw_switchib2";
 
-काष्ठा mlxsw_sib_port;
+struct mlxsw_sib_port;
 
-काष्ठा mlxsw_sib अणु
-	काष्ठा mlxsw_sib_port **ports;
-	काष्ठा mlxsw_core *core;
-	स्थिर काष्ठा mlxsw_bus_info *bus_info;
+struct mlxsw_sib {
+	struct mlxsw_sib_port **ports;
+	struct mlxsw_core *core;
+	const struct mlxsw_bus_info *bus_info;
 	u8 hw_id[ETH_ALEN];
-पूर्ण;
+};
 
-काष्ठा mlxsw_sib_port अणु
-	काष्ठा mlxsw_sib *mlxsw_sib;
+struct mlxsw_sib_port {
+	struct mlxsw_sib *mlxsw_sib;
 	u8 local_port;
-	काष्ठा अणु
+	struct {
 		u8 module;
-	पूर्ण mapping;
-पूर्ण;
+	} mapping;
+};
 
 /* tx_v1_hdr_version
  * Tx header version.
@@ -66,18 +65,18 @@ MLXSW_ITEM32(tx_v1, hdr, proto, 0x00, 21, 3);
 MLXSW_ITEM32(tx_v1, hdr, swid, 0x00, 12, 3);
 
 /* tx_v1_hdr_control_tclass
- * Indicates अगर the packet should use the control TClass and not one
+ * Indicates if the packet should use the control TClass and not one
  * of the data TClasses.
  */
 MLXSW_ITEM32(tx_v1, hdr, control_tclass, 0x00, 6, 1);
 
 /* tx_v1_hdr_port_mid
- * Destination local port क्रम unicast packets.
- * Destination multicast ID क्रम multicast packets.
+ * Destination local port for unicast packets.
+ * Destination multicast ID for multicast packets.
  *
- * Control packets are directed to a specअगरic egress port, जबतक data
- * packets are transmitted through the CPU port (0) पूर्णांकo the चयन partition,
- * where क्रमwarding rules are applied.
+ * Control packets are directed to a specific egress port, while data
+ * packets are transmitted through the CPU port (0) into the switch partition,
+ * where forwarding rules are applied.
  */
 MLXSW_ITEM32(tx_v1, hdr, port_mid, 0x04, 16, 16);
 
@@ -87,13 +86,13 @@ MLXSW_ITEM32(tx_v1, hdr, port_mid, 0x04, 16, 16);
  */
 MLXSW_ITEM32(tx_v1, hdr, type, 0x0C, 0, 4);
 
-अटल व्योम
-mlxsw_sib_tx_v1_hdr_स्थिरruct(काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा mlxsw_tx_info *tx_info)
-अणु
-	अक्षर *txhdr = skb_push(skb, MLXSW_TXHDR_LEN);
+static void
+mlxsw_sib_tx_v1_hdr_construct(struct sk_buff *skb,
+			      const struct mlxsw_tx_info *tx_info)
+{
+	char *txhdr = skb_push(skb, MLXSW_TXHDR_LEN);
 
-	स_रखो(txhdr, 0, MLXSW_TXHDR_LEN);
+	memset(txhdr, 0, MLXSW_TXHDR_LEN);
 
 	mlxsw_tx_v1_hdr_version_set(txhdr, MLXSW_TXHDR_VERSION_1);
 	mlxsw_tx_v1_hdr_ctl_set(txhdr, MLXSW_TXHDR_ETH_CTL);
@@ -102,169 +101,169 @@ mlxsw_sib_tx_v1_hdr_स्थिरruct(काष्ठा sk_buff *skb,
 	mlxsw_tx_v1_hdr_control_tclass_set(txhdr, 1);
 	mlxsw_tx_v1_hdr_port_mid_set(txhdr, tx_info->local_port);
 	mlxsw_tx_v1_hdr_type_set(txhdr, MLXSW_TXHDR_TYPE_CONTROL);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sib_hw_id_get(काष्ठा mlxsw_sib *mlxsw_sib)
-अणु
-	अक्षर spad_pl[MLXSW_REG_SPAD_LEN] = अणु0पूर्ण;
-	पूर्णांक err;
+static int mlxsw_sib_hw_id_get(struct mlxsw_sib *mlxsw_sib)
+{
+	char spad_pl[MLXSW_REG_SPAD_LEN] = {0};
+	int err;
 
 	err = mlxsw_reg_query(mlxsw_sib->core, MLXSW_REG(spad), spad_pl);
-	अगर (err)
-		वापस err;
-	mlxsw_reg_spad_base_mac_स_नकल_from(spad_pl, mlxsw_sib->hw_id);
-	वापस 0;
-पूर्ण
+	if (err)
+		return err;
+	mlxsw_reg_spad_base_mac_memcpy_from(spad_pl, mlxsw_sib->hw_id);
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sib_port_admin_status_set(काष्ठा mlxsw_sib_port *mlxsw_sib_port,
+static int
+mlxsw_sib_port_admin_status_set(struct mlxsw_sib_port *mlxsw_sib_port,
 				bool is_up)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
-	अक्षर paos_pl[MLXSW_REG_PAOS_LEN];
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
+	char paos_pl[MLXSW_REG_PAOS_LEN];
 
 	mlxsw_reg_paos_pack(paos_pl, mlxsw_sib_port->local_port,
 			    is_up ? MLXSW_PORT_ADMIN_STATUS_UP :
 			    MLXSW_PORT_ADMIN_STATUS_DOWN);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sib->core, MLXSW_REG(paos), paos_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sib->core, MLXSW_REG(paos), paos_pl);
+}
 
-अटल पूर्णांक mlxsw_sib_port_mtu_set(काष्ठा mlxsw_sib_port *mlxsw_sib_port,
+static int mlxsw_sib_port_mtu_set(struct mlxsw_sib_port *mlxsw_sib_port,
 				  u16 mtu)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
-	अक्षर pmtu_pl[MLXSW_REG_PMTU_LEN];
-	पूर्णांक max_mtu;
-	पूर्णांक err;
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
+	char pmtu_pl[MLXSW_REG_PMTU_LEN];
+	int max_mtu;
+	int err;
 
 	mlxsw_reg_pmtu_pack(pmtu_pl, mlxsw_sib_port->local_port, 0);
 	err = mlxsw_reg_query(mlxsw_sib->core, MLXSW_REG(pmtu), pmtu_pl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	max_mtu = mlxsw_reg_pmtu_max_mtu_get(pmtu_pl);
 
-	अगर (mtu > max_mtu)
-		वापस -EINVAL;
+	if (mtu > max_mtu)
+		return -EINVAL;
 
 	mlxsw_reg_pmtu_pack(pmtu_pl, mlxsw_sib_port->local_port, mtu);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sib->core, MLXSW_REG(pmtu), pmtu_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sib->core, MLXSW_REG(pmtu), pmtu_pl);
+}
 
-अटल पूर्णांक mlxsw_sib_port_set(काष्ठा mlxsw_sib_port *mlxsw_sib_port, u8 port)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
-	अक्षर plib_pl[MLXSW_REG_PLIB_LEN] = अणु0पूर्ण;
-	पूर्णांक err;
+static int mlxsw_sib_port_set(struct mlxsw_sib_port *mlxsw_sib_port, u8 port)
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
+	char plib_pl[MLXSW_REG_PLIB_LEN] = {0};
+	int err;
 
 	mlxsw_reg_plib_local_port_set(plib_pl, mlxsw_sib_port->local_port);
 	mlxsw_reg_plib_ib_port_set(plib_pl, port);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sib->core, MLXSW_REG(plib), plib_pl);
-	वापस err;
-पूर्ण
+	err = mlxsw_reg_write(mlxsw_sib->core, MLXSW_REG(plib), plib_pl);
+	return err;
+}
 
-अटल पूर्णांक mlxsw_sib_port_swid_set(काष्ठा mlxsw_sib_port *mlxsw_sib_port,
+static int mlxsw_sib_port_swid_set(struct mlxsw_sib_port *mlxsw_sib_port,
 				   u8 swid)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
-	अक्षर pspa_pl[MLXSW_REG_PSPA_LEN];
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
+	char pspa_pl[MLXSW_REG_PSPA_LEN];
 
 	mlxsw_reg_pspa_pack(pspa_pl, swid, mlxsw_sib_port->local_port);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sib->core, MLXSW_REG(pspa), pspa_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sib->core, MLXSW_REG(pspa), pspa_pl);
+}
 
-अटल पूर्णांक mlxsw_sib_port_module_info_get(काष्ठा mlxsw_sib *mlxsw_sib,
+static int mlxsw_sib_port_module_info_get(struct mlxsw_sib *mlxsw_sib,
 					  u8 local_port, u8 *p_module,
 					  u8 *p_width)
-अणु
-	अक्षर pmlp_pl[MLXSW_REG_PMLP_LEN];
-	पूर्णांक err;
+{
+	char pmlp_pl[MLXSW_REG_PMLP_LEN];
+	int err;
 
 	mlxsw_reg_pmlp_pack(pmlp_pl, local_port);
 	err = mlxsw_reg_query(mlxsw_sib->core, MLXSW_REG(pmlp), pmlp_pl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	*p_module = mlxsw_reg_pmlp_module_get(pmlp_pl, 0);
 	*p_width = mlxsw_reg_pmlp_width_get(pmlp_pl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sib_port_speed_set(काष्ठा mlxsw_sib_port *mlxsw_sib_port,
+static int mlxsw_sib_port_speed_set(struct mlxsw_sib_port *mlxsw_sib_port,
 				    u16 speed, u16 width)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
-	अक्षर ptys_pl[MLXSW_REG_PTYS_LEN];
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_sib_port->mlxsw_sib;
+	char ptys_pl[MLXSW_REG_PTYS_LEN];
 
 	mlxsw_reg_ptys_ib_pack(ptys_pl, mlxsw_sib_port->local_port, speed,
 			       width);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sib->core, MLXSW_REG(ptys), ptys_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sib->core, MLXSW_REG(ptys), ptys_pl);
+}
 
-अटल bool mlxsw_sib_port_created(काष्ठा mlxsw_sib *mlxsw_sib, u8 local_port)
-अणु
-	वापस mlxsw_sib->ports[local_port] != शून्य;
-पूर्ण
+static bool mlxsw_sib_port_created(struct mlxsw_sib *mlxsw_sib, u8 local_port)
+{
+	return mlxsw_sib->ports[local_port] != NULL;
+}
 
-अटल पूर्णांक __mlxsw_sib_port_create(काष्ठा mlxsw_sib *mlxsw_sib, u8 local_port,
+static int __mlxsw_sib_port_create(struct mlxsw_sib *mlxsw_sib, u8 local_port,
 				   u8 module, u8 width)
-अणु
-	काष्ठा mlxsw_sib_port *mlxsw_sib_port;
-	पूर्णांक err;
+{
+	struct mlxsw_sib_port *mlxsw_sib_port;
+	int err;
 
-	mlxsw_sib_port = kzalloc(माप(*mlxsw_sib_port), GFP_KERNEL);
-	अगर (!mlxsw_sib_port)
-		वापस -ENOMEM;
+	mlxsw_sib_port = kzalloc(sizeof(*mlxsw_sib_port), GFP_KERNEL);
+	if (!mlxsw_sib_port)
+		return -ENOMEM;
 	mlxsw_sib_port->mlxsw_sib = mlxsw_sib;
 	mlxsw_sib_port->local_port = local_port;
 	mlxsw_sib_port->mapping.module = module;
 
 	err = mlxsw_sib_port_swid_set(mlxsw_sib_port, 0);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to set SWID\n",
 			mlxsw_sib_port->local_port);
-		जाओ err_port_swid_set;
-	पूर्ण
+		goto err_port_swid_set;
+	}
 
 	/* Expose the IB port number as it's front panel name */
 	err = mlxsw_sib_port_set(mlxsw_sib_port, module + 1);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to set IB port\n",
 			mlxsw_sib_port->local_port);
-		जाओ err_port_ib_set;
-	पूर्ण
+		goto err_port_ib_set;
+	}
 
-	/* Supports all speeds from SDR to FDR (biपंचांगask) and support bus width
-	 * of 1x, 2x and 4x (3 bits biपंचांगask)
+	/* Supports all speeds from SDR to FDR (bitmask) and support bus width
+	 * of 1x, 2x and 4x (3 bits bitmask)
 	 */
 	err = mlxsw_sib_port_speed_set(mlxsw_sib_port,
 				       MLXSW_REG_PTYS_IB_SPEED_EDR - 1,
 				       BIT(3) - 1);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to set speed\n",
 			mlxsw_sib_port->local_port);
-		जाओ err_port_speed_set;
-	पूर्ण
+		goto err_port_speed_set;
+	}
 
 	/* Change to the maximum MTU the device supports, the SMA will take
 	 * care of the active MTU
 	 */
 	err = mlxsw_sib_port_mtu_set(mlxsw_sib_port, MLXSW_IB_DEFAULT_MTU);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to set MTU\n",
 			mlxsw_sib_port->local_port);
-		जाओ err_port_mtu_set;
-	पूर्ण
+		goto err_port_mtu_set;
+	}
 
 	err = mlxsw_sib_port_admin_status_set(mlxsw_sib_port, true);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to change admin state to UP\n",
 			mlxsw_sib_port->local_port);
-		जाओ err_port_admin_set;
-	पूर्ण
+		goto err_port_admin_set;
+	}
 
 	mlxsw_core_port_ib_set(mlxsw_sib->core, mlxsw_sib_port->local_port,
 			       mlxsw_sib_port);
 	mlxsw_sib->ports[local_port] = mlxsw_sib_port;
-	वापस 0;
+	return 0;
 
 err_port_admin_set:
 err_port_mtu_set:
@@ -272,169 +271,169 @@ err_port_speed_set:
 err_port_ib_set:
 	mlxsw_sib_port_swid_set(mlxsw_sib_port, MLXSW_PORT_SWID_DISABLED_PORT);
 err_port_swid_set:
-	kमुक्त(mlxsw_sib_port);
-	वापस err;
-पूर्ण
+	kfree(mlxsw_sib_port);
+	return err;
+}
 
-अटल पूर्णांक mlxsw_sib_port_create(काष्ठा mlxsw_sib *mlxsw_sib, u8 local_port,
+static int mlxsw_sib_port_create(struct mlxsw_sib *mlxsw_sib, u8 local_port,
 				 u8 module, u8 width)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = mlxsw_core_port_init(mlxsw_sib->core, local_port,
 				   module + 1, false, 0, false, 0,
-				   mlxsw_sib->hw_id, माप(mlxsw_sib->hw_id));
-	अगर (err) अणु
+				   mlxsw_sib->hw_id, sizeof(mlxsw_sib->hw_id));
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Port %d: Failed to init core port\n",
 			local_port);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = __mlxsw_sib_port_create(mlxsw_sib, local_port, module, width);
-	अगर (err)
-		जाओ err_port_create;
+	if (err)
+		goto err_port_create;
 
-	वापस 0;
+	return 0;
 
 err_port_create:
 	mlxsw_core_port_fini(mlxsw_sib->core, local_port);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __mlxsw_sib_port_हटाओ(काष्ठा mlxsw_sib *mlxsw_sib, u8 local_port)
-अणु
-	काष्ठा mlxsw_sib_port *mlxsw_sib_port = mlxsw_sib->ports[local_port];
+static void __mlxsw_sib_port_remove(struct mlxsw_sib *mlxsw_sib, u8 local_port)
+{
+	struct mlxsw_sib_port *mlxsw_sib_port = mlxsw_sib->ports[local_port];
 
 	mlxsw_core_port_clear(mlxsw_sib->core, local_port, mlxsw_sib);
-	mlxsw_sib->ports[local_port] = शून्य;
+	mlxsw_sib->ports[local_port] = NULL;
 	mlxsw_sib_port_admin_status_set(mlxsw_sib_port, false);
 	mlxsw_sib_port_swid_set(mlxsw_sib_port, MLXSW_PORT_SWID_DISABLED_PORT);
-	kमुक्त(mlxsw_sib_port);
-पूर्ण
+	kfree(mlxsw_sib_port);
+}
 
-अटल व्योम mlxsw_sib_port_हटाओ(काष्ठा mlxsw_sib *mlxsw_sib, u8 local_port)
-अणु
-	__mlxsw_sib_port_हटाओ(mlxsw_sib, local_port);
+static void mlxsw_sib_port_remove(struct mlxsw_sib *mlxsw_sib, u8 local_port)
+{
+	__mlxsw_sib_port_remove(mlxsw_sib, local_port);
 	mlxsw_core_port_fini(mlxsw_sib->core, local_port);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sib_ports_हटाओ(काष्ठा mlxsw_sib *mlxsw_sib)
-अणु
-	पूर्णांक i;
+static void mlxsw_sib_ports_remove(struct mlxsw_sib *mlxsw_sib)
+{
+	int i;
 
-	क्रम (i = 1; i < MLXSW_PORT_MAX_IB_PORTS; i++)
-		अगर (mlxsw_sib_port_created(mlxsw_sib, i))
-			mlxsw_sib_port_हटाओ(mlxsw_sib, i);
-	kमुक्त(mlxsw_sib->ports);
-पूर्ण
+	for (i = 1; i < MLXSW_PORT_MAX_IB_PORTS; i++)
+		if (mlxsw_sib_port_created(mlxsw_sib, i))
+			mlxsw_sib_port_remove(mlxsw_sib, i);
+	kfree(mlxsw_sib->ports);
+}
 
-अटल पूर्णांक mlxsw_sib_ports_create(काष्ठा mlxsw_sib *mlxsw_sib)
-अणु
-	माप_प्रकार alloc_size;
+static int mlxsw_sib_ports_create(struct mlxsw_sib *mlxsw_sib)
+{
+	size_t alloc_size;
 	u8 module, width;
-	पूर्णांक i;
-	पूर्णांक err;
+	int i;
+	int err;
 
-	alloc_size = माप(काष्ठा mlxsw_sib_port *) * MLXSW_PORT_MAX_IB_PORTS;
+	alloc_size = sizeof(struct mlxsw_sib_port *) * MLXSW_PORT_MAX_IB_PORTS;
 	mlxsw_sib->ports = kzalloc(alloc_size, GFP_KERNEL);
-	अगर (!mlxsw_sib->ports)
-		वापस -ENOMEM;
+	if (!mlxsw_sib->ports)
+		return -ENOMEM;
 
-	क्रम (i = 1; i < MLXSW_PORT_MAX_IB_PORTS; i++) अणु
+	for (i = 1; i < MLXSW_PORT_MAX_IB_PORTS; i++) {
 		err = mlxsw_sib_port_module_info_get(mlxsw_sib, i, &module,
 						     &width);
-		अगर (err)
-			जाओ err_port_module_info_get;
-		अगर (!width)
-			जारी;
+		if (err)
+			goto err_port_module_info_get;
+		if (!width)
+			continue;
 		err = mlxsw_sib_port_create(mlxsw_sib, i, module, width);
-		अगर (err)
-			जाओ err_port_create;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto err_port_create;
+	}
+	return 0;
 
 err_port_create:
 err_port_module_info_get:
-	क्रम (i--; i >= 1; i--)
-		अगर (mlxsw_sib_port_created(mlxsw_sib, i))
-			mlxsw_sib_port_हटाओ(mlxsw_sib, i);
-	kमुक्त(mlxsw_sib->ports);
-	वापस err;
-पूर्ण
+	for (i--; i >= 1; i--)
+		if (mlxsw_sib_port_created(mlxsw_sib, i))
+			mlxsw_sib_port_remove(mlxsw_sib, i);
+	kfree(mlxsw_sib->ports);
+	return err;
+}
 
-अटल व्योम
-mlxsw_sib_pude_ib_event_func(काष्ठा mlxsw_sib_port *mlxsw_sib_port,
-			     क्रमागत mlxsw_reg_pude_oper_status status)
-अणु
-	अगर (status == MLXSW_PORT_OPER_STATUS_UP)
+static void
+mlxsw_sib_pude_ib_event_func(struct mlxsw_sib_port *mlxsw_sib_port,
+			     enum mlxsw_reg_pude_oper_status status)
+{
+	if (status == MLXSW_PORT_OPER_STATUS_UP)
 		pr_info("ib link for port %d - up\n",
 			mlxsw_sib_port->mapping.module + 1);
-	अन्यथा
+	else
 		pr_info("ib link for port %d - down\n",
 			mlxsw_sib_port->mapping.module + 1);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sib_pude_event_func(स्थिर काष्ठा mlxsw_reg_info *reg,
-				      अक्षर *pude_pl, व्योम *priv)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = priv;
-	काष्ठा mlxsw_sib_port *mlxsw_sib_port;
-	क्रमागत mlxsw_reg_pude_oper_status status;
+static void mlxsw_sib_pude_event_func(const struct mlxsw_reg_info *reg,
+				      char *pude_pl, void *priv)
+{
+	struct mlxsw_sib *mlxsw_sib = priv;
+	struct mlxsw_sib_port *mlxsw_sib_port;
+	enum mlxsw_reg_pude_oper_status status;
 	u8 local_port;
 
 	local_port = mlxsw_reg_pude_local_port_get(pude_pl);
 	mlxsw_sib_port = mlxsw_sib->ports[local_port];
-	अगर (!mlxsw_sib_port) अणु
+	if (!mlxsw_sib_port) {
 		dev_warn(mlxsw_sib->bus_info->dev, "Port %d: Link event received for non-existent port\n",
 			 local_port);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	status = mlxsw_reg_pude_oper_status_get(pude_pl);
 	mlxsw_sib_pude_ib_event_func(mlxsw_sib_port, status);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mlxsw_listener mlxsw_sib_listener[] = अणु
+static const struct mlxsw_listener mlxsw_sib_listener[] = {
 	MLXSW_EVENTL(mlxsw_sib_pude_event_func, PUDE, EMAD),
-पूर्ण;
+};
 
-अटल पूर्णांक mlxsw_sib_taps_init(काष्ठा mlxsw_sib *mlxsw_sib)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
+static int mlxsw_sib_taps_init(struct mlxsw_sib *mlxsw_sib)
+{
+	int i;
+	int err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mlxsw_sib_listener); i++) अणु
-		err = mlxsw_core_trap_रेजिस्टर(mlxsw_sib->core,
+	for (i = 0; i < ARRAY_SIZE(mlxsw_sib_listener); i++) {
+		err = mlxsw_core_trap_register(mlxsw_sib->core,
 					       &mlxsw_sib_listener[i],
 					       mlxsw_sib);
-		अगर (err)
-			जाओ err_rx_listener_रेजिस्टर;
-	पूर्ण
+		if (err)
+			goto err_rx_listener_register;
+	}
 
-	वापस 0;
+	return 0;
 
-err_rx_listener_रेजिस्टर:
-	क्रम (i--; i >= 0; i--) अणु
-		mlxsw_core_trap_unरेजिस्टर(mlxsw_sib->core,
+err_rx_listener_register:
+	for (i--; i >= 0; i--) {
+		mlxsw_core_trap_unregister(mlxsw_sib->core,
 					   &mlxsw_sib_listener[i],
 					   mlxsw_sib);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlxsw_sib_traps_fini(काष्ठा mlxsw_sib *mlxsw_sib)
-अणु
-	पूर्णांक i;
+static void mlxsw_sib_traps_fini(struct mlxsw_sib *mlxsw_sib)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mlxsw_sib_listener); i++) अणु
-		mlxsw_core_trap_unरेजिस्टर(mlxsw_sib->core,
+	for (i = 0; i < ARRAY_SIZE(mlxsw_sib_listener); i++) {
+		mlxsw_core_trap_unregister(mlxsw_sib->core,
 					   &mlxsw_sib_listener[i], mlxsw_sib);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlxsw_sib_basic_trap_groups_set(काष्ठा mlxsw_core *mlxsw_core)
-अणु
-	अक्षर htgt_pl[MLXSW_REG_HTGT_LEN];
+static int mlxsw_sib_basic_trap_groups_set(struct mlxsw_core *mlxsw_core)
+{
+	char htgt_pl[MLXSW_REG_HTGT_LEN];
 
 	mlxsw_reg_htgt_pack(htgt_pl, MLXSW_REG_HTGT_TRAP_GROUP_EMAD,
 			    MLXSW_REG_HTGT_INVALID_POLICER,
@@ -443,150 +442,150 @@ err_rx_listener_रेजिस्टर:
 	mlxsw_reg_htgt_swid_set(htgt_pl, MLXSW_PORT_SWID_ALL_SWIDS);
 	mlxsw_reg_htgt_local_path_rdq_set(htgt_pl,
 					MLXSW_REG_HTGT_LOCAL_PATH_RDQ_SIB_EMAD);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_core, MLXSW_REG(htgt), htgt_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_core, MLXSW_REG(htgt), htgt_pl);
+}
 
-अटल पूर्णांक mlxsw_sib_init(काष्ठा mlxsw_core *mlxsw_core,
-			  स्थिर काष्ठा mlxsw_bus_info *mlxsw_bus_info,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_core_driver_priv(mlxsw_core);
-	पूर्णांक err;
+static int mlxsw_sib_init(struct mlxsw_core *mlxsw_core,
+			  const struct mlxsw_bus_info *mlxsw_bus_info,
+			  struct netlink_ext_ack *extack)
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_core_driver_priv(mlxsw_core);
+	int err;
 
 	mlxsw_sib->core = mlxsw_core;
 	mlxsw_sib->bus_info = mlxsw_bus_info;
 
 	err = mlxsw_sib_hw_id_get(mlxsw_sib);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Failed to get switch HW ID\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = mlxsw_sib_ports_create(mlxsw_sib);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Failed to create ports\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = mlxsw_sib_taps_init(mlxsw_sib);
-	अगर (err) अणु
+	if (err) {
 		dev_err(mlxsw_sib->bus_info->dev, "Failed to set traps\n");
-		जाओ err_traps_init_err;
-	पूर्ण
+		goto err_traps_init_err;
+	}
 
-	वापस 0;
+	return 0;
 
 err_traps_init_err:
-	mlxsw_sib_ports_हटाओ(mlxsw_sib);
-	वापस err;
-पूर्ण
+	mlxsw_sib_ports_remove(mlxsw_sib);
+	return err;
+}
 
-अटल व्योम mlxsw_sib_fini(काष्ठा mlxsw_core *mlxsw_core)
-अणु
-	काष्ठा mlxsw_sib *mlxsw_sib = mlxsw_core_driver_priv(mlxsw_core);
+static void mlxsw_sib_fini(struct mlxsw_core *mlxsw_core)
+{
+	struct mlxsw_sib *mlxsw_sib = mlxsw_core_driver_priv(mlxsw_core);
 
 	mlxsw_sib_traps_fini(mlxsw_sib);
-	mlxsw_sib_ports_हटाओ(mlxsw_sib);
-पूर्ण
+	mlxsw_sib_ports_remove(mlxsw_sib);
+}
 
-अटल स्थिर काष्ठा mlxsw_config_profile mlxsw_sib_config_profile = अणु
-	.used_max_प्रणाली_port		= 1,
-	.max_प्रणाली_port		= 48000,
+static const struct mlxsw_config_profile mlxsw_sib_config_profile = {
+	.used_max_system_port		= 1,
+	.max_system_port		= 48000,
 	.used_max_ib_mc			= 1,
 	.max_ib_mc			= 27,
 	.used_max_pkey			= 1,
 	.max_pkey			= 32,
-	.swid_config			= अणु
-		अणु
+	.swid_config			= {
+		{
 			.used_type	= 1,
 			.type		= MLXSW_PORT_SWID_TYPE_IB,
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+		}
+	},
+};
 
-अटल काष्ठा mlxsw_driver mlxsw_sib_driver = अणु
+static struct mlxsw_driver mlxsw_sib_driver = {
 	.kind			= mlxsw_sib_driver_name,
-	.priv_size		= माप(काष्ठा mlxsw_sib),
+	.priv_size		= sizeof(struct mlxsw_sib),
 	.init			= mlxsw_sib_init,
 	.fini			= mlxsw_sib_fini,
 	.basic_trap_groups_set	= mlxsw_sib_basic_trap_groups_set,
-	.txhdr_स्थिरruct	= mlxsw_sib_tx_v1_hdr_स्थिरruct,
+	.txhdr_construct	= mlxsw_sib_tx_v1_hdr_construct,
 	.txhdr_len		= MLXSW_TXHDR_LEN,
 	.profile		= &mlxsw_sib_config_profile,
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_driver mlxsw_sib2_driver = अणु
+static struct mlxsw_driver mlxsw_sib2_driver = {
 	.kind			= mlxsw_sib2_driver_name,
-	.priv_size		= माप(काष्ठा mlxsw_sib),
+	.priv_size		= sizeof(struct mlxsw_sib),
 	.init			= mlxsw_sib_init,
 	.fini			= mlxsw_sib_fini,
 	.basic_trap_groups_set	= mlxsw_sib_basic_trap_groups_set,
-	.txhdr_स्थिरruct	= mlxsw_sib_tx_v1_hdr_स्थिरruct,
+	.txhdr_construct	= mlxsw_sib_tx_v1_hdr_construct,
 	.txhdr_len		= MLXSW_TXHDR_LEN,
 	.profile		= &mlxsw_sib_config_profile,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id mlxsw_sib_pci_id_table[] = अणु
-	अणुPCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_SWITCHIB), 0पूर्ण,
-	अणु0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id mlxsw_sib_pci_id_table[] = {
+	{PCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_SWITCHIB), 0},
+	{0, },
+};
 
-अटल काष्ठा pci_driver mlxsw_sib_pci_driver = अणु
+static struct pci_driver mlxsw_sib_pci_driver = {
 	.name = mlxsw_sib_driver_name,
 	.id_table = mlxsw_sib_pci_id_table,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id mlxsw_sib2_pci_id_table[] = अणु
-	अणुPCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_SWITCHIB2), 0पूर्ण,
-	अणु0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id mlxsw_sib2_pci_id_table[] = {
+	{PCI_VDEVICE(MELLANOX, PCI_DEVICE_ID_MELLANOX_SWITCHIB2), 0},
+	{0, },
+};
 
-अटल काष्ठा pci_driver mlxsw_sib2_pci_driver = अणु
+static struct pci_driver mlxsw_sib2_pci_driver = {
 	.name = mlxsw_sib2_driver_name,
 	.id_table = mlxsw_sib2_pci_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mlxsw_sib_module_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init mlxsw_sib_module_init(void)
+{
+	int err;
 
-	err = mlxsw_core_driver_रेजिस्टर(&mlxsw_sib_driver);
-	अगर (err)
-		वापस err;
+	err = mlxsw_core_driver_register(&mlxsw_sib_driver);
+	if (err)
+		return err;
 
-	err = mlxsw_core_driver_रेजिस्टर(&mlxsw_sib2_driver);
-	अगर (err)
-		जाओ err_sib2_driver_रेजिस्टर;
+	err = mlxsw_core_driver_register(&mlxsw_sib2_driver);
+	if (err)
+		goto err_sib2_driver_register;
 
-	err = mlxsw_pci_driver_रेजिस्टर(&mlxsw_sib_pci_driver);
-	अगर (err)
-		जाओ err_sib_pci_driver_रेजिस्टर;
+	err = mlxsw_pci_driver_register(&mlxsw_sib_pci_driver);
+	if (err)
+		goto err_sib_pci_driver_register;
 
-	err = mlxsw_pci_driver_रेजिस्टर(&mlxsw_sib2_pci_driver);
-	अगर (err)
-		जाओ err_sib2_pci_driver_रेजिस्टर;
+	err = mlxsw_pci_driver_register(&mlxsw_sib2_pci_driver);
+	if (err)
+		goto err_sib2_pci_driver_register;
 
-	वापस 0;
+	return 0;
 
-err_sib2_pci_driver_रेजिस्टर:
-	mlxsw_pci_driver_unरेजिस्टर(&mlxsw_sib_pci_driver);
-err_sib_pci_driver_रेजिस्टर:
-	mlxsw_core_driver_unरेजिस्टर(&mlxsw_sib2_driver);
-err_sib2_driver_रेजिस्टर:
-	mlxsw_core_driver_unरेजिस्टर(&mlxsw_sib_driver);
-	वापस err;
-पूर्ण
+err_sib2_pci_driver_register:
+	mlxsw_pci_driver_unregister(&mlxsw_sib_pci_driver);
+err_sib_pci_driver_register:
+	mlxsw_core_driver_unregister(&mlxsw_sib2_driver);
+err_sib2_driver_register:
+	mlxsw_core_driver_unregister(&mlxsw_sib_driver);
+	return err;
+}
 
-अटल व्योम __निकास mlxsw_sib_module_निकास(व्योम)
-अणु
-	mlxsw_pci_driver_unरेजिस्टर(&mlxsw_sib2_pci_driver);
-	mlxsw_pci_driver_unरेजिस्टर(&mlxsw_sib_pci_driver);
-	mlxsw_core_driver_unरेजिस्टर(&mlxsw_sib2_driver);
-	mlxsw_core_driver_unरेजिस्टर(&mlxsw_sib_driver);
-पूर्ण
+static void __exit mlxsw_sib_module_exit(void)
+{
+	mlxsw_pci_driver_unregister(&mlxsw_sib2_pci_driver);
+	mlxsw_pci_driver_unregister(&mlxsw_sib_pci_driver);
+	mlxsw_core_driver_unregister(&mlxsw_sib2_driver);
+	mlxsw_core_driver_unregister(&mlxsw_sib_driver);
+}
 
 module_init(mlxsw_sib_module_init);
-module_निकास(mlxsw_sib_module_निकास);
+module_exit(mlxsw_sib_module_exit);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Elad Raz <eladr@@mellanox.com>");

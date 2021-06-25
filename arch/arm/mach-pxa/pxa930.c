@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/pxa930.c
  *
- * Code specअगरic to PXA930
+ * Code specific to PXA930
  *
  * Copyright (C) 2007-2008 Marvell Internation Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/gpio-pxa.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/dma-mapping.h>
+#include <linux/irq.h>
+#include <linux/gpio-pxa.h>
+#include <linux/platform_device.h>
 
-#समावेश "pxa930.h"
+#include "pxa930.h"
 
-#समावेश "devices.h"
+#include "devices.h"
 
-अटल काष्ठा mfp_addr_map pxa930_mfp_addr_map[] __initdata = अणु
+static struct mfp_addr_map pxa930_mfp_addr_map[] __initdata = {
 
 	MFP_ADDR(GPIO0, 0x02e0),
 	MFP_ADDR(GPIO1, 0x02dc),
@@ -175,9 +174,9 @@
 	MFP_ADDR(RDY, 0x0200),
 
 	MFP_ADDR_END,
-पूर्ण;
+};
 
-अटल काष्ठा mfp_addr_map pxa935_mfp_addr_map[] __initdata = अणु
+static struct mfp_addr_map pxa935_mfp_addr_map[] __initdata = {
 	MFP_ADDR(GPIO159, 0x0524),
 	MFP_ADDR(GPIO163, 0x0534),
 	MFP_ADDR(GPIO167, 0x0544),
@@ -189,29 +188,29 @@
 	MFP_ADDR(GPIO173, 0x055c),
 
 	MFP_ADDR_END,
-पूर्ण;
+};
 
-अटल काष्ठा pxa_gpio_platक्रमm_data pxa93x_gpio_pdata = अणु
+static struct pxa_gpio_platform_data pxa93x_gpio_pdata = {
 	.irq_base	= PXA_GPIO_TO_IRQ(0),
-पूर्ण;
+};
 
-अटल पूर्णांक __init pxa930_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int __init pxa930_init(void)
+{
+	int ret = 0;
 
-	अगर (cpu_is_pxa93x()) अणु
+	if (cpu_is_pxa93x()) {
 		mfp_init_base(io_p2v(MFPR_BASE));
 		mfp_init_addr(pxa930_mfp_addr_map);
-		platक्रमm_device_add_data(&pxa93x_device_gpio,
+		platform_device_add_data(&pxa93x_device_gpio,
 					 &pxa93x_gpio_pdata,
-					 माप(pxa93x_gpio_pdata));
-		ret = platक्रमm_device_रेजिस्टर(&pxa93x_device_gpio);
-	पूर्ण
+					 sizeof(pxa93x_gpio_pdata));
+		ret = platform_device_register(&pxa93x_device_gpio);
+	}
 
-	अगर (cpu_is_pxa935())
+	if (cpu_is_pxa935())
 		mfp_init_addr(pxa935_mfp_addr_map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 core_initcall(pxa930_init);

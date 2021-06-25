@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Internal header file क्रम device mapper
+ * Internal header file for device mapper
  *
  * Copyright (C) 2001, 2002 Sistina Software
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -8,205 +7,205 @@
  * This file is released under the LGPL.
  */
 
-#अगर_अघोषित DM_INTERNAL_H
-#घोषणा DM_INTERNAL_H
+#ifndef DM_INTERNAL_H
+#define DM_INTERNAL_H
 
-#समावेश <linux/fs.h>
-#समावेश <linux/device-mapper.h>
-#समावेश <linux/list.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/refcount.h>
+#include <linux/fs.h>
+#include <linux/device-mapper.h>
+#include <linux/list.h>
+#include <linux/moduleparam.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/hdreg.h>
+#include <linux/completion.h>
+#include <linux/kobject.h>
+#include <linux/refcount.h>
 
-#समावेश "dm-stats.h"
+#include "dm-stats.h"
 
 /*
  * Suspend feature flags
  */
-#घोषणा DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
-#घोषणा DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
+#define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
+#define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
 
 /*
  * Status feature flags
  */
-#घोषणा DM_STATUS_NOFLUSH_FLAG		(1 << 0)
+#define DM_STATUS_NOFLUSH_FLAG		(1 << 0)
 
 /*
- * List of devices that a metadevice uses and should खोलो/बंद.
+ * List of devices that a metadevice uses and should open/close.
  */
-काष्ठा dm_dev_पूर्णांकernal अणु
-	काष्ठा list_head list;
+struct dm_dev_internal {
+	struct list_head list;
 	refcount_t count;
-	काष्ठा dm_dev *dm_dev;
-पूर्ण;
+	struct dm_dev *dm_dev;
+};
 
-काष्ठा dm_table;
-काष्ठा dm_md_mempools;
+struct dm_table;
+struct dm_md_mempools;
 
 /*-----------------------------------------------------------------
  * Internal table functions.
  *---------------------------------------------------------------*/
-व्योम dm_table_event_callback(काष्ठा dm_table *t,
-			     व्योम (*fn)(व्योम *), व्योम *context);
-काष्ठा dm_target *dm_table_get_target(काष्ठा dm_table *t, अचिन्हित पूर्णांक index);
-काष्ठा dm_target *dm_table_find_target(काष्ठा dm_table *t, sector_t sector);
-bool dm_table_has_no_data_devices(काष्ठा dm_table *table);
-पूर्णांक dm_calculate_queue_limits(काष्ठा dm_table *table,
-			      काष्ठा queue_limits *limits);
-व्योम dm_table_set_restrictions(काष्ठा dm_table *t, काष्ठा request_queue *q,
-			       काष्ठा queue_limits *limits);
-काष्ठा list_head *dm_table_get_devices(काष्ठा dm_table *t);
-व्योम dm_table_presuspend_tarमाला_लो(काष्ठा dm_table *t);
-व्योम dm_table_presuspend_unकरो_tarमाला_लो(काष्ठा dm_table *t);
-व्योम dm_table_postsuspend_tarमाला_लो(काष्ठा dm_table *t);
-पूर्णांक dm_table_resume_tarमाला_लो(काष्ठा dm_table *t);
-क्रमागत dm_queue_mode dm_table_get_type(काष्ठा dm_table *t);
-काष्ठा target_type *dm_table_get_immutable_target_type(काष्ठा dm_table *t);
-काष्ठा dm_target *dm_table_get_immutable_target(काष्ठा dm_table *t);
-काष्ठा dm_target *dm_table_get_wildcard_target(काष्ठा dm_table *t);
-bool dm_table_bio_based(काष्ठा dm_table *t);
-bool dm_table_request_based(काष्ठा dm_table *t);
-व्योम dm_table_मुक्त_md_mempools(काष्ठा dm_table *t);
-काष्ठा dm_md_mempools *dm_table_get_md_mempools(काष्ठा dm_table *t);
-bool dm_table_supports_dax(काष्ठा dm_table *t, iterate_devices_callout_fn fn,
-			   पूर्णांक *blocksize);
-पूर्णांक device_not_dax_capable(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
-			   sector_t start, sector_t len, व्योम *data);
+void dm_table_event_callback(struct dm_table *t,
+			     void (*fn)(void *), void *context);
+struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index);
+struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector);
+bool dm_table_has_no_data_devices(struct dm_table *table);
+int dm_calculate_queue_limits(struct dm_table *table,
+			      struct queue_limits *limits);
+void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+			       struct queue_limits *limits);
+struct list_head *dm_table_get_devices(struct dm_table *t);
+void dm_table_presuspend_targets(struct dm_table *t);
+void dm_table_presuspend_undo_targets(struct dm_table *t);
+void dm_table_postsuspend_targets(struct dm_table *t);
+int dm_table_resume_targets(struct dm_table *t);
+enum dm_queue_mode dm_table_get_type(struct dm_table *t);
+struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
+struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
+struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
+bool dm_table_bio_based(struct dm_table *t);
+bool dm_table_request_based(struct dm_table *t);
+void dm_table_free_md_mempools(struct dm_table *t);
+struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+bool dm_table_supports_dax(struct dm_table *t, iterate_devices_callout_fn fn,
+			   int *blocksize);
+int device_not_dax_capable(struct dm_target *ti, struct dm_dev *dev,
+			   sector_t start, sector_t len, void *data);
 
-व्योम dm_lock_md_type(काष्ठा mapped_device *md);
-व्योम dm_unlock_md_type(काष्ठा mapped_device *md);
-व्योम dm_set_md_type(काष्ठा mapped_device *md, क्रमागत dm_queue_mode type);
-क्रमागत dm_queue_mode dm_get_md_type(काष्ठा mapped_device *md);
-काष्ठा target_type *dm_get_immutable_target_type(काष्ठा mapped_device *md);
+void dm_lock_md_type(struct mapped_device *md);
+void dm_unlock_md_type(struct mapped_device *md);
+void dm_set_md_type(struct mapped_device *md, enum dm_queue_mode type);
+enum dm_queue_mode dm_get_md_type(struct mapped_device *md);
+struct target_type *dm_get_immutable_target_type(struct mapped_device *md);
 
-पूर्णांक dm_setup_md_queue(काष्ठा mapped_device *md, काष्ठा dm_table *t);
+int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
 
 /*
  * To check whether the target type is bio-based or not (request-based).
  */
-#घोषणा dm_target_bio_based(t) ((t)->type->map != शून्य)
+#define dm_target_bio_based(t) ((t)->type->map != NULL)
 
 /*
  * To check whether the target type is request-based or not (bio-based).
  */
-#घोषणा dm_target_request_based(t) ((t)->type->clone_and_map_rq != शून्य)
+#define dm_target_request_based(t) ((t)->type->clone_and_map_rq != NULL)
 
 /*
  * To check whether the target type is a hybrid (capable of being
  * either request-based or bio-based).
  */
-#घोषणा dm_target_hybrid(t) (dm_target_bio_based(t) && dm_target_request_based(t))
+#define dm_target_hybrid(t) (dm_target_bio_based(t) && dm_target_request_based(t))
 
 /*-----------------------------------------------------------------
  * A registry of target types.
  *---------------------------------------------------------------*/
-पूर्णांक dm_target_init(व्योम);
-व्योम dm_target_निकास(व्योम);
-काष्ठा target_type *dm_get_target_type(स्थिर अक्षर *name);
-व्योम dm_put_target_type(काष्ठा target_type *tt);
-पूर्णांक dm_target_iterate(व्योम (*iter_func)(काष्ठा target_type *tt,
-					व्योम *param), व्योम *param);
+int dm_target_init(void);
+void dm_target_exit(void);
+struct target_type *dm_get_target_type(const char *name);
+void dm_put_target_type(struct target_type *tt);
+int dm_target_iterate(void (*iter_func)(struct target_type *tt,
+					void *param), void *param);
 
-पूर्णांक dm_split_args(पूर्णांक *argc, अक्षर ***argvp, अक्षर *input);
+int dm_split_args(int *argc, char ***argvp, char *input);
 
 /*
  * Is this mapped_device being deleted?
  */
-पूर्णांक dm_deleting_md(काष्ठा mapped_device *md);
+int dm_deleting_md(struct mapped_device *md);
 
 /*
  * Is this mapped_device suspended?
  */
-पूर्णांक dm_suspended_md(काष्ठा mapped_device *md);
+int dm_suspended_md(struct mapped_device *md);
 
 /*
  * Internal suspend and resume methods.
  */
-पूर्णांक dm_suspended_पूर्णांकernally_md(काष्ठा mapped_device *md);
-व्योम dm_पूर्णांकernal_suspend_fast(काष्ठा mapped_device *md);
-व्योम dm_पूर्णांकernal_resume_fast(काष्ठा mapped_device *md);
-व्योम dm_पूर्णांकernal_suspend_noflush(काष्ठा mapped_device *md);
-व्योम dm_पूर्णांकernal_resume(काष्ठा mapped_device *md);
+int dm_suspended_internally_md(struct mapped_device *md);
+void dm_internal_suspend_fast(struct mapped_device *md);
+void dm_internal_resume_fast(struct mapped_device *md);
+void dm_internal_suspend_noflush(struct mapped_device *md);
+void dm_internal_resume(struct mapped_device *md);
 
 /*
- * Test अगर the device is scheduled क्रम deferred हटाओ.
+ * Test if the device is scheduled for deferred remove.
  */
-पूर्णांक dm_test_deferred_हटाओ_flag(काष्ठा mapped_device *md);
+int dm_test_deferred_remove_flag(struct mapped_device *md);
 
 /*
- * Try to हटाओ devices marked क्रम deferred removal.
+ * Try to remove devices marked for deferred removal.
  */
-व्योम dm_deferred_हटाओ(व्योम);
+void dm_deferred_remove(void);
 
 /*
- * The device-mapper can be driven through one of two पूर्णांकerfaces;
- * ioctl or fileप्रणाली, depending which patch you have applied.
+ * The device-mapper can be driven through one of two interfaces;
+ * ioctl or filesystem, depending which patch you have applied.
  */
-पूर्णांक dm_पूर्णांकerface_init(व्योम);
-व्योम dm_पूर्णांकerface_निकास(व्योम);
+int dm_interface_init(void);
+void dm_interface_exit(void);
 
 /*
- * sysfs पूर्णांकerface
+ * sysfs interface
  */
-पूर्णांक dm_sysfs_init(काष्ठा mapped_device *md);
-व्योम dm_sysfs_निकास(काष्ठा mapped_device *md);
-काष्ठा kobject *dm_kobject(काष्ठा mapped_device *md);
-काष्ठा mapped_device *dm_get_from_kobject(काष्ठा kobject *kobj);
+int dm_sysfs_init(struct mapped_device *md);
+void dm_sysfs_exit(struct mapped_device *md);
+struct kobject *dm_kobject(struct mapped_device *md);
+struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
 
 /*
  * The kobject helper
  */
-व्योम dm_kobject_release(काष्ठा kobject *kobj);
+void dm_kobject_release(struct kobject *kobj);
 
 /*
- * Tarमाला_लो क्रम linear and striped mappings
+ * Targets for linear and striped mappings
  */
-पूर्णांक dm_linear_init(व्योम);
-व्योम dm_linear_निकास(व्योम);
+int dm_linear_init(void);
+void dm_linear_exit(void);
 
-पूर्णांक dm_stripe_init(व्योम);
-व्योम dm_stripe_निकास(व्योम);
+int dm_stripe_init(void);
+void dm_stripe_exit(void);
 
 /*
  * mapped_device operations
  */
-व्योम dm_destroy(काष्ठा mapped_device *md);
-व्योम dm_destroy_immediate(काष्ठा mapped_device *md);
-पूर्णांक dm_खोलो_count(काष्ठा mapped_device *md);
-पूर्णांक dm_lock_क्रम_deletion(काष्ठा mapped_device *md, bool mark_deferred, bool only_deferred);
-पूर्णांक dm_cancel_deferred_हटाओ(काष्ठा mapped_device *md);
-पूर्णांक dm_request_based(काष्ठा mapped_device *md);
-पूर्णांक dm_get_table_device(काष्ठा mapped_device *md, dev_t dev, भ_शेषe_t mode,
-			काष्ठा dm_dev **result);
-व्योम dm_put_table_device(काष्ठा mapped_device *md, काष्ठा dm_dev *d);
+void dm_destroy(struct mapped_device *md);
+void dm_destroy_immediate(struct mapped_device *md);
+int dm_open_count(struct mapped_device *md);
+int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only_deferred);
+int dm_cancel_deferred_remove(struct mapped_device *md);
+int dm_request_based(struct mapped_device *md);
+int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
+			struct dm_dev **result);
+void dm_put_table_device(struct mapped_device *md, struct dm_dev *d);
 
-पूर्णांक dm_kobject_uevent(काष्ठा mapped_device *md, क्रमागत kobject_action action,
-		      अचिन्हित cookie);
+int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
+		      unsigned cookie);
 
-व्योम dm_पूर्णांकernal_suspend(काष्ठा mapped_device *md);
-व्योम dm_पूर्णांकernal_resume(काष्ठा mapped_device *md);
+void dm_internal_suspend(struct mapped_device *md);
+void dm_internal_resume(struct mapped_device *md);
 
-पूर्णांक dm_io_init(व्योम);
-व्योम dm_io_निकास(व्योम);
+int dm_io_init(void);
+void dm_io_exit(void);
 
-पूर्णांक dm_kcopyd_init(व्योम);
-व्योम dm_kcopyd_निकास(व्योम);
+int dm_kcopyd_init(void);
+void dm_kcopyd_exit(void);
 
 /*
  * Mempool operations
  */
-काष्ठा dm_md_mempools *dm_alloc_md_mempools(काष्ठा mapped_device *md, क्रमागत dm_queue_mode type,
-					    अचिन्हित पूर्णांकegrity, अचिन्हित per_bio_data_size,
-					    अचिन्हित min_pool_size);
-व्योम dm_मुक्त_md_mempools(काष्ठा dm_md_mempools *pools);
+struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, enum dm_queue_mode type,
+					    unsigned integrity, unsigned per_bio_data_size,
+					    unsigned min_pool_size);
+void dm_free_md_mempools(struct dm_md_mempools *pools);
 
 /*
  * Various helpers
  */
-अचिन्हित dm_get_reserved_bio_based_ios(व्योम);
+unsigned dm_get_reserved_bio_based_ios(void);
 
-#पूर्ण_अगर
+#endif

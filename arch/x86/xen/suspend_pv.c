@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/types.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/types.h>
 
-#समावेश <यंत्र/xen/hypercall.h>
-#समावेश <यंत्र/xen/page.h>
+#include <asm/xen/hypercall.h>
+#include <asm/xen/page.h>
 
-#समावेश <यंत्र/fixmap.h>
+#include <asm/fixmap.h>
 
-#समावेश "xen-ops.h"
+#include "xen-ops.h"
 
-व्योम xen_pv_pre_suspend(व्योम)
-अणु
+void xen_pv_pre_suspend(void)
+{
 	xen_mm_pin_all();
 
 	xen_start_info->store_mfn = mfn_to_pfn(xen_start_info->store_mfn);
-	xen_start_info->console.करोmU.mfn =
-		mfn_to_pfn(xen_start_info->console.करोmU.mfn);
+	xen_start_info->console.domU.mfn =
+		mfn_to_pfn(xen_start_info->console.domU.mfn);
 
 	BUG_ON(!irqs_disabled());
 
 	HYPERVISOR_shared_info = &xen_dummy_shared_info;
-	अगर (HYPERVISOR_update_va_mapping(fix_to_virt(FIX_PARAVIRT_BOOTMAP),
+	if (HYPERVISOR_update_va_mapping(fix_to_virt(FIX_PARAVIRT_BOOTMAP),
 					 __pte_ma(0), 0))
 		BUG();
-पूर्ण
+}
 
-व्योम xen_pv_post_suspend(पूर्णांक suspend_cancelled)
-अणु
+void xen_pv_post_suspend(int suspend_cancelled)
+{
 	xen_build_mfn_list_list();
 	set_fixmap(FIX_PARAVIRT_BOOTMAP, xen_start_info->shared_info);
-	HYPERVISOR_shared_info = (व्योम *)fix_to_virt(FIX_PARAVIRT_BOOTMAP);
+	HYPERVISOR_shared_info = (void *)fix_to_virt(FIX_PARAVIRT_BOOTMAP);
 	xen_setup_mfn_list_list();
 
-	अगर (suspend_cancelled) अणु
+	if (suspend_cancelled) {
 		xen_start_info->store_mfn =
 			pfn_to_mfn(xen_start_info->store_mfn);
-		xen_start_info->console.करोmU.mfn =
-			pfn_to_mfn(xen_start_info->console.करोmU.mfn);
-	पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_SMP
-		BUG_ON(xen_cpu_initialized_map == शून्य);
+		xen_start_info->console.domU.mfn =
+			pfn_to_mfn(xen_start_info->console.domU.mfn);
+	} else {
+#ifdef CONFIG_SMP
+		BUG_ON(xen_cpu_initialized_map == NULL);
 		cpumask_copy(xen_cpu_initialized_map, cpu_online_mask);
-#पूर्ण_अगर
+#endif
 		xen_vcpu_restore();
-	पूर्ण
+	}
 
 	xen_mm_unpin_all();
-पूर्ण
+}

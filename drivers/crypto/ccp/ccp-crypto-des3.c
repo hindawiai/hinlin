@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AMD Cryptographic Coprocessor (CCP) DES3 crypto API support
  *
@@ -8,84 +7,84 @@
  * Author: Gary R Hook <ghook@amd.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/scatterlist.h>
+#include <linux/crypto.h>
+#include <crypto/algapi.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/internal/des.h>
 
-#समावेश "ccp-crypto.h"
+#include "ccp-crypto.h"
 
-अटल पूर्णांक ccp_des3_complete(काष्ठा crypto_async_request *async_req, पूर्णांक ret)
-अणु
-	काष्ठा skcipher_request *req = skcipher_request_cast(async_req);
-	काष्ठा ccp_ctx *ctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा ccp_des3_req_ctx *rctx = skcipher_request_ctx(req);
+static int ccp_des3_complete(struct crypto_async_request *async_req, int ret)
+{
+	struct skcipher_request *req = skcipher_request_cast(async_req);
+	struct ccp_ctx *ctx = crypto_tfm_ctx(req->base.tfm);
+	struct ccp_des3_req_ctx *rctx = skcipher_request_ctx(req);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ctx->u.des3.mode != CCP_DES3_MODE_ECB)
-		स_नकल(req->iv, rctx->iv, DES3_EDE_BLOCK_SIZE);
+	if (ctx->u.des3.mode != CCP_DES3_MODE_ECB)
+		memcpy(req->iv, rctx->iv, DES3_EDE_BLOCK_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccp_des3_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-		अचिन्हित पूर्णांक key_len)
-अणु
-	काष्ठा ccp_crypto_skcipher_alg *alg = ccp_crypto_skcipher_alg(tfm);
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
-	पूर्णांक err;
+static int ccp_des3_setkey(struct crypto_skcipher *tfm, const u8 *key,
+		unsigned int key_len)
+{
+	struct ccp_crypto_skcipher_alg *alg = ccp_crypto_skcipher_alg(tfm);
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+	int err;
 
-	err = verअगरy_skcipher_des3_key(tfm, key);
-	अगर (err)
-		वापस err;
+	err = verify_skcipher_des3_key(tfm, key);
+	if (err)
+		return err;
 
-	/* It's not clear that there is any support क्रम a keysize of 112.
+	/* It's not clear that there is any support for a keysize of 112.
 	 * If needed, the caller should make K1 == K3
 	 */
 	ctx->u.des3.type = CCP_DES3_TYPE_168;
 	ctx->u.des3.mode = alg->mode;
 	ctx->u.des3.key_len = key_len;
 
-	स_नकल(ctx->u.des3.key, key, key_len);
+	memcpy(ctx->u.des3.key, key, key_len);
 	sg_init_one(&ctx->u.des3.key_sg, ctx->u.des3.key, key_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccp_des3_crypt(काष्ठा skcipher_request *req, bool encrypt)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा ccp_des3_req_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा scatterlist *iv_sg = शून्य;
-	अचिन्हित पूर्णांक iv_len = 0;
-	पूर्णांक ret;
+static int ccp_des3_crypt(struct skcipher_request *req, bool encrypt)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct ccp_des3_req_ctx *rctx = skcipher_request_ctx(req);
+	struct scatterlist *iv_sg = NULL;
+	unsigned int iv_len = 0;
+	int ret;
 
-	अगर (!ctx->u.des3.key_len)
-		वापस -EINVAL;
+	if (!ctx->u.des3.key_len)
+		return -EINVAL;
 
-	अगर (((ctx->u.des3.mode == CCP_DES3_MODE_ECB) ||
+	if (((ctx->u.des3.mode == CCP_DES3_MODE_ECB) ||
 	     (ctx->u.des3.mode == CCP_DES3_MODE_CBC)) &&
 	    (req->cryptlen & (DES3_EDE_BLOCK_SIZE - 1)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (ctx->u.des3.mode != CCP_DES3_MODE_ECB) अणु
-		अगर (!req->iv)
-			वापस -EINVAL;
+	if (ctx->u.des3.mode != CCP_DES3_MODE_ECB) {
+		if (!req->iv)
+			return -EINVAL;
 
-		स_नकल(rctx->iv, req->iv, DES3_EDE_BLOCK_SIZE);
+		memcpy(rctx->iv, req->iv, DES3_EDE_BLOCK_SIZE);
 		iv_sg = &rctx->iv_sg;
 		iv_len = DES3_EDE_BLOCK_SIZE;
 		sg_init_one(iv_sg, rctx->iv, iv_len);
-	पूर्ण
+	}
 
-	स_रखो(&rctx->cmd, 0, माप(rctx->cmd));
+	memset(&rctx->cmd, 0, sizeof(rctx->cmd));
 	INIT_LIST_HEAD(&rctx->cmd.entry);
 	rctx->cmd.engine = CCP_ENGINE_DES3;
 	rctx->cmd.u.des3.type = ctx->u.des3.type;
@@ -103,32 +102,32 @@
 
 	ret = ccp_crypto_enqueue_request(&req->base, &rctx->cmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccp_des3_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस ccp_des3_crypt(req, true);
-पूर्ण
+static int ccp_des3_encrypt(struct skcipher_request *req)
+{
+	return ccp_des3_crypt(req, true);
+}
 
-अटल पूर्णांक ccp_des3_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस ccp_des3_crypt(req, false);
-पूर्ण
+static int ccp_des3_decrypt(struct skcipher_request *req)
+{
+	return ccp_des3_crypt(req, false);
+}
 
-अटल पूर्णांक ccp_des3_init_tfm(काष्ठा crypto_skcipher *tfm)
-अणु
-	काष्ठा ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
+static int ccp_des3_init_tfm(struct crypto_skcipher *tfm)
+{
+	struct ccp_ctx *ctx = crypto_skcipher_ctx(tfm);
 
 	ctx->complete = ccp_des3_complete;
 	ctx->u.des3.key_len = 0;
 
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा ccp_des3_req_ctx));
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct ccp_des3_req_ctx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा skcipher_alg ccp_des3_शेषs = अणु
+static const struct skcipher_alg ccp_des3_defaults = {
 	.setkey			= ccp_des3_setkey,
 	.encrypt		= ccp_des3_encrypt,
 	.decrypt		= ccp_des3_decrypt,
@@ -141,91 +140,91 @@
 				  CRYPTO_ALG_KERN_DRIVER_ONLY |
 				  CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize	= DES3_EDE_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा ccp_ctx),
+	.base.cra_ctxsize	= sizeof(struct ccp_ctx),
 	.base.cra_priority	= CCP_CRA_PRIORITY,
 	.base.cra_module	= THIS_MODULE,
-पूर्ण;
+};
 
-काष्ठा ccp_des3_def अणु
-	क्रमागत ccp_des3_mode mode;
-	अचिन्हित पूर्णांक version;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *driver_name;
-	अचिन्हित पूर्णांक blocksize;
-	अचिन्हित पूर्णांक ivsize;
-	स्थिर काष्ठा skcipher_alg *alg_शेषs;
-पूर्ण;
+struct ccp_des3_def {
+	enum ccp_des3_mode mode;
+	unsigned int version;
+	const char *name;
+	const char *driver_name;
+	unsigned int blocksize;
+	unsigned int ivsize;
+	const struct skcipher_alg *alg_defaults;
+};
 
-अटल स्थिर काष्ठा ccp_des3_def des3_algs[] = अणु
-	अणु
+static const struct ccp_des3_def des3_algs[] = {
+	{
 		.mode		= CCP_DES3_MODE_ECB,
 		.version	= CCP_VERSION(5, 0),
 		.name		= "ecb(des3_ede)",
 		.driver_name	= "ecb-des3-ccp",
 		.blocksize	= DES3_EDE_BLOCK_SIZE,
 		.ivsize		= 0,
-		.alg_शेषs	= &ccp_des3_शेषs,
-	पूर्ण,
-	अणु
+		.alg_defaults	= &ccp_des3_defaults,
+	},
+	{
 		.mode		= CCP_DES3_MODE_CBC,
 		.version	= CCP_VERSION(5, 0),
 		.name		= "cbc(des3_ede)",
 		.driver_name	= "cbc-des3-ccp",
 		.blocksize	= DES3_EDE_BLOCK_SIZE,
 		.ivsize		= DES3_EDE_BLOCK_SIZE,
-		.alg_शेषs	= &ccp_des3_शेषs,
-	पूर्ण,
-पूर्ण;
+		.alg_defaults	= &ccp_des3_defaults,
+	},
+};
 
-अटल पूर्णांक ccp_रेजिस्टर_des3_alg(काष्ठा list_head *head,
-				 स्थिर काष्ठा ccp_des3_def *def)
-अणु
-	काष्ठा ccp_crypto_skcipher_alg *ccp_alg;
-	काष्ठा skcipher_alg *alg;
-	पूर्णांक ret;
+static int ccp_register_des3_alg(struct list_head *head,
+				 const struct ccp_des3_def *def)
+{
+	struct ccp_crypto_skcipher_alg *ccp_alg;
+	struct skcipher_alg *alg;
+	int ret;
 
-	ccp_alg = kzalloc(माप(*ccp_alg), GFP_KERNEL);
-	अगर (!ccp_alg)
-		वापस -ENOMEM;
+	ccp_alg = kzalloc(sizeof(*ccp_alg), GFP_KERNEL);
+	if (!ccp_alg)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&ccp_alg->entry);
 
 	ccp_alg->mode = def->mode;
 
-	/* Copy the शेषs and override as necessary */
+	/* Copy the defaults and override as necessary */
 	alg = &ccp_alg->alg;
-	*alg = *def->alg_शेषs;
-	snम_लिखो(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
-	snम_लिखो(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
+	*alg = *def->alg_defaults;
+	snprintf(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
+	snprintf(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
 			def->driver_name);
 	alg->base.cra_blocksize = def->blocksize;
 	alg->ivsize = def->ivsize;
 
-	ret = crypto_रेजिस्टर_skcipher(alg);
-	अगर (ret) अणु
+	ret = crypto_register_skcipher(alg);
+	if (ret) {
 		pr_err("%s skcipher algorithm registration error (%d)\n",
 				alg->base.cra_name, ret);
-		kमुक्त(ccp_alg);
-		वापस ret;
-	पूर्ण
+		kfree(ccp_alg);
+		return ret;
+	}
 
 	list_add(&ccp_alg->entry, head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ccp_रेजिस्टर_des3_algs(काष्ठा list_head *head)
-अणु
-	पूर्णांक i, ret;
-	अचिन्हित पूर्णांक ccpversion = ccp_version();
+int ccp_register_des3_algs(struct list_head *head)
+{
+	int i, ret;
+	unsigned int ccpversion = ccp_version();
 
-	क्रम (i = 0; i < ARRAY_SIZE(des3_algs); i++) अणु
-		अगर (des3_algs[i].version > ccpversion)
-			जारी;
-		ret = ccp_रेजिस्टर_des3_alg(head, &des3_algs[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(des3_algs); i++) {
+		if (des3_algs[i].version > ccpversion)
+			continue;
+		ret = ccp_register_des3_alg(head, &des3_algs[i]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,116 +1,115 @@
-<शैली गुरु>
 /*
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश "reiserfs.h"
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include "reiserfs.h"
+#include <linux/stat.h>
+#include <linux/buffer_head.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-बाह्य स्थिर काष्ठा reiserfs_key MIN_KEY;
+extern const struct reiserfs_key MIN_KEY;
 
-अटल पूर्णांक reiserfs_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
-अटल पूर्णांक reiserfs_dir_fsync(काष्ठा file *filp, loff_t start, loff_t end,
-			      पूर्णांक datasync);
+static int reiserfs_readdir(struct file *, struct dir_context *);
+static int reiserfs_dir_fsync(struct file *filp, loff_t start, loff_t end,
+			      int datasync);
 
-स्थिर काष्ठा file_operations reiserfs_dir_operations = अणु
+const struct file_operations reiserfs_dir_operations = {
 	.llseek = generic_file_llseek,
-	.पढ़ो = generic_पढ़ो_dir,
-	.iterate_shared = reiserfs_सूची_पढ़ो,
+	.read = generic_read_dir,
+	.iterate_shared = reiserfs_readdir,
 	.fsync = reiserfs_dir_fsync,
 	.unlocked_ioctl = reiserfs_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = reiserfs_compat_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक reiserfs_dir_fsync(काष्ठा file *filp, loff_t start, loff_t end,
-			      पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = filp->f_mapping->host;
-	पूर्णांक err;
+static int reiserfs_dir_fsync(struct file *filp, loff_t start, loff_t end,
+			      int datasync)
+{
+	struct inode *inode = filp->f_mapping->host;
+	int err;
 
-	err = file_ग_लिखो_and_रुको_range(filp, start, end);
-	अगर (err)
-		वापस err;
+	err = file_write_and_wait_range(filp, start, end);
+	if (err)
+		return err;
 
 	inode_lock(inode);
-	reiserfs_ग_लिखो_lock(inode->i_sb);
-	err = reiserfs_commit_क्रम_inode(inode);
-	reiserfs_ग_लिखो_unlock(inode->i_sb);
+	reiserfs_write_lock(inode->i_sb);
+	err = reiserfs_commit_for_inode(inode);
+	reiserfs_write_unlock(inode->i_sb);
 	inode_unlock(inode);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-#घोषणा store_ih(where,what) copy_item_head (where, what)
+#define store_ih(where,what) copy_item_head (where, what)
 
-अटल अंतरभूत bool is_privroot_deh(काष्ठा inode *dir, काष्ठा reiserfs_de_head *deh)
-अणु
-	काष्ठा dentry *privroot = REISERFS_SB(dir->i_sb)->priv_root;
-	वापस (d_really_is_positive(privroot) &&
+static inline bool is_privroot_deh(struct inode *dir, struct reiserfs_de_head *deh)
+{
+	struct dentry *privroot = REISERFS_SB(dir->i_sb)->priv_root;
+	return (d_really_is_positive(privroot) &&
 	        deh->deh_objectid == INODE_PKEY(d_inode(privroot))->k_objectid);
-पूर्ण
+}
 
-पूर्णांक reiserfs_सूची_पढ़ो_inode(काष्ठा inode *inode, काष्ठा dir_context *ctx)
-अणु
+int reiserfs_readdir_inode(struct inode *inode, struct dir_context *ctx)
+{
 
 	/* key of current position in the directory (key of directory entry) */
-	काष्ठा cpu_key pos_key;
+	struct cpu_key pos_key;
 
 	INITIALIZE_PATH(path_to_entry);
-	काष्ठा buffer_head *bh;
-	पूर्णांक item_num, entry_num;
-	स्थिर काष्ठा reiserfs_key *rkey;
-	काष्ठा item_head *ih, पंचांगp_ih;
-	पूर्णांक search_res;
-	अक्षर *local_buf;
+	struct buffer_head *bh;
+	int item_num, entry_num;
+	const struct reiserfs_key *rkey;
+	struct item_head *ih, tmp_ih;
+	int search_res;
+	char *local_buf;
 	loff_t next_pos;
-	अक्षर small_buf[32];	/* aव्योम kदो_स्मृति अगर we can */
-	काष्ठा reiserfs_dir_entry de;
-	पूर्णांक ret = 0;
-	पूर्णांक depth;
+	char small_buf[32];	/* avoid kmalloc if we can */
+	struct reiserfs_dir_entry de;
+	int ret = 0;
+	int depth;
 
-	reiserfs_ग_लिखो_lock(inode->i_sb);
+	reiserfs_write_lock(inode->i_sb);
 
 	reiserfs_check_lock_depth(inode->i_sb, "readdir");
 
 	/*
-	 * क्रमm key क्रम search the next directory entry using
-	 * f_pos field of file काष्ठाure
+	 * form key for search the next directory entry using
+	 * f_pos field of file structure
 	 */
-	make_cpu_key(&pos_key, inode, ctx->pos ?: DOT_OFFSET, TYPE_सूचीENTRY, 3);
+	make_cpu_key(&pos_key, inode, ctx->pos ?: DOT_OFFSET, TYPE_DIRENTRY, 3);
 	next_pos = cpu_key_k_offset(&pos_key);
 
-	path_to_entry.पढ़ोa = PATH_READA;
-	जबतक (1) अणु
+	path_to_entry.reada = PATH_READA;
+	while (1) {
 research:
 		/*
 		 * search the directory item, containing entry with
-		 * specअगरied key
+		 * specified key
 		 */
 		search_res =
 		    search_by_entry_key(inode->i_sb, &pos_key, &path_to_entry,
 					&de);
-		अगर (search_res == IO_ERROR) अणु
+		if (search_res == IO_ERROR) {
 			/*
 			 * FIXME: we could just skip part of directory
-			 * which could not be पढ़ो
+			 * which could not be read
 			 */
 			ret = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		entry_num = de.de_entry_num;
 		bh = de.de_bh;
 		item_num = de.de_item_num;
 		ih = de.de_ih;
-		store_ih(&पंचांगp_ih, ih);
+		store_ih(&tmp_ih, ih);
 
 		/* we must have found item, that is item of this directory, */
 		RFALSE(COMP_SHORT_KEYS(&ih->ih_key, &pos_key),
@@ -132,216 +131,216 @@ research:
 		 * go through all entries in the directory item beginning
 		 * from the entry, that has been found
 		 */
-		अगर (search_res == POSITION_FOUND
-		    || entry_num < ih_entry_count(ih)) अणु
-			काष्ठा reiserfs_de_head *deh =
+		if (search_res == POSITION_FOUND
+		    || entry_num < ih_entry_count(ih)) {
+			struct reiserfs_de_head *deh =
 			    B_I_DEH(bh, ih) + entry_num;
 
-			क्रम (; entry_num < ih_entry_count(ih);
-			     entry_num++, deh++) अणु
-				पूर्णांक d_reclen;
-				अक्षर *d_name;
+			for (; entry_num < ih_entry_count(ih);
+			     entry_num++, deh++) {
+				int d_reclen;
+				char *d_name;
 				ino_t d_ino;
 				loff_t cur_pos = deh_offset(deh);
 
 				/* it is hidden entry */
-				अगर (!de_visible(deh))
-					जारी;
+				if (!de_visible(deh))
+					continue;
 				d_reclen = entry_length(bh, ih, entry_num);
-				d_name = B_I_DEH_ENTRY_खाता_NAME(bh, ih, deh);
+				d_name = B_I_DEH_ENTRY_FILE_NAME(bh, ih, deh);
 
-				अगर (d_reclen <= 0 ||
-				    d_name + d_reclen > bh->b_data + bh->b_size) अणु
+				if (d_reclen <= 0 ||
+				    d_name + d_reclen > bh->b_data + bh->b_size) {
 					/*
 					 * There is corrupted data in entry,
 					 * We'd better stop here
 					 */
-					pathrअन्यथा(&path_to_entry);
+					pathrelse(&path_to_entry);
 					ret = -EIO;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
-				अगर (!d_name[d_reclen - 1])
-					d_reclen = म_माप(d_name);
+				if (!d_name[d_reclen - 1])
+					d_reclen = strlen(d_name);
 
 				/* too big to send back to VFS */
-				अगर (d_reclen >
+				if (d_reclen >
 				    REISERFS_MAX_NAME(inode->i_sb->
-						      s_blocksize)) अणु
-					जारी;
-				पूर्ण
+						      s_blocksize)) {
+					continue;
+				}
 
 				/* Ignore the .reiserfs_priv entry */
-				अगर (is_privroot_deh(inode, deh))
-					जारी;
+				if (is_privroot_deh(inode, deh))
+					continue;
 
 				ctx->pos = deh_offset(deh);
 				d_ino = deh_objectid(deh);
-				अगर (d_reclen <= 32) अणु
+				if (d_reclen <= 32) {
 					local_buf = small_buf;
-				पूर्ण अन्यथा अणु
-					local_buf = kदो_स्मृति(d_reclen,
+				} else {
+					local_buf = kmalloc(d_reclen,
 							    GFP_NOFS);
-					अगर (!local_buf) अणु
-						pathrअन्यथा(&path_to_entry);
+					if (!local_buf) {
+						pathrelse(&path_to_entry);
 						ret = -ENOMEM;
-						जाओ out;
-					पूर्ण
-					अगर (item_moved(&पंचांगp_ih, &path_to_entry)) अणु
-						kमुक्त(local_buf);
-						जाओ research;
-					पूर्ण
-				पूर्ण
+						goto out;
+					}
+					if (item_moved(&tmp_ih, &path_to_entry)) {
+						kfree(local_buf);
+						goto research;
+					}
+				}
 
 				/*
 				 * Note, that we copy name to user space via
 				 * temporary buffer (local_buf) because
-				 * filldir will block अगर user space buffer is
-				 * swapped out. At that समय entry can move to
-				 * somewhere अन्यथा
+				 * filldir will block if user space buffer is
+				 * swapped out. At that time entry can move to
+				 * somewhere else
 				 */
-				स_नकल(local_buf, d_name, d_reclen);
+				memcpy(local_buf, d_name, d_reclen);
 
 				/*
 				 * Since filldir might sleep, we can release
-				 * the ग_लिखो lock here क्रम other रुकोers
+				 * the write lock here for other waiters
 				 */
-				depth = reiserfs_ग_लिखो_unlock_nested(inode->i_sb);
-				अगर (!dir_emit
+				depth = reiserfs_write_unlock_nested(inode->i_sb);
+				if (!dir_emit
 				    (ctx, local_buf, d_reclen, d_ino,
-				     DT_UNKNOWN)) अणु
-					reiserfs_ग_लिखो_lock_nested(inode->i_sb, depth);
-					अगर (local_buf != small_buf) अणु
-						kमुक्त(local_buf);
-					पूर्ण
-					जाओ end;
-				पूर्ण
-				reiserfs_ग_लिखो_lock_nested(inode->i_sb, depth);
-				अगर (local_buf != small_buf) अणु
-					kमुक्त(local_buf);
-				पूर्ण
+				     DT_UNKNOWN)) {
+					reiserfs_write_lock_nested(inode->i_sb, depth);
+					if (local_buf != small_buf) {
+						kfree(local_buf);
+					}
+					goto end;
+				}
+				reiserfs_write_lock_nested(inode->i_sb, depth);
+				if (local_buf != small_buf) {
+					kfree(local_buf);
+				}
 
 				/* deh_offset(deh) may be invalid now. */
 				next_pos = cur_pos + 1;
 
-				अगर (item_moved(&पंचांगp_ih, &path_to_entry)) अणु
+				if (item_moved(&tmp_ih, &path_to_entry)) {
 					set_cpu_key_k_offset(&pos_key,
 							     next_pos);
-					जाओ research;
-				पूर्ण
-			पूर्ण	/* क्रम */
-		पूर्ण
+					goto research;
+				}
+			}	/* for */
+		}
 
 		/* end of directory has been reached */
-		अगर (item_num != B_NR_ITEMS(bh) - 1)
-			जाओ end;
+		if (item_num != B_NR_ITEMS(bh) - 1)
+			goto end;
 
 		/*
 		 * item we went through is last item of node. Using right
 		 * delimiting key check is it directory end
 		 */
 		rkey = get_rkey(&path_to_entry, inode->i_sb);
-		अगर (!comp_le_keys(rkey, &MIN_KEY)) अणु
+		if (!comp_le_keys(rkey, &MIN_KEY)) {
 			/*
 			 * set pos_key to key, that is the smallest and greater
 			 * that key of the last entry in the item
 			 */
 			set_cpu_key_k_offset(&pos_key, next_pos);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* end of directory has been reached */
-		अगर (COMP_SHORT_KEYS(rkey, &pos_key)) अणु
-			जाओ end;
-		पूर्ण
+		if (COMP_SHORT_KEYS(rkey, &pos_key)) {
+			goto end;
+		}
 
-		/* directory जारीs in the right neighboring block */
+		/* directory continues in the right neighboring block */
 		set_cpu_key_k_offset(&pos_key,
 				     le_key_k_offset(KEY_FORMAT_3_5, rkey));
 
-	पूर्ण			/* जबतक */
+	}			/* while */
 
 end:
 	ctx->pos = next_pos;
-	pathrअन्यथा(&path_to_entry);
+	pathrelse(&path_to_entry);
 	reiserfs_check_path(&path_to_entry);
 out:
-	reiserfs_ग_लिखो_unlock(inode->i_sb);
-	वापस ret;
-पूर्ण
+	reiserfs_write_unlock(inode->i_sb);
+	return ret;
+}
 
-अटल पूर्णांक reiserfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	वापस reiserfs_सूची_पढ़ो_inode(file_inode(file), ctx);
-पूर्ण
+static int reiserfs_readdir(struct file *file, struct dir_context *ctx)
+{
+	return reiserfs_readdir_inode(file_inode(file), ctx);
+}
 
 /*
  * compose directory item containing "." and ".." entries (entries are
  * not aligned to 4 byte boundary)
  */
-व्योम make_empty_dir_item_v1(अक्षर *body, __le32 dirid, __le32 objid,
+void make_empty_dir_item_v1(char *body, __le32 dirid, __le32 objid,
 			    __le32 par_dirid, __le32 par_objid)
-अणु
-	काष्ठा reiserfs_de_head *करोt, *करोtकरोt;
+{
+	struct reiserfs_de_head *dot, *dotdot;
 
-	स_रखो(body, 0, EMPTY_सूची_SIZE_V1);
-	करोt = (काष्ठा reiserfs_de_head *)body;
-	करोtकरोt = करोt + 1;
+	memset(body, 0, EMPTY_DIR_SIZE_V1);
+	dot = (struct reiserfs_de_head *)body;
+	dotdot = dot + 1;
 
 	/* direntry header of "." */
-	put_deh_offset(करोt, DOT_OFFSET);
+	put_deh_offset(dot, DOT_OFFSET);
 	/* these two are from make_le_item_head, and are LE */
-	करोt->deh_dir_id = dirid;
-	करोt->deh_objectid = objid;
-	करोt->deh_state = 0;	/* Endian safe अगर 0 */
-	put_deh_location(करोt, EMPTY_सूची_SIZE_V1 - म_माप("."));
-	mark_de_visible(करोt);
+	dot->deh_dir_id = dirid;
+	dot->deh_objectid = objid;
+	dot->deh_state = 0;	/* Endian safe if 0 */
+	put_deh_location(dot, EMPTY_DIR_SIZE_V1 - strlen("."));
+	mark_de_visible(dot);
 
 	/* direntry header of ".." */
-	put_deh_offset(करोtकरोt, DOT_DOT_OFFSET);
-	/* key of ".." क्रम the root directory */
+	put_deh_offset(dotdot, DOT_DOT_OFFSET);
+	/* key of ".." for the root directory */
 	/* these two are from the inode, and are LE */
-	करोtकरोt->deh_dir_id = par_dirid;
-	करोtकरोt->deh_objectid = par_objid;
-	करोtकरोt->deh_state = 0;	/* Endian safe अगर 0 */
-	put_deh_location(करोtकरोt, deh_location(करोt) - म_माप(".."));
-	mark_de_visible(करोtकरोt);
+	dotdot->deh_dir_id = par_dirid;
+	dotdot->deh_objectid = par_objid;
+	dotdot->deh_state = 0;	/* Endian safe if 0 */
+	put_deh_location(dotdot, deh_location(dot) - strlen(".."));
+	mark_de_visible(dotdot);
 
 	/* copy ".." and "." */
-	स_नकल(body + deh_location(करोt), ".", 1);
-	स_नकल(body + deh_location(करोtकरोt), "..", 2);
-पूर्ण
+	memcpy(body + deh_location(dot), ".", 1);
+	memcpy(body + deh_location(dotdot), "..", 2);
+}
 
 /* compose directory item containing "." and ".." entries */
-व्योम make_empty_dir_item(अक्षर *body, __le32 dirid, __le32 objid,
+void make_empty_dir_item(char *body, __le32 dirid, __le32 objid,
 			 __le32 par_dirid, __le32 par_objid)
-अणु
-	काष्ठा reiserfs_de_head *करोt, *करोtकरोt;
+{
+	struct reiserfs_de_head *dot, *dotdot;
 
-	स_रखो(body, 0, EMPTY_सूची_SIZE);
-	करोt = (काष्ठा reiserfs_de_head *)body;
-	करोtकरोt = करोt + 1;
+	memset(body, 0, EMPTY_DIR_SIZE);
+	dot = (struct reiserfs_de_head *)body;
+	dotdot = dot + 1;
 
 	/* direntry header of "." */
-	put_deh_offset(करोt, DOT_OFFSET);
+	put_deh_offset(dot, DOT_OFFSET);
 	/* these two are from make_le_item_head, and are LE */
-	करोt->deh_dir_id = dirid;
-	करोt->deh_objectid = objid;
-	करोt->deh_state = 0;	/* Endian safe अगर 0 */
-	put_deh_location(करोt, EMPTY_सूची_SIZE - ROUND_UP(म_माप(".")));
-	mark_de_visible(करोt);
+	dot->deh_dir_id = dirid;
+	dot->deh_objectid = objid;
+	dot->deh_state = 0;	/* Endian safe if 0 */
+	put_deh_location(dot, EMPTY_DIR_SIZE - ROUND_UP(strlen(".")));
+	mark_de_visible(dot);
 
 	/* direntry header of ".." */
-	put_deh_offset(करोtकरोt, DOT_DOT_OFFSET);
-	/* key of ".." क्रम the root directory */
+	put_deh_offset(dotdot, DOT_DOT_OFFSET);
+	/* key of ".." for the root directory */
 	/* these two are from the inode, and are LE */
-	करोtकरोt->deh_dir_id = par_dirid;
-	करोtकरोt->deh_objectid = par_objid;
-	करोtकरोt->deh_state = 0;	/* Endian safe अगर 0 */
-	put_deh_location(करोtकरोt, deh_location(करोt) - ROUND_UP(म_माप("..")));
-	mark_de_visible(करोtकरोt);
+	dotdot->deh_dir_id = par_dirid;
+	dotdot->deh_objectid = par_objid;
+	dotdot->deh_state = 0;	/* Endian safe if 0 */
+	put_deh_location(dotdot, deh_location(dot) - ROUND_UP(strlen("..")));
+	mark_de_visible(dotdot);
 
 	/* copy ".." and "." */
-	स_नकल(body + deh_location(करोt), ".", 1);
-	स_नकल(body + deh_location(करोtकरोt), "..", 2);
-पूर्ण
+	memcpy(body + deh_location(dot), ".", 1);
+	memcpy(body + deh_location(dotdot), "..", 2);
+}

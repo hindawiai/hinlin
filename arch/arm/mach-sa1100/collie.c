@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * linux/arch/arm/mach-sa1100/collie.c
  *
- * May be copied or modअगरied under the terms of the GNU General Public
- * License.  See linux/COPYING क्रम more inक्रमmation.
+ * May be copied or modified under the terms of the GNU General Public
+ * License.  See linux/COPYING for more information.
  *
- * This file contains all Collie-specअगरic tweaks.
+ * This file contains all Collie-specific tweaks.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
@@ -18,348 +17,348 @@
  *  04-16-2001 Lineo Japan,Inc. ...
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_data/sa11x0-serial.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/ucb1x00.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/input.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/घातer/gpio-अक्षरger.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/tty.h>
+#include <linux/delay.h>
+#include <linux/platform_data/sa11x0-serial.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/ucb1x00.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/timer.h>
+#include <linux/gpio_keys.h>
+#include <linux/input.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/power/gpio-charger.h>
 
-#समावेश <video/sa1100fb.h>
+#include <video/sa1100fb.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <mach/collie.h>
+#include <mach/hardware.h>
+#include <asm/mach-types.h>
+#include <asm/page.h>
+#include <asm/setup.h>
+#include <mach/collie.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/flash.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <linux/platक्रमm_data/irda-sa11x0.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/flash.h>
+#include <asm/mach/map.h>
+#include <linux/platform_data/irda-sa11x0.h>
 
-#समावेश <यंत्र/hardware/scoop.h>
-#समावेश <यंत्र/mach/sharpsl_param.h>
-#समावेश <यंत्र/hardware/locomo.h>
-#समावेश <linux/platक्रमm_data/mfd-mcp-sa11x0.h>
-#समावेश <mach/irqs.h>
+#include <asm/hardware/scoop.h>
+#include <asm/mach/sharpsl_param.h>
+#include <asm/hardware/locomo.h>
+#include <linux/platform_data/mfd-mcp-sa11x0.h>
+#include <mach/irqs.h>
 
-#समावेश "generic.h"
+#include "generic.h"
 
-अटल काष्ठा resource collie_scoop_resources[] = अणु
+static struct resource collie_scoop_resources[] = {
 	[0] = DEFINE_RES_MEM(0x40800000, SZ_4K),
-पूर्ण;
+};
 
-अटल काष्ठा scoop_config collie_scoop_setup = अणु
-	.io_dir 	= COLLIE_SCOOP_IO_सूची,
+static struct scoop_config collie_scoop_setup = {
+	.io_dir 	= COLLIE_SCOOP_IO_DIR,
 	.io_out		= COLLIE_SCOOP_IO_OUT,
 	.gpio_base	= COLLIE_SCOOP_GPIO_BASE,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device colliescoop_device = अणु
+struct platform_device colliescoop_device = {
 	.name		= "sharp-scoop",
 	.id		= -1,
-	.dev		= अणु
- 		.platक्रमm_data	= &collie_scoop_setup,
-	पूर्ण,
+	.dev		= {
+ 		.platform_data	= &collie_scoop_setup,
+	},
 	.num_resources	= ARRAY_SIZE(collie_scoop_resources),
 	.resource	= collie_scoop_resources,
-पूर्ण;
+};
 
-अटल काष्ठा scoop_pcmcia_dev collie_pcmcia_scoop[] = अणु
-	अणु
+static struct scoop_pcmcia_dev collie_pcmcia_scoop[] = {
+	{
 	.dev		= &colliescoop_device.dev,
 	.irq		= COLLIE_IRQ_GPIO_CF_IRQ,
 	.cd_irq		= COLLIE_IRQ_GPIO_CF_CD,
 	.cd_irq_str	= "PCMCIA0 CD",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा scoop_pcmcia_config collie_pcmcia_config = अणु
+static struct scoop_pcmcia_config collie_pcmcia_config = {
 	.devs		= &collie_pcmcia_scoop[0],
 	.num_devs	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा ucb1x00_plat_data collie_ucb1x00_data = अणु
+static struct ucb1x00_plat_data collie_ucb1x00_data = {
 	.gpio_base	= COLLIE_TC35143_GPIO_BASE,
-पूर्ण;
+};
 
-अटल काष्ठा mcp_plat_data collie_mcp_data = अणु
+static struct mcp_plat_data collie_mcp_data = {
 	.mccr0		= MCCR0_ADM | MCCR0_ExtClk,
 	.sclk_rate	= 9216000,
 	.codec_pdata	= &collie_ucb1x00_data,
-पूर्ण;
+};
 
 /* Battery management GPIOs */
-अटल काष्ठा gpiod_lookup_table collie_battery_gpiod_table = अणु
+static struct gpiod_lookup_table collie_battery_gpiod_table = {
 	/* the MCP codec mcp0 has the ucb1x00 as attached device */
 	.dev_id = "ucb1x00",
-	.table = अणु
-		/* This is found on the मुख्य GPIO on the SA1100 */
+	.table = {
+		/* This is found on the main GPIO on the SA1100 */
 		GPIO_LOOKUP("gpio", COLLIE_GPIO_CO,
 			    "main battery full", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio", COLLIE_GPIO_MAIN_BAT_LOW,
 			    "main battery low", GPIO_ACTIVE_HIGH),
 		/*
-		 * This is GPIO 0 on the Scoop expander, which is रेजिस्टरed
+		 * This is GPIO 0 on the Scoop expander, which is registered
 		 * from common/scoop.c with this gpio chip label.
 		 */
 		GPIO_LOOKUP("sharp-scoop", 0,
 			    "main charge on", GPIO_ACTIVE_HIGH),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ },
+	},
+};
 
-अटल पूर्णांक collie_ir_startup(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = gpio_request(COLLIE_GPIO_IR_ON, "IrDA");
-	अगर (rc)
-		वापस rc;
+static int collie_ir_startup(struct device *dev)
+{
+	int rc = gpio_request(COLLIE_GPIO_IR_ON, "IrDA");
+	if (rc)
+		return rc;
 	rc = gpio_direction_output(COLLIE_GPIO_IR_ON, 1);
 
-	अगर (!rc)
-		वापस 0;
+	if (!rc)
+		return 0;
 
-	gpio_मुक्त(COLLIE_GPIO_IR_ON);
-	वापस rc;
-पूर्ण
+	gpio_free(COLLIE_GPIO_IR_ON);
+	return rc;
+}
 
-अटल व्योम collie_ir_shutकरोwn(काष्ठा device *dev)
-अणु
-	gpio_मुक्त(COLLIE_GPIO_IR_ON);
-पूर्ण
+static void collie_ir_shutdown(struct device *dev)
+{
+	gpio_free(COLLIE_GPIO_IR_ON);
+}
 
-अटल पूर्णांक collie_ir_set_घातer(काष्ठा device *dev, अचिन्हित पूर्णांक state)
-अणु
+static int collie_ir_set_power(struct device *dev, unsigned int state)
+{
 	gpio_set_value(COLLIE_GPIO_IR_ON, !state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा irda_platक्रमm_data collie_ir_data = अणु
+static struct irda_platform_data collie_ir_data = {
 	.startup = collie_ir_startup,
-	.shutकरोwn = collie_ir_shutकरोwn,
-	.set_घातer = collie_ir_set_घातer,
-पूर्ण;
+	.shutdown = collie_ir_shutdown,
+	.set_power = collie_ir_set_power,
+};
 
 /*
  * Collie AC IN
  */
-अटल काष्ठा gpiod_lookup_table collie_घातer_gpiod_table = अणु
+static struct gpiod_lookup_table collie_power_gpiod_table = {
 	.dev_id = "gpio-charger",
-	.table = अणु
+	.table = {
 		GPIO_LOOKUP("gpio", COLLIE_GPIO_AC_IN,
-			    शून्य, GPIO_ACTIVE_HIGH),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+			    NULL, GPIO_ACTIVE_HIGH),
+		{ },
+	},
+};
 
-अटल अक्षर *collie_ac_supplied_to[] = अणु
+static char *collie_ac_supplied_to[] = {
 	"main-battery",
 	"backup-battery",
-पूर्ण;
+};
 
-अटल काष्ठा gpio_अक्षरger_platक्रमm_data collie_घातer_data = अणु
+static struct gpio_charger_platform_data collie_power_data = {
 	.name			= "charger",
 	.type			= POWER_SUPPLY_TYPE_MAINS,
 	.supplied_to		= collie_ac_supplied_to,
 	.num_supplicants	= ARRAY_SIZE(collie_ac_supplied_to),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device collie_घातer_device = अणु
+static struct platform_device collie_power_device = {
 	.name			= "gpio-charger",
 	.id			= -1,
-	.dev.platक्रमm_data	= &collie_घातer_data,
-पूर्ण;
+	.dev.platform_data	= &collie_power_data,
+};
 
-#अगर_घोषित CONFIG_SHARP_LOCOMO
+#ifdef CONFIG_SHARP_LOCOMO
 /*
  * low-level UART features.
  */
-काष्ठा platक्रमm_device collie_locomo_device;
+struct platform_device collie_locomo_device;
 
-अटल व्योम collie_uart_set_mctrl(काष्ठा uart_port *port, u_पूर्णांक mctrl)
-अणु
-	अगर (mctrl & TIOCM_RTS)
-		locomo_gpio_ग_लिखो(&collie_locomo_device.dev, LOCOMO_GPIO_RTS, 0);
-	अन्यथा
-		locomo_gpio_ग_लिखो(&collie_locomo_device.dev, LOCOMO_GPIO_RTS, 1);
+static void collie_uart_set_mctrl(struct uart_port *port, u_int mctrl)
+{
+	if (mctrl & TIOCM_RTS)
+		locomo_gpio_write(&collie_locomo_device.dev, LOCOMO_GPIO_RTS, 0);
+	else
+		locomo_gpio_write(&collie_locomo_device.dev, LOCOMO_GPIO_RTS, 1);
 
-	अगर (mctrl & TIOCM_DTR)
-		locomo_gpio_ग_लिखो(&collie_locomo_device.dev, LOCOMO_GPIO_DTR, 0);
-	अन्यथा
-		locomo_gpio_ग_लिखो(&collie_locomo_device.dev, LOCOMO_GPIO_DTR, 1);
-पूर्ण
+	if (mctrl & TIOCM_DTR)
+		locomo_gpio_write(&collie_locomo_device.dev, LOCOMO_GPIO_DTR, 0);
+	else
+		locomo_gpio_write(&collie_locomo_device.dev, LOCOMO_GPIO_DTR, 1);
+}
 
-अटल u_पूर्णांक collie_uart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	पूर्णांक ret = TIOCM_CD;
-	अचिन्हित पूर्णांक r;
+static u_int collie_uart_get_mctrl(struct uart_port *port)
+{
+	int ret = TIOCM_CD;
+	unsigned int r;
 
-	r = locomo_gpio_पढ़ो_output(&collie_locomo_device.dev, LOCOMO_GPIO_CTS & LOCOMO_GPIO_DSR);
-	अगर (r == -ENODEV)
-		वापस ret;
-	अगर (r & LOCOMO_GPIO_CTS)
+	r = locomo_gpio_read_output(&collie_locomo_device.dev, LOCOMO_GPIO_CTS & LOCOMO_GPIO_DSR);
+	if (r == -ENODEV)
+		return ret;
+	if (r & LOCOMO_GPIO_CTS)
 		ret |= TIOCM_CTS;
-	अगर (r & LOCOMO_GPIO_DSR)
+	if (r & LOCOMO_GPIO_DSR)
 		ret |= TIOCM_DSR;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा sa1100_port_fns collie_port_fns __initdata = अणु
+static struct sa1100_port_fns collie_port_fns __initdata = {
 	.set_mctrl	= collie_uart_set_mctrl,
 	.get_mctrl	= collie_uart_get_mctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक collie_uart_probe(काष्ठा locomo_dev *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int collie_uart_probe(struct locomo_dev *dev)
+{
+	return 0;
+}
 
-अटल काष्ठा locomo_driver collie_uart_driver = अणु
-	.drv = अणु
+static struct locomo_driver collie_uart_driver = {
+	.drv = {
 		.name = "collie_uart",
-	पूर्ण,
+	},
 	.devid	= LOCOMO_DEVID_UART,
 	.probe	= collie_uart_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init collie_uart_init(व्योम)
-अणु
-	वापस locomo_driver_रेजिस्टर(&collie_uart_driver);
-पूर्ण
+static int __init collie_uart_init(void)
+{
+	return locomo_driver_register(&collie_uart_driver);
+}
 device_initcall(collie_uart_init);
 
-#पूर्ण_अगर
+#endif
 
 
-अटल काष्ठा resource locomo_resources[] = अणु
+static struct resource locomo_resources[] = {
 	[0] = DEFINE_RES_MEM(0x40000000, SZ_8K),
 	[1] = DEFINE_RES_IRQ(IRQ_GPIO25),
-पूर्ण;
+};
 
-अटल काष्ठा locomo_platक्रमm_data locomo_info = अणु
+static struct locomo_platform_data locomo_info = {
 	.irq_base	= IRQ_BOARD_START,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device collie_locomo_device = अणु
+struct platform_device collie_locomo_device = {
 	.name		= "locomo",
 	.id		= 0,
-	.dev		= अणु
-		.platक्रमm_data	= &locomo_info,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &locomo_info,
+	},
 	.num_resources	= ARRAY_SIZE(locomo_resources),
 	.resource	= locomo_resources,
-पूर्ण;
+};
 
-अटल काष्ठा gpio_keys_button collie_gpio_keys[] = अणु
-	अणु
+static struct gpio_keys_button collie_gpio_keys[] = {
+	{
 		.type	= EV_PWR,
 		.code	= KEY_RESERVED,
 		.gpio	= COLLIE_GPIO_ON_KEY,
 		.desc	= "On key",
 		.wakeup	= 1,
 		.active_low = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.type	= EV_PWR,
 		.code	= KEY_WAKEUP,
 		.gpio	= COLLIE_GPIO_WAKEUP,
 		.desc	= "Sync",
 		.wakeup = 1,
 		.active_low = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा gpio_keys_platक्रमm_data collie_gpio_keys_data = अणु
+static struct gpio_keys_platform_data collie_gpio_keys_data = {
 	.buttons	= collie_gpio_keys,
 	.nbuttons	= ARRAY_SIZE(collie_gpio_keys),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device collie_gpio_keys_device = अणु
+static struct platform_device collie_gpio_keys_device = {
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= अणु
-		.platक्रमm_data = &collie_gpio_keys_data,
-	पूर्ण,
-पूर्ण;
+	.dev	= {
+		.platform_data = &collie_gpio_keys_data,
+	},
+};
 
-अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
+static struct platform_device *devices[] __initdata = {
 	&collie_locomo_device,
 	&colliescoop_device,
-	&collie_घातer_device,
+	&collie_power_device,
 	&collie_gpio_keys_device,
-पूर्ण;
+};
 
-अटल काष्ठा mtd_partition collie_partitions[] = अणु
-	अणु
+static struct mtd_partition collie_partitions[] = {
+	{
 		.name		= "bootloader",
 		.offset 	= 0,
 		.size		= 0x000C0000,
 		.mask_flags	= MTD_WRITEABLE
-	पूर्ण, अणु
+	}, {
 		.name		= "kernel",
 		.offset 	= MTDPART_OFS_APPEND,
 		.size		= 0x00100000,
-	पूर्ण, अणु
+	}, {
 		.name		= "rootfs",
 		.offset 	= MTDPART_OFS_APPEND,
 		.size		= 0x00e20000,
-	पूर्ण, अणु
+	}, {
 		.name		= "bootblock",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 0x00020000,
 		.mask_flags	= MTD_WRITEABLE
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक collie_flash_init(व्योम)
-अणु
-	पूर्णांक rc = gpio_request(COLLIE_GPIO_VPEN, "flash Vpp enable");
-	अगर (rc)
-		वापस rc;
+static int collie_flash_init(void)
+{
+	int rc = gpio_request(COLLIE_GPIO_VPEN, "flash Vpp enable");
+	if (rc)
+		return rc;
 
 	rc = gpio_direction_output(COLLIE_GPIO_VPEN, 1);
-	अगर (rc)
-		gpio_मुक्त(COLLIE_GPIO_VPEN);
+	if (rc)
+		gpio_free(COLLIE_GPIO_VPEN);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम collie_set_vpp(पूर्णांक vpp)
-अणु
+static void collie_set_vpp(int vpp)
+{
 	gpio_set_value(COLLIE_GPIO_VPEN, vpp);
-पूर्ण
+}
 
-अटल व्योम collie_flash_निकास(व्योम)
-अणु
-	gpio_मुक्त(COLLIE_GPIO_VPEN);
-पूर्ण
+static void collie_flash_exit(void)
+{
+	gpio_free(COLLIE_GPIO_VPEN);
+}
 
-अटल काष्ठा flash_platक्रमm_data collie_flash_data = अणु
+static struct flash_platform_data collie_flash_data = {
 	.map_name	= "cfi_probe",
 	.init		= collie_flash_init,
 	.set_vpp	= collie_set_vpp,
-	.निकास		= collie_flash_निकास,
+	.exit		= collie_flash_exit,
 	.parts		= collie_partitions,
 	.nr_parts	= ARRAY_SIZE(collie_partitions),
-पूर्ण;
+};
 
-अटल काष्ठा resource collie_flash_resources[] = अणु
+static struct resource collie_flash_resources[] = {
 	DEFINE_RES_MEM(SA1100_CS0_PHYS, SZ_32M),
-पूर्ण;
+};
 
-अटल काष्ठा sa1100fb_mach_info collie_lcd_info = अणु
-	.pixघड़ी	= 171521,	.bpp		= 16,
+static struct sa1100fb_mach_info collie_lcd_info = {
+	.pixclock	= 171521,	.bpp		= 16,
 	.xres		= 320,		.yres		= 240,
 
 	.hsync_len	= 5,		.vsync_len	= 1,
@@ -371,14 +370,14 @@ device_initcall(collie_uart_init);
 	.lccr0		= LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
 	.lccr3		= LCCR3_OutEnH | LCCR3_PixRsEdg | LCCR3_ACBsDiv(2),
 
-#अगर_घोषित CONFIG_BACKLIGHT_LOCOMO
-	.lcd_घातer	= locomolcd_घातer
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_BACKLIGHT_LOCOMO
+	.lcd_power	= locomolcd_power
+#endif
+};
 
-अटल व्योम __init collie_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static void __init collie_init(void)
+{
+	int ret = 0;
 
 	/* cpu initialize */
 	GAFR = GPIO_SSP_TXD | GPIO_SSP_SCLK | GPIO_SSP_SFRM | GPIO_SSP_CLK |
@@ -407,56 +406,56 @@ device_initcall(collie_uart_init);
 	sa11x0_ppc_configure_mcp();
 
 
-	platक्रमm_scoop_config = &collie_pcmcia_config;
+	platform_scoop_config = &collie_pcmcia_config;
 
-	gpiod_add_lookup_table(&collie_घातer_gpiod_table);
+	gpiod_add_lookup_table(&collie_power_gpiod_table);
 	gpiod_add_lookup_table(&collie_battery_gpiod_table);
 
-	ret = platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_WARNING "collie: Unable to register LoCoMo device\n");
-	पूर्ण
+	ret = platform_add_devices(devices, ARRAY_SIZE(devices));
+	if (ret) {
+		printk(KERN_WARNING "collie: Unable to register LoCoMo device\n");
+	}
 
-	sa11x0_रेजिस्टर_lcd(&collie_lcd_info);
-	sa11x0_रेजिस्टर_mtd(&collie_flash_data, collie_flash_resources,
+	sa11x0_register_lcd(&collie_lcd_info);
+	sa11x0_register_mtd(&collie_flash_data, collie_flash_resources,
 			    ARRAY_SIZE(collie_flash_resources));
-	sa11x0_रेजिस्टर_mcp(&collie_mcp_data);
-	sa11x0_रेजिस्टर_irda(&collie_ir_data);
+	sa11x0_register_mcp(&collie_mcp_data);
+	sa11x0_register_irda(&collie_ir_data);
 
 	sharpsl_save_param();
-पूर्ण
+}
 
-अटल काष्ठा map_desc collie_io_desc[] __initdata = अणु
-	अणु	/* 32M मुख्य flash (cs0) */
-		.भव	= 0xe8000000,
+static struct map_desc collie_io_desc[] __initdata = {
+	{	/* 32M main flash (cs0) */
+		.virtual	= 0xe8000000,
 		.pfn		= __phys_to_pfn(0x00000000),
 		.length		= 0x02000000,
 		.type		= MT_DEVICE
-	पूर्ण, अणु	/* 32M boot flash (cs1) */
-		.भव	= 0xea000000,
+	}, {	/* 32M boot flash (cs1) */
+		.virtual	= 0xea000000,
 		.pfn		= __phys_to_pfn(0x08000000),
 		.length		= 0x02000000,
 		.type		= MT_DEVICE
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल व्योम __init collie_map_io(व्योम)
-अणु
+static void __init collie_map_io(void)
+{
 	sa1100_map_io();
 	iotable_init(collie_io_desc, ARRAY_SIZE(collie_io_desc));
 
-#अगर_घोषित CONFIG_SHARP_LOCOMO
-	sa1100_रेजिस्टर_uart_fns(&collie_port_fns);
-#पूर्ण_अगर
-	sa1100_रेजिस्टर_uart(0, 3);
-	sa1100_रेजिस्टर_uart(1, 1);
-पूर्ण
+#ifdef CONFIG_SHARP_LOCOMO
+	sa1100_register_uart_fns(&collie_port_fns);
+#endif
+	sa1100_register_uart(0, 3);
+	sa1100_register_uart(1, 1);
+}
 
 MACHINE_START(COLLIE, "Sharp-Collie")
 	.map_io		= collie_map_io,
 	.nr_irqs	= SA1100_NR_IRQS,
 	.init_irq	= sa1100_init_irq,
-	.init_समय	= sa1100_समयr_init,
+	.init_time	= sa1100_timer_init,
 	.init_machine	= collie_init,
 	.init_late	= sa11x0_init_late,
 	.restart	= sa11x0_restart,

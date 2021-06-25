@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014 Imagination Technologies Ltd.
  *
- * CPU PM notअगरiers क्रम saving/restoring general CPU state.
+ * CPU PM notifiers for saving/restoring general CPU state.
  */
 
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/init.h>
+#include <linux/cpu_pm.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/dsp.h>
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/pm.h>
-#समावेश <यंत्र/watch.h>
+#include <asm/dsp.h>
+#include <asm/fpu.h>
+#include <asm/mmu_context.h>
+#include <asm/pm.h>
+#include <asm/watch.h>
 
-/* Used by PM helper macros in यंत्र/pm.h */
-काष्ठा mips_अटल_suspend_state mips_अटल_suspend_state;
+/* Used by PM helper macros in asm/pm.h */
+struct mips_static_suspend_state mips_static_suspend_state;
 
 /**
  * mips_cpu_save() - Save general CPU state.
  * Ensures that general CPU context is saved, notably FPU and DSP.
  */
-अटल पूर्णांक mips_cpu_save(व्योम)
-अणु
+static int mips_cpu_save(void)
+{
 	/* Save FPU state */
 	lose_fpu(1);
 
 	/* Save DSP state */
 	save_dsp(current);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * mips_cpu_restore() - Restore general CPU state.
  * Restores important CPU context.
  */
-अटल व्योम mips_cpu_restore(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
+static void mips_cpu_restore(void)
+{
+	unsigned int cpu = smp_processor_id();
 
 	/* Restore ASID */
-	अगर (current->mm)
-		ग_लिखो_c0_entryhi(cpu_asid(cpu, current->mm));
+	if (current->mm)
+		write_c0_entryhi(cpu_asid(cpu, current->mm));
 
 	/* Restore DSP state */
 	restore_dsp(current);
 
 	/* Restore UserLocal */
-	अगर (cpu_has_userlocal)
-		ग_लिखो_c0_userlocal(current_thपढ़ो_info()->tp_value);
+	if (cpu_has_userlocal)
+		write_c0_userlocal(current_thread_info()->tp_value);
 
-	/* Restore watch रेजिस्टरs */
+	/* Restore watch registers */
 	__restore_watch(current);
-पूर्ण
+}
 
 /**
- * mips_pm_notअगरier() - Notअगरier क्रम preserving general CPU context.
- * @self:	Notअगरier block.
+ * mips_pm_notifier() - Notifier for preserving general CPU context.
+ * @self:	Notifier block.
  * @cmd:	CPU PM event.
  * @v:		Private data (unused).
  *
- * This is called when a CPU घातer management event occurs, and is used to
- * ensure that important CPU context is preserved across a CPU घातer करोwn.
+ * This is called when a CPU power management event occurs, and is used to
+ * ensure that important CPU context is preserved across a CPU power down.
  */
-अटल पूर्णांक mips_pm_notअगरier(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd,
-			    व्योम *v)
-अणु
-	पूर्णांक ret;
+static int mips_pm_notifier(struct notifier_block *self, unsigned long cmd,
+			    void *v)
+{
+	int ret;
 
-	चयन (cmd) अणु
-	हाल CPU_PM_ENTER:
+	switch (cmd) {
+	case CPU_PM_ENTER:
 		ret = mips_cpu_save();
-		अगर (ret)
-			वापस NOTIFY_STOP;
-		अवरोध;
-	हाल CPU_PM_ENTER_FAILED:
-	हाल CPU_PM_EXIT:
+		if (ret)
+			return NOTIFY_STOP;
+		break;
+	case CPU_PM_ENTER_FAILED:
+	case CPU_PM_EXIT:
 		mips_cpu_restore();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block mips_pm_notअगरier_block = अणु
-	.notअगरier_call = mips_pm_notअगरier,
-पूर्ण;
+static struct notifier_block mips_pm_notifier_block = {
+	.notifier_call = mips_pm_notifier,
+};
 
-अटल पूर्णांक __init mips_pm_init(व्योम)
-अणु
-	वापस cpu_pm_रेजिस्टर_notअगरier(&mips_pm_notअगरier_block);
-पूर्ण
+static int __init mips_pm_init(void)
+{
+	return cpu_pm_register_notifier(&mips_pm_notifier_block);
+}
 arch_initcall(mips_pm_init);

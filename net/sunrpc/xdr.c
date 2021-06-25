@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/net/sunrpc/xdr.c
  *
@@ -8,114 +7,114 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/msg_prot.h>
-#समावेश <linux/bvec.h>
-#समावेश <trace/events/sunrpc.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/pagemap.h>
+#include <linux/errno.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/msg_prot.h>
+#include <linux/bvec.h>
+#include <trace/events/sunrpc.h>
 
-अटल व्योम _copy_to_pages(काष्ठा page **, माप_प्रकार, स्थिर अक्षर *, माप_प्रकार);
+static void _copy_to_pages(struct page **, size_t, const char *, size_t);
 
 
 /*
- * XDR functions क्रम basic NFS types
+ * XDR functions for basic NFS types
  */
 __be32 *
-xdr_encode_netobj(__be32 *p, स्थिर काष्ठा xdr_netobj *obj)
-अणु
-	अचिन्हित पूर्णांक	quadlen = XDR_QUADLEN(obj->len);
+xdr_encode_netobj(__be32 *p, const struct xdr_netobj *obj)
+{
+	unsigned int	quadlen = XDR_QUADLEN(obj->len);
 
 	p[quadlen] = 0;		/* zero trailing bytes */
 	*p++ = cpu_to_be32(obj->len);
-	स_नकल(p, obj->data, obj->len);
-	वापस p + XDR_QUADLEN(obj->len);
-पूर्ण
+	memcpy(p, obj->data, obj->len);
+	return p + XDR_QUADLEN(obj->len);
+}
 EXPORT_SYMBOL_GPL(xdr_encode_netobj);
 
 __be32 *
-xdr_decode_netobj(__be32 *p, काष्ठा xdr_netobj *obj)
-अणु
-	अचिन्हित पूर्णांक	len;
+xdr_decode_netobj(__be32 *p, struct xdr_netobj *obj)
+{
+	unsigned int	len;
 
-	अगर ((len = be32_to_cpu(*p++)) > XDR_MAX_NETOBJ)
-		वापस शून्य;
+	if ((len = be32_to_cpu(*p++)) > XDR_MAX_NETOBJ)
+		return NULL;
 	obj->len  = len;
 	obj->data = (u8 *) p;
-	वापस p + XDR_QUADLEN(len);
-पूर्ण
+	return p + XDR_QUADLEN(len);
+}
 EXPORT_SYMBOL_GPL(xdr_decode_netobj);
 
 /**
  * xdr_encode_opaque_fixed - Encode fixed length opaque data
- * @p: poपूर्णांकer to current position in XDR buffer.
- * @ptr: poपूर्णांकer to data to encode (or शून्य)
+ * @p: pointer to current position in XDR buffer.
+ * @ptr: pointer to data to encode (or NULL)
  * @nbytes: size of data.
  *
  * Copy the array of data of length nbytes at ptr to the XDR buffer
  * at position p, then align to the next 32-bit boundary by padding
  * with zero bytes (see RFC1832).
- * Note: अगर ptr is शून्य, only the padding is perक्रमmed.
+ * Note: if ptr is NULL, only the padding is performed.
  *
  * Returns the updated current XDR buffer position
  *
  */
-__be32 *xdr_encode_opaque_fixed(__be32 *p, स्थिर व्योम *ptr, अचिन्हित पूर्णांक nbytes)
-अणु
-	अगर (likely(nbytes != 0)) अणु
-		अचिन्हित पूर्णांक quadlen = XDR_QUADLEN(nbytes);
-		अचिन्हित पूर्णांक padding = (quadlen << 2) - nbytes;
+__be32 *xdr_encode_opaque_fixed(__be32 *p, const void *ptr, unsigned int nbytes)
+{
+	if (likely(nbytes != 0)) {
+		unsigned int quadlen = XDR_QUADLEN(nbytes);
+		unsigned int padding = (quadlen << 2) - nbytes;
 
-		अगर (ptr != शून्य)
-			स_नकल(p, ptr, nbytes);
-		अगर (padding != 0)
-			स_रखो((अक्षर *)p + nbytes, 0, padding);
+		if (ptr != NULL)
+			memcpy(p, ptr, nbytes);
+		if (padding != 0)
+			memset((char *)p + nbytes, 0, padding);
 		p += quadlen;
-	पूर्ण
-	वापस p;
-पूर्ण
+	}
+	return p;
+}
 EXPORT_SYMBOL_GPL(xdr_encode_opaque_fixed);
 
 /**
  * xdr_encode_opaque - Encode variable length opaque data
- * @p: poपूर्णांकer to current position in XDR buffer.
- * @ptr: poपूर्णांकer to data to encode (or शून्य)
+ * @p: pointer to current position in XDR buffer.
+ * @ptr: pointer to data to encode (or NULL)
  * @nbytes: size of data.
  *
  * Returns the updated current XDR buffer position
  */
-__be32 *xdr_encode_opaque(__be32 *p, स्थिर व्योम *ptr, अचिन्हित पूर्णांक nbytes)
-अणु
+__be32 *xdr_encode_opaque(__be32 *p, const void *ptr, unsigned int nbytes)
+{
 	*p++ = cpu_to_be32(nbytes);
-	वापस xdr_encode_opaque_fixed(p, ptr, nbytes);
-पूर्ण
+	return xdr_encode_opaque_fixed(p, ptr, nbytes);
+}
 EXPORT_SYMBOL_GPL(xdr_encode_opaque);
 
 __be32 *
-xdr_encode_string(__be32 *p, स्थिर अक्षर *string)
-अणु
-	वापस xdr_encode_array(p, string, म_माप(string));
-पूर्ण
+xdr_encode_string(__be32 *p, const char *string)
+{
+	return xdr_encode_array(p, string, strlen(string));
+}
 EXPORT_SYMBOL_GPL(xdr_encode_string);
 
 __be32 *
-xdr_decode_string_inplace(__be32 *p, अक्षर **sp,
-			  अचिन्हित पूर्णांक *lenp, अचिन्हित पूर्णांक maxlen)
-अणु
+xdr_decode_string_inplace(__be32 *p, char **sp,
+			  unsigned int *lenp, unsigned int maxlen)
+{
 	u32 len;
 
 	len = be32_to_cpu(*p++);
-	अगर (len > maxlen)
-		वापस शून्य;
+	if (len > maxlen)
+		return NULL;
 	*lenp = len;
-	*sp = (अक्षर *) p;
-	वापस p + XDR_QUADLEN(len);
-पूर्ण
+	*sp = (char *) p;
+	return p + XDR_QUADLEN(len);
+}
 EXPORT_SYMBOL_GPL(xdr_decode_string_inplace);
 
 /**
@@ -124,65 +123,65 @@ EXPORT_SYMBOL_GPL(xdr_decode_string_inplace);
  * @len: length of string, in bytes
  *
  */
-व्योम xdr_terminate_string(स्थिर काष्ठा xdr_buf *buf, स्थिर u32 len)
-अणु
-	अक्षर *kaddr;
+void xdr_terminate_string(const struct xdr_buf *buf, const u32 len)
+{
+	char *kaddr;
 
 	kaddr = kmap_atomic(buf->pages[0]);
 	kaddr[buf->page_base + len] = '\0';
 	kunmap_atomic(kaddr);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_terminate_string);
 
-माप_प्रकार xdr_buf_pagecount(स्थिर काष्ठा xdr_buf *buf)
-अणु
-	अगर (!buf->page_len)
-		वापस 0;
-	वापस (buf->page_base + buf->page_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-पूर्ण
+size_t xdr_buf_pagecount(const struct xdr_buf *buf)
+{
+	if (!buf->page_len)
+		return 0;
+	return (buf->page_base + buf->page_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+}
 
-पूर्णांक
-xdr_alloc_bvec(काष्ठा xdr_buf *buf, gfp_t gfp)
-अणु
-	माप_प्रकार i, n = xdr_buf_pagecount(buf);
+int
+xdr_alloc_bvec(struct xdr_buf *buf, gfp_t gfp)
+{
+	size_t i, n = xdr_buf_pagecount(buf);
 
-	अगर (n != 0 && buf->bvec == शून्य) अणु
-		buf->bvec = kदो_स्मृति_array(n, माप(buf->bvec[0]), gfp);
-		अगर (!buf->bvec)
-			वापस -ENOMEM;
-		क्रम (i = 0; i < n; i++) अणु
+	if (n != 0 && buf->bvec == NULL) {
+		buf->bvec = kmalloc_array(n, sizeof(buf->bvec[0]), gfp);
+		if (!buf->bvec)
+			return -ENOMEM;
+		for (i = 0; i < n; i++) {
 			buf->bvec[i].bv_page = buf->pages[i];
 			buf->bvec[i].bv_len = PAGE_SIZE;
 			buf->bvec[i].bv_offset = 0;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-व्योम
-xdr_मुक्त_bvec(काष्ठा xdr_buf *buf)
-अणु
-	kमुक्त(buf->bvec);
-	buf->bvec = शून्य;
-पूर्ण
+void
+xdr_free_bvec(struct xdr_buf *buf)
+{
+	kfree(buf->bvec);
+	buf->bvec = NULL;
+}
 
 /**
- * xdr_अंतरभूत_pages - Prepare receive buffer क्रम a large reply
- * @xdr: xdr_buf पूर्णांकo which reply will be placed
+ * xdr_inline_pages - Prepare receive buffer for a large reply
+ * @xdr: xdr_buf into which reply will be placed
  * @offset: expected offset where data payload will start, in bytes
- * @pages: vector of काष्ठा page poपूर्णांकers
+ * @pages: vector of struct page pointers
  * @base: offset in first page where receive should start, in bytes
  * @len: expected size of the upper layer data payload, in bytes
  *
  */
-व्योम
-xdr_अंतरभूत_pages(काष्ठा xdr_buf *xdr, अचिन्हित पूर्णांक offset,
-		 काष्ठा page **pages, अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा kvec *head = xdr->head;
-	काष्ठा kvec *tail = xdr->tail;
-	अक्षर *buf = (अक्षर *)head->iov_base;
-	अचिन्हित पूर्णांक buflen = head->iov_len;
+void
+xdr_inline_pages(struct xdr_buf *xdr, unsigned int offset,
+		 struct page **pages, unsigned int base, unsigned int len)
+{
+	struct kvec *head = xdr->head;
+	struct kvec *tail = xdr->tail;
+	char *buf = (char *)head->iov_base;
+	unsigned int buflen = head->iov_len;
 
 	head->iov_len  = offset;
 
@@ -193,15 +192,15 @@ xdr_अंतरभूत_pages(काष्ठा xdr_buf *xdr, अचिन्
 	tail->iov_base = buf + offset;
 	tail->iov_len = buflen - offset;
 	xdr->buflen += len;
-पूर्ण
-EXPORT_SYMBOL_GPL(xdr_अंतरभूत_pages);
+}
+EXPORT_SYMBOL_GPL(xdr_inline_pages);
 
 /*
- * Helper routines क्रम करोing 'memmove' like operations on a काष्ठा xdr_buf
+ * Helper routines for doing 'memmove' like operations on a struct xdr_buf
  */
 
 /**
- * _shअगरt_data_left_pages
+ * _shift_data_left_pages
  * @pages: vector of pages containing both the source and dest memory area.
  * @pgto_base: page vector address of destination
  * @pgfrom_base: page vector address of source
@@ -209,23 +208,23 @@ EXPORT_SYMBOL_GPL(xdr_अंतरभूत_pages);
  *
  * Note: the addresses pgto_base and pgfrom_base are both calculated in
  *       the same way:
- *            अगर a memory area starts at byte 'base' in page 'pages[i]',
+ *            if a memory area starts at byte 'base' in page 'pages[i]',
  *            then its address is given as (i << PAGE_CACHE_SHIFT) + base
  * Alse note: pgto_base must be < pgfrom_base, but the memory areas
- * 	they poपूर्णांक to may overlap.
+ * 	they point to may overlap.
  */
-अटल व्योम
-_shअगरt_data_left_pages(काष्ठा page **pages, माप_प्रकार pgto_base,
-			माप_प्रकार pgfrom_base, माप_प्रकार len)
-अणु
-	काष्ठा page **pgfrom, **pgto;
-	अक्षर *vfrom, *vto;
-	माप_प्रकार copy;
+static void
+_shift_data_left_pages(struct page **pages, size_t pgto_base,
+			size_t pgfrom_base, size_t len)
+{
+	struct page **pgfrom, **pgto;
+	char *vfrom, *vto;
+	size_t copy;
 
 	BUG_ON(pgfrom_base <= pgto_base);
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	pgto = pages + (pgto_base >> PAGE_SHIFT);
 	pgfrom = pages + (pgfrom_base >> PAGE_SHIFT);
@@ -233,40 +232,40 @@ _shअगरt_data_left_pages(काष्ठा page **pages, माप_प्�
 	pgto_base &= ~PAGE_MASK;
 	pgfrom_base &= ~PAGE_MASK;
 
-	करो अणु
-		अगर (pgto_base >= PAGE_SIZE) अणु
+	do {
+		if (pgto_base >= PAGE_SIZE) {
 			pgto_base = 0;
 			pgto++;
-		पूर्ण
-		अगर (pgfrom_base >= PAGE_SIZE)अणु
+		}
+		if (pgfrom_base >= PAGE_SIZE){
 			pgfrom_base = 0;
 			pgfrom++;
-		पूर्ण
+		}
 
 		copy = len;
-		अगर (copy > (PAGE_SIZE - pgto_base))
+		if (copy > (PAGE_SIZE - pgto_base))
 			copy = PAGE_SIZE - pgto_base;
-		अगर (copy > (PAGE_SIZE - pgfrom_base))
+		if (copy > (PAGE_SIZE - pgfrom_base))
 			copy = PAGE_SIZE - pgfrom_base;
 
 		vto = kmap_atomic(*pgto);
-		अगर (*pgto != *pgfrom) अणु
+		if (*pgto != *pgfrom) {
 			vfrom = kmap_atomic(*pgfrom);
-			स_नकल(vto + pgto_base, vfrom + pgfrom_base, copy);
+			memcpy(vto + pgto_base, vfrom + pgfrom_base, copy);
 			kunmap_atomic(vfrom);
-		पूर्ण अन्यथा
-			स_हटाओ(vto + pgto_base, vto + pgfrom_base, copy);
+		} else
+			memmove(vto + pgto_base, vto + pgfrom_base, copy);
 		flush_dcache_page(*pgto);
 		kunmap_atomic(vto);
 
 		pgto_base += copy;
 		pgfrom_base += copy;
 
-	पूर्ण जबतक ((len -= copy) != 0);
-पूर्ण
+	} while ((len -= copy) != 0);
+}
 
 /**
- * _shअगरt_data_right_pages
+ * _shift_data_right_pages
  * @pages: vector of pages containing both the source and dest memory area.
  * @pgto_base: page vector address of destination
  * @pgfrom_base: page vector address of source
@@ -274,23 +273,23 @@ _shअगरt_data_left_pages(काष्ठा page **pages, माप_प्�
  *
  * Note: the addresses pgto_base and pgfrom_base are both calculated in
  *       the same way:
- *            अगर a memory area starts at byte 'base' in page 'pages[i]',
+ *            if a memory area starts at byte 'base' in page 'pages[i]',
  *            then its address is given as (i << PAGE_SHIFT) + base
  * Also note: pgfrom_base must be < pgto_base, but the memory areas
- * 	they poपूर्णांक to may overlap.
+ * 	they point to may overlap.
  */
-अटल व्योम
-_shअगरt_data_right_pages(काष्ठा page **pages, माप_प्रकार pgto_base,
-		माप_प्रकार pgfrom_base, माप_प्रकार len)
-अणु
-	काष्ठा page **pgfrom, **pgto;
-	अक्षर *vfrom, *vto;
-	माप_प्रकार copy;
+static void
+_shift_data_right_pages(struct page **pages, size_t pgto_base,
+		size_t pgfrom_base, size_t len)
+{
+	struct page **pgfrom, **pgto;
+	char *vfrom, *vto;
+	size_t copy;
 
 	BUG_ON(pgto_base <= pgfrom_base);
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	pgto_base += len;
 	pgfrom_base += len;
@@ -301,137 +300,137 @@ _shअगरt_data_right_pages(काष्ठा page **pages, माप_प्
 	pgto_base &= ~PAGE_MASK;
 	pgfrom_base &= ~PAGE_MASK;
 
-	करो अणु
-		/* Are any poपूर्णांकers crossing a page boundary? */
-		अगर (pgto_base == 0) अणु
+	do {
+		/* Are any pointers crossing a page boundary? */
+		if (pgto_base == 0) {
 			pgto_base = PAGE_SIZE;
 			pgto--;
-		पूर्ण
-		अगर (pgfrom_base == 0) अणु
+		}
+		if (pgfrom_base == 0) {
 			pgfrom_base = PAGE_SIZE;
 			pgfrom--;
-		पूर्ण
+		}
 
 		copy = len;
-		अगर (copy > pgto_base)
+		if (copy > pgto_base)
 			copy = pgto_base;
-		अगर (copy > pgfrom_base)
+		if (copy > pgfrom_base)
 			copy = pgfrom_base;
 		pgto_base -= copy;
 		pgfrom_base -= copy;
 
 		vto = kmap_atomic(*pgto);
-		अगर (*pgto != *pgfrom) अणु
+		if (*pgto != *pgfrom) {
 			vfrom = kmap_atomic(*pgfrom);
-			स_नकल(vto + pgto_base, vfrom + pgfrom_base, copy);
+			memcpy(vto + pgto_base, vfrom + pgfrom_base, copy);
 			kunmap_atomic(vfrom);
-		पूर्ण अन्यथा
-			स_हटाओ(vto + pgto_base, vto + pgfrom_base, copy);
+		} else
+			memmove(vto + pgto_base, vto + pgfrom_base, copy);
 		flush_dcache_page(*pgto);
 		kunmap_atomic(vto);
 
-	पूर्ण जबतक ((len -= copy) != 0);
-पूर्ण
+	} while ((len -= copy) != 0);
+}
 
 /**
  * _copy_to_pages
  * @pages: array of pages
  * @pgbase: page vector address of destination
- * @p: poपूर्णांकer to source data
+ * @p: pointer to source data
  * @len: length
  *
- * Copies data from an arbitrary memory location पूर्णांकo an array of pages
+ * Copies data from an arbitrary memory location into an array of pages
  * The copy is assumed to be non-overlapping.
  */
-अटल व्योम
-_copy_to_pages(काष्ठा page **pages, माप_प्रकार pgbase, स्थिर अक्षर *p, माप_प्रकार len)
-अणु
-	काष्ठा page **pgto;
-	अक्षर *vto;
-	माप_प्रकार copy;
+static void
+_copy_to_pages(struct page **pages, size_t pgbase, const char *p, size_t len)
+{
+	struct page **pgto;
+	char *vto;
+	size_t copy;
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	pgto = pages + (pgbase >> PAGE_SHIFT);
 	pgbase &= ~PAGE_MASK;
 
-	क्रम (;;) अणु
+	for (;;) {
 		copy = PAGE_SIZE - pgbase;
-		अगर (copy > len)
+		if (copy > len)
 			copy = len;
 
 		vto = kmap_atomic(*pgto);
-		स_नकल(vto + pgbase, p, copy);
+		memcpy(vto + pgbase, p, copy);
 		kunmap_atomic(vto);
 
 		len -= copy;
-		अगर (len == 0)
-			अवरोध;
+		if (len == 0)
+			break;
 
 		pgbase += copy;
-		अगर (pgbase == PAGE_SIZE) अणु
+		if (pgbase == PAGE_SIZE) {
 			flush_dcache_page(*pgto);
 			pgbase = 0;
 			pgto++;
-		पूर्ण
+		}
 		p += copy;
-	पूर्ण
+	}
 	flush_dcache_page(*pgto);
-पूर्ण
+}
 
 /**
  * _copy_from_pages
- * @p: poपूर्णांकer to destination
+ * @p: pointer to destination
  * @pages: array of pages
  * @pgbase: offset of source data
  * @len: length
  *
- * Copies data पूर्णांकo an arbitrary memory location from an array of pages
+ * Copies data into an arbitrary memory location from an array of pages
  * The copy is assumed to be non-overlapping.
  */
-व्योम
-_copy_from_pages(अक्षर *p, काष्ठा page **pages, माप_प्रकार pgbase, माप_प्रकार len)
-अणु
-	काष्ठा page **pgfrom;
-	अक्षर *vfrom;
-	माप_प्रकार copy;
+void
+_copy_from_pages(char *p, struct page **pages, size_t pgbase, size_t len)
+{
+	struct page **pgfrom;
+	char *vfrom;
+	size_t copy;
 
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	pgfrom = pages + (pgbase >> PAGE_SHIFT);
 	pgbase &= ~PAGE_MASK;
 
-	करो अणु
+	do {
 		copy = PAGE_SIZE - pgbase;
-		अगर (copy > len)
+		if (copy > len)
 			copy = len;
 
 		vfrom = kmap_atomic(*pgfrom);
-		स_नकल(p, vfrom + pgbase, copy);
+		memcpy(p, vfrom + pgbase, copy);
 		kunmap_atomic(vfrom);
 
 		pgbase += copy;
-		अगर (pgbase == PAGE_SIZE) अणु
+		if (pgbase == PAGE_SIZE) {
 			pgbase = 0;
 			pgfrom++;
-		पूर्ण
+		}
 		p += copy;
 
-	पूर्ण जबतक ((len -= copy) != 0);
-पूर्ण
+	} while ((len -= copy) != 0);
+}
 EXPORT_SYMBOL_GPL(_copy_from_pages);
 
-अटल व्योम xdr_buf_iov_zero(स्थिर काष्ठा kvec *iov, अचिन्हित पूर्णांक base,
-			     अचिन्हित पूर्णांक len)
-अणु
-	अगर (base >= iov->iov_len)
-		वापस;
-	अगर (len > iov->iov_len - base)
+static void xdr_buf_iov_zero(const struct kvec *iov, unsigned int base,
+			     unsigned int len)
+{
+	if (base >= iov->iov_len)
+		return;
+	if (len > iov->iov_len - base)
 		len = iov->iov_len - base;
-	स_रखो(iov->iov_base + base, 0, len);
-पूर्ण
+	memset(iov->iov_base + base, 0, len);
+}
 
 /**
  * xdr_buf_pages_zero
@@ -439,184 +438,184 @@ EXPORT_SYMBOL_GPL(_copy_from_pages);
  * @pgbase: beginning offset
  * @len: length
  */
-अटल व्योम xdr_buf_pages_zero(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक pgbase,
-			       अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा page **pages = buf->pages;
-	काष्ठा page **page;
-	अक्षर *vpage;
-	अचिन्हित पूर्णांक zero;
+static void xdr_buf_pages_zero(const struct xdr_buf *buf, unsigned int pgbase,
+			       unsigned int len)
+{
+	struct page **pages = buf->pages;
+	struct page **page;
+	char *vpage;
+	unsigned int zero;
 
-	अगर (!len)
-		वापस;
-	अगर (pgbase >= buf->page_len) अणु
+	if (!len)
+		return;
+	if (pgbase >= buf->page_len) {
 		xdr_buf_iov_zero(buf->tail, pgbase - buf->page_len, len);
-		वापस;
-	पूर्ण
-	अगर (pgbase + len > buf->page_len) अणु
+		return;
+	}
+	if (pgbase + len > buf->page_len) {
 		xdr_buf_iov_zero(buf->tail, 0, pgbase + len - buf->page_len);
 		len = buf->page_len - pgbase;
-	पूर्ण
+	}
 
 	pgbase += buf->page_base;
 
 	page = pages + (pgbase >> PAGE_SHIFT);
 	pgbase &= ~PAGE_MASK;
 
-	करो अणु
+	do {
 		zero = PAGE_SIZE - pgbase;
-		अगर (zero > len)
+		if (zero > len)
 			zero = len;
 
 		vpage = kmap_atomic(*page);
-		स_रखो(vpage + pgbase, 0, zero);
+		memset(vpage + pgbase, 0, zero);
 		kunmap_atomic(vpage);
 
 		flush_dcache_page(*page);
 		pgbase = 0;
 		page++;
 
-	पूर्ण जबतक ((len -= zero) != 0);
-पूर्ण
+	} while ((len -= zero) != 0);
+}
 
-अटल अचिन्हित पूर्णांक xdr_buf_pages_fill_sparse(स्थिर काष्ठा xdr_buf *buf,
-					      अचिन्हित पूर्णांक buflen, gfp_t gfp)
-अणु
-	अचिन्हित पूर्णांक i, npages, pagelen;
+static unsigned int xdr_buf_pages_fill_sparse(const struct xdr_buf *buf,
+					      unsigned int buflen, gfp_t gfp)
+{
+	unsigned int i, npages, pagelen;
 
-	अगर (!(buf->flags & XDRBUF_SPARSE_PAGES))
-		वापस buflen;
-	अगर (buflen <= buf->head->iov_len)
-		वापस buflen;
+	if (!(buf->flags & XDRBUF_SPARSE_PAGES))
+		return buflen;
+	if (buflen <= buf->head->iov_len)
+		return buflen;
 	pagelen = buflen - buf->head->iov_len;
-	अगर (pagelen > buf->page_len)
+	if (pagelen > buf->page_len)
 		pagelen = buf->page_len;
 	npages = (pagelen + buf->page_base + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	क्रम (i = 0; i < npages; i++) अणु
-		अगर (!buf->pages[i])
-			जारी;
+	for (i = 0; i < npages; i++) {
+		if (!buf->pages[i])
+			continue;
 		buf->pages[i] = alloc_page(gfp);
-		अगर (likely(buf->pages[i]))
-			जारी;
+		if (likely(buf->pages[i]))
+			continue;
 		buflen -= pagelen;
 		pagelen = i << PAGE_SHIFT;
-		अगर (pagelen > buf->page_base)
+		if (pagelen > buf->page_base)
 			buflen += pagelen - buf->page_base;
-		अवरोध;
-	पूर्ण
-	वापस buflen;
-पूर्ण
+		break;
+	}
+	return buflen;
+}
 
-अटल व्योम xdr_buf_try_expand(काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा kvec *head = buf->head;
-	काष्ठा kvec *tail = buf->tail;
-	अचिन्हित पूर्णांक sum = head->iov_len + buf->page_len + tail->iov_len;
-	अचिन्हित पूर्णांक मुक्त_space, newlen;
+static void xdr_buf_try_expand(struct xdr_buf *buf, unsigned int len)
+{
+	struct kvec *head = buf->head;
+	struct kvec *tail = buf->tail;
+	unsigned int sum = head->iov_len + buf->page_len + tail->iov_len;
+	unsigned int free_space, newlen;
 
-	अगर (sum > buf->len) अणु
-		मुक्त_space = min_t(अचिन्हित पूर्णांक, sum - buf->len, len);
-		newlen = xdr_buf_pages_fill_sparse(buf, buf->len + मुक्त_space,
+	if (sum > buf->len) {
+		free_space = min_t(unsigned int, sum - buf->len, len);
+		newlen = xdr_buf_pages_fill_sparse(buf, buf->len + free_space,
 						   GFP_KERNEL);
-		मुक्त_space = newlen - buf->len;
+		free_space = newlen - buf->len;
 		buf->len = newlen;
-		len -= मुक्त_space;
-		अगर (!len)
-			वापस;
-	पूर्ण
+		len -= free_space;
+		if (!len)
+			return;
+	}
 
-	अगर (buf->buflen > sum) अणु
+	if (buf->buflen > sum) {
 		/* Expand the tail buffer */
-		मुक्त_space = min_t(अचिन्हित पूर्णांक, buf->buflen - sum, len);
-		tail->iov_len += मुक्त_space;
-		buf->len += मुक्त_space;
-	पूर्ण
-पूर्ण
+		free_space = min_t(unsigned int, buf->buflen - sum, len);
+		tail->iov_len += free_space;
+		buf->len += free_space;
+	}
+}
 
-अटल व्योम xdr_buf_tail_copy_right(स्थिर काष्ठा xdr_buf *buf,
-				    अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *tail = buf->tail;
-	अचिन्हित पूर्णांक to = base + shअगरt;
+static void xdr_buf_tail_copy_right(const struct xdr_buf *buf,
+				    unsigned int base, unsigned int len,
+				    unsigned int shift)
+{
+	const struct kvec *tail = buf->tail;
+	unsigned int to = base + shift;
 
-	अगर (to >= tail->iov_len)
-		वापस;
-	अगर (len + to > tail->iov_len)
+	if (to >= tail->iov_len)
+		return;
+	if (len + to > tail->iov_len)
 		len = tail->iov_len - to;
-	स_हटाओ(tail->iov_base + to, tail->iov_base + base, len);
-पूर्ण
+	memmove(tail->iov_base + to, tail->iov_base + base, len);
+}
 
-अटल व्योम xdr_buf_pages_copy_right(स्थिर काष्ठा xdr_buf *buf,
-				     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				     अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *tail = buf->tail;
-	अचिन्हित पूर्णांक to = base + shअगरt;
-	अचिन्हित पूर्णांक pglen = 0;
-	अचिन्हित पूर्णांक talen = 0, tato = 0;
+static void xdr_buf_pages_copy_right(const struct xdr_buf *buf,
+				     unsigned int base, unsigned int len,
+				     unsigned int shift)
+{
+	const struct kvec *tail = buf->tail;
+	unsigned int to = base + shift;
+	unsigned int pglen = 0;
+	unsigned int talen = 0, tato = 0;
 
-	अगर (base >= buf->page_len)
-		वापस;
-	अगर (len > buf->page_len - base)
+	if (base >= buf->page_len)
+		return;
+	if (len > buf->page_len - base)
 		len = buf->page_len - base;
-	अगर (to >= buf->page_len) अणु
+	if (to >= buf->page_len) {
 		tato = to - buf->page_len;
-		अगर (tail->iov_len >= len + tato)
+		if (tail->iov_len >= len + tato)
 			talen = len;
-		अन्यथा अगर (tail->iov_len > tato)
+		else if (tail->iov_len > tato)
 			talen = tail->iov_len - tato;
-	पूर्ण अन्यथा अगर (len + to >= buf->page_len) अणु
+	} else if (len + to >= buf->page_len) {
 		pglen = buf->page_len - to;
 		talen = len - pglen;
-		अगर (talen > tail->iov_len)
+		if (talen > tail->iov_len)
 			talen = tail->iov_len;
-	पूर्ण अन्यथा
+	} else
 		pglen = len;
 
 	_copy_from_pages(tail->iov_base + tato, buf->pages,
 			 buf->page_base + base + pglen, talen);
-	_shअगरt_data_right_pages(buf->pages, buf->page_base + to,
+	_shift_data_right_pages(buf->pages, buf->page_base + to,
 				buf->page_base + base, pglen);
-पूर्ण
+}
 
-अटल व्योम xdr_buf_head_copy_right(स्थिर काष्ठा xdr_buf *buf,
-				    अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *head = buf->head;
-	स्थिर काष्ठा kvec *tail = buf->tail;
-	अचिन्हित पूर्णांक to = base + shअगरt;
-	अचिन्हित पूर्णांक pglen = 0, pgto = 0;
-	अचिन्हित पूर्णांक talen = 0, tato = 0;
+static void xdr_buf_head_copy_right(const struct xdr_buf *buf,
+				    unsigned int base, unsigned int len,
+				    unsigned int shift)
+{
+	const struct kvec *head = buf->head;
+	const struct kvec *tail = buf->tail;
+	unsigned int to = base + shift;
+	unsigned int pglen = 0, pgto = 0;
+	unsigned int talen = 0, tato = 0;
 
-	अगर (base >= head->iov_len)
-		वापस;
-	अगर (len > head->iov_len - base)
+	if (base >= head->iov_len)
+		return;
+	if (len > head->iov_len - base)
 		len = head->iov_len - base;
-	अगर (to >= buf->page_len + head->iov_len) अणु
+	if (to >= buf->page_len + head->iov_len) {
 		tato = to - buf->page_len - head->iov_len;
 		talen = len;
-	पूर्ण अन्यथा अगर (to >= head->iov_len) अणु
+	} else if (to >= head->iov_len) {
 		pgto = to - head->iov_len;
 		pglen = len;
-		अगर (pgto + pglen > buf->page_len) अणु
+		if (pgto + pglen > buf->page_len) {
 			talen = pgto + pglen - buf->page_len;
 			pglen -= talen;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pglen = len - to;
-		अगर (pglen > buf->page_len) अणु
+		if (pglen > buf->page_len) {
 			talen = pglen - buf->page_len;
 			pglen = buf->page_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	len -= talen;
 	base += len;
-	अगर (talen + tato > tail->iov_len)
+	if (talen + tato > tail->iov_len)
 		talen = tail->iov_len > tato ? tail->iov_len - tato : 0;
-	स_नकल(tail->iov_base + tato, head->iov_base + base, talen);
+	memcpy(tail->iov_base + tato, head->iov_base + base, talen);
 
 	len -= pglen;
 	base -= pglen;
@@ -624,157 +623,157 @@ EXPORT_SYMBOL_GPL(_copy_from_pages);
 		       pglen);
 
 	base -= len;
-	स_हटाओ(head->iov_base + to, head->iov_base + base, len);
-पूर्ण
+	memmove(head->iov_base + to, head->iov_base + base, len);
+}
 
-अटल व्योम xdr_buf_tail_shअगरt_right(स्थिर काष्ठा xdr_buf *buf,
-				     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				     अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *tail = buf->tail;
+static void xdr_buf_tail_shift_right(const struct xdr_buf *buf,
+				     unsigned int base, unsigned int len,
+				     unsigned int shift)
+{
+	const struct kvec *tail = buf->tail;
 
-	अगर (base >= tail->iov_len || !shअगरt || !len)
-		वापस;
-	xdr_buf_tail_copy_right(buf, base, len, shअगरt);
-पूर्ण
+	if (base >= tail->iov_len || !shift || !len)
+		return;
+	xdr_buf_tail_copy_right(buf, base, len, shift);
+}
 
-अटल व्योम xdr_buf_pages_shअगरt_right(स्थिर काष्ठा xdr_buf *buf,
-				      अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				      अचिन्हित पूर्णांक shअगरt)
-अणु
-	अगर (!shअगरt || !len)
-		वापस;
-	अगर (base >= buf->page_len) अणु
-		xdr_buf_tail_shअगरt_right(buf, base - buf->page_len, len, shअगरt);
-		वापस;
-	पूर्ण
-	अगर (base + len > buf->page_len)
-		xdr_buf_tail_shअगरt_right(buf, 0, base + len - buf->page_len,
-					 shअगरt);
-	xdr_buf_pages_copy_right(buf, base, len, shअगरt);
-पूर्ण
+static void xdr_buf_pages_shift_right(const struct xdr_buf *buf,
+				      unsigned int base, unsigned int len,
+				      unsigned int shift)
+{
+	if (!shift || !len)
+		return;
+	if (base >= buf->page_len) {
+		xdr_buf_tail_shift_right(buf, base - buf->page_len, len, shift);
+		return;
+	}
+	if (base + len > buf->page_len)
+		xdr_buf_tail_shift_right(buf, 0, base + len - buf->page_len,
+					 shift);
+	xdr_buf_pages_copy_right(buf, base, len, shift);
+}
 
-अटल व्योम xdr_buf_head_shअगरt_right(स्थिर काष्ठा xdr_buf *buf,
-				     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				     अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *head = buf->head;
+static void xdr_buf_head_shift_right(const struct xdr_buf *buf,
+				     unsigned int base, unsigned int len,
+				     unsigned int shift)
+{
+	const struct kvec *head = buf->head;
 
-	अगर (!shअगरt)
-		वापस;
-	अगर (base >= head->iov_len) अणु
-		xdr_buf_pages_shअगरt_right(buf, head->iov_len - base, len,
-					  shअगरt);
-		वापस;
-	पूर्ण
-	अगर (base + len > head->iov_len)
-		xdr_buf_pages_shअगरt_right(buf, 0, base + len - head->iov_len,
-					  shअगरt);
-	xdr_buf_head_copy_right(buf, base, len, shअगरt);
-पूर्ण
+	if (!shift)
+		return;
+	if (base >= head->iov_len) {
+		xdr_buf_pages_shift_right(buf, head->iov_len - base, len,
+					  shift);
+		return;
+	}
+	if (base + len > head->iov_len)
+		xdr_buf_pages_shift_right(buf, 0, base + len - head->iov_len,
+					  shift);
+	xdr_buf_head_copy_right(buf, base, len, shift);
+}
 
-अटल व्योम xdr_buf_tail_copy_left(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-				   अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक shअगरt)
-अणु
-	स्थिर काष्ठा kvec *tail = buf->tail;
+static void xdr_buf_tail_copy_left(const struct xdr_buf *buf, unsigned int base,
+				   unsigned int len, unsigned int shift)
+{
+	const struct kvec *tail = buf->tail;
 
-	अगर (base >= tail->iov_len)
-		वापस;
-	अगर (len > tail->iov_len - base)
+	if (base >= tail->iov_len)
+		return;
+	if (len > tail->iov_len - base)
 		len = tail->iov_len - base;
-	/* Shअगरt data पूर्णांकo head */
-	अगर (shअगरt > buf->page_len + base) अणु
-		स्थिर काष्ठा kvec *head = buf->head;
-		अचिन्हित पूर्णांक hdto =
-			head->iov_len + buf->page_len + base - shअगरt;
-		अचिन्हित पूर्णांक hdlen = len;
+	/* Shift data into head */
+	if (shift > buf->page_len + base) {
+		const struct kvec *head = buf->head;
+		unsigned int hdto =
+			head->iov_len + buf->page_len + base - shift;
+		unsigned int hdlen = len;
 
-		अगर (WARN_ONCE(shअगरt > head->iov_len + buf->page_len + base,
+		if (WARN_ONCE(shift > head->iov_len + buf->page_len + base,
 			      "SUNRPC: Misaligned data.\n"))
-			वापस;
-		अगर (hdto + hdlen > head->iov_len)
+			return;
+		if (hdto + hdlen > head->iov_len)
 			hdlen = head->iov_len - hdto;
-		स_नकल(head->iov_base + hdto, tail->iov_base + base, hdlen);
+		memcpy(head->iov_base + hdto, tail->iov_base + base, hdlen);
 		base += hdlen;
 		len -= hdlen;
-		अगर (!len)
-			वापस;
-	पूर्ण
-	/* Shअगरt data पूर्णांकo pages */
-	अगर (shअगरt > base) अणु
-		अचिन्हित पूर्णांक pgto = buf->page_len + base - shअगरt;
-		अचिन्हित पूर्णांक pglen = len;
+		if (!len)
+			return;
+	}
+	/* Shift data into pages */
+	if (shift > base) {
+		unsigned int pgto = buf->page_len + base - shift;
+		unsigned int pglen = len;
 
-		अगर (pgto + pglen > buf->page_len)
+		if (pgto + pglen > buf->page_len)
 			pglen = buf->page_len - pgto;
 		_copy_to_pages(buf->pages, buf->page_base + pgto,
 			       tail->iov_base + base, pglen);
 		base += pglen;
 		len -= pglen;
-		अगर (!len)
-			वापस;
-	पूर्ण
-	स_हटाओ(tail->iov_base + base - shअगरt, tail->iov_base + base, len);
-पूर्ण
+		if (!len)
+			return;
+	}
+	memmove(tail->iov_base + base - shift, tail->iov_base + base, len);
+}
 
-अटल व्योम xdr_buf_pages_copy_left(स्थिर काष्ठा xdr_buf *buf,
-				    अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	अचिन्हित पूर्णांक pgto;
+static void xdr_buf_pages_copy_left(const struct xdr_buf *buf,
+				    unsigned int base, unsigned int len,
+				    unsigned int shift)
+{
+	unsigned int pgto;
 
-	अगर (base >= buf->page_len)
-		वापस;
-	अगर (len > buf->page_len - base)
+	if (base >= buf->page_len)
+		return;
+	if (len > buf->page_len - base)
 		len = buf->page_len - base;
-	/* Shअगरt data पूर्णांकo head */
-	अगर (shअगरt > base) अणु
-		स्थिर काष्ठा kvec *head = buf->head;
-		अचिन्हित पूर्णांक hdto = head->iov_len + base - shअगरt;
-		अचिन्हित पूर्णांक hdlen = len;
+	/* Shift data into head */
+	if (shift > base) {
+		const struct kvec *head = buf->head;
+		unsigned int hdto = head->iov_len + base - shift;
+		unsigned int hdlen = len;
 
-		अगर (WARN_ONCE(shअगरt > head->iov_len + base,
+		if (WARN_ONCE(shift > head->iov_len + base,
 			      "SUNRPC: Misaligned data.\n"))
-			वापस;
-		अगर (hdto + hdlen > head->iov_len)
+			return;
+		if (hdto + hdlen > head->iov_len)
 			hdlen = head->iov_len - hdto;
 		_copy_from_pages(head->iov_base + hdto, buf->pages,
 				 buf->page_base + base, hdlen);
 		base += hdlen;
 		len -= hdlen;
-		अगर (!len)
-			वापस;
-	पूर्ण
-	pgto = base - shअगरt;
-	_shअगरt_data_left_pages(buf->pages, buf->page_base + pgto,
+		if (!len)
+			return;
+	}
+	pgto = base - shift;
+	_shift_data_left_pages(buf->pages, buf->page_base + pgto,
 			       buf->page_base + base, len);
-पूर्ण
+}
 
-अटल व्योम xdr_buf_tail_shअगरt_left(स्थिर काष्ठा xdr_buf *buf,
-				    अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				    अचिन्हित पूर्णांक shअगरt)
-अणु
-	अगर (!shअगरt || !len)
-		वापस;
-	xdr_buf_tail_copy_left(buf, base, len, shअगरt);
-पूर्ण
+static void xdr_buf_tail_shift_left(const struct xdr_buf *buf,
+				    unsigned int base, unsigned int len,
+				    unsigned int shift)
+{
+	if (!shift || !len)
+		return;
+	xdr_buf_tail_copy_left(buf, base, len, shift);
+}
 
-अटल व्योम xdr_buf_pages_shअगरt_left(स्थिर काष्ठा xdr_buf *buf,
-				     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-				     अचिन्हित पूर्णांक shअगरt)
-अणु
-	अगर (!shअगरt || !len)
-		वापस;
-	अगर (base >= buf->page_len) अणु
-		xdr_buf_tail_shअगरt_left(buf, base - buf->page_len, len, shअगरt);
-		वापस;
-	पूर्ण
-	xdr_buf_pages_copy_left(buf, base, len, shअगरt);
+static void xdr_buf_pages_shift_left(const struct xdr_buf *buf,
+				     unsigned int base, unsigned int len,
+				     unsigned int shift)
+{
+	if (!shift || !len)
+		return;
+	if (base >= buf->page_len) {
+		xdr_buf_tail_shift_left(buf, base - buf->page_len, len, shift);
+		return;
+	}
+	xdr_buf_pages_copy_left(buf, base, len, shift);
 	len += base;
-	अगर (len <= buf->page_len)
-		वापस;
-	xdr_buf_tail_copy_left(buf, 0, len - buf->page_len, shअगरt);
-पूर्ण
+	if (len <= buf->page_len)
+		return;
+	xdr_buf_tail_copy_left(buf, 0, len - buf->page_len, shift);
+}
 
 /**
  * xdr_shrink_bufhead
@@ -783,191 +782,191 @@ EXPORT_SYMBOL_GPL(_copy_from_pages);
  *
  * Shrinks XDR buffer's header kvec buf->head[0], setting it to
  * 'len' bytes. The extra data is not lost, but is instead
- * moved पूर्णांकo the अंतरभूतd pages and/or the tail.
+ * moved into the inlined pages and/or the tail.
  */
-अटल अचिन्हित पूर्णांक xdr_shrink_bufhead(काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा kvec *head = buf->head;
-	अचिन्हित पूर्णांक shअगरt, buflen = max(buf->len, len);
+static unsigned int xdr_shrink_bufhead(struct xdr_buf *buf, unsigned int len)
+{
+	struct kvec *head = buf->head;
+	unsigned int shift, buflen = max(buf->len, len);
 
 	WARN_ON_ONCE(len > head->iov_len);
-	अगर (head->iov_len > buflen) अणु
+	if (head->iov_len > buflen) {
 		buf->buflen -= head->iov_len - buflen;
 		head->iov_len = buflen;
-	पूर्ण
-	अगर (len >= head->iov_len)
-		वापस 0;
-	shअगरt = head->iov_len - len;
-	xdr_buf_try_expand(buf, shअगरt);
-	xdr_buf_head_shअगरt_right(buf, len, buflen - len, shअगरt);
+	}
+	if (len >= head->iov_len)
+		return 0;
+	shift = head->iov_len - len;
+	xdr_buf_try_expand(buf, shift);
+	xdr_buf_head_shift_right(buf, len, buflen - len, shift);
 	head->iov_len = len;
-	buf->buflen -= shअगरt;
-	buf->len -= shअगरt;
-	वापस shअगरt;
-पूर्ण
+	buf->buflen -= shift;
+	buf->len -= shift;
+	return shift;
+}
 
 /**
  * xdr_shrink_pagelen - shrinks buf->pages to @len bytes
  * @buf: xdr_buf
  * @len: new page buffer length
  *
- * The extra data is not lost, but is instead moved पूर्णांकo buf->tail.
+ * The extra data is not lost, but is instead moved into buf->tail.
  * Returns the actual number of bytes moved.
  */
-अटल अचिन्हित पूर्णांक xdr_shrink_pagelen(काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक shअगरt, buflen = buf->len - buf->head->iov_len;
+static unsigned int xdr_shrink_pagelen(struct xdr_buf *buf, unsigned int len)
+{
+	unsigned int shift, buflen = buf->len - buf->head->iov_len;
 
 	WARN_ON_ONCE(len > buf->page_len);
-	अगर (buf->head->iov_len >= buf->len || len > buflen)
+	if (buf->head->iov_len >= buf->len || len > buflen)
 		buflen = len;
-	अगर (buf->page_len > buflen) अणु
+	if (buf->page_len > buflen) {
 		buf->buflen -= buf->page_len - buflen;
 		buf->page_len = buflen;
-	पूर्ण
-	अगर (len >= buf->page_len)
-		वापस 0;
-	shअगरt = buf->page_len - len;
-	xdr_buf_try_expand(buf, shअगरt);
-	xdr_buf_pages_shअगरt_right(buf, len, buflen - len, shअगरt);
+	}
+	if (len >= buf->page_len)
+		return 0;
+	shift = buf->page_len - len;
+	xdr_buf_try_expand(buf, shift);
+	xdr_buf_pages_shift_right(buf, len, buflen - len, shift);
 	buf->page_len = len;
-	buf->len -= shअगरt;
-	buf->buflen -= shअगरt;
-	वापस shअगरt;
-पूर्ण
+	buf->len -= shift;
+	buf->buflen -= shift;
+	return shift;
+}
 
-व्योम
-xdr_shअगरt_buf(काष्ठा xdr_buf *buf, माप_प्रकार len)
-अणु
+void
+xdr_shift_buf(struct xdr_buf *buf, size_t len)
+{
 	xdr_shrink_bufhead(buf, buf->head->iov_len - len);
-पूर्ण
-EXPORT_SYMBOL_GPL(xdr_shअगरt_buf);
+}
+EXPORT_SYMBOL_GPL(xdr_shift_buf);
 
 /**
  * xdr_stream_pos - Return the current offset from the start of the xdr_stream
- * @xdr: poपूर्णांकer to काष्ठा xdr_stream
+ * @xdr: pointer to struct xdr_stream
  */
-अचिन्हित पूर्णांक xdr_stream_pos(स्थिर काष्ठा xdr_stream *xdr)
-अणु
-	वापस (अचिन्हित पूर्णांक)(XDR_QUADLEN(xdr->buf->len) - xdr->nwords) << 2;
-पूर्ण
+unsigned int xdr_stream_pos(const struct xdr_stream *xdr)
+{
+	return (unsigned int)(XDR_QUADLEN(xdr->buf->len) - xdr->nwords) << 2;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_pos);
 
-अटल व्योम xdr_stream_set_pos(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक pos)
-अणु
-	अचिन्हित पूर्णांक blen = xdr->buf->len;
+static void xdr_stream_set_pos(struct xdr_stream *xdr, unsigned int pos)
+{
+	unsigned int blen = xdr->buf->len;
 
 	xdr->nwords = blen > pos ? XDR_QUADLEN(blen) - XDR_QUADLEN(pos) : 0;
-पूर्ण
+}
 
-अटल व्योम xdr_stream_page_set_pos(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक pos)
-अणु
+static void xdr_stream_page_set_pos(struct xdr_stream *xdr, unsigned int pos)
+{
 	xdr_stream_set_pos(xdr, pos + xdr->buf->head[0].iov_len);
-पूर्ण
+}
 
 /**
  * xdr_page_pos - Return the current offset from the start of the xdr pages
- * @xdr: poपूर्णांकer to काष्ठा xdr_stream
+ * @xdr: pointer to struct xdr_stream
  */
-अचिन्हित पूर्णांक xdr_page_pos(स्थिर काष्ठा xdr_stream *xdr)
-अणु
-	अचिन्हित पूर्णांक pos = xdr_stream_pos(xdr);
+unsigned int xdr_page_pos(const struct xdr_stream *xdr)
+{
+	unsigned int pos = xdr_stream_pos(xdr);
 
 	WARN_ON(pos < xdr->buf->head[0].iov_len);
-	वापस pos - xdr->buf->head[0].iov_len;
-पूर्ण
+	return pos - xdr->buf->head[0].iov_len;
+}
 EXPORT_SYMBOL_GPL(xdr_page_pos);
 
 /**
- * xdr_init_encode - Initialize a काष्ठा xdr_stream क्रम sending data.
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
- * @buf: poपूर्णांकer to XDR buffer in which to encode data
- * @p: current poपूर्णांकer inside XDR buffer
- * @rqst: poपूर्णांकer to controlling rpc_rqst, क्रम debugging
+ * xdr_init_encode - Initialize a struct xdr_stream for sending data.
+ * @xdr: pointer to xdr_stream struct
+ * @buf: pointer to XDR buffer in which to encode data
+ * @p: current pointer inside XDR buffer
+ * @rqst: pointer to controlling rpc_rqst, for debugging
  *
  * Note: at the moment the RPC client only passes the length of our
  *	 scratch buffer in the xdr_buf's header kvec. Previously this
  *	 meant we needed to call xdr_adjust_iovec() after encoding the
  *	 data. With the new scheme, the xdr_stream manages the details
  *	 of the buffer length, and takes care of adjusting the kvec
- *	 length क्रम us.
+ *	 length for us.
  */
-व्योम xdr_init_encode(काष्ठा xdr_stream *xdr, काष्ठा xdr_buf *buf, __be32 *p,
-		     काष्ठा rpc_rqst *rqst)
-अणु
-	काष्ठा kvec *iov = buf->head;
-	पूर्णांक scratch_len = buf->buflen - buf->page_len - buf->tail[0].iov_len;
+void xdr_init_encode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p,
+		     struct rpc_rqst *rqst)
+{
+	struct kvec *iov = buf->head;
+	int scratch_len = buf->buflen - buf->page_len - buf->tail[0].iov_len;
 
 	xdr_reset_scratch_buffer(xdr);
 	BUG_ON(scratch_len < 0);
 	xdr->buf = buf;
 	xdr->iov = iov;
-	xdr->p = (__be32 *)((अक्षर *)iov->iov_base + iov->iov_len);
-	xdr->end = (__be32 *)((अक्षर *)iov->iov_base + scratch_len);
+	xdr->p = (__be32 *)((char *)iov->iov_base + iov->iov_len);
+	xdr->end = (__be32 *)((char *)iov->iov_base + scratch_len);
 	BUG_ON(iov->iov_len > scratch_len);
 
-	अगर (p != xdr->p && p != शून्य) अणु
-		माप_प्रकार len;
+	if (p != xdr->p && p != NULL) {
+		size_t len;
 
 		BUG_ON(p < xdr->p || p > xdr->end);
-		len = (अक्षर *)p - (अक्षर *)xdr->p;
+		len = (char *)p - (char *)xdr->p;
 		xdr->p = p;
 		buf->len += len;
 		iov->iov_len += len;
-	पूर्ण
+	}
 	xdr->rqst = rqst;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_init_encode);
 
 /**
  * xdr_commit_encode - Ensure all data is written to buffer
- * @xdr: poपूर्णांकer to xdr_stream
+ * @xdr: pointer to xdr_stream
  *
  * We handle encoding across page boundaries by giving the caller a
- * temporary location to ग_लिखो to, then later copying the data पूर्णांकo
- * place; xdr_commit_encode करोes that copying.
+ * temporary location to write to, then later copying the data into
+ * place; xdr_commit_encode does that copying.
  *
- * Normally the caller करोesn't need to call this directly, as the
- * following xdr_reserve_space will करो it.  But an explicit call may be
- * required at the end of encoding, or any other समय when the xdr_buf
- * data might be पढ़ो.
+ * Normally the caller doesn't need to call this directly, as the
+ * following xdr_reserve_space will do it.  But an explicit call may be
+ * required at the end of encoding, or any other time when the xdr_buf
+ * data might be read.
  */
-अंतरभूत व्योम xdr_commit_encode(काष्ठा xdr_stream *xdr)
-अणु
-	पूर्णांक shअगरt = xdr->scratch.iov_len;
-	व्योम *page;
+inline void xdr_commit_encode(struct xdr_stream *xdr)
+{
+	int shift = xdr->scratch.iov_len;
+	void *page;
 
-	अगर (shअगरt == 0)
-		वापस;
+	if (shift == 0)
+		return;
 	page = page_address(*xdr->page_ptr);
-	स_नकल(xdr->scratch.iov_base, page, shअगरt);
-	स_हटाओ(page, page + shअगरt, (व्योम *)xdr->p - page);
+	memcpy(xdr->scratch.iov_base, page, shift);
+	memmove(page, page + shift, (void *)xdr->p - page);
 	xdr_reset_scratch_buffer(xdr);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_commit_encode);
 
-अटल __be32 *xdr_get_next_encode_buffer(काष्ठा xdr_stream *xdr,
-		माप_प्रकार nbytes)
-अणु
+static __be32 *xdr_get_next_encode_buffer(struct xdr_stream *xdr,
+		size_t nbytes)
+{
 	__be32 *p;
-	पूर्णांक space_left;
-	पूर्णांक frag1bytes, frag2bytes;
+	int space_left;
+	int frag1bytes, frag2bytes;
 
-	अगर (nbytes > PAGE_SIZE)
-		जाओ out_overflow; /* Bigger buffers require special handling */
-	अगर (xdr->buf->len + nbytes > xdr->buf->buflen)
-		जाओ out_overflow; /* Sorry, we're totally out of space */
+	if (nbytes > PAGE_SIZE)
+		goto out_overflow; /* Bigger buffers require special handling */
+	if (xdr->buf->len + nbytes > xdr->buf->buflen)
+		goto out_overflow; /* Sorry, we're totally out of space */
 	frag1bytes = (xdr->end - xdr->p) << 2;
 	frag2bytes = nbytes - frag1bytes;
-	अगर (xdr->iov)
+	if (xdr->iov)
 		xdr->iov->iov_len += frag1bytes;
-	अन्यथा
+	else
 		xdr->buf->page_len += frag1bytes;
 	xdr->page_ptr++;
-	xdr->iov = शून्य;
+	xdr->iov = NULL;
 	/*
 	 * If the last encode didn't end exactly on a page boundary, the
-	 * next one will straddle boundaries.  Encode पूर्णांकo the next
+	 * next one will straddle boundaries.  Encode into the next
 	 * page, then copy it back later in xdr_commit_encode.  We use
 	 * the "scratch" iov to track any temporarily unused fragment of
 	 * space at the end of the previous buffer:
@@ -976,30 +975,30 @@ EXPORT_SYMBOL_GPL(xdr_commit_encode);
 	p = page_address(*xdr->page_ptr);
 	/*
 	 * Note this is where the next encode will start after we've
-	 * shअगरted this one back:
+	 * shifted this one back:
 	 */
-	xdr->p = (व्योम *)p + frag2bytes;
+	xdr->p = (void *)p + frag2bytes;
 	space_left = xdr->buf->buflen - xdr->buf->len;
-	xdr->end = (व्योम *)p + min_t(पूर्णांक, space_left, PAGE_SIZE);
+	xdr->end = (void *)p + min_t(int, space_left, PAGE_SIZE);
 	xdr->buf->page_len += frag2bytes;
 	xdr->buf->len += nbytes;
-	वापस p;
+	return p;
 out_overflow:
 	trace_rpc_xdr_overflow(xdr, nbytes);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * xdr_reserve_space - Reserve buffer space क्रम sending
- * @xdr: poपूर्णांकer to xdr_stream
+ * xdr_reserve_space - Reserve buffer space for sending
+ * @xdr: pointer to xdr_stream
  * @nbytes: number of bytes to reserve
  *
  * Checks that we have enough buffer space to encode 'nbytes' more
  * bytes of data. If so, update the total xdr_buf length, and
  * adjust the length of the current kvec.
  */
-__be32 * xdr_reserve_space(काष्ठा xdr_stream *xdr, माप_प्रकार nbytes)
-अणु
+__be32 * xdr_reserve_space(struct xdr_stream *xdr, size_t nbytes)
+{
 	__be32 *p = xdr->p;
 	__be32 *q;
 
@@ -1008,107 +1007,107 @@ __be32 * xdr_reserve_space(काष्ठा xdr_stream *xdr, माप_प्�
 	nbytes += 3;
 	nbytes &= ~3;
 	q = p + (nbytes >> 2);
-	अगर (unlikely(q > xdr->end || q < p))
-		वापस xdr_get_next_encode_buffer(xdr, nbytes);
+	if (unlikely(q > xdr->end || q < p))
+		return xdr_get_next_encode_buffer(xdr, nbytes);
 	xdr->p = q;
-	अगर (xdr->iov)
+	if (xdr->iov)
 		xdr->iov->iov_len += nbytes;
-	अन्यथा
+	else
 		xdr->buf->page_len += nbytes;
 	xdr->buf->len += nbytes;
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL_GPL(xdr_reserve_space);
 
 
 /**
- * xdr_reserve_space_vec - Reserves a large amount of buffer space क्रम sending
- * @xdr: poपूर्णांकer to xdr_stream
- * @vec: poपूर्णांकer to a kvec array
+ * xdr_reserve_space_vec - Reserves a large amount of buffer space for sending
+ * @xdr: pointer to xdr_stream
+ * @vec: pointer to a kvec array
  * @nbytes: number of bytes to reserve
  *
  * Reserves enough buffer space to encode 'nbytes' of data and stores the
- * poपूर्णांकers in 'vec'. The size argument passed to xdr_reserve_space() is
- * determined based on the number of bytes reमुख्यing in the current page to
- * aव्योम invalidating iov_base poपूर्णांकers when xdr_commit_encode() is called.
+ * pointers in 'vec'. The size argument passed to xdr_reserve_space() is
+ * determined based on the number of bytes remaining in the current page to
+ * avoid invalidating iov_base pointers when xdr_commit_encode() is called.
  */
-पूर्णांक xdr_reserve_space_vec(काष्ठा xdr_stream *xdr, काष्ठा kvec *vec, माप_प्रकार nbytes)
-अणु
-	पूर्णांक thislen;
-	पूर्णांक v = 0;
+int xdr_reserve_space_vec(struct xdr_stream *xdr, struct kvec *vec, size_t nbytes)
+{
+	int thislen;
+	int v = 0;
 	__be32 *p;
 
 	/*
 	 * svcrdma requires every READ payload to start somewhere
 	 * in xdr->pages.
 	 */
-	अगर (xdr->iov == xdr->buf->head) अणु
-		xdr->iov = शून्य;
+	if (xdr->iov == xdr->buf->head) {
+		xdr->iov = NULL;
 		xdr->end = xdr->p;
-	पूर्ण
+	}
 
-	जबतक (nbytes) अणु
+	while (nbytes) {
 		thislen = xdr->buf->page_len % PAGE_SIZE;
-		thislen = min_t(माप_प्रकार, nbytes, PAGE_SIZE - thislen);
+		thislen = min_t(size_t, nbytes, PAGE_SIZE - thislen);
 
 		p = xdr_reserve_space(xdr, thislen);
-		अगर (!p)
-			वापस -EIO;
+		if (!p)
+			return -EIO;
 
 		vec[v].iov_base = p;
 		vec[v].iov_len = thislen;
 		v++;
 		nbytes -= thislen;
-	पूर्ण
+	}
 
-	वापस v;
-पूर्ण
+	return v;
+}
 EXPORT_SYMBOL_GPL(xdr_reserve_space_vec);
 
 /**
  * xdr_truncate_encode - truncate an encode buffer
- * @xdr: poपूर्णांकer to xdr_stream
+ * @xdr: pointer to xdr_stream
  * @len: new length of buffer
  *
  * Truncates the xdr stream, so that xdr->buf->len == len,
- * and xdr->p poपूर्णांकs at offset len from the start of the buffer, and
+ * and xdr->p points at offset len from the start of the buffer, and
  * head, tail, and page lengths are adjusted to correspond.
  *
- * If this means moving xdr->p to a dअगरferent buffer, we assume that
- * the end poपूर्णांकer should be set to the end of the current page,
- * except in the हाल of the head buffer when we assume the head
+ * If this means moving xdr->p to a different buffer, we assume that
+ * the end pointer should be set to the end of the current page,
+ * except in the case of the head buffer when we assume the head
  * buffer's current length represents the end of the available buffer.
  *
- * This is *not* safe to use on a buffer that alपढ़ोy has अंतरभूतd page
- * cache pages (as in a zero-copy server पढ़ो reply), except क्रम the
- * simple हाल of truncating from one position in the tail to another.
+ * This is *not* safe to use on a buffer that already has inlined page
+ * cache pages (as in a zero-copy server read reply), except for the
+ * simple case of truncating from one position in the tail to another.
  *
  */
-व्योम xdr_truncate_encode(काष्ठा xdr_stream *xdr, माप_प्रकार len)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	काष्ठा kvec *head = buf->head;
-	काष्ठा kvec *tail = buf->tail;
-	पूर्णांक fraglen;
-	पूर्णांक new;
+void xdr_truncate_encode(struct xdr_stream *xdr, size_t len)
+{
+	struct xdr_buf *buf = xdr->buf;
+	struct kvec *head = buf->head;
+	struct kvec *tail = buf->tail;
+	int fraglen;
+	int new;
 
-	अगर (len > buf->len) अणु
+	if (len > buf->len) {
 		WARN_ON_ONCE(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 	xdr_commit_encode(xdr);
 
-	fraglen = min_t(पूर्णांक, buf->len - len, tail->iov_len);
+	fraglen = min_t(int, buf->len - len, tail->iov_len);
 	tail->iov_len -= fraglen;
 	buf->len -= fraglen;
-	अगर (tail->iov_len) अणु
+	if (tail->iov_len) {
 		xdr->p = tail->iov_base + tail->iov_len;
 		WARN_ON_ONCE(!xdr->end);
 		WARN_ON_ONCE(!xdr->iov);
-		वापस;
-	पूर्ण
+		return;
+	}
 	WARN_ON_ONCE(fraglen);
-	fraglen = min_t(पूर्णांक, buf->len - len, buf->page_len);
+	fraglen = min_t(int, buf->len - len, buf->page_len);
 	buf->page_len -= fraglen;
 	buf->len -= fraglen;
 
@@ -1116,127 +1115,127 @@ EXPORT_SYMBOL_GPL(xdr_reserve_space_vec);
 
 	xdr->page_ptr = buf->pages + (new >> PAGE_SHIFT);
 
-	अगर (buf->page_len) अणु
+	if (buf->page_len) {
 		xdr->p = page_address(*xdr->page_ptr);
-		xdr->end = (व्योम *)xdr->p + PAGE_SIZE;
-		xdr->p = (व्योम *)xdr->p + (new % PAGE_SIZE);
+		xdr->end = (void *)xdr->p + PAGE_SIZE;
+		xdr->p = (void *)xdr->p + (new % PAGE_SIZE);
 		WARN_ON_ONCE(xdr->iov);
-		वापस;
-	पूर्ण
-	अगर (fraglen)
+		return;
+	}
+	if (fraglen)
 		xdr->end = head->iov_base + head->iov_len;
-	/* (otherwise assume xdr->end is alपढ़ोy set) */
+	/* (otherwise assume xdr->end is already set) */
 	xdr->page_ptr--;
 	head->iov_len = len;
 	buf->len = len;
 	xdr->p = head->iov_base + head->iov_len;
 	xdr->iov = buf->head;
-पूर्ण
+}
 EXPORT_SYMBOL(xdr_truncate_encode);
 
 /**
  * xdr_restrict_buflen - decrease available buffer space
- * @xdr: poपूर्णांकer to xdr_stream
+ * @xdr: pointer to xdr_stream
  * @newbuflen: new maximum number of bytes available
  *
  * Adjust our idea of how much space is available in the buffer.
- * If we've alपढ़ोy used too much space in the buffer, वापसs -1.
- * If the available space is alपढ़ोy smaller than newbuflen, वापसs 0
- * and करोes nothing.  Otherwise, adjusts xdr->buf->buflen to newbuflen
+ * If we've already used too much space in the buffer, returns -1.
+ * If the available space is already smaller than newbuflen, returns 0
+ * and does nothing.  Otherwise, adjusts xdr->buf->buflen to newbuflen
  * and ensures xdr->end is set at most offset newbuflen from the start
  * of the buffer.
  */
-पूर्णांक xdr_restrict_buflen(काष्ठा xdr_stream *xdr, पूर्णांक newbuflen)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	पूर्णांक left_in_this_buf = (व्योम *)xdr->end - (व्योम *)xdr->p;
-	पूर्णांक end_offset = buf->len + left_in_this_buf;
+int xdr_restrict_buflen(struct xdr_stream *xdr, int newbuflen)
+{
+	struct xdr_buf *buf = xdr->buf;
+	int left_in_this_buf = (void *)xdr->end - (void *)xdr->p;
+	int end_offset = buf->len + left_in_this_buf;
 
-	अगर (newbuflen < 0 || newbuflen < buf->len)
-		वापस -1;
-	अगर (newbuflen > buf->buflen)
-		वापस 0;
-	अगर (newbuflen < end_offset)
-		xdr->end = (व्योम *)xdr->end + newbuflen - end_offset;
+	if (newbuflen < 0 || newbuflen < buf->len)
+		return -1;
+	if (newbuflen > buf->buflen)
+		return 0;
+	if (newbuflen < end_offset)
+		xdr->end = (void *)xdr->end + newbuflen - end_offset;
 	buf->buflen = newbuflen;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(xdr_restrict_buflen);
 
 /**
- * xdr_ग_लिखो_pages - Insert a list of pages पूर्णांकo an XDR buffer क्रम sending
- * @xdr: poपूर्णांकer to xdr_stream
+ * xdr_write_pages - Insert a list of pages into an XDR buffer for sending
+ * @xdr: pointer to xdr_stream
  * @pages: list of pages
  * @base: offset of first byte
  * @len: length of data in bytes
  *
  */
-व्योम xdr_ग_लिखो_pages(काष्ठा xdr_stream *xdr, काष्ठा page **pages, अचिन्हित पूर्णांक base,
-		 अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	काष्ठा kvec *iov = buf->tail;
+void xdr_write_pages(struct xdr_stream *xdr, struct page **pages, unsigned int base,
+		 unsigned int len)
+{
+	struct xdr_buf *buf = xdr->buf;
+	struct kvec *iov = buf->tail;
 	buf->pages = pages;
 	buf->page_base = base;
 	buf->page_len = len;
 
-	iov->iov_base = (अक्षर *)xdr->p;
+	iov->iov_base = (char *)xdr->p;
 	iov->iov_len  = 0;
 	xdr->iov = iov;
 
-	अगर (len & 3) अणु
-		अचिन्हित पूर्णांक pad = 4 - (len & 3);
+	if (len & 3) {
+		unsigned int pad = 4 - (len & 3);
 
 		BUG_ON(xdr->p >= xdr->end);
-		iov->iov_base = (अक्षर *)xdr->p + (len & 3);
+		iov->iov_base = (char *)xdr->p + (len & 3);
 		iov->iov_len  += pad;
 		len += pad;
 		*xdr->p++ = 0;
-	पूर्ण
+	}
 	buf->buflen += len;
 	buf->len += len;
-पूर्ण
-EXPORT_SYMBOL_GPL(xdr_ग_लिखो_pages);
+}
+EXPORT_SYMBOL_GPL(xdr_write_pages);
 
-अटल अचिन्हित पूर्णांक xdr_set_iov(काष्ठा xdr_stream *xdr, काष्ठा kvec *iov,
-				अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len)
-अणु
-	अगर (len > iov->iov_len)
+static unsigned int xdr_set_iov(struct xdr_stream *xdr, struct kvec *iov,
+				unsigned int base, unsigned int len)
+{
+	if (len > iov->iov_len)
 		len = iov->iov_len;
-	अगर (unlikely(base > len))
+	if (unlikely(base > len))
 		base = len;
 	xdr->p = (__be32*)(iov->iov_base + base);
 	xdr->end = (__be32*)(iov->iov_base + len);
 	xdr->iov = iov;
-	xdr->page_ptr = शून्य;
-	वापस len - base;
-पूर्ण
+	xdr->page_ptr = NULL;
+	return len - base;
+}
 
-अटल अचिन्हित पूर्णांक xdr_set_tail_base(काष्ठा xdr_stream *xdr,
-				      अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
+static unsigned int xdr_set_tail_base(struct xdr_stream *xdr,
+				      unsigned int base, unsigned int len)
+{
+	struct xdr_buf *buf = xdr->buf;
 
 	xdr_stream_set_pos(xdr, base + buf->page_len + buf->head->iov_len);
-	वापस xdr_set_iov(xdr, buf->tail, base, len);
-पूर्ण
+	return xdr_set_iov(xdr, buf->tail, base, len);
+}
 
-अटल अचिन्हित पूर्णांक xdr_set_page_base(काष्ठा xdr_stream *xdr,
-				      अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक pgnr;
-	अचिन्हित पूर्णांक maxlen;
-	अचिन्हित पूर्णांक pgoff;
-	अचिन्हित पूर्णांक pgend;
-	व्योम *kaddr;
+static unsigned int xdr_set_page_base(struct xdr_stream *xdr,
+				      unsigned int base, unsigned int len)
+{
+	unsigned int pgnr;
+	unsigned int maxlen;
+	unsigned int pgoff;
+	unsigned int pgend;
+	void *kaddr;
 
 	maxlen = xdr->buf->page_len;
-	अगर (base >= maxlen) अणु
+	if (base >= maxlen) {
 		base = maxlen;
 		maxlen = 0;
-	पूर्ण अन्यथा
+	} else
 		maxlen -= base;
-	अगर (len > maxlen)
+	if (len > maxlen)
 		len = maxlen;
 
 	xdr_stream_page_set_pos(xdr, base);
@@ -1250,318 +1249,318 @@ EXPORT_SYMBOL_GPL(xdr_ग_लिखो_pages);
 	xdr->p = (__be32*)(kaddr + pgoff);
 
 	pgend = pgoff + len;
-	अगर (pgend > PAGE_SIZE)
+	if (pgend > PAGE_SIZE)
 		pgend = PAGE_SIZE;
 	xdr->end = (__be32*)(kaddr + pgend);
-	xdr->iov = शून्य;
-	वापस len;
-पूर्ण
+	xdr->iov = NULL;
+	return len;
+}
 
-अटल व्योम xdr_set_page(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक base,
-			 अचिन्हित पूर्णांक len)
-अणु
-	अगर (xdr_set_page_base(xdr, base, len) == 0) अणु
+static void xdr_set_page(struct xdr_stream *xdr, unsigned int base,
+			 unsigned int len)
+{
+	if (xdr_set_page_base(xdr, base, len) == 0) {
 		base -= xdr->buf->page_len;
 		xdr_set_tail_base(xdr, base, len);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम xdr_set_next_page(काष्ठा xdr_stream *xdr)
-अणु
-	अचिन्हित पूर्णांक newbase;
+static void xdr_set_next_page(struct xdr_stream *xdr)
+{
+	unsigned int newbase;
 
 	newbase = (1 + xdr->page_ptr - xdr->buf->pages) << PAGE_SHIFT;
 	newbase -= xdr->buf->page_base;
-	अगर (newbase < xdr->buf->page_len)
-		xdr_set_page_base(xdr, newbase, xdr_stream_reमुख्यing(xdr));
-	अन्यथा
-		xdr_set_tail_base(xdr, 0, xdr_stream_reमुख्यing(xdr));
-पूर्ण
+	if (newbase < xdr->buf->page_len)
+		xdr_set_page_base(xdr, newbase, xdr_stream_remaining(xdr));
+	else
+		xdr_set_tail_base(xdr, 0, xdr_stream_remaining(xdr));
+}
 
-अटल bool xdr_set_next_buffer(काष्ठा xdr_stream *xdr)
-अणु
-	अगर (xdr->page_ptr != शून्य)
+static bool xdr_set_next_buffer(struct xdr_stream *xdr)
+{
+	if (xdr->page_ptr != NULL)
 		xdr_set_next_page(xdr);
-	अन्यथा अगर (xdr->iov == xdr->buf->head)
-		xdr_set_page(xdr, 0, xdr_stream_reमुख्यing(xdr));
-	वापस xdr->p != xdr->end;
-पूर्ण
+	else if (xdr->iov == xdr->buf->head)
+		xdr_set_page(xdr, 0, xdr_stream_remaining(xdr));
+	return xdr->p != xdr->end;
+}
 
 /**
- * xdr_init_decode - Initialize an xdr_stream क्रम decoding data.
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
- * @buf: poपूर्णांकer to XDR buffer from which to decode data
- * @p: current poपूर्णांकer inside XDR buffer
- * @rqst: poपूर्णांकer to controlling rpc_rqst, क्रम debugging
+ * xdr_init_decode - Initialize an xdr_stream for decoding data.
+ * @xdr: pointer to xdr_stream struct
+ * @buf: pointer to XDR buffer from which to decode data
+ * @p: current pointer inside XDR buffer
+ * @rqst: pointer to controlling rpc_rqst, for debugging
  */
-व्योम xdr_init_decode(काष्ठा xdr_stream *xdr, काष्ठा xdr_buf *buf, __be32 *p,
-		     काष्ठा rpc_rqst *rqst)
-अणु
+void xdr_init_decode(struct xdr_stream *xdr, struct xdr_buf *buf, __be32 *p,
+		     struct rpc_rqst *rqst)
+{
 	xdr->buf = buf;
 	xdr_reset_scratch_buffer(xdr);
 	xdr->nwords = XDR_QUADLEN(buf->len);
-	अगर (xdr_set_iov(xdr, buf->head, 0, buf->len) == 0 &&
+	if (xdr_set_iov(xdr, buf->head, 0, buf->len) == 0 &&
 	    xdr_set_page_base(xdr, 0, buf->len) == 0)
 		xdr_set_iov(xdr, buf->tail, 0, buf->len);
-	अगर (p != शून्य && p > xdr->p && xdr->end >= p) अणु
+	if (p != NULL && p > xdr->p && xdr->end >= p) {
 		xdr->nwords -= p - xdr->p;
 		xdr->p = p;
-	पूर्ण
+	}
 	xdr->rqst = rqst;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_init_decode);
 
 /**
- * xdr_init_decode_pages - Initialize an xdr_stream क्रम decoding पूर्णांकo pages
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
- * @buf: poपूर्णांकer to XDR buffer from which to decode data
- * @pages: list of pages to decode पूर्णांकo
+ * xdr_init_decode_pages - Initialize an xdr_stream for decoding into pages
+ * @xdr: pointer to xdr_stream struct
+ * @buf: pointer to XDR buffer from which to decode data
+ * @pages: list of pages to decode into
  * @len: length in bytes of buffer in pages
  */
-व्योम xdr_init_decode_pages(काष्ठा xdr_stream *xdr, काष्ठा xdr_buf *buf,
-			   काष्ठा page **pages, अचिन्हित पूर्णांक len)
-अणु
-	स_रखो(buf, 0, माप(*buf));
+void xdr_init_decode_pages(struct xdr_stream *xdr, struct xdr_buf *buf,
+			   struct page **pages, unsigned int len)
+{
+	memset(buf, 0, sizeof(*buf));
 	buf->pages =  pages;
 	buf->page_len =  len;
 	buf->buflen =  len;
 	buf->len = len;
-	xdr_init_decode(xdr, buf, शून्य, शून्य);
-पूर्ण
+	xdr_init_decode(xdr, buf, NULL, NULL);
+}
 EXPORT_SYMBOL_GPL(xdr_init_decode_pages);
 
-अटल __be32 * __xdr_अंतरभूत_decode(काष्ठा xdr_stream *xdr, माप_प्रकार nbytes)
-अणु
-	अचिन्हित पूर्णांक nwords = XDR_QUADLEN(nbytes);
+static __be32 * __xdr_inline_decode(struct xdr_stream *xdr, size_t nbytes)
+{
+	unsigned int nwords = XDR_QUADLEN(nbytes);
 	__be32 *p = xdr->p;
 	__be32 *q = p + nwords;
 
-	अगर (unlikely(nwords > xdr->nwords || q > xdr->end || q < p))
-		वापस शून्य;
+	if (unlikely(nwords > xdr->nwords || q > xdr->end || q < p))
+		return NULL;
 	xdr->p = q;
 	xdr->nwords -= nwords;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल __be32 *xdr_copy_to_scratch(काष्ठा xdr_stream *xdr, माप_प्रकार nbytes)
-अणु
+static __be32 *xdr_copy_to_scratch(struct xdr_stream *xdr, size_t nbytes)
+{
 	__be32 *p;
-	अक्षर *cpdest = xdr->scratch.iov_base;
-	माप_प्रकार cplen = (अक्षर *)xdr->end - (अक्षर *)xdr->p;
+	char *cpdest = xdr->scratch.iov_base;
+	size_t cplen = (char *)xdr->end - (char *)xdr->p;
 
-	अगर (nbytes > xdr->scratch.iov_len)
-		जाओ out_overflow;
-	p = __xdr_अंतरभूत_decode(xdr, cplen);
-	अगर (p == शून्य)
-		वापस शून्य;
-	स_नकल(cpdest, p, cplen);
-	अगर (!xdr_set_next_buffer(xdr))
-		जाओ out_overflow;
+	if (nbytes > xdr->scratch.iov_len)
+		goto out_overflow;
+	p = __xdr_inline_decode(xdr, cplen);
+	if (p == NULL)
+		return NULL;
+	memcpy(cpdest, p, cplen);
+	if (!xdr_set_next_buffer(xdr))
+		goto out_overflow;
 	cpdest += cplen;
 	nbytes -= cplen;
-	p = __xdr_अंतरभूत_decode(xdr, nbytes);
-	अगर (p == शून्य)
-		वापस शून्य;
-	स_नकल(cpdest, p, nbytes);
-	वापस xdr->scratch.iov_base;
+	p = __xdr_inline_decode(xdr, nbytes);
+	if (p == NULL)
+		return NULL;
+	memcpy(cpdest, p, nbytes);
+	return xdr->scratch.iov_base;
 out_overflow:
 	trace_rpc_xdr_overflow(xdr, nbytes);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * xdr_अंतरभूत_decode - Retrieve XDR data to decode
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
+ * xdr_inline_decode - Retrieve XDR data to decode
+ * @xdr: pointer to xdr_stream struct
  * @nbytes: number of bytes of data to decode
  *
- * Check अगर the input buffer is दीर्घ enough to enable us to decode
+ * Check if the input buffer is long enough to enable us to decode
  * 'nbytes' more bytes of data starting at the current position.
- * If so वापस the current poपूर्णांकer, then update the current
- * poपूर्णांकer position.
+ * If so return the current pointer, then update the current
+ * pointer position.
  */
-__be32 * xdr_अंतरभूत_decode(काष्ठा xdr_stream *xdr, माप_प्रकार nbytes)
-अणु
+__be32 * xdr_inline_decode(struct xdr_stream *xdr, size_t nbytes)
+{
 	__be32 *p;
 
-	अगर (unlikely(nbytes == 0))
-		वापस xdr->p;
-	अगर (xdr->p == xdr->end && !xdr_set_next_buffer(xdr))
-		जाओ out_overflow;
-	p = __xdr_अंतरभूत_decode(xdr, nbytes);
-	अगर (p != शून्य)
-		वापस p;
-	वापस xdr_copy_to_scratch(xdr, nbytes);
+	if (unlikely(nbytes == 0))
+		return xdr->p;
+	if (xdr->p == xdr->end && !xdr_set_next_buffer(xdr))
+		goto out_overflow;
+	p = __xdr_inline_decode(xdr, nbytes);
+	if (p != NULL)
+		return p;
+	return xdr_copy_to_scratch(xdr, nbytes);
 out_overflow:
 	trace_rpc_xdr_overflow(xdr, nbytes);
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(xdr_अंतरभूत_decode);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(xdr_inline_decode);
 
-अटल व्योम xdr_realign_pages(काष्ठा xdr_stream *xdr)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	काष्ठा kvec *iov = buf->head;
-	अचिन्हित पूर्णांक cur = xdr_stream_pos(xdr);
-	अचिन्हित पूर्णांक copied;
+static void xdr_realign_pages(struct xdr_stream *xdr)
+{
+	struct xdr_buf *buf = xdr->buf;
+	struct kvec *iov = buf->head;
+	unsigned int cur = xdr_stream_pos(xdr);
+	unsigned int copied;
 
-	/* Realign pages to current poपूर्णांकer position */
-	अगर (iov->iov_len > cur) अणु
+	/* Realign pages to current pointer position */
+	if (iov->iov_len > cur) {
 		copied = xdr_shrink_bufhead(buf, cur);
 		trace_rpc_xdr_alignment(xdr, cur, copied);
 		xdr_set_page(xdr, 0, buf->page_len);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक xdr_align_pages(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	अचिन्हित पूर्णांक nwords = XDR_QUADLEN(len);
-	अचिन्हित पूर्णांक copied;
+static unsigned int xdr_align_pages(struct xdr_stream *xdr, unsigned int len)
+{
+	struct xdr_buf *buf = xdr->buf;
+	unsigned int nwords = XDR_QUADLEN(len);
+	unsigned int copied;
 
-	अगर (xdr->nwords == 0)
-		वापस 0;
+	if (xdr->nwords == 0)
+		return 0;
 
 	xdr_realign_pages(xdr);
-	अगर (nwords > xdr->nwords) अणु
+	if (nwords > xdr->nwords) {
 		nwords = xdr->nwords;
 		len = nwords << 2;
-	पूर्ण
-	अगर (buf->page_len <= len)
+	}
+	if (buf->page_len <= len)
 		len = buf->page_len;
-	अन्यथा अगर (nwords < xdr->nwords) अणु
-		/* Truncate page data and move it पूर्णांकo the tail */
+	else if (nwords < xdr->nwords) {
+		/* Truncate page data and move it into the tail */
 		copied = xdr_shrink_pagelen(buf, len);
 		trace_rpc_xdr_alignment(xdr, len, copied);
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
 /**
- * xdr_पढ़ो_pages - align page-based XDR data to current poपूर्णांकer position
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
+ * xdr_read_pages - align page-based XDR data to current pointer position
+ * @xdr: pointer to xdr_stream struct
  * @len: number of bytes of page data
  *
- * Moves data beyond the current poपूर्णांकer position from the XDR head[] buffer
- * पूर्णांकo the page list. Any data that lies beyond current position + @len
- * bytes is moved पूर्णांकo the XDR tail[]. The xdr_stream current position is
+ * Moves data beyond the current pointer position from the XDR head[] buffer
+ * into the page list. Any data that lies beyond current position + @len
+ * bytes is moved into the XDR tail[]. The xdr_stream current position is
  * then advanced past that data to align to the next XDR object in the tail.
  *
  * Returns the number of XDR encoded bytes now contained in the pages
  */
-अचिन्हित पूर्णांक xdr_पढ़ो_pages(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक nwords = XDR_QUADLEN(len);
-	अचिन्हित पूर्णांक base, end, pglen;
+unsigned int xdr_read_pages(struct xdr_stream *xdr, unsigned int len)
+{
+	unsigned int nwords = XDR_QUADLEN(len);
+	unsigned int base, end, pglen;
 
 	pglen = xdr_align_pages(xdr, nwords << 2);
-	अगर (pglen == 0)
-		वापस 0;
+	if (pglen == 0)
+		return 0;
 
 	base = (nwords << 2) - pglen;
-	end = xdr_stream_reमुख्यing(xdr) - pglen;
+	end = xdr_stream_remaining(xdr) - pglen;
 
 	xdr_set_tail_base(xdr, base, end);
-	वापस len <= pglen ? len : pglen;
-पूर्ण
-EXPORT_SYMBOL_GPL(xdr_पढ़ो_pages);
+	return len <= pglen ? len : pglen;
+}
+EXPORT_SYMBOL_GPL(xdr_read_pages);
 
-अचिन्हित पूर्णांक xdr_align_data(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक offset,
-			    अचिन्हित पूर्णांक length)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	अचिन्हित पूर्णांक from, bytes, len;
-	अचिन्हित पूर्णांक shअगरt;
+unsigned int xdr_align_data(struct xdr_stream *xdr, unsigned int offset,
+			    unsigned int length)
+{
+	struct xdr_buf *buf = xdr->buf;
+	unsigned int from, bytes, len;
+	unsigned int shift;
 
 	xdr_realign_pages(xdr);
 	from = xdr_page_pos(xdr);
 
-	अगर (from >= buf->page_len + buf->tail->iov_len)
-		वापस 0;
-	अगर (from + buf->head->iov_len >= buf->len)
-		वापस 0;
+	if (from >= buf->page_len + buf->tail->iov_len)
+		return 0;
+	if (from + buf->head->iov_len >= buf->len)
+		return 0;
 
 	len = buf->len - buf->head->iov_len;
 
-	/* We only shअगरt data left! */
-	अगर (WARN_ONCE(from < offset, "SUNRPC: misaligned data src=%u dst=%u\n",
+	/* We only shift data left! */
+	if (WARN_ONCE(from < offset, "SUNRPC: misaligned data src=%u dst=%u\n",
 		      from, offset))
-		वापस 0;
-	अगर (WARN_ONCE(offset > buf->page_len,
+		return 0;
+	if (WARN_ONCE(offset > buf->page_len,
 		      "SUNRPC: buffer overflow. offset=%u, page_len=%u\n",
 		      offset, buf->page_len))
-		वापस 0;
+		return 0;
 
 	/* Move page data to the left */
-	shअगरt = from - offset;
-	xdr_buf_pages_shअगरt_left(buf, from, len, shअगरt);
+	shift = from - offset;
+	xdr_buf_pages_shift_left(buf, from, len, shift);
 
-	bytes = xdr_stream_reमुख्यing(xdr);
-	अगर (length > bytes)
+	bytes = xdr_stream_remaining(xdr);
+	if (length > bytes)
 		length = bytes;
 	bytes -= length;
 
-	xdr->buf->len -= shअगरt;
+	xdr->buf->len -= shift;
 	xdr_set_page(xdr, offset + length, bytes);
-	वापस length;
-पूर्ण
+	return length;
+}
 EXPORT_SYMBOL_GPL(xdr_align_data);
 
-अचिन्हित पूर्णांक xdr_expand_hole(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक offset,
-			     अचिन्हित पूर्णांक length)
-अणु
-	काष्ठा xdr_buf *buf = xdr->buf;
-	अचिन्हित पूर्णांक from, to, shअगरt;
+unsigned int xdr_expand_hole(struct xdr_stream *xdr, unsigned int offset,
+			     unsigned int length)
+{
+	struct xdr_buf *buf = xdr->buf;
+	unsigned int from, to, shift;
 
 	xdr_realign_pages(xdr);
 	from = xdr_page_pos(xdr);
 	to = xdr_align_size(offset + length);
 
 	/* Could the hole be behind us? */
-	अगर (to > from) अणु
-		अचिन्हित पूर्णांक buflen = buf->len - buf->head->iov_len;
-		shअगरt = to - from;
-		xdr_buf_try_expand(buf, shअगरt);
-		xdr_buf_pages_shअगरt_right(buf, from, buflen, shअगरt);
-		xdr_set_page(xdr, to, xdr_stream_reमुख्यing(xdr));
-	पूर्ण अन्यथा अगर (to != from)
+	if (to > from) {
+		unsigned int buflen = buf->len - buf->head->iov_len;
+		shift = to - from;
+		xdr_buf_try_expand(buf, shift);
+		xdr_buf_pages_shift_right(buf, from, buflen, shift);
+		xdr_set_page(xdr, to, xdr_stream_remaining(xdr));
+	} else if (to != from)
 		xdr_align_data(xdr, to, 0);
 	xdr_buf_pages_zero(buf, offset, length);
 
-	वापस length;
-पूर्ण
+	return length;
+}
 EXPORT_SYMBOL_GPL(xdr_expand_hole);
 
 /**
  * xdr_enter_page - decode data from the XDR page
- * @xdr: poपूर्णांकer to xdr_stream काष्ठा
+ * @xdr: pointer to xdr_stream struct
  * @len: number of bytes of page data
  *
- * Moves data beyond the current poपूर्णांकer position from the XDR head[] buffer
- * पूर्णांकo the page list. Any data that lies beyond current position + "len"
- * bytes is moved पूर्णांकo the XDR tail[]. The current poपूर्णांकer is then
+ * Moves data beyond the current pointer position from the XDR head[] buffer
+ * into the page list. Any data that lies beyond current position + "len"
+ * bytes is moved into the XDR tail[]. The current pointer is then
  * repositioned at the beginning of the first XDR page.
  */
-व्योम xdr_enter_page(काष्ठा xdr_stream *xdr, अचिन्हित पूर्णांक len)
-अणु
+void xdr_enter_page(struct xdr_stream *xdr, unsigned int len)
+{
 	len = xdr_align_pages(xdr, len);
 	/*
-	 * Position current poपूर्णांकer at beginning of tail, and
-	 * set reमुख्यing message length.
+	 * Position current pointer at beginning of tail, and
+	 * set remaining message length.
 	 */
-	अगर (len != 0)
+	if (len != 0)
 		xdr_set_page_base(xdr, 0, len);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_enter_page);
 
-अटल स्थिर काष्ठा kvec empty_iov = अणु.iov_base = शून्य, .iov_len = 0पूर्ण;
+static const struct kvec empty_iov = {.iov_base = NULL, .iov_len = 0};
 
-व्योम xdr_buf_from_iov(स्थिर काष्ठा kvec *iov, काष्ठा xdr_buf *buf)
-अणु
+void xdr_buf_from_iov(const struct kvec *iov, struct xdr_buf *buf)
+{
 	buf->head[0] = *iov;
 	buf->tail[0] = empty_iov;
 	buf->page_len = 0;
 	buf->buflen = buf->len = iov->iov_len;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_buf_from_iov);
 
 /**
@@ -1574,66 +1573,66 @@ EXPORT_SYMBOL_GPL(xdr_buf_from_iov);
  * sets @subbuf to an xdr buffer representing the portion of @buf of
  * length @len starting at offset @base.
  *
- * @buf and @subbuf may be poपूर्णांकers to the same काष्ठा xdr_buf.
+ * @buf and @subbuf may be pointers to the same struct xdr_buf.
  *
- * Returns -1 अगर base of length are out of bounds.
+ * Returns -1 if base of length are out of bounds.
  */
-पूर्णांक xdr_buf_subsegment(स्थिर काष्ठा xdr_buf *buf, काष्ठा xdr_buf *subbuf,
-		       अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len)
-अणु
+int xdr_buf_subsegment(const struct xdr_buf *buf, struct xdr_buf *subbuf,
+		       unsigned int base, unsigned int len)
+{
 	subbuf->buflen = subbuf->len = len;
-	अगर (base < buf->head[0].iov_len) अणु
+	if (base < buf->head[0].iov_len) {
 		subbuf->head[0].iov_base = buf->head[0].iov_base + base;
-		subbuf->head[0].iov_len = min_t(अचिन्हित पूर्णांक, len,
+		subbuf->head[0].iov_len = min_t(unsigned int, len,
 						buf->head[0].iov_len - base);
 		len -= subbuf->head[0].iov_len;
 		base = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		base -= buf->head[0].iov_len;
 		subbuf->head[0].iov_base = buf->head[0].iov_base;
 		subbuf->head[0].iov_len = 0;
-	पूर्ण
+	}
 
-	अगर (base < buf->page_len) अणु
+	if (base < buf->page_len) {
 		subbuf->page_len = min(buf->page_len - base, len);
 		base += buf->page_base;
 		subbuf->page_base = base & ~PAGE_MASK;
 		subbuf->pages = &buf->pages[base >> PAGE_SHIFT];
 		len -= subbuf->page_len;
 		base = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		base -= buf->page_len;
 		subbuf->pages = buf->pages;
 		subbuf->page_base = 0;
 		subbuf->page_len = 0;
-	पूर्ण
+	}
 
-	अगर (base < buf->tail[0].iov_len) अणु
+	if (base < buf->tail[0].iov_len) {
 		subbuf->tail[0].iov_base = buf->tail[0].iov_base + base;
-		subbuf->tail[0].iov_len = min_t(अचिन्हित पूर्णांक, len,
+		subbuf->tail[0].iov_len = min_t(unsigned int, len,
 						buf->tail[0].iov_len - base);
 		len -= subbuf->tail[0].iov_len;
 		base = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		base -= buf->tail[0].iov_len;
 		subbuf->tail[0].iov_base = buf->tail[0].iov_base;
 		subbuf->tail[0].iov_len = 0;
-	पूर्ण
+	}
 
-	अगर (base || len)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (base || len)
+		return -1;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(xdr_buf_subsegment);
 
 /**
  * xdr_stream_subsegment - set @subbuf to a portion of @xdr
- * @xdr: an xdr_stream set up क्रम decoding
+ * @xdr: an xdr_stream set up for decoding
  * @subbuf: the result buffer
  * @nbytes: length of @xdr to extract, in bytes
  *
  * Sets up @subbuf to represent a portion of @xdr. The portion
- * starts at the current offset in @xdr, and extends क्रम a length
+ * starts at the current offset in @xdr, and extends for a length
  * of @nbytes. If this is successful, @xdr is advanced to the next
  * position following that portion.
  *
@@ -1641,34 +1640,34 @@ EXPORT_SYMBOL_GPL(xdr_buf_subsegment);
  *   %true: @subbuf has been initialized, and @xdr has been advanced.
  *   %false: a bounds error has occurred
  */
-bool xdr_stream_subsegment(काष्ठा xdr_stream *xdr, काष्ठा xdr_buf *subbuf,
-			   अचिन्हित पूर्णांक nbytes)
-अणु
-	अचिन्हित पूर्णांक reमुख्यing, offset, len;
+bool xdr_stream_subsegment(struct xdr_stream *xdr, struct xdr_buf *subbuf,
+			   unsigned int nbytes)
+{
+	unsigned int remaining, offset, len;
 
-	अगर (xdr_buf_subsegment(xdr->buf, subbuf, xdr_stream_pos(xdr), nbytes))
-		वापस false;
+	if (xdr_buf_subsegment(xdr->buf, subbuf, xdr_stream_pos(xdr), nbytes))
+		return false;
 
-	अगर (subbuf->head[0].iov_len)
-		अगर (!__xdr_अंतरभूत_decode(xdr, subbuf->head[0].iov_len))
-			वापस false;
+	if (subbuf->head[0].iov_len)
+		if (!__xdr_inline_decode(xdr, subbuf->head[0].iov_len))
+			return false;
 
-	reमुख्यing = subbuf->page_len;
+	remaining = subbuf->page_len;
 	offset = subbuf->page_base;
-	जबतक (reमुख्यing) अणु
-		len = min_t(अचिन्हित पूर्णांक, reमुख्यing, PAGE_SIZE) - offset;
+	while (remaining) {
+		len = min_t(unsigned int, remaining, PAGE_SIZE) - offset;
 
-		अगर (xdr->p == xdr->end && !xdr_set_next_buffer(xdr))
-			वापस false;
-		अगर (!__xdr_अंतरभूत_decode(xdr, len))
-			वापस false;
+		if (xdr->p == xdr->end && !xdr_set_next_buffer(xdr))
+			return false;
+		if (!__xdr_inline_decode(xdr, len))
+			return false;
 
-		reमुख्यing -= len;
+		remaining -= len;
 		offset = 0;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_subsegment);
 
 /**
@@ -1677,519 +1676,519 @@ EXPORT_SYMBOL_GPL(xdr_stream_subsegment);
  * @len: number of bytes to reduce "buf" by
  *
  * Trim an xdr_buf by the given number of bytes by fixing up the lengths. Note
- * that it's possible that we'll trim less than that amount अगर the xdr_buf is
- * too small, or अगर (क्रम instance) it's all in the head and the parser has
- * alपढ़ोy पढ़ो too far पूर्णांकo it.
+ * that it's possible that we'll trim less than that amount if the xdr_buf is
+ * too small, or if (for instance) it's all in the head and the parser has
+ * already read too far into it.
  */
-व्योम xdr_buf_trim(काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक len)
-अणु
-	माप_प्रकार cur;
-	अचिन्हित पूर्णांक trim = len;
+void xdr_buf_trim(struct xdr_buf *buf, unsigned int len)
+{
+	size_t cur;
+	unsigned int trim = len;
 
-	अगर (buf->tail[0].iov_len) अणु
-		cur = min_t(माप_प्रकार, buf->tail[0].iov_len, trim);
+	if (buf->tail[0].iov_len) {
+		cur = min_t(size_t, buf->tail[0].iov_len, trim);
 		buf->tail[0].iov_len -= cur;
 		trim -= cur;
-		अगर (!trim)
-			जाओ fix_len;
-	पूर्ण
+		if (!trim)
+			goto fix_len;
+	}
 
-	अगर (buf->page_len) अणु
-		cur = min_t(अचिन्हित पूर्णांक, buf->page_len, trim);
+	if (buf->page_len) {
+		cur = min_t(unsigned int, buf->page_len, trim);
 		buf->page_len -= cur;
 		trim -= cur;
-		अगर (!trim)
-			जाओ fix_len;
-	पूर्ण
+		if (!trim)
+			goto fix_len;
+	}
 
-	अगर (buf->head[0].iov_len) अणु
-		cur = min_t(माप_प्रकार, buf->head[0].iov_len, trim);
+	if (buf->head[0].iov_len) {
+		cur = min_t(size_t, buf->head[0].iov_len, trim);
 		buf->head[0].iov_len -= cur;
 		trim -= cur;
-	पूर्ण
+	}
 fix_len:
 	buf->len -= (len - trim);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xdr_buf_trim);
 
-अटल व्योम __पढ़ो_bytes_from_xdr_buf(स्थिर काष्ठा xdr_buf *subbuf,
-				      व्योम *obj, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक this_len;
+static void __read_bytes_from_xdr_buf(const struct xdr_buf *subbuf,
+				      void *obj, unsigned int len)
+{
+	unsigned int this_len;
 
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->head[0].iov_len);
-	स_नकल(obj, subbuf->head[0].iov_base, this_len);
+	this_len = min_t(unsigned int, len, subbuf->head[0].iov_len);
+	memcpy(obj, subbuf->head[0].iov_base, this_len);
 	len -= this_len;
 	obj += this_len;
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->page_len);
+	this_len = min_t(unsigned int, len, subbuf->page_len);
 	_copy_from_pages(obj, subbuf->pages, subbuf->page_base, this_len);
 	len -= this_len;
 	obj += this_len;
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->tail[0].iov_len);
-	स_नकल(obj, subbuf->tail[0].iov_base, this_len);
-पूर्ण
+	this_len = min_t(unsigned int, len, subbuf->tail[0].iov_len);
+	memcpy(obj, subbuf->tail[0].iov_base, this_len);
+}
 
-/* obj is assumed to poपूर्णांक to allocated memory of size at least len: */
-पूर्णांक पढ़ो_bytes_from_xdr_buf(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-			    व्योम *obj, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा xdr_buf subbuf;
-	पूर्णांक status;
+/* obj is assumed to point to allocated memory of size at least len: */
+int read_bytes_from_xdr_buf(const struct xdr_buf *buf, unsigned int base,
+			    void *obj, unsigned int len)
+{
+	struct xdr_buf subbuf;
+	int status;
 
 	status = xdr_buf_subsegment(buf, &subbuf, base, len);
-	अगर (status != 0)
-		वापस status;
-	__पढ़ो_bytes_from_xdr_buf(&subbuf, obj, len);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(पढ़ो_bytes_from_xdr_buf);
+	if (status != 0)
+		return status;
+	__read_bytes_from_xdr_buf(&subbuf, obj, len);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(read_bytes_from_xdr_buf);
 
-अटल व्योम __ग_लिखो_bytes_to_xdr_buf(स्थिर काष्ठा xdr_buf *subbuf,
-				     व्योम *obj, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक this_len;
+static void __write_bytes_to_xdr_buf(const struct xdr_buf *subbuf,
+				     void *obj, unsigned int len)
+{
+	unsigned int this_len;
 
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->head[0].iov_len);
-	स_नकल(subbuf->head[0].iov_base, obj, this_len);
+	this_len = min_t(unsigned int, len, subbuf->head[0].iov_len);
+	memcpy(subbuf->head[0].iov_base, obj, this_len);
 	len -= this_len;
 	obj += this_len;
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->page_len);
+	this_len = min_t(unsigned int, len, subbuf->page_len);
 	_copy_to_pages(subbuf->pages, subbuf->page_base, obj, this_len);
 	len -= this_len;
 	obj += this_len;
-	this_len = min_t(अचिन्हित पूर्णांक, len, subbuf->tail[0].iov_len);
-	स_नकल(subbuf->tail[0].iov_base, obj, this_len);
-पूर्ण
+	this_len = min_t(unsigned int, len, subbuf->tail[0].iov_len);
+	memcpy(subbuf->tail[0].iov_base, obj, this_len);
+}
 
-/* obj is assumed to poपूर्णांक to allocated memory of size at least len: */
-पूर्णांक ग_लिखो_bytes_to_xdr_buf(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-			   व्योम *obj, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा xdr_buf subbuf;
-	पूर्णांक status;
+/* obj is assumed to point to allocated memory of size at least len: */
+int write_bytes_to_xdr_buf(const struct xdr_buf *buf, unsigned int base,
+			   void *obj, unsigned int len)
+{
+	struct xdr_buf subbuf;
+	int status;
 
 	status = xdr_buf_subsegment(buf, &subbuf, base, len);
-	अगर (status != 0)
-		वापस status;
-	__ग_लिखो_bytes_to_xdr_buf(&subbuf, obj, len);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(ग_लिखो_bytes_to_xdr_buf);
+	if (status != 0)
+		return status;
+	__write_bytes_to_xdr_buf(&subbuf, obj, len);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(write_bytes_to_xdr_buf);
 
-पूर्णांक xdr_decode_word(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base, u32 *obj)
-अणु
+int xdr_decode_word(const struct xdr_buf *buf, unsigned int base, u32 *obj)
+{
 	__be32	raw;
-	पूर्णांक	status;
+	int	status;
 
-	status = पढ़ो_bytes_from_xdr_buf(buf, base, &raw, माप(*obj));
-	अगर (status)
-		वापस status;
+	status = read_bytes_from_xdr_buf(buf, base, &raw, sizeof(*obj));
+	if (status)
+		return status;
 	*obj = be32_to_cpu(raw);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(xdr_decode_word);
 
-पूर्णांक xdr_encode_word(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base, u32 obj)
-अणु
+int xdr_encode_word(const struct xdr_buf *buf, unsigned int base, u32 obj)
+{
 	__be32	raw = cpu_to_be32(obj);
 
-	वापस ग_लिखो_bytes_to_xdr_buf(buf, base, &raw, माप(obj));
-पूर्ण
+	return write_bytes_to_xdr_buf(buf, base, &raw, sizeof(obj));
+}
 EXPORT_SYMBOL_GPL(xdr_encode_word);
 
-/* Returns 0 on success, or अन्यथा a negative error code. */
-अटल पूर्णांक xdr_xcode_array2(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-			    काष्ठा xdr_array2_desc *desc, पूर्णांक encode)
-अणु
-	अक्षर *elem = शून्य, *c;
-	अचिन्हित पूर्णांक copied = 0, toकरो, avail_here;
-	काष्ठा page **ppages = शून्य;
-	पूर्णांक err;
+/* Returns 0 on success, or else a negative error code. */
+static int xdr_xcode_array2(const struct xdr_buf *buf, unsigned int base,
+			    struct xdr_array2_desc *desc, int encode)
+{
+	char *elem = NULL, *c;
+	unsigned int copied = 0, todo, avail_here;
+	struct page **ppages = NULL;
+	int err;
 
-	अगर (encode) अणु
-		अगर (xdr_encode_word(buf, base, desc->array_len) != 0)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (xdr_decode_word(buf, base, &desc->array_len) != 0 ||
+	if (encode) {
+		if (xdr_encode_word(buf, base, desc->array_len) != 0)
+			return -EINVAL;
+	} else {
+		if (xdr_decode_word(buf, base, &desc->array_len) != 0 ||
 		    desc->array_len > desc->array_maxlen ||
-		    (अचिन्हित दीर्घ) base + 4 + desc->array_len *
+		    (unsigned long) base + 4 + desc->array_len *
 				    desc->elem_size > buf->len)
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 	base += 4;
 
-	अगर (!desc->xcode)
-		वापस 0;
+	if (!desc->xcode)
+		return 0;
 
-	toकरो = desc->array_len * desc->elem_size;
+	todo = desc->array_len * desc->elem_size;
 
 	/* process head */
-	अगर (toकरो && base < buf->head->iov_len) अणु
+	if (todo && base < buf->head->iov_len) {
 		c = buf->head->iov_base + base;
-		avail_here = min_t(अचिन्हित पूर्णांक, toकरो,
+		avail_here = min_t(unsigned int, todo,
 				   buf->head->iov_len - base);
-		toकरो -= avail_here;
+		todo -= avail_here;
 
-		जबतक (avail_here >= desc->elem_size) अणु
+		while (avail_here >= desc->elem_size) {
 			err = desc->xcode(desc, c);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 			c += desc->elem_size;
 			avail_here -= desc->elem_size;
-		पूर्ण
-		अगर (avail_here) अणु
-			अगर (!elem) अणु
-				elem = kदो_स्मृति(desc->elem_size, GFP_KERNEL);
+		}
+		if (avail_here) {
+			if (!elem) {
+				elem = kmalloc(desc->elem_size, GFP_KERNEL);
 				err = -ENOMEM;
-				अगर (!elem)
-					जाओ out;
-			पूर्ण
-			अगर (encode) अणु
+				if (!elem)
+					goto out;
+			}
+			if (encode) {
 				err = desc->xcode(desc, elem);
-				अगर (err)
-					जाओ out;
-				स_नकल(c, elem, avail_here);
-			पूर्ण अन्यथा
-				स_नकल(elem, c, avail_here);
+				if (err)
+					goto out;
+				memcpy(c, elem, avail_here);
+			} else
+				memcpy(elem, c, avail_here);
 			copied = avail_here;
-		पूर्ण
+		}
 		base = buf->head->iov_len;  /* align to start of pages */
-	पूर्ण
+	}
 
 	/* process pages array */
 	base -= buf->head->iov_len;
-	अगर (toकरो && base < buf->page_len) अणु
-		अचिन्हित पूर्णांक avail_page;
+	if (todo && base < buf->page_len) {
+		unsigned int avail_page;
 
-		avail_here = min(toकरो, buf->page_len - base);
-		toकरो -= avail_here;
+		avail_here = min(todo, buf->page_len - base);
+		todo -= avail_here;
 
 		base += buf->page_base;
 		ppages = buf->pages + (base >> PAGE_SHIFT);
 		base &= ~PAGE_MASK;
-		avail_page = min_t(अचिन्हित पूर्णांक, PAGE_SIZE - base,
+		avail_page = min_t(unsigned int, PAGE_SIZE - base,
 					avail_here);
 		c = kmap(*ppages) + base;
 
-		जबतक (avail_here) अणु
+		while (avail_here) {
 			avail_here -= avail_page;
-			अगर (copied || avail_page < desc->elem_size) अणु
-				अचिन्हित पूर्णांक l = min(avail_page,
+			if (copied || avail_page < desc->elem_size) {
+				unsigned int l = min(avail_page,
 					desc->elem_size - copied);
-				अगर (!elem) अणु
-					elem = kदो_स्मृति(desc->elem_size,
+				if (!elem) {
+					elem = kmalloc(desc->elem_size,
 						       GFP_KERNEL);
 					err = -ENOMEM;
-					अगर (!elem)
-						जाओ out;
-				पूर्ण
-				अगर (encode) अणु
-					अगर (!copied) अणु
+					if (!elem)
+						goto out;
+				}
+				if (encode) {
+					if (!copied) {
 						err = desc->xcode(desc, elem);
-						अगर (err)
-							जाओ out;
-					पूर्ण
-					स_नकल(c, elem + copied, l);
+						if (err)
+							goto out;
+					}
+					memcpy(c, elem + copied, l);
 					copied += l;
-					अगर (copied == desc->elem_size)
+					if (copied == desc->elem_size)
 						copied = 0;
-				पूर्ण अन्यथा अणु
-					स_नकल(elem + copied, c, l);
+				} else {
+					memcpy(elem + copied, c, l);
 					copied += l;
-					अगर (copied == desc->elem_size) अणु
+					if (copied == desc->elem_size) {
 						err = desc->xcode(desc, elem);
-						अगर (err)
-							जाओ out;
+						if (err)
+							goto out;
 						copied = 0;
-					पूर्ण
-				पूर्ण
+					}
+				}
 				avail_page -= l;
 				c += l;
-			पूर्ण
-			जबतक (avail_page >= desc->elem_size) अणु
+			}
+			while (avail_page >= desc->elem_size) {
 				err = desc->xcode(desc, c);
-				अगर (err)
-					जाओ out;
+				if (err)
+					goto out;
 				c += desc->elem_size;
 				avail_page -= desc->elem_size;
-			पूर्ण
-			अगर (avail_page) अणु
-				अचिन्हित पूर्णांक l = min(avail_page,
+			}
+			if (avail_page) {
+				unsigned int l = min(avail_page,
 					    desc->elem_size - copied);
-				अगर (!elem) अणु
-					elem = kदो_स्मृति(desc->elem_size,
+				if (!elem) {
+					elem = kmalloc(desc->elem_size,
 						       GFP_KERNEL);
 					err = -ENOMEM;
-					अगर (!elem)
-						जाओ out;
-				पूर्ण
-				अगर (encode) अणु
-					अगर (!copied) अणु
+					if (!elem)
+						goto out;
+				}
+				if (encode) {
+					if (!copied) {
 						err = desc->xcode(desc, elem);
-						अगर (err)
-							जाओ out;
-					पूर्ण
-					स_नकल(c, elem + copied, l);
+						if (err)
+							goto out;
+					}
+					memcpy(c, elem + copied, l);
 					copied += l;
-					अगर (copied == desc->elem_size)
+					if (copied == desc->elem_size)
 						copied = 0;
-				पूर्ण अन्यथा अणु
-					स_नकल(elem + copied, c, l);
+				} else {
+					memcpy(elem + copied, c, l);
 					copied += l;
-					अगर (copied == desc->elem_size) अणु
+					if (copied == desc->elem_size) {
 						err = desc->xcode(desc, elem);
-						अगर (err)
-							जाओ out;
+						if (err)
+							goto out;
 						copied = 0;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-			अगर (avail_here) अणु
+					}
+				}
+			}
+			if (avail_here) {
 				kunmap(*ppages);
 				ppages++;
 				c = kmap(*ppages);
-			पूर्ण
+			}
 
 			avail_page = min(avail_here,
-				 (अचिन्हित पूर्णांक) PAGE_SIZE);
-		पूर्ण
+				 (unsigned int) PAGE_SIZE);
+		}
 		base = buf->page_len;  /* align to start of tail */
-	पूर्ण
+	}
 
 	/* process tail */
 	base -= buf->page_len;
-	अगर (toकरो) अणु
+	if (todo) {
 		c = buf->tail->iov_base + base;
-		अगर (copied) अणु
-			अचिन्हित पूर्णांक l = desc->elem_size - copied;
+		if (copied) {
+			unsigned int l = desc->elem_size - copied;
 
-			अगर (encode)
-				स_नकल(c, elem + copied, l);
-			अन्यथा अणु
-				स_नकल(elem + copied, c, l);
+			if (encode)
+				memcpy(c, elem + copied, l);
+			else {
+				memcpy(elem + copied, c, l);
 				err = desc->xcode(desc, elem);
-				अगर (err)
-					जाओ out;
-			पूर्ण
-			toकरो -= l;
+				if (err)
+					goto out;
+			}
+			todo -= l;
 			c += l;
-		पूर्ण
-		जबतक (toकरो) अणु
+		}
+		while (todo) {
 			err = desc->xcode(desc, c);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 			c += desc->elem_size;
-			toकरो -= desc->elem_size;
-		पूर्ण
-	पूर्ण
+			todo -= desc->elem_size;
+		}
+	}
 	err = 0;
 
 out:
-	kमुक्त(elem);
-	अगर (ppages)
+	kfree(elem);
+	if (ppages)
 		kunmap(*ppages);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक xdr_decode_array2(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-		      काष्ठा xdr_array2_desc *desc)
-अणु
-	अगर (base >= buf->len)
-		वापस -EINVAL;
+int xdr_decode_array2(const struct xdr_buf *buf, unsigned int base,
+		      struct xdr_array2_desc *desc)
+{
+	if (base >= buf->len)
+		return -EINVAL;
 
-	वापस xdr_xcode_array2(buf, base, desc, 0);
-पूर्ण
+	return xdr_xcode_array2(buf, base, desc, 0);
+}
 EXPORT_SYMBOL_GPL(xdr_decode_array2);
 
-पूर्णांक xdr_encode_array2(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक base,
-		      काष्ठा xdr_array2_desc *desc)
-अणु
-	अगर ((अचिन्हित दीर्घ) base + 4 + desc->array_len * desc->elem_size >
+int xdr_encode_array2(const struct xdr_buf *buf, unsigned int base,
+		      struct xdr_array2_desc *desc)
+{
+	if ((unsigned long) base + 4 + desc->array_len * desc->elem_size >
 	    buf->head->iov_len + buf->page_len + buf->tail->iov_len)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस xdr_xcode_array2(buf, base, desc, 1);
-पूर्ण
+	return xdr_xcode_array2(buf, base, desc, 1);
+}
 EXPORT_SYMBOL_GPL(xdr_encode_array2);
 
-पूर्णांक xdr_process_buf(स्थिर काष्ठा xdr_buf *buf, अचिन्हित पूर्णांक offset,
-		    अचिन्हित पूर्णांक len,
-		    पूर्णांक (*actor)(काष्ठा scatterlist *, व्योम *), व्योम *data)
-अणु
-	पूर्णांक i, ret = 0;
-	अचिन्हित पूर्णांक page_len, thislen, page_offset;
-	काष्ठा scatterlist      sg[1];
+int xdr_process_buf(const struct xdr_buf *buf, unsigned int offset,
+		    unsigned int len,
+		    int (*actor)(struct scatterlist *, void *), void *data)
+{
+	int i, ret = 0;
+	unsigned int page_len, thislen, page_offset;
+	struct scatterlist      sg[1];
 
 	sg_init_table(sg, 1);
 
-	अगर (offset >= buf->head[0].iov_len) अणु
+	if (offset >= buf->head[0].iov_len) {
 		offset -= buf->head[0].iov_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		thislen = buf->head[0].iov_len - offset;
-		अगर (thislen > len)
+		if (thislen > len)
 			thislen = len;
 		sg_set_buf(sg, buf->head[0].iov_base + offset, thislen);
 		ret = actor(sg, data);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		offset = 0;
 		len -= thislen;
-	पूर्ण
-	अगर (len == 0)
-		जाओ out;
+	}
+	if (len == 0)
+		goto out;
 
-	अगर (offset >= buf->page_len) अणु
+	if (offset >= buf->page_len) {
 		offset -= buf->page_len;
-	पूर्ण अन्यथा अणु
+	} else {
 		page_len = buf->page_len - offset;
-		अगर (page_len > len)
+		if (page_len > len)
 			page_len = len;
 		len -= page_len;
 		page_offset = (offset + buf->page_base) & (PAGE_SIZE - 1);
 		i = (offset + buf->page_base) >> PAGE_SHIFT;
 		thislen = PAGE_SIZE - page_offset;
-		करो अणु
-			अगर (thislen > page_len)
+		do {
+			if (thislen > page_len)
 				thislen = page_len;
 			sg_set_page(sg, buf->pages[i], thislen, page_offset);
 			ret = actor(sg, data);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 			page_len -= thislen;
 			i++;
 			page_offset = 0;
 			thislen = PAGE_SIZE;
-		पूर्ण जबतक (page_len != 0);
+		} while (page_len != 0);
 		offset = 0;
-	पूर्ण
-	अगर (len == 0)
-		जाओ out;
-	अगर (offset < buf->tail[0].iov_len) अणु
+	}
+	if (len == 0)
+		goto out;
+	if (offset < buf->tail[0].iov_len) {
 		thislen = buf->tail[0].iov_len - offset;
-		अगर (thislen > len)
+		if (thislen > len)
 			thislen = len;
 		sg_set_buf(sg, buf->tail[0].iov_base + offset, thislen);
 		ret = actor(sg, data);
 		len -= thislen;
-	पूर्ण
-	अगर (len != 0)
+	}
+	if (len != 0)
 		ret = -EINVAL;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xdr_process_buf);
 
 /**
  * xdr_stream_decode_opaque - Decode variable length opaque
- * @xdr: poपूर्णांकer to xdr_stream
+ * @xdr: pointer to xdr_stream
  * @ptr: location to store opaque data
  * @size: size of storage buffer @ptr
  *
  * Return values:
- *   On success, वापसs size of object stored in *@ptr
+ *   On success, returns size of object stored in *@ptr
  *   %-EBADMSG on XDR buffer overflow
  *   %-EMSGSIZE on overflow of storage buffer @ptr
  */
-sमाप_प्रकार xdr_stream_decode_opaque(काष्ठा xdr_stream *xdr, व्योम *ptr, माप_प्रकार size)
-अणु
-	sमाप_प्रकार ret;
-	व्योम *p;
+ssize_t xdr_stream_decode_opaque(struct xdr_stream *xdr, void *ptr, size_t size)
+{
+	ssize_t ret;
+	void *p;
 
-	ret = xdr_stream_decode_opaque_अंतरभूत(xdr, &p, size);
-	अगर (ret <= 0)
-		वापस ret;
-	स_नकल(ptr, p, ret);
-	वापस ret;
-पूर्ण
+	ret = xdr_stream_decode_opaque_inline(xdr, &p, size);
+	if (ret <= 0)
+		return ret;
+	memcpy(ptr, p, ret);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_decode_opaque);
 
 /**
  * xdr_stream_decode_opaque_dup - Decode and duplicate variable length opaque
- * @xdr: poपूर्णांकer to xdr_stream
- * @ptr: location to store poपूर्णांकer to opaque data
+ * @xdr: pointer to xdr_stream
+ * @ptr: location to store pointer to opaque data
  * @maxlen: maximum acceptable object size
  * @gfp_flags: GFP mask to use
  *
  * Return values:
- *   On success, वापसs size of object stored in *@ptr
+ *   On success, returns size of object stored in *@ptr
  *   %-EBADMSG on XDR buffer overflow
- *   %-EMSGSIZE अगर the size of the object would exceed @maxlen
+ *   %-EMSGSIZE if the size of the object would exceed @maxlen
  *   %-ENOMEM on memory allocation failure
  */
-sमाप_प्रकार xdr_stream_decode_opaque_dup(काष्ठा xdr_stream *xdr, व्योम **ptr,
-		माप_प्रकार maxlen, gfp_t gfp_flags)
-अणु
-	sमाप_प्रकार ret;
-	व्योम *p;
+ssize_t xdr_stream_decode_opaque_dup(struct xdr_stream *xdr, void **ptr,
+		size_t maxlen, gfp_t gfp_flags)
+{
+	ssize_t ret;
+	void *p;
 
-	ret = xdr_stream_decode_opaque_अंतरभूत(xdr, &p, maxlen);
-	अगर (ret > 0) अणु
+	ret = xdr_stream_decode_opaque_inline(xdr, &p, maxlen);
+	if (ret > 0) {
 		*ptr = kmemdup(p, ret, gfp_flags);
-		अगर (*ptr != शून्य)
-			वापस ret;
+		if (*ptr != NULL)
+			return ret;
 		ret = -ENOMEM;
-	पूर्ण
-	*ptr = शून्य;
-	वापस ret;
-पूर्ण
+	}
+	*ptr = NULL;
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_decode_opaque_dup);
 
 /**
  * xdr_stream_decode_string - Decode variable length string
- * @xdr: poपूर्णांकer to xdr_stream
+ * @xdr: pointer to xdr_stream
  * @str: location to store string
  * @size: size of storage buffer @str
  *
  * Return values:
- *   On success, वापसs length of NUL-terminated string stored in *@str
+ *   On success, returns length of NUL-terminated string stored in *@str
  *   %-EBADMSG on XDR buffer overflow
  *   %-EMSGSIZE on overflow of storage buffer @str
  */
-sमाप_प्रकार xdr_stream_decode_string(काष्ठा xdr_stream *xdr, अक्षर *str, माप_प्रकार size)
-अणु
-	sमाप_प्रकार ret;
-	व्योम *p;
+ssize_t xdr_stream_decode_string(struct xdr_stream *xdr, char *str, size_t size)
+{
+	ssize_t ret;
+	void *p;
 
-	ret = xdr_stream_decode_opaque_अंतरभूत(xdr, &p, size);
-	अगर (ret > 0) अणु
-		स_नकल(str, p, ret);
+	ret = xdr_stream_decode_opaque_inline(xdr, &p, size);
+	if (ret > 0) {
+		memcpy(str, p, ret);
 		str[ret] = '\0';
-		वापस म_माप(str);
-	पूर्ण
+		return strlen(str);
+	}
 	*str = '\0';
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_decode_string);
 
 /**
  * xdr_stream_decode_string_dup - Decode and duplicate variable length string
- * @xdr: poपूर्णांकer to xdr_stream
- * @str: location to store poपूर्णांकer to string
+ * @xdr: pointer to xdr_stream
+ * @str: location to store pointer to string
  * @maxlen: maximum acceptable string length
  * @gfp_flags: GFP mask to use
  *
  * Return values:
- *   On success, वापसs length of NUL-terminated string stored in *@ptr
+ *   On success, returns length of NUL-terminated string stored in *@ptr
  *   %-EBADMSG on XDR buffer overflow
- *   %-EMSGSIZE अगर the size of the string would exceed @maxlen
+ *   %-EMSGSIZE if the size of the string would exceed @maxlen
  *   %-ENOMEM on memory allocation failure
  */
-sमाप_प्रकार xdr_stream_decode_string_dup(काष्ठा xdr_stream *xdr, अक्षर **str,
-		माप_प्रकार maxlen, gfp_t gfp_flags)
-अणु
-	व्योम *p;
-	sमाप_प्रकार ret;
+ssize_t xdr_stream_decode_string_dup(struct xdr_stream *xdr, char **str,
+		size_t maxlen, gfp_t gfp_flags)
+{
+	void *p;
+	ssize_t ret;
 
-	ret = xdr_stream_decode_opaque_अंतरभूत(xdr, &p, maxlen);
-	अगर (ret > 0) अणु
-		अक्षर *s = kmemdup_nul(p, ret, gfp_flags);
-		अगर (s != शून्य) अणु
+	ret = xdr_stream_decode_opaque_inline(xdr, &p, maxlen);
+	if (ret > 0) {
+		char *s = kmemdup_nul(p, ret, gfp_flags);
+		if (s != NULL) {
 			*str = s;
-			वापस म_माप(s);
-		पूर्ण
+			return strlen(s);
+		}
 		ret = -ENOMEM;
-	पूर्ण
-	*str = शून्य;
-	वापस ret;
-पूर्ण
+	}
+	*str = NULL;
+	return ret;
+}
 EXPORT_SYMBOL_GPL(xdr_stream_decode_string_dup);

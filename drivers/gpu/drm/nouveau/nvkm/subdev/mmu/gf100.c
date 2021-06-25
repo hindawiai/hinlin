@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2010 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,19 +21,19 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "mem.h"
-#समावेश "vmm.h"
+#include "mem.h"
+#include "vmm.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
 /* Map from compressed to corresponding uncompressed storage type.
  * The value 0xff represents an invalid storage type.
  */
-स्थिर u8 *
-gf100_mmu_kind(काष्ठा nvkm_mmu *mmu, पूर्णांक *count, u8 *invalid)
-अणु
-	अटल स्थिर u8
-	kind[256] = अणु
+const u8 *
+gf100_mmu_kind(struct nvkm_mmu *mmu, int *count, u8 *invalid)
+{
+	static const u8
+	kind[256] = {
 		0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0xff, 0x01, /* 0x00 */
 		0x01, 0x01, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff,
 		0xff, 0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0x11, /* 0x10 */
@@ -67,26 +66,26 @@ gf100_mmu_kind(काष्ठा nvkm_mmu *mmu, पूर्णांक *count
 		0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xfe, 0xff,
 		0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, /* 0xf0 */
 		0xfe, 0xfe, 0xfe, 0xfe, 0xff, 0xfd, 0xfe, 0xff
-	पूर्ण;
+	};
 
 	*count = ARRAY_SIZE(kind);
 	*invalid = 0xff;
-	वापस kind;
-पूर्ण
+	return kind;
+}
 
-अटल स्थिर काष्ठा nvkm_mmu_func
-gf100_mmu = अणु
+static const struct nvkm_mmu_func
+gf100_mmu = {
 	.dma_bits = 40,
-	.mmu = अणुअणु -1, -1, NVIF_CLASS_MMU_GF100पूर्णपूर्ण,
-	.mem = अणुअणु -1,  0, NVIF_CLASS_MEM_GF100पूर्ण, gf100_mem_new, gf100_mem_map पूर्ण,
-	.vmm = अणुअणु -1, -1, NVIF_CLASS_VMM_GF100पूर्ण, gf100_vmm_new पूर्ण,
+	.mmu = {{ -1, -1, NVIF_CLASS_MMU_GF100}},
+	.mem = {{ -1,  0, NVIF_CLASS_MEM_GF100}, gf100_mem_new, gf100_mem_map },
+	.vmm = {{ -1, -1, NVIF_CLASS_VMM_GF100}, gf100_vmm_new },
 	.kind = gf100_mmu_kind,
 	.kind_sys = true,
-पूर्ण;
+};
 
-पूर्णांक
-gf100_mmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	      काष्ठा nvkm_mmu **pmmu)
-अणु
-	वापस nvkm_mmu_new_(&gf100_mmu, device, type, inst, pmmu);
-पूर्ण
+int
+gf100_mmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	      struct nvkm_mmu **pmmu)
+{
+	return nvkm_mmu_new_(&gf100_mmu, device, type, inst, pmmu);
+}

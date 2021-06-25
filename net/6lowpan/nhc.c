@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	6LoWPAN next header compression
  *
@@ -7,139 +6,139 @@
  *	Alexander Aring		<aar@pengutronix.de>
  */
 
-#समावेश <linux/netdevice.h>
+#include <linux/netdevice.h>
 
-#समावेश <net/ipv6.h>
+#include <net/ipv6.h>
 
-#समावेश "nhc.h"
+#include "nhc.h"
 
-अटल काष्ठा rb_root rb_root = RB_ROOT;
-अटल काष्ठा lowpan_nhc *lowpan_nexthdr_nhcs[NEXTHDR_MAX + 1];
-अटल DEFINE_SPINLOCK(lowpan_nhc_lock);
+static struct rb_root rb_root = RB_ROOT;
+static struct lowpan_nhc *lowpan_nexthdr_nhcs[NEXTHDR_MAX + 1];
+static DEFINE_SPINLOCK(lowpan_nhc_lock);
 
-अटल पूर्णांक lowpan_nhc_insert(काष्ठा lowpan_nhc *nhc)
-अणु
-	काष्ठा rb_node **new = &rb_root.rb_node, *parent = शून्य;
+static int lowpan_nhc_insert(struct lowpan_nhc *nhc)
+{
+	struct rb_node **new = &rb_root.rb_node, *parent = NULL;
 
 	/* Figure out where to put new node */
-	जबतक (*new) अणु
-		काष्ठा lowpan_nhc *this = rb_entry(*new, काष्ठा lowpan_nhc,
+	while (*new) {
+		struct lowpan_nhc *this = rb_entry(*new, struct lowpan_nhc,
 						   node);
-		पूर्णांक result, len_dअगर, len;
+		int result, len_dif, len;
 
-		len_dअगर = nhc->idlen - this->idlen;
+		len_dif = nhc->idlen - this->idlen;
 
-		अगर (nhc->idlen < this->idlen)
+		if (nhc->idlen < this->idlen)
 			len = nhc->idlen;
-		अन्यथा
+		else
 			len = this->idlen;
 
-		result = स_भेद(nhc->id, this->id, len);
-		अगर (!result)
-			result = len_dअगर;
+		result = memcmp(nhc->id, this->id, len);
+		if (!result)
+			result = len_dif;
 
 		parent = *new;
-		अगर (result < 0)
+		if (result < 0)
 			new = &((*new)->rb_left);
-		अन्यथा अगर (result > 0)
+		else if (result > 0)
 			new = &((*new)->rb_right);
-		अन्यथा
-			वापस -EEXIST;
-	पूर्ण
+		else
+			return -EEXIST;
+	}
 
 	/* Add new node and rebalance tree. */
 	rb_link_node(&nhc->node, parent, new);
 	rb_insert_color(&nhc->node, &rb_root);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lowpan_nhc_हटाओ(काष्ठा lowpan_nhc *nhc)
-अणु
+static void lowpan_nhc_remove(struct lowpan_nhc *nhc)
+{
 	rb_erase(&nhc->node, &rb_root);
-पूर्ण
+}
 
-अटल काष्ठा lowpan_nhc *lowpan_nhc_by_nhcid(स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rb_node *node = rb_root.rb_node;
-	स्थिर u8 *nhcid_skb_ptr = skb->data;
+static struct lowpan_nhc *lowpan_nhc_by_nhcid(const struct sk_buff *skb)
+{
+	struct rb_node *node = rb_root.rb_node;
+	const u8 *nhcid_skb_ptr = skb->data;
 
-	जबतक (node) अणु
-		काष्ठा lowpan_nhc *nhc = rb_entry(node, काष्ठा lowpan_nhc,
+	while (node) {
+		struct lowpan_nhc *nhc = rb_entry(node, struct lowpan_nhc,
 						  node);
 		u8 nhcid_skb_ptr_masked[LOWPAN_NHC_MAX_ID_LEN];
-		पूर्णांक result, i;
+		int result, i;
 
-		अगर (nhcid_skb_ptr + nhc->idlen > skb->data + skb->len)
-			वापस शून्य;
+		if (nhcid_skb_ptr + nhc->idlen > skb->data + skb->len)
+			return NULL;
 
 		/* copy and mask afterwards the nhid value from skb */
-		स_नकल(nhcid_skb_ptr_masked, nhcid_skb_ptr, nhc->idlen);
-		क्रम (i = 0; i < nhc->idlen; i++)
+		memcpy(nhcid_skb_ptr_masked, nhcid_skb_ptr, nhc->idlen);
+		for (i = 0; i < nhc->idlen; i++)
 			nhcid_skb_ptr_masked[i] &= nhc->idmask[i];
 
-		result = स_भेद(nhcid_skb_ptr_masked, nhc->id, nhc->idlen);
-		अगर (result < 0)
+		result = memcmp(nhcid_skb_ptr_masked, nhc->id, nhc->idlen);
+		if (result < 0)
 			node = node->rb_left;
-		अन्यथा अगर (result > 0)
+		else if (result > 0)
 			node = node->rb_right;
-		अन्यथा
-			वापस nhc;
-	पूर्ण
+		else
+			return nhc;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक lowpan_nhc_check_compression(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा ipv6hdr *hdr, u8 **hc_ptr)
-अणु
-	काष्ठा lowpan_nhc *nhc;
-	पूर्णांक ret = 0;
+int lowpan_nhc_check_compression(struct sk_buff *skb,
+				 const struct ipv6hdr *hdr, u8 **hc_ptr)
+{
+	struct lowpan_nhc *nhc;
+	int ret = 0;
 
 	spin_lock_bh(&lowpan_nhc_lock);
 
 	nhc = lowpan_nexthdr_nhcs[hdr->nexthdr];
-	अगर (!(nhc && nhc->compress))
+	if (!(nhc && nhc->compress))
 		ret = -ENOENT;
 
 	spin_unlock_bh(&lowpan_nhc_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक lowpan_nhc_करो_compression(काष्ठा sk_buff *skb, स्थिर काष्ठा ipv6hdr *hdr,
+int lowpan_nhc_do_compression(struct sk_buff *skb, const struct ipv6hdr *hdr,
 			      u8 **hc_ptr)
-अणु
-	पूर्णांक ret;
-	काष्ठा lowpan_nhc *nhc;
+{
+	int ret;
+	struct lowpan_nhc *nhc;
 
 	spin_lock_bh(&lowpan_nhc_lock);
 
 	nhc = lowpan_nexthdr_nhcs[hdr->nexthdr];
-	/* check अगर the nhc module was हटाओd in unlocked part.
+	/* check if the nhc module was removed in unlocked part.
 	 * TODO: this is a workaround we should prevent unloading
-	 * of nhc modules जबतक unlocked part, this will always drop
+	 * of nhc modules while unlocked part, this will always drop
 	 * the lowpan packet but it's very unlikely.
 	 *
 	 * Solution isn't easy because we need to decide at
-	 * lowpan_nhc_check_compression अगर we करो a compression or not.
-	 * Because the अंतरभूत data which is added to skb, we can't move this
+	 * lowpan_nhc_check_compression if we do a compression or not.
+	 * Because the inline data which is added to skb, we can't move this
 	 * handling.
 	 */
-	अगर (unlikely(!nhc || !nhc->compress)) अणु
+	if (unlikely(!nhc || !nhc->compress)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* In the हाल of RAW sockets the transport header is not set by
+	/* In the case of RAW sockets the transport header is not set by
 	 * the ip6 stack so we must set it ourselves
 	 */
-	अगर (skb->transport_header == skb->network_header)
-		skb_set_transport_header(skb, माप(काष्ठा ipv6hdr));
+	if (skb->transport_header == skb->network_header)
+		skb_set_transport_header(skb, sizeof(struct ipv6hdr));
 
 	ret = nhc->compress(skb, hc_ptr);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/* skip the transport header */
 	skb_pull(skb, nhc->nexthdrlen);
@@ -147,38 +146,38 @@
 out:
 	spin_unlock_bh(&lowpan_nhc_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक lowpan_nhc_करो_uncompression(काष्ठा sk_buff *skb,
-				स्थिर काष्ठा net_device *dev,
-				काष्ठा ipv6hdr *hdr)
-अणु
-	काष्ठा lowpan_nhc *nhc;
-	पूर्णांक ret;
+int lowpan_nhc_do_uncompression(struct sk_buff *skb,
+				const struct net_device *dev,
+				struct ipv6hdr *hdr)
+{
+	struct lowpan_nhc *nhc;
+	int ret;
 
 	spin_lock_bh(&lowpan_nhc_lock);
 
 	nhc = lowpan_nhc_by_nhcid(skb);
-	अगर (nhc) अणु
-		अगर (nhc->uncompress) अणु
-			ret = nhc->uncompress(skb, माप(काष्ठा ipv6hdr) +
+	if (nhc) {
+		if (nhc->uncompress) {
+			ret = nhc->uncompress(skb, sizeof(struct ipv6hdr) +
 					      nhc->nexthdrlen);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				spin_unlock_bh(&lowpan_nhc_lock);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return ret;
+			}
+		} else {
 			spin_unlock_bh(&lowpan_nhc_lock);
 			netdev_warn(dev, "received nhc id for %s which is not implemented.\n",
 				    nhc->name);
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENOTSUPP;
+		}
+	} else {
 		spin_unlock_bh(&lowpan_nhc_lock);
 		netdev_warn(dev, "received unknown nhc id which was not found.\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	hdr->nexthdr = nhc->nexthdr;
 	skb_reset_transport_header(skb);
@@ -187,15 +186,15 @@ out:
 
 	spin_unlock_bh(&lowpan_nhc_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lowpan_nhc_add(काष्ठा lowpan_nhc *nhc)
-अणु
-	पूर्णांक ret;
+int lowpan_nhc_add(struct lowpan_nhc *nhc)
+{
+	int ret;
 
-	अगर (!nhc->idlen || !nhc->idsetup)
-		वापस -EINVAL;
+	if (!nhc->idlen || !nhc->idsetup)
+		return -EINVAL;
 
 	WARN_ONCE(nhc->idlen > LOWPAN_NHC_MAX_ID_LEN,
 		  "LOWPAN_NHC_MAX_ID_LEN should be updated to %zd.\n",
@@ -205,31 +204,31 @@ out:
 
 	spin_lock_bh(&lowpan_nhc_lock);
 
-	अगर (lowpan_nexthdr_nhcs[nhc->nexthdr]) अणु
+	if (lowpan_nexthdr_nhcs[nhc->nexthdr]) {
 		ret = -EEXIST;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = lowpan_nhc_insert(nhc);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	lowpan_nexthdr_nhcs[nhc->nexthdr] = nhc;
 out:
 	spin_unlock_bh(&lowpan_nhc_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(lowpan_nhc_add);
 
-व्योम lowpan_nhc_del(काष्ठा lowpan_nhc *nhc)
-अणु
+void lowpan_nhc_del(struct lowpan_nhc *nhc)
+{
 	spin_lock_bh(&lowpan_nhc_lock);
 
-	lowpan_nhc_हटाओ(nhc);
-	lowpan_nexthdr_nhcs[nhc->nexthdr] = शून्य;
+	lowpan_nhc_remove(nhc);
+	lowpan_nexthdr_nhcs[nhc->nexthdr] = NULL;
 
 	spin_unlock_bh(&lowpan_nhc_lock);
 
 	synchronize_net();
-पूर्ण
+}
 EXPORT_SYMBOL(lowpan_nhc_del);

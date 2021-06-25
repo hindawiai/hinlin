@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/sched/sch_gred.c	Generic Ranकरोm Early Detection queue.
+ * net/sched/sch_gred.c	Generic Random Early Detection queue.
  *
  * Authors:    J Hadi Salim (hadi@cyberus.ca) 1998-2002
  *
@@ -14,326 +13,326 @@
  *  For all the glorious comments look at include/net/red.h
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/red.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/skbuff.h>
+#include <net/pkt_cls.h>
+#include <net/pkt_sched.h>
+#include <net/red.h>
 
-#घोषणा GRED_DEF_PRIO (MAX_DPs / 2)
-#घोषणा GRED_VQ_MASK (MAX_DPs - 1)
+#define GRED_DEF_PRIO (MAX_DPs / 2)
+#define GRED_VQ_MASK (MAX_DPs - 1)
 
-#घोषणा GRED_VQ_RED_FLAGS	(TC_RED_ECN | TC_RED_HARDDROP)
+#define GRED_VQ_RED_FLAGS	(TC_RED_ECN | TC_RED_HARDDROP)
 
-काष्ठा gred_sched_data;
-काष्ठा gred_sched;
+struct gred_sched_data;
+struct gred_sched;
 
-काष्ठा gred_sched_data अणु
+struct gred_sched_data {
 	u32		limit;		/* HARD maximal queue length	*/
 	u32		DP;		/* the drop parameters */
-	u32		red_flags;	/* भवQ version of red_flags */
-	u64		bytesin;	/* bytes seen on भवQ so far*/
-	u32		packetsin;	/* packets seen on भवQ so far*/
-	u32		backlog;	/* bytes on the भवQ */
+	u32		red_flags;	/* virtualQ version of red_flags */
+	u64		bytesin;	/* bytes seen on virtualQ so far*/
+	u32		packetsin;	/* packets seen on virtualQ so far*/
+	u32		backlog;	/* bytes on the virtualQ */
 	u8		prio;		/* the prio of this vq */
 
-	काष्ठा red_parms parms;
-	काष्ठा red_vars  vars;
-	काष्ठा red_stats stats;
-पूर्ण;
+	struct red_parms parms;
+	struct red_vars  vars;
+	struct red_stats stats;
+};
 
-क्रमागत अणु
+enum {
 	GRED_WRED_MODE = 1,
 	GRED_RIO_MODE,
-पूर्ण;
+};
 
-काष्ठा gred_sched अणु
-	काष्ठा gred_sched_data *tab[MAX_DPs];
-	अचिन्हित दीर्घ	flags;
+struct gred_sched {
+	struct gred_sched_data *tab[MAX_DPs];
+	unsigned long	flags;
 	u32		red_flags;
 	u32 		DPs;
 	u32 		def;
-	काष्ठा red_vars wred_set;
-पूर्ण;
+	struct red_vars wred_set;
+};
 
-अटल अंतरभूत पूर्णांक gred_wred_mode(काष्ठा gred_sched *table)
-अणु
-	वापस test_bit(GRED_WRED_MODE, &table->flags);
-पूर्ण
+static inline int gred_wred_mode(struct gred_sched *table)
+{
+	return test_bit(GRED_WRED_MODE, &table->flags);
+}
 
-अटल अंतरभूत व्योम gred_enable_wred_mode(काष्ठा gred_sched *table)
-अणु
+static inline void gred_enable_wred_mode(struct gred_sched *table)
+{
 	__set_bit(GRED_WRED_MODE, &table->flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gred_disable_wred_mode(काष्ठा gred_sched *table)
-अणु
+static inline void gred_disable_wred_mode(struct gred_sched *table)
+{
 	__clear_bit(GRED_WRED_MODE, &table->flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gred_rio_mode(काष्ठा gred_sched *table)
-अणु
-	वापस test_bit(GRED_RIO_MODE, &table->flags);
-पूर्ण
+static inline int gred_rio_mode(struct gred_sched *table)
+{
+	return test_bit(GRED_RIO_MODE, &table->flags);
+}
 
-अटल अंतरभूत व्योम gred_enable_rio_mode(काष्ठा gred_sched *table)
-अणु
+static inline void gred_enable_rio_mode(struct gred_sched *table)
+{
 	__set_bit(GRED_RIO_MODE, &table->flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gred_disable_rio_mode(काष्ठा gred_sched *table)
-अणु
+static inline void gred_disable_rio_mode(struct gred_sched *table)
+{
 	__clear_bit(GRED_RIO_MODE, &table->flags);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gred_wred_mode_check(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	पूर्णांक i;
+static inline int gred_wred_mode_check(struct Qdisc *sch)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	int i;
 
 	/* Really ugly O(n^2) but shouldn't be necessary too frequent. */
-	क्रम (i = 0; i < table->DPs; i++) अणु
-		काष्ठा gred_sched_data *q = table->tab[i];
-		पूर्णांक n;
+	for (i = 0; i < table->DPs; i++) {
+		struct gred_sched_data *q = table->tab[i];
+		int n;
 
-		अगर (q == शून्य)
-			जारी;
+		if (q == NULL)
+			continue;
 
-		क्रम (n = i + 1; n < table->DPs; n++)
-			अगर (table->tab[n] && table->tab[n]->prio == q->prio)
-				वापस 1;
-	पूर्ण
+		for (n = i + 1; n < table->DPs; n++)
+			if (table->tab[n] && table->tab[n]->prio == q->prio)
+				return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक gred_backlog(काष्ठा gred_sched *table,
-					काष्ठा gred_sched_data *q,
-					काष्ठा Qdisc *sch)
-अणु
-	अगर (gred_wred_mode(table))
-		वापस sch->qstats.backlog;
-	अन्यथा
-		वापस q->backlog;
-पूर्ण
+static inline unsigned int gred_backlog(struct gred_sched *table,
+					struct gred_sched_data *q,
+					struct Qdisc *sch)
+{
+	if (gred_wred_mode(table))
+		return sch->qstats.backlog;
+	else
+		return q->backlog;
+}
 
-अटल अंतरभूत u16 tc_index_to_dp(काष्ठा sk_buff *skb)
-अणु
-	वापस skb->tc_index & GRED_VQ_MASK;
-पूर्ण
+static inline u16 tc_index_to_dp(struct sk_buff *skb)
+{
+	return skb->tc_index & GRED_VQ_MASK;
+}
 
-अटल अंतरभूत व्योम gred_load_wred_set(स्थिर काष्ठा gred_sched *table,
-				      काष्ठा gred_sched_data *q)
-अणु
+static inline void gred_load_wred_set(const struct gred_sched *table,
+				      struct gred_sched_data *q)
+{
 	q->vars.qavg = table->wred_set.qavg;
 	q->vars.qidlestart = table->wred_set.qidlestart;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम gred_store_wred_set(काष्ठा gred_sched *table,
-				       काष्ठा gred_sched_data *q)
-अणु
+static inline void gred_store_wred_set(struct gred_sched *table,
+				       struct gred_sched_data *q)
+{
 	table->wred_set.qavg = q->vars.qavg;
 	table->wred_set.qidlestart = q->vars.qidlestart;
-पूर्ण
+}
 
-अटल पूर्णांक gred_use_ecn(काष्ठा gred_sched_data *q)
-अणु
-	वापस q->red_flags & TC_RED_ECN;
-पूर्ण
+static int gred_use_ecn(struct gred_sched_data *q)
+{
+	return q->red_flags & TC_RED_ECN;
+}
 
-अटल पूर्णांक gred_use_harddrop(काष्ठा gred_sched_data *q)
-अणु
-	वापस q->red_flags & TC_RED_HARDDROP;
-पूर्ण
+static int gred_use_harddrop(struct gred_sched_data *q)
+{
+	return q->red_flags & TC_RED_HARDDROP;
+}
 
-अटल bool gred_per_vq_red_flags_used(काष्ठा gred_sched *table)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool gred_per_vq_red_flags_used(struct gred_sched *table)
+{
+	unsigned int i;
 
 	/* Local per-vq flags couldn't have been set unless global are 0 */
-	अगर (table->red_flags)
-		वापस false;
-	क्रम (i = 0; i < MAX_DPs; i++)
-		अगर (table->tab[i] && table->tab[i]->red_flags)
-			वापस true;
-	वापस false;
-पूर्ण
+	if (table->red_flags)
+		return false;
+	for (i = 0; i < MAX_DPs; i++)
+		if (table->tab[i] && table->tab[i]->red_flags)
+			return true;
+	return false;
+}
 
-अटल पूर्णांक gred_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा gred_sched_data *q = शून्य;
-	काष्ठा gred_sched *t = qdisc_priv(sch);
-	अचिन्हित दीर्घ qavg = 0;
+static int gred_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+			struct sk_buff **to_free)
+{
+	struct gred_sched_data *q = NULL;
+	struct gred_sched *t = qdisc_priv(sch);
+	unsigned long qavg = 0;
 	u16 dp = tc_index_to_dp(skb);
 
-	अगर (dp >= t->DPs || (q = t->tab[dp]) == शून्य) अणु
+	if (dp >= t->DPs || (q = t->tab[dp]) == NULL) {
 		dp = t->def;
 
 		q = t->tab[dp];
-		अगर (!q) अणु
-			/* Pass through packets not asचिन्हित to a DP
-			 * अगर no शेष DP has been configured. This
-			 * allows क्रम DP flows to be left untouched.
+		if (!q) {
+			/* Pass through packets not assigned to a DP
+			 * if no default DP has been configured. This
+			 * allows for DP flows to be left untouched.
 			 */
-			अगर (likely(sch->qstats.backlog + qdisc_pkt_len(skb) <=
+			if (likely(sch->qstats.backlog + qdisc_pkt_len(skb) <=
 					sch->limit))
-				वापस qdisc_enqueue_tail(skb, sch);
-			अन्यथा
-				जाओ drop;
-		पूर्ण
+				return qdisc_enqueue_tail(skb, sch);
+			else
+				goto drop;
+		}
 
-		/* fix tc_index? --could be controversial but needed क्रम
+		/* fix tc_index? --could be controversial but needed for
 		   requeueing */
 		skb->tc_index = (skb->tc_index & ~GRED_VQ_MASK) | dp;
-	पूर्ण
+	}
 
 	/* sum up all the qaves of prios < ours to get the new qave */
-	अगर (!gred_wred_mode(t) && gred_rio_mode(t)) अणु
-		पूर्णांक i;
+	if (!gred_wred_mode(t) && gred_rio_mode(t)) {
+		int i;
 
-		क्रम (i = 0; i < t->DPs; i++) अणु
-			अगर (t->tab[i] && t->tab[i]->prio < q->prio &&
+		for (i = 0; i < t->DPs; i++) {
+			if (t->tab[i] && t->tab[i]->prio < q->prio &&
 			    !red_is_idling(&t->tab[i]->vars))
 				qavg += t->tab[i]->vars.qavg;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 	q->packetsin++;
 	q->bytesin += qdisc_pkt_len(skb);
 
-	अगर (gred_wred_mode(t))
+	if (gred_wred_mode(t))
 		gred_load_wred_set(t, q);
 
 	q->vars.qavg = red_calc_qavg(&q->parms,
 				     &q->vars,
 				     gred_backlog(t, q, sch));
 
-	अगर (red_is_idling(&q->vars))
+	if (red_is_idling(&q->vars))
 		red_end_of_idle_period(&q->vars);
 
-	अगर (gred_wred_mode(t))
+	if (gred_wred_mode(t))
 		gred_store_wred_set(t, q);
 
-	चयन (red_action(&q->parms, &q->vars, q->vars.qavg + qavg)) अणु
-	हाल RED_DONT_MARK:
-		अवरोध;
+	switch (red_action(&q->parms, &q->vars, q->vars.qavg + qavg)) {
+	case RED_DONT_MARK:
+		break;
 
-	हाल RED_PROB_MARK:
+	case RED_PROB_MARK:
 		qdisc_qstats_overlimit(sch);
-		अगर (!gred_use_ecn(q) || !INET_ECN_set_ce(skb)) अणु
+		if (!gred_use_ecn(q) || !INET_ECN_set_ce(skb)) {
 			q->stats.prob_drop++;
-			जाओ congestion_drop;
-		पूर्ण
+			goto congestion_drop;
+		}
 
 		q->stats.prob_mark++;
-		अवरोध;
+		break;
 
-	हाल RED_HARD_MARK:
+	case RED_HARD_MARK:
 		qdisc_qstats_overlimit(sch);
-		अगर (gred_use_harddrop(q) || !gred_use_ecn(q) ||
-		    !INET_ECN_set_ce(skb)) अणु
-			q->stats.क्रमced_drop++;
-			जाओ congestion_drop;
-		पूर्ण
-		q->stats.क्रमced_mark++;
-		अवरोध;
-	पूर्ण
+		if (gred_use_harddrop(q) || !gred_use_ecn(q) ||
+		    !INET_ECN_set_ce(skb)) {
+			q->stats.forced_drop++;
+			goto congestion_drop;
+		}
+		q->stats.forced_mark++;
+		break;
+	}
 
-	अगर (gred_backlog(t, q, sch) + qdisc_pkt_len(skb) <= q->limit) अणु
+	if (gred_backlog(t, q, sch) + qdisc_pkt_len(skb) <= q->limit) {
 		q->backlog += qdisc_pkt_len(skb);
-		वापस qdisc_enqueue_tail(skb, sch);
-	पूर्ण
+		return qdisc_enqueue_tail(skb, sch);
+	}
 
 	q->stats.pdrop++;
 drop:
-	वापस qdisc_drop(skb, sch, to_मुक्त);
+	return qdisc_drop(skb, sch, to_free);
 
 congestion_drop:
-	qdisc_drop(skb, sch, to_मुक्त);
-	वापस NET_XMIT_CN;
-पूर्ण
+	qdisc_drop(skb, sch, to_free);
+	return NET_XMIT_CN;
+}
 
-अटल काष्ठा sk_buff *gred_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा gred_sched *t = qdisc_priv(sch);
+static struct sk_buff *gred_dequeue(struct Qdisc *sch)
+{
+	struct sk_buff *skb;
+	struct gred_sched *t = qdisc_priv(sch);
 
 	skb = qdisc_dequeue_head(sch);
 
-	अगर (skb) अणु
-		काष्ठा gred_sched_data *q;
+	if (skb) {
+		struct gred_sched_data *q;
 		u16 dp = tc_index_to_dp(skb);
 
-		अगर (dp >= t->DPs || (q = t->tab[dp]) == शून्य) अणु
+		if (dp >= t->DPs || (q = t->tab[dp]) == NULL) {
 			net_warn_ratelimited("GRED: Unable to relocate VQ 0x%x after dequeue, screwing up backlog\n",
 					     tc_index_to_dp(skb));
-		पूर्ण अन्यथा अणु
+		} else {
 			q->backlog -= qdisc_pkt_len(skb);
 
-			अगर (gred_wred_mode(t)) अणु
-				अगर (!sch->qstats.backlog)
+			if (gred_wred_mode(t)) {
+				if (!sch->qstats.backlog)
 					red_start_of_idle_period(&t->wred_set);
-			पूर्ण अन्यथा अणु
-				अगर (!q->backlog)
+			} else {
+				if (!q->backlog)
 					red_start_of_idle_period(&q->vars);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम gred_reset(काष्ठा Qdisc *sch)
-अणु
-	पूर्णांक i;
-	काष्ठा gred_sched *t = qdisc_priv(sch);
+static void gred_reset(struct Qdisc *sch)
+{
+	int i;
+	struct gred_sched *t = qdisc_priv(sch);
 
 	qdisc_reset_queue(sch);
 
-	क्रम (i = 0; i < t->DPs; i++) अणु
-		काष्ठा gred_sched_data *q = t->tab[i];
+	for (i = 0; i < t->DPs; i++) {
+		struct gred_sched_data *q = t->tab[i];
 
-		अगर (!q)
-			जारी;
+		if (!q)
+			continue;
 
 		red_restart(&q->vars);
 		q->backlog = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम gred_offload(काष्ठा Qdisc *sch, क्रमागत tc_gred_command command)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा tc_gred_qopt_offload opt = अणु
+static void gred_offload(struct Qdisc *sch, enum tc_gred_command command)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct tc_gred_qopt_offload opt = {
 		.command	= command,
 		.handle		= sch->handle,
 		.parent		= sch->parent,
-	पूर्ण;
+	};
 
-	अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
-		वापस;
+	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
+		return;
 
-	अगर (command == TC_GRED_REPLACE) अणु
-		अचिन्हित पूर्णांक i;
+	if (command == TC_GRED_REPLACE) {
+		unsigned int i;
 
 		opt.set.grio_on = gred_rio_mode(table);
 		opt.set.wred_on = gred_wred_mode(table);
 		opt.set.dp_cnt = table->DPs;
 		opt.set.dp_def = table->def;
 
-		क्रम (i = 0; i < table->DPs; i++) अणु
-			काष्ठा gred_sched_data *q = table->tab[i];
+		for (i = 0; i < table->DPs; i++) {
+			struct gred_sched_data *q = table->tab[i];
 
-			अगर (!q)
-				जारी;
+			if (!q)
+				continue;
 			opt.set.tab[i].present = true;
 			opt.set.tab[i].limit = q->limit;
 			opt.set.tab[i].prio = q->prio;
@@ -343,39 +342,39 @@ congestion_drop:
 			opt.set.tab[i].is_harddrop = gred_use_harddrop(q);
 			opt.set.tab[i].probability = q->parms.max_P;
 			opt.set.tab[i].backlog = &q->backlog;
-		पूर्ण
+		}
 		opt.set.qstats = &sch->qstats;
-	पूर्ण
+	}
 
-	dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_GRED, &opt);
-पूर्ण
+	dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_GRED, &opt);
+}
 
-अटल पूर्णांक gred_offload_dump_stats(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा tc_gred_qopt_offload *hw_stats;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int gred_offload_dump_stats(struct Qdisc *sch)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct tc_gred_qopt_offload *hw_stats;
+	unsigned int i;
+	int ret;
 
-	hw_stats = kzalloc(माप(*hw_stats), GFP_KERNEL);
-	अगर (!hw_stats)
-		वापस -ENOMEM;
+	hw_stats = kzalloc(sizeof(*hw_stats), GFP_KERNEL);
+	if (!hw_stats)
+		return -ENOMEM;
 
 	hw_stats->command = TC_GRED_STATS;
 	hw_stats->handle = sch->handle;
 	hw_stats->parent = sch->parent;
 
-	क्रम (i = 0; i < MAX_DPs; i++)
-		अगर (table->tab[i])
+	for (i = 0; i < MAX_DPs; i++)
+		if (table->tab[i])
 			hw_stats->stats.xstats[i] = &table->tab[i]->stats;
 
 	ret = qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_GRED, hw_stats);
-	/* Even अगर driver वापसs failure adjust the stats - in हाल offload
+	/* Even if driver returns failure adjust the stats - in case offload
 	 * ended but driver still wants to adjust the values.
 	 */
-	क्रम (i = 0; i < MAX_DPs; i++) अणु
-		अगर (!table->tab[i])
-			जारी;
+	for (i = 0; i < MAX_DPs; i++) {
+		if (!table->tab[i])
+			continue;
 		table->tab[i]->packetsin += hw_stats->stats.bstats[i].packets;
 		table->tab[i]->bytesin += hw_stats->stats.bstats[i].bytes;
 		table->tab[i]->backlog += hw_stats->stats.qstats[i].backlog;
@@ -388,47 +387,47 @@ congestion_drop:
 		sch->qstats.drops += hw_stats->stats.qstats[i].drops;
 		sch->qstats.requeues += hw_stats->stats.qstats[i].requeues;
 		sch->qstats.overlimits += hw_stats->stats.qstats[i].overlimits;
-	पूर्ण
+	}
 
-	kमुक्त(hw_stats);
-	वापस ret;
-पूर्ण
+	kfree(hw_stats);
+	return ret;
+}
 
-अटल अंतरभूत व्योम gred_destroy_vq(काष्ठा gred_sched_data *q)
-अणु
-	kमुक्त(q);
-पूर्ण
+static inline void gred_destroy_vq(struct gred_sched_data *q)
+{
+	kfree(q);
+}
 
-अटल पूर्णांक gred_change_table_def(काष्ठा Qdisc *sch, काष्ठा nlattr *dps,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा tc_gred_sopt *sopt;
+static int gred_change_table_def(struct Qdisc *sch, struct nlattr *dps,
+				 struct netlink_ext_ack *extack)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct tc_gred_sopt *sopt;
 	bool red_flags_changed;
-	पूर्णांक i;
+	int i;
 
-	अगर (!dps)
-		वापस -EINVAL;
+	if (!dps)
+		return -EINVAL;
 
 	sopt = nla_data(dps);
 
-	अगर (sopt->DPs > MAX_DPs) अणु
+	if (sopt->DPs > MAX_DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "number of virtual queues too high");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (sopt->DPs == 0) अणु
+		return -EINVAL;
+	}
+	if (sopt->DPs == 0) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "number of virtual queues can't be 0");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (sopt->def_DP >= sopt->DPs) अणु
+		return -EINVAL;
+	}
+	if (sopt->def_DP >= sopt->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "default virtual queue above virtual queue count");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (sopt->flags && gred_per_vq_red_flags_used(table)) अणु
+		return -EINVAL;
+	}
+	if (sopt->flags && gred_per_vq_red_flags_used(table)) {
 		NL_SET_ERR_MSG_MOD(extack, "can't set per-Qdisc RED flags when per-virtual queue flags are used");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sch_tree_lock(sch);
 	table->DPs = sopt->DPs;
@@ -437,377 +436,377 @@ congestion_drop:
 	table->red_flags = sopt->flags;
 
 	/*
-	 * Every entry poपूर्णांक to GRED is synchronized with the above code
-	 * and the DP is checked against DPs, i.e. shaकरोwed VQs can no
-	 * दीर्घer be found so we can unlock right here.
+	 * Every entry point to GRED is synchronized with the above code
+	 * and the DP is checked against DPs, i.e. shadowed VQs can no
+	 * longer be found so we can unlock right here.
 	 */
 	sch_tree_unlock(sch);
 
-	अगर (sopt->grio) अणु
+	if (sopt->grio) {
 		gred_enable_rio_mode(table);
 		gred_disable_wred_mode(table);
-		अगर (gred_wred_mode_check(sch))
+		if (gred_wred_mode_check(sch))
 			gred_enable_wred_mode(table);
-	पूर्ण अन्यथा अणु
+	} else {
 		gred_disable_rio_mode(table);
 		gred_disable_wred_mode(table);
-	पूर्ण
+	}
 
-	अगर (red_flags_changed)
-		क्रम (i = 0; i < table->DPs; i++)
-			अगर (table->tab[i])
+	if (red_flags_changed)
+		for (i = 0; i < table->DPs; i++)
+			if (table->tab[i])
 				table->tab[i]->red_flags =
 					table->red_flags & GRED_VQ_RED_FLAGS;
 
-	क्रम (i = table->DPs; i < MAX_DPs; i++) अणु
-		अगर (table->tab[i]) अणु
+	for (i = table->DPs; i < MAX_DPs; i++) {
+		if (table->tab[i]) {
 			pr_warn("GRED: Warning: Destroying shadowed VQ 0x%x\n",
 				i);
 			gred_destroy_vq(table->tab[i]);
-			table->tab[i] = शून्य;
-		पूर्ण
-	पूर्ण
+			table->tab[i] = NULL;
+		}
+	}
 
 	gred_offload(sch, TC_GRED_REPLACE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक gred_change_vq(काष्ठा Qdisc *sch, पूर्णांक dp,
-				 काष्ठा tc_gred_qopt *ctl, पूर्णांक prio,
+static inline int gred_change_vq(struct Qdisc *sch, int dp,
+				 struct tc_gred_qopt *ctl, int prio,
 				 u8 *stab, u32 max_P,
-				 काष्ठा gred_sched_data **pपुनः_स्मृति,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा gred_sched_data *q = table->tab[dp];
+				 struct gred_sched_data **prealloc,
+				 struct netlink_ext_ack *extack)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct gred_sched_data *q = table->tab[dp];
 
-	अगर (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog, ctl->Scell_log, stab)) अणु
+	if (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog, ctl->Scell_log, stab)) {
 		NL_SET_ERR_MSG_MOD(extack, "invalid RED parameters");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!q) अणु
-		table->tab[dp] = q = *pपुनः_स्मृति;
-		*pपुनः_स्मृति = शून्य;
-		अगर (!q)
-			वापस -ENOMEM;
+	if (!q) {
+		table->tab[dp] = q = *prealloc;
+		*prealloc = NULL;
+		if (!q)
+			return -ENOMEM;
 		q->red_flags = table->red_flags & GRED_VQ_RED_FLAGS;
-	पूर्ण
+	}
 
 	q->DP = dp;
 	q->prio = prio;
-	अगर (ctl->limit > sch->limit)
+	if (ctl->limit > sch->limit)
 		q->limit = sch->limit;
-	अन्यथा
+	else
 		q->limit = ctl->limit;
 
-	अगर (q->backlog == 0)
+	if (q->backlog == 0)
 		red_end_of_idle_period(&q->vars);
 
 	red_set_parms(&q->parms,
 		      ctl->qth_min, ctl->qth_max, ctl->Wlog, ctl->Plog,
 		      ctl->Scell_log, stab, max_P);
 	red_set_vars(&q->vars);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy gred_vq_policy[TCA_GRED_VQ_MAX + 1] = अणु
-	[TCA_GRED_VQ_DP]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GRED_VQ_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy gred_vq_policy[TCA_GRED_VQ_MAX + 1] = {
+	[TCA_GRED_VQ_DP]	= { .type = NLA_U32 },
+	[TCA_GRED_VQ_FLAGS]	= { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy gred_vqe_policy[TCA_GRED_VQ_ENTRY_MAX + 1] = अणु
-	[TCA_GRED_VQ_ENTRY]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy gred_vqe_policy[TCA_GRED_VQ_ENTRY_MAX + 1] = {
+	[TCA_GRED_VQ_ENTRY]	= { .type = NLA_NESTED },
+};
 
-अटल स्थिर काष्ठा nla_policy gred_policy[TCA_GRED_MAX + 1] = अणु
-	[TCA_GRED_PARMS]	= अणु .len = माप(काष्ठा tc_gred_qopt) पूर्ण,
-	[TCA_GRED_STAB]		= अणु .len = 256 पूर्ण,
-	[TCA_GRED_DPS]		= अणु .len = माप(काष्ठा tc_gred_sopt) पूर्ण,
-	[TCA_GRED_MAX_P]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GRED_LIMIT]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_GRED_VQ_LIST]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy gred_policy[TCA_GRED_MAX + 1] = {
+	[TCA_GRED_PARMS]	= { .len = sizeof(struct tc_gred_qopt) },
+	[TCA_GRED_STAB]		= { .len = 256 },
+	[TCA_GRED_DPS]		= { .len = sizeof(struct tc_gred_sopt) },
+	[TCA_GRED_MAX_P]	= { .type = NLA_U32 },
+	[TCA_GRED_LIMIT]	= { .type = NLA_U32 },
+	[TCA_GRED_VQ_LIST]	= { .type = NLA_NESTED },
+};
 
-अटल व्योम gred_vq_apply(काष्ठा gred_sched *table, स्थिर काष्ठा nlattr *entry)
-अणु
-	काष्ठा nlattr *tb[TCA_GRED_VQ_MAX + 1];
+static void gred_vq_apply(struct gred_sched *table, const struct nlattr *entry)
+{
+	struct nlattr *tb[TCA_GRED_VQ_MAX + 1];
 	u32 dp;
 
 	nla_parse_nested_deprecated(tb, TCA_GRED_VQ_MAX, entry,
-				    gred_vq_policy, शून्य);
+				    gred_vq_policy, NULL);
 
 	dp = nla_get_u32(tb[TCA_GRED_VQ_DP]);
 
-	अगर (tb[TCA_GRED_VQ_FLAGS])
+	if (tb[TCA_GRED_VQ_FLAGS])
 		table->tab[dp]->red_flags = nla_get_u32(tb[TCA_GRED_VQ_FLAGS]);
-पूर्ण
+}
 
-अटल व्योम gred_vqs_apply(काष्ठा gred_sched *table, काष्ठा nlattr *vqs)
-अणु
-	स्थिर काष्ठा nlattr *attr;
-	पूर्णांक rem;
+static void gred_vqs_apply(struct gred_sched *table, struct nlattr *vqs)
+{
+	const struct nlattr *attr;
+	int rem;
 
-	nla_क्रम_each_nested(attr, vqs, rem) अणु
-		चयन (nla_type(attr)) अणु
-		हाल TCA_GRED_VQ_ENTRY:
+	nla_for_each_nested(attr, vqs, rem) {
+		switch (nla_type(attr)) {
+		case TCA_GRED_VQ_ENTRY:
 			gred_vq_apply(table, attr);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक gred_vq_validate(काष्ठा gred_sched *table, u32 cdp,
-			    स्थिर काष्ठा nlattr *entry,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[TCA_GRED_VQ_MAX + 1];
-	पूर्णांक err;
+static int gred_vq_validate(struct gred_sched *table, u32 cdp,
+			    const struct nlattr *entry,
+			    struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[TCA_GRED_VQ_MAX + 1];
+	int err;
 	u32 dp;
 
 	err = nla_parse_nested_deprecated(tb, TCA_GRED_VQ_MAX, entry,
 					  gred_vq_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!tb[TCA_GRED_VQ_DP]) अणु
+	if (!tb[TCA_GRED_VQ_DP]) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue with no index specified");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dp = nla_get_u32(tb[TCA_GRED_VQ_DP]);
-	अगर (dp >= table->DPs) अणु
+	if (dp >= table->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue with index out of bounds");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (dp != cdp && !table->tab[dp]) अणु
+		return -EINVAL;
+	}
+	if (dp != cdp && !table->tab[dp]) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue not yet instantiated");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tb[TCA_GRED_VQ_FLAGS]) अणु
+	if (tb[TCA_GRED_VQ_FLAGS]) {
 		u32 red_flags = nla_get_u32(tb[TCA_GRED_VQ_FLAGS]);
 
-		अगर (table->red_flags && table->red_flags != red_flags) अणु
+		if (table->red_flags && table->red_flags != red_flags) {
 			NL_SET_ERR_MSG_MOD(extack, "can't change per-virtual queue RED flags when per-Qdisc flags are used");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (red_flags & ~GRED_VQ_RED_FLAGS) अणु
+			return -EINVAL;
+		}
+		if (red_flags & ~GRED_VQ_RED_FLAGS) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "invalid RED flags specified");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gred_vqs_validate(काष्ठा gred_sched *table, u32 cdp,
-			     काष्ठा nlattr *vqs, काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा nlattr *attr;
-	पूर्णांक rem, err;
+static int gred_vqs_validate(struct gred_sched *table, u32 cdp,
+			     struct nlattr *vqs, struct netlink_ext_ack *extack)
+{
+	const struct nlattr *attr;
+	int rem, err;
 
 	err = nla_validate_nested_deprecated(vqs, TCA_GRED_VQ_ENTRY_MAX,
 					     gred_vqe_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	nla_क्रम_each_nested(attr, vqs, rem) अणु
-		चयन (nla_type(attr)) अणु
-		हाल TCA_GRED_VQ_ENTRY:
+	nla_for_each_nested(attr, vqs, rem) {
+		switch (nla_type(attr)) {
+		case TCA_GRED_VQ_ENTRY:
 			err = gred_vq_validate(table, cdp, attr, extack);
-			अगर (err)
-				वापस err;
-			अवरोध;
-		शेष:
+			if (err)
+				return err;
+			break;
+		default:
 			NL_SET_ERR_MSG_MOD(extack, "GRED_VQ_LIST can contain only entry attributes");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (rem > 0) अणु
+	if (rem > 0) {
 		NL_SET_ERR_MSG_MOD(extack, "Trailing data after parsing virtual queue list");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gred_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा tc_gred_qopt *ctl;
-	काष्ठा nlattr *tb[TCA_GRED_MAX + 1];
-	पूर्णांक err, prio = GRED_DEF_PRIO;
+static int gred_change(struct Qdisc *sch, struct nlattr *opt,
+		       struct netlink_ext_ack *extack)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct tc_gred_qopt *ctl;
+	struct nlattr *tb[TCA_GRED_MAX + 1];
+	int err, prio = GRED_DEF_PRIO;
 	u8 *stab;
 	u32 max_P;
-	काष्ठा gred_sched_data *pपुनः_स्मृति;
+	struct gred_sched_data *prealloc;
 
-	अगर (opt == शून्य)
-		वापस -EINVAL;
+	if (opt == NULL)
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_GRED_MAX, opt, gred_policy,
 					  extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_GRED_PARMS] == शून्य && tb[TCA_GRED_STAB] == शून्य) अणु
-		अगर (tb[TCA_GRED_LIMIT] != शून्य)
+	if (tb[TCA_GRED_PARMS] == NULL && tb[TCA_GRED_STAB] == NULL) {
+		if (tb[TCA_GRED_LIMIT] != NULL)
 			sch->limit = nla_get_u32(tb[TCA_GRED_LIMIT]);
-		वापस gred_change_table_def(sch, tb[TCA_GRED_DPS], extack);
-	पूर्ण
+		return gred_change_table_def(sch, tb[TCA_GRED_DPS], extack);
+	}
 
-	अगर (tb[TCA_GRED_PARMS] == शून्य ||
-	    tb[TCA_GRED_STAB] == शून्य ||
-	    tb[TCA_GRED_LIMIT] != शून्य) अणु
+	if (tb[TCA_GRED_PARMS] == NULL ||
+	    tb[TCA_GRED_STAB] == NULL ||
+	    tb[TCA_GRED_LIMIT] != NULL) {
 		NL_SET_ERR_MSG_MOD(extack, "can't configure Qdisc and virtual queue at the same time");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	max_P = tb[TCA_GRED_MAX_P] ? nla_get_u32(tb[TCA_GRED_MAX_P]) : 0;
 
 	ctl = nla_data(tb[TCA_GRED_PARMS]);
 	stab = nla_data(tb[TCA_GRED_STAB]);
 
-	अगर (ctl->DP >= table->DPs) अणु
+	if (ctl->DP >= table->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "virtual queue index above virtual queue count");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tb[TCA_GRED_VQ_LIST]) अणु
+	if (tb[TCA_GRED_VQ_LIST]) {
 		err = gred_vqs_validate(table, ctl->DP, tb[TCA_GRED_VQ_LIST],
 					extack);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (gred_rio_mode(table)) अणु
-		अगर (ctl->prio == 0) अणु
-			पूर्णांक def_prio = GRED_DEF_PRIO;
+	if (gred_rio_mode(table)) {
+		if (ctl->prio == 0) {
+			int def_prio = GRED_DEF_PRIO;
 
-			अगर (table->tab[table->def])
+			if (table->tab[table->def])
 				def_prio = table->tab[table->def]->prio;
 
-			prपूर्णांकk(KERN_DEBUG "GRED: DP %u does not have a prio "
+			printk(KERN_DEBUG "GRED: DP %u does not have a prio "
 			       "setting default to %d\n", ctl->DP, def_prio);
 
 			prio = def_prio;
-		पूर्ण अन्यथा
+		} else
 			prio = ctl->prio;
-	पूर्ण
+	}
 
-	pपुनः_स्मृति = kzalloc(माप(*pपुनः_स्मृति), GFP_KERNEL);
+	prealloc = kzalloc(sizeof(*prealloc), GFP_KERNEL);
 	sch_tree_lock(sch);
 
-	err = gred_change_vq(sch, ctl->DP, ctl, prio, stab, max_P, &pपुनः_स्मृति,
+	err = gred_change_vq(sch, ctl->DP, ctl, prio, stab, max_P, &prealloc,
 			     extack);
-	अगर (err < 0)
-		जाओ err_unlock_मुक्त;
+	if (err < 0)
+		goto err_unlock_free;
 
-	अगर (tb[TCA_GRED_VQ_LIST])
+	if (tb[TCA_GRED_VQ_LIST])
 		gred_vqs_apply(table, tb[TCA_GRED_VQ_LIST]);
 
-	अगर (gred_rio_mode(table)) अणु
+	if (gred_rio_mode(table)) {
 		gred_disable_wred_mode(table);
-		अगर (gred_wred_mode_check(sch))
+		if (gred_wred_mode_check(sch))
 			gred_enable_wred_mode(table);
-	पूर्ण
+	}
 
 	sch_tree_unlock(sch);
-	kमुक्त(pपुनः_स्मृति);
+	kfree(prealloc);
 
 	gred_offload(sch, TC_GRED_REPLACE);
-	वापस 0;
+	return 0;
 
-err_unlock_मुक्त:
+err_unlock_free:
 	sch_tree_unlock(sch);
-	kमुक्त(pपुनः_स्मृति);
-	वापस err;
-पूर्ण
+	kfree(prealloc);
+	return err;
+}
 
-अटल पूर्णांक gred_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[TCA_GRED_MAX + 1];
-	पूर्णांक err;
+static int gred_init(struct Qdisc *sch, struct nlattr *opt,
+		     struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[TCA_GRED_MAX + 1];
+	int err;
 
-	अगर (!opt)
-		वापस -EINVAL;
+	if (!opt)
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_GRED_MAX, opt, gred_policy,
 					  extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_GRED_PARMS] || tb[TCA_GRED_STAB]) अणु
+	if (tb[TCA_GRED_PARMS] || tb[TCA_GRED_STAB]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "virtual queue configuration can't be specified at initialization time");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tb[TCA_GRED_LIMIT])
+	if (tb[TCA_GRED_LIMIT])
 		sch->limit = nla_get_u32(tb[TCA_GRED_LIMIT]);
-	अन्यथा
+	else
 		sch->limit = qdisc_dev(sch)->tx_queue_len
 		             * psched_mtu(qdisc_dev(sch));
 
-	वापस gred_change_table_def(sch, tb[TCA_GRED_DPS], extack);
-पूर्ण
+	return gred_change_table_def(sch, tb[TCA_GRED_DPS], extack);
+}
 
-अटल पूर्णांक gred_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	काष्ठा nlattr *parms, *vqs, *opts = शून्य;
-	पूर्णांक i;
+static int gred_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	struct nlattr *parms, *vqs, *opts = NULL;
+	int i;
 	u32 max_p[MAX_DPs];
-	काष्ठा tc_gred_sopt sopt = अणु
+	struct tc_gred_sopt sopt = {
 		.DPs	= table->DPs,
 		.def_DP	= table->def,
 		.grio	= gred_rio_mode(table),
 		.flags	= table->red_flags,
-	पूर्ण;
+	};
 
-	अगर (gred_offload_dump_stats(sch))
-		जाओ nla_put_failure;
+	if (gred_offload_dump_stats(sch))
+		goto nla_put_failure;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (opts == शून्य)
-		जाओ nla_put_failure;
-	अगर (nla_put(skb, TCA_GRED_DPS, माप(sopt), &sopt))
-		जाओ nla_put_failure;
+	if (opts == NULL)
+		goto nla_put_failure;
+	if (nla_put(skb, TCA_GRED_DPS, sizeof(sopt), &sopt))
+		goto nla_put_failure;
 
-	क्रम (i = 0; i < MAX_DPs; i++) अणु
-		काष्ठा gred_sched_data *q = table->tab[i];
+	for (i = 0; i < MAX_DPs; i++) {
+		struct gred_sched_data *q = table->tab[i];
 
 		max_p[i] = q ? q->parms.max_P : 0;
-	पूर्ण
-	अगर (nla_put(skb, TCA_GRED_MAX_P, माप(max_p), max_p))
-		जाओ nla_put_failure;
+	}
+	if (nla_put(skb, TCA_GRED_MAX_P, sizeof(max_p), max_p))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_GRED_LIMIT, sch->limit))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_GRED_LIMIT, sch->limit))
+		goto nla_put_failure;
 
 	/* Old style all-in-one dump of VQs */
 	parms = nla_nest_start_noflag(skb, TCA_GRED_PARMS);
-	अगर (parms == शून्य)
-		जाओ nla_put_failure;
+	if (parms == NULL)
+		goto nla_put_failure;
 
-	क्रम (i = 0; i < MAX_DPs; i++) अणु
-		काष्ठा gred_sched_data *q = table->tab[i];
-		काष्ठा tc_gred_qopt opt;
-		अचिन्हित दीर्घ qavg;
+	for (i = 0; i < MAX_DPs; i++) {
+		struct gred_sched_data *q = table->tab[i];
+		struct tc_gred_qopt opt;
+		unsigned long qavg;
 
-		स_रखो(&opt, 0, माप(opt));
+		memset(&opt, 0, sizeof(opt));
 
-		अगर (!q) अणु
-			/* hack -- fix at some poपूर्णांक with proper message
+		if (!q) {
+			/* hack -- fix at some point with proper message
 			   This is how we indicate to tc that there is no VQ
 			   at this DP */
 
 			opt.DP = MAX_DPs + i;
-			जाओ append_opt;
-		पूर्ण
+			goto append_opt;
+		}
 
 		opt.limit	= q->limit;
 		opt.DP		= q->DP;
@@ -820,12 +819,12 @@ err_unlock_मुक्त:
 		opt.Scell_log	= q->parms.Scell_log;
 		opt.other	= q->stats.other;
 		opt.early	= q->stats.prob_drop;
-		opt.क्रमced	= q->stats.क्रमced_drop;
+		opt.forced	= q->stats.forced_drop;
 		opt.pdrop	= q->stats.pdrop;
 		opt.packets	= q->packetsin;
 		opt.bytesin	= q->bytesin;
 
-		अगर (gred_wred_mode(table))
+		if (gred_wred_mode(table))
 			gred_load_wred_set(table, q);
 
 		qavg = red_calc_qavg(&q->parms, &q->vars,
@@ -833,86 +832,86 @@ err_unlock_मुक्त:
 		opt.qave = qavg >> q->parms.Wlog;
 
 append_opt:
-		अगर (nla_append(skb, माप(opt), &opt) < 0)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (nla_append(skb, sizeof(opt), &opt) < 0)
+			goto nla_put_failure;
+	}
 
 	nla_nest_end(skb, parms);
 
-	/* Dump the VQs again, in more काष्ठाured way */
+	/* Dump the VQs again, in more structured way */
 	vqs = nla_nest_start_noflag(skb, TCA_GRED_VQ_LIST);
-	अगर (!vqs)
-		जाओ nla_put_failure;
+	if (!vqs)
+		goto nla_put_failure;
 
-	क्रम (i = 0; i < MAX_DPs; i++) अणु
-		काष्ठा gred_sched_data *q = table->tab[i];
-		काष्ठा nlattr *vq;
+	for (i = 0; i < MAX_DPs; i++) {
+		struct gred_sched_data *q = table->tab[i];
+		struct nlattr *vq;
 
-		अगर (!q)
-			जारी;
+		if (!q)
+			continue;
 
 		vq = nla_nest_start_noflag(skb, TCA_GRED_VQ_ENTRY);
-		अगर (!vq)
-			जाओ nla_put_failure;
+		if (!vq)
+			goto nla_put_failure;
 
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_DP, q->DP))
-			जाओ nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_DP, q->DP))
+			goto nla_put_failure;
 
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_FLAGS, q->red_flags))
-			जाओ nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_FLAGS, q->red_flags))
+			goto nla_put_failure;
 
 		/* Stats */
-		अगर (nla_put_u64_64bit(skb, TCA_GRED_VQ_STAT_BYTES, q->bytesin,
+		if (nla_put_u64_64bit(skb, TCA_GRED_VQ_STAT_BYTES, q->bytesin,
 				      TCA_GRED_VQ_PAD))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_PACKETS, q->packetsin))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_BACKLOG,
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_PACKETS, q->packetsin))
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_BACKLOG,
 				gred_backlog(table, q, sch)))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_PROB_DROP,
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_PROB_DROP,
 				q->stats.prob_drop))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_PROB_MARK,
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_PROB_MARK,
 				q->stats.prob_mark))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_FORCED_DROP,
-				q->stats.क्रमced_drop))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_FORCED_MARK,
-				q->stats.क्रमced_mark))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_PDROP, q->stats.pdrop))
-			जाओ nla_put_failure;
-		अगर (nla_put_u32(skb, TCA_GRED_VQ_STAT_OTHER, q->stats.other))
-			जाओ nla_put_failure;
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_FORCED_DROP,
+				q->stats.forced_drop))
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_FORCED_MARK,
+				q->stats.forced_mark))
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_PDROP, q->stats.pdrop))
+			goto nla_put_failure;
+		if (nla_put_u32(skb, TCA_GRED_VQ_STAT_OTHER, q->stats.other))
+			goto nla_put_failure;
 
 		nla_nest_end(skb, vq);
-	पूर्ण
+	}
 	nla_nest_end(skb, vqs);
 
-	वापस nla_nest_end(skb, opts);
+	return nla_nest_end(skb, opts);
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल व्योम gred_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा gred_sched *table = qdisc_priv(sch);
-	पूर्णांक i;
+static void gred_destroy(struct Qdisc *sch)
+{
+	struct gred_sched *table = qdisc_priv(sch);
+	int i;
 
-	क्रम (i = 0; i < table->DPs; i++) अणु
-		अगर (table->tab[i])
+	for (i = 0; i < table->DPs; i++) {
+		if (table->tab[i])
 			gred_destroy_vq(table->tab[i]);
-	पूर्ण
+	}
 	gred_offload(sch, TC_GRED_DESTROY);
-पूर्ण
+}
 
-अटल काष्ठा Qdisc_ops gred_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops gred_qdisc_ops __read_mostly = {
 	.id		=	"gred",
-	.priv_size	=	माप(काष्ठा gred_sched),
+	.priv_size	=	sizeof(struct gred_sched),
 	.enqueue	=	gred_enqueue,
 	.dequeue	=	gred_dequeue,
 	.peek		=	qdisc_peek_head,
@@ -922,19 +921,19 @@ nla_put_failure:
 	.change		=	gred_change,
 	.dump		=	gred_dump,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init gred_module_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&gred_qdisc_ops);
-पूर्ण
+static int __init gred_module_init(void)
+{
+	return register_qdisc(&gred_qdisc_ops);
+}
 
-अटल व्योम __निकास gred_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&gred_qdisc_ops);
-पूर्ण
+static void __exit gred_module_exit(void)
+{
+	unregister_qdisc(&gred_qdisc_ops);
+}
 
 module_init(gred_module_init)
-module_निकास(gred_module_निकास)
+module_exit(gred_module_exit)
 
 MODULE_LICENSE("GPL");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Maple (970 eval board) setup code
  *
@@ -7,345 +6,345 @@
  *                     IBM Corp. 
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/user.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/major.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/console.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/adb.h>
-#समावेश <linux/cuda.h>
-#समावेश <linux/pmu.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/memblock.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/mm.h>
+#include <linux/stddef.h>
+#include <linux/unistd.h>
+#include <linux/ptrace.h>
+#include <linux/user.h>
+#include <linux/tty.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/major.h>
+#include <linux/initrd.h>
+#include <linux/vt_kern.h>
+#include <linux/console.h>
+#include <linux/pci.h>
+#include <linux/adb.h>
+#include <linux/cuda.h>
+#include <linux/pmu.h>
+#include <linux/irq.h>
+#include <linux/seq_file.h>
+#include <linux/root_dev.h>
+#include <linux/serial.h>
+#include <linux/smp.h>
+#include <linux/bitops.h>
+#include <linux/of_device.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/mpic.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/nvram.h>
+#include <asm/processor.h>
+#include <asm/sections.h>
+#include <asm/prom.h>
+#include <asm/io.h>
+#include <asm/pci-bridge.h>
+#include <asm/iommu.h>
+#include <asm/machdep.h>
+#include <asm/dma.h>
+#include <asm/cputable.h>
+#include <asm/time.h>
+#include <asm/mpic.h>
+#include <asm/rtas.h>
+#include <asm/udbg.h>
+#include <asm/nvram.h>
 
-#समावेश "maple.h"
+#include "maple.h"
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
-#अन्यथा
-#घोषणा DBG(fmt...)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(fmt...) udbg_printf(fmt)
+#else
+#define DBG(fmt...)
+#endif
 
-अटल अचिन्हित दीर्घ maple_find_nvram_base(व्योम)
-अणु
-	काष्ठा device_node *rtcs;
-	अचिन्हित दीर्घ result = 0;
+static unsigned long maple_find_nvram_base(void)
+{
+	struct device_node *rtcs;
+	unsigned long result = 0;
 
 	/* find NVRAM device */
-	rtcs = of_find_compatible_node(शून्य, "nvram", "AMD8111");
-	अगर (rtcs) अणु
-		काष्ठा resource r;
-		अगर (of_address_to_resource(rtcs, 0, &r)) अणु
-			prपूर्णांकk(KERN_EMERG "Maple: Unable to translate NVRAM"
+	rtcs = of_find_compatible_node(NULL, "nvram", "AMD8111");
+	if (rtcs) {
+		struct resource r;
+		if (of_address_to_resource(rtcs, 0, &r)) {
+			printk(KERN_EMERG "Maple: Unable to translate NVRAM"
 			       " address\n");
-			जाओ bail;
-		पूर्ण
-		अगर (!(r.flags & IORESOURCE_IO)) अणु
-			prपूर्णांकk(KERN_EMERG "Maple: NVRAM address isn't PIO!\n");
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
+		if (!(r.flags & IORESOURCE_IO)) {
+			printk(KERN_EMERG "Maple: NVRAM address isn't PIO!\n");
+			goto bail;
+		}
 		result = r.start;
-	पूर्ण अन्यथा
-		prपूर्णांकk(KERN_EMERG "Maple: Unable to find NVRAM\n");
+	} else
+		printk(KERN_EMERG "Maple: Unable to find NVRAM\n");
  bail:
 	of_node_put(rtcs);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम __noवापस maple_restart(अक्षर *cmd)
-अणु
-	अचिन्हित पूर्णांक maple_nvram_base;
-	स्थिर अचिन्हित पूर्णांक *maple_nvram_offset, *maple_nvram_command;
-	काष्ठा device_node *sp;
+static void __noreturn maple_restart(char *cmd)
+{
+	unsigned int maple_nvram_base;
+	const unsigned int *maple_nvram_offset, *maple_nvram_command;
+	struct device_node *sp;
 
 	maple_nvram_base = maple_find_nvram_base();
-	अगर (maple_nvram_base == 0)
-		जाओ fail;
+	if (maple_nvram_base == 0)
+		goto fail;
 
 	/* find service processor device */
-	sp = of_find_node_by_name(शून्य, "service-processor");
-	अगर (!sp) अणु
-		prपूर्णांकk(KERN_EMERG "Maple: Unable to find Service Processor\n");
-		जाओ fail;
-	पूर्ण
-	maple_nvram_offset = of_get_property(sp, "restart-addr", शून्य);
-	maple_nvram_command = of_get_property(sp, "restart-value", शून्य);
+	sp = of_find_node_by_name(NULL, "service-processor");
+	if (!sp) {
+		printk(KERN_EMERG "Maple: Unable to find Service Processor\n");
+		goto fail;
+	}
+	maple_nvram_offset = of_get_property(sp, "restart-addr", NULL);
+	maple_nvram_command = of_get_property(sp, "restart-value", NULL);
 	of_node_put(sp);
 
 	/* send command */
 	outb_p(*maple_nvram_command, maple_nvram_base + *maple_nvram_offset);
-	क्रम (;;) ;
+	for (;;) ;
  fail:
-	prपूर्णांकk(KERN_EMERG "Maple: Manual Restart Required\n");
-	क्रम (;;) ;
-पूर्ण
+	printk(KERN_EMERG "Maple: Manual Restart Required\n");
+	for (;;) ;
+}
 
-अटल व्योम __noवापस maple_घातer_off(व्योम)
-अणु
-	अचिन्हित पूर्णांक maple_nvram_base;
-	स्थिर अचिन्हित पूर्णांक *maple_nvram_offset, *maple_nvram_command;
-	काष्ठा device_node *sp;
+static void __noreturn maple_power_off(void)
+{
+	unsigned int maple_nvram_base;
+	const unsigned int *maple_nvram_offset, *maple_nvram_command;
+	struct device_node *sp;
 
 	maple_nvram_base = maple_find_nvram_base();
-	अगर (maple_nvram_base == 0)
-		जाओ fail;
+	if (maple_nvram_base == 0)
+		goto fail;
 
 	/* find service processor device */
-	sp = of_find_node_by_name(शून्य, "service-processor");
-	अगर (!sp) अणु
-		prपूर्णांकk(KERN_EMERG "Maple: Unable to find Service Processor\n");
-		जाओ fail;
-	पूर्ण
-	maple_nvram_offset = of_get_property(sp, "power-off-addr", शून्य);
-	maple_nvram_command = of_get_property(sp, "power-off-value", शून्य);
+	sp = of_find_node_by_name(NULL, "service-processor");
+	if (!sp) {
+		printk(KERN_EMERG "Maple: Unable to find Service Processor\n");
+		goto fail;
+	}
+	maple_nvram_offset = of_get_property(sp, "power-off-addr", NULL);
+	maple_nvram_command = of_get_property(sp, "power-off-value", NULL);
 	of_node_put(sp);
 
 	/* send command */
 	outb_p(*maple_nvram_command, maple_nvram_base + *maple_nvram_offset);
-	क्रम (;;) ;
+	for (;;) ;
  fail:
-	prपूर्णांकk(KERN_EMERG "Maple: Manual Power-Down Required\n");
-	क्रम (;;) ;
-पूर्ण
+	printk(KERN_EMERG "Maple: Manual Power-Down Required\n");
+	for (;;) ;
+}
 
-अटल व्योम __noवापस maple_halt(व्योम)
-अणु
-	maple_घातer_off();
-पूर्ण
+static void __noreturn maple_halt(void)
+{
+	maple_power_off();
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल काष्ठा smp_ops_t maple_smp_ops = अणु
+#ifdef CONFIG_SMP
+static struct smp_ops_t maple_smp_ops = {
 	.probe		= smp_mpic_probe,
 	.message_pass	= smp_mpic_message_pass,
 	.kick_cpu	= smp_generic_kick_cpu,
 	.setup_cpu	= smp_mpic_setup_cpu,
-	.give_समयbase	= smp_generic_give_समयbase,
-	.take_समयbase	= smp_generic_take_समयbase,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SMP */
+	.give_timebase	= smp_generic_give_timebase,
+	.take_timebase	= smp_generic_take_timebase,
+};
+#endif /* CONFIG_SMP */
 
-अटल व्योम __init maple_use_rtas_reboot_and_halt_अगर_present(व्योम)
-अणु
-	अगर (rtas_service_present("system-reboot") &&
-	    rtas_service_present("power-off")) अणु
+static void __init maple_use_rtas_reboot_and_halt_if_present(void)
+{
+	if (rtas_service_present("system-reboot") &&
+	    rtas_service_present("power-off")) {
 		ppc_md.restart = rtas_restart;
-		pm_घातer_off = rtas_घातer_off;
+		pm_power_off = rtas_power_off;
 		ppc_md.halt = rtas_halt;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init maple_setup_arch(व्योम)
-अणु
+static void __init maple_setup_arch(void)
+{
 	/* init to some ~sane value until calibrate_delay() runs */
-	loops_per_jअगरfy = 50000000;
+	loops_per_jiffy = 50000000;
 
 	/* Setup SMP callback */
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	smp_ops = &maple_smp_ops;
-#पूर्ण_अगर
-	maple_use_rtas_reboot_and_halt_अगर_present();
+#endif
+	maple_use_rtas_reboot_and_halt_if_present();
 
-	prपूर्णांकk(KERN_DEBUG "Using native/NAP idle loop\n");
+	printk(KERN_DEBUG "Using native/NAP idle loop\n");
 
 	mmio_nvram_init();
-पूर्ण
+}
 
 /*
  * This is almost identical to pSeries and CHRP. We need to make that
- * code generic at one poपूर्णांक, with appropriate bits in the device-tree to
- * identअगरy the presence of an HT APIC
+ * code generic at one point, with appropriate bits in the device-tree to
+ * identify the presence of an HT APIC
  */
-अटल व्योम __init maple_init_IRQ(व्योम)
-अणु
-	काष्ठा device_node *root, *np, *mpic_node = शून्य;
-	स्थिर अचिन्हित पूर्णांक *opprop;
-	अचिन्हित दीर्घ खोलोpic_addr = 0;
-	पूर्णांक naddr, n, i, opplen, has_isus = 0;
-	काष्ठा mpic *mpic;
-	अचिन्हित पूर्णांक flags = 0;
+static void __init maple_init_IRQ(void)
+{
+	struct device_node *root, *np, *mpic_node = NULL;
+	const unsigned int *opprop;
+	unsigned long openpic_addr = 0;
+	int naddr, n, i, opplen, has_isus = 0;
+	struct mpic *mpic;
+	unsigned int flags = 0;
 
 	/* Locate MPIC in the device-tree. Note that there is a bug
 	 * in Maple device-tree where the type of the controller is
-	 * खोलो-pic and not पूर्णांकerrupt-controller
+	 * open-pic and not interrupt-controller
 	 */
 
-	क्रम_each_node_by_type(np, "interrupt-controller")
-		अगर (of_device_is_compatible(np, "open-pic")) अणु
+	for_each_node_by_type(np, "interrupt-controller")
+		if (of_device_is_compatible(np, "open-pic")) {
 			mpic_node = np;
-			अवरोध;
-		पूर्ण
-	अगर (mpic_node == शून्य)
-		क्रम_each_node_by_type(np, "open-pic") अणु
+			break;
+		}
+	if (mpic_node == NULL)
+		for_each_node_by_type(np, "open-pic") {
 			mpic_node = np;
-			अवरोध;
-		पूर्ण
-	अगर (mpic_node == शून्य) अणु
-		prपूर्णांकk(KERN_ERR
+			break;
+		}
+	if (mpic_node == NULL) {
+		printk(KERN_ERR
 		       "Failed to locate the MPIC interrupt controller\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Find address list in /platक्रमm-खोलो-pic */
+	/* Find address list in /platform-open-pic */
 	root = of_find_node_by_path("/");
 	naddr = of_n_addr_cells(root);
 	opprop = of_get_property(root, "platform-open-pic", &opplen);
-	अगर (opprop) अणु
-		खोलोpic_addr = of_पढ़ो_number(opprop, naddr);
+	if (opprop) {
+		openpic_addr = of_read_number(opprop, naddr);
 		has_isus = (opplen > naddr);
-		prपूर्णांकk(KERN_DEBUG "OpenPIC addr: %lx, has ISUs: %d\n",
-		       खोलोpic_addr, has_isus);
-	पूर्ण
+		printk(KERN_DEBUG "OpenPIC addr: %lx, has ISUs: %d\n",
+		       openpic_addr, has_isus);
+	}
 
-	BUG_ON(खोलोpic_addr == 0);
+	BUG_ON(openpic_addr == 0);
 
-	/* Check क्रम a big endian MPIC */
-	अगर (of_get_property(np, "big-endian", शून्य) != शून्य)
+	/* Check for a big endian MPIC */
+	if (of_get_property(np, "big-endian", NULL) != NULL)
 		flags |= MPIC_BIG_ENDIAN;
 
-	/* XXX Maple specअगरic bits */
+	/* XXX Maple specific bits */
 	flags |= MPIC_U3_HT_IRQS;
-	/* All U3/U4 are big-endian, older SLOF firmware करोesn't encode this */
+	/* All U3/U4 are big-endian, older SLOF firmware doesn't encode this */
 	flags |= MPIC_BIG_ENDIAN;
 
-	/* Setup the खोलोpic driver. More device-tree junks, we hard code no
-	 * ISUs क्रम now. I'll have to revisit some stuffs with the folks करोing
-	 * the firmware क्रम those
+	/* Setup the openpic driver. More device-tree junks, we hard code no
+	 * ISUs for now. I'll have to revisit some stuffs with the folks doing
+	 * the firmware for those
 	 */
-	mpic = mpic_alloc(mpic_node, खोलोpic_addr, flags,
+	mpic = mpic_alloc(mpic_node, openpic_addr, flags,
 			  /*has_isus ? 16 :*/ 0, 0, " MPIC     ");
-	BUG_ON(mpic == शून्य);
+	BUG_ON(mpic == NULL);
 
 	/* Add ISUs */
-	opplen /= माप(u32);
-	क्रम (n = 0, i = naddr; i < opplen; i += naddr, n++) अणु
-		अचिन्हित दीर्घ isuaddr = of_पढ़ो_number(opprop + i, naddr);
+	opplen /= sizeof(u32);
+	for (n = 0, i = naddr; i < opplen; i += naddr, n++) {
+		unsigned long isuaddr = of_read_number(opprop + i, naddr);
 		mpic_assign_isu(mpic, n, isuaddr);
-	पूर्ण
+	}
 
 	/* All ISUs are setup, complete initialization */
 	mpic_init(mpic);
 	ppc_md.get_irq = mpic_get_irq;
 	of_node_put(mpic_node);
 	of_node_put(root);
-पूर्ण
+}
 
-अटल व्योम __init maple_progress(अक्षर *s, अचिन्हित लघु hex)
-अणु
-	prपूर्णांकk("*** %04x : %s\n", hex, s ? s : "");
-पूर्ण
+static void __init maple_progress(char *s, unsigned short hex)
+{
+	printk("*** %04x : %s\n", hex, s ? s : "");
+}
 
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-अटल पूर्णांक __init maple_probe(व्योम)
-अणु
-	अगर (!of_machine_is_compatible("Momentum,Maple") &&
+static int __init maple_probe(void)
+{
+	if (!of_machine_is_compatible("Momentum,Maple") &&
 	    !of_machine_is_compatible("Momentum,Apache"))
-		वापस 0;
+		return 0;
 
-	pm_घातer_off = maple_घातer_off;
+	pm_power_off = maple_power_off;
 
 	iommu_init_early_dart(&maple_pci_controller_ops);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अगर_घोषित CONFIG_EDAC
+#ifdef CONFIG_EDAC
 /*
- * Register a platक्रमm device क्रम CPC925 memory controller on
+ * Register a platform device for CPC925 memory controller on
  * all boards with U3H (CPC925) bridge.
  */
-अटल पूर्णांक __init maple_cpc925_edac_setup(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा device_node *np = शून्य;
-	काष्ठा resource r;
-	पूर्णांक ret;
-	अस्थिर व्योम __iomem *mem;
+static int __init maple_cpc925_edac_setup(void)
+{
+	struct platform_device *pdev;
+	struct device_node *np = NULL;
+	struct resource r;
+	int ret;
+	volatile void __iomem *mem;
 	u32 rev;
 
-	np = of_find_node_by_type(शून्य, "memory-controller");
-	अगर (!np) अणु
-		prपूर्णांकk(KERN_ERR "%s: Unable to find memory-controller node\n",
+	np = of_find_node_by_type(NULL, "memory-controller");
+	if (!np) {
+		printk(KERN_ERR "%s: Unable to find memory-controller node\n",
 			__func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = of_address_to_resource(np, 0, &r);
 	of_node_put(np);
 
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Unable to get memory-controller reg\n",
+	if (ret < 0) {
+		printk(KERN_ERR "%s: Unable to get memory-controller reg\n",
 			__func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mem = ioremap(r.start, resource_size(&r));
-	अगर (!mem) अणु
-		prपूर्णांकk(KERN_ERR "%s: Unable to map memory-controller memory\n",
+	if (!mem) {
+		printk(KERN_ERR "%s: Unable to map memory-controller memory\n",
 				__func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	rev = __raw_पढ़ोl(mem);
+	rev = __raw_readl(mem);
 	iounmap(mem);
 
-	अगर (rev < 0x34 || rev > 0x3f) अणु /* U3H */
-		prपूर्णांकk(KERN_ERR "%s: Non-CPC925(U3H) bridge revision: %02x\n",
+	if (rev < 0x34 || rev > 0x3f) { /* U3H */
+		printk(KERN_ERR "%s: Non-CPC925(U3H) bridge revision: %02x\n",
 			__func__, rev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	pdev = platक्रमm_device_रेजिस्टर_simple("cpc925_edac", 0, &r, 1);
-	अगर (IS_ERR(pdev))
-		वापस PTR_ERR(pdev);
+	pdev = platform_device_register_simple("cpc925_edac", 0, &r, 1);
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
 
-	prपूर्णांकk(KERN_INFO "%s: CPC925 platform device created\n", __func__);
+	printk(KERN_INFO "%s: CPC925 platform device created\n", __func__);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_device_initcall(maple, maple_cpc925_edac_setup);
-#पूर्ण_अगर
+#endif
 
-define_machine(maple) अणु
+define_machine(maple) {
 	.name			= "Maple",
 	.probe			= maple_probe,
 	.setup_arch		= maple_setup_arch,
@@ -355,10 +354,10 @@ define_machine(maple) अणु
 	.pci_get_legacy_ide_irq	= maple_pci_get_legacy_ide_irq,
 	.restart		= maple_restart,
 	.halt			= maple_halt,
-	.get_boot_समय		= maple_get_boot_समय,
-	.set_rtc_समय		= maple_set_rtc_समय,
-	.get_rtc_समय		= maple_get_rtc_समय,
+	.get_boot_time		= maple_get_boot_time,
+	.set_rtc_time		= maple_set_rtc_time,
+	.get_rtc_time		= maple_get_rtc_time,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= maple_progress,
-	.घातer_save		= घातer4_idle,
-पूर्ण;
+	.power_save		= power4_idle,
+};

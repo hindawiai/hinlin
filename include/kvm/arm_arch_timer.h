@@ -1,110 +1,109 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#अगर_अघोषित __ASM_ARM_KVM_ARCH_TIMER_H
-#घोषणा __ASM_ARM_KVM_ARCH_TIMER_H
+#ifndef __ASM_ARM_KVM_ARCH_TIMER_H
+#define __ASM_ARM_KVM_ARCH_TIMER_H
 
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/hrसमयr.h>
+#include <linux/clocksource.h>
+#include <linux/hrtimer.h>
 
-क्रमागत kvm_arch_समयrs अणु
+enum kvm_arch_timers {
 	TIMER_PTIMER,
 	TIMER_VTIMER,
 	NR_KVM_TIMERS
-पूर्ण;
+};
 
-क्रमागत kvm_arch_समयr_regs अणु
+enum kvm_arch_timer_regs {
 	TIMER_REG_CNT,
 	TIMER_REG_CVAL,
 	TIMER_REG_TVAL,
 	TIMER_REG_CTL,
-पूर्ण;
+};
 
-काष्ठा arch_समयr_context अणु
-	काष्ठा kvm_vcpu			*vcpu;
+struct arch_timer_context {
+	struct kvm_vcpu			*vcpu;
 
 	/* Timer IRQ */
-	काष्ठा kvm_irq_level		irq;
+	struct kvm_irq_level		irq;
 
 	/* Emulated Timer (may be unused) */
-	काष्ठा hrसमयr			hrसमयr;
+	struct hrtimer			hrtimer;
 
 	/*
-	 * We have multiple paths which can save/restore the समयr state onto
+	 * We have multiple paths which can save/restore the timer state onto
 	 * the hardware, so we need some way of keeping track of where the
 	 * latest state is.
 	 */
 	bool				loaded;
 
-	/* Duplicated state from arch_समयr.c क्रम convenience */
-	u32				host_समयr_irq;
-	u32				host_समयr_irq_flags;
-पूर्ण;
+	/* Duplicated state from arch_timer.c for convenience */
+	u32				host_timer_irq;
+	u32				host_timer_irq_flags;
+};
 
-काष्ठा समयr_map अणु
-	काष्ठा arch_समयr_context *direct_vसमयr;
-	काष्ठा arch_समयr_context *direct_pसमयr;
-	काष्ठा arch_समयr_context *emul_pसमयr;
-पूर्ण;
+struct timer_map {
+	struct arch_timer_context *direct_vtimer;
+	struct arch_timer_context *direct_ptimer;
+	struct arch_timer_context *emul_ptimer;
+};
 
-काष्ठा arch_समयr_cpu अणु
-	काष्ठा arch_समयr_context समयrs[NR_KVM_TIMERS];
+struct arch_timer_cpu {
+	struct arch_timer_context timers[NR_KVM_TIMERS];
 
-	/* Background समयr used when the guest is not running */
-	काष्ठा hrसमयr			bg_समयr;
+	/* Background timer used when the guest is not running */
+	struct hrtimer			bg_timer;
 
-	/* Is the समयr enabled */
+	/* Is the timer enabled */
 	bool			enabled;
-पूर्ण;
+};
 
-पूर्णांक kvm_समयr_hyp_init(bool);
-पूर्णांक kvm_समयr_enable(काष्ठा kvm_vcpu *vcpu);
-पूर्णांक kvm_समयr_vcpu_reset(काष्ठा kvm_vcpu *vcpu);
-व्योम kvm_समयr_vcpu_init(काष्ठा kvm_vcpu *vcpu);
-व्योम kvm_समयr_sync_user(काष्ठा kvm_vcpu *vcpu);
-bool kvm_समयr_should_notअगरy_user(काष्ठा kvm_vcpu *vcpu);
-व्योम kvm_समयr_update_run(काष्ठा kvm_vcpu *vcpu);
-व्योम kvm_समयr_vcpu_terminate(काष्ठा kvm_vcpu *vcpu);
+int kvm_timer_hyp_init(bool);
+int kvm_timer_enable(struct kvm_vcpu *vcpu);
+int kvm_timer_vcpu_reset(struct kvm_vcpu *vcpu);
+void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu);
+void kvm_timer_sync_user(struct kvm_vcpu *vcpu);
+bool kvm_timer_should_notify_user(struct kvm_vcpu *vcpu);
+void kvm_timer_update_run(struct kvm_vcpu *vcpu);
+void kvm_timer_vcpu_terminate(struct kvm_vcpu *vcpu);
 
-u64 kvm_arm_समयr_get_reg(काष्ठा kvm_vcpu *, u64 regid);
-पूर्णांक kvm_arm_समयr_set_reg(काष्ठा kvm_vcpu *, u64 regid, u64 value);
+u64 kvm_arm_timer_get_reg(struct kvm_vcpu *, u64 regid);
+int kvm_arm_timer_set_reg(struct kvm_vcpu *, u64 regid, u64 value);
 
-पूर्णांक kvm_arm_समयr_set_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr);
-पूर्णांक kvm_arm_समयr_get_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr);
-पूर्णांक kvm_arm_समयr_has_attr(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_device_attr *attr);
+int kvm_arm_timer_set_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr);
+int kvm_arm_timer_get_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr);
+int kvm_arm_timer_has_attr(struct kvm_vcpu *vcpu, struct kvm_device_attr *attr);
 
-bool kvm_समयr_is_pending(काष्ठा kvm_vcpu *vcpu);
+bool kvm_timer_is_pending(struct kvm_vcpu *vcpu);
 
-u64 kvm_phys_समयr_पढ़ो(व्योम);
+u64 kvm_phys_timer_read(void);
 
-व्योम kvm_समयr_vcpu_load(काष्ठा kvm_vcpu *vcpu);
-व्योम kvm_समयr_vcpu_put(काष्ठा kvm_vcpu *vcpu);
+void kvm_timer_vcpu_load(struct kvm_vcpu *vcpu);
+void kvm_timer_vcpu_put(struct kvm_vcpu *vcpu);
 
-व्योम kvm_समयr_init_vhe(व्योम);
+void kvm_timer_init_vhe(void);
 
-bool kvm_arch_समयr_get_input_level(पूर्णांक vपूर्णांकid);
+bool kvm_arch_timer_get_input_level(int vintid);
 
-#घोषणा vcpu_समयr(v)	(&(v)->arch.समयr_cpu)
-#घोषणा vcpu_get_समयr(v,t)	(&vcpu_समयr(v)->समयrs[(t)])
-#घोषणा vcpu_vसमयr(v)	(&(v)->arch.समयr_cpu.समयrs[TIMER_VTIMER])
-#घोषणा vcpu_pसमयr(v)	(&(v)->arch.समयr_cpu.समयrs[TIMER_PTIMER])
+#define vcpu_timer(v)	(&(v)->arch.timer_cpu)
+#define vcpu_get_timer(v,t)	(&vcpu_timer(v)->timers[(t)])
+#define vcpu_vtimer(v)	(&(v)->arch.timer_cpu.timers[TIMER_VTIMER])
+#define vcpu_ptimer(v)	(&(v)->arch.timer_cpu.timers[TIMER_PTIMER])
 
-#घोषणा arch_समयr_ctx_index(ctx)	((ctx) - vcpu_समयr((ctx)->vcpu)->समयrs)
+#define arch_timer_ctx_index(ctx)	((ctx) - vcpu_timer((ctx)->vcpu)->timers)
 
-u64 kvm_arm_समयr_पढ़ो_sysreg(काष्ठा kvm_vcpu *vcpu,
-			      क्रमागत kvm_arch_समयrs पंचांगr,
-			      क्रमागत kvm_arch_समयr_regs treg);
-व्योम kvm_arm_समयr_ग_लिखो_sysreg(काष्ठा kvm_vcpu *vcpu,
-				क्रमागत kvm_arch_समयrs पंचांगr,
-				क्रमागत kvm_arch_समयr_regs treg,
+u64 kvm_arm_timer_read_sysreg(struct kvm_vcpu *vcpu,
+			      enum kvm_arch_timers tmr,
+			      enum kvm_arch_timer_regs treg);
+void kvm_arm_timer_write_sysreg(struct kvm_vcpu *vcpu,
+				enum kvm_arch_timers tmr,
+				enum kvm_arch_timer_regs treg,
 				u64 val);
 
-/* Needed क्रम tracing */
-u32 समयr_get_ctl(काष्ठा arch_समयr_context *ctxt);
-u64 समयr_get_cval(काष्ठा arch_समयr_context *ctxt);
+/* Needed for tracing */
+u32 timer_get_ctl(struct arch_timer_context *ctxt);
+u64 timer_get_cval(struct arch_timer_context *ctxt);
 
-#पूर्ण_अगर
+#endif

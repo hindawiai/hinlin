@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_ASM_X86_PTRACE_H
-#घोषणा _UAPI_ASM_X86_PTRACE_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_ASM_X86_PTRACE_H
+#define _UAPI_ASM_X86_PTRACE_H
 
-#समावेश <linux/compiler.h>	/* For __user */
-#समावेश <यंत्र/ptrace-abi.h>
-#समावेश <यंत्र/processor-flags.h>
+#include <linux/compiler.h>	/* For __user */
+#include <asm/ptrace-abi.h>
+#include <asm/processor-flags.h>
 
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#अगर_घोषित __i386__
-/* this काष्ठा defines the way the रेजिस्टरs are stored on the
-   stack during a प्रणाली call. */
+#ifdef __i386__
+/* this struct defines the way the registers are stored on the
+   stack during a system call. */
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 
-काष्ठा pt_regs अणु
-	दीर्घ ebx;
-	दीर्घ ecx;
-	दीर्घ edx;
-	दीर्घ esi;
-	दीर्घ edi;
-	दीर्घ ebp;
-	दीर्घ eax;
-	पूर्णांक  xds;
-	पूर्णांक  xes;
-	पूर्णांक  xfs;
-	पूर्णांक  xgs;
-	दीर्घ orig_eax;
-	दीर्घ eip;
-	पूर्णांक  xcs;
-	दीर्घ eflags;
-	दीर्घ esp;
-	पूर्णांक  xss;
-पूर्ण;
+struct pt_regs {
+	long ebx;
+	long ecx;
+	long edx;
+	long esi;
+	long edi;
+	long ebp;
+	long eax;
+	int  xds;
+	int  xes;
+	int  xfs;
+	int  xgs;
+	long orig_eax;
+	long eip;
+	int  xcs;
+	long eflags;
+	long esp;
+	int  xss;
+};
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#अन्यथा /* __i386__ */
+#else /* __i386__ */
 
-#अगर_अघोषित __KERNEL__
+#ifndef __KERNEL__
 
-काष्ठा pt_regs अणु
+struct pt_regs {
 /*
  * C ABI says these regs are callee-preserved. They aren't saved on kernel entry
  * unless syscall needs a complete, fully filled "struct pt_regs".
  */
-	अचिन्हित दीर्घ r15;
-	अचिन्हित दीर्घ r14;
-	अचिन्हित दीर्घ r13;
-	अचिन्हित दीर्घ r12;
-	अचिन्हित दीर्घ rbp;
-	अचिन्हित दीर्घ rbx;
+	unsigned long r15;
+	unsigned long r14;
+	unsigned long r13;
+	unsigned long r12;
+	unsigned long rbp;
+	unsigned long rbx;
 /* These regs are callee-clobbered. Always saved on kernel entry. */
-	अचिन्हित दीर्घ r11;
-	अचिन्हित दीर्घ r10;
-	अचिन्हित दीर्घ r9;
-	अचिन्हित दीर्घ r8;
-	अचिन्हित दीर्घ rax;
-	अचिन्हित दीर्घ rcx;
-	अचिन्हित दीर्घ rdx;
-	अचिन्हित दीर्घ rsi;
-	अचिन्हित दीर्घ rdi;
+	unsigned long r11;
+	unsigned long r10;
+	unsigned long r9;
+	unsigned long r8;
+	unsigned long rax;
+	unsigned long rcx;
+	unsigned long rdx;
+	unsigned long rsi;
+	unsigned long rdi;
 /*
  * On syscall entry, this is syscall#. On CPU exception, this is error code.
- * On hw पूर्णांकerrupt, it's IRQ number:
+ * On hw interrupt, it's IRQ number:
  */
-	अचिन्हित दीर्घ orig_rax;
-/* Return frame क्रम iretq */
-	अचिन्हित दीर्घ rip;
-	अचिन्हित दीर्घ cs;
-	अचिन्हित दीर्घ eflags;
-	अचिन्हित दीर्घ rsp;
-	अचिन्हित दीर्घ ss;
+	unsigned long orig_rax;
+/* Return frame for iretq */
+	unsigned long rip;
+	unsigned long cs;
+	unsigned long eflags;
+	unsigned long rsp;
+	unsigned long ss;
 /* top of stack page */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* !__i386__ */
+#endif /* __KERNEL__ */
+#endif /* !__i386__ */
 
 
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* _UAPI_ASM_X86_PTRACE_H */
+#endif /* _UAPI_ASM_X86_PTRACE_H */

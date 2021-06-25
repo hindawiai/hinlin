@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_KEYBOARD_H
-#घोषणा __LINUX_KEYBOARD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_KEYBOARD_H
+#define __LINUX_KEYBOARD_H
 
-#समावेश <uapi/linux/keyboard.h>
+#include <uapi/linux/keyboard.h>
 
-काष्ठा notअगरier_block;
-बाह्य अचिन्हित लघु *key_maps[MAX_NR_KEYMAPS];
-बाह्य अचिन्हित लघु plain_map[NR_KEYS];
+struct notifier_block;
+extern unsigned short *key_maps[MAX_NR_KEYMAPS];
+extern unsigned short plain_map[NR_KEYS];
 
-काष्ठा keyboard_notअगरier_param अणु
-	काष्ठा vc_data *vc;	/* VC on which the keyboard press was करोne */
-	पूर्णांक करोwn;		/* Pressure of the key? */
-	पूर्णांक shअगरt;		/* Current shअगरt mask */
-	पूर्णांक ledstate;		/* Current led state */
-	अचिन्हित पूर्णांक value;	/* keycode, unicode value or keysym */
-पूर्ण;
+struct keyboard_notifier_param {
+	struct vc_data *vc;	/* VC on which the keyboard press was done */
+	int down;		/* Pressure of the key? */
+	int shift;		/* Current shift mask */
+	int ledstate;		/* Current led state */
+	unsigned int value;	/* keycode, unicode value or keysym */
+};
 
-बाह्य पूर्णांक रेजिस्टर_keyboard_notअगरier(काष्ठा notअगरier_block *nb);
-बाह्य पूर्णांक unरेजिस्टर_keyboard_notअगरier(काष्ठा notअगरier_block *nb);
-#पूर्ण_अगर
+extern int register_keyboard_notifier(struct notifier_block *nb);
+extern int unregister_keyboard_notifier(struct notifier_block *nb);
+#endif

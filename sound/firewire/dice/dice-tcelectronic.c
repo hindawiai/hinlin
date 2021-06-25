@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dice-tc_electronic.c - a part of driver क्रम DICE based devices
+ * dice-tc_electronic.c - a part of driver for DICE based devices
  *
  * Copyright (c) 2018 Takashi Sakamoto
  */
 
-#समावेश "dice.h"
+#include "dice.h"
 
-काष्ठा dice_tc_spec अणु
-	अचिन्हित पूर्णांक tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
-	अचिन्हित पूर्णांक rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+struct dice_tc_spec {
+	unsigned int tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+	unsigned int rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
 	bool has_midi;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec desktop_konnekt6 = अणु
-	.tx_pcm_chs = अणुअणु6, 6, 2पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु6, 6, 4पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec desktop_konnekt6 = {
+	.tx_pcm_chs = {{6, 6, 2}, {0, 0, 0} },
+	.rx_pcm_chs = {{6, 6, 4}, {0, 0, 0} },
 	.has_midi = false,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec impact_twin = अणु
-	.tx_pcm_chs = अणुअणु14, 10, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु14, 10, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec impact_twin = {
+	.tx_pcm_chs = {{14, 10, 6}, {0, 0, 0} },
+	.rx_pcm_chs = {{14, 10, 6}, {0, 0, 0} },
 	.has_midi = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec konnekt_8 = अणु
-	.tx_pcm_chs = अणुअणु4, 4, 3पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु4, 4, 3पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec konnekt_8 = {
+	.tx_pcm_chs = {{4, 4, 3}, {0, 0, 0} },
+	.rx_pcm_chs = {{4, 4, 3}, {0, 0, 0} },
 	.has_midi = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec konnekt_24d = अणु
-	.tx_pcm_chs = अणुअणु16, 16, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु16, 16, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec konnekt_24d = {
+	.tx_pcm_chs = {{16, 16, 6}, {0, 0, 0} },
+	.rx_pcm_chs = {{16, 16, 6}, {0, 0, 0} },
 	.has_midi = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec konnekt_live = अणु
-	.tx_pcm_chs = अणुअणु16, 16, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु16, 16, 6पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec konnekt_live = {
+	.tx_pcm_chs = {{16, 16, 6}, {0, 0, 0} },
+	.rx_pcm_chs = {{16, 16, 6}, {0, 0, 0} },
 	.has_midi = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec studio_konnekt_48 = अणु
-	.tx_pcm_chs = अणुअणु16, 16, 8पूर्ण, अणु16, 16, 7पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु16, 16, 8पूर्ण, अणु14, 14, 7पूर्ण पूर्ण,
+static const struct dice_tc_spec studio_konnekt_48 = {
+	.tx_pcm_chs = {{16, 16, 8}, {16, 16, 7} },
+	.rx_pcm_chs = {{16, 16, 8}, {14, 14, 7} },
 	.has_midi = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_tc_spec digital_konnekt_x32 = अणु
-	.tx_pcm_chs = अणुअणु16, 16, 4पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु16, 16, 4पूर्ण, अणु0, 0, 0पूर्ण पूर्ण,
+static const struct dice_tc_spec digital_konnekt_x32 = {
+	.tx_pcm_chs = {{16, 16, 4}, {0, 0, 0} },
+	.rx_pcm_chs = {{16, 16, 4}, {0, 0, 0} },
 	.has_midi = false,
-पूर्ण;
+};
 
-पूर्णांक snd_dice_detect_tcelectronic_क्रमmats(काष्ठा snd_dice *dice)
-अणु
-	अटल स्थिर काष्ठा अणु
+int snd_dice_detect_tcelectronic_formats(struct snd_dice *dice)
+{
+	static const struct {
 		u32 model_id;
-		स्थिर काष्ठा dice_tc_spec *spec;
-	पूर्ण *entry, entries[] = अणु
-		अणु0x00000020, &konnekt_24dपूर्ण,
-		अणु0x00000021, &konnekt_8पूर्ण,
-		अणु0x00000022, &studio_konnekt_48पूर्ण,
-		अणु0x00000023, &konnekt_liveपूर्ण,
-		अणु0x00000024, &desktop_konnekt6पूर्ण,
-		अणु0x00000027, &impact_twinपूर्ण,
-		अणु0x00000030, &digital_konnekt_x32पूर्ण,
-	पूर्ण;
-	काष्ठा fw_csr_iterator it;
-	पूर्णांक key, val, model_id;
-	पूर्णांक i;
+		const struct dice_tc_spec *spec;
+	} *entry, entries[] = {
+		{0x00000020, &konnekt_24d},
+		{0x00000021, &konnekt_8},
+		{0x00000022, &studio_konnekt_48},
+		{0x00000023, &konnekt_live},
+		{0x00000024, &desktop_konnekt6},
+		{0x00000027, &impact_twin},
+		{0x00000030, &digital_konnekt_x32},
+	};
+	struct fw_csr_iterator it;
+	int key, val, model_id;
+	int i;
 
 	model_id = 0;
 	fw_csr_iterator_init(&it, dice->unit->directory);
-	जबतक (fw_csr_iterator_next(&it, &key, &val)) अणु
-		अगर (key == CSR_MODEL) अणु
+	while (fw_csr_iterator_next(&it, &key, &val)) {
+		if (key == CSR_MODEL) {
 			model_id = val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(entries); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(entries); ++i) {
 		entry = entries + i;
-		अगर (entry->model_id == model_id)
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(entries))
-		वापस -ENODEV;
+		if (entry->model_id == model_id)
+			break;
+	}
+	if (i == ARRAY_SIZE(entries))
+		return -ENODEV;
 
-	स_नकल(dice->tx_pcm_chs, entry->spec->tx_pcm_chs,
-	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * माप(अचिन्हित पूर्णांक));
-	स_नकल(dice->rx_pcm_chs, entry->spec->rx_pcm_chs,
-	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * माप(अचिन्हित पूर्णांक));
+	memcpy(dice->tx_pcm_chs, entry->spec->tx_pcm_chs,
+	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * sizeof(unsigned int));
+	memcpy(dice->rx_pcm_chs, entry->spec->rx_pcm_chs,
+	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * sizeof(unsigned int));
 
-	अगर (entry->spec->has_midi) अणु
+	if (entry->spec->has_midi) {
 		dice->tx_midi_ports[0] = 1;
 		dice->rx_midi_ports[0] = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

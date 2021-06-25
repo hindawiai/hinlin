@@ -1,878 +1,877 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * HMM stands क्रम Heterogeneous Memory Management, it is a helper layer inside
+ * HMM stands for Heterogeneous Memory Management, it is a helper layer inside
  * the linux kernel to help device drivers mirror a process address space in
  * the device. This allows the device to use the same address space which
  * makes communication and data exchange a lot easier.
  *
  * This framework's sole purpose is to exercise various code paths inside
- * the kernel to make sure that HMM perक्रमms as expected and to flush out any
+ * the kernel to make sure that HMM performs as expected and to flush out any
  * bugs.
  */
 
-#समावेश "../kselftest_harness.h"
+#include "../kselftest_harness.h"
 
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <unistd.h>
-#समावेश <strings.h>
-#समावेश <समय.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/mman.h>
-#समावेश <sys/ioctl.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <strings.h>
+#include <time.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
 
-#समावेश "./local_config.h"
-#अगर_घोषित LOCAL_CONFIG_HAVE_LIBHUGETLBFS
-#समावेश <hugetlbfs.h>
-#पूर्ण_अगर
+#include "./local_config.h"
+#ifdef LOCAL_CONFIG_HAVE_LIBHUGETLBFS
+#include <hugetlbfs.h>
+#endif
 
 /*
- * This is a निजी UAPI to the kernel test module so it isn't exported
+ * This is a private UAPI to the kernel test module so it isn't exported
  * in the usual include/uapi/... directory.
  */
-#समावेश "../../../../lib/test_hmm_uapi.h"
+#include "../../../../lib/test_hmm_uapi.h"
 
-काष्ठा hmm_buffer अणु
-	व्योम		*ptr;
-	व्योम		*mirror;
-	अचिन्हित दीर्घ	size;
-	पूर्णांक		fd;
-	uपूर्णांक64_t	cpages;
-	uपूर्णांक64_t	faults;
-पूर्ण;
+struct hmm_buffer {
+	void		*ptr;
+	void		*mirror;
+	unsigned long	size;
+	int		fd;
+	uint64_t	cpages;
+	uint64_t	faults;
+};
 
-#घोषणा TWOMEG		(1 << 21)
-#घोषणा HMM_BUFFER_SIZE (1024 << 12)
-#घोषणा HMM_PATH_MAX    64
-#घोषणा NTIMES		10
+#define TWOMEG		(1 << 21)
+#define HMM_BUFFER_SIZE (1024 << 12)
+#define HMM_PATH_MAX    64
+#define NTIMES		10
 
-#घोषणा ALIGN(x, a) (((x) + (a - 1)) & (~((a) - 1)))
+#define ALIGN(x, a) (((x) + (a - 1)) & (~((a) - 1)))
 
 FIXTURE(hmm)
-अणु
-	पूर्णांक		fd;
-	अचिन्हित पूर्णांक	page_size;
-	अचिन्हित पूर्णांक	page_shअगरt;
-पूर्ण;
+{
+	int		fd;
+	unsigned int	page_size;
+	unsigned int	page_shift;
+};
 
 FIXTURE(hmm2)
-अणु
-	पूर्णांक		fd0;
-	पूर्णांक		fd1;
-	अचिन्हित पूर्णांक	page_size;
-	अचिन्हित पूर्णांक	page_shअगरt;
-पूर्ण;
+{
+	int		fd0;
+	int		fd1;
+	unsigned int	page_size;
+	unsigned int	page_shift;
+};
 
-अटल पूर्णांक hmm_खोलो(पूर्णांक unit)
-अणु
-	अक्षर pathname[HMM_PATH_MAX];
-	पूर्णांक fd;
+static int hmm_open(int unit)
+{
+	char pathname[HMM_PATH_MAX];
+	int fd;
 
-	snम_लिखो(pathname, माप(pathname), "/dev/hmm_dmirror%d", unit);
-	fd = खोलो(pathname, O_RDWR, 0);
-	अगर (fd < 0)
-		ख_लिखो(मानक_त्रुटि, "could not open hmm dmirror driver (%s)\n",
+	snprintf(pathname, sizeof(pathname), "/dev/hmm_dmirror%d", unit);
+	fd = open(pathname, O_RDWR, 0);
+	if (fd < 0)
+		fprintf(stderr, "could not open hmm dmirror driver (%s)\n",
 			pathname);
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
 FIXTURE_SETUP(hmm)
-अणु
+{
 	self->page_size = sysconf(_SC_PAGE_SIZE);
-	self->page_shअगरt = ffs(self->page_size) - 1;
+	self->page_shift = ffs(self->page_size) - 1;
 
-	self->fd = hmm_खोलो(0);
+	self->fd = hmm_open(0);
 	ASSERT_GE(self->fd, 0);
-पूर्ण
+}
 
 FIXTURE_SETUP(hmm2)
-अणु
+{
 	self->page_size = sysconf(_SC_PAGE_SIZE);
-	self->page_shअगरt = ffs(self->page_size) - 1;
+	self->page_shift = ffs(self->page_size) - 1;
 
-	self->fd0 = hmm_खोलो(0);
+	self->fd0 = hmm_open(0);
 	ASSERT_GE(self->fd0, 0);
-	self->fd1 = hmm_खोलो(1);
+	self->fd1 = hmm_open(1);
 	ASSERT_GE(self->fd1, 0);
-पूर्ण
+}
 
 FIXTURE_TEARDOWN(hmm)
-अणु
-	पूर्णांक ret = बंद(self->fd);
+{
+	int ret = close(self->fd);
 
 	ASSERT_EQ(ret, 0);
 	self->fd = -1;
-पूर्ण
+}
 
 FIXTURE_TEARDOWN(hmm2)
-अणु
-	पूर्णांक ret = बंद(self->fd0);
+{
+	int ret = close(self->fd0);
 
 	ASSERT_EQ(ret, 0);
 	self->fd0 = -1;
 
-	ret = बंद(self->fd1);
+	ret = close(self->fd1);
 	ASSERT_EQ(ret, 0);
 	self->fd1 = -1;
-पूर्ण
+}
 
-अटल पूर्णांक hmm_dmirror_cmd(पूर्णांक fd,
-			   अचिन्हित दीर्घ request,
-			   काष्ठा hmm_buffer *buffer,
-			   अचिन्हित दीर्घ npages)
-अणु
-	काष्ठा hmm_dmirror_cmd cmd;
-	पूर्णांक ret;
+static int hmm_dmirror_cmd(int fd,
+			   unsigned long request,
+			   struct hmm_buffer *buffer,
+			   unsigned long npages)
+{
+	struct hmm_dmirror_cmd cmd;
+	int ret;
 
-	/* Simulate a device पढ़ोing प्रणाली memory. */
+	/* Simulate a device reading system memory. */
 	cmd.addr = (__u64)buffer->ptr;
 	cmd.ptr = (__u64)buffer->mirror;
 	cmd.npages = npages;
 
-	क्रम (;;) अणु
+	for (;;) {
 		ret = ioctl(fd, request, &cmd);
-		अगर (ret == 0)
-			अवरोध;
-		अगर (त्रुटि_सं == EINTR)
-			जारी;
-		वापस -त्रुटि_सं;
-	पूर्ण
+		if (ret == 0)
+			break;
+		if (errno == EINTR)
+			continue;
+		return -errno;
+	}
 	buffer->cpages = cmd.cpages;
 	buffer->faults = cmd.faults;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hmm_buffer_मुक्त(काष्ठा hmm_buffer *buffer)
-अणु
-	अगर (buffer == शून्य)
-		वापस;
+static void hmm_buffer_free(struct hmm_buffer *buffer)
+{
+	if (buffer == NULL)
+		return;
 
-	अगर (buffer->ptr)
+	if (buffer->ptr)
 		munmap(buffer->ptr, buffer->size);
-	मुक्त(buffer->mirror);
-	मुक्त(buffer);
-पूर्ण
+	free(buffer->mirror);
+	free(buffer);
+}
 
 /*
- * Create a temporary file that will be deleted on बंद.
+ * Create a temporary file that will be deleted on close.
  */
-अटल पूर्णांक hmm_create_file(अचिन्हित दीर्घ size)
-अणु
-	अक्षर path[HMM_PATH_MAX];
-	पूर्णांक fd;
+static int hmm_create_file(unsigned long size)
+{
+	char path[HMM_PATH_MAX];
+	int fd;
 
-	म_नकल(path, "/tmp");
-	fd = खोलो(path, O_TMPखाता | O_EXCL | O_RDWR, 0600);
-	अगर (fd >= 0) अणु
-		पूर्णांक r;
+	strcpy(path, "/tmp");
+	fd = open(path, O_TMPFILE | O_EXCL | O_RDWR, 0600);
+	if (fd >= 0) {
+		int r;
 
-		करो अणु
+		do {
 			r = ftruncate(fd, size);
-		पूर्ण जबतक (r == -1 && त्रुटि_सं == EINTR);
-		अगर (!r)
-			वापस fd;
-		बंद(fd);
-	पूर्ण
-	वापस -1;
-पूर्ण
+		} while (r == -1 && errno == EINTR);
+		if (!r)
+			return fd;
+		close(fd);
+	}
+	return -1;
+}
 
 /*
- * Return a अक्रमom अचिन्हित number.
+ * Return a random unsigned number.
  */
-अटल अचिन्हित पूर्णांक hmm_अक्रमom(व्योम)
-अणु
-	अटल पूर्णांक fd = -1;
-	अचिन्हित पूर्णांक r;
+static unsigned int hmm_random(void)
+{
+	static int fd = -1;
+	unsigned int r;
 
-	अगर (fd < 0) अणु
-		fd = खोलो("/dev/urandom", O_RDONLY);
-		अगर (fd < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "%s:%d failed to open /dev/urandom\n",
-					__खाता__, __LINE__);
-			वापस ~0U;
-		पूर्ण
-	पूर्ण
-	पढ़ो(fd, &r, माप(r));
-	वापस r;
-पूर्ण
+	if (fd < 0) {
+		fd = open("/dev/urandom", O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "%s:%d failed to open /dev/urandom\n",
+					__FILE__, __LINE__);
+			return ~0U;
+		}
+	}
+	read(fd, &r, sizeof(r));
+	return r;
+}
 
-अटल व्योम hmm_nanosleep(अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा बारpec t;
+static void hmm_nanosleep(unsigned int n)
+{
+	struct timespec t;
 
 	t.tv_sec = 0;
 	t.tv_nsec = n;
-	nanosleep(&t, शून्य);
-पूर्ण
+	nanosleep(&t, NULL);
+}
 
 /*
- * Simple शून्य test of device खोलो/बंद.
+ * Simple NULL test of device open/close.
  */
-TEST_F(hmm, खोलो_बंद)
-अणु
-पूर्ण
+TEST_F(hmm, open_close)
+{
+}
 
 /*
- * Read निजी anonymous memory.
+ * Read private anonymous memory.
  */
-TEST_F(hmm, anon_पढ़ो)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
-	पूर्णांक val;
+TEST_F(hmm, anon_read)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
+	int val;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
 	/*
-	 * Initialize buffer in प्रणाली memory but leave the first two pages
+	 * Initialize buffer in system memory but leave the first two pages
 	 * zero (pte_none and pfn_zero).
 	 */
-	i = 2 * self->page_size / माप(*ptr);
-	क्रम (ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	i = 2 * self->page_size / sizeof(*ptr);
+	for (ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Set buffer permission to पढ़ो-only. */
+	/* Set buffer permission to read-only. */
 	ret = mprotect(buffer->ptr, size, PROT_READ);
 	ASSERT_EQ(ret, 0);
 
 	/* Populate the CPU page table with a special zero page. */
-	val = *(पूर्णांक *)(buffer->ptr + self->page_size);
+	val = *(int *)(buffer->ptr + self->page_size);
 	ASSERT_EQ(val, 0);
 
-	/* Simulate a device पढ़ोing प्रणाली memory. */
+	/* Simulate a device reading system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
-	/* Check what the device पढ़ो. */
+	/* Check what the device read. */
 	ptr = buffer->mirror;
-	क्रम (i = 0; i < 2 * self->page_size / माप(*ptr); ++i)
+	for (i = 0; i < 2 * self->page_size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], 0);
-	क्रम (; i < size / माप(*ptr); ++i)
+	for (; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Read निजी anonymous memory which has been रक्षित with
+ * Read private anonymous memory which has been protected with
  * mprotect() PROT_NONE.
  */
-TEST_F(hmm, anon_पढ़ो_prot)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm, anon_read_prot)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer in प्रणाली memory. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer in system memory. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Initialize mirror buffer so we can verअगरy it isn't written. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize mirror buffer so we can verify it isn't written. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = -i;
 
-	/* Protect buffer from पढ़ोing. */
+	/* Protect buffer from reading. */
 	ret = mprotect(buffer->ptr, size, PROT_NONE);
 	ASSERT_EQ(ret, 0);
 
-	/* Simulate a device पढ़ोing प्रणाली memory. */
+	/* Simulate a device reading system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer, npages);
 	ASSERT_EQ(ret, -EFAULT);
 
-	/* Allow CPU to पढ़ो the buffer so we can check it. */
+	/* Allow CPU to read the buffer so we can check it. */
 	ret = mprotect(buffer->ptr, size, PROT_READ);
 	ASSERT_EQ(ret, 0);
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], -i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Write निजी anonymous memory.
+ * Write private anonymous memory.
  */
-TEST_F(hmm, anon_ग_लिखो)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm, anon_write)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Write निजी anonymous memory which has been रक्षित with
+ * Write private anonymous memory which has been protected with
  * mprotect() PROT_READ.
  */
-TEST_F(hmm, anon_ग_लिखो_prot)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm, anon_write_prot)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Simulate a device पढ़ोing a zero page of memory. */
+	/* Simulate a device reading a zero page of memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer, 1);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, 1);
 	ASSERT_EQ(buffer->faults, 1);
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, -EPERM);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], 0);
 
 	/* Now allow writing and see that the zero page is replaced. */
 	ret = mprotect(buffer->ptr, size, PROT_WRITE | PROT_READ);
 	ASSERT_EQ(ret, 0);
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Check that a device writing an anonymous निजी mapping
- * will copy-on-ग_लिखो अगर a child process inherits the mapping.
+ * Check that a device writing an anonymous private mapping
+ * will copy-on-write if a child process inherits the mapping.
  */
-TEST_F(hmm, anon_ग_लिखो_child)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
+TEST_F(hmm, anon_write_child)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
 	pid_t pid;
-	पूर्णांक child_fd;
-	पूर्णांक ret;
+	int child_fd;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer->ptr so we can tell अगर it is written. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer->ptr so we can tell if it is written. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = -i;
 
-	pid = विभाजन();
-	अगर (pid == -1)
+	pid = fork();
+	if (pid == -1)
 		ASSERT_EQ(pid, 0);
-	अगर (pid != 0) अणु
-		रुकोpid(pid, &ret, 0);
+	if (pid != 0) {
+		waitpid(pid, &ret, 0);
 		ASSERT_EQ(WIFEXITED(ret), 1);
 
 		/* Check that the parent's buffer did not change. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ASSERT_EQ(ptr[i], i);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Check that we see the parent's values. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], -i);
 
 	/* The child process needs its own mirror to its own mm. */
-	child_fd = hmm_खोलो(0);
+	child_fd = hmm_open(0);
 	ASSERT_GE(child_fd, 0);
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(child_fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], -i);
 
-	बंद(child_fd);
-	निकास(0);
-पूर्ण
+	close(child_fd);
+	exit(0);
+}
 
 /*
  * Check that a device writing an anonymous shared mapping
- * will not copy-on-ग_लिखो अगर a child process inherits the mapping.
+ * will not copy-on-write if a child process inherits the mapping.
  */
-TEST_F(hmm, anon_ग_लिखो_child_shared)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
+TEST_F(hmm, anon_write_child_shared)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
 	pid_t pid;
-	पूर्णांक child_fd;
-	पूर्णांक ret;
+	int child_fd;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_SHARED | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer->ptr so we can tell अगर it is written. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer->ptr so we can tell if it is written. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = -i;
 
-	pid = विभाजन();
-	अगर (pid == -1)
+	pid = fork();
+	if (pid == -1)
 		ASSERT_EQ(pid, 0);
-	अगर (pid != 0) अणु
-		रुकोpid(pid, &ret, 0);
+	if (pid != 0) {
+		waitpid(pid, &ret, 0);
 		ASSERT_EQ(WIFEXITED(ret), 1);
 
 		/* Check that the parent's buffer did change. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ASSERT_EQ(ptr[i], -i);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Check that we see the parent's values. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], -i);
 
 	/* The child process needs its own mirror to its own mm. */
-	child_fd = hmm_खोलो(0);
+	child_fd = hmm_open(0);
 	ASSERT_GE(child_fd, 0);
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(child_fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], -i);
 
-	बंद(child_fd);
-	निकास(0);
-पूर्ण
+	close(child_fd);
+	exit(0);
+}
 
 /*
- * Write निजी anonymous huge page.
+ * Write private anonymous huge page.
  */
-TEST_F(hmm, anon_ग_लिखो_huge)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	व्योम *old_ptr;
-	व्योम *map;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm, anon_write_huge)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	void *old_ptr;
+	void *map;
+	int *ptr;
+	int ret;
 
 	size = 2 * TWOMEG;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
 	size = TWOMEG;
-	npages = size >> self->page_shअगरt;
-	map = (व्योम *)ALIGN((uपूर्णांकptr_t)buffer->ptr, size);
+	npages = size >> self->page_shift;
+	map = (void *)ALIGN((uintptr_t)buffer->ptr, size);
 	ret = madvise(map, size, MADV_HUGEPAGE);
 	ASSERT_EQ(ret, 0);
 	old_ptr = buffer->ptr;
 	buffer->ptr = map;
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
 	buffer->ptr = old_ptr;
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
-#अगर_घोषित LOCAL_CONFIG_HAVE_LIBHUGETLBFS
+#ifdef LOCAL_CONFIG_HAVE_LIBHUGETLBFS
 /*
  * Write huge TLBFS page.
  */
-TEST_F(hmm, anon_ग_लिखो_hugetlbfs)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
-	दीर्घ pagesizes[4];
-	पूर्णांक n, idx;
+TEST_F(hmm, anon_write_hugetlbfs)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
+	long pagesizes[4];
+	int n, idx;
 
-	/* Skip test अगर we can't allocate a hugetlbfs page. */
+	/* Skip test if we can't allocate a hugetlbfs page. */
 
 	n = gethugepagesizes(pagesizes, 4);
-	अगर (n <= 0)
-		SKIP(वापस, "Huge page size could not be determined");
-	क्रम (idx = 0; --n > 0; ) अणु
-		अगर (pagesizes[n] < pagesizes[idx])
+	if (n <= 0)
+		SKIP(return, "Huge page size could not be determined");
+	for (idx = 0; --n > 0; ) {
+		if (pagesizes[n] < pagesizes[idx])
 			idx = n;
-	पूर्ण
+	}
 	size = ALIGN(TWOMEG, pagesizes[idx]);
-	npages = size >> self->page_shअगरt;
+	npages = size >> self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->ptr = get_hugepage_region(size, GHR_STRICT);
-	अगर (buffer->ptr == शून्य) अणु
-		मुक्त(buffer);
-		SKIP(वापस, "Huge page could not be allocated");
-	पूर्ण
+	if (buffer->ptr == NULL) {
+		free(buffer);
+		SKIP(return, "Huge page could not be allocated");
+	}
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	मुक्त_hugepage_region(buffer->ptr);
-	buffer->ptr = शून्य;
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
-#पूर्ण_अगर /* LOCAL_CONFIG_HAVE_LIBHUGETLBFS */
+	free_hugepage_region(buffer->ptr);
+	buffer->ptr = NULL;
+	hmm_buffer_free(buffer);
+}
+#endif /* LOCAL_CONFIG_HAVE_LIBHUGETLBFS */
 
 /*
  * Read mmap'ed file memory.
  */
-TEST_F(hmm, file_पढ़ो)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
-	पूर्णांक fd;
-	sमाप_प्रकार len;
+TEST_F(hmm, file_read)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
+	int fd;
+	ssize_t len;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
 	fd = hmm_create_file(size);
 	ASSERT_GE(fd, 0);
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = fd;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
 	/* Write initial contents of the file. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
-	len = pग_लिखो(fd, buffer->mirror, size, 0);
+	len = pwrite(fd, buffer->mirror, size, 0);
 	ASSERT_EQ(len, size);
-	स_रखो(buffer->mirror, 0, size);
+	memset(buffer->mirror, 0, size);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ,
 			   MAP_SHARED,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Simulate a device पढ़ोing प्रणाली memory. */
+	/* Simulate a device reading system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
  * Write mmap'ed file memory.
  */
-TEST_F(hmm, file_ग_लिखो)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
-	पूर्णांक fd;
-	sमाप_प्रकार len;
+TEST_F(hmm, file_write)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
+	int fd;
+	ssize_t len;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
 	fd = hmm_create_file(size);
 	ASSERT_GE(fd, 0);
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = fd;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_SHARED,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize data that the device will ग_लिखो to buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Initialize data that the device will write to buffer->ptr. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Simulate a device writing प्रणाली memory. */
+	/* Simulate a device writing system memory. */
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_WRITE, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
 	/* Check what the device wrote. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
 	/* Check that the device also wrote the file. */
-	len = pपढ़ो(fd, buffer->mirror, size, 0);
+	len = pread(fd, buffer->mirror, size, 0);
 	ASSERT_EQ(len, size);
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Migrate anonymous memory to device निजी memory.
+ * Migrate anonymous memory to device private memory.
  */
 TEST_F(hmm, migrate)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer in प्रणाली memory. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer in system memory. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
 	/* Migrate memory to device. */
@@ -880,47 +879,47 @@ TEST_F(hmm, migrate)
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Migrate anonymous memory to device निजी memory and fault some of it back
- * to प्रणाली memory, then try migrating the resulting mix of प्रणाली and device
- * निजी memory to the device.
+ * Migrate anonymous memory to device private memory and fault some of it back
+ * to system memory, then try migrating the resulting mix of system and device
+ * private memory to the device.
  */
 TEST_F(hmm, migrate_fault)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer in प्रणाली memory. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer in system memory. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
 	/* Migrate memory to device. */
@@ -928,12 +927,12 @@ TEST_F(hmm, migrate_fault)
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	/* Fault half the pages back to प्रणाली memory and check them. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / (2 * माप(*ptr)); ++i)
+	/* Fault half the pages back to system memory and check them. */
+	for (i = 0, ptr = buffer->ptr; i < size / (2 * sizeof(*ptr)); ++i)
 		ASSERT_EQ(ptr[i], i);
 
 	/* Migrate memory to the device again. */
@@ -941,36 +940,36 @@ TEST_F(hmm, migrate_fault)
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Migrate anonymous shared memory to device निजी memory.
+ * Migrate anonymous shared memory to device private memory.
  */
 TEST_F(hmm, migrate_shared)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	पूर्णांक ret;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_SHARED | MAP_ANONYMOUS,
 			   buffer->fd, 0);
@@ -980,42 +979,42 @@ TEST_F(hmm, migrate_shared)
 	ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_MIGRATE, buffer, npages);
 	ASSERT_EQ(ret, -ENOENT);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Try to migrate various memory types to device निजी memory.
+ * Try to migrate various memory types to device private memory.
  */
 TEST_F(hmm2, migrate_mixed)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	पूर्णांक *ptr;
-	अचिन्हित अक्षर *p;
-	पूर्णांक ret;
-	पूर्णांक val;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	int *ptr;
+	unsigned char *p;
+	int ret;
+	int val;
 
 	npages = 6;
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(size);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(size);
+	ASSERT_NE(buffer->mirror, NULL);
 
 	/* Reserve a range of addresses. */
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_NONE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 	p = buffer->ptr;
 
-	/* Migrating a रक्षित area should be an error. */
+	/* Migrating a protected area should be an error. */
 	ret = hmm_dmirror_cmd(self->fd1, HMM_DMIRROR_MIGRATE, buffer, npages);
 	ASSERT_EQ(ret, -EINVAL);
 
@@ -1023,35 +1022,35 @@ TEST_F(hmm2, migrate_mixed)
 	ret = munmap(buffer->ptr + self->page_size, self->page_size);
 	ASSERT_EQ(ret, 0);
 
-	/* We expect an error अगर the vma करोesn't cover the range. */
+	/* We expect an error if the vma doesn't cover the range. */
 	ret = hmm_dmirror_cmd(self->fd1, HMM_DMIRROR_MIGRATE, buffer, 3);
 	ASSERT_EQ(ret, -EINVAL);
 
-	/* Page 2 will be a पढ़ो-only zero page. */
+	/* Page 2 will be a read-only zero page. */
 	ret = mprotect(buffer->ptr + 2 * self->page_size, self->page_size,
 				PROT_READ);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 2 * self->page_size);
+	ptr = (int *)(buffer->ptr + 2 * self->page_size);
 	val = *ptr + 3;
 	ASSERT_EQ(val, 3);
 
-	/* Page 3 will be पढ़ो-only. */
+	/* Page 3 will be read-only. */
 	ret = mprotect(buffer->ptr + 3 * self->page_size, self->page_size,
 				PROT_READ | PROT_WRITE);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 3 * self->page_size);
+	ptr = (int *)(buffer->ptr + 3 * self->page_size);
 	*ptr = val;
 	ret = mprotect(buffer->ptr + 3 * self->page_size, self->page_size,
 				PROT_READ);
 	ASSERT_EQ(ret, 0);
 
-	/* Page 4-5 will be पढ़ो-ग_लिखो. */
+	/* Page 4-5 will be read-write. */
 	ret = mprotect(buffer->ptr + 4 * self->page_size, 2 * self->page_size,
 				PROT_READ | PROT_WRITE);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 4 * self->page_size);
+	ptr = (int *)(buffer->ptr + 4 * self->page_size);
 	*ptr = val;
-	ptr = (पूर्णांक *)(buffer->ptr + 5 * self->page_size);
+	ptr = (int *)(buffer->ptr + 5 * self->page_size);
 	*ptr = val;
 
 	/* Now try to migrate pages 2-5 to device 1. */
@@ -1067,44 +1066,44 @@ TEST_F(hmm2, migrate_mixed)
 	buffer->ptr = p;
 
 	buffer->ptr = p;
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 /*
- * Migrate anonymous memory to device निजी memory and fault it back to प्रणाली
- * memory multiple बार.
+ * Migrate anonymous memory to device private memory and fault it back to system
+ * memory multiple times.
  */
 TEST_F(hmm, migrate_multiple)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	अचिन्हित दीर्घ c;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	unsigned long c;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	क्रम (c = 0; c < NTIMES; c++) अणु
-		buffer = दो_स्मृति(माप(*buffer));
-		ASSERT_NE(buffer, शून्य);
+	for (c = 0; c < NTIMES; c++) {
+		buffer = malloc(sizeof(*buffer));
+		ASSERT_NE(buffer, NULL);
 
 		buffer->fd = -1;
 		buffer->size = size;
-		buffer->mirror = दो_स्मृति(size);
-		ASSERT_NE(buffer->mirror, शून्य);
+		buffer->mirror = malloc(size);
+		ASSERT_NE(buffer->mirror, NULL);
 
-		buffer->ptr = mmap(शून्य, size,
+		buffer->ptr = mmap(NULL, size,
 				   PROT_READ | PROT_WRITE,
 				   MAP_PRIVATE | MAP_ANONYMOUS,
 				   buffer->fd, 0);
 		ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-		/* Initialize buffer in प्रणाली memory. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		/* Initialize buffer in system memory. */
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ptr[i] = i;
 
 		/* Migrate memory to device. */
@@ -1113,169 +1112,169 @@ TEST_F(hmm, migrate_multiple)
 		ASSERT_EQ(ret, 0);
 		ASSERT_EQ(buffer->cpages, npages);
 
-		/* Check what the device पढ़ो. */
-		क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+		/* Check what the device read. */
+		for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 			ASSERT_EQ(ptr[i], i);
 
-		/* Fault pages back to प्रणाली memory and check them. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		/* Fault pages back to system memory and check them. */
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ASSERT_EQ(ptr[i], i);
 
-		hmm_buffer_मुक्त(buffer);
-	पूर्ण
-पूर्ण
+		hmm_buffer_free(buffer);
+	}
+}
 
 /*
- * Read anonymous memory multiple बार.
+ * Read anonymous memory multiple times.
  */
-TEST_F(hmm, anon_पढ़ो_multiple)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	अचिन्हित दीर्घ c;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm, anon_read_multiple)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	unsigned long c;
+	int *ptr;
+	int ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	क्रम (c = 0; c < NTIMES; c++) अणु
-		buffer = दो_स्मृति(माप(*buffer));
-		ASSERT_NE(buffer, शून्य);
+	for (c = 0; c < NTIMES; c++) {
+		buffer = malloc(sizeof(*buffer));
+		ASSERT_NE(buffer, NULL);
 
 		buffer->fd = -1;
 		buffer->size = size;
-		buffer->mirror = दो_स्मृति(size);
-		ASSERT_NE(buffer->mirror, शून्य);
+		buffer->mirror = malloc(size);
+		ASSERT_NE(buffer->mirror, NULL);
 
-		buffer->ptr = mmap(शून्य, size,
+		buffer->ptr = mmap(NULL, size,
 				   PROT_READ | PROT_WRITE,
 				   MAP_PRIVATE | MAP_ANONYMOUS,
 				   buffer->fd, 0);
 		ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-		/* Initialize buffer in प्रणाली memory. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		/* Initialize buffer in system memory. */
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ptr[i] = i + c;
 
-		/* Simulate a device पढ़ोing प्रणाली memory. */
+		/* Simulate a device reading system memory. */
 		ret = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer,
 				      npages);
 		ASSERT_EQ(ret, 0);
 		ASSERT_EQ(buffer->cpages, npages);
 		ASSERT_EQ(buffer->faults, 1);
 
-		/* Check what the device पढ़ो. */
-		क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+		/* Check what the device read. */
+		for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 			ASSERT_EQ(ptr[i], i + c);
 
-		hmm_buffer_मुक्त(buffer);
-	पूर्ण
-पूर्ण
+		hmm_buffer_free(buffer);
+	}
+}
 
-व्योम *unmap_buffer(व्योम *p)
-अणु
-	काष्ठा hmm_buffer *buffer = p;
+void *unmap_buffer(void *p)
+{
+	struct hmm_buffer *buffer = p;
 
-	/* Delay क्रम a bit and then unmap buffer जबतक it is being पढ़ो. */
-	hmm_nanosleep(hmm_अक्रमom() % 32000);
+	/* Delay for a bit and then unmap buffer while it is being read. */
+	hmm_nanosleep(hmm_random() % 32000);
 	munmap(buffer->ptr + buffer->size / 2, buffer->size / 2);
-	buffer->ptr = शून्य;
+	buffer->ptr = NULL;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Try पढ़ोing anonymous memory जबतक it is being unmapped.
+ * Try reading anonymous memory while it is being unmapped.
  */
-TEST_F(hmm, anon_tearकरोwn)
-अणु
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ c;
-	व्योम *ret;
+TEST_F(hmm, anon_teardown)
+{
+	unsigned long npages;
+	unsigned long size;
+	unsigned long c;
+	void *ret;
 
-	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shअगरt;
+	npages = ALIGN(HMM_BUFFER_SIZE, self->page_size) >> self->page_shift;
 	ASSERT_NE(npages, 0);
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	क्रम (c = 0; c < NTIMES; ++c) अणु
-		pthपढ़ो_t thपढ़ो;
-		काष्ठा hmm_buffer *buffer;
-		अचिन्हित दीर्घ i;
-		पूर्णांक *ptr;
-		पूर्णांक rc;
+	for (c = 0; c < NTIMES; ++c) {
+		pthread_t thread;
+		struct hmm_buffer *buffer;
+		unsigned long i;
+		int *ptr;
+		int rc;
 
-		buffer = दो_स्मृति(माप(*buffer));
-		ASSERT_NE(buffer, शून्य);
+		buffer = malloc(sizeof(*buffer));
+		ASSERT_NE(buffer, NULL);
 
 		buffer->fd = -1;
 		buffer->size = size;
-		buffer->mirror = दो_स्मृति(size);
-		ASSERT_NE(buffer->mirror, शून्य);
+		buffer->mirror = malloc(size);
+		ASSERT_NE(buffer->mirror, NULL);
 
-		buffer->ptr = mmap(शून्य, size,
+		buffer->ptr = mmap(NULL, size,
 				   PROT_READ | PROT_WRITE,
 				   MAP_PRIVATE | MAP_ANONYMOUS,
 				   buffer->fd, 0);
 		ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-		/* Initialize buffer in प्रणाली memory. */
-		क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+		/* Initialize buffer in system memory. */
+		for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 			ptr[i] = i + c;
 
-		rc = pthपढ़ो_create(&thपढ़ो, शून्य, unmap_buffer, buffer);
+		rc = pthread_create(&thread, NULL, unmap_buffer, buffer);
 		ASSERT_EQ(rc, 0);
 
-		/* Simulate a device पढ़ोing प्रणाली memory. */
+		/* Simulate a device reading system memory. */
 		rc = hmm_dmirror_cmd(self->fd, HMM_DMIRROR_READ, buffer,
 				     npages);
-		अगर (rc == 0) अणु
+		if (rc == 0) {
 			ASSERT_EQ(buffer->cpages, npages);
 			ASSERT_EQ(buffer->faults, 1);
 
-			/* Check what the device पढ़ो. */
-			क्रम (i = 0, ptr = buffer->mirror;
-			     i < size / माप(*ptr);
+			/* Check what the device read. */
+			for (i = 0, ptr = buffer->mirror;
+			     i < size / sizeof(*ptr);
 			     ++i)
 				ASSERT_EQ(ptr[i], i + c);
-		पूर्ण
+		}
 
-		pthपढ़ो_join(thपढ़ो, &ret);
-		hmm_buffer_मुक्त(buffer);
-	पूर्ण
-पूर्ण
+		pthread_join(thread, &ret);
+		hmm_buffer_free(buffer);
+	}
+}
 
 /*
  * Test memory snapshot without faulting in pages accessed by the device.
  */
 TEST_F(hmm2, snapshot)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	पूर्णांक *ptr;
-	अचिन्हित अक्षर *p;
-	अचिन्हित अक्षर *m;
-	पूर्णांक ret;
-	पूर्णांक val;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	int *ptr;
+	unsigned char *p;
+	unsigned char *m;
+	int ret;
+	int val;
 
 	npages = 7;
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(npages);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(npages);
+	ASSERT_NE(buffer->mirror, NULL);
 
 	/* Reserve a range of addresses. */
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_NONE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
@@ -1286,29 +1285,29 @@ TEST_F(hmm2, snapshot)
 	ret = munmap(buffer->ptr + self->page_size, self->page_size);
 	ASSERT_EQ(ret, 0);
 
-	/* Page 2 will be पढ़ो-only zero page. */
+	/* Page 2 will be read-only zero page. */
 	ret = mprotect(buffer->ptr + 2 * self->page_size, self->page_size,
 				PROT_READ);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 2 * self->page_size);
+	ptr = (int *)(buffer->ptr + 2 * self->page_size);
 	val = *ptr + 3;
 	ASSERT_EQ(val, 3);
 
-	/* Page 3 will be पढ़ो-only. */
+	/* Page 3 will be read-only. */
 	ret = mprotect(buffer->ptr + 3 * self->page_size, self->page_size,
 				PROT_READ | PROT_WRITE);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 3 * self->page_size);
+	ptr = (int *)(buffer->ptr + 3 * self->page_size);
 	*ptr = val;
 	ret = mprotect(buffer->ptr + 3 * self->page_size, self->page_size,
 				PROT_READ);
 	ASSERT_EQ(ret, 0);
 
-	/* Page 4-6 will be पढ़ो-ग_लिखो. */
+	/* Page 4-6 will be read-write. */
 	ret = mprotect(buffer->ptr + 4 * self->page_size, 3 * self->page_size,
 				PROT_READ | PROT_WRITE);
 	ASSERT_EQ(ret, 0);
-	ptr = (पूर्णांक *)(buffer->ptr + 4 * self->page_size);
+	ptr = (int *)(buffer->ptr + 4 * self->page_size);
 	*ptr = val;
 
 	/* Page 5 will be migrated to device 0. */
@@ -1340,53 +1339,53 @@ TEST_F(hmm2, snapshot)
 			HMM_DMIRROR_PROT_WRITE);
 	ASSERT_EQ(m[6], HMM_DMIRROR_PROT_NONE);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
-#अगर_घोषित LOCAL_CONFIG_HAVE_LIBHUGETLBFS
+#ifdef LOCAL_CONFIG_HAVE_LIBHUGETLBFS
 /*
- * Test the hmm_range_fault() HMM_PFN_PMD flag क्रम large pages that
+ * Test the hmm_range_fault() HMM_PFN_PMD flag for large pages that
  * should be mapped by a large page table entry.
  */
 TEST_F(hmm, compound)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	पूर्णांक *ptr;
-	अचिन्हित अक्षर *m;
-	पूर्णांक ret;
-	दीर्घ pagesizes[4];
-	पूर्णांक n, idx;
-	अचिन्हित दीर्घ i;
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	int *ptr;
+	unsigned char *m;
+	int ret;
+	long pagesizes[4];
+	int n, idx;
+	unsigned long i;
 
-	/* Skip test अगर we can't allocate a hugetlbfs page. */
+	/* Skip test if we can't allocate a hugetlbfs page. */
 
 	n = gethugepagesizes(pagesizes, 4);
-	अगर (n <= 0)
-		वापस;
-	क्रम (idx = 0; --n > 0; ) अणु
-		अगर (pagesizes[n] < pagesizes[idx])
+	if (n <= 0)
+		return;
+	for (idx = 0; --n > 0; ) {
+		if (pagesizes[n] < pagesizes[idx])
 			idx = n;
-	पूर्ण
+	}
 	size = ALIGN(TWOMEG, pagesizes[idx]);
-	npages = size >> self->page_shअगरt;
+	npages = size >> self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->ptr = get_hugepage_region(size, GHR_STRICT);
-	अगर (buffer->ptr == शून्य) अणु
-		मुक्त(buffer);
-		वापस;
-	पूर्ण
+	if (buffer->ptr == NULL) {
+		free(buffer);
+		return;
+	}
 
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(npages);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(npages);
+	ASSERT_NE(buffer->mirror, NULL);
 
 	/* Initialize the pages the device will snapshot in buffer->ptr. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
 	/* Simulate a device snapshotting CPU pagetables. */
@@ -1396,11 +1395,11 @@ TEST_F(hmm, compound)
 
 	/* Check what the device saw. */
 	m = buffer->mirror;
-	क्रम (i = 0; i < npages; ++i)
+	for (i = 0; i < npages; ++i)
 		ASSERT_EQ(m[i], HMM_DMIRROR_PROT_WRITE |
 				HMM_DMIRROR_PROT_PMD);
 
-	/* Make the region पढ़ो-only. */
+	/* Make the region read-only. */
 	ret = mprotect(buffer->ptr, size, PROT_READ);
 	ASSERT_EQ(ret, 0);
 
@@ -1411,79 +1410,79 @@ TEST_F(hmm, compound)
 
 	/* Check what the device saw. */
 	m = buffer->mirror;
-	क्रम (i = 0; i < npages; ++i)
+	for (i = 0; i < npages; ++i)
 		ASSERT_EQ(m[i], HMM_DMIRROR_PROT_READ |
 				HMM_DMIRROR_PROT_PMD);
 
-	मुक्त_hugepage_region(buffer->ptr);
-	buffer->ptr = शून्य;
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
-#पूर्ण_अगर /* LOCAL_CONFIG_HAVE_LIBHUGETLBFS */
+	free_hugepage_region(buffer->ptr);
+	buffer->ptr = NULL;
+	hmm_buffer_free(buffer);
+}
+#endif /* LOCAL_CONFIG_HAVE_LIBHUGETLBFS */
 
 /*
- * Test two devices पढ़ोing the same memory (द्विगुन mapped).
+ * Test two devices reading the same memory (double mapped).
  */
-TEST_F(hmm2, द्विगुन_map)
-अणु
-	काष्ठा hmm_buffer *buffer;
-	अचिन्हित दीर्घ npages;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ i;
-	पूर्णांक *ptr;
-	पूर्णांक ret;
+TEST_F(hmm2, double_map)
+{
+	struct hmm_buffer *buffer;
+	unsigned long npages;
+	unsigned long size;
+	unsigned long i;
+	int *ptr;
+	int ret;
 
 	npages = 6;
-	size = npages << self->page_shअगरt;
+	size = npages << self->page_shift;
 
-	buffer = दो_स्मृति(माप(*buffer));
-	ASSERT_NE(buffer, शून्य);
+	buffer = malloc(sizeof(*buffer));
+	ASSERT_NE(buffer, NULL);
 
 	buffer->fd = -1;
 	buffer->size = size;
-	buffer->mirror = दो_स्मृति(npages);
-	ASSERT_NE(buffer->mirror, शून्य);
+	buffer->mirror = malloc(npages);
+	ASSERT_NE(buffer->mirror, NULL);
 
 	/* Reserve a range of addresses. */
-	buffer->ptr = mmap(शून्य, size,
+	buffer->ptr = mmap(NULL, size,
 			   PROT_READ | PROT_WRITE,
 			   MAP_PRIVATE | MAP_ANONYMOUS,
 			   buffer->fd, 0);
 	ASSERT_NE(buffer->ptr, MAP_FAILED);
 
-	/* Initialize buffer in प्रणाली memory. */
-	क्रम (i = 0, ptr = buffer->ptr; i < size / माप(*ptr); ++i)
+	/* Initialize buffer in system memory. */
+	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		ptr[i] = i;
 
-	/* Make region पढ़ो-only. */
+	/* Make region read-only. */
 	ret = mprotect(buffer->ptr, size, PROT_READ);
 	ASSERT_EQ(ret, 0);
 
-	/* Simulate device 0 पढ़ोing प्रणाली memory. */
+	/* Simulate device 0 reading system memory. */
 	ret = hmm_dmirror_cmd(self->fd0, HMM_DMIRROR_READ, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
-	/* Simulate device 1 पढ़ोing प्रणाली memory. */
+	/* Simulate device 1 reading system memory. */
 	ret = hmm_dmirror_cmd(self->fd1, HMM_DMIRROR_READ, buffer, npages);
 	ASSERT_EQ(ret, 0);
 	ASSERT_EQ(buffer->cpages, npages);
 	ASSERT_EQ(buffer->faults, 1);
 
-	/* Check what the device पढ़ो. */
-	क्रम (i = 0, ptr = buffer->mirror; i < size / माप(*ptr); ++i)
+	/* Check what the device read. */
+	for (i = 0, ptr = buffer->mirror; i < size / sizeof(*ptr); ++i)
 		ASSERT_EQ(ptr[i], i);
 
 	/* Punch a hole after the first page address. */
 	ret = munmap(buffer->ptr + self->page_size, self->page_size);
 	ASSERT_EQ(ret, 0);
 
-	hmm_buffer_मुक्त(buffer);
-पूर्ण
+	hmm_buffer_free(buffer);
+}
 
 TEST_HARNESS_MAIN

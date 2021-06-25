@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
+ * Support for Medifield PNW Camera Imaging ISP subsystem.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
 
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-mediabus.h>
-#समावेश "atomisp_internal.h"
-#समावेश "atomisp_tpg.h"
+#include <media/v4l2-event.h>
+#include <media/v4l2-mediabus.h>
+#include "atomisp_internal.h"
+#include "atomisp_tpg.h"
 
-अटल पूर्णांक tpg_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	वापस 0;
-पूर्ण
+static int tpg_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	return 0;
+}
 
-अटल पूर्णांक tpg_get_fmt(काष्ठा v4l2_subdev *sd,
-		       काष्ठा v4l2_subdev_pad_config *cfg,
-		       काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
+static int tpg_get_fmt(struct v4l2_subdev *sd,
+		       struct v4l2_subdev_pad_config *cfg,
+		       struct v4l2_subdev_format *format)
+{
 	/*to fake*/
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg_set_fmt(काष्ठा v4l2_subdev *sd,
-		       काष्ठा v4l2_subdev_pad_config *cfg,
-		       काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+static int tpg_set_fmt(struct v4l2_subdev *sd,
+		       struct v4l2_subdev_pad_config *cfg,
+		       struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *fmt = &format->format;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 	/* only raw8 grbg is supported by TPG */
 	fmt->code = MEDIA_BUS_FMT_SGRBG8_1X8;
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
 		cfg->try_fmt = *fmt;
-		वापस 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 0;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tpg_log_status(काष्ठा v4l2_subdev *sd)
-अणु
+static int tpg_log_status(struct v4l2_subdev *sd)
+{
 	/*to fake*/
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	वापस 0;
-पूर्ण
+static int tpg_s_power(struct v4l2_subdev *sd, int on)
+{
+	return 0;
+}
 
-अटल पूर्णांक tpg_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
+static int tpg_enum_mbus_code(struct v4l2_subdev *sd,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_mbus_code_enum *code)
+{
 	/*to fake*/
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
+static int tpg_enum_frame_size(struct v4l2_subdev *sd,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_frame_size_enum *fse)
+{
 	/*to fake*/
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpg_क्रमागत_frame_ival(काष्ठा v4l2_subdev *sd,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत *fie)
-अणु
+static int tpg_enum_frame_ival(struct v4l2_subdev *sd,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_frame_interval_enum *fie)
+{
 	/*to fake*/
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops tpg_video_ops = अणु
+static const struct v4l2_subdev_video_ops tpg_video_ops = {
 	.s_stream = tpg_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops tpg_core_ops = अणु
+static const struct v4l2_subdev_core_ops tpg_core_ops = {
 	.log_status = tpg_log_status,
-	.s_घातer = tpg_s_घातer,
-पूर्ण;
+	.s_power = tpg_s_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops tpg_pad_ops = अणु
-	.क्रमागत_mbus_code = tpg_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = tpg_क्रमागत_frame_size,
-	.क्रमागत_frame_पूर्णांकerval = tpg_क्रमागत_frame_ival,
+static const struct v4l2_subdev_pad_ops tpg_pad_ops = {
+	.enum_mbus_code = tpg_enum_mbus_code,
+	.enum_frame_size = tpg_enum_frame_size,
+	.enum_frame_interval = tpg_enum_frame_ival,
 	.get_fmt = tpg_get_fmt,
 	.set_fmt = tpg_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops tpg_ops = अणु
+static const struct v4l2_subdev_ops tpg_ops = {
 	.core = &tpg_core_ops,
 	.video = &tpg_video_ops,
 	.pad = &tpg_pad_ops,
-पूर्ण;
+};
 
-व्योम atomisp_tpg_unरेजिस्टर_entities(काष्ठा atomisp_tpg_device *tpg)
-अणु
+void atomisp_tpg_unregister_entities(struct atomisp_tpg_device *tpg)
+{
 	media_entity_cleanup(&tpg->sd.entity);
-	v4l2_device_unरेजिस्टर_subdev(&tpg->sd);
-पूर्ण
+	v4l2_device_unregister_subdev(&tpg->sd);
+}
 
-पूर्णांक atomisp_tpg_रेजिस्टर_entities(काष्ठा atomisp_tpg_device *tpg,
-				  काष्ठा v4l2_device *vdev)
-अणु
-	पूर्णांक ret;
+int atomisp_tpg_register_entities(struct atomisp_tpg_device *tpg,
+				  struct v4l2_device *vdev)
+{
+	int ret;
 	/* Register the subdev and video nodes. */
-	ret = v4l2_device_रेजिस्टर_subdev(vdev, &tpg->sd);
-	अगर (ret < 0)
-		जाओ error;
+	ret = v4l2_device_register_subdev(vdev, &tpg->sd);
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	atomisp_tpg_unरेजिस्टर_entities(tpg);
-	वापस ret;
-पूर्ण
+	atomisp_tpg_unregister_entities(tpg);
+	return ret;
+}
 
-व्योम atomisp_tpg_cleanup(काष्ठा atomisp_device *isp)
-अणु
-पूर्ण
+void atomisp_tpg_cleanup(struct atomisp_device *isp)
+{
+}
 
-पूर्णांक atomisp_tpg_init(काष्ठा atomisp_device *isp)
-अणु
-	काष्ठा atomisp_tpg_device *tpg = &isp->tpg;
-	काष्ठा v4l2_subdev *sd = &tpg->sd;
-	काष्ठा media_pad *pads = tpg->pads;
-	काष्ठा media_entity *me = &sd->entity;
-	पूर्णांक ret;
+int atomisp_tpg_init(struct atomisp_device *isp)
+{
+	struct atomisp_tpg_device *tpg = &isp->tpg;
+	struct v4l2_subdev *sd = &tpg->sd;
+	struct media_pad *pads = tpg->pads;
+	struct media_entity *me = &sd->entity;
+	int ret;
 
 	tpg->isp = isp;
 	v4l2_subdev_init(sd, &tpg_ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	strscpy(sd->name, "tpg_subdev", माप(sd->name));
+	strscpy(sd->name, "tpg_subdev", sizeof(sd->name));
 	v4l2_set_subdevdata(sd, tpg);
 
 	pads[0].flags = MEDIA_PAD_FL_SINK;
 	me->function = MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN;
 
 	ret = media_entity_pads_init(me, 1, pads);
-	अगर (ret < 0)
-		जाओ fail;
-	वापस 0;
+	if (ret < 0)
+		goto fail;
+	return 0;
 fail:
 	atomisp_tpg_cleanup(isp);
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * sysctl.h: General linux प्रणाली control पूर्णांकerface
+ * sysctl.h: General linux system control interface
  *
  * Begun 24 March 1995, Stephen Tweedie
  *
@@ -10,50 +9,50 @@
  **
  **  WARNING:
  **  The values in this file are exported to user space via 
- **  the sysctl() binary पूर्णांकerface.  Do *NOT* change the
- **  numbering of any existing values here, and करो not change
+ **  the sysctl() binary interface.  Do *NOT* change the
+ **  numbering of any existing values here, and do not change
  **  any numbers within any one set of values.  If you have to
- **  redefine an existing पूर्णांकerface, use a new number क्रम it.
- **  The kernel will then वापस -ENOTसूची to any application using
- **  the old binary पूर्णांकerface.
+ **  redefine an existing interface, use a new number for it.
+ **  The kernel will then return -ENOTDIR to any application using
+ **  the old binary interface.
  **
  ****************************************************************
  ****************************************************************
  */
 
-#अगर_अघोषित _UAPI_LINUX_SYSCTL_H
-#घोषणा _UAPI_LINUX_SYSCTL_H
+#ifndef _UAPI_LINUX_SYSCTL_H
+#define _UAPI_LINUX_SYSCTL_H
 
-#समावेश <linux/स्थिर.h>
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
+#include <linux/const.h>
+#include <linux/types.h>
+#include <linux/compiler.h>
 
-#घोषणा CTL_MAXNAME 10		/* how many path components करो we allow in a
+#define CTL_MAXNAME 10		/* how many path components do we allow in a
 				   call to sysctl?   In other words, what is
-				   the largest acceptable value क्रम the nlen
-				   member of a काष्ठा __sysctl_args to have? */
+				   the largest acceptable value for the nlen
+				   member of a struct __sysctl_args to have? */
 
-काष्ठा __sysctl_args अणु
-	पूर्णांक __user *name;
-	पूर्णांक nlen;
-	व्योम __user *oldval;
-	माप_प्रकार __user *oldlenp;
-	व्योम __user *newval;
-	माप_प्रकार newlen;
-	अचिन्हित दीर्घ __unused[4];
-पूर्ण;
+struct __sysctl_args {
+	int __user *name;
+	int nlen;
+	void __user *oldval;
+	size_t __user *oldlenp;
+	void __user *newval;
+	size_t newlen;
+	unsigned long __unused[4];
+};
 
 /* Define sysctl names first */
 
 /* Top-level names: */
 
-क्रमागत
-अणु
+enum
+{
 	CTL_KERN=1,		/* General kernel info and control */
 	CTL_VM=2,		/* VM management */
 	CTL_NET=3,		/* Networking */
-	CTL_PROC=4,		/* removal अवरोधs strace(1) compilation */
-	CTL_FS=5,		/* Fileप्रणालीs */
+	CTL_PROC=4,		/* removal breaks strace(1) compilation */
+	CTL_FS=5,		/* Filesystems */
 	CTL_DEBUG=6,		/* Debugging */
 	CTL_DEV=7,		/* Devices */
 	CTL_BUS=8,		/* Busses */
@@ -62,147 +61,147 @@
 	CTL_ARLAN=254,		/* arlan wireless driver */
 	CTL_S390DBF=5677,	/* s390 debug */
 	CTL_SUNRPC=7249,	/* sunrpc debug */
-	CTL_PM=9899,		/* frv घातer management */
-	CTL_FRV=9898,		/* frv specअगरic sysctls */
-पूर्ण;
+	CTL_PM=9899,		/* frv power management */
+	CTL_FRV=9898,		/* frv specific sysctls */
+};
 
 /* CTL_BUS names: */
-क्रमागत
-अणु
+enum
+{
 	CTL_BUS_ISA=1		/* ISA */
-पूर्ण;
+};
 
-/* /proc/sys/fs/inotअगरy/ */
-क्रमागत
-अणु
+/* /proc/sys/fs/inotify/ */
+enum
+{
 	INOTIFY_MAX_USER_INSTANCES=1,	/* max instances per user */
 	INOTIFY_MAX_USER_WATCHES=2,	/* max watches per user */
 	INOTIFY_MAX_QUEUED_EVENTS=3	/* max queued events per instance */
-पूर्ण;
+};
 
 /* CTL_KERN names: */
-क्रमागत
-अणु
-	KERN_OSTYPE=1,		/* string: प्रणाली version */
-	KERN_OSRELEASE=2,	/* string: प्रणाली release */
-	KERN_OSREV=3,		/* पूर्णांक: प्रणाली revision */
-	KERN_VERSION=4,		/* string: compile समय info */
-	KERN_SECUREMASK=5,	/* काष्ठा: maximum rights mask */
-	KERN_PROF=6,		/* table: profiling inक्रमmation */
+enum
+{
+	KERN_OSTYPE=1,		/* string: system version */
+	KERN_OSRELEASE=2,	/* string: system release */
+	KERN_OSREV=3,		/* int: system revision */
+	KERN_VERSION=4,		/* string: compile time info */
+	KERN_SECUREMASK=5,	/* struct: maximum rights mask */
+	KERN_PROF=6,		/* table: profiling information */
 	KERN_NODENAME=7,	/* string: hostname */
-	KERN_DOMAINNAME=8,	/* string: करोमुख्यname */
+	KERN_DOMAINNAME=8,	/* string: domainname */
 
-	KERN_PANIC=15,		/* पूर्णांक: panic समयout */
+	KERN_PANIC=15,		/* int: panic timeout */
 	KERN_REALROOTDEV=16,	/* real root device to mount after initrd */
 
 	KERN_SPARC_REBOOT=21,	/* reboot command on Sparc */
-	KERN_CTLALTDEL=22,	/* पूर्णांक: allow ctl-alt-del to reboot */
-	KERN_PRINTK=23,		/* काष्ठा: control prपूर्णांकk logging parameters */
+	KERN_CTLALTDEL=22,	/* int: allow ctl-alt-del to reboot */
+	KERN_PRINTK=23,		/* struct: control printk logging parameters */
 	KERN_NAMETRANS=24,	/* Name translation */
 	KERN_PPC_HTABRECLAIM=25, /* turn htab reclaimation on/off on PPC */
 	KERN_PPC_ZEROPAGED=26,	/* turn idle page zeroing on/off on PPC */
-	KERN_PPC_POWERSAVE_NAP=27, /* use nap mode क्रम घातer saving */
+	KERN_PPC_POWERSAVE_NAP=27, /* use nap mode for power saving */
 	KERN_MODPROBE=28,	/* string: modprobe path */
-	KERN_SG_BIG_BUFF=29,	/* पूर्णांक: sg driver reserved buffer size */
+	KERN_SG_BIG_BUFF=29,	/* int: sg driver reserved buffer size */
 	KERN_ACCT=30,		/* BSD process accounting parameters */
-	KERN_PPC_L2CR=31,	/* l2cr रेजिस्टर on PPC */
+	KERN_PPC_L2CR=31,	/* l2cr register on PPC */
 
 	KERN_RTSIGNR=32,	/* Number of rt sigs queued */
 	KERN_RTSIGMAX=33,	/* Max queuable */
 	
-	KERN_SHMMAX=34,         /* दीर्घ: Maximum shared memory segment */
-	KERN_MSGMAX=35,         /* पूर्णांक: Maximum size of a messege */
-	KERN_MSGMNB=36,         /* पूर्णांक: Maximum message queue size */
-	KERN_MSGPOOL=37,        /* पूर्णांक: Maximum प्रणाली message pool size */
-	KERN_SYSRQ=38,		/* पूर्णांक: Sysreq enable */
-	KERN_MAX_THREADS=39,	/* पूर्णांक: Maximum nr of thपढ़ोs in the प्रणाली */
- 	KERN_RANDOM=40,		/* Ranकरोm driver */
- 	KERN_SHMALL=41,		/* पूर्णांक: Maximum size of shared memory */
- 	KERN_MSGMNI=42,		/* पूर्णांक: msg queue identअगरiers */
- 	KERN_SEM=43,		/* काष्ठा: sysv semaphore limits */
- 	KERN_SPARC_STOP_A=44,	/* पूर्णांक: Sparc Stop-A enable */
- 	KERN_SHMMNI=45,		/* पूर्णांक: shm array identअगरiers */
-	KERN_OVERFLOWUID=46,	/* पूर्णांक: overflow UID */
-	KERN_OVERFLOWGID=47,	/* पूर्णांक: overflow GID */
+	KERN_SHMMAX=34,         /* long: Maximum shared memory segment */
+	KERN_MSGMAX=35,         /* int: Maximum size of a messege */
+	KERN_MSGMNB=36,         /* int: Maximum message queue size */
+	KERN_MSGPOOL=37,        /* int: Maximum system message pool size */
+	KERN_SYSRQ=38,		/* int: Sysreq enable */
+	KERN_MAX_THREADS=39,	/* int: Maximum nr of threads in the system */
+ 	KERN_RANDOM=40,		/* Random driver */
+ 	KERN_SHMALL=41,		/* int: Maximum size of shared memory */
+ 	KERN_MSGMNI=42,		/* int: msg queue identifiers */
+ 	KERN_SEM=43,		/* struct: sysv semaphore limits */
+ 	KERN_SPARC_STOP_A=44,	/* int: Sparc Stop-A enable */
+ 	KERN_SHMMNI=45,		/* int: shm array identifiers */
+	KERN_OVERFLOWUID=46,	/* int: overflow UID */
+	KERN_OVERFLOWGID=47,	/* int: overflow GID */
 	KERN_SHMPATH=48,	/* string: path to shm fs */
 	KERN_HOTPLUG=49,	/* string: path to uevent helper (deprecated) */
-	KERN_IEEE_EMULATION_WARNINGS=50, /* पूर्णांक: unimplemented ieee inकाष्ठाions */
-	KERN_S390_USER_DEBUG_LOGGING=51,  /* पूर्णांक: dumps of user faults */
-	KERN_CORE_USES_PID=52,		/* पूर्णांक: use core or core.%pid */
-	KERN_TAINTED=53,	/* पूर्णांक: various kernel taपूर्णांकed flags */
-	KERN_CADPID=54,		/* पूर्णांक: PID of the process to notअगरy on CAD */
-	KERN_PIDMAX=55,		/* पूर्णांक: PID # limit */
-  	KERN_CORE_PATTERN=56,	/* string: pattern क्रम core-file names */
-	KERN_PANIC_ON_OOPS=57,  /* पूर्णांक: whether we will panic on an oops */
-	KERN_HPPA_PWRSW=58,	/* पूर्णांक: hppa soft-घातer enable */
-	KERN_HPPA_UNALIGNED=59,	/* पूर्णांक: hppa unaligned-trap enable */
-	KERN_PRINTK_RATELIMIT=60, /* पूर्णांक: tune prपूर्णांकk ratelimiting */
-	KERN_PRINTK_RATELIMIT_BURST=61,	/* पूर्णांक: tune prपूर्णांकk ratelimiting */
+	KERN_IEEE_EMULATION_WARNINGS=50, /* int: unimplemented ieee instructions */
+	KERN_S390_USER_DEBUG_LOGGING=51,  /* int: dumps of user faults */
+	KERN_CORE_USES_PID=52,		/* int: use core or core.%pid */
+	KERN_TAINTED=53,	/* int: various kernel tainted flags */
+	KERN_CADPID=54,		/* int: PID of the process to notify on CAD */
+	KERN_PIDMAX=55,		/* int: PID # limit */
+  	KERN_CORE_PATTERN=56,	/* string: pattern for core-file names */
+	KERN_PANIC_ON_OOPS=57,  /* int: whether we will panic on an oops */
+	KERN_HPPA_PWRSW=58,	/* int: hppa soft-power enable */
+	KERN_HPPA_UNALIGNED=59,	/* int: hppa unaligned-trap enable */
+	KERN_PRINTK_RATELIMIT=60, /* int: tune printk ratelimiting */
+	KERN_PRINTK_RATELIMIT_BURST=61,	/* int: tune printk ratelimiting */
 	KERN_PTY=62,		/* dir: pty driver */
-	KERN_NGROUPS_MAX=63,	/* पूर्णांक: NGROUPS_MAX */
-	KERN_SPARC_SCONS_PWROFF=64, /* पूर्णांक: serial console घातer-off halt */
-	KERN_HZ_TIMER=65,	/* पूर्णांक: hz समयr on or off */
-	KERN_UNKNOWN_NMI_PANIC=66, /* पूर्णांक: unknown nmi panic flag */
-	KERN_BOOTLOADER_TYPE=67, /* पूर्णांक: boot loader type */
-	KERN_RANDOMIZE=68, /* पूर्णांक: अक्रमomize भव address space */
-	KERN_SETUID_DUMPABLE=69, /* पूर्णांक: behaviour of dumps क्रम setuid core */
-	KERN_SPIN_RETRY=70,	/* पूर्णांक: number of spinlock retries */
-	KERN_ACPI_VIDEO_FLAGS=71, /* पूर्णांक: flags क्रम setting up video after ACPI sleep */
-	KERN_IA64_UNALIGNED=72, /* पूर्णांक: ia64 unaligned userland trap enable */
-	KERN_COMPAT_LOG=73,	/* पूर्णांक: prपूर्णांक compat layer  messages */
-	KERN_MAX_LOCK_DEPTH=74, /* पूर्णांक: rपंचांगutex's maximum lock depth */
-	KERN_NMI_WATCHDOG=75, /* पूर्णांक: enable/disable nmi watchकरोg */
-	KERN_PANIC_ON_NMI=76, /* पूर्णांक: whether we will panic on an unrecovered */
-	KERN_PANIC_ON_WARN=77, /* पूर्णांक: call panic() in WARN() functions */
-	KERN_PANIC_PRINT=78, /* uदीर्घ: biपंचांगask to prपूर्णांक प्रणाली info on panic */
-पूर्ण;
+	KERN_NGROUPS_MAX=63,	/* int: NGROUPS_MAX */
+	KERN_SPARC_SCONS_PWROFF=64, /* int: serial console power-off halt */
+	KERN_HZ_TIMER=65,	/* int: hz timer on or off */
+	KERN_UNKNOWN_NMI_PANIC=66, /* int: unknown nmi panic flag */
+	KERN_BOOTLOADER_TYPE=67, /* int: boot loader type */
+	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
+	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
+	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
+	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
+	KERN_MAX_LOCK_DEPTH=74, /* int: rtmutex's maximum lock depth */
+	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
+	KERN_PANIC_ON_WARN=77, /* int: call panic() in WARN() functions */
+	KERN_PANIC_PRINT=78, /* ulong: bitmask to print system info on panic */
+};
 
 
 
 /* CTL_VM names: */
-क्रमागत
-अणु
-	VM_UNUSED1=1,		/* was: काष्ठा: Set vm swapping control */
-	VM_UNUSED2=2,		/* was; पूर्णांक: Linear or वर्ग_मूल() swapout क्रम hogs */
-	VM_UNUSED3=3,		/* was: काष्ठा: Set मुक्त page thresholds */
+enum
+{
+	VM_UNUSED1=1,		/* was: struct: Set vm swapping control */
+	VM_UNUSED2=2,		/* was; int: Linear or sqrt() swapout for hogs */
+	VM_UNUSED3=3,		/* was: struct: Set free page thresholds */
 	VM_UNUSED4=4,		/* Spare */
-	VM_OVERCOMMIT_MEMORY=5,	/* Turn off the भव memory safety limit */
-	VM_UNUSED5=6,		/* was: काष्ठा: Set buffer memory thresholds */
-	VM_UNUSED7=7,		/* was: काष्ठा: Set cache memory thresholds */
-	VM_UNUSED8=8,		/* was: काष्ठा: Control kswapd behaviour */
-	VM_UNUSED9=9,		/* was: काष्ठा: Set page table cache parameters */
-	VM_PAGE_CLUSTER=10,	/* पूर्णांक: set number of pages to swap together */
-	VM_सूचीTY_BACKGROUND=11,	/* dirty_background_ratio */
-	VM_सूचीTY_RATIO=12,	/* dirty_ratio */
-	VM_सूचीTY_WB_CS=13,	/* dirty_ग_लिखोback_centisecs */
-	VM_सूचीTY_EXPIRE_CS=14,	/* dirty_expire_centisecs */
-	VM_NR_PDFLUSH_THREADS=15, /* nr_pdflush_thपढ़ोs */
+	VM_OVERCOMMIT_MEMORY=5,	/* Turn off the virtual memory safety limit */
+	VM_UNUSED5=6,		/* was: struct: Set buffer memory thresholds */
+	VM_UNUSED7=7,		/* was: struct: Set cache memory thresholds */
+	VM_UNUSED8=8,		/* was: struct: Control kswapd behaviour */
+	VM_UNUSED9=9,		/* was: struct: Set page table cache parameters */
+	VM_PAGE_CLUSTER=10,	/* int: set number of pages to swap together */
+	VM_DIRTY_BACKGROUND=11,	/* dirty_background_ratio */
+	VM_DIRTY_RATIO=12,	/* dirty_ratio */
+	VM_DIRTY_WB_CS=13,	/* dirty_writeback_centisecs */
+	VM_DIRTY_EXPIRE_CS=14,	/* dirty_expire_centisecs */
+	VM_NR_PDFLUSH_THREADS=15, /* nr_pdflush_threads */
 	VM_OVERCOMMIT_RATIO=16, /* percent of RAM to allow overcommit in */
-	VM_PAGEBUF=17,		/* काष्ठा: Control pagebuf parameters */
-	VM_HUGETLB_PAGES=18,	/* पूर्णांक: Number of available Huge Pages */
+	VM_PAGEBUF=17,		/* struct: Control pagebuf parameters */
+	VM_HUGETLB_PAGES=18,	/* int: Number of available Huge Pages */
 	VM_SWAPPINESS=19,	/* Tendency to steal mapped memory */
-	VM_LOWMEM_RESERVE_RATIO=20,/* reservation ratio क्रम lower memory zones */
-	VM_MIN_FREE_KBYTES=21,	/* Minimum मुक्त kilobytes to मुख्यtain */
-	VM_MAX_MAP_COUNT=22,	/* पूर्णांक: Maximum number of mmaps/address-space */
+	VM_LOWMEM_RESERVE_RATIO=20,/* reservation ratio for lower memory zones */
+	VM_MIN_FREE_KBYTES=21,	/* Minimum free kilobytes to maintain */
+	VM_MAX_MAP_COUNT=22,	/* int: Maximum number of mmaps/address-space */
 	VM_LAPTOP_MODE=23,	/* vm laptop mode */
 	VM_BLOCK_DUMP=24,	/* block dump mode */
 	VM_HUGETLB_GROUP=25,	/* permitted hugetlb group */
 	VM_VFS_CACHE_PRESSURE=26, /* dcache/icache reclaim pressure */
-	VM_LEGACY_VA_LAYOUT=27, /* legacy/compatibility भव address space layout */
-	VM_SWAP_TOKEN_TIMEOUT=28, /* शेष समय क्रम token समय out */
-	VM_DROP_PAGECACHE=29,	/* पूर्णांक: nuke lots of pagecache */
-	VM_PERCPU_PAGELIST_FRACTION=30,/* पूर्णांक: fraction of pages in each percpu_pagelist */
-	VM_ZONE_RECLAIM_MODE=31, /* reclaim local zone memory beक्रमe going off node */
+	VM_LEGACY_VA_LAYOUT=27, /* legacy/compatibility virtual address space layout */
+	VM_SWAP_TOKEN_TIMEOUT=28, /* default time for token time out */
+	VM_DROP_PAGECACHE=29,	/* int: nuke lots of pagecache */
+	VM_PERCPU_PAGELIST_FRACTION=30,/* int: fraction of pages in each percpu_pagelist */
+	VM_ZONE_RECLAIM_MODE=31, /* reclaim local zone memory before going off node */
 	VM_MIN_UNMAPPED=32,	/* Set min percent of unmapped pages */
 	VM_PANIC_ON_OOM=33,	/* panic at out-of-memory */
-	VM_VDSO_ENABLED=34,	/* map VDSO पूर्णांकo new processes? */
+	VM_VDSO_ENABLED=34,	/* map VDSO into new processes? */
 	VM_MIN_SLAB=35,		 /* Percent pages ignored by node reclaim */
-पूर्ण;
+};
 
 
 /* CTL_NET names: */
-क्रमागत
-अणु
+enum
+{
 	NET_CORE=1,
 	NET_ETHER=2,
 	NET_802=3,
@@ -224,37 +223,37 @@
 	NET_NETFILTER=19,
 	NET_DCCP=20,
 	NET_IRDA=412,
-पूर्ण;
+};
 
-/* /proc/sys/kernel/अक्रमom */
-क्रमागत
-अणु
+/* /proc/sys/kernel/random */
+enum
+{
 	RANDOM_POOLSIZE=1,
 	RANDOM_ENTROPY_COUNT=2,
 	RANDOM_READ_THRESH=3,
 	RANDOM_WRITE_THRESH=4,
 	RANDOM_BOOT_ID=5,
 	RANDOM_UUID=6
-पूर्ण;
+};
 
 /* /proc/sys/kernel/pty */
-क्रमागत
-अणु
+enum
+{
 	PTY_MAX=1,
 	PTY_NR=2
-पूर्ण;
+};
 
 /* /proc/sys/bus/isa */
-क्रमागत
-अणु
+enum
+{
 	BUS_ISA_MEM_BASE=1,
 	BUS_ISA_PORT_BASE=2,
 	BUS_ISA_PORT_SHIFT=3
-पूर्ण;
+};
 
 /* /proc/sys/net/core */
-क्रमागत
-अणु
+enum
+{
 	NET_CORE_WMEM_MAX=1,
 	NET_CORE_RMEM_MAX=2,
 	NET_CORE_WMEM_DEFAULT=3,
@@ -277,7 +276,7 @@
 	NET_CORE_AEVENT_ETIME=20,
 	NET_CORE_AEVENT_RSEQTH=21,
 	NET_CORE_WARNINGS=22,
-पूर्ण;
+};
 
 /* /proc/sys/net/ethernet */
 
@@ -285,16 +284,16 @@
 
 /* /proc/sys/net/unix */
 
-क्रमागत
-अणु
+enum
+{
 	NET_UNIX_DESTROY_DELAY=1,
 	NET_UNIX_DELETE_DELAY=2,
 	NET_UNIX_MAX_DGRAM_QLEN=3,
-पूर्ण;
+};
 
 /* /proc/sys/net/netfilter */
-क्रमागत
-अणु
+enum
+{
 	NET_NF_CONNTRACK_MAX=1,
 	NET_NF_CONNTRACK_TCP_TIMEOUT_SYN_SENT=2,
 	NET_NF_CONNTRACK_TCP_TIMEOUT_SYN_RECV=3,
@@ -327,11 +326,11 @@
 	NET_NF_CONNTRACK_FRAG6_LOW_THRESH=30,
 	NET_NF_CONNTRACK_FRAG6_HIGH_THRESH=31,
 	NET_NF_CONNTRACK_CHECKSUM=32,
-पूर्ण;
+};
 
 /* /proc/sys/net/ipv4 */
-क्रमागत
-अणु
+enum
+{
 	/* v2.0 compatibile variables */
 	NET_IPV4_FORWARD=8,
 	NET_IPV4_DYNADDR=9,
@@ -427,9 +426,9 @@
 	NET_TCP_ALLOWED_CONG_CONTROL=123,
 	NET_TCP_MAX_SSTHRESH=124,
 	NET_TCP_FRTO_RESPONSE=125,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	NET_IPV4_ROUTE_FLUSH=1,
 	NET_IPV4_ROUTE_MIN_DELAY=2, /* obsolete since 2.6.25 */
 	NET_IPV4_ROUTE_MAX_DELAY=3, /* obsolete since 2.6.25 */
@@ -438,9 +437,9 @@
 	NET_IPV4_ROUTE_GC_MIN_INTERVAL=6,
 	NET_IPV4_ROUTE_GC_TIMEOUT=7,
 	NET_IPV4_ROUTE_GC_INTERVAL=8, /* obsolete since 2.6.38 */
-	NET_IPV4_ROUTE_REसूचीECT_LOAD=9,
-	NET_IPV4_ROUTE_REसूचीECT_NUMBER=10,
-	NET_IPV4_ROUTE_REसूचीECT_SILENCE=11,
+	NET_IPV4_ROUTE_REDIRECT_LOAD=9,
+	NET_IPV4_ROUTE_REDIRECT_NUMBER=10,
+	NET_IPV4_ROUTE_REDIRECT_SILENCE=11,
 	NET_IPV4_ROUTE_ERROR_COST=12,
 	NET_IPV4_ROUTE_ERROR_BURST=13,
 	NET_IPV4_ROUTE_GC_ELASTICITY=14,
@@ -449,24 +448,24 @@
 	NET_IPV4_ROUTE_MIN_ADVMSS=17,
 	NET_IPV4_ROUTE_SECRET_INTERVAL=18,
 	NET_IPV4_ROUTE_GC_MIN_INTERVAL_MS=19,
-पूर्ण;
+};
 
-क्रमागत
-अणु
+enum
+{
 	NET_PROTO_CONF_ALL=-2,
 	NET_PROTO_CONF_DEFAULT=-3
 
-	/* And device अगरindices ... */
-पूर्ण;
+	/* And device ifindices ... */
+};
 
-क्रमागत
-अणु
+enum
+{
 	NET_IPV4_CONF_FORWARDING=1,
 	NET_IPV4_CONF_MC_FORWARDING=2,
 	NET_IPV4_CONF_PROXY_ARP=3,
-	NET_IPV4_CONF_ACCEPT_REसूचीECTS=4,
-	NET_IPV4_CONF_SECURE_REसूचीECTS=5,
-	NET_IPV4_CONF_SEND_REसूचीECTS=6,
+	NET_IPV4_CONF_ACCEPT_REDIRECTS=4,
+	NET_IPV4_CONF_SECURE_REDIRECTS=5,
+	NET_IPV4_CONF_SEND_REDIRECTS=6,
 	NET_IPV4_CONF_SHARED_MEDIA=7,
 	NET_IPV4_CONF_RP_FILTER=8,
 	NET_IPV4_CONF_ACCEPT_SOURCE_ROUTE=9,
@@ -483,11 +482,11 @@
 	NET_IPV4_CONF_PROMOTE_SECONDARIES=20,
 	NET_IPV4_CONF_ARP_ACCEPT=21,
 	NET_IPV4_CONF_ARP_NOTIFY=22,
-पूर्ण;
+};
 
 /* /proc/sys/net/ipv4/netfilter */
-क्रमागत
-अणु
+enum
+{
 	NET_IPV4_NF_CONNTRACK_MAX=1,
 	NET_IPV4_NF_CONNTRACK_TCP_TIMEOUT_SYN_SENT=2,
 	NET_IPV4_NF_CONNTRACK_TCP_TIMEOUT_SYN_RECV=3,
@@ -516,10 +515,10 @@
  	NET_IPV4_NF_CONNTRACK_SCTP_TIMEOUT_SHUTDOWN_ACK_SENT=26,
 	NET_IPV4_NF_CONNTRACK_COUNT=27,
 	NET_IPV4_NF_CONNTRACK_CHECKSUM=28,
-पूर्ण;
+};
  
 /* /proc/sys/net/ipv6 */
-क्रमागत अणु
+enum {
 	NET_IPV6_CONF=16,
 	NET_IPV6_NEIGH=17,
 	NET_IPV6_ROUTE=18,
@@ -530,9 +529,9 @@
 	NET_IPV6_IP6FRAG_TIME=23,
 	NET_IPV6_IP6FRAG_SECRET_INTERVAL=24,
 	NET_IPV6_MLD_MAX_MSF=25,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	NET_IPV6_ROUTE_FLUSH=1,
 	NET_IPV6_ROUTE_GC_THRESH=2,
 	NET_IPV6_ROUTE_MAX_SIZE=3,
@@ -543,14 +542,14 @@
 	NET_IPV6_ROUTE_MTU_EXPIRES=8,
 	NET_IPV6_ROUTE_MIN_ADVMSS=9,
 	NET_IPV6_ROUTE_GC_MIN_INTERVAL_MS=10
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	NET_IPV6_FORWARDING=1,
 	NET_IPV6_HOP_LIMIT=2,
 	NET_IPV6_MTU=3,
 	NET_IPV6_ACCEPT_RA=4,
-	NET_IPV6_ACCEPT_REसूचीECTS=5,
+	NET_IPV6_ACCEPT_REDIRECTS=5,
 	NET_IPV6_AUTOCONF=6,
 	NET_IPV6_DAD_TRANSMITS=7,
 	NET_IPV6_RTR_SOLICITS=8,
@@ -574,16 +573,16 @@
 	NET_IPV6_ACCEPT_RA_RT_INFO_MIN_PLEN=27,
 	NET_IPV6_RA_DEFRTR_METRIC=28,
 	__NET_IPV6_MAX
-पूर्ण;
+};
 
 /* /proc/sys/net/ipv6/icmp */
-क्रमागत अणु
+enum {
 	NET_IPV6_ICMP_RATELIMIT = 1,
 	NET_IPV6_ICMP_ECHO_IGNORE_ALL = 2
-पूर्ण;
+};
 
 /* /proc/sys/net/<protocol>/neigh/<dev> */
-क्रमागत अणु
+enum {
 	NET_NEIGH_MCAST_SOLICIT=1,
 	NET_NEIGH_UCAST_SOLICIT=2,
 	NET_NEIGH_APP_SOLICIT=3,
@@ -602,54 +601,54 @@
 	NET_NEIGH_GC_THRESH3=16,
 	NET_NEIGH_RETRANS_TIME_MS=17,
 	NET_NEIGH_REACHABLE_TIME_MS=18,
-पूर्ण;
+};
 
 /* /proc/sys/net/dccp */
-क्रमागत अणु
+enum {
 	NET_DCCP_DEFAULT=1,
-पूर्ण;
+};
 
 /* /proc/sys/net/ipx */
-क्रमागत अणु
+enum {
 	NET_IPX_PPROP_BROADCASTING=1,
 	NET_IPX_FORWARDING=2
-पूर्ण;
+};
 
 /* /proc/sys/net/llc */
-क्रमागत अणु
+enum {
 	NET_LLC2=1,
 	NET_LLC_STATION=2,
-पूर्ण;
+};
 
 /* /proc/sys/net/llc/llc2 */
-क्रमागत अणु
+enum {
 	NET_LLC2_TIMEOUT=1,
-पूर्ण;
+};
 
 /* /proc/sys/net/llc/station */
-क्रमागत अणु
+enum {
 	NET_LLC_STATION_ACK_TIMEOUT=1,
-पूर्ण;
+};
 
-/* /proc/sys/net/llc/llc2/समयout */
-क्रमागत अणु
+/* /proc/sys/net/llc/llc2/timeout */
+enum {
 	NET_LLC2_ACK_TIMEOUT=1,
 	NET_LLC2_P_TIMEOUT=2,
 	NET_LLC2_REJ_TIMEOUT=3,
 	NET_LLC2_BUSY_TIMEOUT=4,
-पूर्ण;
+};
 
 /* /proc/sys/net/appletalk */
-क्रमागत अणु
+enum {
 	NET_ATALK_AARP_EXPIRY_TIME=1,
 	NET_ATALK_AARP_TICK_TIME=2,
 	NET_ATALK_AARP_RETRANSMIT_LIMIT=3,
 	NET_ATALK_AARP_RESOLVE_TIME=4
-पूर्ण;
+};
 
 
 /* /proc/sys/net/netrom */
-क्रमागत अणु
+enum {
 	NET_NETROM_DEFAULT_PATH_QUALITY=1,
 	NET_NETROM_OBSOLESCENCE_COUNT_INITIALISER=2,
 	NET_NETROM_NETWORK_TTL_INITIALISER=3,
@@ -662,10 +661,10 @@
 	NET_NETROM_ROUTING_CONTROL=10,
 	NET_NETROM_LINK_FAILS_COUNT=11,
 	NET_NETROM_RESET=12
-पूर्ण;
+};
 
 /* /proc/sys/net/ax25 */
-क्रमागत अणु
+enum {
 	NET_AX25_IP_DEFAULT_MODE=1,
 	NET_AX25_DEFAULT_MODE=2,
 	NET_AX25_BACKOFF_TYPE=3,
@@ -680,10 +679,10 @@
 	NET_AX25_PACLEN=12,
 	NET_AX25_PROTOCOL=13,
 	NET_AX25_DAMA_SLAVE_TIMEOUT=14
-पूर्ण;
+};
 
 /* /proc/sys/net/rose */
-क्रमागत अणु
+enum {
 	NET_ROSE_RESTART_REQUEST_TIMEOUT=1,
 	NET_ROSE_CALL_REQUEST_TIMEOUT=2,
 	NET_ROSE_RESET_REQUEST_TIMEOUT=3,
@@ -694,26 +693,26 @@
 	NET_ROSE_MAX_VCS=8,
 	NET_ROSE_WINDOW_SIZE=9,
 	NET_ROSE_NO_ACTIVITY_TIMEOUT=10
-पूर्ण;
+};
 
 /* /proc/sys/net/x25 */
-क्रमागत अणु
+enum {
 	NET_X25_RESTART_REQUEST_TIMEOUT=1,
 	NET_X25_CALL_REQUEST_TIMEOUT=2,
 	NET_X25_RESET_REQUEST_TIMEOUT=3,
 	NET_X25_CLEAR_REQUEST_TIMEOUT=4,
 	NET_X25_ACK_HOLD_BACK_TIMEOUT=5,
 	NET_X25_FORWARD=6
-पूर्ण;
+};
 
 /* /proc/sys/net/token-ring */
-क्रमागत
-अणु
+enum
+{
 	NET_TR_RIF_TIMEOUT=1
-पूर्ण;
+};
 
 /* /proc/sys/net/decnet/ */
-क्रमागत अणु
+enum {
 	NET_DECNET_NODE_TYPE = 1,
 	NET_DECNET_NODE_ADDRESS = 2,
 	NET_DECNET_NODE_NAME = 3,
@@ -729,10 +728,10 @@
 	NET_DECNET_RMEM = 13,
 	NET_DECNET_WMEM = 14,
 	NET_DECNET_DEBUG_LEVEL = 255
-पूर्ण;
+};
 
 /* /proc/sys/net/decnet/conf/<dev> */
-क्रमागत अणु
+enum {
 	NET_DECNET_CONF_LOOPBACK = -2,
 	NET_DECNET_CONF_DDCMP = -3,
 	NET_DECNET_CONF_PPP = -4,
@@ -740,11 +739,11 @@
 	NET_DECNET_CONF_GRE = -6,
 	NET_DECNET_CONF_ETHER = -7
 
-	/* ... and अगरindex of devices */
-पूर्ण;
+	/* ... and ifindex of devices */
+};
 
 /* /proc/sys/net/decnet/conf/<dev>/ */
-क्रमागत अणु
+enum {
 	NET_DECNET_CONF_DEV_PRIORITY = 1,
 	NET_DECNET_CONF_DEV_T1 = 2,
 	NET_DECNET_CONF_DEV_T2 = 3,
@@ -752,10 +751,10 @@
 	NET_DECNET_CONF_DEV_FORWARDING = 5,
 	NET_DECNET_CONF_DEV_BLKSIZE = 6,
 	NET_DECNET_CONF_DEV_STATE = 7
-पूर्ण;
+};
 
 /* /proc/sys/net/sctp */
-क्रमागत अणु
+enum {
 	NET_SCTP_RTO_INITIAL = 1,
 	NET_SCTP_RTO_MIN     = 2,
 	NET_SCTP_RTO_MAX     = 3,
@@ -773,46 +772,46 @@
 	NET_SCTP_SNDBUF_POLICY		 = 15,
 	NET_SCTP_SACK_TIMEOUT		 = 16,
 	NET_SCTP_RCVBUF_POLICY		 = 17,
-पूर्ण;
+};
 
 /* /proc/sys/net/bridge */
-क्रमागत अणु
+enum {
 	NET_BRIDGE_NF_CALL_ARPTABLES = 1,
 	NET_BRIDGE_NF_CALL_IPTABLES = 2,
 	NET_BRIDGE_NF_CALL_IP6TABLES = 3,
 	NET_BRIDGE_NF_FILTER_VLAN_TAGGED = 4,
 	NET_BRIDGE_NF_FILTER_PPPOE_TAGGED = 5,
-पूर्ण;
+};
 
 
 /* CTL_FS names: */
-क्रमागत
-अणु
-	FS_NRINODE=1,	/* पूर्णांक:current number of allocated inodes */
+enum
+{
+	FS_NRINODE=1,	/* int:current number of allocated inodes */
 	FS_STATINODE=2,
-	FS_MAXINODE=3,	/* पूर्णांक:maximum number of inodes that can be allocated */
-	FS_NRDQUOT=4,	/* पूर्णांक:current number of allocated dquots */
-	FS_MAXDQUOT=5,	/* पूर्णांक:maximum number of dquots that can be allocated */
-	FS_NRखाता=6,	/* पूर्णांक:current number of allocated filedescriptors */
-	FS_MAXखाता=7,	/* पूर्णांक:maximum number of filedescriptors that can be allocated */
+	FS_MAXINODE=3,	/* int:maximum number of inodes that can be allocated */
+	FS_NRDQUOT=4,	/* int:current number of allocated dquots */
+	FS_MAXDQUOT=5,	/* int:maximum number of dquots that can be allocated */
+	FS_NRFILE=6,	/* int:current number of allocated filedescriptors */
+	FS_MAXFILE=7,	/* int:maximum number of filedescriptors that can be allocated */
 	FS_DENTRY=8,
-	FS_NRSUPER=9,	/* पूर्णांक:current number of allocated super_blocks */
-	FS_MAXSUPER=10,	/* पूर्णांक:maximum number of super_blocks that can be allocated */
-	FS_OVERFLOWUID=11,	/* पूर्णांक: overflow UID */
-	FS_OVERFLOWGID=12,	/* पूर्णांक: overflow GID */
-	FS_LEASES=13,	/* पूर्णांक: leases enabled */
-	FS_सूची_NOTIFY=14,	/* पूर्णांक: directory notअगरication enabled */
-	FS_LEASE_TIME=15,	/* पूर्णांक: maximum समय to रुको क्रम a lease अवरोध */
+	FS_NRSUPER=9,	/* int:current number of allocated super_blocks */
+	FS_MAXSUPER=10,	/* int:maximum number of super_blocks that can be allocated */
+	FS_OVERFLOWUID=11,	/* int: overflow UID */
+	FS_OVERFLOWGID=12,	/* int: overflow GID */
+	FS_LEASES=13,	/* int: leases enabled */
+	FS_DIR_NOTIFY=14,	/* int: directory notification enabled */
+	FS_LEASE_TIME=15,	/* int: maximum time to wait for a lease break */
 	FS_DQSTATS=16,	/* disc quota usage statistics and control */
-	FS_XFS=17,	/* काष्ठा: control xfs parameters */
-	FS_AIO_NR=18,	/* current प्रणाली-wide number of aio requests */
-	FS_AIO_MAX_NR=19,	/* प्रणाली-wide maximum number of aio requests */
-	FS_INOTIFY=20,	/* inotअगरy submenu */
+	FS_XFS=17,	/* struct: control xfs parameters */
+	FS_AIO_NR=18,	/* current system-wide number of aio requests */
+	FS_AIO_MAX_NR=19,	/* system-wide maximum number of aio requests */
+	FS_INOTIFY=20,	/* inotify submenu */
 	FS_OCFS2=988,	/* ocfs2 */
-पूर्ण;
+};
 
 /* /proc/sys/fs/quota/ */
-क्रमागत अणु
+enum {
 	FS_DQ_LOOKUPS = 1,
 	FS_DQ_DROPS = 2,
 	FS_DQ_READS = 3,
@@ -822,12 +821,12 @@
 	FS_DQ_FREE = 7,
 	FS_DQ_SYNCS = 8,
 	FS_DQ_WARNINGS = 9,
-पूर्ण;
+};
 
 /* CTL_DEBUG names: */
 
 /* CTL_DEV names: */
-क्रमागत अणु
+enum {
 	DEV_CDROM=1,
 	DEV_HWMON=2,
 	DEV_PARPORT=3,
@@ -835,37 +834,37 @@
 	DEV_MAC_HID=5,
 	DEV_SCSI=6,
 	DEV_IPMI=7,
-पूर्ण;
+};
 
 /* /proc/sys/dev/cdrom */
-क्रमागत अणु
+enum {
 	DEV_CDROM_INFO=1,
 	DEV_CDROM_AUTOCLOSE=2,
 	DEV_CDROM_AUTOEJECT=3,
 	DEV_CDROM_DEBUG=4,
 	DEV_CDROM_LOCK=5,
 	DEV_CDROM_CHECK_MEDIA=6
-पूर्ण;
+};
 
 /* /proc/sys/dev/parport */
-क्रमागत अणु
+enum {
 	DEV_PARPORT_DEFAULT=-3
-पूर्ण;
+};
 
 /* /proc/sys/dev/raid */
-क्रमागत अणु
+enum {
 	DEV_RAID_SPEED_LIMIT_MIN=1,
 	DEV_RAID_SPEED_LIMIT_MAX=2
-पूर्ण;
+};
 
-/* /proc/sys/dev/parport/शेष */
-क्रमागत अणु
+/* /proc/sys/dev/parport/default */
+enum {
 	DEV_PARPORT_DEFAULT_TIMESLICE=1,
 	DEV_PARPORT_DEFAULT_SPINTIME=2
-पूर्ण;
+};
 
 /* /proc/sys/dev/parport/parport n */
-क्रमागत अणु
+enum {
 	DEV_PARPORT_SPINTIME=1,
 	DEV_PARPORT_BASE_ADDR=2,
 	DEV_PARPORT_IRQ=3,
@@ -873,48 +872,48 @@
 	DEV_PARPORT_MODES=5,
 	DEV_PARPORT_DEVICES=6,
 	DEV_PARPORT_AUTOPROBE=16
-पूर्ण;
+};
 
 /* /proc/sys/dev/parport/parport n/devices/ */
-क्रमागत अणु
+enum {
 	DEV_PARPORT_DEVICES_ACTIVE=-3,
-पूर्ण;
+};
 
 /* /proc/sys/dev/parport/parport n/devices/device n */
-क्रमागत अणु
+enum {
 	DEV_PARPORT_DEVICE_TIMESLICE=1,
-पूर्ण;
+};
 
 /* /proc/sys/dev/mac_hid */
-क्रमागत अणु
+enum {
 	DEV_MAC_HID_KEYBOARD_SENDS_LINUX_KEYCODES=1,
 	DEV_MAC_HID_KEYBOARD_LOCK_KEYCODES=2,
 	DEV_MAC_HID_MOUSE_BUTTON_EMULATION=3,
 	DEV_MAC_HID_MOUSE_BUTTON2_KEYCODE=4,
 	DEV_MAC_HID_MOUSE_BUTTON3_KEYCODE=5,
 	DEV_MAC_HID_ADB_MOUSE_SENDS_KEYCODES=6
-पूर्ण;
+};
 
 /* /proc/sys/dev/scsi */
-क्रमागत अणु
+enum {
 	DEV_SCSI_LOGGING_LEVEL=1,
-पूर्ण;
+};
 
 /* /proc/sys/dev/ipmi */
-क्रमागत अणु
+enum {
 	DEV_IPMI_POWEROFF_POWERCYCLE=1,
-पूर्ण;
+};
 
 /* /proc/sys/abi */
-क्रमागत
-अणु
-	ABI_DEFHANDLER_COFF=1,	/* शेष handler क्रम coff binaries */
-	ABI_DEFHANDLER_ELF=2, 	/* शेष handler क्रम ELF binaries */
-	ABI_DEFHANDLER_LCALL7=3,/* शेष handler क्रम procs using lcall7 */
-	ABI_DEFHANDLER_LIBCSO=4,/* शेष handler क्रम an libc.so ELF पूर्णांकerp */
+enum
+{
+	ABI_DEFHANDLER_COFF=1,	/* default handler for coff binaries */
+	ABI_DEFHANDLER_ELF=2, 	/* default handler for ELF binaries */
+	ABI_DEFHANDLER_LCALL7=3,/* default handler for procs using lcall7 */
+	ABI_DEFHANDLER_LIBCSO=4,/* default handler for an libc.so ELF interp */
 	ABI_TRACE=5,		/* tracing flags */
-	ABI_FAKE_UTSNAME=6,	/* fake target utsname inक्रमmation */
-पूर्ण;
+	ABI_FAKE_UTSNAME=6,	/* fake target utsname information */
+};
 
 
-#पूर्ण_अगर /* _UAPI_LINUX_SYSCTL_H */
+#endif /* _UAPI_LINUX_SYSCTL_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,12 +21,12 @@
  *
  */
 
-#समावेश "kfd_mqd_manager.h"
-#समावेश "amdgpu_amdkfd.h"
-#समावेश "kfd_device_queue_manager.h"
+#include "kfd_mqd_manager.h"
+#include "amdgpu_amdkfd.h"
+#include "kfd_device_queue_manager.h"
 
 /* Mapping queue priority to pipe priority, indexed by queue priority */
-पूर्णांक pipe_priority_map[] = अणु
+int pipe_priority_map[] = {
 	KFD_PIPE_PRIORITY_CS_LOW,
 	KFD_PIPE_PRIORITY_CS_LOW,
 	KFD_PIPE_PRIORITY_CS_LOW,
@@ -44,32 +43,32 @@
 	KFD_PIPE_PRIORITY_CS_HIGH,
 	KFD_PIPE_PRIORITY_CS_HIGH,
 	KFD_PIPE_PRIORITY_CS_HIGH
-पूर्ण;
+};
 
-काष्ठा kfd_mem_obj *allocate_hiq_mqd(काष्ठा kfd_dev *dev, काष्ठा queue_properties *q)
-अणु
-	काष्ठा kfd_mem_obj *mqd_mem_obj = शून्य;
+struct kfd_mem_obj *allocate_hiq_mqd(struct kfd_dev *dev, struct queue_properties *q)
+{
+	struct kfd_mem_obj *mqd_mem_obj = NULL;
 
-	mqd_mem_obj = kzalloc(माप(काष्ठा kfd_mem_obj), GFP_KERNEL);
-	अगर (!mqd_mem_obj)
-		वापस शून्य;
+	mqd_mem_obj = kzalloc(sizeof(struct kfd_mem_obj), GFP_KERNEL);
+	if (!mqd_mem_obj)
+		return NULL;
 
 	mqd_mem_obj->gtt_mem = dev->dqm->hiq_sdma_mqd.gtt_mem;
 	mqd_mem_obj->gpu_addr = dev->dqm->hiq_sdma_mqd.gpu_addr;
 	mqd_mem_obj->cpu_ptr = dev->dqm->hiq_sdma_mqd.cpu_ptr;
 
-	वापस mqd_mem_obj;
-पूर्ण
+	return mqd_mem_obj;
+}
 
-काष्ठा kfd_mem_obj *allocate_sdma_mqd(काष्ठा kfd_dev *dev,
-					काष्ठा queue_properties *q)
-अणु
-	काष्ठा kfd_mem_obj *mqd_mem_obj = शून्य;
-	uपूर्णांक64_t offset;
+struct kfd_mem_obj *allocate_sdma_mqd(struct kfd_dev *dev,
+					struct queue_properties *q)
+{
+	struct kfd_mem_obj *mqd_mem_obj = NULL;
+	uint64_t offset;
 
-	mqd_mem_obj = kzalloc(माप(काष्ठा kfd_mem_obj), GFP_KERNEL);
-	अगर (!mqd_mem_obj)
-		वापस शून्य;
+	mqd_mem_obj = kzalloc(sizeof(struct kfd_mem_obj), GFP_KERNEL);
+	if (!mqd_mem_obj)
+		return NULL;
 
 	offset = (q->sdma_engine_id *
 		dev->device_info->num_sdma_queues_per_engine +
@@ -78,57 +77,57 @@
 
 	offset += dev->dqm->mqd_mgrs[KFD_MQD_TYPE_HIQ]->mqd_size;
 
-	mqd_mem_obj->gtt_mem = (व्योम *)((uपूर्णांक64_t)dev->dqm->hiq_sdma_mqd.gtt_mem
+	mqd_mem_obj->gtt_mem = (void *)((uint64_t)dev->dqm->hiq_sdma_mqd.gtt_mem
 				+ offset);
 	mqd_mem_obj->gpu_addr = dev->dqm->hiq_sdma_mqd.gpu_addr + offset;
-	mqd_mem_obj->cpu_ptr = (uपूर्णांक32_t *)((uपूर्णांक64_t)
+	mqd_mem_obj->cpu_ptr = (uint32_t *)((uint64_t)
 				dev->dqm->hiq_sdma_mqd.cpu_ptr + offset);
 
-	वापस mqd_mem_obj;
-पूर्ण
+	return mqd_mem_obj;
+}
 
-व्योम मुक्त_mqd_hiq_sdma(काष्ठा mqd_manager *mm, व्योम *mqd,
-			काष्ठा kfd_mem_obj *mqd_mem_obj)
-अणु
+void free_mqd_hiq_sdma(struct mqd_manager *mm, void *mqd,
+			struct kfd_mem_obj *mqd_mem_obj)
+{
 	WARN_ON(!mqd_mem_obj->gtt_mem);
-	kमुक्त(mqd_mem_obj);
-पूर्ण
+	kfree(mqd_mem_obj);
+}
 
-व्योम mqd_symmetrically_map_cu_mask(काष्ठा mqd_manager *mm,
-		स्थिर uपूर्णांक32_t *cu_mask, uपूर्णांक32_t cu_mask_count,
-		uपूर्णांक32_t *se_mask)
-अणु
-	काष्ठा kfd_cu_info cu_info;
-	uपूर्णांक32_t cu_per_se[KFD_MAX_NUM_SE] = अणु0पूर्ण;
-	पूर्णांक i, se, sh, cu = 0;
+void mqd_symmetrically_map_cu_mask(struct mqd_manager *mm,
+		const uint32_t *cu_mask, uint32_t cu_mask_count,
+		uint32_t *se_mask)
+{
+	struct kfd_cu_info cu_info;
+	uint32_t cu_per_se[KFD_MAX_NUM_SE] = {0};
+	int i, se, sh, cu = 0;
 
 	amdgpu_amdkfd_get_cu_info(mm->dev->kgd, &cu_info);
 
-	अगर (cu_mask_count > cu_info.cu_active_number)
+	if (cu_mask_count > cu_info.cu_active_number)
 		cu_mask_count = cu_info.cu_active_number;
 
-	क्रम (se = 0; se < cu_info.num_shader_engines; se++)
-		क्रम (sh = 0; sh < cu_info.num_shader_arrays_per_engine; sh++)
-			cu_per_se[se] += hweight32(cu_info.cu_biपंचांगap[se % 4][sh + (se / 4)]);
+	for (se = 0; se < cu_info.num_shader_engines; se++)
+		for (sh = 0; sh < cu_info.num_shader_arrays_per_engine; sh++)
+			cu_per_se[se] += hweight32(cu_info.cu_bitmap[se % 4][sh + (se / 4)]);
 
 	/* Symmetrically map cu_mask to all SEs:
 	 * cu_mask[0] bit0 -> se_mask[0] bit0;
 	 * cu_mask[0] bit1 -> se_mask[1] bit0;
-	 * ... (अगर # SE is 4)
+	 * ... (if # SE is 4)
 	 * cu_mask[0] bit4 -> se_mask[0] bit1;
 	 * ...
 	 */
 	se = 0;
-	क्रम (i = 0; i < cu_mask_count; i++) अणु
-		अगर (cu_mask[i / 32] & (1 << (i % 32)))
+	for (i = 0; i < cu_mask_count; i++) {
+		if (cu_mask[i / 32] & (1 << (i % 32)))
 			se_mask[se] |= 1 << cu;
 
-		करो अणु
+		do {
 			se++;
-			अगर (se == cu_info.num_shader_engines) अणु
+			if (se == cu_info.num_shader_engines) {
 				se = 0;
 				cu++;
-			पूर्ण
-		पूर्ण जबतक (cu >= cu_per_se[se] && cu < 32);
-	पूर्ण
-पूर्ण
+			}
+		} while (cu >= cu_per_se[se] && cu < 32);
+	}
+}

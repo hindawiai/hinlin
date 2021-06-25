@@ -1,195 +1,194 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * AD5686R, AD5685R, AD5684R Digital to analog converters  driver
  *
  * Copyright 2011 Analog Devices Inc.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/fs.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#समावेश "ad5686.h"
+#include "ad5686.h"
 
-अटल स्थिर अक्षर * स्थिर ad5686_घातerकरोwn_modes[] = अणु
+static const char * const ad5686_powerdown_modes[] = {
 	"1kohm_to_gnd",
 	"100kohm_to_gnd",
 	"three_state"
-पूर्ण;
+};
 
-अटल पूर्णांक ad5686_get_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-				     स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
+static int ad5686_get_powerdown_mode(struct iio_dev *indio_dev,
+				     const struct iio_chan_spec *chan)
+{
+	struct ad5686_state *st = iio_priv(indio_dev);
 
-	वापस ((st->pwr_करोwn_mode >> (chan->channel * 2)) & 0x3) - 1;
-पूर्ण
+	return ((st->pwr_down_mode >> (chan->channel * 2)) & 0x3) - 1;
+}
 
-अटल पूर्णांक ad5686_set_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-				     स्थिर काष्ठा iio_chan_spec *chan,
-				     अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
+static int ad5686_set_powerdown_mode(struct iio_dev *indio_dev,
+				     const struct iio_chan_spec *chan,
+				     unsigned int mode)
+{
+	struct ad5686_state *st = iio_priv(indio_dev);
 
-	st->pwr_करोwn_mode &= ~(0x3 << (chan->channel * 2));
-	st->pwr_करोwn_mode |= ((mode + 1) << (chan->channel * 2));
+	st->pwr_down_mode &= ~(0x3 << (chan->channel * 2));
+	st->pwr_down_mode |= ((mode + 1) << (chan->channel * 2));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iio_क्रमागत ad5686_घातerकरोwn_mode_क्रमागत = अणु
-	.items = ad5686_घातerकरोwn_modes,
-	.num_items = ARRAY_SIZE(ad5686_घातerकरोwn_modes),
-	.get = ad5686_get_घातerकरोwn_mode,
-	.set = ad5686_set_घातerकरोwn_mode,
-पूर्ण;
+static const struct iio_enum ad5686_powerdown_mode_enum = {
+	.items = ad5686_powerdown_modes,
+	.num_items = ARRAY_SIZE(ad5686_powerdown_modes),
+	.get = ad5686_get_powerdown_mode,
+	.set = ad5686_set_powerdown_mode,
+};
 
-अटल sमाप_प्रकार ad5686_पढ़ो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-		uपूर्णांकptr_t निजी, स्थिर काष्ठा iio_chan_spec *chan, अक्षर *buf)
-अणु
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
+static ssize_t ad5686_read_dac_powerdown(struct iio_dev *indio_dev,
+		uintptr_t private, const struct iio_chan_spec *chan, char *buf)
+{
+	struct ad5686_state *st = iio_priv(indio_dev);
 
-	वापस sysfs_emit(buf, "%d\n", !!(st->pwr_करोwn_mask &
+	return sysfs_emit(buf, "%d\n", !!(st->pwr_down_mask &
 				       (0x3 << (chan->channel * 2))));
-पूर्ण
+}
 
-अटल sमाप_प्रकार ad5686_ग_लिखो_dac_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-					  uपूर्णांकptr_t निजी,
-					  स्थिर काष्ठा iio_chan_spec *chan,
-					  स्थिर अक्षर *buf,
-					  माप_प्रकार len)
-अणु
-	bool पढ़ोin;
-	पूर्णांक ret;
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
-	अचिन्हित पूर्णांक val, ref_bit_msk;
-	u8 shअगरt, address = 0;
+static ssize_t ad5686_write_dac_powerdown(struct iio_dev *indio_dev,
+					  uintptr_t private,
+					  const struct iio_chan_spec *chan,
+					  const char *buf,
+					  size_t len)
+{
+	bool readin;
+	int ret;
+	struct ad5686_state *st = iio_priv(indio_dev);
+	unsigned int val, ref_bit_msk;
+	u8 shift, address = 0;
 
-	ret = strtobool(buf, &पढ़ोin);
-	अगर (ret)
-		वापस ret;
+	ret = strtobool(buf, &readin);
+	if (ret)
+		return ret;
 
-	अगर (पढ़ोin)
-		st->pwr_करोwn_mask |= (0x3 << (chan->channel * 2));
-	अन्यथा
-		st->pwr_करोwn_mask &= ~(0x3 << (chan->channel * 2));
+	if (readin)
+		st->pwr_down_mask |= (0x3 << (chan->channel * 2));
+	else
+		st->pwr_down_mask &= ~(0x3 << (chan->channel * 2));
 
-	चयन (st->chip_info->regmap_type) अणु
-	हाल AD5310_REGMAP:
-		shअगरt = 9;
+	switch (st->chip_info->regmap_type) {
+	case AD5310_REGMAP:
+		shift = 9;
 		ref_bit_msk = AD5310_REF_BIT_MSK;
-		अवरोध;
-	हाल AD5683_REGMAP:
-		shअगरt = 13;
+		break;
+	case AD5683_REGMAP:
+		shift = 13;
 		ref_bit_msk = AD5683_REF_BIT_MSK;
-		अवरोध;
-	हाल AD5686_REGMAP:
-		shअगरt = 0;
+		break;
+	case AD5686_REGMAP:
+		shift = 0;
 		ref_bit_msk = 0;
-		/* AD5674R/AD5679R have 16 channels and 2 घातerकरोwn रेजिस्टरs */
-		अगर (chan->channel > 0x7)
+		/* AD5674R/AD5679R have 16 channels and 2 powerdown registers */
+		if (chan->channel > 0x7)
 			address = 0x8;
-		अवरोध;
-	हाल AD5693_REGMAP:
-		shअगरt = 13;
+		break;
+	case AD5693_REGMAP:
+		shift = 13;
 		ref_bit_msk = AD5693_REF_BIT_MSK;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	val = ((st->pwr_करोwn_mask & st->pwr_करोwn_mode) << shअगरt);
-	अगर (!st->use_पूर्णांकernal_vref)
+	val = ((st->pwr_down_mask & st->pwr_down_mode) << shift);
+	if (!st->use_internal_vref)
 		val |= ref_bit_msk;
 
-	ret = st->ग_लिखो(st, AD5686_CMD_POWERDOWN_DAC,
+	ret = st->write(st, AD5686_CMD_POWERDOWN_DAC,
 			address, val >> (address * 2));
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
-अटल पूर्णांक ad5686_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val,
-			   पूर्णांक *val2,
-			   दीर्घ m)
-अणु
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int ad5686_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val,
+			   int *val2,
+			   long m)
+{
+	struct ad5686_state *st = iio_priv(indio_dev);
+	int ret;
 
-	चयन (m) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (m) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&st->lock);
-		ret = st->पढ़ो(st, chan->address);
+		ret = st->read(st, chan->address);
 		mutex_unlock(&st->lock);
-		अगर (ret < 0)
-			वापस ret;
-		*val = (ret >> chan->scan_type.shअगरt) &
+		if (ret < 0)
+			return ret;
+		*val = (ret >> chan->scan_type.shift) &
 			GENMASK(chan->scan_type.realbits - 1, 0);
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = st->vref_mv;
 		*val2 = chan->scan_type.realbits;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return IIO_VAL_FRACTIONAL_LOG2;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक ad5686_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक val,
-			    पूर्णांक val2,
-			    दीर्घ mask)
-अणु
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int ad5686_write_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int val,
+			    int val2,
+			    long mask)
+{
+	struct ad5686_state *st = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (val > (1 << chan->scan_type.realbits) || val < 0)
-			वापस -EINVAL;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		if (val > (1 << chan->scan_type.realbits) || val < 0)
+			return -EINVAL;
 
 		mutex_lock(&st->lock);
-		ret = st->ग_लिखो(st,
+		ret = st->write(st,
 				AD5686_CMD_WRITE_INPUT_N_UPDATE_N,
 				chan->address,
-				val << chan->scan_type.shअगरt);
+				val << chan->scan_type.shift);
 		mutex_unlock(&st->lock);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info ad5686_info = अणु
-	.पढ़ो_raw = ad5686_पढ़ो_raw,
-	.ग_लिखो_raw = ad5686_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info ad5686_info = {
+	.read_raw = ad5686_read_raw,
+	.write_raw = ad5686_write_raw,
+};
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info ad5686_ext_info[] = अणु
-	अणु
+static const struct iio_chan_spec_ext_info ad5686_ext_info[] = {
+	{
 		.name = "powerdown",
-		.पढ़ो = ad5686_पढ़ो_dac_घातerकरोwn,
-		.ग_लिखो = ad5686_ग_लिखो_dac_घातerकरोwn,
+		.read = ad5686_read_dac_powerdown,
+		.write = ad5686_write_dac_powerdown,
 		.shared = IIO_SEPARATE,
-	पूर्ण,
-	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &ad5686_घातerकरोwn_mode_क्रमागत),
-	IIO_ENUM_AVAILABLE("powerdown_mode", &ad5686_घातerकरोwn_mode_क्रमागत),
-	अणु पूर्ण,
-पूर्ण;
+	},
+	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &ad5686_powerdown_mode_enum),
+	IIO_ENUM_AVAILABLE("powerdown_mode", &ad5686_powerdown_mode_enum),
+	{ },
+};
 
-#घोषणा AD5868_CHANNEL(chan, addr, bits, _shअगरt) अणु		\
+#define AD5868_CHANNEL(chan, addr, bits, _shift) {		\
 		.type = IIO_VOLTAGE,				\
 		.indexed = 1,					\
 		.output = 1,					\
@@ -197,65 +196,65 @@
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),\
 		.address = addr,				\
-		.scan_type = अणु					\
+		.scan_type = {					\
 			.sign = 'u',				\
 			.realbits = (bits),			\
 			.storagebits = 16,			\
-			.shअगरt = (_shअगरt),			\
-		पूर्ण,						\
+			.shift = (_shift),			\
+		},						\
 		.ext_info = ad5686_ext_info,			\
-पूर्ण
+}
 
-#घोषणा DECLARE_AD5693_CHANNELS(name, bits, _shअगरt)		\
-अटल स्थिर काष्ठा iio_chan_spec name[] = अणु			\
-		AD5868_CHANNEL(0, 0, bits, _shअगरt),		\
-पूर्ण
+#define DECLARE_AD5693_CHANNELS(name, bits, _shift)		\
+static const struct iio_chan_spec name[] = {			\
+		AD5868_CHANNEL(0, 0, bits, _shift),		\
+}
 
-#घोषणा DECLARE_AD5338_CHANNELS(name, bits, _shअगरt)		\
-अटल स्थिर काष्ठा iio_chan_spec name[] = अणु			\
-		AD5868_CHANNEL(0, 1, bits, _shअगरt),		\
-		AD5868_CHANNEL(1, 8, bits, _shअगरt),		\
-पूर्ण
+#define DECLARE_AD5338_CHANNELS(name, bits, _shift)		\
+static const struct iio_chan_spec name[] = {			\
+		AD5868_CHANNEL(0, 1, bits, _shift),		\
+		AD5868_CHANNEL(1, 8, bits, _shift),		\
+}
 
-#घोषणा DECLARE_AD5686_CHANNELS(name, bits, _shअगरt)		\
-अटल स्थिर काष्ठा iio_chan_spec name[] = अणु			\
-		AD5868_CHANNEL(0, 1, bits, _shअगरt),		\
-		AD5868_CHANNEL(1, 2, bits, _shअगरt),		\
-		AD5868_CHANNEL(2, 4, bits, _shअगरt),		\
-		AD5868_CHANNEL(3, 8, bits, _shअगरt),		\
-पूर्ण
+#define DECLARE_AD5686_CHANNELS(name, bits, _shift)		\
+static const struct iio_chan_spec name[] = {			\
+		AD5868_CHANNEL(0, 1, bits, _shift),		\
+		AD5868_CHANNEL(1, 2, bits, _shift),		\
+		AD5868_CHANNEL(2, 4, bits, _shift),		\
+		AD5868_CHANNEL(3, 8, bits, _shift),		\
+}
 
-#घोषणा DECLARE_AD5676_CHANNELS(name, bits, _shअगरt)		\
-अटल स्थिर काष्ठा iio_chan_spec name[] = अणु			\
-		AD5868_CHANNEL(0, 0, bits, _shअगरt),		\
-		AD5868_CHANNEL(1, 1, bits, _shअगरt),		\
-		AD5868_CHANNEL(2, 2, bits, _shअगरt),		\
-		AD5868_CHANNEL(3, 3, bits, _shअगरt),		\
-		AD5868_CHANNEL(4, 4, bits, _shअगरt),		\
-		AD5868_CHANNEL(5, 5, bits, _shअगरt),		\
-		AD5868_CHANNEL(6, 6, bits, _shअगरt),		\
-		AD5868_CHANNEL(7, 7, bits, _shअगरt),		\
-पूर्ण
+#define DECLARE_AD5676_CHANNELS(name, bits, _shift)		\
+static const struct iio_chan_spec name[] = {			\
+		AD5868_CHANNEL(0, 0, bits, _shift),		\
+		AD5868_CHANNEL(1, 1, bits, _shift),		\
+		AD5868_CHANNEL(2, 2, bits, _shift),		\
+		AD5868_CHANNEL(3, 3, bits, _shift),		\
+		AD5868_CHANNEL(4, 4, bits, _shift),		\
+		AD5868_CHANNEL(5, 5, bits, _shift),		\
+		AD5868_CHANNEL(6, 6, bits, _shift),		\
+		AD5868_CHANNEL(7, 7, bits, _shift),		\
+}
 
-#घोषणा DECLARE_AD5679_CHANNELS(name, bits, _shअगरt)		\
-अटल स्थिर काष्ठा iio_chan_spec name[] = अणु			\
-		AD5868_CHANNEL(0, 0, bits, _shअगरt),		\
-		AD5868_CHANNEL(1, 1, bits, _shअगरt),		\
-		AD5868_CHANNEL(2, 2, bits, _shअगरt),		\
-		AD5868_CHANNEL(3, 3, bits, _shअगरt),		\
-		AD5868_CHANNEL(4, 4, bits, _shअगरt),		\
-		AD5868_CHANNEL(5, 5, bits, _shअगरt),		\
-		AD5868_CHANNEL(6, 6, bits, _shअगरt),		\
-		AD5868_CHANNEL(7, 7, bits, _shअगरt),		\
-		AD5868_CHANNEL(8, 8, bits, _shअगरt),		\
-		AD5868_CHANNEL(9, 9, bits, _shअगरt),		\
-		AD5868_CHANNEL(10, 10, bits, _shअगरt),		\
-		AD5868_CHANNEL(11, 11, bits, _shअगरt),		\
-		AD5868_CHANNEL(12, 12, bits, _shअगरt),		\
-		AD5868_CHANNEL(13, 13, bits, _shअगरt),		\
-		AD5868_CHANNEL(14, 14, bits, _shअगरt),		\
-		AD5868_CHANNEL(15, 15, bits, _shअगरt),		\
-पूर्ण
+#define DECLARE_AD5679_CHANNELS(name, bits, _shift)		\
+static const struct iio_chan_spec name[] = {			\
+		AD5868_CHANNEL(0, 0, bits, _shift),		\
+		AD5868_CHANNEL(1, 1, bits, _shift),		\
+		AD5868_CHANNEL(2, 2, bits, _shift),		\
+		AD5868_CHANNEL(3, 3, bits, _shift),		\
+		AD5868_CHANNEL(4, 4, bits, _shift),		\
+		AD5868_CHANNEL(5, 5, bits, _shift),		\
+		AD5868_CHANNEL(6, 6, bits, _shift),		\
+		AD5868_CHANNEL(7, 7, bits, _shift),		\
+		AD5868_CHANNEL(8, 8, bits, _shift),		\
+		AD5868_CHANNEL(9, 9, bits, _shift),		\
+		AD5868_CHANNEL(10, 10, bits, _shift),		\
+		AD5868_CHANNEL(11, 11, bits, _shift),		\
+		AD5868_CHANNEL(12, 12, bits, _shift),		\
+		AD5868_CHANNEL(13, 13, bits, _shift),		\
+		AD5868_CHANNEL(14, 14, bits, _shift),		\
+		AD5868_CHANNEL(15, 15, bits, _shift),		\
+}
 
 DECLARE_AD5693_CHANNELS(ad5310r_channels, 10, 2);
 DECLARE_AD5693_CHANNELS(ad5311r_channels, 10, 6);
@@ -271,286 +270,286 @@ DECLARE_AD5693_CHANNELS(ad5693_channels, 16, 0);
 DECLARE_AD5693_CHANNELS(ad5692r_channels, 14, 2);
 DECLARE_AD5693_CHANNELS(ad5691r_channels, 12, 4);
 
-अटल स्थिर काष्ठा ad5686_chip_info ad5686_chip_info_tbl[] = अणु
-	[ID_AD5310R] = अणु
+static const struct ad5686_chip_info ad5686_chip_info_tbl[] = {
+	[ID_AD5310R] = {
 		.channels = ad5310r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5310_REGMAP,
-	पूर्ण,
-	[ID_AD5311R] = अणु
+	},
+	[ID_AD5311R] = {
 		.channels = ad5311r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5693_REGMAP,
-	पूर्ण,
-	[ID_AD5338R] = अणु
+	},
+	[ID_AD5338R] = {
 		.channels = ad5338r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 2,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5671R] = अणु
+	},
+	[ID_AD5671R] = {
 		.channels = ad5672_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 8,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5672R] = अणु
+	},
+	[ID_AD5672R] = {
 		.channels = ad5672_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 8,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5673R] = अणु
+	},
+	[ID_AD5673R] = {
 		.channels = ad5674r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 16,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5674R] = अणु
+	},
+	[ID_AD5674R] = {
 		.channels = ad5674r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 16,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5675R] = अणु
+	},
+	[ID_AD5675R] = {
 		.channels = ad5676_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 8,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5676] = अणु
+	},
+	[ID_AD5676] = {
 		.channels = ad5676_channels,
 		.num_channels = 8,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5676R] = अणु
+	},
+	[ID_AD5676R] = {
 		.channels = ad5676_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 8,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5677R] = अणु
+	},
+	[ID_AD5677R] = {
 		.channels = ad5679r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 16,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5679R] = अणु
+	},
+	[ID_AD5679R] = {
 		.channels = ad5679r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 16,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5681R] = अणु
+	},
+	[ID_AD5681R] = {
 		.channels = ad5691r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5683_REGMAP,
-	पूर्ण,
-	[ID_AD5682R] = अणु
+	},
+	[ID_AD5682R] = {
 		.channels = ad5692r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5683_REGMAP,
-	पूर्ण,
-	[ID_AD5683] = अणु
+	},
+	[ID_AD5683] = {
 		.channels = ad5693_channels,
 		.num_channels = 1,
 		.regmap_type = AD5683_REGMAP,
-	पूर्ण,
-	[ID_AD5683R] = अणु
+	},
+	[ID_AD5683R] = {
 		.channels = ad5693_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5683_REGMAP,
-	पूर्ण,
-	[ID_AD5684] = अणु
+	},
+	[ID_AD5684] = {
 		.channels = ad5684_channels,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5684R] = अणु
+	},
+	[ID_AD5684R] = {
 		.channels = ad5684_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5685R] = अणु
+	},
+	[ID_AD5685R] = {
 		.channels = ad5685r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5686] = अणु
+	},
+	[ID_AD5686] = {
 		.channels = ad5686_channels,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5686R] = अणु
+	},
+	[ID_AD5686R] = {
 		.channels = ad5686_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5691R] = अणु
+	},
+	[ID_AD5691R] = {
 		.channels = ad5691r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5693_REGMAP,
-	पूर्ण,
-	[ID_AD5692R] = अणु
+	},
+	[ID_AD5692R] = {
 		.channels = ad5692r_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5693_REGMAP,
-	पूर्ण,
-	[ID_AD5693] = अणु
+	},
+	[ID_AD5693] = {
 		.channels = ad5693_channels,
 		.num_channels = 1,
 		.regmap_type = AD5693_REGMAP,
-	पूर्ण,
-	[ID_AD5693R] = अणु
+	},
+	[ID_AD5693R] = {
 		.channels = ad5693_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 1,
 		.regmap_type = AD5693_REGMAP,
-	पूर्ण,
-	[ID_AD5694] = अणु
+	},
+	[ID_AD5694] = {
 		.channels = ad5684_channels,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5694R] = अणु
+	},
+	[ID_AD5694R] = {
 		.channels = ad5684_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5696] = अणु
+	},
+	[ID_AD5696] = {
 		.channels = ad5686_channels,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-	[ID_AD5696R] = अणु
+	},
+	[ID_AD5696R] = {
 		.channels = ad5686_channels,
-		.पूर्णांक_vref_mv = 2500,
+		.int_vref_mv = 2500,
 		.num_channels = 4,
 		.regmap_type = AD5686_REGMAP,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक ad5686_probe(काष्ठा device *dev,
-		 क्रमागत ad5686_supported_device_ids chip_type,
-		 स्थिर अक्षर *name, ad5686_ग_लिखो_func ग_लिखो,
-		 ad5686_पढ़ो_func पढ़ो)
-अणु
-	काष्ठा ad5686_state *st;
-	काष्ठा iio_dev *indio_dev;
-	अचिन्हित पूर्णांक val, ref_bit_msk;
+int ad5686_probe(struct device *dev,
+		 enum ad5686_supported_device_ids chip_type,
+		 const char *name, ad5686_write_func write,
+		 ad5686_read_func read)
+{
+	struct ad5686_state *st;
+	struct iio_dev *indio_dev;
+	unsigned int val, ref_bit_msk;
 	u8 cmd;
-	पूर्णांक ret, i, voltage_uv = 0;
+	int ret, i, voltage_uv = 0;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*st));
-	अगर (indio_dev == शून्य)
-		वापस  -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*st));
+	if (indio_dev == NULL)
+		return  -ENOMEM;
 
 	st = iio_priv(indio_dev);
 	dev_set_drvdata(dev, indio_dev);
 
 	st->dev = dev;
-	st->ग_लिखो = ग_लिखो;
-	st->पढ़ो = पढ़ो;
+	st->write = write;
+	st->read = read;
 
 	st->reg = devm_regulator_get_optional(dev, "vcc");
-	अगर (!IS_ERR(st->reg)) अणु
+	if (!IS_ERR(st->reg)) {
 		ret = regulator_enable(st->reg);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = regulator_get_voltage(st->reg);
-		अगर (ret < 0)
-			जाओ error_disable_reg;
+		if (ret < 0)
+			goto error_disable_reg;
 
 		voltage_uv = ret;
-	पूर्ण
+	}
 
 	st->chip_info = &ad5686_chip_info_tbl[chip_type];
 
-	अगर (voltage_uv)
+	if (voltage_uv)
 		st->vref_mv = voltage_uv / 1000;
-	अन्यथा
-		st->vref_mv = st->chip_info->पूर्णांक_vref_mv;
+	else
+		st->vref_mv = st->chip_info->int_vref_mv;
 
-	/* Set all the घातer करोwn mode क्रम all channels to 1K pullकरोwn */
-	क्रम (i = 0; i < st->chip_info->num_channels; i++)
-		st->pwr_करोwn_mode |= (0x01 << (i * 2));
+	/* Set all the power down mode for all channels to 1K pulldown */
+	for (i = 0; i < st->chip_info->num_channels; i++)
+		st->pwr_down_mode |= (0x01 << (i * 2));
 
 	indio_dev->name = name;
 	indio_dev->info = &ad5686_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = st->chip_info->channels;
 	indio_dev->num_channels = st->chip_info->num_channels;
 
 	mutex_init(&st->lock);
 
-	चयन (st->chip_info->regmap_type) अणु
-	हाल AD5310_REGMAP:
+	switch (st->chip_info->regmap_type) {
+	case AD5310_REGMAP:
 		cmd = AD5686_CMD_CONTROL_REG;
 		ref_bit_msk = AD5310_REF_BIT_MSK;
-		st->use_पूर्णांकernal_vref = !voltage_uv;
-		अवरोध;
-	हाल AD5683_REGMAP:
+		st->use_internal_vref = !voltage_uv;
+		break;
+	case AD5683_REGMAP:
 		cmd = AD5686_CMD_CONTROL_REG;
 		ref_bit_msk = AD5683_REF_BIT_MSK;
-		st->use_पूर्णांकernal_vref = !voltage_uv;
-		अवरोध;
-	हाल AD5686_REGMAP:
+		st->use_internal_vref = !voltage_uv;
+		break;
+	case AD5686_REGMAP:
 		cmd = AD5686_CMD_INTERNAL_REFER_SETUP;
 		ref_bit_msk = 0;
-		अवरोध;
-	हाल AD5693_REGMAP:
+		break;
+	case AD5693_REGMAP:
 		cmd = AD5686_CMD_CONTROL_REG;
 		ref_bit_msk = AD5693_REF_BIT_MSK;
-		st->use_पूर्णांकernal_vref = !voltage_uv;
-		अवरोध;
-	शेष:
+		st->use_internal_vref = !voltage_uv;
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ error_disable_reg;
-	पूर्ण
+		goto error_disable_reg;
+	}
 
 	val = (voltage_uv | ref_bit_msk);
 
-	ret = st->ग_लिखो(st, cmd, 0, !!val);
-	अगर (ret)
-		जाओ error_disable_reg;
+	ret = st->write(st, cmd, 0, !!val);
+	if (ret)
+		goto error_disable_reg;
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ error_disable_reg;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto error_disable_reg;
 
-	वापस 0;
+	return 0;
 
 error_disable_reg:
-	अगर (!IS_ERR(st->reg))
+	if (!IS_ERR(st->reg))
 		regulator_disable(st->reg);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ad5686_probe);
 
-पूर्णांक ad5686_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
-	काष्ठा ad5686_state *st = iio_priv(indio_dev);
+int ad5686_remove(struct device *dev)
+{
+	struct iio_dev *indio_dev = dev_get_drvdata(dev);
+	struct ad5686_state *st = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
-	अगर (!IS_ERR(st->reg))
+	iio_device_unregister(indio_dev);
+	if (!IS_ERR(st->reg))
 		regulator_disable(st->reg);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(ad5686_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ad5686_remove);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");
 MODULE_DESCRIPTION("Analog Devices AD5686/85/84 DAC");

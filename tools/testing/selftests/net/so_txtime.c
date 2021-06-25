@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Test the SO_TXTIME API
  *
- * Takes a stream of अणु payload, delivery समय पूर्ण[], to be sent across two
+ * Takes a stream of { payload, delivery time }[], to be sent across two
  * processes. Start this program on two separate network namespaces or
  * connected hosts, one instance in transmit mode and the other in receive
- * mode using the '-r' option. Receiver will compare arrival बारtamps to
- * the expected stream. Sender will पढ़ो transmit बारtamps from the error
- * queue. The streams can dअगरfer due to out-of-order delivery and drops.
+ * mode using the '-r' option. Receiver will compare arrival timestamps to
+ * the expected stream. Sender will read transmit timestamps from the error
+ * queue. The streams can differ due to out-of-order delivery and drops.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <arpa/inet.h>
-#समावेश <error.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/errqueue.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/udp.h>
-#समावेश <stdbool.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <poll.h>
+#include <arpa/inet.h>
+#include <error.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <linux/net_tstamp.h>
+#include <linux/errqueue.h>
+#include <linux/if_ether.h>
+#include <linux/ipv6.h>
+#include <linux/udp.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <poll.h>
 
-अटल पूर्णांक	cfg_घड़ीid	= CLOCK_TAI;
-अटल uपूर्णांक16_t	cfg_port	= 8000;
-अटल पूर्णांक	cfg_variance_us	= 4000;
-अटल uपूर्णांक64_t	cfg_start_समय_ns;
-अटल पूर्णांक	cfg_mark;
-अटल bool	cfg_rx;
+static int	cfg_clockid	= CLOCK_TAI;
+static uint16_t	cfg_port	= 8000;
+static int	cfg_variance_us	= 4000;
+static uint64_t	cfg_start_time_ns;
+static int	cfg_mark;
+static bool	cfg_rx;
 
-अटल uपूर्णांक64_t glob_tstart;
-अटल uपूर्णांक64_t tdeliver_max;
+static uint64_t glob_tstart;
+static uint64_t tdeliver_max;
 
-/* encode one समयd transmission (of a 1B payload) */
-काष्ठा समयd_send अणु
-	अक्षर	data;
-	पूर्णांक64_t	delay_us;
-पूर्ण;
+/* encode one timed transmission (of a 1B payload) */
+struct timed_send {
+	char	data;
+	int64_t	delay_us;
+};
 
-#घोषणा MAX_NUM_PKT	8
-अटल काष्ठा समयd_send cfg_buf[MAX_NUM_PKT];
-अटल पूर्णांक cfg_num_pkt;
+#define MAX_NUM_PKT	8
+static struct timed_send cfg_buf[MAX_NUM_PKT];
+static int cfg_num_pkt;
 
-अटल पूर्णांक cfg_errq_level;
-अटल पूर्णांक cfg_errq_type;
+static int cfg_errq_level;
+static int cfg_errq_type;
 
-अटल काष्ठा sockaddr_storage cfg_dst_addr;
-अटल काष्ठा sockaddr_storage cfg_src_addr;
-अटल socklen_t cfg_alen;
+static struct sockaddr_storage cfg_dst_addr;
+static struct sockaddr_storage cfg_src_addr;
+static socklen_t cfg_alen;
 
-अटल uपूर्णांक64_t समय_लो_ns(घड़ीid_t घड़ी)
-अणु
-	काष्ठा बारpec ts;
+static uint64_t gettime_ns(clockid_t clock)
+{
+	struct timespec ts;
 
-	अगर (घड़ी_समय_लो(घड़ी, &ts))
-		error(1, त्रुटि_सं, "gettime");
+	if (clock_gettime(clock, &ts))
+		error(1, errno, "gettime");
 
-	वापस ts.tv_sec * (1000ULL * 1000 * 1000) + ts.tv_nsec;
-पूर्ण
+	return ts.tv_sec * (1000ULL * 1000 * 1000) + ts.tv_nsec;
+}
 
-अटल व्योम करो_send_one(पूर्णांक fdt, काष्ठा समयd_send *ts)
-अणु
-	अक्षर control[CMSG_SPACE(माप(uपूर्णांक64_t))];
-	काष्ठा msghdr msg = अणु0पूर्ण;
-	काष्ठा iovec iov = अणु0पूर्ण;
-	काष्ठा cmsghdr *cm;
-	uपूर्णांक64_t tdeliver;
-	पूर्णांक ret;
+static void do_send_one(int fdt, struct timed_send *ts)
+{
+	char control[CMSG_SPACE(sizeof(uint64_t))];
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cm;
+	uint64_t tdeliver;
+	int ret;
 
 	iov.iov_base = &ts->data;
 	iov.iov_len = 1;
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
-	msg.msg_name = (काष्ठा sockaddr *)&cfg_dst_addr;
+	msg.msg_name = (struct sockaddr *)&cfg_dst_addr;
 	msg.msg_namelen = cfg_alen;
 
-	अगर (ts->delay_us >= 0) अणु
-		स_रखो(control, 0, माप(control));
+	if (ts->delay_us >= 0) {
+		memset(control, 0, sizeof(control));
 		msg.msg_control = &control;
-		msg.msg_controllen = माप(control);
+		msg.msg_controllen = sizeof(control);
 
 		tdeliver = glob_tstart + ts->delay_us * 1000;
 		tdeliver_max = tdeliver_max > tdeliver ?
@@ -100,325 +99,325 @@
 		cm = CMSG_FIRSTHDR(&msg);
 		cm->cmsg_level = SOL_SOCKET;
 		cm->cmsg_type = SCM_TXTIME;
-		cm->cmsg_len = CMSG_LEN(माप(tdeliver));
-		स_नकल(CMSG_DATA(cm), &tdeliver, माप(tdeliver));
-	पूर्ण
+		cm->cmsg_len = CMSG_LEN(sizeof(tdeliver));
+		memcpy(CMSG_DATA(cm), &tdeliver, sizeof(tdeliver));
+	}
 
 	ret = sendmsg(fdt, &msg, 0);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "write");
-	अगर (ret == 0)
+	if (ret == -1)
+		error(1, errno, "write");
+	if (ret == 0)
 		error(1, 0, "write: 0B");
 
-पूर्ण
+}
 
-अटल व्योम करो_recv_one(पूर्णांक fdr, काष्ठा समयd_send *ts)
-अणु
-	पूर्णांक64_t tstop, texpect;
-	अक्षर rbuf[2];
-	पूर्णांक ret;
+static void do_recv_one(int fdr, struct timed_send *ts)
+{
+	int64_t tstop, texpect;
+	char rbuf[2];
+	int ret;
 
-	ret = recv(fdr, rbuf, माप(rbuf), 0);
-	अगर (ret == -1 && त्रुटि_सं == EAGAIN)
+	ret = recv(fdr, rbuf, sizeof(rbuf), 0);
+	if (ret == -1 && errno == EAGAIN)
 		error(1, EAGAIN, "recv: timeout");
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "read");
-	अगर (ret != 1)
+	if (ret == -1)
+		error(1, errno, "read");
+	if (ret != 1)
 		error(1, 0, "read: %dB", ret);
 
-	tstop = (समय_लो_ns(cfg_घड़ीid) - glob_tstart) / 1000;
+	tstop = (gettime_ns(cfg_clockid) - glob_tstart) / 1000;
 	texpect = ts->delay_us >= 0 ? ts->delay_us : 0;
 
-	ख_लिखो(मानक_त्रुटि, "payload:%c delay:%lld expected:%lld (us)\n",
-			rbuf[0], (दीर्घ दीर्घ)tstop, (दीर्घ दीर्घ)texpect);
+	fprintf(stderr, "payload:%c delay:%lld expected:%lld (us)\n",
+			rbuf[0], (long long)tstop, (long long)texpect);
 
-	अगर (rbuf[0] != ts->data)
+	if (rbuf[0] != ts->data)
 		error(1, 0, "payload mismatch. expected %c", ts->data);
 
-	अगर (lद_असल(tstop - texpect) > cfg_variance_us)
+	if (llabs(tstop - texpect) > cfg_variance_us)
 		error(1, 0, "exceeds variance (%d us)", cfg_variance_us);
-पूर्ण
+}
 
-अटल व्योम करो_recv_verअगरy_empty(पूर्णांक fdr)
-अणु
-	अक्षर rbuf[1];
-	पूर्णांक ret;
+static void do_recv_verify_empty(int fdr)
+{
+	char rbuf[1];
+	int ret;
 
-	ret = recv(fdr, rbuf, माप(rbuf), 0);
-	अगर (ret != -1 || त्रुटि_सं != EAGAIN)
-		error(1, 0, "recv: not empty as expected (%d, %d)", ret, त्रुटि_सं);
-पूर्ण
+	ret = recv(fdr, rbuf, sizeof(rbuf), 0);
+	if (ret != -1 || errno != EAGAIN)
+		error(1, 0, "recv: not empty as expected (%d, %d)", ret, errno);
+}
 
-अटल पूर्णांक करो_recv_errqueue_समयout(पूर्णांक fdt)
-अणु
-	अक्षर control[CMSG_SPACE(माप(काष्ठा sock_extended_err)) +
-		     CMSG_SPACE(माप(काष्ठा sockaddr_in6))] = अणु0पूर्ण;
-	अक्षर data[माप(काष्ठा ethhdr) + माप(काष्ठा ipv6hdr) +
-		  माप(काष्ठा udphdr) + 1];
-	काष्ठा sock_extended_err *err;
-	पूर्णांक ret, num_tstamp = 0;
-	काष्ठा msghdr msg = अणु0पूर्ण;
-	काष्ठा iovec iov = अणु0पूर्ण;
-	काष्ठा cmsghdr *cm;
-	पूर्णांक64_t tstamp = 0;
+static int do_recv_errqueue_timeout(int fdt)
+{
+	char control[CMSG_SPACE(sizeof(struct sock_extended_err)) +
+		     CMSG_SPACE(sizeof(struct sockaddr_in6))] = {0};
+	char data[sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
+		  sizeof(struct udphdr) + 1];
+	struct sock_extended_err *err;
+	int ret, num_tstamp = 0;
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cm;
+	int64_t tstamp = 0;
 
 	iov.iov_base = data;
-	iov.iov_len = माप(data);
+	iov.iov_len = sizeof(data);
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
 	msg.msg_control = control;
-	msg.msg_controllen = माप(control);
+	msg.msg_controllen = sizeof(control);
 
-	जबतक (1) अणु
-		स्थिर अक्षर *reason;
+	while (1) {
+		const char *reason;
 
 		ret = recvmsg(fdt, &msg, MSG_ERRQUEUE);
-		अगर (ret == -1 && त्रुटि_सं == EAGAIN)
-			अवरोध;
-		अगर (ret == -1)
-			error(1, त्रुटि_सं, "errqueue");
-		अगर (msg.msg_flags != MSG_ERRQUEUE)
+		if (ret == -1 && errno == EAGAIN)
+			break;
+		if (ret == -1)
+			error(1, errno, "errqueue");
+		if (msg.msg_flags != MSG_ERRQUEUE)
 			error(1, 0, "errqueue: flags 0x%x\n", msg.msg_flags);
 
 		cm = CMSG_FIRSTHDR(&msg);
-		अगर (cm->cmsg_level != cfg_errq_level ||
+		if (cm->cmsg_level != cfg_errq_level ||
 		    cm->cmsg_type != cfg_errq_type)
 			error(1, 0, "errqueue: type 0x%x.0x%x\n",
 				    cm->cmsg_level, cm->cmsg_type);
 
-		err = (काष्ठा sock_extended_err *)CMSG_DATA(cm);
-		अगर (err->ee_origin != SO_EE_ORIGIN_TXTIME)
+		err = (struct sock_extended_err *)CMSG_DATA(cm);
+		if (err->ee_origin != SO_EE_ORIGIN_TXTIME)
 			error(1, 0, "errqueue: origin 0x%x\n", err->ee_origin);
 
-		चयन (err->ee_त्रुटि_सं) अणु
-		हाल ECANCELED:
-			अगर (err->ee_code != SO_EE_CODE_TXTIME_MISSED)
+		switch (err->ee_errno) {
+		case ECANCELED:
+			if (err->ee_code != SO_EE_CODE_TXTIME_MISSED)
 				error(1, 0, "errqueue: unknown ECANCELED %u\n",
 				      err->ee_code);
 			reason = "missed txtime";
-		अवरोध;
-		हाल EINVAL:
-			अगर (err->ee_code != SO_EE_CODE_TXTIME_INVALID_PARAM)
+		break;
+		case EINVAL:
+			if (err->ee_code != SO_EE_CODE_TXTIME_INVALID_PARAM)
 				error(1, 0, "errqueue: unknown EINVAL %u\n",
 				      err->ee_code);
 			reason = "invalid txtime";
-		अवरोध;
-		शेष:
+		break;
+		default:
 			error(1, 0, "errqueue: errno %u code %u\n",
-			      err->ee_त्रुटि_सं, err->ee_code);
-		पूर्ण
+			      err->ee_errno, err->ee_code);
+		}
 
-		tstamp = ((पूर्णांक64_t) err->ee_data) << 32 | err->ee_info;
-		tstamp -= (पूर्णांक64_t) glob_tstart;
+		tstamp = ((int64_t) err->ee_data) << 32 | err->ee_info;
+		tstamp -= (int64_t) glob_tstart;
 		tstamp /= 1000 * 1000;
-		ख_लिखो(मानक_त्रुटि, "send: pkt %c at %" PRId64 "ms dropped: %s\n",
+		fprintf(stderr, "send: pkt %c at %" PRId64 "ms dropped: %s\n",
 			data[ret - 1], tstamp, reason);
 
 		msg.msg_flags = 0;
-		msg.msg_controllen = माप(control);
+		msg.msg_controllen = sizeof(control);
 		num_tstamp++;
-	पूर्ण
+	}
 
-	वापस num_tstamp;
-पूर्ण
+	return num_tstamp;
+}
 
-अटल व्योम recv_errqueue_msgs(पूर्णांक fdt)
-अणु
-	काष्ठा pollfd pfd = अणु .fd = fdt, .events = POLLERR पूर्ण;
-	स्थिर पूर्णांक समयout_ms = 10;
-	पूर्णांक ret, num_tstamp = 0;
+static void recv_errqueue_msgs(int fdt)
+{
+	struct pollfd pfd = { .fd = fdt, .events = POLLERR };
+	const int timeout_ms = 10;
+	int ret, num_tstamp = 0;
 
-	करो अणु
-		ret = poll(&pfd, 1, समयout_ms);
-		अगर (ret == -1)
-			error(1, त्रुटि_सं, "poll");
+	do {
+		ret = poll(&pfd, 1, timeout_ms);
+		if (ret == -1)
+			error(1, errno, "poll");
 
-		अगर (ret && (pfd.revents & POLLERR))
-			num_tstamp += करो_recv_errqueue_समयout(fdt);
+		if (ret && (pfd.revents & POLLERR))
+			num_tstamp += do_recv_errqueue_timeout(fdt);
 
-		अगर (num_tstamp == cfg_num_pkt)
-			अवरोध;
+		if (num_tstamp == cfg_num_pkt)
+			break;
 
-	पूर्ण जबतक (समय_लो_ns(cfg_घड़ीid) < tdeliver_max);
-पूर्ण
+	} while (gettime_ns(cfg_clockid) < tdeliver_max);
+}
 
-अटल व्योम start_समय_रुको(व्योम)
-अणु
-	uपूर्णांक64_t now;
-	पूर्णांक err;
+static void start_time_wait(void)
+{
+	uint64_t now;
+	int err;
 
-	अगर (!cfg_start_समय_ns)
-		वापस;
+	if (!cfg_start_time_ns)
+		return;
 
-	now = समय_लो_ns(CLOCK_REALTIME);
-	अगर (cfg_start_समय_ns < now)
-		वापस;
+	now = gettime_ns(CLOCK_REALTIME);
+	if (cfg_start_time_ns < now)
+		return;
 
-	err = usleep((cfg_start_समय_ns - now) / 1000);
-	अगर (err)
-		error(1, त्रुटि_सं, "usleep");
-पूर्ण
+	err = usleep((cfg_start_time_ns - now) / 1000);
+	if (err)
+		error(1, errno, "usleep");
+}
 
-अटल व्योम setsockopt_txसमय(पूर्णांक fd)
-अणु
-	काष्ठा sock_txसमय so_txसमय_val = अणु .घड़ीid = cfg_घड़ीid पूर्ण;
-	काष्ठा sock_txसमय so_txसमय_val_पढ़ो = अणु 0 पूर्ण;
-	socklen_t vallen = माप(so_txसमय_val);
+static void setsockopt_txtime(int fd)
+{
+	struct sock_txtime so_txtime_val = { .clockid = cfg_clockid };
+	struct sock_txtime so_txtime_val_read = { 0 };
+	socklen_t vallen = sizeof(so_txtime_val);
 
-	so_txसमय_val.flags = SOF_TXTIME_REPORT_ERRORS;
+	so_txtime_val.flags = SOF_TXTIME_REPORT_ERRORS;
 
-	अगर (setsockopt(fd, SOL_SOCKET, SO_TXTIME,
-		       &so_txसमय_val, माप(so_txसमय_val)))
-		error(1, त्रुटि_सं, "setsockopt txtime");
+	if (setsockopt(fd, SOL_SOCKET, SO_TXTIME,
+		       &so_txtime_val, sizeof(so_txtime_val)))
+		error(1, errno, "setsockopt txtime");
 
-	अगर (माला_लोockopt(fd, SOL_SOCKET, SO_TXTIME,
-		       &so_txसमय_val_पढ़ो, &vallen))
-		error(1, त्रुटि_सं, "getsockopt txtime");
+	if (getsockopt(fd, SOL_SOCKET, SO_TXTIME,
+		       &so_txtime_val_read, &vallen))
+		error(1, errno, "getsockopt txtime");
 
-	अगर (vallen != माप(so_txसमय_val) ||
-	    स_भेद(&so_txसमय_val, &so_txसमय_val_पढ़ो, vallen))
+	if (vallen != sizeof(so_txtime_val) ||
+	    memcmp(&so_txtime_val, &so_txtime_val_read, vallen))
 		error(1, 0, "getsockopt txtime: mismatch");
-पूर्ण
+}
 
-अटल पूर्णांक setup_tx(काष्ठा sockaddr *addr, socklen_t alen)
-अणु
-	पूर्णांक fd;
-
-	fd = socket(addr->sa_family, SOCK_DGRAM, 0);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "socket t");
-
-	अगर (connect(fd, addr, alen))
-		error(1, त्रुटि_सं, "connect");
-
-	setsockopt_txसमय(fd);
-
-	अगर (cfg_mark &&
-	    setsockopt(fd, SOL_SOCKET, SO_MARK, &cfg_mark, माप(cfg_mark)))
-		error(1, त्रुटि_सं, "setsockopt mark");
-
-	वापस fd;
-पूर्ण
-
-अटल पूर्णांक setup_rx(काष्ठा sockaddr *addr, socklen_t alen)
-अणु
-	काष्ठा समयval tv = अणु .tv_usec = 100 * 1000 पूर्ण;
-	पूर्णांक fd;
+static int setup_tx(struct sockaddr *addr, socklen_t alen)
+{
+	int fd;
 
 	fd = socket(addr->sa_family, SOCK_DGRAM, 0);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "socket r");
+	if (fd == -1)
+		error(1, errno, "socket t");
 
-	अगर (bind(fd, addr, alen))
-		error(1, त्रुटि_सं, "bind");
+	if (connect(fd, addr, alen))
+		error(1, errno, "connect");
 
-	अगर (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, माप(tv)))
-		error(1, त्रुटि_सं, "setsockopt rcv timeout");
+	setsockopt_txtime(fd);
 
-	वापस fd;
-पूर्ण
+	if (cfg_mark &&
+	    setsockopt(fd, SOL_SOCKET, SO_MARK, &cfg_mark, sizeof(cfg_mark)))
+		error(1, errno, "setsockopt mark");
 
-अटल व्योम करो_test_tx(काष्ठा sockaddr *addr, socklen_t alen)
-अणु
-	पूर्णांक fdt, i;
+	return fd;
+}
 
-	ख_लिखो(मानक_त्रुटि, "\nSO_TXTIME ipv%c clock %s\n",
+static int setup_rx(struct sockaddr *addr, socklen_t alen)
+{
+	struct timeval tv = { .tv_usec = 100 * 1000 };
+	int fd;
+
+	fd = socket(addr->sa_family, SOCK_DGRAM, 0);
+	if (fd == -1)
+		error(1, errno, "socket r");
+
+	if (bind(fd, addr, alen))
+		error(1, errno, "bind");
+
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)))
+		error(1, errno, "setsockopt rcv timeout");
+
+	return fd;
+}
+
+static void do_test_tx(struct sockaddr *addr, socklen_t alen)
+{
+	int fdt, i;
+
+	fprintf(stderr, "\nSO_TXTIME ipv%c clock %s\n",
 			addr->sa_family == PF_INET ? '4' : '6',
-			cfg_घड़ीid == CLOCK_TAI ? "tai" : "monotonic");
+			cfg_clockid == CLOCK_TAI ? "tai" : "monotonic");
 
 	fdt = setup_tx(addr, alen);
 
-	start_समय_रुको();
-	glob_tstart = समय_लो_ns(cfg_घड़ीid);
+	start_time_wait();
+	glob_tstart = gettime_ns(cfg_clockid);
 
-	क्रम (i = 0; i < cfg_num_pkt; i++)
-		करो_send_one(fdt, &cfg_buf[i]);
+	for (i = 0; i < cfg_num_pkt; i++)
+		do_send_one(fdt, &cfg_buf[i]);
 
 	recv_errqueue_msgs(fdt);
 
-	अगर (बंद(fdt))
-		error(1, त्रुटि_सं, "close t");
-पूर्ण
+	if (close(fdt))
+		error(1, errno, "close t");
+}
 
-अटल व्योम करो_test_rx(काष्ठा sockaddr *addr, socklen_t alen)
-अणु
-	पूर्णांक fdr, i;
+static void do_test_rx(struct sockaddr *addr, socklen_t alen)
+{
+	int fdr, i;
 
 	fdr = setup_rx(addr, alen);
 
-	start_समय_रुको();
-	glob_tstart = समय_लो_ns(cfg_घड़ीid);
+	start_time_wait();
+	glob_tstart = gettime_ns(cfg_clockid);
 
-	क्रम (i = 0; i < cfg_num_pkt; i++)
-		करो_recv_one(fdr, &cfg_buf[i]);
+	for (i = 0; i < cfg_num_pkt; i++)
+		do_recv_one(fdr, &cfg_buf[i]);
 
-	करो_recv_verअगरy_empty(fdr);
+	do_recv_verify_empty(fdr);
 
-	अगर (बंद(fdr))
-		error(1, त्रुटि_सं, "close r");
-पूर्ण
+	if (close(fdr))
+		error(1, errno, "close r");
+}
 
-अटल व्योम setup_sockaddr(पूर्णांक करोमुख्य, स्थिर अक्षर *str_addr,
-			   काष्ठा sockaddr_storage *sockaddr)
-अणु
-	काष्ठा sockaddr_in6 *addr6 = (व्योम *) sockaddr;
-	काष्ठा sockaddr_in *addr4 = (व्योम *) sockaddr;
+static void setup_sockaddr(int domain, const char *str_addr,
+			   struct sockaddr_storage *sockaddr)
+{
+	struct sockaddr_in6 *addr6 = (void *) sockaddr;
+	struct sockaddr_in *addr4 = (void *) sockaddr;
 
-	चयन (करोमुख्य) अणु
-	हाल PF_INET:
-		स_रखो(addr4, 0, माप(*addr4));
+	switch (domain) {
+	case PF_INET:
+		memset(addr4, 0, sizeof(*addr4));
 		addr4->sin_family = AF_INET;
 		addr4->sin_port = htons(cfg_port);
-		अगर (str_addr &&
+		if (str_addr &&
 		    inet_pton(AF_INET, str_addr, &(addr4->sin_addr)) != 1)
 			error(1, 0, "ipv4 parse error: %s", str_addr);
-		अवरोध;
-	हाल PF_INET6:
-		स_रखो(addr6, 0, माप(*addr6));
+		break;
+	case PF_INET6:
+		memset(addr6, 0, sizeof(*addr6));
 		addr6->sin6_family = AF_INET6;
 		addr6->sin6_port = htons(cfg_port);
-		अगर (str_addr &&
+		if (str_addr &&
 		    inet_pton(AF_INET6, str_addr, &(addr6->sin6_addr)) != 1)
 			error(1, 0, "ipv6 parse error: %s", str_addr);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक parse_io(स्थिर अक्षर *optarg, काष्ठा समयd_send *array)
-अणु
-	अक्षर *arg, *tok;
-	पूर्णांक aoff = 0;
+static int parse_io(const char *optarg, struct timed_send *array)
+{
+	char *arg, *tok;
+	int aoff = 0;
 
 	arg = strdup(optarg);
-	अगर (!arg)
-		error(1, त्रुटि_सं, "strdup");
+	if (!arg)
+		error(1, errno, "strdup");
 
-	जबतक ((tok = म_मोहर(arg, ","))) अणु
-		arg = शून्य;	/* only pass non-zero on first call */
+	while ((tok = strtok(arg, ","))) {
+		arg = NULL;	/* only pass non-zero on first call */
 
-		अगर (aoff / 2 == MAX_NUM_PKT)
+		if (aoff / 2 == MAX_NUM_PKT)
 			error(1, 0, "exceeds max pkt count (%d)", MAX_NUM_PKT);
 
-		अगर (aoff & 1) अणु	/* parse delay */
-			array->delay_us = म_से_दीर्घ(tok, शून्य, 0) * 1000;
+		if (aoff & 1) {	/* parse delay */
+			array->delay_us = strtol(tok, NULL, 0) * 1000;
 			array++;
-		पूर्ण अन्यथा अणु	/* parse अक्षरacter */
+		} else {	/* parse character */
 			array->data = tok[0];
-		पूर्ण
+		}
 
 		aoff++;
-	पूर्ण
+	}
 
-	मुक्त(arg);
+	free(arg);
 
-	वापस aoff / 2;
-पूर्ण
+	return aoff / 2;
+}
 
-अटल व्योम usage(स्थिर अक्षर *progname)
-अणु
-	ख_लिखो(मानक_त्रुटि, "\nUsage: %s [options] <payload>\n"
+static void usage(const char *progname)
+{
+	fprintf(stderr, "\nUsage: %s [options] <payload>\n"
 			"Options:\n"
 			"  -4            only IPv4\n"
 			"  -6            only IPv6\n"
@@ -430,86 +429,86 @@
 			"  -m <mark>     socket mark\n"
 			"\n",
 			progname);
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
-अणु
-	अक्षर *daddr = शून्य, *saddr = शून्य;
-	पूर्णांक करोमुख्य = PF_UNSPEC;
-	पूर्णांक c;
+static void parse_opts(int argc, char **argv)
+{
+	char *daddr = NULL, *saddr = NULL;
+	int domain = PF_UNSPEC;
+	int c;
 
-	जबतक ((c = getopt(argc, argv, "46c:S:D:rt:m:")) != -1) अणु
-		चयन (c) अणु
-		हाल '4':
-			अगर (करोमुख्य != PF_UNSPEC)
+	while ((c = getopt(argc, argv, "46c:S:D:rt:m:")) != -1) {
+		switch (c) {
+		case '4':
+			if (domain != PF_UNSPEC)
 				error(1, 0, "Pass one of -4 or -6");
-			करोमुख्य = PF_INET;
-			cfg_alen = माप(काष्ठा sockaddr_in);
+			domain = PF_INET;
+			cfg_alen = sizeof(struct sockaddr_in);
 			cfg_errq_level = SOL_IP;
 			cfg_errq_type = IP_RECVERR;
-			अवरोध;
-		हाल '6':
-			अगर (करोमुख्य != PF_UNSPEC)
+			break;
+		case '6':
+			if (domain != PF_UNSPEC)
 				error(1, 0, "Pass one of -4 or -6");
-			करोमुख्य = PF_INET6;
-			cfg_alen = माप(काष्ठा sockaddr_in6);
+			domain = PF_INET6;
+			cfg_alen = sizeof(struct sockaddr_in6);
 			cfg_errq_level = SOL_IPV6;
 			cfg_errq_type = IPV6_RECVERR;
-			अवरोध;
-		हाल 'c':
-			अगर (!म_भेद(optarg, "tai"))
-				cfg_घड़ीid = CLOCK_TAI;
-			अन्यथा अगर (!म_भेद(optarg, "monotonic") ||
-				 !म_भेद(optarg, "mono"))
-				cfg_घड़ीid = CLOCK_MONOTONIC;
-			अन्यथा
+			break;
+		case 'c':
+			if (!strcmp(optarg, "tai"))
+				cfg_clockid = CLOCK_TAI;
+			else if (!strcmp(optarg, "monotonic") ||
+				 !strcmp(optarg, "mono"))
+				cfg_clockid = CLOCK_MONOTONIC;
+			else
 				error(1, 0, "unknown clock id %s", optarg);
-			अवरोध;
-		हाल 'S':
+			break;
+		case 'S':
 			saddr = optarg;
-			अवरोध;
-		हाल 'D':
+			break;
+		case 'D':
 			daddr = optarg;
-			अवरोध;
-		हाल 'r':
+			break;
+		case 'r':
 			cfg_rx = true;
-			अवरोध;
-		हाल 't':
-			cfg_start_समय_ns = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'm':
-			cfg_mark = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		शेष:
+			break;
+		case 't':
+			cfg_start_time_ns = strtol(optarg, NULL, 0);
+			break;
+		case 'm':
+			cfg_mark = strtol(optarg, NULL, 0);
+			break;
+		default:
 			usage(argv[0]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (argc - optind != 1)
+	if (argc - optind != 1)
 		usage(argv[0]);
 
-	अगर (करोमुख्य == PF_UNSPEC)
+	if (domain == PF_UNSPEC)
 		error(1, 0, "Pass one of -4 or -6");
-	अगर (!daddr)
+	if (!daddr)
 		error(1, 0, "-D <server addr> required\n");
-	अगर (!cfg_rx && !saddr)
+	if (!cfg_rx && !saddr)
 		error(1, 0, "-S <client addr> required\n");
 
-	setup_sockaddr(करोमुख्य, daddr, &cfg_dst_addr);
-	setup_sockaddr(करोमुख्य, saddr, &cfg_src_addr);
+	setup_sockaddr(domain, daddr, &cfg_dst_addr);
+	setup_sockaddr(domain, saddr, &cfg_src_addr);
 
 	cfg_num_pkt = parse_io(argv[optind], cfg_buf);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
+int main(int argc, char **argv)
+{
 	parse_opts(argc, argv);
 
-	अगर (cfg_rx)
-		करो_test_rx((व्योम *)&cfg_dst_addr, cfg_alen);
-	अन्यथा
-		करो_test_tx((व्योम *)&cfg_src_addr, cfg_alen);
+	if (cfg_rx)
+		do_test_rx((void *)&cfg_dst_addr, cfg_alen);
+	else
+		do_test_tx((void *)&cfg_src_addr, cfg_alen);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

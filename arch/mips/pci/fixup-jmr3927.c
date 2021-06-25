@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  *
  * BRIEF MODULE DESCRIPTION
- *	Board specअगरic pci fixups.
+ *	Board specific pci fixups.
  *
  * Copyright 2001 MontaVista Software Inc.
  * Author: MontaVista Software, Inc.
  *         	ppopov@mvista.com or source@mvista.com
  *
- *  This program is मुक्त software; you can redistribute  it and/or modअगरy it
+ *  This program is free software; you can redistribute  it and/or modify it
  *  under  the terms of  the GNU General  Public License as published by the
  *  Free Software Foundation;  either version 2 of the  License, or (at your
  *  option) any later version.
@@ -16,7 +15,7 @@
  *  THIS  SOFTWARE  IS PROVIDED   ``AS  IS'' AND   ANY  EXPRESS OR IMPLIED
  *  WARRANTIES,   INCLUDING, BUT NOT  LIMITED  TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
- *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   सूचीECT, INसूचीECT,
+ *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   DIRECT, INDIRECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  *  NOT LIMITED   TO, PROCUREMENT OF  SUBSTITUTE GOODS  OR SERVICES; LOSS OF
  *  USE, DATA,  OR PROFITS; OR  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -24,57 +23,57 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  You should have received a copy of the  GNU General Public License aदीर्घ
- *  with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
+ *  You should have received a copy of the  GNU General Public License along
+ *  with this program; if not, write  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#समावेश <linux/types.h>
-#समावेश <यंत्र/txx9/pci.h>
-#समावेश <यंत्र/txx9/jmr3927.h>
+#include <linux/types.h>
+#include <asm/txx9/pci.h>
+#include <asm/txx9/jmr3927.h>
 
-पूर्णांक jmr3927_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	अचिन्हित अक्षर irq = pin;
+int jmr3927_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	unsigned char irq = pin;
 
 	/* IRQ rotation (PICMG) */
 	irq--;			/* 0-3 */
-	अगर (slot == TX3927_PCIC_IDSEL_AD_TO_SLOT(23)) अणु
+	if (slot == TX3927_PCIC_IDSEL_AD_TO_SLOT(23)) {
 		/* PCI CardSlot (IDSEL=A23, DevNu=12) */
 		/* PCIA => PCIC (IDSEL=A23) */
 		/* NOTE: JMR3927 JP1 must be set to OPEN */
 		irq = (irq + 2) % 4;
-	पूर्ण अन्यथा अगर (slot == TX3927_PCIC_IDSEL_AD_TO_SLOT(22)) अणु
+	} else if (slot == TX3927_PCIC_IDSEL_AD_TO_SLOT(22)) {
 		/* PCI CardSlot (IDSEL=A22, DevNu=11) */
 		/* PCIA => PCIA (IDSEL=A22) */
 		/* NOTE: JMR3927 JP1 must be set to OPEN */
 		irq = (irq + 0) % 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* PCI Backplane */
-		अगर (txx9_pci_option & TXX9_PCI_OPT_PICMG)
+		if (txx9_pci_option & TXX9_PCI_OPT_PICMG)
 			irq = (irq + 33 - slot) % 4;
-		अन्यथा
+		else
 			irq = (irq + 3 + slot) % 4;
-	पूर्ण
+	}
 	irq++;			/* 1-4 */
 
-	चयन (irq) अणु
-	हाल 1:
+	switch (irq) {
+	case 1:
 		irq = JMR3927_IRQ_IOC_PCIA;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		irq = JMR3927_IRQ_IOC_PCIB;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		irq = JMR3927_IRQ_IOC_PCIC;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		irq = JMR3927_IRQ_IOC_PCID;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Check OnBoard Ethernet (IDSEL=A24, DevNu=13) */
-	अगर (dev->bus->parent == शून्य &&
+	if (dev->bus->parent == NULL &&
 	    slot == TX3927_PCIC_IDSEL_AD_TO_SLOT(24))
 		irq = JMR3927_IRQ_ETHER0;
-	वापस irq;
-पूर्ण
+	return irq;
+}

@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#घोषणा SNDRV_GF1_SCALE_TABLE_SIZE	128
-#घोषणा SNDRV_GF1_ATTEN_TABLE_SIZE	128
+#define SNDRV_GF1_SCALE_TABLE_SIZE	128
+#define SNDRV_GF1_ATTEN_TABLE_SIZE	128
 
-#अगर_घोषित __GUS_TABLES_ALLOC__
+#ifdef __GUS_TABLES_ALLOC__
 
-#अगर 0
+#if 0
 
-अचिन्हित पूर्णांक snd_gf1_scale_table[SNDRV_GF1_SCALE_TABLE_SIZE] =
-अणु
+unsigned int snd_gf1_scale_table[SNDRV_GF1_SCALE_TABLE_SIZE] =
+{
       8372,      8870,      9397,      9956,     10548,     11175,
      11840,     12544,     13290,     14080,     14917,     15804,
      16744,     17740,     18795,     19912,     21096,     22351,
@@ -35,11 +34,11 @@
    6061989,   6422453,   6804352,   7208960,   7637627,   8091784,
    8572947,   9082720,   9622807,  10195009,  10801236,  11443511,
   12123977,  12844906
-पूर्ण;
+};
 
-#पूर्ण_अगर  /*  0  */
+#endif  /*  0  */
 
-अचिन्हित लघु snd_gf1_atten_table[SNDRV_GF1_ATTEN_TABLE_SIZE] = अणु
+unsigned short snd_gf1_atten_table[SNDRV_GF1_ATTEN_TABLE_SIZE] = {
   4095 /* 0   */,1789 /* 1   */,1533 /* 2   */,1383 /* 3   */,1277 /* 4   */,
   1195 /* 5   */,1127 /* 6   */,1070 /* 7   */,1021 /* 8   */,978  /* 9   */,
   939  /* 10  */,903  /* 11  */,871  /* 12  */,842  /* 13  */,814  /* 14  */,
@@ -66,11 +65,11 @@
   37   /* 115 */,33   /* 116 */,30   /* 117 */,27   /* 118 */,24   /* 119 */,
   21   /* 120 */,18   /* 121 */,15   /* 122 */,12   /* 123 */,9    /* 124 */,
   6    /* 125 */,3    /* 126 */,0    /* 127 */,
-पूर्ण;
+};
 
-#अन्यथा
+#else
 
-बाह्य अचिन्हित पूर्णांक snd_gf1_scale_table[SNDRV_GF1_SCALE_TABLE_SIZE];
-बाह्य अचिन्हित लघु snd_gf1_atten_table[SNDRV_GF1_ATTEN_TABLE_SIZE];
+extern unsigned int snd_gf1_scale_table[SNDRV_GF1_SCALE_TABLE_SIZE];
+extern unsigned short snd_gf1_atten_table[SNDRV_GF1_ATTEN_TABLE_SIZE];
 
-#पूर्ण_अगर
+#endif

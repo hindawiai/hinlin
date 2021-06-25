@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-#अगर_अघोषित _BRCM_PHY_LCN_H_
-#घोषणा _BRCM_PHY_LCN_H_
+#ifndef _BRCM_PHY_LCN_H_
+#define _BRCM_PHY_LCN_H_
 
-#समावेश <types.h>
+#include <types.h>
 
-काष्ठा brcms_phy_lcnphy अणु
-	पूर्णांक lcnphy_txrf_sp_9_override;
+struct brcms_phy_lcnphy {
+	int lcnphy_txrf_sp_9_override;
 	u8 lcnphy_full_cal_channel;
 	u8 lcnphy_cal_counter;
 	u16 lcnphy_cal_temper;
@@ -24,7 +23,7 @@
 	u8 lcnphy_tr_isolation_hi;
 
 	u8 lcnphy_bx_arch;
-	u8 lcnphy_rx_घातer_offset;
+	u8 lcnphy_rx_power_offset;
 	u8 lcnphy_rssi_vf;
 	u8 lcnphy_rssi_vc;
 	u8 lcnphy_rssi_gs;
@@ -49,14 +48,14 @@
 	u8 lcnphy_tempcorrx;
 	bool lcnphy_iqcal_swp_dis;
 	bool lcnphy_hw_iqcal_en;
-	uपूर्णांक lcnphy_bandedge_corr;
+	uint lcnphy_bandedge_corr;
 	bool lcnphy_spurmod;
 	u16 lcnphy_tssi_tx_cnt;
 	u16 lcnphy_tssi_idx;
 	u16 lcnphy_tssi_npt;
 
 	u16 lcnphy_target_tx_freq;
-	s8 lcnphy_tx_घातer_idx_override;
+	s8 lcnphy_tx_power_idx_override;
 	u16 lcnphy_noise_samples;
 
 	u32 lcnphy_papdRxGnIdx;
@@ -83,14 +82,14 @@
 	u8 lcnphy_lowerofdm;
 	u8 lcnphy_cck;
 	u8 lcnphy_psat_2pt3_detected;
-	s32 lcnphy_lowest_Re_भाग_Im;
+	s32 lcnphy_lowest_Re_div_Im;
 	s8 lcnphy_final_papd_cal_idx;
 	u16 lcnphy_extstxctrl4;
 	u16 lcnphy_extstxctrl0;
 	u16 lcnphy_extstxctrl1;
 	s16 lcnphy_cck_dig_filt_type;
 	s16 lcnphy_ofdm_dig_filt_type;
-	काष्ठा lcnphy_cal_results lcnphy_cal_results;
+	struct lcnphy_cal_results lcnphy_cal_results;
 
 	u8 lcnphy_psat_pwr;
 	u8 lcnphy_psat_indx;
@@ -105,7 +104,7 @@
 	u16 lcnphy_logen_mixer_1;
 
 	u8 lcnphy_aci_stat;
-	uपूर्णांक lcnphy_aci_start_समय;
-	s8 lcnphy_tx_घातer_offset[TXP_NUM_RATES];
-पूर्ण;
-#पूर्ण_अगर				/* _BRCM_PHY_LCN_H_ */
+	uint lcnphy_aci_start_time;
+	s8 lcnphy_tx_power_offset[TXP_NUM_RATES];
+};
+#endif				/* _BRCM_PHY_LCN_H_ */

@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2008 Openmoko, Inc.
  * Copyright 2008 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * S3C - FB platक्रमm data definitions
+ * S3C - FB platform data definitions
  */
 
-#अगर_अघोषित __PLAT_S3C_FB_H
-#घोषणा __PLAT_S3C_FB_H __खाता__
+#ifndef __PLAT_S3C_FB_H
+#define __PLAT_S3C_FB_H __FILE__
 
-#समावेश <linux/platक्रमm_data/video_s3c.h>
+#include <linux/platform_data/video_s3c.h>
 
 /**
- * s3c_fb_set_platdata() - Setup the FB device with platक्रमm data.
- * @pd: The platक्रमm data to set. The data is copied from the passed काष्ठाure
+ * s3c_fb_set_platdata() - Setup the FB device with platform data.
+ * @pd: The platform data to set. The data is copied from the passed structure
  *      so the machine data can mark the data __initdata so that any unused
- *      machines will end up dumping their data at runसमय.
+ *      machines will end up dumping their data at runtime.
  */
-बाह्य व्योम s3c_fb_set_platdata(काष्ठा s3c_fb_platdata *pd);
+extern void s3c_fb_set_platdata(struct s3c_fb_platdata *pd);
 
 /**
- * s3c64xx_fb_gpio_setup_24bpp() - S3C64XX setup function क्रम 24bpp LCD
+ * s3c64xx_fb_gpio_setup_24bpp() - S3C64XX setup function for 24bpp LCD
  *
- * Initialise the GPIO क्रम an 24bpp LCD display on the RGB पूर्णांकerface.
+ * Initialise the GPIO for an 24bpp LCD display on the RGB interface.
  */
-बाह्य व्योम s3c64xx_fb_gpio_setup_24bpp(व्योम);
+extern void s3c64xx_fb_gpio_setup_24bpp(void);
 
-#पूर्ण_अगर /* __PLAT_S3C_FB_H */
+#endif /* __PLAT_S3C_FB_H */

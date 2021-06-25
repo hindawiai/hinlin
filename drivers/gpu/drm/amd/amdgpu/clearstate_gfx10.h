@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,7 +21,7 @@
  *
  */
 
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_1[] = अणु
+static const unsigned int gfx10_SECT_CONTEXT_def_1[] = {
 	0x00000000, // DB_RENDER_CONTROL
 	0x00000000, // DB_COUNT_CONTROL
 	0x00000000, // DB_DEPTH_VIEW
@@ -238,8 +237,8 @@
 	0x00000000, // PA_SC_RASTER_CONFIG
 	0x00000000, // PA_SC_RASTER_CONFIG_1
 	0x00000000, // PA_SC_SCREEN_EXTENT_CONTROL
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_2[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_2[] = {
 	0x00000000, // CP_PERFMON_CNTX_CNTL
 	0x00000000, // CP_RINGID
 	0x00000000, // CP_VMID
@@ -512,14 +511,14 @@
 	0x00000000, // CB_BLEND5_CONTROL
 	0x00000000, // CB_BLEND6_CONTROL
 	0x00000000, // CB_BLEND7_CONTROL
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_3[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_3[] = {
 	0x00000000, // PA_CL_POINT_X_RAD
 	0x00000000, // PA_CL_POINT_Y_RAD
 	0x00000000, // PA_CL_POINT_SIZE
 	0x00000000, // PA_CL_POINT_CULL_RAD
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_4[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_4[] = {
 	0x00000000, // VGT_GS_MAX_PRIMS_PER_SUBGROUP
 	0x00000000, // DB_DEPTH_CONTROL
 	0x00000000, // DB_EQAA
@@ -529,7 +528,7 @@
 	0x00000004, // PA_SU_SC_MODE_CNTL
 	0x00000000, // PA_CL_VTE_CNTL
 	0x00000000, // PA_CL_VS_OUT_CNTL
-	0x00000000, // PA_CL_न_अंकINF_CNTL
+	0x00000000, // PA_CL_NANINF_CNTL
 	0x00000000, // PA_SU_LINE_STIPPLE_CNTL
 	0x00000000, // PA_SU_LINE_STIPPLE_SCALE
 	0x00000000, // PA_SU_PRIM_FILTER_CNTL
@@ -650,7 +649,7 @@
 	0, // HOLE
 	0, // HOLE
 	0x00000000, // PA_SU_POINT_SIZE
-	0x00000000, // PA_SU_POपूर्णांक_न्यूनMAX
+	0x00000000, // PA_SU_POINT_MINMAX
 	0x00000000, // PA_SU_LINE_CNTL
 	0x00000000, // PA_SC_LINE_STIPPLE
 	0x00000000, // VGT_OUTPUT_PATH_CNTL
@@ -678,15 +677,15 @@
 	0x00000000, // VGT_GSVS_RING_OFFSET_3
 	0x00000000, // VGT_GS_OUT_PRIM_TYPE
 	0x00000000, // IA_ENHANCE
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_5[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_5[] = {
 	0x00000000, // WD_ENHANCE
 	0x00000000, // VGT_PRIMITIVEID_EN
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_6[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_6[] = {
 	0x00000000, // VGT_PRIMITIVEID_RESET
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_7[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_7[] = {
 	0x00000000, // VGT_MULTI_PRIM_IB_RESET_EN
 	0x00000000, // VGT_DRAW_PAYLOAD_CNTL
 	0x00000000, // HOLE
@@ -753,8 +752,8 @@
 	0x00000000, // VGT_GS_INSTANCE_CNT
 	0x00000000, // VGT_STRMOUT_CONFIG
 	0x00000000, // VGT_STRMOUT_BUFFER_CONFIG
-पूर्ण;
-अटल स्थिर अचिन्हित पूर्णांक gfx10_SECT_CONTEXT_def_8[] = अणु
+};
+static const unsigned int gfx10_SECT_CONTEXT_def_8[] = {
 	0x00000000, // PA_SC_CENTROID_PRIORITY_0
 	0x00000000, // PA_SC_CENTROID_PRIORITY_1
 	0x00001000, // PA_SC_LINE_CNTL
@@ -958,19 +957,19 @@
 	0x00000000, // CB_COLOR5_ATTRIB3
 	0x00000000, // CB_COLOR6_ATTRIB3
 	0x00000000, // CB_COLOR7_ATTRIB3
-पूर्ण;
-अटल स्थिर काष्ठा cs_extent_def gfx10_SECT_CONTEXT_defs[] = अणु
-	अणुgfx10_SECT_CONTEXT_def_1, 0x0000a000, 215 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_2, 0x0000a0d8, 272 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_3, 0x0000a1f5, 4 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_4, 0x0000a1ff, 158 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_5, 0x0000a2a0, 2 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_6, 0x0000a2a3, 1 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_7, 0x0000a2a5, 66 पूर्ण,
-	अणुgfx10_SECT_CONTEXT_def_8, 0x0000a2f5, 203 पूर्ण,
-	अणु 0, 0, 0 पूर्ण
-पूर्ण;
-अटल स्थिर काष्ठा cs_section_def gfx10_cs_data[] = अणु
-	अणु gfx10_SECT_CONTEXT_defs, SECT_CONTEXT पूर्ण,
-	अणु 0, SECT_NONE पूर्ण
-पूर्ण;
+};
+static const struct cs_extent_def gfx10_SECT_CONTEXT_defs[] = {
+	{gfx10_SECT_CONTEXT_def_1, 0x0000a000, 215 },
+	{gfx10_SECT_CONTEXT_def_2, 0x0000a0d8, 272 },
+	{gfx10_SECT_CONTEXT_def_3, 0x0000a1f5, 4 },
+	{gfx10_SECT_CONTEXT_def_4, 0x0000a1ff, 158 },
+	{gfx10_SECT_CONTEXT_def_5, 0x0000a2a0, 2 },
+	{gfx10_SECT_CONTEXT_def_6, 0x0000a2a3, 1 },
+	{gfx10_SECT_CONTEXT_def_7, 0x0000a2a5, 66 },
+	{gfx10_SECT_CONTEXT_def_8, 0x0000a2f5, 203 },
+	{ 0, 0, 0 }
+};
+static const struct cs_section_def gfx10_cs_data[] = {
+	{ gfx10_SECT_CONTEXT_defs, SECT_CONTEXT },
+	{ 0, SECT_NONE }
+};

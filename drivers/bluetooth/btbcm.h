@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *
- *  Bluetooth support क्रम Broadcom devices
+ *  Bluetooth support for Broadcom devices
  *
  *  Copyright (C) 2015  Intel Corporation
  */
 
-#घोषणा BCM_UART_CLOCK_48MHZ	0x01
-#घोषणा BCM_UART_CLOCK_24MHZ	0x02
+#define BCM_UART_CLOCK_48MHZ	0x01
+#define BCM_UART_CLOCK_24MHZ	0x02
 
-काष्ठा bcm_update_uart_baud_rate अणु
+struct bcm_update_uart_baud_rate {
 	__le16 zero;
 	__le32 baud_rate;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bcm_ग_लिखो_uart_घड़ी_setting अणु
+struct bcm_write_uart_clock_setting {
 	__u8 type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bcm_set_sleep_mode अणु
+struct bcm_set_sleep_mode {
 	__u8 sleep_mode;
 	__u8 idle_host;
 	__u8 idle_dev;
@@ -28,91 +27,91 @@
 	__u8 allow_host_sleep;
 	__u8 combine_modes;
 	__u8 tristate_control;
-	__u8 usb_स्वतः_sleep;
-	__u8 usb_resume_समयout;
-	__u8 अवरोध_to_host;
+	__u8 usb_auto_sleep;
+	__u8 usb_resume_timeout;
+	__u8 break_to_host;
 	__u8 pulsed_host_wake;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा bcm_set_pcm_पूर्णांक_params अणु
+struct bcm_set_pcm_int_params {
 	__u8 routing;
 	__u8 rate;
 	__u8 frame_sync;
 	__u8 sync_mode;
-	__u8 घड़ी_mode;
-पूर्ण __packed;
+	__u8 clock_mode;
+} __packed;
 
-काष्ठा bcm_set_pcm_क्रमmat_params अणु
+struct bcm_set_pcm_format_params {
 	__u8 lsb_first;
 	__u8 fill_value;
 	__u8 fill_method;
 	__u8 fill_num;
-	__u8 right_justअगरy;
-पूर्ण __packed;
+	__u8 right_justify;
+} __packed;
 
-#अगर IS_ENABLED(CONFIG_BT_BCM)
+#if IS_ENABLED(CONFIG_BT_BCM)
 
-पूर्णांक btbcm_check_bdaddr(काष्ठा hci_dev *hdev);
-पूर्णांक btbcm_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr);
-पूर्णांक btbcm_patchram(काष्ठा hci_dev *hdev, स्थिर काष्ठा firmware *fw);
-पूर्णांक btbcm_पढ़ो_pcm_पूर्णांक_params(काष्ठा hci_dev *hdev,
-			      काष्ठा bcm_set_pcm_पूर्णांक_params *params);
-पूर्णांक btbcm_ग_लिखो_pcm_पूर्णांक_params(काष्ठा hci_dev *hdev,
-			       स्थिर काष्ठा bcm_set_pcm_पूर्णांक_params *params);
+int btbcm_check_bdaddr(struct hci_dev *hdev);
+int btbcm_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr);
+int btbcm_patchram(struct hci_dev *hdev, const struct firmware *fw);
+int btbcm_read_pcm_int_params(struct hci_dev *hdev,
+			      struct bcm_set_pcm_int_params *params);
+int btbcm_write_pcm_int_params(struct hci_dev *hdev,
+			       const struct bcm_set_pcm_int_params *params);
 
-पूर्णांक btbcm_setup_patchram(काष्ठा hci_dev *hdev);
-पूर्णांक btbcm_setup_apple(काष्ठा hci_dev *hdev);
+int btbcm_setup_patchram(struct hci_dev *hdev);
+int btbcm_setup_apple(struct hci_dev *hdev);
 
-पूर्णांक btbcm_initialize(काष्ठा hci_dev *hdev, bool *fw_load_करोne);
-पूर्णांक btbcm_finalize(काष्ठा hci_dev *hdev, bool *fw_load_करोne);
+int btbcm_initialize(struct hci_dev *hdev, bool *fw_load_done);
+int btbcm_finalize(struct hci_dev *hdev, bool *fw_load_done);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक btbcm_check_bdaddr(काष्ठा hci_dev *hdev)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int btbcm_check_bdaddr(struct hci_dev *hdev)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int btbcm_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_पढ़ो_pcm_पूर्णांक_params(काष्ठा hci_dev *hdev,
-			      काष्ठा bcm_set_pcm_पूर्णांक_params *params)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int btbcm_read_pcm_int_params(struct hci_dev *hdev,
+			      struct bcm_set_pcm_int_params *params)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_ग_लिखो_pcm_पूर्णांक_params(काष्ठा hci_dev *hdev,
-			       स्थिर काष्ठा bcm_set_pcm_पूर्णांक_params *params)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int btbcm_write_pcm_int_params(struct hci_dev *hdev,
+			       const struct bcm_set_pcm_int_params *params)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_patchram(काष्ठा hci_dev *hdev, स्थिर काष्ठा firmware *fw)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int btbcm_patchram(struct hci_dev *hdev, const struct firmware *fw)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_setup_patchram(काष्ठा hci_dev *hdev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int btbcm_setup_patchram(struct hci_dev *hdev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_setup_apple(काष्ठा hci_dev *hdev)
-अणु
-	वापस 0;
-पूर्ण
+static inline int btbcm_setup_apple(struct hci_dev *hdev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_initialize(काष्ठा hci_dev *hdev, bool *fw_load_करोne)
-अणु
-	वापस 0;
-पूर्ण
+static inline int btbcm_initialize(struct hci_dev *hdev, bool *fw_load_done)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक btbcm_finalize(काष्ठा hci_dev *hdev, bool *fw_load_करोne)
-अणु
-	वापस 0;
-पूर्ण
+static inline int btbcm_finalize(struct hci_dev *hdev, bool *fw_load_done)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

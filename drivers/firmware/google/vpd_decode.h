@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * vpd_decode.h
  *
@@ -8,27 +7,27 @@
  * Copyright 2017 Google Inc.
  */
 
-#अगर_अघोषित __VPD_DECODE_H
-#घोषणा __VPD_DECODE_H
+#ifndef __VPD_DECODE_H
+#define __VPD_DECODE_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत अणु
+enum {
 	VPD_OK = 0,
 	VPD_FAIL,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	VPD_TYPE_TERMINATOR = 0,
 	VPD_TYPE_STRING,
 	VPD_TYPE_INFO                = 0xfe,
 	VPD_TYPE_IMPLICIT_TERMINATOR = 0xff,
-पूर्ण;
+};
 
-/* Callback क्रम vpd_decode_string to invoke. */
-प्रकार पूर्णांक vpd_decode_callback(स्थिर u8 *key, u32 key_len,
-				स्थिर u8 *value, u32 value_len,
-				व्योम *arg);
+/* Callback for vpd_decode_string to invoke. */
+typedef int vpd_decode_callback(const u8 *key, u32 key_len,
+				const u8 *value, u32 value_len,
+				void *arg);
 
 /*
  * vpd_decode_string
@@ -37,15 +36,15 @@
  * (key, value). The *consumed will be plused the number of bytes consumed in
  * this function.
  *
- * The input_buf poपूर्णांकs to the first byte of the input buffer.
+ * The input_buf points to the first byte of the input buffer.
  *
  * The *consumed starts from 0, which is actually the next byte to be decoded.
  * It can be non-zero to be used in multiple calls.
  *
- * If one entry is successfully decoded, sends it to callback and वापसs the
+ * If one entry is successfully decoded, sends it to callback and returns the
  * result.
  */
-पूर्णांक vpd_decode_string(स्थिर u32 max_len, स्थिर u8 *input_buf, u32 *consumed,
-		      vpd_decode_callback callback, व्योम *callback_arg);
+int vpd_decode_string(const u32 max_len, const u8 *input_buf, u32 *consumed,
+		      vpd_decode_callback callback, void *callback_arg);
 
-#पूर्ण_अगर  /* __VPD_DECODE_H */
+#endif  /* __VPD_DECODE_H */

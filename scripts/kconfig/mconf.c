@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  *
  * Introduced single menu mode (show all sub-menus in one large tree).
  * 2002-11-06 Petr Baudis <pasky@ucw.cz>
  *
- * i18n, 2005, Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ * i18n, 2005, Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <मानकतर्क.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <strings.h>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <signal.h>
+#include <unistd.h>
 
-#समावेश "lkc.h"
-#समावेश "lxdialog/dialog.h"
+#include "lkc.h"
+#include "lxdialog/dialog.h"
 
-#घोषणा JUMP_NB			9
+#define JUMP_NB			9
 
-अटल स्थिर अक्षर mconf_पढ़ोme[] =
+static const char mconf_readme[] =
 "Overview\n"
 "--------\n"
 "This interface lets you select features and parameters for the build.\n"
@@ -175,29 +174,29 @@
 " classic    => theme with blue background. The classic look\n"
 " bluetitle  => an LCD friendly version of classic. (default)\n"
 "\n",
-menu_inकाष्ठाions[] =
+menu_instructions[] =
 	"Arrow keys navigate the menu.  "
 	"<Enter> selects submenus ---> (or empty submenus ----).  "
 	"Highlighted letters are hotkeys.  "
 	"Pressing <Y> includes, <N> excludes, <M> modularizes features.  "
 	"Press <Esc><Esc> to exit, <?> for Help, </> for Search.  "
 	"Legend: [*] built-in  [ ] excluded  <M> module  < > module capable",
-radiolist_inकाष्ठाions[] =
+radiolist_instructions[] =
 	"Use the arrow keys to navigate this window or "
 	"press the hotkey of the item you wish to select "
 	"followed by the <SPACE BAR>. "
 	"Press <?> for additional information about this option.",
-inputbox_inकाष्ठाions_पूर्णांक[] =
+inputbox_instructions_int[] =
 	"Please enter a decimal value. "
 	"Fractions will not be accepted.  "
 	"Use the <TAB> key to move from the input field to the buttons below it.",
-inputbox_inकाष्ठाions_hex[] =
+inputbox_instructions_hex[] =
 	"Please enter a hexadecimal value. "
 	"Use the <TAB> key to move from the input field to the buttons below it.",
-inputbox_inकाष्ठाions_string[] =
+inputbox_instructions_string[] =
 	"Please enter a string value. "
 	"Use the <TAB> key to move from the input field to the buttons below it.",
-seपंचांगod_text[] =
+setmod_text[] =
 	"This feature depends on another which has been configured as a module.\n"
 	"As a result, this feature will be built as a module.",
 load_config_text[] =
@@ -272,133 +271,133 @@ search_help[] =
 	"\n\n"
 	"Search examples:\n"
 	"Examples: USB	=> find all symbols containing USB\n"
-	"          ^USB => find all symbols starting with USB\न"
+	"          ^USB => find all symbols starting with USB\n"
 	"          USB$ => find all symbols ending with USB\n"
 	"\n";
 
-अटल पूर्णांक indent;
-अटल काष्ठा menu *current_menu;
-अटल पूर्णांक child_count;
-अटल पूर्णांक single_menu_mode;
-अटल पूर्णांक show_all_options;
-अटल पूर्णांक save_and_निकास;
-अटल पूर्णांक silent;
+static int indent;
+static struct menu *current_menu;
+static int child_count;
+static int single_menu_mode;
+static int show_all_options;
+static int save_and_exit;
+static int silent;
 
-अटल व्योम conf(काष्ठा menu *menu, काष्ठा menu *active_menu);
-अटल व्योम conf_choice(काष्ठा menu *menu);
-अटल व्योम conf_string(काष्ठा menu *menu);
-अटल व्योम conf_load(व्योम);
-अटल व्योम conf_save(व्योम);
-अटल पूर्णांक show_textbox_ext(स्थिर अक्षर *title, अक्षर *text, पूर्णांक r, पूर्णांक c,
-			    पूर्णांक *keys, पूर्णांक *vscroll, पूर्णांक *hscroll,
-			    update_text_fn update_text, व्योम *data);
-अटल व्योम show_textbox(स्थिर अक्षर *title, स्थिर अक्षर *text, पूर्णांक r, पूर्णांक c);
-अटल व्योम show_helptext(स्थिर अक्षर *title, स्थिर अक्षर *text);
-अटल व्योम show_help(काष्ठा menu *menu);
+static void conf(struct menu *menu, struct menu *active_menu);
+static void conf_choice(struct menu *menu);
+static void conf_string(struct menu *menu);
+static void conf_load(void);
+static void conf_save(void);
+static int show_textbox_ext(const char *title, char *text, int r, int c,
+			    int *keys, int *vscroll, int *hscroll,
+			    update_text_fn update_text, void *data);
+static void show_textbox(const char *title, const char *text, int r, int c);
+static void show_helptext(const char *title, const char *text);
+static void show_help(struct menu *menu);
 
-अटल अक्षर filename[PATH_MAX+1];
-अटल व्योम set_config_filename(स्थिर अक्षर *config_filename)
-अणु
-	अटल अक्षर menu_backtitle[PATH_MAX+128];
+static char filename[PATH_MAX+1];
+static void set_config_filename(const char *config_filename)
+{
+	static char menu_backtitle[PATH_MAX+128];
 
-	snम_लिखो(menu_backtitle, माप(menu_backtitle), "%s - %s",
-		 config_filename, rooपंचांगenu.prompt->text);
+	snprintf(menu_backtitle, sizeof(menu_backtitle), "%s - %s",
+		 config_filename, rootmenu.prompt->text);
 	set_dialog_backtitle(menu_backtitle);
 
-	snम_लिखो(filename, माप(filename), "%s", config_filename);
-पूर्ण
+	snprintf(filename, sizeof(filename), "%s", config_filename);
+}
 
-काष्ठा subtitle_part अणु
-	काष्ठा list_head entries;
-	स्थिर अक्षर *text;
-पूर्ण;
-अटल LIST_HEAD(trail);
+struct subtitle_part {
+	struct list_head entries;
+	const char *text;
+};
+static LIST_HEAD(trail);
 
-अटल काष्ठा subtitle_list *subtitles;
-अटल व्योम set_subtitle(व्योम)
-अणु
-	काष्ठा subtitle_part *sp;
-	काष्ठा subtitle_list *pos, *पंचांगp;
+static struct subtitle_list *subtitles;
+static void set_subtitle(void)
+{
+	struct subtitle_part *sp;
+	struct subtitle_list *pos, *tmp;
 
-	क्रम (pos = subtitles; pos != शून्य; pos = पंचांगp) अणु
-		पंचांगp = pos->next;
-		मुक्त(pos);
-	पूर्ण
+	for (pos = subtitles; pos != NULL; pos = tmp) {
+		tmp = pos->next;
+		free(pos);
+	}
 
-	subtitles = शून्य;
-	list_क्रम_each_entry(sp, &trail, entries) अणु
-		अगर (sp->text) अणु
-			अगर (pos) अणु
-				pos->next = xसुस्मृति(1, माप(*pos));
+	subtitles = NULL;
+	list_for_each_entry(sp, &trail, entries) {
+		if (sp->text) {
+			if (pos) {
+				pos->next = xcalloc(1, sizeof(*pos));
 				pos = pos->next;
-			पूर्ण अन्यथा अणु
-				subtitles = pos = xसुस्मृति(1, माप(*pos));
-			पूर्ण
+			} else {
+				subtitles = pos = xcalloc(1, sizeof(*pos));
+			}
 			pos->text = sp->text;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	set_dialog_subtitles(subtitles);
-पूर्ण
+}
 
-अटल व्योम reset_subtitle(व्योम)
-अणु
-	काष्ठा subtitle_list *pos, *पंचांगp;
+static void reset_subtitle(void)
+{
+	struct subtitle_list *pos, *tmp;
 
-	क्रम (pos = subtitles; pos != शून्य; pos = पंचांगp) अणु
-		पंचांगp = pos->next;
-		मुक्त(pos);
-	पूर्ण
-	subtitles = शून्य;
+	for (pos = subtitles; pos != NULL; pos = tmp) {
+		tmp = pos->next;
+		free(pos);
+	}
+	subtitles = NULL;
 	set_dialog_subtitles(subtitles);
-पूर्ण
+}
 
-काष्ठा search_data अणु
-	काष्ठा list_head *head;
-	काष्ठा menu **tarमाला_लो;
-	पूर्णांक *keys;
-पूर्ण;
+struct search_data {
+	struct list_head *head;
+	struct menu **targets;
+	int *keys;
+};
 
-अटल व्योम update_text(अक्षर *buf, माप_प्रकार start, माप_प्रकार end, व्योम *_data)
-अणु
-	काष्ठा search_data *data = _data;
-	काष्ठा jump_key *pos;
-	पूर्णांक k = 0;
+static void update_text(char *buf, size_t start, size_t end, void *_data)
+{
+	struct search_data *data = _data;
+	struct jump_key *pos;
+	int k = 0;
 
-	list_क्रम_each_entry(pos, data->head, entries) अणु
-		अगर (pos->offset >= start && pos->offset < end) अणु
-			अक्षर header[4];
+	list_for_each_entry(pos, data->head, entries) {
+		if (pos->offset >= start && pos->offset < end) {
+			char header[4];
 
-			अगर (k < JUMP_NB) अणु
-				पूर्णांक key = '0' + (pos->index % JUMP_NB) + 1;
+			if (k < JUMP_NB) {
+				int key = '0' + (pos->index % JUMP_NB) + 1;
 
-				प्र_लिखो(header, "(%c)", key);
+				sprintf(header, "(%c)", key);
 				data->keys[k] = key;
-				data->tarमाला_लो[k] = pos->target;
+				data->targets[k] = pos->target;
 				k++;
-			पूर्ण अन्यथा अणु
-				प्र_लिखो(header, "   ");
-			पूर्ण
+			} else {
+				sprintf(header, "   ");
+			}
 
-			स_नकल(buf + pos->offset, header, माप(header) - 1);
-		पूर्ण
-	पूर्ण
+			memcpy(buf + pos->offset, header, sizeof(header) - 1);
+		}
+	}
 	data->keys[k] = 0;
-पूर्ण
+}
 
-अटल व्योम search_conf(व्योम)
-अणु
-	काष्ठा symbol **sym_arr;
-	काष्ठा gstr res;
-	काष्ठा gstr title;
-	अक्षर *dialog_input;
-	पूर्णांक dres, vscroll = 0, hscroll = 0;
+static void search_conf(void)
+{
+	struct symbol **sym_arr;
+	struct gstr res;
+	struct gstr title;
+	char *dialog_input;
+	int dres, vscroll = 0, hscroll = 0;
 	bool again;
-	काष्ठा gstr sttext;
-	काष्ठा subtitle_part stpart;
+	struct gstr sttext;
+	struct subtitle_part stpart;
 
 	title = str_new();
-	str_म_लिखो( &title, "Enter (sub)string or regexp to search for "
+	str_printf( &title, "Enter (sub)string or regexp to search for "
 			      "(with or without \"%s\")", CONFIG_);
 
 again:
@@ -406,69 +405,69 @@ again:
 	dres = dialog_inputbox("Search Configuration Parameter",
 			      str_get(&title),
 			      10, 75, "");
-	चयन (dres) अणु
-	हाल 0:
-		अवरोध;
-	हाल 1:
+	switch (dres) {
+	case 0:
+		break;
+	case 1:
 		show_helptext("Search Configuration", search_help);
-		जाओ again;
-	शेष:
-		str_मुक्त(&title);
-		वापस;
-	पूर्ण
+		goto again;
+	default:
+		str_free(&title);
+		return;
+	}
 
-	/* strip the prefix अगर necessary */
+	/* strip the prefix if necessary */
 	dialog_input = dialog_input_result;
-	अगर (strnहालcmp(dialog_input_result, CONFIG_, म_माप(CONFIG_)) == 0)
-		dialog_input += म_माप(CONFIG_);
+	if (strncasecmp(dialog_input_result, CONFIG_, strlen(CONFIG_)) == 0)
+		dialog_input += strlen(CONFIG_);
 
 	sttext = str_new();
-	str_म_लिखो(&sttext, "Search (%s)", dialog_input_result);
+	str_printf(&sttext, "Search (%s)", dialog_input_result);
 	stpart.text = str_get(&sttext);
 	list_add_tail(&stpart.entries, &trail);
 
 	sym_arr = sym_re_search(dialog_input);
-	करो अणु
+	do {
 		LIST_HEAD(head);
-		काष्ठा menu *tarमाला_लो[JUMP_NB];
-		पूर्णांक keys[JUMP_NB + 1], i;
-		काष्ठा search_data data = अणु
+		struct menu *targets[JUMP_NB];
+		int keys[JUMP_NB + 1], i;
+		struct search_data data = {
 			.head = &head,
-			.tarमाला_लो = tarमाला_लो,
+			.targets = targets,
 			.keys = keys,
-		पूर्ण;
-		काष्ठा jump_key *pos, *पंचांगp;
+		};
+		struct jump_key *pos, *tmp;
 
 		res = get_relations_str(sym_arr, &head);
 		set_subtitle();
-		dres = show_textbox_ext("Search Results", (अक्षर *)
+		dres = show_textbox_ext("Search Results", (char *)
 					str_get(&res), 0, 0, keys, &vscroll,
-					&hscroll, &update_text, (व्योम *)
+					&hscroll, &update_text, (void *)
 					&data);
 		again = false;
-		क्रम (i = 0; i < JUMP_NB && keys[i]; i++)
-			अगर (dres == keys[i]) अणु
-				conf(tarमाला_लो[i]->parent, tarमाला_लो[i]);
+		for (i = 0; i < JUMP_NB && keys[i]; i++)
+			if (dres == keys[i]) {
+				conf(targets[i]->parent, targets[i]);
 				again = true;
-			पूर्ण
-		str_मुक्त(&res);
-		list_क्रम_each_entry_safe(pos, पंचांगp, &head, entries)
-			मुक्त(pos);
-	पूर्ण जबतक (again);
-	मुक्त(sym_arr);
-	str_मुक्त(&title);
+			}
+		str_free(&res);
+		list_for_each_entry_safe(pos, tmp, &head, entries)
+			free(pos);
+	} while (again);
+	free(sym_arr);
+	str_free(&title);
 	list_del(trail.prev);
-	str_मुक्त(&sttext);
-पूर्ण
+	str_free(&sttext);
+}
 
-अटल व्योम build_conf(काष्ठा menu *menu)
-अणु
-	काष्ठा symbol *sym;
-	काष्ठा property *prop;
-	काष्ठा menu *child;
-	पूर्णांक type, पंचांगp, करोपूर्णांक = 2;
+static void build_conf(struct menu *menu)
+{
+	struct symbol *sym;
+	struct property *prop;
+	struct menu *child;
+	int type, tmp, doint = 2;
 	tristate val;
-	अक्षर ch;
+	char ch;
 	bool visible;
 
 	/*
@@ -476,563 +475,563 @@ again:
 	 * recalc the value of the symbol.
 	 */
 	visible = menu_is_visible(menu);
-	अगर (show_all_options && !menu_has_prompt(menu))
-		वापस;
-	अन्यथा अगर (!show_all_options && !visible)
-		वापस;
+	if (show_all_options && !menu_has_prompt(menu))
+		return;
+	else if (!show_all_options && !visible)
+		return;
 
 	sym = menu->sym;
 	prop = menu->prompt;
-	अगर (!sym) अणु
-		अगर (prop && menu != current_menu) अणु
-			स्थिर अक्षर *prompt = menu_get_prompt(menu);
-			चयन (prop->type) अणु
-			हाल P_MENU:
+	if (!sym) {
+		if (prop && menu != current_menu) {
+			const char *prompt = menu_get_prompt(menu);
+			switch (prop->type) {
+			case P_MENU:
 				child_count++;
-				अगर (single_menu_mode) अणु
+				if (single_menu_mode) {
 					item_make("%s%*c%s",
 						  menu->data ? "-->" : "++>",
 						  indent + 1, ' ', prompt);
-				पूर्ण अन्यथा
+				} else
 					item_make("   %*c%s  %s",
 						  indent + 1, ' ', prompt,
 						  menu_is_empty(menu) ? "----" : "--->");
 				item_set_tag('m');
 				item_set_data(menu);
-				अगर (single_menu_mode && menu->data)
-					जाओ conf_childs;
-				वापस;
-			हाल P_COMMENT:
-				अगर (prompt) अणु
+				if (single_menu_mode && menu->data)
+					goto conf_childs;
+				return;
+			case P_COMMENT:
+				if (prompt) {
 					child_count++;
 					item_make("   %*c*** %s ***", indent + 1, ' ', prompt);
 					item_set_tag(':');
 					item_set_data(menu);
-				पूर्ण
-				अवरोध;
-			शेष:
-				अगर (prompt) अणु
+				}
+				break;
+			default:
+				if (prompt) {
 					child_count++;
 					item_make("---%*c%s", indent + 1, ' ', prompt);
 					item_set_tag(':');
 					item_set_data(menu);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा
-			करोपूर्णांक = 0;
-		जाओ conf_childs;
-	पूर्ण
+				}
+			}
+		} else
+			doint = 0;
+		goto conf_childs;
+	}
 
 	type = sym_get_type(sym);
-	अगर (sym_is_choice(sym)) अणु
-		काष्ठा symbol *def_sym = sym_get_choice_value(sym);
-		काष्ठा menu *def_menu = शून्य;
+	if (sym_is_choice(sym)) {
+		struct symbol *def_sym = sym_get_choice_value(sym);
+		struct menu *def_menu = NULL;
 
 		child_count++;
-		क्रम (child = menu->list; child; child = child->next) अणु
-			अगर (menu_is_visible(child) && child->sym == def_sym)
+		for (child = menu->list; child; child = child->next) {
+			if (menu_is_visible(child) && child->sym == def_sym)
 				def_menu = child;
-		पूर्ण
+		}
 
 		val = sym_get_tristate_value(sym);
-		अगर (sym_is_changeable(sym)) अणु
-			चयन (type) अणु
-			हाल S_BOOLEAN:
+		if (sym_is_changeable(sym)) {
+			switch (type) {
+			case S_BOOLEAN:
 				item_make("[%c]", val == no ? ' ' : '*');
-				अवरोध;
-			हाल S_TRISTATE:
-				चयन (val) अणु
-				हाल yes: ch = '*'; अवरोध;
-				हाल mod: ch = 'M'; अवरोध;
-				शेष:  ch = ' '; अवरोध;
-				पूर्ण
+				break;
+			case S_TRISTATE:
+				switch (val) {
+				case yes: ch = '*'; break;
+				case mod: ch = 'M'; break;
+				default:  ch = ' '; break;
+				}
 				item_make("<%c>", ch);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			item_set_tag('t');
 			item_set_data(menu);
-		पूर्ण अन्यथा अणु
+		} else {
 			item_make("   ");
 			item_set_tag(def_menu ? 't' : ':');
 			item_set_data(menu);
-		पूर्ण
+		}
 
 		item_add_str("%*c%s", indent + 1, ' ', menu_get_prompt(menu));
-		अगर (val == yes) अणु
-			अगर (def_menu) अणु
+		if (val == yes) {
+			if (def_menu) {
 				item_add_str(" (%s)", menu_get_prompt(def_menu));
 				item_add_str("  --->");
-				अगर (def_menu->list) अणु
+				if (def_menu->list) {
 					indent += 2;
 					build_conf(def_menu);
 					indent -= 2;
-				पूर्ण
-			पूर्ण
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (menu == current_menu) अणु
+				}
+			}
+			return;
+		}
+	} else {
+		if (menu == current_menu) {
 			item_make("---%*c%s", indent + 1, ' ', menu_get_prompt(menu));
 			item_set_tag(':');
 			item_set_data(menu);
-			जाओ conf_childs;
-		पूर्ण
+			goto conf_childs;
+		}
 		child_count++;
 		val = sym_get_tristate_value(sym);
-		अगर (sym_is_choice_value(sym) && val == yes) अणु
+		if (sym_is_choice_value(sym) && val == yes) {
 			item_make("   ");
 			item_set_tag(':');
 			item_set_data(menu);
-		पूर्ण अन्यथा अणु
-			चयन (type) अणु
-			हाल S_BOOLEAN:
-				अगर (sym_is_changeable(sym))
+		} else {
+			switch (type) {
+			case S_BOOLEAN:
+				if (sym_is_changeable(sym))
 					item_make("[%c]", val == no ? ' ' : '*');
-				अन्यथा
+				else
 					item_make("-%c-", val == no ? ' ' : '*');
 				item_set_tag('t');
 				item_set_data(menu);
-				अवरोध;
-			हाल S_TRISTATE:
-				चयन (val) अणु
-				हाल yes: ch = '*'; अवरोध;
-				हाल mod: ch = 'M'; अवरोध;
-				शेष:  ch = ' '; अवरोध;
-				पूर्ण
-				अगर (sym_is_changeable(sym)) अणु
-					अगर (sym->rev_dep.tri == mod)
+				break;
+			case S_TRISTATE:
+				switch (val) {
+				case yes: ch = '*'; break;
+				case mod: ch = 'M'; break;
+				default:  ch = ' '; break;
+				}
+				if (sym_is_changeable(sym)) {
+					if (sym->rev_dep.tri == mod)
 						item_make("{%c}", ch);
-					अन्यथा
+					else
 						item_make("<%c>", ch);
-				पूर्ण अन्यथा
+				} else
 					item_make("-%c-", ch);
 				item_set_tag('t');
 				item_set_data(menu);
-				अवरोध;
-			शेष:
-				पंचांगp = 2 + म_माप(sym_get_string_value(sym)); /* () = 2 */
+				break;
+			default:
+				tmp = 2 + strlen(sym_get_string_value(sym)); /* () = 2 */
 				item_make("(%s)", sym_get_string_value(sym));
-				पंचांगp = indent - पंचांगp + 4;
-				अगर (पंचांगp < 0)
-					पंचांगp = 0;
-				item_add_str("%*c%s%s", पंचांगp, ' ', menu_get_prompt(menu),
+				tmp = indent - tmp + 4;
+				if (tmp < 0)
+					tmp = 0;
+				item_add_str("%*c%s%s", tmp, ' ', menu_get_prompt(menu),
 					     (sym_has_value(sym) || !sym_is_changeable(sym)) ?
 					     "" : " (NEW)");
 				item_set_tag('s');
 				item_set_data(menu);
-				जाओ conf_childs;
-			पूर्ण
-		पूर्ण
+				goto conf_childs;
+			}
+		}
 		item_add_str("%*c%s%s", indent + 1, ' ', menu_get_prompt(menu),
 			  (sym_has_value(sym) || !sym_is_changeable(sym)) ?
 			  "" : " (NEW)");
-		अगर (menu->prompt->type == P_MENU) अणु
+		if (menu->prompt->type == P_MENU) {
 			item_add_str("  %s", menu_is_empty(menu) ? "----" : "--->");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 conf_childs:
-	indent += करोपूर्णांक;
-	क्रम (child = menu->list; child; child = child->next)
+	indent += doint;
+	for (child = menu->list; child; child = child->next)
 		build_conf(child);
-	indent -= करोपूर्णांक;
-पूर्ण
+	indent -= doint;
+}
 
-अटल व्योम conf(काष्ठा menu *menu, काष्ठा menu *active_menu)
-अणु
-	काष्ठा menu *submenu;
-	स्थिर अक्षर *prompt = menu_get_prompt(menu);
-	काष्ठा subtitle_part stpart;
-	काष्ठा symbol *sym;
-	पूर्णांक res;
-	पूर्णांक s_scroll = 0;
+static void conf(struct menu *menu, struct menu *active_menu)
+{
+	struct menu *submenu;
+	const char *prompt = menu_get_prompt(menu);
+	struct subtitle_part stpart;
+	struct symbol *sym;
+	int res;
+	int s_scroll = 0;
 
-	अगर (menu != &rooपंचांगenu)
+	if (menu != &rootmenu)
 		stpart.text = menu_get_prompt(menu);
-	अन्यथा
-		stpart.text = शून्य;
+	else
+		stpart.text = NULL;
 	list_add_tail(&stpart.entries, &trail);
 
-	जबतक (1) अणु
+	while (1) {
 		item_reset();
 		current_menu = menu;
 		build_conf(menu);
-		अगर (!child_count)
-			अवरोध;
+		if (!child_count)
+			break;
 		set_subtitle();
 		dialog_clear();
 		res = dialog_menu(prompt ? prompt : "Main Menu",
-				  menu_inकाष्ठाions,
+				  menu_instructions,
 				  active_menu, &s_scroll);
-		अगर (res == 1 || res == KEY_ESC || res == -ERRDISPLAYTOOSMALL)
-			अवरोध;
-		अगर (item_count() != 0) अणु
-			अगर (!item_activate_selected())
-				जारी;
-			अगर (!item_tag())
-				जारी;
-		पूर्ण
+		if (res == 1 || res == KEY_ESC || res == -ERRDISPLAYTOOSMALL)
+			break;
+		if (item_count() != 0) {
+			if (!item_activate_selected())
+				continue;
+			if (!item_tag())
+				continue;
+		}
 		submenu = item_data();
 		active_menu = item_data();
-		अगर (submenu)
+		if (submenu)
 			sym = submenu->sym;
-		अन्यथा
-			sym = शून्य;
+		else
+			sym = NULL;
 
-		चयन (res) अणु
-		हाल 0:
-			चयन (item_tag()) अणु
-			हाल 'm':
-				अगर (single_menu_mode)
-					submenu->data = (व्योम *) (दीर्घ) !submenu->data;
-				अन्यथा
-					conf(submenu, शून्य);
-				अवरोध;
-			हाल 't':
-				अगर (sym_is_choice(sym) && sym_get_tristate_value(sym) == yes)
+		switch (res) {
+		case 0:
+			switch (item_tag()) {
+			case 'm':
+				if (single_menu_mode)
+					submenu->data = (void *) (long) !submenu->data;
+				else
+					conf(submenu, NULL);
+				break;
+			case 't':
+				if (sym_is_choice(sym) && sym_get_tristate_value(sym) == yes)
 					conf_choice(submenu);
-				अन्यथा अगर (submenu->prompt->type == P_MENU)
-					conf(submenu, शून्य);
-				अवरोध;
-			हाल 's':
+				else if (submenu->prompt->type == P_MENU)
+					conf(submenu, NULL);
+				break;
+			case 's':
 				conf_string(submenu);
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल 2:
-			अगर (sym)
+				break;
+			}
+			break;
+		case 2:
+			if (sym)
 				show_help(submenu);
-			अन्यथा अणु
+			else {
 				reset_subtitle();
-				show_helptext("README", mconf_पढ़ोme);
-			पूर्ण
-			अवरोध;
-		हाल 3:
+				show_helptext("README", mconf_readme);
+			}
+			break;
+		case 3:
 			reset_subtitle();
 			conf_save();
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			reset_subtitle();
 			conf_load();
-			अवरोध;
-		हाल 5:
-			अगर (item_is_tag('t')) अणु
-				अगर (sym_set_tristate_value(sym, yes))
-					अवरोध;
-				अगर (sym_set_tristate_value(sym, mod))
-					show_textbox(शून्य, seपंचांगod_text, 6, 74);
-			पूर्ण
-			अवरोध;
-		हाल 6:
-			अगर (item_is_tag('t'))
+			break;
+		case 5:
+			if (item_is_tag('t')) {
+				if (sym_set_tristate_value(sym, yes))
+					break;
+				if (sym_set_tristate_value(sym, mod))
+					show_textbox(NULL, setmod_text, 6, 74);
+			}
+			break;
+		case 6:
+			if (item_is_tag('t'))
 				sym_set_tristate_value(sym, no);
-			अवरोध;
-		हाल 7:
-			अगर (item_is_tag('t'))
+			break;
+		case 7:
+			if (item_is_tag('t'))
 				sym_set_tristate_value(sym, mod);
-			अवरोध;
-		हाल 8:
-			अगर (item_is_tag('t'))
+			break;
+		case 8:
+			if (item_is_tag('t'))
 				sym_toggle_tristate_value(sym);
-			अन्यथा अगर (item_is_tag('m'))
-				conf(submenu, शून्य);
-			अवरोध;
-		हाल 9:
+			else if (item_is_tag('m'))
+				conf(submenu, NULL);
+			break;
+		case 9:
 			search_conf();
-			अवरोध;
-		हाल 10:
+			break;
+		case 10:
 			show_all_options = !show_all_options;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	list_del(trail.prev);
-पूर्ण
+}
 
-अटल पूर्णांक show_textbox_ext(स्थिर अक्षर *title, अक्षर *text, पूर्णांक r, पूर्णांक c, पूर्णांक
-			    *keys, पूर्णांक *vscroll, पूर्णांक *hscroll, update_text_fn
-			    update_text, व्योम *data)
-अणु
+static int show_textbox_ext(const char *title, char *text, int r, int c, int
+			    *keys, int *vscroll, int *hscroll, update_text_fn
+			    update_text, void *data)
+{
 	dialog_clear();
-	वापस dialog_textbox(title, text, r, c, keys, vscroll, hscroll,
+	return dialog_textbox(title, text, r, c, keys, vscroll, hscroll,
 			      update_text, data);
-पूर्ण
+}
 
-अटल व्योम show_textbox(स्थिर अक्षर *title, स्थिर अक्षर *text, पूर्णांक r, पूर्णांक c)
-अणु
-	show_textbox_ext(title, (अक्षर *) text, r, c, (पूर्णांक []) अणु0पूर्ण, शून्य, शून्य,
-			 शून्य, शून्य);
-पूर्ण
+static void show_textbox(const char *title, const char *text, int r, int c)
+{
+	show_textbox_ext(title, (char *) text, r, c, (int []) {0}, NULL, NULL,
+			 NULL, NULL);
+}
 
-अटल व्योम show_helptext(स्थिर अक्षर *title, स्थिर अक्षर *text)
-अणु
+static void show_helptext(const char *title, const char *text)
+{
 	show_textbox(title, text, 0, 0);
-पूर्ण
+}
 
-अटल व्योम conf_message_callback(स्थिर अक्षर *s)
-अणु
-	अगर (save_and_निकास) अणु
-		अगर (!silent)
-			म_लिखो("%s", s);
-	पूर्ण अन्यथा अणु
-		show_textbox(शून्य, s, 6, 60);
-	पूर्ण
-पूर्ण
+static void conf_message_callback(const char *s)
+{
+	if (save_and_exit) {
+		if (!silent)
+			printf("%s", s);
+	} else {
+		show_textbox(NULL, s, 6, 60);
+	}
+}
 
-अटल व्योम show_help(काष्ठा menu *menu)
-अणु
-	काष्ठा gstr help = str_new();
+static void show_help(struct menu *menu)
+{
+	struct gstr help = str_new();
 
-	help.max_width = geपंचांगaxx(stdscr) - 10;
+	help.max_width = getmaxx(stdscr) - 10;
 	menu_get_ext_help(menu, &help);
 
 	show_helptext(menu_get_prompt(menu), str_get(&help));
-	str_मुक्त(&help);
-पूर्ण
+	str_free(&help);
+}
 
-अटल व्योम conf_choice(काष्ठा menu *menu)
-अणु
-	स्थिर अक्षर *prompt = menu_get_prompt(menu);
-	काष्ठा menu *child;
-	काष्ठा symbol *active;
+static void conf_choice(struct menu *menu)
+{
+	const char *prompt = menu_get_prompt(menu);
+	struct menu *child;
+	struct symbol *active;
 
 	active = sym_get_choice_value(menu->sym);
-	जबतक (1) अणु
-		पूर्णांक res;
-		पूर्णांक selected;
+	while (1) {
+		int res;
+		int selected;
 		item_reset();
 
 		current_menu = menu;
-		क्रम (child = menu->list; child; child = child->next) अणु
-			अगर (!menu_is_visible(child))
-				जारी;
-			अगर (child->sym)
+		for (child = menu->list; child; child = child->next) {
+			if (!menu_is_visible(child))
+				continue;
+			if (child->sym)
 				item_make("%s", menu_get_prompt(child));
-			अन्यथा अणु
+			else {
 				item_make("*** %s ***", menu_get_prompt(child));
 				item_set_tag(':');
-			पूर्ण
+			}
 			item_set_data(child);
-			अगर (child->sym == active)
+			if (child->sym == active)
 				item_set_selected(1);
-			अगर (child->sym == sym_get_choice_value(menu->sym))
+			if (child->sym == sym_get_choice_value(menu->sym))
 				item_set_tag('X');
-		पूर्ण
+		}
 		dialog_clear();
 		res = dialog_checklist(prompt ? prompt : "Main Menu",
-					radiolist_inकाष्ठाions,
+					radiolist_instructions,
 					MENUBOX_HEIGTH_MIN,
 					MENUBOX_WIDTH_MIN,
 					CHECKLIST_HEIGTH_MIN);
 		selected = item_activate_selected();
-		चयन (res) अणु
-		हाल 0:
-			अगर (selected) अणु
+		switch (res) {
+		case 0:
+			if (selected) {
 				child = item_data();
-				अगर (!child->sym)
-					अवरोध;
+				if (!child->sym)
+					break;
 
 				sym_set_tristate_value(child->sym, yes);
-			पूर्ण
-			वापस;
-		हाल 1:
-			अगर (selected) अणु
+			}
+			return;
+		case 1:
+			if (selected) {
 				child = item_data();
 				show_help(child);
 				active = child->sym;
-			पूर्ण अन्यथा
+			} else
 				show_help(menu);
-			अवरोध;
-		हाल KEY_ESC:
-			वापस;
-		हाल -ERRDISPLAYTOOSMALL:
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		case KEY_ESC:
+			return;
+		case -ERRDISPLAYTOOSMALL:
+			return;
+		}
+	}
+}
 
-अटल व्योम conf_string(काष्ठा menu *menu)
-अणु
-	स्थिर अक्षर *prompt = menu_get_prompt(menu);
+static void conf_string(struct menu *menu)
+{
+	const char *prompt = menu_get_prompt(menu);
 
-	जबतक (1) अणु
-		पूर्णांक res;
-		स्थिर अक्षर *heading;
+	while (1) {
+		int res;
+		const char *heading;
 
-		चयन (sym_get_type(menu->sym)) अणु
-		हाल S_INT:
-			heading = inputbox_inकाष्ठाions_पूर्णांक;
-			अवरोध;
-		हाल S_HEX:
-			heading = inputbox_inकाष्ठाions_hex;
-			अवरोध;
-		हाल S_STRING:
-			heading = inputbox_inकाष्ठाions_string;
-			अवरोध;
-		शेष:
+		switch (sym_get_type(menu->sym)) {
+		case S_INT:
+			heading = inputbox_instructions_int;
+			break;
+		case S_HEX:
+			heading = inputbox_instructions_hex;
+			break;
+		case S_STRING:
+			heading = inputbox_instructions_string;
+			break;
+		default:
 			heading = "Internal mconf error!";
-		पूर्ण
+		}
 		dialog_clear();
 		res = dialog_inputbox(prompt ? prompt : "Main Menu",
 				      heading, 10, 75,
 				      sym_get_string_value(menu->sym));
-		चयन (res) अणु
-		हाल 0:
-			अगर (sym_set_string_value(menu->sym, dialog_input_result))
-				वापस;
-			show_textbox(शून्य, "You have made an invalid entry.", 5, 43);
-			अवरोध;
-		हाल 1:
+		switch (res) {
+		case 0:
+			if (sym_set_string_value(menu->sym, dialog_input_result))
+				return;
+			show_textbox(NULL, "You have made an invalid entry.", 5, 43);
+			break;
+		case 1:
 			show_help(menu);
-			अवरोध;
-		हाल KEY_ESC:
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		case KEY_ESC:
+			return;
+		}
+	}
+}
 
-अटल व्योम conf_load(व्योम)
-अणु
+static void conf_load(void)
+{
 
-	जबतक (1) अणु
-		पूर्णांक res;
+	while (1) {
+		int res;
 		dialog_clear();
-		res = dialog_inputbox(शून्य, load_config_text,
+		res = dialog_inputbox(NULL, load_config_text,
 				      11, 55, filename);
-		चयन(res) अणु
-		हाल 0:
-			अगर (!dialog_input_result[0])
-				वापस;
-			अगर (!conf_पढ़ो(dialog_input_result)) अणु
+		switch(res) {
+		case 0:
+			if (!dialog_input_result[0])
+				return;
+			if (!conf_read(dialog_input_result)) {
 				set_config_filename(dialog_input_result);
 				conf_set_changed(true);
-				वापस;
-			पूर्ण
-			show_textbox(शून्य, "File does not exist!", 5, 38);
-			अवरोध;
-		हाल 1:
+				return;
+			}
+			show_textbox(NULL, "File does not exist!", 5, 38);
+			break;
+		case 1:
 			show_helptext("Load Alternate Configuration", load_config_help);
-			अवरोध;
-		हाल KEY_ESC:
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		case KEY_ESC:
+			return;
+		}
+	}
+}
 
-अटल व्योम conf_save(व्योम)
-अणु
-	जबतक (1) अणु
-		पूर्णांक res;
+static void conf_save(void)
+{
+	while (1) {
+		int res;
 		dialog_clear();
-		res = dialog_inputbox(शून्य, save_config_text,
+		res = dialog_inputbox(NULL, save_config_text,
 				      11, 55, filename);
-		चयन(res) अणु
-		हाल 0:
-			अगर (!dialog_input_result[0])
-				वापस;
-			अगर (!conf_ग_लिखो(dialog_input_result)) अणु
+		switch(res) {
+		case 0:
+			if (!dialog_input_result[0])
+				return;
+			if (!conf_write(dialog_input_result)) {
 				set_config_filename(dialog_input_result);
-				वापस;
-			पूर्ण
-			show_textbox(शून्य, "Can't create file!", 5, 60);
-			अवरोध;
-		हाल 1:
+				return;
+			}
+			show_textbox(NULL, "Can't create file!", 5, 60);
+			break;
+		case 1:
 			show_helptext("Save Alternate Configuration", save_config_help);
-			अवरोध;
-		हाल KEY_ESC:
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		case KEY_ESC:
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक handle_निकास(व्योम)
-अणु
-	पूर्णांक res;
+static int handle_exit(void)
+{
+	int res;
 
-	save_and_निकास = 1;
+	save_and_exit = 1;
 	reset_subtitle();
 	dialog_clear();
-	अगर (conf_get_changed())
-		res = dialog_yesno(शून्य,
+	if (conf_get_changed())
+		res = dialog_yesno(NULL,
 				   "Do you wish to save your new configuration?\n"
 				     "(Press <ESC><ESC> to continue kernel configuration.)",
 				   6, 60);
-	अन्यथा
+	else
 		res = -1;
 
 	end_dialog(saved_x, saved_y);
 
-	चयन (res) अणु
-	हाल 0:
-		अगर (conf_ग_लिखो(filename)) अणु
-			ख_लिखो(मानक_त्रुटि, "\n\n"
+	switch (res) {
+	case 0:
+		if (conf_write(filename)) {
+			fprintf(stderr, "\n\n"
 					  "Error while writing of the configuration.\n"
 					  "Your configuration changes were NOT saved."
 					  "\n\n");
-			वापस 1;
-		पूर्ण
-		conf_ग_लिखो_स्वतःconf(0);
+			return 1;
+		}
+		conf_write_autoconf(0);
 		/* fall through */
-	हाल -1:
-		अगर (!silent)
-			म_लिखो("\n\n"
+	case -1:
+		if (!silent)
+			printf("\n\n"
 				 "*** End of the configuration.\n"
 				 "*** Execute 'make' to start the build or try 'make help'."
 				 "\n\n");
 		res = 0;
-		अवरोध;
-	शेष:
-		अगर (!silent)
-			ख_लिखो(मानक_त्रुटि, "\n\n"
+		break;
+	default:
+		if (!silent)
+			fprintf(stderr, "\n\n"
 					  "Your configuration changes were NOT saved."
 					  "\n\n");
-		अगर (res != KEY_ESC)
+		if (res != KEY_ESC)
 			res = 0;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम sig_handler(पूर्णांक signo)
-अणु
-	निकास(handle_निकास());
-पूर्ण
+static void sig_handler(int signo)
+{
+	exit(handle_exit());
+}
 
-पूर्णांक मुख्य(पूर्णांक ac, अक्षर **av)
-अणु
-	अक्षर *mode;
-	पूर्णांक res;
+int main(int ac, char **av)
+{
+	char *mode;
+	int res;
 
-	संकेत(संक_विघ्न, sig_handler);
+	signal(SIGINT, sig_handler);
 
-	अगर (ac > 1 && म_भेद(av[1], "-s") == 0) अणु
+	if (ac > 1 && strcmp(av[1], "-s") == 0) {
 		silent = 1;
-		/* Silence conf_पढ़ो() until the real callback is set up */
-		conf_set_message_callback(शून्य);
+		/* Silence conf_read() until the real callback is set up */
+		conf_set_message_callback(NULL);
 		av++;
-	पूर्ण
+	}
 	conf_parse(av[1]);
-	conf_पढ़ो(शून्य);
+	conf_read(NULL);
 
-	mode = दो_पर्या("MENUCONFIG_MODE");
-	अगर (mode) अणु
-		अगर (!strहालcmp(mode, "single_menu"))
+	mode = getenv("MENUCONFIG_MODE");
+	if (mode) {
+		if (!strcasecmp(mode, "single_menu"))
 			single_menu_mode = 1;
-	पूर्ण
+	}
 
-	अगर (init_dialog(शून्य)) अणु
-		ख_लिखो(मानक_त्रुटि, "Your display is too small to run Menuconfig!\n");
-		ख_लिखो(मानक_त्रुटि, "It must be at least 19 lines by 80 columns.\n");
-		वापस 1;
-	पूर्ण
+	if (init_dialog(NULL)) {
+		fprintf(stderr, "Your display is too small to run Menuconfig!\n");
+		fprintf(stderr, "It must be at least 19 lines by 80 columns.\n");
+		return 1;
+	}
 
 	set_config_filename(conf_get_configname());
 	conf_set_message_callback(conf_message_callback);
-	करो अणु
-		conf(&rooपंचांगenu, शून्य);
-		res = handle_निकास();
-	पूर्ण जबतक (res == KEY_ESC);
+	do {
+		conf(&rootmenu, NULL);
+		res = handle_exit();
+	} while (res == KEY_ESC);
 
-	वापस res;
-पूर्ण
+	return res;
+}

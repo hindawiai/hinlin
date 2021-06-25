@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2013 Intel Corporation. All Rights Reserved.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  *
  */
-#अगर_अघोषित __LIBMSRLISTHELPER_H__
-#घोषणा __LIBMSRLISTHELPER_H__
+#ifndef __LIBMSRLISTHELPER_H__
+#define __LIBMSRLISTHELPER_H__
 
-काष्ठा i2c_client;
-काष्ठा firmware;
+struct i2c_client;
+struct firmware;
 
-पूर्णांक load_msr_list(काष्ठा i2c_client *client, अक्षर *path,
-		  स्थिर काष्ठा firmware **fw);
-पूर्णांक apply_msr_data(काष्ठा i2c_client *client, स्थिर काष्ठा firmware *fw);
-व्योम release_msr_list(काष्ठा i2c_client *client,
-		      स्थिर काष्ठा firmware *fw);
+int load_msr_list(struct i2c_client *client, char *path,
+		  const struct firmware **fw);
+int apply_msr_data(struct i2c_client *client, const struct firmware *fw);
+void release_msr_list(struct i2c_client *client,
+		      const struct firmware *fw);
 
-#पूर्ण_अगर /* अगरndef __LIBMSRLISTHELPER_H__ */
+#endif /* ifndef __LIBMSRLISTHELPER_H__ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * tegra20_i2s.c - Tegra20 I2S driver
  *
@@ -15,155 +14,155 @@
  * Iliyan Malchev <malchev@google.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/dmaengine_pcm.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/dmaengine_pcm.h>
 
-#समावेश "tegra20_i2s.h"
+#include "tegra20_i2s.h"
 
-#घोषणा DRV_NAME "tegra20-i2s"
+#define DRV_NAME "tegra20-i2s"
 
-अटल __maybe_unused पूर्णांक tegra20_i2s_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra20_i2s *i2s = dev_get_drvdata(dev);
+static __maybe_unused int tegra20_i2s_runtime_suspend(struct device *dev)
+{
+	struct tegra20_i2s *i2s = dev_get_drvdata(dev);
 
 	regcache_cache_only(i2s->regmap, true);
 
 	clk_disable_unprepare(i2s->clk_i2s);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __maybe_unused पूर्णांक tegra20_i2s_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra20_i2s *i2s = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static __maybe_unused int tegra20_i2s_runtime_resume(struct device *dev)
+{
+	struct tegra20_i2s *i2s = dev_get_drvdata(dev);
+	int ret;
 
-	ret = reset_control_निश्चित(i2s->reset);
-	अगर (ret)
-		वापस ret;
+	ret = reset_control_assert(i2s->reset);
+	if (ret)
+		return ret;
 
 	ret = clk_prepare_enable(i2s->clk_i2s);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "clk_enable failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	usleep_range(10, 100);
 
-	ret = reset_control_deनिश्चित(i2s->reset);
-	अगर (ret)
-		जाओ disable_घड़ीs;
+	ret = reset_control_deassert(i2s->reset);
+	if (ret)
+		goto disable_clocks;
 
 	regcache_cache_only(i2s->regmap, false);
 	regcache_mark_dirty(i2s->regmap);
 
 	ret = regcache_sync(i2s->regmap);
-	अगर (ret)
-		जाओ disable_घड़ीs;
+	if (ret)
+		goto disable_clocks;
 
-	वापस 0;
+	return 0;
 
-disable_घड़ीs:
+disable_clocks:
 	clk_disable_unprepare(i2s->clk_i2s);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra20_i2s_set_fmt(काष्ठा snd_soc_dai *dai,
-				अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक mask = 0, val = 0;
+static int tegra20_i2s_set_fmt(struct snd_soc_dai *dai,
+				unsigned int fmt)
+{
+	struct tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	unsigned int mask = 0, val = 0;
 
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mask |= TEGRA20_I2S_CTRL_MASTER_ENABLE;
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
 		val |= TEGRA20_I2S_CTRL_MASTER_ENABLE;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mask |= TEGRA20_I2S_CTRL_BIT_FORMAT_MASK |
 		TEGRA20_I2S_CTRL_LRCK_MASK;
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
 		val |= TEGRA20_I2S_CTRL_BIT_FORMAT_DSP;
 		val |= TEGRA20_I2S_CTRL_LRCK_L_LOW;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
 		val |= TEGRA20_I2S_CTRL_BIT_FORMAT_DSP;
 		val |= TEGRA20_I2S_CTRL_LRCK_R_LOW;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		val |= TEGRA20_I2S_CTRL_BIT_FORMAT_I2S;
 		val |= TEGRA20_I2S_CTRL_LRCK_L_LOW;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
 		val |= TEGRA20_I2S_CTRL_BIT_FORMAT_RJM;
 		val |= TEGRA20_I2S_CTRL_LRCK_L_LOW;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		val |= TEGRA20_I2S_CTRL_BIT_FORMAT_LJM;
 		val |= TEGRA20_I2S_CTRL_LRCK_L_LOW;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL, mask, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा device *dev = dai->dev;
-	काष्ठा tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक mask, val;
-	पूर्णांक ret, sample_size, srate, i2sघड़ी, bitcnt;
+static int tegra20_i2s_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct device *dev = dai->dev;
+	struct tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	unsigned int mask, val;
+	int ret, sample_size, srate, i2sclock, bitcnt;
 
 	mask = TEGRA20_I2S_CTRL_BIT_SIZE_MASK;
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		val = TEGRA20_I2S_CTRL_BIT_SIZE_16;
 		sample_size = 16;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		val = TEGRA20_I2S_CTRL_BIT_SIZE_24;
 		sample_size = 24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
 		val = TEGRA20_I2S_CTRL_BIT_SIZE_32;
 		sample_size = 32;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mask |= TEGRA20_I2S_CTRL_FIFO_FORMAT_MASK;
 	val |= TEGRA20_I2S_CTRL_FIFO_FORMAT_PACKED;
@@ -173,225 +172,225 @@ disable_घड़ीs:
 	srate = params_rate(params);
 
 	/* Final "* 2" required by Tegra hardware */
-	i2sघड़ी = srate * params_channels(params) * sample_size * 2;
+	i2sclock = srate * params_channels(params) * sample_size * 2;
 
-	ret = clk_set_rate(i2s->clk_i2s, i2sघड़ी);
-	अगर (ret) अणु
+	ret = clk_set_rate(i2s->clk_i2s, i2sclock);
+	if (ret) {
 		dev_err(dev, "Can't set I2S clock rate: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	bitcnt = (i2sघड़ी / (2 * srate)) - 1;
-	अगर (bitcnt < 0 || bitcnt > TEGRA20_I2S_TIMING_CHANNEL_BIT_COUNT_MASK_US)
-		वापस -EINVAL;
+	bitcnt = (i2sclock / (2 * srate)) - 1;
+	if (bitcnt < 0 || bitcnt > TEGRA20_I2S_TIMING_CHANNEL_BIT_COUNT_MASK_US)
+		return -EINVAL;
 	val = bitcnt << TEGRA20_I2S_TIMING_CHANNEL_BIT_COUNT_SHIFT;
 
-	अगर (i2sघड़ी % (2 * srate))
+	if (i2sclock % (2 * srate))
 		val |= TEGRA20_I2S_TIMING_NON_SYM_ENABLE;
 
-	regmap_ग_लिखो(i2s->regmap, TEGRA20_I2S_TIMING, val);
+	regmap_write(i2s->regmap, TEGRA20_I2S_TIMING, val);
 
-	regmap_ग_लिखो(i2s->regmap, TEGRA20_I2S_FIFO_SCR,
+	regmap_write(i2s->regmap, TEGRA20_I2S_FIFO_SCR,
 		     TEGRA20_I2S_FIFO_SCR_FIFO2_ATN_LVL_FOUR_SLOTS |
 		     TEGRA20_I2S_FIFO_SCR_FIFO1_ATN_LVL_FOUR_SLOTS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra20_i2s_start_playback(काष्ठा tegra20_i2s *i2s)
-अणु
+static void tegra20_i2s_start_playback(struct tegra20_i2s *i2s)
+{
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL,
 			   TEGRA20_I2S_CTRL_FIFO1_ENABLE,
 			   TEGRA20_I2S_CTRL_FIFO1_ENABLE);
-पूर्ण
+}
 
-अटल व्योम tegra20_i2s_stop_playback(काष्ठा tegra20_i2s *i2s)
-अणु
+static void tegra20_i2s_stop_playback(struct tegra20_i2s *i2s)
+{
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL,
 			   TEGRA20_I2S_CTRL_FIFO1_ENABLE, 0);
-पूर्ण
+}
 
-अटल व्योम tegra20_i2s_start_capture(काष्ठा tegra20_i2s *i2s)
-अणु
+static void tegra20_i2s_start_capture(struct tegra20_i2s *i2s)
+{
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL,
 			   TEGRA20_I2S_CTRL_FIFO2_ENABLE,
 			   TEGRA20_I2S_CTRL_FIFO2_ENABLE);
-पूर्ण
+}
 
-अटल व्योम tegra20_i2s_stop_capture(काष्ठा tegra20_i2s *i2s)
-अणु
+static void tegra20_i2s_stop_capture(struct tegra20_i2s *i2s)
+{
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL,
 			   TEGRA20_I2S_CTRL_FIFO2_ENABLE, 0);
-पूर्ण
+}
 
-अटल पूर्णांक tegra20_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+static int tegra20_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
+			       struct snd_soc_dai *dai)
+{
+	struct tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			tegra20_i2s_start_playback(i2s);
-		अन्यथा
+		else
 			tegra20_i2s_start_capture(i2s);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			tegra20_i2s_stop_playback(i2s);
-		अन्यथा
+		else
 			tegra20_i2s_stop_capture(i2s);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_i2s_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+static int tegra20_i2s_probe(struct snd_soc_dai *dai)
+{
+	struct tegra20_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	dai->capture_dma_data = &i2s->capture_dma_data;
 	dai->playback_dma_data = &i2s->playback_dma_data;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops tegra20_i2s_dai_ops = अणु
+static const struct snd_soc_dai_ops tegra20_i2s_dai_ops = {
 	.set_fmt	= tegra20_i2s_set_fmt,
 	.hw_params	= tegra20_i2s_hw_params,
 	.trigger	= tegra20_i2s_trigger,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_driver tegra20_i2s_dai_ढाँचा = अणु
+static const struct snd_soc_dai_driver tegra20_i2s_dai_template = {
 	.probe = tegra20_i2s_probe,
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
-	.capture = अणु
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
 	.ops = &tegra20_i2s_dai_ops,
 	.symmetric_rate = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver tegra20_i2s_component = अणु
+static const struct snd_soc_component_driver tegra20_i2s_component = {
 	.name		= DRV_NAME,
-पूर्ण;
+};
 
-अटल bool tegra20_i2s_wr_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_I2S_CTRL:
-	हाल TEGRA20_I2S_STATUS:
-	हाल TEGRA20_I2S_TIMING:
-	हाल TEGRA20_I2S_FIFO_SCR:
-	हाल TEGRA20_I2S_PCM_CTRL:
-	हाल TEGRA20_I2S_NW_CTRL:
-	हाल TEGRA20_I2S_TDM_CTRL:
-	हाल TEGRA20_I2S_TDM_TX_RX_CTRL:
-	हाल TEGRA20_I2S_FIFO1:
-	हाल TEGRA20_I2S_FIFO2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_i2s_wr_rd_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_I2S_CTRL:
+	case TEGRA20_I2S_STATUS:
+	case TEGRA20_I2S_TIMING:
+	case TEGRA20_I2S_FIFO_SCR:
+	case TEGRA20_I2S_PCM_CTRL:
+	case TEGRA20_I2S_NW_CTRL:
+	case TEGRA20_I2S_TDM_CTRL:
+	case TEGRA20_I2S_TDM_TX_RX_CTRL:
+	case TEGRA20_I2S_FIFO1:
+	case TEGRA20_I2S_FIFO2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool tegra20_i2s_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_I2S_STATUS:
-	हाल TEGRA20_I2S_FIFO_SCR:
-	हाल TEGRA20_I2S_FIFO1:
-	हाल TEGRA20_I2S_FIFO2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_i2s_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_I2S_STATUS:
+	case TEGRA20_I2S_FIFO_SCR:
+	case TEGRA20_I2S_FIFO1:
+	case TEGRA20_I2S_FIFO2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool tegra20_i2s_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल TEGRA20_I2S_FIFO1:
-	हाल TEGRA20_I2S_FIFO2:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool tegra20_i2s_precious_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case TEGRA20_I2S_FIFO1:
+	case TEGRA20_I2S_FIFO2:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config tegra20_i2s_regmap_config = अणु
+static const struct regmap_config tegra20_i2s_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = TEGRA20_I2S_FIFO2,
-	.ग_लिखोable_reg = tegra20_i2s_wr_rd_reg,
-	.पढ़ोable_reg = tegra20_i2s_wr_rd_reg,
-	.अस्थिर_reg = tegra20_i2s_अस्थिर_reg,
+	.max_register = TEGRA20_I2S_FIFO2,
+	.writeable_reg = tegra20_i2s_wr_rd_reg,
+	.readable_reg = tegra20_i2s_wr_rd_reg,
+	.volatile_reg = tegra20_i2s_volatile_reg,
 	.precious_reg = tegra20_i2s_precious_reg,
 	.cache_type = REGCACHE_FLAT,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra20_i2s_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra20_i2s *i2s;
-	काष्ठा resource *mem;
-	व्योम __iomem *regs;
-	पूर्णांक ret;
+static int tegra20_i2s_platform_probe(struct platform_device *pdev)
+{
+	struct tegra20_i2s *i2s;
+	struct resource *mem;
+	void __iomem *regs;
+	int ret;
 
-	i2s = devm_kzalloc(&pdev->dev, माप(काष्ठा tegra20_i2s), GFP_KERNEL);
-	अगर (!i2s) अणु
+	i2s = devm_kzalloc(&pdev->dev, sizeof(struct tegra20_i2s), GFP_KERNEL);
+	if (!i2s) {
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev_set_drvdata(&pdev->dev, i2s);
 
-	i2s->dai = tegra20_i2s_dai_ढाँचा;
+	i2s->dai = tegra20_i2s_dai_template;
 	i2s->dai.name = dev_name(&pdev->dev);
 
 	i2s->reset = devm_reset_control_get_exclusive(&pdev->dev, "i2s");
-	अगर (IS_ERR(i2s->reset)) अणु
+	if (IS_ERR(i2s->reset)) {
 		dev_err(&pdev->dev, "Can't retrieve i2s reset\n");
-		वापस PTR_ERR(i2s->reset);
-	पूर्ण
+		return PTR_ERR(i2s->reset);
+	}
 
-	i2s->clk_i2s = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(i2s->clk_i2s)) अणु
+	i2s->clk_i2s = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(i2s->clk_i2s)) {
 		dev_err(&pdev->dev, "Can't retrieve i2s clock\n");
 		ret = PTR_ERR(i2s->clk_i2s);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, mem);
-	अगर (IS_ERR(regs)) अणु
+	if (IS_ERR(regs)) {
 		ret = PTR_ERR(regs);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
 					    &tegra20_i2s_regmap_config);
-	अगर (IS_ERR(i2s->regmap)) अणु
+	if (IS_ERR(i2s->regmap)) {
 		dev_err(&pdev->dev, "regmap init failed\n");
 		ret = PTR_ERR(i2s->regmap);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	i2s->capture_dma_data.addr = mem->start + TEGRA20_I2S_FIFO2;
 	i2s->capture_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -401,63 +400,63 @@ disable_घड़ीs:
 	i2s->playback_dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	i2s->playback_dma_data.maxburst = 4;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &tegra20_i2s_component,
+	ret = snd_soc_register_component(&pdev->dev, &tegra20_i2s_component,
 					 &i2s->dai, 1);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register DAI: %d\n", ret);
 		ret = -ENOMEM;
-		जाओ err_pm_disable;
-	पूर्ण
+		goto err_pm_disable;
+	}
 
-	ret = tegra_pcm_platक्रमm_रेजिस्टर(&pdev->dev);
-	अगर (ret) अणु
+	ret = tegra_pcm_platform_register(&pdev->dev);
+	if (ret) {
 		dev_err(&pdev->dev, "Could not register PCM: %d\n", ret);
-		जाओ err_unरेजिस्टर_component;
-	पूर्ण
+		goto err_unregister_component;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_component:
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
+err_unregister_component:
+	snd_soc_unregister_component(&pdev->dev);
 err_pm_disable:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra20_i2s_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	tegra_pcm_platक्रमm_unरेजिस्टर(&pdev->dev);
-	snd_soc_unरेजिस्टर_component(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+static int tegra20_i2s_platform_remove(struct platform_device *pdev)
+{
+	tegra_pcm_platform_unregister(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tegra20_i2s_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra20-i2s", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tegra20_i2s_of_match[] = {
+	{ .compatible = "nvidia,tegra20-i2s", },
+	{},
+};
 
-अटल स्थिर काष्ठा dev_pm_ops tegra20_i2s_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(tegra20_i2s_runसमय_suspend,
-			   tegra20_i2s_runसमय_resume, शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-पूर्ण;
+static const struct dev_pm_ops tegra20_i2s_pm_ops = {
+	SET_RUNTIME_PM_OPS(tegra20_i2s_runtime_suspend,
+			   tegra20_i2s_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+};
 
-अटल काष्ठा platक्रमm_driver tegra20_i2s_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra20_i2s_driver = {
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = tegra20_i2s_of_match,
 		.pm = &tegra20_i2s_pm_ops,
-	पूर्ण,
-	.probe = tegra20_i2s_platक्रमm_probe,
-	.हटाओ = tegra20_i2s_platक्रमm_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tegra20_i2s_driver);
+	},
+	.probe = tegra20_i2s_platform_probe,
+	.remove = tegra20_i2s_platform_remove,
+};
+module_platform_driver(tegra20_i2s_driver);
 
 MODULE_AUTHOR("Stephen Warren <swarren@nvidia.com>");
 MODULE_DESCRIPTION("Tegra20 I2S ASoC driver");

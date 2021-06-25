@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	SNAP data link layer. Derived from 802.2
  *
@@ -8,157 +7,157 @@
  *		Merged in additions from Greg Page's psnap.c.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/datalink.h>
-#समावेश <net/llc.h>
-#समावेश <net/psnap.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/in.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rculist.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/datalink.h>
+#include <net/llc.h>
+#include <net/psnap.h>
+#include <linux/mm.h>
+#include <linux/in.h>
+#include <linux/init.h>
+#include <linux/rculist.h>
 
-अटल LIST_HEAD(snap_list);
-अटल DEFINE_SPINLOCK(snap_lock);
-अटल काष्ठा llc_sap *snap_sap;
+static LIST_HEAD(snap_list);
+static DEFINE_SPINLOCK(snap_lock);
+static struct llc_sap *snap_sap;
 
 /*
  *	Find a snap client by matching the 5 bytes.
  */
-अटल काष्ठा datalink_proto *find_snap_client(स्थिर अचिन्हित अक्षर *desc)
-अणु
-	काष्ठा datalink_proto *proto = शून्य, *p;
+static struct datalink_proto *find_snap_client(const unsigned char *desc)
+{
+	struct datalink_proto *proto = NULL, *p;
 
-	list_क्रम_each_entry_rcu(p, &snap_list, node, lockdep_is_held(&snap_lock)) अणु
-		अगर (!स_भेद(p->type, desc, 5)) अणु
+	list_for_each_entry_rcu(p, &snap_list, node, lockdep_is_held(&snap_lock)) {
+		if (!memcmp(p->type, desc, 5)) {
 			proto = p;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस proto;
-पूर्ण
+			break;
+		}
+	}
+	return proto;
+}
 
 /*
  *	A SNAP packet has arrived
  */
-अटल पूर्णांक snap_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-		    काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
-अणु
-	पूर्णांक rc = 1;
-	काष्ठा datalink_proto *proto;
-	अटल काष्ठा packet_type snap_packet_type = अणु
+static int snap_rcv(struct sk_buff *skb, struct net_device *dev,
+		    struct packet_type *pt, struct net_device *orig_dev)
+{
+	int rc = 1;
+	struct datalink_proto *proto;
+	static struct packet_type snap_packet_type = {
 		.type = cpu_to_be16(ETH_P_SNAP),
-	पूर्ण;
+	};
 
-	अगर (unlikely(!pskb_may_pull(skb, 5)))
-		जाओ drop;
+	if (unlikely(!pskb_may_pull(skb, 5)))
+		goto drop;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	proto = find_snap_client(skb_transport_header(skb));
-	अगर (proto) अणु
+	if (proto) {
 		/* Pass the frame on. */
 		skb->transport_header += 5;
 		skb_pull_rcsum(skb, 5);
 		rc = proto->rcvfunc(skb, dev, &snap_packet_type, orig_dev);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	अगर (unlikely(!proto))
-		जाओ drop;
+	if (unlikely(!proto))
+		goto drop;
 
 out:
-	वापस rc;
+	return rc;
 
 drop:
-	kमुक्त_skb(skb);
-	जाओ out;
-पूर्ण
+	kfree_skb(skb);
+	goto out;
+}
 
 /*
  *	Put a SNAP header on a frame and pass to 802.2
  */
-अटल पूर्णांक snap_request(काष्ठा datalink_proto *dl,
-			काष्ठा sk_buff *skb, u8 *dest)
-अणु
-	स_नकल(skb_push(skb, 5), dl->type, 5);
+static int snap_request(struct datalink_proto *dl,
+			struct sk_buff *skb, u8 *dest)
+{
+	memcpy(skb_push(skb, 5), dl->type, 5);
 	llc_build_and_send_ui_pkt(snap_sap, skb, dest, snap_sap->laddr.lsap);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Set up the SNAP layer
  */
-EXPORT_SYMBOL(रेजिस्टर_snap_client);
-EXPORT_SYMBOL(unरेजिस्टर_snap_client);
+EXPORT_SYMBOL(register_snap_client);
+EXPORT_SYMBOL(unregister_snap_client);
 
-अटल स्थिर अक्षर snap_err_msg[] __initस्थिर =
+static const char snap_err_msg[] __initconst =
 	KERN_CRIT "SNAP - unable to register with 802.2\n";
 
-अटल पूर्णांक __init snap_init(व्योम)
-अणु
-	snap_sap = llc_sap_खोलो(0xAA, snap_rcv);
-	अगर (!snap_sap) अणु
-		prपूर्णांकk(snap_err_msg);
-		वापस -EBUSY;
-	पूर्ण
+static int __init snap_init(void)
+{
+	snap_sap = llc_sap_open(0xAA, snap_rcv);
+	if (!snap_sap) {
+		printk(snap_err_msg);
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 module_init(snap_init);
 
-अटल व्योम __निकास snap_निकास(व्योम)
-अणु
+static void __exit snap_exit(void)
+{
 	llc_sap_put(snap_sap);
-पूर्ण
+}
 
-module_निकास(snap_निकास);
+module_exit(snap_exit);
 
 
 /*
- *	Register SNAP clients. We करोn't yet use this क्रम IP.
+ *	Register SNAP clients. We don't yet use this for IP.
  */
-काष्ठा datalink_proto *रेजिस्टर_snap_client(स्थिर अचिन्हित अक्षर *desc,
-					    पूर्णांक (*rcvfunc)(काष्ठा sk_buff *,
-							   काष्ठा net_device *,
-							   काष्ठा packet_type *,
-							   काष्ठा net_device *))
-अणु
-	काष्ठा datalink_proto *proto = शून्य;
+struct datalink_proto *register_snap_client(const unsigned char *desc,
+					    int (*rcvfunc)(struct sk_buff *,
+							   struct net_device *,
+							   struct packet_type *,
+							   struct net_device *))
+{
+	struct datalink_proto *proto = NULL;
 
 	spin_lock_bh(&snap_lock);
 
-	अगर (find_snap_client(desc))
-		जाओ out;
+	if (find_snap_client(desc))
+		goto out;
 
-	proto = kदो_स्मृति(माप(*proto), GFP_ATOMIC);
-	अगर (proto) अणु
-		स_नकल(proto->type, desc, 5);
+	proto = kmalloc(sizeof(*proto), GFP_ATOMIC);
+	if (proto) {
+		memcpy(proto->type, desc, 5);
 		proto->rcvfunc		= rcvfunc;
 		proto->header_length	= 5 + 3; /* snap + 802.2 */
 		proto->request		= snap_request;
 		list_add_rcu(&proto->node, &snap_list);
-	पूर्ण
+	}
 out:
 	spin_unlock_bh(&snap_lock);
 
-	वापस proto;
-पूर्ण
+	return proto;
+}
 
 /*
- *	Unरेजिस्टर SNAP clients. Protocols no दीर्घer want to play with us ...
+ *	Unregister SNAP clients. Protocols no longer want to play with us ...
  */
-व्योम unरेजिस्टर_snap_client(काष्ठा datalink_proto *proto)
-अणु
+void unregister_snap_client(struct datalink_proto *proto)
+{
 	spin_lock_bh(&snap_lock);
 	list_del_rcu(&proto->node);
 	spin_unlock_bh(&snap_lock);
 
 	synchronize_net();
 
-	kमुक्त(proto);
-पूर्ण
+	kfree(proto);
+}
 
 MODULE_LICENSE("GPL");

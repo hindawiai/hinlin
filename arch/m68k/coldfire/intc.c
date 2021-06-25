@@ -1,151 +1,150 @@
-<शैली गुरु>
 /*
- * पूर्णांकc.c  -- support क्रम the old ColdFire पूर्णांकerrupt controller
+ * intc.c  -- support for the old ColdFire interrupt controller
  *
  * (C) Copyright 2009, Greg Ungerer <gerg@snapgear.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <asm/traps.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
 
 /*
- * The mapping of irq number to a mask रेजिस्टर bit is not one-to-one.
- * The irq numbers are either based on "level" of पूर्णांकerrupt or fixed
- * क्रम an स्वतःvector-able पूर्णांकerrupt. So we keep a local data काष्ठाure
- * that maps from irq to mask रेजिस्टर. Not all पूर्णांकerrupts will have
+ * The mapping of irq number to a mask register bit is not one-to-one.
+ * The irq numbers are either based on "level" of interrupt or fixed
+ * for an autovector-able interrupt. So we keep a local data structure
+ * that maps from irq to mask register. Not all interrupts will have
  * an IMR bit.
  */
-अचिन्हित अक्षर mcf_irq2imr[NR_IRQS];
+unsigned char mcf_irq2imr[NR_IRQS];
 
 /*
- * Define the miniumun and maximum बाह्यal पूर्णांकerrupt numbers.
- * This is also used as the "level" पूर्णांकerrupt numbers.
+ * Define the miniumun and maximum external interrupt numbers.
+ * This is also used as the "level" interrupt numbers.
  */
-#घोषणा	EIRQ1	25
-#घोषणा	EIRQ7	31
+#define	EIRQ1	25
+#define	EIRQ7	31
 
 /*
- * In the early version 2 core ColdFire parts the IMR रेजिस्टर was 16 bits
+ * In the early version 2 core ColdFire parts the IMR register was 16 bits
  * in size. Version 3 (and later version 2) core parts have a 32 bit
- * sized IMR रेजिस्टर. Provide some size independent methods to access the
- * IMR रेजिस्टर.
+ * sized IMR register. Provide some size independent methods to access the
+ * IMR register.
  */
-#अगर_घोषित MCFSIM_IMR_IS_16BITS
+#ifdef MCFSIM_IMR_IS_16BITS
 
-व्योम mcf_setimr(पूर्णांक index)
-अणु
+void mcf_setimr(int index)
+{
 	u16 imr;
-	imr = __raw_पढ़ोw(MCFSIM_IMR);
-	__raw_ग_लिखोw(imr | (0x1 << index), MCFSIM_IMR);
-पूर्ण
+	imr = __raw_readw(MCFSIM_IMR);
+	__raw_writew(imr | (0x1 << index), MCFSIM_IMR);
+}
 
-व्योम mcf_clrimr(पूर्णांक index)
-अणु
+void mcf_clrimr(int index)
+{
 	u16 imr;
-	imr = __raw_पढ़ोw(MCFSIM_IMR);
-	__raw_ग_लिखोw(imr & ~(0x1 << index), MCFSIM_IMR);
-पूर्ण
+	imr = __raw_readw(MCFSIM_IMR);
+	__raw_writew(imr & ~(0x1 << index), MCFSIM_IMR);
+}
 
-व्योम mcf_maskimr(अचिन्हित पूर्णांक mask)
-अणु
+void mcf_maskimr(unsigned int mask)
+{
 	u16 imr;
-	imr = __raw_पढ़ोw(MCFSIM_IMR);
+	imr = __raw_readw(MCFSIM_IMR);
 	imr |= mask;
-	__raw_ग_लिखोw(imr, MCFSIM_IMR);
-पूर्ण
+	__raw_writew(imr, MCFSIM_IMR);
+}
 
-#अन्यथा
+#else
 
-व्योम mcf_setimr(पूर्णांक index)
-अणु
+void mcf_setimr(int index)
+{
 	u32 imr;
-	imr = __raw_पढ़ोl(MCFSIM_IMR);
-	__raw_ग_लिखोl(imr | (0x1 << index), MCFSIM_IMR);
-पूर्ण
+	imr = __raw_readl(MCFSIM_IMR);
+	__raw_writel(imr | (0x1 << index), MCFSIM_IMR);
+}
 
-व्योम mcf_clrimr(पूर्णांक index)
-अणु
+void mcf_clrimr(int index)
+{
 	u32 imr;
-	imr = __raw_पढ़ोl(MCFSIM_IMR);
-	__raw_ग_लिखोl(imr & ~(0x1 << index), MCFSIM_IMR);
-पूर्ण
+	imr = __raw_readl(MCFSIM_IMR);
+	__raw_writel(imr & ~(0x1 << index), MCFSIM_IMR);
+}
 
-व्योम mcf_maskimr(अचिन्हित पूर्णांक mask)
-अणु
+void mcf_maskimr(unsigned int mask)
+{
 	u32 imr;
-	imr = __raw_पढ़ोl(MCFSIM_IMR);
+	imr = __raw_readl(MCFSIM_IMR);
 	imr |= mask;
-	__raw_ग_लिखोl(imr, MCFSIM_IMR);
-पूर्ण
+	__raw_writel(imr, MCFSIM_IMR);
+}
 
-#पूर्ण_अगर
+#endif
 
 /*
  * Interrupts can be "vectored" on the ColdFire cores that support this old
- * पूर्णांकerrupt controller. That is, the device raising the पूर्णांकerrupt can also
- * supply the vector number to पूर्णांकerrupt through. The AVR रेजिस्टर of the
- * पूर्णांकerrupt controller enables or disables this क्रम each बाह्यal पूर्णांकerrupt,
- * so provide generic support क्रम this. Setting this up is out-of-band क्रम
- * the पूर्णांकerrupt प्रणाली API's, and needs to be करोne by the driver that
+ * interrupt controller. That is, the device raising the interrupt can also
+ * supply the vector number to interrupt through. The AVR register of the
+ * interrupt controller enables or disables this for each external interrupt,
+ * so provide generic support for this. Setting this up is out-of-band for
+ * the interrupt system API's, and needs to be done by the driver that
  * supports this device. Very few devices actually use this.
  */
-व्योम mcf_स्वतःvector(पूर्णांक irq)
-अणु
-#अगर_घोषित MCFSIM_AVR
-	अगर ((irq >= EIRQ1) && (irq <= EIRQ7)) अणु
+void mcf_autovector(int irq)
+{
+#ifdef MCFSIM_AVR
+	if ((irq >= EIRQ1) && (irq <= EIRQ7)) {
 		u8 avec;
-		avec = __raw_पढ़ोb(MCFSIM_AVR);
+		avec = __raw_readb(MCFSIM_AVR);
 		avec |= (0x1 << (irq - EIRQ1 + 1));
-		__raw_ग_लिखोb(avec, MCFSIM_AVR);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		__raw_writeb(avec, MCFSIM_AVR);
+	}
+#endif
+}
 
-अटल व्योम पूर्णांकc_irq_mask(काष्ठा irq_data *d)
-अणु
-	अगर (mcf_irq2imr[d->irq])
+static void intc_irq_mask(struct irq_data *d)
+{
+	if (mcf_irq2imr[d->irq])
 		mcf_setimr(mcf_irq2imr[d->irq]);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकc_irq_unmask(काष्ठा irq_data *d)
-अणु
-	अगर (mcf_irq2imr[d->irq])
+static void intc_irq_unmask(struct irq_data *d)
+{
+	if (mcf_irq2imr[d->irq])
 		mcf_clrimr(mcf_irq2imr[d->irq]);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकc_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	वापस 0;
-पूर्ण
+static int intc_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	return 0;
+}
 
-अटल काष्ठा irq_chip पूर्णांकc_irq_chip = अणु
+static struct irq_chip intc_irq_chip = {
 	.name		= "CF-INTC",
-	.irq_mask	= पूर्णांकc_irq_mask,
-	.irq_unmask	= पूर्णांकc_irq_unmask,
-	.irq_set_type	= पूर्णांकc_irq_set_type,
-पूर्ण;
+	.irq_mask	= intc_irq_mask,
+	.irq_unmask	= intc_irq_unmask,
+	.irq_set_type	= intc_irq_set_type,
+};
 
-व्योम __init init_IRQ(व्योम)
-अणु
-	पूर्णांक irq;
+void __init init_IRQ(void)
+{
+	int irq;
 
 	mcf_maskimr(0xffffffff);
 
-	क्रम (irq = 0; (irq < NR_IRQS); irq++) अणु
-		irq_set_chip(irq, &पूर्णांकc_irq_chip);
+	for (irq = 0; (irq < NR_IRQS); irq++) {
+		irq_set_chip(irq, &intc_irq_chip);
 		irq_set_irq_type(irq, IRQ_TYPE_LEVEL_HIGH);
 		irq_set_handler(irq, handle_level_irq);
-	पूर्ण
-पूर्ण
+	}
+}
 

@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/poodle.c
  *
- *  Support क्रम the SHARP Poodle Board.
+ *  Support for the SHARP Poodle Board.
  *
  * Based on:
  *  linux/arch/arm/mach-pxa/lubbock.c Author:	Nicolas Pitre
  *
  * Change Log
- *  12-Dec-2002 Sharp Corporation क्रम Poodle
+ *  12-Dec-2002 Sharp Corporation for Poodle
  *  John Lenz <lenz@cs.wisc.edu> updates to 2.6
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/platक्रमm_data/i2c-pxa.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/ads7846.h>
-#समावेश <linux/spi/pxa2xx_spi.h>
-#समावेश <linux/mtd/sharpsl.h>
-#समावेश <linux/memblock.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/platform_device.h>
+#include <linux/fb.h>
+#include <linux/pm.h>
+#include <linux/delay.h>
+#include <linux/mtd/physmap.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/i2c.h>
+#include <linux/platform_data/i2c-pxa.h>
+#include <linux/regulator/machine.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/ads7846.h>
+#include <linux/spi/pxa2xx_spi.h>
+#include <linux/mtd/sharpsl.h>
+#include <linux/memblock.h>
 
-#समावेश <mach/hardware.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/setup.h>
+#include <mach/hardware.h>
+#include <asm/mach-types.h>
+#include <asm/irq.h>
+#include <asm/setup.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
 
-#समावेश "pxa25x.h"
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश "udc.h"
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <mach/poodle.h>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#include "pxa25x.h"
+#include <linux/platform_data/mmc-pxamci.h>
+#include "udc.h"
+#include <linux/platform_data/irda-pxaficp.h>
+#include <mach/poodle.h>
+#include <linux/platform_data/video-pxafb.h>
 
-#समावेश <यंत्र/hardware/scoop.h>
-#समावेश <यंत्र/hardware/locomo.h>
-#समावेश <यंत्र/mach/sharpsl_param.h>
+#include <asm/hardware/scoop.h>
+#include <asm/hardware/locomo.h>
+#include <asm/mach/sharpsl_param.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-अटल अचिन्हित दीर्घ poodle_pin_config[] __initdata = अणु
+static unsigned long poodle_pin_config[] __initdata = {
 	/* I/O */
 	GPIO79_nCS_3,
 	GPIO80_nCS_4,
@@ -115,212 +114,212 @@
 
 	GPIO20_GPIO,	/* POODLE_GPIO_USB_PULLUP */
 	GPIO22_GPIO,	/* POODLE_GPIO_IR_ON */
-पूर्ण;
+};
 
-अटल काष्ठा resource poodle_scoop_resources[] = अणु
-	[0] = अणु
+static struct resource poodle_scoop_resources[] = {
+	[0] = {
 		.start		= 0x10800000,
 		.end		= 0x10800fff,
 		.flags		= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा scoop_config poodle_scoop_setup = अणु
-	.io_dir		= POODLE_SCOOP_IO_सूची,
+static struct scoop_config poodle_scoop_setup = {
+	.io_dir		= POODLE_SCOOP_IO_DIR,
 	.io_out		= POODLE_SCOOP_IO_OUT,
 	.gpio_base	= POODLE_SCOOP_GPIO_BASE,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device poodle_scoop_device = अणु
+struct platform_device poodle_scoop_device = {
 	.name		= "sharp-scoop",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data	= &poodle_scoop_setup,
-	पूर्ण,
+	.dev		= {
+		.platform_data	= &poodle_scoop_setup,
+	},
 	.num_resources	= ARRAY_SIZE(poodle_scoop_resources),
 	.resource	= poodle_scoop_resources,
-पूर्ण;
+};
 
-अटल काष्ठा scoop_pcmcia_dev poodle_pcmcia_scoop[] = अणु
-अणु
+static struct scoop_pcmcia_dev poodle_pcmcia_scoop[] = {
+{
 	.dev        = &poodle_scoop_device.dev,
 	.irq        = POODLE_IRQ_GPIO_CF_IRQ,
 	.cd_irq     = POODLE_IRQ_GPIO_CF_CD,
 	.cd_irq_str = "PCMCIA0 CD",
-पूर्ण,
-पूर्ण;
+},
+};
 
-अटल काष्ठा scoop_pcmcia_config poodle_pcmcia_config = अणु
+static struct scoop_pcmcia_config poodle_pcmcia_config = {
 	.devs         = &poodle_pcmcia_scoop[0],
 	.num_devs     = 1,
-पूर्ण;
+};
 
 EXPORT_SYMBOL(poodle_scoop_device);
 
 
-अटल काष्ठा platक्रमm_device poodle_audio_device = अणु
+static struct platform_device poodle_audio_device = {
 	.name	= "poodle-audio",
 	.id	= -1,
-पूर्ण;
+};
 
 /* LoCoMo device */
-अटल काष्ठा resource locomo_resources[] = अणु
-	[0] = अणु
+static struct resource locomo_resources[] = {
+	[0] = {
 		.start		= 0x10000000,
 		.end		= 0x10001fff,
 		.flags		= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start		= PXA_GPIO_TO_IRQ(10),
 		.end		= PXA_GPIO_TO_IRQ(10),
 		.flags		= IORESOURCE_IRQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा locomo_platक्रमm_data locomo_info = अणु
+static struct locomo_platform_data locomo_info = {
 	.irq_base	= IRQ_BOARD_START,
-पूर्ण;
+};
 
-काष्ठा platक्रमm_device poodle_locomo_device = अणु
+struct platform_device poodle_locomo_device = {
 	.name		= "locomo",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(locomo_resources),
 	.resource	= locomo_resources,
-	.dev		= अणु
-		.platक्रमm_data	= &locomo_info,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &locomo_info,
+	},
+};
 
 EXPORT_SYMBOL(poodle_locomo_device);
 
-#अगर defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
-अटल काष्ठा pxa2xx_spi_controller poodle_spi_info = अणु
+#if defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
+static struct pxa2xx_spi_controller poodle_spi_info = {
 	.num_chipselect	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा ads7846_platक्रमm_data poodle_ads7846_info = अणु
+static struct ads7846_platform_data poodle_ads7846_info = {
 	.model			= 7846,
 	.vref_delay_usecs	= 100,
 	.x_plate_ohms		= 419,
 	.y_plate_ohms		= 486,
-	.gpio_penकरोwn		= POODLE_GPIO_TP_INT,
-पूर्ण;
+	.gpio_pendown		= POODLE_GPIO_TP_INT,
+};
 
-अटल काष्ठा pxa2xx_spi_chip poodle_ads7846_chip = अणु
+static struct pxa2xx_spi_chip poodle_ads7846_chip = {
 	.gpio_cs		= POODLE_GPIO_TP_CS,
-पूर्ण;
+};
 
-अटल काष्ठा spi_board_info poodle_spi_devices[] = अणु
-	अणु
+static struct spi_board_info poodle_spi_devices[] = {
+	{
 		.modalias	= "ads7846",
 		.max_speed_hz	= 10000,
 		.bus_num	= 1,
-		.platक्रमm_data	= &poodle_ads7846_info,
+		.platform_data	= &poodle_ads7846_info,
 		.controller_data= &poodle_ads7846_chip,
 		.irq		= PXA_GPIO_TO_IRQ(POODLE_GPIO_TP_INT),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम __init poodle_init_spi(व्योम)
-अणु
+static void __init poodle_init_spi(void)
+{
 	pxa2xx_set_spi_info(1, &poodle_spi_info);
-	spi_रेजिस्टर_board_info(ARRAY_AND_SIZE(poodle_spi_devices));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम poodle_init_spi(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+	spi_register_board_info(ARRAY_AND_SIZE(poodle_spi_devices));
+}
+#else
+static inline void poodle_init_spi(void) {}
+#endif
 
 /*
  * MMC/SD Device
  *
- * The card detect पूर्णांकerrupt isn't debounced so we delay it by 250ms
+ * The card detect interrupt isn't debounced so we delay it by 250ms
  * to give the card a chance to fully insert/eject.
  */
-अटल पूर्णांक poodle_mci_init(काष्ठा device *dev, irq_handler_t poodle_detect_पूर्णांक, व्योम *data)
-अणु
-	पूर्णांक err;
+static int poodle_mci_init(struct device *dev, irq_handler_t poodle_detect_int, void *data)
+{
+	int err;
 
 	err = gpio_request(POODLE_GPIO_SD_PWR, "SD_PWR");
-	अगर (err)
-		जाओ err_मुक्त_2;
+	if (err)
+		goto err_free_2;
 
 	err = gpio_request(POODLE_GPIO_SD_PWR1, "SD_PWR1");
-	अगर (err)
-		जाओ err_मुक्त_3;
+	if (err)
+		goto err_free_3;
 
 	gpio_direction_output(POODLE_GPIO_SD_PWR, 0);
 	gpio_direction_output(POODLE_GPIO_SD_PWR1, 0);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_3:
-	gpio_मुक्त(POODLE_GPIO_SD_PWR);
-err_मुक्त_2:
-	वापस err;
-पूर्ण
+err_free_3:
+	gpio_free(POODLE_GPIO_SD_PWR);
+err_free_2:
+	return err;
+}
 
-अटल पूर्णांक poodle_mci_setघातer(काष्ठा device *dev, अचिन्हित पूर्णांक vdd)
-अणु
-	काष्ठा pxamci_platक्रमm_data* p_d = dev->platक्रमm_data;
+static int poodle_mci_setpower(struct device *dev, unsigned int vdd)
+{
+	struct pxamci_platform_data* p_d = dev->platform_data;
 
-	अगर ((1 << vdd) & p_d->ocr_mask) अणु
+	if ((1 << vdd) & p_d->ocr_mask) {
 		gpio_set_value(POODLE_GPIO_SD_PWR, 1);
 		mdelay(2);
 		gpio_set_value(POODLE_GPIO_SD_PWR1, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		gpio_set_value(POODLE_GPIO_SD_PWR1, 0);
 		gpio_set_value(POODLE_GPIO_SD_PWR, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम poodle_mci_निकास(काष्ठा device *dev, व्योम *data)
-अणु
-	gpio_मुक्त(POODLE_GPIO_SD_PWR1);
-	gpio_मुक्त(POODLE_GPIO_SD_PWR);
-पूर्ण
+static void poodle_mci_exit(struct device *dev, void *data)
+{
+	gpio_free(POODLE_GPIO_SD_PWR1);
+	gpio_free(POODLE_GPIO_SD_PWR);
+}
 
-अटल काष्ठा pxamci_platक्रमm_data poodle_mci_platक्रमm_data = अणु
+static struct pxamci_platform_data poodle_mci_platform_data = {
 	.detect_delay_ms	= 250,
 	.ocr_mask		= MMC_VDD_32_33|MMC_VDD_33_34,
 	.init 			= poodle_mci_init,
-	.setघातer 		= poodle_mci_setघातer,
-	.निकास			= poodle_mci_निकास,
-पूर्ण;
+	.setpower 		= poodle_mci_setpower,
+	.exit			= poodle_mci_exit,
+};
 
-अटल काष्ठा gpiod_lookup_table poodle_mci_gpio_table = अणु
+static struct gpiod_lookup_table poodle_mci_gpio_table = {
 	.dev_id = "pxa2xx-mci.0",
-	.table = अणु
+	.table = {
 		GPIO_LOOKUP("gpio-pxa", POODLE_GPIO_nSD_DETECT,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", POODLE_GPIO_nSD_WP,
 			    "wp", GPIO_ACTIVE_LOW),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ },
+	},
+};
 
 /*
  * Irda
  */
-अटल काष्ठा pxaficp_platक्रमm_data poodle_ficp_platक्रमm_data = अणु
-	.gpio_pwकरोwn		= POODLE_GPIO_IR_ON,
+static struct pxaficp_platform_data poodle_ficp_platform_data = {
+	.gpio_pwdown		= POODLE_GPIO_IR_ON,
 	.transceiver_cap	= IR_SIRMODE | IR_OFF,
-पूर्ण;
+};
 
 
 /*
  * USB Device Controller
  */
-अटल काष्ठा pxa2xx_udc_mach_info udc_info __initdata = अणु
+static struct pxa2xx_udc_mach_info udc_info __initdata = {
 	/* no connect GPIO; poodle can't tell connection status */
 	.gpio_pullup	= POODLE_GPIO_USB_PULLUP,
-पूर्ण;
+};
 
 
 /* PXAFB device */
-अटल काष्ठा pxafb_mode_info poodle_fb_mode = अणु
-	.pixघड़ी	= 144700,
+static struct pxafb_mode_info poodle_fb_mode = {
+	.pixclock	= 144700,
 	.xres		= 320,
 	.yres		= 240,
 	.bpp		= 16,
@@ -331,142 +330,142 @@ err_मुक्त_2:
 	.upper_margin	= 2,
 	.lower_margin	= 0,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info poodle_fb_info = अणु
+static struct pxafb_mach_info poodle_fb_info = {
 	.modes		= &poodle_fb_mode,
 	.num_modes	= 1,
 	.lcd_conn	= LCD_COLOR_TFT_16BPP,
-पूर्ण;
+};
 
-अटल uपूर्णांक8_t scan_ff_pattern[] = अणु 0xff, 0xff पूर्ण;
+static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
 
-अटल काष्ठा nand_bbt_descr sharpsl_bbt = अणु
+static struct nand_bbt_descr sharpsl_bbt = {
 	.options = 0,
 	.offs = 4,
 	.len = 2,
 	.pattern = scan_ff_pattern
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर probes[] = अणु
+static const char * const probes[] = {
 	"cmdlinepart",
 	"ofpart",
 	"sharpslpart",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा sharpsl_nand_platक्रमm_data sharpsl_nand_platक्रमm_data = अणु
+static struct sharpsl_nand_platform_data sharpsl_nand_platform_data = {
 	.badblock_pattern	= &sharpsl_bbt,
 	.part_parsers		= probes,
-पूर्ण;
+};
 
-अटल काष्ठा resource sharpsl_nand_resources[] = अणु
-	अणु
+static struct resource sharpsl_nand_resources[] = {
+	{
 		.start	= 0x0C000000,
 		.end	= 0x0C000FFF,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device sharpsl_nand_device = अणु
+static struct platform_device sharpsl_nand_device = {
 	.name		= "sharpsl-nand",
 	.id		= -1,
 	.resource	= sharpsl_nand_resources,
 	.num_resources	= ARRAY_SIZE(sharpsl_nand_resources),
-	.dev.platक्रमm_data	= &sharpsl_nand_platक्रमm_data,
-पूर्ण;
+	.dev.platform_data	= &sharpsl_nand_platform_data,
+};
 
-अटल काष्ठा mtd_partition sharpsl_rom_parts[] = अणु
-	अणु
+static struct mtd_partition sharpsl_rom_parts[] = {
+	{
 		.name	="Boot PROM Filesystem",
 		.offset	= 0x00120000,
 		.size	= MTDPART_SIZ_FULL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा physmap_flash_data sharpsl_rom_data = अणु
+static struct physmap_flash_data sharpsl_rom_data = {
 	.width		= 2,
 	.nr_parts	= ARRAY_SIZE(sharpsl_rom_parts),
 	.parts		= sharpsl_rom_parts,
-पूर्ण;
+};
 
-अटल काष्ठा resource sharpsl_rom_resources[] = अणु
-	अणु
+static struct resource sharpsl_rom_resources[] = {
+	{
 		.start	= 0x00000000,
 		.end	= 0x007fffff,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device sharpsl_rom_device = अणु
+static struct platform_device sharpsl_rom_device = {
 	.name	= "physmap-flash",
 	.id	= -1,
 	.resource = sharpsl_rom_resources,
 	.num_resources = ARRAY_SIZE(sharpsl_rom_resources),
-	.dev.platक्रमm_data = &sharpsl_rom_data,
-पूर्ण;
+	.dev.platform_data = &sharpsl_rom_data,
+};
 
-अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
+static struct platform_device *devices[] __initdata = {
 	&poodle_locomo_device,
 	&poodle_scoop_device,
 	&poodle_audio_device,
 	&sharpsl_nand_device,
 	&sharpsl_rom_device,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_board_info __initdata poodle_i2c_devices[] = अणु
-	अणु I2C_BOARD_INFO("wm8731", 0x1b) पूर्ण,
-पूर्ण;
+static struct i2c_board_info __initdata poodle_i2c_devices[] = {
+	{ I2C_BOARD_INFO("wm8731", 0x1b) },
+};
 
-अटल व्योम poodle_घातeroff(व्योम)
-अणु
-	pxa_restart(REBOOT_HARD, शून्य);
-पूर्ण
+static void poodle_poweroff(void)
+{
+	pxa_restart(REBOOT_HARD, NULL);
+}
 
-अटल व्योम __init poodle_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static void __init poodle_init(void)
+{
+	int ret = 0;
 
-	pm_घातer_off = poodle_घातeroff;
+	pm_power_off = poodle_poweroff;
 
 	PCFR |= PCFR_OPDE;
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(poodle_pin_config));
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
-	platक्रमm_scoop_config = &poodle_pcmcia_config;
+	platform_scoop_config = &poodle_pcmcia_config;
 
-	ret = platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
-	अगर (ret)
+	ret = platform_add_devices(devices, ARRAY_SIZE(devices));
+	if (ret)
 		pr_warn("poodle: Unable to register LoCoMo device\n");
 
 	pxa_set_fb_info(&poodle_locomo_device.dev, &poodle_fb_info);
 	pxa_set_udc_info(&udc_info);
 	gpiod_add_lookup_table(&poodle_mci_gpio_table);
-	pxa_set_mci_info(&poodle_mci_platक्रमm_data);
-	pxa_set_ficp_info(&poodle_ficp_platक्रमm_data);
-	pxa_set_i2c_info(शून्य);
-	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(poodle_i2c_devices));
+	pxa_set_mci_info(&poodle_mci_platform_data);
+	pxa_set_ficp_info(&poodle_ficp_platform_data);
+	pxa_set_i2c_info(NULL);
+	i2c_register_board_info(0, ARRAY_AND_SIZE(poodle_i2c_devices));
 	poodle_init_spi();
-	regulator_has_full_स्थिरraपूर्णांकs();
-पूर्ण
+	regulator_has_full_constraints();
+}
 
-अटल व्योम __init fixup_poodle(काष्ठा tag *tags, अक्षर **cmdline)
-अणु
+static void __init fixup_poodle(struct tag *tags, char **cmdline)
+{
 	sharpsl_save_param();
 	memblock_add(0xa0000000, SZ_32M);
-पूर्ण
+}
 
 MACHINE_START(POODLE, "SHARP Poodle")
 	.fixup		= fixup_poodle,
 	.map_io		= pxa25x_map_io,
-	.nr_irqs	= POODLE_NR_IRQS,	/* 4 क्रम LoCoMo */
+	.nr_irqs	= POODLE_NR_IRQS,	/* 4 for LoCoMo */
 	.init_irq	= pxa25x_init_irq,
 	.handle_irq	= pxa25x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine	= poodle_init,
 	.restart	= pxa_restart,
 MACHINE_END

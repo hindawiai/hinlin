@@ -1,280 +1,279 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (c) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
-#समावेश <linux/inet.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/list.h>
-#समावेश <linux/radix-tree.h>
-#समावेश <linux/module.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/रुको.h>
-#समावेश <net/sock.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/inet_connection_sock.h>
-#समावेश <net/request_sock.h>
+#include <linux/inet.h>
+#include <linux/kthread.h>
+#include <linux/list.h>
+#include <linux/radix-tree.h>
+#include <linux/module.h>
+#include <linux/semaphore.h>
+#include <linux/wait.h>
+#include <net/sock.h>
+#include <net/inet_common.h>
+#include <net/inet_connection_sock.h>
+#include <net/request_sock.h>
 
-#समावेश <xen/events.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/xen.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/पूर्णांकerface/io/pvcalls.h>
+#include <xen/events.h>
+#include <xen/grant_table.h>
+#include <xen/xen.h>
+#include <xen/xenbus.h>
+#include <xen/interface/io/pvcalls.h>
 
-#घोषणा PVCALLS_VERSIONS "1"
-#घोषणा MAX_RING_ORDER XENBUS_MAX_RING_GRANT_ORDER
+#define PVCALLS_VERSIONS "1"
+#define MAX_RING_ORDER XENBUS_MAX_RING_GRANT_ORDER
 
-अटल काष्ठा pvcalls_back_global अणु
-	काष्ठा list_head frontends;
-	काष्ठा semaphore frontends_lock;
-पूर्ण pvcalls_back_global;
+static struct pvcalls_back_global {
+	struct list_head frontends;
+	struct semaphore frontends_lock;
+} pvcalls_back_global;
 
 /*
- * Per-frontend data काष्ठाure. It contains poपूर्णांकers to the command
+ * Per-frontend data structure. It contains pointers to the command
  * ring, its event channel, a list of active sockets and a tree of
  * passive sockets.
  */
-काष्ठा pvcalls_fedata अणु
-	काष्ठा list_head list;
-	काष्ठा xenbus_device *dev;
-	काष्ठा xen_pvcalls_sring *sring;
-	काष्ठा xen_pvcalls_back_ring ring;
-	पूर्णांक irq;
-	काष्ठा list_head socket_mappings;
-	काष्ठा radix_tree_root socketpass_mappings;
-	काष्ठा semaphore socket_lock;
-पूर्ण;
+struct pvcalls_fedata {
+	struct list_head list;
+	struct xenbus_device *dev;
+	struct xen_pvcalls_sring *sring;
+	struct xen_pvcalls_back_ring ring;
+	int irq;
+	struct list_head socket_mappings;
+	struct radix_tree_root socketpass_mappings;
+	struct semaphore socket_lock;
+};
 
-काष्ठा pvcalls_ioworker अणु
-	काष्ठा work_काष्ठा रेजिस्टर_work;
-	काष्ठा workqueue_काष्ठा *wq;
-पूर्ण;
+struct pvcalls_ioworker {
+	struct work_struct register_work;
+	struct workqueue_struct *wq;
+};
 
-काष्ठा sock_mapping अणु
-	काष्ठा list_head list;
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा sockpass_mapping *sockpass;
-	काष्ठा socket *sock;
-	uपूर्णांक64_t id;
+struct sock_mapping {
+	struct list_head list;
+	struct pvcalls_fedata *fedata;
+	struct sockpass_mapping *sockpass;
+	struct socket *sock;
+	uint64_t id;
 	grant_ref_t ref;
-	काष्ठा pvcalls_data_पूर्णांकf *ring;
-	व्योम *bytes;
-	काष्ठा pvcalls_data data;
-	uपूर्णांक32_t ring_order;
-	पूर्णांक irq;
-	atomic_t पढ़ो;
-	atomic_t ग_लिखो;
+	struct pvcalls_data_intf *ring;
+	void *bytes;
+	struct pvcalls_data data;
+	uint32_t ring_order;
+	int irq;
+	atomic_t read;
+	atomic_t write;
 	atomic_t io;
 	atomic_t release;
 	atomic_t eoi;
-	व्योम (*saved_data_पढ़ोy)(काष्ठा sock *sk);
-	काष्ठा pvcalls_ioworker ioworker;
-पूर्ण;
+	void (*saved_data_ready)(struct sock *sk);
+	struct pvcalls_ioworker ioworker;
+};
 
-काष्ठा sockpass_mapping अणु
-	काष्ठा list_head list;
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा socket *sock;
-	uपूर्णांक64_t id;
-	काष्ठा xen_pvcalls_request reqcopy;
+struct sockpass_mapping {
+	struct list_head list;
+	struct pvcalls_fedata *fedata;
+	struct socket *sock;
+	uint64_t id;
+	struct xen_pvcalls_request reqcopy;
 	spinlock_t copy_lock;
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा work_काष्ठा रेजिस्टर_work;
-	व्योम (*saved_data_पढ़ोy)(काष्ठा sock *sk);
-पूर्ण;
+	struct workqueue_struct *wq;
+	struct work_struct register_work;
+	void (*saved_data_ready)(struct sock *sk);
+};
 
-अटल irqवापस_t pvcalls_back_conn_event(पूर्णांक irq, व्योम *sock_map);
-अटल पूर्णांक pvcalls_back_release_active(काष्ठा xenbus_device *dev,
-				       काष्ठा pvcalls_fedata *fedata,
-				       काष्ठा sock_mapping *map);
+static irqreturn_t pvcalls_back_conn_event(int irq, void *sock_map);
+static int pvcalls_back_release_active(struct xenbus_device *dev,
+				       struct pvcalls_fedata *fedata,
+				       struct sock_mapping *map);
 
-अटल bool pvcalls_conn_back_पढ़ो(व्योम *opaque)
-अणु
-	काष्ठा sock_mapping *map = (काष्ठा sock_mapping *)opaque;
-	काष्ठा msghdr msg;
-	काष्ठा kvec vec[2];
+static bool pvcalls_conn_back_read(void *opaque)
+{
+	struct sock_mapping *map = (struct sock_mapping *)opaque;
+	struct msghdr msg;
+	struct kvec vec[2];
 	RING_IDX cons, prod, size, wanted, array_size, masked_prod, masked_cons;
-	पूर्णांक32_t error;
-	काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf = map->ring;
-	काष्ठा pvcalls_data *data = &map->data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	int32_t error;
+	struct pvcalls_data_intf *intf = map->ring;
+	struct pvcalls_data *data = &map->data;
+	unsigned long flags;
+	int ret;
 
 	array_size = XEN_FLEX_RING_SIZE(map->ring_order);
-	cons = पूर्णांकf->in_cons;
-	prod = पूर्णांकf->in_prod;
-	error = पूर्णांकf->in_error;
-	/* पढ़ो the indexes first, then deal with the data */
+	cons = intf->in_cons;
+	prod = intf->in_prod;
+	error = intf->in_error;
+	/* read the indexes first, then deal with the data */
 	virt_mb();
 
-	अगर (error)
-		वापस false;
+	if (error)
+		return false;
 
 	size = pvcalls_queued(prod, cons, array_size);
-	अगर (size >= array_size)
-		वापस false;
+	if (size >= array_size)
+		return false;
 	spin_lock_irqsave(&map->sock->sk->sk_receive_queue.lock, flags);
-	अगर (skb_queue_empty(&map->sock->sk->sk_receive_queue)) अणु
-		atomic_set(&map->पढ़ो, 0);
+	if (skb_queue_empty(&map->sock->sk->sk_receive_queue)) {
+		atomic_set(&map->read, 0);
 		spin_unlock_irqrestore(&map->sock->sk->sk_receive_queue.lock,
 				flags);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 	spin_unlock_irqrestore(&map->sock->sk->sk_receive_queue.lock, flags);
 	wanted = array_size - size;
 	masked_prod = pvcalls_mask(prod, array_size);
 	masked_cons = pvcalls_mask(cons, array_size);
 
-	स_रखो(&msg, 0, माप(msg));
-	अगर (masked_prod < masked_cons) अणु
+	memset(&msg, 0, sizeof(msg));
+	if (masked_prod < masked_cons) {
 		vec[0].iov_base = data->in + masked_prod;
 		vec[0].iov_len = wanted;
 		iov_iter_kvec(&msg.msg_iter, WRITE, vec, 1, wanted);
-	पूर्ण अन्यथा अणु
+	} else {
 		vec[0].iov_base = data->in + masked_prod;
 		vec[0].iov_len = array_size - masked_prod;
 		vec[1].iov_base = data->in;
 		vec[1].iov_len = wanted - vec[0].iov_len;
 		iov_iter_kvec(&msg.msg_iter, WRITE, vec, 2, wanted);
-	पूर्ण
+	}
 
-	atomic_set(&map->पढ़ो, 0);
+	atomic_set(&map->read, 0);
 	ret = inet_recvmsg(map->sock, &msg, wanted, MSG_DONTWAIT);
 	WARN_ON(ret > wanted);
-	अगर (ret == -EAGAIN) /* shouldn't happen */
-		वापस true;
-	अगर (!ret)
+	if (ret == -EAGAIN) /* shouldn't happen */
+		return true;
+	if (!ret)
 		ret = -ENOTCONN;
 	spin_lock_irqsave(&map->sock->sk->sk_receive_queue.lock, flags);
-	अगर (ret > 0 && !skb_queue_empty(&map->sock->sk->sk_receive_queue))
-		atomic_inc(&map->पढ़ो);
+	if (ret > 0 && !skb_queue_empty(&map->sock->sk->sk_receive_queue))
+		atomic_inc(&map->read);
 	spin_unlock_irqrestore(&map->sock->sk->sk_receive_queue.lock, flags);
 
-	/* ग_लिखो the data, then modअगरy the indexes */
+	/* write the data, then modify the indexes */
 	virt_wmb();
-	अगर (ret < 0) अणु
-		atomic_set(&map->पढ़ो, 0);
-		पूर्णांकf->in_error = ret;
-	पूर्ण अन्यथा
-		पूर्णांकf->in_prod = prod + ret;
-	/* update the indexes, then notअगरy the other end */
+	if (ret < 0) {
+		atomic_set(&map->read, 0);
+		intf->in_error = ret;
+	} else
+		intf->in_prod = prod + ret;
+	/* update the indexes, then notify the other end */
 	virt_wmb();
-	notअगरy_remote_via_irq(map->irq);
+	notify_remote_via_irq(map->irq);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool pvcalls_conn_back_ग_लिखो(काष्ठा sock_mapping *map)
-अणु
-	काष्ठा pvcalls_data_पूर्णांकf *पूर्णांकf = map->ring;
-	काष्ठा pvcalls_data *data = &map->data;
-	काष्ठा msghdr msg;
-	काष्ठा kvec vec[2];
+static bool pvcalls_conn_back_write(struct sock_mapping *map)
+{
+	struct pvcalls_data_intf *intf = map->ring;
+	struct pvcalls_data *data = &map->data;
+	struct msghdr msg;
+	struct kvec vec[2];
 	RING_IDX cons, prod, size, array_size;
-	पूर्णांक ret;
+	int ret;
 
-	cons = पूर्णांकf->out_cons;
-	prod = पूर्णांकf->out_prod;
-	/* पढ़ो the indexes beक्रमe dealing with the data */
+	cons = intf->out_cons;
+	prod = intf->out_prod;
+	/* read the indexes before dealing with the data */
 	virt_mb();
 
 	array_size = XEN_FLEX_RING_SIZE(map->ring_order);
 	size = pvcalls_queued(prod, cons, array_size);
-	अगर (size == 0)
-		वापस false;
+	if (size == 0)
+		return false;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_flags |= MSG_DONTWAIT;
-	अगर (pvcalls_mask(prod, array_size) > pvcalls_mask(cons, array_size)) अणु
+	if (pvcalls_mask(prod, array_size) > pvcalls_mask(cons, array_size)) {
 		vec[0].iov_base = data->out + pvcalls_mask(cons, array_size);
 		vec[0].iov_len = size;
 		iov_iter_kvec(&msg.msg_iter, READ, vec, 1, size);
-	पूर्ण अन्यथा अणु
+	} else {
 		vec[0].iov_base = data->out + pvcalls_mask(cons, array_size);
 		vec[0].iov_len = array_size - pvcalls_mask(cons, array_size);
 		vec[1].iov_base = data->out;
 		vec[1].iov_len = size - vec[0].iov_len;
 		iov_iter_kvec(&msg.msg_iter, READ, vec, 2, size);
-	पूर्ण
+	}
 
-	atomic_set(&map->ग_लिखो, 0);
+	atomic_set(&map->write, 0);
 	ret = inet_sendmsg(map->sock, &msg, size);
-	अगर (ret == -EAGAIN) अणु
-		atomic_inc(&map->ग_लिखो);
+	if (ret == -EAGAIN) {
+		atomic_inc(&map->write);
 		atomic_inc(&map->io);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* ग_लिखो the data, then update the indexes */
+	/* write the data, then update the indexes */
 	virt_wmb();
-	अगर (ret < 0) अणु
-		पूर्णांकf->out_error = ret;
-	पूर्ण अन्यथा अणु
-		पूर्णांकf->out_error = 0;
-		पूर्णांकf->out_cons = cons + ret;
-		prod = पूर्णांकf->out_prod;
-	पूर्ण
-	/* update the indexes, then notअगरy the other end */
+	if (ret < 0) {
+		intf->out_error = ret;
+	} else {
+		intf->out_error = 0;
+		intf->out_cons = cons + ret;
+		prod = intf->out_prod;
+	}
+	/* update the indexes, then notify the other end */
 	virt_wmb();
-	अगर (prod != cons + ret) अणु
-		atomic_inc(&map->ग_लिखो);
+	if (prod != cons + ret) {
+		atomic_inc(&map->write);
 		atomic_inc(&map->io);
-	पूर्ण
-	notअगरy_remote_via_irq(map->irq);
+	}
+	notify_remote_via_irq(map->irq);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम pvcalls_back_ioworker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pvcalls_ioworker *ioworker = container_of(work,
-		काष्ठा pvcalls_ioworker, रेजिस्टर_work);
-	काष्ठा sock_mapping *map = container_of(ioworker, काष्ठा sock_mapping,
+static void pvcalls_back_ioworker(struct work_struct *work)
+{
+	struct pvcalls_ioworker *ioworker = container_of(work,
+		struct pvcalls_ioworker, register_work);
+	struct sock_mapping *map = container_of(ioworker, struct sock_mapping,
 		ioworker);
-	अचिन्हित पूर्णांक eoi_flags = XEN_EOI_FLAG_SPURIOUS;
+	unsigned int eoi_flags = XEN_EOI_FLAG_SPURIOUS;
 
-	जबतक (atomic_पढ़ो(&map->io) > 0) अणु
-		अगर (atomic_पढ़ो(&map->release) > 0) अणु
+	while (atomic_read(&map->io) > 0) {
+		if (atomic_read(&map->release) > 0) {
 			atomic_set(&map->release, 0);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (atomic_पढ़ो(&map->पढ़ो) > 0 &&
-		    pvcalls_conn_back_पढ़ो(map))
+		if (atomic_read(&map->read) > 0 &&
+		    pvcalls_conn_back_read(map))
 			eoi_flags = 0;
-		अगर (atomic_पढ़ो(&map->ग_लिखो) > 0 &&
-		    pvcalls_conn_back_ग_लिखो(map))
+		if (atomic_read(&map->write) > 0 &&
+		    pvcalls_conn_back_write(map))
 			eoi_flags = 0;
 
-		अगर (atomic_पढ़ो(&map->eoi) > 0 && !atomic_पढ़ो(&map->ग_लिखो)) अणु
+		if (atomic_read(&map->eoi) > 0 && !atomic_read(&map->write)) {
 			atomic_set(&map->eoi, 0);
 			xen_irq_lateeoi(map->irq, eoi_flags);
 			eoi_flags = XEN_EOI_FLAG_SPURIOUS;
-		पूर्ण
+		}
 
 		atomic_dec(&map->io);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pvcalls_back_socket(काष्ठा xenbus_device *dev,
-		काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	पूर्णांक ret;
-	काष्ठा xen_pvcalls_response *rsp;
+static int pvcalls_back_socket(struct xenbus_device *dev,
+		struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	int ret;
+	struct xen_pvcalls_response *rsp;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	अगर (req->u.socket.करोमुख्य != AF_INET ||
+	if (req->u.socket.domain != AF_INET ||
 	    req->u.socket.type != SOCK_STREAM ||
 	    (req->u.socket.protocol != IPPROTO_IP &&
 	     req->u.socket.protocol != AF_INET))
 		ret = -EAFNOSUPPORT;
-	अन्यथा
+	else
 		ret = 0;
 
-	/* leave the actual socket allocation क्रम later */
+	/* leave the actual socket allocation for later */
 
 	rsp = RING_GET_RESPONSE(&fedata->ring, fedata->ring.rsp_prod_pvt++);
 	rsp->req_id = req->req_id;
@@ -282,48 +281,48 @@
 	rsp->u.socket.id = req->u.socket.id;
 	rsp->ret = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pvcalls_sk_state_change(काष्ठा sock *sock)
-अणु
-	काष्ठा sock_mapping *map = sock->sk_user_data;
+static void pvcalls_sk_state_change(struct sock *sock)
+{
+	struct sock_mapping *map = sock->sk_user_data;
 
-	अगर (map == शून्य)
-		वापस;
+	if (map == NULL)
+		return;
 
-	atomic_inc(&map->पढ़ो);
-	notअगरy_remote_via_irq(map->irq);
-पूर्ण
+	atomic_inc(&map->read);
+	notify_remote_via_irq(map->irq);
+}
 
-अटल व्योम pvcalls_sk_data_पढ़ोy(काष्ठा sock *sock)
-अणु
-	काष्ठा sock_mapping *map = sock->sk_user_data;
-	काष्ठा pvcalls_ioworker *iow;
+static void pvcalls_sk_data_ready(struct sock *sock)
+{
+	struct sock_mapping *map = sock->sk_user_data;
+	struct pvcalls_ioworker *iow;
 
-	अगर (map == शून्य)
-		वापस;
+	if (map == NULL)
+		return;
 
 	iow = &map->ioworker;
-	atomic_inc(&map->पढ़ो);
+	atomic_inc(&map->read);
 	atomic_inc(&map->io);
-	queue_work(iow->wq, &iow->रेजिस्टर_work);
-पूर्ण
+	queue_work(iow->wq, &iow->register_work);
+}
 
-अटल काष्ठा sock_mapping *pvcalls_new_active_socket(
-		काष्ठा pvcalls_fedata *fedata,
-		uपूर्णांक64_t id,
+static struct sock_mapping *pvcalls_new_active_socket(
+		struct pvcalls_fedata *fedata,
+		uint64_t id,
 		grant_ref_t ref,
 		evtchn_port_t evtchn,
-		काष्ठा socket *sock)
-अणु
-	पूर्णांक ret;
-	काष्ठा sock_mapping *map;
-	व्योम *page;
+		struct socket *sock)
+{
+	int ret;
+	struct sock_mapping *map;
+	void *page;
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य)
-		वापस शून्य;
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL)
+		return NULL;
 
 	map->fedata = fedata;
 	map->sock = sock;
@@ -331,94 +330,94 @@
 	map->ref = ref;
 
 	ret = xenbus_map_ring_valloc(fedata->dev, &ref, 1, &page);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	map->ring = page;
 	map->ring_order = map->ring->ring_order;
-	/* first पढ़ो the order, then map the data ring */
+	/* first read the order, then map the data ring */
 	virt_rmb();
-	अगर (map->ring_order > MAX_RING_ORDER) अणु
+	if (map->ring_order > MAX_RING_ORDER) {
 		pr_warn("%s frontend requested ring_order %u, which is > MAX (%u)\n",
 				__func__, map->ring_order, MAX_RING_ORDER);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = xenbus_map_ring_valloc(fedata->dev, map->ring->ref,
 				     (1 << map->ring_order), &page);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	map->bytes = page;
 
-	ret = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(
+	ret = bind_interdomain_evtchn_to_irqhandler_lateeoi(
 			fedata->dev, evtchn,
 			pvcalls_back_conn_event, 0, "pvcalls-backend", map);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	map->irq = ret;
 
 	map->data.in = map->bytes;
 	map->data.out = map->bytes + XEN_FLEX_RING_SIZE(map->ring_order);
 
 	map->ioworker.wq = alloc_workqueue("pvcalls_io", WQ_UNBOUND, 1);
-	अगर (!map->ioworker.wq)
-		जाओ out;
+	if (!map->ioworker.wq)
+		goto out;
 	atomic_set(&map->io, 1);
-	INIT_WORK(&map->ioworker.रेजिस्टर_work,	pvcalls_back_ioworker);
+	INIT_WORK(&map->ioworker.register_work,	pvcalls_back_ioworker);
 
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	list_add_tail(&map->list, &fedata->socket_mappings);
 	up(&fedata->socket_lock);
 
-	ग_लिखो_lock_bh(&map->sock->sk->sk_callback_lock);
-	map->saved_data_पढ़ोy = map->sock->sk->sk_data_पढ़ोy;
+	write_lock_bh(&map->sock->sk->sk_callback_lock);
+	map->saved_data_ready = map->sock->sk->sk_data_ready;
 	map->sock->sk->sk_user_data = map;
-	map->sock->sk->sk_data_पढ़ोy = pvcalls_sk_data_पढ़ोy;
+	map->sock->sk->sk_data_ready = pvcalls_sk_data_ready;
 	map->sock->sk->sk_state_change = pvcalls_sk_state_change;
-	ग_लिखो_unlock_bh(&map->sock->sk->sk_callback_lock);
+	write_unlock_bh(&map->sock->sk->sk_callback_lock);
 
-	वापस map;
+	return map;
 out:
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	list_del(&map->list);
 	pvcalls_back_release_active(fedata->dev, fedata, map);
 	up(&fedata->socket_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक pvcalls_back_connect(काष्ठा xenbus_device *dev,
-				काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	पूर्णांक ret = -EINVAL;
-	काष्ठा socket *sock;
-	काष्ठा sock_mapping *map;
-	काष्ठा xen_pvcalls_response *rsp;
-	काष्ठा sockaddr *sa = (काष्ठा sockaddr *)&req->u.connect.addr;
+static int pvcalls_back_connect(struct xenbus_device *dev,
+				struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	int ret = -EINVAL;
+	struct socket *sock;
+	struct sock_mapping *map;
+	struct xen_pvcalls_response *rsp;
+	struct sockaddr *sa = (struct sockaddr *)&req->u.connect.addr;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	अगर (req->u.connect.len < माप(sa->sa_family) ||
-	    req->u.connect.len > माप(req->u.connect.addr) ||
+	if (req->u.connect.len < sizeof(sa->sa_family) ||
+	    req->u.connect.len > sizeof(req->u.connect.addr) ||
 	    sa->sa_family != AF_INET)
-		जाओ out;
+		goto out;
 
 	ret = sock_create(AF_INET, SOCK_STREAM, 0, &sock);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 	ret = inet_stream_connect(sock, sa, req->u.connect.len, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		sock_release(sock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	map = pvcalls_new_active_socket(fedata,
 					req->u.connect.id,
 					req->u.connect.ref,
 					req->u.connect.evtchn,
 					sock);
-	अगर (!map) अणु
+	if (!map) {
 		ret = -EFAULT;
 		sock_release(sock);
-	पूर्ण
+	}
 
 out:
 	rsp = RING_GET_RESPONSE(&fedata->ring, fedata->ring.rsp_prod_pvt++);
@@ -427,79 +426,79 @@ out:
 	rsp->u.connect.id = req->u.connect.id;
 	rsp->ret = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_release_active(काष्ठा xenbus_device *dev,
-				       काष्ठा pvcalls_fedata *fedata,
-				       काष्ठा sock_mapping *map)
-अणु
+static int pvcalls_back_release_active(struct xenbus_device *dev,
+				       struct pvcalls_fedata *fedata,
+				       struct sock_mapping *map)
+{
 	disable_irq(map->irq);
-	अगर (map->sock->sk != शून्य) अणु
-		ग_लिखो_lock_bh(&map->sock->sk->sk_callback_lock);
-		map->sock->sk->sk_user_data = शून्य;
-		map->sock->sk->sk_data_पढ़ोy = map->saved_data_पढ़ोy;
-		ग_लिखो_unlock_bh(&map->sock->sk->sk_callback_lock);
-	पूर्ण
+	if (map->sock->sk != NULL) {
+		write_lock_bh(&map->sock->sk->sk_callback_lock);
+		map->sock->sk->sk_user_data = NULL;
+		map->sock->sk->sk_data_ready = map->saved_data_ready;
+		write_unlock_bh(&map->sock->sk->sk_callback_lock);
+	}
 
 	atomic_set(&map->release, 1);
-	flush_work(&map->ioworker.रेजिस्टर_work);
+	flush_work(&map->ioworker.register_work);
 
-	xenbus_unmap_ring_vमुक्त(dev, map->bytes);
-	xenbus_unmap_ring_vमुक्त(dev, (व्योम *)map->ring);
+	xenbus_unmap_ring_vfree(dev, map->bytes);
+	xenbus_unmap_ring_vfree(dev, (void *)map->ring);
 	unbind_from_irqhandler(map->irq, map);
 
 	sock_release(map->sock);
-	kमुक्त(map);
+	kfree(map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_release_passive(काष्ठा xenbus_device *dev,
-					काष्ठा pvcalls_fedata *fedata,
-					काष्ठा sockpass_mapping *mappass)
-अणु
-	अगर (mappass->sock->sk != शून्य) अणु
-		ग_लिखो_lock_bh(&mappass->sock->sk->sk_callback_lock);
-		mappass->sock->sk->sk_user_data = शून्य;
-		mappass->sock->sk->sk_data_पढ़ोy = mappass->saved_data_पढ़ोy;
-		ग_लिखो_unlock_bh(&mappass->sock->sk->sk_callback_lock);
-	पूर्ण
+static int pvcalls_back_release_passive(struct xenbus_device *dev,
+					struct pvcalls_fedata *fedata,
+					struct sockpass_mapping *mappass)
+{
+	if (mappass->sock->sk != NULL) {
+		write_lock_bh(&mappass->sock->sk->sk_callback_lock);
+		mappass->sock->sk->sk_user_data = NULL;
+		mappass->sock->sk->sk_data_ready = mappass->saved_data_ready;
+		write_unlock_bh(&mappass->sock->sk->sk_callback_lock);
+	}
 	sock_release(mappass->sock);
 	flush_workqueue(mappass->wq);
 	destroy_workqueue(mappass->wq);
-	kमुक्त(mappass);
+	kfree(mappass);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_release(काष्ठा xenbus_device *dev,
-				काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा sock_mapping *map, *n;
-	काष्ठा sockpass_mapping *mappass;
-	पूर्णांक ret = 0;
-	काष्ठा xen_pvcalls_response *rsp;
+static int pvcalls_back_release(struct xenbus_device *dev,
+				struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	struct sock_mapping *map, *n;
+	struct sockpass_mapping *mappass;
+	int ret = 0;
+	struct xen_pvcalls_response *rsp;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	करोwn(&fedata->socket_lock);
-	list_क्रम_each_entry_safe(map, n, &fedata->socket_mappings, list) अणु
-		अगर (map->id == req->u.release.id) अणु
+	down(&fedata->socket_lock);
+	list_for_each_entry_safe(map, n, &fedata->socket_mappings, list) {
+		if (map->id == req->u.release.id) {
 			list_del(&map->list);
 			up(&fedata->socket_lock);
 			ret = pvcalls_back_release_active(dev, fedata, map);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	mappass = radix_tree_lookup(&fedata->socketpass_mappings,
 				    req->u.release.id);
-	अगर (mappass != शून्य) अणु
+	if (mappass != NULL) {
 		radix_tree_delete(&fedata->socketpass_mappings, mappass->id);
 		up(&fedata->socket_lock);
 		ret = pvcalls_back_release_passive(dev, fedata, mappass);
-	पूर्ण अन्यथा
+	} else
 		up(&fedata->socket_lock);
 
 out:
@@ -508,66 +507,66 @@ out:
 	rsp->u.release.id = req->u.release.id;
 	rsp->cmd = req->cmd;
 	rsp->ret = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __pvcalls_back_accept(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sockpass_mapping *mappass = container_of(
-		work, काष्ठा sockpass_mapping, रेजिस्टर_work);
-	काष्ठा sock_mapping *map;
-	काष्ठा pvcalls_ioworker *iow;
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा socket *sock;
-	काष्ठा xen_pvcalls_response *rsp;
-	काष्ठा xen_pvcalls_request *req;
-	पूर्णांक notअगरy;
-	पूर्णांक ret = -EINVAL;
-	अचिन्हित दीर्घ flags;
+static void __pvcalls_back_accept(struct work_struct *work)
+{
+	struct sockpass_mapping *mappass = container_of(
+		work, struct sockpass_mapping, register_work);
+	struct sock_mapping *map;
+	struct pvcalls_ioworker *iow;
+	struct pvcalls_fedata *fedata;
+	struct socket *sock;
+	struct xen_pvcalls_response *rsp;
+	struct xen_pvcalls_request *req;
+	int notify;
+	int ret = -EINVAL;
+	unsigned long flags;
 
 	fedata = mappass->fedata;
 	/*
 	 * __pvcalls_back_accept can race against pvcalls_back_accept.
-	 * We only need to check the value of "cmd" on पढ़ो. It could be
-	 * करोne atomically, but to simplअगरy the code on the ग_लिखो side, we
+	 * We only need to check the value of "cmd" on read. It could be
+	 * done atomically, but to simplify the code on the write side, we
 	 * use a spinlock.
 	 */
 	spin_lock_irqsave(&mappass->copy_lock, flags);
 	req = &mappass->reqcopy;
-	अगर (req->cmd != PVCALLS_ACCEPT) अणु
+	if (req->cmd != PVCALLS_ACCEPT) {
 		spin_unlock_irqrestore(&mappass->copy_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_unlock_irqrestore(&mappass->copy_lock, flags);
 
 	sock = sock_alloc();
-	अगर (sock == शून्य)
-		जाओ out_error;
+	if (sock == NULL)
+		goto out_error;
 	sock->type = mappass->sock->type;
 	sock->ops = mappass->sock->ops;
 
 	ret = inet_accept(mappass->sock, sock, O_NONBLOCK, true);
-	अगर (ret == -EAGAIN) अणु
+	if (ret == -EAGAIN) {
 		sock_release(sock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	map = pvcalls_new_active_socket(fedata,
 					req->u.accept.id_new,
 					req->u.accept.ref,
 					req->u.accept.evtchn,
 					sock);
-	अगर (!map) अणु
+	if (!map) {
 		ret = -EFAULT;
 		sock_release(sock);
-		जाओ out_error;
-	पूर्ण
+		goto out_error;
+	}
 
 	map->sockpass = mappass;
 	iow = &map->ioworker;
-	atomic_inc(&map->पढ़ो);
+	atomic_inc(&map->read);
 	atomic_inc(&map->io);
-	queue_work(iow->wq, &iow->रेजिस्टर_work);
+	queue_work(iow->wq, &iow->register_work);
 
 out_error:
 	rsp = RING_GET_RESPONSE(&fedata->ring, fedata->ring.rsp_prod_pvt++);
@@ -575,27 +574,27 @@ out_error:
 	rsp->cmd = req->cmd;
 	rsp->u.accept.id = req->u.accept.id;
 	rsp->ret = ret;
-	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&fedata->ring, notअगरy);
-	अगर (notअगरy)
-		notअगरy_remote_via_irq(fedata->irq);
+	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&fedata->ring, notify);
+	if (notify)
+		notify_remote_via_irq(fedata->irq);
 
 	mappass->reqcopy.cmd = 0;
-पूर्ण
+}
 
-अटल व्योम pvcalls_pass_sk_data_पढ़ोy(काष्ठा sock *sock)
-अणु
-	काष्ठा sockpass_mapping *mappass = sock->sk_user_data;
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा xen_pvcalls_response *rsp;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक notअगरy;
+static void pvcalls_pass_sk_data_ready(struct sock *sock)
+{
+	struct sockpass_mapping *mappass = sock->sk_user_data;
+	struct pvcalls_fedata *fedata;
+	struct xen_pvcalls_response *rsp;
+	unsigned long flags;
+	int notify;
 
-	अगर (mappass == शून्य)
-		वापस;
+	if (mappass == NULL)
+		return;
 
 	fedata = mappass->fedata;
 	spin_lock_irqsave(&mappass->copy_lock, flags);
-	अगर (mappass->reqcopy.cmd == PVCALLS_POLL) अणु
+	if (mappass->reqcopy.cmd == PVCALLS_POLL) {
 		rsp = RING_GET_RESPONSE(&fedata->ring,
 					fedata->ring.rsp_prod_pvt++);
 		rsp->req_id = mappass->reqcopy.req_id;
@@ -606,95 +605,95 @@ out_error:
 		mappass->reqcopy.cmd = 0;
 		spin_unlock_irqrestore(&mappass->copy_lock, flags);
 
-		RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&fedata->ring, notअगरy);
-		अगर (notअगरy)
-			notअगरy_remote_via_irq(mappass->fedata->irq);
-	पूर्ण अन्यथा अणु
+		RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&fedata->ring, notify);
+		if (notify)
+			notify_remote_via_irq(mappass->fedata->irq);
+	} else {
 		spin_unlock_irqrestore(&mappass->copy_lock, flags);
-		queue_work(mappass->wq, &mappass->रेजिस्टर_work);
-	पूर्ण
-पूर्ण
+		queue_work(mappass->wq, &mappass->register_work);
+	}
+}
 
-अटल पूर्णांक pvcalls_back_bind(काष्ठा xenbus_device *dev,
-			     काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	पूर्णांक ret;
-	काष्ठा sockpass_mapping *map;
-	काष्ठा xen_pvcalls_response *rsp;
+static int pvcalls_back_bind(struct xenbus_device *dev,
+			     struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	int ret;
+	struct sockpass_mapping *map;
+	struct xen_pvcalls_response *rsp;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	map = kzalloc(माप(*map), GFP_KERNEL);
-	अगर (map == शून्य) अणु
+	map = kzalloc(sizeof(*map), GFP_KERNEL);
+	if (map == NULL) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	INIT_WORK(&map->रेजिस्टर_work, __pvcalls_back_accept);
+	INIT_WORK(&map->register_work, __pvcalls_back_accept);
 	spin_lock_init(&map->copy_lock);
 	map->wq = alloc_workqueue("pvcalls_wq", WQ_UNBOUND, 1);
-	अगर (!map->wq) अणु
+	if (!map->wq) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = sock_create(AF_INET, SOCK_STREAM, 0, &map->sock);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	ret = inet_bind(map->sock, (काष्ठा sockaddr *)&req->u.bind.addr,
+	ret = inet_bind(map->sock, (struct sockaddr *)&req->u.bind.addr,
 			req->u.bind.len);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	map->fedata = fedata;
 	map->id = req->u.bind.id;
 
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	ret = radix_tree_insert(&fedata->socketpass_mappings, map->id,
 				map);
 	up(&fedata->socket_lock);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ग_लिखो_lock_bh(&map->sock->sk->sk_callback_lock);
-	map->saved_data_पढ़ोy = map->sock->sk->sk_data_पढ़ोy;
+	write_lock_bh(&map->sock->sk->sk_callback_lock);
+	map->saved_data_ready = map->sock->sk->sk_data_ready;
 	map->sock->sk->sk_user_data = map;
-	map->sock->sk->sk_data_पढ़ोy = pvcalls_pass_sk_data_पढ़ोy;
-	ग_लिखो_unlock_bh(&map->sock->sk->sk_callback_lock);
+	map->sock->sk->sk_data_ready = pvcalls_pass_sk_data_ready;
+	write_unlock_bh(&map->sock->sk->sk_callback_lock);
 
 out:
-	अगर (ret) अणु
-		अगर (map && map->sock)
+	if (ret) {
+		if (map && map->sock)
 			sock_release(map->sock);
-		अगर (map && map->wq)
+		if (map && map->wq)
 			destroy_workqueue(map->wq);
-		kमुक्त(map);
-	पूर्ण
+		kfree(map);
+	}
 	rsp = RING_GET_RESPONSE(&fedata->ring, fedata->ring.rsp_prod_pvt++);
 	rsp->req_id = req->req_id;
 	rsp->cmd = req->cmd;
 	rsp->u.bind.id = req->u.bind.id;
 	rsp->ret = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_listen(काष्ठा xenbus_device *dev,
-			       काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	पूर्णांक ret = -EINVAL;
-	काष्ठा sockpass_mapping *map;
-	काष्ठा xen_pvcalls_response *rsp;
+static int pvcalls_back_listen(struct xenbus_device *dev,
+			       struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	int ret = -EINVAL;
+	struct sockpass_mapping *map;
+	struct xen_pvcalls_response *rsp;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	map = radix_tree_lookup(&fedata->socketpass_mappings, req->u.listen.id);
 	up(&fedata->socket_lock);
-	अगर (map == शून्य)
-		जाओ out;
+	if (map == NULL)
+		goto out;
 
 	ret = inet_listen(map->sock, req->u.listen.backlog);
 
@@ -704,44 +703,44 @@ out:
 	rsp->cmd = req->cmd;
 	rsp->u.listen.id = req->u.listen.id;
 	rsp->ret = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_accept(काष्ठा xenbus_device *dev,
-			       काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा sockpass_mapping *mappass;
-	पूर्णांक ret = -EINVAL;
-	काष्ठा xen_pvcalls_response *rsp;
-	अचिन्हित दीर्घ flags;
+static int pvcalls_back_accept(struct xenbus_device *dev,
+			       struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	struct sockpass_mapping *mappass;
+	int ret = -EINVAL;
+	struct xen_pvcalls_response *rsp;
+	unsigned long flags;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	mappass = radix_tree_lookup(&fedata->socketpass_mappings,
 		req->u.accept.id);
 	up(&fedata->socket_lock);
-	अगर (mappass == शून्य)
-		जाओ out_error;
+	if (mappass == NULL)
+		goto out_error;
 
 	/*
 	 * Limitation of the current implementation: only support one
 	 * concurrent accept or poll call on one socket.
 	 */
 	spin_lock_irqsave(&mappass->copy_lock, flags);
-	अगर (mappass->reqcopy.cmd != 0) अणु
+	if (mappass->reqcopy.cmd != 0) {
 		spin_unlock_irqrestore(&mappass->copy_lock, flags);
 		ret = -EINTR;
-		जाओ out_error;
-	पूर्ण
+		goto out_error;
+	}
 
 	mappass->reqcopy = *req;
 	spin_unlock_irqrestore(&mappass->copy_lock, flags);
-	queue_work(mappass->wq, &mappass->रेजिस्टर_work);
+	queue_work(mappass->wq, &mappass->register_work);
 
-	/* Tell the caller we करोn't need to send back a notअगरication yet */
-	वापस -1;
+	/* Tell the caller we don't need to send back a notification yet */
+	return -1;
 
 out_error:
 	rsp = RING_GET_RESPONSE(&fedata->ring, fedata->ring.rsp_prod_pvt++);
@@ -749,53 +748,53 @@ out_error:
 	rsp->cmd = req->cmd;
 	rsp->u.accept.id = req->u.accept.id;
 	rsp->ret = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_poll(काष्ठा xenbus_device *dev,
-			     काष्ठा xen_pvcalls_request *req)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा sockpass_mapping *mappass;
-	काष्ठा xen_pvcalls_response *rsp;
-	काष्ठा inet_connection_sock *icsk;
-	काष्ठा request_sock_queue *queue;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int pvcalls_back_poll(struct xenbus_device *dev,
+			     struct xen_pvcalls_request *req)
+{
+	struct pvcalls_fedata *fedata;
+	struct sockpass_mapping *mappass;
+	struct xen_pvcalls_response *rsp;
+	struct inet_connection_sock *icsk;
+	struct request_sock_queue *queue;
+	unsigned long flags;
+	int ret;
 	bool data;
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	करोwn(&fedata->socket_lock);
+	down(&fedata->socket_lock);
 	mappass = radix_tree_lookup(&fedata->socketpass_mappings,
 				    req->u.poll.id);
 	up(&fedata->socket_lock);
-	अगर (mappass == शून्य)
-		वापस -EINVAL;
+	if (mappass == NULL)
+		return -EINVAL;
 
 	/*
 	 * Limitation of the current implementation: only support one
 	 * concurrent accept or poll call on one socket.
 	 */
 	spin_lock_irqsave(&mappass->copy_lock, flags);
-	अगर (mappass->reqcopy.cmd != 0) अणु
+	if (mappass->reqcopy.cmd != 0) {
 		ret = -EINTR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mappass->reqcopy = *req;
 	icsk = inet_csk(mappass->sock->sk);
 	queue = &icsk->icsk_accept_queue;
-	data = READ_ONCE(queue->rskq_accept_head) != शून्य;
-	अगर (data) अणु
+	data = READ_ONCE(queue->rskq_accept_head) != NULL;
+	if (data) {
 		mappass->reqcopy.cmd = 0;
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	spin_unlock_irqrestore(&mappass->copy_lock, flags);
 
-	/* Tell the caller we करोn't need to send back a notअगरication yet */
-	वापस -1;
+	/* Tell the caller we don't need to send back a notification yet */
+	return -1;
 
 out:
 	spin_unlock_irqrestore(&mappass->copy_lock, flags);
@@ -805,40 +804,40 @@ out:
 	rsp->cmd = req->cmd;
 	rsp->u.poll.id = req->u.poll.id;
 	rsp->ret = ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_handle_cmd(काष्ठा xenbus_device *dev,
-				   काष्ठा xen_pvcalls_request *req)
-अणु
-	पूर्णांक ret = 0;
+static int pvcalls_back_handle_cmd(struct xenbus_device *dev,
+				   struct xen_pvcalls_request *req)
+{
+	int ret = 0;
 
-	चयन (req->cmd) अणु
-	हाल PVCALLS_SOCKET:
+	switch (req->cmd) {
+	case PVCALLS_SOCKET:
 		ret = pvcalls_back_socket(dev, req);
-		अवरोध;
-	हाल PVCALLS_CONNECT:
+		break;
+	case PVCALLS_CONNECT:
 		ret = pvcalls_back_connect(dev, req);
-		अवरोध;
-	हाल PVCALLS_RELEASE:
+		break;
+	case PVCALLS_RELEASE:
 		ret = pvcalls_back_release(dev, req);
-		अवरोध;
-	हाल PVCALLS_BIND:
+		break;
+	case PVCALLS_BIND:
 		ret = pvcalls_back_bind(dev, req);
-		अवरोध;
-	हाल PVCALLS_LISTEN:
+		break;
+	case PVCALLS_LISTEN:
 		ret = pvcalls_back_listen(dev, req);
-		अवरोध;
-	हाल PVCALLS_ACCEPT:
+		break;
+	case PVCALLS_ACCEPT:
 		ret = pvcalls_back_accept(dev, req);
-		अवरोध;
-	हाल PVCALLS_POLL:
+		break;
+	case PVCALLS_POLL:
 		ret = pvcalls_back_poll(dev, req);
-		अवरोध;
-	शेष:
-	अणु
-		काष्ठा pvcalls_fedata *fedata;
-		काष्ठा xen_pvcalls_response *rsp;
+		break;
+	default:
+	{
+		struct pvcalls_fedata *fedata;
+		struct xen_pvcalls_response *rsp;
 
 		fedata = dev_get_drvdata(&dev->dev);
 		rsp = RING_GET_RESPONSE(
@@ -846,123 +845,123 @@ out:
 		rsp->req_id = req->req_id;
 		rsp->cmd = req->cmd;
 		rsp->ret = -ENOTSUPP;
-		अवरोध;
-	पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	}
+	return ret;
+}
 
-अटल व्योम pvcalls_back_work(काष्ठा pvcalls_fedata *fedata)
-अणु
-	पूर्णांक notअगरy, notअगरy_all = 0, more = 1;
-	काष्ठा xen_pvcalls_request req;
-	काष्ठा xenbus_device *dev = fedata->dev;
+static void pvcalls_back_work(struct pvcalls_fedata *fedata)
+{
+	int notify, notify_all = 0, more = 1;
+	struct xen_pvcalls_request req;
+	struct xenbus_device *dev = fedata->dev;
 
-	जबतक (more) अणु
-		जबतक (RING_HAS_UNCONSUMED_REQUESTS(&fedata->ring)) अणु
+	while (more) {
+		while (RING_HAS_UNCONSUMED_REQUESTS(&fedata->ring)) {
 			RING_COPY_REQUEST(&fedata->ring,
 					  fedata->ring.req_cons++,
 					  &req);
 
-			अगर (!pvcalls_back_handle_cmd(dev, &req)) अणु
+			if (!pvcalls_back_handle_cmd(dev, &req)) {
 				RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(
-					&fedata->ring, notअगरy);
-				notअगरy_all += notअगरy;
-			पूर्ण
-		पूर्ण
+					&fedata->ring, notify);
+				notify_all += notify;
+			}
+		}
 
-		अगर (notअगरy_all) अणु
-			notअगरy_remote_via_irq(fedata->irq);
-			notअगरy_all = 0;
-		पूर्ण
+		if (notify_all) {
+			notify_remote_via_irq(fedata->irq);
+			notify_all = 0;
+		}
 
 		RING_FINAL_CHECK_FOR_REQUESTS(&fedata->ring, more);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t pvcalls_back_event(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा xenbus_device *dev = dev_id;
-	काष्ठा pvcalls_fedata *fedata = शून्य;
-	अचिन्हित पूर्णांक eoi_flags = XEN_EOI_FLAG_SPURIOUS;
+static irqreturn_t pvcalls_back_event(int irq, void *dev_id)
+{
+	struct xenbus_device *dev = dev_id;
+	struct pvcalls_fedata *fedata = NULL;
+	unsigned int eoi_flags = XEN_EOI_FLAG_SPURIOUS;
 
-	अगर (dev) अणु
+	if (dev) {
 		fedata = dev_get_drvdata(&dev->dev);
-		अगर (fedata) अणु
+		if (fedata) {
 			pvcalls_back_work(fedata);
 			eoi_flags = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	xen_irq_lateeoi(irq, eoi_flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t pvcalls_back_conn_event(पूर्णांक irq, व्योम *sock_map)
-अणु
-	काष्ठा sock_mapping *map = sock_map;
-	काष्ठा pvcalls_ioworker *iow;
+static irqreturn_t pvcalls_back_conn_event(int irq, void *sock_map)
+{
+	struct sock_mapping *map = sock_map;
+	struct pvcalls_ioworker *iow;
 
-	अगर (map == शून्य || map->sock == शून्य || map->sock->sk == शून्य ||
-		map->sock->sk->sk_user_data != map) अणु
+	if (map == NULL || map->sock == NULL || map->sock->sk == NULL ||
+		map->sock->sk->sk_user_data != map) {
 		xen_irq_lateeoi(irq, 0);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	iow = &map->ioworker;
 
-	atomic_inc(&map->ग_लिखो);
+	atomic_inc(&map->write);
 	atomic_inc(&map->eoi);
 	atomic_inc(&map->io);
-	queue_work(iow->wq, &iow->रेजिस्टर_work);
+	queue_work(iow->wq, &iow->register_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक backend_connect(काष्ठा xenbus_device *dev)
-अणु
-	पूर्णांक err;
+static int backend_connect(struct xenbus_device *dev)
+{
+	int err;
 	evtchn_port_t evtchn;
 	grant_ref_t ring_ref;
-	काष्ठा pvcalls_fedata *fedata = शून्य;
+	struct pvcalls_fedata *fedata = NULL;
 
-	fedata = kzalloc(माप(काष्ठा pvcalls_fedata), GFP_KERNEL);
-	अगर (!fedata)
-		वापस -ENOMEM;
+	fedata = kzalloc(sizeof(struct pvcalls_fedata), GFP_KERNEL);
+	if (!fedata)
+		return -ENOMEM;
 
 	fedata->irq = -1;
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend, "port", "%u",
+	err = xenbus_scanf(XBT_NIL, dev->otherend, "port", "%u",
 			   &evtchn);
-	अगर (err != 1) अणु
+	if (err != 1) {
 		err = -EINVAL;
 		xenbus_dev_fatal(dev, err, "reading %s/event-channel",
 				 dev->otherend);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend, "ring-ref", "%u", &ring_ref);
-	अगर (err != 1) अणु
+	err = xenbus_scanf(XBT_NIL, dev->otherend, "ring-ref", "%u", &ring_ref);
+	if (err != 1) {
 		err = -EINVAL;
 		xenbus_dev_fatal(dev, err, "reading %s/ring-ref",
 				 dev->otherend);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_lateeoi(dev, evtchn);
-	अगर (err < 0)
-		जाओ error;
+	err = bind_interdomain_evtchn_to_irq_lateeoi(dev, evtchn);
+	if (err < 0)
+		goto error;
 	fedata->irq = err;
 
-	err = request_thपढ़ोed_irq(fedata->irq, शून्य, pvcalls_back_event,
+	err = request_threaded_irq(fedata->irq, NULL, pvcalls_back_event,
 				   IRQF_ONESHOT, "pvcalls-back", dev);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
 	err = xenbus_map_ring_valloc(dev, &ring_ref, 1,
-				     (व्योम **)&fedata->sring);
-	अगर (err < 0)
-		जाओ error;
+				     (void **)&fedata->sring);
+	if (err < 0)
+		goto error;
 
 	BACK_RING_INIT(&fedata->ring, fedata->sring, XEN_PAGE_SIZE * 1);
 	fedata->dev = dev;
@@ -972,273 +971,273 @@ out:
 	sema_init(&fedata->socket_lock, 1);
 	dev_set_drvdata(&dev->dev, fedata);
 
-	करोwn(&pvcalls_back_global.frontends_lock);
+	down(&pvcalls_back_global.frontends_lock);
 	list_add_tail(&fedata->list, &pvcalls_back_global.frontends);
 	up(&pvcalls_back_global.frontends_lock);
 
-	वापस 0;
+	return 0;
 
  error:
-	अगर (fedata->irq >= 0)
+	if (fedata->irq >= 0)
 		unbind_from_irqhandler(fedata->irq, dev);
-	अगर (fedata->sring != शून्य)
-		xenbus_unmap_ring_vमुक्त(dev, fedata->sring);
-	kमुक्त(fedata);
-	वापस err;
-पूर्ण
+	if (fedata->sring != NULL)
+		xenbus_unmap_ring_vfree(dev, fedata->sring);
+	kfree(fedata);
+	return err;
+}
 
-अटल पूर्णांक backend_disconnect(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा pvcalls_fedata *fedata;
-	काष्ठा sock_mapping *map, *n;
-	काष्ठा sockpass_mapping *mappass;
-	काष्ठा radix_tree_iter iter;
-	व्योम **slot;
+static int backend_disconnect(struct xenbus_device *dev)
+{
+	struct pvcalls_fedata *fedata;
+	struct sock_mapping *map, *n;
+	struct sockpass_mapping *mappass;
+	struct radix_tree_iter iter;
+	void **slot;
 
 
 	fedata = dev_get_drvdata(&dev->dev);
 
-	करोwn(&fedata->socket_lock);
-	list_क्रम_each_entry_safe(map, n, &fedata->socket_mappings, list) अणु
+	down(&fedata->socket_lock);
+	list_for_each_entry_safe(map, n, &fedata->socket_mappings, list) {
 		list_del(&map->list);
 		pvcalls_back_release_active(dev, fedata, map);
-	पूर्ण
+	}
 
-	radix_tree_क्रम_each_slot(slot, &fedata->socketpass_mappings, &iter, 0) अणु
+	radix_tree_for_each_slot(slot, &fedata->socketpass_mappings, &iter, 0) {
 		mappass = radix_tree_deref_slot(slot);
-		अगर (!mappass)
-			जारी;
-		अगर (radix_tree_exception(mappass)) अणु
-			अगर (radix_tree_deref_retry(mappass))
+		if (!mappass)
+			continue;
+		if (radix_tree_exception(mappass)) {
+			if (radix_tree_deref_retry(mappass))
 				slot = radix_tree_iter_retry(&iter);
-		पूर्ण अन्यथा अणु
+		} else {
 			radix_tree_delete(&fedata->socketpass_mappings,
 					  mappass->id);
 			pvcalls_back_release_passive(dev, fedata, mappass);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	up(&fedata->socket_lock);
 
 	unbind_from_irqhandler(fedata->irq, dev);
-	xenbus_unmap_ring_vमुक्त(dev, fedata->sring);
+	xenbus_unmap_ring_vfree(dev, fedata->sring);
 
 	list_del(&fedata->list);
-	kमुक्त(fedata);
-	dev_set_drvdata(&dev->dev, शून्य);
+	kfree(fedata);
+	dev_set_drvdata(&dev->dev, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_probe(काष्ठा xenbus_device *dev,
-			      स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक err, पात;
-	काष्ठा xenbus_transaction xbt;
+static int pvcalls_back_probe(struct xenbus_device *dev,
+			      const struct xenbus_device_id *id)
+{
+	int err, abort;
+	struct xenbus_transaction xbt;
 
 again:
-	पात = 1;
+	abort = 1;
 
 	err = xenbus_transaction_start(&xbt);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("%s cannot create xenstore transaction\n", __func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "versions", "%s",
+	err = xenbus_printf(xbt, dev->nodename, "versions", "%s",
 			    PVCALLS_VERSIONS);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("%s write out 'versions' failed\n", __func__);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "max-page-order", "%u",
+	err = xenbus_printf(xbt, dev->nodename, "max-page-order", "%u",
 			    MAX_RING_ORDER);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("%s write out 'max-page-order' failed\n", __func__);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "function-calls",
+	err = xenbus_printf(xbt, dev->nodename, "function-calls",
 			    XENBUS_FUNCTIONS_CALLS);
-	अगर (err) अणु
+	if (err) {
 		pr_warn("%s write out 'function-calls' failed\n", __func__);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
-	पात = 0;
-पात:
-	err = xenbus_transaction_end(xbt, पात);
-	अगर (err) अणु
-		अगर (err == -EAGAIN && !पात)
-			जाओ again;
+	abort = 0;
+abort:
+	err = xenbus_transaction_end(xbt, abort);
+	if (err) {
+		if (err == -EAGAIN && !abort)
+			goto again;
 		pr_warn("%s cannot complete xenstore transaction\n", __func__);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (पात)
-		वापस -EFAULT;
+	if (abort)
+		return -EFAULT;
 
-	xenbus_चयन_state(dev, XenbusStateInitWait);
+	xenbus_switch_state(dev, XenbusStateInitWait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_backend_state(काष्ठा xenbus_device *dev,
-			      क्रमागत xenbus_state state)
-अणु
-	जबतक (dev->state != state) अणु
-		चयन (dev->state) अणु
-		हाल XenbusStateClosed:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateConnected:
-				xenbus_चयन_state(dev, XenbusStateInitWait);
-				अवरोध;
-			हाल XenbusStateClosing:
-				xenbus_चयन_state(dev, XenbusStateClosing);
-				अवरोध;
-			शेष:
+static void set_backend_state(struct xenbus_device *dev,
+			      enum xenbus_state state)
+{
+	while (dev->state != state) {
+		switch (dev->state) {
+		case XenbusStateClosed:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateConnected:
+				xenbus_switch_state(dev, XenbusStateInitWait);
+				break;
+			case XenbusStateClosing:
+				xenbus_switch_state(dev, XenbusStateClosing);
+				break;
+			default:
 				WARN_ON(1);
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateInitWait:
-		हाल XenbusStateInitialised:
-			चयन (state) अणु
-			हाल XenbusStateConnected:
-				अगर (backend_connect(dev))
-					वापस;
-				xenbus_चयन_state(dev, XenbusStateConnected);
-				अवरोध;
-			हाल XenbusStateClosing:
-			हाल XenbusStateClosed:
-				xenbus_चयन_state(dev, XenbusStateClosing);
-				अवरोध;
-			शेष:
+			}
+			break;
+		case XenbusStateInitWait:
+		case XenbusStateInitialised:
+			switch (state) {
+			case XenbusStateConnected:
+				if (backend_connect(dev))
+					return;
+				xenbus_switch_state(dev, XenbusStateConnected);
+				break;
+			case XenbusStateClosing:
+			case XenbusStateClosed:
+				xenbus_switch_state(dev, XenbusStateClosing);
+				break;
+			default:
 				WARN_ON(1);
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateConnected:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateClosing:
-			हाल XenbusStateClosed:
-				करोwn(&pvcalls_back_global.frontends_lock);
+			}
+			break;
+		case XenbusStateConnected:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateClosing:
+			case XenbusStateClosed:
+				down(&pvcalls_back_global.frontends_lock);
 				backend_disconnect(dev);
 				up(&pvcalls_back_global.frontends_lock);
-				xenbus_चयन_state(dev, XenbusStateClosing);
-				अवरोध;
-			शेष:
+				xenbus_switch_state(dev, XenbusStateClosing);
+				break;
+			default:
 				WARN_ON(1);
-			पूर्ण
-			अवरोध;
-		हाल XenbusStateClosing:
-			चयन (state) अणु
-			हाल XenbusStateInitWait:
-			हाल XenbusStateConnected:
-			हाल XenbusStateClosed:
-				xenbus_चयन_state(dev, XenbusStateClosed);
-				अवरोध;
-			शेष:
+			}
+			break;
+		case XenbusStateClosing:
+			switch (state) {
+			case XenbusStateInitWait:
+			case XenbusStateConnected:
+			case XenbusStateClosed:
+				xenbus_switch_state(dev, XenbusStateClosed);
+				break;
+			default:
 				WARN_ON(1);
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			WARN_ON(1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम pvcalls_back_changed(काष्ठा xenbus_device *dev,
-				 क्रमागत xenbus_state frontend_state)
-अणु
-	चयन (frontend_state) अणु
-	हाल XenbusStateInitialising:
+static void pvcalls_back_changed(struct xenbus_device *dev,
+				 enum xenbus_state frontend_state)
+{
+	switch (frontend_state) {
+	case XenbusStateInitialising:
 		set_backend_state(dev, XenbusStateInitWait);
-		अवरोध;
+		break;
 
-	हाल XenbusStateInitialised:
-	हाल XenbusStateConnected:
+	case XenbusStateInitialised:
+	case XenbusStateConnected:
 		set_backend_state(dev, XenbusStateConnected);
-		अवरोध;
+		break;
 
-	हाल XenbusStateClosing:
+	case XenbusStateClosing:
 		set_backend_state(dev, XenbusStateClosing);
-		अवरोध;
+		break;
 
-	हाल XenbusStateClosed:
+	case XenbusStateClosed:
 		set_backend_state(dev, XenbusStateClosed);
-		अगर (xenbus_dev_is_online(dev))
-			अवरोध;
-		device_unरेजिस्टर(&dev->dev);
-		अवरोध;
-	हाल XenbusStateUnknown:
+		if (xenbus_dev_is_online(dev))
+			break;
+		device_unregister(&dev->dev);
+		break;
+	case XenbusStateUnknown:
 		set_backend_state(dev, XenbusStateClosed);
-		device_unरेजिस्टर(&dev->dev);
-		अवरोध;
+		device_unregister(&dev->dev);
+		break;
 
-	शेष:
+	default:
 		xenbus_dev_fatal(dev, -EINVAL, "saw state %d at frontend",
 				 frontend_state);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक pvcalls_back_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int pvcalls_back_remove(struct xenbus_device *dev)
+{
+	return 0;
+}
 
-अटल पूर्णांक pvcalls_back_uevent(काष्ठा xenbus_device *xdev,
-			       काष्ठा kobj_uevent_env *env)
-अणु
-	वापस 0;
-पूर्ण
+static int pvcalls_back_uevent(struct xenbus_device *xdev,
+			       struct kobj_uevent_env *env)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा xenbus_device_id pvcalls_back_ids[] = अणु
-	अणु "pvcalls" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id pvcalls_back_ids[] = {
+	{ "pvcalls" },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver pvcalls_back_driver = अणु
+static struct xenbus_driver pvcalls_back_driver = {
 	.ids = pvcalls_back_ids,
 	.probe = pvcalls_back_probe,
-	.हटाओ = pvcalls_back_हटाओ,
+	.remove = pvcalls_back_remove,
 	.uevent = pvcalls_back_uevent,
 	.otherend_changed = pvcalls_back_changed,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pvcalls_back_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pvcalls_back_init(void)
+{
+	int ret;
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
-	ret = xenbus_रेजिस्टर_backend(&pvcalls_back_driver);
-	अगर (ret < 0)
-		वापस ret;
+	ret = xenbus_register_backend(&pvcalls_back_driver);
+	if (ret < 0)
+		return ret;
 
 	sema_init(&pvcalls_back_global.frontends_lock, 1);
 	INIT_LIST_HEAD(&pvcalls_back_global.frontends);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 module_init(pvcalls_back_init);
 
-अटल व्योम __निकास pvcalls_back_fin(व्योम)
-अणु
-	काष्ठा pvcalls_fedata *fedata, *nfedata;
+static void __exit pvcalls_back_fin(void)
+{
+	struct pvcalls_fedata *fedata, *nfedata;
 
-	करोwn(&pvcalls_back_global.frontends_lock);
-	list_क्रम_each_entry_safe(fedata, nfedata,
-				 &pvcalls_back_global.frontends, list) अणु
+	down(&pvcalls_back_global.frontends_lock);
+	list_for_each_entry_safe(fedata, nfedata,
+				 &pvcalls_back_global.frontends, list) {
 		backend_disconnect(fedata->dev);
-	पूर्ण
+	}
 	up(&pvcalls_back_global.frontends_lock);
 
-	xenbus_unरेजिस्टर_driver(&pvcalls_back_driver);
-पूर्ण
+	xenbus_unregister_driver(&pvcalls_back_driver);
+}
 
-module_निकास(pvcalls_back_fin);
+module_exit(pvcalls_back_fin);
 
 MODULE_DESCRIPTION("Xen PV Calls backend driver");
 MODULE_AUTHOR("Stefano Stabellini <sstabellini@kernel.org>");

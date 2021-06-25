@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *  linux/fs/nfs/ioस्थिति.स
+ *  linux/fs/nfs/iostat.h
  *
- *  Declarations क्रम NFS client per-mount statistics
+ *  Declarations for NFS client per-mount statistics
  *
  *  Copyright (C) 2005, 2006 Chuck Lever <cel@netapp.com>
  *
  */
 
-#अगर_अघोषित _NFS_IOSTAT
-#घोषणा _NFS_IOSTAT
+#ifndef _NFS_IOSTAT
+#define _NFS_IOSTAT
 
-#समावेश <linux/percpu.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/nfs_ioस्थिति.स>
+#include <linux/percpu.h>
+#include <linux/cache.h>
+#include <linux/nfs_iostat.h>
 
-काष्ठा nfs_iostats अणु
-	अचिन्हित दीर्घ दीर्घ	bytes[__NFSIOS_BYTESMAX];
-#अगर_घोषित CONFIG_NFS_FSCACHE
-	अचिन्हित दीर्घ दीर्घ	fscache[__NFSIOS_FSCACHEMAX];
-#पूर्ण_अगर
-	अचिन्हित दीर्घ		events[__NFSIOS_COUNTSMAX];
-पूर्ण ____cacheline_aligned;
+struct nfs_iostats {
+	unsigned long long	bytes[__NFSIOS_BYTESMAX];
+#ifdef CONFIG_NFS_FSCACHE
+	unsigned long long	fscache[__NFSIOS_FSCACHEMAX];
+#endif
+	unsigned long		events[__NFSIOS_COUNTSMAX];
+} ____cacheline_aligned;
 
-अटल अंतरभूत व्योम nfs_inc_server_stats(स्थिर काष्ठा nfs_server *server,
-					क्रमागत nfs_stat_eventcounters stat)
-अणु
+static inline void nfs_inc_server_stats(const struct nfs_server *server,
+					enum nfs_stat_eventcounters stat)
+{
 	this_cpu_inc(server->io_stats->events[stat]);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nfs_inc_stats(स्थिर काष्ठा inode *inode,
-				 क्रमागत nfs_stat_eventcounters stat)
-अणु
+static inline void nfs_inc_stats(const struct inode *inode,
+				 enum nfs_stat_eventcounters stat)
+{
 	nfs_inc_server_stats(NFS_SERVER(inode), stat);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nfs_add_server_stats(स्थिर काष्ठा nfs_server *server,
-					क्रमागत nfs_stat_bytecounters stat,
-					दीर्घ addend)
-अणु
+static inline void nfs_add_server_stats(const struct nfs_server *server,
+					enum nfs_stat_bytecounters stat,
+					long addend)
+{
 	this_cpu_add(server->io_stats->bytes[stat], addend);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nfs_add_stats(स्थिर काष्ठा inode *inode,
-				 क्रमागत nfs_stat_bytecounters stat,
-				 दीर्घ addend)
-अणु
+static inline void nfs_add_stats(const struct inode *inode,
+				 enum nfs_stat_bytecounters stat,
+				 long addend)
+{
 	nfs_add_server_stats(NFS_SERVER(inode), stat, addend);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_NFS_FSCACHE
-अटल अंतरभूत व्योम nfs_add_fscache_stats(काष्ठा inode *inode,
-					 क्रमागत nfs_stat_fscachecounters stat,
-					 दीर्घ addend)
-अणु
+#ifdef CONFIG_NFS_FSCACHE
+static inline void nfs_add_fscache_stats(struct inode *inode,
+					 enum nfs_stat_fscachecounters stat,
+					 long addend)
+{
 	this_cpu_add(NFS_SERVER(inode)->io_stats->fscache[stat], addend);
-पूर्ण
-अटल अंतरभूत व्योम nfs_inc_fscache_stats(काष्ठा inode *inode,
-					 क्रमागत nfs_stat_fscachecounters stat)
-अणु
+}
+static inline void nfs_inc_fscache_stats(struct inode *inode,
+					 enum nfs_stat_fscachecounters stat)
+{
 	this_cpu_inc(NFS_SERVER(inode)->io_stats->fscache[stat]);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत काष्ठा nfs_iostats __percpu *nfs_alloc_iostats(व्योम)
-अणु
-	वापस alloc_percpu(काष्ठा nfs_iostats);
-पूर्ण
+static inline struct nfs_iostats __percpu *nfs_alloc_iostats(void)
+{
+	return alloc_percpu(struct nfs_iostats);
+}
 
-अटल अंतरभूत व्योम nfs_मुक्त_iostats(काष्ठा nfs_iostats __percpu *stats)
-अणु
-	अगर (stats != शून्य)
-		मुक्त_percpu(stats);
-पूर्ण
+static inline void nfs_free_iostats(struct nfs_iostats __percpu *stats)
+{
+	if (stats != NULL)
+		free_percpu(stats);
+}
 
-#पूर्ण_अगर /* _NFS_IOSTAT */
+#endif /* _NFS_IOSTAT */

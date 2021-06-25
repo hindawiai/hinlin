@@ -1,49 +1,48 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2014 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश "ath9k.h"
+#include "ath9k.h"
 
-/* Set/change channels.  If the channel is really being changed, it's करोne
+/* Set/change channels.  If the channel is really being changed, it's done
  * by reseting the chip.  To accomplish this we must first cleanup any pending
  * DMA, then restart stuff.
  */
-अटल पूर्णांक ath_set_channel(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ieee80211_hw *hw = sc->hw;
-	काष्ठा ath9k_channel *hchan;
-	काष्ठा cfg80211_chan_def *chandef = &sc->cur_chan->chandef;
-	काष्ठा ieee80211_channel *chan = chandef->chan;
-	पूर्णांक pos = chan->hw_value;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक old_pos = -1;
-	पूर्णांक r;
+static int ath_set_channel(struct ath_softc *sc)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ieee80211_hw *hw = sc->hw;
+	struct ath9k_channel *hchan;
+	struct cfg80211_chan_def *chandef = &sc->cur_chan->chandef;
+	struct ieee80211_channel *chan = chandef->chan;
+	int pos = chan->hw_value;
+	unsigned long flags;
+	int old_pos = -1;
+	int r;
 
-	अगर (test_bit(ATH_OP_INVALID, &common->op_flags))
-		वापस -EIO;
+	if (test_bit(ATH_OP_INVALID, &common->op_flags))
+		return -EIO;
 
-	अगर (ah->curchan)
+	if (ah->curchan)
 		old_pos = ah->curchan - &ah->channels[0];
 
 	ath_dbg(common, CONFIG, "Set channel: %d MHz width: %d\n",
 		chan->center_freq, chandef->width);
 
-	/* update survey stats क्रम the old channel beक्रमe चयनing */
+	/* update survey stats for the old channel before switching */
 	spin_lock_irqsave(&common->cc_lock, flags);
 	ath_update_survey_stats(sc);
 	spin_unlock_irqrestore(&common->cc_lock, flags);
@@ -51,38 +50,38 @@
 	ath9k_cmn_get_channel(hw, ah, chandef);
 
 	/* If the operating channel changes, change the survey in-use flags
-	 * aदीर्घ with it.
-	 * Reset the survey data क्रम the new channel, unless we're चयनing
+	 * along with it.
+	 * Reset the survey data for the new channel, unless we're switching
 	 * back to the operating channel from an off-channel operation.
 	 */
-	अगर (!sc->cur_chan->offchannel && sc->cur_survey != &sc->survey[pos]) अणु
-		अगर (sc->cur_survey)
+	if (!sc->cur_chan->offchannel && sc->cur_survey != &sc->survey[pos]) {
+		if (sc->cur_survey)
 			sc->cur_survey->filled &= ~SURVEY_INFO_IN_USE;
 
 		sc->cur_survey = &sc->survey[pos];
 
-		स_रखो(sc->cur_survey, 0, माप(काष्ठा survey_info));
+		memset(sc->cur_survey, 0, sizeof(struct survey_info));
 		sc->cur_survey->filled |= SURVEY_INFO_IN_USE;
-	पूर्ण अन्यथा अगर (!(sc->survey[pos].filled & SURVEY_INFO_IN_USE)) अणु
-		स_रखो(&sc->survey[pos], 0, माप(काष्ठा survey_info));
-	पूर्ण
+	} else if (!(sc->survey[pos].filled & SURVEY_INFO_IN_USE)) {
+		memset(&sc->survey[pos], 0, sizeof(struct survey_info));
+	}
 
 	hchan = &sc->sc_ah->channels[pos];
 	r = ath_reset(sc, hchan);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	/* The most recent snapshot of channel->noiseन्यूनमान क्रम the old
+	/* The most recent snapshot of channel->noisefloor for the old
 	 * channel is only available after the hardware reset. Copy it to
 	 * the survey stats now.
 	 */
-	अगर (old_pos >= 0)
+	if (old_pos >= 0)
 		ath_update_survey_nf(sc, old_pos);
 
-	/* Enable radar pulse detection अगर on a DFS channel. Spectral
+	/* Enable radar pulse detection if on a DFS channel. Spectral
 	 * scanning and radar detection can not be used concurrently.
 	 */
-	अगर (hw->conf.radar_enabled) अणु
+	if (hw->conf.radar_enabled) {
 		u32 rxfilter;
 
 		rxfilter = ath9k_hw_getrxfilter(ah);
@@ -91,336 +90,336 @@
 		ath9k_hw_setrxfilter(ah, rxfilter);
 		ath_dbg(common, DFS, "DFS enabled at freq %d\n",
 			chan->center_freq);
-	पूर्ण अन्यथा अणु
-		/* perक्रमm spectral scan अगर requested. */
-		अगर (test_bit(ATH_OP_SCANNING, &common->op_flags) &&
+	} else {
+		/* perform spectral scan if requested. */
+		if (test_bit(ATH_OP_SCANNING, &common->op_flags) &&
 			sc->spec_priv.spectral_mode == SPECTRAL_CHANSCAN)
 			ath9k_cmn_spectral_scan_trigger(common, &sc->spec_priv);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath_chanctx_init(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_chanctx *ctx;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा ieee80211_channel *chan;
-	पूर्णांक i, j;
+void ath_chanctx_init(struct ath_softc *sc)
+{
+	struct ath_chanctx *ctx;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ieee80211_supported_band *sband;
+	struct ieee80211_channel *chan;
+	int i, j;
 
 	sband = &common->sbands[NL80211_BAND_2GHZ];
-	अगर (!sband->n_channels)
+	if (!sband->n_channels)
 		sband = &common->sbands[NL80211_BAND_5GHZ];
 
 	chan = &sband->channels[0];
-	क्रम (i = 0; i < ATH9K_NUM_CHANCTX; i++) अणु
+	for (i = 0; i < ATH9K_NUM_CHANCTX; i++) {
 		ctx = &sc->chanctx[i];
 		cfg80211_chandef_create(&ctx->chandef, chan, NL80211_CHAN_HT20);
-		INIT_LIST_HEAD(&ctx->vअगरs);
-		ctx->txघातer = ATH_TXPOWER_MAX;
-		ctx->flush_समयout = HZ / 5; /* 200ms */
-		क्रम (j = 0; j < ARRAY_SIZE(ctx->acq); j++) अणु
+		INIT_LIST_HEAD(&ctx->vifs);
+		ctx->txpower = ATH_TXPOWER_MAX;
+		ctx->flush_timeout = HZ / 5; /* 200ms */
+		for (j = 0; j < ARRAY_SIZE(ctx->acq); j++) {
 			INIT_LIST_HEAD(&ctx->acq[j].acq_new);
 			INIT_LIST_HEAD(&ctx->acq[j].acq_old);
 			spin_lock_init(&ctx->acq[j].lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम ath_chanctx_set_channel(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx,
-			     काष्ठा cfg80211_chan_def *chandef)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+void ath_chanctx_set_channel(struct ath_softc *sc, struct ath_chanctx *ctx,
+			     struct cfg80211_chan_def *chandef)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	bool cur_chan;
 
 	spin_lock_bh(&sc->chan_lock);
-	अगर (chandef)
-		स_नकल(&ctx->chandef, chandef, माप(*chandef));
+	if (chandef)
+		memcpy(&ctx->chandef, chandef, sizeof(*chandef));
 	cur_chan = sc->cur_chan == ctx;
 	spin_unlock_bh(&sc->chan_lock);
 
-	अगर (!cur_chan) अणु
+	if (!cur_chan) {
 		ath_dbg(common, CHAN_CTX,
 			"Current context differs from the new context\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath_set_channel(sc);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_ATH9K_CHANNEL_CONTEXT
+#ifdef CONFIG_ATH9K_CHANNEL_CONTEXT
 
 /*************/
 /* Utilities */
 /*************/
 
-काष्ठा ath_chanctx* ath_is_go_chanctx_present(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_chanctx *ctx;
-	काष्ठा ath_vअगर *avp;
-	काष्ठा ieee80211_vअगर *vअगर;
+struct ath_chanctx* ath_is_go_chanctx_present(struct ath_softc *sc)
+{
+	struct ath_chanctx *ctx;
+	struct ath_vif *avp;
+	struct ieee80211_vif *vif;
 
 	spin_lock_bh(&sc->chan_lock);
 
-	ath_क्रम_each_chanctx(sc, ctx) अणु
-		अगर (!ctx->active)
-			जारी;
+	ath_for_each_chanctx(sc, ctx) {
+		if (!ctx->active)
+			continue;
 
-		list_क्रम_each_entry(avp, &ctx->vअगरs, list) अणु
-			vअगर = avp->vअगर;
+		list_for_each_entry(avp, &ctx->vifs, list) {
+			vif = avp->vif;
 
-			अगर (ieee80211_vअगर_type_p2p(vअगर) == NL80211_IFTYPE_P2P_GO) अणु
+			if (ieee80211_vif_type_p2p(vif) == NL80211_IFTYPE_P2P_GO) {
 				spin_unlock_bh(&sc->chan_lock);
-				वापस ctx;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ctx;
+			}
+		}
+	}
 
 	spin_unlock_bh(&sc->chan_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**********************************************************/
 /* Functions to handle the channel context state machine. */
 /**********************************************************/
 
-अटल स्थिर अक्षर *offchannel_state_string(क्रमागत ath_offchannel_state state)
-अणु
-	चयन (state) अणु
-		हाल_rtn_string(ATH_OFFCHANNEL_IDLE);
-		हाल_rtn_string(ATH_OFFCHANNEL_PROBE_SEND);
-		हाल_rtn_string(ATH_OFFCHANNEL_PROBE_WAIT);
-		हाल_rtn_string(ATH_OFFCHANNEL_SUSPEND);
-		हाल_rtn_string(ATH_OFFCHANNEL_ROC_START);
-		हाल_rtn_string(ATH_OFFCHANNEL_ROC_WAIT);
-		हाल_rtn_string(ATH_OFFCHANNEL_ROC_DONE);
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *offchannel_state_string(enum ath_offchannel_state state)
+{
+	switch (state) {
+		case_rtn_string(ATH_OFFCHANNEL_IDLE);
+		case_rtn_string(ATH_OFFCHANNEL_PROBE_SEND);
+		case_rtn_string(ATH_OFFCHANNEL_PROBE_WAIT);
+		case_rtn_string(ATH_OFFCHANNEL_SUSPEND);
+		case_rtn_string(ATH_OFFCHANNEL_ROC_START);
+		case_rtn_string(ATH_OFFCHANNEL_ROC_WAIT);
+		case_rtn_string(ATH_OFFCHANNEL_ROC_DONE);
+	default:
+		return "unknown";
+	}
+}
 
-अटल स्थिर अक्षर *chanctx_event_string(क्रमागत ath_chanctx_event ev)
-अणु
-	चयन (ev) अणु
-		हाल_rtn_string(ATH_CHANCTX_EVENT_BEACON_PREPARE);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_BEACON_SENT);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_TSF_TIMER);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_BEACON_RECEIVED);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_AUTHORIZED);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_SWITCH);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_ASSIGN);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_UNASSIGN);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_CHANGE);
-		हाल_rtn_string(ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL);
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *chanctx_event_string(enum ath_chanctx_event ev)
+{
+	switch (ev) {
+		case_rtn_string(ATH_CHANCTX_EVENT_BEACON_PREPARE);
+		case_rtn_string(ATH_CHANCTX_EVENT_BEACON_SENT);
+		case_rtn_string(ATH_CHANCTX_EVENT_TSF_TIMER);
+		case_rtn_string(ATH_CHANCTX_EVENT_BEACON_RECEIVED);
+		case_rtn_string(ATH_CHANCTX_EVENT_AUTHORIZED);
+		case_rtn_string(ATH_CHANCTX_EVENT_SWITCH);
+		case_rtn_string(ATH_CHANCTX_EVENT_ASSIGN);
+		case_rtn_string(ATH_CHANCTX_EVENT_UNASSIGN);
+		case_rtn_string(ATH_CHANCTX_EVENT_CHANGE);
+		case_rtn_string(ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL);
+	default:
+		return "unknown";
+	}
+}
 
-अटल स्थिर अक्षर *chanctx_state_string(क्रमागत ath_chanctx_state state)
-अणु
-	चयन (state) अणु
-		हाल_rtn_string(ATH_CHANCTX_STATE_IDLE);
-		हाल_rtn_string(ATH_CHANCTX_STATE_WAIT_FOR_BEACON);
-		हाल_rtn_string(ATH_CHANCTX_STATE_WAIT_FOR_TIMER);
-		हाल_rtn_string(ATH_CHANCTX_STATE_SWITCH);
-		हाल_rtn_string(ATH_CHANCTX_STATE_FORCE_ACTIVE);
-	शेष:
-		वापस "unknown";
-	पूर्ण
-पूर्ण
+static const char *chanctx_state_string(enum ath_chanctx_state state)
+{
+	switch (state) {
+		case_rtn_string(ATH_CHANCTX_STATE_IDLE);
+		case_rtn_string(ATH_CHANCTX_STATE_WAIT_FOR_BEACON);
+		case_rtn_string(ATH_CHANCTX_STATE_WAIT_FOR_TIMER);
+		case_rtn_string(ATH_CHANCTX_STATE_SWITCH);
+		case_rtn_string(ATH_CHANCTX_STATE_FORCE_ACTIVE);
+	default:
+		return "unknown";
+	}
+}
 
-अटल u32 chanctx_event_delta(काष्ठा ath_softc *sc)
-अणु
+static u32 chanctx_event_delta(struct ath_softc *sc)
+{
 	u64 ms;
-	काष्ठा बारpec64 ts, *old;
+	struct timespec64 ts, *old;
 
-	kसमय_get_raw_ts64(&ts);
-	old = &sc->last_event_समय;
+	ktime_get_raw_ts64(&ts);
+	old = &sc->last_event_time;
 	ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 	ms -= old->tv_sec * 1000 + old->tv_nsec / 1000000;
-	sc->last_event_समय = ts;
+	sc->last_event_time = ts;
 
-	वापस (u32)ms;
-पूर्ण
+	return (u32)ms;
+}
 
-व्योम ath_chanctx_check_active(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_chanctx *ictx;
-	काष्ठा ath_vअगर *avp;
+void ath_chanctx_check_active(struct ath_softc *sc, struct ath_chanctx *ctx)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_chanctx *ictx;
+	struct ath_vif *avp;
 	bool active = false;
 	u8 n_active = 0;
 
-	अगर (!ctx)
-		वापस;
+	if (!ctx)
+		return;
 
-	अगर (ctx == &sc->offchannel.chan) अणु
+	if (ctx == &sc->offchannel.chan) {
 		spin_lock_bh(&sc->chan_lock);
 
-		अगर (likely(sc->sched.channel_चयन_समय))
-			ctx->flush_समयout =
-				usecs_to_jअगरfies(sc->sched.channel_चयन_समय);
-		अन्यथा
-			ctx->flush_समयout =
-				msecs_to_jअगरfies(10);
+		if (likely(sc->sched.channel_switch_time))
+			ctx->flush_timeout =
+				usecs_to_jiffies(sc->sched.channel_switch_time);
+		else
+			ctx->flush_timeout =
+				msecs_to_jiffies(10);
 
 		spin_unlock_bh(&sc->chan_lock);
 
 		/*
 		 * There is no need to iterate over the
-		 * active/asचिन्हित channel contexts अगर
+		 * active/assigned channel contexts if
 		 * the current context is offchannel.
 		 */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ictx = ctx;
 
-	list_क्रम_each_entry(avp, &ctx->vअगरs, list) अणु
-		काष्ठा ieee80211_vअगर *vअगर = avp->vअगर;
+	list_for_each_entry(avp, &ctx->vifs, list) {
+		struct ieee80211_vif *vif = avp->vif;
 
-		चयन (vअगर->type) अणु
-		हाल NL80211_IFTYPE_P2P_CLIENT:
-		हाल NL80211_IFTYPE_STATION:
-			अगर (avp->assoc)
+		switch (vif->type) {
+		case NL80211_IFTYPE_P2P_CLIENT:
+		case NL80211_IFTYPE_STATION:
+			if (avp->assoc)
 				active = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			active = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	ctx->active = active;
 
-	ath_क्रम_each_chanctx(sc, ctx) अणु
-		अगर (!ctx->asचिन्हित || list_empty(&ctx->vअगरs))
-			जारी;
+	ath_for_each_chanctx(sc, ctx) {
+		if (!ctx->assigned || list_empty(&ctx->vifs))
+			continue;
 		n_active++;
-	पूर्ण
+	}
 
 	spin_lock_bh(&sc->chan_lock);
 
-	अगर (n_active <= 1) अणु
-		ictx->flush_समयout = HZ / 5;
+	if (n_active <= 1) {
+		ictx->flush_timeout = HZ / 5;
 		clear_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags);
 		spin_unlock_bh(&sc->chan_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ictx->flush_समयout = usecs_to_jअगरfies(sc->sched.channel_चयन_समय);
+	ictx->flush_timeout = usecs_to_jiffies(sc->sched.channel_switch_time);
 
-	अगर (test_and_set_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags)) अणु
+	if (test_and_set_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags)) {
 		spin_unlock_bh(&sc->chan_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_unlock_bh(&sc->chan_lock);
 
-	अगर (ath9k_is_chanctx_enabled()) अणु
-		ath_chanctx_event(sc, शून्य,
+	if (ath9k_is_chanctx_enabled()) {
+		ath_chanctx_event(sc, NULL,
 				  ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा ath_chanctx *
-ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx)
-अणु
-	पूर्णांक idx = ctx - &sc->chanctx[0];
+static struct ath_chanctx *
+ath_chanctx_get_next(struct ath_softc *sc, struct ath_chanctx *ctx)
+{
+	int idx = ctx - &sc->chanctx[0];
 
-	वापस &sc->chanctx[!idx];
-पूर्ण
+	return &sc->chanctx[!idx];
+}
 
-अटल व्योम ath_chanctx_adjust_tbtt_delta(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_chanctx *prev, *cur;
-	काष्ठा बारpec64 ts;
-	u32 cur_tsf, prev_tsf, beacon_पूर्णांक;
+static void ath_chanctx_adjust_tbtt_delta(struct ath_softc *sc)
+{
+	struct ath_chanctx *prev, *cur;
+	struct timespec64 ts;
+	u32 cur_tsf, prev_tsf, beacon_int;
 	s32 offset;
 
-	beacon_पूर्णांक = TU_TO_USEC(sc->cur_chan->beacon.beacon_पूर्णांकerval);
+	beacon_int = TU_TO_USEC(sc->cur_chan->beacon.beacon_interval);
 
 	cur = sc->cur_chan;
 	prev = ath_chanctx_get_next(sc, cur);
 
-	अगर (!prev->चयन_after_beacon)
-		वापस;
+	if (!prev->switch_after_beacon)
+		return;
 
-	kसमय_get_raw_ts64(&ts);
+	ktime_get_raw_ts64(&ts);
 	cur_tsf = (u32) cur->tsf_val +
 		  ath9k_hw_get_tsf_offset(&cur->tsf_ts, &ts);
 
 	prev_tsf = prev->last_beacon - (u32) prev->tsf_val + cur_tsf;
 	prev_tsf -= ath9k_hw_get_tsf_offset(&prev->tsf_ts, &ts);
 
-	/* Adjust the TSF समय of the AP chanctx to keep its beacons
-	 * at half beacon पूर्णांकerval offset relative to the STA chanctx.
+	/* Adjust the TSF time of the AP chanctx to keep its beacons
+	 * at half beacon interval offset relative to the STA chanctx.
 	 */
 	offset = cur_tsf - prev_tsf;
 
-	/* Ignore stale data or spurious बारtamps */
-	अगर (offset < 0 || offset > 3 * beacon_पूर्णांक)
-		वापस;
+	/* Ignore stale data or spurious timestamps */
+	if (offset < 0 || offset > 3 * beacon_int)
+		return;
 
-	offset = beacon_पूर्णांक / 2 - (offset % beacon_पूर्णांक);
+	offset = beacon_int / 2 - (offset % beacon_int);
 	prev->tsf_val += offset;
-पूर्ण
+}
 
-/* Configure the TSF based hardware समयr क्रम a channel चयन.
- * Also set up backup software समयr, in हाल the gen समयr fails.
+/* Configure the TSF based hardware timer for a channel switch.
+ * Also set up backup software timer, in case the gen timer fails.
  * This could be caused by a hardware reset.
  */
-अटल व्योम ath_chanctx_setup_समयr(काष्ठा ath_softc *sc, u32 tsf_समय)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	अचिन्हित दीर्घ समयout;
+static void ath_chanctx_setup_timer(struct ath_softc *sc, u32 tsf_time)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_hw *ah = sc->sc_ah;
+	unsigned long timeout;
 
-	ath9k_hw_gen_समयr_start(ah, sc->p2p_ps_समयr, tsf_समय, 1000000);
-	tsf_समय -= ath9k_hw_gettsf32(ah);
-	समयout = msecs_to_jअगरfies(tsf_समय / 1000) + 1;
-	mod_समयr(&sc->sched.समयr, jअगरfies + समयout);
+	ath9k_hw_gen_timer_start(ah, sc->p2p_ps_timer, tsf_time, 1000000);
+	tsf_time -= ath9k_hw_gettsf32(ah);
+	timeout = msecs_to_jiffies(tsf_time / 1000) + 1;
+	mod_timer(&sc->sched.timer, jiffies + timeout);
 
 	ath_dbg(common, CHAN_CTX,
 		"Setup chanctx timer with timeout: %d (%d) ms\n",
-		tsf_समय / 1000, jअगरfies_to_msecs(समयout));
-पूर्ण
+		tsf_time / 1000, jiffies_to_msecs(timeout));
+}
 
-अटल व्योम ath_chanctx_handle_bmiss(काष्ठा ath_softc *sc,
-				     काष्ठा ath_chanctx *ctx,
-				     काष्ठा ath_vअगर *avp)
-अणु
+static void ath_chanctx_handle_bmiss(struct ath_softc *sc,
+				     struct ath_chanctx *ctx,
+				     struct ath_vif *avp)
+{
 	/*
-	 * Clear the extend_असलence flag अगर it had been
+	 * Clear the extend_absence flag if it had been
 	 * set during the previous beacon transmission,
 	 * since we need to revert to the normal NoA
 	 * schedule.
 	 */
-	अगर (ctx->active && sc->sched.extend_असलence) अणु
+	if (ctx->active && sc->sched.extend_absence) {
 		avp->noa_duration = 0;
-		sc->sched.extend_असलence = false;
-	पूर्ण
+		sc->sched.extend_absence = false;
+	}
 
 	/* If at least two consecutive beacons were missed on the STA
-	 * chanctx, stay on the STA channel क्रम one extra beacon period,
-	 * to resync the समयr properly.
+	 * chanctx, stay on the STA channel for one extra beacon period,
+	 * to resync the timer properly.
 	 */
-	अगर (ctx->active && sc->sched.beacon_miss >= 2) अणु
+	if (ctx->active && sc->sched.beacon_miss >= 2) {
 		avp->noa_duration = 0;
-		sc->sched.extend_असलence = true;
-	पूर्ण
-पूर्ण
+		sc->sched.extend_absence = true;
+	}
+}
 
-अटल व्योम ath_chanctx_offchannel_noa(काष्ठा ath_softc *sc,
-				       काष्ठा ath_chanctx *ctx,
-				       काष्ठा ath_vअगर *avp,
-				       u32 tsf_समय)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_chanctx_offchannel_noa(struct ath_softc *sc,
+				       struct ath_chanctx *ctx,
+				       struct ath_vif *avp,
+				       u32 tsf_time)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	avp->noa_index++;
-	avp->offchannel_start = tsf_समय;
+	avp->offchannel_start = tsf_time;
 	avp->offchannel_duration = sc->sched.offchannel_duration;
 
 	ath_dbg(common, CHAN_CTX,
@@ -434,33 +433,33 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 	 * has to be recalculated and advertised after
 	 * an offchannel operation.
 	 */
-	अगर (ctx->active && avp->noa_duration)
+	if (ctx->active && avp->noa_duration)
 		avp->noa_duration = 0;
-पूर्ण
+}
 
-अटल व्योम ath_chanctx_set_periodic_noa(काष्ठा ath_softc *sc,
-					 काष्ठा ath_vअगर *avp,
-					 काष्ठा ath_beacon_config *cur_conf,
-					 u32 tsf_समय,
-					 u32 beacon_पूर्णांक)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_chanctx_set_periodic_noa(struct ath_softc *sc,
+					 struct ath_vif *avp,
+					 struct ath_beacon_config *cur_conf,
+					 u32 tsf_time,
+					 u32 beacon_int)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	avp->noa_index++;
-	avp->noa_start = tsf_समय;
+	avp->noa_start = tsf_time;
 
-	अगर (sc->sched.extend_असलence)
-		avp->noa_duration = (3 * beacon_पूर्णांक / 2) +
-			sc->sched.channel_चयन_समय;
-	अन्यथा
+	if (sc->sched.extend_absence)
+		avp->noa_duration = (3 * beacon_int / 2) +
+			sc->sched.channel_switch_time;
+	else
 		avp->noa_duration =
-			TU_TO_USEC(cur_conf->beacon_पूर्णांकerval) / 2 +
-			sc->sched.channel_चयन_समय;
+			TU_TO_USEC(cur_conf->beacon_interval) / 2 +
+			sc->sched.channel_switch_time;
 
-	अगर (test_bit(ATH_OP_SCANNING, &common->op_flags) ||
-	    sc->sched.extend_असलence)
+	if (test_bit(ATH_OP_SCANNING, &common->op_flags) ||
+	    sc->sched.extend_absence)
 		avp->periodic_noa = false;
-	अन्यथा
+	else
 		avp->periodic_noa = true;
 
 	ath_dbg(common, CHAN_CTX,
@@ -469,20 +468,20 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 		avp->noa_start,
 		avp->noa_index,
 		avp->periodic_noa);
-पूर्ण
+}
 
-अटल व्योम ath_chanctx_set_oneshot_noa(काष्ठा ath_softc *sc,
-					काष्ठा ath_vअगर *avp,
-					u32 tsf_समय,
+static void ath_chanctx_set_oneshot_noa(struct ath_softc *sc,
+					struct ath_vif *avp,
+					u32 tsf_time,
 					u32 duration)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	avp->noa_index++;
-	avp->noa_start = tsf_समय;
+	avp->noa_start = tsf_time;
 	avp->periodic_noa = false;
 	avp->oneshot_noa = true;
-	avp->noa_duration = duration + sc->sched.channel_चयन_समय;
+	avp->noa_duration = duration + sc->sched.channel_switch_time;
 
 	ath_dbg(common, CHAN_CTX,
 		"oneshot noa_duration: %d, noa_start: %u, noa_index: %d, periodic: %d\n",
@@ -490,21 +489,21 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 		avp->noa_start,
 		avp->noa_index,
 		avp->periodic_noa);
-पूर्ण
+}
 
-व्योम ath_chanctx_event(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर,
-		       क्रमागत ath_chanctx_event ev)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	काष्ठा ath_common *common = ath9k_hw_common(ah);
-	काष्ठा ath_beacon_config *cur_conf;
-	काष्ठा ath_vअगर *avp = शून्य;
-	काष्ठा ath_chanctx *ctx;
-	u32 tsf_समय;
-	u32 beacon_पूर्णांक;
+void ath_chanctx_event(struct ath_softc *sc, struct ieee80211_vif *vif,
+		       enum ath_chanctx_event ev)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	struct ath_common *common = ath9k_hw_common(ah);
+	struct ath_beacon_config *cur_conf;
+	struct ath_vif *avp = NULL;
+	struct ath_chanctx *ctx;
+	u32 tsf_time;
+	u32 beacon_int;
 
-	अगर (vअगर)
-		avp = (काष्ठा ath_vअगर *) vअगर->drv_priv;
+	if (vif)
+		avp = (struct ath_vif *) vif->drv_priv;
 
 	spin_lock_bh(&sc->chan_lock);
 
@@ -514,91 +513,91 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 		chanctx_state_string(sc->sched.state),
 		chanctx_event_delta(sc));
 
-	चयन (ev) अणु
-	हाल ATH_CHANCTX_EVENT_BEACON_PREPARE:
-		अगर (avp->offchannel_duration)
+	switch (ev) {
+	case ATH_CHANCTX_EVENT_BEACON_PREPARE:
+		if (avp->offchannel_duration)
 			avp->offchannel_duration = 0;
 
-		अगर (avp->oneshot_noa) अणु
+		if (avp->oneshot_noa) {
 			avp->noa_duration = 0;
 			avp->oneshot_noa = false;
 
 			ath_dbg(common, CHAN_CTX,
 				"Clearing oneshot NoA\n");
-		पूर्ण
+		}
 
-		अगर (avp->chanctx != sc->cur_chan) अणु
+		if (avp->chanctx != sc->cur_chan) {
 			ath_dbg(common, CHAN_CTX,
 				"Contexts differ, not preparing beacon\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sc->sched.offchannel_pending && !sc->sched.रुको_चयन) अणु
+		if (sc->sched.offchannel_pending && !sc->sched.wait_switch) {
 			sc->sched.offchannel_pending = false;
 			sc->next_chan = &sc->offchannel.chan;
 			sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_BEACON;
 			ath_dbg(common, CHAN_CTX,
 				"Setting offchannel_pending to false\n");
-		पूर्ण
+		}
 
 		ctx = ath_chanctx_get_next(sc, sc->cur_chan);
-		अगर (ctx->active && sc->sched.state == ATH_CHANCTX_STATE_IDLE) अणु
+		if (ctx->active && sc->sched.state == ATH_CHANCTX_STATE_IDLE) {
 			sc->next_chan = ctx;
 			sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_BEACON;
 			ath_dbg(common, CHAN_CTX,
 				"Set next context, move chanctx state to WAIT_FOR_BEACON\n");
-		पूर्ण
+		}
 
-		/* अगर the समयr missed its winकरोw, use the next पूर्णांकerval */
-		अगर (sc->sched.state == ATH_CHANCTX_STATE_WAIT_FOR_TIMER) अणु
+		/* if the timer missed its window, use the next interval */
+		if (sc->sched.state == ATH_CHANCTX_STATE_WAIT_FOR_TIMER) {
 			sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_BEACON;
 			ath_dbg(common, CHAN_CTX,
 				"Move chanctx state from WAIT_FOR_TIMER to WAIT_FOR_BEACON\n");
-		पूर्ण
+		}
 
-		अगर (sc->sched.mgd_prepare_tx)
+		if (sc->sched.mgd_prepare_tx)
 			sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_BEACON;
 
 		/*
-		 * When a context becomes inactive, क्रम example,
+		 * When a context becomes inactive, for example,
 		 * disassociation of a station context, the NoA
-		 * attribute needs to be हटाओd from subsequent
+		 * attribute needs to be removed from subsequent
 		 * beacons.
 		 */
-		अगर (!ctx->active && avp->noa_duration &&
-		    sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON) अणु
+		if (!ctx->active && avp->noa_duration &&
+		    sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON) {
 			avp->noa_duration = 0;
 			avp->periodic_noa = false;
 
 			ath_dbg(common, CHAN_CTX,
 				"Clearing NoA schedule\n");
-		पूर्ण
+		}
 
-		अगर (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON)
-			अवरोध;
+		if (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON)
+			break;
 
-		ath_dbg(common, CHAN_CTX, "Preparing beacon for vif: %pM\n", vअगर->addr);
+		ath_dbg(common, CHAN_CTX, "Preparing beacon for vif: %pM\n", vif->addr);
 
 		sc->sched.beacon_pending = true;
 		sc->sched.next_tbtt = REG_READ(ah, AR_NEXT_TBTT_TIMER);
 
 		cur_conf = &sc->cur_chan->beacon;
-		beacon_पूर्णांक = TU_TO_USEC(cur_conf->beacon_पूर्णांकerval);
+		beacon_int = TU_TO_USEC(cur_conf->beacon_interval);
 
-		/* defer channel चयन by a quarter beacon पूर्णांकerval */
-		tsf_समय = sc->sched.next_tbtt + beacon_पूर्णांक / 4;
-		sc->sched.चयन_start_समय = tsf_समय;
+		/* defer channel switch by a quarter beacon interval */
+		tsf_time = sc->sched.next_tbtt + beacon_int / 4;
+		sc->sched.switch_start_time = tsf_time;
 		sc->cur_chan->last_beacon = sc->sched.next_tbtt;
 
 		/*
-		 * If an offchannel चयन is scheduled to happen after
+		 * If an offchannel switch is scheduled to happen after
 		 * a beacon transmission, update the NoA with one-shot
 		 * values and increment the index.
 		 */
-		अगर (sc->next_chan == &sc->offchannel.chan) अणु
-			ath_chanctx_offchannel_noa(sc, ctx, avp, tsf_समय);
-			अवरोध;
-		पूर्ण
+		if (sc->next_chan == &sc->offchannel.chan) {
+			ath_chanctx_offchannel_noa(sc, ctx, avp, tsf_time);
+			break;
+		}
 
 		ath_chanctx_handle_bmiss(sc, ctx, avp);
 
@@ -606,63 +605,63 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 		 * If a mgd_prepare_tx() has been called by mac80211,
 		 * a one-shot NoA needs to be sent. This can happen
 		 * with one or more active channel contexts - in both
-		 * हालs, a new NoA schedule has to be advertised.
+		 * cases, a new NoA schedule has to be advertised.
 		 */
-		अगर (sc->sched.mgd_prepare_tx) अणु
-			ath_chanctx_set_oneshot_noa(sc, avp, tsf_समय,
-						    jअगरfies_to_usecs(HZ / 5));
-			अवरोध;
-		पूर्ण
+		if (sc->sched.mgd_prepare_tx) {
+			ath_chanctx_set_oneshot_noa(sc, avp, tsf_time,
+						    jiffies_to_usecs(HZ / 5));
+			break;
+		}
 
 		/* Prevent wrap-around issues */
-		अगर (avp->noa_duration && tsf_समय - avp->noa_start > BIT(30))
+		if (avp->noa_duration && tsf_time - avp->noa_start > BIT(30))
 			avp->noa_duration = 0;
 
 		/*
 		 * If multiple contexts are active, start periodic
-		 * NoA and increment the index क्रम the first
+		 * NoA and increment the index for the first
 		 * announcement.
 		 */
-		अगर (ctx->active &&
-		    (!avp->noa_duration || sc->sched.क्रमce_noa_update))
+		if (ctx->active &&
+		    (!avp->noa_duration || sc->sched.force_noa_update))
 			ath_chanctx_set_periodic_noa(sc, avp, cur_conf,
-						     tsf_समय, beacon_पूर्णांक);
+						     tsf_time, beacon_int);
 
-		अगर (ctx->active && sc->sched.क्रमce_noa_update)
-			sc->sched.क्रमce_noa_update = false;
+		if (ctx->active && sc->sched.force_noa_update)
+			sc->sched.force_noa_update = false;
 
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_BEACON_SENT:
-		अगर (!sc->sched.beacon_pending) अणु
+		break;
+	case ATH_CHANCTX_EVENT_BEACON_SENT:
+		if (!sc->sched.beacon_pending) {
 			ath_dbg(common, CHAN_CTX,
 				"No pending beacon\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		sc->sched.beacon_pending = false;
 
-		अगर (sc->sched.mgd_prepare_tx) अणु
+		if (sc->sched.mgd_prepare_tx) {
 			sc->sched.mgd_prepare_tx = false;
 			complete(&sc->go_beacon);
 			ath_dbg(common, CHAN_CTX,
 				"Beacon sent, complete go_beacon\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON)
-			अवरोध;
+		if (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_BEACON)
+			break;
 
 		ath_dbg(common, CHAN_CTX,
 			"Move chanctx state to WAIT_FOR_TIMER\n");
 
 		sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_TIMER;
-		ath_chanctx_setup_समयr(sc, sc->sched.चयन_start_समय);
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_TSF_TIMER:
-		अगर (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_TIMER)
-			अवरोध;
+		ath_chanctx_setup_timer(sc, sc->sched.switch_start_time);
+		break;
+	case ATH_CHANCTX_EVENT_TSF_TIMER:
+		if (sc->sched.state != ATH_CHANCTX_STATE_WAIT_FOR_TIMER)
+			break;
 
-		अगर (!sc->cur_chan->चयन_after_beacon &&
+		if (!sc->cur_chan->switch_after_beacon &&
 		    sc->sched.beacon_pending)
 			sc->sched.beacon_miss++;
 
@@ -671,52 +670,52 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 
 		sc->sched.state = ATH_CHANCTX_STATE_SWITCH;
 		ieee80211_queue_work(sc->hw, &sc->chanctx_work);
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_BEACON_RECEIVED:
-		अगर (!test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) ||
+		break;
+	case ATH_CHANCTX_EVENT_BEACON_RECEIVED:
+		if (!test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) ||
 		    sc->cur_chan == &sc->offchannel.chan)
-			अवरोध;
+			break;
 
 		sc->sched.beacon_pending = false;
 		sc->sched.beacon_miss = 0;
 
-		अगर (sc->sched.state == ATH_CHANCTX_STATE_FORCE_ACTIVE ||
+		if (sc->sched.state == ATH_CHANCTX_STATE_FORCE_ACTIVE ||
 		    !sc->sched.beacon_adjust ||
 		    !sc->cur_chan->tsf_val)
-			अवरोध;
+			break;
 
 		ath_chanctx_adjust_tbtt_delta(sc);
 
-		/* TSF समय might have been updated by the incoming beacon,
-		 * need update the channel चयन समयr to reflect the change.
+		/* TSF time might have been updated by the incoming beacon,
+		 * need update the channel switch timer to reflect the change.
 		 */
-		tsf_समय = sc->sched.चयन_start_समय;
-		tsf_समय -= (u32) sc->cur_chan->tsf_val +
-			ath9k_hw_get_tsf_offset(&sc->cur_chan->tsf_ts, शून्य);
-		tsf_समय += ath9k_hw_gettsf32(ah);
+		tsf_time = sc->sched.switch_start_time;
+		tsf_time -= (u32) sc->cur_chan->tsf_val +
+			ath9k_hw_get_tsf_offset(&sc->cur_chan->tsf_ts, NULL);
+		tsf_time += ath9k_hw_gettsf32(ah);
 
 		sc->sched.beacon_adjust = false;
-		ath_chanctx_setup_समयr(sc, tsf_समय);
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_AUTHORIZED:
-		अगर (sc->sched.state != ATH_CHANCTX_STATE_FORCE_ACTIVE ||
+		ath_chanctx_setup_timer(sc, tsf_time);
+		break;
+	case ATH_CHANCTX_EVENT_AUTHORIZED:
+		if (sc->sched.state != ATH_CHANCTX_STATE_FORCE_ACTIVE ||
 		    avp->chanctx != sc->cur_chan)
-			अवरोध;
+			break;
 
 		ath_dbg(common, CHAN_CTX,
 			"Move chanctx state from FORCE_ACTIVE to IDLE\n");
 
 		sc->sched.state = ATH_CHANCTX_STATE_IDLE;
 		fallthrough;
-	हाल ATH_CHANCTX_EVENT_SWITCH:
-		अगर (!test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) ||
+	case ATH_CHANCTX_EVENT_SWITCH:
+		if (!test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) ||
 		    sc->sched.state == ATH_CHANCTX_STATE_FORCE_ACTIVE ||
-		    sc->cur_chan->चयन_after_beacon ||
+		    sc->cur_chan->switch_after_beacon ||
 		    sc->cur_chan == &sc->offchannel.chan)
-			अवरोध;
+			break;
 
-		/* If this is a station chanctx, stay active क्रम a half
-		 * beacon period (minus channel चयन समय)
+		/* If this is a station chanctx, stay active for a half
+		 * beacon period (minus channel switch time)
 		 */
 		sc->next_chan = ath_chanctx_get_next(sc, sc->cur_chan);
 		cur_conf = &sc->cur_chan->beacon;
@@ -725,166 +724,166 @@ ath_chanctx_get_next(काष्ठा ath_softc *sc, काष्ठा ath_ch
 			"Move chanctx state to WAIT_FOR_TIMER (event SWITCH)\n");
 
 		sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_TIMER;
-		sc->sched.रुको_चयन = false;
+		sc->sched.wait_switch = false;
 
-		tsf_समय = TU_TO_USEC(cur_conf->beacon_पूर्णांकerval) / 2;
+		tsf_time = TU_TO_USEC(cur_conf->beacon_interval) / 2;
 
-		अगर (sc->sched.extend_असलence) अणु
+		if (sc->sched.extend_absence) {
 			sc->sched.beacon_miss = 0;
-			tsf_समय *= 3;
-		पूर्ण
+			tsf_time *= 3;
+		}
 
-		tsf_समय -= sc->sched.channel_चयन_समय;
-		tsf_समय += ath9k_hw_gettsf32(sc->sc_ah);
-		sc->sched.चयन_start_समय = tsf_समय;
+		tsf_time -= sc->sched.channel_switch_time;
+		tsf_time += ath9k_hw_gettsf32(sc->sc_ah);
+		sc->sched.switch_start_time = tsf_time;
 
-		ath_chanctx_setup_समयr(sc, tsf_समय);
+		ath_chanctx_setup_timer(sc, tsf_time);
 		sc->sched.beacon_pending = true;
 		sc->sched.beacon_adjust = true;
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL:
-		अगर (sc->cur_chan == &sc->offchannel.chan ||
-		    sc->cur_chan->चयन_after_beacon)
-			अवरोध;
+		break;
+	case ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL:
+		if (sc->cur_chan == &sc->offchannel.chan ||
+		    sc->cur_chan->switch_after_beacon)
+			break;
 
 		sc->next_chan = ath_chanctx_get_next(sc, sc->cur_chan);
 		ieee80211_queue_work(sc->hw, &sc->chanctx_work);
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_UNASSIGN:
-		अगर (sc->cur_chan->asचिन्हित) अणु
-			अगर (sc->next_chan && !sc->next_chan->asचिन्हित &&
+		break;
+	case ATH_CHANCTX_EVENT_UNASSIGN:
+		if (sc->cur_chan->assigned) {
+			if (sc->next_chan && !sc->next_chan->assigned &&
 			    sc->next_chan != &sc->offchannel.chan)
 				sc->sched.state = ATH_CHANCTX_STATE_IDLE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ctx = ath_chanctx_get_next(sc, sc->cur_chan);
 		sc->sched.state = ATH_CHANCTX_STATE_IDLE;
-		अगर (!ctx->asचिन्हित)
-			अवरोध;
+		if (!ctx->assigned)
+			break;
 
 		sc->next_chan = ctx;
 		ieee80211_queue_work(sc->hw, &sc->chanctx_work);
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_ASSIGN:
-		अवरोध;
-	हाल ATH_CHANCTX_EVENT_CHANGE:
-		अवरोध;
-	पूर्ण
+		break;
+	case ATH_CHANCTX_EVENT_ASSIGN:
+		break;
+	case ATH_CHANCTX_EVENT_CHANGE:
+		break;
+	}
 
 	spin_unlock_bh(&sc->chan_lock);
-पूर्ण
+}
 
-व्योम ath_chanctx_beacon_sent_ev(काष्ठा ath_softc *sc,
-				क्रमागत ath_chanctx_event ev)
-अणु
-	अगर (sc->sched.beacon_pending)
-		ath_chanctx_event(sc, शून्य, ev);
-पूर्ण
+void ath_chanctx_beacon_sent_ev(struct ath_softc *sc,
+				enum ath_chanctx_event ev)
+{
+	if (sc->sched.beacon_pending)
+		ath_chanctx_event(sc, NULL, ev);
+}
 
-व्योम ath_chanctx_beacon_recv_ev(काष्ठा ath_softc *sc,
-				क्रमागत ath_chanctx_event ev)
-अणु
-	ath_chanctx_event(sc, शून्य, ev);
-पूर्ण
+void ath_chanctx_beacon_recv_ev(struct ath_softc *sc,
+				enum ath_chanctx_event ev)
+{
+	ath_chanctx_event(sc, NULL, ev);
+}
 
-अटल पूर्णांक ath_scan_channel_duration(काष्ठा ath_softc *sc,
-				     काष्ठा ieee80211_channel *chan)
-अणु
-	काष्ठा cfg80211_scan_request *req = sc->offchannel.scan_req;
+static int ath_scan_channel_duration(struct ath_softc *sc,
+				     struct ieee80211_channel *chan)
+{
+	struct cfg80211_scan_request *req = sc->offchannel.scan_req;
 
-	अगर (!req->n_ssids || (chan->flags & IEEE80211_CHAN_NO_IR))
-		वापस (HZ / 9); /* ~110 ms */
+	if (!req->n_ssids || (chan->flags & IEEE80211_CHAN_NO_IR))
+		return (HZ / 9); /* ~110 ms */
 
-	वापस (HZ / 16); /* ~60 ms */
-पूर्ण
+	return (HZ / 16); /* ~60 ms */
+}
 
-अटल व्योम ath_chanctx_चयन(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx,
-			       काष्ठा cfg80211_chan_def *chandef)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_chanctx_switch(struct ath_softc *sc, struct ath_chanctx *ctx,
+			       struct cfg80211_chan_def *chandef)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	spin_lock_bh(&sc->chan_lock);
 
-	अगर (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) &&
-	    (sc->cur_chan != ctx) && (ctx == &sc->offchannel.chan)) अणु
-		अगर (chandef)
+	if (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags) &&
+	    (sc->cur_chan != ctx) && (ctx == &sc->offchannel.chan)) {
+		if (chandef)
 			ctx->chandef = *chandef;
 
 		sc->sched.offchannel_pending = true;
-		sc->sched.रुको_चयन = true;
+		sc->sched.wait_switch = true;
 		sc->sched.offchannel_duration =
-			jअगरfies_to_usecs(sc->offchannel.duration) +
-			sc->sched.channel_चयन_समय;
+			jiffies_to_usecs(sc->offchannel.duration) +
+			sc->sched.channel_switch_time;
 
 		spin_unlock_bh(&sc->chan_lock);
 		ath_dbg(common, CHAN_CTX,
 			"Set offchannel_pending to true\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sc->next_chan = ctx;
-	अगर (chandef) अणु
+	if (chandef) {
 		ctx->chandef = *chandef;
 		ath_dbg(common, CHAN_CTX,
 			"Assigned next_chan to %d MHz\n", chandef->center_freq1);
-	पूर्ण
+	}
 
-	अगर (sc->next_chan == &sc->offchannel.chan) अणु
+	if (sc->next_chan == &sc->offchannel.chan) {
 		sc->sched.offchannel_duration =
-			jअगरfies_to_usecs(sc->offchannel.duration) +
-			sc->sched.channel_चयन_समय;
+			jiffies_to_usecs(sc->offchannel.duration) +
+			sc->sched.channel_switch_time;
 
-		अगर (chandef) अणु
+		if (chandef) {
 			ath_dbg(common, CHAN_CTX,
 				"Offchannel duration for chan %d MHz : %u\n",
 				chandef->center_freq1,
 				sc->sched.offchannel_duration);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&sc->chan_lock);
 	ieee80211_queue_work(sc->hw, &sc->chanctx_work);
-पूर्ण
+}
 
-अटल व्योम ath_chanctx_offchan_चयन(काष्ठा ath_softc *sc,
-				       काष्ठा ieee80211_channel *chan)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा cfg80211_chan_def chandef;
+static void ath_chanctx_offchan_switch(struct ath_softc *sc,
+				       struct ieee80211_channel *chan)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct cfg80211_chan_def chandef;
 
 	cfg80211_chandef_create(&chandef, chan, NL80211_CHAN_NO_HT);
 	ath_dbg(common, CHAN_CTX,
 		"Channel definition created: %d MHz\n", chandef.center_freq1);
 
-	ath_chanctx_चयन(sc, &sc->offchannel.chan, &chandef);
-पूर्ण
+	ath_chanctx_switch(sc, &sc->offchannel.chan, &chandef);
+}
 
-अटल काष्ठा ath_chanctx *ath_chanctx_get_oper_chan(काष्ठा ath_softc *sc,
+static struct ath_chanctx *ath_chanctx_get_oper_chan(struct ath_softc *sc,
 						     bool active)
-अणु
-	काष्ठा ath_chanctx *ctx;
+{
+	struct ath_chanctx *ctx;
 
-	ath_क्रम_each_chanctx(sc, ctx) अणु
-		अगर (!ctx->asचिन्हित || list_empty(&ctx->vअगरs))
-			जारी;
-		अगर (active && !ctx->active)
-			जारी;
+	ath_for_each_chanctx(sc, ctx) {
+		if (!ctx->assigned || list_empty(&ctx->vifs))
+			continue;
+		if (active && !ctx->active)
+			continue;
 
-		अगर (ctx->चयन_after_beacon)
-			वापस ctx;
-	पूर्ण
+		if (ctx->switch_after_beacon)
+			return ctx;
+	}
 
-	वापस &sc->chanctx[0];
-पूर्ण
+	return &sc->chanctx[0];
+}
 
-अटल व्योम
-ath_scan_next_channel(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा cfg80211_scan_request *req = sc->offchannel.scan_req;
-	काष्ठा ieee80211_channel *chan;
+static void
+ath_scan_next_channel(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct cfg80211_scan_request *req = sc->offchannel.scan_req;
+	struct ieee80211_channel *chan;
 
-	अगर (sc->offchannel.scan_idx >= req->n_channels) अणु
+	if (sc->offchannel.scan_idx >= req->n_channels) {
 		ath_dbg(common, CHAN_CTX,
 			"Moving offchannel state to ATH_OFFCHANNEL_IDLE, "
 			"scan_idx: %d, n_channels: %d\n",
@@ -892,10 +891,10 @@ ath_scan_next_channel(काष्ठा ath_softc *sc)
 			req->n_channels);
 
 		sc->offchannel.state = ATH_OFFCHANNEL_IDLE;
-		ath_chanctx_चयन(sc, ath_chanctx_get_oper_chan(sc, false),
-				   शून्य);
-		वापस;
-	पूर्ण
+		ath_chanctx_switch(sc, ath_chanctx_get_oper_chan(sc, false),
+				   NULL);
+		return;
+	}
 
 	ath_dbg(common, CHAN_CTX,
 		"Moving offchannel state to ATH_OFFCHANNEL_PROBE_SEND, scan_idx: %d\n",
@@ -905,347 +904,347 @@ ath_scan_next_channel(काष्ठा ath_softc *sc)
 	sc->offchannel.duration = ath_scan_channel_duration(sc, chan);
 	sc->offchannel.state = ATH_OFFCHANNEL_PROBE_SEND;
 
-	ath_chanctx_offchan_चयन(sc, chan);
-पूर्ण
+	ath_chanctx_offchan_switch(sc, chan);
+}
 
-व्योम ath_offchannel_next(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर;
+void ath_offchannel_next(struct ath_softc *sc)
+{
+	struct ieee80211_vif *vif;
 
-	अगर (sc->offchannel.scan_req) अणु
-		vअगर = sc->offchannel.scan_vअगर;
-		sc->offchannel.chan.txघातer = vअगर->bss_conf.txघातer;
+	if (sc->offchannel.scan_req) {
+		vif = sc->offchannel.scan_vif;
+		sc->offchannel.chan.txpower = vif->bss_conf.txpower;
 		ath_scan_next_channel(sc);
-	पूर्ण अन्यथा अगर (sc->offchannel.roc_vअगर) अणु
-		vअगर = sc->offchannel.roc_vअगर;
-		sc->offchannel.chan.txघातer = vअगर->bss_conf.txघातer;
+	} else if (sc->offchannel.roc_vif) {
+		vif = sc->offchannel.roc_vif;
+		sc->offchannel.chan.txpower = vif->bss_conf.txpower;
 		sc->offchannel.duration =
-			msecs_to_jअगरfies(sc->offchannel.roc_duration);
+			msecs_to_jiffies(sc->offchannel.roc_duration);
 		sc->offchannel.state = ATH_OFFCHANNEL_ROC_START;
-		ath_chanctx_offchan_चयन(sc, sc->offchannel.roc_chan);
-	पूर्ण अन्यथा अणु
+		ath_chanctx_offchan_switch(sc, sc->offchannel.roc_chan);
+	} else {
 		spin_lock_bh(&sc->chan_lock);
 		sc->sched.offchannel_pending = false;
-		sc->sched.रुको_चयन = false;
+		sc->sched.wait_switch = false;
 		spin_unlock_bh(&sc->chan_lock);
 
-		ath_chanctx_चयन(sc, ath_chanctx_get_oper_chan(sc, false),
-				   शून्य);
+		ath_chanctx_switch(sc, ath_chanctx_get_oper_chan(sc, false),
+				   NULL);
 		sc->offchannel.state = ATH_OFFCHANNEL_IDLE;
-		अगर (sc->ps_idle)
+		if (sc->ps_idle)
 			ath_cancel_work(sc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath_roc_complete(काष्ठा ath_softc *sc, क्रमागत ath_roc_complete_reason reason)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+void ath_roc_complete(struct ath_softc *sc, enum ath_roc_complete_reason reason)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
-	sc->offchannel.roc_vअगर = शून्य;
-	sc->offchannel.roc_chan = शून्य;
+	sc->offchannel.roc_vif = NULL;
+	sc->offchannel.roc_chan = NULL;
 
-	चयन (reason) अणु
-	हाल ATH_ROC_COMPLETE_ABORT:
+	switch (reason) {
+	case ATH_ROC_COMPLETE_ABORT:
 		ath_dbg(common, CHAN_CTX, "RoC aborted\n");
-		ieee80211_reमुख्य_on_channel_expired(sc->hw);
-		अवरोध;
-	हाल ATH_ROC_COMPLETE_EXPIRE:
+		ieee80211_remain_on_channel_expired(sc->hw);
+		break;
+	case ATH_ROC_COMPLETE_EXPIRE:
 		ath_dbg(common, CHAN_CTX, "RoC expired\n");
-		ieee80211_reमुख्य_on_channel_expired(sc->hw);
-		अवरोध;
-	हाल ATH_ROC_COMPLETE_CANCEL:
+		ieee80211_remain_on_channel_expired(sc->hw);
+		break;
+	case ATH_ROC_COMPLETE_CANCEL:
 		ath_dbg(common, CHAN_CTX, "RoC canceled\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ath_offchannel_next(sc);
 	ath9k_ps_restore(sc);
-पूर्ण
+}
 
-व्योम ath_scan_complete(काष्ठा ath_softc *sc, bool पात)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा cfg80211_scan_info info = अणु
-		.पातed = पात,
-	पूर्ण;
+void ath_scan_complete(struct ath_softc *sc, bool abort)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct cfg80211_scan_info info = {
+		.aborted = abort,
+	};
 
-	अगर (पात)
+	if (abort)
 		ath_dbg(common, CHAN_CTX, "HW scan aborted\n");
-	अन्यथा
+	else
 		ath_dbg(common, CHAN_CTX, "HW scan complete\n");
 
-	sc->offchannel.scan_req = शून्य;
-	sc->offchannel.scan_vअगर = शून्य;
+	sc->offchannel.scan_req = NULL;
+	sc->offchannel.scan_vif = NULL;
 	sc->offchannel.state = ATH_OFFCHANNEL_IDLE;
 	ieee80211_scan_completed(sc->hw, &info);
 	clear_bit(ATH_OP_SCANNING, &common->op_flags);
 	spin_lock_bh(&sc->chan_lock);
-	अगर (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags))
-		sc->sched.क्रमce_noa_update = true;
+	if (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags))
+		sc->sched.force_noa_update = true;
 	spin_unlock_bh(&sc->chan_lock);
 	ath_offchannel_next(sc);
 	ath9k_ps_restore(sc);
-पूर्ण
+}
 
-अटल व्योम ath_scan_send_probe(काष्ठा ath_softc *sc,
-				काष्ठा cfg80211_ssid *ssid)
-अणु
-	काष्ठा cfg80211_scan_request *req = sc->offchannel.scan_req;
-	काष्ठा ieee80211_vअगर *vअगर = sc->offchannel.scan_vअगर;
-	काष्ठा ath_tx_control txctl = अणुपूर्ण;
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_tx_info *info;
-	पूर्णांक band = sc->offchannel.chan.chandef.chan->band;
+static void ath_scan_send_probe(struct ath_softc *sc,
+				struct cfg80211_ssid *ssid)
+{
+	struct cfg80211_scan_request *req = sc->offchannel.scan_req;
+	struct ieee80211_vif *vif = sc->offchannel.scan_vif;
+	struct ath_tx_control txctl = {};
+	struct sk_buff *skb;
+	struct ieee80211_tx_info *info;
+	int band = sc->offchannel.chan.chandef.chan->band;
 
-	skb = ieee80211_probereq_get(sc->hw, vअगर->addr,
+	skb = ieee80211_probereq_get(sc->hw, vif->addr,
 			ssid->ssid, ssid->ssid_len, req->ie_len);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	info = IEEE80211_SKB_CB(skb);
-	अगर (req->no_cck)
+	if (req->no_cck)
 		info->flags |= IEEE80211_TX_CTL_NO_CCK_RATE;
 
-	अगर (req->ie_len)
+	if (req->ie_len)
 		skb_put_data(skb, req->ie, req->ie_len);
 
 	skb_set_queue_mapping(skb, IEEE80211_AC_VO);
 
-	अगर (!ieee80211_tx_prepare_skb(sc->hw, vअगर, skb, band, शून्य))
-		जाओ error;
+	if (!ieee80211_tx_prepare_skb(sc->hw, vif, skb, band, NULL))
+		goto error;
 
 	txctl.txq = sc->tx.txq_map[IEEE80211_AC_VO];
-	अगर (ath_tx_start(sc->hw, skb, &txctl))
-		जाओ error;
+	if (ath_tx_start(sc->hw, skb, &txctl))
+		goto error;
 
-	वापस;
+	return;
 
 error:
-	ieee80211_मुक्त_txskb(sc->hw, skb);
-पूर्ण
+	ieee80211_free_txskb(sc->hw, skb);
+}
 
-अटल व्योम ath_scan_channel_start(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा cfg80211_scan_request *req = sc->offchannel.scan_req;
-	पूर्णांक i;
+static void ath_scan_channel_start(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct cfg80211_scan_request *req = sc->offchannel.scan_req;
+	int i;
 
-	अगर (!(sc->cur_chan->chandef.chan->flags & IEEE80211_CHAN_NO_IR) &&
-	    req->n_ssids) अणु
-		क्रम (i = 0; i < req->n_ssids; i++)
+	if (!(sc->cur_chan->chandef.chan->flags & IEEE80211_CHAN_NO_IR) &&
+	    req->n_ssids) {
+		for (i = 0; i < req->n_ssids; i++)
 			ath_scan_send_probe(sc, &req->ssids[i]);
 
-	पूर्ण
+	}
 
 	ath_dbg(common, CHAN_CTX,
 		"Moving offchannel state to ATH_OFFCHANNEL_PROBE_WAIT\n");
 
 	sc->offchannel.state = ATH_OFFCHANNEL_PROBE_WAIT;
-	mod_समयr(&sc->offchannel.समयr, jअगरfies + sc->offchannel.duration);
-पूर्ण
+	mod_timer(&sc->offchannel.timer, jiffies + sc->offchannel.duration);
+}
 
-अटल व्योम ath_chanctx_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ath_softc *sc = from_समयr(sc, t, sched.समयr);
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_chanctx_timer(struct timer_list *t)
+{
+	struct ath_softc *sc = from_timer(sc, t, sched.timer);
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	ath_dbg(common, CHAN_CTX,
 		"Channel context timer invoked\n");
 
-	ath_chanctx_event(sc, शून्य, ATH_CHANCTX_EVENT_TSF_TIMER);
-पूर्ण
+	ath_chanctx_event(sc, NULL, ATH_CHANCTX_EVENT_TSF_TIMER);
+}
 
-अटल व्योम ath_offchannel_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ath_softc *sc = from_समयr(sc, t, offchannel.समयr);
-	काष्ठा ath_chanctx *ctx;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_offchannel_timer(struct timer_list *t)
+{
+	struct ath_softc *sc = from_timer(sc, t, offchannel.timer);
+	struct ath_chanctx *ctx;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	ath_dbg(common, CHAN_CTX, "%s: offchannel state: %s\n",
 		__func__, offchannel_state_string(sc->offchannel.state));
 
-	चयन (sc->offchannel.state) अणु
-	हाल ATH_OFFCHANNEL_PROBE_WAIT:
-		अगर (!sc->offchannel.scan_req)
-			वापस;
+	switch (sc->offchannel.state) {
+	case ATH_OFFCHANNEL_PROBE_WAIT:
+		if (!sc->offchannel.scan_req)
+			return;
 
 		/* get first active channel context */
 		ctx = ath_chanctx_get_oper_chan(sc, true);
-		अगर (ctx->active) अणु
+		if (ctx->active) {
 			ath_dbg(common, CHAN_CTX,
 				"Switch to oper/active context, "
 				"move offchannel state to ATH_OFFCHANNEL_SUSPEND\n");
 
 			sc->offchannel.state = ATH_OFFCHANNEL_SUSPEND;
-			ath_chanctx_चयन(sc, ctx, शून्य);
-			mod_समयr(&sc->offchannel.समयr, jअगरfies + HZ / 10);
-			अवरोध;
-		पूर्ण
+			ath_chanctx_switch(sc, ctx, NULL);
+			mod_timer(&sc->offchannel.timer, jiffies + HZ / 10);
+			break;
+		}
 		fallthrough;
-	हाल ATH_OFFCHANNEL_SUSPEND:
-		अगर (!sc->offchannel.scan_req)
-			वापस;
+	case ATH_OFFCHANNEL_SUSPEND:
+		if (!sc->offchannel.scan_req)
+			return;
 
 		ath_scan_next_channel(sc);
-		अवरोध;
-	हाल ATH_OFFCHANNEL_ROC_START:
-	हाल ATH_OFFCHANNEL_ROC_WAIT:
+		break;
+	case ATH_OFFCHANNEL_ROC_START:
+	case ATH_OFFCHANNEL_ROC_WAIT:
 		sc->offchannel.state = ATH_OFFCHANNEL_ROC_DONE;
 		ath_roc_complete(sc, ATH_ROC_COMPLETE_EXPIRE);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल bool
-ath_chanctx_send_vअगर_ps_frame(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp,
-			      bool घातersave)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = avp->vअगर;
-	काष्ठा ieee80211_sta *sta = शून्य;
-	काष्ठा ieee80211_hdr_3addr *nullfunc;
-	काष्ठा ath_tx_control txctl;
-	काष्ठा sk_buff *skb;
-	पूर्णांक band = sc->cur_chan->chandef.chan->band;
+static bool
+ath_chanctx_send_vif_ps_frame(struct ath_softc *sc, struct ath_vif *avp,
+			      bool powersave)
+{
+	struct ieee80211_vif *vif = avp->vif;
+	struct ieee80211_sta *sta = NULL;
+	struct ieee80211_hdr_3addr *nullfunc;
+	struct ath_tx_control txctl;
+	struct sk_buff *skb;
+	int band = sc->cur_chan->chandef.chan->band;
 
-	चयन (vअगर->type) अणु
-	हाल NL80211_IFTYPE_STATION:
-		अगर (!avp->assoc)
-			वापस false;
+	switch (vif->type) {
+	case NL80211_IFTYPE_STATION:
+		if (!avp->assoc)
+			return false;
 
-		skb = ieee80211_nullfunc_get(sc->hw, vअगर, false);
-		अगर (!skb)
-			वापस false;
+		skb = ieee80211_nullfunc_get(sc->hw, vif, false);
+		if (!skb)
+			return false;
 
-		nullfunc = (काष्ठा ieee80211_hdr_3addr *) skb->data;
-		अगर (घातersave)
+		nullfunc = (struct ieee80211_hdr_3addr *) skb->data;
+		if (powersave)
 			nullfunc->frame_control |=
 				cpu_to_le16(IEEE80211_FCTL_PM);
 
 		skb->priority = 7;
 		skb_set_queue_mapping(skb, IEEE80211_AC_VO);
-		अगर (!ieee80211_tx_prepare_skb(sc->hw, vअगर, skb, band, &sta)) अणु
-			dev_kमुक्त_skb_any(skb);
-			वापस false;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+		if (!ieee80211_tx_prepare_skb(sc->hw, vif, skb, band, &sta)) {
+			dev_kfree_skb_any(skb);
+			return false;
+		}
+		break;
+	default:
+		return false;
+	}
 
-	स_रखो(&txctl, 0, माप(txctl));
+	memset(&txctl, 0, sizeof(txctl));
 	txctl.txq = sc->tx.txq_map[IEEE80211_AC_VO];
 	txctl.sta = sta;
-	अगर (ath_tx_start(sc->hw, skb, &txctl)) अणु
-		ieee80211_मुक्त_txskb(sc->hw, skb);
-		वापस false;
-	पूर्ण
+	if (ath_tx_start(sc->hw, skb, &txctl)) {
+		ieee80211_free_txskb(sc->hw, skb);
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-ath_chanctx_send_ps_frame(काष्ठा ath_softc *sc, bool घातersave)
-अणु
-	काष्ठा ath_vअगर *avp;
+static bool
+ath_chanctx_send_ps_frame(struct ath_softc *sc, bool powersave)
+{
+	struct ath_vif *avp;
 	bool sent = false;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry(avp, &sc->cur_chan->vअगरs, list) अणु
-		अगर (ath_chanctx_send_vअगर_ps_frame(sc, avp, घातersave))
+	rcu_read_lock();
+	list_for_each_entry(avp, &sc->cur_chan->vifs, list) {
+		if (ath_chanctx_send_vif_ps_frame(sc, avp, powersave))
 			sent = true;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस sent;
-पूर्ण
+	return sent;
+}
 
-अटल bool ath_chanctx_defer_चयन(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static bool ath_chanctx_defer_switch(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
-	अगर (sc->cur_chan == &sc->offchannel.chan)
-		वापस false;
+	if (sc->cur_chan == &sc->offchannel.chan)
+		return false;
 
-	चयन (sc->sched.state) अणु
-	हाल ATH_CHANCTX_STATE_SWITCH:
-		वापस false;
-	हाल ATH_CHANCTX_STATE_IDLE:
-		अगर (!sc->cur_chan->चयन_after_beacon)
-			वापस false;
+	switch (sc->sched.state) {
+	case ATH_CHANCTX_STATE_SWITCH:
+		return false;
+	case ATH_CHANCTX_STATE_IDLE:
+		if (!sc->cur_chan->switch_after_beacon)
+			return false;
 
 		ath_dbg(common, CHAN_CTX,
 			"Defer switch, set chanctx state to WAIT_FOR_BEACON\n");
 
 		sc->sched.state = ATH_CHANCTX_STATE_WAIT_FOR_BEACON;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम ath_offchannel_channel_change(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
+static void ath_offchannel_channel_change(struct ath_softc *sc)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	ath_dbg(common, CHAN_CTX, "%s: offchannel state: %s\n",
 		__func__, offchannel_state_string(sc->offchannel.state));
 
-	चयन (sc->offchannel.state) अणु
-	हाल ATH_OFFCHANNEL_PROBE_SEND:
-		अगर (!sc->offchannel.scan_req)
-			वापस;
+	switch (sc->offchannel.state) {
+	case ATH_OFFCHANNEL_PROBE_SEND:
+		if (!sc->offchannel.scan_req)
+			return;
 
-		अगर (sc->cur_chan->chandef.chan !=
+		if (sc->cur_chan->chandef.chan !=
 		    sc->offchannel.chan.chandef.chan)
-			वापस;
+			return;
 
 		ath_scan_channel_start(sc);
-		अवरोध;
-	हाल ATH_OFFCHANNEL_IDLE:
-		अगर (!sc->offchannel.scan_req)
-			वापस;
+		break;
+	case ATH_OFFCHANNEL_IDLE:
+		if (!sc->offchannel.scan_req)
+			return;
 
 		ath_scan_complete(sc, false);
-		अवरोध;
-	हाल ATH_OFFCHANNEL_ROC_START:
-		अगर (sc->cur_chan != &sc->offchannel.chan)
-			अवरोध;
+		break;
+	case ATH_OFFCHANNEL_ROC_START:
+		if (sc->cur_chan != &sc->offchannel.chan)
+			break;
 
 		sc->offchannel.state = ATH_OFFCHANNEL_ROC_WAIT;
-		mod_समयr(&sc->offchannel.समयr,
-			  jअगरfies + sc->offchannel.duration);
-		ieee80211_पढ़ोy_on_channel(sc->hw);
-		अवरोध;
-	हाल ATH_OFFCHANNEL_ROC_DONE:
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		mod_timer(&sc->offchannel.timer,
+			  jiffies + sc->offchannel.duration);
+		ieee80211_ready_on_channel(sc->hw);
+		break;
+	case ATH_OFFCHANNEL_ROC_DONE:
+		break;
+	default:
+		break;
+	}
+}
 
-व्योम ath_chanctx_set_next(काष्ठा ath_softc *sc, bool क्रमce)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_chanctx *old_ctx;
-	काष्ठा बारpec64 ts;
-	bool measure_समय = false;
+void ath_chanctx_set_next(struct ath_softc *sc, bool force)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_chanctx *old_ctx;
+	struct timespec64 ts;
+	bool measure_time = false;
 	bool send_ps = false;
 	bool queues_stopped = false;
 
 	spin_lock_bh(&sc->chan_lock);
-	अगर (!sc->next_chan) अणु
+	if (!sc->next_chan) {
 		spin_unlock_bh(&sc->chan_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!क्रमce && ath_chanctx_defer_चयन(sc)) अणु
+	if (!force && ath_chanctx_defer_switch(sc)) {
 		spin_unlock_bh(&sc->chan_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ath_dbg(common, CHAN_CTX,
 		"%s: current: %d MHz, next: %d MHz\n",
@@ -1253,255 +1252,255 @@ ath_chanctx_send_ps_frame(काष्ठा ath_softc *sc, bool घातersave
 		sc->cur_chan->chandef.center_freq1,
 		sc->next_chan->chandef.center_freq1);
 
-	अगर (sc->cur_chan != sc->next_chan) अणु
+	if (sc->cur_chan != sc->next_chan) {
 		ath_dbg(common, CHAN_CTX,
 			"Stopping current chanctx: %d\n",
 			sc->cur_chan->chandef.center_freq1);
 		sc->cur_chan->stopped = true;
 		spin_unlock_bh(&sc->chan_lock);
 
-		अगर (sc->next_chan == &sc->offchannel.chan) अणु
-			kसमय_get_raw_ts64(&ts);
-			measure_समय = true;
-		पूर्ण
+		if (sc->next_chan == &sc->offchannel.chan) {
+			ktime_get_raw_ts64(&ts);
+			measure_time = true;
+		}
 
 		ath9k_chanctx_stop_queues(sc, sc->cur_chan);
 		queues_stopped = true;
 
 		__ath9k_flush(sc->hw, ~0, true, false, false);
 
-		अगर (ath_chanctx_send_ps_frame(sc, true))
+		if (ath_chanctx_send_ps_frame(sc, true))
 			__ath9k_flush(sc->hw, BIT(IEEE80211_AC_VO),
 				      false, false, false);
 
 		send_ps = true;
 		spin_lock_bh(&sc->chan_lock);
 
-		अगर (sc->cur_chan != &sc->offchannel.chan) अणु
-			kसमय_get_raw_ts64(&sc->cur_chan->tsf_ts);
+		if (sc->cur_chan != &sc->offchannel.chan) {
+			ktime_get_raw_ts64(&sc->cur_chan->tsf_ts);
 			sc->cur_chan->tsf_val = ath9k_hw_gettsf64(sc->sc_ah);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	old_ctx = sc->cur_chan;
 	sc->cur_chan = sc->next_chan;
 	sc->cur_chan->stopped = false;
-	sc->next_chan = शून्य;
+	sc->next_chan = NULL;
 
-	अगर (!sc->sched.offchannel_pending)
+	if (!sc->sched.offchannel_pending)
 		sc->sched.offchannel_duration = 0;
 
-	अगर (sc->sched.state != ATH_CHANCTX_STATE_FORCE_ACTIVE)
+	if (sc->sched.state != ATH_CHANCTX_STATE_FORCE_ACTIVE)
 		sc->sched.state = ATH_CHANCTX_STATE_IDLE;
 
 	spin_unlock_bh(&sc->chan_lock);
 
-	अगर (sc->sc_ah->chip_fullsleep ||
-	    स_भेद(&sc->cur_chandef, &sc->cur_chan->chandef,
-		   माप(sc->cur_chandef))) अणु
+	if (sc->sc_ah->chip_fullsleep ||
+	    memcmp(&sc->cur_chandef, &sc->cur_chan->chandef,
+		   sizeof(sc->cur_chandef))) {
 		ath_dbg(common, CHAN_CTX,
 			"%s: Set channel %d MHz\n",
 			__func__, sc->cur_chan->chandef.center_freq1);
 		ath_set_channel(sc);
-		अगर (measure_समय)
-			sc->sched.channel_चयन_समय =
-				ath9k_hw_get_tsf_offset(&ts, शून्य);
+		if (measure_time)
+			sc->sched.channel_switch_time =
+				ath9k_hw_get_tsf_offset(&ts, NULL);
 		/*
 		 * A reset will ensure that all queues are woken up,
 		 * so there is no need to awaken them again.
 		 */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (queues_stopped)
+	if (queues_stopped)
 		ath9k_chanctx_wake_queues(sc, old_ctx);
 out:
-	अगर (send_ps)
+	if (send_ps)
 		ath_chanctx_send_ps_frame(sc, false);
 
 	ath_offchannel_channel_change(sc);
-	ath_chanctx_event(sc, शून्य, ATH_CHANCTX_EVENT_SWITCH);
-पूर्ण
+	ath_chanctx_event(sc, NULL, ATH_CHANCTX_EVENT_SWITCH);
+}
 
-अटल व्योम ath_chanctx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ath_softc *sc = container_of(work, काष्ठा ath_softc,
+static void ath_chanctx_work(struct work_struct *work)
+{
+	struct ath_softc *sc = container_of(work, struct ath_softc,
 					    chanctx_work);
 	mutex_lock(&sc->mutex);
 	ath_chanctx_set_next(sc, false);
 	mutex_unlock(&sc->mutex);
-पूर्ण
+}
 
-व्योम ath9k_offchannel_init(काष्ठा ath_softc *sc)
-अणु
-	काष्ठा ath_chanctx *ctx;
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ieee80211_supported_band *sband;
-	काष्ठा ieee80211_channel *chan;
-	पूर्णांक i;
+void ath9k_offchannel_init(struct ath_softc *sc)
+{
+	struct ath_chanctx *ctx;
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ieee80211_supported_band *sband;
+	struct ieee80211_channel *chan;
+	int i;
 
 	sband = &common->sbands[NL80211_BAND_2GHZ];
-	अगर (!sband->n_channels)
+	if (!sband->n_channels)
 		sband = &common->sbands[NL80211_BAND_5GHZ];
 
 	chan = &sband->channels[0];
 
 	ctx = &sc->offchannel.chan;
-	INIT_LIST_HEAD(&ctx->vअगरs);
-	ctx->txघातer = ATH_TXPOWER_MAX;
+	INIT_LIST_HEAD(&ctx->vifs);
+	ctx->txpower = ATH_TXPOWER_MAX;
 	cfg80211_chandef_create(&ctx->chandef, chan, NL80211_CHAN_HT20);
 
-	क्रम (i = 0; i < ARRAY_SIZE(ctx->acq); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ctx->acq); i++) {
 		INIT_LIST_HEAD(&ctx->acq[i].acq_new);
 		INIT_LIST_HEAD(&ctx->acq[i].acq_old);
 		spin_lock_init(&ctx->acq[i].lock);
-	पूर्ण
+	}
 
 	sc->offchannel.chan.offchannel = true;
-पूर्ण
+}
 
-व्योम ath9k_init_channel_context(काष्ठा ath_softc *sc)
-अणु
+void ath9k_init_channel_context(struct ath_softc *sc)
+{
 	INIT_WORK(&sc->chanctx_work, ath_chanctx_work);
 
-	समयr_setup(&sc->offchannel.समयr, ath_offchannel_समयr, 0);
-	समयr_setup(&sc->sched.समयr, ath_chanctx_समयr, 0);
+	timer_setup(&sc->offchannel.timer, ath_offchannel_timer, 0);
+	timer_setup(&sc->sched.timer, ath_chanctx_timer, 0);
 
 	init_completion(&sc->go_beacon);
-पूर्ण
+}
 
-व्योम ath9k_deinit_channel_context(काष्ठा ath_softc *sc)
-अणु
+void ath9k_deinit_channel_context(struct ath_softc *sc)
+{
 	cancel_work_sync(&sc->chanctx_work);
-पूर्ण
+}
 
-bool ath9k_is_chanctx_enabled(व्योम)
-अणु
-	वापस (ath9k_use_chanctx == 1);
-पूर्ण
+bool ath9k_is_chanctx_enabled(void)
+{
+	return (ath9k_use_chanctx == 1);
+}
 
 /********************/
 /* Queue management */
 /********************/
 
-व्योम ath9k_chanctx_stop_queues(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	पूर्णांक i;
+void ath9k_chanctx_stop_queues(struct ath_softc *sc, struct ath_chanctx *ctx)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	int i;
 
-	अगर (ctx == &sc->offchannel.chan) अणु
+	if (ctx == &sc->offchannel.chan) {
 		ieee80211_stop_queue(sc->hw,
 				     sc->hw->offchannel_tx_hw_queue);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < IEEE80211_NUM_ACS; i++)
+	} else {
+		for (i = 0; i < IEEE80211_NUM_ACS; i++)
 			ieee80211_stop_queue(sc->hw,
 					     ctx->hw_queue_base + i);
-	पूर्ण
+	}
 
-	अगर (ah->opmode == NL80211_IFTYPE_AP)
+	if (ah->opmode == NL80211_IFTYPE_AP)
 		ieee80211_stop_queue(sc->hw, sc->hw->queues - 2);
-पूर्ण
+}
 
 
-व्योम ath9k_chanctx_wake_queues(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx)
-अणु
-	काष्ठा ath_hw *ah = sc->sc_ah;
-	पूर्णांक i;
+void ath9k_chanctx_wake_queues(struct ath_softc *sc, struct ath_chanctx *ctx)
+{
+	struct ath_hw *ah = sc->sc_ah;
+	int i;
 
-	अगर (ctx == &sc->offchannel.chan) अणु
+	if (ctx == &sc->offchannel.chan) {
 		ieee80211_wake_queue(sc->hw,
 				     sc->hw->offchannel_tx_hw_queue);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < IEEE80211_NUM_ACS; i++)
+	} else {
+		for (i = 0; i < IEEE80211_NUM_ACS; i++)
 			ieee80211_wake_queue(sc->hw,
 					     ctx->hw_queue_base + i);
-	पूर्ण
+	}
 
-	अगर (ah->opmode == NL80211_IFTYPE_AP)
+	if (ah->opmode == NL80211_IFTYPE_AP)
 		ieee80211_wake_queue(sc->hw, sc->hw->queues - 2);
-पूर्ण
+}
 
 /*****************/
 /* P2P Powersave */
 /*****************/
 
-अटल व्योम ath9k_update_p2p_ps_समयr(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp)
-अणु
-	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
-	काष्ठा ath_hw *ah = sc->sc_ah;
+static void ath9k_update_p2p_ps_timer(struct ath_softc *sc, struct ath_vif *avp)
+{
+	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+	struct ath_hw *ah = sc->sc_ah;
 	u32 tsf, target_tsf;
 
-	अगर (!avp || !avp->noa.has_next_tsf)
-		वापस;
+	if (!avp || !avp->noa.has_next_tsf)
+		return;
 
-	ath9k_hw_gen_समयr_stop(ah, sc->p2p_ps_समयr);
+	ath9k_hw_gen_timer_stop(ah, sc->p2p_ps_timer);
 
 	tsf = ath9k_hw_gettsf32(sc->sc_ah);
 
 	target_tsf = avp->noa.next_tsf;
-	अगर (!avp->noa.असलent)
+	if (!avp->noa.absent)
 		target_tsf -= ATH_P2P_PS_STOP_TIME;
-	अन्यथा
+	else
 		target_tsf += ATH_P2P_PS_STOP_TIME;
 
-	अगर (target_tsf - tsf < ATH_P2P_PS_STOP_TIME)
+	if (target_tsf - tsf < ATH_P2P_PS_STOP_TIME)
 		target_tsf = tsf + ATH_P2P_PS_STOP_TIME;
 
 	ath_dbg(common, CHAN_CTX, "%s absent %d tsf 0x%08X next_tsf 0x%08X (%dms)\n",
-		__func__, avp->noa.असलent, tsf, target_tsf,
+		__func__, avp->noa.absent, tsf, target_tsf,
 		(target_tsf - tsf) / 1000);
 
-	ath9k_hw_gen_समयr_start(ah, sc->p2p_ps_समयr, target_tsf, 1000000);
-पूर्ण
+	ath9k_hw_gen_timer_start(ah, sc->p2p_ps_timer, target_tsf, 1000000);
+}
 
-अटल व्योम ath9k_update_p2p_ps(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath_vअगर *avp = (व्योम *)vअगर->drv_priv;
+static void ath9k_update_p2p_ps(struct ath_softc *sc, struct ieee80211_vif *vif)
+{
+	struct ath_vif *avp = (void *)vif->drv_priv;
 	u32 tsf;
 
-	अगर (!sc->p2p_ps_समयr)
-		वापस;
+	if (!sc->p2p_ps_timer)
+		return;
 
-	अगर (vअगर->type != NL80211_IFTYPE_STATION)
-		वापस;
+	if (vif->type != NL80211_IFTYPE_STATION)
+		return;
 
-	sc->p2p_ps_vअगर = avp;
+	sc->p2p_ps_vif = avp;
 
-	अगर (sc->ps_flags & PS_BEACON_SYNC)
-		वापस;
+	if (sc->ps_flags & PS_BEACON_SYNC)
+		return;
 
 	tsf = ath9k_hw_gettsf32(sc->sc_ah);
-	ieee80211_parse_p2p_noa(&vअगर->bss_conf.p2p_noa_attr, &avp->noa, tsf);
-	ath9k_update_p2p_ps_समयr(sc, avp);
-पूर्ण
+	ieee80211_parse_p2p_noa(&vif->bss_conf.p2p_noa_attr, &avp->noa, tsf);
+	ath9k_update_p2p_ps_timer(sc, avp);
+}
 
-अटल u8 ath9k_get_ctwin(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp)
-अणु
-	काष्ठा ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
-	u8 चयन_समय, ctwin;
+static u8 ath9k_get_ctwin(struct ath_softc *sc, struct ath_vif *avp)
+{
+	struct ath_beacon_config *cur_conf = &sc->cur_chan->beacon;
+	u8 switch_time, ctwin;
 
 	/*
-	 * Channel चयन in multi-channel mode is deferred
-	 * by a quarter beacon पूर्णांकerval when handling
+	 * Channel switch in multi-channel mode is deferred
+	 * by a quarter beacon interval when handling
 	 * ATH_CHANCTX_EVENT_BEACON_PREPARE, so the P2P-GO
-	 * पूर्णांकerface is guaranteed to be discoverable
-	 * क्रम that duration after a TBTT.
+	 * interface is guaranteed to be discoverable
+	 * for that duration after a TBTT.
 	 */
-	चयन_समय = cur_conf->beacon_पूर्णांकerval / 4;
+	switch_time = cur_conf->beacon_interval / 4;
 
-	ctwin = avp->vअगर->bss_conf.p2p_noa_attr.oppps_ctwinकरोw;
-	अगर (ctwin && (ctwin < चयन_समय))
-		वापस ctwin;
+	ctwin = avp->vif->bss_conf.p2p_noa_attr.oppps_ctwindow;
+	if (ctwin && (ctwin < switch_time))
+		return ctwin;
 
-	अगर (चयन_समय < P2P_DEFAULT_CTWIN)
-		वापस 0;
+	if (switch_time < P2P_DEFAULT_CTWIN)
+		return 0;
 
-	वापस P2P_DEFAULT_CTWIN;
-पूर्ण
+	return P2P_DEFAULT_CTWIN;
+}
 
-व्योम ath9k_beacon_add_noa(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp,
-			  काष्ठा sk_buff *skb)
-अणु
-	अटल स्थिर u8 noa_ie_hdr[] = अणु
+void ath9k_beacon_add_noa(struct ath_softc *sc, struct ath_vif *avp,
+			  struct sk_buff *skb)
+{
+	static const u8 noa_ie_hdr[] = {
 		WLAN_EID_VENDOR_SPECIFIC,	/* type */
 		0,				/* length */
 		0x50, 0x6f, 0x9a,		/* WFA OUI */
@@ -1509,144 +1508,144 @@ bool ath9k_is_chanctx_enabled(व्योम)
 		0x0c,				/* Notice of Absence */
 		0x00,				/* LSB of little-endian len */
 		0x00,				/* MSB of little-endian len */
-	पूर्ण;
+	};
 
-	काष्ठा ieee80211_p2p_noa_attr *noa;
-	पूर्णांक noa_len, noa_desc, i = 0;
+	struct ieee80211_p2p_noa_attr *noa;
+	int noa_len, noa_desc, i = 0;
 	u8 *hdr;
 
-	अगर (!avp->offchannel_duration && !avp->noa_duration)
-		वापस;
+	if (!avp->offchannel_duration && !avp->noa_duration)
+		return;
 
 	noa_desc = !!avp->offchannel_duration + !!avp->noa_duration;
-	noa_len = 2 + माप(काष्ठा ieee80211_p2p_noa_desc) * noa_desc;
+	noa_len = 2 + sizeof(struct ieee80211_p2p_noa_desc) * noa_desc;
 
-	hdr = skb_put_data(skb, noa_ie_hdr, माप(noa_ie_hdr));
-	hdr[1] = माप(noa_ie_hdr) + noa_len - 2;
+	hdr = skb_put_data(skb, noa_ie_hdr, sizeof(noa_ie_hdr));
+	hdr[1] = sizeof(noa_ie_hdr) + noa_len - 2;
 	hdr[7] = noa_len;
 
 	noa = skb_put_zero(skb, noa_len);
 
 	noa->index = avp->noa_index;
-	noa->oppps_ctwinकरोw = ath9k_get_ctwin(sc, avp);
-	अगर (noa->oppps_ctwinकरोw)
-		noa->oppps_ctwinकरोw |= BIT(7);
+	noa->oppps_ctwindow = ath9k_get_ctwin(sc, avp);
+	if (noa->oppps_ctwindow)
+		noa->oppps_ctwindow |= BIT(7);
 
-	अगर (avp->noa_duration) अणु
-		अगर (avp->periodic_noa) अणु
-			u32 पूर्णांकerval = TU_TO_USEC(sc->cur_chan->beacon.beacon_पूर्णांकerval);
+	if (avp->noa_duration) {
+		if (avp->periodic_noa) {
+			u32 interval = TU_TO_USEC(sc->cur_chan->beacon.beacon_interval);
 			noa->desc[i].count = 255;
-			noa->desc[i].पूर्णांकerval = cpu_to_le32(पूर्णांकerval);
-		पूर्ण अन्यथा अणु
+			noa->desc[i].interval = cpu_to_le32(interval);
+		} else {
 			noa->desc[i].count = 1;
-		पूर्ण
+		}
 
-		noa->desc[i].start_समय = cpu_to_le32(avp->noa_start);
+		noa->desc[i].start_time = cpu_to_le32(avp->noa_start);
 		noa->desc[i].duration = cpu_to_le32(avp->noa_duration);
 		i++;
-	पूर्ण
+	}
 
-	अगर (avp->offchannel_duration) अणु
+	if (avp->offchannel_duration) {
 		noa->desc[i].count = 1;
-		noa->desc[i].start_समय = cpu_to_le32(avp->offchannel_start);
+		noa->desc[i].start_time = cpu_to_le32(avp->offchannel_start);
 		noa->desc[i].duration = cpu_to_le32(avp->offchannel_duration);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम ath9k_p2p_ps_समयr(व्योम *priv)
-अणु
-	काष्ठा ath_softc *sc = priv;
-	काष्ठा ath_vअगर *avp = sc->p2p_ps_vअगर;
-	काष्ठा ieee80211_vअगर *vअगर;
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ath_node *an;
+void ath9k_p2p_ps_timer(void *priv)
+{
+	struct ath_softc *sc = priv;
+	struct ath_vif *avp = sc->p2p_ps_vif;
+	struct ieee80211_vif *vif;
+	struct ieee80211_sta *sta;
+	struct ath_node *an;
 	u32 tsf;
 
-	del_समयr_sync(&sc->sched.समयr);
-	ath9k_hw_gen_समयr_stop(sc->sc_ah, sc->p2p_ps_समयr);
-	ath_chanctx_event(sc, शून्य, ATH_CHANCTX_EVENT_TSF_TIMER);
+	del_timer_sync(&sc->sched.timer);
+	ath9k_hw_gen_timer_stop(sc->sc_ah, sc->p2p_ps_timer);
+	ath_chanctx_event(sc, NULL, ATH_CHANCTX_EVENT_TSF_TIMER);
 
-	अगर (!avp || avp->chanctx != sc->cur_chan)
-		वापस;
+	if (!avp || avp->chanctx != sc->cur_chan)
+		return;
 
 	tsf = ath9k_hw_gettsf32(sc->sc_ah);
-	अगर (!avp->noa.असलent)
+	if (!avp->noa.absent)
 		tsf += ATH_P2P_PS_STOP_TIME;
-	अन्यथा
+	else
 		tsf -= ATH_P2P_PS_STOP_TIME;
 
-	अगर (!avp->noa.has_next_tsf ||
+	if (!avp->noa.has_next_tsf ||
 	    avp->noa.next_tsf - tsf > BIT(31))
 		ieee80211_update_p2p_noa(&avp->noa, tsf);
 
-	ath9k_update_p2p_ps_समयr(sc, avp);
+	ath9k_update_p2p_ps_timer(sc, avp);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	vअगर = avp->vअगर;
-	sta = ieee80211_find_sta(vअगर, avp->bssid);
-	अगर (!sta)
-		जाओ out;
+	vif = avp->vif;
+	sta = ieee80211_find_sta(vif, avp->bssid);
+	if (!sta)
+		goto out;
 
-	an = (व्योम *) sta->drv_priv;
-	अगर (an->sleeping == !!avp->noa.असलent)
-		जाओ out;
+	an = (void *) sta->drv_priv;
+	if (an->sleeping == !!avp->noa.absent)
+		goto out;
 
-	an->sleeping = avp->noa.असलent;
-	अगर (an->sleeping)
+	an->sleeping = avp->noa.absent;
+	if (an->sleeping)
 		ath_tx_aggr_sleep(sta, sc, an);
-	अन्यथा
+	else
 		ath_tx_aggr_wakeup(sc, an);
 
 out:
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-व्योम ath9k_p2p_bss_info_changed(काष्ठा ath_softc *sc,
-				काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	अचिन्हित दीर्घ flags;
+void ath9k_p2p_bss_info_changed(struct ath_softc *sc,
+				struct ieee80211_vif *vif)
+{
+	unsigned long flags;
 
 	spin_lock_bh(&sc->sc_pcu_lock);
 	spin_lock_irqsave(&sc->sc_pm_lock, flags);
-	ath9k_update_p2p_ps(sc, vअगर);
+	ath9k_update_p2p_ps(sc, vif);
 	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
 	spin_unlock_bh(&sc->sc_pcu_lock);
-पूर्ण
+}
 
-व्योम ath9k_p2p_beacon_sync(काष्ठा ath_softc *sc)
-अणु
-	अगर (sc->p2p_ps_vअगर)
-		ath9k_update_p2p_ps(sc, sc->p2p_ps_vअगर->vअगर);
-पूर्ण
+void ath9k_p2p_beacon_sync(struct ath_softc *sc)
+{
+	if (sc->p2p_ps_vif)
+		ath9k_update_p2p_ps(sc, sc->p2p_ps_vif->vif);
+}
 
-व्योम ath9k_p2p_हटाओ_vअगर(काष्ठा ath_softc *sc,
-			  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath_vअगर *avp = (व्योम *)vअगर->drv_priv;
+void ath9k_p2p_remove_vif(struct ath_softc *sc,
+			  struct ieee80211_vif *vif)
+{
+	struct ath_vif *avp = (void *)vif->drv_priv;
 
 	spin_lock_bh(&sc->sc_pcu_lock);
-	अगर (avp == sc->p2p_ps_vअगर) अणु
-		sc->p2p_ps_vअगर = शून्य;
-		ath9k_update_p2p_ps_समयr(sc, शून्य);
-	पूर्ण
+	if (avp == sc->p2p_ps_vif) {
+		sc->p2p_ps_vif = NULL;
+		ath9k_update_p2p_ps_timer(sc, NULL);
+	}
 	spin_unlock_bh(&sc->sc_pcu_lock);
-पूर्ण
+}
 
-पूर्णांक ath9k_init_p2p(काष्ठा ath_softc *sc)
-अणु
-	sc->p2p_ps_समयr = ath_gen_समयr_alloc(sc->sc_ah, ath9k_p2p_ps_समयr,
-					       शून्य, sc, AR_FIRST_NDP_TIMER);
-	अगर (!sc->p2p_ps_समयr)
-		वापस -ENOMEM;
+int ath9k_init_p2p(struct ath_softc *sc)
+{
+	sc->p2p_ps_timer = ath_gen_timer_alloc(sc->sc_ah, ath9k_p2p_ps_timer,
+					       NULL, sc, AR_FIRST_NDP_TIMER);
+	if (!sc->p2p_ps_timer)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath9k_deinit_p2p(काष्ठा ath_softc *sc)
-अणु
-	अगर (sc->p2p_ps_समयr)
-		ath_gen_समयr_मुक्त(sc->sc_ah, sc->p2p_ps_समयr);
-पूर्ण
+void ath9k_deinit_p2p(struct ath_softc *sc)
+{
+	if (sc->p2p_ps_timer)
+		ath_gen_timer_free(sc->sc_ah, sc->p2p_ps_timer);
+}
 
-#पूर्ण_अगर /* CONFIG_ATH9K_CHANNEL_CONTEXT */
+#endif /* CONFIG_ATH9K_CHANNEL_CONTEXT */

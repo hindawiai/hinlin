@@ -1,138 +1,137 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 - Google LLC
  * Author: David Brazdil <dbrazdil@google.com>
  */
 
-#समावेश <यंत्र/kvm_यंत्र.h>
-#समावेश <यंत्र/kvm_hyp.h>
-#समावेश <यंत्र/kvm_mmu.h>
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <uapi/linux/psci.h>
+#include <asm/kvm_asm.h>
+#include <asm/kvm_hyp.h>
+#include <asm/kvm_mmu.h>
+#include <linux/arm-smccc.h>
+#include <linux/kvm_host.h>
+#include <uapi/linux/psci.h>
 
-#समावेश <nvhe/memory.h>
-#समावेश <nvhe/trap_handler.h>
+#include <nvhe/memory.h>
+#include <nvhe/trap_handler.h>
 
-व्योम kvm_hyp_cpu_entry(अचिन्हित दीर्घ r0);
-व्योम kvm_hyp_cpu_resume(अचिन्हित दीर्घ r0);
+void kvm_hyp_cpu_entry(unsigned long r0);
+void kvm_hyp_cpu_resume(unsigned long r0);
 
-व्योम __noवापस __host_enter(काष्ठा kvm_cpu_context *host_ctxt);
+void __noreturn __host_enter(struct kvm_cpu_context *host_ctxt);
 
 /* Config options set by the host. */
-काष्ठा kvm_host_psci_config __ro_after_init kvm_host_psci_config;
+struct kvm_host_psci_config __ro_after_init kvm_host_psci_config;
 
-#घोषणा INVALID_CPU_ID	अच_पूर्णांक_उच्च
+#define INVALID_CPU_ID	UINT_MAX
 
-काष्ठा psci_boot_args अणु
+struct psci_boot_args {
 	atomic_t lock;
-	अचिन्हित दीर्घ pc;
-	अचिन्हित दीर्घ r0;
-पूर्ण;
+	unsigned long pc;
+	unsigned long r0;
+};
 
-#घोषणा PSCI_BOOT_ARGS_UNLOCKED		0
-#घोषणा PSCI_BOOT_ARGS_LOCKED		1
+#define PSCI_BOOT_ARGS_UNLOCKED		0
+#define PSCI_BOOT_ARGS_LOCKED		1
 
-#घोषणा PSCI_BOOT_ARGS_INIT					\
-	((काष्ठा psci_boot_args)अणु				\
+#define PSCI_BOOT_ARGS_INIT					\
+	((struct psci_boot_args){				\
 		.lock = ATOMIC_INIT(PSCI_BOOT_ARGS_UNLOCKED),	\
-	पूर्ण)
+	})
 
-अटल DEFINE_PER_CPU(काष्ठा psci_boot_args, cpu_on_args) = PSCI_BOOT_ARGS_INIT;
-अटल DEFINE_PER_CPU(काष्ठा psci_boot_args, suspend_args) = PSCI_BOOT_ARGS_INIT;
+static DEFINE_PER_CPU(struct psci_boot_args, cpu_on_args) = PSCI_BOOT_ARGS_INIT;
+static DEFINE_PER_CPU(struct psci_boot_args, suspend_args) = PSCI_BOOT_ARGS_INIT;
 
-#घोषणा	is_psci_0_1(what, func_id)					\
+#define	is_psci_0_1(what, func_id)					\
 	(kvm_host_psci_config.psci_0_1_ ## what ## _implemented &&	\
 	 (func_id) == kvm_host_psci_config.function_ids_0_1.what)
 
-अटल bool is_psci_0_1_call(u64 func_id)
-अणु
-	वापस (is_psci_0_1(cpu_suspend, func_id) ||
+static bool is_psci_0_1_call(u64 func_id)
+{
+	return (is_psci_0_1(cpu_suspend, func_id) ||
 		is_psci_0_1(cpu_on, func_id) ||
 		is_psci_0_1(cpu_off, func_id) ||
 		is_psci_0_1(migrate, func_id));
-पूर्ण
+}
 
-अटल bool is_psci_0_2_call(u64 func_id)
-अणु
-	/* SMCCC reserves IDs 0x00-1F with the given 32/64-bit base क्रम PSCI. */
-	वापस (PSCI_0_2_FN(0) <= func_id && func_id <= PSCI_0_2_FN(31)) ||
+static bool is_psci_0_2_call(u64 func_id)
+{
+	/* SMCCC reserves IDs 0x00-1F with the given 32/64-bit base for PSCI. */
+	return (PSCI_0_2_FN(0) <= func_id && func_id <= PSCI_0_2_FN(31)) ||
 	       (PSCI_0_2_FN64(0) <= func_id && func_id <= PSCI_0_2_FN64(31));
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ psci_call(अचिन्हित दीर्घ fn, अचिन्हित दीर्घ arg0,
-			       अचिन्हित दीर्घ arg1, अचिन्हित दीर्घ arg2)
-अणु
-	काष्ठा arm_smccc_res res;
+static unsigned long psci_call(unsigned long fn, unsigned long arg0,
+			       unsigned long arg1, unsigned long arg2)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_1_1_smc(fn, arg0, arg1, arg2, &res);
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल अचिन्हित दीर्घ psci_क्रमward(काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	वापस psci_call(cpu_reg(host_ctxt, 0), cpu_reg(host_ctxt, 1),
+static unsigned long psci_forward(struct kvm_cpu_context *host_ctxt)
+{
+	return psci_call(cpu_reg(host_ctxt, 0), cpu_reg(host_ctxt, 1),
 			 cpu_reg(host_ctxt, 2), cpu_reg(host_ctxt, 3));
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक find_cpu_id(u64 mpidr)
-अणु
-	अचिन्हित पूर्णांक i;
+static unsigned int find_cpu_id(u64 mpidr)
+{
+	unsigned int i;
 
 	/* Reject invalid MPIDRs */
-	अगर (mpidr & ~MPIDR_HWID_BITMASK)
-		वापस INVALID_CPU_ID;
+	if (mpidr & ~MPIDR_HWID_BITMASK)
+		return INVALID_CPU_ID;
 
-	क्रम (i = 0; i < NR_CPUS; i++) अणु
-		अगर (cpu_logical_map(i) == mpidr)
-			वापस i;
-	पूर्ण
+	for (i = 0; i < NR_CPUS; i++) {
+		if (cpu_logical_map(i) == mpidr)
+			return i;
+	}
 
-	वापस INVALID_CPU_ID;
-पूर्ण
+	return INVALID_CPU_ID;
+}
 
-अटल __always_अंतरभूत bool try_acquire_boot_args(काष्ठा psci_boot_args *args)
-अणु
-	वापस atomic_cmpxchg_acquire(&args->lock,
+static __always_inline bool try_acquire_boot_args(struct psci_boot_args *args)
+{
+	return atomic_cmpxchg_acquire(&args->lock,
 				      PSCI_BOOT_ARGS_UNLOCKED,
 				      PSCI_BOOT_ARGS_LOCKED) ==
 		PSCI_BOOT_ARGS_UNLOCKED;
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम release_boot_args(काष्ठा psci_boot_args *args)
-अणु
+static __always_inline void release_boot_args(struct psci_boot_args *args)
+{
 	atomic_set_release(&args->lock, PSCI_BOOT_ARGS_UNLOCKED);
-पूर्ण
+}
 
-अटल पूर्णांक psci_cpu_on(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
+static int psci_cpu_on(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
 	DECLARE_REG(u64, mpidr, host_ctxt, 1);
-	DECLARE_REG(अचिन्हित दीर्घ, pc, host_ctxt, 2);
-	DECLARE_REG(अचिन्हित दीर्घ, r0, host_ctxt, 3);
+	DECLARE_REG(unsigned long, pc, host_ctxt, 2);
+	DECLARE_REG(unsigned long, r0, host_ctxt, 3);
 
-	अचिन्हित पूर्णांक cpu_id;
-	काष्ठा psci_boot_args *boot_args;
-	काष्ठा kvm_nvhe_init_params *init_params;
-	पूर्णांक ret;
+	unsigned int cpu_id;
+	struct psci_boot_args *boot_args;
+	struct kvm_nvhe_init_params *init_params;
+	int ret;
 
 	/*
-	 * Find the logical CPU ID क्रम the given MPIDR. The search set is
-	 * the set of CPUs that were online at the poपूर्णांक of KVM initialization.
+	 * Find the logical CPU ID for the given MPIDR. The search set is
+	 * the set of CPUs that were online at the point of KVM initialization.
 	 * Booting other CPUs is rejected because their cpufeatures were not
 	 * checked against the finalized capabilities. This could be relaxed
-	 * by करोing the feature checks in hyp.
+	 * by doing the feature checks in hyp.
 	 */
 	cpu_id = find_cpu_id(mpidr);
-	अगर (cpu_id == INVALID_CPU_ID)
-		वापस PSCI_RET_INVALID_PARAMS;
+	if (cpu_id == INVALID_CPU_ID)
+		return PSCI_RET_INVALID_PARAMS;
 
 	boot_args = per_cpu_ptr(&cpu_on_args, cpu_id);
 	init_params = per_cpu_ptr(&kvm_init_params, cpu_id);
 
-	/* Check अगर the target CPU is alपढ़ोy being booted. */
-	अगर (!try_acquire_boot_args(boot_args))
-		वापस PSCI_RET_ALREADY_ON;
+	/* Check if the target CPU is already being booted. */
+	if (!try_acquire_boot_args(boot_args))
+		return PSCI_RET_ALREADY_ON;
 
 	boot_args->pc = pc;
 	boot_args->r0 = r0;
@@ -143,163 +142,163 @@
 			__hyp_pa(init_params));
 
 	/* If successful, the lock will be released by the target CPU. */
-	अगर (ret != PSCI_RET_SUCCESS)
+	if (ret != PSCI_RET_SUCCESS)
 		release_boot_args(boot_args);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक psci_cpu_suspend(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	DECLARE_REG(u64, घातer_state, host_ctxt, 1);
-	DECLARE_REG(अचिन्हित दीर्घ, pc, host_ctxt, 2);
-	DECLARE_REG(अचिन्हित दीर्घ, r0, host_ctxt, 3);
+static int psci_cpu_suspend(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
+	DECLARE_REG(u64, power_state, host_ctxt, 1);
+	DECLARE_REG(unsigned long, pc, host_ctxt, 2);
+	DECLARE_REG(unsigned long, r0, host_ctxt, 3);
 
-	काष्ठा psci_boot_args *boot_args;
-	काष्ठा kvm_nvhe_init_params *init_params;
+	struct psci_boot_args *boot_args;
+	struct kvm_nvhe_init_params *init_params;
 
 	boot_args = this_cpu_ptr(&suspend_args);
 	init_params = this_cpu_ptr(&kvm_init_params);
 
 	/*
-	 * No need to acquire a lock beक्रमe writing to boot_args because a core
-	 * can only suspend itself. Racy CPU_ON calls use a separate काष्ठा.
+	 * No need to acquire a lock before writing to boot_args because a core
+	 * can only suspend itself. Racy CPU_ON calls use a separate struct.
 	 */
 	boot_args->pc = pc;
 	boot_args->r0 = r0;
 
 	/*
-	 * Will either वापस अगर shallow sleep state, or wake up पूर्णांकo the entry
-	 * poपूर्णांक अगर it is a deep sleep state.
+	 * Will either return if shallow sleep state, or wake up into the entry
+	 * point if it is a deep sleep state.
 	 */
-	वापस psci_call(func_id, घातer_state,
+	return psci_call(func_id, power_state,
 			 __hyp_pa(&kvm_hyp_cpu_resume),
 			 __hyp_pa(init_params));
-पूर्ण
+}
 
-अटल पूर्णांक psci_प्रणाली_suspend(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	DECLARE_REG(अचिन्हित दीर्घ, pc, host_ctxt, 1);
-	DECLARE_REG(अचिन्हित दीर्घ, r0, host_ctxt, 2);
+static int psci_system_suspend(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
+	DECLARE_REG(unsigned long, pc, host_ctxt, 1);
+	DECLARE_REG(unsigned long, r0, host_ctxt, 2);
 
-	काष्ठा psci_boot_args *boot_args;
-	काष्ठा kvm_nvhe_init_params *init_params;
+	struct psci_boot_args *boot_args;
+	struct kvm_nvhe_init_params *init_params;
 
 	boot_args = this_cpu_ptr(&suspend_args);
 	init_params = this_cpu_ptr(&kvm_init_params);
 
 	/*
-	 * No need to acquire a lock beक्रमe writing to boot_args because a core
-	 * can only suspend itself. Racy CPU_ON calls use a separate काष्ठा.
+	 * No need to acquire a lock before writing to boot_args because a core
+	 * can only suspend itself. Racy CPU_ON calls use a separate struct.
 	 */
 	boot_args->pc = pc;
 	boot_args->r0 = r0;
 
-	/* Will only वापस on error. */
-	वापस psci_call(func_id,
+	/* Will only return on error. */
+	return psci_call(func_id,
 			 __hyp_pa(&kvm_hyp_cpu_resume),
 			 __hyp_pa(init_params), 0);
-पूर्ण
+}
 
-यंत्रlinkage व्योम __noवापस kvm_host_psci_cpu_entry(bool is_cpu_on)
-अणु
-	काष्ठा psci_boot_args *boot_args;
-	काष्ठा kvm_cpu_context *host_ctxt;
+asmlinkage void __noreturn kvm_host_psci_cpu_entry(bool is_cpu_on)
+{
+	struct psci_boot_args *boot_args;
+	struct kvm_cpu_context *host_ctxt;
 
 	host_ctxt = &this_cpu_ptr(&kvm_host_data)->host_ctxt;
 
-	अगर (is_cpu_on)
+	if (is_cpu_on)
 		boot_args = this_cpu_ptr(&cpu_on_args);
-	अन्यथा
+	else
 		boot_args = this_cpu_ptr(&suspend_args);
 
 	cpu_reg(host_ctxt, 0) = boot_args->r0;
-	ग_लिखो_sysreg_el2(boot_args->pc, SYS_ELR);
+	write_sysreg_el2(boot_args->pc, SYS_ELR);
 
-	अगर (is_cpu_on)
+	if (is_cpu_on)
 		release_boot_args(boot_args);
 
 	__host_enter(host_ctxt);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ psci_0_1_handler(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	अगर (is_psci_0_1(cpu_off, func_id) || is_psci_0_1(migrate, func_id))
-		वापस psci_क्रमward(host_ctxt);
-	अगर (is_psci_0_1(cpu_on, func_id))
-		वापस psci_cpu_on(func_id, host_ctxt);
-	अगर (is_psci_0_1(cpu_suspend, func_id))
-		वापस psci_cpu_suspend(func_id, host_ctxt);
+static unsigned long psci_0_1_handler(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
+	if (is_psci_0_1(cpu_off, func_id) || is_psci_0_1(migrate, func_id))
+		return psci_forward(host_ctxt);
+	if (is_psci_0_1(cpu_on, func_id))
+		return psci_cpu_on(func_id, host_ctxt);
+	if (is_psci_0_1(cpu_suspend, func_id))
+		return psci_cpu_suspend(func_id, host_ctxt);
 
-	वापस PSCI_RET_NOT_SUPPORTED;
-पूर्ण
+	return PSCI_RET_NOT_SUPPORTED;
+}
 
-अटल अचिन्हित दीर्घ psci_0_2_handler(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	चयन (func_id) अणु
-	हाल PSCI_0_2_FN_PSCI_VERSION:
-	हाल PSCI_0_2_FN_CPU_OFF:
-	हाल PSCI_0_2_FN64_AFFINITY_INFO:
-	हाल PSCI_0_2_FN64_MIGRATE:
-	हाल PSCI_0_2_FN_MIGRATE_INFO_TYPE:
-	हाल PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU:
-		वापस psci_क्रमward(host_ctxt);
+static unsigned long psci_0_2_handler(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
+	switch (func_id) {
+	case PSCI_0_2_FN_PSCI_VERSION:
+	case PSCI_0_2_FN_CPU_OFF:
+	case PSCI_0_2_FN64_AFFINITY_INFO:
+	case PSCI_0_2_FN64_MIGRATE:
+	case PSCI_0_2_FN_MIGRATE_INFO_TYPE:
+	case PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU:
+		return psci_forward(host_ctxt);
 	/*
-	 * SYSTEM_OFF/RESET should not वापस according to the spec.
+	 * SYSTEM_OFF/RESET should not return according to the spec.
 	 * Allow it so as to stay robust to broken firmware.
 	 */
-	हाल PSCI_0_2_FN_SYSTEM_OFF:
-	हाल PSCI_0_2_FN_SYSTEM_RESET:
-		वापस psci_क्रमward(host_ctxt);
-	हाल PSCI_0_2_FN64_CPU_SUSPEND:
-		वापस psci_cpu_suspend(func_id, host_ctxt);
-	हाल PSCI_0_2_FN64_CPU_ON:
-		वापस psci_cpu_on(func_id, host_ctxt);
-	शेष:
-		वापस PSCI_RET_NOT_SUPPORTED;
-	पूर्ण
-पूर्ण
+	case PSCI_0_2_FN_SYSTEM_OFF:
+	case PSCI_0_2_FN_SYSTEM_RESET:
+		return psci_forward(host_ctxt);
+	case PSCI_0_2_FN64_CPU_SUSPEND:
+		return psci_cpu_suspend(func_id, host_ctxt);
+	case PSCI_0_2_FN64_CPU_ON:
+		return psci_cpu_on(func_id, host_ctxt);
+	default:
+		return PSCI_RET_NOT_SUPPORTED;
+	}
+}
 
-अटल अचिन्हित दीर्घ psci_1_0_handler(u64 func_id, काष्ठा kvm_cpu_context *host_ctxt)
-अणु
-	चयन (func_id) अणु
-	हाल PSCI_1_0_FN_PSCI_FEATURES:
-	हाल PSCI_1_0_FN_SET_SUSPEND_MODE:
-	हाल PSCI_1_1_FN64_SYSTEM_RESET2:
-		वापस psci_क्रमward(host_ctxt);
-	हाल PSCI_1_0_FN64_SYSTEM_SUSPEND:
-		वापस psci_प्रणाली_suspend(func_id, host_ctxt);
-	शेष:
-		वापस psci_0_2_handler(func_id, host_ctxt);
-	पूर्ण
-पूर्ण
+static unsigned long psci_1_0_handler(u64 func_id, struct kvm_cpu_context *host_ctxt)
+{
+	switch (func_id) {
+	case PSCI_1_0_FN_PSCI_FEATURES:
+	case PSCI_1_0_FN_SET_SUSPEND_MODE:
+	case PSCI_1_1_FN64_SYSTEM_RESET2:
+		return psci_forward(host_ctxt);
+	case PSCI_1_0_FN64_SYSTEM_SUSPEND:
+		return psci_system_suspend(func_id, host_ctxt);
+	default:
+		return psci_0_2_handler(func_id, host_ctxt);
+	}
+}
 
-bool kvm_host_psci_handler(काष्ठा kvm_cpu_context *host_ctxt)
-अणु
+bool kvm_host_psci_handler(struct kvm_cpu_context *host_ctxt)
+{
 	DECLARE_REG(u64, func_id, host_ctxt, 0);
-	अचिन्हित दीर्घ ret;
+	unsigned long ret;
 
-	चयन (kvm_host_psci_config.version) अणु
-	हाल PSCI_VERSION(0, 1):
-		अगर (!is_psci_0_1_call(func_id))
-			वापस false;
+	switch (kvm_host_psci_config.version) {
+	case PSCI_VERSION(0, 1):
+		if (!is_psci_0_1_call(func_id))
+			return false;
 		ret = psci_0_1_handler(func_id, host_ctxt);
-		अवरोध;
-	हाल PSCI_VERSION(0, 2):
-		अगर (!is_psci_0_2_call(func_id))
-			वापस false;
+		break;
+	case PSCI_VERSION(0, 2):
+		if (!is_psci_0_2_call(func_id))
+			return false;
 		ret = psci_0_2_handler(func_id, host_ctxt);
-		अवरोध;
-	शेष:
-		अगर (!is_psci_0_2_call(func_id))
-			वापस false;
+		break;
+	default:
+		if (!is_psci_0_2_call(func_id))
+			return false;
 		ret = psci_1_0_handler(func_id, host_ctxt);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	cpu_reg(host_ctxt, 0) = ret;
 	cpu_reg(host_ctxt, 1) = 0;
 	cpu_reg(host_ctxt, 2) = 0;
 	cpu_reg(host_ctxt, 3) = 0;
-	वापस true;
-पूर्ण
+	return true;
+}

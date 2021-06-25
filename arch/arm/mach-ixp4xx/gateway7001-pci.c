@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arch/arch/mach-ixp4xx/gateway7001-pci.c
  *
- * PCI setup routines क्रम Gateway 7001
+ * PCI setup routines for Gateway 7001
  *
- * Copyright (C) 2007 Imre Kaloz <kaloz@खोलोwrt.org>
+ * Copyright (C) 2007 Imre Kaloz <kaloz@openwrt.org>
  *
  * based on coyote-pci.c:
  *	Copyright (C) 2002 Jungo Software Technologies.
  *	Copyright (C) 2003 MontaVista Softwrae, Inc.
  *
- * Maपूर्णांकainer: Imre Kaloz <kaloz@खोलोwrt.org>
+ * Maintainer: Imre Kaloz <kaloz@openwrt.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/irq.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <mach/hardware.h>
+#include <asm/mach-types.h>
+#include <mach/hardware.h>
 
-#समावेश <यंत्र/mach/pci.h>
+#include <asm/mach/pci.h>
 
-#समावेश "irqs.h"
+#include "irqs.h"
 
-व्योम __init gateway7001_pci_preinit(व्योम)
-अणु
+void __init gateway7001_pci_preinit(void)
+{
 	irq_set_irq_type(IRQ_IXP4XX_GPIO10, IRQ_TYPE_LEVEL_LOW);
 	irq_set_irq_type(IRQ_IXP4XX_GPIO11, IRQ_TYPE_LEVEL_LOW);
 
 	ixp4xx_pci_preinit();
-पूर्ण
+}
 
-अटल पूर्णांक __init gateway7001_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot,
+static int __init gateway7001_map_irq(const struct pci_dev *dev, u8 slot,
 	u8 pin)
-अणु
-	अगर (slot == 1)
-		वापस IRQ_IXP4XX_GPIO11;
-	अन्यथा अगर (slot == 2)
-		वापस IRQ_IXP4XX_GPIO10;
-	अन्यथा वापस -1;
-पूर्ण
+{
+	if (slot == 1)
+		return IRQ_IXP4XX_GPIO11;
+	else if (slot == 2)
+		return IRQ_IXP4XX_GPIO10;
+	else return -1;
+}
 
-काष्ठा hw_pci gateway7001_pci __initdata = अणु
+struct hw_pci gateway7001_pci __initdata = {
 	.nr_controllers = 1,
 	.ops		= &ixp4xx_ops,
 	.preinit =        gateway7001_pci_preinit,
 	.setup =          ixp4xx_setup,
 	.map_irq =        gateway7001_map_irq,
-पूर्ण;
+};
 
-पूर्णांक __init gateway7001_pci_init(व्योम)
-अणु
-	अगर (machine_is_gateway7001())
+int __init gateway7001_pci_init(void)
+{
+	if (machine_is_gateway7001())
 		pci_common_init(&gateway7001_pci);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(gateway7001_pci_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *    SE/HMC Drive FTP Device
  *
@@ -7,10 +6,10 @@
  *    Author(s): Ralf Hoppe (rhoppe@de.ibm.com)
  */
 
-#अगर_अघोषित __HMCDRV_DEV_H__
-#घोषणा __HMCDRV_DEV_H__
+#ifndef __HMCDRV_DEV_H__
+#define __HMCDRV_DEV_H__
 
-पूर्णांक hmcdrv_dev_init(व्योम);
-व्योम hmcdrv_dev_निकास(व्योम);
+int hmcdrv_dev_init(void);
+void hmcdrv_dev_exit(void);
 
-#पूर्ण_अगर	 /* __HMCDRV_DEV_H__ */
+#endif	 /* __HMCDRV_DEV_H__ */

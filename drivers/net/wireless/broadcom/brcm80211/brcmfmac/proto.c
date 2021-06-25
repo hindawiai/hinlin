@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2013 Broadcom Corporation
  */
 
 
- #समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/netdevice.h>
+ #include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
 
-#समावेश <brcmu_wअगरi.h>
-#समावेश "core.h"
-#समावेश "bus.h"
-#समावेश "debug.h"
-#समावेश "proto.h"
-#समावेश "bcdc.h"
-#समावेश "msgbuf.h"
+#include <brcmu_wifi.h>
+#include "core.h"
+#include "bus.h"
+#include "debug.h"
+#include "proto.h"
+#include "bcdc.h"
+#include "msgbuf.h"
 
 
-पूर्णांक brcmf_proto_attach(काष्ठा brcmf_pub *drvr)
-अणु
-	काष्ठा brcmf_proto *proto;
+int brcmf_proto_attach(struct brcmf_pub *drvr)
+{
+	struct brcmf_proto *proto;
 
 	brcmf_dbg(TRACE, "Enter\n");
 
-	proto = kzalloc(माप(*proto), GFP_ATOMIC);
-	अगर (!proto)
-		जाओ fail;
+	proto = kzalloc(sizeof(*proto), GFP_ATOMIC);
+	if (!proto)
+		goto fail;
 
 	drvr->proto = proto;
 
-	अगर (drvr->bus_अगर->proto_type == BRCMF_PROTO_BCDC) अणु
-		अगर (brcmf_proto_bcdc_attach(drvr))
-			जाओ fail;
-	पूर्ण अन्यथा अगर (drvr->bus_अगर->proto_type == BRCMF_PROTO_MSGBUF) अणु
-		अगर (brcmf_proto_msgbuf_attach(drvr))
-			जाओ fail;
-	पूर्ण अन्यथा अणु
+	if (drvr->bus_if->proto_type == BRCMF_PROTO_BCDC) {
+		if (brcmf_proto_bcdc_attach(drvr))
+			goto fail;
+	} else if (drvr->bus_if->proto_type == BRCMF_PROTO_MSGBUF) {
+		if (brcmf_proto_msgbuf_attach(drvr))
+			goto fail;
+	} else {
 		bphy_err(drvr, "Unsupported proto type %d\n",
-			 drvr->bus_अगर->proto_type);
-		जाओ fail;
-	पूर्ण
-	अगर (!proto->tx_queue_data || (proto->hdrpull == शून्य) ||
-	    (proto->query_dcmd == शून्य) || (proto->set_dcmd == शून्य) ||
-	    (proto->configure_addr_mode == शून्य) ||
-	    (proto->delete_peer == शून्य) || (proto->add_tdls_peer == शून्य) ||
-	    (proto->debugfs_create == शून्य)) अणु
+			 drvr->bus_if->proto_type);
+		goto fail;
+	}
+	if (!proto->tx_queue_data || (proto->hdrpull == NULL) ||
+	    (proto->query_dcmd == NULL) || (proto->set_dcmd == NULL) ||
+	    (proto->configure_addr_mode == NULL) ||
+	    (proto->delete_peer == NULL) || (proto->add_tdls_peer == NULL) ||
+	    (proto->debugfs_create == NULL)) {
 		bphy_err(drvr, "Not all proto handlers have been installed\n");
-		जाओ fail;
-	पूर्ण
-	वापस 0;
+		goto fail;
+	}
+	return 0;
 
 fail:
-	kमुक्त(proto);
-	drvr->proto = शून्य;
-	वापस -ENOMEM;
-पूर्ण
+	kfree(proto);
+	drvr->proto = NULL;
+	return -ENOMEM;
+}
 
-व्योम brcmf_proto_detach(काष्ठा brcmf_pub *drvr)
-अणु
+void brcmf_proto_detach(struct brcmf_pub *drvr)
+{
 	brcmf_dbg(TRACE, "Enter\n");
 
-	अगर (drvr->proto) अणु
-		अगर (drvr->bus_अगर->proto_type == BRCMF_PROTO_BCDC)
+	if (drvr->proto) {
+		if (drvr->bus_if->proto_type == BRCMF_PROTO_BCDC)
 			brcmf_proto_bcdc_detach(drvr);
-		अन्यथा अगर (drvr->bus_अगर->proto_type == BRCMF_PROTO_MSGBUF)
+		else if (drvr->bus_if->proto_type == BRCMF_PROTO_MSGBUF)
 			brcmf_proto_msgbuf_detach(drvr);
-		kमुक्त(drvr->proto);
-		drvr->proto = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(drvr->proto);
+		drvr->proto = NULL;
+	}
+}

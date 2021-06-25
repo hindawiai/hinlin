@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Author: Aleksa Sarai <cyphar@cyphar.com>
  * Copyright (C) 2018-2019 SUSE LLC.
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <syscall.h>
-#समावेश <सीमा.स>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <string.h>
+#include <syscall.h>
+#include <limits.h>
 
-#समावेश "helpers.h"
+#include "helpers.h"
 
-bool needs_खोलोat2(स्थिर काष्ठा खोलो_how *how)
-अणु
-	वापस how->resolve != 0;
-पूर्ण
+bool needs_openat2(const struct open_how *how)
+{
+	return how->resolve != 0;
+}
 
-पूर्णांक raw_खोलोat2(पूर्णांक dfd, स्थिर अक्षर *path, व्योम *how, माप_प्रकार size)
-अणु
-	पूर्णांक ret = syscall(__NR_खोलोat2, dfd, path, how, size);
-	वापस ret >= 0 ? ret : -त्रुटि_सं;
-पूर्ण
+int raw_openat2(int dfd, const char *path, void *how, size_t size)
+{
+	int ret = syscall(__NR_openat2, dfd, path, how, size);
+	return ret >= 0 ? ret : -errno;
+}
 
-पूर्णांक sys_खोलोat2(पूर्णांक dfd, स्थिर अक्षर *path, काष्ठा खोलो_how *how)
-अणु
-	वापस raw_खोलोat2(dfd, path, how, माप(*how));
-पूर्ण
+int sys_openat2(int dfd, const char *path, struct open_how *how)
+{
+	return raw_openat2(dfd, path, how, sizeof(*how));
+}
 
-पूर्णांक sys_खोलोat(पूर्णांक dfd, स्थिर अक्षर *path, काष्ठा खोलो_how *how)
-अणु
-	पूर्णांक ret = खोलोat(dfd, path, how->flags, how->mode);
-	वापस ret >= 0 ? ret : -त्रुटि_सं;
-पूर्ण
+int sys_openat(int dfd, const char *path, struct open_how *how)
+{
+	int ret = openat(dfd, path, how->flags, how->mode);
+	return ret >= 0 ? ret : -errno;
+}
 
-पूर्णांक sys_नामat2(पूर्णांक olddirfd, स्थिर अक्षर *oldpath,
-		  पूर्णांक newdirfd, स्थिर अक्षर *newpath, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक ret = syscall(__NR_नामat2, olddirfd, oldpath,
+int sys_renameat2(int olddirfd, const char *oldpath,
+		  int newdirfd, const char *newpath, unsigned int flags)
+{
+	int ret = syscall(__NR_renameat2, olddirfd, oldpath,
 					  newdirfd, newpath, flags);
-	वापस ret >= 0 ? ret : -त्रुटि_सं;
-पूर्ण
+	return ret >= 0 ? ret : -errno;
+}
 
-पूर्णांक touchat(पूर्णांक dfd, स्थिर अक्षर *path)
-अणु
-	पूर्णांक fd = खोलोat(dfd, path, O_CREAT, 0700);
-	अगर (fd >= 0)
-		बंद(fd);
-	वापस fd;
-पूर्ण
+int touchat(int dfd, const char *path)
+{
+	int fd = openat(dfd, path, O_CREAT, 0700);
+	if (fd >= 0)
+		close(fd);
+	return fd;
+}
 
-अक्षर *fdपढ़ोlink(पूर्णांक fd)
-अणु
-	अक्षर *target, *पंचांगp;
+char *fdreadlink(int fd)
+{
+	char *target, *tmp;
 
-	E_aप्र_लिखो(&पंचांगp, "/proc/self/fd/%d", fd);
+	E_asprintf(&tmp, "/proc/self/fd/%d", fd);
 
-	target = दो_स्मृति(PATH_MAX);
-	अगर (!target)
-		ksft_निकास_fail_msg("fdreadlink: malloc failed\n");
-	स_रखो(target, 0, PATH_MAX);
+	target = malloc(PATH_MAX);
+	if (!target)
+		ksft_exit_fail_msg("fdreadlink: malloc failed\n");
+	memset(target, 0, PATH_MAX);
 
-	E_पढ़ोlink(पंचांगp, target, PATH_MAX);
-	मुक्त(पंचांगp);
-	वापस target;
-पूर्ण
+	E_readlink(tmp, target, PATH_MAX);
+	free(tmp);
+	return target;
+}
 
-bool fdequal(पूर्णांक fd, पूर्णांक dfd, स्थिर अक्षर *path)
-अणु
-	अक्षर *fdpath, *dfdpath, *other;
+bool fdequal(int fd, int dfd, const char *path)
+{
+	char *fdpath, *dfdpath, *other;
 	bool cmp;
 
-	fdpath = fdपढ़ोlink(fd);
-	dfdpath = fdपढ़ोlink(dfd);
+	fdpath = fdreadlink(fd);
+	dfdpath = fdreadlink(dfd);
 
-	अगर (!path)
-		E_aप्र_लिखो(&other, "%s", dfdpath);
-	अन्यथा अगर (*path == '/')
-		E_aप्र_लिखो(&other, "%s", path);
-	अन्यथा
-		E_aप्र_लिखो(&other, "%s/%s", dfdpath, path);
+	if (!path)
+		E_asprintf(&other, "%s", dfdpath);
+	else if (*path == '/')
+		E_asprintf(&other, "%s", path);
+	else
+		E_asprintf(&other, "%s/%s", dfdpath, path);
 
-	cmp = !म_भेद(fdpath, other);
+	cmp = !strcmp(fdpath, other);
 
-	मुक्त(fdpath);
-	मुक्त(dfdpath);
-	मुक्त(other);
-	वापस cmp;
-पूर्ण
+	free(fdpath);
+	free(dfdpath);
+	free(other);
+	return cmp;
+}
 
-bool खोलोat2_supported = false;
+bool openat2_supported = false;
 
-व्योम __attribute__((स्थिरructor)) init(व्योम)
-अणु
-	काष्ठा खोलो_how how = अणुपूर्ण;
-	पूर्णांक fd;
+void __attribute__((constructor)) init(void)
+{
+	struct open_how how = {};
+	int fd;
 
-	BUILD_BUG_ON(माप(काष्ठा खोलो_how) != OPEN_HOW_SIZE_VER0);
+	BUILD_BUG_ON(sizeof(struct open_how) != OPEN_HOW_SIZE_VER0);
 
-	/* Check खोलोat2(2) support. */
-	fd = sys_खोलोat2(AT_FDCWD, ".", &how);
-	खोलोat2_supported = (fd >= 0);
+	/* Check openat2(2) support. */
+	fd = sys_openat2(AT_FDCWD, ".", &how);
+	openat2_supported = (fd >= 0);
 
-	अगर (fd >= 0)
-		बंद(fd);
-पूर्ण
+	if (fd >= 0)
+		close(fd);
+}

@@ -1,120 +1,119 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * posix-घड़ी.h - support क्रम dynamic घड़ी devices
+ * posix-clock.h - support for dynamic clock devices
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
-#अगर_अघोषित _LINUX_POSIX_CLOCK_H_
-#घोषणा _LINUX_POSIX_CLOCK_H_
+#ifndef _LINUX_POSIX_CLOCK_H_
+#define _LINUX_POSIX_CLOCK_H_
 
-#समावेश <linux/cdev.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/posix-समयrs.h>
-#समावेश <linux/rwsem.h>
+#include <linux/cdev.h>
+#include <linux/fs.h>
+#include <linux/poll.h>
+#include <linux/posix-timers.h>
+#include <linux/rwsem.h>
 
-काष्ठा posix_घड़ी;
+struct posix_clock;
 
 /**
- * काष्ठा posix_घड़ी_operations - functional पूर्णांकerface to the घड़ी
+ * struct posix_clock_operations - functional interface to the clock
  *
- * Every posix घड़ी is represented by a अक्षरacter device. Drivers may
+ * Every posix clock is represented by a character device. Drivers may
  * optionally offer extended capabilities by implementing the
- * अक्षरacter device methods. The अक्षरacter device file operations are
- * first handled by the घड़ी device layer, then passed on to the
+ * character device methods. The character device file operations are
+ * first handled by the clock device layer, then passed on to the
  * driver by calling these functions.
  *
- * @owner:          The घड़ी driver should set to THIS_MODULE
- * @घड़ी_adjसमय:  Adjust the घड़ी
- * @घड़ी_समय_लो:  Read the current समय
- * @घड़ी_getres:   Get the घड़ी resolution
- * @घड़ी_समय_रखो:  Set the current समय value
- * @खोलो:           Optional अक्षरacter device खोलो method
- * @release:        Optional अक्षरacter device release method
- * @ioctl:          Optional अक्षरacter device ioctl method
- * @पढ़ो:           Optional अक्षरacter device पढ़ो method
- * @poll:           Optional अक्षरacter device poll method
+ * @owner:          The clock driver should set to THIS_MODULE
+ * @clock_adjtime:  Adjust the clock
+ * @clock_gettime:  Read the current time
+ * @clock_getres:   Get the clock resolution
+ * @clock_settime:  Set the current time value
+ * @open:           Optional character device open method
+ * @release:        Optional character device release method
+ * @ioctl:          Optional character device ioctl method
+ * @read:           Optional character device read method
+ * @poll:           Optional character device poll method
  */
-काष्ठा posix_घड़ी_operations अणु
-	काष्ठा module *owner;
+struct posix_clock_operations {
+	struct module *owner;
 
-	पूर्णांक  (*घड़ी_adjसमय)(काष्ठा posix_घड़ी *pc, काष्ठा __kernel_समयx *tx);
+	int  (*clock_adjtime)(struct posix_clock *pc, struct __kernel_timex *tx);
 
-	पूर्णांक  (*घड़ी_समय_लो)(काष्ठा posix_घड़ी *pc, काष्ठा बारpec64 *ts);
+	int  (*clock_gettime)(struct posix_clock *pc, struct timespec64 *ts);
 
-	पूर्णांक  (*घड़ी_getres) (काष्ठा posix_घड़ी *pc, काष्ठा बारpec64 *ts);
+	int  (*clock_getres) (struct posix_clock *pc, struct timespec64 *ts);
 
-	पूर्णांक  (*घड़ी_समय_रखो)(काष्ठा posix_घड़ी *pc,
-			      स्थिर काष्ठा बारpec64 *ts);
+	int  (*clock_settime)(struct posix_clock *pc,
+			      const struct timespec64 *ts);
 
 	/*
-	 * Optional अक्षरacter device methods:
+	 * Optional character device methods:
 	 */
-	दीर्घ    (*ioctl)   (काष्ठा posix_घड़ी *pc,
-			    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	long    (*ioctl)   (struct posix_clock *pc,
+			    unsigned int cmd, unsigned long arg);
 
-	पूर्णांक     (*खोलो)    (काष्ठा posix_घड़ी *pc, भ_शेषe_t f_mode);
+	int     (*open)    (struct posix_clock *pc, fmode_t f_mode);
 
-	__poll_t (*poll)   (काष्ठा posix_घड़ी *pc,
-			    काष्ठा file *file, poll_table *रुको);
+	__poll_t (*poll)   (struct posix_clock *pc,
+			    struct file *file, poll_table *wait);
 
-	पूर्णांक     (*release) (काष्ठा posix_घड़ी *pc);
+	int     (*release) (struct posix_clock *pc);
 
-	sमाप_प्रकार (*पढ़ो)    (काष्ठा posix_घड़ी *pc,
-			    uपूर्णांक flags, अक्षर __user *buf, माप_प्रकार cnt);
-पूर्ण;
+	ssize_t (*read)    (struct posix_clock *pc,
+			    uint flags, char __user *buf, size_t cnt);
+};
 
 /**
- * काष्ठा posix_घड़ी - represents a dynamic posix घड़ी
+ * struct posix_clock - represents a dynamic posix clock
  *
- * @ops:     Functional पूर्णांकerface to the घड़ी
- * @cdev:    Character device instance क्रम this घड़ी
- * @dev:     Poपूर्णांकer to the घड़ी's device.
+ * @ops:     Functional interface to the clock
+ * @cdev:    Character device instance for this clock
+ * @dev:     Pointer to the clock's device.
  * @rwsem:   Protects the 'zombie' field from concurrent access.
  * @zombie:  If 'zombie' is true, then the hardware has disappeared.
  *
- * Drivers should embed their काष्ठा posix_घड़ी within a निजी
- * काष्ठाure, obtaining a reference to it during callbacks using
+ * Drivers should embed their struct posix_clock within a private
+ * structure, obtaining a reference to it during callbacks using
  * container_of().
  *
- * Drivers should supply an initialized but not exposed काष्ठा device
- * to posix_घड़ी_रेजिस्टर(). It is used to manage lअगरeसमय of the
+ * Drivers should supply an initialized but not exposed struct device
+ * to posix_clock_register(). It is used to manage lifetime of the
  * driver's private structure. It's 'release' field should be set to
- * a release function क्रम this निजी काष्ठाure.
+ * a release function for this private structure.
  */
-काष्ठा posix_घड़ी अणु
-	काष्ठा posix_घड़ी_operations ops;
-	काष्ठा cdev cdev;
-	काष्ठा device *dev;
-	काष्ठा rw_semaphore rwsem;
+struct posix_clock {
+	struct posix_clock_operations ops;
+	struct cdev cdev;
+	struct device *dev;
+	struct rw_semaphore rwsem;
 	bool zombie;
-पूर्ण;
+};
 
 /**
- * posix_घड़ी_रेजिस्टर() - रेजिस्टर a new घड़ी
- * @clk:   Poपूर्णांकer to the घड़ी. Caller must provide 'ops' field
- * @dev:   Poपूर्णांकer to the initialized device. Caller must provide
+ * posix_clock_register() - register a new clock
+ * @clk:   Pointer to the clock. Caller must provide 'ops' field
+ * @dev:   Pointer to the initialized device. Caller must provide
  *         'release' field
  *
- * A घड़ी driver calls this function to रेजिस्टर itself with the
- * घड़ी device subप्रणाली. If 'clk' poपूर्णांकs to dynamically allocated
- * memory, then the caller must provide a 'release' function to मुक्त
+ * A clock driver calls this function to register itself with the
+ * clock device subsystem. If 'clk' points to dynamically allocated
+ * memory, then the caller must provide a 'release' function to free
  * that memory.
  *
  * Returns zero on success, non-zero otherwise.
  */
-पूर्णांक posix_घड़ी_रेजिस्टर(काष्ठा posix_घड़ी *clk, काष्ठा device *dev);
+int posix_clock_register(struct posix_clock *clk, struct device *dev);
 
 /**
- * posix_घड़ी_unरेजिस्टर() - unरेजिस्टर a घड़ी
- * @clk: Clock instance previously रेजिस्टरed via posix_घड़ी_रेजिस्टर()
+ * posix_clock_unregister() - unregister a clock
+ * @clk: Clock instance previously registered via posix_clock_register()
  *
- * A घड़ी driver calls this function to हटाओ itself from the घड़ी
- * device subप्रणाली. The posix_घड़ी itself will reमुख्य (in an
+ * A clock driver calls this function to remove itself from the clock
+ * device subsystem. The posix_clock itself will remain (in an
  * inactive state) until its reference count drops to zero, at which
- * poपूर्णांक it will be deallocated with its 'release' method.
+ * point it will be deallocated with its 'release' method.
  */
-व्योम posix_घड़ी_unरेजिस्टर(काष्ठा posix_घड़ी *clk);
+void posix_clock_unregister(struct posix_clock *clk);
 
-#पूर्ण_अगर
+#endif

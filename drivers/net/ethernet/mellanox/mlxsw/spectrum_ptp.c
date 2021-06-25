@@ -1,832 +1,831 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/ptp_घड़ी_kernel.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/समयcounter.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/rhashtable.h>
-#समावेश <linux/ptp_classअगरy.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/net_tstamp.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/clocksource.h>
+#include <linux/timecounter.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/rhashtable.h>
+#include <linux/ptp_classify.h>
+#include <linux/if_ether.h>
+#include <linux/if_vlan.h>
+#include <linux/net_tstamp.h>
 
-#समावेश "spectrum.h"
-#समावेश "spectrum_ptp.h"
-#समावेश "core.h"
+#include "spectrum.h"
+#include "spectrum_ptp.h"
+#include "core.h"
 
-#घोषणा MLXSW_SP1_PTP_CLOCK_CYCLES_SHIFT	29
-#घोषणा MLXSW_SP1_PTP_CLOCK_FREQ_KHZ		156257 /* 6.4nSec */
-#घोषणा MLXSW_SP1_PTP_CLOCK_MASK		64
+#define MLXSW_SP1_PTP_CLOCK_CYCLES_SHIFT	29
+#define MLXSW_SP1_PTP_CLOCK_FREQ_KHZ		156257 /* 6.4nSec */
+#define MLXSW_SP1_PTP_CLOCK_MASK		64
 
-#घोषणा MLXSW_SP1_PTP_HT_GC_INTERVAL		500 /* ms */
+#define MLXSW_SP1_PTP_HT_GC_INTERVAL		500 /* ms */
 
-/* How दीर्घ, approximately, should the unmatched entries stay in the hash table
- * beक्रमe they are collected. Should be evenly भागisible by the GC पूर्णांकerval.
+/* How long, approximately, should the unmatched entries stay in the hash table
+ * before they are collected. Should be evenly divisible by the GC interval.
  */
-#घोषणा MLXSW_SP1_PTP_HT_GC_TIMEOUT		1000 /* ms */
+#define MLXSW_SP1_PTP_HT_GC_TIMEOUT		1000 /* ms */
 
-काष्ठा mlxsw_sp_ptp_state अणु
-	काष्ठा mlxsw_sp *mlxsw_sp;
-	काष्ठा rhltable unmatched_ht;
+struct mlxsw_sp_ptp_state {
+	struct mlxsw_sp *mlxsw_sp;
+	struct rhltable unmatched_ht;
 	spinlock_t unmatched_lock; /* protects the HT */
-	काष्ठा delayed_work ht_gc_dw;
+	struct delayed_work ht_gc_dw;
 	u32 gc_cycle;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp1_ptp_key अणु
+struct mlxsw_sp1_ptp_key {
 	u8 local_port;
 	u8 message_type;
 	u16 sequence_id;
-	u8 करोमुख्य_number;
+	u8 domain_number;
 	bool ingress;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp1_ptp_unmatched अणु
-	काष्ठा mlxsw_sp1_ptp_key key;
-	काष्ठा rhlist_head ht_node;
-	काष्ठा rcu_head rcu;
-	काष्ठा sk_buff *skb;
-	u64 बारtamp;
+struct mlxsw_sp1_ptp_unmatched {
+	struct mlxsw_sp1_ptp_key key;
+	struct rhlist_head ht_node;
+	struct rcu_head rcu;
+	struct sk_buff *skb;
+	u64 timestamp;
 	u32 gc_cycle;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rhashtable_params mlxsw_sp1_ptp_unmatched_ht_params = अणु
-	.key_len = माप_field(काष्ठा mlxsw_sp1_ptp_unmatched, key),
-	.key_offset = दुरत्व(काष्ठा mlxsw_sp1_ptp_unmatched, key),
-	.head_offset = दुरत्व(काष्ठा mlxsw_sp1_ptp_unmatched, ht_node),
-पूर्ण;
+static const struct rhashtable_params mlxsw_sp1_ptp_unmatched_ht_params = {
+	.key_len = sizeof_field(struct mlxsw_sp1_ptp_unmatched, key),
+	.key_offset = offsetof(struct mlxsw_sp1_ptp_unmatched, key),
+	.head_offset = offsetof(struct mlxsw_sp1_ptp_unmatched, ht_node),
+};
 
-काष्ठा mlxsw_sp_ptp_घड़ी अणु
-	काष्ठा mlxsw_core *core;
-	spinlock_t lock; /* protect this काष्ठाure */
-	काष्ठा cyclecounter cycles;
-	काष्ठा समयcounter tc;
+struct mlxsw_sp_ptp_clock {
+	struct mlxsw_core *core;
+	spinlock_t lock; /* protect this structure */
+	struct cyclecounter cycles;
+	struct timecounter tc;
 	u32 nominal_c_mult;
-	काष्ठा ptp_घड़ी *ptp;
-	काष्ठा ptp_घड़ी_info ptp_info;
-	अचिन्हित दीर्घ overflow_period;
-	काष्ठा delayed_work overflow_work;
-पूर्ण;
+	struct ptp_clock *ptp;
+	struct ptp_clock_info ptp_info;
+	unsigned long overflow_period;
+	struct delayed_work overflow_work;
+};
 
-अटल u64 __mlxsw_sp1_ptp_पढ़ो_frc(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी,
-				    काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
-	काष्ठा mlxsw_core *mlxsw_core = घड़ी->core;
+static u64 __mlxsw_sp1_ptp_read_frc(struct mlxsw_sp_ptp_clock *clock,
+				    struct ptp_system_timestamp *sts)
+{
+	struct mlxsw_core *mlxsw_core = clock->core;
 	u32 frc_h1, frc_h2, frc_l;
 
-	frc_h1 = mlxsw_core_पढ़ो_frc_h(mlxsw_core);
-	ptp_पढ़ो_प्रणाली_prets(sts);
-	frc_l = mlxsw_core_पढ़ो_frc_l(mlxsw_core);
-	ptp_पढ़ो_प्रणाली_postts(sts);
-	frc_h2 = mlxsw_core_पढ़ो_frc_h(mlxsw_core);
+	frc_h1 = mlxsw_core_read_frc_h(mlxsw_core);
+	ptp_read_system_prets(sts);
+	frc_l = mlxsw_core_read_frc_l(mlxsw_core);
+	ptp_read_system_postts(sts);
+	frc_h2 = mlxsw_core_read_frc_h(mlxsw_core);
 
-	अगर (frc_h1 != frc_h2) अणु
+	if (frc_h1 != frc_h2) {
 		/* wrap around */
-		ptp_पढ़ो_प्रणाली_prets(sts);
-		frc_l = mlxsw_core_पढ़ो_frc_l(mlxsw_core);
-		ptp_पढ़ो_प्रणाली_postts(sts);
-	पूर्ण
+		ptp_read_system_prets(sts);
+		frc_l = mlxsw_core_read_frc_l(mlxsw_core);
+		ptp_read_system_postts(sts);
+	}
 
-	वापस (u64) frc_l | (u64) frc_h2 << 32;
-पूर्ण
+	return (u64) frc_l | (u64) frc_h2 << 32;
+}
 
-अटल u64 mlxsw_sp1_ptp_पढ़ो_frc(स्थिर काष्ठा cyclecounter *cc)
-अणु
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी =
-		container_of(cc, काष्ठा mlxsw_sp_ptp_घड़ी, cycles);
+static u64 mlxsw_sp1_ptp_read_frc(const struct cyclecounter *cc)
+{
+	struct mlxsw_sp_ptp_clock *clock =
+		container_of(cc, struct mlxsw_sp_ptp_clock, cycles);
 
-	वापस __mlxsw_sp1_ptp_पढ़ो_frc(घड़ी, शून्य) & cc->mask;
-पूर्ण
+	return __mlxsw_sp1_ptp_read_frc(clock, NULL) & cc->mask;
+}
 
-अटल पूर्णांक
-mlxsw_sp1_ptp_phc_adjfreq(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी, पूर्णांक freq_adj)
-अणु
-	काष्ठा mlxsw_core *mlxsw_core = घड़ी->core;
-	अक्षर mtutc_pl[MLXSW_REG_MTUTC_LEN];
+static int
+mlxsw_sp1_ptp_phc_adjfreq(struct mlxsw_sp_ptp_clock *clock, int freq_adj)
+{
+	struct mlxsw_core *mlxsw_core = clock->core;
+	char mtutc_pl[MLXSW_REG_MTUTC_LEN];
 
 	mlxsw_reg_mtutc_pack(mtutc_pl, MLXSW_REG_MTUTC_OPERATION_ADJUST_FREQ,
 			     freq_adj, 0);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_core, MLXSW_REG(mtutc), mtutc_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_core, MLXSW_REG(mtutc), mtutc_pl);
+}
 
-अटल u64 mlxsw_sp1_ptp_ns2cycles(स्थिर काष्ठा समयcounter *tc, u64 nsec)
-अणु
+static u64 mlxsw_sp1_ptp_ns2cycles(const struct timecounter *tc, u64 nsec)
+{
 	u64 cycles = (u64) nsec;
 
-	cycles <<= tc->cc->shअगरt;
-	cycles = भाग_u64(cycles, tc->cc->mult);
+	cycles <<= tc->cc->shift;
+	cycles = div_u64(cycles, tc->cc->mult);
 
-	वापस cycles;
-पूर्ण
+	return cycles;
+}
 
-अटल पूर्णांक
-mlxsw_sp1_ptp_phc_समय_रखो(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी, u64 nsec)
-अणु
-	काष्ठा mlxsw_core *mlxsw_core = घड़ी->core;
+static int
+mlxsw_sp1_ptp_phc_settime(struct mlxsw_sp_ptp_clock *clock, u64 nsec)
+{
+	struct mlxsw_core *mlxsw_core = clock->core;
 	u64 next_sec, next_sec_in_nsec, cycles;
-	अक्षर mtutc_pl[MLXSW_REG_MTUTC_LEN];
-	अक्षर mtpps_pl[MLXSW_REG_MTPPS_LEN];
-	पूर्णांक err;
+	char mtutc_pl[MLXSW_REG_MTUTC_LEN];
+	char mtpps_pl[MLXSW_REG_MTPPS_LEN];
+	int err;
 
-	next_sec = भाग_u64(nsec, NSEC_PER_SEC) + 1;
+	next_sec = div_u64(nsec, NSEC_PER_SEC) + 1;
 	next_sec_in_nsec = next_sec * NSEC_PER_SEC;
 
-	spin_lock_bh(&घड़ी->lock);
-	cycles = mlxsw_sp1_ptp_ns2cycles(&घड़ी->tc, next_sec_in_nsec);
-	spin_unlock_bh(&घड़ी->lock);
+	spin_lock_bh(&clock->lock);
+	cycles = mlxsw_sp1_ptp_ns2cycles(&clock->tc, next_sec_in_nsec);
+	spin_unlock_bh(&clock->lock);
 
 	mlxsw_reg_mtpps_vpin_pack(mtpps_pl, cycles);
-	err = mlxsw_reg_ग_लिखो(mlxsw_core, MLXSW_REG(mtpps), mtpps_pl);
-	अगर (err)
-		वापस err;
+	err = mlxsw_reg_write(mlxsw_core, MLXSW_REG(mtpps), mtpps_pl);
+	if (err)
+		return err;
 
 	mlxsw_reg_mtutc_pack(mtutc_pl,
 			     MLXSW_REG_MTUTC_OPERATION_SET_TIME_AT_NEXT_SEC,
 			     0, next_sec);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_core, MLXSW_REG(mtutc), mtutc_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_core, MLXSW_REG(mtutc), mtutc_pl);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_adjfine(काष्ठा ptp_घड़ी_info *ptp, दीर्घ scaled_ppm)
-अणु
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा mlxsw_sp_ptp_घड़ी, ptp_info);
-	पूर्णांक neg_adj = 0;
-	u32 dअगरf;
+static int mlxsw_sp1_ptp_adjfine(struct ptp_clock_info *ptp, long scaled_ppm)
+{
+	struct mlxsw_sp_ptp_clock *clock =
+		container_of(ptp, struct mlxsw_sp_ptp_clock, ptp_info);
+	int neg_adj = 0;
+	u32 diff;
 	u64 adj;
 	s32 ppb;
 
 	ppb = scaled_ppm_to_ppb(scaled_ppm);
 
-	अगर (ppb < 0) अणु
+	if (ppb < 0) {
 		neg_adj = 1;
 		ppb = -ppb;
-	पूर्ण
+	}
 
-	adj = घड़ी->nominal_c_mult;
+	adj = clock->nominal_c_mult;
 	adj *= ppb;
-	dअगरf = भाग_u64(adj, NSEC_PER_SEC);
+	diff = div_u64(adj, NSEC_PER_SEC);
 
-	spin_lock_bh(&घड़ी->lock);
-	समयcounter_पढ़ो(&घड़ी->tc);
-	घड़ी->cycles.mult = neg_adj ? घड़ी->nominal_c_mult - dअगरf :
-				       घड़ी->nominal_c_mult + dअगरf;
-	spin_unlock_bh(&घड़ी->lock);
+	spin_lock_bh(&clock->lock);
+	timecounter_read(&clock->tc);
+	clock->cycles.mult = neg_adj ? clock->nominal_c_mult - diff :
+				       clock->nominal_c_mult + diff;
+	spin_unlock_bh(&clock->lock);
 
-	वापस mlxsw_sp1_ptp_phc_adjfreq(घड़ी, neg_adj ? -ppb : ppb);
-पूर्ण
+	return mlxsw_sp1_ptp_phc_adjfreq(clock, neg_adj ? -ppb : ppb);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा mlxsw_sp_ptp_घड़ी, ptp_info);
+static int mlxsw_sp1_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
+	struct mlxsw_sp_ptp_clock *clock =
+		container_of(ptp, struct mlxsw_sp_ptp_clock, ptp_info);
 	u64 nsec;
 
-	spin_lock_bh(&घड़ी->lock);
-	समयcounter_adjसमय(&घड़ी->tc, delta);
-	nsec = समयcounter_पढ़ो(&घड़ी->tc);
-	spin_unlock_bh(&घड़ी->lock);
+	spin_lock_bh(&clock->lock);
+	timecounter_adjtime(&clock->tc, delta);
+	nsec = timecounter_read(&clock->tc);
+	spin_unlock_bh(&clock->lock);
 
-	वापस mlxsw_sp1_ptp_phc_समय_रखो(घड़ी, nsec);
-पूर्ण
+	return mlxsw_sp1_ptp_phc_settime(clock, nsec);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_समय_लोx(काष्ठा ptp_घड़ी_info *ptp,
-				  काष्ठा बारpec64 *ts,
-				  काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा mlxsw_sp_ptp_घड़ी, ptp_info);
+static int mlxsw_sp1_ptp_gettimex(struct ptp_clock_info *ptp,
+				  struct timespec64 *ts,
+				  struct ptp_system_timestamp *sts)
+{
+	struct mlxsw_sp_ptp_clock *clock =
+		container_of(ptp, struct mlxsw_sp_ptp_clock, ptp_info);
 	u64 cycles, nsec;
 
-	spin_lock_bh(&घड़ी->lock);
-	cycles = __mlxsw_sp1_ptp_पढ़ो_frc(घड़ी, sts);
-	nsec = समयcounter_cyc2समय(&घड़ी->tc, cycles);
-	spin_unlock_bh(&घड़ी->lock);
+	spin_lock_bh(&clock->lock);
+	cycles = __mlxsw_sp1_ptp_read_frc(clock, sts);
+	nsec = timecounter_cyc2time(&clock->tc, cycles);
+	spin_unlock_bh(&clock->lock);
 
-	*ts = ns_to_बारpec64(nsec);
+	*ts = ns_to_timespec64(nsec);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-				 स्थिर काष्ठा बारpec64 *ts)
-अणु
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी =
-		container_of(ptp, काष्ठा mlxsw_sp_ptp_घड़ी, ptp_info);
-	u64 nsec = बारpec64_to_ns(ts);
+static int mlxsw_sp1_ptp_settime(struct ptp_clock_info *ptp,
+				 const struct timespec64 *ts)
+{
+	struct mlxsw_sp_ptp_clock *clock =
+		container_of(ptp, struct mlxsw_sp_ptp_clock, ptp_info);
+	u64 nsec = timespec64_to_ns(ts);
 
-	spin_lock_bh(&घड़ी->lock);
-	समयcounter_init(&घड़ी->tc, &घड़ी->cycles, nsec);
-	nsec = समयcounter_पढ़ो(&घड़ी->tc);
-	spin_unlock_bh(&घड़ी->lock);
+	spin_lock_bh(&clock->lock);
+	timecounter_init(&clock->tc, &clock->cycles, nsec);
+	nsec = timecounter_read(&clock->tc);
+	spin_unlock_bh(&clock->lock);
 
-	वापस mlxsw_sp1_ptp_phc_समय_रखो(घड़ी, nsec);
-पूर्ण
+	return mlxsw_sp1_ptp_phc_settime(clock, nsec);
+}
 
-अटल स्थिर काष्ठा ptp_घड़ी_info mlxsw_sp1_ptp_घड़ी_info = अणु
+static const struct ptp_clock_info mlxsw_sp1_ptp_clock_info = {
 	.owner		= THIS_MODULE,
 	.name		= "mlxsw_sp_clock",
 	.max_adj	= 100000000,
 	.adjfine	= mlxsw_sp1_ptp_adjfine,
-	.adjसमय	= mlxsw_sp1_ptp_adjसमय,
-	.समय_लोx64	= mlxsw_sp1_ptp_समय_लोx,
-	.समय_रखो64	= mlxsw_sp1_ptp_समय_रखो,
-पूर्ण;
+	.adjtime	= mlxsw_sp1_ptp_adjtime,
+	.gettimex64	= mlxsw_sp1_ptp_gettimex,
+	.settime64	= mlxsw_sp1_ptp_settime,
+};
 
-अटल व्योम mlxsw_sp1_ptp_घड़ी_overflow(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी;
+static void mlxsw_sp1_ptp_clock_overflow(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct mlxsw_sp_ptp_clock *clock;
 
-	घड़ी = container_of(dwork, काष्ठा mlxsw_sp_ptp_घड़ी, overflow_work);
+	clock = container_of(dwork, struct mlxsw_sp_ptp_clock, overflow_work);
 
-	spin_lock_bh(&घड़ी->lock);
-	समयcounter_पढ़ो(&घड़ी->tc);
-	spin_unlock_bh(&घड़ी->lock);
-	mlxsw_core_schedule_dw(&घड़ी->overflow_work, घड़ी->overflow_period);
-पूर्ण
+	spin_lock_bh(&clock->lock);
+	timecounter_read(&clock->tc);
+	spin_unlock_bh(&clock->lock);
+	mlxsw_core_schedule_dw(&clock->overflow_work, clock->overflow_period);
+}
 
-काष्ठा mlxsw_sp_ptp_घड़ी *
-mlxsw_sp1_ptp_घड़ी_init(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा device *dev)
-अणु
+struct mlxsw_sp_ptp_clock *
+mlxsw_sp1_ptp_clock_init(struct mlxsw_sp *mlxsw_sp, struct device *dev)
+{
 	u64 overflow_cycles, nsec, frac = 0;
-	काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी;
-	पूर्णांक err;
+	struct mlxsw_sp_ptp_clock *clock;
+	int err;
 
-	घड़ी = kzalloc(माप(*घड़ी), GFP_KERNEL);
-	अगर (!घड़ी)
-		वापस ERR_PTR(-ENOMEM);
+	clock = kzalloc(sizeof(*clock), GFP_KERNEL);
+	if (!clock)
+		return ERR_PTR(-ENOMEM);
 
-	spin_lock_init(&घड़ी->lock);
-	घड़ी->cycles.पढ़ो = mlxsw_sp1_ptp_पढ़ो_frc;
-	घड़ी->cycles.shअगरt = MLXSW_SP1_PTP_CLOCK_CYCLES_SHIFT;
-	घड़ी->cycles.mult = घड़ीsource_khz2mult(MLXSW_SP1_PTP_CLOCK_FREQ_KHZ,
-						  घड़ी->cycles.shअगरt);
-	घड़ी->nominal_c_mult = घड़ी->cycles.mult;
-	घड़ी->cycles.mask = CLOCKSOURCE_MASK(MLXSW_SP1_PTP_CLOCK_MASK);
-	घड़ी->core = mlxsw_sp->core;
+	spin_lock_init(&clock->lock);
+	clock->cycles.read = mlxsw_sp1_ptp_read_frc;
+	clock->cycles.shift = MLXSW_SP1_PTP_CLOCK_CYCLES_SHIFT;
+	clock->cycles.mult = clocksource_khz2mult(MLXSW_SP1_PTP_CLOCK_FREQ_KHZ,
+						  clock->cycles.shift);
+	clock->nominal_c_mult = clock->cycles.mult;
+	clock->cycles.mask = CLOCKSOURCE_MASK(MLXSW_SP1_PTP_CLOCK_MASK);
+	clock->core = mlxsw_sp->core;
 
-	समयcounter_init(&घड़ी->tc, &घड़ी->cycles,
-			 kसमय_प्रकारo_ns(kसमय_get_real()));
+	timecounter_init(&clock->tc, &clock->cycles,
+			 ktime_to_ns(ktime_get_real()));
 
-	/* Calculate period in seconds to call the overflow watchकरोg - to make
+	/* Calculate period in seconds to call the overflow watchdog - to make
 	 * sure counter is checked at least twice every wrap around.
 	 * The period is calculated as the minimum between max HW cycles count
-	 * (The घड़ी source mask) and max amount of cycles that can be
-	 * multiplied by घड़ी multiplier where the result करोesn't exceed
+	 * (The clock source mask) and max amount of cycles that can be
+	 * multiplied by clock multiplier where the result doesn't exceed
 	 * 64bits.
 	 */
-	overflow_cycles = भाग64_u64(~0ULL >> 1, घड़ी->cycles.mult);
-	overflow_cycles = min(overflow_cycles, भाग_u64(घड़ी->cycles.mask, 3));
+	overflow_cycles = div64_u64(~0ULL >> 1, clock->cycles.mult);
+	overflow_cycles = min(overflow_cycles, div_u64(clock->cycles.mask, 3));
 
-	nsec = cyclecounter_cyc2ns(&घड़ी->cycles, overflow_cycles, 0, &frac);
-	घड़ी->overflow_period = nsecs_to_jअगरfies(nsec);
+	nsec = cyclecounter_cyc2ns(&clock->cycles, overflow_cycles, 0, &frac);
+	clock->overflow_period = nsecs_to_jiffies(nsec);
 
-	INIT_DELAYED_WORK(&घड़ी->overflow_work, mlxsw_sp1_ptp_घड़ी_overflow);
-	mlxsw_core_schedule_dw(&घड़ी->overflow_work, 0);
+	INIT_DELAYED_WORK(&clock->overflow_work, mlxsw_sp1_ptp_clock_overflow);
+	mlxsw_core_schedule_dw(&clock->overflow_work, 0);
 
-	घड़ी->ptp_info = mlxsw_sp1_ptp_घड़ी_info;
-	घड़ी->ptp = ptp_घड़ी_रेजिस्टर(&घड़ी->ptp_info, dev);
-	अगर (IS_ERR(घड़ी->ptp)) अणु
-		err = PTR_ERR(घड़ी->ptp);
+	clock->ptp_info = mlxsw_sp1_ptp_clock_info;
+	clock->ptp = ptp_clock_register(&clock->ptp_info, dev);
+	if (IS_ERR(clock->ptp)) {
+		err = PTR_ERR(clock->ptp);
 		dev_err(dev, "ptp_clock_register failed %d\n", err);
-		जाओ err_ptp_घड़ी_रेजिस्टर;
-	पूर्ण
+		goto err_ptp_clock_register;
+	}
 
-	वापस घड़ी;
+	return clock;
 
-err_ptp_घड़ी_रेजिस्टर:
-	cancel_delayed_work_sync(&घड़ी->overflow_work);
-	kमुक्त(घड़ी);
-	वापस ERR_PTR(err);
-पूर्ण
+err_ptp_clock_register:
+	cancel_delayed_work_sync(&clock->overflow_work);
+	kfree(clock);
+	return ERR_PTR(err);
+}
 
-व्योम mlxsw_sp1_ptp_घड़ी_fini(काष्ठा mlxsw_sp_ptp_घड़ी *घड़ी)
-अणु
-	ptp_घड़ी_unरेजिस्टर(घड़ी->ptp);
-	cancel_delayed_work_sync(&घड़ी->overflow_work);
-	kमुक्त(घड़ी);
-पूर्ण
+void mlxsw_sp1_ptp_clock_fini(struct mlxsw_sp_ptp_clock *clock)
+{
+	ptp_clock_unregister(clock->ptp);
+	cancel_delayed_work_sync(&clock->overflow_work);
+	kfree(clock);
+}
 
-अटल पूर्णांक mlxsw_sp_ptp_parse(काष्ठा sk_buff *skb,
-			      u8 *p_करोमुख्य_number,
+static int mlxsw_sp_ptp_parse(struct sk_buff *skb,
+			      u8 *p_domain_number,
 			      u8 *p_message_type,
 			      u16 *p_sequence_id)
-अणु
-	अचिन्हित पूर्णांक ptp_class;
-	काष्ठा ptp_header *hdr;
+{
+	unsigned int ptp_class;
+	struct ptp_header *hdr;
 
-	ptp_class = ptp_classअगरy_raw(skb);
+	ptp_class = ptp_classify_raw(skb);
 
-	चयन (ptp_class & PTP_CLASS_VMASK) अणु
-	हाल PTP_CLASS_V1:
-	हाल PTP_CLASS_V2:
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+	switch (ptp_class & PTP_CLASS_VMASK) {
+	case PTP_CLASS_V1:
+	case PTP_CLASS_V2:
+		break;
+	default:
+		return -ERANGE;
+	}
 
 	hdr = ptp_parse_header(skb, ptp_class);
-	अगर (!hdr)
-		वापस -EINVAL;
+	if (!hdr)
+		return -EINVAL;
 
 	*p_message_type	 = ptp_get_msgtype(hdr, ptp_class);
-	*p_करोमुख्य_number = hdr->करोमुख्य_number;
+	*p_domain_number = hdr->domain_number;
 	*p_sequence_id	 = be16_to_cpu(hdr->sequence_id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Returns शून्य on successful insertion, a poपूर्णांकer on conflict, or an ERR_PTR on
+/* Returns NULL on successful insertion, a pointer on conflict, or an ERR_PTR on
  * error.
  */
-अटल पूर्णांक
-mlxsw_sp1_ptp_unmatched_save(काष्ठा mlxsw_sp *mlxsw_sp,
-			     काष्ठा mlxsw_sp1_ptp_key key,
-			     काष्ठा sk_buff *skb,
-			     u64 बारtamp)
-अणु
-	पूर्णांक cycles = MLXSW_SP1_PTP_HT_GC_TIMEOUT / MLXSW_SP1_PTP_HT_GC_INTERVAL;
-	काष्ठा mlxsw_sp_ptp_state *ptp_state = mlxsw_sp->ptp_state;
-	काष्ठा mlxsw_sp1_ptp_unmatched *unmatched;
-	पूर्णांक err;
+static int
+mlxsw_sp1_ptp_unmatched_save(struct mlxsw_sp *mlxsw_sp,
+			     struct mlxsw_sp1_ptp_key key,
+			     struct sk_buff *skb,
+			     u64 timestamp)
+{
+	int cycles = MLXSW_SP1_PTP_HT_GC_TIMEOUT / MLXSW_SP1_PTP_HT_GC_INTERVAL;
+	struct mlxsw_sp_ptp_state *ptp_state = mlxsw_sp->ptp_state;
+	struct mlxsw_sp1_ptp_unmatched *unmatched;
+	int err;
 
-	unmatched = kzalloc(माप(*unmatched), GFP_ATOMIC);
-	अगर (!unmatched)
-		वापस -ENOMEM;
+	unmatched = kzalloc(sizeof(*unmatched), GFP_ATOMIC);
+	if (!unmatched)
+		return -ENOMEM;
 
 	unmatched->key = key;
 	unmatched->skb = skb;
-	unmatched->बारtamp = बारtamp;
+	unmatched->timestamp = timestamp;
 	unmatched->gc_cycle = mlxsw_sp->ptp_state->gc_cycle + cycles;
 
 	err = rhltable_insert(&ptp_state->unmatched_ht, &unmatched->ht_node,
 			      mlxsw_sp1_ptp_unmatched_ht_params);
-	अगर (err)
-		kमुक्त(unmatched);
+	if (err)
+		kfree(unmatched);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा mlxsw_sp1_ptp_unmatched *
-mlxsw_sp1_ptp_unmatched_lookup(काष्ठा mlxsw_sp *mlxsw_sp,
-			       काष्ठा mlxsw_sp1_ptp_key key, पूर्णांक *p_length)
-अणु
-	काष्ठा mlxsw_sp1_ptp_unmatched *unmatched, *last = शून्य;
-	काष्ठा rhlist_head *पंचांगp, *list;
-	पूर्णांक length = 0;
+static struct mlxsw_sp1_ptp_unmatched *
+mlxsw_sp1_ptp_unmatched_lookup(struct mlxsw_sp *mlxsw_sp,
+			       struct mlxsw_sp1_ptp_key key, int *p_length)
+{
+	struct mlxsw_sp1_ptp_unmatched *unmatched, *last = NULL;
+	struct rhlist_head *tmp, *list;
+	int length = 0;
 
 	list = rhltable_lookup(&mlxsw_sp->ptp_state->unmatched_ht, &key,
 			       mlxsw_sp1_ptp_unmatched_ht_params);
-	rhl_क्रम_each_entry_rcu(unmatched, पंचांगp, list, ht_node) अणु
+	rhl_for_each_entry_rcu(unmatched, tmp, list, ht_node) {
 		last = unmatched;
 		length++;
-	पूर्ण
+	}
 
 	*p_length = length;
-	वापस last;
-पूर्ण
+	return last;
+}
 
-अटल पूर्णांक
-mlxsw_sp1_ptp_unmatched_हटाओ(काष्ठा mlxsw_sp *mlxsw_sp,
-			       काष्ठा mlxsw_sp1_ptp_unmatched *unmatched)
-अणु
-	वापस rhltable_हटाओ(&mlxsw_sp->ptp_state->unmatched_ht,
+static int
+mlxsw_sp1_ptp_unmatched_remove(struct mlxsw_sp *mlxsw_sp,
+			       struct mlxsw_sp1_ptp_unmatched *unmatched)
+{
+	return rhltable_remove(&mlxsw_sp->ptp_state->unmatched_ht,
 			       &unmatched->ht_node,
 			       mlxsw_sp1_ptp_unmatched_ht_params);
-पूर्ण
+}
 
 /* This function is called in the following scenarios:
  *
- * 1) When a packet is matched with its बारtamp.
+ * 1) When a packet is matched with its timestamp.
  * 2) In several situation when it is necessary to immediately pass on
- *    an SKB without a बारtamp.
+ *    an SKB without a timestamp.
  * 3) From GC indirectly through mlxsw_sp1_ptp_unmatched_finish().
- *    This हाल is similar to 2) above.
+ *    This case is similar to 2) above.
  */
-अटल व्योम mlxsw_sp1_ptp_packet_finish(काष्ठा mlxsw_sp *mlxsw_sp,
-					काष्ठा sk_buff *skb, u8 local_port,
+static void mlxsw_sp1_ptp_packet_finish(struct mlxsw_sp *mlxsw_sp,
+					struct sk_buff *skb, u8 local_port,
 					bool ingress,
-					काष्ठा skb_shared_hwtstamps *hwtstamps)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
+					struct skb_shared_hwtstamps *hwtstamps)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port;
 
-	/* Between capturing the packet and finishing it, there is a winकरोw of
-	 * opportunity क्रम the originating port to go away (e.g. due to a
+	/* Between capturing the packet and finishing it, there is a window of
+	 * opportunity for the originating port to go away (e.g. due to a
 	 * split). Also make sure the SKB device reference is still valid.
 	 */
 	mlxsw_sp_port = mlxsw_sp->ports[local_port];
-	अगर (!(mlxsw_sp_port && (!skb->dev || skb->dev == mlxsw_sp_port->dev))) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+	if (!(mlxsw_sp_port && (!skb->dev || skb->dev == mlxsw_sp_port->dev))) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
-	अगर (ingress) अणु
-		अगर (hwtstamps)
+	if (ingress) {
+		if (hwtstamps)
 			*skb_hwtstamps(skb) = *hwtstamps;
 		mlxsw_sp_rx_listener_no_mark_func(skb, local_port, mlxsw_sp);
-	पूर्ण अन्यथा अणु
-		/* skb_tstamp_tx() allows hwtstamps to be शून्य. */
+	} else {
+		/* skb_tstamp_tx() allows hwtstamps to be NULL. */
 		skb_tstamp_tx(skb, hwtstamps);
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_any(skb);
+	}
+}
 
-अटल व्योम mlxsw_sp1_packet_बारtamp(काष्ठा mlxsw_sp *mlxsw_sp,
-				       काष्ठा mlxsw_sp1_ptp_key key,
-				       काष्ठा sk_buff *skb,
-				       u64 बारtamp)
-अणु
-	काष्ठा skb_shared_hwtstamps hwtstamps;
+static void mlxsw_sp1_packet_timestamp(struct mlxsw_sp *mlxsw_sp,
+				       struct mlxsw_sp1_ptp_key key,
+				       struct sk_buff *skb,
+				       u64 timestamp)
+{
+	struct skb_shared_hwtstamps hwtstamps;
 	u64 nsec;
 
-	spin_lock_bh(&mlxsw_sp->घड़ी->lock);
-	nsec = समयcounter_cyc2समय(&mlxsw_sp->घड़ी->tc, बारtamp);
-	spin_unlock_bh(&mlxsw_sp->घड़ी->lock);
+	spin_lock_bh(&mlxsw_sp->clock->lock);
+	nsec = timecounter_cyc2time(&mlxsw_sp->clock->tc, timestamp);
+	spin_unlock_bh(&mlxsw_sp->clock->lock);
 
-	hwtstamps.hwtstamp = ns_to_kसमय(nsec);
+	hwtstamps.hwtstamp = ns_to_ktime(nsec);
 	mlxsw_sp1_ptp_packet_finish(mlxsw_sp, skb,
 				    key.local_port, key.ingress, &hwtstamps);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp1_ptp_unmatched_finish(काष्ठा mlxsw_sp *mlxsw_sp,
-			       काष्ठा mlxsw_sp1_ptp_unmatched *unmatched)
-अणु
-	अगर (unmatched->skb && unmatched->बारtamp)
-		mlxsw_sp1_packet_बारtamp(mlxsw_sp, unmatched->key,
+static void
+mlxsw_sp1_ptp_unmatched_finish(struct mlxsw_sp *mlxsw_sp,
+			       struct mlxsw_sp1_ptp_unmatched *unmatched)
+{
+	if (unmatched->skb && unmatched->timestamp)
+		mlxsw_sp1_packet_timestamp(mlxsw_sp, unmatched->key,
 					   unmatched->skb,
-					   unmatched->बारtamp);
-	अन्यथा अगर (unmatched->skb)
+					   unmatched->timestamp);
+	else if (unmatched->skb)
 		mlxsw_sp1_ptp_packet_finish(mlxsw_sp, unmatched->skb,
 					    unmatched->key.local_port,
-					    unmatched->key.ingress, शून्य);
-	kमुक्त_rcu(unmatched, rcu);
-पूर्ण
+					    unmatched->key.ingress, NULL);
+	kfree_rcu(unmatched, rcu);
+}
 
-अटल व्योम mlxsw_sp1_ptp_unmatched_मुक्त_fn(व्योम *ptr, व्योम *arg)
-अणु
-	काष्ठा mlxsw_sp1_ptp_unmatched *unmatched = ptr;
+static void mlxsw_sp1_ptp_unmatched_free_fn(void *ptr, void *arg)
+{
+	struct mlxsw_sp1_ptp_unmatched *unmatched = ptr;
 
-	/* This is invoked at a poपूर्णांक where the ports are gone alपढ़ोy. Nothing
-	 * to करो with whatever is left in the HT but to मुक्त it.
+	/* This is invoked at a point where the ports are gone already. Nothing
+	 * to do with whatever is left in the HT but to free it.
 	 */
-	अगर (unmatched->skb)
-		dev_kमुक्त_skb_any(unmatched->skb);
-	kमुक्त_rcu(unmatched, rcu);
-पूर्ण
+	if (unmatched->skb)
+		dev_kfree_skb_any(unmatched->skb);
+	kfree_rcu(unmatched, rcu);
+}
 
-अटल व्योम mlxsw_sp1_ptp_got_piece(काष्ठा mlxsw_sp *mlxsw_sp,
-				    काष्ठा mlxsw_sp1_ptp_key key,
-				    काष्ठा sk_buff *skb, u64 बारtamp)
-अणु
-	काष्ठा mlxsw_sp1_ptp_unmatched *unmatched;
-	पूर्णांक length;
-	पूर्णांक err;
+static void mlxsw_sp1_ptp_got_piece(struct mlxsw_sp *mlxsw_sp,
+				    struct mlxsw_sp1_ptp_key key,
+				    struct sk_buff *skb, u64 timestamp)
+{
+	struct mlxsw_sp1_ptp_unmatched *unmatched;
+	int length;
+	int err;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	spin_lock(&mlxsw_sp->ptp_state->unmatched_lock);
 
 	unmatched = mlxsw_sp1_ptp_unmatched_lookup(mlxsw_sp, key, &length);
-	अगर (skb && unmatched && unmatched->बारtamp) अणु
+	if (skb && unmatched && unmatched->timestamp) {
 		unmatched->skb = skb;
-	पूर्ण अन्यथा अगर (बारtamp && unmatched && unmatched->skb) अणु
-		unmatched->बारtamp = बारtamp;
-	पूर्ण अन्यथा अणु
+	} else if (timestamp && unmatched && unmatched->skb) {
+		unmatched->timestamp = timestamp;
+	} else {
 		/* Either there is no entry to match, or one that is there is
 		 * incompatible.
 		 */
-		अगर (length < 100)
+		if (length < 100)
 			err = mlxsw_sp1_ptp_unmatched_save(mlxsw_sp, key,
-							   skb, बारtamp);
-		अन्यथा
+							   skb, timestamp);
+		else
 			err = -E2BIG;
-		अगर (err && skb)
+		if (err && skb)
 			mlxsw_sp1_ptp_packet_finish(mlxsw_sp, skb,
 						    key.local_port,
-						    key.ingress, शून्य);
-		unmatched = शून्य;
-	पूर्ण
+						    key.ingress, NULL);
+		unmatched = NULL;
+	}
 
-	अगर (unmatched) अणु
-		err = mlxsw_sp1_ptp_unmatched_हटाओ(mlxsw_sp, unmatched);
+	if (unmatched) {
+		err = mlxsw_sp1_ptp_unmatched_remove(mlxsw_sp, unmatched);
 		WARN_ON_ONCE(err);
-	पूर्ण
+	}
 
 	spin_unlock(&mlxsw_sp->ptp_state->unmatched_lock);
 
-	अगर (unmatched)
+	if (unmatched)
 		mlxsw_sp1_ptp_unmatched_finish(mlxsw_sp, unmatched);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम mlxsw_sp1_ptp_got_packet(काष्ठा mlxsw_sp *mlxsw_sp,
-				     काष्ठा sk_buff *skb, u8 local_port,
+static void mlxsw_sp1_ptp_got_packet(struct mlxsw_sp *mlxsw_sp,
+				     struct sk_buff *skb, u8 local_port,
 				     bool ingress)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
-	काष्ठा mlxsw_sp1_ptp_key key;
+{
+	struct mlxsw_sp_port *mlxsw_sp_port;
+	struct mlxsw_sp1_ptp_key key;
 	u8 types;
-	पूर्णांक err;
+	int err;
 
 	mlxsw_sp_port = mlxsw_sp->ports[local_port];
-	अगर (!mlxsw_sp_port)
-		जाओ immediate;
+	if (!mlxsw_sp_port)
+		goto immediate;
 
 	types = ingress ? mlxsw_sp_port->ptp.ing_types :
 			  mlxsw_sp_port->ptp.egr_types;
-	अगर (!types)
-		जाओ immediate;
+	if (!types)
+		goto immediate;
 
-	स_रखो(&key, 0, माप(key));
+	memset(&key, 0, sizeof(key));
 	key.local_port = local_port;
 	key.ingress = ingress;
 
-	err = mlxsw_sp_ptp_parse(skb, &key.करोमुख्य_number, &key.message_type,
+	err = mlxsw_sp_ptp_parse(skb, &key.domain_number, &key.message_type,
 				 &key.sequence_id);
-	अगर (err)
-		जाओ immediate;
+	if (err)
+		goto immediate;
 
-	/* For packets whose बारtamping was not enabled on this port, करोn't
-	 * bother trying to match the बारtamp.
+	/* For packets whose timestamping was not enabled on this port, don't
+	 * bother trying to match the timestamp.
 	 */
-	अगर (!((1 << key.message_type) & types))
-		जाओ immediate;
+	if (!((1 << key.message_type) & types))
+		goto immediate;
 
 	mlxsw_sp1_ptp_got_piece(mlxsw_sp, key, skb, 0);
-	वापस;
+	return;
 
 immediate:
-	mlxsw_sp1_ptp_packet_finish(mlxsw_sp, skb, local_port, ingress, शून्य);
-पूर्ण
+	mlxsw_sp1_ptp_packet_finish(mlxsw_sp, skb, local_port, ingress, NULL);
+}
 
-व्योम mlxsw_sp1_ptp_got_बारtamp(काष्ठा mlxsw_sp *mlxsw_sp, bool ingress,
+void mlxsw_sp1_ptp_got_timestamp(struct mlxsw_sp *mlxsw_sp, bool ingress,
 				 u8 local_port, u8 message_type,
-				 u8 करोमुख्य_number, u16 sequence_id,
-				 u64 बारtamp)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
-	काष्ठा mlxsw_sp1_ptp_key key;
+				 u8 domain_number, u16 sequence_id,
+				 u64 timestamp)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port;
+	struct mlxsw_sp1_ptp_key key;
 	u8 types;
 
 	mlxsw_sp_port = mlxsw_sp->ports[local_port];
-	अगर (!mlxsw_sp_port)
-		वापस;
+	if (!mlxsw_sp_port)
+		return;
 
 	types = ingress ? mlxsw_sp_port->ptp.ing_types :
 			  mlxsw_sp_port->ptp.egr_types;
 
-	/* For message types whose बारtamping was not enabled on this port,
-	 * करोn't bother with the बारtamp.
+	/* For message types whose timestamping was not enabled on this port,
+	 * don't bother with the timestamp.
 	 */
-	अगर (!((1 << message_type) & types))
-		वापस;
+	if (!((1 << message_type) & types))
+		return;
 
-	स_रखो(&key, 0, माप(key));
+	memset(&key, 0, sizeof(key));
 	key.local_port = local_port;
-	key.करोमुख्य_number = करोमुख्य_number;
+	key.domain_number = domain_number;
 	key.message_type = message_type;
 	key.sequence_id = sequence_id;
 	key.ingress = ingress;
 
-	mlxsw_sp1_ptp_got_piece(mlxsw_sp, key, शून्य, बारtamp);
-पूर्ण
+	mlxsw_sp1_ptp_got_piece(mlxsw_sp, key, NULL, timestamp);
+}
 
-व्योम mlxsw_sp1_ptp_receive(काष्ठा mlxsw_sp *mlxsw_sp, काष्ठा sk_buff *skb,
+void mlxsw_sp1_ptp_receive(struct mlxsw_sp *mlxsw_sp, struct sk_buff *skb,
 			   u8 local_port)
-अणु
+{
 	skb_reset_mac_header(skb);
 	mlxsw_sp1_ptp_got_packet(mlxsw_sp, skb, local_port, true);
-पूर्ण
+}
 
-व्योम mlxsw_sp1_ptp_transmitted(काष्ठा mlxsw_sp *mlxsw_sp,
-			       काष्ठा sk_buff *skb, u8 local_port)
-अणु
+void mlxsw_sp1_ptp_transmitted(struct mlxsw_sp *mlxsw_sp,
+			       struct sk_buff *skb, u8 local_port)
+{
 	mlxsw_sp1_ptp_got_packet(mlxsw_sp, skb, local_port, false);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp1_ptp_ht_gc_collect(काष्ठा mlxsw_sp_ptp_state *ptp_state,
-			    काष्ठा mlxsw_sp1_ptp_unmatched *unmatched)
-अणु
-	काष्ठा mlxsw_sp_ptp_port_dir_stats *stats;
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
-	पूर्णांक err;
+static void
+mlxsw_sp1_ptp_ht_gc_collect(struct mlxsw_sp_ptp_state *ptp_state,
+			    struct mlxsw_sp1_ptp_unmatched *unmatched)
+{
+	struct mlxsw_sp_ptp_port_dir_stats *stats;
+	struct mlxsw_sp_port *mlxsw_sp_port;
+	int err;
 
 	/* If an unmatched entry has an SKB, it has to be handed over to the
-	 * networking stack. This is usually करोne from a trap handler, which is
-	 * invoked in a softirq context. Here we are going to करो it in process
-	 * context. If that were to be पूर्णांकerrupted by a softirq, it could cause
-	 * a deadlock when an attempt is made to take an alपढ़ोy-taken lock
-	 * somewhere aदीर्घ the sending path. Disable softirqs to prevent this.
+	 * networking stack. This is usually done from a trap handler, which is
+	 * invoked in a softirq context. Here we are going to do it in process
+	 * context. If that were to be interrupted by a softirq, it could cause
+	 * a deadlock when an attempt is made to take an already-taken lock
+	 * somewhere along the sending path. Disable softirqs to prevent this.
 	 */
 	local_bh_disable();
 
 	spin_lock(&ptp_state->unmatched_lock);
-	err = rhltable_हटाओ(&ptp_state->unmatched_ht, &unmatched->ht_node,
+	err = rhltable_remove(&ptp_state->unmatched_ht, &unmatched->ht_node,
 			      mlxsw_sp1_ptp_unmatched_ht_params);
 	spin_unlock(&ptp_state->unmatched_lock);
 
-	अगर (err)
-		/* The packet was matched with बारtamp during the walk. */
-		जाओ out;
+	if (err)
+		/* The packet was matched with timestamp during the walk. */
+		goto out;
 
 	mlxsw_sp_port = ptp_state->mlxsw_sp->ports[unmatched->key.local_port];
-	अगर (mlxsw_sp_port) अणु
+	if (mlxsw_sp_port) {
 		stats = unmatched->key.ingress ?
 			&mlxsw_sp_port->ptp.stats.rx_gcd :
 			&mlxsw_sp_port->ptp.stats.tx_gcd;
-		अगर (unmatched->skb)
+		if (unmatched->skb)
 			stats->packets++;
-		अन्यथा
-			stats->बारtamps++;
-	पूर्ण
+		else
+			stats->timestamps++;
+	}
 
-	/* mlxsw_sp1_ptp_unmatched_finish() invokes netअगर_receive_skb(). While
+	/* mlxsw_sp1_ptp_unmatched_finish() invokes netif_receive_skb(). While
 	 * the comment at that function states that it can only be called in
 	 * soft IRQ context, this pattern of local_bh_disable() +
-	 * netअगर_receive_skb(), in process context, is seen अन्यथाwhere in the
+	 * netif_receive_skb(), in process context, is seen elsewhere in the
 	 * kernel, notably in pktgen.
 	 */
 	mlxsw_sp1_ptp_unmatched_finish(ptp_state->mlxsw_sp, unmatched);
 
 out:
 	local_bh_enable();
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp1_ptp_ht_gc(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा mlxsw_sp1_ptp_unmatched *unmatched;
-	काष्ठा mlxsw_sp_ptp_state *ptp_state;
-	काष्ठा rhashtable_iter iter;
+static void mlxsw_sp1_ptp_ht_gc(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct mlxsw_sp1_ptp_unmatched *unmatched;
+	struct mlxsw_sp_ptp_state *ptp_state;
+	struct rhashtable_iter iter;
 	u32 gc_cycle;
-	व्योम *obj;
+	void *obj;
 
-	ptp_state = container_of(dwork, काष्ठा mlxsw_sp_ptp_state, ht_gc_dw);
+	ptp_state = container_of(dwork, struct mlxsw_sp_ptp_state, ht_gc_dw);
 	gc_cycle = ptp_state->gc_cycle++;
 
 	rhltable_walk_enter(&ptp_state->unmatched_ht, &iter);
 	rhashtable_walk_start(&iter);
-	जबतक ((obj = rhashtable_walk_next(&iter))) अणु
-		अगर (IS_ERR(obj))
-			जारी;
+	while ((obj = rhashtable_walk_next(&iter))) {
+		if (IS_ERR(obj))
+			continue;
 
 		unmatched = obj;
-		अगर (unmatched->gc_cycle <= gc_cycle)
+		if (unmatched->gc_cycle <= gc_cycle)
 			mlxsw_sp1_ptp_ht_gc_collect(ptp_state, unmatched);
-	पूर्ण
+	}
 	rhashtable_walk_stop(&iter);
-	rhashtable_walk_निकास(&iter);
+	rhashtable_walk_exit(&iter);
 
 	mlxsw_core_schedule_dw(&ptp_state->ht_gc_dw,
 			       MLXSW_SP1_PTP_HT_GC_INTERVAL);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_ptp_mtptpt_set(काष्ठा mlxsw_sp *mlxsw_sp,
-				   क्रमागत mlxsw_reg_mtptpt_trap_id trap_id,
+static int mlxsw_sp_ptp_mtptpt_set(struct mlxsw_sp *mlxsw_sp,
+				   enum mlxsw_reg_mtptpt_trap_id trap_id,
 				   u16 message_type)
-अणु
-	अक्षर mtptpt_pl[MLXSW_REG_MTPTPT_LEN];
+{
+	char mtptpt_pl[MLXSW_REG_MTPTPT_LEN];
 
 	mlxsw_reg_mtptptp_pack(mtptpt_pl, trap_id, message_type);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mtptpt), mtptpt_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mtptpt), mtptpt_pl);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_set_fअगरo_clr_on_trap(काष्ठा mlxsw_sp *mlxsw_sp,
+static int mlxsw_sp1_ptp_set_fifo_clr_on_trap(struct mlxsw_sp *mlxsw_sp,
 					      bool clr)
-अणु
-	अक्षर mogcr_pl[MLXSW_REG_MOGCR_LEN] = अणु0पूर्ण;
-	पूर्णांक err;
+{
+	char mogcr_pl[MLXSW_REG_MOGCR_LEN] = {0};
+	int err;
 
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	mlxsw_reg_mogcr_ptp_अगरtc_set(mogcr_pl, clr);
+	mlxsw_reg_mogcr_ptp_iftc_set(mogcr_pl, clr);
 	mlxsw_reg_mogcr_ptp_eftc_set(mogcr_pl, clr);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mogcr), mogcr_pl);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_mtpppc_set(काष्ठा mlxsw_sp *mlxsw_sp,
+static int mlxsw_sp1_ptp_mtpppc_set(struct mlxsw_sp *mlxsw_sp,
 				    u16 ing_types, u16 egr_types)
-अणु
-	अक्षर mtpppc_pl[MLXSW_REG_MTPPPC_LEN];
+{
+	char mtpppc_pl[MLXSW_REG_MTPPPC_LEN];
 
 	mlxsw_reg_mtpppc_pack(mtpppc_pl, ing_types, egr_types);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mtpppc), mtpppc_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mtpppc), mtpppc_pl);
+}
 
-काष्ठा mlxsw_sp1_ptp_shaper_params अणु
+struct mlxsw_sp1_ptp_shaper_params {
 	u32 ethtool_speed;
-	क्रमागत mlxsw_reg_qpsc_port_speed port_speed;
-	u8 shaper_समय_exp;
-	u8 shaper_समय_mantissa;
+	enum mlxsw_reg_qpsc_port_speed port_speed;
+	u8 shaper_time_exp;
+	u8 shaper_time_mantissa;
 	u8 shaper_inc;
 	u8 shaper_bs;
 	u8 port_to_shaper_credits;
-	पूर्णांक ing_बारtamp_inc;
-	पूर्णांक egr_बारtamp_inc;
-पूर्ण;
+	int ing_timestamp_inc;
+	int egr_timestamp_inc;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp1_ptp_shaper_params
-mlxsw_sp1_ptp_shaper_params[] = अणु
-	अणु
+static const struct mlxsw_sp1_ptp_shaper_params
+mlxsw_sp1_ptp_shaper_params[] = {
+	{
 		.ethtool_speed		= SPEED_100,
 		.port_speed		= MLXSW_REG_QPSC_PORT_SPEED_100M,
-		.shaper_समय_exp	= 4,
-		.shaper_समय_mantissa	= 12,
+		.shaper_time_exp	= 4,
+		.shaper_time_mantissa	= 12,
 		.shaper_inc		= 9,
 		.shaper_bs		= 1,
 		.port_to_shaper_credits	= 1,
-		.ing_बारtamp_inc	= -313,
-		.egr_बारtamp_inc	= 313,
-	पूर्ण,
-	अणु
+		.ing_timestamp_inc	= -313,
+		.egr_timestamp_inc	= 313,
+	},
+	{
 		.ethtool_speed		= SPEED_1000,
 		.port_speed		= MLXSW_REG_QPSC_PORT_SPEED_1G,
-		.shaper_समय_exp	= 0,
-		.shaper_समय_mantissa	= 12,
+		.shaper_time_exp	= 0,
+		.shaper_time_mantissa	= 12,
 		.shaper_inc		= 6,
 		.shaper_bs		= 0,
 		.port_to_shaper_credits	= 1,
-		.ing_बारtamp_inc	= -35,
-		.egr_बारtamp_inc	= 35,
-	पूर्ण,
-	अणु
+		.ing_timestamp_inc	= -35,
+		.egr_timestamp_inc	= 35,
+	},
+	{
 		.ethtool_speed		= SPEED_10000,
 		.port_speed		= MLXSW_REG_QPSC_PORT_SPEED_10G,
-		.shaper_समय_exp	= 0,
-		.shaper_समय_mantissa	= 2,
+		.shaper_time_exp	= 0,
+		.shaper_time_mantissa	= 2,
 		.shaper_inc		= 14,
 		.shaper_bs		= 1,
 		.port_to_shaper_credits	= 1,
-		.ing_बारtamp_inc	= -11,
-		.egr_बारtamp_inc	= 11,
-	पूर्ण,
-	अणु
+		.ing_timestamp_inc	= -11,
+		.egr_timestamp_inc	= 11,
+	},
+	{
 		.ethtool_speed		= SPEED_25000,
 		.port_speed		= MLXSW_REG_QPSC_PORT_SPEED_25G,
-		.shaper_समय_exp	= 0,
-		.shaper_समय_mantissa	= 0,
+		.shaper_time_exp	= 0,
+		.shaper_time_mantissa	= 0,
 		.shaper_inc		= 11,
 		.shaper_bs		= 1,
 		.port_to_shaper_credits	= 1,
-		.ing_बारtamp_inc	= -14,
-		.egr_बारtamp_inc	= 14,
-	पूर्ण,
-पूर्ण;
+		.ing_timestamp_inc	= -14,
+		.egr_timestamp_inc	= 14,
+	},
+};
 
-#घोषणा MLXSW_SP1_PTP_SHAPER_PARAMS_LEN ARRAY_SIZE(mlxsw_sp1_ptp_shaper_params)
+#define MLXSW_SP1_PTP_SHAPER_PARAMS_LEN ARRAY_SIZE(mlxsw_sp1_ptp_shaper_params)
 
-अटल पूर्णांक mlxsw_sp1_ptp_shaper_params_set(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	स्थिर काष्ठा mlxsw_sp1_ptp_shaper_params *params;
-	अक्षर qpsc_pl[MLXSW_REG_QPSC_LEN];
-	पूर्णांक i, err;
+static int mlxsw_sp1_ptp_shaper_params_set(struct mlxsw_sp *mlxsw_sp)
+{
+	const struct mlxsw_sp1_ptp_shaper_params *params;
+	char qpsc_pl[MLXSW_REG_QPSC_LEN];
+	int i, err;
 
-	क्रम (i = 0; i < MLXSW_SP1_PTP_SHAPER_PARAMS_LEN; i++) अणु
+	for (i = 0; i < MLXSW_SP1_PTP_SHAPER_PARAMS_LEN; i++) {
 		params = &mlxsw_sp1_ptp_shaper_params[i];
 		mlxsw_reg_qpsc_pack(qpsc_pl, params->port_speed,
-				    params->shaper_समय_exp,
-				    params->shaper_समय_mantissa,
+				    params->shaper_time_exp,
+				    params->shaper_time_mantissa,
 				    params->shaper_inc, params->shaper_bs,
 				    params->port_to_shaper_credits,
-				    params->ing_बारtamp_inc,
-				    params->egr_बारtamp_inc);
-		err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(qpsc), qpsc_pl);
-		अगर (err)
-			वापस err;
-	पूर्ण
+				    params->ing_timestamp_inc,
+				    params->egr_timestamp_inc);
+		err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(qpsc), qpsc_pl);
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mlxsw_sp_ptp_state *mlxsw_sp1_ptp_init(काष्ठा mlxsw_sp *mlxsw_sp)
-अणु
-	काष्ठा mlxsw_sp_ptp_state *ptp_state;
+struct mlxsw_sp_ptp_state *mlxsw_sp1_ptp_init(struct mlxsw_sp *mlxsw_sp)
+{
+	struct mlxsw_sp_ptp_state *ptp_state;
 	u16 message_type;
-	पूर्णांक err;
+	int err;
 
 	err = mlxsw_sp1_ptp_shaper_params_set(mlxsw_sp);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
-	ptp_state = kzalloc(माप(*ptp_state), GFP_KERNEL);
-	अगर (!ptp_state)
-		वापस ERR_PTR(-ENOMEM);
+	ptp_state = kzalloc(sizeof(*ptp_state), GFP_KERNEL);
+	if (!ptp_state)
+		return ERR_PTR(-ENOMEM);
 	ptp_state->mlxsw_sp = mlxsw_sp;
 
 	spin_lock_init(&ptp_state->unmatched_lock);
 
 	err = rhltable_init(&ptp_state->unmatched_ht,
 			    &mlxsw_sp1_ptp_unmatched_ht_params);
-	अगर (err)
-		जाओ err_hashtable_init;
+	if (err)
+		goto err_hashtable_init;
 
 	/* Delive these message types as PTP0. */
 	message_type = BIT(PTP_MSGTYPE_SYNC) |
@@ -835,249 +834,249 @@ mlxsw_sp1_ptp_shaper_params[] = अणु
 		       BIT(PTP_MSGTYPE_PDELAY_RESP);
 	err = mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP0,
 				      message_type);
-	अगर (err)
-		जाओ err_mtptpt_set;
+	if (err)
+		goto err_mtptpt_set;
 
-	/* Everything अन्यथा is PTP1. */
+	/* Everything else is PTP1. */
 	message_type = ~message_type;
 	err = mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP1,
 				      message_type);
-	अगर (err)
-		जाओ err_mtptpt1_set;
+	if (err)
+		goto err_mtptpt1_set;
 
-	err = mlxsw_sp1_ptp_set_fअगरo_clr_on_trap(mlxsw_sp, true);
-	अगर (err)
-		जाओ err_fअगरo_clr;
+	err = mlxsw_sp1_ptp_set_fifo_clr_on_trap(mlxsw_sp, true);
+	if (err)
+		goto err_fifo_clr;
 
 	INIT_DELAYED_WORK(&ptp_state->ht_gc_dw, mlxsw_sp1_ptp_ht_gc);
 	mlxsw_core_schedule_dw(&ptp_state->ht_gc_dw,
 			       MLXSW_SP1_PTP_HT_GC_INTERVAL);
-	वापस ptp_state;
+	return ptp_state;
 
-err_fअगरo_clr:
+err_fifo_clr:
 	mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP1, 0);
 err_mtptpt1_set:
 	mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP0, 0);
 err_mtptpt_set:
 	rhltable_destroy(&ptp_state->unmatched_ht);
 err_hashtable_init:
-	kमुक्त(ptp_state);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(ptp_state);
+	return ERR_PTR(err);
+}
 
-व्योम mlxsw_sp1_ptp_fini(काष्ठा mlxsw_sp_ptp_state *ptp_state)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = ptp_state->mlxsw_sp;
+void mlxsw_sp1_ptp_fini(struct mlxsw_sp_ptp_state *ptp_state)
+{
+	struct mlxsw_sp *mlxsw_sp = ptp_state->mlxsw_sp;
 
 	cancel_delayed_work_sync(&ptp_state->ht_gc_dw);
 	mlxsw_sp1_ptp_mtpppc_set(mlxsw_sp, 0, 0);
-	mlxsw_sp1_ptp_set_fअगरo_clr_on_trap(mlxsw_sp, false);
+	mlxsw_sp1_ptp_set_fifo_clr_on_trap(mlxsw_sp, false);
 	mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP1, 0);
 	mlxsw_sp_ptp_mtptpt_set(mlxsw_sp, MLXSW_REG_MTPTPT_TRAP_ID_PTP0, 0);
-	rhltable_मुक्त_and_destroy(&ptp_state->unmatched_ht,
-				  &mlxsw_sp1_ptp_unmatched_मुक्त_fn, शून्य);
-	kमुक्त(ptp_state);
-पूर्ण
+	rhltable_free_and_destroy(&ptp_state->unmatched_ht,
+				  &mlxsw_sp1_ptp_unmatched_free_fn, NULL);
+	kfree(ptp_state);
+}
 
-पूर्णांक mlxsw_sp1_ptp_hwtstamp_get(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			       काष्ठा hwtstamp_config *config)
-अणु
+int mlxsw_sp1_ptp_hwtstamp_get(struct mlxsw_sp_port *mlxsw_sp_port,
+			       struct hwtstamp_config *config)
+{
 	*config = mlxsw_sp_port->ptp.hwtstamp_config;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_ptp_get_message_types(स्थिर काष्ठा hwtstamp_config *config,
+static int mlxsw_sp_ptp_get_message_types(const struct hwtstamp_config *config,
 					  u16 *p_ing_types, u16 *p_egr_types,
-					  क्रमागत hwtstamp_rx_filters *p_rx_filter)
-अणु
-	क्रमागत hwtstamp_rx_filters rx_filter = config->rx_filter;
-	क्रमागत hwtstamp_tx_types tx_type = config->tx_type;
+					  enum hwtstamp_rx_filters *p_rx_filter)
+{
+	enum hwtstamp_rx_filters rx_filter = config->rx_filter;
+	enum hwtstamp_tx_types tx_type = config->tx_type;
 	u16 ing_types = 0x00;
 	u16 egr_types = 0x00;
 
-	चयन (tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
+	switch (tx_type) {
+	case HWTSTAMP_TX_OFF:
 		egr_types = 0x00;
-		अवरोध;
-	हाल HWTSTAMP_TX_ON:
+		break;
+	case HWTSTAMP_TX_ON:
 		egr_types = 0xff;
-		अवरोध;
-	हाल HWTSTAMP_TX_ONESTEP_SYNC:
-	हाल HWTSTAMP_TX_ONESTEP_P2P:
-		वापस -दुस्फल;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case HWTSTAMP_TX_ONESTEP_SYNC:
+	case HWTSTAMP_TX_ONESTEP_P2P:
+		return -ERANGE;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		ing_types = 0x00;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
 		ing_types = 0x01;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		ing_types = 0x02;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
 		ing_types = 0x0f;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_ALL:
+		break;
+	case HWTSTAMP_FILTER_ALL:
 		ing_types = 0xff;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_SOME:
-	हाल HWTSTAMP_FILTER_NTP_ALL:
-		वापस -दुस्फल;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case HWTSTAMP_FILTER_SOME:
+	case HWTSTAMP_FILTER_NTP_ALL:
+		return -ERANGE;
+	default:
+		return -EINVAL;
+	}
 
 	*p_ing_types = ing_types;
 	*p_egr_types = egr_types;
 	*p_rx_filter = rx_filter;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_mtpppc_update(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static int mlxsw_sp1_ptp_mtpppc_update(struct mlxsw_sp_port *mlxsw_sp_port,
 				       u16 ing_types, u16 egr_types)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा mlxsw_sp_port *पंचांगp;
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp_port *tmp;
 	u16 orig_ing_types = 0;
 	u16 orig_egr_types = 0;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	/* MTPPPC configures बारtamping globally, not per port. Find the
-	 * configuration that contains all configured बारtamping requests.
+	/* MTPPPC configures timestamping globally, not per port. Find the
+	 * configuration that contains all configured timestamping requests.
 	 */
-	क्रम (i = 1; i < mlxsw_core_max_ports(mlxsw_sp->core); i++) अणु
-		पंचांगp = mlxsw_sp->ports[i];
-		अगर (पंचांगp) अणु
-			orig_ing_types |= पंचांगp->ptp.ing_types;
-			orig_egr_types |= पंचांगp->ptp.egr_types;
-		पूर्ण
-		अगर (पंचांगp && पंचांगp != mlxsw_sp_port) अणु
-			ing_types |= पंचांगp->ptp.ing_types;
-			egr_types |= पंचांगp->ptp.egr_types;
-		पूर्ण
-	पूर्ण
+	for (i = 1; i < mlxsw_core_max_ports(mlxsw_sp->core); i++) {
+		tmp = mlxsw_sp->ports[i];
+		if (tmp) {
+			orig_ing_types |= tmp->ptp.ing_types;
+			orig_egr_types |= tmp->ptp.egr_types;
+		}
+		if (tmp && tmp != mlxsw_sp_port) {
+			ing_types |= tmp->ptp.ing_types;
+			egr_types |= tmp->ptp.egr_types;
+		}
+	}
 
-	अगर ((ing_types || egr_types) && !(orig_ing_types || orig_egr_types)) अणु
+	if ((ing_types || egr_types) && !(orig_ing_types || orig_egr_types)) {
 		err = mlxsw_sp_nve_inc_parsing_depth_get(mlxsw_sp);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(mlxsw_sp_port->dev, "Failed to increase parsing depth");
-			वापस err;
-		पूर्ण
-	पूर्ण
-	अगर (!(ing_types || egr_types) && (orig_ing_types || orig_egr_types))
+			return err;
+		}
+	}
+	if (!(ing_types || egr_types) && (orig_ing_types || orig_egr_types))
 		mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp);
 
-	वापस mlxsw_sp1_ptp_mtpppc_set(mlxsw_sp_port->mlxsw_sp,
+	return mlxsw_sp1_ptp_mtpppc_set(mlxsw_sp_port->mlxsw_sp,
 				       ing_types, egr_types);
-पूर्ण
+}
 
-अटल bool mlxsw_sp1_ptp_hwtstamp_enabled(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	वापस mlxsw_sp_port->ptp.ing_types || mlxsw_sp_port->ptp.egr_types;
-पूर्ण
+static bool mlxsw_sp1_ptp_hwtstamp_enabled(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	return mlxsw_sp_port->ptp.ing_types || mlxsw_sp_port->ptp.egr_types;
+}
 
-अटल पूर्णांक
-mlxsw_sp1_ptp_port_shaper_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port, bool enable)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	अक्षर qeec_pl[MLXSW_REG_QEEC_LEN];
+static int
+mlxsw_sp1_ptp_port_shaper_set(struct mlxsw_sp_port *mlxsw_sp_port, bool enable)
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	char qeec_pl[MLXSW_REG_QEEC_LEN];
 
 	mlxsw_reg_qeec_ptps_pack(qeec_pl, mlxsw_sp_port->local_port, enable);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(qeec), qeec_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(qeec), qeec_pl);
+}
 
-अटल पूर्णांक mlxsw_sp1_ptp_port_shaper_check(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
+static int mlxsw_sp1_ptp_port_shaper_check(struct mlxsw_sp_port *mlxsw_sp_port)
+{
 	bool ptps = false;
-	पूर्णांक err, i;
+	int err, i;
 	u32 speed;
 
-	अगर (!mlxsw_sp1_ptp_hwtstamp_enabled(mlxsw_sp_port))
-		वापस mlxsw_sp1_ptp_port_shaper_set(mlxsw_sp_port, false);
+	if (!mlxsw_sp1_ptp_hwtstamp_enabled(mlxsw_sp_port))
+		return mlxsw_sp1_ptp_port_shaper_set(mlxsw_sp_port, false);
 
 	err = mlxsw_sp_port_speed_get(mlxsw_sp_port, &speed);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < MLXSW_SP1_PTP_SHAPER_PARAMS_LEN; i++) अणु
-		अगर (mlxsw_sp1_ptp_shaper_params[i].ethtool_speed == speed) अणु
+	for (i = 0; i < MLXSW_SP1_PTP_SHAPER_PARAMS_LEN; i++) {
+		if (mlxsw_sp1_ptp_shaper_params[i].ethtool_speed == speed) {
 			ptps = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस mlxsw_sp1_ptp_port_shaper_set(mlxsw_sp_port, ptps);
-पूर्ण
+	return mlxsw_sp1_ptp_port_shaper_set(mlxsw_sp_port, ptps);
+}
 
-व्योम mlxsw_sp1_ptp_shaper_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork = to_delayed_work(work);
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port;
-	पूर्णांक err;
+void mlxsw_sp1_ptp_shaper_work(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct mlxsw_sp_port *mlxsw_sp_port;
+	int err;
 
-	mlxsw_sp_port = container_of(dwork, काष्ठा mlxsw_sp_port,
+	mlxsw_sp_port = container_of(dwork, struct mlxsw_sp_port,
 				     ptp.shaper_dw);
 
-	अगर (!mlxsw_sp1_ptp_hwtstamp_enabled(mlxsw_sp_port))
-		वापस;
+	if (!mlxsw_sp1_ptp_hwtstamp_enabled(mlxsw_sp_port))
+		return;
 
 	err = mlxsw_sp1_ptp_port_shaper_check(mlxsw_sp_port);
-	अगर (err)
+	if (err)
 		netdev_err(mlxsw_sp_port->dev, "Failed to set up PTP shaper\n");
-पूर्ण
+}
 
-पूर्णांक mlxsw_sp1_ptp_hwtstamp_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			       काष्ठा hwtstamp_config *config)
-अणु
-	क्रमागत hwtstamp_rx_filters rx_filter;
+int mlxsw_sp1_ptp_hwtstamp_set(struct mlxsw_sp_port *mlxsw_sp_port,
+			       struct hwtstamp_config *config)
+{
+	enum hwtstamp_rx_filters rx_filter;
 	u16 ing_types;
 	u16 egr_types;
-	पूर्णांक err;
+	int err;
 
 	err = mlxsw_sp_ptp_get_message_types(config, &ing_types, &egr_types,
 					     &rx_filter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mlxsw_sp1_ptp_mtpppc_update(mlxsw_sp_port, ing_types, egr_types);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mlxsw_sp_port->ptp.hwtstamp_config = *config;
 	mlxsw_sp_port->ptp.ing_types = ing_types;
 	mlxsw_sp_port->ptp.egr_types = egr_types;
 
 	err = mlxsw_sp1_ptp_port_shaper_check(mlxsw_sp_port);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Notअगरy the ioctl caller what we are actually बारtamping. */
+	/* Notify the ioctl caller what we are actually timestamping. */
 	config->rx_filter = rx_filter;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlxsw_sp1_ptp_get_ts_info(काष्ठा mlxsw_sp *mlxsw_sp,
-			      काष्ठा ethtool_ts_info *info)
-अणु
-	info->phc_index = ptp_घड़ी_index(mlxsw_sp->घड़ी->ptp);
+int mlxsw_sp1_ptp_get_ts_info(struct mlxsw_sp *mlxsw_sp,
+			      struct ethtool_ts_info *info)
+{
+	info->phc_index = ptp_clock_index(mlxsw_sp->clock->ptp);
 
-	info->so_बारtamping = SOF_TIMESTAMPING_TX_HARDWARE |
+	info->so_timestamping = SOF_TIMESTAMPING_TX_HARDWARE |
 				SOF_TIMESTAMPING_RX_HARDWARE |
 				SOF_TIMESTAMPING_RAW_HARDWARE;
 
@@ -1087,59 +1086,59 @@ mlxsw_sp1_ptp_port_shaper_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port, b
 	info->rx_filters = BIT(HWTSTAMP_FILTER_NONE) |
 			   BIT(HWTSTAMP_FILTER_ALL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा mlxsw_sp_ptp_port_stat अणु
-	अक्षर str[ETH_GSTRING_LEN];
-	सूचक_भेद_प्रकार offset;
-पूर्ण;
+struct mlxsw_sp_ptp_port_stat {
+	char str[ETH_GSTRING_LEN];
+	ptrdiff_t offset;
+};
 
-#घोषणा MLXSW_SP_PTP_PORT_STAT(NAME, FIELD)				\
-	अणु								\
+#define MLXSW_SP_PTP_PORT_STAT(NAME, FIELD)				\
+	{								\
 		.str = NAME,						\
-		.offset = दुरत्व(काष्ठा mlxsw_sp_ptp_port_stats,	\
+		.offset = offsetof(struct mlxsw_sp_ptp_port_stats,	\
 				    FIELD),				\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mlxsw_sp_ptp_port_stat mlxsw_sp_ptp_port_stats[] = अणु
+static const struct mlxsw_sp_ptp_port_stat mlxsw_sp_ptp_port_stats[] = {
 	MLXSW_SP_PTP_PORT_STAT("ptp_rx_gcd_packets",    rx_gcd.packets),
-	MLXSW_SP_PTP_PORT_STAT("ptp_rx_gcd_timestamps", rx_gcd.बारtamps),
+	MLXSW_SP_PTP_PORT_STAT("ptp_rx_gcd_timestamps", rx_gcd.timestamps),
 	MLXSW_SP_PTP_PORT_STAT("ptp_tx_gcd_packets",    tx_gcd.packets),
-	MLXSW_SP_PTP_PORT_STAT("ptp_tx_gcd_timestamps", tx_gcd.बारtamps),
-पूर्ण;
+	MLXSW_SP_PTP_PORT_STAT("ptp_tx_gcd_timestamps", tx_gcd.timestamps),
+};
 
-#अघोषित MLXSW_SP_PTP_PORT_STAT
+#undef MLXSW_SP_PTP_PORT_STAT
 
-#घोषणा MLXSW_SP_PTP_PORT_STATS_LEN \
+#define MLXSW_SP_PTP_PORT_STATS_LEN \
 	ARRAY_SIZE(mlxsw_sp_ptp_port_stats)
 
-पूर्णांक mlxsw_sp1_get_stats_count(व्योम)
-अणु
-	वापस MLXSW_SP_PTP_PORT_STATS_LEN;
-पूर्ण
+int mlxsw_sp1_get_stats_count(void)
+{
+	return MLXSW_SP_PTP_PORT_STATS_LEN;
+}
 
-व्योम mlxsw_sp1_get_stats_strings(u8 **p)
-अणु
-	पूर्णांक i;
+void mlxsw_sp1_get_stats_strings(u8 **p)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP_PTP_PORT_STATS_LEN; i++) अणु
-		स_नकल(*p, mlxsw_sp_ptp_port_stats[i].str,
+	for (i = 0; i < MLXSW_SP_PTP_PORT_STATS_LEN; i++) {
+		memcpy(*p, mlxsw_sp_ptp_port_stats[i].str,
 		       ETH_GSTRING_LEN);
 		*p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mlxsw_sp1_get_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-			 u64 *data, पूर्णांक data_index)
-अणु
-	व्योम *stats = &mlxsw_sp_port->ptp.stats;
-	सूचक_भेद_प्रकार offset;
-	पूर्णांक i;
+void mlxsw_sp1_get_stats(struct mlxsw_sp_port *mlxsw_sp_port,
+			 u64 *data, int data_index)
+{
+	void *stats = &mlxsw_sp_port->ptp.stats;
+	ptrdiff_t offset;
+	int i;
 
 	data += data_index;
-	क्रम (i = 0; i < MLXSW_SP_PTP_PORT_STATS_LEN; i++) अणु
+	for (i = 0; i < MLXSW_SP_PTP_PORT_STATS_LEN; i++) {
 		offset = mlxsw_sp_ptp_port_stats[i].offset;
 		*data++ = *(u64 *)(stats + offset);
-	पूर्ण
-पूर्ण
+	}
+}

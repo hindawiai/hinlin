@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  */
 
-#समावेश <linux/dma-buf.h>
+#include <linux/dma-buf.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_gem.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_prime.h>
+#include <drm/drm.h>
+#include <drm/drm_device.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_prime.h>
 
-#समावेश "mtk_drm_drv.h"
-#समावेश "mtk_drm_gem.h"
+#include "mtk_drm_drv.h"
+#include "mtk_drm_gem.h"
 
-अटल स्थिर काष्ठा drm_gem_object_funcs mtk_drm_gem_object_funcs = अणु
-	.मुक्त = mtk_drm_gem_मुक्त_object,
+static const struct drm_gem_object_funcs mtk_drm_gem_object_funcs = {
+	.free = mtk_drm_gem_free_object,
 	.get_sg_table = mtk_gem_prime_get_sg_table,
 	.vmap = mtk_drm_gem_prime_vmap,
 	.vunmap = mtk_drm_gem_prime_vunmap,
 	.vm_ops = &drm_gem_cma_vm_ops,
-पूर्ण;
+};
 
-अटल काष्ठा mtk_drm_gem_obj *mtk_drm_gem_init(काष्ठा drm_device *dev,
-						अचिन्हित दीर्घ size)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem_obj;
-	पूर्णांक ret;
+static struct mtk_drm_gem_obj *mtk_drm_gem_init(struct drm_device *dev,
+						unsigned long size)
+{
+	struct mtk_drm_gem_obj *mtk_gem_obj;
+	int ret;
 
 	size = round_up(size, PAGE_SIZE);
 
-	mtk_gem_obj = kzalloc(माप(*mtk_gem_obj), GFP_KERNEL);
-	अगर (!mtk_gem_obj)
-		वापस ERR_PTR(-ENOMEM);
+	mtk_gem_obj = kzalloc(sizeof(*mtk_gem_obj), GFP_KERNEL);
+	if (!mtk_gem_obj)
+		return ERR_PTR(-ENOMEM);
 
 	mtk_gem_obj->base.funcs = &mtk_drm_gem_object_funcs;
 
 	ret = drm_gem_object_init(dev, &mtk_gem_obj->base, size);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_ERROR("failed to initialize gem object\n");
-		kमुक्त(mtk_gem_obj);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree(mtk_gem_obj);
+		return ERR_PTR(ret);
+	}
 
-	वापस mtk_gem_obj;
-पूर्ण
+	return mtk_gem_obj;
+}
 
-काष्ठा mtk_drm_gem_obj *mtk_drm_gem_create(काष्ठा drm_device *dev,
-					   माप_प्रकार size, bool alloc_kmap)
-अणु
-	काष्ठा mtk_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा mtk_drm_gem_obj *mtk_gem;
-	काष्ठा drm_gem_object *obj;
-	पूर्णांक ret;
+struct mtk_drm_gem_obj *mtk_drm_gem_create(struct drm_device *dev,
+					   size_t size, bool alloc_kmap)
+{
+	struct mtk_drm_private *priv = dev->dev_private;
+	struct mtk_drm_gem_obj *mtk_gem;
+	struct drm_gem_object *obj;
+	int ret;
 
 	mtk_gem = mtk_drm_gem_init(dev, size);
-	अगर (IS_ERR(mtk_gem))
-		वापस ERR_CAST(mtk_gem);
+	if (IS_ERR(mtk_gem))
+		return ERR_CAST(mtk_gem);
 
 	obj = &mtk_gem->base;
 
 	mtk_gem->dma_attrs = DMA_ATTR_WRITE_COMBINE;
 
-	अगर (!alloc_kmap)
+	if (!alloc_kmap)
 		mtk_gem->dma_attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
 
 	mtk_gem->cookie = dma_alloc_attrs(priv->dma_dev, obj->size,
 					  &mtk_gem->dma_addr, GFP_KERNEL,
 					  mtk_gem->dma_attrs);
-	अगर (!mtk_gem->cookie) अणु
+	if (!mtk_gem->cookie) {
 		DRM_ERROR("failed to allocate %zx byte dma buffer", obj->size);
 		ret = -ENOMEM;
-		जाओ err_gem_मुक्त;
-	पूर्ण
+		goto err_gem_free;
+	}
 
-	अगर (alloc_kmap)
+	if (alloc_kmap)
 		mtk_gem->kvaddr = mtk_gem->cookie;
 
 	DRM_DEBUG_DRIVER("cookie = %p dma_addr = %pad size = %zu\n",
 			 mtk_gem->cookie, &mtk_gem->dma_addr,
 			 size);
 
-	वापस mtk_gem;
+	return mtk_gem;
 
-err_gem_मुक्त:
+err_gem_free:
 	drm_gem_object_release(obj);
-	kमुक्त(mtk_gem);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(mtk_gem);
+	return ERR_PTR(ret);
+}
 
-व्योम mtk_drm_gem_मुक्त_object(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
-	काष्ठा mtk_drm_निजी *priv = obj->dev->dev_निजी;
+void mtk_drm_gem_free_object(struct drm_gem_object *obj)
+{
+	struct mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
+	struct mtk_drm_private *priv = obj->dev->dev_private;
 
-	अगर (mtk_gem->sg)
+	if (mtk_gem->sg)
 		drm_prime_gem_destroy(obj, mtk_gem->sg);
-	अन्यथा
-		dma_मुक्त_attrs(priv->dma_dev, obj->size, mtk_gem->cookie,
+	else
+		dma_free_attrs(priv->dma_dev, obj->size, mtk_gem->cookie,
 			       mtk_gem->dma_addr, mtk_gem->dma_attrs);
 
-	/* release file poपूर्णांकer to gem object. */
+	/* release file pointer to gem object. */
 	drm_gem_object_release(obj);
 
-	kमुक्त(mtk_gem);
-पूर्ण
+	kfree(mtk_gem);
+}
 
-पूर्णांक mtk_drm_gem_dumb_create(काष्ठा drm_file *file_priv, काष्ठा drm_device *dev,
-			    काष्ठा drm_mode_create_dumb *args)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem;
-	पूर्णांक ret;
+int mtk_drm_gem_dumb_create(struct drm_file *file_priv, struct drm_device *dev,
+			    struct drm_mode_create_dumb *args)
+{
+	struct mtk_drm_gem_obj *mtk_gem;
+	int ret;
 
 	args->pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
 	args->size = args->pitch * args->height;
 
 	mtk_gem = mtk_drm_gem_create(dev, args->size, false);
-	अगर (IS_ERR(mtk_gem))
-		वापस PTR_ERR(mtk_gem);
+	if (IS_ERR(mtk_gem))
+		return PTR_ERR(mtk_gem);
 
 	/*
-	 * allocate a id of idr table where the obj is रेजिस्टरed
+	 * allocate a id of idr table where the obj is registered
 	 * and handle has the id what user can see.
 	 */
 	ret = drm_gem_handle_create(file_priv, &mtk_gem->base, &args->handle);
-	अगर (ret)
-		जाओ err_handle_create;
+	if (ret)
+		goto err_handle_create;
 
 	/* drop reference from allocate - handle holds it now. */
 	drm_gem_object_put(&mtk_gem->base);
 
-	वापस 0;
+	return 0;
 
 err_handle_create:
-	mtk_drm_gem_मुक्त_object(&mtk_gem->base);
-	वापस ret;
-पूर्ण
+	mtk_drm_gem_free_object(&mtk_gem->base);
+	return ret;
+}
 
-अटल पूर्णांक mtk_drm_gem_object_mmap(काष्ठा drm_gem_object *obj,
-				   काष्ठा vm_area_काष्ठा *vma)
+static int mtk_drm_gem_object_mmap(struct drm_gem_object *obj,
+				   struct vm_area_struct *vma)
 
-अणु
-	पूर्णांक ret;
-	काष्ठा mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
-	काष्ठा mtk_drm_निजी *priv = obj->dev->dev_निजी;
+{
+	int ret;
+	struct mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
+	struct mtk_drm_private *priv = obj->dev->dev_private;
 
 	/*
-	 * dma_alloc_attrs() allocated a काष्ठा page table क्रम mtk_gem, so clear
+	 * dma_alloc_attrs() allocated a struct page table for mtk_gem, so clear
 	 * VM_PFNMAP flag that was set by drm_gem_mmap_obj()/drm_gem_mmap().
 	 */
 	vma->vm_flags &= ~VM_PFNMAP;
 
 	ret = dma_mmap_attrs(priv->dma_dev, vma, mtk_gem->cookie,
 			     mtk_gem->dma_addr, obj->size, mtk_gem->dma_attrs);
-	अगर (ret)
-		drm_gem_vm_बंद(vma);
+	if (ret)
+		drm_gem_vm_close(vma);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक mtk_drm_gem_mmap_buf(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक ret;
+int mtk_drm_gem_mmap_buf(struct drm_gem_object *obj, struct vm_area_struct *vma)
+{
+	int ret;
 
 	ret = drm_gem_mmap_obj(obj, obj->size, vma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mtk_drm_gem_object_mmap(obj, vma);
-पूर्ण
+	return mtk_drm_gem_object_mmap(obj, vma);
+}
 
-पूर्णांक mtk_drm_gem_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा drm_gem_object *obj;
-	पूर्णांक ret;
+int mtk_drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	struct drm_gem_object *obj;
+	int ret;
 
 	ret = drm_gem_mmap(filp, vma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	obj = vma->vm_निजी_data;
+	obj = vma->vm_private_data;
 
 	/*
 	 * Set vm_pgoff (used as a fake buffer offset by DRM) to 0 and map the
@@ -188,100 +187,100 @@ err_handle_create:
 	 */
 	vma->vm_pgoff = 0;
 
-	वापस mtk_drm_gem_object_mmap(obj, vma);
-पूर्ण
+	return mtk_drm_gem_object_mmap(obj, vma);
+}
 
 /*
- * Allocate a sg_table क्रम this GEM object.
- * Note: Both the table's contents, and the sg_table itself must be मुक्तd by
+ * Allocate a sg_table for this GEM object.
+ * Note: Both the table's contents, and the sg_table itself must be freed by
  *       the caller.
- * Returns a poपूर्णांकer to the newly allocated sg_table, or an ERR_PTR() error.
+ * Returns a pointer to the newly allocated sg_table, or an ERR_PTR() error.
  */
-काष्ठा sg_table *mtk_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
-	काष्ठा mtk_drm_निजी *priv = obj->dev->dev_निजी;
-	काष्ठा sg_table *sgt;
-	पूर्णांक ret;
+struct sg_table *mtk_gem_prime_get_sg_table(struct drm_gem_object *obj)
+{
+	struct mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
+	struct mtk_drm_private *priv = obj->dev->dev_private;
+	struct sg_table *sgt;
+	int ret;
 
-	sgt = kzalloc(माप(*sgt), GFP_KERNEL);
-	अगर (!sgt)
-		वापस ERR_PTR(-ENOMEM);
+	sgt = kzalloc(sizeof(*sgt), GFP_KERNEL);
+	if (!sgt)
+		return ERR_PTR(-ENOMEM);
 
 	ret = dma_get_sgtable_attrs(priv->dma_dev, sgt, mtk_gem->cookie,
 				    mtk_gem->dma_addr, obj->size,
 				    mtk_gem->dma_attrs);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("failed to allocate sgt, %d\n", ret);
-		kमुक्त(sgt);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		kfree(sgt);
+		return ERR_PTR(ret);
+	}
 
-	वापस sgt;
-पूर्ण
+	return sgt;
+}
 
-काष्ठा drm_gem_object *mtk_gem_prime_import_sg_table(काष्ठा drm_device *dev,
-			काष्ठा dma_buf_attachment *attach, काष्ठा sg_table *sg)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem;
+struct drm_gem_object *mtk_gem_prime_import_sg_table(struct drm_device *dev,
+			struct dma_buf_attachment *attach, struct sg_table *sg)
+{
+	struct mtk_drm_gem_obj *mtk_gem;
 
-	/* check अगर the entries in the sg_table are contiguous */
-	अगर (drm_prime_get_contiguous_size(sg) < attach->dmabuf->size) अणु
+	/* check if the entries in the sg_table are contiguous */
+	if (drm_prime_get_contiguous_size(sg) < attach->dmabuf->size) {
 		DRM_ERROR("sg_table is not contiguous");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	mtk_gem = mtk_drm_gem_init(dev, attach->dmabuf->size);
-	अगर (IS_ERR(mtk_gem))
-		वापस ERR_CAST(mtk_gem);
+	if (IS_ERR(mtk_gem))
+		return ERR_CAST(mtk_gem);
 
 	mtk_gem->dma_addr = sg_dma_address(sg->sgl);
 	mtk_gem->sg = sg;
 
-	वापस &mtk_gem->base;
-पूर्ण
+	return &mtk_gem->base;
+}
 
-पूर्णांक mtk_drm_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
-	काष्ठा sg_table *sgt = शून्य;
-	अचिन्हित पूर्णांक npages;
+int mtk_drm_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
+{
+	struct mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
+	struct sg_table *sgt = NULL;
+	unsigned int npages;
 
-	अगर (mtk_gem->kvaddr)
-		जाओ out;
+	if (mtk_gem->kvaddr)
+		goto out;
 
 	sgt = mtk_gem_prime_get_sg_table(obj);
-	अगर (IS_ERR(sgt))
-		वापस PTR_ERR(sgt);
+	if (IS_ERR(sgt))
+		return PTR_ERR(sgt);
 
 	npages = obj->size >> PAGE_SHIFT;
-	mtk_gem->pages = kसुस्मृति(npages, माप(*mtk_gem->pages), GFP_KERNEL);
-	अगर (!mtk_gem->pages) अणु
-		kमुक्त(sgt);
-		वापस -ENOMEM;
-	पूर्ण
+	mtk_gem->pages = kcalloc(npages, sizeof(*mtk_gem->pages), GFP_KERNEL);
+	if (!mtk_gem->pages) {
+		kfree(sgt);
+		return -ENOMEM;
+	}
 
 	drm_prime_sg_to_page_array(sgt, mtk_gem->pages, npages);
 
 	mtk_gem->kvaddr = vmap(mtk_gem->pages, npages, VM_MAP,
-			       pgprot_ग_लिखोcombine(PAGE_KERNEL));
+			       pgprot_writecombine(PAGE_KERNEL));
 
 out:
-	kमुक्त(sgt);
+	kfree(sgt);
 	dma_buf_map_set_vaddr(map, mtk_gem->kvaddr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mtk_drm_gem_prime_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
-अणु
-	काष्ठा mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
-	व्योम *vaddr = map->vaddr;
+void mtk_drm_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map)
+{
+	struct mtk_drm_gem_obj *mtk_gem = to_mtk_gem_obj(obj);
+	void *vaddr = map->vaddr;
 
-	अगर (!mtk_gem->pages)
-		वापस;
+	if (!mtk_gem->pages)
+		return;
 
 	vunmap(vaddr);
 	mtk_gem->kvaddr = 0;
-	kमुक्त(mtk_gem->pages);
-पूर्ण
+	kfree(mtk_gem->pages);
+}

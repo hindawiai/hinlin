@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -29,27 +28,27 @@
  *      Author: qyang
  */
 
-#अगर_अघोषित DCE100_RESOURCE_H_
-#घोषणा DCE100_RESOURCE_H_
+#ifndef DCE100_RESOURCE_H_
+#define DCE100_RESOURCE_H_
 
-काष्ठा dc;
-काष्ठा resource_pool;
-काष्ठा dc_validation_set;
+struct dc;
+struct resource_pool;
+struct dc_validation_set;
 
-काष्ठा resource_pool *dce100_create_resource_pool(
-	uपूर्णांक8_t num_भव_links,
-	काष्ठा dc *dc);
+struct resource_pool *dce100_create_resource_pool(
+	uint8_t num_virtual_links,
+	struct dc *dc);
 
-क्रमागत dc_status dce100_validate_plane(स्थिर काष्ठा dc_plane_state *plane_state, काष्ठा dc_caps *caps);
+enum dc_status dce100_validate_plane(const struct dc_plane_state *plane_state, struct dc_caps *caps);
 
-क्रमागत dc_status dce100_add_stream_to_ctx(
-		काष्ठा dc *dc,
-		काष्ठा dc_state *new_ctx,
-		काष्ठा dc_stream_state *dc_stream);
+enum dc_status dce100_add_stream_to_ctx(
+		struct dc *dc,
+		struct dc_state *new_ctx,
+		struct dc_stream_state *dc_stream);
 
-काष्ठा stream_encoder *dce100_find_first_मुक्त_match_stream_enc_क्रम_link(
-		काष्ठा resource_context *res_ctx,
-		स्थिर काष्ठा resource_pool *pool,
-		काष्ठा dc_stream_state *stream);
+struct stream_encoder *dce100_find_first_free_match_stream_enc_for_link(
+		struct resource_context *res_ctx,
+		const struct resource_pool *pool,
+		struct dc_stream_state *stream);
 
-#पूर्ण_अगर /* DCE100_RESOURCE_H_ */
+#endif /* DCE100_RESOURCE_H_ */

@@ -1,19 +1,18 @@
-<शैली गुरु>
-#घोषणा RCS_ID "$Id: scc.c,v 1.75 1998/11/04 15:15:01 jreuter Exp jreuter $"
+#define RCS_ID "$Id: scc.c,v 1.75 1998/11/04 15:15:01 jreuter Exp jreuter $"
 
-#घोषणा VERSION "3.0"
+#define VERSION "3.0"
 
 /*
  * Please use z8530drv-utils-3.0 with this version.
  *            ------------------
  *
- * You can find a subset of the करोcumentation in 
+ * You can find a subset of the documentation in 
  * Documentation/networking/device_drivers/hamradio/z8530drv.rst.
  */
 
 /*
    ********************************************************************
-   *   SCC.C - Linux driver क्रम Z8530 based HDLC cards क्रम AX.25      *
+   *   SCC.C - Linux driver for Z8530 based HDLC cards for AX.25      *
    ********************************************************************
 
 
@@ -21,7 +20,7 @@
 
 	Copyright (c) 1993, 2000 Joerg Reuter DL1BKE
 
-	portions (c) 1993 Guiकरो ten Dolle PE1NNZ
+	portions (c) 1993 Guido ten Dolle PE1NNZ
 
    ********************************************************************
    
@@ -29,27 +28,27 @@
    The code is likely to fail, and so your kernel could --- even 
    a whole network. 
 
-   This driver is पूर्णांकended क्रम Amateur Radio use. If you are running it
-   क्रम commercial purposes, please drop me a note. I am nosy...
+   This driver is intended for Amateur Radio use. If you are running it
+   for commercial purposes, please drop me a note. I am nosy...
 
    ...BUT:
  
    ! You  m u s t  recognize the appropriate legislations of your country !
-   ! beक्रमe you connect a radio to the SCC board and start to transmit or !
+   ! before you connect a radio to the SCC board and start to transmit or !
    ! receive. The GPL allows you to use the  d r i v e r,  NOT the RADIO! !
 
    For non-Amateur-Radio use please note that you might need a special
    allowance/licence from the designer of the SCC Board and/or the
    MODEM. 
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy 
-   it under the terms of the (modअगरied) GNU General Public License 
+   This program is free software; you can redistribute it and/or modify 
+   it under the terms of the (modified) GNU General Public License 
    delivered with the Linux kernel source.
    
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License क्रम more details.
+   GNU General Public License for more details.
 
    You should find a copy of the GNU General Public License in 
    /usr/src/linux/COPYING; 
@@ -60,10 +59,10 @@
    Incomplete history of z8530drv:
    -------------------------------
 
-   1994-09-13	started to ग_लिखो the driver, rescued most of my own
+   1994-09-13	started to write the driver, rescued most of my own
 		code (and Hans Alblas' memory buffer pool concept) from 
 		an earlier project "sccdrv" which was initiated by 
-		Guiकरो ten Dolle. Not much of the old driver survived, 
+		Guido ten Dolle. Not much of the old driver survived, 
 		though. The first version I put my hands on was sccdrv1.3
 		from August 1993. The memory buffer pool concept
 		appeared in an unauthorized sccdrv version (1.5) from
@@ -77,51 +76,51 @@
    		  
    1996-10-05	New semester, new driver... 
 
-   		  * KISS TNC emulator हटाओd (TTY driver)
+   		  * KISS TNC emulator removed (TTY driver)
    		  * Source moved to drivers/net/
    		  * Includes Z8530 defines from drivers/net/z8530.h
    		  * Uses sk_buffer memory management
    		  * Reduced overhead of /proc/net/z8530drv output
    		  * Streamlined quite a lot things
-   		  * Invents bअक्रम new bugs... ;-)
+   		  * Invents brand new bugs... ;-)
 
    		  The move to version number 3.0 reflects theses changes.
-   		  You can use 'kissbridge' अगर you need a KISS TNC emulator.
+   		  You can use 'kissbridge' if you need a KISS TNC emulator.
 
-   1996-12-13	Fixed क्रम Linux networking changes. (G4KLX)
-   1997-01-08	Fixed the reमुख्यing problems.
-   1997-04-02	Hopefully fixed the problems with the new *_समयr()
+   1996-12-13	Fixed for Linux networking changes. (G4KLX)
+   1997-01-08	Fixed the remaining problems.
+   1997-04-02	Hopefully fixed the problems with the new *_timer()
    		routines, added calibration code.
    1997-10-12	Made SCC_DELAY a CONFIG option, added CONFIG_SCC_TRXECHO
-   1998-01-29	Small fix to aव्योम lock-up on initialization
+   1998-01-29	Small fix to avoid lock-up on initialization
    1998-09-29	Fixed the "grouping" bugs, tx_inhibit works again,
    		using dev->tx_queue_len now instead of MAXQUEUE now.
    1998-10-21	Postponed the spinlock changes, would need a lot of
-   		testing I currently करोn't have the time to. Softdcd doesn't
+   		testing I currently don't have the time to. Softdcd doesn't
    		work.
-   1998-11-04	Softdcd करोes not work correctly in DPLL mode, in fact it 
+   1998-11-04	Softdcd does not work correctly in DPLL mode, in fact it 
    		never did. The DPLL locks on noise, the SYNC unit sees
-   		flags that aren't... Restarting the DPLL करोes not help
+   		flags that aren't... Restarting the DPLL does not help
    		either, it resynchronizes too slow and the first received
-   		frame माला_लो lost.
-   2000-02-13	Fixed क्रम new network driver पूर्णांकerface changes, still
-   		करोes TX समयouts itself since it uses its own queue
+   		frame gets lost.
+   2000-02-13	Fixed for new network driver interface changes, still
+   		does TX timeouts itself since it uses its own queue
    		scheme.
 
    Thanks to all who contributed to this driver with ideas and bug
    reports!
    
-   NB -- अगर you find errors, change something, please let me know
-      	 first beक्रमe you distribute it... And please करोn't touch
+   NB -- if you find errors, change something, please let me know
+      	 first before you distribute it... And please don't touch
    	 the version number. Just replace my callsign in
-   	 "v3.0.dl1bke" with your own. Just to aव्योम confusion...
+   	 "v3.0.dl1bke" with your own. Just to avoid confusion...
 
-   If you want to add your modअगरication to the linux distribution
+   If you want to add your modification to the linux distribution
    please (!) contact me first.
    
    New versions of the driver will be announced on the linux-hams
    mailing list on vger.kernel.org. To subscribe send an e-mail
-   to majorकरोmo@vger.kernel.org with the following line in
+   to majordomo@vger.kernel.org with the following line in
    the body of the mail:
    
 	   subscribe linux-hams
@@ -137,179 +136,179 @@
 
 /* ----------------------------------------------------------------------- */
 
-#अघोषित  SCC_LDELAY		/* slow it even a bit more करोwn */
-#अघोषित  SCC_DONT_CHECK		/* करोn't look अगर the SCCs you specअगरied are available */
+#undef  SCC_LDELAY		/* slow it even a bit more down */
+#undef  SCC_DONT_CHECK		/* don't look if the SCCs you specified are available */
 
-#घोषणा SCC_MAXCHIPS	4       /* number of max. supported chips */
-#घोषणा SCC_बफ_मानE	384     /* must not exceed 4096 */
-#अघोषित	SCC_DEBUG
+#define SCC_MAXCHIPS	4       /* number of max. supported chips */
+#define SCC_BUFSIZE	384     /* must not exceed 4096 */
+#undef	SCC_DEBUG
 
-#घोषणा SCC_DEFAULT_CLOCK	4915200 
-				/* शेष pघड़ी अगर nothing is specअगरied */
+#define SCC_DEFAULT_CLOCK	4915200 
+				/* default pclock if nothing is specified */
 
 /* ----------------------------------------------------------------------- */
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/in.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/init.h>
-#समावेश <linux/scc.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/signal.h>
+#include <linux/timer.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/string.h>
+#include <linux/in.h>
+#include <linux/fcntl.h>
+#include <linux/ptrace.h>
+#include <linux/delay.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/rtnetlink.h>
+#include <linux/if_ether.h>
+#include <linux/if_arp.h>
+#include <linux/socket.h>
+#include <linux/init.h>
+#include <linux/scc.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/bitops.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/ax25.h>
+#include <net/net_namespace.h>
+#include <net/ax25.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
+#include <asm/irq.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
 
-#समावेश "z8530.h"
+#include "z8530.h"
 
-अटल स्थिर अक्षर banner[] __initस्थिर = KERN_INFO \
+static const char banner[] __initconst = KERN_INFO \
 	"AX.25: Z8530 SCC driver version "VERSION".dl1bke\n";
 
-अटल व्योम t_dरुको(काष्ठा समयr_list *t);
-अटल व्योम t_txdelay(काष्ठा समयr_list *t);
-अटल व्योम t_tail(काष्ठा समयr_list *t);
-अटल व्योम t_busy(काष्ठा समयr_list *);
-अटल व्योम t_maxkeyup(काष्ठा समयr_list *);
-अटल व्योम t_idle(काष्ठा समयr_list *t);
-अटल व्योम scc_tx_करोne(काष्ठा scc_channel *);
-अटल व्योम scc_start_tx_समयr(काष्ठा scc_channel *,
-			       व्योम (*)(काष्ठा समयr_list *), अचिन्हित दीर्घ);
-अटल व्योम scc_start_maxkeyup(काष्ठा scc_channel *);
-अटल व्योम scc_start_defer(काष्ठा scc_channel *);
+static void t_dwait(struct timer_list *t);
+static void t_txdelay(struct timer_list *t);
+static void t_tail(struct timer_list *t);
+static void t_busy(struct timer_list *);
+static void t_maxkeyup(struct timer_list *);
+static void t_idle(struct timer_list *t);
+static void scc_tx_done(struct scc_channel *);
+static void scc_start_tx_timer(struct scc_channel *,
+			       void (*)(struct timer_list *), unsigned long);
+static void scc_start_maxkeyup(struct scc_channel *);
+static void scc_start_defer(struct scc_channel *);
 
-अटल व्योम z8530_init(व्योम);
+static void z8530_init(void);
 
-अटल व्योम init_channel(काष्ठा scc_channel *scc);
-अटल व्योम scc_key_trx (काष्ठा scc_channel *scc, अक्षर tx);
-अटल व्योम scc_init_समयr(काष्ठा scc_channel *scc);
+static void init_channel(struct scc_channel *scc);
+static void scc_key_trx (struct scc_channel *scc, char tx);
+static void scc_init_timer(struct scc_channel *scc);
 
-अटल पूर्णांक scc_net_alloc(स्थिर अक्षर *name, काष्ठा scc_channel *scc);
-अटल व्योम scc_net_setup(काष्ठा net_device *dev);
-अटल पूर्णांक scc_net_खोलो(काष्ठा net_device *dev);
-अटल पूर्णांक scc_net_बंद(काष्ठा net_device *dev);
-अटल व्योम scc_net_rx(काष्ठा scc_channel *scc, काष्ठा sk_buff *skb);
-अटल netdev_tx_t scc_net_tx(काष्ठा sk_buff *skb,
-			      काष्ठा net_device *dev);
-अटल पूर्णांक scc_net_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
-अटल पूर्णांक scc_net_set_mac_address(काष्ठा net_device *dev, व्योम *addr);
-अटल काष्ठा net_device_stats * scc_net_get_stats(काष्ठा net_device *dev);
+static int scc_net_alloc(const char *name, struct scc_channel *scc);
+static void scc_net_setup(struct net_device *dev);
+static int scc_net_open(struct net_device *dev);
+static int scc_net_close(struct net_device *dev);
+static void scc_net_rx(struct scc_channel *scc, struct sk_buff *skb);
+static netdev_tx_t scc_net_tx(struct sk_buff *skb,
+			      struct net_device *dev);
+static int scc_net_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
+static int scc_net_set_mac_address(struct net_device *dev, void *addr);
+static struct net_device_stats * scc_net_get_stats(struct net_device *dev);
 
-अटल अचिन्हित अक्षर SCC_DriverName[] = "scc";
+static unsigned char SCC_DriverName[] = "scc";
 
-अटल काष्ठा irqflags अणु अचिन्हित अक्षर used : 1; पूर्ण Ivec[NR_IRQS];
+static struct irqflags { unsigned char used : 1; } Ivec[NR_IRQS];
 	
-अटल काष्ठा scc_channel SCC_Info[2 * SCC_MAXCHIPS];	/* inक्रमmation per channel */
+static struct scc_channel SCC_Info[2 * SCC_MAXCHIPS];	/* information per channel */
 
-अटल काष्ठा scc_ctrl अणु
+static struct scc_ctrl {
 	io_port chan_A;
 	io_port chan_B;
-	पूर्णांक irq;
-पूर्ण SCC_ctrl[SCC_MAXCHIPS+1];
+	int irq;
+} SCC_ctrl[SCC_MAXCHIPS+1];
 
-अटल अचिन्हित अक्षर Driver_Initialized;
-अटल पूर्णांक Nchips;
-अटल io_port Vector_Latch;
+static unsigned char Driver_Initialized;
+static int Nchips;
+static io_port Vector_Latch;
 
 
 /* ******************************************************************** */
 /* *			Port Access Functions			      * */
 /* ******************************************************************** */
 
-/* These provide पूर्णांकerrupt save 2-step access to the Z8530 रेजिस्टरs */
+/* These provide interrupt save 2-step access to the Z8530 registers */
 
-अटल DEFINE_SPINLOCK(iolock);	/* Guards paired accesses */
+static DEFINE_SPINLOCK(iolock);	/* Guards paired accesses */
 
-अटल अंतरभूत अचिन्हित अक्षर InReg(io_port port, अचिन्हित अक्षर reg)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर r;
+static inline unsigned char InReg(io_port port, unsigned char reg)
+{
+	unsigned long flags;
+	unsigned char r;
 
 	spin_lock_irqsave(&iolock, flags);	
-#अगर_घोषित SCC_LDELAY
+#ifdef SCC_LDELAY
 	Outb(port, reg);
 	udelay(SCC_LDELAY);
 	r=Inb(port);
 	udelay(SCC_LDELAY);
-#अन्यथा
+#else
 	Outb(port, reg);
 	r=Inb(port);
-#पूर्ण_अगर
+#endif
 	spin_unlock_irqrestore(&iolock, flags);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल अंतरभूत व्योम OutReg(io_port port, अचिन्हित अक्षर reg, अचिन्हित अक्षर val)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void OutReg(io_port port, unsigned char reg, unsigned char val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&iolock, flags);
-#अगर_घोषित SCC_LDELAY
+#ifdef SCC_LDELAY
 	Outb(port, reg); udelay(SCC_LDELAY);
 	Outb(port, val); udelay(SCC_LDELAY);
-#अन्यथा
+#else
 	Outb(port, reg);
 	Outb(port, val);
-#पूर्ण_अगर
+#endif
 	spin_unlock_irqrestore(&iolock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wr(काष्ठा scc_channel *scc, अचिन्हित अक्षर reg,
-	अचिन्हित अक्षर val)
-अणु
+static inline void wr(struct scc_channel *scc, unsigned char reg,
+	unsigned char val)
+{
 	OutReg(scc->ctrl, reg, (scc->wreg[reg] = val));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम or(काष्ठा scc_channel *scc, अचिन्हित अक्षर reg, अचिन्हित अक्षर val)
-अणु
+static inline void or(struct scc_channel *scc, unsigned char reg, unsigned char val)
+{
 	OutReg(scc->ctrl, reg, (scc->wreg[reg] |= val));
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cl(काष्ठा scc_channel *scc, अचिन्हित अक्षर reg, अचिन्हित अक्षर val)
-अणु
+static inline void cl(struct scc_channel *scc, unsigned char reg, unsigned char val)
+{
 	OutReg(scc->ctrl, reg, (scc->wreg[reg] &= ~val));
-पूर्ण
+}
 
 /* ******************************************************************** */
 /* *			Some useful macros			      * */
 /* ******************************************************************** */
 
-अटल अंतरभूत व्योम scc_discard_buffers(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void scc_discard_buffers(struct scc_channel *scc)
+{
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);	
-	अगर (scc->tx_buff != शून्य)
-	अणु
-		dev_kमुक्त_skb(scc->tx_buff);
-		scc->tx_buff = शून्य;
-	पूर्ण
+	if (scc->tx_buff != NULL)
+	{
+		dev_kfree_skb(scc->tx_buff);
+		scc->tx_buff = NULL;
+	}
 	
-	जबतक (!skb_queue_empty(&scc->tx_queue))
-		dev_kमुक्त_skb(skb_dequeue(&scc->tx_queue));
+	while (!skb_queue_empty(&scc->tx_queue))
+		dev_kfree_skb(skb_dequeue(&scc->tx_queue));
 
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 
 
@@ -318,83 +317,83 @@
 /* ******************************************************************** */
 
 
-/* ----> subroutines क्रम the पूर्णांकerrupt handlers <---- */
+/* ----> subroutines for the interrupt handlers <---- */
 
-अटल अंतरभूत व्योम scc_notअगरy(काष्ठा scc_channel *scc, पूर्णांक event)
-अणु
-	काष्ठा sk_buff *skb;
-	अक्षर *bp;
+static inline void scc_notify(struct scc_channel *scc, int event)
+{
+	struct sk_buff *skb;
+	char *bp;
 	
-        अगर (scc->kiss.fulldup != KISS_DUPLEX_OPTIMA)
-		वापस;
+        if (scc->kiss.fulldup != KISS_DUPLEX_OPTIMA)
+		return;
 
 	skb = dev_alloc_skb(2);
-	अगर (skb != शून्य)
-	अणु
+	if (skb != NULL)
+	{
 		bp = skb_put(skb, 2);
 		*bp++ = PARAM_HWEVENT;
 		*bp++ = event;
 		scc_net_rx(scc, skb);
-	पूर्ण अन्यथा
+	} else
 		scc->stat.nospace++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_rx_FIFO(काष्ठा scc_channel *scc)
-अणु
-	पूर्णांक k;
+static inline void flush_rx_FIFO(struct scc_channel *scc)
+{
+	int k;
 	
-	क्रम (k=0; k<3; k++)
+	for (k=0; k<3; k++)
 		Inb(scc->data);
 		
-	अगर(scc->rx_buff != शून्य)		/* did we receive something? */
-	अणु
+	if(scc->rx_buff != NULL)		/* did we receive something? */
+	{
 		scc->stat.rxerrs++;  /* then count it as an error */
-		dev_kमुक्त_skb_irq(scc->rx_buff);
-		scc->rx_buff = शून्य;
-	पूर्ण
-पूर्ण
+		dev_kfree_skb_irq(scc->rx_buff);
+		scc->rx_buff = NULL;
+	}
+}
 
-अटल व्योम start_hunt(काष्ठा scc_channel *scc)
-अणु
-	अगर ((scc->modem.घड़ीsrc != CLK_EXTERNAL))
+static void start_hunt(struct scc_channel *scc)
+{
+	if ((scc->modem.clocksrc != CLK_EXTERNAL))
 		OutReg(scc->ctrl,R14,SEARCH|scc->wreg[R14]); /* DPLL: enter search mode */
 	or(scc,R3,ENT_HM|RxENABLE);  /* enable the receiver, hunt mode */
-पूर्ण
+}
 
-/* ----> four dअगरferent पूर्णांकerrupt handlers क्रम Tx, Rx, changing of	*/
+/* ----> four different interrupt handlers for Tx, Rx, changing of	*/
 /*       DCD/CTS and Rx/Tx errors					*/
 
-/* Transmitter पूर्णांकerrupt handler */
-अटल अंतरभूत व्योम scc_txपूर्णांक(काष्ठा scc_channel *scc)
-अणु
-	काष्ठा sk_buff *skb;
+/* Transmitter interrupt handler */
+static inline void scc_txint(struct scc_channel *scc)
+{
+	struct sk_buff *skb;
 
-	scc->stat.txपूर्णांकs++;
+	scc->stat.txints++;
 	skb = scc->tx_buff;
 	
 	/* send first octet */
 	
-	अगर (skb == शून्य)
-	अणु
+	if (skb == NULL)
+	{
 		skb = skb_dequeue(&scc->tx_queue);
 		scc->tx_buff = skb;
-		netअगर_wake_queue(scc->dev);
+		netif_wake_queue(scc->dev);
 
-		अगर (skb == शून्य)
-		अणु
-			scc_tx_करोne(scc);
+		if (skb == NULL)
+		{
+			scc_tx_done(scc);
 			Outb(scc->ctrl, RES_Tx_P);
-			वापस;
-		पूर्ण
+			return;
+		}
 		
-		अगर (skb->len == 0)		/* Paranoia... */
-		अणु
-			dev_kमुक्त_skb_irq(skb);
-			scc->tx_buff = शून्य;
-			scc_tx_करोne(scc);
+		if (skb->len == 0)		/* Paranoia... */
+		{
+			dev_kfree_skb_irq(skb);
+			scc->tx_buff = NULL;
+			scc_tx_done(scc);
 			Outb(scc->ctrl, RES_Tx_P);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		scc->stat.tx_state = TXS_ACTIVE;
 
@@ -404,309 +403,309 @@
 		Outb(scc->data,*skb->data);	/* send byte */
 		skb_pull(skb, 1);
 
-		अगर (!scc->enhanced)		/* reset EOM latch */
+		if (!scc->enhanced)		/* reset EOM latch */
 			Outb(scc->ctrl,RES_EOM_L);
-		वापस;
-	पूर्ण
+		return;
+	}
 	
 	/* End Of Frame... */
 	
-	अगर (skb->len == 0)
-	अणु
-		Outb(scc->ctrl, RES_Tx_P);	/* reset pending पूर्णांक */
+	if (skb->len == 0)
+	{
+		Outb(scc->ctrl, RES_Tx_P);	/* reset pending int */
 		cl(scc, R10, ABUNDER);		/* send CRC */
-		dev_kमुक्त_skb_irq(skb);
-		scc->tx_buff = शून्य;
+		dev_kfree_skb_irq(skb);
+		scc->tx_buff = NULL;
 		scc->stat.tx_state = TXS_NEWFRAME; /* next frame... */
-		वापस;
-	पूर्ण 
+		return;
+	} 
 	
 	/* send octet */
 	
 	Outb(scc->data,*skb->data);		
 	skb_pull(skb, 1);
-पूर्ण
+}
 
 
-/* External/Status पूर्णांकerrupt handler */
-अटल अंतरभूत व्योम scc_exपूर्णांक(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित अक्षर status,changes,chg_and_stat;
+/* External/Status interrupt handler */
+static inline void scc_exint(struct scc_channel *scc)
+{
+	unsigned char status,changes,chg_and_stat;
 
-	scc->stat.exपूर्णांकs++;
+	scc->stat.exints++;
 
 	status = InReg(scc->ctrl,R0);
 	changes = status ^ scc->status;
 	chg_and_stat = changes & status;
 	
-	/* ABORT: generated whenever DCD drops जबतक receiving */
+	/* ABORT: generated whenever DCD drops while receiving */
 
-	अगर (chg_and_stat & BRK_ABRT)		/* Received an ABORT */
+	if (chg_and_stat & BRK_ABRT)		/* Received an ABORT */
 		flush_rx_FIFO(scc);
 
-	/* HUNT: software DCD; on = रुकोing क्रम SYNC, off = receiving frame */
+	/* HUNT: software DCD; on = waiting for SYNC, off = receiving frame */
 
-	अगर ((changes & SYNC_HUNT) && scc->kiss.softdcd)
-	अणु
-		अगर (status & SYNC_HUNT)
-		अणु
+	if ((changes & SYNC_HUNT) && scc->kiss.softdcd)
+	{
+		if (status & SYNC_HUNT)
+		{
 			scc->dcd = 0;
 			flush_rx_FIFO(scc);
-			अगर ((scc->modem.घड़ीsrc != CLK_EXTERNAL))
+			if ((scc->modem.clocksrc != CLK_EXTERNAL))
 				OutReg(scc->ctrl,R14,SEARCH|scc->wreg[R14]); /* DPLL: enter search mode */
-		पूर्ण अन्यथा अणु
+		} else {
 			scc->dcd = 1;
-		पूर्ण
+		}
 
-		scc_notअगरy(scc, scc->dcd? HWEV_DCD_OFF:HWEV_DCD_ON);
-	पूर्ण
+		scc_notify(scc, scc->dcd? HWEV_DCD_OFF:HWEV_DCD_ON);
+	}
 
 	/* DCD: on = start to receive packet, off = ABORT condition */
-	/* (a successfully received packet generates a special condition पूर्णांक) */
+	/* (a successfully received packet generates a special condition int) */
 	
-	अगर((changes & DCD) && !scc->kiss.softdcd) /* DCD input changed state */
-	अणु
-		अगर(status & DCD)                /* DCD is now ON */
-		अणु
+	if((changes & DCD) && !scc->kiss.softdcd) /* DCD input changed state */
+	{
+		if(status & DCD)                /* DCD is now ON */
+		{
 			start_hunt(scc);
 			scc->dcd = 1;
-		पूर्ण अन्यथा अणु                        /* DCD is now OFF */
+		} else {                        /* DCD is now OFF */
 			cl(scc,R3,ENT_HM|RxENABLE); /* disable the receiver */
 			flush_rx_FIFO(scc);
 			scc->dcd = 0;
-		पूर्ण
+		}
 		
-		scc_notअगरy(scc, scc->dcd? HWEV_DCD_ON:HWEV_DCD_OFF);
-	पूर्ण
+		scc_notify(scc, scc->dcd? HWEV_DCD_ON:HWEV_DCD_OFF);
+	}
 
-#अगर_घोषित notdef
-	/* CTS: use बाह्यal TxDelay (what's that good क्रम?!)
-	 * Anyway: If we _could_ use it (BayCom USCC uses CTS क्रम
+#ifdef notdef
+	/* CTS: use external TxDelay (what's that good for?!)
+	 * Anyway: If we _could_ use it (BayCom USCC uses CTS for
 	 * own purposes) we _should_ use the "autoenable" feature
-	 * of the Z8530 and not this पूर्णांकerrupt...
+	 * of the Z8530 and not this interrupt...
 	 */
 	 
-	अगर (chg_and_stat & CTS)			/* CTS is now ON */
-	अणु
-		अगर (scc->kiss.txdelay == 0)	/* zero TXDELAY = रुको क्रम CTS */
-			scc_start_tx_समयr(scc, t_txdelay, 0);
-	पूर्ण
-#पूर्ण_अगर
+	if (chg_and_stat & CTS)			/* CTS is now ON */
+	{
+		if (scc->kiss.txdelay == 0)	/* zero TXDELAY = wait for CTS */
+			scc_start_tx_timer(scc, t_txdelay, 0);
+	}
+#endif
 	
-	अगर (scc->stat.tx_state == TXS_ACTIVE && (status & TxEOM))
-	अणु
+	if (scc->stat.tx_state == TXS_ACTIVE && (status & TxEOM))
+	{
 		scc->stat.tx_under++;	  /* oops, an underrun! count 'em */
-		Outb(scc->ctrl, RES_EXT_INT);	/* reset ext/status पूर्णांकerrupts */
+		Outb(scc->ctrl, RES_EXT_INT);	/* reset ext/status interrupts */
 
-		अगर (scc->tx_buff != शून्य)
-		अणु
-			dev_kमुक्त_skb_irq(scc->tx_buff);
-			scc->tx_buff = शून्य;
-		पूर्ण
+		if (scc->tx_buff != NULL)
+		{
+			dev_kfree_skb_irq(scc->tx_buff);
+			scc->tx_buff = NULL;
+		}
 		
 		or(scc,R10,ABUNDER);
-		scc_start_tx_समयr(scc, t_txdelay, 0);	/* restart transmission */
-	पूर्ण
+		scc_start_tx_timer(scc, t_txdelay, 0);	/* restart transmission */
+	}
 		
 	scc->status = status;
 	Outb(scc->ctrl,RES_EXT_INT);
-पूर्ण
+}
 
 
-/* Receiver पूर्णांकerrupt handler */
-अटल अंतरभूत व्योम scc_rxपूर्णांक(काष्ठा scc_channel *scc)
-अणु
-	काष्ठा sk_buff *skb;
+/* Receiver interrupt handler */
+static inline void scc_rxint(struct scc_channel *scc)
+{
+	struct sk_buff *skb;
 
-	scc->stat.rxपूर्णांकs++;
+	scc->stat.rxints++;
 
-	अगर((scc->wreg[5] & RTS) && scc->kiss.fulldup == KISS_DUPLEX_HALF)
-	अणु
-		Inb(scc->data);		/* discard अक्षर */
-		or(scc,R3,ENT_HM);	/* enter hunt mode क्रम next flag */
-		वापस;
-	पूर्ण
+	if((scc->wreg[5] & RTS) && scc->kiss.fulldup == KISS_DUPLEX_HALF)
+	{
+		Inb(scc->data);		/* discard char */
+		or(scc,R3,ENT_HM);	/* enter hunt mode for next flag */
+		return;
+	}
 
 	skb = scc->rx_buff;
 	
-	अगर (skb == शून्य)
-	अणु
+	if (skb == NULL)
+	{
 		skb = dev_alloc_skb(scc->stat.bufsize);
-		अगर (skb == शून्य)
-		अणु
+		if (skb == NULL)
+		{
 			scc->dev_stat.rx_dropped++;
 			scc->stat.nospace++;
 			Inb(scc->data);
 			or(scc, R3, ENT_HM);
-			वापस;
-		पूर्ण
+			return;
+		}
 		
 		scc->rx_buff = skb;
 		skb_put_u8(skb, 0);	/* KISS data */
-	पूर्ण
+	}
 	
-	अगर (skb->len >= scc->stat.bufsize)
-	अणु
-#अगर_घोषित notdef
-		prपूर्णांकk(KERN_DEBUG "z8530drv: oops, scc_rxint() received huge frame...\n");
-#पूर्ण_अगर
-		dev_kमुक्त_skb_irq(skb);
-		scc->rx_buff = शून्य;
+	if (skb->len >= scc->stat.bufsize)
+	{
+#ifdef notdef
+		printk(KERN_DEBUG "z8530drv: oops, scc_rxint() received huge frame...\n");
+#endif
+		dev_kfree_skb_irq(skb);
+		scc->rx_buff = NULL;
 		Inb(scc->data);
 		or(scc, R3, ENT_HM);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	skb_put_u8(skb, Inb(scc->data));
-पूर्ण
+}
 
 
-/* Receive Special Condition पूर्णांकerrupt handler */
-अटल अंतरभूत व्योम scc_spपूर्णांक(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित अक्षर status;
-	काष्ठा sk_buff *skb;
+/* Receive Special Condition interrupt handler */
+static inline void scc_spint(struct scc_channel *scc)
+{
+	unsigned char status;
+	struct sk_buff *skb;
 
-	scc->stat.spपूर्णांकs++;
+	scc->stat.spints++;
 
-	status = InReg(scc->ctrl,R1);		/* पढ़ो receiver status */
+	status = InReg(scc->ctrl,R1);		/* read receiver status */
 	
 	Inb(scc->data);				/* throw away Rx byte */
 	skb = scc->rx_buff;
 
-	अगर(status & Rx_OVR)			/* receiver overrun */
-	अणु
+	if(status & Rx_OVR)			/* receiver overrun */
+	{
 		scc->stat.rx_over++;             /* count them */
-		or(scc,R3,ENT_HM);               /* enter hunt mode क्रम next flag */
+		or(scc,R3,ENT_HM);               /* enter hunt mode for next flag */
 		
-		अगर (skb != शून्य) 
-			dev_kमुक्त_skb_irq(skb);
-		scc->rx_buff = skb = शून्य;
-	पूर्ण
+		if (skb != NULL) 
+			dev_kfree_skb_irq(skb);
+		scc->rx_buff = skb = NULL;
+	}
 
-	अगर(status & END_FR && skb != शून्य)	/* end of frame */
-	अणु
+	if(status & END_FR && skb != NULL)	/* end of frame */
+	{
 		/* CRC okay, frame ends on 8 bit boundary and received something ? */
 		
-		अगर (!(status & CRC_ERR) && (status & 0xe) == RES8 && skb->len > 0)
-		अणु
+		if (!(status & CRC_ERR) && (status & 0xe) == RES8 && skb->len > 0)
+		{
 			/* ignore last received byte (first of the CRC bytes) */
 			skb_trim(skb, skb->len-1);
 			scc_net_rx(scc, skb);
-			scc->rx_buff = शून्य;
+			scc->rx_buff = NULL;
 			scc->stat.rxframes++;
-		पूर्ण अन्यथा अणु				/* a bad frame */
-			dev_kमुक्त_skb_irq(skb);
-			scc->rx_buff = शून्य;
+		} else {				/* a bad frame */
+			dev_kfree_skb_irq(skb);
+			scc->rx_buff = NULL;
 			scc->stat.rxerrs++;
-		पूर्ण
-	पूर्ण 
+		}
+	} 
 
 	Outb(scc->ctrl,ERR_RES);
-पूर्ण
+}
 
 
-/* ----> पूर्णांकerrupt service routine क्रम the Z8530 <---- */
+/* ----> interrupt service routine for the Z8530 <---- */
 
-अटल व्योम scc_isr_dispatch(काष्ठा scc_channel *scc, पूर्णांक vector)
-अणु
+static void scc_isr_dispatch(struct scc_channel *scc, int vector)
+{
 	spin_lock(&scc->lock);
-	चयन (vector & VECTOR_MASK)
-	अणु
-		हाल TXINT: scc_txपूर्णांक(scc); अवरोध;
-		हाल EXINT: scc_exपूर्णांक(scc); अवरोध;
-		हाल RXINT: scc_rxपूर्णांक(scc); अवरोध;
-		हाल SPINT: scc_spपूर्णांक(scc); अवरोध;
-	पूर्ण
+	switch (vector & VECTOR_MASK)
+	{
+		case TXINT: scc_txint(scc); break;
+		case EXINT: scc_exint(scc); break;
+		case RXINT: scc_rxint(scc); break;
+		case SPINT: scc_spint(scc); break;
+	}
 	spin_unlock(&scc->lock);
-पूर्ण
+}
 
-/* If the card has a latch क्रम the पूर्णांकerrupt vector (like the PA0HZP card)
-   use it to get the number of the chip that generated the पूर्णांक.
+/* If the card has a latch for the interrupt vector (like the PA0HZP card)
+   use it to get the number of the chip that generated the int.
    If not: poll all defined chips.
  */
 
-#घोषणा SCC_IRQTIMEOUT 30000
+#define SCC_IRQTIMEOUT 30000
 
-अटल irqवापस_t scc_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	पूर्णांक chip_irq = (दीर्घ) dev_id;
-	अचिन्हित अक्षर vector;	
-	काष्ठा scc_channel *scc;
-	काष्ठा scc_ctrl *ctrl;
-	पूर्णांक k;
+static irqreturn_t scc_isr(int irq, void *dev_id)
+{
+	int chip_irq = (long) dev_id;
+	unsigned char vector;	
+	struct scc_channel *scc;
+	struct scc_ctrl *ctrl;
+	int k;
 	
-	अगर (Vector_Latch)
-	अणु
-	    	क्रम(k=0; k < SCC_IRQTIMEOUT; k++)
-    		अणु
+	if (Vector_Latch)
+	{
+	    	for(k=0; k < SCC_IRQTIMEOUT; k++)
+    		{
 			Outb(Vector_Latch, 0);      /* Generate INTACK */
         
 			/* Read the vector */
-			अगर((vector=Inb(Vector_Latch)) >= 16 * Nchips) अवरोध; 
-			अगर (vector & 0x01) अवरोध;
+			if((vector=Inb(Vector_Latch)) >= 16 * Nchips) break; 
+			if (vector & 0x01) break;
         	 
 		        scc=&SCC_Info[vector >> 3 ^ 0x01];
-			अगर (!scc->dev) अवरोध;
+			if (!scc->dev) break;
 
 			scc_isr_dispatch(scc, vector);
 
 			OutReg(scc->ctrl,R0,RES_H_IUS);              /* Reset Highest IUS */
-		पूर्ण  
+		}  
 
-		अगर (k == SCC_IRQTIMEOUT)
-			prपूर्णांकk(KERN_WARNING "z8530drv: endless loop in scc_isr()?\n");
+		if (k == SCC_IRQTIMEOUT)
+			printk(KERN_WARNING "z8530drv: endless loop in scc_isr()?\n");
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	/* Find the SCC generating the पूर्णांकerrupt by polling all attached SCCs
-	 * पढ़ोing RR3A (the पूर्णांकerrupt pending रेजिस्टर)
+	/* Find the SCC generating the interrupt by polling all attached SCCs
+	 * reading RR3A (the interrupt pending register)
 	 */
 
 	ctrl = SCC_ctrl;
-	जबतक (ctrl->chan_A)
-	अणु
-		अगर (ctrl->irq != chip_irq)
-		अणु
+	while (ctrl->chan_A)
+	{
+		if (ctrl->irq != chip_irq)
+		{
 			ctrl++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		scc = शून्य;
-		क्रम (k = 0; InReg(ctrl->chan_A,R3) && k < SCC_IRQTIMEOUT; k++)
-		अणु
+		scc = NULL;
+		for (k = 0; InReg(ctrl->chan_A,R3) && k < SCC_IRQTIMEOUT; k++)
+		{
 			vector=InReg(ctrl->chan_B,R2);	/* Read the vector */
-			अगर (vector & 0x01) अवरोध; 
+			if (vector & 0x01) break; 
 
 			scc = &SCC_Info[vector >> 3 ^ 0x01];
-		        अगर (!scc->dev) अवरोध;
+		        if (!scc->dev) break;
 
 			scc_isr_dispatch(scc, vector);
-		पूर्ण
+		}
 
-		अगर (k == SCC_IRQTIMEOUT)
-		अणु
-			prपूर्णांकk(KERN_WARNING "z8530drv: endless loop in scc_isr()?!\n");
-			अवरोध;
-		पूर्ण
+		if (k == SCC_IRQTIMEOUT)
+		{
+			printk(KERN_WARNING "z8530drv: endless loop in scc_isr()?!\n");
+			break;
+		}
 
-		/* This looks weird and it is. At least the BayCom USCC करोesn't
+		/* This looks weird and it is. At least the BayCom USCC doesn't
 		 * use the Interrupt Daisy Chain, thus we'll have to start
-		 * all over again to be sure not to miss an पूर्णांकerrupt from 
+		 * all over again to be sure not to miss an interrupt from 
 		 * (any of) the other chip(s)...
 		 * Honestly, the situation *is* braindamaged...
 		 */
 
-		अगर (scc != शून्य)
-		अणु
+		if (scc != NULL)
+		{
 			OutReg(scc->ctrl,R0,RES_H_IUS);
 			ctrl = SCC_ctrl; 
-		पूर्ण अन्यथा
+		} else
 			ctrl++;
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
 
 
@@ -717,53 +716,53 @@
 
 /* ----> set SCC channel speed <---- */
 
-अटल अंतरभूत व्योम set_brg(काष्ठा scc_channel *scc, अचिन्हित पूर्णांक tc)
-अणु
+static inline void set_brg(struct scc_channel *scc, unsigned int tc)
+{
 	cl(scc,R14,BRENABL);		/* disable baudrate generator */
 	wr(scc,R12,tc & 255);		/* brg rate LOW */
 	wr(scc,R13,tc >> 8);   		/* brg rate HIGH */
 	or(scc,R14,BRENABL);		/* enable baudrate generator */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम set_speed(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void set_speed(struct scc_channel *scc)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&scc->lock, flags);
 
-	अगर (scc->modem.speed > 0)	/* paranoia... */
-		set_brg(scc, (अचिन्हित) (scc->घड़ी / (scc->modem.speed * 64)) - 2);
+	if (scc->modem.speed > 0)	/* paranoia... */
+		set_brg(scc, (unsigned) (scc->clock / (scc->modem.speed * 64)) - 2);
 		
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 
 /* ----> initialize a SCC channel <---- */
 
-अटल अंतरभूत व्योम init_brg(काष्ठा scc_channel *scc)
-अणु
+static inline void init_brg(struct scc_channel *scc)
+{
 	wr(scc, R14, BRSRC);				/* BRG source = PCLK */
 	OutReg(scc->ctrl, R14, SSBR|scc->wreg[R14]);	/* DPLL source = BRG */
 	OutReg(scc->ctrl, R14, SNRZI|scc->wreg[R14]);	/* DPLL NRZI mode */
-पूर्ण
+}
 
 /*
  * Initialization according to the Z8530 manual (SGS-Thomson's version):
  *
- * 1. Modes and स्थिरants
+ * 1. Modes and constants
  *
  * WR9	11000000	chip reset
  * WR4	XXXXXXXX	Tx/Rx control, async or sync mode
  * WR1	0XX00X00	select W/REQ (optional)
- * WR2	XXXXXXXX	program पूर्णांकerrupt vector
+ * WR2	XXXXXXXX	program interrupt vector
  * WR3	XXXXXXX0	select Rx control
  * WR5	XXXX0XXX	select Tx control
- * WR6	XXXXXXXX	sync अक्षरacter
- * WR7	XXXXXXXX	sync अक्षरacter
- * WR9	000X0XXX	select पूर्णांकerrupt control
+ * WR6	XXXXXXXX	sync character
+ * WR7	XXXXXXXX	sync character
+ * WR9	000X0XXX	select interrupt control
  * WR10	XXXXXXXX	miscellaneous control (optional)
- * WR11	XXXXXXXX	घड़ी control
- * WR12	XXXXXXXX	समय स्थिरant lower byte (optional)
- * WR13	XXXXXXXX	समय स्थिरant upper byte (optional)
+ * WR11	XXXXXXXX	clock control
+ * WR12	XXXXXXXX	time constant lower byte (optional)
+ * WR13	XXXXXXXX	time constant upper byte (optional)
  * WR14	XXXXXXX0	miscellaneous control
  * WR14	XXXSSSSS	commands (optional)
  *
@@ -777,39 +776,39 @@
  *
  * 3. Interrupt status
  *
- * WR15	XXXXXXXX	enable बाह्यal/status
- * WR0	00010000	reset बाह्यal status
- * WR0	00010000	reset बाह्यal status twice
+ * WR15	XXXXXXXX	enable external/status
+ * WR0	00010000	reset external status
+ * WR0	00010000	reset external status twice
  * WR1	SSSXXSXX	enable Rx, Tx and Ext/status
- * WR9	000SXSSS	enable master पूर्णांकerrupt enable
+ * WR9	000SXSSS	enable master interrupt enable
  *
  * 1 = set to one, 0 = reset to zero
  * X = user defined, S = same as previous init
  *
  *
- * Note that the implementation dअगरfers in some poपूर्णांकs from above scheme.
+ * Note that the implementation differs in some points from above scheme.
  *
  */
  
-अटल व्योम init_channel(काष्ठा scc_channel *scc)
-अणु
-	del_समयr(&scc->tx_t);
-	del_समयr(&scc->tx_wकरोg);
+static void init_channel(struct scc_channel *scc)
+{
+	del_timer(&scc->tx_t);
+	del_timer(&scc->tx_wdog);
 
 	disable_irq(scc->irq);
 
-	wr(scc,R4,X1CLK|SDLC);		/* *1 घड़ी, SDLC mode */
+	wr(scc,R4,X1CLK|SDLC);		/* *1 clock, SDLC mode */
 	wr(scc,R1,0);			/* no W/REQ operation */
-	wr(scc,R3,Rx8|RxCRC_ENAB);	/* RX 8 bits/अक्षर, CRC, disabled */	
-	wr(scc,R5,Tx8|DTR|TxCRC_ENAB);	/* TX 8 bits/अक्षर, disabled, DTR */
+	wr(scc,R3,Rx8|RxCRC_ENAB);	/* RX 8 bits/char, CRC, disabled */	
+	wr(scc,R5,Tx8|DTR|TxCRC_ENAB);	/* TX 8 bits/char, disabled, DTR */
 	wr(scc,R6,0);			/* SDLC address zero (not used) */
 	wr(scc,R7,FLAG);		/* SDLC flag value */
 	wr(scc,R9,VIS);			/* vector includes status */
-	wr(scc,R10,(scc->modem.nrz? NRZ : NRZI)|CRCPS|ABUNDER); /* पात on underrun, preset CRC generator, NRZ(I) */
+	wr(scc,R10,(scc->modem.nrz? NRZ : NRZI)|CRCPS|ABUNDER); /* abort on underrun, preset CRC generator, NRZ(I) */
 	wr(scc,R14, 0);
 
 
-/* set घड़ी sources:
+/* set clock sources:
 
    CLK_DPLL: normal halfduplex operation
    
@@ -817,7 +816,7 @@
 		TxClk: use DPLL
 		TRxC mode DPLL output
 		
-   CLK_EXTERNAL: बाह्यal घड़ीing (G3RUH or DF9IC modem)
+   CLK_EXTERNAL: external clocking (G3RUH or DF9IC modem)
    
   	        BayCom: 		others:
   	        
@@ -835,421 +834,421 @@
 */  
 
    		
-	चयन(scc->modem.घड़ीsrc)
-	अणु
-		हाल CLK_DPLL:
+	switch(scc->modem.clocksrc)
+	{
+		case CLK_DPLL:
 			wr(scc, R11, RCDPLL|TCDPLL|TRxCOI|TRxCDP);
 			init_brg(scc);
-			अवरोध;
+			break;
 
-		हाल CLK_DIVIDER:
-			wr(scc, R11, ((scc->bअक्रम & BAYCOM)? TRxCDP : TRxCBR) | RCDPLL|TCRTxCP|TRxCOI);
+		case CLK_DIVIDER:
+			wr(scc, R11, ((scc->brand & BAYCOM)? TRxCDP : TRxCBR) | RCDPLL|TCRTxCP|TRxCOI);
 			init_brg(scc);
-			अवरोध;
+			break;
 
-		हाल CLK_EXTERNAL:
-			wr(scc, R11, (scc->bअक्रम & BAYCOM)? RCTRxCP|TCRTxCP : RCRTxCP|TCTRxCP);
+		case CLK_EXTERNAL:
+			wr(scc, R11, (scc->brand & BAYCOM)? RCTRxCP|TCRTxCP : RCRTxCP|TCTRxCP);
 			OutReg(scc->ctrl, R14, DISDPLL);
-			अवरोध;
+			break;
 
-	पूर्ण
+	}
 	
 	set_speed(scc);			/* set baudrate */
 	
-	अगर(scc->enhanced)
-	अणु
+	if(scc->enhanced)
+	{
 		or(scc,R15,SHDLCE|FIFOE);	/* enable FIFO, SDLC/HDLC Enhancements (From now R7 is R7') */
 		wr(scc,R7,AUTOEOM);
-	पूर्ण
+	}
 
-	अगर(scc->kiss.softdcd || (InReg(scc->ctrl,R0) & DCD))
+	if(scc->kiss.softdcd || (InReg(scc->ctrl,R0) & DCD))
 						/* DCD is now ON */
-	अणु
+	{
 		start_hunt(scc);
-	पूर्ण
+	}
 	
-	/* enable ABORT, DCD & SYNC/HUNT पूर्णांकerrupts */
+	/* enable ABORT, DCD & SYNC/HUNT interrupts */
 
 	wr(scc,R15, BRKIE|TxUIE|(scc->kiss.softdcd? SYNCIE:DCDIE));
 
-	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status पूर्णांकerrupts */
-	Outb(scc->ctrl,RES_EXT_INT);	/* must be करोne twice */
+	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status interrupts */
+	Outb(scc->ctrl,RES_EXT_INT);	/* must be done twice */
 
-	or(scc,R1,INT_ALL_Rx|TxINT_ENAB|EXT_INT_ENAB); /* enable पूर्णांकerrupts */
+	or(scc,R1,INT_ALL_Rx|TxINT_ENAB|EXT_INT_ENAB); /* enable interrupts */
 	
-	scc->status = InReg(scc->ctrl,R0);	/* पढ़ो initial status */
+	scc->status = InReg(scc->ctrl,R0);	/* read initial status */
 	
-	or(scc,R9,MIE);			/* master पूर्णांकerrupt enable */
+	or(scc,R9,MIE);			/* master interrupt enable */
 	
-	scc_init_समयr(scc);
+	scc_init_timer(scc);
 			
 	enable_irq(scc->irq);
-पूर्ण
+}
 
 
 
 
 /* ******************************************************************** */
-/* *			SCC समयr functions			      * */
+/* *			SCC timer functions			      * */
 /* ******************************************************************** */
 
 
-/* ----> scc_key_trx sets the समय स्थिरant क्रम the baudrate 
+/* ----> scc_key_trx sets the time constant for the baudrate 
          generator and keys the transmitter		     <---- */
 
-अटल व्योम scc_key_trx(काष्ठा scc_channel *scc, अक्षर tx)
-अणु
-	अचिन्हित पूर्णांक समय_स्थिर;
+static void scc_key_trx(struct scc_channel *scc, char tx)
+{
+	unsigned int time_const;
 		
-	अगर (scc->bअक्रम & PRIMUS)
+	if (scc->brand & PRIMUS)
 		Outb(scc->ctrl + 4, scc->option | (tx? 0x80 : 0));
 
-	अगर (scc->modem.speed < 300) 
+	if (scc->modem.speed < 300) 
 		scc->modem.speed = 1200;
 
-	समय_स्थिर = (अचिन्हित) (scc->घड़ी / (scc->modem.speed * (tx? 2:64))) - 2;
+	time_const = (unsigned) (scc->clock / (scc->modem.speed * (tx? 2:64))) - 2;
 
 	disable_irq(scc->irq);
 
-	अगर (tx)
-	अणु
+	if (tx)
+	{
 		or(scc, R1, TxINT_ENAB);	/* t_maxkeyup may have reset these */
 		or(scc, R15, TxUIE);
-	पूर्ण
+	}
 
-	अगर (scc->modem.घड़ीsrc == CLK_DPLL)
-	अणु				/* क्रमce simplex operation */
-		अगर (tx)
-		अणु
-#अगर_घोषित CONFIG_SCC_TRXECHO
-			cl(scc, R3, RxENABLE|ENT_HM);	/* चयन off receiver */
+	if (scc->modem.clocksrc == CLK_DPLL)
+	{				/* force simplex operation */
+		if (tx)
+		{
+#ifdef CONFIG_SCC_TRXECHO
+			cl(scc, R3, RxENABLE|ENT_HM);	/* switch off receiver */
 			cl(scc, R15, DCDIE|SYNCIE);	/* No DCD changes, please */
-#पूर्ण_अगर
-			set_brg(scc, समय_स्थिर);	/* reprogram baudrate generator */
+#endif
+			set_brg(scc, time_const);	/* reprogram baudrate generator */
 
 			/* DPLL -> Rx clk, BRG -> Tx CLK, TRxC mode output, TRxC = BRG */
 			wr(scc, R11, RCDPLL|TCBR|TRxCOI|TRxCBR);
 			
 			/* By popular demand: tx_inhibit */
-			अगर (scc->kiss.tx_inhibit)
-			अणु
+			if (scc->kiss.tx_inhibit)
+			{
 				or(scc,R5, TxENAB);
 				scc->wreg[R5] |= RTS;
-			पूर्ण अन्यथा अणु
+			} else {
 				or(scc,R5,RTS|TxENAB);	/* set the RTS line and enable TX */
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			cl(scc,R5,RTS|TxENAB);
 			
-			set_brg(scc, समय_स्थिर);	/* reprogram baudrate generator */
+			set_brg(scc, time_const);	/* reprogram baudrate generator */
 			
 			/* DPLL -> Rx clk, DPLL -> Tx CLK, TRxC mode output, TRxC = DPLL */
 			wr(scc, R11, RCDPLL|TCDPLL|TRxCOI|TRxCDP);
 
-#अगर_अघोषित CONFIG_SCC_TRXECHO
-			अगर (scc->kiss.softdcd)
-#पूर्ण_अगर
-			अणु
+#ifndef CONFIG_SCC_TRXECHO
+			if (scc->kiss.softdcd)
+#endif
+			{
 				or(scc,R15, scc->kiss.softdcd? SYNCIE:DCDIE);
 				start_hunt(scc);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (tx)
-		अणु
-#अगर_घोषित CONFIG_SCC_TRXECHO
-			अगर (scc->kiss.fulldup == KISS_DUPLEX_HALF)
-			अणु
+			}
+		}
+	} else {
+		if (tx)
+		{
+#ifdef CONFIG_SCC_TRXECHO
+			if (scc->kiss.fulldup == KISS_DUPLEX_HALF)
+			{
 				cl(scc, R3, RxENABLE);
 				cl(scc, R15, DCDIE|SYNCIE);
-			पूर्ण
-#पूर्ण_अगर
+			}
+#endif
 				
-			अगर (scc->kiss.tx_inhibit)
-			अणु
+			if (scc->kiss.tx_inhibit)
+			{
 				or(scc,R5, TxENAB);
 				scc->wreg[R5] |= RTS;
-			पूर्ण अन्यथा अणु	
+			} else {	
 				or(scc,R5,RTS|TxENAB);	/* enable tx */
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			cl(scc,R5,RTS|TxENAB);		/* disable tx */
 
-			अगर ((scc->kiss.fulldup == KISS_DUPLEX_HALF) &&
-#अगर_अघोषित CONFIG_SCC_TRXECHO
+			if ((scc->kiss.fulldup == KISS_DUPLEX_HALF) &&
+#ifndef CONFIG_SCC_TRXECHO
 			    scc->kiss.softdcd)
-#अन्यथा
+#else
 			    1)
-#पूर्ण_अगर
-			अणु
+#endif
+			{
 				or(scc, R15, scc->kiss.softdcd? SYNCIE:DCDIE);
 				start_hunt(scc);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	enable_irq(scc->irq);
-पूर्ण
+}
 
 
-/* ----> SCC समयr पूर्णांकerrupt handler and मित्रs. <---- */
+/* ----> SCC timer interrupt handler and friends. <---- */
 
-अटल व्योम __scc_start_tx_समयr(काष्ठा scc_channel *scc,
-				 व्योम (*handler)(काष्ठा समयr_list *t),
-				 अचिन्हित दीर्घ when)
-अणु
-	del_समयr(&scc->tx_t);
+static void __scc_start_tx_timer(struct scc_channel *scc,
+				 void (*handler)(struct timer_list *t),
+				 unsigned long when)
+{
+	del_timer(&scc->tx_t);
 
-	अगर (when == 0)
-	अणु
+	if (when == 0)
+	{
 		handler(&scc->tx_t);
-	पूर्ण अन्यथा 
-	अगर (when != TIMER_OFF)
-	अणु
+	} else 
+	if (when != TIMER_OFF)
+	{
 		scc->tx_t.function = handler;
-		scc->tx_t.expires = jअगरfies + (when*HZ)/100;
-		add_समयr(&scc->tx_t);
-	पूर्ण
-पूर्ण
+		scc->tx_t.expires = jiffies + (when*HZ)/100;
+		add_timer(&scc->tx_t);
+	}
+}
 
-अटल व्योम scc_start_tx_समयr(काष्ठा scc_channel *scc,
-			       व्योम (*handler)(काष्ठा समयr_list *t),
-			       अचिन्हित दीर्घ when)
-अणु
-	अचिन्हित दीर्घ flags;
+static void scc_start_tx_timer(struct scc_channel *scc,
+			       void (*handler)(struct timer_list *t),
+			       unsigned long when)
+{
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);
-	__scc_start_tx_समयr(scc, handler, when);
+	__scc_start_tx_timer(scc, handler, when);
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम scc_start_defer(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void scc_start_defer(struct scc_channel *scc)
+{
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);
-	del_समयr(&scc->tx_wकरोg);
+	del_timer(&scc->tx_wdog);
 	
-	अगर (scc->kiss.maxdefer != 0 && scc->kiss.maxdefer != TIMER_OFF)
-	अणु
-		scc->tx_wकरोg.function = t_busy;
-		scc->tx_wकरोg.expires = jअगरfies + HZ*scc->kiss.maxdefer;
-		add_समयr(&scc->tx_wकरोg);
-	पूर्ण
+	if (scc->kiss.maxdefer != 0 && scc->kiss.maxdefer != TIMER_OFF)
+	{
+		scc->tx_wdog.function = t_busy;
+		scc->tx_wdog.expires = jiffies + HZ*scc->kiss.maxdefer;
+		add_timer(&scc->tx_wdog);
+	}
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
-अटल व्योम scc_start_maxkeyup(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void scc_start_maxkeyup(struct scc_channel *scc)
+{
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);
-	del_समयr(&scc->tx_wकरोg);
+	del_timer(&scc->tx_wdog);
 	
-	अगर (scc->kiss.maxkeyup != 0 && scc->kiss.maxkeyup != TIMER_OFF)
-	अणु
-		scc->tx_wकरोg.function = t_maxkeyup;
-		scc->tx_wकरोg.expires = jअगरfies + HZ*scc->kiss.maxkeyup;
-		add_समयr(&scc->tx_wकरोg);
-	पूर्ण
+	if (scc->kiss.maxkeyup != 0 && scc->kiss.maxkeyup != TIMER_OFF)
+	{
+		scc->tx_wdog.function = t_maxkeyup;
+		scc->tx_wdog.expires = jiffies + HZ*scc->kiss.maxkeyup;
+		add_timer(&scc->tx_wdog);
+	}
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 /* 
- * This is called from scc_txपूर्णांक() when there are no more frames to send.
- * Not exactly a समयr function, but it is a बंद मित्र of the family...
+ * This is called from scc_txint() when there are no more frames to send.
+ * Not exactly a timer function, but it is a close friend of the family...
  */
 
-अटल व्योम scc_tx_करोne(काष्ठा scc_channel *scc)
-अणु
+static void scc_tx_done(struct scc_channel *scc)
+{
 	/* 
-	 * trx reमुख्यs keyed in fulldup mode 2 until t_idle expires.
+	 * trx remains keyed in fulldup mode 2 until t_idle expires.
 	 */
 				 
-	चयन (scc->kiss.fulldup)
-	अणु
-		हाल KISS_DUPLEX_LINK:
+	switch (scc->kiss.fulldup)
+	{
+		case KISS_DUPLEX_LINK:
 			scc->stat.tx_state = TXS_IDLE2;
-			अगर (scc->kiss.idleसमय != TIMER_OFF)
-				scc_start_tx_समयr(scc, t_idle,
-						   scc->kiss.idleसमय*100);
-			अवरोध;
-		हाल KISS_DUPLEX_OPTIMA:
-			scc_notअगरy(scc, HWEV_ALL_SENT);
-			अवरोध;
-		शेष:
+			if (scc->kiss.idletime != TIMER_OFF)
+				scc_start_tx_timer(scc, t_idle,
+						   scc->kiss.idletime*100);
+			break;
+		case KISS_DUPLEX_OPTIMA:
+			scc_notify(scc, HWEV_ALL_SENT);
+			break;
+		default:
 			scc->stat.tx_state = TXS_BUSY;
-			scc_start_tx_समयr(scc, t_tail, scc->kiss.tailसमय);
-	पूर्ण
+			scc_start_tx_timer(scc, t_tail, scc->kiss.tailtime);
+	}
 
-	netअगर_wake_queue(scc->dev);
-पूर्ण
+	netif_wake_queue(scc->dev);
+}
 
 
-अटल अचिन्हित अक्षर Rand = 17;
+static unsigned char Rand = 17;
 
-अटल अंतरभूत पूर्णांक is_grouped(काष्ठा scc_channel *scc)
-अणु
-	पूर्णांक k;
-	काष्ठा scc_channel *scc2;
-	अचिन्हित अक्षर grp1, grp2;
+static inline int is_grouped(struct scc_channel *scc)
+{
+	int k;
+	struct scc_channel *scc2;
+	unsigned char grp1, grp2;
 
 	grp1 = scc->kiss.group;
 	
-	क्रम (k = 0; k < (Nchips * 2); k++)
-	अणु
+	for (k = 0; k < (Nchips * 2); k++)
+	{
 		scc2 = &SCC_Info[k];
 		grp2 = scc2->kiss.group;
 		
-		अगर (scc2 == scc || !(scc2->dev && grp2))
-			जारी;
+		if (scc2 == scc || !(scc2->dev && grp2))
+			continue;
 		
-		अगर ((grp1 & 0x3f) == (grp2 & 0x3f))
-		अणु
-			अगर ( (grp1 & TXGROUP) && (scc2->wreg[R5] & RTS) )
-				वापस 1;
+		if ((grp1 & 0x3f) == (grp2 & 0x3f))
+		{
+			if ( (grp1 & TXGROUP) && (scc2->wreg[R5] & RTS) )
+				return 1;
 			
-			अगर ( (grp1 & RXGROUP) && scc2->dcd )
-				वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if ( (grp1 & RXGROUP) && scc2->dcd )
+				return 1;
+		}
+	}
+	return 0;
+}
 
 /* DWAIT and SLOTTIME expired
  *
- * fulldup == 0:  DCD is active or Rand > P-persistence: start t_busy समयr
- *                अन्यथा key trx and start txdelay
+ * fulldup == 0:  DCD is active or Rand > P-persistence: start t_busy timer
+ *                else key trx and start txdelay
  * fulldup == 1:  key trx and start txdelay
- * fulldup == 2:  mपूर्णांकime expired, reset status or key trx and start txdelay
+ * fulldup == 2:  mintime expired, reset status or key trx and start txdelay
  */
 
-अटल व्योम t_dरुको(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_t);
+static void t_dwait(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_t);
 	
-	अगर (scc->stat.tx_state == TXS_WAIT)	/* maxkeyup or idle समयout */
-	अणु
-		अगर (skb_queue_empty(&scc->tx_queue)) अणु	/* nothing to send */
+	if (scc->stat.tx_state == TXS_WAIT)	/* maxkeyup or idle timeout */
+	{
+		if (skb_queue_empty(&scc->tx_queue)) {	/* nothing to send */
 			scc->stat.tx_state = TXS_IDLE;
-			netअगर_wake_queue(scc->dev);	/* t_maxkeyup locked it. */
-			वापस;
-		पूर्ण
+			netif_wake_queue(scc->dev);	/* t_maxkeyup locked it. */
+			return;
+		}
 
 		scc->stat.tx_state = TXS_BUSY;
-	पूर्ण
+	}
 
-	अगर (scc->kiss.fulldup == KISS_DUPLEX_HALF)
-	अणु
+	if (scc->kiss.fulldup == KISS_DUPLEX_HALF)
+	{
 		Rand = Rand * 17 + 31;
 		
-		अगर (scc->dcd || (scc->kiss.persist) < Rand || (scc->kiss.group && is_grouped(scc)) )
-		अणु
+		if (scc->dcd || (scc->kiss.persist) < Rand || (scc->kiss.group && is_grouped(scc)) )
+		{
 			scc_start_defer(scc);
-			scc_start_tx_समयr(scc, t_dरुको, scc->kiss.slotसमय);
-			वापस ;
-		पूर्ण
-	पूर्ण
+			scc_start_tx_timer(scc, t_dwait, scc->kiss.slottime);
+			return ;
+		}
+	}
 
-	अगर ( !(scc->wreg[R5] & RTS) )
-	अणु
+	if ( !(scc->wreg[R5] & RTS) )
+	{
 		scc_key_trx(scc, TX_ON);
-		scc_start_tx_समयr(scc, t_txdelay, scc->kiss.txdelay);
-	पूर्ण अन्यथा अणु
-		scc_start_tx_समयr(scc, t_txdelay, 0);
-	पूर्ण
-पूर्ण
+		scc_start_tx_timer(scc, t_txdelay, scc->kiss.txdelay);
+	} else {
+		scc_start_tx_timer(scc, t_txdelay, 0);
+	}
+}
 
 
 /* TXDELAY expired
  *
- * kick transmission by a fake scc_txपूर्णांक(scc), start 'maxkeyup' watchकरोg.
+ * kick transmission by a fake scc_txint(scc), start 'maxkeyup' watchdog.
  */
 
-अटल व्योम t_txdelay(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_t);
+static void t_txdelay(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_t);
 
 	scc_start_maxkeyup(scc);
 
-	अगर (scc->tx_buff == शून्य)
-	अणु
+	if (scc->tx_buff == NULL)
+	{
 		disable_irq(scc->irq);
-		scc_txपूर्णांक(scc);	
+		scc_txint(scc);	
 		enable_irq(scc->irq);
-	पूर्ण
-पूर्ण
+	}
+}
 	
 
 /* TAILTIME expired
  *
- * चयन off transmitter. If we were stopped by Maxkeyup restart
+ * switch off transmitter. If we were stopped by Maxkeyup restart
  * transmission after 'mintime' seconds
  */
 
-अटल व्योम t_tail(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_t);
-	अचिन्हित दीर्घ flags;
+static void t_tail(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_t);
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags); 
- 	del_समयr(&scc->tx_wकरोg);	
+ 	del_timer(&scc->tx_wdog);	
  	scc_key_trx(scc, TX_OFF);
 	spin_unlock_irqrestore(&scc->lock, flags);
 
- 	अगर (scc->stat.tx_state == TXS_TIMEOUT)		/* we had a समयout? */
- 	अणु
+ 	if (scc->stat.tx_state == TXS_TIMEOUT)		/* we had a timeout? */
+ 	{
  		scc->stat.tx_state = TXS_WAIT;
-		scc_start_tx_समयr(scc, t_dरुको, scc->kiss.mपूर्णांकime*100);
- 		वापस;
- 	पूर्ण
+		scc_start_tx_timer(scc, t_dwait, scc->kiss.mintime*100);
+ 		return;
+ 	}
  	
  	scc->stat.tx_state = TXS_IDLE;
-	netअगर_wake_queue(scc->dev);
-पूर्ण
+	netif_wake_queue(scc->dev);
+}
 
 
-/* BUSY समयout
+/* BUSY timeout
  *
- * throw away send buffers अगर DCD reमुख्यs active too दीर्घ.
+ * throw away send buffers if DCD remains active too long.
  */
 
-अटल व्योम t_busy(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_wकरोg);
+static void t_busy(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_wdog);
 
-	del_समयr(&scc->tx_t);
-	netअगर_stop_queue(scc->dev);	/* करोn't pile on the wabbit! */
+	del_timer(&scc->tx_t);
+	netif_stop_queue(scc->dev);	/* don't pile on the wabbit! */
 
 	scc_discard_buffers(scc);
 	scc->stat.txerrs++;
 	scc->stat.tx_state = TXS_IDLE;
 
-	netअगर_wake_queue(scc->dev);	
-पूर्ण
+	netif_wake_queue(scc->dev);	
+}
 
-/* MAXKEYUP समयout
+/* MAXKEYUP timeout
  *
- * this is our watchकरोg.
+ * this is our watchdog.
  */
 
-अटल व्योम t_maxkeyup(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_wकरोg);
-	अचिन्हित दीर्घ flags;
+static void t_maxkeyup(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_wdog);
+	unsigned long flags;
 
 	spin_lock_irqsave(&scc->lock, flags);
 	/* 
-	 * let things settle करोwn beक्रमe we start to
+	 * let things settle down before we start to
 	 * accept new data.
 	 */
 
-	netअगर_stop_queue(scc->dev);
+	netif_stop_queue(scc->dev);
 	scc_discard_buffers(scc);
 
-	del_समयr(&scc->tx_t);
+	del_timer(&scc->tx_t);
 
-	cl(scc, R1, TxINT_ENAB);	/* क्रमce an ABORT, but करोn't */
+	cl(scc, R1, TxINT_ENAB);	/* force an ABORT, but don't */
 	cl(scc, R15, TxUIE);		/* count it. */
 	OutReg(scc->ctrl, R0, RES_Tx_P);
 
@@ -1257,36 +1256,36 @@
 
 	scc->stat.txerrs++;
 	scc->stat.tx_state = TXS_TIMEOUT;
-	scc_start_tx_समयr(scc, t_tail, scc->kiss.tailसमय);
-पूर्ण
+	scc_start_tx_timer(scc, t_tail, scc->kiss.tailtime);
+}
 
-/* IDLE समयout
+/* IDLE timeout
  *
- * in fulldup mode 2 it keys करोwn the transmitter after 'idle' seconds
- * of inactivity. We will not restart transmission beक्रमe 'mintime'
+ * in fulldup mode 2 it keys down the transmitter after 'idle' seconds
+ * of inactivity. We will not restart transmission before 'mintime'
  * expires.
  */
 
-अटल व्योम t_idle(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_t);
+static void t_idle(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_t);
 	
-	del_समयr(&scc->tx_wकरोg);
+	del_timer(&scc->tx_wdog);
 
 	scc_key_trx(scc, TX_OFF);
-	अगर(scc->kiss.mपूर्णांकime)
-		scc_start_tx_समयr(scc, t_dरुको, scc->kiss.mपूर्णांकime*100);
+	if(scc->kiss.mintime)
+		scc_start_tx_timer(scc, t_dwait, scc->kiss.mintime*100);
 	scc->stat.tx_state = TXS_WAIT;
-पूर्ण
+}
 
-अटल व्योम scc_init_समयr(काष्ठा scc_channel *scc)
-अणु
-	अचिन्हित दीर्घ flags;
+static void scc_init_timer(struct scc_channel *scc)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&scc->lock, flags);	
 	scc->stat.tx_state = TXS_IDLE;
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 
 /* ******************************************************************** */
@@ -1298,197 +1297,197 @@
  * this will set the "hardware" parameters through KISS commands or ioctl()
  */
 
-#घोषणा CAST(x) (अचिन्हित दीर्घ)(x)
+#define CAST(x) (unsigned long)(x)
 
-अटल अचिन्हित पूर्णांक scc_set_param(काष्ठा scc_channel *scc, अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक arg)
-अणु
-	चयन (cmd)
-	अणु
-		हाल PARAM_TXDELAY:	scc->kiss.txdelay=arg;		अवरोध;
-		हाल PARAM_PERSIST:	scc->kiss.persist=arg;		अवरोध;
-		हाल PARAM_SLOTTIME:	scc->kiss.slotसमय=arg;		अवरोध;
-		हाल PARAM_TXTAIL:	scc->kiss.tailसमय=arg;		अवरोध;
-		हाल PARAM_FULLDUP:	scc->kiss.fulldup=arg;		अवरोध;
-		हाल PARAM_DTR:		अवरोध; /* करोes someone need this? */
-		हाल PARAM_GROUP:	scc->kiss.group=arg;		अवरोध;
-		हाल PARAM_IDLE:	scc->kiss.idleसमय=arg;		अवरोध;
-		हाल PARAM_MIN:		scc->kiss.mपूर्णांकime=arg;		अवरोध;
-		हाल PARAM_MAXKEY:	scc->kiss.maxkeyup=arg;		अवरोध;
-		हाल PARAM_WAIT:	scc->kiss.रुकोसमय=arg;		अवरोध;
-		हाल PARAM_MAXDEFER:	scc->kiss.maxdefer=arg;		अवरोध;
-		हाल PARAM_TX:		scc->kiss.tx_inhibit=arg;	अवरोध;
+static unsigned int scc_set_param(struct scc_channel *scc, unsigned int cmd, unsigned int arg)
+{
+	switch (cmd)
+	{
+		case PARAM_TXDELAY:	scc->kiss.txdelay=arg;		break;
+		case PARAM_PERSIST:	scc->kiss.persist=arg;		break;
+		case PARAM_SLOTTIME:	scc->kiss.slottime=arg;		break;
+		case PARAM_TXTAIL:	scc->kiss.tailtime=arg;		break;
+		case PARAM_FULLDUP:	scc->kiss.fulldup=arg;		break;
+		case PARAM_DTR:		break; /* does someone need this? */
+		case PARAM_GROUP:	scc->kiss.group=arg;		break;
+		case PARAM_IDLE:	scc->kiss.idletime=arg;		break;
+		case PARAM_MIN:		scc->kiss.mintime=arg;		break;
+		case PARAM_MAXKEY:	scc->kiss.maxkeyup=arg;		break;
+		case PARAM_WAIT:	scc->kiss.waittime=arg;		break;
+		case PARAM_MAXDEFER:	scc->kiss.maxdefer=arg;		break;
+		case PARAM_TX:		scc->kiss.tx_inhibit=arg;	break;
 
-		हाल PARAM_SOFTDCD:	
+		case PARAM_SOFTDCD:	
 			scc->kiss.softdcd=arg;
-			अगर (arg)
-			अणु
+			if (arg)
+			{
 				or(scc, R15, SYNCIE);
 				cl(scc, R15, DCDIE);
 				start_hunt(scc);
-			पूर्ण अन्यथा अणु
+			} else {
 				or(scc, R15, DCDIE);
 				cl(scc, R15, SYNCIE);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 				
-		हाल PARAM_SPEED:
-			अगर (arg < 256)
+		case PARAM_SPEED:
+			if (arg < 256)
 				scc->modem.speed=arg*100;
-			अन्यथा
+			else
 				scc->modem.speed=arg;
 
-			अगर (scc->stat.tx_state == 0)	/* only चयन baudrate on rx... ;-) */
+			if (scc->stat.tx_state == 0)	/* only switch baudrate on rx... ;-) */
 				set_speed(scc);
-			अवरोध;
+			break;
 			
-		हाल PARAM_RTS:	
-			अगर ( !(scc->wreg[R5] & RTS) )
-			अणु
-				अगर (arg != TX_OFF) अणु
+		case PARAM_RTS:	
+			if ( !(scc->wreg[R5] & RTS) )
+			{
+				if (arg != TX_OFF) {
 					scc_key_trx(scc, TX_ON);
-					scc_start_tx_समयr(scc, t_txdelay, scc->kiss.txdelay);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (arg == TX_OFF)
-				अणु
+					scc_start_tx_timer(scc, t_txdelay, scc->kiss.txdelay);
+				}
+			} else {
+				if (arg == TX_OFF)
+				{
 					scc->stat.tx_state = TXS_BUSY;
-					scc_start_tx_समयr(scc, t_tail, scc->kiss.tailसमय);
-				पूर्ण
-			पूर्ण
-			अवरोध;
+					scc_start_tx_timer(scc, t_tail, scc->kiss.tailtime);
+				}
+			}
+			break;
 			
-		हाल PARAM_HWEVENT:
-			scc_notअगरy(scc, scc->dcd? HWEV_DCD_ON:HWEV_DCD_OFF);
-			अवरोध;
+		case PARAM_HWEVENT:
+			scc_notify(scc, scc->dcd? HWEV_DCD_ON:HWEV_DCD_OFF);
+			break;
 
-		शेष:		वापस -EINVAL;
-	पूर्ण
+		default:		return -EINVAL;
+	}
 	
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
  
-अटल अचिन्हित दीर्घ scc_get_param(काष्ठा scc_channel *scc, अचिन्हित पूर्णांक cmd)
-अणु
-	चयन (cmd)
-	अणु
-		हाल PARAM_TXDELAY:	वापस CAST(scc->kiss.txdelay);
-		हाल PARAM_PERSIST:	वापस CAST(scc->kiss.persist);
-		हाल PARAM_SLOTTIME:	वापस CAST(scc->kiss.slotसमय);
-		हाल PARAM_TXTAIL:	वापस CAST(scc->kiss.tailसमय);
-		हाल PARAM_FULLDUP:	वापस CAST(scc->kiss.fulldup);
-		हाल PARAM_SOFTDCD:	वापस CAST(scc->kiss.softdcd);
-		हाल PARAM_DTR:		वापस CAST((scc->wreg[R5] & DTR)? 1:0);
-		हाल PARAM_RTS:		वापस CAST((scc->wreg[R5] & RTS)? 1:0);
-		हाल PARAM_SPEED:	वापस CAST(scc->modem.speed);
-		हाल PARAM_GROUP:	वापस CAST(scc->kiss.group);
-		हाल PARAM_IDLE:	वापस CAST(scc->kiss.idleसमय);
-		हाल PARAM_MIN:		वापस CAST(scc->kiss.mपूर्णांकime);
-		हाल PARAM_MAXKEY:	वापस CAST(scc->kiss.maxkeyup);
-		हाल PARAM_WAIT:	वापस CAST(scc->kiss.रुकोसमय);
-		हाल PARAM_MAXDEFER:	वापस CAST(scc->kiss.maxdefer);
-		हाल PARAM_TX:		वापस CAST(scc->kiss.tx_inhibit);
-		शेष:		वापस NO_SUCH_PARAM;
-	पूर्ण
+static unsigned long scc_get_param(struct scc_channel *scc, unsigned int cmd)
+{
+	switch (cmd)
+	{
+		case PARAM_TXDELAY:	return CAST(scc->kiss.txdelay);
+		case PARAM_PERSIST:	return CAST(scc->kiss.persist);
+		case PARAM_SLOTTIME:	return CAST(scc->kiss.slottime);
+		case PARAM_TXTAIL:	return CAST(scc->kiss.tailtime);
+		case PARAM_FULLDUP:	return CAST(scc->kiss.fulldup);
+		case PARAM_SOFTDCD:	return CAST(scc->kiss.softdcd);
+		case PARAM_DTR:		return CAST((scc->wreg[R5] & DTR)? 1:0);
+		case PARAM_RTS:		return CAST((scc->wreg[R5] & RTS)? 1:0);
+		case PARAM_SPEED:	return CAST(scc->modem.speed);
+		case PARAM_GROUP:	return CAST(scc->kiss.group);
+		case PARAM_IDLE:	return CAST(scc->kiss.idletime);
+		case PARAM_MIN:		return CAST(scc->kiss.mintime);
+		case PARAM_MAXKEY:	return CAST(scc->kiss.maxkeyup);
+		case PARAM_WAIT:	return CAST(scc->kiss.waittime);
+		case PARAM_MAXDEFER:	return CAST(scc->kiss.maxdefer);
+		case PARAM_TX:		return CAST(scc->kiss.tx_inhibit);
+		default:		return NO_SUCH_PARAM;
+	}
 
-पूर्ण
+}
 
-#अघोषित CAST
+#undef CAST
 
 /* ******************************************************************* */
 /* *			Send calibration pattern		     * */
 /* ******************************************************************* */
 
-अटल व्योम scc_stop_calibrate(काष्ठा समयr_list *t)
-अणु
-	काष्ठा scc_channel *scc = from_समयr(scc, t, tx_wकरोg);
-	अचिन्हित दीर्घ flags;
+static void scc_stop_calibrate(struct timer_list *t)
+{
+	struct scc_channel *scc = from_timer(scc, t, tx_wdog);
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);
-	del_समयr(&scc->tx_wकरोg);
+	del_timer(&scc->tx_wdog);
 	scc_key_trx(scc, TX_OFF);
 	wr(scc, R6, 0);
 	wr(scc, R7, FLAG);
-	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status पूर्णांकerrupts */
+	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status interrupts */
 	Outb(scc->ctrl,RES_EXT_INT);
 
-	netअगर_wake_queue(scc->dev);
+	netif_wake_queue(scc->dev);
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 
-अटल व्योम
-scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णांक duration, अचिन्हित अक्षर pattern)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+scc_start_calibrate(struct scc_channel *scc, int duration, unsigned char pattern)
+{
+	unsigned long flags;
 	
 	spin_lock_irqsave(&scc->lock, flags);
-	netअगर_stop_queue(scc->dev);
+	netif_stop_queue(scc->dev);
 	scc_discard_buffers(scc);
 
-	del_समयr(&scc->tx_wकरोg);
+	del_timer(&scc->tx_wdog);
 
-	scc->tx_wकरोg.function = scc_stop_calibrate;
-	scc->tx_wकरोg.expires = jअगरfies + HZ*duration;
-	add_समयr(&scc->tx_wकरोg);
+	scc->tx_wdog.function = scc_stop_calibrate;
+	scc->tx_wdog.expires = jiffies + HZ*duration;
+	add_timer(&scc->tx_wdog);
 
-	/* This करोesn't seem to work. Why not? */	
+	/* This doesn't seem to work. Why not? */	
 	wr(scc, R6, 0);
 	wr(scc, R7, pattern);
 
 	/* 
-	 * Don't know अगर this works. 
+	 * Don't know if this works. 
 	 * Damn, where is my Z8530 programming manual...? 
 	 */
 
-	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status पूर्णांकerrupts */
+	Outb(scc->ctrl,RES_EXT_INT);	/* reset ext/status interrupts */
 	Outb(scc->ctrl,RES_EXT_INT);
 
 	scc_key_trx(scc, TX_ON);
 	spin_unlock_irqrestore(&scc->lock, flags);
-पूर्ण
+}
 
 /* ******************************************************************* */
-/* *		Init channel काष्ठाures, special HW, etc...	     * */
+/* *		Init channel structures, special HW, etc...	     * */
 /* ******************************************************************* */
 
 /*
  * Reset the Z8530s and setup special hardware
  */
 
-अटल व्योम z8530_init(व्योम)
-अणु
-	काष्ठा scc_channel *scc;
-	पूर्णांक chip, k;
-	अचिन्हित दीर्घ flags;
-	अक्षर *flag;
+static void z8530_init(void)
+{
+	struct scc_channel *scc;
+	int chip, k;
+	unsigned long flags;
+	char *flag;
 
 
-	prपूर्णांकk(KERN_INFO "Init Z8530 driver: %u channels, IRQ", Nchips*2);
+	printk(KERN_INFO "Init Z8530 driver: %u channels, IRQ", Nchips*2);
 	
 	flag=" ";
-	क्रम (k = 0; k < nr_irqs; k++)
-		अगर (Ivec[k].used) 
-		अणु
-			prपूर्णांकk("%s%d", flag, k);
+	for (k = 0; k < nr_irqs; k++)
+		if (Ivec[k].used) 
+		{
+			printk("%s%d", flag, k);
 			flag=",";
-		पूर्ण
-	prपूर्णांकk("\n");
+		}
+	printk("\n");
 
 
-	/* reset and pre-init all chips in the प्रणाली */
-	क्रम (chip = 0; chip < Nchips; chip++)
-	अणु
+	/* reset and pre-init all chips in the system */
+	for (chip = 0; chip < Nchips; chip++)
+	{
 		scc=&SCC_Info[2*chip];
-		अगर (!scc->ctrl) जारी;
+		if (!scc->ctrl) continue;
 
 		/* Special SCC cards */
 
-		अगर(scc->bअक्रम & EAGLE)			/* this is an EAGLE card */
-			Outb(scc->special,0x08);	/* enable पूर्णांकerrupt on the board */
+		if(scc->brand & EAGLE)			/* this is an EAGLE card */
+			Outb(scc->special,0x08);	/* enable interrupt on the board */
 			
-		अगर(scc->bअक्रम & (PC100 | PRIMUS))	/* this is a PC100/PRIMUS card */
+		if(scc->brand & (PC100 | PRIMUS))	/* this is a PC100/PRIMUS card */
 			Outb(scc->special,scc->option);	/* set the MODEM mode (0x22) */
 
 			
@@ -1497,47 +1496,47 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 		spin_lock_irqsave(&scc->lock, flags);
 				
 		Outb(scc->ctrl, 0);
-		OutReg(scc->ctrl,R9,FHWRES);		/* क्रमce hardware reset */
-		udelay(100);				/* give it 'a bit' more समय than required */
-		wr(scc, R2, chip*16);			/* पूर्णांकerrupt vector */
+		OutReg(scc->ctrl,R9,FHWRES);		/* force hardware reset */
+		udelay(100);				/* give it 'a bit' more time than required */
+		wr(scc, R2, chip*16);			/* interrupt vector */
 		wr(scc, R9, VIS);			/* vector includes status */
 		spin_unlock_irqrestore(&scc->lock, flags);		
-        पूर्ण
+        }
 
  
 	Driver_Initialized = 1;
-पूर्ण
+}
 
 /*
- * Allocate device काष्ठाure, err, instance, and रेजिस्टर driver
+ * Allocate device structure, err, instance, and register driver
  */
 
-अटल पूर्णांक scc_net_alloc(स्थिर अक्षर *name, काष्ठा scc_channel *scc)
-अणु
-	पूर्णांक err;
-	काष्ठा net_device *dev;
+static int scc_net_alloc(const char *name, struct scc_channel *scc)
+{
+	int err;
+	struct net_device *dev;
 
 	dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, scc_net_setup);
-	अगर (!dev) 
-		वापस -ENOMEM;
+	if (!dev) 
+		return -ENOMEM;
 
 	dev->ml_priv = scc;
 	scc->dev = dev;
 	spin_lock_init(&scc->lock);
-	समयr_setup(&scc->tx_t, शून्य, 0);
-	समयr_setup(&scc->tx_wकरोg, शून्य, 0);
+	timer_setup(&scc->tx_t, NULL, 0);
+	timer_setup(&scc->tx_wdog, NULL, 0);
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: can't register network device (%d)\n", 
+	err = register_netdevice(dev);
+	if (err) {
+		printk(KERN_ERR "%s: can't register network device (%d)\n", 
 		       name, err);
-		मुक्त_netdev(dev);
-		scc->dev = शून्य;
-		वापस err;
-	पूर्ण
+		free_netdev(dev);
+		scc->dev = NULL;
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
@@ -1545,26 +1544,26 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 /* *			    Network driver methods		      * */
 /* ******************************************************************** */
 
-अटल स्थिर काष्ठा net_device_ops scc_netdev_ops = अणु
-	.nकरो_खोलो            = scc_net_खोलो,
-	.nकरो_stop	     = scc_net_बंद,
-	.nकरो_start_xmit	     = scc_net_tx,
-	.nकरो_set_mac_address = scc_net_set_mac_address,
-	.nकरो_get_stats       = scc_net_get_stats,
-	.nकरो_करो_ioctl        = scc_net_ioctl,
-पूर्ण;
+static const struct net_device_ops scc_netdev_ops = {
+	.ndo_open            = scc_net_open,
+	.ndo_stop	     = scc_net_close,
+	.ndo_start_xmit	     = scc_net_tx,
+	.ndo_set_mac_address = scc_net_set_mac_address,
+	.ndo_get_stats       = scc_net_get_stats,
+	.ndo_do_ioctl        = scc_net_ioctl,
+};
 
 /* ----> Initialize device <----- */
 
-अटल व्योम scc_net_setup(काष्ठा net_device *dev)
-अणु
+static void scc_net_setup(struct net_device *dev)
+{
 	dev->tx_queue_len    = 16;	/* should be enough... */
 
 	dev->netdev_ops	     = &scc_netdev_ops;
 	dev->header_ops      = &ax25_header_ops;
 
-	स_नकल(dev->broadcast, &ax25_bcast,  AX25_ADDR_LEN);
-	स_नकल(dev->dev_addr,  &ax25_defaddr, AX25_ADDR_LEN);
+	memcpy(dev->broadcast, &ax25_bcast,  AX25_ADDR_LEN);
+	memcpy(dev->dev_addr,  &ax25_defaddr, AX25_ADDR_LEN);
  
 	dev->flags      = 0;
 
@@ -1573,82 +1572,82 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 	dev->mtu = AX25_DEF_PACLEN;
 	dev->addr_len = AX25_ADDR_LEN;
 
-पूर्ण
+}
 
-/* ----> खोलो network device <---- */
+/* ----> open network device <---- */
 
-अटल पूर्णांक scc_net_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा scc_channel *scc = (काष्ठा scc_channel *) dev->ml_priv;
+static int scc_net_open(struct net_device *dev)
+{
+	struct scc_channel *scc = (struct scc_channel *) dev->ml_priv;
 
- 	अगर (!scc->init)
-		वापस -EINVAL;
+ 	if (!scc->init)
+		return -EINVAL;
 
-	scc->tx_buff = शून्य;
+	scc->tx_buff = NULL;
 	skb_queue_head_init(&scc->tx_queue);
  
 	init_channel(scc);
 
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+	netif_start_queue(dev);
+	return 0;
+}
 
-/* ----> बंद network device <---- */
+/* ----> close network device <---- */
 
-अटल पूर्णांक scc_net_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा scc_channel *scc = (काष्ठा scc_channel *) dev->ml_priv;
-	अचिन्हित दीर्घ flags;
+static int scc_net_close(struct net_device *dev)
+{
+	struct scc_channel *scc = (struct scc_channel *) dev->ml_priv;
+	unsigned long flags;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 	spin_lock_irqsave(&scc->lock, flags);	
-	Outb(scc->ctrl,0);		/* Make sure poपूर्णांकer is written */
-	wr(scc,R1,0);			/* disable पूर्णांकerrupts */
+	Outb(scc->ctrl,0);		/* Make sure pointer is written */
+	wr(scc,R1,0);			/* disable interrupts */
 	wr(scc,R3,0);
 	spin_unlock_irqrestore(&scc->lock, flags);
 
-	del_समयr_sync(&scc->tx_t);
-	del_समयr_sync(&scc->tx_wकरोg);
+	del_timer_sync(&scc->tx_t);
+	del_timer_sync(&scc->tx_wdog);
 	
 	scc_discard_buffers(scc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* ----> receive frame, called from scc_rxपूर्णांक() <---- */
+/* ----> receive frame, called from scc_rxint() <---- */
 
-अटल व्योम scc_net_rx(काष्ठा scc_channel *scc, काष्ठा sk_buff *skb)
-अणु
-	अगर (skb->len == 0) अणु
-		dev_kमुक्त_skb_irq(skb);
-		वापस;
-	पूर्ण
+static void scc_net_rx(struct scc_channel *scc, struct sk_buff *skb)
+{
+	if (skb->len == 0) {
+		dev_kfree_skb_irq(skb);
+		return;
+	}
 		
 	scc->dev_stat.rx_packets++;
 	scc->dev_stat.rx_bytes += skb->len;
 
 	skb->protocol = ax25_type_trans(skb, scc->dev);
 	
-	netअगर_rx(skb);
-पूर्ण
+	netif_rx(skb);
+}
 
 /* ----> transmit frame <---- */
 
-अटल netdev_tx_t scc_net_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा scc_channel *scc = (काष्ठा scc_channel *) dev->ml_priv;
-	अचिन्हित दीर्घ flags;
-	अक्षर kisscmd;
+static netdev_tx_t scc_net_tx(struct sk_buff *skb, struct net_device *dev)
+{
+	struct scc_channel *scc = (struct scc_channel *) dev->ml_priv;
+	unsigned long flags;
+	char kisscmd;
 
-	अगर (skb->protocol == htons(ETH_P_IP))
-		वापस ax25_ip_xmit(skb);
+	if (skb->protocol == htons(ETH_P_IP))
+		return ax25_ip_xmit(skb);
 
-	अगर (skb->len > scc->stat.bufsize || skb->len < 2) अणु
+	if (skb->len > scc->stat.bufsize || skb->len < 2) {
 		scc->dev_stat.tx_dropped++;	/* bogus frame */
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
 	
 	scc->dev_stat.tx_packets++;
 	scc->dev_stat.tx_bytes += skb->len;
@@ -1657,109 +1656,109 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 	kisscmd = *skb->data & 0x1f;
 	skb_pull(skb, 1);
 
-	अगर (kisscmd) अणु
+	if (kisscmd) {
 		scc_set_param(scc, kisscmd, *skb->data);
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
 
 	spin_lock_irqsave(&scc->lock, flags);
 		
-	अगर (skb_queue_len(&scc->tx_queue) > scc->dev->tx_queue_len) अणु
-		काष्ठा sk_buff *skb_del;
+	if (skb_queue_len(&scc->tx_queue) > scc->dev->tx_queue_len) {
+		struct sk_buff *skb_del;
 		skb_del = skb_dequeue(&scc->tx_queue);
-		dev_kमुक्त_skb(skb_del);
-	पूर्ण
+		dev_kfree_skb(skb_del);
+	}
 	skb_queue_tail(&scc->tx_queue, skb);
-	netअगर_trans_update(dev);
+	netif_trans_update(dev);
 	
 
 	/*
-	 * Start transmission अगर the trx state is idle or
-	 * t_idle hasn't expired yet. Use dरुको/persistence/slotसमय
-	 * algorithm क्रम normal halfduplex operation.
+	 * Start transmission if the trx state is idle or
+	 * t_idle hasn't expired yet. Use dwait/persistence/slottime
+	 * algorithm for normal halfduplex operation.
 	 */
 
-	अगर(scc->stat.tx_state == TXS_IDLE || scc->stat.tx_state == TXS_IDLE2) अणु
+	if(scc->stat.tx_state == TXS_IDLE || scc->stat.tx_state == TXS_IDLE2) {
 		scc->stat.tx_state = TXS_BUSY;
-		अगर (scc->kiss.fulldup == KISS_DUPLEX_HALF)
-			__scc_start_tx_समयr(scc, t_dरुको, scc->kiss.रुकोसमय);
-		अन्यथा
-			__scc_start_tx_समयr(scc, t_dरुको, 0);
-	पूर्ण
+		if (scc->kiss.fulldup == KISS_DUPLEX_HALF)
+			__scc_start_tx_timer(scc, t_dwait, scc->kiss.waittime);
+		else
+			__scc_start_tx_timer(scc, t_dwait, 0);
+	}
 	spin_unlock_irqrestore(&scc->lock, flags);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /* ----> ioctl functions <---- */
 
 /*
- * SIOCSCCCFG		- configure driver	arg: (काष्ठा scc_hw_config *) arg
+ * SIOCSCCCFG		- configure driver	arg: (struct scc_hw_config *) arg
  * SIOCSCCINI		- initialize driver	arg: ---
- * SIOCSCCCHANINI	- initialize channel	arg: (काष्ठा scc_modem *) arg
- * SIOCSCCSMEM		- set memory		arg: (काष्ठा scc_mem_config *) arg
- * SIOCSCCGKISS		- get level 1 parameter	arg: (काष्ठा scc_kiss_cmd *) arg
- * SIOCSCCSKISS		- set level 1 parameter arg: (काष्ठा scc_kiss_cmd *) arg
- * SIOCSCCGSTAT		- get driver status	arg: (काष्ठा scc_stat *) arg
- * SIOCSCCCAL		- send calib. pattern	arg: (काष्ठा scc_calibrate *) arg
+ * SIOCSCCCHANINI	- initialize channel	arg: (struct scc_modem *) arg
+ * SIOCSCCSMEM		- set memory		arg: (struct scc_mem_config *) arg
+ * SIOCSCCGKISS		- get level 1 parameter	arg: (struct scc_kiss_cmd *) arg
+ * SIOCSCCSKISS		- set level 1 parameter arg: (struct scc_kiss_cmd *) arg
+ * SIOCSCCGSTAT		- get driver status	arg: (struct scc_stat *) arg
+ * SIOCSCCCAL		- send calib. pattern	arg: (struct scc_calibrate *) arg
  */
 
-अटल पूर्णांक scc_net_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा scc_kiss_cmd kiss_cmd;
-	काष्ठा scc_mem_config memcfg;
-	काष्ठा scc_hw_config hwcfg;
-	काष्ठा scc_calibrate cal;
-	काष्ठा scc_channel *scc = (काष्ठा scc_channel *) dev->ml_priv;
-	पूर्णांक chan;
-	अचिन्हित अक्षर device_name[IFNAMSIZ];
-	व्योम __user *arg = अगरr->अगरr_data;
+static int scc_net_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct scc_kiss_cmd kiss_cmd;
+	struct scc_mem_config memcfg;
+	struct scc_hw_config hwcfg;
+	struct scc_calibrate cal;
+	struct scc_channel *scc = (struct scc_channel *) dev->ml_priv;
+	int chan;
+	unsigned char device_name[IFNAMSIZ];
+	void __user *arg = ifr->ifr_data;
 	
 	
-	अगर (!Driver_Initialized)
-	अणु
-		अगर (cmd == SIOCSCCCFG)
-		अणु
-			पूर्णांक found = 1;
+	if (!Driver_Initialized)
+	{
+		if (cmd == SIOCSCCCFG)
+		{
+			int found = 1;
 
-			अगर (!capable(CAP_SYS_RAWIO)) वापस -EPERM;
-			अगर (!arg) वापस -EFAULT;
+			if (!capable(CAP_SYS_RAWIO)) return -EPERM;
+			if (!arg) return -EFAULT;
 
-			अगर (Nchips >= SCC_MAXCHIPS) 
-				वापस -EINVAL;
+			if (Nchips >= SCC_MAXCHIPS) 
+				return -EINVAL;
 
-			अगर (copy_from_user(&hwcfg, arg, माप(hwcfg)))
-				वापस -EFAULT;
+			if (copy_from_user(&hwcfg, arg, sizeof(hwcfg)))
+				return -EFAULT;
 
-			अगर (hwcfg.irq == 2) hwcfg.irq = 9;
+			if (hwcfg.irq == 2) hwcfg.irq = 9;
 
-			अगर (hwcfg.irq < 0 || hwcfg.irq >= nr_irqs)
-				वापस -EINVAL;
+			if (hwcfg.irq < 0 || hwcfg.irq >= nr_irqs)
+				return -EINVAL;
 				
-			अगर (!Ivec[hwcfg.irq].used && hwcfg.irq)
-			अणु
-				अगर (request_irq(hwcfg.irq, scc_isr,
+			if (!Ivec[hwcfg.irq].used && hwcfg.irq)
+			{
+				if (request_irq(hwcfg.irq, scc_isr,
 						0, "AX.25 SCC",
-						(व्योम *)(दीर्घ) hwcfg.irq))
-					prपूर्णांकk(KERN_WARNING "z8530drv: warning, cannot get IRQ %d\n", hwcfg.irq);
-				अन्यथा
+						(void *)(long) hwcfg.irq))
+					printk(KERN_WARNING "z8530drv: warning, cannot get IRQ %d\n", hwcfg.irq);
+				else
 					Ivec[hwcfg.irq].used = 1;
-			पूर्ण
+			}
 
-			अगर (hwcfg.vector_latch && !Vector_Latch) अणु
-				अगर (!request_region(hwcfg.vector_latch, 1, "scc vector latch"))
-					prपूर्णांकk(KERN_WARNING "z8530drv: warning, cannot reserve vector latch port 0x%lx\n, disabled.", hwcfg.vector_latch);
-				अन्यथा
+			if (hwcfg.vector_latch && !Vector_Latch) {
+				if (!request_region(hwcfg.vector_latch, 1, "scc vector latch"))
+					printk(KERN_WARNING "z8530drv: warning, cannot reserve vector latch port 0x%lx\n, disabled.", hwcfg.vector_latch);
+				else
 					Vector_Latch = hwcfg.vector_latch;
-			पूर्ण
+			}
 
-			अगर (hwcfg.घड़ी == 0)
-				hwcfg.घड़ी = SCC_DEFAULT_CLOCK;
+			if (hwcfg.clock == 0)
+				hwcfg.clock = SCC_DEFAULT_CLOCK;
 
-#अगर_अघोषित SCC_DONT_CHECK
+#ifndef SCC_DONT_CHECK
 
-			अगर(request_region(hwcfg.ctrl_a, 1, "scc-probe"))
-			अणु
+			if(request_region(hwcfg.ctrl_a, 1, "scc-probe"))
+			{
 				disable_irq(hwcfg.irq);
 				Outb(hwcfg.ctrl_a, 0);
 				OutReg(hwcfg.ctrl_a, R9, FHWRES);
@@ -1767,17 +1766,17 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 				OutReg(hwcfg.ctrl_a,R13,0x55);		/* is this chip really there? */
 				udelay(5);
 
-				अगर (InReg(hwcfg.ctrl_a,R13) != 0x55)
+				if (InReg(hwcfg.ctrl_a,R13) != 0x55)
 					found = 0;
 				enable_irq(hwcfg.irq);
 				release_region(hwcfg.ctrl_a, 1);
-			पूर्ण
-			अन्यथा
+			}
+			else
 				found = 0;
-#पूर्ण_अगर
+#endif
 
-			अगर (found)
-			अणु
+			if (found)
+			{
 				SCC_Info[2*Nchips  ].ctrl = hwcfg.ctrl_a;
 				SCC_Info[2*Nchips  ].data = hwcfg.data_a;
 				SCC_Info[2*Nchips  ].irq  = hwcfg.irq;
@@ -1788,386 +1787,386 @@ scc_start_calibrate(काष्ठा scc_channel *scc, पूर्णां�
 				SCC_ctrl[Nchips].chan_A = hwcfg.ctrl_a;
 				SCC_ctrl[Nchips].chan_B = hwcfg.ctrl_b;
 				SCC_ctrl[Nchips].irq    = hwcfg.irq;
-			पूर्ण
+			}
 
 
-			क्रम (chan = 0; chan < 2; chan++)
-			अणु
-				प्र_लिखो(device_name, "%s%i", SCC_DriverName, 2*Nchips+chan);
+			for (chan = 0; chan < 2; chan++)
+			{
+				sprintf(device_name, "%s%i", SCC_DriverName, 2*Nchips+chan);
 
 				SCC_Info[2*Nchips+chan].special = hwcfg.special;
-				SCC_Info[2*Nchips+chan].घड़ी = hwcfg.घड़ी;
-				SCC_Info[2*Nchips+chan].bअक्रम = hwcfg.bअक्रम;
+				SCC_Info[2*Nchips+chan].clock = hwcfg.clock;
+				SCC_Info[2*Nchips+chan].brand = hwcfg.brand;
 				SCC_Info[2*Nchips+chan].option = hwcfg.option;
 				SCC_Info[2*Nchips+chan].enhanced = hwcfg.escc;
 
-#अगर_घोषित SCC_DONT_CHECK
-				prपूर्णांकk(KERN_INFO "%s: data port = 0x%3.3x  control port = 0x%3.3x\n",
+#ifdef SCC_DONT_CHECK
+				printk(KERN_INFO "%s: data port = 0x%3.3x  control port = 0x%3.3x\n",
 					device_name, 
 					SCC_Info[2*Nchips+chan].data, 
 					SCC_Info[2*Nchips+chan].ctrl);
 
-#अन्यथा
-				prपूर्णांकk(KERN_INFO "%s: data port = 0x%3.3lx  control port = 0x%3.3lx -- %s\n",
+#else
+				printk(KERN_INFO "%s: data port = 0x%3.3lx  control port = 0x%3.3lx -- %s\n",
 					device_name,
 					chan? hwcfg.data_b : hwcfg.data_a, 
 					chan? hwcfg.ctrl_b : hwcfg.ctrl_a,
 					found? "found" : "missing");
-#पूर्ण_अगर
+#endif
 
-				अगर (found)
-				अणु
+				if (found)
+				{
 					request_region(SCC_Info[2*Nchips+chan].ctrl, 1, "scc ctrl");
 					request_region(SCC_Info[2*Nchips+chan].data, 1, "scc data");
-					अगर (Nchips+chan != 0 &&
+					if (Nchips+chan != 0 &&
 					    scc_net_alloc(device_name, 
 							  &SCC_Info[2*Nchips+chan]))
-					    वापस -EINVAL;
-				पूर्ण
-			पूर्ण
+					    return -EINVAL;
+				}
+			}
 			
-			अगर (found) Nchips++;
+			if (found) Nchips++;
 			
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		
-		अगर (cmd == SIOCSCCINI)
-		अणु
-			अगर (!capable(CAP_SYS_RAWIO))
-				वापस -EPERM;
+		if (cmd == SIOCSCCINI)
+		{
+			if (!capable(CAP_SYS_RAWIO))
+				return -EPERM;
 				
-			अगर (Nchips == 0)
-				वापस -EINVAL;
+			if (Nchips == 0)
+				return -EINVAL;
 
 			z8530_init();
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		
-		वापस -EINVAL;	/* confuse the user */
-	पूर्ण
+		return -EINVAL;	/* confuse the user */
+	}
 	
-	अगर (!scc->init)
-	अणु
-		अगर (cmd == SIOCSCCCHANINI)
-		अणु
-			अगर (!capable(CAP_NET_ADMIN)) वापस -EPERM;
-			अगर (!arg) वापस -EINVAL;
+	if (!scc->init)
+	{
+		if (cmd == SIOCSCCCHANINI)
+		{
+			if (!capable(CAP_NET_ADMIN)) return -EPERM;
+			if (!arg) return -EINVAL;
 			
-			scc->stat.bufsize   = SCC_बफ_मानE;
+			scc->stat.bufsize   = SCC_BUFSIZE;
 
-			अगर (copy_from_user(&scc->modem, arg, माप(काष्ठा scc_modem)))
-				वापस -EINVAL;
+			if (copy_from_user(&scc->modem, arg, sizeof(struct scc_modem)))
+				return -EINVAL;
 			
-			/* शेष KISS Params */
+			/* default KISS Params */
 		
-			अगर (scc->modem.speed < 4800)
-			अणु
+			if (scc->modem.speed < 4800)
+			{
 				scc->kiss.txdelay = 36;		/* 360 ms */
 				scc->kiss.persist = 42;		/* 25% persistence */			/* was 25 */
-				scc->kiss.slotसमय = 16;	/* 160 ms */
-				scc->kiss.tailसमय = 4;		/* minimal reasonable value */
+				scc->kiss.slottime = 16;	/* 160 ms */
+				scc->kiss.tailtime = 4;		/* minimal reasonable value */
 				scc->kiss.fulldup = 0;		/* CSMA */
-				scc->kiss.रुकोसमय = 50;	/* 500 ms */
+				scc->kiss.waittime = 50;	/* 500 ms */
 				scc->kiss.maxkeyup = 10;	/* 10 s */
-				scc->kiss.mपूर्णांकime = 3;		/* 3 s */
-				scc->kiss.idleसमय = 30;	/* 30 s */
+				scc->kiss.mintime = 3;		/* 3 s */
+				scc->kiss.idletime = 30;	/* 30 s */
 				scc->kiss.maxdefer = 120;	/* 2 min */
 				scc->kiss.softdcd = 0;		/* hardware dcd */
-			पूर्ण अन्यथा अणु
+			} else {
 				scc->kiss.txdelay = 10;		/* 100 ms */
 				scc->kiss.persist = 64;		/* 25% persistence */			/* was 25 */
-				scc->kiss.slotसमय = 8;		/* 160 ms */
-				scc->kiss.tailसमय = 1;		/* minimal reasonable value */
+				scc->kiss.slottime = 8;		/* 160 ms */
+				scc->kiss.tailtime = 1;		/* minimal reasonable value */
 				scc->kiss.fulldup = 0;		/* CSMA */
-				scc->kiss.रुकोसमय = 50;	/* 500 ms */
+				scc->kiss.waittime = 50;	/* 500 ms */
 				scc->kiss.maxkeyup = 7;		/* 7 s */
-				scc->kiss.mपूर्णांकime = 3;		/* 3 s */
-				scc->kiss.idleसमय = 30;	/* 30 s */
+				scc->kiss.mintime = 3;		/* 3 s */
+				scc->kiss.idletime = 30;	/* 30 s */
 				scc->kiss.maxdefer = 120;	/* 2 min */
 				scc->kiss.softdcd = 0;		/* hardware dcd */
-			पूर्ण
+			}
 			
-			scc->tx_buff = शून्य;
+			scc->tx_buff = NULL;
 			skb_queue_head_init(&scc->tx_queue);
 			scc->init = 1;
 			
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	
-	चयन(cmd)
-	अणु
-		हाल SIOCSCCRESERVED:
-			वापस -ENOIOCTLCMD;
+	switch(cmd)
+	{
+		case SIOCSCCRESERVED:
+			return -ENOIOCTLCMD;
 
-		हाल SIOCSCCSMEM:
-			अगर (!capable(CAP_SYS_RAWIO)) वापस -EPERM;
-			अगर (!arg || copy_from_user(&memcfg, arg, माप(memcfg)))
-				वापस -EINVAL;
+		case SIOCSCCSMEM:
+			if (!capable(CAP_SYS_RAWIO)) return -EPERM;
+			if (!arg || copy_from_user(&memcfg, arg, sizeof(memcfg)))
+				return -EINVAL;
 			scc->stat.bufsize   = memcfg.bufsize;
-			वापस 0;
+			return 0;
 		
-		हाल SIOCSCCGSTAT:
-			अगर (!arg || copy_to_user(arg, &scc->stat, माप(scc->stat)))
-				वापस -EINVAL;
-			वापस 0;
+		case SIOCSCCGSTAT:
+			if (!arg || copy_to_user(arg, &scc->stat, sizeof(scc->stat)))
+				return -EINVAL;
+			return 0;
 		
-		हाल SIOCSCCGKISS:
-			अगर (!arg || copy_from_user(&kiss_cmd, arg, माप(kiss_cmd)))
-				वापस -EINVAL;
+		case SIOCSCCGKISS:
+			if (!arg || copy_from_user(&kiss_cmd, arg, sizeof(kiss_cmd)))
+				return -EINVAL;
 			kiss_cmd.param = scc_get_param(scc, kiss_cmd.command);
-			अगर (copy_to_user(arg, &kiss_cmd, माप(kiss_cmd)))
-				वापस -EINVAL;
-			वापस 0;
+			if (copy_to_user(arg, &kiss_cmd, sizeof(kiss_cmd)))
+				return -EINVAL;
+			return 0;
 		
-		हाल SIOCSCCSKISS:
-			अगर (!capable(CAP_NET_ADMIN)) वापस -EPERM;
-			अगर (!arg || copy_from_user(&kiss_cmd, arg, माप(kiss_cmd)))
-				वापस -EINVAL;
-			वापस scc_set_param(scc, kiss_cmd.command, kiss_cmd.param);
+		case SIOCSCCSKISS:
+			if (!capable(CAP_NET_ADMIN)) return -EPERM;
+			if (!arg || copy_from_user(&kiss_cmd, arg, sizeof(kiss_cmd)))
+				return -EINVAL;
+			return scc_set_param(scc, kiss_cmd.command, kiss_cmd.param);
 		
-		हाल SIOCSCCCAL:
-			अगर (!capable(CAP_SYS_RAWIO)) वापस -EPERM;
-			अगर (!arg || copy_from_user(&cal, arg, माप(cal)) || cal.समय == 0)
-				वापस -EINVAL;
+		case SIOCSCCCAL:
+			if (!capable(CAP_SYS_RAWIO)) return -EPERM;
+			if (!arg || copy_from_user(&cal, arg, sizeof(cal)) || cal.time == 0)
+				return -EINVAL;
 
-			scc_start_calibrate(scc, cal.समय, cal.pattern);
-			वापस 0;
+			scc_start_calibrate(scc, cal.time, cal.pattern);
+			return 0;
 
-		शेष:
-			वापस -ENOIOCTLCMD;
+		default:
+			return -ENOIOCTLCMD;
 		
-	पूर्ण
+	}
 	
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-/* ----> set पूर्णांकerface callsign <---- */
+/* ----> set interface callsign <---- */
 
-अटल पूर्णांक scc_net_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sockaddr *sa = (काष्ठा sockaddr *) addr;
-	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len);
-	वापस 0;
-पूर्ण
+static int scc_net_set_mac_address(struct net_device *dev, void *addr)
+{
+	struct sockaddr *sa = (struct sockaddr *) addr;
+	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len);
+	return 0;
+}
 
 /* ----> get statistics <---- */
 
-अटल काष्ठा net_device_stats *scc_net_get_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा scc_channel *scc = (काष्ठा scc_channel *) dev->ml_priv;
+static struct net_device_stats *scc_net_get_stats(struct net_device *dev)
+{
+	struct scc_channel *scc = (struct scc_channel *) dev->ml_priv;
 	
 	scc->dev_stat.rx_errors = scc->stat.rxerrs + scc->stat.rx_over;
 	scc->dev_stat.tx_errors = scc->stat.txerrs + scc->stat.tx_under;
-	scc->dev_stat.rx_fअगरo_errors = scc->stat.rx_over;
-	scc->dev_stat.tx_fअगरo_errors = scc->stat.tx_under;
+	scc->dev_stat.rx_fifo_errors = scc->stat.rx_over;
+	scc->dev_stat.tx_fifo_errors = scc->stat.tx_under;
 
-	वापस &scc->dev_stat;
-पूर्ण
+	return &scc->dev_stat;
+}
 
 /* ******************************************************************** */
 /* *		dump statistics to /proc/net/z8530drv		      * */
 /* ******************************************************************** */
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल अंतरभूत काष्ठा scc_channel *scc_net_seq_idx(loff_t pos)
-अणु
-	पूर्णांक k;
+static inline struct scc_channel *scc_net_seq_idx(loff_t pos)
+{
+	int k;
 
-	क्रम (k = 0; k < Nchips*2; ++k) अणु
-		अगर (!SCC_Info[k].init) 
-			जारी;
-		अगर (pos-- == 0)
-			वापस &SCC_Info[k];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (k = 0; k < Nchips*2; ++k) {
+		if (!SCC_Info[k].init) 
+			continue;
+		if (pos-- == 0)
+			return &SCC_Info[k];
+	}
+	return NULL;
+}
 
-अटल व्योम *scc_net_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	वापस *pos ? scc_net_seq_idx(*pos - 1) : SEQ_START_TOKEN;
+static void *scc_net_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	return *pos ? scc_net_seq_idx(*pos - 1) : SEQ_START_TOKEN;
 	
-पूर्ण
+}
 
-अटल व्योम *scc_net_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	अचिन्हित k;
-	काष्ठा scc_channel *scc = v;
+static void *scc_net_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	unsigned k;
+	struct scc_channel *scc = v;
 	++*pos;
 	
-	क्रम (k = (v == SEQ_START_TOKEN) ? 0 : (scc - SCC_Info)+1;
-	     k < Nchips*2; ++k) अणु
-		अगर (SCC_Info[k].init) 
-			वापस &SCC_Info[k];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (k = (v == SEQ_START_TOKEN) ? 0 : (scc - SCC_Info)+1;
+	     k < Nchips*2; ++k) {
+		if (SCC_Info[k].init) 
+			return &SCC_Info[k];
+	}
+	return NULL;
+}
 
-अटल व्योम scc_net_seq_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-पूर्ण
+static void scc_net_seq_stop(struct seq_file *seq, void *v)
+{
+}
 
-अटल पूर्णांक scc_net_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, "z8530drv-"VERSION"\n");
-	पूर्ण अन्यथा अगर (!Driver_Initialized) अणु
-		seq_माला_दो(seq, "not initialized\n");
-	पूर्ण अन्यथा अगर (!Nchips) अणु
-		seq_माला_दो(seq, "chips missing\n");
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा scc_channel *scc = v;
-		स्थिर काष्ठा scc_stat *stat = &scc->stat;
-		स्थिर काष्ठा scc_kiss *kiss = &scc->kiss;
+static int scc_net_seq_show(struct seq_file *seq, void *v)
+{
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, "z8530drv-"VERSION"\n");
+	} else if (!Driver_Initialized) {
+		seq_puts(seq, "not initialized\n");
+	} else if (!Nchips) {
+		seq_puts(seq, "chips missing\n");
+	} else {
+		const struct scc_channel *scc = v;
+		const struct scc_stat *stat = &scc->stat;
+		const struct scc_kiss *kiss = &scc->kiss;
 
 
-		/* dev	data ctrl irq घड़ी bअक्रम enh vector special option 
-		 *	baud nrz घड़ीsrc softdcd bufsize
-		 *	rxपूर्णांकs txपूर्णांकs exपूर्णांकs spपूर्णांकs
+		/* dev	data ctrl irq clock brand enh vector special option 
+		 *	baud nrz clocksrc softdcd bufsize
+		 *	rxints txints exints spints
 		 *	rcvd rxerrs over / xmit txerrs under / nospace bufsize
-		 *	txd pers slot tail ful रुको min maxk idl defr txof grp
+		 *	txd pers slot tail ful wait min maxk idl defr txof grp
 		 *	W ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 		 *	R ## ## XX ## ## ## ## ## XX ## ## ## ## ## ## ##
 		 */
 
-		seq_म_लिखो(seq, "%s\t%3.3lx %3.3lx %d %lu %2.2x %d %3.3lx %3.3lx %d\n",
+		seq_printf(seq, "%s\t%3.3lx %3.3lx %d %lu %2.2x %d %3.3lx %3.3lx %d\n",
 				scc->dev->name,
-				scc->data, scc->ctrl, scc->irq, scc->घड़ी, scc->bअक्रम,
+				scc->data, scc->ctrl, scc->irq, scc->clock, scc->brand,
 				scc->enhanced, Vector_Latch, scc->special,
 				scc->option);
-		seq_म_लिखो(seq, "\t%lu %d %d %d %d\n",
+		seq_printf(seq, "\t%lu %d %d %d %d\n",
 				scc->modem.speed, scc->modem.nrz,
-				scc->modem.घड़ीsrc, kiss->softdcd,
+				scc->modem.clocksrc, kiss->softdcd,
 				stat->bufsize);
-		seq_म_लिखो(seq, "\t%lu %lu %lu %lu\n",
-				stat->rxपूर्णांकs, stat->txपूर्णांकs, stat->exपूर्णांकs, stat->spपूर्णांकs);
-		seq_म_लिखो(seq, "\t%lu %lu %d / %lu %lu %d / %d %d\n",
+		seq_printf(seq, "\t%lu %lu %lu %lu\n",
+				stat->rxints, stat->txints, stat->exints, stat->spints);
+		seq_printf(seq, "\t%lu %lu %d / %lu %lu %d / %d %d\n",
 				stat->rxframes, stat->rxerrs, stat->rx_over,
 				stat->txframes, stat->txerrs, stat->tx_under,
 				stat->nospace,  stat->tx_state);
 
-#घोषणा K(x) kiss->x
-		seq_म_लिखो(seq, "\t%d %d %d %d %d %d %d %d %d %d %d %d\n",
-				K(txdelay), K(persist), K(slotसमय), K(tailसमय),
-				K(fulldup), K(रुकोसमय), K(mपूर्णांकime), K(maxkeyup),
-				K(idleसमय), K(maxdefer), K(tx_inhibit), K(group));
-#अघोषित K
-#अगर_घोषित SCC_DEBUG
-		अणु
-			पूर्णांक reg;
+#define K(x) kiss->x
+		seq_printf(seq, "\t%d %d %d %d %d %d %d %d %d %d %d %d\n",
+				K(txdelay), K(persist), K(slottime), K(tailtime),
+				K(fulldup), K(waittime), K(mintime), K(maxkeyup),
+				K(idletime), K(maxdefer), K(tx_inhibit), K(group));
+#undef K
+#ifdef SCC_DEBUG
+		{
+			int reg;
 
-		seq_म_लिखो(seq, "\tW ");
-			क्रम (reg = 0; reg < 16; reg++)
-				seq_म_लिखो(seq, "%2.2x ", scc->wreg[reg]);
-			seq_म_लिखो(seq, "\n");
+		seq_printf(seq, "\tW ");
+			for (reg = 0; reg < 16; reg++)
+				seq_printf(seq, "%2.2x ", scc->wreg[reg]);
+			seq_printf(seq, "\n");
 			
-		seq_म_लिखो(seq, "\tR %2.2x %2.2x XX ", InReg(scc->ctrl,R0), InReg(scc->ctrl,R1));
-			क्रम (reg = 3; reg < 8; reg++)
-				seq_म_लिखो(seq, "%2.2x ", InReg(scc->ctrl, reg));
-			seq_म_लिखो(seq, "XX ");
-			क्रम (reg = 9; reg < 16; reg++)
-				seq_म_लिखो(seq, "%2.2x ", InReg(scc->ctrl, reg));
-			seq_म_लिखो(seq, "\n");
-		पूर्ण
-#पूर्ण_अगर
-		seq_अ_दो(seq, '\n');
-	पूर्ण
+		seq_printf(seq, "\tR %2.2x %2.2x XX ", InReg(scc->ctrl,R0), InReg(scc->ctrl,R1));
+			for (reg = 3; reg < 8; reg++)
+				seq_printf(seq, "%2.2x ", InReg(scc->ctrl, reg));
+			seq_printf(seq, "XX ");
+			for (reg = 9; reg < 16; reg++)
+				seq_printf(seq, "%2.2x ", InReg(scc->ctrl, reg));
+			seq_printf(seq, "\n");
+		}
+#endif
+		seq_putc(seq, '\n');
+	}
 
-        वापस 0;
-पूर्ण
+        return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations scc_net_seq_ops = अणु
+static const struct seq_operations scc_net_seq_ops = {
 	.start  = scc_net_seq_start,
 	.next   = scc_net_seq_next,
 	.stop   = scc_net_seq_stop,
 	.show   = scc_net_seq_show,
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+};
+#endif /* CONFIG_PROC_FS */
 
  
 /* ******************************************************************** */
 /* * 			Init SCC driver 			      * */
 /* ******************************************************************** */
 
-अटल पूर्णांक __init scc_init_driver (व्योम)
-अणु
-	अक्षर devname[IFNAMSIZ];
+static int __init scc_init_driver (void)
+{
+	char devname[IFNAMSIZ];
 	
-	prपूर्णांकk(banner);
+	printk(banner);
 	
-	प्र_लिखो(devname,"%s0", SCC_DriverName);
+	sprintf(devname,"%s0", SCC_DriverName);
 	
 	rtnl_lock();
-	अगर (scc_net_alloc(devname, SCC_Info)) अणु
+	if (scc_net_alloc(devname, SCC_Info)) {
 		rtnl_unlock();
-		prपूर्णांकk(KERN_ERR "z8530drv: cannot initialize module\n");
-		वापस -EIO;
-	पूर्ण
+		printk(KERN_ERR "z8530drv: cannot initialize module\n");
+		return -EIO;
+	}
 	rtnl_unlock();
 
 	proc_create_seq("z8530drv", 0, init_net.proc_net, &scc_net_seq_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास scc_cleanup_driver(व्योम)
-अणु
+static void __exit scc_cleanup_driver(void)
+{
 	io_port ctrl;
-	पूर्णांक k;
-	काष्ठा scc_channel *scc;
-	काष्ठा net_device *dev;
+	int k;
+	struct scc_channel *scc;
+	struct net_device *dev;
 	
-	अगर (Nchips == 0 && (dev = SCC_Info[0].dev)) 
-	अणु
-		unरेजिस्टर_netdev(dev);
-		मुक्त_netdev(dev);
-	पूर्ण
+	if (Nchips == 0 && (dev = SCC_Info[0].dev)) 
+	{
+		unregister_netdev(dev);
+		free_netdev(dev);
+	}
 
 	/* Guard against chip prattle */
 	local_irq_disable();
 	
-	क्रम (k = 0; k < Nchips; k++)
-		अगर ( (ctrl = SCC_ctrl[k].chan_A) )
-		अणु
+	for (k = 0; k < Nchips; k++)
+		if ( (ctrl = SCC_ctrl[k].chan_A) )
+		{
 			Outb(ctrl, 0);
-			OutReg(ctrl,R9,FHWRES);	/* क्रमce hardware reset */
+			OutReg(ctrl,R9,FHWRES);	/* force hardware reset */
 			udelay(50);
-		पूर्ण
+		}
 		
-	/* To unload the port must be बंदd so no real IRQ pending */
-	क्रम (k = 0; k < nr_irqs ; k++)
-		अगर (Ivec[k].used) मुक्त_irq(k, शून्य);
+	/* To unload the port must be closed so no real IRQ pending */
+	for (k = 0; k < nr_irqs ; k++)
+		if (Ivec[k].used) free_irq(k, NULL);
 		
 	local_irq_enable();
 		
 	/* Now clean up */
-	क्रम (k = 0; k < Nchips*2; k++)
-	अणु
+	for (k = 0; k < Nchips*2; k++)
+	{
 		scc = &SCC_Info[k];
-		अगर (scc->ctrl)
-		अणु
+		if (scc->ctrl)
+		{
 			release_region(scc->ctrl, 1);
 			release_region(scc->data, 1);
-		पूर्ण
-		अगर (scc->dev)
-		अणु
-			unरेजिस्टर_netdev(scc->dev);
-			मुक्त_netdev(scc->dev);
-		पूर्ण
-	पूर्ण
+		}
+		if (scc->dev)
+		{
+			unregister_netdev(scc->dev);
+			free_netdev(scc->dev);
+		}
+	}
 	
 		
-	अगर (Vector_Latch)
+	if (Vector_Latch)
 		release_region(Vector_Latch, 1);
 
-	हटाओ_proc_entry("z8530drv", init_net.proc_net);
-पूर्ण
+	remove_proc_entry("z8530drv", init_net.proc_net);
+}
 
 MODULE_AUTHOR("Joerg Reuter <jreuter@yaina.de>");
 MODULE_DESCRIPTION("AX.25 Device Driver for Z8530 based HDLC cards");
 MODULE_LICENSE("GPL");
 module_init(scc_init_driver);
-module_निकास(scc_cleanup_driver);
+module_exit(scc_cleanup_driver);

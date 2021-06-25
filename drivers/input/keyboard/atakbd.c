@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  atakbd.c
  *
@@ -10,31 +9,31 @@
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *
  *  Based on the work of:
- *	Hamish Macकरोnald
+ *	Hamish Macdonald
  */
 
 /*
- * Atari keyboard driver क्रम Linux/m68k
+ * Atari keyboard driver for Linux/m68k
  *
- * The low level init and पूर्णांकerrupt stuff is handled in arch/mm68k/atari/atakeyb.c
+ * The low level init and interrupt stuff is handled in arch/mm68k/atari/atakeyb.c
  * (the keyboard ACIA also handles the mouse and joystick data, and the keyboard
- * पूर्णांकerrupt is shared with the MIDI ACIA so MIDI data also get handled there).
+ * interrupt is shared with the MIDI ACIA so MIDI data also get handled there).
  * This driver only deals with handing key events off to the input layer.
  */
 
 /*
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
 
-#समावेश <यंत्र/atariपूर्णांकs.h>
-#समावेश <यंत्र/atarihw.h>
-#समावेश <यंत्र/atarikb.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/atariints.h>
+#include <asm/atarihw.h>
+#include <asm/atarikb.h>
+#include <asm/irq.h>
 
 MODULE_AUTHOR("Michael Schmitz <schmitz@biophys.uni-duesseldorf.de>");
 MODULE_DESCRIPTION("Atari keyboard driver");
@@ -64,7 +63,7 @@ MODULE_LICENSE("GPL");
  */
 
 
-अटल अचिन्हित अक्षर atakbd_keycode[0x73] = अणु	/* American layout */
+static unsigned char atakbd_keycode[0x73] = {	/* American layout */
 	[1]	 = KEY_ESC,
 	[2]	 = KEY_1,
 	[3]	 = KEY_2,
@@ -161,76 +160,76 @@ MODULE_LICENSE("GPL");
 	[112]	 = KEY_KP0,
 	[113]	 = KEY_KPDOT,
 	[114]	 = KEY_KPENTER,
-पूर्ण;
+};
 
-अटल काष्ठा input_dev *atakbd_dev;
+static struct input_dev *atakbd_dev;
 
-अटल व्योम atakbd_पूर्णांकerrupt(अचिन्हित अक्षर scancode, अक्षर करोwn)
-अणु
+static void atakbd_interrupt(unsigned char scancode, char down)
+{
 
-	अगर (scancode < 0x73) अणु		/* scancodes < 0xf3 are keys */
+	if (scancode < 0x73) {		/* scancodes < 0xf3 are keys */
 
 		// report raw events here?
 
 		scancode = atakbd_keycode[scancode];
 
-		input_report_key(atakbd_dev, scancode, करोwn);
+		input_report_key(atakbd_dev, scancode, down);
 		input_sync(atakbd_dev);
-	पूर्ण अन्यथा				/* scancodes >= 0xf3 are mouse data, most likely */
-		prपूर्णांकk(KERN_INFO "atakbd: unhandled scancode %x\n", scancode);
+	} else				/* scancodes >= 0xf3 are mouse data, most likely */
+		printk(KERN_INFO "atakbd: unhandled scancode %x\n", scancode);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक __init atakbd_init(व्योम)
-अणु
-	पूर्णांक i, error;
+static int __init atakbd_init(void)
+{
+	int i, error;
 
-	अगर (!MACH_IS_ATARI || !ATARIHW_PRESENT(ST_MFP))
-		वापस -ENODEV;
+	if (!MACH_IS_ATARI || !ATARIHW_PRESENT(ST_MFP))
+		return -ENODEV;
 
-	// need to init core driver अगर not alपढ़ोy करोne so
+	// need to init core driver if not already done so
 	error = atari_keyb_init();
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	atakbd_dev = input_allocate_device();
-	अगर (!atakbd_dev)
-		वापस -ENOMEM;
+	if (!atakbd_dev)
+		return -ENOMEM;
 
 	atakbd_dev->name = "Atari Keyboard";
 	atakbd_dev->phys = "atakbd/input0";
 	atakbd_dev->id.bustype = BUS_HOST;
-	atakbd_dev->id.venकरोr = 0x0001;
+	atakbd_dev->id.vendor = 0x0001;
 	atakbd_dev->id.product = 0x0001;
 	atakbd_dev->id.version = 0x0100;
 
 	atakbd_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
 	atakbd_dev->keycode = atakbd_keycode;
-	atakbd_dev->keycodesize = माप(अचिन्हित अक्षर);
+	atakbd_dev->keycodesize = sizeof(unsigned char);
 	atakbd_dev->keycodemax = ARRAY_SIZE(atakbd_keycode);
 
-	क्रम (i = 1; i < 0x72; i++) अणु
+	for (i = 1; i < 0x72; i++) {
 		set_bit(atakbd_keycode[i], atakbd_dev->keybit);
-	पूर्ण
+	}
 
 	/* error check */
-	error = input_रेजिस्टर_device(atakbd_dev);
-	अगर (error) अणु
-		input_मुक्त_device(atakbd_dev);
-		वापस error;
-	पूर्ण
+	error = input_register_device(atakbd_dev);
+	if (error) {
+		input_free_device(atakbd_dev);
+		return error;
+	}
 
-	atari_input_keyboard_पूर्णांकerrupt_hook = atakbd_पूर्णांकerrupt;
+	atari_input_keyboard_interrupt_hook = atakbd_interrupt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास atakbd_निकास(व्योम)
-अणु
-	atari_input_keyboard_पूर्णांकerrupt_hook = शून्य;
-	input_unरेजिस्टर_device(atakbd_dev);
-पूर्ण
+static void __exit atakbd_exit(void)
+{
+	atari_input_keyboard_interrupt_hook = NULL;
+	input_unregister_device(atakbd_dev);
+}
 
 module_init(atakbd_init);
-module_निकास(atakbd_निकास);
+module_exit(atakbd_exit);

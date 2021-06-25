@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 1995-2004 Russell King
  *
  * Delay routines, using a pre-computed "loops_per_second" value.
  */
-#अगर_अघोषित __ASM_ARM_DELAY_H
-#घोषणा __ASM_ARM_DELAY_H
+#ifndef __ASM_ARM_DELAY_H
+#define __ASM_ARM_DELAY_H
 
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/param.h>	/* HZ */
+#include <asm/memory.h>
+#include <asm/param.h>	/* HZ */
 
 /*
  * Loop (or tick) based delay:
  *
- * loops = loops_per_jअगरfy * jअगरfies_per_sec * delay_us / us_per_sec
+ * loops = loops_per_jiffy * jiffies_per_sec * delay_us / us_per_sec
  *
  * where:
  *
- * jअगरfies_per_sec = HZ
+ * jiffies_per_sec = HZ
  * us_per_sec = 1000000
  *
- * Thereक्रमe the स्थिरant part is HZ / 1000000 which is a small
- * fractional number. To make this usable with पूर्णांकeger math, we
- * scale up this स्थिरant by 2^31, perक्रमm the actual multiplication,
- * and scale the result back करोwn by 2^31 with a simple shअगरt:
+ * Therefore the constant part is HZ / 1000000 which is a small
+ * fractional number. To make this usable with integer math, we
+ * scale up this constant by 2^31, perform the actual multiplication,
+ * and scale the result back down by 2^31 with a simple shift:
  *
- * loops = (loops_per_jअगरfy * delay_us * UDELAY_MULT) >> 31
+ * loops = (loops_per_jiffy * delay_us * UDELAY_MULT) >> 31
  *
  * where:
  *
@@ -35,67 +34,67 @@
  *             = 2147.483648 * HZ
  *             = 2147 * HZ + 483648 * HZ / 1000000
  *
- * 31 is the biggest scale shअगरt value that won't overflow 32 bits क्रम
+ * 31 is the biggest scale shift value that won't overflow 32 bits for
  * delay_us * UDELAY_MULT assuming HZ <= 1000 and delay_us <= 2000.
  */
-#घोषणा MAX_UDELAY_MS	2
-#घोषणा UDELAY_MULT	UL(2147 * HZ + 483648 * HZ / 1000000)
-#घोषणा UDELAY_SHIFT	31
+#define MAX_UDELAY_MS	2
+#define UDELAY_MULT	UL(2147 * HZ + 483648 * HZ / 1000000)
+#define UDELAY_SHIFT	31
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा delay_समयr अणु
-	अचिन्हित दीर्घ (*पढ़ो_current_समयr)(व्योम);
-	अचिन्हित दीर्घ freq;
-पूर्ण;
+struct delay_timer {
+	unsigned long (*read_current_timer)(void);
+	unsigned long freq;
+};
 
-बाह्य काष्ठा arm_delay_ops अणु
-	व्योम (*delay)(अचिन्हित दीर्घ);
-	व्योम (*स्थिर_udelay)(अचिन्हित दीर्घ);
-	व्योम (*udelay)(अचिन्हित दीर्घ);
-	अचिन्हित दीर्घ ticks_per_jअगरfy;
-पूर्ण arm_delay_ops;
+extern struct arm_delay_ops {
+	void (*delay)(unsigned long);
+	void (*const_udelay)(unsigned long);
+	void (*udelay)(unsigned long);
+	unsigned long ticks_per_jiffy;
+} arm_delay_ops;
 
-#घोषणा __delay(n)		arm_delay_ops.delay(n)
+#define __delay(n)		arm_delay_ops.delay(n)
 
 /*
- * This function पूर्णांकentionally करोes not exist; अगर you see references to
+ * This function intentionally does not exist; if you see references to
  * it, it means that you're calling udelay() with an out of range value.
  *
  * With currently imposed limits, this means that we support a max delay
  * of 2000us. Further limits: HZ<=1000
  */
-बाह्य व्योम __bad_udelay(व्योम);
+extern void __bad_udelay(void);
 
 /*
- * भागision by multiplication: you करोn't have to worry about
+ * division by multiplication: you don't have to worry about
  * loss of precision.
  *
- * Use only क्रम very small delays ( < 2 msec).  Should probably use a
- * lookup table, really, as the multiplications take much too दीर्घ with
- * लघु delays.  This is a "reasonable" implementation, though (and the
- * first स्थिरant multiplications माला_लो optimized away अगर the delay is
- * a स्थिरant)
+ * Use only for very small delays ( < 2 msec).  Should probably use a
+ * lookup table, really, as the multiplications take much too long with
+ * short delays.  This is a "reasonable" implementation, though (and the
+ * first constant multiplications gets optimized away if the delay is
+ * a constant)
  */
-#घोषणा __udelay(n)		arm_delay_ops.udelay(n)
-#घोषणा __स्थिर_udelay(n)	arm_delay_ops.स्थिर_udelay(n)
+#define __udelay(n)		arm_delay_ops.udelay(n)
+#define __const_udelay(n)	arm_delay_ops.const_udelay(n)
 
-#घोषणा udelay(n)							\
-	(__builtin_स्थिरant_p(n) ?					\
+#define udelay(n)							\
+	(__builtin_constant_p(n) ?					\
 	  ((n) > (MAX_UDELAY_MS * 1000) ? __bad_udelay() :		\
-			__स्थिर_udelay((n) * UDELAY_MULT)) :		\
+			__const_udelay((n) * UDELAY_MULT)) :		\
 	  __udelay(n))
 
-/* Loop-based definitions क्रम assembly code. */
-बाह्य व्योम __loop_delay(अचिन्हित दीर्घ loops);
-बाह्य व्योम __loop_udelay(अचिन्हित दीर्घ usecs);
-बाह्य व्योम __loop_स्थिर_udelay(अचिन्हित दीर्घ);
+/* Loop-based definitions for assembly code. */
+extern void __loop_delay(unsigned long loops);
+extern void __loop_udelay(unsigned long usecs);
+extern void __loop_const_udelay(unsigned long);
 
-/* Delay-loop समयr registration. */
-#घोषणा ARCH_HAS_READ_CURRENT_TIMER
-बाह्य व्योम रेजिस्टर_current_समयr_delay(स्थिर काष्ठा delay_समयr *समयr);
+/* Delay-loop timer registration. */
+#define ARCH_HAS_READ_CURRENT_TIMER
+extern void register_current_timer_delay(const struct delay_timer *timer);
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* defined(_ARM_DELAY_H) */
+#endif /* defined(_ARM_DELAY_H) */
 

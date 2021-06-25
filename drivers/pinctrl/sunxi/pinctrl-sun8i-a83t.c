@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Allwinner a83t SoCs pinctrl driver.
  *
@@ -6,22 +5,22 @@
  *
  * Based on pinctrl-sun8i-a23.c, which is:
  * Copyright (C) 2014 Chen-Yu Tsai <wens@csie.org>
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-sunxi.h"
+#include "pinctrl-sunxi.h"
 
-अटल स्थिर काष्ठा sunxi_desc_pin sun8i_a83t_pins[] = अणु
+static const struct sunxi_desc_pin sun8i_a83t_pins[] = {
 	/* Hole */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
@@ -239,7 +238,7 @@
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D15 */
-		  SUNXI_FUNCTION(0x4, "gmac")),	/* RGMII-शून्य / MII-CRS */
+		  SUNXI_FUNCTION(0x4, "gmac")),	/* RGMII-NULL / MII-CRS */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 18),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -257,7 +256,7 @@
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D20 */
 		  SUNXI_FUNCTION(0x3, "lvds0"),		/* VP1 */
-		  SUNXI_FUNCTION(0x4, "gmac")),		/* Gशून्य / ETXERR */
+		  SUNXI_FUNCTION(0x4, "gmac")),		/* GNULL / ETXERR */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 21),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -570,30 +569,30 @@
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 11)),	/* PH_EINT11 */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sunxi_pinctrl_desc sun8i_a83t_pinctrl_data = अणु
+static const struct sunxi_pinctrl_desc sun8i_a83t_pinctrl_data = {
 	.pins = sun8i_a83t_pins,
 	.npins = ARRAY_SIZE(sun8i_a83t_pins),
 	.irq_banks = 3,
-पूर्ण;
+};
 
-अटल पूर्णांक sun8i_a83t_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sunxi_pinctrl_init(pdev,
+static int sun8i_a83t_pinctrl_probe(struct platform_device *pdev)
+{
+	return sunxi_pinctrl_init(pdev,
 				  &sun8i_a83t_pinctrl_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id sun8i_a83t_pinctrl_match[] = अणु
-	अणु .compatible = "allwinner,sun8i-a83t-pinctrl", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id sun8i_a83t_pinctrl_match[] = {
+	{ .compatible = "allwinner,sun8i-a83t-pinctrl", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver sun8i_a83t_pinctrl_driver = अणु
+static struct platform_driver sun8i_a83t_pinctrl_driver = {
 	.probe	= sun8i_a83t_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name		= "sun8i-a83t-pinctrl",
 		.of_match_table	= sun8i_a83t_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(sun8i_a83t_pinctrl_driver);
+	},
+};
+builtin_platform_driver(sun8i_a83t_pinctrl_driver);

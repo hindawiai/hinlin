@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Interface क्रम Dynamic Logical Partitioning of I/O Slots on
- * RPA-compliant PPC64 platक्रमm.
+ * Interface for Dynamic Logical Partitioning of I/O Slots on
+ * RPA-compliant PPC64 platform.
  *
  * John Rose <johnrose@austin.ibm.com>
  * October 2003
  *
  * Copyright (C) 2003 IBM.
  */
-#समावेश <linux/kobject.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_hotplug.h>
-#समावेश "rpaphp.h"
-#समावेश "rpadlpar.h"
-#समावेश "../pci.h"
+#include <linux/kobject.h>
+#include <linux/string.h>
+#include <linux/pci.h>
+#include <linux/pci_hotplug.h>
+#include "rpaphp.h"
+#include "rpadlpar.h"
+#include "../pci.h"
 
-#घोषणा DLPAR_KOBJ_NAME       "control"
+#define DLPAR_KOBJ_NAME       "control"
 
 /* Those two have no quotes because they are passed to __ATTR() which
- * stringअगरies the argument (yuck !)
+ * stringifies the argument (yuck !)
  */
-#घोषणा ADD_SLOT_ATTR_NAME    add_slot
-#घोषणा REMOVE_SLOT_ATTR_NAME हटाओ_slot
+#define ADD_SLOT_ATTR_NAME    add_slot
+#define REMOVE_SLOT_ATTR_NAME remove_slot
 
-अटल sमाप_प्रकार add_slot_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार nbytes)
-अणु
-	अक्षर drc_name[MAX_DRC_NAME_LEN];
-	अक्षर *end;
-	पूर्णांक rc;
+static ssize_t add_slot_store(struct kobject *kobj, struct kobj_attribute *attr,
+			      const char *buf, size_t nbytes)
+{
+	char drc_name[MAX_DRC_NAME_LEN];
+	char *end;
+	int rc;
 
-	अगर (nbytes >= MAX_DRC_NAME_LEN)
-		वापस 0;
+	if (nbytes >= MAX_DRC_NAME_LEN)
+		return 0;
 
 	strscpy(drc_name, buf, nbytes + 1);
 
-	end = म_अक्षर(drc_name, '\n');
-	अगर (end)
+	end = strchr(drc_name, '\n');
+	if (end)
 		*end = '\0';
 
 	rc = dlpar_add_slot(drc_name);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल sमाप_प्रकार add_slot_show(काष्ठा kobject *kobj,
-			     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+static ssize_t add_slot_show(struct kobject *kobj,
+			     struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "0\n");
+}
 
-अटल sमाप_प्रकार हटाओ_slot_store(काष्ठा kobject *kobj,
-				 काष्ठा kobj_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार nbytes)
-अणु
-	अक्षर drc_name[MAX_DRC_NAME_LEN];
-	पूर्णांक rc;
-	अक्षर *end;
+static ssize_t remove_slot_store(struct kobject *kobj,
+				 struct kobj_attribute *attr,
+				 const char *buf, size_t nbytes)
+{
+	char drc_name[MAX_DRC_NAME_LEN];
+	int rc;
+	char *end;
 
-	अगर (nbytes >= MAX_DRC_NAME_LEN)
-		वापस 0;
+	if (nbytes >= MAX_DRC_NAME_LEN)
+		return 0;
 
 	strscpy(drc_name, buf, nbytes + 1);
 
-	end = म_अक्षर(drc_name, '\n');
-	अगर (end)
+	end = strchr(drc_name, '\n');
+	if (end)
 		*end = '\0';
 
-	rc = dlpar_हटाओ_slot(drc_name);
-	अगर (rc)
-		वापस rc;
+	rc = dlpar_remove_slot(drc_name);
+	if (rc)
+		return rc;
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल sमाप_प्रकार हटाओ_slot_show(काष्ठा kobject *kobj,
-				काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "0\n");
-पूर्ण
+static ssize_t remove_slot_show(struct kobject *kobj,
+				struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "0\n");
+}
 
-अटल काष्ठा kobj_attribute add_slot_attr =
+static struct kobj_attribute add_slot_attr =
 	__ATTR(ADD_SLOT_ATTR_NAME, 0644, add_slot_show, add_slot_store);
 
-अटल काष्ठा kobj_attribute हटाओ_slot_attr =
-	__ATTR(REMOVE_SLOT_ATTR_NAME, 0644, हटाओ_slot_show, हटाओ_slot_store);
+static struct kobj_attribute remove_slot_attr =
+	__ATTR(REMOVE_SLOT_ATTR_NAME, 0644, remove_slot_show, remove_slot_store);
 
-अटल काष्ठा attribute *शेष_attrs[] = अणु
+static struct attribute *default_attrs[] = {
 	&add_slot_attr.attr,
-	&हटाओ_slot_attr.attr,
-	शून्य,
-पूर्ण;
+	&remove_slot_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dlpar_attr_group = अणु
-	.attrs = शेष_attrs,
-पूर्ण;
+static const struct attribute_group dlpar_attr_group = {
+	.attrs = default_attrs,
+};
 
-अटल काष्ठा kobject *dlpar_kobj;
+static struct kobject *dlpar_kobj;
 
-पूर्णांक dlpar_sysfs_init(व्योम)
-अणु
-	पूर्णांक error;
+int dlpar_sysfs_init(void)
+{
+	int error;
 
 	dlpar_kobj = kobject_create_and_add(DLPAR_KOBJ_NAME,
 					    &pci_slots_kset->kobj);
-	अगर (!dlpar_kobj)
-		वापस -EINVAL;
+	if (!dlpar_kobj)
+		return -EINVAL;
 
 	error = sysfs_create_group(dlpar_kobj, &dlpar_attr_group);
-	अगर (error)
+	if (error)
 		kobject_put(dlpar_kobj);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम dlpar_sysfs_निकास(व्योम)
-अणु
-	sysfs_हटाओ_group(dlpar_kobj, &dlpar_attr_group);
+void dlpar_sysfs_exit(void)
+{
+	sysfs_remove_group(dlpar_kobj, &dlpar_attr_group);
 	kobject_put(dlpar_kobj);
-पूर्ण
+}

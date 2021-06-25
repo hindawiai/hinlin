@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम keys on TCA6416 I2C IO expander
+ * Driver for keys on TCA6416 I2C IO expander
  *
  * Copyright (C) 2010 Texas Instruments
  *
  * Author : Sriramakrishnan.A.G. <srk@ti.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/tca6416_keypad.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/workqueue.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/tca6416_keypad.h>
 
-#घोषणा TCA6416_INPUT          0
-#घोषणा TCA6416_OUTPUT         1
-#घोषणा TCA6416_INVERT         2
-#घोषणा TCA6416_सूचीECTION      3
+#define TCA6416_INPUT          0
+#define TCA6416_OUTPUT         1
+#define TCA6416_INVERT         2
+#define TCA6416_DIRECTION      3
 
-अटल स्थिर काष्ठा i2c_device_id tca6416_id[] = अणु
-	अणु "tca6416-keys", 16, पूर्ण,
-	अणु "tca6408-keys", 8, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tca6416_id[] = {
+	{ "tca6416-keys", 16, },
+	{ "tca6408-keys", 8, },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tca6416_id);
 
-काष्ठा tca6416_drv_data अणु
-	काष्ठा input_dev *input;
-	काष्ठा tca6416_button data[];
-पूर्ण;
+struct tca6416_drv_data {
+	struct input_dev *input;
+	struct tca6416_button data[];
+};
 
-काष्ठा tca6416_keypad_chip अणु
-	uपूर्णांक16_t reg_output;
-	uपूर्णांक16_t reg_direction;
-	uपूर्णांक16_t reg_input;
+struct tca6416_keypad_chip {
+	uint16_t reg_output;
+	uint16_t reg_direction;
+	uint16_t reg_input;
 
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input;
-	काष्ठा delayed_work dwork;
-	पूर्णांक io_size;
-	पूर्णांक irqnum;
+	struct i2c_client *client;
+	struct input_dev *input;
+	struct delayed_work dwork;
+	int io_size;
+	int irqnum;
 	u16 pinmask;
 	bool use_polling;
-	काष्ठा tca6416_button buttons[];
-पूर्ण;
+	struct tca6416_button buttons[];
+};
 
-अटल पूर्णांक tca6416_ग_लिखो_reg(काष्ठा tca6416_keypad_chip *chip, पूर्णांक reg, u16 val)
-अणु
-	पूर्णांक error;
+static int tca6416_write_reg(struct tca6416_keypad_chip *chip, int reg, u16 val)
+{
+	int error;
 
 	error = chip->io_size > 8 ?
-		i2c_smbus_ग_लिखो_word_data(chip->client, reg << 1, val) :
-		i2c_smbus_ग_लिखो_byte_data(chip->client, reg, val);
-	अगर (error < 0) अणु
+		i2c_smbus_write_word_data(chip->client, reg << 1, val) :
+		i2c_smbus_write_byte_data(chip->client, reg, val);
+	if (error < 0) {
 		dev_err(&chip->client->dev,
 			"%s failed, reg: %d, val: %d, error: %d\n",
 			__func__, reg, val, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tca6416_पढ़ो_reg(काष्ठा tca6416_keypad_chip *chip, पूर्णांक reg, u16 *val)
-अणु
-	पूर्णांक retval;
+static int tca6416_read_reg(struct tca6416_keypad_chip *chip, int reg, u16 *val)
+{
+	int retval;
 
 	retval = chip->io_size > 8 ?
-		 i2c_smbus_पढ़ो_word_data(chip->client, reg << 1) :
-		 i2c_smbus_पढ़ो_byte_data(chip->client, reg);
-	अगर (retval < 0) अणु
+		 i2c_smbus_read_word_data(chip->client, reg << 1) :
+		 i2c_smbus_read_byte_data(chip->client, reg);
+	if (retval < 0) {
 		dev_err(&chip->client->dev, "%s failed, reg: %d, error: %d\n",
 			__func__, reg, retval);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	*val = (u16)retval;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tca6416_keys_scan(काष्ठा tca6416_keypad_chip *chip)
-अणु
-	काष्ठा input_dev *input = chip->input;
+static void tca6416_keys_scan(struct tca6416_keypad_chip *chip)
+{
+	struct input_dev *input = chip->input;
 	u16 reg_val, val;
-	पूर्णांक error, i, pin_index;
+	int error, i, pin_index;
 
-	error = tca6416_पढ़ो_reg(chip, TCA6416_INPUT, &reg_val);
-	अगर (error)
-		वापस;
+	error = tca6416_read_reg(chip, TCA6416_INPUT, &reg_val);
+	if (error)
+		return;
 
 	reg_val &= chip->pinmask;
 
@@ -102,127 +101,127 @@ MODULE_DEVICE_TABLE(i2c, tca6416_id);
 	val = reg_val ^ chip->reg_input;
 	chip->reg_input = reg_val;
 
-	क्रम (i = 0, pin_index = 0; i < 16; i++) अणु
-		अगर (val & (1 << i)) अणु
-			काष्ठा tca6416_button *button = &chip->buttons[pin_index];
-			अचिन्हित पूर्णांक type = button->type ?: EV_KEY;
-			पूर्णांक state = ((reg_val & (1 << i)) ? 1 : 0)
+	for (i = 0, pin_index = 0; i < 16; i++) {
+		if (val & (1 << i)) {
+			struct tca6416_button *button = &chip->buttons[pin_index];
+			unsigned int type = button->type ?: EV_KEY;
+			int state = ((reg_val & (1 << i)) ? 1 : 0)
 						^ button->active_low;
 
 			input_event(input, type, button->code, !!state);
 			input_sync(input);
-		पूर्ण
+		}
 
-		अगर (chip->pinmask & (1 << i))
+		if (chip->pinmask & (1 << i))
 			pin_index++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * This is thपढ़ोed IRQ handler and this can (and will) sleep.
+ * This is threaded IRQ handler and this can (and will) sleep.
  */
-अटल irqवापस_t tca6416_keys_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tca6416_keypad_chip *chip = dev_id;
+static irqreturn_t tca6416_keys_isr(int irq, void *dev_id)
+{
+	struct tca6416_keypad_chip *chip = dev_id;
 
 	tca6416_keys_scan(chip);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम tca6416_keys_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tca6416_keypad_chip *chip =
-		container_of(work, काष्ठा tca6416_keypad_chip, dwork.work);
+static void tca6416_keys_work_func(struct work_struct *work)
+{
+	struct tca6416_keypad_chip *chip =
+		container_of(work, struct tca6416_keypad_chip, dwork.work);
 
 	tca6416_keys_scan(chip);
-	schedule_delayed_work(&chip->dwork, msecs_to_jअगरfies(100));
-पूर्ण
+	schedule_delayed_work(&chip->dwork, msecs_to_jiffies(100));
+}
 
-अटल पूर्णांक tca6416_keys_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा tca6416_keypad_chip *chip = input_get_drvdata(dev);
+static int tca6416_keys_open(struct input_dev *dev)
+{
+	struct tca6416_keypad_chip *chip = input_get_drvdata(dev);
 
-	/* Get initial device state in हाल it has चयनes */
+	/* Get initial device state in case it has switches */
 	tca6416_keys_scan(chip);
 
-	अगर (chip->use_polling)
-		schedule_delayed_work(&chip->dwork, msecs_to_jअगरfies(100));
-	अन्यथा
+	if (chip->use_polling)
+		schedule_delayed_work(&chip->dwork, msecs_to_jiffies(100));
+	else
 		enable_irq(chip->irqnum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tca6416_keys_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा tca6416_keypad_chip *chip = input_get_drvdata(dev);
+static void tca6416_keys_close(struct input_dev *dev)
+{
+	struct tca6416_keypad_chip *chip = input_get_drvdata(dev);
 
-	अगर (chip->use_polling)
+	if (chip->use_polling)
 		cancel_delayed_work_sync(&chip->dwork);
-	अन्यथा
+	else
 		disable_irq(chip->irqnum);
-पूर्ण
+}
 
-अटल पूर्णांक tca6416_setup_रेजिस्टरs(काष्ठा tca6416_keypad_chip *chip)
-अणु
-	पूर्णांक error;
+static int tca6416_setup_registers(struct tca6416_keypad_chip *chip)
+{
+	int error;
 
-	error = tca6416_पढ़ो_reg(chip, TCA6416_OUTPUT, &chip->reg_output);
-	अगर (error)
-		वापस error;
+	error = tca6416_read_reg(chip, TCA6416_OUTPUT, &chip->reg_output);
+	if (error)
+		return error;
 
-	error = tca6416_पढ़ो_reg(chip, TCA6416_सूचीECTION, &chip->reg_direction);
-	अगर (error)
-		वापस error;
+	error = tca6416_read_reg(chip, TCA6416_DIRECTION, &chip->reg_direction);
+	if (error)
+		return error;
 
 	/* ensure that keypad pins are set to input */
-	error = tca6416_ग_लिखो_reg(chip, TCA6416_सूचीECTION,
+	error = tca6416_write_reg(chip, TCA6416_DIRECTION,
 				  chip->reg_direction | chip->pinmask);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = tca6416_पढ़ो_reg(chip, TCA6416_सूचीECTION, &chip->reg_direction);
-	अगर (error)
-		वापस error;
+	error = tca6416_read_reg(chip, TCA6416_DIRECTION, &chip->reg_direction);
+	if (error)
+		return error;
 
-	error = tca6416_पढ़ो_reg(chip, TCA6416_INPUT, &chip->reg_input);
-	अगर (error)
-		वापस error;
+	error = tca6416_read_reg(chip, TCA6416_INPUT, &chip->reg_input);
+	if (error)
+		return error;
 
 	chip->reg_input &= chip->pinmask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tca6416_keypad_probe(काष्ठा i2c_client *client,
-				   स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा tca6416_keys_platक्रमm_data *pdata;
-	काष्ठा tca6416_keypad_chip *chip;
-	काष्ठा input_dev *input;
-	पूर्णांक error;
-	पूर्णांक i;
+static int tca6416_keypad_probe(struct i2c_client *client,
+				   const struct i2c_device_id *id)
+{
+	struct tca6416_keys_platform_data *pdata;
+	struct tca6416_keypad_chip *chip;
+	struct input_dev *input;
+	int error;
+	int i;
 
 	/* Check functionality */
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE)) {
 		dev_err(&client->dev, "%s adapter not supported\n",
 			dev_driver_string(&client->adapter->dev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pdata = dev_get_platdata(&client->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_dbg(&client->dev, "no platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	chip = kzalloc(काष्ठा_size(chip, buttons, pdata->nbuttons), GFP_KERNEL);
+	chip = kzalloc(struct_size(chip, buttons, pdata->nbuttons), GFP_KERNEL);
 	input = input_allocate_device();
-	अगर (!chip || !input) अणु
+	if (!chip || !input) {
 		error = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	chip->client = client;
 	chip->input = input;
@@ -236,142 +235,142 @@ MODULE_DEVICE_TABLE(i2c, tca6416_id);
 	input->name = client->name;
 	input->dev.parent = &client->dev;
 
-	input->खोलो = tca6416_keys_खोलो;
-	input->बंद = tca6416_keys_बंद;
+	input->open = tca6416_keys_open;
+	input->close = tca6416_keys_close;
 
 	input->id.bustype = BUS_HOST;
-	input->id.venकरोr = 0x0001;
+	input->id.vendor = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = 0x0100;
 
-	/* Enable स्वतः repeat feature of Linux input subप्रणाली */
-	अगर (pdata->rep)
+	/* Enable auto repeat feature of Linux input subsystem */
+	if (pdata->rep)
 		__set_bit(EV_REP, input->evbit);
 
-	क्रम (i = 0; i < pdata->nbuttons; i++) अणु
-		अचिन्हित पूर्णांक type;
+	for (i = 0; i < pdata->nbuttons; i++) {
+		unsigned int type;
 
 		chip->buttons[i] = pdata->buttons[i];
 		type = (pdata->buttons[i].type) ?: EV_KEY;
 		input_set_capability(input, type, pdata->buttons[i].code);
-	पूर्ण
+	}
 
 	input_set_drvdata(input, chip);
 
 	/*
-	 * Initialize cached रेजिस्टरs from their original values.
+	 * Initialize cached registers from their original values.
 	 * we can't share this chip with another i2c master.
 	 */
-	error = tca6416_setup_रेजिस्टरs(chip);
-	अगर (error)
-		जाओ fail1;
+	error = tca6416_setup_registers(chip);
+	if (error)
+		goto fail1;
 
-	अगर (!chip->use_polling) अणु
-		अगर (pdata->irq_is_gpio)
+	if (!chip->use_polling) {
+		if (pdata->irq_is_gpio)
 			chip->irqnum = gpio_to_irq(client->irq);
-		अन्यथा
+		else
 			chip->irqnum = client->irq;
 
-		error = request_thपढ़ोed_irq(chip->irqnum, शून्य,
+		error = request_threaded_irq(chip->irqnum, NULL,
 					     tca6416_keys_isr,
 					     IRQF_TRIGGER_FALLING |
 					     IRQF_ONESHOT | IRQF_NO_AUTOEN,
 					     "tca6416-keypad", chip);
-		अगर (error) अणु
+		if (error) {
 			dev_dbg(&client->dev,
 				"Unable to claim irq %d; error %d\n",
 				chip->irqnum, error);
-			जाओ fail1;
-		पूर्ण
-	पूर्ण
+			goto fail1;
+		}
+	}
 
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_dbg(&client->dev,
 			"Unable to register input device, error: %d\n", error);
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	i2c_set_clientdata(client, chip);
 	device_init_wakeup(&client->dev, 1);
 
-	वापस 0;
+	return 0;
 
 fail2:
-	अगर (!chip->use_polling) अणु
-		मुक्त_irq(chip->irqnum, chip);
+	if (!chip->use_polling) {
+		free_irq(chip->irqnum, chip);
 		enable_irq(chip->irqnum);
-	पूर्ण
+	}
 fail1:
-	input_मुक्त_device(input);
-	kमुक्त(chip);
-	वापस error;
-पूर्ण
+	input_free_device(input);
+	kfree(chip);
+	return error;
+}
 
-अटल पूर्णांक tca6416_keypad_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tca6416_keypad_chip *chip = i2c_get_clientdata(client);
+static int tca6416_keypad_remove(struct i2c_client *client)
+{
+	struct tca6416_keypad_chip *chip = i2c_get_clientdata(client);
 
-	अगर (!chip->use_polling) अणु
-		मुक्त_irq(chip->irqnum, chip);
+	if (!chip->use_polling) {
+		free_irq(chip->irqnum, chip);
 		enable_irq(chip->irqnum);
-	पूर्ण
+	}
 
-	input_unरेजिस्टर_device(chip->input);
-	kमुक्त(chip);
+	input_unregister_device(chip->input);
+	kfree(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tca6416_keypad_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tca6416_keypad_chip *chip = i2c_get_clientdata(client);
+#ifdef CONFIG_PM_SLEEP
+static int tca6416_keypad_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tca6416_keypad_chip *chip = i2c_get_clientdata(client);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(chip->irqnum);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tca6416_keypad_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा tca6416_keypad_chip *chip = i2c_get_clientdata(client);
+static int tca6416_keypad_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct tca6416_keypad_chip *chip = i2c_get_clientdata(client);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(chip->irqnum);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tca6416_keypad_dev_pm_ops,
+static SIMPLE_DEV_PM_OPS(tca6416_keypad_dev_pm_ops,
 			 tca6416_keypad_suspend, tca6416_keypad_resume);
 
-अटल काष्ठा i2c_driver tca6416_keypad_driver = अणु
-	.driver = अणु
+static struct i2c_driver tca6416_keypad_driver = {
+	.driver = {
 		.name	= "tca6416-keypad",
 		.pm	= &tca6416_keypad_dev_pm_ops,
-	पूर्ण,
+	},
 	.probe		= tca6416_keypad_probe,
-	.हटाओ		= tca6416_keypad_हटाओ,
+	.remove		= tca6416_keypad_remove,
 	.id_table	= tca6416_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tca6416_keypad_init(व्योम)
-अणु
-	वापस i2c_add_driver(&tca6416_keypad_driver);
-पूर्ण
+static int __init tca6416_keypad_init(void)
+{
+	return i2c_add_driver(&tca6416_keypad_driver);
+}
 
 subsys_initcall(tca6416_keypad_init);
 
-अटल व्योम __निकास tca6416_keypad_निकास(व्योम)
-अणु
+static void __exit tca6416_keypad_exit(void)
+{
 	i2c_del_driver(&tca6416_keypad_driver);
-पूर्ण
-module_निकास(tca6416_keypad_निकास);
+}
+module_exit(tca6416_keypad_exit);
 
 MODULE_AUTHOR("Sriramakrishnan <srk@ti.com>");
 MODULE_DESCRIPTION("Keypad driver over tca6416 IO expander");

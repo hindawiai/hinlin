@@ -1,4 +1,3 @@
-<शैली गुरु>
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-#समावेश "../../../include/linux/uio.h"
+#include "../../../include/linux/uio.h"

@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MMC35240 - MEMSIC 3-axis Magnetic Sensor
  *
  * Copyright (c) 2015, Intel Corporation.
  *
- * IIO driver क्रम MMC35240 (7-bit I2C slave address 0x30).
+ * IIO driver for MMC35240 (7-bit I2C slave address 0x30).
  *
  * TODO: offset, ACPI, continuous measurement mode, PM
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pm.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/regmap.h>
+#include <linux/acpi.h>
+#include <linux/pm.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा MMC35240_DRV_NAME "mmc35240"
-#घोषणा MMC35240_REGMAP_NAME "mmc35240_regmap"
+#define MMC35240_DRV_NAME "mmc35240"
+#define MMC35240_REGMAP_NAME "mmc35240_regmap"
 
-#घोषणा MMC35240_REG_XOUT_L	0x00
-#घोषणा MMC35240_REG_XOUT_H	0x01
-#घोषणा MMC35240_REG_YOUT_L	0x02
-#घोषणा MMC35240_REG_YOUT_H	0x03
-#घोषणा MMC35240_REG_ZOUT_L	0x04
-#घोषणा MMC35240_REG_ZOUT_H	0x05
+#define MMC35240_REG_XOUT_L	0x00
+#define MMC35240_REG_XOUT_H	0x01
+#define MMC35240_REG_YOUT_L	0x02
+#define MMC35240_REG_YOUT_H	0x03
+#define MMC35240_REG_ZOUT_L	0x04
+#define MMC35240_REG_ZOUT_H	0x05
 
-#घोषणा MMC35240_REG_STATUS	0x06
-#घोषणा MMC35240_REG_CTRL0	0x07
-#घोषणा MMC35240_REG_CTRL1	0x08
+#define MMC35240_REG_STATUS	0x06
+#define MMC35240_REG_CTRL0	0x07
+#define MMC35240_REG_CTRL1	0x08
 
-#घोषणा MMC35240_REG_ID		0x20
+#define MMC35240_REG_ID		0x20
 
-#घोषणा MMC35240_STATUS_MEAS_DONE_BIT	BIT(0)
+#define MMC35240_STATUS_MEAS_DONE_BIT	BIT(0)
 
-#घोषणा MMC35240_CTRL0_REFILL_BIT	BIT(7)
-#घोषणा MMC35240_CTRL0_RESET_BIT	BIT(6)
-#घोषणा MMC35240_CTRL0_SET_BIT		BIT(5)
-#घोषणा MMC35240_CTRL0_CMM_BIT		BIT(1)
-#घोषणा MMC35240_CTRL0_TM_BIT		BIT(0)
+#define MMC35240_CTRL0_REFILL_BIT	BIT(7)
+#define MMC35240_CTRL0_RESET_BIT	BIT(6)
+#define MMC35240_CTRL0_SET_BIT		BIT(5)
+#define MMC35240_CTRL0_CMM_BIT		BIT(1)
+#define MMC35240_CTRL0_TM_BIT		BIT(0)
 
 /* output resolution bits */
-#घोषणा MMC35240_CTRL1_BW0_BIT		BIT(0)
-#घोषणा MMC35240_CTRL1_BW1_BIT		BIT(1)
+#define MMC35240_CTRL1_BW0_BIT		BIT(0)
+#define MMC35240_CTRL1_BW1_BIT		BIT(1)
 
-#घोषणा MMC35240_CTRL1_BW_MASK	 (MMC35240_CTRL1_BW0_BIT | \
+#define MMC35240_CTRL1_BW_MASK	 (MMC35240_CTRL1_BW0_BIT | \
 		 MMC35240_CTRL1_BW1_BIT)
-#घोषणा MMC35240_CTRL1_BW_SHIFT		0
+#define MMC35240_CTRL1_BW_SHIFT		0
 
-#घोषणा MMC35240_WAIT_CHARGE_PUMP	50000	/* us */
-#घोषणा MMC35240_WAIT_SET_RESET		1000	/* us */
+#define MMC35240_WAIT_CHARGE_PUMP	50000	/* us */
+#define MMC35240_WAIT_SET_RESET		1000	/* us */
 
 /*
- * Memsic OTP process code piece is put here क्रम reference:
+ * Memsic OTP process code piece is put here for reference:
  *
- * #घोषणा OTP_CONVERT(REG)  ((भग्न)((REG) >=32 ? (32 - (REG)) : (REG)) * 0.006
+ * #define OTP_CONVERT(REG)  ((float)((REG) >=32 ? (32 - (REG)) : (REG)) * 0.006
  * 1) For X axis, the COEFFICIENT is always 1.
  * 2) For Y axis, the COEFFICIENT is as below:
  *    f_OTP_matrix[4] = OTP_CONVERT(((reg_data[1] & 0x03) << 4) |
  *                                   (reg_data[2] >> 4)) + 1.0;
  * 3) For Z axis, the COEFFICIENT is as below:
  *    f_OTP_matrix[8] = (OTP_CONVERT(reg_data[3] & 0x3f) + 1) * 1.35;
- * We implemented the OTP logic पूर्णांकo driver.
+ * We implemented the OTP logic into driver.
  */
 
-/* scale = 1000 here क्रम Y otp */
-#घोषणा MMC35240_OTP_CONVERT_Y(REG) (((REG) >= 32 ? (32 - (REG)) : (REG)) * 6)
+/* scale = 1000 here for Y otp */
+#define MMC35240_OTP_CONVERT_Y(REG) (((REG) >= 32 ? (32 - (REG)) : (REG)) * 6)
 
-/* 0.6 * 1.35 = 0.81, scale 10000 क्रम Z otp */
-#घोषणा MMC35240_OTP_CONVERT_Z(REG) (((REG) >= 32 ? (32 - (REG)) : (REG)) * 81)
+/* 0.6 * 1.35 = 0.81, scale 10000 for Z otp */
+#define MMC35240_OTP_CONVERT_Z(REG) (((REG) >= 32 ? (32 - (REG)) : (REG)) * 81)
 
-#घोषणा MMC35240_X_COEFF(x)	(x)
-#घोषणा MMC35240_Y_COEFF(y)	(y + 1000)
-#घोषणा MMC35240_Z_COEFF(z)	(z + 13500)
+#define MMC35240_X_COEFF(x)	(x)
+#define MMC35240_Y_COEFF(y)	(y + 1000)
+#define MMC35240_Z_COEFF(z)	(z + 13500)
 
-#घोषणा MMC35240_OTP_START_ADDR		0x1B
+#define MMC35240_OTP_START_ADDR		0x1B
 
-क्रमागत mmc35240_resolution अणु
+enum mmc35240_resolution {
 	MMC35240_16_BITS_SLOW = 0, /* 7.92 ms */
 	MMC35240_16_BITS_FAST,     /* 4.08 ms */
 	MMC35240_14_BITS,          /* 2.16 ms */
 	MMC35240_12_BITS,          /* 1.20 ms */
-पूर्ण;
+};
 
-क्रमागत mmc35240_axis अणु
+enum mmc35240_axis {
 	AXIS_X = 0,
 	AXIS_Y,
 	AXIS_Z,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	पूर्णांक sens[3]; /* sensitivity per X, Y, Z axis */
-	पूर्णांक nfo; /* null field output */
-पूर्ण mmc35240_props_table[] = अणु
+static const struct {
+	int sens[3]; /* sensitivity per X, Y, Z axis */
+	int nfo; /* null field output */
+} mmc35240_props_table[] = {
 	/* 16 bits, 125Hz ODR */
-	अणु
-		अणु1024, 1024, 1024पूर्ण,
+	{
+		{1024, 1024, 1024},
 		32768,
-	पूर्ण,
+	},
 	/* 16 bits, 250Hz ODR */
-	अणु
-		अणु1024, 1024, 770पूर्ण,
+	{
+		{1024, 1024, 770},
 		32768,
-	पूर्ण,
+	},
 	/* 14 bits, 450Hz ODR */
-	अणु
-		अणु256, 256, 193पूर्ण,
+	{
+		{256, 256, 193},
 		8192,
-	पूर्ण,
+	},
 	/* 12 bits, 800Hz ODR */
-	अणु
-		अणु64, 64, 48पूर्ण,
+	{
+		{64, 64, 48},
 		2048,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा mmc35240_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex mutex;
-	काष्ठा regmap *regmap;
-	क्रमागत mmc35240_resolution res;
+struct mmc35240_data {
+	struct i2c_client *client;
+	struct mutex mutex;
+	struct regmap *regmap;
+	enum mmc35240_resolution res;
 
 	/* OTP compensation */
-	पूर्णांक axis_coef[3];
-	पूर्णांक axis_scale[3];
-पूर्ण;
+	int axis_coef[3];
+	int axis_scale[3];
+};
 
-अटल स्थिर काष्ठा अणु
-	पूर्णांक val;
-	पूर्णांक val2;
-पूर्ण mmc35240_samp_freq[] = अणु अणु1, 500000पूर्ण,
-			   अणु13, 0पूर्ण,
-			   अणु25, 0पूर्ण,
-			   अणु50, 0पूर्ण पूर्ण;
+static const struct {
+	int val;
+	int val2;
+} mmc35240_samp_freq[] = { {1, 500000},
+			   {13, 0},
+			   {25, 0},
+			   {50, 0} };
 
-अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL("1.5 13 25 50");
+static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("1.5 13 25 50");
 
-#घोषणा MMC35240_CHANNEL(_axis) अणु \
+#define MMC35240_CHANNEL(_axis) { \
 	.type = IIO_MAGN, \
-	.modअगरied = 1, \
+	.modified = 1, \
 	.channel2 = IIO_MOD_ ## _axis, \
 	.address = AXIS_ ## _axis, \
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SAMP_FREQ) | \
 			BIT(IIO_CHAN_INFO_SCALE), \
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec mmc35240_channels[] = अणु
+static const struct iio_chan_spec mmc35240_channels[] = {
 	MMC35240_CHANNEL(X),
 	MMC35240_CHANNEL(Y),
 	MMC35240_CHANNEL(Z),
-पूर्ण;
+};
 
-अटल काष्ठा attribute *mmc35240_attributes[] = अणु
-	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
-	शून्य
-पूर्ण;
+static struct attribute *mmc35240_attributes[] = {
+	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group mmc35240_attribute_group = अणु
+static const struct attribute_group mmc35240_attribute_group = {
 	.attrs = mmc35240_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक mmc35240_get_samp_freq_index(काष्ठा mmc35240_data *data,
-					पूर्णांक val, पूर्णांक val2)
-अणु
-	पूर्णांक i;
+static int mmc35240_get_samp_freq_index(struct mmc35240_data *data,
+					int val, int val2)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mmc35240_samp_freq); i++)
-		अगर (mmc35240_samp_freq[i].val == val &&
+	for (i = 0; i < ARRAY_SIZE(mmc35240_samp_freq); i++)
+		if (mmc35240_samp_freq[i].val == val &&
 		    mmc35240_samp_freq[i].val2 == val2)
-			वापस i;
-	वापस -EINVAL;
-पूर्ण
+			return i;
+	return -EINVAL;
+}
 
-अटल पूर्णांक mmc35240_hw_set(काष्ठा mmc35240_data *data, bool set)
-अणु
-	पूर्णांक ret;
+static int mmc35240_hw_set(struct mmc35240_data *data, bool set)
+{
+	int ret;
 	u8 coil_bit;
 
 	/*
-	 * Reअक्षरge the capacitor at VCAP pin, requested to be issued
-	 * beक्रमe a SET/RESET command.
+	 * Recharge the capacitor at VCAP pin, requested to be issued
+	 * before a SET/RESET command.
 	 */
 	ret = regmap_update_bits(data->regmap, MMC35240_REG_CTRL0,
 				 MMC35240_CTRL0_REFILL_BIT,
 				 MMC35240_CTRL0_REFILL_BIT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	usleep_range(MMC35240_WAIT_CHARGE_PUMP, MMC35240_WAIT_CHARGE_PUMP + 1);
 
-	अगर (set)
+	if (set)
 		coil_bit = MMC35240_CTRL0_SET_BIT;
-	अन्यथा
+	else
 		coil_bit = MMC35240_CTRL0_RESET_BIT;
 
-	वापस regmap_update_bits(data->regmap, MMC35240_REG_CTRL0,
+	return regmap_update_bits(data->regmap, MMC35240_REG_CTRL0,
 				  coil_bit, coil_bit);
 
-पूर्ण
+}
 
-अटल पूर्णांक mmc35240_init(काष्ठा mmc35240_data *data)
-अणु
-	पूर्णांक ret, y_convert, z_convert;
-	अचिन्हित पूर्णांक reg_id;
+static int mmc35240_init(struct mmc35240_data *data)
+{
+	int ret, y_convert, z_convert;
+	unsigned int reg_id;
 	u8 otp_data[6];
 
-	ret = regmap_पढ़ो(data->regmap, MMC35240_REG_ID, &reg_id);
-	अगर (ret < 0) अणु
+	ret = regmap_read(data->regmap, MMC35240_REG_ID, &reg_id);
+	if (ret < 0) {
 		dev_err(&data->client->dev, "Error reading product id\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(&data->client->dev, "MMC35240 chip id %x\n", reg_id);
 
 	/*
-	 * make sure we restore sensor अक्षरacteristics, by करोing
+	 * make sure we restore sensor characteristics, by doing
 	 * a SET/RESET sequence, the axis polarity being naturally
 	 * aligned after RESET
 	 */
 	ret = mmc35240_hw_set(data, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	usleep_range(MMC35240_WAIT_SET_RESET, MMC35240_WAIT_SET_RESET + 1);
 
 	ret = mmc35240_hw_set(data, false);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* set शेष sampling frequency */
+	/* set default sampling frequency */
 	ret = regmap_update_bits(data->regmap, MMC35240_REG_CTRL1,
 				 MMC35240_CTRL1_BW_MASK,
 				 data->res << MMC35240_CTRL1_BW_SHIFT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_bulk_पढ़ो(data->regmap, MMC35240_OTP_START_ADDR,
-			       otp_data, माप(otp_data));
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_bulk_read(data->regmap, MMC35240_OTP_START_ADDR,
+			       otp_data, sizeof(otp_data));
+	if (ret < 0)
+		return ret;
 
 	y_convert = MMC35240_OTP_CONVERT_Y(((otp_data[1] & 0x03) << 4) |
 					   (otp_data[2] >> 4));
@@ -256,67 +255,67 @@
 	data->axis_scale[1] = 1000;
 	data->axis_scale[2] = 10000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc35240_take_measurement(काष्ठा mmc35240_data *data)
-अणु
-	पूर्णांक ret, tries = 100;
-	अचिन्हित पूर्णांक reg_status;
+static int mmc35240_take_measurement(struct mmc35240_data *data)
+{
+	int ret, tries = 100;
+	unsigned int reg_status;
 
-	ret = regmap_ग_लिखो(data->regmap, MMC35240_REG_CTRL0,
+	ret = regmap_write(data->regmap, MMC35240_REG_CTRL0,
 			   MMC35240_CTRL0_TM_BIT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	जबतक (tries-- > 0) अणु
-		ret = regmap_पढ़ो(data->regmap, MMC35240_REG_STATUS,
+	while (tries-- > 0) {
+		ret = regmap_read(data->regmap, MMC35240_REG_STATUS,
 				  &reg_status);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (reg_status & MMC35240_STATUS_MEAS_DONE_BIT)
-			अवरोध;
-		/* minimum रुको समय to complete measurement is 10 ms */
+		if (ret < 0)
+			return ret;
+		if (reg_status & MMC35240_STATUS_MEAS_DONE_BIT)
+			break;
+		/* minimum wait time to complete measurement is 10 ms */
 		usleep_range(10000, 11000);
-	पूर्ण
+	}
 
-	अगर (tries < 0) अणु
+	if (tries < 0) {
 		dev_err(&data->client->dev, "data not ready\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc35240_पढ़ो_measurement(काष्ठा mmc35240_data *data, __le16 buf[3])
-अणु
-	पूर्णांक ret;
+static int mmc35240_read_measurement(struct mmc35240_data *data, __le16 buf[3])
+{
+	int ret;
 
 	ret = mmc35240_take_measurement(data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस regmap_bulk_पढ़ो(data->regmap, MMC35240_REG_XOUT_L, buf,
-				3 * माप(__le16));
-पूर्ण
+	return regmap_bulk_read(data->regmap, MMC35240_REG_XOUT_L, buf,
+				3 * sizeof(__le16));
+}
 
 /**
- * mmc35240_raw_to_mgauss - convert raw पढ़ोings to milli gauss. Also apply
- *			    compensation क्रम output value.
+ * mmc35240_raw_to_mgauss - convert raw readings to milli gauss. Also apply
+ *			    compensation for output value.
  *
- * @data: device निजी data
- * @index: axis index क्रम which we want the conversion
- * @buf: raw data to be converted, 2 bytes in little endian क्रमmat
- * @val: compensated output पढ़ोing (unit is milli gauss)
+ * @data: device private data
+ * @index: axis index for which we want the conversion
+ * @buf: raw data to be converted, 2 bytes in little endian format
+ * @val: compensated output reading (unit is milli gauss)
  *
- * Returns: 0 in हाल of success, -EINVAL when @index is not valid
+ * Returns: 0 in case of success, -EINVAL when @index is not valid
  */
-अटल पूर्णांक mmc35240_raw_to_mgauss(काष्ठा mmc35240_data *data, पूर्णांक index,
-				  __le16 buf[], पूर्णांक *val)
-अणु
-	पूर्णांक raw[3];
-	पूर्णांक sens[3];
-	पूर्णांक nfo;
+static int mmc35240_raw_to_mgauss(struct mmc35240_data *data, int index,
+				  __le16 buf[], int *val)
+{
+	int raw[3];
+	int sens[3];
+	int nfo;
 
 	raw[AXIS_X] = le16_to_cpu(buf[AXIS_X]);
 	raw[AXIS_Y] = le16_to_cpu(buf[AXIS_Y]);
@@ -328,177 +327,177 @@
 
 	nfo = mmc35240_props_table[data->res].nfo;
 
-	चयन (index) अणु
-	हाल AXIS_X:
+	switch (index) {
+	case AXIS_X:
 		*val = (raw[AXIS_X] - nfo) * 1000 / sens[AXIS_X];
-		अवरोध;
-	हाल AXIS_Y:
+		break;
+	case AXIS_Y:
 		*val = (raw[AXIS_Y] - nfo) * 1000 / sens[AXIS_Y] -
 			(raw[AXIS_Z] - nfo)  * 1000 / sens[AXIS_Z];
-		अवरोध;
-	हाल AXIS_Z:
+		break;
+	case AXIS_Z:
 		*val = (raw[AXIS_Y] - nfo) * 1000 / sens[AXIS_Y] +
 			(raw[AXIS_Z] - nfo) * 1000 / sens[AXIS_Z];
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	/* apply OTP compensation */
 	*val = (*val) * data->axis_coef[index] / data->axis_scale[index];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc35240_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
-			     पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा mmc35240_data *data = iio_priv(indio_dev);
-	पूर्णांक ret, i;
-	अचिन्हित पूर्णांक reg;
+static int mmc35240_read_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan, int *val,
+			     int *val2, long mask)
+{
+	struct mmc35240_data *data = iio_priv(indio_dev);
+	int ret, i;
+	unsigned int reg;
 	__le16 buf[3];
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&data->mutex);
-		ret = mmc35240_पढ़ो_measurement(data, buf);
+		ret = mmc35240_read_measurement(data, buf);
 		mutex_unlock(&data->mutex);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		ret = mmc35240_raw_to_mgauss(data, chan->address, buf, val);
-		अगर (ret < 0)
-			वापस ret;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		if (ret < 0)
+			return ret;
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = 1000;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		return IIO_VAL_INT_PLUS_MICRO;
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		mutex_lock(&data->mutex);
-		ret = regmap_पढ़ो(data->regmap, MMC35240_REG_CTRL1, &reg);
+		ret = regmap_read(data->regmap, MMC35240_REG_CTRL1, &reg);
 		mutex_unlock(&data->mutex);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		i = (reg & MMC35240_CTRL1_BW_MASK) >> MMC35240_CTRL1_BW_SHIFT;
-		अगर (i < 0 || i >= ARRAY_SIZE(mmc35240_samp_freq))
-			वापस -EINVAL;
+		if (i < 0 || i >= ARRAY_SIZE(mmc35240_samp_freq))
+			return -EINVAL;
 
 		*val = mmc35240_samp_freq[i].val;
 		*val2 = mmc35240_samp_freq[i].val2;
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक mmc35240_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
-			      पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा mmc35240_data *data = iio_priv(indio_dev);
-	पूर्णांक i, ret;
+static int mmc35240_write_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan, int val,
+			      int val2, long mask)
+{
+	struct mmc35240_data *data = iio_priv(indio_dev);
+	int i, ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		i = mmc35240_get_samp_freq_index(data, val, val2);
-		अगर (i < 0)
-			वापस -EINVAL;
+		if (i < 0)
+			return -EINVAL;
 		mutex_lock(&data->mutex);
 		ret = regmap_update_bits(data->regmap, MMC35240_REG_CTRL1,
 					 MMC35240_CTRL1_BW_MASK,
 					 i << MMC35240_CTRL1_BW_SHIFT);
 		mutex_unlock(&data->mutex);
-		वापस ret;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return ret;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info mmc35240_info = अणु
-	.पढ़ो_raw	= mmc35240_पढ़ो_raw,
-	.ग_लिखो_raw	= mmc35240_ग_लिखो_raw,
+static const struct iio_info mmc35240_info = {
+	.read_raw	= mmc35240_read_raw,
+	.write_raw	= mmc35240_write_raw,
 	.attrs		= &mmc35240_attribute_group,
-पूर्ण;
+};
 
-अटल bool mmc35240_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MMC35240_REG_CTRL0:
-	हाल MMC35240_REG_CTRL1:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mmc35240_is_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case MMC35240_REG_CTRL0:
+	case MMC35240_REG_CTRL1:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool mmc35240_is_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MMC35240_REG_XOUT_L:
-	हाल MMC35240_REG_XOUT_H:
-	हाल MMC35240_REG_YOUT_L:
-	हाल MMC35240_REG_YOUT_H:
-	हाल MMC35240_REG_ZOUT_L:
-	हाल MMC35240_REG_ZOUT_H:
-	हाल MMC35240_REG_STATUS:
-	हाल MMC35240_REG_ID:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mmc35240_is_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case MMC35240_REG_XOUT_L:
+	case MMC35240_REG_XOUT_H:
+	case MMC35240_REG_YOUT_L:
+	case MMC35240_REG_YOUT_H:
+	case MMC35240_REG_ZOUT_L:
+	case MMC35240_REG_ZOUT_H:
+	case MMC35240_REG_STATUS:
+	case MMC35240_REG_ID:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool mmc35240_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल MMC35240_REG_CTRL0:
-	हाल MMC35240_REG_CTRL1:
-		वापस false;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+static bool mmc35240_is_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case MMC35240_REG_CTRL0:
+	case MMC35240_REG_CTRL1:
+		return false;
+	default:
+		return true;
+	}
+}
 
-अटल स्थिर काष्ठा reg_शेष mmc35240_reg_शेषs[] = अणु
-	अणु MMC35240_REG_CTRL0,  0x00 पूर्ण,
-	अणु MMC35240_REG_CTRL1,  0x00 पूर्ण,
-पूर्ण;
+static const struct reg_default mmc35240_reg_defaults[] = {
+	{ MMC35240_REG_CTRL0,  0x00 },
+	{ MMC35240_REG_CTRL1,  0x00 },
+};
 
-अटल स्थिर काष्ठा regmap_config mmc35240_regmap_config = अणु
+static const struct regmap_config mmc35240_regmap_config = {
 	.name = MMC35240_REGMAP_NAME,
 
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = MMC35240_REG_ID,
+	.max_register = MMC35240_REG_ID,
 	.cache_type = REGCACHE_FLAT,
 
-	.ग_लिखोable_reg = mmc35240_is_ग_लिखोable_reg,
-	.पढ़ोable_reg = mmc35240_is_पढ़ोable_reg,
-	.अस्थिर_reg = mmc35240_is_अस्थिर_reg,
+	.writeable_reg = mmc35240_is_writeable_reg,
+	.readable_reg = mmc35240_is_readable_reg,
+	.volatile_reg = mmc35240_is_volatile_reg,
 
-	.reg_शेषs = mmc35240_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(mmc35240_reg_शेषs),
-पूर्ण;
+	.reg_defaults = mmc35240_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(mmc35240_reg_defaults),
+};
 
-अटल पूर्णांक mmc35240_probe(काष्ठा i2c_client *client,
-			  स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा mmc35240_data *data;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int mmc35240_probe(struct i2c_client *client,
+			  const struct i2c_device_id *id)
+{
+	struct mmc35240_data *data;
+	struct iio_dev *indio_dev;
+	struct regmap *regmap;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	regmap = devm_regmap_init_i2c(client, &mmc35240_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&client->dev, "regmap initialization failed\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -512,77 +511,77 @@
 	indio_dev->name = MMC35240_DRV_NAME;
 	indio_dev->channels = mmc35240_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mmc35240_channels);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	ret = mmc35240_init(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "mmc35240 chip init failed\n");
-		वापस ret;
-	पूर्ण
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+		return ret;
+	}
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mmc35240_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा mmc35240_data *data = iio_priv(indio_dev);
+#ifdef CONFIG_PM_SLEEP
+static int mmc35240_suspend(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct mmc35240_data *data = iio_priv(indio_dev);
 
 	regcache_cache_only(data->regmap, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmc35240_resume(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा mmc35240_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int mmc35240_resume(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct mmc35240_data *data = iio_priv(indio_dev);
+	int ret;
 
 	regcache_mark_dirty(data->regmap);
 	ret = regcache_sync_region(data->regmap, MMC35240_REG_CTRL0,
 				   MMC35240_REG_CTRL1);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev, "Failed to restore control registers\n");
 
 	regcache_cache_only(data->regmap, false);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops mmc35240_pm_ops = अणु
+static const struct dev_pm_ops mmc35240_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(mmc35240_suspend, mmc35240_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mmc35240_of_match[] = अणु
-	अणु .compatible = "memsic,mmc35240", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id mmc35240_of_match[] = {
+	{ .compatible = "memsic,mmc35240", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, mmc35240_of_match);
 
-अटल स्थिर काष्ठा acpi_device_id mmc35240_acpi_match[] = अणु
-	अणु"MMC35240", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id mmc35240_acpi_match[] = {
+	{"MMC35240", 0},
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, mmc35240_acpi_match);
 
-अटल स्थिर काष्ठा i2c_device_id mmc35240_id[] = अणु
-	अणु"mmc35240", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id mmc35240_id[] = {
+	{"mmc35240", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, mmc35240_id);
 
-अटल काष्ठा i2c_driver mmc35240_driver = अणु
-	.driver = अणु
+static struct i2c_driver mmc35240_driver = {
+	.driver = {
 		.name = MMC35240_DRV_NAME,
 		.of_match_table = mmc35240_of_match,
 		.pm = &mmc35240_pm_ops,
 		.acpi_match_table = ACPI_PTR(mmc35240_acpi_match),
-	पूर्ण,
+	},
 	.probe		= mmc35240_probe,
 	.id_table	= mmc35240_id,
-पूर्ण;
+};
 
 module_i2c_driver(mmc35240_driver);
 

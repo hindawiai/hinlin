@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * framebuffer driver क्रम VBE 2.0 compliant graphic boards
+ * framebuffer driver for VBE 2.0 compliant graphic boards
  *
- * चयनing to graphics mode happens at boot समय (जबतक
+ * switching to graphics mode happens at boot time (while
  * running in real mode, see arch/i386/boot/video.S).
  *
  * (c) 1998 Gerd Knorr <kraxel@goldbach.in-berlin.de>
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/screen_info.h>
+#include <linux/io.h>
 
-#समावेश <video/vga.h>
+#include <video/vga.h>
 
-#घोषणा dac_reg	(0x3c8)
-#घोषणा dac_val	(0x3c9)
+#define dac_reg	(0x3c8)
+#define dac_val	(0x3c9)
 
 /* --------------------------------------------------------------------- */
 
-काष्ठा vesafb_par अणु
-	u32 pseuकरो_palette[256];
-	पूर्णांक wc_cookie;
-	काष्ठा resource *region;
-पूर्ण;
+struct vesafb_par {
+	u32 pseudo_palette[256];
+	int wc_cookie;
+	struct resource *region;
+};
 
-अटल काष्ठा fb_var_screeninfo vesafb_defined = अणु
+static struct fb_var_screeninfo vesafb_defined = {
 	.activate	= FB_ACTIVATE_NOW,
 	.height		= -1,
 	.width		= -1,
@@ -45,77 +44,77 @@
 	.lower_margin	= 4,
 	.vsync_len	= 4,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 
-अटल काष्ठा fb_fix_screeninfo vesafb_fix = अणु
+static struct fb_fix_screeninfo vesafb_fix = {
 	.id	= "VESA VGA",
 	.type	= FB_TYPE_PACKED_PIXELS,
 	.accel	= FB_ACCEL_NONE,
-पूर्ण;
+};
 
-अटल पूर्णांक   inverse    __पढ़ो_mostly;
-अटल पूर्णांक   mtrr       __पढ़ो_mostly;		/* disable mtrr */
-अटल पूर्णांक   vram_remap;			/* Set amount of memory to be used */
-अटल पूर्णांक   vram_total;			/* Set total amount of memory */
-अटल पूर्णांक   pmi_setpal __पढ़ो_mostly = 1;	/* pmi क्रम palette changes ??? */
-अटल पूर्णांक   ypan       __पढ़ो_mostly;		/* 0..nothing, 1..ypan, 2..ywrap */
-अटल व्योम  (*pmi_start)(व्योम) __पढ़ो_mostly;
-अटल व्योम  (*pmi_pal)  (व्योम) __पढ़ो_mostly;
-अटल पूर्णांक   depth      __पढ़ो_mostly;
-अटल पूर्णांक   vga_compat __पढ़ो_mostly;
+static int   inverse    __read_mostly;
+static int   mtrr       __read_mostly;		/* disable mtrr */
+static int   vram_remap;			/* Set amount of memory to be used */
+static int   vram_total;			/* Set total amount of memory */
+static int   pmi_setpal __read_mostly = 1;	/* pmi for palette changes ??? */
+static int   ypan       __read_mostly;		/* 0..nothing, 1..ypan, 2..ywrap */
+static void  (*pmi_start)(void) __read_mostly;
+static void  (*pmi_pal)  (void) __read_mostly;
+static int   depth      __read_mostly;
+static int   vga_compat __read_mostly;
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक vesafb_pan_display(काष्ठा fb_var_screeninfo *var,
-                              काष्ठा fb_info *info)
-अणु
-#अगर_घोषित __i386__
-	पूर्णांक offset;
+static int vesafb_pan_display(struct fb_var_screeninfo *var,
+                              struct fb_info *info)
+{
+#ifdef __i386__
+	int offset;
 
 	offset = (var->yoffset * info->fix.line_length + var->xoffset) / 4;
 
-        __यंत्र__ __अस्थिर__(
+        __asm__ __volatile__(
                 "call *(%%edi)"
-                : /* no वापस value */
+                : /* no return value */
                 : "a" (0x4f07),         /* EAX */
                   "b" (0),              /* EBX */
                   "c" (offset),         /* ECX */
                   "d" (offset >> 16),   /* EDX */
                   "D" (&pmi_start));    /* EDI */
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक vesa_setpalette(पूर्णांक regno, अचिन्हित red, अचिन्हित green,
-			    अचिन्हित blue)
-अणु
-	पूर्णांक shअगरt = 16 - depth;
-	पूर्णांक err = -EINVAL;
+static int vesa_setpalette(int regno, unsigned red, unsigned green,
+			    unsigned blue)
+{
+	int shift = 16 - depth;
+	int err = -EINVAL;
 
 /*
- * Try VGA रेजिस्टरs first...
+ * Try VGA registers first...
  */
-	अगर (vga_compat) अणु
+	if (vga_compat) {
 		outb_p(regno,       dac_reg);
-		outb_p(red   >> shअगरt, dac_val);
-		outb_p(green >> shअगरt, dac_val);
-		outb_p(blue  >> shअगरt, dac_val);
+		outb_p(red   >> shift, dac_val);
+		outb_p(green >> shift, dac_val);
+		outb_p(blue  >> shift, dac_val);
 		err = 0;
-	पूर्ण
+	}
 
-#अगर_घोषित __i386__
+#ifdef __i386__
 /*
  * Fallback to the PMI....
  */
-	अगर (err && pmi_setpal) अणु
-		काष्ठा अणु u_अक्षर blue, green, red, pad; पूर्ण entry;
+	if (err && pmi_setpal) {
+		struct { u_char blue, green, red, pad; } entry;
 
-		entry.red   = red   >> shअगरt;
-		entry.green = green >> shअगरt;
-		entry.blue  = blue  >> shअगरt;
+		entry.red   = red   >> shift;
+		entry.green = green >> shift;
+		entry.blue  = blue  >> shift;
 		entry.pad   = 0;
-	        __यंत्र__ __अस्थिर__(
+	        __asm__ __volatile__(
                 "call *(%%esi)"
-                : /* no वापस value */
+                : /* no return value */
                 : "a" (0x4f09),         /* EAX */
                   "b" (0),              /* EBX */
                   "c" (1),              /* ECX */
@@ -123,75 +122,75 @@
                   "D" (&entry),         /* EDI */
                   "S" (&pmi_pal));      /* ESI */
 		err = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक vesafb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-			    अचिन्हित blue, अचिन्हित transp,
-			    काष्ठा fb_info *info)
-अणु
-	पूर्णांक err = 0;
+static int vesafb_setcolreg(unsigned regno, unsigned red, unsigned green,
+			    unsigned blue, unsigned transp,
+			    struct fb_info *info)
+{
+	int err = 0;
 
 	/*
-	 *  Set a single color रेजिस्टर. The values supplied are
-	 *  alपढ़ोy rounded करोwn to the hardware's capabilities
-	 *  (according to the entries in the `var' काष्ठाure). Return
-	 *  != 0 क्रम invalid regno.
+	 *  Set a single color register. The values supplied are
+	 *  already rounded down to the hardware's capabilities
+	 *  (according to the entries in the `var' structure). Return
+	 *  != 0 for invalid regno.
 	 */
 	
-	अगर (regno >= info->cmap.len)
-		वापस 1;
+	if (regno >= info->cmap.len)
+		return 1;
 
-	अगर (info->var.bits_per_pixel == 8)
+	if (info->var.bits_per_pixel == 8)
 		err = vesa_setpalette(regno,red,green,blue);
-	अन्यथा अगर (regno < 16) अणु
-		चयन (info->var.bits_per_pixel) अणु
-		हाल 16:
-			अगर (info->var.red.offset == 10) अणु
+	else if (regno < 16) {
+		switch (info->var.bits_per_pixel) {
+		case 16:
+			if (info->var.red.offset == 10) {
 				/* 1:5:5:5 */
-				((u32*) (info->pseuकरो_palette))[regno] =
+				((u32*) (info->pseudo_palette))[regno] =
 					((red   & 0xf800) >>  1) |
 					((green & 0xf800) >>  6) |
 					((blue  & 0xf800) >> 11);
-			पूर्ण अन्यथा अणु
+			} else {
 				/* 0:5:6:5 */
-				((u32*) (info->pseuकरो_palette))[regno] =
+				((u32*) (info->pseudo_palette))[regno] =
 					((red   & 0xf800)      ) |
 					((green & 0xfc00) >>  5) |
 					((blue  & 0xf800) >> 11);
-			पूर्ण
-			अवरोध;
-		हाल 24:
-		हाल 32:
+			}
+			break;
+		case 24:
+		case 32:
 			red   >>= 8;
 			green >>= 8;
 			blue  >>= 8;
-			((u32 *)(info->pseuकरो_palette))[regno] =
+			((u32 *)(info->pseudo_palette))[regno] =
 				(red   << info->var.red.offset)   |
 				(green << info->var.green.offset) |
 				(blue  << info->var.blue.offset);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम vesafb_destroy(काष्ठा fb_info *info)
-अणु
-	काष्ठा vesafb_par *par = info->par;
+static void vesafb_destroy(struct fb_info *info)
+{
+	struct vesafb_par *par = info->par;
 
 	fb_dealloc_cmap(&info->cmap);
 	arch_phys_wc_del(par->wc_cookie);
-	अगर (info->screen_base)
+	if (info->screen_base)
 		iounmap(info->screen_base);
 	release_mem_region(info->apertures->ranges[0].base, info->apertures->ranges[0].size);
-पूर्ण
+}
 
-अटल काष्ठा fb_ops vesafb_ops = अणु
+static struct fb_ops vesafb_ops = {
 	.owner		= THIS_MODULE,
 	.fb_destroy     = vesafb_destroy,
 	.fb_setcolreg	= vesafb_setcolreg,
@@ -199,63 +198,63 @@
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-पूर्ण;
+};
 
-अटल पूर्णांक vesafb_setup(अक्षर *options)
-अणु
-	अक्षर *this_opt;
+static int vesafb_setup(char *options)
+{
+	char *this_opt;
 	
-	अगर (!options || !*options)
-		वापस 0;
+	if (!options || !*options)
+		return 0;
 	
-	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
-		अगर (!*this_opt) जारी;
+	while ((this_opt = strsep(&options, ",")) != NULL) {
+		if (!*this_opt) continue;
 		
-		अगर (! म_भेद(this_opt, "inverse"))
+		if (! strcmp(this_opt, "inverse"))
 			inverse=1;
-		अन्यथा अगर (! म_भेद(this_opt, "redraw"))
+		else if (! strcmp(this_opt, "redraw"))
 			ypan=0;
-		अन्यथा अगर (! म_भेद(this_opt, "ypan"))
+		else if (! strcmp(this_opt, "ypan"))
 			ypan=1;
-		अन्यथा अगर (! म_भेद(this_opt, "ywrap"))
+		else if (! strcmp(this_opt, "ywrap"))
 			ypan=2;
-		अन्यथा अगर (! म_भेद(this_opt, "vgapal"))
+		else if (! strcmp(this_opt, "vgapal"))
 			pmi_setpal=0;
-		अन्यथा अगर (! म_भेद(this_opt, "pmipal"))
+		else if (! strcmp(this_opt, "pmipal"))
 			pmi_setpal=1;
-		अन्यथा अगर (! म_भेदन(this_opt, "mtrr:", 5))
-			mtrr = simple_म_से_अदीर्घ(this_opt+5, शून्य, 0);
-		अन्यथा अगर (! म_भेद(this_opt, "nomtrr"))
+		else if (! strncmp(this_opt, "mtrr:", 5))
+			mtrr = simple_strtoul(this_opt+5, NULL, 0);
+		else if (! strcmp(this_opt, "nomtrr"))
 			mtrr=0;
-		अन्यथा अगर (! म_भेदन(this_opt, "vtotal:", 7))
-			vram_total = simple_म_से_अदीर्घ(this_opt+7, शून्य, 0);
-		अन्यथा अगर (! म_भेदन(this_opt, "vremap:", 7))
-			vram_remap = simple_म_से_अदीर्घ(this_opt+7, शून्य, 0);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		else if (! strncmp(this_opt, "vtotal:", 7))
+			vram_total = simple_strtoul(this_opt+7, NULL, 0);
+		else if (! strncmp(this_opt, "vremap:", 7))
+			vram_remap = simple_strtoul(this_opt+7, NULL, 0);
+	}
+	return 0;
+}
 
-अटल पूर्णांक vesafb_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा fb_info *info;
-	काष्ठा vesafb_par *par;
-	पूर्णांक i, err;
-	अचिन्हित पूर्णांक size_vmode;
-	अचिन्हित पूर्णांक size_remap;
-	अचिन्हित पूर्णांक माप_प्रकारotal;
-	अक्षर *option = शून्य;
+static int vesafb_probe(struct platform_device *dev)
+{
+	struct fb_info *info;
+	struct vesafb_par *par;
+	int i, err;
+	unsigned int size_vmode;
+	unsigned int size_remap;
+	unsigned int size_total;
+	char *option = NULL;
 
-	/* ignore error वापस of fb_get_options */
+	/* ignore error return of fb_get_options */
 	fb_get_options("vesafb", &option);
 	vesafb_setup(option);
 
-	अगर (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
-		वापस -ENODEV;
+	if (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
+		return -ENODEV;
 
 	vga_compat = (screen_info.capabilities & 2) ? 0 : 1;
 	vesafb_fix.smem_start = screen_info.lfb_base;
 	vesafb_defined.bits_per_pixel = screen_info.lfb_depth;
-	अगर (15 == vesafb_defined.bits_per_pixel)
+	if (15 == vesafb_defined.bits_per_pixel)
 		vesafb_defined.bits_per_pixel = 16;
 	vesafb_defined.xres = screen_info.lfb_width;
 	vesafb_defined.yres = screen_info.lfb_height;
@@ -263,117 +262,117 @@
 	vesafb_fix.visual   = (vesafb_defined.bits_per_pixel == 8) ?
 		FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_TRUECOLOR;
 
-	/*   size_vmode -- that is the amount of memory needed क्रम the
+	/*   size_vmode -- that is the amount of memory needed for the
 	 *                 used video mode, i.e. the minimum amount of
 	 *                 memory we need. */
 	size_vmode = vesafb_defined.yres * vesafb_fix.line_length;
 
-	/*   माप_प्रकारotal -- all video memory we have. Used क्रम mtrr
+	/*   size_total -- all video memory we have. Used for mtrr
 	 *                 entries, resource allocation and bounds
 	 *                 checking. */
-	माप_प्रकारotal = screen_info.lfb_size * 65536;
-	अगर (vram_total)
-		माप_प्रकारotal = vram_total * 1024 * 1024;
-	अगर (माप_प्रकारotal < size_vmode)
-		माप_प्रकारotal = size_vmode;
+	size_total = screen_info.lfb_size * 65536;
+	if (vram_total)
+		size_total = vram_total * 1024 * 1024;
+	if (size_total < size_vmode)
+		size_total = size_vmode;
 
 	/*   size_remap -- the amount of video memory we are going to
-	 *                 use क्रम vesafb.  With modern cards it is no
-	 *                 option to simply use माप_प्रकारotal as that
+	 *                 use for vesafb.  With modern cards it is no
+	 *                 option to simply use size_total as that
 	 *                 wastes plenty of kernel address space. */
 	size_remap  = size_vmode * 2;
-	अगर (vram_remap)
+	if (vram_remap)
 		size_remap = vram_remap * 1024 * 1024;
-	अगर (size_remap < size_vmode)
+	if (size_remap < size_vmode)
 		size_remap = size_vmode;
-	अगर (size_remap > माप_प्रकारotal)
-		size_remap = माप_प्रकारotal;
+	if (size_remap > size_total)
+		size_remap = size_total;
 	vesafb_fix.smem_len = size_remap;
 
-#अगर_अघोषित __i386__
+#ifndef __i386__
 	screen_info.vesapm_seg = 0;
-#पूर्ण_अगर
+#endif
 
-	अगर (!request_mem_region(vesafb_fix.smem_start, माप_प्रकारotal, "vesafb")) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (!request_mem_region(vesafb_fix.smem_start, size_total, "vesafb")) {
+		printk(KERN_WARNING
 		       "vesafb: cannot reserve video memory at 0x%lx\n",
 			vesafb_fix.smem_start);
-		/* We cannot make this fatal. Someबार this comes from magic
-		   spaces our resource handlers simply करोn't know about */
-	पूर्ण
+		/* We cannot make this fatal. Sometimes this comes from magic
+		   spaces our resource handlers simply don't know about */
+	}
 
-	info = framebuffer_alloc(माप(काष्ठा vesafb_par), &dev->dev);
-	अगर (!info) अणु
-		release_mem_region(vesafb_fix.smem_start, माप_प्रकारotal);
-		वापस -ENOMEM;
-	पूर्ण
-	platक्रमm_set_drvdata(dev, info);
+	info = framebuffer_alloc(sizeof(struct vesafb_par), &dev->dev);
+	if (!info) {
+		release_mem_region(vesafb_fix.smem_start, size_total);
+		return -ENOMEM;
+	}
+	platform_set_drvdata(dev, info);
 	par = info->par;
-	info->pseuकरो_palette = par->pseuकरो_palette;
+	info->pseudo_palette = par->pseudo_palette;
 
-	/* set vesafb aperture size क्रम generic probing */
+	/* set vesafb aperture size for generic probing */
 	info->apertures = alloc_apertures(1);
-	अगर (!info->apertures) अणु
+	if (!info->apertures) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	info->apertures->ranges[0].base = screen_info.lfb_base;
-	info->apertures->ranges[0].size = माप_प्रकारotal;
+	info->apertures->ranges[0].size = size_total;
 
-	prपूर्णांकk(KERN_INFO "vesafb: mode is %dx%dx%d, linelength=%d, pages=%d\n",
+	printk(KERN_INFO "vesafb: mode is %dx%dx%d, linelength=%d, pages=%d\n",
 	       vesafb_defined.xres, vesafb_defined.yres, vesafb_defined.bits_per_pixel, vesafb_fix.line_length, screen_info.pages);
 
-	अगर (screen_info.vesapm_seg) अणु
-		prपूर्णांकk(KERN_INFO "vesafb: protected mode interface info at %04x:%04x\n",
+	if (screen_info.vesapm_seg) {
+		printk(KERN_INFO "vesafb: protected mode interface info at %04x:%04x\n",
 		       screen_info.vesapm_seg,screen_info.vesapm_off);
-	पूर्ण
+	}
 
-	अगर (screen_info.vesapm_seg < 0xc000)
+	if (screen_info.vesapm_seg < 0xc000)
 		ypan = pmi_setpal = 0; /* not available or some DOS TSR ... */
 
-	अगर (ypan || pmi_setpal) अणु
-		अचिन्हित लघु *pmi_base;
-		pmi_base  = (अचिन्हित लघु*)phys_to_virt(((अचिन्हित दीर्घ)screen_info.vesapm_seg << 4) + screen_info.vesapm_off);
-		pmi_start = (व्योम*)((अक्षर*)pmi_base + pmi_base[1]);
-		pmi_pal   = (व्योम*)((अक्षर*)pmi_base + pmi_base[2]);
-		prपूर्णांकk(KERN_INFO "vesafb: pmi: set display start = %p, set palette = %p\n",pmi_start,pmi_pal);
-		अगर (pmi_base[3]) अणु
-			prपूर्णांकk(KERN_INFO "vesafb: pmi: ports = ");
-			क्रम (i = pmi_base[3]/2; pmi_base[i] != 0xffff; i++)
-				prपूर्णांकk("%x ", pmi_base[i]);
-			prपूर्णांकk("\n");
-			अगर (pmi_base[i] != 0xffff) अणु
+	if (ypan || pmi_setpal) {
+		unsigned short *pmi_base;
+		pmi_base  = (unsigned short*)phys_to_virt(((unsigned long)screen_info.vesapm_seg << 4) + screen_info.vesapm_off);
+		pmi_start = (void*)((char*)pmi_base + pmi_base[1]);
+		pmi_pal   = (void*)((char*)pmi_base + pmi_base[2]);
+		printk(KERN_INFO "vesafb: pmi: set display start = %p, set palette = %p\n",pmi_start,pmi_pal);
+		if (pmi_base[3]) {
+			printk(KERN_INFO "vesafb: pmi: ports = ");
+			for (i = pmi_base[3]/2; pmi_base[i] != 0xffff; i++)
+				printk("%x ", pmi_base[i]);
+			printk("\n");
+			if (pmi_base[i] != 0xffff) {
 				/*
 				 * memory areas not supported (yet?)
 				 *
-				 * Rules are: we have to set up a descriptor क्रम the requested
-				 * memory area and pass it in the ES रेजिस्टर to the BIOS function.
+				 * Rules are: we have to set up a descriptor for the requested
+				 * memory area and pass it in the ES register to the BIOS function.
 				 */
-				prपूर्णांकk(KERN_INFO "vesafb: can't handle memory requests, pmi disabled\n");
+				printk(KERN_INFO "vesafb: can't handle memory requests, pmi disabled\n");
 				ypan = pmi_setpal = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (vesafb_defined.bits_per_pixel == 8 && !pmi_setpal && !vga_compat) अणु
-		prपूर्णांकk(KERN_WARNING "vesafb: hardware palette is unchangeable,\n"
+	if (vesafb_defined.bits_per_pixel == 8 && !pmi_setpal && !vga_compat) {
+		printk(KERN_WARNING "vesafb: hardware palette is unchangeable,\n"
 		                    "        colors may be incorrect\n");
 		vesafb_fix.visual = FB_VISUAL_STATIC_PSEUDOCOLOR;
-	पूर्ण
+	}
 
-	vesafb_defined.xres_भव = vesafb_defined.xres;
-	vesafb_defined.yres_भव = vesafb_fix.smem_len / vesafb_fix.line_length;
-	अगर (ypan && vesafb_defined.yres_भव > vesafb_defined.yres) अणु
-		prपूर्णांकk(KERN_INFO "vesafb: scrolling: %s using protected mode interface, yres_virtual=%d\n",
-		       (ypan > 1) ? "ywrap" : "ypan",vesafb_defined.yres_भव);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_INFO "vesafb: scrolling: redraw\n");
-		vesafb_defined.yres_भव = vesafb_defined.yres;
+	vesafb_defined.xres_virtual = vesafb_defined.xres;
+	vesafb_defined.yres_virtual = vesafb_fix.smem_len / vesafb_fix.line_length;
+	if (ypan && vesafb_defined.yres_virtual > vesafb_defined.yres) {
+		printk(KERN_INFO "vesafb: scrolling: %s using protected mode interface, yres_virtual=%d\n",
+		       (ypan > 1) ? "ywrap" : "ypan",vesafb_defined.yres_virtual);
+	} else {
+		printk(KERN_INFO "vesafb: scrolling: redraw\n");
+		vesafb_defined.yres_virtual = vesafb_defined.yres;
 		ypan = 0;
-	पूर्ण
+	}
 
-	/* some dummy values क्रम timing to make fbset happy */
-	vesafb_defined.pixघड़ी     = 10000000 / vesafb_defined.xres * 1000 / vesafb_defined.yres;
+	/* some dummy values for timing to make fbset happy */
+	vesafb_defined.pixclock     = 10000000 / vesafb_defined.xres * 1000 / vesafb_defined.yres;
 	vesafb_defined.left_margin  = (vesafb_defined.xres / 8) & 0xf8;
 	vesafb_defined.hsync_len    = (vesafb_defined.xres / 8) & 0xf8;
 	
@@ -386,15 +385,15 @@
 	vesafb_defined.transp.offset = screen_info.rsvd_pos;
 	vesafb_defined.transp.length = screen_info.rsvd_size;
 
-	अगर (vesafb_defined.bits_per_pixel <= 8) अणु
+	if (vesafb_defined.bits_per_pixel <= 8) {
 		depth = vesafb_defined.green.length;
 		vesafb_defined.red.length =
 		vesafb_defined.green.length =
 		vesafb_defined.blue.length =
 		vesafb_defined.bits_per_pixel;
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "vesafb: %s: "
+	printk(KERN_INFO "vesafb: %s: "
 	       "size=%d:%d:%d:%d, shift=%d:%d:%d:%d\n",
 	       (vesafb_defined.bits_per_pixel > 8) ?
 	       "Truecolor" : (vga_compat || pmi_setpal) ?
@@ -411,46 +410,46 @@
 	vesafb_fix.ypanstep  = ypan     ? 1 : 0;
 	vesafb_fix.ywrapstep = (ypan>1) ? 1 : 0;
 
-	/* request failure करोes not faze us, as vgacon probably has this
-	 * region alपढ़ोy (FIXME) */
+	/* request failure does not faze us, as vgacon probably has this
+	 * region already (FIXME) */
 	par->region = request_region(0x3c0, 32, "vesafb");
 
-	अगर (mtrr == 3) अणु
-		अचिन्हित पूर्णांक temp_size = माप_प्रकारotal;
+	if (mtrr == 3) {
+		unsigned int temp_size = size_total;
 
-		/* Find the largest घातer-of-two */
-		temp_size = roundup_घात_of_two(temp_size);
+		/* Find the largest power-of-two */
+		temp_size = roundup_pow_of_two(temp_size);
 
-		/* Try and find a घातer of two to add */
-		करो अणु
+		/* Try and find a power of two to add */
+		do {
 			par->wc_cookie =
 				arch_phys_wc_add(vesafb_fix.smem_start,
 						 temp_size);
 			temp_size >>= 1;
-		पूर्ण जबतक (temp_size >= PAGE_SIZE && par->wc_cookie < 0);
+		} while (temp_size >= PAGE_SIZE && par->wc_cookie < 0);
 
 		info->screen_base = ioremap_wc(vesafb_fix.smem_start, vesafb_fix.smem_len);
-	पूर्ण अन्यथा अणु
-		अगर (mtrr && mtrr != 3)
+	} else {
+		if (mtrr && mtrr != 3)
 			WARN_ONCE(1, "Only MTRR_TYPE_WRCOMB (3) make sense\n");
 		info->screen_base = ioremap(vesafb_fix.smem_start, vesafb_fix.smem_len);
-	पूर्ण
+	}
 
-	अगर (!info->screen_base) अणु
-		prपूर्णांकk(KERN_ERR
+	if (!info->screen_base) {
+		printk(KERN_ERR
 		       "vesafb: abort, cannot ioremap video memory 0x%x @ 0x%lx\n",
 			vesafb_fix.smem_len, vesafb_fix.smem_start);
 		err = -EIO;
-		जाओ err_release_region;
-	पूर्ण
+		goto err_release_region;
+	}
 
-	prपूर्णांकk(KERN_INFO "vesafb: framebuffer at 0x%lx, mapped to 0x%p, "
+	printk(KERN_INFO "vesafb: framebuffer at 0x%lx, mapped to 0x%p, "
 	       "using %dk, total %dk\n",
 	       vesafb_fix.smem_start, info->screen_base,
-	       size_remap/1024, माप_प्रकारotal/1024);
+	       size_remap/1024, size_total/1024);
 
-	अगर (!ypan)
-		vesafb_ops.fb_pan_display = शून्य;
+	if (!ypan)
+		vesafb_ops.fb_pan_display = NULL;
 
 	info->fbops = &vesafb_ops;
 	info->var = vesafb_defined;
@@ -458,48 +457,48 @@
 	info->flags = FBINFO_FLAG_DEFAULT | FBINFO_MISC_FIRMWARE |
 		(ypan ? FBINFO_HWACCEL_YPAN : 0);
 
-	अगर (fb_alloc_cmap(&info->cmap, 256, 0) < 0) अणु
+	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0) {
 		err = -ENOMEM;
-		जाओ err_release_region;
-	पूर्ण
-	अगर (रेजिस्टर_framebuffer(info)<0) अणु
+		goto err_release_region;
+	}
+	if (register_framebuffer(info)<0) {
 		err = -EINVAL;
 		fb_dealloc_cmap(&info->cmap);
-		जाओ err_release_region;
-	पूर्ण
+		goto err_release_region;
+	}
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
-	वापस 0;
+	return 0;
 err_release_region:
 	arch_phys_wc_del(par->wc_cookie);
-	अगर (info->screen_base)
+	if (info->screen_base)
 		iounmap(info->screen_base);
-	अगर (par->region)
+	if (par->region)
 		release_region(0x3c0, 32);
 err:
 	framebuffer_release(info);
-	release_mem_region(vesafb_fix.smem_start, माप_प्रकारotal);
-	वापस err;
-पूर्ण
+	release_mem_region(vesafb_fix.smem_start, size_total);
+	return err;
+}
 
-अटल पूर्णांक vesafb_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fb_info *info = platक्रमm_get_drvdata(pdev);
+static int vesafb_remove(struct platform_device *pdev)
+{
+	struct fb_info *info = platform_get_drvdata(pdev);
 
-	unरेजिस्टर_framebuffer(info);
-	अगर (((काष्ठा vesafb_par *)(info->par))->region)
+	unregister_framebuffer(info);
+	if (((struct vesafb_par *)(info->par))->region)
 		release_region(0x3c0, 32);
 	framebuffer_release(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver vesafb_driver = अणु
-	.driver = अणु
+static struct platform_driver vesafb_driver = {
+	.driver = {
 		.name = "vesa-framebuffer",
-	पूर्ण,
+	},
 	.probe = vesafb_probe,
-	.हटाओ = vesafb_हटाओ,
-पूर्ण;
+	.remove = vesafb_remove,
+};
 
-module_platक्रमm_driver(vesafb_driver);
+module_platform_driver(vesafb_driver);
 MODULE_LICENSE("GPL");

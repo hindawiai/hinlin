@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __OMAP1_BL_H__
-#घोषणा __OMAP1_BL_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __OMAP1_BL_H__
+#define __OMAP1_BL_H__
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-काष्ठा omap_backlight_config अणु
-	पूर्णांक शेष_पूर्णांकensity;
-	पूर्णांक (*set_घातer)(काष्ठा device *dev, पूर्णांक state);
-पूर्ण;
+struct omap_backlight_config {
+	int default_intensity;
+	int (*set_power)(struct device *dev, int state);
+};
 
-#पूर्ण_अगर
+#endif

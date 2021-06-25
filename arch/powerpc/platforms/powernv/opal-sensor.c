@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV sensor code
  *
  * Copyright (C) 2013 IBM
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/machdep.h>
+#include <linux/delay.h>
+#include <linux/of_platform.h>
+#include <asm/opal.h>
+#include <asm/machdep.h>
 
 /*
- * This will वापस sensor inक्रमmation to driver based on the requested sensor
- * handle. A handle is an opaque id क्रम the घातernv, पढ़ो by the driver from the
+ * This will return sensor information to driver based on the requested sensor
+ * handle. A handle is an opaque id for the powernv, read by the driver from the
  * device tree..
  */
-पूर्णांक opal_get_sensor_data(u32 sensor_hndl, u32 *sensor_data)
-अणु
-	पूर्णांक ret, token;
-	काष्ठा opal_msg msg;
+int opal_get_sensor_data(u32 sensor_hndl, u32 *sensor_data)
+{
+	int ret, token;
+	struct opal_msg msg;
 	__be32 data;
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0)
-		वापस token;
+	token = opal_async_get_token_interruptible();
+	if (token < 0)
+		return token;
 
-	ret = opal_sensor_पढ़ो(sensor_hndl, token, &data);
-	चयन (ret) अणु
-	हाल OPAL_ASYNC_COMPLETION:
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	ret = opal_sensor_read(sensor_hndl, token, &data);
+	switch (ret) {
+	case OPAL_ASYNC_COMPLETION:
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_err("%s: Failed to wait for the async response, %d\n",
 			       __func__, ret);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = opal_error_code(opal_get_async_rc(msg));
 		*sensor_data = be32_to_cpu(data);
-		अवरोध;
+		break;
 
-	हाल OPAL_SUCCESS:
+	case OPAL_SUCCESS:
 		ret = 0;
 		*sensor_data = be32_to_cpu(data);
-		अवरोध;
+		break;
 
-	हाल OPAL_WRONG_STATE:
+	case OPAL_WRONG_STATE:
 		ret = -EIO;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = opal_error_code(ret);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(opal_get_sensor_data);
 
-पूर्णांक opal_get_sensor_data_u64(u32 sensor_hndl, u64 *sensor_data)
-अणु
-	पूर्णांक ret, token;
-	काष्ठा opal_msg msg;
+int opal_get_sensor_data_u64(u32 sensor_hndl, u64 *sensor_data)
+{
+	int ret, token;
+	struct opal_msg msg;
 	__be64 data;
 
-	अगर (!opal_check_token(OPAL_SENSOR_READ_U64)) अणु
+	if (!opal_check_token(OPAL_SENSOR_READ_U64)) {
 		u32 sdata;
 
 		ret = opal_get_sensor_data(sensor_hndl, &sdata);
-		अगर (!ret)
+		if (!ret)
 			*sensor_data = sdata;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	token = opal_async_get_token_पूर्णांकerruptible();
-	अगर (token < 0)
-		वापस token;
+	token = opal_async_get_token_interruptible();
+	if (token < 0)
+		return token;
 
-	ret = opal_sensor_पढ़ो_u64(sensor_hndl, token, &data);
-	चयन (ret) अणु
-	हाल OPAL_ASYNC_COMPLETION:
-		ret = opal_async_रुको_response(token, &msg);
-		अगर (ret) अणु
+	ret = opal_sensor_read_u64(sensor_hndl, token, &data);
+	switch (ret) {
+	case OPAL_ASYNC_COMPLETION:
+		ret = opal_async_wait_response(token, &msg);
+		if (ret) {
 			pr_err("%s: Failed to wait for the async response, %d\n",
 			       __func__, ret);
-			जाओ out_token;
-		पूर्ण
+			goto out_token;
+		}
 
 		ret = opal_error_code(opal_get_async_rc(msg));
 		*sensor_data = be64_to_cpu(data);
-		अवरोध;
+		break;
 
-	हाल OPAL_SUCCESS:
+	case OPAL_SUCCESS:
 		ret = 0;
 		*sensor_data = be64_to_cpu(data);
-		अवरोध;
+		break;
 
-	हाल OPAL_WRONG_STATE:
+	case OPAL_WRONG_STATE:
 		ret = -EIO;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = opal_error_code(ret);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out_token:
 	opal_async_release_token(token);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(opal_get_sensor_data_u64);
 
-पूर्णांक __init opal_sensor_init(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा device_node *sensor;
+int __init opal_sensor_init(void)
+{
+	struct platform_device *pdev;
+	struct device_node *sensor;
 
 	sensor = of_find_node_by_path("/ibm,opal/sensors");
-	अगर (!sensor) अणु
+	if (!sensor) {
 		pr_err("Opal node 'sensors' not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	pdev = of_platक्रमm_device_create(sensor, "opal-sensor", शून्य);
+	pdev = of_platform_device_create(sensor, "opal-sensor", NULL);
 	of_node_put(sensor);
 
-	वापस PTR_ERR_OR_ZERO(pdev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(pdev);
+}

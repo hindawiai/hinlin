@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  IBM System z Huge TLB Page Support क्रम Kernel.
+ *  IBM System z Huge TLB Page Support for Kernel.
  *
  *    Copyright IBM Corp. 2007,2020
  *    Author(s): Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "hugetlb"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "hugetlb"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/mm.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/security.h>
+#include <linux/mm.h>
+#include <linux/hugetlb.h>
+#include <linux/mman.h>
+#include <linux/sched/mm.h>
+#include <linux/security.h>
 
 /*
- * If the bit selected by single-bit biपंचांगask "a" is set within "x", move
- * it to the position indicated by single-bit biपंचांगask "b".
+ * If the bit selected by single-bit bitmask "a" is set within "x", move
+ * it to the position indicated by single-bit bitmask "b".
  */
-#घोषणा move_set_bit(x, a, b)	(((x) & (a)) >> ilog2(a) << ilog2(b))
+#define move_set_bit(x, a, b)	(((x) & (a)) >> ilog2(a) << ilog2(b))
 
-अटल अंतरभूत अचिन्हित दीर्घ __pte_to_rste(pte_t pte)
-अणु
-	अचिन्हित दीर्घ rste;
+static inline unsigned long __pte_to_rste(pte_t pte)
+{
+	unsigned long rste;
 
 	/*
 	 * Convert encoding		  pte bits	pmd / pud bits
@@ -34,19 +33,19 @@
 	 * prot-none, clean, young	111.000001.1 -> 01..1...1...00
 	 * prot-none, dirty, old	111.000010.1 -> 10..1...1...00
 	 * prot-none, dirty, young	111.000011.1 -> 11..1...1...00
-	 * पढ़ो-only, clean, old	111.000100.1 -> 00..1...1...01
-	 * पढ़ो-only, clean, young	101.000101.1 -> 01..1...0...01
-	 * पढ़ो-only, dirty, old	111.000110.1 -> 10..1...1...01
-	 * पढ़ो-only, dirty, young	101.000111.1 -> 11..1...0...01
-	 * पढ़ो-ग_लिखो, clean, old	111.001100.1 -> 00..1...1...11
-	 * पढ़ो-ग_लिखो, clean, young	101.001101.1 -> 01..1...0...11
-	 * पढ़ो-ग_लिखो, dirty, old	110.001110.1 -> 10..0...1...11
-	 * पढ़ो-ग_लिखो, dirty, young	100.001111.1 -> 11..0...0...11
-	 * HW-bits: R पढ़ो-only, I invalid
-	 * SW-bits: p present, y young, d dirty, r पढ़ो, w ग_लिखो, s special,
+	 * read-only, clean, old	111.000100.1 -> 00..1...1...01
+	 * read-only, clean, young	101.000101.1 -> 01..1...0...01
+	 * read-only, dirty, old	111.000110.1 -> 10..1...1...01
+	 * read-only, dirty, young	101.000111.1 -> 11..1...0...01
+	 * read-write, clean, old	111.001100.1 -> 00..1...1...11
+	 * read-write, clean, young	101.001101.1 -> 01..1...0...11
+	 * read-write, dirty, old	110.001110.1 -> 10..0...1...11
+	 * read-write, dirty, young	100.001111.1 -> 11..0...0...11
+	 * HW-bits: R read-only, I invalid
+	 * SW-bits: p present, y young, d dirty, r read, w write, s special,
 	 *	    u unused, l large
 	 */
-	अगर (pte_present(pte)) अणु
+	if (pte_present(pte)) {
 		rste = pte_val(pte) & PAGE_MASK;
 		rste |= move_set_bit(pte_val(pte), _PAGE_READ,
 				     _SEGMENT_ENTRY_READ);
@@ -56,29 +55,29 @@
 				     _SEGMENT_ENTRY_INVALID);
 		rste |= move_set_bit(pte_val(pte), _PAGE_PROTECT,
 				     _SEGMENT_ENTRY_PROTECT);
-		rste |= move_set_bit(pte_val(pte), _PAGE_सूचीTY,
-				     _SEGMENT_ENTRY_सूचीTY);
+		rste |= move_set_bit(pte_val(pte), _PAGE_DIRTY,
+				     _SEGMENT_ENTRY_DIRTY);
 		rste |= move_set_bit(pte_val(pte), _PAGE_YOUNG,
 				     _SEGMENT_ENTRY_YOUNG);
-#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
-		rste |= move_set_bit(pte_val(pte), _PAGE_SOFT_सूचीTY,
-				     _SEGMENT_ENTRY_SOFT_सूचीTY);
-#पूर्ण_अगर
+#ifdef CONFIG_MEM_SOFT_DIRTY
+		rste |= move_set_bit(pte_val(pte), _PAGE_SOFT_DIRTY,
+				     _SEGMENT_ENTRY_SOFT_DIRTY);
+#endif
 		rste |= move_set_bit(pte_val(pte), _PAGE_NOEXEC,
 				     _SEGMENT_ENTRY_NOEXEC);
-	पूर्ण अन्यथा
+	} else
 		rste = _SEGMENT_ENTRY_EMPTY;
-	वापस rste;
-पूर्ण
+	return rste;
+}
 
-अटल अंतरभूत pte_t __rste_to_pte(अचिन्हित दीर्घ rste)
-अणु
-	पूर्णांक present;
+static inline pte_t __rste_to_pte(unsigned long rste)
+{
+	int present;
 	pte_t pte;
 
-	अगर ((rste & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
+	if ((rste & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
 		present = pud_present(__pud(rste));
-	अन्यथा
+	else
 		present = pmd_present(__pmd(rste));
 
 	/*
@@ -89,19 +88,19 @@
 	 * prot-none, clean, young	01..1...1...00 -> 111.000001.1
 	 * prot-none, dirty, old	10..1...1...00 -> 111.000010.1
 	 * prot-none, dirty, young	11..1...1...00 -> 111.000011.1
-	 * पढ़ो-only, clean, old	00..1...1...01 -> 111.000100.1
-	 * पढ़ो-only, clean, young	01..1...0...01 -> 101.000101.1
-	 * पढ़ो-only, dirty, old	10..1...1...01 -> 111.000110.1
-	 * पढ़ो-only, dirty, young	11..1...0...01 -> 101.000111.1
-	 * पढ़ो-ग_लिखो, clean, old	00..1...1...11 -> 111.001100.1
-	 * पढ़ो-ग_लिखो, clean, young	01..1...0...11 -> 101.001101.1
-	 * पढ़ो-ग_लिखो, dirty, old	10..0...1...11 -> 110.001110.1
-	 * पढ़ो-ग_लिखो, dirty, young	11..0...0...11 -> 100.001111.1
-	 * HW-bits: R पढ़ो-only, I invalid
-	 * SW-bits: p present, y young, d dirty, r पढ़ो, w ग_लिखो, s special,
+	 * read-only, clean, old	00..1...1...01 -> 111.000100.1
+	 * read-only, clean, young	01..1...0...01 -> 101.000101.1
+	 * read-only, dirty, old	10..1...1...01 -> 111.000110.1
+	 * read-only, dirty, young	11..1...0...01 -> 101.000111.1
+	 * read-write, clean, old	00..1...1...11 -> 111.001100.1
+	 * read-write, clean, young	01..1...0...11 -> 101.001101.1
+	 * read-write, dirty, old	10..0...1...11 -> 110.001110.1
+	 * read-write, dirty, young	11..0...0...11 -> 100.001111.1
+	 * HW-bits: R read-only, I invalid
+	 * SW-bits: p present, y young, d dirty, r read, w write, s special,
 	 *	    u unused, l large
 	 */
-	अगर (present) अणु
+	if (present) {
 		pte_val(pte) = rste & _SEGMENT_ENTRY_ORIGIN_LARGE;
 		pte_val(pte) |= _PAGE_LARGE | _PAGE_PRESENT;
 		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_READ,
@@ -112,165 +111,165 @@
 					     _PAGE_INVALID);
 		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_PROTECT,
 					     _PAGE_PROTECT);
-		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_सूचीTY,
-					     _PAGE_सूचीTY);
+		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_DIRTY,
+					     _PAGE_DIRTY);
 		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_YOUNG,
 					     _PAGE_YOUNG);
-#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
-		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_SOFT_सूचीTY,
-					     _PAGE_SOFT_सूचीTY);
-#पूर्ण_अगर
+#ifdef CONFIG_MEM_SOFT_DIRTY
+		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_SOFT_DIRTY,
+					     _PAGE_SOFT_DIRTY);
+#endif
 		pte_val(pte) |= move_set_bit(rste, _SEGMENT_ENTRY_NOEXEC,
 					     _PAGE_NOEXEC);
-	पूर्ण अन्यथा
+	} else
 		pte_val(pte) = _PAGE_INVALID;
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
-अटल व्योम clear_huge_pte_skeys(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ rste)
-अणु
-	काष्ठा page *page;
-	अचिन्हित दीर्घ size, paddr;
+static void clear_huge_pte_skeys(struct mm_struct *mm, unsigned long rste)
+{
+	struct page *page;
+	unsigned long size, paddr;
 
-	अगर (!mm_uses_skeys(mm) ||
+	if (!mm_uses_skeys(mm) ||
 	    rste & _SEGMENT_ENTRY_INVALID)
-		वापस;
+		return;
 
-	अगर ((rste & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3) अणु
+	if ((rste & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3) {
 		page = pud_page(__pud(rste));
 		size = PUD_SIZE;
 		paddr = rste & PUD_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		page = pmd_page(__pmd(rste));
 		size = PMD_SIZE;
 		paddr = rste & PMD_MASK;
-	पूर्ण
+	}
 
-	अगर (!test_and_set_bit(PG_arch_1, &page->flags))
+	if (!test_and_set_bit(PG_arch_1, &page->flags))
 		__storage_key_init_range(paddr, paddr + size - 1);
-पूर्ण
+}
 
-व्योम set_huge_pte_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+void set_huge_pte_at(struct mm_struct *mm, unsigned long addr,
 		     pte_t *ptep, pte_t pte)
-अणु
-	अचिन्हित दीर्घ rste;
+{
+	unsigned long rste;
 
 	rste = __pte_to_rste(pte);
-	अगर (!MACHINE_HAS_NX)
+	if (!MACHINE_HAS_NX)
 		rste &= ~_SEGMENT_ENTRY_NOEXEC;
 
-	/* Set correct table type क्रम 2G hugepages */
-	अगर ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3) अणु
-		अगर (likely(pte_present(pte)))
+	/* Set correct table type for 2G hugepages */
+	if ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3) {
+		if (likely(pte_present(pte)))
 			rste |= _REGION3_ENTRY_LARGE;
 		rste |= _REGION_ENTRY_TYPE_R3;
-	पूर्ण अन्यथा अगर (likely(pte_present(pte)))
+	} else if (likely(pte_present(pte)))
 		rste |= _SEGMENT_ENTRY_LARGE;
 
 	clear_huge_pte_skeys(mm, rste);
 	pte_val(*ptep) = rste;
-पूर्ण
+}
 
 pte_t huge_ptep_get(pte_t *ptep)
-अणु
-	वापस __rste_to_pte(pte_val(*ptep));
-पूर्ण
+{
+	return __rste_to_pte(pte_val(*ptep));
+}
 
-pte_t huge_ptep_get_and_clear(काष्ठा mm_काष्ठा *mm,
-			      अचिन्हित दीर्घ addr, pte_t *ptep)
-अणु
+pte_t huge_ptep_get_and_clear(struct mm_struct *mm,
+			      unsigned long addr, pte_t *ptep)
+{
 	pte_t pte = huge_ptep_get(ptep);
 	pmd_t *pmdp = (pmd_t *) ptep;
 	pud_t *pudp = (pud_t *) ptep;
 
-	अगर ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
+	if ((pte_val(*ptep) & _REGION_ENTRY_TYPE_MASK) == _REGION_ENTRY_TYPE_R3)
 		pudp_xchg_direct(mm, addr, pudp, __pud(_REGION3_ENTRY_EMPTY));
-	अन्यथा
+	else
 		pmdp_xchg_direct(mm, addr, pmdp, __pmd(_SEGMENT_ENTRY_EMPTY));
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
-pte_t *huge_pte_alloc(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
-अणु
+pte_t *huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
+			unsigned long addr, unsigned long sz)
+{
 	pgd_t *pgdp;
 	p4d_t *p4dp;
 	pud_t *pudp;
-	pmd_t *pmdp = शून्य;
+	pmd_t *pmdp = NULL;
 
 	pgdp = pgd_offset(mm, addr);
 	p4dp = p4d_alloc(mm, pgdp, addr);
-	अगर (p4dp) अणु
+	if (p4dp) {
 		pudp = pud_alloc(mm, p4dp, addr);
-		अगर (pudp) अणु
-			अगर (sz == PUD_SIZE)
-				वापस (pte_t *) pudp;
-			अन्यथा अगर (sz == PMD_SIZE)
+		if (pudp) {
+			if (sz == PUD_SIZE)
+				return (pte_t *) pudp;
+			else if (sz == PMD_SIZE)
 				pmdp = pmd_alloc(mm, pudp, addr);
-		पूर्ण
-	पूर्ण
-	वापस (pte_t *) pmdp;
-पूर्ण
+		}
+	}
+	return (pte_t *) pmdp;
+}
 
-pte_t *huge_pte_offset(काष्ठा mm_काष्ठा *mm,
-		       अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
-अणु
+pte_t *huge_pte_offset(struct mm_struct *mm,
+		       unsigned long addr, unsigned long sz)
+{
 	pgd_t *pgdp;
 	p4d_t *p4dp;
 	pud_t *pudp;
-	pmd_t *pmdp = शून्य;
+	pmd_t *pmdp = NULL;
 
 	pgdp = pgd_offset(mm, addr);
-	अगर (pgd_present(*pgdp)) अणु
+	if (pgd_present(*pgdp)) {
 		p4dp = p4d_offset(pgdp, addr);
-		अगर (p4d_present(*p4dp)) अणु
+		if (p4d_present(*p4dp)) {
 			pudp = pud_offset(p4dp, addr);
-			अगर (pud_present(*pudp)) अणु
-				अगर (pud_large(*pudp))
-					वापस (pte_t *) pudp;
+			if (pud_present(*pudp)) {
+				if (pud_large(*pudp))
+					return (pte_t *) pudp;
 				pmdp = pmd_offset(pudp, addr);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस (pte_t *) pmdp;
-पूर्ण
+			}
+		}
+	}
+	return (pte_t *) pmdp;
+}
 
-पूर्णांक pmd_huge(pmd_t pmd)
-अणु
-	वापस pmd_large(pmd);
-पूर्ण
+int pmd_huge(pmd_t pmd)
+{
+	return pmd_large(pmd);
+}
 
-पूर्णांक pud_huge(pud_t pud)
-अणु
-	वापस pud_large(pud);
-पूर्ण
+int pud_huge(pud_t pud)
+{
+	return pud_large(pud);
+}
 
-काष्ठा page *
-follow_huge_pud(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
-		pud_t *pud, पूर्णांक flags)
-अणु
-	अगर (flags & FOLL_GET)
-		वापस शून्य;
+struct page *
+follow_huge_pud(struct mm_struct *mm, unsigned long address,
+		pud_t *pud, int flags)
+{
+	if (flags & FOLL_GET)
+		return NULL;
 
-	वापस pud_page(*pud) + ((address & ~PUD_MASK) >> PAGE_SHIFT);
-पूर्ण
+	return pud_page(*pud) + ((address & ~PUD_MASK) >> PAGE_SHIFT);
+}
 
-bool __init arch_hugetlb_valid_size(अचिन्हित दीर्घ size)
-अणु
-	अगर (MACHINE_HAS_EDAT1 && size == PMD_SIZE)
-		वापस true;
-	अन्यथा अगर (MACHINE_HAS_EDAT2 && size == PUD_SIZE)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+bool __init arch_hugetlb_valid_size(unsigned long size)
+{
+	if (MACHINE_HAS_EDAT1 && size == PMD_SIZE)
+		return true;
+	else if (MACHINE_HAS_EDAT2 && size == PUD_SIZE)
+		return true;
+	else
+		return false;
+}
 
-अटल अचिन्हित दीर्घ hugetlb_get_unmapped_area_bottomup(काष्ठा file *file,
-		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-		अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा hstate *h = hstate_file(file);
-	काष्ठा vm_unmapped_area_info info;
+static unsigned long hugetlb_get_unmapped_area_bottomup(struct file *file,
+		unsigned long addr, unsigned long len,
+		unsigned long pgoff, unsigned long flags)
+{
+	struct hstate *h = hstate_file(file);
+	struct vm_unmapped_area_info info;
 
 	info.flags = 0;
 	info.length = len;
@@ -278,16 +277,16 @@ bool __init arch_hugetlb_valid_size(अचिन्हित दीर्घ siz
 	info.high_limit = TASK_SIZE;
 	info.align_mask = PAGE_MASK & ~huge_page_mask(h);
 	info.align_offset = 0;
-	वापस vm_unmapped_area(&info);
-पूर्ण
+	return vm_unmapped_area(&info);
+}
 
-अटल अचिन्हित दीर्घ hugetlb_get_unmapped_area_topकरोwn(काष्ठा file *file,
-		अचिन्हित दीर्घ addr0, अचिन्हित दीर्घ len,
-		अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा hstate *h = hstate_file(file);
-	काष्ठा vm_unmapped_area_info info;
-	अचिन्हित दीर्घ addr;
+static unsigned long hugetlb_get_unmapped_area_topdown(struct file *file,
+		unsigned long addr0, unsigned long len,
+		unsigned long pgoff, unsigned long flags)
+{
+	struct hstate *h = hstate_file(file);
+	struct vm_unmapped_area_info info;
+	unsigned long addr;
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
@@ -303,52 +302,52 @@ bool __init arch_hugetlb_valid_size(अचिन्हित दीर्घ siz
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	अगर (addr & ~PAGE_MASK) अणु
+	if (addr & ~PAGE_MASK) {
 		VM_BUG_ON(addr != -ENOMEM);
 		info.flags = 0;
 		info.low_limit = TASK_UNMAPPED_BASE;
 		info.high_limit = TASK_SIZE;
 		addr = vm_unmapped_area(&info);
-	पूर्ण
+	}
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अचिन्हित दीर्घ hugetlb_get_unmapped_area(काष्ठा file *file, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा hstate *h = hstate_file(file);
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
+unsigned long hugetlb_get_unmapped_area(struct file *file, unsigned long addr,
+		unsigned long len, unsigned long pgoff, unsigned long flags)
+{
+	struct hstate *h = hstate_file(file);
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
 
-	अगर (len & ~huge_page_mask(h))
-		वापस -EINVAL;
-	अगर (len > TASK_SIZE - mmap_min_addr)
-		वापस -ENOMEM;
+	if (len & ~huge_page_mask(h))
+		return -EINVAL;
+	if (len > TASK_SIZE - mmap_min_addr)
+		return -ENOMEM;
 
-	अगर (flags & MAP_FIXED) अणु
-		अगर (prepare_hugepage_range(file, addr, len))
-			वापस -EINVAL;
-		जाओ check_asce_limit;
-	पूर्ण
+	if (flags & MAP_FIXED) {
+		if (prepare_hugepage_range(file, addr, len))
+			return -EINVAL;
+		goto check_asce_limit;
+	}
 
-	अगर (addr) अणु
+	if (addr) {
 		addr = ALIGN(addr, huge_page_size(h));
 		vma = find_vma(mm, addr);
-		अगर (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
+		if (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			जाओ check_asce_limit;
-	पूर्ण
+			goto check_asce_limit;
+	}
 
-	अगर (mm->get_unmapped_area == arch_get_unmapped_area)
+	if (mm->get_unmapped_area == arch_get_unmapped_area)
 		addr = hugetlb_get_unmapped_area_bottomup(file, addr, len,
 				pgoff, flags);
-	अन्यथा
-		addr = hugetlb_get_unmapped_area_topकरोwn(file, addr, len,
+	else
+		addr = hugetlb_get_unmapped_area_topdown(file, addr, len,
 				pgoff, flags);
-	अगर (offset_in_page(addr))
-		वापस addr;
+	if (offset_in_page(addr))
+		return addr;
 
 check_asce_limit:
-	वापस check_asce_limit(mm, addr, len);
-पूर्ण
+	return check_asce_limit(mm, addr, len);
+}

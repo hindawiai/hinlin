@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright Alan Cox GW4PTS (alan@lxorguk.ukuu.org.uk)
  * Copyright Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/slab.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net/arp.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/netrom.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/export.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/slab.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <net/arp.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <net/netrom.h>
+#include <linux/seq_file.h>
+#include <linux/export.h>
 
-अटल अचिन्हित पूर्णांक nr_neigh_no = 1;
+static unsigned int nr_neigh_no = 1;
 
-अटल HLIST_HEAD(nr_node_list);
-अटल DEFINE_SPINLOCK(nr_node_list_lock);
-अटल HLIST_HEAD(nr_neigh_list);
-अटल DEFINE_SPINLOCK(nr_neigh_list_lock);
+static HLIST_HEAD(nr_node_list);
+static DEFINE_SPINLOCK(nr_node_list_lock);
+static HLIST_HEAD(nr_neigh_list);
+static DEFINE_SPINLOCK(nr_neigh_list_lock);
 
-अटल काष्ठा nr_node *nr_node_get(ax25_address *callsign)
-अणु
-	काष्ठा nr_node *found = शून्य;
-	काष्ठा nr_node *nr_node;
+static struct nr_node *nr_node_get(ax25_address *callsign)
+{
+	struct nr_node *found = NULL;
+	struct nr_node *nr_node;
 
 	spin_lock_bh(&nr_node_list_lock);
-	nr_node_क्रम_each(nr_node, &nr_node_list)
-		अगर (ax25cmp(callsign, &nr_node->callsign) == 0) अणु
+	nr_node_for_each(nr_node, &nr_node_list)
+		if (ax25cmp(callsign, &nr_node->callsign) == 0) {
 			nr_node_hold(nr_node);
 			found = nr_node;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	spin_unlock_bh(&nr_node_list_lock);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल काष्ठा nr_neigh *nr_neigh_get_dev(ax25_address *callsign,
-					 काष्ठा net_device *dev)
-अणु
-	काष्ठा nr_neigh *found = शून्य;
-	काष्ठा nr_neigh *nr_neigh;
+static struct nr_neigh *nr_neigh_get_dev(ax25_address *callsign,
+					 struct net_device *dev)
+{
+	struct nr_neigh *found = NULL;
+	struct nr_neigh *nr_neigh;
 
 	spin_lock_bh(&nr_neigh_list_lock);
-	nr_neigh_क्रम_each(nr_neigh, &nr_neigh_list)
-		अगर (ax25cmp(callsign, &nr_neigh->callsign) == 0 &&
-		    nr_neigh->dev == dev) अणु
+	nr_neigh_for_each(nr_neigh, &nr_neigh_list)
+		if (ax25cmp(callsign, &nr_neigh->callsign) == 0 &&
+		    nr_neigh->dev == dev) {
 			nr_neigh_hold(nr_neigh);
 			found = nr_neigh;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	spin_unlock_bh(&nr_neigh_list_lock);
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल व्योम nr_हटाओ_neigh(काष्ठा nr_neigh *);
+static void nr_remove_neigh(struct nr_neigh *);
 
 /*      re-sort the routes in quality order.    */
-अटल व्योम re_sort_routes(काष्ठा nr_node *nr_node, पूर्णांक x, पूर्णांक y)
-अणु
-	अगर (nr_node->routes[y].quality > nr_node->routes[x].quality) अणु
-		अगर (nr_node->which == x)
+static void re_sort_routes(struct nr_node *nr_node, int x, int y)
+{
+	if (nr_node->routes[y].quality > nr_node->routes[x].quality) {
+		if (nr_node->which == x)
 			nr_node->which = y;
-		अन्यथा अगर (nr_node->which == y)
+		else if (nr_node->which == y)
 			nr_node->which = x;
 
 		swap(nr_node->routes[x], nr_node->routes[y]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *	Add a new route to a node, and in the process add the node and the
- *	neighbour अगर it is new.
+ *	neighbour if it is new.
  */
-अटल पूर्णांक __must_check nr_add_node(ax25_address *nr, स्थिर अक्षर *mnemonic,
-	ax25_address *ax25, ax25_digi *ax25_digi, काष्ठा net_device *dev,
-	पूर्णांक quality, पूर्णांक obs_count)
-अणु
-	काष्ठा nr_node  *nr_node;
-	काष्ठा nr_neigh *nr_neigh;
-	पूर्णांक i, found;
-	काष्ठा net_device *odev;
+static int __must_check nr_add_node(ax25_address *nr, const char *mnemonic,
+	ax25_address *ax25, ax25_digi *ax25_digi, struct net_device *dev,
+	int quality, int obs_count)
+{
+	struct nr_node  *nr_node;
+	struct nr_neigh *nr_neigh;
+	int i, found;
+	struct net_device *odev;
 
-	अगर ((odev=nr_dev_get(nr)) != शून्य) अणु	/* Can't add routes to ourself */
+	if ((odev=nr_dev_get(nr)) != NULL) {	/* Can't add routes to ourself */
 		dev_put(odev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nr_node = nr_node_get(nr);
 
@@ -117,80 +116,80 @@
 	 * The L2 link to a neighbour has failed in the past
 	 * and now a frame comes from this neighbour. We assume
 	 * it was a temporary trouble with the link and reset the
-	 * routes now (and not रुको क्रम a node broadcast).
+	 * routes now (and not wait for a node broadcast).
 	 */
-	अगर (nr_neigh != शून्य && nr_neigh->failed != 0 && quality == 0) अणु
-		काष्ठा nr_node *nr_nodet;
+	if (nr_neigh != NULL && nr_neigh->failed != 0 && quality == 0) {
+		struct nr_node *nr_nodet;
 
 		spin_lock_bh(&nr_node_list_lock);
-		nr_node_क्रम_each(nr_nodet, &nr_node_list) अणु
+		nr_node_for_each(nr_nodet, &nr_node_list) {
 			nr_node_lock(nr_nodet);
-			क्रम (i = 0; i < nr_nodet->count; i++)
-				अगर (nr_nodet->routes[i].neighbour == nr_neigh)
-					अगर (i < nr_nodet->which)
+			for (i = 0; i < nr_nodet->count; i++)
+				if (nr_nodet->routes[i].neighbour == nr_neigh)
+					if (i < nr_nodet->which)
 						nr_nodet->which = i;
 			nr_node_unlock(nr_nodet);
-		पूर्ण
+		}
 		spin_unlock_bh(&nr_node_list_lock);
-	पूर्ण
+	}
 
-	अगर (nr_neigh != शून्य)
+	if (nr_neigh != NULL)
 		nr_neigh->failed = 0;
 
-	अगर (quality == 0 && nr_neigh != शून्य && nr_node != शून्य) अणु
+	if (quality == 0 && nr_neigh != NULL && nr_node != NULL) {
 		nr_neigh_put(nr_neigh);
 		nr_node_put(nr_node);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (nr_neigh == शून्य) अणु
-		अगर ((nr_neigh = kदो_स्मृति(माप(*nr_neigh), GFP_ATOMIC)) == शून्य) अणु
-			अगर (nr_node)
+	if (nr_neigh == NULL) {
+		if ((nr_neigh = kmalloc(sizeof(*nr_neigh), GFP_ATOMIC)) == NULL) {
+			if (nr_node)
 				nr_node_put(nr_node);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		nr_neigh->callsign = *ax25;
-		nr_neigh->digipeat = शून्य;
-		nr_neigh->ax25     = शून्य;
+		nr_neigh->digipeat = NULL;
+		nr_neigh->ax25     = NULL;
 		nr_neigh->dev      = dev;
-		nr_neigh->quality  = sysctl_netrom_शेष_path_quality;
+		nr_neigh->quality  = sysctl_netrom_default_path_quality;
 		nr_neigh->locked   = 0;
 		nr_neigh->count    = 0;
 		nr_neigh->number   = nr_neigh_no++;
 		nr_neigh->failed   = 0;
 		refcount_set(&nr_neigh->refcount, 1);
 
-		अगर (ax25_digi != शून्य && ax25_digi->ndigi > 0) अणु
+		if (ax25_digi != NULL && ax25_digi->ndigi > 0) {
 			nr_neigh->digipeat = kmemdup(ax25_digi,
-						     माप(*ax25_digi),
+						     sizeof(*ax25_digi),
 						     GFP_KERNEL);
-			अगर (nr_neigh->digipeat == शून्य) अणु
-				kमुक्त(nr_neigh);
-				अगर (nr_node)
+			if (nr_neigh->digipeat == NULL) {
+				kfree(nr_neigh);
+				if (nr_node)
 					nr_node_put(nr_node);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+				return -ENOMEM;
+			}
+		}
 
 		spin_lock_bh(&nr_neigh_list_lock);
 		hlist_add_head(&nr_neigh->neigh_node, &nr_neigh_list);
 		nr_neigh_hold(nr_neigh);
 		spin_unlock_bh(&nr_neigh_list_lock);
-	पूर्ण
+	}
 
-	अगर (quality != 0 && ax25cmp(nr, ax25) == 0 && !nr_neigh->locked)
+	if (quality != 0 && ax25cmp(nr, ax25) == 0 && !nr_neigh->locked)
 		nr_neigh->quality = quality;
 
-	अगर (nr_node == शून्य) अणु
-		अगर ((nr_node = kदो_स्मृति(माप(*nr_node), GFP_ATOMIC)) == शून्य) अणु
-			अगर (nr_neigh)
+	if (nr_node == NULL) {
+		if ((nr_node = kmalloc(sizeof(*nr_node), GFP_ATOMIC)) == NULL) {
+			if (nr_neigh)
 				nr_neigh_put(nr_neigh);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		nr_node->callsign = *nr;
-		म_नकल(nr_node->mnemonic, mnemonic);
+		strcpy(nr_node->mnemonic, mnemonic);
 
 		nr_node->which = 0;
 		nr_node->count = 1;
@@ -210,25 +209,25 @@
 		spin_unlock_bh(&nr_node_list_lock);
 
 		nr_neigh_put(nr_neigh);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	nr_node_lock(nr_node);
 
-	अगर (quality != 0)
-		म_नकल(nr_node->mnemonic, mnemonic);
+	if (quality != 0)
+		strcpy(nr_node->mnemonic, mnemonic);
 
-	क्रम (found = 0, i = 0; i < nr_node->count; i++) अणु
-		अगर (nr_node->routes[i].neighbour == nr_neigh) अणु
+	for (found = 0, i = 0; i < nr_node->count; i++) {
+		if (nr_node->routes[i].neighbour == nr_neigh) {
 			nr_node->routes[i].quality   = quality;
 			nr_node->routes[i].obs_count = obs_count;
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
+	if (!found) {
 		/* We have space at the bottom, slot it in */
-		अगर (nr_node->count < 3) अणु
+		if (nr_node->count < 3) {
 			nr_node->routes[2] = nr_node->routes[1];
 			nr_node->routes[1] = nr_node->routes[0];
 
@@ -240,14 +239,14 @@
 			nr_node->count++;
 			nr_neigh_hold(nr_neigh);
 			nr_neigh->count++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* It must be better than the worst */
-			अगर (quality > nr_node->routes[2].quality) अणु
+			if (quality > nr_node->routes[2].quality) {
 				nr_node->routes[2].neighbour->count--;
 				nr_neigh_put(nr_node->routes[2].neighbour);
 
-				अगर (nr_node->routes[2].neighbour->count == 0 && !nr_node->routes[2].neighbour->locked)
-					nr_हटाओ_neigh(nr_node->routes[2].neighbour);
+				if (nr_node->routes[2].neighbour->count == 0 && !nr_node->routes[2].neighbour->locked)
+					nr_remove_neigh(nr_node->routes[2].neighbour);
 
 				nr_node->routes[2].quality   = quality;
 				nr_node->routes[2].obs_count = obs_count;
@@ -255,150 +254,150 @@
 
 				nr_neigh_hold(nr_neigh);
 				nr_neigh->count++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* Now re-sort the routes in quality order */
-	चयन (nr_node->count) अणु
-	हाल 3:
+	switch (nr_node->count) {
+	case 3:
 		re_sort_routes(nr_node, 0, 1);
 		re_sort_routes(nr_node, 1, 2);
 		fallthrough;
-	हाल 2:
+	case 2:
 		re_sort_routes(nr_node, 0, 1);
-	हाल 1:
-		अवरोध;
-	पूर्ण
+	case 1:
+		break;
+	}
 
-	क्रम (i = 0; i < nr_node->count; i++) अणु
-		अगर (nr_node->routes[i].neighbour == nr_neigh) अणु
-			अगर (i < nr_node->which)
+	for (i = 0; i < nr_node->count; i++) {
+		if (nr_node->routes[i].neighbour == nr_neigh) {
+			if (i < nr_node->which)
 				nr_node->which = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	nr_neigh_put(nr_neigh);
 	nr_node_unlock(nr_node);
 	nr_node_put(nr_node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम __nr_हटाओ_node(काष्ठा nr_node *nr_node)
-अणु
+static inline void __nr_remove_node(struct nr_node *nr_node)
+{
 	hlist_del_init(&nr_node->node_node);
 	nr_node_put(nr_node);
-पूर्ण
+}
 
-#घोषणा nr_हटाओ_node_locked(__node) \
-	__nr_हटाओ_node(__node)
+#define nr_remove_node_locked(__node) \
+	__nr_remove_node(__node)
 
-अटल व्योम nr_हटाओ_node(काष्ठा nr_node *nr_node)
-अणु
+static void nr_remove_node(struct nr_node *nr_node)
+{
 	spin_lock_bh(&nr_node_list_lock);
-	__nr_हटाओ_node(nr_node);
+	__nr_remove_node(nr_node);
 	spin_unlock_bh(&nr_node_list_lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __nr_हटाओ_neigh(काष्ठा nr_neigh *nr_neigh)
-अणु
+static inline void __nr_remove_neigh(struct nr_neigh *nr_neigh)
+{
 	hlist_del_init(&nr_neigh->neigh_node);
 	nr_neigh_put(nr_neigh);
-पूर्ण
+}
 
-#घोषणा nr_हटाओ_neigh_locked(__neigh) \
-	__nr_हटाओ_neigh(__neigh)
+#define nr_remove_neigh_locked(__neigh) \
+	__nr_remove_neigh(__neigh)
 
-अटल व्योम nr_हटाओ_neigh(काष्ठा nr_neigh *nr_neigh)
-अणु
+static void nr_remove_neigh(struct nr_neigh *nr_neigh)
+{
 	spin_lock_bh(&nr_neigh_list_lock);
-	__nr_हटाओ_neigh(nr_neigh);
+	__nr_remove_neigh(nr_neigh);
 	spin_unlock_bh(&nr_neigh_list_lock);
-पूर्ण
+}
 
 /*
- *	"Delete" a node. Strictly speaking हटाओ a route to a node. The node
- *	is only deleted अगर no routes are left to it.
+ *	"Delete" a node. Strictly speaking remove a route to a node. The node
+ *	is only deleted if no routes are left to it.
  */
-अटल पूर्णांक nr_del_node(ax25_address *callsign, ax25_address *neighbour, काष्ठा net_device *dev)
-अणु
-	काष्ठा nr_node  *nr_node;
-	काष्ठा nr_neigh *nr_neigh;
-	पूर्णांक i;
+static int nr_del_node(ax25_address *callsign, ax25_address *neighbour, struct net_device *dev)
+{
+	struct nr_node  *nr_node;
+	struct nr_neigh *nr_neigh;
+	int i;
 
 	nr_node = nr_node_get(callsign);
 
-	अगर (nr_node == शून्य)
-		वापस -EINVAL;
+	if (nr_node == NULL)
+		return -EINVAL;
 
 	nr_neigh = nr_neigh_get_dev(neighbour, dev);
 
-	अगर (nr_neigh == शून्य) अणु
+	if (nr_neigh == NULL) {
 		nr_node_put(nr_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nr_node_lock(nr_node);
-	क्रम (i = 0; i < nr_node->count; i++) अणु
-		अगर (nr_node->routes[i].neighbour == nr_neigh) अणु
+	for (i = 0; i < nr_node->count; i++) {
+		if (nr_node->routes[i].neighbour == nr_neigh) {
 			nr_neigh->count--;
 			nr_neigh_put(nr_neigh);
 
-			अगर (nr_neigh->count == 0 && !nr_neigh->locked)
-				nr_हटाओ_neigh(nr_neigh);
+			if (nr_neigh->count == 0 && !nr_neigh->locked)
+				nr_remove_neigh(nr_neigh);
 			nr_neigh_put(nr_neigh);
 
 			nr_node->count--;
 
-			अगर (nr_node->count == 0) अणु
-				nr_हटाओ_node(nr_node);
-			पूर्ण अन्यथा अणु
-				चयन (i) अणु
-				हाल 0:
+			if (nr_node->count == 0) {
+				nr_remove_node(nr_node);
+			} else {
+				switch (i) {
+				case 0:
 					nr_node->routes[0] = nr_node->routes[1];
 					fallthrough;
-				हाल 1:
+				case 1:
 					nr_node->routes[1] = nr_node->routes[2];
-				हाल 2:
-					अवरोध;
-				पूर्ण
+				case 2:
+					break;
+				}
 				nr_node_put(nr_node);
-			पूर्ण
+			}
 			nr_node_unlock(nr_node);
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	nr_neigh_put(nr_neigh);
 	nr_node_unlock(nr_node);
 	nr_node_put(nr_node);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  *	Lock a neighbour with a quality.
  */
-अटल पूर्णांक __must_check nr_add_neigh(ax25_address *callsign,
-	ax25_digi *ax25_digi, काष्ठा net_device *dev, अचिन्हित पूर्णांक quality)
-अणु
-	काष्ठा nr_neigh *nr_neigh;
+static int __must_check nr_add_neigh(ax25_address *callsign,
+	ax25_digi *ax25_digi, struct net_device *dev, unsigned int quality)
+{
+	struct nr_neigh *nr_neigh;
 
 	nr_neigh = nr_neigh_get_dev(callsign, dev);
-	अगर (nr_neigh) अणु
+	if (nr_neigh) {
 		nr_neigh->quality = quality;
 		nr_neigh->locked  = 1;
 		nr_neigh_put(nr_neigh);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((nr_neigh = kदो_स्मृति(माप(*nr_neigh), GFP_ATOMIC)) == शून्य)
-		वापस -ENOMEM;
+	if ((nr_neigh = kmalloc(sizeof(*nr_neigh), GFP_ATOMIC)) == NULL)
+		return -ENOMEM;
 
 	nr_neigh->callsign = *callsign;
-	nr_neigh->digipeat = शून्य;
-	nr_neigh->ax25     = शून्य;
+	nr_neigh->digipeat = NULL;
+	nr_neigh->ax25     = NULL;
 	nr_neigh->dev      = dev;
 	nr_neigh->quality  = quality;
 	nr_neigh->locked   = 1;
@@ -407,249 +406,249 @@
 	nr_neigh->failed   = 0;
 	refcount_set(&nr_neigh->refcount, 1);
 
-	अगर (ax25_digi != शून्य && ax25_digi->ndigi > 0) अणु
-		nr_neigh->digipeat = kmemdup(ax25_digi, माप(*ax25_digi),
+	if (ax25_digi != NULL && ax25_digi->ndigi > 0) {
+		nr_neigh->digipeat = kmemdup(ax25_digi, sizeof(*ax25_digi),
 					     GFP_KERNEL);
-		अगर (nr_neigh->digipeat == शून्य) अणु
-			kमुक्त(nr_neigh);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+		if (nr_neigh->digipeat == NULL) {
+			kfree(nr_neigh);
+			return -ENOMEM;
+		}
+	}
 
 	spin_lock_bh(&nr_neigh_list_lock);
 	hlist_add_head(&nr_neigh->neigh_node, &nr_neigh_list);
 	/* refcount is initialized at 1 */
 	spin_unlock_bh(&nr_neigh_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	"Delete" a neighbour. The neighbour is only हटाओd अगर the number
+ *	"Delete" a neighbour. The neighbour is only removed if the number
  *	of nodes that may use it is zero.
  */
-अटल पूर्णांक nr_del_neigh(ax25_address *callsign, काष्ठा net_device *dev, अचिन्हित पूर्णांक quality)
-अणु
-	काष्ठा nr_neigh *nr_neigh;
+static int nr_del_neigh(ax25_address *callsign, struct net_device *dev, unsigned int quality)
+{
+	struct nr_neigh *nr_neigh;
 
 	nr_neigh = nr_neigh_get_dev(callsign, dev);
 
-	अगर (nr_neigh == शून्य) वापस -EINVAL;
+	if (nr_neigh == NULL) return -EINVAL;
 
 	nr_neigh->quality = quality;
 	nr_neigh->locked  = 0;
 
-	अगर (nr_neigh->count == 0)
-		nr_हटाओ_neigh(nr_neigh);
+	if (nr_neigh->count == 0)
+		nr_remove_neigh(nr_neigh);
 	nr_neigh_put(nr_neigh);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Decrement the obsolescence count by one. If a route is reduced to a
- *	count of zero, हटाओ it. Also हटाओ any unlocked neighbours with
+ *	count of zero, remove it. Also remove any unlocked neighbours with
  *	zero nodes routing via it.
  */
-अटल पूर्णांक nr_dec_obs(व्योम)
-अणु
-	काष्ठा nr_neigh *nr_neigh;
-	काष्ठा nr_node  *s;
-	काष्ठा hlist_node *nodet;
-	पूर्णांक i;
+static int nr_dec_obs(void)
+{
+	struct nr_neigh *nr_neigh;
+	struct nr_node  *s;
+	struct hlist_node *nodet;
+	int i;
 
 	spin_lock_bh(&nr_node_list_lock);
-	nr_node_क्रम_each_safe(s, nodet, &nr_node_list) अणु
+	nr_node_for_each_safe(s, nodet, &nr_node_list) {
 		nr_node_lock(s);
-		क्रम (i = 0; i < s->count; i++) अणु
-			चयन (s->routes[i].obs_count) अणु
-			हाल 0:		/* A locked entry */
-				अवरोध;
+		for (i = 0; i < s->count; i++) {
+			switch (s->routes[i].obs_count) {
+			case 0:		/* A locked entry */
+				break;
 
-			हाल 1:		/* From 1 -> 0 */
+			case 1:		/* From 1 -> 0 */
 				nr_neigh = s->routes[i].neighbour;
 
 				nr_neigh->count--;
 				nr_neigh_put(nr_neigh);
 
-				अगर (nr_neigh->count == 0 && !nr_neigh->locked)
-					nr_हटाओ_neigh(nr_neigh);
+				if (nr_neigh->count == 0 && !nr_neigh->locked)
+					nr_remove_neigh(nr_neigh);
 
 				s->count--;
 
-				चयन (i) अणु
-				हाल 0:
+				switch (i) {
+				case 0:
 					s->routes[0] = s->routes[1];
 					fallthrough;
-				हाल 1:
+				case 1:
 					s->routes[1] = s->routes[2];
-				हाल 2:
-					अवरोध;
-				पूर्ण
-				अवरोध;
+				case 2:
+					break;
+				}
+				break;
 
-			शेष:
+			default:
 				s->routes[i].obs_count--;
-				अवरोध;
+				break;
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (s->count <= 0)
-			nr_हटाओ_node_locked(s);
+		if (s->count <= 0)
+			nr_remove_node_locked(s);
 		nr_node_unlock(s);
-	पूर्ण
+	}
 	spin_unlock_bh(&nr_node_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	A device has been हटाओd. Remove its routes and neighbours.
+ *	A device has been removed. Remove its routes and neighbours.
  */
-व्योम nr_rt_device_करोwn(काष्ठा net_device *dev)
-अणु
-	काष्ठा nr_neigh *s;
-	काष्ठा hlist_node *nodet, *node2t;
-	काष्ठा nr_node  *t;
-	पूर्णांक i;
+void nr_rt_device_down(struct net_device *dev)
+{
+	struct nr_neigh *s;
+	struct hlist_node *nodet, *node2t;
+	struct nr_node  *t;
+	int i;
 
 	spin_lock_bh(&nr_neigh_list_lock);
-	nr_neigh_क्रम_each_safe(s, nodet, &nr_neigh_list) अणु
-		अगर (s->dev == dev) अणु
+	nr_neigh_for_each_safe(s, nodet, &nr_neigh_list) {
+		if (s->dev == dev) {
 			spin_lock_bh(&nr_node_list_lock);
-			nr_node_क्रम_each_safe(t, node2t, &nr_node_list) अणु
+			nr_node_for_each_safe(t, node2t, &nr_node_list) {
 				nr_node_lock(t);
-				क्रम (i = 0; i < t->count; i++) अणु
-					अगर (t->routes[i].neighbour == s) अणु
+				for (i = 0; i < t->count; i++) {
+					if (t->routes[i].neighbour == s) {
 						t->count--;
 
-						चयन (i) अणु
-						हाल 0:
+						switch (i) {
+						case 0:
 							t->routes[0] = t->routes[1];
 							fallthrough;
-						हाल 1:
+						case 1:
 							t->routes[1] = t->routes[2];
-						हाल 2:
-							अवरोध;
-						पूर्ण
-					पूर्ण
-				पूर्ण
+						case 2:
+							break;
+						}
+					}
+				}
 
-				अगर (t->count <= 0)
-					nr_हटाओ_node_locked(t);
+				if (t->count <= 0)
+					nr_remove_node_locked(t);
 				nr_node_unlock(t);
-			पूर्ण
+			}
 			spin_unlock_bh(&nr_node_list_lock);
 
-			nr_हटाओ_neigh_locked(s);
-		पूर्ण
-	पूर्ण
+			nr_remove_neigh_locked(s);
+		}
+	}
 	spin_unlock_bh(&nr_neigh_list_lock);
-पूर्ण
+}
 
 /*
- *	Check that the device given is a valid AX.25 पूर्णांकerface that is "up".
- *	Or a valid ethernet पूर्णांकerface with an AX.25 callsign binding.
+ *	Check that the device given is a valid AX.25 interface that is "up".
+ *	Or a valid ethernet interface with an AX.25 callsign binding.
  */
-अटल काष्ठा net_device *nr_ax25_dev_get(अक्षर *devname)
-अणु
-	काष्ठा net_device *dev;
+static struct net_device *nr_ax25_dev_get(char *devname)
+{
+	struct net_device *dev;
 
-	अगर ((dev = dev_get_by_name(&init_net, devname)) == शून्य)
-		वापस शून्य;
+	if ((dev = dev_get_by_name(&init_net, devname)) == NULL)
+		return NULL;
 
-	अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_AX25)
-		वापस dev;
+	if ((dev->flags & IFF_UP) && dev->type == ARPHRD_AX25)
+		return dev;
 
 	dev_put(dev);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  *	Find the first active NET/ROM device, usually "nr0".
  */
-काष्ठा net_device *nr_dev_first(व्योम)
-अणु
-	काष्ठा net_device *dev, *first = शून्य;
+struct net_device *nr_dev_first(void)
+{
+	struct net_device *dev, *first = NULL;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_NETROM)
-			अगर (first == शून्य || म_भेदन(dev->name, first->name, 3) < 0)
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if ((dev->flags & IFF_UP) && dev->type == ARPHRD_NETROM)
+			if (first == NULL || strncmp(dev->name, first->name, 3) < 0)
 				first = dev;
-	पूर्ण
-	अगर (first)
+	}
+	if (first)
 		dev_hold(first);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस first;
-पूर्ण
+	return first;
+}
 
 /*
- *	Find the NET/ROM device क्रम the given callsign.
+ *	Find the NET/ROM device for the given callsign.
  */
-काष्ठा net_device *nr_dev_get(ax25_address *addr)
-अणु
-	काष्ठा net_device *dev;
+struct net_device *nr_dev_get(ax25_address *addr)
+{
+	struct net_device *dev;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_netdev_rcu(&init_net, dev) अणु
-		अगर ((dev->flags & IFF_UP) && dev->type == ARPHRD_NETROM &&
-		    ax25cmp(addr, (ax25_address *)dev->dev_addr) == 0) अणु
+	rcu_read_lock();
+	for_each_netdev_rcu(&init_net, dev) {
+		if ((dev->flags & IFF_UP) && dev->type == ARPHRD_NETROM &&
+		    ax25cmp(addr, (ax25_address *)dev->dev_addr) == 0) {
 			dev_hold(dev);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	dev = शून्य;
+			goto out;
+		}
+	}
+	dev = NULL;
 out:
-	rcu_पढ़ो_unlock();
-	वापस dev;
-पूर्ण
+	rcu_read_unlock();
+	return dev;
+}
 
-अटल ax25_digi *nr_call_to_digi(ax25_digi *digi, पूर्णांक ndigis,
+static ax25_digi *nr_call_to_digi(ax25_digi *digi, int ndigis,
 	ax25_address *digipeaters)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (ndigis == 0)
-		वापस शून्य;
+	if (ndigis == 0)
+		return NULL;
 
-	क्रम (i = 0; i < ndigis; i++) अणु
+	for (i = 0; i < ndigis; i++) {
 		digi->calls[i]    = digipeaters[i];
 		digi->repeated[i] = 0;
-	पूर्ण
+	}
 
 	digi->ndigi      = ndigis;
 	digi->lastrepeat = -1;
 
-	वापस digi;
-पूर्ण
+	return digi;
+}
 
 /*
  *	Handle the ioctls that control the routing functions.
  */
-पूर्णांक nr_rt_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg)
-अणु
-	काष्ठा nr_route_काष्ठा nr_route;
-	काष्ठा net_device *dev;
+int nr_rt_ioctl(unsigned int cmd, void __user *arg)
+{
+	struct nr_route_struct nr_route;
+	struct net_device *dev;
 	ax25_digi digi;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (cmd) अणु
-	हाल SIOCADDRT:
-		अगर (copy_from_user(&nr_route, arg, माप(काष्ठा nr_route_काष्ठा)))
-			वापस -EFAULT;
-		अगर (nr_route.ndigis > AX25_MAX_DIGIS)
-			वापस -EINVAL;
-		अगर ((dev = nr_ax25_dev_get(nr_route.device)) == शून्य)
-			वापस -EINVAL;
-		चयन (nr_route.type) अणु
-		हाल NETROM_NODE:
-			अगर (strnlen(nr_route.mnemonic, 7) == 7) अणु
+	switch (cmd) {
+	case SIOCADDRT:
+		if (copy_from_user(&nr_route, arg, sizeof(struct nr_route_struct)))
+			return -EFAULT;
+		if (nr_route.ndigis > AX25_MAX_DIGIS)
+			return -EINVAL;
+		if ((dev = nr_ax25_dev_get(nr_route.device)) == NULL)
+			return -EINVAL;
+		switch (nr_route.type) {
+		case NETROM_NODE:
+			if (strnlen(nr_route.mnemonic, 7) == 7) {
 				ret = -EINVAL;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			ret = nr_add_node(&nr_route.callsign,
 				nr_route.mnemonic,
@@ -658,163 +657,163 @@ out:
 						nr_route.digipeaters),
 				dev, nr_route.quality,
 				nr_route.obs_count);
-			अवरोध;
-		हाल NETROM_NEIGH:
+			break;
+		case NETROM_NEIGH:
 			ret = nr_add_neigh(&nr_route.callsign,
 				nr_call_to_digi(&digi, nr_route.ndigis,
 						nr_route.digipeaters),
 				dev, nr_route.quality);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
+		}
 		dev_put(dev);
-		वापस ret;
+		return ret;
 
-	हाल SIOCDELRT:
-		अगर (copy_from_user(&nr_route, arg, माप(काष्ठा nr_route_काष्ठा)))
-			वापस -EFAULT;
-		अगर ((dev = nr_ax25_dev_get(nr_route.device)) == शून्य)
-			वापस -EINVAL;
-		चयन (nr_route.type) अणु
-		हाल NETROM_NODE:
+	case SIOCDELRT:
+		if (copy_from_user(&nr_route, arg, sizeof(struct nr_route_struct)))
+			return -EFAULT;
+		if ((dev = nr_ax25_dev_get(nr_route.device)) == NULL)
+			return -EINVAL;
+		switch (nr_route.type) {
+		case NETROM_NODE:
 			ret = nr_del_node(&nr_route.callsign,
 				&nr_route.neighbour, dev);
-			अवरोध;
-		हाल NETROM_NEIGH:
+			break;
+		case NETROM_NEIGH:
 			ret = nr_del_neigh(&nr_route.callsign,
 				dev, nr_route.quality);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
+		}
 		dev_put(dev);
-		वापस ret;
+		return ret;
 
-	हाल SIOCNRDECOBS:
-		वापस nr_dec_obs();
+	case SIOCNRDECOBS:
+		return nr_dec_obs();
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * 	A level 2 link has समयd out, thereक्रमe it appears to be a poor link,
- *	then करोn't use that neighbour until it is reset.
+ * 	A level 2 link has timed out, therefore it appears to be a poor link,
+ *	then don't use that neighbour until it is reset.
  */
-व्योम nr_link_failed(ax25_cb *ax25, पूर्णांक reason)
-अणु
-	काष्ठा nr_neigh *s, *nr_neigh = शून्य;
-	काष्ठा nr_node  *nr_node = शून्य;
+void nr_link_failed(ax25_cb *ax25, int reason)
+{
+	struct nr_neigh *s, *nr_neigh = NULL;
+	struct nr_node  *nr_node = NULL;
 
 	spin_lock_bh(&nr_neigh_list_lock);
-	nr_neigh_क्रम_each(s, &nr_neigh_list) अणु
-		अगर (s->ax25 == ax25) अणु
+	nr_neigh_for_each(s, &nr_neigh_list) {
+		if (s->ax25 == ax25) {
 			nr_neigh_hold(s);
 			nr_neigh = s;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_bh(&nr_neigh_list_lock);
 
-	अगर (nr_neigh == शून्य)
-		वापस;
+	if (nr_neigh == NULL)
+		return;
 
-	nr_neigh->ax25 = शून्य;
+	nr_neigh->ax25 = NULL;
 	ax25_cb_put(ax25);
 
-	अगर (++nr_neigh->failed < sysctl_netrom_link_fails_count) अणु
+	if (++nr_neigh->failed < sysctl_netrom_link_fails_count) {
 		nr_neigh_put(nr_neigh);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_lock_bh(&nr_node_list_lock);
-	nr_node_क्रम_each(nr_node, &nr_node_list) अणु
+	nr_node_for_each(nr_node, &nr_node_list) {
 		nr_node_lock(nr_node);
-		अगर (nr_node->which < nr_node->count &&
+		if (nr_node->which < nr_node->count &&
 		    nr_node->routes[nr_node->which].neighbour == nr_neigh)
 			nr_node->which++;
 		nr_node_unlock(nr_node);
-	पूर्ण
+	}
 	spin_unlock_bh(&nr_node_list_lock);
 	nr_neigh_put(nr_neigh);
-पूर्ण
+}
 
 /*
- *	Route a frame to an appropriate AX.25 connection. A शून्य ax25_cb
- *	indicates an पूर्णांकernally generated frame.
+ *	Route a frame to an appropriate AX.25 connection. A NULL ax25_cb
+ *	indicates an internally generated frame.
  */
-पूर्णांक nr_route_frame(काष्ठा sk_buff *skb, ax25_cb *ax25)
-अणु
+int nr_route_frame(struct sk_buff *skb, ax25_cb *ax25)
+{
 	ax25_address *nr_src, *nr_dest;
-	काष्ठा nr_neigh *nr_neigh;
-	काष्ठा nr_node  *nr_node;
-	काष्ठा net_device *dev;
-	अचिन्हित अक्षर *dptr;
+	struct nr_neigh *nr_neigh;
+	struct nr_node  *nr_node;
+	struct net_device *dev;
+	unsigned char *dptr;
 	ax25_cb *ax25s;
-	पूर्णांक ret;
-	काष्ठा sk_buff *skbn;
+	int ret;
+	struct sk_buff *skbn;
 
 
 	nr_src  = (ax25_address *)(skb->data + 0);
 	nr_dest = (ax25_address *)(skb->data + 7);
 
-	अगर (ax25 != शून्य) अणु
+	if (ax25 != NULL) {
 		ret = nr_add_node(nr_src, "", &ax25->dest_addr, ax25->digipeat,
 				  ax25->ax25_dev->dev, 0,
 				  sysctl_netrom_obsolescence_count_initialiser);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर ((dev = nr_dev_get(nr_dest)) != शून्य) अणु	/* Its क्रम me */
-		अगर (ax25 == शून्य)			/* Its from me */
+	if ((dev = nr_dev_get(nr_dest)) != NULL) {	/* Its for me */
+		if (ax25 == NULL)			/* Its from me */
 			ret = nr_loopback_queue(skb);
-		अन्यथा
+		else
 			ret = nr_rx_frame(skb, dev);
 		dev_put(dev);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!sysctl_netrom_routing_control && ax25 != शून्य)
-		वापस 0;
+	if (!sysctl_netrom_routing_control && ax25 != NULL)
+		return 0;
 
 	/* Its Time-To-Live has expired */
-	अगर (skb->data[14] == 1) अणु
-		वापस 0;
-	पूर्ण
+	if (skb->data[14] == 1) {
+		return 0;
+	}
 
 	nr_node = nr_node_get(nr_dest);
-	अगर (nr_node == शून्य)
-		वापस 0;
+	if (nr_node == NULL)
+		return 0;
 	nr_node_lock(nr_node);
 
-	अगर (nr_node->which >= nr_node->count) अणु
+	if (nr_node->which >= nr_node->count) {
 		nr_node_unlock(nr_node);
 		nr_node_put(nr_node);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	nr_neigh = nr_node->routes[nr_node->which].neighbour;
 
-	अगर ((dev = nr_dev_first()) == शून्य) अणु
+	if ((dev = nr_dev_first()) == NULL) {
 		nr_node_unlock(nr_node);
 		nr_node_put(nr_node);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* We are going to change the netrom headers so we should get our
 	   own skb, we also did not know until now how much header space
 	   we had to reserve... - RXQ */
-	अगर ((skbn=skb_copy_expand(skb, dev->hard_header_len, 0, GFP_ATOMIC)) == शून्य) अणु
+	if ((skbn=skb_copy_expand(skb, dev->hard_header_len, 0, GFP_ATOMIC)) == NULL) {
 		nr_node_unlock(nr_node);
 		nr_node_put(nr_node);
 		dev_put(dev);
-		वापस 0;
-	पूर्ण
-	kमुक्त_skb(skb);
+		return 0;
+	}
+	kfree_skb(skb);
 	skb=skbn;
 	skb->data[14]--;
 
@@ -826,106 +825,106 @@ out:
 					 (ax25_address *)dev->dev_addr,
 					 &nr_neigh->callsign,
 					 nr_neigh->digipeat, nr_neigh->dev);
-	अगर (ax25s)
+	if (ax25s)
 		ax25_cb_put(ax25s);
 
 	dev_put(dev);
-	ret = (nr_neigh->ax25 != शून्य);
+	ret = (nr_neigh->ax25 != NULL);
 	nr_node_unlock(nr_node);
 	nr_node_put(nr_node);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 
-अटल व्योम *nr_node_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *nr_node_start(struct seq_file *seq, loff_t *pos)
 	__acquires(&nr_node_list_lock)
-अणु
+{
 	spin_lock_bh(&nr_node_list_lock);
-	वापस seq_hlist_start_head(&nr_node_list, *pos);
-पूर्ण
+	return seq_hlist_start_head(&nr_node_list, *pos);
+}
 
-अटल व्योम *nr_node_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	वापस seq_hlist_next(v, &nr_node_list, pos);
-पूर्ण
+static void *nr_node_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	return seq_hlist_next(v, &nr_node_list, pos);
+}
 
-अटल व्योम nr_node_stop(काष्ठा seq_file *seq, व्योम *v)
+static void nr_node_stop(struct seq_file *seq, void *v)
 	__releases(&nr_node_list_lock)
-अणु
+{
 	spin_unlock_bh(&nr_node_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nr_node_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर buf[11];
-	पूर्णांक i;
+static int nr_node_show(struct seq_file *seq, void *v)
+{
+	char buf[11];
+	int i;
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq,
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq,
 			 "callsign  mnemonic w n qual obs neigh qual obs neigh qual obs neigh\n");
-	अन्यथा अणु
-		काष्ठा nr_node *nr_node = hlist_entry(v, काष्ठा nr_node,
+	else {
+		struct nr_node *nr_node = hlist_entry(v, struct nr_node,
 						      node_node);
 
 		nr_node_lock(nr_node);
-		seq_म_लिखो(seq, "%-9s %-7s  %d %d",
+		seq_printf(seq, "%-9s %-7s  %d %d",
 			ax2asc(buf, &nr_node->callsign),
 			(nr_node->mnemonic[0] == '\0') ? "*" : nr_node->mnemonic,
 			nr_node->which + 1,
 			nr_node->count);
 
-		क्रम (i = 0; i < nr_node->count; i++) अणु
-			seq_म_लिखो(seq, "  %3d   %d %05d",
+		for (i = 0; i < nr_node->count; i++) {
+			seq_printf(seq, "  %3d   %d %05d",
 				nr_node->routes[i].quality,
 				nr_node->routes[i].obs_count,
 				nr_node->routes[i].neighbour->number);
-		पूर्ण
+		}
 		nr_node_unlock(nr_node);
 
-		seq_माला_दो(seq, "\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+		seq_puts(seq, "\n");
+	}
+	return 0;
+}
 
-स्थिर काष्ठा seq_operations nr_node_seqops = अणु
+const struct seq_operations nr_node_seqops = {
 	.start = nr_node_start,
 	.next = nr_node_next,
 	.stop = nr_node_stop,
 	.show = nr_node_show,
-पूर्ण;
+};
 
-अटल व्योम *nr_neigh_start(काष्ठा seq_file *seq, loff_t *pos)
+static void *nr_neigh_start(struct seq_file *seq, loff_t *pos)
 	__acquires(&nr_neigh_list_lock)
-अणु
+{
 	spin_lock_bh(&nr_neigh_list_lock);
-	वापस seq_hlist_start_head(&nr_neigh_list, *pos);
-पूर्ण
+	return seq_hlist_start_head(&nr_neigh_list, *pos);
+}
 
-अटल व्योम *nr_neigh_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	वापस seq_hlist_next(v, &nr_neigh_list, pos);
-पूर्ण
+static void *nr_neigh_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	return seq_hlist_next(v, &nr_neigh_list, pos);
+}
 
-अटल व्योम nr_neigh_stop(काष्ठा seq_file *seq, व्योम *v)
+static void nr_neigh_stop(struct seq_file *seq, void *v)
 	__releases(&nr_neigh_list_lock)
-अणु
+{
 	spin_unlock_bh(&nr_neigh_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nr_neigh_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	अक्षर buf[11];
-	पूर्णांक i;
+static int nr_neigh_show(struct seq_file *seq, void *v)
+{
+	char buf[11];
+	int i;
 
-	अगर (v == SEQ_START_TOKEN)
-		seq_माला_दो(seq, "addr  callsign  dev  qual lock count failed digipeaters\n");
-	अन्यथा अणु
-		काष्ठा nr_neigh *nr_neigh;
+	if (v == SEQ_START_TOKEN)
+		seq_puts(seq, "addr  callsign  dev  qual lock count failed digipeaters\n");
+	else {
+		struct nr_neigh *nr_neigh;
 
-		nr_neigh = hlist_entry(v, काष्ठा nr_neigh, neigh_node);
-		seq_म_लिखो(seq, "%05d %-9s %-4s  %3d    %d   %3d    %3d",
+		nr_neigh = hlist_entry(v, struct nr_neigh, neigh_node);
+		seq_printf(seq, "%05d %-9s %-4s  %3d    %d   %3d    %3d",
 			nr_neigh->number,
 			ax2asc(buf, &nr_neigh->callsign),
 			nr_neigh->dev ? nr_neigh->dev->name : "???",
@@ -934,48 +933,48 @@ out:
 			nr_neigh->count,
 			nr_neigh->failed);
 
-		अगर (nr_neigh->digipeat != शून्य) अणु
-			क्रम (i = 0; i < nr_neigh->digipeat->ndigi; i++)
-				seq_म_लिखो(seq, " %s",
+		if (nr_neigh->digipeat != NULL) {
+			for (i = 0; i < nr_neigh->digipeat->ndigi; i++)
+				seq_printf(seq, " %s",
 					   ax2asc(buf, &nr_neigh->digipeat->calls[i]));
-		पूर्ण
+		}
 
-		seq_माला_दो(seq, "\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+		seq_puts(seq, "\n");
+	}
+	return 0;
+}
 
-स्थिर काष्ठा seq_operations nr_neigh_seqops = अणु
+const struct seq_operations nr_neigh_seqops = {
 	.start = nr_neigh_start,
 	.next = nr_neigh_next,
 	.stop = nr_neigh_stop,
 	.show = nr_neigh_show,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /*
  *	Free all memory associated with the nodes and routes lists.
  */
-व्योम nr_rt_मुक्त(व्योम)
-अणु
-	काष्ठा nr_neigh *s = शून्य;
-	काष्ठा nr_node  *t = शून्य;
-	काष्ठा hlist_node *nodet;
+void nr_rt_free(void)
+{
+	struct nr_neigh *s = NULL;
+	struct nr_node  *t = NULL;
+	struct hlist_node *nodet;
 
 	spin_lock_bh(&nr_neigh_list_lock);
 	spin_lock_bh(&nr_node_list_lock);
-	nr_node_क्रम_each_safe(t, nodet, &nr_node_list) अणु
+	nr_node_for_each_safe(t, nodet, &nr_node_list) {
 		nr_node_lock(t);
-		nr_हटाओ_node_locked(t);
+		nr_remove_node_locked(t);
 		nr_node_unlock(t);
-	पूर्ण
-	nr_neigh_क्रम_each_safe(s, nodet, &nr_neigh_list) अणु
-		जबतक(s->count) अणु
+	}
+	nr_neigh_for_each_safe(s, nodet, &nr_neigh_list) {
+		while(s->count) {
 			s->count--;
 			nr_neigh_put(s);
-		पूर्ण
-		nr_हटाओ_neigh_locked(s);
-	पूर्ण
+		}
+		nr_remove_neigh_locked(s);
+	}
 	spin_unlock_bh(&nr_node_list_lock);
 	spin_unlock_bh(&nr_neigh_list_lock);
-पूर्ण
+}

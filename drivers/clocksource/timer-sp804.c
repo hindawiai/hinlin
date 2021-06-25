@@ -1,216 +1,215 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  linux/drivers/घड़ीsource/समयr-sp.c
+ *  linux/drivers/clocksource/timer-sp.c
  *
  *  Copyright (C) 1999 - 2003 ARM Limited
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
-#घोषणा pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)    KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_clk.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/sched_घड़ी.h>
+#include <linux/clk.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_clk.h>
+#include <linux/of_irq.h>
+#include <linux/sched_clock.h>
 
-#समावेश "timer-sp.h"
+#include "timer-sp.h"
 
-/* Hisilicon 64-bit समयr(a variant of ARM SP804) */
-#घोषणा HISI_TIMER_1_BASE	0x00
-#घोषणा HISI_TIMER_2_BASE	0x40
-#घोषणा HISI_TIMER_LOAD		0x00
-#घोषणा HISI_TIMER_LOAD_H	0x04
-#घोषणा HISI_TIMER_VALUE	0x08
-#घोषणा HISI_TIMER_VALUE_H	0x0c
-#घोषणा HISI_TIMER_CTRL		0x10
-#घोषणा HISI_TIMER_INTCLR	0x14
-#घोषणा HISI_TIMER_RIS		0x18
-#घोषणा HISI_TIMER_MIS		0x1c
-#घोषणा HISI_TIMER_BGLOAD	0x20
-#घोषणा HISI_TIMER_BGLOAD_H	0x24
+/* Hisilicon 64-bit timer(a variant of ARM SP804) */
+#define HISI_TIMER_1_BASE	0x00
+#define HISI_TIMER_2_BASE	0x40
+#define HISI_TIMER_LOAD		0x00
+#define HISI_TIMER_LOAD_H	0x04
+#define HISI_TIMER_VALUE	0x08
+#define HISI_TIMER_VALUE_H	0x0c
+#define HISI_TIMER_CTRL		0x10
+#define HISI_TIMER_INTCLR	0x14
+#define HISI_TIMER_RIS		0x18
+#define HISI_TIMER_MIS		0x1c
+#define HISI_TIMER_BGLOAD	0x20
+#define HISI_TIMER_BGLOAD_H	0x24
 
-अटल काष्ठा sp804_समयr arm_sp804_समयr __initdata = अणु
+static struct sp804_timer arm_sp804_timer __initdata = {
 	.load		= TIMER_LOAD,
 	.value		= TIMER_VALUE,
 	.ctrl		= TIMER_CTRL,
-	.पूर्णांकclr		= TIMER_INTCLR,
-	.समयr_base	= अणुTIMER_1_BASE, TIMER_2_BASEपूर्ण,
+	.intclr		= TIMER_INTCLR,
+	.timer_base	= {TIMER_1_BASE, TIMER_2_BASE},
 	.width		= 32,
-पूर्ण;
+};
 
-अटल काष्ठा sp804_समयr hisi_sp804_समयr __initdata = अणु
+static struct sp804_timer hisi_sp804_timer __initdata = {
 	.load		= HISI_TIMER_LOAD,
 	.load_h		= HISI_TIMER_LOAD_H,
 	.value		= HISI_TIMER_VALUE,
 	.value_h	= HISI_TIMER_VALUE_H,
 	.ctrl		= HISI_TIMER_CTRL,
-	.पूर्णांकclr		= HISI_TIMER_INTCLR,
-	.समयr_base	= अणुHISI_TIMER_1_BASE, HISI_TIMER_2_BASEपूर्ण,
+	.intclr		= HISI_TIMER_INTCLR,
+	.timer_base	= {HISI_TIMER_1_BASE, HISI_TIMER_2_BASE},
 	.width		= 64,
-पूर्ण;
+};
 
-अटल काष्ठा sp804_clkevt sp804_clkevt[NR_TIMERS];
+static struct sp804_clkevt sp804_clkevt[NR_TIMERS];
 
-अटल दीर्घ __init sp804_get_घड़ी_rate(काष्ठा clk *clk, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+static long __init sp804_get_clock_rate(struct clk *clk, const char *name)
+{
+	int err;
 
-	अगर (!clk)
+	if (!clk)
 		clk = clk_get_sys("sp804", name);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("%s clock not found: %ld\n", name, PTR_ERR(clk));
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
 	err = clk_prepare_enable(clk);
-	अगर (err) अणु
+	if (err) {
 		pr_err("clock failed to enable: %d\n", err);
 		clk_put(clk);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस clk_get_rate(clk);
-पूर्ण
+	return clk_get_rate(clk);
+}
 
-अटल काष्ठा sp804_clkevt * __init sp804_clkevt_get(व्योम __iomem *base)
-अणु
-	पूर्णांक i;
+static struct sp804_clkevt * __init sp804_clkevt_get(void __iomem *base)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_TIMERS; i++) अणु
-		अगर (sp804_clkevt[i].base == base)
-			वापस &sp804_clkevt[i];
-	पूर्ण
+	for (i = 0; i < NR_TIMERS; i++) {
+		if (sp804_clkevt[i].base == base)
+			return &sp804_clkevt[i];
+	}
 
 	/* It's impossible to reach here */
 	WARN_ON(1);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा sp804_clkevt *sched_clkevt;
+static struct sp804_clkevt *sched_clkevt;
 
-अटल u64 notrace sp804_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl_relaxed(sched_clkevt->value);
-पूर्ण
+static u64 notrace sp804_read(void)
+{
+	return ~readl_relaxed(sched_clkevt->value);
+}
 
-अटल पूर्णांक __init sp804_घड़ीsource_and_sched_घड़ी_init(व्योम __iomem *base,
-							 स्थिर अक्षर *name,
-							 काष्ठा clk *clk,
-							 पूर्णांक use_sched_घड़ी)
-अणु
-	दीर्घ rate;
-	काष्ठा sp804_clkevt *clkevt;
+static int __init sp804_clocksource_and_sched_clock_init(void __iomem *base,
+							 const char *name,
+							 struct clk *clk,
+							 int use_sched_clock)
+{
+	long rate;
+	struct sp804_clkevt *clkevt;
 
-	rate = sp804_get_घड़ी_rate(clk, name);
-	अगर (rate < 0)
-		वापस -EINVAL;
+	rate = sp804_get_clock_rate(clk, name);
+	if (rate < 0)
+		return -EINVAL;
 
 	clkevt = sp804_clkevt_get(base);
 
-	ग_लिखोl(0, clkevt->ctrl);
-	ग_लिखोl(0xffffffff, clkevt->load);
-	ग_लिखोl(0xffffffff, clkevt->value);
-	अगर (clkevt->width == 64) अणु
-		ग_लिखोl(0xffffffff, clkevt->load_h);
-		ग_लिखोl(0xffffffff, clkevt->value_h);
-	पूर्ण
-	ग_लिखोl(TIMER_CTRL_32BIT | TIMER_CTRL_ENABLE | TIMER_CTRL_PERIODIC,
+	writel(0, clkevt->ctrl);
+	writel(0xffffffff, clkevt->load);
+	writel(0xffffffff, clkevt->value);
+	if (clkevt->width == 64) {
+		writel(0xffffffff, clkevt->load_h);
+		writel(0xffffffff, clkevt->value_h);
+	}
+	writel(TIMER_CTRL_32BIT | TIMER_CTRL_ENABLE | TIMER_CTRL_PERIODIC,
 		clkevt->ctrl);
 
-	घड़ीsource_mmio_init(clkevt->value, name,
-		rate, 200, 32, घड़ीsource_mmio_पढ़ोl_करोwn);
+	clocksource_mmio_init(clkevt->value, name,
+		rate, 200, 32, clocksource_mmio_readl_down);
 
-	अगर (use_sched_घड़ी) अणु
+	if (use_sched_clock) {
 		sched_clkevt = clkevt;
-		sched_घड़ी_रेजिस्टर(sp804_पढ़ो, 32, rate);
-	पूर्ण
+		sched_clock_register(sp804_read, 32, rate);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल काष्ठा sp804_clkevt *common_clkevt;
+static struct sp804_clkevt *common_clkevt;
 
 /*
- * IRQ handler क्रम the समयr
+ * IRQ handler for the timer
  */
-अटल irqवापस_t sp804_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *evt = dev_id;
+static irqreturn_t sp804_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *evt = dev_id;
 
-	/* clear the पूर्णांकerrupt */
-	ग_लिखोl(1, common_clkevt->पूर्णांकclr);
+	/* clear the interrupt */
+	writel(1, common_clkevt->intclr);
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अंतरभूत व्योम समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	ग_लिखोl(0, common_clkevt->ctrl);
-पूर्ण
+static inline void timer_shutdown(struct clock_event_device *evt)
+{
+	writel(0, common_clkevt->ctrl);
+}
 
-अटल पूर्णांक sp804_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	समयr_shutकरोwn(evt);
-	वापस 0;
-पूर्ण
+static int sp804_shutdown(struct clock_event_device *evt)
+{
+	timer_shutdown(evt);
+	return 0;
+}
 
-अटल पूर्णांक sp804_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	अचिन्हित दीर्घ ctrl = TIMER_CTRL_32BIT | TIMER_CTRL_IE |
+static int sp804_set_periodic(struct clock_event_device *evt)
+{
+	unsigned long ctrl = TIMER_CTRL_32BIT | TIMER_CTRL_IE |
 			     TIMER_CTRL_PERIODIC | TIMER_CTRL_ENABLE;
 
-	समयr_shutकरोwn(evt);
-	ग_लिखोl(common_clkevt->reload, common_clkevt->load);
-	ग_लिखोl(ctrl, common_clkevt->ctrl);
-	वापस 0;
-पूर्ण
+	timer_shutdown(evt);
+	writel(common_clkevt->reload, common_clkevt->load);
+	writel(ctrl, common_clkevt->ctrl);
+	return 0;
+}
 
-अटल पूर्णांक sp804_set_next_event(अचिन्हित दीर्घ next,
-	काष्ठा घड़ी_event_device *evt)
-अणु
-	अचिन्हित दीर्घ ctrl = TIMER_CTRL_32BIT | TIMER_CTRL_IE |
+static int sp804_set_next_event(unsigned long next,
+	struct clock_event_device *evt)
+{
+	unsigned long ctrl = TIMER_CTRL_32BIT | TIMER_CTRL_IE |
 			     TIMER_CTRL_ONESHOT | TIMER_CTRL_ENABLE;
 
-	ग_लिखोl(next, common_clkevt->load);
-	ग_लिखोl(ctrl, common_clkevt->ctrl);
+	writel(next, common_clkevt->load);
+	writel(ctrl, common_clkevt->ctrl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा घड़ी_event_device sp804_घड़ीevent = अणु
+static struct clock_event_device sp804_clockevent = {
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_DYNIRQ,
-	.set_state_shutकरोwn	= sp804_shutकरोwn,
+	.set_state_shutdown	= sp804_shutdown,
 	.set_state_periodic	= sp804_set_periodic,
-	.set_state_oneshot	= sp804_shutकरोwn,
-	.tick_resume		= sp804_shutकरोwn,
+	.set_state_oneshot	= sp804_shutdown,
+	.tick_resume		= sp804_shutdown,
 	.set_next_event		= sp804_set_next_event,
 	.rating			= 300,
-पूर्ण;
+};
 
-अटल पूर्णांक __init sp804_घड़ीevents_init(व्योम __iomem *base, अचिन्हित पूर्णांक irq,
-					 काष्ठा clk *clk, स्थिर अक्षर *name)
-अणु
-	काष्ठा घड़ी_event_device *evt = &sp804_घड़ीevent;
-	दीर्घ rate;
+static int __init sp804_clockevents_init(void __iomem *base, unsigned int irq,
+					 struct clk *clk, const char *name)
+{
+	struct clock_event_device *evt = &sp804_clockevent;
+	long rate;
 
-	rate = sp804_get_घड़ी_rate(clk, name);
-	अगर (rate < 0)
-		वापस -EINVAL;
+	rate = sp804_get_clock_rate(clk, name);
+	if (rate < 0)
+		return -EINVAL;
 
 	common_clkevt = sp804_clkevt_get(base);
 	common_clkevt->reload = DIV_ROUND_CLOSEST(rate, HZ);
@@ -218,174 +217,174 @@
 	evt->irq = irq;
 	evt->cpumask = cpu_possible_mask;
 
-	ग_लिखोl(0, common_clkevt->ctrl);
+	writel(0, common_clkevt->ctrl);
 
-	अगर (request_irq(irq, sp804_समयr_पूर्णांकerrupt, IRQF_TIMER | IRQF_IRQPOLL,
-			"timer", &sp804_घड़ीevent))
+	if (request_irq(irq, sp804_timer_interrupt, IRQF_TIMER | IRQF_IRQPOLL,
+			"timer", &sp804_clockevent))
 		pr_err("request_irq() failed\n");
-	घड़ीevents_config_and_रेजिस्टर(evt, rate, 0xf, 0xffffffff);
+	clockevents_config_and_register(evt, rate, 0xf, 0xffffffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init sp804_clkevt_init(काष्ठा sp804_समयr *समयr, व्योम __iomem *base)
-अणु
-	पूर्णांक i;
+static void __init sp804_clkevt_init(struct sp804_timer *timer, void __iomem *base)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_TIMERS; i++) अणु
-		व्योम __iomem *समयr_base;
-		काष्ठा sp804_clkevt *clkevt;
+	for (i = 0; i < NR_TIMERS; i++) {
+		void __iomem *timer_base;
+		struct sp804_clkevt *clkevt;
 
-		समयr_base = base + समयr->समयr_base[i];
+		timer_base = base + timer->timer_base[i];
 		clkevt = &sp804_clkevt[i];
-		clkevt->base	= समयr_base;
-		clkevt->load	= समयr_base + समयr->load;
-		clkevt->load_h	= समयr_base + समयr->load_h;
-		clkevt->value	= समयr_base + समयr->value;
-		clkevt->value_h	= समयr_base + समयr->value_h;
-		clkevt->ctrl	= समयr_base + समयr->ctrl;
-		clkevt->पूर्णांकclr	= समयr_base + समयr->पूर्णांकclr;
-		clkevt->width	= समयr->width;
-	पूर्ण
-पूर्ण
+		clkevt->base	= timer_base;
+		clkevt->load	= timer_base + timer->load;
+		clkevt->load_h	= timer_base + timer->load_h;
+		clkevt->value	= timer_base + timer->value;
+		clkevt->value_h	= timer_base + timer->value_h;
+		clkevt->ctrl	= timer_base + timer->ctrl;
+		clkevt->intclr	= timer_base + timer->intclr;
+		clkevt->width	= timer->width;
+	}
+}
 
-अटल पूर्णांक __init sp804_of_init(काष्ठा device_node *np, काष्ठा sp804_समयr *समयr)
-अणु
-	अटल bool initialized = false;
-	व्योम __iomem *base;
-	व्योम __iomem *समयr1_base;
-	व्योम __iomem *समयr2_base;
-	पूर्णांक irq, ret = -EINVAL;
+static int __init sp804_of_init(struct device_node *np, struct sp804_timer *timer)
+{
+	static bool initialized = false;
+	void __iomem *base;
+	void __iomem *timer1_base;
+	void __iomem *timer2_base;
+	int irq, ret = -EINVAL;
 	u32 irq_num = 0;
-	काष्ठा clk *clk1, *clk2;
-	स्थिर अक्षर *name = of_get_property(np, "compatible", शून्य);
+	struct clk *clk1, *clk2;
+	const char *name = of_get_property(np, "compatible", NULL);
 
 	base = of_iomap(np, 0);
-	अगर (!base)
-		वापस -ENXIO;
+	if (!base)
+		return -ENXIO;
 
-	समयr1_base = base + समयr->समयr_base[0];
-	समयr2_base = base + समयr->समयr_base[1];
+	timer1_base = base + timer->timer_base[0];
+	timer2_base = base + timer->timer_base[1];
 
-	/* Ensure समयrs are disabled */
-	ग_लिखोl(0, समयr1_base + समयr->ctrl);
-	ग_लिखोl(0, समयr2_base + समयr->ctrl);
+	/* Ensure timers are disabled */
+	writel(0, timer1_base + timer->ctrl);
+	writel(0, timer2_base + timer->ctrl);
 
-	अगर (initialized || !of_device_is_available(np)) अणु
+	if (initialized || !of_device_is_available(np)) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	clk1 = of_clk_get(np, 0);
-	अगर (IS_ERR(clk1))
-		clk1 = शून्य;
+	if (IS_ERR(clk1))
+		clk1 = NULL;
 
-	/* Get the 2nd घड़ी अगर the समयr has 3 समयr घड़ीs */
-	अगर (of_clk_get_parent_count(np) == 3) अणु
+	/* Get the 2nd clock if the timer has 3 timer clocks */
+	if (of_clk_get_parent_count(np) == 3) {
 		clk2 = of_clk_get(np, 1);
-		अगर (IS_ERR(clk2)) अणु
+		if (IS_ERR(clk2)) {
 			pr_err("%pOFn clock not found: %d\n", np,
-				(पूर्णांक)PTR_ERR(clk2));
-			clk2 = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा
+				(int)PTR_ERR(clk2));
+			clk2 = NULL;
+		}
+	} else
 		clk2 = clk1;
 
 	irq = irq_of_parse_and_map(np, 0);
-	अगर (irq <= 0)
-		जाओ err;
+	if (irq <= 0)
+		goto err;
 
-	sp804_clkevt_init(समयr, base);
+	sp804_clkevt_init(timer, base);
 
-	of_property_पढ़ो_u32(np, "arm,sp804-has-irq", &irq_num);
-	अगर (irq_num == 2) अणु
+	of_property_read_u32(np, "arm,sp804-has-irq", &irq_num);
+	if (irq_num == 2) {
 
-		ret = sp804_घड़ीevents_init(समयr2_base, irq, clk2, name);
-		अगर (ret)
-			जाओ err;
+		ret = sp804_clockevents_init(timer2_base, irq, clk2, name);
+		if (ret)
+			goto err;
 
-		ret = sp804_घड़ीsource_and_sched_घड़ी_init(समयr1_base,
+		ret = sp804_clocksource_and_sched_clock_init(timer1_base,
 							     name, clk1, 1);
-		अगर (ret)
-			जाओ err;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto err;
+	} else {
 
-		ret = sp804_घड़ीevents_init(समयr1_base, irq, clk1, name);
-		अगर (ret)
-			जाओ err;
+		ret = sp804_clockevents_init(timer1_base, irq, clk1, name);
+		if (ret)
+			goto err;
 
-		ret = sp804_घड़ीsource_and_sched_घड़ी_init(समयr2_base,
+		ret = sp804_clocksource_and_sched_clock_init(timer2_base,
 							     name, clk2, 1);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 	initialized = true;
 
-	वापस 0;
+	return 0;
 err:
 	iounmap(base);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init arm_sp804_of_init(काष्ठा device_node *np)
-अणु
-	वापस sp804_of_init(np, &arm_sp804_समयr);
-पूर्ण
+static int __init arm_sp804_of_init(struct device_node *np)
+{
+	return sp804_of_init(np, &arm_sp804_timer);
+}
 TIMER_OF_DECLARE(sp804, "arm,sp804", arm_sp804_of_init);
 
-अटल पूर्णांक __init hisi_sp804_of_init(काष्ठा device_node *np)
-अणु
-	वापस sp804_of_init(np, &hisi_sp804_समयr);
-पूर्ण
+static int __init hisi_sp804_of_init(struct device_node *np)
+{
+	return sp804_of_init(np, &hisi_sp804_timer);
+}
 TIMER_OF_DECLARE(hisi_sp804, "hisilicon,sp804", hisi_sp804_of_init);
 
-अटल पूर्णांक __init पूर्णांकegrator_cp_of_init(काष्ठा device_node *np)
-अणु
-	अटल पूर्णांक init_count = 0;
-	व्योम __iomem *base;
-	पूर्णांक irq, ret = -EINVAL;
-	स्थिर अक्षर *name = of_get_property(np, "compatible", शून्य);
-	काष्ठा clk *clk;
+static int __init integrator_cp_of_init(struct device_node *np)
+{
+	static int init_count = 0;
+	void __iomem *base;
+	int irq, ret = -EINVAL;
+	const char *name = of_get_property(np, "compatible", NULL);
+	struct clk *clk;
 
 	base = of_iomap(np, 0);
-	अगर (!base) अणु
+	if (!base) {
 		pr_err("Failed to iomap\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	clk = of_clk_get(np, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Failed to get clock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 
-	/* Ensure समयr is disabled */
-	ग_लिखोl(0, base + arm_sp804_समयr.ctrl);
+	/* Ensure timer is disabled */
+	writel(0, base + arm_sp804_timer.ctrl);
 
-	अगर (init_count == 2 || !of_device_is_available(np))
-		जाओ err;
+	if (init_count == 2 || !of_device_is_available(np))
+		goto err;
 
-	sp804_clkevt_init(&arm_sp804_समयr, base);
+	sp804_clkevt_init(&arm_sp804_timer, base);
 
-	अगर (!init_count) अणु
-		ret = sp804_घड़ीsource_and_sched_घड़ी_init(base,
+	if (!init_count) {
+		ret = sp804_clocksource_and_sched_clock_init(base,
 							     name, clk, 0);
-		अगर (ret)
-			जाओ err;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto err;
+	} else {
 		irq = irq_of_parse_and_map(np, 0);
-		अगर (irq <= 0)
-			जाओ err;
+		if (irq <= 0)
+			goto err;
 
-		ret = sp804_घड़ीevents_init(base, irq, clk, name);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		ret = sp804_clockevents_init(base, irq, clk, name);
+		if (ret)
+			goto err;
+	}
 
 	init_count++;
-	वापस 0;
+	return 0;
 err:
 	iounmap(base);
-	वापस ret;
-पूर्ण
-TIMER_OF_DECLARE(पूर्णांकcp, "arm,integrator-cp-timer", पूर्णांकegrator_cp_of_init);
+	return ret;
+}
+TIMER_OF_DECLARE(intcp, "arm,integrator-cp-timer", integrator_cp_of_init);

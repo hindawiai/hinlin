@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,36 +22,36 @@
  *
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "i915_syncmap.h"
+#include "i915_syncmap.h"
 
-#समावेश "i915_gem.h" /* GEM_BUG_ON() */
-#समावेश "i915_selftest.h"
+#include "i915_gem.h" /* GEM_BUG_ON() */
+#include "i915_selftest.h"
 
-#घोषणा SHIFT ilog2(KSYNCMAP)
-#घोषणा MASK (KSYNCMAP - 1)
+#define SHIFT ilog2(KSYNCMAP)
+#define MASK (KSYNCMAP - 1)
 
 /*
- * काष्ठा i915_syncmap is a layer of a radixtree that maps a u64 fence
- * context id to the last u32 fence seqno रुकोed upon from that context.
- * Unlike lib/radixtree it uses a parent poपूर्णांकer that allows traversal back to
- * the root. This allows us to access the whole tree via a single poपूर्णांकer
+ * struct i915_syncmap is a layer of a radixtree that maps a u64 fence
+ * context id to the last u32 fence seqno waited upon from that context.
+ * Unlike lib/radixtree it uses a parent pointer that allows traversal back to
+ * the root. This allows us to access the whole tree via a single pointer
  * to the most recently used layer. We expect fence contexts to be dense
  * and most reuse to be on the same i915_gem_context but on neighbouring
  * engines (i.e. on adjacent contexts) and reuse the same leaf, a very
  * effective lookup cache. If the new lookup is not on the same leaf, we
  * expect it to be on the neighbouring branch.
  *
- * A leaf holds an array of u32 seqno, and has height 0. The biपंचांगap field
+ * A leaf holds an array of u32 seqno, and has height 0. The bitmap field
  * allows us to store whether a particular seqno is valid (i.e. allows us
  * to distinguish unset from 0).
  *
- * A branch holds an array of layer poपूर्णांकers, and has height > 0, and always
+ * A branch holds an array of layer pointers, and has height > 0, and always
  * has at least 2 layers (either branches or leaves) below it.
  *
  * For example,
- *	क्रम x in
+ *	for x in
  *	  0 1 2 0x10 0x11 0x200 0x201
  *	  0x500000 0x500001 0x503000 0x503001
  *	  0xE<<60:
@@ -71,235 +70,235 @@
  *	e-> 0xe00000000000000X e:e
  */
 
-काष्ठा i915_syncmap अणु
+struct i915_syncmap {
 	u64 prefix;
-	अचिन्हित पूर्णांक height;
-	अचिन्हित पूर्णांक biपंचांगap;
-	काष्ठा i915_syncmap *parent;
+	unsigned int height;
+	unsigned int bitmap;
+	struct i915_syncmap *parent;
 	/*
-	 * Following this header is an array of either seqno or child poपूर्णांकers:
-	 * जोड़ अणु
+	 * Following this header is an array of either seqno or child pointers:
+	 * union {
 	 *	u32 seqno[KSYNCMAP];
-	 *	काष्ठा i915_syncmap *child[KSYNCMAP];
-	 * पूर्ण;
+	 *	struct i915_syncmap *child[KSYNCMAP];
+	 * };
 	 */
-पूर्ण;
+};
 
 /**
  * i915_syncmap_init -- initialise the #i915_syncmap
- * @root: poपूर्णांकer to the #i915_syncmap
+ * @root: pointer to the #i915_syncmap
  */
-व्योम i915_syncmap_init(काष्ठा i915_syncmap **root)
-अणु
+void i915_syncmap_init(struct i915_syncmap **root)
+{
 	BUILD_BUG_ON_NOT_POWER_OF_2(KSYNCMAP);
 	BUILD_BUG_ON_NOT_POWER_OF_2(SHIFT);
-	BUILD_BUG_ON(KSYNCMAP > BITS_PER_TYPE((*root)->biपंचांगap));
-	*root = शून्य;
-पूर्ण
+	BUILD_BUG_ON(KSYNCMAP > BITS_PER_TYPE((*root)->bitmap));
+	*root = NULL;
+}
 
-अटल अंतरभूत u32 *__sync_seqno(काष्ठा i915_syncmap *p)
-अणु
+static inline u32 *__sync_seqno(struct i915_syncmap *p)
+{
 	GEM_BUG_ON(p->height);
-	वापस (u32 *)(p + 1);
-पूर्ण
+	return (u32 *)(p + 1);
+}
 
-अटल अंतरभूत काष्ठा i915_syncmap **__sync_child(काष्ठा i915_syncmap *p)
-अणु
+static inline struct i915_syncmap **__sync_child(struct i915_syncmap *p)
+{
 	GEM_BUG_ON(!p->height);
-	वापस (काष्ठा i915_syncmap **)(p + 1);
-पूर्ण
+	return (struct i915_syncmap **)(p + 1);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-__sync_branch_idx(स्थिर काष्ठा i915_syncmap *p, u64 id)
-अणु
-	वापस (id >> p->height) & MASK;
-पूर्ण
+static inline unsigned int
+__sync_branch_idx(const struct i915_syncmap *p, u64 id)
+{
+	return (id >> p->height) & MASK;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-__sync_leaf_idx(स्थिर काष्ठा i915_syncmap *p, u64 id)
-अणु
+static inline unsigned int
+__sync_leaf_idx(const struct i915_syncmap *p, u64 id)
+{
 	GEM_BUG_ON(p->height);
-	वापस id & MASK;
-पूर्ण
+	return id & MASK;
+}
 
-अटल अंतरभूत u64 __sync_branch_prefix(स्थिर काष्ठा i915_syncmap *p, u64 id)
-अणु
-	वापस id >> p->height >> SHIFT;
-पूर्ण
+static inline u64 __sync_branch_prefix(const struct i915_syncmap *p, u64 id)
+{
+	return id >> p->height >> SHIFT;
+}
 
-अटल अंतरभूत u64 __sync_leaf_prefix(स्थिर काष्ठा i915_syncmap *p, u64 id)
-अणु
+static inline u64 __sync_leaf_prefix(const struct i915_syncmap *p, u64 id)
+{
 	GEM_BUG_ON(p->height);
-	वापस id >> SHIFT;
-पूर्ण
+	return id >> SHIFT;
+}
 
-अटल अंतरभूत bool seqno_later(u32 a, u32 b)
-अणु
-	वापस (s32)(a - b) >= 0;
-पूर्ण
+static inline bool seqno_later(u32 a, u32 b)
+{
+	return (s32)(a - b) >= 0;
+}
 
 /**
- * i915_syncmap_is_later -- compare against the last know sync poपूर्णांक
- * @root: poपूर्णांकer to the #i915_syncmap
- * @id: the context id (other समयline) we are synchronising to
- * @seqno: the sequence number aदीर्घ the other समयline
+ * i915_syncmap_is_later -- compare against the last know sync point
+ * @root: pointer to the #i915_syncmap
+ * @id: the context id (other timeline) we are synchronising to
+ * @seqno: the sequence number along the other timeline
  *
- * If we have alपढ़ोy synchronised this @root समयline with another (@id) then
+ * If we have already synchronised this @root timeline with another (@id) then
  * we can omit any repeated or earlier synchronisation requests. If the two
- * समयlines are alपढ़ोy coupled, we can also omit the dependency between the
- * two as that is alपढ़ोy known via the समयline.
+ * timelines are already coupled, we can also omit the dependency between the
+ * two as that is already known via the timeline.
  *
- * Returns true अगर the two समयlines are alपढ़ोy synchronised wrt to @seqno,
- * false अगर not and the synchronisation must be emitted.
+ * Returns true if the two timelines are already synchronised wrt to @seqno,
+ * false if not and the synchronisation must be emitted.
  */
-bool i915_syncmap_is_later(काष्ठा i915_syncmap **root, u64 id, u32 seqno)
-अणु
-	काष्ठा i915_syncmap *p;
-	अचिन्हित पूर्णांक idx;
+bool i915_syncmap_is_later(struct i915_syncmap **root, u64 id, u32 seqno)
+{
+	struct i915_syncmap *p;
+	unsigned int idx;
 
 	p = *root;
-	अगर (!p)
-		वापस false;
+	if (!p)
+		return false;
 
-	अगर (likely(__sync_leaf_prefix(p, id) == p->prefix))
-		जाओ found;
+	if (likely(__sync_leaf_prefix(p, id) == p->prefix))
+		goto found;
 
 	/* First climb the tree back to a parent branch */
-	करो अणु
+	do {
 		p = p->parent;
-		अगर (!p)
-			वापस false;
+		if (!p)
+			return false;
 
-		अगर (__sync_branch_prefix(p, id) == p->prefix)
-			अवरोध;
-	पूर्ण जबतक (1);
+		if (__sync_branch_prefix(p, id) == p->prefix)
+			break;
+	} while (1);
 
 	/* And then descend again until we find our leaf */
-	करो अणु
-		अगर (!p->height)
-			अवरोध;
+	do {
+		if (!p->height)
+			break;
 
 		p = __sync_child(p)[__sync_branch_idx(p, id)];
-		अगर (!p)
-			वापस false;
+		if (!p)
+			return false;
 
-		अगर (__sync_branch_prefix(p, id) != p->prefix)
-			वापस false;
-	पूर्ण जबतक (1);
+		if (__sync_branch_prefix(p, id) != p->prefix)
+			return false;
+	} while (1);
 
 	*root = p;
 found:
 	idx = __sync_leaf_idx(p, id);
-	अगर (!(p->biपंचांगap & BIT(idx)))
-		वापस false;
+	if (!(p->bitmap & BIT(idx)))
+		return false;
 
-	वापस seqno_later(__sync_seqno(p)[idx], seqno);
-पूर्ण
+	return seqno_later(__sync_seqno(p)[idx], seqno);
+}
 
-अटल काष्ठा i915_syncmap *
-__sync_alloc_leaf(काष्ठा i915_syncmap *parent, u64 id)
-अणु
-	काष्ठा i915_syncmap *p;
+static struct i915_syncmap *
+__sync_alloc_leaf(struct i915_syncmap *parent, u64 id)
+{
+	struct i915_syncmap *p;
 
-	p = kदो_स्मृति(माप(*p) + KSYNCMAP * माप(u32), GFP_KERNEL);
-	अगर (unlikely(!p))
-		वापस शून्य;
+	p = kmalloc(sizeof(*p) + KSYNCMAP * sizeof(u32), GFP_KERNEL);
+	if (unlikely(!p))
+		return NULL;
 
 	p->parent = parent;
 	p->height = 0;
-	p->biपंचांगap = 0;
+	p->bitmap = 0;
 	p->prefix = __sync_leaf_prefix(p, id);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल अंतरभूत व्योम __sync_set_seqno(काष्ठा i915_syncmap *p, u64 id, u32 seqno)
-अणु
-	अचिन्हित पूर्णांक idx = __sync_leaf_idx(p, id);
+static inline void __sync_set_seqno(struct i915_syncmap *p, u64 id, u32 seqno)
+{
+	unsigned int idx = __sync_leaf_idx(p, id);
 
-	p->biपंचांगap |= BIT(idx);
+	p->bitmap |= BIT(idx);
 	__sync_seqno(p)[idx] = seqno;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __sync_set_child(काष्ठा i915_syncmap *p,
-				    अचिन्हित पूर्णांक idx,
-				    काष्ठा i915_syncmap *child)
-अणु
-	p->biपंचांगap |= BIT(idx);
+static inline void __sync_set_child(struct i915_syncmap *p,
+				    unsigned int idx,
+				    struct i915_syncmap *child)
+{
+	p->bitmap |= BIT(idx);
 	__sync_child(p)[idx] = child;
-पूर्ण
+}
 
-अटल noअंतरभूत पूर्णांक __sync_set(काष्ठा i915_syncmap **root, u64 id, u32 seqno)
-अणु
-	काष्ठा i915_syncmap *p = *root;
-	अचिन्हित पूर्णांक idx;
+static noinline int __sync_set(struct i915_syncmap **root, u64 id, u32 seqno)
+{
+	struct i915_syncmap *p = *root;
+	unsigned int idx;
 
-	अगर (!p) अणु
-		p = __sync_alloc_leaf(शून्य, id);
-		अगर (unlikely(!p))
-			वापस -ENOMEM;
+	if (!p) {
+		p = __sync_alloc_leaf(NULL, id);
+		if (unlikely(!p))
+			return -ENOMEM;
 
-		जाओ found;
-	पूर्ण
+		goto found;
+	}
 
-	/* Caller handled the likely cached हाल */
+	/* Caller handled the likely cached case */
 	GEM_BUG_ON(__sync_leaf_prefix(p, id) == p->prefix);
 
 	/* Climb back up the tree until we find a common prefix */
-	करो अणु
-		अगर (!p->parent)
-			अवरोध;
+	do {
+		if (!p->parent)
+			break;
 
 		p = p->parent;
 
-		अगर (__sync_branch_prefix(p, id) == p->prefix)
-			अवरोध;
-	पूर्ण जबतक (1);
+		if (__sync_branch_prefix(p, id) == p->prefix)
+			break;
+	} while (1);
 
 	/*
-	 * No लघुcut, we have to descend the tree to find the right layer
+	 * No shortcut, we have to descend the tree to find the right layer
 	 * containing this fence.
 	 *
-	 * Each layer in the tree holds 16 (KSYNCMAP) poपूर्णांकers, either fences
+	 * Each layer in the tree holds 16 (KSYNCMAP) pointers, either fences
 	 * or lower layers. Leaf nodes (height = 0) contain the fences, all
-	 * other nodes (height > 0) are पूर्णांकernal layers that poपूर्णांक to a lower
-	 * node. Each पूर्णांकernal layer has at least 2 descendents.
+	 * other nodes (height > 0) are internal layers that point to a lower
+	 * node. Each internal layer has at least 2 descendents.
 	 *
 	 * Starting at the top, we check whether the current prefix matches. If
-	 * it करोesn't, we have gone past our target and need to insert a join
-	 * पूर्णांकo the tree, and a new leaf node क्रम the target as a descendent
+	 * it doesn't, we have gone past our target and need to insert a join
+	 * into the tree, and a new leaf node for the target as a descendent
 	 * of the join, as well as the original layer.
 	 *
 	 * The matching prefix means we are still following the right branch
 	 * of the tree. If it has height 0, we have found our leaf and just
 	 * need to replace the fence slot with ourselves. If the height is
 	 * not zero, our slot contains the next layer in the tree (unless
-	 * it is empty, in which हाल we can add ourselves as a new leaf).
+	 * it is empty, in which case we can add ourselves as a new leaf).
 	 * As descend the tree the prefix grows (and height decreases).
 	 */
-	करो अणु
-		काष्ठा i915_syncmap *next;
+	do {
+		struct i915_syncmap *next;
 
-		अगर (__sync_branch_prefix(p, id) != p->prefix) अणु
-			अचिन्हित पूर्णांक above;
+		if (__sync_branch_prefix(p, id) != p->prefix) {
+			unsigned int above;
 
 			/* Insert a join above the current layer */
-			next = kzalloc(माप(*next) + KSYNCMAP * माप(next),
+			next = kzalloc(sizeof(*next) + KSYNCMAP * sizeof(next),
 				       GFP_KERNEL);
-			अगर (unlikely(!next))
-				वापस -ENOMEM;
+			if (unlikely(!next))
+				return -ENOMEM;
 
-			/* Compute the height at which these two भागerge */
+			/* Compute the height at which these two diverge */
 			above = fls64(__sync_branch_prefix(p, id) ^ p->prefix);
 			above = round_up(above, SHIFT);
 			next->height = above + p->height;
 			next->prefix = __sync_branch_prefix(next, id);
 
-			/* Insert the join पूर्णांकo the parent */
-			अगर (p->parent) अणु
+			/* Insert the join into the parent */
+			if (p->parent) {
 				idx = __sync_branch_idx(p->parent, id);
 				__sync_child(p->parent)[idx] = next;
-				GEM_BUG_ON(!(p->parent->biपंचांगap & BIT(idx)));
-			पूर्ण
+				GEM_BUG_ON(!(p->parent->bitmap & BIT(idx)));
+			}
 			next->parent = p->parent;
 
 			/* Compute the idx of the other branch, not our id! */
@@ -309,105 +308,105 @@ __sync_alloc_leaf(काष्ठा i915_syncmap *parent, u64 id)
 
 			/* Ascend to the join */
 			p = next;
-		पूर्ण अन्यथा अणु
-			अगर (!p->height)
-				अवरोध;
-		पूर्ण
+		} else {
+			if (!p->height)
+				break;
+		}
 
-		/* Descend पूर्णांकo the next layer */
+		/* Descend into the next layer */
 		GEM_BUG_ON(!p->height);
 		idx = __sync_branch_idx(p, id);
 		next = __sync_child(p)[idx];
-		अगर (!next) अणु
+		if (!next) {
 			next = __sync_alloc_leaf(p, id);
-			अगर (unlikely(!next))
-				वापस -ENOMEM;
+			if (unlikely(!next))
+				return -ENOMEM;
 
 			__sync_set_child(p, idx, next);
 			p = next;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		p = next;
-	पूर्ण जबतक (1);
+	} while (1);
 
 found:
 	GEM_BUG_ON(p->prefix != __sync_leaf_prefix(p, id));
 	__sync_set_seqno(p, id, seqno);
 	*root = p;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i915_syncmap_set -- mark the most recent syncpoपूर्णांक between contexts
- * @root: poपूर्णांकer to the #i915_syncmap
- * @id: the context id (other समयline) we have synchronised to
- * @seqno: the sequence number aदीर्घ the other समयline
+ * i915_syncmap_set -- mark the most recent syncpoint between contexts
+ * @root: pointer to the #i915_syncmap
+ * @id: the context id (other timeline) we have synchronised to
+ * @seqno: the sequence number along the other timeline
  *
- * When we synchronise this @root समयline with another (@id), we also know
- * that we have synchronized with all previous seqno aदीर्घ that समयline. If
+ * When we synchronise this @root timeline with another (@id), we also know
+ * that we have synchronized with all previous seqno along that timeline. If
  * we then have a request to synchronise with the same seqno or older, we can
  * omit it, see i915_syncmap_is_later()
  *
  * Returns 0 on success, or a negative error code.
  */
-पूर्णांक i915_syncmap_set(काष्ठा i915_syncmap **root, u64 id, u32 seqno)
-अणु
-	काष्ठा i915_syncmap *p = *root;
+int i915_syncmap_set(struct i915_syncmap **root, u64 id, u32 seqno)
+{
+	struct i915_syncmap *p = *root;
 
 	/*
 	 * We expect to be called in sequence following is_later(id), which
-	 * should have preloaded the root क्रम us.
+	 * should have preloaded the root for us.
 	 */
-	अगर (likely(p && __sync_leaf_prefix(p, id) == p->prefix)) अणु
+	if (likely(p && __sync_leaf_prefix(p, id) == p->prefix)) {
 		__sync_set_seqno(p, id, seqno);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस __sync_set(root, id, seqno);
-पूर्ण
+	return __sync_set(root, id, seqno);
+}
 
-अटल व्योम __sync_मुक्त(काष्ठा i915_syncmap *p)
-अणु
-	अगर (p->height) अणु
-		अचिन्हित पूर्णांक i;
+static void __sync_free(struct i915_syncmap *p)
+{
+	if (p->height) {
+		unsigned int i;
 
-		जबतक ((i = ffs(p->biपंचांगap))) अणु
-			p->biपंचांगap &= ~0u << i;
-			__sync_मुक्त(__sync_child(p)[i - 1]);
-		पूर्ण
-	पूर्ण
+		while ((i = ffs(p->bitmap))) {
+			p->bitmap &= ~0u << i;
+			__sync_free(__sync_child(p)[i - 1]);
+		}
+	}
 
-	kमुक्त(p);
-पूर्ण
+	kfree(p);
+}
 
 /**
- * i915_syncmap_मुक्त -- मुक्त all memory associated with the syncmap
- * @root: poपूर्णांकer to the #i915_syncmap
+ * i915_syncmap_free -- free all memory associated with the syncmap
+ * @root: pointer to the #i915_syncmap
  *
- * Either when the समयline is to be मुक्तd and we no दीर्घer need the sync
- * poपूर्णांक tracking, or when the fences are all known to be संकेतed and the
- * sync poपूर्णांक tracking is redundant, we can मुक्त the #i915_syncmap to recover
+ * Either when the timeline is to be freed and we no longer need the sync
+ * point tracking, or when the fences are all known to be signaled and the
+ * sync point tracking is redundant, we can free the #i915_syncmap to recover
  * its allocations.
  *
- * Will reinitialise the @root poपूर्णांकer so that the #i915_syncmap is पढ़ोy क्रम
+ * Will reinitialise the @root pointer so that the #i915_syncmap is ready for
  * reuse.
  */
-व्योम i915_syncmap_मुक्त(काष्ठा i915_syncmap **root)
-अणु
-	काष्ठा i915_syncmap *p;
+void i915_syncmap_free(struct i915_syncmap **root)
+{
+	struct i915_syncmap *p;
 
 	p = *root;
-	अगर (!p)
-		वापस;
+	if (!p)
+		return;
 
-	जबतक (p->parent)
+	while (p->parent)
 		p = p->parent;
 
-	__sync_मुक्त(p);
-	*root = शून्य;
-पूर्ण
+	__sync_free(p);
+	*root = NULL;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftests/i915_syncmap.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftests/i915_syncmap.c"
+#endif

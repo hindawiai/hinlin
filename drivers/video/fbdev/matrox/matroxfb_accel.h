@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MATROXFB_ACCEL_H__
-#घोषणा __MATROXFB_ACCEL_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MATROXFB_ACCEL_H__
+#define __MATROXFB_ACCEL_H__
 
-#समावेश "matroxfb_base.h"
+#include "matroxfb_base.h"
 
-व्योम matrox_cfbX_init(काष्ठा matrox_fb_info *minfo);
+void matrox_cfbX_init(struct matrox_fb_info *minfo);
 
-#पूर्ण_अगर
+#endif

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 2007-2015 VMware, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person
- * obtaining a copy of this software and associated करोcumentation
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -28,19 +27,19 @@
 /*
  * svga_escape.h --
  *
- *    Definitions क्रम our own (venकरोr-specअगरic) SVGA Escape commands.
+ *    Definitions for our own (vendor-specific) SVGA Escape commands.
  */
 
-#अगर_अघोषित _SVGA_ESCAPE_H_
-#घोषणा _SVGA_ESCAPE_H_
+#ifndef _SVGA_ESCAPE_H_
+#define _SVGA_ESCAPE_H_
 
 
 /*
- * Namespace IDs क्रम the escape command
+ * Namespace IDs for the escape command
  */
 
-#घोषणा SVGA_ESCAPE_NSID_VMWARE 0x00000000
-#घोषणा SVGA_ESCAPE_NSID_DEVEL  0xFFFFFFFF
+#define SVGA_ESCAPE_NSID_VMWARE 0x00000000
+#define SVGA_ESCAPE_NSID_DEVEL  0xFFFFFFFF
 
 
 /*
@@ -57,35 +56,35 @@
  *   0003: SVGA_ESCAPE_VMWARE_HINT (svga_escape.h)
  */
 
-#घोषणा SVGA_ESCAPE_VMWARE_MAJOR_MASK  0xFFFF0000
+#define SVGA_ESCAPE_VMWARE_MAJOR_MASK  0xFFFF0000
 
 
 /*
- * SVGA Hपूर्णांक commands.
+ * SVGA Hint commands.
  *
- * These escapes let the SVGA driver provide optional inक्रमmation to
+ * These escapes let the SVGA driver provide optional information to
  * he host about the state of the guest or guest applications. The
- * host can use these hपूर्णांकs to make user पूर्णांकerface or perक्रमmance
+ * host can use these hints to make user interface or performance
  * decisions.
  *
  * Notes:
  *
- *   - SVGA_ESCAPE_VMWARE_HINT_FULLSCREEN is deprecated क्रम guests
+ *   - SVGA_ESCAPE_VMWARE_HINT_FULLSCREEN is deprecated for guests
  *     that use the SVGA Screen Object extension. Instead of sending
  *     this escape, use the SVGA_SCREEN_FULLSCREEN_HINT flag on your
  *     Screen Object.
  */
 
-#घोषणा SVGA_ESCAPE_VMWARE_HINT               0x00030000
-#घोषणा SVGA_ESCAPE_VMWARE_HINT_FULLSCREEN    0x00030001  /* Deprecated */
+#define SVGA_ESCAPE_VMWARE_HINT               0x00030000
+#define SVGA_ESCAPE_VMWARE_HINT_FULLSCREEN    0x00030001  /* Deprecated */
 
-प्रकार
-काष्ठा अणु
-   uपूर्णांक32 command;
-   uपूर्णांक32 fullscreen;
-   काष्ठा अणु
-      पूर्णांक32 x, y;
-   पूर्ण monitorPosition;
-पूर्ण SVGAEscapeHपूर्णांकFullscreen;
+typedef
+struct {
+   uint32 command;
+   uint32 fullscreen;
+   struct {
+      int32 x, y;
+   } monitorPosition;
+} SVGAEscapeHintFullscreen;
 
-#पूर्ण_अगर /* _SVGA_ESCAPE_H_ */
+#endif /* _SVGA_ESCAPE_H_ */

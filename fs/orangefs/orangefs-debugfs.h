@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-व्योम orangefs_debugfs_init(पूर्णांक);
-व्योम orangefs_debugfs_cleanup(व्योम);
-पूर्णांक orangefs_prepare_debugfs_help_string(पूर्णांक);
-पूर्णांक orangefs_debugfs_new_client_mask(व्योम __user *);
-पूर्णांक orangefs_debugfs_new_client_string(व्योम __user *);
-पूर्णांक orangefs_debugfs_new_debug(व्योम __user *);
+/* SPDX-License-Identifier: GPL-2.0 */
+void orangefs_debugfs_init(int);
+void orangefs_debugfs_cleanup(void);
+int orangefs_prepare_debugfs_help_string(int);
+int orangefs_debugfs_new_client_mask(void __user *);
+int orangefs_debugfs_new_client_string(void __user *);
+int orangefs_debugfs_new_debug(void __user *);

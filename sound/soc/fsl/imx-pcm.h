@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2009 Sascha Hauer <s.hauer@pengutronix.de>
  *
@@ -7,62 +6,62 @@
  * Liam Girdwood, Javier Martin and probably others.
  */
 
-#अगर_अघोषित _IMX_PCM_H
-#घोषणा _IMX_PCM_H
+#ifndef _IMX_PCM_H
+#define _IMX_PCM_H
 
-#समावेश <linux/platक्रमm_data/dma-imx.h>
+#include <linux/platform_data/dma-imx.h>
 
 /*
  * Do not change this as the FIQ handler depends on this size
  */
-#घोषणा IMX_SSI_DMABUF_SIZE	(64 * 1024)
+#define IMX_SSI_DMABUF_SIZE	(64 * 1024)
 
-#घोषणा IMX_DEFAULT_DMABUF_SIZE	(64 * 1024)
-#घोषणा IMX_SAI_DMABUF_SIZE	(64 * 1024)
-#घोषणा IMX_SPDIF_DMABUF_SIZE	(64 * 1024)
-#घोषणा IMX_ESAI_DMABUF_SIZE	(256 * 1024)
+#define IMX_DEFAULT_DMABUF_SIZE	(64 * 1024)
+#define IMX_SAI_DMABUF_SIZE	(64 * 1024)
+#define IMX_SPDIF_DMABUF_SIZE	(64 * 1024)
+#define IMX_ESAI_DMABUF_SIZE	(256 * 1024)
 
-अटल अंतरभूत व्योम
-imx_pcm_dma_params_init_data(काष्ठा imx_dma_data *dma_data,
-	पूर्णांक dma, क्रमागत sdma_peripheral_type peripheral_type)
-अणु
+static inline void
+imx_pcm_dma_params_init_data(struct imx_dma_data *dma_data,
+	int dma, enum sdma_peripheral_type peripheral_type)
+{
 	dma_data->dma_request = dma;
 	dma_data->priority = DMA_PRIO_HIGH;
 	dma_data->peripheral_type = peripheral_type;
-पूर्ण
+}
 
-काष्ठा imx_pcm_fiq_params अणु
-	पूर्णांक irq;
-	व्योम __iomem *base;
+struct imx_pcm_fiq_params {
+	int irq;
+	void __iomem *base;
 
-	/* Poपूर्णांकer to original ssi driver to setup tx rx sizes */
-	काष्ठा snd_dmaengine_dai_dma_data *dma_params_rx;
-	काष्ठा snd_dmaengine_dai_dma_data *dma_params_tx;
-पूर्ण;
+	/* Pointer to original ssi driver to setup tx rx sizes */
+	struct snd_dmaengine_dai_dma_data *dma_params_rx;
+	struct snd_dmaengine_dai_dma_data *dma_params_tx;
+};
 
-#अगर IS_ENABLED(CONFIG_SND_SOC_IMX_PCM_DMA)
-पूर्णांक imx_pcm_dma_init(काष्ठा platक्रमm_device *pdev, माप_प्रकार size);
-#अन्यथा
-अटल अंतरभूत पूर्णांक imx_pcm_dma_init(काष्ठा platक्रमm_device *pdev, माप_प्रकार size)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SND_SOC_IMX_PCM_DMA)
+int imx_pcm_dma_init(struct platform_device *pdev, size_t size);
+#else
+static inline int imx_pcm_dma_init(struct platform_device *pdev, size_t size)
+{
+	return -ENODEV;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_SND_SOC_IMX_PCM_FIQ)
-पूर्णांक imx_pcm_fiq_init(काष्ठा platक्रमm_device *pdev,
-		काष्ठा imx_pcm_fiq_params *params);
-व्योम imx_pcm_fiq_निकास(काष्ठा platक्रमm_device *pdev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक imx_pcm_fiq_init(काष्ठा platक्रमm_device *pdev,
-		काष्ठा imx_pcm_fiq_params *params)
-अणु
-	वापस -ENODEV;
-पूर्ण
+#if IS_ENABLED(CONFIG_SND_SOC_IMX_PCM_FIQ)
+int imx_pcm_fiq_init(struct platform_device *pdev,
+		struct imx_pcm_fiq_params *params);
+void imx_pcm_fiq_exit(struct platform_device *pdev);
+#else
+static inline int imx_pcm_fiq_init(struct platform_device *pdev,
+		struct imx_pcm_fiq_params *params)
+{
+	return -ENODEV;
+}
 
-अटल अंतरभूत व्योम imx_pcm_fiq_निकास(काष्ठा platक्रमm_device *pdev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void imx_pcm_fiq_exit(struct platform_device *pdev)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _IMX_PCM_H */
+#endif /* _IMX_PCM_H */

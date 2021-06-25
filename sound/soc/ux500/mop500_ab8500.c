@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
  * Author: Ola Lilja <ola.o.lilja@stericsson.com>,
  *         Kristoffer Karlsson <kristoffer.karlsson@stericsson.com>
- *         क्रम ST-Ericsson.
+ *         for ST-Ericsson.
  *
  * License terms:
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/mutex.h>
 
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
 
-#समावेश "ux500_pcm.h"
-#समावेश "ux500_msp_dai.h"
-#समावेश "mop500_ab8500.h"
-#समावेश "../codecs/ab8500-codec.h"
+#include "ux500_pcm.h"
+#include "ux500_msp_dai.h"
+#include "mop500_ab8500.h"
+#include "../codecs/ab8500-codec.h"
 
-#घोषणा TX_SLOT_MONO	0x0008
-#घोषणा TX_SLOT_STEREO	0x000a
-#घोषणा RX_SLOT_MONO	0x0001
-#घोषणा RX_SLOT_STEREO	0x0003
-#घोषणा TX_SLOT_8CH	0x00FF
-#घोषणा RX_SLOT_8CH	0x00FF
+#define TX_SLOT_MONO	0x0008
+#define TX_SLOT_STEREO	0x000a
+#define RX_SLOT_MONO	0x0001
+#define RX_SLOT_STEREO	0x0003
+#define TX_SLOT_8CH	0x00FF
+#define RX_SLOT_8CH	0x00FF
 
-#घोषणा DEF_TX_SLOTS	TX_SLOT_STEREO
-#घोषणा DEF_RX_SLOTS	RX_SLOT_MONO
+#define DEF_TX_SLOTS	TX_SLOT_STEREO
+#define DEF_RX_SLOTS	RX_SLOT_MONO
 
-#घोषणा DRIVERMODE_NORMAL	0
-#घोषणा DRIVERMODE_CODEC_ONLY	1
+#define DRIVERMODE_NORMAL	0
+#define DRIVERMODE_CODEC_ONLY	1
 
 /* Slot configuration */
-अटल अचिन्हित पूर्णांक tx_slots = DEF_TX_SLOTS;
-अटल अचिन्हित पूर्णांक rx_slots = DEF_RX_SLOTS;
+static unsigned int tx_slots = DEF_TX_SLOTS;
+static unsigned int rx_slots = DEF_RX_SLOTS;
 
 /* Configuration consistency parameters */
-अटल DEFINE_MUTEX(mop500_ab8500_params_lock);
-अटल अचिन्हित दीर्घ mop500_ab8500_usage;
-अटल पूर्णांक mop500_ab8500_rate;
-अटल पूर्णांक mop500_ab8500_channels;
+static DEFINE_MUTEX(mop500_ab8500_params_lock);
+static unsigned long mop500_ab8500_usage;
+static int mop500_ab8500_rate;
+static int mop500_ab8500_channels;
 
 /* Clocks */
-अटल स्थिर अक्षर * स्थिर क्रमागत_mclk[] = अणु
+static const char * const enum_mclk[] = {
 	"SYSCLK",
 	"ULPCLK"
-पूर्ण;
-क्रमागत mclk अणु
+};
+enum mclk {
 	MCLK_SYSCLK,
 	MCLK_ULPCLK,
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_EXT_DECL(soc_क्रमागत_mclk, क्रमागत_mclk);
+static SOC_ENUM_SINGLE_EXT_DECL(soc_enum_mclk, enum_mclk);
 
-/* Private data क्रम machine-part MOP500<->AB8500 */
-काष्ठा mop500_ab8500_drvdata अणु
+/* Private data for machine-part MOP500<->AB8500 */
+struct mop500_ab8500_drvdata {
 	/* Clocks */
-	क्रमागत mclk mclk_sel;
-	काष्ठा clk *clk_ptr_पूर्णांकclk;
-	काष्ठा clk *clk_ptr_sysclk;
-	काष्ठा clk *clk_ptr_ulpclk;
-पूर्ण;
+	enum mclk mclk_sel;
+	struct clk *clk_ptr_intclk;
+	struct clk *clk_ptr_sysclk;
+	struct clk *clk_ptr_ulpclk;
+};
 
-अटल अंतरभूत स्थिर अक्षर *get_mclk_str(क्रमागत mclk mclk_sel)
-अणु
-	चयन (mclk_sel) अणु
-	हाल MCLK_SYSCLK:
-		वापस "SYSCLK";
-	हाल MCLK_ULPCLK:
-		वापस "ULPCLK";
-	शेष:
-		वापस "Unknown";
-	पूर्ण
-पूर्ण
+static inline const char *get_mclk_str(enum mclk mclk_sel)
+{
+	switch (mclk_sel) {
+	case MCLK_SYSCLK:
+		return "SYSCLK";
+	case MCLK_ULPCLK:
+		return "ULPCLK";
+	default:
+		return "Unknown";
+	}
+}
 
-अटल पूर्णांक mop500_ab8500_set_mclk(काष्ठा device *dev,
-				काष्ठा mop500_ab8500_drvdata *drvdata)
-अणु
-	पूर्णांक status;
-	काष्ठा clk *clk_ptr;
+static int mop500_ab8500_set_mclk(struct device *dev,
+				struct mop500_ab8500_drvdata *drvdata)
+{
+	int status;
+	struct clk *clk_ptr;
 
-	अगर (IS_ERR(drvdata->clk_ptr_पूर्णांकclk)) अणु
+	if (IS_ERR(drvdata->clk_ptr_intclk)) {
 		dev_err(dev,
 			"%s: ERROR: intclk not initialized!\n", __func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (drvdata->mclk_sel) अणु
-	हाल MCLK_SYSCLK:
+	switch (drvdata->mclk_sel) {
+	case MCLK_SYSCLK:
 		clk_ptr = drvdata->clk_ptr_sysclk;
-		अवरोध;
-	हाल MCLK_ULPCLK:
+		break;
+	case MCLK_ULPCLK:
 		clk_ptr = drvdata->clk_ptr_ulpclk;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (IS_ERR(clk_ptr)) अणु
+	if (IS_ERR(clk_ptr)) {
 		dev_err(dev, "%s: ERROR: %s not initialized!\n", __func__,
 			get_mclk_str(drvdata->mclk_sel));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	status = clk_set_parent(drvdata->clk_ptr_पूर्णांकclk, clk_ptr);
-	अगर (status)
+	status = clk_set_parent(drvdata->clk_ptr_intclk, clk_ptr);
+	if (status)
 		dev_err(dev,
 			"%s: ERROR: Setting intclk parent to %s failed (ret = %d)!",
 			__func__, get_mclk_str(drvdata->mclk_sel), status);
-	अन्यथा
+	else
 		dev_dbg(dev,
 			"%s: intclk parent changed to %s.\n",
 			__func__, get_mclk_str(drvdata->mclk_sel));
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Control-events
  */
 
-अटल पूर्णांक mclk_input_control_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	काष्ठा mop500_ab8500_drvdata *drvdata =
+static int mclk_input_control_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
+	struct mop500_ab8500_drvdata *drvdata =
 				snd_soc_card_get_drvdata(card);
 
-	ucontrol->value.क्रमागतerated.item[0] = drvdata->mclk_sel;
+	ucontrol->value.enumerated.item[0] = drvdata->mclk_sel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mclk_input_control_put(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	काष्ठा mop500_ab8500_drvdata *drvdata =
+static int mclk_input_control_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
+	struct mop500_ab8500_drvdata *drvdata =
 				snd_soc_card_get_drvdata(card);
-	अचिन्हित पूर्णांक val = ucontrol->value.क्रमागतerated.item[0];
+	unsigned int val = ucontrol->value.enumerated.item[0];
 
-	अगर (val > (अचिन्हित पूर्णांक)MCLK_ULPCLK)
-		वापस -EINVAL;
-	अगर (drvdata->mclk_sel == val)
-		वापस 0;
+	if (val > (unsigned int)MCLK_ULPCLK)
+		return -EINVAL;
+	if (drvdata->mclk_sel == val)
+		return 0;
 
 	drvdata->mclk_sel = val;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Controls
  */
 
-अटल काष्ठा snd_kcontrol_new mop500_ab8500_ctrls[] = अणु
+static struct snd_kcontrol_new mop500_ab8500_ctrls[] = {
 	SOC_ENUM_EXT("Master Clock Select",
-		soc_क्रमागत_mclk,
+		soc_enum_mclk,
 		mclk_input_control_get, mclk_input_control_put),
 	SOC_DAPM_PIN_SWITCH("Headset Left"),
 	SOC_DAPM_PIN_SWITCH("Headset Right"),
@@ -185,43 +184,43 @@
 	SOC_DAPM_PIN_SWITCH("DMic 4"),
 	SOC_DAPM_PIN_SWITCH("DMic 5"),
 	SOC_DAPM_PIN_SWITCH("DMic 6"),
-पूर्ण;
+};
 
 /* ASoC */
 
-अटल पूर्णांक mop500_ab8500_startup(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+static int mop500_ab8500_startup(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
 
-	/* Set audio-घड़ी source */
-	वापस mop500_ab8500_set_mclk(rtd->card->dev,
+	/* Set audio-clock source */
+	return mop500_ab8500_set_mclk(rtd->card->dev,
 				snd_soc_card_get_drvdata(rtd->card));
-पूर्ण
+}
 
-अटल व्योम mop500_ab8500_shutकरोwn(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा device *dev = rtd->card->dev;
+static void mop500_ab8500_shutdown(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct device *dev = rtd->card->dev;
 
 	dev_dbg(dev, "%s: Enter\n", __func__);
 
-	/* Reset slots configuration to शेष(s) */
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	/* Reset slots configuration to default(s) */
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		tx_slots = DEF_TX_SLOTS;
-	अन्यथा
+	else
 		rx_slots = DEF_RX_SLOTS;
-पूर्ण
+}
 
-अटल पूर्णांक mop500_ab8500_hw_params(काष्ठा snd_pcm_substream *substream,
-			काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा device *dev = rtd->card->dev;
-	अचिन्हित पूर्णांक fmt;
-	पूर्णांक channels, ret = 0, driver_mode, slots;
-	अचिन्हित पूर्णांक sw_codec, sw_cpu;
+static int mop500_ab8500_hw_params(struct snd_pcm_substream *substream,
+			struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct device *dev = rtd->card->dev;
+	unsigned int fmt;
+	int channels, ret = 0, driver_mode, slots;
+	unsigned int sw_codec, sw_cpu;
 	bool is_playback;
 
 	dev_dbg(dev, "%s: Enter\n", __func__);
@@ -238,163 +237,163 @@
 
 	/* Ensure configuration consistency between DAIs */
 	mutex_lock(&mop500_ab8500_params_lock);
-	अगर (mop500_ab8500_usage) अणु
-		अगर (mop500_ab8500_rate != params_rate(params) ||
-		    mop500_ab8500_channels != params_channels(params)) अणु
+	if (mop500_ab8500_usage) {
+		if (mop500_ab8500_rate != params_rate(params) ||
+		    mop500_ab8500_channels != params_channels(params)) {
 			mutex_unlock(&mop500_ab8500_params_lock);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EBUSY;
+		}
+	} else {
 		mop500_ab8500_rate = params_rate(params);
 		mop500_ab8500_channels = params_channels(params);
-	पूर्ण
+	}
 	__set_bit(cpu_dai->id, &mop500_ab8500_usage);
 	mutex_unlock(&mop500_ab8500_params_lock);
 
 	channels = params_channels(params);
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S32_LE:
 		sw_cpu = 32;
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_S16_LE:
 		sw_cpu = 16;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	/* Setup codec depending on driver-mode */
-	अगर (channels == 8)
+	if (channels == 8)
 		driver_mode = DRIVERMODE_CODEC_ONLY;
-	अन्यथा
+	else
 		driver_mode = DRIVERMODE_NORMAL;
 	dev_dbg(dev, "%s: Driver-mode: %s.\n", __func__,
 		(driver_mode == DRIVERMODE_NORMAL) ? "NORMAL" : "CODEC_ONLY");
 
-	/* Setup क्रमmat */
+	/* Setup format */
 
-	अगर (driver_mode == DRIVERMODE_NORMAL) अणु
+	if (driver_mode == DRIVERMODE_NORMAL) {
 		fmt = SND_SOC_DAIFMT_DSP_A |
 			SND_SOC_DAIFMT_CBM_CFM |
 			SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_CONT;
-	पूर्ण अन्यथा अणु
+	} else {
 		fmt = SND_SOC_DAIFMT_DSP_A |
 			SND_SOC_DAIFMT_CBM_CFM |
 			SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_GATED;
-	पूर्ण
+	}
 
-	ret = snd_soc_runसमय_set_dai_fmt(rtd, fmt);
-	अगर (ret)
-		वापस ret;
+	ret = snd_soc_runtime_set_dai_fmt(rtd, fmt);
+	if (ret)
+		return ret;
 
 	/* Setup TDM-slots */
 
 	is_playback = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);
-	चयन (channels) अणु
-	हाल 1:
+	switch (channels) {
+	case 1:
 		slots = 16;
 		tx_slots = (is_playback) ? TX_SLOT_MONO : 0;
 		rx_slots = (is_playback) ? 0 : RX_SLOT_MONO;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		slots = 16;
 		tx_slots = (is_playback) ? TX_SLOT_STEREO : 0;
 		rx_slots = (is_playback) ? 0 : RX_SLOT_STEREO;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		slots = 16;
 		tx_slots = (is_playback) ? TX_SLOT_8CH : 0;
 		rx_slots = (is_playback) ? 0 : RX_SLOT_8CH;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (driver_mode == DRIVERMODE_NORMAL)
+	if (driver_mode == DRIVERMODE_NORMAL)
 		sw_codec = sw_cpu;
-	अन्यथा
+	else
 		sw_codec = 20;
 
 	dev_dbg(dev, "%s: CPU-DAI TDM: TX=0x%04X RX=0x%04x\n", __func__,
 		tx_slots, rx_slots);
 	ret = snd_soc_dai_set_tdm_slot(cpu_dai, tx_slots, rx_slots, slots,
 				sw_cpu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_dbg(dev, "%s: CODEC-DAI TDM: TX=0x%04X RX=0x%04x\n", __func__,
 		tx_slots, rx_slots);
 	ret = snd_soc_dai_set_tdm_slot(codec_dai, tx_slots, rx_slots, slots,
 				sw_codec);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mop500_ab8500_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+static int mop500_ab8500_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 
 	mutex_lock(&mop500_ab8500_params_lock);
 	__clear_bit(cpu_dai->id, &mop500_ab8500_usage);
 	mutex_unlock(&mop500_ab8500_params_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा snd_soc_ops mop500_ab8500_ops[] = अणु
-	अणु
+struct snd_soc_ops mop500_ab8500_ops[] = {
+	{
 		.hw_params = mop500_ab8500_hw_params,
-		.hw_मुक्त = mop500_ab8500_hw_मुक्त,
+		.hw_free = mop500_ab8500_hw_free,
 		.startup = mop500_ab8500_startup,
-		.shutकरोwn = mop500_ab8500_shutकरोwn,
-	पूर्ण
-पूर्ण;
+		.shutdown = mop500_ab8500_shutdown,
+	}
+};
 
-पूर्णांक mop500_ab8500_machine_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = &rtd->card->dapm;
-	काष्ठा device *dev = rtd->card->dev;
-	काष्ठा mop500_ab8500_drvdata *drvdata;
-	पूर्णांक ret;
+int mop500_ab8500_machine_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_dapm_context *dapm = &rtd->card->dapm;
+	struct device *dev = rtd->card->dev;
+	struct mop500_ab8500_drvdata *drvdata;
+	int ret;
 
 	dev_dbg(dev, "%s Enter.\n", __func__);
 
-	/* Create driver निजी-data काष्ठा */
-	drvdata = devm_kzalloc(dev, माप(काष्ठा mop500_ab8500_drvdata),
+	/* Create driver private-data struct */
+	drvdata = devm_kzalloc(dev, sizeof(struct mop500_ab8500_drvdata),
 			GFP_KERNEL);
 
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	if (!drvdata)
+		return -ENOMEM;
 
 	snd_soc_card_set_drvdata(rtd->card, drvdata);
 
-	/* Setup घड़ीs */
+	/* Setup clocks */
 
 	drvdata->clk_ptr_sysclk = clk_get(dev, "sysclk");
-	अगर (IS_ERR(drvdata->clk_ptr_sysclk))
+	if (IS_ERR(drvdata->clk_ptr_sysclk))
 		dev_warn(dev, "%s: WARNING: clk_get failed for 'sysclk'!\n",
 			__func__);
 	drvdata->clk_ptr_ulpclk = clk_get(dev, "ulpclk");
-	अगर (IS_ERR(drvdata->clk_ptr_ulpclk))
+	if (IS_ERR(drvdata->clk_ptr_ulpclk))
 		dev_warn(dev, "%s: WARNING: clk_get failed for 'ulpclk'!\n",
 			__func__);
-	drvdata->clk_ptr_पूर्णांकclk = clk_get(dev, "intclk");
-	अगर (IS_ERR(drvdata->clk_ptr_पूर्णांकclk))
+	drvdata->clk_ptr_intclk = clk_get(dev, "intclk");
+	if (IS_ERR(drvdata->clk_ptr_intclk))
 		dev_warn(dev, "%s: WARNING: clk_get failed for 'intclk'!\n",
 			__func__);
 
-	/* Set पूर्णांकclk शेष parent to ulpclk */
+	/* Set intclk default parent to ulpclk */
 	drvdata->mclk_sel = MCLK_ULPCLK;
 	ret = mop500_ab8500_set_mclk(dev, drvdata);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(dev, "%s: WARNING: mop500_ab8500_set_mclk!\n",
 			__func__);
 
@@ -403,11 +402,11 @@
 	/* Add controls */
 	ret = snd_soc_add_card_controls(rtd->card, mop500_ab8500_ctrls,
 			ARRAY_SIZE(mop500_ab8500_ctrls));
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("%s: Failed to add machine-controls (%d)!\n",
 				__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = snd_soc_dapm_disable_pin(dapm, "Earpiece");
 	ret |= snd_soc_dapm_disable_pin(dapm, "Speaker Left");
@@ -427,19 +426,19 @@
 	ret |= snd_soc_dapm_disable_pin(dapm, "DMic 5");
 	ret |= snd_soc_dapm_disable_pin(dapm, "DMic 6");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mop500_ab8500_हटाओ(काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा mop500_ab8500_drvdata *drvdata = snd_soc_card_get_drvdata(card);
+void mop500_ab8500_remove(struct snd_soc_card *card)
+{
+	struct mop500_ab8500_drvdata *drvdata = snd_soc_card_get_drvdata(card);
 
-	अगर (drvdata->clk_ptr_sysclk != शून्य)
+	if (drvdata->clk_ptr_sysclk != NULL)
 		clk_put(drvdata->clk_ptr_sysclk);
-	अगर (drvdata->clk_ptr_ulpclk != शून्य)
+	if (drvdata->clk_ptr_ulpclk != NULL)
 		clk_put(drvdata->clk_ptr_ulpclk);
-	अगर (drvdata->clk_ptr_पूर्णांकclk != शून्य)
-		clk_put(drvdata->clk_ptr_पूर्णांकclk);
+	if (drvdata->clk_ptr_intclk != NULL)
+		clk_put(drvdata->clk_ptr_intclk);
 
 	snd_soc_card_set_drvdata(card, drvdata);
-पूर्ण
+}

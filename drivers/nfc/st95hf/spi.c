@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ----------------------------------------------------------------------------
- * drivers/nfc/st95hf/spi.c function definitions क्रम SPI communication
+ * drivers/nfc/st95hf/spi.c function definitions for SPI communication
  * ----------------------------------------------------------------------------
  * Copyright (C) 2015 STMicroelectronics Pvt. Ltd. All rights reserved.
  */
 
-#समावेश "spi.h"
+#include "spi.h"
 
 /* Function to send user provided buffer to ST95HF through SPI */
-पूर्णांक st95hf_spi_send(काष्ठा st95hf_spi_context *spicontext,
-		    अचिन्हित अक्षर *buffertx,
-		    पूर्णांक datalen,
-		    क्रमागत req_type reqtype)
-अणु
-	काष्ठा spi_message m;
-	पूर्णांक result = 0;
-	काष्ठा spi_device *spidev = spicontext->spidev;
-	काष्ठा spi_transfer tx_transfer = अणु
+int st95hf_spi_send(struct st95hf_spi_context *spicontext,
+		    unsigned char *buffertx,
+		    int datalen,
+		    enum req_type reqtype)
+{
+	struct spi_message m;
+	int result = 0;
+	struct spi_device *spidev = spicontext->spidev;
+	struct spi_transfer tx_transfer = {
 		.tx_buf = buffertx,
 		.len = datalen,
-	पूर्ण;
+	};
 
 	mutex_lock(&spicontext->spi_lock);
 
-	अगर (reqtype == SYNC) अणु
+	if (reqtype == SYNC) {
 		spicontext->req_issync = true;
-		reinit_completion(&spicontext->करोne);
-	पूर्ण अन्यथा अणु
+		reinit_completion(&spicontext->done);
+	} else {
 		spicontext->req_issync = false;
-	पूर्ण
+	}
 
 	spi_message_init(&m);
 	spi_message_add_tail(&tx_transfer, &m);
 
 	result = spi_sync(spidev, &m);
-	अगर (result) अणु
+	if (result) {
 		dev_err(&spidev->dev, "error: sending cmd to st95hf using SPI = %d\n",
 			result);
 		mutex_unlock(&spicontext->spi_lock);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
-	/* वापस क्रम asynchronous or no-रुको हाल */
-	अगर (reqtype == ASYNC) अणु
+	/* return for asynchronous or no-wait case */
+	if (reqtype == ASYNC) {
 		mutex_unlock(&spicontext->spi_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	result = रुको_क्रम_completion_समयout(&spicontext->करोne,
-					     msecs_to_jअगरfies(1000));
-	/* check क्रम समयout or success */
-	अगर (!result) अणु
+	result = wait_for_completion_timeout(&spicontext->done,
+					     msecs_to_jiffies(1000));
+	/* check for timeout or success */
+	if (!result) {
 		dev_err(&spidev->dev, "error: response not ready timeout\n");
 		result = -ETIMEDOUT;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&spicontext->spi_lock);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(st95hf_spi_send);
 
 /* Function to Receive command Response */
-पूर्णांक st95hf_spi_recv_response(काष्ठा st95hf_spi_context *spicontext,
-			     अचिन्हित अक्षर *receivebuff)
-अणु
-	पूर्णांक len = 0;
-	काष्ठा spi_transfer tx_takedata;
-	काष्ठा spi_message m;
-	काष्ठा spi_device *spidev = spicontext->spidev;
-	अचिन्हित अक्षर पढ़ोdata_cmd = ST95HF_COMMAND_RECEIVE;
-	काष्ठा spi_transfer t[2] = अणु
-		अणु.tx_buf = &पढ़ोdata_cmd, .len = 1,पूर्ण,
-		अणु.rx_buf = receivebuff, .len = 2, .cs_change = 1,पूर्ण,
-	पूर्ण;
+int st95hf_spi_recv_response(struct st95hf_spi_context *spicontext,
+			     unsigned char *receivebuff)
+{
+	int len = 0;
+	struct spi_transfer tx_takedata;
+	struct spi_message m;
+	struct spi_device *spidev = spicontext->spidev;
+	unsigned char readdata_cmd = ST95HF_COMMAND_RECEIVE;
+	struct spi_transfer t[2] = {
+		{.tx_buf = &readdata_cmd, .len = 1,},
+		{.rx_buf = receivebuff, .len = 2, .cs_change = 1,},
+	};
 
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	स_रखो(&tx_takedata, 0x0, माप(काष्ठा spi_transfer));
+	memset(&tx_takedata, 0x0, sizeof(struct spi_transfer));
 
 	mutex_lock(&spicontext->spi_lock);
 
@@ -91,23 +90,23 @@ EXPORT_SYMBOL_GPL(st95hf_spi_send);
 	spi_message_add_tail(&t[1], &m);
 
 	ret = spi_sync(spidev, &m);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spidev->dev, "spi_recv_resp, data length error = %d\n",
 			ret);
 		mutex_unlock(&spicontext->spi_lock);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* As 2 bytes are alपढ़ोy पढ़ो */
+	/* As 2 bytes are already read */
 	len = 2;
 
-	/* Support of दीर्घ frame */
-	अगर (receivebuff[0] & 0x60)
+	/* Support of long frame */
+	if (receivebuff[0] & 0x60)
 		len += (((receivebuff[0] & 0x60) >> 5) << 8) | receivebuff[1];
-	अन्यथा
+	else
 		len += receivebuff[1];
 
-	/* Now make a transfer to पढ़ो only relevant bytes */
+	/* Now make a transfer to read only relevant bytes */
 	tx_takedata.rx_buf = &receivebuff[2];
 	tx_takedata.len = len - 2;
 
@@ -117,27 +116,27 @@ EXPORT_SYMBOL_GPL(st95hf_spi_send);
 	ret = spi_sync(spidev, &m);
 
 	mutex_unlock(&spicontext->spi_lock);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&spidev->dev, "spi_recv_resp, data read error = %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(st95hf_spi_recv_response);
 
-पूर्णांक st95hf_spi_recv_echo_res(काष्ठा st95hf_spi_context *spicontext,
-			     अचिन्हित अक्षर *receivebuff)
-अणु
-	अचिन्हित अक्षर पढ़ोdata_cmd = ST95HF_COMMAND_RECEIVE;
-	काष्ठा spi_transfer t[2] = अणु
-		अणु.tx_buf = &पढ़ोdata_cmd, .len = 1,पूर्ण,
-		अणु.rx_buf = receivebuff, .len = 1,पूर्ण,
-	पूर्ण;
-	काष्ठा spi_message m;
-	काष्ठा spi_device *spidev = spicontext->spidev;
-	पूर्णांक ret = 0;
+int st95hf_spi_recv_echo_res(struct st95hf_spi_context *spicontext,
+			     unsigned char *receivebuff)
+{
+	unsigned char readdata_cmd = ST95HF_COMMAND_RECEIVE;
+	struct spi_transfer t[2] = {
+		{.tx_buf = &readdata_cmd, .len = 1,},
+		{.rx_buf = receivebuff, .len = 1,},
+	};
+	struct spi_message m;
+	struct spi_device *spidev = spicontext->spidev;
+	int ret = 0;
 
 	mutex_lock(&spicontext->spi_lock);
 
@@ -148,10 +147,10 @@ EXPORT_SYMBOL_GPL(st95hf_spi_recv_response);
 
 	mutex_unlock(&spicontext->spi_lock);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&spidev->dev, "recv_echo_res, data read error = %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(st95hf_spi_recv_echo_res);

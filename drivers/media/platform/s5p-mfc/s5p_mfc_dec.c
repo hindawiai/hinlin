@@ -1,336 +1,335 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * linux/drivers/media/platक्रमm/s5p-mfc/s5p_mfc_dec.c
+ * linux/drivers/media/platform/s5p-mfc/s5p_mfc_dec.c
  *
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  * Kamil Debski, <k.debski@samsung.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/workqueue.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/videobuf2-v4l2.h>
-#समावेश "s5p_mfc_common.h"
-#समावेश "s5p_mfc_ctrl.h"
-#समावेश "s5p_mfc_debug.h"
-#समावेश "s5p_mfc_dec.h"
-#समावेश "s5p_mfc_intr.h"
-#समावेश "s5p_mfc_opr.h"
-#समावेश "s5p_mfc_pm.h"
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <linux/workqueue.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-event.h>
+#include <media/videobuf2-v4l2.h>
+#include "s5p_mfc_common.h"
+#include "s5p_mfc_ctrl.h"
+#include "s5p_mfc_debug.h"
+#include "s5p_mfc_dec.h"
+#include "s5p_mfc_intr.h"
+#include "s5p_mfc_opr.h"
+#include "s5p_mfc_pm.h"
 
-अटल काष्ठा s5p_mfc_fmt क्रमmats[] = अणु
-	अणु
+static struct s5p_mfc_fmt formats[] = {
+	{
 		.fourcc		= V4L2_PIX_FMT_NV12MT_16X16,
 		.codec_mode	= S5P_MFC_CODEC_NONE,
 		.type		= MFC_FMT_RAW,
 		.num_planes	= 2,
 		.versions	= MFC_V6_BIT | MFC_V7_BIT,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_NV12MT,
 		.codec_mode	= S5P_MFC_CODEC_NONE,
 		.type		= MFC_FMT_RAW,
 		.num_planes	= 2,
 		.versions	= MFC_V5_BIT,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_NV12M,
 		.codec_mode	= S5P_MFC_CODEC_NONE,
 		.type		= MFC_FMT_RAW,
 		.num_planes	= 2,
 		.versions	= MFC_V6PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_NV21M,
 		.codec_mode	= S5P_MFC_CODEC_NONE,
 		.type		= MFC_FMT_RAW,
 		.num_planes	= 2,
 		.versions	= MFC_V6PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_H264,
 		.codec_mode	= S5P_MFC_CODEC_H264_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_H264_MVC,
 		.codec_mode	= S5P_MFC_CODEC_H264_MVC_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V6PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_H263,
 		.codec_mode	= S5P_MFC_CODEC_H263_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_MPEG1,
 		.codec_mode	= S5P_MFC_CODEC_MPEG2_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_MPEG2,
 		.codec_mode	= S5P_MFC_CODEC_MPEG2_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_MPEG4,
 		.codec_mode	= S5P_MFC_CODEC_MPEG4_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_XVID,
 		.codec_mode	= S5P_MFC_CODEC_MPEG4_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_VC1_ANNEX_G,
 		.codec_mode	= S5P_MFC_CODEC_VC1_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_VC1_ANNEX_L,
 		.codec_mode	= S5P_MFC_CODEC_VC1RCV_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V5PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_VP8,
 		.codec_mode	= S5P_MFC_CODEC_VP8_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V6PLUS_BITS,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_HEVC,
 		.codec_mode	= S5P_FIMV_CODEC_HEVC_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V10_BIT,
-	पूर्ण,
-	अणु
+	},
+	{
 		.fourcc		= V4L2_PIX_FMT_VP9,
 		.codec_mode	= S5P_FIMV_CODEC_VP9_DEC,
 		.type		= MFC_FMT_DEC,
 		.num_planes	= 1,
 		.versions	= MFC_V10_BIT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा NUM_FORMATS ARRAY_SIZE(क्रमmats)
+#define NUM_FORMATS ARRAY_SIZE(formats)
 
-/* Find selected क्रमmat description */
-अटल काष्ठा s5p_mfc_fmt *find_क्रमmat(काष्ठा v4l2_क्रमmat *f, अचिन्हित पूर्णांक t)
-अणु
-	अचिन्हित पूर्णांक i;
+/* Find selected format description */
+static struct s5p_mfc_fmt *find_format(struct v4l2_format *f, unsigned int t)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < NUM_FORMATS; i++) अणु
-		अगर (क्रमmats[i].fourcc == f->fmt.pix_mp.pixelक्रमmat &&
-		    क्रमmats[i].type == t)
-			वापस &क्रमmats[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < NUM_FORMATS; i++) {
+		if (formats[i].fourcc == f->fmt.pix_mp.pixelformat &&
+		    formats[i].type == t)
+			return &formats[i];
+	}
+	return NULL;
+}
 
-अटल काष्ठा mfc_control controls[] = अणु
-	अणु
+static struct mfc_control controls[] = {
+	{
 		.id = V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY,
 		.type = V4L2_CTRL_TYPE_INTEGER,
 		.name = "H264 Display Delay",
 		.minimum = 0,
 		.maximum = 16383,
 		.step = 1,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY,
 		.type = V4L2_CTRL_TYPE_INTEGER,
 		.minimum = 0,
 		.maximum = 16383,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
 		.name = "H264 Display Delay Enable",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY_ENABLE,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
 		.minimum = 0,
 		.maximum = 1,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MPEG_VIDEO_DECODER_MPEG4_DEBLOCK_FILTER,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
 		.name = "Mpeg4 Loop Filter Enable",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MPEG_VIDEO_DECODER_SLICE_INTERFACE,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
 		.name = "Slice Interface Enable",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
-		.शेष_value = 0,
-	पूर्ण,
-	अणु
+		.default_value = 0,
+	},
+	{
 		.id = V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
 		.name = "Minimum number of cap bufs",
 		.minimum = 1,
 		.maximum = 32,
 		.step = 1,
-		.शेष_value = 1,
-		.is_अस्थिर = 1,
-	पूर्ण,
-पूर्ण;
+		.default_value = 1,
+		.is_volatile = 1,
+	},
+};
 
-#घोषणा NUM_CTRLS ARRAY_SIZE(controls)
+#define NUM_CTRLS ARRAY_SIZE(controls)
 
 /* Check whether a context should be run on hardware */
-अटल पूर्णांक s5p_mfc_ctx_पढ़ोy(काष्ठा s5p_mfc_ctx *ctx)
-अणु
+static int s5p_mfc_ctx_ready(struct s5p_mfc_ctx *ctx)
+{
 	/* Context is to parse header */
-	अगर (ctx->src_queue_cnt >= 1 && ctx->state == MFCINST_GOT_INST)
-		वापस 1;
+	if (ctx->src_queue_cnt >= 1 && ctx->state == MFCINST_GOT_INST)
+		return 1;
 	/* Context is to decode a frame */
-	अगर (ctx->src_queue_cnt >= 1 &&
+	if (ctx->src_queue_cnt >= 1 &&
 	    ctx->state == MFCINST_RUNNING &&
 	    ctx->dst_queue_cnt >= ctx->pb_count)
-		वापस 1;
-	/* Context is to वापस last frame */
-	अगर (ctx->state == MFCINST_FINISHING &&
+		return 1;
+	/* Context is to return last frame */
+	if (ctx->state == MFCINST_FINISHING &&
 	    ctx->dst_queue_cnt >= ctx->pb_count)
-		वापस 1;
+		return 1;
 	/* Context is to set buffers */
-	अगर (ctx->src_queue_cnt >= 1 &&
+	if (ctx->src_queue_cnt >= 1 &&
 	    ctx->state == MFCINST_HEAD_PARSED &&
 	    ctx->capture_state == QUEUE_BUFS_MMAPED)
-		वापस 1;
+		return 1;
 	/* Resolution change */
-	अगर ((ctx->state == MFCINST_RES_CHANGE_INIT ||
+	if ((ctx->state == MFCINST_RES_CHANGE_INIT ||
 		ctx->state == MFCINST_RES_CHANGE_FLUSH) &&
 		ctx->dst_queue_cnt >= ctx->pb_count)
-		वापस 1;
-	अगर (ctx->state == MFCINST_RES_CHANGE_END &&
+		return 1;
+	if (ctx->state == MFCINST_RES_CHANGE_END &&
 		ctx->src_queue_cnt >= 1)
-		वापस 1;
+		return 1;
 	mfc_debug(2, "ctx is not ready\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा s5p_mfc_codec_ops decoder_codec_ops = अणु
-	.pre_seq_start		= शून्य,
-	.post_seq_start		= शून्य,
-	.pre_frame_start	= शून्य,
-	.post_frame_start	= शून्य,
-पूर्ण;
+static const struct s5p_mfc_codec_ops decoder_codec_ops = {
+	.pre_seq_start		= NULL,
+	.post_seq_start		= NULL,
+	.pre_frame_start	= NULL,
+	.post_frame_start	= NULL,
+};
 
 /* Query capabilities of the device */
-अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
-			   काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
+static int vidioc_querycap(struct file *file, void *priv,
+			   struct v4l2_capability *cap)
+{
+	struct s5p_mfc_dev *dev = video_drvdata(file);
 
-	strscpy(cap->driver, S5P_MFC_NAME, माप(cap->driver));
-	strscpy(cap->card, dev->vfd_dec->name, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, S5P_MFC_NAME, sizeof(cap->driver));
+	strscpy(cap->card, dev->vfd_dec->name, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 		 dev_name(&dev->plat_dev->dev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Enumerate क्रमmat */
-अटल पूर्णांक vidioc_क्रमागत_fmt(काष्ठा file *file, काष्ठा v4l2_fmtdesc *f,
+/* Enumerate format */
+static int vidioc_enum_fmt(struct file *file, struct v4l2_fmtdesc *f,
 							bool out)
-अणु
-	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
-	पूर्णांक i, j = 0;
+{
+	struct s5p_mfc_dev *dev = video_drvdata(file);
+	int i, j = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); ++i) अणु
-		अगर (out && क्रमmats[i].type != MFC_FMT_DEC)
-			जारी;
-		अन्यथा अगर (!out && क्रमmats[i].type != MFC_FMT_RAW)
-			जारी;
-		अन्यथा अगर ((dev->variant->version_bit & क्रमmats[i].versions) == 0)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(formats); ++i) {
+		if (out && formats[i].type != MFC_FMT_DEC)
+			continue;
+		else if (!out && formats[i].type != MFC_FMT_RAW)
+			continue;
+		else if ((dev->variant->version_bit & formats[i].versions) == 0)
+			continue;
 
-		अगर (j == f->index)
-			अवरोध;
+		if (j == f->index)
+			break;
 		++j;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(क्रमmats))
-		वापस -EINVAL;
-	f->pixelक्रमmat = क्रमmats[i].fourcc;
-	वापस 0;
-पूर्ण
+	}
+	if (i == ARRAY_SIZE(formats))
+		return -EINVAL;
+	f->pixelformat = formats[i].fourcc;
+	return 0;
+}
 
-अटल पूर्णांक vidioc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *pirv,
-				   काष्ठा v4l2_fmtdesc *f)
-अणु
-	वापस vidioc_क्रमागत_fmt(file, f, false);
-पूर्ण
+static int vidioc_enum_fmt_vid_cap(struct file *file, void *pirv,
+				   struct v4l2_fmtdesc *f)
+{
+	return vidioc_enum_fmt(file, f, false);
+}
 
-अटल पूर्णांक vidioc_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *priv,
-				   काष्ठा v4l2_fmtdesc *f)
-अणु
-	वापस vidioc_क्रमागत_fmt(file, f, true);
-पूर्ण
+static int vidioc_enum_fmt_vid_out(struct file *file, void *priv,
+				   struct v4l2_fmtdesc *f)
+{
+	return vidioc_enum_fmt(file, f, true);
+}
 
-/* Get क्रमmat */
-अटल पूर्णांक vidioc_g_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	काष्ठा v4l2_pix_क्रमmat_mplane *pix_mp;
+/* Get format */
+static int vidioc_g_fmt(struct file *file, void *priv, struct v4l2_format *f)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	struct v4l2_pix_format_mplane *pix_mp;
 
 	mfc_debug_enter();
 	pix_mp = &f->fmt.pix_mp;
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 	    (ctx->state == MFCINST_GOT_INST || ctx->state ==
-						MFCINST_RES_CHANGE_END)) अणु
+						MFCINST_RES_CHANGE_END)) {
 		/* If the MFC is parsing the header,
-		 * so रुको until it is finished */
-		s5p_mfc_रुको_क्रम_करोne_ctx(ctx, S5P_MFC_R2H_CMD_SEQ_DONE_RET,
+		 * so wait until it is finished */
+		s5p_mfc_wait_for_done_ctx(ctx, S5P_MFC_R2H_CMD_SEQ_DONE_RET,
 									0);
-	पूर्ण
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+	}
+	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 	    ctx->state >= MFCINST_HEAD_PARSED &&
-	    ctx->state < MFCINST_ABORT) अणु
+	    ctx->state < MFCINST_ABORT) {
 		/* This is run on CAPTURE (decode output) */
 		/* Width and height are set to the dimensions
 		   of the movie, the buffer is bigger and
@@ -340,14 +339,14 @@
 		pix_mp->height = ctx->buf_height;
 		pix_mp->field = V4L2_FIELD_NONE;
 		pix_mp->num_planes = 2;
-		/* Set pixelक्रमmat to the क्रमmat in which MFC
-		   outमाला_दो the decoded frame */
-		pix_mp->pixelक्रमmat = ctx->dst_fmt->fourcc;
+		/* Set pixelformat to the format in which MFC
+		   outputs the decoded frame */
+		pix_mp->pixelformat = ctx->dst_fmt->fourcc;
 		pix_mp->plane_fmt[0].bytesperline = ctx->buf_width;
 		pix_mp->plane_fmt[0].sizeimage = ctx->luma_size;
 		pix_mp->plane_fmt[1].bytesperline = ctx->buf_width;
 		pix_mp->plane_fmt[1].sizeimage = ctx->chroma_size;
-	पूर्ण अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+	} else if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		/* This is run on OUTPUT
 		   The buffer contains compressed image
 		   so width and height have no meaning */
@@ -356,432 +355,432 @@
 		pix_mp->field = V4L2_FIELD_NONE;
 		pix_mp->plane_fmt[0].bytesperline = ctx->dec_src_buf_size;
 		pix_mp->plane_fmt[0].sizeimage = ctx->dec_src_buf_size;
-		pix_mp->pixelक्रमmat = ctx->src_fmt->fourcc;
+		pix_mp->pixelformat = ctx->src_fmt->fourcc;
 		pix_mp->num_planes = ctx->src_fmt->num_planes;
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("Format could not be read\n");
 		mfc_debug(2, "%s-- with error\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mfc_debug_leave();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Try क्रमmat */
-अटल पूर्णांक vidioc_try_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
-	काष्ठा s5p_mfc_fmt *fmt;
+/* Try format */
+static int vidioc_try_fmt(struct file *file, void *priv, struct v4l2_format *f)
+{
+	struct s5p_mfc_dev *dev = video_drvdata(file);
+	struct s5p_mfc_fmt *fmt;
 
 	mfc_debug(2, "Type is %d\n", f->type);
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		fmt = find_क्रमmat(f, MFC_FMT_DEC);
-		अगर (!fmt) अणु
+	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		fmt = find_format(f, MFC_FMT_DEC);
+		if (!fmt) {
 			mfc_err("Unsupported format for source.\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (fmt->codec_mode == S5P_FIMV_CODEC_NONE) अणु
+			return -EINVAL;
+		}
+		if (fmt->codec_mode == S5P_FIMV_CODEC_NONE) {
 			mfc_err("Unknown codec\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर ((dev->variant->version_bit & fmt->versions) == 0) अणु
+			return -EINVAL;
+		}
+		if ((dev->variant->version_bit & fmt->versions) == 0) {
 			mfc_err("Unsupported format by this MFC version.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
-		fmt = find_क्रमmat(f, MFC_FMT_RAW);
-		अगर (!fmt) अणु
+			return -EINVAL;
+		}
+	} else if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+		fmt = find_format(f, MFC_FMT_RAW);
+		if (!fmt) {
 			mfc_err("Unsupported format for destination.\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर ((dev->variant->version_bit & fmt->versions) == 0) अणु
+			return -EINVAL;
+		}
+		if ((dev->variant->version_bit & fmt->versions) == 0) {
 			mfc_err("Unsupported format by this MFC version.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Set क्रमmat */
-अटल पूर्णांक vidioc_s_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	पूर्णांक ret = 0;
-	काष्ठा v4l2_pix_क्रमmat_mplane *pix_mp;
-	काष्ठा s5p_mfc_buf_size *buf_size = dev->variant->buf_size;
+/* Set format */
+static int vidioc_s_fmt(struct file *file, void *priv, struct v4l2_format *f)
+{
+	struct s5p_mfc_dev *dev = video_drvdata(file);
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	int ret = 0;
+	struct v4l2_pix_format_mplane *pix_mp;
+	struct s5p_mfc_buf_size *buf_size = dev->variant->buf_size;
 
 	mfc_debug_enter();
 	ret = vidioc_try_fmt(file, priv, f);
 	pix_mp = &f->fmt.pix_mp;
-	अगर (ret)
-		वापस ret;
-	अगर (vb2_is_streaming(&ctx->vq_src) || vb2_is_streaming(&ctx->vq_dst)) अणु
+	if (ret)
+		return ret;
+	if (vb2_is_streaming(&ctx->vq_src) || vb2_is_streaming(&ctx->vq_dst)) {
 		v4l2_err(&dev->v4l2_dev, "%s queue busy\n", __func__);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
-	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+		goto out;
+	}
+	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		/* dst_fmt is validated by call to vidioc_try_fmt */
-		ctx->dst_fmt = find_क्रमmat(f, MFC_FMT_RAW);
+		ctx->dst_fmt = find_format(f, MFC_FMT_RAW);
 		ret = 0;
-		जाओ out;
-	पूर्ण अन्यथा अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+		goto out;
+	} else if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		/* src_fmt is validated by call to vidioc_try_fmt */
-		ctx->src_fmt = find_क्रमmat(f, MFC_FMT_DEC);
+		ctx->src_fmt = find_format(f, MFC_FMT_DEC);
 		ctx->codec_mode = ctx->src_fmt->codec_mode;
 		mfc_debug(2, "The codec number is: %d\n", ctx->codec_mode);
 		pix_mp->height = 0;
 		pix_mp->width = 0;
-		अगर (pix_mp->plane_fmt[0].sizeimage == 0)
+		if (pix_mp->plane_fmt[0].sizeimage == 0)
 			pix_mp->plane_fmt[0].sizeimage = ctx->dec_src_buf_size =
 								DEF_CPB_SIZE;
-		अन्यथा अगर (pix_mp->plane_fmt[0].sizeimage > buf_size->cpb)
+		else if (pix_mp->plane_fmt[0].sizeimage > buf_size->cpb)
 			ctx->dec_src_buf_size = buf_size->cpb;
-		अन्यथा
+		else
 			ctx->dec_src_buf_size = pix_mp->plane_fmt[0].sizeimage;
 		pix_mp->plane_fmt[0].bytesperline = 0;
 		ctx->state = MFCINST_INIT;
 		ret = 0;
-		जाओ out;
-	पूर्ण अन्यथा अणु
+		goto out;
+	} else {
 		mfc_err("Wrong type error for S_FMT : %d", f->type);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mfc_debug_leave();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक reqbufs_output(काष्ठा s5p_mfc_dev *dev, काष्ठा s5p_mfc_ctx *ctx,
-				काष्ठा v4l2_requestbuffers *reqbufs)
-अणु
-	पूर्णांक ret = 0;
+static int reqbufs_output(struct s5p_mfc_dev *dev, struct s5p_mfc_ctx *ctx,
+				struct v4l2_requestbuffers *reqbufs)
+{
+	int ret = 0;
 
-	s5p_mfc_घड़ी_on();
+	s5p_mfc_clock_on();
 
-	अगर (reqbufs->count == 0) अणु
+	if (reqbufs->count == 0) {
 		mfc_debug(2, "Freeing buffers\n");
 		ret = vb2_reqbufs(&ctx->vq_src, reqbufs);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		ctx->src_bufs_cnt = 0;
 		ctx->output_state = QUEUE_FREE;
-	पूर्ण अन्यथा अगर (ctx->output_state == QUEUE_FREE) अणु
-		/* Can only request buffers when we have a valid क्रमmat set. */
+	} else if (ctx->output_state == QUEUE_FREE) {
+		/* Can only request buffers when we have a valid format set. */
 		WARN_ON(ctx->src_bufs_cnt != 0);
-		अगर (ctx->state != MFCINST_INIT) अणु
+		if (ctx->state != MFCINST_INIT) {
 			mfc_err("Reqbufs called in an invalid state\n");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		mfc_debug(2, "Allocating %d buffers for OUTPUT queue\n",
 				reqbufs->count);
 		ret = vb2_reqbufs(&ctx->vq_src, reqbufs);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		ret = s5p_mfc_खोलो_mfc_inst(dev, ctx);
-		अगर (ret) अणु
+		ret = s5p_mfc_open_mfc_inst(dev, ctx);
+		if (ret) {
 			reqbufs->count = 0;
 			vb2_reqbufs(&ctx->vq_src, reqbufs);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ctx->output_state = QUEUE_BUFS_REQUESTED;
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("Buffers have already been requested\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 out:
-	s5p_mfc_घड़ी_off();
-	अगर (ret)
+	s5p_mfc_clock_off();
+	if (ret)
 		mfc_err("Failed allocating buffers for OUTPUT queue\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक reqbufs_capture(काष्ठा s5p_mfc_dev *dev, काष्ठा s5p_mfc_ctx *ctx,
-				काष्ठा v4l2_requestbuffers *reqbufs)
-अणु
-	पूर्णांक ret = 0;
+static int reqbufs_capture(struct s5p_mfc_dev *dev, struct s5p_mfc_ctx *ctx,
+				struct v4l2_requestbuffers *reqbufs)
+{
+	int ret = 0;
 
-	s5p_mfc_घड़ी_on();
+	s5p_mfc_clock_on();
 
-	अगर (reqbufs->count == 0) अणु
+	if (reqbufs->count == 0) {
 		mfc_debug(2, "Freeing buffers\n");
 		ret = vb2_reqbufs(&ctx->vq_dst, reqbufs);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		s5p_mfc_hw_call(dev->mfc_ops, release_codec_buffers, ctx);
 		ctx->dst_bufs_cnt = 0;
-	पूर्ण अन्यथा अगर (ctx->capture_state == QUEUE_FREE) अणु
+	} else if (ctx->capture_state == QUEUE_FREE) {
 		WARN_ON(ctx->dst_bufs_cnt != 0);
 		mfc_debug(2, "Allocating %d buffers for CAPTURE queue\n",
 				reqbufs->count);
 		ret = vb2_reqbufs(&ctx->vq_dst, reqbufs);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ctx->capture_state = QUEUE_BUFS_REQUESTED;
 		ctx->total_dpb_count = reqbufs->count;
 
 		ret = s5p_mfc_hw_call(dev->mfc_ops, alloc_codec_buffers, ctx);
-		अगर (ret) अणु
+		if (ret) {
 			mfc_err("Failed to allocate decoding buffers\n");
 			reqbufs->count = 0;
 			vb2_reqbufs(&ctx->vq_dst, reqbufs);
 			ret = -ENOMEM;
 			ctx->capture_state = QUEUE_FREE;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		WARN_ON(ctx->dst_bufs_cnt != ctx->total_dpb_count);
 		ctx->capture_state = QUEUE_BUFS_MMAPED;
 
-		अगर (s5p_mfc_ctx_पढ़ोy(ctx))
+		if (s5p_mfc_ctx_ready(ctx))
 			set_work_bit_irqsave(ctx);
 		s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-		s5p_mfc_रुको_क्रम_करोne_ctx(ctx, S5P_MFC_R2H_CMD_INIT_BUFFERS_RET,
+		s5p_mfc_wait_for_done_ctx(ctx, S5P_MFC_R2H_CMD_INIT_BUFFERS_RET,
 					  0);
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("Buffers have already been requested\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 out:
-	s5p_mfc_घड़ी_off();
-	अगर (ret)
+	s5p_mfc_clock_off();
+	if (ret)
 		mfc_err("Failed allocating buffers for CAPTURE queue\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Request buffers */
-अटल पूर्णांक vidioc_reqbufs(काष्ठा file *file, व्योम *priv,
-					  काष्ठा v4l2_requestbuffers *reqbufs)
-अणु
-	काष्ठा s5p_mfc_dev *dev = video_drvdata(file);
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+static int vidioc_reqbufs(struct file *file, void *priv,
+					  struct v4l2_requestbuffers *reqbufs)
+{
+	struct s5p_mfc_dev *dev = video_drvdata(file);
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
 
-	अगर (reqbufs->memory != V4L2_MEMORY_MMAP) अणु
+	if (reqbufs->memory != V4L2_MEMORY_MMAP) {
 		mfc_debug(2, "Only V4L2_MEMORY_MMAP is supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (reqbufs->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		वापस reqbufs_output(dev, ctx, reqbufs);
-	पूर्ण अन्यथा अगर (reqbufs->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
-		वापस reqbufs_capture(dev, ctx, reqbufs);
-	पूर्ण अन्यथा अणु
+	if (reqbufs->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		return reqbufs_output(dev, ctx, reqbufs);
+	} else if (reqbufs->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+		return reqbufs_capture(dev, ctx, reqbufs);
+	} else {
 		mfc_err("Invalid type requested\n");
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
 /* Query buffer */
-अटल पूर्णांक vidioc_querybuf(काष्ठा file *file, व्योम *priv,
-						   काष्ठा v4l2_buffer *buf)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	पूर्णांक ret;
-	पूर्णांक i;
+static int vidioc_querybuf(struct file *file, void *priv,
+						   struct v4l2_buffer *buf)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	int ret;
+	int i;
 
-	अगर (buf->memory != V4L2_MEMORY_MMAP) अणु
+	if (buf->memory != V4L2_MEMORY_MMAP) {
 		mfc_err("Only mmapped buffers can be used\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mfc_debug(2, "State: %d, buf->type: %d\n", ctx->state, buf->type);
-	अगर (ctx->state == MFCINST_GOT_INST &&
-			buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+	if (ctx->state == MFCINST_GOT_INST &&
+			buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		ret = vb2_querybuf(&ctx->vq_src, buf);
-	पूर्ण अन्यथा अगर (ctx->state == MFCINST_RUNNING &&
-			buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	} else if (ctx->state == MFCINST_RUNNING &&
+			buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		ret = vb2_querybuf(&ctx->vq_dst, buf);
-		क्रम (i = 0; i < buf->length; i++)
+		for (i = 0; i < buf->length; i++)
 			buf->m.planes[i].m.mem_offset += DST_QUEUE_OFF_BASE;
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("vidioc_querybuf called in an inappropriate state\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 	mfc_debug_leave();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Queue a buffer */
-अटल पूर्णांक vidioc_qbuf(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_buffer *buf)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+static int vidioc_qbuf(struct file *file, void *priv, struct v4l2_buffer *buf)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
 
-	अगर (ctx->state == MFCINST_ERROR) अणु
+	if (ctx->state == MFCINST_ERROR) {
 		mfc_err("Call on QBUF after unrecoverable error\n");
-		वापस -EIO;
-	पूर्ण
-	अगर (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		वापस vb2_qbuf(&ctx->vq_src, शून्य, buf);
-	अन्यथा अगर (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		वापस vb2_qbuf(&ctx->vq_dst, शून्य, buf);
-	वापस -EINVAL;
-पूर्ण
+		return -EIO;
+	}
+	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+		return vb2_qbuf(&ctx->vq_src, NULL, buf);
+	else if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+		return vb2_qbuf(&ctx->vq_dst, NULL, buf);
+	return -EINVAL;
+}
 
 /* Dequeue a buffer */
-अटल पूर्णांक vidioc_dqbuf(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_buffer *buf)
-अणु
-	स्थिर काष्ठा v4l2_event ev = अणु
+static int vidioc_dqbuf(struct file *file, void *priv, struct v4l2_buffer *buf)
+{
+	const struct v4l2_event ev = {
 		.type = V4L2_EVENT_EOS
-	पूर्ण;
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	पूर्णांक ret;
+	};
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	int ret;
 
-	अगर (ctx->state == MFCINST_ERROR) अणु
+	if (ctx->state == MFCINST_ERROR) {
 		mfc_err_limited("Call on DQBUF after unrecoverable error\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (buf->type) अणु
-	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-		वापस vb2_dqbuf(&ctx->vq_src, buf, file->f_flags & O_NONBLOCK);
-	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	switch (buf->type) {
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return vb2_dqbuf(&ctx->vq_src, buf, file->f_flags & O_NONBLOCK);
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		ret = vb2_dqbuf(&ctx->vq_dst, buf, file->f_flags & O_NONBLOCK);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (ctx->state == MFCINST_FINISHED &&
+		if (ctx->state == MFCINST_FINISHED &&
 		    (ctx->dst_bufs[buf->index].flags & MFC_BUF_FLAG_EOS))
 			v4l2_event_queue_fh(&ctx->fh, &ev);
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
+}
 
 /* Export DMA buffer */
-अटल पूर्णांक vidioc_expbuf(काष्ठा file *file, व्योम *priv,
-	काष्ठा v4l2_exportbuffer *eb)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+static int vidioc_expbuf(struct file *file, void *priv,
+	struct v4l2_exportbuffer *eb)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
 
-	अगर (eb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		वापस vb2_expbuf(&ctx->vq_src, eb);
-	अगर (eb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		वापस vb2_expbuf(&ctx->vq_dst, eb);
-	वापस -EINVAL;
-पूर्ण
+	if (eb->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+		return vb2_expbuf(&ctx->vq_src, eb);
+	if (eb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+		return vb2_expbuf(&ctx->vq_dst, eb);
+	return -EINVAL;
+}
 
 /* Stream on */
-अटल पूर्णांक vidioc_streamon(काष्ठा file *file, व्योम *priv,
-			   क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	पूर्णांक ret = -EINVAL;
+static int vidioc_streamon(struct file *file, void *priv,
+			   enum v4l2_buf_type type)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	int ret = -EINVAL;
 
 	mfc_debug_enter();
-	अगर (type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+	if (type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		ret = vb2_streamon(&ctx->vq_src, type);
-	अन्यथा अगर (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+	else if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
 		ret = vb2_streamon(&ctx->vq_dst, type);
 	mfc_debug_leave();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Stream off, which equals to a छोड़ो */
-अटल पूर्णांक vidioc_streamoff(काष्ठा file *file, व्योम *priv,
-			    क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+/* Stream off, which equals to a pause */
+static int vidioc_streamoff(struct file *file, void *priv,
+			    enum v4l2_buf_type type)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
 
-	अगर (type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		वापस vb2_streamoff(&ctx->vq_src, type);
-	अन्यथा अगर (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		वापस vb2_streamoff(&ctx->vq_dst, type);
-	वापस -EINVAL;
-पूर्ण
+	if (type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+		return vb2_streamoff(&ctx->vq_src, type);
+	else if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+		return vb2_streamoff(&ctx->vq_dst, type);
+	return -EINVAL;
+}
 
 /* Set controls - v4l2 control framework */
-अटल पूर्णांक s5p_mfc_dec_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = ctrl_to_ctx(ctrl);
+static int s5p_mfc_dec_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct s5p_mfc_ctx *ctx = ctrl_to_ctx(ctrl);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY:
-	हाल V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY:
+	switch (ctrl->id) {
+	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY:
+	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY:
 		ctx->display_delay = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
-	हाल V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY_ENABLE:
+		break;
+	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
+	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY_ENABLE:
 		ctx->display_delay_enable = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_VIDEO_DECODER_MPEG4_DEBLOCK_FILTER:
+		break;
+	case V4L2_CID_MPEG_VIDEO_DECODER_MPEG4_DEBLOCK_FILTER:
 		ctx->loop_filter_mpeg4 = ctrl->val;
-		अवरोध;
-	हाल V4L2_CID_MPEG_VIDEO_DECODER_SLICE_INTERFACE:
-		ctx->slice_पूर्णांकerface = ctrl->val;
-		अवरोध;
-	शेष:
+		break;
+	case V4L2_CID_MPEG_VIDEO_DECODER_SLICE_INTERFACE:
+		ctx->slice_interface = ctrl->val;
+		break;
+	default:
 		mfc_err("Invalid control 0x%08x\n", ctrl->id);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5p_mfc_dec_g_v_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = ctrl_to_ctx(ctrl);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+static int s5p_mfc_dec_g_v_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct s5p_mfc_ctx *ctx = ctrl_to_ctx(ctrl);
+	struct s5p_mfc_dev *dev = ctx->dev;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_MIN_BUFFERS_FOR_CAPTURE:
-		अगर (ctx->state >= MFCINST_HEAD_PARSED &&
-		    ctx->state < MFCINST_ABORT) अणु
+	switch (ctrl->id) {
+	case V4L2_CID_MIN_BUFFERS_FOR_CAPTURE:
+		if (ctx->state >= MFCINST_HEAD_PARSED &&
+		    ctx->state < MFCINST_ABORT) {
 			ctrl->val = ctx->pb_count;
-			अवरोध;
-		पूर्ण अन्यथा अगर (ctx->state != MFCINST_INIT &&
-				ctx->state != MFCINST_RES_CHANGE_END) अणु
+			break;
+		} else if (ctx->state != MFCINST_INIT &&
+				ctx->state != MFCINST_RES_CHANGE_END) {
 			v4l2_err(&dev->v4l2_dev, "Decoding not initialised\n");
-			वापस -EINVAL;
-		पूर्ण
-		/* Should रुको क्रम the header to be parsed */
-		s5p_mfc_रुको_क्रम_करोne_ctx(ctx,
+			return -EINVAL;
+		}
+		/* Should wait for the header to be parsed */
+		s5p_mfc_wait_for_done_ctx(ctx,
 				S5P_MFC_R2H_CMD_SEQ_DONE_RET, 0);
-		अगर (ctx->state >= MFCINST_HEAD_PARSED &&
-		    ctx->state < MFCINST_ABORT) अणु
+		if (ctx->state >= MFCINST_HEAD_PARSED &&
+		    ctx->state < MFCINST_ABORT) {
 			ctrl->val = ctx->pb_count;
-		पूर्ण अन्यथा अणु
+		} else {
 			v4l2_err(&dev->v4l2_dev, "Decoding not initialised\n");
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+		}
+		break;
+	}
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops s5p_mfc_dec_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops s5p_mfc_dec_ctrl_ops = {
 	.s_ctrl = s5p_mfc_dec_s_ctrl,
-	.g_अस्थिर_ctrl = s5p_mfc_dec_g_v_ctrl,
-पूर्ण;
+	.g_volatile_ctrl = s5p_mfc_dec_g_v_ctrl,
+};
 
-/* Get compose inक्रमmation */
-अटल पूर्णांक vidioc_g_selection(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_selection *s)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+/* Get compose information */
+static int vidioc_g_selection(struct file *file, void *priv,
+			      struct v4l2_selection *s)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
 	u32 left, right, top, bottom;
 	u32 width, height;
 
-	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर (ctx->state != MFCINST_HEAD_PARSED &&
+	if (ctx->state != MFCINST_HEAD_PARSED &&
 	    ctx->state != MFCINST_RUNNING &&
 	    ctx->state != MFCINST_FINISHING &&
-	    ctx->state != MFCINST_FINISHED) अणु
+	    ctx->state != MFCINST_FINISHED) {
 		mfc_err("Can not get compose information\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (ctx->src_fmt->fourcc == V4L2_PIX_FMT_H264) अणु
+		return -EINVAL;
+	}
+	if (ctx->src_fmt->fourcc == V4L2_PIX_FMT_H264) {
 		left = s5p_mfc_hw_call(dev->mfc_ops, get_crop_info_h, ctx);
 		right = left >> S5P_FIMV_SHARED_CROP_RIGHT_SHIFT;
 		left = left & S5P_FIMV_SHARED_CROP_LEFT_MASK;
@@ -793,7 +792,7 @@ out:
 		mfc_debug(2, "Composing info [h264]: l=%d t=%d w=%d h=%d (r=%d b=%d fw=%d fh=%d\n",
 			  left, top, s->r.width, s->r.height, right, bottom,
 			  ctx->buf_width, ctx->buf_height);
-	पूर्ण अन्यथा अणु
+	} else {
 		left = 0;
 		top = 0;
 		width = ctx->img_width;
@@ -801,83 +800,83 @@ out:
 		mfc_debug(2, "Composing info: w=%d h=%d fw=%d fh=%d\n",
 			  s->r.width, s->r.height, ctx->buf_width,
 			  ctx->buf_height);
-	पूर्ण
+	}
 
-	चयन (s->target) अणु
-	हाल V4L2_SEL_TGT_COMPOSE:
-	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
-	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	switch (s->target) {
+	case V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
 		s->r.left = left;
 		s->r.top = top;
 		s->r.width = width;
 		s->r.height = height;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक vidioc_decoder_cmd(काष्ठा file *file, व्योम *priv,
-			      काष्ठा v4l2_decoder_cmd *cmd)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
-	काष्ठा s5p_mfc_buf *buf;
-	अचिन्हित दीर्घ flags;
+static int vidioc_decoder_cmd(struct file *file, void *priv,
+			      struct v4l2_decoder_cmd *cmd)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
+	struct s5p_mfc_buf *buf;
+	unsigned long flags;
 
-	चयन (cmd->cmd) अणु
-	हाल V4L2_DEC_CMD_STOP:
-		अगर (cmd->flags != 0)
-			वापस -EINVAL;
+	switch (cmd->cmd) {
+	case V4L2_DEC_CMD_STOP:
+		if (cmd->flags != 0)
+			return -EINVAL;
 
-		अगर (!vb2_is_streaming(&ctx->vq_src))
-			वापस -EINVAL;
+		if (!vb2_is_streaming(&ctx->vq_src))
+			return -EINVAL;
 
 		spin_lock_irqsave(&dev->irqlock, flags);
-		अगर (list_empty(&ctx->src_queue)) अणु
+		if (list_empty(&ctx->src_queue)) {
 			mfc_err("EOS: empty src queue, entering finishing state");
 			ctx->state = MFCINST_FINISHING;
-			अगर (s5p_mfc_ctx_पढ़ोy(ctx))
+			if (s5p_mfc_ctx_ready(ctx))
 				set_work_bit_irqsave(ctx);
 			spin_unlock_irqrestore(&dev->irqlock, flags);
 			s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-		पूर्ण अन्यथा अणु
+		} else {
 			mfc_err("EOS: marking last buffer of stream");
 			buf = list_entry(ctx->src_queue.prev,
-						काष्ठा s5p_mfc_buf, list);
-			अगर (buf->flags & MFC_BUF_FLAG_USED)
+						struct s5p_mfc_buf, list);
+			if (buf->flags & MFC_BUF_FLAG_USED)
 				ctx->state = MFCINST_FINISHING;
-			अन्यथा
+			else
 				buf->flags |= MFC_BUF_FLAG_EOS;
 			spin_unlock_irqrestore(&dev->irqlock, flags);
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक vidioc_subscribe_event(काष्ठा v4l2_fh *fh,
-				स्थिर काष्ठा  v4l2_event_subscription *sub)
-अणु
-	चयन (sub->type) अणु
-	हाल V4L2_EVENT_EOS:
-		वापस v4l2_event_subscribe(fh, sub, 2, शून्य);
-	हाल V4L2_EVENT_SOURCE_CHANGE:
-		वापस v4l2_src_change_event_subscribe(fh, sub);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int vidioc_subscribe_event(struct v4l2_fh *fh,
+				const struct  v4l2_event_subscription *sub)
+{
+	switch (sub->type) {
+	case V4L2_EVENT_EOS:
+		return v4l2_event_subscribe(fh, sub, 2, NULL);
+	case V4L2_EVENT_SOURCE_CHANGE:
+		return v4l2_src_change_event_subscribe(fh, sub);
+	default:
+		return -EINVAL;
+	}
+}
 
 
 /* v4l2_ioctl_ops */
-अटल स्थिर काष्ठा v4l2_ioctl_ops s5p_mfc_dec_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops s5p_mfc_dec_ioctl_ops = {
 	.vidioc_querycap = vidioc_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap = vidioc_क्रमागत_fmt_vid_cap,
-	.vidioc_क्रमागत_fmt_vid_out = vidioc_क्रमागत_fmt_vid_out,
+	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_out = vidioc_enum_fmt_vid_out,
 	.vidioc_g_fmt_vid_cap_mplane = vidioc_g_fmt,
 	.vidioc_g_fmt_vid_out_mplane = vidioc_g_fmt,
 	.vidioc_try_fmt_vid_cap_mplane = vidioc_try_fmt,
@@ -895,89 +894,89 @@ out:
 	.vidioc_decoder_cmd = vidioc_decoder_cmd,
 	.vidioc_subscribe_event = vidioc_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल पूर्णांक s5p_mfc_queue_setup(काष्ठा vb2_queue *vq,
-			अचिन्हित पूर्णांक *buf_count,
-			अचिन्हित पूर्णांक *plane_count, अचिन्हित पूर्णांक psize[],
-			काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+static int s5p_mfc_queue_setup(struct vb2_queue *vq,
+			unsigned int *buf_count,
+			unsigned int *plane_count, unsigned int psize[],
+			struct device *alloc_devs[])
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
 
-	/* Video output क्रम decoding (source)
+	/* Video output for decoding (source)
 	 * this can be set after getting an instance */
-	अगर (ctx->state == MFCINST_INIT &&
-	    vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		/* A single plane is required क्रम input */
+	if (ctx->state == MFCINST_INIT &&
+	    vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		/* A single plane is required for input */
 		*plane_count = 1;
-		अगर (*buf_count < 1)
+		if (*buf_count < 1)
 			*buf_count = 1;
-		अगर (*buf_count > MFC_MAX_BUFFERS)
+		if (*buf_count > MFC_MAX_BUFFERS)
 			*buf_count = MFC_MAX_BUFFERS;
-	/* Video capture क्रम decoding (destination)
+	/* Video capture for decoding (destination)
 	 * this can be set after the header was parsed */
-	पूर्ण अन्यथा अगर (ctx->state == MFCINST_HEAD_PARSED &&
-		   vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
-		/* Output plane count is 2 - one क्रम Y and one क्रम CbCr */
+	} else if (ctx->state == MFCINST_HEAD_PARSED &&
+		   vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+		/* Output plane count is 2 - one for Y and one for CbCr */
 		*plane_count = 2;
 		/* Setup buffer count */
-		अगर (*buf_count < ctx->pb_count)
+		if (*buf_count < ctx->pb_count)
 			*buf_count = ctx->pb_count;
-		अगर (*buf_count > ctx->pb_count + MFC_MAX_EXTRA_DPB)
+		if (*buf_count > ctx->pb_count + MFC_MAX_EXTRA_DPB)
 			*buf_count = ctx->pb_count + MFC_MAX_EXTRA_DPB;
-		अगर (*buf_count > MFC_MAX_BUFFERS)
+		if (*buf_count > MFC_MAX_BUFFERS)
 			*buf_count = MFC_MAX_BUFFERS;
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("State seems invalid. State = %d, vq->type = %d\n",
 							ctx->state, vq->type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mfc_debug(2, "Buffer count=%d, plane count=%d\n",
 						*buf_count, *plane_count);
-	अगर (ctx->state == MFCINST_HEAD_PARSED &&
-	    vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	if (ctx->state == MFCINST_HEAD_PARSED &&
+	    vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		psize[0] = ctx->luma_size;
 		psize[1] = ctx->chroma_size;
 
-		अगर (IS_MFCV6_PLUS(dev))
+		if (IS_MFCV6_PLUS(dev))
 			alloc_devs[0] = ctx->dev->mem_dev[BANK_L_CTX];
-		अन्यथा
+		else
 			alloc_devs[0] = ctx->dev->mem_dev[BANK_R_CTX];
 		alloc_devs[1] = ctx->dev->mem_dev[BANK_L_CTX];
-	पूर्ण अन्यथा अगर (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
-		   ctx->state == MFCINST_INIT) अणु
+	} else if (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+		   ctx->state == MFCINST_INIT) {
 		psize[0] = ctx->dec_src_buf_size;
 		alloc_devs[0] = ctx->dev->mem_dev[BANK_L_CTX];
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("This video node is dedicated to decoding. Decoding not initialized\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5p_mfc_buf_init(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा vb2_queue *vq = vb->vb2_queue;
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
-	अचिन्हित पूर्णांक i;
+static int s5p_mfc_buf_init(struct vb2_buffer *vb)
+{
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct vb2_queue *vq = vb->vb2_queue;
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
+	unsigned int i;
 
-	अगर (vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
-		अगर (ctx->capture_state == QUEUE_BUFS_MMAPED)
-			वापस 0;
-		क्रम (i = 0; i < ctx->dst_fmt->num_planes; i++) अणु
-			अगर (IS_ERR_OR_शून्य(ERR_PTR(
-					vb2_dma_contig_plane_dma_addr(vb, i)))) अणु
+	if (vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
+		if (ctx->capture_state == QUEUE_BUFS_MMAPED)
+			return 0;
+		for (i = 0; i < ctx->dst_fmt->num_planes; i++) {
+			if (IS_ERR_OR_NULL(ERR_PTR(
+					vb2_dma_contig_plane_dma_addr(vb, i)))) {
 				mfc_err("Plane mem not allocated\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-		अगर (vb2_plane_size(vb, 0) < ctx->luma_size ||
-			vb2_plane_size(vb, 1) < ctx->chroma_size) अणु
+				return -EINVAL;
+			}
+		}
+		if (vb2_plane_size(vb, 0) < ctx->luma_size ||
+			vb2_plane_size(vb, 1) < ctx->chroma_size) {
 			mfc_err("Plane buffer (CAPTURE) is too small\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		i = vb->index;
 		ctx->dst_bufs[i].b = vbuf;
 		ctx->dst_bufs[i].cookie.raw.luma =
@@ -985,169 +984,169 @@ out:
 		ctx->dst_bufs[i].cookie.raw.chroma =
 					vb2_dma_contig_plane_dma_addr(vb, 1);
 		ctx->dst_bufs_cnt++;
-	पूर्ण अन्यथा अगर (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
-		अगर (IS_ERR_OR_शून्य(ERR_PTR(
-					vb2_dma_contig_plane_dma_addr(vb, 0)))) अणु
+	} else if (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		if (IS_ERR_OR_NULL(ERR_PTR(
+					vb2_dma_contig_plane_dma_addr(vb, 0)))) {
 			mfc_err("Plane memory not allocated\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (vb2_plane_size(vb, 0) < ctx->dec_src_buf_size) अणु
+			return -EINVAL;
+		}
+		if (vb2_plane_size(vb, 0) < ctx->dec_src_buf_size) {
 			mfc_err("Plane buffer (OUTPUT) is too small\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		i = vb->index;
 		ctx->src_bufs[i].b = vbuf;
 		ctx->src_bufs[i].cookie.stream =
 					vb2_dma_contig_plane_dma_addr(vb, 0);
 		ctx->src_bufs_cnt++;
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("s5p_mfc_buf_init: unknown queue type\n");
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक s5p_mfc_start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(q->drv_priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
+static int s5p_mfc_start_streaming(struct vb2_queue *q, unsigned int count)
+{
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(q->drv_priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
 
 	v4l2_ctrl_handler_setup(&ctx->ctrl_handler);
-	अगर (ctx->state == MFCINST_FINISHING ||
+	if (ctx->state == MFCINST_FINISHING ||
 		ctx->state == MFCINST_FINISHED)
 		ctx->state = MFCINST_RUNNING;
-	/* If context is पढ़ोy then dev = work->data;schedule it to run */
-	अगर (s5p_mfc_ctx_पढ़ोy(ctx))
+	/* If context is ready then dev = work->data;schedule it to run */
+	if (s5p_mfc_ctx_ready(ctx))
 		set_work_bit_irqsave(ctx);
 	s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s5p_mfc_stop_streaming(काष्ठा vb2_queue *q)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(q->drv_priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
-	पूर्णांक पातed = 0;
+static void s5p_mfc_stop_streaming(struct vb2_queue *q)
+{
+	unsigned long flags;
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(q->drv_priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
+	int aborted = 0;
 
 	spin_lock_irqsave(&dev->irqlock, flags);
-	अगर ((ctx->state == MFCINST_FINISHING ||
+	if ((ctx->state == MFCINST_FINISHING ||
 		ctx->state ==  MFCINST_RUNNING) &&
-		dev->curr_ctx == ctx->num && dev->hw_lock) अणु
+		dev->curr_ctx == ctx->num && dev->hw_lock) {
 		ctx->state = MFCINST_ABORT;
 		spin_unlock_irqrestore(&dev->irqlock, flags);
-		s5p_mfc_रुको_क्रम_करोne_ctx(ctx,
+		s5p_mfc_wait_for_done_ctx(ctx,
 					S5P_MFC_R2H_CMD_FRAME_DONE_RET, 0);
-		पातed = 1;
+		aborted = 1;
 		spin_lock_irqsave(&dev->irqlock, flags);
-	पूर्ण
-	अगर (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	}
+	if (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		s5p_mfc_cleanup_queue(&ctx->dst_queue, &ctx->vq_dst);
 		INIT_LIST_HEAD(&ctx->dst_queue);
 		ctx->dst_queue_cnt = 0;
 		ctx->dpb_flush_flag = 1;
 		ctx->dec_dst_flag = 0;
-		अगर (IS_MFCV6_PLUS(dev) && (ctx->state == MFCINST_RUNNING)) अणु
+		if (IS_MFCV6_PLUS(dev) && (ctx->state == MFCINST_RUNNING)) {
 			ctx->state = MFCINST_FLUSH;
 			set_work_bit_irqsave(ctx);
 			s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
 			spin_unlock_irqrestore(&dev->irqlock, flags);
-			अगर (s5p_mfc_रुको_क्रम_करोne_ctx(ctx,
+			if (s5p_mfc_wait_for_done_ctx(ctx,
 				S5P_MFC_R2H_CMD_DPB_FLUSH_RET, 0))
 				mfc_err("Err flushing buffers\n");
 			spin_lock_irqsave(&dev->irqlock, flags);
-		पूर्ण
-	पूर्ण अन्यथा अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+		}
+	} else if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		s5p_mfc_cleanup_queue(&ctx->src_queue, &ctx->vq_src);
 		INIT_LIST_HEAD(&ctx->src_queue);
 		ctx->src_queue_cnt = 0;
-	पूर्ण
-	अगर (पातed)
+	}
+	if (aborted)
 		ctx->state = MFCINST_RUNNING;
 	spin_unlock_irqrestore(&dev->irqlock, flags);
-पूर्ण
+}
 
 
-अटल व्योम s5p_mfc_buf_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा vb2_queue *vq = vb->vb2_queue;
-	काष्ठा s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
-	काष्ठा s5p_mfc_dev *dev = ctx->dev;
-	अचिन्हित दीर्घ flags;
-	काष्ठा s5p_mfc_buf *mfc_buf;
+static void s5p_mfc_buf_queue(struct vb2_buffer *vb)
+{
+	struct vb2_queue *vq = vb->vb2_queue;
+	struct s5p_mfc_ctx *ctx = fh_to_ctx(vq->drv_priv);
+	struct s5p_mfc_dev *dev = ctx->dev;
+	unsigned long flags;
+	struct s5p_mfc_buf *mfc_buf;
 
-	अगर (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) अणु
+	if (vq->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		mfc_buf = &ctx->src_bufs[vb->index];
 		mfc_buf->flags &= ~MFC_BUF_FLAG_USED;
 		spin_lock_irqsave(&dev->irqlock, flags);
 		list_add_tail(&mfc_buf->list, &ctx->src_queue);
 		ctx->src_queue_cnt++;
 		spin_unlock_irqrestore(&dev->irqlock, flags);
-	पूर्ण अन्यथा अगर (vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) अणु
+	} else if (vq->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
 		mfc_buf = &ctx->dst_bufs[vb->index];
 		mfc_buf->flags &= ~MFC_BUF_FLAG_USED;
-		/* Mark destination as available क्रम use by MFC */
+		/* Mark destination as available for use by MFC */
 		spin_lock_irqsave(&dev->irqlock, flags);
 		set_bit(vb->index, &ctx->dec_dst_flag);
 		list_add_tail(&mfc_buf->list, &ctx->dst_queue);
 		ctx->dst_queue_cnt++;
 		spin_unlock_irqrestore(&dev->irqlock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		mfc_err("Unsupported buffer type (%d)\n", vq->type);
-	पूर्ण
-	अगर (s5p_mfc_ctx_पढ़ोy(ctx))
+	}
+	if (s5p_mfc_ctx_ready(ctx))
 		set_work_bit_irqsave(ctx);
 	s5p_mfc_hw_call(dev->mfc_ops, try_run, dev);
-पूर्ण
+}
 
-अटल काष्ठा vb2_ops s5p_mfc_dec_qops = अणु
+static struct vb2_ops s5p_mfc_dec_qops = {
 	.queue_setup		= s5p_mfc_queue_setup,
-	.रुको_prepare		= vb2_ops_रुको_prepare,
-	.रुको_finish		= vb2_ops_रुको_finish,
+	.wait_prepare		= vb2_ops_wait_prepare,
+	.wait_finish		= vb2_ops_wait_finish,
 	.buf_init		= s5p_mfc_buf_init,
 	.start_streaming	= s5p_mfc_start_streaming,
 	.stop_streaming		= s5p_mfc_stop_streaming,
 	.buf_queue		= s5p_mfc_buf_queue,
-पूर्ण;
+};
 
-स्थिर काष्ठा s5p_mfc_codec_ops *get_dec_codec_ops(व्योम)
-अणु
-	वापस &decoder_codec_ops;
-पूर्ण
+const struct s5p_mfc_codec_ops *get_dec_codec_ops(void)
+{
+	return &decoder_codec_ops;
+}
 
-काष्ठा vb2_ops *get_dec_queue_ops(व्योम)
-अणु
-	वापस &s5p_mfc_dec_qops;
-पूर्ण
+struct vb2_ops *get_dec_queue_ops(void)
+{
+	return &s5p_mfc_dec_qops;
+}
 
-स्थिर काष्ठा v4l2_ioctl_ops *get_dec_v4l2_ioctl_ops(व्योम)
-अणु
-	वापस &s5p_mfc_dec_ioctl_ops;
-पूर्ण
+const struct v4l2_ioctl_ops *get_dec_v4l2_ioctl_ops(void)
+{
+	return &s5p_mfc_dec_ioctl_ops;
+}
 
-#घोषणा IS_MFC51_PRIV(x) ((V4L2_CTRL_ID2WHICH(x) == V4L2_CTRL_CLASS_CODEC) \
+#define IS_MFC51_PRIV(x) ((V4L2_CTRL_ID2WHICH(x) == V4L2_CTRL_CLASS_CODEC) \
 						&& V4L2_CTRL_DRIVER_PRIV(x))
 
-पूर्णांक s5p_mfc_dec_ctrls_setup(काष्ठा s5p_mfc_ctx *ctx)
-अणु
-	काष्ठा v4l2_ctrl_config cfg;
-	पूर्णांक i;
+int s5p_mfc_dec_ctrls_setup(struct s5p_mfc_ctx *ctx)
+{
+	struct v4l2_ctrl_config cfg;
+	int i;
 
 	v4l2_ctrl_handler_init(&ctx->ctrl_handler, NUM_CTRLS);
-	अगर (ctx->ctrl_handler.error) अणु
+	if (ctx->ctrl_handler.error) {
 		mfc_err("v4l2_ctrl_handler_init failed\n");
-		वापस ctx->ctrl_handler.error;
-	पूर्ण
+		return ctx->ctrl_handler.error;
+	}
 
-	क्रम (i = 0; i < NUM_CTRLS; i++) अणु
-		अगर (IS_MFC51_PRIV(controls[i].id)) अणु
-			स_रखो(&cfg, 0, माप(काष्ठा v4l2_ctrl_config));
+	for (i = 0; i < NUM_CTRLS; i++) {
+		if (IS_MFC51_PRIV(controls[i].id)) {
+			memset(&cfg, 0, sizeof(struct v4l2_ctrl_config));
 			cfg.ops = &s5p_mfc_dec_ctrl_ops;
 			cfg.id = controls[i].id;
 			cfg.min = controls[i].minimum;
 			cfg.max = controls[i].maximum;
-			cfg.def = controls[i].शेष_value;
+			cfg.def = controls[i].default_value;
 			cfg.name = controls[i].name;
 			cfg.type = controls[i].type;
 
@@ -1155,46 +1154,46 @@ out:
 			cfg.menu_skip_mask = 0;
 
 			ctx->ctrls[i] = v4l2_ctrl_new_custom(&ctx->ctrl_handler,
-					&cfg, शून्य);
-		पूर्ण अन्यथा अणु
+					&cfg, NULL);
+		} else {
 			ctx->ctrls[i] = v4l2_ctrl_new_std(&ctx->ctrl_handler,
 					&s5p_mfc_dec_ctrl_ops,
 					controls[i].id, controls[i].minimum,
 					controls[i].maximum, controls[i].step,
-					controls[i].शेष_value);
-		पूर्ण
-		अगर (ctx->ctrl_handler.error) अणु
+					controls[i].default_value);
+		}
+		if (ctx->ctrl_handler.error) {
 			mfc_err("Adding control (%d) failed\n", i);
-			वापस ctx->ctrl_handler.error;
-		पूर्ण
-		अगर (controls[i].is_अस्थिर && ctx->ctrls[i])
+			return ctx->ctrl_handler.error;
+		}
+		if (controls[i].is_volatile && ctx->ctrls[i])
 			ctx->ctrls[i]->flags |= V4L2_CTRL_FLAG_VOLATILE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-व्योम s5p_mfc_dec_ctrls_delete(काष्ठा s5p_mfc_ctx *ctx)
-अणु
-	पूर्णांक i;
+void s5p_mfc_dec_ctrls_delete(struct s5p_mfc_ctx *ctx)
+{
+	int i;
 
-	v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
-	क्रम (i = 0; i < NUM_CTRLS; i++)
-		ctx->ctrls[i] = शून्य;
-पूर्ण
+	v4l2_ctrl_handler_free(&ctx->ctrl_handler);
+	for (i = 0; i < NUM_CTRLS; i++)
+		ctx->ctrls[i] = NULL;
+}
 
-व्योम s5p_mfc_dec_init(काष्ठा s5p_mfc_ctx *ctx)
-अणु
-	काष्ठा v4l2_क्रमmat f;
-	f.fmt.pix_mp.pixelक्रमmat = V4L2_PIX_FMT_H264;
-	ctx->src_fmt = find_क्रमmat(&f, MFC_FMT_DEC);
-	अगर (IS_MFCV8_PLUS(ctx->dev))
-		f.fmt.pix_mp.pixelक्रमmat = V4L2_PIX_FMT_NV12M;
-	अन्यथा अगर (IS_MFCV6_PLUS(ctx->dev))
-		f.fmt.pix_mp.pixelक्रमmat = V4L2_PIX_FMT_NV12MT_16X16;
-	अन्यथा
-		f.fmt.pix_mp.pixelक्रमmat = V4L2_PIX_FMT_NV12MT;
-	ctx->dst_fmt = find_क्रमmat(&f, MFC_FMT_RAW);
+void s5p_mfc_dec_init(struct s5p_mfc_ctx *ctx)
+{
+	struct v4l2_format f;
+	f.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
+	ctx->src_fmt = find_format(&f, MFC_FMT_DEC);
+	if (IS_MFCV8_PLUS(ctx->dev))
+		f.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12M;
+	else if (IS_MFCV6_PLUS(ctx->dev))
+		f.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12MT_16X16;
+	else
+		f.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12MT;
+	ctx->dst_fmt = find_format(&f, MFC_FMT_RAW);
 	mfc_debug(2, "Default src_fmt is %p, dest_fmt is %p\n",
 			ctx->src_fmt, ctx->dst_fmt);
-पूर्ण
+}
 

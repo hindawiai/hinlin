@@ -1,138 +1,137 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#अगर_अघोषित __INODE_DOT_H__
-#घोषणा __INODE_DOT_H__
+#ifndef __INODE_DOT_H__
+#define __INODE_DOT_H__
 
-#समावेश <linux/fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/mm.h>
-#समावेश "util.h"
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
+#include <linux/mm.h>
+#include "util.h"
 
-बाह्य पूर्णांक gfs2_releasepage(काष्ठा page *page, gfp_t gfp_mask);
-बाह्य पूर्णांक gfs2_पूर्णांकernal_पढ़ो(काष्ठा gfs2_inode *ip,
-			      अक्षर *buf, loff_t *pos, अचिन्हित size);
-बाह्य व्योम gfs2_set_aops(काष्ठा inode *inode);
+extern int gfs2_releasepage(struct page *page, gfp_t gfp_mask);
+extern int gfs2_internal_read(struct gfs2_inode *ip,
+			      char *buf, loff_t *pos, unsigned size);
+extern void gfs2_set_aops(struct inode *inode);
 
-अटल अंतरभूत पूर्णांक gfs2_is_stuffed(स्थिर काष्ठा gfs2_inode *ip)
-अणु
-	वापस !ip->i_height;
-पूर्ण
+static inline int gfs2_is_stuffed(const struct gfs2_inode *ip)
+{
+	return !ip->i_height;
+}
 
-अटल अंतरभूत पूर्णांक gfs2_is_jdata(स्थिर काष्ठा gfs2_inode *ip)
-अणु
-	वापस ip->i_diskflags & GFS2_DIF_JDATA;
-पूर्ण
+static inline int gfs2_is_jdata(const struct gfs2_inode *ip)
+{
+	return ip->i_diskflags & GFS2_DIF_JDATA;
+}
 
-अटल अंतरभूत bool gfs2_is_ordered(स्थिर काष्ठा gfs2_sbd *sdp)
-अणु
-	वापस sdp->sd_args.ar_data == GFS2_DATA_ORDERED;
-पूर्ण
+static inline bool gfs2_is_ordered(const struct gfs2_sbd *sdp)
+{
+	return sdp->sd_args.ar_data == GFS2_DATA_ORDERED;
+}
 
-अटल अंतरभूत bool gfs2_is_ग_लिखोback(स्थिर काष्ठा gfs2_sbd *sdp)
-अणु
-	वापस sdp->sd_args.ar_data == GFS2_DATA_WRITEBACK;
-पूर्ण
+static inline bool gfs2_is_writeback(const struct gfs2_sbd *sdp)
+{
+	return sdp->sd_args.ar_data == GFS2_DATA_WRITEBACK;
+}
 
-अटल अंतरभूत पूर्णांक gfs2_is_dir(स्थिर काष्ठा gfs2_inode *ip)
-अणु
-	वापस S_ISसूची(ip->i_inode.i_mode);
-पूर्ण
+static inline int gfs2_is_dir(const struct gfs2_inode *ip)
+{
+	return S_ISDIR(ip->i_inode.i_mode);
+}
 
-अटल अंतरभूत व्योम gfs2_set_inode_blocks(काष्ठा inode *inode, u64 blocks)
-अणु
+static inline void gfs2_set_inode_blocks(struct inode *inode, u64 blocks)
+{
 	inode->i_blocks = blocks <<
-		(GFS2_SB(inode)->sd_sb.sb_bsize_shअगरt - GFS2_BASIC_BLOCK_SHIFT);
-पूर्ण
+		(GFS2_SB(inode)->sd_sb.sb_bsize_shift - GFS2_BASIC_BLOCK_SHIFT);
+}
 
-अटल अंतरभूत u64 gfs2_get_inode_blocks(स्थिर काष्ठा inode *inode)
-अणु
-	वापस inode->i_blocks >>
-		(GFS2_SB(inode)->sd_sb.sb_bsize_shअगरt - GFS2_BASIC_BLOCK_SHIFT);
-पूर्ण
+static inline u64 gfs2_get_inode_blocks(const struct inode *inode)
+{
+	return inode->i_blocks >>
+		(GFS2_SB(inode)->sd_sb.sb_bsize_shift - GFS2_BASIC_BLOCK_SHIFT);
+}
 
-अटल अंतरभूत व्योम gfs2_add_inode_blocks(काष्ठा inode *inode, s64 change)
-अणु
+static inline void gfs2_add_inode_blocks(struct inode *inode, s64 change)
+{
 	change <<= inode->i_blkbits - GFS2_BASIC_BLOCK_SHIFT;
-	gfs2_निश्चित(GFS2_SB(inode), (change >= 0 || inode->i_blocks >= -change));
+	gfs2_assert(GFS2_SB(inode), (change >= 0 || inode->i_blocks >= -change));
 	inode->i_blocks += change;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gfs2_check_inum(स्थिर काष्ठा gfs2_inode *ip, u64 no_addr,
-				  u64 no_क्रमmal_ino)
-अणु
-	वापस ip->i_no_addr == no_addr && ip->i_no_क्रमmal_ino == no_क्रमmal_ino;
-पूर्ण
+static inline int gfs2_check_inum(const struct gfs2_inode *ip, u64 no_addr,
+				  u64 no_formal_ino)
+{
+	return ip->i_no_addr == no_addr && ip->i_no_formal_ino == no_formal_ino;
+}
 
-अटल अंतरभूत व्योम gfs2_inum_out(स्थिर काष्ठा gfs2_inode *ip,
-				 काष्ठा gfs2_dirent *dent)
-अणु
-	dent->de_inum.no_क्रमmal_ino = cpu_to_be64(ip->i_no_क्रमmal_ino);
+static inline void gfs2_inum_out(const struct gfs2_inode *ip,
+				 struct gfs2_dirent *dent)
+{
+	dent->de_inum.no_formal_ino = cpu_to_be64(ip->i_no_formal_ino);
 	dent->de_inum.no_addr = cpu_to_be64(ip->i_no_addr);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक gfs2_check_पूर्णांकernal_file_size(काष्ठा inode *inode,
+static inline int gfs2_check_internal_file_size(struct inode *inode,
 						u64 minsize, u64 maxsize)
-अणु
-	u64 size = i_size_पढ़ो(inode);
-	अगर (size < minsize || size > maxsize)
-		जाओ err;
-	अगर (size & (BIT(inode->i_blkbits) - 1))
-		जाओ err;
-	वापस 0;
+{
+	u64 size = i_size_read(inode);
+	if (size < minsize || size > maxsize)
+		goto err;
+	if (size & (BIT(inode->i_blkbits) - 1))
+		goto err;
+	return 0;
 err:
 	gfs2_consist_inode(GFS2_I(inode));
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-बाह्य काष्ठा inode *gfs2_inode_lookup(काष्ठा super_block *sb, अचिन्हित type, 
-				       u64 no_addr, u64 no_क्रमmal_ino,
-				       अचिन्हित पूर्णांक blktype);
-बाह्य काष्ठा inode *gfs2_lookup_by_inum(काष्ठा gfs2_sbd *sdp, u64 no_addr,
-					 u64 no_क्रमmal_ino,
-					 अचिन्हित पूर्णांक blktype);
+extern struct inode *gfs2_inode_lookup(struct super_block *sb, unsigned type, 
+				       u64 no_addr, u64 no_formal_ino,
+				       unsigned int blktype);
+extern struct inode *gfs2_lookup_by_inum(struct gfs2_sbd *sdp, u64 no_addr,
+					 u64 no_formal_ino,
+					 unsigned int blktype);
 
-बाह्य पूर्णांक gfs2_inode_refresh(काष्ठा gfs2_inode *ip);
+extern int gfs2_inode_refresh(struct gfs2_inode *ip);
 
-बाह्य काष्ठा inode *gfs2_lookupi(काष्ठा inode *dir, स्थिर काष्ठा qstr *name,
-				  पूर्णांक is_root);
-बाह्य पूर्णांक gfs2_permission(काष्ठा user_namespace *mnt_userns,
-			   काष्ठा inode *inode, पूर्णांक mask);
-बाह्य काष्ठा inode *gfs2_lookup_simple(काष्ठा inode *dip, स्थिर अक्षर *name);
-बाह्य व्योम gfs2_dinode_out(स्थिर काष्ठा gfs2_inode *ip, व्योम *buf);
-बाह्य पूर्णांक gfs2_खोलो_common(काष्ठा inode *inode, काष्ठा file *file);
-बाह्य loff_t gfs2_seek_data(काष्ठा file *file, loff_t offset);
-बाह्य loff_t gfs2_seek_hole(काष्ठा file *file, loff_t offset);
+extern struct inode *gfs2_lookupi(struct inode *dir, const struct qstr *name,
+				  int is_root);
+extern int gfs2_permission(struct user_namespace *mnt_userns,
+			   struct inode *inode, int mask);
+extern struct inode *gfs2_lookup_simple(struct inode *dip, const char *name);
+extern void gfs2_dinode_out(const struct gfs2_inode *ip, void *buf);
+extern int gfs2_open_common(struct inode *inode, struct file *file);
+extern loff_t gfs2_seek_data(struct file *file, loff_t offset);
+extern loff_t gfs2_seek_hole(struct file *file, loff_t offset);
 
-बाह्य स्थिर काष्ठा file_operations gfs2_file_fops_nolock;
-बाह्य स्थिर काष्ठा file_operations gfs2_dir_fops_nolock;
+extern const struct file_operations gfs2_file_fops_nolock;
+extern const struct file_operations gfs2_dir_fops_nolock;
 
-बाह्य पूर्णांक gfs2_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa);
-बाह्य पूर्णांक gfs2_fileattr_set(काष्ठा user_namespace *mnt_userns,
-			     काष्ठा dentry *dentry, काष्ठा fileattr *fa);
-बाह्य व्योम gfs2_set_inode_flags(काष्ठा inode *inode);
+extern int gfs2_fileattr_get(struct dentry *dentry, struct fileattr *fa);
+extern int gfs2_fileattr_set(struct user_namespace *mnt_userns,
+			     struct dentry *dentry, struct fileattr *fa);
+extern void gfs2_set_inode_flags(struct inode *inode);
  
-#अगर_घोषित CONFIG_GFS2_FS_LOCKING_DLM
-बाह्य स्थिर काष्ठा file_operations gfs2_file_fops;
-बाह्य स्थिर काष्ठा file_operations gfs2_dir_fops;
+#ifdef CONFIG_GFS2_FS_LOCKING_DLM
+extern const struct file_operations gfs2_file_fops;
+extern const struct file_operations gfs2_dir_fops;
 
-अटल अंतरभूत पूर्णांक gfs2_localflocks(स्थिर काष्ठा gfs2_sbd *sdp)
-अणु
-	वापस sdp->sd_args.ar_localflocks;
-पूर्ण
-#अन्यथा /* Single node only */
-#घोषणा gfs2_file_fops gfs2_file_fops_nolock
-#घोषणा gfs2_dir_fops gfs2_dir_fops_nolock
+static inline int gfs2_localflocks(const struct gfs2_sbd *sdp)
+{
+	return sdp->sd_args.ar_localflocks;
+}
+#else /* Single node only */
+#define gfs2_file_fops gfs2_file_fops_nolock
+#define gfs2_dir_fops gfs2_dir_fops_nolock
 
-अटल अंतरभूत पूर्णांक gfs2_localflocks(स्थिर काष्ठा gfs2_sbd *sdp)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_GFS2_FS_LOCKING_DLM */
+static inline int gfs2_localflocks(const struct gfs2_sbd *sdp)
+{
+	return 1;
+}
+#endif /* CONFIG_GFS2_FS_LOCKING_DLM */
 
-#पूर्ण_अगर /* __INODE_DOT_H__ */
+#endif /* __INODE_DOT_H__ */
 

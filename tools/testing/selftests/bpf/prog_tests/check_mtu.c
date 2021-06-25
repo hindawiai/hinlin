@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Jesper Dangaard Brouer */
 
-#समावेश <linux/अगर_link.h> /* beक्रमe test_progs.h, aव्योम bpf_util.h redefines */
-#समावेश <test_progs.h>
-#समावेश "test_check_mtu.skel.h"
-#समावेश "network_helpers.h"
+#include <linux/if_link.h> /* before test_progs.h, avoid bpf_util.h redefines */
+#include <test_progs.h>
+#include "test_check_mtu.skel.h"
+#include "network_helpers.h"
 
-#समावेश <मानककोष.स>
-#समावेश <पूर्णांकtypes.h>
+#include <stdlib.h>
+#include <inttypes.h>
 
-#घोषणा IFINDEX_LO 1
+#define IFINDEX_LO 1
 
-अटल __u32 duration; /* Hपूर्णांक: needed क्रम CHECK macro */
+static __u32 duration; /* Hint: needed for CHECK macro */
 
-अटल पूर्णांक पढ़ो_mtu_device_lo(व्योम)
-अणु
-	स्थिर अक्षर *filename = "/sys/class/net/lo/mtu";
-	अक्षर buf[11] = अणुपूर्ण;
-	पूर्णांक value, n, fd;
+static int read_mtu_device_lo(void)
+{
+	const char *filename = "/sys/class/net/lo/mtu";
+	char buf[11] = {};
+	int value, n, fd;
 
-	fd = खोलो(filename, 0, O_RDONLY);
-	अगर (fd == -1)
-		वापस -1;
+	fd = open(filename, 0, O_RDONLY);
+	if (fd == -1)
+		return -1;
 
-	n = पढ़ो(fd, buf, माप(buf));
-	बंद(fd);
+	n = read(fd, buf, sizeof(buf));
+	close(fd);
 
-	अगर (n == -1)
-		वापस -2;
+	if (n == -1)
+		return -2;
 
-	value = strtoimax(buf, शून्य, 10);
-	अगर (त्रुटि_सं == दुस्फल)
-		वापस -3;
+	value = strtoimax(buf, NULL, 10);
+	if (errno == ERANGE)
+		return -3;
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम test_check_mtu_xdp_attach(व्योम)
-अणु
-	काष्ठा bpf_link_info link_info;
-	__u32 link_info_len = माप(link_info);
-	काष्ठा test_check_mtu *skel;
-	काष्ठा bpf_program *prog;
-	काष्ठा bpf_link *link;
-	पूर्णांक err = 0;
-	पूर्णांक fd;
+static void test_check_mtu_xdp_attach(void)
+{
+	struct bpf_link_info link_info;
+	__u32 link_info_len = sizeof(link_info);
+	struct test_check_mtu *skel;
+	struct bpf_program *prog;
+	struct bpf_link *link;
+	int err = 0;
+	int fd;
 
-	skel = test_check_mtu__खोलो_and_load();
-	अगर (CHECK(!skel, "open and load skel", "failed"))
-		वापस; /* Exit अगर e.g. helper unknown to kernel */
+	skel = test_check_mtu__open_and_load();
+	if (CHECK(!skel, "open and load skel", "failed"))
+		return; /* Exit if e.g. helper unknown to kernel */
 
 	prog = skel->progs.xdp_use_helper_basic;
 
 	link = bpf_program__attach_xdp(prog, IFINDEX_LO);
-	अगर (CHECK(IS_ERR(link), "link_attach", "failed: %ld\n", PTR_ERR(link)))
-		जाओ out;
+	if (CHECK(IS_ERR(link), "link_attach", "failed: %ld\n", PTR_ERR(link)))
+		goto out;
 	skel->links.xdp_use_helper_basic = link;
 
-	स_रखो(&link_info, 0, माप(link_info));
+	memset(&link_info, 0, sizeof(link_info));
 	fd = bpf_link__fd(link);
 	err = bpf_obj_get_info_by_fd(fd, &link_info, &link_info_len);
-	अगर (CHECK(err, "link_info", "failed: %d\n", err))
-		जाओ out;
+	if (CHECK(err, "link_info", "failed: %d\n", err))
+		goto out;
 
 	CHECK(link_info.type != BPF_LINK_TYPE_XDP, "link_type",
 	      "got %u != exp %u\n", link_info.type, BPF_LINK_TYPE_XDP);
-	CHECK(link_info.xdp.अगरindex != IFINDEX_LO, "link_ifindex",
-	      "got %u != exp %u\n", link_info.xdp.अगरindex, IFINDEX_LO);
+	CHECK(link_info.xdp.ifindex != IFINDEX_LO, "link_ifindex",
+	      "got %u != exp %u\n", link_info.xdp.ifindex, IFINDEX_LO);
 
 	err = bpf_link__detach(link);
 	CHECK(err, "link_detach", "failed %d\n", err);
 
 out:
 	test_check_mtu__destroy(skel);
-पूर्ण
+}
 
-अटल व्योम test_check_mtu_run_xdp(काष्ठा test_check_mtu *skel,
-				   काष्ठा bpf_program *prog,
+static void test_check_mtu_run_xdp(struct test_check_mtu *skel,
+				   struct bpf_program *prog,
 				   __u32 mtu_expect)
-अणु
-	स्थिर अक्षर *prog_name = bpf_program__name(prog);
-	पूर्णांक retval_expect = XDP_PASS;
+{
+	const char *prog_name = bpf_program__name(prog);
+	int retval_expect = XDP_PASS;
 	__u32 mtu_result = 0;
-	अक्षर buf[256] = अणुपूर्ण;
-	पूर्णांक err;
-	काष्ठा bpf_prog_test_run_attr tattr = अणु
+	char buf[256] = {};
+	int err;
+	struct bpf_prog_test_run_attr tattr = {
 		.repeat = 1,
 		.data_in = &pkt_v4,
-		.data_size_in = माप(pkt_v4),
+		.data_size_in = sizeof(pkt_v4),
 		.data_out = buf,
-		.data_size_out = माप(buf),
+		.data_size_out = sizeof(buf),
 		.prog_fd = bpf_program__fd(prog),
-	पूर्ण;
+	};
 
 	err = bpf_prog_test_run_xattr(&tattr);
 	CHECK_ATTR(err != 0, "bpf_prog_test_run",
 		   "prog_name:%s (err %d errno %d retval %d)\n",
-		   prog_name, err, त्रुटि_सं, tattr.retval);
+		   prog_name, err, errno, tattr.retval);
 
 	CHECK(tattr.retval != retval_expect, "retval",
 	      "progname:%s unexpected retval=%d expected=%d\n",
@@ -106,25 +105,25 @@ out:
 	/* Extract MTU that BPF-prog got */
 	mtu_result = skel->bss->global_bpf_mtu_xdp;
 	ASSERT_EQ(mtu_result, mtu_expect, "MTU-compare-user");
-पूर्ण
+}
 
 
-अटल व्योम test_check_mtu_xdp(__u32 mtu, __u32 अगरindex)
-अणु
-	काष्ठा test_check_mtu *skel;
-	पूर्णांक err;
+static void test_check_mtu_xdp(__u32 mtu, __u32 ifindex)
+{
+	struct test_check_mtu *skel;
+	int err;
 
-	skel = test_check_mtu__खोलो();
-	अगर (CHECK(!skel, "skel_open", "failed"))
-		वापस;
+	skel = test_check_mtu__open();
+	if (CHECK(!skel, "skel_open", "failed"))
+		return;
 
 	/* Update "constants" in BPF-prog *BEFORE* libbpf load */
 	skel->rodata->GLOBAL_USER_MTU = mtu;
-	skel->rodata->GLOBAL_USER_IFINDEX = अगरindex;
+	skel->rodata->GLOBAL_USER_IFINDEX = ifindex;
 
 	err = test_check_mtu__load(skel);
-	अगर (CHECK(err, "skel_load", "failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skel_load", "failed: %d\n", err))
+		goto cleanup;
 
 	test_check_mtu_run_xdp(skel, skel->progs.xdp_use_helper, mtu);
 	test_check_mtu_run_xdp(skel, skel->progs.xdp_exceed_mtu, mtu);
@@ -134,30 +133,30 @@ out:
 
 cleanup:
 	test_check_mtu__destroy(skel);
-पूर्ण
+}
 
-अटल व्योम test_check_mtu_run_tc(काष्ठा test_check_mtu *skel,
-				  काष्ठा bpf_program *prog,
+static void test_check_mtu_run_tc(struct test_check_mtu *skel,
+				  struct bpf_program *prog,
 				  __u32 mtu_expect)
-अणु
-	स्थिर अक्षर *prog_name = bpf_program__name(prog);
-	पूर्णांक retval_expect = BPF_OK;
+{
+	const char *prog_name = bpf_program__name(prog);
+	int retval_expect = BPF_OK;
 	__u32 mtu_result = 0;
-	अक्षर buf[256] = अणुपूर्ण;
-	पूर्णांक err;
-	काष्ठा bpf_prog_test_run_attr tattr = अणु
+	char buf[256] = {};
+	int err;
+	struct bpf_prog_test_run_attr tattr = {
 		.repeat = 1,
 		.data_in = &pkt_v4,
-		.data_size_in = माप(pkt_v4),
+		.data_size_in = sizeof(pkt_v4),
 		.data_out = buf,
-		.data_size_out = माप(buf),
+		.data_size_out = sizeof(buf),
 		.prog_fd = bpf_program__fd(prog),
-	पूर्ण;
+	};
 
 	err = bpf_prog_test_run_xattr(&tattr);
 	CHECK_ATTR(err != 0, "bpf_prog_test_run",
 		   "prog_name:%s (err %d errno %d retval %d)\n",
-		   prog_name, err, त्रुटि_सं, tattr.retval);
+		   prog_name, err, errno, tattr.retval);
 
 	CHECK(tattr.retval != retval_expect, "retval",
 	      "progname:%s unexpected retval=%d expected=%d\n",
@@ -166,25 +165,25 @@ cleanup:
 	/* Extract MTU that BPF-prog got */
 	mtu_result = skel->bss->global_bpf_mtu_tc;
 	ASSERT_EQ(mtu_result, mtu_expect, "MTU-compare-user");
-पूर्ण
+}
 
 
-अटल व्योम test_check_mtu_tc(__u32 mtu, __u32 अगरindex)
-अणु
-	काष्ठा test_check_mtu *skel;
-	पूर्णांक err;
+static void test_check_mtu_tc(__u32 mtu, __u32 ifindex)
+{
+	struct test_check_mtu *skel;
+	int err;
 
-	skel = test_check_mtu__खोलो();
-	अगर (CHECK(!skel, "skel_open", "failed"))
-		वापस;
+	skel = test_check_mtu__open();
+	if (CHECK(!skel, "skel_open", "failed"))
+		return;
 
 	/* Update "constants" in BPF-prog *BEFORE* libbpf load */
 	skel->rodata->GLOBAL_USER_MTU = mtu;
-	skel->rodata->GLOBAL_USER_IFINDEX = अगरindex;
+	skel->rodata->GLOBAL_USER_IFINDEX = ifindex;
 
 	err = test_check_mtu__load(skel);
-	अगर (CHECK(err, "skel_load", "failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skel_load", "failed: %d\n", err))
+		goto cleanup;
 
 	test_check_mtu_run_tc(skel, skel->progs.tc_use_helper, mtu);
 	test_check_mtu_run_tc(skel, skel->progs.tc_exceed_mtu, mtu);
@@ -194,28 +193,28 @@ cleanup:
 	test_check_mtu_run_tc(skel, skel->progs.tc_input_len_exceed, mtu);
 cleanup:
 	test_check_mtu__destroy(skel);
-पूर्ण
+}
 
-व्योम test_check_mtu(व्योम)
-अणु
+void test_check_mtu(void)
+{
 	__u32 mtu_lo;
 
-	अगर (test__start_subtest("bpf_check_mtu XDP-attach"))
+	if (test__start_subtest("bpf_check_mtu XDP-attach"))
 		test_check_mtu_xdp_attach();
 
-	mtu_lo = पढ़ो_mtu_device_lo();
-	अगर (CHECK(mtu_lo < 0, "reading MTU value", "failed (err:%d)", mtu_lo))
-		वापस;
+	mtu_lo = read_mtu_device_lo();
+	if (CHECK(mtu_lo < 0, "reading MTU value", "failed (err:%d)", mtu_lo))
+		return;
 
-	अगर (test__start_subtest("bpf_check_mtu XDP-run"))
+	if (test__start_subtest("bpf_check_mtu XDP-run"))
 		test_check_mtu_xdp(mtu_lo, 0);
 
-	अगर (test__start_subtest("bpf_check_mtu XDP-run ifindex-lookup"))
+	if (test__start_subtest("bpf_check_mtu XDP-run ifindex-lookup"))
 		test_check_mtu_xdp(mtu_lo, IFINDEX_LO);
 
-	अगर (test__start_subtest("bpf_check_mtu TC-run"))
+	if (test__start_subtest("bpf_check_mtu TC-run"))
 		test_check_mtu_tc(mtu_lo, 0);
 
-	अगर (test__start_subtest("bpf_check_mtu TC-run ifindex-lookup"))
+	if (test__start_subtest("bpf_check_mtu TC-run ifindex-lookup"))
 		test_check_mtu_tc(mtu_lo, IFINDEX_LO);
-पूर्ण
+}

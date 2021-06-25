@@ -1,47 +1,46 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2006 - 2007 Ivo van Doorn
  * Copyright (C) 2007 Dmitry Torokhov
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#अगर_अघोषित _UAPI__RFKILL_H
-#घोषणा _UAPI__RFKILL_H
+#ifndef _UAPI__RFKILL_H
+#define _UAPI__RFKILL_H
 
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* define userspace visible states */
-#घोषणा RFKILL_STATE_SOFT_BLOCKED	0
-#घोषणा RFKILL_STATE_UNBLOCKED		1
-#घोषणा RFKILL_STATE_HARD_BLOCKED	2
+#define RFKILL_STATE_SOFT_BLOCKED	0
+#define RFKILL_STATE_UNBLOCKED		1
+#define RFKILL_STATE_HARD_BLOCKED	2
 
 /**
- * क्रमागत rfसमाप्त_type - type of rfसमाप्त चयन.
+ * enum rfkill_type - type of rfkill switch.
  *
- * @RFKILL_TYPE_ALL: toggles all चयनes (requests only - not a चयन type)
- * @RFKILL_TYPE_WLAN: चयन is on a 802.11 wireless network device.
- * @RFKILL_TYPE_BLUETOOTH: चयन is on a bluetooth device.
- * @RFKILL_TYPE_UWB: चयन is on a ultra wideband device.
- * @RFKILL_TYPE_WIMAX: चयन is on a WiMAX device.
- * @RFKILL_TYPE_WWAN: चयन is on a wireless WAN device.
- * @RFKILL_TYPE_GPS: चयन is on a GPS device.
- * @RFKILL_TYPE_FM: चयन is on a FM radio device.
- * @RFKILL_TYPE_NFC: चयन is on an NFC device.
- * @NUM_RFKILL_TYPES: number of defined rfसमाप्त types
+ * @RFKILL_TYPE_ALL: toggles all switches (requests only - not a switch type)
+ * @RFKILL_TYPE_WLAN: switch is on a 802.11 wireless network device.
+ * @RFKILL_TYPE_BLUETOOTH: switch is on a bluetooth device.
+ * @RFKILL_TYPE_UWB: switch is on a ultra wideband device.
+ * @RFKILL_TYPE_WIMAX: switch is on a WiMAX device.
+ * @RFKILL_TYPE_WWAN: switch is on a wireless WAN device.
+ * @RFKILL_TYPE_GPS: switch is on a GPS device.
+ * @RFKILL_TYPE_FM: switch is on a FM radio device.
+ * @RFKILL_TYPE_NFC: switch is on an NFC device.
+ * @NUM_RFKILL_TYPES: number of defined rfkill types
  */
-क्रमागत rfसमाप्त_type अणु
+enum rfkill_type {
 	RFKILL_TYPE_ALL = 0,
 	RFKILL_TYPE_WLAN,
 	RFKILL_TYPE_BLUETOOTH,
@@ -52,69 +51,69 @@
 	RFKILL_TYPE_FM,
 	RFKILL_TYPE_NFC,
 	NUM_RFKILL_TYPES,
-पूर्ण;
+};
 
 /**
- * क्रमागत rfसमाप्त_operation - operation types
+ * enum rfkill_operation - operation types
  * @RFKILL_OP_ADD: a device was added
- * @RFKILL_OP_DEL: a device was हटाओd
+ * @RFKILL_OP_DEL: a device was removed
  * @RFKILL_OP_CHANGE: a device's state changed -- userspace changes one device
  * @RFKILL_OP_CHANGE_ALL: userspace changes all devices (of a type, or all)
- *	पूर्णांकo a state, also updating the शेष state used क्रम devices that
+ *	into a state, also updating the default state used for devices that
  *	are hot-plugged later.
  */
-क्रमागत rfसमाप्त_operation अणु
+enum rfkill_operation {
 	RFKILL_OP_ADD = 0,
 	RFKILL_OP_DEL,
 	RFKILL_OP_CHANGE,
 	RFKILL_OP_CHANGE_ALL,
-पूर्ण;
+};
 
 /**
- * क्रमागत rfसमाप्त_hard_block_reasons - hard block reasons
- * @RFKILL_HARD_BLOCK_SIGNAL: the hardware rfसमाप्त संकेत is active
+ * enum rfkill_hard_block_reasons - hard block reasons
+ * @RFKILL_HARD_BLOCK_SIGNAL: the hardware rfkill signal is active
  * @RFKILL_HARD_BLOCK_NOT_OWNER: the NIC is not owned by the host
  */
-क्रमागत rfसमाप्त_hard_block_reasons अणु
+enum rfkill_hard_block_reasons {
 	RFKILL_HARD_BLOCK_SIGNAL	= 1 << 0,
 	RFKILL_HARD_BLOCK_NOT_OWNER	= 1 << 1,
-पूर्ण;
+};
 
 /**
- * काष्ठा rfसमाप्त_event - events क्रम userspace on /dev/rfसमाप्त
- * @idx: index of dev rfसमाप्त
- * @type: type of the rfसमाप्त काष्ठा
+ * struct rfkill_event - events for userspace on /dev/rfkill
+ * @idx: index of dev rfkill
+ * @type: type of the rfkill struct
  * @op: operation code
  * @hard: hard state (0/1)
  * @soft: soft state (0/1)
  *
- * Structure used क्रम userspace communication on /dev/rfसमाप्त,
- * used क्रम events from the kernel and control to the kernel.
+ * Structure used for userspace communication on /dev/rfkill,
+ * used for events from the kernel and control to the kernel.
  */
-काष्ठा rfसमाप्त_event अणु
+struct rfkill_event {
 	__u32 idx;
 	__u8  type;
 	__u8  op;
 	__u8  soft;
 	__u8  hard;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
 /**
- * काष्ठा rfसमाप्त_event_ext - events क्रम userspace on /dev/rfसमाप्त
- * @idx: index of dev rfसमाप्त
- * @type: type of the rfसमाप्त काष्ठा
+ * struct rfkill_event_ext - events for userspace on /dev/rfkill
+ * @idx: index of dev rfkill
+ * @type: type of the rfkill struct
  * @op: operation code
  * @hard: hard state (0/1)
  * @soft: soft state (0/1)
- * @hard_block_reasons: valid अगर hard is set. One or several reasons from
- *	&क्रमागत rfसमाप्त_hard_block_reasons.
+ * @hard_block_reasons: valid if hard is set. One or several reasons from
+ *	&enum rfkill_hard_block_reasons.
  *
- * Structure used क्रम userspace communication on /dev/rfसमाप्त,
- * used क्रम events from the kernel and control to the kernel.
+ * Structure used for userspace communication on /dev/rfkill,
+ * used for events from the kernel and control to the kernel.
  *
- * See the extensibility करोcs below.
+ * See the extensibility docs below.
  */
-काष्ठा rfसमाप्त_event_ext अणु
+struct rfkill_event_ext {
 	__u32 idx;
 	__u8  type;
 	__u8  op;
@@ -122,61 +121,61 @@
 	__u8  hard;
 
 	/*
-	 * older kernels will accept/send only up to this poपूर्णांक,
-	 * and अगर extended further up to any chunk marked below
+	 * older kernels will accept/send only up to this point,
+	 * and if extended further up to any chunk marked below
 	 */
 
 	__u8  hard_block_reasons;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
 /**
  * DOC: Extensibility
  *
- * Originally, we had planned to allow backward and क्रमward compatible
- * changes by just adding fields at the end of the काष्ठाure that are
- * then not reported on older kernels on पढ़ो(), and not written to by
- * older kernels on ग_लिखो(), with the kernel reporting the size it did
+ * Originally, we had planned to allow backward and forward compatible
+ * changes by just adding fields at the end of the structure that are
+ * then not reported on older kernels on read(), and not written to by
+ * older kernels on write(), with the kernel reporting the size it did
  * accept as the result.
  *
- * This would have allowed userspace to detect on पढ़ो() and ग_लिखो()
- * which kernel काष्ठाure version it was dealing with, and अगर was just
+ * This would have allowed userspace to detect on read() and write()
+ * which kernel structure version it was dealing with, and if was just
  * recompiled it would have gotten the new fields, but obviously not
- * accessed them, but things should've जारीd to work.
+ * accessed them, but things should've continued to work.
  *
- * Unक्रमtunately, जबतक actually exercising this mechanism to add the
- * hard block reasons field, we found that userspace (notably प्रणालीd)
+ * Unfortunately, while actually exercising this mechanism to add the
+ * hard block reasons field, we found that userspace (notably systemd)
  * did all kinds of fun things not in line with this scheme:
  *
- * 1. treat the (expected) लघु ग_लिखोs as an error;
- * 2. ask to पढ़ो माप(काष्ठा rfसमाप्त_event) but then compare the
- *    actual वापस value to RFKILL_EVENT_SIZE_V1 and treat any
+ * 1. treat the (expected) short writes as an error;
+ * 2. ask to read sizeof(struct rfkill_event) but then compare the
+ *    actual return value to RFKILL_EVENT_SIZE_V1 and treat any
  *    mismatch as an error.
  *
- * As a consequence, just recompiling with a new काष्ठा version caused
- * things to no दीर्घer work correctly on old and new kernels.
+ * As a consequence, just recompiling with a new struct version caused
+ * things to no longer work correctly on old and new kernels.
  *
- * Hence, we've rolled back &काष्ठा rfसमाप्त_event to the original version
- * and added &काष्ठा rfसमाप्त_event_ext. This effectively reverts to the
- * old behaviour क्रम all userspace, unless it explicitly opts in to the
- * rules outlined here by using the new &काष्ठा rfसमाप्त_event_ext.
+ * Hence, we've rolled back &struct rfkill_event to the original version
+ * and added &struct rfkill_event_ext. This effectively reverts to the
+ * old behaviour for all userspace, unless it explicitly opts in to the
+ * rules outlined here by using the new &struct rfkill_event_ext.
  *
- * Userspace using &काष्ठा rfसमाप्त_event_ext must adhere to the following
+ * Userspace using &struct rfkill_event_ext must adhere to the following
  * rules
  *
- * 1. accept लघु ग_लिखोs, optionally using them to detect that it's
+ * 1. accept short writes, optionally using them to detect that it's
  *    running on an older kernel;
- * 2. accept लघु पढ़ोs, knowing that this means it's running on an
+ * 2. accept short reads, knowing that this means it's running on an
  *    older kernel;
- * 3. treat पढ़ोs that are as दीर्घ as requested as acceptable, not
+ * 3. treat reads that are as long as requested as acceptable, not
  *    checking against RFKILL_EVENT_SIZE_V1 or such.
  */
-#घोषणा RFKILL_EVENT_SIZE_V1	माप(काष्ठा rfसमाप्त_event)
+#define RFKILL_EVENT_SIZE_V1	sizeof(struct rfkill_event)
 
-/* ioctl क्रम turning off rfसमाप्त-input (अगर present) */
-#घोषणा RFKILL_IOC_MAGIC	'R'
-#घोषणा RFKILL_IOC_NOINPUT	1
-#घोषणा RFKILL_IOCTL_NOINPUT	_IO(RFKILL_IOC_MAGIC, RFKILL_IOC_NOINPUT)
+/* ioctl for turning off rfkill-input (if present) */
+#define RFKILL_IOC_MAGIC	'R'
+#define RFKILL_IOC_NOINPUT	1
+#define RFKILL_IOCTL_NOINPUT	_IO(RFKILL_IOC_MAGIC, RFKILL_IOC_NOINPUT)
 
-/* and that's all userspace माला_लो */
+/* and that's all userspace gets */
 
-#पूर्ण_अगर /* _UAPI__RFKILL_H */
+#endif /* _UAPI__RFKILL_H */

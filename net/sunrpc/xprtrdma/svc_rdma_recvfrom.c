@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2016-2018 Oracle. All rights reserved.
  * Copyright (c) 2014 Open Grid Computing, Inc. All rights reserved.
@@ -8,31 +7,31 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the BSD-type
+ * COPYING in the main directory of this source tree, or the BSD-type
  * license below:
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *      Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimer.
  *
- *      Redistributions in binary क्रमm must reproduce the above
+ *      Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
- *      disclaimer in the करोcumentation and/or other materials provided
+ *      disclaimer in the documentation and/or other materials provided
  *      with the distribution.
  *
  *      Neither the name of the Network Appliance, Inc. nor the names of
- *      its contributors may be used to enकरोrse or promote products
- *      derived from this software without specअगरic prior written
+ *      its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written
  *      permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -40,479 +39,479 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Tom Tucker <tom@खोलोgridcomputing.com>
+ * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
 /* Operation
  *
- * The मुख्य entry poपूर्णांक is svc_rdma_recvfrom. This is called from
+ * The main entry point is svc_rdma_recvfrom. This is called from
  * svc_recv when the transport indicates there is incoming data to
- * be पढ़ो. "Data Ready" is संकेतed when an RDMA Receive completes,
+ * be read. "Data Ready" is signaled when an RDMA Receive completes,
  * or when a set of RDMA Reads complete.
  *
- * An svc_rqst is passed in. This काष्ठाure contains an array of
- * मुक्त pages (rq_pages) that will contain the incoming RPC message.
+ * An svc_rqst is passed in. This structure contains an array of
+ * free pages (rq_pages) that will contain the incoming RPC message.
  *
- * Short messages are moved directly पूर्णांकo svc_rqst::rq_arg, and
- * the RPC Call is पढ़ोy to be processed by the Upper Layer.
- * svc_rdma_recvfrom वापसs the length of the RPC Call message,
+ * Short messages are moved directly into svc_rqst::rq_arg, and
+ * the RPC Call is ready to be processed by the Upper Layer.
+ * svc_rdma_recvfrom returns the length of the RPC Call message,
  * completing the reception of the RPC Call.
  *
  * However, when an incoming message has Read chunks,
  * svc_rdma_recvfrom must post RDMA Reads to pull the RPC Call's
  * data payload from the client. svc_rdma_recvfrom sets up the
  * RDMA Reads using pages in svc_rqst::rq_pages, which are
- * transferred to an svc_rdma_recv_ctxt क्रम the duration of the
- * I/O. svc_rdma_recvfrom then वापसs zero, since the RPC message
- * is still not yet पढ़ोy.
+ * transferred to an svc_rdma_recv_ctxt for the duration of the
+ * I/O. svc_rdma_recvfrom then returns zero, since the RPC message
+ * is still not yet ready.
  *
  * When the Read chunk payloads have become available on the
- * server, "Data Ready" is उठाओd again, and svc_recv calls
- * svc_rdma_recvfrom again. This second call may use a dअगरferent
- * svc_rqst than the first one, thus any inक्रमmation that needs
+ * server, "Data Ready" is raised again, and svc_recv calls
+ * svc_rdma_recvfrom again. This second call may use a different
+ * svc_rqst than the first one, thus any information that needs
  * to be preserved across these two calls is kept in an
  * svc_rdma_recv_ctxt.
  *
- * The second call to svc_rdma_recvfrom perक्रमms final assembly
+ * The second call to svc_rdma_recvfrom performs final assembly
  * of the RPC Call message, using the RDMA Read sink pages kept in
  * the svc_rdma_recv_ctxt. The xdr_buf is copied from the
- * svc_rdma_recv_ctxt to the second svc_rqst. The second call वापसs
+ * svc_rdma_recv_ctxt to the second svc_rqst. The second call returns
  * the length of the completed RPC Call message.
  *
  * Page Management
  *
  * Pages under I/O must be transferred from the first svc_rqst to an
- * svc_rdma_recv_ctxt beक्रमe the first svc_rdma_recvfrom call वापसs.
+ * svc_rdma_recv_ctxt before the first svc_rdma_recvfrom call returns.
  *
- * The first svc_rqst supplies pages क्रम RDMA Reads. These are moved
- * from rqstp::rq_pages पूर्णांकo ctxt::pages. The consumed elements of
- * the rq_pages array are set to शून्य and refilled with the first
- * svc_rdma_recvfrom call वापसs.
+ * The first svc_rqst supplies pages for RDMA Reads. These are moved
+ * from rqstp::rq_pages into ctxt::pages. The consumed elements of
+ * the rq_pages array are set to NULL and refilled with the first
+ * svc_rdma_recvfrom call returns.
  *
  * During the second svc_rdma_recvfrom call, RDMA Read sink pages
  * are transferred from the svc_rdma_recv_ctxt to the second svc_rqst.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <rdma/ib_verbs.h>
-#समावेश <rdma/rdma_cm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <asm/unaligned.h>
+#include <rdma/ib_verbs.h>
+#include <rdma/rdma_cm.h>
 
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/debug.h>
-#समावेश <linux/sunrpc/rpc_rdma.h>
-#समावेश <linux/sunrpc/svc_rdma.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/debug.h>
+#include <linux/sunrpc/rpc_rdma.h>
+#include <linux/sunrpc/svc_rdma.h>
 
-#समावेश "xprt_rdma.h"
-#समावेश <trace/events/rpcrdma.h>
+#include "xprt_rdma.h"
+#include <trace/events/rpcrdma.h>
 
-अटल व्योम svc_rdma_wc_receive(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
+static void svc_rdma_wc_receive(struct ib_cq *cq, struct ib_wc *wc);
 
-अटल अंतरभूत काष्ठा svc_rdma_recv_ctxt *
-svc_rdma_next_recv_ctxt(काष्ठा list_head *list)
-अणु
-	वापस list_first_entry_or_null(list, काष्ठा svc_rdma_recv_ctxt,
+static inline struct svc_rdma_recv_ctxt *
+svc_rdma_next_recv_ctxt(struct list_head *list)
+{
+	return list_first_entry_or_null(list, struct svc_rdma_recv_ctxt,
 					rc_list);
-पूर्ण
+}
 
-अटल व्योम svc_rdma_recv_cid_init(काष्ठा svcxprt_rdma *rdma,
-				   काष्ठा rpc_rdma_cid *cid)
-अणु
+static void svc_rdma_recv_cid_init(struct svcxprt_rdma *rdma,
+				   struct rpc_rdma_cid *cid)
+{
 	cid->ci_queue_id = rdma->sc_rq_cq->res.id;
-	cid->ci_completion_id = atomic_inc_वापस(&rdma->sc_completion_ids);
-पूर्ण
+	cid->ci_completion_id = atomic_inc_return(&rdma->sc_completion_ids);
+}
 
-अटल काष्ठा svc_rdma_recv_ctxt *
-svc_rdma_recv_ctxt_alloc(काष्ठा svcxprt_rdma *rdma)
-अणु
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
+static struct svc_rdma_recv_ctxt *
+svc_rdma_recv_ctxt_alloc(struct svcxprt_rdma *rdma)
+{
+	struct svc_rdma_recv_ctxt *ctxt;
 	dma_addr_t addr;
-	व्योम *buffer;
+	void *buffer;
 
-	ctxt = kदो_स्मृति(माप(*ctxt), GFP_KERNEL);
-	अगर (!ctxt)
-		जाओ fail0;
-	buffer = kदो_स्मृति(rdma->sc_max_req_size, GFP_KERNEL);
-	अगर (!buffer)
-		जाओ fail1;
+	ctxt = kmalloc(sizeof(*ctxt), GFP_KERNEL);
+	if (!ctxt)
+		goto fail0;
+	buffer = kmalloc(rdma->sc_max_req_size, GFP_KERNEL);
+	if (!buffer)
+		goto fail1;
 	addr = ib_dma_map_single(rdma->sc_pd->device, buffer,
 				 rdma->sc_max_req_size, DMA_FROM_DEVICE);
-	अगर (ib_dma_mapping_error(rdma->sc_pd->device, addr))
-		जाओ fail2;
+	if (ib_dma_mapping_error(rdma->sc_pd->device, addr))
+		goto fail2;
 
 	svc_rdma_recv_cid_init(rdma, &ctxt->rc_cid);
 	pcl_init(&ctxt->rc_call_pcl);
-	pcl_init(&ctxt->rc_पढ़ो_pcl);
-	pcl_init(&ctxt->rc_ग_लिखो_pcl);
+	pcl_init(&ctxt->rc_read_pcl);
+	pcl_init(&ctxt->rc_write_pcl);
 	pcl_init(&ctxt->rc_reply_pcl);
 
-	ctxt->rc_recv_wr.next = शून्य;
+	ctxt->rc_recv_wr.next = NULL;
 	ctxt->rc_recv_wr.wr_cqe = &ctxt->rc_cqe;
 	ctxt->rc_recv_wr.sg_list = &ctxt->rc_recv_sge;
 	ctxt->rc_recv_wr.num_sge = 1;
-	ctxt->rc_cqe.करोne = svc_rdma_wc_receive;
+	ctxt->rc_cqe.done = svc_rdma_wc_receive;
 	ctxt->rc_recv_sge.addr = addr;
 	ctxt->rc_recv_sge.length = rdma->sc_max_req_size;
 	ctxt->rc_recv_sge.lkey = rdma->sc_pd->local_dma_lkey;
 	ctxt->rc_recv_buf = buffer;
 	ctxt->rc_temp = false;
-	वापस ctxt;
+	return ctxt;
 
 fail2:
-	kमुक्त(buffer);
+	kfree(buffer);
 fail1:
-	kमुक्त(ctxt);
+	kfree(ctxt);
 fail0:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम svc_rdma_recv_ctxt_destroy(काष्ठा svcxprt_rdma *rdma,
-				       काष्ठा svc_rdma_recv_ctxt *ctxt)
-अणु
+static void svc_rdma_recv_ctxt_destroy(struct svcxprt_rdma *rdma,
+				       struct svc_rdma_recv_ctxt *ctxt)
+{
 	ib_dma_unmap_single(rdma->sc_pd->device, ctxt->rc_recv_sge.addr,
 			    ctxt->rc_recv_sge.length, DMA_FROM_DEVICE);
-	kमुक्त(ctxt->rc_recv_buf);
-	kमुक्त(ctxt);
-पूर्ण
+	kfree(ctxt->rc_recv_buf);
+	kfree(ctxt);
+}
 
 /**
- * svc_rdma_recv_ctxts_destroy - Release all recv_ctxt's क्रम an xprt
- * @rdma: svcxprt_rdma being torn करोwn
+ * svc_rdma_recv_ctxts_destroy - Release all recv_ctxt's for an xprt
+ * @rdma: svcxprt_rdma being torn down
  *
  */
-व्योम svc_rdma_recv_ctxts_destroy(काष्ठा svcxprt_rdma *rdma)
-अणु
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
-	काष्ठा llist_node *node;
+void svc_rdma_recv_ctxts_destroy(struct svcxprt_rdma *rdma)
+{
+	struct svc_rdma_recv_ctxt *ctxt;
+	struct llist_node *node;
 
-	जबतक ((node = llist_del_first(&rdma->sc_recv_ctxts))) अणु
-		ctxt = llist_entry(node, काष्ठा svc_rdma_recv_ctxt, rc_node);
+	while ((node = llist_del_first(&rdma->sc_recv_ctxts))) {
+		ctxt = llist_entry(node, struct svc_rdma_recv_ctxt, rc_node);
 		svc_rdma_recv_ctxt_destroy(rdma, ctxt);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * svc_rdma_recv_ctxt_get - Allocate a recv_ctxt
  * @rdma: controlling svcxprt_rdma
  *
- * Returns a recv_ctxt or (rarely) शून्य अगर none are available.
+ * Returns a recv_ctxt or (rarely) NULL if none are available.
  */
-काष्ठा svc_rdma_recv_ctxt *svc_rdma_recv_ctxt_get(काष्ठा svcxprt_rdma *rdma)
-अणु
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
-	काष्ठा llist_node *node;
+struct svc_rdma_recv_ctxt *svc_rdma_recv_ctxt_get(struct svcxprt_rdma *rdma)
+{
+	struct svc_rdma_recv_ctxt *ctxt;
+	struct llist_node *node;
 
 	node = llist_del_first(&rdma->sc_recv_ctxts);
-	अगर (!node)
-		जाओ out_empty;
-	ctxt = llist_entry(node, काष्ठा svc_rdma_recv_ctxt, rc_node);
+	if (!node)
+		goto out_empty;
+	ctxt = llist_entry(node, struct svc_rdma_recv_ctxt, rc_node);
 
 out:
 	ctxt->rc_page_count = 0;
-	वापस ctxt;
+	return ctxt;
 
 out_empty:
 	ctxt = svc_rdma_recv_ctxt_alloc(rdma);
-	अगर (!ctxt)
-		वापस शून्य;
-	जाओ out;
-पूर्ण
+	if (!ctxt)
+		return NULL;
+	goto out;
+}
 
 /**
- * svc_rdma_recv_ctxt_put - Return recv_ctxt to मुक्त list
+ * svc_rdma_recv_ctxt_put - Return recv_ctxt to free list
  * @rdma: controlling svcxprt_rdma
- * @ctxt: object to वापस to the मुक्त list
+ * @ctxt: object to return to the free list
  *
  */
-व्योम svc_rdma_recv_ctxt_put(काष्ठा svcxprt_rdma *rdma,
-			    काष्ठा svc_rdma_recv_ctxt *ctxt)
-अणु
-	pcl_मुक्त(&ctxt->rc_call_pcl);
-	pcl_मुक्त(&ctxt->rc_पढ़ो_pcl);
-	pcl_मुक्त(&ctxt->rc_ग_लिखो_pcl);
-	pcl_मुक्त(&ctxt->rc_reply_pcl);
+void svc_rdma_recv_ctxt_put(struct svcxprt_rdma *rdma,
+			    struct svc_rdma_recv_ctxt *ctxt)
+{
+	pcl_free(&ctxt->rc_call_pcl);
+	pcl_free(&ctxt->rc_read_pcl);
+	pcl_free(&ctxt->rc_write_pcl);
+	pcl_free(&ctxt->rc_reply_pcl);
 
-	अगर (!ctxt->rc_temp)
+	if (!ctxt->rc_temp)
 		llist_add(&ctxt->rc_node, &rdma->sc_recv_ctxts);
-	अन्यथा
+	else
 		svc_rdma_recv_ctxt_destroy(rdma, ctxt);
-पूर्ण
+}
 
 /**
- * svc_rdma_release_rqst - Release transport-specअगरic per-rqst resources
+ * svc_rdma_release_rqst - Release transport-specific per-rqst resources
  * @rqstp: svc_rqst being released
  *
  * Ensure that the recv_ctxt is released whether or not a Reply
- * was sent. For example, the client could बंद the connection,
- * or svc_process could drop an RPC, beक्रमe the Reply is sent.
+ * was sent. For example, the client could close the connection,
+ * or svc_process could drop an RPC, before the Reply is sent.
  */
-व्योम svc_rdma_release_rqst(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_rdma_recv_ctxt *ctxt = rqstp->rq_xprt_ctxt;
-	काष्ठा svc_xprt *xprt = rqstp->rq_xprt;
-	काष्ठा svcxprt_rdma *rdma =
-		container_of(xprt, काष्ठा svcxprt_rdma, sc_xprt);
+void svc_rdma_release_rqst(struct svc_rqst *rqstp)
+{
+	struct svc_rdma_recv_ctxt *ctxt = rqstp->rq_xprt_ctxt;
+	struct svc_xprt *xprt = rqstp->rq_xprt;
+	struct svcxprt_rdma *rdma =
+		container_of(xprt, struct svcxprt_rdma, sc_xprt);
 
-	rqstp->rq_xprt_ctxt = शून्य;
-	अगर (ctxt)
+	rqstp->rq_xprt_ctxt = NULL;
+	if (ctxt)
 		svc_rdma_recv_ctxt_put(rdma, ctxt);
-पूर्ण
+}
 
-अटल bool svc_rdma_refresh_recvs(काष्ठा svcxprt_rdma *rdma,
-				   अचिन्हित पूर्णांक wanted, bool temp)
-अणु
-	स्थिर काष्ठा ib_recv_wr *bad_wr = शून्य;
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
-	काष्ठा ib_recv_wr *recv_chain;
-	पूर्णांक ret;
+static bool svc_rdma_refresh_recvs(struct svcxprt_rdma *rdma,
+				   unsigned int wanted, bool temp)
+{
+	const struct ib_recv_wr *bad_wr = NULL;
+	struct svc_rdma_recv_ctxt *ctxt;
+	struct ib_recv_wr *recv_chain;
+	int ret;
 
-	अगर (test_bit(XPT_CLOSE, &rdma->sc_xprt.xpt_flags))
-		वापस false;
+	if (test_bit(XPT_CLOSE, &rdma->sc_xprt.xpt_flags))
+		return false;
 
-	recv_chain = शून्य;
-	जबतक (wanted--) अणु
+	recv_chain = NULL;
+	while (wanted--) {
 		ctxt = svc_rdma_recv_ctxt_get(rdma);
-		अगर (!ctxt)
-			अवरोध;
+		if (!ctxt)
+			break;
 
 		trace_svcrdma_post_recv(ctxt);
 		ctxt->rc_temp = temp;
 		ctxt->rc_recv_wr.next = recv_chain;
 		recv_chain = &ctxt->rc_recv_wr;
 		rdma->sc_pending_recvs++;
-	पूर्ण
-	अगर (!recv_chain)
-		वापस false;
+	}
+	if (!recv_chain)
+		return false;
 
 	ret = ib_post_recv(rdma->sc_qp, recv_chain, &bad_wr);
-	अगर (ret)
-		जाओ err_मुक्त;
-	वापस true;
+	if (ret)
+		goto err_free;
+	return true;
 
-err_मुक्त:
+err_free:
 	trace_svcrdma_rq_post_err(rdma, ret);
-	जबतक (bad_wr) अणु
-		ctxt = container_of(bad_wr, काष्ठा svc_rdma_recv_ctxt,
+	while (bad_wr) {
+		ctxt = container_of(bad_wr, struct svc_rdma_recv_ctxt,
 				    rc_recv_wr);
 		bad_wr = bad_wr->next;
 		svc_rdma_recv_ctxt_put(rdma, ctxt);
-	पूर्ण
+	}
 	/* Since we're destroying the xprt, no need to reset
 	 * sc_pending_recvs. */
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
  * svc_rdma_post_recvs - Post initial set of Recv WRs
  * @rdma: fresh svcxprt_rdma
  *
- * Returns true अगर successful, otherwise false.
+ * Returns true if successful, otherwise false.
  */
-bool svc_rdma_post_recvs(काष्ठा svcxprt_rdma *rdma)
-अणु
-	वापस svc_rdma_refresh_recvs(rdma, rdma->sc_max_requests, true);
-पूर्ण
+bool svc_rdma_post_recvs(struct svcxprt_rdma *rdma)
+{
+	return svc_rdma_refresh_recvs(rdma, rdma->sc_max_requests, true);
+}
 
 /**
- * svc_rdma_wc_receive - Invoked by RDMA provider क्रम each polled Receive WC
+ * svc_rdma_wc_receive - Invoked by RDMA provider for each polled Receive WC
  * @cq: Completion Queue context
  * @wc: Work Completion object
  *
  */
-अटल व्योम svc_rdma_wc_receive(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
-अणु
-	काष्ठा svcxprt_rdma *rdma = cq->cq_context;
-	काष्ठा ib_cqe *cqe = wc->wr_cqe;
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
+static void svc_rdma_wc_receive(struct ib_cq *cq, struct ib_wc *wc)
+{
+	struct svcxprt_rdma *rdma = cq->cq_context;
+	struct ib_cqe *cqe = wc->wr_cqe;
+	struct svc_rdma_recv_ctxt *ctxt;
 
 	rdma->sc_pending_recvs--;
 
 	/* WARNING: Only wc->wr_cqe and wc->status are reliable */
-	ctxt = container_of(cqe, काष्ठा svc_rdma_recv_ctxt, rc_cqe);
+	ctxt = container_of(cqe, struct svc_rdma_recv_ctxt, rc_cqe);
 
 	trace_svcrdma_wc_receive(wc, &ctxt->rc_cid);
-	अगर (wc->status != IB_WC_SUCCESS)
-		जाओ flushed;
+	if (wc->status != IB_WC_SUCCESS)
+		goto flushed;
 
 	/* If receive posting fails, the connection is about to be
 	 * lost anyway. The server will not be able to send a reply
-	 * क्रम this RPC, and the client will retransmit this RPC
+	 * for this RPC, and the client will retransmit this RPC
 	 * anyway when it reconnects.
 	 *
-	 * Thereक्रमe we drop the Receive, even अगर status was SUCCESS
+	 * Therefore we drop the Receive, even if status was SUCCESS
 	 * to reduce the likelihood of replayed requests once the
 	 * client reconnects.
 	 */
-	अगर (rdma->sc_pending_recvs < rdma->sc_max_requests)
-		अगर (!svc_rdma_refresh_recvs(rdma, rdma->sc_recv_batch, false))
-			जाओ flushed;
+	if (rdma->sc_pending_recvs < rdma->sc_max_requests)
+		if (!svc_rdma_refresh_recvs(rdma, rdma->sc_recv_batch, false))
+			goto flushed;
 
 	/* All wc fields are now known to be valid */
 	ctxt->rc_byte_len = wc->byte_len;
 
 	spin_lock(&rdma->sc_rq_dto_lock);
 	list_add_tail(&ctxt->rc_list, &rdma->sc_rq_dto_q);
-	/* Note the unlock pairs with the smp_rmb in svc_xprt_पढ़ोy: */
+	/* Note the unlock pairs with the smp_rmb in svc_xprt_ready: */
 	set_bit(XPT_DATA, &rdma->sc_xprt.xpt_flags);
 	spin_unlock(&rdma->sc_rq_dto_lock);
-	अगर (!test_bit(RDMAXPRT_CONN_PENDING, &rdma->sc_flags))
+	if (!test_bit(RDMAXPRT_CONN_PENDING, &rdma->sc_flags))
 		svc_xprt_enqueue(&rdma->sc_xprt);
-	वापस;
+	return;
 
 flushed:
 	svc_rdma_recv_ctxt_put(rdma, ctxt);
-	svc_xprt_deferred_बंद(&rdma->sc_xprt);
-पूर्ण
+	svc_xprt_deferred_close(&rdma->sc_xprt);
+}
 
 /**
  * svc_rdma_flush_recv_queues - Drain pending Receive work
- * @rdma: svcxprt_rdma being shut करोwn
+ * @rdma: svcxprt_rdma being shut down
  *
  */
-व्योम svc_rdma_flush_recv_queues(काष्ठा svcxprt_rdma *rdma)
-अणु
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
+void svc_rdma_flush_recv_queues(struct svcxprt_rdma *rdma)
+{
+	struct svc_rdma_recv_ctxt *ctxt;
 
-	जबतक ((ctxt = svc_rdma_next_recv_ctxt(&rdma->sc_rq_dto_q))) अणु
+	while ((ctxt = svc_rdma_next_recv_ctxt(&rdma->sc_rq_dto_q))) {
 		list_del(&ctxt->rc_list);
 		svc_rdma_recv_ctxt_put(rdma, ctxt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम svc_rdma_build_arg_xdr(काष्ठा svc_rqst *rqstp,
-				   काष्ठा svc_rdma_recv_ctxt *ctxt)
-अणु
-	काष्ठा xdr_buf *arg = &rqstp->rq_arg;
+static void svc_rdma_build_arg_xdr(struct svc_rqst *rqstp,
+				   struct svc_rdma_recv_ctxt *ctxt)
+{
+	struct xdr_buf *arg = &rqstp->rq_arg;
 
 	arg->head[0].iov_base = ctxt->rc_recv_buf;
 	arg->head[0].iov_len = ctxt->rc_byte_len;
-	arg->tail[0].iov_base = शून्य;
+	arg->tail[0].iov_base = NULL;
 	arg->tail[0].iov_len = 0;
 	arg->page_len = 0;
 	arg->page_base = 0;
 	arg->buflen = ctxt->rc_byte_len;
 	arg->len = ctxt->rc_byte_len;
-पूर्ण
+}
 
 /**
- * xdr_count_पढ़ो_segments - Count number of Read segments in Read list
+ * xdr_count_read_segments - Count number of Read segments in Read list
  * @rctxt: Ingress receive context
  * @p: Start of an un-decoded Read list
  *
- * Beक्रमe allocating anything, ensure the ingress Read list is safe
+ * Before allocating anything, ensure the ingress Read list is safe
  * to use.
  *
  * The segment count is limited to how many segments can fit in the
  * transport header without overflowing the buffer. That's about 40
- * Read segments क्रम a 1KB अंतरभूत threshold.
+ * Read segments for a 1KB inline threshold.
  *
  * Return values:
- *   %true: Read list is valid. @rctxt's xdr_stream is updated to poपूर्णांक
- *	    to the first byte past the Read list. rc_पढ़ो_pcl and
+ *   %true: Read list is valid. @rctxt's xdr_stream is updated to point
+ *	    to the first byte past the Read list. rc_read_pcl and
  *	    rc_call_pcl cl_count fields are set to the number of
  *	    Read segments in the list.
  *  %false: Read list is corrupt. @rctxt's xdr_stream is left in an
  *	    unknown state.
  */
-अटल bool xdr_count_पढ़ो_segments(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p)
-अणु
+static bool xdr_count_read_segments(struct svc_rdma_recv_ctxt *rctxt, __be32 *p)
+{
 	rctxt->rc_call_pcl.cl_count = 0;
-	rctxt->rc_पढ़ो_pcl.cl_count = 0;
-	जबतक (xdr_item_is_present(p)) अणु
+	rctxt->rc_read_pcl.cl_count = 0;
+	while (xdr_item_is_present(p)) {
 		u32 position, handle, length;
 		u64 offset;
 
-		p = xdr_अंतरभूत_decode(&rctxt->rc_stream,
-				      rpcrdma_पढ़ोseg_maxsz * माप(*p));
-		अगर (!p)
-			वापस false;
+		p = xdr_inline_decode(&rctxt->rc_stream,
+				      rpcrdma_readseg_maxsz * sizeof(*p));
+		if (!p)
+			return false;
 
-		xdr_decode_पढ़ो_segment(p, &position, &handle,
+		xdr_decode_read_segment(p, &position, &handle,
 					    &length, &offset);
-		अगर (position) अणु
-			अगर (position & 3)
-				वापस false;
-			++rctxt->rc_पढ़ो_pcl.cl_count;
-		पूर्ण अन्यथा अणु
+		if (position) {
+			if (position & 3)
+				return false;
+			++rctxt->rc_read_pcl.cl_count;
+		} else {
 			++rctxt->rc_call_pcl.cl_count;
-		पूर्ण
+		}
 
-		p = xdr_अंतरभूत_decode(&rctxt->rc_stream, माप(*p));
-		अगर (!p)
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		p = xdr_inline_decode(&rctxt->rc_stream, sizeof(*p));
+		if (!p)
+			return false;
+	}
+	return true;
+}
 
 /* Sanity check the Read list.
  *
  * Sanity checks:
- * - Read list करोes not overflow Receive buffer.
+ * - Read list does not overflow Receive buffer.
  * - Chunk size limited by largest NFS data payload.
  *
  * Return values:
  *   %true: Read list is valid. @rctxt's xdr_stream is updated
- *	    to poपूर्णांक to the first byte past the Read list.
+ *	    to point to the first byte past the Read list.
  *  %false: Read list is corrupt. @rctxt's xdr_stream is left
  *	    in an unknown state.
  */
-अटल bool xdr_check_पढ़ो_list(काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static bool xdr_check_read_list(struct svc_rdma_recv_ctxt *rctxt)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(&rctxt->rc_stream, माप(*p));
-	अगर (!p)
-		वापस false;
-	अगर (!xdr_count_पढ़ो_segments(rctxt, p))
-		वापस false;
-	अगर (!pcl_alloc_call(rctxt, p))
-		वापस false;
-	वापस pcl_alloc_पढ़ो(rctxt, p);
-पूर्ण
+	p = xdr_inline_decode(&rctxt->rc_stream, sizeof(*p));
+	if (!p)
+		return false;
+	if (!xdr_count_read_segments(rctxt, p))
+		return false;
+	if (!pcl_alloc_call(rctxt, p))
+		return false;
+	return pcl_alloc_read(rctxt, p);
+}
 
-अटल bool xdr_check_ग_लिखो_chunk(काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static bool xdr_check_write_chunk(struct svc_rdma_recv_ctxt *rctxt)
+{
 	u32 segcount;
 	__be32 *p;
 
-	अगर (xdr_stream_decode_u32(&rctxt->rc_stream, &segcount))
-		वापस false;
+	if (xdr_stream_decode_u32(&rctxt->rc_stream, &segcount))
+		return false;
 
 	/* A bogus segcount causes this buffer overflow check to fail. */
-	p = xdr_अंतरभूत_decode(&rctxt->rc_stream,
-			      segcount * rpcrdma_segment_maxsz * माप(*p));
-	वापस p != शून्य;
-पूर्ण
+	p = xdr_inline_decode(&rctxt->rc_stream,
+			      segcount * rpcrdma_segment_maxsz * sizeof(*p));
+	return p != NULL;
+}
 
 /**
- * xdr_count_ग_लिखो_chunks - Count number of Write chunks in Write list
+ * xdr_count_write_chunks - Count number of Write chunks in Write list
  * @rctxt: Received header and decoding state
  * @p: start of an un-decoded Write list
  *
- * Beक्रमe allocating anything, ensure the ingress Write list is
+ * Before allocating anything, ensure the ingress Write list is
  * safe to use.
  *
  * Return values:
  *       %true: Write list is valid. @rctxt's xdr_stream is updated
- *		to poपूर्णांक to the first byte past the Write list, and
- *		the number of Write chunks is in rc_ग_लिखो_pcl.cl_count.
+ *		to point to the first byte past the Write list, and
+ *		the number of Write chunks is in rc_write_pcl.cl_count.
  *      %false: Write list is corrupt. @rctxt's xdr_stream is left
  *		in an indeterminate state.
  */
-अटल bool xdr_count_ग_लिखो_chunks(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p)
-अणु
-	rctxt->rc_ग_लिखो_pcl.cl_count = 0;
-	जबतक (xdr_item_is_present(p)) अणु
-		अगर (!xdr_check_ग_लिखो_chunk(rctxt))
-			वापस false;
-		++rctxt->rc_ग_लिखो_pcl.cl_count;
-		p = xdr_अंतरभूत_decode(&rctxt->rc_stream, माप(*p));
-		अगर (!p)
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+static bool xdr_count_write_chunks(struct svc_rdma_recv_ctxt *rctxt, __be32 *p)
+{
+	rctxt->rc_write_pcl.cl_count = 0;
+	while (xdr_item_is_present(p)) {
+		if (!xdr_check_write_chunk(rctxt))
+			return false;
+		++rctxt->rc_write_pcl.cl_count;
+		p = xdr_inline_decode(&rctxt->rc_stream, sizeof(*p));
+		if (!p)
+			return false;
+	}
+	return true;
+}
 
 /* Sanity check the Write list.
  *
@@ -520,346 +519,346 @@ flushed:
  * - This implementation currently supports only one Write chunk.
  *
  * Sanity checks:
- * - Write list करोes not overflow Receive buffer.
+ * - Write list does not overflow Receive buffer.
  * - Chunk size limited by largest NFS data payload.
  *
  * Return values:
  *       %true: Write list is valid. @rctxt's xdr_stream is updated
- *		to poपूर्णांक to the first byte past the Write list.
+ *		to point to the first byte past the Write list.
  *      %false: Write list is corrupt. @rctxt's xdr_stream is left
  *		in an unknown state.
  */
-अटल bool xdr_check_ग_लिखो_list(काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static bool xdr_check_write_list(struct svc_rdma_recv_ctxt *rctxt)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(&rctxt->rc_stream, माप(*p));
-	अगर (!p)
-		वापस false;
-	अगर (!xdr_count_ग_लिखो_chunks(rctxt, p))
-		वापस false;
-	अगर (!pcl_alloc_ग_लिखो(rctxt, &rctxt->rc_ग_लिखो_pcl, p))
-		वापस false;
+	p = xdr_inline_decode(&rctxt->rc_stream, sizeof(*p));
+	if (!p)
+		return false;
+	if (!xdr_count_write_chunks(rctxt, p))
+		return false;
+	if (!pcl_alloc_write(rctxt, &rctxt->rc_write_pcl, p))
+		return false;
 
-	rctxt->rc_cur_result_payload = pcl_first_chunk(&rctxt->rc_ग_लिखो_pcl);
-	वापस true;
-पूर्ण
+	rctxt->rc_cur_result_payload = pcl_first_chunk(&rctxt->rc_write_pcl);
+	return true;
+}
 
 /* Sanity check the Reply chunk.
  *
  * Sanity checks:
- * - Reply chunk करोes not overflow Receive buffer.
+ * - Reply chunk does not overflow Receive buffer.
  * - Chunk size limited by largest NFS data payload.
  *
  * Return values:
  *       %true: Reply chunk is valid. @rctxt's xdr_stream is updated
- *		to poपूर्णांक to the first byte past the Reply chunk.
+ *		to point to the first byte past the Reply chunk.
  *      %false: Reply chunk is corrupt. @rctxt's xdr_stream is left
  *		in an unknown state.
  */
-अटल bool xdr_check_reply_chunk(काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static bool xdr_check_reply_chunk(struct svc_rdma_recv_ctxt *rctxt)
+{
 	__be32 *p;
 
-	p = xdr_अंतरभूत_decode(&rctxt->rc_stream, माप(*p));
-	अगर (!p)
-		वापस false;
+	p = xdr_inline_decode(&rctxt->rc_stream, sizeof(*p));
+	if (!p)
+		return false;
 
-	अगर (!xdr_item_is_present(p))
-		वापस true;
-	अगर (!xdr_check_ग_लिखो_chunk(rctxt))
-		वापस false;
+	if (!xdr_item_is_present(p))
+		return true;
+	if (!xdr_check_write_chunk(rctxt))
+		return false;
 
 	rctxt->rc_reply_pcl.cl_count = 1;
-	वापस pcl_alloc_ग_लिखो(rctxt, &rctxt->rc_reply_pcl, p);
-पूर्ण
+	return pcl_alloc_write(rctxt, &rctxt->rc_reply_pcl, p);
+}
 
-/* RPC-over-RDMA Version One निजी extension: Remote Invalidation.
- * Responder's choice: requester संकेतs it can handle Send With
+/* RPC-over-RDMA Version One private extension: Remote Invalidation.
+ * Responder's choice: requester signals it can handle Send With
  * Invalidate, and responder chooses one R_key to invalidate.
  *
  * If there is exactly one distinct R_key in the received transport
  * header, set rc_inv_rkey to that R_key. Otherwise, set it to zero.
  */
-अटल व्योम svc_rdma_get_inv_rkey(काष्ठा svcxprt_rdma *rdma,
-				  काष्ठा svc_rdma_recv_ctxt *ctxt)
-अणु
-	काष्ठा svc_rdma_segment *segment;
-	काष्ठा svc_rdma_chunk *chunk;
+static void svc_rdma_get_inv_rkey(struct svcxprt_rdma *rdma,
+				  struct svc_rdma_recv_ctxt *ctxt)
+{
+	struct svc_rdma_segment *segment;
+	struct svc_rdma_chunk *chunk;
 	u32 inv_rkey;
 
 	ctxt->rc_inv_rkey = 0;
 
-	अगर (!rdma->sc_snd_w_inv)
-		वापस;
+	if (!rdma->sc_snd_w_inv)
+		return;
 
 	inv_rkey = 0;
-	pcl_क्रम_each_chunk(chunk, &ctxt->rc_call_pcl) अणु
-		pcl_क्रम_each_segment(segment, chunk) अणु
-			अगर (inv_rkey == 0)
+	pcl_for_each_chunk(chunk, &ctxt->rc_call_pcl) {
+		pcl_for_each_segment(segment, chunk) {
+			if (inv_rkey == 0)
 				inv_rkey = segment->rs_handle;
-			अन्यथा अगर (inv_rkey != segment->rs_handle)
-				वापस;
-		पूर्ण
-	पूर्ण
-	pcl_क्रम_each_chunk(chunk, &ctxt->rc_पढ़ो_pcl) अणु
-		pcl_क्रम_each_segment(segment, chunk) अणु
-			अगर (inv_rkey == 0)
+			else if (inv_rkey != segment->rs_handle)
+				return;
+		}
+	}
+	pcl_for_each_chunk(chunk, &ctxt->rc_read_pcl) {
+		pcl_for_each_segment(segment, chunk) {
+			if (inv_rkey == 0)
 				inv_rkey = segment->rs_handle;
-			अन्यथा अगर (inv_rkey != segment->rs_handle)
-				वापस;
-		पूर्ण
-	पूर्ण
-	pcl_क्रम_each_chunk(chunk, &ctxt->rc_ग_लिखो_pcl) अणु
-		pcl_क्रम_each_segment(segment, chunk) अणु
-			अगर (inv_rkey == 0)
+			else if (inv_rkey != segment->rs_handle)
+				return;
+		}
+	}
+	pcl_for_each_chunk(chunk, &ctxt->rc_write_pcl) {
+		pcl_for_each_segment(segment, chunk) {
+			if (inv_rkey == 0)
 				inv_rkey = segment->rs_handle;
-			अन्यथा अगर (inv_rkey != segment->rs_handle)
-				वापस;
-		पूर्ण
-	पूर्ण
-	pcl_क्रम_each_chunk(chunk, &ctxt->rc_reply_pcl) अणु
-		pcl_क्रम_each_segment(segment, chunk) अणु
-			अगर (inv_rkey == 0)
+			else if (inv_rkey != segment->rs_handle)
+				return;
+		}
+	}
+	pcl_for_each_chunk(chunk, &ctxt->rc_reply_pcl) {
+		pcl_for_each_segment(segment, chunk) {
+			if (inv_rkey == 0)
 				inv_rkey = segment->rs_handle;
-			अन्यथा अगर (inv_rkey != segment->rs_handle)
-				वापस;
-		पूर्ण
-	पूर्ण
+			else if (inv_rkey != segment->rs_handle)
+				return;
+		}
+	}
 	ctxt->rc_inv_rkey = inv_rkey;
-पूर्ण
+}
 
 /**
  * svc_rdma_xdr_decode_req - Decode the transport header
  * @rq_arg: xdr_buf containing ingress RPC/RDMA message
  * @rctxt: state of decoding
  *
- * On entry, xdr->head[0].iov_base poपूर्णांकs to first byte of the
+ * On entry, xdr->head[0].iov_base points to first byte of the
  * RPC-over-RDMA transport header.
  *
- * On successful निकास, head[0] poपूर्णांकs to first byte past the
+ * On successful exit, head[0] points to first byte past the
  * RPC-over-RDMA header. For RDMA_MSG, this is the RPC message.
  *
- * The length of the RPC-over-RDMA header is वापसed.
+ * The length of the RPC-over-RDMA header is returned.
  *
  * Assumptions:
  * - The transport header is entirely contained in the head iovec.
  */
-अटल पूर्णांक svc_rdma_xdr_decode_req(काष्ठा xdr_buf *rq_arg,
-				   काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static int svc_rdma_xdr_decode_req(struct xdr_buf *rq_arg,
+				   struct svc_rdma_recv_ctxt *rctxt)
+{
 	__be32 *p, *rdma_argp;
-	अचिन्हित पूर्णांक hdr_len;
+	unsigned int hdr_len;
 
 	rdma_argp = rq_arg->head[0].iov_base;
-	xdr_init_decode(&rctxt->rc_stream, rq_arg, rdma_argp, शून्य);
+	xdr_init_decode(&rctxt->rc_stream, rq_arg, rdma_argp, NULL);
 
-	p = xdr_अंतरभूत_decode(&rctxt->rc_stream,
-			      rpcrdma_fixed_maxsz * माप(*p));
-	अगर (unlikely(!p))
-		जाओ out_लघु;
+	p = xdr_inline_decode(&rctxt->rc_stream,
+			      rpcrdma_fixed_maxsz * sizeof(*p));
+	if (unlikely(!p))
+		goto out_short;
 	p++;
-	अगर (*p != rpcrdma_version)
-		जाओ out_version;
+	if (*p != rpcrdma_version)
+		goto out_version;
 	p += 2;
 	rctxt->rc_msgtype = *p;
-	चयन (rctxt->rc_msgtype) अणु
-	हाल rdma_msg:
-		अवरोध;
-	हाल rdma_nomsg:
-		अवरोध;
-	हाल rdma_करोne:
-		जाओ out_drop;
-	हाल rdma_error:
-		जाओ out_drop;
-	शेष:
-		जाओ out_proc;
-	पूर्ण
+	switch (rctxt->rc_msgtype) {
+	case rdma_msg:
+		break;
+	case rdma_nomsg:
+		break;
+	case rdma_done:
+		goto out_drop;
+	case rdma_error:
+		goto out_drop;
+	default:
+		goto out_proc;
+	}
 
-	अगर (!xdr_check_पढ़ो_list(rctxt))
-		जाओ out_inval;
-	अगर (!xdr_check_ग_लिखो_list(rctxt))
-		जाओ out_inval;
-	अगर (!xdr_check_reply_chunk(rctxt))
-		जाओ out_inval;
+	if (!xdr_check_read_list(rctxt))
+		goto out_inval;
+	if (!xdr_check_write_list(rctxt))
+		goto out_inval;
+	if (!xdr_check_reply_chunk(rctxt))
+		goto out_inval;
 
 	rq_arg->head[0].iov_base = rctxt->rc_stream.p;
 	hdr_len = xdr_stream_pos(&rctxt->rc_stream);
 	rq_arg->head[0].iov_len -= hdr_len;
 	rq_arg->len -= hdr_len;
 	trace_svcrdma_decode_rqst(rctxt, rdma_argp, hdr_len);
-	वापस hdr_len;
+	return hdr_len;
 
-out_लघु:
-	trace_svcrdma_decode_लघु_err(rctxt, rq_arg->len);
-	वापस -EINVAL;
+out_short:
+	trace_svcrdma_decode_short_err(rctxt, rq_arg->len);
+	return -EINVAL;
 
 out_version:
 	trace_svcrdma_decode_badvers_err(rctxt, rdma_argp);
-	वापस -EPROTONOSUPPORT;
+	return -EPROTONOSUPPORT;
 
 out_drop:
 	trace_svcrdma_decode_drop_err(rctxt, rdma_argp);
-	वापस 0;
+	return 0;
 
 out_proc:
 	trace_svcrdma_decode_badproc_err(rctxt, rdma_argp);
-	वापस -EINVAL;
+	return -EINVAL;
 
 out_inval:
 	trace_svcrdma_decode_parse_err(rctxt, rdma_argp);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम svc_rdma_send_error(काष्ठा svcxprt_rdma *rdma,
-				काष्ठा svc_rdma_recv_ctxt *rctxt,
-				पूर्णांक status)
-अणु
-	काष्ठा svc_rdma_send_ctxt *sctxt;
+static void svc_rdma_send_error(struct svcxprt_rdma *rdma,
+				struct svc_rdma_recv_ctxt *rctxt,
+				int status)
+{
+	struct svc_rdma_send_ctxt *sctxt;
 
 	sctxt = svc_rdma_send_ctxt_get(rdma);
-	अगर (!sctxt)
-		वापस;
+	if (!sctxt)
+		return;
 	svc_rdma_send_error_msg(rdma, sctxt, rctxt, status);
-पूर्ण
+}
 
 /* By convention, backchannel calls arrive via rdma_msg type
  * messages, and never populate the chunk lists. This makes
  * the RPC/RDMA header small and fixed in size, so it is
- * straightक्रमward to check the RPC header's direction field.
+ * straightforward to check the RPC header's direction field.
  */
-अटल bool svc_rdma_is_reverse_direction_reply(काष्ठा svc_xprt *xprt,
-						काष्ठा svc_rdma_recv_ctxt *rctxt)
-अणु
+static bool svc_rdma_is_reverse_direction_reply(struct svc_xprt *xprt,
+						struct svc_rdma_recv_ctxt *rctxt)
+{
 	__be32 *p = rctxt->rc_recv_buf;
 
-	अगर (!xprt->xpt_bc_xprt)
-		वापस false;
+	if (!xprt->xpt_bc_xprt)
+		return false;
 
-	अगर (rctxt->rc_msgtype != rdma_msg)
-		वापस false;
+	if (rctxt->rc_msgtype != rdma_msg)
+		return false;
 
-	अगर (!pcl_is_empty(&rctxt->rc_call_pcl))
-		वापस false;
-	अगर (!pcl_is_empty(&rctxt->rc_पढ़ो_pcl))
-		वापस false;
-	अगर (!pcl_is_empty(&rctxt->rc_ग_लिखो_pcl))
-		वापस false;
-	अगर (!pcl_is_empty(&rctxt->rc_reply_pcl))
-		वापस false;
+	if (!pcl_is_empty(&rctxt->rc_call_pcl))
+		return false;
+	if (!pcl_is_empty(&rctxt->rc_read_pcl))
+		return false;
+	if (!pcl_is_empty(&rctxt->rc_write_pcl))
+		return false;
+	if (!pcl_is_empty(&rctxt->rc_reply_pcl))
+		return false;
 
 	/* RPC call direction */
-	अगर (*(p + 8) == cpu_to_be32(RPC_CALL))
-		वापस false;
+	if (*(p + 8) == cpu_to_be32(RPC_CALL))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * svc_rdma_recvfrom - Receive an RPC call
- * @rqstp: request काष्ठाure पूर्णांकo which to receive an RPC Call
+ * @rqstp: request structure into which to receive an RPC Call
  *
  * Returns:
  *	The positive number of bytes in the RPC Call message,
- *	%0 अगर there were no Calls पढ़ोy to वापस,
- *	%-EINVAL अगर the Read chunk data is too large,
- *	%-ENOMEM अगर rdma_rw context pool was exhausted,
- *	%-ENOTCONN अगर posting failed (connection is lost),
- *	%-EIO अगर rdma_rw initialization failed (DMA mapping, etc).
+ *	%0 if there were no Calls ready to return,
+ *	%-EINVAL if the Read chunk data is too large,
+ *	%-ENOMEM if rdma_rw context pool was exhausted,
+ *	%-ENOTCONN if posting failed (connection is lost),
+ *	%-EIO if rdma_rw initialization failed (DMA mapping, etc).
  *
  * Called in a loop when XPT_DATA is set. XPT_DATA is cleared only
- * when there are no reमुख्यing ctxt's to process.
+ * when there are no remaining ctxt's to process.
  *
- * The next ctxt is हटाओd from the "receive" lists.
+ * The next ctxt is removed from the "receive" lists.
  *
  * - If the ctxt completes a Read, then finish assembling the Call
- *   message and वापस the number of bytes in the message.
+ *   message and return the number of bytes in the message.
  *
- * - If the ctxt completes a Receive, then स्थिरruct the Call
+ * - If the ctxt completes a Receive, then construct the Call
  *   message from the contents of the Receive buffer.
  *
  *   - If there are no Read chunks in this message, then finish
- *     assembling the Call message and वापस the number of bytes
+ *     assembling the Call message and return the number of bytes
  *     in the message.
  *
  *   - If there are Read chunks in this message, post Read WRs to
- *     pull that payload and वापस 0.
+ *     pull that payload and return 0.
  */
-पूर्णांक svc_rdma_recvfrom(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा svc_xprt *xprt = rqstp->rq_xprt;
-	काष्ठा svcxprt_rdma *rdma_xprt =
-		container_of(xprt, काष्ठा svcxprt_rdma, sc_xprt);
-	काष्ठा svc_rdma_recv_ctxt *ctxt;
-	पूर्णांक ret;
+int svc_rdma_recvfrom(struct svc_rqst *rqstp)
+{
+	struct svc_xprt *xprt = rqstp->rq_xprt;
+	struct svcxprt_rdma *rdma_xprt =
+		container_of(xprt, struct svcxprt_rdma, sc_xprt);
+	struct svc_rdma_recv_ctxt *ctxt;
+	int ret;
 
-	rqstp->rq_xprt_ctxt = शून्य;
+	rqstp->rq_xprt_ctxt = NULL;
 
-	ctxt = शून्य;
+	ctxt = NULL;
 	spin_lock(&rdma_xprt->sc_rq_dto_lock);
 	ctxt = svc_rdma_next_recv_ctxt(&rdma_xprt->sc_rq_dto_q);
-	अगर (ctxt)
+	if (ctxt)
 		list_del(&ctxt->rc_list);
-	अन्यथा
+	else
 		/* No new incoming requests, terminate the loop */
 		clear_bit(XPT_DATA, &xprt->xpt_flags);
 	spin_unlock(&rdma_xprt->sc_rq_dto_lock);
 
-	/* Unblock the transport क्रम the next receive */
+	/* Unblock the transport for the next receive */
 	svc_xprt_received(xprt);
-	अगर (!ctxt)
-		वापस 0;
+	if (!ctxt)
+		return 0;
 
 	percpu_counter_inc(&svcrdma_stat_recv);
-	ib_dma_sync_single_क्रम_cpu(rdma_xprt->sc_pd->device,
+	ib_dma_sync_single_for_cpu(rdma_xprt->sc_pd->device,
 				   ctxt->rc_recv_sge.addr, ctxt->rc_byte_len,
 				   DMA_FROM_DEVICE);
 	svc_rdma_build_arg_xdr(rqstp, ctxt);
 
 	/* Prevent svc_xprt_release from releasing pages in rq_pages
-	 * अगर we वापस 0 or an error.
+	 * if we return 0 or an error.
 	 */
 	rqstp->rq_respages = rqstp->rq_pages;
 	rqstp->rq_next_page = rqstp->rq_respages;
 
 	ret = svc_rdma_xdr_decode_req(&rqstp->rq_arg, ctxt);
-	अगर (ret < 0)
-		जाओ out_err;
-	अगर (ret == 0)
-		जाओ out_drop;
+	if (ret < 0)
+		goto out_err;
+	if (ret == 0)
+		goto out_drop;
 	rqstp->rq_xprt_hlen = ret;
 
-	अगर (svc_rdma_is_reverse_direction_reply(xprt, ctxt))
-		जाओ out_backchannel;
+	if (svc_rdma_is_reverse_direction_reply(xprt, ctxt))
+		goto out_backchannel;
 
 	svc_rdma_get_inv_rkey(rdma_xprt, ctxt);
 
-	अगर (!pcl_is_empty(&ctxt->rc_पढ़ो_pcl) ||
-	    !pcl_is_empty(&ctxt->rc_call_pcl)) अणु
-		ret = svc_rdma_process_पढ़ो_list(rdma_xprt, rqstp, ctxt);
-		अगर (ret < 0)
-			जाओ out_पढ़ोfail;
-	पूर्ण
+	if (!pcl_is_empty(&ctxt->rc_read_pcl) ||
+	    !pcl_is_empty(&ctxt->rc_call_pcl)) {
+		ret = svc_rdma_process_read_list(rdma_xprt, rqstp, ctxt);
+		if (ret < 0)
+			goto out_readfail;
+	}
 
 	rqstp->rq_xprt_ctxt = ctxt;
 	rqstp->rq_prot = IPPROTO_MAX;
 	svc_xprt_copy_addrs(rqstp, xprt);
-	वापस rqstp->rq_arg.len;
+	return rqstp->rq_arg.len;
 
 out_err:
 	svc_rdma_send_error(rdma_xprt, ctxt, ret);
 	svc_rdma_recv_ctxt_put(rdma_xprt, ctxt);
-	वापस 0;
+	return 0;
 
-out_पढ़ोfail:
-	अगर (ret == -EINVAL)
+out_readfail:
+	if (ret == -EINVAL)
 		svc_rdma_send_error(rdma_xprt, ctxt, ret);
 	svc_rdma_recv_ctxt_put(rdma_xprt, ctxt);
-	वापस ret;
+	return ret;
 
 out_backchannel:
 	svc_rdma_handle_bc_reply(rqstp, ctxt);
 out_drop:
 	svc_rdma_recv_ctxt_put(rdma_xprt, ctxt);
-	वापस 0;
-पूर्ण
+	return 0;
+}

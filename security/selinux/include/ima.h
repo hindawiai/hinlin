@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2021 Microsoft Corporation
  *
  * Author: Lakshmi Ramasubramanian (nramas@linux.microsoft.com)
  *
- * Measure critical data काष्ठाures मुख्यtaपूर्णांकed by SELinux
- * using IMA subप्रणाली.
+ * Measure critical data structures maintainted by SELinux
+ * using IMA subsystem.
  */
 
-#अगर_अघोषित _SELINUX_IMA_H_
-#घोषणा _SELINUX_IMA_H_
+#ifndef _SELINUX_IMA_H_
+#define _SELINUX_IMA_H_
 
-#समावेश "security.h"
+#include "security.h"
 
-#अगर_घोषित CONFIG_IMA
-बाह्य व्योम selinux_ima_measure_state(काष्ठा selinux_state *selinux_state);
-बाह्य व्योम selinux_ima_measure_state_locked(
-			काष्ठा selinux_state *selinux_state);
-#अन्यथा
-अटल अंतरभूत व्योम selinux_ima_measure_state(काष्ठा selinux_state *selinux_state)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम selinux_ima_measure_state_locked(
-			काष्ठा selinux_state *selinux_state)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_IMA
+extern void selinux_ima_measure_state(struct selinux_state *selinux_state);
+extern void selinux_ima_measure_state_locked(
+			struct selinux_state *selinux_state);
+#else
+static inline void selinux_ima_measure_state(struct selinux_state *selinux_state)
+{
+}
+static inline void selinux_ima_measure_state_locked(
+			struct selinux_state *selinux_state)
+{
+}
+#endif
 
-#पूर्ण_अगर	/* _SELINUX_IMA_H_ */
+#endif	/* _SELINUX_IMA_H_ */

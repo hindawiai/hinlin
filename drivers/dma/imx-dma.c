@@ -1,397 +1,396 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // drivers/dma/imx-dma.c
 //
-// This file contains a driver क्रम the Freescale i.MX DMA engine
+// This file contains a driver for the Freescale i.MX DMA engine
 // found on i.MX1/21/27
 //
 // Copyright 2010 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 // Copyright 2012 Javier Martin, Vista Silicon <javier.martin@vista-silicon.com>
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_dma.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/dmaengine.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/of_dma.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/platक्रमm_data/dma-imx.h>
+#include <asm/irq.h>
+#include <linux/platform_data/dma-imx.h>
 
-#समावेश "dmaengine.h"
-#घोषणा IMXDMA_MAX_CHAN_DESCRIPTORS	16
-#घोषणा IMX_DMA_CHANNELS  16
+#include "dmaengine.h"
+#define IMXDMA_MAX_CHAN_DESCRIPTORS	16
+#define IMX_DMA_CHANNELS  16
 
-#घोषणा IMX_DMA_2D_SLOTS	2
-#घोषणा IMX_DMA_2D_SLOT_A	0
-#घोषणा IMX_DMA_2D_SLOT_B	1
+#define IMX_DMA_2D_SLOTS	2
+#define IMX_DMA_2D_SLOT_A	0
+#define IMX_DMA_2D_SLOT_B	1
 
-#घोषणा IMX_DMA_LENGTH_LOOP	((अचिन्हित पूर्णांक)-1)
-#घोषणा IMX_DMA_MEMSIZE_32	(0 << 4)
-#घोषणा IMX_DMA_MEMSIZE_8	(1 << 4)
-#घोषणा IMX_DMA_MEMSIZE_16	(2 << 4)
-#घोषणा IMX_DMA_TYPE_LINEAR	(0 << 10)
-#घोषणा IMX_DMA_TYPE_2D		(1 << 10)
-#घोषणा IMX_DMA_TYPE_FIFO	(2 << 10)
+#define IMX_DMA_LENGTH_LOOP	((unsigned int)-1)
+#define IMX_DMA_MEMSIZE_32	(0 << 4)
+#define IMX_DMA_MEMSIZE_8	(1 << 4)
+#define IMX_DMA_MEMSIZE_16	(2 << 4)
+#define IMX_DMA_TYPE_LINEAR	(0 << 10)
+#define IMX_DMA_TYPE_2D		(1 << 10)
+#define IMX_DMA_TYPE_FIFO	(2 << 10)
 
-#घोषणा IMX_DMA_ERR_BURST     (1 << 0)
-#घोषणा IMX_DMA_ERR_REQUEST   (1 << 1)
-#घोषणा IMX_DMA_ERR_TRANSFER  (1 << 2)
-#घोषणा IMX_DMA_ERR_BUFFER    (1 << 3)
-#घोषणा IMX_DMA_ERR_TIMEOUT   (1 << 4)
+#define IMX_DMA_ERR_BURST     (1 << 0)
+#define IMX_DMA_ERR_REQUEST   (1 << 1)
+#define IMX_DMA_ERR_TRANSFER  (1 << 2)
+#define IMX_DMA_ERR_BUFFER    (1 << 3)
+#define IMX_DMA_ERR_TIMEOUT   (1 << 4)
 
-#घोषणा DMA_DCR     0x00		/* Control Register */
-#घोषणा DMA_DISR    0x04		/* Interrupt status Register */
-#घोषणा DMA_DIMR    0x08		/* Interrupt mask Register */
-#घोषणा DMA_DBTOSR  0x0c		/* Burst समयout status Register */
-#घोषणा DMA_DRTOSR  0x10		/* Request समयout Register */
-#घोषणा DMA_DSESR   0x14		/* Transfer Error Status Register */
-#घोषणा DMA_DBOSR   0x18		/* Buffer overflow status Register */
-#घोषणा DMA_DBTOCR  0x1c		/* Burst समयout control Register */
-#घोषणा DMA_WSRA    0x40		/* W-Size Register A */
-#घोषणा DMA_XSRA    0x44		/* X-Size Register A */
-#घोषणा DMA_YSRA    0x48		/* Y-Size Register A */
-#घोषणा DMA_WSRB    0x4c		/* W-Size Register B */
-#घोषणा DMA_XSRB    0x50		/* X-Size Register B */
-#घोषणा DMA_YSRB    0x54		/* Y-Size Register B */
-#घोषणा DMA_SAR(x)  (0x80 + ((x) << 6))	/* Source Address Registers */
-#घोषणा DMA_DAR(x)  (0x84 + ((x) << 6))	/* Destination Address Registers */
-#घोषणा DMA_CNTR(x) (0x88 + ((x) << 6))	/* Count Registers */
-#घोषणा DMA_CCR(x)  (0x8c + ((x) << 6))	/* Control Registers */
-#घोषणा DMA_RSSR(x) (0x90 + ((x) << 6))	/* Request source select Registers */
-#घोषणा DMA_BLR(x)  (0x94 + ((x) << 6))	/* Burst length Registers */
-#घोषणा DMA_RTOR(x) (0x98 + ((x) << 6))	/* Request समयout Registers */
-#घोषणा DMA_BUCR(x) (0x98 + ((x) << 6))	/* Bus Utilization Registers */
-#घोषणा DMA_CCNR(x) (0x9C + ((x) << 6))	/* Channel counter Registers */
+#define DMA_DCR     0x00		/* Control Register */
+#define DMA_DISR    0x04		/* Interrupt status Register */
+#define DMA_DIMR    0x08		/* Interrupt mask Register */
+#define DMA_DBTOSR  0x0c		/* Burst timeout status Register */
+#define DMA_DRTOSR  0x10		/* Request timeout Register */
+#define DMA_DSESR   0x14		/* Transfer Error Status Register */
+#define DMA_DBOSR   0x18		/* Buffer overflow status Register */
+#define DMA_DBTOCR  0x1c		/* Burst timeout control Register */
+#define DMA_WSRA    0x40		/* W-Size Register A */
+#define DMA_XSRA    0x44		/* X-Size Register A */
+#define DMA_YSRA    0x48		/* Y-Size Register A */
+#define DMA_WSRB    0x4c		/* W-Size Register B */
+#define DMA_XSRB    0x50		/* X-Size Register B */
+#define DMA_YSRB    0x54		/* Y-Size Register B */
+#define DMA_SAR(x)  (0x80 + ((x) << 6))	/* Source Address Registers */
+#define DMA_DAR(x)  (0x84 + ((x) << 6))	/* Destination Address Registers */
+#define DMA_CNTR(x) (0x88 + ((x) << 6))	/* Count Registers */
+#define DMA_CCR(x)  (0x8c + ((x) << 6))	/* Control Registers */
+#define DMA_RSSR(x) (0x90 + ((x) << 6))	/* Request source select Registers */
+#define DMA_BLR(x)  (0x94 + ((x) << 6))	/* Burst length Registers */
+#define DMA_RTOR(x) (0x98 + ((x) << 6))	/* Request timeout Registers */
+#define DMA_BUCR(x) (0x98 + ((x) << 6))	/* Bus Utilization Registers */
+#define DMA_CCNR(x) (0x9C + ((x) << 6))	/* Channel counter Registers */
 
-#घोषणा DCR_DRST           (1<<1)
-#घोषणा DCR_DEN            (1<<0)
-#घोषणा DBTOCR_EN          (1<<15)
-#घोषणा DBTOCR_CNT(x)      ((x) & 0x7fff)
-#घोषणा CNTR_CNT(x)        ((x) & 0xffffff)
-#घोषणा CCR_ACRPT          (1<<14)
-#घोषणा CCR_DMOD_LINEAR    (0x0 << 12)
-#घोषणा CCR_DMOD_2D        (0x1 << 12)
-#घोषणा CCR_DMOD_FIFO      (0x2 << 12)
-#घोषणा CCR_DMOD_EOBFIFO   (0x3 << 12)
-#घोषणा CCR_SMOD_LINEAR    (0x0 << 10)
-#घोषणा CCR_SMOD_2D        (0x1 << 10)
-#घोषणा CCR_SMOD_FIFO      (0x2 << 10)
-#घोषणा CCR_SMOD_EOBFIFO   (0x3 << 10)
-#घोषणा CCR_Mसूची_DEC       (1<<9)
-#घोषणा CCR_MSEL_B         (1<<8)
-#घोषणा CCR_DSIZ_32        (0x0 << 6)
-#घोषणा CCR_DSIZ_8         (0x1 << 6)
-#घोषणा CCR_DSIZ_16        (0x2 << 6)
-#घोषणा CCR_SSIZ_32        (0x0 << 4)
-#घोषणा CCR_SSIZ_8         (0x1 << 4)
-#घोषणा CCR_SSIZ_16        (0x2 << 4)
-#घोषणा CCR_REN            (1<<3)
-#घोषणा CCR_RPT            (1<<2)
-#घोषणा CCR_FRC            (1<<1)
-#घोषणा CCR_CEN            (1<<0)
-#घोषणा RTOR_EN            (1<<15)
-#घोषणा RTOR_CLK           (1<<14)
-#घोषणा RTOR_PSC           (1<<13)
+#define DCR_DRST           (1<<1)
+#define DCR_DEN            (1<<0)
+#define DBTOCR_EN          (1<<15)
+#define DBTOCR_CNT(x)      ((x) & 0x7fff)
+#define CNTR_CNT(x)        ((x) & 0xffffff)
+#define CCR_ACRPT          (1<<14)
+#define CCR_DMOD_LINEAR    (0x0 << 12)
+#define CCR_DMOD_2D        (0x1 << 12)
+#define CCR_DMOD_FIFO      (0x2 << 12)
+#define CCR_DMOD_EOBFIFO   (0x3 << 12)
+#define CCR_SMOD_LINEAR    (0x0 << 10)
+#define CCR_SMOD_2D        (0x1 << 10)
+#define CCR_SMOD_FIFO      (0x2 << 10)
+#define CCR_SMOD_EOBFIFO   (0x3 << 10)
+#define CCR_MDIR_DEC       (1<<9)
+#define CCR_MSEL_B         (1<<8)
+#define CCR_DSIZ_32        (0x0 << 6)
+#define CCR_DSIZ_8         (0x1 << 6)
+#define CCR_DSIZ_16        (0x2 << 6)
+#define CCR_SSIZ_32        (0x0 << 4)
+#define CCR_SSIZ_8         (0x1 << 4)
+#define CCR_SSIZ_16        (0x2 << 4)
+#define CCR_REN            (1<<3)
+#define CCR_RPT            (1<<2)
+#define CCR_FRC            (1<<1)
+#define CCR_CEN            (1<<0)
+#define RTOR_EN            (1<<15)
+#define RTOR_CLK           (1<<14)
+#define RTOR_PSC           (1<<13)
 
-क्रमागत  imxdma_prep_type अणु
+enum  imxdma_prep_type {
 	IMXDMA_DESC_MEMCPY,
 	IMXDMA_DESC_INTERLEAVED,
 	IMXDMA_DESC_SLAVE_SG,
 	IMXDMA_DESC_CYCLIC,
-पूर्ण;
+};
 
-काष्ठा imx_dma_2d_config अणु
+struct imx_dma_2d_config {
 	u16		xsr;
 	u16		ysr;
 	u16		wsr;
-	पूर्णांक		count;
-पूर्ण;
+	int		count;
+};
 
-काष्ठा imxdma_desc अणु
-	काष्ठा list_head		node;
-	काष्ठा dma_async_tx_descriptor	desc;
-	क्रमागत dma_status			status;
+struct imxdma_desc {
+	struct list_head		node;
+	struct dma_async_tx_descriptor	desc;
+	enum dma_status			status;
 	dma_addr_t			src;
 	dma_addr_t			dest;
-	माप_प्रकार				len;
-	क्रमागत dma_transfer_direction	direction;
-	क्रमागत imxdma_prep_type		type;
-	/* For स_नकल and पूर्णांकerleaved */
-	अचिन्हित पूर्णांक			config_port;
-	अचिन्हित पूर्णांक			config_mem;
-	/* For पूर्णांकerleaved transfers */
-	अचिन्हित पूर्णांक			x;
-	अचिन्हित पूर्णांक			y;
-	अचिन्हित पूर्णांक			w;
+	size_t				len;
+	enum dma_transfer_direction	direction;
+	enum imxdma_prep_type		type;
+	/* For memcpy and interleaved */
+	unsigned int			config_port;
+	unsigned int			config_mem;
+	/* For interleaved transfers */
+	unsigned int			x;
+	unsigned int			y;
+	unsigned int			w;
 	/* For slave sg and cyclic */
-	काष्ठा scatterlist		*sg;
-	अचिन्हित पूर्णांक			sgcount;
-पूर्ण;
+	struct scatterlist		*sg;
+	unsigned int			sgcount;
+};
 
-काष्ठा imxdma_channel अणु
-	पूर्णांक				hw_chaining;
-	काष्ठा समयr_list		watchकरोg;
-	काष्ठा imxdma_engine		*imxdma;
-	अचिन्हित पूर्णांक			channel;
+struct imxdma_channel {
+	int				hw_chaining;
+	struct timer_list		watchdog;
+	struct imxdma_engine		*imxdma;
+	unsigned int			channel;
 
-	काष्ठा tasklet_काष्ठा		dma_tasklet;
-	काष्ठा list_head		ld_मुक्त;
-	काष्ठा list_head		ld_queue;
-	काष्ठा list_head		ld_active;
-	पूर्णांक				descs_allocated;
-	क्रमागत dma_slave_buswidth		word_size;
+	struct tasklet_struct		dma_tasklet;
+	struct list_head		ld_free;
+	struct list_head		ld_queue;
+	struct list_head		ld_active;
+	int				descs_allocated;
+	enum dma_slave_buswidth		word_size;
 	dma_addr_t			per_address;
 	u32				watermark_level;
-	काष्ठा dma_chan			chan;
-	काष्ठा dma_async_tx_descriptor	desc;
-	क्रमागत dma_status			status;
-	पूर्णांक				dma_request;
-	काष्ठा scatterlist		*sg_list;
+	struct dma_chan			chan;
+	struct dma_async_tx_descriptor	desc;
+	enum dma_status			status;
+	int				dma_request;
+	struct scatterlist		*sg_list;
 	u32				ccr_from_device;
 	u32				ccr_to_device;
 	bool				enabled_2d;
-	पूर्णांक				slot_2d;
-	अचिन्हित पूर्णांक			irq;
-	काष्ठा dma_slave_config		config;
-पूर्ण;
+	int				slot_2d;
+	unsigned int			irq;
+	struct dma_slave_config		config;
+};
 
-क्रमागत imx_dma_type अणु
+enum imx_dma_type {
 	IMX1_DMA,
 	IMX21_DMA,
 	IMX27_DMA,
-पूर्ण;
+};
 
-काष्ठा imxdma_engine अणु
-	काष्ठा device			*dev;
-	काष्ठा dma_device		dma_device;
-	व्योम __iomem			*base;
-	काष्ठा clk			*dma_ahb;
-	काष्ठा clk			*dma_ipg;
+struct imxdma_engine {
+	struct device			*dev;
+	struct dma_device		dma_device;
+	void __iomem			*base;
+	struct clk			*dma_ahb;
+	struct clk			*dma_ipg;
 	spinlock_t			lock;
-	काष्ठा imx_dma_2d_config	slots_2d[IMX_DMA_2D_SLOTS];
-	काष्ठा imxdma_channel		channel[IMX_DMA_CHANNELS];
-	क्रमागत imx_dma_type		devtype;
-	अचिन्हित पूर्णांक			irq;
-	अचिन्हित पूर्णांक			irq_err;
+	struct imx_dma_2d_config	slots_2d[IMX_DMA_2D_SLOTS];
+	struct imxdma_channel		channel[IMX_DMA_CHANNELS];
+	enum imx_dma_type		devtype;
+	unsigned int			irq;
+	unsigned int			irq_err;
 
-पूर्ण;
+};
 
-काष्ठा imxdma_filter_data अणु
-	काष्ठा imxdma_engine	*imxdma;
-	पूर्णांक			 request;
-पूर्ण;
+struct imxdma_filter_data {
+	struct imxdma_engine	*imxdma;
+	int			 request;
+};
 
-अटल स्थिर काष्ठा of_device_id imx_dma_of_dev_id[] = अणु
-	अणु
-		.compatible = "fsl,imx1-dma", .data = (स्थिर व्योम *)IMX1_DMA,
-	पूर्ण, अणु
-		.compatible = "fsl,imx21-dma", .data = (स्थिर व्योम *)IMX21_DMA,
-	पूर्ण, अणु
-		.compatible = "fsl,imx27-dma", .data = (स्थिर व्योम *)IMX27_DMA,
-	पूर्ण, अणु
+static const struct of_device_id imx_dma_of_dev_id[] = {
+	{
+		.compatible = "fsl,imx1-dma", .data = (const void *)IMX1_DMA,
+	}, {
+		.compatible = "fsl,imx21-dma", .data = (const void *)IMX21_DMA,
+	}, {
+		.compatible = "fsl,imx27-dma", .data = (const void *)IMX27_DMA,
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
+	}
+};
 MODULE_DEVICE_TABLE(of, imx_dma_of_dev_id);
 
-अटल अंतरभूत पूर्णांक is_imx1_dma(काष्ठा imxdma_engine *imxdma)
-अणु
-	वापस imxdma->devtype == IMX1_DMA;
-पूर्ण
+static inline int is_imx1_dma(struct imxdma_engine *imxdma)
+{
+	return imxdma->devtype == IMX1_DMA;
+}
 
-अटल अंतरभूत पूर्णांक is_imx27_dma(काष्ठा imxdma_engine *imxdma)
-अणु
-	वापस imxdma->devtype == IMX27_DMA;
-पूर्ण
+static inline int is_imx27_dma(struct imxdma_engine *imxdma)
+{
+	return imxdma->devtype == IMX27_DMA;
+}
 
-अटल काष्ठा imxdma_channel *to_imxdma_chan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा imxdma_channel, chan);
-पूर्ण
+static struct imxdma_channel *to_imxdma_chan(struct dma_chan *chan)
+{
+	return container_of(chan, struct imxdma_channel, chan);
+}
 
-अटल अंतरभूत bool imxdma_chan_is_करोing_cyclic(काष्ठा imxdma_channel *imxdmac)
-अणु
-	काष्ठा imxdma_desc *desc;
+static inline bool imxdma_chan_is_doing_cyclic(struct imxdma_channel *imxdmac)
+{
+	struct imxdma_desc *desc;
 
-	अगर (!list_empty(&imxdmac->ld_active)) अणु
-		desc = list_first_entry(&imxdmac->ld_active, काष्ठा imxdma_desc,
+	if (!list_empty(&imxdmac->ld_active)) {
+		desc = list_first_entry(&imxdmac->ld_active, struct imxdma_desc,
 					node);
-		अगर (desc->type == IMXDMA_DESC_CYCLIC)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		if (desc->type == IMXDMA_DESC_CYCLIC)
+			return true;
+	}
+	return false;
+}
 
 
 
-अटल व्योम imx_dmav1_ग_लिखोl(काष्ठा imxdma_engine *imxdma, अचिन्हित val,
-			     अचिन्हित offset)
-अणु
-	__raw_ग_लिखोl(val, imxdma->base + offset);
-पूर्ण
+static void imx_dmav1_writel(struct imxdma_engine *imxdma, unsigned val,
+			     unsigned offset)
+{
+	__raw_writel(val, imxdma->base + offset);
+}
 
-अटल अचिन्हित imx_dmav1_पढ़ोl(काष्ठा imxdma_engine *imxdma, अचिन्हित offset)
-अणु
-	वापस __raw_पढ़ोl(imxdma->base + offset);
-पूर्ण
+static unsigned imx_dmav1_readl(struct imxdma_engine *imxdma, unsigned offset)
+{
+	return __raw_readl(imxdma->base + offset);
+}
 
-अटल पूर्णांक imxdma_hw_chain(काष्ठा imxdma_channel *imxdmac)
-अणु
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
+static int imxdma_hw_chain(struct imxdma_channel *imxdmac)
+{
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
 
-	अगर (is_imx27_dma(imxdma))
-		वापस imxdmac->hw_chaining;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (is_imx27_dma(imxdma))
+		return imxdmac->hw_chaining;
+	else
+		return 0;
+}
 
 /*
- * imxdma_sg_next - prepare next chunk क्रम scatter-gather DMA emulation
+ * imxdma_sg_next - prepare next chunk for scatter-gather DMA emulation
  */
-अटल अंतरभूत व्योम imxdma_sg_next(काष्ठा imxdma_desc *d)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा scatterlist *sg = d->sg;
-	माप_प्रकार now;
+static inline void imxdma_sg_next(struct imxdma_desc *d)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct scatterlist *sg = d->sg;
+	size_t now;
 
-	now = min_t(माप_प्रकार, d->len, sg_dma_len(sg));
-	अगर (d->len != IMX_DMA_LENGTH_LOOP)
+	now = min_t(size_t, d->len, sg_dma_len(sg));
+	if (d->len != IMX_DMA_LENGTH_LOOP)
 		d->len -= now;
 
-	अगर (d->direction == DMA_DEV_TO_MEM)
-		imx_dmav1_ग_लिखोl(imxdma, sg->dma_address,
+	if (d->direction == DMA_DEV_TO_MEM)
+		imx_dmav1_writel(imxdma, sg->dma_address,
 				 DMA_DAR(imxdmac->channel));
-	अन्यथा
-		imx_dmav1_ग_लिखोl(imxdma, sg->dma_address,
+	else
+		imx_dmav1_writel(imxdma, sg->dma_address,
 				 DMA_SAR(imxdmac->channel));
 
-	imx_dmav1_ग_लिखोl(imxdma, now, DMA_CNTR(imxdmac->channel));
+	imx_dmav1_writel(imxdma, now, DMA_CNTR(imxdmac->channel));
 
 	dev_dbg(imxdma->dev, " %s channel: %d dst 0x%08x, src 0x%08x, "
 		"size 0x%08x\n", __func__, imxdmac->channel,
-		 imx_dmav1_पढ़ोl(imxdma, DMA_DAR(imxdmac->channel)),
-		 imx_dmav1_पढ़ोl(imxdma, DMA_SAR(imxdmac->channel)),
-		 imx_dmav1_पढ़ोl(imxdma, DMA_CNTR(imxdmac->channel)));
-पूर्ण
+		 imx_dmav1_readl(imxdma, DMA_DAR(imxdmac->channel)),
+		 imx_dmav1_readl(imxdma, DMA_SAR(imxdmac->channel)),
+		 imx_dmav1_readl(imxdma, DMA_CNTR(imxdmac->channel)));
+}
 
-अटल व्योम imxdma_enable_hw(काष्ठा imxdma_desc *d)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	पूर्णांक channel = imxdmac->channel;
-	अचिन्हित दीर्घ flags;
+static void imxdma_enable_hw(struct imxdma_desc *d)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	int channel = imxdmac->channel;
+	unsigned long flags;
 
 	dev_dbg(imxdma->dev, "%s channel %d\n", __func__, channel);
 
 	local_irq_save(flags);
 
-	imx_dmav1_ग_लिखोl(imxdma, 1 << channel, DMA_DISR);
-	imx_dmav1_ग_लिखोl(imxdma, imx_dmav1_पढ़ोl(imxdma, DMA_DIMR) &
+	imx_dmav1_writel(imxdma, 1 << channel, DMA_DISR);
+	imx_dmav1_writel(imxdma, imx_dmav1_readl(imxdma, DMA_DIMR) &
 			 ~(1 << channel), DMA_DIMR);
-	imx_dmav1_ग_लिखोl(imxdma, imx_dmav1_पढ़ोl(imxdma, DMA_CCR(channel)) |
+	imx_dmav1_writel(imxdma, imx_dmav1_readl(imxdma, DMA_CCR(channel)) |
 			 CCR_CEN | CCR_ACRPT, DMA_CCR(channel));
 
-	अगर (!is_imx1_dma(imxdma) &&
-			d->sg && imxdma_hw_chain(imxdmac)) अणु
+	if (!is_imx1_dma(imxdma) &&
+			d->sg && imxdma_hw_chain(imxdmac)) {
 		d->sg = sg_next(d->sg);
-		अगर (d->sg) अणु
-			u32 पंचांगp;
+		if (d->sg) {
+			u32 tmp;
 			imxdma_sg_next(d);
-			पंचांगp = imx_dmav1_पढ़ोl(imxdma, DMA_CCR(channel));
-			imx_dmav1_ग_लिखोl(imxdma, पंचांगp | CCR_RPT | CCR_ACRPT,
+			tmp = imx_dmav1_readl(imxdma, DMA_CCR(channel));
+			imx_dmav1_writel(imxdma, tmp | CCR_RPT | CCR_ACRPT,
 					 DMA_CCR(channel));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम imxdma_disable_hw(काष्ठा imxdma_channel *imxdmac)
-अणु
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	पूर्णांक channel = imxdmac->channel;
-	अचिन्हित दीर्घ flags;
+static void imxdma_disable_hw(struct imxdma_channel *imxdmac)
+{
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	int channel = imxdmac->channel;
+	unsigned long flags;
 
 	dev_dbg(imxdma->dev, "%s channel %d\n", __func__, channel);
 
-	अगर (imxdma_hw_chain(imxdmac))
-		del_समयr(&imxdmac->watchकरोg);
+	if (imxdma_hw_chain(imxdmac))
+		del_timer(&imxdmac->watchdog);
 
 	local_irq_save(flags);
-	imx_dmav1_ग_लिखोl(imxdma, imx_dmav1_पढ़ोl(imxdma, DMA_DIMR) |
+	imx_dmav1_writel(imxdma, imx_dmav1_readl(imxdma, DMA_DIMR) |
 			 (1 << channel), DMA_DIMR);
-	imx_dmav1_ग_लिखोl(imxdma, imx_dmav1_पढ़ोl(imxdma, DMA_CCR(channel)) &
+	imx_dmav1_writel(imxdma, imx_dmav1_readl(imxdma, DMA_CCR(channel)) &
 			 ~CCR_CEN, DMA_CCR(channel));
-	imx_dmav1_ग_लिखोl(imxdma, 1 << channel, DMA_DISR);
+	imx_dmav1_writel(imxdma, 1 << channel, DMA_DISR);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल व्योम imxdma_watchकरोg(काष्ठा समयr_list *t)
-अणु
-	काष्ठा imxdma_channel *imxdmac = from_समयr(imxdmac, t, watchकरोg);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	पूर्णांक channel = imxdmac->channel;
+static void imxdma_watchdog(struct timer_list *t)
+{
+	struct imxdma_channel *imxdmac = from_timer(imxdmac, t, watchdog);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	int channel = imxdmac->channel;
 
-	imx_dmav1_ग_लिखोl(imxdma, 0, DMA_CCR(channel));
+	imx_dmav1_writel(imxdma, 0, DMA_CCR(channel));
 
-	/* Tasklet watchकरोg error handler */
+	/* Tasklet watchdog error handler */
 	tasklet_schedule(&imxdmac->dma_tasklet);
 	dev_dbg(imxdma->dev, "channel %d: watchdog timeout!\n",
 		imxdmac->channel);
-पूर्ण
+}
 
-अटल irqवापस_t imxdma_err_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा imxdma_engine *imxdma = dev_id;
-	अचिन्हित पूर्णांक err_mask;
-	पूर्णांक i, disr;
-	पूर्णांक errcode;
+static irqreturn_t imxdma_err_handler(int irq, void *dev_id)
+{
+	struct imxdma_engine *imxdma = dev_id;
+	unsigned int err_mask;
+	int i, disr;
+	int errcode;
 
-	disr = imx_dmav1_पढ़ोl(imxdma, DMA_DISR);
+	disr = imx_dmav1_readl(imxdma, DMA_DISR);
 
-	err_mask = imx_dmav1_पढ़ोl(imxdma, DMA_DBTOSR) |
-		   imx_dmav1_पढ़ोl(imxdma, DMA_DRTOSR) |
-		   imx_dmav1_पढ़ोl(imxdma, DMA_DSESR)  |
-		   imx_dmav1_पढ़ोl(imxdma, DMA_DBOSR);
+	err_mask = imx_dmav1_readl(imxdma, DMA_DBTOSR) |
+		   imx_dmav1_readl(imxdma, DMA_DRTOSR) |
+		   imx_dmav1_readl(imxdma, DMA_DSESR)  |
+		   imx_dmav1_readl(imxdma, DMA_DBOSR);
 
-	अगर (!err_mask)
-		वापस IRQ_HANDLED;
+	if (!err_mask)
+		return IRQ_HANDLED;
 
-	imx_dmav1_ग_लिखोl(imxdma, disr & err_mask, DMA_DISR);
+	imx_dmav1_writel(imxdma, disr & err_mask, DMA_DISR);
 
-	क्रम (i = 0; i < IMX_DMA_CHANNELS; i++) अणु
-		अगर (!(err_mask & (1 << i)))
-			जारी;
+	for (i = 0; i < IMX_DMA_CHANNELS; i++) {
+		if (!(err_mask & (1 << i)))
+			continue;
 		errcode = 0;
 
-		अगर (imx_dmav1_पढ़ोl(imxdma, DMA_DBTOSR) & (1 << i)) अणु
-			imx_dmav1_ग_लिखोl(imxdma, 1 << i, DMA_DBTOSR);
+		if (imx_dmav1_readl(imxdma, DMA_DBTOSR) & (1 << i)) {
+			imx_dmav1_writel(imxdma, 1 << i, DMA_DBTOSR);
 			errcode |= IMX_DMA_ERR_BURST;
-		पूर्ण
-		अगर (imx_dmav1_पढ़ोl(imxdma, DMA_DRTOSR) & (1 << i)) अणु
-			imx_dmav1_ग_लिखोl(imxdma, 1 << i, DMA_DRTOSR);
+		}
+		if (imx_dmav1_readl(imxdma, DMA_DRTOSR) & (1 << i)) {
+			imx_dmav1_writel(imxdma, 1 << i, DMA_DRTOSR);
 			errcode |= IMX_DMA_ERR_REQUEST;
-		पूर्ण
-		अगर (imx_dmav1_पढ़ोl(imxdma, DMA_DSESR) & (1 << i)) अणु
-			imx_dmav1_ग_लिखोl(imxdma, 1 << i, DMA_DSESR);
+		}
+		if (imx_dmav1_readl(imxdma, DMA_DSESR) & (1 << i)) {
+			imx_dmav1_writel(imxdma, 1 << i, DMA_DSESR);
 			errcode |= IMX_DMA_ERR_TRANSFER;
-		पूर्ण
-		अगर (imx_dmav1_पढ़ोl(imxdma, DMA_DBOSR) & (1 << i)) अणु
-			imx_dmav1_ग_लिखोl(imxdma, 1 << i, DMA_DBOSR);
+		}
+		if (imx_dmav1_readl(imxdma, DMA_DBOSR) & (1 << i)) {
+			imx_dmav1_writel(imxdma, 1 << i, DMA_DBOSR);
 			errcode |= IMX_DMA_ERR_BUFFER;
-		पूर्ण
+		}
 		/* Tasklet error handler */
 		tasklet_schedule(&imxdma->channel[i].dma_tasklet);
 
@@ -401,116 +400,116 @@ MODULE_DEVICE_TABLE(of, imx_dma_of_dev_id);
 			 errcode & IMX_DMA_ERR_REQUEST ?  " request" : "",
 			 errcode & IMX_DMA_ERR_TRANSFER ? " transfer" : "",
 			 errcode & IMX_DMA_ERR_BUFFER ?   " buffer" : "");
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
-अटल व्योम dma_irq_handle_channel(काष्ठा imxdma_channel *imxdmac)
-अणु
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	पूर्णांक chno = imxdmac->channel;
-	काष्ठा imxdma_desc *desc;
-	अचिन्हित दीर्घ flags;
+static void dma_irq_handle_channel(struct imxdma_channel *imxdmac)
+{
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	int chno = imxdmac->channel;
+	struct imxdma_desc *desc;
+	unsigned long flags;
 
 	spin_lock_irqsave(&imxdma->lock, flags);
-	अगर (list_empty(&imxdmac->ld_active)) अणु
+	if (list_empty(&imxdmac->ld_active)) {
 		spin_unlock_irqrestore(&imxdma->lock, flags);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	desc = list_first_entry(&imxdmac->ld_active,
-				काष्ठा imxdma_desc,
+				struct imxdma_desc,
 				node);
 	spin_unlock_irqrestore(&imxdma->lock, flags);
 
-	अगर (desc->sg) अणु
-		u32 पंचांगp;
+	if (desc->sg) {
+		u32 tmp;
 		desc->sg = sg_next(desc->sg);
 
-		अगर (desc->sg) अणु
+		if (desc->sg) {
 			imxdma_sg_next(desc);
 
-			पंचांगp = imx_dmav1_पढ़ोl(imxdma, DMA_CCR(chno));
+			tmp = imx_dmav1_readl(imxdma, DMA_CCR(chno));
 
-			अगर (imxdma_hw_chain(imxdmac)) अणु
-				/* FIXME: The समयout should probably be
+			if (imxdma_hw_chain(imxdmac)) {
+				/* FIXME: The timeout should probably be
 				 * configurable
 				 */
-				mod_समयr(&imxdmac->watchकरोg,
-					jअगरfies + msecs_to_jअगरfies(500));
+				mod_timer(&imxdmac->watchdog,
+					jiffies + msecs_to_jiffies(500));
 
-				पंचांगp |= CCR_CEN | CCR_RPT | CCR_ACRPT;
-				imx_dmav1_ग_लिखोl(imxdma, पंचांगp, DMA_CCR(chno));
-			पूर्ण अन्यथा अणु
-				imx_dmav1_ग_लिखोl(imxdma, पंचांगp & ~CCR_CEN,
+				tmp |= CCR_CEN | CCR_RPT | CCR_ACRPT;
+				imx_dmav1_writel(imxdma, tmp, DMA_CCR(chno));
+			} else {
+				imx_dmav1_writel(imxdma, tmp & ~CCR_CEN,
 						 DMA_CCR(chno));
-				पंचांगp |= CCR_CEN;
-			पूर्ण
+				tmp |= CCR_CEN;
+			}
 
-			imx_dmav1_ग_लिखोl(imxdma, पंचांगp, DMA_CCR(chno));
+			imx_dmav1_writel(imxdma, tmp, DMA_CCR(chno));
 
-			अगर (imxdma_chan_is_करोing_cyclic(imxdmac))
+			if (imxdma_chan_is_doing_cyclic(imxdmac))
 				/* Tasklet progression */
 				tasklet_schedule(&imxdmac->dma_tasklet);
 
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (imxdma_hw_chain(imxdmac)) अणु
-			del_समयr(&imxdmac->watchकरोg);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (imxdma_hw_chain(imxdmac)) {
+			del_timer(&imxdmac->watchdog);
+			return;
+		}
+	}
 
 out:
-	imx_dmav1_ग_लिखोl(imxdma, 0, DMA_CCR(chno));
+	imx_dmav1_writel(imxdma, 0, DMA_CCR(chno));
 	/* Tasklet irq */
 	tasklet_schedule(&imxdmac->dma_tasklet);
-पूर्ण
+}
 
-अटल irqवापस_t dma_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा imxdma_engine *imxdma = dev_id;
-	पूर्णांक i, disr;
+static irqreturn_t dma_irq_handler(int irq, void *dev_id)
+{
+	struct imxdma_engine *imxdma = dev_id;
+	int i, disr;
 
-	अगर (!is_imx1_dma(imxdma))
+	if (!is_imx1_dma(imxdma))
 		imxdma_err_handler(irq, dev_id);
 
-	disr = imx_dmav1_पढ़ोl(imxdma, DMA_DISR);
+	disr = imx_dmav1_readl(imxdma, DMA_DISR);
 
 	dev_dbg(imxdma->dev, "%s called, disr=0x%08x\n", __func__, disr);
 
-	imx_dmav1_ग_लिखोl(imxdma, disr, DMA_DISR);
-	क्रम (i = 0; i < IMX_DMA_CHANNELS; i++) अणु
-		अगर (disr & (1 << i))
+	imx_dmav1_writel(imxdma, disr, DMA_DISR);
+	for (i = 0; i < IMX_DMA_CHANNELS; i++) {
+		if (disr & (1 << i))
 			dma_irq_handle_channel(&imxdma->channel[i]);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक imxdma_xfer_desc(काष्ठा imxdma_desc *d)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	पूर्णांक slot = -1;
-	पूर्णांक i;
+static int imxdma_xfer_desc(struct imxdma_desc *d)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(d->desc.chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	int slot = -1;
+	int i;
 
 	/* Configure and enable */
-	चयन (d->type) अणु
-	हाल IMXDMA_DESC_INTERLEAVED:
-		/* Try to get a मुक्त 2D slot */
-		क्रम (i = 0; i < IMX_DMA_2D_SLOTS; i++) अणु
-			अगर ((imxdma->slots_2d[i].count > 0) &&
+	switch (d->type) {
+	case IMXDMA_DESC_INTERLEAVED:
+		/* Try to get a free 2D slot */
+		for (i = 0; i < IMX_DMA_2D_SLOTS; i++) {
+			if ((imxdma->slots_2d[i].count > 0) &&
 			((imxdma->slots_2d[i].xsr != d->x) ||
 			(imxdma->slots_2d[i].ysr != d->y) ||
 			(imxdma->slots_2d[i].wsr != d->w)))
-				जारी;
+				continue;
 			slot = i;
-			अवरोध;
-		पूर्ण
-		अगर (slot < 0)
-			वापस -EBUSY;
+			break;
+		}
+		if (slot < 0)
+			return -EBUSY;
 
 		imxdma->slots_2d[slot].xsr = d->x;
 		imxdma->slots_2d[slot].ysr = d->y;
@@ -520,172 +519,172 @@ out:
 		imxdmac->slot_2d = slot;
 		imxdmac->enabled_2d = true;
 
-		अगर (slot == IMX_DMA_2D_SLOT_A) अणु
+		if (slot == IMX_DMA_2D_SLOT_A) {
 			d->config_mem &= ~CCR_MSEL_B;
 			d->config_port &= ~CCR_MSEL_B;
-			imx_dmav1_ग_लिखोl(imxdma, d->x, DMA_XSRA);
-			imx_dmav1_ग_लिखोl(imxdma, d->y, DMA_YSRA);
-			imx_dmav1_ग_लिखोl(imxdma, d->w, DMA_WSRA);
-		पूर्ण अन्यथा अणु
+			imx_dmav1_writel(imxdma, d->x, DMA_XSRA);
+			imx_dmav1_writel(imxdma, d->y, DMA_YSRA);
+			imx_dmav1_writel(imxdma, d->w, DMA_WSRA);
+		} else {
 			d->config_mem |= CCR_MSEL_B;
 			d->config_port |= CCR_MSEL_B;
-			imx_dmav1_ग_लिखोl(imxdma, d->x, DMA_XSRB);
-			imx_dmav1_ग_लिखोl(imxdma, d->y, DMA_YSRB);
-			imx_dmav1_ग_लिखोl(imxdma, d->w, DMA_WSRB);
-		पूर्ण
+			imx_dmav1_writel(imxdma, d->x, DMA_XSRB);
+			imx_dmav1_writel(imxdma, d->y, DMA_YSRB);
+			imx_dmav1_writel(imxdma, d->w, DMA_WSRB);
+		}
 		/*
-		 * We fall-through here पूर्णांकentionally, since a 2D transfer is
+		 * We fall-through here intentionally, since a 2D transfer is
 		 * similar to MEMCPY just adding the 2D slot configuration.
 		 */
 		fallthrough;
-	हाल IMXDMA_DESC_MEMCPY:
-		imx_dmav1_ग_लिखोl(imxdma, d->src, DMA_SAR(imxdmac->channel));
-		imx_dmav1_ग_लिखोl(imxdma, d->dest, DMA_DAR(imxdmac->channel));
-		imx_dmav1_ग_लिखोl(imxdma, d->config_mem | (d->config_port << 2),
+	case IMXDMA_DESC_MEMCPY:
+		imx_dmav1_writel(imxdma, d->src, DMA_SAR(imxdmac->channel));
+		imx_dmav1_writel(imxdma, d->dest, DMA_DAR(imxdmac->channel));
+		imx_dmav1_writel(imxdma, d->config_mem | (d->config_port << 2),
 			 DMA_CCR(imxdmac->channel));
 
-		imx_dmav1_ग_लिखोl(imxdma, d->len, DMA_CNTR(imxdmac->channel));
+		imx_dmav1_writel(imxdma, d->len, DMA_CNTR(imxdmac->channel));
 
 		dev_dbg(imxdma->dev,
 			"%s channel: %d dest=0x%08llx src=0x%08llx dma_length=%zu\n",
 			__func__, imxdmac->channel,
-			(अचिन्हित दीर्घ दीर्घ)d->dest,
-			(अचिन्हित दीर्घ दीर्घ)d->src, d->len);
+			(unsigned long long)d->dest,
+			(unsigned long long)d->src, d->len);
 
-		अवरोध;
+		break;
 	/* Cyclic transfer is the same as slave_sg with special sg configuration. */
-	हाल IMXDMA_DESC_CYCLIC:
-	हाल IMXDMA_DESC_SLAVE_SG:
-		अगर (d->direction == DMA_DEV_TO_MEM) अणु
-			imx_dmav1_ग_लिखोl(imxdma, imxdmac->per_address,
+	case IMXDMA_DESC_CYCLIC:
+	case IMXDMA_DESC_SLAVE_SG:
+		if (d->direction == DMA_DEV_TO_MEM) {
+			imx_dmav1_writel(imxdma, imxdmac->per_address,
 					 DMA_SAR(imxdmac->channel));
-			imx_dmav1_ग_लिखोl(imxdma, imxdmac->ccr_from_device,
+			imx_dmav1_writel(imxdma, imxdmac->ccr_from_device,
 					 DMA_CCR(imxdmac->channel));
 
 			dev_dbg(imxdma->dev,
 				"%s channel: %d sg=%p sgcount=%d total length=%zu dev_addr=0x%08llx (dev2mem)\n",
 				__func__, imxdmac->channel,
 				d->sg, d->sgcount, d->len,
-				(अचिन्हित दीर्घ दीर्घ)imxdmac->per_address);
-		पूर्ण अन्यथा अगर (d->direction == DMA_MEM_TO_DEV) अणु
-			imx_dmav1_ग_लिखोl(imxdma, imxdmac->per_address,
+				(unsigned long long)imxdmac->per_address);
+		} else if (d->direction == DMA_MEM_TO_DEV) {
+			imx_dmav1_writel(imxdma, imxdmac->per_address,
 					 DMA_DAR(imxdmac->channel));
-			imx_dmav1_ग_लिखोl(imxdma, imxdmac->ccr_to_device,
+			imx_dmav1_writel(imxdma, imxdmac->ccr_to_device,
 					 DMA_CCR(imxdmac->channel));
 
 			dev_dbg(imxdma->dev,
 				"%s channel: %d sg=%p sgcount=%d total length=%zu dev_addr=0x%08llx (mem2dev)\n",
 				__func__, imxdmac->channel,
 				d->sg, d->sgcount, d->len,
-				(अचिन्हित दीर्घ दीर्घ)imxdmac->per_address);
-		पूर्ण अन्यथा अणु
+				(unsigned long long)imxdmac->per_address);
+		} else {
 			dev_err(imxdma->dev, "%s channel: %d bad dma mode\n",
 				__func__, imxdmac->channel);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		imxdma_sg_next(d);
 
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	imxdma_enable_hw(d);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imxdma_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा imxdma_channel *imxdmac = from_tasklet(imxdmac, t, dma_tasklet);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc, *next_desc;
-	अचिन्हित दीर्घ flags;
+static void imxdma_tasklet(struct tasklet_struct *t)
+{
+	struct imxdma_channel *imxdmac = from_tasklet(imxdmac, t, dma_tasklet);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc, *next_desc;
+	unsigned long flags;
 
 	spin_lock_irqsave(&imxdma->lock, flags);
 
-	अगर (list_empty(&imxdmac->ld_active)) अणु
+	if (list_empty(&imxdmac->ld_active)) {
 		/* Someone might have called terminate all */
 		spin_unlock_irqrestore(&imxdma->lock, flags);
-		वापस;
-	पूर्ण
-	desc = list_first_entry(&imxdmac->ld_active, काष्ठा imxdma_desc, node);
+		return;
+	}
+	desc = list_first_entry(&imxdmac->ld_active, struct imxdma_desc, node);
 
 	/* If we are dealing with a cyclic descriptor, keep it on ld_active
-	 * and करोnt mark the descriptor as complete.
-	 * Only in non-cyclic हालs it would be marked as complete
+	 * and dont mark the descriptor as complete.
+	 * Only in non-cyclic cases it would be marked as complete
 	 */
-	अगर (imxdma_chan_is_करोing_cyclic(imxdmac))
-		जाओ out;
-	अन्यथा
+	if (imxdma_chan_is_doing_cyclic(imxdmac))
+		goto out;
+	else
 		dma_cookie_complete(&desc->desc);
 
-	/* Free 2D slot अगर it was an पूर्णांकerleaved transfer */
-	अगर (imxdmac->enabled_2d) अणु
+	/* Free 2D slot if it was an interleaved transfer */
+	if (imxdmac->enabled_2d) {
 		imxdma->slots_2d[imxdmac->slot_2d].count--;
 		imxdmac->enabled_2d = false;
-	पूर्ण
+	}
 
-	list_move_tail(imxdmac->ld_active.next, &imxdmac->ld_मुक्त);
+	list_move_tail(imxdmac->ld_active.next, &imxdmac->ld_free);
 
-	अगर (!list_empty(&imxdmac->ld_queue)) अणु
+	if (!list_empty(&imxdmac->ld_queue)) {
 		next_desc = list_first_entry(&imxdmac->ld_queue,
-					     काष्ठा imxdma_desc, node);
+					     struct imxdma_desc, node);
 		list_move_tail(imxdmac->ld_queue.next, &imxdmac->ld_active);
-		अगर (imxdma_xfer_desc(next_desc) < 0)
+		if (imxdma_xfer_desc(next_desc) < 0)
 			dev_warn(imxdma->dev, "%s: channel: %d couldn't xfer desc\n",
 				 __func__, imxdmac->channel);
-	पूर्ण
+	}
 out:
 	spin_unlock_irqrestore(&imxdma->lock, flags);
 
-	dmaengine_desc_get_callback_invoke(&desc->desc, शून्य);
-पूर्ण
+	dmaengine_desc_get_callback_invoke(&desc->desc, NULL);
+}
 
-अटल पूर्णांक imxdma_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	अचिन्हित दीर्घ flags;
+static int imxdma_terminate_all(struct dma_chan *chan)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	unsigned long flags;
 
 	imxdma_disable_hw(imxdmac);
 
 	spin_lock_irqsave(&imxdma->lock, flags);
-	list_splice_tail_init(&imxdmac->ld_active, &imxdmac->ld_मुक्त);
-	list_splice_tail_init(&imxdmac->ld_queue, &imxdmac->ld_मुक्त);
+	list_splice_tail_init(&imxdmac->ld_active, &imxdmac->ld_free);
+	list_splice_tail_init(&imxdmac->ld_queue, &imxdmac->ld_free);
 	spin_unlock_irqrestore(&imxdma->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imxdma_config_ग_लिखो(काष्ठा dma_chan *chan,
-			       काष्ठा dma_slave_config *dmaengine_cfg,
-			       क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	अचिन्हित पूर्णांक mode = 0;
+static int imxdma_config_write(struct dma_chan *chan,
+			       struct dma_slave_config *dmaengine_cfg,
+			       enum dma_transfer_direction direction)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	unsigned int mode = 0;
 
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		imxdmac->per_address = dmaengine_cfg->src_addr;
 		imxdmac->watermark_level = dmaengine_cfg->src_maxburst;
 		imxdmac->word_size = dmaengine_cfg->src_addr_width;
-	पूर्ण अन्यथा अणु
+	} else {
 		imxdmac->per_address = dmaengine_cfg->dst_addr;
 		imxdmac->watermark_level = dmaengine_cfg->dst_maxburst;
 		imxdmac->word_size = dmaengine_cfg->dst_addr_width;
-	पूर्ण
+	}
 
-	चयन (imxdmac->word_size) अणु
-	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+	switch (imxdmac->word_size) {
+	case DMA_SLAVE_BUSWIDTH_1_BYTE:
 		mode = IMX_DMA_MEMSIZE_8;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+		break;
+	case DMA_SLAVE_BUSWIDTH_2_BYTES:
 		mode = IMX_DMA_MEMSIZE_16;
-		अवरोध;
-	शेष:
-	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+		break;
+	default:
+	case DMA_SLAVE_BUSWIDTH_4_BYTES:
 		mode = IMX_DMA_MEMSIZE_32;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	imxdmac->hw_chaining = 0;
 
@@ -695,193 +694,193 @@ out:
 	imxdmac->ccr_to_device =
 		(IMX_DMA_MEMSIZE_32 | IMX_DMA_TYPE_LINEAR) |
 		((mode | IMX_DMA_TYPE_FIFO) << 2) | CCR_REN;
-	imx_dmav1_ग_लिखोl(imxdma, imxdmac->dma_request,
+	imx_dmav1_writel(imxdma, imxdmac->dma_request,
 			 DMA_RSSR(imxdmac->channel));
 
 	/* Set burst length */
-	imx_dmav1_ग_लिखोl(imxdma, imxdmac->watermark_level *
+	imx_dmav1_writel(imxdma, imxdmac->watermark_level *
 			 imxdmac->word_size, DMA_BLR(imxdmac->channel));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imxdma_config(काष्ठा dma_chan *chan,
-			 काष्ठा dma_slave_config *dmaengine_cfg)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
+static int imxdma_config(struct dma_chan *chan,
+			 struct dma_slave_config *dmaengine_cfg)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
 
-	स_नकल(&imxdmac->config, dmaengine_cfg, माप(*dmaengine_cfg));
+	memcpy(&imxdmac->config, dmaengine_cfg, sizeof(*dmaengine_cfg));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dma_status imxdma_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status imxdma_tx_status(struct dma_chan *chan,
 					    dma_cookie_t cookie,
-					    काष्ठा dma_tx_state *txstate)
-अणु
-	वापस dma_cookie_status(chan, cookie, txstate);
-पूर्ण
+					    struct dma_tx_state *txstate)
+{
+	return dma_cookie_status(chan, cookie, txstate);
+}
 
-अटल dma_cookie_t imxdma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(tx->chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
+static dma_cookie_t imxdma_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(tx->chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
 	dma_cookie_t cookie;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&imxdma->lock, flags);
-	list_move_tail(imxdmac->ld_मुक्त.next, &imxdmac->ld_queue);
+	list_move_tail(imxdmac->ld_free.next, &imxdmac->ld_queue);
 	cookie = dma_cookie_assign(tx);
 	spin_unlock_irqrestore(&imxdma->lock, flags);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल पूर्णांक imxdma_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imx_dma_data *data = chan->निजी;
+static int imxdma_alloc_chan_resources(struct dma_chan *chan)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imx_dma_data *data = chan->private;
 
-	अगर (data != शून्य)
+	if (data != NULL)
 		imxdmac->dma_request = data->dma_request;
 
-	जबतक (imxdmac->descs_allocated < IMXDMA_MAX_CHAN_DESCRIPTORS) अणु
-		काष्ठा imxdma_desc *desc;
+	while (imxdmac->descs_allocated < IMXDMA_MAX_CHAN_DESCRIPTORS) {
+		struct imxdma_desc *desc;
 
-		desc = kzalloc(माप(*desc), GFP_KERNEL);
-		अगर (!desc)
-			अवरोध;
-		स_रखो(&desc->desc, 0, माप(काष्ठा dma_async_tx_descriptor));
+		desc = kzalloc(sizeof(*desc), GFP_KERNEL);
+		if (!desc)
+			break;
+		memset(&desc->desc, 0, sizeof(struct dma_async_tx_descriptor));
 		dma_async_tx_descriptor_init(&desc->desc, chan);
 		desc->desc.tx_submit = imxdma_tx_submit;
 		/* txd.flags will be overwritten in prep funcs */
 		desc->desc.flags = DMA_CTRL_ACK;
 		desc->status = DMA_COMPLETE;
 
-		list_add_tail(&desc->node, &imxdmac->ld_मुक्त);
+		list_add_tail(&desc->node, &imxdmac->ld_free);
 		imxdmac->descs_allocated++;
-	पूर्ण
+	}
 
-	अगर (!imxdmac->descs_allocated)
-		वापस -ENOMEM;
+	if (!imxdmac->descs_allocated)
+		return -ENOMEM;
 
-	वापस imxdmac->descs_allocated;
-पूर्ण
+	return imxdmac->descs_allocated;
+}
 
-अटल व्योम imxdma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc, *_desc;
-	अचिन्हित दीर्घ flags;
+static void imxdma_free_chan_resources(struct dma_chan *chan)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc, *_desc;
+	unsigned long flags;
 
 	spin_lock_irqsave(&imxdma->lock, flags);
 
 	imxdma_disable_hw(imxdmac);
-	list_splice_tail_init(&imxdmac->ld_active, &imxdmac->ld_मुक्त);
-	list_splice_tail_init(&imxdmac->ld_queue, &imxdmac->ld_मुक्त);
+	list_splice_tail_init(&imxdmac->ld_active, &imxdmac->ld_free);
+	list_splice_tail_init(&imxdmac->ld_queue, &imxdmac->ld_free);
 
 	spin_unlock_irqrestore(&imxdma->lock, flags);
 
-	list_क्रम_each_entry_safe(desc, _desc, &imxdmac->ld_मुक्त, node) अणु
-		kमुक्त(desc);
+	list_for_each_entry_safe(desc, _desc, &imxdmac->ld_free, node) {
+		kfree(desc);
 		imxdmac->descs_allocated--;
-	पूर्ण
-	INIT_LIST_HEAD(&imxdmac->ld_मुक्त);
+	}
+	INIT_LIST_HEAD(&imxdmac->ld_free);
 
-	kमुक्त(imxdmac->sg_list);
-	imxdmac->sg_list = शून्य;
-पूर्ण
+	kfree(imxdmac->sg_list);
+	imxdmac->sg_list = NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *imxdma_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा scatterlist *sg;
-	पूर्णांक i, dma_length = 0;
-	काष्ठा imxdma_desc *desc;
+static struct dma_async_tx_descriptor *imxdma_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct scatterlist *sg;
+	int i, dma_length = 0;
+	struct imxdma_desc *desc;
 
-	अगर (list_empty(&imxdmac->ld_मुक्त) ||
-	    imxdma_chan_is_करोing_cyclic(imxdmac))
-		वापस शून्य;
+	if (list_empty(&imxdmac->ld_free) ||
+	    imxdma_chan_is_doing_cyclic(imxdmac))
+		return NULL;
 
-	desc = list_first_entry(&imxdmac->ld_मुक्त, काष्ठा imxdma_desc, node);
+	desc = list_first_entry(&imxdmac->ld_free, struct imxdma_desc, node);
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		dma_length += sg_dma_len(sg);
-	पूर्ण
+	}
 
-	चयन (imxdmac->word_size) अणु
-	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
-		अगर (sg_dma_len(sgl) & 3 || sgl->dma_address & 3)
-			वापस शून्य;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
-		अगर (sg_dma_len(sgl) & 1 || sgl->dma_address & 1)
-			वापस शून्य;
-		अवरोध;
-	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
-		अवरोध;
-	शेष:
-		वापस शून्य;
-	पूर्ण
+	switch (imxdmac->word_size) {
+	case DMA_SLAVE_BUSWIDTH_4_BYTES:
+		if (sg_dma_len(sgl) & 3 || sgl->dma_address & 3)
+			return NULL;
+		break;
+	case DMA_SLAVE_BUSWIDTH_2_BYTES:
+		if (sg_dma_len(sgl) & 1 || sgl->dma_address & 1)
+			return NULL;
+		break;
+	case DMA_SLAVE_BUSWIDTH_1_BYTE:
+		break;
+	default:
+		return NULL;
+	}
 
 	desc->type = IMXDMA_DESC_SLAVE_SG;
 	desc->sg = sgl;
 	desc->sgcount = sg_len;
 	desc->len = dma_length;
 	desc->direction = direction;
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		desc->src = imxdmac->per_address;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->dest = imxdmac->per_address;
-	पूर्ण
-	desc->desc.callback = शून्य;
-	desc->desc.callback_param = शून्य;
+	}
+	desc->desc.callback = NULL;
+	desc->desc.callback_param = NULL;
 
-	वापस &desc->desc;
-पूर्ण
+	return &desc->desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *imxdma_prep_dma_cyclic(
-		काष्ठा dma_chan *chan, dma_addr_t dma_addr, माप_प्रकार buf_len,
-		माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक periods = buf_len / period_len;
+static struct dma_async_tx_descriptor *imxdma_prep_dma_cyclic(
+		struct dma_chan *chan, dma_addr_t dma_addr, size_t buf_len,
+		size_t period_len, enum dma_transfer_direction direction,
+		unsigned long flags)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc;
+	int i;
+	unsigned int periods = buf_len / period_len;
 
 	dev_dbg(imxdma->dev, "%s channel: %d buf_len=%zu period_len=%zu\n",
 			__func__, imxdmac->channel, buf_len, period_len);
 
-	अगर (list_empty(&imxdmac->ld_मुक्त) ||
-	    imxdma_chan_is_करोing_cyclic(imxdmac))
-		वापस शून्य;
+	if (list_empty(&imxdmac->ld_free) ||
+	    imxdma_chan_is_doing_cyclic(imxdmac))
+		return NULL;
 
-	desc = list_first_entry(&imxdmac->ld_मुक्त, काष्ठा imxdma_desc, node);
+	desc = list_first_entry(&imxdmac->ld_free, struct imxdma_desc, node);
 
-	kमुक्त(imxdmac->sg_list);
+	kfree(imxdmac->sg_list);
 
-	imxdmac->sg_list = kसुस्मृति(periods + 1,
-			माप(काष्ठा scatterlist), GFP_ATOMIC);
-	अगर (!imxdmac->sg_list)
-		वापस शून्य;
+	imxdmac->sg_list = kcalloc(periods + 1,
+			sizeof(struct scatterlist), GFP_ATOMIC);
+	if (!imxdmac->sg_list)
+		return NULL;
 
 	sg_init_table(imxdmac->sg_list, periods);
 
-	क्रम (i = 0; i < periods; i++) अणु
-		sg_assign_page(&imxdmac->sg_list[i], शून्य);
+	for (i = 0; i < periods; i++) {
+		sg_assign_page(&imxdmac->sg_list[i], NULL);
 		imxdmac->sg_list[i].offset = 0;
 		imxdmac->sg_list[i].dma_address = dma_addr;
 		sg_dma_len(&imxdmac->sg_list[i]) = period_len;
 		dma_addr += period_len;
-	पूर्ण
+	}
 
-	/* बंद the loop */
+	/* close the loop */
 	sg_chain(imxdmac->sg_list, periods + 1, imxdmac->sg_list);
 
 	desc->type = IMXDMA_DESC_CYCLIC;
@@ -889,36 +888,36 @@ out:
 	desc->sgcount = periods;
 	desc->len = IMX_DMA_LENGTH_LOOP;
 	desc->direction = direction;
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		desc->src = imxdmac->per_address;
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->dest = imxdmac->per_address;
-	पूर्ण
-	desc->desc.callback = शून्य;
-	desc->desc.callback_param = शून्य;
+	}
+	desc->desc.callback = NULL;
+	desc->desc.callback_param = NULL;
 
-	imxdma_config_ग_लिखो(chan, &imxdmac->config, direction);
+	imxdma_config_write(chan, &imxdmac->config, direction);
 
-	वापस &desc->desc;
-पूर्ण
+	return &desc->desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *imxdma_prep_dma_स_नकल(
-	काष्ठा dma_chan *chan, dma_addr_t dest,
-	dma_addr_t src, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc;
+static struct dma_async_tx_descriptor *imxdma_prep_dma_memcpy(
+	struct dma_chan *chan, dma_addr_t dest,
+	dma_addr_t src, size_t len, unsigned long flags)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc;
 
 	dev_dbg(imxdma->dev, "%s channel: %d src=0x%llx dst=0x%llx len=%zu\n",
-		__func__, imxdmac->channel, (अचिन्हित दीर्घ दीर्घ)src,
-		(अचिन्हित दीर्घ दीर्घ)dest, len);
+		__func__, imxdmac->channel, (unsigned long long)src,
+		(unsigned long long)dest, len);
 
-	अगर (list_empty(&imxdmac->ld_मुक्त) ||
-	    imxdma_chan_is_करोing_cyclic(imxdmac))
-		वापस शून्य;
+	if (list_empty(&imxdmac->ld_free) ||
+	    imxdma_chan_is_doing_cyclic(imxdmac))
+		return NULL;
 
-	desc = list_first_entry(&imxdmac->ld_मुक्त, काष्ठा imxdma_desc, node);
+	desc = list_first_entry(&imxdmac->ld_free, struct imxdma_desc, node);
 
 	desc->type = IMXDMA_DESC_MEMCPY;
 	desc->src = src;
@@ -927,35 +926,35 @@ out:
 	desc->direction = DMA_MEM_TO_MEM;
 	desc->config_port = IMX_DMA_MEMSIZE_32 | IMX_DMA_TYPE_LINEAR;
 	desc->config_mem = IMX_DMA_MEMSIZE_32 | IMX_DMA_TYPE_LINEAR;
-	desc->desc.callback = शून्य;
-	desc->desc.callback_param = शून्य;
+	desc->desc.callback = NULL;
+	desc->desc.callback_param = NULL;
 
-	वापस &desc->desc;
-पूर्ण
+	return &desc->desc;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *imxdma_prep_dma_पूर्णांकerleaved(
-	काष्ठा dma_chan *chan, काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-	अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc;
+static struct dma_async_tx_descriptor *imxdma_prep_dma_interleaved(
+	struct dma_chan *chan, struct dma_interleaved_template *xt,
+	unsigned long flags)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc;
 
 	dev_dbg(imxdma->dev, "%s channel: %d src_start=0x%llx dst_start=0x%llx\n"
 		"   src_sgl=%s dst_sgl=%s numf=%zu frame_size=%zu\n", __func__,
-		imxdmac->channel, (अचिन्हित दीर्घ दीर्घ)xt->src_start,
-		(अचिन्हित दीर्घ दीर्घ) xt->dst_start,
+		imxdmac->channel, (unsigned long long)xt->src_start,
+		(unsigned long long) xt->dst_start,
 		xt->src_sgl ? "true" : "false", xt->dst_sgl ? "true" : "false",
 		xt->numf, xt->frame_size);
 
-	अगर (list_empty(&imxdmac->ld_मुक्त) ||
-	    imxdma_chan_is_करोing_cyclic(imxdmac))
-		वापस शून्य;
+	if (list_empty(&imxdmac->ld_free) ||
+	    imxdma_chan_is_doing_cyclic(imxdmac))
+		return NULL;
 
-	अगर (xt->frame_size != 1 || xt->numf <= 0 || xt->dir != DMA_MEM_TO_MEM)
-		वापस शून्य;
+	if (xt->frame_size != 1 || xt->numf <= 0 || xt->dir != DMA_MEM_TO_MEM)
+		return NULL;
 
-	desc = list_first_entry(&imxdmac->ld_मुक्त, काष्ठा imxdma_desc, node);
+	desc = list_first_entry(&imxdmac->ld_free, struct imxdma_desc, node);
 
 	desc->type = IMXDMA_DESC_INTERLEAVED;
 	desc->src = xt->src_start;
@@ -967,146 +966,146 @@ out:
 	desc->direction = DMA_MEM_TO_MEM;
 	desc->config_port = IMX_DMA_MEMSIZE_32;
 	desc->config_mem = IMX_DMA_MEMSIZE_32;
-	अगर (xt->src_sgl)
+	if (xt->src_sgl)
 		desc->config_mem |= IMX_DMA_TYPE_2D;
-	अगर (xt->dst_sgl)
+	if (xt->dst_sgl)
 		desc->config_port |= IMX_DMA_TYPE_2D;
-	desc->desc.callback = शून्य;
-	desc->desc.callback_param = शून्य;
+	desc->desc.callback = NULL;
+	desc->desc.callback_param = NULL;
 
-	वापस &desc->desc;
-पूर्ण
+	return &desc->desc;
+}
 
-अटल व्योम imxdma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा imxdma_channel *imxdmac = to_imxdma_chan(chan);
-	काष्ठा imxdma_engine *imxdma = imxdmac->imxdma;
-	काष्ठा imxdma_desc *desc;
-	अचिन्हित दीर्घ flags;
+static void imxdma_issue_pending(struct dma_chan *chan)
+{
+	struct imxdma_channel *imxdmac = to_imxdma_chan(chan);
+	struct imxdma_engine *imxdma = imxdmac->imxdma;
+	struct imxdma_desc *desc;
+	unsigned long flags;
 
 	spin_lock_irqsave(&imxdma->lock, flags);
-	अगर (list_empty(&imxdmac->ld_active) &&
-	    !list_empty(&imxdmac->ld_queue)) अणु
+	if (list_empty(&imxdmac->ld_active) &&
+	    !list_empty(&imxdmac->ld_queue)) {
 		desc = list_first_entry(&imxdmac->ld_queue,
-					काष्ठा imxdma_desc, node);
+					struct imxdma_desc, node);
 
-		अगर (imxdma_xfer_desc(desc) < 0) अणु
+		if (imxdma_xfer_desc(desc) < 0) {
 			dev_warn(imxdma->dev,
 				 "%s: channel: %d couldn't issue DMA xfer\n",
 				 __func__, imxdmac->channel);
-		पूर्ण अन्यथा अणु
+		} else {
 			list_move_tail(imxdmac->ld_queue.next,
 				       &imxdmac->ld_active);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&imxdma->lock, flags);
-पूर्ण
+}
 
-अटल bool imxdma_filter_fn(काष्ठा dma_chan *chan, व्योम *param)
-अणु
-	काष्ठा imxdma_filter_data *fdata = param;
-	काष्ठा imxdma_channel *imxdma_chan = to_imxdma_chan(chan);
+static bool imxdma_filter_fn(struct dma_chan *chan, void *param)
+{
+	struct imxdma_filter_data *fdata = param;
+	struct imxdma_channel *imxdma_chan = to_imxdma_chan(chan);
 
-	अगर (chan->device->dev != fdata->imxdma->dev)
-		वापस false;
+	if (chan->device->dev != fdata->imxdma->dev)
+		return false;
 
 	imxdma_chan->dma_request = fdata->request;
-	chan->निजी = शून्य;
+	chan->private = NULL;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा dma_chan *imxdma_xlate(काष्ठा of_phandle_args *dma_spec,
-						काष्ठा of_dma *ofdma)
-अणु
-	पूर्णांक count = dma_spec->args_count;
-	काष्ठा imxdma_engine *imxdma = ofdma->of_dma_data;
-	काष्ठा imxdma_filter_data fdata = अणु
+static struct dma_chan *imxdma_xlate(struct of_phandle_args *dma_spec,
+						struct of_dma *ofdma)
+{
+	int count = dma_spec->args_count;
+	struct imxdma_engine *imxdma = ofdma->of_dma_data;
+	struct imxdma_filter_data fdata = {
 		.imxdma = imxdma,
-	पूर्ण;
+	};
 
-	अगर (count != 1)
-		वापस शून्य;
+	if (count != 1)
+		return NULL;
 
 	fdata.request = dma_spec->args[0];
 
-	वापस dma_request_channel(imxdma->dma_device.cap_mask,
+	return dma_request_channel(imxdma->dma_device.cap_mask,
 					imxdma_filter_fn, &fdata);
-पूर्ण
+}
 
-अटल पूर्णांक __init imxdma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imxdma_engine *imxdma;
-	काष्ठा resource *res;
-	पूर्णांक ret, i;
-	पूर्णांक irq, irq_err;
+static int __init imxdma_probe(struct platform_device *pdev)
+{
+	struct imxdma_engine *imxdma;
+	struct resource *res;
+	int ret, i;
+	int irq, irq_err;
 
-	imxdma = devm_kzalloc(&pdev->dev, माप(*imxdma), GFP_KERNEL);
-	अगर (!imxdma)
-		वापस -ENOMEM;
+	imxdma = devm_kzalloc(&pdev->dev, sizeof(*imxdma), GFP_KERNEL);
+	if (!imxdma)
+		return -ENOMEM;
 
 	imxdma->dev = &pdev->dev;
-	imxdma->devtype = (क्रमागत imx_dma_type)of_device_get_match_data(&pdev->dev);
+	imxdma->devtype = (enum imx_dma_type)of_device_get_match_data(&pdev->dev);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	imxdma->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(imxdma->base))
-		वापस PTR_ERR(imxdma->base);
+	if (IS_ERR(imxdma->base))
+		return PTR_ERR(imxdma->base);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	imxdma->dma_ipg = devm_clk_get(&pdev->dev, "ipg");
-	अगर (IS_ERR(imxdma->dma_ipg))
-		वापस PTR_ERR(imxdma->dma_ipg);
+	if (IS_ERR(imxdma->dma_ipg))
+		return PTR_ERR(imxdma->dma_ipg);
 
 	imxdma->dma_ahb = devm_clk_get(&pdev->dev, "ahb");
-	अगर (IS_ERR(imxdma->dma_ahb))
-		वापस PTR_ERR(imxdma->dma_ahb);
+	if (IS_ERR(imxdma->dma_ahb))
+		return PTR_ERR(imxdma->dma_ahb);
 
 	ret = clk_prepare_enable(imxdma->dma_ipg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = clk_prepare_enable(imxdma->dma_ahb);
-	अगर (ret)
-		जाओ disable_dma_ipg_clk;
+	if (ret)
+		goto disable_dma_ipg_clk;
 
 	/* reset DMA module */
-	imx_dmav1_ग_लिखोl(imxdma, DCR_DRST, DMA_DCR);
+	imx_dmav1_writel(imxdma, DCR_DRST, DMA_DCR);
 
-	अगर (is_imx1_dma(imxdma)) अणु
+	if (is_imx1_dma(imxdma)) {
 		ret = devm_request_irq(&pdev->dev, irq,
 				       dma_irq_handler, 0, "DMA", imxdma);
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(imxdma->dev, "Can't register IRQ for DMA\n");
-			जाओ disable_dma_ahb_clk;
-		पूर्ण
+			goto disable_dma_ahb_clk;
+		}
 		imxdma->irq = irq;
 
-		irq_err = platक्रमm_get_irq(pdev, 1);
-		अगर (irq_err < 0) अणु
+		irq_err = platform_get_irq(pdev, 1);
+		if (irq_err < 0) {
 			ret = irq_err;
-			जाओ disable_dma_ahb_clk;
-		पूर्ण
+			goto disable_dma_ahb_clk;
+		}
 
 		ret = devm_request_irq(&pdev->dev, irq_err,
 				       imxdma_err_handler, 0, "DMA", imxdma);
-		अगर (ret) अणु
+		if (ret) {
 			dev_warn(imxdma->dev, "Can't register ERRIRQ for DMA\n");
-			जाओ disable_dma_ahb_clk;
-		पूर्ण
+			goto disable_dma_ahb_clk;
+		}
 		imxdma->irq_err = irq_err;
-	पूर्ण
+	}
 
 	/* enable DMA module */
-	imx_dmav1_ग_लिखोl(imxdma, DCR_DEN, DMA_DCR);
+	imx_dmav1_writel(imxdma, DCR_DEN, DMA_DCR);
 
-	/* clear all पूर्णांकerrupts */
-	imx_dmav1_ग_लिखोl(imxdma, (1 << IMX_DMA_CHANNELS) - 1, DMA_DISR);
+	/* clear all interrupts */
+	imx_dmav1_writel(imxdma, (1 << IMX_DMA_CHANNELS) - 1, DMA_DISR);
 
-	/* disable पूर्णांकerrupts */
-	imx_dmav1_ग_लिखोl(imxdma, (1 << IMX_DMA_CHANNELS) - 1, DMA_DIMR);
+	/* disable interrupts */
+	imx_dmav1_writel(imxdma, (1 << IMX_DMA_CHANNELS) - 1, DMA_DIMR);
 
 	INIT_LIST_HEAD(&imxdma->dma_device.channels);
 
@@ -1116,33 +1115,33 @@ out:
 	dma_cap_set(DMA_INTERLEAVE, imxdma->dma_device.cap_mask);
 
 	/* Initialize 2D global parameters */
-	क्रम (i = 0; i < IMX_DMA_2D_SLOTS; i++)
+	for (i = 0; i < IMX_DMA_2D_SLOTS; i++)
 		imxdma->slots_2d[i].count = 0;
 
 	spin_lock_init(&imxdma->lock);
 
 	/* Initialize channel parameters */
-	क्रम (i = 0; i < IMX_DMA_CHANNELS; i++) अणु
-		काष्ठा imxdma_channel *imxdmac = &imxdma->channel[i];
+	for (i = 0; i < IMX_DMA_CHANNELS; i++) {
+		struct imxdma_channel *imxdmac = &imxdma->channel[i];
 
-		अगर (!is_imx1_dma(imxdma)) अणु
+		if (!is_imx1_dma(imxdma)) {
 			ret = devm_request_irq(&pdev->dev, irq + i,
 					dma_irq_handler, 0, "DMA", imxdma);
-			अगर (ret) अणु
+			if (ret) {
 				dev_warn(imxdma->dev, "Can't register IRQ %d "
 					 "for DMA channel %d\n",
 					 irq + i, i);
-				जाओ disable_dma_ahb_clk;
-			पूर्ण
+				goto disable_dma_ahb_clk;
+			}
 
 			imxdmac->irq = irq + i;
-			समयr_setup(&imxdmac->watchकरोg, imxdma_watchकरोg, 0);
-		पूर्ण
+			timer_setup(&imxdmac->watchdog, imxdma_watchdog, 0);
+		}
 
 		imxdmac->imxdma = imxdma;
 
 		INIT_LIST_HEAD(&imxdmac->ld_queue);
-		INIT_LIST_HEAD(&imxdmac->ld_मुक्त);
+		INIT_LIST_HEAD(&imxdmac->ld_free);
 		INIT_LIST_HEAD(&imxdmac->ld_active);
 
 		tasklet_setup(&imxdmac->dma_tasklet, imxdma_tasklet);
@@ -1153,100 +1152,100 @@ out:
 		/* Add the channel to the DMAC list */
 		list_add_tail(&imxdmac->chan.device_node,
 			      &imxdma->dma_device.channels);
-	पूर्ण
+	}
 
 	imxdma->dma_device.dev = &pdev->dev;
 
 	imxdma->dma_device.device_alloc_chan_resources = imxdma_alloc_chan_resources;
-	imxdma->dma_device.device_मुक्त_chan_resources = imxdma_मुक्त_chan_resources;
+	imxdma->dma_device.device_free_chan_resources = imxdma_free_chan_resources;
 	imxdma->dma_device.device_tx_status = imxdma_tx_status;
 	imxdma->dma_device.device_prep_slave_sg = imxdma_prep_slave_sg;
 	imxdma->dma_device.device_prep_dma_cyclic = imxdma_prep_dma_cyclic;
-	imxdma->dma_device.device_prep_dma_स_नकल = imxdma_prep_dma_स_नकल;
-	imxdma->dma_device.device_prep_पूर्णांकerleaved_dma = imxdma_prep_dma_पूर्णांकerleaved;
+	imxdma->dma_device.device_prep_dma_memcpy = imxdma_prep_dma_memcpy;
+	imxdma->dma_device.device_prep_interleaved_dma = imxdma_prep_dma_interleaved;
 	imxdma->dma_device.device_config = imxdma_config;
 	imxdma->dma_device.device_terminate_all = imxdma_terminate_all;
 	imxdma->dma_device.device_issue_pending = imxdma_issue_pending;
 
-	platक्रमm_set_drvdata(pdev, imxdma);
+	platform_set_drvdata(pdev, imxdma);
 
 	imxdma->dma_device.copy_align = DMAENGINE_ALIGN_4_BYTES;
 	dma_set_max_seg_size(imxdma->dma_device.dev, 0xffffff);
 
-	ret = dma_async_device_रेजिस्टर(&imxdma->dma_device);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&imxdma->dma_device);
+	if (ret) {
 		dev_err(&pdev->dev, "unable to register\n");
-		जाओ disable_dma_ahb_clk;
-	पूर्ण
+		goto disable_dma_ahb_clk;
+	}
 
-	अगर (pdev->dev.of_node) अणु
-		ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
+	if (pdev->dev.of_node) {
+		ret = of_dma_controller_register(pdev->dev.of_node,
 				imxdma_xlate, imxdma);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "unable to register of_dma_controller\n");
-			जाओ err_of_dma_controller;
-		पूर्ण
-	पूर्ण
+			goto err_of_dma_controller;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_of_dma_controller:
-	dma_async_device_unरेजिस्टर(&imxdma->dma_device);
+	dma_async_device_unregister(&imxdma->dma_device);
 disable_dma_ahb_clk:
 	clk_disable_unprepare(imxdma->dma_ahb);
 disable_dma_ipg_clk:
 	clk_disable_unprepare(imxdma->dma_ipg);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम imxdma_मुक्त_irq(काष्ठा platक्रमm_device *pdev, काष्ठा imxdma_engine *imxdma)
-अणु
-	पूर्णांक i;
+static void imxdma_free_irq(struct platform_device *pdev, struct imxdma_engine *imxdma)
+{
+	int i;
 
-	अगर (is_imx1_dma(imxdma)) अणु
+	if (is_imx1_dma(imxdma)) {
 		disable_irq(imxdma->irq);
 		disable_irq(imxdma->irq_err);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < IMX_DMA_CHANNELS; i++) अणु
-		काष्ठा imxdma_channel *imxdmac = &imxdma->channel[i];
+	for (i = 0; i < IMX_DMA_CHANNELS; i++) {
+		struct imxdma_channel *imxdmac = &imxdma->channel[i];
 
-		अगर (!is_imx1_dma(imxdma))
+		if (!is_imx1_dma(imxdma))
 			disable_irq(imxdmac->irq);
 
-		tasklet_समाप्त(&imxdmac->dma_tasklet);
-	पूर्ण
-पूर्ण
+		tasklet_kill(&imxdmac->dma_tasklet);
+	}
+}
 
-अटल पूर्णांक imxdma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imxdma_engine *imxdma = platक्रमm_get_drvdata(pdev);
+static int imxdma_remove(struct platform_device *pdev)
+{
+	struct imxdma_engine *imxdma = platform_get_drvdata(pdev);
 
-	imxdma_मुक्त_irq(pdev, imxdma);
+	imxdma_free_irq(pdev, imxdma);
 
-        dma_async_device_unरेजिस्टर(&imxdma->dma_device);
+        dma_async_device_unregister(&imxdma->dma_device);
 
-	अगर (pdev->dev.of_node)
-		of_dma_controller_मुक्त(pdev->dev.of_node);
+	if (pdev->dev.of_node)
+		of_dma_controller_free(pdev->dev.of_node);
 
 	clk_disable_unprepare(imxdma->dma_ipg);
 	clk_disable_unprepare(imxdma->dma_ahb);
 
-        वापस 0;
-पूर्ण
+        return 0;
+}
 
-अटल काष्ठा platक्रमm_driver imxdma_driver = अणु
-	.driver		= अणु
+static struct platform_driver imxdma_driver = {
+	.driver		= {
 		.name	= "imx-dma",
 		.of_match_table = imx_dma_of_dev_id,
-	पूर्ण,
-	.हटाओ		= imxdma_हटाओ,
-पूर्ण;
+	},
+	.remove		= imxdma_remove,
+};
 
-अटल पूर्णांक __init imxdma_module_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&imxdma_driver, imxdma_probe);
-पूर्ण
+static int __init imxdma_module_init(void)
+{
+	return platform_driver_probe(&imxdma_driver, imxdma_probe);
+}
 subsys_initcall(imxdma_module_init);
 
 MODULE_AUTHOR("Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>");

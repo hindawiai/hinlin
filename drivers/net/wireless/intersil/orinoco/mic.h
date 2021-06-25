@@ -1,24 +1,23 @@
-<शैली गुरु>
 /* Orinoco MIC helpers
  *
- * See copyright notice in मुख्य.c
+ * See copyright notice in main.c
  */
-#अगर_अघोषित _ORINOCO_MIC_H_
-#घोषणा _ORINOCO_MIC_H_
+#ifndef _ORINOCO_MIC_H_
+#define _ORINOCO_MIC_H_
 
-#समावेश <linux/types.h>
-#समावेश <crypto/hash.h>
+#include <linux/types.h>
+#include <crypto/hash.h>
 
-#घोषणा MICHAEL_MIC_LEN 8
+#define MICHAEL_MIC_LEN 8
 
 /* Forward declarations */
-काष्ठा orinoco_निजी;
-काष्ठा crypto_ahash;
+struct orinoco_private;
+struct crypto_ahash;
 
-पूर्णांक orinoco_mic_init(काष्ठा orinoco_निजी *priv);
-व्योम orinoco_mic_मुक्त(काष्ठा orinoco_निजी *priv);
-पूर्णांक orinoco_mic(काष्ठा crypto_shash *tfm_michael, u8 *key,
+int orinoco_mic_init(struct orinoco_private *priv);
+void orinoco_mic_free(struct orinoco_private *priv);
+int orinoco_mic(struct crypto_shash *tfm_michael, u8 *key,
 		u8 *da, u8 *sa, u8 priority,
-		u8 *data, माप_प्रकार data_len, u8 *mic);
+		u8 *data, size_t data_len, u8 *mic);
 
-#पूर्ण_अगर /* ORINOCO_MIC_H */
+#endif /* ORINOCO_MIC_H */

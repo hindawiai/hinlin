@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *    Support क्रम LGDT3302 and LGDT3303 - VSB/QAM
+ *    Support for LGDT3302 and LGDT3303 - VSB/QAM
  *
  *    Copyright (C) 2005 Wilson Michaels <wilsonmichaels@earthlink.net>
  */
 
-#अगर_अघोषित _LGDT330X_PRIV_
-#घोषणा _LGDT330X_PRIV_
+#ifndef _LGDT330X_PRIV_
+#define _LGDT330X_PRIV_
 
-/* i2c control रेजिस्टर addresses */
-क्रमागत I2C_REG अणु
+/* i2c control register addresses */
+enum I2C_REG {
 	TOP_CONTROL= 0x00,
 	IRQ_MASK= 0x01,
 	IRQ_STATUS= 0x02,
@@ -53,6 +52,6 @@
 	LGDT3303_PH_ERR2= 0x72,
 	LGDT3303_PACKET_ERR_COUNTER1= 0x8b,
 	LGDT3303_PACKET_ERR_COUNTER2= 0x8c,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _LGDT330X_PRIV_ */
+#endif /* _LGDT330X_PRIV_ */

@@ -1,149 +1,148 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LAPB_H
-#घोषणा _LAPB_H 
-#समावेश <linux/lapb.h>
-#समावेश <linux/refcount.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LAPB_H
+#define _LAPB_H 
+#include <linux/lapb.h>
+#include <linux/refcount.h>
 
-#घोषणा	LAPB_HEADER_LEN	20		/* LAPB over Ethernet + a bit more */
+#define	LAPB_HEADER_LEN	20		/* LAPB over Ethernet + a bit more */
 
-#घोषणा	LAPB_ACK_PENDING_CONDITION	0x01
-#घोषणा	LAPB_REJECT_CONDITION		0x02
-#घोषणा	LAPB_PEER_RX_BUSY_CONDITION	0x04
+#define	LAPB_ACK_PENDING_CONDITION	0x01
+#define	LAPB_REJECT_CONDITION		0x02
+#define	LAPB_PEER_RX_BUSY_CONDITION	0x04
 
-/* Control field ढाँचाs */
-#घोषणा	LAPB_I		0x00	/* Inक्रमmation frames */
-#घोषणा	LAPB_S		0x01	/* Supervisory frames */
-#घोषणा	LAPB_U		0x03	/* Unnumbered frames */
+/* Control field templates */
+#define	LAPB_I		0x00	/* Information frames */
+#define	LAPB_S		0x01	/* Supervisory frames */
+#define	LAPB_U		0x03	/* Unnumbered frames */
 
-#घोषणा	LAPB_RR		0x01	/* Receiver पढ़ोy */
-#घोषणा	LAPB_RNR	0x05	/* Receiver not पढ़ोy */
-#घोषणा	LAPB_REJ	0x09	/* Reject */
+#define	LAPB_RR		0x01	/* Receiver ready */
+#define	LAPB_RNR	0x05	/* Receiver not ready */
+#define	LAPB_REJ	0x09	/* Reject */
 
-#घोषणा	LAPB_SABM	0x2F	/* Set Asynchronous Balanced Mode */
-#घोषणा	LAPB_SABME	0x6F	/* Set Asynchronous Balanced Mode Extended */
-#घोषणा	LAPB_DISC	0x43	/* Disconnect */
-#घोषणा	LAPB_DM		0x0F	/* Disconnected mode */
-#घोषणा	LAPB_UA		0x63	/* Unnumbered acknowledge */
-#घोषणा	LAPB_FRMR	0x87	/* Frame reject */
+#define	LAPB_SABM	0x2F	/* Set Asynchronous Balanced Mode */
+#define	LAPB_SABME	0x6F	/* Set Asynchronous Balanced Mode Extended */
+#define	LAPB_DISC	0x43	/* Disconnect */
+#define	LAPB_DM		0x0F	/* Disconnected mode */
+#define	LAPB_UA		0x63	/* Unnumbered acknowledge */
+#define	LAPB_FRMR	0x87	/* Frame reject */
 
-#घोषणा LAPB_ILLEGAL	0x100	/* Impossible to be a real frame type */
+#define LAPB_ILLEGAL	0x100	/* Impossible to be a real frame type */
 
-#घोषणा	LAPB_SPF	0x10	/* Poll/final bit क्रम standard LAPB */
-#घोषणा	LAPB_EPF	0x01	/* Poll/final bit क्रम extended LAPB */
+#define	LAPB_SPF	0x10	/* Poll/final bit for standard LAPB */
+#define	LAPB_EPF	0x01	/* Poll/final bit for extended LAPB */
 
-#घोषणा	LAPB_FRMR_W	0x01	/* Control field invalid	*/
-#घोषणा	LAPB_FRMR_X	0x02	/* I field invalid		*/
-#घोषणा	LAPB_FRMR_Y	0x04	/* I field too दीर्घ		*/
-#घोषणा	LAPB_FRMR_Z	0x08	/* Invalid N(R)			*/
+#define	LAPB_FRMR_W	0x01	/* Control field invalid	*/
+#define	LAPB_FRMR_X	0x02	/* I field invalid		*/
+#define	LAPB_FRMR_Y	0x04	/* I field too long		*/
+#define	LAPB_FRMR_Z	0x08	/* Invalid N(R)			*/
 
-#घोषणा	LAPB_POLLOFF	0
-#घोषणा	LAPB_POLLON	1
+#define	LAPB_POLLOFF	0
+#define	LAPB_POLLON	1
 
 /* LAPB C-bit */
-#घोषणा LAPB_COMMAND	1
-#घोषणा LAPB_RESPONSE	2
+#define LAPB_COMMAND	1
+#define LAPB_RESPONSE	2
 
-#घोषणा	LAPB_ADDR_A	0x03
-#घोषणा	LAPB_ADDR_B	0x01
-#घोषणा	LAPB_ADDR_C	0x0F
-#घोषणा	LAPB_ADDR_D	0x07
+#define	LAPB_ADDR_A	0x03
+#define	LAPB_ADDR_B	0x01
+#define	LAPB_ADDR_C	0x0F
+#define	LAPB_ADDR_D	0x07
 
-/* Define Link State स्थिरants. */
-क्रमागत अणु
+/* Define Link State constants. */
+enum {
 	LAPB_STATE_0,	/* Disconnected State		*/
-	LAPB_STATE_1,	/* Aरुकोing Connection State	*/
-	LAPB_STATE_2,	/* Aरुकोing Disconnection State	*/
+	LAPB_STATE_1,	/* Awaiting Connection State	*/
+	LAPB_STATE_2,	/* Awaiting Disconnection State	*/
 	LAPB_STATE_3,	/* Data Transfer State		*/
 	LAPB_STATE_4	/* Frame Reject State		*/
-पूर्ण;
+};
 
-#घोषणा	LAPB_DEFAULT_MODE		(LAPB_STANDARD | LAPB_SLP | LAPB_DTE)
-#घोषणा	LAPB_DEFAULT_WINDOW		7		/* Winकरोw=7 */
-#घोषणा	LAPB_DEFAULT_T1			(5 * HZ)	/* T1=5s    */
-#घोषणा	LAPB_DEFAULT_T2			(1 * HZ)	/* T2=1s    */
-#घोषणा	LAPB_DEFAULT_N2			20		/* N2=20    */
+#define	LAPB_DEFAULT_MODE		(LAPB_STANDARD | LAPB_SLP | LAPB_DTE)
+#define	LAPB_DEFAULT_WINDOW		7		/* Window=7 */
+#define	LAPB_DEFAULT_T1			(5 * HZ)	/* T1=5s    */
+#define	LAPB_DEFAULT_T2			(1 * HZ)	/* T2=1s    */
+#define	LAPB_DEFAULT_N2			20		/* N2=20    */
 
-#घोषणा	LAPB_SMODULUS	8
-#घोषणा	LAPB_EMODULUS	128
-
-/*
- *	Inक्रमmation about the current frame.
- */
-काष्ठा lapb_frame अणु
-	अचिन्हित लघु		type;		/* Parsed type		*/
-	अचिन्हित लघु		nr, ns;		/* N(R), N(S)		*/
-	अचिन्हित अक्षर		cr;		/* Command/Response	*/
-	अचिन्हित अक्षर		pf;		/* Poll/Final		*/
-	अचिन्हित अक्षर		control[2];	/* Original control data*/
-पूर्ण;
+#define	LAPB_SMODULUS	8
+#define	LAPB_EMODULUS	128
 
 /*
- *	The per LAPB connection control काष्ठाure.
+ *	Information about the current frame.
  */
-काष्ठा lapb_cb अणु
-	काष्ठा list_head	node;
-	काष्ठा net_device	*dev;
+struct lapb_frame {
+	unsigned short		type;		/* Parsed type		*/
+	unsigned short		nr, ns;		/* N(R), N(S)		*/
+	unsigned char		cr;		/* Command/Response	*/
+	unsigned char		pf;		/* Poll/Final		*/
+	unsigned char		control[2];	/* Original control data*/
+};
+
+/*
+ *	The per LAPB connection control structure.
+ */
+struct lapb_cb {
+	struct list_head	node;
+	struct net_device	*dev;
 
 	/* Link status fields */
-	अचिन्हित पूर्णांक		mode;
-	अचिन्हित अक्षर		state;
-	अचिन्हित लघु		vs, vr, va;
-	अचिन्हित अक्षर		condition;
-	अचिन्हित लघु		n2, n2count;
-	अचिन्हित लघु		t1, t2;
-	काष्ठा समयr_list	t1समयr, t2समयr;
-	bool			t1समयr_running, t2समयr_running;
+	unsigned int		mode;
+	unsigned char		state;
+	unsigned short		vs, vr, va;
+	unsigned char		condition;
+	unsigned short		n2, n2count;
+	unsigned short		t1, t2;
+	struct timer_list	t1timer, t2timer;
+	bool			t1timer_running, t2timer_running;
 
-	/* Internal control inक्रमmation */
-	काष्ठा sk_buff_head	ग_लिखो_queue;
-	काष्ठा sk_buff_head	ack_queue;
-	अचिन्हित अक्षर		winकरोw;
-	स्थिर काष्ठा lapb_रेजिस्टर_काष्ठा *callbacks;
+	/* Internal control information */
+	struct sk_buff_head	write_queue;
+	struct sk_buff_head	ack_queue;
+	unsigned char		window;
+	const struct lapb_register_struct *callbacks;
 
-	/* FRMR control inक्रमmation */
-	काष्ठा lapb_frame	frmr_data;
-	अचिन्हित अक्षर		frmr_type;
+	/* FRMR control information */
+	struct lapb_frame	frmr_data;
+	unsigned char		frmr_type;
 
 	spinlock_t		lock;
 	refcount_t		refcnt;
-पूर्ण;
+};
 
-/* lapb_अगरace.c */
-व्योम lapb_connect_confirmation(काष्ठा lapb_cb *lapb, पूर्णांक);
-व्योम lapb_connect_indication(काष्ठा lapb_cb *lapb, पूर्णांक);
-व्योम lapb_disconnect_confirmation(काष्ठा lapb_cb *lapb, पूर्णांक);
-व्योम lapb_disconnect_indication(काष्ठा lapb_cb *lapb, पूर्णांक);
-पूर्णांक lapb_data_indication(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *);
-पूर्णांक lapb_data_transmit(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *);
+/* lapb_iface.c */
+void lapb_connect_confirmation(struct lapb_cb *lapb, int);
+void lapb_connect_indication(struct lapb_cb *lapb, int);
+void lapb_disconnect_confirmation(struct lapb_cb *lapb, int);
+void lapb_disconnect_indication(struct lapb_cb *lapb, int);
+int lapb_data_indication(struct lapb_cb *lapb, struct sk_buff *);
+int lapb_data_transmit(struct lapb_cb *lapb, struct sk_buff *);
 
 /* lapb_in.c */
-व्योम lapb_data_input(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *);
+void lapb_data_input(struct lapb_cb *lapb, struct sk_buff *);
 
 /* lapb_out.c */
-व्योम lapb_kick(काष्ठा lapb_cb *lapb);
-व्योम lapb_transmit_buffer(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *, पूर्णांक);
-व्योम lapb_establish_data_link(काष्ठा lapb_cb *lapb);
-व्योम lapb_enquiry_response(काष्ठा lapb_cb *lapb);
-व्योम lapb_समयout_response(काष्ठा lapb_cb *lapb);
-व्योम lapb_check_अगरrames_acked(काष्ठा lapb_cb *lapb, अचिन्हित लघु);
-व्योम lapb_check_need_response(काष्ठा lapb_cb *lapb, पूर्णांक, पूर्णांक);
+void lapb_kick(struct lapb_cb *lapb);
+void lapb_transmit_buffer(struct lapb_cb *lapb, struct sk_buff *, int);
+void lapb_establish_data_link(struct lapb_cb *lapb);
+void lapb_enquiry_response(struct lapb_cb *lapb);
+void lapb_timeout_response(struct lapb_cb *lapb);
+void lapb_check_iframes_acked(struct lapb_cb *lapb, unsigned short);
+void lapb_check_need_response(struct lapb_cb *lapb, int, int);
 
 /* lapb_subr.c */
-व्योम lapb_clear_queues(काष्ठा lapb_cb *lapb);
-व्योम lapb_frames_acked(काष्ठा lapb_cb *lapb, अचिन्हित लघु);
-व्योम lapb_requeue_frames(काष्ठा lapb_cb *lapb);
-पूर्णांक lapb_validate_nr(काष्ठा lapb_cb *lapb, अचिन्हित लघु);
-पूर्णांक lapb_decode(काष्ठा lapb_cb *lapb, काष्ठा sk_buff *, काष्ठा lapb_frame *);
-व्योम lapb_send_control(काष्ठा lapb_cb *lapb, पूर्णांक, पूर्णांक, पूर्णांक);
-व्योम lapb_transmit_frmr(काष्ठा lapb_cb *lapb);
+void lapb_clear_queues(struct lapb_cb *lapb);
+void lapb_frames_acked(struct lapb_cb *lapb, unsigned short);
+void lapb_requeue_frames(struct lapb_cb *lapb);
+int lapb_validate_nr(struct lapb_cb *lapb, unsigned short);
+int lapb_decode(struct lapb_cb *lapb, struct sk_buff *, struct lapb_frame *);
+void lapb_send_control(struct lapb_cb *lapb, int, int, int);
+void lapb_transmit_frmr(struct lapb_cb *lapb);
 
-/* lapb_समयr.c */
-व्योम lapb_start_t1समयr(काष्ठा lapb_cb *lapb);
-व्योम lapb_start_t2समयr(काष्ठा lapb_cb *lapb);
-व्योम lapb_stop_t1समयr(काष्ठा lapb_cb *lapb);
-व्योम lapb_stop_t2समयr(काष्ठा lapb_cb *lapb);
-पूर्णांक lapb_t1समयr_running(काष्ठा lapb_cb *lapb);
+/* lapb_timer.c */
+void lapb_start_t1timer(struct lapb_cb *lapb);
+void lapb_start_t2timer(struct lapb_cb *lapb);
+void lapb_stop_t1timer(struct lapb_cb *lapb);
+void lapb_stop_t2timer(struct lapb_cb *lapb);
+int lapb_t1timer_running(struct lapb_cb *lapb);
 
 /*
  * Debug levels.
@@ -152,12 +151,12 @@
  *	2 = Packets I/O and State Changes
  *	3 = Hex dumps, Packets I/O and State Changes.
  */
-#घोषणा	LAPB_DEBUG	0
+#define	LAPB_DEBUG	0
 
-#घोषणा lapb_dbg(level, fmt, ...)			\
-करो अणु							\
-	अगर (level < LAPB_DEBUG)				\
+#define lapb_dbg(level, fmt, ...)			\
+do {							\
+	if (level < LAPB_DEBUG)				\
 		pr_debug(fmt, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#पूर्ण_अगर
+#endif

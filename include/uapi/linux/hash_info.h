@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * Hash Info: Hash algorithms inक्रमmation
+ * Hash Info: Hash algorithms information
  *
  * Copyright (c) 2013 Dmitry Kasatkin <d.kasatkin@samsung.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  *
  */
 
-#अगर_अघोषित _UAPI_LINUX_HASH_INFO_H
-#घोषणा _UAPI_LINUX_HASH_INFO_H
+#ifndef _UAPI_LINUX_HASH_INFO_H
+#define _UAPI_LINUX_HASH_INFO_H
 
-क्रमागत hash_algo अणु
+enum hash_algo {
 	HASH_ALGO_MD4,
 	HASH_ALGO_MD5,
 	HASH_ALGO_SHA1,
@@ -37,6 +36,6 @@
 	HASH_ALGO_STREEBOG_256,
 	HASH_ALGO_STREEBOG_512,
 	HASH_ALGO__LAST
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _UAPI_LINUX_HASH_INFO_H */
+#endif /* _UAPI_LINUX_HASH_INFO_H */

@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_अघोषित __CHECKER__
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "armada_trace.h"
-#पूर्ण_अगर
+// SPDX-License-Identifier: GPL-2.0
+#ifndef __CHECKER__
+#define CREATE_TRACE_POINTS
+#include "armada_trace.h"
+#endif

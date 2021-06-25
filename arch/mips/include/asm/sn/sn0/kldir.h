@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Derived from IRIX <sys/SN/klसूची.स>, revision 1.21.
+ * Derived from IRIX <sys/SN/kldir.h>, revision 1.21.
  *
  * Copyright (C) 1992 - 1997, 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 1999, 2000 by Ralf Baechle
  */
-#अगर_अघोषित _ASM_SN_SN0_KLसूची_H
-#घोषणा _ASM_SN_SN0_KLसूची_H
+#ifndef _ASM_SN_SN0_KLDIR_H
+#define _ASM_SN_SN0_KLDIR_H
 
 
 /*
  * The kldir memory area resides at a fixed place in each node's memory and
- * provides poपूर्णांकers to most other IP27 memory areas.  This allows us to
- * resize and/or relocate memory areas at a later समय without अवरोधing all
+ * provides pointers to most other IP27 memory areas.  This allows us to
+ * resize and/or relocate memory areas at a later time without breaking all
  * firmware and kernels that use them.	Indices in the array are
  * permanently dedicated to areas listed below.	 Some memory areas (marked
  * below) reside at a permanently fixed location, but are included in the
- * directory क्रम completeness.
+ * directory for completeness.
  */
 
 /*
@@ -61,7 +60,7 @@
  * 0x19000 (100K)	   +-----------------------------------------+
  *
  *
- * The lower portion of the memory map contains inक्रमmation that is
+ * The lower portion of the memory map contains information that is
  * permanent and is used by the IP27PROM, IO6PROM and IRIX.
  *
  * 0x19000 (100K)	   +-----------------------------------------+
@@ -83,7 +82,7 @@
  * 0x11000 (68K)	   +-----------------------------------------+
  *			   |	  Early cache Exception stack	     |
  *			   |		 and/or			     |
- *			   |	  kernel/io6prom nmi रेजिस्टरs	     |
+ *			   |	  kernel/io6prom nmi registers	     |
  * 0x10800  (66k)	   +-----------------------------------------+
  *			   |	  cache error eframe		     |
  * 0x10400 (65K)	   +-----------------------------------------+
@@ -104,13 +103,13 @@
  * 0x2800 (10K)		   +-----------------------------------------+
  *			   |	  LAUNCH [NUM_CPU]		     |
  * 0x2400 (9K)		   +-----------------------------------------+
- *			   |	  Low memory directory (KLसूची)	     |
+ *			   |	  Low memory directory (KLDIR)	     |
  * 0x2000 (8K)		   +-----------------------------------------+
  *			   |	  ARCS SPB (1K)			     |
  * 0x1000 (4K)		   +-----------------------------------------+
  *			   |	  Early cache Exception stack	     |
  *			   |		 and/or			     |
- *			   |	  kernel/io6prom nmi रेजिस्टरs	     |
+ *			   |	  kernel/io6prom nmi registers	     |
  * 0x800  (2k)		   +-----------------------------------------+
  *			   |	  cache error eframe		     |
  * 0x400 (1K)		   +-----------------------------------------+
@@ -122,66 +121,66 @@
  * This is defined here because IP27_SYMMON_STK_SIZE must be at least what
  * we define here.  Since it's set up in the prom.  We can't redefine it later
  * and expect more space to be allocated.  The way to find out the true size
- * of the symmon stacks is to भागide SYMMON_STK_SIZE by SYMMON_STK_STRIDE
- * क्रम a particular node.
+ * of the symmon stacks is to divide SYMMON_STK_SIZE by SYMMON_STK_STRIDE
+ * for a particular node.
  */
-#घोषणा SYMMON_STACK_SIZE		0x8000
+#define SYMMON_STACK_SIZE		0x8000
 
-#अगर defined(PROM)
+#if defined(PROM)
 
 /*
  * These defines are prom version dependent.  No code other than the IP27
  * prom should attempt to use these values.
  */
-#घोषणा IP27_LAUNCH_OFFSET		0x2400
-#घोषणा IP27_LAUNCH_SIZE		0x400
-#घोषणा IP27_LAUNCH_COUNT		2
-#घोषणा IP27_LAUNCH_STRIDE		0x200
+#define IP27_LAUNCH_OFFSET		0x2400
+#define IP27_LAUNCH_SIZE		0x400
+#define IP27_LAUNCH_COUNT		2
+#define IP27_LAUNCH_STRIDE		0x200
 
-#घोषणा IP27_KLCONFIG_OFFSET		0x4000
-#घोषणा IP27_KLCONFIG_SIZE		0xc000
-#घोषणा IP27_KLCONFIG_COUNT		1
-#घोषणा IP27_KLCONFIG_STRIDE		0
+#define IP27_KLCONFIG_OFFSET		0x4000
+#define IP27_KLCONFIG_SIZE		0xc000
+#define IP27_KLCONFIG_COUNT		1
+#define IP27_KLCONFIG_STRIDE		0
 
-#घोषणा IP27_NMI_OFFSET			0x3000
-#घोषणा IP27_NMI_SIZE			0x40
-#घोषणा IP27_NMI_COUNT			2
-#घोषणा IP27_NMI_STRIDE			0x40
+#define IP27_NMI_OFFSET			0x3000
+#define IP27_NMI_SIZE			0x40
+#define IP27_NMI_COUNT			2
+#define IP27_NMI_STRIDE			0x40
 
-#घोषणा IP27_PI_ERROR_OFFSET		0x12000
-#घोषणा IP27_PI_ERROR_SIZE		0x4000
-#घोषणा IP27_PI_ERROR_COUNT		1
-#घोषणा IP27_PI_ERROR_STRIDE		0
+#define IP27_PI_ERROR_OFFSET		0x12000
+#define IP27_PI_ERROR_SIZE		0x4000
+#define IP27_PI_ERROR_COUNT		1
+#define IP27_PI_ERROR_STRIDE		0
 
-#घोषणा IP27_SYMMON_STK_OFFSET		0x25000
-#घोषणा IP27_SYMMON_STK_SIZE		0xe000
-#घोषणा IP27_SYMMON_STK_COUNT		2
+#define IP27_SYMMON_STK_OFFSET		0x25000
+#define IP27_SYMMON_STK_SIZE		0xe000
+#define IP27_SYMMON_STK_COUNT		2
 /* IP27_SYMMON_STK_STRIDE must be >= SYMMON_STACK_SIZE */
-#घोषणा IP27_SYMMON_STK_STRIDE		0x7000
+#define IP27_SYMMON_STK_STRIDE		0x7000
 
-#घोषणा IP27_FREEMEM_OFFSET		0x19000
-#घोषणा IP27_FREEMEM_SIZE		-1
-#घोषणा IP27_FREEMEM_COUNT		1
-#घोषणा IP27_FREEMEM_STRIDE		0
+#define IP27_FREEMEM_OFFSET		0x19000
+#define IP27_FREEMEM_SIZE		-1
+#define IP27_FREEMEM_COUNT		1
+#define IP27_FREEMEM_STRIDE		0
 
-#पूर्ण_अगर /* PROM */
+#endif /* PROM */
 /*
  * There will be only one of these in a partition so the IO6 must set it up.
  */
-#घोषणा IO6_GDA_OFFSET			0x11000
-#घोषणा IO6_GDA_SIZE			0x400
-#घोषणा IO6_GDA_COUNT			1
-#घोषणा IO6_GDA_STRIDE			0
+#define IO6_GDA_OFFSET			0x11000
+#define IO6_GDA_SIZE			0x400
+#define IO6_GDA_COUNT			1
+#define IO6_GDA_STRIDE			0
 
 /*
- * save area of kernel nmi regs in the prom क्रमmat
+ * save area of kernel nmi regs in the prom format
  */
-#घोषणा IP27_NMI_KREGS_OFFSET		0x11400
-#घोषणा IP27_NMI_KREGS_CPU_SIZE		0x200
+#define IP27_NMI_KREGS_OFFSET		0x11400
+#define IP27_NMI_KREGS_CPU_SIZE		0x200
 /*
- * save area of kernel nmi regs in eframe क्रमmat
+ * save area of kernel nmi regs in eframe format
  */
-#घोषणा IP27_NMI_EFRAME_OFFSET		0x11800
-#घोषणा IP27_NMI_EFRAME_SIZE		0x200
+#define IP27_NMI_EFRAME_OFFSET		0x11800
+#define IP27_NMI_EFRAME_SIZE		0x200
 
-#पूर्ण_अगर /* _ASM_SN_SN0_KLसूची_H */
+#endif /* _ASM_SN_SN0_KLDIR_H */

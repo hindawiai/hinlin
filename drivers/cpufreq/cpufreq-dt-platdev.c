@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Linaro.
  * Viresh Kumar <viresh.kumar@linaro.org>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-#समावेश "cpufreq-dt.h"
-
-/*
- * Machines क्रम which the cpufreq device is *always* created, mostly used क्रम
- * platक्रमms using "operating-points" (V1) property.
- */
-अटल स्थिर काष्ठा of_device_id whitelist[] __initस्थिर = अणु
-	अणु .compatible = "allwinner,sun4i-a10", पूर्ण,
-	अणु .compatible = "allwinner,sun5i-a10s", पूर्ण,
-	अणु .compatible = "allwinner,sun5i-a13", पूर्ण,
-	अणु .compatible = "allwinner,sun5i-r8", पूर्ण,
-	अणु .compatible = "allwinner,sun6i-a31", पूर्ण,
-	अणु .compatible = "allwinner,sun6i-a31s", पूर्ण,
-	अणु .compatible = "allwinner,sun7i-a20", पूर्ण,
-	अणु .compatible = "allwinner,sun8i-a23", पूर्ण,
-	अणु .compatible = "allwinner,sun8i-a83t", पूर्ण,
-	अणु .compatible = "allwinner,sun8i-h3", पूर्ण,
-
-	अणु .compatible = "apm,xgene-shadowcat", पूर्ण,
-
-	अणु .compatible = "arm,integrator-ap", पूर्ण,
-	अणु .compatible = "arm,integrator-cp", पूर्ण,
-
-	अणु .compatible = "hisilicon,hi3660", पूर्ण,
-
-	अणु .compatible = "fsl,imx27", पूर्ण,
-	अणु .compatible = "fsl,imx51", पूर्ण,
-	अणु .compatible = "fsl,imx53", पूर्ण,
-
-	अणु .compatible = "marvell,berlin", पूर्ण,
-	अणु .compatible = "marvell,pxa250", पूर्ण,
-	अणु .compatible = "marvell,pxa270", पूर्ण,
-
-	अणु .compatible = "samsung,exynos3250", पूर्ण,
-	अणु .compatible = "samsung,exynos4210", पूर्ण,
-	अणु .compatible = "samsung,exynos5250", पूर्ण,
-#अगर_अघोषित CONFIG_BL_SWITCHER
-	अणु .compatible = "samsung,exynos5800", पूर्ण,
-#पूर्ण_अगर
-
-	अणु .compatible = "renesas,emev2", पूर्ण,
-	अणु .compatible = "renesas,r7s72100", पूर्ण,
-	अणु .compatible = "renesas,r8a73a4", पूर्ण,
-	अणु .compatible = "renesas,r8a7740", पूर्ण,
-	अणु .compatible = "renesas,r8a7742", पूर्ण,
-	अणु .compatible = "renesas,r8a7743", पूर्ण,
-	अणु .compatible = "renesas,r8a7744", पूर्ण,
-	अणु .compatible = "renesas,r8a7745", पूर्ण,
-	अणु .compatible = "renesas,r8a7778", पूर्ण,
-	अणु .compatible = "renesas,r8a7779", पूर्ण,
-	अणु .compatible = "renesas,r8a7790", पूर्ण,
-	अणु .compatible = "renesas,r8a7791", पूर्ण,
-	अणु .compatible = "renesas,r8a7792", पूर्ण,
-	अणु .compatible = "renesas,r8a7793", पूर्ण,
-	अणु .compatible = "renesas,r8a7794", पूर्ण,
-	अणु .compatible = "renesas,sh73a0", पूर्ण,
-
-	अणु .compatible = "rockchip,rk2928", पूर्ण,
-	अणु .compatible = "rockchip,rk3036", पूर्ण,
-	अणु .compatible = "rockchip,rk3066a", पूर्ण,
-	अणु .compatible = "rockchip,rk3066b", पूर्ण,
-	अणु .compatible = "rockchip,rk3188", पूर्ण,
-	अणु .compatible = "rockchip,rk3228", पूर्ण,
-	अणु .compatible = "rockchip,rk3288", पूर्ण,
-	अणु .compatible = "rockchip,rk3328", पूर्ण,
-	अणु .compatible = "rockchip,rk3366", पूर्ण,
-	अणु .compatible = "rockchip,rk3368", पूर्ण,
-	अणु .compatible = "rockchip,rk3399",
-	  .data = &(काष्ठा cpufreq_dt_platक्रमm_data)
-		अणु .have_governor_per_policy = true, पूर्ण,
-	पूर्ण,
-
-	अणु .compatible = "st-ericsson,u8500", पूर्ण,
-	अणु .compatible = "st-ericsson,u8540", पूर्ण,
-	अणु .compatible = "st-ericsson,u9500", पूर्ण,
-	अणु .compatible = "st-ericsson,u9540", पूर्ण,
-
-	अणु .compatible = "ti,omap2", पूर्ण,
-	अणु .compatible = "ti,omap4", पूर्ण,
-	अणु .compatible = "ti,omap5", पूर्ण,
-
-	अणु .compatible = "xlnx,zynq-7000", पूर्ण,
-	अणु .compatible = "xlnx,zynqmp", पूर्ण,
-
-	अणु पूर्ण
-पूर्ण;
+#include "cpufreq-dt.h"
 
 /*
- * Machines क्रम which the cpufreq device is *not* created, mostly used क्रम
- * platक्रमms using "operating-points-v2" property.
+ * Machines for which the cpufreq device is *always* created, mostly used for
+ * platforms using "operating-points" (V1) property.
  */
-अटल स्थिर काष्ठा of_device_id blacklist[] __initस्थिर = अणु
-	अणु .compatible = "allwinner,sun50i-h6", पूर्ण,
+static const struct of_device_id whitelist[] __initconst = {
+	{ .compatible = "allwinner,sun4i-a10", },
+	{ .compatible = "allwinner,sun5i-a10s", },
+	{ .compatible = "allwinner,sun5i-a13", },
+	{ .compatible = "allwinner,sun5i-r8", },
+	{ .compatible = "allwinner,sun6i-a31", },
+	{ .compatible = "allwinner,sun6i-a31s", },
+	{ .compatible = "allwinner,sun7i-a20", },
+	{ .compatible = "allwinner,sun8i-a23", },
+	{ .compatible = "allwinner,sun8i-a83t", },
+	{ .compatible = "allwinner,sun8i-h3", },
 
-	अणु .compatible = "arm,vexpress", पूर्ण,
+	{ .compatible = "apm,xgene-shadowcat", },
 
-	अणु .compatible = "calxeda,highbank", पूर्ण,
-	अणु .compatible = "calxeda,ecx-2000", पूर्ण,
+	{ .compatible = "arm,integrator-ap", },
+	{ .compatible = "arm,integrator-cp", },
 
-	अणु .compatible = "fsl,imx7ulp", पूर्ण,
-	अणु .compatible = "fsl,imx7d", पूर्ण,
-	अणु .compatible = "fsl,imx8mq", पूर्ण,
-	अणु .compatible = "fsl,imx8mm", पूर्ण,
-	अणु .compatible = "fsl,imx8mn", पूर्ण,
-	अणु .compatible = "fsl,imx8mp", पूर्ण,
+	{ .compatible = "hisilicon,hi3660", },
 
-	अणु .compatible = "marvell,armadaxp", पूर्ण,
+	{ .compatible = "fsl,imx27", },
+	{ .compatible = "fsl,imx51", },
+	{ .compatible = "fsl,imx53", },
 
-	अणु .compatible = "mediatek,mt2701", पूर्ण,
-	अणु .compatible = "mediatek,mt2712", पूर्ण,
-	अणु .compatible = "mediatek,mt7622", पूर्ण,
-	अणु .compatible = "mediatek,mt7623", पूर्ण,
-	अणु .compatible = "mediatek,mt8167", पूर्ण,
-	अणु .compatible = "mediatek,mt817x", पूर्ण,
-	अणु .compatible = "mediatek,mt8173", पूर्ण,
-	अणु .compatible = "mediatek,mt8176", पूर्ण,
-	अणु .compatible = "mediatek,mt8183", पूर्ण,
-	अणु .compatible = "mediatek,mt8516", पूर्ण,
+	{ .compatible = "marvell,berlin", },
+	{ .compatible = "marvell,pxa250", },
+	{ .compatible = "marvell,pxa270", },
 
-	अणु .compatible = "nvidia,tegra20", पूर्ण,
-	अणु .compatible = "nvidia,tegra30", पूर्ण,
-	अणु .compatible = "nvidia,tegra124", पूर्ण,
-	अणु .compatible = "nvidia,tegra210", पूर्ण,
+	{ .compatible = "samsung,exynos3250", },
+	{ .compatible = "samsung,exynos4210", },
+	{ .compatible = "samsung,exynos5250", },
+#ifndef CONFIG_BL_SWITCHER
+	{ .compatible = "samsung,exynos5800", },
+#endif
 
-	अणु .compatible = "qcom,apq8096", पूर्ण,
-	अणु .compatible = "qcom,msm8996", पूर्ण,
-	अणु .compatible = "qcom,qcs404", पूर्ण,
-	अणु .compatible = "qcom,sc7180", पूर्ण,
-	अणु .compatible = "qcom,sdm845", पूर्ण,
+	{ .compatible = "renesas,emev2", },
+	{ .compatible = "renesas,r7s72100", },
+	{ .compatible = "renesas,r8a73a4", },
+	{ .compatible = "renesas,r8a7740", },
+	{ .compatible = "renesas,r8a7742", },
+	{ .compatible = "renesas,r8a7743", },
+	{ .compatible = "renesas,r8a7744", },
+	{ .compatible = "renesas,r8a7745", },
+	{ .compatible = "renesas,r8a7778", },
+	{ .compatible = "renesas,r8a7779", },
+	{ .compatible = "renesas,r8a7790", },
+	{ .compatible = "renesas,r8a7791", },
+	{ .compatible = "renesas,r8a7792", },
+	{ .compatible = "renesas,r8a7793", },
+	{ .compatible = "renesas,r8a7794", },
+	{ .compatible = "renesas,sh73a0", },
 
-	अणु .compatible = "st,stih407", पूर्ण,
-	अणु .compatible = "st,stih410", पूर्ण,
-	अणु .compatible = "st,stih418", पूर्ण,
+	{ .compatible = "rockchip,rk2928", },
+	{ .compatible = "rockchip,rk3036", },
+	{ .compatible = "rockchip,rk3066a", },
+	{ .compatible = "rockchip,rk3066b", },
+	{ .compatible = "rockchip,rk3188", },
+	{ .compatible = "rockchip,rk3228", },
+	{ .compatible = "rockchip,rk3288", },
+	{ .compatible = "rockchip,rk3328", },
+	{ .compatible = "rockchip,rk3366", },
+	{ .compatible = "rockchip,rk3368", },
+	{ .compatible = "rockchip,rk3399",
+	  .data = &(struct cpufreq_dt_platform_data)
+		{ .have_governor_per_policy = true, },
+	},
 
-	अणु .compatible = "ti,am33xx", पूर्ण,
-	अणु .compatible = "ti,am43", पूर्ण,
-	अणु .compatible = "ti,dra7", पूर्ण,
-	अणु .compatible = "ti,omap3", पूर्ण,
+	{ .compatible = "st-ericsson,u8500", },
+	{ .compatible = "st-ericsson,u8540", },
+	{ .compatible = "st-ericsson,u9500", },
+	{ .compatible = "st-ericsson,u9540", },
 
-	अणु .compatible = "qcom,ipq8064", पूर्ण,
-	अणु .compatible = "qcom,apq8064", पूर्ण,
-	अणु .compatible = "qcom,msm8974", पूर्ण,
-	अणु .compatible = "qcom,msm8960", पूर्ण,
+	{ .compatible = "ti,omap2", },
+	{ .compatible = "ti,omap4", },
+	{ .compatible = "ti,omap5", },
 
-	अणु पूर्ण
-पूर्ण;
+	{ .compatible = "xlnx,zynq-7000", },
+	{ .compatible = "xlnx,zynqmp", },
 
-अटल bool __init cpu0_node_has_opp_v2_prop(व्योम)
-अणु
-	काष्ठा device_node *np = of_cpu_device_node_get(0);
+	{ }
+};
+
+/*
+ * Machines for which the cpufreq device is *not* created, mostly used for
+ * platforms using "operating-points-v2" property.
+ */
+static const struct of_device_id blacklist[] __initconst = {
+	{ .compatible = "allwinner,sun50i-h6", },
+
+	{ .compatible = "arm,vexpress", },
+
+	{ .compatible = "calxeda,highbank", },
+	{ .compatible = "calxeda,ecx-2000", },
+
+	{ .compatible = "fsl,imx7ulp", },
+	{ .compatible = "fsl,imx7d", },
+	{ .compatible = "fsl,imx8mq", },
+	{ .compatible = "fsl,imx8mm", },
+	{ .compatible = "fsl,imx8mn", },
+	{ .compatible = "fsl,imx8mp", },
+
+	{ .compatible = "marvell,armadaxp", },
+
+	{ .compatible = "mediatek,mt2701", },
+	{ .compatible = "mediatek,mt2712", },
+	{ .compatible = "mediatek,mt7622", },
+	{ .compatible = "mediatek,mt7623", },
+	{ .compatible = "mediatek,mt8167", },
+	{ .compatible = "mediatek,mt817x", },
+	{ .compatible = "mediatek,mt8173", },
+	{ .compatible = "mediatek,mt8176", },
+	{ .compatible = "mediatek,mt8183", },
+	{ .compatible = "mediatek,mt8516", },
+
+	{ .compatible = "nvidia,tegra20", },
+	{ .compatible = "nvidia,tegra30", },
+	{ .compatible = "nvidia,tegra124", },
+	{ .compatible = "nvidia,tegra210", },
+
+	{ .compatible = "qcom,apq8096", },
+	{ .compatible = "qcom,msm8996", },
+	{ .compatible = "qcom,qcs404", },
+	{ .compatible = "qcom,sc7180", },
+	{ .compatible = "qcom,sdm845", },
+
+	{ .compatible = "st,stih407", },
+	{ .compatible = "st,stih410", },
+	{ .compatible = "st,stih418", },
+
+	{ .compatible = "ti,am33xx", },
+	{ .compatible = "ti,am43", },
+	{ .compatible = "ti,dra7", },
+	{ .compatible = "ti,omap3", },
+
+	{ .compatible = "qcom,ipq8064", },
+	{ .compatible = "qcom,apq8064", },
+	{ .compatible = "qcom,msm8974", },
+	{ .compatible = "qcom,msm8960", },
+
+	{ }
+};
+
+static bool __init cpu0_node_has_opp_v2_prop(void)
+{
+	struct device_node *np = of_cpu_device_node_get(0);
 	bool ret = false;
 
-	अगर (of_get_property(np, "operating-points-v2", शून्य))
+	if (of_get_property(np, "operating-points-v2", NULL))
 		ret = true;
 
 	of_node_put(np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init cpufreq_dt_platdev_init(व्योम)
-अणु
-	काष्ठा device_node *np = of_find_node_by_path("/");
-	स्थिर काष्ठा of_device_id *match;
-	स्थिर व्योम *data = शून्य;
+static int __init cpufreq_dt_platdev_init(void)
+{
+	struct device_node *np = of_find_node_by_path("/");
+	const struct of_device_id *match;
+	const void *data = NULL;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	match = of_match_node(whitelist, np);
-	अगर (match) अणु
+	if (match) {
 		data = match->data;
-		जाओ create_pdev;
-	पूर्ण
+		goto create_pdev;
+	}
 
-	अगर (cpu0_node_has_opp_v2_prop() && !of_match_node(blacklist, np))
-		जाओ create_pdev;
+	if (cpu0_node_has_opp_v2_prop() && !of_match_node(blacklist, np))
+		goto create_pdev;
 
 	of_node_put(np);
-	वापस -ENODEV;
+	return -ENODEV;
 
 create_pdev:
 	of_node_put(np);
-	वापस PTR_ERR_OR_ZERO(platक्रमm_device_रेजिस्टर_data(शून्य, "cpufreq-dt",
+	return PTR_ERR_OR_ZERO(platform_device_register_data(NULL, "cpufreq-dt",
 			       -1, data,
-			       माप(काष्ठा cpufreq_dt_platक्रमm_data)));
-पूर्ण
+			       sizeof(struct cpufreq_dt_platform_data)));
+}
 core_initcall(cpufreq_dt_platdev_init);

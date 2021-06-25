@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
     Conexant CX22700 DVB OFDM demodulator driver
 
@@ -9,27 +8,27 @@
 
 */
 
-#अगर_अघोषित CX22700_H
-#घोषणा CX22700_H
+#ifndef CX22700_H
+#define CX22700_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा cx22700_config
-अणु
+struct cx22700_config
+{
 	/* the demodulator's i2c address */
 	u8 demod_address;
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_CX22700)
-बाह्य काष्ठा dvb_frontend* cx22700_attach(स्थिर काष्ठा cx22700_config* config,
-					   काष्ठा i2c_adapter* i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend* cx22700_attach(स्थिर काष्ठा cx22700_config* config,
-					   काष्ठा i2c_adapter* i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर // CONFIG_DVB_CX22700
+#if IS_REACHABLE(CONFIG_DVB_CX22700)
+extern struct dvb_frontend* cx22700_attach(const struct cx22700_config* config,
+					   struct i2c_adapter* i2c);
+#else
+static inline struct dvb_frontend* cx22700_attach(const struct cx22700_config* config,
+					   struct i2c_adapter* i2c)
+{
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif // CONFIG_DVB_CX22700
 
-#पूर्ण_अगर // CX22700_H
+#endif // CX22700_H

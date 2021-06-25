@@ -1,220 +1,219 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  net/dccp/ccid.c
  *
  *  An implementation of the DCCP protocol
- *  Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  *
- *  CCID infraकाष्ठाure
+ *  CCID infrastructure
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "ccid.h"
-#समावेश "ccids/lib/tfrc.h"
+#include "ccid.h"
+#include "ccids/lib/tfrc.h"
 
-अटल काष्ठा ccid_operations *ccids[] = अणु
+static struct ccid_operations *ccids[] = {
 	&ccid2_ops,
-#अगर_घोषित CONFIG_IP_DCCP_CCID3
+#ifdef CONFIG_IP_DCCP_CCID3
 	&ccid3_ops,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा ccid_operations *ccid_by_number(स्थिर u8 id)
-अणु
-	पूर्णांक i;
+static struct ccid_operations *ccid_by_number(const u8 id)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ccids); i++)
-		अगर (ccids[i]->ccid_id == id)
-			वापस ccids[i];
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(ccids); i++)
+		if (ccids[i]->ccid_id == id)
+			return ccids[i];
+	return NULL;
+}
 
 /* check that up to @array_len members in @ccid_array are supported */
-bool ccid_support_check(u8 स्थिर *ccid_array, u8 array_len)
-अणु
-	जबतक (array_len > 0)
-		अगर (ccid_by_number(ccid_array[--array_len]) == शून्य)
-			वापस false;
-	वापस true;
-पूर्ण
+bool ccid_support_check(u8 const *ccid_array, u8 array_len)
+{
+	while (array_len > 0)
+		if (ccid_by_number(ccid_array[--array_len]) == NULL)
+			return false;
+	return true;
+}
 
 /**
  * ccid_get_builtin_ccids  -  Populate a list of built-in CCIDs
- * @ccid_array: poपूर्णांकer to copy पूर्णांकo
- * @array_len: value to वापस length पूर्णांकo
+ * @ccid_array: pointer to copy into
+ * @array_len: value to return length into
  *
- * This function allocates memory - caller must see that it is मुक्तd after use.
+ * This function allocates memory - caller must see that it is freed after use.
  */
-पूर्णांक ccid_get_builtin_ccids(u8 **ccid_array, u8 *array_len)
-अणु
-	*ccid_array = kदो_स्मृति(ARRAY_SIZE(ccids), gfp_any());
-	अगर (*ccid_array == शून्य)
-		वापस -ENOBUFS;
+int ccid_get_builtin_ccids(u8 **ccid_array, u8 *array_len)
+{
+	*ccid_array = kmalloc(ARRAY_SIZE(ccids), gfp_any());
+	if (*ccid_array == NULL)
+		return -ENOBUFS;
 
-	क्रम (*array_len = 0; *array_len < ARRAY_SIZE(ccids); *array_len += 1)
+	for (*array_len = 0; *array_len < ARRAY_SIZE(ccids); *array_len += 1)
 		(*ccid_array)[*array_len] = ccids[*array_len]->ccid_id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ccid_माला_लोockopt_builtin_ccids(काष्ठा sock *sk, पूर्णांक len,
-				  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
+int ccid_getsockopt_builtin_ccids(struct sock *sk, int len,
+				  char __user *optval, int __user *optlen)
+{
 	u8 *ccid_array, array_len;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (ccid_get_builtin_ccids(&ccid_array, &array_len))
-		वापस -ENOBUFS;
+	if (ccid_get_builtin_ccids(&ccid_array, &array_len))
+		return -ENOBUFS;
 
-	अगर (put_user(array_len, optlen))
+	if (put_user(array_len, optlen))
 		err = -EFAULT;
-	अन्यथा अगर (len > 0 && copy_to_user(optval, ccid_array,
+	else if (len > 0 && copy_to_user(optval, ccid_array,
 					 len > array_len ? array_len : len))
 		err = -EFAULT;
 
-	kमुक्त(ccid_array);
-	वापस err;
-पूर्ण
+	kfree(ccid_array);
+	return err;
+}
 
-अटल __म_लिखो(3, 4) काष्ठा kmem_cache *ccid_kmem_cache_create(पूर्णांक obj_size, अक्षर *slab_name_fmt, स्थिर अक्षर *fmt,...)
-अणु
-	काष्ठा kmem_cache *slab;
-	बहु_सूची args;
+static __printf(3, 4) struct kmem_cache *ccid_kmem_cache_create(int obj_size, char *slab_name_fmt, const char *fmt,...)
+{
+	struct kmem_cache *slab;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
-	vsnम_लिखो(slab_name_fmt, CCID_SLAB_NAME_LENGTH, fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	vsnprintf(slab_name_fmt, CCID_SLAB_NAME_LENGTH, fmt, args);
+	va_end(args);
 
-	slab = kmem_cache_create(slab_name_fmt, माप(काष्ठा ccid) + obj_size, 0,
-				 SLAB_HWCACHE_ALIGN, शून्य);
-	वापस slab;
-पूर्ण
+	slab = kmem_cache_create(slab_name_fmt, sizeof(struct ccid) + obj_size, 0,
+				 SLAB_HWCACHE_ALIGN, NULL);
+	return slab;
+}
 
-अटल व्योम ccid_kmem_cache_destroy(काष्ठा kmem_cache *slab)
-अणु
+static void ccid_kmem_cache_destroy(struct kmem_cache *slab)
+{
 	kmem_cache_destroy(slab);
-पूर्ण
+}
 
-अटल पूर्णांक __init ccid_activate(काष्ठा ccid_operations *ccid_ops)
-अणु
-	पूर्णांक err = -ENOBUFS;
+static int __init ccid_activate(struct ccid_operations *ccid_ops)
+{
+	int err = -ENOBUFS;
 
 	ccid_ops->ccid_hc_rx_slab =
 			ccid_kmem_cache_create(ccid_ops->ccid_hc_rx_obj_size,
 					       ccid_ops->ccid_hc_rx_slab_name,
 					       "ccid%u_hc_rx_sock",
 					       ccid_ops->ccid_id);
-	अगर (ccid_ops->ccid_hc_rx_slab == शून्य)
-		जाओ out;
+	if (ccid_ops->ccid_hc_rx_slab == NULL)
+		goto out;
 
 	ccid_ops->ccid_hc_tx_slab =
 			ccid_kmem_cache_create(ccid_ops->ccid_hc_tx_obj_size,
 					       ccid_ops->ccid_hc_tx_slab_name,
 					       "ccid%u_hc_tx_sock",
 					       ccid_ops->ccid_id);
-	अगर (ccid_ops->ccid_hc_tx_slab == शून्य)
-		जाओ out_मुक्त_rx_slab;
+	if (ccid_ops->ccid_hc_tx_slab == NULL)
+		goto out_free_rx_slab;
 
 	pr_info("DCCP: Activated CCID %d (%s)\n",
 		ccid_ops->ccid_id, ccid_ops->ccid_name);
 	err = 0;
 out:
-	वापस err;
-out_मुक्त_rx_slab:
+	return err;
+out_free_rx_slab:
 	ccid_kmem_cache_destroy(ccid_ops->ccid_hc_rx_slab);
-	ccid_ops->ccid_hc_rx_slab = शून्य;
-	जाओ out;
-पूर्ण
+	ccid_ops->ccid_hc_rx_slab = NULL;
+	goto out;
+}
 
-अटल व्योम ccid_deactivate(काष्ठा ccid_operations *ccid_ops)
-अणु
+static void ccid_deactivate(struct ccid_operations *ccid_ops)
+{
 	ccid_kmem_cache_destroy(ccid_ops->ccid_hc_tx_slab);
-	ccid_ops->ccid_hc_tx_slab = शून्य;
+	ccid_ops->ccid_hc_tx_slab = NULL;
 	ccid_kmem_cache_destroy(ccid_ops->ccid_hc_rx_slab);
-	ccid_ops->ccid_hc_rx_slab = शून्य;
+	ccid_ops->ccid_hc_rx_slab = NULL;
 
 	pr_info("DCCP: Deactivated CCID %d (%s)\n",
 		ccid_ops->ccid_id, ccid_ops->ccid_name);
-पूर्ण
+}
 
-काष्ठा ccid *ccid_new(स्थिर u8 id, काष्ठा sock *sk, bool rx)
-अणु
-	काष्ठा ccid_operations *ccid_ops = ccid_by_number(id);
-	काष्ठा ccid *ccid = शून्य;
+struct ccid *ccid_new(const u8 id, struct sock *sk, bool rx)
+{
+	struct ccid_operations *ccid_ops = ccid_by_number(id);
+	struct ccid *ccid = NULL;
 
-	अगर (ccid_ops == शून्य)
-		जाओ out;
+	if (ccid_ops == NULL)
+		goto out;
 
 	ccid = kmem_cache_alloc(rx ? ccid_ops->ccid_hc_rx_slab :
 				     ccid_ops->ccid_hc_tx_slab, gfp_any());
-	अगर (ccid == शून्य)
-		जाओ out;
+	if (ccid == NULL)
+		goto out;
 	ccid->ccid_ops = ccid_ops;
-	अगर (rx) अणु
-		स_रखो(ccid + 1, 0, ccid_ops->ccid_hc_rx_obj_size);
-		अगर (ccid->ccid_ops->ccid_hc_rx_init != शून्य &&
+	if (rx) {
+		memset(ccid + 1, 0, ccid_ops->ccid_hc_rx_obj_size);
+		if (ccid->ccid_ops->ccid_hc_rx_init != NULL &&
 		    ccid->ccid_ops->ccid_hc_rx_init(ccid, sk) != 0)
-			जाओ out_मुक्त_ccid;
-	पूर्ण अन्यथा अणु
-		स_रखो(ccid + 1, 0, ccid_ops->ccid_hc_tx_obj_size);
-		अगर (ccid->ccid_ops->ccid_hc_tx_init != शून्य &&
+			goto out_free_ccid;
+	} else {
+		memset(ccid + 1, 0, ccid_ops->ccid_hc_tx_obj_size);
+		if (ccid->ccid_ops->ccid_hc_tx_init != NULL &&
 		    ccid->ccid_ops->ccid_hc_tx_init(ccid, sk) != 0)
-			जाओ out_मुक्त_ccid;
-	पूर्ण
+			goto out_free_ccid;
+	}
 out:
-	वापस ccid;
-out_मुक्त_ccid:
-	kmem_cache_मुक्त(rx ? ccid_ops->ccid_hc_rx_slab :
+	return ccid;
+out_free_ccid:
+	kmem_cache_free(rx ? ccid_ops->ccid_hc_rx_slab :
 			ccid_ops->ccid_hc_tx_slab, ccid);
-	ccid = शून्य;
-	जाओ out;
-पूर्ण
+	ccid = NULL;
+	goto out;
+}
 
-व्योम ccid_hc_rx_delete(काष्ठा ccid *ccid, काष्ठा sock *sk)
-अणु
-	अगर (ccid != शून्य) अणु
-		अगर (ccid->ccid_ops->ccid_hc_rx_निकास != शून्य)
-			ccid->ccid_ops->ccid_hc_rx_निकास(sk);
-		kmem_cache_मुक्त(ccid->ccid_ops->ccid_hc_rx_slab, ccid);
-	पूर्ण
-पूर्ण
+void ccid_hc_rx_delete(struct ccid *ccid, struct sock *sk)
+{
+	if (ccid != NULL) {
+		if (ccid->ccid_ops->ccid_hc_rx_exit != NULL)
+			ccid->ccid_ops->ccid_hc_rx_exit(sk);
+		kmem_cache_free(ccid->ccid_ops->ccid_hc_rx_slab, ccid);
+	}
+}
 
-व्योम ccid_hc_tx_delete(काष्ठा ccid *ccid, काष्ठा sock *sk)
-अणु
-	अगर (ccid != शून्य) अणु
-		अगर (ccid->ccid_ops->ccid_hc_tx_निकास != शून्य)
-			ccid->ccid_ops->ccid_hc_tx_निकास(sk);
-		kmem_cache_मुक्त(ccid->ccid_ops->ccid_hc_tx_slab, ccid);
-	पूर्ण
-पूर्ण
+void ccid_hc_tx_delete(struct ccid *ccid, struct sock *sk)
+{
+	if (ccid != NULL) {
+		if (ccid->ccid_ops->ccid_hc_tx_exit != NULL)
+			ccid->ccid_ops->ccid_hc_tx_exit(sk);
+		kmem_cache_free(ccid->ccid_ops->ccid_hc_tx_slab, ccid);
+	}
+}
 
-पूर्णांक __init ccid_initialize_builtins(व्योम)
-अणु
-	पूर्णांक i, err = tfrc_lib_init();
+int __init ccid_initialize_builtins(void)
+{
+	int i, err = tfrc_lib_init();
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ccids); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ccids); i++) {
 		err = ccid_activate(ccids[i]);
-		अगर (err)
-			जाओ unwind_registrations;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto unwind_registrations;
+	}
+	return 0;
 
 unwind_registrations:
-	जबतक(--i >= 0)
+	while(--i >= 0)
 		ccid_deactivate(ccids[i]);
-	tfrc_lib_निकास();
-	वापस err;
-पूर्ण
+	tfrc_lib_exit();
+	return err;
+}
 
-व्योम ccid_cleanup_builtins(व्योम)
-अणु
-	पूर्णांक i;
+void ccid_cleanup_builtins(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ccids); i++)
+	for (i = 0; i < ARRAY_SIZE(ccids); i++)
 		ccid_deactivate(ccids[i]);
-	tfrc_lib_निकास();
-पूर्ण
+	tfrc_lib_exit();
+}

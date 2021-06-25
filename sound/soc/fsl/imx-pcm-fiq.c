@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // imx-pcm-fiq.c  --  ALSA Soc Audio Layer
 //
 // Copyright 2009 Sascha Hauer <s.hauer@pengutronix.de>
@@ -7,386 +6,386 @@
 // This code is based on code copyrighted by Freescale,
 // Liam Girdwood, Javier Martin and probably others.
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
+#include <sound/core.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
 
-#समावेश <यंत्र/fiq.h>
+#include <asm/fiq.h>
 
-#समावेश <linux/platक्रमm_data/asoc-imx-ssi.h>
+#include <linux/platform_data/asoc-imx-ssi.h>
 
-#समावेश "imx-ssi.h"
-#समावेश "imx-pcm.h"
+#include "imx-ssi.h"
+#include "imx-pcm.h"
 
-काष्ठा imx_pcm_runसमय_data अणु
-	अचिन्हित पूर्णांक period;
-	पूर्णांक periods;
-	अचिन्हित दीर्घ offset;
-	काष्ठा hrसमयr hrt;
-	पूर्णांक poll_समय_ns;
-	काष्ठा snd_pcm_substream *substream;
+struct imx_pcm_runtime_data {
+	unsigned int period;
+	int periods;
+	unsigned long offset;
+	struct hrtimer hrt;
+	int poll_time_ns;
+	struct snd_pcm_substream *substream;
 	atomic_t playing;
 	atomic_t capturing;
-पूर्ण;
+};
 
-अटल क्रमागत hrसमयr_restart snd_hrसमयr_callback(काष्ठा hrसमयr *hrt)
-अणु
-	काष्ठा imx_pcm_runसमय_data *iprtd =
-		container_of(hrt, काष्ठा imx_pcm_runसमय_data, hrt);
-	काष्ठा snd_pcm_substream *substream = iprtd->substream;
-	काष्ठा pt_regs regs;
+static enum hrtimer_restart snd_hrtimer_callback(struct hrtimer *hrt)
+{
+	struct imx_pcm_runtime_data *iprtd =
+		container_of(hrt, struct imx_pcm_runtime_data, hrt);
+	struct snd_pcm_substream *substream = iprtd->substream;
+	struct pt_regs regs;
 
-	अगर (!atomic_पढ़ो(&iprtd->playing) && !atomic_पढ़ो(&iprtd->capturing))
-		वापस HRTIMER_NORESTART;
+	if (!atomic_read(&iprtd->playing) && !atomic_read(&iprtd->capturing))
+		return HRTIMER_NORESTART;
 
 	get_fiq_regs(&regs);
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		iprtd->offset = regs.ARM_r8 & 0xffff;
-	अन्यथा
+	else
 		iprtd->offset = regs.ARM_r9 & 0xffff;
 
 	snd_pcm_period_elapsed(substream);
 
-	hrसमयr_क्रमward_now(hrt, ns_to_kसमय(iprtd->poll_समय_ns));
+	hrtimer_forward_now(hrt, ns_to_ktime(iprtd->poll_time_ns));
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल काष्ठा fiq_handler fh = अणु
+static struct fiq_handler fh = {
 	.name		= DRV_NAME,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_imx_pcm_hw_params(काष्ठा snd_soc_component *component,
-				 काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd = runसमय->निजी_data;
+static int snd_imx_pcm_hw_params(struct snd_soc_component *component,
+				 struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd = runtime->private_data;
 
 	iprtd->periods = params_periods(params);
 	iprtd->period = params_period_bytes(params);
 	iprtd->offset = 0;
-	iprtd->poll_समय_ns = 1000000000 / params_rate(params) *
+	iprtd->poll_time_ns = 1000000000 / params_rate(params) *
 				params_period_size(params);
-	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_imx_pcm_prepare(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd = runसमय->निजी_data;
-	काष्ठा pt_regs regs;
+static int snd_imx_pcm_prepare(struct snd_soc_component *component,
+			       struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd = runtime->private_data;
+	struct pt_regs regs;
 
 	get_fiq_regs(&regs);
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		regs.ARM_r8 = (iprtd->period * iprtd->periods - 1) << 16;
-	अन्यथा
+	else
 		regs.ARM_r9 = (iprtd->period * iprtd->periods - 1) << 16;
 
 	set_fiq_regs(&regs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_pcm_fiq;
+static int imx_pcm_fiq;
 
-अटल पूर्णांक snd_imx_pcm_trigger(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd = runसमय->निजी_data;
+static int snd_imx_pcm_trigger(struct snd_soc_component *component,
+			       struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd = runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			atomic_set(&iprtd->playing, 1);
-		अन्यथा
+		else
 			atomic_set(&iprtd->capturing, 1);
-		hrसमयr_start(&iprtd->hrt, ns_to_kसमय(iprtd->poll_समय_ns),
+		hrtimer_start(&iprtd->hrt, ns_to_ktime(iprtd->poll_time_ns),
 		      HRTIMER_MODE_REL);
 		enable_fiq(imx_pcm_fiq);
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			atomic_set(&iprtd->playing, 0);
-		अन्यथा
+		else
 			atomic_set(&iprtd->capturing, 0);
-		अगर (!atomic_पढ़ो(&iprtd->playing) &&
-				!atomic_पढ़ो(&iprtd->capturing))
+		if (!atomic_read(&iprtd->playing) &&
+				!atomic_read(&iprtd->capturing))
 			disable_fiq(imx_pcm_fiq);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल snd_pcm_uframes_t
-snd_imx_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
-		    काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd = runसमय->निजी_data;
+static snd_pcm_uframes_t
+snd_imx_pcm_pointer(struct snd_soc_component *component,
+		    struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd = runtime->private_data;
 
-	वापस bytes_to_frames(substream->runसमय, iprtd->offset);
-पूर्ण
+	return bytes_to_frames(substream->runtime, iprtd->offset);
+}
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_imx_hardware = अणु
+static const struct snd_pcm_hardware snd_imx_hardware = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_RESUME,
-	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
+	.formats = SNDRV_PCM_FMTBIT_S16_LE,
 	.buffer_bytes_max = IMX_SSI_DMABUF_SIZE,
 	.period_bytes_min = 128,
 	.period_bytes_max = 16 * 1024,
 	.periods_min = 4,
 	.periods_max = 255,
-	.fअगरo_size = 0,
-पूर्ण;
+	.fifo_size = 0,
+};
 
-अटल पूर्णांक snd_imx_खोलो(काष्ठा snd_soc_component *component,
-			काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd;
-	पूर्णांक ret;
+static int snd_imx_open(struct snd_soc_component *component,
+			struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd;
+	int ret;
 
-	iprtd = kzalloc(माप(*iprtd), GFP_KERNEL);
-	अगर (iprtd == शून्य)
-		वापस -ENOMEM;
-	runसमय->निजी_data = iprtd;
+	iprtd = kzalloc(sizeof(*iprtd), GFP_KERNEL);
+	if (iprtd == NULL)
+		return -ENOMEM;
+	runtime->private_data = iprtd;
 
 	iprtd->substream = substream;
 
 	atomic_set(&iprtd->playing, 0);
 	atomic_set(&iprtd->capturing, 0);
-	hrसमयr_init(&iprtd->hrt, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	iprtd->hrt.function = snd_hrसमयr_callback;
+	hrtimer_init(&iprtd->hrt, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	iprtd->hrt.function = snd_hrtimer_callback;
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(substream->runसमय,
+	ret = snd_pcm_hw_constraint_integer(substream->runtime,
 			SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (ret < 0) अणु
-		kमुक्त(iprtd);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(iprtd);
+		return ret;
+	}
 
-	snd_soc_set_runसमय_hwparams(substream, &snd_imx_hardware);
-	वापस 0;
-पूर्ण
+	snd_soc_set_runtime_hwparams(substream, &snd_imx_hardware);
+	return 0;
+}
 
-अटल पूर्णांक snd_imx_बंद(काष्ठा snd_soc_component *component,
-			 काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा imx_pcm_runसमय_data *iprtd = runसमय->निजी_data;
+static int snd_imx_close(struct snd_soc_component *component,
+			 struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct imx_pcm_runtime_data *iprtd = runtime->private_data;
 
-	hrसमयr_cancel(&iprtd->hrt);
+	hrtimer_cancel(&iprtd->hrt);
 
-	kमुक्त(iprtd);
+	kfree(iprtd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_imx_pcm_mmap(काष्ठा snd_soc_component *component,
-			    काष्ठा snd_pcm_substream *substream,
-			    काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	पूर्णांक ret;
+static int snd_imx_pcm_mmap(struct snd_soc_component *component,
+			    struct snd_pcm_substream *substream,
+			    struct vm_area_struct *vma)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	int ret;
 
-	ret = dma_mmap_wc(substream->pcm->card->dev, vma, runसमय->dma_area,
-			  runसमय->dma_addr, runसमय->dma_bytes);
+	ret = dma_mmap_wc(substream->pcm->card->dev, vma, runtime->dma_area,
+			  runtime->dma_addr, runtime->dma_bytes);
 
 	pr_debug("%s: ret: %d %p %pad 0x%08zx\n", __func__, ret,
-			runसमय->dma_area,
-			&runसमय->dma_addr,
-			runसमय->dma_bytes);
-	वापस ret;
-पूर्ण
+			runtime->dma_area,
+			&runtime->dma_addr,
+			runtime->dma_bytes);
+	return ret;
+}
 
-अटल पूर्णांक imx_pcm_pपुनः_स्मृतिate_dma_buffer(काष्ठा snd_pcm *pcm, पूर्णांक stream)
-अणु
-	काष्ठा snd_pcm_substream *substream = pcm->streams[stream].substream;
-	काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
-	माप_प्रकार size = IMX_SSI_DMABUF_SIZE;
+static int imx_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
+{
+	struct snd_pcm_substream *substream = pcm->streams[stream].substream;
+	struct snd_dma_buffer *buf = &substream->dma_buffer;
+	size_t size = IMX_SSI_DMABUF_SIZE;
 
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
-	buf->निजी_data = शून्य;
+	buf->private_data = NULL;
 	buf->area = dma_alloc_wc(pcm->card->dev, size, &buf->addr, GFP_KERNEL);
-	अगर (!buf->area)
-		वापस -ENOMEM;
+	if (!buf->area)
+		return -ENOMEM;
 	buf->bytes = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_pcm_new(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_card *card = rtd->card->snd_card;
-	काष्ठा snd_pcm *pcm = rtd->pcm;
-	पूर्णांक ret;
+static int imx_pcm_new(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_card *card = rtd->card->snd_card;
+	struct snd_pcm *pcm = rtd->pcm;
+	int ret;
 
 	ret = dma_coerce_mask_and_coherent(card->dev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) अणु
-		ret = imx_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
+	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
+		ret = imx_pcm_preallocate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_PLAYBACK);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) अणु
-		ret = imx_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
+	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
+		ret = imx_pcm_preallocate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_CAPTURE);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ssi_irq;
+static int ssi_irq;
 
-अटल पूर्णांक snd_imx_pcm_new(काष्ठा snd_soc_component *component,
-			   काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_pcm *pcm = rtd->pcm;
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक ret;
+static int snd_imx_pcm_new(struct snd_soc_component *component,
+			   struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_pcm *pcm = rtd->pcm;
+	struct snd_pcm_substream *substream;
+	int ret;
 
 	ret = imx_pcm_new(rtd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	substream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
-	अगर (substream) अणु
-		काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
+	if (substream) {
+		struct snd_dma_buffer *buf = &substream->dma_buffer;
 
-		imx_ssi_fiq_tx_buffer = (अचिन्हित दीर्घ)buf->area;
-	पूर्ण
+		imx_ssi_fiq_tx_buffer = (unsigned long)buf->area;
+	}
 
 	substream = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream;
-	अगर (substream) अणु
-		काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
+	if (substream) {
+		struct snd_dma_buffer *buf = &substream->dma_buffer;
 
-		imx_ssi_fiq_rx_buffer = (अचिन्हित दीर्घ)buf->area;
-	पूर्ण
+		imx_ssi_fiq_rx_buffer = (unsigned long)buf->area;
+	}
 
 	set_fiq_handler(&imx_ssi_fiq_start,
 		&imx_ssi_fiq_end - &imx_ssi_fiq_start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx_pcm_मुक्त(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_dma_buffer *buf;
-	पूर्णांक stream;
+static void imx_pcm_free(struct snd_pcm *pcm)
+{
+	struct snd_pcm_substream *substream;
+	struct snd_dma_buffer *buf;
+	int stream;
 
-	क्रम (stream = 0; stream < 2; stream++) अणु
+	for (stream = 0; stream < 2; stream++) {
 		substream = pcm->streams[stream].substream;
-		अगर (!substream)
-			जारी;
+		if (!substream)
+			continue;
 
 		buf = &substream->dma_buffer;
-		अगर (!buf->area)
-			जारी;
+		if (!buf->area)
+			continue;
 
-		dma_मुक्त_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
-		buf->area = शून्य;
-	पूर्ण
-पूर्ण
+		dma_free_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
+		buf->area = NULL;
+	}
+}
 
-अटल व्योम snd_imx_pcm_मुक्त(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_pcm *pcm)
-अणु
+static void snd_imx_pcm_free(struct snd_soc_component *component,
+			     struct snd_pcm *pcm)
+{
 	mxc_set_irq_fiq(ssi_irq, 0);
 	release_fiq(&fh);
-	imx_pcm_मुक्त(pcm);
-पूर्ण
+	imx_pcm_free(pcm);
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver imx_soc_component_fiq = अणु
-	.खोलो		= snd_imx_खोलो,
-	.बंद		= snd_imx_बंद,
+static const struct snd_soc_component_driver imx_soc_component_fiq = {
+	.open		= snd_imx_open,
+	.close		= snd_imx_close,
 	.hw_params	= snd_imx_pcm_hw_params,
 	.prepare	= snd_imx_pcm_prepare,
 	.trigger	= snd_imx_pcm_trigger,
-	.poपूर्णांकer	= snd_imx_pcm_poपूर्णांकer,
+	.pointer	= snd_imx_pcm_pointer,
 	.mmap		= snd_imx_pcm_mmap,
-	.pcm_स्थिरruct	= snd_imx_pcm_new,
-	.pcm_deकाष्ठा	= snd_imx_pcm_मुक्त,
-पूर्ण;
+	.pcm_construct	= snd_imx_pcm_new,
+	.pcm_destruct	= snd_imx_pcm_free,
+};
 
-पूर्णांक imx_pcm_fiq_init(काष्ठा platक्रमm_device *pdev,
-		काष्ठा imx_pcm_fiq_params *params)
-अणु
-	पूर्णांक ret;
+int imx_pcm_fiq_init(struct platform_device *pdev,
+		struct imx_pcm_fiq_params *params)
+{
+	int ret;
 
 	ret = claim_fiq(&fh);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to claim fiq: %d", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mxc_set_irq_fiq(params->irq, 1);
 	ssi_irq = params->irq;
 
 	imx_pcm_fiq = params->irq;
 
-	imx_ssi_fiq_base = (अचिन्हित दीर्घ)params->base;
+	imx_ssi_fiq_base = (unsigned long)params->base;
 
 	params->dma_params_tx->maxburst = 4;
 	params->dma_params_rx->maxburst = 6;
 
-	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &imx_soc_component_fiq,
-					      शून्य, 0);
-	अगर (ret)
-		जाओ failed_रेजिस्टर;
+	ret = devm_snd_soc_register_component(&pdev->dev, &imx_soc_component_fiq,
+					      NULL, 0);
+	if (ret)
+		goto failed_register;
 
-	वापस 0;
+	return 0;
 
-failed_रेजिस्टर:
+failed_register:
 	mxc_set_irq_fiq(ssi_irq, 0);
 	release_fiq(&fh);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(imx_pcm_fiq_init);
 
-व्योम imx_pcm_fiq_निकास(काष्ठा platक्रमm_device *pdev)
-अणु
-पूर्ण
-EXPORT_SYMBOL_GPL(imx_pcm_fiq_निकास);
+void imx_pcm_fiq_exit(struct platform_device *pdev)
+{
+}
+EXPORT_SYMBOL_GPL(imx_pcm_fiq_exit);
 
 MODULE_LICENSE("GPL");

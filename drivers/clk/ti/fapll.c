@@ -1,276 +1,275 @@
-<शैली गुरु>
 /*
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/math64.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/clk/ti.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/math64.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/clk/ti.h>
 
 /* FAPLL Control Register PLL_CTRL */
-#घोषणा FAPLL_MAIN_MULT_N_SHIFT	16
-#घोषणा FAPLL_MAIN_DIV_P_SHIFT	8
-#घोषणा FAPLL_MAIN_LOCK		BIT(7)
-#घोषणा FAPLL_MAIN_PLLEN	BIT(3)
-#घोषणा FAPLL_MAIN_BP		BIT(2)
-#घोषणा FAPLL_MAIN_LOC_CTL	BIT(0)
+#define FAPLL_MAIN_MULT_N_SHIFT	16
+#define FAPLL_MAIN_DIV_P_SHIFT	8
+#define FAPLL_MAIN_LOCK		BIT(7)
+#define FAPLL_MAIN_PLLEN	BIT(3)
+#define FAPLL_MAIN_BP		BIT(2)
+#define FAPLL_MAIN_LOC_CTL	BIT(0)
 
-#घोषणा FAPLL_MAIN_MAX_MULT_N	0xffff
-#घोषणा FAPLL_MAIN_MAX_DIV_P	0xff
-#घोषणा FAPLL_MAIN_CLEAR_MASK	\
+#define FAPLL_MAIN_MAX_MULT_N	0xffff
+#define FAPLL_MAIN_MAX_DIV_P	0xff
+#define FAPLL_MAIN_CLEAR_MASK	\
 	((FAPLL_MAIN_MAX_MULT_N << FAPLL_MAIN_MULT_N_SHIFT) | \
 	 (FAPLL_MAIN_DIV_P_SHIFT << FAPLL_MAIN_DIV_P_SHIFT) | \
 	 FAPLL_MAIN_LOC_CTL)
 
-/* FAPLL घातerकरोwn रेजिस्टर PWD */
-#घोषणा FAPLL_PWD_OFFSET	4
+/* FAPLL powerdown register PWD */
+#define FAPLL_PWD_OFFSET	4
 
-#घोषणा MAX_FAPLL_OUTPUTS	7
-#घोषणा FAPLL_MAX_RETRIES	1000
+#define MAX_FAPLL_OUTPUTS	7
+#define FAPLL_MAX_RETRIES	1000
 
-#घोषणा to_fapll(_hw)		container_of(_hw, काष्ठा fapll_data, hw)
-#घोषणा to_synth(_hw)		container_of(_hw, काष्ठा fapll_synth, hw)
+#define to_fapll(_hw)		container_of(_hw, struct fapll_data, hw)
+#define to_synth(_hw)		container_of(_hw, struct fapll_synth, hw)
 
 /* The bypass bit is inverted on the ddr_pll.. */
-#घोषणा fapll_is_ddr_pll(va)	(((u32)(va) & 0xffff) == 0x0440)
+#define fapll_is_ddr_pll(va)	(((u32)(va) & 0xffff) == 0x0440)
 
 /*
- * The audio_pll_clk1 input is hard wired to the 27MHz bypass घड़ी,
+ * The audio_pll_clk1 input is hard wired to the 27MHz bypass clock,
  * and the audio_pll_clk1 synthesizer is hardwared to 32KiHz output.
  */
-#घोषणा is_ddr_pll_clk1(va)	(((u32)(va) & 0xffff) == 0x044c)
-#घोषणा is_audio_pll_clk1(va)	(((u32)(va) & 0xffff) == 0x04a8)
+#define is_ddr_pll_clk1(va)	(((u32)(va) & 0xffff) == 0x044c)
+#define is_audio_pll_clk1(va)	(((u32)(va) & 0xffff) == 0x04a8)
 
-/* Synthesizer भागider रेजिस्टर */
-#घोषणा SYNTH_LDMDIV1		BIT(8)
+/* Synthesizer divider register */
+#define SYNTH_LDMDIV1		BIT(8)
 
-/* Synthesizer frequency रेजिस्टर */
-#घोषणा SYNTH_LDFREQ		BIT(31)
+/* Synthesizer frequency register */
+#define SYNTH_LDFREQ		BIT(31)
 
-#घोषणा SYNTH_PHASE_K		8
-#घोषणा SYNTH_MAX_INT_DIV	0xf
-#घोषणा SYNTH_MAX_DIV_M		0xff
+#define SYNTH_PHASE_K		8
+#define SYNTH_MAX_INT_DIV	0xf
+#define SYNTH_MAX_DIV_M		0xff
 
-काष्ठा fapll_data अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *base;
-	स्थिर अक्षर *name;
-	काष्ठा clk *clk_ref;
-	काष्ठा clk *clk_bypass;
-	काष्ठा clk_onecell_data outमाला_दो;
+struct fapll_data {
+	struct clk_hw hw;
+	void __iomem *base;
+	const char *name;
+	struct clk *clk_ref;
+	struct clk *clk_bypass;
+	struct clk_onecell_data outputs;
 	bool bypass_bit_inverted;
-पूर्ण;
+};
 
-काष्ठा fapll_synth अणु
-	काष्ठा clk_hw hw;
-	काष्ठा fapll_data *fd;
-	पूर्णांक index;
-	व्योम __iomem *freq;
-	व्योम __iomem *भाग;
-	स्थिर अक्षर *name;
-	काष्ठा clk *clk_pll;
-पूर्ण;
+struct fapll_synth {
+	struct clk_hw hw;
+	struct fapll_data *fd;
+	int index;
+	void __iomem *freq;
+	void __iomem *div;
+	const char *name;
+	struct clk *clk_pll;
+};
 
-अटल bool ti_fapll_घड़ी_is_bypass(काष्ठा fapll_data *fd)
-अणु
-	u32 v = पढ़ोl_relaxed(fd->base);
+static bool ti_fapll_clock_is_bypass(struct fapll_data *fd)
+{
+	u32 v = readl_relaxed(fd->base);
 
-	अगर (fd->bypass_bit_inverted)
-		वापस !(v & FAPLL_MAIN_BP);
-	अन्यथा
-		वापस !!(v & FAPLL_MAIN_BP);
-पूर्ण
+	if (fd->bypass_bit_inverted)
+		return !(v & FAPLL_MAIN_BP);
+	else
+		return !!(v & FAPLL_MAIN_BP);
+}
 
-अटल व्योम ti_fapll_set_bypass(काष्ठा fapll_data *fd)
-अणु
-	u32 v = पढ़ोl_relaxed(fd->base);
+static void ti_fapll_set_bypass(struct fapll_data *fd)
+{
+	u32 v = readl_relaxed(fd->base);
 
-	अगर (fd->bypass_bit_inverted)
+	if (fd->bypass_bit_inverted)
 		v &= ~FAPLL_MAIN_BP;
-	अन्यथा
+	else
 		v |= FAPLL_MAIN_BP;
-	ग_लिखोl_relaxed(v, fd->base);
-पूर्ण
+	writel_relaxed(v, fd->base);
+}
 
-अटल व्योम ti_fapll_clear_bypass(काष्ठा fapll_data *fd)
-अणु
-	u32 v = पढ़ोl_relaxed(fd->base);
+static void ti_fapll_clear_bypass(struct fapll_data *fd)
+{
+	u32 v = readl_relaxed(fd->base);
 
-	अगर (fd->bypass_bit_inverted)
+	if (fd->bypass_bit_inverted)
 		v |= FAPLL_MAIN_BP;
-	अन्यथा
+	else
 		v &= ~FAPLL_MAIN_BP;
-	ग_लिखोl_relaxed(v, fd->base);
-पूर्ण
+	writel_relaxed(v, fd->base);
+}
 
-अटल पूर्णांक ti_fapll_रुको_lock(काष्ठा fapll_data *fd)
-अणु
-	पूर्णांक retries = FAPLL_MAX_RETRIES;
+static int ti_fapll_wait_lock(struct fapll_data *fd)
+{
+	int retries = FAPLL_MAX_RETRIES;
 	u32 v;
 
-	जबतक ((v = पढ़ोl_relaxed(fd->base))) अणु
-		अगर (v & FAPLL_MAIN_LOCK)
-			वापस 0;
+	while ((v = readl_relaxed(fd->base))) {
+		if (v & FAPLL_MAIN_LOCK)
+			return 0;
 
-		अगर (retries-- <= 0)
-			अवरोध;
+		if (retries-- <= 0)
+			break;
 
 		udelay(1);
-	पूर्ण
+	}
 
 	pr_err("%s failed to lock\n", fd->name);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक ti_fapll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
-	u32 v = पढ़ोl_relaxed(fd->base);
+static int ti_fapll_enable(struct clk_hw *hw)
+{
+	struct fapll_data *fd = to_fapll(hw);
+	u32 v = readl_relaxed(fd->base);
 
 	v |= FAPLL_MAIN_PLLEN;
-	ग_लिखोl_relaxed(v, fd->base);
-	ti_fapll_रुको_lock(fd);
+	writel_relaxed(v, fd->base);
+	ti_fapll_wait_lock(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ti_fapll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
-	u32 v = पढ़ोl_relaxed(fd->base);
+static void ti_fapll_disable(struct clk_hw *hw)
+{
+	struct fapll_data *fd = to_fapll(hw);
+	u32 v = readl_relaxed(fd->base);
 
 	v &= ~FAPLL_MAIN_PLLEN;
-	ग_लिखोl_relaxed(v, fd->base);
-पूर्ण
+	writel_relaxed(v, fd->base);
+}
 
-अटल पूर्णांक ti_fapll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
-	u32 v = पढ़ोl_relaxed(fd->base);
+static int ti_fapll_is_enabled(struct clk_hw *hw)
+{
+	struct fapll_data *fd = to_fapll(hw);
+	u32 v = readl_relaxed(fd->base);
 
-	वापस v & FAPLL_MAIN_PLLEN;
-पूर्ण
+	return v & FAPLL_MAIN_PLLEN;
+}
 
-अटल अचिन्हित दीर्घ ti_fapll_recalc_rate(काष्ठा clk_hw *hw,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
+static unsigned long ti_fapll_recalc_rate(struct clk_hw *hw,
+					  unsigned long parent_rate)
+{
+	struct fapll_data *fd = to_fapll(hw);
 	u32 fapll_n, fapll_p, v;
 	u64 rate;
 
-	अगर (ti_fapll_घड़ी_is_bypass(fd))
-		वापस parent_rate;
+	if (ti_fapll_clock_is_bypass(fd))
+		return parent_rate;
 
 	rate = parent_rate;
 
-	/* PLL pre-भागider is P and multiplier is N */
-	v = पढ़ोl_relaxed(fd->base);
+	/* PLL pre-divider is P and multiplier is N */
+	v = readl_relaxed(fd->base);
 	fapll_p = (v >> 8) & 0xff;
-	अगर (fapll_p)
-		करो_भाग(rate, fapll_p);
+	if (fapll_p)
+		do_div(rate, fapll_p);
 	fapll_n = v >> 16;
-	अगर (fapll_n)
+	if (fapll_n)
 		rate *= fapll_n;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल u8 ti_fapll_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
+static u8 ti_fapll_get_parent(struct clk_hw *hw)
+{
+	struct fapll_data *fd = to_fapll(hw);
 
-	अगर (ti_fapll_घड़ी_is_bypass(fd))
-		वापस 1;
+	if (ti_fapll_clock_is_bypass(fd))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ti_fapll_set_भाग_mult(अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ parent_rate,
-				 u32 *pre_भाग_p, u32 *mult_n)
-अणु
+static int ti_fapll_set_div_mult(unsigned long rate,
+				 unsigned long parent_rate,
+				 u32 *pre_div_p, u32 *mult_n)
+{
 	/*
-	 * So far no luck getting decent घड़ी with PLL भागider,
-	 * PLL करोes not seem to lock and the संकेत करोes not look
-	 * right. It seems the भागider can only be used together
+	 * So far no luck getting decent clock with PLL divider,
+	 * PLL does not seem to lock and the signal does not look
+	 * right. It seems the divider can only be used together
 	 * with the multiplier?
 	 */
-	अगर (rate < parent_rate) अणु
+	if (rate < parent_rate) {
 		pr_warn("FAPLL main divider rates unsupported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*mult_n = rate / parent_rate;
-	अगर (*mult_n > FAPLL_MAIN_MAX_MULT_N)
-		वापस -EINVAL;
-	*pre_भाग_p = 1;
+	if (*mult_n > FAPLL_MAIN_MAX_MULT_N)
+		return -EINVAL;
+	*pre_div_p = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ ti_fapll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *parent_rate)
-अणु
-	u32 pre_भाग_p, mult_n;
-	पूर्णांक error;
+static long ti_fapll_round_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long *parent_rate)
+{
+	u32 pre_div_p, mult_n;
+	int error;
 
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
-	error = ti_fapll_set_भाग_mult(rate, *parent_rate,
-				      &pre_भाग_p, &mult_n);
-	अगर (error)
-		वापस error;
+	error = ti_fapll_set_div_mult(rate, *parent_rate,
+				      &pre_div_p, &mult_n);
+	if (error)
+		return error;
 
-	rate = *parent_rate / pre_भाग_p;
+	rate = *parent_rate / pre_div_p;
 	rate *= mult_n;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक ti_fapll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा fapll_data *fd = to_fapll(hw);
-	u32 pre_भाग_p, mult_n, v;
-	पूर्णांक error;
+static int ti_fapll_set_rate(struct clk_hw *hw, unsigned long rate,
+			     unsigned long parent_rate)
+{
+	struct fapll_data *fd = to_fapll(hw);
+	u32 pre_div_p, mult_n, v;
+	int error;
 
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
-	error = ti_fapll_set_भाग_mult(rate, parent_rate,
-				      &pre_भाग_p, &mult_n);
-	अगर (error)
-		वापस error;
+	error = ti_fapll_set_div_mult(rate, parent_rate,
+				      &pre_div_p, &mult_n);
+	if (error)
+		return error;
 
 	ti_fapll_set_bypass(fd);
-	v = पढ़ोl_relaxed(fd->base);
+	v = readl_relaxed(fd->base);
 	v &= ~FAPLL_MAIN_CLEAR_MASK;
-	v |= pre_भाग_p << FAPLL_MAIN_DIV_P_SHIFT;
+	v |= pre_div_p << FAPLL_MAIN_DIV_P_SHIFT;
 	v |= mult_n << FAPLL_MAIN_MULT_N_SHIFT;
-	ग_लिखोl_relaxed(v, fd->base);
-	अगर (ti_fapll_is_enabled(hw))
-		ti_fapll_रुको_lock(fd);
+	writel_relaxed(v, fd->base);
+	if (ti_fapll_is_enabled(hw))
+		ti_fapll_wait_lock(fd);
 	ti_fapll_clear_bypass(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops ti_fapll_ops = अणु
+static const struct clk_ops ti_fapll_ops = {
 	.enable = ti_fapll_enable,
 	.disable = ti_fapll_disable,
 	.is_enabled = ti_fapll_is_enabled,
@@ -278,396 +277,396 @@
 	.get_parent = ti_fapll_get_parent,
 	.round_rate = ti_fapll_round_rate,
 	.set_rate = ti_fapll_set_rate,
-पूर्ण;
+};
 
-अटल पूर्णांक ti_fapll_synth_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	u32 v = पढ़ोl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
+static int ti_fapll_synth_enable(struct clk_hw *hw)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	u32 v = readl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
 
 	v &= ~(1 << synth->index);
-	ग_लिखोl_relaxed(v, synth->fd->base + FAPLL_PWD_OFFSET);
+	writel_relaxed(v, synth->fd->base + FAPLL_PWD_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ti_fapll_synth_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	u32 v = पढ़ोl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
+static void ti_fapll_synth_disable(struct clk_hw *hw)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	u32 v = readl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
 
 	v |= 1 << synth->index;
-	ग_लिखोl_relaxed(v, synth->fd->base + FAPLL_PWD_OFFSET);
-पूर्ण
+	writel_relaxed(v, synth->fd->base + FAPLL_PWD_OFFSET);
+}
 
-अटल पूर्णांक ti_fapll_synth_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	u32 v = पढ़ोl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
+static int ti_fapll_synth_is_enabled(struct clk_hw *hw)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	u32 v = readl_relaxed(synth->fd->base + FAPLL_PWD_OFFSET);
 
-	वापस !(v & (1 << synth->index));
-पूर्ण
+	return !(v & (1 << synth->index));
+}
 
 /*
- * See dm816x TRM chapter 1.10.3 Flying Adder PLL क्रमe more info
+ * See dm816x TRM chapter 1.10.3 Flying Adder PLL fore more info
  */
-अटल अचिन्हित दीर्घ ti_fapll_synth_recalc_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	u32 synth_भाग_m;
+static unsigned long ti_fapll_synth_recalc_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	u32 synth_div_m;
 	u64 rate;
 
-	/* The audio_pll_clk1 is hardwired to produce 32.768KiHz घड़ी */
-	अगर (!synth->भाग)
-		वापस 32768;
+	/* The audio_pll_clk1 is hardwired to produce 32.768KiHz clock */
+	if (!synth->div)
+		return 32768;
 
 	/*
 	 * PLL in bypass sets the synths in bypass mode too. The PLL rate
 	 * can be also be set to 27MHz, so we can't use parent_rate to
-	 * check क्रम bypass mode.
+	 * check for bypass mode.
 	 */
-	अगर (ti_fapll_घड़ी_is_bypass(synth->fd))
-		वापस parent_rate;
+	if (ti_fapll_clock_is_bypass(synth->fd))
+		return parent_rate;
 
 	rate = parent_rate;
 
 	/*
-	 * Synth frequency पूर्णांकeger and fractional भागider.
+	 * Synth frequency integer and fractional divider.
 	 * Note that the phase output K is 8, so the result needs
 	 * to be multiplied by SYNTH_PHASE_K.
 	 */
-	अगर (synth->freq) अणु
-		u32 v, synth_पूर्णांक_भाग, synth_frac_भाग, synth_भाग_freq;
+	if (synth->freq) {
+		u32 v, synth_int_div, synth_frac_div, synth_div_freq;
 
-		v = पढ़ोl_relaxed(synth->freq);
-		synth_पूर्णांक_भाग = (v >> 24) & 0xf;
-		synth_frac_भाग = v & 0xffffff;
-		synth_भाग_freq = (synth_पूर्णांक_भाग * 10000000) + synth_frac_भाग;
+		v = readl_relaxed(synth->freq);
+		synth_int_div = (v >> 24) & 0xf;
+		synth_frac_div = v & 0xffffff;
+		synth_div_freq = (synth_int_div * 10000000) + synth_frac_div;
 		rate *= 10000000;
-		करो_भाग(rate, synth_भाग_freq);
+		do_div(rate, synth_div_freq);
 		rate *= SYNTH_PHASE_K;
-	पूर्ण
+	}
 
-	/* Synth post-भागider M */
-	synth_भाग_m = पढ़ोl_relaxed(synth->भाग) & SYNTH_MAX_DIV_M;
+	/* Synth post-divider M */
+	synth_div_m = readl_relaxed(synth->div) & SYNTH_MAX_DIV_M;
 
-	वापस DIV_ROUND_UP_ULL(rate, synth_भाग_m);
-पूर्ण
+	return DIV_ROUND_UP_ULL(rate, synth_div_m);
+}
 
-अटल अचिन्हित दीर्घ ti_fapll_synth_get_frac_rate(काष्ठा clk_hw *hw,
-						  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	अचिन्हित दीर्घ current_rate, frac_rate;
-	u32 post_भाग_m;
+static unsigned long ti_fapll_synth_get_frac_rate(struct clk_hw *hw,
+						  unsigned long parent_rate)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	unsigned long current_rate, frac_rate;
+	u32 post_div_m;
 
 	current_rate = ti_fapll_synth_recalc_rate(hw, parent_rate);
-	post_भाग_m = पढ़ोl_relaxed(synth->भाग) & SYNTH_MAX_DIV_M;
-	frac_rate = current_rate * post_भाग_m;
+	post_div_m = readl_relaxed(synth->div) & SYNTH_MAX_DIV_M;
+	frac_rate = current_rate * post_div_m;
 
-	वापस frac_rate;
-पूर्ण
+	return frac_rate;
+}
 
-अटल u32 ti_fapll_synth_set_frac_rate(काष्ठा fapll_synth *synth,
-					अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	u32 post_भाग_m, synth_पूर्णांक_भाग = 0, synth_frac_भाग = 0, v;
+static u32 ti_fapll_synth_set_frac_rate(struct fapll_synth *synth,
+					unsigned long rate,
+					unsigned long parent_rate)
+{
+	u32 post_div_m, synth_int_div = 0, synth_frac_div = 0, v;
 
-	post_भाग_m = DIV_ROUND_UP_ULL((u64)parent_rate * SYNTH_PHASE_K, rate);
-	post_भाग_m = post_भाग_m / SYNTH_MAX_INT_DIV;
-	अगर (post_भाग_m > SYNTH_MAX_DIV_M)
-		वापस -EINVAL;
-	अगर (!post_भाग_m)
-		post_भाग_m = 1;
+	post_div_m = DIV_ROUND_UP_ULL((u64)parent_rate * SYNTH_PHASE_K, rate);
+	post_div_m = post_div_m / SYNTH_MAX_INT_DIV;
+	if (post_div_m > SYNTH_MAX_DIV_M)
+		return -EINVAL;
+	if (!post_div_m)
+		post_div_m = 1;
 
-	क्रम (; post_भाग_m < SYNTH_MAX_DIV_M; post_भाग_m++) अणु
-		synth_पूर्णांक_भाग = DIV_ROUND_UP_ULL((u64)parent_rate *
+	for (; post_div_m < SYNTH_MAX_DIV_M; post_div_m++) {
+		synth_int_div = DIV_ROUND_UP_ULL((u64)parent_rate *
 						 SYNTH_PHASE_K *
 						 10000000,
-						 rate * post_भाग_m);
-		synth_frac_भाग = synth_पूर्णांक_भाग % 10000000;
-		synth_पूर्णांक_भाग /= 10000000;
+						 rate * post_div_m);
+		synth_frac_div = synth_int_div % 10000000;
+		synth_int_div /= 10000000;
 
-		अगर (synth_पूर्णांक_भाग <= SYNTH_MAX_INT_DIV)
-			अवरोध;
-	पूर्ण
+		if (synth_int_div <= SYNTH_MAX_INT_DIV)
+			break;
+	}
 
-	अगर (synth_पूर्णांक_भाग > SYNTH_MAX_INT_DIV)
-		वापस -EINVAL;
+	if (synth_int_div > SYNTH_MAX_INT_DIV)
+		return -EINVAL;
 
-	v = पढ़ोl_relaxed(synth->freq);
+	v = readl_relaxed(synth->freq);
 	v &= ~0x1fffffff;
-	v |= (synth_पूर्णांक_भाग & SYNTH_MAX_INT_DIV) << 24;
-	v |= (synth_frac_भाग & 0xffffff);
+	v |= (synth_int_div & SYNTH_MAX_INT_DIV) << 24;
+	v |= (synth_frac_div & 0xffffff);
 	v |= SYNTH_LDFREQ;
-	ग_लिखोl_relaxed(v, synth->freq);
+	writel_relaxed(v, synth->freq);
 
-	वापस post_भाग_m;
-पूर्ण
+	return post_div_m;
+}
 
-अटल दीर्घ ti_fapll_synth_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	काष्ठा fapll_data *fd = synth->fd;
-	अचिन्हित दीर्घ r;
+static long ti_fapll_synth_round_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long *parent_rate)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	struct fapll_data *fd = synth->fd;
+	unsigned long r;
 
-	अगर (ti_fapll_घड़ी_is_bypass(fd) || !synth->भाग || !rate)
-		वापस -EINVAL;
+	if (ti_fapll_clock_is_bypass(fd) || !synth->div || !rate)
+		return -EINVAL;
 
-	/* Only post भागider m available with no fractional भागider? */
-	अगर (!synth->freq) अणु
-		अचिन्हित दीर्घ frac_rate;
-		u32 synth_post_भाग_m;
+	/* Only post divider m available with no fractional divider? */
+	if (!synth->freq) {
+		unsigned long frac_rate;
+		u32 synth_post_div_m;
 
 		frac_rate = ti_fapll_synth_get_frac_rate(hw, *parent_rate);
-		synth_post_भाग_m = DIV_ROUND_UP(frac_rate, rate);
-		r = DIV_ROUND_UP(frac_rate, synth_post_भाग_m);
-		जाओ out;
-	पूर्ण
+		synth_post_div_m = DIV_ROUND_UP(frac_rate, rate);
+		r = DIV_ROUND_UP(frac_rate, synth_post_div_m);
+		goto out;
+	}
 
 	r = *parent_rate * SYNTH_PHASE_K;
-	अगर (rate > r)
-		जाओ out;
+	if (rate > r)
+		goto out;
 
 	r = DIV_ROUND_UP_ULL(r, SYNTH_MAX_INT_DIV * SYNTH_MAX_DIV_M);
-	अगर (rate < r)
-		जाओ out;
+	if (rate < r)
+		goto out;
 
 	r = rate;
 out:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक ti_fapll_synth_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा fapll_synth *synth = to_synth(hw);
-	काष्ठा fapll_data *fd = synth->fd;
-	अचिन्हित दीर्घ frac_rate, post_rate = 0;
-	u32 post_भाग_m = 0, v;
+static int ti_fapll_synth_set_rate(struct clk_hw *hw, unsigned long rate,
+				   unsigned long parent_rate)
+{
+	struct fapll_synth *synth = to_synth(hw);
+	struct fapll_data *fd = synth->fd;
+	unsigned long frac_rate, post_rate = 0;
+	u32 post_div_m = 0, v;
 
-	अगर (ti_fapll_घड़ी_is_bypass(fd) || !synth->भाग || !rate)
-		वापस -EINVAL;
+	if (ti_fapll_clock_is_bypass(fd) || !synth->div || !rate)
+		return -EINVAL;
 
-	/* Produce the rate with just post भागider M? */
+	/* Produce the rate with just post divider M? */
 	frac_rate = ti_fapll_synth_get_frac_rate(hw, parent_rate);
-	अगर (frac_rate < rate) अणु
-		अगर (!synth->freq)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		post_भाग_m = DIV_ROUND_UP(frac_rate, rate);
-		अगर (post_भाग_m && (post_भाग_m <= SYNTH_MAX_DIV_M))
-			post_rate = DIV_ROUND_UP(frac_rate, post_भाग_m);
-		अगर (!synth->freq && !post_rate)
-			वापस -EINVAL;
-	पूर्ण
+	if (frac_rate < rate) {
+		if (!synth->freq)
+			return -EINVAL;
+	} else {
+		post_div_m = DIV_ROUND_UP(frac_rate, rate);
+		if (post_div_m && (post_div_m <= SYNTH_MAX_DIV_M))
+			post_rate = DIV_ROUND_UP(frac_rate, post_div_m);
+		if (!synth->freq && !post_rate)
+			return -EINVAL;
+	}
 
-	/* Need to recalculate the fractional भागider? */
-	अगर ((post_rate != rate) && synth->freq)
-		post_भाग_m = ti_fapll_synth_set_frac_rate(synth,
+	/* Need to recalculate the fractional divider? */
+	if ((post_rate != rate) && synth->freq)
+		post_div_m = ti_fapll_synth_set_frac_rate(synth,
 							  rate,
 							  parent_rate);
 
-	v = पढ़ोl_relaxed(synth->भाग);
+	v = readl_relaxed(synth->div);
 	v &= ~SYNTH_MAX_DIV_M;
-	v |= post_भाग_m;
+	v |= post_div_m;
 	v |= SYNTH_LDMDIV1;
-	ग_लिखोl_relaxed(v, synth->भाग);
+	writel_relaxed(v, synth->div);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops ti_fapll_synt_ops = अणु
+static const struct clk_ops ti_fapll_synt_ops = {
 	.enable = ti_fapll_synth_enable,
 	.disable = ti_fapll_synth_disable,
 	.is_enabled = ti_fapll_synth_is_enabled,
 	.recalc_rate = ti_fapll_synth_recalc_rate,
 	.round_rate = ti_fapll_synth_round_rate,
 	.set_rate = ti_fapll_synth_set_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk * __init ti_fapll_synth_setup(काष्ठा fapll_data *fd,
-						व्योम __iomem *freq,
-						व्योम __iomem *भाग,
-						पूर्णांक index,
-						स्थिर अक्षर *name,
-						स्थिर अक्षर *parent,
-						काष्ठा clk *pll_clk)
-अणु
-	काष्ठा clk_init_data *init;
-	काष्ठा fapll_synth *synth;
-	काष्ठा clk *clk = ERR_PTR(-ENOMEM);
+static struct clk * __init ti_fapll_synth_setup(struct fapll_data *fd,
+						void __iomem *freq,
+						void __iomem *div,
+						int index,
+						const char *name,
+						const char *parent,
+						struct clk *pll_clk)
+{
+	struct clk_init_data *init;
+	struct fapll_synth *synth;
+	struct clk *clk = ERR_PTR(-ENOMEM);
 
-	init = kzalloc(माप(*init), GFP_KERNEL);
-	अगर (!init)
-		वापस ERR_PTR(-ENOMEM);
+	init = kzalloc(sizeof(*init), GFP_KERNEL);
+	if (!init)
+		return ERR_PTR(-ENOMEM);
 
 	init->ops = &ti_fapll_synt_ops;
 	init->name = name;
 	init->parent_names = &parent;
 	init->num_parents = 1;
 
-	synth = kzalloc(माप(*synth), GFP_KERNEL);
-	अगर (!synth)
-		जाओ मुक्त;
+	synth = kzalloc(sizeof(*synth), GFP_KERNEL);
+	if (!synth)
+		goto free;
 
 	synth->fd = fd;
 	synth->index = index;
 	synth->freq = freq;
-	synth->भाग = भाग;
+	synth->div = div;
 	synth->name = name;
 	synth->hw.init = init;
 	synth->clk_pll = pll_clk;
 
-	clk = clk_रेजिस्टर(शून्य, &synth->hw);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_register(NULL, &synth->hw);
+	if (IS_ERR(clk)) {
 		pr_err("failed to register clock\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	वापस clk;
+	return clk;
 
-मुक्त:
-	kमुक्त(synth);
-	kमुक्त(init);
+free:
+	kfree(synth);
+	kfree(init);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल व्योम __init ti_fapll_setup(काष्ठा device_node *node)
-अणु
-	काष्ठा fapll_data *fd;
-	काष्ठा clk_init_data *init = शून्य;
-	स्थिर अक्षर *parent_name[2];
-	काष्ठा clk *pll_clk;
-	पूर्णांक i;
+static void __init ti_fapll_setup(struct device_node *node)
+{
+	struct fapll_data *fd;
+	struct clk_init_data *init = NULL;
+	const char *parent_name[2];
+	struct clk *pll_clk;
+	int i;
 
-	fd = kzalloc(माप(*fd), GFP_KERNEL);
-	अगर (!fd)
-		वापस;
+	fd = kzalloc(sizeof(*fd), GFP_KERNEL);
+	if (!fd)
+		return;
 
-	fd->outमाला_दो.clks = kzalloc(माप(काष्ठा clk *) *
+	fd->outputs.clks = kzalloc(sizeof(struct clk *) *
 				   MAX_FAPLL_OUTPUTS + 1,
 				   GFP_KERNEL);
-	अगर (!fd->outमाला_दो.clks)
-		जाओ मुक्त;
+	if (!fd->outputs.clks)
+		goto free;
 
-	init = kzalloc(माप(*init), GFP_KERNEL);
-	अगर (!init)
-		जाओ मुक्त;
+	init = kzalloc(sizeof(*init), GFP_KERNEL);
+	if (!init)
+		goto free;
 
 	init->ops = &ti_fapll_ops;
 	init->name = node->name;
 
 	init->num_parents = of_clk_get_parent_count(node);
-	अगर (init->num_parents != 2) अणु
+	if (init->num_parents != 2) {
 		pr_err("%pOFn must have two parents\n", node);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	of_clk_parent_fill(node, parent_name, 2);
 	init->parent_names = parent_name;
 
 	fd->clk_ref = of_clk_get(node, 0);
-	अगर (IS_ERR(fd->clk_ref)) अणु
+	if (IS_ERR(fd->clk_ref)) {
 		pr_err("%pOFn could not get clk_ref\n", node);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	fd->clk_bypass = of_clk_get(node, 1);
-	अगर (IS_ERR(fd->clk_bypass)) अणु
+	if (IS_ERR(fd->clk_bypass)) {
 		pr_err("%pOFn could not get clk_bypass\n", node);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	fd->base = of_iomap(node, 0);
-	अगर (!fd->base) अणु
+	if (!fd->base) {
 		pr_err("%pOFn could not get IO base\n", node);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	अगर (fapll_is_ddr_pll(fd->base))
+	if (fapll_is_ddr_pll(fd->base))
 		fd->bypass_bit_inverted = true;
 
 	fd->name = node->name;
 	fd->hw.init = init;
 
 	/* Register the parent PLL */
-	pll_clk = clk_रेजिस्टर(शून्य, &fd->hw);
-	अगर (IS_ERR(pll_clk))
-		जाओ unmap;
+	pll_clk = clk_register(NULL, &fd->hw);
+	if (IS_ERR(pll_clk))
+		goto unmap;
 
-	fd->outमाला_दो.clks[0] = pll_clk;
-	fd->outमाला_दो.clk_num++;
+	fd->outputs.clks[0] = pll_clk;
+	fd->outputs.clk_num++;
 
 	/*
 	 * Set up the child synthesizers starting at index 1 as the
-	 * PLL output is at index 0. We need to check the घड़ी-indices
-	 * क्रम numbering in हाल there are holes in the synth mapping,
-	 * and then probe the synth रेजिस्टर to see अगर it has a FREQ
-	 * रेजिस्टर available.
+	 * PLL output is at index 0. We need to check the clock-indices
+	 * for numbering in case there are holes in the synth mapping,
+	 * and then probe the synth register to see if it has a FREQ
+	 * register available.
 	 */
-	क्रम (i = 0; i < MAX_FAPLL_OUTPUTS; i++) अणु
-		स्थिर अक्षर *output_name;
-		व्योम __iomem *freq, *भाग;
-		काष्ठा clk *synth_clk;
-		पूर्णांक output_instance;
+	for (i = 0; i < MAX_FAPLL_OUTPUTS; i++) {
+		const char *output_name;
+		void __iomem *freq, *div;
+		struct clk *synth_clk;
+		int output_instance;
 		u32 v;
 
-		अगर (of_property_पढ़ो_string_index(node, "clock-output-names",
+		if (of_property_read_string_index(node, "clock-output-names",
 						  i, &output_name))
-			जारी;
+			continue;
 
-		अगर (of_property_पढ़ो_u32_index(node, "clock-indices", i,
+		if (of_property_read_u32_index(node, "clock-indices", i,
 					       &output_instance))
 			output_instance = i;
 
 		freq = fd->base + (output_instance * 8);
-		भाग = freq + 4;
+		div = freq + 4;
 
-		/* Check क्रम hardwired audio_pll_clk1 */
-		अगर (is_audio_pll_clk1(freq)) अणु
-			freq = शून्य;
-			भाग = शून्य;
-		पूर्ण अन्यथा अणु
-			/* Does the synthesizer have a FREQ रेजिस्टर? */
-			v = पढ़ोl_relaxed(freq);
-			अगर (!v)
-				freq = शून्य;
-		पूर्ण
-		synth_clk = ti_fapll_synth_setup(fd, freq, भाग, output_instance,
+		/* Check for hardwired audio_pll_clk1 */
+		if (is_audio_pll_clk1(freq)) {
+			freq = NULL;
+			div = NULL;
+		} else {
+			/* Does the synthesizer have a FREQ register? */
+			v = readl_relaxed(freq);
+			if (!v)
+				freq = NULL;
+		}
+		synth_clk = ti_fapll_synth_setup(fd, freq, div, output_instance,
 						 output_name, node->name,
 						 pll_clk);
-		अगर (IS_ERR(synth_clk))
-			जारी;
+		if (IS_ERR(synth_clk))
+			continue;
 
-		fd->outमाला_दो.clks[output_instance] = synth_clk;
-		fd->outमाला_दो.clk_num++;
+		fd->outputs.clks[output_instance] = synth_clk;
+		fd->outputs.clk_num++;
 
-		clk_रेजिस्टर_clkdev(synth_clk, output_name, शून्य);
-	पूर्ण
+		clk_register_clkdev(synth_clk, output_name, NULL);
+	}
 
-	/* Register the child synthesizers as the FAPLL outमाला_दो */
-	of_clk_add_provider(node, of_clk_src_onecell_get, &fd->outमाला_दो);
-	/* Add घड़ी alias क्रम the outमाला_दो */
+	/* Register the child synthesizers as the FAPLL outputs */
+	of_clk_add_provider(node, of_clk_src_onecell_get, &fd->outputs);
+	/* Add clock alias for the outputs */
 
-	kमुक्त(init);
+	kfree(init);
 
-	वापस;
+	return;
 
 unmap:
 	iounmap(fd->base);
-मुक्त:
-	अगर (fd->clk_bypass)
+free:
+	if (fd->clk_bypass)
 		clk_put(fd->clk_bypass);
-	अगर (fd->clk_ref)
+	if (fd->clk_ref)
 		clk_put(fd->clk_ref);
-	kमुक्त(fd->outमाला_दो.clks);
-	kमुक्त(fd);
-	kमुक्त(init);
-पूर्ण
+	kfree(fd->outputs.clks);
+	kfree(fd);
+	kfree(init);
+}
 
-CLK_OF_DECLARE(ti_fapll_घड़ी, "ti,dm816-fapll-clock", ti_fapll_setup);
+CLK_OF_DECLARE(ti_fapll_clock, "ti,dm816-fapll-clock", ti_fapll_setup);

@@ -1,255 +1,254 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/sched/xacct.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/file.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/fsnotअगरy.h>
-#समावेश <linux/security.h>
-#समावेश <linux/export.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/splice.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/fs.h>
-#समावेश "internal.h"
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/sched/xacct.h>
+#include <linux/fcntl.h>
+#include <linux/file.h>
+#include <linux/uio.h>
+#include <linux/fsnotify.h>
+#include <linux/security.h>
+#include <linux/export.h>
+#include <linux/syscalls.h>
+#include <linux/pagemap.h>
+#include <linux/splice.h>
+#include <linux/compat.h>
+#include <linux/mount.h>
+#include <linux/fs.h>
+#include "internal.h"
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unistd.h>
+#include <linux/uaccess.h>
+#include <asm/unistd.h>
 
 /*
- * Perक्रमms necessary checks beक्रमe करोing a clone.
+ * Performs necessary checks before doing a clone.
  *
  * Can adjust amount of bytes to clone via @req_count argument.
- * Returns appropriate error code that caller should वापस or
- * zero in हाल the clone should be allowed.
+ * Returns appropriate error code that caller should return or
+ * zero in case the clone should be allowed.
  */
-अटल पूर्णांक generic_remap_checks(काष्ठा file *file_in, loff_t pos_in,
-				काष्ठा file *file_out, loff_t pos_out,
-				loff_t *req_count, अचिन्हित पूर्णांक remap_flags)
-अणु
-	काष्ठा inode *inode_in = file_in->f_mapping->host;
-	काष्ठा inode *inode_out = file_out->f_mapping->host;
-	uपूर्णांक64_t count = *req_count;
-	uपूर्णांक64_t bcount;
+static int generic_remap_checks(struct file *file_in, loff_t pos_in,
+				struct file *file_out, loff_t pos_out,
+				loff_t *req_count, unsigned int remap_flags)
+{
+	struct inode *inode_in = file_in->f_mapping->host;
+	struct inode *inode_out = file_out->f_mapping->host;
+	uint64_t count = *req_count;
+	uint64_t bcount;
 	loff_t size_in, size_out;
 	loff_t bs = inode_out->i_sb->s_blocksize;
-	पूर्णांक ret;
+	int ret;
 
 	/* The start of both ranges must be aligned to an fs block. */
-	अगर (!IS_ALIGNED(pos_in, bs) || !IS_ALIGNED(pos_out, bs))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(pos_in, bs) || !IS_ALIGNED(pos_out, bs))
+		return -EINVAL;
 
-	/* Ensure offsets करोn't wrap. */
-	अगर (pos_in + count < pos_in || pos_out + count < pos_out)
-		वापस -EINVAL;
+	/* Ensure offsets don't wrap. */
+	if (pos_in + count < pos_in || pos_out + count < pos_out)
+		return -EINVAL;
 
-	size_in = i_size_पढ़ो(inode_in);
-	size_out = i_size_पढ़ो(inode_out);
+	size_in = i_size_read(inode_in);
+	size_out = i_size_read(inode_out);
 
-	/* Dedupe requires both ranges to be within खातापूर्ण. */
-	अगर ((remap_flags & REMAP_खाता_DEDUP) &&
+	/* Dedupe requires both ranges to be within EOF. */
+	if ((remap_flags & REMAP_FILE_DEDUP) &&
 	    (pos_in >= size_in || pos_in + count > size_in ||
 	     pos_out >= size_out || pos_out + count > size_out))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Ensure the infile range is within the infile. */
-	अगर (pos_in >= size_in)
-		वापस -EINVAL;
-	count = min(count, size_in - (uपूर्णांक64_t)pos_in);
+	if (pos_in >= size_in)
+		return -EINVAL;
+	count = min(count, size_in - (uint64_t)pos_in);
 
-	ret = generic_ग_लिखो_check_limits(file_out, pos_out, &count);
-	अगर (ret)
-		वापस ret;
+	ret = generic_write_check_limits(file_out, pos_out, &count);
+	if (ret)
+		return ret;
 
 	/*
-	 * If the user wanted us to link to the infile's खातापूर्ण, round up to the
-	 * next block boundary क्रम this check.
+	 * If the user wanted us to link to the infile's EOF, round up to the
+	 * next block boundary for this check.
 	 *
 	 * Otherwise, make sure the count is also block-aligned, having
-	 * alपढ़ोy confirmed the starting offsets' block alignment.
+	 * already confirmed the starting offsets' block alignment.
 	 */
-	अगर (pos_in + count == size_in) अणु
+	if (pos_in + count == size_in) {
 		bcount = ALIGN(size_in, bs) - pos_in;
-	पूर्ण अन्यथा अणु
-		अगर (!IS_ALIGNED(count, bs))
+	} else {
+		if (!IS_ALIGNED(count, bs))
 			count = ALIGN_DOWN(count, bs);
 		bcount = count;
-	पूर्ण
+	}
 
 	/* Don't allow overlapped cloning within the same file. */
-	अगर (inode_in == inode_out &&
+	if (inode_in == inode_out &&
 	    pos_out + bcount > pos_in &&
 	    pos_out < pos_in + bcount)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
-	 * We लघुened the request but the caller can't deal with that, so
+	 * We shortened the request but the caller can't deal with that, so
 	 * bounce the request back to userspace.
 	 */
-	अगर (*req_count != count && !(remap_flags & REMAP_खाता_CAN_SHORTEN))
-		वापस -EINVAL;
+	if (*req_count != count && !(remap_flags & REMAP_FILE_CAN_SHORTEN))
+		return -EINVAL;
 
 	*req_count = count;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक remap_verअगरy_area(काष्ठा file *file, loff_t pos, loff_t len,
-			     bool ग_लिखो)
-अणु
-	काष्ठा inode *inode = file_inode(file);
+static int remap_verify_area(struct file *file, loff_t pos, loff_t len,
+			     bool write)
+{
+	struct inode *inode = file_inode(file);
 
-	अगर (unlikely(pos < 0 || len < 0))
-		वापस -EINVAL;
+	if (unlikely(pos < 0 || len < 0))
+		return -EINVAL;
 
-	अगर (unlikely((loff_t) (pos + len) < 0))
-		वापस -EINVAL;
+	if (unlikely((loff_t) (pos + len) < 0))
+		return -EINVAL;
 
-	अगर (unlikely(inode->i_flctx && mandatory_lock(inode))) अणु
+	if (unlikely(inode->i_flctx && mandatory_lock(inode))) {
 		loff_t end = len ? pos + len - 1 : OFFSET_MAX;
-		पूर्णांक retval;
+		int retval;
 
 		retval = locks_mandatory_area(inode, file, pos, end,
-				ग_लिखो ? F_WRLCK : F_RDLCK);
-		अगर (retval < 0)
-			वापस retval;
-	पूर्ण
+				write ? F_WRLCK : F_RDLCK);
+		if (retval < 0)
+			return retval;
+	}
 
-	वापस security_file_permission(file, ग_लिखो ? MAY_WRITE : MAY_READ);
-पूर्ण
+	return security_file_permission(file, write ? MAY_WRITE : MAY_READ);
+}
 
 /*
- * Ensure that we करोn't remap a partial खातापूर्ण block in the middle of something
- * अन्यथा.  Assume that the offsets have alपढ़ोy been checked क्रम block
+ * Ensure that we don't remap a partial EOF block in the middle of something
+ * else.  Assume that the offsets have already been checked for block
  * alignment.
  *
- * For clone we only link a partial खातापूर्ण block above or at the destination file's
- * खातापूर्ण.  For deduplication we accept a partial खातापूर्ण block only अगर it ends at the
- * destination file's खातापूर्ण (can not link it पूर्णांकo the middle of a file).
+ * For clone we only link a partial EOF block above or at the destination file's
+ * EOF.  For deduplication we accept a partial EOF block only if it ends at the
+ * destination file's EOF (can not link it into the middle of a file).
  *
- * Shorten the request अगर possible.
+ * Shorten the request if possible.
  */
-अटल पूर्णांक generic_remap_check_len(काष्ठा inode *inode_in,
-				   काष्ठा inode *inode_out,
+static int generic_remap_check_len(struct inode *inode_in,
+				   struct inode *inode_out,
 				   loff_t pos_out,
 				   loff_t *len,
-				   अचिन्हित पूर्णांक remap_flags)
-अणु
+				   unsigned int remap_flags)
+{
 	u64 blkmask = i_blocksize(inode_in) - 1;
 	loff_t new_len = *len;
 
-	अगर ((*len & blkmask) == 0)
-		वापस 0;
+	if ((*len & blkmask) == 0)
+		return 0;
 
-	अगर (pos_out + *len < i_size_पढ़ो(inode_out))
+	if (pos_out + *len < i_size_read(inode_out))
 		new_len &= ~blkmask;
 
-	अगर (new_len == *len)
-		वापस 0;
+	if (new_len == *len)
+		return 0;
 
-	अगर (remap_flags & REMAP_खाता_CAN_SHORTEN) अणु
+	if (remap_flags & REMAP_FILE_CAN_SHORTEN) {
 		*len = new_len;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस (remap_flags & REMAP_खाता_DEDUP) ? -EBADE : -EINVAL;
-पूर्ण
+	return (remap_flags & REMAP_FILE_DEDUP) ? -EBADE : -EINVAL;
+}
 
-/* Read a page's worth of file data पूर्णांकo the page cache. */
-अटल काष्ठा page *vfs_dedupe_get_page(काष्ठा inode *inode, loff_t offset)
-अणु
-	काष्ठा page *page;
+/* Read a page's worth of file data into the page cache. */
+static struct page *vfs_dedupe_get_page(struct inode *inode, loff_t offset)
+{
+	struct page *page;
 
-	page = पढ़ो_mapping_page(inode->i_mapping, offset >> PAGE_SHIFT, शून्य);
-	अगर (IS_ERR(page))
-		वापस page;
-	अगर (!PageUptodate(page)) अणु
+	page = read_mapping_page(inode->i_mapping, offset >> PAGE_SHIFT, NULL);
+	if (IS_ERR(page))
+		return page;
+	if (!PageUptodate(page)) {
 		put_page(page);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
-	वापस page;
-पूर्ण
+		return ERR_PTR(-EIO);
+	}
+	return page;
+}
 
 /*
- * Lock two pages, ensuring that we lock in offset order अगर the pages are from
+ * Lock two pages, ensuring that we lock in offset order if the pages are from
  * the same file.
  */
-अटल व्योम vfs_lock_two_pages(काष्ठा page *page1, काष्ठा page *page2)
-अणु
+static void vfs_lock_two_pages(struct page *page1, struct page *page2)
+{
 	/* Always lock in order of increasing index. */
-	अगर (page1->index > page2->index)
+	if (page1->index > page2->index)
 		swap(page1, page2);
 
 	lock_page(page1);
-	अगर (page1 != page2)
+	if (page1 != page2)
 		lock_page(page2);
-पूर्ण
+}
 
 /* Unlock two pages, being careful not to unlock the same page twice. */
-अटल व्योम vfs_unlock_two_pages(काष्ठा page *page1, काष्ठा page *page2)
-अणु
+static void vfs_unlock_two_pages(struct page *page1, struct page *page2)
+{
 	unlock_page(page1);
-	अगर (page1 != page2)
+	if (page1 != page2)
 		unlock_page(page2);
-पूर्ण
+}
 
 /*
- * Compare extents of two files to see अगर they are the same.
- * Caller must have locked both inodes to prevent ग_लिखो races.
+ * Compare extents of two files to see if they are the same.
+ * Caller must have locked both inodes to prevent write races.
  */
-अटल पूर्णांक vfs_dedupe_file_range_compare(काष्ठा inode *src, loff_t srcoff,
-					 काष्ठा inode *dest, loff_t destoff,
+static int vfs_dedupe_file_range_compare(struct inode *src, loff_t srcoff,
+					 struct inode *dest, loff_t destoff,
 					 loff_t len, bool *is_same)
-अणु
+{
 	loff_t src_poff;
 	loff_t dest_poff;
-	व्योम *src_addr;
-	व्योम *dest_addr;
-	काष्ठा page *src_page;
-	काष्ठा page *dest_page;
+	void *src_addr;
+	void *dest_addr;
+	struct page *src_page;
+	struct page *dest_page;
 	loff_t cmp_len;
 	bool same;
-	पूर्णांक error;
+	int error;
 
 	error = -EINVAL;
 	same = true;
-	जबतक (len) अणु
+	while (len) {
 		src_poff = srcoff & (PAGE_SIZE - 1);
 		dest_poff = destoff & (PAGE_SIZE - 1);
 		cmp_len = min(PAGE_SIZE - src_poff,
 			      PAGE_SIZE - dest_poff);
 		cmp_len = min(cmp_len, len);
-		अगर (cmp_len <= 0)
-			जाओ out_error;
+		if (cmp_len <= 0)
+			goto out_error;
 
 		src_page = vfs_dedupe_get_page(src, srcoff);
-		अगर (IS_ERR(src_page)) अणु
+		if (IS_ERR(src_page)) {
 			error = PTR_ERR(src_page);
-			जाओ out_error;
-		पूर्ण
+			goto out_error;
+		}
 		dest_page = vfs_dedupe_get_page(dest, destoff);
-		अगर (IS_ERR(dest_page)) अणु
+		if (IS_ERR(dest_page)) {
 			error = PTR_ERR(dest_page);
 			put_page(src_page);
-			जाओ out_error;
-		पूर्ण
+			goto out_error;
+		}
 
 		vfs_lock_two_pages(src_page, dest_page);
 
 		/*
 		 * Now that we've locked both pages, make sure they're still
-		 * mapped to the file data we're पूर्णांकerested in.  If not,
+		 * mapped to the file data we're interested in.  If not,
 		 * someone is invalidating pages on us and we lose.
 		 */
-		अगर (!PageUptodate(src_page) || !PageUptodate(dest_page) ||
+		if (!PageUptodate(src_page) || !PageUptodate(dest_page) ||
 		    src_page->mapping != src->i_mapping ||
-		    dest_page->mapping != dest->i_mapping) अणु
+		    dest_page->mapping != dest->i_mapping) {
 			same = false;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		src_addr = kmap_atomic(src_page);
 		dest_addr = kmap_atomic(dest_page);
@@ -257,7 +256,7 @@
 		flush_dcache_page(src_page);
 		flush_dcache_page(dest_page);
 
-		अगर (स_भेद(src_addr + src_poff, dest_addr + dest_poff, cmp_len))
+		if (memcmp(src_addr + src_poff, dest_addr + dest_poff, cmp_len))
 			same = false;
 
 		kunmap_atomic(dest_addr);
@@ -267,317 +266,317 @@ unlock:
 		put_page(dest_page);
 		put_page(src_page);
 
-		अगर (!same)
-			अवरोध;
+		if (!same)
+			break;
 
 		srcoff += cmp_len;
 		destoff += cmp_len;
 		len -= cmp_len;
-	पूर्ण
+	}
 
 	*is_same = same;
-	वापस 0;
+	return 0;
 
 out_error:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Check that the two inodes are eligible क्रम cloning, the ranges make
+ * Check that the two inodes are eligible for cloning, the ranges make
  * sense, and then flush all dirty data.  Caller must ensure that the
- * inodes have been locked against any other modअगरications.
+ * inodes have been locked against any other modifications.
  *
- * If there's an error, then the usual negative error code is वापसed.
- * Otherwise वापसs 0 with *len set to the request length.
+ * If there's an error, then the usual negative error code is returned.
+ * Otherwise returns 0 with *len set to the request length.
  */
-पूर्णांक generic_remap_file_range_prep(काष्ठा file *file_in, loff_t pos_in,
-				  काष्ठा file *file_out, loff_t pos_out,
-				  loff_t *len, अचिन्हित पूर्णांक remap_flags)
-अणु
-	काष्ठा inode *inode_in = file_inode(file_in);
-	काष्ठा inode *inode_out = file_inode(file_out);
+int generic_remap_file_range_prep(struct file *file_in, loff_t pos_in,
+				  struct file *file_out, loff_t pos_out,
+				  loff_t *len, unsigned int remap_flags)
+{
+	struct inode *inode_in = file_inode(file_in);
+	struct inode *inode_out = file_inode(file_out);
 	bool same_inode = (inode_in == inode_out);
-	पूर्णांक ret;
+	int ret;
 
 	/* Don't touch certain kinds of inodes */
-	अगर (IS_IMMUTABLE(inode_out))
-		वापस -EPERM;
+	if (IS_IMMUTABLE(inode_out))
+		return -EPERM;
 
-	अगर (IS_SWAPखाता(inode_in) || IS_SWAPखाता(inode_out))
-		वापस -ETXTBSY;
+	if (IS_SWAPFILE(inode_in) || IS_SWAPFILE(inode_out))
+		return -ETXTBSY;
 
 	/* Don't reflink dirs, pipes, sockets... */
-	अगर (S_ISसूची(inode_in->i_mode) || S_ISसूची(inode_out->i_mode))
-		वापस -EISसूची;
-	अगर (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
-		वापस -EINVAL;
+	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
+		return -EISDIR;
+	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
+		return -EINVAL;
 
-	/* Zero length dedupe निकासs immediately; reflink goes to खातापूर्ण. */
-	अगर (*len == 0) अणु
-		loff_t isize = i_size_पढ़ो(inode_in);
+	/* Zero length dedupe exits immediately; reflink goes to EOF. */
+	if (*len == 0) {
+		loff_t isize = i_size_read(inode_in);
 
-		अगर ((remap_flags & REMAP_खाता_DEDUP) || pos_in == isize)
-			वापस 0;
-		अगर (pos_in > isize)
-			वापस -EINVAL;
+		if ((remap_flags & REMAP_FILE_DEDUP) || pos_in == isize)
+			return 0;
+		if (pos_in > isize)
+			return -EINVAL;
 		*len = isize - pos_in;
-		अगर (*len == 0)
-			वापस 0;
-	पूर्ण
+		if (*len == 0)
+			return 0;
+	}
 
-	/* Check that we करोn't violate प्रणाली file offset limits. */
+	/* Check that we don't violate system file offset limits. */
 	ret = generic_remap_checks(file_in, pos_in, file_out, pos_out, len,
 			remap_flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Wait क्रम the completion of any pending IOs on both files */
-	inode_dio_रुको(inode_in);
-	अगर (!same_inode)
-		inode_dio_रुको(inode_out);
+	/* Wait for the completion of any pending IOs on both files */
+	inode_dio_wait(inode_in);
+	if (!same_inode)
+		inode_dio_wait(inode_out);
 
-	ret = filemap_ग_लिखो_and_रुको_range(inode_in->i_mapping,
+	ret = filemap_write_and_wait_range(inode_in->i_mapping,
 			pos_in, pos_in + *len - 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = filemap_ग_लिखो_and_रुको_range(inode_out->i_mapping,
+	ret = filemap_write_and_wait_range(inode_out->i_mapping,
 			pos_out, pos_out + *len - 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * Check that the extents are the same.
 	 */
-	अगर (remap_flags & REMAP_खाता_DEDUP) अणु
+	if (remap_flags & REMAP_FILE_DEDUP) {
 		bool		is_same = false;
 
 		ret = vfs_dedupe_file_range_compare(inode_in, pos_in,
 				inode_out, pos_out, *len, &is_same);
-		अगर (ret)
-			वापस ret;
-		अगर (!is_same)
-			वापस -EBADE;
-	पूर्ण
+		if (ret)
+			return ret;
+		if (!is_same)
+			return -EBADE;
+	}
 
 	ret = generic_remap_check_len(inode_in, inode_out, pos_out, len,
 			remap_flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* If can't alter the file contents, we're करोne. */
-	अगर (!(remap_flags & REMAP_खाता_DEDUP))
-		ret = file_modअगरied(file_out);
+	/* If can't alter the file contents, we're done. */
+	if (!(remap_flags & REMAP_FILE_DEDUP))
+		ret = file_modified(file_out);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(generic_remap_file_range_prep);
 
-loff_t करो_clone_file_range(काष्ठा file *file_in, loff_t pos_in,
-			   काष्ठा file *file_out, loff_t pos_out,
-			   loff_t len, अचिन्हित पूर्णांक remap_flags)
-अणु
+loff_t do_clone_file_range(struct file *file_in, loff_t pos_in,
+			   struct file *file_out, loff_t pos_out,
+			   loff_t len, unsigned int remap_flags)
+{
 	loff_t ret;
 
-	WARN_ON_ONCE(remap_flags & REMAP_खाता_DEDUP);
+	WARN_ON_ONCE(remap_flags & REMAP_FILE_DEDUP);
 
 	/*
-	 * FICLONE/FICLONदुस्फल ioctls enक्रमce that src and dest files are on
+	 * FICLONE/FICLONERANGE ioctls enforce that src and dest files are on
 	 * the same mount. Practically, they only need to be on the same file
-	 * प्रणाली.
+	 * system.
 	 */
-	अगर (file_inode(file_in)->i_sb != file_inode(file_out)->i_sb)
-		वापस -EXDEV;
+	if (file_inode(file_in)->i_sb != file_inode(file_out)->i_sb)
+		return -EXDEV;
 
 	ret = generic_file_rw_checks(file_in, file_out);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (!file_in->f_op->remap_file_range)
-		वापस -EOPNOTSUPP;
+	if (!file_in->f_op->remap_file_range)
+		return -EOPNOTSUPP;
 
-	ret = remap_verअगरy_area(file_in, pos_in, len, false);
-	अगर (ret)
-		वापस ret;
+	ret = remap_verify_area(file_in, pos_in, len, false);
+	if (ret)
+		return ret;
 
-	ret = remap_verअगरy_area(file_out, pos_out, len, true);
-	अगर (ret)
-		वापस ret;
+	ret = remap_verify_area(file_out, pos_out, len, true);
+	if (ret)
+		return ret;
 
 	ret = file_in->f_op->remap_file_range(file_in, pos_in,
 			file_out, pos_out, len, remap_flags);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	fsnotअगरy_access(file_in);
-	fsnotअगरy_modअगरy(file_out);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(करो_clone_file_range);
+	fsnotify_access(file_in);
+	fsnotify_modify(file_out);
+	return ret;
+}
+EXPORT_SYMBOL(do_clone_file_range);
 
-loff_t vfs_clone_file_range(काष्ठा file *file_in, loff_t pos_in,
-			    काष्ठा file *file_out, loff_t pos_out,
-			    loff_t len, अचिन्हित पूर्णांक remap_flags)
-अणु
+loff_t vfs_clone_file_range(struct file *file_in, loff_t pos_in,
+			    struct file *file_out, loff_t pos_out,
+			    loff_t len, unsigned int remap_flags)
+{
 	loff_t ret;
 
-	file_start_ग_लिखो(file_out);
-	ret = करो_clone_file_range(file_in, pos_in, file_out, pos_out, len,
+	file_start_write(file_out);
+	ret = do_clone_file_range(file_in, pos_in, file_out, pos_out, len,
 				  remap_flags);
-	file_end_ग_लिखो(file_out);
+	file_end_write(file_out);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(vfs_clone_file_range);
 
 /* Check whether we are allowed to dedupe the destination file */
-अटल bool allow_file_dedupe(काष्ठा file *file)
-अणु
-	काष्ठा user_namespace *mnt_userns = file_mnt_user_ns(file);
-	काष्ठा inode *inode = file_inode(file);
+static bool allow_file_dedupe(struct file *file)
+{
+	struct user_namespace *mnt_userns = file_mnt_user_ns(file);
+	struct inode *inode = file_inode(file);
 
-	अगर (capable(CAP_SYS_ADMIN))
-		वापस true;
-	अगर (file->f_mode & FMODE_WRITE)
-		वापस true;
-	अगर (uid_eq(current_fsuid(), i_uid_पूर्णांकo_mnt(mnt_userns, inode)))
-		वापस true;
-	अगर (!inode_permission(mnt_userns, inode, MAY_WRITE))
-		वापस true;
-	वापस false;
-पूर्ण
+	if (capable(CAP_SYS_ADMIN))
+		return true;
+	if (file->f_mode & FMODE_WRITE)
+		return true;
+	if (uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode)))
+		return true;
+	if (!inode_permission(mnt_userns, inode, MAY_WRITE))
+		return true;
+	return false;
+}
 
-loff_t vfs_dedupe_file_range_one(काष्ठा file *src_file, loff_t src_pos,
-				 काष्ठा file *dst_file, loff_t dst_pos,
-				 loff_t len, अचिन्हित पूर्णांक remap_flags)
-अणु
+loff_t vfs_dedupe_file_range_one(struct file *src_file, loff_t src_pos,
+				 struct file *dst_file, loff_t dst_pos,
+				 loff_t len, unsigned int remap_flags)
+{
 	loff_t ret;
 
-	WARN_ON_ONCE(remap_flags & ~(REMAP_खाता_DEDUP |
-				     REMAP_खाता_CAN_SHORTEN));
+	WARN_ON_ONCE(remap_flags & ~(REMAP_FILE_DEDUP |
+				     REMAP_FILE_CAN_SHORTEN));
 
-	ret = mnt_want_ग_लिखो_file(dst_file);
-	अगर (ret)
-		वापस ret;
+	ret = mnt_want_write_file(dst_file);
+	if (ret)
+		return ret;
 
 	/*
-	 * This is redundant अगर called from vfs_dedupe_file_range(), but other
-	 * callers need it and it's not perक्रमmance sesitive...
+	 * This is redundant if called from vfs_dedupe_file_range(), but other
+	 * callers need it and it's not performance sesitive...
 	 */
-	ret = remap_verअगरy_area(src_file, src_pos, len, false);
-	अगर (ret)
-		जाओ out_drop_ग_लिखो;
+	ret = remap_verify_area(src_file, src_pos, len, false);
+	if (ret)
+		goto out_drop_write;
 
-	ret = remap_verअगरy_area(dst_file, dst_pos, len, true);
-	अगर (ret)
-		जाओ out_drop_ग_लिखो;
+	ret = remap_verify_area(dst_file, dst_pos, len, true);
+	if (ret)
+		goto out_drop_write;
 
 	ret = -EPERM;
-	अगर (!allow_file_dedupe(dst_file))
-		जाओ out_drop_ग_लिखो;
+	if (!allow_file_dedupe(dst_file))
+		goto out_drop_write;
 
 	ret = -EXDEV;
-	अगर (src_file->f_path.mnt != dst_file->f_path.mnt)
-		जाओ out_drop_ग_लिखो;
+	if (src_file->f_path.mnt != dst_file->f_path.mnt)
+		goto out_drop_write;
 
-	ret = -EISसूची;
-	अगर (S_ISसूची(file_inode(dst_file)->i_mode))
-		जाओ out_drop_ग_लिखो;
+	ret = -EISDIR;
+	if (S_ISDIR(file_inode(dst_file)->i_mode))
+		goto out_drop_write;
 
 	ret = -EINVAL;
-	अगर (!dst_file->f_op->remap_file_range)
-		जाओ out_drop_ग_लिखो;
+	if (!dst_file->f_op->remap_file_range)
+		goto out_drop_write;
 
-	अगर (len == 0) अणु
+	if (len == 0) {
 		ret = 0;
-		जाओ out_drop_ग_लिखो;
-	पूर्ण
+		goto out_drop_write;
+	}
 
 	ret = dst_file->f_op->remap_file_range(src_file, src_pos, dst_file,
-			dst_pos, len, remap_flags | REMAP_खाता_DEDUP);
-out_drop_ग_लिखो:
-	mnt_drop_ग_लिखो_file(dst_file);
+			dst_pos, len, remap_flags | REMAP_FILE_DEDUP);
+out_drop_write:
+	mnt_drop_write_file(dst_file);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(vfs_dedupe_file_range_one);
 
-पूर्णांक vfs_dedupe_file_range(काष्ठा file *file, काष्ठा file_dedupe_range *same)
-अणु
-	काष्ठा file_dedupe_range_info *info;
-	काष्ठा inode *src = file_inode(file);
+int vfs_dedupe_file_range(struct file *file, struct file_dedupe_range *same)
+{
+	struct file_dedupe_range_info *info;
+	struct inode *src = file_inode(file);
 	u64 off;
 	u64 len;
-	पूर्णांक i;
-	पूर्णांक ret;
+	int i;
+	int ret;
 	u16 count = same->dest_count;
 	loff_t deduped;
 
-	अगर (!(file->f_mode & FMODE_READ))
-		वापस -EINVAL;
+	if (!(file->f_mode & FMODE_READ))
+		return -EINVAL;
 
-	अगर (same->reserved1 || same->reserved2)
-		वापस -EINVAL;
+	if (same->reserved1 || same->reserved2)
+		return -EINVAL;
 
 	off = same->src_offset;
 	len = same->src_length;
 
-	अगर (S_ISसूची(src->i_mode))
-		वापस -EISसूची;
+	if (S_ISDIR(src->i_mode))
+		return -EISDIR;
 
-	अगर (!S_ISREG(src->i_mode))
-		वापस -EINVAL;
+	if (!S_ISREG(src->i_mode))
+		return -EINVAL;
 
-	अगर (!file->f_op->remap_file_range)
-		वापस -EOPNOTSUPP;
+	if (!file->f_op->remap_file_range)
+		return -EOPNOTSUPP;
 
-	ret = remap_verअगरy_area(file, off, len, false);
-	अगर (ret < 0)
-		वापस ret;
+	ret = remap_verify_area(file, off, len, false);
+	if (ret < 0)
+		return ret;
 	ret = 0;
 
-	अगर (off + len > i_size_पढ़ो(src))
-		वापस -EINVAL;
+	if (off + len > i_size_read(src))
+		return -EINVAL;
 
-	/* Arbitrary 1G limit on a single dedupe request, can be उठाओd. */
+	/* Arbitrary 1G limit on a single dedupe request, can be raised. */
 	len = min_t(u64, len, 1 << 30);
 
-	/* pre-क्रमmat output fields to sane values */
-	क्रम (i = 0; i < count; i++) अणु
+	/* pre-format output fields to sane values */
+	for (i = 0; i < count; i++) {
 		same->info[i].bytes_deduped = 0ULL;
-		same->info[i].status = खाता_DEDUPE_RANGE_SAME;
-	पूर्ण
+		same->info[i].status = FILE_DEDUPE_RANGE_SAME;
+	}
 
-	क्रम (i = 0, info = same->info; i < count; i++, info++) अणु
-		काष्ठा fd dst_fd = fdget(info->dest_fd);
-		काष्ठा file *dst_file = dst_fd.file;
+	for (i = 0, info = same->info; i < count; i++, info++) {
+		struct fd dst_fd = fdget(info->dest_fd);
+		struct file *dst_file = dst_fd.file;
 
-		अगर (!dst_file) अणु
+		if (!dst_file) {
 			info->status = -EBADF;
-			जाओ next_loop;
-		पूर्ण
+			goto next_loop;
+		}
 
-		अगर (info->reserved) अणु
+		if (info->reserved) {
 			info->status = -EINVAL;
-			जाओ next_fdput;
-		पूर्ण
+			goto next_fdput;
+		}
 
 		deduped = vfs_dedupe_file_range_one(file, off, dst_file,
 						    info->dest_offset, len,
-						    REMAP_खाता_CAN_SHORTEN);
-		अगर (deduped == -EBADE)
-			info->status = खाता_DEDUPE_RANGE_DIFFERS;
-		अन्यथा अगर (deduped < 0)
+						    REMAP_FILE_CAN_SHORTEN);
+		if (deduped == -EBADE)
+			info->status = FILE_DEDUPE_RANGE_DIFFERS;
+		else if (deduped < 0)
 			info->status = deduped;
-		अन्यथा
+		else
 			info->bytes_deduped = len;
 
 next_fdput:
 		fdput(dst_fd);
 next_loop:
-		अगर (fatal_संकेत_pending(current))
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (fatal_signal_pending(current))
+			break;
+	}
+	return ret;
+}
 EXPORT_SYMBOL(vfs_dedupe_file_range);

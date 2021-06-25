@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,462 +7,462 @@
  * Copyright 2017 Canonical Ltd.
  */
 
-#अगर_अघोषित __AA_LABEL_H
-#घोषणा __AA_LABEL_H
+#ifndef __AA_LABEL_H
+#define __AA_LABEL_H
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/atomic.h>
+#include <linux/audit.h>
+#include <linux/rbtree.h>
+#include <linux/rcupdate.h>
 
-#समावेश "apparmor.h"
-#समावेश "lib.h"
+#include "apparmor.h"
+#include "lib.h"
 
-काष्ठा aa_ns;
+struct aa_ns;
 
-#घोषणा LOCAL_VEC_ENTRIES 8
-#घोषणा DEFINE_VEC(T, V)						\
-	काष्ठा aa_ ## T *(_ ## V ## _localपंचांगp)[LOCAL_VEC_ENTRIES];	\
-	काष्ठा aa_ ## T **(V)
+#define LOCAL_VEC_ENTRIES 8
+#define DEFINE_VEC(T, V)						\
+	struct aa_ ## T *(_ ## V ## _localtmp)[LOCAL_VEC_ENTRIES];	\
+	struct aa_ ## T **(V)
 
-#घोषणा vec_setup(T, V, N, GFP)						\
-(अणु									\
-	अगर ((N) <= LOCAL_VEC_ENTRIES) अणु					\
+#define vec_setup(T, V, N, GFP)						\
+({									\
+	if ((N) <= LOCAL_VEC_ENTRIES) {					\
 		typeof(N) i;						\
-		(V) = (_ ## V ## _localपंचांगp);				\
-		क्रम (i = 0; i < (N); i++)				\
-			(V)[i] = शून्य;					\
-	पूर्ण अन्यथा								\
-		(V) = kzalloc(माप(काष्ठा aa_ ## T *) * (N), (GFP));	\
+		(V) = (_ ## V ## _localtmp);				\
+		for (i = 0; i < (N); i++)				\
+			(V)[i] = NULL;					\
+	} else								\
+		(V) = kzalloc(sizeof(struct aa_ ## T *) * (N), (GFP));	\
 	(V) ? 0 : -ENOMEM;						\
-पूर्ण)
+})
 
-#घोषणा vec_cleanup(T, V, N)						\
-करो अणु									\
-	पूर्णांक i;								\
-	क्रम (i = 0; i < (N); i++) अणु					\
-		अगर (!IS_ERR_OR_शून्य((V)[i]))				\
+#define vec_cleanup(T, V, N)						\
+do {									\
+	int i;								\
+	for (i = 0; i < (N); i++) {					\
+		if (!IS_ERR_OR_NULL((V)[i]))				\
 			aa_put_ ## T((V)[i]);				\
-	पूर्ण								\
-	अगर ((V) != _ ## V ## _localपंचांगp)					\
-		kमुक्त(V);						\
-पूर्ण जबतक (0)
+	}								\
+	if ((V) != _ ## V ## _localtmp)					\
+		kfree(V);						\
+} while (0)
 
-#घोषणा vec_last(VEC, SIZE) ((VEC)[(SIZE) - 1])
-#घोषणा vec_ns(VEC, SIZE) (vec_last((VEC), (SIZE))->ns)
-#घोषणा vec_labअन्यथाt(VEC, SIZE) (&vec_ns((VEC), (SIZE))->labels)
-#घोषणा cleanup_करोमुख्य_vec(V, L) cleanup_label_vec((V), (L)->size)
+#define vec_last(VEC, SIZE) ((VEC)[(SIZE) - 1])
+#define vec_ns(VEC, SIZE) (vec_last((VEC), (SIZE))->ns)
+#define vec_labelset(VEC, SIZE) (&vec_ns((VEC), (SIZE))->labels)
+#define cleanup_domain_vec(V, L) cleanup_label_vec((V), (L)->size)
 
-काष्ठा aa_profile;
-#घोषणा VEC_FLAG_TERMINATE 1
-पूर्णांक aa_vec_unique(काष्ठा aa_profile **vec, पूर्णांक n, पूर्णांक flags);
-काष्ठा aa_label *aa_vec_find_or_create_label(काष्ठा aa_profile **vec, पूर्णांक len,
+struct aa_profile;
+#define VEC_FLAG_TERMINATE 1
+int aa_vec_unique(struct aa_profile **vec, int n, int flags);
+struct aa_label *aa_vec_find_or_create_label(struct aa_profile **vec, int len,
 					     gfp_t gfp);
-#घोषणा aa_sort_and_merge_vec(N, V) \
-	aa_sort_and_merge_profiles((N), (काष्ठा aa_profile **)(V))
+#define aa_sort_and_merge_vec(N, V) \
+	aa_sort_and_merge_profiles((N), (struct aa_profile **)(V))
 
 
-/* काष्ठा aa_labअन्यथाt - set of labels क्रम a namespace
+/* struct aa_labelset - set of labels for a namespace
  *
- * Labels are reference counted; aa_labअन्यथाt करोes not contribute to label
- * reference counts. Once a label's last refcount is put it is हटाओd from
+ * Labels are reference counted; aa_labelset does not contribute to label
+ * reference counts. Once a label's last refcount is put it is removed from
  * the set.
  */
-काष्ठा aa_labअन्यथाt अणु
+struct aa_labelset {
 	rwlock_t lock;
 
-	काष्ठा rb_root root;
-पूर्ण;
+	struct rb_root root;
+};
 
-#घोषणा __labअन्यथाt_क्रम_each(LS, N) \
-	क्रम ((N) = rb_first(&(LS)->root); (N); (N) = rb_next(N))
+#define __labelset_for_each(LS, N) \
+	for ((N) = rb_first(&(LS)->root); (N); (N) = rb_next(N))
 
-व्योम aa_labअन्यथाt_destroy(काष्ठा aa_labअन्यथाt *ls);
-व्योम aa_labअन्यथाt_init(काष्ठा aa_labअन्यथाt *ls);
+void aa_labelset_destroy(struct aa_labelset *ls);
+void aa_labelset_init(struct aa_labelset *ls);
 
 
-क्रमागत label_flags अणु
+enum label_flags {
 	FLAG_HAT = 1,			/* profile is a hat */
-	FLAG_UNCONFINED = 2,		/* label unconfined only अगर all */
-	FLAG_शून्य = 4,			/* profile is null learning profile */
+	FLAG_UNCONFINED = 2,		/* label unconfined only if all */
+	FLAG_NULL = 4,			/* profile is null learning profile */
 	FLAG_IX_ON_NAME_ERROR = 8,	/* fallback to ix on name lookup fail */
-	FLAG_IMMUTIBLE = 0x10,		/* करोn't allow changes/replacement */
+	FLAG_IMMUTIBLE = 0x10,		/* don't allow changes/replacement */
 	FLAG_USER_DEFINED = 0x20,	/* user based profile - lower privs */
-	FLAG_NO_LIST_REF = 0x40,	/* list करोesn't keep profile ref */
+	FLAG_NO_LIST_REF = 0x40,	/* list doesn't keep profile ref */
 	FLAG_NS_COUNT = 0x80,		/* carries NS ref count */
 	FLAG_IN_TREE = 0x100,		/* label is in tree */
-	FLAG_PROखाता = 0x200,		/* label is a profile */
-	FLAG_EXPLICIT = 0x400,		/* explicit अटल label */
-	FLAG_STALE = 0x800,		/* replaced/हटाओd */
+	FLAG_PROFILE = 0x200,		/* label is a profile */
+	FLAG_EXPLICIT = 0x400,		/* explicit static label */
+	FLAG_STALE = 0x800,		/* replaced/removed */
 	FLAG_RENAMED = 0x1000,		/* label has renaming in it */
 	FLAG_REVOKED = 0x2000,		/* label has revocation in it */
 
 	/* These flags must correspond with PATH_flags */
 	/* TODO: add new path flags */
-पूर्ण;
+};
 
-काष्ठा aa_label;
-काष्ठा aa_proxy अणु
-	काष्ठा kref count;
-	काष्ठा aa_label __rcu *label;
-पूर्ण;
+struct aa_label;
+struct aa_proxy {
+	struct kref count;
+	struct aa_label __rcu *label;
+};
 
-काष्ठा label_it अणु
-	पूर्णांक i, j;
-पूर्ण;
+struct label_it {
+	int i, j;
+};
 
-/* काष्ठा aa_label - lazy labeling काष्ठा
+/* struct aa_label - lazy labeling struct
  * @count: ref count of active users
  * @node: rbtree position
- * @rcu: rcu callback काष्ठा
+ * @rcu: rcu callback struct
  * @proxy: is set to the label that replaced this label
- * @hname: text representation of the label (MAYBE_शून्य)
+ * @hname: text representation of the label (MAYBE_NULL)
  * @flags: stale and other flags - values may change under label set lock
  * @secid: secid that references this label
  * @size: number of entries in @ent[]
- * @ent: set of profiles क्रम label, actual size determined by @size
+ * @ent: set of profiles for label, actual size determined by @size
  */
-काष्ठा aa_label अणु
-	काष्ठा kref count;
-	काष्ठा rb_node node;
-	काष्ठा rcu_head rcu;
-	काष्ठा aa_proxy *proxy;
-	__counted अक्षर *hname;
-	दीर्घ flags;
+struct aa_label {
+	struct kref count;
+	struct rb_node node;
+	struct rcu_head rcu;
+	struct aa_proxy *proxy;
+	__counted char *hname;
+	long flags;
 	u32 secid;
-	पूर्णांक size;
-	काष्ठा aa_profile *vec[];
-पूर्ण;
+	int size;
+	struct aa_profile *vec[];
+};
 
-#घोषणा last_error(E, FN)				\
-करो अणु							\
-	पूर्णांक __subE = (FN);				\
-	अगर (__subE)					\
+#define last_error(E, FN)				\
+do {							\
+	int __subE = (FN);				\
+	if (__subE)					\
 		(E) = __subE;				\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा label_isprofile(X) ((X)->flags & FLAG_PROखाता)
-#घोषणा label_unconfined(X) ((X)->flags & FLAG_UNCONFINED)
-#घोषणा unconfined(X) label_unconfined(X)
-#घोषणा label_is_stale(X) ((X)->flags & FLAG_STALE)
-#घोषणा __label_make_stale(X) ((X)->flags |= FLAG_STALE)
-#घोषणा labels_ns(X) (vec_ns(&((X)->vec[0]), (X)->size))
-#घोषणा labels_set(X) (&labels_ns(X)->labels)
-#घोषणा labels_profile(X) ((X)->vec[(X)->size - 1])
+#define label_isprofile(X) ((X)->flags & FLAG_PROFILE)
+#define label_unconfined(X) ((X)->flags & FLAG_UNCONFINED)
+#define unconfined(X) label_unconfined(X)
+#define label_is_stale(X) ((X)->flags & FLAG_STALE)
+#define __label_make_stale(X) ((X)->flags |= FLAG_STALE)
+#define labels_ns(X) (vec_ns(&((X)->vec[0]), (X)->size))
+#define labels_set(X) (&labels_ns(X)->labels)
+#define labels_profile(X) ((X)->vec[(X)->size - 1])
 
 
-पूर्णांक aa_label_next_confined(काष्ठा aa_label *l, पूर्णांक i);
+int aa_label_next_confined(struct aa_label *l, int i);
 
-/* क्रम each profile in a label */
-#घोषणा label_क्रम_each(I, L, P)						\
-	क्रम ((I).i = 0; ((P) = (L)->vec[(I).i]); ++((I).i))
+/* for each profile in a label */
+#define label_for_each(I, L, P)						\
+	for ((I).i = 0; ((P) = (L)->vec[(I).i]); ++((I).i))
 
-/* assumes अवरोध/जाओ ended label_क्रम_each */
-#घोषणा label_क्रम_each_cont(I, L, P)					\
-	क्रम (++((I).i); ((P) = (L)->vec[(I).i]); ++((I).i))
+/* assumes break/goto ended label_for_each */
+#define label_for_each_cont(I, L, P)					\
+	for (++((I).i); ((P) = (L)->vec[(I).i]); ++((I).i))
 
-#घोषणा next_comb(I, L1, L2)						\
-करो अणु									\
+#define next_comb(I, L1, L2)						\
+do {									\
 	(I).j++;							\
-	अगर ((I).j >= (L2)->size) अणु					\
+	if ((I).j >= (L2)->size) {					\
 		(I).i++;						\
 		(I).j = 0;						\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
 
-/* क्रम each combination of P1 in L1, and P2 in L2 */
-#घोषणा label_क्रम_each_comb(I, L1, L2, P1, P2)				\
-क्रम ((I).i = (I).j = 0;							\
+/* for each combination of P1 in L1, and P2 in L2 */
+#define label_for_each_comb(I, L1, L2, P1, P2)				\
+for ((I).i = (I).j = 0;							\
 	((P1) = (L1)->vec[(I).i]) && ((P2) = (L2)->vec[(I).j]);		\
 	(I) = next_comb(I, L1, L2))
 
-#घोषणा fn_क्रम_each_comb(L1, L2, P1, P2, FN)				\
-(अणु									\
-	काष्ठा label_it i;						\
-	पूर्णांक __E = 0;							\
-	label_क्रम_each_comb(i, (L1), (L2), (P1), (P2)) अणु		\
+#define fn_for_each_comb(L1, L2, P1, P2, FN)				\
+({									\
+	struct label_it i;						\
+	int __E = 0;							\
+	label_for_each_comb(i, (L1), (L2), (P1), (P2)) {		\
 		last_error(__E, (FN));					\
-	पूर्ण								\
+	}								\
 	__E;								\
-पूर्ण)
+})
 
-/* क्रम each profile that is enक्रमcing confinement in a label */
-#घोषणा label_क्रम_each_confined(I, L, P)				\
-	क्रम ((I).i = aa_label_next_confined((L), 0);			\
+/* for each profile that is enforcing confinement in a label */
+#define label_for_each_confined(I, L, P)				\
+	for ((I).i = aa_label_next_confined((L), 0);			\
 	     ((P) = (L)->vec[(I).i]);					\
 	     (I).i = aa_label_next_confined((L), (I).i + 1))
 
-#घोषणा label_क्रम_each_in_merge(I, A, B, P)				\
-	क्रम ((I).i = (I).j = 0;						\
+#define label_for_each_in_merge(I, A, B, P)				\
+	for ((I).i = (I).j = 0;						\
 	     ((P) = aa_label_next_in_merge(&(I), (A), (B)));		\
 	     )
 
-#घोषणा label_क्रम_each_not_in_set(I, SET, SUB, P)			\
-	क्रम ((I).i = (I).j = 0;						\
+#define label_for_each_not_in_set(I, SET, SUB, P)			\
+	for ((I).i = (I).j = 0;						\
 	     ((P) = __aa_label_next_not_in_set(&(I), (SET), (SUB)));	\
 	     )
 
-#घोषणा next_in_ns(i, NS, L)						\
-(अणु									\
+#define next_in_ns(i, NS, L)						\
+({									\
 	typeof(i) ___i = (i);						\
-	जबतक ((L)->vec[___i] && (L)->vec[___i]->ns != (NS))		\
+	while ((L)->vec[___i] && (L)->vec[___i]->ns != (NS))		\
 		(___i)++;						\
 	(___i);								\
-पूर्ण)
+})
 
-#घोषणा label_क्रम_each_in_ns(I, NS, L, P)				\
-	क्रम ((I).i = next_in_ns(0, (NS), (L));				\
+#define label_for_each_in_ns(I, NS, L, P)				\
+	for ((I).i = next_in_ns(0, (NS), (L));				\
 	     ((P) = (L)->vec[(I).i]);					\
 	     (I).i = next_in_ns((I).i + 1, (NS), (L)))
 
-#घोषणा fn_क्रम_each_in_ns(L, P, FN)					\
-(अणु									\
-	काष्ठा label_it __i;						\
-	काष्ठा aa_ns *__ns = labels_ns(L);				\
-	पूर्णांक __E = 0;							\
-	label_क्रम_each_in_ns(__i, __ns, (L), (P)) अणु			\
+#define fn_for_each_in_ns(L, P, FN)					\
+({									\
+	struct label_it __i;						\
+	struct aa_ns *__ns = labels_ns(L);				\
+	int __E = 0;							\
+	label_for_each_in_ns(__i, __ns, (L), (P)) {			\
 		last_error(__E, (FN));					\
-	पूर्ण								\
+	}								\
 	__E;								\
-पूर्ण)
+})
 
 
-#घोषणा fn_क्रम_each_XXX(L, P, FN, ...)					\
-(अणु									\
-	काष्ठा label_it i;						\
-	पूर्णांक __E = 0;							\
-	label_क्रम_each ## __VA_ARGS__(i, (L), (P)) अणु			\
+#define fn_for_each_XXX(L, P, FN, ...)					\
+({									\
+	struct label_it i;						\
+	int __E = 0;							\
+	label_for_each ## __VA_ARGS__(i, (L), (P)) {			\
 		last_error(__E, (FN));					\
-	पूर्ण								\
+	}								\
 	__E;								\
-पूर्ण)
+})
 
-#घोषणा fn_क्रम_each(L, P, FN) fn_क्रम_each_XXX(L, P, FN)
-#घोषणा fn_क्रम_each_confined(L, P, FN) fn_क्रम_each_XXX(L, P, FN, _confined)
+#define fn_for_each(L, P, FN) fn_for_each_XXX(L, P, FN)
+#define fn_for_each_confined(L, P, FN) fn_for_each_XXX(L, P, FN, _confined)
 
-#घोषणा fn_क्रम_each2_XXX(L1, L2, P, FN, ...)				\
-(अणु									\
-	काष्ठा label_it i;						\
-	पूर्णांक __E = 0;							\
-	label_क्रम_each ## __VA_ARGS__(i, (L1), (L2), (P)) अणु		\
+#define fn_for_each2_XXX(L1, L2, P, FN, ...)				\
+({									\
+	struct label_it i;						\
+	int __E = 0;							\
+	label_for_each ## __VA_ARGS__(i, (L1), (L2), (P)) {		\
 		last_error(__E, (FN));					\
-	पूर्ण								\
+	}								\
 	__E;								\
-पूर्ण)
+})
 
-#घोषणा fn_क्रम_each_in_merge(L1, L2, P, FN)				\
-	fn_क्रम_each2_XXX((L1), (L2), P, FN, _in_merge)
-#घोषणा fn_क्रम_each_not_in_set(L1, L2, P, FN)				\
-	fn_क्रम_each2_XXX((L1), (L2), P, FN, _not_in_set)
+#define fn_for_each_in_merge(L1, L2, P, FN)				\
+	fn_for_each2_XXX((L1), (L2), P, FN, _in_merge)
+#define fn_for_each_not_in_set(L1, L2, P, FN)				\
+	fn_for_each2_XXX((L1), (L2), P, FN, _not_in_set)
 
-#घोषणा LABEL_MEDIATES(L, C)						\
-(अणु									\
-	काष्ठा aa_profile *profile;					\
-	काष्ठा label_it i;						\
-	पूर्णांक ret = 0;							\
-	label_क्रम_each(i, (L), profile) अणु				\
-		अगर (PROखाता_MEDIATES(profile, (C))) अणु			\
+#define LABEL_MEDIATES(L, C)						\
+({									\
+	struct aa_profile *profile;					\
+	struct label_it i;						\
+	int ret = 0;							\
+	label_for_each(i, (L), profile) {				\
+		if (PROFILE_MEDIATES(profile, (C))) {			\
 			ret = 1;					\
-			अवरोध;						\
-		पूर्ण							\
-	पूर्ण								\
+			break;						\
+		}							\
+	}								\
 	ret;								\
-पूर्ण)
+})
 
 
-व्योम aa_labअन्यथाt_destroy(काष्ठा aa_labअन्यथाt *ls);
-व्योम aa_labअन्यथाt_init(काष्ठा aa_labअन्यथाt *ls);
-व्योम __aa_labअन्यथाt_update_subtree(काष्ठा aa_ns *ns);
+void aa_labelset_destroy(struct aa_labelset *ls);
+void aa_labelset_init(struct aa_labelset *ls);
+void __aa_labelset_update_subtree(struct aa_ns *ns);
 
-व्योम aa_label_destroy(काष्ठा aa_label *label);
-व्योम aa_label_मुक्त(काष्ठा aa_label *label);
-व्योम aa_label_kref(काष्ठा kref *kref);
-bool aa_label_init(काष्ठा aa_label *label, पूर्णांक size, gfp_t gfp);
-काष्ठा aa_label *aa_label_alloc(पूर्णांक size, काष्ठा aa_proxy *proxy, gfp_t gfp);
+void aa_label_destroy(struct aa_label *label);
+void aa_label_free(struct aa_label *label);
+void aa_label_kref(struct kref *kref);
+bool aa_label_init(struct aa_label *label, int size, gfp_t gfp);
+struct aa_label *aa_label_alloc(int size, struct aa_proxy *proxy, gfp_t gfp);
 
-bool aa_label_is_subset(काष्ठा aa_label *set, काष्ठा aa_label *sub);
-bool aa_label_is_unconfined_subset(काष्ठा aa_label *set, काष्ठा aa_label *sub);
-काष्ठा aa_profile *__aa_label_next_not_in_set(काष्ठा label_it *I,
-					     काष्ठा aa_label *set,
-					     काष्ठा aa_label *sub);
-bool aa_label_हटाओ(काष्ठा aa_label *label);
-काष्ठा aa_label *aa_label_insert(काष्ठा aa_labअन्यथाt *ls, काष्ठा aa_label *l);
-bool aa_label_replace(काष्ठा aa_label *old, काष्ठा aa_label *new);
-bool aa_label_make_newest(काष्ठा aa_labअन्यथाt *ls, काष्ठा aa_label *old,
-			  काष्ठा aa_label *new);
+bool aa_label_is_subset(struct aa_label *set, struct aa_label *sub);
+bool aa_label_is_unconfined_subset(struct aa_label *set, struct aa_label *sub);
+struct aa_profile *__aa_label_next_not_in_set(struct label_it *I,
+					     struct aa_label *set,
+					     struct aa_label *sub);
+bool aa_label_remove(struct aa_label *label);
+struct aa_label *aa_label_insert(struct aa_labelset *ls, struct aa_label *l);
+bool aa_label_replace(struct aa_label *old, struct aa_label *new);
+bool aa_label_make_newest(struct aa_labelset *ls, struct aa_label *old,
+			  struct aa_label *new);
 
-काष्ठा aa_label *aa_label_find(काष्ठा aa_label *l);
+struct aa_label *aa_label_find(struct aa_label *l);
 
-काष्ठा aa_profile *aa_label_next_in_merge(काष्ठा label_it *I,
-					  काष्ठा aa_label *a,
-					  काष्ठा aa_label *b);
-काष्ठा aa_label *aa_label_find_merge(काष्ठा aa_label *a, काष्ठा aa_label *b);
-काष्ठा aa_label *aa_label_merge(काष्ठा aa_label *a, काष्ठा aa_label *b,
+struct aa_profile *aa_label_next_in_merge(struct label_it *I,
+					  struct aa_label *a,
+					  struct aa_label *b);
+struct aa_label *aa_label_find_merge(struct aa_label *a, struct aa_label *b);
+struct aa_label *aa_label_merge(struct aa_label *a, struct aa_label *b,
 				gfp_t gfp);
 
 
-bool aa_update_label_name(काष्ठा aa_ns *ns, काष्ठा aa_label *label, gfp_t gfp);
+bool aa_update_label_name(struct aa_ns *ns, struct aa_label *label, gfp_t gfp);
 
-#घोषणा FLAGS_NONE 0
-#घोषणा FLAG_SHOW_MODE 1
-#घोषणा FLAG_VIEW_SUBNS 2
-#घोषणा FLAG_HIDDEN_UNCONFINED 4
-#घोषणा FLAG_ABS_ROOT 8
-पूर्णांक aa_label_snxprपूर्णांक(अक्षर *str, माप_प्रकार size, काष्ठा aa_ns *view,
-		      काष्ठा aa_label *label, पूर्णांक flags);
-पूर्णांक aa_label_asxprपूर्णांक(अक्षर **strp, काष्ठा aa_ns *ns, काष्ठा aa_label *label,
-		      पूर्णांक flags, gfp_t gfp);
-पूर्णांक aa_label_acntsxprपूर्णांक(अक्षर __counted **strp, काष्ठा aa_ns *ns,
-			 काष्ठा aa_label *label, पूर्णांक flags, gfp_t gfp);
-व्योम aa_label_xaudit(काष्ठा audit_buffer *ab, काष्ठा aa_ns *ns,
-		     काष्ठा aa_label *label, पूर्णांक flags, gfp_t gfp);
-व्योम aa_label_seq_xprपूर्णांक(काष्ठा seq_file *f, काष्ठा aa_ns *ns,
-			 काष्ठा aa_label *label, पूर्णांक flags, gfp_t gfp);
-व्योम aa_label_xprपूर्णांकk(काष्ठा aa_ns *ns, काष्ठा aa_label *label, पूर्णांक flags,
+#define FLAGS_NONE 0
+#define FLAG_SHOW_MODE 1
+#define FLAG_VIEW_SUBNS 2
+#define FLAG_HIDDEN_UNCONFINED 4
+#define FLAG_ABS_ROOT 8
+int aa_label_snxprint(char *str, size_t size, struct aa_ns *view,
+		      struct aa_label *label, int flags);
+int aa_label_asxprint(char **strp, struct aa_ns *ns, struct aa_label *label,
+		      int flags, gfp_t gfp);
+int aa_label_acntsxprint(char __counted **strp, struct aa_ns *ns,
+			 struct aa_label *label, int flags, gfp_t gfp);
+void aa_label_xaudit(struct audit_buffer *ab, struct aa_ns *ns,
+		     struct aa_label *label, int flags, gfp_t gfp);
+void aa_label_seq_xprint(struct seq_file *f, struct aa_ns *ns,
+			 struct aa_label *label, int flags, gfp_t gfp);
+void aa_label_xprintk(struct aa_ns *ns, struct aa_label *label, int flags,
 		      gfp_t gfp);
-व्योम aa_label_audit(काष्ठा audit_buffer *ab, काष्ठा aa_label *label, gfp_t gfp);
-व्योम aa_label_seq_prपूर्णांक(काष्ठा seq_file *f, काष्ठा aa_label *label, gfp_t gfp);
-व्योम aa_label_prपूर्णांकk(काष्ठा aa_label *label, gfp_t gfp);
+void aa_label_audit(struct audit_buffer *ab, struct aa_label *label, gfp_t gfp);
+void aa_label_seq_print(struct seq_file *f, struct aa_label *label, gfp_t gfp);
+void aa_label_printk(struct aa_label *label, gfp_t gfp);
 
-काष्ठा aa_label *aa_label_strn_parse(काष्ठा aa_label *base, स्थिर अक्षर *str,
-				     माप_प्रकार n, gfp_t gfp, bool create,
-				     bool क्रमce_stack);
-काष्ठा aa_label *aa_label_parse(काष्ठा aa_label *base, स्थिर अक्षर *str,
-				gfp_t gfp, bool create, bool क्रमce_stack);
+struct aa_label *aa_label_strn_parse(struct aa_label *base, const char *str,
+				     size_t n, gfp_t gfp, bool create,
+				     bool force_stack);
+struct aa_label *aa_label_parse(struct aa_label *base, const char *str,
+				gfp_t gfp, bool create, bool force_stack);
 
-अटल अंतरभूत स्थिर अक्षर *aa_label_strn_split(स्थिर अक्षर *str, पूर्णांक n)
-अणु
-	स्थिर अक्षर *pos;
-	अचिन्हित पूर्णांक state;
+static inline const char *aa_label_strn_split(const char *str, int n)
+{
+	const char *pos;
+	unsigned int state;
 
 	state = aa_dfa_matchn_until(stacksplitdfa, DFA_START, str, n, &pos);
-	अगर (!ACCEPT_TABLE(stacksplitdfa)[state])
-		वापस शून्य;
+	if (!ACCEPT_TABLE(stacksplitdfa)[state])
+		return NULL;
 
-	वापस pos - 3;
-पूर्ण
+	return pos - 3;
+}
 
-अटल अंतरभूत स्थिर अक्षर *aa_label_str_split(स्थिर अक्षर *str)
-अणु
-	स्थिर अक्षर *pos;
-	अचिन्हित पूर्णांक state;
+static inline const char *aa_label_str_split(const char *str)
+{
+	const char *pos;
+	unsigned int state;
 
 	state = aa_dfa_match_until(stacksplitdfa, DFA_START, str, &pos);
-	अगर (!ACCEPT_TABLE(stacksplitdfa)[state])
-		वापस शून्य;
+	if (!ACCEPT_TABLE(stacksplitdfa)[state])
+		return NULL;
 
-	वापस pos - 3;
-पूर्ण
+	return pos - 3;
+}
 
 
 
-काष्ठा aa_perms;
-पूर्णांक aa_label_match(काष्ठा aa_profile *profile, काष्ठा aa_label *label,
-		   अचिन्हित पूर्णांक state, bool subns, u32 request,
-		   काष्ठा aa_perms *perms);
+struct aa_perms;
+int aa_label_match(struct aa_profile *profile, struct aa_label *label,
+		   unsigned int state, bool subns, u32 request,
+		   struct aa_perms *perms);
 
 
 /**
  * __aa_get_label - get a reference count to uncounted label reference
  * @l: reference to get a count on
  *
- * Returns: poपूर्णांकer to reference OR शून्य अगर race is lost and reference is
+ * Returns: pointer to reference OR NULL if race is lost and reference is
  *          being repeated.
- * Requires: lock held, and the वापस code MUST be checked
+ * Requires: lock held, and the return code MUST be checked
  */
-अटल अंतरभूत काष्ठा aa_label *__aa_get_label(काष्ठा aa_label *l)
-अणु
-	अगर (l && kref_get_unless_zero(&l->count))
-		वापस l;
+static inline struct aa_label *__aa_get_label(struct aa_label *l)
+{
+	if (l && kref_get_unless_zero(&l->count))
+		return l;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अंतरभूत काष्ठा aa_label *aa_get_label(काष्ठा aa_label *l)
-अणु
-	अगर (l)
+static inline struct aa_label *aa_get_label(struct aa_label *l)
+{
+	if (l)
 		kref_get(&(l->count));
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
 
 /**
  * aa_get_label_rcu - increment refcount on a label that can be replaced
- * @l: poपूर्णांकer to label that can be replaced (NOT शून्य)
+ * @l: pointer to label that can be replaced (NOT NULL)
  *
- * Returns: poपूर्णांकer to a refcounted label.
- *     अन्यथा शून्य अगर no label
+ * Returns: pointer to a refcounted label.
+ *     else NULL if no label
  */
-अटल अंतरभूत काष्ठा aa_label *aa_get_label_rcu(काष्ठा aa_label __rcu **l)
-अणु
-	काष्ठा aa_label *c;
+static inline struct aa_label *aa_get_label_rcu(struct aa_label __rcu **l)
+{
+	struct aa_label *c;
 
-	rcu_पढ़ो_lock();
-	करो अणु
+	rcu_read_lock();
+	do {
 		c = rcu_dereference(*l);
-	पूर्ण जबतक (c && !kref_get_unless_zero(&c->count));
-	rcu_पढ़ो_unlock();
+	} while (c && !kref_get_unless_zero(&c->count));
+	rcu_read_unlock();
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
 /**
  * aa_get_newest_label - find the newest version of @l
- * @l: the label to check क्रम newer versions of
+ * @l: the label to check for newer versions of
  *
- * Returns: refcounted newest version of @l taking पूर्णांकo account
- *          replacement, नामs and removals
- *          वापस @l.
+ * Returns: refcounted newest version of @l taking into account
+ *          replacement, renames and removals
+ *          return @l.
  */
-अटल अंतरभूत काष्ठा aa_label *aa_get_newest_label(काष्ठा aa_label *l)
-अणु
-	अगर (!l)
-		वापस शून्य;
+static inline struct aa_label *aa_get_newest_label(struct aa_label *l)
+{
+	if (!l)
+		return NULL;
 
-	अगर (label_is_stale(l)) अणु
-		काष्ठा aa_label *पंचांगp;
+	if (label_is_stale(l)) {
+		struct aa_label *tmp;
 
 		AA_BUG(!l->proxy);
 		AA_BUG(!l->proxy->label);
 		/* BUG: only way this can happen is @l ref count and its
 		 * replacement count have gone to 0 and are on their way
-		 * to deकाष्ठाion. ie. we have a refcounting error
+		 * to destruction. ie. we have a refcounting error
 		 */
-		पंचांगp = aa_get_label_rcu(&l->proxy->label);
-		AA_BUG(!पंचांगp);
+		tmp = aa_get_label_rcu(&l->proxy->label);
+		AA_BUG(!tmp);
 
-		वापस पंचांगp;
-	पूर्ण
+		return tmp;
+	}
 
-	वापस aa_get_label(l);
-पूर्ण
+	return aa_get_label(l);
+}
 
-अटल अंतरभूत व्योम aa_put_label(काष्ठा aa_label *l)
-अणु
-	अगर (l)
+static inline void aa_put_label(struct aa_label *l)
+{
+	if (l)
 		kref_put(&l->count, aa_label_kref);
-पूर्ण
+}
 
 
-काष्ठा aa_proxy *aa_alloc_proxy(काष्ठा aa_label *l, gfp_t gfp);
-व्योम aa_proxy_kref(काष्ठा kref *kref);
+struct aa_proxy *aa_alloc_proxy(struct aa_label *l, gfp_t gfp);
+void aa_proxy_kref(struct kref *kref);
 
-अटल अंतरभूत काष्ठा aa_proxy *aa_get_proxy(काष्ठा aa_proxy *proxy)
-अणु
-	अगर (proxy)
+static inline struct aa_proxy *aa_get_proxy(struct aa_proxy *proxy)
+{
+	if (proxy)
 		kref_get(&(proxy->count));
 
-	वापस proxy;
-पूर्ण
+	return proxy;
+}
 
-अटल अंतरभूत व्योम aa_put_proxy(काष्ठा aa_proxy *proxy)
-अणु
-	अगर (proxy)
+static inline void aa_put_proxy(struct aa_proxy *proxy)
+{
+	if (proxy)
 		kref_put(&proxy->count, aa_proxy_kref);
-पूर्ण
+}
 
-व्योम __aa_proxy_redirect(काष्ठा aa_label *orig, काष्ठा aa_label *new);
+void __aa_proxy_redirect(struct aa_label *orig, struct aa_label *new);
 
-#पूर्ण_अगर /* __AA_LABEL_H */
+#endif /* __AA_LABEL_H */

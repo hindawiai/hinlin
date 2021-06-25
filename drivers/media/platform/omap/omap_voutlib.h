@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * omap_voutlib.h
  *
@@ -10,31 +9,31 @@
  *
  */
 
-#अगर_अघोषित OMAP_VOUTLIB_H
-#घोषणा OMAP_VOUTLIB_H
+#ifndef OMAP_VOUTLIB_H
+#define OMAP_VOUTLIB_H
 
-व्योम omap_vout_शेष_crop(काष्ठा v4l2_pix_क्रमmat *pix,
-		काष्ठा v4l2_framebuffer *fbuf, काष्ठा v4l2_rect *crop);
+void omap_vout_default_crop(struct v4l2_pix_format *pix,
+		struct v4l2_framebuffer *fbuf, struct v4l2_rect *crop);
 
-पूर्णांक omap_vout_new_crop(काष्ठा v4l2_pix_क्रमmat *pix,
-		काष्ठा v4l2_rect *crop, काष्ठा v4l2_winकरोw *win,
-		काष्ठा v4l2_framebuffer *fbuf,
-		स्थिर काष्ठा v4l2_rect *new_crop);
+int omap_vout_new_crop(struct v4l2_pix_format *pix,
+		struct v4l2_rect *crop, struct v4l2_window *win,
+		struct v4l2_framebuffer *fbuf,
+		const struct v4l2_rect *new_crop);
 
-पूर्णांक omap_vout_try_winकरोw(काष्ठा v4l2_framebuffer *fbuf,
-		काष्ठा v4l2_winकरोw *new_win);
+int omap_vout_try_window(struct v4l2_framebuffer *fbuf,
+		struct v4l2_window *new_win);
 
-पूर्णांक omap_vout_new_winकरोw(काष्ठा v4l2_rect *crop,
-		काष्ठा v4l2_winकरोw *win, काष्ठा v4l2_framebuffer *fbuf,
-		काष्ठा v4l2_winकरोw *new_win);
+int omap_vout_new_window(struct v4l2_rect *crop,
+		struct v4l2_window *win, struct v4l2_framebuffer *fbuf,
+		struct v4l2_window *new_win);
 
-व्योम omap_vout_new_क्रमmat(काष्ठा v4l2_pix_क्रमmat *pix,
-		काष्ठा v4l2_framebuffer *fbuf, काष्ठा v4l2_rect *crop,
-		काष्ठा v4l2_winकरोw *win);
-अचिन्हित दीर्घ omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr);
-व्योम omap_vout_मुक्त_buffer(अचिन्हित दीर्घ virtaddr, u32 buf_size);
+void omap_vout_new_format(struct v4l2_pix_format *pix,
+		struct v4l2_framebuffer *fbuf, struct v4l2_rect *crop,
+		struct v4l2_window *win);
+unsigned long omap_vout_alloc_buffer(u32 buf_size, u32 *phys_addr);
+void omap_vout_free_buffer(unsigned long virtaddr, u32 buf_size);
 
-bool omap_vout_dss_omap24xx(व्योम);
-bool omap_vout_dss_omap34xx(व्योम);
-#पूर्ण_अगर	/* #अगर_अघोषित OMAP_VOUTLIB_H */
+bool omap_vout_dss_omap24xx(void);
+bool omap_vout_dss_omap34xx(void);
+#endif	/* #ifndef OMAP_VOUTLIB_H */
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1994-1998	   Linus Torvalds & authors (see below)
  *  Copyright (C) 1998-2002	   Linux ATA Development
@@ -16,30 +15,30 @@
  * This is the IDE/ATA disk driver, as evolved from hd.c and ide.c.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/genhd.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/ide.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/genhd.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/leds.h>
+#include <linux/ide.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/भाग64.h>
+#include <asm/byteorder.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/div64.h>
 
-#समावेश "ide-disk.h"
+#include "ide-disk.h"
 
-अटल स्थिर u8 ide_rw_cmds[] = अणु
+static const u8 ide_rw_cmds[] = {
 	ATA_CMD_READ_MULTI,
 	ATA_CMD_WRITE_MULTI,
 	ATA_CMD_READ_MULTI_EXT,
@@ -52,60 +51,60 @@
 	ATA_CMD_WRITE,
 	ATA_CMD_READ_EXT,
 	ATA_CMD_WRITE_EXT,
-पूर्ण;
+};
 
-अटल व्योम ide_tf_set_cmd(ide_drive_t *drive, काष्ठा ide_cmd *cmd, u8 dma)
-अणु
-	u8 index, lba48, ग_लिखो;
+static void ide_tf_set_cmd(ide_drive_t *drive, struct ide_cmd *cmd, u8 dma)
+{
+	u8 index, lba48, write;
 
 	lba48 = (cmd->tf_flags & IDE_TFLAG_LBA48) ? 2 : 0;
-	ग_लिखो = (cmd->tf_flags & IDE_TFLAG_WRITE) ? 1 : 0;
+	write = (cmd->tf_flags & IDE_TFLAG_WRITE) ? 1 : 0;
 
-	अगर (dma) अणु
+	if (dma) {
 		cmd->protocol = ATA_PROT_DMA;
 		index = 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->protocol = ATA_PROT_PIO;
-		अगर (drive->mult_count) अणु
+		if (drive->mult_count) {
 			cmd->tf_flags |= IDE_TFLAG_MULTI_PIO;
 			index = 0;
-		पूर्ण अन्यथा
+		} else
 			index = 4;
-	पूर्ण
+	}
 
-	cmd->tf.command = ide_rw_cmds[index + lba48 + ग_लिखो];
-पूर्ण
+	cmd->tf.command = ide_rw_cmds[index + lba48 + write];
+}
 
 /*
- * __ide_करो_rw_disk() issues READ and WRITE commands to a disk,
- * using LBA अगर supported, or CHS otherwise, to address sectors.
+ * __ide_do_rw_disk() issues READ and WRITE commands to a disk,
+ * using LBA if supported, or CHS otherwise, to address sectors.
  */
-अटल ide_startstop_t __ide_करो_rw_disk(ide_drive_t *drive, काष्ठा request *rq,
+static ide_startstop_t __ide_do_rw_disk(ide_drive_t *drive, struct request *rq,
 					sector_t block)
-अणु
-	ide_hwअगर_t *hwअगर	= drive->hwअगर;
+{
+	ide_hwif_t *hwif	= drive->hwif;
 	u16 nsectors		= (u16)blk_rq_sectors(rq);
 	u8 lba48		= !!(drive->dev_flags & IDE_DFLAG_LBA48);
 	u8 dma			= !!(drive->dev_flags & IDE_DFLAG_USING_DMA);
-	काष्ठा ide_cmd		cmd;
-	काष्ठा ide_taskfile	*tf = &cmd.tf;
+	struct ide_cmd		cmd;
+	struct ide_taskfile	*tf = &cmd.tf;
 	ide_startstop_t		rc;
 
-	अगर ((hwअगर->host_flags & IDE_HFLAG_NO_LBA48_DMA) && lba48 && dma) अणु
-		अगर (block + blk_rq_sectors(rq) > 1ULL << 28)
+	if ((hwif->host_flags & IDE_HFLAG_NO_LBA48_DMA) && lba48 && dma) {
+		if (block + blk_rq_sectors(rq) > 1ULL << 28)
 			dma = 0;
-		अन्यथा
+		else
 			lba48 = 0;
-	पूर्ण
+	}
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 
-	अगर (drive->dev_flags & IDE_DFLAG_LBA) अणु
-		अगर (lba48) अणु
+	if (drive->dev_flags & IDE_DFLAG_LBA) {
+		if (lba48) {
 			pr_debug("%s: LBA=0x%012llx\n", drive->name,
-					(अचिन्हित दीर्घ दीर्घ)block);
+					(unsigned long long)block);
 
 			tf->nsect  = nsectors & 0xff;
 			tf->lbal   = (u8) block;
@@ -116,26 +115,26 @@
 			tf = &cmd.hob;
 			tf->nsect = (nsectors >> 8) & 0xff;
 			tf->lbal  = (u8)(block >> 24);
-			अगर (माप(block) != 4) अणु
+			if (sizeof(block) != 4) {
 				tf->lbam = (u8)((u64)block >> 32);
 				tf->lbah = (u8)((u64)block >> 40);
-			पूर्ण
+			}
 
 			cmd.valid.out.hob = IDE_VALID_OUT_HOB;
 			cmd.valid.in.hob  = IDE_VALID_IN_HOB;
 			cmd.tf_flags |= IDE_TFLAG_LBA48;
-		पूर्ण अन्यथा अणु
+		} else {
 			tf->nsect  = nsectors & 0xff;
 			tf->lbal   = block;
 			tf->lbam   = block >>= 8;
 			tf->lbah   = block >>= 8;
 			tf->device = ((block >> 8) & 0xf) | ATA_LBA;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक sect, head, cyl, track;
+		}
+	} else {
+		unsigned int sect, head, cyl, track;
 
-		track = (पूर्णांक)block / drive->sect;
-		sect  = (पूर्णांक)block % drive->sect + 1;
+		track = (int)block / drive->sect;
+		sect  = (int)block % drive->sect + 1;
 		head  = track % drive->head;
 		cyl   = track / drive->head;
 
@@ -146,33 +145,33 @@
 		tf->lbam   = cyl;
 		tf->lbah   = cyl >> 8;
 		tf->device = head;
-	पूर्ण
+	}
 
 	cmd.tf_flags |= IDE_TFLAG_FS;
 
-	अगर (rq_data_dir(rq))
+	if (rq_data_dir(rq))
 		cmd.tf_flags |= IDE_TFLAG_WRITE;
 
 	ide_tf_set_cmd(drive, &cmd, dma);
 	cmd.rq = rq;
 
-	अगर (dma == 0) अणु
+	if (dma == 0) {
 		ide_init_sg_cmd(&cmd, nsectors << 9);
 		ide_map_sg(drive, &cmd);
-	पूर्ण
+	}
 
-	rc = करो_rw_taskfile(drive, &cmd);
+	rc = do_rw_taskfile(drive, &cmd);
 
-	अगर (rc == ide_stopped && dma) अणु
+	if (rc == ide_stopped && dma) {
 		/* fallback to PIO */
 		cmd.tf_flags |= IDE_TFLAG_DMA_PIO_FALLBACK;
 		ide_tf_set_cmd(drive, &cmd, 0);
 		ide_init_sg_cmd(&cmd, nsectors << 9);
-		rc = करो_rw_taskfile(drive, &cmd);
-	पूर्ण
+		rc = do_rw_taskfile(drive, &cmd);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * 268435455  == 137439 MB or 28bit limit
@@ -180,10 +179,10 @@
  * 1073741822 == 549756 MB or 48bit addressing fake drive
  */
 
-अटल ide_startstop_t ide_करो_rw_disk(ide_drive_t *drive, काष्ठा request *rq,
+static ide_startstop_t ide_do_rw_disk(ide_drive_t *drive, struct request *rq,
 				      sector_t block)
-अणु
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
+{
+	ide_hwif_t *hwif = drive->hwif;
 
 	BUG_ON(drive->dev_flags & IDE_DFLAG_BLOCKED);
 	BUG_ON(blk_rq_is_passthrough(rq));
@@ -192,349 +191,349 @@
 
 	pr_debug("%s: %sing: block=%llu, sectors=%u\n",
 		 drive->name, rq_data_dir(rq) == READ ? "read" : "writ",
-		 (अचिन्हित दीर्घ दीर्घ)block, blk_rq_sectors(rq));
+		 (unsigned long long)block, blk_rq_sectors(rq));
 
-	अगर (hwअगर->rw_disk)
-		hwअगर->rw_disk(drive, rq);
+	if (hwif->rw_disk)
+		hwif->rw_disk(drive, rq);
 
-	वापस __ide_करो_rw_disk(drive, rq, block);
-पूर्ण
+	return __ide_do_rw_disk(drive, rq, block);
+}
 
 /*
- * Queries क्रम true maximum capacity of the drive.
- * Returns maximum LBA address (> 0) of the drive, 0 अगर failed.
+ * Queries for true maximum capacity of the drive.
+ * Returns maximum LBA address (> 0) of the drive, 0 if failed.
  */
-अटल u64 idedisk_पढ़ो_native_max_address(ide_drive_t *drive, पूर्णांक lba48)
-अणु
-	काष्ठा ide_cmd cmd;
-	काष्ठा ide_taskfile *tf = &cmd.tf;
+static u64 idedisk_read_native_max_address(ide_drive_t *drive, int lba48)
+{
+	struct ide_cmd cmd;
+	struct ide_taskfile *tf = &cmd.tf;
 	u64 addr = 0;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	अगर (lba48)
+	memset(&cmd, 0, sizeof(cmd));
+	if (lba48)
 		tf->command = ATA_CMD_READ_NATIVE_MAX_EXT;
-	अन्यथा
+	else
 		tf->command = ATA_CMD_READ_NATIVE_MAX;
 	tf->device  = ATA_LBA;
 
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
-	अगर (lba48) अणु
+	if (lba48) {
 		cmd.valid.out.hob = IDE_VALID_OUT_HOB;
 		cmd.valid.in.hob  = IDE_VALID_IN_HOB;
 		cmd.tf_flags = IDE_TFLAG_LBA48;
-	पूर्ण
+	}
 
 	ide_no_data_taskfile(drive, &cmd);
 
-	/* अगर OK, compute maximum address value */
-	अगर (!(tf->status & ATA_ERR))
+	/* if OK, compute maximum address value */
+	if (!(tf->status & ATA_ERR))
 		addr = ide_get_lba_addr(&cmd, lba48) + 1;
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
 /*
- * Sets maximum भव LBA address of the drive.
- * Returns new maximum भव LBA address (> 0) or 0 on failure.
+ * Sets maximum virtual LBA address of the drive.
+ * Returns new maximum virtual LBA address (> 0) or 0 on failure.
  */
-अटल u64 idedisk_set_max_address(ide_drive_t *drive, u64 addr_req, पूर्णांक lba48)
-अणु
-	काष्ठा ide_cmd cmd;
-	काष्ठा ide_taskfile *tf = &cmd.tf;
+static u64 idedisk_set_max_address(ide_drive_t *drive, u64 addr_req, int lba48)
+{
+	struct ide_cmd cmd;
+	struct ide_taskfile *tf = &cmd.tf;
 	u64 addr_set = 0;
 
 	addr_req--;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	tf->lbal     = (addr_req >>  0) & 0xff;
 	tf->lbam     = (addr_req >>= 8) & 0xff;
 	tf->lbah     = (addr_req >>= 8) & 0xff;
-	अगर (lba48) अणु
+	if (lba48) {
 		cmd.hob.lbal = (addr_req >>= 8) & 0xff;
 		cmd.hob.lbam = (addr_req >>= 8) & 0xff;
 		cmd.hob.lbah = (addr_req >>= 8) & 0xff;
 		tf->command  = ATA_CMD_SET_MAX_EXT;
-	पूर्ण अन्यथा अणु
+	} else {
 		tf->device   = (addr_req >>= 8) & 0x0f;
 		tf->command  = ATA_CMD_SET_MAX;
-	पूर्ण
+	}
 	tf->device |= ATA_LBA;
 
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
-	अगर (lba48) अणु
+	if (lba48) {
 		cmd.valid.out.hob = IDE_VALID_OUT_HOB;
 		cmd.valid.in.hob  = IDE_VALID_IN_HOB;
 		cmd.tf_flags = IDE_TFLAG_LBA48;
-	पूर्ण
+	}
 
 	ide_no_data_taskfile(drive, &cmd);
 
-	/* अगर OK, compute maximum address value */
-	अगर (!(tf->status & ATA_ERR))
+	/* if OK, compute maximum address value */
+	if (!(tf->status & ATA_ERR))
 		addr_set = ide_get_lba_addr(&cmd, lba48) + 1;
 
-	वापस addr_set;
-पूर्ण
+	return addr_set;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ sectors_to_MB(अचिन्हित दीर्घ दीर्घ n)
-अणु
+static unsigned long long sectors_to_MB(unsigned long long n)
+{
 	n <<= 9;		/* make it bytes */
-	करो_भाग(n, 1000000);	/* make it MB */
-	वापस n;
-पूर्ण
+	do_div(n, 1000000);	/* make it MB */
+	return n;
+}
 
 /*
  * Some disks report total number of sectors instead of
  * maximum sector address.  We list them here.
  */
-अटल स्थिर काष्ठा drive_list_entry hpa_list[] = अणु
-	अणु "ST340823A",	शून्य पूर्ण,
-	अणु "ST320413A",	शून्य पूर्ण,
-	अणु "ST310211A",	शून्य पूर्ण,
-	अणु शून्य,		शून्य पूर्ण
-पूर्ण;
+static const struct drive_list_entry hpa_list[] = {
+	{ "ST340823A",	NULL },
+	{ "ST320413A",	NULL },
+	{ "ST310211A",	NULL },
+	{ NULL,		NULL }
+};
 
-अटल u64 ide_disk_hpa_get_native_capacity(ide_drive_t *drive, पूर्णांक lba48)
-अणु
+static u64 ide_disk_hpa_get_native_capacity(ide_drive_t *drive, int lba48)
+{
 	u64 capacity, set_max;
 
 	capacity = drive->capacity64;
-	set_max  = idedisk_पढ़ो_native_max_address(drive, lba48);
+	set_max  = idedisk_read_native_max_address(drive, lba48);
 
-	अगर (ide_in_drive_list(drive->id, hpa_list)) अणु
+	if (ide_in_drive_list(drive->id, hpa_list)) {
 		/*
-		 * Since we are inclusive wrt to firmware revisions करो this
+		 * Since we are inclusive wrt to firmware revisions do this
 		 * extra check and apply the workaround only when needed.
 		 */
-		अगर (set_max == capacity + 1)
+		if (set_max == capacity + 1)
 			set_max--;
-	पूर्ण
+	}
 
-	वापस set_max;
-पूर्ण
+	return set_max;
+}
 
-अटल u64 ide_disk_hpa_set_capacity(ide_drive_t *drive, u64 set_max, पूर्णांक lba48)
-अणु
+static u64 ide_disk_hpa_set_capacity(ide_drive_t *drive, u64 set_max, int lba48)
+{
 	set_max = idedisk_set_max_address(drive, set_max, lba48);
-	अगर (set_max)
+	if (set_max)
 		drive->capacity64 = set_max;
 
-	वापस set_max;
-पूर्ण
+	return set_max;
+}
 
-अटल व्योम idedisk_check_hpa(ide_drive_t *drive)
-अणु
+static void idedisk_check_hpa(ide_drive_t *drive)
+{
 	u64 capacity, set_max;
-	पूर्णांक lba48 = ata_id_lba48_enabled(drive->id);
+	int lba48 = ata_id_lba48_enabled(drive->id);
 
 	capacity = drive->capacity64;
 	set_max  = ide_disk_hpa_get_native_capacity(drive, lba48);
 
-	अगर (set_max <= capacity)
-		वापस;
+	if (set_max <= capacity)
+		return;
 
 	drive->probed_capacity = set_max;
 
-	prपूर्णांकk(KERN_INFO "%s: Host Protected Area detected.\n"
+	printk(KERN_INFO "%s: Host Protected Area detected.\n"
 			 "\tcurrent capacity is %llu sectors (%llu MB)\n"
 			 "\tnative  capacity is %llu sectors (%llu MB)\n",
 			 drive->name,
 			 capacity, sectors_to_MB(capacity),
 			 set_max, sectors_to_MB(set_max));
 
-	अगर ((drive->dev_flags & IDE_DFLAG_NOHPA) == 0)
-		वापस;
+	if ((drive->dev_flags & IDE_DFLAG_NOHPA) == 0)
+		return;
 
 	set_max = ide_disk_hpa_set_capacity(drive, set_max, lba48);
-	अगर (set_max)
-		prपूर्णांकk(KERN_INFO "%s: Host Protected Area disabled.\n",
+	if (set_max)
+		printk(KERN_INFO "%s: Host Protected Area disabled.\n",
 				 drive->name);
-पूर्ण
+}
 
-अटल पूर्णांक ide_disk_get_capacity(ide_drive_t *drive)
-अणु
+static int ide_disk_get_capacity(ide_drive_t *drive)
+{
 	u16 *id = drive->id;
-	पूर्णांक lba;
+	int lba;
 
-	अगर (ata_id_lba48_enabled(id)) अणु
+	if (ata_id_lba48_enabled(id)) {
 		/* drive speaks 48-bit LBA */
 		lba = 1;
 		drive->capacity64 = ata_id_u64(id, ATA_ID_LBA_CAPACITY_2);
-	पूर्ण अन्यथा अगर (ata_id_has_lba(id) && ata_id_is_lba_capacity_ok(id)) अणु
+	} else if (ata_id_has_lba(id) && ata_id_is_lba_capacity_ok(id)) {
 		/* drive speaks 28-bit LBA */
 		lba = 1;
 		drive->capacity64 = ata_id_u32(id, ATA_ID_LBA_CAPACITY);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* drive speaks boring old 28-bit CHS */
 		lba = 0;
 		drive->capacity64 = drive->cyl * drive->head * drive->sect;
-	पूर्ण
+	}
 
 	drive->probed_capacity = drive->capacity64;
 
-	अगर (lba) अणु
+	if (lba) {
 		drive->dev_flags |= IDE_DFLAG_LBA;
 
 		/*
 		* If this device supports the Host Protected Area feature set,
 		* then we may need to change our opinion about its capacity.
 		*/
-		अगर (ata_id_hpa_enabled(id))
+		if (ata_id_hpa_enabled(id))
 			idedisk_check_hpa(drive);
-	पूर्ण
+	}
 
-	/* limit drive capacity to 137GB अगर LBA48 cannot be used */
-	अगर ((drive->dev_flags & IDE_DFLAG_LBA48) == 0 &&
-	    drive->capacity64 > 1ULL << 28) अणु
-		prपूर्णांकk(KERN_WARNING "%s: cannot use LBA48 - full capacity "
+	/* limit drive capacity to 137GB if LBA48 cannot be used */
+	if ((drive->dev_flags & IDE_DFLAG_LBA48) == 0 &&
+	    drive->capacity64 > 1ULL << 28) {
+		printk(KERN_WARNING "%s: cannot use LBA48 - full capacity "
 		       "%llu sectors (%llu MB)\n",
-		       drive->name, (अचिन्हित दीर्घ दीर्घ)drive->capacity64,
+		       drive->name, (unsigned long long)drive->capacity64,
 		       sectors_to_MB(drive->capacity64));
 		drive->probed_capacity = drive->capacity64 = 1ULL << 28;
-	पूर्ण
+	}
 
-	अगर ((drive->hwअगर->host_flags & IDE_HFLAG_NO_LBA48_DMA) &&
-	    (drive->dev_flags & IDE_DFLAG_LBA48)) अणु
-		अगर (drive->capacity64 > 1ULL << 28) अणु
-			prपूर्णांकk(KERN_INFO "%s: cannot use LBA48 DMA - PIO mode"
+	if ((drive->hwif->host_flags & IDE_HFLAG_NO_LBA48_DMA) &&
+	    (drive->dev_flags & IDE_DFLAG_LBA48)) {
+		if (drive->capacity64 > 1ULL << 28) {
+			printk(KERN_INFO "%s: cannot use LBA48 DMA - PIO mode"
 					 " will be used for accessing sectors "
 					 "> %u\n", drive->name, 1 << 28);
-		पूर्ण अन्यथा
+		} else
 			drive->dev_flags &= ~IDE_DFLAG_LBA48;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ide_disk_unlock_native_capacity(ide_drive_t *drive)
-अणु
+static void ide_disk_unlock_native_capacity(ide_drive_t *drive)
+{
 	u16 *id = drive->id;
-	पूर्णांक lba48 = ata_id_lba48_enabled(id);
+	int lba48 = ata_id_lba48_enabled(id);
 
-	अगर ((drive->dev_flags & IDE_DFLAG_LBA) == 0 ||
+	if ((drive->dev_flags & IDE_DFLAG_LBA) == 0 ||
 	    ata_id_hpa_enabled(id) == 0)
-		वापस;
+		return;
 
 	/*
 	 * according to the spec the SET MAX ADDRESS command shall be
 	 * immediately preceded by a READ NATIVE MAX ADDRESS command
 	 */
-	अगर (!ide_disk_hpa_get_native_capacity(drive, lba48))
-		वापस;
+	if (!ide_disk_hpa_get_native_capacity(drive, lba48))
+		return;
 
-	अगर (ide_disk_hpa_set_capacity(drive, drive->probed_capacity, lba48))
+	if (ide_disk_hpa_set_capacity(drive, drive->probed_capacity, lba48))
 		drive->dev_flags |= IDE_DFLAG_NOHPA; /* disable HPA on resume */
-पूर्ण
+}
 
-अटल bool idedisk_prep_rq(ide_drive_t *drive, काष्ठा request *rq)
-अणु
-	काष्ठा ide_cmd *cmd;
+static bool idedisk_prep_rq(ide_drive_t *drive, struct request *rq)
+{
+	struct ide_cmd *cmd;
 
-	अगर (req_op(rq) != REQ_OP_FLUSH)
-		वापस true;
+	if (req_op(rq) != REQ_OP_FLUSH)
+		return true;
 
-	अगर (ide_req(rq)->special) अणु
+	if (ide_req(rq)->special) {
 		cmd = ide_req(rq)->special;
-		स_रखो(cmd, 0, माप(*cmd));
-	पूर्ण अन्यथा अणु
-		cmd = kzalloc(माप(*cmd), GFP_ATOMIC);
-	पूर्ण
+		memset(cmd, 0, sizeof(*cmd));
+	} else {
+		cmd = kzalloc(sizeof(*cmd), GFP_ATOMIC);
+	}
 
-	/* FIXME: map काष्ठा ide_taskfile on rq->cmd[] */
-	BUG_ON(cmd == शून्य);
+	/* FIXME: map struct ide_taskfile on rq->cmd[] */
+	BUG_ON(cmd == NULL);
 
-	अगर (ata_id_flush_ext_enabled(drive->id) &&
+	if (ata_id_flush_ext_enabled(drive->id) &&
 	    (drive->capacity64 >= (1UL << 28)))
 		cmd->tf.command = ATA_CMD_FLUSH_EXT;
-	अन्यथा
+	else
 		cmd->tf.command = ATA_CMD_FLUSH;
 	cmd->valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd->tf_flags = IDE_TFLAG_DYN;
 	cmd->protocol = ATA_PROT_NODATA;
 	rq->cmd_flags &= ~REQ_OP_MASK;
 	rq->cmd_flags |= REQ_OP_DRV_OUT;
-	ide_req(rq)->type = ATA_PRIV_TASKखाता;
+	ide_req(rq)->type = ATA_PRIV_TASKFILE;
 	ide_req(rq)->special = cmd;
 	cmd->rq = rq;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 ide_devset_get(multcount, mult_count);
 
 /*
- * This is tightly woven पूर्णांकo the driver->करो_special can not touch.
- * DON'T करो it again until a total personality reग_लिखो is committed.
+ * This is tightly woven into the driver->do_special can not touch.
+ * DON'T do it again until a total personality rewrite is committed.
  */
-अटल पूर्णांक set_multcount(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	काष्ठा request *rq;
+static int set_multcount(ide_drive_t *drive, int arg)
+{
+	struct request *rq;
 
-	अगर (arg < 0 || arg > (drive->id[ATA_ID_MAX_MULTSECT] & 0xff))
-		वापस -EINVAL;
+	if (arg < 0 || arg > (drive->id[ATA_ID_MAX_MULTSECT] & 0xff))
+		return -EINVAL;
 
-	अगर (drive->special_flags & IDE_SFLAG_SET_MULTMODE)
-		वापस -EBUSY;
+	if (drive->special_flags & IDE_SFLAG_SET_MULTMODE)
+		return -EBUSY;
 
 	rq = blk_get_request(drive->queue, REQ_OP_DRV_IN, 0);
-	ide_req(rq)->type = ATA_PRIV_TASKखाता;
+	ide_req(rq)->type = ATA_PRIV_TASKFILE;
 
 	drive->mult_req = arg;
 	drive->special_flags |= IDE_SFLAG_SET_MULTMODE;
-	blk_execute_rq(शून्य, rq, 0);
+	blk_execute_rq(NULL, rq, 0);
 	blk_put_request(rq);
 
-	वापस (drive->mult_count == arg) ? 0 : -EIO;
-पूर्ण
+	return (drive->mult_count == arg) ? 0 : -EIO;
+}
 
 ide_devset_get_flag(nowerr, IDE_DFLAG_NOWERR);
 
-अटल पूर्णांक set_nowerr(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+static int set_nowerr(ide_drive_t *drive, int arg)
+{
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	अगर (arg)
+	if (arg)
 		drive->dev_flags |= IDE_DFLAG_NOWERR;
-	अन्यथा
+	else
 		drive->dev_flags &= ~IDE_DFLAG_NOWERR;
 
 	drive->bad_wstat = arg ? BAD_R_STAT : BAD_W_STAT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ide_करो_setfeature(ide_drive_t *drive, u8 feature, u8 nsect)
-अणु
-	काष्ठा ide_cmd cmd;
+static int ide_do_setfeature(ide_drive_t *drive, u8 feature, u8 nsect)
+{
+	struct ide_cmd cmd;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.tf.feature = feature;
 	cmd.tf.nsect   = nsect;
 	cmd.tf.command = ATA_CMD_SET_FEATURES;
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 
-	वापस ide_no_data_taskfile(drive, &cmd);
-पूर्ण
+	return ide_no_data_taskfile(drive, &cmd);
+}
 
-अटल व्योम update_flush(ide_drive_t *drive)
-अणु
+static void update_flush(ide_drive_t *drive)
+{
 	u16 *id = drive->id;
 	bool wc = false;
 
-	अगर (drive->dev_flags & IDE_DFLAG_WCACHE) अणु
-		अचिन्हित दीर्घ दीर्घ capacity;
-		पूर्णांक barrier;
+	if (drive->dev_flags & IDE_DFLAG_WCACHE) {
+		unsigned long long capacity;
+		int barrier;
 		/*
-		 * We must aव्योम issuing commands a drive करोes not
+		 * We must avoid issuing commands a drive does not
 		 * understand or we may crash it. We check flush cache
 		 * is supported. We also check we have the LBA48 flush
-		 * cache अगर the drive capacity is too large. By this
-		 * समय we have trimmed the drive capacity अगर LBA48 is
-		 * not available so we करोn't need to recheck that.
+		 * cache if the drive capacity is too large. By this
+		 * time we have trimmed the drive capacity if LBA48 is
+		 * not available so we don't need to recheck that.
 		 */
 		capacity = ide_gd_capacity(drive);
 		barrier = ata_id_flush_enabled(id) &&
@@ -543,72 +542,72 @@ ide_devset_get_flag(nowerr, IDE_DFLAG_NOWERR);
 			 capacity <= (1ULL << 28) ||
 			 ata_id_flush_ext_enabled(id));
 
-		prपूर्णांकk(KERN_INFO "%s: cache flushes %ssupported\n",
+		printk(KERN_INFO "%s: cache flushes %ssupported\n",
 		       drive->name, barrier ? "" : "not ");
 
-		अगर (barrier) अणु
+		if (barrier) {
 			wc = true;
 			drive->prep_rq = idedisk_prep_rq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	blk_queue_ग_लिखो_cache(drive->queue, wc, false);
-पूर्ण
+	blk_queue_write_cache(drive->queue, wc, false);
+}
 
 ide_devset_get_flag(wcache, IDE_DFLAG_WCACHE);
 
-अटल पूर्णांक set_wcache(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	पूर्णांक err = 1;
+static int set_wcache(ide_drive_t *drive, int arg)
+{
+	int err = 1;
 
-	अगर (arg < 0 || arg > 1)
-		वापस -EINVAL;
+	if (arg < 0 || arg > 1)
+		return -EINVAL;
 
-	अगर (ata_id_flush_enabled(drive->id)) अणु
-		err = ide_करो_setfeature(drive,
+	if (ata_id_flush_enabled(drive->id)) {
+		err = ide_do_setfeature(drive,
 			arg ? SETFEATURES_WC_ON : SETFEATURES_WC_OFF, 0);
-		अगर (err == 0) अणु
-			अगर (arg)
+		if (err == 0) {
+			if (arg)
 				drive->dev_flags |= IDE_DFLAG_WCACHE;
-			अन्यथा
+			else
 				drive->dev_flags &= ~IDE_DFLAG_WCACHE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	update_flush(drive);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक करो_idedisk_flushcache(ide_drive_t *drive)
-अणु
-	काष्ठा ide_cmd cmd;
+static int do_idedisk_flushcache(ide_drive_t *drive)
+{
+	struct ide_cmd cmd;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	अगर (ata_id_flush_ext_enabled(drive->id))
+	memset(&cmd, 0, sizeof(cmd));
+	if (ata_id_flush_ext_enabled(drive->id))
 		cmd.tf.command = ATA_CMD_FLUSH_EXT;
-	अन्यथा
+	else
 		cmd.tf.command = ATA_CMD_FLUSH;
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 
-	वापस ide_no_data_taskfile(drive, &cmd);
-पूर्ण
+	return ide_no_data_taskfile(drive, &cmd);
+}
 
 ide_devset_get(acoustic, acoustic);
 
-अटल पूर्णांक set_acoustic(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (arg < 0 || arg > 254)
-		वापस -EINVAL;
+static int set_acoustic(ide_drive_t *drive, int arg)
+{
+	if (arg < 0 || arg > 254)
+		return -EINVAL;
 
-	ide_करो_setfeature(drive,
+	ide_do_setfeature(drive,
 		arg ? SETFEATURES_AAM_ON : SETFEATURES_AAM_OFF, arg);
 
 	drive->acoustic = arg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_devset_get_flag(addressing, IDE_DFLAG_LBA48);
 
@@ -616,27 +615,27 @@ ide_devset_get_flag(addressing, IDE_DFLAG_LBA48);
  * drive->addressing:
  *	0: 28-bit
  *	1: 48-bit
- *	2: 48-bit capable करोing 28-bit
+ *	2: 48-bit capable doing 28-bit
  */
-अटल पूर्णांक set_addressing(ide_drive_t *drive, पूर्णांक arg)
-अणु
-	अगर (arg < 0 || arg > 2)
-		वापस -EINVAL;
+static int set_addressing(ide_drive_t *drive, int arg)
+{
+	if (arg < 0 || arg > 2)
+		return -EINVAL;
 
-	अगर (arg && ((drive->hwअगर->host_flags & IDE_HFLAG_NO_LBA48) ||
+	if (arg && ((drive->hwif->host_flags & IDE_HFLAG_NO_LBA48) ||
 	    ata_id_lba48_enabled(drive->id) == 0))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (arg == 2)
+	if (arg == 2)
 		arg = 0;
 
-	अगर (arg)
+	if (arg)
 		drive->dev_flags |= IDE_DFLAG_LBA48;
-	अन्यथा
+	else
 		drive->dev_flags &= ~IDE_DFLAG_LBA48;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 ide_ext_devset_rw(acoustic, acoustic);
 ide_ext_devset_rw(address, addressing);
@@ -645,152 +644,152 @@ ide_ext_devset_rw(wcache, wcache);
 
 ide_ext_devset_rw_sync(nowerr, nowerr);
 
-अटल पूर्णांक ide_disk_check(ide_drive_t *drive, स्थिर अक्षर *s)
-अणु
-	वापस 1;
-पूर्ण
+static int ide_disk_check(ide_drive_t *drive, const char *s)
+{
+	return 1;
+}
 
-अटल व्योम ide_disk_setup(ide_drive_t *drive)
-अणु
-	काष्ठा ide_disk_obj *idkp = drive->driver_data;
-	काष्ठा request_queue *q = drive->queue;
-	ide_hwअगर_t *hwअगर = drive->hwअगर;
+static void ide_disk_setup(ide_drive_t *drive)
+{
+	struct ide_disk_obj *idkp = drive->driver_data;
+	struct request_queue *q = drive->queue;
+	ide_hwif_t *hwif = drive->hwif;
 	u16 *id = drive->id;
-	अक्षर *m = (अक्षर *)&id[ATA_ID_PROD];
-	अचिन्हित दीर्घ दीर्घ capacity;
+	char *m = (char *)&id[ATA_ID_PROD];
+	unsigned long long capacity;
 
-	ide_proc_रेजिस्टर_driver(drive, idkp->driver);
+	ide_proc_register_driver(drive, idkp->driver);
 
-	अगर ((drive->dev_flags & IDE_DFLAG_ID_READ) == 0)
-		वापस;
+	if ((drive->dev_flags & IDE_DFLAG_ID_READ) == 0)
+		return;
 
-	अगर (drive->dev_flags & IDE_DFLAG_REMOVABLE) अणु
+	if (drive->dev_flags & IDE_DFLAG_REMOVABLE) {
 		/*
 		 * Removable disks (eg. SYQUEST); ignore 'WD' drives
 		 */
-		अगर (m[0] != 'W' || m[1] != 'D')
+		if (m[0] != 'W' || m[1] != 'D')
 			drive->dev_flags |= IDE_DFLAG_DOORLOCKING;
-	पूर्ण
+	}
 
-	(व्योम)set_addressing(drive, 1);
+	(void)set_addressing(drive, 1);
 
-	अगर (drive->dev_flags & IDE_DFLAG_LBA48) अणु
-		पूर्णांक max_s = 2048;
+	if (drive->dev_flags & IDE_DFLAG_LBA48) {
+		int max_s = 2048;
 
-		अगर (max_s > hwअगर->rqsize)
-			max_s = hwअगर->rqsize;
+		if (max_s > hwif->rqsize)
+			max_s = hwif->rqsize;
 
 		blk_queue_max_hw_sectors(q, max_s);
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "%s: max request size: %dKiB\n", drive->name,
+	printk(KERN_INFO "%s: max request size: %dKiB\n", drive->name,
 	       queue_max_sectors(q) / 2);
 
-	अगर (ata_id_is_ssd(id)) अणु
+	if (ata_id_is_ssd(id)) {
 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
 		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
-	पूर्ण
+	}
 
-	/* calculate drive capacity, and select LBA अगर possible */
+	/* calculate drive capacity, and select LBA if possible */
 	ide_disk_get_capacity(drive);
 
 	/*
-	 * अगर possible, give fdisk access to more of the drive,
+	 * if possible, give fdisk access to more of the drive,
 	 * by correcting bios_cyls:
 	 */
 	capacity = ide_gd_capacity(drive);
 
-	अगर ((drive->dev_flags & IDE_DFLAG_FORCED_GEOM) == 0) अणु
-		अगर (ata_id_lba48_enabled(drive->id)) अणु
+	if ((drive->dev_flags & IDE_DFLAG_FORCED_GEOM) == 0) {
+		if (ata_id_lba48_enabled(drive->id)) {
 			/* compatibility */
 			drive->bios_sect = 63;
 			drive->bios_head = 255;
-		पूर्ण
+		}
 
-		अगर (drive->bios_sect && drive->bios_head) अणु
-			अचिन्हित पूर्णांक cap0 = capacity; /* truncate to 32 bits */
-			अचिन्हित पूर्णांक cylsz, cyl;
+		if (drive->bios_sect && drive->bios_head) {
+			unsigned int cap0 = capacity; /* truncate to 32 bits */
+			unsigned int cylsz, cyl;
 
-			अगर (cap0 != capacity)
+			if (cap0 != capacity)
 				drive->bios_cyl = 65535;
-			अन्यथा अणु
+			else {
 				cylsz = drive->bios_sect * drive->bios_head;
 				cyl = cap0 / cylsz;
-				अगर (cyl > 65535)
+				if (cyl > 65535)
 					cyl = 65535;
-				अगर (cyl > drive->bios_cyl)
+				if (cyl > drive->bios_cyl)
 					drive->bios_cyl = cyl;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	prपूर्णांकk(KERN_INFO "%s: %llu sectors (%llu MB)",
+			}
+		}
+	}
+	printk(KERN_INFO "%s: %llu sectors (%llu MB)",
 			 drive->name, capacity, sectors_to_MB(capacity));
 
-	/* Only prपूर्णांक cache size when it was specअगरied */
-	अगर (id[ATA_ID_BUF_SIZE])
-		prपूर्णांकk(KERN_CONT " w/%dKiB Cache", id[ATA_ID_BUF_SIZE] / 2);
+	/* Only print cache size when it was specified */
+	if (id[ATA_ID_BUF_SIZE])
+		printk(KERN_CONT " w/%dKiB Cache", id[ATA_ID_BUF_SIZE] / 2);
 
-	prपूर्णांकk(KERN_CONT ", CHS=%d/%d/%d\n",
+	printk(KERN_CONT ", CHS=%d/%d/%d\n",
 			 drive->bios_cyl, drive->bios_head, drive->bios_sect);
 
-	/* ग_लिखो cache enabled? */
-	अगर ((id[ATA_ID_CSFO] & 1) || ata_id_wcache_enabled(id))
+	/* write cache enabled? */
+	if ((id[ATA_ID_CSFO] & 1) || ata_id_wcache_enabled(id))
 		drive->dev_flags |= IDE_DFLAG_WCACHE;
 
 	set_wcache(drive, 1);
 
-	अगर ((drive->dev_flags & IDE_DFLAG_LBA) == 0 &&
+	if ((drive->dev_flags & IDE_DFLAG_LBA) == 0 &&
 	    (drive->head == 0 || drive->head > 16))
-		prपूर्णांकk(KERN_ERR "%s: invalid geometry: %d physical heads?\n",
+		printk(KERN_ERR "%s: invalid geometry: %d physical heads?\n",
 			drive->name, drive->head);
-पूर्ण
+}
 
-अटल व्योम ide_disk_flush(ide_drive_t *drive)
-अणु
-	अगर (ata_id_flush_enabled(drive->id) == 0 ||
+static void ide_disk_flush(ide_drive_t *drive)
+{
+	if (ata_id_flush_enabled(drive->id) == 0 ||
 	    (drive->dev_flags & IDE_DFLAG_WCACHE) == 0)
-		वापस;
+		return;
 
-	अगर (करो_idedisk_flushcache(drive))
-		prपूर्णांकk(KERN_INFO "%s: wcache flush failed!\n", drive->name);
-पूर्ण
+	if (do_idedisk_flushcache(drive))
+		printk(KERN_INFO "%s: wcache flush failed!\n", drive->name);
+}
 
-अटल पूर्णांक ide_disk_init_media(ide_drive_t *drive, काष्ठा gendisk *disk)
-अणु
-	वापस 0;
-पूर्ण
+static int ide_disk_init_media(ide_drive_t *drive, struct gendisk *disk)
+{
+	return 0;
+}
 
-अटल पूर्णांक ide_disk_set_करोorlock(ide_drive_t *drive, काष्ठा gendisk *disk,
-				 पूर्णांक on)
-अणु
-	काष्ठा ide_cmd cmd;
-	पूर्णांक ret;
+static int ide_disk_set_doorlock(ide_drive_t *drive, struct gendisk *disk,
+				 int on)
+{
+	struct ide_cmd cmd;
+	int ret;
 
-	अगर ((drive->dev_flags & IDE_DFLAG_DOORLOCKING) == 0)
-		वापस 0;
+	if ((drive->dev_flags & IDE_DFLAG_DOORLOCKING) == 0)
+		return 0;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.tf.command = on ? ATA_CMD_MEDIA_LOCK : ATA_CMD_MEDIA_UNLOCK;
 	cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 	cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
 
 	ret = ide_no_data_taskfile(drive, &cmd);
 
-	अगर (ret)
+	if (ret)
 		drive->dev_flags &= ~IDE_DFLAG_DOORLOCKING;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा ide_disk_ops ide_ata_disk_ops = अणु
+const struct ide_disk_ops ide_ata_disk_ops = {
 	.check			= ide_disk_check,
 	.unlock_native_capacity	= ide_disk_unlock_native_capacity,
 	.get_capacity		= ide_disk_get_capacity,
 	.setup			= ide_disk_setup,
 	.flush			= ide_disk_flush,
 	.init_media		= ide_disk_init_media,
-	.set_करोorlock		= ide_disk_set_करोorlock,
-	.करो_request		= ide_करो_rw_disk,
+	.set_doorlock		= ide_disk_set_doorlock,
+	.do_request		= ide_do_rw_disk,
 	.ioctl			= ide_disk_ioctl,
 	.compat_ioctl		= ide_disk_ioctl,
-पूर्ण;
+};

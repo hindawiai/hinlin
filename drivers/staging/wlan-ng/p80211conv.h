@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1) */
+/* SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1) */
 /* p80211conv.h
  *
  * Ether/802.11 conversions and packet buffer routines
@@ -16,17 +15,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License क्रम the specअगरic language governing
+ *   implied. See the License for the specific language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   हाल the provisions of the GPL are applicable instead of the
+ *   case the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you करो not delete
+ *   and other provisions required by the GPL.  If you do not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -46,118 +45,118 @@
  *
  * --------------------------------------------------------------------
  *
- * This file declares the functions, types and macros that perक्रमm
+ * This file declares the functions, types and macros that perform
  * Ethernet to/from 802.11 frame conversions.
  *
  * --------------------------------------------------------------------
  */
 
-#अगर_अघोषित _LINUX_P80211CONV_H
-#घोषणा _LINUX_P80211CONV_H
+#ifndef _LINUX_P80211CONV_H
+#define _LINUX_P80211CONV_H
 
-#घोषणा WLAN_IEEE_OUI_LEN	3
+#define WLAN_IEEE_OUI_LEN	3
 
-#घोषणा WLAN_ETHCONV_ENCAP	1
-#घोषणा WLAN_ETHCONV_8021h	3
+#define WLAN_ETHCONV_ENCAP	1
+#define WLAN_ETHCONV_8021h	3
 
-#घोषणा P80211CAPTURE_VERSION	0x80211001
+#define P80211CAPTURE_VERSION	0x80211001
 
-#घोषणा	P80211_FRMMETA_MAGIC	0x802110
+#define	P80211_FRMMETA_MAGIC	0x802110
 
-काष्ठा p80211_rxmeta अणु
-	काष्ठा wlandevice *wlandev;
+struct p80211_rxmeta {
+	struct wlandevice *wlandev;
 
-	u64 maस_समय;		/* Hi-rez MAC-supplied समय value */
-	u64 hostसमय;		/* Best-rez host supplied समय value */
+	u64 mactime;		/* Hi-rez MAC-supplied time value */
+	u64 hosttime;		/* Best-rez host supplied time value */
 
-	अचिन्हित पूर्णांक rxrate;	/* Receive data rate in 100kbps */
-	अचिन्हित पूर्णांक priority;	/* 0-15, 0=contention, 6=CF */
-	पूर्णांक संकेत;		/* An SSI, see p80211netdev.h */
-	पूर्णांक noise;		/* An SSI, see p80211netdev.h */
-	अचिन्हित पूर्णांक channel;	/* Receive channel (mostly क्रम snअगरs) */
-	अचिन्हित पूर्णांक preamble;	/* P80211ENUM_preambletype_* */
-	अचिन्हित पूर्णांक encoding;	/* P80211ENUM_encoding_* */
+	unsigned int rxrate;	/* Receive data rate in 100kbps */
+	unsigned int priority;	/* 0-15, 0=contention, 6=CF */
+	int signal;		/* An SSI, see p80211netdev.h */
+	int noise;		/* An SSI, see p80211netdev.h */
+	unsigned int channel;	/* Receive channel (mostly for snifs) */
+	unsigned int preamble;	/* P80211ENUM_preambletype_* */
+	unsigned int encoding;	/* P80211ENUM_encoding_* */
 
-पूर्ण;
+};
 
-काष्ठा p80211_frmmeta अणु
-	अचिन्हित पूर्णांक magic;
-	काष्ठा p80211_rxmeta *rx;
-पूर्ण;
+struct p80211_frmmeta {
+	unsigned int magic;
+	struct p80211_rxmeta *rx;
+};
 
-व्योम p80211skb_मुक्त(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb);
-पूर्णांक p80211skb_rxmeta_attach(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb);
-व्योम p80211skb_rxmeta_detach(काष्ठा sk_buff *skb);
+void p80211skb_free(struct wlandevice *wlandev, struct sk_buff *skb);
+int p80211skb_rxmeta_attach(struct wlandevice *wlandev, struct sk_buff *skb);
+void p80211skb_rxmeta_detach(struct sk_buff *skb);
 
-अटल अंतरभूत काष्ठा p80211_frmmeta *p80211skb_frmmeta(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा p80211_frmmeta *frmmeta = (काष्ठा p80211_frmmeta *)skb->cb;
+static inline struct p80211_frmmeta *p80211skb_frmmeta(struct sk_buff *skb)
+{
+	struct p80211_frmmeta *frmmeta = (struct p80211_frmmeta *)skb->cb;
 
-	वापस frmmeta->magic == P80211_FRMMETA_MAGIC ? frmmeta : शून्य;
-पूर्ण
+	return frmmeta->magic == P80211_FRMMETA_MAGIC ? frmmeta : NULL;
+}
 
-अटल अंतरभूत काष्ठा p80211_rxmeta *p80211skb_rxmeta(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा p80211_frmmeta *frmmeta = p80211skb_frmmeta(skb);
+static inline struct p80211_rxmeta *p80211skb_rxmeta(struct sk_buff *skb)
+{
+	struct p80211_frmmeta *frmmeta = p80211skb_frmmeta(skb);
 
-	वापस frmmeta ? frmmeta->rx : शून्य;
-पूर्ण
+	return frmmeta ? frmmeta->rx : NULL;
+}
 
 /*
- * Frame capture header.  (See करोc/capturefrm.txt)
+ * Frame capture header.  (See doc/capturefrm.txt)
  */
-काष्ठा p80211_caphdr अणु
+struct p80211_caphdr {
 	__be32 version;
 	__be32 length;
-	__be64 maस_समय;
-	__be64 hostसमय;
+	__be64 mactime;
+	__be64 hosttime;
 	__be32 phytype;
 	__be32 channel;
 	__be32 datarate;
 	__be32 antenna;
 	__be32 priority;
 	__be32 ssi_type;
-	__be32 ssi_संकेत;
+	__be32 ssi_signal;
 	__be32 ssi_noise;
 	__be32 preamble;
 	__be32 encoding;
-पूर्ण;
+};
 
-काष्ठा p80211_metawep अणु
-	व्योम *data;
+struct p80211_metawep {
+	void *data;
 	u8 iv[4];
 	u8 icv[4];
-पूर्ण;
+};
 
 /* local ether header type */
-काष्ठा wlan_ethhdr अणु
+struct wlan_ethhdr {
 	u8 daddr[ETH_ALEN];
 	u8 saddr[ETH_ALEN];
 	__be16 type;
-पूर्ण __packed;
+} __packed;
 
 /* local llc header type */
-काष्ठा wlan_llc अणु
+struct wlan_llc {
 	u8 dsap;
 	u8 ssap;
 	u8 ctl;
-पूर्ण __packed;
+} __packed;
 
 /* local snap header type */
-काष्ठा wlan_snap अणु
+struct wlan_snap {
 	u8 oui[WLAN_IEEE_OUI_LEN];
 	__be16 type;
-पूर्ण __packed;
+} __packed;
 
 /* Circular include trick */
-काष्ठा wlandevice;
+struct wlandevice;
 
-पूर्णांक skb_p80211_to_ether(काष्ठा wlandevice *wlandev, u32 ethconv,
-			काष्ठा sk_buff *skb);
-पूर्णांक skb_ether_to_p80211(काष्ठा wlandevice *wlandev, u32 ethconv,
-			काष्ठा sk_buff *skb, जोड़ p80211_hdr *p80211_hdr,
-			काष्ठा p80211_metawep *p80211_wep);
+int skb_p80211_to_ether(struct wlandevice *wlandev, u32 ethconv,
+			struct sk_buff *skb);
+int skb_ether_to_p80211(struct wlandevice *wlandev, u32 ethconv,
+			struct sk_buff *skb, union p80211_hdr *p80211_hdr,
+			struct p80211_metawep *p80211_wep);
 
-पूर्णांक p80211_stt_findproto(u16 proto);
+int p80211_stt_findproto(u16 proto);
 
-#पूर्ण_अगर
+#endif

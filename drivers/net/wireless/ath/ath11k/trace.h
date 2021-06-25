@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
+/* SPDX-License-Identifier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  */
 
-#अगर !defined(_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#if !defined(_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश "core.h"
+#include <linux/tracepoint.h>
+#include "core.h"
 
-#घोषणा _TRACE_H_
+#define _TRACE_H_
 
 /* create empty functions when tracing is disabled */
-#अगर !defined(CONFIG_ATH11K_TRACING)
-#अघोषित TRACE_EVENT
-#घोषणा TRACE_EVENT(name, proto, ...) \
-अटल अंतरभूत व्योम trace_ ## name(proto) अणुपूर्ण
-#पूर्ण_अगर /* !CONFIG_ATH11K_TRACING || __CHECKER__ */
+#if !defined(CONFIG_ATH11K_TRACING)
+#undef TRACE_EVENT
+#define TRACE_EVENT(name, proto, ...) \
+static inline void trace_ ## name(proto) {}
+#endif /* !CONFIG_ATH11K_TRACING || __CHECKER__ */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM ath11k
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ath11k
 
 TRACE_EVENT(ath11k_htt_pktlog,
-	    TP_PROTO(काष्ठा ath11k *ar, स्थिर व्योम *buf, u16 buf_len,
+	    TP_PROTO(struct ath11k *ar, const void *buf, u16 buf_len,
 		     u32 pktlog_checksum),
 
 	TP_ARGS(ar, buf, buf_len, pktlog_checksum),
@@ -40,10 +39,10 @@ TRACE_EVENT(ath11k_htt_pktlog,
 		__assign_str(driver, dev_driver_string(ar->ab->dev));
 		__entry->buf_len = buf_len;
 		__entry->pktlog_checksum = pktlog_checksum;
-		स_नकल(__get_dynamic_array(pktlog), buf, buf_len);
+		memcpy(__get_dynamic_array(pktlog), buf, buf_len);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		"%s %s size %u pktlog_checksum %d",
 		__get_str(driver),
 		__get_str(device),
@@ -53,7 +52,7 @@ TRACE_EVENT(ath11k_htt_pktlog,
 );
 
 TRACE_EVENT(ath11k_htt_ppdu_stats,
-	    TP_PROTO(काष्ठा ath11k *ar, स्थिर व्योम *data, माप_प्रकार len),
+	    TP_PROTO(struct ath11k *ar, const void *data, size_t len),
 
 	TP_ARGS(ar, data, len),
 
@@ -68,10 +67,10 @@ TRACE_EVENT(ath11k_htt_ppdu_stats,
 		__assign_str(device, dev_name(ar->ab->dev));
 		__assign_str(driver, dev_driver_string(ar->ab->dev));
 		__entry->len = len;
-		स_नकल(__get_dynamic_array(ppdu), data, len);
+		memcpy(__get_dynamic_array(ppdu), data, len);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		"%s %s ppdu len %d",
 		__get_str(driver),
 		__get_str(device),
@@ -80,7 +79,7 @@ TRACE_EVENT(ath11k_htt_ppdu_stats,
 );
 
 TRACE_EVENT(ath11k_htt_rxdesc,
-	    TP_PROTO(काष्ठा ath11k *ar, स्थिर व्योम *data, माप_प्रकार len),
+	    TP_PROTO(struct ath11k *ar, const void *data, size_t len),
 
 	TP_ARGS(ar, data, len),
 
@@ -95,10 +94,10 @@ TRACE_EVENT(ath11k_htt_rxdesc,
 		__assign_str(device, dev_name(ar->ab->dev));
 		__assign_str(driver, dev_driver_string(ar->ab->dev));
 		__entry->len = len;
-		स_नकल(__get_dynamic_array(rxdesc), data, len);
+		memcpy(__get_dynamic_array(rxdesc), data, len);
 	),
 
-	TP_prपूर्णांकk(
+	TP_printk(
 		"%s %s rxdesc len %d",
 		__get_str(driver),
 		__get_str(device),
@@ -106,13 +105,13 @@ TRACE_EVENT(ath11k_htt_rxdesc,
 	 )
 );
 
-#पूर्ण_अगर /* _TRACE_H_ || TRACE_HEADER_MULTI_READ*/
+#endif /* _TRACE_H_ || TRACE_HEADER_MULTI_READ*/
 
-/* we करोn't want to use include/trace/events */
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता trace
+/* we don't want to use include/trace/events */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE trace
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

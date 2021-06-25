@@ -1,254 +1,253 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
-#अगर_अघोषित _LINUX_SKMSG_H
-#घोषणा _LINUX_SKMSG_H
+#ifndef _LINUX_SKMSG_H
+#define _LINUX_SKMSG_H
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/skbuff.h>
+#include <linux/bpf.h>
+#include <linux/filter.h>
+#include <linux/scatterlist.h>
+#include <linux/skbuff.h>
 
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
-#समावेश <net/strparser.h>
+#include <net/sock.h>
+#include <net/tcp.h>
+#include <net/strparser.h>
 
-#घोषणा MAX_MSG_FRAGS			MAX_SKB_FRAGS
-#घोषणा NR_MSG_FRAG_IDS			(MAX_MSG_FRAGS + 1)
+#define MAX_MSG_FRAGS			MAX_SKB_FRAGS
+#define NR_MSG_FRAG_IDS			(MAX_MSG_FRAGS + 1)
 
-क्रमागत __sk_action अणु
+enum __sk_action {
 	__SK_DROP = 0,
 	__SK_PASS,
-	__SK_REसूचीECT,
+	__SK_REDIRECT,
 	__SK_NONE,
-पूर्ण;
+};
 
-काष्ठा sk_msg_sg अणु
+struct sk_msg_sg {
 	u32				start;
 	u32				curr;
 	u32				end;
 	u32				size;
-	u32				copyअवरोध;
-	अचिन्हित दीर्घ			copy;
+	u32				copybreak;
+	unsigned long			copy;
 	/* The extra two elements:
-	 * 1) used क्रम chaining the front and sections when the list becomes
+	 * 1) used for chaining the front and sections when the list becomes
 	 *    partitioned (e.g. end < start). The crypto APIs require the
 	 *    chaining;
 	 * 2) to chain tailer SG entries after the message.
 	 */
-	काष्ठा scatterlist		data[MAX_MSG_FRAGS + 2];
-पूर्ण;
-अटल_निश्चित(BITS_PER_LONG >= NR_MSG_FRAG_IDS);
+	struct scatterlist		data[MAX_MSG_FRAGS + 2];
+};
+static_assert(BITS_PER_LONG >= NR_MSG_FRAG_IDS);
 
-/* UAPI in filter.c depends on काष्ठा sk_msg_sg being first element. */
-काष्ठा sk_msg अणु
-	काष्ठा sk_msg_sg		sg;
-	व्योम				*data;
-	व्योम				*data_end;
+/* UAPI in filter.c depends on struct sk_msg_sg being first element. */
+struct sk_msg {
+	struct sk_msg_sg		sg;
+	void				*data;
+	void				*data_end;
 	u32				apply_bytes;
 	u32				cork_bytes;
 	u32				flags;
-	काष्ठा sk_buff			*skb;
-	काष्ठा sock			*sk_redir;
-	काष्ठा sock			*sk;
-	काष्ठा list_head		list;
-पूर्ण;
+	struct sk_buff			*skb;
+	struct sock			*sk_redir;
+	struct sock			*sk;
+	struct list_head		list;
+};
 
-काष्ठा sk_psock_progs अणु
-	काष्ठा bpf_prog			*msg_parser;
-	काष्ठा bpf_prog			*stream_parser;
-	काष्ठा bpf_prog			*stream_verdict;
-	काष्ठा bpf_prog			*skb_verdict;
-पूर्ण;
+struct sk_psock_progs {
+	struct bpf_prog			*msg_parser;
+	struct bpf_prog			*stream_parser;
+	struct bpf_prog			*stream_verdict;
+	struct bpf_prog			*skb_verdict;
+};
 
-क्रमागत sk_psock_state_bits अणु
+enum sk_psock_state_bits {
 	SK_PSOCK_TX_ENABLED,
-पूर्ण;
+};
 
-काष्ठा sk_psock_link अणु
-	काष्ठा list_head		list;
-	काष्ठा bpf_map			*map;
-	व्योम				*link_raw;
-पूर्ण;
+struct sk_psock_link {
+	struct list_head		list;
+	struct bpf_map			*map;
+	void				*link_raw;
+};
 
-काष्ठा sk_psock_work_state अणु
-	काष्ठा sk_buff			*skb;
+struct sk_psock_work_state {
+	struct sk_buff			*skb;
 	u32				len;
 	u32				off;
-पूर्ण;
+};
 
-काष्ठा sk_psock अणु
-	काष्ठा sock			*sk;
-	काष्ठा sock			*sk_redir;
+struct sk_psock {
+	struct sock			*sk;
+	struct sock			*sk_redir;
 	u32				apply_bytes;
 	u32				cork_bytes;
 	u32				eval;
-	काष्ठा sk_msg			*cork;
-	काष्ठा sk_psock_progs		progs;
-#अगर IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
-	काष्ठा strparser		strp;
-#पूर्ण_अगर
-	काष्ठा sk_buff_head		ingress_skb;
-	काष्ठा list_head		ingress_msg;
+	struct sk_msg			*cork;
+	struct sk_psock_progs		progs;
+#if IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
+	struct strparser		strp;
+#endif
+	struct sk_buff_head		ingress_skb;
+	struct list_head		ingress_msg;
 	spinlock_t			ingress_lock;
-	अचिन्हित दीर्घ			state;
-	काष्ठा list_head		link;
+	unsigned long			state;
+	struct list_head		link;
 	spinlock_t			link_lock;
 	refcount_t			refcnt;
-	व्योम (*saved_unhash)(काष्ठा sock *sk);
-	व्योम (*saved_बंद)(काष्ठा sock *sk, दीर्घ समयout);
-	व्योम (*saved_ग_लिखो_space)(काष्ठा sock *sk);
-	व्योम (*saved_data_पढ़ोy)(काष्ठा sock *sk);
-	पूर्णांक  (*psock_update_sk_prot)(काष्ठा sock *sk, काष्ठा sk_psock *psock,
+	void (*saved_unhash)(struct sock *sk);
+	void (*saved_close)(struct sock *sk, long timeout);
+	void (*saved_write_space)(struct sock *sk);
+	void (*saved_data_ready)(struct sock *sk);
+	int  (*psock_update_sk_prot)(struct sock *sk, struct sk_psock *psock,
 				     bool restore);
-	काष्ठा proto			*sk_proto;
-	काष्ठा mutex			work_mutex;
-	काष्ठा sk_psock_work_state	work_state;
-	काष्ठा work_काष्ठा		work;
-	काष्ठा rcu_work			rwork;
-पूर्ण;
+	struct proto			*sk_proto;
+	struct mutex			work_mutex;
+	struct sk_psock_work_state	work_state;
+	struct work_struct		work;
+	struct rcu_work			rwork;
+};
 
-पूर्णांक sk_msg_alloc(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक len,
-		 पूर्णांक elem_first_coalesce);
-पूर्णांक sk_msg_clone(काष्ठा sock *sk, काष्ठा sk_msg *dst, काष्ठा sk_msg *src,
+int sk_msg_alloc(struct sock *sk, struct sk_msg *msg, int len,
+		 int elem_first_coalesce);
+int sk_msg_clone(struct sock *sk, struct sk_msg *dst, struct sk_msg *src,
 		 u32 off, u32 len);
-व्योम sk_msg_trim(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक len);
-पूर्णांक sk_msg_मुक्त(काष्ठा sock *sk, काष्ठा sk_msg *msg);
-पूर्णांक sk_msg_मुक्त_noअक्षरge(काष्ठा sock *sk, काष्ठा sk_msg *msg);
-व्योम sk_msg_मुक्त_partial(काष्ठा sock *sk, काष्ठा sk_msg *msg, u32 bytes);
-व्योम sk_msg_मुक्त_partial_noअक्षरge(काष्ठा sock *sk, काष्ठा sk_msg *msg,
+void sk_msg_trim(struct sock *sk, struct sk_msg *msg, int len);
+int sk_msg_free(struct sock *sk, struct sk_msg *msg);
+int sk_msg_free_nocharge(struct sock *sk, struct sk_msg *msg);
+void sk_msg_free_partial(struct sock *sk, struct sk_msg *msg, u32 bytes);
+void sk_msg_free_partial_nocharge(struct sock *sk, struct sk_msg *msg,
 				  u32 bytes);
 
-व्योम sk_msg_वापस(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक bytes);
-व्योम sk_msg_वापस_zero(काष्ठा sock *sk, काष्ठा sk_msg *msg, पूर्णांक bytes);
+void sk_msg_return(struct sock *sk, struct sk_msg *msg, int bytes);
+void sk_msg_return_zero(struct sock *sk, struct sk_msg *msg, int bytes);
 
-पूर्णांक sk_msg_zerocopy_from_iter(काष्ठा sock *sk, काष्ठा iov_iter *from,
-			      काष्ठा sk_msg *msg, u32 bytes);
-पूर्णांक sk_msg_memcopy_from_iter(काष्ठा sock *sk, काष्ठा iov_iter *from,
-			     काष्ठा sk_msg *msg, u32 bytes);
-पूर्णांक sk_msg_रुको_data(काष्ठा sock *sk, काष्ठा sk_psock *psock, पूर्णांक flags,
-		     दीर्घ समयo, पूर्णांक *err);
-पूर्णांक sk_msg_recvmsg(काष्ठा sock *sk, काष्ठा sk_psock *psock, काष्ठा msghdr *msg,
-		   पूर्णांक len, पूर्णांक flags);
+int sk_msg_zerocopy_from_iter(struct sock *sk, struct iov_iter *from,
+			      struct sk_msg *msg, u32 bytes);
+int sk_msg_memcopy_from_iter(struct sock *sk, struct iov_iter *from,
+			     struct sk_msg *msg, u32 bytes);
+int sk_msg_wait_data(struct sock *sk, struct sk_psock *psock, int flags,
+		     long timeo, int *err);
+int sk_msg_recvmsg(struct sock *sk, struct sk_psock *psock, struct msghdr *msg,
+		   int len, int flags);
 
-अटल अंतरभूत व्योम sk_msg_check_to_मुक्त(काष्ठा sk_msg *msg, u32 i, u32 bytes)
-अणु
+static inline void sk_msg_check_to_free(struct sk_msg *msg, u32 i, u32 bytes)
+{
 	WARN_ON(i == msg->sg.end && bytes);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_msg_apply_bytes(काष्ठा sk_psock *psock, u32 bytes)
-अणु
-	अगर (psock->apply_bytes) अणु
-		अगर (psock->apply_bytes < bytes)
+static inline void sk_msg_apply_bytes(struct sk_psock *psock, u32 bytes)
+{
+	if (psock->apply_bytes) {
+		if (psock->apply_bytes < bytes)
 			psock->apply_bytes = 0;
-		अन्यथा
+		else
 			psock->apply_bytes -= bytes;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u32 sk_msg_iter_dist(u32 start, u32 end)
-अणु
-	वापस end >= start ? end - start : end + (NR_MSG_FRAG_IDS - start);
-पूर्ण
+static inline u32 sk_msg_iter_dist(u32 start, u32 end)
+{
+	return end >= start ? end - start : end + (NR_MSG_FRAG_IDS - start);
+}
 
-#घोषणा sk_msg_iter_var_prev(var)			\
-	करो अणु						\
-		अगर (var == 0)				\
+#define sk_msg_iter_var_prev(var)			\
+	do {						\
+		if (var == 0)				\
 			var = NR_MSG_FRAG_IDS - 1;	\
-		अन्यथा					\
+		else					\
 			var--;				\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा sk_msg_iter_var_next(var)			\
-	करो अणु						\
+#define sk_msg_iter_var_next(var)			\
+	do {						\
 		var++;					\
-		अगर (var == NR_MSG_FRAG_IDS)		\
+		if (var == NR_MSG_FRAG_IDS)		\
 			var = 0;			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा sk_msg_iter_prev(msg, which)			\
+#define sk_msg_iter_prev(msg, which)			\
 	sk_msg_iter_var_prev(msg->sg.which)
 
-#घोषणा sk_msg_iter_next(msg, which)			\
+#define sk_msg_iter_next(msg, which)			\
 	sk_msg_iter_var_next(msg->sg.which)
 
-अटल अंतरभूत व्योम sk_msg_clear_meta(काष्ठा sk_msg *msg)
-अणु
-	स_रखो(&msg->sg, 0, दुरत्वend(काष्ठा sk_msg_sg, copy));
-पूर्ण
+static inline void sk_msg_clear_meta(struct sk_msg *msg)
+{
+	memset(&msg->sg, 0, offsetofend(struct sk_msg_sg, copy));
+}
 
-अटल अंतरभूत व्योम sk_msg_init(काष्ठा sk_msg *msg)
-अणु
+static inline void sk_msg_init(struct sk_msg *msg)
+{
 	BUILD_BUG_ON(ARRAY_SIZE(msg->sg.data) - 1 != NR_MSG_FRAG_IDS);
-	स_रखो(msg, 0, माप(*msg));
+	memset(msg, 0, sizeof(*msg));
 	sg_init_marker(msg->sg.data, NR_MSG_FRAG_IDS);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_msg_xfer(काष्ठा sk_msg *dst, काष्ठा sk_msg *src,
-			       पूर्णांक which, u32 size)
-अणु
+static inline void sk_msg_xfer(struct sk_msg *dst, struct sk_msg *src,
+			       int which, u32 size)
+{
 	dst->sg.data[which] = src->sg.data[which];
 	dst->sg.data[which].length  = size;
 	dst->sg.size		   += size;
 	src->sg.size		   -= size;
 	src->sg.data[which].length -= size;
 	src->sg.data[which].offset += size;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_msg_xfer_full(काष्ठा sk_msg *dst, काष्ठा sk_msg *src)
-अणु
-	स_नकल(dst, src, माप(*src));
+static inline void sk_msg_xfer_full(struct sk_msg *dst, struct sk_msg *src)
+{
+	memcpy(dst, src, sizeof(*src));
 	sk_msg_init(src);
-पूर्ण
+}
 
-अटल अंतरभूत bool sk_msg_full(स्थिर काष्ठा sk_msg *msg)
-अणु
-	वापस sk_msg_iter_dist(msg->sg.start, msg->sg.end) == MAX_MSG_FRAGS;
-पूर्ण
+static inline bool sk_msg_full(const struct sk_msg *msg)
+{
+	return sk_msg_iter_dist(msg->sg.start, msg->sg.end) == MAX_MSG_FRAGS;
+}
 
-अटल अंतरभूत u32 sk_msg_elem_used(स्थिर काष्ठा sk_msg *msg)
-अणु
-	वापस sk_msg_iter_dist(msg->sg.start, msg->sg.end);
-पूर्ण
+static inline u32 sk_msg_elem_used(const struct sk_msg *msg)
+{
+	return sk_msg_iter_dist(msg->sg.start, msg->sg.end);
+}
 
-अटल अंतरभूत काष्ठा scatterlist *sk_msg_elem(काष्ठा sk_msg *msg, पूर्णांक which)
-अणु
-	वापस &msg->sg.data[which];
-पूर्ण
+static inline struct scatterlist *sk_msg_elem(struct sk_msg *msg, int which)
+{
+	return &msg->sg.data[which];
+}
 
-अटल अंतरभूत काष्ठा scatterlist sk_msg_elem_cpy(काष्ठा sk_msg *msg, पूर्णांक which)
-अणु
-	वापस msg->sg.data[which];
-पूर्ण
+static inline struct scatterlist sk_msg_elem_cpy(struct sk_msg *msg, int which)
+{
+	return msg->sg.data[which];
+}
 
-अटल अंतरभूत काष्ठा page *sk_msg_page(काष्ठा sk_msg *msg, पूर्णांक which)
-अणु
-	वापस sg_page(sk_msg_elem(msg, which));
-पूर्ण
+static inline struct page *sk_msg_page(struct sk_msg *msg, int which)
+{
+	return sg_page(sk_msg_elem(msg, which));
+}
 
-अटल अंतरभूत bool sk_msg_to_ingress(स्थिर काष्ठा sk_msg *msg)
-अणु
-	वापस msg->flags & BPF_F_INGRESS;
-पूर्ण
+static inline bool sk_msg_to_ingress(const struct sk_msg *msg)
+{
+	return msg->flags & BPF_F_INGRESS;
+}
 
-अटल अंतरभूत व्योम sk_msg_compute_data_poपूर्णांकers(काष्ठा sk_msg *msg)
-अणु
-	काष्ठा scatterlist *sge = sk_msg_elem(msg, msg->sg.start);
+static inline void sk_msg_compute_data_pointers(struct sk_msg *msg)
+{
+	struct scatterlist *sge = sk_msg_elem(msg, msg->sg.start);
 
-	अगर (test_bit(msg->sg.start, &msg->sg.copy)) अणु
-		msg->data = शून्य;
-		msg->data_end = शून्य;
-	पूर्ण अन्यथा अणु
+	if (test_bit(msg->sg.start, &msg->sg.copy)) {
+		msg->data = NULL;
+		msg->data_end = NULL;
+	} else {
 		msg->data = sg_virt(sge);
 		msg->data_end = msg->data + sge->length;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम sk_msg_page_add(काष्ठा sk_msg *msg, काष्ठा page *page,
+static inline void sk_msg_page_add(struct sk_msg *msg, struct page *page,
 				   u32 len, u32 offset)
-अणु
-	काष्ठा scatterlist *sge;
+{
+	struct scatterlist *sge;
 
 	get_page(page);
 	sge = sk_msg_elem(msg, msg->sg.end);
@@ -258,276 +257,276 @@
 	__set_bit(msg->sg.end, &msg->sg.copy);
 	msg->sg.size += len;
 	sk_msg_iter_next(msg, end);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_msg_sg_copy(काष्ठा sk_msg *msg, u32 i, bool copy_state)
-अणु
-	करो अणु
-		अगर (copy_state)
+static inline void sk_msg_sg_copy(struct sk_msg *msg, u32 i, bool copy_state)
+{
+	do {
+		if (copy_state)
 			__set_bit(i, &msg->sg.copy);
-		अन्यथा
+		else
 			__clear_bit(i, &msg->sg.copy);
 		sk_msg_iter_var_next(i);
-		अगर (i == msg->sg.end)
-			अवरोध;
-	पूर्ण जबतक (1);
-पूर्ण
+		if (i == msg->sg.end)
+			break;
+	} while (1);
+}
 
-अटल अंतरभूत व्योम sk_msg_sg_copy_set(काष्ठा sk_msg *msg, u32 start)
-अणु
+static inline void sk_msg_sg_copy_set(struct sk_msg *msg, u32 start)
+{
 	sk_msg_sg_copy(msg, start, true);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_msg_sg_copy_clear(काष्ठा sk_msg *msg, u32 start)
-अणु
+static inline void sk_msg_sg_copy_clear(struct sk_msg *msg, u32 start)
+{
 	sk_msg_sg_copy(msg, start, false);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा sk_psock *sk_psock(स्थिर काष्ठा sock *sk)
-अणु
-	वापस rcu_dereference_sk_user_data(sk);
-पूर्ण
+static inline struct sk_psock *sk_psock(const struct sock *sk)
+{
+	return rcu_dereference_sk_user_data(sk);
+}
 
-अटल अंतरभूत व्योम sk_psock_queue_msg(काष्ठा sk_psock *psock,
-				      काष्ठा sk_msg *msg)
-अणु
+static inline void sk_psock_queue_msg(struct sk_psock *psock,
+				      struct sk_msg *msg)
+{
 	spin_lock_bh(&psock->ingress_lock);
 	list_add_tail(&msg->list, &psock->ingress_msg);
 	spin_unlock_bh(&psock->ingress_lock);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा sk_msg *sk_psock_dequeue_msg(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_msg *msg;
+static inline struct sk_msg *sk_psock_dequeue_msg(struct sk_psock *psock)
+{
+	struct sk_msg *msg;
 
 	spin_lock_bh(&psock->ingress_lock);
-	msg = list_first_entry_or_null(&psock->ingress_msg, काष्ठा sk_msg, list);
-	अगर (msg)
+	msg = list_first_entry_or_null(&psock->ingress_msg, struct sk_msg, list);
+	if (msg)
 		list_del(&msg->list);
 	spin_unlock_bh(&psock->ingress_lock);
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
-अटल अंतरभूत काष्ठा sk_msg *sk_psock_peek_msg(काष्ठा sk_psock *psock)
-अणु
-	काष्ठा sk_msg *msg;
+static inline struct sk_msg *sk_psock_peek_msg(struct sk_psock *psock)
+{
+	struct sk_msg *msg;
 
 	spin_lock_bh(&psock->ingress_lock);
-	msg = list_first_entry_or_null(&psock->ingress_msg, काष्ठा sk_msg, list);
+	msg = list_first_entry_or_null(&psock->ingress_msg, struct sk_msg, list);
 	spin_unlock_bh(&psock->ingress_lock);
-	वापस msg;
-पूर्ण
+	return msg;
+}
 
-अटल अंतरभूत काष्ठा sk_msg *sk_psock_next_msg(काष्ठा sk_psock *psock,
-					       काष्ठा sk_msg *msg)
-अणु
-	काष्ठा sk_msg *ret;
+static inline struct sk_msg *sk_psock_next_msg(struct sk_psock *psock,
+					       struct sk_msg *msg)
+{
+	struct sk_msg *ret;
 
 	spin_lock_bh(&psock->ingress_lock);
-	अगर (list_is_last(&msg->list, &psock->ingress_msg))
-		ret = शून्य;
-	अन्यथा
+	if (list_is_last(&msg->list, &psock->ingress_msg))
+		ret = NULL;
+	else
 		ret = list_next_entry(msg, list);
 	spin_unlock_bh(&psock->ingress_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत bool sk_psock_queue_empty(स्थिर काष्ठा sk_psock *psock)
-अणु
-	वापस psock ? list_empty(&psock->ingress_msg) : true;
-पूर्ण
+static inline bool sk_psock_queue_empty(const struct sk_psock *psock)
+{
+	return psock ? list_empty(&psock->ingress_msg) : true;
+}
 
-अटल अंतरभूत व्योम kमुक्त_sk_msg(काष्ठा sk_msg *msg)
-अणु
-	अगर (msg->skb)
+static inline void kfree_sk_msg(struct sk_msg *msg)
+{
+	if (msg->skb)
 		consume_skb(msg->skb);
-	kमुक्त(msg);
-पूर्ण
+	kfree(msg);
+}
 
-अटल अंतरभूत व्योम sk_psock_report_error(काष्ठा sk_psock *psock, पूर्णांक err)
-अणु
-	काष्ठा sock *sk = psock->sk;
+static inline void sk_psock_report_error(struct sk_psock *psock, int err)
+{
+	struct sock *sk = psock->sk;
 
 	sk->sk_err = err;
 	sk->sk_error_report(sk);
-पूर्ण
+}
 
-काष्ठा sk_psock *sk_psock_init(काष्ठा sock *sk, पूर्णांक node);
-व्योम sk_psock_stop(काष्ठा sk_psock *psock, bool रुको);
+struct sk_psock *sk_psock_init(struct sock *sk, int node);
+void sk_psock_stop(struct sk_psock *psock, bool wait);
 
-#अगर IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
-पूर्णांक sk_psock_init_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock);
-व्योम sk_psock_start_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock);
-व्योम sk_psock_stop_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock);
-#अन्यथा
-अटल अंतरभूत पूर्णांक sk_psock_init_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+#if IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
+int sk_psock_init_strp(struct sock *sk, struct sk_psock *psock);
+void sk_psock_start_strp(struct sock *sk, struct sk_psock *psock);
+void sk_psock_stop_strp(struct sock *sk, struct sk_psock *psock);
+#else
+static inline int sk_psock_init_strp(struct sock *sk, struct sk_psock *psock)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत व्योम sk_psock_start_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-पूर्ण
+static inline void sk_psock_start_strp(struct sock *sk, struct sk_psock *psock)
+{
+}
 
-अटल अंतरभूत व्योम sk_psock_stop_strp(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void sk_psock_stop_strp(struct sock *sk, struct sk_psock *psock)
+{
+}
+#endif
 
-व्योम sk_psock_start_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock);
-व्योम sk_psock_stop_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock);
+void sk_psock_start_verdict(struct sock *sk, struct sk_psock *psock);
+void sk_psock_stop_verdict(struct sock *sk, struct sk_psock *psock);
 
-पूर्णांक sk_psock_msg_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock,
-			 काष्ठा sk_msg *msg);
+int sk_psock_msg_verdict(struct sock *sk, struct sk_psock *psock,
+			 struct sk_msg *msg);
 
-अटल अंतरभूत काष्ठा sk_psock_link *sk_psock_init_link(व्योम)
-अणु
-	वापस kzalloc(माप(काष्ठा sk_psock_link),
+static inline struct sk_psock_link *sk_psock_init_link(void)
+{
+	return kzalloc(sizeof(struct sk_psock_link),
 		       GFP_ATOMIC | __GFP_NOWARN);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_psock_मुक्त_link(काष्ठा sk_psock_link *link)
-अणु
-	kमुक्त(link);
-पूर्ण
+static inline void sk_psock_free_link(struct sk_psock_link *link)
+{
+	kfree(link);
+}
 
-काष्ठा sk_psock_link *sk_psock_link_pop(काष्ठा sk_psock *psock);
+struct sk_psock_link *sk_psock_link_pop(struct sk_psock *psock);
 
-अटल अंतरभूत व्योम sk_psock_cork_मुक्त(काष्ठा sk_psock *psock)
-अणु
-	अगर (psock->cork) अणु
-		sk_msg_मुक्त(psock->sk, psock->cork);
-		kमुक्त(psock->cork);
-		psock->cork = शून्य;
-	पूर्ण
-पूर्ण
+static inline void sk_psock_cork_free(struct sk_psock *psock)
+{
+	if (psock->cork) {
+		sk_msg_free(psock->sk, psock->cork);
+		kfree(psock->cork);
+		psock->cork = NULL;
+	}
+}
 
-अटल अंतरभूत व्योम sk_psock_restore_proto(काष्ठा sock *sk,
-					  काष्ठा sk_psock *psock)
-अणु
-	अगर (psock->psock_update_sk_prot)
+static inline void sk_psock_restore_proto(struct sock *sk,
+					  struct sk_psock *psock)
+{
+	if (psock->psock_update_sk_prot)
 		psock->psock_update_sk_prot(sk, psock, true);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_psock_set_state(काष्ठा sk_psock *psock,
-				      क्रमागत sk_psock_state_bits bit)
-अणु
+static inline void sk_psock_set_state(struct sk_psock *psock,
+				      enum sk_psock_state_bits bit)
+{
 	set_bit(bit, &psock->state);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_psock_clear_state(काष्ठा sk_psock *psock,
-					क्रमागत sk_psock_state_bits bit)
-अणु
+static inline void sk_psock_clear_state(struct sk_psock *psock,
+					enum sk_psock_state_bits bit)
+{
 	clear_bit(bit, &psock->state);
-पूर्ण
+}
 
-अटल अंतरभूत bool sk_psock_test_state(स्थिर काष्ठा sk_psock *psock,
-				       क्रमागत sk_psock_state_bits bit)
-अणु
-	वापस test_bit(bit, &psock->state);
-पूर्ण
+static inline bool sk_psock_test_state(const struct sk_psock *psock,
+				       enum sk_psock_state_bits bit)
+{
+	return test_bit(bit, &psock->state);
+}
 
-अटल अंतरभूत काष्ठा sk_psock *sk_psock_get(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_psock *psock;
+static inline struct sk_psock *sk_psock_get(struct sock *sk)
+{
+	struct sk_psock *psock;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	psock = sk_psock(sk);
-	अगर (psock && !refcount_inc_not_zero(&psock->refcnt))
-		psock = शून्य;
-	rcu_पढ़ो_unlock();
-	वापस psock;
-पूर्ण
+	if (psock && !refcount_inc_not_zero(&psock->refcnt))
+		psock = NULL;
+	rcu_read_unlock();
+	return psock;
+}
 
-व्योम sk_psock_drop(काष्ठा sock *sk, काष्ठा sk_psock *psock);
+void sk_psock_drop(struct sock *sk, struct sk_psock *psock);
 
-अटल अंतरभूत व्योम sk_psock_put(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (refcount_dec_and_test(&psock->refcnt))
+static inline void sk_psock_put(struct sock *sk, struct sk_psock *psock)
+{
+	if (refcount_dec_and_test(&psock->refcnt))
 		sk_psock_drop(sk, psock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sk_psock_data_पढ़ोy(काष्ठा sock *sk, काष्ठा sk_psock *psock)
-अणु
-	अगर (psock->saved_data_पढ़ोy)
-		psock->saved_data_पढ़ोy(sk);
-	अन्यथा
-		sk->sk_data_पढ़ोy(sk);
-पूर्ण
+static inline void sk_psock_data_ready(struct sock *sk, struct sk_psock *psock)
+{
+	if (psock->saved_data_ready)
+		psock->saved_data_ready(sk);
+	else
+		sk->sk_data_ready(sk);
+}
 
-अटल अंतरभूत व्योम psock_set_prog(काष्ठा bpf_prog **pprog,
-				  काष्ठा bpf_prog *prog)
-अणु
+static inline void psock_set_prog(struct bpf_prog **pprog,
+				  struct bpf_prog *prog)
+{
 	prog = xchg(pprog, prog);
-	अगर (prog)
+	if (prog)
 		bpf_prog_put(prog);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक psock_replace_prog(काष्ठा bpf_prog **pprog,
-				     काष्ठा bpf_prog *prog,
-				     काष्ठा bpf_prog *old)
-अणु
-	अगर (cmpxchg(pprog, old, prog) != old)
-		वापस -ENOENT;
+static inline int psock_replace_prog(struct bpf_prog **pprog,
+				     struct bpf_prog *prog,
+				     struct bpf_prog *old)
+{
+	if (cmpxchg(pprog, old, prog) != old)
+		return -ENOENT;
 
-	अगर (old)
+	if (old)
 		bpf_prog_put(old);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम psock_progs_drop(काष्ठा sk_psock_progs *progs)
-अणु
-	psock_set_prog(&progs->msg_parser, शून्य);
-	psock_set_prog(&progs->stream_parser, शून्य);
-	psock_set_prog(&progs->stream_verdict, शून्य);
-	psock_set_prog(&progs->skb_verdict, शून्य);
-पूर्ण
+static inline void psock_progs_drop(struct sk_psock_progs *progs)
+{
+	psock_set_prog(&progs->msg_parser, NULL);
+	psock_set_prog(&progs->stream_parser, NULL);
+	psock_set_prog(&progs->stream_verdict, NULL);
+	psock_set_prog(&progs->skb_verdict, NULL);
+}
 
-पूर्णांक sk_psock_tls_strp_पढ़ो(काष्ठा sk_psock *psock, काष्ठा sk_buff *skb);
+int sk_psock_tls_strp_read(struct sk_psock *psock, struct sk_buff *skb);
 
-अटल अंतरभूत bool sk_psock_strp_enabled(काष्ठा sk_psock *psock)
-अणु
-	अगर (!psock)
-		वापस false;
-	वापस !!psock->saved_data_पढ़ोy;
-पूर्ण
+static inline bool sk_psock_strp_enabled(struct sk_psock *psock)
+{
+	if (!psock)
+		return false;
+	return !!psock->saved_data_ready;
+}
 
-#अगर IS_ENABLED(CONFIG_NET_SOCK_MSG)
+#if IS_ENABLED(CONFIG_NET_SOCK_MSG)
 
 /* We only have one bit so far. */
-#घोषणा BPF_F_PTR_MASK ~(BPF_F_INGRESS)
+#define BPF_F_PTR_MASK ~(BPF_F_INGRESS)
 
-अटल अंतरभूत bool skb_bpf_ingress(स्थिर काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित दीर्घ sk_redir = skb->_sk_redir;
+static inline bool skb_bpf_ingress(const struct sk_buff *skb)
+{
+	unsigned long sk_redir = skb->_sk_redir;
 
-	वापस sk_redir & BPF_F_INGRESS;
-पूर्ण
+	return sk_redir & BPF_F_INGRESS;
+}
 
-अटल अंतरभूत व्योम skb_bpf_set_ingress(काष्ठा sk_buff *skb)
-अणु
+static inline void skb_bpf_set_ingress(struct sk_buff *skb)
+{
 	skb->_sk_redir |= BPF_F_INGRESS;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम skb_bpf_set_redir(काष्ठा sk_buff *skb, काष्ठा sock *sk_redir,
+static inline void skb_bpf_set_redir(struct sk_buff *skb, struct sock *sk_redir,
 				     bool ingress)
-अणु
-	skb->_sk_redir = (अचिन्हित दीर्घ)sk_redir;
-	अगर (ingress)
+{
+	skb->_sk_redir = (unsigned long)sk_redir;
+	if (ingress)
 		skb->_sk_redir |= BPF_F_INGRESS;
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा sock *skb_bpf_redirect_fetch(स्थिर काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित दीर्घ sk_redir = skb->_sk_redir;
+static inline struct sock *skb_bpf_redirect_fetch(const struct sk_buff *skb)
+{
+	unsigned long sk_redir = skb->_sk_redir;
 
-	वापस (काष्ठा sock *)(sk_redir & BPF_F_PTR_MASK);
-पूर्ण
+	return (struct sock *)(sk_redir & BPF_F_PTR_MASK);
+}
 
-अटल अंतरभूत व्योम skb_bpf_redirect_clear(काष्ठा sk_buff *skb)
-अणु
+static inline void skb_bpf_redirect_clear(struct sk_buff *skb)
+{
 	skb->_sk_redir = 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NET_SOCK_MSG */
-#पूर्ण_अगर /* _LINUX_SKMSG_H */
+}
+#endif /* CONFIG_NET_SOCK_MSG */
+#endif /* _LINUX_SKMSG_H */

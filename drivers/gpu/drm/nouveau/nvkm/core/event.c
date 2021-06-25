@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013-2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,76 +19,76 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश <core/event.h>
-#समावेश <core/notअगरy.h>
+#include <core/event.h>
+#include <core/notify.h>
 
-व्योम
-nvkm_event_put(काष्ठा nvkm_event *event, u32 types, पूर्णांक index)
-अणु
-	निश्चित_spin_locked(&event->refs_lock);
-	जबतक (types) अणु
-		पूर्णांक type = __ffs(types); types &= ~(1 << type);
-		अगर (--event->refs[index * event->types_nr + type] == 0) अणु
-			अगर (event->func->fini)
+void
+nvkm_event_put(struct nvkm_event *event, u32 types, int index)
+{
+	assert_spin_locked(&event->refs_lock);
+	while (types) {
+		int type = __ffs(types); types &= ~(1 << type);
+		if (--event->refs[index * event->types_nr + type] == 0) {
+			if (event->func->fini)
 				event->func->fini(event, 1 << type, index);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम
-nvkm_event_get(काष्ठा nvkm_event *event, u32 types, पूर्णांक index)
-अणु
-	निश्चित_spin_locked(&event->refs_lock);
-	जबतक (types) अणु
-		पूर्णांक type = __ffs(types); types &= ~(1 << type);
-		अगर (++event->refs[index * event->types_nr + type] == 1) अणु
-			अगर (event->func->init)
+void
+nvkm_event_get(struct nvkm_event *event, u32 types, int index)
+{
+	assert_spin_locked(&event->refs_lock);
+	while (types) {
+		int type = __ffs(types); types &= ~(1 << type);
+		if (++event->refs[index * event->types_nr + type] == 1) {
+			if (event->func->init)
 				event->func->init(event, 1 << type, index);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम
-nvkm_event_send(काष्ठा nvkm_event *event, u32 types, पूर्णांक index,
-		व्योम *data, u32 size)
-अणु
-	काष्ठा nvkm_notअगरy *notअगरy;
-	अचिन्हित दीर्घ flags;
+void
+nvkm_event_send(struct nvkm_event *event, u32 types, int index,
+		void *data, u32 size)
+{
+	struct nvkm_notify *notify;
+	unsigned long flags;
 
-	अगर (!event->refs || WARN_ON(index >= event->index_nr))
-		वापस;
+	if (!event->refs || WARN_ON(index >= event->index_nr))
+		return;
 
 	spin_lock_irqsave(&event->list_lock, flags);
-	list_क्रम_each_entry(notअगरy, &event->list, head) अणु
-		अगर (notअगरy->index == index && (notअगरy->types & types)) अणु
-			अगर (event->func->send) अणु
-				event->func->send(data, size, notअगरy);
-				जारी;
-			पूर्ण
-			nvkm_notअगरy_send(notअगरy, data, size);
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(notify, &event->list, head) {
+		if (notify->index == index && (notify->types & types)) {
+			if (event->func->send) {
+				event->func->send(data, size, notify);
+				continue;
+			}
+			nvkm_notify_send(notify, data, size);
+		}
+	}
 	spin_unlock_irqrestore(&event->list_lock, flags);
-पूर्ण
+}
 
-व्योम
-nvkm_event_fini(काष्ठा nvkm_event *event)
-अणु
-	अगर (event->refs) अणु
-		kमुक्त(event->refs);
-		event->refs = शून्य;
-	पूर्ण
-पूर्ण
+void
+nvkm_event_fini(struct nvkm_event *event)
+{
+	if (event->refs) {
+		kfree(event->refs);
+		event->refs = NULL;
+	}
+}
 
-पूर्णांक
-nvkm_event_init(स्थिर काष्ठा nvkm_event_func *func, पूर्णांक types_nr, पूर्णांक index_nr,
-		काष्ठा nvkm_event *event)
-अणु
+int
+nvkm_event_init(const struct nvkm_event_func *func, int types_nr, int index_nr,
+		struct nvkm_event *event)
+{
 	event->refs = kzalloc(array3_size(index_nr, types_nr,
-					  माप(*event->refs)),
+					  sizeof(*event->refs)),
 			      GFP_KERNEL);
-	अगर (!event->refs)
-		वापस -ENOMEM;
+	if (!event->refs)
+		return -ENOMEM;
 
 	event->func = func;
 	event->types_nr = types_nr;
@@ -97,5 +96,5 @@ nvkm_event_init(स्थिर काष्ठा nvkm_event_func *func, पू
 	spin_lock_init(&event->refs_lock);
 	spin_lock_init(&event->list_lock);
 	INIT_LIST_HEAD(&event->list);
-	वापस 0;
-पूर्ण
+	return 0;
+}

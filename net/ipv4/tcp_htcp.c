@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * H-TCP congestion control. The algorithm is detailed in:
  * R.N.Shorten, D.J.Leith:
@@ -8,310 +7,310 @@
  * https://www.hamilton.ie/net/htcp3.pdf
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <net/tcp.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <net/tcp.h>
 
-#घोषणा ALPHA_BASE	(1<<7)	/* 1.0 with shअगरt << 7 */
-#घोषणा BETA_MIN	(1<<6)	/* 0.5 with shअगरt << 7 */
-#घोषणा BETA_MAX	102	/* 0.8 with shअगरt << 7 */
+#define ALPHA_BASE	(1<<7)	/* 1.0 with shift << 7 */
+#define BETA_MIN	(1<<6)	/* 0.5 with shift << 7 */
+#define BETA_MAX	102	/* 0.8 with shift << 7 */
 
-अटल पूर्णांक use_rtt_scaling __पढ़ो_mostly = 1;
-module_param(use_rtt_scaling, पूर्णांक, 0644);
+static int use_rtt_scaling __read_mostly = 1;
+module_param(use_rtt_scaling, int, 0644);
 MODULE_PARM_DESC(use_rtt_scaling, "turn on/off RTT scaling");
 
-अटल पूर्णांक use_bandwidth_चयन __पढ़ो_mostly = 1;
-module_param(use_bandwidth_चयन, पूर्णांक, 0644);
-MODULE_PARM_DESC(use_bandwidth_चयन, "turn on/off bandwidth switcher");
+static int use_bandwidth_switch __read_mostly = 1;
+module_param(use_bandwidth_switch, int, 0644);
+MODULE_PARM_DESC(use_bandwidth_switch, "turn on/off bandwidth switcher");
 
-काष्ठा htcp अणु
-	u32	alpha;		/* Fixed poपूर्णांक arith, << 7 */
-	u8	beta;           /* Fixed poपूर्णांक arith, << 7 */
-	u8	modeचयन;	/* Delay modeचयन
+struct htcp {
+	u32	alpha;		/* Fixed point arith, << 7 */
+	u8	beta;           /* Fixed point arith, << 7 */
+	u8	modeswitch;	/* Delay modeswitch
 				   until we had at least one congestion event */
 	u16	pkts_acked;
 	u32	packetcount;
 	u32	minRTT;
 	u32	maxRTT;
 	u32	last_cong;	/* Time since last congestion event end */
-	u32	unकरो_last_cong;
+	u32	undo_last_cong;
 
-	u32	unकरो_maxRTT;
-	u32	unकरो_old_maxB;
+	u32	undo_maxRTT;
+	u32	undo_old_maxB;
 
 	/* Bandwidth estimation */
 	u32	minB;
 	u32	maxB;
 	u32	old_maxB;
 	u32	Bi;
-	u32	lastसमय;
-पूर्ण;
+	u32	lasttime;
+};
 
-अटल अंतरभूत u32 htcp_cong_समय(स्थिर काष्ठा htcp *ca)
-अणु
-	वापस jअगरfies - ca->last_cong;
-पूर्ण
+static inline u32 htcp_cong_time(const struct htcp *ca)
+{
+	return jiffies - ca->last_cong;
+}
 
-अटल अंतरभूत u32 htcp_ccount(स्थिर काष्ठा htcp *ca)
-अणु
-	वापस htcp_cong_समय(ca) / ca->minRTT;
-पूर्ण
+static inline u32 htcp_ccount(const struct htcp *ca)
+{
+	return htcp_cong_time(ca) / ca->minRTT;
+}
 
-अटल अंतरभूत व्योम htcp_reset(काष्ठा htcp *ca)
-अणु
-	ca->unकरो_last_cong = ca->last_cong;
-	ca->unकरो_maxRTT = ca->maxRTT;
-	ca->unकरो_old_maxB = ca->old_maxB;
+static inline void htcp_reset(struct htcp *ca)
+{
+	ca->undo_last_cong = ca->last_cong;
+	ca->undo_maxRTT = ca->maxRTT;
+	ca->undo_old_maxB = ca->old_maxB;
 
-	ca->last_cong = jअगरfies;
-पूर्ण
+	ca->last_cong = jiffies;
+}
 
-अटल u32 htcp_cwnd_unकरो(काष्ठा sock *sk)
-अणु
-	काष्ठा htcp *ca = inet_csk_ca(sk);
+static u32 htcp_cwnd_undo(struct sock *sk)
+{
+	struct htcp *ca = inet_csk_ca(sk);
 
-	अगर (ca->unकरो_last_cong) अणु
-		ca->last_cong = ca->unकरो_last_cong;
-		ca->maxRTT = ca->unकरो_maxRTT;
-		ca->old_maxB = ca->unकरो_old_maxB;
-		ca->unकरो_last_cong = 0;
-	पूर्ण
+	if (ca->undo_last_cong) {
+		ca->last_cong = ca->undo_last_cong;
+		ca->maxRTT = ca->undo_maxRTT;
+		ca->old_maxB = ca->undo_old_maxB;
+		ca->undo_last_cong = 0;
+	}
 
-	वापस tcp_reno_unकरो_cwnd(sk);
-पूर्ण
+	return tcp_reno_undo_cwnd(sk);
+}
 
-अटल अंतरभूत व्योम measure_rtt(काष्ठा sock *sk, u32 srtt)
-अणु
-	स्थिर काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा htcp *ca = inet_csk_ca(sk);
+static inline void measure_rtt(struct sock *sk, u32 srtt)
+{
+	const struct inet_connection_sock *icsk = inet_csk(sk);
+	struct htcp *ca = inet_csk_ca(sk);
 
 	/* keep track of minimum RTT seen so far, minRTT is zero at first */
-	अगर (ca->minRTT > srtt || !ca->minRTT)
+	if (ca->minRTT > srtt || !ca->minRTT)
 		ca->minRTT = srtt;
 
 	/* max RTT */
-	अगर (icsk->icsk_ca_state == TCP_CA_Open) अणु
-		अगर (ca->maxRTT < ca->minRTT)
+	if (icsk->icsk_ca_state == TCP_CA_Open) {
+		if (ca->maxRTT < ca->minRTT)
 			ca->maxRTT = ca->minRTT;
-		अगर (ca->maxRTT < srtt &&
-		    srtt <= ca->maxRTT + msecs_to_jअगरfies(20))
+		if (ca->maxRTT < srtt &&
+		    srtt <= ca->maxRTT + msecs_to_jiffies(20))
 			ca->maxRTT = srtt;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम measure_achieved_throughput(काष्ठा sock *sk,
-					स्थिर काष्ठा ack_sample *sample)
-अणु
-	स्थिर काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा htcp *ca = inet_csk_ca(sk);
-	u32 now = tcp_jअगरfies32;
+static void measure_achieved_throughput(struct sock *sk,
+					const struct ack_sample *sample)
+{
+	const struct inet_connection_sock *icsk = inet_csk(sk);
+	const struct tcp_sock *tp = tcp_sk(sk);
+	struct htcp *ca = inet_csk_ca(sk);
+	u32 now = tcp_jiffies32;
 
-	अगर (icsk->icsk_ca_state == TCP_CA_Open)
+	if (icsk->icsk_ca_state == TCP_CA_Open)
 		ca->pkts_acked = sample->pkts_acked;
 
-	अगर (sample->rtt_us > 0)
-		measure_rtt(sk, usecs_to_jअगरfies(sample->rtt_us));
+	if (sample->rtt_us > 0)
+		measure_rtt(sk, usecs_to_jiffies(sample->rtt_us));
 
-	अगर (!use_bandwidth_चयन)
-		वापस;
+	if (!use_bandwidth_switch)
+		return;
 
 	/* achieved throughput calculations */
-	अगर (!((1 << icsk->icsk_ca_state) & (TCPF_CA_Open | TCPF_CA_Disorder))) अणु
+	if (!((1 << icsk->icsk_ca_state) & (TCPF_CA_Open | TCPF_CA_Disorder))) {
 		ca->packetcount = 0;
-		ca->lastसमय = now;
-		वापस;
-	पूर्ण
+		ca->lasttime = now;
+		return;
+	}
 
 	ca->packetcount += sample->pkts_acked;
 
-	अगर (ca->packetcount >= tp->snd_cwnd - (ca->alpha >> 7 ? : 1) &&
-	    now - ca->lastसमय >= ca->minRTT &&
-	    ca->minRTT > 0) अणु
-		__u32 cur_Bi = ca->packetcount * HZ / (now - ca->lastसमय);
+	if (ca->packetcount >= tp->snd_cwnd - (ca->alpha >> 7 ? : 1) &&
+	    now - ca->lasttime >= ca->minRTT &&
+	    ca->minRTT > 0) {
+		__u32 cur_Bi = ca->packetcount * HZ / (now - ca->lasttime);
 
-		अगर (htcp_ccount(ca) <= 3) अणु
+		if (htcp_ccount(ca) <= 3) {
 			/* just after backoff */
 			ca->minB = ca->maxB = ca->Bi = cur_Bi;
-		पूर्ण अन्यथा अणु
+		} else {
 			ca->Bi = (3 * ca->Bi + cur_Bi) / 4;
-			अगर (ca->Bi > ca->maxB)
+			if (ca->Bi > ca->maxB)
 				ca->maxB = ca->Bi;
-			अगर (ca->minB > ca->maxB)
+			if (ca->minB > ca->maxB)
 				ca->minB = ca->maxB;
-		पूर्ण
+		}
 		ca->packetcount = 0;
-		ca->lastसमय = now;
-	पूर्ण
-पूर्ण
+		ca->lasttime = now;
+	}
+}
 
-अटल अंतरभूत व्योम htcp_beta_update(काष्ठा htcp *ca, u32 minRTT, u32 maxRTT)
-अणु
-	अगर (use_bandwidth_चयन) अणु
+static inline void htcp_beta_update(struct htcp *ca, u32 minRTT, u32 maxRTT)
+{
+	if (use_bandwidth_switch) {
 		u32 maxB = ca->maxB;
 		u32 old_maxB = ca->old_maxB;
 
 		ca->old_maxB = ca->maxB;
-		अगर (!between(5 * maxB, 4 * old_maxB, 6 * old_maxB)) अणु
+		if (!between(5 * maxB, 4 * old_maxB, 6 * old_maxB)) {
 			ca->beta = BETA_MIN;
-			ca->modeचयन = 0;
-			वापस;
-		पूर्ण
-	पूर्ण
+			ca->modeswitch = 0;
+			return;
+		}
+	}
 
-	अगर (ca->modeचयन && minRTT > msecs_to_jअगरfies(10) && maxRTT) अणु
+	if (ca->modeswitch && minRTT > msecs_to_jiffies(10) && maxRTT) {
 		ca->beta = (minRTT << 7) / maxRTT;
-		अगर (ca->beta < BETA_MIN)
+		if (ca->beta < BETA_MIN)
 			ca->beta = BETA_MIN;
-		अन्यथा अगर (ca->beta > BETA_MAX)
+		else if (ca->beta > BETA_MAX)
 			ca->beta = BETA_MAX;
-	पूर्ण अन्यथा अणु
+	} else {
 		ca->beta = BETA_MIN;
-		ca->modeचयन = 1;
-	पूर्ण
-पूर्ण
+		ca->modeswitch = 1;
+	}
+}
 
-अटल अंतरभूत व्योम htcp_alpha_update(काष्ठा htcp *ca)
-अणु
+static inline void htcp_alpha_update(struct htcp *ca)
+{
 	u32 minRTT = ca->minRTT;
 	u32 factor = 1;
-	u32 dअगरf = htcp_cong_समय(ca);
+	u32 diff = htcp_cong_time(ca);
 
-	अगर (dअगरf > HZ) अणु
-		dअगरf -= HZ;
-		factor = 1 + (10 * dअगरf + ((dअगरf / 2) * (dअगरf / 2) / HZ)) / HZ;
-	पूर्ण
+	if (diff > HZ) {
+		diff -= HZ;
+		factor = 1 + (10 * diff + ((diff / 2) * (diff / 2) / HZ)) / HZ;
+	}
 
-	अगर (use_rtt_scaling && minRTT) अणु
+	if (use_rtt_scaling && minRTT) {
 		u32 scale = (HZ << 3) / (10 * minRTT);
 
-		/* clamping ratio to पूर्णांकerval [0.5,10]<<3 */
+		/* clamping ratio to interval [0.5,10]<<3 */
 		scale = min(max(scale, 1U << 2), 10U << 3);
 		factor = (factor << 3) / scale;
-		अगर (!factor)
+		if (!factor)
 			factor = 1;
-	पूर्ण
+	}
 
 	ca->alpha = 2 * factor * ((1 << 7) - ca->beta);
-	अगर (!ca->alpha)
+	if (!ca->alpha)
 		ca->alpha = ALPHA_BASE;
-पूर्ण
+}
 
 /*
- * After we have the rtt data to calculate beta, we'd still prefer to रुको one
- * rtt beक्रमe we adjust our beta to ensure we are working from a consistent
+ * After we have the rtt data to calculate beta, we'd still prefer to wait one
+ * rtt before we adjust our beta to ensure we are working from a consistent
  * data.
  *
  * This function should be called when we hit a congestion event since only at
- * that poपूर्णांक करो we really have a real sense of maxRTT (the queues en route
+ * that point do we really have a real sense of maxRTT (the queues en route
  * were getting just too full now).
  */
-अटल व्योम htcp_param_update(काष्ठा sock *sk)
-अणु
-	काष्ठा htcp *ca = inet_csk_ca(sk);
+static void htcp_param_update(struct sock *sk)
+{
+	struct htcp *ca = inet_csk_ca(sk);
 	u32 minRTT = ca->minRTT;
 	u32 maxRTT = ca->maxRTT;
 
 	htcp_beta_update(ca, minRTT, maxRTT);
 	htcp_alpha_update(ca);
 
-	/* add slowly fading memory क्रम maxRTT to accommodate routing changes */
-	अगर (minRTT > 0 && maxRTT > minRTT)
+	/* add slowly fading memory for maxRTT to accommodate routing changes */
+	if (minRTT > 0 && maxRTT > minRTT)
 		ca->maxRTT = minRTT + ((maxRTT - minRTT) * 95) / 100;
-पूर्ण
+}
 
-अटल u32 htcp_recalc_ssthresh(काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	स्थिर काष्ठा htcp *ca = inet_csk_ca(sk);
+static u32 htcp_recalc_ssthresh(struct sock *sk)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	const struct htcp *ca = inet_csk_ca(sk);
 
 	htcp_param_update(sk);
-	वापस max((tp->snd_cwnd * ca->beta) >> 7, 2U);
-पूर्ण
+	return max((tp->snd_cwnd * ca->beta) >> 7, 2U);
+}
 
-अटल व्योम htcp_cong_aव्योम(काष्ठा sock *sk, u32 ack, u32 acked)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा htcp *ca = inet_csk_ca(sk);
+static void htcp_cong_avoid(struct sock *sk, u32 ack, u32 acked)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct htcp *ca = inet_csk_ca(sk);
 
-	अगर (!tcp_is_cwnd_limited(sk))
-		वापस;
+	if (!tcp_is_cwnd_limited(sk))
+		return;
 
-	अगर (tcp_in_slow_start(tp))
+	if (tcp_in_slow_start(tp))
 		tcp_slow_start(tp, acked);
-	अन्यथा अणु
+	else {
 		/* In dangerous area, increase slowly.
 		 * In theory this is tp->snd_cwnd += alpha / tp->snd_cwnd
 		 */
-		अगर ((tp->snd_cwnd_cnt * ca->alpha)>>7 >= tp->snd_cwnd) अणु
-			अगर (tp->snd_cwnd < tp->snd_cwnd_clamp)
+		if ((tp->snd_cwnd_cnt * ca->alpha)>>7 >= tp->snd_cwnd) {
+			if (tp->snd_cwnd < tp->snd_cwnd_clamp)
 				tp->snd_cwnd++;
 			tp->snd_cwnd_cnt = 0;
 			htcp_alpha_update(ca);
-		पूर्ण अन्यथा
+		} else
 			tp->snd_cwnd_cnt += ca->pkts_acked;
 
 		ca->pkts_acked = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम htcp_init(काष्ठा sock *sk)
-अणु
-	काष्ठा htcp *ca = inet_csk_ca(sk);
+static void htcp_init(struct sock *sk)
+{
+	struct htcp *ca = inet_csk_ca(sk);
 
-	स_रखो(ca, 0, माप(काष्ठा htcp));
+	memset(ca, 0, sizeof(struct htcp));
 	ca->alpha = ALPHA_BASE;
 	ca->beta = BETA_MIN;
 	ca->pkts_acked = 1;
-	ca->last_cong = jअगरfies;
-पूर्ण
+	ca->last_cong = jiffies;
+}
 
-अटल व्योम htcp_state(काष्ठा sock *sk, u8 new_state)
-अणु
-	चयन (new_state) अणु
-	हाल TCP_CA_Open:
-		अणु
-			काष्ठा htcp *ca = inet_csk_ca(sk);
+static void htcp_state(struct sock *sk, u8 new_state)
+{
+	switch (new_state) {
+	case TCP_CA_Open:
+		{
+			struct htcp *ca = inet_csk_ca(sk);
 
-			अगर (ca->unकरो_last_cong) अणु
-				ca->last_cong = jअगरfies;
-				ca->unकरो_last_cong = 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल TCP_CA_CWR:
-	हाल TCP_CA_Recovery:
-	हाल TCP_CA_Loss:
+			if (ca->undo_last_cong) {
+				ca->last_cong = jiffies;
+				ca->undo_last_cong = 0;
+			}
+		}
+		break;
+	case TCP_CA_CWR:
+	case TCP_CA_Recovery:
+	case TCP_CA_Loss:
 		htcp_reset(inet_csk_ca(sk));
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल काष्ठा tcp_congestion_ops htcp __पढ़ो_mostly = अणु
+static struct tcp_congestion_ops htcp __read_mostly = {
 	.init		= htcp_init,
 	.ssthresh	= htcp_recalc_ssthresh,
-	.cong_aव्योम	= htcp_cong_aव्योम,
+	.cong_avoid	= htcp_cong_avoid,
 	.set_state	= htcp_state,
-	.unकरो_cwnd	= htcp_cwnd_unकरो,
+	.undo_cwnd	= htcp_cwnd_undo,
 	.pkts_acked	= measure_achieved_throughput,
 	.owner		= THIS_MODULE,
 	.name		= "htcp",
-पूर्ण;
+};
 
-अटल पूर्णांक __init htcp_रेजिस्टर(व्योम)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा htcp) > ICSK_CA_PRIV_SIZE);
+static int __init htcp_register(void)
+{
+	BUILD_BUG_ON(sizeof(struct htcp) > ICSK_CA_PRIV_SIZE);
 	BUILD_BUG_ON(BETA_MIN >= BETA_MAX);
-	वापस tcp_रेजिस्टर_congestion_control(&htcp);
-पूर्ण
+	return tcp_register_congestion_control(&htcp);
+}
 
-अटल व्योम __निकास htcp_unरेजिस्टर(व्योम)
-अणु
-	tcp_unरेजिस्टर_congestion_control(&htcp);
-पूर्ण
+static void __exit htcp_unregister(void)
+{
+	tcp_unregister_congestion_control(&htcp);
+}
 
-module_init(htcp_रेजिस्टर);
-module_निकास(htcp_unरेजिस्टर);
+module_init(htcp_register);
+module_exit(htcp_unregister);
 
 MODULE_AUTHOR("Baruch Even");
 MODULE_LICENSE("GPL");

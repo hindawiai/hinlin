@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
 * Copyright (c) 2016 MediaTek Inc.
-* Author: Tअगरfany Lin <tअगरfany.lin@mediatek.com>
+* Author: Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/रुको.h>
+#include <linux/errno.h>
+#include <linux/wait.h>
 
-#समावेश "mtk_vcodec_drv.h"
-#समावेश "mtk_vcodec_intr.h"
-#समावेश "mtk_vcodec_util.h"
+#include "mtk_vcodec_drv.h"
+#include "mtk_vcodec_intr.h"
+#include "mtk_vcodec_util.h"
 
-पूर्णांक mtk_vcodec_रुको_क्रम_करोne_ctx(काष्ठा mtk_vcodec_ctx  *ctx, पूर्णांक command,
-				 अचिन्हित पूर्णांक समयout_ms)
-अणु
-	रुको_queue_head_t *रुकोqueue;
-	दीर्घ समयout_jअगरf, ret;
-	पूर्णांक status = 0;
+int mtk_vcodec_wait_for_done_ctx(struct mtk_vcodec_ctx  *ctx, int command,
+				 unsigned int timeout_ms)
+{
+	wait_queue_head_t *waitqueue;
+	long timeout_jiff, ret;
+	int status = 0;
 
-	रुकोqueue = (रुको_queue_head_t *)&ctx->queue;
-	समयout_jअगरf = msecs_to_jअगरfies(समयout_ms);
+	waitqueue = (wait_queue_head_t *)&ctx->queue;
+	timeout_jiff = msecs_to_jiffies(timeout_ms);
 
-	ret = रुको_event_पूर्णांकerruptible_समयout(*रुकोqueue,
-				ctx->पूर्णांक_cond,
-				समयout_jअगरf);
+	ret = wait_event_interruptible_timeout(*waitqueue,
+				ctx->int_cond,
+				timeout_jiff);
 
-	अगर (!ret) अणु
-		status = -1;	/* समयout */
+	if (!ret) {
+		status = -1;	/* timeout */
 		mtk_v4l2_err("[%d] ctx->type=%d, cmd=%d, wait_event_interruptible_timeout time=%ums out %d %d!",
-			     ctx->id, ctx->type, command, समयout_ms,
-			     ctx->पूर्णांक_cond, ctx->पूर्णांक_type);
-	पूर्ण अन्यथा अगर (-ERESTARTSYS == ret) अणु
+			     ctx->id, ctx->type, command, timeout_ms,
+			     ctx->int_cond, ctx->int_type);
+	} else if (-ERESTARTSYS == ret) {
 		mtk_v4l2_err("[%d] ctx->type=%d, cmd=%d, wait_event_interruptible_timeout interrupted by a signal %d %d",
-			     ctx->id, ctx->type, command, ctx->पूर्णांक_cond,
-			     ctx->पूर्णांक_type);
+			     ctx->id, ctx->type, command, ctx->int_cond,
+			     ctx->int_type);
 		status = -1;
-	पूर्ण
+	}
 
-	ctx->पूर्णांक_cond = 0;
-	ctx->पूर्णांक_type = 0;
+	ctx->int_cond = 0;
+	ctx->int_type = 0;
 
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL(mtk_vcodec_रुको_क्रम_करोne_ctx);
+	return status;
+}
+EXPORT_SYMBOL(mtk_vcodec_wait_for_done_ctx);

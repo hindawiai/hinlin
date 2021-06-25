@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-अस्थिर __u64 test_get_स्थिरant = 0;
+volatile __u64 test_get_constant = 0;
 SEC("freplace/get_constant")
-पूर्णांक security_new_get_स्थिरant(दीर्घ val)
-अणु
-	अगर (val != 123)
-		वापस 0;
-	test_get_स्थिरant = 1;
-	वापस test_get_स्थिरant; /* original get_स्थिरant() वापसs val - 122 */
-पूर्ण
-अक्षर _license[] SEC("license") = "GPL";
+int security_new_get_constant(long val)
+{
+	if (val != 123)
+		return 0;
+	test_get_constant = 1;
+	return test_get_constant; /* original get_constant() returns val - 122 */
+}
+char _license[] SEC("license") = "GPL";

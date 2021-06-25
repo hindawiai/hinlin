@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012 Sascha Hauer, Pengutronix
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/समय.स>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/mm.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/time.h>
 
-#समावेश "common.h"
-#समावेश "hardware.h"
-#समावेश "mx27.h"
+#include "common.h"
+#include "hardware.h"
+#include "mx27.h"
 
 /* MX27 memory map definition */
-अटल काष्ठा map_desc imx27_io_desc[] __initdata = अणु
+static struct map_desc imx27_io_desc[] __initdata = {
 	/*
 	 * this fixed mapping covers:
 	 * - AIPI1
@@ -40,27 +39,27 @@
 	 * - EMI
 	 */
 	imx_map_entry(MX27, X_MEMC, MT_DEVICE),
-पूर्ण;
+};
 
 /*
  * Initialize the memory map. It is called during the
- * प्रणाली startup to create अटल physical to भव
- * memory map क्रम the IO modules.
+ * system startup to create static physical to virtual
+ * memory map for the IO modules.
  */
-अटल व्योम __init mx27_map_io(व्योम)
-अणु
+static void __init mx27_map_io(void)
+{
 	iotable_init(imx27_io_desc, ARRAY_SIZE(imx27_io_desc));
-पूर्ण
+}
 
-अटल व्योम __init imx27_init_early(व्योम)
-अणु
+static void __init imx27_init_early(void)
+{
 	mxc_set_cpu_type(MXC_CPU_MX27);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर imx27_dt_board_compat[] __initस्थिर = अणु
+static const char * const imx27_dt_board_compat[] __initconst = {
 	"fsl,imx27",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(IMX27_DT, "Freescale i.MX27 (Device Tree Support)")
 	.map_io		= mx27_map_io,

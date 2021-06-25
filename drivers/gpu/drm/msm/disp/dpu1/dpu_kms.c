@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/pm_opp.h>
+#include <linux/debugfs.h>
+#include <linux/dma-buf.h>
+#include <linux/of_irq.h>
+#include <linux/pm_opp.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_file.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_mmu.h"
-#समावेश "msm_gem.h"
+#include "msm_drv.h"
+#include "msm_mmu.h"
+#include "msm_gem.h"
 
-#समावेश "dpu_kms.h"
-#समावेश "dpu_core_irq.h"
-#समावेश "dpu_formats.h"
-#समावेश "dpu_hw_vbif.h"
-#समावेश "dpu_vbif.h"
-#समावेश "dpu_encoder.h"
-#समावेश "dpu_plane.h"
-#समावेश "dpu_crtc.h"
+#include "dpu_kms.h"
+#include "dpu_core_irq.h"
+#include "dpu_formats.h"
+#include "dpu_hw_vbif.h"
+#include "dpu_vbif.h"
+#include "dpu_encoder.h"
+#include "dpu_plane.h"
+#include "dpu_crtc.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "dpu_trace.h"
+#define CREATE_TRACE_POINTS
+#include "dpu_trace.h"
 
 /*
  * To enable overall DRM driver logging
@@ -40,560 +39,560 @@
  * To enable DRM driver h/w logging
  * # echo <mask> > /sys/kernel/debug/dri/0/debug/hw_log_mask
  *
- * See dpu_hw_mdss.h क्रम h/w logging mask definitions (search क्रम DPU_DBG_MASK_)
+ * See dpu_hw_mdss.h for h/w logging mask definitions (search for DPU_DBG_MASK_)
  */
-#घोषणा DPU_DEBUGFS_सूची "msm_dpu"
-#घोषणा DPU_DEBUGFS_HWMASKNAME "hw_log_mask"
+#define DPU_DEBUGFS_DIR "msm_dpu"
+#define DPU_DEBUGFS_HWMASKNAME "hw_log_mask"
 
-#घोषणा MIN_IB_BW	400000000ULL /* Min ib vote 400MB */
+#define MIN_IB_BW	400000000ULL /* Min ib vote 400MB */
 
-अटल पूर्णांक dpu_kms_hw_init(काष्ठा msm_kms *kms);
-अटल व्योम _dpu_kms_mmu_destroy(काष्ठा dpu_kms *dpu_kms);
+static int dpu_kms_hw_init(struct msm_kms *kms);
+static void _dpu_kms_mmu_destroy(struct dpu_kms *dpu_kms);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल पूर्णांक _dpu_danger_संकेत_status(काष्ठा seq_file *s,
+#ifdef CONFIG_DEBUG_FS
+static int _dpu_danger_signal_status(struct seq_file *s,
 		bool danger_status)
-अणु
-	काष्ठा dpu_kms *kms = (काष्ठा dpu_kms *)s->निजी;
-	काष्ठा dpu_danger_safe_status status;
-	पूर्णांक i;
+{
+	struct dpu_kms *kms = (struct dpu_kms *)s->private;
+	struct dpu_danger_safe_status status;
+	int i;
 
-	अगर (!kms->hw_mdp) अणु
+	if (!kms->hw_mdp) {
 		DPU_ERROR("invalid arg(s)\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_रखो(&status, 0, माप(काष्ठा dpu_danger_safe_status));
+	memset(&status, 0, sizeof(struct dpu_danger_safe_status));
 
-	pm_runसमय_get_sync(&kms->pdev->dev);
-	अगर (danger_status) अणु
-		seq_माला_दो(s, "\nDanger signal status:\n");
-		अगर (kms->hw_mdp->ops.get_danger_status)
+	pm_runtime_get_sync(&kms->pdev->dev);
+	if (danger_status) {
+		seq_puts(s, "\nDanger signal status:\n");
+		if (kms->hw_mdp->ops.get_danger_status)
 			kms->hw_mdp->ops.get_danger_status(kms->hw_mdp,
 					&status);
-	पूर्ण अन्यथा अणु
-		seq_माला_दो(s, "\nSafe signal status:\n");
-		अगर (kms->hw_mdp->ops.get_danger_status)
+	} else {
+		seq_puts(s, "\nSafe signal status:\n");
+		if (kms->hw_mdp->ops.get_danger_status)
 			kms->hw_mdp->ops.get_danger_status(kms->hw_mdp,
 					&status);
-	पूर्ण
-	pm_runसमय_put_sync(&kms->pdev->dev);
+	}
+	pm_runtime_put_sync(&kms->pdev->dev);
 
-	seq_म_लिखो(s, "MDP     :  0x%x\n", status.mdp);
+	seq_printf(s, "MDP     :  0x%x\n", status.mdp);
 
-	क्रम (i = SSPP_VIG0; i < SSPP_MAX; i++)
-		seq_म_लिखो(s, "SSPP%d   :  0x%x  \t", i - SSPP_VIG0,
+	for (i = SSPP_VIG0; i < SSPP_MAX; i++)
+		seq_printf(s, "SSPP%d   :  0x%x  \t", i - SSPP_VIG0,
 				status.sspp[i]);
-	seq_माला_दो(s, "\n");
+	seq_puts(s, "\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpu_debugfs_danger_stats_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	वापस _dpu_danger_संकेत_status(s, true);
-पूर्ण
+static int dpu_debugfs_danger_stats_show(struct seq_file *s, void *v)
+{
+	return _dpu_danger_signal_status(s, true);
+}
 DEFINE_SHOW_ATTRIBUTE(dpu_debugfs_danger_stats);
 
-अटल पूर्णांक dpu_debugfs_safe_stats_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	वापस _dpu_danger_संकेत_status(s, false);
-पूर्ण
+static int dpu_debugfs_safe_stats_show(struct seq_file *s, void *v)
+{
+	return _dpu_danger_signal_status(s, false);
+}
 DEFINE_SHOW_ATTRIBUTE(dpu_debugfs_safe_stats);
 
-अटल व्योम dpu_debugfs_danger_init(काष्ठा dpu_kms *dpu_kms,
-		काष्ठा dentry *parent)
-अणु
-	काष्ठा dentry *entry = debugfs_create_dir("danger", parent);
+static void dpu_debugfs_danger_init(struct dpu_kms *dpu_kms,
+		struct dentry *parent)
+{
+	struct dentry *entry = debugfs_create_dir("danger", parent);
 
 	debugfs_create_file("danger_status", 0600, entry,
 			dpu_kms, &dpu_debugfs_danger_stats_fops);
 	debugfs_create_file("safe_status", 0600, entry,
 			dpu_kms, &dpu_debugfs_safe_stats_fops);
-पूर्ण
+}
 
-अटल पूर्णांक _dpu_debugfs_show_regset32(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा dpu_debugfs_regset32 *regset = s->निजी;
-	काष्ठा dpu_kms *dpu_kms = regset->dpu_kms;
-	व्योम __iomem *base;
-	uपूर्णांक32_t i, addr;
+static int _dpu_debugfs_show_regset32(struct seq_file *s, void *data)
+{
+	struct dpu_debugfs_regset32 *regset = s->private;
+	struct dpu_kms *dpu_kms = regset->dpu_kms;
+	void __iomem *base;
+	uint32_t i, addr;
 
-	अगर (!dpu_kms->mmio)
-		वापस 0;
+	if (!dpu_kms->mmio)
+		return 0;
 
 	base = dpu_kms->mmio + regset->offset;
 
-	/* insert padding spaces, अगर needed */
-	अगर (regset->offset & 0xF) अणु
-		seq_म_लिखो(s, "[%x]", regset->offset & ~0xF);
-		क्रम (i = 0; i < (regset->offset & 0xF); i += 4)
-			seq_माला_दो(s, "         ");
-	पूर्ण
+	/* insert padding spaces, if needed */
+	if (regset->offset & 0xF) {
+		seq_printf(s, "[%x]", regset->offset & ~0xF);
+		for (i = 0; i < (regset->offset & 0xF); i += 4)
+			seq_puts(s, "         ");
+	}
 
-	pm_runसमय_get_sync(&dpu_kms->pdev->dev);
+	pm_runtime_get_sync(&dpu_kms->pdev->dev);
 
-	/* मुख्य रेजिस्टर output */
-	क्रम (i = 0; i < regset->blk_len; i += 4) अणु
+	/* main register output */
+	for (i = 0; i < regset->blk_len; i += 4) {
 		addr = regset->offset + i;
-		अगर ((addr & 0xF) == 0x0)
-			seq_म_लिखो(s, i ? "\n[%x]" : "[%x]", addr);
-		seq_म_लिखो(s, " %08x", पढ़ोl_relaxed(base + i));
-	पूर्ण
-	seq_माला_दो(s, "\n");
-	pm_runसमय_put_sync(&dpu_kms->pdev->dev);
+		if ((addr & 0xF) == 0x0)
+			seq_printf(s, i ? "\n[%x]" : "[%x]", addr);
+		seq_printf(s, " %08x", readl_relaxed(base + i));
+	}
+	seq_puts(s, "\n");
+	pm_runtime_put_sync(&dpu_kms->pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpu_debugfs_खोलो_regset32(काष्ठा inode *inode,
-		काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, _dpu_debugfs_show_regset32, inode->i_निजी);
-पूर्ण
+static int dpu_debugfs_open_regset32(struct inode *inode,
+		struct file *file)
+{
+	return single_open(file, _dpu_debugfs_show_regset32, inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations dpu_fops_regset32 = अणु
-	.खोलो =		dpu_debugfs_खोलो_regset32,
-	.पढ़ो =		seq_पढ़ो,
+static const struct file_operations dpu_fops_regset32 = {
+	.open =		dpu_debugfs_open_regset32,
+	.read =		seq_read,
 	.llseek =	seq_lseek,
 	.release =	single_release,
-पूर्ण;
+};
 
-व्योम dpu_debugfs_setup_regset32(काष्ठा dpu_debugfs_regset32 *regset,
-		uपूर्णांक32_t offset, uपूर्णांक32_t length, काष्ठा dpu_kms *dpu_kms)
-अणु
-	अगर (regset) अणु
+void dpu_debugfs_setup_regset32(struct dpu_debugfs_regset32 *regset,
+		uint32_t offset, uint32_t length, struct dpu_kms *dpu_kms)
+{
+	if (regset) {
 		regset->offset = offset;
 		regset->blk_len = length;
 		regset->dpu_kms = dpu_kms;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dpu_debugfs_create_regset32(स्थिर अक्षर *name, umode_t mode,
-		व्योम *parent, काष्ठा dpu_debugfs_regset32 *regset)
-अणु
-	अगर (!name || !regset || !regset->dpu_kms || !regset->blk_len)
-		वापस;
+void dpu_debugfs_create_regset32(const char *name, umode_t mode,
+		void *parent, struct dpu_debugfs_regset32 *regset)
+{
+	if (!name || !regset || !regset->dpu_kms || !regset->blk_len)
+		return;
 
 	/* make sure offset is a multiple of 4 */
-	regset->offset = round_करोwn(regset->offset, 4);
+	regset->offset = round_down(regset->offset, 4);
 
 	debugfs_create_file(name, mode, parent, regset, &dpu_fops_regset32);
-पूर्ण
+}
 
-अटल पूर्णांक dpu_kms_debugfs_init(काष्ठा msm_kms *kms, काष्ठा drm_minor *minor)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	व्योम *p = dpu_hw_util_get_log_mask_ptr();
-	काष्ठा dentry *entry;
-	काष्ठा drm_device *dev;
-	काष्ठा msm_drm_निजी *priv;
+static int dpu_kms_debugfs_init(struct msm_kms *kms, struct drm_minor *minor)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	void *p = dpu_hw_util_get_log_mask_ptr();
+	struct dentry *entry;
+	struct drm_device *dev;
+	struct msm_drm_private *priv;
 
-	अगर (!p)
-		वापस -EINVAL;
+	if (!p)
+		return -EINVAL;
 
 	dev = dpu_kms->dev;
-	priv = dev->dev_निजी;
+	priv = dev->dev_private;
 
 	entry = debugfs_create_dir("debug", minor->debugfs_root);
 
 	debugfs_create_x32(DPU_DEBUGFS_HWMASKNAME, 0600, entry, p);
 
 	dpu_debugfs_danger_init(dpu_kms, entry);
-	dpu_debugfs_vbअगर_init(dpu_kms, entry);
+	dpu_debugfs_vbif_init(dpu_kms, entry);
 	dpu_debugfs_core_irq_init(dpu_kms, entry);
 
-	अगर (priv->dp)
+	if (priv->dp)
 		msm_dp_debugfs_init(priv->dp, minor);
 
-	वापस dpu_core_perf_debugfs_init(dpu_kms, entry);
-पूर्ण
-#पूर्ण_अगर
+	return dpu_core_perf_debugfs_init(dpu_kms, entry);
+}
+#endif
 
 /* Global/shared object state funcs */
 
 /*
- * This is a helper that वापसs the निजी state currently in operation.
- * Note that this would वापस the "old_state" अगर called in the atomic check
- * path, and the "new_state" after the atomic swap has been करोne.
+ * This is a helper that returns the private state currently in operation.
+ * Note that this would return the "old_state" if called in the atomic check
+ * path, and the "new_state" after the atomic swap has been done.
  */
-काष्ठा dpu_global_state *
-dpu_kms_get_existing_global_state(काष्ठा dpu_kms *dpu_kms)
-अणु
-	वापस to_dpu_global_state(dpu_kms->global_state.state);
-पूर्ण
+struct dpu_global_state *
+dpu_kms_get_existing_global_state(struct dpu_kms *dpu_kms)
+{
+	return to_dpu_global_state(dpu_kms->global_state.state);
+}
 
 /*
- * This acquires the modeset lock set aside क्रम global state, creates
- * a new duplicated निजी object state.
+ * This acquires the modeset lock set aside for global state, creates
+ * a new duplicated private object state.
  */
-काष्ठा dpu_global_state *dpu_kms_get_global_state(काष्ठा drm_atomic_state *s)
-अणु
-	काष्ठा msm_drm_निजी *priv = s->dev->dev_निजी;
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(priv->kms);
-	काष्ठा drm_निजी_state *priv_state;
-	पूर्णांक ret;
+struct dpu_global_state *dpu_kms_get_global_state(struct drm_atomic_state *s)
+{
+	struct msm_drm_private *priv = s->dev->dev_private;
+	struct dpu_kms *dpu_kms = to_dpu_kms(priv->kms);
+	struct drm_private_state *priv_state;
+	int ret;
 
 	ret = drm_modeset_lock(&dpu_kms->global_state_lock, s->acquire_ctx);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	priv_state = drm_atomic_get_निजी_obj_state(s,
+	priv_state = drm_atomic_get_private_obj_state(s,
 						&dpu_kms->global_state);
-	अगर (IS_ERR(priv_state))
-		वापस ERR_CAST(priv_state);
+	if (IS_ERR(priv_state))
+		return ERR_CAST(priv_state);
 
-	वापस to_dpu_global_state(priv_state);
-पूर्ण
+	return to_dpu_global_state(priv_state);
+}
 
-अटल काष्ठा drm_निजी_state *
-dpu_kms_global_duplicate_state(काष्ठा drm_निजी_obj *obj)
-अणु
-	काष्ठा dpu_global_state *state;
+static struct drm_private_state *
+dpu_kms_global_duplicate_state(struct drm_private_obj *obj)
+{
+	struct dpu_global_state *state;
 
-	state = kmemdup(obj->state, माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस शून्य;
+	state = kmemdup(obj->state, sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return NULL;
 
-	__drm_atomic_helper_निजी_obj_duplicate_state(obj, &state->base);
+	__drm_atomic_helper_private_obj_duplicate_state(obj, &state->base);
 
-	वापस &state->base;
-पूर्ण
+	return &state->base;
+}
 
-अटल व्योम dpu_kms_global_destroy_state(काष्ठा drm_निजी_obj *obj,
-				      काष्ठा drm_निजी_state *state)
-अणु
-	काष्ठा dpu_global_state *dpu_state = to_dpu_global_state(state);
+static void dpu_kms_global_destroy_state(struct drm_private_obj *obj,
+				      struct drm_private_state *state)
+{
+	struct dpu_global_state *dpu_state = to_dpu_global_state(state);
 
-	kमुक्त(dpu_state);
-पूर्ण
+	kfree(dpu_state);
+}
 
-अटल स्थिर काष्ठा drm_निजी_state_funcs dpu_kms_global_state_funcs = अणु
+static const struct drm_private_state_funcs dpu_kms_global_state_funcs = {
 	.atomic_duplicate_state = dpu_kms_global_duplicate_state,
 	.atomic_destroy_state = dpu_kms_global_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक dpu_kms_global_obj_init(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा dpu_global_state *state;
+static int dpu_kms_global_obj_init(struct dpu_kms *dpu_kms)
+{
+	struct dpu_global_state *state;
 
 	drm_modeset_lock_init(&dpu_kms->global_state_lock);
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस -ENOMEM;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return -ENOMEM;
 
-	drm_atomic_निजी_obj_init(dpu_kms->dev, &dpu_kms->global_state,
+	drm_atomic_private_obj_init(dpu_kms->dev, &dpu_kms->global_state,
 				    &state->base,
 				    &dpu_kms_global_state_funcs);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpu_kms_parse_data_bus_icc_path(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा icc_path *path0;
-	काष्ठा icc_path *path1;
-	काष्ठा drm_device *dev = dpu_kms->dev;
+static int dpu_kms_parse_data_bus_icc_path(struct dpu_kms *dpu_kms)
+{
+	struct icc_path *path0;
+	struct icc_path *path1;
+	struct drm_device *dev = dpu_kms->dev;
 
 	path0 = of_icc_get(dev->dev, "mdp0-mem");
 	path1 = of_icc_get(dev->dev, "mdp1-mem");
 
-	अगर (IS_ERR_OR_शून्य(path0))
-		वापस PTR_ERR_OR_ZERO(path0);
+	if (IS_ERR_OR_NULL(path0))
+		return PTR_ERR_OR_ZERO(path0);
 
 	dpu_kms->path[0] = path0;
 	dpu_kms->num_paths = 1;
 
-	अगर (!IS_ERR_OR_शून्य(path1)) अणु
+	if (!IS_ERR_OR_NULL(path1)) {
 		dpu_kms->path[1] = path1;
 		dpu_kms->num_paths++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक dpu_kms_enable_vblank(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc)
-अणु
-	वापस dpu_crtc_vblank(crtc, true);
-पूर्ण
+static int dpu_kms_enable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
+{
+	return dpu_crtc_vblank(crtc, true);
+}
 
-अटल व्योम dpu_kms_disable_vblank(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc)
-अणु
+static void dpu_kms_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
+{
 	dpu_crtc_vblank(crtc, false);
-पूर्ण
+}
 
-अटल व्योम dpu_kms_enable_commit(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	pm_runसमय_get_sync(&dpu_kms->pdev->dev);
-पूर्ण
+static void dpu_kms_enable_commit(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	pm_runtime_get_sync(&dpu_kms->pdev->dev);
+}
 
-अटल व्योम dpu_kms_disable_commit(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	pm_runसमय_put_sync(&dpu_kms->pdev->dev);
-पूर्ण
+static void dpu_kms_disable_commit(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	pm_runtime_put_sync(&dpu_kms->pdev->dev);
+}
 
-अटल kसमय_प्रकार dpu_kms_vsync_समय(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_encoder *encoder;
+static ktime_t dpu_kms_vsync_time(struct msm_kms *kms, struct drm_crtc *crtc)
+{
+	struct drm_encoder *encoder;
 
-	drm_क्रम_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask) अणु
-		kसमय_प्रकार vsync_समय;
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask) {
+		ktime_t vsync_time;
 
-		अगर (dpu_encoder_vsync_समय(encoder, &vsync_समय) == 0)
-			वापस vsync_समय;
-	पूर्ण
+		if (dpu_encoder_vsync_time(encoder, &vsync_time) == 0)
+			return vsync_time;
+	}
 
-	वापस kसमय_get();
-पूर्ण
+	return ktime_get();
+}
 
-अटल व्योम dpu_kms_prepare_commit(काष्ठा msm_kms *kms,
-		काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_encoder *encoder;
-	पूर्णांक i;
+static void dpu_kms_prepare_commit(struct msm_kms *kms,
+		struct drm_atomic_state *state)
+{
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *crtc_state;
+	struct drm_encoder *encoder;
+	int i;
 
-	अगर (!kms)
-		वापस;
+	if (!kms)
+		return;
 
-	/* Call prepare_commit क्रम all affected encoders */
-	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
-		drm_क्रम_each_encoder_mask(encoder, crtc->dev,
-					  crtc_state->encoder_mask) अणु
+	/* Call prepare_commit for all affected encoders */
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
+		drm_for_each_encoder_mask(encoder, crtc->dev,
+					  crtc_state->encoder_mask) {
 			dpu_encoder_prepare_commit(encoder);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम dpu_kms_flush_commit(काष्ठा msm_kms *kms, अचिन्हित crtc_mask)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	काष्ठा drm_crtc *crtc;
+static void dpu_kms_flush_commit(struct msm_kms *kms, unsigned crtc_mask)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask) अणु
-		अगर (!crtc->state->active)
-			जारी;
+	for_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask) {
+		if (!crtc->state->active)
+			continue;
 
 		trace_dpu_kms_commit(DRMID(crtc));
 		dpu_crtc_commit_kickoff(crtc);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Override the encoder enable since we need to setup the अंतरभूत rotator and करो
- * some crtc magic beक्रमe enabling any bridge that might be present.
+ * Override the encoder enable since we need to setup the inline rotator and do
+ * some crtc magic before enabling any bridge that might be present.
  */
-व्योम dpu_kms_encoder_enable(काष्ठा drm_encoder *encoder)
-अणु
-	स्थिर काष्ठा drm_encoder_helper_funcs *funcs = encoder->helper_निजी;
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा drm_crtc *crtc;
+void dpu_kms_encoder_enable(struct drm_encoder *encoder)
+{
+	const struct drm_encoder_helper_funcs *funcs = encoder->helper_private;
+	struct drm_device *dev = encoder->dev;
+	struct drm_crtc *crtc;
 
 	/* Forward this enable call to the commit hook */
-	अगर (funcs && funcs->commit)
+	if (funcs && funcs->commit)
 		funcs->commit(encoder);
 
-	drm_क्रम_each_crtc(crtc, dev) अणु
-		अगर (!(crtc->state->encoder_mask & drm_encoder_mask(encoder)))
-			जारी;
+	drm_for_each_crtc(crtc, dev) {
+		if (!(crtc->state->encoder_mask & drm_encoder_mask(encoder)))
+			continue;
 
 		trace_dpu_kms_enc_enable(DRMID(crtc));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dpu_kms_complete_commit(काष्ठा msm_kms *kms, अचिन्हित crtc_mask)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	काष्ठा drm_crtc *crtc;
+static void dpu_kms_complete_commit(struct msm_kms *kms, unsigned crtc_mask)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	struct drm_crtc *crtc;
 
 	DPU_ATRACE_BEGIN("kms_complete_commit");
 
-	क्रम_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask)
+	for_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask)
 		dpu_crtc_complete_commit(crtc);
 
 	DPU_ATRACE_END("kms_complete_commit");
-पूर्ण
+}
 
-अटल व्योम dpu_kms_रुको_क्रम_commit_करोne(काष्ठा msm_kms *kms,
-		काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_encoder *encoder;
-	काष्ठा drm_device *dev;
-	पूर्णांक ret;
+static void dpu_kms_wait_for_commit_done(struct msm_kms *kms,
+		struct drm_crtc *crtc)
+{
+	struct drm_encoder *encoder;
+	struct drm_device *dev;
+	int ret;
 
-	अगर (!kms || !crtc || !crtc->state) अणु
+	if (!kms || !crtc || !crtc->state) {
 		DPU_ERROR("invalid params\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev = crtc->dev;
 
-	अगर (!crtc->state->enable) अणु
+	if (!crtc->state->enable) {
 		DPU_DEBUG("[crtc:%d] not enable\n", crtc->base.id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!crtc->state->active) अणु
+	if (!crtc->state->active) {
 		DPU_DEBUG("[crtc:%d] not active\n", crtc->base.id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	list_क्रम_each_entry(encoder, &dev->mode_config.encoder_list, head) अणु
-		अगर (encoder->crtc != crtc)
-			जारी;
+	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+		if (encoder->crtc != crtc)
+			continue;
 		/*
-		 * Wait क्रम post-flush अगर necessary to delay beक्रमe
-		 * plane_cleanup. For example, रुको क्रम vsync in हाल of video
-		 * mode panels. This may be a no-op क्रम command mode panels.
+		 * Wait for post-flush if necessary to delay before
+		 * plane_cleanup. For example, wait for vsync in case of video
+		 * mode panels. This may be a no-op for command mode panels.
 		 */
-		trace_dpu_kms_रुको_क्रम_commit_करोne(DRMID(crtc));
-		ret = dpu_encoder_रुको_क्रम_event(encoder, MSM_ENC_COMMIT_DONE);
-		अगर (ret && ret != -EWOULDBLOCK) अणु
+		trace_dpu_kms_wait_for_commit_done(DRMID(crtc));
+		ret = dpu_encoder_wait_for_event(encoder, MSM_ENC_COMMIT_DONE);
+		if (ret && ret != -EWOULDBLOCK) {
 			DPU_ERROR("wait for commit done returned %d\n", ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम dpu_kms_रुको_flush(काष्ठा msm_kms *kms, अचिन्हित crtc_mask)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
-	काष्ठा drm_crtc *crtc;
+static void dpu_kms_wait_flush(struct msm_kms *kms, unsigned crtc_mask)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
+	struct drm_crtc *crtc;
 
-	क्रम_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask)
-		dpu_kms_रुको_क्रम_commit_करोne(kms, crtc);
-पूर्ण
+	for_each_crtc_mask(dpu_kms->dev, crtc, crtc_mask)
+		dpu_kms_wait_for_commit_done(kms, crtc);
+}
 
-अटल पूर्णांक _dpu_kms_initialize_dsi(काष्ठा drm_device *dev,
-				    काष्ठा msm_drm_निजी *priv,
-				    काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा drm_encoder *encoder = शून्य;
-	पूर्णांक i, rc = 0;
+static int _dpu_kms_initialize_dsi(struct drm_device *dev,
+				    struct msm_drm_private *priv,
+				    struct dpu_kms *dpu_kms)
+{
+	struct drm_encoder *encoder = NULL;
+	int i, rc = 0;
 
-	अगर (!(priv->dsi[0] || priv->dsi[1]))
-		वापस rc;
+	if (!(priv->dsi[0] || priv->dsi[1]))
+		return rc;
 
 	/*TODO: Support two independent DSI connectors */
 	encoder = dpu_encoder_init(dev, DRM_MODE_ENCODER_DSI);
-	अगर (IS_ERR(encoder)) अणु
+	if (IS_ERR(encoder)) {
 		DPU_ERROR("encoder init failed for dsi display\n");
-		वापस PTR_ERR(encoder);
-	पूर्ण
+		return PTR_ERR(encoder);
+	}
 
 	priv->encoders[priv->num_encoders++] = encoder;
 
-	क्रम (i = 0; i < ARRAY_SIZE(priv->dsi); i++) अणु
-		अगर (!priv->dsi[i])
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(priv->dsi); i++) {
+		if (!priv->dsi[i])
+			continue;
 
 		rc = msm_dsi_modeset_init(priv->dsi[i], dev, encoder);
-		अगर (rc) अणु
+		if (rc) {
 			DPU_ERROR("modeset_init failed for dsi[%d], rc = %d\n",
 				i, rc);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक _dpu_kms_initialize_displayport(काष्ठा drm_device *dev,
-					    काष्ठा msm_drm_निजी *priv,
-					    काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा drm_encoder *encoder = शून्य;
-	पूर्णांक rc = 0;
+static int _dpu_kms_initialize_displayport(struct drm_device *dev,
+					    struct msm_drm_private *priv,
+					    struct dpu_kms *dpu_kms)
+{
+	struct drm_encoder *encoder = NULL;
+	int rc = 0;
 
-	अगर (!priv->dp)
-		वापस rc;
+	if (!priv->dp)
+		return rc;
 
 	encoder = dpu_encoder_init(dev, DRM_MODE_ENCODER_TMDS);
-	अगर (IS_ERR(encoder)) अणु
+	if (IS_ERR(encoder)) {
 		DPU_ERROR("encoder init failed for dsi display\n");
-		वापस PTR_ERR(encoder);
-	पूर्ण
+		return PTR_ERR(encoder);
+	}
 
 	rc = msm_dp_modeset_init(priv->dp, dev, encoder);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("modeset_init failed for DP, rc = %d\n", rc);
 		drm_encoder_cleanup(encoder);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	priv->encoders[priv->num_encoders++] = encoder;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * _dpu_kms_setup_displays - create encoders, bridges and connectors
- *                           क्रम underlying displays
- * @dev:        Poपूर्णांकer to drm device काष्ठाure
- * @priv:       Poपूर्णांकer to निजी drm device data
- * @dpu_kms:    Poपूर्णांकer to dpu kms काष्ठाure
+ *                           for underlying displays
+ * @dev:        Pointer to drm device structure
+ * @priv:       Pointer to private drm device data
+ * @dpu_kms:    Pointer to dpu kms structure
  * Returns:     Zero on success
  */
-अटल पूर्णांक _dpu_kms_setup_displays(काष्ठा drm_device *dev,
-				    काष्ठा msm_drm_निजी *priv,
-				    काष्ठा dpu_kms *dpu_kms)
-अणु
-	पूर्णांक rc = 0;
+static int _dpu_kms_setup_displays(struct drm_device *dev,
+				    struct msm_drm_private *priv,
+				    struct dpu_kms *dpu_kms)
+{
+	int rc = 0;
 
 	rc = _dpu_kms_initialize_dsi(dev, priv, dpu_kms);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("initialize_dsi failed, rc = %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	rc = _dpu_kms_initialize_displayport(dev, priv, dpu_kms);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("initialize_DP failed, rc = %d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम _dpu_kms_drm_obj_destroy(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा msm_drm_निजी *priv;
-	पूर्णांक i;
+static void _dpu_kms_drm_obj_destroy(struct dpu_kms *dpu_kms)
+{
+	struct msm_drm_private *priv;
+	int i;
 
-	priv = dpu_kms->dev->dev_निजी;
+	priv = dpu_kms->dev->dev_private;
 
-	क्रम (i = 0; i < priv->num_crtcs; i++)
+	for (i = 0; i < priv->num_crtcs; i++)
 		priv->crtcs[i]->funcs->destroy(priv->crtcs[i]);
 	priv->num_crtcs = 0;
 
-	क्रम (i = 0; i < priv->num_planes; i++)
+	for (i = 0; i < priv->num_planes; i++)
 		priv->planes[i]->funcs->destroy(priv->planes[i]);
 	priv->num_planes = 0;
 
-	क्रम (i = 0; i < priv->num_connectors; i++)
+	for (i = 0; i < priv->num_connectors; i++)
 		priv->connectors[i]->funcs->destroy(priv->connectors[i]);
 	priv->num_connectors = 0;
 
-	क्रम (i = 0; i < priv->num_encoders; i++)
+	for (i = 0; i < priv->num_encoders; i++)
 		priv->encoders[i]->funcs->destroy(priv->encoders[i]);
 	priv->num_encoders = 0;
-पूर्ण
+}
 
-अटल पूर्णांक _dpu_kms_drm_obj_init(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा drm_device *dev;
-	काष्ठा drm_plane *primary_planes[MAX_PLANES], *plane;
-	काष्ठा drm_plane *cursor_planes[MAX_PLANES] = अणु शून्य पूर्ण;
-	काष्ठा drm_crtc *crtc;
+static int _dpu_kms_drm_obj_init(struct dpu_kms *dpu_kms)
+{
+	struct drm_device *dev;
+	struct drm_plane *primary_planes[MAX_PLANES], *plane;
+	struct drm_plane *cursor_planes[MAX_PLANES] = { NULL };
+	struct drm_crtc *crtc;
 
-	काष्ठा msm_drm_निजी *priv;
-	काष्ठा dpu_mdss_cfg *catalog;
+	struct msm_drm_private *priv;
+	struct dpu_mdss_cfg *catalog;
 
-	पूर्णांक primary_planes_idx = 0, cursor_planes_idx = 0, i, ret;
-	पूर्णांक max_crtc_count;
+	int primary_planes_idx = 0, cursor_planes_idx = 0, i, ret;
+	int max_crtc_count;
 	dev = dpu_kms->dev;
-	priv = dev->dev_निजी;
+	priv = dev->dev_private;
 	catalog = dpu_kms->catalog;
 
 	/*
@@ -601,21 +600,21 @@ dpu_kms_global_duplicate_state(काष्ठा drm_निजी_obj *obj)
 	 * bridges and connectors
 	 */
 	ret = _dpu_kms_setup_displays(dev, priv, dpu_kms);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	max_crtc_count = min(catalog->mixer_count, priv->num_encoders);
 
 	/* Create the planes, keeping track of one primary/cursor per crtc */
-	क्रम (i = 0; i < catalog->sspp_count; i++) अणु
-		क्रमागत drm_plane_type type;
+	for (i = 0; i < catalog->sspp_count; i++) {
+		enum drm_plane_type type;
 
-		अगर ((catalog->sspp[i].features & BIT(DPU_SSPP_CURSOR))
+		if ((catalog->sspp[i].features & BIT(DPU_SSPP_CURSOR))
 			&& cursor_planes_idx < max_crtc_count)
 			type = DRM_PLANE_TYPE_CURSOR;
-		अन्यथा अगर (primary_planes_idx < max_crtc_count)
+		else if (primary_planes_idx < max_crtc_count)
 			type = DRM_PLANE_TYPE_PRIMARY;
-		अन्यथा
+		else
 			type = DRM_PLANE_TYPE_OVERLAY;
 
 		DPU_DEBUG("Create plane type %d with features %lx (cur %lx)\n",
@@ -624,182 +623,182 @@ dpu_kms_global_duplicate_state(काष्ठा drm_निजी_obj *obj)
 
 		plane = dpu_plane_init(dev, catalog->sspp[i].id, type,
 				       (1UL << max_crtc_count) - 1, 0);
-		अगर (IS_ERR(plane)) अणु
+		if (IS_ERR(plane)) {
 			DPU_ERROR("dpu_plane_init failed\n");
 			ret = PTR_ERR(plane);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		priv->planes[priv->num_planes++] = plane;
 
-		अगर (type == DRM_PLANE_TYPE_CURSOR)
+		if (type == DRM_PLANE_TYPE_CURSOR)
 			cursor_planes[cursor_planes_idx++] = plane;
-		अन्यथा अगर (type == DRM_PLANE_TYPE_PRIMARY)
+		else if (type == DRM_PLANE_TYPE_PRIMARY)
 			primary_planes[primary_planes_idx++] = plane;
-	पूर्ण
+	}
 
 	max_crtc_count = min(max_crtc_count, primary_planes_idx);
 
 	/* Create one CRTC per encoder */
-	क्रम (i = 0; i < max_crtc_count; i++) अणु
+	for (i = 0; i < max_crtc_count; i++) {
 		crtc = dpu_crtc_init(dev, primary_planes[i], cursor_planes[i]);
-		अगर (IS_ERR(crtc)) अणु
+		if (IS_ERR(crtc)) {
 			ret = PTR_ERR(crtc);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		priv->crtcs[priv->num_crtcs++] = crtc;
-	पूर्ण
+	}
 
 	/* All CRTCs are compatible with all encoders */
-	क्रम (i = 0; i < priv->num_encoders; i++)
+	for (i = 0; i < priv->num_encoders; i++)
 		priv->encoders[i]->possible_crtcs = (1 << priv->num_crtcs) - 1;
 
-	वापस 0;
+	return 0;
 fail:
 	_dpu_kms_drm_obj_destroy(dpu_kms);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल दीर्घ dpu_kms_round_pixclk(काष्ठा msm_kms *kms, अचिन्हित दीर्घ rate,
-		काष्ठा drm_encoder *encoder)
-अणु
-	वापस rate;
-पूर्ण
+static long dpu_kms_round_pixclk(struct msm_kms *kms, unsigned long rate,
+		struct drm_encoder *encoder)
+{
+	return rate;
+}
 
-अटल व्योम _dpu_kms_hw_destroy(काष्ठा dpu_kms *dpu_kms)
-अणु
-	पूर्णांक i;
+static void _dpu_kms_hw_destroy(struct dpu_kms *dpu_kms)
+{
+	int i;
 
-	अगर (dpu_kms->hw_पूर्णांकr)
-		dpu_hw_पूर्णांकr_destroy(dpu_kms->hw_पूर्णांकr);
-	dpu_kms->hw_पूर्णांकr = शून्य;
+	if (dpu_kms->hw_intr)
+		dpu_hw_intr_destroy(dpu_kms->hw_intr);
+	dpu_kms->hw_intr = NULL;
 
-	/* safe to call these more than once during shutकरोwn */
+	/* safe to call these more than once during shutdown */
 	_dpu_kms_mmu_destroy(dpu_kms);
 
-	अगर (dpu_kms->catalog) अणु
-		क्रम (i = 0; i < dpu_kms->catalog->vbअगर_count; i++) अणु
-			u32 vbअगर_idx = dpu_kms->catalog->vbअगर[i].id;
+	if (dpu_kms->catalog) {
+		for (i = 0; i < dpu_kms->catalog->vbif_count; i++) {
+			u32 vbif_idx = dpu_kms->catalog->vbif[i].id;
 
-			अगर ((vbअगर_idx < VBIF_MAX) && dpu_kms->hw_vbअगर[vbअगर_idx])
-				dpu_hw_vbअगर_destroy(dpu_kms->hw_vbअगर[vbअगर_idx]);
-		पूर्ण
-	पूर्ण
+			if ((vbif_idx < VBIF_MAX) && dpu_kms->hw_vbif[vbif_idx])
+				dpu_hw_vbif_destroy(dpu_kms->hw_vbif[vbif_idx]);
+		}
+	}
 
-	अगर (dpu_kms->rm_init)
+	if (dpu_kms->rm_init)
 		dpu_rm_destroy(&dpu_kms->rm);
 	dpu_kms->rm_init = false;
 
-	अगर (dpu_kms->catalog)
+	if (dpu_kms->catalog)
 		dpu_hw_catalog_deinit(dpu_kms->catalog);
-	dpu_kms->catalog = शून्य;
+	dpu_kms->catalog = NULL;
 
-	अगर (dpu_kms->vbअगर[VBIF_NRT])
-		devm_iounmap(&dpu_kms->pdev->dev, dpu_kms->vbअगर[VBIF_NRT]);
-	dpu_kms->vbअगर[VBIF_NRT] = शून्य;
+	if (dpu_kms->vbif[VBIF_NRT])
+		devm_iounmap(&dpu_kms->pdev->dev, dpu_kms->vbif[VBIF_NRT]);
+	dpu_kms->vbif[VBIF_NRT] = NULL;
 
-	अगर (dpu_kms->vbअगर[VBIF_RT])
-		devm_iounmap(&dpu_kms->pdev->dev, dpu_kms->vbअगर[VBIF_RT]);
-	dpu_kms->vbअगर[VBIF_RT] = शून्य;
+	if (dpu_kms->vbif[VBIF_RT])
+		devm_iounmap(&dpu_kms->pdev->dev, dpu_kms->vbif[VBIF_RT]);
+	dpu_kms->vbif[VBIF_RT] = NULL;
 
-	अगर (dpu_kms->hw_mdp)
+	if (dpu_kms->hw_mdp)
 		dpu_hw_mdp_destroy(dpu_kms->hw_mdp);
-	dpu_kms->hw_mdp = शून्य;
+	dpu_kms->hw_mdp = NULL;
 
-	अगर (dpu_kms->mmio)
+	if (dpu_kms->mmio)
 		devm_iounmap(&dpu_kms->pdev->dev, dpu_kms->mmio);
-	dpu_kms->mmio = शून्य;
-पूर्ण
+	dpu_kms->mmio = NULL;
+}
 
-अटल व्योम dpu_kms_destroy(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms;
+static void dpu_kms_destroy(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms;
 
-	अगर (!kms) अणु
+	if (!kms) {
 		DPU_ERROR("invalid kms\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dpu_kms = to_dpu_kms(kms);
 
 	_dpu_kms_hw_destroy(dpu_kms);
 
 	msm_kms_destroy(&dpu_kms->base);
-पूर्ण
+}
 
-अटल व्योम _dpu_kms_set_encoder_mode(काष्ठा msm_kms *kms,
-				 काष्ठा drm_encoder *encoder,
+static void _dpu_kms_set_encoder_mode(struct msm_kms *kms,
+				 struct drm_encoder *encoder,
 				 bool cmd_mode)
-अणु
-	काष्ठा msm_display_info info;
-	काष्ठा msm_drm_निजी *priv = encoder->dev->dev_निजी;
-	पूर्णांक i, rc = 0;
+{
+	struct msm_display_info info;
+	struct msm_drm_private *priv = encoder->dev->dev_private;
+	int i, rc = 0;
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 
-	info.पूर्णांकf_type = encoder->encoder_type;
+	info.intf_type = encoder->encoder_type;
 	info.capabilities = cmd_mode ? MSM_DISPLAY_CAP_CMD_MODE :
 			MSM_DISPLAY_CAP_VID_MODE;
 
-	चयन (info.पूर्णांकf_type) अणु
-	हाल DRM_MODE_ENCODER_DSI:
-		/* TODO: No support क्रम DSI swap */
-		क्रम (i = 0; i < ARRAY_SIZE(priv->dsi); i++) अणु
-			अगर (priv->dsi[i]) अणु
+	switch (info.intf_type) {
+	case DRM_MODE_ENCODER_DSI:
+		/* TODO: No support for DSI swap */
+		for (i = 0; i < ARRAY_SIZE(priv->dsi); i++) {
+			if (priv->dsi[i]) {
 				info.h_tile_instance[info.num_of_h_tiles] = i;
 				info.num_of_h_tiles++;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल DRM_MODE_ENCODER_TMDS:
+			}
+		}
+		break;
+	case DRM_MODE_ENCODER_TMDS:
 		info.num_of_h_tiles = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	rc = dpu_encoder_setup(encoder->dev, encoder, &info);
-	अगर (rc)
+	if (rc)
 		DPU_ERROR("failed to setup DPU encoder %d: rc:%d\n",
 			encoder->base.id, rc);
-पूर्ण
+}
 
-अटल irqवापस_t dpu_irq(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
+static irqreturn_t dpu_irq(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
 
-	वापस dpu_core_irq(dpu_kms);
-पूर्ण
+	return dpu_core_irq(dpu_kms);
+}
 
-अटल व्योम dpu_irq_preinstall(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
+static void dpu_irq_preinstall(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
 
 	dpu_core_irq_preinstall(dpu_kms);
-पूर्ण
+}
 
-अटल पूर्णांक dpu_irq_postinstall(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा msm_drm_निजी *priv;
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
+static int dpu_irq_postinstall(struct msm_kms *kms)
+{
+	struct msm_drm_private *priv;
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
 
-	अगर (!dpu_kms || !dpu_kms->dev)
-		वापस -EINVAL;
+	if (!dpu_kms || !dpu_kms->dev)
+		return -EINVAL;
 
-	priv = dpu_kms->dev->dev_निजी;
-	अगर (!priv)
-		वापस -EINVAL;
+	priv = dpu_kms->dev->dev_private;
+	if (!priv)
+		return -EINVAL;
 
 	msm_dp_irq_postinstall(priv->dp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpu_irq_uninstall(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms = to_dpu_kms(kms);
+static void dpu_irq_uninstall(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
 
 	dpu_core_irq_uninstall(dpu_kms);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा msm_kms_funcs kms_funcs = अणु
+static const struct msm_kms_funcs kms_funcs = {
 	.hw_init         = dpu_kms_hw_init,
 	.irq_preinstall  = dpu_irq_preinstall,
 	.irq_postinstall = dpu_irq_postinstall,
@@ -807,208 +806,208 @@ fail:
 	.irq             = dpu_irq,
 	.enable_commit   = dpu_kms_enable_commit,
 	.disable_commit  = dpu_kms_disable_commit,
-	.vsync_समय      = dpu_kms_vsync_समय,
+	.vsync_time      = dpu_kms_vsync_time,
 	.prepare_commit  = dpu_kms_prepare_commit,
 	.flush_commit    = dpu_kms_flush_commit,
-	.रुको_flush      = dpu_kms_रुको_flush,
+	.wait_flush      = dpu_kms_wait_flush,
 	.complete_commit = dpu_kms_complete_commit,
 	.enable_vblank   = dpu_kms_enable_vblank,
 	.disable_vblank  = dpu_kms_disable_vblank,
-	.check_modअगरied_क्रमmat = dpu_क्रमmat_check_modअगरied_क्रमmat,
-	.get_क्रमmat      = dpu_get_msm_क्रमmat,
+	.check_modified_format = dpu_format_check_modified_format,
+	.get_format      = dpu_get_msm_format,
 	.round_pixclk    = dpu_kms_round_pixclk,
 	.destroy         = dpu_kms_destroy,
 	.set_encoder_mode = _dpu_kms_set_encoder_mode,
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	.debugfs_init    = dpu_kms_debugfs_init,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल व्योम _dpu_kms_mmu_destroy(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा msm_mmu *mmu;
+static void _dpu_kms_mmu_destroy(struct dpu_kms *dpu_kms)
+{
+	struct msm_mmu *mmu;
 
-	अगर (!dpu_kms->base.aspace)
-		वापस;
+	if (!dpu_kms->base.aspace)
+		return;
 
 	mmu = dpu_kms->base.aspace->mmu;
 
 	mmu->funcs->detach(mmu);
 	msm_gem_address_space_put(dpu_kms->base.aspace);
 
-	dpu_kms->base.aspace = शून्य;
-पूर्ण
+	dpu_kms->base.aspace = NULL;
+}
 
-अटल पूर्णांक _dpu_kms_mmu_init(काष्ठा dpu_kms *dpu_kms)
-अणु
-	काष्ठा iommu_करोमुख्य *करोमुख्य;
-	काष्ठा msm_gem_address_space *aspace;
-	काष्ठा msm_mmu *mmu;
+static int _dpu_kms_mmu_init(struct dpu_kms *dpu_kms)
+{
+	struct iommu_domain *domain;
+	struct msm_gem_address_space *aspace;
+	struct msm_mmu *mmu;
 
-	करोमुख्य = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
-	अगर (!करोमुख्य)
-		वापस 0;
+	domain = iommu_domain_alloc(&platform_bus_type);
+	if (!domain)
+		return 0;
 
-	mmu = msm_iommu_new(dpu_kms->dev->dev, करोमुख्य);
+	mmu = msm_iommu_new(dpu_kms->dev->dev, domain);
 	aspace = msm_gem_address_space_create(mmu, "dpu1",
 		0x1000, 0x100000000 - 0x1000);
 
-	अगर (IS_ERR(aspace)) अणु
+	if (IS_ERR(aspace)) {
 		mmu->funcs->destroy(mmu);
-		वापस PTR_ERR(aspace);
-	पूर्ण
+		return PTR_ERR(aspace);
+	}
 
 	dpu_kms->base.aspace = aspace;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dss_clk *_dpu_kms_get_clk(काष्ठा dpu_kms *dpu_kms,
-		अक्षर *घड़ी_name)
-अणु
-	काष्ठा dss_module_घातer *mp = &dpu_kms->mp;
-	पूर्णांक i;
+static struct dss_clk *_dpu_kms_get_clk(struct dpu_kms *dpu_kms,
+		char *clock_name)
+{
+	struct dss_module_power *mp = &dpu_kms->mp;
+	int i;
 
-	क्रम (i = 0; i < mp->num_clk; i++) अणु
-		अगर (!म_भेद(mp->clk_config[i].clk_name, घड़ी_name))
-			वापस &mp->clk_config[i];
-	पूर्ण
+	for (i = 0; i < mp->num_clk; i++) {
+		if (!strcmp(mp->clk_config[i].clk_name, clock_name))
+			return &mp->clk_config[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-u64 dpu_kms_get_clk_rate(काष्ठा dpu_kms *dpu_kms, अक्षर *घड़ी_name)
-अणु
-	काष्ठा dss_clk *clk;
+u64 dpu_kms_get_clk_rate(struct dpu_kms *dpu_kms, char *clock_name)
+{
+	struct dss_clk *clk;
 
-	clk = _dpu_kms_get_clk(dpu_kms, घड़ी_name);
-	अगर (!clk)
-		वापस -EINVAL;
+	clk = _dpu_kms_get_clk(dpu_kms, clock_name);
+	if (!clk)
+		return -EINVAL;
 
-	वापस clk_get_rate(clk->clk);
-पूर्ण
+	return clk_get_rate(clk->clk);
+}
 
-अटल पूर्णांक dpu_kms_hw_init(काष्ठा msm_kms *kms)
-अणु
-	काष्ठा dpu_kms *dpu_kms;
-	काष्ठा drm_device *dev;
-	पूर्णांक i, rc = -EINVAL;
+static int dpu_kms_hw_init(struct msm_kms *kms)
+{
+	struct dpu_kms *dpu_kms;
+	struct drm_device *dev;
+	int i, rc = -EINVAL;
 
-	अगर (!kms) अणु
+	if (!kms) {
 		DPU_ERROR("invalid kms\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dpu_kms = to_dpu_kms(kms);
 	dev = dpu_kms->dev;
 
 	rc = dpu_kms_global_obj_init(dpu_kms);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	atomic_set(&dpu_kms->bandwidth_ref, 0);
 
 	dpu_kms->mmio = msm_ioremap(dpu_kms->pdev, "mdp", "mdp");
-	अगर (IS_ERR(dpu_kms->mmio)) अणु
+	if (IS_ERR(dpu_kms->mmio)) {
 		rc = PTR_ERR(dpu_kms->mmio);
 		DPU_ERROR("mdp register memory map failed: %d\n", rc);
-		dpu_kms->mmio = शून्य;
-		जाओ error;
-	पूर्ण
+		dpu_kms->mmio = NULL;
+		goto error;
+	}
 	DRM_DEBUG("mapped dpu address space @%pK\n", dpu_kms->mmio);
 
-	dpu_kms->vbअगर[VBIF_RT] = msm_ioremap(dpu_kms->pdev, "vbif", "vbif");
-	अगर (IS_ERR(dpu_kms->vbअगर[VBIF_RT])) अणु
-		rc = PTR_ERR(dpu_kms->vbअगर[VBIF_RT]);
+	dpu_kms->vbif[VBIF_RT] = msm_ioremap(dpu_kms->pdev, "vbif", "vbif");
+	if (IS_ERR(dpu_kms->vbif[VBIF_RT])) {
+		rc = PTR_ERR(dpu_kms->vbif[VBIF_RT]);
 		DPU_ERROR("vbif register memory map failed: %d\n", rc);
-		dpu_kms->vbअगर[VBIF_RT] = शून्य;
-		जाओ error;
-	पूर्ण
-	dpu_kms->vbअगर[VBIF_NRT] = msm_ioremap_quiet(dpu_kms->pdev, "vbif_nrt", "vbif_nrt");
-	अगर (IS_ERR(dpu_kms->vbअगर[VBIF_NRT])) अणु
-		dpu_kms->vbअगर[VBIF_NRT] = शून्य;
+		dpu_kms->vbif[VBIF_RT] = NULL;
+		goto error;
+	}
+	dpu_kms->vbif[VBIF_NRT] = msm_ioremap_quiet(dpu_kms->pdev, "vbif_nrt", "vbif_nrt");
+	if (IS_ERR(dpu_kms->vbif[VBIF_NRT])) {
+		dpu_kms->vbif[VBIF_NRT] = NULL;
 		DPU_DEBUG("VBIF NRT is not defined");
-	पूर्ण
+	}
 
 	dpu_kms->reg_dma = msm_ioremap_quiet(dpu_kms->pdev, "regdma", "regdma");
-	अगर (IS_ERR(dpu_kms->reg_dma)) अणु
-		dpu_kms->reg_dma = शून्य;
+	if (IS_ERR(dpu_kms->reg_dma)) {
+		dpu_kms->reg_dma = NULL;
 		DPU_DEBUG("REG_DMA is not defined");
-	पूर्ण
+	}
 
 	dpu_kms_parse_data_bus_icc_path(dpu_kms);
 
-	pm_runसमय_get_sync(&dpu_kms->pdev->dev);
+	pm_runtime_get_sync(&dpu_kms->pdev->dev);
 
-	dpu_kms->core_rev = पढ़ोl_relaxed(dpu_kms->mmio + 0x0);
+	dpu_kms->core_rev = readl_relaxed(dpu_kms->mmio + 0x0);
 
 	pr_info("dpu hardware revision:0x%x\n", dpu_kms->core_rev);
 
 	dpu_kms->catalog = dpu_hw_catalog_init(dpu_kms->core_rev);
-	अगर (IS_ERR_OR_शून्य(dpu_kms->catalog)) अणु
+	if (IS_ERR_OR_NULL(dpu_kms->catalog)) {
 		rc = PTR_ERR(dpu_kms->catalog);
-		अगर (!dpu_kms->catalog)
+		if (!dpu_kms->catalog)
 			rc = -EINVAL;
 		DPU_ERROR("catalog init failed: %d\n", rc);
-		dpu_kms->catalog = शून्य;
-		जाओ घातer_error;
-	पूर्ण
+		dpu_kms->catalog = NULL;
+		goto power_error;
+	}
 
 	/*
-	 * Now we need to पढ़ो the HW catalog and initialize resources such as
-	 * घड़ीs, regulators, GDSC/MMAGIC, ioremap the रेजिस्टर ranges etc
+	 * Now we need to read the HW catalog and initialize resources such as
+	 * clocks, regulators, GDSC/MMAGIC, ioremap the register ranges etc
 	 */
 	rc = _dpu_kms_mmu_init(dpu_kms);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("dpu_kms_mmu_init failed: %d\n", rc);
-		जाओ घातer_error;
-	पूर्ण
+		goto power_error;
+	}
 
 	rc = dpu_rm_init(&dpu_kms->rm, dpu_kms->catalog, dpu_kms->mmio);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("rm init failed: %d\n", rc);
-		जाओ घातer_error;
-	पूर्ण
+		goto power_error;
+	}
 
 	dpu_kms->rm_init = true;
 
 	dpu_kms->hw_mdp = dpu_hw_mdptop_init(MDP_TOP, dpu_kms->mmio,
 					     dpu_kms->catalog);
-	अगर (IS_ERR(dpu_kms->hw_mdp)) अणु
+	if (IS_ERR(dpu_kms->hw_mdp)) {
 		rc = PTR_ERR(dpu_kms->hw_mdp);
 		DPU_ERROR("failed to get hw_mdp: %d\n", rc);
-		dpu_kms->hw_mdp = शून्य;
-		जाओ घातer_error;
-	पूर्ण
+		dpu_kms->hw_mdp = NULL;
+		goto power_error;
+	}
 
-	क्रम (i = 0; i < dpu_kms->catalog->vbअगर_count; i++) अणु
-		u32 vbअगर_idx = dpu_kms->catalog->vbअगर[i].id;
+	for (i = 0; i < dpu_kms->catalog->vbif_count; i++) {
+		u32 vbif_idx = dpu_kms->catalog->vbif[i].id;
 
-		dpu_kms->hw_vbअगर[i] = dpu_hw_vbअगर_init(vbअगर_idx,
-				dpu_kms->vbअगर[vbअगर_idx], dpu_kms->catalog);
-		अगर (IS_ERR_OR_शून्य(dpu_kms->hw_vbअगर[vbअगर_idx])) अणु
-			rc = PTR_ERR(dpu_kms->hw_vbअगर[vbअगर_idx]);
-			अगर (!dpu_kms->hw_vbअगर[vbअगर_idx])
+		dpu_kms->hw_vbif[i] = dpu_hw_vbif_init(vbif_idx,
+				dpu_kms->vbif[vbif_idx], dpu_kms->catalog);
+		if (IS_ERR_OR_NULL(dpu_kms->hw_vbif[vbif_idx])) {
+			rc = PTR_ERR(dpu_kms->hw_vbif[vbif_idx]);
+			if (!dpu_kms->hw_vbif[vbif_idx])
 				rc = -EINVAL;
-			DPU_ERROR("failed to init vbif %d: %d\n", vbअगर_idx, rc);
-			dpu_kms->hw_vbअगर[vbअगर_idx] = शून्य;
-			जाओ घातer_error;
-		पूर्ण
-	पूर्ण
+			DPU_ERROR("failed to init vbif %d: %d\n", vbif_idx, rc);
+			dpu_kms->hw_vbif[vbif_idx] = NULL;
+			goto power_error;
+		}
+	}
 
 	rc = dpu_core_perf_init(&dpu_kms->perf, dev, dpu_kms->catalog,
 			_dpu_kms_get_clk(dpu_kms, "core"));
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("failed to init perf %d\n", rc);
-		जाओ perf_err;
-	पूर्ण
+		goto perf_err;
+	}
 
-	dpu_kms->hw_पूर्णांकr = dpu_hw_पूर्णांकr_init(dpu_kms->mmio, dpu_kms->catalog);
-	अगर (IS_ERR_OR_शून्य(dpu_kms->hw_पूर्णांकr)) अणु
-		rc = PTR_ERR(dpu_kms->hw_पूर्णांकr);
+	dpu_kms->hw_intr = dpu_hw_intr_init(dpu_kms->mmio, dpu_kms->catalog);
+	if (IS_ERR_OR_NULL(dpu_kms->hw_intr)) {
+		rc = PTR_ERR(dpu_kms->hw_intr);
 		DPU_ERROR("hw_intr init failed: %d\n", rc);
-		dpu_kms->hw_पूर्णांकr = शून्य;
-		जाओ hw_पूर्णांकr_init_err;
-	पूर्ण
+		dpu_kms->hw_intr = NULL;
+		goto hw_intr_init_err;
+	}
 
 	dev->mode_config.min_width = 0;
 	dev->mode_config.min_height = 0;
@@ -1022,233 +1021,233 @@ u64 dpu_kms_get_clk_rate(काष्ठा dpu_kms *dpu_kms, अक्षर *�
 	dev->mode_config.max_height = 4096;
 
 	/*
-	 * Support क्रमmat modअगरiers क्रम compression etc.
+	 * Support format modifiers for compression etc.
 	 */
-	dev->mode_config.allow_fb_modअगरiers = true;
+	dev->mode_config.allow_fb_modifiers = true;
 
 	dev->max_vblank_count = 0xffffffff;
-	/* Disable vblank irqs aggressively क्रम घातer-saving */
+	/* Disable vblank irqs aggressively for power-saving */
 	dev->vblank_disable_immediate = true;
 
 	/*
 	 * _dpu_kms_drm_obj_init should create the DRM related objects
-	 * i.e. CRTCs, planes, encoders, connectors and so क्रमth
+	 * i.e. CRTCs, planes, encoders, connectors and so forth
 	 */
 	rc = _dpu_kms_drm_obj_init(dpu_kms);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("modeset init failed: %d\n", rc);
-		जाओ drm_obj_init_err;
-	पूर्ण
+		goto drm_obj_init_err;
+	}
 
-	dpu_vbअगर_init_memtypes(dpu_kms);
+	dpu_vbif_init_memtypes(dpu_kms);
 
-	pm_runसमय_put_sync(&dpu_kms->pdev->dev);
+	pm_runtime_put_sync(&dpu_kms->pdev->dev);
 
-	वापस 0;
+	return 0;
 
 drm_obj_init_err:
 	dpu_core_perf_destroy(&dpu_kms->perf);
-hw_पूर्णांकr_init_err:
+hw_intr_init_err:
 perf_err:
-घातer_error:
-	pm_runसमय_put_sync(&dpu_kms->pdev->dev);
+power_error:
+	pm_runtime_put_sync(&dpu_kms->pdev->dev);
 error:
 	_dpu_kms_hw_destroy(dpu_kms);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा msm_kms *dpu_kms_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा msm_drm_निजी *priv;
-	काष्ठा dpu_kms *dpu_kms;
-	पूर्णांक irq;
+struct msm_kms *dpu_kms_init(struct drm_device *dev)
+{
+	struct msm_drm_private *priv;
+	struct dpu_kms *dpu_kms;
+	int irq;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		DPU_ERROR("drm device node invalid\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	priv = dev->dev_निजी;
+	priv = dev->dev_private;
 	dpu_kms = to_dpu_kms(priv->kms);
 
 	irq = irq_of_parse_and_map(dpu_kms->pdev->dev.of_node, 0);
-	अगर (irq < 0) अणु
+	if (irq < 0) {
 		DPU_ERROR("failed to get irq: %d\n", irq);
-		वापस ERR_PTR(irq);
-	पूर्ण
+		return ERR_PTR(irq);
+	}
 	dpu_kms->base.irq = irq;
 
-	वापस &dpu_kms->base;
-पूर्ण
+	return &dpu_kms->base;
+}
 
-अटल पूर्णांक dpu_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा drm_device *ddev = dev_get_drvdata(master);
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा msm_drm_निजी *priv = ddev->dev_निजी;
-	काष्ठा dpu_kms *dpu_kms;
-	काष्ठा dss_module_घातer *mp;
-	पूर्णांक ret = 0;
+static int dpu_bind(struct device *dev, struct device *master, void *data)
+{
+	struct drm_device *ddev = dev_get_drvdata(master);
+	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_drm_private *priv = ddev->dev_private;
+	struct dpu_kms *dpu_kms;
+	struct dss_module_power *mp;
+	int ret = 0;
 
-	dpu_kms = devm_kzalloc(&pdev->dev, माप(*dpu_kms), GFP_KERNEL);
-	अगर (!dpu_kms)
-		वापस -ENOMEM;
+	dpu_kms = devm_kzalloc(&pdev->dev, sizeof(*dpu_kms), GFP_KERNEL);
+	if (!dpu_kms)
+		return -ENOMEM;
 
 	dpu_kms->opp_table = dev_pm_opp_set_clkname(dev, "core");
-	अगर (IS_ERR(dpu_kms->opp_table))
-		वापस PTR_ERR(dpu_kms->opp_table);
+	if (IS_ERR(dpu_kms->opp_table))
+		return PTR_ERR(dpu_kms->opp_table);
 	/* OPP table is optional */
 	ret = dev_pm_opp_of_add_table(dev);
-	अगर (ret && ret != -ENODEV) अणु
+	if (ret && ret != -ENODEV) {
 		dev_err(dev, "invalid OPP table in device tree\n");
-		जाओ put_clkname;
-	पूर्ण
+		goto put_clkname;
+	}
 
 	mp = &dpu_kms->mp;
-	ret = msm_dss_parse_घड़ी(pdev, mp);
-	अगर (ret) अणु
+	ret = msm_dss_parse_clock(pdev, mp);
+	if (ret) {
 		DPU_ERROR("failed to parse clocks, ret=%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	platक्रमm_set_drvdata(pdev, dpu_kms);
+	platform_set_drvdata(pdev, dpu_kms);
 
 	ret = msm_kms_init(&dpu_kms->base, &kms_funcs);
-	अगर (ret) अणु
+	if (ret) {
 		DPU_ERROR("failed to init kms, ret=%d\n", ret);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dpu_kms->dev = ddev;
 	dpu_kms->pdev = pdev;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 	dpu_kms->rpm_enabled = true;
 
 	priv->kms = &dpu_kms->base;
-	वापस ret;
+	return ret;
 err:
-	dev_pm_opp_of_हटाओ_table(dev);
+	dev_pm_opp_of_remove_table(dev);
 put_clkname:
 	dev_pm_opp_put_clkname(dpu_kms->opp_table);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dpu_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा dpu_kms *dpu_kms = platक्रमm_get_drvdata(pdev);
-	काष्ठा dss_module_घातer *mp = &dpu_kms->mp;
+static void dpu_unbind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct dpu_kms *dpu_kms = platform_get_drvdata(pdev);
+	struct dss_module_power *mp = &dpu_kms->mp;
 
 	msm_dss_put_clk(mp->clk_config, mp->num_clk);
-	devm_kमुक्त(&pdev->dev, mp->clk_config);
+	devm_kfree(&pdev->dev, mp->clk_config);
 	mp->num_clk = 0;
 
-	अगर (dpu_kms->rpm_enabled)
-		pm_runसमय_disable(&pdev->dev);
+	if (dpu_kms->rpm_enabled)
+		pm_runtime_disable(&pdev->dev);
 
-	dev_pm_opp_of_हटाओ_table(dev);
+	dev_pm_opp_of_remove_table(dev);
 	dev_pm_opp_put_clkname(dpu_kms->opp_table);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा component_ops dpu_ops = अणु
+static const struct component_ops dpu_ops = {
 	.bind   = dpu_bind,
 	.unbind = dpu_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक dpu_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस component_add(&pdev->dev, &dpu_ops);
-पूर्ण
+static int dpu_dev_probe(struct platform_device *pdev)
+{
+	return component_add(&pdev->dev, &dpu_ops);
+}
 
-अटल पूर्णांक dpu_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int dpu_dev_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &dpu_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused dpu_runसमय_suspend(काष्ठा device *dev)
-अणु
-	पूर्णांक i, rc = -1;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा dpu_kms *dpu_kms = platक्रमm_get_drvdata(pdev);
-	काष्ठा dss_module_घातer *mp = &dpu_kms->mp;
+static int __maybe_unused dpu_runtime_suspend(struct device *dev)
+{
+	int i, rc = -1;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct dpu_kms *dpu_kms = platform_get_drvdata(pdev);
+	struct dss_module_power *mp = &dpu_kms->mp;
 
-	/* Drop the perक्रमmance state vote */
+	/* Drop the performance state vote */
 	dev_pm_opp_set_rate(dev, 0);
 	rc = msm_dss_enable_clk(mp->clk_config, mp->num_clk, false);
-	अगर (rc)
+	if (rc)
 		DPU_ERROR("clock disable failed rc:%d\n", rc);
 
-	क्रम (i = 0; i < dpu_kms->num_paths; i++)
+	for (i = 0; i < dpu_kms->num_paths; i++)
 		icc_set_bw(dpu_kms->path[i], 0, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __maybe_unused dpu_runसमय_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक rc = -1;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा dpu_kms *dpu_kms = platक्रमm_get_drvdata(pdev);
-	काष्ठा drm_encoder *encoder;
-	काष्ठा drm_device *ddev;
-	काष्ठा dss_module_घातer *mp = &dpu_kms->mp;
-	पूर्णांक i;
+static int __maybe_unused dpu_runtime_resume(struct device *dev)
+{
+	int rc = -1;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct dpu_kms *dpu_kms = platform_get_drvdata(pdev);
+	struct drm_encoder *encoder;
+	struct drm_device *ddev;
+	struct dss_module_power *mp = &dpu_kms->mp;
+	int i;
 
 	ddev = dpu_kms->dev;
 
 	WARN_ON(!(dpu_kms->num_paths));
-	/* Min vote of BW is required beक्रमe turning on AXI clk */
-	क्रम (i = 0; i < dpu_kms->num_paths; i++)
+	/* Min vote of BW is required before turning on AXI clk */
+	for (i = 0; i < dpu_kms->num_paths; i++)
 		icc_set_bw(dpu_kms->path[i], 0, Bps_to_icc(MIN_IB_BW));
 
 	rc = msm_dss_enable_clk(mp->clk_config, mp->num_clk, true);
-	अगर (rc) अणु
+	if (rc) {
 		DPU_ERROR("clock enable failed rc:%d\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	dpu_vbअगर_init_memtypes(dpu_kms);
+	dpu_vbif_init_memtypes(dpu_kms);
 
-	drm_क्रम_each_encoder(encoder, ddev)
-		dpu_encoder_virt_runसमय_resume(encoder);
+	drm_for_each_encoder(encoder, ddev)
+		dpu_encoder_virt_runtime_resume(encoder);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dpu_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(dpu_runसमय_suspend, dpu_runसमय_resume, शून्य)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
-				pm_runसमय_क्रमce_resume)
-पूर्ण;
+static const struct dev_pm_ops dpu_pm_ops = {
+	SET_RUNTIME_PM_OPS(dpu_runtime_suspend, dpu_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+				pm_runtime_force_resume)
+};
 
-अटल स्थिर काष्ठा of_device_id dpu_dt_match[] = अणु
-	अणु .compatible = "qcom,sdm845-dpu", पूर्ण,
-	अणु .compatible = "qcom,sc7180-dpu", पूर्ण,
-	अणु .compatible = "qcom,sc7280-dpu", पूर्ण,
-	अणु .compatible = "qcom,sm8150-dpu", पूर्ण,
-	अणु .compatible = "qcom,sm8250-dpu", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dpu_dt_match[] = {
+	{ .compatible = "qcom,sdm845-dpu", },
+	{ .compatible = "qcom,sc7180-dpu", },
+	{ .compatible = "qcom,sc7280-dpu", },
+	{ .compatible = "qcom,sm8150-dpu", },
+	{ .compatible = "qcom,sm8250-dpu", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dpu_dt_match);
 
-अटल काष्ठा platक्रमm_driver dpu_driver = अणु
+static struct platform_driver dpu_driver = {
 	.probe = dpu_dev_probe,
-	.हटाओ = dpu_dev_हटाओ,
-	.driver = अणु
+	.remove = dpu_dev_remove,
+	.driver = {
 		.name = "msm_dpu",
 		.of_match_table = dpu_dt_match,
 		.pm = &dpu_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init msm_dpu_रेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_रेजिस्टर(&dpu_driver);
-पूर्ण
+void __init msm_dpu_register(void)
+{
+	platform_driver_register(&dpu_driver);
+}
 
-व्योम __निकास msm_dpu_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&dpu_driver);
-पूर्ण
+void __exit msm_dpu_unregister(void)
+{
+	platform_driver_unregister(&dpu_driver);
+}

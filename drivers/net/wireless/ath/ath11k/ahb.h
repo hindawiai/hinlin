@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
+/* SPDX-License-Identifier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
-#अगर_अघोषित ATH11K_AHB_H
-#घोषणा ATH11K_AHB_H
+#ifndef ATH11K_AHB_H
+#define ATH11K_AHB_H
 
-#समावेश "core.h"
+#include "core.h"
 
-#घोषणा ATH11K_AHB_RECOVERY_TIMEOUT (3 * HZ)
-काष्ठा ath11k_base;
+#define ATH11K_AHB_RECOVERY_TIMEOUT (3 * HZ)
+struct ath11k_base;
 
-काष्ठा ath11k_ahb अणु
-	काष्ठा rproc *tgt_rproc;
-पूर्ण;
+struct ath11k_ahb {
+	struct rproc *tgt_rproc;
+};
 
-अटल अंतरभूत काष्ठा ath11k_ahb *ath11k_ahb_priv(काष्ठा ath11k_base *ab)
-अणु
-	वापस (काष्ठा ath11k_ahb *)ab->drv_priv;
-पूर्ण
-#पूर्ण_अगर
+static inline struct ath11k_ahb *ath11k_ahb_priv(struct ath11k_base *ab)
+{
+	return (struct ath11k_ahb *)ab->drv_priv;
+}
+#endif

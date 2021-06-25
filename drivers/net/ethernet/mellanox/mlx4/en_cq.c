@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,32 +31,32 @@
  *
  */
 
-#समावेश <linux/mlx4/cq.h>
-#समावेश <linux/mlx4/qp.h>
-#समावेश <linux/mlx4/cmd.h>
+#include <linux/mlx4/cq.h>
+#include <linux/mlx4/qp.h>
+#include <linux/mlx4/cmd.h>
 
-#समावेश "mlx4_en.h"
+#include "mlx4_en.h"
 
-अटल व्योम mlx4_en_cq_event(काष्ठा mlx4_cq *cq, क्रमागत mlx4_event event)
-अणु
-	वापस;
-पूर्ण
+static void mlx4_en_cq_event(struct mlx4_cq *cq, enum mlx4_event event)
+{
+	return;
+}
 
 
-पूर्णांक mlx4_en_create_cq(काष्ठा mlx4_en_priv *priv,
-		      काष्ठा mlx4_en_cq **pcq,
-		      पूर्णांक entries, पूर्णांक ring, क्रमागत cq_type mode,
-		      पूर्णांक node)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_cq *cq;
-	पूर्णांक err;
+int mlx4_en_create_cq(struct mlx4_en_priv *priv,
+		      struct mlx4_en_cq **pcq,
+		      int entries, int ring, enum cq_type mode,
+		      int node)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_cq *cq;
+	int err;
 
-	cq = kzalloc_node(माप(*cq), GFP_KERNEL, node);
-	अगर (!cq) अणु
+	cq = kzalloc_node(sizeof(*cq), GFP_KERNEL, node);
+	if (!cq) {
 		en_err(priv, "Failed to allocate CQ structure\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cq->size = entries;
 	cq->buf_size = cq->size * mdev->dev->caps.cqe_size;
@@ -73,142 +72,142 @@
 	err = mlx4_alloc_hwq_res(mdev->dev, &cq->wqres,
 				cq->buf_size);
 	set_dev_node(&mdev->dev->persist->pdev->dev, mdev->dev->numa_node);
-	अगर (err)
-		जाओ err_cq;
+	if (err)
+		goto err_cq;
 
-	cq->buf = (काष्ठा mlx4_cqe *)cq->wqres.buf.direct.buf;
+	cq->buf = (struct mlx4_cqe *)cq->wqres.buf.direct.buf;
 	*pcq = cq;
 
-	वापस 0;
+	return 0;
 
 err_cq:
-	kमुक्त(cq);
-	*pcq = शून्य;
-	वापस err;
-पूर्ण
+	kfree(cq);
+	*pcq = NULL;
+	return err;
+}
 
-पूर्णांक mlx4_en_activate_cq(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_en_cq *cq,
-			पूर्णांक cq_idx)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक irq, err = 0;
-	पूर्णांक बारtamp_en = 0;
-	bool asचिन्हित_eq = false;
+int mlx4_en_activate_cq(struct mlx4_en_priv *priv, struct mlx4_en_cq *cq,
+			int cq_idx)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int irq, err = 0;
+	int timestamp_en = 0;
+	bool assigned_eq = false;
 
 	cq->dev = mdev->pndev[priv->port];
 	cq->mcq.set_ci_db  = cq->wqres.db.db;
 	cq->mcq.arm_db     = cq->wqres.db.db + 1;
 	*cq->mcq.set_ci_db = 0;
 	*cq->mcq.arm_db    = 0;
-	स_रखो(cq->buf, 0, cq->buf_size);
+	memset(cq->buf, 0, cq->buf_size);
 
-	अगर (cq->type == RX) अणु
-		अगर (!mlx4_is_eq_vector_valid(mdev->dev, priv->port,
-					     cq->vector)) अणु
+	if (cq->type == RX) {
+		if (!mlx4_is_eq_vector_valid(mdev->dev, priv->port,
+					     cq->vector)) {
 			cq->vector = cpumask_first(priv->rx_ring[cq->ring]->affinity_mask);
 
 			err = mlx4_assign_eq(mdev->dev, priv->port,
 					     &cq->vector);
-			अगर (err) अणु
+			if (err) {
 				mlx4_err(mdev, "Failed assigning an EQ to CQ vector %d\n",
 					 cq->vector);
-				जाओ मुक्त_eq;
-			पूर्ण
+				goto free_eq;
+			}
 
-			asचिन्हित_eq = true;
-		पूर्ण
+			assigned_eq = true;
+		}
 		irq = mlx4_eq_get_irq(mdev->dev, cq->vector);
 		cq->aff_mask = irq_get_effective_affinity_mask(irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* For TX we use the same irq per
-		ring we asचिन्हित क्रम the RX    */
-		काष्ठा mlx4_en_cq *rx_cq;
+		ring we assigned for the RX    */
+		struct mlx4_en_cq *rx_cq;
 
 		cq_idx = cq_idx % priv->rx_ring_num;
 		rx_cq = priv->rx_cq[cq_idx];
 		cq->vector = rx_cq->vector;
-	पूर्ण
+	}
 
-	अगर (cq->type == RX)
+	if (cq->type == RX)
 		cq->size = priv->rx_ring[cq->ring]->actual_size;
 
-	अगर ((cq->type != RX && priv->hwtstamp_config.tx_type) ||
+	if ((cq->type != RX && priv->hwtstamp_config.tx_type) ||
 	    (cq->type == RX && priv->hwtstamp_config.rx_filter))
-		बारtamp_en = 1;
+		timestamp_en = 1;
 
 	cq->mcq.usage = MLX4_RES_USAGE_DRIVER;
 	err = mlx4_cq_alloc(mdev->dev, cq->size, &cq->wqres.mtt,
 			    &mdev->priv_uar, cq->wqres.db.dma, &cq->mcq,
-			    cq->vector, 0, बारtamp_en, &cq->wqres.buf, false);
-	अगर (err)
-		जाओ मुक्त_eq;
+			    cq->vector, 0, timestamp_en, &cq->wqres.buf, false);
+	if (err)
+		goto free_eq;
 
 	cq->mcq.event = mlx4_en_cq_event;
 
-	चयन (cq->type) अणु
-	हाल TX:
+	switch (cq->type) {
+	case TX:
 		cq->mcq.comp = mlx4_en_tx_irq;
-		netअगर_tx_napi_add(cq->dev, &cq->napi, mlx4_en_poll_tx_cq,
+		netif_tx_napi_add(cq->dev, &cq->napi, mlx4_en_poll_tx_cq,
 				  NAPI_POLL_WEIGHT);
 		napi_enable(&cq->napi);
-		अवरोध;
-	हाल RX:
+		break;
+	case RX:
 		cq->mcq.comp = mlx4_en_rx_irq;
-		netअगर_napi_add(cq->dev, &cq->napi, mlx4_en_poll_rx_cq, 64);
+		netif_napi_add(cq->dev, &cq->napi, mlx4_en_poll_rx_cq, 64);
 		napi_enable(&cq->napi);
-		अवरोध;
-	हाल TX_XDP:
+		break;
+	case TX_XDP:
 		/* nothing regarding napi, it's shared with rx ring */
 		cq->xdp_busy = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_eq:
-	अगर (asचिन्हित_eq)
+free_eq:
+	if (assigned_eq)
 		mlx4_release_eq(mdev->dev, cq->vector);
 	cq->vector = mdev->dev->caps.num_comp_vectors;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx4_en_destroy_cq(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_en_cq **pcq)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_cq *cq = *pcq;
+void mlx4_en_destroy_cq(struct mlx4_en_priv *priv, struct mlx4_en_cq **pcq)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_cq *cq = *pcq;
 
-	mlx4_मुक्त_hwq_res(mdev->dev, &cq->wqres, cq->buf_size);
-	अगर (mlx4_is_eq_vector_valid(mdev->dev, priv->port, cq->vector) &&
+	mlx4_free_hwq_res(mdev->dev, &cq->wqres, cq->buf_size);
+	if (mlx4_is_eq_vector_valid(mdev->dev, priv->port, cq->vector) &&
 	    cq->type == RX)
 		mlx4_release_eq(priv->mdev->dev, cq->vector);
 	cq->vector = 0;
 	cq->buf_size = 0;
-	cq->buf = शून्य;
-	kमुक्त(cq);
-	*pcq = शून्य;
-पूर्ण
+	cq->buf = NULL;
+	kfree(cq);
+	*pcq = NULL;
+}
 
-व्योम mlx4_en_deactivate_cq(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_en_cq *cq)
-अणु
-	अगर (cq->type != TX_XDP) अणु
+void mlx4_en_deactivate_cq(struct mlx4_en_priv *priv, struct mlx4_en_cq *cq)
+{
+	if (cq->type != TX_XDP) {
 		napi_disable(&cq->napi);
-		netअगर_napi_del(&cq->napi);
-	पूर्ण
+		netif_napi_del(&cq->napi);
+	}
 
-	mlx4_cq_मुक्त(priv->mdev->dev, &cq->mcq);
-पूर्ण
+	mlx4_cq_free(priv->mdev->dev, &cq->mcq);
+}
 
 /* Set rx cq moderation parameters */
-पूर्णांक mlx4_en_set_cq_moder(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_en_cq *cq)
-अणु
-	वापस mlx4_cq_modअगरy(priv->mdev->dev, &cq->mcq,
-			      cq->moder_cnt, cq->moder_समय);
-पूर्ण
+int mlx4_en_set_cq_moder(struct mlx4_en_priv *priv, struct mlx4_en_cq *cq)
+{
+	return mlx4_cq_modify(priv->mdev->dev, &cq->mcq,
+			      cq->moder_cnt, cq->moder_time);
+}
 
-व्योम mlx4_en_arm_cq(काष्ठा mlx4_en_priv *priv, काष्ठा mlx4_en_cq *cq)
-अणु
+void mlx4_en_arm_cq(struct mlx4_en_priv *priv, struct mlx4_en_cq *cq)
+{
 	mlx4_cq_arm(&cq->mcq, MLX4_CQ_DB_REQ_NOT, priv->mdev->uar_map,
 		    &priv->mdev->uar_lock);
-पूर्ण
+}
 
 

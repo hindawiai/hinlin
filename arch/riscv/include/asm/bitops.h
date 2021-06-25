@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_BITOPS_H
-#घोषणा _ASM_RISCV_BITOPS_H
+#ifndef _ASM_RISCV_BITOPS_H
+#define _ASM_RISCV_BITOPS_H
 
-#अगर_अघोषित _LINUX_BITOPS_H
-#त्रुटि "Only <linux/bitops.h> can be included directly"
-#पूर्ण_अगर /* _LINUX_BITOPS_H */
+#ifndef _LINUX_BITOPS_H
+#error "Only <linux/bitops.h> can be included directly"
+#endif /* _LINUX_BITOPS_H */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/irqflags.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <linux/compiler.h>
+#include <linux/irqflags.h>
+#include <asm/barrier.h>
+#include <asm/bitsperlong.h>
 
-#समावेश <यंत्र-generic/bitops/__ffs.h>
-#समावेश <यंत्र-generic/bitops/ffz.h>
-#समावेश <यंत्र-generic/bitops/fls.h>
-#समावेश <यंत्र-generic/bitops/__fls.h>
-#समावेश <यंत्र-generic/bitops/fls64.h>
-#समावेश <यंत्र-generic/bitops/find.h>
-#समावेश <यंत्र-generic/bitops/sched.h>
-#समावेश <यंत्र-generic/bitops/ffs.h>
+#include <asm-generic/bitops/__ffs.h>
+#include <asm-generic/bitops/ffz.h>
+#include <asm-generic/bitops/fls.h>
+#include <asm-generic/bitops/__fls.h>
+#include <asm-generic/bitops/fls64.h>
+#include <asm-generic/bitops/find.h>
+#include <asm-generic/bitops/sched.h>
+#include <asm-generic/bitops/ffs.h>
 
-#समावेश <यंत्र-generic/bitops/hweight.h>
+#include <asm-generic/bitops/hweight.h>
 
-#अगर (BITS_PER_LONG == 64)
-#घोषणा __AMO(op)	"amo" #op ".d"
-#या_अगर (BITS_PER_LONG == 32)
-#घोषणा __AMO(op)	"amo" #op ".w"
-#अन्यथा
-#त्रुटि "Unexpected BITS_PER_LONG"
-#पूर्ण_अगर
+#if (BITS_PER_LONG == 64)
+#define __AMO(op)	"amo" #op ".d"
+#elif (BITS_PER_LONG == 32)
+#define __AMO(op)	"amo" #op ".w"
+#else
+#error "Unexpected BITS_PER_LONG"
+#endif
 
-#घोषणा __test_and_op_bit_ord(op, mod, nr, addr, ord)		\
-(अणु								\
-	अचिन्हित दीर्घ __res, __mask;				\
+#define __test_and_op_bit_ord(op, mod, nr, addr, ord)		\
+({								\
+	unsigned long __res, __mask;				\
 	__mask = BIT_MASK(nr);					\
-	__यंत्र__ __अस्थिर__ (					\
+	__asm__ __volatile__ (					\
 		__AMO(op) #ord " %0, %2, %1"			\
 		: "=r" (__res), "+A" (addr[BIT_WORD(nr)])	\
 		: "r" (mod(__mask))				\
 		: "memory");					\
 	((__res & __mask) != 0);				\
-पूर्ण)
+})
 
-#घोषणा __op_bit_ord(op, mod, nr, addr, ord)			\
-	__यंत्र__ __अस्थिर__ (					\
+#define __op_bit_ord(op, mod, nr, addr, ord)			\
+	__asm__ __volatile__ (					\
 		__AMO(op) #ord " zero, %1, %0"			\
 		: "+A" (addr[BIT_WORD(nr)])			\
 		: "r" (mod(BIT_MASK(nr)))			\
 		: "memory");
 
-#घोषणा __test_and_op_bit(op, mod, nr, addr) 			\
+#define __test_and_op_bit(op, mod, nr, addr) 			\
 	__test_and_op_bit_ord(op, mod, nr, addr, .aqrl)
-#घोषणा __op_bit(op, mod, nr, addr)				\
+#define __op_bit(op, mod, nr, addr)				\
 	__op_bit_ord(op, mod, nr, addr, )
 
-/* Biपंचांगask modअगरiers */
-#घोषणा __NOP(x)	(x)
-#घोषणा __NOT(x)	(~(x))
+/* Bitmask modifiers */
+#define __NOP(x)	(x)
+#define __NOT(x)	(~(x))
 
 /**
- * test_and_set_bit - Set a bit and वापस its old value
+ * test_and_set_bit - Set a bit and return its old value
  * @nr: Bit to set
  * @addr: Address to count from
  *
  * This operation may be reordered on other architectures than x86.
  */
-अटल अंतरभूत पूर्णांक test_and_set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	वापस __test_and_op_bit(or, __NOP, nr, addr);
-पूर्ण
+static inline int test_and_set_bit(int nr, volatile unsigned long *addr)
+{
+	return __test_and_op_bit(or, __NOP, nr, addr);
+}
 
 /**
- * test_and_clear_bit - Clear a bit and वापस its old value
+ * test_and_clear_bit - Clear a bit and return its old value
  * @nr: Bit to clear
  * @addr: Address to count from
  *
  * This operation can be reordered on other architectures other than x86.
  */
-अटल अंतरभूत पूर्णांक test_and_clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	वापस __test_and_op_bit(and, __NOT, nr, addr);
-पूर्ण
+static inline int test_and_clear_bit(int nr, volatile unsigned long *addr)
+{
+	return __test_and_op_bit(and, __NOT, nr, addr);
+}
 
 /**
- * test_and_change_bit - Change a bit and वापस its old value
+ * test_and_change_bit - Change a bit and return its old value
  * @nr: Bit to change
  * @addr: Address to count from
  *
  * This operation is atomic and cannot be reordered.
  * It also implies a memory barrier.
  */
-अटल अंतरभूत पूर्णांक test_and_change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	वापस __test_and_op_bit(xor, __NOP, nr, addr);
-पूर्ण
+static inline int test_and_change_bit(int nr, volatile unsigned long *addr)
+{
+	return __test_and_op_bit(xor, __NOP, nr, addr);
+}
 
 /**
  * set_bit - Atomically set a bit in memory
@@ -106,16 +105,16 @@
  * @addr: the address to start counting from
  *
  * Note: there are no guarantees that this function will not be reordered
- * on non x86 architectures, so अगर you are writing portable code,
+ * on non x86 architectures, so if you are writing portable code,
  * make sure not to rely on its reordering guarantees.
  *
  * Note that @nr may be almost arbitrarily large; this function is not
  * restricted to acting on a single-word quantity.
  */
-अटल अंतरभूत व्योम set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
+static inline void set_bit(int nr, volatile unsigned long *addr)
+{
 	__op_bit(or, __NOP, nr, addr);
-पूर्ण
+}
 
 /**
  * clear_bit - Clears a bit in memory
@@ -123,13 +122,13 @@
  * @addr: Address to start counting from
  *
  * Note: there are no guarantees that this function will not be reordered
- * on non x86 architectures, so अगर you are writing portable code,
+ * on non x86 architectures, so if you are writing portable code,
  * make sure not to rely on its reordering guarantees.
  */
-अटल अंतरभूत व्योम clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
+static inline void clear_bit(int nr, volatile unsigned long *addr)
+{
 	__op_bit(and, __NOT, nr, addr);
-पूर्ण
+}
 
 /**
  * change_bit - Toggle a bit in memory
@@ -140,67 +139,67 @@
  * Note that @nr may be almost arbitrarily large; this function is not
  * restricted to acting on a single-word quantity.
  */
-अटल अंतरभूत व्योम change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
+static inline void change_bit(int nr, volatile unsigned long *addr)
+{
 	__op_bit(xor, __NOP, nr, addr);
-पूर्ण
+}
 
 /**
- * test_and_set_bit_lock - Set a bit and वापस its old value, क्रम lock
+ * test_and_set_bit_lock - Set a bit and return its old value, for lock
  * @nr: Bit to set
  * @addr: Address to count from
  *
  * This operation is atomic and provides acquire barrier semantics.
  * It can be used to implement bit locks.
  */
-अटल अंतरभूत पूर्णांक test_and_set_bit_lock(
-	अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	वापस __test_and_op_bit_ord(or, __NOP, nr, addr, .aq);
-पूर्ण
+static inline int test_and_set_bit_lock(
+	unsigned long nr, volatile unsigned long *addr)
+{
+	return __test_and_op_bit_ord(or, __NOP, nr, addr, .aq);
+}
 
 /**
- * clear_bit_unlock - Clear a bit in memory, क्रम unlock
+ * clear_bit_unlock - Clear a bit in memory, for unlock
  * @nr: the bit to set
  * @addr: the address to start counting from
  *
  * This operation is atomic and provides release barrier semantics.
  */
-अटल अंतरभूत व्योम clear_bit_unlock(
-	अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
+static inline void clear_bit_unlock(
+	unsigned long nr, volatile unsigned long *addr)
+{
 	__op_bit_ord(and, __NOT, nr, addr, .rl);
-पूर्ण
+}
 
 /**
- * __clear_bit_unlock - Clear a bit in memory, क्रम unlock
+ * __clear_bit_unlock - Clear a bit in memory, for unlock
  * @nr: the bit to set
  * @addr: the address to start counting from
  *
  * This operation is like clear_bit_unlock, however it is not atomic.
- * It करोes provide release barrier semantics so it can be used to unlock
- * a bit lock, however it would only be used अगर no other CPU can modअगरy
+ * It does provide release barrier semantics so it can be used to unlock
+ * a bit lock, however it would only be used if no other CPU can modify
  * any bits in the memory until the lock is released (a good example is
- * अगर the bit lock itself protects access to the other bits in the word).
+ * if the bit lock itself protects access to the other bits in the word).
  *
- * On RISC-V प्रणालीs there seems to be no benefit to taking advantage of the
- * non-atomic property here: it's a lot more inकाष्ठाions and we still have to
+ * On RISC-V systems there seems to be no benefit to taking advantage of the
+ * non-atomic property here: it's a lot more instructions and we still have to
  * provide release semantics anyway.
  */
-अटल अंतरभूत व्योम __clear_bit_unlock(
-	अचिन्हित दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
-अणु
+static inline void __clear_bit_unlock(
+	unsigned long nr, volatile unsigned long *addr)
+{
 	clear_bit_unlock(nr, addr);
-पूर्ण
+}
 
-#अघोषित __test_and_op_bit
-#अघोषित __op_bit
-#अघोषित __NOP
-#अघोषित __NOT
-#अघोषित __AMO
+#undef __test_and_op_bit
+#undef __op_bit
+#undef __NOP
+#undef __NOT
+#undef __AMO
 
-#समावेश <यंत्र-generic/bitops/non-atomic.h>
-#समावेश <यंत्र-generic/bitops/le.h>
-#समावेश <यंत्र-generic/bitops/ext2-atomic.h>
+#include <asm-generic/bitops/non-atomic.h>
+#include <asm-generic/bitops/le.h>
+#include <asm-generic/bitops/ext2-atomic.h>
 
-#पूर्ण_अगर /* _ASM_RISCV_BITOPS_H */
+#endif /* _ASM_RISCV_BITOPS_H */

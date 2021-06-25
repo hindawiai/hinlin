@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BOOT_STRING_H
-#घोषणा BOOT_STRING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BOOT_STRING_H
+#define BOOT_STRING_H
 
 /* Undef any of these macros coming from string_32.h. */
-#अघोषित स_नकल
-#अघोषित स_रखो
-#अघोषित स_भेद
+#undef memcpy
+#undef memset
+#undef memcmp
 
-व्योम *स_नकल(व्योम *dst, स्थिर व्योम *src, माप_प्रकार len);
-व्योम *स_रखो(व्योम *dst, पूर्णांक c, माप_प्रकार len);
-पूर्णांक स_भेद(स्थिर व्योम *s1, स्थिर व्योम *s2, माप_प्रकार len);
+void *memcpy(void *dst, const void *src, size_t len);
+void *memset(void *dst, int c, size_t len);
+int memcmp(const void *s1, const void *s2, size_t len);
 
-/* Access builtin version by शेष. */
-#घोषणा स_नकल(d,s,l) __builtin_स_नकल(d,s,l)
-#घोषणा स_रखो(d,c,l) __builtin_स_रखो(d,c,l)
-#घोषणा स_भेद	__builtin_स_भेद
+/* Access builtin version by default. */
+#define memcpy(d,s,l) __builtin_memcpy(d,s,l)
+#define memset(d,c,l) __builtin_memset(d,c,l)
+#define memcmp	__builtin_memcmp
 
-बाह्य पूर्णांक म_भेद(स्थिर अक्षर *str1, स्थिर अक्षर *str2);
-बाह्य पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count);
-बाह्य माप_प्रकार म_माप(स्थिर अक्षर *s);
-बाह्य अक्षर *म_माला(स्थिर अक्षर *s1, स्थिर अक्षर *s2);
-बाह्य अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c);
-बाह्य माप_प्रकार strnlen(स्थिर अक्षर *s, माप_प्रकार maxlen);
-बाह्य अचिन्हित पूर्णांक atou(स्थिर अक्षर *s);
-बाह्य अचिन्हित दीर्घ दीर्घ simple_म_से_अदीर्घl(स्थिर अक्षर *cp, अक्षर **endp,
-					  अचिन्हित पूर्णांक base);
+extern int strcmp(const char *str1, const char *str2);
+extern int strncmp(const char *cs, const char *ct, size_t count);
+extern size_t strlen(const char *s);
+extern char *strstr(const char *s1, const char *s2);
+extern char *strchr(const char *s, int c);
+extern size_t strnlen(const char *s, size_t maxlen);
+extern unsigned int atou(const char *s);
+extern unsigned long long simple_strtoull(const char *cp, char **endp,
+					  unsigned int base);
 
-पूर्णांक kम_से_अदीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *res);
-पूर्णांक boot_kम_से_अदीर्घ(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ *res);
-#पूर्ण_अगर /* BOOT_STRING_H */
+int kstrtoull(const char *s, unsigned int base, unsigned long long *res);
+int boot_kstrtoul(const char *s, unsigned int base, unsigned long *res);
+#endif /* BOOT_STRING_H */

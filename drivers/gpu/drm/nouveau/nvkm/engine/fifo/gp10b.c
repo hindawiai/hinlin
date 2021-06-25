@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,28 +19,28 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#समावेश "gk104.h"
-#समावेश "changk104.h"
+#include "gk104.h"
+#include "changk104.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-अटल स्थिर काष्ठा gk104_fअगरo_func
-gp10b_fअगरo = अणु
-	.पूर्णांकr.fault = gp100_fअगरo_पूर्णांकr_fault,
-	.pbdma = &gm200_fअगरo_pbdma,
-	.fault.access = gk104_fअगरo_fault_access,
-	.fault.engine = gp100_fअगरo_fault_engine,
-	.fault.reason = gk104_fअगरo_fault_reason,
-	.fault.hubclient = gk104_fअगरo_fault_hubclient,
-	.fault.gpcclient = gk104_fअगरo_fault_gpcclient,
-	.runlist = &gm107_fअगरo_runlist,
-	.chan = अणुअणु0,0,PASCAL_CHANNEL_GPFIFO_Aपूर्ण, gk104_fअगरo_gpfअगरo_new पूर्ण,
-	.cgrp_क्रमce = true,
-पूर्ण;
+static const struct gk104_fifo_func
+gp10b_fifo = {
+	.intr.fault = gp100_fifo_intr_fault,
+	.pbdma = &gm200_fifo_pbdma,
+	.fault.access = gk104_fifo_fault_access,
+	.fault.engine = gp100_fifo_fault_engine,
+	.fault.reason = gk104_fifo_fault_reason,
+	.fault.hubclient = gk104_fifo_fault_hubclient,
+	.fault.gpcclient = gk104_fifo_fault_gpcclient,
+	.runlist = &gm107_fifo_runlist,
+	.chan = {{0,0,PASCAL_CHANNEL_GPFIFO_A}, gk104_fifo_gpfifo_new },
+	.cgrp_force = true,
+};
 
-पूर्णांक
-gp10b_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_fअगरo **pfअगरo)
-अणु
-	वापस gk104_fअगरo_new_(&gp10b_fअगरo, device, type, inst, 512, pfअगरo);
-पूर्ण
+int
+gp10b_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_fifo **pfifo)
+{
+	return gk104_fifo_new_(&gp10b_fifo, device, type, inst, 512, pfifo);
+}

@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Inline assembly cache operations.
  *
@@ -10,104 +9,104 @@
  * Copyright (C) 1997 - 2002 Ralf Baechle (ralf@gnu.org)
  * Copyright (C) 2004 Ralf Baechle (ralf@linux-mips.org)
  */
-#अगर_अघोषित _ASM_R4KCACHE_H
-#घोषणा _ASM_R4KCACHE_H
+#ifndef _ASM_R4KCACHE_H
+#define _ASM_R4KCACHE_H
 
-#समावेश <linux/stringअगरy.h>
+#include <linux/stringify.h>
 
-#समावेश <यंत्र/यंत्र.h>
-#समावेश <यंत्र/यंत्र-eva.h>
-#समावेश <यंत्र/cacheops.h>
-#समावेश <यंत्र/compiler.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/cpu-type.h>
-#समावेश <यंत्र/mipsmtregs.h>
-#समावेश <यंत्र/mmzone.h>
-#समावेश <यंत्र/unroll.h>
+#include <asm/asm.h>
+#include <asm/asm-eva.h>
+#include <asm/cacheops.h>
+#include <asm/compiler.h>
+#include <asm/cpu-features.h>
+#include <asm/cpu-type.h>
+#include <asm/mipsmtregs.h>
+#include <asm/mmzone.h>
+#include <asm/unroll.h>
 
-बाह्य व्योम (*r4k_blast_dcache)(व्योम);
-बाह्य व्योम (*r4k_blast_icache)(व्योम);
+extern void (*r4k_blast_dcache)(void);
+extern void (*r4k_blast_icache)(void);
 
 /*
- * This macro वापस a properly sign-extended address suitable as base address
- * क्रम indexed cache operations.  Two issues here:
+ * This macro return a properly sign-extended address suitable as base address
+ * for indexed cache operations.  Two issues here:
  *
  *  - The MIPS32 and MIPS64 specs permit an implementation to directly derive
- *    the index bits from the भव address.	This अवरोधs with tradition
+ *    the index bits from the virtual address.	This breaks with tradition
  *    set by the R4000.	 To keep unpleasant surprises from happening we pick
  *    an address in KSEG0 / CKSEG0.
- *  - We need a properly sign extended address क्रम 64-bit code.	 To get away
- *    without अगरdefs we let the compiler करो it by a type cast.
+ *  - We need a properly sign extended address for 64-bit code.	 To get away
+ *    without ifdefs we let the compiler do it by a type cast.
  */
-#घोषणा INDEX_BASE	CKSEG0
+#define INDEX_BASE	CKSEG0
 
-#घोषणा _cache_op(insn, op, addr)					\
-	__यंत्र__ __अस्थिर__(						\
+#define _cache_op(insn, op, addr)					\
+	__asm__ __volatile__(						\
 	"	.set	push					\n"	\
 	"	.set	noreorder				\n"	\
 	"	.set "MIPS_ISA_ARCH_LEVEL"			\n"	\
 	"	" insn("%0", "%1") "				\n"	\
 	"	.set	pop					\n"	\
 	:								\
-	: "i" (op), "R" (*(अचिन्हित अक्षर *)(addr)))
+	: "i" (op), "R" (*(unsigned char *)(addr)))
 
-#घोषणा cache_op(op, addr)						\
+#define cache_op(op, addr)						\
 	_cache_op(kernel_cache, op, addr)
 
-अटल अंतरभूत व्योम flush_icache_line_indexed(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_icache_line_indexed(unsigned long addr)
+{
 	cache_op(Index_Invalidate_I, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_dcache_line_indexed(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_dcache_line_indexed(unsigned long addr)
+{
 	cache_op(Index_Writeback_Inv_D, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_scache_line_indexed(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_scache_line_indexed(unsigned long addr)
+{
 	cache_op(Index_Writeback_Inv_SD, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_icache_line(अचिन्हित दीर्घ addr)
-अणु
-	चयन (boot_cpu_type()) अणु
-	हाल CPU_LOONGSON2EF:
+static inline void flush_icache_line(unsigned long addr)
+{
+	switch (boot_cpu_type()) {
+	case CPU_LOONGSON2EF:
 		cache_op(Hit_Invalidate_I_Loongson2, addr);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		cache_op(Hit_Invalidate_I, addr);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत व्योम flush_dcache_line(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_dcache_line(unsigned long addr)
+{
 	cache_op(Hit_Writeback_Inv_D, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम invalidate_dcache_line(अचिन्हित दीर्घ addr)
-अणु
+static inline void invalidate_dcache_line(unsigned long addr)
+{
 	cache_op(Hit_Invalidate_D, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम invalidate_scache_line(अचिन्हित दीर्घ addr)
-अणु
+static inline void invalidate_scache_line(unsigned long addr)
+{
 	cache_op(Hit_Invalidate_SD, addr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम flush_scache_line(अचिन्हित दीर्घ addr)
-अणु
+static inline void flush_scache_line(unsigned long addr)
+{
 	cache_op(Hit_Writeback_Inv_SD, addr);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_EVA
+#ifdef CONFIG_EVA
 
-#घोषणा रक्षित_cache_op(op, addr)				\
-(अणु								\
-	पूर्णांक __err = 0;						\
-	__यंत्र__ __अस्थिर__(					\
+#define protected_cache_op(op, addr)				\
+({								\
+	int __err = 0;						\
+	__asm__ __volatile__(					\
 	"	.set	push			\n"		\
 	"	.set	noreorder		\n"		\
 	"	.set	mips0			\n"		\
@@ -125,13 +124,13 @@
 	: "+r" (__err)						\
 	: "i" (op), "r" (addr), "i" (-EFAULT));			\
 	__err;							\
-पूर्ण)
-#अन्यथा
+})
+#else
 
-#घोषणा रक्षित_cache_op(op, addr)				\
-(अणु								\
-	पूर्णांक __err = 0;						\
-	__यंत्र__ __अस्थिर__(					\
+#define protected_cache_op(op, addr)				\
+({								\
+	int __err = 0;						\
+	__asm__ __volatile__(					\
 	"	.set	push			\n"		\
 	"	.set	noreorder		\n"		\
 	"	.set "MIPS_ISA_ARCH_LEVEL"	\n"		\
@@ -148,95 +147,95 @@
 	: "+r" (__err)						\
 	: "i" (op), "r" (addr), "i" (-EFAULT));			\
 	__err;							\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
 /*
- * The next two are क्रम badland addresses like संकेत trampolines.
+ * The next two are for badland addresses like signal trampolines.
  */
-अटल अंतरभूत पूर्णांक रक्षित_flush_icache_line(अचिन्हित दीर्घ addr)
-अणु
-	चयन (boot_cpu_type()) अणु
-	हाल CPU_LOONGSON2EF:
-		वापस रक्षित_cache_op(Hit_Invalidate_I_Loongson2, addr);
+static inline int protected_flush_icache_line(unsigned long addr)
+{
+	switch (boot_cpu_type()) {
+	case CPU_LOONGSON2EF:
+		return protected_cache_op(Hit_Invalidate_I_Loongson2, addr);
 
-	शेष:
-		वापस रक्षित_cache_op(Hit_Invalidate_I, addr);
-	पूर्ण
-पूर्ण
+	default:
+		return protected_cache_op(Hit_Invalidate_I, addr);
+	}
+}
 
 /*
- * R10000 / R12000 hazard - these processors करोn't support the Hit_Writeback_D
+ * R10000 / R12000 hazard - these processors don't support the Hit_Writeback_D
  * cacheop so we use Hit_Writeback_Inv_D which is supported by all R4000-style
  * caches.  We're talking about one cacheline unnecessarily getting invalidated
  * here so the penalty isn't overly hard.
  */
-अटल अंतरभूत पूर्णांक रक्षित_ग_लिखोback_dcache_line(अचिन्हित दीर्घ addr)
-अणु
-	वापस रक्षित_cache_op(Hit_Writeback_Inv_D, addr);
-पूर्ण
+static inline int protected_writeback_dcache_line(unsigned long addr)
+{
+	return protected_cache_op(Hit_Writeback_Inv_D, addr);
+}
 
-अटल अंतरभूत पूर्णांक रक्षित_ग_लिखोback_scache_line(अचिन्हित दीर्घ addr)
-अणु
-	वापस रक्षित_cache_op(Hit_Writeback_Inv_SD, addr);
-पूर्ण
+static inline int protected_writeback_scache_line(unsigned long addr)
+{
+	return protected_cache_op(Hit_Writeback_Inv_SD, addr);
+}
 
 /*
- * This one is RM7000-specअगरic
+ * This one is RM7000-specific
  */
-अटल अंतरभूत व्योम invalidate_tcache_page(अचिन्हित दीर्घ addr)
-अणु
+static inline void invalidate_tcache_page(unsigned long addr)
+{
 	cache_op(Page_Invalidate_T, addr);
-पूर्ण
+}
 
-#घोषणा cache_unroll(बार, insn, op, addr, lsize) करो अणु			\
-	पूर्णांक i = 0;							\
-	unroll(बार, _cache_op, insn, op, (addr) + (i++ * (lsize)));	\
-पूर्ण जबतक (0)
+#define cache_unroll(times, insn, op, addr, lsize) do {			\
+	int i = 0;							\
+	unroll(times, _cache_op, insn, op, (addr) + (i++ * (lsize)));	\
+} while (0)
 
 /* build blast_xxx, blast_xxx_page, blast_xxx_page_indexed */
-#घोषणा __BUILD_BLAST_CACHE(pfx, desc, indexop, hitop, lsize, extra)	\
-अटल अंतरभूत व्योम extra##blast_##pfx##cache##lsize(व्योम)		\
-अणु									\
-	अचिन्हित दीर्घ start = INDEX_BASE;				\
-	अचिन्हित दीर्घ end = start + current_cpu_data.desc.waysize;	\
-	अचिन्हित दीर्घ ws_inc = 1UL << current_cpu_data.desc.waybit;	\
-	अचिन्हित दीर्घ ws_end = current_cpu_data.desc.ways <<		\
+#define __BUILD_BLAST_CACHE(pfx, desc, indexop, hitop, lsize, extra)	\
+static inline void extra##blast_##pfx##cache##lsize(void)		\
+{									\
+	unsigned long start = INDEX_BASE;				\
+	unsigned long end = start + current_cpu_data.desc.waysize;	\
+	unsigned long ws_inc = 1UL << current_cpu_data.desc.waybit;	\
+	unsigned long ws_end = current_cpu_data.desc.ways <<		\
 			       current_cpu_data.desc.waybit;		\
-	अचिन्हित दीर्घ ws, addr;						\
+	unsigned long ws, addr;						\
 									\
-	क्रम (ws = 0; ws < ws_end; ws += ws_inc)				\
-		क्रम (addr = start; addr < end; addr += lsize * 32)	\
+	for (ws = 0; ws < ws_end; ws += ws_inc)				\
+		for (addr = start; addr < end; addr += lsize * 32)	\
 			cache_unroll(32, kernel_cache, indexop,		\
 				     addr | ws, lsize);			\
-पूर्ण									\
+}									\
 									\
-अटल अंतरभूत व्योम extra##blast_##pfx##cache##lsize##_page(अचिन्हित दीर्घ page) \
-अणु									\
-	अचिन्हित दीर्घ start = page;					\
-	अचिन्हित दीर्घ end = page + PAGE_SIZE;				\
+static inline void extra##blast_##pfx##cache##lsize##_page(unsigned long page) \
+{									\
+	unsigned long start = page;					\
+	unsigned long end = page + PAGE_SIZE;				\
 									\
-	करो अणु								\
+	do {								\
 		cache_unroll(32, kernel_cache, hitop, start, lsize);	\
 		start += lsize * 32;					\
-	पूर्ण जबतक (start < end);						\
-पूर्ण									\
+	} while (start < end);						\
+}									\
 									\
-अटल अंतरभूत व्योम extra##blast_##pfx##cache##lsize##_page_indexed(अचिन्हित दीर्घ page) \
-अणु									\
-	अचिन्हित दीर्घ indexmask = current_cpu_data.desc.waysize - 1;	\
-	अचिन्हित दीर्घ start = INDEX_BASE + (page & indexmask);		\
-	अचिन्हित दीर्घ end = start + PAGE_SIZE;				\
-	अचिन्हित दीर्घ ws_inc = 1UL << current_cpu_data.desc.waybit;	\
-	अचिन्हित दीर्घ ws_end = current_cpu_data.desc.ways <<		\
+static inline void extra##blast_##pfx##cache##lsize##_page_indexed(unsigned long page) \
+{									\
+	unsigned long indexmask = current_cpu_data.desc.waysize - 1;	\
+	unsigned long start = INDEX_BASE + (page & indexmask);		\
+	unsigned long end = start + PAGE_SIZE;				\
+	unsigned long ws_inc = 1UL << current_cpu_data.desc.waybit;	\
+	unsigned long ws_end = current_cpu_data.desc.ways <<		\
 			       current_cpu_data.desc.waybit;		\
-	अचिन्हित दीर्घ ws, addr;						\
+	unsigned long ws, addr;						\
 									\
-	क्रम (ws = 0; ws < ws_end; ws += ws_inc)				\
-		क्रम (addr = start; addr < end; addr += lsize * 32)	\
+	for (ws = 0; ws < ws_end; ws += ws_inc)				\
+		for (addr = start; addr < end; addr += lsize * 32)	\
 			cache_unroll(32, kernel_cache, indexop,		\
 				     addr | ws, lsize);			\
-पूर्ण
+}
 
 __BUILD_BLAST_CACHE(d, dcache, Index_Writeback_Inv_D, Hit_Writeback_Inv_D, 16, )
 __BUILD_BLAST_CACHE(i, icache, Index_Invalidate_I, Hit_Invalidate_I, 16, )
@@ -259,17 +258,17 @@ __BUILD_BLAST_CACHE(inv_s, scache, Index_Writeback_Inv_SD, Hit_Invalidate_SD, 32
 __BUILD_BLAST_CACHE(inv_s, scache, Index_Writeback_Inv_SD, Hit_Invalidate_SD, 64, )
 __BUILD_BLAST_CACHE(inv_s, scache, Index_Writeback_Inv_SD, Hit_Invalidate_SD, 128, )
 
-#घोषणा __BUILD_BLAST_USER_CACHE(pfx, desc, indexop, hitop, lsize) \
-अटल अंतरभूत व्योम blast_##pfx##cache##lsize##_user_page(अचिन्हित दीर्घ page) \
-अणु									\
-	अचिन्हित दीर्घ start = page;					\
-	अचिन्हित दीर्घ end = page + PAGE_SIZE;				\
+#define __BUILD_BLAST_USER_CACHE(pfx, desc, indexop, hitop, lsize) \
+static inline void blast_##pfx##cache##lsize##_user_page(unsigned long page) \
+{									\
+	unsigned long start = page;					\
+	unsigned long end = page + PAGE_SIZE;				\
 									\
-	करो अणु								\
+	do {								\
 		cache_unroll(32, user_cache, hitop, start, lsize);	\
 		start += lsize * 32;					\
-	पूर्ण जबतक (start < end);						\
-पूर्ण
+	} while (start < end);						\
+}
 
 __BUILD_BLAST_USER_CACHE(d, dcache, Index_Writeback_Inv_D, Hit_Writeback_Inv_D,
 			 16)
@@ -281,28 +280,28 @@ __BUILD_BLAST_USER_CACHE(d, dcache, Index_Writeback_Inv_D, Hit_Writeback_Inv_D,
 			 64)
 __BUILD_BLAST_USER_CACHE(i, icache, Index_Invalidate_I, Hit_Invalidate_I, 64)
 
-/* build blast_xxx_range, रक्षित_blast_xxx_range */
-#घोषणा __BUILD_BLAST_CACHE_RANGE(pfx, desc, hitop, prot, extra)	\
-अटल अंतरभूत व्योम prot##extra##blast_##pfx##cache##_range(अचिन्हित दीर्घ start, \
-						    अचिन्हित दीर्घ end)	\
-अणु									\
-	अचिन्हित दीर्घ lsize = cpu_##desc##_line_size();			\
-	अचिन्हित दीर्घ addr = start & ~(lsize - 1);			\
-	अचिन्हित दीर्घ aend = (end - 1) & ~(lsize - 1);			\
+/* build blast_xxx_range, protected_blast_xxx_range */
+#define __BUILD_BLAST_CACHE_RANGE(pfx, desc, hitop, prot, extra)	\
+static inline void prot##extra##blast_##pfx##cache##_range(unsigned long start, \
+						    unsigned long end)	\
+{									\
+	unsigned long lsize = cpu_##desc##_line_size();			\
+	unsigned long addr = start & ~(lsize - 1);			\
+	unsigned long aend = (end - 1) & ~(lsize - 1);			\
 									\
-	जबतक (1) अणु							\
+	while (1) {							\
 		prot##cache_op(hitop, addr);				\
-		अगर (addr == aend)					\
-			अवरोध;						\
+		if (addr == aend)					\
+			break;						\
 		addr += lsize;						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-__BUILD_BLAST_CACHE_RANGE(d, dcache, Hit_Writeback_Inv_D, रक्षित_, )
-__BUILD_BLAST_CACHE_RANGE(i, icache, Hit_Invalidate_I, रक्षित_, )
-__BUILD_BLAST_CACHE_RANGE(s, scache, Hit_Writeback_Inv_SD, रक्षित_, )
+__BUILD_BLAST_CACHE_RANGE(d, dcache, Hit_Writeback_Inv_D, protected_, )
+__BUILD_BLAST_CACHE_RANGE(i, icache, Hit_Invalidate_I, protected_, )
+__BUILD_BLAST_CACHE_RANGE(s, scache, Hit_Writeback_Inv_SD, protected_, )
 __BUILD_BLAST_CACHE_RANGE(i, icache, Hit_Invalidate_I_Loongson2, \
-	रक्षित_, loongson2_)
+	protected_, loongson2_)
 __BUILD_BLAST_CACHE_RANGE(d, dcache, Hit_Writeback_Inv_D, , )
 __BUILD_BLAST_CACHE_RANGE(i, icache, Hit_Invalidate_I, , )
 __BUILD_BLAST_CACHE_RANGE(s, scache, Hit_Writeback_Inv_SD, , )
@@ -310,26 +309,26 @@ __BUILD_BLAST_CACHE_RANGE(s, scache, Hit_Writeback_Inv_SD, , )
 __BUILD_BLAST_CACHE_RANGE(inv_d, dcache, Hit_Invalidate_D, , )
 __BUILD_BLAST_CACHE_RANGE(inv_s, scache, Hit_Invalidate_SD, , )
 
-/* Currently, this is very specअगरic to Loongson-3 */
-#घोषणा __BUILD_BLAST_CACHE_NODE(pfx, desc, indexop, hitop, lsize)	\
-अटल अंतरभूत व्योम blast_##pfx##cache##lsize##_node(दीर्घ node)		\
-अणु									\
-	अचिन्हित दीर्घ start = CAC_BASE | nid_to_addrbase(node);		\
-	अचिन्हित दीर्घ end = start + current_cpu_data.desc.waysize;	\
-	अचिन्हित दीर्घ ws_inc = 1UL << current_cpu_data.desc.waybit;	\
-	अचिन्हित दीर्घ ws_end = current_cpu_data.desc.ways <<		\
+/* Currently, this is very specific to Loongson-3 */
+#define __BUILD_BLAST_CACHE_NODE(pfx, desc, indexop, hitop, lsize)	\
+static inline void blast_##pfx##cache##lsize##_node(long node)		\
+{									\
+	unsigned long start = CAC_BASE | nid_to_addrbase(node);		\
+	unsigned long end = start + current_cpu_data.desc.waysize;	\
+	unsigned long ws_inc = 1UL << current_cpu_data.desc.waybit;	\
+	unsigned long ws_end = current_cpu_data.desc.ways <<		\
 			       current_cpu_data.desc.waybit;		\
-	अचिन्हित दीर्घ ws, addr;						\
+	unsigned long ws, addr;						\
 									\
-	क्रम (ws = 0; ws < ws_end; ws += ws_inc)				\
-		क्रम (addr = start; addr < end; addr += lsize * 32)	\
+	for (ws = 0; ws < ws_end; ws += ws_inc)				\
+		for (addr = start; addr < end; addr += lsize * 32)	\
 			cache_unroll(32, kernel_cache, indexop,		\
 				     addr | ws, lsize);			\
-पूर्ण
+}
 
 __BUILD_BLAST_CACHE_NODE(s, scache, Index_Writeback_Inv_SD, Hit_Writeback_Inv_SD, 16)
 __BUILD_BLAST_CACHE_NODE(s, scache, Index_Writeback_Inv_SD, Hit_Writeback_Inv_SD, 32)
 __BUILD_BLAST_CACHE_NODE(s, scache, Index_Writeback_Inv_SD, Hit_Writeback_Inv_SD, 64)
 __BUILD_BLAST_CACHE_NODE(s, scache, Index_Writeback_Inv_SD, Hit_Writeback_Inv_SD, 128)
 
-#पूर्ण_अगर /* _ASM_R4KCACHE_H */
+#endif /* _ASM_R4KCACHE_H */

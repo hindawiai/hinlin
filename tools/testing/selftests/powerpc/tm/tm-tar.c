@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015, Michael Neuling, IBM Corp.
  * Original: Michael Neuling 19/7/2013
  * Edited: Rashmica Gupta 01/12/2015
  *
- * Do some transactions, see अगर the tar is corrupted.
- * If the transaction is पातed, the TAR should be rolled back to the
- * checkpoपूर्णांकed value beक्रमe the transaction began. The value written to
- * TAR in suspended mode should only reमुख्य in TAR अगर the transaction
+ * Do some transactions, see if the tar is corrupted.
+ * If the transaction is aborted, the TAR should be rolled back to the
+ * checkpointed value before the transaction began. The value written to
+ * TAR in suspended mode should only remain in TAR if the transaction
  * completes.
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
-#समावेश "tm.h"
-#समावेश "utils.h"
+#include "tm.h"
+#include "utils.h"
 
-पूर्णांक	num_loops	= 10000;
+int	num_loops	= 10000;
 
-पूर्णांक test_tar(व्योम)
-अणु
-	पूर्णांक i;
+int test_tar(void)
+{
+	int i;
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 	SKIP_IF(!is_ppc64le());
 
-	क्रम (i = 0; i < num_loops; i++)
-	अणु
-		uपूर्णांक64_t result = 0;
-		यंत्र __अस्थिर__(
+	for (i = 0; i < num_loops; i++)
+	{
+		uint64_t result = 0;
+		asm __volatile__(
 			"li	7, 1;"
 			"mtspr	%[tar], 7;"	/* tar = 1 */
 			"tbegin.;"
 			"beq	3f;"
-			"li	4, 0x7000;"	/* Loop lots, to use समय */
+			"li	4, 0x7000;"	/* Loop lots, to use time */
 			"2:;"			/* Start loop */
 			"li	7, 2;"
 			"mtspr	%[tar], 7;"	/* tar = 2 */
@@ -65,28 +64,28 @@
 			: [tar]"i"(SPRN_TAR)
 			   : "memory", "r0", "r4", "r7");
 
-		/* If result is anything अन्यथा other than 7 or 9, the tar
+		/* If result is anything else other than 7 or 9, the tar
 		 * value must have been corrupted. */
-		अगर ((result != 7) && (result != 9))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if ((result != 7) && (result != 9))
+			return 1;
+	}
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
+int main(int argc, char *argv[])
+{
 	/* A low number of iterations (eg 100) can cause a false pass */
-	अगर (argc > 1) अणु
-		अगर (म_भेद(argv[1], "-h") == 0) अणु
-			म_लिखो("Syntax:\n\t%s [<num loops>]\n",
+	if (argc > 1) {
+		if (strcmp(argv[1], "-h") == 0) {
+			printf("Syntax:\n\t%s [<num loops>]\n",
 			       argv[0]);
-			वापस 1;
-		पूर्ण अन्यथा अणु
-			num_loops = म_से_प(argv[1]);
-		पूर्ण
-	पूर्ण
+			return 1;
+		} else {
+			num_loops = atoi(argv[1]);
+		}
+	}
 
-	म_लिखो("Starting, %d loops\n", num_loops);
+	printf("Starting, %d loops\n", num_loops);
 
-	वापस test_harness(test_tar, "tm_tar");
-पूर्ण
+	return test_harness(test_tar, "tm_tar");
+}

@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Facebook
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-पूर्णांक calls = 0;
-पूर्णांक alt_calls = 0;
+int calls = 0;
+int alt_calls = 0;
 
 SEC("cgroup_skb/egress1")
-पूर्णांक egress(काष्ठा __sk_buff *skb)
-अणु
+int egress(struct __sk_buff *skb)
+{
 	__sync_fetch_and_add(&calls, 1);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 SEC("cgroup_skb/egress2")
-पूर्णांक egress_alt(काष्ठा __sk_buff *skb)
-अणु
+int egress_alt(struct __sk_buff *skb)
+{
 	__sync_fetch_and_add(&alt_calls, 1);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 

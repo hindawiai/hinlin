@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *  S390 version
  *
  *  Derived from "include/asm-i386/types.h"
  */
 
-#अगर_अघोषित _UAPI_S390_TYPES_H
-#घोषणा _UAPI_S390_TYPES_H
+#ifndef _UAPI_S390_TYPES_H
+#define _UAPI_S390_TYPES_H
 
-#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
+#include <asm-generic/int-ll64.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-/* A address type so that arithmetic can be करोne on it & it can be upgraded to
+/* A address type so that arithmetic can be done on it & it can be upgraded to
    64 bit when necessary 
 */
-प्रकार अचिन्हित दीर्घ addr_t; 
-प्रकार __चिन्हित__ दीर्घ saddr_t;
+typedef unsigned long addr_t; 
+typedef __signed__ long saddr_t;
 
-प्रकार काष्ठा अणु
+typedef struct {
 	__u32 u[4];
-पूर्ण __vector128;
+} __vector128;
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _UAPI_S390_TYPES_H */
+#endif /* _UAPI_S390_TYPES_H */

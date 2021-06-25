@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Linux RFKILL support क्रम RTL8187
+ * Linux RFKILL support for RTL8187
  *
- * Copyright (c) 2009 Herton Ronalकरो Krzesinski <herton@mandriva.com.br>
+ * Copyright (c) 2009 Herton Ronaldo Krzesinski <herton@mandriva.com.br>
  *
  * Based on the RFKILL handling in the r8187 driver, which is:
  * Copyright (c) Realtek Semiconductor Corp. All rights reserved.
  *
- * Thanks to Realtek क्रम their support!
+ * Thanks to Realtek for their support!
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/usb.h>
-#समावेश <net/mac80211.h>
+#include <linux/types.h>
+#include <linux/usb.h>
+#include <net/mac80211.h>
 
-#समावेश "rtl8187.h"
-#समावेश "rfkill.h"
+#include "rtl8187.h"
+#include "rfkill.h"
 
-अटल bool rtl8187_is_radio_enabled(काष्ठा rtl8187_priv *priv)
-अणु
+static bool rtl8187_is_radio_enabled(struct rtl8187_priv *priv)
+{
 	u8 gpio;
 
-	gpio = rtl818x_ioपढ़ो8(priv, &priv->map->GPIO0);
-	rtl818x_ioग_लिखो8(priv, &priv->map->GPIO0, gpio & ~priv->rfसमाप्त_mask);
-	gpio = rtl818x_ioपढ़ो8(priv, &priv->map->GPIO1);
+	gpio = rtl818x_ioread8(priv, &priv->map->GPIO0);
+	rtl818x_iowrite8(priv, &priv->map->GPIO0, gpio & ~priv->rfkill_mask);
+	gpio = rtl818x_ioread8(priv, &priv->map->GPIO1);
 
-	वापस gpio & priv->rfसमाप्त_mask;
-पूर्ण
+	return gpio & priv->rfkill_mask;
+}
 
-व्योम rtl8187_rfसमाप्त_init(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl8187_priv *priv = hw->priv;
+void rtl8187_rfkill_init(struct ieee80211_hw *hw)
+{
+	struct rtl8187_priv *priv = hw->priv;
 
-	priv->rfसमाप्त_off = rtl8187_is_radio_enabled(priv);
-	prपूर्णांकk(KERN_INFO "rtl8187: wireless switch is %s\n",
-	       priv->rfसमाप्त_off ? "on" : "off");
-	wiphy_rfसमाप्त_set_hw_state(hw->wiphy, !priv->rfसमाप्त_off);
-	wiphy_rfसमाप्त_start_polling(hw->wiphy);
-पूर्ण
+	priv->rfkill_off = rtl8187_is_radio_enabled(priv);
+	printk(KERN_INFO "rtl8187: wireless switch is %s\n",
+	       priv->rfkill_off ? "on" : "off");
+	wiphy_rfkill_set_hw_state(hw->wiphy, !priv->rfkill_off);
+	wiphy_rfkill_start_polling(hw->wiphy);
+}
 
-व्योम rtl8187_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw)
-अणु
+void rtl8187_rfkill_poll(struct ieee80211_hw *hw)
+{
 	bool enabled;
-	काष्ठा rtl8187_priv *priv = hw->priv;
+	struct rtl8187_priv *priv = hw->priv;
 
 	mutex_lock(&priv->conf_mutex);
 	enabled = rtl8187_is_radio_enabled(priv);
-	अगर (unlikely(enabled != priv->rfसमाप्त_off)) अणु
-		priv->rfसमाप्त_off = enabled;
-		prपूर्णांकk(KERN_INFO "rtl8187: wireless radio switch turned %s\n",
+	if (unlikely(enabled != priv->rfkill_off)) {
+		priv->rfkill_off = enabled;
+		printk(KERN_INFO "rtl8187: wireless radio switch turned %s\n",
 		       enabled ? "on" : "off");
-		wiphy_rfसमाप्त_set_hw_state(hw->wiphy, !enabled);
-	पूर्ण
+		wiphy_rfkill_set_hw_state(hw->wiphy, !enabled);
+	}
 	mutex_unlock(&priv->conf_mutex);
-पूर्ण
+}
 
-व्योम rtl8187_rfसमाप्त_निकास(काष्ठा ieee80211_hw *hw)
-अणु
-	wiphy_rfसमाप्त_stop_polling(hw->wiphy);
-पूर्ण
+void rtl8187_rfkill_exit(struct ieee80211_hw *hw)
+{
+	wiphy_rfkill_stop_polling(hw->wiphy);
+}

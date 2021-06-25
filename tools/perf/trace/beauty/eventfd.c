@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
-#अगर_अघोषित EFD_SEMAPHORE
-#घोषणा EFD_SEMAPHORE		1
-#पूर्ण_अगर
+// SPDX-License-Identifier: LGPL-2.1
+#ifndef EFD_SEMAPHORE
+#define EFD_SEMAPHORE		1
+#endif
 
-#अगर_अघोषित EFD_NONBLOCK
-#घोषणा EFD_NONBLOCK		00004000
-#पूर्ण_अगर
+#ifndef EFD_NONBLOCK
+#define EFD_NONBLOCK		00004000
+#endif
 
-#अगर_अघोषित EFD_CLOEXEC
-#घोषणा EFD_CLOEXEC		02000000
-#पूर्ण_अगर
+#ifndef EFD_CLOEXEC
+#define EFD_CLOEXEC		02000000
+#endif
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_eventfd_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
+static size_t syscall_arg__scnprintf_eventfd_flags(char *bf, size_t size, struct syscall_arg *arg)
+{
 	bool show_prefix = arg->show_string_prefix;
-	स्थिर अक्षर *prefix = "EFD_";
-	पूर्णांक prपूर्णांकed = 0, flags = arg->val;
+	const char *prefix = "EFD_";
+	int printed = 0, flags = arg->val;
 
-	अगर (flags == 0)
-		वापस scnम_लिखो(bf, size, "NONE");
-#घोषणा	P_FLAG(n) \
-	अगर (flags & EFD_##n) अणु \
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #n); \
+	if (flags == 0)
+		return scnprintf(bf, size, "NONE");
+#define	P_FLAG(n) \
+	if (flags & EFD_##n) { \
+		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #n); \
 		flags &= ~EFD_##n; \
-	पूर्ण
+	}
 
 	P_FLAG(SEMAPHORE);
 	P_FLAG(CLOEXEC);
 	P_FLAG(NONBLOCK);
-#अघोषित P_FLAG
+#undef P_FLAG
 
-	अगर (flags)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", flags);
+	if (flags)
+		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", flags);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-#घोषणा SCA_EFD_FLAGS syscall_arg__scnम_लिखो_eventfd_flags
+#define SCA_EFD_FLAGS syscall_arg__scnprintf_eventfd_flags

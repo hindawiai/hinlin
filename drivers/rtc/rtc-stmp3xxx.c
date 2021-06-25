@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Freescale STMP37XX/STMP378X Real Time Clock driver
  *
@@ -10,410 +9,410 @@
  * Copyright 2008 Embedded Alley Solutions, Inc All Rights Reserved.
  * Copyright 2011 Wolfram Sang, Pengutronix e.K.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/sपंचांगp_device.h>
-#समावेश <linux/sपंचांगp3xxx_rtc_wdt.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/of_device.h>
+#include <linux/of.h>
+#include <linux/stmp_device.h>
+#include <linux/stmp3xxx_rtc_wdt.h>
 
-#घोषणा STMP3XXX_RTC_CTRL			0x0
-#घोषणा STMP3XXX_RTC_CTRL_ALARM_IRQ_EN		0x00000001
-#घोषणा STMP3XXX_RTC_CTRL_ONEMSEC_IRQ_EN	0x00000002
-#घोषणा STMP3XXX_RTC_CTRL_ALARM_IRQ		0x00000004
-#घोषणा STMP3XXX_RTC_CTRL_WATCHDOGEN		0x00000010
+#define STMP3XXX_RTC_CTRL			0x0
+#define STMP3XXX_RTC_CTRL_ALARM_IRQ_EN		0x00000001
+#define STMP3XXX_RTC_CTRL_ONEMSEC_IRQ_EN	0x00000002
+#define STMP3XXX_RTC_CTRL_ALARM_IRQ		0x00000004
+#define STMP3XXX_RTC_CTRL_WATCHDOGEN		0x00000010
 
-#घोषणा STMP3XXX_RTC_STAT			0x10
-#घोषणा STMP3XXX_RTC_STAT_STALE_SHIFT		16
-#घोषणा STMP3XXX_RTC_STAT_RTC_PRESENT		0x80000000
-#घोषणा STMP3XXX_RTC_STAT_XTAL32000_PRESENT	0x10000000
-#घोषणा STMP3XXX_RTC_STAT_XTAL32768_PRESENT	0x08000000
+#define STMP3XXX_RTC_STAT			0x10
+#define STMP3XXX_RTC_STAT_STALE_SHIFT		16
+#define STMP3XXX_RTC_STAT_RTC_PRESENT		0x80000000
+#define STMP3XXX_RTC_STAT_XTAL32000_PRESENT	0x10000000
+#define STMP3XXX_RTC_STAT_XTAL32768_PRESENT	0x08000000
 
-#घोषणा STMP3XXX_RTC_SECONDS			0x30
+#define STMP3XXX_RTC_SECONDS			0x30
 
-#घोषणा STMP3XXX_RTC_ALARM			0x40
+#define STMP3XXX_RTC_ALARM			0x40
 
-#घोषणा STMP3XXX_RTC_WATCHDOG			0x50
+#define STMP3XXX_RTC_WATCHDOG			0x50
 
-#घोषणा STMP3XXX_RTC_PERSISTENT0		0x60
-#घोषणा STMP3XXX_RTC_PERSISTENT0_CLOCKSOURCE		(1 << 0)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN		(1 << 1)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_ALARM_EN		(1 << 2)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_XTAL24MHZ_PWRUP	(1 << 4)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_XTAL32KHZ_PWRUP	(1 << 5)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_XTAL32_FREQ		(1 << 6)
-#घोषणा STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE		(1 << 7)
+#define STMP3XXX_RTC_PERSISTENT0		0x60
+#define STMP3XXX_RTC_PERSISTENT0_CLOCKSOURCE		(1 << 0)
+#define STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN		(1 << 1)
+#define STMP3XXX_RTC_PERSISTENT0_ALARM_EN		(1 << 2)
+#define STMP3XXX_RTC_PERSISTENT0_XTAL24MHZ_PWRUP	(1 << 4)
+#define STMP3XXX_RTC_PERSISTENT0_XTAL32KHZ_PWRUP	(1 << 5)
+#define STMP3XXX_RTC_PERSISTENT0_XTAL32_FREQ		(1 << 6)
+#define STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE		(1 << 7)
 
-#घोषणा STMP3XXX_RTC_PERSISTENT1		0x70
-/* missing biपंचांगask in headers */
-#घोषणा STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER	0x80000000
+#define STMP3XXX_RTC_PERSISTENT1		0x70
+/* missing bitmask in headers */
+#define STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER	0x80000000
 
-काष्ठा sपंचांगp3xxx_rtc_data अणु
-	काष्ठा rtc_device *rtc;
-	व्योम __iomem *io;
-	पूर्णांक irq_alarm;
-पूर्ण;
+struct stmp3xxx_rtc_data {
+	struct rtc_device *rtc;
+	void __iomem *io;
+	int irq_alarm;
+};
 
-#अगर IS_ENABLED(CONFIG_STMP3XXX_RTC_WATCHDOG)
+#if IS_ENABLED(CONFIG_STMP3XXX_RTC_WATCHDOG)
 /**
- * sपंचांगp3xxx_wdt_set_समयout - configure the watchकरोg inside the STMP3xxx RTC
- * @dev: the parent device of the watchकरोg (= the RTC)
- * @समयout: the desired value क्रम the समयout रेजिस्टर of the watchकरोg.
- *           0 disables the watchकरोg
+ * stmp3xxx_wdt_set_timeout - configure the watchdog inside the STMP3xxx RTC
+ * @dev: the parent device of the watchdog (= the RTC)
+ * @timeout: the desired value for the timeout register of the watchdog.
+ *           0 disables the watchdog
  *
- * The watchकरोg needs one रेजिस्टर and two bits which are in the RTC करोमुख्य.
+ * The watchdog needs one register and two bits which are in the RTC domain.
  * To handle the resource conflict, the RTC driver will create another
- * platक्रमm_device क्रम the watchकरोg driver as a child of the RTC device.
- * The watchकरोg driver is passed the below accessor function via platक्रमm_data
- * to configure the watchकरोg. Locking is not needed because accessing SET/CLR
- * रेजिस्टरs is atomic.
+ * platform_device for the watchdog driver as a child of the RTC device.
+ * The watchdog driver is passed the below accessor function via platform_data
+ * to configure the watchdog. Locking is not needed because accessing SET/CLR
+ * registers is atomic.
  */
 
-अटल व्योम sपंचांगp3xxx_wdt_set_समयout(काष्ठा device *dev, u32 समयout)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static void stmp3xxx_wdt_set_timeout(struct device *dev, u32 timeout)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	अगर (समयout) अणु
-		ग_लिखोl(समयout, rtc_data->io + STMP3XXX_RTC_WATCHDOG);
-		ग_लिखोl(STMP3XXX_RTC_CTRL_WATCHDOGEN,
+	if (timeout) {
+		writel(timeout, rtc_data->io + STMP3XXX_RTC_WATCHDOG);
+		writel(STMP3XXX_RTC_CTRL_WATCHDOGEN,
 		       rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_SET);
-		ग_लिखोl(STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER,
+		writel(STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER,
 		       rtc_data->io + STMP3XXX_RTC_PERSISTENT1 + STMP_OFFSET_REG_SET);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(STMP3XXX_RTC_CTRL_WATCHDOGEN,
+	} else {
+		writel(STMP3XXX_RTC_CTRL_WATCHDOGEN,
 		       rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_CLR);
-		ग_लिखोl(STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER,
+		writel(STMP3XXX_RTC_PERSISTENT1_FORCE_UPDATER,
 		       rtc_data->io + STMP3XXX_RTC_PERSISTENT1 + STMP_OFFSET_REG_CLR);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा sपंचांगp3xxx_wdt_pdata wdt_pdata = अणु
-	.wdt_set_समयout = sपंचांगp3xxx_wdt_set_समयout,
-पूर्ण;
+static struct stmp3xxx_wdt_pdata wdt_pdata = {
+	.wdt_set_timeout = stmp3xxx_wdt_set_timeout,
+};
 
-अटल व्योम sपंचांगp3xxx_wdt_रेजिस्टर(काष्ठा platक्रमm_device *rtc_pdev)
-अणु
-	पूर्णांक rc = -1;
-	काष्ठा platक्रमm_device *wdt_pdev =
-		platक्रमm_device_alloc("stmp3xxx_rtc_wdt", rtc_pdev->id);
+static void stmp3xxx_wdt_register(struct platform_device *rtc_pdev)
+{
+	int rc = -1;
+	struct platform_device *wdt_pdev =
+		platform_device_alloc("stmp3xxx_rtc_wdt", rtc_pdev->id);
 
-	अगर (wdt_pdev) अणु
+	if (wdt_pdev) {
 		wdt_pdev->dev.parent = &rtc_pdev->dev;
-		wdt_pdev->dev.platक्रमm_data = &wdt_pdata;
-		rc = platक्रमm_device_add(wdt_pdev);
-	पूर्ण
+		wdt_pdev->dev.platform_data = &wdt_pdata;
+		rc = platform_device_add(wdt_pdev);
+	}
 
-	अगर (rc)
+	if (rc)
 		dev_err(&rtc_pdev->dev,
 			"failed to register stmp3xxx_rtc_wdt\n");
-पूर्ण
-#अन्यथा
-अटल व्योम sपंचांगp3xxx_wdt_रेजिस्टर(काष्ठा platक्रमm_device *rtc_pdev)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_STMP3XXX_RTC_WATCHDOG */
+}
+#else
+static void stmp3xxx_wdt_register(struct platform_device *rtc_pdev)
+{
+}
+#endif /* CONFIG_STMP3XXX_RTC_WATCHDOG */
 
-अटल पूर्णांक sपंचांगp3xxx_रुको_समय(काष्ठा sपंचांगp3xxx_rtc_data *rtc_data)
-अणु
-	पूर्णांक समयout = 5000; /* 3ms according to i.MX28 Ref Manual */
+static int stmp3xxx_wait_time(struct stmp3xxx_rtc_data *rtc_data)
+{
+	int timeout = 5000; /* 3ms according to i.MX28 Ref Manual */
 	/*
 	 * The i.MX28 Applications Processor Reference Manual, Rev. 1, 2010
 	 * states:
-	 * | The order in which रेजिस्टरs are updated is
+	 * | The order in which registers are updated is
 	 * | Persistent 0, 1, 2, 3, 4, 5, Alarm, Seconds.
 	 * | (This list is in bitfield order, from LSB to MSB, as they would
 	 * | appear in the STALE_REGS and NEW_REGS bitfields of the HW_RTC_STAT
-	 * | रेजिस्टर. For example, the Seconds रेजिस्टर corresponds to
+	 * | register. For example, the Seconds register corresponds to
 	 * | STALE_REGS or NEW_REGS containing 0x80.)
 	 */
-	करो अणु
-		अगर (!(पढ़ोl(rtc_data->io + STMP3XXX_RTC_STAT) &
+	do {
+		if (!(readl(rtc_data->io + STMP3XXX_RTC_STAT) &
 				(0x80 << STMP3XXX_RTC_STAT_STALE_SHIFT)))
-			वापस 0;
+			return 0;
 		udelay(1);
-	पूर्ण जबतक (--समयout > 0);
-	वापस (पढ़ोl(rtc_data->io + STMP3XXX_RTC_STAT) &
+	} while (--timeout > 0);
+	return (readl(rtc_data->io + STMP3XXX_RTC_STAT) &
 		(0x80 << STMP3XXX_RTC_STAT_STALE_SHIFT)) ? -ETIME : 0;
-पूर्ण
+}
 
-/* Time पढ़ो/ग_लिखो */
-अटल पूर्णांक sपंचांगp3xxx_rtc_समय_लो(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-	पूर्णांक ret;
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+/* Time read/write */
+static int stmp3xxx_rtc_gettime(struct device *dev, struct rtc_time *rtc_tm)
+{
+	int ret;
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	ret = sपंचांगp3xxx_रुको_समय(rtc_data);
-	अगर (ret)
-		वापस ret;
+	ret = stmp3xxx_wait_time(rtc_data);
+	if (ret)
+		return ret;
 
-	rtc_समय64_to_पंचांग(पढ़ोl(rtc_data->io + STMP3XXX_RTC_SECONDS), rtc_पंचांग);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(readl(rtc_data->io + STMP3XXX_RTC_SECONDS), rtc_tm);
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_समय_रखो(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static int stmp3xxx_rtc_settime(struct device *dev, struct rtc_time *rtc_tm)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	ग_लिखोl(rtc_पंचांग_to_समय64(rtc_पंचांग), rtc_data->io + STMP3XXX_RTC_SECONDS);
-	वापस sपंचांगp3xxx_रुको_समय(rtc_data);
-पूर्ण
+	writel(rtc_tm_to_time64(rtc_tm), rtc_data->io + STMP3XXX_RTC_SECONDS);
+	return stmp3xxx_wait_time(rtc_data);
+}
 
-/* पूर्णांकerrupt(s) handler */
-अटल irqवापस_t sपंचांगp3xxx_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev_id);
-	u32 status = पढ़ोl(rtc_data->io + STMP3XXX_RTC_CTRL);
+/* interrupt(s) handler */
+static irqreturn_t stmp3xxx_rtc_interrupt(int irq, void *dev_id)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev_id);
+	u32 status = readl(rtc_data->io + STMP3XXX_RTC_CTRL);
 
-	अगर (status & STMP3XXX_RTC_CTRL_ALARM_IRQ) अणु
-		ग_लिखोl(STMP3XXX_RTC_CTRL_ALARM_IRQ,
+	if (status & STMP3XXX_RTC_CTRL_ALARM_IRQ) {
+		writel(STMP3XXX_RTC_CTRL_ALARM_IRQ,
 			rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_CLR);
 		rtc_update_irq(rtc_data->rtc, 1, RTC_AF | RTC_IRQF);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static int stmp3xxx_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	अगर (enabled) अणु
-		ग_लिखोl(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
+	if (enabled) {
+		writel(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
 				STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN,
 			rtc_data->io + STMP3XXX_RTC_PERSISTENT0 +
 				STMP_OFFSET_REG_SET);
-		ग_लिखोl(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
+		writel(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
 			rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_SET);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
+	} else {
+		writel(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
 				STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN,
 			rtc_data->io + STMP3XXX_RTC_PERSISTENT0 +
 				STMP_OFFSET_REG_CLR);
-		ग_लिखोl(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
+		writel(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
 			rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_CLR);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static int stmp3xxx_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	rtc_समय64_to_पंचांग(पढ़ोl(rtc_data->io + STMP3XXX_RTC_ALARM), &alm->समय);
-	वापस 0;
-पूर्ण
+	rtc_time64_to_tm(readl(rtc_data->io + STMP3XXX_RTC_ALARM), &alm->time);
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static int stmp3xxx_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	ग_लिखोl(rtc_पंचांग_to_समय64(&alm->समय), rtc_data->io + STMP3XXX_RTC_ALARM);
+	writel(rtc_tm_to_time64(&alm->time), rtc_data->io + STMP3XXX_RTC_ALARM);
 
-	sपंचांगp3xxx_alarm_irq_enable(dev, alm->enabled);
+	stmp3xxx_alarm_irq_enable(dev, alm->enabled);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops sपंचांगp3xxx_rtc_ops = अणु
+static const struct rtc_class_ops stmp3xxx_rtc_ops = {
 	.alarm_irq_enable =
-			  sपंचांगp3xxx_alarm_irq_enable,
-	.पढ़ो_समय	= sपंचांगp3xxx_rtc_समय_लो,
-	.set_समय	= sपंचांगp3xxx_rtc_समय_रखो,
-	.पढ़ो_alarm	= sपंचांगp3xxx_rtc_पढ़ो_alarm,
-	.set_alarm	= sपंचांगp3xxx_rtc_set_alarm,
-पूर्ण;
+			  stmp3xxx_alarm_irq_enable,
+	.read_time	= stmp3xxx_rtc_gettime,
+	.set_time	= stmp3xxx_rtc_settime,
+	.read_alarm	= stmp3xxx_rtc_read_alarm,
+	.set_alarm	= stmp3xxx_rtc_set_alarm,
+};
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = platक्रमm_get_drvdata(pdev);
+static int stmp3xxx_rtc_remove(struct platform_device *pdev)
+{
+	struct stmp3xxx_rtc_data *rtc_data = platform_get_drvdata(pdev);
 
-	अगर (!rtc_data)
-		वापस 0;
+	if (!rtc_data)
+		return 0;
 
-	ग_लिखोl(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
+	writel(STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
 		rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_CLR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data;
-	काष्ठा resource *r;
+static int stmp3xxx_rtc_probe(struct platform_device *pdev)
+{
+	struct stmp3xxx_rtc_data *rtc_data;
+	struct resource *r;
 	u32 rtc_stat;
 	u32 pers0_set, pers0_clr;
 	u32 crystalfreq = 0;
-	पूर्णांक err;
+	int err;
 
-	rtc_data = devm_kzalloc(&pdev->dev, माप(*rtc_data), GFP_KERNEL);
-	अगर (!rtc_data)
-		वापस -ENOMEM;
+	rtc_data = devm_kzalloc(&pdev->dev, sizeof(*rtc_data), GFP_KERNEL);
+	if (!rtc_data)
+		return -ENOMEM;
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!r) अणु
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!r) {
 		dev_err(&pdev->dev, "failed to get resource\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	rtc_data->io = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	अगर (!rtc_data->io) अणु
+	if (!rtc_data->io) {
 		dev_err(&pdev->dev, "ioremap failed\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	rtc_data->irq_alarm = platक्रमm_get_irq(pdev, 0);
+	rtc_data->irq_alarm = platform_get_irq(pdev, 0);
 
-	rtc_stat = पढ़ोl(rtc_data->io + STMP3XXX_RTC_STAT);
-	अगर (!(rtc_stat & STMP3XXX_RTC_STAT_RTC_PRESENT)) अणु
+	rtc_stat = readl(rtc_data->io + STMP3XXX_RTC_STAT);
+	if (!(rtc_stat & STMP3XXX_RTC_STAT_RTC_PRESENT)) {
 		dev_err(&pdev->dev, "no device onboard\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	platक्रमm_set_drvdata(pdev, rtc_data);
+	platform_set_drvdata(pdev, rtc_data);
 
 	/*
-	 * Resetting the rtc stops the watchकरोg समयr that is potentially
-	 * running. So (assuming it is running on purpose) करोn't reset अगर the
-	 * watchकरोg is enabled.
+	 * Resetting the rtc stops the watchdog timer that is potentially
+	 * running. So (assuming it is running on purpose) don't reset if the
+	 * watchdog is enabled.
 	 */
-	अगर (पढ़ोl(rtc_data->io + STMP3XXX_RTC_CTRL) &
-	    STMP3XXX_RTC_CTRL_WATCHDOGEN) अणु
+	if (readl(rtc_data->io + STMP3XXX_RTC_CTRL) &
+	    STMP3XXX_RTC_CTRL_WATCHDOGEN) {
 		dev_info(&pdev->dev,
 			 "Watchdog is running, skip resetting rtc\n");
-	पूर्ण अन्यथा अणु
-		err = sपंचांगp_reset_block(rtc_data->io);
-		अगर (err) अणु
+	} else {
+		err = stmp_reset_block(rtc_data->io);
+		if (err) {
 			dev_err(&pdev->dev, "stmp_reset_block failed: %d\n",
 				err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	/*
-	 * Obviously the rtc needs a घड़ी input to be able to run.
-	 * This घड़ी can be provided by an बाह्यal 32k crystal. If that one is
+	 * Obviously the rtc needs a clock input to be able to run.
+	 * This clock can be provided by an external 32k crystal. If that one is
 	 * missing XTAL must not be disabled in suspend which consumes a
-	 * lot of घातer. Normally the presence and exact frequency (supported
+	 * lot of power. Normally the presence and exact frequency (supported
 	 * are 32000 Hz and 32768 Hz) is detectable from fuses, but as reality
 	 * proves these fuses are not blown correctly on all machines, so the
 	 * frequency can be overridden in the device tree.
 	 */
-	अगर (rtc_stat & STMP3XXX_RTC_STAT_XTAL32000_PRESENT)
+	if (rtc_stat & STMP3XXX_RTC_STAT_XTAL32000_PRESENT)
 		crystalfreq = 32000;
-	अन्यथा अगर (rtc_stat & STMP3XXX_RTC_STAT_XTAL32768_PRESENT)
+	else if (rtc_stat & STMP3XXX_RTC_STAT_XTAL32768_PRESENT)
 		crystalfreq = 32768;
 
-	of_property_पढ़ो_u32(pdev->dev.of_node, "stmp,crystal-freq",
+	of_property_read_u32(pdev->dev.of_node, "stmp,crystal-freq",
 			     &crystalfreq);
 
-	चयन (crystalfreq) अणु
-	हाल 32000:
-		/* keep 32kHz crystal running in low-घातer mode */
+	switch (crystalfreq) {
+	case 32000:
+		/* keep 32kHz crystal running in low-power mode */
 		pers0_set = STMP3XXX_RTC_PERSISTENT0_XTAL32_FREQ |
 			STMP3XXX_RTC_PERSISTENT0_XTAL32KHZ_PWRUP |
 			STMP3XXX_RTC_PERSISTENT0_CLOCKSOURCE;
 		pers0_clr = STMP3XXX_RTC_PERSISTENT0_XTAL24MHZ_PWRUP;
-		अवरोध;
-	हाल 32768:
-		/* keep 32.768kHz crystal running in low-घातer mode */
+		break;
+	case 32768:
+		/* keep 32.768kHz crystal running in low-power mode */
 		pers0_set = STMP3XXX_RTC_PERSISTENT0_XTAL32KHZ_PWRUP |
 			STMP3XXX_RTC_PERSISTENT0_CLOCKSOURCE;
 		pers0_clr = STMP3XXX_RTC_PERSISTENT0_XTAL24MHZ_PWRUP |
 			STMP3XXX_RTC_PERSISTENT0_XTAL32_FREQ;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(&pdev->dev,
 			 "invalid crystal-freq specified in device-tree. Assuming no crystal\n");
 		fallthrough;
-	हाल 0:
-		/* keep XTAL on in low-घातer mode */
+	case 0:
+		/* keep XTAL on in low-power mode */
 		pers0_set = STMP3XXX_RTC_PERSISTENT0_XTAL24MHZ_PWRUP;
 		pers0_clr = STMP3XXX_RTC_PERSISTENT0_XTAL32KHZ_PWRUP |
 			STMP3XXX_RTC_PERSISTENT0_CLOCKSOURCE;
-	पूर्ण
+	}
 
-	ग_लिखोl(pers0_set, rtc_data->io + STMP3XXX_RTC_PERSISTENT0 +
+	writel(pers0_set, rtc_data->io + STMP3XXX_RTC_PERSISTENT0 +
 			STMP_OFFSET_REG_SET);
 
-	ग_लिखोl(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
+	writel(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
 			STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN |
 			STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE | pers0_clr,
 		rtc_data->io + STMP3XXX_RTC_PERSISTENT0 + STMP_OFFSET_REG_CLR);
 
-	ग_लिखोl(STMP3XXX_RTC_CTRL_ONEMSEC_IRQ_EN |
+	writel(STMP3XXX_RTC_CTRL_ONEMSEC_IRQ_EN |
 			STMP3XXX_RTC_CTRL_ALARM_IRQ_EN,
 		rtc_data->io + STMP3XXX_RTC_CTRL + STMP_OFFSET_REG_CLR);
 
 	rtc_data->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc_data->rtc))
-		वापस PTR_ERR(rtc_data->rtc);
+	if (IS_ERR(rtc_data->rtc))
+		return PTR_ERR(rtc_data->rtc);
 
 	err = devm_request_irq(&pdev->dev, rtc_data->irq_alarm,
-			sपंचांगp3xxx_rtc_पूर्णांकerrupt, 0, "RTC alarm", &pdev->dev);
-	अगर (err) अणु
+			stmp3xxx_rtc_interrupt, 0, "RTC alarm", &pdev->dev);
+	if (err) {
 		dev_err(&pdev->dev, "Cannot claim IRQ%d\n",
 			rtc_data->irq_alarm);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	rtc_data->rtc->ops = &sपंचांगp3xxx_rtc_ops;
+	rtc_data->rtc->ops = &stmp3xxx_rtc_ops;
 	rtc_data->rtc->range_max = U32_MAX;
 
-	err = devm_rtc_रेजिस्टर_device(rtc_data->rtc);
-	अगर (err)
-		वापस err;
+	err = devm_rtc_register_device(rtc_data->rtc);
+	if (err)
+		return err;
 
-	sपंचांगp3xxx_wdt_रेजिस्टर(pdev);
-	वापस 0;
-पूर्ण
+	stmp3xxx_wdt_register(pdev);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sपंचांगp3xxx_rtc_suspend(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PM_SLEEP
+static int stmp3xxx_rtc_suspend(struct device *dev)
+{
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांगp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
+static int stmp3xxx_rtc_resume(struct device *dev)
+{
+	struct stmp3xxx_rtc_data *rtc_data = dev_get_drvdata(dev);
 
-	sपंचांगp_reset_block(rtc_data->io);
-	ग_लिखोl(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
+	stmp_reset_block(rtc_data->io);
+	writel(STMP3XXX_RTC_PERSISTENT0_ALARM_EN |
 			STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE_EN |
 			STMP3XXX_RTC_PERSISTENT0_ALARM_WAKE,
 		rtc_data->io + STMP3XXX_RTC_PERSISTENT0 + STMP_OFFSET_REG_CLR);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(sपंचांगp3xxx_rtc_pm_ops, sपंचांगp3xxx_rtc_suspend,
-			sपंचांगp3xxx_rtc_resume);
+static SIMPLE_DEV_PM_OPS(stmp3xxx_rtc_pm_ops, stmp3xxx_rtc_suspend,
+			stmp3xxx_rtc_resume);
 
-अटल स्थिर काष्ठा of_device_id rtc_dt_ids[] = अणु
-	अणु .compatible = "fsl,stmp3xxx-rtc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id rtc_dt_ids[] = {
+	{ .compatible = "fsl,stmp3xxx-rtc", },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, rtc_dt_ids);
 
-अटल काष्ठा platक्रमm_driver sपंचांगp3xxx_rtcdrv = अणु
-	.probe		= sपंचांगp3xxx_rtc_probe,
-	.हटाओ		= sपंचांगp3xxx_rtc_हटाओ,
-	.driver		= अणु
+static struct platform_driver stmp3xxx_rtcdrv = {
+	.probe		= stmp3xxx_rtc_probe,
+	.remove		= stmp3xxx_rtc_remove,
+	.driver		= {
 		.name	= "stmp3xxx-rtc",
-		.pm	= &sपंचांगp3xxx_rtc_pm_ops,
+		.pm	= &stmp3xxx_rtc_pm_ops,
 		.of_match_table = rtc_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sपंचांगp3xxx_rtcdrv);
+module_platform_driver(stmp3xxx_rtcdrv);
 
 MODULE_DESCRIPTION("STMP3xxx RTC Driver");
 MODULE_AUTHOR("dmitry pervushin <dpervushin@embeddedalley.com> and "

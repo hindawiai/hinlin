@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,15 +30,15 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/mlx5/qp.h>
-#समावेश <linux/mlx5/cq.h>
-#समावेश <linux/mlx5/driver.h>
-#समावेश "mlx5_core.h"
-#समावेश "lib/eq.h"
+#include <linux/module.h>
+#include <linux/debugfs.h>
+#include <linux/mlx5/qp.h>
+#include <linux/mlx5/cq.h>
+#include <linux/mlx5/driver.h>
+#include "mlx5_core.h"
+#include "lib/eq.h"
 
-क्रमागत अणु
+enum {
 	QP_PID,
 	QP_STATE,
 	QP_XPORT,
@@ -49,9 +48,9 @@
 	QP_N_SEND,
 	QP_LOG_PG_SZ,
 	QP_RQPN,
-पूर्ण;
+};
 
-अटल अक्षर *qp_fields[] = अणु
+static char *qp_fields[] = {
 	[QP_PID]	= "pid",
 	[QP_STATE]	= "state",
 	[QP_XPORT]	= "transport",
@@ -61,90 +60,90 @@
 	[QP_N_SEND]	= "num_send",
 	[QP_LOG_PG_SZ]	= "log2_page_sz",
 	[QP_RQPN]	= "remote_qpn",
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EQ_NUM_EQES,
 	EQ_INTR,
 	EQ_LOG_PG_SZ,
-पूर्ण;
+};
 
-अटल अक्षर *eq_fields[] = अणु
+static char *eq_fields[] = {
 	[EQ_NUM_EQES]	= "num_eqes",
 	[EQ_INTR]	= "intr",
 	[EQ_LOG_PG_SZ]	= "log_page_size",
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CQ_PID,
 	CQ_NUM_CQES,
 	CQ_LOG_PG_SZ,
-पूर्ण;
+};
 
-अटल अक्षर *cq_fields[] = अणु
+static char *cq_fields[] = {
 	[CQ_PID]	= "pid",
 	[CQ_NUM_CQES]	= "num_cqes",
 	[CQ_LOG_PG_SZ]	= "log_page_size",
-पूर्ण;
+};
 
-काष्ठा dentry *mlx5_debugfs_root;
+struct dentry *mlx5_debugfs_root;
 EXPORT_SYMBOL(mlx5_debugfs_root);
 
-व्योम mlx5_रेजिस्टर_debugfs(व्योम)
-अणु
-	mlx5_debugfs_root = debugfs_create_dir("mlx5", शून्य);
-पूर्ण
+void mlx5_register_debugfs(void)
+{
+	mlx5_debugfs_root = debugfs_create_dir("mlx5", NULL);
+}
 
-व्योम mlx5_unरेजिस्टर_debugfs(व्योम)
-अणु
-	debugfs_हटाओ(mlx5_debugfs_root);
-पूर्ण
+void mlx5_unregister_debugfs(void)
+{
+	debugfs_remove(mlx5_debugfs_root);
+}
 
-व्योम mlx5_qp_debugfs_init(काष्ठा mlx5_core_dev *dev)
-अणु
+void mlx5_qp_debugfs_init(struct mlx5_core_dev *dev)
+{
 	dev->priv.qp_debugfs = debugfs_create_dir("QPs",  dev->priv.dbg_root);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx5_qp_debugfs_init);
 
-व्योम mlx5_qp_debugfs_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	debugfs_हटाओ_recursive(dev->priv.qp_debugfs);
-पूर्ण
+void mlx5_qp_debugfs_cleanup(struct mlx5_core_dev *dev)
+{
+	debugfs_remove_recursive(dev->priv.qp_debugfs);
+}
 EXPORT_SYMBOL(mlx5_qp_debugfs_cleanup);
 
-व्योम mlx5_eq_debugfs_init(काष्ठा mlx5_core_dev *dev)
-अणु
+void mlx5_eq_debugfs_init(struct mlx5_core_dev *dev)
+{
 	dev->priv.eq_debugfs = debugfs_create_dir("EQs",  dev->priv.dbg_root);
-पूर्ण
+}
 
-व्योम mlx5_eq_debugfs_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	debugfs_हटाओ_recursive(dev->priv.eq_debugfs);
-पूर्ण
+void mlx5_eq_debugfs_cleanup(struct mlx5_core_dev *dev)
+{
+	debugfs_remove_recursive(dev->priv.eq_debugfs);
+}
 
-अटल sमाप_प्रकार average_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t average_read(struct file *filp, char __user *buf, size_t count,
 			    loff_t *pos)
-अणु
-	काष्ठा mlx5_cmd_stats *stats;
+{
+	struct mlx5_cmd_stats *stats;
 	u64 field = 0;
-	पूर्णांक ret;
-	अक्षर tbuf[22];
+	int ret;
+	char tbuf[22];
 
-	stats = filp->निजी_data;
+	stats = filp->private_data;
 	spin_lock_irq(&stats->lock);
-	अगर (stats->n)
-		field = भाग64_u64(stats->sum, stats->n);
+	if (stats->n)
+		field = div64_u64(stats->sum, stats->n);
 	spin_unlock_irq(&stats->lock);
-	ret = snम_लिखो(tbuf, माप(tbuf), "%llu\n", field);
-	वापस simple_पढ़ो_from_buffer(buf, count, pos, tbuf, ret);
-पूर्ण
+	ret = snprintf(tbuf, sizeof(tbuf), "%llu\n", field);
+	return simple_read_from_buffer(buf, count, pos, tbuf, ret);
+}
 
-अटल sमाप_प्रकार average_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
-			     माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा mlx5_cmd_stats *stats;
+static ssize_t average_write(struct file *filp, const char __user *buf,
+			     size_t count, loff_t *pos)
+{
+	struct mlx5_cmd_stats *stats;
 
-	stats = filp->निजी_data;
+	stats = filp->private_data;
 	spin_lock_irq(&stats->lock);
 	stats->sum = 0;
 	stats->n = 0;
@@ -152,362 +151,362 @@ EXPORT_SYMBOL(mlx5_qp_debugfs_cleanup);
 
 	*pos += count;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations stats_fops = अणु
+static const struct file_operations stats_fops = {
 	.owner	= THIS_MODULE,
-	.खोलो	= simple_खोलो,
-	.पढ़ो	= average_पढ़ो,
-	.ग_लिखो	= average_ग_लिखो,
-पूर्ण;
+	.open	= simple_open,
+	.read	= average_read,
+	.write	= average_write,
+};
 
-व्योम mlx5_cmdअगर_debugfs_init(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा mlx5_cmd_stats *stats;
-	काष्ठा dentry **cmd;
-	स्थिर अक्षर *namep;
-	पूर्णांक i;
+void mlx5_cmdif_debugfs_init(struct mlx5_core_dev *dev)
+{
+	struct mlx5_cmd_stats *stats;
+	struct dentry **cmd;
+	const char *namep;
+	int i;
 
-	cmd = &dev->priv.cmdअगर_debugfs;
+	cmd = &dev->priv.cmdif_debugfs;
 	*cmd = debugfs_create_dir("commands", dev->priv.dbg_root);
 
-	क्रम (i = 0; i < MLX5_CMD_OP_MAX; i++) अणु
+	for (i = 0; i < MLX5_CMD_OP_MAX; i++) {
 		stats = &dev->cmd.stats[i];
 		namep = mlx5_command_str(i);
-		अगर (म_भेद(namep, "unknown command opcode")) अणु
+		if (strcmp(namep, "unknown command opcode")) {
 			stats->root = debugfs_create_dir(namep, *cmd);
 
 			debugfs_create_file("average", 0400, stats->root, stats,
 					    &stats_fops);
 			debugfs_create_u64("n", 0400, stats->root, &stats->n);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम mlx5_cmdअगर_debugfs_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	debugfs_हटाओ_recursive(dev->priv.cmdअगर_debugfs);
-पूर्ण
+void mlx5_cmdif_debugfs_cleanup(struct mlx5_core_dev *dev)
+{
+	debugfs_remove_recursive(dev->priv.cmdif_debugfs);
+}
 
-व्योम mlx5_cq_debugfs_init(काष्ठा mlx5_core_dev *dev)
-अणु
+void mlx5_cq_debugfs_init(struct mlx5_core_dev *dev)
+{
 	dev->priv.cq_debugfs = debugfs_create_dir("CQs",  dev->priv.dbg_root);
-पूर्ण
+}
 
-व्योम mlx5_cq_debugfs_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
-	debugfs_हटाओ_recursive(dev->priv.cq_debugfs);
-पूर्ण
+void mlx5_cq_debugfs_cleanup(struct mlx5_core_dev *dev)
+{
+	debugfs_remove_recursive(dev->priv.cq_debugfs);
+}
 
-अटल u64 qp_पढ़ो_field(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_qp *qp,
-			 पूर्णांक index, पूर्णांक *is_str)
-अणु
-	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_qp_out);
-	u32 in[MLX5_ST_SZ_DW(query_qp_in)] = अणुपूर्ण;
+static u64 qp_read_field(struct mlx5_core_dev *dev, struct mlx5_core_qp *qp,
+			 int index, int *is_str)
+{
+	int outlen = MLX5_ST_SZ_BYTES(query_qp_out);
+	u32 in[MLX5_ST_SZ_DW(query_qp_in)] = {};
 	u64 param = 0;
 	u32 *out;
-	पूर्णांक state;
+	int state;
 	u32 *qpc;
-	पूर्णांक err;
+	int err;
 
 	out = kzalloc(outlen, GFP_KERNEL);
-	अगर (!out)
-		वापस 0;
+	if (!out)
+		return 0;
 
 	MLX5_SET(query_qp_in, in, opcode, MLX5_CMD_OP_QUERY_QP);
 	MLX5_SET(query_qp_in, in, qpn, qp->qpn);
 	err = mlx5_cmd_exec_inout(dev, query_qp, in, out);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	*is_str = 0;
 
 	qpc = MLX5_ADDR_OF(query_qp_out, out, qpc);
-	चयन (index) अणु
-	हाल QP_PID:
+	switch (index) {
+	case QP_PID:
 		param = qp->pid;
-		अवरोध;
-	हाल QP_STATE:
+		break;
+	case QP_STATE:
 		state = MLX5_GET(qpc, qpc, state);
-		param = (अचिन्हित दीर्घ)mlx5_qp_state_str(state);
+		param = (unsigned long)mlx5_qp_state_str(state);
 		*is_str = 1;
-		अवरोध;
-	हाल QP_XPORT:
-		param = (अचिन्हित दीर्घ)mlx5_qp_type_str(MLX5_GET(qpc, qpc, st));
+		break;
+	case QP_XPORT:
+		param = (unsigned long)mlx5_qp_type_str(MLX5_GET(qpc, qpc, st));
 		*is_str = 1;
-		अवरोध;
-	हाल QP_MTU:
-		चयन (MLX5_GET(qpc, qpc, mtu)) अणु
-		हाल IB_MTU_256:
+		break;
+	case QP_MTU:
+		switch (MLX5_GET(qpc, qpc, mtu)) {
+		case IB_MTU_256:
 			param = 256;
-			अवरोध;
-		हाल IB_MTU_512:
+			break;
+		case IB_MTU_512:
 			param = 512;
-			अवरोध;
-		हाल IB_MTU_1024:
+			break;
+		case IB_MTU_1024:
 			param = 1024;
-			अवरोध;
-		हाल IB_MTU_2048:
+			break;
+		case IB_MTU_2048:
 			param = 2048;
-			अवरोध;
-		हाल IB_MTU_4096:
+			break;
+		case IB_MTU_4096:
 			param = 4096;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			param = 0;
-		पूर्ण
-		अवरोध;
-	हाल QP_N_RECV:
+		}
+		break;
+	case QP_N_RECV:
 		param = 1 << MLX5_GET(qpc, qpc, log_rq_size);
-		अवरोध;
-	हाल QP_RECV_SZ:
+		break;
+	case QP_RECV_SZ:
 		param = 1 << (MLX5_GET(qpc, qpc, log_rq_stride) + 4);
-		अवरोध;
-	हाल QP_N_SEND:
-		अगर (!MLX5_GET(qpc, qpc, no_sq))
+		break;
+	case QP_N_SEND:
+		if (!MLX5_GET(qpc, qpc, no_sq))
 			param = 1 << MLX5_GET(qpc, qpc, log_sq_size);
-		अवरोध;
-	हाल QP_LOG_PG_SZ:
+		break;
+	case QP_LOG_PG_SZ:
 		param = MLX5_GET(qpc, qpc, log_page_size) + 12;
-		अवरोध;
-	हाल QP_RQPN:
+		break;
+	case QP_RQPN:
 		param = MLX5_GET(qpc, qpc, remote_qpn);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	kमुक्त(out);
-	वापस param;
-पूर्ण
+	kfree(out);
+	return param;
+}
 
-अटल u64 eq_पढ़ो_field(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_eq *eq,
-			 पूर्णांक index)
-अणु
-	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_eq_out);
-	u32 in[MLX5_ST_SZ_DW(query_eq_in)] = अणुपूर्ण;
+static u64 eq_read_field(struct mlx5_core_dev *dev, struct mlx5_eq *eq,
+			 int index)
+{
+	int outlen = MLX5_ST_SZ_BYTES(query_eq_out);
+	u32 in[MLX5_ST_SZ_DW(query_eq_in)] = {};
 	u64 param = 0;
-	व्योम *ctx;
+	void *ctx;
 	u32 *out;
-	पूर्णांक err;
+	int err;
 
 	out = kzalloc(outlen, GFP_KERNEL);
-	अगर (!out)
-		वापस param;
+	if (!out)
+		return param;
 
 	MLX5_SET(query_eq_in, in, opcode, MLX5_CMD_OP_QUERY_EQ);
 	MLX5_SET(query_eq_in, in, eq_number, eq->eqn);
 	err = mlx5_cmd_exec_inout(dev, query_eq, in, out);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(dev, "failed to query eq\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ctx = MLX5_ADDR_OF(query_eq_out, out, eq_context_entry);
 
-	चयन (index) अणु
-	हाल EQ_NUM_EQES:
+	switch (index) {
+	case EQ_NUM_EQES:
 		param = 1 << MLX5_GET(eqc, ctx, log_eq_size);
-		अवरोध;
-	हाल EQ_INTR:
-		param = MLX5_GET(eqc, ctx, पूर्णांकr);
-		अवरोध;
-	हाल EQ_LOG_PG_SZ:
+		break;
+	case EQ_INTR:
+		param = MLX5_GET(eqc, ctx, intr);
+		break;
+	case EQ_LOG_PG_SZ:
 		param = MLX5_GET(eqc, ctx, log_page_size) + 12;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	kमुक्त(out);
-	वापस param;
-पूर्ण
+	kfree(out);
+	return param;
+}
 
-अटल u64 cq_पढ़ो_field(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq,
-			 पूर्णांक index)
-अणु
-	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_cq_out);
+static u64 cq_read_field(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq,
+			 int index)
+{
+	int outlen = MLX5_ST_SZ_BYTES(query_cq_out);
 	u64 param = 0;
-	व्योम *ctx;
+	void *ctx;
 	u32 *out;
-	पूर्णांक err;
+	int err;
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	अगर (!out)
-		वापस param;
+	if (!out)
+		return param;
 
 	err = mlx5_core_query_cq(dev, cq, out);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(dev, "failed to query cq\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ctx = MLX5_ADDR_OF(query_cq_out, out, cq_context);
 
-	चयन (index) अणु
-	हाल CQ_PID:
+	switch (index) {
+	case CQ_PID:
 		param = cq->pid;
-		अवरोध;
-	हाल CQ_NUM_CQES:
+		break;
+	case CQ_NUM_CQES:
 		param = 1 << MLX5_GET(cqc, ctx, log_cq_size);
-		अवरोध;
-	हाल CQ_LOG_PG_SZ:
+		break;
+	case CQ_LOG_PG_SZ:
 		param = MLX5_GET(cqc, ctx, log_page_size);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	kvमुक्त(out);
-	वापस param;
-पूर्ण
+	kvfree(out);
+	return param;
+}
 
-अटल sमाप_प्रकार dbg_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t dbg_read(struct file *filp, char __user *buf, size_t count,
 			loff_t *pos)
-अणु
-	काष्ठा mlx5_field_desc *desc;
-	काष्ठा mlx5_rsc_debug *d;
-	अक्षर tbuf[18];
-	पूर्णांक is_str = 0;
+{
+	struct mlx5_field_desc *desc;
+	struct mlx5_rsc_debug *d;
+	char tbuf[18];
+	int is_str = 0;
 	u64 field;
-	पूर्णांक ret;
+	int ret;
 
-	desc = filp->निजी_data;
-	d = (व्योम *)(desc - desc->i) - माप(*d);
-	चयन (d->type) अणु
-	हाल MLX5_DBG_RSC_QP:
-		field = qp_पढ़ो_field(d->dev, d->object, desc->i, &is_str);
-		अवरोध;
+	desc = filp->private_data;
+	d = (void *)(desc - desc->i) - sizeof(*d);
+	switch (d->type) {
+	case MLX5_DBG_RSC_QP:
+		field = qp_read_field(d->dev, d->object, desc->i, &is_str);
+		break;
 
-	हाल MLX5_DBG_RSC_EQ:
-		field = eq_पढ़ो_field(d->dev, d->object, desc->i);
-		अवरोध;
+	case MLX5_DBG_RSC_EQ:
+		field = eq_read_field(d->dev, d->object, desc->i);
+		break;
 
-	हाल MLX5_DBG_RSC_CQ:
-		field = cq_पढ़ो_field(d->dev, d->object, desc->i);
-		अवरोध;
+	case MLX5_DBG_RSC_CQ:
+		field = cq_read_field(d->dev, d->object, desc->i);
+		break;
 
-	शेष:
+	default:
 		mlx5_core_warn(d->dev, "invalid resource type %d\n", d->type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (is_str)
-		ret = snम_लिखो(tbuf, माप(tbuf), "%s\n", (स्थिर अक्षर *)(अचिन्हित दीर्घ)field);
-	अन्यथा
-		ret = snम_लिखो(tbuf, माप(tbuf), "0x%llx\n", field);
+	if (is_str)
+		ret = snprintf(tbuf, sizeof(tbuf), "%s\n", (const char *)(unsigned long)field);
+	else
+		ret = snprintf(tbuf, sizeof(tbuf), "0x%llx\n", field);
 
-	वापस simple_पढ़ो_from_buffer(buf, count, pos, tbuf, ret);
-पूर्ण
+	return simple_read_from_buffer(buf, count, pos, tbuf, ret);
+}
 
-अटल स्थिर काष्ठा file_operations fops = अणु
+static const struct file_operations fops = {
 	.owner	= THIS_MODULE,
-	.खोलो	= simple_खोलो,
-	.पढ़ो	= dbg_पढ़ो,
-पूर्ण;
+	.open	= simple_open,
+	.read	= dbg_read,
+};
 
-अटल पूर्णांक add_res_tree(काष्ठा mlx5_core_dev *dev, क्रमागत dbg_rsc_type type,
-			काष्ठा dentry *root, काष्ठा mlx5_rsc_debug **dbg,
-			पूर्णांक rsn, अक्षर **field, पूर्णांक nfile, व्योम *data)
-अणु
-	काष्ठा mlx5_rsc_debug *d;
-	अक्षर resn[32];
-	पूर्णांक i;
+static int add_res_tree(struct mlx5_core_dev *dev, enum dbg_rsc_type type,
+			struct dentry *root, struct mlx5_rsc_debug **dbg,
+			int rsn, char **field, int nfile, void *data)
+{
+	struct mlx5_rsc_debug *d;
+	char resn[32];
+	int i;
 
-	d = kzalloc(काष्ठा_size(d, fields, nfile), GFP_KERNEL);
-	अगर (!d)
-		वापस -ENOMEM;
+	d = kzalloc(struct_size(d, fields, nfile), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
 
 	d->dev = dev;
 	d->object = data;
 	d->type = type;
-	प्र_लिखो(resn, "0x%x", rsn);
+	sprintf(resn, "0x%x", rsn);
 	d->root = debugfs_create_dir(resn,  root);
 
-	क्रम (i = 0; i < nfile; i++) अणु
+	for (i = 0; i < nfile; i++) {
 		d->fields[i].i = i;
 		debugfs_create_file(field[i], 0400, d->root, &d->fields[i],
 				    &fops);
-	पूर्ण
+	}
 	*dbg = d;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rem_res_tree(काष्ठा mlx5_rsc_debug *d)
-अणु
-	debugfs_हटाओ_recursive(d->root);
-	kमुक्त(d);
-पूर्ण
+static void rem_res_tree(struct mlx5_rsc_debug *d)
+{
+	debugfs_remove_recursive(d->root);
+	kfree(d);
+}
 
-पूर्णांक mlx5_debug_qp_add(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_qp *qp)
-अणु
-	पूर्णांक err;
+int mlx5_debug_qp_add(struct mlx5_core_dev *dev, struct mlx5_core_qp *qp)
+{
+	int err;
 
-	अगर (!mlx5_debugfs_root)
-		वापस 0;
+	if (!mlx5_debugfs_root)
+		return 0;
 
 	err = add_res_tree(dev, MLX5_DBG_RSC_QP, dev->priv.qp_debugfs,
 			   &qp->dbg, qp->qpn, qp_fields,
 			   ARRAY_SIZE(qp_fields), qp);
-	अगर (err)
-		qp->dbg = शून्य;
+	if (err)
+		qp->dbg = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(mlx5_debug_qp_add);
 
-व्योम mlx5_debug_qp_हटाओ(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_qp *qp)
-अणु
-	अगर (!mlx5_debugfs_root)
-		वापस;
+void mlx5_debug_qp_remove(struct mlx5_core_dev *dev, struct mlx5_core_qp *qp)
+{
+	if (!mlx5_debugfs_root)
+		return;
 
-	अगर (qp->dbg)
+	if (qp->dbg)
 		rem_res_tree(qp->dbg);
-पूर्ण
-EXPORT_SYMBOL(mlx5_debug_qp_हटाओ);
+}
+EXPORT_SYMBOL(mlx5_debug_qp_remove);
 
-पूर्णांक mlx5_debug_eq_add(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_eq *eq)
-अणु
-	पूर्णांक err;
+int mlx5_debug_eq_add(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
+{
+	int err;
 
-	अगर (!mlx5_debugfs_root)
-		वापस 0;
+	if (!mlx5_debugfs_root)
+		return 0;
 
 	err = add_res_tree(dev, MLX5_DBG_RSC_EQ, dev->priv.eq_debugfs,
 			   &eq->dbg, eq->eqn, eq_fields,
 			   ARRAY_SIZE(eq_fields), eq);
-	अगर (err)
-		eq->dbg = शून्य;
+	if (err)
+		eq->dbg = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx5_debug_eq_हटाओ(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_eq *eq)
-अणु
-	अगर (!mlx5_debugfs_root)
-		वापस;
+void mlx5_debug_eq_remove(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
+{
+	if (!mlx5_debugfs_root)
+		return;
 
-	अगर (eq->dbg)
+	if (eq->dbg)
 		rem_res_tree(eq->dbg);
-पूर्ण
+}
 
-पूर्णांक mlx5_debug_cq_add(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq)
-अणु
-	पूर्णांक err;
+int mlx5_debug_cq_add(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq)
+{
+	int err;
 
-	अगर (!mlx5_debugfs_root)
-		वापस 0;
+	if (!mlx5_debugfs_root)
+		return 0;
 
 	err = add_res_tree(dev, MLX5_DBG_RSC_CQ, dev->priv.cq_debugfs,
 			   &cq->dbg, cq->cqn, cq_fields,
 			   ARRAY_SIZE(cq_fields), cq);
-	अगर (err)
-		cq->dbg = शून्य;
+	if (err)
+		cq->dbg = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlx5_debug_cq_हटाओ(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_cq *cq)
-अणु
-	अगर (!mlx5_debugfs_root)
-		वापस;
+void mlx5_debug_cq_remove(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq)
+{
+	if (!mlx5_debugfs_root)
+		return;
 
-	अगर (cq->dbg)
+	if (cq->dbg)
 		rem_res_tree(cq->dbg);
-पूर्ण
+}

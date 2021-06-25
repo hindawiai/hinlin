@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Common header file क्रम probe-based Dynamic events.
+ * Common header file for probe-based Dynamic events.
  *
  * This code was copied from kernel/trace/trace_kprobe.h written by
  * Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
@@ -11,79 +10,79 @@
  * Author:     Srikar Dronamraju
  */
 
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/tracefs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/bitops.h>
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/smp.h>
+#include <linux/tracefs.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/ptrace.h>
+#include <linux/perf_event.h>
+#include <linux/kprobes.h>
+#include <linux/stringify.h>
+#include <linux/limits.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
+#include <asm/bitsperlong.h>
 
-#समावेश "trace.h"
-#समावेश "trace_output.h"
+#include "trace.h"
+#include "trace_output.h"
 
-#घोषणा MAX_TRACE_ARGS		128
-#घोषणा MAX_ARGSTR_LEN		63
-#घोषणा MAX_ARRAY_LEN		64
-#घोषणा MAX_ARG_NAME_LEN	32
-#घोषणा MAX_STRING_SIZE		PATH_MAX
+#define MAX_TRACE_ARGS		128
+#define MAX_ARGSTR_LEN		63
+#define MAX_ARRAY_LEN		64
+#define MAX_ARG_NAME_LEN	32
+#define MAX_STRING_SIZE		PATH_MAX
 
 /* Reserved field names */
-#घोषणा FIELD_STRING_IP		"__probe_ip"
-#घोषणा FIELD_STRING_RETIP	"__probe_ret_ip"
-#घोषणा FIELD_STRING_FUNC	"__probe_func"
+#define FIELD_STRING_IP		"__probe_ip"
+#define FIELD_STRING_RETIP	"__probe_ret_ip"
+#define FIELD_STRING_FUNC	"__probe_func"
 
-#अघोषित DEFINE_FIELD
-#घोषणा DEFINE_FIELD(type, item, name, is_चिन्हित)			\
-	करो अणु								\
+#undef DEFINE_FIELD
+#define DEFINE_FIELD(type, item, name, is_signed)			\
+	do {								\
 		ret = trace_define_field(event_call, #type, name,	\
-					 दुरत्व(typeof(field), item),	\
-					 माप(field.item), is_चिन्हित, \
+					 offsetof(typeof(field), item),	\
+					 sizeof(field.item), is_signed, \
 					 FILTER_OTHER);			\
-		अगर (ret)						\
-			वापस ret;					\
-	पूर्ण जबतक (0)
+		if (ret)						\
+			return ret;					\
+	} while (0)
 
 
-/* Flags क्रम trace_probe */
-#घोषणा TP_FLAG_TRACE		1
-#घोषणा TP_FLAG_PROखाता		2
+/* Flags for trace_probe */
+#define TP_FLAG_TRACE		1
+#define TP_FLAG_PROFILE		2
 
 /* data_loc: data location, compatible with u32 */
-#घोषणा make_data_loc(len, offs)	\
+#define make_data_loc(len, offs)	\
 	(((u32)(len) << 16) | ((u32)(offs) & 0xffff))
-#घोषणा get_loc_len(dl)		((u32)(dl) >> 16)
-#घोषणा get_loc_offs(dl)	((u32)(dl) & 0xffff)
+#define get_loc_len(dl)		((u32)(dl) >> 16)
+#define get_loc_offs(dl)	((u32)(dl) & 0xffff)
 
-अटल nokprobe_अंतरभूत व्योम *get_loc_data(u32 *dl, व्योम *ent)
-अणु
-	वापस (u8 *)ent + get_loc_offs(*dl);
-पूर्ण
+static nokprobe_inline void *get_loc_data(u32 *dl, void *ent)
+{
+	return (u8 *)ent + get_loc_offs(*dl);
+}
 
-अटल nokprobe_अंतरभूत u32 update_data_loc(u32 loc, पूर्णांक consumed)
-अणु
+static nokprobe_inline u32 update_data_loc(u32 loc, int consumed)
+{
 	u32 maxlen = get_loc_len(loc);
 	u32 offset = get_loc_offs(loc);
 
-	वापस make_data_loc(maxlen - consumed, offset + consumed);
-पूर्ण
+	return make_data_loc(maxlen - consumed, offset + consumed);
+}
 
-/* Prपूर्णांकing function type */
-प्रकार पूर्णांक (*prपूर्णांक_type_func_t)(काष्ठा trace_seq *, व्योम *, व्योम *);
+/* Printing function type */
+typedef int (*print_type_func_t)(struct trace_seq *, void *, void *);
 
-क्रमागत fetch_op अणु
+enum fetch_op {
 	FETCH_OP_NOP = 0,
 	// Stage 1 (load) ops
 	FETCH_OP_REG,		/* Register : .param = offset */
 	FETCH_OP_STACK,		/* Stack : .param = index */
-	FETCH_OP_STACKP,	/* Stack poपूर्णांकer */
+	FETCH_OP_STACKP,	/* Stack pointer */
 	FETCH_OP_RETVAL,	/* Return value */
 	FETCH_OP_IMM,		/* Immediate : .immediate */
 	FETCH_OP_COMM,		/* Current comm */
@@ -99,57 +98,57 @@
 	FETCH_OP_ST_UMEM,	/* Mem: .offset, .size */
 	FETCH_OP_ST_STRING,	/* String: .offset, .size */
 	FETCH_OP_ST_USTRING,	/* User String: .offset, .size */
-	// Stage 4 (modअगरy) op
-	FETCH_OP_MOD_BF,	/* Bitfield: .basesize, .lshअगरt, .rshअगरt */
+	// Stage 4 (modify) op
+	FETCH_OP_MOD_BF,	/* Bitfield: .basesize, .lshift, .rshift */
 	// Stage 5 (loop) op
 	FETCH_OP_LP_ARRAY,	/* Array: .param = loop count */
 	FETCH_OP_END,
 	FETCH_NOP_SYMBOL,	/* Unresolved Symbol holder */
-पूर्ण;
+};
 
-काष्ठा fetch_insn अणु
-	क्रमागत fetch_op op;
-	जोड़ अणु
-		अचिन्हित पूर्णांक param;
-		काष्ठा अणु
-			अचिन्हित पूर्णांक size;
-			पूर्णांक offset;
-		पूर्ण;
-		काष्ठा अणु
-			अचिन्हित अक्षर basesize;
-			अचिन्हित अक्षर lshअगरt;
-			अचिन्हित अक्षर rshअगरt;
-		पूर्ण;
-		अचिन्हित दीर्घ immediate;
-		व्योम *data;
-	पूर्ण;
-पूर्ण;
+struct fetch_insn {
+	enum fetch_op op;
+	union {
+		unsigned int param;
+		struct {
+			unsigned int size;
+			int offset;
+		};
+		struct {
+			unsigned char basesize;
+			unsigned char lshift;
+			unsigned char rshift;
+		};
+		unsigned long immediate;
+		void *data;
+	};
+};
 
 /* fetch + deref*N + store + mod + end <= 16, this allows N=12, enough */
-#घोषणा FETCH_INSN_MAX	16
-#घोषणा FETCH_TOKEN_COMM	(-ECOMM)
+#define FETCH_INSN_MAX	16
+#define FETCH_TOKEN_COMM	(-ECOMM)
 
-/* Fetch type inक्रमmation table */
-काष्ठा fetch_type अणु
-	स्थिर अक्षर		*name;		/* Name of type */
-	माप_प्रकार			size;		/* Byte size of type */
-	पूर्णांक			is_चिन्हित;	/* Signed flag */
-	prपूर्णांक_type_func_t	prपूर्णांक;		/* Prपूर्णांक functions */
-	स्थिर अक्षर		*fmt;		/* Format string */
-	स्थिर अक्षर		*fmttype;	/* Name in क्रमmat file */
-पूर्ण;
+/* Fetch type information table */
+struct fetch_type {
+	const char		*name;		/* Name of type */
+	size_t			size;		/* Byte size of type */
+	int			is_signed;	/* Signed flag */
+	print_type_func_t	print;		/* Print functions */
+	const char		*fmt;		/* Format string */
+	const char		*fmttype;	/* Name in format file */
+};
 
 /* For defining macros, define string/string_size types */
-प्रकार u32 string;
-प्रकार u32 string_size;
+typedef u32 string;
+typedef u32 string_size;
 
-#घोषणा PRINT_TYPE_FUNC_NAME(type)	prपूर्णांक_type_##type
-#घोषणा PRINT_TYPE_FMT_NAME(type)	prपूर्णांक_type_क्रमmat_##type
+#define PRINT_TYPE_FUNC_NAME(type)	print_type_##type
+#define PRINT_TYPE_FMT_NAME(type)	print_type_format_##type
 
-/* Prपूर्णांकing  in basic type function ढाँचा */
-#घोषणा DECLARE_BASIC_PRINT_TYPE_FUNC(type)				\
-पूर्णांक PRINT_TYPE_FUNC_NAME(type)(काष्ठा trace_seq *s, व्योम *data, व्योम *ent);\
-बाह्य स्थिर अक्षर PRINT_TYPE_FMT_NAME(type)[]
+/* Printing  in basic type function template */
+#define DECLARE_BASIC_PRINT_TYPE_FUNC(type)				\
+int PRINT_TYPE_FUNC_NAME(type)(struct trace_seq *s, void *data, void *ent);\
+extern const char PRINT_TYPE_FMT_NAME(type)[]
 
 DECLARE_BASIC_PRINT_TYPE_FUNC(u8);
 DECLARE_BASIC_PRINT_TYPE_FUNC(u16);
@@ -167,223 +166,223 @@ DECLARE_BASIC_PRINT_TYPE_FUNC(x64);
 DECLARE_BASIC_PRINT_TYPE_FUNC(string);
 DECLARE_BASIC_PRINT_TYPE_FUNC(symbol);
 
-/* Default (अचिन्हित दीर्घ) fetch type */
-#घोषणा __DEFAULT_FETCH_TYPE(t) x##t
-#घोषणा _DEFAULT_FETCH_TYPE(t) __DEFAULT_FETCH_TYPE(t)
-#घोषणा DEFAULT_FETCH_TYPE _DEFAULT_FETCH_TYPE(BITS_PER_LONG)
-#घोषणा DEFAULT_FETCH_TYPE_STR __stringअगरy(DEFAULT_FETCH_TYPE)
+/* Default (unsigned long) fetch type */
+#define __DEFAULT_FETCH_TYPE(t) x##t
+#define _DEFAULT_FETCH_TYPE(t) __DEFAULT_FETCH_TYPE(t)
+#define DEFAULT_FETCH_TYPE _DEFAULT_FETCH_TYPE(BITS_PER_LONG)
+#define DEFAULT_FETCH_TYPE_STR __stringify(DEFAULT_FETCH_TYPE)
 
-#घोषणा __ADDR_FETCH_TYPE(t) u##t
-#घोषणा _ADDR_FETCH_TYPE(t) __ADDR_FETCH_TYPE(t)
-#घोषणा ADDR_FETCH_TYPE _ADDR_FETCH_TYPE(BITS_PER_LONG)
+#define __ADDR_FETCH_TYPE(t) u##t
+#define _ADDR_FETCH_TYPE(t) __ADDR_FETCH_TYPE(t)
+#define ADDR_FETCH_TYPE _ADDR_FETCH_TYPE(BITS_PER_LONG)
 
-#घोषणा __ASSIGN_FETCH_TYPE(_name, ptype, ftype, _size, sign, _fmttype)	\
-	अणु.name = _name,				\
+#define __ASSIGN_FETCH_TYPE(_name, ptype, ftype, _size, sign, _fmttype)	\
+	{.name = _name,				\
 	 .size = _size,					\
-	 .is_चिन्हित = sign,				\
-	 .prपूर्णांक = PRINT_TYPE_FUNC_NAME(ptype),		\
+	 .is_signed = sign,				\
+	 .print = PRINT_TYPE_FUNC_NAME(ptype),		\
 	 .fmt = PRINT_TYPE_FMT_NAME(ptype),		\
 	 .fmttype = _fmttype,				\
-	पूर्ण
-#घोषणा _ASSIGN_FETCH_TYPE(_name, ptype, ftype, _size, sign, _fmttype)	\
+	}
+#define _ASSIGN_FETCH_TYPE(_name, ptype, ftype, _size, sign, _fmttype)	\
 	__ASSIGN_FETCH_TYPE(_name, ptype, ftype, _size, sign, #_fmttype)
-#घोषणा ASSIGN_FETCH_TYPE(ptype, ftype, sign)			\
-	_ASSIGN_FETCH_TYPE(#ptype, ptype, ftype, माप(ftype), sign, ptype)
+#define ASSIGN_FETCH_TYPE(ptype, ftype, sign)			\
+	_ASSIGN_FETCH_TYPE(#ptype, ptype, ftype, sizeof(ftype), sign, ptype)
 
-/* If ptype is an alias of atype, use this macro (show atype in क्रमmat) */
-#घोषणा ASSIGN_FETCH_TYPE_ALIAS(ptype, atype, ftype, sign)		\
-	_ASSIGN_FETCH_TYPE(#ptype, ptype, ftype, माप(ftype), sign, atype)
+/* If ptype is an alias of atype, use this macro (show atype in format) */
+#define ASSIGN_FETCH_TYPE_ALIAS(ptype, atype, ftype, sign)		\
+	_ASSIGN_FETCH_TYPE(#ptype, ptype, ftype, sizeof(ftype), sign, atype)
 
-#घोषणा ASSIGN_FETCH_TYPE_END अणुपूर्ण
-#घोषणा MAX_ARRAY_LEN	64
+#define ASSIGN_FETCH_TYPE_END {}
+#define MAX_ARRAY_LEN	64
 
-#अगर_घोषित CONFIG_KPROBE_EVENTS
-bool trace_kprobe_on_func_entry(काष्ठा trace_event_call *call);
-bool trace_kprobe_error_injectable(काष्ठा trace_event_call *call);
-#अन्यथा
-अटल अंतरभूत bool trace_kprobe_on_func_entry(काष्ठा trace_event_call *call)
-अणु
-	वापस false;
-पूर्ण
+#ifdef CONFIG_KPROBE_EVENTS
+bool trace_kprobe_on_func_entry(struct trace_event_call *call);
+bool trace_kprobe_error_injectable(struct trace_event_call *call);
+#else
+static inline bool trace_kprobe_on_func_entry(struct trace_event_call *call)
+{
+	return false;
+}
 
-अटल अंतरभूत bool trace_kprobe_error_injectable(काष्ठा trace_event_call *call)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KPROBE_EVENTS */
+static inline bool trace_kprobe_error_injectable(struct trace_event_call *call)
+{
+	return false;
+}
+#endif /* CONFIG_KPROBE_EVENTS */
 
-काष्ठा probe_arg अणु
-	काष्ठा fetch_insn	*code;
+struct probe_arg {
+	struct fetch_insn	*code;
 	bool			dynamic;/* Dynamic array (string) is used */
-	अचिन्हित पूर्णांक		offset;	/* Offset from argument entry */
-	अचिन्हित पूर्णांक		count;	/* Array count */
-	स्थिर अक्षर		*name;	/* Name of this argument */
-	स्थिर अक्षर		*comm;	/* Command of this argument */
-	अक्षर			*fmt;	/* Format string अगर needed */
-	स्थिर काष्ठा fetch_type	*type;	/* Type of this argument */
-पूर्ण;
+	unsigned int		offset;	/* Offset from argument entry */
+	unsigned int		count;	/* Array count */
+	const char		*name;	/* Name of this argument */
+	const char		*comm;	/* Command of this argument */
+	char			*fmt;	/* Format string if needed */
+	const struct fetch_type	*type;	/* Type of this argument */
+};
 
-काष्ठा trace_uprobe_filter अणु
+struct trace_uprobe_filter {
 	rwlock_t		rwlock;
-	पूर्णांक			nr_प्रणालीwide;
-	काष्ठा list_head	perf_events;
-पूर्ण;
+	int			nr_systemwide;
+	struct list_head	perf_events;
+};
 
 /* Event call and class holder */
-काष्ठा trace_probe_event अणु
-	अचिन्हित पूर्णांक			flags;	/* For TP_FLAG_* */
-	काष्ठा trace_event_class	class;
-	काष्ठा trace_event_call		call;
-	काष्ठा list_head 		files;
-	काष्ठा list_head		probes;
-	काष्ठा trace_uprobe_filter	filter[];
-पूर्ण;
+struct trace_probe_event {
+	unsigned int			flags;	/* For TP_FLAG_* */
+	struct trace_event_class	class;
+	struct trace_event_call		call;
+	struct list_head 		files;
+	struct list_head		probes;
+	struct trace_uprobe_filter	filter[];
+};
 
-काष्ठा trace_probe अणु
-	काष्ठा list_head		list;
-	काष्ठा trace_probe_event	*event;
-	sमाप_प्रकार				size;	/* trace entry size */
-	अचिन्हित पूर्णांक			nr_args;
-	काष्ठा probe_arg		args[];
-पूर्ण;
+struct trace_probe {
+	struct list_head		list;
+	struct trace_probe_event	*event;
+	ssize_t				size;	/* trace entry size */
+	unsigned int			nr_args;
+	struct probe_arg		args[];
+};
 
-काष्ठा event_file_link अणु
-	काष्ठा trace_event_file		*file;
-	काष्ठा list_head		list;
-पूर्ण;
+struct event_file_link {
+	struct trace_event_file		*file;
+	struct list_head		list;
+};
 
-अटल अंतरभूत bool trace_probe_test_flag(काष्ठा trace_probe *tp,
-					 अचिन्हित पूर्णांक flag)
-अणु
-	वापस !!(tp->event->flags & flag);
-पूर्ण
+static inline bool trace_probe_test_flag(struct trace_probe *tp,
+					 unsigned int flag)
+{
+	return !!(tp->event->flags & flag);
+}
 
-अटल अंतरभूत व्योम trace_probe_set_flag(काष्ठा trace_probe *tp,
-					अचिन्हित पूर्णांक flag)
-अणु
+static inline void trace_probe_set_flag(struct trace_probe *tp,
+					unsigned int flag)
+{
 	tp->event->flags |= flag;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम trace_probe_clear_flag(काष्ठा trace_probe *tp,
-					  अचिन्हित पूर्णांक flag)
-अणु
+static inline void trace_probe_clear_flag(struct trace_probe *tp,
+					  unsigned int flag)
+{
 	tp->event->flags &= ~flag;
-पूर्ण
+}
 
-अटल अंतरभूत bool trace_probe_is_enabled(काष्ठा trace_probe *tp)
-अणु
-	वापस trace_probe_test_flag(tp, TP_FLAG_TRACE | TP_FLAG_PROखाता);
-पूर्ण
+static inline bool trace_probe_is_enabled(struct trace_probe *tp)
+{
+	return trace_probe_test_flag(tp, TP_FLAG_TRACE | TP_FLAG_PROFILE);
+}
 
-अटल अंतरभूत स्थिर अक्षर *trace_probe_name(काष्ठा trace_probe *tp)
-अणु
-	वापस trace_event_name(&tp->event->call);
-पूर्ण
+static inline const char *trace_probe_name(struct trace_probe *tp)
+{
+	return trace_event_name(&tp->event->call);
+}
 
-अटल अंतरभूत स्थिर अक्षर *trace_probe_group_name(काष्ठा trace_probe *tp)
-अणु
-	वापस tp->event->call.class->प्रणाली;
-पूर्ण
+static inline const char *trace_probe_group_name(struct trace_probe *tp)
+{
+	return tp->event->call.class->system;
+}
 
-अटल अंतरभूत काष्ठा trace_event_call *
-	trace_probe_event_call(काष्ठा trace_probe *tp)
-अणु
-	वापस &tp->event->call;
-पूर्ण
+static inline struct trace_event_call *
+	trace_probe_event_call(struct trace_probe *tp)
+{
+	return &tp->event->call;
+}
 
-अटल अंतरभूत काष्ठा trace_probe_event *
-trace_probe_event_from_call(काष्ठा trace_event_call *event_call)
-अणु
-	वापस container_of(event_call, काष्ठा trace_probe_event, call);
-पूर्ण
+static inline struct trace_probe_event *
+trace_probe_event_from_call(struct trace_event_call *event_call)
+{
+	return container_of(event_call, struct trace_probe_event, call);
+}
 
-अटल अंतरभूत काष्ठा trace_probe *
-trace_probe_primary_from_call(काष्ठा trace_event_call *call)
-अणु
-	काष्ठा trace_probe_event *tpe = trace_probe_event_from_call(call);
+static inline struct trace_probe *
+trace_probe_primary_from_call(struct trace_event_call *call)
+{
+	struct trace_probe_event *tpe = trace_probe_event_from_call(call);
 
-	वापस list_first_entry(&tpe->probes, काष्ठा trace_probe, list);
-पूर्ण
+	return list_first_entry(&tpe->probes, struct trace_probe, list);
+}
 
-अटल अंतरभूत काष्ठा list_head *trace_probe_probe_list(काष्ठा trace_probe *tp)
-अणु
-	वापस &tp->event->probes;
-पूर्ण
+static inline struct list_head *trace_probe_probe_list(struct trace_probe *tp)
+{
+	return &tp->event->probes;
+}
 
-अटल अंतरभूत bool trace_probe_has_sibling(काष्ठा trace_probe *tp)
-अणु
-	काष्ठा list_head *list = trace_probe_probe_list(tp);
+static inline bool trace_probe_has_sibling(struct trace_probe *tp)
+{
+	struct list_head *list = trace_probe_probe_list(tp);
 
-	वापस !list_empty(list) && !list_is_singular(list);
-पूर्ण
+	return !list_empty(list) && !list_is_singular(list);
+}
 
-अटल अंतरभूत पूर्णांक trace_probe_unरेजिस्टर_event_call(काष्ठा trace_probe *tp)
-अणु
-	/* tp->event is unरेजिस्टरed in trace_हटाओ_event_call() */
-	वापस trace_हटाओ_event_call(&tp->event->call);
-पूर्ण
+static inline int trace_probe_unregister_event_call(struct trace_probe *tp)
+{
+	/* tp->event is unregistered in trace_remove_event_call() */
+	return trace_remove_event_call(&tp->event->call);
+}
 
-अटल अंतरभूत bool trace_probe_has_single_file(काष्ठा trace_probe *tp)
-अणु
-	वापस !!list_is_singular(&tp->event->files);
-पूर्ण
+static inline bool trace_probe_has_single_file(struct trace_probe *tp)
+{
+	return !!list_is_singular(&tp->event->files);
+}
 
-पूर्णांक trace_probe_init(काष्ठा trace_probe *tp, स्थिर अक्षर *event,
-		     स्थिर अक्षर *group, bool alloc_filter);
-व्योम trace_probe_cleanup(काष्ठा trace_probe *tp);
-पूर्णांक trace_probe_append(काष्ठा trace_probe *tp, काष्ठा trace_probe *to);
-व्योम trace_probe_unlink(काष्ठा trace_probe *tp);
-पूर्णांक trace_probe_रेजिस्टर_event_call(काष्ठा trace_probe *tp);
-पूर्णांक trace_probe_add_file(काष्ठा trace_probe *tp, काष्ठा trace_event_file *file);
-पूर्णांक trace_probe_हटाओ_file(काष्ठा trace_probe *tp,
-			    काष्ठा trace_event_file *file);
-काष्ठा event_file_link *trace_probe_get_file_link(काष्ठा trace_probe *tp,
-						काष्ठा trace_event_file *file);
-पूर्णांक trace_probe_compare_arg_type(काष्ठा trace_probe *a, काष्ठा trace_probe *b);
-bool trace_probe_match_command_args(काष्ठा trace_probe *tp,
-				    पूर्णांक argc, स्थिर अक्षर **argv);
-पूर्णांक trace_probe_create(स्थिर अक्षर *raw_command, पूर्णांक (*createfn)(पूर्णांक, स्थिर अक्षर **));
+int trace_probe_init(struct trace_probe *tp, const char *event,
+		     const char *group, bool alloc_filter);
+void trace_probe_cleanup(struct trace_probe *tp);
+int trace_probe_append(struct trace_probe *tp, struct trace_probe *to);
+void trace_probe_unlink(struct trace_probe *tp);
+int trace_probe_register_event_call(struct trace_probe *tp);
+int trace_probe_add_file(struct trace_probe *tp, struct trace_event_file *file);
+int trace_probe_remove_file(struct trace_probe *tp,
+			    struct trace_event_file *file);
+struct event_file_link *trace_probe_get_file_link(struct trace_probe *tp,
+						struct trace_event_file *file);
+int trace_probe_compare_arg_type(struct trace_probe *a, struct trace_probe *b);
+bool trace_probe_match_command_args(struct trace_probe *tp,
+				    int argc, const char **argv);
+int trace_probe_create(const char *raw_command, int (*createfn)(int, const char **));
 
-#घोषणा trace_probe_क्रम_each_link(pos, tp)	\
-	list_क्रम_each_entry(pos, &(tp)->event->files, list)
-#घोषणा trace_probe_क्रम_each_link_rcu(pos, tp)	\
-	list_क्रम_each_entry_rcu(pos, &(tp)->event->files, list)
+#define trace_probe_for_each_link(pos, tp)	\
+	list_for_each_entry(pos, &(tp)->event->files, list)
+#define trace_probe_for_each_link_rcu(pos, tp)	\
+	list_for_each_entry_rcu(pos, &(tp)->event->files, list)
 
-#घोषणा TPARG_FL_RETURN BIT(0)
-#घोषणा TPARG_FL_KERNEL BIT(1)
-#घोषणा TPARG_FL_FENTRY BIT(2)
-#घोषणा TPARG_FL_MASK	GENMASK(2, 0)
+#define TPARG_FL_RETURN BIT(0)
+#define TPARG_FL_KERNEL BIT(1)
+#define TPARG_FL_FENTRY BIT(2)
+#define TPARG_FL_MASK	GENMASK(2, 0)
 
-बाह्य पूर्णांक traceprobe_parse_probe_arg(काष्ठा trace_probe *tp, पूर्णांक i,
-				अक्षर *arg, अचिन्हित पूर्णांक flags);
+extern int traceprobe_parse_probe_arg(struct trace_probe *tp, int i,
+				char *arg, unsigned int flags);
 
-बाह्य पूर्णांक traceprobe_update_arg(काष्ठा probe_arg *arg);
-बाह्य व्योम traceprobe_मुक्त_probe_arg(काष्ठा probe_arg *arg);
+extern int traceprobe_update_arg(struct probe_arg *arg);
+extern void traceprobe_free_probe_arg(struct probe_arg *arg);
 
-बाह्य पूर्णांक traceprobe_split_symbol_offset(अक्षर *symbol, दीर्घ *offset);
-पूर्णांक traceprobe_parse_event_name(स्थिर अक्षर **pevent, स्थिर अक्षर **pgroup,
-				अक्षर *buf, पूर्णांक offset);
+extern int traceprobe_split_symbol_offset(char *symbol, long *offset);
+int traceprobe_parse_event_name(const char **pevent, const char **pgroup,
+				char *buf, int offset);
 
-बाह्य पूर्णांक traceprobe_set_prपूर्णांक_fmt(काष्ठा trace_probe *tp, bool is_वापस);
+extern int traceprobe_set_print_fmt(struct trace_probe *tp, bool is_return);
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-बाह्य काष्ठा trace_event_call *
-create_local_trace_kprobe(अक्षर *func, व्योम *addr, अचिन्हित दीर्घ offs,
-			  bool is_वापस);
-बाह्य व्योम destroy_local_trace_kprobe(काष्ठा trace_event_call *event_call);
+#ifdef CONFIG_PERF_EVENTS
+extern struct trace_event_call *
+create_local_trace_kprobe(char *func, void *addr, unsigned long offs,
+			  bool is_return);
+extern void destroy_local_trace_kprobe(struct trace_event_call *event_call);
 
-बाह्य काष्ठा trace_event_call *
-create_local_trace_uprobe(अक्षर *name, अचिन्हित दीर्घ offs,
-			  अचिन्हित दीर्घ ref_ctr_offset, bool is_वापस);
-बाह्य व्योम destroy_local_trace_uprobe(काष्ठा trace_event_call *event_call);
-#पूर्ण_अगर
-बाह्य पूर्णांक traceprobe_define_arg_fields(काष्ठा trace_event_call *event_call,
-					माप_प्रकार offset, काष्ठा trace_probe *tp);
+extern struct trace_event_call *
+create_local_trace_uprobe(char *name, unsigned long offs,
+			  unsigned long ref_ctr_offset, bool is_return);
+extern void destroy_local_trace_uprobe(struct trace_event_call *event_call);
+#endif
+extern int traceprobe_define_arg_fields(struct trace_event_call *event_call,
+					size_t offset, struct trace_probe *tp);
 
-#अघोषित ERRORS
-#घोषणा ERRORS	\
-	C(खाता_NOT_FOUND,	"Failed to find the given file"),	\
-	C(NO_REGULAR_खाता,	"Not a regular file"),			\
+#undef ERRORS
+#define ERRORS	\
+	C(FILE_NOT_FOUND,	"Failed to find the given file"),	\
+	C(NO_REGULAR_FILE,	"Not a regular file"),			\
 	C(BAD_REFCNT,		"Invalid reference counter offset"),	\
 	C(REFCNT_OPEN_BRACE,	"Reference counter brace is not closed"), \
 	C(BAD_REFCNT_SUFFIX,	"Reference counter has wrong suffix"),	\
@@ -408,8 +407,8 @@ create_local_trace_uprobe(अक्षर *name, अचिन्हित दी
 	C(BAD_MEM_ADDR,		"Invalid memory address"),		\
 	C(BAD_IMM,		"Invalid immediate value"),		\
 	C(IMMSTR_NO_CLOSE,	"String is not closed with '\"'"),	\
-	C(खाता_ON_KPROBE,	"File offset is not available with kprobe"), \
-	C(BAD_खाता_OFFS,	"Invalid file offset value"),		\
+	C(FILE_ON_KPROBE,	"File offset is not available with kprobe"), \
+	C(BAD_FILE_OFFS,	"Invalid file offset value"),		\
 	C(SYM_ON_UPROBE,	"Symbol is not available with uprobe"),	\
 	C(TOO_MANY_OPS,		"Dereference is too much nested"), 	\
 	C(DEREF_NEED_BRACE,	"Dereference needs a brace"),		\
@@ -436,25 +435,25 @@ create_local_trace_uprobe(अक्षर *name, अचिन्हित दी
 	C(DIFF_ARG_TYPE,	"Argument type or name is different from existing probe"),\
 	C(SAME_PROBE,		"There is already the exact same probe event"),
 
-#अघोषित C
-#घोषणा C(a, b)		TP_ERR_##a
+#undef C
+#define C(a, b)		TP_ERR_##a
 
 /* Define TP_ERR_ */
-क्रमागत अणु ERRORS पूर्ण;
+enum { ERRORS };
 
 /* Error text is defined in trace_probe.c */
 
-काष्ठा trace_probe_log अणु
-	स्थिर अक्षर	*subप्रणाली;
-	स्थिर अक्षर	**argv;
-	पूर्णांक		argc;
-	पूर्णांक		index;
-पूर्ण;
+struct trace_probe_log {
+	const char	*subsystem;
+	const char	**argv;
+	int		argc;
+	int		index;
+};
 
-व्योम trace_probe_log_init(स्थिर अक्षर *subप्रणाली, पूर्णांक argc, स्थिर अक्षर **argv);
-व्योम trace_probe_log_set_index(पूर्णांक index);
-व्योम trace_probe_log_clear(व्योम);
-व्योम __trace_probe_log_err(पूर्णांक offset, पूर्णांक err);
+void trace_probe_log_init(const char *subsystem, int argc, const char **argv);
+void trace_probe_log_set_index(int index);
+void trace_probe_log_clear(void);
+void __trace_probe_log_err(int offset, int err);
 
-#घोषणा trace_probe_log_err(offs, err)	\
+#define trace_probe_log_err(offs, err)	\
 	__trace_probe_log_err(offs, TP_ERR_##err)

@@ -1,78 +1,77 @@
-<शैली गुरु>
 /* Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  *
  * This file is provided under a dual BSD/GPLv2 license.
  *
- * SipHash: a fast लघु-input PRF
+ * SipHash: a fast short-input PRF
  * https://131002.net/siphash/
  *
- * This implementation is specअगरically क्रम SipHash2-4 क्रम a secure PRF
- * and HalfSipHash1-3/SipHash1-3 क्रम an insecure PRF only suitable क्रम
+ * This implementation is specifically for SipHash2-4 for a secure PRF
+ * and HalfSipHash1-3/SipHash1-3 for an insecure PRF only suitable for
  * hashtables.
  */
 
-#अगर_अघोषित _LINUX_SIPHASH_H
-#घोषणा _LINUX_SIPHASH_H
+#ifndef _LINUX_SIPHASH_H
+#define _LINUX_SIPHASH_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
 
-#घोषणा SIPHASH_ALIGNMENT __alignof__(u64)
-प्रकार काष्ठा अणु
+#define SIPHASH_ALIGNMENT __alignof__(u64)
+typedef struct {
 	u64 key[2];
-पूर्ण siphash_key_t;
+} siphash_key_t;
 
-अटल अंतरभूत bool siphash_key_is_zero(स्थिर siphash_key_t *key)
-अणु
-	वापस !(key->key[0] | key->key[1]);
-पूर्ण
+static inline bool siphash_key_is_zero(const siphash_key_t *key)
+{
+	return !(key->key[0] | key->key[1]);
+}
 
-u64 __siphash_aligned(स्थिर व्योम *data, माप_प्रकार len, स्थिर siphash_key_t *key);
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-u64 __siphash_unaligned(स्थिर व्योम *data, माप_प्रकार len, स्थिर siphash_key_t *key);
-#पूर्ण_अगर
+u64 __siphash_aligned(const void *data, size_t len, const siphash_key_t *key);
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+u64 __siphash_unaligned(const void *data, size_t len, const siphash_key_t *key);
+#endif
 
-u64 siphash_1u64(स्थिर u64 a, स्थिर siphash_key_t *key);
-u64 siphash_2u64(स्थिर u64 a, स्थिर u64 b, स्थिर siphash_key_t *key);
-u64 siphash_3u64(स्थिर u64 a, स्थिर u64 b, स्थिर u64 c,
-		 स्थिर siphash_key_t *key);
-u64 siphash_4u64(स्थिर u64 a, स्थिर u64 b, स्थिर u64 c, स्थिर u64 d,
-		 स्थिर siphash_key_t *key);
-u64 siphash_1u32(स्थिर u32 a, स्थिर siphash_key_t *key);
-u64 siphash_3u32(स्थिर u32 a, स्थिर u32 b, स्थिर u32 c,
-		 स्थिर siphash_key_t *key);
+u64 siphash_1u64(const u64 a, const siphash_key_t *key);
+u64 siphash_2u64(const u64 a, const u64 b, const siphash_key_t *key);
+u64 siphash_3u64(const u64 a, const u64 b, const u64 c,
+		 const siphash_key_t *key);
+u64 siphash_4u64(const u64 a, const u64 b, const u64 c, const u64 d,
+		 const siphash_key_t *key);
+u64 siphash_1u32(const u32 a, const siphash_key_t *key);
+u64 siphash_3u32(const u32 a, const u32 b, const u32 c,
+		 const siphash_key_t *key);
 
-अटल अंतरभूत u64 siphash_2u32(स्थिर u32 a, स्थिर u32 b,
-			       स्थिर siphash_key_t *key)
-अणु
-	वापस siphash_1u64((u64)b << 32 | a, key);
-पूर्ण
-अटल अंतरभूत u64 siphash_4u32(स्थिर u32 a, स्थिर u32 b, स्थिर u32 c,
-			       स्थिर u32 d, स्थिर siphash_key_t *key)
-अणु
-	वापस siphash_2u64((u64)b << 32 | a, (u64)d << 32 | c, key);
-पूर्ण
+static inline u64 siphash_2u32(const u32 a, const u32 b,
+			       const siphash_key_t *key)
+{
+	return siphash_1u64((u64)b << 32 | a, key);
+}
+static inline u64 siphash_4u32(const u32 a, const u32 b, const u32 c,
+			       const u32 d, const siphash_key_t *key)
+{
+	return siphash_2u64((u64)b << 32 | a, (u64)d << 32 | c, key);
+}
 
 
-अटल अंतरभूत u64 ___siphash_aligned(स्थिर __le64 *data, माप_प्रकार len,
-				     स्थिर siphash_key_t *key)
-अणु
-	अगर (__builtin_स्थिरant_p(len) && len == 4)
-		वापस siphash_1u32(le32_to_cpup((स्थिर __le32 *)data), key);
-	अगर (__builtin_स्थिरant_p(len) && len == 8)
-		वापस siphash_1u64(le64_to_cpu(data[0]), key);
-	अगर (__builtin_स्थिरant_p(len) && len == 16)
-		वापस siphash_2u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
+static inline u64 ___siphash_aligned(const __le64 *data, size_t len,
+				     const siphash_key_t *key)
+{
+	if (__builtin_constant_p(len) && len == 4)
+		return siphash_1u32(le32_to_cpup((const __le32 *)data), key);
+	if (__builtin_constant_p(len) && len == 8)
+		return siphash_1u64(le64_to_cpu(data[0]), key);
+	if (__builtin_constant_p(len) && len == 16)
+		return siphash_2u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
 				    key);
-	अगर (__builtin_स्थिरant_p(len) && len == 24)
-		वापस siphash_3u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
+	if (__builtin_constant_p(len) && len == 24)
+		return siphash_3u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
 				    le64_to_cpu(data[2]), key);
-	अगर (__builtin_स्थिरant_p(len) && len == 32)
-		वापस siphash_4u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
+	if (__builtin_constant_p(len) && len == 32)
+		return siphash_4u64(le64_to_cpu(data[0]), le64_to_cpu(data[1]),
 				    le64_to_cpu(data[2]), le64_to_cpu(data[3]),
 				    key);
-	वापस __siphash_aligned(data, len, key);
-पूर्ण
+	return __siphash_aligned(data, len, key);
+}
 
 /**
  * siphash - compute 64-bit siphash PRF value
@@ -80,52 +79,52 @@ u64 siphash_3u32(स्थिर u32 a, स्थिर u32 b, स्थिर u
  * @size: size of @data
  * @key: the siphash key
  */
-अटल अंतरभूत u64 siphash(स्थिर व्योम *data, माप_प्रकार len,
-			  स्थिर siphash_key_t *key)
-अणु
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)data, SIPHASH_ALIGNMENT))
-		वापस __siphash_unaligned(data, len, key);
-#पूर्ण_अगर
-	वापस ___siphash_aligned(data, len, key);
-पूर्ण
+static inline u64 siphash(const void *data, size_t len,
+			  const siphash_key_t *key)
+{
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	if (!IS_ALIGNED((unsigned long)data, SIPHASH_ALIGNMENT))
+		return __siphash_unaligned(data, len, key);
+#endif
+	return ___siphash_aligned(data, len, key);
+}
 
-#घोषणा HSIPHASH_ALIGNMENT __alignof__(अचिन्हित दीर्घ)
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ key[2];
-पूर्ण hsiphash_key_t;
+#define HSIPHASH_ALIGNMENT __alignof__(unsigned long)
+typedef struct {
+	unsigned long key[2];
+} hsiphash_key_t;
 
-u32 __hsiphash_aligned(स्थिर व्योम *data, माप_प्रकार len,
-		       स्थिर hsiphash_key_t *key);
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-u32 __hsiphash_unaligned(स्थिर व्योम *data, माप_प्रकार len,
-			 स्थिर hsiphash_key_t *key);
-#पूर्ण_अगर
+u32 __hsiphash_aligned(const void *data, size_t len,
+		       const hsiphash_key_t *key);
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+u32 __hsiphash_unaligned(const void *data, size_t len,
+			 const hsiphash_key_t *key);
+#endif
 
-u32 hsiphash_1u32(स्थिर u32 a, स्थिर hsiphash_key_t *key);
-u32 hsiphash_2u32(स्थिर u32 a, स्थिर u32 b, स्थिर hsiphash_key_t *key);
-u32 hsiphash_3u32(स्थिर u32 a, स्थिर u32 b, स्थिर u32 c,
-		  स्थिर hsiphash_key_t *key);
-u32 hsiphash_4u32(स्थिर u32 a, स्थिर u32 b, स्थिर u32 c, स्थिर u32 d,
-		  स्थिर hsiphash_key_t *key);
+u32 hsiphash_1u32(const u32 a, const hsiphash_key_t *key);
+u32 hsiphash_2u32(const u32 a, const u32 b, const hsiphash_key_t *key);
+u32 hsiphash_3u32(const u32 a, const u32 b, const u32 c,
+		  const hsiphash_key_t *key);
+u32 hsiphash_4u32(const u32 a, const u32 b, const u32 c, const u32 d,
+		  const hsiphash_key_t *key);
 
-अटल अंतरभूत u32 ___hsiphash_aligned(स्थिर __le32 *data, माप_प्रकार len,
-				      स्थिर hsiphash_key_t *key)
-अणु
-	अगर (__builtin_स्थिरant_p(len) && len == 4)
-		वापस hsiphash_1u32(le32_to_cpu(data[0]), key);
-	अगर (__builtin_स्थिरant_p(len) && len == 8)
-		वापस hsiphash_2u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
+static inline u32 ___hsiphash_aligned(const __le32 *data, size_t len,
+				      const hsiphash_key_t *key)
+{
+	if (__builtin_constant_p(len) && len == 4)
+		return hsiphash_1u32(le32_to_cpu(data[0]), key);
+	if (__builtin_constant_p(len) && len == 8)
+		return hsiphash_2u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
 				     key);
-	अगर (__builtin_स्थिरant_p(len) && len == 12)
-		वापस hsiphash_3u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
+	if (__builtin_constant_p(len) && len == 12)
+		return hsiphash_3u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
 				     le32_to_cpu(data[2]), key);
-	अगर (__builtin_स्थिरant_p(len) && len == 16)
-		वापस hsiphash_4u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
+	if (__builtin_constant_p(len) && len == 16)
+		return hsiphash_4u32(le32_to_cpu(data[0]), le32_to_cpu(data[1]),
 				     le32_to_cpu(data[2]), le32_to_cpu(data[3]),
 				     key);
-	वापस __hsiphash_aligned(data, len, key);
-पूर्ण
+	return __hsiphash_aligned(data, len, key);
+}
 
 /**
  * hsiphash - compute 32-bit hsiphash PRF value
@@ -133,14 +132,14 @@ u32 hsiphash_4u32(स्थिर u32 a, स्थिर u32 b, स्थिर 
  * @size: size of @data
  * @key: the hsiphash key
  */
-अटल अंतरभूत u32 hsiphash(स्थिर व्योम *data, माप_प्रकार len,
-			   स्थिर hsiphash_key_t *key)
-अणु
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)data, HSIPHASH_ALIGNMENT))
-		वापस __hsiphash_unaligned(data, len, key);
-#पूर्ण_अगर
-	वापस ___hsiphash_aligned(data, len, key);
-पूर्ण
+static inline u32 hsiphash(const void *data, size_t len,
+			   const hsiphash_key_t *key)
+{
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	if (!IS_ALIGNED((unsigned long)data, HSIPHASH_ALIGNMENT))
+		return __hsiphash_unaligned(data, len, key);
+#endif
+	return ___hsiphash_aligned(data, len, key);
+}
 
-#पूर्ण_अगर /* _LINUX_SIPHASH_H */
+#endif /* _LINUX_SIPHASH_H */

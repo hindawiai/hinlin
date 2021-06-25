@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/slab.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/spinlock.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
 
 ax25_dev *ax25_dev_list;
 DEFINE_SPINLOCK(ax25_dev_lock);
 
 ax25_dev *ax25_addr_ax25dev(ax25_address *addr)
-अणु
-	ax25_dev *ax25_dev, *res = शून्य;
+{
+	ax25_dev *ax25_dev, *res = NULL;
 
 	spin_lock_bh(&ax25_dev_lock);
-	क्रम (ax25_dev = ax25_dev_list; ax25_dev != शून्य; ax25_dev = ax25_dev->next)
-		अगर (ax25cmp(addr, (ax25_address *)ax25_dev->dev->dev_addr) == 0) अणु
+	for (ax25_dev = ax25_dev_list; ax25_dev != NULL; ax25_dev = ax25_dev->next)
+		if (ax25cmp(addr, (ax25_address *)ax25_dev->dev->dev_addr) == 0) {
 			res = ax25_dev;
-		पूर्ण
+		}
 	spin_unlock_bh(&ax25_dev_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- *	This is called when an पूर्णांकerface is brought up. These are
- *	reasonable शेषs.
+ *	This is called when an interface is brought up. These are
+ *	reasonable defaults.
  */
-व्योम ax25_dev_device_up(काष्ठा net_device *dev)
-अणु
+void ax25_dev_device_up(struct net_device *dev)
+{
 	ax25_dev *ax25_dev;
 
-	अगर ((ax25_dev = kzalloc(माप(*ax25_dev), GFP_ATOMIC)) == शून्य) अणु
-		prपूर्णांकk(KERN_ERR "AX.25: ax25_dev_device_up - out of memory\n");
-		वापस;
-	पूर्ण
+	if ((ax25_dev = kzalloc(sizeof(*ax25_dev), GFP_ATOMIC)) == NULL) {
+		printk(KERN_ERR "AX.25: ax25_dev_device_up - out of memory\n");
+		return;
+	}
 
 	dev->ax25_ptr     = ax25_dev;
 	ax25_dev->dev     = dev;
 	dev_hold(dev);
-	ax25_dev->क्रमward = शून्य;
+	ax25_dev->forward = NULL;
 
 	ax25_dev->values[AX25_VALUES_IPDEFMODE] = AX25_DEF_IPDEFMODE;
 	ax25_dev->values[AX25_VALUES_AXDEFMODE] = AX25_DEF_AXDEFMODE;
@@ -77,122 +76,122 @@ ax25_dev *ax25_addr_ax25dev(ax25_address *addr)
 	ax25_dev->values[AX25_VALUES_PROTOCOL]  = AX25_DEF_PROTOCOL;
 	ax25_dev->values[AX25_VALUES_DS_TIMEOUT]= AX25_DEF_DS_TIMEOUT;
 
-#अगर defined(CONFIG_AX25_DAMA_SLAVE) || defined(CONFIG_AX25_DAMA_MASTER)
-	ax25_ds_setup_समयr(ax25_dev);
-#पूर्ण_अगर
+#if defined(CONFIG_AX25_DAMA_SLAVE) || defined(CONFIG_AX25_DAMA_MASTER)
+	ax25_ds_setup_timer(ax25_dev);
+#endif
 
 	spin_lock_bh(&ax25_dev_lock);
 	ax25_dev->next = ax25_dev_list;
 	ax25_dev_list  = ax25_dev;
 	spin_unlock_bh(&ax25_dev_lock);
 
-	ax25_रेजिस्टर_dev_sysctl(ax25_dev);
-पूर्ण
+	ax25_register_dev_sysctl(ax25_dev);
+}
 
-व्योम ax25_dev_device_करोwn(काष्ठा net_device *dev)
-अणु
+void ax25_dev_device_down(struct net_device *dev)
+{
 	ax25_dev *s, *ax25_dev;
 
-	अगर ((ax25_dev = ax25_dev_ax25dev(dev)) == शून्य)
-		वापस;
+	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
+		return;
 
-	ax25_unरेजिस्टर_dev_sysctl(ax25_dev);
+	ax25_unregister_dev_sysctl(ax25_dev);
 
 	spin_lock_bh(&ax25_dev_lock);
 
-#अगर_घोषित CONFIG_AX25_DAMA_SLAVE
-	ax25_ds_del_समयr(ax25_dev);
-#पूर्ण_अगर
+#ifdef CONFIG_AX25_DAMA_SLAVE
+	ax25_ds_del_timer(ax25_dev);
+#endif
 
 	/*
-	 *	Remove any packet क्रमwarding that poपूर्णांकs to this device.
+	 *	Remove any packet forwarding that points to this device.
 	 */
-	क्रम (s = ax25_dev_list; s != शून्य; s = s->next)
-		अगर (s->क्रमward == dev)
-			s->क्रमward = शून्य;
+	for (s = ax25_dev_list; s != NULL; s = s->next)
+		if (s->forward == dev)
+			s->forward = NULL;
 
-	अगर ((s = ax25_dev_list) == ax25_dev) अणु
+	if ((s = ax25_dev_list) == ax25_dev) {
 		ax25_dev_list = s->next;
 		spin_unlock_bh(&ax25_dev_lock);
-		dev->ax25_ptr = शून्य;
+		dev->ax25_ptr = NULL;
 		dev_put(dev);
-		kमुक्त(ax25_dev);
-		वापस;
-	पूर्ण
+		kfree(ax25_dev);
+		return;
+	}
 
-	जबतक (s != शून्य && s->next != शून्य) अणु
-		अगर (s->next == ax25_dev) अणु
+	while (s != NULL && s->next != NULL) {
+		if (s->next == ax25_dev) {
 			s->next = ax25_dev->next;
 			spin_unlock_bh(&ax25_dev_lock);
-			dev->ax25_ptr = शून्य;
+			dev->ax25_ptr = NULL;
 			dev_put(dev);
-			kमुक्त(ax25_dev);
-			वापस;
-		पूर्ण
+			kfree(ax25_dev);
+			return;
+		}
 
 		s = s->next;
-	पूर्ण
+	}
 	spin_unlock_bh(&ax25_dev_lock);
-	dev->ax25_ptr = शून्य;
-पूर्ण
+	dev->ax25_ptr = NULL;
+}
 
-पूर्णांक ax25_fwd_ioctl(अचिन्हित पूर्णांक cmd, काष्ठा ax25_fwd_काष्ठा *fwd)
-अणु
+int ax25_fwd_ioctl(unsigned int cmd, struct ax25_fwd_struct *fwd)
+{
 	ax25_dev *ax25_dev, *fwd_dev;
 
-	अगर ((ax25_dev = ax25_addr_ax25dev(&fwd->port_from)) == शून्य)
-		वापस -EINVAL;
+	if ((ax25_dev = ax25_addr_ax25dev(&fwd->port_from)) == NULL)
+		return -EINVAL;
 
-	चयन (cmd) अणु
-	हाल SIOCAX25ADDFWD:
-		अगर ((fwd_dev = ax25_addr_ax25dev(&fwd->port_to)) == शून्य)
-			वापस -EINVAL;
-		अगर (ax25_dev->क्रमward != शून्य)
-			वापस -EINVAL;
-		ax25_dev->क्रमward = fwd_dev->dev;
-		अवरोध;
+	switch (cmd) {
+	case SIOCAX25ADDFWD:
+		if ((fwd_dev = ax25_addr_ax25dev(&fwd->port_to)) == NULL)
+			return -EINVAL;
+		if (ax25_dev->forward != NULL)
+			return -EINVAL;
+		ax25_dev->forward = fwd_dev->dev;
+		break;
 
-	हाल SIOCAX25DELFWD:
-		अगर (ax25_dev->क्रमward == शून्य)
-			वापस -EINVAL;
-		ax25_dev->क्रमward = शून्य;
-		अवरोध;
+	case SIOCAX25DELFWD:
+		if (ax25_dev->forward == NULL)
+			return -EINVAL;
+		ax25_dev->forward = NULL;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा net_device *ax25_fwd_dev(काष्ठा net_device *dev)
-अणु
+struct net_device *ax25_fwd_dev(struct net_device *dev)
+{
 	ax25_dev *ax25_dev;
 
-	अगर ((ax25_dev = ax25_dev_ax25dev(dev)) == शून्य)
-		वापस dev;
+	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
+		return dev;
 
-	अगर (ax25_dev->क्रमward == शून्य)
-		वापस dev;
+	if (ax25_dev->forward == NULL)
+		return dev;
 
-	वापस ax25_dev->क्रमward;
-पूर्ण
+	return ax25_dev->forward;
+}
 
 /*
- *	Free all memory associated with device काष्ठाures.
+ *	Free all memory associated with device structures.
  */
-व्योम __निकास ax25_dev_मुक्त(व्योम)
-अणु
+void __exit ax25_dev_free(void)
+{
 	ax25_dev *s, *ax25_dev;
 
 	spin_lock_bh(&ax25_dev_lock);
 	ax25_dev = ax25_dev_list;
-	जबतक (ax25_dev != शून्य) अणु
+	while (ax25_dev != NULL) {
 		s        = ax25_dev;
 		dev_put(ax25_dev->dev);
 		ax25_dev = ax25_dev->next;
-		kमुक्त(s);
-	पूर्ण
-	ax25_dev_list = शून्य;
+		kfree(s);
+	}
+	ax25_dev_list = NULL;
 	spin_unlock_bh(&ax25_dev_lock);
-पूर्ण
+}

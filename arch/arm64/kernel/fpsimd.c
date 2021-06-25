@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * FP/SIMD context चयनing and fault handling
+ * FP/SIMD context switching and fault handling
  *
  * Copyright (C) 2012 ARM Ltd.
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/bottom_half.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/prctl.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/swab.h>
+#include <linux/bitmap.h>
+#include <linux/bitops.h>
+#include <linux/bottom_half.h>
+#include <linux/bug.h>
+#include <linux/cache.h>
+#include <linux/compat.h>
+#include <linux/compiler.h>
+#include <linux/cpu.h>
+#include <linux/cpu_pm.h>
+#include <linux/kernel.h>
+#include <linux/linkage.h>
+#include <linux/irqflags.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
+#include <linux/prctl.h>
+#include <linux/preempt.h>
+#include <linux/ptrace.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task_stack.h>
+#include <linux/signal.h>
+#include <linux/slab.h>
+#include <linux/stddef.h>
+#include <linux/sysctl.h>
+#include <linux/swab.h>
 
-#समावेश <यंत्र/esr.h>
-#समावेश <यंत्र/exception.h>
-#समावेश <यंत्र/fpsimd.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/neon.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/simd.h>
-#समावेश <यंत्र/sigcontext.h>
-#समावेश <यंत्र/sysreg.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/virt.h>
+#include <asm/esr.h>
+#include <asm/exception.h>
+#include <asm/fpsimd.h>
+#include <asm/cpufeature.h>
+#include <asm/cputype.h>
+#include <asm/neon.h>
+#include <asm/processor.h>
+#include <asm/simd.h>
+#include <asm/sigcontext.h>
+#include <asm/sysreg.h>
+#include <asm/traps.h>
+#include <asm/virt.h>
 
-#घोषणा FPEXC_IOF	(1 << 0)
-#घोषणा FPEXC_DZF	(1 << 1)
-#घोषणा FPEXC_OFF	(1 << 2)
-#घोषणा FPEXC_UFF	(1 << 3)
-#घोषणा FPEXC_IXF	(1 << 4)
-#घोषणा FPEXC_IDF	(1 << 7)
+#define FPEXC_IOF	(1 << 0)
+#define FPEXC_DZF	(1 << 1)
+#define FPEXC_OFF	(1 << 2)
+#define FPEXC_UFF	(1 << 3)
+#define FPEXC_IXF	(1 << 4)
+#define FPEXC_IDF	(1 << 7)
 
 /*
  * (Note: in this discussion, statements about FPSIMD apply equally to SVE.)
  *
- * In order to reduce the number of बार the FPSIMD state is needlessly saved
+ * In order to reduce the number of times the FPSIMD state is needlessly saved
  * and restored, we need to keep track of two things:
- * (a) क्रम each task, we need to remember which CPU was the last one to have
- *     the task's FPSIMD state loaded पूर्णांकo its FPSIMD रेजिस्टरs;
- * (b) क्रम each CPU, we need to remember which task's userland FPSIMD state has
- *     been loaded पूर्णांकo its FPSIMD रेजिस्टरs most recently, or whether it has
- *     been used to perक्रमm kernel mode NEON in the meanसमय.
+ * (a) for each task, we need to remember which CPU was the last one to have
+ *     the task's FPSIMD state loaded into its FPSIMD registers;
+ * (b) for each CPU, we need to remember which task's userland FPSIMD state has
+ *     been loaded into its FPSIMD registers most recently, or whether it has
+ *     been used to perform kernel mode NEON in the meantime.
  *
- * For (a), we add a fpsimd_cpu field to thपढ़ो_काष्ठा, which माला_लो updated to
- * the id of the current CPU every समय the state is loaded onto a CPU. For (b),
+ * For (a), we add a fpsimd_cpu field to thread_struct, which gets updated to
+ * the id of the current CPU every time the state is loaded onto a CPU. For (b),
  * we add the per-cpu variable 'fpsimd_last_state' (below), which contains the
  * address of the userland FPSIMD state of the task that was loaded onto the CPU
- * the most recently, or शून्य अगर kernel mode NEON has been perक्रमmed after that.
+ * the most recently, or NULL if kernel mode NEON has been performed after that.
  *
- * With this in place, we no दीर्घer have to restore the next FPSIMD state right
- * when चयनing between tasks. Instead, we can defer this check to userland
- * resume, at which समय we verअगरy whether the CPU's fpsimd_last_state and the
- * task's fpsimd_cpu are still mutually in sync. If this is the हाल, we
+ * With this in place, we no longer have to restore the next FPSIMD state right
+ * when switching between tasks. Instead, we can defer this check to userland
+ * resume, at which time we verify whether the CPU's fpsimd_last_state and the
+ * task's fpsimd_cpu are still mutually in sync. If this is the case, we
  * can omit the FPSIMD restore.
  *
- * As an optimization, we use the thपढ़ो_info flag TIF_FOREIGN_FPSTATE to
+ * As an optimization, we use the thread_info flag TIF_FOREIGN_FPSTATE to
  * indicate whether or not the userland FPSIMD state of the current task is
- * present in the रेजिस्टरs. The flag is set unless the FPSIMD रेजिस्टरs of this
+ * present in the registers. The flag is set unless the FPSIMD registers of this
  * CPU currently contain the most recent userland FPSIMD state of the current
  * task.
  *
  * In order to allow softirq handlers to use FPSIMD, kernel_neon_begin() may
- * save the task's FPSIMD context back to task_काष्ठा from softirq context.
+ * save the task's FPSIMD context back to task_struct from softirq context.
  * To prevent this from racing with the manipulation of the task's FPSIMD state
  * from task context and thereby corrupting the state, it is necessary to
  * protect any manipulation of a task's fpsimd_state or TIF_FOREIGN_FPSTATE
- * flag with अणु, __पूर्णget_cpu_fpsimd_context(). This will still allow softirqs to
+ * flag with {, __}get_cpu_fpsimd_context(). This will still allow softirqs to
  * run but prevent them to use FPSIMD.
  *
  * For a certain task, the sequence may look something like this:
- * - the task माला_लो scheduled in; अगर both the task's fpsimd_cpu field
+ * - the task gets scheduled in; if both the task's fpsimd_cpu field
  *   contains the id of the current CPU, and the CPU's fpsimd_last_state per-cpu
- *   variable poपूर्णांकs to the task's fpsimd_state, the TIF_FOREIGN_FPSTATE flag is
+ *   variable points to the task's fpsimd_state, the TIF_FOREIGN_FPSTATE flag is
  *   cleared, otherwise it is set;
  *
- * - the task वापसs to userland; अगर TIF_FOREIGN_FPSTATE is set, the task's
- *   userland FPSIMD state is copied from memory to the रेजिस्टरs, the task's
+ * - the task returns to userland; if TIF_FOREIGN_FPSTATE is set, the task's
+ *   userland FPSIMD state is copied from memory to the registers, the task's
  *   fpsimd_cpu field is set to the id of the current CPU, the current
  *   CPU's fpsimd_last_state pointer is set to this task's fpsimd_state and the
  *   TIF_FOREIGN_FPSTATE flag is cleared;
  *
- * - the task executes an ordinary syscall; upon वापस to userland, the
+ * - the task executes an ordinary syscall; upon return to userland, the
  *   TIF_FOREIGN_FPSTATE flag will still be cleared, so no FPSIMD state is
  *   restored;
  *
- * - the task executes a syscall which executes some NEON inकाष्ठाions; this is
+ * - the task executes a syscall which executes some NEON instructions; this is
  *   preceded by a call to kernel_neon_begin(), which copies the task's FPSIMD
- *   रेजिस्टर contents to memory, clears the fpsimd_last_state per-cpu variable
+ *   register contents to memory, clears the fpsimd_last_state per-cpu variable
  *   and sets the TIF_FOREIGN_FPSTATE flag;
  *
- * - the task माला_लो preempted after kernel_neon_end() is called; as we have not
- *   वापसed from the 2nd syscall yet, TIF_FOREIGN_FPSTATE is still set so
- *   whatever is in the FPSIMD रेजिस्टरs is not saved to memory, but discarded.
+ * - the task gets preempted after kernel_neon_end() is called; as we have not
+ *   returned from the 2nd syscall yet, TIF_FOREIGN_FPSTATE is still set so
+ *   whatever is in the FPSIMD registers is not saved to memory, but discarded.
  */
-काष्ठा fpsimd_last_state_काष्ठा अणु
-	काष्ठा user_fpsimd_state *st;
-	व्योम *sve_state;
-	अचिन्हित पूर्णांक sve_vl;
-पूर्ण;
+struct fpsimd_last_state_struct {
+	struct user_fpsimd_state *st;
+	void *sve_state;
+	unsigned int sve_vl;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा fpsimd_last_state_काष्ठा, fpsimd_last_state);
+static DEFINE_PER_CPU(struct fpsimd_last_state_struct, fpsimd_last_state);
 
-/* Default VL क्रम tasks that करोn't set it explicitly: */
-अटल पूर्णांक __sve_शेष_vl = -1;
+/* Default VL for tasks that don't set it explicitly: */
+static int __sve_default_vl = -1;
 
-अटल पूर्णांक get_sve_शेष_vl(व्योम)
-अणु
-	वापस READ_ONCE(__sve_शेष_vl);
-पूर्ण
+static int get_sve_default_vl(void)
+{
+	return READ_ONCE(__sve_default_vl);
+}
 
-#अगर_घोषित CONFIG_ARM64_SVE
+#ifdef CONFIG_ARM64_SVE
 
-अटल व्योम set_sve_शेष_vl(पूर्णांक val)
-अणु
-	WRITE_ONCE(__sve_शेष_vl, val);
-पूर्ण
+static void set_sve_default_vl(int val)
+{
+	WRITE_ONCE(__sve_default_vl, val);
+}
 
 /* Maximum supported vector length across all CPUs (initially poisoned) */
-पूर्णांक __ro_after_init sve_max_vl = SVE_VL_MIN;
-पूर्णांक __ro_after_init sve_max_भवisable_vl = SVE_VL_MIN;
+int __ro_after_init sve_max_vl = SVE_VL_MIN;
+int __ro_after_init sve_max_virtualisable_vl = SVE_VL_MIN;
 
 /*
  * Set of available vector lengths,
@@ -147,186 +146,186 @@
  */
 __ro_after_init DECLARE_BITMAP(sve_vq_map, SVE_VQ_MAX);
 /* Set of vector lengths present on at least one cpu: */
-अटल __ro_after_init DECLARE_BITMAP(sve_vq_partial_map, SVE_VQ_MAX);
+static __ro_after_init DECLARE_BITMAP(sve_vq_partial_map, SVE_VQ_MAX);
 
-अटल व्योम __percpu *efi_sve_state;
+static void __percpu *efi_sve_state;
 
-#अन्यथा /* ! CONFIG_ARM64_SVE */
+#else /* ! CONFIG_ARM64_SVE */
 
-/* Dummy declaration क्रम code that will be optimised out: */
-बाह्य __ro_after_init DECLARE_BITMAP(sve_vq_map, SVE_VQ_MAX);
-बाह्य __ro_after_init DECLARE_BITMAP(sve_vq_partial_map, SVE_VQ_MAX);
-बाह्य व्योम __percpu *efi_sve_state;
+/* Dummy declaration for code that will be optimised out: */
+extern __ro_after_init DECLARE_BITMAP(sve_vq_map, SVE_VQ_MAX);
+extern __ro_after_init DECLARE_BITMAP(sve_vq_partial_map, SVE_VQ_MAX);
+extern void __percpu *efi_sve_state;
 
-#पूर्ण_अगर /* ! CONFIG_ARM64_SVE */
+#endif /* ! CONFIG_ARM64_SVE */
 
 DEFINE_PER_CPU(bool, fpsimd_context_busy);
 EXPORT_PER_CPU_SYMBOL(fpsimd_context_busy);
 
-अटल व्योम __get_cpu_fpsimd_context(व्योम)
-अणु
+static void __get_cpu_fpsimd_context(void)
+{
 	bool busy = __this_cpu_xchg(fpsimd_context_busy, true);
 
 	WARN_ON(busy);
-पूर्ण
+}
 
 /*
- * Claim ownership of the CPU FPSIMD context क्रम use by the calling context.
+ * Claim ownership of the CPU FPSIMD context for use by the calling context.
  *
- * The caller may मुक्तly manipulate the FPSIMD context metadata until
+ * The caller may freely manipulate the FPSIMD context metadata until
  * put_cpu_fpsimd_context() is called.
  *
- * The द्विगुन-underscore version must only be called अगर you know the task
+ * The double-underscore version must only be called if you know the task
  * can't be preempted.
  */
-अटल व्योम get_cpu_fpsimd_context(व्योम)
-अणु
+static void get_cpu_fpsimd_context(void)
+{
 	local_bh_disable();
 	__get_cpu_fpsimd_context();
-पूर्ण
+}
 
-अटल व्योम __put_cpu_fpsimd_context(व्योम)
-अणु
+static void __put_cpu_fpsimd_context(void)
+{
 	bool busy = __this_cpu_xchg(fpsimd_context_busy, false);
 
 	WARN_ON(!busy); /* No matching get_cpu_fpsimd_context()? */
-पूर्ण
+}
 
 /*
  * Release the CPU FPSIMD context.
  *
  * Must be called from a context in which get_cpu_fpsimd_context() was
  * previously called, with no call to put_cpu_fpsimd_context() in the
- * meanसमय.
+ * meantime.
  */
-अटल व्योम put_cpu_fpsimd_context(व्योम)
-अणु
+static void put_cpu_fpsimd_context(void)
+{
 	__put_cpu_fpsimd_context();
 	local_bh_enable();
-पूर्ण
+}
 
-अटल bool have_cpu_fpsimd_context(व्योम)
-अणु
-	वापस !preemptible() && __this_cpu_पढ़ो(fpsimd_context_busy);
-पूर्ण
+static bool have_cpu_fpsimd_context(void)
+{
+	return !preemptible() && __this_cpu_read(fpsimd_context_busy);
+}
 
 /*
- * Call __sve_मुक्त() directly only अगर you know task can't be scheduled
+ * Call __sve_free() directly only if you know task can't be scheduled
  * or preempted.
  */
-अटल व्योम __sve_मुक्त(काष्ठा task_काष्ठा *task)
-अणु
-	kमुक्त(task->thपढ़ो.sve_state);
-	task->thपढ़ो.sve_state = शून्य;
-पूर्ण
+static void __sve_free(struct task_struct *task)
+{
+	kfree(task->thread.sve_state);
+	task->thread.sve_state = NULL;
+}
 
-अटल व्योम sve_मुक्त(काष्ठा task_काष्ठा *task)
-अणु
-	WARN_ON(test_tsk_thपढ़ो_flag(task, TIF_SVE));
+static void sve_free(struct task_struct *task)
+{
+	WARN_ON(test_tsk_thread_flag(task, TIF_SVE));
 
-	__sve_मुक्त(task);
-पूर्ण
+	__sve_free(task);
+}
 
 /*
- * TIF_SVE controls whether a task can use SVE without trapping जबतक
+ * TIF_SVE controls whether a task can use SVE without trapping while
  * in userspace, and also the way a task's FPSIMD/SVE state is stored
- * in thपढ़ो_काष्ठा.
+ * in thread_struct.
  *
  * The kernel uses this flag to track whether a user task is actively
- * using SVE, and thereक्रमe whether full SVE रेजिस्टर state needs to
+ * using SVE, and therefore whether full SVE register state needs to
  * be tracked.  If not, the cheaper FPSIMD context handling code can
  * be used instead of the more costly SVE equivalents.
  *
  *  * TIF_SVE set:
  *
- *    The task can execute SVE inकाष्ठाions जबतक in userspace without
+ *    The task can execute SVE instructions while in userspace without
  *    trapping to the kernel.
  *
  *    When stored, Z0-Z31 (incorporating Vn in bits[127:0] or the
  *    corresponding Zn), P0-P15 and FFR are encoded in in
- *    task->thपढ़ो.sve_state, क्रमmatted appropriately क्रम vector
- *    length task->thपढ़ो.sve_vl.
+ *    task->thread.sve_state, formatted appropriately for vector
+ *    length task->thread.sve_vl.
  *
- *    task->thपढ़ो.sve_state must poपूर्णांक to a valid buffer at least
+ *    task->thread.sve_state must point to a valid buffer at least
  *    sve_state_size(task) bytes in size.
  *
  *    During any syscall, the kernel may optionally clear TIF_SVE and
- *    discard the vector state except क्रम the FPSIMD subset.
+ *    discard the vector state except for the FPSIMD subset.
  *
  *  * TIF_SVE clear:
  *
- *    An attempt by the user task to execute an SVE inकाष्ठाion causes
- *    करो_sve_acc() to be called, which करोes some preparation and then
+ *    An attempt by the user task to execute an SVE instruction causes
+ *    do_sve_acc() to be called, which does some preparation and then
  *    sets TIF_SVE.
  *
- *    When stored, FPSIMD रेजिस्टरs V0-V31 are encoded in
- *    task->thपढ़ो.uw.fpsimd_state; bits [max : 128] क्रम each of Z0-Z31 are
+ *    When stored, FPSIMD registers V0-V31 are encoded in
+ *    task->thread.uw.fpsimd_state; bits [max : 128] for each of Z0-Z31 are
  *    logically zero but not stored anywhere; P0-P15 and FFR are not
- *    stored and have unspecअगरied values from userspace's poपूर्णांक of
+ *    stored and have unspecified values from userspace's point of
  *    view.  For hygiene purposes, the kernel zeroes them on next use,
  *    but userspace is discouraged from relying on this.
  *
- *    task->thपढ़ो.sve_state करोes not need to be non-शून्य, valid or any
+ *    task->thread.sve_state does not need to be non-NULL, valid or any
  *    particular size: it must not be dereferenced.
  *
- *  * FPSR and FPCR are always stored in task->thपढ़ो.uw.fpsimd_state
+ *  * FPSR and FPCR are always stored in task->thread.uw.fpsimd_state
  *    irrespective of whether TIF_SVE is clear or set, since these are
  *    not vector length dependent.
  */
 
 /*
- * Update current's FPSIMD/SVE रेजिस्टरs from thपढ़ो_काष्ठा.
+ * Update current's FPSIMD/SVE registers from thread_struct.
  *
  * This function should be called only when the FPSIMD/SVE state in
- * thपढ़ो_काष्ठा is known to be up to date, when preparing to enter
+ * thread_struct is known to be up to date, when preparing to enter
  * userspace.
  */
-अटल व्योम task_fpsimd_load(व्योम)
-अणु
-	WARN_ON(!प्रणाली_supports_fpsimd());
+static void task_fpsimd_load(void)
+{
+	WARN_ON(!system_supports_fpsimd());
 	WARN_ON(!have_cpu_fpsimd_context());
 
-	अगर (IS_ENABLED(CONFIG_ARM64_SVE) && test_thपढ़ो_flag(TIF_SVE))
-		sve_load_state(sve_pffr(&current->thपढ़ो),
-			       &current->thपढ़ो.uw.fpsimd_state.fpsr,
-			       sve_vq_from_vl(current->thपढ़ो.sve_vl) - 1);
-	अन्यथा
-		fpsimd_load_state(&current->thपढ़ो.uw.fpsimd_state);
-पूर्ण
+	if (IS_ENABLED(CONFIG_ARM64_SVE) && test_thread_flag(TIF_SVE))
+		sve_load_state(sve_pffr(&current->thread),
+			       &current->thread.uw.fpsimd_state.fpsr,
+			       sve_vq_from_vl(current->thread.sve_vl) - 1);
+	else
+		fpsimd_load_state(&current->thread.uw.fpsimd_state);
+}
 
 /*
- * Ensure FPSIMD/SVE storage in memory क्रम the loaded context is up to
- * date with respect to the CPU रेजिस्टरs.
+ * Ensure FPSIMD/SVE storage in memory for the loaded context is up to
+ * date with respect to the CPU registers.
  */
-अटल व्योम fpsimd_save(व्योम)
-अणु
-	काष्ठा fpsimd_last_state_काष्ठा स्थिर *last =
+static void fpsimd_save(void)
+{
+	struct fpsimd_last_state_struct const *last =
 		this_cpu_ptr(&fpsimd_last_state);
 	/* set by fpsimd_bind_task_to_cpu() or fpsimd_bind_state_to_cpu() */
 
-	WARN_ON(!प्रणाली_supports_fpsimd());
+	WARN_ON(!system_supports_fpsimd());
 	WARN_ON(!have_cpu_fpsimd_context());
 
-	अगर (!test_thपढ़ो_flag(TIF_FOREIGN_FPSTATE)) अणु
-		अगर (IS_ENABLED(CONFIG_ARM64_SVE) &&
-		    test_thपढ़ो_flag(TIF_SVE)) अणु
-			अगर (WARN_ON(sve_get_vl() != last->sve_vl)) अणु
+	if (!test_thread_flag(TIF_FOREIGN_FPSTATE)) {
+		if (IS_ENABLED(CONFIG_ARM64_SVE) &&
+		    test_thread_flag(TIF_SVE)) {
+			if (WARN_ON(sve_get_vl() != last->sve_vl)) {
 				/*
 				 * Can't save the user regs, so current would
 				 * re-enter user with corrupt state.
-				 * There's no way to recover, so समाप्त it:
+				 * There's no way to recover, so kill it:
 				 */
-				क्रमce_संकेत_inject(SIGKILL, SI_KERNEL, 0, 0);
-				वापस;
-			पूर्ण
+				force_signal_inject(SIGKILL, SI_KERNEL, 0, 0);
+				return;
+			}
 
-			sve_save_state((अक्षर *)last->sve_state +
+			sve_save_state((char *)last->sve_state +
 						sve_ffr_offset(last->sve_vl),
 				       &last->st->fpsr);
-		पूर्ण अन्यथा
+		} else
 			fpsimd_save_state(last->st);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * All vector length selection from userspace comes through here.
@@ -334,1126 +333,1126 @@ EXPORT_PER_CPU_SYMBOL(fpsimd_context_busy);
  * If things go wrong there's a bug somewhere, but try to fall back to a
  * safe choice.
  */
-अटल अचिन्हित पूर्णांक find_supported_vector_length(अचिन्हित पूर्णांक vl)
-अणु
-	पूर्णांक bit;
-	पूर्णांक max_vl = sve_max_vl;
+static unsigned int find_supported_vector_length(unsigned int vl)
+{
+	int bit;
+	int max_vl = sve_max_vl;
 
-	अगर (WARN_ON(!sve_vl_valid(vl)))
+	if (WARN_ON(!sve_vl_valid(vl)))
 		vl = SVE_VL_MIN;
 
-	अगर (WARN_ON(!sve_vl_valid(max_vl)))
+	if (WARN_ON(!sve_vl_valid(max_vl)))
 		max_vl = SVE_VL_MIN;
 
-	अगर (vl > max_vl)
+	if (vl > max_vl)
 		vl = max_vl;
 
 	bit = find_next_bit(sve_vq_map, SVE_VQ_MAX,
 			    __vq_to_bit(sve_vq_from_vl(vl)));
-	वापस sve_vl_from_vq(__bit_to_vq(bit));
-पूर्ण
+	return sve_vl_from_vq(__bit_to_vq(bit));
+}
 
-#अगर defined(CONFIG_ARM64_SVE) && defined(CONFIG_SYSCTL)
+#if defined(CONFIG_ARM64_SVE) && defined(CONFIG_SYSCTL)
 
-अटल पूर्णांक sve_proc_करो_शेष_vl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-				  व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret;
-	पूर्णांक vl = get_sve_शेष_vl();
-	काष्ठा ctl_table पंचांगp_table = अणु
+static int sve_proc_do_default_vl(struct ctl_table *table, int write,
+				  void *buffer, size_t *lenp, loff_t *ppos)
+{
+	int ret;
+	int vl = get_sve_default_vl();
+	struct ctl_table tmp_table = {
 		.data = &vl,
-		.maxlen = माप(vl),
-	पूर्ण;
+		.maxlen = sizeof(vl),
+	};
 
-	ret = proc_करोपूर्णांकvec(&पंचांगp_table, ग_लिखो, buffer, lenp, ppos);
-	अगर (ret || !ग_लिखो)
-		वापस ret;
+	ret = proc_dointvec(&tmp_table, write, buffer, lenp, ppos);
+	if (ret || !write)
+		return ret;
 
 	/* Writing -1 has the special meaning "set to max": */
-	अगर (vl == -1)
+	if (vl == -1)
 		vl = sve_max_vl;
 
-	अगर (!sve_vl_valid(vl))
-		वापस -EINVAL;
+	if (!sve_vl_valid(vl))
+		return -EINVAL;
 
-	set_sve_शेष_vl(find_supported_vector_length(vl));
-	वापस 0;
-पूर्ण
+	set_sve_default_vl(find_supported_vector_length(vl));
+	return 0;
+}
 
-अटल काष्ठा ctl_table sve_शेष_vl_table[] = अणु
-	अणु
+static struct ctl_table sve_default_vl_table[] = {
+	{
 		.procname	= "sve_default_vector_length",
 		.mode		= 0644,
-		.proc_handler	= sve_proc_करो_शेष_vl,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		.proc_handler	= sve_proc_do_default_vl,
+	},
+	{ }
+};
 
-अटल पूर्णांक __init sve_sysctl_init(व्योम)
-अणु
-	अगर (प्रणाली_supports_sve())
-		अगर (!रेजिस्टर_sysctl("abi", sve_शेष_vl_table))
-			वापस -EINVAL;
+static int __init sve_sysctl_init(void)
+{
+	if (system_supports_sve())
+		if (!register_sysctl("abi", sve_default_vl_table))
+			return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा /* ! (CONFIG_ARM64_SVE && CONFIG_SYSCTL) */
-अटल पूर्णांक __init sve_sysctl_init(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* ! (CONFIG_ARM64_SVE && CONFIG_SYSCTL) */
+#else /* ! (CONFIG_ARM64_SVE && CONFIG_SYSCTL) */
+static int __init sve_sysctl_init(void) { return 0; }
+#endif /* ! (CONFIG_ARM64_SVE && CONFIG_SYSCTL) */
 
-#घोषणा ZREG(sve_state, vq, n) ((अक्षर *)(sve_state) +		\
+#define ZREG(sve_state, vq, n) ((char *)(sve_state) +		\
 	(SVE_SIG_ZREG_OFFSET(vq, n) - SVE_SIG_REGS_OFFSET))
 
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-अटल __uपूर्णांक128_t arm64_cpu_to_le128(__uपूर्णांक128_t x)
-अणु
+#ifdef CONFIG_CPU_BIG_ENDIAN
+static __uint128_t arm64_cpu_to_le128(__uint128_t x)
+{
 	u64 a = swab64(x);
 	u64 b = swab64(x >> 64);
 
-	वापस ((__uपूर्णांक128_t)a << 64) | b;
-पूर्ण
-#अन्यथा
-अटल __uपूर्णांक128_t arm64_cpu_to_le128(__uपूर्णांक128_t x)
-अणु
-	वापस x;
-पूर्ण
-#पूर्ण_अगर
+	return ((__uint128_t)a << 64) | b;
+}
+#else
+static __uint128_t arm64_cpu_to_le128(__uint128_t x)
+{
+	return x;
+}
+#endif
 
-#घोषणा arm64_le128_to_cpu(x) arm64_cpu_to_le128(x)
+#define arm64_le128_to_cpu(x) arm64_cpu_to_le128(x)
 
-अटल व्योम __fpsimd_to_sve(व्योम *sst, काष्ठा user_fpsimd_state स्थिर *fst,
-			    अचिन्हित पूर्णांक vq)
-अणु
-	अचिन्हित पूर्णांक i;
-	__uपूर्णांक128_t *p;
+static void __fpsimd_to_sve(void *sst, struct user_fpsimd_state const *fst,
+			    unsigned int vq)
+{
+	unsigned int i;
+	__uint128_t *p;
 
-	क्रम (i = 0; i < SVE_NUM_ZREGS; ++i) अणु
-		p = (__uपूर्णांक128_t *)ZREG(sst, vq, i);
+	for (i = 0; i < SVE_NUM_ZREGS; ++i) {
+		p = (__uint128_t *)ZREG(sst, vq, i);
 		*p = arm64_cpu_to_le128(fst->vregs[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Transfer the FPSIMD state in task->thपढ़ो.uw.fpsimd_state to
- * task->thपढ़ो.sve_state.
+ * Transfer the FPSIMD state in task->thread.uw.fpsimd_state to
+ * task->thread.sve_state.
  *
- * Task can be a non-runnable task, or current.  In the latter हाल,
- * the caller must have ownership of the cpu FPSIMD context beक्रमe calling
+ * Task can be a non-runnable task, or current.  In the latter case,
+ * the caller must have ownership of the cpu FPSIMD context before calling
  * this function.
- * task->thपढ़ो.sve_state must poपूर्णांक to at least sve_state_size(task)
+ * task->thread.sve_state must point to at least sve_state_size(task)
  * bytes of allocated kernel memory.
- * task->thपढ़ो.uw.fpsimd_state must be up to date beक्रमe calling this
+ * task->thread.uw.fpsimd_state must be up to date before calling this
  * function.
  */
-अटल व्योम fpsimd_to_sve(काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित पूर्णांक vq;
-	व्योम *sst = task->thपढ़ो.sve_state;
-	काष्ठा user_fpsimd_state स्थिर *fst = &task->thपढ़ो.uw.fpsimd_state;
+static void fpsimd_to_sve(struct task_struct *task)
+{
+	unsigned int vq;
+	void *sst = task->thread.sve_state;
+	struct user_fpsimd_state const *fst = &task->thread.uw.fpsimd_state;
 
-	अगर (!प्रणाली_supports_sve())
-		वापस;
+	if (!system_supports_sve())
+		return;
 
-	vq = sve_vq_from_vl(task->thपढ़ो.sve_vl);
+	vq = sve_vq_from_vl(task->thread.sve_vl);
 	__fpsimd_to_sve(sst, fst, vq);
-पूर्ण
+}
 
 /*
- * Transfer the SVE state in task->thपढ़ो.sve_state to
- * task->thपढ़ो.uw.fpsimd_state.
+ * Transfer the SVE state in task->thread.sve_state to
+ * task->thread.uw.fpsimd_state.
  *
- * Task can be a non-runnable task, or current.  In the latter हाल,
- * the caller must have ownership of the cpu FPSIMD context beक्रमe calling
+ * Task can be a non-runnable task, or current.  In the latter case,
+ * the caller must have ownership of the cpu FPSIMD context before calling
  * this function.
- * task->thपढ़ो.sve_state must poपूर्णांक to at least sve_state_size(task)
+ * task->thread.sve_state must point to at least sve_state_size(task)
  * bytes of allocated kernel memory.
- * task->thपढ़ो.sve_state must be up to date beक्रमe calling this function.
+ * task->thread.sve_state must be up to date before calling this function.
  */
-अटल व्योम sve_to_fpsimd(काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित पूर्णांक vq;
-	व्योम स्थिर *sst = task->thपढ़ो.sve_state;
-	काष्ठा user_fpsimd_state *fst = &task->thपढ़ो.uw.fpsimd_state;
-	अचिन्हित पूर्णांक i;
-	__uपूर्णांक128_t स्थिर *p;
+static void sve_to_fpsimd(struct task_struct *task)
+{
+	unsigned int vq;
+	void const *sst = task->thread.sve_state;
+	struct user_fpsimd_state *fst = &task->thread.uw.fpsimd_state;
+	unsigned int i;
+	__uint128_t const *p;
 
-	अगर (!प्रणाली_supports_sve())
-		वापस;
+	if (!system_supports_sve())
+		return;
 
-	vq = sve_vq_from_vl(task->thपढ़ो.sve_vl);
-	क्रम (i = 0; i < SVE_NUM_ZREGS; ++i) अणु
-		p = (__uपूर्णांक128_t स्थिर *)ZREG(sst, vq, i);
+	vq = sve_vq_from_vl(task->thread.sve_vl);
+	for (i = 0; i < SVE_NUM_ZREGS; ++i) {
+		p = (__uint128_t const *)ZREG(sst, vq, i);
 		fst->vregs[i] = arm64_le128_to_cpu(*p);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_ARM64_SVE
+#ifdef CONFIG_ARM64_SVE
 
 /*
  * Return how many bytes of memory are required to store the full SVE
- * state क्रम task, given task's currently configured vector length.
+ * state for task, given task's currently configured vector length.
  */
-माप_प्रकार sve_state_size(काष्ठा task_काष्ठा स्थिर *task)
-अणु
-	वापस SVE_SIG_REGS_SIZE(sve_vq_from_vl(task->thपढ़ो.sve_vl));
-पूर्ण
+size_t sve_state_size(struct task_struct const *task)
+{
+	return SVE_SIG_REGS_SIZE(sve_vq_from_vl(task->thread.sve_vl));
+}
 
 /*
- * Ensure that task->thपढ़ो.sve_state is allocated and sufficiently large.
+ * Ensure that task->thread.sve_state is allocated and sufficiently large.
  *
- * This function should be used only in preparation क्रम replacing
- * task->thपढ़ो.sve_state with new data.  The memory is always zeroed
- * here to prevent stale data from showing through: this is करोne in
- * the पूर्णांकerest of testability and predictability: except in the
- * करो_sve_acc() हाल, there is no ABI requirement to hide stale data
+ * This function should be used only in preparation for replacing
+ * task->thread.sve_state with new data.  The memory is always zeroed
+ * here to prevent stale data from showing through: this is done in
+ * the interest of testability and predictability: except in the
+ * do_sve_acc() case, there is no ABI requirement to hide stale data
  * written previously be task.
  */
-व्योम sve_alloc(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (task->thपढ़ो.sve_state) अणु
-		स_रखो(task->thपढ़ो.sve_state, 0, sve_state_size(current));
-		वापस;
-	पूर्ण
+void sve_alloc(struct task_struct *task)
+{
+	if (task->thread.sve_state) {
+		memset(task->thread.sve_state, 0, sve_state_size(current));
+		return;
+	}
 
 	/* This is a small allocation (maximum ~8KB) and Should Not Fail. */
-	task->thपढ़ो.sve_state =
+	task->thread.sve_state =
 		kzalloc(sve_state_size(task), GFP_KERNEL);
 
 	/*
 	 * If future SVE revisions can have larger vectors though,
 	 * this may cease to be true:
 	 */
-	BUG_ON(!task->thपढ़ो.sve_state);
-पूर्ण
+	BUG_ON(!task->thread.sve_state);
+}
 
 
 /*
- * Ensure that task->thपढ़ो.sve_state is up to date with respect to
+ * Ensure that task->thread.sve_state is up to date with respect to
  * the user task, irrespective of when SVE is in use or not.
  *
  * This should only be called by ptrace.  task must be non-runnable.
- * task->thपढ़ो.sve_state must poपूर्णांक to at least sve_state_size(task)
+ * task->thread.sve_state must point to at least sve_state_size(task)
  * bytes of allocated kernel memory.
  */
-व्योम fpsimd_sync_to_sve(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (!test_tsk_thपढ़ो_flag(task, TIF_SVE))
+void fpsimd_sync_to_sve(struct task_struct *task)
+{
+	if (!test_tsk_thread_flag(task, TIF_SVE))
 		fpsimd_to_sve(task);
-पूर्ण
+}
 
 /*
- * Ensure that task->thपढ़ो.uw.fpsimd_state is up to date with respect to
+ * Ensure that task->thread.uw.fpsimd_state is up to date with respect to
  * the user task, irrespective of whether SVE is in use or not.
  *
  * This should only be called by ptrace.  task must be non-runnable.
- * task->thपढ़ो.sve_state must poपूर्णांक to at least sve_state_size(task)
+ * task->thread.sve_state must point to at least sve_state_size(task)
  * bytes of allocated kernel memory.
  */
-व्योम sve_sync_to_fpsimd(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (test_tsk_thपढ़ो_flag(task, TIF_SVE))
+void sve_sync_to_fpsimd(struct task_struct *task)
+{
+	if (test_tsk_thread_flag(task, TIF_SVE))
 		sve_to_fpsimd(task);
-पूर्ण
+}
 
 /*
- * Ensure that task->thपढ़ो.sve_state is up to date with respect to
- * the task->thपढ़ो.uw.fpsimd_state.
+ * Ensure that task->thread.sve_state is up to date with respect to
+ * the task->thread.uw.fpsimd_state.
  *
- * This should only be called by ptrace to merge new FPSIMD रेजिस्टर
- * values पूर्णांकo a task क्रम which SVE is currently active.
+ * This should only be called by ptrace to merge new FPSIMD register
+ * values into a task for which SVE is currently active.
  * task must be non-runnable.
- * task->thपढ़ो.sve_state must poपूर्णांक to at least sve_state_size(task)
+ * task->thread.sve_state must point to at least sve_state_size(task)
  * bytes of allocated kernel memory.
- * task->thपढ़ो.uw.fpsimd_state must alपढ़ोy have been initialised with
- * the new FPSIMD रेजिस्टर values to be merged in.
+ * task->thread.uw.fpsimd_state must already have been initialised with
+ * the new FPSIMD register values to be merged in.
  */
-व्योम sve_sync_from_fpsimd_zeropad(काष्ठा task_काष्ठा *task)
-अणु
-	अचिन्हित पूर्णांक vq;
-	व्योम *sst = task->thपढ़ो.sve_state;
-	काष्ठा user_fpsimd_state स्थिर *fst = &task->thपढ़ो.uw.fpsimd_state;
+void sve_sync_from_fpsimd_zeropad(struct task_struct *task)
+{
+	unsigned int vq;
+	void *sst = task->thread.sve_state;
+	struct user_fpsimd_state const *fst = &task->thread.uw.fpsimd_state;
 
-	अगर (!test_tsk_thपढ़ो_flag(task, TIF_SVE))
-		वापस;
+	if (!test_tsk_thread_flag(task, TIF_SVE))
+		return;
 
-	vq = sve_vq_from_vl(task->thपढ़ो.sve_vl);
+	vq = sve_vq_from_vl(task->thread.sve_vl);
 
-	स_रखो(sst, 0, SVE_SIG_REGS_SIZE(vq));
+	memset(sst, 0, SVE_SIG_REGS_SIZE(vq));
 	__fpsimd_to_sve(sst, fst, vq);
-पूर्ण
+}
 
-पूर्णांक sve_set_vector_length(काष्ठा task_काष्ठा *task,
-			  अचिन्हित दीर्घ vl, अचिन्हित दीर्घ flags)
-अणु
-	अगर (flags & ~(अचिन्हित दीर्घ)(PR_SVE_VL_INHERIT |
+int sve_set_vector_length(struct task_struct *task,
+			  unsigned long vl, unsigned long flags)
+{
+	if (flags & ~(unsigned long)(PR_SVE_VL_INHERIT |
 				     PR_SVE_SET_VL_ONEXEC))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (!sve_vl_valid(vl))
-		वापस -EINVAL;
+	if (!sve_vl_valid(vl))
+		return -EINVAL;
 
 	/*
 	 * Clamp to the maximum vector length that VL-agnostic SVE code can
-	 * work with.  A flag may be asचिन्हित in the future to allow setting
+	 * work with.  A flag may be assigned in the future to allow setting
 	 * of larger vector lengths without confusing older software.
 	 */
-	अगर (vl > SVE_VL_ARCH_MAX)
+	if (vl > SVE_VL_ARCH_MAX)
 		vl = SVE_VL_ARCH_MAX;
 
 	vl = find_supported_vector_length(vl);
 
-	अगर (flags & (PR_SVE_VL_INHERIT |
+	if (flags & (PR_SVE_VL_INHERIT |
 		     PR_SVE_SET_VL_ONEXEC))
-		task->thपढ़ो.sve_vl_onexec = vl;
-	अन्यथा
-		/* Reset VL to प्रणाली शेष on next exec: */
-		task->thपढ़ो.sve_vl_onexec = 0;
+		task->thread.sve_vl_onexec = vl;
+	else
+		/* Reset VL to system default on next exec: */
+		task->thread.sve_vl_onexec = 0;
 
-	/* Only actually set the VL अगर not deferred: */
-	अगर (flags & PR_SVE_SET_VL_ONEXEC)
-		जाओ out;
+	/* Only actually set the VL if not deferred: */
+	if (flags & PR_SVE_SET_VL_ONEXEC)
+		goto out;
 
-	अगर (vl == task->thपढ़ो.sve_vl)
-		जाओ out;
+	if (vl == task->thread.sve_vl)
+		goto out;
 
 	/*
-	 * To ensure the FPSIMD bits of the SVE vector रेजिस्टरs are preserved,
-	 * ग_लिखो any live रेजिस्टर state back to task_काष्ठा, and convert to a
-	 * non-SVE thपढ़ो.
+	 * To ensure the FPSIMD bits of the SVE vector registers are preserved,
+	 * write any live register state back to task_struct, and convert to a
+	 * non-SVE thread.
 	 */
-	अगर (task == current) अणु
+	if (task == current) {
 		get_cpu_fpsimd_context();
 
 		fpsimd_save();
-	पूर्ण
+	}
 
 	fpsimd_flush_task_state(task);
-	अगर (test_and_clear_tsk_thपढ़ो_flag(task, TIF_SVE))
+	if (test_and_clear_tsk_thread_flag(task, TIF_SVE))
 		sve_to_fpsimd(task);
 
-	अगर (task == current)
+	if (task == current)
 		put_cpu_fpsimd_context();
 
 	/*
-	 * Force पुनः_स्मृतिation of task SVE state to the correct size
+	 * Force reallocation of task SVE state to the correct size
 	 * on next use:
 	 */
-	sve_मुक्त(task);
+	sve_free(task);
 
-	task->thपढ़ो.sve_vl = vl;
+	task->thread.sve_vl = vl;
 
 out:
-	update_tsk_thपढ़ो_flag(task, TIF_SVE_VL_INHERIT,
+	update_tsk_thread_flag(task, TIF_SVE_VL_INHERIT,
 			       flags & PR_SVE_VL_INHERIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Encode the current vector length and flags क्रम वापस.
- * This is only required क्रम prctl(): ptrace has separate fields
+ * Encode the current vector length and flags for return.
+ * This is only required for prctl(): ptrace has separate fields
  *
- * flags are as क्रम sve_set_vector_length().
+ * flags are as for sve_set_vector_length().
  */
-अटल पूर्णांक sve_prctl_status(अचिन्हित दीर्घ flags)
-अणु
-	पूर्णांक ret;
+static int sve_prctl_status(unsigned long flags)
+{
+	int ret;
 
-	अगर (flags & PR_SVE_SET_VL_ONEXEC)
-		ret = current->thपढ़ो.sve_vl_onexec;
-	अन्यथा
-		ret = current->thपढ़ो.sve_vl;
+	if (flags & PR_SVE_SET_VL_ONEXEC)
+		ret = current->thread.sve_vl_onexec;
+	else
+		ret = current->thread.sve_vl;
 
-	अगर (test_thपढ़ो_flag(TIF_SVE_VL_INHERIT))
+	if (test_thread_flag(TIF_SVE_VL_INHERIT))
 		ret |= PR_SVE_VL_INHERIT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* PR_SVE_SET_VL */
-पूर्णांक sve_set_current_vl(अचिन्हित दीर्घ arg)
-अणु
-	अचिन्हित दीर्घ vl, flags;
-	पूर्णांक ret;
+int sve_set_current_vl(unsigned long arg)
+{
+	unsigned long vl, flags;
+	int ret;
 
 	vl = arg & PR_SVE_VL_LEN_MASK;
 	flags = arg & ~vl;
 
-	अगर (!प्रणाली_supports_sve() || is_compat_task())
-		वापस -EINVAL;
+	if (!system_supports_sve() || is_compat_task())
+		return -EINVAL;
 
 	ret = sve_set_vector_length(current, vl, flags);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस sve_prctl_status(flags);
-पूर्ण
+	return sve_prctl_status(flags);
+}
 
 /* PR_SVE_GET_VL */
-पूर्णांक sve_get_current_vl(व्योम)
-अणु
-	अगर (!प्रणाली_supports_sve() || is_compat_task())
-		वापस -EINVAL;
+int sve_get_current_vl(void)
+{
+	if (!system_supports_sve() || is_compat_task())
+		return -EINVAL;
 
-	वापस sve_prctl_status(0);
-पूर्ण
+	return sve_prctl_status(0);
+}
 
-अटल व्योम sve_probe_vqs(DECLARE_BITMAP(map, SVE_VQ_MAX))
-अणु
-	अचिन्हित पूर्णांक vq, vl;
-	अचिन्हित दीर्घ zcr;
+static void sve_probe_vqs(DECLARE_BITMAP(map, SVE_VQ_MAX))
+{
+	unsigned int vq, vl;
+	unsigned long zcr;
 
-	biपंचांगap_zero(map, SVE_VQ_MAX);
+	bitmap_zero(map, SVE_VQ_MAX);
 
 	zcr = ZCR_ELx_LEN_MASK;
-	zcr = पढ़ो_sysreg_s(SYS_ZCR_EL1) & ~zcr;
+	zcr = read_sysreg_s(SYS_ZCR_EL1) & ~zcr;
 
-	क्रम (vq = SVE_VQ_MAX; vq >= SVE_VQ_MIN; --vq) अणु
-		ग_लिखो_sysreg_s(zcr | (vq - 1), SYS_ZCR_EL1); /* self-syncing */
+	for (vq = SVE_VQ_MAX; vq >= SVE_VQ_MIN; --vq) {
+		write_sysreg_s(zcr | (vq - 1), SYS_ZCR_EL1); /* self-syncing */
 		vl = sve_get_vl();
-		vq = sve_vq_from_vl(vl); /* skip पूर्णांकervening lengths */
+		vq = sve_vq_from_vl(vl); /* skip intervening lengths */
 		set_bit(__vq_to_bit(vq), map);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Initialise the set of known supported VQs क्रम the boot CPU.
- * This is called during kernel boot, beक्रमe secondary CPUs are brought up.
+ * Initialise the set of known supported VQs for the boot CPU.
+ * This is called during kernel boot, before secondary CPUs are brought up.
  */
-व्योम __init sve_init_vq_map(व्योम)
-अणु
+void __init sve_init_vq_map(void)
+{
 	sve_probe_vqs(sve_vq_map);
-	biपंचांगap_copy(sve_vq_partial_map, sve_vq_map, SVE_VQ_MAX);
-पूर्ण
+	bitmap_copy(sve_vq_partial_map, sve_vq_map, SVE_VQ_MAX);
+}
 
 /*
  * If we haven't committed to the set of supported VQs yet, filter out
  * those not supported by the current CPU.
  * This function is called during the bring-up of early secondary CPUs only.
  */
-व्योम sve_update_vq_map(व्योम)
-अणु
-	DECLARE_BITMAP(पंचांगp_map, SVE_VQ_MAX);
+void sve_update_vq_map(void)
+{
+	DECLARE_BITMAP(tmp_map, SVE_VQ_MAX);
 
-	sve_probe_vqs(पंचांगp_map);
-	biपंचांगap_and(sve_vq_map, sve_vq_map, पंचांगp_map, SVE_VQ_MAX);
-	biपंचांगap_or(sve_vq_partial_map, sve_vq_partial_map, पंचांगp_map, SVE_VQ_MAX);
-पूर्ण
+	sve_probe_vqs(tmp_map);
+	bitmap_and(sve_vq_map, sve_vq_map, tmp_map, SVE_VQ_MAX);
+	bitmap_or(sve_vq_partial_map, sve_vq_partial_map, tmp_map, SVE_VQ_MAX);
+}
 
 /*
  * Check whether the current CPU supports all VQs in the committed set.
  * This function is called during the bring-up of late secondary CPUs only.
  */
-पूर्णांक sve_verअगरy_vq_map(व्योम)
-अणु
-	DECLARE_BITMAP(पंचांगp_map, SVE_VQ_MAX);
-	अचिन्हित दीर्घ b;
+int sve_verify_vq_map(void)
+{
+	DECLARE_BITMAP(tmp_map, SVE_VQ_MAX);
+	unsigned long b;
 
-	sve_probe_vqs(पंचांगp_map);
+	sve_probe_vqs(tmp_map);
 
-	biपंचांगap_complement(पंचांगp_map, पंचांगp_map, SVE_VQ_MAX);
-	अगर (biपंचांगap_पूर्णांकersects(पंचांगp_map, sve_vq_map, SVE_VQ_MAX)) अणु
+	bitmap_complement(tmp_map, tmp_map, SVE_VQ_MAX);
+	if (bitmap_intersects(tmp_map, sve_vq_map, SVE_VQ_MAX)) {
 		pr_warn("SVE: cpu%d: Required vector length(s) missing\n",
 			smp_processor_id());
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!IS_ENABLED(CONFIG_KVM) || !is_hyp_mode_available())
-		वापस 0;
+	if (!IS_ENABLED(CONFIG_KVM) || !is_hyp_mode_available())
+		return 0;
 
 	/*
-	 * For KVM, it is necessary to ensure that this CPU करोesn't
+	 * For KVM, it is necessary to ensure that this CPU doesn't
 	 * support any vector length that guests may have probed as
 	 * unsupported.
 	 */
 
 	/* Recover the set of supported VQs: */
-	biपंचांगap_complement(पंचांगp_map, पंचांगp_map, SVE_VQ_MAX);
+	bitmap_complement(tmp_map, tmp_map, SVE_VQ_MAX);
 	/* Find VQs supported that are not globally supported: */
-	biपंचांगap_andnot(पंचांगp_map, पंचांगp_map, sve_vq_map, SVE_VQ_MAX);
+	bitmap_andnot(tmp_map, tmp_map, sve_vq_map, SVE_VQ_MAX);
 
-	/* Find the lowest such VQ, अगर any: */
-	b = find_last_bit(पंचांगp_map, SVE_VQ_MAX);
-	अगर (b >= SVE_VQ_MAX)
-		वापस 0; /* no mismatches */
+	/* Find the lowest such VQ, if any: */
+	b = find_last_bit(tmp_map, SVE_VQ_MAX);
+	if (b >= SVE_VQ_MAX)
+		return 0; /* no mismatches */
 
 	/*
-	 * Mismatches above sve_max_भवisable_vl are fine, since
+	 * Mismatches above sve_max_virtualisable_vl are fine, since
 	 * no guest is allowed to configure ZCR_EL2.LEN to exceed this:
 	 */
-	अगर (sve_vl_from_vq(__bit_to_vq(b)) <= sve_max_भवisable_vl) अणु
+	if (sve_vl_from_vq(__bit_to_vq(b)) <= sve_max_virtualisable_vl) {
 		pr_warn("SVE: cpu%d: Unsupported vector length(s) present\n",
 			smp_processor_id());
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init sve_efi_setup(व्योम)
-अणु
-	अगर (!IS_ENABLED(CONFIG_EFI))
-		वापस;
+static void __init sve_efi_setup(void)
+{
+	if (!IS_ENABLED(CONFIG_EFI))
+		return;
 
 	/*
-	 * alloc_percpu() warns and prपूर्णांकs a backtrace अगर this goes wrong.
-	 * This is evidence of a crippled प्रणाली and we are वापसing व्योम,
+	 * alloc_percpu() warns and prints a backtrace if this goes wrong.
+	 * This is evidence of a crippled system and we are returning void,
 	 * so no attempt is made to handle this situation here.
 	 */
-	अगर (!sve_vl_valid(sve_max_vl))
-		जाओ fail;
+	if (!sve_vl_valid(sve_max_vl))
+		goto fail;
 
 	efi_sve_state = __alloc_percpu(
 		SVE_SIG_REGS_SIZE(sve_vq_from_vl(sve_max_vl)), SVE_VQ_BYTES);
-	अगर (!efi_sve_state)
-		जाओ fail;
+	if (!efi_sve_state)
+		goto fail;
 
-	वापस;
+	return;
 
 fail:
 	panic("Cannot allocate percpu memory for EFI SVE save/restore");
-पूर्ण
+}
 
 /*
- * Enable SVE क्रम EL1.
- * Intended क्रम use by the cpufeatures code during CPU boot.
+ * Enable SVE for EL1.
+ * Intended for use by the cpufeatures code during CPU boot.
  */
-व्योम sve_kernel_enable(स्थिर काष्ठा arm64_cpu_capabilities *__always_unused p)
-अणु
-	ग_लिखो_sysreg(पढ़ो_sysreg(CPACR_EL1) | CPACR_EL1_ZEN_EL1EN, CPACR_EL1);
+void sve_kernel_enable(const struct arm64_cpu_capabilities *__always_unused p)
+{
+	write_sysreg(read_sysreg(CPACR_EL1) | CPACR_EL1_ZEN_EL1EN, CPACR_EL1);
 	isb();
-पूर्ण
+}
 
 /*
- * Read the pseuकरो-ZCR used by cpufeatures to identअगरy the supported SVE
+ * Read the pseudo-ZCR used by cpufeatures to identify the supported SVE
  * vector length.
  *
- * Use only अगर SVE is present.
+ * Use only if SVE is present.
  * This function clobbers the SVE vector length.
  */
-u64 पढ़ो_zcr_features(व्योम)
-अणु
+u64 read_zcr_features(void)
+{
 	u64 zcr;
-	अचिन्हित पूर्णांक vq_max;
+	unsigned int vq_max;
 
 	/*
-	 * Set the maximum possible VL, and ग_लिखो zeroes to all other
-	 * bits to see अगर they stick.
+	 * Set the maximum possible VL, and write zeroes to all other
+	 * bits to see if they stick.
 	 */
-	sve_kernel_enable(शून्य);
-	ग_लिखो_sysreg_s(ZCR_ELx_LEN_MASK, SYS_ZCR_EL1);
+	sve_kernel_enable(NULL);
+	write_sysreg_s(ZCR_ELx_LEN_MASK, SYS_ZCR_EL1);
 
-	zcr = पढ़ो_sysreg_s(SYS_ZCR_EL1);
+	zcr = read_sysreg_s(SYS_ZCR_EL1);
 	zcr &= ~(u64)ZCR_ELx_LEN_MASK; /* find sticky 1s outside LEN field */
 	vq_max = sve_vq_from_vl(sve_get_vl());
 	zcr |= vq_max - 1; /* set LEN field to maximum effective value */
 
-	वापस zcr;
-पूर्ण
+	return zcr;
+}
 
-व्योम __init sve_setup(व्योम)
-अणु
+void __init sve_setup(void)
+{
 	u64 zcr;
-	DECLARE_BITMAP(पंचांगp_map, SVE_VQ_MAX);
-	अचिन्हित दीर्घ b;
+	DECLARE_BITMAP(tmp_map, SVE_VQ_MAX);
+	unsigned long b;
 
-	अगर (!प्रणाली_supports_sve())
-		वापस;
+	if (!system_supports_sve())
+		return;
 
 	/*
-	 * The SVE architecture mandates support क्रम 128-bit vectors,
+	 * The SVE architecture mandates support for 128-bit vectors,
 	 * so sve_vq_map must have at least SVE_VQ_MIN set.
 	 * If something went wrong, at least try to patch it up:
 	 */
-	अगर (WARN_ON(!test_bit(__vq_to_bit(SVE_VQ_MIN), sve_vq_map)))
+	if (WARN_ON(!test_bit(__vq_to_bit(SVE_VQ_MIN), sve_vq_map)))
 		set_bit(__vq_to_bit(SVE_VQ_MIN), sve_vq_map);
 
-	zcr = पढ़ो_sanitised_ftr_reg(SYS_ZCR_EL1);
+	zcr = read_sanitised_ftr_reg(SYS_ZCR_EL1);
 	sve_max_vl = sve_vl_from_vq((zcr & ZCR_ELx_LEN_MASK) + 1);
 
 	/*
 	 * Sanity-check that the max VL we determined through CPU features
-	 * corresponds properly to sve_vq_map.  If not, करो our best:
+	 * corresponds properly to sve_vq_map.  If not, do our best:
 	 */
-	अगर (WARN_ON(sve_max_vl != find_supported_vector_length(sve_max_vl)))
+	if (WARN_ON(sve_max_vl != find_supported_vector_length(sve_max_vl)))
 		sve_max_vl = find_supported_vector_length(sve_max_vl);
 
 	/*
-	 * For the शेष VL, pick the maximum supported value <= 64.
-	 * VL == 64 is guaranteed not to grow the संकेत frame.
+	 * For the default VL, pick the maximum supported value <= 64.
+	 * VL == 64 is guaranteed not to grow the signal frame.
 	 */
-	set_sve_शेष_vl(find_supported_vector_length(64));
+	set_sve_default_vl(find_supported_vector_length(64));
 
-	biपंचांगap_andnot(पंचांगp_map, sve_vq_partial_map, sve_vq_map,
+	bitmap_andnot(tmp_map, sve_vq_partial_map, sve_vq_map,
 		      SVE_VQ_MAX);
 
-	b = find_last_bit(पंचांगp_map, SVE_VQ_MAX);
-	अगर (b >= SVE_VQ_MAX)
-		/* No non-भवisable VLs found */
-		sve_max_भवisable_vl = SVE_VQ_MAX;
-	अन्यथा अगर (WARN_ON(b == SVE_VQ_MAX - 1))
-		/* No भवisable VLs?  This is architecturally क्रमbidden. */
-		sve_max_भवisable_vl = SVE_VQ_MIN;
-	अन्यथा /* b + 1 < SVE_VQ_MAX */
-		sve_max_भवisable_vl = sve_vl_from_vq(__bit_to_vq(b + 1));
+	b = find_last_bit(tmp_map, SVE_VQ_MAX);
+	if (b >= SVE_VQ_MAX)
+		/* No non-virtualisable VLs found */
+		sve_max_virtualisable_vl = SVE_VQ_MAX;
+	else if (WARN_ON(b == SVE_VQ_MAX - 1))
+		/* No virtualisable VLs?  This is architecturally forbidden. */
+		sve_max_virtualisable_vl = SVE_VQ_MIN;
+	else /* b + 1 < SVE_VQ_MAX */
+		sve_max_virtualisable_vl = sve_vl_from_vq(__bit_to_vq(b + 1));
 
-	अगर (sve_max_भवisable_vl > sve_max_vl)
-		sve_max_भवisable_vl = sve_max_vl;
+	if (sve_max_virtualisable_vl > sve_max_vl)
+		sve_max_virtualisable_vl = sve_max_vl;
 
 	pr_info("SVE: maximum available vector length %u bytes per vector\n",
 		sve_max_vl);
 	pr_info("SVE: default vector length %u bytes per vector\n",
-		get_sve_शेष_vl());
+		get_sve_default_vl());
 
-	/* KVM decides whether to support mismatched प्रणालीs. Just warn here: */
-	अगर (sve_max_भवisable_vl < sve_max_vl)
+	/* KVM decides whether to support mismatched systems. Just warn here: */
+	if (sve_max_virtualisable_vl < sve_max_vl)
 		pr_warn("SVE: unvirtualisable vector lengths present\n");
 
 	sve_efi_setup();
-पूर्ण
+}
 
 /*
- * Called from the put_task_काष्ठा() path, which cannot get here
+ * Called from the put_task_struct() path, which cannot get here
  * unless dead_task is really dead and not schedulable.
  */
-व्योम fpsimd_release_task(काष्ठा task_काष्ठा *dead_task)
-अणु
-	__sve_मुक्त(dead_task);
-पूर्ण
+void fpsimd_release_task(struct task_struct *dead_task)
+{
+	__sve_free(dead_task);
+}
 
-#पूर्ण_अगर /* CONFIG_ARM64_SVE */
+#endif /* CONFIG_ARM64_SVE */
 
 /*
  * Trapped SVE access
  *
- * Storage is allocated क्रम the full SVE state, the current FPSIMD
- * रेजिस्टर contents are migrated across, and the access trap is
+ * Storage is allocated for the full SVE state, the current FPSIMD
+ * register contents are migrated across, and the access trap is
  * disabled.
  *
  * TIF_SVE should be clear on entry: otherwise, fpsimd_restore_current_state()
- * would have disabled the SVE access trap क्रम userspace during
- * ret_to_user, making an SVE access trap impossible in that हाल.
+ * would have disabled the SVE access trap for userspace during
+ * ret_to_user, making an SVE access trap impossible in that case.
  */
-व्योम करो_sve_acc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
-अणु
-	/* Even अगर we chose not to use SVE, the hardware could still trap: */
-	अगर (unlikely(!प्रणाली_supports_sve()) || WARN_ON(is_compat_task())) अणु
-		क्रमce_संकेत_inject(संक_अवैध, ILL_ILLOPC, regs->pc, 0);
-		वापस;
-	पूर्ण
+void do_sve_acc(unsigned int esr, struct pt_regs *regs)
+{
+	/* Even if we chose not to use SVE, the hardware could still trap: */
+	if (unlikely(!system_supports_sve()) || WARN_ON(is_compat_task())) {
+		force_signal_inject(SIGILL, ILL_ILLOPC, regs->pc, 0);
+		return;
+	}
 
 	sve_alloc(current);
 
 	get_cpu_fpsimd_context();
 
-	अगर (test_and_set_thपढ़ो_flag(TIF_SVE))
+	if (test_and_set_thread_flag(TIF_SVE))
 		WARN_ON(1); /* SVE access shouldn't have trapped */
 
 	/*
 	 * Convert the FPSIMD state to SVE, zeroing all the state that
 	 * is not shared with FPSIMD. If (as is likely) the current
-	 * state is live in the रेजिस्टरs then करो this there and
-	 * update our metadata क्रम the current task including
+	 * state is live in the registers then do this there and
+	 * update our metadata for the current task including
 	 * disabling the trap, otherwise update our in-memory copy.
 	 */
-	अगर (!test_thपढ़ो_flag(TIF_FOREIGN_FPSTATE)) अणु
-		sve_set_vq(sve_vq_from_vl(current->thपढ़ो.sve_vl) - 1);
+	if (!test_thread_flag(TIF_FOREIGN_FPSTATE)) {
+		sve_set_vq(sve_vq_from_vl(current->thread.sve_vl) - 1);
 		sve_flush_live();
 		fpsimd_bind_task_to_cpu();
-	पूर्ण अन्यथा अणु
+	} else {
 		fpsimd_to_sve(current);
-	पूर्ण
+	}
 
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 
 /*
  * Trapped FP/ASIMD access.
  */
-व्योम करो_fpsimd_acc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
-अणु
+void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
+{
 	/* TODO: implement lazy context saving/restoring */
 	WARN_ON(1);
-पूर्ण
+}
 
 /*
- * Raise a संक_भ_त्रुटि क्रम the current process.
+ * Raise a SIGFPE for the current process.
  */
-व्योम करो_fpsimd_exc(अचिन्हित पूर्णांक esr, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित पूर्णांक si_code = FPE_FLTUNK;
+void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
+{
+	unsigned int si_code = FPE_FLTUNK;
 
-	अगर (esr & ESR_ELx_FP_EXC_TFV) अणु
-		अगर (esr & FPEXC_IOF)
+	if (esr & ESR_ELx_FP_EXC_TFV) {
+		if (esr & FPEXC_IOF)
 			si_code = FPE_FLTINV;
-		अन्यथा अगर (esr & FPEXC_DZF)
+		else if (esr & FPEXC_DZF)
 			si_code = FPE_FLTDIV;
-		अन्यथा अगर (esr & FPEXC_OFF)
+		else if (esr & FPEXC_OFF)
 			si_code = FPE_FLTOVF;
-		अन्यथा अगर (esr & FPEXC_UFF)
+		else if (esr & FPEXC_UFF)
 			si_code = FPE_FLTUND;
-		अन्यथा अगर (esr & FPEXC_IXF)
+		else if (esr & FPEXC_IXF)
 			si_code = FPE_FLTRES;
-	पूर्ण
+	}
 
-	send_sig_fault(संक_भ_त्रुटि, si_code,
-		       (व्योम __user *)inकाष्ठाion_poपूर्णांकer(regs),
+	send_sig_fault(SIGFPE, si_code,
+		       (void __user *)instruction_pointer(regs),
 		       current);
-पूर्ण
+}
 
-व्योम fpsimd_thपढ़ो_चयन(काष्ठा task_काष्ठा *next)
-अणु
+void fpsimd_thread_switch(struct task_struct *next)
+{
 	bool wrong_task, wrong_cpu;
 
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+	if (!system_supports_fpsimd())
+		return;
 
 	__get_cpu_fpsimd_context();
 
-	/* Save unsaved fpsimd state, अगर any: */
+	/* Save unsaved fpsimd state, if any: */
 	fpsimd_save();
 
 	/*
 	 * Fix up TIF_FOREIGN_FPSTATE to correctly describe next's
-	 * state.  For kernel thपढ़ोs, FPSIMD रेजिस्टरs are never loaded
+	 * state.  For kernel threads, FPSIMD registers are never loaded
 	 * and wrong_task and wrong_cpu will always be true.
 	 */
-	wrong_task = __this_cpu_पढ़ो(fpsimd_last_state.st) !=
-					&next->thपढ़ो.uw.fpsimd_state;
-	wrong_cpu = next->thपढ़ो.fpsimd_cpu != smp_processor_id();
+	wrong_task = __this_cpu_read(fpsimd_last_state.st) !=
+					&next->thread.uw.fpsimd_state;
+	wrong_cpu = next->thread.fpsimd_cpu != smp_processor_id();
 
-	update_tsk_thपढ़ो_flag(next, TIF_FOREIGN_FPSTATE,
+	update_tsk_thread_flag(next, TIF_FOREIGN_FPSTATE,
 			       wrong_task || wrong_cpu);
 
 	__put_cpu_fpsimd_context();
-पूर्ण
+}
 
-व्योम fpsimd_flush_thपढ़ो(व्योम)
-अणु
-	पूर्णांक vl, supported_vl;
+void fpsimd_flush_thread(void)
+{
+	int vl, supported_vl;
 
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+	if (!system_supports_fpsimd())
+		return;
 
 	get_cpu_fpsimd_context();
 
 	fpsimd_flush_task_state(current);
-	स_रखो(&current->thपढ़ो.uw.fpsimd_state, 0,
-	       माप(current->thपढ़ो.uw.fpsimd_state));
+	memset(&current->thread.uw.fpsimd_state, 0,
+	       sizeof(current->thread.uw.fpsimd_state));
 
-	अगर (प्रणाली_supports_sve()) अणु
-		clear_thपढ़ो_flag(TIF_SVE);
-		sve_मुक्त(current);
+	if (system_supports_sve()) {
+		clear_thread_flag(TIF_SVE);
+		sve_free(current);
 
 		/*
 		 * Reset the task vector length as required.
 		 * This is where we ensure that all user tasks have a valid
 		 * vector length configured: no kernel task can become a user
 		 * task without an exec and hence a call to this function.
-		 * By the समय the first call to this function is made, all
-		 * early hardware probing is complete, so __sve_शेष_vl
+		 * By the time the first call to this function is made, all
+		 * early hardware probing is complete, so __sve_default_vl
 		 * should be valid.
 		 * If a bug causes this to go wrong, we make some noise and
-		 * try to fudge thपढ़ो.sve_vl to a safe value here.
+		 * try to fudge thread.sve_vl to a safe value here.
 		 */
-		vl = current->thपढ़ो.sve_vl_onexec ?
-			current->thपढ़ो.sve_vl_onexec : get_sve_शेष_vl();
+		vl = current->thread.sve_vl_onexec ?
+			current->thread.sve_vl_onexec : get_sve_default_vl();
 
-		अगर (WARN_ON(!sve_vl_valid(vl)))
+		if (WARN_ON(!sve_vl_valid(vl)))
 			vl = SVE_VL_MIN;
 
 		supported_vl = find_supported_vector_length(vl);
-		अगर (WARN_ON(supported_vl != vl))
+		if (WARN_ON(supported_vl != vl))
 			vl = supported_vl;
 
-		current->thपढ़ो.sve_vl = vl;
+		current->thread.sve_vl = vl;
 
 		/*
 		 * If the task is not set to inherit, ensure that the vector
 		 * length will be reset by a subsequent exec:
 		 */
-		अगर (!test_thपढ़ो_flag(TIF_SVE_VL_INHERIT))
-			current->thपढ़ो.sve_vl_onexec = 0;
-	पूर्ण
+		if (!test_thread_flag(TIF_SVE_VL_INHERIT))
+			current->thread.sve_vl_onexec = 0;
+	}
 
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 
 /*
- * Save the userland FPSIMD state of 'current' to memory, but only अगर the state
- * currently held in the रेजिस्टरs करोes in fact beदीर्घ to 'current'
+ * Save the userland FPSIMD state of 'current' to memory, but only if the state
+ * currently held in the registers does in fact belong to 'current'
  */
-व्योम fpsimd_preserve_current_state(व्योम)
-अणु
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+void fpsimd_preserve_current_state(void)
+{
+	if (!system_supports_fpsimd())
+		return;
 
 	get_cpu_fpsimd_context();
 	fpsimd_save();
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 
 /*
  * Like fpsimd_preserve_current_state(), but ensure that
- * current->thपढ़ो.uw.fpsimd_state is updated so that it can be copied to
- * the संकेत frame.
+ * current->thread.uw.fpsimd_state is updated so that it can be copied to
+ * the signal frame.
  */
-व्योम fpsimd_संकेत_preserve_current_state(व्योम)
-अणु
+void fpsimd_signal_preserve_current_state(void)
+{
 	fpsimd_preserve_current_state();
-	अगर (test_thपढ़ो_flag(TIF_SVE))
+	if (test_thread_flag(TIF_SVE))
 		sve_to_fpsimd(current);
-पूर्ण
+}
 
 /*
  * Associate current's FPSIMD context with this cpu
- * The caller must have ownership of the cpu FPSIMD context beक्रमe calling
+ * The caller must have ownership of the cpu FPSIMD context before calling
  * this function.
  */
-व्योम fpsimd_bind_task_to_cpu(व्योम)
-अणु
-	काष्ठा fpsimd_last_state_काष्ठा *last =
+void fpsimd_bind_task_to_cpu(void)
+{
+	struct fpsimd_last_state_struct *last =
 		this_cpu_ptr(&fpsimd_last_state);
 
-	WARN_ON(!प्रणाली_supports_fpsimd());
-	last->st = &current->thपढ़ो.uw.fpsimd_state;
-	last->sve_state = current->thपढ़ो.sve_state;
-	last->sve_vl = current->thपढ़ो.sve_vl;
-	current->thपढ़ो.fpsimd_cpu = smp_processor_id();
+	WARN_ON(!system_supports_fpsimd());
+	last->st = &current->thread.uw.fpsimd_state;
+	last->sve_state = current->thread.sve_state;
+	last->sve_vl = current->thread.sve_vl;
+	current->thread.fpsimd_cpu = smp_processor_id();
 
-	अगर (प्रणाली_supports_sve()) अणु
-		/* Toggle SVE trapping क्रम userspace अगर needed */
-		अगर (test_thपढ़ो_flag(TIF_SVE))
+	if (system_supports_sve()) {
+		/* Toggle SVE trapping for userspace if needed */
+		if (test_thread_flag(TIF_SVE))
 			sve_user_enable();
-		अन्यथा
+		else
 			sve_user_disable();
 
-		/* Serialised by exception वापस to user */
-	पूर्ण
-पूर्ण
+		/* Serialised by exception return to user */
+	}
+}
 
-व्योम fpsimd_bind_state_to_cpu(काष्ठा user_fpsimd_state *st, व्योम *sve_state,
-			      अचिन्हित पूर्णांक sve_vl)
-अणु
-	काष्ठा fpsimd_last_state_काष्ठा *last =
+void fpsimd_bind_state_to_cpu(struct user_fpsimd_state *st, void *sve_state,
+			      unsigned int sve_vl)
+{
+	struct fpsimd_last_state_struct *last =
 		this_cpu_ptr(&fpsimd_last_state);
 
-	WARN_ON(!प्रणाली_supports_fpsimd());
+	WARN_ON(!system_supports_fpsimd());
 	WARN_ON(!in_softirq() && !irqs_disabled());
 
 	last->st = st;
 	last->sve_state = sve_state;
 	last->sve_vl = sve_vl;
-पूर्ण
+}
 
 /*
- * Load the userland FPSIMD state of 'current' from memory, but only अगर the
- * FPSIMD state alपढ़ोy held in the रेजिस्टरs is /not/ the most recent FPSIMD
+ * Load the userland FPSIMD state of 'current' from memory, but only if the
+ * FPSIMD state already held in the registers is /not/ the most recent FPSIMD
  * state of 'current'
  */
-व्योम fpsimd_restore_current_state(व्योम)
-अणु
+void fpsimd_restore_current_state(void)
+{
 	/*
-	 * For the tasks that were created beक्रमe we detected the असलence of
-	 * FP/SIMD, the TIF_FOREIGN_FPSTATE could be set via fpsimd_thपढ़ो_चयन(),
+	 * For the tasks that were created before we detected the absence of
+	 * FP/SIMD, the TIF_FOREIGN_FPSTATE could be set via fpsimd_thread_switch(),
 	 * e.g, init. This could be then inherited by the children processes.
-	 * If we later detect that the प्रणाली करोesn't support FP/SIMD,
-	 * we must clear the flag क्रम  all the tasks to indicate that the
-	 * FPSTATE is clean (as we can't have one) to aव्योम looping क्रम ever in
-	 * करो_notअगरy_resume().
+	 * If we later detect that the system doesn't support FP/SIMD,
+	 * we must clear the flag for  all the tasks to indicate that the
+	 * FPSTATE is clean (as we can't have one) to avoid looping for ever in
+	 * do_notify_resume().
 	 */
-	अगर (!प्रणाली_supports_fpsimd()) अणु
-		clear_thपढ़ो_flag(TIF_FOREIGN_FPSTATE);
-		वापस;
-	पूर्ण
+	if (!system_supports_fpsimd()) {
+		clear_thread_flag(TIF_FOREIGN_FPSTATE);
+		return;
+	}
 
 	get_cpu_fpsimd_context();
 
-	अगर (test_and_clear_thपढ़ो_flag(TIF_FOREIGN_FPSTATE)) अणु
+	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
 		task_fpsimd_load();
 		fpsimd_bind_task_to_cpu();
-	पूर्ण
+	}
 
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 
 /*
- * Load an updated userland FPSIMD state क्रम 'current' from memory and set the
- * flag that indicates that the FPSIMD रेजिस्टर contents are the most recent
+ * Load an updated userland FPSIMD state for 'current' from memory and set the
+ * flag that indicates that the FPSIMD register contents are the most recent
  * FPSIMD state of 'current'
  */
-व्योम fpsimd_update_current_state(काष्ठा user_fpsimd_state स्थिर *state)
-अणु
-	अगर (WARN_ON(!प्रणाली_supports_fpsimd()))
-		वापस;
+void fpsimd_update_current_state(struct user_fpsimd_state const *state)
+{
+	if (WARN_ON(!system_supports_fpsimd()))
+		return;
 
 	get_cpu_fpsimd_context();
 
-	current->thपढ़ो.uw.fpsimd_state = *state;
-	अगर (test_thपढ़ो_flag(TIF_SVE))
+	current->thread.uw.fpsimd_state = *state;
+	if (test_thread_flag(TIF_SVE))
 		fpsimd_to_sve(current);
 
 	task_fpsimd_load();
 	fpsimd_bind_task_to_cpu();
 
-	clear_thपढ़ो_flag(TIF_FOREIGN_FPSTATE);
+	clear_thread_flag(TIF_FOREIGN_FPSTATE);
 
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 
 /*
  * Invalidate live CPU copies of task t's FPSIMD state
  *
  * This function may be called with preemption enabled.  The barrier()
  * ensures that the assignment to fpsimd_cpu is visible to any
- * preemption/softirq that could race with set_tsk_thपढ़ो_flag(), so
+ * preemption/softirq that could race with set_tsk_thread_flag(), so
  * that TIF_FOREIGN_FPSTATE cannot be spuriously re-cleared.
  *
  * The final barrier ensures that TIF_FOREIGN_FPSTATE is seen set by any
  * subsequent code.
  */
-व्योम fpsimd_flush_task_state(काष्ठा task_काष्ठा *t)
-अणु
-	t->thपढ़ो.fpsimd_cpu = NR_CPUS;
+void fpsimd_flush_task_state(struct task_struct *t)
+{
+	t->thread.fpsimd_cpu = NR_CPUS;
 	/*
-	 * If we करोn't support fpsimd, bail out after we have
-	 * reset the fpsimd_cpu क्रम this task and clear the
+	 * If we don't support fpsimd, bail out after we have
+	 * reset the fpsimd_cpu for this task and clear the
 	 * FPSTATE.
 	 */
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+	if (!system_supports_fpsimd())
+		return;
 	barrier();
-	set_tsk_thपढ़ो_flag(t, TIF_FOREIGN_FPSTATE);
+	set_tsk_thread_flag(t, TIF_FOREIGN_FPSTATE);
 
 	barrier();
-पूर्ण
+}
 
 /*
  * Invalidate any task's FPSIMD state that is present on this cpu.
  * The FPSIMD context should be acquired with get_cpu_fpsimd_context()
- * beक्रमe calling this function.
+ * before calling this function.
  */
-अटल व्योम fpsimd_flush_cpu_state(व्योम)
-अणु
-	WARN_ON(!प्रणाली_supports_fpsimd());
-	__this_cpu_ग_लिखो(fpsimd_last_state.st, शून्य);
-	set_thपढ़ो_flag(TIF_FOREIGN_FPSTATE);
-पूर्ण
+static void fpsimd_flush_cpu_state(void)
+{
+	WARN_ON(!system_supports_fpsimd());
+	__this_cpu_write(fpsimd_last_state.st, NULL);
+	set_thread_flag(TIF_FOREIGN_FPSTATE);
+}
 
 /*
  * Save the FPSIMD state to memory and invalidate cpu view.
  * This function must be called with preemption disabled.
  */
-व्योम fpsimd_save_and_flush_cpu_state(व्योम)
-अणु
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+void fpsimd_save_and_flush_cpu_state(void)
+{
+	if (!system_supports_fpsimd())
+		return;
 	WARN_ON(preemptible());
 	__get_cpu_fpsimd_context();
 	fpsimd_save();
 	fpsimd_flush_cpu_state();
 	__put_cpu_fpsimd_context();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_KERNEL_MODE_NEON
+#ifdef CONFIG_KERNEL_MODE_NEON
 
 /*
  * Kernel-side NEON support functions
  */
 
 /*
- * kernel_neon_begin(): obtain the CPU FPSIMD रेजिस्टरs क्रम use by the calling
+ * kernel_neon_begin(): obtain the CPU FPSIMD registers for use by the calling
  * context
  *
- * Must not be called unless may_use_simd() वापसs true.
- * Task context in the FPSIMD रेजिस्टरs is saved back to memory as necessary.
+ * Must not be called unless may_use_simd() returns true.
+ * Task context in the FPSIMD registers is saved back to memory as necessary.
  *
- * A matching call to kernel_neon_end() must be made beक्रमe वापसing from the
+ * A matching call to kernel_neon_end() must be made before returning from the
  * calling context.
  *
- * The caller may मुक्तly use the FPSIMD रेजिस्टरs until kernel_neon_end() is
+ * The caller may freely use the FPSIMD registers until kernel_neon_end() is
  * called.
  */
-व्योम kernel_neon_begin(व्योम)
-अणु
-	अगर (WARN_ON(!प्रणाली_supports_fpsimd()))
-		वापस;
+void kernel_neon_begin(void)
+{
+	if (WARN_ON(!system_supports_fpsimd()))
+		return;
 
 	BUG_ON(!may_use_simd());
 
 	get_cpu_fpsimd_context();
 
-	/* Save unsaved fpsimd state, अगर any: */
+	/* Save unsaved fpsimd state, if any: */
 	fpsimd_save();
 
-	/* Invalidate any task state reमुख्यing in the fpsimd regs: */
+	/* Invalidate any task state remaining in the fpsimd regs: */
 	fpsimd_flush_cpu_state();
-पूर्ण
+}
 EXPORT_SYMBOL(kernel_neon_begin);
 
 /*
- * kernel_neon_end(): give the CPU FPSIMD रेजिस्टरs back to the current task
+ * kernel_neon_end(): give the CPU FPSIMD registers back to the current task
  *
  * Must be called from a context in which kernel_neon_begin() was previously
- * called, with no call to kernel_neon_end() in the meanसमय.
+ * called, with no call to kernel_neon_end() in the meantime.
  *
- * The caller must not use the FPSIMD रेजिस्टरs after this function is called,
- * unless kernel_neon_begin() is called again in the meanसमय.
+ * The caller must not use the FPSIMD registers after this function is called,
+ * unless kernel_neon_begin() is called again in the meantime.
  */
-व्योम kernel_neon_end(व्योम)
-अणु
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+void kernel_neon_end(void)
+{
+	if (!system_supports_fpsimd())
+		return;
 
 	put_cpu_fpsimd_context();
-पूर्ण
+}
 EXPORT_SYMBOL(kernel_neon_end);
 
-#अगर_घोषित CONFIG_EFI
+#ifdef CONFIG_EFI
 
-अटल DEFINE_PER_CPU(काष्ठा user_fpsimd_state, efi_fpsimd_state);
-अटल DEFINE_PER_CPU(bool, efi_fpsimd_state_used);
-अटल DEFINE_PER_CPU(bool, efi_sve_state_used);
+static DEFINE_PER_CPU(struct user_fpsimd_state, efi_fpsimd_state);
+static DEFINE_PER_CPU(bool, efi_fpsimd_state_used);
+static DEFINE_PER_CPU(bool, efi_sve_state_used);
 
 /*
- * EFI runसमय services support functions
+ * EFI runtime services support functions
  *
- * The ABI क्रम EFI runसमय services allows EFI to use FPSIMD during the call.
- * This means that क्रम EFI (and only क्रम EFI), we have to assume that FPSIMD
+ * The ABI for EFI runtime services allows EFI to use FPSIMD during the call.
+ * This means that for EFI (and only for EFI), we have to assume that FPSIMD
  * is always used rather than being an optional accelerator.
  *
- * These functions provide the necessary support क्रम ensuring FPSIMD
+ * These functions provide the necessary support for ensuring FPSIMD
  * save/restore in the contexts from which EFI is used.
  *
- * Do not use them क्रम any other purpose -- अगर tempted to करो so, you are
- * either करोing something wrong or you need to propose some refactoring.
+ * Do not use them for any other purpose -- if tempted to do so, you are
+ * either doing something wrong or you need to propose some refactoring.
  */
 
 /*
- * __efi_fpsimd_begin(): prepare FPSIMD क्रम making an EFI runसमय services call
+ * __efi_fpsimd_begin(): prepare FPSIMD for making an EFI runtime services call
  */
-व्योम __efi_fpsimd_begin(व्योम)
-अणु
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+void __efi_fpsimd_begin(void)
+{
+	if (!system_supports_fpsimd())
+		return;
 
 	WARN_ON(preemptible());
 
-	अगर (may_use_simd()) अणु
+	if (may_use_simd()) {
 		kernel_neon_begin();
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * If !efi_sve_state, SVE can't be in use yet and doesn't need
 		 * preserving:
 		 */
-		अगर (प्रणाली_supports_sve() && likely(efi_sve_state)) अणु
-			अक्षर *sve_state = this_cpu_ptr(efi_sve_state);
+		if (system_supports_sve() && likely(efi_sve_state)) {
+			char *sve_state = this_cpu_ptr(efi_sve_state);
 
-			__this_cpu_ग_लिखो(efi_sve_state_used, true);
+			__this_cpu_write(efi_sve_state_used, true);
 
 			sve_save_state(sve_state + sve_ffr_offset(sve_max_vl),
 				       &this_cpu_ptr(&efi_fpsimd_state)->fpsr);
-		पूर्ण अन्यथा अणु
+		} else {
 			fpsimd_save_state(this_cpu_ptr(&efi_fpsimd_state));
-		पूर्ण
+		}
 
-		__this_cpu_ग_लिखो(efi_fpsimd_state_used, true);
-	पूर्ण
-पूर्ण
+		__this_cpu_write(efi_fpsimd_state_used, true);
+	}
+}
 
 /*
- * __efi_fpsimd_end(): clean up FPSIMD after an EFI runसमय services call
+ * __efi_fpsimd_end(): clean up FPSIMD after an EFI runtime services call
  */
-व्योम __efi_fpsimd_end(व्योम)
-अणु
-	अगर (!प्रणाली_supports_fpsimd())
-		वापस;
+void __efi_fpsimd_end(void)
+{
+	if (!system_supports_fpsimd())
+		return;
 
-	अगर (!__this_cpu_xchg(efi_fpsimd_state_used, false)) अणु
+	if (!__this_cpu_xchg(efi_fpsimd_state_used, false)) {
 		kernel_neon_end();
-	पूर्ण अन्यथा अणु
-		अगर (प्रणाली_supports_sve() &&
-		    likely(__this_cpu_पढ़ो(efi_sve_state_used))) अणु
-			अक्षर स्थिर *sve_state = this_cpu_ptr(efi_sve_state);
+	} else {
+		if (system_supports_sve() &&
+		    likely(__this_cpu_read(efi_sve_state_used))) {
+			char const *sve_state = this_cpu_ptr(efi_sve_state);
 
 			sve_load_state(sve_state + sve_ffr_offset(sve_max_vl),
 				       &this_cpu_ptr(&efi_fpsimd_state)->fpsr,
 				       sve_vq_from_vl(sve_get_vl()) - 1);
 
-			__this_cpu_ग_लिखो(efi_sve_state_used, false);
-		पूर्ण अन्यथा अणु
+			__this_cpu_write(efi_sve_state_used, false);
+		} else {
 			fpsimd_load_state(this_cpu_ptr(&efi_fpsimd_state));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#पूर्ण_अगर /* CONFIG_EFI */
+#endif /* CONFIG_EFI */
 
-#पूर्ण_अगर /* CONFIG_KERNEL_MODE_NEON */
+#endif /* CONFIG_KERNEL_MODE_NEON */
 
-#अगर_घोषित CONFIG_CPU_PM
-अटल पूर्णांक fpsimd_cpu_pm_notअगरier(काष्ठा notअगरier_block *self,
-				  अचिन्हित दीर्घ cmd, व्योम *v)
-अणु
-	चयन (cmd) अणु
-	हाल CPU_PM_ENTER:
+#ifdef CONFIG_CPU_PM
+static int fpsimd_cpu_pm_notifier(struct notifier_block *self,
+				  unsigned long cmd, void *v)
+{
+	switch (cmd) {
+	case CPU_PM_ENTER:
 		fpsimd_save_and_flush_cpu_state();
-		अवरोध;
-	हाल CPU_PM_EXIT:
-		अवरोध;
-	हाल CPU_PM_ENTER_FAILED:
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
+		break;
+	case CPU_PM_EXIT:
+		break;
+	case CPU_PM_ENTER_FAILED:
+	default:
+		return NOTIFY_DONE;
+	}
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block fpsimd_cpu_pm_notअगरier_block = अणु
-	.notअगरier_call = fpsimd_cpu_pm_notअगरier,
-पूर्ण;
+static struct notifier_block fpsimd_cpu_pm_notifier_block = {
+	.notifier_call = fpsimd_cpu_pm_notifier,
+};
 
-अटल व्योम __init fpsimd_pm_init(व्योम)
-अणु
-	cpu_pm_रेजिस्टर_notअगरier(&fpsimd_cpu_pm_notअगरier_block);
-पूर्ण
+static void __init fpsimd_pm_init(void)
+{
+	cpu_pm_register_notifier(&fpsimd_cpu_pm_notifier_block);
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम fpsimd_pm_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_CPU_PM */
+#else
+static inline void fpsimd_pm_init(void) { }
+#endif /* CONFIG_CPU_PM */
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल पूर्णांक fpsimd_cpu_dead(अचिन्हित पूर्णांक cpu)
-अणु
-	per_cpu(fpsimd_last_state.st, cpu) = शून्य;
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_HOTPLUG_CPU
+static int fpsimd_cpu_dead(unsigned int cpu)
+{
+	per_cpu(fpsimd_last_state.st, cpu) = NULL;
+	return 0;
+}
 
-अटल अंतरभूत व्योम fpsimd_hotplug_init(व्योम)
-अणु
+static inline void fpsimd_hotplug_init(void)
+{
 	cpuhp_setup_state_nocalls(CPUHP_ARM64_FPSIMD_DEAD, "arm64/fpsimd:dead",
-				  शून्य, fpsimd_cpu_dead);
-पूर्ण
+				  NULL, fpsimd_cpu_dead);
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम fpsimd_hotplug_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#else
+static inline void fpsimd_hotplug_init(void) { }
+#endif
 
 /*
  * FP/SIMD support code initialisation.
  */
-अटल पूर्णांक __init fpsimd_init(व्योम)
-अणु
-	अगर (cpu_have_named_feature(FP)) अणु
+static int __init fpsimd_init(void)
+{
+	if (cpu_have_named_feature(FP)) {
 		fpsimd_pm_init();
 		fpsimd_hotplug_init();
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_notice("Floating-point is not implemented\n");
-	पूर्ण
+	}
 
-	अगर (!cpu_have_named_feature(ASIMD))
+	if (!cpu_have_named_feature(ASIMD))
 		pr_notice("Advanced SIMD is not implemented\n");
 
-	वापस sve_sysctl_init();
-पूर्ण
+	return sve_sysctl_init();
+}
 core_initcall(fpsimd_init);

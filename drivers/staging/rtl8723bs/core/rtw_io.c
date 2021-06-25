@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
@@ -13,7 +12,7 @@ a. provides the API
 
 b. provides the protocol engine
 
-c. provides the software पूर्णांकerface between caller and the hardware पूर्णांकerface
+c. provides the software interface between caller and the hardware interface
 
 
 Compiler Flag Option:
@@ -26,165 +25,165 @@ jackson@realtek.com.tw
 
 */
 
-#घोषणा _RTW_IO_C_
+#define _RTW_IO_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
 
-#घोषणा rtw_le16_to_cpu(val)		val
-#घोषणा rtw_le32_to_cpu(val)		val
-#घोषणा rtw_cpu_to_le16(val)		val
-#घोषणा rtw_cpu_to_le32(val)		val
+#define rtw_le16_to_cpu(val)		val
+#define rtw_le32_to_cpu(val)		val
+#define rtw_cpu_to_le16(val)		val
+#define rtw_cpu_to_le32(val)		val
 
-u8 _rtw_पढ़ो8(काष्ठा adapter *adapter, u32 addr)
-अणु
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	u8 (*_पढ़ो8)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr);
+u8 _rtw_read8(struct adapter *adapter, u32 addr)
+{
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	u8 (*_read8)(struct intf_hdl *pintfhdl, u32 addr);
 
-	_पढ़ो8 = pपूर्णांकfhdl->io_ops._पढ़ो8;
+	_read8 = pintfhdl->io_ops._read8;
 
-	वापस _पढ़ो8(pपूर्णांकfhdl, addr);
-पूर्ण
+	return _read8(pintfhdl, addr);
+}
 
-u16 _rtw_पढ़ो16(काष्ठा adapter *adapter, u32 addr)
-अणु
+u16 _rtw_read16(struct adapter *adapter, u32 addr)
+{
 	u16 r_val;
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	u16 (*_पढ़ो16)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr);
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	u16 (*_read16)(struct intf_hdl *pintfhdl, u32 addr);
 
-	_पढ़ो16 = pपूर्णांकfhdl->io_ops._पढ़ो16;
+	_read16 = pintfhdl->io_ops._read16;
 
-	r_val = _पढ़ो16(pपूर्णांकfhdl, addr);
-	वापस rtw_le16_to_cpu(r_val);
-पूर्ण
+	r_val = _read16(pintfhdl, addr);
+	return rtw_le16_to_cpu(r_val);
+}
 
-u32 _rtw_पढ़ो32(काष्ठा adapter *adapter, u32 addr)
-अणु
+u32 _rtw_read32(struct adapter *adapter, u32 addr)
+{
 	u32 r_val;
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	u32 (*_पढ़ो32)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr);
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	u32 (*_read32)(struct intf_hdl *pintfhdl, u32 addr);
 
-	_पढ़ो32 = pपूर्णांकfhdl->io_ops._पढ़ो32;
+	_read32 = pintfhdl->io_ops._read32;
 
-	r_val = _पढ़ो32(pपूर्णांकfhdl, addr);
-	वापस rtw_le32_to_cpu(r_val);
+	r_val = _read32(pintfhdl, addr);
+	return rtw_le32_to_cpu(r_val);
 
-पूर्ण
+}
 
-पूर्णांक _rtw_ग_लिखो8(काष्ठा adapter *adapter, u32 addr, u8 val)
-अणु
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	पूर्णांक (*_ग_लिखो8)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u8 val);
-	पूर्णांक ret;
+int _rtw_write8(struct adapter *adapter, u32 addr, u8 val)
+{
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	int (*_write8)(struct intf_hdl *pintfhdl, u32 addr, u8 val);
+	int ret;
 
-	_ग_लिखो8 = pपूर्णांकfhdl->io_ops._ग_लिखो8;
+	_write8 = pintfhdl->io_ops._write8;
 
-	ret = _ग_लिखो8(pपूर्णांकfhdl, addr, val);
+	ret = _write8(pintfhdl, addr, val);
 
-	वापस RTW_STATUS_CODE(ret);
-पूर्ण
-पूर्णांक _rtw_ग_लिखो16(काष्ठा adapter *adapter, u32 addr, u16 val)
-अणु
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	पूर्णांक (*_ग_लिखो16)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u16 val);
-	पूर्णांक ret;
+	return RTW_STATUS_CODE(ret);
+}
+int _rtw_write16(struct adapter *adapter, u32 addr, u16 val)
+{
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	int (*_write16)(struct intf_hdl *pintfhdl, u32 addr, u16 val);
+	int ret;
 
-	_ग_लिखो16 = pपूर्णांकfhdl->io_ops._ग_लिखो16;
+	_write16 = pintfhdl->io_ops._write16;
 
-	ret = _ग_लिखो16(pपूर्णांकfhdl, addr, val);
-	वापस RTW_STATUS_CODE(ret);
-पूर्ण
-पूर्णांक _rtw_ग_लिखो32(काष्ठा adapter *adapter, u32 addr, u32 val)
-अणु
-	/* काष्ठा	io_queue	*pio_queue = (काष्ठा io_queue *)adapter->pio_queue; */
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	पूर्णांक (*_ग_लिखो32)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 val);
-	पूर्णांक ret;
+	ret = _write16(pintfhdl, addr, val);
+	return RTW_STATUS_CODE(ret);
+}
+int _rtw_write32(struct adapter *adapter, u32 addr, u32 val)
+{
+	/* struct	io_queue	*pio_queue = (struct io_queue *)adapter->pio_queue; */
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
+	int (*_write32)(struct intf_hdl *pintfhdl, u32 addr, u32 val);
+	int ret;
 
-	_ग_लिखो32 = pपूर्णांकfhdl->io_ops._ग_लिखो32;
+	_write32 = pintfhdl->io_ops._write32;
 
-	ret = _ग_लिखो32(pपूर्णांकfhdl, addr, val);
+	ret = _write32(pintfhdl, addr, val);
 
-	वापस RTW_STATUS_CODE(ret);
-पूर्ण
+	return RTW_STATUS_CODE(ret);
+}
 
-u8 _rtw_sd_f0_पढ़ो8(काष्ठा adapter *adapter, u32 addr)
-अणु
+u8 _rtw_sd_f0_read8(struct adapter *adapter, u32 addr)
+{
 	u8 r_val = 0x00;
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
-	u8 (*_sd_f0_पढ़ो8)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr);
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct intf_hdl *pintfhdl = &(pio_priv->intf);
+	u8 (*_sd_f0_read8)(struct intf_hdl *pintfhdl, u32 addr);
 
-	_sd_f0_पढ़ो8 = pपूर्णांकfhdl->io_ops._sd_f0_पढ़ो8;
+	_sd_f0_read8 = pintfhdl->io_ops._sd_f0_read8;
 
-	अगर (_sd_f0_पढ़ो8)
-		r_val = _sd_f0_पढ़ो8(pपूर्णांकfhdl, addr);
-	अन्यथा
+	if (_sd_f0_read8)
+		r_val = _sd_f0_read8(pintfhdl, addr);
+	else
 		netdev_warn(adapter->pnetdev,
 			    FUNC_ADPT_FMT " _sd_f0_read8 callback is NULL\n",
 			    FUNC_ADPT_ARG(adapter));
 
-	वापस r_val;
-पूर्ण
+	return r_val;
+}
 
-u32 _rtw_ग_लिखो_port(काष्ठा adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
-अणु
-	u32 (*_ग_लिखो_port)(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, u8 *pmem);
-	काष्ठा io_priv *pio_priv = &adapter->iopriv;
-	काष्ठा	पूर्णांकf_hdl		*pपूर्णांकfhdl = &(pio_priv->पूर्णांकf);
+u32 _rtw_write_port(struct adapter *adapter, u32 addr, u32 cnt, u8 *pmem)
+{
+	u32 (*_write_port)(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *pmem);
+	struct io_priv *pio_priv = &adapter->iopriv;
+	struct	intf_hdl		*pintfhdl = &(pio_priv->intf);
 
-	_ग_लिखो_port = pपूर्णांकfhdl->io_ops._ग_लिखो_port;
+	_write_port = pintfhdl->io_ops._write_port;
 
-	वापस _ग_लिखो_port(pपूर्णांकfhdl, addr, cnt, pmem);
-पूर्ण
+	return _write_port(pintfhdl, addr, cnt, pmem);
+}
 
-पूर्णांक rtw_init_io_priv(काष्ठा adapter *padapter, व्योम (*set_पूर्णांकf_ops)(काष्ठा adapter *padapter, काष्ठा _io_ops *pops))
-अणु
-	काष्ठा io_priv *piopriv = &padapter->iopriv;
-	काष्ठा पूर्णांकf_hdl *pपूर्णांकf = &piopriv->पूर्णांकf;
+int rtw_init_io_priv(struct adapter *padapter, void (*set_intf_ops)(struct adapter *padapter, struct _io_ops *pops))
+{
+	struct io_priv *piopriv = &padapter->iopriv;
+	struct intf_hdl *pintf = &piopriv->intf;
 
-	अगर (!set_पूर्णांकf_ops)
-		वापस _FAIL;
+	if (!set_intf_ops)
+		return _FAIL;
 
 	piopriv->padapter = padapter;
-	pपूर्णांकf->padapter = padapter;
-	pपूर्णांकf->pपूर्णांकf_dev = adapter_to_dvobj(padapter);
+	pintf->padapter = padapter;
+	pintf->pintf_dev = adapter_to_dvobj(padapter);
 
-	set_पूर्णांकf_ops(padapter, &pपूर्णांकf->io_ops);
+	set_intf_ops(padapter, &pintf->io_ops);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
 /*
-* Increase and check अगर the continual_io_error of this @param dvobjprive is larger than MAX_CONTINUAL_IO_ERR
-* @वापस true:
-* @वापस false:
+* Increase and check if the continual_io_error of this @param dvobjprive is larger than MAX_CONTINUAL_IO_ERR
+* @return true:
+* @return false:
 */
-पूर्णांक rtw_inc_and_chk_continual_io_error(काष्ठा dvobj_priv *dvobj)
-अणु
-	पूर्णांक ret = false;
-	पूर्णांक value = atomic_inc_वापस(&dvobj->continual_io_error);
-	अगर (value > MAX_CONTINUAL_IO_ERR)
+int rtw_inc_and_chk_continual_io_error(struct dvobj_priv *dvobj)
+{
+	int ret = false;
+	int value = atomic_inc_return(&dvobj->continual_io_error);
+	if (value > MAX_CONTINUAL_IO_ERR)
 		ret = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
 * Set the continual_io_error of this @param dvobjprive to 0
 */
-व्योम rtw_reset_continual_io_error(काष्ठा dvobj_priv *dvobj)
-अणु
+void rtw_reset_continual_io_error(struct dvobj_priv *dvobj)
+{
 	atomic_set(&dvobj->continual_io_error, 0);
-पूर्ण
+}

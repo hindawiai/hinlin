@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright(c) 2004 - 2006 Intel Corporation. All rights reserved.
  */
-#अगर_अघोषित LINUX_DMAENGINE_H
-#घोषणा LINUX_DMAENGINE_H
+#ifndef LINUX_DMAENGINE_H
+#define LINUX_DMAENGINE_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/bug.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/page.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/uio.h>
+#include <linux/bug.h>
+#include <linux/scatterlist.h>
+#include <linux/bitmap.h>
+#include <linux/types.h>
+#include <asm/page.h>
 
 /**
- * प्रकार dma_cookie_t - an opaque DMA cookie
+ * typedef dma_cookie_t - an opaque DMA cookie
  *
- * अगर dma_cookie_t is >0 it's a DMA request cookie, <0 it's an error code
+ * if dma_cookie_t is >0 it's a DMA request cookie, <0 it's an error code
  */
-प्रकार s32 dma_cookie_t;
-#घोषणा DMA_MIN_COOKIE	1
+typedef s32 dma_cookie_t;
+#define DMA_MIN_COOKIE	1
 
-अटल अंतरभूत पूर्णांक dma_submit_error(dma_cookie_t cookie)
-अणु
-	वापस cookie < 0 ? cookie : 0;
-पूर्ण
+static inline int dma_submit_error(dma_cookie_t cookie)
+{
+	return cookie < 0 ? cookie : 0;
+}
 
 /**
- * क्रमागत dma_status - DMA transaction status
+ * enum dma_status - DMA transaction status
  * @DMA_COMPLETE: transaction completed
  * @DMA_IN_PROGRESS: transaction not yet processed
- * @DMA_PAUSED: transaction is छोड़ोd
+ * @DMA_PAUSED: transaction is paused
  * @DMA_ERROR: transaction failed
  */
-क्रमागत dma_status अणु
+enum dma_status {
 	DMA_COMPLETE,
 	DMA_IN_PROGRESS,
 	DMA_PAUSED,
 	DMA_ERROR,
 	DMA_OUT_OF_ORDER,
-पूर्ण;
+};
 
 /**
- * क्रमागत dma_transaction_type - DMA transaction types/indexes
+ * enum dma_transaction_type - DMA transaction types/indexes
  *
  * Note: The DMA_ASYNC_TX capability is not to be set by drivers.  It is
- * स्वतःmatically set as dma devices are रेजिस्टरed.
+ * automatically set as dma devices are registered.
  */
-क्रमागत dma_transaction_type अणु
+enum dma_transaction_type {
 	DMA_MEMCPY,
 	DMA_XOR,
 	DMA_PQ,
@@ -66,39 +65,39 @@
 	DMA_COMPLETION_NO_ORDER,
 	DMA_REPEAT,
 	DMA_LOAD_EOT,
-/* last transaction type क्रम creation of the capabilities mask */
+/* last transaction type for creation of the capabilities mask */
 	DMA_TX_TYPE_END,
-पूर्ण;
+};
 
 /**
- * क्रमागत dma_transfer_direction - dma transfer mode and direction indicator
+ * enum dma_transfer_direction - dma transfer mode and direction indicator
  * @DMA_MEM_TO_MEM: Async/Memcpy mode
  * @DMA_MEM_TO_DEV: Slave mode & From Memory to Device
  * @DMA_DEV_TO_MEM: Slave mode & From Device to Memory
  * @DMA_DEV_TO_DEV: Slave mode & From Device to Device
  */
-क्रमागत dma_transfer_direction अणु
+enum dma_transfer_direction {
 	DMA_MEM_TO_MEM,
 	DMA_MEM_TO_DEV,
 	DMA_DEV_TO_MEM,
 	DMA_DEV_TO_DEV,
 	DMA_TRANS_NONE,
-पूर्ण;
+};
 
 /**
  * Interleaved Transfer Request
  * ----------------------------
  * A chunk is collection of contiguous bytes to be transferred.
- * The gap(in bytes) between two chunks is called पूर्णांकer-chunk-gap(ICG).
+ * The gap(in bytes) between two chunks is called inter-chunk-gap(ICG).
  * ICGs may or may not change between chunks.
- * A FRAME is the smallest series of contiguous अणुchunk,icgपूर्ण pairs,
- *  that when repeated an पूर्णांकegral number of बार, specअगरies the transfer.
- * A transfer ढाँचा is specअगरication of a Frame, the number of बार
+ * A FRAME is the smallest series of contiguous {chunk,icg} pairs,
+ *  that when repeated an integral number of times, specifies the transfer.
+ * A transfer template is specification of a Frame, the number of times
  *  it is to be repeated and other per-transfer attributes.
  *
- * Practically, a client driver would have पढ़ोy a ढाँचा क्रम each
- *  type of transfer it is going to need during its lअगरeसमय and
- *  set only 'src_start' and 'dst_start' beक्रमe submitting the requests.
+ * Practically, a client driver would have ready a template for each
+ *  type of transfer it is going to need during its lifetime and
+ *  set only 'src_start' and 'dst_start' before submitting the requests.
  *
  *
  *  |      Frame-1        |       Frame-2       | ~ |       Frame-'numf'  |
@@ -109,90 +108,90 @@
  */
 
 /**
- * काष्ठा data_chunk - Element of scatter-gather list that makes a frame.
- * @size: Number of bytes to पढ़ो from source.
- *	  size_dst := fn(op, size_src), so करोesn't mean much क्रम destination.
+ * struct data_chunk - Element of scatter-gather list that makes a frame.
+ * @size: Number of bytes to read from source.
+ *	  size_dst := fn(op, size_src), so doesn't mean much for destination.
  * @icg: Number of bytes to jump after last src/dst address of this
- *	 chunk and beक्रमe first src/dst address क्रम next chunk.
- *	 Ignored क्रम dst(assumed 0), अगर dst_inc is true and dst_sgl is false.
- *	 Ignored क्रम src(assumed 0), अगर src_inc is true and src_sgl is false.
+ *	 chunk and before first src/dst address for next chunk.
+ *	 Ignored for dst(assumed 0), if dst_inc is true and dst_sgl is false.
+ *	 Ignored for src(assumed 0), if src_inc is true and src_sgl is false.
  * @dst_icg: Number of bytes to jump after last dst address of this
- *	 chunk and beक्रमe the first dst address क्रम next chunk.
- *	 Ignored अगर dst_inc is true and dst_sgl is false.
+ *	 chunk and before the first dst address for next chunk.
+ *	 Ignored if dst_inc is true and dst_sgl is false.
  * @src_icg: Number of bytes to jump after last src address of this
- *	 chunk and beक्रमe the first src address क्रम next chunk.
- *	 Ignored अगर src_inc is true and src_sgl is false.
+ *	 chunk and before the first src address for next chunk.
+ *	 Ignored if src_inc is true and src_sgl is false.
  */
-काष्ठा data_chunk अणु
-	माप_प्रकार size;
-	माप_प्रकार icg;
-	माप_प्रकार dst_icg;
-	माप_प्रकार src_icg;
-पूर्ण;
+struct data_chunk {
+	size_t size;
+	size_t icg;
+	size_t dst_icg;
+	size_t src_icg;
+};
 
 /**
- * काष्ठा dma_पूर्णांकerleaved_ढाँचा - Template to convey DMAC the transfer pattern
+ * struct dma_interleaved_template - Template to convey DMAC the transfer pattern
  *	 and attributes.
- * @src_start: Bus address of source क्रम the first chunk.
- * @dst_start: Bus address of destination क्रम the first chunk.
- * @dir: Specअगरies the type of Source and Destination.
- * @src_inc: If the source address increments after पढ़ोing from it.
+ * @src_start: Bus address of source for the first chunk.
+ * @dst_start: Bus address of destination for the first chunk.
+ * @dir: Specifies the type of Source and Destination.
+ * @src_inc: If the source address increments after reading from it.
  * @dst_inc: If the destination address increments after writing to it.
- * @src_sgl: If the 'icg' of sgl[] applies to Source (scattered पढ़ो).
- *		Otherwise, source is पढ़ो contiguously (icg ignored).
- *		Ignored अगर src_inc is false.
- * @dst_sgl: If the 'icg' of sgl[] applies to Destination (scattered ग_लिखो).
+ * @src_sgl: If the 'icg' of sgl[] applies to Source (scattered read).
+ *		Otherwise, source is read contiguously (icg ignored).
+ *		Ignored if src_inc is false.
+ * @dst_sgl: If the 'icg' of sgl[] applies to Destination (scattered write).
  *		Otherwise, destination is filled contiguously (icg ignored).
- *		Ignored अगर dst_inc is false.
- * @numf: Number of frames in this ढाँचा.
+ *		Ignored if dst_inc is false.
+ * @numf: Number of frames in this template.
  * @frame_size: Number of chunks in a frame i.e, size of sgl[].
- * @sgl: Array of अणुchunk,icgपूर्ण pairs that make up a frame.
+ * @sgl: Array of {chunk,icg} pairs that make up a frame.
  */
-काष्ठा dma_पूर्णांकerleaved_ढाँचा अणु
+struct dma_interleaved_template {
 	dma_addr_t src_start;
 	dma_addr_t dst_start;
-	क्रमागत dma_transfer_direction dir;
+	enum dma_transfer_direction dir;
 	bool src_inc;
 	bool dst_inc;
 	bool src_sgl;
 	bool dst_sgl;
-	माप_प्रकार numf;
-	माप_प्रकार frame_size;
-	काष्ठा data_chunk sgl[];
-पूर्ण;
+	size_t numf;
+	size_t frame_size;
+	struct data_chunk sgl[];
+};
 
 /**
- * क्रमागत dma_ctrl_flags - DMA flags to augment operation preparation,
+ * enum dma_ctrl_flags - DMA flags to augment operation preparation,
  *  control completion, and communicate status.
- * @DMA_PREP_INTERRUPT - trigger an पूर्णांकerrupt (callback) upon completion of
+ * @DMA_PREP_INTERRUPT - trigger an interrupt (callback) upon completion of
  *  this transaction
- * @DMA_CTRL_ACK - अगर clear, the descriptor cannot be reused until the client
+ * @DMA_CTRL_ACK - if clear, the descriptor cannot be reused until the client
  *  acknowledges receipt, i.e. has a chance to establish any dependency
  *  chains
- * @DMA_PREP_PQ_DISABLE_P - prevent generation of P जबतक generating Q
- * @DMA_PREP_PQ_DISABLE_Q - prevent generation of Q जबतक generating P
+ * @DMA_PREP_PQ_DISABLE_P - prevent generation of P while generating Q
+ * @DMA_PREP_PQ_DISABLE_Q - prevent generation of Q while generating P
  * @DMA_PREP_CONTINUE - indicate to a driver that it is reusing buffers as
- *  sources that were the result of a previous operation, in the हाल of a PQ
- *  operation it जारीs the calculation with new sources
+ *  sources that were the result of a previous operation, in the case of a PQ
+ *  operation it continues the calculation with new sources
  * @DMA_PREP_FENCE - tell the driver that subsequent operations depend
  *  on the result of this operation
  * @DMA_CTRL_REUSE: client can reuse the descriptor and submit again till
- *  cleared or मुक्तd
+ *  cleared or freed
  * @DMA_PREP_CMD: tell the driver that the data passed to DMA API is command
- *  data and the descriptor should be in dअगरferent क्रमmat from normal
+ *  data and the descriptor should be in different format from normal
  *  data descriptors.
- * @DMA_PREP_REPEAT: tell the driver that the transaction shall be स्वतःmatically
+ * @DMA_PREP_REPEAT: tell the driver that the transaction shall be automatically
  *  repeated when it ends until a transaction is issued on the same channel
  *  with the DMA_PREP_LOAD_EOT flag set. This flag is only applicable to
- *  पूर्णांकerleaved transactions and is ignored क्रम all other transaction types.
+ *  interleaved transactions and is ignored for all other transaction types.
  * @DMA_PREP_LOAD_EOT: tell the driver that the transaction shall replace any
  *  active repeated (as indicated by DMA_PREP_REPEAT) transaction when the
  *  repeated transaction ends. Not setting this flag when the previously queued
  *  transaction is marked with DMA_PREP_REPEAT will cause the new transaction
- *  to never be processed and stay in the issued queue क्रमever. The flag is
- *  ignored अगर the previous transaction is not a repeated transaction.
+ *  to never be processed and stay in the issued queue forever. The flag is
+ *  ignored if the previous transaction is not a repeated transaction.
  */
-क्रमागत dma_ctrl_flags अणु
+enum dma_ctrl_flags {
 	DMA_PREP_INTERRUPT = (1 << 0),
 	DMA_CTRL_ACK = (1 << 1),
 	DMA_PREP_PQ_DISABLE_P = (1 << 2),
@@ -203,49 +202,49 @@
 	DMA_PREP_CMD = (1 << 7),
 	DMA_PREP_REPEAT = (1 << 8),
 	DMA_PREP_LOAD_EOT = (1 << 9),
-पूर्ण;
+};
 
 /**
- * क्रमागत sum_check_bits - bit position of pq_check_flags
+ * enum sum_check_bits - bit position of pq_check_flags
  */
-क्रमागत sum_check_bits अणु
+enum sum_check_bits {
 	SUM_CHECK_P = 0,
 	SUM_CHECK_Q = 1,
-पूर्ण;
+};
 
 /**
- * क्रमागत pq_check_flags - result of async_अणुxor,pqपूर्ण_zero_sum operations
- * @SUM_CHECK_P_RESULT - 1 अगर xor zero sum error, 0 otherwise
- * @SUM_CHECK_Q_RESULT - 1 अगर reed-solomon zero sum error, 0 otherwise
+ * enum pq_check_flags - result of async_{xor,pq}_zero_sum operations
+ * @SUM_CHECK_P_RESULT - 1 if xor zero sum error, 0 otherwise
+ * @SUM_CHECK_Q_RESULT - 1 if reed-solomon zero sum error, 0 otherwise
  */
-क्रमागत sum_check_flags अणु
+enum sum_check_flags {
 	SUM_CHECK_P_RESULT = (1 << SUM_CHECK_P),
 	SUM_CHECK_Q_RESULT = (1 << SUM_CHECK_Q),
-पूर्ण;
+};
 
 
 /**
- * dma_cap_mask_t - capabilities biपंचांगap modeled after cpumask_t.
+ * dma_cap_mask_t - capabilities bitmap modeled after cpumask_t.
  * See linux/cpumask.h
  */
-प्रकार काष्ठा अणु DECLARE_BITMAP(bits, DMA_TX_TYPE_END); पूर्ण dma_cap_mask_t;
+typedef struct { DECLARE_BITMAP(bits, DMA_TX_TYPE_END); } dma_cap_mask_t;
 
 /**
- * काष्ठा dma_chan_percpu - the per-CPU part of काष्ठा dma_chan
- * @स_नकल_count: transaction counter
+ * struct dma_chan_percpu - the per-CPU part of struct dma_chan
+ * @memcpy_count: transaction counter
  * @bytes_transferred: byte counter
  */
 
 /**
- * क्रमागत dma_desc_metadata_mode - per descriptor metadata mode types supported
+ * enum dma_desc_metadata_mode - per descriptor metadata mode types supported
  * @DESC_METADATA_CLIENT - the metadata buffer is allocated/provided by the
  *  client driver and it is attached (via the dmaengine_desc_attach_metadata()
  *  helper) to the descriptor.
  *
- * Client drivers पूर्णांकerested to use this mode can follow:
+ * Client drivers interested to use this mode can follow:
  * - DMA_MEM_TO_DEV / DEV_MEM_TO_MEM:
  *   1. prepare the descriptor (dmaengine_prep_*)
- *	स्थिरruct the metadata in the client's buffer
+ *	construct the metadata in the client's buffer
  *   2. use dmaengine_desc_attach_metadata() to attach the buffer to the
  *	descriptor
  *   3. submit the transfer
@@ -258,121 +257,121 @@
  *	attached buffer
  *
  * @DESC_METADATA_ENGINE - the metadata buffer is allocated/managed by the DMA
- *  driver. The client driver can ask क्रम the poपूर्णांकer, maximum size and the
- *  currently used size of the metadata and can directly update or पढ़ो it.
+ *  driver. The client driver can ask for the pointer, maximum size and the
+ *  currently used size of the metadata and can directly update or read it.
  *  dmaengine_desc_get_metadata_ptr() and dmaengine_desc_set_metadata_len() is
  *  provided as helper functions.
  *
- *  Note: the metadata area क्रम the descriptor is no दीर्घer valid after the
- *  transfer has been completed (valid up to the poपूर्णांक when the completion
- *  callback वापसs अगर used).
+ *  Note: the metadata area for the descriptor is no longer valid after the
+ *  transfer has been completed (valid up to the point when the completion
+ *  callback returns if used).
  *
- * Client drivers पूर्णांकerested to use this mode can follow:
+ * Client drivers interested to use this mode can follow:
  * - DMA_MEM_TO_DEV / DEV_MEM_TO_MEM:
  *   1. prepare the descriptor (dmaengine_prep_*)
- *   2. use dmaengine_desc_get_metadata_ptr() to get the poपूर्णांकer to the engine's
+ *   2. use dmaengine_desc_get_metadata_ptr() to get the pointer to the engine's
  *	metadata area
- *   3. update the metadata at the poपूर्णांकer
+ *   3. update the metadata at the pointer
  *   4. use dmaengine_desc_set_metadata_len()  to tell the DMA engine the amount
- *	of data the client has placed पूर्णांकo the metadata buffer
+ *	of data the client has placed into the metadata buffer
  *   5. submit the transfer
  * - DMA_DEV_TO_MEM:
  *   1. prepare the descriptor (dmaengine_prep_*)
  *   2. submit the transfer
  *   3. on transfer completion, use dmaengine_desc_get_metadata_ptr() to get the
- *	poपूर्णांकer to the engine's metadata area
- *   4. Read out the metadata from the poपूर्णांकer
+ *	pointer to the engine's metadata area
+ *   4. Read out the metadata from the pointer
  *
- * Note: the two mode is not compatible and clients must use one mode क्रम a
+ * Note: the two mode is not compatible and clients must use one mode for a
  * descriptor.
  */
-क्रमागत dma_desc_metadata_mode अणु
+enum dma_desc_metadata_mode {
 	DESC_METADATA_NONE = 0,
 	DESC_METADATA_CLIENT = BIT(0),
 	DESC_METADATA_ENGINE = BIT(1),
-पूर्ण;
+};
 
-काष्ठा dma_chan_percpu अणु
+struct dma_chan_percpu {
 	/* stats */
-	अचिन्हित दीर्घ स_नकल_count;
-	अचिन्हित दीर्घ bytes_transferred;
-पूर्ण;
+	unsigned long memcpy_count;
+	unsigned long bytes_transferred;
+};
 
 /**
- * काष्ठा dma_router - DMA router काष्ठाure
- * @dev: poपूर्णांकer to the DMA router device
- * @route_मुक्त: function to be called when the route can be disconnected
+ * struct dma_router - DMA router structure
+ * @dev: pointer to the DMA router device
+ * @route_free: function to be called when the route can be disconnected
  */
-काष्ठा dma_router अणु
-	काष्ठा device *dev;
-	व्योम (*route_मुक्त)(काष्ठा device *dev, व्योम *route_data);
-पूर्ण;
+struct dma_router {
+	struct device *dev;
+	void (*route_free)(struct device *dev, void *route_data);
+};
 
 /**
- * काष्ठा dma_chan - devices supply DMA channels, clients use them
- * @device: ptr to the dma device who supplies this channel, always !%शून्य
+ * struct dma_chan - devices supply DMA channels, clients use them
+ * @device: ptr to the dma device who supplies this channel, always !%NULL
  * @slave: ptr to the device using this channel
- * @cookie: last cookie value वापसed to client
- * @completed_cookie: last completed cookie क्रम this channel
- * @chan_id: channel ID क्रम sysfs
- * @dev: class device क्रम sysfs
- * @name: backlink name क्रम sysfs
- * @dbg_client_name: slave name क्रम debugfs in क्रमmat:
- *	dev_name(requester's dev):channel name, क्रम example: "2b00000.mcasp:tx"
+ * @cookie: last cookie value returned to client
+ * @completed_cookie: last completed cookie for this channel
+ * @chan_id: channel ID for sysfs
+ * @dev: class device for sysfs
+ * @name: backlink name for sysfs
+ * @dbg_client_name: slave name for debugfs in format:
+ *	dev_name(requester's dev):channel name, for example: "2b00000.mcasp:tx"
  * @device_node: used to add this to the device chan list
- * @local: per-cpu poपूर्णांकer to a काष्ठा dma_chan_percpu
+ * @local: per-cpu pointer to a struct dma_chan_percpu
  * @client_count: how many clients are using this channel
  * @table_count: number of appearances in the mem-to-mem allocation table
- * @router: poपूर्णांकer to the DMA router काष्ठाure
- * @route_data: channel specअगरic data क्रम the router
- * @निजी: निजी data क्रम certain client-channel associations
+ * @router: pointer to the DMA router structure
+ * @route_data: channel specific data for the router
+ * @private: private data for certain client-channel associations
  */
-काष्ठा dma_chan अणु
-	काष्ठा dma_device *device;
-	काष्ठा device *slave;
+struct dma_chan {
+	struct dma_device *device;
+	struct device *slave;
 	dma_cookie_t cookie;
 	dma_cookie_t completed_cookie;
 
 	/* sysfs */
-	पूर्णांक chan_id;
-	काष्ठा dma_chan_dev *dev;
-	स्थिर अक्षर *name;
-#अगर_घोषित CONFIG_DEBUG_FS
-	अक्षर *dbg_client_name;
-#पूर्ण_अगर
+	int chan_id;
+	struct dma_chan_dev *dev;
+	const char *name;
+#ifdef CONFIG_DEBUG_FS
+	char *dbg_client_name;
+#endif
 
-	काष्ठा list_head device_node;
-	काष्ठा dma_chan_percpu __percpu *local;
-	पूर्णांक client_count;
-	पूर्णांक table_count;
+	struct list_head device_node;
+	struct dma_chan_percpu __percpu *local;
+	int client_count;
+	int table_count;
 
 	/* DMA router */
-	काष्ठा dma_router *router;
-	व्योम *route_data;
+	struct dma_router *router;
+	void *route_data;
 
-	व्योम *निजी;
-पूर्ण;
+	void *private;
+};
 
 /**
- * काष्ठा dma_chan_dev - relate sysfs device node to backing channel device
+ * struct dma_chan_dev - relate sysfs device node to backing channel device
  * @chan: driver channel device
  * @device: sysfs device
  * @dev_id: parent dma_device dev_id
- * @chan_dma_dev: The channel is using custom/dअगरferent dma-mapping
+ * @chan_dma_dev: The channel is using custom/different dma-mapping
  * compared to the parent dma_device
  */
-काष्ठा dma_chan_dev अणु
-	काष्ठा dma_chan *chan;
-	काष्ठा device device;
-	पूर्णांक dev_id;
+struct dma_chan_dev {
+	struct dma_chan *chan;
+	struct device device;
+	int dev_id;
 	bool chan_dma_dev;
-पूर्ण;
+};
 
 /**
- * क्रमागत dma_slave_buswidth - defines bus width of the DMA slave
+ * enum dma_slave_buswidth - defines bus width of the DMA slave
  * device, source or target buses
  */
-क्रमागत dma_slave_buswidth अणु
+enum dma_slave_buswidth {
 	DMA_SLAVE_BUSWIDTH_UNDEFINED = 0,
 	DMA_SLAVE_BUSWIDTH_1_BYTE = 1,
 	DMA_SLAVE_BUSWIDTH_2_BYTES = 2,
@@ -382,80 +381,80 @@
 	DMA_SLAVE_BUSWIDTH_16_BYTES = 16,
 	DMA_SLAVE_BUSWIDTH_32_BYTES = 32,
 	DMA_SLAVE_BUSWIDTH_64_BYTES = 64,
-पूर्ण;
+};
 
 /**
- * काष्ठा dma_slave_config - dma slave channel runसमय config
+ * struct dma_slave_config - dma slave channel runtime config
  * @direction: whether the data shall go in or out on this slave
  * channel, right now. DMA_MEM_TO_DEV and DMA_DEV_TO_MEM are
  * legal values. DEPRECATED, drivers should use the direction argument
  * to the device_prep_slave_sg and device_prep_dma_cyclic functions or
- * the dir field in the dma_पूर्णांकerleaved_ढाँचा काष्ठाure.
+ * the dir field in the dma_interleaved_template structure.
  * @src_addr: this is the physical address where DMA slave data
- * should be पढ़ो (RX), अगर the source is memory this argument is
+ * should be read (RX), if the source is memory this argument is
  * ignored.
  * @dst_addr: this is the physical address where DMA slave data
- * should be written (TX), अगर the source is memory this argument
+ * should be written (TX), if the source is memory this argument
  * is ignored.
  * @src_addr_width: this is the width in bytes of the source (RX)
- * रेजिस्टर where DMA data shall be पढ़ो. If the source
+ * register where DMA data shall be read. If the source
  * is memory this may be ignored depending on architecture.
  * Legal values: 1, 2, 3, 4, 8, 16, 32, 64.
- * @dst_addr_width: same as src_addr_width but क्रम destination
+ * @dst_addr_width: same as src_addr_width but for destination
  * target (TX) mutatis mutandis.
  * @src_maxburst: the maximum number of words (note: words, as in
  * units of the src_addr_width member, not bytes) that can be sent
  * in one burst to the device. Typically something like half the
- * FIFO depth on I/O peripherals so you करोn't overflow it. This
+ * FIFO depth on I/O peripherals so you don't overflow it. This
  * may or may not be applicable on memory sources.
- * @dst_maxburst: same as src_maxburst but क्रम destination target
+ * @dst_maxburst: same as src_maxburst but for destination target
  * mutatis mutandis.
- * @src_port_winकरोw_size: The length of the रेजिस्टर area in words the data need
- * to be accessed on the device side. It is only used क्रम devices which is using
- * an area instead of a single रेजिस्टर to receive the data. Typically the DMA
+ * @src_port_window_size: The length of the register area in words the data need
+ * to be accessed on the device side. It is only used for devices which is using
+ * an area instead of a single register to receive the data. Typically the DMA
  * loops in this area in order to transfer the data.
- * @dst_port_winकरोw_size: same as src_port_winकरोw_size but क्रम the destination
+ * @dst_port_window_size: same as src_port_window_size but for the destination
  * port.
- * @device_fc: Flow Controller Settings. Only valid क्रम slave channels. Fill
- * with 'true' अगर peripheral should be flow controller. Direction will be
- * selected at Runसमय.
- * @slave_id: Slave requester id. Only valid क्रम slave channels. The dma
+ * @device_fc: Flow Controller Settings. Only valid for slave channels. Fill
+ * with 'true' if peripheral should be flow controller. Direction will be
+ * selected at Runtime.
+ * @slave_id: Slave requester id. Only valid for slave channels. The dma
  * slave peripheral will have unique id as dma requester which need to be
  * pass as slave config.
- * @peripheral_config: peripheral configuration क्रम programming peripheral
- * क्रम dmaengine transfer
+ * @peripheral_config: peripheral configuration for programming peripheral
+ * for dmaengine transfer
  * @peripheral_size: peripheral configuration buffer size
  *
- * This काष्ठा is passed in as configuration data to a DMA engine
- * in order to set up a certain channel क्रम DMA transport at runसमय.
- * The DMA device/engine has to provide support क्रम an additional
- * callback in the dma_device काष्ठाure, device_config and this काष्ठा
+ * This struct is passed in as configuration data to a DMA engine
+ * in order to set up a certain channel for DMA transport at runtime.
+ * The DMA device/engine has to provide support for an additional
+ * callback in the dma_device structure, device_config and this struct
  * will then be passed in as an argument to the function.
  *
- * The rationale क्रम adding configuration inक्रमmation to this काष्ठा is as
- * follows: अगर it is likely that more than one DMA slave controllers in
+ * The rationale for adding configuration information to this struct is as
+ * follows: if it is likely that more than one DMA slave controllers in
  * the world will support the configuration option, then make it generic.
- * If not: अगर it is fixed so that it be sent in अटल from the platक्रमm
- * data, then prefer to करो that.
+ * If not: if it is fixed so that it be sent in static from the platform
+ * data, then prefer to do that.
  */
-काष्ठा dma_slave_config अणु
-	क्रमागत dma_transfer_direction direction;
+struct dma_slave_config {
+	enum dma_transfer_direction direction;
 	phys_addr_t src_addr;
 	phys_addr_t dst_addr;
-	क्रमागत dma_slave_buswidth src_addr_width;
-	क्रमागत dma_slave_buswidth dst_addr_width;
+	enum dma_slave_buswidth src_addr_width;
+	enum dma_slave_buswidth dst_addr_width;
 	u32 src_maxburst;
 	u32 dst_maxburst;
-	u32 src_port_winकरोw_size;
-	u32 dst_port_winकरोw_size;
+	u32 src_port_window_size;
+	u32 dst_port_window_size;
 	bool device_fc;
-	अचिन्हित पूर्णांक slave_id;
-	व्योम *peripheral_config;
-	माप_प्रकार peripheral_size;
-पूर्ण;
+	unsigned int slave_id;
+	void *peripheral_config;
+	size_t peripheral_size;
+};
 
 /**
- * क्रमागत dma_residue_granularity - Granularity of the reported transfer residue
+ * enum dma_residue_granularity - Granularity of the reported transfer residue
  * @DMA_RESIDUE_GRANULARITY_DESCRIPTOR: Residue reporting is not support. The
  *  DMA channel is only able to tell whether a descriptor has been completed or
  *  not, which means residue reporting is not supported by this channel. The
@@ -463,133 +462,133 @@
  * @DMA_RESIDUE_GRANULARITY_SEGMENT: Residue is updated after each successfully
  *  completed segment of the transfer (For cyclic transfers this is after each
  *  period). This is typically implemented by having the hardware generate an
- *  पूर्णांकerrupt after each transferred segment and then the drivers updates the
- *  outstanding residue by the size of the segment. Another possibility is अगर
+ *  interrupt after each transferred segment and then the drivers updates the
+ *  outstanding residue by the size of the segment. Another possibility is if
  *  the hardware supports scatter-gather and the segment descriptor has a field
- *  which माला_लो set after the segment has been completed. The driver then counts
+ *  which gets set after the segment has been completed. The driver then counts
  *  the number of segments without the flag set to compute the residue.
  * @DMA_RESIDUE_GRANULARITY_BURST: Residue is updated after each transferred
- *  burst. This is typically only supported अगर the hardware has a progress
- *  रेजिस्टर of some sort (E.g. a रेजिस्टर with the current पढ़ो/ग_लिखो address
- *  or a रेजिस्टर with the amount of bursts/beats/bytes that have been
+ *  burst. This is typically only supported if the hardware has a progress
+ *  register of some sort (E.g. a register with the current read/write address
+ *  or a register with the amount of bursts/beats/bytes that have been
  *  transferred or still need to be transferred).
  */
-क्रमागत dma_residue_granularity अणु
+enum dma_residue_granularity {
 	DMA_RESIDUE_GRANULARITY_DESCRIPTOR = 0,
 	DMA_RESIDUE_GRANULARITY_SEGMENT = 1,
 	DMA_RESIDUE_GRANULARITY_BURST = 2,
-पूर्ण;
+};
 
 /**
- * काष्ठा dma_slave_caps - expose capabilities of a slave channel only
+ * struct dma_slave_caps - expose capabilities of a slave channel only
  * @src_addr_widths: bit mask of src addr widths the channel supports.
- *	Width is specअगरied in bytes, e.g. क्रम a channel supporting
+ *	Width is specified in bytes, e.g. for a channel supporting
  *	a width of 4 the mask should have BIT(4) set.
  * @dst_addr_widths: bit mask of dst addr widths the channel supports
  * @directions: bit mask of slave directions the channel supports.
- *	Since the क्रमागत dma_transfer_direction is not defined as bit flag क्रम
+ *	Since the enum dma_transfer_direction is not defined as bit flag for
  *	each type, the dma controller should set BIT(<TYPE>) and same
  *	should be checked by controller as well
  * @min_burst: min burst capability per-transfer
  * @max_burst: max burst capability per-transfer
  * @max_sg_burst: max number of SG list entries executed in a single burst
- *	DMA tansaction with no software पूर्णांकervention क्रम reinitialization.
+ *	DMA tansaction with no software intervention for reinitialization.
  *	Zero value means unlimited number of entries.
- * @cmd_छोड़ो: true, अगर छोड़ो is supported (i.e. क्रम पढ़ोing residue or
- *	       क्रम resume later)
- * @cmd_resume: true, अगर resume is supported
- * @cmd_terminate: true, अगर terminate cmd is supported
+ * @cmd_pause: true, if pause is supported (i.e. for reading residue or
+ *	       for resume later)
+ * @cmd_resume: true, if resume is supported
+ * @cmd_terminate: true, if terminate cmd is supported
  * @residue_granularity: granularity of the reported transfer residue
- * @descriptor_reuse: अगर a descriptor can be reused by client and
- * resubmitted multiple बार
+ * @descriptor_reuse: if a descriptor can be reused by client and
+ * resubmitted multiple times
  */
-काष्ठा dma_slave_caps अणु
+struct dma_slave_caps {
 	u32 src_addr_widths;
 	u32 dst_addr_widths;
 	u32 directions;
 	u32 min_burst;
 	u32 max_burst;
 	u32 max_sg_burst;
-	bool cmd_छोड़ो;
+	bool cmd_pause;
 	bool cmd_resume;
 	bool cmd_terminate;
-	क्रमागत dma_residue_granularity residue_granularity;
+	enum dma_residue_granularity residue_granularity;
 	bool descriptor_reuse;
-पूर्ण;
+};
 
-अटल अंतरभूत स्थिर अक्षर *dma_chan_name(काष्ठा dma_chan *chan)
-अणु
-	वापस dev_name(&chan->dev->device);
-पूर्ण
+static inline const char *dma_chan_name(struct dma_chan *chan)
+{
+	return dev_name(&chan->dev->device);
+}
 
-व्योम dma_chan_cleanup(काष्ठा kref *kref);
+void dma_chan_cleanup(struct kref *kref);
 
 /**
- * प्रकार dma_filter_fn - callback filter क्रम dma_request_channel
+ * typedef dma_filter_fn - callback filter for dma_request_channel
  * @chan: channel to be reviewed
  * @filter_param: opaque parameter passed through dma_request_channel
  *
- * When this optional parameter is specअगरied in a call to dma_request_channel a
- * suitable channel is passed to this routine क्रम further dispositioning beक्रमe
- * being वापसed.  Where 'suitable' indicates a non-busy channel that
- * satisfies the given capability mask.  It वापसs 'true' to indicate that the
+ * When this optional parameter is specified in a call to dma_request_channel a
+ * suitable channel is passed to this routine for further dispositioning before
+ * being returned.  Where 'suitable' indicates a non-busy channel that
+ * satisfies the given capability mask.  It returns 'true' to indicate that the
  * channel is suitable.
  */
-प्रकार bool (*dma_filter_fn)(काष्ठा dma_chan *chan, व्योम *filter_param);
+typedef bool (*dma_filter_fn)(struct dma_chan *chan, void *filter_param);
 
-प्रकार व्योम (*dma_async_tx_callback)(व्योम *dma_async_param);
+typedef void (*dma_async_tx_callback)(void *dma_async_param);
 
-क्रमागत dmaengine_tx_result अणु
+enum dmaengine_tx_result {
 	DMA_TRANS_NOERROR = 0,		/* SUCCESS */
-	DMA_TRANS_READ_FAILED,		/* Source DMA पढ़ो failed */
-	DMA_TRANS_WRITE_FAILED,		/* Destination DMA ग_लिखो failed */
-	DMA_TRANS_ABORTED,		/* Op never submitted / पातed */
-पूर्ण;
+	DMA_TRANS_READ_FAILED,		/* Source DMA read failed */
+	DMA_TRANS_WRITE_FAILED,		/* Destination DMA write failed */
+	DMA_TRANS_ABORTED,		/* Op never submitted / aborted */
+};
 
-काष्ठा dmaengine_result अणु
-	क्रमागत dmaengine_tx_result result;
+struct dmaengine_result {
+	enum dmaengine_tx_result result;
 	u32 residue;
-पूर्ण;
+};
 
-प्रकार व्योम (*dma_async_tx_callback_result)(व्योम *dma_async_param,
-				स्थिर काष्ठा dmaengine_result *result);
+typedef void (*dma_async_tx_callback_result)(void *dma_async_param,
+				const struct dmaengine_result *result);
 
-काष्ठा dmaengine_unmap_data अणु
-#अगर IS_ENABLED(CONFIG_DMA_ENGINE_RAID)
+struct dmaengine_unmap_data {
+#if IS_ENABLED(CONFIG_DMA_ENGINE_RAID)
 	u16 map_cnt;
-#अन्यथा
+#else
 	u8 map_cnt;
-#पूर्ण_अगर
+#endif
 	u8 to_cnt;
 	u8 from_cnt;
 	u8 bidi_cnt;
-	काष्ठा device *dev;
-	काष्ठा kref kref;
-	माप_प्रकार len;
+	struct device *dev;
+	struct kref kref;
+	size_t len;
 	dma_addr_t addr[];
-पूर्ण;
+};
 
-काष्ठा dma_async_tx_descriptor;
+struct dma_async_tx_descriptor;
 
-काष्ठा dma_descriptor_metadata_ops अणु
-	पूर्णांक (*attach)(काष्ठा dma_async_tx_descriptor *desc, व्योम *data,
-		      माप_प्रकार len);
+struct dma_descriptor_metadata_ops {
+	int (*attach)(struct dma_async_tx_descriptor *desc, void *data,
+		      size_t len);
 
-	व्योम *(*get_ptr)(काष्ठा dma_async_tx_descriptor *desc,
-			 माप_प्रकार *payload_len, माप_प्रकार *max_len);
-	पूर्णांक (*set_len)(काष्ठा dma_async_tx_descriptor *desc,
-		       माप_प्रकार payload_len);
-पूर्ण;
+	void *(*get_ptr)(struct dma_async_tx_descriptor *desc,
+			 size_t *payload_len, size_t *max_len);
+	int (*set_len)(struct dma_async_tx_descriptor *desc,
+		       size_t payload_len);
+};
 
 /**
- * काष्ठा dma_async_tx_descriptor - async transaction descriptor
+ * struct dma_async_tx_descriptor - async transaction descriptor
  * ---dma generic offload fields---
- * @cookie: tracking cookie क्रम this transaction, set to -EBUSY अगर
+ * @cookie: tracking cookie for this transaction, set to -EBUSY if
  *	this tx is sitting on a dependency list
  * @flags: flags to augment operation preparation, control completion, and
  *	communicate status
  * @phys: physical address of the descriptor
- * @chan: target channel क्रम this operation
+ * @chan: target channel for this operation
  * @tx_submit: accept the descriptor, assign ordered cookie and mark the
  * descriptor pending. To be pushed on .issue_pending() call
  * @callback: routine to call after this operation is complete
@@ -598,147 +597,147 @@
  *	DESC_METADATA_CLIENT or DESC_METADATA_ENGINE. Otherwise
  *	DESC_METADATA_NONE
  * @metadata_ops: DMA driver provided metadata mode ops, need to be set by the
- *	DMA driver अगर metadata mode is supported with the descriptor
- * ---async_tx api specअगरic fields---
+ *	DMA driver if metadata mode is supported with the descriptor
+ * ---async_tx api specific fields---
  * @next: at completion submit this descriptor
- * @parent: poपूर्णांकer to the next level up in the dependency chain
- * @lock: protect the parent and next poपूर्णांकers
+ * @parent: pointer to the next level up in the dependency chain
+ * @lock: protect the parent and next pointers
  */
-काष्ठा dma_async_tx_descriptor अणु
+struct dma_async_tx_descriptor {
 	dma_cookie_t cookie;
-	क्रमागत dma_ctrl_flags flags; /* not a 'long' to pack with cookie */
+	enum dma_ctrl_flags flags; /* not a 'long' to pack with cookie */
 	dma_addr_t phys;
-	काष्ठा dma_chan *chan;
-	dma_cookie_t (*tx_submit)(काष्ठा dma_async_tx_descriptor *tx);
-	पूर्णांक (*desc_मुक्त)(काष्ठा dma_async_tx_descriptor *tx);
+	struct dma_chan *chan;
+	dma_cookie_t (*tx_submit)(struct dma_async_tx_descriptor *tx);
+	int (*desc_free)(struct dma_async_tx_descriptor *tx);
 	dma_async_tx_callback callback;
 	dma_async_tx_callback_result callback_result;
-	व्योम *callback_param;
-	काष्ठा dmaengine_unmap_data *unmap;
-	क्रमागत dma_desc_metadata_mode desc_metadata_mode;
-	काष्ठा dma_descriptor_metadata_ops *metadata_ops;
-#अगर_घोषित CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
-	काष्ठा dma_async_tx_descriptor *next;
-	काष्ठा dma_async_tx_descriptor *parent;
+	void *callback_param;
+	struct dmaengine_unmap_data *unmap;
+	enum dma_desc_metadata_mode desc_metadata_mode;
+	struct dma_descriptor_metadata_ops *metadata_ops;
+#ifdef CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
+	struct dma_async_tx_descriptor *next;
+	struct dma_async_tx_descriptor *parent;
 	spinlock_t lock;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_DMA_ENGINE
-अटल अंतरभूत व्योम dma_set_unmap(काष्ठा dma_async_tx_descriptor *tx,
-				 काष्ठा dmaengine_unmap_data *unmap)
-अणु
+#ifdef CONFIG_DMA_ENGINE
+static inline void dma_set_unmap(struct dma_async_tx_descriptor *tx,
+				 struct dmaengine_unmap_data *unmap)
+{
 	kref_get(&unmap->kref);
 	tx->unmap = unmap;
-पूर्ण
+}
 
-काष्ठा dmaengine_unmap_data *
-dmaengine_get_unmap_data(काष्ठा device *dev, पूर्णांक nr, gfp_t flags);
-व्योम dmaengine_unmap_put(काष्ठा dmaengine_unmap_data *unmap);
-#अन्यथा
-अटल अंतरभूत व्योम dma_set_unmap(काष्ठा dma_async_tx_descriptor *tx,
-				 काष्ठा dmaengine_unmap_data *unmap)
-अणु
-पूर्ण
-अटल अंतरभूत काष्ठा dmaengine_unmap_data *
-dmaengine_get_unmap_data(काष्ठा device *dev, पूर्णांक nr, gfp_t flags)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत व्योम dmaengine_unmap_put(काष्ठा dmaengine_unmap_data *unmap)
-अणु
-पूर्ण
-#पूर्ण_अगर
+struct dmaengine_unmap_data *
+dmaengine_get_unmap_data(struct device *dev, int nr, gfp_t flags);
+void dmaengine_unmap_put(struct dmaengine_unmap_data *unmap);
+#else
+static inline void dma_set_unmap(struct dma_async_tx_descriptor *tx,
+				 struct dmaengine_unmap_data *unmap)
+{
+}
+static inline struct dmaengine_unmap_data *
+dmaengine_get_unmap_data(struct device *dev, int nr, gfp_t flags)
+{
+	return NULL;
+}
+static inline void dmaengine_unmap_put(struct dmaengine_unmap_data *unmap)
+{
+}
+#endif
 
-अटल अंतरभूत व्योम dma_descriptor_unmap(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	अगर (!tx->unmap)
-		वापस;
+static inline void dma_descriptor_unmap(struct dma_async_tx_descriptor *tx)
+{
+	if (!tx->unmap)
+		return;
 
 	dmaengine_unmap_put(tx->unmap);
-	tx->unmap = शून्य;
-पूर्ण
+	tx->unmap = NULL;
+}
 
-#अगर_अघोषित CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
-अटल अंतरभूत व्योम txd_lock(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम txd_unlock(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम txd_chain(काष्ठा dma_async_tx_descriptor *txd, काष्ठा dma_async_tx_descriptor *next)
-अणु
+#ifndef CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
+static inline void txd_lock(struct dma_async_tx_descriptor *txd)
+{
+}
+static inline void txd_unlock(struct dma_async_tx_descriptor *txd)
+{
+}
+static inline void txd_chain(struct dma_async_tx_descriptor *txd, struct dma_async_tx_descriptor *next)
+{
 	BUG();
-पूर्ण
-अटल अंतरभूत व्योम txd_clear_parent(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम txd_clear_next(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-पूर्ण
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *txd_next(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *txd_parent(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस शून्य;
-पूर्ण
+}
+static inline void txd_clear_parent(struct dma_async_tx_descriptor *txd)
+{
+}
+static inline void txd_clear_next(struct dma_async_tx_descriptor *txd)
+{
+}
+static inline struct dma_async_tx_descriptor *txd_next(struct dma_async_tx_descriptor *txd)
+{
+	return NULL;
+}
+static inline struct dma_async_tx_descriptor *txd_parent(struct dma_async_tx_descriptor *txd)
+{
+	return NULL;
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम txd_lock(काष्ठा dma_async_tx_descriptor *txd)
-अणु
+#else
+static inline void txd_lock(struct dma_async_tx_descriptor *txd)
+{
 	spin_lock_bh(&txd->lock);
-पूर्ण
-अटल अंतरभूत व्योम txd_unlock(काष्ठा dma_async_tx_descriptor *txd)
-अणु
+}
+static inline void txd_unlock(struct dma_async_tx_descriptor *txd)
+{
 	spin_unlock_bh(&txd->lock);
-पूर्ण
-अटल अंतरभूत व्योम txd_chain(काष्ठा dma_async_tx_descriptor *txd, काष्ठा dma_async_tx_descriptor *next)
-अणु
+}
+static inline void txd_chain(struct dma_async_tx_descriptor *txd, struct dma_async_tx_descriptor *next)
+{
 	txd->next = next;
 	next->parent = txd;
-पूर्ण
-अटल अंतरभूत व्योम txd_clear_parent(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	txd->parent = शून्य;
-पूर्ण
-अटल अंतरभूत व्योम txd_clear_next(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	txd->next = शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *txd_parent(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस txd->parent;
-पूर्ण
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *txd_next(काष्ठा dma_async_tx_descriptor *txd)
-अणु
-	वापस txd->next;
-पूर्ण
-#पूर्ण_अगर
+}
+static inline void txd_clear_parent(struct dma_async_tx_descriptor *txd)
+{
+	txd->parent = NULL;
+}
+static inline void txd_clear_next(struct dma_async_tx_descriptor *txd)
+{
+	txd->next = NULL;
+}
+static inline struct dma_async_tx_descriptor *txd_parent(struct dma_async_tx_descriptor *txd)
+{
+	return txd->parent;
+}
+static inline struct dma_async_tx_descriptor *txd_next(struct dma_async_tx_descriptor *txd)
+{
+	return txd->next;
+}
+#endif
 
 /**
- * काष्ठा dma_tx_state - filled in to report the status of
+ * struct dma_tx_state - filled in to report the status of
  * a transfer.
  * @last: last completed DMA cookie
  * @used: last issued DMA cookie (i.e. the one in progress)
- * @residue: the reमुख्यing number of bytes left to transmit
- *	on the selected transfer क्रम states DMA_IN_PROGRESS and
- *	DMA_PAUSED अगर this is implemented in the driver, अन्यथा 0
+ * @residue: the remaining number of bytes left to transmit
+ *	on the selected transfer for states DMA_IN_PROGRESS and
+ *	DMA_PAUSED if this is implemented in the driver, else 0
  * @in_flight_bytes: amount of data in bytes cached by the DMA.
  */
-काष्ठा dma_tx_state अणु
+struct dma_tx_state {
 	dma_cookie_t last;
 	dma_cookie_t used;
 	u32 residue;
 	u32 in_flight_bytes;
-पूर्ण;
+};
 
 /**
- * क्रमागत dmaengine_alignment - defines alignment of the DMA async tx
+ * enum dmaengine_alignment - defines alignment of the DMA async tx
  * buffers
  */
-क्रमागत dmaengine_alignment अणु
+enum dmaengine_alignment {
 	DMAENGINE_ALIGN_1_BYTE = 0,
 	DMAENGINE_ALIGN_2_BYTES = 1,
 	DMAENGINE_ALIGN_4_BYTES = 2,
@@ -748,133 +747,133 @@ dmaengine_get_unmap_data(काष्ठा device *dev, पूर्णां�
 	DMAENGINE_ALIGN_64_BYTES = 6,
 	DMAENGINE_ALIGN_128_BYTES = 7,
 	DMAENGINE_ALIGN_256_BYTES = 8,
-पूर्ण;
+};
 
 /**
- * काष्ठा dma_slave_map - associates slave device and it's slave channel with
+ * struct dma_slave_map - associates slave device and it's slave channel with
  * parameter to be used by a filter function
  * @devname: name of the device
  * @slave: slave channel name
- * @param: opaque parameter to pass to काष्ठा dma_filter.fn
+ * @param: opaque parameter to pass to struct dma_filter.fn
  */
-काष्ठा dma_slave_map अणु
-	स्थिर अक्षर *devname;
-	स्थिर अक्षर *slave;
-	व्योम *param;
-पूर्ण;
+struct dma_slave_map {
+	const char *devname;
+	const char *slave;
+	void *param;
+};
 
 /**
- * काष्ठा dma_filter - inक्रमmation क्रम slave device/channel to filter_fn/param
+ * struct dma_filter - information for slave device/channel to filter_fn/param
  * mapping
  * @fn: filter function callback
  * @mapcnt: number of slave device/channel in the map
  * @map: array of channel to filter mapping data
  */
-काष्ठा dma_filter अणु
+struct dma_filter {
 	dma_filter_fn fn;
-	पूर्णांक mapcnt;
-	स्थिर काष्ठा dma_slave_map *map;
-पूर्ण;
+	int mapcnt;
+	const struct dma_slave_map *map;
+};
 
 /**
- * काष्ठा dma_device - info on the entity supplying DMA services
+ * struct dma_device - info on the entity supplying DMA services
  * @chancnt: how many DMA channels are supported
- * @निजीcnt: how many DMA channels are requested by dma_request_channel
- * @channels: the list of काष्ठा dma_chan
- * @global_node: list_head क्रम global dma_device_list
- * @filter: inक्रमmation क्रम device/slave to filter function/param mapping
+ * @privatecnt: how many DMA channels are requested by dma_request_channel
+ * @channels: the list of struct dma_chan
+ * @global_node: list_head for global dma_device_list
+ * @filter: information for device/slave to filter function/param mapping
  * @cap_mask: one or more dma_capability flags
  * @desc_metadata_modes: supported metadata modes by the DMA device
- * @max_xor: maximum number of xor sources, 0 अगर no capability
- * @max_pq: maximum number of PQ sources and PQ-जारी capability
- * @copy_align: alignment shअगरt क्रम स_नकल operations
- * @xor_align: alignment shअगरt क्रम xor operations
- * @pq_align: alignment shअगरt क्रम pq operations
- * @fill_align: alignment shअगरt क्रम स_रखो operations
+ * @max_xor: maximum number of xor sources, 0 if no capability
+ * @max_pq: maximum number of PQ sources and PQ-continue capability
+ * @copy_align: alignment shift for memcpy operations
+ * @xor_align: alignment shift for xor operations
+ * @pq_align: alignment shift for pq operations
+ * @fill_align: alignment shift for memset operations
  * @dev_id: unique device ID
- * @dev: काष्ठा device reference क्रम dma mapping api
- * @owner: owner module (स्वतःmatically set based on the provided dev)
+ * @dev: struct device reference for dma mapping api
+ * @owner: owner module (automatically set based on the provided dev)
  * @src_addr_widths: bit mask of src addr widths the device supports
- *	Width is specअगरied in bytes, e.g. क्रम a device supporting
+ *	Width is specified in bytes, e.g. for a device supporting
  *	a width of 4 the mask should have BIT(4) set.
  * @dst_addr_widths: bit mask of dst addr widths the device supports
  * @directions: bit mask of slave directions the device supports.
- *	Since the क्रमागत dma_transfer_direction is not defined as bit flag क्रम
+ *	Since the enum dma_transfer_direction is not defined as bit flag for
  *	each type, the dma controller should set BIT(<TYPE>) and same
  *	should be checked by controller as well
  * @min_burst: min burst capability per-transfer
  * @max_burst: max burst capability per-transfer
  * @max_sg_burst: max number of SG list entries executed in a single burst
- *	DMA tansaction with no software पूर्णांकervention क्रम reinitialization.
+ *	DMA tansaction with no software intervention for reinitialization.
  *	Zero value means unlimited number of entries.
  * @residue_granularity: granularity of the transfer residue reported
  *	by tx_status
- * @device_alloc_chan_resources: allocate resources and वापस the
+ * @device_alloc_chan_resources: allocate resources and return the
  *	number of allocated descriptors
- * @device_router_config: optional callback क्रम DMA router configuration
- * @device_मुक्त_chan_resources: release DMA channel's resources
- * @device_prep_dma_स_नकल: prepares a स_नकल operation
+ * @device_router_config: optional callback for DMA router configuration
+ * @device_free_chan_resources: release DMA channel's resources
+ * @device_prep_dma_memcpy: prepares a memcpy operation
  * @device_prep_dma_xor: prepares a xor operation
  * @device_prep_dma_xor_val: prepares a xor validation operation
  * @device_prep_dma_pq: prepares a pq operation
  * @device_prep_dma_pq_val: prepares a pqzero_sum operation
- * @device_prep_dma_स_रखो: prepares a स_रखो operation
- * @device_prep_dma_स_रखो_sg: prepares a स_रखो operation over a scatter list
- * @device_prep_dma_पूर्णांकerrupt: prepares an end of chain पूर्णांकerrupt operation
+ * @device_prep_dma_memset: prepares a memset operation
+ * @device_prep_dma_memset_sg: prepares a memset operation over a scatter list
+ * @device_prep_dma_interrupt: prepares an end of chain interrupt operation
  * @device_prep_slave_sg: prepares a slave dma operation
- * @device_prep_dma_cyclic: prepare a cyclic dma operation suitable क्रम audio.
+ * @device_prep_dma_cyclic: prepare a cyclic dma operation suitable for audio.
  *	The function takes a buffer of size buf_len. The callback function will
  *	be called after period_len bytes have been transferred.
- * @device_prep_पूर्णांकerleaved_dma: Transfer expression in a generic way.
+ * @device_prep_interleaved_dma: Transfer expression in a generic way.
  * @device_prep_dma_imm_data: DMA's 8 byte immediate data to the dst address
  * @device_caps: May be used to override the generic DMA slave capabilities
- *	with per-channel specअगरic ones
- * @device_config: Pushes a new configuration to a channel, वापस 0 or an error
+ *	with per-channel specific ones
+ * @device_config: Pushes a new configuration to a channel, return 0 or an error
  *	code
- * @device_छोड़ो: Pauses any transfer happening on a channel. Returns
+ * @device_pause: Pauses any transfer happening on a channel. Returns
  *	0 or an error code
  * @device_resume: Resumes any transfer on a channel previously
- *	छोड़ोd. Returns 0 or an error code
+ *	paused. Returns 0 or an error code
  * @device_terminate_all: Aborts all transfers on a channel. Returns 0
  *	or an error code
  * @device_synchronize: Synchronizes the termination of a transfers to the
  *  current context.
- * @device_tx_status: poll क्रम transaction completion, the optional
- *	txstate parameter can be supplied with a poपूर्णांकer to get a
- *	काष्ठा with auxiliary transfer status inक्रमmation, otherwise the call
- *	will just वापस a simple status code
+ * @device_tx_status: poll for transaction completion, the optional
+ *	txstate parameter can be supplied with a pointer to get a
+ *	struct with auxiliary transfer status information, otherwise the call
+ *	will just return a simple status code
  * @device_issue_pending: push pending transactions to hardware
  * @descriptor_reuse: a submitted transfer can be resubmitted after completion
- * @device_release: called someसमय atfer dma_async_device_unरेजिस्टर() is
- *     called and there are no further references to this काष्ठाure. This
- *     must be implemented to मुक्त resources however many existing drivers
- *     करो not and are thereक्रमe not safe to unbind जबतक in use.
- * @dbg_summary_show: optional routine to show contents in debugfs; शेष code
+ * @device_release: called sometime atfer dma_async_device_unregister() is
+ *     called and there are no further references to this structure. This
+ *     must be implemented to free resources however many existing drivers
+ *     do not and are therefore not safe to unbind while in use.
+ * @dbg_summary_show: optional routine to show contents in debugfs; default code
  *     will be used when this is omitted, but custom code can show extra,
- *     controller specअगरic inक्रमmation.
+ *     controller specific information.
  */
-काष्ठा dma_device अणु
-	काष्ठा kref ref;
-	अचिन्हित पूर्णांक chancnt;
-	अचिन्हित पूर्णांक निजीcnt;
-	काष्ठा list_head channels;
-	काष्ठा list_head global_node;
-	काष्ठा dma_filter filter;
+struct dma_device {
+	struct kref ref;
+	unsigned int chancnt;
+	unsigned int privatecnt;
+	struct list_head channels;
+	struct list_head global_node;
+	struct dma_filter filter;
 	dma_cap_mask_t  cap_mask;
-	क्रमागत dma_desc_metadata_mode desc_metadata_modes;
-	अचिन्हित लघु max_xor;
-	अचिन्हित लघु max_pq;
-	क्रमागत dmaengine_alignment copy_align;
-	क्रमागत dmaengine_alignment xor_align;
-	क्रमागत dmaengine_alignment pq_align;
-	क्रमागत dmaengine_alignment fill_align;
-	#घोषणा DMA_HAS_PQ_CONTINUE (1 << 15)
+	enum dma_desc_metadata_mode desc_metadata_modes;
+	unsigned short max_xor;
+	unsigned short max_pq;
+	enum dmaengine_alignment copy_align;
+	enum dmaengine_alignment xor_align;
+	enum dmaengine_alignment pq_align;
+	enum dmaengine_alignment fill_align;
+	#define DMA_HAS_PQ_CONTINUE (1 << 15)
 
-	पूर्णांक dev_id;
-	काष्ठा device *dev;
-	काष्ठा module *owner;
-	काष्ठा ida chan_ida;
-	काष्ठा mutex chan_mutex;	/* to protect chan_ida */
+	int dev_id;
+	struct device *dev;
+	struct module *owner;
+	struct ida chan_ida;
+	struct mutex chan_mutex;	/* to protect chan_ida */
 
 	u32 src_addr_widths;
 	u32 dst_addr_widths;
@@ -883,240 +882,240 @@ dmaengine_get_unmap_data(काष्ठा device *dev, पूर्णां�
 	u32 max_burst;
 	u32 max_sg_burst;
 	bool descriptor_reuse;
-	क्रमागत dma_residue_granularity residue_granularity;
+	enum dma_residue_granularity residue_granularity;
 
-	पूर्णांक (*device_alloc_chan_resources)(काष्ठा dma_chan *chan);
-	पूर्णांक (*device_router_config)(काष्ठा dma_chan *chan);
-	व्योम (*device_मुक्त_chan_resources)(काष्ठा dma_chan *chan);
+	int (*device_alloc_chan_resources)(struct dma_chan *chan);
+	int (*device_router_config)(struct dma_chan *chan);
+	void (*device_free_chan_resources)(struct dma_chan *chan);
 
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_स_नकल)(
-		काष्ठा dma_chan *chan, dma_addr_t dst, dma_addr_t src,
-		माप_प्रकार len, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_xor)(
-		काष्ठा dma_chan *chan, dma_addr_t dst, dma_addr_t *src,
-		अचिन्हित पूर्णांक src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_xor_val)(
-		काष्ठा dma_chan *chan, dma_addr_t *src,	अचिन्हित पूर्णांक src_cnt,
-		माप_प्रकार len, क्रमागत sum_check_flags *result, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_pq)(
-		काष्ठा dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
-		अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf,
-		माप_प्रकार len, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_pq_val)(
-		काष्ठा dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
-		अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len,
-		क्रमागत sum_check_flags *pqres, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_स_रखो)(
-		काष्ठा dma_chan *chan, dma_addr_t dest, पूर्णांक value, माप_प्रकार len,
-		अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_स_रखो_sg)(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sg,
-		अचिन्हित पूर्णांक nents, पूर्णांक value, अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_पूर्णांकerrupt)(
-		काष्ठा dma_chan *chan, अचिन्हित दीर्घ flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_memcpy)(
+		struct dma_chan *chan, dma_addr_t dst, dma_addr_t src,
+		size_t len, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_xor)(
+		struct dma_chan *chan, dma_addr_t dst, dma_addr_t *src,
+		unsigned int src_cnt, size_t len, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_xor_val)(
+		struct dma_chan *chan, dma_addr_t *src,	unsigned int src_cnt,
+		size_t len, enum sum_check_flags *result, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_pq)(
+		struct dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
+		unsigned int src_cnt, const unsigned char *scf,
+		size_t len, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_pq_val)(
+		struct dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
+		unsigned int src_cnt, const unsigned char *scf, size_t len,
+		enum sum_check_flags *pqres, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_memset)(
+		struct dma_chan *chan, dma_addr_t dest, int value, size_t len,
+		unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_memset_sg)(
+		struct dma_chan *chan, struct scatterlist *sg,
+		unsigned int nents, int value, unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_interrupt)(
+		struct dma_chan *chan, unsigned long flags);
 
-	काष्ठा dma_async_tx_descriptor *(*device_prep_slave_sg)(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags, व्योम *context);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_cyclic)(
-		काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
-		माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
-		अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_पूर्णांकerleaved_dma)(
-		काष्ठा dma_chan *chan, काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-		अचिन्हित दीर्घ flags);
-	काष्ठा dma_async_tx_descriptor *(*device_prep_dma_imm_data)(
-		काष्ठा dma_chan *chan, dma_addr_t dst, u64 data,
-		अचिन्हित दीर्घ flags);
+	struct dma_async_tx_descriptor *(*device_prep_slave_sg)(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction direction,
+		unsigned long flags, void *context);
+	struct dma_async_tx_descriptor *(*device_prep_dma_cyclic)(
+		struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
+		size_t period_len, enum dma_transfer_direction direction,
+		unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_interleaved_dma)(
+		struct dma_chan *chan, struct dma_interleaved_template *xt,
+		unsigned long flags);
+	struct dma_async_tx_descriptor *(*device_prep_dma_imm_data)(
+		struct dma_chan *chan, dma_addr_t dst, u64 data,
+		unsigned long flags);
 
-	व्योम (*device_caps)(काष्ठा dma_chan *chan,
-			    काष्ठा dma_slave_caps *caps);
-	पूर्णांक (*device_config)(काष्ठा dma_chan *chan,
-			     काष्ठा dma_slave_config *config);
-	पूर्णांक (*device_छोड़ो)(काष्ठा dma_chan *chan);
-	पूर्णांक (*device_resume)(काष्ठा dma_chan *chan);
-	पूर्णांक (*device_terminate_all)(काष्ठा dma_chan *chan);
-	व्योम (*device_synchronize)(काष्ठा dma_chan *chan);
+	void (*device_caps)(struct dma_chan *chan,
+			    struct dma_slave_caps *caps);
+	int (*device_config)(struct dma_chan *chan,
+			     struct dma_slave_config *config);
+	int (*device_pause)(struct dma_chan *chan);
+	int (*device_resume)(struct dma_chan *chan);
+	int (*device_terminate_all)(struct dma_chan *chan);
+	void (*device_synchronize)(struct dma_chan *chan);
 
-	क्रमागत dma_status (*device_tx_status)(काष्ठा dma_chan *chan,
+	enum dma_status (*device_tx_status)(struct dma_chan *chan,
 					    dma_cookie_t cookie,
-					    काष्ठा dma_tx_state *txstate);
-	व्योम (*device_issue_pending)(काष्ठा dma_chan *chan);
-	व्योम (*device_release)(काष्ठा dma_device *dev);
+					    struct dma_tx_state *txstate);
+	void (*device_issue_pending)(struct dma_chan *chan);
+	void (*device_release)(struct dma_device *dev);
 	/* debugfs support */
-#अगर_घोषित CONFIG_DEBUG_FS
-	व्योम (*dbg_summary_show)(काष्ठा seq_file *s, काष्ठा dma_device *dev);
-	काष्ठा dentry *dbg_dev_root;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_FS
+	void (*dbg_summary_show)(struct seq_file *s, struct dma_device *dev);
+	struct dentry *dbg_dev_root;
+#endif
+};
 
-अटल अंतरभूत पूर्णांक dmaengine_slave_config(काष्ठा dma_chan *chan,
-					  काष्ठा dma_slave_config *config)
-अणु
-	अगर (chan->device->device_config)
-		वापस chan->device->device_config(chan, config);
+static inline int dmaengine_slave_config(struct dma_chan *chan,
+					  struct dma_slave_config *config)
+{
+	if (chan->device->device_config)
+		return chan->device->device_config(chan, config);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-अटल अंतरभूत bool is_slave_direction(क्रमागत dma_transfer_direction direction)
-अणु
-	वापस (direction == DMA_MEM_TO_DEV) || (direction == DMA_DEV_TO_MEM);
-पूर्ण
+static inline bool is_slave_direction(enum dma_transfer_direction direction)
+{
+	return (direction == DMA_MEM_TO_DEV) || (direction == DMA_DEV_TO_MEM);
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_slave_single(
-	काष्ठा dma_chan *chan, dma_addr_t buf, माप_प्रकार len,
-	क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा scatterlist sg;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_slave_single(
+	struct dma_chan *chan, dma_addr_t buf, size_t len,
+	enum dma_transfer_direction dir, unsigned long flags)
+{
+	struct scatterlist sg;
 	sg_init_table(&sg, 1);
 	sg_dma_address(&sg) = buf;
 	sg_dma_len(&sg) = len;
 
-	अगर (!chan || !chan->device || !chan->device->device_prep_slave_sg)
-		वापस शून्य;
+	if (!chan || !chan->device || !chan->device->device_prep_slave_sg)
+		return NULL;
 
-	वापस chan->device->device_prep_slave_sg(chan, &sg, 1,
-						  dir, flags, शून्य);
-पूर्ण
+	return chan->device->device_prep_slave_sg(chan, &sg, 1,
+						  dir, flags, NULL);
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_slave_sg(
-	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,	अचिन्हित पूर्णांक sg_len,
-	क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_slave_sg)
-		वापस शून्य;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_slave_sg(
+	struct dma_chan *chan, struct scatterlist *sgl,	unsigned int sg_len,
+	enum dma_transfer_direction dir, unsigned long flags)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_slave_sg)
+		return NULL;
 
-	वापस chan->device->device_prep_slave_sg(chan, sgl, sg_len,
-						  dir, flags, शून्य);
-पूर्ण
+	return chan->device->device_prep_slave_sg(chan, sgl, sg_len,
+						  dir, flags, NULL);
+}
 
-#अगर_घोषित CONFIG_RAPIDIO_DMA_ENGINE
-काष्ठा rio_dma_ext;
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_rio_sg(
-	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,	अचिन्हित पूर्णांक sg_len,
-	क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags,
-	काष्ठा rio_dma_ext *rio_ext)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_slave_sg)
-		वापस शून्य;
+#ifdef CONFIG_RAPIDIO_DMA_ENGINE
+struct rio_dma_ext;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_rio_sg(
+	struct dma_chan *chan, struct scatterlist *sgl,	unsigned int sg_len,
+	enum dma_transfer_direction dir, unsigned long flags,
+	struct rio_dma_ext *rio_ext)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_slave_sg)
+		return NULL;
 
-	वापस chan->device->device_prep_slave_sg(chan, sgl, sg_len,
+	return chan->device->device_prep_slave_sg(chan, sgl, sg_len,
 						  dir, flags, rio_ext);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_dma_cyclic(
-		काष्ठा dma_chan *chan, dma_addr_t buf_addr, माप_प्रकार buf_len,
-		माप_प्रकार period_len, क्रमागत dma_transfer_direction dir,
-		अचिन्हित दीर्घ flags)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_dma_cyclic)
-		वापस शून्य;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_dma_cyclic(
+		struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
+		size_t period_len, enum dma_transfer_direction dir,
+		unsigned long flags)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_dma_cyclic)
+		return NULL;
 
-	वापस chan->device->device_prep_dma_cyclic(chan, buf_addr, buf_len,
+	return chan->device->device_prep_dma_cyclic(chan, buf_addr, buf_len,
 						period_len, dir, flags);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_पूर्णांकerleaved_dma(
-		काष्ठा dma_chan *chan, काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-		अचिन्हित दीर्घ flags)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_पूर्णांकerleaved_dma)
-		वापस शून्य;
-	अगर (flags & DMA_PREP_REPEAT &&
+static inline struct dma_async_tx_descriptor *dmaengine_prep_interleaved_dma(
+		struct dma_chan *chan, struct dma_interleaved_template *xt,
+		unsigned long flags)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_interleaved_dma)
+		return NULL;
+	if (flags & DMA_PREP_REPEAT &&
 	    !test_bit(DMA_REPEAT, chan->device->cap_mask.bits))
-		वापस शून्य;
+		return NULL;
 
-	वापस chan->device->device_prep_पूर्णांकerleaved_dma(chan, xt, flags);
-पूर्ण
+	return chan->device->device_prep_interleaved_dma(chan, xt, flags);
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_dma_स_रखो(
-		काष्ठा dma_chan *chan, dma_addr_t dest, पूर्णांक value, माप_प्रकार len,
-		अचिन्हित दीर्घ flags)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_dma_स_रखो)
-		वापस शून्य;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_dma_memset(
+		struct dma_chan *chan, dma_addr_t dest, int value, size_t len,
+		unsigned long flags)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_dma_memset)
+		return NULL;
 
-	वापस chan->device->device_prep_dma_स_रखो(chan, dest, value,
+	return chan->device->device_prep_dma_memset(chan, dest, value,
 						    len, flags);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा dma_async_tx_descriptor *dmaengine_prep_dma_स_नकल(
-		काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-		माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	अगर (!chan || !chan->device || !chan->device->device_prep_dma_स_नकल)
-		वापस शून्य;
+static inline struct dma_async_tx_descriptor *dmaengine_prep_dma_memcpy(
+		struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+		size_t len, unsigned long flags)
+{
+	if (!chan || !chan->device || !chan->device->device_prep_dma_memcpy)
+		return NULL;
 
-	वापस chan->device->device_prep_dma_स_नकल(chan, dest, src,
+	return chan->device->device_prep_dma_memcpy(chan, dest, src,
 						    len, flags);
-पूर्ण
+}
 
-अटल अंतरभूत bool dmaengine_is_metadata_mode_supported(काष्ठा dma_chan *chan,
-		क्रमागत dma_desc_metadata_mode mode)
-अणु
-	अगर (!chan)
-		वापस false;
+static inline bool dmaengine_is_metadata_mode_supported(struct dma_chan *chan,
+		enum dma_desc_metadata_mode mode)
+{
+	if (!chan)
+		return false;
 
-	वापस !!(chan->device->desc_metadata_modes & mode);
-पूर्ण
+	return !!(chan->device->desc_metadata_modes & mode);
+}
 
-#अगर_घोषित CONFIG_DMA_ENGINE
-पूर्णांक dmaengine_desc_attach_metadata(काष्ठा dma_async_tx_descriptor *desc,
-				   व्योम *data, माप_प्रकार len);
-व्योम *dmaengine_desc_get_metadata_ptr(काष्ठा dma_async_tx_descriptor *desc,
-				      माप_प्रकार *payload_len, माप_प्रकार *max_len);
-पूर्णांक dmaengine_desc_set_metadata_len(काष्ठा dma_async_tx_descriptor *desc,
-				    माप_प्रकार payload_len);
-#अन्यथा /* CONFIG_DMA_ENGINE */
-अटल अंतरभूत पूर्णांक dmaengine_desc_attach_metadata(
-		काष्ठा dma_async_tx_descriptor *desc, व्योम *data, माप_प्रकार len)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत व्योम *dmaengine_desc_get_metadata_ptr(
-		काष्ठा dma_async_tx_descriptor *desc, माप_प्रकार *payload_len,
-		माप_प्रकार *max_len)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत पूर्णांक dmaengine_desc_set_metadata_len(
-		काष्ठा dma_async_tx_descriptor *desc, माप_प्रकार payload_len)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DMA_ENGINE */
+#ifdef CONFIG_DMA_ENGINE
+int dmaengine_desc_attach_metadata(struct dma_async_tx_descriptor *desc,
+				   void *data, size_t len);
+void *dmaengine_desc_get_metadata_ptr(struct dma_async_tx_descriptor *desc,
+				      size_t *payload_len, size_t *max_len);
+int dmaengine_desc_set_metadata_len(struct dma_async_tx_descriptor *desc,
+				    size_t payload_len);
+#else /* CONFIG_DMA_ENGINE */
+static inline int dmaengine_desc_attach_metadata(
+		struct dma_async_tx_descriptor *desc, void *data, size_t len)
+{
+	return -EINVAL;
+}
+static inline void *dmaengine_desc_get_metadata_ptr(
+		struct dma_async_tx_descriptor *desc, size_t *payload_len,
+		size_t *max_len)
+{
+	return NULL;
+}
+static inline int dmaengine_desc_set_metadata_len(
+		struct dma_async_tx_descriptor *desc, size_t payload_len)
+{
+	return -EINVAL;
+}
+#endif /* CONFIG_DMA_ENGINE */
 
 /**
  * dmaengine_terminate_all() - Terminate all active DMA transfers
- * @chan: The channel क्रम which to terminate the transfers
+ * @chan: The channel for which to terminate the transfers
  *
  * This function is DEPRECATED use either dmaengine_terminate_sync() or
  * dmaengine_terminate_async() instead.
  */
-अटल अंतरभूत पूर्णांक dmaengine_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	अगर (chan->device->device_terminate_all)
-		वापस chan->device->device_terminate_all(chan);
+static inline int dmaengine_terminate_all(struct dma_chan *chan)
+{
+	if (chan->device->device_terminate_all)
+		return chan->device->device_terminate_all(chan);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
 /**
  * dmaengine_terminate_async() - Terminate all active DMA transfers
- * @chan: The channel क्रम which to terminate the transfers
+ * @chan: The channel for which to terminate the transfers
  *
  * Calling this function will terminate all active and pending descriptors
  * that have previously been submitted to the channel. It is not guaranteed
- * though that the transfer क्रम the active descriptor has stopped when the
- * function वापसs. Furthermore it is possible the complete callback of a
- * submitted transfer is still running when this function वापसs.
+ * though that the transfer for the active descriptor has stopped when the
+ * function returns. Furthermore it is possible the complete callback of a
+ * submitted transfer is still running when this function returns.
  *
- * dmaengine_synchronize() needs to be called beक्रमe it is safe to मुक्त
- * any memory that is accessed by previously submitted descriptors or beक्रमe
- * मुक्तing any resources accessed from within the completion callback of any
+ * dmaengine_synchronize() needs to be called before it is safe to free
+ * any memory that is accessed by previously submitted descriptors or before
+ * freeing any resources accessed from within the completion callback of any
  * previously submitted descriptors.
  *
  * This function can be called from atomic context as well as from within a
@@ -1125,512 +1124,512 @@ dmaengine_get_unmap_data(काष्ठा device *dev, पूर्णां�
  * If none of the two conditions above apply consider using
  * dmaengine_terminate_sync() instead.
  */
-अटल अंतरभूत पूर्णांक dmaengine_terminate_async(काष्ठा dma_chan *chan)
-अणु
-	अगर (chan->device->device_terminate_all)
-		वापस chan->device->device_terminate_all(chan);
+static inline int dmaengine_terminate_async(struct dma_chan *chan)
+{
+	if (chan->device->device_terminate_all)
+		return chan->device->device_terminate_all(chan);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * dmaengine_synchronize() - Synchronize DMA channel termination
  * @chan: The channel to synchronize
  *
  * Synchronizes to the DMA channel termination to the current context. When this
- * function वापसs it is guaranteed that all transfers क्रम previously issued
- * descriptors have stopped and it is safe to मुक्त the memory associated
+ * function returns it is guaranteed that all transfers for previously issued
+ * descriptors have stopped and it is safe to free the memory associated
  * with them. Furthermore it is guaranteed that all complete callback functions
- * क्रम a previously submitted descriptor have finished running and it is safe to
- * मुक्त resources accessed from within the complete callbacks.
+ * for a previously submitted descriptor have finished running and it is safe to
+ * free resources accessed from within the complete callbacks.
  *
- * The behavior of this function is undefined अगर dma_async_issue_pending() has
+ * The behavior of this function is undefined if dma_async_issue_pending() has
  * been called between dmaengine_terminate_async() and this function.
  *
  * This function must only be called from non-atomic context and must not be
  * called from within a complete callback of a descriptor submitted on the same
  * channel.
  */
-अटल अंतरभूत व्योम dmaengine_synchronize(काष्ठा dma_chan *chan)
-अणु
+static inline void dmaengine_synchronize(struct dma_chan *chan)
+{
 	might_sleep();
 
-	अगर (chan->device->device_synchronize)
+	if (chan->device->device_synchronize)
 		chan->device->device_synchronize(chan);
-पूर्ण
+}
 
 /**
  * dmaengine_terminate_sync() - Terminate all active DMA transfers
- * @chan: The channel क्रम which to terminate the transfers
+ * @chan: The channel for which to terminate the transfers
  *
  * Calling this function will terminate all active and pending transfers
  * that have previously been submitted to the channel. It is similar to
  * dmaengine_terminate_async() but guarantees that the DMA transfer has actually
  * stopped and that all complete callbacks have finished running when the
- * function वापसs.
+ * function returns.
  *
  * This function must only be called from non-atomic context and must not be
  * called from within a complete callback of a descriptor submitted on the same
  * channel.
  */
-अटल अंतरभूत पूर्णांक dmaengine_terminate_sync(काष्ठा dma_chan *chan)
-अणु
-	पूर्णांक ret;
+static inline int dmaengine_terminate_sync(struct dma_chan *chan)
+{
+	int ret;
 
 	ret = dmaengine_terminate_async(chan);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dmaengine_synchronize(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक dmaengine_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	अगर (chan->device->device_छोड़ो)
-		वापस chan->device->device_छोड़ो(chan);
+static inline int dmaengine_pause(struct dma_chan *chan)
+{
+	if (chan->device->device_pause)
+		return chan->device->device_pause(chan);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-अटल अंतरभूत पूर्णांक dmaengine_resume(काष्ठा dma_chan *chan)
-अणु
-	अगर (chan->device->device_resume)
-		वापस chan->device->device_resume(chan);
+static inline int dmaengine_resume(struct dma_chan *chan)
+{
+	if (chan->device->device_resume)
+		return chan->device->device_resume(chan);
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-अटल अंतरभूत क्रमागत dma_status dmaengine_tx_status(काष्ठा dma_chan *chan,
-	dma_cookie_t cookie, काष्ठा dma_tx_state *state)
-अणु
-	वापस chan->device->device_tx_status(chan, cookie, state);
-पूर्ण
+static inline enum dma_status dmaengine_tx_status(struct dma_chan *chan,
+	dma_cookie_t cookie, struct dma_tx_state *state)
+{
+	return chan->device->device_tx_status(chan, cookie, state);
+}
 
-अटल अंतरभूत dma_cookie_t dmaengine_submit(काष्ठा dma_async_tx_descriptor *desc)
-अणु
-	वापस desc->tx_submit(desc);
-पूर्ण
+static inline dma_cookie_t dmaengine_submit(struct dma_async_tx_descriptor *desc)
+{
+	return desc->tx_submit(desc);
+}
 
-अटल अंतरभूत bool dmaengine_check_align(क्रमागत dmaengine_alignment align,
-					 माप_प्रकार off1, माप_प्रकार off2, माप_प्रकार len)
-अणु
-	वापस !(((1 << align) - 1) & (off1 | off2 | len));
-पूर्ण
+static inline bool dmaengine_check_align(enum dmaengine_alignment align,
+					 size_t off1, size_t off2, size_t len)
+{
+	return !(((1 << align) - 1) & (off1 | off2 | len));
+}
 
-अटल अंतरभूत bool is_dma_copy_aligned(काष्ठा dma_device *dev, माप_प्रकार off1,
-				       माप_प्रकार off2, माप_प्रकार len)
-अणु
-	वापस dmaengine_check_align(dev->copy_align, off1, off2, len);
-पूर्ण
+static inline bool is_dma_copy_aligned(struct dma_device *dev, size_t off1,
+				       size_t off2, size_t len)
+{
+	return dmaengine_check_align(dev->copy_align, off1, off2, len);
+}
 
-अटल अंतरभूत bool is_dma_xor_aligned(काष्ठा dma_device *dev, माप_प्रकार off1,
-				      माप_प्रकार off2, माप_प्रकार len)
-अणु
-	वापस dmaengine_check_align(dev->xor_align, off1, off2, len);
-पूर्ण
+static inline bool is_dma_xor_aligned(struct dma_device *dev, size_t off1,
+				      size_t off2, size_t len)
+{
+	return dmaengine_check_align(dev->xor_align, off1, off2, len);
+}
 
-अटल अंतरभूत bool is_dma_pq_aligned(काष्ठा dma_device *dev, माप_प्रकार off1,
-				     माप_प्रकार off2, माप_प्रकार len)
-अणु
-	वापस dmaengine_check_align(dev->pq_align, off1, off2, len);
-पूर्ण
+static inline bool is_dma_pq_aligned(struct dma_device *dev, size_t off1,
+				     size_t off2, size_t len)
+{
+	return dmaengine_check_align(dev->pq_align, off1, off2, len);
+}
 
-अटल अंतरभूत bool is_dma_fill_aligned(काष्ठा dma_device *dev, माप_प्रकार off1,
-				       माप_प्रकार off2, माप_प्रकार len)
-अणु
-	वापस dmaengine_check_align(dev->fill_align, off1, off2, len);
-पूर्ण
+static inline bool is_dma_fill_aligned(struct dma_device *dev, size_t off1,
+				       size_t off2, size_t len)
+{
+	return dmaengine_check_align(dev->fill_align, off1, off2, len);
+}
 
-अटल अंतरभूत व्योम
-dma_set_maxpq(काष्ठा dma_device *dma, पूर्णांक maxpq, पूर्णांक has_pq_जारी)
-अणु
+static inline void
+dma_set_maxpq(struct dma_device *dma, int maxpq, int has_pq_continue)
+{
 	dma->max_pq = maxpq;
-	अगर (has_pq_जारी)
+	if (has_pq_continue)
 		dma->max_pq |= DMA_HAS_PQ_CONTINUE;
-पूर्ण
+}
 
-अटल अंतरभूत bool dmaf_जारी(क्रमागत dma_ctrl_flags flags)
-अणु
-	वापस (flags & DMA_PREP_CONTINUE) == DMA_PREP_CONTINUE;
-पूर्ण
+static inline bool dmaf_continue(enum dma_ctrl_flags flags)
+{
+	return (flags & DMA_PREP_CONTINUE) == DMA_PREP_CONTINUE;
+}
 
-अटल अंतरभूत bool dmaf_p_disabled_जारी(क्रमागत dma_ctrl_flags flags)
-अणु
-	क्रमागत dma_ctrl_flags mask = DMA_PREP_CONTINUE | DMA_PREP_PQ_DISABLE_P;
+static inline bool dmaf_p_disabled_continue(enum dma_ctrl_flags flags)
+{
+	enum dma_ctrl_flags mask = DMA_PREP_CONTINUE | DMA_PREP_PQ_DISABLE_P;
 
-	वापस (flags & mask) == mask;
-पूर्ण
+	return (flags & mask) == mask;
+}
 
-अटल अंतरभूत bool dma_dev_has_pq_जारी(काष्ठा dma_device *dma)
-अणु
-	वापस (dma->max_pq & DMA_HAS_PQ_CONTINUE) == DMA_HAS_PQ_CONTINUE;
-पूर्ण
+static inline bool dma_dev_has_pq_continue(struct dma_device *dma)
+{
+	return (dma->max_pq & DMA_HAS_PQ_CONTINUE) == DMA_HAS_PQ_CONTINUE;
+}
 
-अटल अंतरभूत अचिन्हित लघु dma_dev_to_maxpq(काष्ठा dma_device *dma)
-अणु
-	वापस dma->max_pq & ~DMA_HAS_PQ_CONTINUE;
-पूर्ण
+static inline unsigned short dma_dev_to_maxpq(struct dma_device *dma)
+{
+	return dma->max_pq & ~DMA_HAS_PQ_CONTINUE;
+}
 
-/* dma_maxpq - reduce maxpq in the face of जारीd operations
+/* dma_maxpq - reduce maxpq in the face of continued operations
  * @dma - dma device with PQ capability
- * @flags - to check अगर DMA_PREP_CONTINUE and DMA_PREP_PQ_DISABLE_P are set
+ * @flags - to check if DMA_PREP_CONTINUE and DMA_PREP_PQ_DISABLE_P are set
  *
- * When an engine करोes not support native continuation we need 3 extra
+ * When an engine does not support native continuation we need 3 extra
  * source slots to reuse P and Q with the following coefficients:
- * 1/ अणु00पूर्ण * P : हटाओ P from Q', but use it as a source for P'
- * 2/ अणु01पूर्ण * Q : use Q to जारी Q' calculation
- * 3/ अणु00पूर्ण * Q : subtract Q from P' to cancel (2)
+ * 1/ {00} * P : remove P from Q', but use it as a source for P'
+ * 2/ {01} * Q : use Q to continue Q' calculation
+ * 3/ {00} * Q : subtract Q from P' to cancel (2)
  *
- * In the हाल where P is disabled we only need 1 extra source:
- * 1/ अणु01पूर्ण * Q : use Q to जारी Q' calculation
+ * In the case where P is disabled we only need 1 extra source:
+ * 1/ {01} * Q : use Q to continue Q' calculation
  */
-अटल अंतरभूत पूर्णांक dma_maxpq(काष्ठा dma_device *dma, क्रमागत dma_ctrl_flags flags)
-अणु
-	अगर (dma_dev_has_pq_जारी(dma) || !dmaf_जारी(flags))
-		वापस dma_dev_to_maxpq(dma);
-	अगर (dmaf_p_disabled_जारी(flags))
-		वापस dma_dev_to_maxpq(dma) - 1;
-	अगर (dmaf_जारी(flags))
-		वापस dma_dev_to_maxpq(dma) - 3;
+static inline int dma_maxpq(struct dma_device *dma, enum dma_ctrl_flags flags)
+{
+	if (dma_dev_has_pq_continue(dma) || !dmaf_continue(flags))
+		return dma_dev_to_maxpq(dma);
+	if (dmaf_p_disabled_continue(flags))
+		return dma_dev_to_maxpq(dma) - 1;
+	if (dmaf_continue(flags))
+		return dma_dev_to_maxpq(dma) - 3;
 	BUG();
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार dmaengine_get_icg(bool inc, bool sgl, माप_प्रकार icg,
-				      माप_प्रकार dir_icg)
-अणु
-	अगर (inc) अणु
-		अगर (dir_icg)
-			वापस dir_icg;
-		अगर (sgl)
-			वापस icg;
-	पूर्ण
+static inline size_t dmaengine_get_icg(bool inc, bool sgl, size_t icg,
+				      size_t dir_icg)
+{
+	if (inc) {
+		if (dir_icg)
+			return dir_icg;
+		if (sgl)
+			return icg;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत माप_प्रकार dmaengine_get_dst_icg(काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-					   काष्ठा data_chunk *chunk)
-अणु
-	वापस dmaengine_get_icg(xt->dst_inc, xt->dst_sgl,
+static inline size_t dmaengine_get_dst_icg(struct dma_interleaved_template *xt,
+					   struct data_chunk *chunk)
+{
+	return dmaengine_get_icg(xt->dst_inc, xt->dst_sgl,
 				 chunk->icg, chunk->dst_icg);
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार dmaengine_get_src_icg(काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
-					   काष्ठा data_chunk *chunk)
-अणु
-	वापस dmaengine_get_icg(xt->src_inc, xt->src_sgl,
+static inline size_t dmaengine_get_src_icg(struct dma_interleaved_template *xt,
+					   struct data_chunk *chunk)
+{
+	return dmaengine_get_icg(xt->src_inc, xt->src_sgl,
 				 chunk->icg, chunk->src_icg);
-पूर्ण
+}
 
-/* --- खुला DMA engine API --- */
+/* --- public DMA engine API --- */
 
-#अगर_घोषित CONFIG_DMA_ENGINE
-व्योम dmaengine_get(व्योम);
-व्योम dmaengine_put(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम dmaengine_get(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम dmaengine_put(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DMA_ENGINE
+void dmaengine_get(void);
+void dmaengine_put(void);
+#else
+static inline void dmaengine_get(void)
+{
+}
+static inline void dmaengine_put(void)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_ASYNC_TX_DMA
-#घोषणा async_dmaengine_get()	dmaengine_get()
-#घोषणा async_dmaengine_put()	dmaengine_put()
-#अगर_अघोषित CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
-#घोषणा async_dma_find_channel(type) dma_find_channel(DMA_ASYNC_TX)
-#अन्यथा
-#घोषणा async_dma_find_channel(type) dma_find_channel(type)
-#पूर्ण_अगर /* CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH */
-#अन्यथा
-अटल अंतरभूत व्योम async_dmaengine_get(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम async_dmaengine_put(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत काष्ठा dma_chan *
-async_dma_find_channel(क्रमागत dma_transaction_type type)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ASYNC_TX_DMA */
-व्योम dma_async_tx_descriptor_init(काष्ठा dma_async_tx_descriptor *tx,
-				  काष्ठा dma_chan *chan);
+#ifdef CONFIG_ASYNC_TX_DMA
+#define async_dmaengine_get()	dmaengine_get()
+#define async_dmaengine_put()	dmaengine_put()
+#ifndef CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH
+#define async_dma_find_channel(type) dma_find_channel(DMA_ASYNC_TX)
+#else
+#define async_dma_find_channel(type) dma_find_channel(type)
+#endif /* CONFIG_ASYNC_TX_ENABLE_CHANNEL_SWITCH */
+#else
+static inline void async_dmaengine_get(void)
+{
+}
+static inline void async_dmaengine_put(void)
+{
+}
+static inline struct dma_chan *
+async_dma_find_channel(enum dma_transaction_type type)
+{
+	return NULL;
+}
+#endif /* CONFIG_ASYNC_TX_DMA */
+void dma_async_tx_descriptor_init(struct dma_async_tx_descriptor *tx,
+				  struct dma_chan *chan);
 
-अटल अंतरभूत व्योम async_tx_ack(काष्ठा dma_async_tx_descriptor *tx)
-अणु
+static inline void async_tx_ack(struct dma_async_tx_descriptor *tx)
+{
 	tx->flags |= DMA_CTRL_ACK;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम async_tx_clear_ack(काष्ठा dma_async_tx_descriptor *tx)
-अणु
+static inline void async_tx_clear_ack(struct dma_async_tx_descriptor *tx)
+{
 	tx->flags &= ~DMA_CTRL_ACK;
-पूर्ण
+}
 
-अटल अंतरभूत bool async_tx_test_ack(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	वापस (tx->flags & DMA_CTRL_ACK) == DMA_CTRL_ACK;
-पूर्ण
+static inline bool async_tx_test_ack(struct dma_async_tx_descriptor *tx)
+{
+	return (tx->flags & DMA_CTRL_ACK) == DMA_CTRL_ACK;
+}
 
-#घोषणा dma_cap_set(tx, mask) __dma_cap_set((tx), &(mask))
-अटल अंतरभूत व्योम
-__dma_cap_set(क्रमागत dma_transaction_type tx_type, dma_cap_mask_t *dstp)
-अणु
+#define dma_cap_set(tx, mask) __dma_cap_set((tx), &(mask))
+static inline void
+__dma_cap_set(enum dma_transaction_type tx_type, dma_cap_mask_t *dstp)
+{
 	set_bit(tx_type, dstp->bits);
-पूर्ण
+}
 
-#घोषणा dma_cap_clear(tx, mask) __dma_cap_clear((tx), &(mask))
-अटल अंतरभूत व्योम
-__dma_cap_clear(क्रमागत dma_transaction_type tx_type, dma_cap_mask_t *dstp)
-अणु
+#define dma_cap_clear(tx, mask) __dma_cap_clear((tx), &(mask))
+static inline void
+__dma_cap_clear(enum dma_transaction_type tx_type, dma_cap_mask_t *dstp)
+{
 	clear_bit(tx_type, dstp->bits);
-पूर्ण
+}
 
-#घोषणा dma_cap_zero(mask) __dma_cap_zero(&(mask))
-अटल अंतरभूत व्योम __dma_cap_zero(dma_cap_mask_t *dstp)
-अणु
-	biपंचांगap_zero(dstp->bits, DMA_TX_TYPE_END);
-पूर्ण
+#define dma_cap_zero(mask) __dma_cap_zero(&(mask))
+static inline void __dma_cap_zero(dma_cap_mask_t *dstp)
+{
+	bitmap_zero(dstp->bits, DMA_TX_TYPE_END);
+}
 
-#घोषणा dma_has_cap(tx, mask) __dma_has_cap((tx), &(mask))
-अटल अंतरभूत पूर्णांक
-__dma_has_cap(क्रमागत dma_transaction_type tx_type, dma_cap_mask_t *srcp)
-अणु
-	वापस test_bit(tx_type, srcp->bits);
-पूर्ण
+#define dma_has_cap(tx, mask) __dma_has_cap((tx), &(mask))
+static inline int
+__dma_has_cap(enum dma_transaction_type tx_type, dma_cap_mask_t *srcp)
+{
+	return test_bit(tx_type, srcp->bits);
+}
 
-#घोषणा क्रम_each_dma_cap_mask(cap, mask) \
-	क्रम_each_set_bit(cap, mask.bits, DMA_TX_TYPE_END)
+#define for_each_dma_cap_mask(cap, mask) \
+	for_each_set_bit(cap, mask.bits, DMA_TX_TYPE_END)
 
 /**
  * dma_async_issue_pending - flush pending transactions to HW
  * @chan: target DMA channel
  *
  * This allows drivers to push copies to HW in batches,
- * reducing MMIO ग_लिखोs where possible.
+ * reducing MMIO writes where possible.
  */
-अटल अंतरभूत व्योम dma_async_issue_pending(काष्ठा dma_chan *chan)
-अणु
+static inline void dma_async_issue_pending(struct dma_chan *chan)
+{
 	chan->device->device_issue_pending(chan);
-पूर्ण
+}
 
 /**
- * dma_async_is_tx_complete - poll क्रम transaction completion
+ * dma_async_is_tx_complete - poll for transaction completion
  * @chan: DMA channel
- * @cookie: transaction identअगरier to check status of
- * @last: वापसs last completed cookie, can be शून्य
- * @used: वापसs last issued cookie, can be शून्य
+ * @cookie: transaction identifier to check status of
+ * @last: returns last completed cookie, can be NULL
+ * @used: returns last issued cookie, can be NULL
  *
- * If @last and @used are passed in, upon वापस they reflect the driver
- * पूर्णांकernal state and can be used with dma_async_is_complete() to check
+ * If @last and @used are passed in, upon return they reflect the driver
+ * internal state and can be used with dma_async_is_complete() to check
  * the status of multiple cookies without re-checking hardware state.
  */
-अटल अंतरभूत क्रमागत dma_status dma_async_is_tx_complete(काष्ठा dma_chan *chan,
+static inline enum dma_status dma_async_is_tx_complete(struct dma_chan *chan,
 	dma_cookie_t cookie, dma_cookie_t *last, dma_cookie_t *used)
-अणु
-	काष्ठा dma_tx_state state;
-	क्रमागत dma_status status;
+{
+	struct dma_tx_state state;
+	enum dma_status status;
 
 	status = chan->device->device_tx_status(chan, cookie, &state);
-	अगर (last)
+	if (last)
 		*last = state.last;
-	अगर (used)
+	if (used)
 		*used = state.used;
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * dma_async_is_complete - test a cookie against chan state
- * @cookie: transaction identअगरier to test status of
+ * @cookie: transaction identifier to test status of
  * @last_complete: last know completed transaction
  * @last_used: last cookie value handed out
  *
  * dma_async_is_complete() is used in dma_async_is_tx_complete()
- * the test logic is separated क्रम lightweight testing of multiple cookies
+ * the test logic is separated for lightweight testing of multiple cookies
  */
-अटल अंतरभूत क्रमागत dma_status dma_async_is_complete(dma_cookie_t cookie,
+static inline enum dma_status dma_async_is_complete(dma_cookie_t cookie,
 			dma_cookie_t last_complete, dma_cookie_t last_used)
-अणु
-	अगर (last_complete <= last_used) अणु
-		अगर ((cookie <= last_complete) || (cookie > last_used))
-			वापस DMA_COMPLETE;
-	पूर्ण अन्यथा अणु
-		अगर ((cookie <= last_complete) && (cookie > last_used))
-			वापस DMA_COMPLETE;
-	पूर्ण
-	वापस DMA_IN_PROGRESS;
-पूर्ण
+{
+	if (last_complete <= last_used) {
+		if ((cookie <= last_complete) || (cookie > last_used))
+			return DMA_COMPLETE;
+	} else {
+		if ((cookie <= last_complete) && (cookie > last_used))
+			return DMA_COMPLETE;
+	}
+	return DMA_IN_PROGRESS;
+}
 
-अटल अंतरभूत व्योम
-dma_set_tx_state(काष्ठा dma_tx_state *st, dma_cookie_t last, dma_cookie_t used, u32 residue)
-अणु
-	अगर (!st)
-		वापस;
+static inline void
+dma_set_tx_state(struct dma_tx_state *st, dma_cookie_t last, dma_cookie_t used, u32 residue)
+{
+	if (!st)
+		return;
 
 	st->last = last;
 	st->used = used;
 	st->residue = residue;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DMA_ENGINE
-काष्ठा dma_chan *dma_find_channel(क्रमागत dma_transaction_type tx_type);
-क्रमागत dma_status dma_sync_रुको(काष्ठा dma_chan *chan, dma_cookie_t cookie);
-क्रमागत dma_status dma_रुको_क्रम_async_tx(काष्ठा dma_async_tx_descriptor *tx);
-व्योम dma_issue_pending_all(व्योम);
-काष्ठा dma_chan *__dma_request_channel(स्थिर dma_cap_mask_t *mask,
-				       dma_filter_fn fn, व्योम *fn_param,
-				       काष्ठा device_node *np);
+#ifdef CONFIG_DMA_ENGINE
+struct dma_chan *dma_find_channel(enum dma_transaction_type tx_type);
+enum dma_status dma_sync_wait(struct dma_chan *chan, dma_cookie_t cookie);
+enum dma_status dma_wait_for_async_tx(struct dma_async_tx_descriptor *tx);
+void dma_issue_pending_all(void);
+struct dma_chan *__dma_request_channel(const dma_cap_mask_t *mask,
+				       dma_filter_fn fn, void *fn_param,
+				       struct device_node *np);
 
-काष्ठा dma_chan *dma_request_chan(काष्ठा device *dev, स्थिर अक्षर *name);
-काष्ठा dma_chan *dma_request_chan_by_mask(स्थिर dma_cap_mask_t *mask);
+struct dma_chan *dma_request_chan(struct device *dev, const char *name);
+struct dma_chan *dma_request_chan_by_mask(const dma_cap_mask_t *mask);
 
-व्योम dma_release_channel(काष्ठा dma_chan *chan);
-पूर्णांक dma_get_slave_caps(काष्ठा dma_chan *chan, काष्ठा dma_slave_caps *caps);
-#अन्यथा
-अटल अंतरभूत काष्ठा dma_chan *dma_find_channel(क्रमागत dma_transaction_type tx_type)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत क्रमागत dma_status dma_sync_रुको(काष्ठा dma_chan *chan, dma_cookie_t cookie)
-अणु
-	वापस DMA_COMPLETE;
-पूर्ण
-अटल अंतरभूत क्रमागत dma_status dma_रुको_क्रम_async_tx(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	वापस DMA_COMPLETE;
-पूर्ण
-अटल अंतरभूत व्योम dma_issue_pending_all(व्योम)
-अणु
-पूर्ण
-अटल अंतरभूत काष्ठा dma_chan *__dma_request_channel(स्थिर dma_cap_mask_t *mask,
+void dma_release_channel(struct dma_chan *chan);
+int dma_get_slave_caps(struct dma_chan *chan, struct dma_slave_caps *caps);
+#else
+static inline struct dma_chan *dma_find_channel(enum dma_transaction_type tx_type)
+{
+	return NULL;
+}
+static inline enum dma_status dma_sync_wait(struct dma_chan *chan, dma_cookie_t cookie)
+{
+	return DMA_COMPLETE;
+}
+static inline enum dma_status dma_wait_for_async_tx(struct dma_async_tx_descriptor *tx)
+{
+	return DMA_COMPLETE;
+}
+static inline void dma_issue_pending_all(void)
+{
+}
+static inline struct dma_chan *__dma_request_channel(const dma_cap_mask_t *mask,
 						     dma_filter_fn fn,
-						     व्योम *fn_param,
-						     काष्ठा device_node *np)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा dma_chan *dma_request_chan(काष्ठा device *dev,
-						स्थिर अक्षर *name)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
-अटल अंतरभूत काष्ठा dma_chan *dma_request_chan_by_mask(
-						स्थिर dma_cap_mask_t *mask)
-अणु
-	वापस ERR_PTR(-ENODEV);
-पूर्ण
-अटल अंतरभूत व्योम dma_release_channel(काष्ठा dma_chan *chan)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक dma_get_slave_caps(काष्ठा dma_chan *chan,
-				     काष्ठा dma_slave_caps *caps)
-अणु
-	वापस -ENXIO;
-पूर्ण
-#पूर्ण_अगर
+						     void *fn_param,
+						     struct device_node *np)
+{
+	return NULL;
+}
+static inline struct dma_chan *dma_request_chan(struct device *dev,
+						const char *name)
+{
+	return ERR_PTR(-ENODEV);
+}
+static inline struct dma_chan *dma_request_chan_by_mask(
+						const dma_cap_mask_t *mask)
+{
+	return ERR_PTR(-ENODEV);
+}
+static inline void dma_release_channel(struct dma_chan *chan)
+{
+}
+static inline int dma_get_slave_caps(struct dma_chan *chan,
+				     struct dma_slave_caps *caps)
+{
+	return -ENXIO;
+}
+#endif
 
-अटल अंतरभूत पूर्णांक dmaengine_desc_set_reuse(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा dma_slave_caps caps;
-	पूर्णांक ret;
+static inline int dmaengine_desc_set_reuse(struct dma_async_tx_descriptor *tx)
+{
+	struct dma_slave_caps caps;
+	int ret;
 
 	ret = dma_get_slave_caps(tx->chan, &caps);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!caps.descriptor_reuse)
-		वापस -EPERM;
+	if (!caps.descriptor_reuse)
+		return -EPERM;
 
 	tx->flags |= DMA_CTRL_REUSE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम dmaengine_desc_clear_reuse(काष्ठा dma_async_tx_descriptor *tx)
-अणु
+static inline void dmaengine_desc_clear_reuse(struct dma_async_tx_descriptor *tx)
+{
 	tx->flags &= ~DMA_CTRL_REUSE;
-पूर्ण
+}
 
-अटल अंतरभूत bool dmaengine_desc_test_reuse(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	वापस (tx->flags & DMA_CTRL_REUSE) == DMA_CTRL_REUSE;
-पूर्ण
+static inline bool dmaengine_desc_test_reuse(struct dma_async_tx_descriptor *tx)
+{
+	return (tx->flags & DMA_CTRL_REUSE) == DMA_CTRL_REUSE;
+}
 
-अटल अंतरभूत पूर्णांक dmaengine_desc_मुक्त(काष्ठा dma_async_tx_descriptor *desc)
-अणु
-	/* this is supported क्रम reusable desc, so check that */
-	अगर (!dmaengine_desc_test_reuse(desc))
-		वापस -EPERM;
+static inline int dmaengine_desc_free(struct dma_async_tx_descriptor *desc)
+{
+	/* this is supported for reusable desc, so check that */
+	if (!dmaengine_desc_test_reuse(desc))
+		return -EPERM;
 
-	वापस desc->desc_मुक्त(desc);
-पूर्ण
+	return desc->desc_free(desc);
+}
 
 /* --- DMA device --- */
 
-पूर्णांक dma_async_device_रेजिस्टर(काष्ठा dma_device *device);
-पूर्णांक dmaenginem_async_device_रेजिस्टर(काष्ठा dma_device *device);
-व्योम dma_async_device_unरेजिस्टर(काष्ठा dma_device *device);
-पूर्णांक dma_async_device_channel_रेजिस्टर(काष्ठा dma_device *device,
-				      काष्ठा dma_chan *chan);
-व्योम dma_async_device_channel_unरेजिस्टर(काष्ठा dma_device *device,
-					 काष्ठा dma_chan *chan);
-व्योम dma_run_dependencies(काष्ठा dma_async_tx_descriptor *tx);
-#घोषणा dma_request_channel(mask, x, y) \
-	__dma_request_channel(&(mask), x, y, शून्य)
+int dma_async_device_register(struct dma_device *device);
+int dmaenginem_async_device_register(struct dma_device *device);
+void dma_async_device_unregister(struct dma_device *device);
+int dma_async_device_channel_register(struct dma_device *device,
+				      struct dma_chan *chan);
+void dma_async_device_channel_unregister(struct dma_device *device,
+					 struct dma_chan *chan);
+void dma_run_dependencies(struct dma_async_tx_descriptor *tx);
+#define dma_request_channel(mask, x, y) \
+	__dma_request_channel(&(mask), x, y, NULL)
 
 /* Deprecated, please use dma_request_chan() directly */
-अटल अंतरभूत काष्ठा dma_chan * __deprecated
-dma_request_slave_channel(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा dma_chan *ch = dma_request_chan(dev, name);
+static inline struct dma_chan * __deprecated
+dma_request_slave_channel(struct device *dev, const char *name)
+{
+	struct dma_chan *ch = dma_request_chan(dev, name);
 
-	वापस IS_ERR(ch) ? शून्य : ch;
-पूर्ण
+	return IS_ERR(ch) ? NULL : ch;
+}
 
-अटल अंतरभूत काष्ठा dma_chan
-*dma_request_slave_channel_compat(स्थिर dma_cap_mask_t mask,
-				  dma_filter_fn fn, व्योम *fn_param,
-				  काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा dma_chan *chan;
+static inline struct dma_chan
+*dma_request_slave_channel_compat(const dma_cap_mask_t mask,
+				  dma_filter_fn fn, void *fn_param,
+				  struct device *dev, const char *name)
+{
+	struct dma_chan *chan;
 
 	chan = dma_request_slave_channel(dev, name);
-	अगर (chan)
-		वापस chan;
+	if (chan)
+		return chan;
 
-	अगर (!fn || !fn_param)
-		वापस शून्य;
+	if (!fn || !fn_param)
+		return NULL;
 
-	वापस __dma_request_channel(&mask, fn, fn_param, शून्य);
-पूर्ण
+	return __dma_request_channel(&mask, fn, fn_param, NULL);
+}
 
-अटल अंतरभूत अक्षर *
-dmaengine_get_direction_text(क्रमागत dma_transfer_direction dir)
-अणु
-	चयन (dir) अणु
-	हाल DMA_DEV_TO_MEM:
-		वापस "DEV_TO_MEM";
-	हाल DMA_MEM_TO_DEV:
-		वापस "MEM_TO_DEV";
-	हाल DMA_MEM_TO_MEM:
-		वापस "MEM_TO_MEM";
-	हाल DMA_DEV_TO_DEV:
-		वापस "DEV_TO_DEV";
-	शेष:
-		वापस "invalid";
-	पूर्ण
-पूर्ण
+static inline char *
+dmaengine_get_direction_text(enum dma_transfer_direction dir)
+{
+	switch (dir) {
+	case DMA_DEV_TO_MEM:
+		return "DEV_TO_MEM";
+	case DMA_MEM_TO_DEV:
+		return "MEM_TO_DEV";
+	case DMA_MEM_TO_MEM:
+		return "MEM_TO_MEM";
+	case DMA_DEV_TO_DEV:
+		return "DEV_TO_DEV";
+	default:
+		return "invalid";
+	}
+}
 
-अटल अंतरभूत काष्ठा device *dmaengine_get_dma_device(काष्ठा dma_chan *chan)
-अणु
-	अगर (chan->dev->chan_dma_dev)
-		वापस &chan->dev->device;
+static inline struct device *dmaengine_get_dma_device(struct dma_chan *chan)
+{
+	if (chan->dev->chan_dma_dev)
+		return &chan->dev->device;
 
-	वापस chan->device->dev;
-पूर्ण
+	return chan->device->dev;
+}
 
-#पूर्ण_अगर /* DMAENGINE_H */
+#endif /* DMAENGINE_H */

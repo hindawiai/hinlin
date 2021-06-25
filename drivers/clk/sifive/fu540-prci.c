@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018-2019 SiFive, Inc.
  * Copyright (C) 2018-2019 Wesley Terpstra
  * Copyright (C) 2018-2019 Paul Walmsley
  * Copyright (C) 2020 Zong Li
  *
- * The FU540 PRCI implements घड़ी and reset control क्रम the SiFive
+ * The FU540 PRCI implements clock and reset control for the SiFive
  * FU540-C000 chip.  This driver assumes that it has sole control
  * over all PRCI resources.
  *
@@ -17,74 +16,74 @@
  * - SiFive FU540-C000 manual v1p0, Chapter 7 "Clocking and Reset"
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <dt-bindings/घड़ी/sअगरive-fu540-prci.h>
+#include <dt-bindings/clock/sifive-fu540-prci.h>
 
-#समावेश "fu540-prci.h"
-#समावेश "sifive-prci.h"
+#include "fu540-prci.h"
+#include "sifive-prci.h"
 
-/* PRCI पूर्णांकegration data क्रम each WRPLL instance */
+/* PRCI integration data for each WRPLL instance */
 
-अटल काष्ठा __prci_wrpll_data __prci_corepll_data = अणु
+static struct __prci_wrpll_data __prci_corepll_data = {
 	.cfg0_offs = PRCI_COREPLLCFG0_OFFSET,
 	.cfg1_offs = PRCI_COREPLLCFG1_OFFSET,
-	.enable_bypass = sअगरive_prci_coreclksel_use_hfclk,
-	.disable_bypass = sअगरive_prci_coreclksel_use_corepll,
-पूर्ण;
+	.enable_bypass = sifive_prci_coreclksel_use_hfclk,
+	.disable_bypass = sifive_prci_coreclksel_use_corepll,
+};
 
-अटल काष्ठा __prci_wrpll_data __prci_ddrpll_data = अणु
+static struct __prci_wrpll_data __prci_ddrpll_data = {
 	.cfg0_offs = PRCI_DDRPLLCFG0_OFFSET,
 	.cfg1_offs = PRCI_DDRPLLCFG1_OFFSET,
-पूर्ण;
+};
 
-अटल काष्ठा __prci_wrpll_data __prci_gemgxlpll_data = अणु
+static struct __prci_wrpll_data __prci_gemgxlpll_data = {
 	.cfg0_offs = PRCI_GEMGXLPLLCFG0_OFFSET,
 	.cfg1_offs = PRCI_GEMGXLPLLCFG1_OFFSET,
-पूर्ण;
+};
 
-/* Linux घड़ी framework पूर्णांकegration */
+/* Linux clock framework integration */
 
-अटल स्थिर काष्ठा clk_ops sअगरive_fu540_prci_wrpll_clk_ops = अणु
-	.set_rate = sअगरive_prci_wrpll_set_rate,
-	.round_rate = sअगरive_prci_wrpll_round_rate,
-	.recalc_rate = sअगरive_prci_wrpll_recalc_rate,
-	.enable = sअगरive_prci_घड़ी_enable,
-	.disable = sअगरive_prci_घड़ी_disable,
-	.is_enabled = sअगरive_clk_is_enabled,
-पूर्ण;
+static const struct clk_ops sifive_fu540_prci_wrpll_clk_ops = {
+	.set_rate = sifive_prci_wrpll_set_rate,
+	.round_rate = sifive_prci_wrpll_round_rate,
+	.recalc_rate = sifive_prci_wrpll_recalc_rate,
+	.enable = sifive_prci_clock_enable,
+	.disable = sifive_prci_clock_disable,
+	.is_enabled = sifive_clk_is_enabled,
+};
 
-अटल स्थिर काष्ठा clk_ops sअगरive_fu540_prci_wrpll_ro_clk_ops = अणु
-	.recalc_rate = sअगरive_prci_wrpll_recalc_rate,
-पूर्ण;
+static const struct clk_ops sifive_fu540_prci_wrpll_ro_clk_ops = {
+	.recalc_rate = sifive_prci_wrpll_recalc_rate,
+};
 
-अटल स्थिर काष्ठा clk_ops sअगरive_fu540_prci_tlclksel_clk_ops = अणु
-	.recalc_rate = sअगरive_prci_tlclksel_recalc_rate,
-पूर्ण;
+static const struct clk_ops sifive_fu540_prci_tlclksel_clk_ops = {
+	.recalc_rate = sifive_prci_tlclksel_recalc_rate,
+};
 
-/* List of घड़ी controls provided by the PRCI */
-काष्ठा __prci_घड़ी __prci_init_घड़ीs_fu540[] = अणु
-	[PRCI_CLK_COREPLL] = अणु
+/* List of clock controls provided by the PRCI */
+struct __prci_clock __prci_init_clocks_fu540[] = {
+	[PRCI_CLK_COREPLL] = {
 		.name = "corepll",
 		.parent_name = "hfclk",
-		.ops = &sअगरive_fu540_prci_wrpll_clk_ops,
+		.ops = &sifive_fu540_prci_wrpll_clk_ops,
 		.pwd = &__prci_corepll_data,
-	पूर्ण,
-	[PRCI_CLK_DDRPLL] = अणु
+	},
+	[PRCI_CLK_DDRPLL] = {
 		.name = "ddrpll",
 		.parent_name = "hfclk",
-		.ops = &sअगरive_fu540_prci_wrpll_ro_clk_ops,
+		.ops = &sifive_fu540_prci_wrpll_ro_clk_ops,
 		.pwd = &__prci_ddrpll_data,
-	पूर्ण,
-	[PRCI_CLK_GEMGXLPLL] = अणु
+	},
+	[PRCI_CLK_GEMGXLPLL] = {
 		.name = "gemgxlpll",
 		.parent_name = "hfclk",
-		.ops = &sअगरive_fu540_prci_wrpll_clk_ops,
+		.ops = &sifive_fu540_prci_wrpll_clk_ops,
 		.pwd = &__prci_gemgxlpll_data,
-	पूर्ण,
-	[PRCI_CLK_TLCLK] = अणु
+	},
+	[PRCI_CLK_TLCLK] = {
 		.name = "tlclk",
 		.parent_name = "corepll",
-		.ops = &sअगरive_fu540_prci_tlclksel_clk_ops,
-	पूर्ण,
-पूर्ण;
+		.ops = &sifive_fu540_prci_tlclksel_clk_ops,
+	},
+};

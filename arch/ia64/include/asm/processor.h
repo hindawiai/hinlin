@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_PROCESSOR_H
-#घोषणा _ASM_IA64_PROCESSOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_PROCESSOR_H
+#define _ASM_IA64_PROCESSOR_H
 
 /*
  * Copyright (C) 1998-2004 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *	Stephane Eranian <eranian@hpl.hp.com>
- * Copyright (C) 1999 Asit Mallick <asit.k.mallick@पूर्णांकel.com>
- * Copyright (C) 1999 Don Dugger <करोn.dugger@पूर्णांकel.com>
+ * Copyright (C) 1999 Asit Mallick <asit.k.mallick@intel.com>
+ * Copyright (C) 1999 Don Dugger <don.dugger@intel.com>
  *
  * 11/24/98	S.Eranian	added ia64_set_iva()
- * 12/03/99	D. Mosberger	implement thपढ़ो_saved_pc() via kernel unwind API
- * 06/16/00	A. Mallick	added csd/ssd/tssd क्रम ia32 support
+ * 12/03/99	D. Mosberger	implement thread_saved_pc() via kernel unwind API
+ * 06/16/00	A. Mallick	added csd/ssd/tssd for ia32 support
  */
 
 
-#समावेश <यंत्र/पूर्णांकrinsics.h>
-#समावेश <यंत्र/kregs.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/ustack.h>
+#include <asm/intrinsics.h>
+#include <asm/kregs.h>
+#include <asm/ptrace.h>
+#include <asm/ustack.h>
 
-#घोषणा IA64_NUM_PHYS_STACK_REG	96
-#घोषणा IA64_NUM_DBG_REGS	8
+#define IA64_NUM_PHYS_STACK_REG	96
+#define IA64_NUM_DBG_REGS	8
 
-#घोषणा DEFAULT_MAP_BASE	__IA64_UL_CONST(0x2000000000000000)
-#घोषणा DEFAULT_TASK_SIZE	__IA64_UL_CONST(0xa000000000000000)
+#define DEFAULT_MAP_BASE	__IA64_UL_CONST(0x2000000000000000)
+#define DEFAULT_TASK_SIZE	__IA64_UL_CONST(0xa000000000000000)
 
 /*
  * TASK_SIZE really is a mis-named.  It really is the maximum user
  * space address (plus one).  On IA-64, there are five regions of 2TB
- * each (assuming 8KB page size), क्रम a total of 8TB of user भव
+ * each (assuming 8KB page size), for a total of 8TB of user virtual
  * address space.
  */
-#घोषणा TASK_SIZE       	DEFAULT_TASK_SIZE
+#define TASK_SIZE       	DEFAULT_TASK_SIZE
 
 /*
- * This decides where the kernel will search क्रम a मुक्त chunk of vm
+ * This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#घोषणा TASK_UNMAPPED_BASE	(current->thपढ़ो.map_base)
+#define TASK_UNMAPPED_BASE	(current->thread.map_base)
 
-#घोषणा IA64_THREAD_FPH_VALID	(__IA64_UL(1) << 0)	/* भग्नing-poपूर्णांक high state valid? */
-#घोषणा IA64_THREAD_DBG_VALID	(__IA64_UL(1) << 1)	/* debug रेजिस्टरs valid? */
-#घोषणा IA64_THREAD_PM_VALID	(__IA64_UL(1) << 2)	/* perक्रमmance रेजिस्टरs valid? */
-#घोषणा IA64_THREAD_UAC_NOPRINT	(__IA64_UL(1) << 3)	/* करोn't log unaligned accesses */
-#घोषणा IA64_THREAD_UAC_SIGBUS	(__IA64_UL(1) << 4)	/* generate SIGBUS on unaligned acc. */
-#घोषणा IA64_THREAD_MIGRATION	(__IA64_UL(1) << 5)	/* require migration
+#define IA64_THREAD_FPH_VALID	(__IA64_UL(1) << 0)	/* floating-point high state valid? */
+#define IA64_THREAD_DBG_VALID	(__IA64_UL(1) << 1)	/* debug registers valid? */
+#define IA64_THREAD_PM_VALID	(__IA64_UL(1) << 2)	/* performance registers valid? */
+#define IA64_THREAD_UAC_NOPRINT	(__IA64_UL(1) << 3)	/* don't log unaligned accesses */
+#define IA64_THREAD_UAC_SIGBUS	(__IA64_UL(1) << 4)	/* generate SIGBUS on unaligned acc. */
+#define IA64_THREAD_MIGRATION	(__IA64_UL(1) << 5)	/* require migration
 							   sync at ctx sw */
-#घोषणा IA64_THREAD_FPEMU_NOPRINT (__IA64_UL(1) << 6)	/* करोn't log any fpswa faults */
-#घोषणा IA64_THREAD_FPEMU_संक_भ_त्रुटि  (__IA64_UL(1) << 7)	/* send a संक_भ_त्रुटि क्रम fpswa faults */
+#define IA64_THREAD_FPEMU_NOPRINT (__IA64_UL(1) << 6)	/* don't log any fpswa faults */
+#define IA64_THREAD_FPEMU_SIGFPE  (__IA64_UL(1) << 7)	/* send a SIGFPE for fpswa faults */
 
-#घोषणा IA64_THREAD_UAC_SHIFT	3
-#घोषणा IA64_THREAD_UAC_MASK	(IA64_THREAD_UAC_NOPRINT | IA64_THREAD_UAC_SIGBUS)
-#घोषणा IA64_THREAD_FPEMU_SHIFT	6
-#घोषणा IA64_THREAD_FPEMU_MASK	(IA64_THREAD_FPEMU_NOPRINT | IA64_THREAD_FPEMU_संक_भ_त्रुटि)
+#define IA64_THREAD_UAC_SHIFT	3
+#define IA64_THREAD_UAC_MASK	(IA64_THREAD_UAC_NOPRINT | IA64_THREAD_UAC_SIGBUS)
+#define IA64_THREAD_FPEMU_SHIFT	6
+#define IA64_THREAD_FPEMU_MASK	(IA64_THREAD_FPEMU_NOPRINT | IA64_THREAD_FPEMU_SIGFPE)
 
 
 /*
- * This shअगरt should be large enough to be able to represent 1000000000/itc_freq with good
- * accuracy जबतक being small enough to fit 10*1000000000<<IA64_NSEC_PER_CYC_SHIFT in 64 bits
- * (this will give enough slack to represent 10 seconds worth of समय as a scaled number).
+ * This shift should be large enough to be able to represent 1000000000/itc_freq with good
+ * accuracy while being small enough to fit 10*1000000000<<IA64_NSEC_PER_CYC_SHIFT in 64 bits
+ * (this will give enough slack to represent 10 seconds worth of time as a scaled number).
  */
-#घोषणा IA64_NSEC_PER_CYC_SHIFT	30
+#define IA64_NSEC_PER_CYC_SHIFT	30
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/cache.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
+#include <linux/cache.h>
+#include <linux/compiler.h>
+#include <linux/threads.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/fpu.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/percpu.h>
-#समावेश <यंत्र/rse.h>
-#समावेश <यंत्र/unwind.h>
-#समावेश <linux/atomic.h>
-#अगर_घोषित CONFIG_NUMA
-#समावेश <यंत्र/nodedata.h>
-#पूर्ण_अगर
+#include <asm/fpu.h>
+#include <asm/page.h>
+#include <asm/percpu.h>
+#include <asm/rse.h>
+#include <asm/unwind.h>
+#include <linux/atomic.h>
+#ifdef CONFIG_NUMA
+#include <asm/nodedata.h>
+#endif
 
-/* like above but expressed as bitfields क्रम more efficient access: */
-काष्ठा ia64_psr अणु
+/* like above but expressed as bitfields for more efficient access: */
+struct ia64_psr {
 	__u64 reserved0 : 1;
 	__u64 be : 1;
 	__u64 up : 1;
@@ -119,11 +118,11 @@
 	__u64 ed : 1;
 	__u64 bn : 1;
 	__u64 reserved4 : 19;
-पूर्ण;
+};
 
-जोड़ ia64_isr अणु
+union ia64_isr {
 	__u64  val;
-	काष्ठा अणु
+	struct {
 		__u64 code : 16;
 		__u64 vector : 8;
 		__u64 reserved1 : 8;
@@ -139,537 +138,537 @@
 		__u64 ei : 2;
 		__u64 ed : 1;
 		__u64 reserved2 : 20;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-जोड़ ia64_lid अणु
+union ia64_lid {
 	__u64 val;
-	काष्ठा अणु
+	struct {
 		__u64  rv  : 16;
 		__u64  eid : 8;
 		__u64  id  : 8;
 		__u64  ig  : 32;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-जोड़ ia64_tpr अणु
+union ia64_tpr {
 	__u64 val;
-	काष्ठा अणु
+	struct {
 		__u64 ig0 : 4;
 		__u64 mic : 4;
 		__u64 rsv : 8;
 		__u64 mmi : 1;
 		__u64 ig1 : 47;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-जोड़ ia64_itir अणु
+union ia64_itir {
 	__u64 val;
-	काष्ठा अणु
+	struct {
 		__u64 rv3  :  2; /* 0-1 */
 		__u64 ps   :  6; /* 2-7 */
 		__u64 key  : 24; /* 8-31 */
 		__u64 rv4  : 32; /* 32-63 */
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-जोड़  ia64_rr अणु
+union  ia64_rr {
 	__u64 val;
-	काष्ठा अणु
+	struct {
 		__u64  ve	:  1;  /* enable hw walker */
 		__u64  reserved0:  1;  /* reserved */
 		__u64  ps	:  6;  /* log page size */
 		__u64  rid	: 24;  /* region id */
 		__u64  reserved1: 32;  /* reserved */
-	पूर्ण;
-पूर्ण;
+	};
+};
 
 /*
  * CPU type, hardware bug flags, and per-CPU state.  Frequently used
  * state comes earlier:
  */
-काष्ठा cpuinfo_ia64 अणु
-	अचिन्हित पूर्णांक softirq_pending;
-	अचिन्हित दीर्घ iपंचांग_delta;	/* # of घड़ी cycles between घड़ी ticks */
-	अचिन्हित दीर्घ iपंचांग_next;		/* पूर्णांकerval समयr mask value to use क्रम next घड़ी tick */
-	अचिन्हित दीर्घ nsec_per_cyc;	/* (1000000000<<IA64_NSEC_PER_CYC_SHIFT)/itc_freq */
-	अचिन्हित दीर्घ unimpl_va_mask;	/* mask of unimplemented भव address bits (from PAL) */
-	अचिन्हित दीर्घ unimpl_pa_mask;	/* mask of unimplemented physical address bits (from PAL) */
-	अचिन्हित दीर्घ itc_freq;		/* frequency of ITC counter */
-	अचिन्हित दीर्घ proc_freq;	/* frequency of processor */
-	अचिन्हित दीर्घ cyc_per_usec;	/* itc_freq/1000000 */
-	अचिन्हित दीर्घ ptce_base;
-	अचिन्हित पूर्णांक ptce_count[2];
-	अचिन्हित पूर्णांक ptce_stride[2];
-	काष्ठा task_काष्ठा *ksoftirqd;	/* kernel softirq daemon क्रम this CPU */
+struct cpuinfo_ia64 {
+	unsigned int softirq_pending;
+	unsigned long itm_delta;	/* # of clock cycles between clock ticks */
+	unsigned long itm_next;		/* interval timer mask value to use for next clock tick */
+	unsigned long nsec_per_cyc;	/* (1000000000<<IA64_NSEC_PER_CYC_SHIFT)/itc_freq */
+	unsigned long unimpl_va_mask;	/* mask of unimplemented virtual address bits (from PAL) */
+	unsigned long unimpl_pa_mask;	/* mask of unimplemented physical address bits (from PAL) */
+	unsigned long itc_freq;		/* frequency of ITC counter */
+	unsigned long proc_freq;	/* frequency of processor */
+	unsigned long cyc_per_usec;	/* itc_freq/1000000 */
+	unsigned long ptce_base;
+	unsigned int ptce_count[2];
+	unsigned int ptce_stride[2];
+	struct task_struct *ksoftirqd;	/* kernel softirq daemon for this CPU */
 
-#अगर_घोषित CONFIG_SMP
-	अचिन्हित दीर्घ loops_per_jअगरfy;
-	पूर्णांक cpu;
-	अचिन्हित पूर्णांक socket_id;	/* physical processor socket id */
-	अचिन्हित लघु core_id;	/* core id */
-	अचिन्हित लघु thपढ़ो_id; /* thपढ़ो id */
-	अचिन्हित लघु num_log;	/* Total number of logical processors on
+#ifdef CONFIG_SMP
+	unsigned long loops_per_jiffy;
+	int cpu;
+	unsigned int socket_id;	/* physical processor socket id */
+	unsigned short core_id;	/* core id */
+	unsigned short thread_id; /* thread id */
+	unsigned short num_log;	/* Total number of logical processors on
 				 * this socket that were successfully booted */
-	अचिन्हित अक्षर cores_per_socket;	/* Cores per processor socket */
-	अचिन्हित अक्षर thपढ़ोs_per_core;	/* Thपढ़ोs per core */
-#पूर्ण_अगर
+	unsigned char cores_per_socket;	/* Cores per processor socket */
+	unsigned char threads_per_core;	/* Threads per core */
+#endif
 
-	/* CPUID-derived inक्रमmation: */
-	अचिन्हित दीर्घ ppn;
-	अचिन्हित दीर्घ features;
-	अचिन्हित अक्षर number;
-	अचिन्हित अक्षर revision;
-	अचिन्हित अक्षर model;
-	अचिन्हित अक्षर family;
-	अचिन्हित अक्षर archrev;
-	अक्षर venकरोr[16];
-	अक्षर *model_name;
+	/* CPUID-derived information: */
+	unsigned long ppn;
+	unsigned long features;
+	unsigned char number;
+	unsigned char revision;
+	unsigned char model;
+	unsigned char family;
+	unsigned char archrev;
+	char vendor[16];
+	char *model_name;
 
-#अगर_घोषित CONFIG_NUMA
-	काष्ठा ia64_node_data *node_data;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_NUMA
+	struct ia64_node_data *node_data;
+#endif
+};
 
-DECLARE_PER_CPU(काष्ठा cpuinfo_ia64, ia64_cpu_info);
+DECLARE_PER_CPU(struct cpuinfo_ia64, ia64_cpu_info);
 
 /*
  * The "local" data variable.  It refers to the per-CPU data of the currently executing
- * CPU, much like "current" poपूर्णांकs to the per-task data of the currently executing task.
- * Do not use the address of local_cpu_data, since it will be dअगरferent from
+ * CPU, much like "current" points to the per-task data of the currently executing task.
+ * Do not use the address of local_cpu_data, since it will be different from
  * cpu_data(smp_processor_id())!
  */
-#घोषणा local_cpu_data		(&__ia64_per_cpu_var(ia64_cpu_info))
-#घोषणा cpu_data(cpu)		(&per_cpu(ia64_cpu_info, cpu))
+#define local_cpu_data		(&__ia64_per_cpu_var(ia64_cpu_info))
+#define cpu_data(cpu)		(&per_cpu(ia64_cpu_info, cpu))
 
-बाह्य व्योम prपूर्णांक_cpu_info (काष्ठा cpuinfo_ia64 *);
+extern void print_cpu_info (struct cpuinfo_ia64 *);
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ seg;
-पूर्ण mm_segment_t;
+typedef struct {
+	unsigned long seg;
+} mm_segment_t;
 
-#घोषणा SET_UNALIGN_CTL(task,value)								\
-(अणु												\
-	(task)->thपढ़ो.flags = (((task)->thपढ़ो.flags & ~IA64_THREAD_UAC_MASK)			\
+#define SET_UNALIGN_CTL(task,value)								\
+({												\
+	(task)->thread.flags = (((task)->thread.flags & ~IA64_THREAD_UAC_MASK)			\
 				| (((value) << IA64_THREAD_UAC_SHIFT) & IA64_THREAD_UAC_MASK));	\
 	0;											\
-पूर्ण)
-#घोषणा GET_UNALIGN_CTL(task,addr)								\
-(अणु												\
-	put_user(((task)->thपढ़ो.flags & IA64_THREAD_UAC_MASK) >> IA64_THREAD_UAC_SHIFT,	\
-		 (पूर्णांक __user *) (addr));							\
-पूर्ण)
+})
+#define GET_UNALIGN_CTL(task,addr)								\
+({												\
+	put_user(((task)->thread.flags & IA64_THREAD_UAC_MASK) >> IA64_THREAD_UAC_SHIFT,	\
+		 (int __user *) (addr));							\
+})
 
-#घोषणा SET_FPEMU_CTL(task,value)								\
-(अणु												\
-	(task)->thपढ़ो.flags = (((task)->thपढ़ो.flags & ~IA64_THREAD_FPEMU_MASK)		\
+#define SET_FPEMU_CTL(task,value)								\
+({												\
+	(task)->thread.flags = (((task)->thread.flags & ~IA64_THREAD_FPEMU_MASK)		\
 			  | (((value) << IA64_THREAD_FPEMU_SHIFT) & IA64_THREAD_FPEMU_MASK));	\
 	0;											\
-पूर्ण)
-#घोषणा GET_FPEMU_CTL(task,addr)								\
-(अणु												\
-	put_user(((task)->thपढ़ो.flags & IA64_THREAD_FPEMU_MASK) >> IA64_THREAD_FPEMU_SHIFT,	\
-		 (पूर्णांक __user *) (addr));							\
-पूर्ण)
+})
+#define GET_FPEMU_CTL(task,addr)								\
+({												\
+	put_user(((task)->thread.flags & IA64_THREAD_FPEMU_MASK) >> IA64_THREAD_FPEMU_SHIFT,	\
+		 (int __user *) (addr));							\
+})
 
-काष्ठा thपढ़ो_काष्ठा अणु
-	__u32 flags;			/* various thपढ़ो flags (see IA64_THREAD_*) */
-	/* writing on_ustack is perक्रमmance-critical, so it's worth spending 8 bits on it... */
+struct thread_struct {
+	__u32 flags;			/* various thread flags (see IA64_THREAD_*) */
+	/* writing on_ustack is performance-critical, so it's worth spending 8 bits on it... */
 	__u8 on_ustack;			/* executing on user-stacks? */
 	__u8 pad[3];
-	__u64 ksp;			/* kernel stack poपूर्णांकer */
-	__u64 map_base;			/* base address क्रम get_unmapped_area() */
-	__u64 rbs_bot;			/* the base address क्रम the RBS */
-	पूर्णांक last_fph_cpu;		/* CPU that may hold the contents of f32-f127 */
-	अचिन्हित दीर्घ dbr[IA64_NUM_DBG_REGS];
-	अचिन्हित दीर्घ ibr[IA64_NUM_DBG_REGS];
-	काष्ठा ia64_fpreg fph[96];	/* saved/loaded on demand */
-पूर्ण;
+	__u64 ksp;			/* kernel stack pointer */
+	__u64 map_base;			/* base address for get_unmapped_area() */
+	__u64 rbs_bot;			/* the base address for the RBS */
+	int last_fph_cpu;		/* CPU that may hold the contents of f32-f127 */
+	unsigned long dbr[IA64_NUM_DBG_REGS];
+	unsigned long ibr[IA64_NUM_DBG_REGS];
+	struct ia64_fpreg fph[96];	/* saved/loaded on demand */
+};
 
-#घोषणा INIT_THREAD अणु						\
+#define INIT_THREAD {						\
 	.flags =	0,					\
 	.on_ustack =	0,					\
 	.ksp =		0,					\
 	.map_base =	DEFAULT_MAP_BASE,			\
 	.rbs_bot =	STACK_TOP - DEFAULT_USER_STACK_SIZE,	\
 	.last_fph_cpu =  -1,					\
-	.dbr =		अणु0, पूर्ण,					\
-	.ibr =		अणु0, पूर्ण,					\
-	.fph =		अणुअणुअणुअणु0पूर्णपूर्णपूर्ण, पूर्ण				\
-पूर्ण
+	.dbr =		{0, },					\
+	.ibr =		{0, },					\
+	.fph =		{{{{0}}}, }				\
+}
 
-#घोषणा start_thपढ़ो(regs,new_ip,new_sp) करो अणु							\
+#define start_thread(regs,new_ip,new_sp) do {							\
 	regs->cr_ipsr = ((regs->cr_ipsr | (IA64_PSR_BITS_TO_SET | IA64_PSR_CPL))		\
 			 & ~(IA64_PSR_BITS_TO_CLEAR | IA64_PSR_RI | IA64_PSR_IS));		\
 	regs->cr_iip = new_ip;									\
 	regs->ar_rsc = 0xf;		/* eager mode, privilege level 3 */			\
 	regs->ar_rnat = 0;									\
-	regs->ar_bspstore = current->thपढ़ो.rbs_bot;						\
+	regs->ar_bspstore = current->thread.rbs_bot;						\
 	regs->ar_fpsr = FPSR_DEFAULT;								\
 	regs->loadrs = 0;									\
 	regs->r8 = get_dumpable(current->mm);	/* set "don't zap registers" flag */		\
 	regs->r12 = new_sp - 16;	/* allocate 16 byte scratch area */			\
-	अगर (unlikely(get_dumpable(current->mm) != SUID_DUMP_USER)) अणु	\
+	if (unlikely(get_dumpable(current->mm) != SUID_DUMP_USER)) {	\
 		/*										\
-		 * Zap scratch regs to aव्योम leaking bits between processes with dअगरferent	\
+		 * Zap scratch regs to avoid leaking bits between processes with different	\
 		 * uid/privileges.								\
 		 */										\
 		regs->ar_pfs = 0; regs->b0 = 0; regs->pr = 0;					\
 		regs->r1 = 0; regs->r9  = 0; regs->r11 = 0; regs->r13 = 0; regs->r15 = 0;	\
-	पूर्ण											\
-पूर्ण जबतक (0)
+	}											\
+} while (0)
 
 /* Forward declarations, a strange C thing... */
-काष्ठा mm_काष्ठा;
-काष्ठा task_काष्ठा;
+struct mm_struct;
+struct task_struct;
 
 /*
- * Free all resources held by a thपढ़ो. This is called after the
- * parent of DEAD_TASK has collected the निकास status of the task via
- * रुको().
+ * Free all resources held by a thread. This is called after the
+ * parent of DEAD_TASK has collected the exit status of the task via
+ * wait().
  */
-#घोषणा release_thपढ़ो(dead_task)
+#define release_thread(dead_task)
 
-/* Get रुको channel क्रम task P.  */
-बाह्य अचिन्हित दीर्घ get_wchan (काष्ठा task_काष्ठा *p);
+/* Get wait channel for task P.  */
+extern unsigned long get_wchan (struct task_struct *p);
 
-/* Return inकाष्ठाion poपूर्णांकer of blocked task TSK.  */
-#घोषणा KSTK_EIP(tsk)					\
-  (अणु							\
-	काष्ठा pt_regs *_regs = task_pt_regs(tsk);	\
+/* Return instruction pointer of blocked task TSK.  */
+#define KSTK_EIP(tsk)					\
+  ({							\
+	struct pt_regs *_regs = task_pt_regs(tsk);	\
 	_regs->cr_iip + ia64_psr(_regs)->ri;		\
-  पूर्ण)
+  })
 
-/* Return stack poपूर्णांकer of blocked task TSK.  */
-#घोषणा KSTK_ESP(tsk)  ((tsk)->thपढ़ो.ksp)
+/* Return stack pointer of blocked task TSK.  */
+#define KSTK_ESP(tsk)  ((tsk)->thread.ksp)
 
-बाह्य व्योम ia64_getreg_unknown_kr (व्योम);
-बाह्य व्योम ia64_setreg_unknown_kr (व्योम);
+extern void ia64_getreg_unknown_kr (void);
+extern void ia64_setreg_unknown_kr (void);
 
-#घोषणा ia64_get_kr(regnum)					\
-(अणु								\
-	अचिन्हित दीर्घ r = 0;					\
+#define ia64_get_kr(regnum)					\
+({								\
+	unsigned long r = 0;					\
 								\
-	चयन (regnum) अणु					\
-	    हाल 0: r = ia64_getreg(_IA64_REG_AR_KR0); अवरोध;	\
-	    हाल 1: r = ia64_getreg(_IA64_REG_AR_KR1); अवरोध;	\
-	    हाल 2: r = ia64_getreg(_IA64_REG_AR_KR2); अवरोध;	\
-	    हाल 3: r = ia64_getreg(_IA64_REG_AR_KR3); अवरोध;	\
-	    हाल 4: r = ia64_getreg(_IA64_REG_AR_KR4); अवरोध;	\
-	    हाल 5: r = ia64_getreg(_IA64_REG_AR_KR5); अवरोध;	\
-	    हाल 6: r = ia64_getreg(_IA64_REG_AR_KR6); अवरोध;	\
-	    हाल 7: r = ia64_getreg(_IA64_REG_AR_KR7); अवरोध;	\
-	    शेष: ia64_getreg_unknown_kr(); अवरोध;		\
-	पूर्ण							\
+	switch (regnum) {					\
+	    case 0: r = ia64_getreg(_IA64_REG_AR_KR0); break;	\
+	    case 1: r = ia64_getreg(_IA64_REG_AR_KR1); break;	\
+	    case 2: r = ia64_getreg(_IA64_REG_AR_KR2); break;	\
+	    case 3: r = ia64_getreg(_IA64_REG_AR_KR3); break;	\
+	    case 4: r = ia64_getreg(_IA64_REG_AR_KR4); break;	\
+	    case 5: r = ia64_getreg(_IA64_REG_AR_KR5); break;	\
+	    case 6: r = ia64_getreg(_IA64_REG_AR_KR6); break;	\
+	    case 7: r = ia64_getreg(_IA64_REG_AR_KR7); break;	\
+	    default: ia64_getreg_unknown_kr(); break;		\
+	}							\
 	r;							\
-पूर्ण)
+})
 
-#घोषणा ia64_set_kr(regnum, r) 					\
-(अणु								\
-	चयन (regnum) अणु					\
-	    हाल 0: ia64_setreg(_IA64_REG_AR_KR0, r); अवरोध;	\
-	    हाल 1: ia64_setreg(_IA64_REG_AR_KR1, r); अवरोध;	\
-	    हाल 2: ia64_setreg(_IA64_REG_AR_KR2, r); अवरोध;	\
-	    हाल 3: ia64_setreg(_IA64_REG_AR_KR3, r); अवरोध;	\
-	    हाल 4: ia64_setreg(_IA64_REG_AR_KR4, r); अवरोध;	\
-	    हाल 5: ia64_setreg(_IA64_REG_AR_KR5, r); अवरोध;	\
-	    हाल 6: ia64_setreg(_IA64_REG_AR_KR6, r); अवरोध;	\
-	    हाल 7: ia64_setreg(_IA64_REG_AR_KR7, r); अवरोध;	\
-	    शेष: ia64_setreg_unknown_kr(); अवरोध;		\
-	पूर्ण							\
-पूर्ण)
+#define ia64_set_kr(regnum, r) 					\
+({								\
+	switch (regnum) {					\
+	    case 0: ia64_setreg(_IA64_REG_AR_KR0, r); break;	\
+	    case 1: ia64_setreg(_IA64_REG_AR_KR1, r); break;	\
+	    case 2: ia64_setreg(_IA64_REG_AR_KR2, r); break;	\
+	    case 3: ia64_setreg(_IA64_REG_AR_KR3, r); break;	\
+	    case 4: ia64_setreg(_IA64_REG_AR_KR4, r); break;	\
+	    case 5: ia64_setreg(_IA64_REG_AR_KR5, r); break;	\
+	    case 6: ia64_setreg(_IA64_REG_AR_KR6, r); break;	\
+	    case 7: ia64_setreg(_IA64_REG_AR_KR7, r); break;	\
+	    default: ia64_setreg_unknown_kr(); break;		\
+	}							\
+})
 
 /*
- * The following three macros can't be inline functions because we don't have काष्ठा
- * task_काष्ठा at this poपूर्णांक.
+ * The following three macros can't be inline functions because we don't have struct
+ * task_struct at this point.
  */
 
 /*
- * Return TRUE अगर task T owns the fph partition of the CPU we're running on.
+ * Return TRUE if task T owns the fph partition of the CPU we're running on.
  * Must be called from code that has preemption disabled.
  */
-#घोषणा ia64_is_local_fpu_owner(t)								\
-(अणु												\
-	काष्ठा task_काष्ठा *__ia64_islfo_task = (t);						\
-	(__ia64_islfo_task->thपढ़ो.last_fph_cpu == smp_processor_id()				\
-	 && __ia64_islfo_task == (काष्ठा task_काष्ठा *) ia64_get_kr(IA64_KR_FPU_OWNER));	\
-पूर्ण)
+#define ia64_is_local_fpu_owner(t)								\
+({												\
+	struct task_struct *__ia64_islfo_task = (t);						\
+	(__ia64_islfo_task->thread.last_fph_cpu == smp_processor_id()				\
+	 && __ia64_islfo_task == (struct task_struct *) ia64_get_kr(IA64_KR_FPU_OWNER));	\
+})
 
 /*
  * Mark task T as owning the fph partition of the CPU we're running on.
  * Must be called from code that has preemption disabled.
  */
-#घोषणा ia64_set_local_fpu_owner(t) करो अणु						\
-	काष्ठा task_काष्ठा *__ia64_slfo_task = (t);					\
-	__ia64_slfo_task->thपढ़ो.last_fph_cpu = smp_processor_id();			\
-	ia64_set_kr(IA64_KR_FPU_OWNER, (अचिन्हित दीर्घ) __ia64_slfo_task);		\
-पूर्ण जबतक (0)
+#define ia64_set_local_fpu_owner(t) do {						\
+	struct task_struct *__ia64_slfo_task = (t);					\
+	__ia64_slfo_task->thread.last_fph_cpu = smp_processor_id();			\
+	ia64_set_kr(IA64_KR_FPU_OWNER, (unsigned long) __ia64_slfo_task);		\
+} while (0)
 
 /* Mark the fph partition of task T as being invalid on all CPUs.  */
-#घोषणा ia64_drop_fpu(t)	((t)->thपढ़ो.last_fph_cpu = -1)
+#define ia64_drop_fpu(t)	((t)->thread.last_fph_cpu = -1)
 
-बाह्य व्योम __ia64_init_fpu (व्योम);
-बाह्य व्योम __ia64_save_fpu (काष्ठा ia64_fpreg *fph);
-बाह्य व्योम __ia64_load_fpu (काष्ठा ia64_fpreg *fph);
-बाह्य व्योम ia64_save_debug_regs (अचिन्हित दीर्घ *save_area);
-बाह्य व्योम ia64_load_debug_regs (अचिन्हित दीर्घ *save_area);
+extern void __ia64_init_fpu (void);
+extern void __ia64_save_fpu (struct ia64_fpreg *fph);
+extern void __ia64_load_fpu (struct ia64_fpreg *fph);
+extern void ia64_save_debug_regs (unsigned long *save_area);
+extern void ia64_load_debug_regs (unsigned long *save_area);
 
-#घोषणा ia64_fph_enable()	करो अणु ia64_rsm(IA64_PSR_DFH); ia64_srlz_d(); पूर्ण जबतक (0)
-#घोषणा ia64_fph_disable()	करो अणु ia64_ssm(IA64_PSR_DFH); ia64_srlz_d(); पूर्ण जबतक (0)
+#define ia64_fph_enable()	do { ia64_rsm(IA64_PSR_DFH); ia64_srlz_d(); } while (0)
+#define ia64_fph_disable()	do { ia64_ssm(IA64_PSR_DFH); ia64_srlz_d(); } while (0)
 
-/* load fp 0.0 पूर्णांकo fph */
-अटल अंतरभूत व्योम
-ia64_init_fpu (व्योम) अणु
+/* load fp 0.0 into fph */
+static inline void
+ia64_init_fpu (void) {
 	ia64_fph_enable();
 	__ia64_init_fpu();
 	ia64_fph_disable();
-पूर्ण
+}
 
 /* save f32-f127 at FPH */
-अटल अंतरभूत व्योम
-ia64_save_fpu (काष्ठा ia64_fpreg *fph) अणु
+static inline void
+ia64_save_fpu (struct ia64_fpreg *fph) {
 	ia64_fph_enable();
 	__ia64_save_fpu(fph);
 	ia64_fph_disable();
-पूर्ण
+}
 
 /* load f32-f127 from FPH */
-अटल अंतरभूत व्योम
-ia64_load_fpu (काष्ठा ia64_fpreg *fph) अणु
+static inline void
+ia64_load_fpu (struct ia64_fpreg *fph) {
 	ia64_fph_enable();
 	__ia64_load_fpu(fph);
 	ia64_fph_disable();
-पूर्ण
+}
 
-अटल अंतरभूत __u64
-ia64_clear_ic (व्योम)
-अणु
+static inline __u64
+ia64_clear_ic (void)
+{
 	__u64 psr;
 	psr = ia64_getreg(_IA64_REG_PSR);
 	ia64_stop();
 	ia64_rsm(IA64_PSR_I | IA64_PSR_IC);
 	ia64_srlz_i();
-	वापस psr;
-पूर्ण
+	return psr;
+}
 
 /*
  * Restore the psr.
  */
-अटल अंतरभूत व्योम
+static inline void
 ia64_set_psr (__u64 psr)
-अणु
+{
 	ia64_stop();
 	ia64_setreg(_IA64_REG_PSR_L, psr);
 	ia64_srlz_i();
-पूर्ण
+}
 
 /*
- * Insert a translation पूर्णांकo an inकाष्ठाion and/or data translation
- * रेजिस्टर.
+ * Insert a translation into an instruction and/or data translation
+ * register.
  */
-अटल अंतरभूत व्योम
+static inline void
 ia64_itr (__u64 target_mask, __u64 tr_num,
 	  __u64 vmaddr, __u64 pte,
 	  __u64 log_page_size)
-अणु
+{
 	ia64_setreg(_IA64_REG_CR_ITIR, (log_page_size << 2));
 	ia64_setreg(_IA64_REG_CR_IFA, vmaddr);
 	ia64_stop();
-	अगर (target_mask & 0x1)
+	if (target_mask & 0x1)
 		ia64_itri(tr_num, pte);
-	अगर (target_mask & 0x2)
+	if (target_mask & 0x2)
 		ia64_itrd(tr_num, pte);
-पूर्ण
+}
 
 /*
- * Insert a translation पूर्णांकo the inकाष्ठाion and/or data translation
+ * Insert a translation into the instruction and/or data translation
  * cache.
  */
-अटल अंतरभूत व्योम
+static inline void
 ia64_itc (__u64 target_mask, __u64 vmaddr, __u64 pte,
 	  __u64 log_page_size)
-अणु
+{
 	ia64_setreg(_IA64_REG_CR_ITIR, (log_page_size << 2));
 	ia64_setreg(_IA64_REG_CR_IFA, vmaddr);
 	ia64_stop();
-	/* as per EAS2.6, itc must be the last inकाष्ठाion in an inकाष्ठाion group */
-	अगर (target_mask & 0x1)
+	/* as per EAS2.6, itc must be the last instruction in an instruction group */
+	if (target_mask & 0x1)
 		ia64_itci(pte);
-	अगर (target_mask & 0x2)
+	if (target_mask & 0x2)
 		ia64_itcd(pte);
-पूर्ण
+}
 
 /*
- * Purge a range of addresses from inकाष्ठाion and/or data translation
- * रेजिस्टर(s).
+ * Purge a range of addresses from instruction and/or data translation
+ * register(s).
  */
-अटल अंतरभूत व्योम
+static inline void
 ia64_ptr (__u64 target_mask, __u64 vmaddr, __u64 log_size)
-अणु
-	अगर (target_mask & 0x1)
+{
+	if (target_mask & 0x1)
 		ia64_ptri(vmaddr, (log_size << 2));
-	अगर (target_mask & 0x2)
+	if (target_mask & 0x2)
 		ia64_ptrd(vmaddr, (log_size << 2));
-पूर्ण
+}
 
-/* Set the पूर्णांकerrupt vector address.  The address must be suitably aligned (32KB).  */
-अटल अंतरभूत व्योम
-ia64_set_iva (व्योम *ivt_addr)
-अणु
+/* Set the interrupt vector address.  The address must be suitably aligned (32KB).  */
+static inline void
+ia64_set_iva (void *ivt_addr)
+{
 	ia64_setreg(_IA64_REG_CR_IVA, (__u64) ivt_addr);
 	ia64_srlz_i();
-पूर्ण
+}
 
 /* Set the page table address and control bits.  */
-अटल अंतरभूत व्योम
+static inline void
 ia64_set_pta (__u64 pta)
-अणु
+{
 	/* Note: srlz.i implies srlz.d */
 	ia64_setreg(_IA64_REG_CR_PTA, pta);
 	ia64_srlz_i();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-ia64_eoi (व्योम)
-अणु
+static inline void
+ia64_eoi (void)
+{
 	ia64_setreg(_IA64_REG_CR_EOI, 0);
 	ia64_srlz_d();
-पूर्ण
+}
 
-#घोषणा cpu_relax()	ia64_hपूर्णांक(ia64_hपूर्णांक_छोड़ो)
+#define cpu_relax()	ia64_hint(ia64_hint_pause)
 
-अटल अंतरभूत पूर्णांक
-ia64_get_irr(अचिन्हित पूर्णांक vector)
-अणु
-	अचिन्हित पूर्णांक reg = vector / 64;
-	अचिन्हित पूर्णांक bit = vector % 64;
+static inline int
+ia64_get_irr(unsigned int vector)
+{
+	unsigned int reg = vector / 64;
+	unsigned int bit = vector % 64;
 	u64 irr;
 
-	चयन (reg) अणु
-	हाल 0: irr = ia64_getreg(_IA64_REG_CR_IRR0); अवरोध;
-	हाल 1: irr = ia64_getreg(_IA64_REG_CR_IRR1); अवरोध;
-	हाल 2: irr = ia64_getreg(_IA64_REG_CR_IRR2); अवरोध;
-	हाल 3: irr = ia64_getreg(_IA64_REG_CR_IRR3); अवरोध;
-	पूर्ण
+	switch (reg) {
+	case 0: irr = ia64_getreg(_IA64_REG_CR_IRR0); break;
+	case 1: irr = ia64_getreg(_IA64_REG_CR_IRR1); break;
+	case 2: irr = ia64_getreg(_IA64_REG_CR_IRR2); break;
+	case 3: irr = ia64_getreg(_IA64_REG_CR_IRR3); break;
+	}
 
-	वापस test_bit(bit, &irr);
-पूर्ण
+	return test_bit(bit, &irr);
+}
 
-अटल अंतरभूत व्योम
-ia64_set_lrr0 (अचिन्हित दीर्घ val)
-अणु
+static inline void
+ia64_set_lrr0 (unsigned long val)
+{
 	ia64_setreg(_IA64_REG_CR_LRR0, val);
 	ia64_srlz_d();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-ia64_set_lrr1 (अचिन्हित दीर्घ val)
-अणु
+static inline void
+ia64_set_lrr1 (unsigned long val)
+{
 	ia64_setreg(_IA64_REG_CR_LRR1, val);
 	ia64_srlz_d();
-पूर्ण
+}
 
 
 /*
- * Given the address to which a spill occurred, वापस the unat bit
+ * Given the address to which a spill occurred, return the unat bit
  * number that corresponds to this address.
  */
-अटल अंतरभूत __u64
-ia64_unat_pos (व्योम *spill_addr)
-अणु
-	वापस ((__u64) spill_addr >> 3) & 0x3f;
-पूर्ण
+static inline __u64
+ia64_unat_pos (void *spill_addr)
+{
+	return ((__u64) spill_addr >> 3) & 0x3f;
+}
 
 /*
- * Set the NaT bit of an पूर्णांकeger रेजिस्टर which was spilled at address
+ * Set the NaT bit of an integer register which was spilled at address
  * SPILL_ADDR.  UNAT is the mask to be updated.
  */
-अटल अंतरभूत व्योम
-ia64_set_unat (__u64 *unat, व्योम *spill_addr, अचिन्हित दीर्घ nat)
-अणु
+static inline void
+ia64_set_unat (__u64 *unat, void *spill_addr, unsigned long nat)
+{
 	__u64 bit = ia64_unat_pos(spill_addr);
 	__u64 mask = 1UL << bit;
 
 	*unat = (*unat & ~mask) | (nat << bit);
-पूर्ण
+}
 
-अटल अंतरभूत __u64
-ia64_get_ivr (व्योम)
-अणु
+static inline __u64
+ia64_get_ivr (void)
+{
 	__u64 r;
 	ia64_srlz_d();
 	r = ia64_getreg(_IA64_REG_CR_IVR);
 	ia64_srlz_d();
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल अंतरभूत व्योम
+static inline void
 ia64_set_dbr (__u64 regnum, __u64 value)
-अणु
+{
 	__ia64_set_dbr(regnum, value);
-#अगर_घोषित CONFIG_ITANIUM
+#ifdef CONFIG_ITANIUM
 	ia64_srlz_d();
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत __u64
+static inline __u64
 ia64_get_dbr (__u64 regnum)
-अणु
+{
 	__u64 retval;
 
 	retval = __ia64_get_dbr(regnum);
-#अगर_घोषित CONFIG_ITANIUM
+#ifdef CONFIG_ITANIUM
 	ia64_srlz_d();
-#पूर्ण_अगर
-	वापस retval;
-पूर्ण
+#endif
+	return retval;
+}
 
-अटल अंतरभूत __u64
+static inline __u64
 ia64_rotr (__u64 w, __u64 n)
-अणु
-	वापस (w >> n) | (w << (64 - n));
-पूर्ण
+{
+	return (w >> n) | (w << (64 - n));
+}
 
-#घोषणा ia64_rotl(w,n)	ia64_rotr((w), (64) - (n))
+#define ia64_rotl(w,n)	ia64_rotr((w), (64) - (n))
 
 /*
- * Take a mapped kernel address and वापस the equivalent address
- * in the region 7 identity mapped भव area.
+ * Take a mapped kernel address and return the equivalent address
+ * in the region 7 identity mapped virtual area.
  */
-अटल अंतरभूत व्योम *
-ia64_imva (व्योम *addr)
-अणु
-	व्योम *result;
-	result = (व्योम *) ia64_tpa(addr);
-	वापस __va(result);
-पूर्ण
+static inline void *
+ia64_imva (void *addr)
+{
+	void *result;
+	result = (void *) ia64_tpa(addr);
+	return __va(result);
+}
 
-#घोषणा ARCH_HAS_PREFETCH
-#घोषणा ARCH_HAS_PREFETCHW
-#घोषणा ARCH_HAS_SPINLOCK_PREFETCH
-#घोषणा PREFETCH_STRIDE			L1_CACHE_BYTES
+#define ARCH_HAS_PREFETCH
+#define ARCH_HAS_PREFETCHW
+#define ARCH_HAS_SPINLOCK_PREFETCH
+#define PREFETCH_STRIDE			L1_CACHE_BYTES
 
-अटल अंतरभूत व्योम
-prefetch (स्थिर व्योम *x)
-अणु
-	 ia64_lfetch(ia64_lfhपूर्णांक_none, x);
-पूर्ण
+static inline void
+prefetch (const void *x)
+{
+	 ia64_lfetch(ia64_lfhint_none, x);
+}
 
-अटल अंतरभूत व्योम
-prefetchw (स्थिर व्योम *x)
-अणु
-	ia64_lfetch_excl(ia64_lfhपूर्णांक_none, x);
-पूर्ण
+static inline void
+prefetchw (const void *x)
+{
+	ia64_lfetch_excl(ia64_lfhint_none, x);
+}
 
-#घोषणा spin_lock_prefetch(x)	prefetchw(x)
+#define spin_lock_prefetch(x)	prefetchw(x)
 
-बाह्य अचिन्हित दीर्घ boot_option_idle_override;
+extern unsigned long boot_option_idle_override;
 
-क्रमागत idle_boot_override अणुIDLE_NO_OVERRIDE=0, IDLE_HALT, IDLE_FORCE_MWAIT,
-			 IDLE_NOMWAIT, IDLE_POLLपूर्ण;
+enum idle_boot_override {IDLE_NO_OVERRIDE=0, IDLE_HALT, IDLE_FORCE_MWAIT,
+			 IDLE_NOMWAIT, IDLE_POLL};
 
-व्योम शेष_idle(व्योम);
+void default_idle(void);
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
+#endif /* !__ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_IA64_PROCESSOR_H */
+#endif /* _ASM_IA64_PROCESSOR_H */

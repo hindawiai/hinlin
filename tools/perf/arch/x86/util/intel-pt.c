@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * पूर्णांकel_pt.c: Intel Processor Trace support
+ * intel_pt.c: Intel Processor Trace support
  * Copyright (c) 2013-2015, Intel Corporation.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <stdbool.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/zभाग.स>
-#समावेश <cpuid.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/log2.h>
+#include <linux/zalloc.h>
+#include <cpuid.h>
 
-#समावेश "../../../util/session.h"
-#समावेश "../../../util/event.h"
-#समावेश "../../../util/evlist.h"
-#समावेश "../../../util/evsel.h"
-#समावेश "../../../util/evsel_config.h"
-#समावेश "../../../util/cpumap.h"
-#समावेश "../../../util/mmap.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "../../../util/parse-events.h"
-#समावेश "../../../util/pmu.h"
-#समावेश "../../../util/debug.h"
-#समावेश "../../../util/auxtrace.h"
-#समावेश "../../../util/perf_api_probe.h"
-#समावेश "../../../util/record.h"
-#समावेश "../../../util/target.h"
-#समावेश "../../../util/tsc.h"
-#समावेश <पूर्णांकernal/lib.h> // page_size
-#समावेश "../../../util/intel-pt.h"
+#include "../../../util/session.h"
+#include "../../../util/event.h"
+#include "../../../util/evlist.h"
+#include "../../../util/evsel.h"
+#include "../../../util/evsel_config.h"
+#include "../../../util/cpumap.h"
+#include "../../../util/mmap.h"
+#include <subcmd/parse-options.h>
+#include "../../../util/parse-events.h"
+#include "../../../util/pmu.h"
+#include "../../../util/debug.h"
+#include "../../../util/auxtrace.h"
+#include "../../../util/perf_api_probe.h"
+#include "../../../util/record.h"
+#include "../../../util/target.h"
+#include "../../../util/tsc.h"
+#include <internal/lib.h> // page_size
+#include "../../../util/intel-pt.h"
 
-#घोषणा KiB(x) ((x) * 1024)
-#घोषणा MiB(x) ((x) * 1024 * 1024)
-#घोषणा KiB_MASK(x) (KiB(x) - 1)
-#घोषणा MiB_MASK(x) (MiB(x) - 1)
+#define KiB(x) ((x) * 1024)
+#define MiB(x) ((x) * 1024 * 1024)
+#define KiB_MASK(x) (KiB(x) - 1)
+#define MiB_MASK(x) (MiB(x) - 1)
 
-#घोषणा INTEL_PT_PSB_PERIOD_NEAR	256
+#define INTEL_PT_PSB_PERIOD_NEAR	256
 
-काष्ठा पूर्णांकel_pt_snapshot_ref अणु
-	व्योम *ref_buf;
-	माप_प्रकार ref_offset;
+struct intel_pt_snapshot_ref {
+	void *ref_buf;
+	size_t ref_offset;
 	bool wrapped;
-पूर्ण;
+};
 
-काष्ठा पूर्णांकel_pt_recording अणु
-	काष्ठा auxtrace_record		itr;
-	काष्ठा perf_pmu			*पूर्णांकel_pt_pmu;
-	पूर्णांक				have_sched_चयन;
-	काष्ठा evlist		*evlist;
+struct intel_pt_recording {
+	struct auxtrace_record		itr;
+	struct perf_pmu			*intel_pt_pmu;
+	int				have_sched_switch;
+	struct evlist		*evlist;
 	bool				snapshot_mode;
-	bool				snapshot_init_करोne;
-	माप_प्रकार				snapshot_size;
-	माप_प्रकार				snapshot_ref_buf_size;
-	पूर्णांक				snapshot_ref_cnt;
-	काष्ठा पूर्णांकel_pt_snapshot_ref	*snapshot_refs;
-	माप_प्रकार				priv_size;
-पूर्ण;
+	bool				snapshot_init_done;
+	size_t				snapshot_size;
+	size_t				snapshot_ref_buf_size;
+	int				snapshot_ref_cnt;
+	struct intel_pt_snapshot_ref	*snapshot_refs;
+	size_t				priv_size;
+};
 
-अटल पूर्णांक पूर्णांकel_pt_parse_terms_with_शेष(स्थिर अक्षर *pmu_name,
-					     काष्ठा list_head *क्रमmats,
-					     स्थिर अक्षर *str,
+static int intel_pt_parse_terms_with_default(const char *pmu_name,
+					     struct list_head *formats,
+					     const char *str,
 					     u64 *config)
-अणु
-	काष्ठा list_head *terms;
-	काष्ठा perf_event_attr attr = अणु .size = 0, पूर्ण;
-	पूर्णांक err;
+{
+	struct list_head *terms;
+	struct perf_event_attr attr = { .size = 0, };
+	int err;
 
-	terms = दो_स्मृति(माप(काष्ठा list_head));
-	अगर (!terms)
-		वापस -ENOMEM;
+	terms = malloc(sizeof(struct list_head));
+	if (!terms)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(terms);
 
 	err = parse_events_terms(terms, str);
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	attr.config = *config;
-	err = perf_pmu__config_terms(pmu_name, क्रमmats, &attr, terms, true,
-				     शून्य);
-	अगर (err)
-		जाओ out_मुक्त;
+	err = perf_pmu__config_terms(pmu_name, formats, &attr, terms, true,
+				     NULL);
+	if (err)
+		goto out_free;
 
 	*config = attr.config;
-out_मुक्त:
+out_free:
 	parse_events_terms__delete(terms);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_parse_terms(स्थिर अक्षर *pmu_name, काष्ठा list_head *क्रमmats,
-				स्थिर अक्षर *str, u64 *config)
-अणु
+static int intel_pt_parse_terms(const char *pmu_name, struct list_head *formats,
+				const char *str, u64 *config)
+{
 	*config = 0;
-	वापस पूर्णांकel_pt_parse_terms_with_शेष(pmu_name, क्रमmats, str,
+	return intel_pt_parse_terms_with_default(pmu_name, formats, str,
 						 config);
-पूर्ण
+}
 
-अटल u64 पूर्णांकel_pt_masked_bits(u64 mask, u64 bits)
-अणु
-	स्थिर u64 top_bit = 1ULL << 63;
+static u64 intel_pt_masked_bits(u64 mask, u64 bits)
+{
+	const u64 top_bit = 1ULL << 63;
 	u64 res = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 64; i++) अणु
-		अगर (mask & top_bit) अणु
+	for (i = 0; i < 64; i++) {
+		if (mask & top_bit) {
 			res <<= 1;
-			अगर (bits & top_bit)
+			if (bits & top_bit)
 				res |= 1;
-		पूर्ण
+		}
 		mask <<= 1;
 		bits <<= 1;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_पढ़ो_config(काष्ठा perf_pmu *पूर्णांकel_pt_pmu, स्थिर अक्षर *str,
-				काष्ठा evlist *evlist, u64 *res)
-अणु
-	काष्ठा evsel *evsel;
+static int intel_pt_read_config(struct perf_pmu *intel_pt_pmu, const char *str,
+				struct evlist *evlist, u64 *res)
+{
+	struct evsel *evsel;
 	u64 mask;
 
 	*res = 0;
 
-	mask = perf_pmu__क्रमmat_bits(&पूर्णांकel_pt_pmu->क्रमmat, str);
-	अगर (!mask)
-		वापस -EINVAL;
+	mask = perf_pmu__format_bits(&intel_pt_pmu->format, str);
+	if (!mask)
+		return -EINVAL;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type == पूर्णांकel_pt_pmu->type) अणु
-			*res = पूर्णांकel_pt_masked_bits(mask, evsel->core.attr.config);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type == intel_pt_pmu->type) {
+			*res = intel_pt_masked_bits(mask, evsel->core.attr.config);
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल माप_प्रकार पूर्णांकel_pt_psb_period(काष्ठा perf_pmu *पूर्णांकel_pt_pmu,
-				  काष्ठा evlist *evlist)
-अणु
+static size_t intel_pt_psb_period(struct perf_pmu *intel_pt_pmu,
+				  struct evlist *evlist)
+{
 	u64 val;
-	पूर्णांक err, topa_multiple_entries;
-	माप_प्रकार psb_period;
+	int err, topa_multiple_entries;
+	size_t psb_period;
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "caps/topa_multiple_entries",
+	if (perf_pmu__scan_file(intel_pt_pmu, "caps/topa_multiple_entries",
 				"%d", &topa_multiple_entries) != 1)
 		topa_multiple_entries = 0;
 
@@ -155,240 +154,240 @@ out_मुक्त:
 	 * Use caps/topa_multiple_entries to indicate early hardware that had
 	 * extra frequent PSBs.
 	 */
-	अगर (!topa_multiple_entries) अणु
+	if (!topa_multiple_entries) {
 		psb_period = 256;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = पूर्णांकel_pt_पढ़ो_config(पूर्णांकel_pt_pmu, "psb_period", evlist, &val);
-	अगर (err)
+	err = intel_pt_read_config(intel_pt_pmu, "psb_period", evlist, &val);
+	if (err)
 		val = 0;
 
 	psb_period = 1 << (val + 11);
 out:
-	pr_debug2("%s psb_period %zu\n", पूर्णांकel_pt_pmu->name, psb_period);
-	वापस psb_period;
-पूर्ण
+	pr_debug2("%s psb_period %zu\n", intel_pt_pmu->name, psb_period);
+	return psb_period;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_pick_bit(पूर्णांक bits, पूर्णांक target)
-अणु
-	पूर्णांक pos, pick = -1;
+static int intel_pt_pick_bit(int bits, int target)
+{
+	int pos, pick = -1;
 
-	क्रम (pos = 0; bits; bits >>= 1, pos++) अणु
-		अगर (bits & 1) अणु
-			अगर (pos <= target || pick < 0)
+	for (pos = 0; bits; bits >>= 1, pos++) {
+		if (bits & 1) {
+			if (pos <= target || pick < 0)
 				pick = pos;
-			अगर (pos >= target)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (pos >= target)
+				break;
+		}
+	}
 
-	वापस pick;
-पूर्ण
+	return pick;
+}
 
-अटल u64 पूर्णांकel_pt_शेष_config(काष्ठा perf_pmu *पूर्णांकel_pt_pmu)
-अणु
-	अक्षर buf[256];
-	पूर्णांक mtc, mtc_periods = 0, mtc_period;
-	पूर्णांक psb_cyc, psb_periods, psb_period;
-	पूर्णांक pos = 0;
+static u64 intel_pt_default_config(struct perf_pmu *intel_pt_pmu)
+{
+	char buf[256];
+	int mtc, mtc_periods = 0, mtc_period;
+	int psb_cyc, psb_periods, psb_period;
+	int pos = 0;
 	u64 config;
-	अक्षर c;
+	char c;
 
-	pos += scnम_लिखो(buf + pos, माप(buf) - pos, "tsc");
+	pos += scnprintf(buf + pos, sizeof(buf) - pos, "tsc");
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "caps/mtc", "%d",
+	if (perf_pmu__scan_file(intel_pt_pmu, "caps/mtc", "%d",
 				&mtc) != 1)
 		mtc = 1;
 
-	अगर (mtc) अणु
-		अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "caps/mtc_periods", "%x",
+	if (mtc) {
+		if (perf_pmu__scan_file(intel_pt_pmu, "caps/mtc_periods", "%x",
 					&mtc_periods) != 1)
 			mtc_periods = 0;
-		अगर (mtc_periods) अणु
-			mtc_period = पूर्णांकel_pt_pick_bit(mtc_periods, 3);
-			pos += scnम_लिखो(buf + pos, माप(buf) - pos,
+		if (mtc_periods) {
+			mtc_period = intel_pt_pick_bit(mtc_periods, 3);
+			pos += scnprintf(buf + pos, sizeof(buf) - pos,
 					 ",mtc,mtc_period=%d", mtc_period);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "caps/psb_cyc", "%d",
+	if (perf_pmu__scan_file(intel_pt_pmu, "caps/psb_cyc", "%d",
 				&psb_cyc) != 1)
 		psb_cyc = 1;
 
-	अगर (psb_cyc && mtc_periods) अणु
-		अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "caps/psb_periods", "%x",
+	if (psb_cyc && mtc_periods) {
+		if (perf_pmu__scan_file(intel_pt_pmu, "caps/psb_periods", "%x",
 					&psb_periods) != 1)
 			psb_periods = 0;
-		अगर (psb_periods) अणु
-			psb_period = पूर्णांकel_pt_pick_bit(psb_periods, 3);
-			pos += scnम_लिखो(buf + pos, माप(buf) - pos,
+		if (psb_periods) {
+			psb_period = intel_pt_pick_bit(psb_periods, 3);
+			pos += scnprintf(buf + pos, sizeof(buf) - pos,
 					 ",psb_period=%d", psb_period);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "format/pt", "%c", &c) == 1 &&
-	    perf_pmu__scan_file(पूर्णांकel_pt_pmu, "format/branch", "%c", &c) == 1)
-		pos += scnम_लिखो(buf + pos, माप(buf) - pos, ",pt,branch");
+	if (perf_pmu__scan_file(intel_pt_pmu, "format/pt", "%c", &c) == 1 &&
+	    perf_pmu__scan_file(intel_pt_pmu, "format/branch", "%c", &c) == 1)
+		pos += scnprintf(buf + pos, sizeof(buf) - pos, ",pt,branch");
 
-	pr_debug2("%s default config: %s\n", पूर्णांकel_pt_pmu->name, buf);
+	pr_debug2("%s default config: %s\n", intel_pt_pmu->name, buf);
 
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat, buf,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format, buf,
 			     &config);
 
-	वापस config;
-पूर्ण
+	return config;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_parse_snapshot_options(काष्ठा auxtrace_record *itr,
-					   काष्ठा record_opts *opts,
-					   स्थिर अक्षर *str)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	अचिन्हित दीर्घ दीर्घ snapshot_size = 0;
-	अक्षर *endptr;
+static int intel_pt_parse_snapshot_options(struct auxtrace_record *itr,
+					   struct record_opts *opts,
+					   const char *str)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	unsigned long long snapshot_size = 0;
+	char *endptr;
 
-	अगर (str) अणु
-		snapshot_size = म_से_अदीर्घl(str, &endptr, 0);
-		अगर (*endptr || snapshot_size > SIZE_MAX)
-			वापस -1;
-	पूर्ण
+	if (str) {
+		snapshot_size = strtoull(str, &endptr, 0);
+		if (*endptr || snapshot_size > SIZE_MAX)
+			return -1;
+	}
 
 	opts->auxtrace_snapshot_mode = true;
 	opts->auxtrace_snapshot_size = snapshot_size;
 
 	ptr->snapshot_size = snapshot_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा perf_event_attr *
-पूर्णांकel_pt_pmu_शेष_config(काष्ठा perf_pmu *पूर्णांकel_pt_pmu)
-अणु
-	काष्ठा perf_event_attr *attr;
+struct perf_event_attr *
+intel_pt_pmu_default_config(struct perf_pmu *intel_pt_pmu)
+{
+	struct perf_event_attr *attr;
 
-	attr = zalloc(माप(काष्ठा perf_event_attr));
-	अगर (!attr)
-		वापस शून्य;
+	attr = zalloc(sizeof(struct perf_event_attr));
+	if (!attr)
+		return NULL;
 
-	attr->config = पूर्णांकel_pt_शेष_config(पूर्णांकel_pt_pmu);
+	attr->config = intel_pt_default_config(intel_pt_pmu);
 
-	पूर्णांकel_pt_pmu->selectable = true;
+	intel_pt_pmu->selectable = true;
 
-	वापस attr;
-पूर्ण
+	return attr;
+}
 
-अटल स्थिर अक्षर *पूर्णांकel_pt_find_filter(काष्ठा evlist *evlist,
-					काष्ठा perf_pmu *पूर्णांकel_pt_pmu)
-अणु
-	काष्ठा evsel *evsel;
+static const char *intel_pt_find_filter(struct evlist *evlist,
+					struct perf_pmu *intel_pt_pmu)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type == पूर्णांकel_pt_pmu->type)
-			वापस evsel->filter;
-	पूर्ण
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type == intel_pt_pmu->type)
+			return evsel->filter;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल माप_प्रकार पूर्णांकel_pt_filter_bytes(स्थिर अक्षर *filter)
-अणु
-	माप_प्रकार len = filter ? म_माप(filter) : 0;
+static size_t intel_pt_filter_bytes(const char *filter)
+{
+	size_t len = filter ? strlen(filter) : 0;
 
-	वापस len ? roundup(len + 1, 8) : 0;
-पूर्ण
+	return len ? roundup(len + 1, 8) : 0;
+}
 
-अटल माप_प्रकार
-पूर्णांकel_pt_info_priv_size(काष्ठा auxtrace_record *itr, काष्ठा evlist *evlist)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	स्थिर अक्षर *filter = पूर्णांकel_pt_find_filter(evlist, ptr->पूर्णांकel_pt_pmu);
+static size_t
+intel_pt_info_priv_size(struct auxtrace_record *itr, struct evlist *evlist)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	const char *filter = intel_pt_find_filter(evlist, ptr->intel_pt_pmu);
 
-	ptr->priv_size = (INTEL_PT_AUXTRACE_PRIV_MAX * माप(u64)) +
-			 पूर्णांकel_pt_filter_bytes(filter);
+	ptr->priv_size = (INTEL_PT_AUXTRACE_PRIV_MAX * sizeof(u64)) +
+			 intel_pt_filter_bytes(filter);
 
-	वापस ptr->priv_size;
-पूर्ण
+	return ptr->priv_size;
+}
 
-अटल व्योम पूर्णांकel_pt_tsc_ctc_ratio(u32 *n, u32 *d)
-अणु
-	अचिन्हित पूर्णांक eax = 0, ebx = 0, ecx = 0, edx = 0;
+static void intel_pt_tsc_ctc_ratio(u32 *n, u32 *d)
+{
+	unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
 
 	__get_cpuid(0x15, &eax, &ebx, &ecx, &edx);
 	*n = ebx;
 	*d = eax;
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pt_info_fill(काष्ठा auxtrace_record *itr,
-			      काष्ठा perf_session *session,
-			      काष्ठा perf_record_auxtrace_info *auxtrace_info,
-			      माप_प्रकार priv_size)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	काष्ठा perf_pmu *पूर्णांकel_pt_pmu = ptr->पूर्णांकel_pt_pmu;
-	काष्ठा perf_event_mmap_page *pc;
-	काष्ठा perf_tsc_conversion tc = अणु .समय_mult = 0, पूर्ण;
-	bool cap_user_समय_zero = false, per_cpu_mmaps;
+static int intel_pt_info_fill(struct auxtrace_record *itr,
+			      struct perf_session *session,
+			      struct perf_record_auxtrace_info *auxtrace_info,
+			      size_t priv_size)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	struct perf_pmu *intel_pt_pmu = ptr->intel_pt_pmu;
+	struct perf_event_mmap_page *pc;
+	struct perf_tsc_conversion tc = { .time_mult = 0, };
+	bool cap_user_time_zero = false, per_cpu_mmaps;
 	u64 tsc_bit, mtc_bit, mtc_freq_bits, cyc_bit, noretcomp_bit;
 	u32 tsc_ctc_ratio_n, tsc_ctc_ratio_d;
-	अचिन्हित दीर्घ max_non_turbo_ratio;
-	माप_प्रकार filter_str_len;
-	स्थिर अक्षर *filter;
+	unsigned long max_non_turbo_ratio;
+	size_t filter_str_len;
+	const char *filter;
 	__u64 *info;
-	पूर्णांक err;
+	int err;
 
-	अगर (priv_size != ptr->priv_size)
-		वापस -EINVAL;
+	if (priv_size != ptr->priv_size)
+		return -EINVAL;
 
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format,
 			     "tsc", &tsc_bit);
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format,
 			     "noretcomp", &noretcomp_bit);
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format,
 			     "mtc", &mtc_bit);
-	mtc_freq_bits = perf_pmu__क्रमmat_bits(&पूर्णांकel_pt_pmu->क्रमmat,
+	mtc_freq_bits = perf_pmu__format_bits(&intel_pt_pmu->format,
 					      "mtc_period");
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format,
 			     "cyc", &cyc_bit);
 
-	पूर्णांकel_pt_tsc_ctc_ratio(&tsc_ctc_ratio_n, &tsc_ctc_ratio_d);
+	intel_pt_tsc_ctc_ratio(&tsc_ctc_ratio_n, &tsc_ctc_ratio_d);
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "max_nonturbo_ratio",
+	if (perf_pmu__scan_file(intel_pt_pmu, "max_nonturbo_ratio",
 				"%lu", &max_non_turbo_ratio) != 1)
 		max_non_turbo_ratio = 0;
 
-	filter = पूर्णांकel_pt_find_filter(session->evlist, ptr->पूर्णांकel_pt_pmu);
-	filter_str_len = filter ? म_माप(filter) : 0;
+	filter = intel_pt_find_filter(session->evlist, ptr->intel_pt_pmu);
+	filter_str_len = filter ? strlen(filter) : 0;
 
-	अगर (!session->evlist->core.nr_mmaps)
-		वापस -EINVAL;
+	if (!session->evlist->core.nr_mmaps)
+		return -EINVAL;
 
 	pc = session->evlist->mmap[0].core.base;
-	अगर (pc) अणु
-		err = perf_पढ़ो_tsc_conversion(pc, &tc);
-		अगर (err) अणु
-			अगर (err != -EOPNOTSUPP)
-				वापस err;
-		पूर्ण अन्यथा अणु
-			cap_user_समय_zero = tc.समय_mult != 0;
-		पूर्ण
-		अगर (!cap_user_समय_zero)
+	if (pc) {
+		err = perf_read_tsc_conversion(pc, &tc);
+		if (err) {
+			if (err != -EOPNOTSUPP)
+				return err;
+		} else {
+			cap_user_time_zero = tc.time_mult != 0;
+		}
+		if (!cap_user_time_zero)
 			ui__warning("Intel Processor Trace: TSC not available\n");
-	पूर्ण
+	}
 
 	per_cpu_mmaps = !perf_cpu_map__empty(session->evlist->core.cpus);
 
 	auxtrace_info->type = PERF_AUXTRACE_INTEL_PT;
-	auxtrace_info->priv[INTEL_PT_PMU_TYPE] = पूर्णांकel_pt_pmu->type;
-	auxtrace_info->priv[INTEL_PT_TIME_SHIFT] = tc.समय_shअगरt;
-	auxtrace_info->priv[INTEL_PT_TIME_MULT] = tc.समय_mult;
-	auxtrace_info->priv[INTEL_PT_TIME_ZERO] = tc.समय_zero;
-	auxtrace_info->priv[INTEL_PT_CAP_USER_TIME_ZERO] = cap_user_समय_zero;
+	auxtrace_info->priv[INTEL_PT_PMU_TYPE] = intel_pt_pmu->type;
+	auxtrace_info->priv[INTEL_PT_TIME_SHIFT] = tc.time_shift;
+	auxtrace_info->priv[INTEL_PT_TIME_MULT] = tc.time_mult;
+	auxtrace_info->priv[INTEL_PT_TIME_ZERO] = tc.time_zero;
+	auxtrace_info->priv[INTEL_PT_CAP_USER_TIME_ZERO] = cap_user_time_zero;
 	auxtrace_info->priv[INTEL_PT_TSC_BIT] = tsc_bit;
 	auxtrace_info->priv[INTEL_PT_NORETCOMP_BIT] = noretcomp_bit;
-	auxtrace_info->priv[INTEL_PT_HAVE_SCHED_SWITCH] = ptr->have_sched_चयन;
+	auxtrace_info->priv[INTEL_PT_HAVE_SCHED_SWITCH] = ptr->have_sched_switch;
 	auxtrace_info->priv[INTEL_PT_SNAPSHOT_MODE] = ptr->snapshot_mode;
 	auxtrace_info->priv[INTEL_PT_PER_CPU_MMAPS] = per_cpu_mmaps;
 	auxtrace_info->priv[INTEL_PT_MTC_BIT] = mtc_bit;
@@ -401,474 +400,474 @@ out:
 
 	info = &auxtrace_info->priv[INTEL_PT_FILTER_STR_LEN] + 1;
 
-	अगर (filter_str_len) अणु
-		माप_प्रकार len = पूर्णांकel_pt_filter_bytes(filter);
+	if (filter_str_len) {
+		size_t len = intel_pt_filter_bytes(filter);
 
-		म_नकलन((अक्षर *)info, filter, len);
+		strncpy((char *)info, filter, len);
 		info += len >> 3;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_track_चयनes(काष्ठा evlist *evlist)
-अणु
-	स्थिर अक्षर *sched_चयन = "sched:sched_switch";
-	काष्ठा evsel *evsel;
-	पूर्णांक err;
+static int intel_pt_track_switches(struct evlist *evlist)
+{
+	const char *sched_switch = "sched:sched_switch";
+	struct evsel *evsel;
+	int err;
 
-	अगर (!evlist__can_select_event(evlist, sched_चयन))
-		वापस -EPERM;
+	if (!evlist__can_select_event(evlist, sched_switch))
+		return -EPERM;
 
-	err = parse_events(evlist, sched_चयन, शून्य);
-	अगर (err) अणु
+	err = parse_events(evlist, sched_switch, NULL);
+	if (err) {
 		pr_debug2("%s: failed to parse %s, error %d\n",
-			  __func__, sched_चयन, err);
-		वापस err;
-	पूर्ण
+			  __func__, sched_switch, err);
+		return err;
+	}
 
 	evsel = evlist__last(evlist);
 
 	evsel__set_sample_bit(evsel, CPU);
 	evsel__set_sample_bit(evsel, TIME);
 
-	evsel->core.प्रणाली_wide = true;
+	evsel->core.system_wide = true;
 	evsel->no_aux_samples = true;
 	evsel->immediate = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pt_valid_str(अक्षर *str, माप_प्रकार len, u64 valid)
-अणु
-	अचिन्हित पूर्णांक val, last = 0, state = 1;
-	पूर्णांक p = 0;
+static void intel_pt_valid_str(char *str, size_t len, u64 valid)
+{
+	unsigned int val, last = 0, state = 1;
+	int p = 0;
 
 	str[0] = '\0';
 
-	क्रम (val = 0; val <= 64; val++, valid >>= 1) अणु
-		अगर (valid & 1) अणु
+	for (val = 0; val <= 64; val++, valid >>= 1) {
+		if (valid & 1) {
 			last = val;
-			चयन (state) अणु
-			हाल 0:
-				p += scnम_लिखो(str + p, len - p, ",");
+			switch (state) {
+			case 0:
+				p += scnprintf(str + p, len - p, ",");
 				/* Fall through */
-			हाल 1:
-				p += scnम_लिखो(str + p, len - p, "%u", val);
+			case 1:
+				p += scnprintf(str + p, len - p, "%u", val);
 				state = 2;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				state = 3;
-				अवरोध;
-			हाल 3:
+				break;
+			case 3:
 				state = 4;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			चयन (state) अणु
-			हाल 3:
-				p += scnम_लिखो(str + p, len - p, ",%u", last);
+				break;
+			default:
+				break;
+			}
+		} else {
+			switch (state) {
+			case 3:
+				p += scnprintf(str + p, len - p, ",%u", last);
 				state = 0;
-				अवरोध;
-			हाल 4:
-				p += scnम_लिखो(str + p, len - p, "-%u", last);
+				break;
+			case 4:
+				p += scnprintf(str + p, len - p, "-%u", last);
 				state = 0;
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-			अगर (state != 1)
+				break;
+			default:
+				break;
+			}
+			if (state != 1)
 				state = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक पूर्णांकel_pt_val_config_term(काष्ठा perf_pmu *पूर्णांकel_pt_pmu,
-				    स्थिर अक्षर *caps, स्थिर अक्षर *name,
-				    स्थिर अक्षर *supported, u64 config)
-अणु
-	अक्षर valid_str[256];
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित दीर्घ दीर्घ valid;
+static int intel_pt_val_config_term(struct perf_pmu *intel_pt_pmu,
+				    const char *caps, const char *name,
+				    const char *supported, u64 config)
+{
+	char valid_str[256];
+	unsigned int shift;
+	unsigned long long valid;
 	u64 bits;
-	पूर्णांक ok;
+	int ok;
 
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, caps, "%llx", &valid) != 1)
+	if (perf_pmu__scan_file(intel_pt_pmu, caps, "%llx", &valid) != 1)
 		valid = 0;
 
-	अगर (supported &&
-	    perf_pmu__scan_file(पूर्णांकel_pt_pmu, supported, "%d", &ok) == 1 && !ok)
+	if (supported &&
+	    perf_pmu__scan_file(intel_pt_pmu, supported, "%d", &ok) == 1 && !ok)
 		valid = 0;
 
 	valid |= 1;
 
-	bits = perf_pmu__क्रमmat_bits(&पूर्णांकel_pt_pmu->क्रमmat, name);
+	bits = perf_pmu__format_bits(&intel_pt_pmu->format, name);
 
 	config &= bits;
 
-	क्रम (shअगरt = 0; bits && !(bits & 1); shअगरt++)
+	for (shift = 0; bits && !(bits & 1); shift++)
 		bits >>= 1;
 
-	config >>= shअगरt;
+	config >>= shift;
 
-	अगर (config > 63)
-		जाओ out_err;
+	if (config > 63)
+		goto out_err;
 
-	अगर (valid & (1 << config))
-		वापस 0;
+	if (valid & (1 << config))
+		return 0;
 out_err:
-	पूर्णांकel_pt_valid_str(valid_str, माप(valid_str), valid);
+	intel_pt_valid_str(valid_str, sizeof(valid_str), valid);
 	pr_err("Invalid %s for %s. Valid values are: %s\n",
 	       name, INTEL_PT_PMU_NAME, valid_str);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_validate_config(काष्ठा perf_pmu *पूर्णांकel_pt_pmu,
-				    काष्ठा evsel *evsel)
-अणु
-	पूर्णांक err;
-	अक्षर c;
+static int intel_pt_validate_config(struct perf_pmu *intel_pt_pmu,
+				    struct evsel *evsel)
+{
+	int err;
+	char c;
 
-	अगर (!evsel)
-		वापस 0;
+	if (!evsel)
+		return 0;
 
 	/*
-	 * If supported, क्रमce pass-through config term (pt=1) even अगर user
-	 * sets pt=0, which aव्योमs senseless kernel errors.
+	 * If supported, force pass-through config term (pt=1) even if user
+	 * sets pt=0, which avoids senseless kernel errors.
 	 */
-	अगर (perf_pmu__scan_file(पूर्णांकel_pt_pmu, "format/pt", "%c", &c) == 1 &&
-	    !(evsel->core.attr.config & 1)) अणु
+	if (perf_pmu__scan_file(intel_pt_pmu, "format/pt", "%c", &c) == 1 &&
+	    !(evsel->core.attr.config & 1)) {
 		pr_warning("pt=0 doesn't make sense, forcing pt=1\n");
 		evsel->core.attr.config |= 1;
-	पूर्ण
+	}
 
-	err = पूर्णांकel_pt_val_config_term(पूर्णांकel_pt_pmu, "caps/cycle_thresholds",
+	err = intel_pt_val_config_term(intel_pt_pmu, "caps/cycle_thresholds",
 				       "cyc_thresh", "caps/psb_cyc",
 				       evsel->core.attr.config);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = पूर्णांकel_pt_val_config_term(पूर्णांकel_pt_pmu, "caps/mtc_periods",
+	err = intel_pt_val_config_term(intel_pt_pmu, "caps/mtc_periods",
 				       "mtc_period", "caps/mtc",
 				       evsel->core.attr.config);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस पूर्णांकel_pt_val_config_term(पूर्णांकel_pt_pmu, "caps/psb_periods",
+	return intel_pt_val_config_term(intel_pt_pmu, "caps/psb_periods",
 					"psb_period", "caps/psb_cyc",
 					evsel->core.attr.config);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pt_config_sample_mode(काष्ठा perf_pmu *पूर्णांकel_pt_pmu,
-					काष्ठा evsel *evsel)
-अणु
+static void intel_pt_config_sample_mode(struct perf_pmu *intel_pt_pmu,
+					struct evsel *evsel)
+{
 	u64 user_bits = 0, bits;
-	काष्ठा evsel_config_term *term = evsel__get_config_term(evsel, CFG_CHG);
+	struct evsel_config_term *term = evsel__get_config_term(evsel, CFG_CHG);
 
-	अगर (term)
+	if (term)
 		user_bits = term->val.cfg_chg;
 
-	bits = perf_pmu__क्रमmat_bits(&पूर्णांकel_pt_pmu->क्रमmat, "psb_period");
+	bits = perf_pmu__format_bits(&intel_pt_pmu->format, "psb_period");
 
 	/* Did user change psb_period */
-	अगर (bits & user_bits)
-		वापस;
+	if (bits & user_bits)
+		return;
 
 	/* Set psb_period to 0 */
 	evsel->core.attr.config &= ~bits;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pt_min_max_sample_sz(काष्ठा evlist *evlist,
-				       माप_प्रकार *min_sz, माप_प्रकार *max_sz)
-अणु
-	काष्ठा evsel *evsel;
+static void intel_pt_min_max_sample_sz(struct evlist *evlist,
+				       size_t *min_sz, size_t *max_sz)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		माप_प्रकार sz = evsel->core.attr.aux_sample_size;
+	evlist__for_each_entry(evlist, evsel) {
+		size_t sz = evsel->core.attr.aux_sample_size;
 
-		अगर (!sz)
-			जारी;
-		अगर (min_sz && (sz < *min_sz || !*min_sz))
+		if (!sz)
+			continue;
+		if (min_sz && (sz < *min_sz || !*min_sz))
 			*min_sz = sz;
-		अगर (max_sz && sz > *max_sz)
+		if (max_sz && sz > *max_sz)
 			*max_sz = sz;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Currently, there is not enough inक्रमmation to disambiguate dअगरferent PEBS
+ * Currently, there is not enough information to disambiguate different PEBS
  * events, so only allow one.
  */
-अटल bool पूर्णांकel_pt_too_many_aux_output(काष्ठा evlist *evlist)
-अणु
-	काष्ठा evsel *evsel;
-	पूर्णांक aux_output_cnt = 0;
+static bool intel_pt_too_many_aux_output(struct evlist *evlist)
+{
+	struct evsel *evsel;
+	int aux_output_cnt = 0;
 
-	evlist__क्रम_each_entry(evlist, evsel)
+	evlist__for_each_entry(evlist, evsel)
 		aux_output_cnt += !!evsel->core.attr.aux_output;
 
-	अगर (aux_output_cnt > 1) अणु
+	if (aux_output_cnt > 1) {
 		pr_err(INTEL_PT_PMU_NAME " supports at most one event with aux-output\n");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_recording_options(काष्ठा auxtrace_record *itr,
-				      काष्ठा evlist *evlist,
-				      काष्ठा record_opts *opts)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	काष्ठा perf_pmu *पूर्णांकel_pt_pmu = ptr->पूर्णांकel_pt_pmu;
+static int intel_pt_recording_options(struct auxtrace_record *itr,
+				      struct evlist *evlist,
+				      struct record_opts *opts)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	struct perf_pmu *intel_pt_pmu = ptr->intel_pt_pmu;
 	bool have_timing_info, need_immediate = false;
-	काष्ठा evsel *evsel, *पूर्णांकel_pt_evsel = शून्य;
-	स्थिर काष्ठा perf_cpu_map *cpus = evlist->core.cpus;
+	struct evsel *evsel, *intel_pt_evsel = NULL;
+	const struct perf_cpu_map *cpus = evlist->core.cpus;
 	bool privileged = perf_event_paranoid_check(-1);
 	u64 tsc_bit;
-	पूर्णांक err;
+	int err;
 
 	ptr->evlist = evlist;
 	ptr->snapshot_mode = opts->auxtrace_snapshot_mode;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->core.attr.type == पूर्णांकel_pt_pmu->type) अणु
-			अगर (पूर्णांकel_pt_evsel) अणु
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->core.attr.type == intel_pt_pmu->type) {
+			if (intel_pt_evsel) {
 				pr_err("There may be only one " INTEL_PT_PMU_NAME " event\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			evsel->core.attr.freq = 0;
 			evsel->core.attr.sample_period = 1;
 			evsel->no_aux_samples = true;
-			पूर्णांकel_pt_evsel = evsel;
+			intel_pt_evsel = evsel;
 			opts->full_auxtrace = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (opts->auxtrace_snapshot_mode && !opts->full_auxtrace) अणु
+	if (opts->auxtrace_snapshot_mode && !opts->full_auxtrace) {
 		pr_err("Snapshot mode (-S option) requires " INTEL_PT_PMU_NAME " PMU event (-e " INTEL_PT_PMU_NAME ")\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (opts->auxtrace_snapshot_mode && opts->auxtrace_sample_mode) अणु
+	if (opts->auxtrace_snapshot_mode && opts->auxtrace_sample_mode) {
 		pr_err("Snapshot mode (" INTEL_PT_PMU_NAME " PMU) and sample trace cannot be used together\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (opts->use_घड़ीid) अणु
+	if (opts->use_clockid) {
 		pr_err("Cannot use clockid (-k option) with " INTEL_PT_PMU_NAME "\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (पूर्णांकel_pt_too_many_aux_output(evlist))
-		वापस -EINVAL;
+	if (intel_pt_too_many_aux_output(evlist))
+		return -EINVAL;
 
-	अगर (!opts->full_auxtrace)
-		वापस 0;
+	if (!opts->full_auxtrace)
+		return 0;
 
-	अगर (opts->auxtrace_sample_mode)
-		पूर्णांकel_pt_config_sample_mode(पूर्णांकel_pt_pmu, पूर्णांकel_pt_evsel);
+	if (opts->auxtrace_sample_mode)
+		intel_pt_config_sample_mode(intel_pt_pmu, intel_pt_evsel);
 
-	err = पूर्णांकel_pt_validate_config(पूर्णांकel_pt_pmu, पूर्णांकel_pt_evsel);
-	अगर (err)
-		वापस err;
+	err = intel_pt_validate_config(intel_pt_pmu, intel_pt_evsel);
+	if (err)
+		return err;
 
-	/* Set शेष sizes क्रम snapshot mode */
-	अगर (opts->auxtrace_snapshot_mode) अणु
-		माप_प्रकार psb_period = पूर्णांकel_pt_psb_period(पूर्णांकel_pt_pmu, evlist);
+	/* Set default sizes for snapshot mode */
+	if (opts->auxtrace_snapshot_mode) {
+		size_t psb_period = intel_pt_psb_period(intel_pt_pmu, evlist);
 
-		अगर (!opts->auxtrace_snapshot_size && !opts->auxtrace_mmap_pages) अणु
-			अगर (privileged) अणु
+		if (!opts->auxtrace_snapshot_size && !opts->auxtrace_mmap_pages) {
+			if (privileged) {
 				opts->auxtrace_mmap_pages = MiB(4) / page_size;
-			पूर्ण अन्यथा अणु
+			} else {
 				opts->auxtrace_mmap_pages = KiB(128) / page_size;
-				अगर (opts->mmap_pages == अच_पूर्णांक_उच्च)
+				if (opts->mmap_pages == UINT_MAX)
 					opts->mmap_pages = KiB(256) / page_size;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!opts->auxtrace_mmap_pages && !privileged &&
-			   opts->mmap_pages == अच_पूर्णांक_उच्च) अणु
+			}
+		} else if (!opts->auxtrace_mmap_pages && !privileged &&
+			   opts->mmap_pages == UINT_MAX) {
 			opts->mmap_pages = KiB(256) / page_size;
-		पूर्ण
-		अगर (!opts->auxtrace_snapshot_size)
+		}
+		if (!opts->auxtrace_snapshot_size)
 			opts->auxtrace_snapshot_size =
-				opts->auxtrace_mmap_pages * (माप_प्रकार)page_size;
-		अगर (!opts->auxtrace_mmap_pages) अणु
-			माप_प्रकार sz = opts->auxtrace_snapshot_size;
+				opts->auxtrace_mmap_pages * (size_t)page_size;
+		if (!opts->auxtrace_mmap_pages) {
+			size_t sz = opts->auxtrace_snapshot_size;
 
 			sz = round_up(sz, page_size) / page_size;
-			opts->auxtrace_mmap_pages = roundup_घात_of_two(sz);
-		पूर्ण
-		अगर (opts->auxtrace_snapshot_size >
-				opts->auxtrace_mmap_pages * (माप_प्रकार)page_size) अणु
+			opts->auxtrace_mmap_pages = roundup_pow_of_two(sz);
+		}
+		if (opts->auxtrace_snapshot_size >
+				opts->auxtrace_mmap_pages * (size_t)page_size) {
 			pr_err("Snapshot size %zu must not be greater than AUX area tracing mmap size %zu\n",
 			       opts->auxtrace_snapshot_size,
-			       opts->auxtrace_mmap_pages * (माप_प्रकार)page_size);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (!opts->auxtrace_snapshot_size || !opts->auxtrace_mmap_pages) अणु
+			       opts->auxtrace_mmap_pages * (size_t)page_size);
+			return -EINVAL;
+		}
+		if (!opts->auxtrace_snapshot_size || !opts->auxtrace_mmap_pages) {
 			pr_err("Failed to calculate default snapshot size and/or AUX area tracing mmap pages\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		pr_debug2("Intel PT snapshot size: %zu\n",
 			  opts->auxtrace_snapshot_size);
-		अगर (psb_period &&
+		if (psb_period &&
 		    opts->auxtrace_snapshot_size <= psb_period +
 						  INTEL_PT_PSB_PERIOD_NEAR)
 			ui__warning("Intel PT snapshot size (%zu) may be too small for PSB period (%zu)\n",
 				    opts->auxtrace_snapshot_size, psb_period);
-	पूर्ण
+	}
 
-	/* Set शेष sizes क्रम sample mode */
-	अगर (opts->auxtrace_sample_mode) अणु
-		माप_प्रकार psb_period = पूर्णांकel_pt_psb_period(पूर्णांकel_pt_pmu, evlist);
-		माप_प्रकार min_sz = 0, max_sz = 0;
+	/* Set default sizes for sample mode */
+	if (opts->auxtrace_sample_mode) {
+		size_t psb_period = intel_pt_psb_period(intel_pt_pmu, evlist);
+		size_t min_sz = 0, max_sz = 0;
 
-		पूर्णांकel_pt_min_max_sample_sz(evlist, &min_sz, &max_sz);
-		अगर (!opts->auxtrace_mmap_pages && !privileged &&
-		    opts->mmap_pages == अच_पूर्णांक_उच्च)
+		intel_pt_min_max_sample_sz(evlist, &min_sz, &max_sz);
+		if (!opts->auxtrace_mmap_pages && !privileged &&
+		    opts->mmap_pages == UINT_MAX)
 			opts->mmap_pages = KiB(256) / page_size;
-		अगर (!opts->auxtrace_mmap_pages) अणु
-			माप_प्रकार sz = round_up(max_sz, page_size) / page_size;
+		if (!opts->auxtrace_mmap_pages) {
+			size_t sz = round_up(max_sz, page_size) / page_size;
 
-			opts->auxtrace_mmap_pages = roundup_घात_of_two(sz);
-		पूर्ण
-		अगर (max_sz > opts->auxtrace_mmap_pages * (माप_प्रकार)page_size) अणु
+			opts->auxtrace_mmap_pages = roundup_pow_of_two(sz);
+		}
+		if (max_sz > opts->auxtrace_mmap_pages * (size_t)page_size) {
 			pr_err("Sample size %zu must not be greater than AUX area tracing mmap size %zu\n",
 			       max_sz,
-			       opts->auxtrace_mmap_pages * (माप_प्रकार)page_size);
-			वापस -EINVAL;
-		पूर्ण
+			       opts->auxtrace_mmap_pages * (size_t)page_size);
+			return -EINVAL;
+		}
 		pr_debug2("Intel PT min. sample size: %zu max. sample size: %zu\n",
 			  min_sz, max_sz);
-		अगर (psb_period &&
+		if (psb_period &&
 		    min_sz <= psb_period + INTEL_PT_PSB_PERIOD_NEAR)
 			ui__warning("Intel PT sample size (%zu) may be too small for PSB period (%zu)\n",
 				    min_sz, psb_period);
-	पूर्ण
+	}
 
-	/* Set शेष sizes क्रम full trace mode */
-	अगर (opts->full_auxtrace && !opts->auxtrace_mmap_pages) अणु
-		अगर (privileged) अणु
+	/* Set default sizes for full trace mode */
+	if (opts->full_auxtrace && !opts->auxtrace_mmap_pages) {
+		if (privileged) {
 			opts->auxtrace_mmap_pages = MiB(4) / page_size;
-		पूर्ण अन्यथा अणु
+		} else {
 			opts->auxtrace_mmap_pages = KiB(128) / page_size;
-			अगर (opts->mmap_pages == अच_पूर्णांक_उच्च)
+			if (opts->mmap_pages == UINT_MAX)
 				opts->mmap_pages = KiB(256) / page_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Validate auxtrace_mmap_pages */
-	अगर (opts->auxtrace_mmap_pages) अणु
-		माप_प्रकार sz = opts->auxtrace_mmap_pages * (माप_प्रकार)page_size;
-		माप_प्रकार min_sz;
+	if (opts->auxtrace_mmap_pages) {
+		size_t sz = opts->auxtrace_mmap_pages * (size_t)page_size;
+		size_t min_sz;
 
-		अगर (opts->auxtrace_snapshot_mode || opts->auxtrace_sample_mode)
+		if (opts->auxtrace_snapshot_mode || opts->auxtrace_sample_mode)
 			min_sz = KiB(4);
-		अन्यथा
+		else
 			min_sz = KiB(8);
 
-		अगर (sz < min_sz || !is_घातer_of_2(sz)) अणु
+		if (sz < min_sz || !is_power_of_2(sz)) {
 			pr_err("Invalid mmap size for Intel Processor Trace: must be at least %zuKiB and a power of 2\n",
 			       min_sz / 1024);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (!opts->auxtrace_snapshot_mode && !opts->auxtrace_sample_mode) अणु
+	if (!opts->auxtrace_snapshot_mode && !opts->auxtrace_sample_mode) {
 		u32 aux_watermark = opts->auxtrace_mmap_pages * page_size / 4;
 
-		पूर्णांकel_pt_evsel->core.attr.aux_watermark = aux_watermark;
-	पूर्ण
+		intel_pt_evsel->core.attr.aux_watermark = aux_watermark;
+	}
 
-	पूर्णांकel_pt_parse_terms(पूर्णांकel_pt_pmu->name, &पूर्णांकel_pt_pmu->क्रमmat,
+	intel_pt_parse_terms(intel_pt_pmu->name, &intel_pt_pmu->format,
 			     "tsc", &tsc_bit);
 
-	अगर (opts->full_auxtrace && (पूर्णांकel_pt_evsel->core.attr.config & tsc_bit))
+	if (opts->full_auxtrace && (intel_pt_evsel->core.attr.config & tsc_bit))
 		have_timing_info = true;
-	अन्यथा
+	else
 		have_timing_info = false;
 
 	/*
-	 * Per-cpu recording needs sched_चयन events to distinguish dअगरferent
-	 * thपढ़ोs.
+	 * Per-cpu recording needs sched_switch events to distinguish different
+	 * threads.
 	 */
-	अगर (have_timing_info && !perf_cpu_map__empty(cpus) &&
-	    !record_opts__no_चयन_events(opts)) अणु
-		अगर (perf_can_record_चयन_events()) अणु
+	if (have_timing_info && !perf_cpu_map__empty(cpus) &&
+	    !record_opts__no_switch_events(opts)) {
+		if (perf_can_record_switch_events()) {
 			bool cpu_wide = !target__none(&opts->target) &&
 					!target__has_task(&opts->target);
 
-			अगर (!cpu_wide && perf_can_record_cpu_wide()) अणु
-				काष्ठा evsel *चयन_evsel;
+			if (!cpu_wide && perf_can_record_cpu_wide()) {
+				struct evsel *switch_evsel;
 
-				err = parse_events(evlist, "dummy:u", शून्य);
-				अगर (err)
-					वापस err;
+				err = parse_events(evlist, "dummy:u", NULL);
+				if (err)
+					return err;
 
-				चयन_evsel = evlist__last(evlist);
+				switch_evsel = evlist__last(evlist);
 
-				चयन_evsel->core.attr.freq = 0;
-				चयन_evsel->core.attr.sample_period = 1;
-				चयन_evsel->core.attr.context_चयन = 1;
+				switch_evsel->core.attr.freq = 0;
+				switch_evsel->core.attr.sample_period = 1;
+				switch_evsel->core.attr.context_switch = 1;
 
-				चयन_evsel->core.प्रणाली_wide = true;
-				चयन_evsel->no_aux_samples = true;
-				चयन_evsel->immediate = true;
+				switch_evsel->core.system_wide = true;
+				switch_evsel->no_aux_samples = true;
+				switch_evsel->immediate = true;
 
-				evsel__set_sample_bit(चयन_evsel, TID);
-				evsel__set_sample_bit(चयन_evsel, TIME);
-				evsel__set_sample_bit(चयन_evsel, CPU);
-				evsel__reset_sample_bit(चयन_evsel, BRANCH_STACK);
+				evsel__set_sample_bit(switch_evsel, TID);
+				evsel__set_sample_bit(switch_evsel, TIME);
+				evsel__set_sample_bit(switch_evsel, CPU);
+				evsel__reset_sample_bit(switch_evsel, BRANCH_STACK);
 
-				opts->record_चयन_events = false;
-				ptr->have_sched_चयन = 3;
-			पूर्ण अन्यथा अणु
-				opts->record_चयन_events = true;
+				opts->record_switch_events = false;
+				ptr->have_sched_switch = 3;
+			} else {
+				opts->record_switch_events = true;
 				need_immediate = true;
-				अगर (cpu_wide)
-					ptr->have_sched_चयन = 3;
-				अन्यथा
-					ptr->have_sched_चयन = 2;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			err = पूर्णांकel_pt_track_चयनes(evlist);
-			अगर (err == -EPERM)
+				if (cpu_wide)
+					ptr->have_sched_switch = 3;
+				else
+					ptr->have_sched_switch = 2;
+			}
+		} else {
+			err = intel_pt_track_switches(evlist);
+			if (err == -EPERM)
 				pr_debug2("Unable to select sched:sched_switch\n");
-			अन्यथा अगर (err)
-				वापस err;
-			अन्यथा
-				ptr->have_sched_चयन = 1;
-		पूर्ण
-	पूर्ण
+			else if (err)
+				return err;
+			else
+				ptr->have_sched_switch = 1;
+		}
+	}
 
-	अगर (have_timing_info && !पूर्णांकel_pt_evsel->core.attr.exclude_kernel &&
+	if (have_timing_info && !intel_pt_evsel->core.attr.exclude_kernel &&
 	    perf_can_record_text_poke_events() && perf_can_record_cpu_wide())
 		opts->text_poke = true;
 
-	अगर (पूर्णांकel_pt_evsel) अणु
+	if (intel_pt_evsel) {
 		/*
 		 * To obtain the auxtrace buffer file descriptor, the auxtrace
 		 * event must come first.
 		 */
-		evlist__to_front(evlist, पूर्णांकel_pt_evsel);
+		evlist__to_front(evlist, intel_pt_evsel);
 		/*
-		 * In the हाल of per-cpu mmaps, we need the CPU on the
+		 * In the case of per-cpu mmaps, we need the CPU on the
 		 * AUX event.
 		 */
-		अगर (!perf_cpu_map__empty(cpus))
-			evsel__set_sample_bit(पूर्णांकel_pt_evsel, CPU);
-	पूर्ण
+		if (!perf_cpu_map__empty(cpus))
+			evsel__set_sample_bit(intel_pt_evsel, CPU);
+	}
 
 	/* Add dummy event to keep tracking */
-	अगर (opts->full_auxtrace) अणु
-		काष्ठा evsel *tracking_evsel;
+	if (opts->full_auxtrace) {
+		struct evsel *tracking_evsel;
 
-		err = parse_events(evlist, "dummy:u", शून्य);
-		अगर (err)
-			वापस err;
+		err = parse_events(evlist, "dummy:u", NULL);
+		if (err)
+			return err;
 
 		tracking_evsel = evlist__last(evlist);
 
@@ -878,351 +877,351 @@ out_err:
 		tracking_evsel->core.attr.sample_period = 1;
 
 		tracking_evsel->no_aux_samples = true;
-		अगर (need_immediate)
+		if (need_immediate)
 			tracking_evsel->immediate = true;
 
-		/* In per-cpu हाल, always need the समय of mmap events etc */
-		अगर (!perf_cpu_map__empty(cpus)) अणु
+		/* In per-cpu case, always need the time of mmap events etc */
+		if (!perf_cpu_map__empty(cpus)) {
 			evsel__set_sample_bit(tracking_evsel, TIME);
-			/* And the CPU क्रम चयन events */
+			/* And the CPU for switch events */
 			evsel__set_sample_bit(tracking_evsel, CPU);
-		पूर्ण
+		}
 		evsel__reset_sample_bit(tracking_evsel, BRANCH_STACK);
-	पूर्ण
+	}
 
 	/*
-	 * Warn the user when we करो not have enough inक्रमmation to decode i.e.
-	 * per-cpu with no sched_चयन (except workload-only).
+	 * Warn the user when we do not have enough information to decode i.e.
+	 * per-cpu with no sched_switch (except workload-only).
 	 */
-	अगर (!ptr->have_sched_चयन && !perf_cpu_map__empty(cpus) &&
+	if (!ptr->have_sched_switch && !perf_cpu_map__empty(cpus) &&
 	    !target__none(&opts->target) &&
-	    !पूर्णांकel_pt_evsel->core.attr.exclude_user)
+	    !intel_pt_evsel->core.attr.exclude_user)
 		ui__warning("Intel Processor Trace decoding will not be possible except for kernel tracing!\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_snapshot_start(काष्ठा auxtrace_record *itr)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	काष्ठा evsel *evsel;
+static int intel_pt_snapshot_start(struct auxtrace_record *itr)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(ptr->evlist, evsel) अणु
-		अगर (evsel->core.attr.type == ptr->पूर्णांकel_pt_pmu->type)
-			वापस evsel__disable(evsel);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	evlist__for_each_entry(ptr->evlist, evsel) {
+		if (evsel->core.attr.type == ptr->intel_pt_pmu->type)
+			return evsel__disable(evsel);
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_snapshot_finish(काष्ठा auxtrace_record *itr)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
-	काष्ठा evsel *evsel;
+static int intel_pt_snapshot_finish(struct auxtrace_record *itr)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(ptr->evlist, evsel) अणु
-		अगर (evsel->core.attr.type == ptr->पूर्णांकel_pt_pmu->type)
-			वापस evsel__enable(evsel);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	evlist__for_each_entry(ptr->evlist, evsel) {
+		if (evsel->core.attr.type == ptr->intel_pt_pmu->type)
+			return evsel__enable(evsel);
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_alloc_snapshot_refs(काष्ठा पूर्णांकel_pt_recording *ptr, पूर्णांक idx)
-अणु
-	स्थिर माप_प्रकार sz = माप(काष्ठा पूर्णांकel_pt_snapshot_ref);
-	पूर्णांक cnt = ptr->snapshot_ref_cnt, new_cnt = cnt * 2;
-	काष्ठा पूर्णांकel_pt_snapshot_ref *refs;
+static int intel_pt_alloc_snapshot_refs(struct intel_pt_recording *ptr, int idx)
+{
+	const size_t sz = sizeof(struct intel_pt_snapshot_ref);
+	int cnt = ptr->snapshot_ref_cnt, new_cnt = cnt * 2;
+	struct intel_pt_snapshot_ref *refs;
 
-	अगर (!new_cnt)
+	if (!new_cnt)
 		new_cnt = 16;
 
-	जबतक (new_cnt <= idx)
+	while (new_cnt <= idx)
 		new_cnt *= 2;
 
-	refs = सुस्मृति(new_cnt, sz);
-	अगर (!refs)
-		वापस -ENOMEM;
+	refs = calloc(new_cnt, sz);
+	if (!refs)
+		return -ENOMEM;
 
-	स_नकल(refs, ptr->snapshot_refs, cnt * sz);
+	memcpy(refs, ptr->snapshot_refs, cnt * sz);
 
 	ptr->snapshot_refs = refs;
 	ptr->snapshot_ref_cnt = new_cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pt_मुक्त_snapshot_refs(काष्ठा पूर्णांकel_pt_recording *ptr)
-अणु
-	पूर्णांक i;
+static void intel_pt_free_snapshot_refs(struct intel_pt_recording *ptr)
+{
+	int i;
 
-	क्रम (i = 0; i < ptr->snapshot_ref_cnt; i++)
-		zमुक्त(&ptr->snapshot_refs[i].ref_buf);
-	zमुक्त(&ptr->snapshot_refs);
-पूर्ण
+	for (i = 0; i < ptr->snapshot_ref_cnt; i++)
+		zfree(&ptr->snapshot_refs[i].ref_buf);
+	zfree(&ptr->snapshot_refs);
+}
 
-अटल व्योम पूर्णांकel_pt_recording_मुक्त(काष्ठा auxtrace_record *itr)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
+static void intel_pt_recording_free(struct auxtrace_record *itr)
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
 
-	पूर्णांकel_pt_मुक्त_snapshot_refs(ptr);
-	मुक्त(ptr);
-पूर्ण
+	intel_pt_free_snapshot_refs(ptr);
+	free(ptr);
+}
 
-अटल पूर्णांक पूर्णांकel_pt_alloc_snapshot_ref(काष्ठा पूर्णांकel_pt_recording *ptr, पूर्णांक idx,
-				       माप_प्रकार snapshot_buf_size)
-अणु
-	माप_प्रकार ref_buf_size = ptr->snapshot_ref_buf_size;
-	व्योम *ref_buf;
+static int intel_pt_alloc_snapshot_ref(struct intel_pt_recording *ptr, int idx,
+				       size_t snapshot_buf_size)
+{
+	size_t ref_buf_size = ptr->snapshot_ref_buf_size;
+	void *ref_buf;
 
 	ref_buf = zalloc(ref_buf_size);
-	अगर (!ref_buf)
-		वापस -ENOMEM;
+	if (!ref_buf)
+		return -ENOMEM;
 
 	ptr->snapshot_refs[idx].ref_buf = ref_buf;
 	ptr->snapshot_refs[idx].ref_offset = snapshot_buf_size - ref_buf_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार पूर्णांकel_pt_snapshot_ref_buf_size(काष्ठा पूर्णांकel_pt_recording *ptr,
-					     माप_प्रकार snapshot_buf_size)
-अणु
-	स्थिर माप_प्रकार max_size = 256 * 1024;
-	माप_प्रकार buf_size = 0, psb_period;
+static size_t intel_pt_snapshot_ref_buf_size(struct intel_pt_recording *ptr,
+					     size_t snapshot_buf_size)
+{
+	const size_t max_size = 256 * 1024;
+	size_t buf_size = 0, psb_period;
 
-	अगर (ptr->snapshot_size <= 64 * 1024)
-		वापस 0;
+	if (ptr->snapshot_size <= 64 * 1024)
+		return 0;
 
-	psb_period = पूर्णांकel_pt_psb_period(ptr->पूर्णांकel_pt_pmu, ptr->evlist);
-	अगर (psb_period)
+	psb_period = intel_pt_psb_period(ptr->intel_pt_pmu, ptr->evlist);
+	if (psb_period)
 		buf_size = psb_period * 2;
 
-	अगर (!buf_size || buf_size > max_size)
+	if (!buf_size || buf_size > max_size)
 		buf_size = max_size;
 
-	अगर (buf_size >= snapshot_buf_size)
-		वापस 0;
+	if (buf_size >= snapshot_buf_size)
+		return 0;
 
-	अगर (buf_size >= ptr->snapshot_size / 2)
-		वापस 0;
+	if (buf_size >= ptr->snapshot_size / 2)
+		return 0;
 
-	वापस buf_size;
-पूर्ण
+	return buf_size;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_snapshot_init(काष्ठा पूर्णांकel_pt_recording *ptr,
-				  माप_प्रकार snapshot_buf_size)
-अणु
-	अगर (ptr->snapshot_init_करोne)
-		वापस 0;
+static int intel_pt_snapshot_init(struct intel_pt_recording *ptr,
+				  size_t snapshot_buf_size)
+{
+	if (ptr->snapshot_init_done)
+		return 0;
 
-	ptr->snapshot_init_करोne = true;
+	ptr->snapshot_init_done = true;
 
-	ptr->snapshot_ref_buf_size = पूर्णांकel_pt_snapshot_ref_buf_size(ptr,
+	ptr->snapshot_ref_buf_size = intel_pt_snapshot_ref_buf_size(ptr,
 							snapshot_buf_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_pt_compare_buffers - compare bytes in a buffer to a circular buffer.
+ * intel_pt_compare_buffers - compare bytes in a buffer to a circular buffer.
  * @buf1: first buffer
  * @compare_size: number of bytes to compare
  * @buf2: second buffer (a circular buffer)
  * @offs2: offset in second buffer
  * @buf2_size: size of second buffer
  *
- * The comparison allows क्रम the possibility that the bytes to compare in the
+ * The comparison allows for the possibility that the bytes to compare in the
  * circular buffer are not contiguous.  It is assumed that @compare_size <=
- * @buf2_size.  This function वापसs %false अगर the bytes are identical, %true
+ * @buf2_size.  This function returns %false if the bytes are identical, %true
  * otherwise.
  */
-अटल bool पूर्णांकel_pt_compare_buffers(व्योम *buf1, माप_प्रकार compare_size,
-				     व्योम *buf2, माप_प्रकार offs2, माप_प्रकार buf2_size)
-अणु
-	माप_प्रकार end2 = offs2 + compare_size, part_size;
+static bool intel_pt_compare_buffers(void *buf1, size_t compare_size,
+				     void *buf2, size_t offs2, size_t buf2_size)
+{
+	size_t end2 = offs2 + compare_size, part_size;
 
-	अगर (end2 <= buf2_size)
-		वापस स_भेद(buf1, buf2 + offs2, compare_size);
+	if (end2 <= buf2_size)
+		return memcmp(buf1, buf2 + offs2, compare_size);
 
 	part_size = end2 - buf2_size;
-	अगर (स_भेद(buf1, buf2 + offs2, part_size))
-		वापस true;
+	if (memcmp(buf1, buf2 + offs2, part_size))
+		return true;
 
 	compare_size -= part_size;
 
-	वापस स_भेद(buf1 + part_size, buf2, compare_size);
-पूर्ण
+	return memcmp(buf1 + part_size, buf2, compare_size);
+}
 
-अटल bool पूर्णांकel_pt_compare_ref(व्योम *ref_buf, माप_प्रकार ref_offset,
-				 माप_प्रकार ref_size, माप_प्रकार buf_size,
-				 व्योम *data, माप_प्रकार head)
-अणु
-	माप_प्रकार ref_end = ref_offset + ref_size;
+static bool intel_pt_compare_ref(void *ref_buf, size_t ref_offset,
+				 size_t ref_size, size_t buf_size,
+				 void *data, size_t head)
+{
+	size_t ref_end = ref_offset + ref_size;
 
-	अगर (ref_end > buf_size) अणु
-		अगर (head > ref_offset || head < ref_end - buf_size)
-			वापस true;
-	पूर्ण अन्यथा अगर (head > ref_offset && head < ref_end) अणु
-		वापस true;
-	पूर्ण
+	if (ref_end > buf_size) {
+		if (head > ref_offset || head < ref_end - buf_size)
+			return true;
+	} else if (head > ref_offset && head < ref_end) {
+		return true;
+	}
 
-	वापस पूर्णांकel_pt_compare_buffers(ref_buf, ref_size, data, ref_offset,
+	return intel_pt_compare_buffers(ref_buf, ref_size, data, ref_offset,
 					buf_size);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pt_copy_ref(व्योम *ref_buf, माप_प्रकार ref_size, माप_प्रकार buf_size,
-			      व्योम *data, माप_प्रकार head)
-अणु
-	अगर (head >= ref_size) अणु
-		स_नकल(ref_buf, data + head - ref_size, ref_size);
-	पूर्ण अन्यथा अणु
-		स_नकल(ref_buf, data, head);
+static void intel_pt_copy_ref(void *ref_buf, size_t ref_size, size_t buf_size,
+			      void *data, size_t head)
+{
+	if (head >= ref_size) {
+		memcpy(ref_buf, data + head - ref_size, ref_size);
+	} else {
+		memcpy(ref_buf, data, head);
 		ref_size -= head;
-		स_नकल(ref_buf + head, data + buf_size - ref_size, ref_size);
-	पूर्ण
-पूर्ण
+		memcpy(ref_buf + head, data + buf_size - ref_size, ref_size);
+	}
+}
 
-अटल bool पूर्णांकel_pt_wrapped(काष्ठा पूर्णांकel_pt_recording *ptr, पूर्णांक idx,
-			     काष्ठा auxtrace_mmap *mm, अचिन्हित अक्षर *data,
+static bool intel_pt_wrapped(struct intel_pt_recording *ptr, int idx,
+			     struct auxtrace_mmap *mm, unsigned char *data,
 			     u64 head)
-अणु
-	काष्ठा पूर्णांकel_pt_snapshot_ref *ref = &ptr->snapshot_refs[idx];
+{
+	struct intel_pt_snapshot_ref *ref = &ptr->snapshot_refs[idx];
 	bool wrapped;
 
-	wrapped = पूर्णांकel_pt_compare_ref(ref->ref_buf, ref->ref_offset,
+	wrapped = intel_pt_compare_ref(ref->ref_buf, ref->ref_offset,
 				       ptr->snapshot_ref_buf_size, mm->len,
 				       data, head);
 
-	पूर्णांकel_pt_copy_ref(ref->ref_buf, ptr->snapshot_ref_buf_size, mm->len,
+	intel_pt_copy_ref(ref->ref_buf, ptr->snapshot_ref_buf_size, mm->len,
 			  data, head);
 
-	वापस wrapped;
-पूर्ण
+	return wrapped;
+}
 
-अटल bool पूर्णांकel_pt_first_wrap(u64 *data, माप_प्रकार buf_size)
-अणु
-	पूर्णांक i, a, b;
+static bool intel_pt_first_wrap(u64 *data, size_t buf_size)
+{
+	int i, a, b;
 
 	b = buf_size >> 3;
 	a = b - 512;
-	अगर (a < 0)
+	if (a < 0)
 		a = 0;
 
-	क्रम (i = a; i < b; i++) अणु
-		अगर (data[i])
-			वापस true;
-	पूर्ण
+	for (i = a; i < b; i++) {
+		if (data[i])
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक पूर्णांकel_pt_find_snapshot(काष्ठा auxtrace_record *itr, पूर्णांक idx,
-				  काष्ठा auxtrace_mmap *mm, अचिन्हित अक्षर *data,
+static int intel_pt_find_snapshot(struct auxtrace_record *itr, int idx,
+				  struct auxtrace_mmap *mm, unsigned char *data,
 				  u64 *head, u64 *old)
-अणु
-	काष्ठा पूर्णांकel_pt_recording *ptr =
-			container_of(itr, काष्ठा पूर्णांकel_pt_recording, itr);
+{
+	struct intel_pt_recording *ptr =
+			container_of(itr, struct intel_pt_recording, itr);
 	bool wrapped;
-	पूर्णांक err;
+	int err;
 
 	pr_debug3("%s: mmap index %d old head %zu new head %zu\n",
-		  __func__, idx, (माप_प्रकार)*old, (माप_प्रकार)*head);
+		  __func__, idx, (size_t)*old, (size_t)*head);
 
-	err = पूर्णांकel_pt_snapshot_init(ptr, mm->len);
-	अगर (err)
-		जाओ out_err;
+	err = intel_pt_snapshot_init(ptr, mm->len);
+	if (err)
+		goto out_err;
 
-	अगर (idx >= ptr->snapshot_ref_cnt) अणु
-		err = पूर्णांकel_pt_alloc_snapshot_refs(ptr, idx);
-		अगर (err)
-			जाओ out_err;
-	पूर्ण
+	if (idx >= ptr->snapshot_ref_cnt) {
+		err = intel_pt_alloc_snapshot_refs(ptr, idx);
+		if (err)
+			goto out_err;
+	}
 
-	अगर (ptr->snapshot_ref_buf_size) अणु
-		अगर (!ptr->snapshot_refs[idx].ref_buf) अणु
-			err = पूर्णांकel_pt_alloc_snapshot_ref(ptr, idx, mm->len);
-			अगर (err)
-				जाओ out_err;
-		पूर्ण
-		wrapped = पूर्णांकel_pt_wrapped(ptr, idx, mm, data, *head);
-	पूर्ण अन्यथा अणु
+	if (ptr->snapshot_ref_buf_size) {
+		if (!ptr->snapshot_refs[idx].ref_buf) {
+			err = intel_pt_alloc_snapshot_ref(ptr, idx, mm->len);
+			if (err)
+				goto out_err;
+		}
+		wrapped = intel_pt_wrapped(ptr, idx, mm, data, *head);
+	} else {
 		wrapped = ptr->snapshot_refs[idx].wrapped;
-		अगर (!wrapped && पूर्णांकel_pt_first_wrap((u64 *)data, mm->len)) अणु
+		if (!wrapped && intel_pt_first_wrap((u64 *)data, mm->len)) {
 			ptr->snapshot_refs[idx].wrapped = true;
 			wrapped = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * In full trace mode 'head' continually increases.  However in snapshot
 	 * mode 'head' is an offset within the buffer.  Here 'old' and 'head'
-	 * are adjusted to match the full trace हाल which expects that 'old' is
+	 * are adjusted to match the full trace case which expects that 'old' is
 	 * always less than 'head'.
 	 */
-	अगर (wrapped) अणु
+	if (wrapped) {
 		*old = *head;
 		*head += mm->len;
-	पूर्ण अन्यथा अणु
-		अगर (mm->mask)
+	} else {
+		if (mm->mask)
 			*old &= mm->mask;
-		अन्यथा
+		else
 			*old %= mm->len;
-		अगर (*old > *head)
+		if (*old > *head)
 			*head += mm->len;
-	पूर्ण
+	}
 
 	pr_debug3("%s: wrap-around %sdetected, adjusted old head %zu adjusted new head %zu\n",
-		  __func__, wrapped ? "" : "not ", (माप_प्रकार)*old, (माप_प्रकार)*head);
+		  __func__, wrapped ? "" : "not ", (size_t)*old, (size_t)*head);
 
-	वापस 0;
+	return 0;
 
 out_err:
 	pr_err("%s: failed, error %d\n", __func__, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u64 पूर्णांकel_pt_reference(काष्ठा auxtrace_record *itr __maybe_unused)
-अणु
-	वापस rdtsc();
-पूर्ण
+static u64 intel_pt_reference(struct auxtrace_record *itr __maybe_unused)
+{
+	return rdtsc();
+}
 
-काष्ठा auxtrace_record *पूर्णांकel_pt_recording_init(पूर्णांक *err)
-अणु
-	काष्ठा perf_pmu *पूर्णांकel_pt_pmu = perf_pmu__find(INTEL_PT_PMU_NAME);
-	काष्ठा पूर्णांकel_pt_recording *ptr;
+struct auxtrace_record *intel_pt_recording_init(int *err)
+{
+	struct perf_pmu *intel_pt_pmu = perf_pmu__find(INTEL_PT_PMU_NAME);
+	struct intel_pt_recording *ptr;
 
-	अगर (!पूर्णांकel_pt_pmu)
-		वापस शून्य;
+	if (!intel_pt_pmu)
+		return NULL;
 
-	अगर (setenv("JITDUMP_USE_ARCH_TIMESTAMP", "1", 1)) अणु
-		*err = -त्रुटि_सं;
-		वापस शून्य;
-	पूर्ण
+	if (setenv("JITDUMP_USE_ARCH_TIMESTAMP", "1", 1)) {
+		*err = -errno;
+		return NULL;
+	}
 
-	ptr = zalloc(माप(काष्ठा पूर्णांकel_pt_recording));
-	अगर (!ptr) अणु
+	ptr = zalloc(sizeof(struct intel_pt_recording));
+	if (!ptr) {
 		*err = -ENOMEM;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	ptr->पूर्णांकel_pt_pmu = पूर्णांकel_pt_pmu;
-	ptr->itr.pmu = पूर्णांकel_pt_pmu;
-	ptr->itr.recording_options = पूर्णांकel_pt_recording_options;
-	ptr->itr.info_priv_size = पूर्णांकel_pt_info_priv_size;
-	ptr->itr.info_fill = पूर्णांकel_pt_info_fill;
-	ptr->itr.मुक्त = पूर्णांकel_pt_recording_मुक्त;
-	ptr->itr.snapshot_start = पूर्णांकel_pt_snapshot_start;
-	ptr->itr.snapshot_finish = पूर्णांकel_pt_snapshot_finish;
-	ptr->itr.find_snapshot = पूर्णांकel_pt_find_snapshot;
-	ptr->itr.parse_snapshot_options = पूर्णांकel_pt_parse_snapshot_options;
-	ptr->itr.reference = पूर्णांकel_pt_reference;
-	ptr->itr.पढ़ो_finish = auxtrace_record__पढ़ो_finish;
+	ptr->intel_pt_pmu = intel_pt_pmu;
+	ptr->itr.pmu = intel_pt_pmu;
+	ptr->itr.recording_options = intel_pt_recording_options;
+	ptr->itr.info_priv_size = intel_pt_info_priv_size;
+	ptr->itr.info_fill = intel_pt_info_fill;
+	ptr->itr.free = intel_pt_recording_free;
+	ptr->itr.snapshot_start = intel_pt_snapshot_start;
+	ptr->itr.snapshot_finish = intel_pt_snapshot_finish;
+	ptr->itr.find_snapshot = intel_pt_find_snapshot;
+	ptr->itr.parse_snapshot_options = intel_pt_parse_snapshot_options;
+	ptr->itr.reference = intel_pt_reference;
+	ptr->itr.read_finish = auxtrace_record__read_finish;
 	/*
 	 * Decoding starts at a PSB packet. Minimum PSB period is 2K so 4K
 	 * should give at least 1 PSB per sample.
 	 */
-	ptr->itr.शेष_aux_sample_size = 4096;
-	वापस &ptr->itr;
-पूर्ण
+	ptr->itr.default_aux_sample_size = 4096;
+	return &ptr->itr;
+}

@@ -1,221 +1,220 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * include/linux/backing-dev.h
  *
- * low-level device inक्रमmation and state which is propagated up through
+ * low-level device information and state which is propagated up through
  * to high-level code.
  */
 
-#अगर_अघोषित _LINUX_BACKING_DEV_H
-#घोषणा _LINUX_BACKING_DEV_H
+#ifndef _LINUX_BACKING_DEV_H
+#define _LINUX_BACKING_DEV_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/device.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/blk-cgroup.h>
-#समावेश <linux/backing-dev-defs.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/blkdev.h>
+#include <linux/device.h>
+#include <linux/writeback.h>
+#include <linux/blk-cgroup.h>
+#include <linux/backing-dev-defs.h>
+#include <linux/slab.h>
 
-अटल अंतरभूत काष्ठा backing_dev_info *bdi_get(काष्ठा backing_dev_info *bdi)
-अणु
+static inline struct backing_dev_info *bdi_get(struct backing_dev_info *bdi)
+{
 	kref_get(&bdi->refcnt);
-	वापस bdi;
-पूर्ण
+	return bdi;
+}
 
-काष्ठा backing_dev_info *bdi_get_by_id(u64 id);
-व्योम bdi_put(काष्ठा backing_dev_info *bdi);
+struct backing_dev_info *bdi_get_by_id(u64 id);
+void bdi_put(struct backing_dev_info *bdi);
 
-__म_लिखो(2, 3)
-पूर्णांक bdi_रेजिस्टर(काष्ठा backing_dev_info *bdi, स्थिर अक्षर *fmt, ...);
-__म_लिखो(2, 0)
-पूर्णांक bdi_रेजिस्टर_va(काष्ठा backing_dev_info *bdi, स्थिर अक्षर *fmt,
-		    बहु_सूची args);
-व्योम bdi_set_owner(काष्ठा backing_dev_info *bdi, काष्ठा device *owner);
-व्योम bdi_unरेजिस्टर(काष्ठा backing_dev_info *bdi);
+__printf(2, 3)
+int bdi_register(struct backing_dev_info *bdi, const char *fmt, ...);
+__printf(2, 0)
+int bdi_register_va(struct backing_dev_info *bdi, const char *fmt,
+		    va_list args);
+void bdi_set_owner(struct backing_dev_info *bdi, struct device *owner);
+void bdi_unregister(struct backing_dev_info *bdi);
 
-काष्ठा backing_dev_info *bdi_alloc(पूर्णांक node_id);
+struct backing_dev_info *bdi_alloc(int node_id);
 
-व्योम wb_start_background_ग_लिखोback(काष्ठा bdi_ग_लिखोback *wb);
-व्योम wb_workfn(काष्ठा work_काष्ठा *work);
-व्योम wb_wakeup_delayed(काष्ठा bdi_ग_लिखोback *wb);
+void wb_start_background_writeback(struct bdi_writeback *wb);
+void wb_workfn(struct work_struct *work);
+void wb_wakeup_delayed(struct bdi_writeback *wb);
 
-व्योम wb_रुको_क्रम_completion(काष्ठा wb_completion *करोne);
+void wb_wait_for_completion(struct wb_completion *done);
 
-बाह्य spinlock_t bdi_lock;
-बाह्य काष्ठा list_head bdi_list;
+extern spinlock_t bdi_lock;
+extern struct list_head bdi_list;
 
-बाह्य काष्ठा workqueue_काष्ठा *bdi_wq;
-बाह्य काष्ठा workqueue_काष्ठा *bdi_async_bio_wq;
+extern struct workqueue_struct *bdi_wq;
+extern struct workqueue_struct *bdi_async_bio_wq;
 
-अटल अंतरभूत bool wb_has_dirty_io(काष्ठा bdi_ग_लिखोback *wb)
-अणु
-	वापस test_bit(WB_has_dirty_io, &wb->state);
-पूर्ण
+static inline bool wb_has_dirty_io(struct bdi_writeback *wb)
+{
+	return test_bit(WB_has_dirty_io, &wb->state);
+}
 
-अटल अंतरभूत bool bdi_has_dirty_io(काष्ठा backing_dev_info *bdi)
-अणु
+static inline bool bdi_has_dirty_io(struct backing_dev_info *bdi)
+{
 	/*
-	 * @bdi->tot_ग_लिखो_bandwidth is guaranteed to be > 0 अगर there are
-	 * any dirty wbs.  See wb_update_ग_लिखो_bandwidth().
+	 * @bdi->tot_write_bandwidth is guaranteed to be > 0 if there are
+	 * any dirty wbs.  See wb_update_write_bandwidth().
 	 */
-	वापस atomic_दीर्घ_पढ़ो(&bdi->tot_ग_लिखो_bandwidth);
-पूर्ण
+	return atomic_long_read(&bdi->tot_write_bandwidth);
+}
 
-अटल अंतरभूत व्योम __add_wb_stat(काष्ठा bdi_ग_लिखोback *wb,
-				 क्रमागत wb_stat_item item, s64 amount)
-अणु
+static inline void __add_wb_stat(struct bdi_writeback *wb,
+				 enum wb_stat_item item, s64 amount)
+{
 	percpu_counter_add_batch(&wb->stat[item], amount, WB_STAT_BATCH);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम inc_wb_stat(काष्ठा bdi_ग_लिखोback *wb, क्रमागत wb_stat_item item)
-अणु
+static inline void inc_wb_stat(struct bdi_writeback *wb, enum wb_stat_item item)
+{
 	__add_wb_stat(wb, item, 1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dec_wb_stat(काष्ठा bdi_ग_लिखोback *wb, क्रमागत wb_stat_item item)
-अणु
+static inline void dec_wb_stat(struct bdi_writeback *wb, enum wb_stat_item item)
+{
 	__add_wb_stat(wb, item, -1);
-पूर्ण
+}
 
-अटल अंतरभूत s64 wb_stat(काष्ठा bdi_ग_लिखोback *wb, क्रमागत wb_stat_item item)
-अणु
-	वापस percpu_counter_पढ़ो_positive(&wb->stat[item]);
-पूर्ण
+static inline s64 wb_stat(struct bdi_writeback *wb, enum wb_stat_item item)
+{
+	return percpu_counter_read_positive(&wb->stat[item]);
+}
 
-अटल अंतरभूत s64 wb_stat_sum(काष्ठा bdi_ग_लिखोback *wb, क्रमागत wb_stat_item item)
-अणु
-	वापस percpu_counter_sum_positive(&wb->stat[item]);
-पूर्ण
+static inline s64 wb_stat_sum(struct bdi_writeback *wb, enum wb_stat_item item)
+{
+	return percpu_counter_sum_positive(&wb->stat[item]);
+}
 
-बाह्य व्योम wb_ग_लिखोout_inc(काष्ठा bdi_ग_लिखोback *wb);
+extern void wb_writeout_inc(struct bdi_writeback *wb);
 
 /*
  * maximal error of a stat counter.
  */
-अटल अंतरभूत अचिन्हित दीर्घ wb_stat_error(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
-	वापस nr_cpu_ids * WB_STAT_BATCH;
-#अन्यथा
-	वापस 1;
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned long wb_stat_error(void)
+{
+#ifdef CONFIG_SMP
+	return nr_cpu_ids * WB_STAT_BATCH;
+#else
+	return 1;
+#endif
+}
 
-पूर्णांक bdi_set_min_ratio(काष्ठा backing_dev_info *bdi, अचिन्हित पूर्णांक min_ratio);
-पूर्णांक bdi_set_max_ratio(काष्ठा backing_dev_info *bdi, अचिन्हित पूर्णांक max_ratio);
+int bdi_set_min_ratio(struct backing_dev_info *bdi, unsigned int min_ratio);
+int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
 
 /*
  * Flags in backing_dev_info::capability
  *
- * BDI_CAP_WRITEBACK:		Supports dirty page ग_लिखोback, and dirty pages
+ * BDI_CAP_WRITEBACK:		Supports dirty page writeback, and dirty pages
  *				should contribute to accounting
- * BDI_CAP_WRITEBACK_ACCT:	Automatically account ग_लिखोback pages
+ * BDI_CAP_WRITEBACK_ACCT:	Automatically account writeback pages
  * BDI_CAP_STRICTLIMIT:		Keep number of dirty pages below bdi threshold
  */
-#घोषणा BDI_CAP_WRITEBACK		(1 << 0)
-#घोषणा BDI_CAP_WRITEBACK_ACCT		(1 << 1)
-#घोषणा BDI_CAP_STRICTLIMIT		(1 << 2)
+#define BDI_CAP_WRITEBACK		(1 << 0)
+#define BDI_CAP_WRITEBACK_ACCT		(1 << 1)
+#define BDI_CAP_STRICTLIMIT		(1 << 2)
 
-बाह्य काष्ठा backing_dev_info noop_backing_dev_info;
+extern struct backing_dev_info noop_backing_dev_info;
 
 /**
- * ग_लिखोback_in_progress - determine whether there is ग_लिखोback in progress
- * @wb: bdi_ग_लिखोback of पूर्णांकerest
+ * writeback_in_progress - determine whether there is writeback in progress
+ * @wb: bdi_writeback of interest
  *
- * Determine whether there is ग_लिखोback रुकोing to be handled against a
- * bdi_ग_लिखोback.
+ * Determine whether there is writeback waiting to be handled against a
+ * bdi_writeback.
  */
-अटल अंतरभूत bool ग_लिखोback_in_progress(काष्ठा bdi_ग_लिखोback *wb)
-अणु
-	वापस test_bit(WB_ग_लिखोback_running, &wb->state);
-पूर्ण
+static inline bool writeback_in_progress(struct bdi_writeback *wb)
+{
+	return test_bit(WB_writeback_running, &wb->state);
+}
 
-अटल अंतरभूत काष्ठा backing_dev_info *inode_to_bdi(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb;
+static inline struct backing_dev_info *inode_to_bdi(struct inode *inode)
+{
+	struct super_block *sb;
 
-	अगर (!inode)
-		वापस &noop_backing_dev_info;
+	if (!inode)
+		return &noop_backing_dev_info;
 
 	sb = inode->i_sb;
-#अगर_घोषित CONFIG_BLOCK
-	अगर (sb_is_blkdev_sb(sb))
-		वापस I_BDEV(inode)->bd_bdi;
-#पूर्ण_अगर
-	वापस sb->s_bdi;
-पूर्ण
+#ifdef CONFIG_BLOCK
+	if (sb_is_blkdev_sb(sb))
+		return I_BDEV(inode)->bd_bdi;
+#endif
+	return sb->s_bdi;
+}
 
-अटल अंतरभूत पूर्णांक wb_congested(काष्ठा bdi_ग_लिखोback *wb, पूर्णांक cong_bits)
-अणु
-	वापस wb->congested & cong_bits;
-पूर्ण
+static inline int wb_congested(struct bdi_writeback *wb, int cong_bits)
+{
+	return wb->congested & cong_bits;
+}
 
-दीर्घ congestion_रुको(पूर्णांक sync, दीर्घ समयout);
-दीर्घ रुको_अगरf_congested(पूर्णांक sync, दीर्घ समयout);
+long congestion_wait(int sync, long timeout);
+long wait_iff_congested(int sync, long timeout);
 
-अटल अंतरभूत bool mapping_can_ग_लिखोback(काष्ठा address_space *mapping)
-अणु
-	वापस inode_to_bdi(mapping->host)->capabilities & BDI_CAP_WRITEBACK;
-पूर्ण
+static inline bool mapping_can_writeback(struct address_space *mapping)
+{
+	return inode_to_bdi(mapping->host)->capabilities & BDI_CAP_WRITEBACK;
+}
 
-अटल अंतरभूत पूर्णांक bdi_sched_रुको(व्योम *word)
-अणु
+static inline int bdi_sched_wait(void *word)
+{
 	schedule();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_CGROUP_WRITEBACK
+#ifdef CONFIG_CGROUP_WRITEBACK
 
-काष्ठा bdi_ग_लिखोback *wb_get_lookup(काष्ठा backing_dev_info *bdi,
-				    काष्ठा cgroup_subsys_state *memcg_css);
-काष्ठा bdi_ग_लिखोback *wb_get_create(काष्ठा backing_dev_info *bdi,
-				    काष्ठा cgroup_subsys_state *memcg_css,
+struct bdi_writeback *wb_get_lookup(struct backing_dev_info *bdi,
+				    struct cgroup_subsys_state *memcg_css);
+struct bdi_writeback *wb_get_create(struct backing_dev_info *bdi,
+				    struct cgroup_subsys_state *memcg_css,
 				    gfp_t gfp);
-व्योम wb_memcg_offline(काष्ठा mem_cgroup *memcg);
-व्योम wb_blkcg_offline(काष्ठा blkcg *blkcg);
-पूर्णांक inode_congested(काष्ठा inode *inode, पूर्णांक cong_bits);
+void wb_memcg_offline(struct mem_cgroup *memcg);
+void wb_blkcg_offline(struct blkcg *blkcg);
+int inode_congested(struct inode *inode, int cong_bits);
 
 /**
- * inode_cgwb_enabled - test whether cgroup ग_लिखोback is enabled on an inode
- * @inode: inode of पूर्णांकerest
+ * inode_cgwb_enabled - test whether cgroup writeback is enabled on an inode
+ * @inode: inode of interest
  *
- * Cgroup ग_लिखोback requires support from the fileप्रणाली.  Also, both memcg and
- * iocg have to be on the शेष hierarchy.  Test whether all conditions are
+ * Cgroup writeback requires support from the filesystem.  Also, both memcg and
+ * iocg have to be on the default hierarchy.  Test whether all conditions are
  * met.
  *
  * Note that the test result may change dynamically on the same inode
  * depending on how memcg and iocg are configured.
  */
-अटल अंतरभूत bool inode_cgwb_enabled(काष्ठा inode *inode)
-अणु
-	काष्ठा backing_dev_info *bdi = inode_to_bdi(inode);
+static inline bool inode_cgwb_enabled(struct inode *inode)
+{
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
 
-	वापस cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
+	return cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
 		cgroup_subsys_on_dfl(io_cgrp_subsys) &&
 		(bdi->capabilities & BDI_CAP_WRITEBACK) &&
-		(inode->i_sb->s_अगरlags & SB_I_CGROUPWB);
-पूर्ण
+		(inode->i_sb->s_iflags & SB_I_CGROUPWB);
+}
 
 /**
- * wb_find_current - find wb क्रम %current on a bdi
- * @bdi: bdi of पूर्णांकerest
+ * wb_find_current - find wb for %current on a bdi
+ * @bdi: bdi of interest
  *
  * Find the wb of @bdi which matches both the memcg and blkcg of %current.
- * Must be called under rcu_पढ़ो_lock() which protects the returend wb.
- * शून्य अगर not found.
+ * Must be called under rcu_read_lock() which protects the returend wb.
+ * NULL if not found.
  */
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *wb_find_current(काष्ठा backing_dev_info *bdi)
-अणु
-	काष्ठा cgroup_subsys_state *memcg_css;
-	काष्ठा bdi_ग_लिखोback *wb;
+static inline struct bdi_writeback *wb_find_current(struct backing_dev_info *bdi)
+{
+	struct cgroup_subsys_state *memcg_css;
+	struct bdi_writeback *wb;
 
 	memcg_css = task_css(current, memory_cgrp_id);
-	अगर (!memcg_css->parent)
-		वापस &bdi->wb;
+	if (!memcg_css->parent)
+		return &bdi->wb;
 
 	wb = radix_tree_lookup(&bdi->cgwb_tree, memcg_css->id);
 
@@ -223,71 +222,71 @@ __म_लिखो(2, 0)
 	 * %current's blkcg equals the effective blkcg of its memcg.  No
 	 * need to use the relatively expensive cgroup_get_e_css().
 	 */
-	अगर (likely(wb && wb->blkcg_css == task_css(current, io_cgrp_id)))
-		वापस wb;
-	वापस शून्य;
-पूर्ण
+	if (likely(wb && wb->blkcg_css == task_css(current, io_cgrp_id)))
+		return wb;
+	return NULL;
+}
 
 /**
- * wb_get_create_current - get or create wb क्रम %current on a bdi
- * @bdi: bdi of पूर्णांकerest
+ * wb_get_create_current - get or create wb for %current on a bdi
+ * @bdi: bdi of interest
  * @gfp: allocation mask
  *
  * Equivalent to wb_get_create() on %current's memcg.  This function is
- * called from a relatively hot path and optimizes the common हालs using
+ * called from a relatively hot path and optimizes the common cases using
  * wb_find_current().
  */
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *
-wb_get_create_current(काष्ठा backing_dev_info *bdi, gfp_t gfp)
-अणु
-	काष्ठा bdi_ग_लिखोback *wb;
+static inline struct bdi_writeback *
+wb_get_create_current(struct backing_dev_info *bdi, gfp_t gfp)
+{
+	struct bdi_writeback *wb;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	wb = wb_find_current(bdi);
-	अगर (wb && unlikely(!wb_tryget(wb)))
-		wb = शून्य;
-	rcu_पढ़ो_unlock();
+	if (wb && unlikely(!wb_tryget(wb)))
+		wb = NULL;
+	rcu_read_unlock();
 
-	अगर (unlikely(!wb)) अणु
-		काष्ठा cgroup_subsys_state *memcg_css;
+	if (unlikely(!wb)) {
+		struct cgroup_subsys_state *memcg_css;
 
 		memcg_css = task_get_css(current, memory_cgrp_id);
 		wb = wb_get_create(bdi, memcg_css, gfp);
 		css_put(memcg_css);
-	पूर्ण
-	वापस wb;
-पूर्ण
+	}
+	return wb;
+}
 
 /**
  * inode_to_wb_is_valid - test whether an inode has a wb associated
- * @inode: inode of पूर्णांकerest
+ * @inode: inode of interest
  *
- * Returns %true अगर @inode has a wb associated.  May be called without any
+ * Returns %true if @inode has a wb associated.  May be called without any
  * locking.
  */
-अटल अंतरभूत bool inode_to_wb_is_valid(काष्ठा inode *inode)
-अणु
-	वापस inode->i_wb;
-पूर्ण
+static inline bool inode_to_wb_is_valid(struct inode *inode)
+{
+	return inode->i_wb;
+}
 
 /**
  * inode_to_wb - determine the wb of an inode
- * @inode: inode of पूर्णांकerest
+ * @inode: inode of interest
  *
  * Returns the wb @inode is currently associated with.  The caller must be
  * holding either @inode->i_lock, the i_pages lock, or the
  * associated wb's list_lock.
  */
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *inode_to_wb(स्थिर काष्ठा inode *inode)
-अणु
-#अगर_घोषित CONFIG_LOCKDEP
+static inline struct bdi_writeback *inode_to_wb(const struct inode *inode)
+{
+#ifdef CONFIG_LOCKDEP
 	WARN_ON_ONCE(debug_locks &&
 		     (!lockdep_is_held(&inode->i_lock) &&
 		      !lockdep_is_held(&inode->i_mapping->i_pages.xa_lock) &&
 		      !lockdep_is_held(&inode->i_wb->list_lock)));
-#पूर्ण_अगर
-	वापस inode->i_wb;
-पूर्ण
+#endif
+	return inode->i_wb;
+}
 
 /**
  * unlocked_inode_to_wb_begin - begin unlocked inode wb access transaction
@@ -297,139 +296,139 @@ wb_get_create_current(काष्ठा backing_dev_info *bdi, gfp_t gfp)
  * The caller wants to access the wb associated with @inode but isn't
  * holding inode->i_lock, the i_pages lock or wb->list_lock.  This
  * function determines the wb associated with @inode and ensures that the
- * association करोesn't change until the transaction is finished with
+ * association doesn't change until the transaction is finished with
  * unlocked_inode_to_wb_end().
  *
  * The caller must call unlocked_inode_to_wb_end() with *@cookie afterwards and
  * can't sleep during the transaction.  IRQs may or may not be disabled on
- * वापस.
+ * return.
  */
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *
-unlocked_inode_to_wb_begin(काष्ठा inode *inode, काष्ठा wb_lock_cookie *cookie)
-अणु
-	rcu_पढ़ो_lock();
+static inline struct bdi_writeback *
+unlocked_inode_to_wb_begin(struct inode *inode, struct wb_lock_cookie *cookie)
+{
+	rcu_read_lock();
 
 	/*
-	 * Paired with store_release in inode_चयन_wbs_work_fn() and
-	 * ensures that we see the new wb अगर we see cleared I_WB_SWITCH.
+	 * Paired with store_release in inode_switch_wbs_work_fn() and
+	 * ensures that we see the new wb if we see cleared I_WB_SWITCH.
 	 */
 	cookie->locked = smp_load_acquire(&inode->i_state) & I_WB_SWITCH;
 
-	अगर (unlikely(cookie->locked))
+	if (unlikely(cookie->locked))
 		xa_lock_irqsave(&inode->i_mapping->i_pages, cookie->flags);
 
 	/*
-	 * Protected by either !I_WB_SWITCH + rcu_पढ़ो_lock() or the i_pages
+	 * Protected by either !I_WB_SWITCH + rcu_read_lock() or the i_pages
 	 * lock.  inode_to_wb() will bark.  Deref directly.
 	 */
-	वापस inode->i_wb;
-पूर्ण
+	return inode->i_wb;
+}
 
 /**
  * unlocked_inode_to_wb_end - end inode wb access transaction
  * @inode: target inode
  * @cookie: @cookie from unlocked_inode_to_wb_begin()
  */
-अटल अंतरभूत व्योम unlocked_inode_to_wb_end(काष्ठा inode *inode,
-					    काष्ठा wb_lock_cookie *cookie)
-अणु
-	अगर (unlikely(cookie->locked))
+static inline void unlocked_inode_to_wb_end(struct inode *inode,
+					    struct wb_lock_cookie *cookie)
+{
+	if (unlikely(cookie->locked))
 		xa_unlock_irqrestore(&inode->i_mapping->i_pages, cookie->flags);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-#अन्यथा	/* CONFIG_CGROUP_WRITEBACK */
+#else	/* CONFIG_CGROUP_WRITEBACK */
 
-अटल अंतरभूत bool inode_cgwb_enabled(काष्ठा inode *inode)
-अणु
-	वापस false;
-पूर्ण
+static inline bool inode_cgwb_enabled(struct inode *inode)
+{
+	return false;
+}
 
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *wb_find_current(काष्ठा backing_dev_info *bdi)
-अणु
-	वापस &bdi->wb;
-पूर्ण
+static inline struct bdi_writeback *wb_find_current(struct backing_dev_info *bdi)
+{
+	return &bdi->wb;
+}
 
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *
-wb_get_create_current(काष्ठा backing_dev_info *bdi, gfp_t gfp)
-अणु
-	वापस &bdi->wb;
-पूर्ण
+static inline struct bdi_writeback *
+wb_get_create_current(struct backing_dev_info *bdi, gfp_t gfp)
+{
+	return &bdi->wb;
+}
 
-अटल अंतरभूत bool inode_to_wb_is_valid(काष्ठा inode *inode)
-अणु
-	वापस true;
-पूर्ण
+static inline bool inode_to_wb_is_valid(struct inode *inode)
+{
+	return true;
+}
 
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *inode_to_wb(काष्ठा inode *inode)
-अणु
-	वापस &inode_to_bdi(inode)->wb;
-पूर्ण
+static inline struct bdi_writeback *inode_to_wb(struct inode *inode)
+{
+	return &inode_to_bdi(inode)->wb;
+}
 
-अटल अंतरभूत काष्ठा bdi_ग_लिखोback *
-unlocked_inode_to_wb_begin(काष्ठा inode *inode, काष्ठा wb_lock_cookie *cookie)
-अणु
-	वापस inode_to_wb(inode);
-पूर्ण
+static inline struct bdi_writeback *
+unlocked_inode_to_wb_begin(struct inode *inode, struct wb_lock_cookie *cookie)
+{
+	return inode_to_wb(inode);
+}
 
-अटल अंतरभूत व्योम unlocked_inode_to_wb_end(काष्ठा inode *inode,
-					    काष्ठा wb_lock_cookie *cookie)
-अणु
-पूर्ण
+static inline void unlocked_inode_to_wb_end(struct inode *inode,
+					    struct wb_lock_cookie *cookie)
+{
+}
 
-अटल अंतरभूत व्योम wb_memcg_offline(काष्ठा mem_cgroup *memcg)
-अणु
-पूर्ण
+static inline void wb_memcg_offline(struct mem_cgroup *memcg)
+{
+}
 
-अटल अंतरभूत व्योम wb_blkcg_offline(काष्ठा blkcg *blkcg)
-अणु
-पूर्ण
+static inline void wb_blkcg_offline(struct blkcg *blkcg)
+{
+}
 
-अटल अंतरभूत पूर्णांक inode_congested(काष्ठा inode *inode, पूर्णांक cong_bits)
-अणु
-	वापस wb_congested(&inode_to_bdi(inode)->wb, cong_bits);
-पूर्ण
+static inline int inode_congested(struct inode *inode, int cong_bits)
+{
+	return wb_congested(&inode_to_bdi(inode)->wb, cong_bits);
+}
 
-#पूर्ण_अगर	/* CONFIG_CGROUP_WRITEBACK */
+#endif	/* CONFIG_CGROUP_WRITEBACK */
 
-अटल अंतरभूत पूर्णांक inode_पढ़ो_congested(काष्ठा inode *inode)
-अणु
-	वापस inode_congested(inode, 1 << WB_sync_congested);
-पूर्ण
+static inline int inode_read_congested(struct inode *inode)
+{
+	return inode_congested(inode, 1 << WB_sync_congested);
+}
 
-अटल अंतरभूत पूर्णांक inode_ग_लिखो_congested(काष्ठा inode *inode)
-अणु
-	वापस inode_congested(inode, 1 << WB_async_congested);
-पूर्ण
+static inline int inode_write_congested(struct inode *inode)
+{
+	return inode_congested(inode, 1 << WB_async_congested);
+}
 
-अटल अंतरभूत पूर्णांक inode_rw_congested(काष्ठा inode *inode)
-अणु
-	वापस inode_congested(inode, (1 << WB_sync_congested) |
+static inline int inode_rw_congested(struct inode *inode)
+{
+	return inode_congested(inode, (1 << WB_sync_congested) |
 				      (1 << WB_async_congested));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक bdi_congested(काष्ठा backing_dev_info *bdi, पूर्णांक cong_bits)
-अणु
-	वापस wb_congested(&bdi->wb, cong_bits);
-पूर्ण
+static inline int bdi_congested(struct backing_dev_info *bdi, int cong_bits)
+{
+	return wb_congested(&bdi->wb, cong_bits);
+}
 
-अटल अंतरभूत पूर्णांक bdi_पढ़ो_congested(काष्ठा backing_dev_info *bdi)
-अणु
-	वापस bdi_congested(bdi, 1 << WB_sync_congested);
-पूर्ण
+static inline int bdi_read_congested(struct backing_dev_info *bdi)
+{
+	return bdi_congested(bdi, 1 << WB_sync_congested);
+}
 
-अटल अंतरभूत पूर्णांक bdi_ग_लिखो_congested(काष्ठा backing_dev_info *bdi)
-अणु
-	वापस bdi_congested(bdi, 1 << WB_async_congested);
-पूर्ण
+static inline int bdi_write_congested(struct backing_dev_info *bdi)
+{
+	return bdi_congested(bdi, 1 << WB_async_congested);
+}
 
-अटल अंतरभूत पूर्णांक bdi_rw_congested(काष्ठा backing_dev_info *bdi)
-अणु
-	वापस bdi_congested(bdi, (1 << WB_sync_congested) |
+static inline int bdi_rw_congested(struct backing_dev_info *bdi)
+{
+	return bdi_congested(bdi, (1 << WB_sync_congested) |
 				  (1 << WB_async_congested));
-पूर्ण
+}
 
-स्थिर अक्षर *bdi_dev_name(काष्ठा backing_dev_info *bdi);
+const char *bdi_dev_name(struct backing_dev_info *bdi);
 
-#पूर्ण_अगर	/* _LINUX_BACKING_DEV_H */
+#endif	/* _LINUX_BACKING_DEV_H */

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Texas Instruments
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#अगर_अघोषित __TILCDC_PANEL_H__
-#घोषणा __TILCDC_PANEL_H__
+#ifndef __TILCDC_PANEL_H__
+#define __TILCDC_PANEL_H__
 
-/* sub-module क्रम generic lcd panel output */
+/* sub-module for generic lcd panel output */
 
-पूर्णांक tilcdc_panel_init(व्योम);
-व्योम tilcdc_panel_fini(व्योम);
+int tilcdc_panel_init(void);
+void tilcdc_panel_fini(void);
 
-#पूर्ण_अगर /* __TILCDC_PANEL_H__ */
+#endif /* __TILCDC_PANEL_H__ */

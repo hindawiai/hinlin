@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
- * drm_sysfs.c - Modअगरications to drm_sysfs_class.c to support
+ * drm_sysfs.c - Modifications to drm_sysfs_class.c to support
  *               extra sysfs attribute from DRM. Normal drm_sysfs_class
- *               करोes not allow adding attributes.
+ *               does not allow adding attributes.
  *
  * Copyright (c) 2004 Jon Smirl <jonsmirl@gmail.com>
- * Copyright (c) 2003-2004 Greg Kroah-Harपंचांगan <greg@kroah.com>
+ * Copyright (c) 2003-2004 Greg Kroah-Hartman <greg@kroah.com>
  * Copyright (c) 2003-2004 IBM Corp.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/gfp.h>
+#include <linux/i2c.h>
+#include <linux/kdev_t.h>
+#include <linux/slab.h>
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_property.h>
-#समावेश <drm/drm_sysfs.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_print.h>
+#include <drm/drm_property.h>
+#include <drm/drm_sysfs.h>
 
-#समावेश "drm_internal.h"
-#समावेश "drm_crtc_internal.h"
+#include "drm_internal.h"
+#include "drm_crtc_internal.h"
 
-#घोषणा to_drm_minor(d) dev_get_drvdata(d)
-#घोषणा to_drm_connector(d) dev_get_drvdata(d)
+#define to_drm_minor(d) dev_get_drvdata(d)
+#define to_drm_connector(d) dev_get_drvdata(d)
 
 /**
  * DOC: overview
  *
- * DRM provides very little additional support to drivers क्रम sysfs
- * पूर्णांकeractions, beyond just all the standard stuff. Drivers who want to expose
+ * DRM provides very little additional support to drivers for sysfs
+ * interactions, beyond just all the standard stuff. Drivers who want to expose
  * additional sysfs properties and property groups can attach them at either
  * &drm_device.dev or &drm_connector.kdev.
  *
- * Registration is स्वतःmatically handled when calling drm_dev_रेजिस्टर(), or
- * drm_connector_रेजिस्टर() in हाल of hot-plugged connectors. Unregistration is
- * also स्वतःmatically handled by drm_dev_unरेजिस्टर() and
- * drm_connector_unरेजिस्टर().
+ * Registration is automatically handled when calling drm_dev_register(), or
+ * drm_connector_register() in case of hot-plugged connectors. Unregistration is
+ * also automatically handled by drm_dev_unregister() and
+ * drm_connector_unregister().
  */
 
-अटल काष्ठा device_type drm_sysfs_device_minor = अणु
+static struct device_type drm_sysfs_device_minor = {
 	.name = "drm_minor"
-पूर्ण;
+};
 
-काष्ठा class *drm_class;
+struct class *drm_class;
 
-अटल अक्षर *drm_devnode(काष्ठा device *dev, umode_t *mode)
-अणु
-	वापस kaप्र_लिखो(GFP_KERNEL, "dri/%s", dev_name(dev));
-पूर्ण
+static char *drm_devnode(struct device *dev, umode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "dri/%s", dev_name(dev));
+}
 
-अटल CLASS_ATTR_STRING(version, S_IRUGO, "drm 1.1.0 20060810");
+static CLASS_ATTR_STRING(version, S_IRUGO, "drm 1.1.0 20060810");
 
 /**
  * drm_sysfs_init - initialize sysfs helpers
@@ -70,213 +69,213 @@
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक drm_sysfs_init(व्योम)
-अणु
-	पूर्णांक err;
+int drm_sysfs_init(void)
+{
+	int err;
 
 	drm_class = class_create(THIS_MODULE, "drm");
-	अगर (IS_ERR(drm_class))
-		वापस PTR_ERR(drm_class);
+	if (IS_ERR(drm_class))
+		return PTR_ERR(drm_class);
 
 	err = class_create_file(drm_class, &class_attr_version.attr);
-	अगर (err) अणु
+	if (err) {
 		class_destroy(drm_class);
-		drm_class = शून्य;
-		वापस err;
-	पूर्ण
+		drm_class = NULL;
+		return err;
+	}
 
 	drm_class->devnode = drm_devnode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * drm_sysfs_destroy - destroys DRM class
  *
  * Destroy the DRM device class.
  */
-व्योम drm_sysfs_destroy(व्योम)
-अणु
-	अगर (IS_ERR_OR_शून्य(drm_class))
-		वापस;
-	class_हटाओ_file(drm_class, &class_attr_version.attr);
+void drm_sysfs_destroy(void)
+{
+	if (IS_ERR_OR_NULL(drm_class))
+		return;
+	class_remove_file(drm_class, &class_attr_version.attr);
 	class_destroy(drm_class);
-	drm_class = शून्य;
-पूर्ण
+	drm_class = NULL;
+}
 
 /*
  * Connector properties
  */
-अटल sमाप_प्रकार status_store(काष्ठा device *device,
-			   काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा drm_connector *connector = to_drm_connector(device);
-	काष्ठा drm_device *dev = connector->dev;
-	क्रमागत drm_connector_क्रमce old_क्रमce;
-	पूर्णांक ret;
+static ssize_t status_store(struct device *device,
+			   struct device_attribute *attr,
+			   const char *buf, size_t count)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	struct drm_device *dev = connector->dev;
+	enum drm_connector_force old_force;
+	int ret;
 
-	ret = mutex_lock_पूर्णांकerruptible(&dev->mode_config.mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&dev->mode_config.mutex);
+	if (ret)
+		return ret;
 
-	old_क्रमce = connector->क्रमce;
+	old_force = connector->force;
 
-	अगर (sysfs_streq(buf, "detect"))
-		connector->क्रमce = 0;
-	अन्यथा अगर (sysfs_streq(buf, "on"))
-		connector->क्रमce = DRM_FORCE_ON;
-	अन्यथा अगर (sysfs_streq(buf, "on-digital"))
-		connector->क्रमce = DRM_FORCE_ON_DIGITAL;
-	अन्यथा अगर (sysfs_streq(buf, "off"))
-		connector->क्रमce = DRM_FORCE_OFF;
-	अन्यथा
+	if (sysfs_streq(buf, "detect"))
+		connector->force = 0;
+	else if (sysfs_streq(buf, "on"))
+		connector->force = DRM_FORCE_ON;
+	else if (sysfs_streq(buf, "on-digital"))
+		connector->force = DRM_FORCE_ON_DIGITAL;
+	else if (sysfs_streq(buf, "off"))
+		connector->force = DRM_FORCE_OFF;
+	else
 		ret = -EINVAL;
 
-	अगर (old_क्रमce != connector->क्रमce || !connector->क्रमce) अणु
+	if (old_force != connector->force || !connector->force) {
 		DRM_DEBUG_KMS("[CONNECTOR:%d:%s] force updated from %d to %d or reprobing\n",
 			      connector->base.id,
 			      connector->name,
-			      old_क्रमce, connector->क्रमce);
+			      old_force, connector->force);
 
 		connector->funcs->fill_modes(connector,
 					     dev->mode_config.max_width,
 					     dev->mode_config.max_height);
-	पूर्ण
+	}
 
 	mutex_unlock(&dev->mode_config.mutex);
 
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल sमाप_प्रकार status_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा drm_connector *connector = to_drm_connector(device);
-	क्रमागत drm_connector_status status;
+static ssize_t status_show(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	enum drm_connector_status status;
 
 	status = READ_ONCE(connector->status);
 
-	वापस sysfs_emit(buf, "%s\n",
+	return sysfs_emit(buf, "%s\n",
 			  drm_get_connector_status_name(status));
-पूर्ण
+}
 
-अटल sमाप_प्रकार dpms_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा drm_connector *connector = to_drm_connector(device);
-	पूर्णांक dpms;
+static ssize_t dpms_show(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	int dpms;
 
 	dpms = READ_ONCE(connector->dpms);
 
-	वापस sysfs_emit(buf, "%s\n", drm_get_dpms_name(dpms));
-पूर्ण
+	return sysfs_emit(buf, "%s\n", drm_get_dpms_name(dpms));
+}
 
-अटल sमाप_प्रकार enabled_show(काष्ठा device *device,
-			    काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा drm_connector *connector = to_drm_connector(device);
+static ssize_t enabled_show(struct device *device,
+			    struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
 	bool enabled;
 
 	enabled = READ_ONCE(connector->encoder);
 
-	वापस sysfs_emit(buf, enabled ? "enabled\n" : "disabled\n");
-पूर्ण
+	return sysfs_emit(buf, enabled ? "enabled\n" : "disabled\n");
+}
 
-अटल sमाप_प्रकार edid_show(काष्ठा file *filp, काष्ठा kobject *kobj,
-			 काष्ठा bin_attribute *attr, अक्षर *buf, loff_t off,
-			 माप_प्रकार count)
-अणु
-	काष्ठा device *connector_dev = kobj_to_dev(kobj);
-	काष्ठा drm_connector *connector = to_drm_connector(connector_dev);
-	अचिन्हित अक्षर *edid;
-	माप_प्रकार size;
-	sमाप_प्रकार ret = 0;
+static ssize_t edid_show(struct file *filp, struct kobject *kobj,
+			 struct bin_attribute *attr, char *buf, loff_t off,
+			 size_t count)
+{
+	struct device *connector_dev = kobj_to_dev(kobj);
+	struct drm_connector *connector = to_drm_connector(connector_dev);
+	unsigned char *edid;
+	size_t size;
+	ssize_t ret = 0;
 
 	mutex_lock(&connector->dev->mode_config.mutex);
-	अगर (!connector->edid_blob_ptr)
-		जाओ unlock;
+	if (!connector->edid_blob_ptr)
+		goto unlock;
 
 	edid = connector->edid_blob_ptr->data;
 	size = connector->edid_blob_ptr->length;
-	अगर (!edid)
-		जाओ unlock;
+	if (!edid)
+		goto unlock;
 
-	अगर (off >= size)
-		जाओ unlock;
+	if (off >= size)
+		goto unlock;
 
-	अगर (off + count > size)
+	if (off + count > size)
 		count = size - off;
-	स_नकल(buf, edid + off, count);
+	memcpy(buf, edid + off, count);
 
 	ret = count;
 unlock:
 	mutex_unlock(&connector->dev->mode_config.mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार modes_show(काष्ठा device *device,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा drm_connector *connector = to_drm_connector(device);
-	काष्ठा drm_display_mode *mode;
-	पूर्णांक written = 0;
+static ssize_t modes_show(struct device *device,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(device);
+	struct drm_display_mode *mode;
+	int written = 0;
 
 	mutex_lock(&connector->dev->mode_config.mutex);
-	list_क्रम_each_entry(mode, &connector->modes, head) अणु
-		written += scnम_लिखो(buf + written, PAGE_SIZE - written, "%s\n",
+	list_for_each_entry(mode, &connector->modes, head) {
+		written += scnprintf(buf + written, PAGE_SIZE - written, "%s\n",
 				    mode->name);
-	पूर्ण
+	}
 	mutex_unlock(&connector->dev->mode_config.mutex);
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल DEVICE_ATTR_RW(status);
-अटल DEVICE_ATTR_RO(enabled);
-अटल DEVICE_ATTR_RO(dpms);
-अटल DEVICE_ATTR_RO(modes);
+static DEVICE_ATTR_RW(status);
+static DEVICE_ATTR_RO(enabled);
+static DEVICE_ATTR_RO(dpms);
+static DEVICE_ATTR_RO(modes);
 
-अटल काष्ठा attribute *connector_dev_attrs[] = अणु
+static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_enabled.attr,
 	&dev_attr_dpms.attr,
 	&dev_attr_modes.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा bin_attribute edid_attr = अणु
+static struct bin_attribute edid_attr = {
 	.attr.name = "edid",
 	.attr.mode = 0444,
 	.size = 0,
-	.पढ़ो = edid_show,
-पूर्ण;
+	.read = edid_show,
+};
 
-अटल काष्ठा bin_attribute *connector_bin_attrs[] = अणु
+static struct bin_attribute *connector_bin_attrs[] = {
 	&edid_attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group connector_dev_group = अणु
+static const struct attribute_group connector_dev_group = {
 	.attrs = connector_dev_attrs,
 	.bin_attrs = connector_bin_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *connector_dev_groups[] = अणु
+static const struct attribute_group *connector_dev_groups[] = {
 	&connector_dev_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-पूर्णांक drm_sysfs_connector_add(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
+int drm_sysfs_connector_add(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
 
-	अगर (connector->kdev)
-		वापस 0;
+	if (connector->kdev)
+		return 0;
 
 	connector->kdev =
 		device_create_with_groups(drm_class, dev->primary->kdev, 0,
@@ -286,114 +285,114 @@ unlock:
 	DRM_DEBUG("adding \"%s\" to sysfs\n",
 		  connector->name);
 
-	अगर (IS_ERR(connector->kdev)) अणु
+	if (IS_ERR(connector->kdev)) {
 		DRM_ERROR("failed to register connector device: %ld\n", PTR_ERR(connector->kdev));
-		वापस PTR_ERR(connector->kdev);
-	पूर्ण
+		return PTR_ERR(connector->kdev);
+	}
 
-	अगर (connector->ddc)
-		वापस sysfs_create_link(&connector->kdev->kobj,
+	if (connector->ddc)
+		return sysfs_create_link(&connector->kdev->kobj,
 				 &connector->ddc->dev.kobj, "ddc");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम drm_sysfs_connector_हटाओ(काष्ठा drm_connector *connector)
-अणु
-	अगर (!connector->kdev)
-		वापस;
+void drm_sysfs_connector_remove(struct drm_connector *connector)
+{
+	if (!connector->kdev)
+		return;
 
-	अगर (connector->ddc)
-		sysfs_हटाओ_link(&connector->kdev->kobj, "ddc");
+	if (connector->ddc)
+		sysfs_remove_link(&connector->kdev->kobj, "ddc");
 
 	DRM_DEBUG("removing \"%s\" from sysfs\n",
 		  connector->name);
 
-	device_unरेजिस्टर(connector->kdev);
-	connector->kdev = शून्य;
-पूर्ण
+	device_unregister(connector->kdev);
+	connector->kdev = NULL;
+}
 
-व्योम drm_sysfs_lease_event(काष्ठा drm_device *dev)
-अणु
-	अक्षर *event_string = "LEASE=1";
-	अक्षर *envp[] = अणु event_string, शून्य पूर्ण;
+void drm_sysfs_lease_event(struct drm_device *dev)
+{
+	char *event_string = "LEASE=1";
+	char *envp[] = { event_string, NULL };
 
 	DRM_DEBUG("generating lease event\n");
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
-पूर्ण
+}
 
 /**
  * drm_sysfs_hotplug_event - generate a DRM uevent
  * @dev: DRM device
  *
- * Send a uevent क्रम the DRM device specअगरied by @dev.  Currently we only
+ * Send a uevent for the DRM device specified by @dev.  Currently we only
  * set HOTPLUG=1 in the uevent environment, but this could be expanded to
  * deal with other types of events.
  *
  * Any new uapi should be using the drm_sysfs_connector_status_event()
- * क्रम uevents on connector status change.
+ * for uevents on connector status change.
  */
-व्योम drm_sysfs_hotplug_event(काष्ठा drm_device *dev)
-अणु
-	अक्षर *event_string = "HOTPLUG=1";
-	अक्षर *envp[] = अणु event_string, शून्य पूर्ण;
+void drm_sysfs_hotplug_event(struct drm_device *dev)
+{
+	char *event_string = "HOTPLUG=1";
+	char *envp[] = { event_string, NULL };
 
 	DRM_DEBUG("generating hotplug event\n");
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_sysfs_hotplug_event);
 
 /**
- * drm_sysfs_connector_status_event - generate a DRM uevent क्रम connector
+ * drm_sysfs_connector_status_event - generate a DRM uevent for connector
  * property status change
  * @connector: connector on which property status changed
  * @property: connector property whose status changed.
  *
- * Send a uevent क्रम the DRM device specअगरied by @dev.  Currently we
- * set HOTPLUG=1 and connector id aदीर्घ with the attached property id
+ * Send a uevent for the DRM device specified by @dev.  Currently we
+ * set HOTPLUG=1 and connector id along with the attached property id
  * related to the status change.
  */
-व्योम drm_sysfs_connector_status_event(काष्ठा drm_connector *connector,
-				      काष्ठा drm_property *property)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	अक्षर hotplug_str[] = "HOTPLUG=1", conn_id[21], prop_id[21];
-	अक्षर *envp[4] = अणु hotplug_str, conn_id, prop_id, शून्य पूर्ण;
+void drm_sysfs_connector_status_event(struct drm_connector *connector,
+				      struct drm_property *property)
+{
+	struct drm_device *dev = connector->dev;
+	char hotplug_str[] = "HOTPLUG=1", conn_id[21], prop_id[21];
+	char *envp[4] = { hotplug_str, conn_id, prop_id, NULL };
 
 	WARN_ON(!drm_mode_obj_find_prop_id(&connector->base,
 					   property->base.id));
 
-	snम_लिखो(conn_id, ARRAY_SIZE(conn_id),
+	snprintf(conn_id, ARRAY_SIZE(conn_id),
 		 "CONNECTOR=%u", connector->base.id);
-	snम_लिखो(prop_id, ARRAY_SIZE(prop_id),
+	snprintf(prop_id, ARRAY_SIZE(prop_id),
 		 "PROPERTY=%u", property->base.id);
 
 	DRM_DEBUG("generating connector status event\n");
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_sysfs_connector_status_event);
 
-अटल व्योम drm_sysfs_release(काष्ठा device *dev)
-अणु
-	kमुक्त(dev);
-पूर्ण
+static void drm_sysfs_release(struct device *dev)
+{
+	kfree(dev);
+}
 
-काष्ठा device *drm_sysfs_minor_alloc(काष्ठा drm_minor *minor)
-अणु
-	स्थिर अक्षर *minor_str;
-	काष्ठा device *kdev;
-	पूर्णांक r;
+struct device *drm_sysfs_minor_alloc(struct drm_minor *minor)
+{
+	const char *minor_str;
+	struct device *kdev;
+	int r;
 
-	अगर (minor->type == DRM_MINOR_RENDER)
+	if (minor->type == DRM_MINOR_RENDER)
 		minor_str = "renderD%d";
-	अन्यथा
+	else
 		minor_str = "card%d";
 
-	kdev = kzalloc(माप(*kdev), GFP_KERNEL);
-	अगर (!kdev)
-		वापस ERR_PTR(-ENOMEM);
+	kdev = kzalloc(sizeof(*kdev), GFP_KERNEL);
+	if (!kdev)
+		return ERR_PTR(-ENOMEM);
 
 	device_initialize(kdev);
 	kdev->devt = MKDEV(DRM_MAJOR, minor->index);
@@ -404,44 +403,44 @@ EXPORT_SYMBOL(drm_sysfs_connector_status_event);
 	dev_set_drvdata(kdev, minor);
 
 	r = dev_set_name(kdev, minor_str, minor->index);
-	अगर (r < 0)
-		जाओ err_मुक्त;
+	if (r < 0)
+		goto err_free;
 
-	वापस kdev;
+	return kdev;
 
-err_मुक्त:
+err_free:
 	put_device(kdev);
-	वापस ERR_PTR(r);
-पूर्ण
+	return ERR_PTR(r);
+}
 
 /**
- * drm_class_device_रेजिस्टर - रेजिस्टर new device with the DRM sysfs class
- * @dev: device to रेजिस्टर
+ * drm_class_device_register - register new device with the DRM sysfs class
+ * @dev: device to register
  *
- * Registers a new &काष्ठा device within the DRM sysfs class. Essentially only
- * used by tपंचांग to have a place क्रम its global settings. Drivers should never use
+ * Registers a new &struct device within the DRM sysfs class. Essentially only
+ * used by ttm to have a place for its global settings. Drivers should never use
  * this.
  */
-पूर्णांक drm_class_device_रेजिस्टर(काष्ठा device *dev)
-अणु
-	अगर (!drm_class || IS_ERR(drm_class))
-		वापस -ENOENT;
+int drm_class_device_register(struct device *dev)
+{
+	if (!drm_class || IS_ERR(drm_class))
+		return -ENOENT;
 
 	dev->class = drm_class;
-	वापस device_रेजिस्टर(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(drm_class_device_रेजिस्टर);
+	return device_register(dev);
+}
+EXPORT_SYMBOL_GPL(drm_class_device_register);
 
 /**
- * drm_class_device_unरेजिस्टर - unरेजिस्टर device with the DRM sysfs class
- * @dev: device to unरेजिस्टर
+ * drm_class_device_unregister - unregister device with the DRM sysfs class
+ * @dev: device to unregister
  *
- * Unरेजिस्टरs a &काष्ठा device from the DRM sysfs class. Essentially only used
- * by tपंचांग to have a place क्रम its global settings. Drivers should never use
+ * Unregisters a &struct device from the DRM sysfs class. Essentially only used
+ * by ttm to have a place for its global settings. Drivers should never use
  * this.
  */
-व्योम drm_class_device_unरेजिस्टर(काष्ठा device *dev)
-अणु
-	वापस device_unरेजिस्टर(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(drm_class_device_unरेजिस्टर);
+void drm_class_device_unregister(struct device *dev)
+{
+	return device_unregister(dev);
+}
+EXPORT_SYMBOL_GPL(drm_class_device_unregister);

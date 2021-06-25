@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2011 Riअक्षरd Weinberger <richrd@nod.at>
+ * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/console.h>
-#समावेश <linux/init.h>
-#समावेश <os.h>
+#include <linux/kernel.h>
+#include <linux/console.h>
+#include <linux/init.h>
+#include <os.h>
 
-अटल व्योम early_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित पूर्णांक n)
-अणु
-	um_early_prपूर्णांकk(s, n);
-पूर्ण
+static void early_console_write(struct console *con, const char *s, unsigned int n)
+{
+	um_early_printk(s, n);
+}
 
-अटल काष्ठा console early_console_dev = अणु
+static struct console early_console_dev = {
 	.name = "earlycon",
-	.ग_लिखो = early_console_ग_लिखो,
+	.write = early_console_write,
 	.flags = CON_BOOT,
 	.index = -1,
-पूर्ण;
+};
 
-अटल पूर्णांक __init setup_early_prपूर्णांकk(अक्षर *buf)
-अणु
-	अगर (!early_console) अणु
+static int __init setup_early_printk(char *buf)
+{
+	if (!early_console) {
 		early_console = &early_console_dev;
-		रेजिस्टर_console(&early_console_dev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		register_console(&early_console_dev);
+	}
+	return 0;
+}
 
-early_param("earlyprintk", setup_early_prपूर्णांकk);
+early_param("earlyprintk", setup_early_printk);

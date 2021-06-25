@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*****************************************************************************
  *
  *     Author: Xilinx, Inc.
  *
- *     This program is मुक्त software; you can redistribute it and/or modअगरy it
+ *     This program is free software; you can redistribute it and/or modify it
  *     under the terms of the GNU General Public License as published by the
  *     Free Software Foundation; either version 2 of the License, or (at your
  *     option) any later version.
@@ -25,31 +24,31 @@
  *     (c) Copyright 2003-2008 Xilinx Inc.
  *     All rights reserved.
  *
- *     You should have received a copy of the GNU General Public License aदीर्घ
- *     with this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ *     You should have received a copy of the GNU General Public License along
+ *     with this program; if not, write to the Free Software Foundation, Inc.,
  *     675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *****************************************************************************/
 
-#अगर_अघोषित XILINX_BUFFER_ICAP_H_	/* prevent circular inclusions */
-#घोषणा XILINX_BUFFER_ICAP_H_	/* by using protection macros */
+#ifndef XILINX_BUFFER_ICAP_H_	/* prevent circular inclusions */
+#define XILINX_BUFFER_ICAP_H_	/* by using protection macros */
 
-#समावेश <linux/types.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/types.h>
+#include <linux/cdev.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश "xilinx_hwicap.h"
+#include <asm/io.h>
+#include "xilinx_hwicap.h"
 
-/* Loads a partial bitstream from प्रणाली memory. */
-पूर्णांक buffer_icap_set_configuration(काष्ठा hwicap_drvdata *drvdata, u32 *data,
+/* Loads a partial bitstream from system memory. */
+int buffer_icap_set_configuration(struct hwicap_drvdata *drvdata, u32 *data,
 			     u32 Size);
 
-/* Loads a partial bitstream from प्रणाली memory. */
-पूर्णांक buffer_icap_get_configuration(काष्ठा hwicap_drvdata *drvdata, u32 *data,
+/* Loads a partial bitstream from system memory. */
+int buffer_icap_get_configuration(struct hwicap_drvdata *drvdata, u32 *data,
 			     u32 Size);
 
-u32 buffer_icap_get_status(काष्ठा hwicap_drvdata *drvdata);
-व्योम buffer_icap_reset(काष्ठा hwicap_drvdata *drvdata);
+u32 buffer_icap_get_status(struct hwicap_drvdata *drvdata);
+void buffer_icap_reset(struct hwicap_drvdata *drvdata);
 
-#पूर्ण_अगर
+#endif

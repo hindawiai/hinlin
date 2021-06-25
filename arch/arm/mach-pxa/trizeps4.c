@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/trizeps4.c
  *
- *  Support क्रम the Keith und Koep Trizeps4 Module Platक्रमm.
+ *  Support for the Keith und Koep Trizeps4 Module Platform.
  *
- *  Author:	Jथञrgen Schindele
+ *  Author:	Jürgen Schindele
  *  Created:	20 02, 2006
- *  Copyright:	Jथञrgen Schindele
+ *  Copyright:	Jürgen Schindele
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/dm9000.h>
-#समावेश <linux/mtd/physmap.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/leds.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/bitops.h>
+#include <linux/fb.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/dm9000.h>
+#include <linux/mtd/physmap.h>
+#include <linux/mtd/partitions.h>
+#include <linux/regulator/machine.h>
+#include <linux/platform_data/i2c-pxa.h>
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/sizes.h>
+#include <asm/types.h>
+#include <asm/setup.h>
+#include <asm/memory.h>
+#include <asm/mach-types.h>
+#include <asm/irq.h>
+#include <linux/sizes.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/mach/irq.h>
-#समावेश <यंत्र/mach/flash.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/mach/irq.h>
+#include <asm/mach/flash.h>
 
-#समावेश "pxa27x.h"
-#समावेश <mach/trizeps4.h>
-#समावेश <mach/audपन.स>
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
-#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
-#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
-#समावेश <mach/smemc.h>
+#include "pxa27x.h"
+#include <mach/trizeps4.h>
+#include <mach/audio.h>
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/mmc-pxamci.h>
+#include <linux/platform_data/irda-pxaficp.h>
+#include <linux/platform_data/usb-ohci-pxa27x.h>
+#include <mach/smemc.h>
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-/*	comment out the following line अगर you want to use the
- *	Standard UART from PXA क्रम serial / irda transmission
- *	and acivate it अगर you have status leds connected */
-#घोषणा STATUS_LEDS_ON_STUART_PINS 1
+/*	comment out the following line if you want to use the
+ *	Standard UART from PXA for serial / irda transmission
+ *	and acivate it if you have status leds connected */
+#define STATUS_LEDS_ON_STUART_PINS 1
 
 /*****************************************************************************
  * MultiFunctionPins of CPU
  *****************************************************************************/
-अटल अचिन्हित दीर्घ trizeps4_pin_config[] __initdata = अणु
+static unsigned long trizeps4_pin_config[] __initdata = {
 	/* Chip Selects */
 	GPIO15_nCS_1,		/* DiskOnChip CS */
 	GPIO93_GPIO,		/* TRIZEPS4_DOC_IRQ */
@@ -95,13 +94,13 @@
 	GPIO43_BTUART_TXD,
 	GPIO44_BTUART_CTS,
 	GPIO45_BTUART_RTS,
-#अगर_घोषित STATUS_LEDS_ON_STUART_PINS
+#ifdef STATUS_LEDS_ON_STUART_PINS
 	GPIO46_GPIO,
 	GPIO47_GPIO,
-#अन्यथा
+#else
 	GPIO46_STUART_RXD,
 	GPIO47_STUART_TXD,
-#पूर्ण_अगर
+#endif
 	/* PCMCIA */
 	GPIO11_GPIO,			/* TRIZEPS4_CD_IRQ */
 	GPIO13_GPIO,			/* TRIZEPS4_READY_NINT */
@@ -132,323 +131,323 @@
 	/* I2C */
 	GPIO117_I2C_SCL,
 	GPIO118_I2C_SDA,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ trizeps4wl_pin_config[] __initdata = अणु
+static unsigned long trizeps4wl_pin_config[] __initdata = {
 	/* SSP 2 */
 	GPIO14_SSP2_SFRM,
 	GPIO19_SSP2_SCLK,
 	GPIO53_GPIO,			/* TRIZEPS4_SPI_IRQ */
 	GPIO86_SSP2_RXD,
 	GPIO87_SSP2_TXD,
-पूर्ण;
+};
 
 /****************************************************************************
  * ONBOARD FLASH
  ****************************************************************************/
-अटल काष्ठा mtd_partition trizeps4_partitions[] = अणु
-	अणु
+static struct mtd_partition trizeps4_partitions[] = {
+	{
 		.name =		"Bootloader",
 		.offset =	0x00000000,
 		.size =		0x00040000,
-		.mask_flags =	MTD_WRITEABLE  /* क्रमce पढ़ो-only */
-	पूर्ण, अणु
+		.mask_flags =	MTD_WRITEABLE  /* force read-only */
+	}, {
 		.name =		"Backup",
 		.offset =	0x00040000,
 		.size =		0x00040000,
-	पूर्ण, अणु
+	}, {
 		.name =		"Image",
 		.offset =	0x00080000,
 		.size =		0x01080000,
-	पूर्ण, अणु
+	}, {
 		.name =		"IPSM",
 		.offset =	0x01100000,
 		.size =		0x00e00000,
-	पूर्ण, अणु
+	}, {
 		.name =		"Registry",
 		.offset =	0x01f00000,
 		.size =		MTDPART_SIZ_FULL,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा physmap_flash_data trizeps4_flash_data[] = अणु
-	अणु
+static struct physmap_flash_data trizeps4_flash_data[] = {
+	{
 		.width		= 4,			/* bankwidth in bytes */
 		.parts		= trizeps4_partitions,
 		.nr_parts	= ARRAY_SIZE(trizeps4_partitions)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा resource flash_resource = अणु
+static struct resource flash_resource = {
 	.start	= PXA_CS0_PHYS,
 	.end	= PXA_CS0_PHYS + SZ_32M - 1,
 	.flags	= IORESOURCE_MEM,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device flash_device = अणु
+static struct platform_device flash_device = {
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev = अणु
-		.platक्रमm_data = trizeps4_flash_data,
-	पूर्ण,
+	.dev = {
+		.platform_data = trizeps4_flash_data,
+	},
 	.resource = &flash_resource,
 	.num_resources = 1,
-पूर्ण;
+};
 
 /****************************************************************************
  * DAVICOM DM9000 Ethernet
  ****************************************************************************/
-अटल काष्ठा resource dm9000_resources[] = अणु
-	[0] = अणु
+static struct resource dm9000_resources[] = {
+	[0] = {
 		.start	= TRIZEPS4_ETH_PHYS+0x300,
 		.end	= TRIZEPS4_ETH_PHYS+0x400-1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= TRIZEPS4_ETH_PHYS+0x8300,
 		.end	= TRIZEPS4_ETH_PHYS+0x8400-1,
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[2] = अणु
+	},
+	[2] = {
 		.start	= TRIZEPS4_ETH_IRQ,
 		.end	= TRIZEPS4_ETH_IRQ,
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा dm9000_plat_data tri_dm9000_platdata = अणु
+static struct dm9000_plat_data tri_dm9000_platdata = {
 	.flags		= DM9000_PLATF_32BITONLY,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device dm9000_device = अणु
+static struct platform_device dm9000_device = {
 	.name		= "dm9000",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm9000_resources),
 	.resource	= dm9000_resources,
-	.dev		= अणु
-		.platक्रमm_data = &tri_dm9000_platdata,
-	पूर्ण
-पूर्ण;
+	.dev		= {
+		.platform_data = &tri_dm9000_platdata,
+	}
+};
 
 /****************************************************************************
  * LED's on GPIO pins of PXA
  ****************************************************************************/
-अटल काष्ठा gpio_led trizeps4_led[] = अणु
-#अगर_घोषित STATUS_LEDS_ON_STUART_PINS
-	अणु
+static struct gpio_led trizeps4_led[] = {
+#ifdef STATUS_LEDS_ON_STUART_PINS
+	{
 		.name = "led0:orange:heartbeat",	/* */
-		.शेष_trigger = "heartbeat",
+		.default_trigger = "heartbeat",
 		.gpio = GPIO_HEARTBEAT_LED,
 		.active_low = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "led1:yellow:cpubusy",		/* */
-		.शेष_trigger = "cpu-busy",
+		.default_trigger = "cpu-busy",
 		.gpio = GPIO_SYS_BUSY_LED,
 		.active_low = 1,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
-अटल काष्ठा gpio_led_platक्रमm_data trizeps4_led_data = अणु
+static struct gpio_led_platform_data trizeps4_led_data = {
 	.leds		= trizeps4_led,
 	.num_leds	= ARRAY_SIZE(trizeps4_led),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device leds_devices = अणु
+static struct platform_device leds_devices = {
 	.name		= "leds-gpio",
 	.id		= -1,
-	.dev		= अणु
-		.platक्रमm_data	= &trizeps4_led_data,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data	= &trizeps4_led_data,
+	},
+};
 
-अटल काष्ठा platक्रमm_device *trizeps4_devices[] __initdata = अणु
+static struct platform_device *trizeps4_devices[] __initdata = {
 	&flash_device,
 	&dm9000_device,
 	&leds_devices,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *trizeps4wl_devices[] __initdata = अणु
+static struct platform_device *trizeps4wl_devices[] __initdata = {
 	&flash_device,
 	&leds_devices,
-पूर्ण;
+};
 
-अटल लघु trizeps_conxs_bcr;
+static short trizeps_conxs_bcr;
 
-/* PCCARD घातer चयनing supports only 3,3V */
-व्योम board_pcmcia_घातer(पूर्णांक घातer)
-अणु
-	अगर (घातer) अणु
-		/* चयन घातer on, put in reset and enable buffers */
-		trizeps_conxs_bcr |= घातer;
+/* PCCARD power switching supports only 3,3V */
+void board_pcmcia_power(int power)
+{
+	if (power) {
+		/* switch power on, put in reset and enable buffers */
+		trizeps_conxs_bcr |= power;
 		trizeps_conxs_bcr |= ConXS_BCR_CF_RESET;
 		trizeps_conxs_bcr &= ~ConXS_BCR_CF_BUF_EN;
-		BCR_ग_लिखोw(trizeps_conxs_bcr);
-		/* रुको a little */
+		BCR_writew(trizeps_conxs_bcr);
+		/* wait a little */
 		udelay(2000);
 		/* take reset away */
 		trizeps_conxs_bcr &= ~ConXS_BCR_CF_RESET;
-		BCR_ग_लिखोw(trizeps_conxs_bcr);
+		BCR_writew(trizeps_conxs_bcr);
 		udelay(2000);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* put in reset */
 		trizeps_conxs_bcr |= ConXS_BCR_CF_RESET;
-		BCR_ग_लिखोw(trizeps_conxs_bcr);
+		BCR_writew(trizeps_conxs_bcr);
 		udelay(1000);
-		/* चयन घातer off */
+		/* switch power off */
 		trizeps_conxs_bcr &= ~0xf;
-		BCR_ग_लिखोw(trizeps_conxs_bcr);
-	पूर्ण
-	pr_debug("%s: o%s 0x%x\n", __func__, घातer ? "n" : "ff",
+		BCR_writew(trizeps_conxs_bcr);
+	}
+	pr_debug("%s: o%s 0x%x\n", __func__, power ? "n" : "ff",
 			trizeps_conxs_bcr);
-पूर्ण
-EXPORT_SYMBOL(board_pcmcia_घातer);
+}
+EXPORT_SYMBOL(board_pcmcia_power);
 
-/* backlight घातer चयनing क्रम LCD panel */
-अटल व्योम board_backlight_घातer(पूर्णांक on)
-अणु
-	अगर (on)
+/* backlight power switching for LCD panel */
+static void board_backlight_power(int on)
+{
+	if (on)
 		trizeps_conxs_bcr |= ConXS_BCR_L_DISP;
-	अन्यथा
+	else
 		trizeps_conxs_bcr &= ~ConXS_BCR_L_DISP;
 
 	pr_debug("%s: o%s 0x%x\n", __func__, on ? "n" : "ff",
 			trizeps_conxs_bcr);
-	BCR_ग_लिखोw(trizeps_conxs_bcr);
-पूर्ण
+	BCR_writew(trizeps_conxs_bcr);
+}
 
 /* a I2C based RTC is known on CONXS board */
-अटल काष्ठा i2c_board_info trizeps4_i2c_devices[] __initdata = अणु
-	अणु I2C_BOARD_INFO("rtc-pcf8593", 0x51) पूर्ण
-पूर्ण;
+static struct i2c_board_info trizeps4_i2c_devices[] __initdata = {
+	{ I2C_BOARD_INFO("rtc-pcf8593", 0x51) }
+};
 
 /****************************************************************************
- * MMC card slot बाह्यal to module
+ * MMC card slot external to module
  ****************************************************************************/
-अटल पूर्णांक trizeps4_mci_init(काष्ठा device *dev, irq_handler_t mci_detect_पूर्णांक,
-		व्योम *data)
-अणु
-	पूर्णांक err;
+static int trizeps4_mci_init(struct device *dev, irq_handler_t mci_detect_int,
+		void *data)
+{
+	int err;
 
-	err = request_irq(TRIZEPS4_MMC_IRQ, mci_detect_पूर्णांक,
+	err = request_irq(TRIZEPS4_MMC_IRQ, mci_detect_int,
 			  IRQF_TRIGGER_RISING, "MMC card detect", data);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "trizeps4_mci_init: MMC/SD: can't request"
+	if (err) {
+		printk(KERN_ERR "trizeps4_mci_init: MMC/SD: can't request"
 						"MMC card detect IRQ\n");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल व्योम trizeps4_mci_निकास(काष्ठा device *dev, व्योम *data)
-अणु
-	मुक्त_irq(TRIZEPS4_MMC_IRQ, data);
-पूर्ण
+static void trizeps4_mci_exit(struct device *dev, void *data)
+{
+	free_irq(TRIZEPS4_MMC_IRQ, data);
+}
 
-अटल काष्ठा pxamci_platक्रमm_data trizeps4_mci_platक्रमm_data = अणु
+static struct pxamci_platform_data trizeps4_mci_platform_data = {
 	.ocr_mask	= MMC_VDD_32_33|MMC_VDD_33_34,
 	.detect_delay_ms= 10,
 	.init 		= trizeps4_mci_init,
-	.निकास		= trizeps4_mci_निकास,
-	.get_ro		= शून्य,	/* ग_लिखो-protection not supported */
-	.setघातer 	= शून्य,	/* घातer-चयनing not supported */
-पूर्ण;
+	.exit		= trizeps4_mci_exit,
+	.get_ro		= NULL,	/* write-protection not supported */
+	.setpower 	= NULL,	/* power-switching not supported */
+};
 
 /****************************************************************************
- * IRDA mode चयनing on stuart
+ * IRDA mode switching on stuart
  ****************************************************************************/
-#अगर_अघोषित STATUS_LEDS_ON_STUART_PINS
-अटल लघु trizeps_conxs_ircr;
+#ifndef STATUS_LEDS_ON_STUART_PINS
+static short trizeps_conxs_ircr;
 
-अटल पूर्णांक trizeps4_irda_startup(काष्ठा device *dev)
-अणु
+static int trizeps4_irda_startup(struct device *dev)
+{
 	trizeps_conxs_ircr &= ~ConXS_IRCR_SD;
-	IRCR_ग_लिखोw(trizeps_conxs_ircr);
-	वापस 0;
-पूर्ण
+	IRCR_writew(trizeps_conxs_ircr);
+	return 0;
+}
 
-अटल व्योम trizeps4_irda_shutकरोwn(काष्ठा device *dev)
-अणु
+static void trizeps4_irda_shutdown(struct device *dev)
+{
 	trizeps_conxs_ircr |= ConXS_IRCR_SD;
-	IRCR_ग_लिखोw(trizeps_conxs_ircr);
-पूर्ण
+	IRCR_writew(trizeps_conxs_ircr);
+}
 
-अटल व्योम trizeps4_irda_transceiver_mode(काष्ठा device *dev, पूर्णांक mode)
-अणु
-	अचिन्हित दीर्घ flags;
+static void trizeps4_irda_transceiver_mode(struct device *dev, int mode)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
 	/* Switch mode */
-	अगर (mode & IR_SIRMODE)
+	if (mode & IR_SIRMODE)
 		trizeps_conxs_ircr &= ~ConXS_IRCR_MODE;	/* Slow mode */
-	अन्यथा अगर (mode & IR_FIRMODE)
+	else if (mode & IR_FIRMODE)
 		trizeps_conxs_ircr |= ConXS_IRCR_MODE;	/* Fast mode */
 
-	/* Switch घातer */
-	अगर (mode & IR_OFF)
+	/* Switch power */
+	if (mode & IR_OFF)
 		trizeps_conxs_ircr |= ConXS_IRCR_SD;
-	अन्यथा
+	else
 		trizeps_conxs_ircr &= ~ConXS_IRCR_SD;
 
-	IRCR_ग_लिखोw(trizeps_conxs_ircr);
+	IRCR_writew(trizeps_conxs_ircr);
 	local_irq_restore(flags);
 
 	pxa2xx_transceiver_mode(dev, mode);
-पूर्ण
+}
 
-अटल काष्ठा pxaficp_platक्रमm_data trizeps4_ficp_platक्रमm_data = अणु
-	.gpio_pwकरोwn		= -1,
+static struct pxaficp_platform_data trizeps4_ficp_platform_data = {
+	.gpio_pwdown		= -1,
 	.transceiver_cap	= IR_SIRMODE | IR_FIRMODE | IR_OFF,
 	.transceiver_mode	= trizeps4_irda_transceiver_mode,
 	.startup		= trizeps4_irda_startup,
-	.shutकरोwn		= trizeps4_irda_shutकरोwn,
-पूर्ण;
-#पूर्ण_अगर
+	.shutdown		= trizeps4_irda_shutdown,
+};
+#endif
 
 /****************************************************************************
  * OHCI USB port
  ****************************************************************************/
-अटल काष्ठा pxaohci_platक्रमm_data trizeps4_ohci_platक्रमm_data = अणु
+static struct pxaohci_platform_data trizeps4_ohci_platform_data = {
 	.port_mode	= PMM_PERPORT_MODE,
 	.flags		= ENABLE_PORT_ALL | POWER_CONTROL_LOW | POWER_SENSE_LOW,
-पूर्ण;
+};
 
-अटल काष्ठा map_desc trizeps4_io_desc[] __initdata = अणु
-	अणु 	/* ConXS CFSR */
-		.भव	= TRIZEPS4_CFSR_VIRT,
+static struct map_desc trizeps4_io_desc[] __initdata = {
+	{ 	/* ConXS CFSR */
+		.virtual	= TRIZEPS4_CFSR_VIRT,
 		.pfn		= __phys_to_pfn(TRIZEPS4_CFSR_PHYS),
 		.length		= 0x00001000,
 		.type		= MT_DEVICE
-	पूर्ण,
-	अणु	/* ConXS BCR */
-		.भव	= TRIZEPS4_BOCR_VIRT,
+	},
+	{	/* ConXS BCR */
+		.virtual	= TRIZEPS4_BOCR_VIRT,
 		.pfn		= __phys_to_pfn(TRIZEPS4_BOCR_PHYS),
 		.length		= 0x00001000,
 		.type		= MT_DEVICE
-	पूर्ण,
-	अणु 	/* ConXS IRCR */
-		.भव	= TRIZEPS4_IRCR_VIRT,
+	},
+	{ 	/* ConXS IRCR */
+		.virtual	= TRIZEPS4_IRCR_VIRT,
 		.pfn		= __phys_to_pfn(TRIZEPS4_IRCR_PHYS),
 		.length		= 0x00001000,
 		.type		= MT_DEVICE
-	पूर्ण,
-	अणु	/* ConXS DCR */
-		.भव	= TRIZEPS4_DICR_VIRT,
+	},
+	{	/* ConXS DCR */
+		.virtual	= TRIZEPS4_DICR_VIRT,
 		.pfn		= __phys_to_pfn(TRIZEPS4_DICR_PHYS),
 		.length		= 0x00001000,
 		.type		= MT_DEVICE
-	पूर्ण,
-	अणु	/* ConXS UPSR */
-		.भव	= TRIZEPS4_UPSR_VIRT,
+	},
+	{	/* ConXS UPSR */
+		.virtual	= TRIZEPS4_UPSR_VIRT,
 		.pfn		= __phys_to_pfn(TRIZEPS4_UPSR_PHYS),
 		.length		= 0x00001000,
 		.type		= MT_DEVICE
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा pxafb_mode_info sharp_lcd_mode = अणु
-	.pixघड़ी	= 78000,
+static struct pxafb_mode_info sharp_lcd_mode = {
+	.pixclock	= 78000,
 	.xres		= 640,
 	.yres		= 480,
 	.bpp		= 8,
@@ -460,19 +459,19 @@ EXPORT_SYMBOL(board_pcmcia_घातer);
 	.lower_margin	= 0,
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
 	.cmap_greyscale	= 0,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info sharp_lcd = अणु
+static struct pxafb_mach_info sharp_lcd = {
 	.modes		= &sharp_lcd_mode,
 	.num_modes	= 1,
 	.lcd_conn	= LCD_COLOR_DSTN_16BPP | LCD_PCLK_EDGE_FALL,
 	.cmap_inverse	= 0,
-	.cmap_अटल	= 0,
-	.pxafb_backlight_घातer = board_backlight_घातer,
-पूर्ण;
+	.cmap_static	= 0,
+	.pxafb_backlight_power = board_backlight_power,
+};
 
-अटल काष्ठा pxafb_mode_info toshiba_lcd_mode = अणु
-	.pixघड़ी	= 39720,
+static struct pxafb_mode_info toshiba_lcd_mode = {
+	.pixclock	= 39720,
 	.xres		= 640,
 	.yres		= 480,
 	.bpp		= 8,
@@ -484,93 +483,93 @@ EXPORT_SYMBOL(board_pcmcia_घातer);
 	.lower_margin	= 10,
 	.sync		= 0,
 	.cmap_greyscale	= 0,
-पूर्ण;
+};
 
-अटल काष्ठा pxafb_mach_info toshiba_lcd = अणु
+static struct pxafb_mach_info toshiba_lcd = {
 	.modes		= &toshiba_lcd_mode,
 	.num_modes	= 1,
 	.lcd_conn	= (LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL),
 	.cmap_inverse	= 0,
-	.cmap_अटल	= 0,
-	.pxafb_backlight_घातer = board_backlight_घातer,
-पूर्ण;
+	.cmap_static	= 0,
+	.pxafb_backlight_power = board_backlight_power,
+};
 
-अटल व्योम __init trizeps4_init(व्योम)
-अणु
+static void __init trizeps4_init(void)
+{
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(trizeps4_pin_config));
-	अगर (machine_is_trizeps4wl()) अणु
+	if (machine_is_trizeps4wl()) {
 		pxa2xx_mfp_config(ARRAY_AND_SIZE(trizeps4wl_pin_config));
-		platक्रमm_add_devices(trizeps4wl_devices,
+		platform_add_devices(trizeps4wl_devices,
 					ARRAY_SIZE(trizeps4wl_devices));
-	पूर्ण अन्यथा अणु
-		platक्रमm_add_devices(trizeps4_devices,
+	} else {
+		platform_add_devices(trizeps4_devices,
 					ARRAY_SIZE(trizeps4_devices));
-	पूर्ण
+	}
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
-	अगर (0)	/* करोnt know how to determine LCD */
-		pxa_set_fb_info(शून्य, &sharp_lcd);
-	अन्यथा
-		pxa_set_fb_info(शून्य, &toshiba_lcd);
+	if (0)	/* dont know how to determine LCD */
+		pxa_set_fb_info(NULL, &sharp_lcd);
+	else
+		pxa_set_fb_info(NULL, &toshiba_lcd);
 
-	pxa_set_mci_info(&trizeps4_mci_platक्रमm_data);
-#अगर_अघोषित STATUS_LEDS_ON_STUART_PINS
-	pxa_set_ficp_info(&trizeps4_ficp_platक्रमm_data);
-#पूर्ण_अगर
-	pxa_set_ohci_info(&trizeps4_ohci_platक्रमm_data);
-	pxa_set_ac97_info(शून्य);
-	pxa_set_i2c_info(शून्य);
-	i2c_रेजिस्टर_board_info(0, trizeps4_i2c_devices,
+	pxa_set_mci_info(&trizeps4_mci_platform_data);
+#ifndef STATUS_LEDS_ON_STUART_PINS
+	pxa_set_ficp_info(&trizeps4_ficp_platform_data);
+#endif
+	pxa_set_ohci_info(&trizeps4_ohci_platform_data);
+	pxa_set_ac97_info(NULL);
+	pxa_set_i2c_info(NULL);
+	i2c_register_board_info(0, trizeps4_i2c_devices,
 					ARRAY_SIZE(trizeps4_i2c_devices));
 
 	/* this is the reset value */
 	trizeps_conxs_bcr = 0x00A0;
 
-	BCR_ग_लिखोw(trizeps_conxs_bcr);
-	board_backlight_घातer(1);
+	BCR_writew(trizeps_conxs_bcr);
+	board_backlight_power(1);
 
-	regulator_has_full_स्थिरraपूर्णांकs();
-पूर्ण
+	regulator_has_full_constraints();
+}
 
-अटल व्योम __init trizeps4_map_io(व्योम)
-अणु
+static void __init trizeps4_map_io(void)
+{
 	pxa27x_map_io();
 	iotable_init(trizeps4_io_desc, ARRAY_SIZE(trizeps4_io_desc));
 
-	अगर ((__raw_पढ़ोl(MSC0) & 0x8) && (__raw_पढ़ोl(BOOT_DEF) & 0x1)) अणु
-		/* अगर flash is 16 bit wide its a Trizeps4 WL */
+	if ((__raw_readl(MSC0) & 0x8) && (__raw_readl(BOOT_DEF) & 0x1)) {
+		/* if flash is 16 bit wide its a Trizeps4 WL */
 		__machine_arch_type = MACH_TYPE_TRIZEPS4WL;
 		trizeps4_flash_data[0].width = 2;
-	पूर्ण अन्यथा अणु
-		/* अगर flash is 32 bit wide its a Trizeps4 */
+	} else {
+		/* if flash is 32 bit wide its a Trizeps4 */
 		__machine_arch_type = MACH_TYPE_TRIZEPS4;
 		trizeps4_flash_data[0].width = 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
 MACHINE_START(TRIZEPS4, "Keith und Koep Trizeps IV module")
-	/* MAINTAINER("Jथञrgen Schindele") */
+	/* MAINTAINER("Jürgen Schindele") */
 	.atag_offset	= 0x100,
 	.init_machine	= trizeps4_init,
 	.map_io		= trizeps4_map_io,
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.restart	= pxa_restart,
 MACHINE_END
 
 MACHINE_START(TRIZEPS4WL, "Keith und Koep Trizeps IV-WL module")
-	/* MAINTAINER("Jथञrgen Schindele") */
+	/* MAINTAINER("Jürgen Schindele") */
 	.atag_offset	= 0x100,
 	.init_machine	= trizeps4_init,
 	.map_io		= trizeps4_map_io,
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.restart	= pxa_restart,
 MACHINE_END

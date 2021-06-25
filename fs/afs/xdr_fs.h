@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* AFS fileserver XDR types
  *
  * Copyright (C) 2018 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#अगर_अघोषित XDR_FS_H
-#घोषणा XDR_FS_H
+#ifndef XDR_FS_H
+#define XDR_FS_H
 
-काष्ठा afs_xdr_AFSFetchStatus अणु
-	__be32	अगर_version;
-#घोषणा AFS_FSTATUS_VERSION	1
+struct afs_xdr_AFSFetchStatus {
+	__be32	if_version;
+#define AFS_FSTATUS_VERSION	1
 	__be32	type;
 	__be32	nlink;
 	__be32	size_lo;
@@ -24,32 +23,32 @@
 	__be32	parent_vnode;
 	__be32	parent_unique;
 	__be32	seg_size;
-	__be32	mसमय_client;
-	__be32	mसमय_server;
+	__be32	mtime_client;
+	__be32	mtime_server;
 	__be32	group;
 	__be32	sync_counter;
 	__be32	data_version_hi;
 	__be32	lock_count;
 	__be32	size_hi;
-	__be32	पात_code;
-पूर्ण __packed;
+	__be32	abort_code;
+} __packed;
 
-#घोषणा AFS_सूची_HASHTBL_SIZE	128
-#घोषणा AFS_सूची_सूचीENT_SIZE	32
-#घोषणा AFS_सूची_SLOTS_PER_BLOCK	64
-#घोषणा AFS_सूची_BLOCK_SIZE	2048
-#घोषणा AFS_सूची_BLOCKS_PER_PAGE	(PAGE_SIZE / AFS_सूची_BLOCK_SIZE)
-#घोषणा AFS_सूची_MAX_SLOTS	65536
-#घोषणा AFS_सूची_BLOCKS_WITH_CTR	128
-#घोषणा AFS_सूची_MAX_BLOCKS	1023
-#घोषणा AFS_सूची_RESV_BLOCKS	1
-#घोषणा AFS_सूची_RESV_BLOCKS0	13
+#define AFS_DIR_HASHTBL_SIZE	128
+#define AFS_DIR_DIRENT_SIZE	32
+#define AFS_DIR_SLOTS_PER_BLOCK	64
+#define AFS_DIR_BLOCK_SIZE	2048
+#define AFS_DIR_BLOCKS_PER_PAGE	(PAGE_SIZE / AFS_DIR_BLOCK_SIZE)
+#define AFS_DIR_MAX_SLOTS	65536
+#define AFS_DIR_BLOCKS_WITH_CTR	128
+#define AFS_DIR_MAX_BLOCKS	1023
+#define AFS_DIR_RESV_BLOCKS	1
+#define AFS_DIR_RESV_BLOCKS0	13
 
 /*
- * Directory entry काष्ठाure.
+ * Directory entry structure.
  */
-जोड़ afs_xdr_dirent अणु
-	काष्ठा अणु
+union afs_xdr_dirent {
+	struct {
 		u8		valid;
 		u8		unused[1];
 		__be16		hash_next;
@@ -60,58 +59,58 @@
 		 * represent a directory entry, name should be assumed to be 16
 		 * bytes, due to a now-standardised (mis)calculation, but it is
 		 * in fact 20 bytes in size.  afs_dir_calc_slots() should be
-		 * used क्रम this.
+		 * used for this.
 		 *
-		 * For names दीर्घer than (16 or) 20 bytes, extra slots should
-		 * be annexed to this one using the extended_name क्रमmat.
+		 * For names longer than (16 or) 20 bytes, extra slots should
+		 * be annexed to this one using the extended_name format.
 		 */
-	पूर्ण u;
+	} u;
 	u8			extended_name[32];
-पूर्ण __packed;
+} __packed;
 
 /*
  * Directory block header (one at the beginning of every 2048-byte block).
  */
-काष्ठा afs_xdr_dir_hdr अणु
+struct afs_xdr_dir_hdr {
 	__be16		npages;
 	__be16		magic;
-#घोषणा AFS_सूची_MAGIC htons(1234)
+#define AFS_DIR_MAGIC htons(1234)
 	u8		reserved;
-	u8		biपंचांगap[8];
+	u8		bitmap[8];
 	u8		pad[19];
-पूर्ण __packed;
+} __packed;
 
 /*
  * Directory block layout
  */
-जोड़ afs_xdr_dir_block अणु
-	काष्ठा afs_xdr_dir_hdr		hdr;
+union afs_xdr_dir_block {
+	struct afs_xdr_dir_hdr		hdr;
 
-	काष्ठा अणु
-		काष्ठा afs_xdr_dir_hdr	hdr;
-		u8			alloc_ctrs[AFS_सूची_MAX_BLOCKS];
-		__be16			hashtable[AFS_सूची_HASHTBL_SIZE];
-	पूर्ण meta;
+	struct {
+		struct afs_xdr_dir_hdr	hdr;
+		u8			alloc_ctrs[AFS_DIR_MAX_BLOCKS];
+		__be16			hashtable[AFS_DIR_HASHTBL_SIZE];
+	} meta;
 
-	जोड़ afs_xdr_dirent	dirents[AFS_सूची_SLOTS_PER_BLOCK];
-पूर्ण __packed;
+	union afs_xdr_dirent	dirents[AFS_DIR_SLOTS_PER_BLOCK];
+} __packed;
 
 /*
  * Directory layout on a linux VM page.
  */
-काष्ठा afs_xdr_dir_page अणु
-	जोड़ afs_xdr_dir_block	blocks[AFS_सूची_BLOCKS_PER_PAGE];
-पूर्ण;
+struct afs_xdr_dir_page {
+	union afs_xdr_dir_block	blocks[AFS_DIR_BLOCKS_PER_PAGE];
+};
 
 /*
- * Calculate the number of dirent slots required क्रम any given name length.
+ * Calculate the number of dirent slots required for any given name length.
  * The calculation is made assuming the part of the name in the first slot is
  * 16 bytes, rather than 20, but this miscalculation is now standardised.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक afs_dir_calc_slots(माप_प्रकार name_len)
-अणु
+static inline unsigned int afs_dir_calc_slots(size_t name_len)
+{
 	name_len++; /* NUL-terminated */
-	वापस 1 + ((name_len + 15) / AFS_सूची_सूचीENT_SIZE);
-पूर्ण
+	return 1 + ((name_len + 15) / AFS_DIR_DIRENT_SIZE);
+}
 
-#पूर्ण_अगर /* XDR_FS_H */
+#endif /* XDR_FS_H */

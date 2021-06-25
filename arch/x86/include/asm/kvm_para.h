@@ -1,146 +1,145 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_KVM_PARA_H
-#घोषणा _ASM_X86_KVM_PARA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_KVM_PARA_H
+#define _ASM_X86_KVM_PARA_H
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <uapi/यंत्र/kvm_para.h>
+#include <asm/processor.h>
+#include <asm/alternative.h>
+#include <linux/interrupt.h>
+#include <uapi/asm/kvm_para.h>
 
-#अगर_घोषित CONFIG_KVM_GUEST
-bool kvm_check_and_clear_guest_छोड़ोd(व्योम);
-#अन्यथा
-अटल अंतरभूत bool kvm_check_and_clear_guest_छोड़ोd(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KVM_GUEST */
+#ifdef CONFIG_KVM_GUEST
+bool kvm_check_and_clear_guest_paused(void);
+#else
+static inline bool kvm_check_and_clear_guest_paused(void)
+{
+	return false;
+}
+#endif /* CONFIG_KVM_GUEST */
 
-#घोषणा KVM_HYPERCALL \
+#define KVM_HYPERCALL \
         ALTERNATIVE("vmcall", "vmmcall", X86_FEATURE_VMMCALL)
 
 /* For KVM hypercalls, a three-byte sequence of either the vmcall or the vmmcall
- * inकाष्ठाion.  The hypervisor may replace it with something अन्यथा but only the
- * inकाष्ठाions are guaranteed to be supported.
+ * instruction.  The hypervisor may replace it with something else but only the
+ * instructions are guaranteed to be supported.
  *
  * Up to four arguments may be passed in rbx, rcx, rdx, and rsi respectively.
- * The hypercall number should be placed in rax and the वापस value will be
- * placed in rax.  No other रेजिस्टरs will be clobbered unless explicitly
+ * The hypercall number should be placed in rax and the return value will be
+ * placed in rax.  No other registers will be clobbered unless explicitly
  * noted by the particular hypercall.
  */
 
-अटल अंतरभूत दीर्घ kvm_hypercall0(अचिन्हित पूर्णांक nr)
-अणु
-	दीर्घ ret;
-	यंत्र अस्थिर(KVM_HYPERCALL
+static inline long kvm_hypercall0(unsigned int nr)
+{
+	long ret;
+	asm volatile(KVM_HYPERCALL
 		     : "=a"(ret)
 		     : "a"(nr)
 		     : "memory");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall1(अचिन्हित पूर्णांक nr, अचिन्हित दीर्घ p1)
-अणु
-	दीर्घ ret;
-	यंत्र अस्थिर(KVM_HYPERCALL
+static inline long kvm_hypercall1(unsigned int nr, unsigned long p1)
+{
+	long ret;
+	asm volatile(KVM_HYPERCALL
 		     : "=a"(ret)
 		     : "a"(nr), "b"(p1)
 		     : "memory");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall2(अचिन्हित पूर्णांक nr, अचिन्हित दीर्घ p1,
-				  अचिन्हित दीर्घ p2)
-अणु
-	दीर्घ ret;
-	यंत्र अस्थिर(KVM_HYPERCALL
+static inline long kvm_hypercall2(unsigned int nr, unsigned long p1,
+				  unsigned long p2)
+{
+	long ret;
+	asm volatile(KVM_HYPERCALL
 		     : "=a"(ret)
 		     : "a"(nr), "b"(p1), "c"(p2)
 		     : "memory");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall3(अचिन्हित पूर्णांक nr, अचिन्हित दीर्घ p1,
-				  अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3)
-अणु
-	दीर्घ ret;
-	यंत्र अस्थिर(KVM_HYPERCALL
+static inline long kvm_hypercall3(unsigned int nr, unsigned long p1,
+				  unsigned long p2, unsigned long p3)
+{
+	long ret;
+	asm volatile(KVM_HYPERCALL
 		     : "=a"(ret)
 		     : "a"(nr), "b"(p1), "c"(p2), "d"(p3)
 		     : "memory");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत दीर्घ kvm_hypercall4(अचिन्हित पूर्णांक nr, अचिन्हित दीर्घ p1,
-				  अचिन्हित दीर्घ p2, अचिन्हित दीर्घ p3,
-				  अचिन्हित दीर्घ p4)
-अणु
-	दीर्घ ret;
-	यंत्र अस्थिर(KVM_HYPERCALL
+static inline long kvm_hypercall4(unsigned int nr, unsigned long p1,
+				  unsigned long p2, unsigned long p3,
+				  unsigned long p4)
+{
+	long ret;
+	asm volatile(KVM_HYPERCALL
 		     : "=a"(ret)
 		     : "a"(nr), "b"(p1), "c"(p2), "d"(p3), "S"(p4)
 		     : "memory");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_KVM_GUEST
-व्योम kvmघड़ी_init(व्योम);
-व्योम kvmघड़ी_disable(व्योम);
-bool kvm_para_available(व्योम);
-अचिन्हित पूर्णांक kvm_arch_para_features(व्योम);
-अचिन्हित पूर्णांक kvm_arch_para_hपूर्णांकs(व्योम);
-व्योम kvm_async_pf_task_रुको_schedule(u32 token);
-व्योम kvm_async_pf_task_wake(u32 token);
-u32 kvm_पढ़ो_and_reset_apf_flags(व्योम);
-bool __kvm_handle_async_pf(काष्ठा pt_regs *regs, u32 token);
+#ifdef CONFIG_KVM_GUEST
+void kvmclock_init(void);
+void kvmclock_disable(void);
+bool kvm_para_available(void);
+unsigned int kvm_arch_para_features(void);
+unsigned int kvm_arch_para_hints(void);
+void kvm_async_pf_task_wait_schedule(u32 token);
+void kvm_async_pf_task_wake(u32 token);
+u32 kvm_read_and_reset_apf_flags(void);
+bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token);
 
 DECLARE_STATIC_KEY_FALSE(kvm_async_pf_enabled);
 
-अटल __always_अंतरभूत bool kvm_handle_async_pf(काष्ठा pt_regs *regs, u32 token)
-अणु
-	अगर (अटल_branch_unlikely(&kvm_async_pf_enabled))
-		वापस __kvm_handle_async_pf(regs, token);
-	अन्यथा
-		वापस false;
-पूर्ण
+static __always_inline bool kvm_handle_async_pf(struct pt_regs *regs, u32 token)
+{
+	if (static_branch_unlikely(&kvm_async_pf_enabled))
+		return __kvm_handle_async_pf(regs, token);
+	else
+		return false;
+}
 
-#अगर_घोषित CONFIG_PARAVIRT_SPINLOCKS
-व्योम __init kvm_spinlock_init(व्योम);
-#अन्यथा /* !CONFIG_PARAVIRT_SPINLOCKS */
-अटल अंतरभूत व्योम kvm_spinlock_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PARAVIRT_SPINLOCKS */
+#ifdef CONFIG_PARAVIRT_SPINLOCKS
+void __init kvm_spinlock_init(void);
+#else /* !CONFIG_PARAVIRT_SPINLOCKS */
+static inline void kvm_spinlock_init(void)
+{
+}
+#endif /* CONFIG_PARAVIRT_SPINLOCKS */
 
-#अन्यथा /* CONFIG_KVM_GUEST */
-#घोषणा kvm_async_pf_task_रुको_schedule(T) करो अणुपूर्ण जबतक(0)
-#घोषणा kvm_async_pf_task_wake(T) करो अणुपूर्ण जबतक(0)
+#else /* CONFIG_KVM_GUEST */
+#define kvm_async_pf_task_wait_schedule(T) do {} while(0)
+#define kvm_async_pf_task_wake(T) do {} while(0)
 
-अटल अंतरभूत bool kvm_para_available(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool kvm_para_available(void)
+{
+	return false;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_features(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int kvm_arch_para_features(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक kvm_arch_para_hपूर्णांकs(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int kvm_arch_para_hints(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत u32 kvm_पढ़ो_and_reset_apf_flags(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline u32 kvm_read_and_reset_apf_flags(void)
+{
+	return 0;
+}
 
-अटल __always_अंतरभूत bool kvm_handle_async_pf(काष्ठा pt_regs *regs, u32 token)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+static __always_inline bool kvm_handle_async_pf(struct pt_regs *regs, u32 token)
+{
+	return false;
+}
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_KVM_PARA_H */
+#endif /* _ASM_X86_KVM_PARA_H */

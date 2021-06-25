@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   Copyright (c) 2006,2007 Daniel Mack
 */
 
-#समावेश <linux/device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/gfp.h>
-#समावेश <sound/rawmidi.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
+#include <linux/device.h>
+#include <linux/usb.h>
+#include <linux/gfp.h>
+#include <sound/rawmidi.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
 
-#समावेश "device.h"
-#समावेश "midi.h"
+#include "device.h"
+#include "midi.h"
 
-अटल पूर्णांक snd_usb_caiaq_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+static int snd_usb_caiaq_midi_input_open(struct snd_rawmidi_substream *substream)
+{
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_caiaq_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+static int snd_usb_caiaq_midi_input_close(struct snd_rawmidi_substream *substream)
+{
+	return 0;
+}
 
-अटल व्योम snd_usb_caiaq_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = substream->rmidi->निजी_data;
+static void snd_usb_caiaq_midi_input_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	struct snd_usb_caiaqdev *cdev = substream->rmidi->private_data;
 
-	अगर (!cdev)
-		वापस;
+	if (!cdev)
+		return;
 
-	cdev->midi_receive_substream = up ? substream : शून्य;
-पूर्ण
+	cdev->midi_receive_substream = up ? substream : NULL;
+}
 
 
-अटल पूर्णांक snd_usb_caiaq_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	वापस 0;
-पूर्ण
+static int snd_usb_caiaq_midi_output_open(struct snd_rawmidi_substream *substream)
+{
+	return 0;
+}
 
-अटल पूर्णांक snd_usb_caiaq_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = substream->rmidi->निजी_data;
-	अगर (cdev->midi_out_active) अणु
-		usb_समाप्त_urb(&cdev->midi_out_urb);
+static int snd_usb_caiaq_midi_output_close(struct snd_rawmidi_substream *substream)
+{
+	struct snd_usb_caiaqdev *cdev = substream->rmidi->private_data;
+	if (cdev->midi_out_active) {
+		usb_kill_urb(&cdev->midi_out_urb);
 		cdev->midi_out_active = 0;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम snd_usb_caiaq_midi_send(काष्ठा snd_usb_caiaqdev *cdev,
-				    काष्ठा snd_rawmidi_substream *substream)
-अणु
-	पूर्णांक len, ret;
-	काष्ठा device *dev = caiaqdev_to_dev(cdev);
+static void snd_usb_caiaq_midi_send(struct snd_usb_caiaqdev *cdev,
+				    struct snd_rawmidi_substream *substream)
+{
+	int len, ret;
+	struct device *dev = caiaqdev_to_dev(cdev);
 
 	cdev->midi_out_buf[0] = EP1_CMD_MIDI_WRITE;
 	cdev->midi_out_buf[1] = 0; /* port */
 	len = snd_rawmidi_transmit(substream, cdev->midi_out_buf + 3,
-				   EP1_बफ_मानE - 3);
+				   EP1_BUFSIZE - 3);
 
-	अगर (len <= 0)
-		वापस;
+	if (len <= 0)
+		return;
 
 	cdev->midi_out_buf[2] = len;
 	cdev->midi_out_urb.transfer_buffer_length = len+3;
 
 	ret = usb_submit_urb(&cdev->midi_out_urb, GFP_ATOMIC);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev,
 			"snd_usb_caiaq_midi_send(%p): usb_submit_urb() failed,"
 			"ret=%d, len=%d\n", substream, ret, len);
-	अन्यथा
+	else
 		cdev->midi_out_active = 1;
-पूर्ण
+}
 
-अटल व्योम snd_usb_caiaq_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = substream->rmidi->निजी_data;
+static void snd_usb_caiaq_midi_output_trigger(struct snd_rawmidi_substream *substream, int up)
+{
+	struct snd_usb_caiaqdev *cdev = substream->rmidi->private_data;
 
-	अगर (up) अणु
+	if (up) {
 		cdev->midi_out_substream = substream;
-		अगर (!cdev->midi_out_active)
+		if (!cdev->midi_out_active)
 			snd_usb_caiaq_midi_send(cdev, substream);
-	पूर्ण अन्यथा अणु
-		cdev->midi_out_substream = शून्य;
-	पूर्ण
-पूर्ण
+	} else {
+		cdev->midi_out_substream = NULL;
+	}
+}
 
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_usb_caiaq_midi_output =
-अणु
-	.खोलो =		snd_usb_caiaq_midi_output_खोलो,
-	.बंद =	snd_usb_caiaq_midi_output_बंद,
+static const struct snd_rawmidi_ops snd_usb_caiaq_midi_output =
+{
+	.open =		snd_usb_caiaq_midi_output_open,
+	.close =	snd_usb_caiaq_midi_output_close,
 	.trigger =      snd_usb_caiaq_midi_output_trigger,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_rawmidi_ops snd_usb_caiaq_midi_input =
-अणु
-	.खोलो =		snd_usb_caiaq_midi_input_खोलो,
-	.बंद =	snd_usb_caiaq_midi_input_बंद,
+static const struct snd_rawmidi_ops snd_usb_caiaq_midi_input =
+{
+	.open =		snd_usb_caiaq_midi_input_open,
+	.close =	snd_usb_caiaq_midi_input_close,
 	.trigger =      snd_usb_caiaq_midi_input_trigger,
-पूर्ण;
+};
 
-व्योम snd_usb_caiaq_midi_handle_input(काष्ठा snd_usb_caiaqdev *cdev,
-				     पूर्णांक port, स्थिर अक्षर *buf, पूर्णांक len)
-अणु
-	अगर (!cdev->midi_receive_substream)
-		वापस;
+void snd_usb_caiaq_midi_handle_input(struct snd_usb_caiaqdev *cdev,
+				     int port, const char *buf, int len)
+{
+	if (!cdev->midi_receive_substream)
+		return;
 
 	snd_rawmidi_receive(cdev->midi_receive_substream, buf, len);
-पूर्ण
+}
 
-पूर्णांक snd_usb_caiaq_midi_init(काष्ठा snd_usb_caiaqdev *device)
-अणु
-	पूर्णांक ret;
-	काष्ठा snd_rawmidi *rmidi;
+int snd_usb_caiaq_midi_init(struct snd_usb_caiaqdev *device)
+{
+	int ret;
+	struct snd_rawmidi *rmidi;
 
 	ret = snd_rawmidi_new(device->chip.card, device->product_name, 0,
 					device->spec.num_midi_out,
 					device->spec.num_midi_in,
 					&rmidi);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	strscpy(rmidi->name, device->product_name, माप(rmidi->name));
+	strscpy(rmidi->name, device->product_name, sizeof(rmidi->name));
 
 	rmidi->info_flags = SNDRV_RAWMIDI_INFO_DUPLEX;
-	rmidi->निजी_data = device;
+	rmidi->private_data = device;
 
-	अगर (device->spec.num_midi_out > 0) अणु
+	if (device->spec.num_midi_out > 0) {
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT;
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT,
 				    &snd_usb_caiaq_midi_output);
-	पूर्ण
+	}
 
-	अगर (device->spec.num_midi_in > 0) अणु
+	if (device->spec.num_midi_in > 0) {
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_INPUT;
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT,
 				    &snd_usb_caiaq_midi_input);
-	पूर्ण
+	}
 
 	device->rmidi = rmidi;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_usb_caiaq_midi_output_करोne(काष्ठा urb* urb)
-अणु
-	काष्ठा snd_usb_caiaqdev *cdev = urb->context;
+void snd_usb_caiaq_midi_output_done(struct urb* urb)
+{
+	struct snd_usb_caiaqdev *cdev = urb->context;
 
 	cdev->midi_out_active = 0;
-	अगर (urb->status != 0)
-		वापस;
+	if (urb->status != 0)
+		return;
 
-	अगर (!cdev->midi_out_substream)
-		वापस;
+	if (!cdev->midi_out_substream)
+		return;
 
 	snd_usb_caiaq_midi_send(cdev, cdev->midi_out_substream);
-पूर्ण
+}

@@ -1,4 +1,3 @@
-<शैली गुरु>
-#घोषणा OPTi93X
-#समावेश "opti92x-ad1848.c"
+#define OPTi93X
+#include "opti92x-ad1848.c"
 

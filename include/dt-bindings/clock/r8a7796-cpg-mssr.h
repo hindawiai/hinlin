@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+
  *
  * Copyright (C) 2016 Renesas Electronics Corp.
  */
-#अगर_अघोषित __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__
-#घोषणा __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__
+#ifndef __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__
+#define __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__
 
-#समावेश <dt-bindings/घड़ी/renesas-cpg-mssr.h>
+#include <dt-bindings/clock/renesas-cpg-mssr.h>
 
 /* r8a7796 CPG Core Clocks */
-#घोषणा R8A7796_CLK_Z			0
-#घोषणा R8A7796_CLK_Z2			1
-#घोषणा R8A7796_CLK_ZR			2
-#घोषणा R8A7796_CLK_ZG			3
-#घोषणा R8A7796_CLK_ZTR			4
-#घोषणा R8A7796_CLK_ZTRD2		5
-#घोषणा R8A7796_CLK_ZT			6
-#घोषणा R8A7796_CLK_ZX			7
-#घोषणा R8A7796_CLK_S0D1		8
-#घोषणा R8A7796_CLK_S0D2		9
-#घोषणा R8A7796_CLK_S0D3		10
-#घोषणा R8A7796_CLK_S0D4		11
-#घोषणा R8A7796_CLK_S0D6		12
-#घोषणा R8A7796_CLK_S0D8		13
-#घोषणा R8A7796_CLK_S0D12		14
-#घोषणा R8A7796_CLK_S1D1		15
-#घोषणा R8A7796_CLK_S1D2		16
-#घोषणा R8A7796_CLK_S1D4		17
-#घोषणा R8A7796_CLK_S2D1		18
-#घोषणा R8A7796_CLK_S2D2		19
-#घोषणा R8A7796_CLK_S2D4		20
-#घोषणा R8A7796_CLK_S3D1		21
-#घोषणा R8A7796_CLK_S3D2		22
-#घोषणा R8A7796_CLK_S3D4		23
-#घोषणा R8A7796_CLK_LB			24
-#घोषणा R8A7796_CLK_CL			25
-#घोषणा R8A7796_CLK_ZB3			26
-#घोषणा R8A7796_CLK_ZB3D2		27
-#घोषणा R8A7796_CLK_ZB3D4		28
-#घोषणा R8A7796_CLK_CR			29
-#घोषणा R8A7796_CLK_CRD2		30
-#घोषणा R8A7796_CLK_SD0H		31
-#घोषणा R8A7796_CLK_SD0			32
-#घोषणा R8A7796_CLK_SD1H		33
-#घोषणा R8A7796_CLK_SD1			34
-#घोषणा R8A7796_CLK_SD2H		35
-#घोषणा R8A7796_CLK_SD2			36
-#घोषणा R8A7796_CLK_SD3H		37
-#घोषणा R8A7796_CLK_SD3			38
-#घोषणा R8A7796_CLK_SSP2		39
-#घोषणा R8A7796_CLK_SSP1		40
-#घोषणा R8A7796_CLK_SSPRS		41
-#घोषणा R8A7796_CLK_RPC			42
-#घोषणा R8A7796_CLK_RPCD2		43
-#घोषणा R8A7796_CLK_MSO			44
-#घोषणा R8A7796_CLK_CANFD		45
-#घोषणा R8A7796_CLK_HDMI		46
-#घोषणा R8A7796_CLK_CSI0		47
-/* CLK_CSIREF was हटाओd */
-#घोषणा R8A7796_CLK_CP			49
-#घोषणा R8A7796_CLK_CPEX		50
-#घोषणा R8A7796_CLK_R			51
-#घोषणा R8A7796_CLK_OSC			52
+#define R8A7796_CLK_Z			0
+#define R8A7796_CLK_Z2			1
+#define R8A7796_CLK_ZR			2
+#define R8A7796_CLK_ZG			3
+#define R8A7796_CLK_ZTR			4
+#define R8A7796_CLK_ZTRD2		5
+#define R8A7796_CLK_ZT			6
+#define R8A7796_CLK_ZX			7
+#define R8A7796_CLK_S0D1		8
+#define R8A7796_CLK_S0D2		9
+#define R8A7796_CLK_S0D3		10
+#define R8A7796_CLK_S0D4		11
+#define R8A7796_CLK_S0D6		12
+#define R8A7796_CLK_S0D8		13
+#define R8A7796_CLK_S0D12		14
+#define R8A7796_CLK_S1D1		15
+#define R8A7796_CLK_S1D2		16
+#define R8A7796_CLK_S1D4		17
+#define R8A7796_CLK_S2D1		18
+#define R8A7796_CLK_S2D2		19
+#define R8A7796_CLK_S2D4		20
+#define R8A7796_CLK_S3D1		21
+#define R8A7796_CLK_S3D2		22
+#define R8A7796_CLK_S3D4		23
+#define R8A7796_CLK_LB			24
+#define R8A7796_CLK_CL			25
+#define R8A7796_CLK_ZB3			26
+#define R8A7796_CLK_ZB3D2		27
+#define R8A7796_CLK_ZB3D4		28
+#define R8A7796_CLK_CR			29
+#define R8A7796_CLK_CRD2		30
+#define R8A7796_CLK_SD0H		31
+#define R8A7796_CLK_SD0			32
+#define R8A7796_CLK_SD1H		33
+#define R8A7796_CLK_SD1			34
+#define R8A7796_CLK_SD2H		35
+#define R8A7796_CLK_SD2			36
+#define R8A7796_CLK_SD3H		37
+#define R8A7796_CLK_SD3			38
+#define R8A7796_CLK_SSP2		39
+#define R8A7796_CLK_SSP1		40
+#define R8A7796_CLK_SSPRS		41
+#define R8A7796_CLK_RPC			42
+#define R8A7796_CLK_RPCD2		43
+#define R8A7796_CLK_MSO			44
+#define R8A7796_CLK_CANFD		45
+#define R8A7796_CLK_HDMI		46
+#define R8A7796_CLK_CSI0		47
+/* CLK_CSIREF was removed */
+#define R8A7796_CLK_CP			49
+#define R8A7796_CLK_CPEX		50
+#define R8A7796_CLK_R			51
+#define R8A7796_CLK_OSC			52
 
-#पूर्ण_अगर /* __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__ */
+#endif /* __DT_BINDINGS_CLOCK_R8A7796_CPG_MSSR_H__ */

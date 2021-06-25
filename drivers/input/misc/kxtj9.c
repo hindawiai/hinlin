@@ -1,447 +1,446 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Kionix, Inc.
  * Written by Chris Hudson <chudson@kionix.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input/kxtj9.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/input/kxtj9.h>
 
-#घोषणा NAME			"kxtj9"
-#घोषणा G_MAX			8000
+#define NAME			"kxtj9"
+#define G_MAX			8000
 /* OUTPUT REGISTERS */
-#घोषणा XOUT_L			0x06
-#घोषणा WHO_AM_I		0x0F
+#define XOUT_L			0x06
+#define WHO_AM_I		0x0F
 /* CONTROL REGISTERS */
-#घोषणा INT_REL			0x1A
-#घोषणा CTRL_REG1		0x1B
-#घोषणा INT_CTRL1		0x1E
-#घोषणा DATA_CTRL		0x21
+#define INT_REL			0x1A
+#define CTRL_REG1		0x1B
+#define INT_CTRL1		0x1E
+#define DATA_CTRL		0x21
 /* CONTROL REGISTER 1 BITS */
-#घोषणा PC1_OFF			0x7F
-#घोषणा PC1_ON			(1 << 7)
-/* Data पढ़ोy funtion enable bit: set during probe अगर using irq mode */
-#घोषणा DRDYE			(1 << 5)
+#define PC1_OFF			0x7F
+#define PC1_ON			(1 << 7)
+/* Data ready funtion enable bit: set during probe if using irq mode */
+#define DRDYE			(1 << 5)
 /* DATA CONTROL REGISTER BITS */
-#घोषणा ODR12_5F		0
-#घोषणा ODR25F			1
-#घोषणा ODR50F			2
-#घोषणा ODR100F		3
-#घोषणा ODR200F		4
-#घोषणा ODR400F		5
-#घोषणा ODR800F		6
+#define ODR12_5F		0
+#define ODR25F			1
+#define ODR50F			2
+#define ODR100F		3
+#define ODR200F		4
+#define ODR400F		5
+#define ODR800F		6
 /* INTERRUPT CONTROL REGISTER 1 BITS */
-/* Set these during probe अगर using irq mode */
-#घोषणा KXTJ9_IEL		(1 << 3)
-#घोषणा KXTJ9_IEA		(1 << 4)
-#घोषणा KXTJ9_IEN		(1 << 5)
+/* Set these during probe if using irq mode */
+#define KXTJ9_IEL		(1 << 3)
+#define KXTJ9_IEA		(1 << 4)
+#define KXTJ9_IEN		(1 << 5)
 /* INPUT_ABS CONSTANTS */
-#घोषणा FUZZ			3
-#घोषणा FLAT			3
+#define FUZZ			3
+#define FLAT			3
 /* RESUME STATE INDICES */
-#घोषणा RES_DATA_CTRL		0
-#घोषणा RES_CTRL_REG1		1
-#घोषणा RES_INT_CTRL1		2
-#घोषणा RESUME_ENTRIES		3
+#define RES_DATA_CTRL		0
+#define RES_CTRL_REG1		1
+#define RES_INT_CTRL1		2
+#define RESUME_ENTRIES		3
 
 /*
- * The following table lists the maximum appropriate poll पूर्णांकerval क्रम each
+ * The following table lists the maximum appropriate poll interval for each
  * available output data rate.
  */
-अटल स्थिर काष्ठा अणु
-	अचिन्हित पूर्णांक cutoff;
+static const struct {
+	unsigned int cutoff;
 	u8 mask;
-पूर्ण kxtj9_odr_table[] = अणु
-	अणु 3,	ODR800F पूर्ण,
-	अणु 5,	ODR400F पूर्ण,
-	अणु 10,	ODR200F पूर्ण,
-	अणु 20,	ODR100F पूर्ण,
-	अणु 40,	ODR50F  पूर्ण,
-	अणु 80,	ODR25F  पूर्ण,
-	अणु 0,	ODR12_5Fपूर्ण,
-पूर्ण;
+} kxtj9_odr_table[] = {
+	{ 3,	ODR800F },
+	{ 5,	ODR400F },
+	{ 10,	ODR200F },
+	{ 20,	ODR100F },
+	{ 40,	ODR50F  },
+	{ 80,	ODR25F  },
+	{ 0,	ODR12_5F},
+};
 
-काष्ठा kxtj9_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा kxtj9_platक्रमm_data pdata;
-	काष्ठा input_dev *input_dev;
-	अचिन्हित पूर्णांक last_poll_पूर्णांकerval;
-	u8 shअगरt;
+struct kxtj9_data {
+	struct i2c_client *client;
+	struct kxtj9_platform_data pdata;
+	struct input_dev *input_dev;
+	unsigned int last_poll_interval;
+	u8 shift;
 	u8 ctrl_reg1;
 	u8 data_ctrl;
-	u8 पूर्णांक_ctrl;
-पूर्ण;
+	u8 int_ctrl;
+};
 
-अटल पूर्णांक kxtj9_i2c_पढ़ो(काष्ठा kxtj9_data *tj9, u8 addr, u8 *data, पूर्णांक len)
-अणु
-	काष्ठा i2c_msg msgs[] = अणु
-		अणु
+static int kxtj9_i2c_read(struct kxtj9_data *tj9, u8 addr, u8 *data, int len)
+{
+	struct i2c_msg msgs[] = {
+		{
 			.addr = tj9->client->addr,
 			.flags = tj9->client->flags,
 			.len = 1,
 			.buf = &addr,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr = tj9->client->addr,
 			.flags = tj9->client->flags | I2C_M_RD,
 			.len = len,
 			.buf = data,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	वापस i2c_transfer(tj9->client->adapter, msgs, 2);
-पूर्ण
+	return i2c_transfer(tj9->client->adapter, msgs, 2);
+}
 
-अटल व्योम kxtj9_report_acceleration_data(काष्ठा kxtj9_data *tj9)
-अणु
+static void kxtj9_report_acceleration_data(struct kxtj9_data *tj9)
+{
 	s16 acc_data[3]; /* Data bytes from hardware xL, xH, yL, yH, zL, zH */
 	s16 x, y, z;
-	पूर्णांक err;
+	int err;
 
-	err = kxtj9_i2c_पढ़ो(tj9, XOUT_L, (u8 *)acc_data, 6);
-	अगर (err < 0)
+	err = kxtj9_i2c_read(tj9, XOUT_L, (u8 *)acc_data, 6);
+	if (err < 0)
 		dev_err(&tj9->client->dev, "accelerometer data read failed\n");
 
 	x = le16_to_cpu(acc_data[tj9->pdata.axis_map_x]);
 	y = le16_to_cpu(acc_data[tj9->pdata.axis_map_y]);
 	z = le16_to_cpu(acc_data[tj9->pdata.axis_map_z]);
 
-	x >>= tj9->shअगरt;
-	y >>= tj9->shअगरt;
-	z >>= tj9->shअगरt;
+	x >>= tj9->shift;
+	y >>= tj9->shift;
+	z >>= tj9->shift;
 
-	input_report_असल(tj9->input_dev, ABS_X, tj9->pdata.negate_x ? -x : x);
-	input_report_असल(tj9->input_dev, ABS_Y, tj9->pdata.negate_y ? -y : y);
-	input_report_असल(tj9->input_dev, ABS_Z, tj9->pdata.negate_z ? -z : z);
+	input_report_abs(tj9->input_dev, ABS_X, tj9->pdata.negate_x ? -x : x);
+	input_report_abs(tj9->input_dev, ABS_Y, tj9->pdata.negate_y ? -y : y);
+	input_report_abs(tj9->input_dev, ABS_Z, tj9->pdata.negate_z ? -z : z);
 	input_sync(tj9->input_dev);
-पूर्ण
+}
 
-अटल irqवापस_t kxtj9_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा kxtj9_data *tj9 = dev;
-	पूर्णांक err;
+static irqreturn_t kxtj9_isr(int irq, void *dev)
+{
+	struct kxtj9_data *tj9 = dev;
+	int err;
 
-	/* data पढ़ोy is the only possible पूर्णांकerrupt type */
+	/* data ready is the only possible interrupt type */
 	kxtj9_report_acceleration_data(tj9);
 
-	err = i2c_smbus_पढ़ो_byte_data(tj9->client, INT_REL);
-	अगर (err < 0)
+	err = i2c_smbus_read_byte_data(tj9->client, INT_REL);
+	if (err < 0)
 		dev_err(&tj9->client->dev,
 			"error clearing interrupt status: %d\n", err);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक kxtj9_update_g_range(काष्ठा kxtj9_data *tj9, u8 new_g_range)
-अणु
-	चयन (new_g_range) अणु
-	हाल KXTJ9_G_2G:
-		tj9->shअगरt = 4;
-		अवरोध;
-	हाल KXTJ9_G_4G:
-		tj9->shअगरt = 3;
-		अवरोध;
-	हाल KXTJ9_G_8G:
-		tj9->shअगरt = 2;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+static int kxtj9_update_g_range(struct kxtj9_data *tj9, u8 new_g_range)
+{
+	switch (new_g_range) {
+	case KXTJ9_G_2G:
+		tj9->shift = 4;
+		break;
+	case KXTJ9_G_4G:
+		tj9->shift = 3;
+		break;
+	case KXTJ9_G_8G:
+		tj9->shift = 2;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	tj9->ctrl_reg1 &= 0xe7;
 	tj9->ctrl_reg1 |= new_g_range;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kxtj9_update_odr(काष्ठा kxtj9_data *tj9, अचिन्हित पूर्णांक poll_पूर्णांकerval)
-अणु
-	पूर्णांक err;
-	पूर्णांक i;
+static int kxtj9_update_odr(struct kxtj9_data *tj9, unsigned int poll_interval)
+{
+	int err;
+	int i;
 
-	/* Use the lowest ODR that can support the requested poll पूर्णांकerval */
-	क्रम (i = 0; i < ARRAY_SIZE(kxtj9_odr_table); i++) अणु
+	/* Use the lowest ODR that can support the requested poll interval */
+	for (i = 0; i < ARRAY_SIZE(kxtj9_odr_table); i++) {
 		tj9->data_ctrl = kxtj9_odr_table[i].mask;
-		अगर (poll_पूर्णांकerval < kxtj9_odr_table[i].cutoff)
-			अवरोध;
-	पूर्ण
+		if (poll_interval < kxtj9_odr_table[i].cutoff)
+			break;
+	}
 
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, CTRL_REG1, 0);
-	अगर (err < 0)
-		वापस err;
+	err = i2c_smbus_write_byte_data(tj9->client, CTRL_REG1, 0);
+	if (err < 0)
+		return err;
 
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, DATA_CTRL, tj9->data_ctrl);
-	अगर (err < 0)
-		वापस err;
+	err = i2c_smbus_write_byte_data(tj9->client, DATA_CTRL, tj9->data_ctrl);
+	if (err < 0)
+		return err;
 
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
-	अगर (err < 0)
-		वापस err;
+	err = i2c_smbus_write_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kxtj9_device_घातer_on(काष्ठा kxtj9_data *tj9)
-अणु
-	अगर (tj9->pdata.घातer_on)
-		वापस tj9->pdata.घातer_on();
+static int kxtj9_device_power_on(struct kxtj9_data *tj9)
+{
+	if (tj9->pdata.power_on)
+		return tj9->pdata.power_on();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम kxtj9_device_घातer_off(काष्ठा kxtj9_data *tj9)
-अणु
-	पूर्णांक err;
+static void kxtj9_device_power_off(struct kxtj9_data *tj9)
+{
+	int err;
 
 	tj9->ctrl_reg1 &= PC1_OFF;
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
-	अगर (err < 0)
+	err = i2c_smbus_write_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
+	if (err < 0)
 		dev_err(&tj9->client->dev, "soft power off failed\n");
 
-	अगर (tj9->pdata.घातer_off)
-		tj9->pdata.घातer_off();
-पूर्ण
+	if (tj9->pdata.power_off)
+		tj9->pdata.power_off();
+}
 
-अटल पूर्णांक kxtj9_enable(काष्ठा kxtj9_data *tj9)
-अणु
-	पूर्णांक err;
+static int kxtj9_enable(struct kxtj9_data *tj9)
+{
+	int err;
 
-	err = kxtj9_device_घातer_on(tj9);
-	अगर (err < 0)
-		वापस err;
+	err = kxtj9_device_power_on(tj9);
+	if (err < 0)
+		return err;
 
-	/* ensure that PC1 is cleared beक्रमe updating control रेजिस्टरs */
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, CTRL_REG1, 0);
-	अगर (err < 0)
-		वापस err;
+	/* ensure that PC1 is cleared before updating control registers */
+	err = i2c_smbus_write_byte_data(tj9->client, CTRL_REG1, 0);
+	if (err < 0)
+		return err;
 
-	/* only ग_लिखो INT_CTRL_REG1 अगर in irq mode */
-	अगर (tj9->client->irq) अणु
-		err = i2c_smbus_ग_लिखो_byte_data(tj9->client,
-						INT_CTRL1, tj9->पूर्णांक_ctrl);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	/* only write INT_CTRL_REG1 if in irq mode */
+	if (tj9->client->irq) {
+		err = i2c_smbus_write_byte_data(tj9->client,
+						INT_CTRL1, tj9->int_ctrl);
+		if (err < 0)
+			return err;
+	}
 
 	err = kxtj9_update_g_range(tj9, tj9->pdata.g_range);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* turn on outमाला_दो */
+	/* turn on outputs */
 	tj9->ctrl_reg1 |= PC1_ON;
-	err = i2c_smbus_ग_लिखो_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
-	अगर (err < 0)
-		वापस err;
+	err = i2c_smbus_write_byte_data(tj9->client, CTRL_REG1, tj9->ctrl_reg1);
+	if (err < 0)
+		return err;
 
-	err = kxtj9_update_odr(tj9, tj9->last_poll_पूर्णांकerval);
-	अगर (err < 0)
-		वापस err;
+	err = kxtj9_update_odr(tj9, tj9->last_poll_interval);
+	if (err < 0)
+		return err;
 
-	/* clear initial पूर्णांकerrupt अगर in irq mode */
-	अगर (tj9->client->irq) अणु
-		err = i2c_smbus_पढ़ो_byte_data(tj9->client, INT_REL);
-		अगर (err < 0) अणु
+	/* clear initial interrupt if in irq mode */
+	if (tj9->client->irq) {
+		err = i2c_smbus_read_byte_data(tj9->client, INT_REL);
+		if (err < 0) {
 			dev_err(&tj9->client->dev,
 				"error clearing interrupt: %d\n", err);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	kxtj9_device_घातer_off(tj9);
-	वापस err;
-पूर्ण
+	kxtj9_device_power_off(tj9);
+	return err;
+}
 
-अटल व्योम kxtj9_disable(काष्ठा kxtj9_data *tj9)
-अणु
-	kxtj9_device_घातer_off(tj9);
-पूर्ण
+static void kxtj9_disable(struct kxtj9_data *tj9)
+{
+	kxtj9_device_power_off(tj9);
+}
 
-अटल पूर्णांक kxtj9_input_खोलो(काष्ठा input_dev *input)
-अणु
-	काष्ठा kxtj9_data *tj9 = input_get_drvdata(input);
+static int kxtj9_input_open(struct input_dev *input)
+{
+	struct kxtj9_data *tj9 = input_get_drvdata(input);
 
-	वापस kxtj9_enable(tj9);
-पूर्ण
+	return kxtj9_enable(tj9);
+}
 
-अटल व्योम kxtj9_input_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा kxtj9_data *tj9 = input_get_drvdata(dev);
+static void kxtj9_input_close(struct input_dev *dev)
+{
+	struct kxtj9_data *tj9 = input_get_drvdata(dev);
 
 	kxtj9_disable(tj9);
-पूर्ण
+}
 
 /*
- * When IRQ mode is selected, we need to provide an पूर्णांकerface to allow the user
+ * When IRQ mode is selected, we need to provide an interface to allow the user
  * to change the output data rate of the part.  For consistency, we are using
- * the set_poll method, which accepts a poll पूर्णांकerval in milliseconds, and then
- * calls update_odr() जबतक passing this value as an argument.  In IRQ mode, the
- * data outमाला_दो will not be पढ़ो AT the requested poll पूर्णांकerval, rather, the
- * lowest ODR that can support the requested पूर्णांकerval.  The client application
- * will be responsible क्रम retrieving data from the input node at the desired
- * पूर्णांकerval.
+ * the set_poll method, which accepts a poll interval in milliseconds, and then
+ * calls update_odr() while passing this value as an argument.  In IRQ mode, the
+ * data outputs will not be read AT the requested poll interval, rather, the
+ * lowest ODR that can support the requested interval.  The client application
+ * will be responsible for retrieving data from the input node at the desired
+ * interval.
  */
 
-/* Returns currently selected poll पूर्णांकerval (in ms) */
-अटल sमाप_प्रकार kxtj9_get_poll(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा kxtj9_data *tj9 = i2c_get_clientdata(client);
+/* Returns currently selected poll interval (in ms) */
+static ssize_t kxtj9_get_poll(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct kxtj9_data *tj9 = i2c_get_clientdata(client);
 
-	वापस प्र_लिखो(buf, "%d\n", tj9->last_poll_पूर्णांकerval);
-पूर्ण
+	return sprintf(buf, "%d\n", tj9->last_poll_interval);
+}
 
-/* Allow users to select a new poll पूर्णांकerval (in ms) */
-अटल sमाप_प्रकार kxtj9_set_poll(काष्ठा device *dev, काष्ठा device_attribute *attr,
-						स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा kxtj9_data *tj9 = i2c_get_clientdata(client);
-	काष्ठा input_dev *input_dev = tj9->input_dev;
-	अचिन्हित पूर्णांक पूर्णांकerval;
-	पूर्णांक error;
+/* Allow users to select a new poll interval (in ms) */
+static ssize_t kxtj9_set_poll(struct device *dev, struct device_attribute *attr,
+						const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct kxtj9_data *tj9 = i2c_get_clientdata(client);
+	struct input_dev *input_dev = tj9->input_dev;
+	unsigned int interval;
+	int error;
 
-	error = kstrtouपूर्णांक(buf, 10, &पूर्णांकerval);
-	अगर (error < 0)
-		वापस error;
+	error = kstrtouint(buf, 10, &interval);
+	if (error < 0)
+		return error;
 
-	/* Lock the device to prevent races with खोलो/बंद (and itself) */
+	/* Lock the device to prevent races with open/close (and itself) */
 	mutex_lock(&input_dev->mutex);
 
 	disable_irq(client->irq);
 
 	/*
-	 * Set current पूर्णांकerval to the greater of the minimum पूर्णांकerval or
-	 * the requested पूर्णांकerval
+	 * Set current interval to the greater of the minimum interval or
+	 * the requested interval
 	 */
-	tj9->last_poll_पूर्णांकerval = max(पूर्णांकerval, tj9->pdata.min_पूर्णांकerval);
+	tj9->last_poll_interval = max(interval, tj9->pdata.min_interval);
 
-	kxtj9_update_odr(tj9, tj9->last_poll_पूर्णांकerval);
+	kxtj9_update_odr(tj9, tj9->last_poll_interval);
 
 	enable_irq(client->irq);
 	mutex_unlock(&input_dev->mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(poll, S_IRUGO|S_IWUSR, kxtj9_get_poll, kxtj9_set_poll);
+static DEVICE_ATTR(poll, S_IRUGO|S_IWUSR, kxtj9_get_poll, kxtj9_set_poll);
 
-अटल काष्ठा attribute *kxtj9_attributes[] = अणु
+static struct attribute *kxtj9_attributes[] = {
 	&dev_attr_poll.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल काष्ठा attribute_group kxtj9_attribute_group = अणु
+static struct attribute_group kxtj9_attribute_group = {
 	.attrs = kxtj9_attributes
-पूर्ण;
+};
 
-अटल व्योम kxtj9_poll(काष्ठा input_dev *input)
-अणु
-	काष्ठा kxtj9_data *tj9 = input_get_drvdata(input);
-	अचिन्हित पूर्णांक poll_पूर्णांकerval = input_get_poll_पूर्णांकerval(input);
+static void kxtj9_poll(struct input_dev *input)
+{
+	struct kxtj9_data *tj9 = input_get_drvdata(input);
+	unsigned int poll_interval = input_get_poll_interval(input);
 
 	kxtj9_report_acceleration_data(tj9);
 
-	अगर (poll_पूर्णांकerval != tj9->last_poll_पूर्णांकerval) अणु
-		kxtj9_update_odr(tj9, poll_पूर्णांकerval);
-		tj9->last_poll_पूर्णांकerval = poll_पूर्णांकerval;
-	पूर्ण
-पूर्ण
+	if (poll_interval != tj9->last_poll_interval) {
+		kxtj9_update_odr(tj9, poll_interval);
+		tj9->last_poll_interval = poll_interval;
+	}
+}
 
-अटल व्योम kxtj9_platक्रमm_निकास(व्योम *data)
-अणु
-	काष्ठा kxtj9_data *tj9 = data;
+static void kxtj9_platform_exit(void *data)
+{
+	struct kxtj9_data *tj9 = data;
 
-	अगर (tj9->pdata.निकास)
-		tj9->pdata.निकास();
-पूर्ण
+	if (tj9->pdata.exit)
+		tj9->pdata.exit();
+}
 
-अटल पूर्णांक kxtj9_verअगरy(काष्ठा kxtj9_data *tj9)
-अणु
-	पूर्णांक retval;
+static int kxtj9_verify(struct kxtj9_data *tj9)
+{
+	int retval;
 
-	retval = kxtj9_device_घातer_on(tj9);
-	अगर (retval < 0)
-		वापस retval;
+	retval = kxtj9_device_power_on(tj9);
+	if (retval < 0)
+		return retval;
 
-	retval = i2c_smbus_पढ़ो_byte_data(tj9->client, WHO_AM_I);
-	अगर (retval < 0) अणु
+	retval = i2c_smbus_read_byte_data(tj9->client, WHO_AM_I);
+	if (retval < 0) {
 		dev_err(&tj9->client->dev, "read err int source\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	retval = (retval != 0x07 && retval != 0x08) ? -EIO : 0;
 
 out:
-	kxtj9_device_घातer_off(tj9);
-	वापस retval;
-पूर्ण
+	kxtj9_device_power_off(tj9);
+	return retval;
+}
 
-अटल पूर्णांक kxtj9_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	स्थिर काष्ठा kxtj9_platक्रमm_data *pdata =
+static int kxtj9_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	const struct kxtj9_platform_data *pdata =
 			dev_get_platdata(&client->dev);
-	काष्ठा kxtj9_data *tj9;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err;
+	struct kxtj9_data *tj9;
+	struct input_dev *input_dev;
+	int err;
 
-	अगर (!i2c_check_functionality(client->adapter,
-				I2C_FUNC_I2C | I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(client->adapter,
+				I2C_FUNC_I2C | I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev, "client is not i2c capable\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&client->dev, "platform data is NULL; exiting\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	tj9 = devm_kzalloc(&client->dev, माप(*tj9), GFP_KERNEL);
-	अगर (!tj9) अणु
+	tj9 = devm_kzalloc(&client->dev, sizeof(*tj9), GFP_KERNEL);
+	if (!tj9) {
 		dev_err(&client->dev,
 			"failed to allocate memory for module data\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	tj9->client = client;
 	tj9->pdata = *pdata;
 
-	अगर (pdata->init) अणु
+	if (pdata->init) {
 		err = pdata->init();
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	err = devm_add_action_or_reset(&client->dev, kxtj9_platक्रमm_निकास, tj9);
-	अगर (err)
-		वापस err;
+	err = devm_add_action_or_reset(&client->dev, kxtj9_platform_exit, tj9);
+	if (err)
+		return err;
 
-	err = kxtj9_verअगरy(tj9);
-	अगर (err < 0) अणु
+	err = kxtj9_verify(tj9);
+	if (err < 0) {
 		dev_err(&client->dev, "device not recognized\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	i2c_set_clientdata(client, tj9);
 
 	tj9->ctrl_reg1 = tj9->pdata.res_12bit | tj9->pdata.g_range;
-	tj9->last_poll_पूर्णांकerval = tj9->pdata.init_पूर्णांकerval;
+	tj9->last_poll_interval = tj9->pdata.init_interval;
 
 	input_dev = devm_input_allocate_device(&client->dev);
-	अगर (!input_dev) अणु
+	if (!input_dev) {
 		dev_err(&client->dev, "input device allocate failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	input_set_drvdata(input_dev, tj9);
 	tj9->input_dev = input_dev;
@@ -449,100 +448,100 @@ out:
 	input_dev->name = "kxtj9_accel";
 	input_dev->id.bustype = BUS_I2C;
 
-	input_dev->खोलो = kxtj9_input_खोलो;
-	input_dev->बंद = kxtj9_input_बंद;
+	input_dev->open = kxtj9_input_open;
+	input_dev->close = kxtj9_input_close;
 
-	input_set_असल_params(input_dev, ABS_X, -G_MAX, G_MAX, FUZZ, FLAT);
-	input_set_असल_params(input_dev, ABS_Y, -G_MAX, G_MAX, FUZZ, FLAT);
-	input_set_असल_params(input_dev, ABS_Z, -G_MAX, G_MAX, FUZZ, FLAT);
+	input_set_abs_params(input_dev, ABS_X, -G_MAX, G_MAX, FUZZ, FLAT);
+	input_set_abs_params(input_dev, ABS_Y, -G_MAX, G_MAX, FUZZ, FLAT);
+	input_set_abs_params(input_dev, ABS_Z, -G_MAX, G_MAX, FUZZ, FLAT);
 
-	अगर (client->irq <= 0) अणु
+	if (client->irq <= 0) {
 		err = input_setup_polling(input_dev, kxtj9_poll);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	err = input_रेजिस्टर_device(input_dev);
-	अगर (err) अणु
+	err = input_register_device(input_dev);
+	if (err) {
 		dev_err(&client->dev,
 			"unable to register input polled device %s: %d\n",
 			input_dev->name, err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (client->irq) अणु
+	if (client->irq) {
 		/* If in irq mode, populate INT_CTRL_REG1 and enable DRDY. */
-		tj9->पूर्णांक_ctrl |= KXTJ9_IEN | KXTJ9_IEA | KXTJ9_IEL;
+		tj9->int_ctrl |= KXTJ9_IEN | KXTJ9_IEA | KXTJ9_IEL;
 		tj9->ctrl_reg1 |= DRDYE;
 
-		err = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
-						शून्य, kxtj9_isr,
+		err = devm_request_threaded_irq(&client->dev, client->irq,
+						NULL, kxtj9_isr,
 						IRQF_TRIGGER_RISING |
 							IRQF_ONESHOT,
 						"kxtj9-irq", tj9);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&client->dev, "request irq failed: %d\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		err = devm_device_add_group(&client->dev,
 					    &kxtj9_attribute_group);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&client->dev, "sysfs create failed: %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused kxtj9_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा kxtj9_data *tj9 = i2c_get_clientdata(client);
-	काष्ठा input_dev *input_dev = tj9->input_dev;
+static int __maybe_unused kxtj9_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct kxtj9_data *tj9 = i2c_get_clientdata(client);
+	struct input_dev *input_dev = tj9->input_dev;
 
 	mutex_lock(&input_dev->mutex);
 
-	अगर (input_device_enabled(input_dev))
+	if (input_device_enabled(input_dev))
 		kxtj9_disable(tj9);
 
 	mutex_unlock(&input_dev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused kxtj9_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा kxtj9_data *tj9 = i2c_get_clientdata(client);
-	काष्ठा input_dev *input_dev = tj9->input_dev;
+static int __maybe_unused kxtj9_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct kxtj9_data *tj9 = i2c_get_clientdata(client);
+	struct input_dev *input_dev = tj9->input_dev;
 
 	mutex_lock(&input_dev->mutex);
 
-	अगर (input_device_enabled(input_dev))
+	if (input_device_enabled(input_dev))
 		kxtj9_enable(tj9);
 
 	mutex_unlock(&input_dev->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(kxtj9_pm_ops, kxtj9_suspend, kxtj9_resume);
+static SIMPLE_DEV_PM_OPS(kxtj9_pm_ops, kxtj9_suspend, kxtj9_resume);
 
-अटल स्थिर काष्ठा i2c_device_id kxtj9_id[] = अणु
-	अणु NAME, 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id kxtj9_id[] = {
+	{ NAME, 0 },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(i2c, kxtj9_id);
 
-अटल काष्ठा i2c_driver kxtj9_driver = अणु
-	.driver = अणु
+static struct i2c_driver kxtj9_driver = {
+	.driver = {
 		.name	= NAME,
 		.pm	= &kxtj9_pm_ops,
-	पूर्ण,
+	},
 	.probe		= kxtj9_probe,
 	.id_table	= kxtj9_id,
-पूर्ण;
+};
 
 module_i2c_driver(kxtj9_driver);
 

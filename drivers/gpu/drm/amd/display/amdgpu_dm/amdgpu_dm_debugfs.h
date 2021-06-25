@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,16 +23,16 @@
  *
  */
 
-#अगर_अघोषित __AMDGPU_DM_DEBUGFS_H__
-#घोषणा __AMDGPU_DM_DEBUGFS_H__
+#ifndef __AMDGPU_DM_DEBUGFS_H__
+#define __AMDGPU_DM_DEBUGFS_H__
 
-#समावेश "amdgpu.h"
-#समावेश "amdgpu_dm.h"
+#include "amdgpu.h"
+#include "amdgpu_dm.h"
 
-व्योम connector_debugfs_init(काष्ठा amdgpu_dm_connector *connector);
-व्योम dtn_debugfs_init(काष्ठा amdgpu_device *adev);
-#अगर defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
-व्योम crtc_debugfs_init(काष्ठा drm_crtc *crtc);
-#पूर्ण_अगर
+void connector_debugfs_init(struct amdgpu_dm_connector *connector);
+void dtn_debugfs_init(struct amdgpu_device *adev);
+#if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
+void crtc_debugfs_init(struct drm_crtc *crtc);
+#endif
 
-#पूर्ण_अगर
+#endif

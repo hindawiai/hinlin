@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  ARM64 cacheinfo support
  *
@@ -7,97 +6,97 @@
  *  All Rights Reserved
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/cacheinfo.h>
-#समावेश <linux/of.h>
+#include <linux/acpi.h>
+#include <linux/cacheinfo.h>
+#include <linux/of.h>
 
-#घोषणा MAX_CACHE_LEVEL			7	/* Max 7 level supported */
-/* Ctypen, bits[3(n - 1) + 2 : 3(n - 1)], क्रम n = 1 to 7 */
-#घोषणा CLIDR_CTYPE_SHIFT(level)	(3 * (level - 1))
-#घोषणा CLIDR_CTYPE_MASK(level)		(7 << CLIDR_CTYPE_SHIFT(level))
-#घोषणा CLIDR_CTYPE(clidr, level)	\
+#define MAX_CACHE_LEVEL			7	/* Max 7 level supported */
+/* Ctypen, bits[3(n - 1) + 2 : 3(n - 1)], for n = 1 to 7 */
+#define CLIDR_CTYPE_SHIFT(level)	(3 * (level - 1))
+#define CLIDR_CTYPE_MASK(level)		(7 << CLIDR_CTYPE_SHIFT(level))
+#define CLIDR_CTYPE(clidr, level)	\
 	(((clidr) & CLIDR_CTYPE_MASK(level)) >> CLIDR_CTYPE_SHIFT(level))
 
-पूर्णांक cache_line_size(व्योम)
-अणु
-	अगर (coherency_max_size != 0)
-		वापस coherency_max_size;
+int cache_line_size(void)
+{
+	if (coherency_max_size != 0)
+		return coherency_max_size;
 
-	वापस cache_line_size_of_cpu();
-पूर्ण
+	return cache_line_size_of_cpu();
+}
 EXPORT_SYMBOL_GPL(cache_line_size);
 
-अटल अंतरभूत क्रमागत cache_type get_cache_type(पूर्णांक level)
-अणु
+static inline enum cache_type get_cache_type(int level)
+{
 	u64 clidr;
 
-	अगर (level > MAX_CACHE_LEVEL)
-		वापस CACHE_TYPE_NOCACHE;
-	clidr = पढ़ो_sysreg(clidr_el1);
-	वापस CLIDR_CTYPE(clidr, level);
-पूर्ण
+	if (level > MAX_CACHE_LEVEL)
+		return CACHE_TYPE_NOCACHE;
+	clidr = read_sysreg(clidr_el1);
+	return CLIDR_CTYPE(clidr, level);
+}
 
-अटल व्योम ci_leaf_init(काष्ठा cacheinfo *this_leaf,
-			 क्रमागत cache_type type, अचिन्हित पूर्णांक level)
-अणु
+static void ci_leaf_init(struct cacheinfo *this_leaf,
+			 enum cache_type type, unsigned int level)
+{
 	this_leaf->level = level;
 	this_leaf->type = type;
-पूर्ण
+}
 
-अटल पूर्णांक __init_cache_level(अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित पूर्णांक ctype, level, leaves, fw_level;
-	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+static int __init_cache_level(unsigned int cpu)
+{
+	unsigned int ctype, level, leaves, fw_level;
+	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
 
-	क्रम (level = 1, leaves = 0; level <= MAX_CACHE_LEVEL; level++) अणु
+	for (level = 1, leaves = 0; level <= MAX_CACHE_LEVEL; level++) {
 		ctype = get_cache_type(level);
-		अगर (ctype == CACHE_TYPE_NOCACHE) अणु
+		if (ctype == CACHE_TYPE_NOCACHE) {
 			level--;
-			अवरोध;
-		पूर्ण
-		/* Separate inकाष्ठाion and data caches */
+			break;
+		}
+		/* Separate instruction and data caches */
 		leaves += (ctype == CACHE_TYPE_SEPARATE) ? 2 : 1;
-	पूर्ण
+	}
 
-	अगर (acpi_disabled)
+	if (acpi_disabled)
 		fw_level = of_find_last_cache_level(cpu);
-	अन्यथा
+	else
 		fw_level = acpi_find_last_cache_level(cpu);
 
-	अगर (level < fw_level) अणु
+	if (level < fw_level) {
 		/*
-		 * some बाह्यal caches not specअगरied in CLIDR_EL1
-		 * the inक्रमmation may be available in the device tree
-		 * only unअगरied बाह्यal caches are considered here
+		 * some external caches not specified in CLIDR_EL1
+		 * the information may be available in the device tree
+		 * only unified external caches are considered here
 		 */
 		leaves += (fw_level - level);
 		level = fw_level;
-	पूर्ण
+	}
 
 	this_cpu_ci->num_levels = level;
 	this_cpu_ci->num_leaves = leaves;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __populate_cache_leaves(अचिन्हित पूर्णांक cpu)
-अणु
-	अचिन्हित पूर्णांक level, idx;
-	क्रमागत cache_type type;
-	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
-	काष्ठा cacheinfo *this_leaf = this_cpu_ci->info_list;
+static int __populate_cache_leaves(unsigned int cpu)
+{
+	unsigned int level, idx;
+	enum cache_type type;
+	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+	struct cacheinfo *this_leaf = this_cpu_ci->info_list;
 
-	क्रम (idx = 0, level = 1; level <= this_cpu_ci->num_levels &&
-	     idx < this_cpu_ci->num_leaves; idx++, level++) अणु
+	for (idx = 0, level = 1; level <= this_cpu_ci->num_levels &&
+	     idx < this_cpu_ci->num_leaves; idx++, level++) {
 		type = get_cache_type(level);
-		अगर (type == CACHE_TYPE_SEPARATE) अणु
+		if (type == CACHE_TYPE_SEPARATE) {
 			ci_leaf_init(this_leaf++, CACHE_TYPE_DATA, level);
 			ci_leaf_init(this_leaf++, CACHE_TYPE_INST, level);
-		पूर्ण अन्यथा अणु
+		} else {
 			ci_leaf_init(this_leaf++, type, level);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 DEFINE_SMP_CALL_CACHE_FUNCTION(init_cache_level)
 DEFINE_SMP_CALL_CACHE_FUNCTION(populate_cache_leaves)

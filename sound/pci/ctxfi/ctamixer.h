@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -13,84 +12,84 @@
  * @Date 	May 21 2008
  */
 
-#अगर_अघोषित CTAMIXER_H
-#घोषणा CTAMIXER_H
+#ifndef CTAMIXER_H
+#define CTAMIXER_H
 
-#समावेश "ctresource.h"
-#समावेश <linux/spinlock.h>
-#समावेश <sound/core.h>
+#include "ctresource.h"
+#include <linux/spinlock.h>
+#include <sound/core.h>
 
 /* Define the descriptor of a summation node resource */
-काष्ठा sum अणु
-	काष्ठा rsc rsc;		/* Basic resource info */
-	अचिन्हित अक्षर idx[8];
-पूर्ण;
+struct sum {
+	struct rsc rsc;		/* Basic resource info */
+	unsigned char idx[8];
+};
 
 /* Define sum resource request description info */
-काष्ठा sum_desc अणु
-	अचिन्हित पूर्णांक msr;
-पूर्ण;
+struct sum_desc {
+	unsigned int msr;
+};
 
-काष्ठा sum_mgr अणु
-	काष्ठा rsc_mgr mgr;	/* Basic resource manager info */
-	काष्ठा snd_card *card;	/* poपूर्णांकer to this card */
+struct sum_mgr {
+	struct rsc_mgr mgr;	/* Basic resource manager info */
+	struct snd_card *card;	/* pointer to this card */
 	spinlock_t mgr_lock;
 
 	 /* request one sum resource */
-	पूर्णांक (*get_sum)(काष्ठा sum_mgr *mgr,
-			स्थिर काष्ठा sum_desc *desc, काष्ठा sum **rsum);
-	/* वापस one sum resource */
-	पूर्णांक (*put_sum)(काष्ठा sum_mgr *mgr, काष्ठा sum *sum);
-पूर्ण;
+	int (*get_sum)(struct sum_mgr *mgr,
+			const struct sum_desc *desc, struct sum **rsum);
+	/* return one sum resource */
+	int (*put_sum)(struct sum_mgr *mgr, struct sum *sum);
+};
 
-/* Conकाष्ठाor and deकाष्ठाor of daio resource manager */
-पूर्णांक sum_mgr_create(काष्ठा hw *hw, काष्ठा sum_mgr **rsum_mgr);
-पूर्णांक sum_mgr_destroy(काष्ठा sum_mgr *sum_mgr);
+/* Constructor and destructor of daio resource manager */
+int sum_mgr_create(struct hw *hw, struct sum_mgr **rsum_mgr);
+int sum_mgr_destroy(struct sum_mgr *sum_mgr);
 
 /* Define the descriptor of a amixer resource */
-काष्ठा amixer_rsc_ops;
+struct amixer_rsc_ops;
 
-काष्ठा amixer अणु
-	काष्ठा rsc rsc;		/* Basic resource info */
-	अचिन्हित अक्षर idx[8];
-	काष्ठा rsc *input;	/* poपूर्णांकer to a resource acting as source */
-	काष्ठा sum *sum;	/* Put amixer output to this summation node */
-	स्थिर काष्ठा amixer_rsc_ops *ops;	/* AMixer specअगरic operations */
-पूर्ण;
+struct amixer {
+	struct rsc rsc;		/* Basic resource info */
+	unsigned char idx[8];
+	struct rsc *input;	/* pointer to a resource acting as source */
+	struct sum *sum;	/* Put amixer output to this summation node */
+	const struct amixer_rsc_ops *ops;	/* AMixer specific operations */
+};
 
-काष्ठा amixer_rsc_ops अणु
-	पूर्णांक (*set_input)(काष्ठा amixer *amixer, काष्ठा rsc *rsc);
-	पूर्णांक (*set_scale)(काष्ठा amixer *amixer, अचिन्हित पूर्णांक scale);
-	पूर्णांक (*set_invalid_squash)(काष्ठा amixer *amixer, अचिन्हित पूर्णांक iv);
-	पूर्णांक (*set_sum)(काष्ठा amixer *amixer, काष्ठा sum *sum);
-	पूर्णांक (*commit_ग_लिखो)(काष्ठा amixer *amixer);
-	/* Only क्रम पूर्णांकerleaved recording */
-	पूर्णांक (*commit_raw_ग_लिखो)(काष्ठा amixer *amixer);
-	पूर्णांक (*setup)(काष्ठा amixer *amixer, काष्ठा rsc *input,
-			अचिन्हित पूर्णांक scale, काष्ठा sum *sum);
-	पूर्णांक (*get_scale)(काष्ठा amixer *amixer);
-पूर्ण;
+struct amixer_rsc_ops {
+	int (*set_input)(struct amixer *amixer, struct rsc *rsc);
+	int (*set_scale)(struct amixer *amixer, unsigned int scale);
+	int (*set_invalid_squash)(struct amixer *amixer, unsigned int iv);
+	int (*set_sum)(struct amixer *amixer, struct sum *sum);
+	int (*commit_write)(struct amixer *amixer);
+	/* Only for interleaved recording */
+	int (*commit_raw_write)(struct amixer *amixer);
+	int (*setup)(struct amixer *amixer, struct rsc *input,
+			unsigned int scale, struct sum *sum);
+	int (*get_scale)(struct amixer *amixer);
+};
 
 /* Define amixer resource request description info */
-काष्ठा amixer_desc अणु
-	अचिन्हित पूर्णांक msr;
-पूर्ण;
+struct amixer_desc {
+	unsigned int msr;
+};
 
-काष्ठा amixer_mgr अणु
-	काष्ठा rsc_mgr mgr;	/* Basic resource manager info */
-	काष्ठा snd_card *card;	/* poपूर्णांकer to this card */
+struct amixer_mgr {
+	struct rsc_mgr mgr;	/* Basic resource manager info */
+	struct snd_card *card;	/* pointer to this card */
 	spinlock_t mgr_lock;
 
 	 /* request one amixer resource */
-	पूर्णांक (*get_amixer)(काष्ठा amixer_mgr *mgr,
-			  स्थिर काष्ठा amixer_desc *desc,
-			  काष्ठा amixer **ramixer);
-	/* वापस one amixer resource */
-	पूर्णांक (*put_amixer)(काष्ठा amixer_mgr *mgr, काष्ठा amixer *amixer);
-पूर्ण;
+	int (*get_amixer)(struct amixer_mgr *mgr,
+			  const struct amixer_desc *desc,
+			  struct amixer **ramixer);
+	/* return one amixer resource */
+	int (*put_amixer)(struct amixer_mgr *mgr, struct amixer *amixer);
+};
 
-/* Conकाष्ठाor and deकाष्ठाor of amixer resource manager */
-पूर्णांक amixer_mgr_create(काष्ठा hw *hw, काष्ठा amixer_mgr **ramixer_mgr);
-पूर्णांक amixer_mgr_destroy(काष्ठा amixer_mgr *amixer_mgr);
+/* Constructor and destructor of amixer resource manager */
+int amixer_mgr_create(struct hw *hw, struct amixer_mgr **ramixer_mgr);
+int amixer_mgr_destroy(struct amixer_mgr *amixer_mgr);
 
-#पूर्ण_अगर /* CTAMIXER_H */
+#endif /* CTAMIXER_H */

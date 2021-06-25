@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  */
 
-#समावेश "bochs.h"
+#include "bochs.h"
 
 /* ---------------------------------------------------------------------- */
 
-पूर्णांक bochs_mm_init(काष्ठा bochs_device *bochs)
-अणु
-	काष्ठा drm_vram_mm *vmm;
+int bochs_mm_init(struct bochs_device *bochs)
+{
+	struct drm_vram_mm *vmm;
 
 	vmm = drm_vram_helper_alloc_mm(bochs->dev, bochs->fb_base,
 				       bochs->fb_size);
-	वापस PTR_ERR_OR_ZERO(vmm);
-पूर्ण
+	return PTR_ERR_OR_ZERO(vmm);
+}
 
-व्योम bochs_mm_fini(काष्ठा bochs_device *bochs)
-अणु
-	अगर (!bochs->dev->vram_mm)
-		वापस;
+void bochs_mm_fini(struct bochs_device *bochs)
+{
+	if (!bochs->dev->vram_mm)
+		return;
 
 	drm_vram_helper_release_mm(bochs->dev);
-पूर्ण
+}

@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2018 Western Digital Corporation
  */
-#अगर_अघोषित UFS_BSG_H
-#घोषणा UFS_BSG_H
+#ifndef UFS_BSG_H
+#define UFS_BSG_H
 
-#समावेश <linux/bsg-lib.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/bsg-lib.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_host.h>
 
-#समावेश "ufshcd.h"
-#समावेश "ufs.h"
+#include "ufshcd.h"
+#include "ufs.h"
 
-#अगर_घोषित CONFIG_SCSI_UFS_BSG
-व्योम ufs_bsg_हटाओ(काष्ठा ufs_hba *hba);
-पूर्णांक ufs_bsg_probe(काष्ठा ufs_hba *hba);
-#अन्यथा
-अटल अंतरभूत व्योम ufs_bsg_हटाओ(काष्ठा ufs_hba *hba) अणुपूर्ण
-अटल अंतरभूत पूर्णांक ufs_bsg_probe(काष्ठा ufs_hba *hba) अणुवापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SCSI_UFS_BSG
+void ufs_bsg_remove(struct ufs_hba *hba);
+int ufs_bsg_probe(struct ufs_hba *hba);
+#else
+static inline void ufs_bsg_remove(struct ufs_hba *hba) {}
+static inline int ufs_bsg_probe(struct ufs_hba *hba) {return 0; }
+#endif
 
-#पूर्ण_अगर /* UFS_BSG_H */
+#endif /* UFS_BSG_H */

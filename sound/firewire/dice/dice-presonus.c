@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// dice-presonus.c - a part of driver क्रम DICE based devices
+// SPDX-License-Identifier: GPL-2.0
+// dice-presonus.c - a part of driver for DICE based devices
 //
 // Copyright (c) 2019 Takashi Sakamoto
 //
 // Licensed under the terms of the GNU General Public License, version 2.
 
-#समावेश "dice.h"
+#include "dice.h"
 
-काष्ठा dice_presonus_spec अणु
-	अचिन्हित पूर्णांक tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
-	अचिन्हित पूर्णांक rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+struct dice_presonus_spec {
+	unsigned int tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+	unsigned int rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
 	bool has_midi;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dice_presonus_spec dice_presonus_firesutio = अणु
-	.tx_pcm_chs = अणुअणु16, 16, 0पूर्ण, अणु10, 2, 0पूर्ण पूर्ण,
-	.rx_pcm_chs = अणुअणु16, 16, 0पूर्ण, अणु10, 2, 0पूर्ण पूर्ण,
+static const struct dice_presonus_spec dice_presonus_firesutio = {
+	.tx_pcm_chs = {{16, 16, 0}, {10, 2, 0} },
+	.rx_pcm_chs = {{16, 16, 0}, {10, 2, 0} },
 	.has_midi = true,
-पूर्ण;
+};
 
-पूर्णांक snd_dice_detect_presonus_क्रमmats(काष्ठा snd_dice *dice)
-अणु
-	अटल स्थिर काष्ठा अणु
+int snd_dice_detect_presonus_formats(struct snd_dice *dice)
+{
+	static const struct {
 		u32 model_id;
-		स्थिर काष्ठा dice_presonus_spec *spec;
-	पूर्ण *entry, entries[] = अणु
-		अणु0x000008, &dice_presonus_firesutioपूर्ण,
-	पूर्ण;
-	काष्ठा fw_csr_iterator it;
-	पूर्णांक key, val, model_id;
-	पूर्णांक i;
+		const struct dice_presonus_spec *spec;
+	} *entry, entries[] = {
+		{0x000008, &dice_presonus_firesutio},
+	};
+	struct fw_csr_iterator it;
+	int key, val, model_id;
+	int i;
 
 	model_id = 0;
 	fw_csr_iterator_init(&it, dice->unit->directory);
-	जबतक (fw_csr_iterator_next(&it, &key, &val)) अणु
-		अगर (key == CSR_MODEL) अणु
+	while (fw_csr_iterator_next(&it, &key, &val)) {
+		if (key == CSR_MODEL) {
 			model_id = val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(entries); ++i) अणु
+	for (i = 0; i < ARRAY_SIZE(entries); ++i) {
 		entry = entries + i;
-		अगर (entry->model_id == model_id)
-			अवरोध;
-	पूर्ण
-	अगर (i == ARRAY_SIZE(entries))
-		वापस -ENODEV;
+		if (entry->model_id == model_id)
+			break;
+	}
+	if (i == ARRAY_SIZE(entries))
+		return -ENODEV;
 
-	स_नकल(dice->tx_pcm_chs, entry->spec->tx_pcm_chs,
-	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * माप(अचिन्हित पूर्णांक));
-	स_नकल(dice->rx_pcm_chs, entry->spec->rx_pcm_chs,
-	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * माप(अचिन्हित पूर्णांक));
+	memcpy(dice->tx_pcm_chs, entry->spec->tx_pcm_chs,
+	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * sizeof(unsigned int));
+	memcpy(dice->rx_pcm_chs, entry->spec->rx_pcm_chs,
+	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * sizeof(unsigned int));
 
-	अगर (entry->spec->has_midi) अणु
+	if (entry->spec->has_midi) {
 		dice->tx_midi_ports[0] = 1;
 		dice->rx_midi_ports[0] = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

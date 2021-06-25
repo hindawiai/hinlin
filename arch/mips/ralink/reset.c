@@ -1,105 +1,104 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
- * Copyright (C) 2008-2009 Gabor Juhos <juhosg@खोलोwrt.org>
- * Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
+ * Copyright (C) 2008-2009 Gabor Juhos <juhosg@openwrt.org>
+ * Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/pm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/reset-controller.h>
+#include <linux/pm.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/delay.h>
+#include <linux/reset-controller.h>
 
-#समावेश <यंत्र/reboot.h>
+#include <asm/reboot.h>
 
-#समावेश <यंत्र/mach-ralink/ralink_regs.h>
+#include <asm/mach-ralink/ralink_regs.h>
 
 /* Reset Control */
-#घोषणा SYSC_REG_RESET_CTRL	0x034
+#define SYSC_REG_RESET_CTRL	0x034
 
-#घोषणा RSTCTL_RESET_PCI	BIT(26)
-#घोषणा RSTCTL_RESET_SYSTEM	BIT(0)
+#define RSTCTL_RESET_PCI	BIT(26)
+#define RSTCTL_RESET_SYSTEM	BIT(0)
 
-अटल पूर्णांक ralink_निश्चित_device(काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित दीर्घ id)
-अणु
+static int ralink_assert_device(struct reset_controller_dev *rcdev,
+				unsigned long id)
+{
 	u32 val;
 
-	अगर (id == 0)
-		वापस -1;
+	if (id == 0)
+		return -1;
 
 	val = rt_sysc_r32(SYSC_REG_RESET_CTRL);
 	val |= BIT(id);
 	rt_sysc_w32(val, SYSC_REG_RESET_CTRL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ralink_deनिश्चित_device(काष्ठा reset_controller_dev *rcdev,
-				  अचिन्हित दीर्घ id)
-अणु
+static int ralink_deassert_device(struct reset_controller_dev *rcdev,
+				  unsigned long id)
+{
 	u32 val;
 
-	अगर (id == 0)
-		वापस -1;
+	if (id == 0)
+		return -1;
 
 	val = rt_sysc_r32(SYSC_REG_RESET_CTRL);
 	val &= ~BIT(id);
 	rt_sysc_w32(val, SYSC_REG_RESET_CTRL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ralink_reset_device(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	ralink_निश्चित_device(rcdev, id);
-	वापस ralink_deनिश्चित_device(rcdev, id);
-पूर्ण
+static int ralink_reset_device(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	ralink_assert_device(rcdev, id);
+	return ralink_deassert_device(rcdev, id);
+}
 
-अटल स्थिर काष्ठा reset_control_ops reset_ops = अणु
+static const struct reset_control_ops reset_ops = {
 	.reset = ralink_reset_device,
-	.निश्चित = ralink_निश्चित_device,
-	.deनिश्चित = ralink_deनिश्चित_device,
-पूर्ण;
+	.assert = ralink_assert_device,
+	.deassert = ralink_deassert_device,
+};
 
-अटल काष्ठा reset_controller_dev reset_dev = अणु
+static struct reset_controller_dev reset_dev = {
 	.ops			= &reset_ops,
 	.owner			= THIS_MODULE,
 	.nr_resets		= 32,
 	.of_reset_n_cells	= 1,
-पूर्ण;
+};
 
-व्योम ralink_rst_init(व्योम)
-अणु
-	reset_dev.of_node = of_find_compatible_node(शून्य, शून्य,
+void ralink_rst_init(void)
+{
+	reset_dev.of_node = of_find_compatible_node(NULL, NULL,
 						"ralink,rt2880-reset");
-	अगर (!reset_dev.of_node)
+	if (!reset_dev.of_node)
 		pr_err("Failed to find reset controller node");
-	अन्यथा
-		reset_controller_रेजिस्टर(&reset_dev);
-पूर्ण
+	else
+		reset_controller_register(&reset_dev);
+}
 
-अटल व्योम ralink_restart(अक्षर *command)
-अणु
-	अगर (IS_ENABLED(CONFIG_PCI)) अणु
+static void ralink_restart(char *command)
+{
+	if (IS_ENABLED(CONFIG_PCI)) {
 		rt_sysc_m32(0, RSTCTL_RESET_PCI, SYSC_REG_RESET_CTRL);
 		mdelay(50);
-	पूर्ण
+	}
 
 	local_irq_disable();
 	rt_sysc_w32(RSTCTL_RESET_SYSTEM, SYSC_REG_RESET_CTRL);
 	unreachable();
-पूर्ण
+}
 
-अटल पूर्णांक __init mips_reboot_setup(व्योम)
-अणु
+static int __init mips_reboot_setup(void)
+{
 	_machine_restart = ralink_restart;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 arch_initcall(mips_reboot_setup);

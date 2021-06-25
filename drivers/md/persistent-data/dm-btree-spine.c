@@ -1,275 +1,274 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#समावेश "dm-btree-internal.h"
-#समावेश "dm-transaction-manager.h"
+#include "dm-btree-internal.h"
+#include "dm-transaction-manager.h"
 
-#समावेश <linux/device-mapper.h>
+#include <linux/device-mapper.h>
 
-#घोषणा DM_MSG_PREFIX "btree spine"
+#define DM_MSG_PREFIX "btree spine"
 
 /*----------------------------------------------------------------*/
 
-#घोषणा BTREE_CSUM_XOR 121107
+#define BTREE_CSUM_XOR 121107
 
-अटल पूर्णांक node_check(काष्ठा dm_block_validator *v,
-		      काष्ठा dm_block *b,
-		      माप_प्रकार block_size);
+static int node_check(struct dm_block_validator *v,
+		      struct dm_block *b,
+		      size_t block_size);
 
-अटल व्योम node_prepare_क्रम_ग_लिखो(काष्ठा dm_block_validator *v,
-				   काष्ठा dm_block *b,
-				   माप_प्रकार block_size)
-अणु
-	काष्ठा btree_node *n = dm_block_data(b);
-	काष्ठा node_header *h = &n->header;
+static void node_prepare_for_write(struct dm_block_validator *v,
+				   struct dm_block *b,
+				   size_t block_size)
+{
+	struct btree_node *n = dm_block_data(b);
+	struct node_header *h = &n->header;
 
 	h->blocknr = cpu_to_le64(dm_block_location(b));
 	h->csum = cpu_to_le32(dm_bm_checksum(&h->flags,
-					     block_size - माप(__le32),
+					     block_size - sizeof(__le32),
 					     BTREE_CSUM_XOR));
-पूर्ण
+}
 
-अटल पूर्णांक node_check(काष्ठा dm_block_validator *v,
-		      काष्ठा dm_block *b,
-		      माप_प्रकार block_size)
-अणु
-	काष्ठा btree_node *n = dm_block_data(b);
-	काष्ठा node_header *h = &n->header;
-	माप_प्रकार value_size;
+static int node_check(struct dm_block_validator *v,
+		      struct dm_block *b,
+		      size_t block_size)
+{
+	struct btree_node *n = dm_block_data(b);
+	struct node_header *h = &n->header;
+	size_t value_size;
 	__le32 csum_disk;
-	uपूर्णांक32_t flags;
+	uint32_t flags;
 
-	अगर (dm_block_location(b) != le64_to_cpu(h->blocknr)) अणु
+	if (dm_block_location(b) != le64_to_cpu(h->blocknr)) {
 		DMERR_LIMIT("node_check failed: blocknr %llu != wanted %llu",
 			    le64_to_cpu(h->blocknr), dm_block_location(b));
-		वापस -ENOTBLK;
-	पूर्ण
+		return -ENOTBLK;
+	}
 
 	csum_disk = cpu_to_le32(dm_bm_checksum(&h->flags,
-					       block_size - माप(__le32),
+					       block_size - sizeof(__le32),
 					       BTREE_CSUM_XOR));
-	अगर (csum_disk != h->csum) अणु
+	if (csum_disk != h->csum) {
 		DMERR_LIMIT("node_check failed: csum %u != wanted %u",
 			    le32_to_cpu(csum_disk), le32_to_cpu(h->csum));
-		वापस -EILSEQ;
-	पूर्ण
+		return -EILSEQ;
+	}
 
 	value_size = le32_to_cpu(h->value_size);
 
-	अगर (माप(काष्ठा node_header) +
-	    (माप(__le64) + value_size) * le32_to_cpu(h->max_entries) > block_size) अणु
+	if (sizeof(struct node_header) +
+	    (sizeof(__le64) + value_size) * le32_to_cpu(h->max_entries) > block_size) {
 		DMERR_LIMIT("node_check failed: max_entries too large");
-		वापस -EILSEQ;
-	पूर्ण
+		return -EILSEQ;
+	}
 
-	अगर (le32_to_cpu(h->nr_entries) > le32_to_cpu(h->max_entries)) अणु
+	if (le32_to_cpu(h->nr_entries) > le32_to_cpu(h->max_entries)) {
 		DMERR_LIMIT("node_check failed: too many entries");
-		वापस -EILSEQ;
-	पूर्ण
+		return -EILSEQ;
+	}
 
 	/*
 	 * The node must be either INTERNAL or LEAF.
 	 */
 	flags = le32_to_cpu(h->flags);
-	अगर (!(flags & INTERNAL_NODE) && !(flags & LEAF_NODE)) अणु
+	if (!(flags & INTERNAL_NODE) && !(flags & LEAF_NODE)) {
 		DMERR_LIMIT("node_check failed: node is neither INTERNAL or LEAF");
-		वापस -EILSEQ;
-	पूर्ण
+		return -EILSEQ;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा dm_block_validator btree_node_validator = अणु
+struct dm_block_validator btree_node_validator = {
 	.name = "btree_node",
-	.prepare_क्रम_ग_लिखो = node_prepare_क्रम_ग_लिखो,
+	.prepare_for_write = node_prepare_for_write,
 	.check = node_check
-पूर्ण;
+};
 
 /*----------------------------------------------------------------*/
 
-पूर्णांक bn_पढ़ो_lock(काष्ठा dm_btree_info *info, dm_block_t b,
-		 काष्ठा dm_block **result)
-अणु
-	वापस dm_पंचांग_पढ़ो_lock(info->पंचांग, b, &btree_node_validator, result);
-पूर्ण
+int bn_read_lock(struct dm_btree_info *info, dm_block_t b,
+		 struct dm_block **result)
+{
+	return dm_tm_read_lock(info->tm, b, &btree_node_validator, result);
+}
 
-अटल पूर्णांक bn_shaकरोw(काष्ठा dm_btree_info *info, dm_block_t orig,
-	      काष्ठा dm_btree_value_type *vt,
-	      काष्ठा dm_block **result)
-अणु
-	पूर्णांक r, inc;
+static int bn_shadow(struct dm_btree_info *info, dm_block_t orig,
+	      struct dm_btree_value_type *vt,
+	      struct dm_block **result)
+{
+	int r, inc;
 
-	r = dm_पंचांग_shaकरोw_block(info->पंचांग, orig, &btree_node_validator,
+	r = dm_tm_shadow_block(info->tm, orig, &btree_node_validator,
 			       result, &inc);
-	अगर (!r && inc)
-		inc_children(info->पंचांग, dm_block_data(*result), vt);
+	if (!r && inc)
+		inc_children(info->tm, dm_block_data(*result), vt);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक new_block(काष्ठा dm_btree_info *info, काष्ठा dm_block **result)
-अणु
-	वापस dm_पंचांग_new_block(info->पंचांग, &btree_node_validator, result);
-पूर्ण
+int new_block(struct dm_btree_info *info, struct dm_block **result)
+{
+	return dm_tm_new_block(info->tm, &btree_node_validator, result);
+}
 
-व्योम unlock_block(काष्ठा dm_btree_info *info, काष्ठा dm_block *b)
-अणु
-	dm_पंचांग_unlock(info->पंचांग, b);
-पूर्ण
+void unlock_block(struct dm_btree_info *info, struct dm_block *b)
+{
+	dm_tm_unlock(info->tm, b);
+}
 
 /*----------------------------------------------------------------*/
 
-व्योम init_ro_spine(काष्ठा ro_spine *s, काष्ठा dm_btree_info *info)
-अणु
+void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info)
+{
 	s->info = info;
 	s->count = 0;
-	s->nodes[0] = शून्य;
-	s->nodes[1] = शून्य;
-पूर्ण
+	s->nodes[0] = NULL;
+	s->nodes[1] = NULL;
+}
 
-व्योम निकास_ro_spine(काष्ठा ro_spine *s)
-अणु
-	पूर्णांक i;
+void exit_ro_spine(struct ro_spine *s)
+{
+	int i;
 
-	क्रम (i = 0; i < s->count; i++) अणु
+	for (i = 0; i < s->count; i++) {
 		unlock_block(s->info, s->nodes[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ro_step(काष्ठा ro_spine *s, dm_block_t new_child)
-अणु
-	पूर्णांक r;
+int ro_step(struct ro_spine *s, dm_block_t new_child)
+{
+	int r;
 
-	अगर (s->count == 2) अणु
+	if (s->count == 2) {
 		unlock_block(s->info, s->nodes[0]);
 		s->nodes[0] = s->nodes[1];
 		s->count--;
-	पूर्ण
+	}
 
-	r = bn_पढ़ो_lock(s->info, new_child, s->nodes + s->count);
-	अगर (!r)
+	r = bn_read_lock(s->info, new_child, s->nodes + s->count);
+	if (!r)
 		s->count++;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम ro_pop(काष्ठा ro_spine *s)
-अणु
+void ro_pop(struct ro_spine *s)
+{
 	BUG_ON(!s->count);
 	--s->count;
 	unlock_block(s->info, s->nodes[s->count]);
-पूर्ण
+}
 
-काष्ठा btree_node *ro_node(काष्ठा ro_spine *s)
-अणु
-	काष्ठा dm_block *block;
+struct btree_node *ro_node(struct ro_spine *s)
+{
+	struct dm_block *block;
 
 	BUG_ON(!s->count);
 	block = s->nodes[s->count - 1];
 
-	वापस dm_block_data(block);
-पूर्ण
+	return dm_block_data(block);
+}
 
 /*----------------------------------------------------------------*/
 
-व्योम init_shaकरोw_spine(काष्ठा shaकरोw_spine *s, काष्ठा dm_btree_info *info)
-अणु
+void init_shadow_spine(struct shadow_spine *s, struct dm_btree_info *info)
+{
 	s->info = info;
 	s->count = 0;
-पूर्ण
+}
 
-व्योम निकास_shaकरोw_spine(काष्ठा shaकरोw_spine *s)
-अणु
-	पूर्णांक i;
+void exit_shadow_spine(struct shadow_spine *s)
+{
+	int i;
 
-	क्रम (i = 0; i < s->count; i++) अणु
+	for (i = 0; i < s->count; i++) {
 		unlock_block(s->info, s->nodes[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक shaकरोw_step(काष्ठा shaकरोw_spine *s, dm_block_t b,
-		काष्ठा dm_btree_value_type *vt)
-अणु
-	पूर्णांक r;
+int shadow_step(struct shadow_spine *s, dm_block_t b,
+		struct dm_btree_value_type *vt)
+{
+	int r;
 
-	अगर (s->count == 2) अणु
+	if (s->count == 2) {
 		unlock_block(s->info, s->nodes[0]);
 		s->nodes[0] = s->nodes[1];
 		s->count--;
-	पूर्ण
+	}
 
-	r = bn_shaकरोw(s->info, b, vt, s->nodes + s->count);
-	अगर (!r) अणु
-		अगर (!s->count)
+	r = bn_shadow(s->info, b, vt, s->nodes + s->count);
+	if (!r) {
+		if (!s->count)
 			s->root = dm_block_location(s->nodes[0]);
 
 		s->count++;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-काष्ठा dm_block *shaकरोw_current(काष्ठा shaकरोw_spine *s)
-अणु
+struct dm_block *shadow_current(struct shadow_spine *s)
+{
 	BUG_ON(!s->count);
 
-	वापस s->nodes[s->count - 1];
-पूर्ण
+	return s->nodes[s->count - 1];
+}
 
-काष्ठा dm_block *shaकरोw_parent(काष्ठा shaकरोw_spine *s)
-अणु
+struct dm_block *shadow_parent(struct shadow_spine *s)
+{
 	BUG_ON(s->count != 2);
 
-	वापस s->count == 2 ? s->nodes[0] : शून्य;
-पूर्ण
+	return s->count == 2 ? s->nodes[0] : NULL;
+}
 
-पूर्णांक shaकरोw_has_parent(काष्ठा shaकरोw_spine *s)
-अणु
-	वापस s->count >= 2;
-पूर्ण
+int shadow_has_parent(struct shadow_spine *s)
+{
+	return s->count >= 2;
+}
 
-dm_block_t shaकरोw_root(काष्ठा shaकरोw_spine *s)
-अणु
-	वापस s->root;
-पूर्ण
+dm_block_t shadow_root(struct shadow_spine *s)
+{
+	return s->root;
+}
 
-अटल व्योम le64_inc(व्योम *context, स्थिर व्योम *value_le)
-अणु
-	काष्ठा dm_transaction_manager *पंचांग = context;
+static void le64_inc(void *context, const void *value_le)
+{
+	struct dm_transaction_manager *tm = context;
 	__le64 v_le;
 
-	स_नकल(&v_le, value_le, माप(v_le));
-	dm_पंचांग_inc(पंचांग, le64_to_cpu(v_le));
-पूर्ण
+	memcpy(&v_le, value_le, sizeof(v_le));
+	dm_tm_inc(tm, le64_to_cpu(v_le));
+}
 
-अटल व्योम le64_dec(व्योम *context, स्थिर व्योम *value_le)
-अणु
-	काष्ठा dm_transaction_manager *पंचांग = context;
+static void le64_dec(void *context, const void *value_le)
+{
+	struct dm_transaction_manager *tm = context;
 	__le64 v_le;
 
-	स_नकल(&v_le, value_le, माप(v_le));
-	dm_पंचांग_dec(पंचांग, le64_to_cpu(v_le));
-पूर्ण
+	memcpy(&v_le, value_le, sizeof(v_le));
+	dm_tm_dec(tm, le64_to_cpu(v_le));
+}
 
-अटल पूर्णांक le64_equal(व्योम *context, स्थिर व्योम *value1_le, स्थिर व्योम *value2_le)
-अणु
+static int le64_equal(void *context, const void *value1_le, const void *value2_le)
+{
 	__le64 v1_le, v2_le;
 
-	स_नकल(&v1_le, value1_le, माप(v1_le));
-	स_नकल(&v2_le, value2_le, माप(v2_le));
-	वापस v1_le == v2_le;
-पूर्ण
+	memcpy(&v1_le, value1_le, sizeof(v1_le));
+	memcpy(&v2_le, value2_le, sizeof(v2_le));
+	return v1_le == v2_le;
+}
 
-व्योम init_le64_type(काष्ठा dm_transaction_manager *पंचांग,
-		    काष्ठा dm_btree_value_type *vt)
-अणु
-	vt->context = पंचांग;
-	vt->size = माप(__le64);
+void init_le64_type(struct dm_transaction_manager *tm,
+		    struct dm_btree_value_type *vt)
+{
+	vt->context = tm;
+	vt->size = sizeof(__le64);
 	vt->inc = le64_inc;
 	vt->dec = le64_dec;
 	vt->equal = le64_equal;
-पूर्ण
+}

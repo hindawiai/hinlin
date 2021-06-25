@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित S390_CMB_H
-#घोषणा S390_CMB_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef S390_CMB_H
+#define S390_CMB_H
 
-#समावेश <uapi/यंत्र/cmb.h>
+#include <uapi/asm/cmb.h>
 
-काष्ठा ccw_device;
-बाह्य पूर्णांक enable_cmf(काष्ठा ccw_device *cdev);
-बाह्य पूर्णांक disable_cmf(काष्ठा ccw_device *cdev);
-बाह्य पूर्णांक __disable_cmf(काष्ठा ccw_device *cdev);
-बाह्य u64 cmf_पढ़ो(काष्ठा ccw_device *cdev, पूर्णांक index);
-बाह्य पूर्णांक cmf_पढ़ोall(काष्ठा ccw_device *cdev, काष्ठा cmbdata *data);
+struct ccw_device;
+extern int enable_cmf(struct ccw_device *cdev);
+extern int disable_cmf(struct ccw_device *cdev);
+extern int __disable_cmf(struct ccw_device *cdev);
+extern u64 cmf_read(struct ccw_device *cdev, int index);
+extern int cmf_readall(struct ccw_device *cdev, struct cmbdata *data);
 
-#पूर्ण_अगर /* S390_CMB_H */
+#endif /* S390_CMB_H */

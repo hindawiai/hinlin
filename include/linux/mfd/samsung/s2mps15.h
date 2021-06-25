@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 2015 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#अगर_अघोषित __LINUX_MFD_S2MPS15_H
-#घोषणा __LINUX_MFD_S2MPS15_H
+#ifndef __LINUX_MFD_S2MPS15_H
+#define __LINUX_MFD_S2MPS15_H
 
-/* S2MPS15 रेजिस्टरs */
-क्रमागत s2mps15_reg अणु
+/* S2MPS15 registers */
+enum s2mps15_reg {
 	S2MPS15_REG_ID,
 	S2MPS15_REG_INT1,
 	S2MPS15_REG_INT2,
@@ -93,10 +92,10 @@
 	S2MPS15_REG_LDODSCH2,
 	S2MPS15_REG_LDODSCH3,
 	S2MPS15_REG_LDODSCH4,
-पूर्ण;
+};
 
 /* S2MPS15 regulator ids */
-क्रमागत s2mps15_regulators अणु
+enum s2mps15_regulators {
 	S2MPS15_LDO1,
 	S2MPS15_LDO2,
 	S2MPS15_LDO3,
@@ -136,15 +135,15 @@
 	S2MPS15_BUCK10,
 	S2MPS15_BUCK11,
 	S2MPS15_REGULATOR_MAX,
-पूर्ण;
+};
 
-#घोषणा S2MPS15_LDO_VSEL_MASK		(0x3F)
-#घोषणा S2MPS15_BUCK_VSEL_MASK		(0xFF)
+#define S2MPS15_LDO_VSEL_MASK		(0x3F)
+#define S2MPS15_BUCK_VSEL_MASK		(0xFF)
 
-#घोषणा S2MPS15_ENABLE_SHIFT		(0x06)
-#घोषणा S2MPS15_ENABLE_MASK		(0x03 << S2MPS15_ENABLE_SHIFT)
+#define S2MPS15_ENABLE_SHIFT		(0x06)
+#define S2MPS15_ENABLE_MASK		(0x03 << S2MPS15_ENABLE_SHIFT)
 
-#घोषणा S2MPS15_LDO_N_VOLTAGES		(S2MPS15_LDO_VSEL_MASK + 1)
-#घोषणा S2MPS15_BUCK_N_VOLTAGES	(S2MPS15_BUCK_VSEL_MASK + 1)
+#define S2MPS15_LDO_N_VOLTAGES		(S2MPS15_LDO_VSEL_MASK + 1)
+#define S2MPS15_BUCK_N_VOLTAGES	(S2MPS15_BUCK_VSEL_MASK + 1)
 
-#पूर्ण_अगर /* __LINUX_MFD_S2MPS15_H */
+#endif /* __LINUX_MFD_S2MPS15_H */

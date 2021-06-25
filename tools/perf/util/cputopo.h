@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_CPUTOPO_H
-#घोषणा __PERF_CPUTOPO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_CPUTOPO_H
+#define __PERF_CPUTOPO_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा cpu_topology अणु
+struct cpu_topology {
 	u32	  core_sib;
 	u32	  die_sib;
-	u32	  thपढ़ो_sib;
-	अक्षर	**core_siblings;
-	अक्षर	**die_siblings;
-	अक्षर	**thपढ़ो_siblings;
-पूर्ण;
+	u32	  thread_sib;
+	char	**core_siblings;
+	char	**die_siblings;
+	char	**thread_siblings;
+};
 
-काष्ठा numa_topology_node अणु
-	अक्षर		*cpus;
+struct numa_topology_node {
+	char		*cpus;
 	u32		 node;
 	u64		 mem_total;
-	u64		 mem_मुक्त;
-पूर्ण;
+	u64		 mem_free;
+};
 
-काष्ठा numa_topology अणु
+struct numa_topology {
 	u32				nr;
-	काष्ठा numa_topology_node	nodes[];
-पूर्ण;
+	struct numa_topology_node	nodes[];
+};
 
-काष्ठा cpu_topology *cpu_topology__new(व्योम);
-व्योम cpu_topology__delete(काष्ठा cpu_topology *tp);
+struct cpu_topology *cpu_topology__new(void);
+void cpu_topology__delete(struct cpu_topology *tp);
 
-काष्ठा numa_topology *numa_topology__new(व्योम);
-व्योम numa_topology__delete(काष्ठा numa_topology *tp);
+struct numa_topology *numa_topology__new(void);
+void numa_topology__delete(struct numa_topology *tp);
 
-#पूर्ण_अगर /* __PERF_CPUTOPO_H */
+#endif /* __PERF_CPUTOPO_H */

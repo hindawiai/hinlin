@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_EFUSE_C_
+#define _RTW_EFUSE_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <hal_data.h>
-#समावेश <linux/jअगरfies.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <hal_data.h>
+#include <linux/jiffies.h>
 
 
 /* Define global variables */
 u8 fakeEfuseBank;
 u32 fakeEfuseUsedBytes;
-u8 fakeEfuseContent[EFUSE_MAX_HW_SIZE] = अणु0पूर्ण;
-u8 fakeEfuseInitMap[EFUSE_MAX_MAP_LEN] = अणु0पूर्ण;
-u8 fakeEfuseModअगरiedMap[EFUSE_MAX_MAP_LEN] = अणु0पूर्ण;
+u8 fakeEfuseContent[EFUSE_MAX_HW_SIZE] = {0};
+u8 fakeEfuseInitMap[EFUSE_MAX_MAP_LEN] = {0};
+u8 fakeEfuseModifiedMap[EFUSE_MAX_MAP_LEN] = {0};
 
 u32 BTEfuseUsedBytes;
 u8 BTEfuseContent[EFUSE_MAX_BT_BANK][EFUSE_MAX_HW_SIZE];
-u8 BTEfuseInitMap[EFUSE_BT_MAX_MAP_LEN] = अणु0पूर्ण;
-u8 BTEfuseModअगरiedMap[EFUSE_BT_MAX_MAP_LEN] = अणु0पूर्ण;
+u8 BTEfuseInitMap[EFUSE_BT_MAX_MAP_LEN] = {0};
+u8 BTEfuseModifiedMap[EFUSE_BT_MAX_MAP_LEN] = {0};
 
 u32 fakeBTEfuseUsedBytes;
 u8 fakeBTEfuseContent[EFUSE_MAX_BT_BANK][EFUSE_MAX_HW_SIZE];
-u8 fakeBTEfuseInitMap[EFUSE_BT_MAX_MAP_LEN] = अणु0पूर्ण;
-u8 fakeBTEfuseModअगरiedMap[EFUSE_BT_MAX_MAP_LEN] = अणु0पूर्ण;
+u8 fakeBTEfuseInitMap[EFUSE_BT_MAX_MAP_LEN] = {0};
+u8 fakeBTEfuseModifiedMap[EFUSE_BT_MAX_MAP_LEN] = {0};
 
-#घोषणा REG_EFUSE_CTRL		0x0030
-#घोषणा EFUSE_CTRL			REG_EFUSE_CTRL		/*  E-Fuse Control. */
+#define REG_EFUSE_CTRL		0x0030
+#define EFUSE_CTRL			REG_EFUSE_CTRL		/*  E-Fuse Control. */
 
-अटल bool
+static bool
 Efuse_Read1ByteFromFakeContent(
-	काष्ठा adapter *padapter,
+	struct adapter *padapter,
 	u16 	Offset,
 	u8 *Value)
-अणु
-	अगर (Offset >= EFUSE_MAX_HW_SIZE)
-		वापस false;
-	/* DbgPrपूर्णांक("Read fake content, offset = %d\n", Offset); */
-	अगर (fakeEfuseBank == 0)
+{
+	if (Offset >= EFUSE_MAX_HW_SIZE)
+		return false;
+	/* DbgPrint("Read fake content, offset = %d\n", Offset); */
+	if (fakeEfuseBank == 0)
 		*Value = fakeEfuseContent[Offset];
-	अन्यथा
+	else
 		*Value = fakeBTEfuseContent[fakeEfuseBank-1][Offset];
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
+static bool
 Efuse_Write1ByteToFakeContent(
-	काष्ठा adapter *padapter,
+	struct adapter *padapter,
 	u16 	Offset,
 	u8 Value)
-अणु
-	अगर (Offset >= EFUSE_MAX_HW_SIZE)
-		वापस false;
-	अगर (fakeEfuseBank == 0)
+{
+	if (Offset >= EFUSE_MAX_HW_SIZE)
+		return false;
+	if (fakeEfuseBank == 0)
 		fakeEfuseContent[Offset] = Value;
-	अन्यथा
+	else
 		fakeBTEfuseContent[fakeEfuseBank-1][Offset] = Value;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*-----------------------------------------------------------------------------
  * Function:	Efuse_PowerSwitch
  *
- * Overview:	When we want to enable ग_लिखो operation, we should change to
- *			pwr on state. When we stop ग_लिखो, we should चयन to 500k mode
+ * Overview:	When we want to enable write operation, we should change to
+ *			pwr on state. When we stop write, we should switch to 500k mode
  *			and disable LDO 2.5V.
  *
  * Input:       NONE
@@ -82,14 +81,14 @@ Efuse_Write1ByteToFakeContent(
  * 11/17/2008	MHC		Create Version 0.
  *
  *---------------------------------------------------------------------------*/
-व्योम
+void
 Efuse_PowerSwitch(
-काष्ठा adapter *padapter,
+struct adapter *padapter,
 u8 bWrite,
 u8 PwrState)
-अणु
+{
 	padapter->HalFunc.EfusePowerSwitch(padapter, bWrite, PwrState);
-पूर्ण
+}
 
 /*-----------------------------------------------------------------------------
  * Function:	Efuse_GetCurrentSize
@@ -109,86 +108,86 @@ u8 PwrState)
  *---------------------------------------------------------------------------*/
 u16
 Efuse_GetCurrentSize(
-	काष्ठा adapter *padapter,
+	struct adapter *padapter,
 	u8 	efuseType,
-	bool		bPseuकरोTest)
-अणु
-	वापस padapter->HalFunc.EfuseGetCurrentSize(padapter, efuseType,
-						     bPseuकरोTest);
-पूर्ण
+	bool		bPseudoTest)
+{
+	return padapter->HalFunc.EfuseGetCurrentSize(padapter, efuseType,
+						     bPseudoTest);
+}
 
 /*  11/16/2008 MH Add description. Get current efuse area enabled word!!. */
 u8
 Efuse_CalculateWordCnts(u8 word_en)
-अणु
+{
 	u8 word_cnts = 0;
-	अगर (!(word_en & BIT(0)))
-		word_cnts++; /*  0 : ग_लिखो enable */
-	अगर (!(word_en & BIT(1)))
+	if (!(word_en & BIT(0)))
+		word_cnts++; /*  0 : write enable */
+	if (!(word_en & BIT(1)))
 		word_cnts++;
-	अगर (!(word_en & BIT(2)))
+	if (!(word_en & BIT(2)))
 		word_cnts++;
-	अगर (!(word_en & BIT(3)))
+	if (!(word_en & BIT(3)))
 		word_cnts++;
-	वापस word_cnts;
-पूर्ण
+	return word_cnts;
+}
 
 /*  */
 /* 	Description: */
-/* 		1. Execute E-Fuse पढ़ो byte operation according as map offset and */
+/* 		1. Execute E-Fuse read byte operation according as map offset and */
 /* 		    save to E-Fuse table. */
-/* 		2. Referred from SD1 Riअक्षरd. */
+/* 		2. Referred from SD1 Richard. */
 /*  */
 /* 	Assumption: */
-/* 		1. Boot from E-Fuse and successfully स्वतः-load. */
-/* 		2. PASSIVE_LEVEL (USB पूर्णांकerface) */
+/* 		1. Boot from E-Fuse and successfully auto-load. */
+/* 		2. PASSIVE_LEVEL (USB interface) */
 /*  */
 /* 	Created by Roger, 2008.10.21. */
 /*  */
 /* 	2008/12/12 MH	1. Reorganize code flow and reserve bytes. and add description. */
 /* 					2. Add efuse utilization collect. */
-/* 	2008/12/22 MH	Read Efuse must check अगर we ग_लिखो section 1 data again!!! Sec1 */
-/* 					ग_लिखो addr must be after sec5. */
+/* 	2008/12/22 MH	Read Efuse must check if we write section 1 data again!!! Sec1 */
+/* 					write addr must be after sec5. */
 /*  */
 
-व्योम
+void
 efuse_ReadEFuse(
-	काष्ठा adapter *Adapter,
+	struct adapter *Adapter,
 	u8 efuseType,
 	u16 	_offset,
 	u16 	_size_byte,
 	u8 *pbuf,
-bool	bPseuकरोTest
+bool	bPseudoTest
 	);
-व्योम
+void
 efuse_ReadEFuse(
-	काष्ठा adapter *Adapter,
+	struct adapter *Adapter,
 	u8 efuseType,
 	u16 	_offset,
 	u16 	_size_byte,
 	u8 *pbuf,
-bool	bPseuकरोTest
+bool	bPseudoTest
 	)
-अणु
-	Adapter->HalFunc.ReadEFuse(Adapter, efuseType, _offset, _size_byte, pbuf, bPseuकरोTest);
-पूर्ण
+{
+	Adapter->HalFunc.ReadEFuse(Adapter, efuseType, _offset, _size_byte, pbuf, bPseudoTest);
+}
 
-व्योम
+void
 EFUSE_GetEfuseDefinition(
-	काष्ठा adapter *padapter,
+	struct adapter *padapter,
 	u8 efuseType,
 	u8 type,
-	व्योम 	*pOut,
-	bool		bPseuकरोTest
+	void 	*pOut,
+	bool		bPseudoTest
 	)
-अणु
-	padapter->HalFunc.EFUSEGetEfuseDefinition(padapter, efuseType, type, pOut, bPseuकरोTest);
-पूर्ण
+{
+	padapter->HalFunc.EFUSEGetEfuseDefinition(padapter, efuseType, type, pOut, bPseudoTest);
+}
 
 /*-----------------------------------------------------------------------------
  * Function:	EFUSE_Read1Byte
  *
- * Overview:	Copy from WMAC fot EFUSE पढ़ो 1 byte.
+ * Overview:	Copy from WMAC fot EFUSE read 1 byte.
  *
  * Input:       NONE
  *
@@ -203,108 +202,108 @@ EFUSE_GetEfuseDefinition(
  *---------------------------------------------------------------------------*/
 u8
 EFUSE_Read1Byte(
-काष्ठा adapter *Adapter,
+struct adapter *Adapter,
 u16 	Address)
-अणु
-	u8 Bytetemp = अणु0x00पूर्ण;
-	u8 temp = अणु0x00पूर्ण;
+{
+	u8 Bytetemp = {0x00};
+	u8 temp = {0x00};
 	u32 k = 0;
 	u16 contentLen = 0;
 
-	EFUSE_GetEfuseDefinition(Adapter, EFUSE_WIFI, TYPE_EFUSE_REAL_CONTENT_LEN, (व्योम *)&contentLen, false);
+	EFUSE_GetEfuseDefinition(Adapter, EFUSE_WIFI, TYPE_EFUSE_REAL_CONTENT_LEN, (void *)&contentLen, false);
 
-	अगर (Address < contentLen) अणु/* E-fuse 512Byte */
+	if (Address < contentLen) {/* E-fuse 512Byte */
 		/* Write E-fuse Register address bit0~7 */
 		temp = Address & 0xFF;
-		rtw_ग_लिखो8(Adapter, EFUSE_CTRL+1, temp);
-		Bytetemp = rtw_पढ़ो8(Adapter, EFUSE_CTRL+2);
+		rtw_write8(Adapter, EFUSE_CTRL+1, temp);
+		Bytetemp = rtw_read8(Adapter, EFUSE_CTRL+2);
 		/* Write E-fuse Register address bit8~9 */
 		temp = ((Address >> 8) & 0x03) | (Bytetemp & 0xFC);
-		rtw_ग_लिखो8(Adapter, EFUSE_CTRL+2, temp);
+		rtw_write8(Adapter, EFUSE_CTRL+2, temp);
 
 		/* Write 0x30[31]= 0 */
-		Bytetemp = rtw_पढ़ो8(Adapter, EFUSE_CTRL+3);
+		Bytetemp = rtw_read8(Adapter, EFUSE_CTRL+3);
 		temp = Bytetemp & 0x7F;
-		rtw_ग_लिखो8(Adapter, EFUSE_CTRL+3, temp);
+		rtw_write8(Adapter, EFUSE_CTRL+3, temp);
 
-		/* Wait Write-पढ़ोy (0x30[31]= 1) */
-		Bytetemp = rtw_पढ़ो8(Adapter, EFUSE_CTRL+3);
-		जबतक (!(Bytetemp & 0x80)) अणु
-			Bytetemp = rtw_पढ़ो8(Adapter, EFUSE_CTRL+3);
+		/* Wait Write-ready (0x30[31]= 1) */
+		Bytetemp = rtw_read8(Adapter, EFUSE_CTRL+3);
+		while (!(Bytetemp & 0x80)) {
+			Bytetemp = rtw_read8(Adapter, EFUSE_CTRL+3);
 			k++;
-			अगर (k == 1000)
-				अवरोध;
-		पूर्ण
-		वापस rtw_पढ़ो8(Adapter, EFUSE_CTRL);
-	पूर्ण अन्यथा
-		वापस 0xFF;
+			if (k == 1000)
+				break;
+		}
+		return rtw_read8(Adapter, EFUSE_CTRL);
+	} else
+		return 0xFF;
 
-पूर्ण /* EFUSE_Read1Byte */
+} /* EFUSE_Read1Byte */
 
 /*  11/16/2008 MH Read one byte from real Efuse. */
 u8
 efuse_OneByteRead(
-काष्ठा adapter *padapter,
+struct adapter *padapter,
 u16 		addr,
 u8 	*data,
-bool		bPseuकरोTest)
-अणु
-	u32 पंचांगpidx = 0;
+bool		bPseudoTest)
+{
+	u32 tmpidx = 0;
 	u8 bResult;
-	u8 पढ़ोbyte;
+	u8 readbyte;
 
-	अगर (bPseuकरोTest) अणु
-		वापस Efuse_Read1ByteFromFakeContent(padapter, addr, data);
-	पूर्ण
+	if (bPseudoTest) {
+		return Efuse_Read1ByteFromFakeContent(padapter, addr, data);
+	}
 
-	/*  <20130121, Kordan> For SMIC EFUSE specअगरicम_से_पn. */
-	/* 0x34[11]: SW क्रमce PGMEN input of efuse to high. (क्रम the bank selected by 0x34[9:8]) */
+	/*  <20130121, Kordan> For SMIC EFUSE specificatoin. */
+	/* 0x34[11]: SW force PGMEN input of efuse to high. (for the bank selected by 0x34[9:8]) */
 	/* PHY_SetMacReg(padapter, 0x34, BIT11, 0); */
-	rtw_ग_लिखो16(padapter, 0x34, rtw_पढ़ो16(padapter, 0x34) & (~BIT11));
+	rtw_write16(padapter, 0x34, rtw_read16(padapter, 0x34) & (~BIT11));
 
 	/*  -----------------e-fuse reg ctrl --------------------------------- */
 	/* address */
-	rtw_ग_लिखो8(padapter, EFUSE_CTRL+1, (u8)(addr&0xff));
-	rtw_ग_लिखो8(padapter, EFUSE_CTRL+2, ((u8)((addr>>8) & 0x03)) |
-	(rtw_पढ़ो8(padapter, EFUSE_CTRL+2)&0xFC));
+	rtw_write8(padapter, EFUSE_CTRL+1, (u8)(addr&0xff));
+	rtw_write8(padapter, EFUSE_CTRL+2, ((u8)((addr>>8) & 0x03)) |
+	(rtw_read8(padapter, EFUSE_CTRL+2)&0xFC));
 
-	/* rtw_ग_लिखो8(padapter, EFUSE_CTRL+3,  0x72); पढ़ो cmd */
+	/* rtw_write8(padapter, EFUSE_CTRL+3,  0x72); read cmd */
 	/* Write bit 32 0 */
-	पढ़ोbyte = rtw_पढ़ो8(padapter, EFUSE_CTRL+3);
-	rtw_ग_लिखो8(padapter, EFUSE_CTRL+3, (पढ़ोbyte & 0x7f));
+	readbyte = rtw_read8(padapter, EFUSE_CTRL+3);
+	rtw_write8(padapter, EFUSE_CTRL+3, (readbyte & 0x7f));
 
-	जबतक (!(0x80 & rtw_पढ़ो8(padapter, EFUSE_CTRL+3)) && (पंचांगpidx < 1000)) अणु
+	while (!(0x80 & rtw_read8(padapter, EFUSE_CTRL+3)) && (tmpidx < 1000)) {
 		mdelay(1);
-		पंचांगpidx++;
-	पूर्ण
-	अगर (पंचांगpidx < 100) अणु
-		*data = rtw_पढ़ो8(padapter, EFUSE_CTRL);
+		tmpidx++;
+	}
+	if (tmpidx < 100) {
+		*data = rtw_read8(padapter, EFUSE_CTRL);
 		bResult = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		*data = 0xff;
 		bResult = false;
-	पूर्ण
+	}
 
-	वापस bResult;
-पूर्ण
+	return bResult;
+}
 
 /*  11/16/2008 MH Write one byte to reald Efuse. */
-u8 efuse_OneByteWrite(काष्ठा adapter *padapter, u16 addr, u8 data, bool bPseuकरोTest)
-अणु
-	u8 पंचांगpidx = 0;
+u8 efuse_OneByteWrite(struct adapter *padapter, u16 addr, u8 data, bool bPseudoTest)
+{
+	u8 tmpidx = 0;
 	u8 bResult = false;
 	u32 efuseValue = 0;
 
-	अगर (bPseuकरोTest) अणु
-		वापस Efuse_Write1ByteToFakeContent(padapter, addr, data);
-	पूर्ण
+	if (bPseudoTest) {
+		return Efuse_Write1ByteToFakeContent(padapter, addr, data);
+	}
 
 
 	/*  -----------------e-fuse reg ctrl --------------------------------- */
 	/* address */
 
 
-	efuseValue = rtw_पढ़ो32(padapter, EFUSE_CTRL);
+	efuseValue = rtw_read32(padapter, EFUSE_CTRL);
 	efuseValue |= (BIT21|BIT31);
 	efuseValue &= ~(0x3FFFF);
 	efuseValue |= ((addr<<8 | data) & 0x3FFFF);
@@ -312,49 +311,49 @@ u8 efuse_OneByteWrite(काष्ठा adapter *padapter, u16 addr, u8 data, b
 
 	/*  <20130227, Kordan> 8192E MP chip A-cut had better not set 0x34[11] until B-Cut. */
 
-	/*  <20130121, Kordan> For SMIC EFUSE specअगरicम_से_पn. */
-	/* 0x34[11]: SW क्रमce PGMEN input of efuse to high. (क्रम the bank selected by 0x34[9:8]) */
+	/*  <20130121, Kordan> For SMIC EFUSE specificatoin. */
+	/* 0x34[11]: SW force PGMEN input of efuse to high. (for the bank selected by 0x34[9:8]) */
 	/* PHY_SetMacReg(padapter, 0x34, BIT11, 1); */
-	rtw_ग_लिखो16(padapter, 0x34, rtw_पढ़ो16(padapter, 0x34) | (BIT11));
-	rtw_ग_लिखो32(padapter, EFUSE_CTRL, 0x90600000|((addr<<8 | data)));
+	rtw_write16(padapter, 0x34, rtw_read16(padapter, 0x34) | (BIT11));
+	rtw_write32(padapter, EFUSE_CTRL, 0x90600000|((addr<<8 | data)));
 
-	जबतक ((0x80 &  rtw_पढ़ो8(padapter, EFUSE_CTRL+3)) && (पंचांगpidx < 100)) अणु
+	while ((0x80 &  rtw_read8(padapter, EFUSE_CTRL+3)) && (tmpidx < 100)) {
 		mdelay(1);
-		पंचांगpidx++;
-	पूर्ण
+		tmpidx++;
+	}
 
-	अगर (पंचांगpidx < 100) अणु
+	if (tmpidx < 100) {
 		bResult = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		bResult = false;
-	पूर्ण
+	}
 
 	/*  disable Efuse program enable */
 	PHY_SetMacReg(padapter, EFUSE_TEST, BIT(11), 0);
 
-	वापस bResult;
-पूर्ण
+	return bResult;
+}
 
-पूर्णांक
-Efuse_PgPacketRead(काष्ठा adapter *padapter,
+int
+Efuse_PgPacketRead(struct adapter *padapter,
 				u8 	offset,
 				u8 	*data,
-				bool		bPseuकरोTest)
-अणु
-	वापस padapter->HalFunc.Efuse_PgPacketRead(padapter, offset, data,
-						    bPseuकरोTest);
-पूर्ण
+				bool		bPseudoTest)
+{
+	return padapter->HalFunc.Efuse_PgPacketRead(padapter, offset, data,
+						    bPseudoTest);
+}
 
-पूर्णांक
-Efuse_PgPacketWrite(काष्ठा adapter *padapter,
+int
+Efuse_PgPacketWrite(struct adapter *padapter,
 				u8 	offset,
 				u8 	word_en,
 				u8 	*data,
-				bool		bPseuकरोTest)
-अणु
-	वापस padapter->HalFunc.Efuse_PgPacketWrite(padapter, offset, word_en,
-						     data, bPseuकरोTest);
-पूर्ण
+				bool		bPseudoTest)
+{
+	return padapter->HalFunc.Efuse_PgPacketWrite(padapter, offset, word_en,
+						     data, bPseudoTest);
+}
 
 /*-----------------------------------------------------------------------------
  * Function:	efuse_WordEnableDataRead
@@ -373,41 +372,41 @@ Efuse_PgPacketWrite(काष्ठा adapter *padapter,
  * 11/21/2008	MHC		Fix Write bug when we only enable late word.
  *
  *---------------------------------------------------------------------------*/
-व्योम
+void
 efuse_WordEnableDataRead(u8 word_en,
 						u8 *sourdata,
 						u8 *targetdata)
-अणु
-	अगर (!(word_en&BIT(0))) अणु
+{
+	if (!(word_en&BIT(0))) {
 		targetdata[0] = sourdata[0];
 		targetdata[1] = sourdata[1];
-	पूर्ण
-	अगर (!(word_en&BIT(1))) अणु
+	}
+	if (!(word_en&BIT(1))) {
 		targetdata[2] = sourdata[2];
 		targetdata[3] = sourdata[3];
-	पूर्ण
-	अगर (!(word_en&BIT(2))) अणु
+	}
+	if (!(word_en&BIT(2))) {
 		targetdata[4] = sourdata[4];
 		targetdata[5] = sourdata[5];
-	पूर्ण
-	अगर (!(word_en&BIT(3))) अणु
+	}
+	if (!(word_en&BIT(3))) {
 		targetdata[6] = sourdata[6];
 		targetdata[7] = sourdata[7];
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 u8
-Efuse_WordEnableDataWrite(काष्ठा adapter *padapter,
+Efuse_WordEnableDataWrite(struct adapter *padapter,
 						u16 	efuse_addr,
 						u8 word_en,
 						u8 *data,
-						bool		bPseuकरोTest)
-अणु
-	वापस padapter->HalFunc.Efuse_WordEnableDataWrite(padapter, efuse_addr,
+						bool		bPseudoTest)
+{
+	return padapter->HalFunc.Efuse_WordEnableDataWrite(padapter, efuse_addr,
 							   word_en, data,
-							   bPseuकरोTest);
-पूर्ण
+							   bPseudoTest);
+}
 
 /*-----------------------------------------------------------------------------
  * Function:	Efuse_ReadAllMap
@@ -425,29 +424,29 @@ Efuse_WordEnableDataWrite(काष्ठा adapter *padapter,
  * 11/11/2008	MHC		Create Version 0.
  *
  *---------------------------------------------------------------------------*/
-व्योम
+void
 Efuse_ReadAllMap(
-	काष्ठा adapter *padapter,
+	struct adapter *padapter,
 	u8 efuseType,
 	u8 *Efuse,
-	bool		bPseuकरोTest);
-व्योम Efuse_ReadAllMap(काष्ठा adapter *padapter, u8 efuseType, u8 *Efuse, bool bPseuकरोTest)
-अणु
+	bool		bPseudoTest);
+void Efuse_ReadAllMap(struct adapter *padapter, u8 efuseType, u8 *Efuse, bool bPseudoTest)
+{
 	u16 mapLen = 0;
 
 	Efuse_PowerSwitch(padapter, false, true);
 
-	EFUSE_GetEfuseDefinition(padapter, efuseType, TYPE_EFUSE_MAP_LEN, (व्योम *)&mapLen, bPseuकरोTest);
+	EFUSE_GetEfuseDefinition(padapter, efuseType, TYPE_EFUSE_MAP_LEN, (void *)&mapLen, bPseudoTest);
 
-	efuse_ReadEFuse(padapter, efuseType, 0, mapLen, Efuse, bPseuकरोTest);
+	efuse_ReadEFuse(padapter, efuseType, 0, mapLen, Efuse, bPseudoTest);
 
 	Efuse_PowerSwitch(padapter, false, false);
-पूर्ण
+}
 
 /*-----------------------------------------------------------------------------
- * Function:	efuse_ShaकरोwRead1Byte
- *		efuse_ShaकरोwRead2Byte
- *		efuse_ShaकरोwRead4Byte
+ * Function:	efuse_ShadowRead1Byte
+ *		efuse_ShadowRead2Byte
+ *		efuse_ShadowRead4Byte
  *
  * Overview:	Read from efuse init map by one/two/four bytes !!!!!
  *
@@ -462,40 +461,40 @@ Efuse_ReadAllMap(
  * 11/12/2008	MHC		Create Version 0.
  *
  *---------------------------------------------------------------------------*/
-अटल व्योम efuse_ShaकरोwRead1Byte(काष्ठा adapter *padapter, u16 Offset, u8 *Value)
-अणु
-	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+static void efuse_ShadowRead1Byte(struct adapter *padapter, u16 Offset, u8 *Value)
+{
+	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 
 	*Value = pEEPROM->efuse_eeprom_data[Offset];
 
-पूर्ण	/*  EFUSE_ShaकरोwRead1Byte */
+}	/*  EFUSE_ShadowRead1Byte */
 
 /* Read Two Bytes */
-अटल व्योम efuse_ShaकरोwRead2Byte(काष्ठा adapter *padapter, u16 Offset, u16 *Value)
-अणु
-	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+static void efuse_ShadowRead2Byte(struct adapter *padapter, u16 Offset, u16 *Value)
+{
+	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 
 	*Value = pEEPROM->efuse_eeprom_data[Offset];
 	*Value |= pEEPROM->efuse_eeprom_data[Offset+1]<<8;
 
-पूर्ण	/*  EFUSE_ShaकरोwRead2Byte */
+}	/*  EFUSE_ShadowRead2Byte */
 
 /* Read Four Bytes */
-अटल व्योम efuse_ShaकरोwRead4Byte(काष्ठा adapter *padapter, u16 Offset, u32 *Value)
-अणु
-	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+static void efuse_ShadowRead4Byte(struct adapter *padapter, u16 Offset, u32 *Value)
+{
+	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 
 	*Value = pEEPROM->efuse_eeprom_data[Offset];
 	*Value |= pEEPROM->efuse_eeprom_data[Offset+1]<<8;
 	*Value |= pEEPROM->efuse_eeprom_data[Offset+2]<<16;
 	*Value |= pEEPROM->efuse_eeprom_data[Offset+3]<<24;
 
-पूर्ण	/*  efuse_ShaकरोwRead4Byte */
+}	/*  efuse_ShadowRead4Byte */
 
 /*-----------------------------------------------------------------------------
- * Function:	EFUSE_ShaकरोwMapUpdate
+ * Function:	EFUSE_ShadowMapUpdate
  *
- * Overview:	Transfer current EFUSE content to shaकरोw init and modअगरy map.
+ * Overview:	Transfer current EFUSE content to shadow init and modify map.
  *
  * Input:       NONE
  *
@@ -508,25 +507,25 @@ Efuse_ReadAllMap(
  * 11/13/2008	MHC		Create Version 0.
  *
  *---------------------------------------------------------------------------*/
-व्योम EFUSE_ShaकरोwMapUpdate(काष्ठा adapter *padapter, u8 efuseType, bool bPseuकरोTest)
-अणु
-	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+void EFUSE_ShadowMapUpdate(struct adapter *padapter, u8 efuseType, bool bPseudoTest)
+{
+	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 	u16 mapLen = 0;
 
-	EFUSE_GetEfuseDefinition(padapter, efuseType, TYPE_EFUSE_MAP_LEN, (व्योम *)&mapLen, bPseuकरोTest);
+	EFUSE_GetEfuseDefinition(padapter, efuseType, TYPE_EFUSE_MAP_LEN, (void *)&mapLen, bPseudoTest);
 
-	अगर (pEEPROM->bस्वतःload_fail_flag)
-		स_रखो(pEEPROM->efuse_eeprom_data, 0xFF, mapLen);
-	अन्यथा
-		Efuse_ReadAllMap(padapter, efuseType, pEEPROM->efuse_eeprom_data, bPseuकरोTest);
+	if (pEEPROM->bautoload_fail_flag)
+		memset(pEEPROM->efuse_eeprom_data, 0xFF, mapLen);
+	else
+		Efuse_ReadAllMap(padapter, efuseType, pEEPROM->efuse_eeprom_data, bPseudoTest);
 
-	/* Platक्रमmMoveMemory((व्योम *)&pHalData->EfuseMap[EFUSE_MODIFY_MAP][0], */
-	/* व्योम *)&pHalData->EfuseMap[EFUSE_INIT_MAP][0], mapLen); */
-पूर्ण /*  EFUSE_ShaकरोwMapUpdate */
+	/* PlatformMoveMemory((void *)&pHalData->EfuseMap[EFUSE_MODIFY_MAP][0], */
+	/* void *)&pHalData->EfuseMap[EFUSE_INIT_MAP][0], mapLen); */
+} /*  EFUSE_ShadowMapUpdate */
 
 
 /*-----------------------------------------------------------------------------
- * Function:	EFUSE_ShaकरोwRead
+ * Function:	EFUSE_ShadowRead
  *
  * Overview:	Read from efuse init map !!!!!
  *
@@ -541,13 +540,13 @@ Efuse_ReadAllMap(
  * 11/12/2008	MHC		Create Version 0.
  *
  *---------------------------------------------------------------------------*/
-व्योम EFUSE_ShaकरोwRead(काष्ठा adapter *padapter, u8 Type, u16 Offset, u32 *Value)
-अणु
-	अगर (Type == 1)
-		efuse_ShaकरोwRead1Byte(padapter, Offset, (u8 *)Value);
-	अन्यथा अगर (Type == 2)
-		efuse_ShaकरोwRead2Byte(padapter, Offset, (u16 *)Value);
-	अन्यथा अगर (Type == 4)
-		efuse_ShaकरोwRead4Byte(padapter, Offset, (u32 *)Value);
+void EFUSE_ShadowRead(struct adapter *padapter, u8 Type, u16 Offset, u32 *Value)
+{
+	if (Type == 1)
+		efuse_ShadowRead1Byte(padapter, Offset, (u8 *)Value);
+	else if (Type == 2)
+		efuse_ShadowRead2Byte(padapter, Offset, (u16 *)Value);
+	else if (Type == 4)
+		efuse_ShadowRead4Byte(padapter, Offset, (u32 *)Value);
 
-पूर्ण	/* EFUSE_ShaकरोwRead*/
+}	/* EFUSE_ShadowRead*/

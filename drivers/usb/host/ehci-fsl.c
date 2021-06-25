@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2005-2009 MontaVista Software, Inc.
  * Copyright 2008,2012,2015      Freescale Semiconductor, Inc.
  *
  * Ported to 834x by Randy Vinson <rvinson@mvista.com> using code provided
  * by Hunter Wu.
- * Power Management support by Dave Liu <daveliu@मुक्तscale.com>,
- * Jerry Huang <Chang-Ming.Huang@मुक्तscale.com> and
+ * Power Management support by Dave Liu <daveliu@freescale.com>,
+ * Jerry Huang <Chang-Ming.Huang@freescale.com> and
  * Anton Vorontsov <avorontsov@ru.mvista.com>.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/err.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/ehci_def.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fsl_devices.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/err.h>
+#include <linux/usb.h>
+#include <linux/usb/ehci_def.h>
+#include <linux/usb/hcd.h>
+#include <linux/usb/otg.h>
+#include <linux/platform_device.h>
+#include <linux/fsl_devices.h>
+#include <linux/of_platform.h>
+#include <linux/io.h>
 
-#समावेश "ehci.h"
-#समावेश "ehci-fsl.h"
+#include "ehci.h"
+#include "ehci-fsl.h"
 
-#घोषणा DRIVER_DESC "Freescale EHCI Host controller driver"
-#घोषणा DRV_NAME "ehci-fsl"
+#define DRIVER_DESC "Freescale EHCI Host controller driver"
+#define DRV_NAME "ehci-fsl"
 
-अटल काष्ठा hc_driver __पढ़ो_mostly fsl_ehci_hc_driver;
+static struct hc_driver __read_mostly fsl_ehci_hc_driver;
 
 /* configure so an HC device and id are always provided */
 /* always called with process context; sleeping is OK */
@@ -43,446 +42,446 @@
  *
  * Context: task context, might sleep
  *
- * Allocates basic resources क्रम this USB host controller.
+ * Allocates basic resources for this USB host controller.
  */
-अटल पूर्णांक fsl_ehci_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_usb2_platक्रमm_data *pdata;
-	काष्ठा usb_hcd *hcd;
-	काष्ठा resource *res;
-	पूर्णांक irq;
-	पूर्णांक retval;
-	u32 पंचांगp;
+static int fsl_ehci_drv_probe(struct platform_device *pdev)
+{
+	struct fsl_usb2_platform_data *pdata;
+	struct usb_hcd *hcd;
+	struct resource *res;
+	int irq;
+	int retval;
+	u32 tmp;
 
 	pr_debug("initializing FSL-SOC USB Controller\n");
 
-	/* Need platक्रमm data क्रम setup */
+	/* Need platform data for setup */
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev,
 			"No platform data for %s.\n", dev_name(&pdev->dev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
-	 * This is a host mode driver, verअगरy that we're supposed to be
+	 * This is a host mode driver, verify that we're supposed to be
 	 * in host mode.
 	 */
-	अगर (!((pdata->operating_mode == FSL_USB2_DR_HOST) ||
+	if (!((pdata->operating_mode == FSL_USB2_DR_HOST) ||
 	      (pdata->operating_mode == FSL_USB2_MPH_HOST) ||
-	      (pdata->operating_mode == FSL_USB2_DR_OTG))) अणु
+	      (pdata->operating_mode == FSL_USB2_DR_OTG))) {
 		dev_err(&pdev->dev,
 			"Non Host Mode configured for %s. Wrong driver linked.\n",
 			dev_name(&pdev->dev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res) {
 		dev_err(&pdev->dev,
 			"Found HC with no IRQ. Check %s setup!\n",
 			dev_name(&pdev->dev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	irq = res->start;
 
 	hcd = __usb_create_hcd(&fsl_ehci_hc_driver, pdev->dev.parent,
-			       &pdev->dev, dev_name(&pdev->dev), शून्य);
-	अगर (!hcd) अणु
+			       &pdev->dev, dev_name(&pdev->dev), NULL);
+	if (!hcd) {
 		retval = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	if (IS_ERR(hcd->regs)) {
 		retval = PTR_ERR(hcd->regs);
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
 	pdata->regs = hcd->regs;
 
-	अगर (pdata->घातer_budget)
-		hcd->घातer_budget = pdata->घातer_budget;
+	if (pdata->power_budget)
+		hcd->power_budget = pdata->power_budget;
 
 	/*
-	 * करो platक्रमm specअगरic init: check the घड़ी, grab/config pins, etc.
+	 * do platform specific init: check the clock, grab/config pins, etc.
 	 */
-	अगर (pdata->init && pdata->init(pdev)) अणु
+	if (pdata->init && pdata->init(pdev)) {
 		retval = -ENODEV;
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
 	/* Enable USB controller, 83xx or 8536 */
-	अगर (pdata->have_sysअगर_regs && pdata->controller_ver < FSL_USB_VER_1_6) अणु
-		पंचांगp = ioपढ़ो32be(hcd->regs + FSL_SOC_USB_CTRL);
-		पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-		पंचांगp |= 0x4;
-		ioग_लिखो32be(पंचांगp, hcd->regs + FSL_SOC_USB_CTRL);
-	पूर्ण
+	if (pdata->have_sysif_regs && pdata->controller_ver < FSL_USB_VER_1_6) {
+		tmp = ioread32be(hcd->regs + FSL_SOC_USB_CTRL);
+		tmp &= ~CONTROL_REGISTER_W1C_MASK;
+		tmp |= 0x4;
+		iowrite32be(tmp, hcd->regs + FSL_SOC_USB_CTRL);
+	}
 
-	/* Set USB_EN bit to select ULPI phy क्रम USB controller version 2.5 */
-	अगर (pdata->controller_ver == FSL_USB_VER_2_5 &&
+	/* Set USB_EN bit to select ULPI phy for USB controller version 2.5 */
+	if (pdata->controller_ver == FSL_USB_VER_2_5 &&
 	    pdata->phy_mode == FSL_USB2_PHY_ULPI)
-		ioग_लिखो32be(USB_CTRL_USB_EN, hcd->regs + FSL_SOC_USB_CTRL);
+		iowrite32be(USB_CTRL_USB_EN, hcd->regs + FSL_SOC_USB_CTRL);
 
 	/*
-	 * Enable UTMI phy and program PTS field in UTMI mode beक्रमe निश्चितing
-	 * controller reset क्रम USB Controller version 2.5
+	 * Enable UTMI phy and program PTS field in UTMI mode before asserting
+	 * controller reset for USB Controller version 2.5
 	 */
-	अगर (pdata->has_fsl_erratum_a007792) अणु
-		पंचांगp = ioपढ़ो32be(hcd->regs + FSL_SOC_USB_CTRL);
-		पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-		पंचांगp |= CTRL_UTMI_PHY_EN;
-		ioग_लिखो32be(पंचांगp, hcd->regs + FSL_SOC_USB_CTRL);
+	if (pdata->has_fsl_erratum_a007792) {
+		tmp = ioread32be(hcd->regs + FSL_SOC_USB_CTRL);
+		tmp &= ~CONTROL_REGISTER_W1C_MASK;
+		tmp |= CTRL_UTMI_PHY_EN;
+		iowrite32be(tmp, hcd->regs + FSL_SOC_USB_CTRL);
 
-		ग_लिखोl(PORT_PTS_UTMI, hcd->regs + FSL_SOC_USB_PORTSC1);
-	पूर्ण
+		writel(PORT_PTS_UTMI, hcd->regs + FSL_SOC_USB_PORTSC1);
+	}
 
-	/* Don't need to set host mode here. It will be करोne by tdi_reset() */
+	/* Don't need to set host mode here. It will be done by tdi_reset() */
 
 	retval = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (retval != 0)
-		जाओ err2;
+	if (retval != 0)
+		goto err2;
 	device_wakeup_enable(hcd->self.controller);
 
-#अगर_घोषित CONFIG_USB_OTG
-	अगर (pdata->operating_mode == FSL_USB2_DR_OTG) अणु
-		काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
+#ifdef CONFIG_USB_OTG
+	if (pdata->operating_mode == FSL_USB2_DR_OTG) {
+		struct ehci_hcd *ehci = hcd_to_ehci(hcd);
 
 		hcd->usb_phy = usb_get_phy(USB_PHY_TYPE_USB2);
 		dev_dbg(&pdev->dev, "hcd=0x%p  ehci=0x%p, phy=0x%p\n",
 			hcd, ehci, hcd->usb_phy);
 
-		अगर (!IS_ERR_OR_शून्य(hcd->usb_phy)) अणु
+		if (!IS_ERR_OR_NULL(hcd->usb_phy)) {
 			retval = otg_set_host(hcd->usb_phy->otg,
 					      &ehci_to_hcd(ehci)->self);
-			अगर (retval) अणु
+			if (retval) {
 				usb_put_phy(hcd->usb_phy);
-				जाओ err2;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto err2;
+			}
+		} else {
 			dev_err(&pdev->dev, "can't find phy\n");
 			retval = -ENODEV;
-			जाओ err2;
-		पूर्ण
+			goto err2;
+		}
 
 		hcd->skip_phy_initialization = 1;
-	पूर्ण
-#पूर्ण_अगर
-	वापस retval;
+	}
+#endif
+	return retval;
 
       err2:
 	usb_put_hcd(hcd);
       err1:
 	dev_err(&pdev->dev, "init %s fail, %d\n", dev_name(&pdev->dev), retval);
-	अगर (pdata->निकास)
-		pdata->निकास(pdev);
-	वापस retval;
-पूर्ण
+	if (pdata->exit)
+		pdata->exit(pdev);
+	return retval;
+}
 
-अटल bool usb_phy_clk_valid(काष्ठा usb_hcd *hcd)
-अणु
-	व्योम __iomem *non_ehci = hcd->regs;
+static bool usb_phy_clk_valid(struct usb_hcd *hcd)
+{
+	void __iomem *non_ehci = hcd->regs;
 	bool ret = true;
 
-	अगर (!(ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL) & PHY_CLK_VALID))
+	if (!(ioread32be(non_ehci + FSL_SOC_USB_CTRL) & PHY_CLK_VALID))
 		ret = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ehci_fsl_setup_phy(काष्ठा usb_hcd *hcd,
-			       क्रमागत fsl_usb2_phy_modes phy_mode,
-			       अचिन्हित पूर्णांक port_offset)
-अणु
-	u32 portsc, पंचांगp;
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
-	व्योम __iomem *non_ehci = hcd->regs;
-	काष्ठा device *dev = hcd->self.controller;
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(dev);
+static int ehci_fsl_setup_phy(struct usb_hcd *hcd,
+			       enum fsl_usb2_phy_modes phy_mode,
+			       unsigned int port_offset)
+{
+	u32 portsc, tmp;
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	void __iomem *non_ehci = hcd->regs;
+	struct device *dev = hcd->self.controller;
+	struct fsl_usb2_platform_data *pdata = dev_get_platdata(dev);
 
-	अगर (pdata->controller_ver < 0) अणु
+	if (pdata->controller_ver < 0) {
 		dev_warn(hcd->self.controller, "Could not get controller version\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	portsc = ehci_पढ़ोl(ehci, &ehci->regs->port_status[port_offset]);
+	portsc = ehci_readl(ehci, &ehci->regs->port_status[port_offset]);
 	portsc &= ~(PORT_PTS_MSK | PORT_PTS_PTW);
 
-	चयन (phy_mode) अणु
-	हाल FSL_USB2_PHY_ULPI:
-		अगर (pdata->have_sysअगर_regs && pdata->controller_ver) अणु
+	switch (phy_mode) {
+	case FSL_USB2_PHY_ULPI:
+		if (pdata->have_sysif_regs && pdata->controller_ver) {
 			/* controller version 1.6 or above */
 			/* turn off UTMI PHY first */
-			पंचांगp = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-			पंचांगp &= ~(CONTROL_REGISTER_W1C_MASK | UTMI_PHY_EN);
-			ioग_लिखो32be(पंचांगp, non_ehci + FSL_SOC_USB_CTRL);
+			tmp = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+			tmp &= ~(CONTROL_REGISTER_W1C_MASK | UTMI_PHY_EN);
+			iowrite32be(tmp, non_ehci + FSL_SOC_USB_CTRL);
 
 			/* then turn on ULPI and enable USB controller */
-			पंचांगp = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-			पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-			पंचांगp |= ULPI_PHY_CLK_SEL | USB_CTRL_USB_EN;
-			ioग_लिखो32be(पंचांगp, non_ehci + FSL_SOC_USB_CTRL);
-		पूर्ण
+			tmp = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+			tmp &= ~CONTROL_REGISTER_W1C_MASK;
+			tmp |= ULPI_PHY_CLK_SEL | USB_CTRL_USB_EN;
+			iowrite32be(tmp, non_ehci + FSL_SOC_USB_CTRL);
+		}
 		portsc |= PORT_PTS_ULPI;
-		अवरोध;
-	हाल FSL_USB2_PHY_SERIAL:
+		break;
+	case FSL_USB2_PHY_SERIAL:
 		portsc |= PORT_PTS_SERIAL;
-		अवरोध;
-	हाल FSL_USB2_PHY_UTMI_WIDE:
+		break;
+	case FSL_USB2_PHY_UTMI_WIDE:
 		portsc |= PORT_PTS_PTW;
 		fallthrough;
-	हाल FSL_USB2_PHY_UTMI:
+	case FSL_USB2_PHY_UTMI:
 		/* Presence of this node "has_fsl_erratum_a006918"
 		 * in device-tree is used to stop USB controller
 		 * initialization in Linux
 		 */
-		अगर (pdata->has_fsl_erratum_a006918) अणु
+		if (pdata->has_fsl_erratum_a006918) {
 			dev_warn(dev, "USB PHY clock invalid\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		fallthrough;
-	हाल FSL_USB2_PHY_UTMI_DUAL:
+	case FSL_USB2_PHY_UTMI_DUAL:
 		/* PHY_CLK_VALID bit is de-featured from all controller
-		 * versions below 2.4 and is to be checked only क्रम
-		 * पूर्णांकernal UTMI phy
+		 * versions below 2.4 and is to be checked only for
+		 * internal UTMI phy
 		 */
-		अगर (pdata->controller_ver > FSL_USB_VER_2_4 &&
-		    pdata->have_sysअगर_regs && !usb_phy_clk_valid(hcd)) अणु
+		if (pdata->controller_ver > FSL_USB_VER_2_4 &&
+		    pdata->have_sysif_regs && !usb_phy_clk_valid(hcd)) {
 			dev_err(dev, "USB PHY clock invalid\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (pdata->have_sysअगर_regs && pdata->controller_ver) अणु
+		if (pdata->have_sysif_regs && pdata->controller_ver) {
 			/* controller version 1.6 or above */
-			पंचांगp = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-			पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-			पंचांगp |= UTMI_PHY_EN;
-			ioग_लिखो32be(पंचांगp, non_ehci + FSL_SOC_USB_CTRL);
+			tmp = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+			tmp &= ~CONTROL_REGISTER_W1C_MASK;
+			tmp |= UTMI_PHY_EN;
+			iowrite32be(tmp, non_ehci + FSL_SOC_USB_CTRL);
 
-			mdelay(FSL_UTMI_PHY_DLY);  /* Delay क्रम UTMI PHY CLK to
+			mdelay(FSL_UTMI_PHY_DLY);  /* Delay for UTMI PHY CLK to
 						become stable - 10ms*/
-		पूर्ण
+		}
 		/* enable UTMI PHY */
-		अगर (pdata->have_sysअगर_regs) अणु
-			पंचांगp = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-			पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-			पंचांगp |= CTRL_UTMI_PHY_EN;
-			ioग_लिखो32be(पंचांगp, non_ehci + FSL_SOC_USB_CTRL);
-		पूर्ण
+		if (pdata->have_sysif_regs) {
+			tmp = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+			tmp &= ~CONTROL_REGISTER_W1C_MASK;
+			tmp |= CTRL_UTMI_PHY_EN;
+			iowrite32be(tmp, non_ehci + FSL_SOC_USB_CTRL);
+		}
 		portsc |= PORT_PTS_UTMI;
-		अवरोध;
-	हाल FSL_USB2_PHY_NONE:
-		अवरोध;
-	पूर्ण
+		break;
+	case FSL_USB2_PHY_NONE:
+		break;
+	}
 
-	अगर (pdata->have_sysअगर_regs &&
+	if (pdata->have_sysif_regs &&
 	    pdata->controller_ver > FSL_USB_VER_1_6 &&
-	    !usb_phy_clk_valid(hcd)) अणु
+	    !usb_phy_clk_valid(hcd)) {
 		dev_warn(hcd->self.controller, "USB PHY clock invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ehci_ग_लिखोl(ehci, portsc, &ehci->regs->port_status[port_offset]);
+	ehci_writel(ehci, portsc, &ehci->regs->port_status[port_offset]);
 
-	अगर (phy_mode != FSL_USB2_PHY_ULPI && pdata->have_sysअगर_regs) अणु
-		पंचांगp = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-		पंचांगp &= ~CONTROL_REGISTER_W1C_MASK;
-		पंचांगp |= USB_CTRL_USB_EN;
-		ioग_लिखो32be(पंचांगp, non_ehci + FSL_SOC_USB_CTRL);
-	पूर्ण
+	if (phy_mode != FSL_USB2_PHY_ULPI && pdata->have_sysif_regs) {
+		tmp = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+		tmp &= ~CONTROL_REGISTER_W1C_MASK;
+		tmp |= USB_CTRL_USB_EN;
+		iowrite32be(tmp, non_ehci + FSL_SOC_USB_CTRL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehci_fsl_usb_setup(काष्ठा ehci_hcd *ehci)
-अणु
-	काष्ठा usb_hcd *hcd = ehci_to_hcd(ehci);
-	काष्ठा fsl_usb2_platक्रमm_data *pdata;
-	व्योम __iomem *non_ehci = hcd->regs;
+static int ehci_fsl_usb_setup(struct ehci_hcd *ehci)
+{
+	struct usb_hcd *hcd = ehci_to_hcd(ehci);
+	struct fsl_usb2_platform_data *pdata;
+	void __iomem *non_ehci = hcd->regs;
 
 	pdata = dev_get_platdata(hcd->self.controller);
 
-	अगर (pdata->have_sysअगर_regs) अणु
+	if (pdata->have_sysif_regs) {
 		/*
-		* Turn on cache snooping hardware, since some PowerPC platक्रमms
+		* Turn on cache snooping hardware, since some PowerPC platforms
 		* wholly rely on hardware to deal with cache coherent
 		*/
 
-		/* Setup Snooping क्रम all the 4GB space */
+		/* Setup Snooping for all the 4GB space */
 		/* SNOOP1 starts from 0x0, size 2G */
-		ioग_लिखो32be(0x0 | SNOOP_SIZE_2GB,
+		iowrite32be(0x0 | SNOOP_SIZE_2GB,
 			    non_ehci + FSL_SOC_USB_SNOOP1);
 		/* SNOOP2 starts from 0x80000000, size 2G */
-		ioग_लिखो32be(0x80000000 | SNOOP_SIZE_2GB,
+		iowrite32be(0x80000000 | SNOOP_SIZE_2GB,
 			    non_ehci + FSL_SOC_USB_SNOOP2);
-	पूर्ण
+	}
 
 	/* Deal with USB erratum A-005275 */
-	अगर (pdata->has_fsl_erratum_a005275 == 1)
+	if (pdata->has_fsl_erratum_a005275 == 1)
 		ehci->has_fsl_hs_errata = 1;
 
-	अगर (pdata->has_fsl_erratum_a005697 == 1)
+	if (pdata->has_fsl_erratum_a005697 == 1)
 		ehci->has_fsl_susp_errata = 1;
 
-	अगर ((pdata->operating_mode == FSL_USB2_DR_HOST) ||
+	if ((pdata->operating_mode == FSL_USB2_DR_HOST) ||
 			(pdata->operating_mode == FSL_USB2_DR_OTG))
-		अगर (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 0))
-			वापस -EINVAL;
+		if (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 0))
+			return -EINVAL;
 
-	अगर (pdata->operating_mode == FSL_USB2_MPH_HOST) अणु
+	if (pdata->operating_mode == FSL_USB2_MPH_HOST) {
 
 		/* Deal with USB Erratum #14 on MPC834x Rev 1.0 & 1.1 chips */
-		अगर (pdata->has_fsl_erratum_14 == 1)
+		if (pdata->has_fsl_erratum_14 == 1)
 			ehci->has_fsl_port_bug = 1;
 
-		अगर (pdata->port_enables & FSL_USB2_PORT0_ENABLED)
-			अगर (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 0))
-				वापस -EINVAL;
+		if (pdata->port_enables & FSL_USB2_PORT0_ENABLED)
+			if (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 0))
+				return -EINVAL;
 
-		अगर (pdata->port_enables & FSL_USB2_PORT1_ENABLED)
-			अगर (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 1))
-				वापस -EINVAL;
-	पूर्ण
+		if (pdata->port_enables & FSL_USB2_PORT1_ENABLED)
+			if (ehci_fsl_setup_phy(hcd, pdata->phy_mode, 1))
+				return -EINVAL;
+	}
 
-	अगर (pdata->have_sysअगर_regs) अणु
-#अगर_घोषित CONFIG_FSL_SOC_BOOKE
-		ioग_लिखो32be(0x00000008, non_ehci + FSL_SOC_USB_PRICTRL);
-		ioग_लिखो32be(0x00000080, non_ehci + FSL_SOC_USB_AGECNTTHRSH);
-#अन्यथा
-		ioग_लिखो32be(0x0000000c, non_ehci + FSL_SOC_USB_PRICTRL);
-		ioग_लिखो32be(0x00000040, non_ehci + FSL_SOC_USB_AGECNTTHRSH);
-#पूर्ण_अगर
-		ioग_लिखो32be(0x00000001, non_ehci + FSL_SOC_USB_SICTRL);
-	पूर्ण
+	if (pdata->have_sysif_regs) {
+#ifdef CONFIG_FSL_SOC_BOOKE
+		iowrite32be(0x00000008, non_ehci + FSL_SOC_USB_PRICTRL);
+		iowrite32be(0x00000080, non_ehci + FSL_SOC_USB_AGECNTTHRSH);
+#else
+		iowrite32be(0x0000000c, non_ehci + FSL_SOC_USB_PRICTRL);
+		iowrite32be(0x00000040, non_ehci + FSL_SOC_USB_AGECNTTHRSH);
+#endif
+		iowrite32be(0x00000001, non_ehci + FSL_SOC_USB_SICTRL);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* called after घातerup, by probe or प्रणाली-pm "wakeup" */
-अटल पूर्णांक ehci_fsl_reinit(काष्ठा ehci_hcd *ehci)
-अणु
-	अगर (ehci_fsl_usb_setup(ehci))
-		वापस -EINVAL;
+/* called after powerup, by probe or system-pm "wakeup" */
+static int ehci_fsl_reinit(struct ehci_hcd *ehci)
+{
+	if (ehci_fsl_usb_setup(ehci))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* called during probe() after chip reset completes */
-अटल पूर्णांक ehci_fsl_setup(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
-	पूर्णांक retval;
-	काष्ठा fsl_usb2_platक्रमm_data *pdata;
-	काष्ठा device *dev;
+static int ehci_fsl_setup(struct usb_hcd *hcd)
+{
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	int retval;
+	struct fsl_usb2_platform_data *pdata;
+	struct device *dev;
 
 	dev = hcd->self.controller;
 	pdata = dev_get_platdata(hcd->self.controller);
 	ehci->big_endian_desc = pdata->big_endian_desc;
 	ehci->big_endian_mmio = pdata->big_endian_mmio;
 
-	/* EHCI रेजिस्टरs start at offset 0x100 */
+	/* EHCI registers start at offset 0x100 */
 	ehci->caps = hcd->regs + 0x100;
 
-#अगर_घोषित CONFIG_PPC_83xx
+#ifdef CONFIG_PPC_83xx
 	/*
-	 * Deal with MPC834X that need port घातer to be cycled after the घातer
-	 * fault condition is हटाओd. Otherwise the state machine करोes not
+	 * Deal with MPC834X that need port power to be cycled after the power
+	 * fault condition is removed. Otherwise the state machine does not
 	 * reflect PORTSC[CSC] correctly.
 	 */
 	ehci->need_oc_pp_cycle = 1;
-#पूर्ण_अगर
+#endif
 
 	hcd->has_tt = 1;
 
 	retval = ehci_setup(hcd);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (of_device_is_compatible(dev->parent->of_node,
-				    "fsl,mpc5121-usb2-dr")) अणु
+	if (of_device_is_compatible(dev->parent->of_node,
+				    "fsl,mpc5121-usb2-dr")) {
 		/*
-		 * set SBUSCFG:AHBBRST so that control msgs करोn't
-		 * fail when करोing heavy PATA ग_लिखोs.
+		 * set SBUSCFG:AHBBRST so that control msgs don't
+		 * fail when doing heavy PATA writes.
 		 */
-		ehci_ग_लिखोl(ehci, SBUSCFG_INCR8,
+		ehci_writel(ehci, SBUSCFG_INCR8,
 			    hcd->regs + FSL_SOC_USB_SBUSCFG);
-	पूर्ण
+	}
 
 	retval = ehci_fsl_reinit(ehci);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-काष्ठा ehci_fsl अणु
-	काष्ठा ehci_hcd	ehci;
+struct ehci_fsl {
+	struct ehci_hcd	ehci;
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	/* Saved USB PHY settings, need to restore after deep sleep. */
 	u32 usb_ctrl;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-#अगर_घोषित CONFIG_PPC_MPC512x
-अटल पूर्णांक ehci_fsl_mpc512x_drv_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(dev);
-	u32 पंचांगp;
+#ifdef CONFIG_PPC_MPC512x
+static int ehci_fsl_mpc512x_drv_suspend(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	struct fsl_usb2_platform_data *pdata = dev_get_platdata(dev);
+	u32 tmp;
 
-#अगर_घोषित CONFIG_DYNAMIC_DEBUG
-	u32 mode = ehci_पढ़ोl(ehci, hcd->regs + FSL_SOC_USB_USBMODE);
+#ifdef CONFIG_DYNAMIC_DEBUG
+	u32 mode = ehci_readl(ehci, hcd->regs + FSL_SOC_USB_USBMODE);
 	mode &= USBMODE_CM_MASK;
-	पंचांगp = ehci_पढ़ोl(ehci, hcd->regs + 0x140);	/* usbcmd */
+	tmp = ehci_readl(ehci, hcd->regs + 0x140);	/* usbcmd */
 
 	dev_dbg(dev, "suspend=%d already_suspended=%d "
 		"mode=%d  usbcmd %08x\n", pdata->suspended,
-		pdata->alपढ़ोy_suspended, mode, पंचांगp);
-#पूर्ण_अगर
+		pdata->already_suspended, mode, tmp);
+#endif
 
 	/*
-	 * If the controller is alपढ़ोy suspended, then this must be a
+	 * If the controller is already suspended, then this must be a
 	 * PM suspend.  Remember this fact, so that we will leave the
-	 * controller suspended at PM resume समय.
+	 * controller suspended at PM resume time.
 	 */
-	अगर (pdata->suspended) अणु
+	if (pdata->suspended) {
 		dev_dbg(dev, "already suspended, leaving early\n");
-		pdata->alपढ़ोy_suspended = 1;
-		वापस 0;
-	पूर्ण
+		pdata->already_suspended = 1;
+		return 0;
+	}
 
 	dev_dbg(dev, "suspending...\n");
 
 	ehci->rh_state = EHCI_RH_SUSPENDED;
-	dev->घातer.घातer_state = PMSG_SUSPEND;
+	dev->power.power_state = PMSG_SUSPEND;
 
-	/* ignore non-host पूर्णांकerrupts */
+	/* ignore non-host interrupts */
 	clear_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags);
 
 	/* stop the controller */
-	पंचांगp = ehci_पढ़ोl(ehci, &ehci->regs->command);
-	पंचांगp &= ~CMD_RUN;
-	ehci_ग_लिखोl(ehci, पंचांगp, &ehci->regs->command);
+	tmp = ehci_readl(ehci, &ehci->regs->command);
+	tmp &= ~CMD_RUN;
+	ehci_writel(ehci, tmp, &ehci->regs->command);
 
-	/* save EHCI रेजिस्टरs */
-	pdata->pm_command = ehci_पढ़ोl(ehci, &ehci->regs->command);
+	/* save EHCI registers */
+	pdata->pm_command = ehci_readl(ehci, &ehci->regs->command);
 	pdata->pm_command &= ~CMD_RUN;
-	pdata->pm_status  = ehci_पढ़ोl(ehci, &ehci->regs->status);
-	pdata->pm_पूर्णांकr_enable  = ehci_पढ़ोl(ehci, &ehci->regs->पूर्णांकr_enable);
-	pdata->pm_frame_index  = ehci_पढ़ोl(ehci, &ehci->regs->frame_index);
-	pdata->pm_segment  = ehci_पढ़ोl(ehci, &ehci->regs->segment);
-	pdata->pm_frame_list  = ehci_पढ़ोl(ehci, &ehci->regs->frame_list);
-	pdata->pm_async_next  = ehci_पढ़ोl(ehci, &ehci->regs->async_next);
+	pdata->pm_status  = ehci_readl(ehci, &ehci->regs->status);
+	pdata->pm_intr_enable  = ehci_readl(ehci, &ehci->regs->intr_enable);
+	pdata->pm_frame_index  = ehci_readl(ehci, &ehci->regs->frame_index);
+	pdata->pm_segment  = ehci_readl(ehci, &ehci->regs->segment);
+	pdata->pm_frame_list  = ehci_readl(ehci, &ehci->regs->frame_list);
+	pdata->pm_async_next  = ehci_readl(ehci, &ehci->regs->async_next);
 	pdata->pm_configured_flag  =
-		ehci_पढ़ोl(ehci, &ehci->regs->configured_flag);
-	pdata->pm_portsc = ehci_पढ़ोl(ehci, &ehci->regs->port_status[0]);
-	pdata->pm_usbgenctrl = ehci_पढ़ोl(ehci,
+		ehci_readl(ehci, &ehci->regs->configured_flag);
+	pdata->pm_portsc = ehci_readl(ehci, &ehci->regs->port_status[0]);
+	pdata->pm_usbgenctrl = ehci_readl(ehci,
 					  hcd->regs + FSL_SOC_USB_USBGENCTRL);
 
 	/* clear the W1C bits */
@@ -490,243 +489,243 @@
 
 	pdata->suspended = 1;
 
-	/* clear PP to cut घातer to the port */
-	पंचांगp = ehci_पढ़ोl(ehci, &ehci->regs->port_status[0]);
-	पंचांगp &= ~PORT_POWER;
-	ehci_ग_लिखोl(ehci, पंचांगp, &ehci->regs->port_status[0]);
+	/* clear PP to cut power to the port */
+	tmp = ehci_readl(ehci, &ehci->regs->port_status[0]);
+	tmp &= ~PORT_POWER;
+	ehci_writel(ehci, tmp, &ehci->regs->port_status[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehci_fsl_mpc512x_drv_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(dev);
-	u32 पंचांगp;
+static int ehci_fsl_mpc512x_drv_resume(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	struct fsl_usb2_platform_data *pdata = dev_get_platdata(dev);
+	u32 tmp;
 
 	dev_dbg(dev, "suspend=%d already_suspended=%d\n",
-		pdata->suspended, pdata->alपढ़ोy_suspended);
+		pdata->suspended, pdata->already_suspended);
 
 	/*
-	 * If the controller was alपढ़ोy suspended at suspend समय,
-	 * then करोn't resume it now.
+	 * If the controller was already suspended at suspend time,
+	 * then don't resume it now.
 	 */
-	अगर (pdata->alपढ़ोy_suspended) अणु
+	if (pdata->already_suspended) {
 		dev_dbg(dev, "already suspended, leaving early\n");
-		pdata->alपढ़ोy_suspended = 0;
-		वापस 0;
-	पूर्ण
+		pdata->already_suspended = 0;
+		return 0;
+	}
 
-	अगर (!pdata->suspended) अणु
+	if (!pdata->suspended) {
 		dev_dbg(dev, "not suspended, leaving early\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pdata->suspended = 0;
 
 	dev_dbg(dev, "resuming...\n");
 
 	/* set host mode */
-	पंचांगp = USBMODE_CM_HOST | (pdata->es ? USBMODE_ES : 0);
-	ehci_ग_लिखोl(ehci, पंचांगp, hcd->regs + FSL_SOC_USB_USBMODE);
+	tmp = USBMODE_CM_HOST | (pdata->es ? USBMODE_ES : 0);
+	ehci_writel(ehci, tmp, hcd->regs + FSL_SOC_USB_USBMODE);
 
-	ehci_ग_लिखोl(ehci, pdata->pm_usbgenctrl,
+	ehci_writel(ehci, pdata->pm_usbgenctrl,
 		    hcd->regs + FSL_SOC_USB_USBGENCTRL);
-	ehci_ग_लिखोl(ehci, ISIPHYCTRL_PXE | ISIPHYCTRL_PHYE,
+	ehci_writel(ehci, ISIPHYCTRL_PXE | ISIPHYCTRL_PHYE,
 		    hcd->regs + FSL_SOC_USB_ISIPHYCTRL);
 
-	ehci_ग_लिखोl(ehci, SBUSCFG_INCR8, hcd->regs + FSL_SOC_USB_SBUSCFG);
+	ehci_writel(ehci, SBUSCFG_INCR8, hcd->regs + FSL_SOC_USB_SBUSCFG);
 
-	/* restore EHCI रेजिस्टरs */
-	ehci_ग_लिखोl(ehci, pdata->pm_command, &ehci->regs->command);
-	ehci_ग_लिखोl(ehci, pdata->pm_पूर्णांकr_enable, &ehci->regs->पूर्णांकr_enable);
-	ehci_ग_लिखोl(ehci, pdata->pm_frame_index, &ehci->regs->frame_index);
-	ehci_ग_लिखोl(ehci, pdata->pm_segment, &ehci->regs->segment);
-	ehci_ग_लिखोl(ehci, pdata->pm_frame_list, &ehci->regs->frame_list);
-	ehci_ग_लिखोl(ehci, pdata->pm_async_next, &ehci->regs->async_next);
-	ehci_ग_लिखोl(ehci, pdata->pm_configured_flag,
+	/* restore EHCI registers */
+	ehci_writel(ehci, pdata->pm_command, &ehci->regs->command);
+	ehci_writel(ehci, pdata->pm_intr_enable, &ehci->regs->intr_enable);
+	ehci_writel(ehci, pdata->pm_frame_index, &ehci->regs->frame_index);
+	ehci_writel(ehci, pdata->pm_segment, &ehci->regs->segment);
+	ehci_writel(ehci, pdata->pm_frame_list, &ehci->regs->frame_list);
+	ehci_writel(ehci, pdata->pm_async_next, &ehci->regs->async_next);
+	ehci_writel(ehci, pdata->pm_configured_flag,
 		    &ehci->regs->configured_flag);
-	ehci_ग_लिखोl(ehci, pdata->pm_portsc, &ehci->regs->port_status[0]);
+	ehci_writel(ehci, pdata->pm_portsc, &ehci->regs->port_status[0]);
 
 	set_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags);
 	ehci->rh_state = EHCI_RH_RUNNING;
-	dev->घातer.घातer_state = PMSG_ON;
+	dev->power.power_state = PMSG_ON;
 
-	पंचांगp = ehci_पढ़ोl(ehci, &ehci->regs->command);
-	पंचांगp |= CMD_RUN;
-	ehci_ग_लिखोl(ehci, पंचांगp, &ehci->regs->command);
+	tmp = ehci_readl(ehci, &ehci->regs->command);
+	tmp |= CMD_RUN;
+	ehci_writel(ehci, tmp, &ehci->regs->command);
 
 	usb_hcd_resume_root_hub(hcd);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक ehci_fsl_mpc512x_drv_suspend(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
+	return 0;
+}
+#else
+static inline int ehci_fsl_mpc512x_drv_suspend(struct device *dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ehci_fsl_mpc512x_drv_resume(काष्ठा device *dev)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_MPC512x */
+static inline int ehci_fsl_mpc512x_drv_resume(struct device *dev)
+{
+	return 0;
+}
+#endif /* CONFIG_PPC_MPC512x */
 
-अटल काष्ठा ehci_fsl *hcd_to_ehci_fsl(काष्ठा usb_hcd *hcd)
-अणु
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
+static struct ehci_fsl *hcd_to_ehci_fsl(struct usb_hcd *hcd)
+{
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
 
-	वापस container_of(ehci, काष्ठा ehci_fsl, ehci);
-पूर्ण
+	return container_of(ehci, struct ehci_fsl, ehci);
+}
 
-अटल पूर्णांक ehci_fsl_drv_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
-	व्योम __iomem *non_ehci = hcd->regs;
+static int ehci_fsl_drv_suspend(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
+	void __iomem *non_ehci = hcd->regs;
 
-	अगर (of_device_is_compatible(dev->parent->of_node,
-				    "fsl,mpc5121-usb2-dr")) अणु
-		वापस ehci_fsl_mpc512x_drv_suspend(dev);
-	पूर्ण
+	if (of_device_is_compatible(dev->parent->of_node,
+				    "fsl,mpc5121-usb2-dr")) {
+		return ehci_fsl_mpc512x_drv_suspend(dev);
+	}
 
-	ehci_prepare_ports_क्रम_controller_suspend(hcd_to_ehci(hcd),
+	ehci_prepare_ports_for_controller_suspend(hcd_to_ehci(hcd),
 			device_may_wakeup(dev));
-	अगर (!fsl_deep_sleep())
-		वापस 0;
+	if (!fsl_deep_sleep())
+		return 0;
 
-	ehci_fsl->usb_ctrl = ioपढ़ो32be(non_ehci + FSL_SOC_USB_CTRL);
-	वापस 0;
-पूर्ण
+	ehci_fsl->usb_ctrl = ioread32be(non_ehci + FSL_SOC_USB_CTRL);
+	return 0;
+}
 
-अटल पूर्णांक ehci_fsl_drv_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
-	व्योम __iomem *non_ehci = hcd->regs;
+static int ehci_fsl_drv_resume(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct ehci_fsl *ehci_fsl = hcd_to_ehci_fsl(hcd);
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
+	void __iomem *non_ehci = hcd->regs;
 
-	अगर (of_device_is_compatible(dev->parent->of_node,
-				    "fsl,mpc5121-usb2-dr")) अणु
-		वापस ehci_fsl_mpc512x_drv_resume(dev);
-	पूर्ण
+	if (of_device_is_compatible(dev->parent->of_node,
+				    "fsl,mpc5121-usb2-dr")) {
+		return ehci_fsl_mpc512x_drv_resume(dev);
+	}
 
-	ehci_prepare_ports_क्रम_controller_resume(ehci);
-	अगर (!fsl_deep_sleep())
-		वापस 0;
+	ehci_prepare_ports_for_controller_resume(ehci);
+	if (!fsl_deep_sleep())
+		return 0;
 
-	usb_root_hub_lost_घातer(hcd->self.root_hub);
+	usb_root_hub_lost_power(hcd->self.root_hub);
 
 	/* Restore USB PHY settings and enable the controller. */
-	ioग_लिखो32be(ehci_fsl->usb_ctrl, non_ehci + FSL_SOC_USB_CTRL);
+	iowrite32be(ehci_fsl->usb_ctrl, non_ehci + FSL_SOC_USB_CTRL);
 
 	ehci_reset(ehci);
 	ehci_fsl_reinit(ehci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ehci_fsl_drv_restore(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+static int ehci_fsl_drv_restore(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
 
-	usb_root_hub_lost_घातer(hcd->self.root_hub);
-	वापस 0;
-पूर्ण
+	usb_root_hub_lost_power(hcd->self.root_hub);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops ehci_fsl_pm_ops = अणु
+static const struct dev_pm_ops ehci_fsl_pm_ops = {
 	.suspend = ehci_fsl_drv_suspend,
 	.resume = ehci_fsl_drv_resume,
 	.restore = ehci_fsl_drv_restore,
-पूर्ण;
+};
 
-#घोषणा EHCI_FSL_PM_OPS		(&ehci_fsl_pm_ops)
-#अन्यथा
-#घोषणा EHCI_FSL_PM_OPS		शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+#define EHCI_FSL_PM_OPS		(&ehci_fsl_pm_ops)
+#else
+#define EHCI_FSL_PM_OPS		NULL
+#endif /* CONFIG_PM */
 
-#अगर_घोषित CONFIG_USB_OTG
-अटल पूर्णांक ehci_start_port_reset(काष्ठा usb_hcd *hcd, अचिन्हित port)
-अणु
-	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
+#ifdef CONFIG_USB_OTG
+static int ehci_start_port_reset(struct usb_hcd *hcd, unsigned port)
+{
+	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
 	u32 status;
 
-	अगर (!port)
-		वापस -EINVAL;
+	if (!port)
+		return -EINVAL;
 
 	port--;
 
-	/* start port reset beक्रमe HNP protocol समय out */
-	status = पढ़ोl(&ehci->regs->port_status[port]);
-	अगर (!(status & PORT_CONNECT))
-		वापस -ENODEV;
+	/* start port reset before HNP protocol time out */
+	status = readl(&ehci->regs->port_status[port]);
+	if (!(status & PORT_CONNECT))
+		return -ENODEV;
 
 	/* hub_wq will finish the reset later */
-	अगर (ehci_is_TDI(ehci)) अणु
-		ग_लिखोl(PORT_RESET |
+	if (ehci_is_TDI(ehci)) {
+		writel(PORT_RESET |
 		       (status & ~(PORT_CSC | PORT_PEC | PORT_OCC)),
 		       &ehci->regs->port_status[port]);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(PORT_RESET, &ehci->regs->port_status[port]);
-	पूर्ण
+	} else {
+		writel(PORT_RESET, &ehci->regs->port_status[port]);
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा ehci_start_port_reset	शून्य
-#पूर्ण_अगर /* CONFIG_USB_OTG */
+	return 0;
+}
+#else
+#define ehci_start_port_reset	NULL
+#endif /* CONFIG_USB_OTG */
 
-अटल स्थिर काष्ठा ehci_driver_overrides ehci_fsl_overrides __initस्थिर = अणु
-	.extra_priv_size = माप(काष्ठा ehci_fsl),
+static const struct ehci_driver_overrides ehci_fsl_overrides __initconst = {
+	.extra_priv_size = sizeof(struct ehci_fsl),
 	.reset = ehci_fsl_setup,
-पूर्ण;
+};
 
 /**
- * fsl_ehci_drv_हटाओ - shutकरोwn processing क्रम FSL-based HCDs
- * @pdev: USB Host Controller being हटाओd
+ * fsl_ehci_drv_remove - shutdown processing for FSL-based HCDs
+ * @pdev: USB Host Controller being removed
  *
  * Context: task context, might sleep
  *
  * Reverses the effect of usb_hcd_fsl_probe().
  */
-अटल पूर्णांक fsl_ehci_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+static int fsl_ehci_drv_remove(struct platform_device *pdev)
+{
+	struct fsl_usb2_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 
-	अगर (!IS_ERR_OR_शून्य(hcd->usb_phy)) अणु
-		otg_set_host(hcd->usb_phy->otg, शून्य);
+	if (!IS_ERR_OR_NULL(hcd->usb_phy)) {
+		otg_set_host(hcd->usb_phy->otg, NULL);
 		usb_put_phy(hcd->usb_phy);
-	पूर्ण
+	}
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 
 	/*
-	 * करो platक्रमm specअगरic un-initialization:
-	 * release iomux pins, disable घड़ी, etc.
+	 * do platform specific un-initialization:
+	 * release iomux pins, disable clock, etc.
 	 */
-	अगर (pdata->निकास)
-		pdata->निकास(pdev);
+	if (pdata->exit)
+		pdata->exit(pdev);
 	usb_put_hcd(hcd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ehci_fsl_driver = अणु
+static struct platform_driver ehci_fsl_driver = {
 	.probe = fsl_ehci_drv_probe,
-	.हटाओ = fsl_ehci_drv_हटाओ,
-	.shutकरोwn = usb_hcd_platक्रमm_shutकरोwn,
-	.driver = अणु
+	.remove = fsl_ehci_drv_remove,
+	.shutdown = usb_hcd_platform_shutdown,
+	.driver = {
 		.name = "fsl-ehci",
 		.pm = EHCI_FSL_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ehci_fsl_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ehci_fsl_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info(DRV_NAME ": " DRIVER_DESC "\n");
 
@@ -737,15 +736,15 @@
 	fsl_ehci_hc_driver.start_port_reset = ehci_start_port_reset;
 
 
-	वापस platक्रमm_driver_रेजिस्टर(&ehci_fsl_driver);
-पूर्ण
+	return platform_driver_register(&ehci_fsl_driver);
+}
 module_init(ehci_fsl_init);
 
-अटल व्योम __निकास ehci_fsl_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ehci_fsl_driver);
-पूर्ण
-module_निकास(ehci_fsl_cleanup);
+static void __exit ehci_fsl_cleanup(void)
+{
+	platform_driver_unregister(&ehci_fsl_driver);
+}
+module_exit(ehci_fsl_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");

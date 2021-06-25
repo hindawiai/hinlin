@@ -1,328 +1,327 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * trace_events_inject - trace event injection
  *
  * Copyright (C) 2019 Cong Wang <cwang@twitter.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rculist.h>
+#include <linux/module.h>
+#include <linux/ctype.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/rculist.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
-अटल पूर्णांक
-trace_inject_entry(काष्ठा trace_event_file *file, व्योम *rec, पूर्णांक len)
-अणु
-	काष्ठा trace_event_buffer fbuffer;
-	पूर्णांक written = 0;
-	व्योम *entry;
+static int
+trace_inject_entry(struct trace_event_file *file, void *rec, int len)
+{
+	struct trace_event_buffer fbuffer;
+	int written = 0;
+	void *entry;
 
-	rcu_पढ़ो_lock_sched();
+	rcu_read_lock_sched();
 	entry = trace_event_buffer_reserve(&fbuffer, file, len);
-	अगर (entry) अणु
-		स_नकल(entry, rec, len);
+	if (entry) {
+		memcpy(entry, rec, len);
 		written = len;
 		trace_event_buffer_commit(&fbuffer);
-	पूर्ण
-	rcu_पढ़ो_unlock_sched();
+	}
+	rcu_read_unlock_sched();
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-अटल पूर्णांक
-parse_field(अक्षर *str, काष्ठा trace_event_call *call,
-	    काष्ठा ftrace_event_field **pf, u64 *pv)
-अणु
-	काष्ठा ftrace_event_field *field;
-	अक्षर *field_name;
-	पूर्णांक s, i = 0;
-	पूर्णांक len;
+static int
+parse_field(char *str, struct trace_event_call *call,
+	    struct ftrace_event_field **pf, u64 *pv)
+{
+	struct ftrace_event_field *field;
+	char *field_name;
+	int s, i = 0;
+	int len;
 	u64 val;
 
-	अगर (!str[i])
-		वापस 0;
+	if (!str[i])
+		return 0;
 	/* First find the field to associate to */
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
 	s = i;
-	जबतक (है_अक्षर_अंक(str[i]) || str[i] == '_')
+	while (isalnum(str[i]) || str[i] == '_')
 		i++;
 	len = i - s;
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
 	field_name = kmemdup_nul(str + s, len, GFP_KERNEL);
-	अगर (!field_name)
-		वापस -ENOMEM;
+	if (!field_name)
+		return -ENOMEM;
 	field = trace_find_event_field(call, field_name);
-	kमुक्त(field_name);
-	अगर (!field)
-		वापस -ENOENT;
+	kfree(field_name);
+	if (!field)
+		return -ENOENT;
 
 	*pf = field;
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
-	अगर (str[i] != '=')
-		वापस -EINVAL;
+	if (str[i] != '=')
+		return -EINVAL;
 	i++;
-	जबतक (है_खाली(str[i]))
+	while (isspace(str[i]))
 		i++;
 	s = i;
-	अगर (है_अंक(str[i]) || str[i] == '-') अणु
-		अक्षर *num, c;
-		पूर्णांक ret;
+	if (isdigit(str[i]) || str[i] == '-') {
+		char *num, c;
+		int ret;
 
 		/* Make sure the field is not a string */
-		अगर (is_string_field(field))
-			वापस -EINVAL;
+		if (is_string_field(field))
+			return -EINVAL;
 
-		अगर (str[i] == '-')
+		if (str[i] == '-')
 			i++;
 
 		/* We allow 0xDEADBEEF */
-		जबतक (है_अक्षर_अंक(str[i]))
+		while (isalnum(str[i]))
 			i++;
 		num = str + s;
 		c = str[i];
-		अगर (c != '\0' && !है_खाली(c))
-			वापस -EINVAL;
+		if (c != '\0' && !isspace(c))
+			return -EINVAL;
 		str[i] = '\0';
 		/* Make sure it is a value */
-		अगर (field->is_चिन्हित)
-			ret = kम_से_दीर्घl(num, 0, &val);
-		अन्यथा
-			ret = kम_से_अदीर्घl(num, 0, &val);
+		if (field->is_signed)
+			ret = kstrtoll(num, 0, &val);
+		else
+			ret = kstrtoull(num, 0, &val);
 		str[i] = c;
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		*pv = val;
-		वापस i;
-	पूर्ण अन्यथा अगर (str[i] == '\'' || str[i] == '"') अणु
-		अक्षर q = str[i];
+		return i;
+	} else if (str[i] == '\'' || str[i] == '"') {
+		char q = str[i];
 
-		/* Make sure the field is OK क्रम strings */
-		अगर (!is_string_field(field))
-			वापस -EINVAL;
+		/* Make sure the field is OK for strings */
+		if (!is_string_field(field))
+			return -EINVAL;
 
-		क्रम (i++; str[i]; i++) अणु
-			अगर (str[i] == '\\' && str[i + 1]) अणु
+		for (i++; str[i]; i++) {
+			if (str[i] == '\\' && str[i + 1]) {
 				i++;
-				जारी;
-			पूर्ण
-			अगर (str[i] == q)
-				अवरोध;
-		पूर्ण
-		अगर (!str[i])
-			वापस -EINVAL;
+				continue;
+			}
+			if (str[i] == q)
+				break;
+		}
+		if (!str[i])
+			return -EINVAL;
 
 		/* Skip quotes */
 		s++;
 		len = i - s;
-		अगर (len >= MAX_FILTER_STR_VAL)
-			वापस -EINVAL;
+		if (len >= MAX_FILTER_STR_VAL)
+			return -EINVAL;
 
-		*pv = (अचिन्हित दीर्घ)(str + s);
+		*pv = (unsigned long)(str + s);
 		str[i] = 0;
 		/* go past the last quote */
 		i++;
-		वापस i;
-	पूर्ण
+		return i;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक trace_get_entry_size(काष्ठा trace_event_call *call)
-अणु
-	काष्ठा ftrace_event_field *field;
-	काष्ठा list_head *head;
-	पूर्णांक size = 0;
+static int trace_get_entry_size(struct trace_event_call *call)
+{
+	struct ftrace_event_field *field;
+	struct list_head *head;
+	int size = 0;
 
 	head = trace_get_fields(call);
-	list_क्रम_each_entry(field, head, link) अणु
-		अगर (field->size + field->offset > size)
+	list_for_each_entry(field, head, link) {
+		if (field->size + field->offset > size)
 			size = field->size + field->offset;
-	पूर्ण
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम *trace_alloc_entry(काष्ठा trace_event_call *call, पूर्णांक *size)
-अणु
-	पूर्णांक entry_size = trace_get_entry_size(call);
-	काष्ठा ftrace_event_field *field;
-	काष्ठा list_head *head;
-	व्योम *entry = शून्य;
+static void *trace_alloc_entry(struct trace_event_call *call, int *size)
+{
+	int entry_size = trace_get_entry_size(call);
+	struct ftrace_event_field *field;
+	struct list_head *head;
+	void *entry = NULL;
 
 	/* We need an extra '\0' at the end. */
 	entry = kzalloc(entry_size + 1, GFP_KERNEL);
-	अगर (!entry)
-		वापस शून्य;
+	if (!entry)
+		return NULL;
 
 	head = trace_get_fields(call);
-	list_क्रम_each_entry(field, head, link) अणु
-		अगर (!is_string_field(field))
-			जारी;
-		अगर (field->filter_type == FILTER_STATIC_STRING)
-			जारी;
-		अगर (field->filter_type == FILTER_DYN_STRING) अणु
+	list_for_each_entry(field, head, link) {
+		if (!is_string_field(field))
+			continue;
+		if (field->filter_type == FILTER_STATIC_STRING)
+			continue;
+		if (field->filter_type == FILTER_DYN_STRING) {
 			u32 *str_item;
-			पूर्णांक str_loc = entry_size & 0xffff;
+			int str_loc = entry_size & 0xffff;
 
 			str_item = (u32 *)(entry + field->offset);
 			*str_item = str_loc; /* string length is 0. */
-		पूर्ण अन्यथा अणु
-			अक्षर **paddr;
+		} else {
+			char **paddr;
 
-			paddr = (अक्षर **)(entry + field->offset);
+			paddr = (char **)(entry + field->offset);
 			*paddr = "";
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*size = entry_size + 1;
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-#घोषणा INJECT_STRING "STATIC STRING CAN NOT BE INJECTED"
+#define INJECT_STRING "STATIC STRING CAN NOT BE INJECTED"
 
-/* Caller is responsible to मुक्त the *pentry. */
-अटल पूर्णांक parse_entry(अक्षर *str, काष्ठा trace_event_call *call, व्योम **pentry)
-अणु
-	काष्ठा ftrace_event_field *field;
-	व्योम *entry = शून्य;
-	पूर्णांक entry_size;
+/* Caller is responsible to free the *pentry. */
+static int parse_entry(char *str, struct trace_event_call *call, void **pentry)
+{
+	struct ftrace_event_field *field;
+	void *entry = NULL;
+	int entry_size;
 	u64 val = 0;
-	पूर्णांक len;
+	int len;
 
 	entry = trace_alloc_entry(call, &entry_size);
 	*pentry = entry;
-	अगर (!entry)
-		वापस -ENOMEM;
+	if (!entry)
+		return -ENOMEM;
 
 	tracing_generic_entry_update(entry, call->event.type,
 				     tracing_gen_ctx());
 
-	जबतक ((len = parse_field(str, call, &field, &val)) > 0) अणु
-		अगर (is_function_field(field))
-			वापस -EINVAL;
+	while ((len = parse_field(str, call, &field, &val)) > 0) {
+		if (is_function_field(field))
+			return -EINVAL;
 
-		अगर (is_string_field(field)) अणु
-			अक्षर *addr = (अक्षर *)(अचिन्हित दीर्घ) val;
+		if (is_string_field(field)) {
+			char *addr = (char *)(unsigned long) val;
 
-			अगर (field->filter_type == FILTER_STATIC_STRING) अणु
+			if (field->filter_type == FILTER_STATIC_STRING) {
 				strlcpy(entry + field->offset, addr, field->size);
-			पूर्ण अन्यथा अगर (field->filter_type == FILTER_DYN_STRING) अणु
-				पूर्णांक str_len = म_माप(addr) + 1;
-				पूर्णांक str_loc = entry_size & 0xffff;
+			} else if (field->filter_type == FILTER_DYN_STRING) {
+				int str_len = strlen(addr) + 1;
+				int str_loc = entry_size & 0xffff;
 				u32 *str_item;
 
 				entry_size += str_len;
-				*pentry = kपुनः_स्मृति(entry, entry_size, GFP_KERNEL);
-				अगर (!*pentry) अणु
-					kमुक्त(entry);
-					वापस -ENOMEM;
-				पूर्ण
+				*pentry = krealloc(entry, entry_size, GFP_KERNEL);
+				if (!*pentry) {
+					kfree(entry);
+					return -ENOMEM;
+				}
 				entry = *pentry;
 
 				strlcpy(entry + (entry_size - str_len), addr, str_len);
 				str_item = (u32 *)(entry + field->offset);
 				*str_item = (str_len << 16) | str_loc;
-			पूर्ण अन्यथा अणु
-				अक्षर **paddr;
+			} else {
+				char **paddr;
 
-				paddr = (अक्षर **)(entry + field->offset);
+				paddr = (char **)(entry + field->offset);
 				*paddr = INJECT_STRING;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			चयन (field->size) अणु
-			हाल 1: अणु
-				u8 पंचांगp = (u8) val;
+			}
+		} else {
+			switch (field->size) {
+			case 1: {
+				u8 tmp = (u8) val;
 
-				स_नकल(entry + field->offset, &पंचांगp, 1);
-				अवरोध;
-			पूर्ण
-			हाल 2: अणु
-				u16 पंचांगp = (u16) val;
+				memcpy(entry + field->offset, &tmp, 1);
+				break;
+			}
+			case 2: {
+				u16 tmp = (u16) val;
 
-				स_नकल(entry + field->offset, &पंचांगp, 2);
-				अवरोध;
-			पूर्ण
-			हाल 4: अणु
-				u32 पंचांगp = (u32) val;
+				memcpy(entry + field->offset, &tmp, 2);
+				break;
+			}
+			case 4: {
+				u32 tmp = (u32) val;
 
-				स_नकल(entry + field->offset, &पंचांगp, 4);
-				अवरोध;
-			पूर्ण
-			हाल 8:
-				स_नकल(entry + field->offset, &val, 8);
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				memcpy(entry + field->offset, &tmp, 4);
+				break;
+			}
+			case 8:
+				memcpy(entry + field->offset, &val, 8);
+				break;
+			default:
+				return -EINVAL;
+			}
+		}
 
 		str += len;
-	पूर्ण
+	}
 
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 
-	वापस entry_size;
-पूर्ण
+	return entry_size;
+}
 
-अटल sमाप_प्रकार
-event_inject_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
+static ssize_t
+event_inject_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		   loff_t *ppos)
-अणु
-	काष्ठा trace_event_call *call;
-	काष्ठा trace_event_file *file;
-	पूर्णांक err = -ENODEV, size;
-	व्योम *entry = शून्य;
-	अक्षर *buf;
+{
+	struct trace_event_call *call;
+	struct trace_event_file *file;
+	int err = -ENODEV, size;
+	void *entry = NULL;
+	char *buf;
 
-	अगर (cnt >= PAGE_SIZE)
-		वापस -EINVAL;
+	if (cnt >= PAGE_SIZE)
+		return -EINVAL;
 
 	buf = memdup_user_nul(ubuf, cnt);
-	अगर (IS_ERR(buf))
-		वापस PTR_ERR(buf);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
 	strim(buf);
 
 	mutex_lock(&event_mutex);
 	file = event_file_data(filp);
-	अगर (file) अणु
+	if (file) {
 		call = file->event_call;
 		size = parse_entry(buf, call, &entry);
-		अगर (size < 0)
+		if (size < 0)
 			err = size;
-		अन्यथा
+		else
 			err = trace_inject_entry(file, entry, size);
-	पूर्ण
+	}
 	mutex_unlock(&event_mutex);
 
-	kमुक्त(entry);
-	kमुक्त(buf);
+	kfree(entry);
+	kfree(buf);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	*ppos += err;
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल sमाप_प्रकार
-event_inject_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
+static ssize_t
+event_inject_read(struct file *file, char __user *buf, size_t size,
 		  loff_t *ppos)
-अणु
-	वापस -EPERM;
-पूर्ण
+{
+	return -EPERM;
+}
 
-स्थिर काष्ठा file_operations event_inject_fops = अणु
-	.खोलो = tracing_खोलो_generic,
-	.पढ़ो = event_inject_पढ़ो,
-	.ग_लिखो = event_inject_ग_लिखो,
-पूर्ण;
+const struct file_operations event_inject_fops = {
+	.open = tracing_open_generic,
+	.read = event_inject_read,
+	.write = event_inject_write,
+};

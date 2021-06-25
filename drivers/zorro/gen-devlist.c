@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	Generate devlist.h from the Zorro ID file.
  *
@@ -10,100 +9,100 @@
  *	(c) 1999--2000 Martin Mares <mj@ucw.cz>
  */
 
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <string.h>
 
-#घोषणा MAX_NAME_SIZE 63
+#define MAX_NAME_SIZE 63
 
-अटल व्योम
-pq(खाता *f, स्थिर अक्षर *c)
-अणु
-	जबतक (*c) अणु
-		अगर (*c == '"')
-			ख_लिखो(f, "\\\"");
-		अन्यथा
-			ख_अक्षर_दो(*c, f);
+static void
+pq(FILE *f, const char *c)
+{
+	while (*c) {
+		if (*c == '"')
+			fprintf(f, "\\\"");
+		else
+			fputc(*c, f);
 		c++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक
-मुख्य(व्योम)
-अणु
-	अक्षर line[1024], *c, *bra, manuf[8];
-	पूर्णांक manufs = 0;
-	पूर्णांक mode = 0;
-	पूर्णांक lino = 0;
-	पूर्णांक manuf_len = 0;
-	खाता *devf;
+int
+main(void)
+{
+	char line[1024], *c, *bra, manuf[8];
+	int manufs = 0;
+	int mode = 0;
+	int lino = 0;
+	int manuf_len = 0;
+	FILE *devf;
 
-	devf = ख_खोलो("devlist.h", "w");
-	अगर (!devf) अणु
-		ख_लिखो(मानक_त्रुटि, "Cannot create output file!\n");
-		वापस 1;
-	पूर्ण
+	devf = fopen("devlist.h", "w");
+	if (!devf) {
+		fprintf(stderr, "Cannot create output file!\n");
+		return 1;
+	}
 
-	जबतक (ख_माला_लो(line, माप(line)-1, मानक_निवेश)) अणु
+	while (fgets(line, sizeof(line)-1, stdin)) {
 		lino++;
-		अगर ((c = म_अक्षर(line, '\n')))
+		if ((c = strchr(line, '\n')))
 			*c = 0;
-		अगर (!line[0] || line[0] == '#')
-			जारी;
-		अगर (line[0] == '\t') अणु
-			चयन (mode) अणु
-			हाल 1:
-				अगर (म_माप(line) > 5 && line[5] == ' ') अणु
+		if (!line[0] || line[0] == '#')
+			continue;
+		if (line[0] == '\t') {
+			switch (mode) {
+			case 1:
+				if (strlen(line) > 5 && line[5] == ' ') {
 					c = line + 5;
-					जबतक (*c == ' ')
+					while (*c == ' ')
 						*c++ = 0;
-					अगर (manuf_len + म_माप(c) + 1 > MAX_NAME_SIZE) अणु
-						/* Too दीर्घ, try cutting off दीर्घ description */
-						bra = म_अक्षर(c, '[');
-						अगर (bra && bra > c && bra[-1] == ' ')
+					if (manuf_len + strlen(c) + 1 > MAX_NAME_SIZE) {
+						/* Too long, try cutting off long description */
+						bra = strchr(c, '[');
+						if (bra && bra > c && bra[-1] == ' ')
 							bra[-1] = 0;
-						अगर (manuf_len + म_माप(c) + 1 > MAX_NAME_SIZE) अणु
-							ख_लिखो(मानक_त्रुटि, "Line %d: Product name too long\n", lino);
-							वापस 1;
-						पूर्ण
-					पूर्ण
-					ख_लिखो(devf, "\tPRODUCT(%s,%s,\"", manuf, line+1);
+						if (manuf_len + strlen(c) + 1 > MAX_NAME_SIZE) {
+							fprintf(stderr, "Line %d: Product name too long\n", lino);
+							return 1;
+						}
+					}
+					fprintf(devf, "\tPRODUCT(%s,%s,\"", manuf, line+1);
 					pq(devf, c);
-					ख_माला_दो("\")\n", devf);
-				पूर्ण अन्यथा जाओ err;
-				अवरोध;
-			शेष:
-				जाओ err;
-			पूर्ण
-		पूर्ण अन्यथा अगर (म_माप(line) > 4 && line[4] == ' ') अणु
+					fputs("\")\n", devf);
+				} else goto err;
+				break;
+			default:
+				goto err;
+			}
+		} else if (strlen(line) > 4 && line[4] == ' ') {
 			c = line + 4;
-			जबतक (*c == ' ')
+			while (*c == ' ')
 				*c++ = 0;
-			अगर (manufs)
-				ख_माला_दो("ENDMANUF()\n\n", devf);
+			if (manufs)
+				fputs("ENDMANUF()\n\n", devf);
 			manufs++;
-			म_नकल(manuf, line);
-			manuf_len = म_माप(c);
-			अगर (manuf_len + 24 > MAX_NAME_SIZE) अणु
-				ख_लिखो(मानक_त्रुटि, "Line %d: manufacturer name too long\n", lino);
-				वापस 1;
-			पूर्ण
-			ख_लिखो(devf, "MANUF(%s,\"", manuf);
+			strcpy(manuf, line);
+			manuf_len = strlen(c);
+			if (manuf_len + 24 > MAX_NAME_SIZE) {
+				fprintf(stderr, "Line %d: manufacturer name too long\n", lino);
+				return 1;
+			}
+			fprintf(devf, "MANUF(%s,\"", manuf);
 			pq(devf, c);
-			ख_माला_दो("\")\n", devf);
+			fputs("\")\n", devf);
 			mode = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 		err:
-			ख_लिखो(मानक_त्रुटि, "Line %d: Syntax error in mode %d: %s\n", lino, mode, line);
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	ख_माला_दो("ENDMANUF()\न\
-\न\
-#अघोषित MANUF\न\
-#अघोषित PRODUCT\न\
-#अघोषित ENDMANUF\न", devf);
+			fprintf(stderr, "Line %d: Syntax error in mode %d: %s\n", lino, mode, line);
+			return 1;
+		}
+	}
+	fputs("ENDMANUF()\n\
+\n\
+#undef MANUF\n\
+#undef PRODUCT\n\
+#undef ENDMANUF\n", devf);
 
-	ख_बंद(devf);
+	fclose(devf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

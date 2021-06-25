@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Device Tree board file क्रम NXP LPC18xx/43xx
+ * Device Tree board file for NXP LPC18xx/43xx
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -9,14 +8,14 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <यंत्र/mach/arch.h>
+#include <asm/mach/arch.h>
 
-अटल स्थिर अक्षर *स्थिर lpc18xx_43xx_compat[] __initस्थिर = अणु
+static const char *const lpc18xx_43xx_compat[] __initconst = {
 	"nxp,lpc1850",
 	"nxp,lpc4350",
 	"nxp,lpc4370",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(LPC18XXDT, "NXP LPC18xx/43xx (Device Tree)")
 	.dt_compat = lpc18xx_43xx_compat,

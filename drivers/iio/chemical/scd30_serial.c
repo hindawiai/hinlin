@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Sensirion SCD30 carbon dioxide sensor serial driver
  *
  * Copyright (c) 2020 Tomasz Duszynski <tomasz.duszynski@octakon.com>
  */
-#समावेश <linux/crc16.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/property.h>
-#समावेश <linux/serdev.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/crc16.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/iio/iio.h>
+#include <linux/jiffies.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/property.h>
+#include <linux/serdev.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <asm/unaligned.h>
 
-#समावेश "scd30.h"
+#include "scd30.h"
 
-#घोषणा SCD30_SERDEV_ADDR 0x61
-#घोषणा SCD30_SERDEV_WRITE 0x06
-#घोषणा SCD30_SERDEV_READ 0x03
-#घोषणा SCD30_SERDEV_MAX_BUF_SIZE 17
-#घोषणा SCD30_SERDEV_RX_HEADER_SIZE 3
-#घोषणा SCD30_SERDEV_CRC_SIZE 2
-#घोषणा SCD30_SERDEV_TIMEOUT msecs_to_jअगरfies(200)
+#define SCD30_SERDEV_ADDR 0x61
+#define SCD30_SERDEV_WRITE 0x06
+#define SCD30_SERDEV_READ 0x03
+#define SCD30_SERDEV_MAX_BUF_SIZE 17
+#define SCD30_SERDEV_RX_HEADER_SIZE 3
+#define SCD30_SERDEV_CRC_SIZE 2
+#define SCD30_SERDEV_TIMEOUT msecs_to_jiffies(200)
 
-काष्ठा scd30_serdev_priv अणु
-	काष्ठा completion meas_पढ़ोy;
-	अक्षर *buf;
-	पूर्णांक num_expected;
-	पूर्णांक num;
-पूर्ण;
+struct scd30_serdev_priv {
+	struct completion meas_ready;
+	char *buf;
+	int num_expected;
+	int num;
+};
 
-अटल u16 scd30_serdev_cmd_lookup_tbl[] = अणु
+static u16 scd30_serdev_cmd_lookup_tbl[] = {
 	[CMD_START_MEAS] = 0x0036,
 	[CMD_STOP_MEAS] = 0x0037,
 	[CMD_MEAS_INTERVAL] = 0x0025,
@@ -46,42 +45,42 @@
 	[CMD_TEMP_OFFSET] = 0x003b,
 	[CMD_FW_VERSION] = 0x0020,
 	[CMD_RESET] = 0x0034,
-पूर्ण;
+};
 
-अटल u16 scd30_serdev_calc_crc(स्थिर अक्षर *buf, पूर्णांक size)
-अणु
-	वापस crc16(0xffff, buf, size);
-पूर्ण
+static u16 scd30_serdev_calc_crc(const char *buf, int size)
+{
+	return crc16(0xffff, buf, size);
+}
 
-अटल पूर्णांक scd30_serdev_xfer(काष्ठा scd30_state *state, अक्षर *txbuf, पूर्णांक txsize,
-			     अक्षर *rxbuf, पूर्णांक rxsize)
-अणु
-	काष्ठा serdev_device *serdev = to_serdev_device(state->dev);
-	काष्ठा scd30_serdev_priv *priv = state->priv;
-	पूर्णांक ret;
+static int scd30_serdev_xfer(struct scd30_state *state, char *txbuf, int txsize,
+			     char *rxbuf, int rxsize)
+{
+	struct serdev_device *serdev = to_serdev_device(state->dev);
+	struct scd30_serdev_priv *priv = state->priv;
+	int ret;
 
 	priv->buf = rxbuf;
 	priv->num_expected = rxsize;
 	priv->num = 0;
 
-	ret = serdev_device_ग_लिखो(serdev, txbuf, txsize, SCD30_SERDEV_TIMEOUT);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != txsize)
-		वापस -EIO;
+	ret = serdev_device_write(serdev, txbuf, txsize, SCD30_SERDEV_TIMEOUT);
+	if (ret < 0)
+		return ret;
+	if (ret != txsize)
+		return -EIO;
 
-	ret = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&priv->meas_पढ़ोy, SCD30_SERDEV_TIMEOUT);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (!ret)
-		वापस -ETIMEDOUT;
+	ret = wait_for_completion_interruptible_timeout(&priv->meas_ready, SCD30_SERDEV_TIMEOUT);
+	if (ret < 0)
+		return ret;
+	if (!ret)
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scd30_serdev_command(काष्ठा scd30_state *state, क्रमागत scd30_cmd cmd, u16 arg,
-				व्योम *response, पूर्णांक size)
-अणु
+static int scd30_serdev_command(struct scd30_state *state, enum scd30_cmd cmd, u16 arg,
+				void *response, int size)
+{
 	/*
 	 * Communication over serial line is based on modbus protocol (or rather
 	 * its variation called modbus over serial to be precise). Upon
@@ -96,7 +95,7 @@
 	 * +------+------+-----+-----+-------+-------+-----+-----+
 	 *
 	 * The message device replies with depends on the 'op code' field from
-	 * the request. In हाल it was set to SCD30_SERDEV_WRITE sensor should
+	 * the request. In case it was set to SCD30_SERDEV_WRITE sensor should
 	 * reply with unchanged request. Otherwise 'op code' was set to
 	 * SCD30_SERDEV_READ and response looks like the one below. As with
 	 * request, each field takes one byte.
@@ -106,29 +105,29 @@
 	 * | addr | code | bytes  |       |     |       | lsb | msb |
 	 * +------+------+--------+-------+-----+-------+-----+-----+
 	 */
-	अक्षर txbuf[SCD30_SERDEV_MAX_BUF_SIZE] = अणु SCD30_SERDEV_ADDR पूर्ण,
+	char txbuf[SCD30_SERDEV_MAX_BUF_SIZE] = { SCD30_SERDEV_ADDR },
 	     rxbuf[SCD30_SERDEV_MAX_BUF_SIZE];
-	पूर्णांक ret, rxsize, txsize = 2;
-	अक्षर *rsp = response;
+	int ret, rxsize, txsize = 2;
+	char *rsp = response;
 	u16 crc;
 
 	put_unaligned_be16(scd30_serdev_cmd_lookup_tbl[cmd], txbuf + txsize);
 	txsize += 2;
 
-	अगर (rsp) अणु
+	if (rsp) {
 		txbuf[1] = SCD30_SERDEV_READ;
-		अगर (cmd == CMD_READ_MEAS)
-			/* number of u16 words to पढ़ो */
+		if (cmd == CMD_READ_MEAS)
+			/* number of u16 words to read */
 			put_unaligned_be16(size / 2, txbuf + txsize);
-		अन्यथा
+		else
 			put_unaligned_be16(0x0001, txbuf + txsize);
 		txsize += 2;
 		crc = scd30_serdev_calc_crc(txbuf, txsize);
 		put_unaligned_le16(crc, txbuf + txsize);
 		txsize += 2;
 		rxsize = SCD30_SERDEV_RX_HEADER_SIZE + size + SCD30_SERDEV_CRC_SIZE;
-	पूर्ण अन्यथा अणु
-		अगर ((cmd == CMD_STOP_MEAS) || (cmd == CMD_RESET))
+	} else {
+		if ((cmd == CMD_STOP_MEAS) || (cmd == CMD_RESET))
 			arg = 0x0001;
 
 		txbuf[1] = SCD30_SERDEV_WRITE;
@@ -138,125 +137,125 @@
 		put_unaligned_le16(crc, txbuf + txsize);
 		txsize += 2;
 		rxsize = txsize;
-	पूर्ण
+	}
 
 	ret = scd30_serdev_xfer(state, txbuf, txsize, rxbuf, rxsize);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (txbuf[1]) अणु
-	हाल SCD30_SERDEV_WRITE:
-		अगर (स_भेद(txbuf, rxbuf, txsize)) अणु
+	switch (txbuf[1]) {
+	case SCD30_SERDEV_WRITE:
+		if (memcmp(txbuf, rxbuf, txsize)) {
 			dev_err(state->dev, "wrong message received\n");
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
-	हाल SCD30_SERDEV_READ:
-		अगर (rxbuf[2] != (rxsize - SCD30_SERDEV_RX_HEADER_SIZE - SCD30_SERDEV_CRC_SIZE)) अणु
+			return -EIO;
+		}
+		break;
+	case SCD30_SERDEV_READ:
+		if (rxbuf[2] != (rxsize - SCD30_SERDEV_RX_HEADER_SIZE - SCD30_SERDEV_CRC_SIZE)) {
 			dev_err(state->dev, "received data size does not match header\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		rxsize -= SCD30_SERDEV_CRC_SIZE;
 		crc = get_unaligned_le16(rxbuf + rxsize);
-		अगर (crc != scd30_serdev_calc_crc(rxbuf, rxsize)) अणु
+		if (crc != scd30_serdev_calc_crc(rxbuf, rxsize)) {
 			dev_err(state->dev, "data integrity check failed\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		rxsize -= SCD30_SERDEV_RX_HEADER_SIZE;
-		स_नकल(rsp, rxbuf + SCD30_SERDEV_RX_HEADER_SIZE, rxsize);
-		अवरोध;
-	शेष:
+		memcpy(rsp, rxbuf + SCD30_SERDEV_RX_HEADER_SIZE, rxsize);
+		break;
+	default:
 		dev_err(state->dev, "received unknown op code\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक scd30_serdev_receive_buf(काष्ठा serdev_device *serdev,
-				    स्थिर अचिन्हित अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा iio_dev *indio_dev = serdev_device_get_drvdata(serdev);
-	काष्ठा scd30_serdev_priv *priv;
-	काष्ठा scd30_state *state;
-	पूर्णांक num;
+static int scd30_serdev_receive_buf(struct serdev_device *serdev,
+				    const unsigned char *buf, size_t size)
+{
+	struct iio_dev *indio_dev = serdev_device_get_drvdata(serdev);
+	struct scd30_serdev_priv *priv;
+	struct scd30_state *state;
+	int num;
 
-	अगर (!indio_dev)
-		वापस 0;
+	if (!indio_dev)
+		return 0;
 
 	state = iio_priv(indio_dev);
 	priv = state->priv;
 
-	/* just in हाल sensor माला_दो some unexpected bytes on the bus */
-	अगर (!priv->buf)
-		वापस 0;
+	/* just in case sensor puts some unexpected bytes on the bus */
+	if (!priv->buf)
+		return 0;
 
-	अगर (priv->num + size >= priv->num_expected)
+	if (priv->num + size >= priv->num_expected)
 		num = priv->num_expected - priv->num;
-	अन्यथा
+	else
 		num = size;
 
-	स_नकल(priv->buf + priv->num, buf, num);
+	memcpy(priv->buf + priv->num, buf, num);
 	priv->num += num;
 
-	अगर (priv->num == priv->num_expected) अणु
-		priv->buf = शून्य;
-		complete(&priv->meas_पढ़ोy);
-	पूर्ण
+	if (priv->num == priv->num_expected) {
+		priv->buf = NULL;
+		complete(&priv->meas_ready);
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल स्थिर काष्ठा serdev_device_ops scd30_serdev_ops = अणु
+static const struct serdev_device_ops scd30_serdev_ops = {
 	.receive_buf = scd30_serdev_receive_buf,
-	.ग_लिखो_wakeup = serdev_device_ग_लिखो_wakeup,
-पूर्ण;
+	.write_wakeup = serdev_device_write_wakeup,
+};
 
-अटल पूर्णांक scd30_serdev_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा device *dev = &serdev->dev;
-	काष्ठा scd30_serdev_priv *priv;
-	पूर्णांक irq, ret;
+static int scd30_serdev_probe(struct serdev_device *serdev)
+{
+	struct device *dev = &serdev->dev;
+	struct scd30_serdev_priv *priv;
+	int irq, ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	init_completion(&priv->meas_पढ़ोy);
+	init_completion(&priv->meas_ready);
 	serdev_device_set_client_ops(serdev, &scd30_serdev_ops);
 
-	ret = devm_serdev_device_खोलो(dev, serdev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_serdev_device_open(dev, serdev);
+	if (ret)
+		return ret;
 
 	serdev_device_set_baudrate(serdev, 19200);
 	serdev_device_set_flow_control(serdev, false);
 
 	ret = serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	irq = fwnode_irq_get(dev_fwnode(dev), 0);
 
-	वापस scd30_probe(dev, irq, KBUILD_MODNAME, priv, scd30_serdev_command);
-पूर्ण
+	return scd30_probe(dev, irq, KBUILD_MODNAME, priv, scd30_serdev_command);
+}
 
-अटल स्थिर काष्ठा of_device_id scd30_serdev_of_match[] = अणु
-	अणु .compatible = "sensirion,scd30" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id scd30_serdev_of_match[] = {
+	{ .compatible = "sensirion,scd30" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, scd30_serdev_of_match);
 
-अटल काष्ठा serdev_device_driver scd30_serdev_driver = अणु
-	.driver = अणु
+static struct serdev_device_driver scd30_serdev_driver = {
+	.driver = {
 		.name = KBUILD_MODNAME,
 		.of_match_table = scd30_serdev_of_match,
 		.pm = &scd30_pm_ops,
-	पूर्ण,
+	},
 	.probe = scd30_serdev_probe,
-पूर्ण;
+};
 module_serdev_device_driver(scd30_serdev_driver);
 
 MODULE_AUTHOR("Tomasz Duszynski <tomasz.duszynski@octakon.com>");

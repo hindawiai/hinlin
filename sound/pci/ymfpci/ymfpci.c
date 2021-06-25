@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  The driver क्रम the Yamaha's DS1/DS1E cards
+ *  The driver for the Yamaha's DS1/DS1E cards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश "ymfpci.h"
-#समावेश <sound/mpu401.h>
-#समावेश <sound/opl3.h>
-#समावेश <sound/initval.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/time.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include "ymfpci.h"
+#include <sound/mpu401.h>
+#include <sound/opl3.h>
+#include <sound/initval.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Yamaha DS-1 PCI");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
-अटल दीर्घ fm_port[SNDRV_CARDS];
-अटल दीर्घ mpu_port[SNDRV_CARDS];
-#अगर_घोषित SUPPORT_JOYSTICK
-अटल दीर्घ joystick_port[SNDRV_CARDS];
-#पूर्ण_अगर
-अटल bool rear_चयन[SNDRV_CARDS];
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
+static long fm_port[SNDRV_CARDS];
+static long mpu_port[SNDRV_CARDS];
+#ifdef SUPPORT_JOYSTICK
+static long joystick_port[SNDRV_CARDS];
+#endif
+static bool rear_switch[SNDRV_CARDS];
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for the Yamaha DS-1 PCI soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for the Yamaha DS-1 PCI soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable Yamaha DS-1 soundcard.");
-module_param_hw_array(mpu_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(mpu_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(mpu_port, "MPU-401 Port.");
-module_param_hw_array(fm_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(fm_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(fm_port, "FM OPL-3 Port.");
-#अगर_घोषित SUPPORT_JOYSTICK
-module_param_hw_array(joystick_port, दीर्घ, ioport, शून्य, 0444);
+#ifdef SUPPORT_JOYSTICK
+module_param_hw_array(joystick_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(joystick_port, "Joystick port address");
-#पूर्ण_अगर
-module_param_array(rear_चयन, bool, शून्य, 0444);
-MODULE_PARM_DESC(rear_चयन, "Enable shared rear/line-in switch");
+#endif
+module_param_array(rear_switch, bool, NULL, 0444);
+MODULE_PARM_DESC(rear_switch, "Enable shared rear/line-in switch");
 
-अटल स्थिर काष्ठा pci_device_id snd_ymfpci_ids[] = अणु
-	अणु PCI_VDEVICE(YAMAHA, 0x0004), 0, पूर्ण,   /* YMF724 */
-	अणु PCI_VDEVICE(YAMAHA, 0x000d), 0, पूर्ण,   /* YMF724F */
-	अणु PCI_VDEVICE(YAMAHA, 0x000a), 0, पूर्ण,   /* YMF740 */
-	अणु PCI_VDEVICE(YAMAHA, 0x000c), 0, पूर्ण,   /* YMF740C */
-	अणु PCI_VDEVICE(YAMAHA, 0x0010), 0, पूर्ण,   /* YMF744 */
-	अणु PCI_VDEVICE(YAMAHA, 0x0012), 0, पूर्ण,   /* YMF754 */
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id snd_ymfpci_ids[] = {
+	{ PCI_VDEVICE(YAMAHA, 0x0004), 0, },   /* YMF724 */
+	{ PCI_VDEVICE(YAMAHA, 0x000d), 0, },   /* YMF724F */
+	{ PCI_VDEVICE(YAMAHA, 0x000a), 0, },   /* YMF740 */
+	{ PCI_VDEVICE(YAMAHA, 0x000c), 0, },   /* YMF740C */
+	{ PCI_VDEVICE(YAMAHA, 0x0010), 0, },   /* YMF744 */
+	{ PCI_VDEVICE(YAMAHA, 0x0012), 0, },   /* YMF754 */
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, snd_ymfpci_ids);
 
-#अगर_घोषित SUPPORT_JOYSTICK
-अटल पूर्णांक snd_ymfpci_create_gameport(काष्ठा snd_ymfpci *chip, पूर्णांक dev,
-				      पूर्णांक legacy_ctrl, पूर्णांक legacy_ctrl2)
-अणु
-	काष्ठा gameport *gp;
-	काष्ठा resource *r = शून्य;
-	पूर्णांक io_port = joystick_port[dev];
+#ifdef SUPPORT_JOYSTICK
+static int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev,
+				      int legacy_ctrl, int legacy_ctrl2)
+{
+	struct gameport *gp;
+	struct resource *r = NULL;
+	int io_port = joystick_port[dev];
 
-	अगर (!io_port)
-		वापस -ENODEV;
+	if (!io_port)
+		return -ENODEV;
 
-	अगर (chip->pci->device >= 0x0010) अणु /* YMF 744/754 */
+	if (chip->pci->device >= 0x0010) { /* YMF 744/754 */
 
-		अगर (io_port == 1) अणु
-			/* स्वतः-detect */
-			अगर (!(io_port = pci_resource_start(chip->pci, 2)))
-				वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (io_port == 1) अणु
-			/* स्वतः-detect */
-			क्रम (io_port = 0x201; io_port <= 0x205; io_port++) अणु
-				अगर (io_port == 0x203)
-					जारी;
-				अगर ((r = request_region(io_port, 1, "YMFPCI gameport")) != शून्य)
-					अवरोध;
-			पूर्ण
-			अगर (!r) अणु
+		if (io_port == 1) {
+			/* auto-detect */
+			if (!(io_port = pci_resource_start(chip->pci, 2)))
+				return -ENODEV;
+		}
+	} else {
+		if (io_port == 1) {
+			/* auto-detect */
+			for (io_port = 0x201; io_port <= 0x205; io_port++) {
+				if (io_port == 0x203)
+					continue;
+				if ((r = request_region(io_port, 1, "YMFPCI gameport")) != NULL)
+					break;
+			}
+			if (!r) {
 				dev_err(chip->card->dev,
 					"no gameport ports available\n");
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण
-		चयन (io_port) अणु
-		हाल 0x201: legacy_ctrl2 |= 0 << 6; अवरोध;
-		हाल 0x202: legacy_ctrl2 |= 1 << 6; अवरोध;
-		हाल 0x204: legacy_ctrl2 |= 2 << 6; अवरोध;
-		हाल 0x205: legacy_ctrl2 |= 3 << 6; अवरोध;
-		शेष:
+				return -EBUSY;
+			}
+		}
+		switch (io_port) {
+		case 0x201: legacy_ctrl2 |= 0 << 6; break;
+		case 0x202: legacy_ctrl2 |= 1 << 6; break;
+		case 0x204: legacy_ctrl2 |= 2 << 6; break;
+		case 0x205: legacy_ctrl2 |= 3 << 6; break;
+		default:
 			dev_err(chip->card->dev,
 				"invalid joystick port %#x", io_port);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (!r && !(r = request_region(io_port, 1, "YMFPCI gameport"))) अणु
+	if (!r && !(r = request_region(io_port, 1, "YMFPCI gameport"))) {
 		dev_err(chip->card->dev,
 			"joystick port %#x is in use.\n", io_port);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	chip->gameport = gp = gameport_allocate_port();
-	अगर (!gp) अणु
+	if (!gp) {
 		dev_err(chip->card->dev,
 			"cannot allocate memory for gameport\n");
-		release_and_मुक्त_resource(r);
-		वापस -ENOMEM;
-	पूर्ण
+		release_and_free_resource(r);
+		return -ENOMEM;
+	}
 
 
 	gameport_set_name(gp, "Yamaha YMF Gameport");
@@ -124,228 +123,228 @@ MODULE_DEVICE_TABLE(pci, snd_ymfpci_ids);
 	gp->io = io_port;
 	gameport_set_port_data(gp, r);
 
-	अगर (chip->pci->device >= 0x0010) /* YMF 744/754 */
-		pci_ग_लिखो_config_word(chip->pci, PCIR_DSXG_JOYBASE, io_port);
+	if (chip->pci->device >= 0x0010) /* YMF 744/754 */
+		pci_write_config_word(chip->pci, PCIR_DSXG_JOYBASE, io_port);
 
-	pci_ग_लिखो_config_word(chip->pci, PCIR_DSXG_LEGACY, legacy_ctrl | YMFPCI_LEGACY_JPEN);
-	pci_ग_लिखो_config_word(chip->pci, PCIR_DSXG_ELEGACY, legacy_ctrl2);
+	pci_write_config_word(chip->pci, PCIR_DSXG_LEGACY, legacy_ctrl | YMFPCI_LEGACY_JPEN);
+	pci_write_config_word(chip->pci, PCIR_DSXG_ELEGACY, legacy_ctrl2);
 
-	gameport_रेजिस्टर_port(chip->gameport);
+	gameport_register_port(chip->gameport);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम snd_ymfpci_मुक्त_gameport(काष्ठा snd_ymfpci *chip)
-अणु
-	अगर (chip->gameport) अणु
-		काष्ठा resource *r = gameport_get_port_data(chip->gameport);
+void snd_ymfpci_free_gameport(struct snd_ymfpci *chip)
+{
+	if (chip->gameport) {
+		struct resource *r = gameport_get_port_data(chip->gameport);
 
-		gameport_unरेजिस्टर_port(chip->gameport);
-		chip->gameport = शून्य;
+		gameport_unregister_port(chip->gameport);
+		chip->gameport = NULL;
 
-		release_and_मुक्त_resource(r);
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक snd_ymfpci_create_gameport(काष्ठा snd_ymfpci *chip, पूर्णांक dev, पूर्णांक l, पूर्णांक l2) अणु वापस -ENOSYS; पूर्ण
-व्योम snd_ymfpci_मुक्त_gameport(काष्ठा snd_ymfpci *chip) अणु पूर्ण
-#पूर्ण_अगर /* SUPPORT_JOYSTICK */
+		release_and_free_resource(r);
+	}
+}
+#else
+static inline int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev, int l, int l2) { return -ENOSYS; }
+void snd_ymfpci_free_gameport(struct snd_ymfpci *chip) { }
+#endif /* SUPPORT_JOYSTICK */
 
-अटल पूर्णांक snd_card_ymfpci_probe(काष्ठा pci_dev *pci,
-				 स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	अटल पूर्णांक dev;
-	काष्ठा snd_card *card;
-	काष्ठा resource *fm_res = शून्य;
-	काष्ठा resource *mpu_res = शून्य;
-	काष्ठा snd_ymfpci *chip;
-	काष्ठा snd_opl3 *opl3;
-	स्थिर अक्षर *str, *model;
-	पूर्णांक err;
+static int snd_card_ymfpci_probe(struct pci_dev *pci,
+				 const struct pci_device_id *pci_id)
+{
+	static int dev;
+	struct snd_card *card;
+	struct resource *fm_res = NULL;
+	struct resource *mpu_res = NULL;
+	struct snd_ymfpci *chip;
+	struct snd_opl3 *opl3;
+	const char *str, *model;
+	int err;
 	u16 legacy_ctrl, legacy_ctrl2, old_legacy_ctrl;
 
-	अगर (dev >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (!enable[dev]) अणु
+	if (dev >= SNDRV_CARDS)
+		return -ENODEV;
+	if (!enable[dev]) {
 		dev++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	चयन (pci_id->device) अणु
-	हाल 0x0004: str = "YMF724";  model = "DS-1"; अवरोध;
-	हाल 0x000d: str = "YMF724F"; model = "DS-1"; अवरोध;
-	हाल 0x000a: str = "YMF740";  model = "DS-1L"; अवरोध;
-	हाल 0x000c: str = "YMF740C"; model = "DS-1L"; अवरोध;
-	हाल 0x0010: str = "YMF744";  model = "DS-1S"; अवरोध;
-	हाल 0x0012: str = "YMF754";  model = "DS-1E"; अवरोध;
-	शेष: model = str = "???"; अवरोध;
-	पूर्ण
+	switch (pci_id->device) {
+	case 0x0004: str = "YMF724";  model = "DS-1"; break;
+	case 0x000d: str = "YMF724F"; model = "DS-1"; break;
+	case 0x000a: str = "YMF740";  model = "DS-1L"; break;
+	case 0x000c: str = "YMF740C"; model = "DS-1L"; break;
+	case 0x0010: str = "YMF744";  model = "DS-1S"; break;
+	case 0x0012: str = "YMF754";  model = "DS-1E"; break;
+	default: model = str = "???"; break;
+	}
 
 	legacy_ctrl = 0;
 	legacy_ctrl2 = 0x0800;	/* SBEN = 0, SMOD = 01, LAD = 0 */
 
-	अगर (pci_id->device >= 0x0010) अणु /* YMF 744/754 */
-		अगर (fm_port[dev] == 1) अणु
-			/* स्वतः-detect */
+	if (pci_id->device >= 0x0010) { /* YMF 744/754 */
+		if (fm_port[dev] == 1) {
+			/* auto-detect */
 			fm_port[dev] = pci_resource_start(pci, 1);
-		पूर्ण
-		अगर (fm_port[dev] > 0 &&
-		    (fm_res = request_region(fm_port[dev], 4, "YMFPCI OPL3")) != शून्य) अणु
+		}
+		if (fm_port[dev] > 0 &&
+		    (fm_res = request_region(fm_port[dev], 4, "YMFPCI OPL3")) != NULL) {
 			legacy_ctrl |= YMFPCI_LEGACY_FMEN;
-			pci_ग_लिखो_config_word(pci, PCIR_DSXG_FMBASE, fm_port[dev]);
-		पूर्ण
-		अगर (mpu_port[dev] == 1) अणु
-			/* स्वतः-detect */
+			pci_write_config_word(pci, PCIR_DSXG_FMBASE, fm_port[dev]);
+		}
+		if (mpu_port[dev] == 1) {
+			/* auto-detect */
 			mpu_port[dev] = pci_resource_start(pci, 1) + 0x20;
-		पूर्ण
-		अगर (mpu_port[dev] > 0 &&
-		    (mpu_res = request_region(mpu_port[dev], 2, "YMFPCI MPU401")) != शून्य) अणु
+		}
+		if (mpu_port[dev] > 0 &&
+		    (mpu_res = request_region(mpu_port[dev], 2, "YMFPCI MPU401")) != NULL) {
 			legacy_ctrl |= YMFPCI_LEGACY_MEN;
-			pci_ग_लिखो_config_word(pci, PCIR_DSXG_MPU401BASE, mpu_port[dev]);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (fm_port[dev]) अणु
-		हाल 0x388: legacy_ctrl2 |= 0; अवरोध;
-		हाल 0x398: legacy_ctrl2 |= 1; अवरोध;
-		हाल 0x3a0: legacy_ctrl2 |= 2; अवरोध;
-		हाल 0x3a8: legacy_ctrl2 |= 3; अवरोध;
-		शेष: fm_port[dev] = 0; अवरोध;
-		पूर्ण
-		अगर (fm_port[dev] > 0 &&
-		    (fm_res = request_region(fm_port[dev], 4, "YMFPCI OPL3")) != शून्य) अणु
+			pci_write_config_word(pci, PCIR_DSXG_MPU401BASE, mpu_port[dev]);
+		}
+	} else {
+		switch (fm_port[dev]) {
+		case 0x388: legacy_ctrl2 |= 0; break;
+		case 0x398: legacy_ctrl2 |= 1; break;
+		case 0x3a0: legacy_ctrl2 |= 2; break;
+		case 0x3a8: legacy_ctrl2 |= 3; break;
+		default: fm_port[dev] = 0; break;
+		}
+		if (fm_port[dev] > 0 &&
+		    (fm_res = request_region(fm_port[dev], 4, "YMFPCI OPL3")) != NULL) {
 			legacy_ctrl |= YMFPCI_LEGACY_FMEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			legacy_ctrl2 &= ~YMFPCI_LEGACY2_FMIO;
 			fm_port[dev] = 0;
-		पूर्ण
-		चयन (mpu_port[dev]) अणु
-		हाल 0x330: legacy_ctrl2 |= 0 << 4; अवरोध;
-		हाल 0x300: legacy_ctrl2 |= 1 << 4; अवरोध;
-		हाल 0x332: legacy_ctrl2 |= 2 << 4; अवरोध;
-		हाल 0x334: legacy_ctrl2 |= 3 << 4; अवरोध;
-		शेष: mpu_port[dev] = 0; अवरोध;
-		पूर्ण
-		अगर (mpu_port[dev] > 0 &&
-		    (mpu_res = request_region(mpu_port[dev], 2, "YMFPCI MPU401")) != शून्य) अणु
+		}
+		switch (mpu_port[dev]) {
+		case 0x330: legacy_ctrl2 |= 0 << 4; break;
+		case 0x300: legacy_ctrl2 |= 1 << 4; break;
+		case 0x332: legacy_ctrl2 |= 2 << 4; break;
+		case 0x334: legacy_ctrl2 |= 3 << 4; break;
+		default: mpu_port[dev] = 0; break;
+		}
+		if (mpu_port[dev] > 0 &&
+		    (mpu_res = request_region(mpu_port[dev], 2, "YMFPCI MPU401")) != NULL) {
 			legacy_ctrl |= YMFPCI_LEGACY_MEN;
-		पूर्ण अन्यथा अणु
+		} else {
 			legacy_ctrl2 &= ~YMFPCI_LEGACY2_MPUIO;
 			mpu_port[dev] = 0;
-		पूर्ण
-	पूर्ण
-	अगर (mpu_res) अणु
+		}
+	}
+	if (mpu_res) {
 		legacy_ctrl |= YMFPCI_LEGACY_MIEN;
 		legacy_ctrl2 |= YMFPCI_LEGACY2_IMOD;
-	पूर्ण
-	pci_पढ़ो_config_word(pci, PCIR_DSXG_LEGACY, &old_legacy_ctrl);
-	pci_ग_लिखो_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
-	pci_ग_लिखो_config_word(pci, PCIR_DSXG_ELEGACY, legacy_ctrl2);
-	अगर ((err = snd_ymfpci_create(card, pci,
+	}
+	pci_read_config_word(pci, PCIR_DSXG_LEGACY, &old_legacy_ctrl);
+	pci_write_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
+	pci_write_config_word(pci, PCIR_DSXG_ELEGACY, legacy_ctrl2);
+	if ((err = snd_ymfpci_create(card, pci,
 				     old_legacy_ctrl,
-			 	     &chip)) < 0) अणु
-		release_and_मुक्त_resource(mpu_res);
-		release_and_मुक्त_resource(fm_res);
-		जाओ मुक्त_card;
-	पूर्ण
+			 	     &chip)) < 0) {
+		release_and_free_resource(mpu_res);
+		release_and_free_resource(fm_res);
+		goto free_card;
+	}
 	chip->fm_res = fm_res;
 	chip->mpu_res = mpu_res;
-	card->निजी_data = chip;
+	card->private_data = chip;
 
-	म_नकल(card->driver, str);
-	प्र_लिखो(card->लघुname, "Yamaha %s (%s)", model, str);
-	प्र_लिखो(card->दीर्घname, "%s at 0x%lx, irq %i",
-		card->लघुname,
+	strcpy(card->driver, str);
+	sprintf(card->shortname, "Yamaha %s (%s)", model, str);
+	sprintf(card->longname, "%s at 0x%lx, irq %i",
+		card->shortname,
 		chip->reg_area_phys,
 		chip->irq);
 	err = snd_ymfpci_pcm(chip, 0);
-	अगर (err < 0)
-		जाओ मुक्त_card;
+	if (err < 0)
+		goto free_card;
 
-	err = snd_ymfpci_pcm_spdअगर(chip, 1);
-	अगर (err < 0)
-		जाओ मुक्त_card;
+	err = snd_ymfpci_pcm_spdif(chip, 1);
+	if (err < 0)
+		goto free_card;
 
-	err = snd_ymfpci_mixer(chip, rear_चयन[dev]);
-	अगर (err < 0)
-		जाओ मुक्त_card;
+	err = snd_ymfpci_mixer(chip, rear_switch[dev]);
+	if (err < 0)
+		goto free_card;
 
-	अगर (chip->ac97->ext_id & AC97_EI_SDAC) अणु
+	if (chip->ac97->ext_id & AC97_EI_SDAC) {
 		err = snd_ymfpci_pcm_4ch(chip, 2);
-		अगर (err < 0)
-			जाओ मुक्त_card;
+		if (err < 0)
+			goto free_card;
 
 		err = snd_ymfpci_pcm2(chip, 3);
-		अगर (err < 0)
-			जाओ मुक्त_card;
-	पूर्ण
-	err = snd_ymfpci_समयr(chip, 0);
-	अगर (err < 0)
-		जाओ मुक्त_card;
+		if (err < 0)
+			goto free_card;
+	}
+	err = snd_ymfpci_timer(chip, 0);
+	if (err < 0)
+		goto free_card;
 
-	अगर (chip->mpu_res) अणु
-		अगर ((err = snd_mpu401_uart_new(card, 0, MPU401_HW_YMFPCI,
+	if (chip->mpu_res) {
+		if ((err = snd_mpu401_uart_new(card, 0, MPU401_HW_YMFPCI,
 					       mpu_port[dev],
 					       MPU401_INFO_INTEGRATED |
 					       MPU401_INFO_IRQ_HOOK,
-					       -1, &chip->rawmidi)) < 0) अणु
+					       -1, &chip->rawmidi)) < 0) {
 			dev_warn(card->dev,
 				 "cannot initialize MPU401 at 0x%lx, skipping...\n",
 				 mpu_port[dev]);
 			legacy_ctrl &= ~YMFPCI_LEGACY_MIEN; /* disable MPU401 irq */
-			pci_ग_लिखो_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
-		पूर्ण
-	पूर्ण
-	अगर (chip->fm_res) अणु
-		अगर ((err = snd_opl3_create(card,
+			pci_write_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
+		}
+	}
+	if (chip->fm_res) {
+		if ((err = snd_opl3_create(card,
 					   fm_port[dev],
 					   fm_port[dev] + 2,
-					   OPL3_HW_OPL3, 1, &opl3)) < 0) अणु
+					   OPL3_HW_OPL3, 1, &opl3)) < 0) {
 			dev_warn(card->dev,
 				 "cannot initialize FM OPL3 at 0x%lx, skipping...\n",
 				 fm_port[dev]);
 			legacy_ctrl &= ~YMFPCI_LEGACY_FMEN;
-			pci_ग_लिखो_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
-		पूर्ण अन्यथा अगर ((err = snd_opl3_hwdep_new(opl3, 0, 1, शून्य)) < 0) अणु
+			pci_write_config_word(pci, PCIR_DSXG_LEGACY, legacy_ctrl);
+		} else if ((err = snd_opl3_hwdep_new(opl3, 0, 1, NULL)) < 0) {
 			dev_err(card->dev, "cannot create opl3 hwdep\n");
-			जाओ मुक्त_card;
-		पूर्ण
-	पूर्ण
+			goto free_card;
+		}
+	}
 
 	snd_ymfpci_create_gameport(chip, dev, legacy_ctrl, legacy_ctrl2);
 
-	err = snd_card_रेजिस्टर(card);
-	अगर (err < 0)
-		जाओ मुक्त_card;
+	err = snd_card_register(card);
+	if (err < 0)
+		goto free_card;
 
 	pci_set_drvdata(pci, card);
 	dev++;
-	वापस 0;
+	return 0;
 
-मुक्त_card:
-	snd_card_मुक्त(card);
-	वापस err;
-पूर्ण
+free_card:
+	snd_card_free(card);
+	return err;
+}
 
-अटल व्योम snd_card_ymfpci_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	snd_card_मुक्त(pci_get_drvdata(pci));
-पूर्ण
+static void snd_card_ymfpci_remove(struct pci_dev *pci)
+{
+	snd_card_free(pci_get_drvdata(pci));
+}
 
-अटल काष्ठा pci_driver ymfpci_driver = अणु
+static struct pci_driver ymfpci_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = snd_ymfpci_ids,
 	.probe = snd_card_ymfpci_probe,
-	.हटाओ = snd_card_ymfpci_हटाओ,
-#अगर_घोषित CONFIG_PM_SLEEP
-	.driver = अणु
+	.remove = snd_card_ymfpci_remove,
+#ifdef CONFIG_PM_SLEEP
+	.driver = {
 		.pm = &snd_ymfpci_pm,
-	पूर्ण,
-#पूर्ण_अगर
-पूर्ण;
+	},
+#endif
+};
 
 module_pci_driver(ymfpci_driver);

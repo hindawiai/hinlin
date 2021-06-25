@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <यंत्र/contregs.h>
-#समावेश <यंत्र/sun3mmu.h>
-#समावेश <यंत्र/पन.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <asm/contregs.h>
+#include <asm/sun3mmu.h>
+#include <asm/io.h>
 
-व्योम sun3_leds(अचिन्हित अक्षर byte)
-अणु
-	अचिन्हित अक्षर dfc;
+void sun3_leds(unsigned char byte)
+{
+	unsigned char dfc;
 
 	GET_DFC(dfc);
 	SET_DFC(FC_CONTROL);
 	SET_CONTROL_BYTE(AC_LEDS, byte);
 	SET_DFC(dfc);
-पूर्ण
+}

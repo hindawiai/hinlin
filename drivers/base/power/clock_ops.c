@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * drivers/base/घातer/घड़ी_ops.c - Generic घड़ी manipulation PM callbacks
+ * drivers/base/power/clock_ops.c - Generic clock manipulation PM callbacks
  *
  * Copyright (c) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_घड़ी.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/of_clk.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/pm.h>
+#include <linux/pm_clock.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/of_clk.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_runtime.h>
 
-#अगर_घोषित CONFIG_PM_CLK
+#ifdef CONFIG_PM_CLK
 
-क्रमागत pce_status अणु
+enum pce_status {
 	PCE_STATUS_NONE = 0,
 	PCE_STATUS_ACQUIRED,
 	PCE_STATUS_PREPARED,
 	PCE_STATUS_ENABLED,
 	PCE_STATUS_ERROR,
-पूर्ण;
+};
 
-काष्ठा pm_घड़ी_entry अणु
-	काष्ठा list_head node;
-	अक्षर *con_id;
-	काष्ठा clk *clk;
-	क्रमागत pce_status status;
+struct pm_clock_entry {
+	struct list_head node;
+	char *con_id;
+	struct clk *clk;
+	enum pce_status status;
 	bool enabled_when_prepared;
-पूर्ण;
+};
 
 /**
- * pm_clk_list_lock - ensure exclusive access क्रम modअगरying the PM घड़ी
+ * pm_clk_list_lock - ensure exclusive access for modifying the PM clock
  *		      entry list.
- * @psd: pm_subsys_data instance corresponding to the PM घड़ी entry list
- *	 and clk_op_might_sleep count to be modअगरied.
+ * @psd: pm_subsys_data instance corresponding to the PM clock entry list
+ *	 and clk_op_might_sleep count to be modified.
  *
- * Get exclusive access beक्रमe modअगरying the PM घड़ी entry list and the
- * घड़ी_op_might_sleep count to guard against concurrent modअगरications.
- * This also protects against a concurrent घड़ी_op_might_sleep and PM घड़ी
+ * Get exclusive access before modifying the PM clock entry list and the
+ * clock_op_might_sleep count to guard against concurrent modifications.
+ * This also protects against a concurrent clock_op_might_sleep and PM clock
  * entry list usage in pm_clk_suspend()/pm_clk_resume() that may or may not
  * happen in atomic context, hence both the mutex and the spinlock must be
  * taken here.
  */
-अटल व्योम pm_clk_list_lock(काष्ठा pm_subsys_data *psd)
+static void pm_clk_list_lock(struct pm_subsys_data *psd)
 	__acquires(&psd->lock)
-अणु
-	mutex_lock(&psd->घड़ी_mutex);
+{
+	mutex_lock(&psd->clock_mutex);
 	spin_lock_irq(&psd->lock);
-पूर्ण
+}
 
 /**
  * pm_clk_list_unlock - counterpart to pm_clk_list_lock().
  * @psd: the same pm_subsys_data instance previously passed to
  *	 pm_clk_list_lock().
  */
-अटल व्योम pm_clk_list_unlock(काष्ठा pm_subsys_data *psd)
+static void pm_clk_list_unlock(struct pm_subsys_data *psd)
 	__releases(&psd->lock)
-अणु
+{
 	spin_unlock_irq(&psd->lock);
-	mutex_unlock(&psd->घड़ी_mutex);
-पूर्ण
+	mutex_unlock(&psd->clock_mutex);
+}
 
 /**
- * pm_clk_op_lock - ensure exclusive access क्रम perक्रमming घड़ी operations.
- * @psd: pm_subsys_data instance corresponding to the PM घड़ी entry list
+ * pm_clk_op_lock - ensure exclusive access for performing clock operations.
+ * @psd: pm_subsys_data instance corresponding to the PM clock entry list
  *	 and clk_op_might_sleep count being used.
  * @flags: stored irq flags.
- * @fn: string क्रम the caller function's name.
+ * @fn: string for the caller function's name.
  *
  * This is used by pm_clk_suspend() and pm_clk_resume() to guard
- * against concurrent modअगरications to the घड़ी entry list and the
- * घड़ी_op_might_sleep count. If घड़ी_op_might_sleep is != 0 then
+ * against concurrent modifications to the clock entry list and the
+ * clock_op_might_sleep count. If clock_op_might_sleep is != 0 then
  * only the mutex can be locked and those functions can only be used in
- * non atomic context. If घड़ी_op_might_sleep == 0 then these functions
+ * non atomic context. If clock_op_might_sleep == 0 then these functions
  * may be used in any context and only the spinlock can be locked.
- * Returns -EINVAL अगर called in atomic context when घड़ी ops might sleep.
+ * Returns -EINVAL if called in atomic context when clock ops might sleep.
  */
-अटल पूर्णांक pm_clk_op_lock(काष्ठा pm_subsys_data *psd, अचिन्हित दीर्घ *flags,
-			  स्थिर अक्षर *fn)
-	/* sparse annotations करोn't work here as exit state isn't अटल */
-अणु
+static int pm_clk_op_lock(struct pm_subsys_data *psd, unsigned long *flags,
+			  const char *fn)
+	/* sparse annotations don't work here as exit state isn't static */
+{
 	bool atomic_context = in_atomic() || irqs_disabled();
 
 try_again:
 	spin_lock_irqsave(&psd->lock, *flags);
-	अगर (!psd->घड़ी_op_might_sleep) अणु
+	if (!psd->clock_op_might_sleep) {
 		/* the __release is there to work around sparse limitations */
 		__release(&psd->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* bail out अगर in atomic context */
-	अगर (atomic_context) अणु
+	/* bail out if in atomic context */
+	if (atomic_context) {
 		pr_err("%s: atomic context with clock_ops_might_sleep = %d",
-		       fn, psd->घड़ी_op_might_sleep);
+		       fn, psd->clock_op_might_sleep);
 		spin_unlock_irqrestore(&psd->lock, *flags);
 		might_sleep();
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	/* we must चयन to the mutex */
+	/* we must switch to the mutex */
 	spin_unlock_irqrestore(&psd->lock, *flags);
-	mutex_lock(&psd->घड़ी_mutex);
+	mutex_lock(&psd->clock_mutex);
 
 	/*
-	 * There was a possibility क्रम psd->घड़ी_op_might_sleep
-	 * to become 0 above. Keep the mutex only अगर not the हाल.
+	 * There was a possibility for psd->clock_op_might_sleep
+	 * to become 0 above. Keep the mutex only if not the case.
 	 */
-	अगर (likely(psd->घड़ी_op_might_sleep))
-		वापस 0;
+	if (likely(psd->clock_op_might_sleep))
+		return 0;
 
-	mutex_unlock(&psd->घड़ी_mutex);
-	जाओ try_again;
-पूर्ण
+	mutex_unlock(&psd->clock_mutex);
+	goto try_again;
+}
 
 /**
  * pm_clk_op_unlock - counterpart to pm_clk_op_lock().
@@ -128,662 +127,662 @@ try_again:
  *	 pm_clk_op_lock().
  * @flags: irq flags provided by pm_clk_op_lock().
  */
-अटल व्योम pm_clk_op_unlock(काष्ठा pm_subsys_data *psd, अचिन्हित दीर्घ *flags)
-	/* sparse annotations करोn't work here as entry state isn't अटल */
-अणु
-	अगर (psd->घड़ी_op_might_sleep) अणु
-		mutex_unlock(&psd->घड़ी_mutex);
-	पूर्ण अन्यथा अणु
+static void pm_clk_op_unlock(struct pm_subsys_data *psd, unsigned long *flags)
+	/* sparse annotations don't work here as entry state isn't static */
+{
+	if (psd->clock_op_might_sleep) {
+		mutex_unlock(&psd->clock_mutex);
+	} else {
 		/* the __acquire is there to work around sparse limitations */
 		__acquire(&psd->lock);
 		spin_unlock_irqrestore(&psd->lock, *flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * __pm_clk_enable - Enable a घड़ी, reporting any errors
- * @dev: The device क्रम the given घड़ी
- * @ce: PM घड़ी entry corresponding to the घड़ी.
+ * __pm_clk_enable - Enable a clock, reporting any errors
+ * @dev: The device for the given clock
+ * @ce: PM clock entry corresponding to the clock.
  */
-अटल अंतरभूत व्योम __pm_clk_enable(काष्ठा device *dev, काष्ठा pm_घड़ी_entry *ce)
-अणु
-	पूर्णांक ret;
+static inline void __pm_clk_enable(struct device *dev, struct pm_clock_entry *ce)
+{
+	int ret;
 
-	चयन (ce->status) अणु
-	हाल PCE_STATUS_ACQUIRED:
+	switch (ce->status) {
+	case PCE_STATUS_ACQUIRED:
 		ret = clk_prepare_enable(ce->clk);
-		अवरोध;
-	हाल PCE_STATUS_PREPARED:
+		break;
+	case PCE_STATUS_PREPARED:
 		ret = clk_enable(ce->clk);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
-	अगर (!ret)
+		break;
+	default:
+		return;
+	}
+	if (!ret)
 		ce->status = PCE_STATUS_ENABLED;
-	अन्यथा
+	else
 		dev_err(dev, "%s: failed to enable clk %p, error %d\n",
 			__func__, ce->clk, ret);
-पूर्ण
+}
 
 /**
- * pm_clk_acquire - Acquire a device घड़ी.
- * @dev: Device whose घड़ी is to be acquired.
- * @ce: PM घड़ी entry corresponding to the घड़ी.
+ * pm_clk_acquire - Acquire a device clock.
+ * @dev: Device whose clock is to be acquired.
+ * @ce: PM clock entry corresponding to the clock.
  */
-अटल व्योम pm_clk_acquire(काष्ठा device *dev, काष्ठा pm_घड़ी_entry *ce)
-अणु
-	अगर (!ce->clk)
+static void pm_clk_acquire(struct device *dev, struct pm_clock_entry *ce)
+{
+	if (!ce->clk)
 		ce->clk = clk_get(dev, ce->con_id);
-	अगर (IS_ERR(ce->clk)) अणु
+	if (IS_ERR(ce->clk)) {
 		ce->status = PCE_STATUS_ERROR;
-		वापस;
-	पूर्ण अन्यथा अगर (clk_is_enabled_when_prepared(ce->clk)) अणु
-		/* we defer preparing the घड़ी in that हाल */
+		return;
+	} else if (clk_is_enabled_when_prepared(ce->clk)) {
+		/* we defer preparing the clock in that case */
 		ce->status = PCE_STATUS_ACQUIRED;
 		ce->enabled_when_prepared = true;
-	पूर्ण अन्यथा अगर (clk_prepare(ce->clk)) अणु
+	} else if (clk_prepare(ce->clk)) {
 		ce->status = PCE_STATUS_ERROR;
 		dev_err(dev, "clk_prepare() failed\n");
-		वापस;
-	पूर्ण अन्यथा अणु
+		return;
+	} else {
 		ce->status = PCE_STATUS_PREPARED;
-	पूर्ण
+	}
 	dev_dbg(dev, "Clock %pC con_id %s managed by runtime PM.\n",
 		ce->clk, ce->con_id);
-पूर्ण
+}
 
-अटल पूर्णांक __pm_clk_add(काष्ठा device *dev, स्थिर अक्षर *con_id,
-			काष्ठा clk *clk)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce;
+static int __pm_clk_add(struct device *dev, const char *con_id,
+			struct clk *clk)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce;
 
-	अगर (!psd)
-		वापस -EINVAL;
+	if (!psd)
+		return -EINVAL;
 
-	ce = kzalloc(माप(*ce), GFP_KERNEL);
-	अगर (!ce)
-		वापस -ENOMEM;
+	ce = kzalloc(sizeof(*ce), GFP_KERNEL);
+	if (!ce)
+		return -ENOMEM;
 
-	अगर (con_id) अणु
+	if (con_id) {
 		ce->con_id = kstrdup(con_id, GFP_KERNEL);
-		अगर (!ce->con_id) अणु
-			kमुक्त(ce);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (IS_ERR(clk)) अणु
-			kमुक्त(ce);
-			वापस -ENOENT;
-		पूर्ण
+		if (!ce->con_id) {
+			kfree(ce);
+			return -ENOMEM;
+		}
+	} else {
+		if (IS_ERR(clk)) {
+			kfree(ce);
+			return -ENOENT;
+		}
 		ce->clk = clk;
-	पूर्ण
+	}
 
 	pm_clk_acquire(dev, ce);
 
 	pm_clk_list_lock(psd);
-	list_add_tail(&ce->node, &psd->घड़ी_list);
-	अगर (ce->enabled_when_prepared)
-		psd->घड़ी_op_might_sleep++;
+	list_add_tail(&ce->node, &psd->clock_list);
+	if (ce->enabled_when_prepared)
+		psd->clock_op_might_sleep++;
 	pm_clk_list_unlock(psd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pm_clk_add - Start using a device घड़ी क्रम घातer management.
- * @dev: Device whose घड़ी is going to be used क्रम घातer management.
- * @con_id: Connection ID of the घड़ी.
+ * pm_clk_add - Start using a device clock for power management.
+ * @dev: Device whose clock is going to be used for power management.
+ * @con_id: Connection ID of the clock.
  *
- * Add the घड़ी represented by @con_id to the list of घड़ीs used क्रम
- * the घातer management of @dev.
+ * Add the clock represented by @con_id to the list of clocks used for
+ * the power management of @dev.
  */
-पूर्णांक pm_clk_add(काष्ठा device *dev, स्थिर अक्षर *con_id)
-अणु
-	वापस __pm_clk_add(dev, con_id, शून्य);
-पूर्ण
+int pm_clk_add(struct device *dev, const char *con_id)
+{
+	return __pm_clk_add(dev, con_id, NULL);
+}
 EXPORT_SYMBOL_GPL(pm_clk_add);
 
 /**
- * pm_clk_add_clk - Start using a device घड़ी क्रम घातer management.
- * @dev: Device whose घड़ी is going to be used क्रम घातer management.
- * @clk: Clock poपूर्णांकer
+ * pm_clk_add_clk - Start using a device clock for power management.
+ * @dev: Device whose clock is going to be used for power management.
+ * @clk: Clock pointer
  *
- * Add the घड़ी to the list of घड़ीs used क्रम the घातer management of @dev.
- * The घातer-management code will take control of the घड़ी reference, so
+ * Add the clock to the list of clocks used for the power management of @dev.
+ * The power-management code will take control of the clock reference, so
  * callers should not call clk_put() on @clk after this function sucessfully
- * वापसed.
+ * returned.
  */
-पूर्णांक pm_clk_add_clk(काष्ठा device *dev, काष्ठा clk *clk)
-अणु
-	वापस __pm_clk_add(dev, शून्य, clk);
-पूर्ण
+int pm_clk_add_clk(struct device *dev, struct clk *clk)
+{
+	return __pm_clk_add(dev, NULL, clk);
+}
 EXPORT_SYMBOL_GPL(pm_clk_add_clk);
 
 
 /**
- * of_pm_clk_add_clk - Start using a device घड़ी क्रम घातer management.
- * @dev: Device whose घड़ी is going to be used क्रम घातer management.
- * @name: Name of घड़ी that is going to be used क्रम घातer management.
+ * of_pm_clk_add_clk - Start using a device clock for power management.
+ * @dev: Device whose clock is going to be used for power management.
+ * @name: Name of clock that is going to be used for power management.
  *
- * Add the घड़ी described in the 'clocks' device-tree node that matches
- * with the 'name' provided, to the list of घड़ीs used क्रम the घातer
- * management of @dev. On success, वापसs 0. Returns a negative error
- * code अगर the घड़ी is not found or cannot be added.
+ * Add the clock described in the 'clocks' device-tree node that matches
+ * with the 'name' provided, to the list of clocks used for the power
+ * management of @dev. On success, returns 0. Returns a negative error
+ * code if the clock is not found or cannot be added.
  */
-पूर्णांक of_pm_clk_add_clk(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+int of_pm_clk_add_clk(struct device *dev, const char *name)
+{
+	struct clk *clk;
+	int ret;
 
-	अगर (!dev || !dev->of_node || !name)
-		वापस -EINVAL;
+	if (!dev || !dev->of_node || !name)
+		return -EINVAL;
 
 	clk = of_clk_get_by_name(dev->of_node, name);
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	ret = pm_clk_add_clk(dev, clk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_put(clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(of_pm_clk_add_clk);
 
 /**
- * of_pm_clk_add_clks - Start using device घड़ी(s) क्रम घातer management.
- * @dev: Device whose घड़ी(s) is going to be used क्रम घातer management.
+ * of_pm_clk_add_clks - Start using device clock(s) for power management.
+ * @dev: Device whose clock(s) is going to be used for power management.
  *
- * Add a series of घड़ीs described in the 'clocks' device-tree node क्रम
- * a device to the list of घड़ीs used क्रम the घातer management of @dev.
- * On success, वापसs the number of घड़ीs added. Returns a negative
- * error code अगर there are no घड़ीs in the device node क्रम the device
- * or अगर adding a घड़ी fails.
+ * Add a series of clocks described in the 'clocks' device-tree node for
+ * a device to the list of clocks used for the power management of @dev.
+ * On success, returns the number of clocks added. Returns a negative
+ * error code if there are no clocks in the device node for the device
+ * or if adding a clock fails.
  */
-पूर्णांक of_pm_clk_add_clks(काष्ठा device *dev)
-अणु
-	काष्ठा clk **clks;
-	पूर्णांक i, count;
-	पूर्णांक ret;
+int of_pm_clk_add_clks(struct device *dev)
+{
+	struct clk **clks;
+	int i, count;
+	int ret;
 
-	अगर (!dev || !dev->of_node)
-		वापस -EINVAL;
+	if (!dev || !dev->of_node)
+		return -EINVAL;
 
 	count = of_clk_get_parent_count(dev->of_node);
-	अगर (count <= 0)
-		वापस -ENODEV;
+	if (count <= 0)
+		return -ENODEV;
 
-	clks = kसुस्मृति(count, माप(*clks), GFP_KERNEL);
-	अगर (!clks)
-		वापस -ENOMEM;
+	clks = kcalloc(count, sizeof(*clks), GFP_KERNEL);
+	if (!clks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		clks[i] = of_clk_get(dev->of_node, i);
-		अगर (IS_ERR(clks[i])) अणु
+		if (IS_ERR(clks[i])) {
 			ret = PTR_ERR(clks[i]);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		ret = pm_clk_add_clk(dev, clks[i]);
-		अगर (ret) अणु
+		if (ret) {
 			clk_put(clks[i]);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	kमुक्त(clks);
+	kfree(clks);
 
-	वापस i;
+	return i;
 
 error:
-	जबतक (i--)
-		pm_clk_हटाओ_clk(dev, clks[i]);
+	while (i--)
+		pm_clk_remove_clk(dev, clks[i]);
 
-	kमुक्त(clks);
+	kfree(clks);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_pm_clk_add_clks);
 
 /**
- * __pm_clk_हटाओ - Destroy PM घड़ी entry.
- * @ce: PM घड़ी entry to destroy.
+ * __pm_clk_remove - Destroy PM clock entry.
+ * @ce: PM clock entry to destroy.
  */
-अटल व्योम __pm_clk_हटाओ(काष्ठा pm_घड़ी_entry *ce)
-अणु
-	अगर (!ce)
-		वापस;
+static void __pm_clk_remove(struct pm_clock_entry *ce)
+{
+	if (!ce)
+		return;
 
-	चयन (ce->status) अणु
-	हाल PCE_STATUS_ENABLED:
+	switch (ce->status) {
+	case PCE_STATUS_ENABLED:
 		clk_disable(ce->clk);
 		fallthrough;
-	हाल PCE_STATUS_PREPARED:
+	case PCE_STATUS_PREPARED:
 		clk_unprepare(ce->clk);
 		fallthrough;
-	हाल PCE_STATUS_ACQUIRED:
-	हाल PCE_STATUS_ERROR:
-		अगर (!IS_ERR(ce->clk))
+	case PCE_STATUS_ACQUIRED:
+	case PCE_STATUS_ERROR:
+		if (!IS_ERR(ce->clk))
 			clk_put(ce->clk);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	kमुक्त(ce->con_id);
-	kमुक्त(ce);
-पूर्ण
+	kfree(ce->con_id);
+	kfree(ce);
+}
 
 /**
- * pm_clk_हटाओ - Stop using a device घड़ी क्रम घातer management.
- * @dev: Device whose घड़ी should not be used क्रम PM any more.
- * @con_id: Connection ID of the घड़ी.
+ * pm_clk_remove - Stop using a device clock for power management.
+ * @dev: Device whose clock should not be used for PM any more.
+ * @con_id: Connection ID of the clock.
  *
- * Remove the घड़ी represented by @con_id from the list of घड़ीs used क्रम
- * the घातer management of @dev.
+ * Remove the clock represented by @con_id from the list of clocks used for
+ * the power management of @dev.
  */
-व्योम pm_clk_हटाओ(काष्ठा device *dev, स्थिर अक्षर *con_id)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce;
+void pm_clk_remove(struct device *dev, const char *con_id)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce;
 
-	अगर (!psd)
-		वापस;
+	if (!psd)
+		return;
 
 	pm_clk_list_lock(psd);
 
-	list_क्रम_each_entry(ce, &psd->घड़ी_list, node) अणु
-		अगर (!con_id && !ce->con_id)
-			जाओ हटाओ;
-		अन्यथा अगर (!con_id || !ce->con_id)
-			जारी;
-		अन्यथा अगर (!म_भेद(con_id, ce->con_id))
-			जाओ हटाओ;
-	पूर्ण
+	list_for_each_entry(ce, &psd->clock_list, node) {
+		if (!con_id && !ce->con_id)
+			goto remove;
+		else if (!con_id || !ce->con_id)
+			continue;
+		else if (!strcmp(con_id, ce->con_id))
+			goto remove;
+	}
 
 	pm_clk_list_unlock(psd);
-	वापस;
+	return;
 
- हटाओ:
+ remove:
 	list_del(&ce->node);
-	अगर (ce->enabled_when_prepared)
-		psd->घड़ी_op_might_sleep--;
+	if (ce->enabled_when_prepared)
+		psd->clock_op_might_sleep--;
 	pm_clk_list_unlock(psd);
 
-	__pm_clk_हटाओ(ce);
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_clk_हटाओ);
+	__pm_clk_remove(ce);
+}
+EXPORT_SYMBOL_GPL(pm_clk_remove);
 
 /**
- * pm_clk_हटाओ_clk - Stop using a device घड़ी क्रम घातer management.
- * @dev: Device whose घड़ी should not be used क्रम PM any more.
- * @clk: Clock poपूर्णांकer
+ * pm_clk_remove_clk - Stop using a device clock for power management.
+ * @dev: Device whose clock should not be used for PM any more.
+ * @clk: Clock pointer
  *
- * Remove the घड़ी poपूर्णांकed to by @clk from the list of घड़ीs used क्रम
- * the घातer management of @dev.
+ * Remove the clock pointed to by @clk from the list of clocks used for
+ * the power management of @dev.
  */
-व्योम pm_clk_हटाओ_clk(काष्ठा device *dev, काष्ठा clk *clk)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce;
+void pm_clk_remove_clk(struct device *dev, struct clk *clk)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce;
 
-	अगर (!psd || !clk)
-		वापस;
+	if (!psd || !clk)
+		return;
 
 	pm_clk_list_lock(psd);
 
-	list_क्रम_each_entry(ce, &psd->घड़ी_list, node) अणु
-		अगर (clk == ce->clk)
-			जाओ हटाओ;
-	पूर्ण
+	list_for_each_entry(ce, &psd->clock_list, node) {
+		if (clk == ce->clk)
+			goto remove;
+	}
 
 	pm_clk_list_unlock(psd);
-	वापस;
+	return;
 
- हटाओ:
+ remove:
 	list_del(&ce->node);
-	अगर (ce->enabled_when_prepared)
-		psd->घड़ी_op_might_sleep--;
+	if (ce->enabled_when_prepared)
+		psd->clock_op_might_sleep--;
 	pm_clk_list_unlock(psd);
 
-	__pm_clk_हटाओ(ce);
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_clk_हटाओ_clk);
+	__pm_clk_remove(ce);
+}
+EXPORT_SYMBOL_GPL(pm_clk_remove_clk);
 
 /**
- * pm_clk_init - Initialize a device's list of घातer management घड़ीs.
- * @dev: Device to initialize the list of PM घड़ीs क्रम.
+ * pm_clk_init - Initialize a device's list of power management clocks.
+ * @dev: Device to initialize the list of PM clocks for.
  *
- * Initialize the lock and घड़ी_list members of the device's pm_subsys_data
- * object, set the count of घड़ीs that might sleep to 0.
+ * Initialize the lock and clock_list members of the device's pm_subsys_data
+ * object, set the count of clocks that might sleep to 0.
  */
-व्योम pm_clk_init(काष्ठा device *dev)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	अगर (psd) अणु
-		INIT_LIST_HEAD(&psd->घड़ी_list);
-		mutex_init(&psd->घड़ी_mutex);
-		psd->घड़ी_op_might_sleep = 0;
-	पूर्ण
-पूर्ण
+void pm_clk_init(struct device *dev)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	if (psd) {
+		INIT_LIST_HEAD(&psd->clock_list);
+		mutex_init(&psd->clock_mutex);
+		psd->clock_op_might_sleep = 0;
+	}
+}
 EXPORT_SYMBOL_GPL(pm_clk_init);
 
 /**
- * pm_clk_create - Create and initialize a device's list of PM घड़ीs.
- * @dev: Device to create and initialize the list of PM घड़ीs क्रम.
+ * pm_clk_create - Create and initialize a device's list of PM clocks.
+ * @dev: Device to create and initialize the list of PM clocks for.
  *
- * Allocate a काष्ठा pm_subsys_data object, initialize its lock and घड़ी_list
- * members and make the @dev's घातer.subsys_data field poपूर्णांक to it.
+ * Allocate a struct pm_subsys_data object, initialize its lock and clock_list
+ * members and make the @dev's power.subsys_data field point to it.
  */
-पूर्णांक pm_clk_create(काष्ठा device *dev)
-अणु
-	वापस dev_pm_get_subsys_data(dev);
-पूर्ण
+int pm_clk_create(struct device *dev)
+{
+	return dev_pm_get_subsys_data(dev);
+}
 EXPORT_SYMBOL_GPL(pm_clk_create);
 
 /**
- * pm_clk_destroy - Destroy a device's list of घातer management घड़ीs.
- * @dev: Device to destroy the list of PM घड़ीs क्रम.
+ * pm_clk_destroy - Destroy a device's list of power management clocks.
+ * @dev: Device to destroy the list of PM clocks for.
  *
- * Clear the @dev's घातer.subsys_data field, हटाओ the list of घड़ी entries
- * from the काष्ठा pm_subsys_data object poपूर्णांकed to by it beक्रमe and मुक्त
+ * Clear the @dev's power.subsys_data field, remove the list of clock entries
+ * from the struct pm_subsys_data object pointed to by it before and free
  * that object.
  */
-व्योम pm_clk_destroy(काष्ठा device *dev)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce, *c;
-	काष्ठा list_head list;
+void pm_clk_destroy(struct device *dev)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce, *c;
+	struct list_head list;
 
-	अगर (!psd)
-		वापस;
+	if (!psd)
+		return;
 
 	INIT_LIST_HEAD(&list);
 
 	pm_clk_list_lock(psd);
 
-	list_क्रम_each_entry_safe_reverse(ce, c, &psd->घड़ी_list, node)
+	list_for_each_entry_safe_reverse(ce, c, &psd->clock_list, node)
 		list_move(&ce->node, &list);
-	psd->घड़ी_op_might_sleep = 0;
+	psd->clock_op_might_sleep = 0;
 
 	pm_clk_list_unlock(psd);
 
 	dev_pm_put_subsys_data(dev);
 
-	list_क्रम_each_entry_safe_reverse(ce, c, &list, node) अणु
+	list_for_each_entry_safe_reverse(ce, c, &list, node) {
 		list_del(&ce->node);
-		__pm_clk_हटाओ(ce);
-	पूर्ण
-पूर्ण
+		__pm_clk_remove(ce);
+	}
+}
 EXPORT_SYMBOL_GPL(pm_clk_destroy);
 
 /**
- * pm_clk_suspend - Disable घड़ीs in a device's PM घड़ी list.
- * @dev: Device to disable the घड़ीs क्रम.
+ * pm_clk_suspend - Disable clocks in a device's PM clock list.
+ * @dev: Device to disable the clocks for.
  */
-पूर्णांक pm_clk_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int pm_clk_suspend(struct device *dev)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce;
+	unsigned long flags;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	अगर (!psd)
-		वापस 0;
+	if (!psd)
+		return 0;
 
 	ret = pm_clk_op_lock(psd, &flags, __func__);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	list_क्रम_each_entry_reverse(ce, &psd->घड़ी_list, node) अणु
-		अगर (ce->status == PCE_STATUS_ENABLED) अणु
-			अगर (ce->enabled_when_prepared) अणु
+	list_for_each_entry_reverse(ce, &psd->clock_list, node) {
+		if (ce->status == PCE_STATUS_ENABLED) {
+			if (ce->enabled_when_prepared) {
 				clk_disable_unprepare(ce->clk);
 				ce->status = PCE_STATUS_ACQUIRED;
-			पूर्ण अन्यथा अणु
+			} else {
 				clk_disable(ce->clk);
 				ce->status = PCE_STATUS_PREPARED;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	pm_clk_op_unlock(psd, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pm_clk_suspend);
 
 /**
- * pm_clk_resume - Enable घड़ीs in a device's PM घड़ी list.
- * @dev: Device to enable the घड़ीs क्रम.
+ * pm_clk_resume - Enable clocks in a device's PM clock list.
+ * @dev: Device to enable the clocks for.
  */
-पूर्णांक pm_clk_resume(काष्ठा device *dev)
-अणु
-	काष्ठा pm_subsys_data *psd = dev_to_psd(dev);
-	काष्ठा pm_घड़ी_entry *ce;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int pm_clk_resume(struct device *dev)
+{
+	struct pm_subsys_data *psd = dev_to_psd(dev);
+	struct pm_clock_entry *ce;
+	unsigned long flags;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	अगर (!psd)
-		वापस 0;
+	if (!psd)
+		return 0;
 
 	ret = pm_clk_op_lock(psd, &flags, __func__);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	list_क्रम_each_entry(ce, &psd->घड़ी_list, node)
+	list_for_each_entry(ce, &psd->clock_list, node)
 		__pm_clk_enable(dev, ce);
 
 	pm_clk_op_unlock(psd, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pm_clk_resume);
 
 /**
- * pm_clk_notअगरy - Notअगरy routine क्रम device addition and removal.
- * @nb: Notअगरier block object this function is a member of.
+ * pm_clk_notify - Notify routine for device addition and removal.
+ * @nb: Notifier block object this function is a member of.
  * @action: Operation being carried out by the caller.
- * @data: Device the routine is being run क्रम.
+ * @data: Device the routine is being run for.
  *
  * For this function to work, @nb must be a member of an object of type
- * काष्ठा pm_clk_notअगरier_block containing all of the requisite data.
- * Specअगरically, the pm_करोमुख्य member of that object is copied to the device's
- * pm_करोमुख्य field and its con_ids member is used to populate the device's list
- * of PM घड़ीs, depending on @action.
+ * struct pm_clk_notifier_block containing all of the requisite data.
+ * Specifically, the pm_domain member of that object is copied to the device's
+ * pm_domain field and its con_ids member is used to populate the device's list
+ * of PM clocks, depending on @action.
  *
- * If the device's pm_करोमुख्य field is alपढ़ोy populated with a value dअगरferent
- * from the one stored in the काष्ठा pm_clk_notअगरier_block object, the function
- * करोes nothing.
+ * If the device's pm_domain field is already populated with a value different
+ * from the one stored in the struct pm_clk_notifier_block object, the function
+ * does nothing.
  */
-अटल पूर्णांक pm_clk_notअगरy(काष्ठा notअगरier_block *nb,
-				 अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा pm_clk_notअगरier_block *clknb;
-	काष्ठा device *dev = data;
-	अक्षर **con_id;
-	पूर्णांक error;
+static int pm_clk_notify(struct notifier_block *nb,
+				 unsigned long action, void *data)
+{
+	struct pm_clk_notifier_block *clknb;
+	struct device *dev = data;
+	char **con_id;
+	int error;
 
 	dev_dbg(dev, "%s() %ld\n", __func__, action);
 
-	clknb = container_of(nb, काष्ठा pm_clk_notअगरier_block, nb);
+	clknb = container_of(nb, struct pm_clk_notifier_block, nb);
 
-	चयन (action) अणु
-	हाल BUS_NOTIFY_ADD_DEVICE:
-		अगर (dev->pm_करोमुख्य)
-			अवरोध;
+	switch (action) {
+	case BUS_NOTIFY_ADD_DEVICE:
+		if (dev->pm_domain)
+			break;
 
 		error = pm_clk_create(dev);
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 
-		dev_pm_करोमुख्य_set(dev, clknb->pm_करोमुख्य);
-		अगर (clknb->con_ids[0]) अणु
-			क्रम (con_id = clknb->con_ids; *con_id; con_id++)
+		dev_pm_domain_set(dev, clknb->pm_domain);
+		if (clknb->con_ids[0]) {
+			for (con_id = clknb->con_ids; *con_id; con_id++)
 				pm_clk_add(dev, *con_id);
-		पूर्ण अन्यथा अणु
-			pm_clk_add(dev, शून्य);
-		पूर्ण
+		} else {
+			pm_clk_add(dev, NULL);
+		}
 
-		अवरोध;
-	हाल BUS_NOTIFY_DEL_DEVICE:
-		अगर (dev->pm_करोमुख्य != clknb->pm_करोमुख्य)
-			अवरोध;
+		break;
+	case BUS_NOTIFY_DEL_DEVICE:
+		if (dev->pm_domain != clknb->pm_domain)
+			break;
 
-		dev_pm_करोमुख्य_set(dev, शून्य);
+		dev_pm_domain_set(dev, NULL);
 		pm_clk_destroy(dev);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pm_clk_runसमय_suspend(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+int pm_clk_runtime_suspend(struct device *dev)
+{
+	int ret;
 
 	dev_dbg(dev, "%s\n", __func__);
 
-	ret = pm_generic_runसमय_suspend(dev);
-	अगर (ret) अणु
+	ret = pm_generic_runtime_suspend(dev);
+	if (ret) {
 		dev_err(dev, "failed to suspend device\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = pm_clk_suspend(dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to suspend clock\n");
-		pm_generic_runसमय_resume(dev);
-		वापस ret;
-	पूर्ण
+		pm_generic_runtime_resume(dev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_clk_runसमय_suspend);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pm_clk_runtime_suspend);
 
-पूर्णांक pm_clk_runसमय_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+int pm_clk_runtime_resume(struct device *dev)
+{
+	int ret;
 
 	dev_dbg(dev, "%s\n", __func__);
 
 	ret = pm_clk_resume(dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to resume clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस pm_generic_runसमय_resume(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_clk_runसमय_resume);
+	return pm_generic_runtime_resume(dev);
+}
+EXPORT_SYMBOL_GPL(pm_clk_runtime_resume);
 
-#अन्यथा /* !CONFIG_PM_CLK */
+#else /* !CONFIG_PM_CLK */
 
 /**
- * enable_घड़ी - Enable a device घड़ी.
- * @dev: Device whose घड़ी is to be enabled.
- * @con_id: Connection ID of the घड़ी.
+ * enable_clock - Enable a device clock.
+ * @dev: Device whose clock is to be enabled.
+ * @con_id: Connection ID of the clock.
  */
-अटल व्योम enable_घड़ी(काष्ठा device *dev, स्थिर अक्षर *con_id)
-अणु
-	काष्ठा clk *clk;
+static void enable_clock(struct device *dev, const char *con_id)
+{
+	struct clk *clk;
 
 	clk = clk_get(dev, con_id);
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		clk_prepare_enable(clk);
 		clk_put(clk);
 		dev_info(dev, "Runtime PM disabled, clock forced on.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * disable_घड़ी - Disable a device घड़ी.
- * @dev: Device whose घड़ी is to be disabled.
- * @con_id: Connection ID of the घड़ी.
+ * disable_clock - Disable a device clock.
+ * @dev: Device whose clock is to be disabled.
+ * @con_id: Connection ID of the clock.
  */
-अटल व्योम disable_घड़ी(काष्ठा device *dev, स्थिर अक्षर *con_id)
-अणु
-	काष्ठा clk *clk;
+static void disable_clock(struct device *dev, const char *con_id)
+{
+	struct clk *clk;
 
 	clk = clk_get(dev, con_id);
-	अगर (!IS_ERR(clk)) अणु
+	if (!IS_ERR(clk)) {
 		clk_disable_unprepare(clk);
 		clk_put(clk);
 		dev_info(dev, "Runtime PM disabled, clock forced off.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * pm_clk_notअगरy - Notअगरy routine क्रम device addition and removal.
- * @nb: Notअगरier block object this function is a member of.
+ * pm_clk_notify - Notify routine for device addition and removal.
+ * @nb: Notifier block object this function is a member of.
  * @action: Operation being carried out by the caller.
- * @data: Device the routine is being run क्रम.
+ * @data: Device the routine is being run for.
  *
  * For this function to work, @nb must be a member of an object of type
- * काष्ठा pm_clk_notअगरier_block containing all of the requisite data.
- * Specअगरically, the con_ids member of that object is used to enable or disable
- * the device's घड़ीs, depending on @action.
+ * struct pm_clk_notifier_block containing all of the requisite data.
+ * Specifically, the con_ids member of that object is used to enable or disable
+ * the device's clocks, depending on @action.
  */
-अटल पूर्णांक pm_clk_notअगरy(काष्ठा notअगरier_block *nb,
-				 अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा pm_clk_notअगरier_block *clknb;
-	काष्ठा device *dev = data;
-	अक्षर **con_id;
+static int pm_clk_notify(struct notifier_block *nb,
+				 unsigned long action, void *data)
+{
+	struct pm_clk_notifier_block *clknb;
+	struct device *dev = data;
+	char **con_id;
 
 	dev_dbg(dev, "%s() %ld\n", __func__, action);
 
-	clknb = container_of(nb, काष्ठा pm_clk_notअगरier_block, nb);
+	clknb = container_of(nb, struct pm_clk_notifier_block, nb);
 
-	चयन (action) अणु
-	हाल BUS_NOTIFY_BIND_DRIVER:
-		अगर (clknb->con_ids[0]) अणु
-			क्रम (con_id = clknb->con_ids; *con_id; con_id++)
-				enable_घड़ी(dev, *con_id);
-		पूर्ण अन्यथा अणु
-			enable_घड़ी(dev, शून्य);
-		पूर्ण
-		अवरोध;
-	हाल BUS_NOTIFY_DRIVER_NOT_BOUND:
-	हाल BUS_NOTIFY_UNBOUND_DRIVER:
-		अगर (clknb->con_ids[0]) अणु
-			क्रम (con_id = clknb->con_ids; *con_id; con_id++)
-				disable_घड़ी(dev, *con_id);
-		पूर्ण अन्यथा अणु
-			disable_घड़ी(dev, शून्य);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	switch (action) {
+	case BUS_NOTIFY_BIND_DRIVER:
+		if (clknb->con_ids[0]) {
+			for (con_id = clknb->con_ids; *con_id; con_id++)
+				enable_clock(dev, *con_id);
+		} else {
+			enable_clock(dev, NULL);
+		}
+		break;
+	case BUS_NOTIFY_DRIVER_NOT_BOUND:
+	case BUS_NOTIFY_UNBOUND_DRIVER:
+		if (clknb->con_ids[0]) {
+			for (con_id = clknb->con_ids; *con_id; con_id++)
+				disable_clock(dev, *con_id);
+		} else {
+			disable_clock(dev, NULL);
+		}
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* !CONFIG_PM_CLK */
+#endif /* !CONFIG_PM_CLK */
 
 /**
- * pm_clk_add_notअगरier - Add bus type notअगरier क्रम घातer management घड़ीs.
- * @bus: Bus type to add the notअगरier to.
- * @clknb: Notअगरier to be added to the given bus type.
+ * pm_clk_add_notifier - Add bus type notifier for power management clocks.
+ * @bus: Bus type to add the notifier to.
+ * @clknb: Notifier to be added to the given bus type.
  *
  * The nb member of @clknb is not expected to be initialized and its
- * notअगरier_call member will be replaced with pm_clk_notअगरy().  However,
- * the reमुख्यing members of @clknb should be populated prior to calling this
+ * notifier_call member will be replaced with pm_clk_notify().  However,
+ * the remaining members of @clknb should be populated prior to calling this
  * routine.
  */
-व्योम pm_clk_add_notअगरier(काष्ठा bus_type *bus,
-				 काष्ठा pm_clk_notअगरier_block *clknb)
-अणु
-	अगर (!bus || !clknb)
-		वापस;
+void pm_clk_add_notifier(struct bus_type *bus,
+				 struct pm_clk_notifier_block *clknb)
+{
+	if (!bus || !clknb)
+		return;
 
-	clknb->nb.notअगरier_call = pm_clk_notअगरy;
-	bus_रेजिस्टर_notअगरier(bus, &clknb->nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_clk_add_notअगरier);
+	clknb->nb.notifier_call = pm_clk_notify;
+	bus_register_notifier(bus, &clknb->nb);
+}
+EXPORT_SYMBOL_GPL(pm_clk_add_notifier);

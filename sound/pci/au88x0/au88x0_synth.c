@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  */
 
 /*
  * Someday its supposed to make use of the WT DMA engine
- * क्रम a Wavetable synthesizer.
+ * for a Wavetable synthesizer.
  */
 
-#समावेश "au88x0.h"
-#समावेश "au88x0_wt.h"
+#include "au88x0.h"
+#include "au88x0_wt.h"
 
-अटल व्योम vortex_fअगरo_setwtvalid(vortex_t * vortex, पूर्णांक fअगरo, पूर्णांक en);
-अटल व्योम vortex_connection_adb_mixin(vortex_t * vortex, पूर्णांक en,
-					अचिन्हित अक्षर channel,
-					अचिन्हित अक्षर source,
-					अचिन्हित अक्षर mixin);
-अटल व्योम vortex_connection_mixin_mix(vortex_t * vortex, पूर्णांक en,
-					अचिन्हित अक्षर mixin,
-					अचिन्हित अक्षर mix, पूर्णांक a);
-अटल व्योम vortex_fअगरo_wtinitialize(vortex_t * vortex, पूर्णांक fअगरo, पूर्णांक j);
-अटल पूर्णांक vortex_wt_SetReg(vortex_t * vortex, अचिन्हित अक्षर reg, पूर्णांक wt,
+static void vortex_fifo_setwtvalid(vortex_t * vortex, int fifo, int en);
+static void vortex_connection_adb_mixin(vortex_t * vortex, int en,
+					unsigned char channel,
+					unsigned char source,
+					unsigned char mixin);
+static void vortex_connection_mixin_mix(vortex_t * vortex, int en,
+					unsigned char mixin,
+					unsigned char mix, int a);
+static void vortex_fifo_wtinitialize(vortex_t * vortex, int fifo, int j);
+static int vortex_wt_SetReg(vortex_t * vortex, unsigned char reg, int wt,
 			    u32 val);
 
 /* WT */
 
-/* Put 2 WT channels together क्रम one stereo पूर्णांकerlaced channel. */
-अटल व्योम vortex_wt_setstereo(vortex_t * vortex, u32 wt, u32 stereo)
-अणु
-	पूर्णांक temp;
+/* Put 2 WT channels together for one stereo interlaced channel. */
+static void vortex_wt_setstereo(vortex_t * vortex, u32 wt, u32 stereo)
+{
+	int temp;
 
-	//temp = hwपढ़ो(vortex->mmio, 0x80 + ((wt >> 0x5)<< 0xf) + (((wt & 0x1f) >> 1) << 2));
-	temp = hwपढ़ो(vortex->mmio, WT_STEREO(wt));
+	//temp = hwread(vortex->mmio, 0x80 + ((wt >> 0x5)<< 0xf) + (((wt & 0x1f) >> 1) << 2));
+	temp = hwread(vortex->mmio, WT_STEREO(wt));
 	temp = (temp & 0xfe) | (stereo & 1);
-	//hwग_लिखो(vortex->mmio, 0x80 + ((wt >> 0x5)<< 0xf) + (((wt & 0x1f) >> 1) << 2), temp);
-	hwग_लिखो(vortex->mmio, WT_STEREO(wt), temp);
-पूर्ण
+	//hwwrite(vortex->mmio, 0x80 + ((wt >> 0x5)<< 0xf) + (((wt & 0x1f) >> 1) << 2), temp);
+	hwwrite(vortex->mmio, WT_STEREO(wt), temp);
+}
 
-/* Join to mixकरोwn route. */
-अटल व्योम vortex_wt_setdsout(vortex_t * vortex, u32 wt, पूर्णांक en)
-अणु
-	पूर्णांक temp;
+/* Join to mixdown route. */
+static void vortex_wt_setdsout(vortex_t * vortex, u32 wt, int en)
+{
+	int temp;
 
-	/* There is one DSREG रेजिस्टर क्रम each bank (32 voices each). */
-	temp = hwपढ़ो(vortex->mmio, WT_DSREG((wt >= 0x20) ? 1 : 0));
-	अगर (en)
+	/* There is one DSREG register for each bank (32 voices each). */
+	temp = hwread(vortex->mmio, WT_DSREG((wt >= 0x20) ? 1 : 0));
+	if (en)
 		temp |= (1 << (wt & 0x1f));
-	अन्यथा
+	else
 		temp &= ~(1 << (wt & 0x1f));
-	hwग_लिखो(vortex->mmio, WT_DSREG((wt >= 0x20) ? 1 : 0), temp);
-पूर्ण
+	hwwrite(vortex->mmio, WT_DSREG((wt >= 0x20) ? 1 : 0), temp);
+}
 
 /* Setup WT route. */
-अटल पूर्णांक vortex_wt_allocroute(vortex_t * vortex, पूर्णांक wt, पूर्णांक nr_ch)
-अणु
+static int vortex_wt_allocroute(vortex_t * vortex, int wt, int nr_ch)
+{
 	wt_voice_t *voice = &(vortex->wt_voice[wt]);
-	पूर्णांक temp;
+	int temp;
 
 	//FIXME: WT audio routing.
-	अगर (nr_ch) अणु
-		vortex_fअगरo_wtinitialize(vortex, wt, 1);
-		vortex_fअगरo_setwtvalid(vortex, wt, 1);
+	if (nr_ch) {
+		vortex_fifo_wtinitialize(vortex, wt, 1);
+		vortex_fifo_setwtvalid(vortex, wt, 1);
 		vortex_wt_setstereo(vortex, wt, nr_ch - 1);
-	पूर्ण अन्यथा
-		vortex_fअगरo_setwtvalid(vortex, wt, 0);
+	} else
+		vortex_fifo_setwtvalid(vortex, wt, 0);
 	
-	/* Set mixकरोwn mode. */
+	/* Set mixdown mode. */
 	vortex_wt_setdsout(vortex, wt, 1);
-	/* Set other parameter रेजिस्टरs. */
-	hwग_लिखो(vortex->mmio, WT_SRAMP(0), 0x880000);
-	//hwग_लिखो(vortex->mmio, WT_GMODE(0), 0xffffffff);
-#अगर_घोषित CHIP_AU8830
-	hwग_लिखो(vortex->mmio, WT_SRAMP(1), 0x880000);
-	//hwग_लिखो(vortex->mmio, WT_GMODE(1), 0xffffffff);
-#पूर्ण_अगर
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 0), 0);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 1), 0);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 2), 0);
+	/* Set other parameter registers. */
+	hwwrite(vortex->mmio, WT_SRAMP(0), 0x880000);
+	//hwwrite(vortex->mmio, WT_GMODE(0), 0xffffffff);
+#ifdef CHIP_AU8830
+	hwwrite(vortex->mmio, WT_SRAMP(1), 0x880000);
+	//hwwrite(vortex->mmio, WT_GMODE(1), 0xffffffff);
+#endif
+	hwwrite(vortex->mmio, WT_PARM(wt, 0), 0);
+	hwwrite(vortex->mmio, WT_PARM(wt, 1), 0);
+	hwwrite(vortex->mmio, WT_PARM(wt, 2), 0);
 
-	temp = hwपढ़ो(vortex->mmio, WT_PARM(wt, 3));
+	temp = hwread(vortex->mmio, WT_PARM(wt, 3));
 	dev_dbg(vortex->card->dev, "WT PARM3: %x\n", temp);
-	//hwग_लिखो(vortex->mmio, WT_PARM(wt, 3), temp);
+	//hwwrite(vortex->mmio, WT_PARM(wt, 3), temp);
 
-	hwग_लिखो(vortex->mmio, WT_DELAY(wt, 0), 0);
-	hwग_लिखो(vortex->mmio, WT_DELAY(wt, 1), 0);
-	hwग_लिखो(vortex->mmio, WT_DELAY(wt, 2), 0);
-	hwग_लिखो(vortex->mmio, WT_DELAY(wt, 3), 0);
+	hwwrite(vortex->mmio, WT_DELAY(wt, 0), 0);
+	hwwrite(vortex->mmio, WT_DELAY(wt, 1), 0);
+	hwwrite(vortex->mmio, WT_DELAY(wt, 2), 0);
+	hwwrite(vortex->mmio, WT_DELAY(wt, 3), 0);
 
 	dev_dbg(vortex->card->dev, "WT GMODE: %x\n",
-		hwपढ़ो(vortex->mmio, WT_GMODE(wt)));
+		hwread(vortex->mmio, WT_GMODE(wt)));
 
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 2), 0xffffffff);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 3), 0xcff1c810);
+	hwwrite(vortex->mmio, WT_PARM(wt, 2), 0xffffffff);
+	hwwrite(vortex->mmio, WT_PARM(wt, 3), 0xcff1c810);
 
 	voice->parm0 = voice->parm1 = 0xcfb23e2f;
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 0), voice->parm0);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 1), voice->parm1);
+	hwwrite(vortex->mmio, WT_PARM(wt, 0), voice->parm0);
+	hwwrite(vortex->mmio, WT_PARM(wt, 1), voice->parm1);
 	dev_dbg(vortex->card->dev, "WT GMODE 2 : %x\n",
-		hwपढ़ो(vortex->mmio, WT_GMODE(wt)));
-	वापस 0;
-पूर्ण
+		hwread(vortex->mmio, WT_GMODE(wt)));
+	return 0;
+}
 
 
-अटल व्योम vortex_wt_connect(vortex_t * vortex, पूर्णांक en)
-अणु
-	पूर्णांक i, ii, mix;
+static void vortex_wt_connect(vortex_t * vortex, int en)
+{
+	int i, ii, mix;
 
-#घोषणा NR_WTROUTES 6
-#अगर_घोषित CHIP_AU8830
-#घोषणा NR_WTBLOCKS 2
-#अन्यथा
-#घोषणा NR_WTBLOCKS 1
-#पूर्ण_अगर
+#define NR_WTROUTES 6
+#ifdef CHIP_AU8830
+#define NR_WTBLOCKS 2
+#else
+#define NR_WTBLOCKS 1
+#endif
 
-	क्रम (i = 0; i < NR_WTBLOCKS; i++) अणु
-		क्रम (ii = 0; ii < NR_WTROUTES; ii++) अणु
+	for (i = 0; i < NR_WTBLOCKS; i++) {
+		for (ii = 0; ii < NR_WTROUTES; ii++) {
 			mix =
 			    vortex_adb_checkinout(vortex,
 						  vortex->fixed_res, en,
@@ -126,165 +125,165 @@
 
 			vortex_connection_mixin_mix(vortex, en, mix,
 						    vortex->mixplayb[ii % 2], 0);
-			अगर (VORTEX_IS_QUAD(vortex))
+			if (VORTEX_IS_QUAD(vortex))
 				vortex_connection_mixin_mix(vortex, en,
 							    mix,
 							    vortex->mixplayb[2 +
 								     (ii % 2)], 0);
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < NR_WT; i++) अणु
-		hwग_लिखो(vortex->mmio, WT_RUN(i), 1);
-	पूर्ण
-पूर्ण
+		}
+	}
+	for (i = 0; i < NR_WT; i++) {
+		hwwrite(vortex->mmio, WT_RUN(i), 1);
+	}
+}
 
 /* Read WT Register */
-#अगर 0
-अटल पूर्णांक vortex_wt_GetReg(vortex_t * vortex, अक्षर reg, पूर्णांक wt)
-अणु
-	//पूर्णांक eax, esi;
+#if 0
+static int vortex_wt_GetReg(vortex_t * vortex, char reg, int wt)
+{
+	//int eax, esi;
 
-	अगर (reg == 4) अणु
-		वापस hwपढ़ो(vortex->mmio, WT_PARM(wt, 3));
-	पूर्ण
-	अगर (reg == 7) अणु
-		वापस hwपढ़ो(vortex->mmio, WT_GMODE(wt));
-	पूर्ण
+	if (reg == 4) {
+		return hwread(vortex->mmio, WT_PARM(wt, 3));
+	}
+	if (reg == 7) {
+		return hwread(vortex->mmio, WT_GMODE(wt));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* WT hardware असलtraction layer generic रेजिस्टर पूर्णांकerface. */
-अटल पूर्णांक
-vortex_wt_SetReg2(vortex_t * vortex, अचिन्हित अक्षर reg, पूर्णांक wt,
+/* WT hardware abstraction layer generic register interface. */
+static int
+vortex_wt_SetReg2(vortex_t * vortex, unsigned char reg, int wt,
 		  u16 val)
-अणु
+{
 	/*
-	   पूर्णांक eax, edx;
+	   int eax, edx;
 
-	   अगर (wt >= NR_WT)  // 0x40 -> NR_WT
-	   वापस 0;
+	   if (wt >= NR_WT)  // 0x40 -> NR_WT
+	   return 0;
 
-	   अगर ((reg - 0x20) > 0) अणु
-	   अगर ((reg - 0x21) != 0) 
-	   वापस 0;
+	   if ((reg - 0x20) > 0) {
+	   if ((reg - 0x21) != 0) 
+	   return 0;
 	   eax = ((((b & 0xff) << 0xb) + (edx & 0xff)) << 4) + 0x208; // param 2
-	   पूर्ण अन्यथा अणु
+	   } else {
 	   eax = ((((b & 0xff) << 0xb) + (edx & 0xff)) << 4) + 0x20a; // param 3
-	   पूर्ण
-	   hwग_लिखो(vortex->mmio, eax, c);
+	   }
+	   hwwrite(vortex->mmio, eax, c);
 	 */
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/*खुला: अटल व्योम __thiscall CWTHal::SetReg(अचिन्हित अक्षर,पूर्णांक,अचिन्हित दीर्घ) */
-#पूर्ण_अगर
-अटल पूर्णांक
-vortex_wt_SetReg(vortex_t * vortex, अचिन्हित अक्षर reg, पूर्णांक wt,
+/*public: static void __thiscall CWTHal::SetReg(unsigned char,int,unsigned long) */
+#endif
+static int
+vortex_wt_SetReg(vortex_t * vortex, unsigned char reg, int wt,
 		 u32 val)
-अणु
-	पूर्णांक ecx;
+{
+	int ecx;
 
-	अगर ((reg == 5) || ((reg >= 7) && (reg <= 10)) || (reg == 0xc)) अणु
-		अगर (wt >= (NR_WT / NR_WT_PB)) अणु
+	if ((reg == 5) || ((reg >= 7) && (reg <= 10)) || (reg == 0xc)) {
+		if (wt >= (NR_WT / NR_WT_PB)) {
 			dev_warn(vortex->card->dev,
 				 "WT SetReg: bank out of range. reg=0x%x, wt=%d\n",
 				 reg, wt);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (wt >= NR_WT) अणु
+			return 0;
+		}
+	} else {
+		if (wt >= NR_WT) {
 			dev_err(vortex->card->dev,
 				"WT SetReg: voice out of range\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	अगर (reg > 0xc)
-		वापस 0;
+			return 0;
+		}
+	}
+	if (reg > 0xc)
+		return 0;
 
-	चयन (reg) अणु
-		/* Voice specअगरic parameters */
-	हाल 0:		/* running */
+	switch (reg) {
+		/* Voice specific parameters */
+	case 0:		/* running */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_RUN(wt), (पूर्णांक)val);
+		       WT_RUN(wt), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_RUN(wt), val);
-		वापस 0xc;
-	हाल 1:		/* param 0 */
+		hwwrite(vortex->mmio, WT_RUN(wt), val);
+		return 0xc;
+	case 1:		/* param 0 */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_PARM(wt,0), (पूर्णांक)val);
+		       WT_PARM(wt,0), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_PARM(wt, 0), val);
-		वापस 0xc;
-	हाल 2:		/* param 1 */
+		hwwrite(vortex->mmio, WT_PARM(wt, 0), val);
+		return 0xc;
+	case 2:		/* param 1 */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_PARM(wt,1), (पूर्णांक)val);
+		       WT_PARM(wt,1), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_PARM(wt, 1), val);
-		वापस 0xc;
-	हाल 3:		/* param 2 */
+		hwwrite(vortex->mmio, WT_PARM(wt, 1), val);
+		return 0xc;
+	case 3:		/* param 2 */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_PARM(wt,2), (पूर्णांक)val);
+		       WT_PARM(wt,2), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_PARM(wt, 2), val);
-		वापस 0xc;
-	हाल 4:		/* param 3 */
+		hwwrite(vortex->mmio, WT_PARM(wt, 2), val);
+		return 0xc;
+	case 4:		/* param 3 */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_PARM(wt,3), (पूर्णांक)val);
+		       WT_PARM(wt,3), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_PARM(wt, 3), val);
-		वापस 0xc;
-	हाल 6:		/* mute */
+		hwwrite(vortex->mmio, WT_PARM(wt, 3), val);
+		return 0xc;
+	case 6:		/* mute */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_MUTE(wt), (पूर्णांक)val);
+		       WT_MUTE(wt), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_MUTE(wt), val);
-		वापस 0xc;
-	हाल 0xb:
+		hwwrite(vortex->mmio, WT_MUTE(wt), val);
+		return 0xc;
+	case 0xb:
 			/* delay */
 		/*
 		pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n",
-		       WT_DELAY(wt,0), (पूर्णांक)val);
+		       WT_DELAY(wt,0), (int)val);
 		*/
-		hwग_लिखो(vortex->mmio, WT_DELAY(wt, 3), val);
-		hwग_लिखो(vortex->mmio, WT_DELAY(wt, 2), val);
-		hwग_लिखो(vortex->mmio, WT_DELAY(wt, 1), val);
-		hwग_लिखो(vortex->mmio, WT_DELAY(wt, 0), val);
-		वापस 0xc;
+		hwwrite(vortex->mmio, WT_DELAY(wt, 3), val);
+		hwwrite(vortex->mmio, WT_DELAY(wt, 2), val);
+		hwwrite(vortex->mmio, WT_DELAY(wt, 1), val);
+		hwwrite(vortex->mmio, WT_DELAY(wt, 0), val);
+		return 0xc;
 		/* Global WT block parameters */
-	हाल 5:		/* sramp */
+	case 5:		/* sramp */
 		ecx = WT_SRAMP(wt);
-		अवरोध;
-	हाल 8:		/* aramp */
+		break;
+	case 8:		/* aramp */
 		ecx = WT_ARAMP(wt);
-		अवरोध;
-	हाल 9:		/* mramp */
+		break;
+	case 9:		/* mramp */
 		ecx = WT_MRAMP(wt);
-		अवरोध;
-	हाल 0xa:		/* ctrl */
+		break;
+	case 0xa:		/* ctrl */
 		ecx = WT_CTRL(wt);
-		अवरोध;
-	हाल 0xc:		/* ds_reg */
+		break;
+	case 0xc:		/* ds_reg */
 		ecx = WT_DSREG(wt);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 	/*
-	pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n", ecx, (पूर्णांक)val);
+	pr_debug( "vortex: WT SetReg(0x%x) = 0x%08x\n", ecx, (int)val);
 	*/
-	hwग_लिखो(vortex->mmio, ecx, val);
-	वापस 1;
-पूर्ण
+	hwwrite(vortex->mmio, ecx, val);
+	return 1;
+}
 
-अटल व्योम vortex_wt_init(vortex_t * vortex)
-अणु
+static void vortex_wt_init(vortex_t * vortex)
+{
 	u32 var4, var8, varc, var10 = 0, edi;
 
 	var10 &= 0xFFFFFFE3;
@@ -300,33 +299,33 @@ vortex_wt_SetReg(vortex_t * vortex, अचिन्हित अक्षर reg
 	varc = 0x00830000;
 	var8 = 0x00830000;
 
-	/* Init Bank रेजिस्टरs. */
-	क्रम (edi = 0; edi < (NR_WT / NR_WT_PB); edi++) अणु
+	/* Init Bank registers. */
+	for (edi = 0; edi < (NR_WT / NR_WT_PB); edi++) {
 		vortex_wt_SetReg(vortex, 0xc, edi, 0);	/* ds_reg */
 		vortex_wt_SetReg(vortex, 0xa, edi, var10);	/* ctrl  */
 		vortex_wt_SetReg(vortex, 0x9, edi, var4);	/* mramp */
 		vortex_wt_SetReg(vortex, 0x8, edi, varc);	/* aramp */
 		vortex_wt_SetReg(vortex, 0x5, edi, var8);	/* sramp */
-	पूर्ण
-	/* Init Voice रेजिस्टरs. */
-	क्रम (edi = 0; edi < NR_WT; edi++) अणु
+	}
+	/* Init Voice registers. */
+	for (edi = 0; edi < NR_WT; edi++) {
 		vortex_wt_SetReg(vortex, 0x4, edi, 0);	/* param 3 0x20c */
 		vortex_wt_SetReg(vortex, 0x3, edi, 0);	/* param 2 0x208 */
 		vortex_wt_SetReg(vortex, 0x2, edi, 0);	/* param 1 0x204 */
 		vortex_wt_SetReg(vortex, 0x1, edi, 0);	/* param 0 0x200 */
 		vortex_wt_SetReg(vortex, 0xb, edi, 0);	/* delay 0x400 - 0x40c */
-	पूर्ण
+	}
 	var10 |= 1;
-	क्रम (edi = 0; edi < (NR_WT / NR_WT_PB); edi++)
+	for (edi = 0; edi < (NR_WT / NR_WT_PB); edi++)
 		vortex_wt_SetReg(vortex, 0xa, edi, var10);	/* ctrl */
-पूर्ण
+}
 
-/* Extract of CAdbTopology::SetVolume(काष्ठा _ASPVOLUME *) */
-#अगर 0
-अटल व्योम vortex_wt_SetVolume(vortex_t * vortex, पूर्णांक wt, पूर्णांक vol[])
-अणु
+/* Extract of CAdbTopology::SetVolume(struct _ASPVOLUME *) */
+#if 0
+static void vortex_wt_SetVolume(vortex_t * vortex, int wt, int vol[])
+{
 	wt_voice_t *voice = &(vortex->wt_voice[wt]);
-	पूर्णांक ecx = vol[1], eax = vol[0];
+	int ecx = vol[1], eax = vol[0];
 
 	/* This is pure guess */
 	voice->parm0 &= 0xff00ffff;
@@ -335,29 +334,29 @@ vortex_wt_SetReg(vortex_t * vortex, अचिन्हित अक्षर reg
 	voice->parm1 |= (vol[1] & 0xff) << 0x10;
 
 	/* This is real */
-	hwग_लिखो(vortex, WT_PARM(wt, 0), voice->parm0);
-	hwग_लिखो(vortex, WT_PARM(wt, 1), voice->parm0);
+	hwwrite(vortex, WT_PARM(wt, 0), voice->parm0);
+	hwwrite(vortex, WT_PARM(wt, 1), voice->parm0);
 
-	अगर (voice->this_1D0 & 4) अणु
+	if (voice->this_1D0 & 4) {
 		eax >>= 8;
 		ecx = eax;
-		अगर (ecx < 0x80)
+		if (ecx < 0x80)
 			ecx = 0x7f;
 		voice->parm3 &= 0xFFFFC07F;
 		voice->parm3 |= (ecx & 0x7f) << 7;
 		voice->parm3 &= 0xFFFFFF80;
 		voice->parm3 |= (eax & 0x7f);
-	पूर्ण अन्यथा अणु
+	} else {
 		voice->parm3 &= 0xFFE03FFF;
 		voice->parm3 |= (eax & 0xFE00) << 5;
-	पूर्ण
+	}
 
-	hwग_लिखो(vortex, WT_PARM(wt, 3), voice->parm3);
-पूर्ण
+	hwwrite(vortex, WT_PARM(wt, 3), voice->parm3);
+}
 
-/* Extract of CAdbTopology::SetFrequency(अचिन्हित दीर्घ arg_0) */
-अटल व्योम vortex_wt_SetFrequency(vortex_t * vortex, पूर्णांक wt, अचिन्हित पूर्णांक sr)
-अणु
+/* Extract of CAdbTopology::SetFrequency(unsigned long arg_0) */
+static void vortex_wt_SetFrequency(vortex_t * vortex, int wt, unsigned int sr)
+{
 	wt_voice_t *voice = &(vortex->wt_voice[wt]);
 	u32 eax, edx;
 
@@ -367,35 +366,35 @@ vortex_wt_SetReg(vortex_t * vortex, अचिन्हित अक्षर reg
 
 	edx >>= 0xa;
 	edx <<= 1;
-	अगर (edx) अणु
-		अगर (edx & 0x0FFF80000)
+	if (edx) {
+		if (edx & 0x0FFF80000)
 			eax = 0x7fff;
-		अन्यथा अणु
+		else {
 			edx <<= 0xd;
 			eax = 7;
-			जबतक ((edx & 0x80000000) == 0) अणु
+			while ((edx & 0x80000000) == 0) {
 				edx <<= 1;
 				eax--;
-				अगर (eax == 0)
-					अवरोध;
-			पूर्ण
-			अगर (eax)
+				if (eax == 0)
+					break;
+			}
+			if (eax)
 				edx <<= 1;
 			eax <<= 0xc;
 			edx >>= 0x14;
 			eax |= edx;
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		eax = 0;
 	voice->parm0 &= 0xffff0001;
 	voice->parm0 |= (eax & 0x7fff) << 1;
 	voice->parm1 = voice->parm0 | 1;
 	// Wt: this_1D4
-	//AuWt::WriteReg((uदीर्घ)(this_1DC<<4)+0x200, (uदीर्घ)this_1E4);
-	//AuWt::WriteReg((uदीर्घ)(this_1DC<<4)+0x204, (uदीर्घ)this_1E8);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 0), voice->parm0);
-	hwग_लिखो(vortex->mmio, WT_PARM(wt, 1), voice->parm1);
-पूर्ण
-#पूर्ण_अगर
+	//AuWt::WriteReg((ulong)(this_1DC<<4)+0x200, (ulong)this_1E4);
+	//AuWt::WriteReg((ulong)(this_1DC<<4)+0x204, (ulong)this_1E8);
+	hwwrite(vortex->mmio, WT_PARM(wt, 0), voice->parm0);
+	hwwrite(vortex->mmio, WT_PARM(wt, 1), voice->parm1);
+}
+#endif
 
 /* End of File */

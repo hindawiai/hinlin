@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Slim Bootloader(SBL) firmware update संकेतing driver
+ * Slim Bootloader(SBL) firmware update signaling driver
  *
- * Slim Bootloader is a small, खोलो-source, non UEFI compliant, boot firmware
- * optimized क्रम running on certain Intel platक्रमms.
+ * Slim Bootloader is a small, open-source, non UEFI compliant, boot firmware
+ * optimized for running on certain Intel platforms.
  *
  * SBL exposes an ACPI-WMI device via /sys/bus/wmi/devices/<INTEL_WMI_SBL_GUID>.
  * This driver further adds "firmware_update_request" device attribute.
- * This attribute normally has a value of 0 and userspace can संकेत SBL
+ * This attribute normally has a value of 0 and userspace can signal SBL
  * to update firmware, on next reboot, by writing a value of 1.
  *
  * More details of SBL firmware update process is available at:
- * https://slimbootloader.github.io/security/firmware-update.hपंचांगl
+ * https://slimbootloader.github.io/security/firmware-update.html
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/wmi.h>
+#include <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/wmi.h>
 
-#घोषणा INTEL_WMI_SBL_GUID  "44FADEB1-B204-40F2-8581-394BBDC1B651"
+#define INTEL_WMI_SBL_GUID  "44FADEB1-B204-40F2-8581-394BBDC1B651"
 
-अटल पूर्णांक get_fwu_request(काष्ठा device *dev, u32 *out)
-अणु
-	काष्ठा acpi_buffer result = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	जोड़ acpi_object *obj;
+static int get_fwu_request(struct device *dev, u32 *out)
+{
+	struct acpi_buffer result = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object *obj;
 	acpi_status status;
 
 	status = wmi_query_block(INTEL_WMI_SBL_GUID, 0, &result);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "wmi_query_block failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	obj = (जोड़ acpi_object *)result.poपूर्णांकer;
-	अगर (!obj || obj->type != ACPI_TYPE_INTEGER) अणु
+	obj = (union acpi_object *)result.pointer;
+	if (!obj || obj->type != ACPI_TYPE_INTEGER) {
 		dev_warn(dev, "wmi_query_block returned invalid value\n");
-		kमुक्त(obj);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(obj);
+		return -EINVAL;
+	}
 
-	*out = obj->पूर्णांकeger.value;
-	kमुक्त(obj);
+	*out = obj->integer.value;
+	kfree(obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_fwu_request(काष्ठा device *dev, u32 in)
-अणु
-	काष्ठा acpi_buffer input;
+static int set_fwu_request(struct device *dev, u32 in)
+{
+	struct acpi_buffer input;
 	acpi_status status;
 	u32 value;
 
 	value = in;
-	input.length = माप(u32);
-	input.poपूर्णांकer = &value;
+	input.length = sizeof(u32);
+	input.pointer = &value;
 
 	status = wmi_set_block(INTEL_WMI_SBL_GUID, 0, &input);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "wmi_set_block failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार firmware_update_request_show(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    अक्षर *buf)
-अणु
+static ssize_t firmware_update_request_show(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = get_fwu_request(dev, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस प्र_लिखो(buf, "%d\n", val);
-पूर्ण
+	return sprintf(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार firmware_update_request_store(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static ssize_t firmware_update_request_store(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t count)
+{
+	unsigned int val;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &val);
+	if (ret)
+		return ret;
 
 	/* May later be extended to support values other than 0 and 1 */
-	अगर (val > 1)
-		वापस -दुस्फल;
+	if (val > 1)
+		return -ERANGE;
 
 	ret = set_fwu_request(dev, val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(firmware_update_request);
+	return count;
+}
+static DEVICE_ATTR_RW(firmware_update_request);
 
-अटल काष्ठा attribute *firmware_update_attrs[] = अणु
+static struct attribute *firmware_update_attrs[] = {
 	&dev_attr_firmware_update_request.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(firmware_update);
 
-अटल पूर्णांक पूर्णांकel_wmi_sbl_fw_update_probe(काष्ठा wmi_device *wdev,
-					 स्थिर व्योम *context)
-अणु
+static int intel_wmi_sbl_fw_update_probe(struct wmi_device *wdev,
+					 const void *context)
+{
 	dev_info(&wdev->dev, "Slim Bootloader signaling driver attached\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_wmi_sbl_fw_update_हटाओ(काष्ठा wmi_device *wdev)
-अणु
+static void intel_wmi_sbl_fw_update_remove(struct wmi_device *wdev)
+{
 	dev_info(&wdev->dev, "Slim Bootloader signaling driver removed\n");
-पूर्ण
+}
 
-अटल स्थिर काष्ठा wmi_device_id पूर्णांकel_wmi_sbl_id_table[] = अणु
-	अणु .guid_string = INTEL_WMI_SBL_GUID पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(wmi, पूर्णांकel_wmi_sbl_id_table);
+static const struct wmi_device_id intel_wmi_sbl_id_table[] = {
+	{ .guid_string = INTEL_WMI_SBL_GUID },
+	{}
+};
+MODULE_DEVICE_TABLE(wmi, intel_wmi_sbl_id_table);
 
-अटल काष्ठा wmi_driver पूर्णांकel_wmi_sbl_fw_update_driver = अणु
-	.driver = अणु
+static struct wmi_driver intel_wmi_sbl_fw_update_driver = {
+	.driver = {
 		.name = "intel-wmi-sbl-fw-update",
 		.dev_groups = firmware_update_groups,
-	पूर्ण,
-	.probe = पूर्णांकel_wmi_sbl_fw_update_probe,
-	.हटाओ = पूर्णांकel_wmi_sbl_fw_update_हटाओ,
-	.id_table = पूर्णांकel_wmi_sbl_id_table,
-पूर्ण;
-module_wmi_driver(पूर्णांकel_wmi_sbl_fw_update_driver);
+	},
+	.probe = intel_wmi_sbl_fw_update_probe,
+	.remove = intel_wmi_sbl_fw_update_remove,
+	.id_table = intel_wmi_sbl_id_table,
+};
+module_wmi_driver(intel_wmi_sbl_fw_update_driver);
 
 MODULE_AUTHOR("Jithu Joseph <jithu.joseph@intel.com>");
 MODULE_DESCRIPTION("Slim Bootloader firmware update signaling driver");

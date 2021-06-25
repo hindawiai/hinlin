@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Au12x0/Au1550 PSC ALSA ASoC audio support.
  *
@@ -8,408 +7,408 @@
  *
  * Au1xxx-PSC I2S glue.
  *
- * NOTE: so far only PSC slave mode (bit- and frameघड़ी) is supported.
+ * NOTE: so far only PSC slave mode (bit- and frameclock) is supported.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/suspend.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/soc.h>
-#समावेश <यंत्र/mach-au1x00/au1000.h>
-#समावेश <यंत्र/mach-au1x00/au1xxx_psc.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/suspend.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/initval.h>
+#include <sound/soc.h>
+#include <asm/mach-au1x00/au1000.h>
+#include <asm/mach-au1x00/au1xxx_psc.h>
 
-#समावेश "psc.h"
+#include "psc.h"
 
-/* supported I2S DAI hardware क्रमmats */
-#घोषणा AU1XPSC_I2S_DAIFMT \
+/* supported I2S DAI hardware formats */
+#define AU1XPSC_I2S_DAIFMT \
 	(SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_LEFT_J |	\
 	 SND_SOC_DAIFMT_NB_NF)
 
 /* supported I2S direction */
-#घोषणा AU1XPSC_I2S_सूची \
-	(SND_SOC_DAIसूची_PLAYBACK | SND_SOC_DAIसूची_CAPTURE)
+#define AU1XPSC_I2S_DIR \
+	(SND_SOC_DAIDIR_PLAYBACK | SND_SOC_DAIDIR_CAPTURE)
 
-#घोषणा AU1XPSC_I2S_RATES \
+#define AU1XPSC_I2S_RATES \
 	SNDRV_PCM_RATE_8000_192000
 
-#घोषणा AU1XPSC_I2S_FMTS \
+#define AU1XPSC_I2S_FMTS \
 	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
 
-#घोषणा I2SSTAT_BUSY(stype)	\
+#define I2SSTAT_BUSY(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_I2SSTAT_TB : PSC_I2SSTAT_RB)
-#घोषणा I2SPCR_START(stype)	\
+#define I2SPCR_START(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_I2SPCR_TS : PSC_I2SPCR_RS)
-#घोषणा I2SPCR_STOP(stype)	\
+#define I2SPCR_STOP(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_I2SPCR_TP : PSC_I2SPCR_RP)
-#घोषणा I2SPCR_CLRFIFO(stype)	\
+#define I2SPCR_CLRFIFO(stype)	\
 	((stype) == SNDRV_PCM_STREAM_PLAYBACK ? PSC_I2SPCR_TC : PSC_I2SPCR_RC)
 
 
-अटल पूर्णांक au1xpsc_i2s_set_fmt(काष्ठा snd_soc_dai *cpu_dai,
-			       अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(cpu_dai);
-	अचिन्हित दीर्घ ct;
-	पूर्णांक ret;
+static int au1xpsc_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
+			       unsigned int fmt)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(cpu_dai);
+	unsigned long ct;
+	int ret;
 
 	ret = -EINVAL;
 
 	ct = pscdata->cfg;
 
-	ct &= ~(PSC_I2SCFG_XM | PSC_I2SCFG_MLJ);	/* left-justअगरied */
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	ct &= ~(PSC_I2SCFG_XM | PSC_I2SCFG_MLJ);	/* left-justified */
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		ct |= PSC_I2SCFG_XM;	/* enable I2S mode */
-		अवरोध;
-	हाल SND_SOC_DAIFMT_MSB:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LSB:
-		ct |= PSC_I2SCFG_MLJ;	/* LSB (right-) justअगरied */
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	case SND_SOC_DAIFMT_MSB:
+		break;
+	case SND_SOC_DAIFMT_LSB:
+		ct |= PSC_I2SCFG_MLJ;	/* LSB (right-) justified */
+		break;
+	default:
+		goto out;
+	}
 
 	ct &= ~(PSC_I2SCFG_BI | PSC_I2SCFG_WI);		/* IB-IF */
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
 		ct |= PSC_I2SCFG_BI | PSC_I2SCFG_WI;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_IF:
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
 		ct |= PSC_I2SCFG_BI;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
 		ct |= PSC_I2SCFG_WI;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_IF:
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	case SND_SOC_DAIFMT_IB_IF:
+		break;
+	default:
+		goto out;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:	/* CODEC master */
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:	/* CODEC master */
 		ct |= PSC_I2SCFG_MS;	/* PSC I2S slave mode */
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:	/* CODEC slave */
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:	/* CODEC slave */
 		ct &= ~PSC_I2SCFG_MS;	/* PSC I2S Master mode */
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	default:
+		goto out;
+	}
 
 	pscdata->cfg = ct;
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक au1xpsc_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+static int au1xpsc_i2s_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
 
-	पूर्णांक cfgbits;
-	अचिन्हित दीर्घ stat;
+	int cfgbits;
+	unsigned long stat;
 
-	/* check अगर the PSC is alपढ़ोy streaming data */
-	stat = __raw_पढ़ोl(I2S_STAT(pscdata));
-	अगर (stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB)) अणु
+	/* check if the PSC is already streaming data */
+	stat = __raw_readl(I2S_STAT(pscdata));
+	if (stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB)) {
 		/* reject parameters not currently set up in hardware */
-		cfgbits = __raw_पढ़ोl(I2S_CFG(pscdata));
-		अगर ((PSC_I2SCFG_GET_LEN(cfgbits) != params->msbits) ||
+		cfgbits = __raw_readl(I2S_CFG(pscdata));
+		if ((PSC_I2SCFG_GET_LEN(cfgbits) != params->msbits) ||
 		    (params_rate(params) != pscdata->rate))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+	} else {
 		/* set sample bitdepth */
 		pscdata->cfg &= ~(0x1f << 4);
 		pscdata->cfg |= PSC_I2SCFG_SET_LEN(params->msbits);
-		/* remember current rate क्रम other stream */
+		/* remember current rate for other stream */
 		pscdata->rate = params_rate(params);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* Configure PSC late:  on my devel प्रणालीs the codec  is I2S master and
- * supplies the i2sbitघड़ी __AND__ i2sMclk (!) to the PSC unit.  ASoC
- * uses aggressive PM and  चयनes the codec off  when it is not in use
- * which also means the PSC unit करोesn't get any घड़ीs and is thereक्रमe
- * dead. That's why this chunk here माला_लो called from the trigger callback
- * because I can be reasonably certain the codec is driving the घड़ीs.
+/* Configure PSC late:  on my devel systems the codec  is I2S master and
+ * supplies the i2sbitclock __AND__ i2sMclk (!) to the PSC unit.  ASoC
+ * uses aggressive PM and  switches the codec off  when it is not in use
+ * which also means the PSC unit doesn't get any clocks and is therefore
+ * dead. That's why this chunk here gets called from the trigger callback
+ * because I can be reasonably certain the codec is driving the clocks.
  */
-अटल पूर्णांक au1xpsc_i2s_configure(काष्ठा au1xpsc_audio_data *pscdata)
-अणु
-	अचिन्हित दीर्घ पंचांगo;
+static int au1xpsc_i2s_configure(struct au1xpsc_audio_data *pscdata)
+{
+	unsigned long tmo;
 
 	/* bring PSC out of sleep, and configure I2S unit */
-	__raw_ग_लिखोl(PSC_CTRL_ENABLE, PSC_CTRL(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(PSC_CTRL_ENABLE, PSC_CTRL(pscdata));
+	wmb(); /* drain writebuffer */
 
-	पंचांगo = 1000000;
-	जबतक (!(__raw_पढ़ोl(I2S_STAT(pscdata)) & PSC_I2SSTAT_SR) && पंचांगo)
-		पंचांगo--;
+	tmo = 1000000;
+	while (!(__raw_readl(I2S_STAT(pscdata)) & PSC_I2SSTAT_SR) && tmo)
+		tmo--;
 
-	अगर (!पंचांगo)
-		जाओ psc_err;
+	if (!tmo)
+		goto psc_err;
 
-	__raw_ग_लिखोl(0, I2S_CFG(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(pscdata->cfg | PSC_I2SCFG_DE_ENABLE, I2S_CFG(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, I2S_CFG(pscdata));
+	wmb(); /* drain writebuffer */
+	__raw_writel(pscdata->cfg | PSC_I2SCFG_DE_ENABLE, I2S_CFG(pscdata));
+	wmb(); /* drain writebuffer */
 
-	/* रुको क्रम I2S controller to become पढ़ोy */
-	पंचांगo = 1000000;
-	जबतक (!(__raw_पढ़ोl(I2S_STAT(pscdata)) & PSC_I2SSTAT_DR) && पंचांगo)
-		पंचांगo--;
+	/* wait for I2S controller to become ready */
+	tmo = 1000000;
+	while (!(__raw_readl(I2S_STAT(pscdata)) & PSC_I2SSTAT_DR) && tmo)
+		tmo--;
 
-	अगर (पंचांगo)
-		वापस 0;
+	if (tmo)
+		return 0;
 
 psc_err:
-	__raw_ग_लिखोl(0, I2S_CFG(pscdata));
-	__raw_ग_लिखोl(PSC_CTRL_SUSPEND, PSC_CTRL(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
-	वापस -ETIMEDOUT;
-पूर्ण
+	__raw_writel(0, I2S_CFG(pscdata));
+	__raw_writel(PSC_CTRL_SUSPEND, PSC_CTRL(pscdata));
+	wmb(); /* drain writebuffer */
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक au1xpsc_i2s_start(काष्ठा au1xpsc_audio_data *pscdata, पूर्णांक stype)
-अणु
-	अचिन्हित दीर्घ पंचांगo, stat;
-	पूर्णांक ret;
+static int au1xpsc_i2s_start(struct au1xpsc_audio_data *pscdata, int stype)
+{
+	unsigned long tmo, stat;
+	int ret;
 
 	ret = 0;
 
-	/* अगर both TX and RX are idle, configure the PSC  */
-	stat = __raw_पढ़ोl(I2S_STAT(pscdata));
-	अगर (!(stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB))) अणु
+	/* if both TX and RX are idle, configure the PSC  */
+	stat = __raw_readl(I2S_STAT(pscdata));
+	if (!(stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB))) {
 		ret = au1xpsc_i2s_configure(pscdata);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	__raw_ग_लिखोl(I2SPCR_CLRFIFO(stype), I2S_PCR(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(I2SPCR_START(stype), I2S_PCR(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(I2SPCR_CLRFIFO(stype), I2S_PCR(pscdata));
+	wmb(); /* drain writebuffer */
+	__raw_writel(I2SPCR_START(stype), I2S_PCR(pscdata));
+	wmb(); /* drain writebuffer */
 
-	/* रुको क्रम start confirmation */
-	पंचांगo = 1000000;
-	जबतक (!(__raw_पढ़ोl(I2S_STAT(pscdata)) & I2SSTAT_BUSY(stype)) && पंचांगo)
-		पंचांगo--;
+	/* wait for start confirmation */
+	tmo = 1000000;
+	while (!(__raw_readl(I2S_STAT(pscdata)) & I2SSTAT_BUSY(stype)) && tmo)
+		tmo--;
 
-	अगर (!पंचांगo) अणु
-		__raw_ग_लिखोl(I2SPCR_STOP(stype), I2S_PCR(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
+	if (!tmo) {
+		__raw_writel(I2SPCR_STOP(stype), I2S_PCR(pscdata));
+		wmb(); /* drain writebuffer */
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक au1xpsc_i2s_stop(काष्ठा au1xpsc_audio_data *pscdata, पूर्णांक stype)
-अणु
-	अचिन्हित दीर्घ पंचांगo, stat;
+static int au1xpsc_i2s_stop(struct au1xpsc_audio_data *pscdata, int stype)
+{
+	unsigned long tmo, stat;
 
-	__raw_ग_लिखोl(I2SPCR_STOP(stype), I2S_PCR(pscdata));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(I2SPCR_STOP(stype), I2S_PCR(pscdata));
+	wmb(); /* drain writebuffer */
 
-	/* रुको क्रम stop confirmation */
-	पंचांगo = 1000000;
-	जबतक ((__raw_पढ़ोl(I2S_STAT(pscdata)) & I2SSTAT_BUSY(stype)) && पंचांगo)
-		पंचांगo--;
+	/* wait for stop confirmation */
+	tmo = 1000000;
+	while ((__raw_readl(I2S_STAT(pscdata)) & I2SSTAT_BUSY(stype)) && tmo)
+		tmo--;
 
-	/* अगर both TX and RX are idle, disable PSC */
-	stat = __raw_पढ़ोl(I2S_STAT(pscdata));
-	अगर (!(stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB))) अणु
-		__raw_ग_लिखोl(0, I2S_CFG(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
-		__raw_ग_लिखोl(PSC_CTRL_SUSPEND, PSC_CTRL(pscdata));
-		wmb(); /* drain ग_लिखोbuffer */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	/* if both TX and RX are idle, disable PSC */
+	stat = __raw_readl(I2S_STAT(pscdata));
+	if (!(stat & (PSC_I2SSTAT_TB | PSC_I2SSTAT_RB))) {
+		__raw_writel(0, I2S_CFG(pscdata));
+		wmb(); /* drain writebuffer */
+		__raw_writel(PSC_CTRL_SUSPEND, PSC_CTRL(pscdata));
+		wmb(); /* drain writebuffer */
+	}
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret, stype = substream->stream;
+static int au1xpsc_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
+			       struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+	int ret, stype = substream->stream;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		ret = au1xpsc_i2s_start(pscdata, stype);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		ret = au1xpsc_i2s_stop(pscdata, stype);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक au1xpsc_i2s_startup(काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
+static int au1xpsc_i2s_startup(struct snd_pcm_substream *substream,
+			       struct snd_soc_dai *dai)
+{
+	struct au1xpsc_audio_data *pscdata = snd_soc_dai_get_drvdata(dai);
 	snd_soc_dai_set_dma_data(dai, substream, &pscdata->dmaids[0]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops au1xpsc_i2s_dai_ops = अणु
+static const struct snd_soc_dai_ops au1xpsc_i2s_dai_ops = {
 	.startup	= au1xpsc_i2s_startup,
 	.trigger	= au1xpsc_i2s_trigger,
 	.hw_params	= au1xpsc_i2s_hw_params,
 	.set_fmt	= au1xpsc_i2s_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_driver au1xpsc_i2s_dai_ढाँचा = अणु
-	.playback = अणु
+static const struct snd_soc_dai_driver au1xpsc_i2s_dai_template = {
+	.playback = {
 		.rates		= AU1XPSC_I2S_RATES,
-		.क्रमmats	= AU1XPSC_I2S_FMTS,
+		.formats	= AU1XPSC_I2S_FMTS,
 		.channels_min	= 2,
-		.channels_max	= 8,	/* 2 without बाह्यal help */
-	पूर्ण,
-	.capture = अणु
+		.channels_max	= 8,	/* 2 without external help */
+	},
+	.capture = {
 		.rates		= AU1XPSC_I2S_RATES,
-		.क्रमmats	= AU1XPSC_I2S_FMTS,
+		.formats	= AU1XPSC_I2S_FMTS,
 		.channels_min	= 2,
-		.channels_max	= 8,	/* 2 without बाह्यal help */
-	पूर्ण,
+		.channels_max	= 8,	/* 2 without external help */
+	},
 	.ops = &au1xpsc_i2s_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver au1xpsc_i2s_component = अणु
+static const struct snd_soc_component_driver au1xpsc_i2s_component = {
 	.name		= "au1xpsc-i2s",
-पूर्ण;
+};
 
-अटल पूर्णांक au1xpsc_i2s_drvprobe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *dmares;
-	अचिन्हित दीर्घ sel;
-	काष्ठा au1xpsc_audio_data *wd;
+static int au1xpsc_i2s_drvprobe(struct platform_device *pdev)
+{
+	struct resource *dmares;
+	unsigned long sel;
+	struct au1xpsc_audio_data *wd;
 
-	wd = devm_kzalloc(&pdev->dev, माप(काष्ठा au1xpsc_audio_data),
+	wd = devm_kzalloc(&pdev->dev, sizeof(struct au1xpsc_audio_data),
 			  GFP_KERNEL);
-	अगर (!wd)
-		वापस -ENOMEM;
+	if (!wd)
+		return -ENOMEM;
 
-	wd->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wd->mmio))
-		वापस PTR_ERR(wd->mmio);
+	wd->mmio = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wd->mmio))
+		return PTR_ERR(wd->mmio);
 
-	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
-	अगर (!dmares)
-		वापस -EBUSY;
+	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
+	if (!dmares)
+		return -EBUSY;
 	wd->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
-	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 1);
-	अगर (!dmares)
-		वापस -EBUSY;
+	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
+	if (!dmares)
+		return -EBUSY;
 	wd->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
-	/* preserve PSC घड़ी source set up by platक्रमm (dev.platक्रमm_data
-	 * is alपढ़ोy occupied by soc layer)
+	/* preserve PSC clock source set up by platform (dev.platform_data
+	 * is already occupied by soc layer)
 	 */
-	sel = __raw_पढ़ोl(PSC_SEL(wd)) & PSC_SEL_CLK_MASK;
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_SEL_PS_I2SMODE | sel, PSC_SEL(wd));
-	__raw_ग_लिखोl(0, I2S_CFG(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	sel = __raw_readl(PSC_SEL(wd)) & PSC_SEL_CLK_MASK;
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_SEL_PS_I2SMODE | sel, PSC_SEL(wd));
+	__raw_writel(0, I2S_CFG(wd));
+	wmb(); /* drain writebuffer */
 
-	/* preconfigure: set max rx/tx fअगरo depths */
+	/* preconfigure: set max rx/tx fifo depths */
 	wd->cfg |= PSC_I2SCFG_RT_FIFO8 | PSC_I2SCFG_TT_FIFO8;
 
-	/* करोn't रुको क्रम I2S core to become पढ़ोy now; घड़ीs may not
-	 * be running yet; depending on घड़ी input क्रम PSC a रुको might
-	 * समय out.
+	/* don't wait for I2S core to become ready now; clocks may not
+	 * be running yet; depending on clock input for PSC a wait might
+	 * time out.
 	 */
 
 	/* name the DAI like this device instance ("au1xpsc-i2s.PSCINDEX") */
-	स_नकल(&wd->dai_drv, &au1xpsc_i2s_dai_ढाँचा,
-	       माप(काष्ठा snd_soc_dai_driver));
+	memcpy(&wd->dai_drv, &au1xpsc_i2s_dai_template,
+	       sizeof(struct snd_soc_dai_driver));
 	wd->dai_drv.name = dev_name(&pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, wd);
+	platform_set_drvdata(pdev, wd);
 
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	return devm_snd_soc_register_component(&pdev->dev,
 				&au1xpsc_i2s_component, &wd->dai_drv, 1);
-पूर्ण
+}
 
-अटल पूर्णांक au1xpsc_i2s_drvहटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = platक्रमm_get_drvdata(pdev);
+static int au1xpsc_i2s_drvremove(struct platform_device *pdev)
+{
+	struct au1xpsc_audio_data *wd = platform_get_drvdata(pdev);
 
-	__raw_ग_लिखोl(0, I2S_CFG(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, I2S_CFG(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक au1xpsc_i2s_drvsuspend(काष्ठा device *dev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int au1xpsc_i2s_drvsuspend(struct device *dev)
+{
+	struct au1xpsc_audio_data *wd = dev_get_drvdata(dev);
 
-	/* save पूर्णांकeresting रेजिस्टर and disable PSC */
-	wd->pm[0] = __raw_पढ़ोl(PSC_SEL(wd));
+	/* save interesting register and disable PSC */
+	wd->pm[0] = __raw_readl(PSC_SEL(wd));
 
-	__raw_ग_लिखोl(0, I2S_CFG(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	__raw_writel(0, I2S_CFG(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au1xpsc_i2s_drvresume(काष्ठा device *dev)
-अणु
-	काष्ठा au1xpsc_audio_data *wd = dev_get_drvdata(dev);
+static int au1xpsc_i2s_drvresume(struct device *dev)
+{
+	struct au1xpsc_audio_data *wd = dev_get_drvdata(dev);
 
-	/* select I2S mode and PSC घड़ी */
-	__raw_ग_लिखोl(PSC_CTRL_DISABLE, PSC_CTRL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(0, PSC_SEL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
-	__raw_ग_लिखोl(wd->pm[0], PSC_SEL(wd));
-	wmb(); /* drain ग_लिखोbuffer */
+	/* select I2S mode and PSC clock */
+	__raw_writel(PSC_CTRL_DISABLE, PSC_CTRL(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(0, PSC_SEL(wd));
+	wmb(); /* drain writebuffer */
+	__raw_writel(wd->pm[0], PSC_SEL(wd));
+	wmb(); /* drain writebuffer */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops au1xpsci2s_pmops = अणु
+static const struct dev_pm_ops au1xpsci2s_pmops = {
 	.suspend	= au1xpsc_i2s_drvsuspend,
 	.resume		= au1xpsc_i2s_drvresume,
-पूर्ण;
+};
 
-#घोषणा AU1XPSCI2S_PMOPS &au1xpsci2s_pmops
+#define AU1XPSCI2S_PMOPS &au1xpsci2s_pmops
 
-#अन्यथा
+#else
 
-#घोषणा AU1XPSCI2S_PMOPS शून्य
+#define AU1XPSCI2S_PMOPS NULL
 
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver au1xpsc_i2s_driver = अणु
-	.driver		= अणु
+static struct platform_driver au1xpsc_i2s_driver = {
+	.driver		= {
 		.name	= "au1xpsc_i2s",
 		.pm	= AU1XPSCI2S_PMOPS,
-	पूर्ण,
+	},
 	.probe		= au1xpsc_i2s_drvprobe,
-	.हटाओ		= au1xpsc_i2s_drvहटाओ,
-पूर्ण;
+	.remove		= au1xpsc_i2s_drvremove,
+};
 
-module_platक्रमm_driver(au1xpsc_i2s_driver);
+module_platform_driver(au1xpsc_i2s_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Au12x0/Au1550 PSC I2S ALSA ASoC audio driver");

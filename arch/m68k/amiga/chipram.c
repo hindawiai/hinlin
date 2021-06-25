@@ -1,125 +1,124 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
 **  linux/amiga/chipram.c
 **
-**      Modअगरied 03-May-94 by Geert Uytterhoeven <geert@linux-m68k.org>
-**          - 64-bit aligned allocations क्रम full AGA compatibility
+**      Modified 03-May-94 by Geert Uytterhoeven <geert@linux-m68k.org>
+**          - 64-bit aligned allocations for full AGA compatibility
 **
 **	Rewritten 15/9/2000 by Geert to use resource management
 */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/atomic.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/amigahw.h>
+#include <asm/atomic.h>
+#include <asm/page.h>
+#include <asm/amigahw.h>
 
-अचिन्हित दीर्घ amiga_chip_size;
+unsigned long amiga_chip_size;
 EXPORT_SYMBOL(amiga_chip_size);
 
-अटल काष्ठा resource chipram_res = अणु
+static struct resource chipram_res = {
 	.name = "Chip RAM", .start = CHIP_PHYSADDR
-पूर्ण;
-अटल atomic_t chipavail;
+};
+static atomic_t chipavail;
 
 
-व्योम __init amiga_chip_init(व्योम)
-अणु
-	अगर (!AMIGAHW_PRESENT(CHIP_RAM))
-		वापस;
+void __init amiga_chip_init(void)
+{
+	if (!AMIGAHW_PRESENT(CHIP_RAM))
+		return;
 
 	chipram_res.end = CHIP_PHYSADDR + amiga_chip_size - 1;
 	request_resource(&iomem_resource, &chipram_res);
 
 	atomic_set(&chipavail, amiga_chip_size);
-पूर्ण
+}
 
 
-व्योम *amiga_chip_alloc(अचिन्हित दीर्घ size, स्थिर अक्षर *name)
-अणु
-	काष्ठा resource *res;
-	व्योम *p;
+void *amiga_chip_alloc(unsigned long size, const char *name)
+{
+	struct resource *res;
+	void *p;
 
-	res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	अगर (!res)
-		वापस शून्य;
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (!res)
+		return NULL;
 
 	res->name = name;
 	p = amiga_chip_alloc_res(size, res);
-	अगर (!p) अणु
-		kमुक्त(res);
-		वापस शून्य;
-	पूर्ण
+	if (!p) {
+		kfree(res);
+		return NULL;
+	}
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(amiga_chip_alloc);
 
 
 	/*
 	 *  Warning:
-	 *  amiga_chip_alloc_res is meant only क्रम drivers that need to
-	 *  allocate Chip RAM beक्रमe kदो_स्मृति() is functional. As a consequence,
-	 *  those drivers must not मुक्त that Chip RAM afterwards.
+	 *  amiga_chip_alloc_res is meant only for drivers that need to
+	 *  allocate Chip RAM before kmalloc() is functional. As a consequence,
+	 *  those drivers must not free that Chip RAM afterwards.
 	 */
 
-व्योम *amiga_chip_alloc_res(अचिन्हित दीर्घ size, काष्ठा resource *res)
-अणु
-	पूर्णांक error;
+void *amiga_chip_alloc_res(unsigned long size, struct resource *res)
+{
+	int error;
 
 	/* round up */
 	size = PAGE_ALIGN(size);
 
 	pr_debug("amiga_chip_alloc_res: allocate %lu bytes\n", size);
-	error = allocate_resource(&chipram_res, res, size, 0, अच_पूर्णांक_उच्च,
-				  PAGE_SIZE, शून्य, शून्य);
-	अगर (error < 0) अणु
+	error = allocate_resource(&chipram_res, res, size, 0, UINT_MAX,
+				  PAGE_SIZE, NULL, NULL);
+	if (error < 0) {
 		pr_err("amiga_chip_alloc_res: allocate_resource() failed %d!\n",
 		       error);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	atomic_sub(size, &chipavail);
 	pr_debug("amiga_chip_alloc_res: returning %pR\n", res);
-	वापस ZTWO_VADDR(res->start);
-पूर्ण
+	return ZTWO_VADDR(res->start);
+}
 
-व्योम amiga_chip_मुक्त(व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ start = ZTWO_PADDR(ptr);
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ size;
+void amiga_chip_free(void *ptr)
+{
+	unsigned long start = ZTWO_PADDR(ptr);
+	struct resource *res;
+	unsigned long size;
 
 	res = lookup_resource(&chipram_res, start);
-	अगर (!res) अणु
+	if (!res) {
 		pr_err("amiga_chip_free: trying to free nonexistent region at "
 		       "%p\n", ptr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	size = resource_size(res);
 	pr_debug("amiga_chip_free: free %lu bytes at %p\n", size, ptr);
 	atomic_add(size, &chipavail);
 	release_resource(res);
-	kमुक्त(res);
-पूर्ण
-EXPORT_SYMBOL(amiga_chip_मुक्त);
+	kfree(res);
+}
+EXPORT_SYMBOL(amiga_chip_free);
 
 
-अचिन्हित दीर्घ amiga_chip_avail(व्योम)
-अणु
-	अचिन्हित दीर्घ n = atomic_पढ़ो(&chipavail);
+unsigned long amiga_chip_avail(void)
+{
+	unsigned long n = atomic_read(&chipavail);
 
 	pr_debug("amiga_chip_avail : %lu bytes\n", n);
-	वापस n;
-पूर्ण
+	return n;
+}
 EXPORT_SYMBOL(amiga_chip_avail);
 

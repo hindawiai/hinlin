@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /* Copyright(c) 2015-17 Intel Corporation. */
 
-#अगर_अघोषित __SDW_BUS_H
-#घोषणा __SDW_BUS_H
+#ifndef __SDW_BUS_H
+#define __SDW_BUS_H
 
-#घोषणा DEFAULT_BANK_SWITCH_TIMEOUT 3000
-#घोषणा DEFAULT_PROBE_TIMEOUT       2000
+#define DEFAULT_BANK_SWITCH_TIMEOUT 3000
+#define DEFAULT_PROBE_TIMEOUT       2000
 
-u64 sdw_dmi_override_adr(काष्ठा sdw_bus *bus, u64 addr);
+u64 sdw_dmi_override_adr(struct sdw_bus *bus, u64 addr);
 
-#अगर IS_ENABLED(CONFIG_ACPI)
-पूर्णांक sdw_acpi_find_slaves(काष्ठा sdw_bus *bus);
-#अन्यथा
-अटल अंतरभूत पूर्णांक sdw_acpi_find_slaves(काष्ठा sdw_bus *bus)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ACPI)
+int sdw_acpi_find_slaves(struct sdw_bus *bus);
+#else
+static inline int sdw_acpi_find_slaves(struct sdw_bus *bus)
+{
+	return -ENOTSUPP;
+}
+#endif
 
-पूर्णांक sdw_of_find_slaves(काष्ठा sdw_bus *bus);
-व्योम sdw_extract_slave_id(काष्ठा sdw_bus *bus,
-			  u64 addr, काष्ठा sdw_slave_id *id);
-पूर्णांक sdw_slave_add(काष्ठा sdw_bus *bus, काष्ठा sdw_slave_id *id,
-		  काष्ठा fwnode_handle *fwnode);
-पूर्णांक sdw_master_device_add(काष्ठा sdw_bus *bus, काष्ठा device *parent,
-			  काष्ठा fwnode_handle *fwnode);
-पूर्णांक sdw_master_device_del(काष्ठा sdw_bus *bus);
+int sdw_of_find_slaves(struct sdw_bus *bus);
+void sdw_extract_slave_id(struct sdw_bus *bus,
+			  u64 addr, struct sdw_slave_id *id);
+int sdw_slave_add(struct sdw_bus *bus, struct sdw_slave_id *id,
+		  struct fwnode_handle *fwnode);
+int sdw_master_device_add(struct sdw_bus *bus, struct device *parent,
+			  struct fwnode_handle *fwnode);
+int sdw_master_device_del(struct sdw_bus *bus);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम sdw_bus_debugfs_init(काष्ठा sdw_bus *bus);
-व्योम sdw_bus_debugfs_निकास(काष्ठा sdw_bus *bus);
-व्योम sdw_slave_debugfs_init(काष्ठा sdw_slave *slave);
-व्योम sdw_slave_debugfs_निकास(काष्ठा sdw_slave *slave);
-व्योम sdw_debugfs_init(व्योम);
-व्योम sdw_debugfs_निकास(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम sdw_bus_debugfs_init(काष्ठा sdw_bus *bus) अणुपूर्ण
-अटल अंतरभूत व्योम sdw_bus_debugfs_निकास(काष्ठा sdw_bus *bus) अणुपूर्ण
-अटल अंतरभूत व्योम sdw_slave_debugfs_init(काष्ठा sdw_slave *slave) अणुपूर्ण
-अटल अंतरभूत व्योम sdw_slave_debugfs_निकास(काष्ठा sdw_slave *slave) अणुपूर्ण
-अटल अंतरभूत व्योम sdw_debugfs_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम sdw_debugfs_निकास(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+void sdw_bus_debugfs_init(struct sdw_bus *bus);
+void sdw_bus_debugfs_exit(struct sdw_bus *bus);
+void sdw_slave_debugfs_init(struct sdw_slave *slave);
+void sdw_slave_debugfs_exit(struct sdw_slave *slave);
+void sdw_debugfs_init(void);
+void sdw_debugfs_exit(void);
+#else
+static inline void sdw_bus_debugfs_init(struct sdw_bus *bus) {}
+static inline void sdw_bus_debugfs_exit(struct sdw_bus *bus) {}
+static inline void sdw_slave_debugfs_init(struct sdw_slave *slave) {}
+static inline void sdw_slave_debugfs_exit(struct sdw_slave *slave) {}
+static inline void sdw_debugfs_init(void) {}
+static inline void sdw_debugfs_exit(void) {}
+#endif
 
-क्रमागत अणु
+enum {
 	SDW_MSG_FLAG_READ = 0,
 	SDW_MSG_FLAG_WRITE,
-पूर्ण;
+};
 
 /**
- * काष्ठा sdw_msg - Message काष्ठाure
+ * struct sdw_msg - Message structure
  * @addr: Register address accessed in the Slave
  * @len: number of messages
  * @dev_num: Slave device number
- * @addr_page1: SCP address page 1 Slave रेजिस्टर
- * @addr_page2: SCP address page 2 Slave रेजिस्टर
- * @flags: transfer flags, indicate अगर xfer is पढ़ो or ग_लिखो
+ * @addr_page1: SCP address page 1 Slave register
+ * @addr_page2: SCP address page 2 Slave register
+ * @flags: transfer flags, indicate if xfer is read or write
  * @buf: message data buffer
- * @ssp_sync: Send message at SSP (Stream Synchronization Poपूर्णांक)
+ * @ssp_sync: Send message at SSP (Stream Synchronization Point)
  * @page: address requires paging
  */
-काष्ठा sdw_msg अणु
+struct sdw_msg {
 	u16 addr;
 	u16 len;
 	u8 dev_num;
@@ -71,161 +70,161 @@ u64 sdw_dmi_override_adr(काष्ठा sdw_bus *bus, u64 addr);
 	u8 *buf;
 	bool ssp_sync;
 	bool page;
-पूर्ण;
+};
 
-#घोषणा SDW_DOUBLE_RATE_FACTOR		2
-#घोषणा SDW_STRM_RATE_GROUPING		1
+#define SDW_DOUBLE_RATE_FACTOR		2
+#define SDW_STRM_RATE_GROUPING		1
 
-बाह्य पूर्णांक sdw_rows[SDW_FRAME_ROWS];
-बाह्य पूर्णांक sdw_cols[SDW_FRAME_COLS];
+extern int sdw_rows[SDW_FRAME_ROWS];
+extern int sdw_cols[SDW_FRAME_COLS];
 
-पूर्णांक sdw_find_row_index(पूर्णांक row);
-पूर्णांक sdw_find_col_index(पूर्णांक col);
+int sdw_find_row_index(int row);
+int sdw_find_col_index(int col);
 
 /**
- * sdw_port_runसमय: Runसमय port parameters क्रम Master or Slave
+ * sdw_port_runtime: Runtime port parameters for Master or Slave
  *
  * @num: Port number. For audio streams, valid port number ranges from
  * [1,14]
  * @ch_mask: Channel mask
  * @transport_params: Transport parameters
  * @port_params: Port parameters
- * @port_node: List node क्रम Master or Slave port_list
+ * @port_node: List node for Master or Slave port_list
  *
- * SoundWire spec has no mention of ports क्रम Master पूर्णांकerface but the
+ * SoundWire spec has no mention of ports for Master interface but the
  * concept is logically extended.
  */
-काष्ठा sdw_port_runसमय अणु
-	पूर्णांक num;
-	पूर्णांक ch_mask;
-	काष्ठा sdw_transport_params transport_params;
-	काष्ठा sdw_port_params port_params;
-	काष्ठा list_head port_node;
-पूर्ण;
+struct sdw_port_runtime {
+	int num;
+	int ch_mask;
+	struct sdw_transport_params transport_params;
+	struct sdw_port_params port_params;
+	struct list_head port_node;
+};
 
 /**
- * sdw_slave_runसमय: Runसमय Stream parameters क्रम Slave
+ * sdw_slave_runtime: Runtime Stream parameters for Slave
  *
  * @slave: Slave handle
- * @direction: Data direction क्रम Slave
- * @ch_count: Number of channels handled by the Slave क्रम
+ * @direction: Data direction for Slave
+ * @ch_count: Number of channels handled by the Slave for
  * this stream
- * @m_rt_node: sdw_master_runसमय list node
- * @port_list: List of Slave Ports configured क्रम this stream
+ * @m_rt_node: sdw_master_runtime list node
+ * @port_list: List of Slave Ports configured for this stream
  */
-काष्ठा sdw_slave_runसमय अणु
-	काष्ठा sdw_slave *slave;
-	क्रमागत sdw_data_direction direction;
-	अचिन्हित पूर्णांक ch_count;
-	काष्ठा list_head m_rt_node;
-	काष्ठा list_head port_list;
-पूर्ण;
+struct sdw_slave_runtime {
+	struct sdw_slave *slave;
+	enum sdw_data_direction direction;
+	unsigned int ch_count;
+	struct list_head m_rt_node;
+	struct list_head port_list;
+};
 
 /**
- * sdw_master_runसमय: Runसमय stream parameters क्रम Master
+ * sdw_master_runtime: Runtime stream parameters for Master
  *
  * @bus: Bus handle
- * @stream: Stream runसमय handle
- * @direction: Data direction क्रम Master
- * @ch_count: Number of channels handled by the Master क्रम
+ * @stream: Stream runtime handle
+ * @direction: Data direction for Master
+ * @ch_count: Number of channels handled by the Master for
  * this stream, can be zero.
- * @slave_rt_list: Slave runसमय list
- * @port_list: List of Master Ports configured क्रम this stream, can be zero.
- * @stream_node: sdw_stream_runसमय master_list node
+ * @slave_rt_list: Slave runtime list
+ * @port_list: List of Master Ports configured for this stream, can be zero.
+ * @stream_node: sdw_stream_runtime master_list node
  * @bus_node: sdw_bus m_rt_list node
  */
-काष्ठा sdw_master_runसमय अणु
-	काष्ठा sdw_bus *bus;
-	काष्ठा sdw_stream_runसमय *stream;
-	क्रमागत sdw_data_direction direction;
-	अचिन्हित पूर्णांक ch_count;
-	काष्ठा list_head slave_rt_list;
-	काष्ठा list_head port_list;
-	काष्ठा list_head stream_node;
-	काष्ठा list_head bus_node;
-पूर्ण;
+struct sdw_master_runtime {
+	struct sdw_bus *bus;
+	struct sdw_stream_runtime *stream;
+	enum sdw_data_direction direction;
+	unsigned int ch_count;
+	struct list_head slave_rt_list;
+	struct list_head port_list;
+	struct list_head stream_node;
+	struct list_head bus_node;
+};
 
-काष्ठा sdw_dpn_prop *sdw_get_slave_dpn_prop(काष्ठा sdw_slave *slave,
-					    क्रमागत sdw_data_direction direction,
-					    अचिन्हित पूर्णांक port_num);
-पूर्णांक sdw_configure_dpn_पूर्णांकr(काष्ठा sdw_slave *slave, पूर्णांक port,
-			   bool enable, पूर्णांक mask);
+struct sdw_dpn_prop *sdw_get_slave_dpn_prop(struct sdw_slave *slave,
+					    enum sdw_data_direction direction,
+					    unsigned int port_num);
+int sdw_configure_dpn_intr(struct sdw_slave *slave, int port,
+			   bool enable, int mask);
 
-पूर्णांक sdw_transfer(काष्ठा sdw_bus *bus, काष्ठा sdw_msg *msg);
-पूर्णांक sdw_transfer_defer(काष्ठा sdw_bus *bus, काष्ठा sdw_msg *msg,
-		       काष्ठा sdw_defer *defer);
+int sdw_transfer(struct sdw_bus *bus, struct sdw_msg *msg);
+int sdw_transfer_defer(struct sdw_bus *bus, struct sdw_msg *msg,
+		       struct sdw_defer *defer);
 
-#घोषणा SDW_READ_INTR_CLEAR_RETRY	10
+#define SDW_READ_INTR_CLEAR_RETRY	10
 
-पूर्णांक sdw_fill_msg(काष्ठा sdw_msg *msg, काष्ठा sdw_slave *slave,
-		 u32 addr, माप_प्रकार count, u16 dev_num, u8 flags, u8 *buf);
+int sdw_fill_msg(struct sdw_msg *msg, struct sdw_slave *slave,
+		 u32 addr, size_t count, u16 dev_num, u8 flags, u8 *buf);
 
-/* Retrieve and वापस channel count from channel mask */
-अटल अंतरभूत पूर्णांक sdw_ch_mask_to_ch(पूर्णांक ch_mask)
-अणु
-	पूर्णांक c = 0;
+/* Retrieve and return channel count from channel mask */
+static inline int sdw_ch_mask_to_ch(int ch_mask)
+{
+	int c = 0;
 
-	क्रम (c = 0; ch_mask; ch_mask >>= 1)
+	for (c = 0; ch_mask; ch_mask >>= 1)
 		c += ch_mask & 1;
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-/* Fill transport parameter data काष्ठाure */
-अटल अंतरभूत व्योम sdw_fill_xport_params(काष्ठा sdw_transport_params *params,
-					 पूर्णांक port_num, bool grp_ctrl_valid,
-					 पूर्णांक grp_ctrl, पूर्णांक sample_पूर्णांक,
-					 पूर्णांक off1, पूर्णांक off2,
-					 पूर्णांक hstart, पूर्णांक hstop,
-					 पूर्णांक pack_mode, पूर्णांक lane_ctrl)
-अणु
+/* Fill transport parameter data structure */
+static inline void sdw_fill_xport_params(struct sdw_transport_params *params,
+					 int port_num, bool grp_ctrl_valid,
+					 int grp_ctrl, int sample_int,
+					 int off1, int off2,
+					 int hstart, int hstop,
+					 int pack_mode, int lane_ctrl)
+{
 	params->port_num = port_num;
 	params->blk_grp_ctrl_valid = grp_ctrl_valid;
 	params->blk_grp_ctrl = grp_ctrl;
-	params->sample_पूर्णांकerval = sample_पूर्णांक;
+	params->sample_interval = sample_int;
 	params->offset1 = off1;
 	params->offset2 = off2;
 	params->hstart = hstart;
 	params->hstop = hstop;
 	params->blk_pkg_mode = pack_mode;
 	params->lane_ctrl = lane_ctrl;
-पूर्ण
+}
 
-/* Fill port parameter data काष्ठाure */
-अटल अंतरभूत व्योम sdw_fill_port_params(काष्ठा sdw_port_params *params,
-					पूर्णांक port_num, पूर्णांक bps,
-					पूर्णांक flow_mode, पूर्णांक data_mode)
-अणु
+/* Fill port parameter data structure */
+static inline void sdw_fill_port_params(struct sdw_port_params *params,
+					int port_num, int bps,
+					int flow_mode, int data_mode)
+{
 	params->num = port_num;
 	params->bps = bps;
 	params->flow_mode = flow_mode;
 	params->data_mode = data_mode;
-पूर्ण
+}
 
-/* Read-Modअगरy-Write Slave रेजिस्टर */
-अटल अंतरभूत पूर्णांक sdw_update(काष्ठा sdw_slave *slave, u32 addr, u8 mask, u8 val)
-अणु
-	पूर्णांक पंचांगp;
+/* Read-Modify-Write Slave register */
+static inline int sdw_update(struct sdw_slave *slave, u32 addr, u8 mask, u8 val)
+{
+	int tmp;
 
-	पंचांगp = sdw_पढ़ो(slave, addr);
-	अगर (पंचांगp < 0)
-		वापस पंचांगp;
+	tmp = sdw_read(slave, addr);
+	if (tmp < 0)
+		return tmp;
 
-	पंचांगp = (पंचांगp & ~mask) | val;
-	वापस sdw_ग_लिखो(slave, addr, पंचांगp);
-पूर्ण
+	tmp = (tmp & ~mask) | val;
+	return sdw_write(slave, addr, tmp);
+}
 
-/* broadcast पढ़ो/ग_लिखो क्रम tests */
-पूर्णांक sdw_bपढ़ो_no_pm_unlocked(काष्ठा sdw_bus *bus, u16 dev_num, u32 addr);
-पूर्णांक sdw_bग_लिखो_no_pm_unlocked(काष्ठा sdw_bus *bus, u16 dev_num, u32 addr, u8 value);
+/* broadcast read/write for tests */
+int sdw_bread_no_pm_unlocked(struct sdw_bus *bus, u16 dev_num, u32 addr);
+int sdw_bwrite_no_pm_unlocked(struct sdw_bus *bus, u16 dev_num, u32 addr, u8 value);
 
 /*
  * At the moment we only track Master-initiated hw_reset.
  * Additional fields can be added as needed
  */
-#घोषणा SDW_UNATTACH_REQUEST_MASTER_RESET	BIT(0)
+#define SDW_UNATTACH_REQUEST_MASTER_RESET	BIT(0)
 
-व्योम sdw_clear_slave_status(काष्ठा sdw_bus *bus, u32 request);
-पूर्णांक sdw_slave_modalias(स्थिर काष्ठा sdw_slave *slave, अक्षर *buf, माप_प्रकार size);
+void sdw_clear_slave_status(struct sdw_bus *bus, u32 request);
+int sdw_slave_modalias(const struct sdw_slave *slave, char *buf, size_t size);
 
-#पूर्ण_अगर /* __SDW_BUS_H */
+#endif /* __SDW_BUS_H */

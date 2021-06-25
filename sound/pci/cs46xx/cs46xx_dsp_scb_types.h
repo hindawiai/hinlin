@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  The driver क्रम the Cirrus Logic's Sound Fusion CS46XX based soundcards
+ *  The driver for the Cirrus Logic's Sound Fusion CS46XX based soundcards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
  * NOTE: comments are copy/paste from cwcemb80.lst 
  * provided by Tom Woller at Cirrus (my only
- * करोcumentation about the SP OS running inside
+ * documentation about the SP OS running inside
  * the DSP) 
  */
 
-#अगर_अघोषित __CS46XX_DSP_SCB_TYPES_H__
-#घोषणा __CS46XX_DSP_SCB_TYPES_H__
+#ifndef __CS46XX_DSP_SCB_TYPES_H__
+#define __CS46XX_DSP_SCB_TYPES_H__
 
-#समावेश <यंत्र/byteorder.h>
+#include <asm/byteorder.h>
 
-#अगर_अघोषित ___DSP_DUAL_16BIT_ALLOC
-#अगर   defined(__LITTLE_ENDIAN)
-#घोषणा ___DSP_DUAL_16BIT_ALLOC(a,b) u16 a; u16 b;
-#या_अगर defined(__BIG_ENDIAN)
-#घोषणा ___DSP_DUAL_16BIT_ALLOC(a,b) u16 b; u16 a;
-#अन्यथा
-#त्रुटि Not __LITTLE_ENDIAN and not __BIG_ENDIAN, then what ???
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef ___DSP_DUAL_16BIT_ALLOC
+#if   defined(__LITTLE_ENDIAN)
+#define ___DSP_DUAL_16BIT_ALLOC(a,b) u16 a; u16 b;
+#elif defined(__BIG_ENDIAN)
+#define ___DSP_DUAL_16BIT_ALLOC(a,b) u16 b; u16 a;
+#else
+#error Not __LITTLE_ENDIAN and not __BIG_ENDIAN, then what ???
+#endif
+#endif
 
-/* This काष्ठाs are used पूर्णांकernally by the SP */
+/* This structs are used internally by the SP */
 
-काष्ठा dsp_basic_dma_req अणु
+struct dsp_basic_dma_req {
 	/* DMA Requestor Word 0 (DCW)  fields:
 
 	   31 [30-28]27  [26:24] 23 22 21 20 [19:18] [17:16] 15 14 13  12  11 10 9 8 7 6  [5:0]
@@ -39,78 +38,78 @@
 	u32 dmw;                 /* DMA Mode Word */
 	u32 saw;                 /* Source Address Word */
 	u32 daw;                 /* Destination Address Word  */
-पूर्ण;
+};
 
-काष्ठा dsp_scatter_gather_ext अणु
+struct dsp_scatter_gather_ext {
 	u32 npaw;                /* Next-Page Address Word */
 
 	/* DMA Requestor Word 5 (NPCW)  fields:
      
 	   31-30 29 28          [27:16]              [15:12]             [11:3]                [2:0] 				
 	   _________________________________________________________________________________________	
-	   |SV  |LE|SE|   Sample-end byte offset   |         | Page-map entry offset क्रम next  |    | 
-	   |page|__|__| ___________________________|_________|__page, अगर !sample-end___________|____|
+	   |SV  |LE|SE|   Sample-end byte offset   |         | Page-map entry offset for next  |    | 
+	   |page|__|__| ___________________________|_________|__page, if !sample-end___________|____|
 	*/
 	u32 npcw;                /* Next-Page Control Word */
 	u32 lbaw;                /* Loop-Begin Address Word */
 	u32 nplbaw;              /* Next-Page after Loop-Begin Address Word */
 	u32 sgaw;                /* Scatter/Gather Address Word */
-पूर्ण;
+};
 
-काष्ठा dsp_volume_control अणु
+struct dsp_volume_control {
 	___DSP_DUAL_16BIT_ALLOC(
-	   rightTarg,  /* Target volume क्रम left & right channels */
+	   rightTarg,  /* Target volume for left & right channels */
 	   leftTarg
 	)
 	___DSP_DUAL_16BIT_ALLOC(
 	   rightVol,   /* Current left & right channel volumes */
 	   leftVol
 	)
-पूर्ण;
+};
 
-/* Generic stream control block (SCB) काष्ठाure definition */
-काष्ठा dsp_generic_scb अणु
+/* Generic stream control block (SCB) structure definition */
+struct dsp_generic_scb {
 	/* For streaming I/O, the DSP should never alter any words in the DMA
 	   requestor or the scatter/gather extension.  Only ad hoc DMA request
-	   streams are मुक्त to alter the requestor (currently only occur in the
+	   streams are free to alter the requestor (currently only occur in the
 	   DOS-based MIDI controller and in debugger-inserted code).
     
-	   If an SCB करोes not have any associated DMA requestor, these 9 पूर्णांकs
-	   may be मुक्तd क्रम use by other tasks, but the poपूर्णांकer to the SCB must
+	   If an SCB does not have any associated DMA requestor, these 9 ints
+	   may be freed for use by other tasks, but the pointer to the SCB must
 	   still be such that the insOrd:nextSCB appear at offset 9 from the
-	   SCB poपूर्णांकer.
+	   SCB pointer.
      
-	   Basic (non scatter/gather) DMA requestor (4 पूर्णांकs)
+	   Basic (non scatter/gather) DMA requestor (4 ints)
 	*/
   
-	/* Initialized by the host, only modअगरied by DMA 
-	   R/O क्रम the DSP task */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
+	/* Initialized by the host, only modified by DMA 
+	   R/O for the DSP task */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
 
-	/* Scatter/gather DMA requestor extension   (5 पूर्णांकs) 
-	   Initialized by the host, only modअगरied by DMA
-	   DSP task never needs to even पढ़ो these.
+	/* Scatter/gather DMA requestor extension   (5 ints) 
+	   Initialized by the host, only modified by DMA
+	   DSP task never needs to even read these.
 	*/
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 
-	/* Sublist poपूर्णांकer & next stream control block (SCB) link.
-	   Initialized & modअगरied by the host R/O क्रम the DSP task
+	/* Sublist pointer & next stream control block (SCB) link.
+	   Initialized & modified by the host R/O for the DSP task
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,     /* REQUIRED */
 	    sub_list_ptr  /* REQUIRED */
 	)
   
-	/* Poपूर्णांकer to this tasks parameter block & stream function poपूर्णांकer 
-	   Initialized by the host  R/O क्रम the DSP task */
+	/* Pointer to this tasks parameter block & stream function pointer 
+	   Initialized by the host  R/O for the DSP task */
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,  /* REQUIRED */
+	    entry_point,  /* REQUIRED */
 	    this_spb      /* REQUIRED */
 	)
 
-	/* rsConfig रेजिस्टर क्रम stream buffer (rsDMA reg. 
-	   is loaded from basicReq.daw क्रम incoming streams, or 
-	   basicReq.saw, क्रम outgoing streams) 
+	/* rsConfig register for stream buffer (rsDMA reg. 
+	   is loaded from basicReq.daw for incoming streams, or 
+	   basicReq.saw, for outgoing streams) 
 
 	   31 30 29  [28:24]     [23:16] 15 14 13 12 11 10 9 8 7 6  5      4      [3:0]
 	   ______________________________________________________________________________
@@ -119,34 +118,34 @@
 	   31 30 29  [28:24]     [23:16] 15 14 13 12 11 10 9 8 7 6  5      4      [3:0]
 
 
-	   Initialized by the host R/O क्रम the DSP task
+	   Initialized by the host R/O for the DSP task
 	*/
 	u32  strm_rs_config; /* REQUIRED */
                // 
 	/* On mixer input streams: indicates mixer input stream configuration
 	   On Tees, this is copied from the stream being snooped
 
-	   Stream sample poपूर्णांकer & MAC-unit mode क्रम this stream 
+	   Stream sample pointer & MAC-unit mode for this stream 
      
 	   Initialized by the host Updated by the DSP task
 	*/
 	u32  strm_buf_ptr; /* REQUIRED  */
 
-	/* On mixer input streams: poपूर्णांकs to next mixer input and is updated by the
+	/* On mixer input streams: points to next mixer input and is updated by the
                                    mixer subroutine in the "parent" DSP task
-				   (least-signअगरicant 16 bits are preserved, unused)
+				   (least-significant 16 bits are preserved, unused)
     
-           On Tees, the poपूर्णांकer is copied from the stream being snooped on
-	   initialization, and, subsequently, it is copied पूर्णांकo the
+           On Tees, the pointer is copied from the stream being snooped on
+	   initialization, and, subsequently, it is copied into the
 	   stream being snooped.
 
-	   On wavetable/3D voices: the strmBufPtr will use all 32 bits to allow क्रम
+	   On wavetable/3D voices: the strmBufPtr will use all 32 bits to allow for
                                    fractional phase accumulation
 
 	   Fractional increment per output sample in the input sample buffer
 
 	   (Not used on mixer input streams & redefined on Tees)
-	   On wavetable/3D voices: this 32-bit word specअगरies the पूर्णांकeger.fractional 
+	   On wavetable/3D voices: this 32-bit word specifies the integer.fractional 
 	   increment per output sample.
 	*/
 	u32  strmPhiIncr;
@@ -160,78 +159,78 @@
                                    "parent" DSP task
 
 	   On Tees, both current & target volumes are copied up on initialization,
-	   and, subsequently, the target volume is copied up जबतक the current
-	   volume is copied करोwn.
+	   and, subsequently, the target volume is copied up while the current
+	   volume is copied down.
      
-	   These two 32-bit words are redefined क्रम wavetable & 3-D voices.    
+	   These two 32-bit words are redefined for wavetable & 3-D voices.    
 	*/
-	काष्ठा dsp_volume_control vol_ctrl_t;   /* Optional */
-पूर्ण;
+	struct dsp_volume_control vol_ctrl_t;   /* Optional */
+};
 
 
-काष्ठा dsp_spos_control_block अणु
-	/* WARNING: Certain items in this काष्ठाure are modअगरied by the host
-	            Any dword that can be modअगरied by the host, must not be
-		    modअगरied by the SP as the host can only करो atomic dword
-		    ग_लिखोs, and to करो otherwise, even a पढ़ो modअगरy ग_लिखो, 
+struct dsp_spos_control_block {
+	/* WARNING: Certain items in this structure are modified by the host
+	            Any dword that can be modified by the host, must not be
+		    modified by the SP as the host can only do atomic dword
+		    writes, and to do otherwise, even a read modify write, 
 		    may lead to corrupted data on the SP.
   
-		    This rule करोes not apply to one off boot समय initialisation prior to starting the SP
+		    This rule does not apply to one off boot time initialisation prior to starting the SP
 	*/
 
 
 	___DSP_DUAL_16BIT_ALLOC( 
-	/* First element on the Hyper क्रमground task tree */
+	/* First element on the Hyper forground task tree */
 	    hfg_tree_root_ptr,  /* HOST */			    
-	/* First 3 dwords are written by the host and पढ़ो-only on the DSP */
+	/* First 3 dwords are written by the host and read-only on the DSP */
 	    hfg_stack_base      /* HOST */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	/* Poपूर्णांक to this data काष्ठाure to enable easy access */
+	/* Point to this data structure to enable easy access */
 	    spos_cb_ptr,	 /* SP */
 	    prev_task_tree_ptr   /* SP && HOST */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
 	/* Currently Unused */
-	    xxपूर्णांकerval_समयr_period,
-	/* Enable extension of SPOS data काष्ठाure */
+	    xxinterval_timer_period,
+	/* Enable extension of SPOS data structure */
 	    HFGSPB_ptr
 	)
 
 
 	___DSP_DUAL_16BIT_ALLOC(
 	    xxnum_HFG_ticks_thisInterval,
-	/* Modअगरied by the DSP */
+	/* Modified by the DSP */
 	    xxnum_tntervals
 	)
 
 
-	/* Set by DSP upon encountering a trap (अवरोधpoपूर्णांक) or a spurious
-	   पूर्णांकerrupt.  The host must clear this dword after पढ़ोing it
+	/* Set by DSP upon encountering a trap (breakpoint) or a spurious
+	   interrupt.  The host must clear this dword after reading it
 	   upon receiving spInt1. */
 	___DSP_DUAL_16BIT_ALLOC(
-	    spurious_पूर्णांक_flag,	 /* (Host & SP) Nature of the spurious पूर्णांकerrupt */
+	    spurious_int_flag,	 /* (Host & SP) Nature of the spurious interrupt */
 	    trap_flag            /* (Host & SP) Nature of detected Trap */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
 	    unused2,					
-	    invalid_IP_flag        /* (Host & SP ) Indicate detection of invalid inकाष्ठाion poपूर्णांकer */
+	    invalid_IP_flag        /* (Host & SP ) Indicate detection of invalid instruction pointer */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	/* poपूर्णांकer to क्रमground task tree header क्रम use in next task search */
+	/* pointer to forground task tree header for use in next task search */
 	    fg_task_tree_hdr_ptr,	  /* HOST */		
-	/* Data काष्ठाure क्रम controlling synchronous link update */
+	/* Data structure for controlling synchronous link update */
 	    hfg_sync_update_ptr           /* HOST */
 	)
   
 	___DSP_DUAL_16BIT_ALLOC(
-	     begin_क्रमeground_FCNT,  /* SP */
-	/* Place holder क्रम holding sleep timing */
-	     last_FCNT_beक्रमe_sleep  /* SP */
+	     begin_foreground_FCNT,  /* SP */
+	/* Place holder for holding sleep timing */
+	     last_FCNT_before_sleep  /* SP */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
@@ -252,44 +251,44 @@
 	    unused8
 	)
                               
-	/* Space क्रम saving enough context so that we can set up enough 
+	/* Space for saving enough context so that we can set up enough 
 	   to save some more context.
 	*/
-	u32 rFE_save_क्रम_invalid_IP;
-	u32 r32_save_क्रम_spurious_पूर्णांक;
-	u32 r32_save_क्रम_trap;
-	u32 r32_save_क्रम_HFG;
-पूर्ण;
+	u32 rFE_save_for_invalid_IP;
+	u32 r32_save_for_spurious_int;
+	u32 r32_save_for_trap;
+	u32 r32_save_for_HFG;
+};
 
-/* SPB क्रम MIX_TO_OSTREAM algorithm family */
-काष्ठा dsp_mix2_ostream_spb
-अणु
-	/* 16b.16b पूर्णांकeger.frac approximation to the
+/* SPB for MIX_TO_OSTREAM algorithm family */
+struct dsp_mix2_ostream_spb
+{
+	/* 16b.16b integer.frac approximation to the
 	   number of 3 sample triplets to output each
-	   frame. (approximation must be न्यूनमान, to
+	   frame. (approximation must be floor, to
 	   insure that the fractional error is always
 	   positive)
 	*/
 	u32 outTripletsPerFrame;
 
-	/* 16b.16b पूर्णांकeger.frac accumulated number of
+	/* 16b.16b integer.frac accumulated number of
 	   output triplets since the start of group 
 	*/
 	u32 accumOutTriplets;  
-पूर्ण;
+};
 
-/* SCB क्रम Timing master algorithm */
-काष्ठा dsp_timing_master_scb अणु
+/* SCB for Timing master algorithm */
+struct dsp_timing_master_scb {
 	/* First 12 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,     /* REQUIRED */
 	    sub_list_ptr  /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,  /* REQUIRED */
+	    entry_point,  /* REQUIRED */
 	    this_spb      /* REQUIRED */
 	)
 
@@ -301,11 +300,11 @@
 
   
 	/* Initial values are xxxx:0000
-	   hi: Current CODEC output FIFO poपूर्णांकer
+	   hi: Current CODEC output FIFO pointer
 	       (0 to 0x0f)
            lo: Flag indicating that the CODEC
 	       FIFO is sync'd (host clears to
-	       resynchronize the FIFO poपूर्णांकer
+	       resynchronize the FIFO pointer
 	       upon start/restart) 
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
@@ -313,10 +312,10 @@
 	    codec_FIFO_ptr
 	)
   
-	/* Init. 8000:0005 क्रम 44.1k
-                 8000:0001 क्रम 48k
+	/* Init. 8000:0005 for 44.1k
+                 8000:0001 for 48k
 	   hi: Fractional sample accumulator 0.16b
-	   lo: Number of frames reमुख्यing to be
+	   lo: Number of frames remaining to be
 	       processed in the current group of
 	       frames
 	*/
@@ -325,11 +324,11 @@
 	    TM_frms_left_in_group
 	) 
 
-	/* Init. 0001:0005 क्रम 44.1k
-                 0000:0001 क्रम 48k
+	/* Init. 0001:0005 for 44.1k
+                 0000:0001 for 48k
 	   hi: Fractional sample correction factor 0.16b
 	       to be added every frameGroupLength frames
-	       to correct क्रम truncation error in
+	       to correct for truncation error in
 	       nsamp_per_frm_q15
 	   lo: Number of frames in the group
 	*/
@@ -338,26 +337,26 @@
 	    TM_frm_group_length  
 	)
 
-	/* Init. 44.1k*65536/8k = 0x00058333 क्रम 44.1k
-                 48k*65536/8k = 0x00060000 क्रम 48k
-	   16b.16b पूर्णांकeger.frac approximation to the
+	/* Init. 44.1k*65536/8k = 0x00058333 for 44.1k
+                 48k*65536/8k = 0x00060000 for 48k
+	   16b.16b integer.frac approximation to the
 	   number of samples to output each frame.
-	   (approximation must be न्यूनमान, to insure */
+	   (approximation must be floor, to insure */
 	u32 nsamp_per_frm_q15;
-पूर्ण;
+};
 
-/* SCB क्रम CODEC output algorithm */
-काष्ठा dsp_codec_output_scb अणु
+/* SCB for CODEC output algorithm */
+struct dsp_codec_output_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
@@ -365,22 +364,22 @@
 
 	u32 strm_buf_ptr;   /* REQUIRED */
 
-	/* NOTE: The CODEC output task पढ़ोs samples from the first task on its
-                 sublist at the stream buffer poपूर्णांकer (init. to lag DMA destination
+	/* NOTE: The CODEC output task reads samples from the first task on its
+                 sublist at the stream buffer pointer (init. to lag DMA destination
 		 address word).  After the required number of samples is transferred,
 		 the CODEC output task advances sub_list_ptr->strm_buf_ptr past the samples
 		 consumed.
 	*/
 
-	/* Init. 0000:0010 क्रम SDout
-                 0060:0010 क्रम SDout2
-		 0080:0010 क्रम SDout3
+	/* Init. 0000:0010 for SDout
+                 0060:0010 for SDout2
+		 0080:0010 for SDout3
 	   hi: Base IO address of FIFO to which
 	       the left-channel samples are to
 	       be written.
-	   lo: Displacement क्रम the base IO
-	       address क्रम left-channel to obtain
-	       the base IO address क्रम the FIFO
+	   lo: Displacement for the base IO
+	       address for left-channel to obtain
+	       the base IO address for the FIFO
 	       to which the right-channel samples
 	       are to be written.
 	*/
@@ -390,62 +389,62 @@
 	)
 
 
-	/* Init: 0x0080:0004 क्रम non-AC-97
-	   Init: 0x0080:0000 क्रम AC-97
+	/* Init: 0x0080:0004 for non-AC-97
+	   Init: 0x0080:0000 for AC-97
 	   hi: Exponential volume change rate
-	       क्रम input stream
-	   lo: Positive shअगरt count to shअगरt the
+	       for input stream
+	   lo: Positive shift count to shift the
 	       16-bit input sample to obtain the
 	       32-bit output word
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
-	    CO_scale_shअगरt_count, 
+	    CO_scale_shift_count, 
 	    CO_exp_vol_change_rate
 	)
 
-	/* Poपूर्णांकer to SCB at end of input chain */
+	/* Pointer to SCB at end of input chain */
 	___DSP_DUAL_16BIT_ALLOC(
 	    reserved,
 	    last_sub_ptr
 	)
-पूर्ण;
+};
 
-/* SCB क्रम CODEC input algorithm */
-काष्ठा dsp_codec_input_scb अणु
+/* SCB for CODEC input algorithm */
+struct dsp_codec_input_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
 	u32 strm_rs_config; /* REQUIRED */
 	u32 strm_buf_ptr;   /* REQUIRED */
 
-	/* NOTE: The CODEC input task पढ़ोs samples from the hardware FIFO 
+	/* NOTE: The CODEC input task reads samples from the hardware FIFO 
                  sublist at the DMA source address word (sub_list_ptr->basic_req.saw).
                  After the required number of samples is transferred, the CODEC
                  output task advances sub_list_ptr->basic_req.saw past the samples
                  consumed.  SPuD must initialize the sub_list_ptr->basic_req.saw
-                 to poपूर्णांक half-way around from the initial sub_list_ptr->strm_nuf_ptr
-                 to allow क्रम lag/lead.
+                 to point half-way around from the initial sub_list_ptr->strm_nuf_ptr
+                 to allow for lag/lead.
 	*/
 
-	/* Init. 0000:0010 क्रम SDout
-                 0060:0010 क्रम SDout2
-		 0080:0010 क्रम SDout3
+	/* Init. 0000:0010 for SDout
+                 0060:0010 for SDout2
+		 0080:0010 for SDout3
 	   hi: Base IO address of FIFO to which
 	       the left-channel samples are to
 	       be written.
-	   lo: Displacement क्रम the base IO
-	       address क्रम left-channel to obtain
-	       the base IO address क्रम the FIFO
+	   lo: Displacement for the base IO
+	       address for left-channel to obtain
+	       the base IO address for the FIFO
 	       to which the right-channel samples
 	       are to be written.
 	*/
@@ -454,31 +453,31 @@
 	    left_chan_base_IN_addr
 	)
 	/* Init. ?:fffc
-	   lo: Negative shअगरt count to shअगरt the
+	   lo: Negative shift count to shift the
 	       32-bit input dword to obtain the
 	       16-bit sample msb-aligned (count
-	       is negative to shअगरt left)
+	       is negative to shift left)
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
-	    scaleShअगरtCount, 
+	    scaleShiftCount, 
 	    reserver1
 	)
 
 	u32  reserved2;
-पूर्ण;
+};
 
 
-काष्ठा dsp_pcm_serial_input_scb अणु
+struct dsp_pcm_serial_input_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
@@ -486,7 +485,7 @@
 	u32 strm_rs_config; /* REQUIRED */
   
 	/* Init. Ptr to CODEC input SCB
-	   hi: Poपूर्णांकer to the SCB containing the
+	   hi: Pointer to the SCB containing the
 	       input buffer to which CODEC input
 	       samples are written
 	   lo: Flag indicating the link to the CODEC
@@ -498,18 +497,18 @@
 	)
 
 	/* Initialized by the host (host updates target volumes) */
-	काष्ठा dsp_volume_control psi_vol_ctrl;   
+	struct dsp_volume_control psi_vol_ctrl;   
   
-पूर्ण;
+};
 
-काष्ठा dsp_src_task_scb अणु
+struct dsp_src_task_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    frames_left_in_gof,
 	    gofs_left_in_sec
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    स्थिर2_thirds,
+	    const2_thirds,
 	    num_extra_tnput_samples
 	)
 
@@ -531,7 +530,7 @@
 	u32 input_buf_strm_config;
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    reserved_क्रम_SRC_use,
+	    reserved_for_SRC_use,
 	    input_buf_consumer_ptr
 	)
 
@@ -548,19 +547,19 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    src_entry_poपूर्णांक,
+	    src_entry_point,
 	    src_this_sbp
 	)
 
 	u32  src_strm_rs_config;
 	u32  src_strm_buf_ptr;
   
-	u32   phiIncr6पूर्णांक_26frac;
+	u32   phiIncr6int_26frac;
   
-	काष्ठा dsp_volume_control src_vol_ctrl;
-पूर्ण;
+	struct dsp_volume_control src_vol_ctrl;
+};
 
-काष्ठा dsp_decimate_by_घात2_scb अणु
+struct dsp_decimate_by_pow2_scb {
 	/* decimationFactor = 2, 4, or 8 (larger factors waste too much memory
 	                                  when compared to cascading decimators)
 	*/
@@ -569,8 +568,8 @@
 	    dec2_coef_increment
 	)
 
-	/* coefIncrement = 128 / decimationFactor (क्रम our ROM filter)
-	   coefBasePtr = 0x8000 (क्रम our ROM filter)
+	/* coefIncrement = 128 / decimationFactor (for our ROM filter)
+	   coefBasePtr = 0x8000 (for our ROM filter)
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
 	    dec2_in_samples_per_out_triplet,
@@ -581,11 +580,11 @@
 	*/
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    dec2_स्थिर2_thirds,
+	    dec2_const2_thirds,
 	    dec2_half_num_taps_mp5
 	)
 	/* halfNumTapsM5: (1/2 number of taps in decimation filter) minus 5
-	   स्थिर2thirds: स्थिरant 2/3 in 16Q0 क्रमmat (sign.15)
+	   const2thirds: constant 2/3 in 16Q0 format (sign.15)
 	*/
 
 	___DSP_DUAL_16BIT_ALLOC(
@@ -596,7 +595,7 @@
 	u32  dec2_reserved2;
 
 	u32  dec2_input_nuf_strm_config;
-	/* inputBufStrmConfig: rsConfig क्रम the input buffer to the decimator
+	/* inputBufStrmConfig: rsConfig for the input buffer to the decimator
 	   (buffer size = decimationFactor * 32 dwords)
 	*/
 
@@ -604,7 +603,7 @@
 	    dec2_phi_incr,
 	    dec2_input_buf_consumer_ptr
 	)
-	/* inputBufConsumerPtr: Input buffer पढ़ो poपूर्णांकer (पूर्णांकo SRC filter)
+	/* inputBufConsumerPtr: Input buffer read pointer (into SRC filter)
 	   phiIncr = decimationFactor * 4
 	*/
 
@@ -614,8 +613,8 @@
 	    dec2_exp_vol_change_rate,
 	    dec2_input_buf_producer_ptr
 	)
-	/* inputBufProducerPtr: Input buffer ग_लिखो poपूर्णांकer
-	   expVolChangeRate: Exponential volume change rate क्रम possible
+	/* inputBufProducerPtr: Input buffer write pointer
+	   expVolChangeRate: Exponential volume change rate for possible
 	                     future mixer on input streams
 	*/
 
@@ -625,7 +624,7 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    dec2_entry_poपूर्णांक,
+	    dec2_entry_point,
 	    dec2_this_spb
 	)
 
@@ -634,21 +633,21 @@
 
 	u32  dec2_reserved4;
 
-	काष्ठा dsp_volume_control dec2_vol_ctrl; /* Not used! */
-पूर्ण;
+	struct dsp_volume_control dec2_vol_ctrl; /* Not used! */
+};
 
-काष्ठा dsp_vari_decimate_scb अणु
+struct dsp_vari_decimate_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    vdec_frames_left_in_gof,
 	    vdec_gofs_left_in_sec
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    vdec_स्थिर2_thirds,
+	    vdec_const2_thirds,
 	    vdec_extra_in_samples
 	)
 	/* extraInSamples: # of accumulated, unused input samples (init. to 0)
-	   स्थिर2thirds: स्थिरant 2/3 in 16Q0 क्रमmat (sign.15) */
+	   const2thirds: constant 2/3 in 16Q0 format (sign.15) */
 
 	___DSP_DUAL_16BIT_ALLOC(
 	    vdec_cor_per_gof,
@@ -659,14 +658,14 @@
 	    vdec_output_buf_producer_ptr,
 	    vdec_input_buf_consumer_ptr
 	)
-	/* inputBufConsumerPtr: Input buffer पढ़ो poपूर्णांकer (पूर्णांकo SRC filter) */
+	/* inputBufConsumerPtr: Input buffer read pointer (into SRC filter) */
 	___DSP_DUAL_16BIT_ALLOC(
 	    vdec_gof_length,
 	    vdec_gofs_per_sec
 	)
 
 	u32  vdec_input_buf_strm_config;
-	/* inputBufStrmConfig: rsConfig क्रम the input buffer to the decimator
+	/* inputBufStrmConfig: rsConfig for the input buffer to the decimator
 	   (buffer size = 64 dwords) */
 	u32  vdec_coef_increment;
 	/* coefIncrement = - 128.0 / decimationFactor (as a 32Q15 number) */
@@ -678,8 +677,8 @@
  	    vdec_exp_vol_change_rate,
 	    vdec_input_buf_producer_ptr
 	)
-	/* inputBufProducerPtr: Input buffer ग_लिखो poपूर्णांकer
-	   expVolChangeRate: Exponential volume change rate क्रम possible
+	/* inputBufProducerPtr: Input buffer write pointer
+	   expVolChangeRate: Exponential volume change rate for possible
 	   future mixer on input streams */
 
 	___DSP_DUAL_16BIT_ALLOC(
@@ -688,31 +687,31 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    vdec_entry_poपूर्णांक,
+	    vdec_entry_point,
 	    vdec_this_spb
 	)
 
 	u32 vdec_strm_rs_config;
 	u32 vdec_strm_buf_ptr;
 
-	u32 vdec_phi_incr_6पूर्णांक_26frac;
+	u32 vdec_phi_incr_6int_26frac;
 
-	काष्ठा dsp_volume_control vdec_vol_ctrl;
-पूर्ण;
+	struct dsp_volume_control vdec_vol_ctrl;
+};
 
 
-/* SCB क्रम MIX_TO_OSTREAM algorithm family */
-काष्ठा dsp_mix2_ostream_scb अणु
+/* SCB for MIX_TO_OSTREAM algorithm family */
+struct dsp_mix2_ostream_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
@@ -720,9 +719,9 @@
 	u32 strm_buf_ptr;   /* REQUIRED */
 
 
-	/* hi: Number of mixed-करोwn input triplets
+	/* hi: Number of mixed-down input triplets
 	       computed since start of group
-	   lo: Number of frames reमुख्यing to be
+	   lo: Number of frames remaining to be
 	       processed in the current group of
 	       frames
 	*/
@@ -732,7 +731,7 @@
 	)
 
 	/* hi: Exponential volume change rate
-	       क्रम mixer on input streams
+	       for mixer on input streams
 	   lo: Number of frames in the group
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
@@ -741,24 +740,24 @@
 	)
   
 	___DSP_DUAL_16BIT_ALLOC(
-	    स्थिर_FFFF,
-	    स्थिर_zero
+	    const_FFFF,
+	    const_zero
 	)
-पूर्ण;
+};
 
 
-/* SCB क्रम S16_MIX algorithm */
-काष्ठा dsp_mix_only_scb अणु
+/* SCB for S16_MIX algorithm */
+struct dsp_mix_only_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
@@ -766,12 +765,12 @@
 	u32 strm_buf_ptr;   /* REQUIRED */
 
 	u32 reserved;
-	काष्ठा dsp_volume_control vol_ctrl;
-पूर्ण;
+	struct dsp_volume_control vol_ctrl;
+};
 
-/* SCB क्रम the async. CODEC input algorithm */
-काष्ठा dsp_async_codec_input_scb अणु
-	u32 io_मुक्त2;     
+/* SCB for the async. CODEC input algorithm */
+struct dsp_async_codec_input_scb {
+	u32 io_free2;     
   
 	u32 io_current_total;
 	u32 io_previous_total;
@@ -779,10 +778,10 @@
 	u16 io_count;
 	u16 io_count_limit;
   
-	u16 o_fअगरo_base_addr;            
-	u16 ost_mo_क्रमmat;
+	u16 o_fifo_base_addr;            
+	u16 ost_mo_format;
 	/* 1 = stereo; 0 = mono 
-	   xxx क्रम ASER 1 (not allowed); 118 क्रम ASER2 */
+	   xxx for ASER 1 (not allowed); 118 for ASER2 */
 
 	u32  ostrm_rs_config;
 	u32  ostrm_buf_ptr;
@@ -792,7 +791,7 @@
 	    io_io_enable
 	)
 
-	u32  io_मुक्त4;
+	u32  io_free4;
 
 	___DSP_DUAL_16BIT_ALLOC(  
 	    io_next_scb,
@@ -800,34 +799,34 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    io_entry_poपूर्णांक,
+	    io_entry_point,
 	    io_this_spb
 	)
 
 	u32 istrm_rs_config;
 	u32 istrm_buf_ptr;
 
-	/* Init. 0000:8042: क्रम ASER1
-                 0000:8044: क्रम ASER2  */
+	/* Init. 0000:8042: for ASER1
+                 0000:8044: for ASER2  */
 	___DSP_DUAL_16BIT_ALLOC(
 	    io_stat_reg_addr,
-	    iofअगरo_poपूर्णांकer
+	    iofifo_pointer
 	)
 
 	/* Init 1 stero:100 ASER1
 	   Init 0 mono:110 ASER2 
 	*/
 	___DSP_DUAL_16BIT_ALLOC(
-	    अगरअगरo_base_addr,            
-	    ist_mo_क्रमmat
+	    ififo_base_addr,            
+	    ist_mo_format
 	)
 
-	u32 i_मुक्त;
-पूर्ण;
+	u32 i_free;
+};
 
 
-/* SCB क्रम the SP/DIF CODEC input and output */
-काष्ठा dsp_spdअगरiscb अणु
+/* SCB for the SP/DIF CODEC input and output */
+struct dsp_spdifiscb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    status_ptr,     
 	    status_start_ptr
@@ -845,13 +844,13 @@
 
 	___DSP_DUAL_16BIT_ALLOC(  
 	    status,
-	    मुक्त4
+	    free4
 	)
 
-	u32 मुक्त3;
+	u32 free3;
 
 	___DSP_DUAL_16BIT_ALLOC(  
-	    मुक्त2,
+	    free2,
 	    bit_count
 	)
 
@@ -863,7 +862,7 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,
+	    entry_point,
 	    this_spb
 	)
 
@@ -872,36 +871,36 @@
   
 	___DSP_DUAL_16BIT_ALLOC(
 	    stat_reg_addr, 
-	    fअगरo_poपूर्णांकer
+	    fifo_pointer
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    fअगरo_base_addr, 
-	    st_mo_क्रमmat
+	    fifo_base_addr, 
+	    st_mo_format
 	)
 
-	u32  मुक्त1;
-पूर्ण;
+	u32  free1;
+};
 
 
-/* SCB क्रम the SP/DIF CODEC input and output  */
-काष्ठा dsp_spdअगरoscb अणु		 
+/* SCB for the SP/DIF CODEC input and output  */
+struct dsp_spdifoscb {		 
 
-	u32 मुक्त2;     
+	u32 free2;     
 
-	u32 मुक्त3[4];             
+	u32 free3[4];             
 
-	/* Need to be here क्रम compatibility with AsynchFGTxCode */
+	/* Need to be here for compatibility with AsynchFGTxCode */
 	u32 strm_rs_config;
                                
 	u32 strm_buf_ptr;
 
 	___DSP_DUAL_16BIT_ALLOC(  
 	    status,
-	    मुक्त5
+	    free5
 	)
 
-	u32 मुक्त4;
+	u32 free4;
 
 	___DSP_DUAL_16BIT_ALLOC(  
 	    next_scb,
@@ -909,27 +908,27 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,
+	    entry_point,
 	    this_spb
 	)
 
-	u32 मुक्त6[2];
+	u32 free6[2];
   
 	___DSP_DUAL_16BIT_ALLOC(
 	    stat_reg_addr, 
-	    fअगरo_poपूर्णांकer
+	    fifo_pointer
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    fअगरo_base_addr,
-	    st_mo_क्रमmat
+	    fifo_base_addr,
+	    st_mo_format
 	)
 
-	u32  मुक्त1;                                         
-पूर्ण;
+	u32  free1;                                         
+};
 
 
-काष्ठा dsp_asynch_fg_rx_scb अणु
+struct dsp_asynch_fg_rx_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    bot_buf_mask,
 	    buf_Mask
@@ -941,7 +940,7 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    old_producer_poपूर्णांकer,
+	    old_producer_pointer,
 	    hfg_scb_ptr
 	)
 
@@ -977,10 +976,10 @@
 	    right_vol,
 	    left_vol
 	)
-पूर्ण;
+};
 
 
-काष्ठा dsp_asynch_fg_tx_scb अणु
+struct dsp_asynch_fg_tx_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    not_buf_mask,
 	    buf_mask
@@ -1005,7 +1004,7 @@
 
 	___DSP_DUAL_16BIT_ALLOC(
 	    unused2,
-	    स्थिर_one_third
+	    const_one_third
 	)
 
 	u32 unused3[3];
@@ -1035,20 +1034,20 @@
 	    unused_right_vol,
 	    unused_left_vol
 	)
-पूर्ण;
+};
 
 
-काष्ठा dsp_output_snoop_scb अणु
+struct dsp_output_snoop_scb {
 	/* First 13 dwords from generic_scb_t */
-	काष्ठा dsp_basic_dma_req  basic_req;  /* Optional */
-	काष्ठा dsp_scatter_gather_ext sg_ext;  /* Optional */
+	struct dsp_basic_dma_req  basic_req;  /* Optional */
+	struct dsp_scatter_gather_ext sg_ext;  /* Optional */
 	___DSP_DUAL_16BIT_ALLOC(
 	    next_scb,       /* REQUIRED */
 	    sub_list_ptr    /* REQUIRED */
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,    /* REQUIRED */
+	    entry_point,    /* REQUIRED */
 	    this_spb        /* REQUIRED */
 	)
 
@@ -1066,9 +1065,9 @@
 	    reserved,
 	    input_scb
 	)
-पूर्ण;
+};
 
-काष्ठा dsp_spio_ग_लिखो_scb अणु
+struct dsp_spio_write_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	    address1,
 	    address2
@@ -1100,14 +1099,14 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,
+	    entry_point,
 	    this_ptr
 	)
 
 	u32 unused3[5];
-पूर्ण;
+};
 
-काष्ठा dsp_magic_snoop_task अणु
+struct dsp_magic_snoop_task {
 	u32 i0;
 	u32 i1;
 
@@ -1129,7 +1128,7 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	    entry_poपूर्णांक,
+	    entry_point,
 	    this_ptr
 	)
 
@@ -1138,11 +1137,11 @@
 
 	u32 i8;
 
-	काष्ठा dsp_volume_control vdec_vol_ctrl;
-पूर्ण;
+	struct dsp_volume_control vdec_vol_ctrl;
+};
 
 
-काष्ठा dsp_filter_scb अणु
+struct dsp_filter_scb {
 	___DSP_DUAL_16BIT_ALLOC(
 	      a0_right,          /* 0x00 */
 	      a0_left
@@ -1176,7 +1175,7 @@
 	)
 
 	___DSP_DUAL_16BIT_ALLOC(
-	      entry_poपूर्णांक,       /* 0x0A */
+	      entry_point,       /* 0x0A */
 	      spb_ptr
 	)
 
@@ -1195,5 +1194,5 @@
               b2_right,          /* 0x0F */
 	      b2_left
 	)
-पूर्ण;
-#पूर्ण_अगर /* __DSP_SCB_TYPES_H__ */
+};
+#endif /* __DSP_SCB_TYPES_H__ */

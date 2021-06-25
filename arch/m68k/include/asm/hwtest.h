@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* Routines to test क्रम presence/असलence of hardware रेजिस्टरs:
+/* SPDX-License-Identifier: GPL-2.0 */
+/* Routines to test for presence/absence of hardware registers:
  * see arch/m68k/mm/hwtest.c.
  *  -- PMM <pmaydell@chiark.greenend.org.uk> 05/1998
  *
@@ -8,10 +7,10 @@
  * the code is tiny anyway.  16/5/98 pb
  */
 
-#अगर_अघोषित __ASM_HWTEST_H
-#घोषणा __ASM_HWTEST_H
+#ifndef __ASM_HWTEST_H
+#define __ASM_HWTEST_H
 
-बाह्य पूर्णांक hwreg_present(अस्थिर व्योम *regp);
-बाह्य पूर्णांक hwreg_ग_लिखो(अस्थिर व्योम *regp, अचिन्हित लघु val);
+extern int hwreg_present(volatile void *regp);
+extern int hwreg_write(volatile void *regp, unsigned short val);
 
-#पूर्ण_अगर
+#endif

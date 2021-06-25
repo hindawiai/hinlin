@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*******************************************************************************
 
   Copyright(c) 2006 Tundra Semiconductor Corporation.
@@ -8,374 +7,374 @@
 *******************************************************************************/
 
 /* This driver is based on the driver code originally developed
- * क्रम the Intel IOC80314 (ForestLake) Gigabit Ethernet by
- * scott.wood@बारys.com  * Copyright (C) 2003 TimeSys Corporation
+ * for the Intel IOC80314 (ForestLake) Gigabit Ethernet by
+ * scott.wood@timesys.com  * Copyright (C) 2003 TimeSys Corporation
  *
  * Currently changes from original version are:
- * - porting to Tsi108-based platक्रमm and kernel 2.6 (kong.lai@tundra.com)
- * - modअगरications to handle two ports independently and support क्रम
+ * - porting to Tsi108-based platform and kernel 2.6 (kong.lai@tundra.com)
+ * - modifications to handle two ports independently and support for
  *   additional PHY devices (alexandre.bounine@tundra.com)
- * - Get hardware inक्रमmation from platक्रमm device. (tie-fei.zang@मुक्तscale.com)
+ * - Get hardware information from platform device. (tie-fei.zang@freescale.com)
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/net.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/device.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/net.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/crc32.h>
+#include <linux/mii.h>
+#include <linux/device.h>
+#include <linux/pci.h>
+#include <linux/rtnetlink.h>
+#include <linux/timer.h>
+#include <linux/platform_device.h>
+#include <linux/gfp.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/tsi108.h>
+#include <asm/io.h>
+#include <asm/tsi108.h>
 
-#समावेश "tsi108_eth.h"
+#include "tsi108_eth.h"
 
-#घोषणा MII_READ_DELAY 10000	/* max link रुको समय in msec */
+#define MII_READ_DELAY 10000	/* max link wait time in msec */
 
-#घोषणा TSI108_RXRING_LEN     256
+#define TSI108_RXRING_LEN     256
 
-/* NOTE: The driver currently करोes not support receiving packets
- * larger than the buffer size, so करोn't decrease this (unless you
+/* NOTE: The driver currently does not support receiving packets
+ * larger than the buffer size, so don't decrease this (unless you
  * want to add such support).
  */
-#घोषणा TSI108_RXBUF_SIZE     1536
+#define TSI108_RXBUF_SIZE     1536
 
-#घोषणा TSI108_TXRING_LEN     256
+#define TSI108_TXRING_LEN     256
 
-#घोषणा TSI108_TX_INT_FREQ    64
+#define TSI108_TX_INT_FREQ    64
 
 /* Check the phy status every half a second. */
-#घोषणा CHECK_PHY_INTERVAL (HZ/2)
+#define CHECK_PHY_INTERVAL (HZ/2)
 
-अटल पूर्णांक tsi108_init_one(काष्ठा platक्रमm_device *pdev);
-अटल पूर्णांक tsi108_ether_हटाओ(काष्ठा platक्रमm_device *pdev);
+static int tsi108_init_one(struct platform_device *pdev);
+static int tsi108_ether_remove(struct platform_device *pdev);
 
-काष्ठा tsi108_prv_data अणु
-	व्योम  __iomem *regs;	/* Base of normal regs */
-	व्योम  __iomem *phyregs;	/* Base of रेजिस्टर bank used क्रम PHY access */
+struct tsi108_prv_data {
+	void  __iomem *regs;	/* Base of normal regs */
+	void  __iomem *phyregs;	/* Base of register bank used for PHY access */
 
-	काष्ठा net_device *dev;
-	काष्ठा napi_काष्ठा napi;
+	struct net_device *dev;
+	struct napi_struct napi;
 
-	अचिन्हित पूर्णांक phy;		/* Index of PHY क्रम this पूर्णांकerface */
-	अचिन्हित पूर्णांक irq_num;
-	अचिन्हित पूर्णांक id;
-	अचिन्हित पूर्णांक phy_type;
+	unsigned int phy;		/* Index of PHY for this interface */
+	unsigned int irq_num;
+	unsigned int id;
+	unsigned int phy_type;
 
-	काष्ठा समयr_list समयr;/* Timer that triggers the check phy function */
-	अचिन्हित पूर्णांक rxtail;	/* Next entry in rxring to पढ़ो */
-	अचिन्हित पूर्णांक rxhead;	/* Next entry in rxring to give a new buffer */
-	अचिन्हित पूर्णांक rxमुक्त;	/* Number of मुक्त, allocated RX buffers */
+	struct timer_list timer;/* Timer that triggers the check phy function */
+	unsigned int rxtail;	/* Next entry in rxring to read */
+	unsigned int rxhead;	/* Next entry in rxring to give a new buffer */
+	unsigned int rxfree;	/* Number of free, allocated RX buffers */
 
-	अचिन्हित पूर्णांक rxpending;	/* Non-zero अगर there are still descriptors
+	unsigned int rxpending;	/* Non-zero if there are still descriptors
 				 * to be processed from a previous descriptor
-				 * पूर्णांकerrupt condition that has been cleared */
+				 * interrupt condition that has been cleared */
 
-	अचिन्हित पूर्णांक txtail;	/* Next TX descriptor to check status on */
-	अचिन्हित पूर्णांक txhead;	/* Next TX descriptor to use */
+	unsigned int txtail;	/* Next TX descriptor to check status on */
+	unsigned int txhead;	/* Next TX descriptor to use */
 
-	/* Number of मुक्त TX descriptors.  This could be calculated from
-	 * rxhead and rxtail अगर one descriptor were left unused to disambiguate
+	/* Number of free TX descriptors.  This could be calculated from
+	 * rxhead and rxtail if one descriptor were left unused to disambiguate
 	 * full and empty conditions, but it's simpler to just keep track
 	 * explicitly. */
 
-	अचिन्हित पूर्णांक txमुक्त;
+	unsigned int txfree;
 
-	अचिन्हित पूर्णांक phy_ok;		/* The PHY is currently घातered on. */
+	unsigned int phy_ok;		/* The PHY is currently powered on. */
 
-	/* PHY status (duplex is 1 क्रम half, 2 क्रम full,
-	 * so that the शेष 0 indicates that neither has
+	/* PHY status (duplex is 1 for half, 2 for full,
+	 * so that the default 0 indicates that neither has
 	 * yet been configured). */
 
-	अचिन्हित पूर्णांक link_up;
-	अचिन्हित पूर्णांक speed;
-	अचिन्हित पूर्णांक duplex;
+	unsigned int link_up;
+	unsigned int speed;
+	unsigned int duplex;
 
 	tx_desc *txring;
 	rx_desc *rxring;
-	काष्ठा sk_buff *txskbs[TSI108_TXRING_LEN];
-	काष्ठा sk_buff *rxskbs[TSI108_RXRING_LEN];
+	struct sk_buff *txskbs[TSI108_TXRING_LEN];
+	struct sk_buff *rxskbs[TSI108_RXRING_LEN];
 
 	dma_addr_t txdma, rxdma;
 
-	/* txlock nests in misघड़ी and phy_lock */
+	/* txlock nests in misclock and phy_lock */
 
-	spinlock_t txlock, misघड़ी;
+	spinlock_t txlock, misclock;
 
 	/* stats is used to hold the upper bits of each hardware counter,
-	 * and पंचांगpstats is used to hold the full values क्रम वापसing
-	 * to the caller of get_stats().  They must be separate in हाल
-	 * an overflow पूर्णांकerrupt occurs beक्रमe the stats are consumed.
+	 * and tmpstats is used to hold the full values for returning
+	 * to the caller of get_stats().  They must be separate in case
+	 * an overflow interrupt occurs before the stats are consumed.
 	 */
 
-	काष्ठा net_device_stats stats;
-	काष्ठा net_device_stats पंचांगpstats;
+	struct net_device_stats stats;
+	struct net_device_stats tmpstats;
 
-	/* These stats are kept separate in hardware, thus require inभागidual
-	 * fields क्रम handling carry.  They are combined in get_stats.
+	/* These stats are kept separate in hardware, thus require individual
+	 * fields for handling carry.  They are combined in get_stats.
 	 */
 
-	अचिन्हित दीर्घ rx_fcs;	/* Add to rx_frame_errors */
-	अचिन्हित दीर्घ rx_लघु_fcs;	/* Add to rx_frame_errors */
-	अचिन्हित दीर्घ rx_दीर्घ_fcs;	/* Add to rx_frame_errors */
-	अचिन्हित दीर्घ rx_underruns;	/* Add to rx_length_errors */
-	अचिन्हित दीर्घ rx_overruns;	/* Add to rx_length_errors */
+	unsigned long rx_fcs;	/* Add to rx_frame_errors */
+	unsigned long rx_short_fcs;	/* Add to rx_frame_errors */
+	unsigned long rx_long_fcs;	/* Add to rx_frame_errors */
+	unsigned long rx_underruns;	/* Add to rx_length_errors */
+	unsigned long rx_overruns;	/* Add to rx_length_errors */
 
-	अचिन्हित दीर्घ tx_coll_पात;	/* Add to tx_पातed_errors/collisions */
-	अचिन्हित दीर्घ tx_छोड़ो_drop;	/* Add to tx_पातed_errors */
+	unsigned long tx_coll_abort;	/* Add to tx_aborted_errors/collisions */
+	unsigned long tx_pause_drop;	/* Add to tx_aborted_errors */
 
-	अचिन्हित दीर्घ mc_hash[16];
+	unsigned long mc_hash[16];
 	u32 msg_enable;			/* debug message level */
-	काष्ठा mii_अगर_info mii_अगर;
-	अचिन्हित पूर्णांक init_media;
+	struct mii_if_info mii_if;
+	unsigned int init_media;
 
-	काष्ठा platक्रमm_device *pdev;
-पूर्ण;
+	struct platform_device *pdev;
+};
 
-/* Structure क्रम a device driver */
+/* Structure for a device driver */
 
-अटल काष्ठा platक्रमm_driver tsi_eth_driver = अणु
+static struct platform_driver tsi_eth_driver = {
 	.probe = tsi108_init_one,
-	.हटाओ = tsi108_ether_हटाओ,
-	.driver	= अणु
+	.remove = tsi108_ether_remove,
+	.driver	= {
 		.name = "tsi-ethernet",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल व्योम tsi108_समयd_checker(काष्ठा समयr_list *t);
+static void tsi108_timed_checker(struct timer_list *t);
 
-#अगर_घोषित DEBUG
-अटल व्योम dump_eth_one(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+#ifdef DEBUG
+static void dump_eth_one(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 
-	prपूर्णांकk("Dumping %s...\n", dev->name);
-	prपूर्णांकk("intstat %x intmask %x phy_ok %d"
+	printk("Dumping %s...\n", dev->name);
+	printk("intstat %x intmask %x phy_ok %d"
 	       " link %d speed %d duplex %d\n",
 	       TSI_READ(TSI108_EC_INTSTAT),
 	       TSI_READ(TSI108_EC_INTMASK), data->phy_ok,
 	       data->link_up, data->speed, data->duplex);
 
-	prपूर्णांकk("TX: head %d, tail %d, free %d, stat %x, estat %x, err %x\n",
-	       data->txhead, data->txtail, data->txमुक्त,
+	printk("TX: head %d, tail %d, free %d, stat %x, estat %x, err %x\n",
+	       data->txhead, data->txtail, data->txfree,
 	       TSI_READ(TSI108_EC_TXSTAT),
 	       TSI_READ(TSI108_EC_TXESTAT),
 	       TSI_READ(TSI108_EC_TXERR));
 
-	prपूर्णांकk("RX: head %d, tail %d, free %d, stat %x,"
+	printk("RX: head %d, tail %d, free %d, stat %x,"
 	       " estat %x, err %x, pending %d\n\n",
-	       data->rxhead, data->rxtail, data->rxमुक्त,
+	       data->rxhead, data->rxtail, data->rxfree,
 	       TSI_READ(TSI108_EC_RXSTAT),
 	       TSI_READ(TSI108_EC_RXESTAT),
 	       TSI_READ(TSI108_EC_RXERR), data->rxpending);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* Synchronization is needed between the thपढ़ो and up/करोwn events.
- * Note that the PHY is accessed through the same रेजिस्टरs क्रम both
- * पूर्णांकerfaces, so this can't be made पूर्णांकerface-specअगरic.
+/* Synchronization is needed between the thread and up/down events.
+ * Note that the PHY is accessed through the same registers for both
+ * interfaces, so this can't be made interface-specific.
  */
 
-अटल DEFINE_SPINLOCK(phy_lock);
+static DEFINE_SPINLOCK(phy_lock);
 
-अटल पूर्णांक tsi108_पढ़ो_mii(काष्ठा tsi108_prv_data *data, पूर्णांक reg)
-अणु
-	अचिन्हित i;
+static int tsi108_read_mii(struct tsi108_prv_data *data, int reg)
+{
+	unsigned i;
 
 	TSI_WRITE_PHY(TSI108_MAC_MII_ADDR,
 				(data->phy << TSI108_MAC_MII_ADDR_PHY) |
 				(reg << TSI108_MAC_MII_ADDR_REG));
 	TSI_WRITE_PHY(TSI108_MAC_MII_CMD, 0);
 	TSI_WRITE_PHY(TSI108_MAC_MII_CMD, TSI108_MAC_MII_CMD_READ);
-	क्रम (i = 0; i < 100; i++) अणु
-		अगर (!(TSI_READ_PHY(TSI108_MAC_MII_IND) &
+	for (i = 0; i < 100; i++) {
+		if (!(TSI_READ_PHY(TSI108_MAC_MII_IND) &
 		      (TSI108_MAC_MII_IND_NOTVALID | TSI108_MAC_MII_IND_BUSY)))
-			अवरोध;
+			break;
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (i == 100)
-		वापस 0xffff;
-	अन्यथा
-		वापस TSI_READ_PHY(TSI108_MAC_MII_DATAIN);
-पूर्ण
+	if (i == 100)
+		return 0xffff;
+	else
+		return TSI_READ_PHY(TSI108_MAC_MII_DATAIN);
+}
 
-अटल व्योम tsi108_ग_लिखो_mii(काष्ठा tsi108_prv_data *data,
-				पूर्णांक reg, u16 val)
-अणु
-	अचिन्हित i = 100;
+static void tsi108_write_mii(struct tsi108_prv_data *data,
+				int reg, u16 val)
+{
+	unsigned i = 100;
 	TSI_WRITE_PHY(TSI108_MAC_MII_ADDR,
 				(data->phy << TSI108_MAC_MII_ADDR_PHY) |
 				(reg << TSI108_MAC_MII_ADDR_REG));
 	TSI_WRITE_PHY(TSI108_MAC_MII_DATAOUT, val);
-	जबतक (i--) अणु
-		अगर(!(TSI_READ_PHY(TSI108_MAC_MII_IND) &
+	while (i--) {
+		if(!(TSI_READ_PHY(TSI108_MAC_MII_IND) &
 			TSI108_MAC_MII_IND_BUSY))
-			अवरोध;
+			break;
 		udelay(10);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tsi108_mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक addr, पूर्णांक reg)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	वापस tsi108_पढ़ो_mii(data, reg);
-पूर्ण
+static int tsi108_mdio_read(struct net_device *dev, int addr, int reg)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	return tsi108_read_mii(data, reg);
+}
 
-अटल व्योम tsi108_mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक addr, पूर्णांक reg, पूर्णांक val)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	tsi108_ग_लिखो_mii(data, reg, val);
-पूर्ण
+static void tsi108_mdio_write(struct net_device *dev, int addr, int reg, int val)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	tsi108_write_mii(data, reg, val);
+}
 
-अटल अंतरभूत व्योम tsi108_ग_लिखो_tbi(काष्ठा tsi108_prv_data *data,
-					पूर्णांक reg, u16 val)
-अणु
-	अचिन्हित i = 1000;
+static inline void tsi108_write_tbi(struct tsi108_prv_data *data,
+					int reg, u16 val)
+{
+	unsigned i = 1000;
 	TSI_WRITE(TSI108_MAC_MII_ADDR,
 			     (0x1e << TSI108_MAC_MII_ADDR_PHY)
 			     | (reg << TSI108_MAC_MII_ADDR_REG));
 	TSI_WRITE(TSI108_MAC_MII_DATAOUT, val);
-	जबतक(i--) अणु
-		अगर(!(TSI_READ(TSI108_MAC_MII_IND) & TSI108_MAC_MII_IND_BUSY))
-			वापस;
+	while(i--) {
+		if(!(TSI_READ(TSI108_MAC_MII_IND) & TSI108_MAC_MII_IND_BUSY))
+			return;
 		udelay(10);
-	पूर्ण
-	prपूर्णांकk(KERN_ERR "%s function time out\n", __func__);
-पूर्ण
+	}
+	printk(KERN_ERR "%s function time out\n", __func__);
+}
 
-अटल पूर्णांक mii_speed(काष्ठा mii_अगर_info *mii)
-अणु
-	पूर्णांक advert, lpa, val, media;
-	पूर्णांक lpa2 = 0;
-	पूर्णांक speed;
+static int mii_speed(struct mii_if_info *mii)
+{
+	int advert, lpa, val, media;
+	int lpa2 = 0;
+	int speed;
 
-	अगर (!mii_link_ok(mii))
-		वापस 0;
+	if (!mii_link_ok(mii))
+		return 0;
 
-	val = (*mii->mdio_पढ़ो) (mii->dev, mii->phy_id, MII_BMSR);
-	अगर ((val & BMSR_ANEGCOMPLETE) == 0)
-		वापस 0;
+	val = (*mii->mdio_read) (mii->dev, mii->phy_id, MII_BMSR);
+	if ((val & BMSR_ANEGCOMPLETE) == 0)
+		return 0;
 
-	advert = (*mii->mdio_पढ़ो) (mii->dev, mii->phy_id, MII_ADVERTISE);
-	lpa = (*mii->mdio_पढ़ो) (mii->dev, mii->phy_id, MII_LPA);
+	advert = (*mii->mdio_read) (mii->dev, mii->phy_id, MII_ADVERTISE);
+	lpa = (*mii->mdio_read) (mii->dev, mii->phy_id, MII_LPA);
 	media = mii_nway_result(advert & lpa);
 
-	अगर (mii->supports_gmii)
-		lpa2 = mii->mdio_पढ़ो(mii->dev, mii->phy_id, MII_STAT1000);
+	if (mii->supports_gmii)
+		lpa2 = mii->mdio_read(mii->dev, mii->phy_id, MII_STAT1000);
 
 	speed = lpa2 & (LPA_1000FULL | LPA_1000HALF) ? 1000 :
 			(media & (ADVERTISE_100FULL | ADVERTISE_100HALF) ? 100 : 10);
-	वापस speed;
-पूर्ण
+	return speed;
+}
 
-अटल व्योम tsi108_check_phy(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_check_phy(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 mac_cfg2_reg, portctrl_reg;
 	u32 duplex;
 	u32 speed;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&phy_lock, flags);
 
-	अगर (!data->phy_ok)
-		जाओ out;
+	if (!data->phy_ok)
+		goto out;
 
-	duplex = mii_check_media(&data->mii_अगर, netअगर_msg_link(data), data->init_media);
+	duplex = mii_check_media(&data->mii_if, netif_msg_link(data), data->init_media);
 	data->init_media = 0;
 
-	अगर (netअगर_carrier_ok(dev)) अणु
+	if (netif_carrier_ok(dev)) {
 
-		speed = mii_speed(&data->mii_अगर);
+		speed = mii_speed(&data->mii_if);
 
-		अगर ((speed != data->speed) || duplex) अणु
+		if ((speed != data->speed) || duplex) {
 
 			mac_cfg2_reg = TSI_READ(TSI108_MAC_CFG2);
 			portctrl_reg = TSI_READ(TSI108_EC_PORTCTRL);
 
 			mac_cfg2_reg &= ~TSI108_MAC_CFG2_IFACE_MASK;
 
-			अगर (speed == 1000) अणु
+			if (speed == 1000) {
 				mac_cfg2_reg |= TSI108_MAC_CFG2_GIG;
 				portctrl_reg &= ~TSI108_EC_PORTCTRL_NOGIG;
-			पूर्ण अन्यथा अणु
+			} else {
 				mac_cfg2_reg |= TSI108_MAC_CFG2_NOGIG;
 				portctrl_reg |= TSI108_EC_PORTCTRL_NOGIG;
-			पूर्ण
+			}
 
 			data->speed = speed;
 
-			अगर (data->mii_अगर.full_duplex) अणु
+			if (data->mii_if.full_duplex) {
 				mac_cfg2_reg |= TSI108_MAC_CFG2_FULLDUPLEX;
 				portctrl_reg &= ~TSI108_EC_PORTCTRL_HALFDUPLEX;
 				data->duplex = 2;
-			पूर्ण अन्यथा अणु
+			} else {
 				mac_cfg2_reg &= ~TSI108_MAC_CFG2_FULLDUPLEX;
 				portctrl_reg |= TSI108_EC_PORTCTRL_HALFDUPLEX;
 				data->duplex = 1;
-			पूर्ण
+			}
 
 			TSI_WRITE(TSI108_MAC_CFG2, mac_cfg2_reg);
 			TSI_WRITE(TSI108_EC_PORTCTRL, portctrl_reg);
-		पूर्ण
+		}
 
-		अगर (data->link_up == 0) अणु
-			/* The manual says it can take 3-4 usecs क्रम the speed change
+		if (data->link_up == 0) {
+			/* The manual says it can take 3-4 usecs for the speed change
 			 * to take effect.
 			 */
 			udelay(5);
 
 			spin_lock(&data->txlock);
-			अगर (is_valid_ether_addr(dev->dev_addr) && data->txमुक्त)
-				netअगर_wake_queue(dev);
+			if (is_valid_ether_addr(dev->dev_addr) && data->txfree)
+				netif_wake_queue(dev);
 
 			data->link_up = 1;
 			spin_unlock(&data->txlock);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (data->link_up == 1) अणु
-			netअगर_stop_queue(dev);
+		}
+	} else {
+		if (data->link_up == 1) {
+			netif_stop_queue(dev);
 			data->link_up = 0;
-			prपूर्णांकk(KERN_NOTICE "%s : link is down\n", dev->name);
-		पूर्ण
+			printk(KERN_NOTICE "%s : link is down\n", dev->name);
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
 out:
 	spin_unlock_irqrestore(&phy_lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-tsi108_stat_carry_one(पूर्णांक carry, पूर्णांक carry_bit, पूर्णांक carry_shअगरt,
-		      अचिन्हित दीर्घ *upper)
-अणु
-	अगर (carry & carry_bit)
-		*upper += carry_shअगरt;
-पूर्ण
+static inline void
+tsi108_stat_carry_one(int carry, int carry_bit, int carry_shift,
+		      unsigned long *upper)
+{
+	if (carry & carry_bit)
+		*upper += carry_shift;
+}
 
-अटल व्योम tsi108_stat_carry(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static void tsi108_stat_carry(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	unsigned long flags;
 	u32 carry1, carry2;
 
-	spin_lock_irqsave(&data->misघड़ी, flags);
+	spin_lock_irqsave(&data->misclock, flags);
 
 	carry1 = TSI_READ(TSI108_STAT_CARRY1);
 	carry2 = TSI_READ(TSI108_STAT_CARRY2);
@@ -412,10 +411,10 @@ tsi108_stat_carry_one(पूर्णांक carry, पूर्णांक c
 			      TSI108_STAT_RXJUMBO_CARRY, &data->rx_overruns);
 
 	tsi108_stat_carry_one(carry1, TSI108_STAT_CARRY1_RXFRAG,
-			      TSI108_STAT_RXFRAG_CARRY, &data->rx_लघु_fcs);
+			      TSI108_STAT_RXFRAG_CARRY, &data->rx_short_fcs);
 
 	tsi108_stat_carry_one(carry1, TSI108_STAT_CARRY1_RXJABBER,
-			      TSI108_STAT_RXJABBER_CARRY, &data->rx_दीर्घ_fcs);
+			      TSI108_STAT_RXJABBER_CARRY, &data->rx_long_fcs);
 
 	tsi108_stat_carry_one(carry1, TSI108_STAT_CARRY1_RXDROP,
 			      TSI108_STAT_RXDROP_CARRY,
@@ -430,10 +429,10 @@ tsi108_stat_carry_one(पूर्णांक carry, पूर्णांक c
 
 	tsi108_stat_carry_one(carry2, TSI108_STAT_CARRY2_TXEXDEF,
 			      TSI108_STAT_TXEXDEF_CARRY,
-			      &data->stats.tx_पातed_errors);
+			      &data->stats.tx_aborted_errors);
 
 	tsi108_stat_carry_one(carry2, TSI108_STAT_CARRY2_TXEXCOL,
-			      TSI108_STAT_TXEXCOL_CARRY, &data->tx_coll_पात);
+			      TSI108_STAT_TXEXCOL_CARRY, &data->tx_coll_abort);
 
 	tsi108_stat_carry_one(carry2, TSI108_STAT_CARRY2_TXTCOL,
 			      TSI108_STAT_TXTCOL_CARRY,
@@ -441,446 +440,446 @@ tsi108_stat_carry_one(पूर्णांक carry, पूर्णांक c
 
 	tsi108_stat_carry_one(carry2, TSI108_STAT_CARRY2_TXPAUSE,
 			      TSI108_STAT_TXPAUSEDROP_CARRY,
-			      &data->tx_छोड़ो_drop);
+			      &data->tx_pause_drop);
 
-	spin_unlock_irqrestore(&data->misघड़ी, flags);
-पूर्ण
+	spin_unlock_irqrestore(&data->misclock, flags);
+}
 
 /* Read a stat counter atomically with respect to carries.
- * data->misघड़ी must be held.
+ * data->misclock must be held.
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्णांक reg, पूर्णांक carry_bit,
-		 पूर्णांक carry_shअगरt, अचिन्हित दीर्घ *upper)
-अणु
-	पूर्णांक carryreg;
-	अचिन्हित दीर्घ val;
+static inline unsigned long
+tsi108_read_stat(struct tsi108_prv_data * data, int reg, int carry_bit,
+		 int carry_shift, unsigned long *upper)
+{
+	int carryreg;
+	unsigned long val;
 
-	अगर (reg < 0xb0)
+	if (reg < 0xb0)
 		carryreg = TSI108_STAT_CARRY1;
-	अन्यथा
+	else
 		carryreg = TSI108_STAT_CARRY2;
 
       again:
 	val = TSI_READ(reg) | *upper;
 
-	/* Check to see अगर it overflowed, but the पूर्णांकerrupt hasn't
+	/* Check to see if it overflowed, but the interrupt hasn't
 	 * been serviced yet.  If so, handle the carry here, and
 	 * try again.
 	 */
 
-	अगर (unlikely(TSI_READ(carryreg) & carry_bit)) अणु
-		*upper += carry_shअगरt;
+	if (unlikely(TSI_READ(carryreg) & carry_bit)) {
+		*upper += carry_shift;
 		TSI_WRITE(carryreg, carry_bit);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल काष्ठा net_device_stats *tsi108_get_stats(काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ excol;
+static struct net_device_stats *tsi108_get_stats(struct net_device *dev)
+{
+	unsigned long excol;
 
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	spin_lock_irq(&data->misघड़ी);
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	spin_lock_irq(&data->misclock);
 
-	data->पंचांगpstats.rx_packets =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXPKTS,
+	data->tmpstats.rx_packets =
+	    tsi108_read_stat(data, TSI108_STAT_RXPKTS,
 			     TSI108_STAT_CARRY1_RXPKTS,
 			     TSI108_STAT_RXPKTS_CARRY, &data->stats.rx_packets);
 
-	data->पंचांगpstats.tx_packets =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_TXPKTS,
+	data->tmpstats.tx_packets =
+	    tsi108_read_stat(data, TSI108_STAT_TXPKTS,
 			     TSI108_STAT_CARRY2_TXPKTS,
 			     TSI108_STAT_TXPKTS_CARRY, &data->stats.tx_packets);
 
-	data->पंचांगpstats.rx_bytes =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXBYTES,
+	data->tmpstats.rx_bytes =
+	    tsi108_read_stat(data, TSI108_STAT_RXBYTES,
 			     TSI108_STAT_CARRY1_RXBYTES,
 			     TSI108_STAT_RXBYTES_CARRY, &data->stats.rx_bytes);
 
-	data->पंचांगpstats.tx_bytes =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_TXBYTES,
+	data->tmpstats.tx_bytes =
+	    tsi108_read_stat(data, TSI108_STAT_TXBYTES,
 			     TSI108_STAT_CARRY2_TXBYTES,
 			     TSI108_STAT_TXBYTES_CARRY, &data->stats.tx_bytes);
 
-	data->पंचांगpstats.multicast =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXMCAST,
+	data->tmpstats.multicast =
+	    tsi108_read_stat(data, TSI108_STAT_RXMCAST,
 			     TSI108_STAT_CARRY1_RXMCAST,
 			     TSI108_STAT_RXMCAST_CARRY, &data->stats.multicast);
 
-	excol = tsi108_पढ़ो_stat(data, TSI108_STAT_TXEXCOL,
+	excol = tsi108_read_stat(data, TSI108_STAT_TXEXCOL,
 				 TSI108_STAT_CARRY2_TXEXCOL,
 				 TSI108_STAT_TXEXCOL_CARRY,
-				 &data->tx_coll_पात);
+				 &data->tx_coll_abort);
 
-	data->पंचांगpstats.collisions =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_TXTCOL,
+	data->tmpstats.collisions =
+	    tsi108_read_stat(data, TSI108_STAT_TXTCOL,
 			     TSI108_STAT_CARRY2_TXTCOL,
 			     TSI108_STAT_TXTCOL_CARRY, &data->stats.collisions);
 
-	data->पंचांगpstats.collisions += excol;
+	data->tmpstats.collisions += excol;
 
-	data->पंचांगpstats.rx_length_errors =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXLENGTH,
+	data->tmpstats.rx_length_errors =
+	    tsi108_read_stat(data, TSI108_STAT_RXLENGTH,
 			     TSI108_STAT_CARRY1_RXLENGTH,
 			     TSI108_STAT_RXLENGTH_CARRY,
 			     &data->stats.rx_length_errors);
 
-	data->पंचांगpstats.rx_length_errors +=
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXRUNT,
+	data->tmpstats.rx_length_errors +=
+	    tsi108_read_stat(data, TSI108_STAT_RXRUNT,
 			     TSI108_STAT_CARRY1_RXRUNT,
 			     TSI108_STAT_RXRUNT_CARRY, &data->rx_underruns);
 
-	data->पंचांगpstats.rx_length_errors +=
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXJUMBO,
+	data->tmpstats.rx_length_errors +=
+	    tsi108_read_stat(data, TSI108_STAT_RXJUMBO,
 			     TSI108_STAT_CARRY1_RXJUMBO,
 			     TSI108_STAT_RXJUMBO_CARRY, &data->rx_overruns);
 
-	data->पंचांगpstats.rx_frame_errors =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXALIGN,
+	data->tmpstats.rx_frame_errors =
+	    tsi108_read_stat(data, TSI108_STAT_RXALIGN,
 			     TSI108_STAT_CARRY1_RXALIGN,
 			     TSI108_STAT_RXALIGN_CARRY,
 			     &data->stats.rx_frame_errors);
 
-	data->पंचांगpstats.rx_frame_errors +=
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXFCS,
+	data->tmpstats.rx_frame_errors +=
+	    tsi108_read_stat(data, TSI108_STAT_RXFCS,
 			     TSI108_STAT_CARRY1_RXFCS, TSI108_STAT_RXFCS_CARRY,
 			     &data->rx_fcs);
 
-	data->पंचांगpstats.rx_frame_errors +=
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXFRAG,
+	data->tmpstats.rx_frame_errors +=
+	    tsi108_read_stat(data, TSI108_STAT_RXFRAG,
 			     TSI108_STAT_CARRY1_RXFRAG,
-			     TSI108_STAT_RXFRAG_CARRY, &data->rx_लघु_fcs);
+			     TSI108_STAT_RXFRAG_CARRY, &data->rx_short_fcs);
 
-	data->पंचांगpstats.rx_missed_errors =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_RXDROP,
+	data->tmpstats.rx_missed_errors =
+	    tsi108_read_stat(data, TSI108_STAT_RXDROP,
 			     TSI108_STAT_CARRY1_RXDROP,
 			     TSI108_STAT_RXDROP_CARRY,
 			     &data->stats.rx_missed_errors);
 
-	/* These three are मुख्यtained by software. */
-	data->पंचांगpstats.rx_fअगरo_errors = data->stats.rx_fअगरo_errors;
-	data->पंचांगpstats.rx_crc_errors = data->stats.rx_crc_errors;
+	/* These three are maintained by software. */
+	data->tmpstats.rx_fifo_errors = data->stats.rx_fifo_errors;
+	data->tmpstats.rx_crc_errors = data->stats.rx_crc_errors;
 
-	data->पंचांगpstats.tx_पातed_errors =
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_TXEXDEF,
+	data->tmpstats.tx_aborted_errors =
+	    tsi108_read_stat(data, TSI108_STAT_TXEXDEF,
 			     TSI108_STAT_CARRY2_TXEXDEF,
 			     TSI108_STAT_TXEXDEF_CARRY,
-			     &data->stats.tx_पातed_errors);
+			     &data->stats.tx_aborted_errors);
 
-	data->पंचांगpstats.tx_पातed_errors +=
-	    tsi108_पढ़ो_stat(data, TSI108_STAT_TXPAUSEDROP,
+	data->tmpstats.tx_aborted_errors +=
+	    tsi108_read_stat(data, TSI108_STAT_TXPAUSEDROP,
 			     TSI108_STAT_CARRY2_TXPAUSE,
 			     TSI108_STAT_TXPAUSEDROP_CARRY,
-			     &data->tx_छोड़ो_drop);
+			     &data->tx_pause_drop);
 
-	data->पंचांगpstats.tx_पातed_errors += excol;
+	data->tmpstats.tx_aborted_errors += excol;
 
-	data->पंचांगpstats.tx_errors = data->पंचांगpstats.tx_पातed_errors;
-	data->पंचांगpstats.rx_errors = data->पंचांगpstats.rx_length_errors +
-	    data->पंचांगpstats.rx_crc_errors +
-	    data->पंचांगpstats.rx_frame_errors +
-	    data->पंचांगpstats.rx_fअगरo_errors + data->पंचांगpstats.rx_missed_errors;
+	data->tmpstats.tx_errors = data->tmpstats.tx_aborted_errors;
+	data->tmpstats.rx_errors = data->tmpstats.rx_length_errors +
+	    data->tmpstats.rx_crc_errors +
+	    data->tmpstats.rx_frame_errors +
+	    data->tmpstats.rx_fifo_errors + data->tmpstats.rx_missed_errors;
 
-	spin_unlock_irq(&data->misघड़ी);
-	वापस &data->पंचांगpstats;
-पूर्ण
+	spin_unlock_irq(&data->misclock);
+	return &data->tmpstats;
+}
 
-अटल व्योम tsi108_restart_rx(काष्ठा tsi108_prv_data * data, काष्ठा net_device *dev)
-अणु
+static void tsi108_restart_rx(struct tsi108_prv_data * data, struct net_device *dev)
+{
 	TSI_WRITE(TSI108_EC_RXQ_PTRHIGH,
 			     TSI108_EC_RXQ_PTRHIGH_VALID);
 
 	TSI_WRITE(TSI108_EC_RXCTRL, TSI108_EC_RXCTRL_GO
 			     | TSI108_EC_RXCTRL_QUEUE0);
-पूर्ण
+}
 
-अटल व्योम tsi108_restart_tx(काष्ठा tsi108_prv_data * data)
-अणु
+static void tsi108_restart_tx(struct tsi108_prv_data * data)
+{
 	TSI_WRITE(TSI108_EC_TXQ_PTRHIGH,
 			     TSI108_EC_TXQ_PTRHIGH_VALID);
 
 	TSI_WRITE(TSI108_EC_TXCTRL, TSI108_EC_TXCTRL_IDLEINT |
 			     TSI108_EC_TXCTRL_GO | TSI108_EC_TXCTRL_QUEUE0);
-पूर्ण
+}
 
 /* txlock must be held by caller, with IRQs disabled, and
  * with permission to re-enable them when the lock is dropped.
  */
-अटल व्योम tsi108_complete_tx(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	पूर्णांक tx;
-	काष्ठा sk_buff *skb;
-	पूर्णांक release = 0;
+static void tsi108_complete_tx(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	int tx;
+	struct sk_buff *skb;
+	int release = 0;
 
-	जबतक (!data->txमुक्त || data->txhead != data->txtail) अणु
+	while (!data->txfree || data->txhead != data->txtail) {
 		tx = data->txtail;
 
-		अगर (data->txring[tx].misc & TSI108_TX_OWN)
-			अवरोध;
+		if (data->txring[tx].misc & TSI108_TX_OWN)
+			break;
 
 		skb = data->txskbs[tx];
 
-		अगर (!(data->txring[tx].misc & TSI108_TX_OK))
-			prपूर्णांकk("%s: bad tx packet, misc %x\n",
+		if (!(data->txring[tx].misc & TSI108_TX_OK))
+			printk("%s: bad tx packet, misc %x\n",
 			       dev->name, data->txring[tx].misc);
 
 		data->txtail = (data->txtail + 1) % TSI108_TXRING_LEN;
-		data->txमुक्त++;
+		data->txfree++;
 
-		अगर (data->txring[tx].misc & TSI108_TX_खातापूर्ण) अणु
-			dev_kमुक्त_skb_any(skb);
+		if (data->txring[tx].misc & TSI108_TX_EOF) {
+			dev_kfree_skb_any(skb);
 			release++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (release) अणु
-		अगर (is_valid_ether_addr(dev->dev_addr) && data->link_up)
-			netअगर_wake_queue(dev);
-	पूर्ण
-पूर्ण
+	if (release) {
+		if (is_valid_ether_addr(dev->dev_addr) && data->link_up)
+			netif_wake_queue(dev);
+	}
+}
 
-अटल पूर्णांक tsi108_send_packet(काष्ठा sk_buff * skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	पूर्णांक frags = skb_shinfo(skb)->nr_frags + 1;
-	पूर्णांक i;
+static int tsi108_send_packet(struct sk_buff * skb, struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	int frags = skb_shinfo(skb)->nr_frags + 1;
+	int i;
 
-	अगर (!data->phy_ok && net_ratelimit())
-		prपूर्णांकk(KERN_ERR "%s: Transmit while PHY is down!\n", dev->name);
+	if (!data->phy_ok && net_ratelimit())
+		printk(KERN_ERR "%s: Transmit while PHY is down!\n", dev->name);
 
-	अगर (!data->link_up) अणु
-		prपूर्णांकk(KERN_ERR "%s: Transmit while link is down!\n",
+	if (!data->link_up) {
+		printk(KERN_ERR "%s: Transmit while link is down!\n",
 		       dev->name);
-		netअगर_stop_queue(dev);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		netif_stop_queue(dev);
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (data->txमुक्त < MAX_SKB_FRAGS + 1) अणु
-		netअगर_stop_queue(dev);
+	if (data->txfree < MAX_SKB_FRAGS + 1) {
+		netif_stop_queue(dev);
 
-		अगर (net_ratelimit())
-			prपूर्णांकk(KERN_ERR "%s: Transmit with full tx ring!\n",
+		if (net_ratelimit())
+			printk(KERN_ERR "%s: Transmit with full tx ring!\n",
 			       dev->name);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	अगर (data->txमुक्त - frags < MAX_SKB_FRAGS + 1) अणु
-		netअगर_stop_queue(dev);
-	पूर्ण
+	if (data->txfree - frags < MAX_SKB_FRAGS + 1) {
+		netif_stop_queue(dev);
+	}
 
 	spin_lock_irq(&data->txlock);
 
-	क्रम (i = 0; i < frags; i++) अणु
-		पूर्णांक misc = 0;
-		पूर्णांक tx = data->txhead;
+	for (i = 0; i < frags; i++) {
+		int misc = 0;
+		int tx = data->txhead;
 
-		/* This is करोne to mark every TSI108_TX_INT_FREQ tx buffers with
-		 * the पूर्णांकerrupt bit.  TX descriptor-complete पूर्णांकerrupts are
+		/* This is done to mark every TSI108_TX_INT_FREQ tx buffers with
+		 * the interrupt bit.  TX descriptor-complete interrupts are
 		 * enabled when the queue fills up, and masked when there is
-		 * still मुक्त space.  This way, when saturating the outbound
-		 * link, the tx पूर्णांकerrupts are kept to a reasonable level.
+		 * still free space.  This way, when saturating the outbound
+		 * link, the tx interrupts are kept to a reasonable level.
 		 * When the queue is not full, reclamation of skbs still occurs
 		 * as new packets are transmitted, or on a queue-empty
-		 * पूर्णांकerrupt.
+		 * interrupt.
 		 */
 
-		अगर ((tx % TSI108_TX_INT_FREQ == 0) &&
-		    ((TSI108_TXRING_LEN - data->txमुक्त) >= TSI108_TX_INT_FREQ))
+		if ((tx % TSI108_TX_INT_FREQ == 0) &&
+		    ((TSI108_TXRING_LEN - data->txfree) >= TSI108_TX_INT_FREQ))
 			misc = TSI108_TX_INT;
 
 		data->txskbs[tx] = skb;
 
-		अगर (i == 0) अणु
+		if (i == 0) {
 			data->txring[tx].buf0 = dma_map_single(&data->pdev->dev,
 					skb->data, skb_headlen(skb),
 					DMA_TO_DEVICE);
 			data->txring[tx].len = skb_headlen(skb);
 			misc |= TSI108_TX_SOF;
-		पूर्ण अन्यथा अणु
-			स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
+		} else {
+			const skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
 
 			data->txring[tx].buf0 =
 				skb_frag_dma_map(&data->pdev->dev, frag,
 						0, skb_frag_size(frag),
 						DMA_TO_DEVICE);
 			data->txring[tx].len = skb_frag_size(frag);
-		पूर्ण
+		}
 
-		अगर (i == frags - 1)
-			misc |= TSI108_TX_खातापूर्ण;
+		if (i == frags - 1)
+			misc |= TSI108_TX_EOF;
 
-		अगर (netअगर_msg_pktdata(data)) अणु
-			पूर्णांक i;
-			prपूर्णांकk("%s: Tx Frame contents (%d)\n", dev->name,
+		if (netif_msg_pktdata(data)) {
+			int i;
+			printk("%s: Tx Frame contents (%d)\n", dev->name,
 			       skb->len);
-			क्रम (i = 0; i < skb->len; i++)
-				prपूर्णांकk(" %2.2x", skb->data[i]);
-			prपूर्णांकk(".\n");
-		पूर्ण
+			for (i = 0; i < skb->len; i++)
+				printk(" %2.2x", skb->data[i]);
+			printk(".\n");
+		}
 		data->txring[tx].misc = misc | TSI108_TX_OWN;
 
 		data->txhead = (data->txhead + 1) % TSI108_TXRING_LEN;
-		data->txमुक्त--;
-	पूर्ण
+		data->txfree--;
+	}
 
 	tsi108_complete_tx(dev);
 
-	/* This must be करोne after the check क्रम completed tx descriptors,
-	 * so that the tail poपूर्णांकer is correct.
+	/* This must be done after the check for completed tx descriptors,
+	 * so that the tail pointer is correct.
 	 */
 
-	अगर (!(TSI_READ(TSI108_EC_TXSTAT) & TSI108_EC_TXSTAT_QUEUE0))
+	if (!(TSI_READ(TSI108_EC_TXSTAT) & TSI108_EC_TXSTAT_QUEUE0))
 		tsi108_restart_tx(data);
 
 	spin_unlock_irq(&data->txlock);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक tsi108_complete_rx(काष्ठा net_device *dev, पूर्णांक budget)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	पूर्णांक करोne = 0;
+static int tsi108_complete_rx(struct net_device *dev, int budget)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	int done = 0;
 
-	जबतक (data->rxमुक्त && करोne != budget) अणु
-		पूर्णांक rx = data->rxtail;
-		काष्ठा sk_buff *skb;
+	while (data->rxfree && done != budget) {
+		int rx = data->rxtail;
+		struct sk_buff *skb;
 
-		अगर (data->rxring[rx].misc & TSI108_RX_OWN)
-			अवरोध;
+		if (data->rxring[rx].misc & TSI108_RX_OWN)
+			break;
 
 		skb = data->rxskbs[rx];
 		data->rxtail = (data->rxtail + 1) % TSI108_RXRING_LEN;
-		data->rxमुक्त--;
-		करोne++;
+		data->rxfree--;
+		done++;
 
-		अगर (data->rxring[rx].misc & TSI108_RX_BAD) अणु
-			spin_lock_irq(&data->misघड़ी);
+		if (data->rxring[rx].misc & TSI108_RX_BAD) {
+			spin_lock_irq(&data->misclock);
 
-			अगर (data->rxring[rx].misc & TSI108_RX_CRC)
+			if (data->rxring[rx].misc & TSI108_RX_CRC)
 				data->stats.rx_crc_errors++;
-			अगर (data->rxring[rx].misc & TSI108_RX_OVER)
-				data->stats.rx_fअगरo_errors++;
+			if (data->rxring[rx].misc & TSI108_RX_OVER)
+				data->stats.rx_fifo_errors++;
 
-			spin_unlock_irq(&data->misघड़ी);
+			spin_unlock_irq(&data->misclock);
 
-			dev_kमुक्त_skb_any(skb);
-			जारी;
-		पूर्ण
-		अगर (netअगर_msg_pktdata(data)) अणु
-			पूर्णांक i;
-			prपूर्णांकk("%s: Rx Frame contents (%d)\n",
+			dev_kfree_skb_any(skb);
+			continue;
+		}
+		if (netif_msg_pktdata(data)) {
+			int i;
+			printk("%s: Rx Frame contents (%d)\n",
 			       dev->name, data->rxring[rx].len);
-			क्रम (i = 0; i < data->rxring[rx].len; i++)
-				prपूर्णांकk(" %2.2x", skb->data[i]);
-			prपूर्णांकk(".\n");
-		पूर्ण
+			for (i = 0; i < data->rxring[rx].len; i++)
+				printk(" %2.2x", skb->data[i]);
+			printk(".\n");
+		}
 
 		skb_put(skb, data->rxring[rx].len);
 		skb->protocol = eth_type_trans(skb, dev);
-		netअगर_receive_skb(skb);
-	पूर्ण
+		netif_receive_skb(skb);
+	}
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-अटल पूर्णांक tsi108_refill_rx(काष्ठा net_device *dev, पूर्णांक budget)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	पूर्णांक करोne = 0;
+static int tsi108_refill_rx(struct net_device *dev, int budget)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	int done = 0;
 
-	जबतक (data->rxमुक्त != TSI108_RXRING_LEN && करोne != budget) अणु
-		पूर्णांक rx = data->rxhead;
-		काष्ठा sk_buff *skb;
+	while (data->rxfree != TSI108_RXRING_LEN && done != budget) {
+		int rx = data->rxhead;
+		struct sk_buff *skb;
 
 		skb = netdev_alloc_skb_ip_align(dev, TSI108_RXBUF_SIZE);
 		data->rxskbs[rx] = skb;
-		अगर (!skb)
-			अवरोध;
+		if (!skb)
+			break;
 
 		data->rxring[rx].buf0 = dma_map_single(&data->pdev->dev,
 				skb->data, TSI108_RX_SKB_SIZE,
 				DMA_FROM_DEVICE);
 
-		/* Someबार the hardware sets blen to zero after packet
+		/* Sometimes the hardware sets blen to zero after packet
 		 * reception, even though the manual says that it's only ever
-		 * modअगरied by the driver.
+		 * modified by the driver.
 		 */
 
 		data->rxring[rx].blen = TSI108_RX_SKB_SIZE;
 		data->rxring[rx].misc = TSI108_RX_OWN | TSI108_RX_INT;
 
 		data->rxhead = (data->rxhead + 1) % TSI108_RXRING_LEN;
-		data->rxमुक्त++;
-		करोne++;
-	पूर्ण
+		data->rxfree++;
+		done++;
+	}
 
-	अगर (करोne != 0 && !(TSI_READ(TSI108_EC_RXSTAT) &
+	if (done != 0 && !(TSI_READ(TSI108_EC_RXSTAT) &
 			   TSI108_EC_RXSTAT_QUEUE0))
 		tsi108_restart_rx(data, dev);
 
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
-अटल पूर्णांक tsi108_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा tsi108_prv_data *data = container_of(napi, काष्ठा tsi108_prv_data, napi);
-	काष्ठा net_device *dev = data->dev;
+static int tsi108_poll(struct napi_struct *napi, int budget)
+{
+	struct tsi108_prv_data *data = container_of(napi, struct tsi108_prv_data, napi);
+	struct net_device *dev = data->dev;
 	u32 estat = TSI_READ(TSI108_EC_RXESTAT);
-	u32 पूर्णांकstat = TSI_READ(TSI108_EC_INTSTAT);
-	पूर्णांक num_received = 0, num_filled = 0;
+	u32 intstat = TSI_READ(TSI108_EC_INTSTAT);
+	int num_received = 0, num_filled = 0;
 
-	पूर्णांकstat &= TSI108_INT_RXQUEUE0 | TSI108_INT_RXTHRESH |
+	intstat &= TSI108_INT_RXQUEUE0 | TSI108_INT_RXTHRESH |
 	    TSI108_INT_RXOVERRUN | TSI108_INT_RXERROR | TSI108_INT_RXWAIT;
 
 	TSI_WRITE(TSI108_EC_RXESTAT, estat);
-	TSI_WRITE(TSI108_EC_INTSTAT, पूर्णांकstat);
+	TSI_WRITE(TSI108_EC_INTSTAT, intstat);
 
-	अगर (data->rxpending || (estat & TSI108_EC_RXESTAT_Q0_DESCINT))
+	if (data->rxpending || (estat & TSI108_EC_RXESTAT_Q0_DESCINT))
 		num_received = tsi108_complete_rx(dev, budget);
 
 	/* This should normally fill no more slots than the number of
 	 * packets received in tsi108_complete_rx().  The exception
-	 * is when we previously ran out of memory क्रम RX SKBs.  In that
-	 * हाल, it's helpful to obey the budget, not only so that the
+	 * is when we previously ran out of memory for RX SKBs.  In that
+	 * case, it's helpful to obey the budget, not only so that the
 	 * CPU isn't hogged, but so that memory (which may still be low)
 	 * is not hogged by one device.
 	 *
 	 * A work unit is considered to be two SKBs to allow us to catch
 	 * up when the ring has shrunk due to out-of-memory but we're
-	 * still removing the full budget's worth of packets each समय.
+	 * still removing the full budget's worth of packets each time.
 	 */
 
-	अगर (data->rxमुक्त < TSI108_RXRING_LEN)
+	if (data->rxfree < TSI108_RXRING_LEN)
 		num_filled = tsi108_refill_rx(dev, budget * 2);
 
-	अगर (पूर्णांकstat & TSI108_INT_RXERROR) अणु
+	if (intstat & TSI108_INT_RXERROR) {
 		u32 err = TSI_READ(TSI108_EC_RXERR);
 		TSI_WRITE(TSI108_EC_RXERR, err);
 
-		अगर (err) अणु
-			अगर (net_ratelimit())
-				prपूर्णांकk(KERN_DEBUG "%s: RX error %x\n",
+		if (err) {
+			if (net_ratelimit())
+				printk(KERN_DEBUG "%s: RX error %x\n",
 				       dev->name, err);
 
-			अगर (!(TSI_READ(TSI108_EC_RXSTAT) &
+			if (!(TSI_READ(TSI108_EC_RXSTAT) &
 			      TSI108_EC_RXSTAT_QUEUE0))
 				tsi108_restart_rx(data, dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (पूर्णांकstat & TSI108_INT_RXOVERRUN) अणु
-		spin_lock_irq(&data->misघड़ी);
-		data->stats.rx_fअगरo_errors++;
-		spin_unlock_irq(&data->misघड़ी);
-	पूर्ण
+	if (intstat & TSI108_INT_RXOVERRUN) {
+		spin_lock_irq(&data->misclock);
+		data->stats.rx_fifo_errors++;
+		spin_unlock_irq(&data->misclock);
+	}
 
-	अगर (num_received < budget) अणु
+	if (num_received < budget) {
 		data->rxpending = 0;
-		napi_complete_करोne(napi, num_received);
+		napi_complete_done(napi, num_received);
 
 		TSI_WRITE(TSI108_EC_INTMASK,
 				     TSI_READ(TSI108_EC_INTMASK)
@@ -889,30 +888,30 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 					 TSI108_INT_RXOVERRUN |
 					 TSI108_INT_RXERROR |
 					 TSI108_INT_RXWAIT));
-	पूर्ण अन्यथा अणु
+	} else {
 		data->rxpending = 1;
-	पूर्ण
+	}
 
-	वापस num_received;
-पूर्ण
+	return num_received;
+}
 
-अटल व्योम tsi108_rx_पूर्णांक(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_rx_int(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 
-	/* A race could cause dev to alपढ़ोy be scheduled, so it's not an
-	 * error अगर that happens (and पूर्णांकerrupts shouldn't be re-masked,
-	 * because that can cause harmful races, अगर poll has alपढ़ोy
+	/* A race could cause dev to already be scheduled, so it's not an
+	 * error if that happens (and interrupts shouldn't be re-masked,
+	 * because that can cause harmful races, if poll has already
 	 * unmasked them but not cleared LINK_STATE_SCHED).
 	 *
-	 * This can happen अगर this code races with tsi108_poll(), which masks
-	 * the पूर्णांकerrupts after tsi108_irq_one() पढ़ो the mask, but beक्रमe
+	 * This can happen if this code races with tsi108_poll(), which masks
+	 * the interrupts after tsi108_irq_one() read the mask, but before
 	 * napi_schedule is called.  It could also happen due to calls
 	 * from tsi108_check_rxring().
 	 */
 
-	अगर (napi_schedule_prep(&data->napi)) अणु
-		/* Mask, rather than ack, the receive पूर्णांकerrupts.  The ack
+	if (napi_schedule_prep(&data->napi)) {
+		/* Mask, rather than ack, the receive interrupts.  The ack
 		 * will happen in tsi108_poll().
 		 */
 
@@ -923,21 +922,21 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 				     TSI108_INT_RXOVERRUN | TSI108_INT_RXERROR |
 				     TSI108_INT_RXWAIT);
 		__napi_schedule(&data->napi);
-	पूर्ण अन्यथा अणु
-		अगर (!netअगर_running(dev)) अणु
-			/* This can happen अगर an पूर्णांकerrupt occurs जबतक the
-			 * पूर्णांकerface is being brought करोwn, as the START
-			 * bit is cleared beक्रमe the stop function is called.
+	} else {
+		if (!netif_running(dev)) {
+			/* This can happen if an interrupt occurs while the
+			 * interface is being brought down, as the START
+			 * bit is cleared before the stop function is called.
 			 *
-			 * In this हाल, the पूर्णांकerrupts must be masked, or
-			 * they will जारी indefinitely.
+			 * In this case, the interrupts must be masked, or
+			 * they will continue indefinitely.
 			 *
-			 * There's a race here अगर the पूर्णांकerface is brought करोwn
+			 * There's a race here if the interface is brought down
 			 * and then up in rapid succession, as the device could
-			 * be made running after the above check and beक्रमe
-			 * the masking below.  This will only happen अगर the IRQ
-			 * thपढ़ो has a lower priority than the task brining
-			 * up the पूर्णांकerface.  Fixing this race would likely
+			 * be made running after the above check and before
+			 * the masking below.  This will only happen if the IRQ
+			 * thread has a lower priority than the task brining
+			 * up the interface.  Fixing this race would likely
 			 * require changes in generic code.
 			 */
 
@@ -949,112 +948,112 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 					     TSI108_INT_RXOVERRUN |
 					     TSI108_INT_RXERROR |
 					     TSI108_INT_RXWAIT);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* If the RX ring has run out of memory, try periodically
  * to allocate some more, as otherwise poll would never
  * get called (apart from the initial end-of-queue condition).
  *
- * This is called once per second (by शेष) from the thपढ़ो.
+ * This is called once per second (by default) from the thread.
  */
 
-अटल व्योम tsi108_check_rxring(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_check_rxring(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 
 	/* A poll is scheduled, as opposed to caling tsi108_refill_rx
-	 * directly, so as to keep the receive path single-thपढ़ोed
+	 * directly, so as to keep the receive path single-threaded
 	 * (and thus not needing a lock).
 	 */
 
-	अगर (netअगर_running(dev) && data->rxमुक्त < TSI108_RXRING_LEN / 4)
-		tsi108_rx_पूर्णांक(dev);
-पूर्ण
+	if (netif_running(dev) && data->rxfree < TSI108_RXRING_LEN / 4)
+		tsi108_rx_int(dev);
+}
 
-अटल व्योम tsi108_tx_पूर्णांक(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_tx_int(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 estat = TSI_READ(TSI108_EC_TXESTAT);
 
 	TSI_WRITE(TSI108_EC_TXESTAT, estat);
 	TSI_WRITE(TSI108_EC_INTSTAT, TSI108_INT_TXQUEUE0 |
 			     TSI108_INT_TXIDLE | TSI108_INT_TXERROR);
-	अगर (estat & TSI108_EC_TXESTAT_Q0_ERR) अणु
+	if (estat & TSI108_EC_TXESTAT_Q0_ERR) {
 		u32 err = TSI_READ(TSI108_EC_TXERR);
 		TSI_WRITE(TSI108_EC_TXERR, err);
 
-		अगर (err && net_ratelimit())
-			prपूर्णांकk(KERN_ERR "%s: TX error %x\n", dev->name, err);
-	पूर्ण
+		if (err && net_ratelimit())
+			printk(KERN_ERR "%s: TX error %x\n", dev->name, err);
+	}
 
-	अगर (estat & (TSI108_EC_TXESTAT_Q0_DESCINT | TSI108_EC_TXESTAT_Q0_EOQ)) अणु
+	if (estat & (TSI108_EC_TXESTAT_Q0_DESCINT | TSI108_EC_TXESTAT_Q0_EOQ)) {
 		spin_lock(&data->txlock);
 		tsi108_complete_tx(dev);
 		spin_unlock(&data->txlock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल irqवापस_t tsi108_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static irqreturn_t tsi108_irq(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 stat = TSI_READ(TSI108_EC_INTSTAT);
 
-	अगर (!(stat & TSI108_INT_ANY))
-		वापस IRQ_NONE;	/* Not our पूर्णांकerrupt */
+	if (!(stat & TSI108_INT_ANY))
+		return IRQ_NONE;	/* Not our interrupt */
 
 	stat &= ~TSI_READ(TSI108_EC_INTMASK);
 
-	अगर (stat & (TSI108_INT_TXQUEUE0 | TSI108_INT_TXIDLE |
+	if (stat & (TSI108_INT_TXQUEUE0 | TSI108_INT_TXIDLE |
 		    TSI108_INT_TXERROR))
-		tsi108_tx_पूर्णांक(dev);
-	अगर (stat & (TSI108_INT_RXQUEUE0 | TSI108_INT_RXTHRESH |
+		tsi108_tx_int(dev);
+	if (stat & (TSI108_INT_RXQUEUE0 | TSI108_INT_RXTHRESH |
 		    TSI108_INT_RXWAIT | TSI108_INT_RXOVERRUN |
 		    TSI108_INT_RXERROR))
-		tsi108_rx_पूर्णांक(dev);
+		tsi108_rx_int(dev);
 
-	अगर (stat & TSI108_INT_SFN) अणु
-		अगर (net_ratelimit())
-			prपूर्णांकk(KERN_DEBUG "%s: SFN error\n", dev->name);
+	if (stat & TSI108_INT_SFN) {
+		if (net_ratelimit())
+			printk(KERN_DEBUG "%s: SFN error\n", dev->name);
 		TSI_WRITE(TSI108_EC_INTSTAT, TSI108_INT_SFN);
-	पूर्ण
+	}
 
-	अगर (stat & TSI108_INT_STATCARRY) अणु
+	if (stat & TSI108_INT_STATCARRY) {
 		tsi108_stat_carry(dev);
 		TSI_WRITE(TSI108_EC_INTSTAT, TSI108_INT_STATCARRY);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम tsi108_stop_ethernet(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	पूर्णांक i = 1000;
+static void tsi108_stop_ethernet(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	int i = 1000;
 	/* Disable all TX and RX queues ... */
 	TSI_WRITE(TSI108_EC_TXCTRL, 0);
 	TSI_WRITE(TSI108_EC_RXCTRL, 0);
 
-	/* ...and रुको क्रम them to become idle */
-	जबतक(i--) अणु
-		अगर(!(TSI_READ(TSI108_EC_TXSTAT) & TSI108_EC_TXSTAT_ACTIVE))
-			अवरोध;
+	/* ...and wait for them to become idle */
+	while(i--) {
+		if(!(TSI_READ(TSI108_EC_TXSTAT) & TSI108_EC_TXSTAT_ACTIVE))
+			break;
 		udelay(10);
-	पूर्ण
+	}
 	i = 1000;
-	जबतक(i--)अणु
-		अगर(!(TSI_READ(TSI108_EC_RXSTAT) & TSI108_EC_RXSTAT_ACTIVE))
-			वापस;
+	while(i--){
+		if(!(TSI_READ(TSI108_EC_RXSTAT) & TSI108_EC_RXSTAT_ACTIVE))
+			return;
 		udelay(10);
-	पूर्ण
-	prपूर्णांकk(KERN_ERR "%s function time out\n", __func__);
-पूर्ण
+	}
+	printk(KERN_ERR "%s function time out\n", __func__);
+}
 
-अटल व्योम tsi108_reset_ether(काष्ठा tsi108_prv_data * data)
-अणु
+static void tsi108_reset_ether(struct tsi108_prv_data * data)
+{
 	TSI_WRITE(TSI108_MAC_CFG1, TSI108_MAC_CFG1_SOFTRST);
 	udelay(100);
 	TSI_WRITE(TSI108_MAC_CFG1, 0);
@@ -1085,26 +1084,26 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 			     (TSI_READ(TSI108_MAC_MII_MGMT_CFG) &
 			     ~(TSI108_MAC_MII_MGMT_RST |
 			       TSI108_MAC_MII_MGMT_CLK)) | 0x07);
-पूर्ण
+}
 
-अटल पूर्णांक tsi108_get_mac(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static int tsi108_get_mac(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 word1 = TSI_READ(TSI108_MAC_ADDR1);
 	u32 word2 = TSI_READ(TSI108_MAC_ADDR2);
 
 	/* Note that the octets are reversed from what the manual says,
 	 * producing an even weirder ordering...
 	 */
-	अगर (word2 == 0 && word1 == 0) अणु
+	if (word2 == 0 && word1 == 0) {
 		dev->dev_addr[0] = 0x00;
 		dev->dev_addr[1] = 0x06;
 		dev->dev_addr[2] = 0xd2;
 		dev->dev_addr[3] = 0x00;
 		dev->dev_addr[4] = 0x00;
-		अगर (0x8 == data->phy)
+		if (0x8 == data->phy)
 			dev->dev_addr[5] = 0x01;
-		अन्यथा
+		else
 			dev->dev_addr[5] = 0x02;
 
 		word2 = (dev->dev_addr[0] << 16) | (dev->dev_addr[1] << 24);
@@ -1114,257 +1113,257 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 
 		TSI_WRITE(TSI108_MAC_ADDR1, word1);
 		TSI_WRITE(TSI108_MAC_ADDR2, word2);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->dev_addr[0] = (word2 >> 16) & 0xff;
 		dev->dev_addr[1] = (word2 >> 24) & 0xff;
 		dev->dev_addr[2] = (word1 >> 0) & 0xff;
 		dev->dev_addr[3] = (word1 >> 8) & 0xff;
 		dev->dev_addr[4] = (word1 >> 16) & 0xff;
 		dev->dev_addr[5] = (word1 >> 24) & 0xff;
-	पूर्ण
+	}
 
-	अगर (!is_valid_ether_addr(dev->dev_addr)) अणु
-		prपूर्णांकk(KERN_ERR
+	if (!is_valid_ether_addr(dev->dev_addr)) {
+		printk(KERN_ERR
 		       "%s: Invalid MAC address. word1: %08x, word2: %08x\n",
 		       dev->name, word1, word2);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tsi108_set_mac(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static int tsi108_set_mac(struct net_device *dev, void *addr)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 word1, word2;
-	पूर्णांक i;
+	int i;
 
-	अगर (!is_valid_ether_addr(addr))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr))
+		return -EADDRNOTAVAIL;
 
-	क्रम (i = 0; i < 6; i++)
-		/* +2 is क्रम the offset of the HW addr type */
-		dev->dev_addr[i] = ((अचिन्हित अक्षर *)addr)[i + 2];
+	for (i = 0; i < 6; i++)
+		/* +2 is for the offset of the HW addr type */
+		dev->dev_addr[i] = ((unsigned char *)addr)[i + 2];
 
 	word2 = (dev->dev_addr[0] << 16) | (dev->dev_addr[1] << 24);
 
 	word1 = (dev->dev_addr[2] << 0) | (dev->dev_addr[3] << 8) |
 	    (dev->dev_addr[4] << 16) | (dev->dev_addr[5] << 24);
 
-	spin_lock_irq(&data->misघड़ी);
+	spin_lock_irq(&data->misclock);
 	TSI_WRITE(TSI108_MAC_ADDR1, word1);
 	TSI_WRITE(TSI108_MAC_ADDR2, word2);
 	spin_lock(&data->txlock);
 
-	अगर (data->txमुक्त && data->link_up)
-		netअगर_wake_queue(dev);
+	if (data->txfree && data->link_up)
+		netif_wake_queue(dev);
 
 	spin_unlock(&data->txlock);
-	spin_unlock_irq(&data->misघड़ी);
-	वापस 0;
-पूर्ण
+	spin_unlock_irq(&data->misclock);
+	return 0;
+}
 
 /* Protected by dev->xmit_lock. */
-अटल व्योम tsi108_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_set_rx_mode(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 rxcfg = TSI_READ(TSI108_EC_RXCFG);
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		rxcfg &= ~(TSI108_EC_RXCFG_UC_HASH | TSI108_EC_RXCFG_MC_HASH);
 		rxcfg |= TSI108_EC_RXCFG_UFE | TSI108_EC_RXCFG_MFE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rxcfg &= ~(TSI108_EC_RXCFG_UFE | TSI108_EC_RXCFG_MFE);
 
-	अगर (dev->flags & IFF_ALLMULTI || !netdev_mc_empty(dev)) अणु
-		पूर्णांक i;
-		काष्ठा netdev_hw_addr *ha;
+	if (dev->flags & IFF_ALLMULTI || !netdev_mc_empty(dev)) {
+		int i;
+		struct netdev_hw_addr *ha;
 		rxcfg |= TSI108_EC_RXCFG_MFE | TSI108_EC_RXCFG_MC_HASH;
 
-		स_रखो(data->mc_hash, 0, माप(data->mc_hash));
+		memset(data->mc_hash, 0, sizeof(data->mc_hash));
 
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
+		netdev_for_each_mc_addr(ha, dev) {
 			u32 hash, crc;
 
 			crc = ether_crc(6, ha->addr);
 			hash = crc >> 23;
 			__set_bit(hash, &data->mc_hash[0]);
-		पूर्ण
+		}
 
 		TSI_WRITE(TSI108_EC_HASHADDR,
 				     TSI108_EC_HASHADDR_AUTOINC |
 				     TSI108_EC_HASHADDR_MCAST);
 
-		क्रम (i = 0; i < 16; i++) अणु
+		for (i = 0; i < 16; i++) {
 			/* The manual says that the hardware may drop
-			 * back-to-back ग_लिखोs to the data रेजिस्टर.
+			 * back-to-back writes to the data register.
 			 */
 			udelay(1);
 			TSI_WRITE(TSI108_EC_HASHDATA,
 					     data->mc_hash[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
       out:
 	TSI_WRITE(TSI108_EC_RXCFG, rxcfg);
-पूर्ण
+}
 
-अटल व्योम tsi108_init_phy(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_init_phy(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 	u32 i = 0;
 	u16 phyval = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&phy_lock, flags);
 
-	tsi108_ग_लिखो_mii(data, MII_BMCR, BMCR_RESET);
-	जबतक (--i) अणु
-		अगर(!(tsi108_पढ़ो_mii(data, MII_BMCR) & BMCR_RESET))
-			अवरोध;
+	tsi108_write_mii(data, MII_BMCR, BMCR_RESET);
+	while (--i) {
+		if(!(tsi108_read_mii(data, MII_BMCR) & BMCR_RESET))
+			break;
 		udelay(10);
-	पूर्ण
-	अगर (i == 0)
-		prपूर्णांकk(KERN_ERR "%s function time out\n", __func__);
+	}
+	if (i == 0)
+		printk(KERN_ERR "%s function time out\n", __func__);
 
-	अगर (data->phy_type == TSI108_PHY_BCM54XX) अणु
-		tsi108_ग_लिखो_mii(data, 0x09, 0x0300);
-		tsi108_ग_लिखो_mii(data, 0x10, 0x1020);
-		tsi108_ग_लिखो_mii(data, 0x1c, 0x8c00);
-	पूर्ण
+	if (data->phy_type == TSI108_PHY_BCM54XX) {
+		tsi108_write_mii(data, 0x09, 0x0300);
+		tsi108_write_mii(data, 0x10, 0x1020);
+		tsi108_write_mii(data, 0x1c, 0x8c00);
+	}
 
-	tsi108_ग_लिखो_mii(data,
+	tsi108_write_mii(data,
 			 MII_BMCR,
 			 BMCR_ANENABLE | BMCR_ANRESTART);
-	जबतक (tsi108_पढ़ो_mii(data, MII_BMCR) & BMCR_ANRESTART)
+	while (tsi108_read_mii(data, MII_BMCR) & BMCR_ANRESTART)
 		cpu_relax();
 
-	/* Set G/MII mode and receive घड़ी select in TBI control #2.  The
+	/* Set G/MII mode and receive clock select in TBI control #2.  The
 	 * second port won't work if this isn't done, even though we don't
 	 * use TBI mode.
 	 */
 
-	tsi108_ग_लिखो_tbi(data, 0x11, 0x30);
+	tsi108_write_tbi(data, 0x11, 0x30);
 
-	/* FIXME: It seems to take more than 2 back-to-back पढ़ोs to the
-	 * PHY_STAT रेजिस्टर beक्रमe the link up status bit is set.
+	/* FIXME: It seems to take more than 2 back-to-back reads to the
+	 * PHY_STAT register before the link up status bit is set.
 	 */
 
 	data->link_up = 0;
 
-	जबतक (!((phyval = tsi108_पढ़ो_mii(data, MII_BMSR)) &
-		 BMSR_LSTATUS)) अणु
-		अगर (i++ > (MII_READ_DELAY / 10)) अणु
-			अवरोध;
-		पूर्ण
+	while (!((phyval = tsi108_read_mii(data, MII_BMSR)) &
+		 BMSR_LSTATUS)) {
+		if (i++ > (MII_READ_DELAY / 10)) {
+			break;
+		}
 		spin_unlock_irqrestore(&phy_lock, flags);
 		msleep(10);
 		spin_lock_irqsave(&phy_lock, flags);
-	पूर्ण
+	}
 
-	data->mii_अगर.supports_gmii = mii_check_gmii_support(&data->mii_अगर);
-	prपूर्णांकk(KERN_DEBUG "PHY_STAT reg contains %08x\n", phyval);
+	data->mii_if.supports_gmii = mii_check_gmii_support(&data->mii_if);
+	printk(KERN_DEBUG "PHY_STAT reg contains %08x\n", phyval);
 	data->phy_ok = 1;
 	data->init_media = 1;
 	spin_unlock_irqrestore(&phy_lock, flags);
-पूर्ण
+}
 
-अटल व्योम tsi108_समाप्त_phy(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static void tsi108_kill_phy(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&phy_lock, flags);
-	tsi108_ग_लिखो_mii(data, MII_BMCR, BMCR_PDOWN);
+	tsi108_write_mii(data, MII_BMCR, BMCR_PDOWN);
 	data->phy_ok = 0;
 	spin_unlock_irqrestore(&phy_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक tsi108_खोलो(काष्ठा net_device *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अचिन्हित पूर्णांक rxring_size = TSI108_RXRING_LEN * माप(rx_desc);
-	अचिन्हित पूर्णांक txring_size = TSI108_TXRING_LEN * माप(tx_desc);
+static int tsi108_open(struct net_device *dev)
+{
+	int i;
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	unsigned int rxring_size = TSI108_RXRING_LEN * sizeof(rx_desc);
+	unsigned int txring_size = TSI108_TXRING_LEN * sizeof(tx_desc);
 
 	i = request_irq(data->irq_num, tsi108_irq, 0, dev->name, dev);
-	अगर (i != 0) अणु
-		prपूर्णांकk(KERN_ERR "tsi108_eth%d: Could not allocate IRQ%d.\n",
+	if (i != 0) {
+		printk(KERN_ERR "tsi108_eth%d: Could not allocate IRQ%d.\n",
 		       data->id, data->irq_num);
-		वापस i;
-	पूर्ण अन्यथा अणु
+		return i;
+	} else {
 		dev->irq = data->irq_num;
-		prपूर्णांकk(KERN_NOTICE
+		printk(KERN_NOTICE
 		       "tsi108_open : Port %d Assigned IRQ %d to %s\n",
 		       data->id, dev->irq, dev->name);
-	पूर्ण
+	}
 
 	data->rxring = dma_alloc_coherent(&data->pdev->dev, rxring_size,
 					  &data->rxdma, GFP_KERNEL);
-	अगर (!data->rxring)
-		वापस -ENOMEM;
+	if (!data->rxring)
+		return -ENOMEM;
 
 	data->txring = dma_alloc_coherent(&data->pdev->dev, txring_size,
 					  &data->txdma, GFP_KERNEL);
-	अगर (!data->txring) अणु
-		dma_मुक्त_coherent(&data->pdev->dev, rxring_size, data->rxring,
+	if (!data->txring) {
+		dma_free_coherent(&data->pdev->dev, rxring_size, data->rxring,
 				    data->rxdma);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < TSI108_RXRING_LEN; i++) अणु
-		data->rxring[i].next0 = data->rxdma + (i + 1) * माप(rx_desc);
+	for (i = 0; i < TSI108_RXRING_LEN; i++) {
+		data->rxring[i].next0 = data->rxdma + (i + 1) * sizeof(rx_desc);
 		data->rxring[i].blen = TSI108_RXBUF_SIZE;
 		data->rxring[i].vlan = 0;
-	पूर्ण
+	}
 
 	data->rxring[TSI108_RXRING_LEN - 1].next0 = data->rxdma;
 
 	data->rxtail = 0;
 	data->rxhead = 0;
 
-	क्रम (i = 0; i < TSI108_RXRING_LEN; i++) अणु
-		काष्ठा sk_buff *skb;
+	for (i = 0; i < TSI108_RXRING_LEN; i++) {
+		struct sk_buff *skb;
 
 		skb = netdev_alloc_skb_ip_align(dev, TSI108_RXBUF_SIZE);
-		अगर (!skb) अणु
-			/* Bah.  No memory क्रम now, but maybe we'll get
+		if (!skb) {
+			/* Bah.  No memory for now, but maybe we'll get
 			 * some more later.
 			 * For now, we'll live with the smaller ring.
 			 */
-			prपूर्णांकk(KERN_WARNING
+			printk(KERN_WARNING
 			       "%s: Could only allocate %d receive skb(s).\n",
 			       dev->name, i);
 			data->rxhead = i;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		data->rxskbs[i] = skb;
 		data->rxring[i].buf0 = virt_to_phys(data->rxskbs[i]->data);
 		data->rxring[i].misc = TSI108_RX_OWN | TSI108_RX_INT;
-	पूर्ण
+	}
 
-	data->rxमुक्त = i;
+	data->rxfree = i;
 	TSI_WRITE(TSI108_EC_RXQ_PTRLOW, data->rxdma);
 
-	क्रम (i = 0; i < TSI108_TXRING_LEN; i++) अणु
-		data->txring[i].next0 = data->txdma + (i + 1) * माप(tx_desc);
+	for (i = 0; i < TSI108_TXRING_LEN; i++) {
+		data->txring[i].next0 = data->txdma + (i + 1) * sizeof(tx_desc);
 		data->txring[i].misc = 0;
-	पूर्ण
+	}
 
 	data->txring[TSI108_TXRING_LEN - 1].next0 = data->txdma;
 	data->txtail = 0;
 	data->txhead = 0;
-	data->txमुक्त = TSI108_TXRING_LEN;
+	data->txfree = TSI108_TXRING_LEN;
 	TSI_WRITE(TSI108_EC_TXQ_PTRLOW, data->txdma);
 	tsi108_init_phy(dev);
 
 	napi_enable(&data->napi);
 
-	समयr_setup(&data->समयr, tsi108_समयd_checker, 0);
-	mod_समयr(&data->समयr, jअगरfies + 1);
+	timer_setup(&data->timer, tsi108_timed_checker, 0);
+	mod_timer(&data->timer, jiffies + 1);
 
 	tsi108_restart_rx(data, dev);
 
@@ -1378,62 +1377,62 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 
 	TSI_WRITE(TSI108_MAC_CFG1,
 			     TSI108_MAC_CFG1_RXEN | TSI108_MAC_CFG1_TXEN);
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+	netif_start_queue(dev);
+	return 0;
+}
 
-अटल पूर्णांक tsi108_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static int tsi108_close(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	napi_disable(&data->napi);
 
-	del_समयr_sync(&data->समयr);
+	del_timer_sync(&data->timer);
 
 	tsi108_stop_ethernet(dev);
-	tsi108_समाप्त_phy(dev);
+	tsi108_kill_phy(dev);
 	TSI_WRITE(TSI108_EC_INTMASK, ~0);
 	TSI_WRITE(TSI108_MAC_CFG1, 0);
 
-	/* Check क्रम any pending TX packets, and drop them. */
+	/* Check for any pending TX packets, and drop them. */
 
-	जबतक (!data->txमुक्त || data->txhead != data->txtail) अणु
-		पूर्णांक tx = data->txtail;
-		काष्ठा sk_buff *skb;
+	while (!data->txfree || data->txhead != data->txtail) {
+		int tx = data->txtail;
+		struct sk_buff *skb;
 		skb = data->txskbs[tx];
 		data->txtail = (data->txtail + 1) % TSI108_TXRING_LEN;
-		data->txमुक्त++;
-		dev_kमुक्त_skb(skb);
-	पूर्ण
+		data->txfree++;
+		dev_kfree_skb(skb);
+	}
 
-	मुक्त_irq(data->irq_num, dev);
+	free_irq(data->irq_num, dev);
 
 	/* Discard the RX ring. */
 
-	जबतक (data->rxमुक्त) अणु
-		पूर्णांक rx = data->rxtail;
-		काष्ठा sk_buff *skb;
+	while (data->rxfree) {
+		int rx = data->rxtail;
+		struct sk_buff *skb;
 
 		skb = data->rxskbs[rx];
 		data->rxtail = (data->rxtail + 1) % TSI108_RXRING_LEN;
-		data->rxमुक्त--;
-		dev_kमुक्त_skb(skb);
-	पूर्ण
+		data->rxfree--;
+		dev_kfree_skb(skb);
+	}
 
-	dma_मुक्त_coherent(&data->pdev->dev,
-			    TSI108_RXRING_LEN * माप(rx_desc),
+	dma_free_coherent(&data->pdev->dev,
+			    TSI108_RXRING_LEN * sizeof(rx_desc),
 			    data->rxring, data->rxdma);
-	dma_मुक्त_coherent(&data->pdev->dev,
-			    TSI108_TXRING_LEN * माप(tx_desc),
+	dma_free_coherent(&data->pdev->dev,
+			    TSI108_TXRING_LEN * sizeof(tx_desc),
 			    data->txring, data->txdma);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tsi108_init_mac(काष्ठा net_device *dev)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
+static void tsi108_init_mac(struct net_device *dev)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
 
 	TSI_WRITE(TSI108_MAC_CFG2, TSI108_MAC_CFG2_DFLT_PREAMBLE |
 			     TSI108_MAC_CFG2_PADCRC);
@@ -1490,83 +1489,83 @@ tsi108_पढ़ो_stat(काष्ठा tsi108_prv_data * data, पूर्
 						TSI108_EC_RXQ_BUFCFG_SFNPORT));
 
 	TSI_WRITE(TSI108_EC_INTMASK, ~0);
-पूर्ण
+}
 
-अटल पूर्णांक tsi108_get_link_ksettings(काष्ठा net_device *dev,
-				     काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-
-	spin_lock_irqsave(&data->txlock, flags);
-	mii_ethtool_get_link_ksettings(&data->mii_अगर, cmd);
-	spin_unlock_irqrestore(&data->txlock, flags);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक tsi108_set_link_ksettings(काष्ठा net_device *dev,
-				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int tsi108_get_link_ksettings(struct net_device *dev,
+				     struct ethtool_link_ksettings *cmd)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&data->txlock, flags);
-	rc = mii_ethtool_set_link_ksettings(&data->mii_अगर, cmd);
+	mii_ethtool_get_link_ksettings(&data->mii_if, cmd);
 	spin_unlock_irqrestore(&data->txlock, flags);
 
-	वापस rc;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tsi108_करो_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा tsi108_prv_data *data = netdev_priv(dev);
-	अगर (!netअगर_running(dev))
-		वापस -EINVAL;
-	वापस generic_mii_ioctl(&data->mii_अगर, अगर_mii(rq), cmd, शून्य);
-पूर्ण
+static int tsi108_set_link_ksettings(struct net_device *dev,
+				     const struct ethtool_link_ksettings *cmd)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	unsigned long flags;
+	int rc;
 
-अटल स्थिर काष्ठा ethtool_ops tsi108_ethtool_ops = अणु
+	spin_lock_irqsave(&data->txlock, flags);
+	rc = mii_ethtool_set_link_ksettings(&data->mii_if, cmd);
+	spin_unlock_irqrestore(&data->txlock, flags);
+
+	return rc;
+}
+
+static int tsi108_do_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct tsi108_prv_data *data = netdev_priv(dev);
+	if (!netif_running(dev))
+		return -EINVAL;
+	return generic_mii_ioctl(&data->mii_if, if_mii(rq), cmd, NULL);
+}
+
+static const struct ethtool_ops tsi108_ethtool_ops = {
 	.get_link 	= ethtool_op_get_link,
 	.get_link_ksettings	= tsi108_get_link_ksettings,
 	.set_link_ksettings	= tsi108_set_link_ksettings,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops tsi108_netdev_ops = अणु
-	.nकरो_खोलो		= tsi108_खोलो,
-	.nकरो_stop		= tsi108_बंद,
-	.nकरो_start_xmit		= tsi108_send_packet,
-	.nकरो_set_rx_mode	= tsi108_set_rx_mode,
-	.nकरो_get_stats		= tsi108_get_stats,
-	.nकरो_करो_ioctl		= tsi108_करो_ioctl,
-	.nकरो_set_mac_address	= tsi108_set_mac,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops tsi108_netdev_ops = {
+	.ndo_open		= tsi108_open,
+	.ndo_stop		= tsi108_close,
+	.ndo_start_xmit		= tsi108_send_packet,
+	.ndo_set_rx_mode	= tsi108_set_rx_mode,
+	.ndo_get_stats		= tsi108_get_stats,
+	.ndo_do_ioctl		= tsi108_do_ioctl,
+	.ndo_set_mac_address	= tsi108_set_mac,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक
-tsi108_init_one(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = शून्य;
-	काष्ठा tsi108_prv_data *data = शून्य;
+static int
+tsi108_init_one(struct platform_device *pdev)
+{
+	struct net_device *dev = NULL;
+	struct tsi108_prv_data *data = NULL;
 	hw_info *einfo;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	einfo = dev_get_platdata(&pdev->dev);
 
-	अगर (शून्य == einfo) अणु
-		prपूर्णांकk(KERN_ERR "tsi-eth %d: Missing additional data!\n",
+	if (NULL == einfo) {
+		printk(KERN_ERR "tsi-eth %d: Missing additional data!\n",
 		       pdev->id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Create an ethernet device instance */
 
-	dev = alloc_etherdev(माप(काष्ठा tsi108_prv_data));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = alloc_etherdev(sizeof(struct tsi108_prv_data));
+	if (!dev)
+		return -ENOMEM;
 
-	prपूर्णांकk("tsi108_eth%d: probe...\n", pdev->id);
+	printk("tsi108_eth%d: probe...\n", pdev->id);
 	data = netdev_priv(dev);
 	data->dev = dev;
 	data->pdev = pdev;
@@ -1576,114 +1575,114 @@ tsi108_init_one(काष्ठा platक्रमm_device *pdev)
 			einfo->phy, einfo->irq_num);
 
 	data->regs = ioremap(einfo->regs, 0x400);
-	अगर (शून्य == data->regs) अणु
+	if (NULL == data->regs) {
 		err = -ENOMEM;
-		जाओ regs_fail;
-	पूर्ण
+		goto regs_fail;
+	}
 
 	data->phyregs = ioremap(einfo->phyregs, 0x400);
-	अगर (शून्य == data->phyregs) अणु
+	if (NULL == data->phyregs) {
 		err = -ENOMEM;
-		जाओ phyregs_fail;
-	पूर्ण
+		goto phyregs_fail;
+	}
 /* MII setup */
-	data->mii_अगर.dev = dev;
-	data->mii_अगर.mdio_पढ़ो = tsi108_mdio_पढ़ो;
-	data->mii_अगर.mdio_ग_लिखो = tsi108_mdio_ग_लिखो;
-	data->mii_अगर.phy_id = einfo->phy;
-	data->mii_अगर.phy_id_mask = 0x1f;
-	data->mii_अगर.reg_num_mask = 0x1f;
+	data->mii_if.dev = dev;
+	data->mii_if.mdio_read = tsi108_mdio_read;
+	data->mii_if.mdio_write = tsi108_mdio_write;
+	data->mii_if.phy_id = einfo->phy;
+	data->mii_if.phy_id_mask = 0x1f;
+	data->mii_if.reg_num_mask = 0x1f;
 
 	data->phy = einfo->phy;
 	data->phy_type = einfo->phy_type;
 	data->irq_num = einfo->irq_num;
 	data->id = pdev->id;
-	netअगर_napi_add(dev, &data->napi, tsi108_poll, 64);
+	netif_napi_add(dev, &data->napi, tsi108_poll, 64);
 	dev->netdev_ops = &tsi108_netdev_ops;
 	dev->ethtool_ops = &tsi108_ethtool_ops;
 
 	/* Apparently, the Linux networking code won't use scatter-gather
-	 * अगर the hardware करोesn't do checksums.  However, it's faster
+	 * if the hardware doesn't do checksums.  However, it's faster
 	 * to checksum in place and use SG, as (among other reasons)
 	 * the cache won't be dirtied (which then has to be flushed
-	 * beक्रमe DMA).  The checksumming is करोne by the driver (via
+	 * before DMA).  The checksumming is done by the driver (via
 	 * a new function skb_csum_dev() in net/core/skbuff.c).
 	 */
 
 	dev->features = NETIF_F_HIGHDMA;
 
 	spin_lock_init(&data->txlock);
-	spin_lock_init(&data->misघड़ी);
+	spin_lock_init(&data->misclock);
 
 	tsi108_reset_ether(data);
-	tsi108_समाप्त_phy(dev);
+	tsi108_kill_phy(dev);
 
-	अगर ((err = tsi108_get_mac(dev)) != 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Invalid MAC address.  Please correct.\n",
+	if ((err = tsi108_get_mac(dev)) != 0) {
+		printk(KERN_ERR "%s: Invalid MAC address.  Please correct.\n",
 		       dev->name);
-		जाओ रेजिस्टर_fail;
-	पूर्ण
+		goto register_fail;
+	}
 
 	tsi108_init_mac(dev);
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "%s: Cannot register net device, aborting.\n",
+	err = register_netdev(dev);
+	if (err) {
+		printk(KERN_ERR "%s: Cannot register net device, aborting.\n",
 				dev->name);
-		जाओ रेजिस्टर_fail;
-	पूर्ण
+		goto register_fail;
+	}
 
-	platक्रमm_set_drvdata(pdev, dev);
-	prपूर्णांकk(KERN_INFO "%s: Tsi108 Gigabit Ethernet, MAC: %pM\n",
+	platform_set_drvdata(pdev, dev);
+	printk(KERN_INFO "%s: Tsi108 Gigabit Ethernet, MAC: %pM\n",
 	       dev->name, dev->dev_addr);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	data->msg_enable = DEBUG;
 	dump_eth_one(dev);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
+	return 0;
 
-रेजिस्टर_fail:
+register_fail:
 	iounmap(data->phyregs);
 
 phyregs_fail:
 	iounmap(data->regs);
 
 regs_fail:
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	free_netdev(dev);
+	return err;
+}
 
-/* There's no way to either get पूर्णांकerrupts from the PHY when
- * something changes, or to have the Tsi108 स्वतःmatically communicate
+/* There's no way to either get interrupts from the PHY when
+ * something changes, or to have the Tsi108 automatically communicate
  * with the PHY to reconfigure itself.
  *
- * Thus, we have to करो it using a समयr.
+ * Thus, we have to do it using a timer.
  */
 
-अटल व्योम tsi108_समयd_checker(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tsi108_prv_data *data = from_समयr(data, t, समयr);
-	काष्ठा net_device *dev = data->dev;
+static void tsi108_timed_checker(struct timer_list *t)
+{
+	struct tsi108_prv_data *data = from_timer(data, t, timer);
+	struct net_device *dev = data->dev;
 
 	tsi108_check_phy(dev);
 	tsi108_check_rxring(dev);
-	mod_समयr(&data->समयr, jअगरfies + CHECK_PHY_INTERVAL);
-पूर्ण
+	mod_timer(&data->timer, jiffies + CHECK_PHY_INTERVAL);
+}
 
-अटल पूर्णांक tsi108_ether_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा tsi108_prv_data *priv = netdev_priv(dev);
+static int tsi108_ether_remove(struct platform_device *pdev)
+{
+	struct net_device *dev = platform_get_drvdata(pdev);
+	struct tsi108_prv_data *priv = netdev_priv(dev);
 
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 	tsi108_stop_ethernet(dev);
 	iounmap(priv->regs);
 	iounmap(priv->phyregs);
-	मुक्त_netdev(dev);
+	free_netdev(dev);
 
-	वापस 0;
-पूर्ण
-module_platक्रमm_driver(tsi_eth_driver);
+	return 0;
+}
+module_platform_driver(tsi_eth_driver);
 
 MODULE_AUTHOR("Tundra Semiconductor Corporation");
 MODULE_DESCRIPTION("Tsi108 Gigabit Ethernet driver");

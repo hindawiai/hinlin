@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#अगर_अघोषित __ASM_AUXVEC_H
-#घोषणा __ASM_AUXVEC_H
+#ifndef __ASM_AUXVEC_H
+#define __ASM_AUXVEC_H
 
 /*
- * This entry gives some inक्रमmation about the FPU initialization
- * perक्रमmed by the kernel.
+ * This entry gives some information about the FPU initialization
+ * performed by the kernel.
  */
-#घोषणा AT_FPUCW	18	/* Used FPU control word.  */
+#define AT_FPUCW	18	/* Used FPU control word.  */
 
 
 /* VDSO location */
-#घोषणा AT_SYSINFO_EHDR	33
+#define AT_SYSINFO_EHDR	33
 
-#घोषणा AT_VECTOR_SIZE_ARCH 1
+#define AT_VECTOR_SIZE_ARCH 1
 
-#पूर्ण_अगर
+#endif

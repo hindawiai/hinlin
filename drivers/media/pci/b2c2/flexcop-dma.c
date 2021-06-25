@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Linux driver क्रम digital TV devices equipped with B2C2 FlexcopII(b)/III
+ * Linux driver for digital TV devices equipped with B2C2 FlexcopII(b)/III
  * flexcop-dma.c - configuring and controlling the DMA of the FlexCop
- * see flexcop.c क्रम copyright inक्रमmation
+ * see flexcop.c for copyright information
  */
-#समावेश "flexcop.h"
+#include "flexcop.h"
 
-पूर्णांक flexcop_dma_allocate(काष्ठा pci_dev *pdev,
-		काष्ठा flexcop_dma *dma, u32 size)
-अणु
+int flexcop_dma_allocate(struct pci_dev *pdev,
+		struct flexcop_dma *dma, u32 size)
+{
 	u8 *tcpu;
 	dma_addr_t tdma = 0;
 
-	अगर (size % 2) अणु
+	if (size % 2) {
 		err("dma buffersize has to be even.");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tcpu = dma_alloc_coherent(&pdev->dev, size, &tdma, GFP_KERNEL);
-	अगर (tcpu != शून्य) अणु
+	if (tcpu != NULL) {
 		dma->pdev = pdev;
 		dma->cpu_addr0 = tcpu;
 		dma->dma_addr0 = tdma;
 		dma->cpu_addr1 = tcpu + size/2;
 		dma->dma_addr1 = tdma + size/2;
 		dma->size = size/2;
-		वापस 0;
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		return 0;
+	}
+	return -ENOMEM;
+}
 EXPORT_SYMBOL(flexcop_dma_allocate);
 
-व्योम flexcop_dma_मुक्त(काष्ठा flexcop_dma *dma)
-अणु
-	dma_मुक्त_coherent(&dma->pdev->dev, dma->size * 2, dma->cpu_addr0,
+void flexcop_dma_free(struct flexcop_dma *dma)
+{
+	dma_free_coherent(&dma->pdev->dev, dma->size * 2, dma->cpu_addr0,
 			  dma->dma_addr0);
-	स_रखो(dma, 0, माप(काष्ठा flexcop_dma));
-पूर्ण
-EXPORT_SYMBOL(flexcop_dma_मुक्त);
+	memset(dma, 0, sizeof(struct flexcop_dma));
+}
+EXPORT_SYMBOL(flexcop_dma_free);
 
-पूर्णांक flexcop_dma_config(काष्ठा flexcop_device *fc,
-		काष्ठा flexcop_dma *dma,
+int flexcop_dma_config(struct flexcop_device *fc,
+		struct flexcop_dma *dma,
 		flexcop_dma_index_t dma_idx)
-अणु
+{
 	flexcop_ibi_value v0x0, v0x4, v0xc;
 
 	v0x0.raw = v0x4.raw = v0xc.raw = 0;
 	v0x0.dma_0x0.dma_address0 = dma->dma_addr0 >> 2;
 	v0xc.dma_0xc.dma_address1 = dma->dma_addr1 >> 2;
-	v0x4.dma_0x4_ग_लिखो.dma_addr_size = dma->size / 4;
+	v0x4.dma_0x4_write.dma_addr_size = dma->size / 4;
 
-	अगर ((dma_idx & FC_DMA_1) == dma_idx) अणु
-		fc->ग_लिखो_ibi_reg(fc, dma1_000, v0x0);
-		fc->ग_लिखो_ibi_reg(fc, dma1_004, v0x4);
-		fc->ग_लिखो_ibi_reg(fc, dma1_00c, v0xc);
-	पूर्ण अन्यथा अगर ((dma_idx & FC_DMA_2) == dma_idx) अणु
-		fc->ग_लिखो_ibi_reg(fc, dma2_010, v0x0);
-		fc->ग_लिखो_ibi_reg(fc, dma2_014, v0x4);
-		fc->ग_लिखो_ibi_reg(fc, dma2_01c, v0xc);
-	पूर्ण अन्यथा अणु
+	if ((dma_idx & FC_DMA_1) == dma_idx) {
+		fc->write_ibi_reg(fc, dma1_000, v0x0);
+		fc->write_ibi_reg(fc, dma1_004, v0x4);
+		fc->write_ibi_reg(fc, dma1_00c, v0xc);
+	} else if ((dma_idx & FC_DMA_2) == dma_idx) {
+		fc->write_ibi_reg(fc, dma2_010, v0x0);
+		fc->write_ibi_reg(fc, dma2_014, v0x4);
+		fc->write_ibi_reg(fc, dma2_01c, v0xc);
+	} else {
 		err("either DMA1 or DMA2 can be configured within one %s call.",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(flexcop_dma_config);
 
 /* start the DMA transfers, but not the DMA IRQs */
-पूर्णांक flexcop_dma_xfer_control(काष्ठा flexcop_device *fc,
+int flexcop_dma_xfer_control(struct flexcop_device *fc,
 		flexcop_dma_index_t dma_idx,
 		flexcop_dma_addr_index_t index,
-		पूर्णांक onoff)
-अणु
+		int onoff)
+{
 	flexcop_ibi_value v0x0, v0xc;
-	flexcop_ibi_रेजिस्टर r0x0, r0xc;
+	flexcop_ibi_register r0x0, r0xc;
 
-	अगर ((dma_idx & FC_DMA_1) == dma_idx) अणु
+	if ((dma_idx & FC_DMA_1) == dma_idx) {
 		r0x0 = dma1_000;
 		r0xc = dma1_00c;
-	पूर्ण अन्यथा अगर ((dma_idx & FC_DMA_2) == dma_idx) अणु
+	} else if ((dma_idx & FC_DMA_2) == dma_idx) {
 		r0x0 = dma2_010;
 		r0xc = dma2_01c;
-	पूर्ण अन्यथा अणु
+	} else {
 		err("transfer DMA1 or DMA2 can be started within one %s call.",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	v0x0 = fc->पढ़ो_ibi_reg(fc, r0x0);
-	v0xc = fc->पढ़ो_ibi_reg(fc, r0xc);
+	v0x0 = fc->read_ibi_reg(fc, r0x0);
+	v0xc = fc->read_ibi_reg(fc, r0xc);
 
 	deb_rdump("reg: %03x: %x\n", r0x0, v0x0.raw);
 	deb_rdump("reg: %03x: %x\n", r0xc, v0xc.raw);
 
-	अगर (index & FC_DMA_SUBADDR_0)
+	if (index & FC_DMA_SUBADDR_0)
 		v0x0.dma_0x0.dma_0start = onoff;
 
-	अगर (index & FC_DMA_SUBADDR_1)
+	if (index & FC_DMA_SUBADDR_1)
 		v0xc.dma_0xc.dma_1start = onoff;
 
-	fc->ग_लिखो_ibi_reg(fc, r0x0, v0x0);
-	fc->ग_लिखो_ibi_reg(fc, r0xc, v0xc);
+	fc->write_ibi_reg(fc, r0x0, v0x0);
+	fc->write_ibi_reg(fc, r0xc, v0xc);
 
 	deb_rdump("reg: %03x: %x\n", r0x0, v0x0.raw);
 	deb_rdump("reg: %03x: %x\n", r0xc, v0xc.raw);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(flexcop_dma_xfer_control);
 
-अटल पूर्णांक flexcop_dma_remap(काष्ठा flexcop_device *fc,
+static int flexcop_dma_remap(struct flexcop_device *fc,
 		flexcop_dma_index_t dma_idx,
-		पूर्णांक onoff)
-अणु
-	flexcop_ibi_रेजिस्टर r = (dma_idx & FC_DMA_1) ? dma1_00c : dma2_01c;
-	flexcop_ibi_value v = fc->पढ़ो_ibi_reg(fc, r);
+		int onoff)
+{
+	flexcop_ibi_register r = (dma_idx & FC_DMA_1) ? dma1_00c : dma2_01c;
+	flexcop_ibi_value v = fc->read_ibi_reg(fc, r);
 
 	deb_info("%s\n", __func__);
 	v.dma_0xc.remap_enable = onoff;
-	fc->ग_लिखो_ibi_reg(fc, r, v);
-	वापस 0;
-पूर्ण
+	fc->write_ibi_reg(fc, r, v);
+	return 0;
+}
 
-पूर्णांक flexcop_dma_control_size_irq(काष्ठा flexcop_device *fc,
+int flexcop_dma_control_size_irq(struct flexcop_device *fc,
 		flexcop_dma_index_t no,
-		पूर्णांक onoff)
-अणु
-	flexcop_ibi_value v = fc->पढ़ो_ibi_reg(fc, ctrl_208);
+		int onoff)
+{
+	flexcop_ibi_value v = fc->read_ibi_reg(fc, ctrl_208);
 
-	अगर (no & FC_DMA_1)
+	if (no & FC_DMA_1)
 		v.ctrl_208.DMA1_IRQ_Enable_sig = onoff;
 
-	अगर (no & FC_DMA_2)
+	if (no & FC_DMA_2)
 		v.ctrl_208.DMA2_IRQ_Enable_sig = onoff;
 
-	fc->ग_लिखो_ibi_reg(fc, ctrl_208, v);
-	वापस 0;
-पूर्ण
+	fc->write_ibi_reg(fc, ctrl_208, v);
+	return 0;
+}
 EXPORT_SYMBOL(flexcop_dma_control_size_irq);
 
-पूर्णांक flexcop_dma_control_समयr_irq(काष्ठा flexcop_device *fc,
+int flexcop_dma_control_timer_irq(struct flexcop_device *fc,
 		flexcop_dma_index_t no,
-		पूर्णांक onoff)
-अणु
-	flexcop_ibi_value v = fc->पढ़ो_ibi_reg(fc, ctrl_208);
+		int onoff)
+{
+	flexcop_ibi_value v = fc->read_ibi_reg(fc, ctrl_208);
 
-	अगर (no & FC_DMA_1)
+	if (no & FC_DMA_1)
 		v.ctrl_208.DMA1_Timer_Enable_sig = onoff;
 
-	अगर (no & FC_DMA_2)
+	if (no & FC_DMA_2)
 		v.ctrl_208.DMA2_Timer_Enable_sig = onoff;
 
-	fc->ग_लिखो_ibi_reg(fc, ctrl_208, v);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(flexcop_dma_control_समयr_irq);
+	fc->write_ibi_reg(fc, ctrl_208, v);
+	return 0;
+}
+EXPORT_SYMBOL(flexcop_dma_control_timer_irq);
 
 /* 1 cycles = 1.97 msec */
-पूर्णांक flexcop_dma_config_समयr(काष्ठा flexcop_device *fc,
+int flexcop_dma_config_timer(struct flexcop_device *fc,
 		flexcop_dma_index_t dma_idx, u8 cycles)
-अणु
-	flexcop_ibi_रेजिस्टर r = (dma_idx & FC_DMA_1) ? dma1_004 : dma2_014;
-	flexcop_ibi_value v = fc->पढ़ो_ibi_reg(fc, r);
+{
+	flexcop_ibi_register r = (dma_idx & FC_DMA_1) ? dma1_004 : dma2_014;
+	flexcop_ibi_value v = fc->read_ibi_reg(fc, r);
 
 	flexcop_dma_remap(fc, dma_idx, 0);
 
 	deb_info("%s\n", __func__);
-	v.dma_0x4_ग_लिखो.dmaसमयr = cycles;
-	fc->ग_लिखो_ibi_reg(fc, r, v);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(flexcop_dma_config_समयr);
+	v.dma_0x4_write.dmatimer = cycles;
+	fc->write_ibi_reg(fc, r, v);
+	return 0;
+}
+EXPORT_SYMBOL(flexcop_dma_config_timer);
 

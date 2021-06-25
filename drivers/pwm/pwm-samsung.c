@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2007 Ben Dooks
  * Copyright (c) 2008 Simtec Electronics
@@ -7,324 +6,324 @@
  * Copyright (c) 2013 Tomasz Figa <tomasz.figa@gmail.com>
  * Copyright (c) 2017 Samsung Electronics Co., Ltd.
  *
- * PWM driver क्रम Samsung SoCs
+ * PWM driver for Samsung SoCs
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/export.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समय.स>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/export.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pwm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/time.h>
 
-/* For काष्ठा samsung_समयr_variant and samsung_pwm_lock. */
-#समावेश <घड़ीsource/samsung_pwm.h>
+/* For struct samsung_timer_variant and samsung_pwm_lock. */
+#include <clocksource/samsung_pwm.h>
 
-#घोषणा REG_TCFG0			0x00
-#घोषणा REG_TCFG1			0x04
-#घोषणा REG_TCON			0x08
+#define REG_TCFG0			0x00
+#define REG_TCFG1			0x04
+#define REG_TCON			0x08
 
-#घोषणा REG_TCNTB(chan)			(0x0c + ((chan) * 0xc))
-#घोषणा REG_TCMPB(chan)			(0x10 + ((chan) * 0xc))
+#define REG_TCNTB(chan)			(0x0c + ((chan) * 0xc))
+#define REG_TCMPB(chan)			(0x10 + ((chan) * 0xc))
 
-#घोषणा TCFG0_PRESCALER_MASK		0xff
-#घोषणा TCFG0_PRESCALER1_SHIFT		8
+#define TCFG0_PRESCALER_MASK		0xff
+#define TCFG0_PRESCALER1_SHIFT		8
 
-#घोषणा TCFG1_MUX_MASK			0xf
-#घोषणा TCFG1_SHIFT(chan)		(4 * (chan))
+#define TCFG1_MUX_MASK			0xf
+#define TCFG1_SHIFT(chan)		(4 * (chan))
 
 /*
- * Each channel occupies 4 bits in TCON रेजिस्टर, but there is a gap of 4
- * bits (one channel) after channel 0, so channels have dअगरferent numbering
- * when accessing TCON रेजिस्टर. See to_tcon_channel() function.
+ * Each channel occupies 4 bits in TCON register, but there is a gap of 4
+ * bits (one channel) after channel 0, so channels have different numbering
+ * when accessing TCON register. See to_tcon_channel() function.
  *
- * In addition, the location of स्वतःreload bit क्रम channel 4 (TCON channel 5)
- * in its set of bits is 2 as opposed to 3 क्रम other channels.
+ * In addition, the location of autoreload bit for channel 4 (TCON channel 5)
+ * in its set of bits is 2 as opposed to 3 for other channels.
  */
-#घोषणा TCON_START(chan)		BIT(4 * (chan) + 0)
-#घोषणा TCON_MANUALUPDATE(chan)		BIT(4 * (chan) + 1)
-#घोषणा TCON_INVERT(chan)		BIT(4 * (chan) + 2)
-#घोषणा _TCON_AUTORELOAD(chan)		BIT(4 * (chan) + 3)
-#घोषणा _TCON_AUTORELOAD4(chan)		BIT(4 * (chan) + 2)
-#घोषणा TCON_AUTORELOAD(chan)		\
+#define TCON_START(chan)		BIT(4 * (chan) + 0)
+#define TCON_MANUALUPDATE(chan)		BIT(4 * (chan) + 1)
+#define TCON_INVERT(chan)		BIT(4 * (chan) + 2)
+#define _TCON_AUTORELOAD(chan)		BIT(4 * (chan) + 3)
+#define _TCON_AUTORELOAD4(chan)		BIT(4 * (chan) + 2)
+#define TCON_AUTORELOAD(chan)		\
 	((chan < 5) ? _TCON_AUTORELOAD(chan) : _TCON_AUTORELOAD4(chan))
 
 /**
- * काष्ठा samsung_pwm_channel - निजी data of PWM channel
+ * struct samsung_pwm_channel - private data of PWM channel
  * @period_ns:	current period in nanoseconds programmed to the hardware
- * @duty_ns:	current duty समय in nanoseconds programmed to the hardware
- * @tin_ns:	समय of one समयr tick in nanoseconds with current समयr rate
+ * @duty_ns:	current duty time in nanoseconds programmed to the hardware
+ * @tin_ns:	time of one timer tick in nanoseconds with current timer rate
  */
-काष्ठा samsung_pwm_channel अणु
+struct samsung_pwm_channel {
 	u32 period_ns;
 	u32 duty_ns;
 	u32 tin_ns;
-पूर्ण;
+};
 
 /**
- * काष्ठा samsung_pwm_chip - निजी data of PWM chip
+ * struct samsung_pwm_chip - private data of PWM chip
  * @chip:		generic PWM chip
  * @variant:		local copy of hardware variant data
- * @inverter_mask:	inverter status क्रम all channels - one bit per channel
- * @disabled_mask:	disabled status क्रम all channels - one bit per channel
- * @base:		base address of mapped PWM रेजिस्टरs
- * @base_clk:		base घड़ी used to drive the समयrs
- * @tclk0:		बाह्यal घड़ी 0 (can be ERR_PTR अगर not present)
- * @tclk1:		बाह्यal घड़ी 1 (can be ERR_PTR अगर not present)
+ * @inverter_mask:	inverter status for all channels - one bit per channel
+ * @disabled_mask:	disabled status for all channels - one bit per channel
+ * @base:		base address of mapped PWM registers
+ * @base_clk:		base clock used to drive the timers
+ * @tclk0:		external clock 0 (can be ERR_PTR if not present)
+ * @tclk1:		external clock 1 (can be ERR_PTR if not present)
  */
-काष्ठा samsung_pwm_chip अणु
-	काष्ठा pwm_chip chip;
-	काष्ठा samsung_pwm_variant variant;
+struct samsung_pwm_chip {
+	struct pwm_chip chip;
+	struct samsung_pwm_variant variant;
 	u8 inverter_mask;
 	u8 disabled_mask;
 
-	व्योम __iomem *base;
-	काष्ठा clk *base_clk;
-	काष्ठा clk *tclk0;
-	काष्ठा clk *tclk1;
-पूर्ण;
+	void __iomem *base;
+	struct clk *base_clk;
+	struct clk *tclk0;
+	struct clk *tclk1;
+};
 
-#अगर_अघोषित CONFIG_CLKSRC_SAMSUNG_PWM
+#ifndef CONFIG_CLKSRC_SAMSUNG_PWM
 /*
- * PWM block is shared between pwm-samsung and samsung_pwm_समयr drivers
- * and some रेजिस्टरs need access synchronization. If both drivers are
- * compiled in, the spinlock is defined in the घड़ीsource driver,
+ * PWM block is shared between pwm-samsung and samsung_pwm_timer drivers
+ * and some registers need access synchronization. If both drivers are
+ * compiled in, the spinlock is defined in the clocksource driver,
  * otherwise following definition is used.
  *
- * Currently we करो not need any more complex synchronization method
+ * Currently we do not need any more complex synchronization method
  * because all the supported SoCs contain only one instance of the PWM
- * IP. Should this change, both drivers will need to be modअगरied to
+ * IP. Should this change, both drivers will need to be modified to
  * properly synchronize accesses to particular instances.
  */
-अटल DEFINE_SPINLOCK(samsung_pwm_lock);
-#पूर्ण_अगर
+static DEFINE_SPINLOCK(samsung_pwm_lock);
+#endif
 
-अटल अंतरभूत
-काष्ठा samsung_pwm_chip *to_samsung_pwm_chip(काष्ठा pwm_chip *chip)
-अणु
-	वापस container_of(chip, काष्ठा samsung_pwm_chip, chip);
-पूर्ण
+static inline
+struct samsung_pwm_chip *to_samsung_pwm_chip(struct pwm_chip *chip)
+{
+	return container_of(chip, struct samsung_pwm_chip, chip);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक to_tcon_channel(अचिन्हित पूर्णांक channel)
-अणु
-	/* TCON रेजिस्टर has a gap of 4 bits (1 channel) after channel 0 */
-	वापस (channel == 0) ? 0 : (channel + 1);
-पूर्ण
+static inline unsigned int to_tcon_channel(unsigned int channel)
+{
+	/* TCON register has a gap of 4 bits (1 channel) after channel 0 */
+	return (channel == 0) ? 0 : (channel + 1);
+}
 
-अटल व्योम pwm_samsung_set_भागisor(काष्ठा samsung_pwm_chip *pwm,
-				    अचिन्हित पूर्णांक channel, u8 भागisor)
-अणु
-	u8 shअगरt = TCFG1_SHIFT(channel);
-	अचिन्हित दीर्घ flags;
+static void pwm_samsung_set_divisor(struct samsung_pwm_chip *pwm,
+				    unsigned int channel, u8 divisor)
+{
+	u8 shift = TCFG1_SHIFT(channel);
+	unsigned long flags;
 	u32 reg;
 	u8 bits;
 
-	bits = (fls(भागisor) - 1) - pwm->variant.भाग_base;
+	bits = (fls(divisor) - 1) - pwm->variant.div_base;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	reg = पढ़ोl(pwm->base + REG_TCFG1);
-	reg &= ~(TCFG1_MUX_MASK << shअगरt);
-	reg |= bits << shअगरt;
-	ग_लिखोl(reg, pwm->base + REG_TCFG1);
+	reg = readl(pwm->base + REG_TCFG1);
+	reg &= ~(TCFG1_MUX_MASK << shift);
+	reg |= bits << shift;
+	writel(reg, pwm->base + REG_TCFG1);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक pwm_samsung_is_tभाग(काष्ठा samsung_pwm_chip *chip, अचिन्हित पूर्णांक chan)
-अणु
-	काष्ठा samsung_pwm_variant *variant = &chip->variant;
+static int pwm_samsung_is_tdiv(struct samsung_pwm_chip *chip, unsigned int chan)
+{
+	struct samsung_pwm_variant *variant = &chip->variant;
 	u32 reg;
 
-	reg = पढ़ोl(chip->base + REG_TCFG1);
+	reg = readl(chip->base + REG_TCFG1);
 	reg >>= TCFG1_SHIFT(chan);
 	reg &= TCFG1_MUX_MASK;
 
-	वापस (BIT(reg) & variant->tclk_mask) == 0;
-पूर्ण
+	return (BIT(reg) & variant->tclk_mask) == 0;
+}
 
-अटल अचिन्हित दीर्घ pwm_samsung_get_tin_rate(काष्ठा samsung_pwm_chip *chip,
-					      अचिन्हित पूर्णांक chan)
-अणु
-	अचिन्हित दीर्घ rate;
+static unsigned long pwm_samsung_get_tin_rate(struct samsung_pwm_chip *chip,
+					      unsigned int chan)
+{
+	unsigned long rate;
 	u32 reg;
 
 	rate = clk_get_rate(chip->base_clk);
 
-	reg = पढ़ोl(chip->base + REG_TCFG0);
-	अगर (chan >= 2)
+	reg = readl(chip->base + REG_TCFG0);
+	if (chan >= 2)
 		reg >>= TCFG0_PRESCALER1_SHIFT;
 	reg &= TCFG0_PRESCALER_MASK;
 
-	वापस rate / (reg + 1);
-पूर्ण
+	return rate / (reg + 1);
+}
 
-अटल अचिन्हित दीर्घ pwm_samsung_calc_tin(काष्ठा samsung_pwm_chip *chip,
-					  अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ freq)
-अणु
-	काष्ठा samsung_pwm_variant *variant = &chip->variant;
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk *clk;
-	u8 भाग;
+static unsigned long pwm_samsung_calc_tin(struct samsung_pwm_chip *chip,
+					  unsigned int chan, unsigned long freq)
+{
+	struct samsung_pwm_variant *variant = &chip->variant;
+	unsigned long rate;
+	struct clk *clk;
+	u8 div;
 
-	अगर (!pwm_samsung_is_tभाग(chip, chan)) अणु
+	if (!pwm_samsung_is_tdiv(chip, chan)) {
 		clk = (chan < 2) ? chip->tclk0 : chip->tclk1;
-		अगर (!IS_ERR(clk)) अणु
+		if (!IS_ERR(clk)) {
 			rate = clk_get_rate(clk);
-			अगर (rate)
-				वापस rate;
-		पूर्ण
+			if (rate)
+				return rate;
+		}
 
 		dev_warn(chip->chip.dev,
 			"tclk of PWM %d is inoperational, using tdiv\n", chan);
-	पूर्ण
+	}
 
 	rate = pwm_samsung_get_tin_rate(chip, chan);
 	dev_dbg(chip->chip.dev, "tin parent at %lu\n", rate);
 
 	/*
 	 * Compare minimum PWM frequency that can be achieved with possible
-	 * भागider settings and choose the lowest भागisor that can generate
+	 * divider settings and choose the lowest divisor that can generate
 	 * frequencies lower than requested.
 	 */
-	अगर (variant->bits < 32) अणु
-		/* Only क्रम s3c24xx */
-		क्रम (भाग = variant->भाग_base; भाग < 4; ++भाग)
-			अगर ((rate >> (variant->bits + भाग)) < freq)
-				अवरोध;
-	पूर्ण अन्यथा अणु
+	if (variant->bits < 32) {
+		/* Only for s3c24xx */
+		for (div = variant->div_base; div < 4; ++div)
+			if ((rate >> (variant->bits + div)) < freq)
+				break;
+	} else {
 		/*
 		 * Other variants have enough counter bits to generate any
-		 * requested rate, so no need to check higher भागisors.
+		 * requested rate, so no need to check higher divisors.
 		 */
-		भाग = variant->भाग_base;
-	पूर्ण
+		div = variant->div_base;
+	}
 
-	pwm_samsung_set_भागisor(chip, chan, BIT(भाग));
+	pwm_samsung_set_divisor(chip, chan, BIT(div));
 
-	वापस rate >> भाग;
-पूर्ण
+	return rate >> div;
+}
 
-अटल पूर्णांक pwm_samsung_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
-	काष्ठा samsung_pwm_channel *our_chan;
+static int pwm_samsung_request(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
+	struct samsung_pwm_channel *our_chan;
 
-	अगर (!(our_chip->variant.output_mask & BIT(pwm->hwpwm))) अणु
+	if (!(our_chip->variant.output_mask & BIT(pwm->hwpwm))) {
 		dev_warn(chip->dev,
 			"tried to request PWM channel %d without output\n",
 			pwm->hwpwm);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	our_chan = kzalloc(माप(*our_chan), GFP_KERNEL);
-	अगर (!our_chan)
-		वापस -ENOMEM;
+	our_chan = kzalloc(sizeof(*our_chan), GFP_KERNEL);
+	if (!our_chan)
+		return -ENOMEM;
 
 	pwm_set_chip_data(pwm, our_chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pwm_samsung_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	kमुक्त(pwm_get_chip_data(pwm));
-पूर्ण
+static void pwm_samsung_free(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	kfree(pwm_get_chip_data(pwm));
+}
 
-अटल पूर्णांक pwm_samsung_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
-	अचिन्हित पूर्णांक tcon_chan = to_tcon_channel(pwm->hwpwm);
-	अचिन्हित दीर्घ flags;
+static int pwm_samsung_enable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
+	unsigned int tcon_chan = to_tcon_channel(pwm->hwpwm);
+	unsigned long flags;
 	u32 tcon;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = पढ़ोl(our_chip->base + REG_TCON);
+	tcon = readl(our_chip->base + REG_TCON);
 
 	tcon &= ~TCON_START(tcon_chan);
 	tcon |= TCON_MANUALUPDATE(tcon_chan);
-	ग_लिखोl(tcon, our_chip->base + REG_TCON);
+	writel(tcon, our_chip->base + REG_TCON);
 
 	tcon &= ~TCON_MANUALUPDATE(tcon_chan);
 	tcon |= TCON_START(tcon_chan) | TCON_AUTORELOAD(tcon_chan);
-	ग_लिखोl(tcon, our_chip->base + REG_TCON);
+	writel(tcon, our_chip->base + REG_TCON);
 
 	our_chip->disabled_mask &= ~BIT(pwm->hwpwm);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pwm_samsung_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
-	अचिन्हित पूर्णांक tcon_chan = to_tcon_channel(pwm->hwpwm);
-	अचिन्हित दीर्घ flags;
+static void pwm_samsung_disable(struct pwm_chip *chip, struct pwm_device *pwm)
+{
+	struct samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
+	unsigned int tcon_chan = to_tcon_channel(pwm->hwpwm);
+	unsigned long flags;
 	u32 tcon;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = पढ़ोl(our_chip->base + REG_TCON);
+	tcon = readl(our_chip->base + REG_TCON);
 	tcon &= ~TCON_AUTORELOAD(tcon_chan);
-	ग_लिखोl(tcon, our_chip->base + REG_TCON);
+	writel(tcon, our_chip->base + REG_TCON);
 
 	our_chip->disabled_mask |= BIT(pwm->hwpwm);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-पूर्ण
+}
 
-अटल व्योम pwm_samsung_manual_update(काष्ठा samsung_pwm_chip *chip,
-				      काष्ठा pwm_device *pwm)
-अणु
-	अचिन्हित पूर्णांक tcon_chan = to_tcon_channel(pwm->hwpwm);
+static void pwm_samsung_manual_update(struct samsung_pwm_chip *chip,
+				      struct pwm_device *pwm)
+{
+	unsigned int tcon_chan = to_tcon_channel(pwm->hwpwm);
 	u32 tcon;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = पढ़ोl(chip->base + REG_TCON);
+	tcon = readl(chip->base + REG_TCON);
 	tcon |= TCON_MANUALUPDATE(tcon_chan);
-	ग_लिखोl(tcon, chip->base + REG_TCON);
+	writel(tcon, chip->base + REG_TCON);
 
 	tcon &= ~TCON_MANUALUPDATE(tcon_chan);
-	ग_लिखोl(tcon, chip->base + REG_TCON);
+	writel(tcon, chip->base + REG_TCON);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक __pwm_samsung_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-				पूर्णांक duty_ns, पूर्णांक period_ns, bool क्रमce_period)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
-	काष्ठा samsung_pwm_channel *chan = pwm_get_chip_data(pwm);
+static int __pwm_samsung_config(struct pwm_chip *chip, struct pwm_device *pwm,
+				int duty_ns, int period_ns, bool force_period)
+{
+	struct samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
+	struct samsung_pwm_channel *chan = pwm_get_chip_data(pwm);
 	u32 tin_ns = chan->tin_ns, tcnt, tcmp, oldtcmp;
 
 	/*
-	 * We currently aव्योम using 64bit arithmetic by using the
+	 * We currently avoid using 64bit arithmetic by using the
 	 * fact that anything faster than 1Hz is easily representable
 	 * by 32bits.
 	 */
-	अगर (period_ns > NSEC_PER_SEC)
-		वापस -दुस्फल;
+	if (period_ns > NSEC_PER_SEC)
+		return -ERANGE;
 
-	tcnt = पढ़ोl(our_chip->base + REG_TCNTB(pwm->hwpwm));
-	oldtcmp = पढ़ोl(our_chip->base + REG_TCMPB(pwm->hwpwm));
+	tcnt = readl(our_chip->base + REG_TCNTB(pwm->hwpwm));
+	oldtcmp = readl(our_chip->base + REG_TCMPB(pwm->hwpwm));
 
-	/* We need tick count क्रम calculation, not last tick. */
+	/* We need tick count for calculation, not last tick. */
 	++tcnt;
 
-	/* Check to see अगर we are changing the घड़ी rate of the PWM. */
-	अगर (chan->period_ns != period_ns || क्रमce_period) अणु
-		अचिन्हित दीर्घ tin_rate;
+	/* Check to see if we are changing the clock rate of the PWM. */
+	if (chan->period_ns != period_ns || force_period) {
+		unsigned long tin_rate;
 		u32 period;
 
 		period = NSEC_PER_SEC / period_ns;
@@ -338,17 +337,17 @@
 
 		tin_ns = NSEC_PER_SEC / tin_rate;
 		tcnt = period_ns / tin_ns;
-	पूर्ण
+	}
 
-	/* Period is too लघु. */
-	अगर (tcnt <= 1)
-		वापस -दुस्फल;
+	/* Period is too short. */
+	if (tcnt <= 1)
+		return -ERANGE;
 
-	/* Note that counters count करोwn. */
+	/* Note that counters count down. */
 	tcmp = duty_ns / tin_ns;
 
 	/* 0% duty is not available */
-	अगर (!tcmp)
+	if (!tcmp)
 		++tcmp;
 
 	tcmp = tcnt - tcmp;
@@ -361,287 +360,287 @@
 	dev_dbg(our_chip->chip.dev,
 				"tin_ns=%u, tcmp=%u/%u\n", tin_ns, tcmp, tcnt);
 
-	/* Update PWM रेजिस्टरs. */
-	ग_लिखोl(tcnt, our_chip->base + REG_TCNTB(pwm->hwpwm));
-	ग_लिखोl(tcmp, our_chip->base + REG_TCMPB(pwm->hwpwm));
+	/* Update PWM registers. */
+	writel(tcnt, our_chip->base + REG_TCNTB(pwm->hwpwm));
+	writel(tcmp, our_chip->base + REG_TCMPB(pwm->hwpwm));
 
 	/*
-	 * In हाल the PWM is currently at 100% duty cycle, क्रमce a manual
-	 * update to prevent the संकेत staying high अगर the PWM is disabled
-	 * लघुly afer this update (beक्रमe it स्वतःreloaded the new values).
+	 * In case the PWM is currently at 100% duty cycle, force a manual
+	 * update to prevent the signal staying high if the PWM is disabled
+	 * shortly afer this update (before it autoreloaded the new values).
 	 */
-	अगर (oldtcmp == (u32) -1) अणु
+	if (oldtcmp == (u32) -1) {
 		dev_dbg(our_chip->chip.dev, "Forcing manual update");
 		pwm_samsung_manual_update(our_chip, pwm);
-	पूर्ण
+	}
 
 	chan->period_ns = period_ns;
 	chan->tin_ns = tin_ns;
 	chan->duty_ns = duty_ns;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_samsung_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
-			      पूर्णांक duty_ns, पूर्णांक period_ns)
-अणु
-	वापस __pwm_samsung_config(chip, pwm, duty_ns, period_ns, false);
-पूर्ण
+static int pwm_samsung_config(struct pwm_chip *chip, struct pwm_device *pwm,
+			      int duty_ns, int period_ns)
+{
+	return __pwm_samsung_config(chip, pwm, duty_ns, period_ns, false);
+}
 
-अटल व्योम pwm_samsung_set_invert(काष्ठा samsung_pwm_chip *chip,
-				   अचिन्हित पूर्णांक channel, bool invert)
-अणु
-	अचिन्हित पूर्णांक tcon_chan = to_tcon_channel(channel);
-	अचिन्हित दीर्घ flags;
+static void pwm_samsung_set_invert(struct samsung_pwm_chip *chip,
+				   unsigned int channel, bool invert)
+{
+	unsigned int tcon_chan = to_tcon_channel(channel);
+	unsigned long flags;
 	u32 tcon;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = पढ़ोl(chip->base + REG_TCON);
+	tcon = readl(chip->base + REG_TCON);
 
-	अगर (invert) अणु
+	if (invert) {
 		chip->inverter_mask |= BIT(channel);
 		tcon |= TCON_INVERT(tcon_chan);
-	पूर्ण अन्यथा अणु
+	} else {
 		chip->inverter_mask &= ~BIT(channel);
 		tcon &= ~TCON_INVERT(tcon_chan);
-	पूर्ण
+	}
 
-	ग_लिखोl(tcon, chip->base + REG_TCON);
+	writel(tcon, chip->base + REG_TCON);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक pwm_samsung_set_polarity(काष्ठा pwm_chip *chip,
-				    काष्ठा pwm_device *pwm,
-				    क्रमागत pwm_polarity polarity)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
+static int pwm_samsung_set_polarity(struct pwm_chip *chip,
+				    struct pwm_device *pwm,
+				    enum pwm_polarity polarity)
+{
+	struct samsung_pwm_chip *our_chip = to_samsung_pwm_chip(chip);
 	bool invert = (polarity == PWM_POLARITY_NORMAL);
 
 	/* Inverted means normal in the hardware. */
 	pwm_samsung_set_invert(our_chip, pwm->hwpwm, invert);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pwm_ops pwm_samsung_ops = अणु
+static const struct pwm_ops pwm_samsung_ops = {
 	.request	= pwm_samsung_request,
-	.मुक्त		= pwm_samsung_मुक्त,
+	.free		= pwm_samsung_free,
 	.enable		= pwm_samsung_enable,
 	.disable	= pwm_samsung_disable,
 	.config		= pwm_samsung_config,
 	.set_polarity	= pwm_samsung_set_polarity,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा samsung_pwm_variant s3c24xx_variant = अणु
+#ifdef CONFIG_OF
+static const struct samsung_pwm_variant s3c24xx_variant = {
 	.bits		= 16,
-	.भाग_base	= 1,
-	.has_tपूर्णांक_cstat	= false,
+	.div_base	= 1,
+	.has_tint_cstat	= false,
 	.tclk_mask	= BIT(4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pwm_variant s3c64xx_variant = अणु
+static const struct samsung_pwm_variant s3c64xx_variant = {
 	.bits		= 32,
-	.भाग_base	= 0,
-	.has_tपूर्णांक_cstat	= true,
+	.div_base	= 0,
+	.has_tint_cstat	= true,
 	.tclk_mask	= BIT(7) | BIT(6) | BIT(5),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pwm_variant s5p64x0_variant = अणु
+static const struct samsung_pwm_variant s5p64x0_variant = {
 	.bits		= 32,
-	.भाग_base	= 0,
-	.has_tपूर्णांक_cstat	= true,
+	.div_base	= 0,
+	.has_tint_cstat	= true,
 	.tclk_mask	= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pwm_variant s5pc100_variant = अणु
+static const struct samsung_pwm_variant s5pc100_variant = {
 	.bits		= 32,
-	.भाग_base	= 0,
-	.has_tपूर्णांक_cstat	= true,
+	.div_base	= 0,
+	.has_tint_cstat	= true,
 	.tclk_mask	= BIT(5),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id samsung_pwm_matches[] = अणु
-	अणु .compatible = "samsung,s3c2410-pwm", .data = &s3c24xx_variant पूर्ण,
-	अणु .compatible = "samsung,s3c6400-pwm", .data = &s3c64xx_variant पूर्ण,
-	अणु .compatible = "samsung,s5p6440-pwm", .data = &s5p64x0_variant पूर्ण,
-	अणु .compatible = "samsung,s5pc100-pwm", .data = &s5pc100_variant पूर्ण,
-	अणु .compatible = "samsung,exynos4210-pwm", .data = &s5p64x0_variant पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id samsung_pwm_matches[] = {
+	{ .compatible = "samsung,s3c2410-pwm", .data = &s3c24xx_variant },
+	{ .compatible = "samsung,s3c6400-pwm", .data = &s3c64xx_variant },
+	{ .compatible = "samsung,s5p6440-pwm", .data = &s5p64x0_variant },
+	{ .compatible = "samsung,s5pc100-pwm", .data = &s5pc100_variant },
+	{ .compatible = "samsung,exynos4210-pwm", .data = &s5p64x0_variant },
+	{},
+};
 MODULE_DEVICE_TABLE(of, samsung_pwm_matches);
 
-अटल पूर्णांक pwm_samsung_parse_dt(काष्ठा samsung_pwm_chip *chip)
-अणु
-	काष्ठा device_node *np = chip->chip.dev->of_node;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा property *prop;
-	स्थिर __be32 *cur;
+static int pwm_samsung_parse_dt(struct samsung_pwm_chip *chip)
+{
+	struct device_node *np = chip->chip.dev->of_node;
+	const struct of_device_id *match;
+	struct property *prop;
+	const __be32 *cur;
 	u32 val;
 
 	match = of_match_node(samsung_pwm_matches, np);
-	अगर (!match)
-		वापस -ENODEV;
+	if (!match)
+		return -ENODEV;
 
-	स_नकल(&chip->variant, match->data, माप(chip->variant));
+	memcpy(&chip->variant, match->data, sizeof(chip->variant));
 
-	of_property_क्रम_each_u32(np, "samsung,pwm-outputs", prop, cur, val) अणु
-		अगर (val >= SAMSUNG_PWM_NUM) अणु
+	of_property_for_each_u32(np, "samsung,pwm-outputs", prop, cur, val) {
+		if (val >= SAMSUNG_PWM_NUM) {
 			dev_err(chip->chip.dev,
 				"%s: invalid channel index in samsung,pwm-outputs property\n",
 								__func__);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		chip->variant.output_mask |= BIT(val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक pwm_samsung_parse_dt(काष्ठा samsung_pwm_chip *chip)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static int pwm_samsung_parse_dt(struct samsung_pwm_chip *chip)
+{
+	return -ENODEV;
+}
+#endif
 
-अटल पूर्णांक pwm_samsung_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा samsung_pwm_chip *chip;
-	अचिन्हित पूर्णांक chan;
-	पूर्णांक ret;
+static int pwm_samsung_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct samsung_pwm_chip *chip;
+	unsigned int chan;
+	int ret;
 
-	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (chip == शून्य)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (chip == NULL)
+		return -ENOMEM;
 
 	chip->chip.dev = &pdev->dev;
 	chip->chip.ops = &pwm_samsung_ops;
 	chip->chip.npwm = SAMSUNG_PWM_NUM;
 	chip->inverter_mask = BIT(SAMSUNG_PWM_NUM) - 1;
 
-	अगर (IS_ENABLED(CONFIG_OF) && pdev->dev.of_node) अणु
+	if (IS_ENABLED(CONFIG_OF) && pdev->dev.of_node) {
 		ret = pwm_samsung_parse_dt(chip);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		chip->chip.of_xlate = of_pwm_xlate_with_flags;
 		chip->chip.of_pwm_n_cells = 3;
-	पूर्ण अन्यथा अणु
-		अगर (!pdev->dev.platक्रमm_data) अणु
+	} else {
+		if (!pdev->dev.platform_data) {
 			dev_err(&pdev->dev, "no platform data specified\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		स_नकल(&chip->variant, pdev->dev.platक्रमm_data,
-							माप(chip->variant));
-	पूर्ण
+		memcpy(&chip->variant, pdev->dev.platform_data,
+							sizeof(chip->variant));
+	}
 
-	chip->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(chip->base))
-		वापस PTR_ERR(chip->base);
+	chip->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(chip->base))
+		return PTR_ERR(chip->base);
 
 	chip->base_clk = devm_clk_get(&pdev->dev, "timers");
-	अगर (IS_ERR(chip->base_clk)) अणु
+	if (IS_ERR(chip->base_clk)) {
 		dev_err(dev, "failed to get timer base clk\n");
-		वापस PTR_ERR(chip->base_clk);
-	पूर्ण
+		return PTR_ERR(chip->base_clk);
+	}
 
 	ret = clk_prepare_enable(chip->base_clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to enable base clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (chan = 0; chan < SAMSUNG_PWM_NUM; ++chan)
-		अगर (chip->variant.output_mask & BIT(chan))
+	for (chan = 0; chan < SAMSUNG_PWM_NUM; ++chan)
+		if (chip->variant.output_mask & BIT(chan))
 			pwm_samsung_set_invert(chip, chan, true);
 
-	/* Following घड़ीs are optional. */
+	/* Following clocks are optional. */
 	chip->tclk0 = devm_clk_get(&pdev->dev, "pwm-tclk0");
 	chip->tclk1 = devm_clk_get(&pdev->dev, "pwm-tclk1");
 
-	platक्रमm_set_drvdata(pdev, chip);
+	platform_set_drvdata(pdev, chip);
 
 	ret = pwmchip_add(&chip->chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to register PWM chip\n");
 		clk_disable_unprepare(chip->base_clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(dev, "base_clk at %lu, tclk0 at %lu, tclk1 at %lu\n",
 		clk_get_rate(chip->base_clk),
 		!IS_ERR(chip->tclk0) ? clk_get_rate(chip->tclk0) : 0,
 		!IS_ERR(chip->tclk1) ? clk_get_rate(chip->tclk1) : 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pwm_samsung_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा samsung_pwm_chip *chip = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int pwm_samsung_remove(struct platform_device *pdev)
+{
+	struct samsung_pwm_chip *chip = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = pwmchip_हटाओ(&chip->chip);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pwmchip_remove(&chip->chip);
+	if (ret < 0)
+		return ret;
 
 	clk_disable_unprepare(chip->base_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक pwm_samsung_resume(काष्ठा device *dev)
-अणु
-	काष्ठा samsung_pwm_chip *our_chip = dev_get_drvdata(dev);
-	काष्ठा pwm_chip *chip = &our_chip->chip;
-	अचिन्हित पूर्णांक i;
+#ifdef CONFIG_PM_SLEEP
+static int pwm_samsung_resume(struct device *dev)
+{
+	struct samsung_pwm_chip *our_chip = dev_get_drvdata(dev);
+	struct pwm_chip *chip = &our_chip->chip;
+	unsigned int i;
 
-	क्रम (i = 0; i < SAMSUNG_PWM_NUM; i++) अणु
-		काष्ठा pwm_device *pwm = &chip->pwms[i];
-		काष्ठा samsung_pwm_channel *chan = pwm_get_chip_data(pwm);
+	for (i = 0; i < SAMSUNG_PWM_NUM; i++) {
+		struct pwm_device *pwm = &chip->pwms[i];
+		struct samsung_pwm_channel *chan = pwm_get_chip_data(pwm);
 
-		अगर (!chan)
-			जारी;
+		if (!chan)
+			continue;
 
-		अगर (our_chip->variant.output_mask & BIT(i))
+		if (our_chip->variant.output_mask & BIT(i))
 			pwm_samsung_set_invert(our_chip, i,
 					our_chip->inverter_mask & BIT(i));
 
-		अगर (chan->period_ns) अणु
+		if (chan->period_ns) {
 			__pwm_samsung_config(chip, pwm, chan->duty_ns,
 					     chan->period_ns, true);
 			/* needed to make PWM disable work on Odroid-XU3 */
 			pwm_samsung_manual_update(our_chip, pwm);
-		पूर्ण
+		}
 
-		अगर (our_chip->disabled_mask & BIT(i))
+		if (our_chip->disabled_mask & BIT(i))
 			pwm_samsung_disable(chip, pwm);
-		अन्यथा
+		else
 			pwm_samsung_enable(chip, pwm);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(pwm_samsung_pm_ops, शून्य, pwm_samsung_resume);
+static SIMPLE_DEV_PM_OPS(pwm_samsung_pm_ops, NULL, pwm_samsung_resume);
 
-अटल काष्ठा platक्रमm_driver pwm_samsung_driver = अणु
-	.driver		= अणु
+static struct platform_driver pwm_samsung_driver = {
+	.driver		= {
 		.name	= "samsung-pwm",
 		.pm	= &pwm_samsung_pm_ops,
 		.of_match_table = of_match_ptr(samsung_pwm_matches),
-	पूर्ण,
+	},
 	.probe		= pwm_samsung_probe,
-	.हटाओ		= pwm_samsung_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(pwm_samsung_driver);
+	.remove		= pwm_samsung_remove,
+};
+module_platform_driver(pwm_samsung_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Tomasz Figa <tomasz.figa@gmail.com>");

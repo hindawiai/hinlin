@@ -1,376 +1,375 @@
-<शैली गुरु>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <मानकघोष.स>
-#समावेश <sys/sysmacros.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/mman.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/user.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/ptrace.h>
-#समावेश <sys/mount.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/filter.h>
-#समावेश <linux/seccomp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stddef.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/user.h>
+#include <sys/ioctl.h>
+#include <sys/ptrace.h>
+#include <sys/mount.h>
+#include <linux/limits.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>
 
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप(*(x)))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
-अटल पूर्णांक seccomp(अचिन्हित पूर्णांक op, अचिन्हित पूर्णांक flags, व्योम *args)
-अणु
-	त्रुटि_सं = 0;
-	वापस syscall(__NR_seccomp, op, flags, args);
-पूर्ण
+static int seccomp(unsigned int op, unsigned int flags, void *args)
+{
+	errno = 0;
+	return syscall(__NR_seccomp, op, flags, args);
+}
 
-अटल पूर्णांक send_fd(पूर्णांक sock, पूर्णांक fd)
-अणु
-	काष्ठा msghdr msg = अणुपूर्ण;
-	काष्ठा cmsghdr *cmsg;
-	अक्षर buf[CMSG_SPACE(माप(पूर्णांक))] = अणु0पूर्ण, c = 'c';
-	काष्ठा iovec io = अणु
+static int send_fd(int sock, int fd)
+{
+	struct msghdr msg = {};
+	struct cmsghdr *cmsg;
+	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+	struct iovec io = {
 		.iov_base = &c,
 		.iov_len = 1,
-	पूर्ण;
+	};
 
 	msg.msg_iov = &io;
 	msg.msg_iovlen = 1;
 	msg.msg_control = buf;
-	msg.msg_controllen = माप(buf);
+	msg.msg_controllen = sizeof(buf);
 	cmsg = CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
-	cmsg->cmsg_len = CMSG_LEN(माप(पूर्णांक));
-	*((पूर्णांक *)CMSG_DATA(cmsg)) = fd;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	*((int *)CMSG_DATA(cmsg)) = fd;
 	msg.msg_controllen = cmsg->cmsg_len;
 
-	अगर (sendmsg(sock, &msg, 0) < 0) अणु
-		लिखो_त्रुटि("sendmsg");
-		वापस -1;
-	पूर्ण
+	if (sendmsg(sock, &msg, 0) < 0) {
+		perror("sendmsg");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक recv_fd(पूर्णांक sock)
-अणु
-	काष्ठा msghdr msg = अणुपूर्ण;
-	काष्ठा cmsghdr *cmsg;
-	अक्षर buf[CMSG_SPACE(माप(पूर्णांक))] = अणु0पूर्ण, c = 'c';
-	काष्ठा iovec io = अणु
+static int recv_fd(int sock)
+{
+	struct msghdr msg = {};
+	struct cmsghdr *cmsg;
+	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+	struct iovec io = {
 		.iov_base = &c,
 		.iov_len = 1,
-	पूर्ण;
+	};
 
 	msg.msg_iov = &io;
 	msg.msg_iovlen = 1;
 	msg.msg_control = buf;
-	msg.msg_controllen = माप(buf);
+	msg.msg_controllen = sizeof(buf);
 
-	अगर (recvmsg(sock, &msg, 0) < 0) अणु
-		लिखो_त्रुटि("recvmsg");
-		वापस -1;
-	पूर्ण
+	if (recvmsg(sock, &msg, 0) < 0) {
+		perror("recvmsg");
+		return -1;
+	}
 
 	cmsg = CMSG_FIRSTHDR(&msg);
 
-	वापस *((पूर्णांक *)CMSG_DATA(cmsg));
-पूर्ण
+	return *((int *)CMSG_DATA(cmsg));
+}
 
-अटल पूर्णांक user_trap_syscall(पूर्णांक nr, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा sock_filter filter[] = अणु
+static int user_trap_syscall(int nr, unsigned int flags)
+{
+	struct sock_filter filter[] = {
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
-			दुरत्व(काष्ठा seccomp_data, nr)),
+			offsetof(struct seccomp_data, nr)),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
 		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
 		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
-	पूर्ण;
+	};
 
-	काष्ठा sock_fprog prog = अणु
-		.len = (अचिन्हित लघु)ARRAY_SIZE(filter),
+	struct sock_fprog prog = {
+		.len = (unsigned short)ARRAY_SIZE(filter),
 		.filter = filter,
-	पूर्ण;
+	};
 
-	वापस seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
-पूर्ण
+	return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
+}
 
-अटल पूर्णांक handle_req(काष्ठा seccomp_notअगर *req,
-		      काष्ठा seccomp_notअगर_resp *resp, पूर्णांक listener)
-अणु
-	अक्षर path[PATH_MAX], source[PATH_MAX], target[PATH_MAX];
-	पूर्णांक ret = -1, mem;
+static int handle_req(struct seccomp_notif *req,
+		      struct seccomp_notif_resp *resp, int listener)
+{
+	char path[PATH_MAX], source[PATH_MAX], target[PATH_MAX];
+	int ret = -1, mem;
 
 	resp->id = req->id;
 	resp->error = -EPERM;
 	resp->val = 0;
 
-	अगर (req->data.nr != __NR_mount) अणु
-		ख_लिखो(मानक_त्रुटि, "huh? trapped something besides mount? %d\n", req->data.nr);
-		वापस -1;
-	पूर्ण
+	if (req->data.nr != __NR_mount) {
+		fprintf(stderr, "huh? trapped something besides mount? %d\n", req->data.nr);
+		return -1;
+	}
 
 	/* Only allow bind mounts. */
-	अगर (!(req->data.args[3] & MS_BIND))
-		वापस 0;
+	if (!(req->data.args[3] & MS_BIND))
+		return 0;
 
 	/*
 	 * Ok, let's read the task's memory to see where they wanted their
 	 * mount to go.
 	 */
-	snम_लिखो(path, माप(path), "/proc/%d/mem", req->pid);
-	mem = खोलो(path, O_RDONLY);
-	अगर (mem < 0) अणु
-		लिखो_त्रुटि("open mem");
-		वापस -1;
-	पूर्ण
+	snprintf(path, sizeof(path), "/proc/%d/mem", req->pid);
+	mem = open(path, O_RDONLY);
+	if (mem < 0) {
+		perror("open mem");
+		return -1;
+	}
 
 	/*
-	 * Now we aव्योम a TOCTOU: we referred to a pid by its pid, but since
+	 * Now we avoid a TOCTOU: we referred to a pid by its pid, but since
 	 * the pid that made the syscall may have died, we need to confirm that
-	 * the pid is still valid after we खोलो its /proc/pid/mem file. We can
+	 * the pid is still valid after we open its /proc/pid/mem file. We can
 	 * ask the listener fd this as follows.
 	 *
-	 * Note that this check should occur *after* any task-specअगरic
-	 * resources are खोलोed, to make sure that the task has not died and
+	 * Note that this check should occur *after* any task-specific
+	 * resources are opened, to make sure that the task has not died and
 	 * we're not wrongly reading someone else's state in order to make
 	 * decisions.
 	 */
-	अगर (ioctl(listener, SECCOMP_IOCTL_NOTIF_ID_VALID, &req->id) < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "task died before we could map its memory\n");
-		जाओ out;
-	पूर्ण
+	if (ioctl(listener, SECCOMP_IOCTL_NOTIF_ID_VALID, &req->id) < 0) {
+		fprintf(stderr, "task died before we could map its memory\n");
+		goto out;
+	}
 
 	/*
-	 * Phew, we've got the right /proc/pid/mem. Now we can पढ़ो it. Note
-	 * that to aव्योम another TOCTOU, we should पढ़ो all of the poपूर्णांकer args
-	 * beक्रमe we decide to allow the syscall.
+	 * Phew, we've got the right /proc/pid/mem. Now we can read it. Note
+	 * that to avoid another TOCTOU, we should read all of the pointer args
+	 * before we decide to allow the syscall.
 	 */
-	अगर (lseek(mem, req->data.args[0], शुरू_से) < 0) अणु
-		लिखो_त्रुटि("seek");
-		जाओ out;
-	पूर्ण
+	if (lseek(mem, req->data.args[0], SEEK_SET) < 0) {
+		perror("seek");
+		goto out;
+	}
 
-	ret = पढ़ो(mem, source, माप(source));
-	अगर (ret < 0) अणु
-		लिखो_त्रुटि("read");
-		जाओ out;
-	पूर्ण
+	ret = read(mem, source, sizeof(source));
+	if (ret < 0) {
+		perror("read");
+		goto out;
+	}
 
-	अगर (lseek(mem, req->data.args[1], शुरू_से) < 0) अणु
-		लिखो_त्रुटि("seek");
-		जाओ out;
-	पूर्ण
+	if (lseek(mem, req->data.args[1], SEEK_SET) < 0) {
+		perror("seek");
+		goto out;
+	}
 
-	ret = पढ़ो(mem, target, माप(target));
-	अगर (ret < 0) अणु
-		लिखो_त्रुटि("read");
-		जाओ out;
-	पूर्ण
+	ret = read(mem, target, sizeof(target));
+	if (ret < 0) {
+		perror("read");
+		goto out;
+	}
 
 	/*
-	 * Our policy is to only allow bind mounts inside /पंचांगp. This isn't very
-	 * पूर्णांकeresting, because we could करो unprivlieged bind mounts with user
-	 * namespaces alपढ़ोy, but you get the idea.
+	 * Our policy is to only allow bind mounts inside /tmp. This isn't very
+	 * interesting, because we could do unprivlieged bind mounts with user
+	 * namespaces already, but you get the idea.
 	 */
-	अगर (!म_भेदन(source, "/tmp/", 5) && !म_भेदन(target, "/tmp/", 5)) अणु
-		अगर (mount(source, target, शून्य, req->data.args[3], शून्य) < 0) अणु
+	if (!strncmp(source, "/tmp/", 5) && !strncmp(target, "/tmp/", 5)) {
+		if (mount(source, target, NULL, req->data.args[3], NULL) < 0) {
 			ret = -1;
-			लिखो_त्रुटि("actual mount");
-			जाओ out;
-		पूर्ण
+			perror("actual mount");
+			goto out;
+		}
 		resp->error = 0;
-	पूर्ण
+	}
 
-	/* Even अगर we didn't allow it because of policy, generating the
+	/* Even if we didn't allow it because of policy, generating the
 	 * response was be a success, because we want to tell the worker EPERM.
 	 */
 	ret = 0;
 
 out:
-	बंद(mem);
-	वापस ret;
-पूर्ण
+	close(mem);
+	return ret;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक sk_pair[2], ret = 1, status, listener;
+int main(void)
+{
+	int sk_pair[2], ret = 1, status, listener;
 	pid_t worker = 0 , tracer = 0;
 
-	अगर (socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair) < 0) अणु
-		लिखो_त्रुटि("socketpair");
-		वापस 1;
-	पूर्ण
+	if (socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair) < 0) {
+		perror("socketpair");
+		return 1;
+	}
 
-	worker = विभाजन();
-	अगर (worker < 0) अणु
-		लिखो_त्रुटि("fork");
-		जाओ बंद_pair;
-	पूर्ण
+	worker = fork();
+	if (worker < 0) {
+		perror("fork");
+		goto close_pair;
+	}
 
-	अगर (worker == 0) अणु
+	if (worker == 0) {
 		listener = user_trap_syscall(__NR_mount,
 					     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-		अगर (listener < 0) अणु
-			लिखो_त्रुटि("seccomp");
-			निकास(1);
-		पूर्ण
+		if (listener < 0) {
+			perror("seccomp");
+			exit(1);
+		}
 
 		/*
 		 * Drop privileges. We definitely can't mount as uid 1000.
 		 */
-		अगर (setuid(1000) < 0) अणु
-			लिखो_त्रुटि("setuid");
-			निकास(1);
-		पूर्ण
+		if (setuid(1000) < 0) {
+			perror("setuid");
+			exit(1);
+		}
 
 		/*
 		 * Send the listener to the parent; also serves as
 		 * synchronization.
 		 */
-		अगर (send_fd(sk_pair[1], listener) < 0)
-			निकास(1);
-		बंद(listener);
+		if (send_fd(sk_pair[1], listener) < 0)
+			exit(1);
+		close(listener);
 
-		अगर (सूची_गढ़ो("/tmp/foo", 0755) < 0) अणु
-			लिखो_त्रुटि("mkdir");
-			निकास(1);
-		पूर्ण
+		if (mkdir("/tmp/foo", 0755) < 0) {
+			perror("mkdir");
+			exit(1);
+		}
 
 		/*
-		 * Try a bad mount just क्रम grins.
+		 * Try a bad mount just for grins.
 		 */
-		अगर (mount("/dev/sda", "/tmp/foo", शून्य, 0, शून्य) != -1) अणु
-			ख_लिखो(मानक_त्रुटि, "huh? mounted /dev/sda?\n");
-			निकास(1);
-		पूर्ण
+		if (mount("/dev/sda", "/tmp/foo", NULL, 0, NULL) != -1) {
+			fprintf(stderr, "huh? mounted /dev/sda?\n");
+			exit(1);
+		}
 
-		अगर (त्रुटि_सं != EPERM) अणु
-			लिखो_त्रुटि("bad error from mount");
-			निकास(1);
-		पूर्ण
+		if (errno != EPERM) {
+			perror("bad error from mount");
+			exit(1);
+		}
 
 		/*
 		 * Ok, we expect this one to succeed.
 		 */
-		अगर (mount("/tmp/foo", "/tmp/foo", शून्य, MS_BIND, शून्य) < 0) अणु
-			लिखो_त्रुटि("mount");
-			निकास(1);
-		पूर्ण
+		if (mount("/tmp/foo", "/tmp/foo", NULL, MS_BIND, NULL) < 0) {
+			perror("mount");
+			exit(1);
+		}
 
-		निकास(0);
-	पूर्ण
+		exit(0);
+	}
 
 	/*
 	 * Get the listener from the child.
 	 */
 	listener = recv_fd(sk_pair[0]);
-	अगर (listener < 0)
-		जाओ out_समाप्त;
+	if (listener < 0)
+		goto out_kill;
 
 	/*
 	 * Fork a task to handle the requests. This isn't strictly necessary,
 	 * but it makes the particular writing of this sample easier, since we
-	 * can just रुको ofr the tracee to निकास and समाप्त the tracer.
+	 * can just wait ofr the tracee to exit and kill the tracer.
 	 */
-	tracer = विभाजन();
-	अगर (tracer < 0) अणु
-		लिखो_त्रुटि("fork");
-		जाओ out_समाप्त;
-	पूर्ण
+	tracer = fork();
+	if (tracer < 0) {
+		perror("fork");
+		goto out_kill;
+	}
 
-	अगर (tracer == 0) अणु
-		काष्ठा seccomp_notअगर *req;
-		काष्ठा seccomp_notअगर_resp *resp;
-		काष्ठा seccomp_notअगर_sizes sizes;
+	if (tracer == 0) {
+		struct seccomp_notif *req;
+		struct seccomp_notif_resp *resp;
+		struct seccomp_notif_sizes sizes;
 
-		अगर (seccomp(SECCOMP_GET_NOTIF_SIZES, 0, &sizes) < 0) अणु
-			लिखो_त्रुटि("seccomp(GET_NOTIF_SIZES)");
-			जाओ out_बंद;
-		पूर्ण
+		if (seccomp(SECCOMP_GET_NOTIF_SIZES, 0, &sizes) < 0) {
+			perror("seccomp(GET_NOTIF_SIZES)");
+			goto out_close;
+		}
 
-		req = दो_स्मृति(sizes.seccomp_notअगर);
-		अगर (!req)
-			जाओ out_बंद;
+		req = malloc(sizes.seccomp_notif);
+		if (!req)
+			goto out_close;
 
-		resp = दो_स्मृति(sizes.seccomp_notअगर_resp);
-		अगर (!resp)
-			जाओ out_req;
-		स_रखो(resp, 0, sizes.seccomp_notअगर_resp);
+		resp = malloc(sizes.seccomp_notif_resp);
+		if (!resp)
+			goto out_req;
+		memset(resp, 0, sizes.seccomp_notif_resp);
 
-		जबतक (1) अणु
-			स_रखो(req, 0, sizes.seccomp_notअगर);
-			अगर (ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, req)) अणु
-				लिखो_त्रुटि("ioctl recv");
-				जाओ out_resp;
-			पूर्ण
+		while (1) {
+			memset(req, 0, sizes.seccomp_notif);
+			if (ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, req)) {
+				perror("ioctl recv");
+				goto out_resp;
+			}
 
-			अगर (handle_req(req, resp, listener) < 0)
-				जाओ out_resp;
+			if (handle_req(req, resp, listener) < 0)
+				goto out_resp;
 
 			/*
 			 * ENOENT here means that the task may have gotten a
-			 * संकेत and restarted the syscall. It's up to the
-			 * handler to decide what to करो in this हाल, but क्रम
+			 * signal and restarted the syscall. It's up to the
+			 * handler to decide what to do in this case, but for
 			 * the sample code, we just ignore it. Probably
-			 * something better should happen, like unकरोing the
+			 * something better should happen, like undoing the
 			 * mount, or keeping track of the args to make sure we
-			 * करोn't करो it again.
+			 * don't do it again.
 			 */
-			अगर (ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, resp) < 0 &&
-			    त्रुटि_सं != ENOENT) अणु
-				लिखो_त्रुटि("ioctl send");
-				जाओ out_resp;
-			पूर्ण
-		पूर्ण
+			if (ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, resp) < 0 &&
+			    errno != ENOENT) {
+				perror("ioctl send");
+				goto out_resp;
+			}
+		}
 out_resp:
-		मुक्त(resp);
+		free(resp);
 out_req:
-		मुक्त(req);
-out_बंद:
-		बंद(listener);
-		निकास(1);
-	पूर्ण
+		free(req);
+out_close:
+		close(listener);
+		exit(1);
+	}
 
-	बंद(listener);
+	close(listener);
 
-	अगर (रुकोpid(worker, &status, 0) != worker) अणु
-		लिखो_त्रुटि("waitpid");
-		जाओ out_समाप्त;
-	पूर्ण
+	if (waitpid(worker, &status, 0) != worker) {
+		perror("waitpid");
+		goto out_kill;
+	}
 
-	अगर (umount2("/tmp/foo", MNT_DETACH) < 0 && त्रुटि_सं != EINVAL) अणु
-		लिखो_त्रुटि("umount2");
-		जाओ out_समाप्त;
-	पूर्ण
+	if (umount2("/tmp/foo", MNT_DETACH) < 0 && errno != EINVAL) {
+		perror("umount2");
+		goto out_kill;
+	}
 
-	अगर (हटाओ("/tmp/foo") < 0 && त्रुटि_सं != ENOENT) अणु
-		लिखो_त्रुटि("remove");
-		निकास(1);
-	पूर्ण
+	if (remove("/tmp/foo") < 0 && errno != ENOENT) {
+		perror("remove");
+		exit(1);
+	}
 
-	अगर (!WIFEXITED(status) || WEXITSTATUS(status)) अणु
-		ख_लिखो(मानक_त्रुटि, "worker exited nonzero\n");
-		जाओ out_समाप्त;
-	पूर्ण
+	if (!WIFEXITED(status) || WEXITSTATUS(status)) {
+		fprintf(stderr, "worker exited nonzero\n");
+		goto out_kill;
+	}
 
 	ret = 0;
 
-out_समाप्त:
-	अगर (tracer > 0)
-		समाप्त(tracer, SIGKILL);
-	अगर (worker > 0)
-		समाप्त(worker, SIGKILL);
+out_kill:
+	if (tracer > 0)
+		kill(tracer, SIGKILL);
+	if (worker > 0)
+		kill(worker, SIGKILL);
 
-बंद_pair:
-	बंद(sk_pair[0]);
-	बंद(sk_pair[1]);
-	वापस ret;
-पूर्ण
+close_pair:
+	close(sk_pair[0]);
+	close(sk_pair[1]);
+	return ret;
+}

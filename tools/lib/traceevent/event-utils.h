@@ -1,68 +1,67 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: LGPL-2.1 */
+/* SPDX-License-Identifier: LGPL-2.1 */
 /*
  * Copyright (C) 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#अगर_अघोषित __UTIL_H
-#घोषणा __UTIL_H
+#ifndef __UTIL_H
+#define __UTIL_H
 
-#समावेश <प्रकार.स>
+#include <ctype.h>
 
 /* Can be overridden */
-व्योम warning(स्थिर अक्षर *fmt, ...);
-व्योम pr_stat(स्थिर अक्षर *fmt, ...);
-व्योम vpr_stat(स्थिर अक्षर *fmt, बहु_सूची ap);
+void warning(const char *fmt, ...);
+void pr_stat(const char *fmt, ...);
+void vpr_stat(const char *fmt, va_list ap);
 
 /* Always available */
-व्योम __warning(स्थिर अक्षर *fmt, ...);
-व्योम __pr_stat(स्थिर अक्षर *fmt, ...);
+void __warning(const char *fmt, ...);
+void __pr_stat(const char *fmt, ...);
 
-व्योम __vwarning(स्थिर अक्षर *fmt, ...);
-व्योम __vpr_stat(स्थिर अक्षर *fmt, ...);
+void __vwarning(const char *fmt, ...);
+void __vpr_stat(const char *fmt, ...);
 
-#घोषणा min(x, y) (अणु				\
+#define min(x, y) ({				\
 	typeof(x) _min1 = (x);			\
 	typeof(y) _min2 = (y);			\
-	(व्योम) (&_min1 == &_min2);		\
-	_min1 < _min2 ? _min1 : _min2; पूर्ण)
+	(void) (&_min1 == &_min2);		\
+	_min1 < _min2 ? _min1 : _min2; })
 
-अटल अंतरभूत अक्षर *strim(अक्षर *string)
-अणु
-	अक्षर *ret;
+static inline char *strim(char *string)
+{
+	char *ret;
 
-	अगर (!string)
-		वापस शून्य;
-	जबतक (*string) अणु
-		अगर (!है_खाली(*string))
-			अवरोध;
+	if (!string)
+		return NULL;
+	while (*string) {
+		if (!isspace(*string))
+			break;
 		string++;
-	पूर्ण
+	}
 	ret = string;
 
-	string = ret + म_माप(ret) - 1;
-	जबतक (string > ret) अणु
-		अगर (!है_खाली(*string))
-			अवरोध;
+	string = ret + strlen(ret) - 1;
+	while (string > ret) {
+		if (!isspace(*string))
+			break;
 		string--;
-	पूर्ण
+	}
 	string[1] = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक has_text(स्थिर अक्षर *text)
-अणु
-	अगर (!text)
-		वापस 0;
+static inline int has_text(const char *text)
+{
+	if (!text)
+		return 0;
 
-	जबतक (*text) अणु
-		अगर (!है_खाली(*text))
-			वापस 1;
+	while (*text) {
+		if (!isspace(*text))
+			return 1;
 		text++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

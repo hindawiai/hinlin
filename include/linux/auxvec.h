@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_AUXVEC_H
-#घोषणा _LINUX_AUXVEC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_AUXVEC_H
+#define _LINUX_AUXVEC_H
 
-#समावेश <uapi/linux/auxvec.h>
+#include <uapi/linux/auxvec.h>
 
-#घोषणा AT_VECTOR_SIZE_BASE 20 /* NEW_AUX_ENT entries in auxiliary table */
-  /* number of "#define AT_.*" above, minus अणुAT_शून्य, AT_IGNORE, AT_NOTELFपूर्ण */
-#पूर्ण_अगर /* _LINUX_AUXVEC_H */
+#define AT_VECTOR_SIZE_BASE 20 /* NEW_AUX_ENT entries in auxiliary table */
+  /* number of "#define AT_.*" above, minus {AT_NULL, AT_IGNORE, AT_NOTELF} */
+#endif /* _LINUX_AUXVEC_H */

@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *   Low-level ALSA driver क्रम the ENSONIQ SoundScape
+ *   Low-level ALSA driver for the ENSONIQ SoundScape
  *   Copyright (c) by Chris Rankin
  *
- *   This driver was written in part using inक्रमmation obtained from
+ *   This driver was written in part using information obtained from
  *   the OSS/Free SoundScape driver, written by Hannu Savolainen.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/isa.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <sound/core.h>
-#समावेश <sound/wss.h>
-#समावेश <sound/mpu401.h>
-#समावेश <sound/initval.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/isa.h>
+#include <linux/delay.h>
+#include <linux/firmware.h>
+#include <linux/pnp.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <asm/dma.h>
+#include <sound/core.h>
+#include <sound/wss.h>
+#include <sound/mpu401.h>
+#include <sound/initval.h>
 
 
 MODULE_AUTHOR("Chris Rankin");
@@ -34,79 +33,79 @@ MODULE_FIRMWARE("sndscape.co3");
 MODULE_FIRMWARE("sndscape.co4");
 MODULE_FIRMWARE("scope.cod");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-अटल अक्षर* id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-अटल दीर्घ wss_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
-अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
-अटल पूर्णांक dma[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
-अटल पूर्णांक dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
-अटल bool joystick[SNDRV_CARDS];
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+static char* id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+static long wss_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+static int dma[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
+static int dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
+static bool joystick[SNDRV_CARDS];
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index number for SoundScape soundcard");
 
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "Description for SoundScape card");
 
-module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(port, "Port # for SoundScape driver.");
 
-module_param_hw_array(wss_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(wss_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(wss_port, "WSS Port # for SoundScape driver.");
 
-module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(irq, int, irq, NULL, 0444);
 MODULE_PARM_DESC(irq, "IRQ # for SoundScape driver.");
 
-module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
 MODULE_PARM_DESC(mpu_irq, "MPU401 IRQ # for SoundScape driver.");
 
-module_param_hw_array(dma, पूर्णांक, dma, शून्य, 0444);
+module_param_hw_array(dma, int, dma, NULL, 0444);
 MODULE_PARM_DESC(dma, "DMA # for SoundScape driver.");
 
-module_param_hw_array(dma2, पूर्णांक, dma, शून्य, 0444);
+module_param_hw_array(dma2, int, dma, NULL, 0444);
 MODULE_PARM_DESC(dma2, "DMA2 # for SoundScape driver.");
 
-module_param_array(joystick, bool, शून्य, 0444);
+module_param_array(joystick, bool, NULL, 0444);
 MODULE_PARM_DESC(joystick, "Enable gameport.");
 
-#अगर_घोषित CONFIG_PNP
-अटल पूर्णांक isa_रेजिस्टरed;
-अटल पूर्णांक pnp_रेजिस्टरed;
+#ifdef CONFIG_PNP
+static int isa_registered;
+static int pnp_registered;
 
-अटल स्थिर काष्ठा pnp_card_device_id sscape_pnpids[] = अणु
-	अणु .id = "ENS3081", .devs = अणु अणु "ENS0000" पूर्ण पूर्ण पूर्ण, /* Soundscape PnP */
-	अणु .id = "ENS4081", .devs = अणु अणु "ENS1011" पूर्ण पूर्ण पूर्ण,	/* VIVO90 */
-	अणु .id = "" पूर्ण	/* end */
-पूर्ण;
+static const struct pnp_card_device_id sscape_pnpids[] = {
+	{ .id = "ENS3081", .devs = { { "ENS0000" } } }, /* Soundscape PnP */
+	{ .id = "ENS4081", .devs = { { "ENS1011" } } },	/* VIVO90 */
+	{ .id = "" }	/* end */
+};
 
 MODULE_DEVICE_TABLE(pnp_card, sscape_pnpids);
-#पूर्ण_अगर
+#endif
 
 
-#घोषणा HOST_CTRL_IO(i)  ((i) + 2)
-#घोषणा HOST_DATA_IO(i)  ((i) + 3)
-#घोषणा ODIE_ADDR_IO(i)  ((i) + 4)
-#घोषणा ODIE_DATA_IO(i)  ((i) + 5)
-#घोषणा CODEC_IO(i)      ((i) + 8)
+#define HOST_CTRL_IO(i)  ((i) + 2)
+#define HOST_DATA_IO(i)  ((i) + 3)
+#define ODIE_ADDR_IO(i)  ((i) + 4)
+#define ODIE_DATA_IO(i)  ((i) + 5)
+#define CODEC_IO(i)      ((i) + 8)
 
-#घोषणा IC_ODIE  1
-#घोषणा IC_OPUS  2
+#define IC_ODIE  1
+#define IC_OPUS  2
 
-#घोषणा RX_READY 0x01
-#घोषणा TX_READY 0x02
+#define RX_READY 0x01
+#define TX_READY 0x02
 
-#घोषणा CMD_ACK			0x80
-#घोषणा CMD_SET_MIDI_VOL	0x84
-#घोषणा CMD_GET_MIDI_VOL	0x85
-#घोषणा CMD_XXX_MIDI_VOL	0x86
-#घोषणा CMD_SET_EXTMIDI		0x8a
-#घोषणा CMD_GET_EXTMIDI		0x8b
-#घोषणा CMD_SET_MT32		0x8c
-#घोषणा CMD_GET_MT32		0x8d
+#define CMD_ACK			0x80
+#define CMD_SET_MIDI_VOL	0x84
+#define CMD_GET_MIDI_VOL	0x85
+#define CMD_XXX_MIDI_VOL	0x86
+#define CMD_SET_EXTMIDI		0x8a
+#define CMD_GET_EXTMIDI		0x8b
+#define CMD_SET_MT32		0x8c
+#define CMD_GET_MT32		0x8d
 
-क्रमागत GA_REG अणु
+enum GA_REG {
 	GA_INTSTAT_REG = 0,
 	GA_INTENA_REG,
 	GA_DMAA_REG,
@@ -117,370 +116,370 @@ MODULE_DEVICE_TABLE(pnp_card, sscape_pnpids);
 	GA_SMCFGA_REG,
 	GA_SMCFGB_REG,
 	GA_HMCTL_REG
-पूर्ण;
+};
 
-#घोषणा DMA_8BIT  0x80
+#define DMA_8BIT  0x80
 
 
-क्रमागत card_type अणु
+enum card_type {
 	MEDIA_FX,	/* Sequoia S-1000 */
 	SSCAPE,		/* Sequoia S-2000 */
 	SSCAPE_PNP,
 	SSCAPE_VIVO,
-पूर्ण;
+};
 
-काष्ठा soundscape अणु
+struct soundscape {
 	spinlock_t lock;
-	अचिन्हित io_base;
-	पूर्णांक ic_type;
-	क्रमागत card_type type;
-	काष्ठा resource *io_res;
-	काष्ठा resource *wss_res;
-	काष्ठा snd_wss *chip;
+	unsigned io_base;
+	int ic_type;
+	enum card_type type;
+	struct resource *io_res;
+	struct resource *wss_res;
+	struct snd_wss *chip;
 
-	अचिन्हित अक्षर midi_vol;
-पूर्ण;
+	unsigned char midi_vol;
+};
 
-#घोषणा INVALID_IRQ  ((अचिन्हित)-1)
+#define INVALID_IRQ  ((unsigned)-1)
 
 
-अटल अंतरभूत काष्ठा soundscape *get_card_soundscape(काष्ठा snd_card *c)
-अणु
-	वापस (काष्ठा soundscape *) (c->निजी_data);
-पूर्ण
+static inline struct soundscape *get_card_soundscape(struct snd_card *c)
+{
+	return (struct soundscape *) (c->private_data);
+}
 
 /*
- * Allocates some kernel memory that we can use क्रम DMA.
+ * Allocates some kernel memory that we can use for DMA.
  * I think this means that the memory has to map to
  * contiguous pages of physical memory.
  */
-अटल काष्ठा snd_dma_buffer *get_dmabuf(काष्ठा soundscape *s,
-					 काष्ठा snd_dma_buffer *buf,
-					 अचिन्हित दीर्घ size)
-अणु
-	अगर (buf) अणु
-		अगर (snd_dma_alloc_pages_fallback(SNDRV_DMA_TYPE_DEV,
+static struct snd_dma_buffer *get_dmabuf(struct soundscape *s,
+					 struct snd_dma_buffer *buf,
+					 unsigned long size)
+{
+	if (buf) {
+		if (snd_dma_alloc_pages_fallback(SNDRV_DMA_TYPE_DEV,
 						 s->chip->card->dev,
-						 size, buf) < 0) अणु
-			snd_prपूर्णांकk(KERN_ERR "sscape: Failed to allocate "
+						 size, buf) < 0) {
+			snd_printk(KERN_ERR "sscape: Failed to allocate "
 					    "%lu bytes for DMA\n",
 					    size);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			return NULL;
+		}
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /*
  * Release the DMA-able kernel memory ...
  */
-अटल व्योम मुक्त_dmabuf(काष्ठा snd_dma_buffer *buf)
-अणु
-	अगर (buf && buf->area)
-		snd_dma_मुक्त_pages(buf);
-पूर्ण
+static void free_dmabuf(struct snd_dma_buffer *buf)
+{
+	if (buf && buf->area)
+		snd_dma_free_pages(buf);
+}
 
 /*
- * This function ग_लिखोs to the SoundScape's control रेजिस्टरs,
- * but करोesn't do any locking. It's up to the caller to करो that.
+ * This function writes to the SoundScape's control registers,
+ * but doesn't do any locking. It's up to the caller to do that.
  * This is why this function is "unsafe" ...
  */
-अटल अंतरभूत व्योम sscape_ग_लिखो_unsafe(अचिन्हित io_base, क्रमागत GA_REG reg,
-				       अचिन्हित अक्षर val)
-अणु
+static inline void sscape_write_unsafe(unsigned io_base, enum GA_REG reg,
+				       unsigned char val)
+{
 	outb(reg, ODIE_ADDR_IO(io_base));
 	outb(val, ODIE_DATA_IO(io_base));
-पूर्ण
+}
 
 /*
- * Write to the SoundScape's control रेजिस्टरs, and करो the
+ * Write to the SoundScape's control registers, and do the
  * necessary locking ...
  */
-अटल व्योम sscape_ग_लिखो(काष्ठा soundscape *s, क्रमागत GA_REG reg,
-			 अचिन्हित अक्षर val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void sscape_write(struct soundscape *s, enum GA_REG reg,
+			 unsigned char val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->lock, flags);
-	sscape_ग_लिखो_unsafe(s->io_base, reg, val);
+	sscape_write_unsafe(s->io_base, reg, val);
 	spin_unlock_irqrestore(&s->lock, flags);
-पूर्ण
+}
 
 /*
- * Read from the SoundScape's control रेजिस्टरs, but leave any
+ * Read from the SoundScape's control registers, but leave any
  * locking to the caller. This is why the function is "unsafe" ...
  */
-अटल अंतरभूत अचिन्हित अक्षर sscape_पढ़ो_unsafe(अचिन्हित io_base,
-					       क्रमागत GA_REG reg)
-अणु
+static inline unsigned char sscape_read_unsafe(unsigned io_base,
+					       enum GA_REG reg)
+{
 	outb(reg, ODIE_ADDR_IO(io_base));
-	वापस inb(ODIE_DATA_IO(io_base));
-पूर्ण
+	return inb(ODIE_DATA_IO(io_base));
+}
 
 /*
- * Puts the SoundScape पूर्णांकo "host" mode, as compared to "MIDI" mode
+ * Puts the SoundScape into "host" mode, as compared to "MIDI" mode
  */
-अटल अंतरभूत व्योम set_host_mode_unsafe(अचिन्हित io_base)
-अणु
+static inline void set_host_mode_unsafe(unsigned io_base)
+{
 	outb(0x0, HOST_CTRL_IO(io_base));
-पूर्ण
+}
 
 /*
- * Puts the SoundScape पूर्णांकo "MIDI" mode, as compared to "host" mode
+ * Puts the SoundScape into "MIDI" mode, as compared to "host" mode
  */
-अटल अंतरभूत व्योम set_midi_mode_unsafe(अचिन्हित io_base)
-अणु
+static inline void set_midi_mode_unsafe(unsigned io_base)
+{
 	outb(0x3, HOST_CTRL_IO(io_base));
-पूर्ण
+}
 
 /*
- * Read the SoundScape's host-mode control रेजिस्टर, but leave
+ * Read the SoundScape's host-mode control register, but leave
  * any locking issues to the caller ...
  */
-अटल अंतरभूत पूर्णांक host_पढ़ो_unsafe(अचिन्हित io_base)
-अणु
-	पूर्णांक data = -1;
-	अगर ((inb(HOST_CTRL_IO(io_base)) & RX_READY) != 0)
+static inline int host_read_unsafe(unsigned io_base)
+{
+	int data = -1;
+	if ((inb(HOST_CTRL_IO(io_base)) & RX_READY) != 0)
 		data = inb(HOST_DATA_IO(io_base));
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /*
- * Read the SoundScape's host-mode control रेजिस्टर, perक्रमming
- * a limited amount of busy-रुकोing अगर the रेजिस्टर isn't पढ़ोy.
+ * Read the SoundScape's host-mode control register, performing
+ * a limited amount of busy-waiting if the register isn't ready.
  * Also leaves all locking-issues to the caller ...
  */
-अटल पूर्णांक host_पढ़ो_ctrl_unsafe(अचिन्हित io_base, अचिन्हित समयout)
-अणु
-	पूर्णांक data;
+static int host_read_ctrl_unsafe(unsigned io_base, unsigned timeout)
+{
+	int data;
 
-	जबतक (((data = host_पढ़ो_unsafe(io_base)) < 0) && (समयout != 0)) अणु
+	while (((data = host_read_unsafe(io_base)) < 0) && (timeout != 0)) {
 		udelay(100);
-		--समयout;
-	पूर्ण /* जबतक */
+		--timeout;
+	} /* while */
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /*
- * Write to the SoundScape's host-mode control रेजिस्टरs, but
+ * Write to the SoundScape's host-mode control registers, but
  * leave any locking issues to the caller ...
  */
-अटल अंतरभूत पूर्णांक host_ग_लिखो_unsafe(अचिन्हित io_base, अचिन्हित अक्षर data)
-अणु
-	अगर ((inb(HOST_CTRL_IO(io_base)) & TX_READY) != 0) अणु
+static inline int host_write_unsafe(unsigned io_base, unsigned char data)
+{
+	if ((inb(HOST_CTRL_IO(io_base)) & TX_READY) != 0) {
 		outb(data, HOST_DATA_IO(io_base));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Write to the SoundScape's host-mode control रेजिस्टरs, perक्रमming
- * a limited amount of busy-रुकोing अगर the रेजिस्टर isn't पढ़ोy.
+ * Write to the SoundScape's host-mode control registers, performing
+ * a limited amount of busy-waiting if the register isn't ready.
  * Also leaves all locking-issues to the caller ...
  */
-अटल पूर्णांक host_ग_लिखो_ctrl_unsafe(अचिन्हित io_base, अचिन्हित अक्षर data,
-				  अचिन्हित समयout)
-अणु
-	पूर्णांक err;
+static int host_write_ctrl_unsafe(unsigned io_base, unsigned char data,
+				  unsigned timeout)
+{
+	int err;
 
-	जबतक (!(err = host_ग_लिखो_unsafe(io_base, data)) && (समयout != 0)) अणु
+	while (!(err = host_write_unsafe(io_base, data)) && (timeout != 0)) {
 		udelay(100);
-		--समयout;
-	पूर्ण /* जबतक */
+		--timeout;
+	} /* while */
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /*
- * Check that the MIDI subप्रणाली is operational. If it isn't,
- * then we will hang the computer अगर we try to use it ...
+ * Check that the MIDI subsystem is operational. If it isn't,
+ * then we will hang the computer if we try to use it ...
  *
- * NOTE: This check is based upon observation, not करोcumentation.
+ * NOTE: This check is based upon observation, not documentation.
  */
-अटल अंतरभूत पूर्णांक verअगरy_mpu401(स्थिर काष्ठा snd_mpu401 *mpu)
-अणु
-	वापस ((inb(MPU401C(mpu)) & 0xc0) == 0x80);
-पूर्ण
+static inline int verify_mpu401(const struct snd_mpu401 *mpu)
+{
+	return ((inb(MPU401C(mpu)) & 0xc0) == 0x80);
+}
 
 /*
  * This is apparently the standard way to initialise an MPU-401
  */
-अटल अंतरभूत व्योम initialise_mpu401(स्थिर काष्ठा snd_mpu401 *mpu)
-अणु
+static inline void initialise_mpu401(const struct snd_mpu401 *mpu)
+{
 	outb(0, MPU401D(mpu));
-पूर्ण
+}
 
 /*
  * Tell the SoundScape to activate the AD1845 chip (I think).
- * The AD1845 detection fails अगर we *करोn't* करो this, so I
+ * The AD1845 detection fails if we *don't* do this, so I
  * think that this is a good idea ...
  */
-अटल व्योम activate_ad1845_unsafe(अचिन्हित io_base)
-अणु
-	अचिन्हित अक्षर val = sscape_पढ़ो_unsafe(io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(io_base, GA_HMCTL_REG, (val & 0xcf) | 0x10);
-	sscape_ग_लिखो_unsafe(io_base, GA_CDCFG_REG, 0x80);
-पूर्ण
+static void activate_ad1845_unsafe(unsigned io_base)
+{
+	unsigned char val = sscape_read_unsafe(io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(io_base, GA_HMCTL_REG, (val & 0xcf) | 0x10);
+	sscape_write_unsafe(io_base, GA_CDCFG_REG, 0x80);
+}
 
 /*
  * Do the necessary ALSA-level cleanup to deallocate our driver ...
  */
-अटल व्योम soundscape_मुक्त(काष्ठा snd_card *c)
-अणु
-	काष्ठा soundscape *sscape = get_card_soundscape(c);
-	release_and_मुक्त_resource(sscape->io_res);
-	release_and_मुक्त_resource(sscape->wss_res);
-	मुक्त_dma(sscape->chip->dma1);
-पूर्ण
+static void soundscape_free(struct snd_card *c)
+{
+	struct soundscape *sscape = get_card_soundscape(c);
+	release_and_free_resource(sscape->io_res);
+	release_and_free_resource(sscape->wss_res);
+	free_dma(sscape->chip->dma1);
+}
 
 /*
  * Tell the SoundScape to begin a DMA transfer using the given channel.
  * All locking issues are left to the caller.
  */
-अटल व्योम sscape_start_dma_unsafe(अचिन्हित io_base, क्रमागत GA_REG reg)
-अणु
-	sscape_ग_लिखो_unsafe(io_base, reg,
-			    sscape_पढ़ो_unsafe(io_base, reg) | 0x01);
-	sscape_ग_लिखो_unsafe(io_base, reg,
-			    sscape_पढ़ो_unsafe(io_base, reg) & 0xfe);
-पूर्ण
+static void sscape_start_dma_unsafe(unsigned io_base, enum GA_REG reg)
+{
+	sscape_write_unsafe(io_base, reg,
+			    sscape_read_unsafe(io_base, reg) | 0x01);
+	sscape_write_unsafe(io_base, reg,
+			    sscape_read_unsafe(io_base, reg) & 0xfe);
+}
 
 /*
- * Wait क्रम a DMA transfer to complete. This is a "limited busy-wait",
+ * Wait for a DMA transfer to complete. This is a "limited busy-wait",
  * and all locking issues are left to the caller.
  */
-अटल पूर्णांक sscape_रुको_dma_unsafe(अचिन्हित io_base, क्रमागत GA_REG reg,
-				  अचिन्हित समयout)
-अणु
-	जबतक (!(sscape_पढ़ो_unsafe(io_base, reg) & 0x01) && (समयout != 0)) अणु
+static int sscape_wait_dma_unsafe(unsigned io_base, enum GA_REG reg,
+				  unsigned timeout)
+{
+	while (!(sscape_read_unsafe(io_base, reg) & 0x01) && (timeout != 0)) {
 		udelay(100);
-		--समयout;
-	पूर्ण /* जबतक */
+		--timeout;
+	} /* while */
 
-	वापस sscape_पढ़ो_unsafe(io_base, reg) & 0x01;
-पूर्ण
+	return sscape_read_unsafe(io_base, reg) & 0x01;
+}
 
 /*
- * Wait क्रम the On-Board Processor to वापस its start-up
- * acknowledgement sequence. This रुको is too दीर्घ क्रम
- * us to perक्रमm "busy-waiting", and so we must sleep.
+ * Wait for the On-Board Processor to return its start-up
+ * acknowledgement sequence. This wait is too long for
+ * us to perform "busy-waiting", and so we must sleep.
  * This in turn means that we must not be holding any
  * spinlocks when we call this function.
  */
-अटल पूर्णांक obp_startup_ack(काष्ठा soundscape *s, अचिन्हित समयout)
-अणु
-	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(समयout);
+static int obp_startup_ack(struct soundscape *s, unsigned timeout)
+{
+	unsigned long end_time = jiffies + msecs_to_jiffies(timeout);
 
-	करो अणु
-		अचिन्हित दीर्घ flags;
-		पूर्णांक x;
+	do {
+		unsigned long flags;
+		int x;
 
 		spin_lock_irqsave(&s->lock, flags);
-		x = host_पढ़ो_unsafe(s->io_base);
+		x = host_read_unsafe(s->io_base);
 		spin_unlock_irqrestore(&s->lock, flags);
-		अगर (x == 0xfe || x == 0xff)
-			वापस 1;
+		if (x == 0xfe || x == 0xff)
+			return 1;
 
 		msleep(10);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+	} while (time_before(jiffies, end_time));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Wait क्रम the host to वापस its start-up acknowledgement
- * sequence. This रुको is too दीर्घ क्रम us to perक्रमm
+ * Wait for the host to return its start-up acknowledgement
+ * sequence. This wait is too long for us to perform
  * "busy-waiting", and so we must sleep. This in turn means
  * that we must not be holding any spinlocks when we call
  * this function.
  */
-अटल पूर्णांक host_startup_ack(काष्ठा soundscape *s, अचिन्हित समयout)
-अणु
-	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(समयout);
+static int host_startup_ack(struct soundscape *s, unsigned timeout)
+{
+	unsigned long end_time = jiffies + msecs_to_jiffies(timeout);
 
-	करो अणु
-		अचिन्हित दीर्घ flags;
-		पूर्णांक x;
+	do {
+		unsigned long flags;
+		int x;
 
 		spin_lock_irqsave(&s->lock, flags);
-		x = host_पढ़ो_unsafe(s->io_base);
+		x = host_read_unsafe(s->io_base);
 		spin_unlock_irqrestore(&s->lock, flags);
-		अगर (x == 0xfe)
-			वापस 1;
+		if (x == 0xfe)
+			return 1;
 
 		msleep(10);
-	पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_समय));
+	} while (time_before(jiffies, end_time));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Upload a byte-stream पूर्णांकo the SoundScape using DMA channel A.
+ * Upload a byte-stream into the SoundScape using DMA channel A.
  */
-अटल पूर्णांक upload_dma_data(काष्ठा soundscape *s, स्थिर अचिन्हित अक्षर *data,
-			   माप_प्रकार size)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_dma_buffer dma;
-	पूर्णांक ret;
-	अचिन्हित अक्षर val;
+static int upload_dma_data(struct soundscape *s, const unsigned char *data,
+			   size_t size)
+{
+	unsigned long flags;
+	struct snd_dma_buffer dma;
+	int ret;
+	unsigned char val;
 
-	अगर (!get_dmabuf(s, &dma, PAGE_ALIGN(32 * 1024)))
-		वापस -ENOMEM;
+	if (!get_dmabuf(s, &dma, PAGE_ALIGN(32 * 1024)))
+		return -ENOMEM;
 
 	spin_lock_irqsave(&s->lock, flags);
 
 	/*
 	 * Reset the board ...
 	 */
-	val = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, val & 0x3f);
+	val = sscape_read_unsafe(s->io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, val & 0x3f);
 
 	/*
 	 * Enable the DMA channels and configure them ...
 	 */
 	val = (s->chip->dma1 << 4) | DMA_8BIT;
-	sscape_ग_लिखो_unsafe(s->io_base, GA_DMAA_REG, val);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_DMAB_REG, 0x20);
+	sscape_write_unsafe(s->io_base, GA_DMAA_REG, val);
+	sscape_write_unsafe(s->io_base, GA_DMAB_REG, 0x20);
 
 	/*
 	 * Take the board out of reset ...
 	 */
-	val = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, val | 0x80);
+	val = sscape_read_unsafe(s->io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, val | 0x80);
 
 	/*
 	 * Upload the firmware to the SoundScape
 	 * board through the DMA channel ...
 	 */
-	जबतक (size != 0) अणु
-		अचिन्हित दीर्घ len;
+	while (size != 0) {
+		unsigned long len;
 
 		len = min(size, dma.bytes);
-		स_नकल(dma.area, data, len);
+		memcpy(dma.area, data, len);
 		data += len;
 		size -= len;
 
 		snd_dma_program(s->chip->dma1, dma.addr, len, DMA_MODE_WRITE);
 		sscape_start_dma_unsafe(s->io_base, GA_DMAA_REG);
-		अगर (!sscape_रुको_dma_unsafe(s->io_base, GA_DMAA_REG, 5000)) अणु
+		if (!sscape_wait_dma_unsafe(s->io_base, GA_DMAA_REG, 5000)) {
 			/*
 			 * Don't forget to release this spinlock we're holding
 			 */
 			spin_unlock_irqrestore(&s->lock, flags);
 
-			snd_prपूर्णांकk(KERN_ERR
+			snd_printk(KERN_ERR
 					"sscape: DMA upload has timed out\n");
 			ret = -EAGAIN;
-			जाओ _release_dma;
-		पूर्ण
-	पूर्ण /* जबतक */
+			goto _release_dma;
+		}
+	} /* while */
 
 	set_host_mode_unsafe(s->io_base);
 	outb(0x0, s->io_base);
@@ -488,8 +487,8 @@ MODULE_DEVICE_TABLE(pnp_card, sscape_pnpids);
 	/*
 	 * Boot the board ... (I think)
 	 */
-	val = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, val | 0x40);
+	val = sscape_read_unsafe(s->io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, val | 0x40);
 	spin_unlock_irqrestore(&s->lock, flags);
 
 	/*
@@ -498,334 +497,334 @@ MODULE_DEVICE_TABLE(pnp_card, sscape_pnpids);
 	 * give it 5 seconds (max) ...
 	 */
 	ret = 0;
-	अगर (!obp_startup_ack(s, 5000)) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: No response "
+	if (!obp_startup_ack(s, 5000)) {
+		snd_printk(KERN_ERR "sscape: No response "
 				    "from on-board processor after upload\n");
 		ret = -EAGAIN;
-	पूर्ण अन्यथा अगर (!host_startup_ack(s, 5000)) अणु
-		snd_prपूर्णांकk(KERN_ERR
+	} else if (!host_startup_ack(s, 5000)) {
+		snd_printk(KERN_ERR
 				"sscape: SoundScape failed to initialise\n");
 		ret = -EAGAIN;
-	पूर्ण
+	}
 
 _release_dma:
 	/*
-	 * NOTE!!! We are NOT holding any spinlocks at this poपूर्णांक !!!
+	 * NOTE!!! We are NOT holding any spinlocks at this point !!!
 	 */
-	sscape_ग_लिखो(s, GA_DMAA_REG, (s->ic_type == IC_OPUS ? 0x40 : 0x70));
-	मुक्त_dmabuf(&dma);
+	sscape_write(s, GA_DMAA_REG, (s->ic_type == IC_OPUS ? 0x40 : 0x70));
+	free_dmabuf(&dma);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Upload the bootblock(?) पूर्णांकo the SoundScape. The only
+ * Upload the bootblock(?) into the SoundScape. The only
  * purpose of this block of code seems to be to tell
  * us which version of the microcode we should be using.
  */
-अटल पूर्णांक sscape_upload_bootblock(काष्ठा snd_card *card)
-अणु
-	काष्ठा soundscape *sscape = get_card_soundscape(card);
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा firmware *init_fw = शून्य;
-	पूर्णांक data = 0;
-	पूर्णांक ret;
+static int sscape_upload_bootblock(struct snd_card *card)
+{
+	struct soundscape *sscape = get_card_soundscape(card);
+	unsigned long flags;
+	const struct firmware *init_fw = NULL;
+	int data = 0;
+	int ret;
 
 	ret = request_firmware(&init_fw, "scope.cod", card->dev);
-	अगर (ret < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Error loading scope.cod");
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		snd_printk(KERN_ERR "sscape: Error loading scope.cod");
+		return ret;
+	}
 	ret = upload_dma_data(sscape, init_fw->data, init_fw->size);
 
 	release_firmware(init_fw);
 
 	spin_lock_irqsave(&sscape->lock, flags);
-	अगर (ret == 0)
-		data = host_पढ़ो_ctrl_unsafe(sscape->io_base, 100);
+	if (ret == 0)
+		data = host_read_ctrl_unsafe(sscape->io_base, 100);
 
-	अगर (data & 0x10)
-		sscape_ग_लिखो_unsafe(sscape->io_base, GA_SMCFGA_REG, 0x2f);
+	if (data & 0x10)
+		sscape_write_unsafe(sscape->io_base, GA_SMCFGA_REG, 0x2f);
 
 	spin_unlock_irqrestore(&sscape->lock, flags);
 
 	data &= 0xf;
-	अगर (ret == 0 && data > 7) अणु
-		snd_prपूर्णांकk(KERN_ERR
+	if (ret == 0 && data > 7) {
+		snd_printk(KERN_ERR
 				"sscape: timeout reading firmware version\n");
 		ret = -EAGAIN;
-	पूर्ण
+	}
 
-	वापस (ret == 0) ? data : ret;
-पूर्ण
+	return (ret == 0) ? data : ret;
+}
 
 /*
- * Upload the microcode पूर्णांकo the SoundScape.
+ * Upload the microcode into the SoundScape.
  */
-अटल पूर्णांक sscape_upload_microcode(काष्ठा snd_card *card, पूर्णांक version)
-अणु
-	काष्ठा soundscape *sscape = get_card_soundscape(card);
-	स्थिर काष्ठा firmware *init_fw = शून्य;
-	अक्षर name[14];
-	पूर्णांक err;
+static int sscape_upload_microcode(struct snd_card *card, int version)
+{
+	struct soundscape *sscape = get_card_soundscape(card);
+	const struct firmware *init_fw = NULL;
+	char name[14];
+	int err;
 
-	snम_लिखो(name, माप(name), "sndscape.co%d", version);
+	snprintf(name, sizeof(name), "sndscape.co%d", version);
 
 	err = request_firmware(&init_fw, name, card->dev);
-	अगर (err < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Error loading sndscape.co%d",
+	if (err < 0) {
+		snd_printk(KERN_ERR "sscape: Error loading sndscape.co%d",
 				version);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = upload_dma_data(sscape, init_fw->data, init_fw->size);
-	अगर (err == 0)
-		snd_prपूर्णांकk(KERN_INFO "sscape: MIDI firmware loaded %zu KBs\n",
+	if (err == 0)
+		snd_printk(KERN_INFO "sscape: MIDI firmware loaded %zu KBs\n",
 				init_fw->size >> 10);
 
 	release_firmware(init_fw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Mixer control क्रम the SoundScape's MIDI device.
+ * Mixer control for the SoundScape's MIDI device.
  */
-अटल पूर्णांक sscape_midi_info(काष्ठा snd_kcontrol *ctl,
-			    काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int sscape_midi_info(struct snd_kcontrol *ctl,
+			    struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 127;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 127;
+	return 0;
+}
 
-अटल पूर्णांक sscape_midi_get(काष्ठा snd_kcontrol *kctl,
-			   काष्ठा snd_ctl_elem_value *uctl)
-अणु
-	काष्ठा snd_wss *chip = snd_kcontrol_chip(kctl);
-	काष्ठा snd_card *card = chip->card;
-	रेजिस्टर काष्ठा soundscape *s = get_card_soundscape(card);
-	अचिन्हित दीर्घ flags;
+static int sscape_midi_get(struct snd_kcontrol *kctl,
+			   struct snd_ctl_elem_value *uctl)
+{
+	struct snd_wss *chip = snd_kcontrol_chip(kctl);
+	struct snd_card *card = chip->card;
+	register struct soundscape *s = get_card_soundscape(card);
+	unsigned long flags;
 
 	spin_lock_irqsave(&s->lock, flags);
-	uctl->value.पूर्णांकeger.value[0] = s->midi_vol;
+	uctl->value.integer.value[0] = s->midi_vol;
 	spin_unlock_irqrestore(&s->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sscape_midi_put(काष्ठा snd_kcontrol *kctl,
-			   काष्ठा snd_ctl_elem_value *uctl)
-अणु
-	काष्ठा snd_wss *chip = snd_kcontrol_chip(kctl);
-	काष्ठा snd_card *card = chip->card;
-	काष्ठा soundscape *s = get_card_soundscape(card);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक change;
-	अचिन्हित अक्षर new_val;
+static int sscape_midi_put(struct snd_kcontrol *kctl,
+			   struct snd_ctl_elem_value *uctl)
+{
+	struct snd_wss *chip = snd_kcontrol_chip(kctl);
+	struct snd_card *card = chip->card;
+	struct soundscape *s = get_card_soundscape(card);
+	unsigned long flags;
+	int change;
+	unsigned char new_val;
 
 	spin_lock_irqsave(&s->lock, flags);
 
-	new_val = uctl->value.पूर्णांकeger.value[0] & 127;
+	new_val = uctl->value.integer.value[0] & 127;
 	/*
-	 * We need to put the board पूर्णांकo HOST mode beक्रमe we
+	 * We need to put the board into HOST mode before we
 	 * can send any volume-changing HOST commands ...
 	 */
 	set_host_mode_unsafe(s->io_base);
 
 	/*
 	 * To successfully change the MIDI volume setting, you seem to
-	 * have to ग_लिखो a volume command, ग_लिखो the new volume value,
-	 * and then perक्रमm another volume-related command. Perhaps the
+	 * have to write a volume command, write the new volume value,
+	 * and then perform another volume-related command. Perhaps the
 	 * first command is an "open" and the second command is a "close"?
 	 */
-	अगर (s->midi_vol == new_val) अणु
+	if (s->midi_vol == new_val) {
 		change = 0;
-		जाओ __skip_change;
-	पूर्ण
-	change = host_ग_लिखो_ctrl_unsafe(s->io_base, CMD_SET_MIDI_VOL, 100)
-		 && host_ग_लिखो_ctrl_unsafe(s->io_base, new_val, 100)
-		 && host_ग_लिखो_ctrl_unsafe(s->io_base, CMD_XXX_MIDI_VOL, 100)
-		 && host_ग_लिखो_ctrl_unsafe(s->io_base, new_val, 100);
+		goto __skip_change;
+	}
+	change = host_write_ctrl_unsafe(s->io_base, CMD_SET_MIDI_VOL, 100)
+		 && host_write_ctrl_unsafe(s->io_base, new_val, 100)
+		 && host_write_ctrl_unsafe(s->io_base, CMD_XXX_MIDI_VOL, 100)
+		 && host_write_ctrl_unsafe(s->io_base, new_val, 100);
 	s->midi_vol = new_val;
 __skip_change:
 
 	/*
-	 * Take the board out of HOST mode and back पूर्णांकo MIDI mode ...
+	 * Take the board out of HOST mode and back into MIDI mode ...
 	 */
 	set_midi_mode_unsafe(s->io_base);
 
 	spin_unlock_irqrestore(&s->lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new midi_mixer_ctl = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static const struct snd_kcontrol_new midi_mixer_ctl = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "MIDI",
 	.info = sscape_midi_info,
 	.get = sscape_midi_get,
 	.put = sscape_midi_put
-पूर्ण;
+};
 
 /*
  * The SoundScape can use two IRQs from a possible set of four.
  * These IRQs are encoded as bit patterns so that they can be
- * written to the control रेजिस्टरs.
+ * written to the control registers.
  */
-अटल अचिन्हित get_irq_config(पूर्णांक sscape_type, पूर्णांक irq)
-अणु
-	अटल स्थिर पूर्णांक valid_irq[] = अणु 9, 5, 7, 10 पूर्ण;
-	अटल स्थिर पूर्णांक old_irq[] = अणु 9, 7, 5, 15 पूर्ण;
-	अचिन्हित cfg;
+static unsigned get_irq_config(int sscape_type, int irq)
+{
+	static const int valid_irq[] = { 9, 5, 7, 10 };
+	static const int old_irq[] = { 9, 7, 5, 15 };
+	unsigned cfg;
 
-	अगर (sscape_type == MEDIA_FX) अणु
-		क्रम (cfg = 0; cfg < ARRAY_SIZE(old_irq); ++cfg)
-			अगर (irq == old_irq[cfg])
-				वापस cfg;
-	पूर्ण अन्यथा अणु
-		क्रम (cfg = 0; cfg < ARRAY_SIZE(valid_irq); ++cfg)
-			अगर (irq == valid_irq[cfg])
-				वापस cfg;
-	पूर्ण
+	if (sscape_type == MEDIA_FX) {
+		for (cfg = 0; cfg < ARRAY_SIZE(old_irq); ++cfg)
+			if (irq == old_irq[cfg])
+				return cfg;
+	} else {
+		for (cfg = 0; cfg < ARRAY_SIZE(valid_irq); ++cfg)
+			if (irq == valid_irq[cfg])
+				return cfg;
+	}
 
-	वापस INVALID_IRQ;
-पूर्ण
+	return INVALID_IRQ;
+}
 
 /*
- * Perक्रमm certain arcane port-checks to see whether there
+ * Perform certain arcane port-checks to see whether there
  * is a SoundScape board lurking behind the given ports.
  */
-अटल पूर्णांक detect_sscape(काष्ठा soundscape *s, दीर्घ wss_io)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित d;
-	पूर्णांक retval = 0;
+static int detect_sscape(struct soundscape *s, long wss_io)
+{
+	unsigned long flags;
+	unsigned d;
+	int retval = 0;
 
 	spin_lock_irqsave(&s->lock, flags);
 
 	/*
-	 * The following code is lअगरted from the original OSS driver,
-	 * and as I करोn't have a datasheet I cannot really comment
-	 * on what it is करोing...
+	 * The following code is lifted from the original OSS driver,
+	 * and as I don't have a datasheet I cannot really comment
+	 * on what it is doing...
 	 */
-	अगर ((inb(HOST_CTRL_IO(s->io_base)) & 0x78) != 0)
-		जाओ _करोne;
+	if ((inb(HOST_CTRL_IO(s->io_base)) & 0x78) != 0)
+		goto _done;
 
 	d = inb(ODIE_ADDR_IO(s->io_base)) & 0xf0;
-	अगर ((d & 0x80) != 0)
-		जाओ _करोne;
+	if ((d & 0x80) != 0)
+		goto _done;
 
-	अगर (d == 0)
+	if (d == 0)
 		s->ic_type = IC_ODIE;
-	अन्यथा अगर ((d & 0x60) != 0)
+	else if ((d & 0x60) != 0)
 		s->ic_type = IC_OPUS;
-	अन्यथा
-		जाओ _करोne;
+	else
+		goto _done;
 
 	outb(0xfa, ODIE_ADDR_IO(s->io_base));
-	अगर ((inb(ODIE_ADDR_IO(s->io_base)) & 0x9f) != 0x0a)
-		जाओ _करोne;
+	if ((inb(ODIE_ADDR_IO(s->io_base)) & 0x9f) != 0x0a)
+		goto _done;
 
 	outb(0xfe, ODIE_ADDR_IO(s->io_base));
-	अगर ((inb(ODIE_ADDR_IO(s->io_base)) & 0x9f) != 0x0e)
-		जाओ _करोne;
+	if ((inb(ODIE_ADDR_IO(s->io_base)) & 0x9f) != 0x0e)
+		goto _done;
 
 	outb(0xfe, ODIE_ADDR_IO(s->io_base));
 	d = inb(ODIE_DATA_IO(s->io_base));
-	अगर (s->type != SSCAPE_VIVO && (d & 0x9f) != 0x0e)
-		जाओ _करोne;
+	if (s->type != SSCAPE_VIVO && (d & 0x9f) != 0x0e)
+		goto _done;
 
-	अगर (s->ic_type == IC_OPUS)
+	if (s->ic_type == IC_OPUS)
 		activate_ad1845_unsafe(s->io_base);
 
-	अगर (s->type == SSCAPE_VIVO)
+	if (s->type == SSCAPE_VIVO)
 		wss_io += 4;
 
-	d  = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, d | 0xc0);
+	d  = sscape_read_unsafe(s->io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, d | 0xc0);
 
-	/* रुको क्रम WSS codec */
-	क्रम (d = 0; d < 500; d++) अणु
-		अगर ((inb(wss_io) & 0x80) == 0)
-			अवरोध;
+	/* wait for WSS codec */
+	for (d = 0; d < 500; d++) {
+		if ((inb(wss_io) & 0x80) == 0)
+			break;
 		spin_unlock_irqrestore(&s->lock, flags);
 		msleep(1);
 		spin_lock_irqsave(&s->lock, flags);
-	पूर्ण
+	}
 
-	अगर ((inb(wss_io) & 0x80) != 0)
-		जाओ _करोne;
+	if ((inb(wss_io) & 0x80) != 0)
+		goto _done;
 
-	अगर (inb(wss_io + 2) == 0xff)
-		जाओ _करोne;
+	if (inb(wss_io + 2) == 0xff)
+		goto _done;
 
-	d  = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG) & 0x3f;
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, d);
+	d  = sscape_read_unsafe(s->io_base, GA_HMCTL_REG) & 0x3f;
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, d);
 
-	अगर ((inb(wss_io) & 0x80) != 0)
+	if ((inb(wss_io) & 0x80) != 0)
 		s->type = MEDIA_FX;
 
-	d = sscape_पढ़ो_unsafe(s->io_base, GA_HMCTL_REG);
-	sscape_ग_लिखो_unsafe(s->io_base, GA_HMCTL_REG, d | 0xc0);
-	/* रुको क्रम WSS codec */
-	क्रम (d = 0; d < 500; d++) अणु
-		अगर ((inb(wss_io) & 0x80) == 0)
-			अवरोध;
+	d = sscape_read_unsafe(s->io_base, GA_HMCTL_REG);
+	sscape_write_unsafe(s->io_base, GA_HMCTL_REG, d | 0xc0);
+	/* wait for WSS codec */
+	for (d = 0; d < 500; d++) {
+		if ((inb(wss_io) & 0x80) == 0)
+			break;
 		spin_unlock_irqrestore(&s->lock, flags);
 		msleep(1);
 		spin_lock_irqsave(&s->lock, flags);
-	पूर्ण
+	}
 
 	/*
 	 * SoundScape successfully detected!
 	 */
 	retval = 1;
 
-_करोne:
+_done:
 	spin_unlock_irqrestore(&s->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * ALSA callback function, called when attempting to खोलो the MIDI device.
- * Check that the MIDI firmware has been loaded, because we करोn't want
+ * ALSA callback function, called when attempting to open the MIDI device.
+ * Check that the MIDI firmware has been loaded, because we don't want
  * to crash the machine. Also check that someone isn't using the hardware
  * IOCTL device.
  */
-अटल पूर्णांक mpu401_खोलो(काष्ठा snd_mpu401 *mpu)
-अणु
-	अगर (!verअगरy_mpu401(mpu)) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: MIDI disabled, "
+static int mpu401_open(struct snd_mpu401 *mpu)
+{
+	if (!verify_mpu401(mpu)) {
+		snd_printk(KERN_ERR "sscape: MIDI disabled, "
 				    "please load firmware\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Initialise an MPU-401 subdevice क्रम MIDI support on the SoundScape.
+ * Initialise an MPU-401 subdevice for MIDI support on the SoundScape.
  */
-अटल पूर्णांक create_mpu401(काष्ठा snd_card *card, पूर्णांक devnum,
-			 अचिन्हित दीर्घ port, पूर्णांक irq)
-अणु
-	काष्ठा soundscape *sscape = get_card_soundscape(card);
-	काष्ठा snd_rawmidi *rawmidi;
-	पूर्णांक err;
+static int create_mpu401(struct snd_card *card, int devnum,
+			 unsigned long port, int irq)
+{
+	struct soundscape *sscape = get_card_soundscape(card);
+	struct snd_rawmidi *rawmidi;
+	int err;
 
 	err = snd_mpu401_uart_new(card, devnum, MPU401_HW_MPU401, port,
 				  MPU401_INFO_INTEGRATED, irq, &rawmidi);
-	अगर (err == 0) अणु
-		काष्ठा snd_mpu401 *mpu = rawmidi->निजी_data;
-		mpu->खोलो_input = mpu401_खोलो;
-		mpu->खोलो_output = mpu401_खोलो;
-		mpu->निजी_data = sscape;
+	if (err == 0) {
+		struct snd_mpu401 *mpu = rawmidi->private_data;
+		mpu->open_input = mpu401_open;
+		mpu->open_output = mpu401_open;
+		mpu->private_data = sscape;
 
 		initialise_mpu401(mpu);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /*
@@ -834,189 +833,189 @@ _करोne:
  * try to support at least some of the extra bits by overriding
  * some of the CS4231 callback.
  */
-अटल पूर्णांक create_ad1845(काष्ठा snd_card *card, अचिन्हित port,
-			 पूर्णांक irq, पूर्णांक dma1, पूर्णांक dma2)
-अणु
-	रेजिस्टर काष्ठा soundscape *sscape = get_card_soundscape(card);
-	काष्ठा snd_wss *chip;
-	पूर्णांक err;
-	पूर्णांक codec_type = WSS_HW_DETECT;
+static int create_ad1845(struct snd_card *card, unsigned port,
+			 int irq, int dma1, int dma2)
+{
+	register struct soundscape *sscape = get_card_soundscape(card);
+	struct snd_wss *chip;
+	int err;
+	int codec_type = WSS_HW_DETECT;
 
-	चयन (sscape->type) अणु
-	हाल MEDIA_FX:
-	हाल SSCAPE:
+	switch (sscape->type) {
+	case MEDIA_FX:
+	case SSCAPE:
 		/*
 		 * There are some freak examples of early Soundscape cards
-		 * with CS4231 instead of AD1848/CS4248. Unक्रमtunately, the
+		 * with CS4231 instead of AD1848/CS4248. Unfortunately, the
 		 * CS4231 works only in CS4248 compatibility mode on
-		 * these cards so क्रमce it.
+		 * these cards so force it.
 		 */
-		अगर (sscape->ic_type != IC_OPUS)
+		if (sscape->ic_type != IC_OPUS)
 			codec_type = WSS_HW_AD1848;
-		अवरोध;
+		break;
 
-	हाल SSCAPE_VIVO:
+	case SSCAPE_VIVO:
 		port += 4;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	err = snd_wss_create(card, port, -1, irq, dma1, dma2,
 			     codec_type, WSS_HWSHARE_DMA1, &chip);
-	अगर (!err) अणु
-		अचिन्हित दीर्घ flags;
+	if (!err) {
+		unsigned long flags;
 
-		अगर (sscape->type != SSCAPE_VIVO) अणु
+		if (sscape->type != SSCAPE_VIVO) {
 			/*
-			 * The input घड़ी frequency on the SoundScape must
-			 * be 14.31818 MHz, because we must set this रेजिस्टर
+			 * The input clock frequency on the SoundScape must
+			 * be 14.31818 MHz, because we must set this register
 			 * to get the playback to sound correct ...
 			 */
 			snd_wss_mce_up(chip);
 			spin_lock_irqsave(&chip->reg_lock, flags);
 			snd_wss_out(chip, AD1845_CLOCK, 0x20);
 			spin_unlock_irqrestore(&chip->reg_lock, flags);
-			snd_wss_mce_करोwn(chip);
+			snd_wss_mce_down(chip);
 
-		पूर्ण
+		}
 
 		err = snd_wss_pcm(chip, 0);
-		अगर (err < 0) अणु
-			snd_prपूर्णांकk(KERN_ERR "sscape: No PCM device "
+		if (err < 0) {
+			snd_printk(KERN_ERR "sscape: No PCM device "
 					    "for AD1845 chip\n");
-			जाओ _error;
-		पूर्ण
+			goto _error;
+		}
 
 		err = snd_wss_mixer(chip);
-		अगर (err < 0) अणु
-			snd_prपूर्णांकk(KERN_ERR "sscape: No mixer device "
+		if (err < 0) {
+			snd_printk(KERN_ERR "sscape: No mixer device "
 					    "for AD1845 chip\n");
-			जाओ _error;
-		पूर्ण
-		अगर (chip->hardware != WSS_HW_AD1848) अणु
-			err = snd_wss_समयr(chip, 0);
-			अगर (err < 0) अणु
-				snd_prपूर्णांकk(KERN_ERR "sscape: No timer device "
+			goto _error;
+		}
+		if (chip->hardware != WSS_HW_AD1848) {
+			err = snd_wss_timer(chip, 0);
+			if (err < 0) {
+				snd_printk(KERN_ERR "sscape: No timer device "
 						    "for AD1845 chip\n");
-				जाओ _error;
-			पूर्ण
-		पूर्ण
+				goto _error;
+			}
+		}
 
-		अगर (sscape->type != SSCAPE_VIVO) अणु
+		if (sscape->type != SSCAPE_VIVO) {
 			err = snd_ctl_add(card,
 					  snd_ctl_new1(&midi_mixer_ctl, chip));
-			अगर (err < 0) अणु
-				snd_prपूर्णांकk(KERN_ERR "sscape: Could not create "
+			if (err < 0) {
+				snd_printk(KERN_ERR "sscape: Could not create "
 						    "MIDI mixer control\n");
-				जाओ _error;
-			पूर्ण
-		पूर्ण
+				goto _error;
+			}
+		}
 
 		sscape->chip = chip;
-	पूर्ण
+	}
 
 _error:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /*
- * Create an ALSA soundcard entry क्रम the SoundScape, using
+ * Create an ALSA soundcard entry for the SoundScape, using
  * the given list of port, IRQ and DMA resources.
  */
-अटल पूर्णांक create_sscape(पूर्णांक dev, काष्ठा snd_card *card)
-अणु
-	काष्ठा soundscape *sscape = get_card_soundscape(card);
-	अचिन्हित dma_cfg;
-	अचिन्हित irq_cfg;
-	अचिन्हित mpu_irq_cfg;
-	काष्ठा resource *io_res;
-	काष्ठा resource *wss_res;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
-	पूर्णांक val;
-	स्थिर अक्षर *name;
+static int create_sscape(int dev, struct snd_card *card)
+{
+	struct soundscape *sscape = get_card_soundscape(card);
+	unsigned dma_cfg;
+	unsigned irq_cfg;
+	unsigned mpu_irq_cfg;
+	struct resource *io_res;
+	struct resource *wss_res;
+	unsigned long flags;
+	int err;
+	int val;
+	const char *name;
 
 	/*
 	 * Grab IO ports that we will need to probe so that we
 	 * can detect and control this hardware ...
 	 */
 	io_res = request_region(port[dev], 8, "SoundScape");
-	अगर (!io_res) अणु
-		snd_prपूर्णांकk(KERN_ERR
+	if (!io_res) {
+		snd_printk(KERN_ERR
 			   "sscape: can't grab port 0x%lx\n", port[dev]);
-		वापस -EBUSY;
-	पूर्ण
-	wss_res = शून्य;
-	अगर (sscape->type == SSCAPE_VIVO) अणु
+		return -EBUSY;
+	}
+	wss_res = NULL;
+	if (sscape->type == SSCAPE_VIVO) {
 		wss_res = request_region(wss_port[dev], 4, "SoundScape");
-		अगर (!wss_res) अणु
-			snd_prपूर्णांकk(KERN_ERR "sscape: can't grab port 0x%lx\n",
+		if (!wss_res) {
+			snd_printk(KERN_ERR "sscape: can't grab port 0x%lx\n",
 					    wss_port[dev]);
 			err = -EBUSY;
-			जाओ _release_region;
-		पूर्ण
-	पूर्ण
+			goto _release_region;
+		}
+	}
 
 	/*
 	 * Grab one DMA channel ...
 	 */
 	err = request_dma(dma[dev], "SoundScape");
-	अगर (err < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: can't grab DMA %d\n", dma[dev]);
-		जाओ _release_region;
-	पूर्ण
+	if (err < 0) {
+		snd_printk(KERN_ERR "sscape: can't grab DMA %d\n", dma[dev]);
+		goto _release_region;
+	}
 
 	spin_lock_init(&sscape->lock);
 	sscape->io_res = io_res;
 	sscape->wss_res = wss_res;
 	sscape->io_base = port[dev];
 
-	अगर (!detect_sscape(sscape, wss_port[dev])) अणु
-		prपूर्णांकk(KERN_ERR "sscape: hardware not detected at 0x%x\n",
+	if (!detect_sscape(sscape, wss_port[dev])) {
+		printk(KERN_ERR "sscape: hardware not detected at 0x%x\n",
 			sscape->io_base);
 		err = -ENODEV;
-		जाओ _release_dma;
-	पूर्ण
+		goto _release_dma;
+	}
 
-	चयन (sscape->type) अणु
-	हाल MEDIA_FX:
+	switch (sscape->type) {
+	case MEDIA_FX:
 		name = "MediaFX/SoundFX";
-		अवरोध;
-	हाल SSCAPE:
+		break;
+	case SSCAPE:
 		name = "Soundscape";
-		अवरोध;
-	हाल SSCAPE_PNP:
+		break;
+	case SSCAPE_PNP:
 		name = "Soundscape PnP";
-		अवरोध;
-	हाल SSCAPE_VIVO:
+		break;
+	case SSCAPE_VIVO:
 		name = "Soundscape VIVO";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		name = "unknown Soundscape";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	prपूर्णांकk(KERN_INFO "sscape: %s card detected at 0x%x, using IRQ %d, DMA %d\n",
+	printk(KERN_INFO "sscape: %s card detected at 0x%x, using IRQ %d, DMA %d\n",
 			 name, sscape->io_base, irq[dev], dma[dev]);
 
 	/*
 	 * Check that the user didn't pass us garbage data ...
 	 */
 	irq_cfg = get_irq_config(sscape->type, irq[dev]);
-	अगर (irq_cfg == INVALID_IRQ) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Invalid IRQ %d\n", irq[dev]);
+	if (irq_cfg == INVALID_IRQ) {
+		snd_printk(KERN_ERR "sscape: Invalid IRQ %d\n", irq[dev]);
 		err = -ENXIO;
-		जाओ _release_dma;
-	पूर्ण
+		goto _release_dma;
+	}
 
 	mpu_irq_cfg = get_irq_config(sscape->type, mpu_irq[dev]);
-	अगर (mpu_irq_cfg == INVALID_IRQ) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Invalid IRQ %d\n", mpu_irq[dev]);
+	if (mpu_irq_cfg == INVALID_IRQ) {
+		snd_printk(KERN_ERR "sscape: Invalid IRQ %d\n", mpu_irq[dev]);
 		err = -ENXIO;
-		जाओ _release_dma;
-	पूर्ण
+		goto _release_dma;
+	}
 
 	/*
 	 * Tell the on-board devices where their resources are (I think -
@@ -1024,30 +1023,30 @@ _error:
 	 */
 	spin_lock_irqsave(&sscape->lock, flags);
 
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_SMCFGA_REG, 0x2e);
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_SMCFGB_REG, 0x00);
+	sscape_write_unsafe(sscape->io_base, GA_SMCFGA_REG, 0x2e);
+	sscape_write_unsafe(sscape->io_base, GA_SMCFGB_REG, 0x00);
 
 	/*
 	 * Enable and configure the DMA channels ...
 	 */
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_DMACFG_REG, 0x50);
+	sscape_write_unsafe(sscape->io_base, GA_DMACFG_REG, 0x50);
 	dma_cfg = (sscape->ic_type == IC_OPUS ? 0x40 : 0x70);
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_DMAA_REG, dma_cfg);
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_DMAB_REG, 0x20);
+	sscape_write_unsafe(sscape->io_base, GA_DMAA_REG, dma_cfg);
+	sscape_write_unsafe(sscape->io_base, GA_DMAB_REG, 0x20);
 
 	mpu_irq_cfg |= mpu_irq_cfg << 2;
-	val = sscape_पढ़ो_unsafe(sscape->io_base, GA_HMCTL_REG) & 0xF7;
-	अगर (joystick[dev])
+	val = sscape_read_unsafe(sscape->io_base, GA_HMCTL_REG) & 0xF7;
+	if (joystick[dev])
 		val |= 8;
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_HMCTL_REG, val | 0x10);
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_INTCFG_REG, 0xf0 | mpu_irq_cfg);
-	sscape_ग_लिखो_unsafe(sscape->io_base,
+	sscape_write_unsafe(sscape->io_base, GA_HMCTL_REG, val | 0x10);
+	sscape_write_unsafe(sscape->io_base, GA_INTCFG_REG, 0xf0 | mpu_irq_cfg);
+	sscape_write_unsafe(sscape->io_base,
 			    GA_CDCFG_REG, 0x09 | DMA_8BIT
 			    | (dma[dev] << 4) | (irq_cfg << 1));
 	/*
 	 * Enable the master IRQ ...
 	 */
-	sscape_ग_लिखो_unsafe(sscape->io_base, GA_INTENA_REG, 0x80);
+	sscape_write_unsafe(sscape->io_base, GA_INTENA_REG, 0x80);
 
 	spin_unlock_irqrestore(&sscape->lock, flags);
 
@@ -1057,110 +1056,110 @@ _error:
 	 */
 	err = create_ad1845(card, wss_port[dev], irq[dev],
 			    dma[dev], dma2[dev]);
-	अगर (err < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR
+	if (err < 0) {
+		snd_printk(KERN_ERR
 				"sscape: No AD1845 device at 0x%lx, IRQ %d\n",
 				wss_port[dev], irq[dev]);
-		जाओ _release_dma;
-	पूर्ण
-	म_नकल(card->driver, "SoundScape");
-	म_नकल(card->लघुname, name);
-	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+		goto _release_dma;
+	}
+	strcpy(card->driver, "SoundScape");
+	strcpy(card->shortname, name);
+	snprintf(card->longname, sizeof(card->longname),
 		 "%s at 0x%lx, IRQ %d, DMA1 %d, DMA2 %d\n",
 		 name, sscape->chip->port, sscape->chip->irq,
 		 sscape->chip->dma1, sscape->chip->dma2);
 
-#घोषणा MIDI_DEVNUM  0
-	अगर (sscape->type != SSCAPE_VIVO) अणु
+#define MIDI_DEVNUM  0
+	if (sscape->type != SSCAPE_VIVO) {
 		err = sscape_upload_bootblock(card);
-		अगर (err >= 0)
+		if (err >= 0)
 			err = sscape_upload_microcode(card, err);
 
-		अगर (err == 0) अणु
+		if (err == 0) {
 			err = create_mpu401(card, MIDI_DEVNUM, port[dev],
 					    mpu_irq[dev]);
-			अगर (err < 0) अणु
-				snd_prपूर्णांकk(KERN_ERR "sscape: Failed to create "
+			if (err < 0) {
+				snd_printk(KERN_ERR "sscape: Failed to create "
 						"MPU-401 device at 0x%lx\n",
 						port[dev]);
-				जाओ _release_dma;
-			पूर्ण
+				goto _release_dma;
+			}
 
 			/*
 			 * Initialize mixer
 			 */
 			spin_lock_irqsave(&sscape->lock, flags);
 			sscape->midi_vol = 0;
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						CMD_SET_MIDI_VOL, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						sscape->midi_vol, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						CMD_XXX_MIDI_VOL, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						sscape->midi_vol, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						CMD_SET_EXTMIDI, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base,
+			host_write_ctrl_unsafe(sscape->io_base,
 						0, 100);
-			host_ग_लिखो_ctrl_unsafe(sscape->io_base, CMD_ACK, 100);
+			host_write_ctrl_unsafe(sscape->io_base, CMD_ACK, 100);
 
 			set_midi_mode_unsafe(sscape->io_base);
 			spin_unlock_irqrestore(&sscape->lock, flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Now that we have successfully created this sound card,
-	 * it is safe to store the poपूर्णांकer.
-	 * NOTE: we only रेजिस्टर the sound card's "destructor"
+	 * it is safe to store the pointer.
+	 * NOTE: we only register the sound card's "destructor"
 	 *       function now that our "constructor" has completed.
 	 */
-	card->निजी_मुक्त = soundscape_मुक्त;
+	card->private_free = soundscape_free;
 
-	वापस 0;
+	return 0;
 
 _release_dma:
-	मुक्त_dma(dma[dev]);
+	free_dma(dma[dev]);
 
 _release_region:
-	release_and_मुक्त_resource(wss_res);
-	release_and_मुक्त_resource(io_res);
+	release_and_free_resource(wss_res);
+	release_and_free_resource(io_res);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक snd_sscape_match(काष्ठा device *pdev, अचिन्हित पूर्णांक i)
-अणु
+static int snd_sscape_match(struct device *pdev, unsigned int i)
+{
 	/*
 	 * Make sure we were given ALL of the other parameters.
 	 */
-	अगर (port[i] == SNDRV_AUTO_PORT)
-		वापस 0;
+	if (port[i] == SNDRV_AUTO_PORT)
+		return 0;
 
-	अगर (irq[i] == SNDRV_AUTO_IRQ ||
+	if (irq[i] == SNDRV_AUTO_IRQ ||
 	    mpu_irq[i] == SNDRV_AUTO_IRQ ||
-	    dma[i] == SNDRV_AUTO_DMA) अणु
-		prपूर्णांकk(KERN_INFO
+	    dma[i] == SNDRV_AUTO_DMA) {
+		printk(KERN_INFO
 		       "sscape: insufficient parameters, "
 		       "need IO, IRQ, MPU-IRQ and DMA\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक snd_sscape_probe(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
-अणु
-	काष्ठा snd_card *card;
-	काष्ठा soundscape *sscape;
-	पूर्णांक ret;
+static int snd_sscape_probe(struct device *pdev, unsigned int dev)
+{
+	struct snd_card *card;
+	struct soundscape *sscape;
+	int ret;
 
 	ret = snd_card_new(pdev, index[dev], id[dev], THIS_MODULE,
-			   माप(काष्ठा soundscape), &card);
-	अगर (ret < 0)
-		वापस ret;
+			   sizeof(struct soundscape), &card);
+	if (ret < 0)
+		return ret;
 
 	sscape = get_card_soundscape(card);
 	sscape->type = SSCAPE;
@@ -1168,78 +1167,78 @@ _release_region:
 	dma[dev] &= 0x03;
 
 	ret = create_sscape(dev, card);
-	अगर (ret < 0)
-		जाओ _release_card;
+	if (ret < 0)
+		goto _release_card;
 
-	ret = snd_card_रेजिस्टर(card);
-	अगर (ret < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Failed to register sound card\n");
-		जाओ _release_card;
-	पूर्ण
+	ret = snd_card_register(card);
+	if (ret < 0) {
+		snd_printk(KERN_ERR "sscape: Failed to register sound card\n");
+		goto _release_card;
+	}
 	dev_set_drvdata(pdev, card);
-	वापस 0;
+	return 0;
 
 _release_card:
-	snd_card_मुक्त(card);
-	वापस ret;
-पूर्ण
+	snd_card_free(card);
+	return ret;
+}
 
-अटल व्योम snd_sscape_हटाओ(काष्ठा device *devptr, अचिन्हित पूर्णांक dev)
-अणु
-	snd_card_मुक्त(dev_get_drvdata(devptr));
-पूर्ण
+static void snd_sscape_remove(struct device *devptr, unsigned int dev)
+{
+	snd_card_free(dev_get_drvdata(devptr));
+}
 
-#घोषणा DEV_NAME "sscape"
+#define DEV_NAME "sscape"
 
-अटल काष्ठा isa_driver snd_sscape_driver = अणु
+static struct isa_driver snd_sscape_driver = {
 	.match		= snd_sscape_match,
 	.probe		= snd_sscape_probe,
-	.हटाओ		= snd_sscape_हटाओ,
+	.remove		= snd_sscape_remove,
 	/* FIXME: suspend/resume */
-	.driver		= अणु
+	.driver		= {
 		.name	= DEV_NAME
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#अगर_घोषित CONFIG_PNP
-अटल अंतरभूत पूर्णांक get_next_स्वतःindex(पूर्णांक i)
-अणु
-	जबतक (i < SNDRV_CARDS && port[i] != SNDRV_AUTO_PORT)
+#ifdef CONFIG_PNP
+static inline int get_next_autoindex(int i)
+{
+	while (i < SNDRV_CARDS && port[i] != SNDRV_AUTO_PORT)
 		++i;
-	वापस i;
-पूर्ण
+	return i;
+}
 
 
-अटल पूर्णांक sscape_pnp_detect(काष्ठा pnp_card_link *pcard,
-			     स्थिर काष्ठा pnp_card_device_id *pid)
-अणु
-	अटल पूर्णांक idx = 0;
-	काष्ठा pnp_dev *dev;
-	काष्ठा snd_card *card;
-	काष्ठा soundscape *sscape;
-	पूर्णांक ret;
+static int sscape_pnp_detect(struct pnp_card_link *pcard,
+			     const struct pnp_card_device_id *pid)
+{
+	static int idx = 0;
+	struct pnp_dev *dev;
+	struct snd_card *card;
+	struct soundscape *sscape;
+	int ret;
 
 	/*
-	 * Allow this function to fail *quietly* अगर all the ISA PnP
+	 * Allow this function to fail *quietly* if all the ISA PnP
 	 * devices were configured using module parameters instead.
 	 */
-	idx = get_next_स्वतःindex(idx);
-	अगर (idx >= SNDRV_CARDS)
-		वापस -ENOSPC;
+	idx = get_next_autoindex(idx);
+	if (idx >= SNDRV_CARDS)
+		return -ENOSPC;
 
 	/*
-	 * Check that we still have room क्रम another sound card ...
+	 * Check that we still have room for another sound card ...
 	 */
-	dev = pnp_request_card_device(pcard, pid->devs[0].id, शून्य);
-	अगर (!dev)
-		वापस -ENODEV;
+	dev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
+	if (!dev)
+		return -ENODEV;
 
-	अगर (!pnp_is_active(dev)) अणु
-		अगर (pnp_activate_dev(dev) < 0) अणु
-			snd_prपूर्णांकk(KERN_INFO "sscape: device is inactive\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+	if (!pnp_is_active(dev)) {
+		if (pnp_activate_dev(dev) < 0) {
+			snd_printk(KERN_INFO "sscape: device is inactive\n");
+			return -EBUSY;
+		}
+	}
 
 	/*
 	 * Create a new ALSA sound card entry, in anticipation
@@ -1247,18 +1246,18 @@ _release_card:
 	 */
 	ret = snd_card_new(&pcard->card->dev,
 			   index[idx], id[idx], THIS_MODULE,
-			   माप(काष्ठा soundscape), &card);
-	अगर (ret < 0)
-		वापस ret;
+			   sizeof(struct soundscape), &card);
+	if (ret < 0)
+		return ret;
 
 	sscape = get_card_soundscape(card);
 
 	/*
-	 * Identअगरy card model ...
+	 * Identify card model ...
 	 */
-	अगर (!म_भेदन("ENS4081", pid->id, 7))
+	if (!strncmp("ENS4081", pid->id, 7))
 		sscape->type = SSCAPE_VIVO;
-	अन्यथा
+	else
 		sscape->type = SSCAPE_PNP;
 
 	/*
@@ -1268,77 +1267,77 @@ _release_card:
 	irq[idx] = pnp_irq(dev, 0);
 	mpu_irq[idx] = pnp_irq(dev, 1);
 	dma[idx] = pnp_dma(dev, 0) & 0x03;
-	अगर (sscape->type == SSCAPE_PNP) अणु
+	if (sscape->type == SSCAPE_PNP) {
 		dma2[idx] = dma[idx];
 		wss_port[idx] = CODEC_IO(port[idx]);
-	पूर्ण अन्यथा अणु
+	} else {
 		wss_port[idx] = pnp_port_start(dev, 1);
 		dma2[idx] = pnp_dma(dev, 1);
-	पूर्ण
+	}
 
 	ret = create_sscape(idx, card);
-	अगर (ret < 0)
-		जाओ _release_card;
+	if (ret < 0)
+		goto _release_card;
 
-	ret = snd_card_रेजिस्टर(card);
-	अगर (ret < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "sscape: Failed to register sound card\n");
-		जाओ _release_card;
-	पूर्ण
+	ret = snd_card_register(card);
+	if (ret < 0) {
+		snd_printk(KERN_ERR "sscape: Failed to register sound card\n");
+		goto _release_card;
+	}
 
 	pnp_set_card_drvdata(pcard, card);
 	++idx;
-	वापस 0;
+	return 0;
 
 _release_card:
-	snd_card_मुक्त(card);
-	वापस ret;
-पूर्ण
+	snd_card_free(card);
+	return ret;
+}
 
-अटल व्योम sscape_pnp_हटाओ(काष्ठा pnp_card_link *pcard)
-अणु
-	snd_card_मुक्त(pnp_get_card_drvdata(pcard));
-	pnp_set_card_drvdata(pcard, शून्य);
-पूर्ण
+static void sscape_pnp_remove(struct pnp_card_link *pcard)
+{
+	snd_card_free(pnp_get_card_drvdata(pcard));
+	pnp_set_card_drvdata(pcard, NULL);
+}
 
-अटल काष्ठा pnp_card_driver sscape_pnpc_driver = अणु
+static struct pnp_card_driver sscape_pnpc_driver = {
 	.flags = PNP_DRIVER_RES_DO_NOT_CHANGE,
 	.name = "sscape",
 	.id_table = sscape_pnpids,
 	.probe = sscape_pnp_detect,
-	.हटाओ = sscape_pnp_हटाओ,
-पूर्ण;
+	.remove = sscape_pnp_remove,
+};
 
-#पूर्ण_अगर /* CONFIG_PNP */
+#endif /* CONFIG_PNP */
 
-अटल पूर्णांक __init sscape_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init sscape_init(void)
+{
+	int err;
 
-	err = isa_रेजिस्टर_driver(&snd_sscape_driver, SNDRV_CARDS);
-#अगर_घोषित CONFIG_PNP
-	अगर (!err)
-		isa_रेजिस्टरed = 1;
+	err = isa_register_driver(&snd_sscape_driver, SNDRV_CARDS);
+#ifdef CONFIG_PNP
+	if (!err)
+		isa_registered = 1;
 
-	err = pnp_रेजिस्टर_card_driver(&sscape_pnpc_driver);
-	अगर (!err)
-		pnp_रेजिस्टरed = 1;
+	err = pnp_register_card_driver(&sscape_pnpc_driver);
+	if (!err)
+		pnp_registered = 1;
 
-	अगर (isa_रेजिस्टरed)
+	if (isa_registered)
 		err = 0;
-#पूर्ण_अगर
-	वापस err;
-पूर्ण
+#endif
+	return err;
+}
 
-अटल व्योम __निकास sscape_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_PNP
-	अगर (pnp_रेजिस्टरed)
-		pnp_unरेजिस्टर_card_driver(&sscape_pnpc_driver);
-	अगर (isa_रेजिस्टरed)
-#पूर्ण_अगर
-		isa_unरेजिस्टर_driver(&snd_sscape_driver);
-पूर्ण
+static void __exit sscape_exit(void)
+{
+#ifdef CONFIG_PNP
+	if (pnp_registered)
+		pnp_unregister_card_driver(&sscape_pnpc_driver);
+	if (isa_registered)
+#endif
+		isa_unregister_driver(&snd_sscape_driver);
+}
 
 module_init(sscape_init);
-module_निकास(sscape_निकास);
+module_exit(sscape_exit);

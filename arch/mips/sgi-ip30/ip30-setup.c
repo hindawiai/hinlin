@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SGI IP30 miscellaneous setup bits.
  *
@@ -8,56 +7,56 @@
  *               2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/memblock.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/percpu.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/smp-ops.h>
-#समावेश <यंत्र/sgialib.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/sgi/heart.h>
+#include <asm/smp-ops.h>
+#include <asm/sgialib.h>
+#include <asm/time.h>
+#include <asm/sgi/heart.h>
 
-#समावेश "ip30-common.h"
+#include "ip30-common.h"
 
-/* Structure of accessible HEART रेजिस्टरs located in XKPHYS space. */
-काष्ठा ip30_heart_regs __iomem *heart_regs = HEART_XKPHYS_BASE;
+/* Structure of accessible HEART registers located in XKPHYS space. */
+struct ip30_heart_regs __iomem *heart_regs = HEART_XKPHYS_BASE;
 
 /*
  * ARCS will report up to the first 1GB of
- * memory अगर queried.  Anything beyond that
+ * memory if queried.  Anything beyond that
  * is marked as reserved.
  */
-#घोषणा IP30_MAX_PROM_MEMORY	_AC(0x40000000, UL)
+#define IP30_MAX_PROM_MEMORY	_AC(0x40000000, UL)
 
 /*
  * Memory in the Octane starts at 512MB
  */
-#घोषणा IP30_MEMORY_BASE	_AC(0x20000000, UL)
+#define IP30_MEMORY_BASE	_AC(0x20000000, UL)
 
 /*
- * If using ARCS to probe क्रम memory, then
- * reमुख्यing memory will start at this offset.
+ * If using ARCS to probe for memory, then
+ * remaining memory will start at this offset.
  */
-#घोषणा IP30_REAL_MEMORY_START  (IP30_MEMORY_BASE + IP30_MAX_PROM_MEMORY)
+#define IP30_REAL_MEMORY_START  (IP30_MEMORY_BASE + IP30_MAX_PROM_MEMORY)
 
-#घोषणा MEM_SHIFT(x) ((x) >> 20)
+#define MEM_SHIFT(x) ((x) >> 20)
 
-अटल व्योम __init ip30_mem_init(व्योम)
-अणु
-	अचिन्हित दीर्घ total_mem;
+static void __init ip30_mem_init(void)
+{
+	unsigned long total_mem;
 	phys_addr_t addr;
 	phys_addr_t size;
 	u32 memcfg;
-	पूर्णांक i;
+	int i;
 
 	total_mem = 0;
-	क्रम (i = 0; i < HEART_MEMORY_BANKS; i++) अणु
-		memcfg = __raw_पढ़ोl(&heart_regs->mem_cfg.l[i]);
-		अगर (!(memcfg & HEART_MEMCFG_VALID))
-			जारी;
+	for (i = 0; i < HEART_MEMORY_BANKS; i++) {
+		memcfg = __raw_readl(&heart_regs->mem_cfg.l[i]);
+		if (!(memcfg & HEART_MEMCFG_VALID))
+			continue;
 
 		addr = memcfg & HEART_MEMCFG_ADDR_MASK;
 		addr <<= HEART_MEMCFG_UNIT_SHIFT;
@@ -69,71 +68,71 @@
 
 		total_mem += size;
 
-		अगर (addr >= IP30_REAL_MEMORY_START)
-			memblock_मुक्त(addr, size);
-		अन्यथा अगर ((addr + size) > IP30_REAL_MEMORY_START)
-			memblock_मुक्त(IP30_REAL_MEMORY_START,
+		if (addr >= IP30_REAL_MEMORY_START)
+			memblock_free(addr, size);
+		else if ((addr + size) > IP30_REAL_MEMORY_START)
+			memblock_free(IP30_REAL_MEMORY_START,
 				     size - IP30_MAX_PROM_MEMORY);
-	पूर्ण
+	}
 	pr_info("Detected %luMB of physical memory.\n", MEM_SHIFT(total_mem));
-पूर्ण
+}
 
 /**
- * ip30_cpu_समय_init - platक्रमm समय initialization.
+ * ip30_cpu_time_init - platform time initialization.
  */
-अटल व्योम __init ip30_cpu_समय_init(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static void __init ip30_cpu_time_init(void)
+{
+	int cpu = smp_processor_id();
 	u64 heart_compare;
-	अचिन्हित पूर्णांक start, end;
-	पूर्णांक समय_dअगरf;
+	unsigned int start, end;
+	int time_diff;
 
-	heart_compare = (heart_पढ़ो(&heart_regs->count) +
+	heart_compare = (heart_read(&heart_regs->count) +
 			 (HEART_CYCLES_PER_SEC / 10));
-	start = पढ़ो_c0_count();
-	जबतक ((heart_पढ़ो(&heart_regs->count) - heart_compare) & 0x800000)
+	start = read_c0_count();
+	while ((heart_read(&heart_regs->count) - heart_compare) & 0x800000)
 		cpu_relax();
 
-	end = पढ़ो_c0_count();
-	समय_dअगरf = (पूर्णांक)end - (पूर्णांक)start;
-	mips_hpt_frequency = समय_dअगरf * 10;
+	end = read_c0_count();
+	time_diff = (int)end - (int)start;
+	mips_hpt_frequency = time_diff * 10;
 	pr_info("IP30: CPU%d: %d MHz CPU detected.\n", cpu,
 		(mips_hpt_frequency * 2) / 1000000);
-पूर्ण
+}
 
-व्योम __init ip30_per_cpu_init(व्योम)
-अणु
-	/* Disable all पूर्णांकerrupts. */
+void __init ip30_per_cpu_init(void)
+{
+	/* Disable all interrupts. */
 	clear_c0_status(ST0_IM);
 
-	ip30_cpu_समय_init();
-#अगर_घोषित CONFIG_SMP
+	ip30_cpu_time_init();
+#ifdef CONFIG_SMP
 	ip30_install_ipi();
-#पूर्ण_अगर
+#endif
 
 	enable_percpu_irq(IP30_HEART_L0_IRQ, IRQ_TYPE_NONE);
 	enable_percpu_irq(IP30_HEART_L1_IRQ, IRQ_TYPE_NONE);
 	enable_percpu_irq(IP30_HEART_L2_IRQ, IRQ_TYPE_NONE);
 	enable_percpu_irq(IP30_HEART_ERR_IRQ, IRQ_TYPE_NONE);
-पूर्ण
+}
 
 /**
  * plat_mem_setup - despite the name, misc setup happens here.
  */
-व्योम __init plat_mem_setup(व्योम)
-अणु
+void __init plat_mem_setup(void)
+{
 	ip30_mem_init();
 
-	/* XXX: Hard lock on /sbin/init अगर this flag isn't specअगरied. */
+	/* XXX: Hard lock on /sbin/init if this flag isn't specified. */
 	prom_flags |= PROM_FLAG_DONT_FREE_TEMP;
 
-#अगर_घोषित CONFIG_SMP
-	रेजिस्टर_smp_ops(&ip30_smp_ops);
-#अन्यथा
+#ifdef CONFIG_SMP
+	register_smp_ops(&ip30_smp_ops);
+#else
 	ip30_per_cpu_init();
-#पूर्ण_अगर
+#endif
 
 	ioport_resource.start = 0;
 	ioport_resource.end = ~0UL;
 	set_io_port_base(IO_BASE);
-पूर्ण
+}

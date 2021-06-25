@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/pci.h>
+#include <linux/delay.h>
 
-#समावेश "nitrox_dev.h"
-#समावेश "nitrox_hal.h"
-#समावेश "nitrox_common.h"
-#समावेश "nitrox_isr.h"
-#समावेश "nitrox_mbx.h"
+#include "nitrox_dev.h"
+#include "nitrox_hal.h"
+#include "nitrox_common.h"
+#include "nitrox_isr.h"
+#include "nitrox_mbx.h"
 
 /**
  * num_vfs_valid - validate VF count
  * @num_vfs: number of VF(s)
  */
-अटल अंतरभूत bool num_vfs_valid(पूर्णांक num_vfs)
-अणु
+static inline bool num_vfs_valid(int num_vfs)
+{
 	bool valid = false;
 
-	चयन (num_vfs) अणु
-	हाल 16:
-	हाल 32:
-	हाल 64:
-	हाल 128:
+	switch (num_vfs) {
+	case 16:
+	case 32:
+	case 64:
+	case 128:
 		valid = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस valid;
-पूर्ण
+	return valid;
+}
 
-अटल अंतरभूत क्रमागत vf_mode num_vfs_to_mode(पूर्णांक num_vfs)
-अणु
-	क्रमागत vf_mode mode = 0;
+static inline enum vf_mode num_vfs_to_mode(int num_vfs)
+{
+	enum vf_mode mode = 0;
 
-	चयन (num_vfs) अणु
-	हाल 0:
+	switch (num_vfs) {
+	case 0:
 		mode = __NDEV_MODE_PF;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		mode = __NDEV_MODE_VF16;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		mode = __NDEV_MODE_VF32;
-		अवरोध;
-	हाल 64:
+		break;
+	case 64:
 		mode = __NDEV_MODE_VF64;
-		अवरोध;
-	हाल 128:
+		break;
+	case 128:
 		mode = __NDEV_MODE_VF128;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल अंतरभूत पूर्णांक vf_mode_to_nr_queues(क्रमागत vf_mode mode)
-अणु
-	पूर्णांक nr_queues = 0;
+static inline int vf_mode_to_nr_queues(enum vf_mode mode)
+{
+	int nr_queues = 0;
 
-	चयन (mode) अणु
-	हाल __NDEV_MODE_PF:
+	switch (mode) {
+	case __NDEV_MODE_PF:
 		nr_queues = MAX_PF_QUEUES;
-		अवरोध;
-	हाल __NDEV_MODE_VF16:
+		break;
+	case __NDEV_MODE_VF16:
 		nr_queues = 8;
-		अवरोध;
-	हाल __NDEV_MODE_VF32:
+		break;
+	case __NDEV_MODE_VF32:
 		nr_queues = 4;
-		अवरोध;
-	हाल __NDEV_MODE_VF64:
+		break;
+	case __NDEV_MODE_VF64:
 		nr_queues = 2;
-		अवरोध;
-	हाल __NDEV_MODE_VF128:
+		break;
+	case __NDEV_MODE_VF128:
 		nr_queues = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस nr_queues;
-पूर्ण
+	return nr_queues;
+}
 
-अटल व्योम nitrox_pf_cleanup(काष्ठा nitrox_device *ndev)
-अणु
+static void nitrox_pf_cleanup(struct nitrox_device *ndev)
+{
 	 /* PF has no queues in SR-IOV mode */
 	atomic_set(&ndev->state, __NDEV_NOT_READY);
-	/* unरेजिस्टर crypto algorithms */
-	nitrox_crypto_unरेजिस्टर();
+	/* unregister crypto algorithms */
+	nitrox_crypto_unregister();
 
 	/* cleanup PF resources */
-	nitrox_unरेजिस्टर_पूर्णांकerrupts(ndev);
+	nitrox_unregister_interrupts(ndev);
 	nitrox_common_sw_cleanup(ndev);
-पूर्ण
+}
 
 /**
  * nitrox_pf_reinit - re-initialize PF resources once SR-IOV is disabled
  * @ndev: NITROX device
  */
-अटल पूर्णांक nitrox_pf_reinit(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक err;
+static int nitrox_pf_reinit(struct nitrox_device *ndev)
+{
+	int err;
 
-	/* allocate resources क्रम PF */
+	/* allocate resources for PF */
 	err = nitrox_common_sw_init(ndev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = nitrox_रेजिस्टर_पूर्णांकerrupts(ndev);
-	अगर (err) अणु
+	err = nitrox_register_interrupts(ndev);
+	if (err) {
 		nitrox_common_sw_cleanup(ndev);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* configure the AQM queues */
 	nitrox_config_aqm_rings(ndev);
@@ -117,58 +116,58 @@
 	nitrox_config_pkt_input_rings(ndev);
 	nitrox_config_pkt_solicit_ports(ndev);
 
-	/* set device to पढ़ोy state */
+	/* set device to ready state */
 	atomic_set(&ndev->state, __NDEV_READY);
 
-	/* रेजिस्टर crypto algorithms */
-	वापस nitrox_crypto_रेजिस्टर();
-पूर्ण
+	/* register crypto algorithms */
+	return nitrox_crypto_register();
+}
 
-अटल व्योम nitrox_sriov_cleanup(काष्ठा nitrox_device *ndev)
-अणु
-	/* unरेजिस्टर पूर्णांकerrupts क्रम PF in SR-IOV */
-	nitrox_sriov_unरेजिस्टर_पूर्णांकerrupts(ndev);
+static void nitrox_sriov_cleanup(struct nitrox_device *ndev)
+{
+	/* unregister interrupts for PF in SR-IOV */
+	nitrox_sriov_unregister_interrupts(ndev);
 	nitrox_mbox_cleanup(ndev);
-पूर्ण
+}
 
-अटल पूर्णांक nitrox_sriov_init(काष्ठा nitrox_device *ndev)
-अणु
-	पूर्णांक ret;
+static int nitrox_sriov_init(struct nitrox_device *ndev)
+{
+	int ret;
 
-	/* रेजिस्टर पूर्णांकerrupts क्रम PF in SR-IOV */
-	ret = nitrox_sriov_रेजिस्टर_पूर्णांकerupts(ndev);
-	अगर (ret)
-		वापस ret;
+	/* register interrupts for PF in SR-IOV */
+	ret = nitrox_sriov_register_interupts(ndev);
+	if (ret)
+		return ret;
 
 	ret = nitrox_mbox_init(ndev);
-	अगर (ret)
-		जाओ sriov_init_fail;
+	if (ret)
+		goto sriov_init_fail;
 
-	वापस 0;
+	return 0;
 
 sriov_init_fail:
 	nitrox_sriov_cleanup(ndev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nitrox_sriov_enable(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
-अणु
-	काष्ठा nitrox_device *ndev = pci_get_drvdata(pdev);
-	पूर्णांक err;
+static int nitrox_sriov_enable(struct pci_dev *pdev, int num_vfs)
+{
+	struct nitrox_device *ndev = pci_get_drvdata(pdev);
+	int err;
 
-	अगर (!num_vfs_valid(num_vfs)) अणु
+	if (!num_vfs_valid(num_vfs)) {
 		dev_err(DEV(ndev), "Invalid num_vfs %d\n", num_vfs);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (pci_num_vf(pdev) == num_vfs)
-		वापस num_vfs;
+	if (pci_num_vf(pdev) == num_vfs)
+		return num_vfs;
 
 	err = pci_enable_sriov(pdev, num_vfs);
-	अगर (err) अणु
+	if (err) {
 		dev_err(DEV(ndev), "failed to enable PCI sriov %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	dev_info(DEV(ndev), "Enabled VF(s) %d\n", num_vfs);
 
 	ndev->mode = num_vfs_to_mode(num_vfs);
@@ -182,11 +181,11 @@ sriov_init_fail:
 
 	/* PF SR-IOV mode initialization */
 	err = nitrox_sriov_init(ndev);
-	अगर (err)
-		जाओ iov_fail;
+	if (err)
+		goto iov_fail;
 
 	config_nps_core_vfcfg_mode(ndev, ndev->mode);
-	वापस num_vfs;
+	return num_vfs;
 
 iov_fail:
 	pci_disable_sriov(pdev);
@@ -196,20 +195,20 @@ iov_fail:
 	ndev->mode = __NDEV_MODE_PF;
 	/* reset back to working mode in PF */
 	nitrox_pf_reinit(ndev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक nitrox_sriov_disable(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा nitrox_device *ndev = pci_get_drvdata(pdev);
+static int nitrox_sriov_disable(struct pci_dev *pdev)
+{
+	struct nitrox_device *ndev = pci_get_drvdata(pdev);
 
-	अगर (!test_bit(__NDEV_SRIOV_BIT, &ndev->flags))
-		वापस 0;
+	if (!test_bit(__NDEV_SRIOV_BIT, &ndev->flags))
+		return 0;
 
-	अगर (pci_vfs_asचिन्हित(pdev)) अणु
+	if (pci_vfs_assigned(pdev)) {
 		dev_warn(DEV(ndev), "VFs are attached to VM. Can't disable SR-IOV\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 	pci_disable_sriov(pdev);
 	/* clear bit in flags */
 	clear_bit(__NDEV_SRIOV_BIT, &ndev->flags);
@@ -223,13 +222,13 @@ iov_fail:
 
 	config_nps_core_vfcfg_mode(ndev, ndev->mode);
 
-	वापस nitrox_pf_reinit(ndev);
-पूर्ण
+	return nitrox_pf_reinit(ndev);
+}
 
-पूर्णांक nitrox_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
-अणु
-	अगर (!num_vfs)
-		वापस nitrox_sriov_disable(pdev);
+int nitrox_sriov_configure(struct pci_dev *pdev, int num_vfs)
+{
+	if (!num_vfs)
+		return nitrox_sriov_disable(pdev);
 
-	वापस nitrox_sriov_enable(pdev, num_vfs);
-पूर्ण
+	return nitrox_sriov_enable(pdev, num_vfs);
+}

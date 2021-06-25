@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_CSC_TYPES_H
-#घोषणा __IA_CSS_CSC_TYPES_H
+#ifndef __IA_CSS_CSC_TYPES_H
+#define __IA_CSS_CSC_TYPES_H
 
 /* @file
-* CSS-API header file क्रम Color Space Conversion parameters.
+* CSS-API header file for Color Space Conversion parameters.
 */
 
 /* Color Correction configuration.
  *
- *  This काष्ठाure is used क्रम 3 हालs.
- *  ("YCgCo" is the output क्रमmat of Demosaic.)
+ *  This structure is used for 3 cases.
+ *  ("YCgCo" is the output format of Demosaic.)
  *
- *  1. Color Space Conversion (YCgCo to YUV) क्रम ISP1.
+ *  1. Color Space Conversion (YCgCo to YUV) for ISP1.
  *     ISP block: CSC1 (Color Space Conversion)
- *     काष्ठा ia_css_cc_config   *cc_config
+ *     struct ia_css_cc_config   *cc_config
  *
- *  2. Color Correction Matrix (YCgCo to RGB) क्रम ISP2.
+ *  2. Color Correction Matrix (YCgCo to RGB) for ISP2.
  *     ISP block: CCM2 (Color Correction Matrix)
- *     काष्ठा ia_css_cc_config   *yuv2rgb_cc_config
+ *     struct ia_css_cc_config   *yuv2rgb_cc_config
  *
- *  3. Color Space Conversion (RGB to YUV) क्रम ISP2.
+ *  3. Color Space Conversion (RGB to YUV) for ISP2.
  *     ISP block: CSC2 (Color Space Conversion)
- *     काष्ठा ia_css_cc_config   *rgb2yuv_cc_config
+ *     struct ia_css_cc_config   *rgb2yuv_cc_config
  *
- *  शेष/ineffective:
+ *  default/ineffective:
  *  1. YCgCo -> YUV
  *	1	0.174		0.185
  *	0	-0.66252	-0.66874
@@ -69,12 +68,12 @@
  *	-1382	-2714	4096
  *	4096	-3430	-666
  */
-काष्ठा ia_css_cc_config अणु
+struct ia_css_cc_config {
 	u32 fraction_bits;/** Fractional bits of matrix.
 					u8.0, [0,13] */
 	s32 matrix[3 * 3]; /** Conversion matrix.
 					s[13-fraction_bits].[fraction_bits],
 					[-8192,8191] */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __IA_CSS_CSC_TYPES_H */
+#endif /* __IA_CSS_CSC_TYPES_H */

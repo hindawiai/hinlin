@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,527 +23,527 @@
  *
  */
 
-#समावेश "dc_features.h"
-#समावेश "display_mode_enums.h"
+#include "dc_features.h"
+#include "display_mode_enums.h"
 
-#अगर_अघोषित __DISPLAY_MODE_STRUCTS_H__
-#घोषणा __DISPLAY_MODE_STRUCTS_H__
+#ifndef __DISPLAY_MODE_STRUCTS_H__
+#define __DISPLAY_MODE_STRUCTS_H__
 
-प्रकार काष्ठा _vcs_dpi_voltage_scaling_st voltage_scaling_st;
-प्रकार काष्ठा _vcs_dpi_soc_bounding_box_st soc_bounding_box_st;
-प्रकार काष्ठा _vcs_dpi_ip_params_st ip_params_st;
-प्रकार काष्ठा _vcs_dpi_display_pipe_source_params_st display_pipe_source_params_st;
-प्रकार काष्ठा _vcs_dpi_display_output_params_st display_output_params_st;
-प्रकार काष्ठा _vcs_dpi_scaler_ratio_depth_st scaler_ratio_depth_st;
-प्रकार काष्ठा _vcs_dpi_scaler_taps_st scaler_taps_st;
-प्रकार काष्ठा _vcs_dpi_display_pipe_dest_params_st display_pipe_dest_params_st;
-प्रकार काष्ठा _vcs_dpi_display_pipe_params_st display_pipe_params_st;
-प्रकार काष्ठा _vcs_dpi_display_घड़ीs_and_cfg_st display_घड़ीs_and_cfg_st;
-प्रकार काष्ठा _vcs_dpi_display_e2e_pipe_params_st display_e2e_pipe_params_st;
-प्रकार काष्ठा _vcs_dpi_display_data_rq_misc_params_st display_data_rq_misc_params_st;
-प्रकार काष्ठा _vcs_dpi_display_data_rq_sizing_params_st display_data_rq_sizing_params_st;
-प्रकार काष्ठा _vcs_dpi_display_data_rq_dlg_params_st display_data_rq_dlg_params_st;
-प्रकार काष्ठा _vcs_dpi_display_rq_dlg_params_st display_rq_dlg_params_st;
-प्रकार काष्ठा _vcs_dpi_display_rq_sizing_params_st display_rq_sizing_params_st;
-प्रकार काष्ठा _vcs_dpi_display_rq_misc_params_st display_rq_misc_params_st;
-प्रकार काष्ठा _vcs_dpi_display_rq_params_st display_rq_params_st;
-प्रकार काष्ठा _vcs_dpi_display_dlg_regs_st display_dlg_regs_st;
-प्रकार काष्ठा _vcs_dpi_display_ttu_regs_st display_ttu_regs_st;
-प्रकार काष्ठा _vcs_dpi_display_data_rq_regs_st display_data_rq_regs_st;
-प्रकार काष्ठा _vcs_dpi_display_rq_regs_st display_rq_regs_st;
-प्रकार काष्ठा _vcs_dpi_display_dlg_sys_params_st display_dlg_sys_params_st;
-प्रकार काष्ठा _vcs_dpi_display_arb_params_st display_arb_params_st;
+typedef struct _vcs_dpi_voltage_scaling_st voltage_scaling_st;
+typedef struct _vcs_dpi_soc_bounding_box_st soc_bounding_box_st;
+typedef struct _vcs_dpi_ip_params_st ip_params_st;
+typedef struct _vcs_dpi_display_pipe_source_params_st display_pipe_source_params_st;
+typedef struct _vcs_dpi_display_output_params_st display_output_params_st;
+typedef struct _vcs_dpi_scaler_ratio_depth_st scaler_ratio_depth_st;
+typedef struct _vcs_dpi_scaler_taps_st scaler_taps_st;
+typedef struct _vcs_dpi_display_pipe_dest_params_st display_pipe_dest_params_st;
+typedef struct _vcs_dpi_display_pipe_params_st display_pipe_params_st;
+typedef struct _vcs_dpi_display_clocks_and_cfg_st display_clocks_and_cfg_st;
+typedef struct _vcs_dpi_display_e2e_pipe_params_st display_e2e_pipe_params_st;
+typedef struct _vcs_dpi_display_data_rq_misc_params_st display_data_rq_misc_params_st;
+typedef struct _vcs_dpi_display_data_rq_sizing_params_st display_data_rq_sizing_params_st;
+typedef struct _vcs_dpi_display_data_rq_dlg_params_st display_data_rq_dlg_params_st;
+typedef struct _vcs_dpi_display_rq_dlg_params_st display_rq_dlg_params_st;
+typedef struct _vcs_dpi_display_rq_sizing_params_st display_rq_sizing_params_st;
+typedef struct _vcs_dpi_display_rq_misc_params_st display_rq_misc_params_st;
+typedef struct _vcs_dpi_display_rq_params_st display_rq_params_st;
+typedef struct _vcs_dpi_display_dlg_regs_st display_dlg_regs_st;
+typedef struct _vcs_dpi_display_ttu_regs_st display_ttu_regs_st;
+typedef struct _vcs_dpi_display_data_rq_regs_st display_data_rq_regs_st;
+typedef struct _vcs_dpi_display_rq_regs_st display_rq_regs_st;
+typedef struct _vcs_dpi_display_dlg_sys_params_st display_dlg_sys_params_st;
+typedef struct _vcs_dpi_display_arb_params_st display_arb_params_st;
 
-काष्ठा _vcs_dpi_voltage_scaling_st अणु
-	पूर्णांक state;
-	द्विगुन dscclk_mhz;
-	द्विगुन dcfclk_mhz;
-	द्विगुन socclk_mhz;
-	द्विगुन phyclk_d18_mhz;
-	द्विगुन dram_speed_mts;
-	द्विगुन fabricclk_mhz;
-	द्विगुन dispclk_mhz;
-	द्विगुन dram_bw_per_chan_gbps;
-	द्विगुन phyclk_mhz;
-	द्विगुन dppclk_mhz;
-	द्विगुन dtbclk_mhz;
-पूर्ण;
+struct _vcs_dpi_voltage_scaling_st {
+	int state;
+	double dscclk_mhz;
+	double dcfclk_mhz;
+	double socclk_mhz;
+	double phyclk_d18_mhz;
+	double dram_speed_mts;
+	double fabricclk_mhz;
+	double dispclk_mhz;
+	double dram_bw_per_chan_gbps;
+	double phyclk_mhz;
+	double dppclk_mhz;
+	double dtbclk_mhz;
+};
 
-काष्ठा _vcs_dpi_soc_bounding_box_st अणु
-	काष्ठा _vcs_dpi_voltage_scaling_st घड़ी_limits[DC__VOLTAGE_STATES];
-	अचिन्हित पूर्णांक num_states;
-	द्विगुन sr_निकास_समय_us;
-	द्विगुन sr_enter_plus_निकास_समय_us;
-	द्विगुन urgent_latency_us;
-	द्विगुन urgent_latency_pixel_data_only_us;
-	द्विगुन urgent_latency_pixel_mixed_with_vm_data_us;
-	द्विगुन urgent_latency_vm_data_only_us;
-	द्विगुन ग_लिखोback_latency_us;
-	द्विगुन ideal_dram_bw_after_urgent_percent;
-	द्विगुन pct_ideal_dram_sdp_bw_after_urgent_pixel_only; // PercentOfIdealDRAMFabricAndSDPPortBWReceivedAfterUrgLatencyPixelDataOnly
-	द्विगुन pct_ideal_dram_sdp_bw_after_urgent_pixel_and_vm;
-	द्विगुन pct_ideal_dram_sdp_bw_after_urgent_vm_only;
-	द्विगुन pct_ideal_sdp_bw_after_urgent;
-	द्विगुन max_avg_sdp_bw_use_normal_percent;
-	द्विगुन max_avg_dram_bw_use_normal_percent;
-	अचिन्हित पूर्णांक max_request_size_bytes;
-	द्विगुन करोwnspपढ़ो_percent;
-	द्विगुन dram_page_खोलो_समय_ns;
-	द्विगुन dram_rw_turnaround_समय_ns;
-	द्विगुन dram_वापस_buffer_per_channel_bytes;
-	द्विगुन dram_channel_width_bytes;
-	द्विगुन fabric_datapath_to_dcn_data_वापस_bytes;
-	द्विगुन dcn_करोwnspपढ़ो_percent;
-	द्विगुन dispclk_dppclk_vco_speed_mhz;
-	द्विगुन dfs_vco_period_ps;
-	अचिन्हित पूर्णांक urgent_out_of_order_वापस_per_channel_pixel_only_bytes;
-	अचिन्हित पूर्णांक urgent_out_of_order_वापस_per_channel_pixel_and_vm_bytes;
-	अचिन्हित पूर्णांक urgent_out_of_order_वापस_per_channel_vm_only_bytes;
-	अचिन्हित पूर्णांक round_trip_ping_latency_dcfclk_cycles;
-	अचिन्हित पूर्णांक urgent_out_of_order_वापस_per_channel_bytes;
-	अचिन्हित पूर्णांक channel_पूर्णांकerleave_bytes;
-	अचिन्हित पूर्णांक num_banks;
-	अचिन्हित पूर्णांक num_chans;
-	अचिन्हित पूर्णांक vmm_page_size_bytes;
-	अचिन्हित पूर्णांक hostvm_min_page_size_bytes;
-	अचिन्हित पूर्णांक gpuvm_min_page_size_bytes;
-	द्विगुन dram_घड़ी_change_latency_us;
-	द्विगुन dummy_pstate_latency_us;
-	द्विगुन ग_लिखोback_dram_घड़ी_change_latency_us;
-	अचिन्हित पूर्णांक वापस_bus_width_bytes;
-	अचिन्हित पूर्णांक voltage_override;
-	द्विगुन xfc_bus_transport_समय_us;
-	द्विगुन xfc_xbuf_latency_tolerance_us;
-	पूर्णांक use_urgent_burst_bw;
-	द्विगुन min_dcfclk;
-	bool करो_urgent_latency_adjusपंचांगent;
-	द्विगुन urgent_latency_adjusपंचांगent_fabric_घड़ी_component_us;
-	द्विगुन urgent_latency_adjusपंचांगent_fabric_घड़ी_reference_mhz;
-	bool disable_dram_घड़ी_change_vactive_support;
-	bool allow_dram_घड़ी_one_display_vactive;
-	क्रमागत self_refresh_affinity allow_dram_self_refresh_or_dram_घड़ी_change_in_vblank;
-पूर्ण;
+struct _vcs_dpi_soc_bounding_box_st {
+	struct _vcs_dpi_voltage_scaling_st clock_limits[DC__VOLTAGE_STATES];
+	unsigned int num_states;
+	double sr_exit_time_us;
+	double sr_enter_plus_exit_time_us;
+	double urgent_latency_us;
+	double urgent_latency_pixel_data_only_us;
+	double urgent_latency_pixel_mixed_with_vm_data_us;
+	double urgent_latency_vm_data_only_us;
+	double writeback_latency_us;
+	double ideal_dram_bw_after_urgent_percent;
+	double pct_ideal_dram_sdp_bw_after_urgent_pixel_only; // PercentOfIdealDRAMFabricAndSDPPortBWReceivedAfterUrgLatencyPixelDataOnly
+	double pct_ideal_dram_sdp_bw_after_urgent_pixel_and_vm;
+	double pct_ideal_dram_sdp_bw_after_urgent_vm_only;
+	double pct_ideal_sdp_bw_after_urgent;
+	double max_avg_sdp_bw_use_normal_percent;
+	double max_avg_dram_bw_use_normal_percent;
+	unsigned int max_request_size_bytes;
+	double downspread_percent;
+	double dram_page_open_time_ns;
+	double dram_rw_turnaround_time_ns;
+	double dram_return_buffer_per_channel_bytes;
+	double dram_channel_width_bytes;
+	double fabric_datapath_to_dcn_data_return_bytes;
+	double dcn_downspread_percent;
+	double dispclk_dppclk_vco_speed_mhz;
+	double dfs_vco_period_ps;
+	unsigned int urgent_out_of_order_return_per_channel_pixel_only_bytes;
+	unsigned int urgent_out_of_order_return_per_channel_pixel_and_vm_bytes;
+	unsigned int urgent_out_of_order_return_per_channel_vm_only_bytes;
+	unsigned int round_trip_ping_latency_dcfclk_cycles;
+	unsigned int urgent_out_of_order_return_per_channel_bytes;
+	unsigned int channel_interleave_bytes;
+	unsigned int num_banks;
+	unsigned int num_chans;
+	unsigned int vmm_page_size_bytes;
+	unsigned int hostvm_min_page_size_bytes;
+	unsigned int gpuvm_min_page_size_bytes;
+	double dram_clock_change_latency_us;
+	double dummy_pstate_latency_us;
+	double writeback_dram_clock_change_latency_us;
+	unsigned int return_bus_width_bytes;
+	unsigned int voltage_override;
+	double xfc_bus_transport_time_us;
+	double xfc_xbuf_latency_tolerance_us;
+	int use_urgent_burst_bw;
+	double min_dcfclk;
+	bool do_urgent_latency_adjustment;
+	double urgent_latency_adjustment_fabric_clock_component_us;
+	double urgent_latency_adjustment_fabric_clock_reference_mhz;
+	bool disable_dram_clock_change_vactive_support;
+	bool allow_dram_clock_one_display_vactive;
+	enum self_refresh_affinity allow_dram_self_refresh_or_dram_clock_change_in_vblank;
+};
 
-काष्ठा _vcs_dpi_ip_params_st अणु
+struct _vcs_dpi_ip_params_st {
 	bool use_min_dcfclk;
 	bool clamp_min_dcfclk;
 	bool gpuvm_enable;
 	bool hostvm_enable;
 	bool dsc422_native_support;
-	अचिन्हित पूर्णांक gpuvm_max_page_table_levels;
-	अचिन्हित पूर्णांक hostvm_max_page_table_levels;
-	अचिन्हित पूर्णांक hostvm_cached_page_table_levels;
-	अचिन्हित पूर्णांक pte_group_size_bytes;
-	अचिन्हित पूर्णांक max_पूर्णांकer_dcn_tile_repeaters;
-	अचिन्हित पूर्णांक num_dsc;
-	अचिन्हित पूर्णांक odm_capable;
-	अचिन्हित पूर्णांक rob_buffer_size_kbytes;
-	अचिन्हित पूर्णांक det_buffer_size_kbytes;
-	अचिन्हित पूर्णांक dpte_buffer_size_in_pte_reqs_luma;
-	अचिन्हित पूर्णांक dpte_buffer_size_in_pte_reqs_chroma;
-	अचिन्हित पूर्णांक pde_proc_buffer_size_64k_reqs;
-	अचिन्हित पूर्णांक dpp_output_buffer_pixels;
-	अचिन्हित पूर्णांक opp_output_buffer_lines;
-	अचिन्हित पूर्णांक pixel_chunk_size_kbytes;
-	अचिन्हित अक्षर pte_enable;
-	अचिन्हित पूर्णांक pte_chunk_size_kbytes;
-	अचिन्हित पूर्णांक meta_chunk_size_kbytes;
-	अचिन्हित पूर्णांक min_meta_chunk_size_bytes;
-	अचिन्हित पूर्णांक ग_लिखोback_chunk_size_kbytes;
-	अचिन्हित पूर्णांक line_buffer_size_bits;
-	अचिन्हित पूर्णांक max_line_buffer_lines;
-	अचिन्हित पूर्णांक ग_लिखोback_luma_buffer_size_kbytes;
-	अचिन्हित पूर्णांक ग_लिखोback_chroma_buffer_size_kbytes;
-	अचिन्हित पूर्णांक ग_लिखोback_chroma_line_buffer_width_pixels;
+	unsigned int gpuvm_max_page_table_levels;
+	unsigned int hostvm_max_page_table_levels;
+	unsigned int hostvm_cached_page_table_levels;
+	unsigned int pte_group_size_bytes;
+	unsigned int max_inter_dcn_tile_repeaters;
+	unsigned int num_dsc;
+	unsigned int odm_capable;
+	unsigned int rob_buffer_size_kbytes;
+	unsigned int det_buffer_size_kbytes;
+	unsigned int dpte_buffer_size_in_pte_reqs_luma;
+	unsigned int dpte_buffer_size_in_pte_reqs_chroma;
+	unsigned int pde_proc_buffer_size_64k_reqs;
+	unsigned int dpp_output_buffer_pixels;
+	unsigned int opp_output_buffer_lines;
+	unsigned int pixel_chunk_size_kbytes;
+	unsigned char pte_enable;
+	unsigned int pte_chunk_size_kbytes;
+	unsigned int meta_chunk_size_kbytes;
+	unsigned int min_meta_chunk_size_bytes;
+	unsigned int writeback_chunk_size_kbytes;
+	unsigned int line_buffer_size_bits;
+	unsigned int max_line_buffer_lines;
+	unsigned int writeback_luma_buffer_size_kbytes;
+	unsigned int writeback_chroma_buffer_size_kbytes;
+	unsigned int writeback_chroma_line_buffer_width_pixels;
 
-	अचिन्हित पूर्णांक ग_लिखोback_पूर्णांकerface_buffer_size_kbytes;
-	अचिन्हित पूर्णांक ग_लिखोback_line_buffer_buffer_size;
+	unsigned int writeback_interface_buffer_size_kbytes;
+	unsigned int writeback_line_buffer_buffer_size;
 
-	अचिन्हित पूर्णांक ग_लिखोback_10bpc420_supported;
-	द्विगुन ग_लिखोback_max_hscl_ratio;
-	द्विगुन ग_लिखोback_max_vscl_ratio;
-	द्विगुन ग_लिखोback_min_hscl_ratio;
-	द्विगुन ग_लिखोback_min_vscl_ratio;
-	अचिन्हित पूर्णांक maximum_dsc_bits_per_component;
-	अचिन्हित पूर्णांक ग_लिखोback_max_hscl_taps;
-	अचिन्हित पूर्णांक ग_लिखोback_max_vscl_taps;
-	अचिन्हित पूर्णांक ग_लिखोback_line_buffer_luma_buffer_size;
-	अचिन्हित पूर्णांक ग_लिखोback_line_buffer_chroma_buffer_size;
+	unsigned int writeback_10bpc420_supported;
+	double writeback_max_hscl_ratio;
+	double writeback_max_vscl_ratio;
+	double writeback_min_hscl_ratio;
+	double writeback_min_vscl_ratio;
+	unsigned int maximum_dsc_bits_per_component;
+	unsigned int writeback_max_hscl_taps;
+	unsigned int writeback_max_vscl_taps;
+	unsigned int writeback_line_buffer_luma_buffer_size;
+	unsigned int writeback_line_buffer_chroma_buffer_size;
 
-	अचिन्हित पूर्णांक max_page_table_levels;
-	अचिन्हित पूर्णांक max_num_dpp;
-	अचिन्हित पूर्णांक max_num_otg;
-	अचिन्हित पूर्णांक cursor_chunk_size;
-	अचिन्हित पूर्णांक cursor_buffer_size;
-	अचिन्हित पूर्णांक max_num_wb;
-	अचिन्हित पूर्णांक max_dchub_pscl_bw_pix_per_clk;
-	अचिन्हित पूर्णांक max_pscl_lb_bw_pix_per_clk;
-	अचिन्हित पूर्णांक max_lb_vscl_bw_pix_per_clk;
-	अचिन्हित पूर्णांक max_vscl_hscl_bw_pix_per_clk;
-	द्विगुन max_hscl_ratio;
-	द्विगुन max_vscl_ratio;
-	अचिन्हित पूर्णांक hscl_mults;
-	अचिन्हित पूर्णांक vscl_mults;
-	अचिन्हित पूर्णांक max_hscl_taps;
-	अचिन्हित पूर्णांक max_vscl_taps;
-	अचिन्हित पूर्णांक xfc_supported;
-	अचिन्हित पूर्णांक ptoi_supported;
-	अचिन्हित पूर्णांक gfx7_compat_tiling_supported;
+	unsigned int max_page_table_levels;
+	unsigned int max_num_dpp;
+	unsigned int max_num_otg;
+	unsigned int cursor_chunk_size;
+	unsigned int cursor_buffer_size;
+	unsigned int max_num_wb;
+	unsigned int max_dchub_pscl_bw_pix_per_clk;
+	unsigned int max_pscl_lb_bw_pix_per_clk;
+	unsigned int max_lb_vscl_bw_pix_per_clk;
+	unsigned int max_vscl_hscl_bw_pix_per_clk;
+	double max_hscl_ratio;
+	double max_vscl_ratio;
+	unsigned int hscl_mults;
+	unsigned int vscl_mults;
+	unsigned int max_hscl_taps;
+	unsigned int max_vscl_taps;
+	unsigned int xfc_supported;
+	unsigned int ptoi_supported;
+	unsigned int gfx7_compat_tiling_supported;
 
 	bool odm_combine_4to1_supported;
 	bool dynamic_metadata_vm_enabled;
-	अचिन्हित पूर्णांक max_num_hdmi_frl_outमाला_दो;
+	unsigned int max_num_hdmi_frl_outputs;
 
-	अचिन्हित पूर्णांक xfc_fill_स्थिरant_bytes;
-	द्विगुन dispclk_ramp_margin_percent;
-	द्विगुन xfc_fill_bw_overhead_percent;
-	द्विगुन underscan_factor;
-	अचिन्हित पूर्णांक min_vblank_lines;
-	अचिन्हित पूर्णांक dppclk_delay_subtotal;
-	अचिन्हित पूर्णांक dispclk_delay_subtotal;
-	द्विगुन dcfclk_cstate_latency;
-	अचिन्हित पूर्णांक dppclk_delay_scl;
-	अचिन्हित पूर्णांक dppclk_delay_scl_lb_only;
-	अचिन्हित पूर्णांक dppclk_delay_cnvc_क्रमmatter;
-	अचिन्हित पूर्णांक dppclk_delay_cnvc_cursor;
-	अचिन्हित पूर्णांक is_line_buffer_bpp_fixed;
-	अचिन्हित पूर्णांक line_buffer_fixed_bpp;
-	अचिन्हित पूर्णांक dcc_supported;
+	unsigned int xfc_fill_constant_bytes;
+	double dispclk_ramp_margin_percent;
+	double xfc_fill_bw_overhead_percent;
+	double underscan_factor;
+	unsigned int min_vblank_lines;
+	unsigned int dppclk_delay_subtotal;
+	unsigned int dispclk_delay_subtotal;
+	double dcfclk_cstate_latency;
+	unsigned int dppclk_delay_scl;
+	unsigned int dppclk_delay_scl_lb_only;
+	unsigned int dppclk_delay_cnvc_formatter;
+	unsigned int dppclk_delay_cnvc_cursor;
+	unsigned int is_line_buffer_bpp_fixed;
+	unsigned int line_buffer_fixed_bpp;
+	unsigned int dcc_supported;
 
-	अचिन्हित पूर्णांक IsLineBufferBppFixed;
-	अचिन्हित पूर्णांक LineBufferFixedBpp;
-	अचिन्हित पूर्णांक can_vstartup_lines_exceed_vsync_plus_back_porch_lines_minus_one;
-	अचिन्हित पूर्णांक bug_क्रमcing_LC_req_same_size_fixed;
-	अचिन्हित पूर्णांक number_of_cursors;
-पूर्ण;
+	unsigned int IsLineBufferBppFixed;
+	unsigned int LineBufferFixedBpp;
+	unsigned int can_vstartup_lines_exceed_vsync_plus_back_porch_lines_minus_one;
+	unsigned int bug_forcing_LC_req_same_size_fixed;
+	unsigned int number_of_cursors;
+};
 
-काष्ठा _vcs_dpi_display_xfc_params_st अणु
-	द्विगुन xfc_tslv_vपढ़ोy_offset_us;
-	द्विगुन xfc_tslv_vupdate_width_us;
-	द्विगुन xfc_tslv_vupdate_offset_us;
-	पूर्णांक xfc_slv_chunk_size_bytes;
-पूर्ण;
+struct _vcs_dpi_display_xfc_params_st {
+	double xfc_tslv_vready_offset_us;
+	double xfc_tslv_vupdate_width_us;
+	double xfc_tslv_vupdate_offset_us;
+	int xfc_slv_chunk_size_bytes;
+};
 
-काष्ठा _vcs_dpi_display_pipe_source_params_st अणु
-	पूर्णांक source_क्रमmat;
-	द्विगुन dcc_fraction_of_zs_req_luma;
-	द्विगुन dcc_fraction_of_zs_req_chroma;
-	अचिन्हित अक्षर dcc;
-	अचिन्हित पूर्णांक dcc_rate;
-	अचिन्हित पूर्णांक dcc_rate_chroma;
-	अचिन्हित अक्षर dcc_use_global;
-	अचिन्हित अक्षर vm;
+struct _vcs_dpi_display_pipe_source_params_st {
+	int source_format;
+	double dcc_fraction_of_zs_req_luma;
+	double dcc_fraction_of_zs_req_chroma;
+	unsigned char dcc;
+	unsigned int dcc_rate;
+	unsigned int dcc_rate_chroma;
+	unsigned char dcc_use_global;
+	unsigned char vm;
 	bool unbounded_req_mode;
 	bool gpuvm;    // gpuvm enabled
 	bool hostvm;    // hostvm enabled
-	bool gpuvm_levels_क्रमce_en;
-	अचिन्हित पूर्णांक gpuvm_levels_क्रमce;
-	bool hostvm_levels_क्रमce_en;
-	अचिन्हित पूर्णांक hostvm_levels_क्रमce;
-	पूर्णांक source_scan;
-	पूर्णांक sw_mode;
-	पूर्णांक macro_tile_size;
-	अचिन्हित पूर्णांक surface_width_y;
-	अचिन्हित पूर्णांक surface_height_y;
-	अचिन्हित पूर्णांक surface_width_c;
-	अचिन्हित पूर्णांक surface_height_c;
-	अचिन्हित पूर्णांक viewport_width;
-	अचिन्हित पूर्णांक viewport_height;
-	अचिन्हित पूर्णांक viewport_y_y;
-	अचिन्हित पूर्णांक viewport_y_c;
-	अचिन्हित पूर्णांक viewport_width_c;
-	अचिन्हित पूर्णांक viewport_height_c;
-	अचिन्हित पूर्णांक data_pitch;
-	अचिन्हित पूर्णांक data_pitch_c;
-	अचिन्हित पूर्णांक meta_pitch;
-	अचिन्हित पूर्णांक meta_pitch_c;
-	अचिन्हित पूर्णांक cur0_src_width;
-	पूर्णांक cur0_bpp;
-	अचिन्हित पूर्णांक cur1_src_width;
-	पूर्णांक cur1_bpp;
-	पूर्णांक num_cursors;
-	अचिन्हित अक्षर is_hsplit;
-	अचिन्हित अक्षर dynamic_metadata_enable;
-	अचिन्हित पूर्णांक dynamic_metadata_lines_beक्रमe_active;
-	अचिन्हित पूर्णांक dynamic_metadata_xmit_bytes;
-	अचिन्हित पूर्णांक hsplit_grp;
-	अचिन्हित अक्षर xfc_enable;
-	अचिन्हित अक्षर xfc_slave;
-	अचिन्हित अक्षर immediate_flip;
-	काष्ठा _vcs_dpi_display_xfc_params_st xfc_params;
-	//क्रम vstartuplines calculation मुक्तsync
-	अचिन्हित अक्षर v_total_min;
-	अचिन्हित अक्षर v_total_max;
-पूर्ण;
-काष्ठा ग_लिखोback_st अणु
-	पूर्णांक wb_src_height;
-	पूर्णांक wb_src_width;
-	पूर्णांक wb_dst_width;
-	पूर्णांक wb_dst_height;
-	पूर्णांक wb_pixel_क्रमmat;
-	पूर्णांक wb_htaps_luma;
-	पूर्णांक wb_vtaps_luma;
-	पूर्णांक wb_htaps_chroma;
-	पूर्णांक wb_vtaps_chroma;
-	द्विगुन wb_hratio;
-	द्विगुन wb_vratio;
-पूर्ण;
+	bool gpuvm_levels_force_en;
+	unsigned int gpuvm_levels_force;
+	bool hostvm_levels_force_en;
+	unsigned int hostvm_levels_force;
+	int source_scan;
+	int sw_mode;
+	int macro_tile_size;
+	unsigned int surface_width_y;
+	unsigned int surface_height_y;
+	unsigned int surface_width_c;
+	unsigned int surface_height_c;
+	unsigned int viewport_width;
+	unsigned int viewport_height;
+	unsigned int viewport_y_y;
+	unsigned int viewport_y_c;
+	unsigned int viewport_width_c;
+	unsigned int viewport_height_c;
+	unsigned int data_pitch;
+	unsigned int data_pitch_c;
+	unsigned int meta_pitch;
+	unsigned int meta_pitch_c;
+	unsigned int cur0_src_width;
+	int cur0_bpp;
+	unsigned int cur1_src_width;
+	int cur1_bpp;
+	int num_cursors;
+	unsigned char is_hsplit;
+	unsigned char dynamic_metadata_enable;
+	unsigned int dynamic_metadata_lines_before_active;
+	unsigned int dynamic_metadata_xmit_bytes;
+	unsigned int hsplit_grp;
+	unsigned char xfc_enable;
+	unsigned char xfc_slave;
+	unsigned char immediate_flip;
+	struct _vcs_dpi_display_xfc_params_st xfc_params;
+	//for vstartuplines calculation freesync
+	unsigned char v_total_min;
+	unsigned char v_total_max;
+};
+struct writeback_st {
+	int wb_src_height;
+	int wb_src_width;
+	int wb_dst_width;
+	int wb_dst_height;
+	int wb_pixel_format;
+	int wb_htaps_luma;
+	int wb_vtaps_luma;
+	int wb_htaps_chroma;
+	int wb_vtaps_chroma;
+	double wb_hratio;
+	double wb_vratio;
+};
 
-काष्ठा _vcs_dpi_display_output_params_st अणु
-	पूर्णांक dp_lanes;
-	द्विगुन output_bpp;
-	अचिन्हित पूर्णांक dsc_input_bpc;
-	पूर्णांक dsc_enable;
-	पूर्णांक wb_enable;
-	पूर्णांक num_active_wb;
-	पूर्णांक output_type;
-	पूर्णांक is_भव;
-	पूर्णांक output_क्रमmat;
-	पूर्णांक dsc_slices;
-	पूर्णांक max_audio_sample_rate;
-	काष्ठा ग_लिखोback_st wb;
-पूर्ण;
+struct _vcs_dpi_display_output_params_st {
+	int dp_lanes;
+	double output_bpp;
+	unsigned int dsc_input_bpc;
+	int dsc_enable;
+	int wb_enable;
+	int num_active_wb;
+	int output_type;
+	int is_virtual;
+	int output_format;
+	int dsc_slices;
+	int max_audio_sample_rate;
+	struct writeback_st wb;
+};
 
-काष्ठा _vcs_dpi_scaler_ratio_depth_st अणु
-	द्विगुन hscl_ratio;
-	द्विगुन vscl_ratio;
-	द्विगुन hscl_ratio_c;
-	द्विगुन vscl_ratio_c;
-	द्विगुन vinit;
-	द्विगुन vinit_c;
-	द्विगुन vinit_bot;
-	द्विगुन vinit_bot_c;
-	पूर्णांक lb_depth;
-	पूर्णांक scl_enable;
-पूर्ण;
+struct _vcs_dpi_scaler_ratio_depth_st {
+	double hscl_ratio;
+	double vscl_ratio;
+	double hscl_ratio_c;
+	double vscl_ratio_c;
+	double vinit;
+	double vinit_c;
+	double vinit_bot;
+	double vinit_bot_c;
+	int lb_depth;
+	int scl_enable;
+};
 
-काष्ठा _vcs_dpi_scaler_taps_st अणु
-	अचिन्हित पूर्णांक htaps;
-	अचिन्हित पूर्णांक vtaps;
-	अचिन्हित पूर्णांक htaps_c;
-	अचिन्हित पूर्णांक vtaps_c;
-पूर्ण;
+struct _vcs_dpi_scaler_taps_st {
+	unsigned int htaps;
+	unsigned int vtaps;
+	unsigned int htaps_c;
+	unsigned int vtaps_c;
+};
 
-काष्ठा _vcs_dpi_display_pipe_dest_params_st अणु
-	अचिन्हित पूर्णांक recout_width;
-	अचिन्हित पूर्णांक recout_height;
-	अचिन्हित पूर्णांक full_recout_width;
-	अचिन्हित पूर्णांक full_recout_height;
-	अचिन्हित पूर्णांक hblank_start;
-	अचिन्हित पूर्णांक hblank_end;
-	अचिन्हित पूर्णांक vblank_start;
-	अचिन्हित पूर्णांक vblank_end;
-	अचिन्हित पूर्णांक htotal;
-	अचिन्हित पूर्णांक vtotal;
-	अचिन्हित पूर्णांक vfront_porch;
-	अचिन्हित पूर्णांक vactive;
-	अचिन्हित पूर्णांक hactive;
-	अचिन्हित पूर्णांक vstartup_start;
-	अचिन्हित पूर्णांक vupdate_offset;
-	अचिन्हित पूर्णांक vupdate_width;
-	अचिन्हित पूर्णांक vपढ़ोy_offset;
-	अचिन्हित अक्षर पूर्णांकerlaced;
-	द्विगुन pixel_rate_mhz;
-	अचिन्हित अक्षर synchronized_vblank_all_planes;
-	अचिन्हित अक्षर otg_inst;
-	अचिन्हित पूर्णांक odm_combine;
-	अचिन्हित अक्षर use_maximum_vstartup;
-	अचिन्हित पूर्णांक vtotal_max;
-	अचिन्हित पूर्णांक vtotal_min;
-पूर्ण;
+struct _vcs_dpi_display_pipe_dest_params_st {
+	unsigned int recout_width;
+	unsigned int recout_height;
+	unsigned int full_recout_width;
+	unsigned int full_recout_height;
+	unsigned int hblank_start;
+	unsigned int hblank_end;
+	unsigned int vblank_start;
+	unsigned int vblank_end;
+	unsigned int htotal;
+	unsigned int vtotal;
+	unsigned int vfront_porch;
+	unsigned int vactive;
+	unsigned int hactive;
+	unsigned int vstartup_start;
+	unsigned int vupdate_offset;
+	unsigned int vupdate_width;
+	unsigned int vready_offset;
+	unsigned char interlaced;
+	double pixel_rate_mhz;
+	unsigned char synchronized_vblank_all_planes;
+	unsigned char otg_inst;
+	unsigned int odm_combine;
+	unsigned char use_maximum_vstartup;
+	unsigned int vtotal_max;
+	unsigned int vtotal_min;
+};
 
-काष्ठा _vcs_dpi_display_pipe_params_st अणु
+struct _vcs_dpi_display_pipe_params_st {
 	display_pipe_source_params_st src;
 	display_pipe_dest_params_st dest;
 	scaler_ratio_depth_st scale_ratio_depth;
 	scaler_taps_st scale_taps;
-पूर्ण;
+};
 
-काष्ठा _vcs_dpi_display_घड़ीs_and_cfg_st अणु
-	पूर्णांक voltage;
-	द्विगुन dppclk_mhz;
-	द्विगुन refclk_mhz;
-	द्विगुन dispclk_mhz;
-	द्विगुन dcfclk_mhz;
-	द्विगुन socclk_mhz;
-पूर्ण;
+struct _vcs_dpi_display_clocks_and_cfg_st {
+	int voltage;
+	double dppclk_mhz;
+	double refclk_mhz;
+	double dispclk_mhz;
+	double dcfclk_mhz;
+	double socclk_mhz;
+};
 
-काष्ठा _vcs_dpi_display_e2e_pipe_params_st अणु
+struct _vcs_dpi_display_e2e_pipe_params_st {
 	display_pipe_params_st pipe;
-	display_output_params_st करोut;
-	display_घड़ीs_and_cfg_st clks_cfg;
-पूर्ण;
+	display_output_params_st dout;
+	display_clocks_and_cfg_st clks_cfg;
+};
 
-काष्ठा _vcs_dpi_display_data_rq_misc_params_st अणु
-	अचिन्हित पूर्णांक full_swath_bytes;
-	अचिन्हित पूर्णांक stored_swath_bytes;
-	अचिन्हित पूर्णांक blk256_height;
-	अचिन्हित पूर्णांक blk256_width;
-	अचिन्हित पूर्णांक req_height;
-	अचिन्हित पूर्णांक req_width;
-पूर्ण;
+struct _vcs_dpi_display_data_rq_misc_params_st {
+	unsigned int full_swath_bytes;
+	unsigned int stored_swath_bytes;
+	unsigned int blk256_height;
+	unsigned int blk256_width;
+	unsigned int req_height;
+	unsigned int req_width;
+};
 
-काष्ठा _vcs_dpi_display_data_rq_sizing_params_st अणु
-	अचिन्हित पूर्णांक chunk_bytes;
-	अचिन्हित पूर्णांक min_chunk_bytes;
-	अचिन्हित पूर्णांक meta_chunk_bytes;
-	अचिन्हित पूर्णांक min_meta_chunk_bytes;
-	अचिन्हित पूर्णांक mpte_group_bytes;
-	अचिन्हित पूर्णांक dpte_group_bytes;
-पूर्ण;
+struct _vcs_dpi_display_data_rq_sizing_params_st {
+	unsigned int chunk_bytes;
+	unsigned int min_chunk_bytes;
+	unsigned int meta_chunk_bytes;
+	unsigned int min_meta_chunk_bytes;
+	unsigned int mpte_group_bytes;
+	unsigned int dpte_group_bytes;
+};
 
-काष्ठा _vcs_dpi_display_data_rq_dlg_params_st अणु
-	अचिन्हित पूर्णांक swath_width_ub;
-	अचिन्हित पूर्णांक swath_height;
-	अचिन्हित पूर्णांक req_per_swath_ub;
-	अचिन्हित पूर्णांक meta_pte_bytes_per_frame_ub;
-	अचिन्हित पूर्णांक dpte_req_per_row_ub;
-	अचिन्हित पूर्णांक dpte_groups_per_row_ub;
-	अचिन्हित पूर्णांक dpte_row_height;
-	अचिन्हित पूर्णांक dpte_bytes_per_row_ub;
-	अचिन्हित पूर्णांक meta_chunks_per_row_ub;
-	अचिन्हित पूर्णांक meta_req_per_row_ub;
-	अचिन्हित पूर्णांक meta_row_height;
-	अचिन्हित पूर्णांक meta_bytes_per_row_ub;
-पूर्ण;
+struct _vcs_dpi_display_data_rq_dlg_params_st {
+	unsigned int swath_width_ub;
+	unsigned int swath_height;
+	unsigned int req_per_swath_ub;
+	unsigned int meta_pte_bytes_per_frame_ub;
+	unsigned int dpte_req_per_row_ub;
+	unsigned int dpte_groups_per_row_ub;
+	unsigned int dpte_row_height;
+	unsigned int dpte_bytes_per_row_ub;
+	unsigned int meta_chunks_per_row_ub;
+	unsigned int meta_req_per_row_ub;
+	unsigned int meta_row_height;
+	unsigned int meta_bytes_per_row_ub;
+};
 
-काष्ठा _vcs_dpi_display_rq_dlg_params_st अणु
+struct _vcs_dpi_display_rq_dlg_params_st {
 	display_data_rq_dlg_params_st rq_l;
 	display_data_rq_dlg_params_st rq_c;
-पूर्ण;
+};
 
-काष्ठा _vcs_dpi_display_rq_sizing_params_st अणु
+struct _vcs_dpi_display_rq_sizing_params_st {
 	display_data_rq_sizing_params_st rq_l;
 	display_data_rq_sizing_params_st rq_c;
-पूर्ण;
+};
 
-काष्ठा _vcs_dpi_display_rq_misc_params_st अणु
+struct _vcs_dpi_display_rq_misc_params_st {
 	display_data_rq_misc_params_st rq_l;
 	display_data_rq_misc_params_st rq_c;
-पूर्ण;
+};
 
-काष्ठा _vcs_dpi_display_rq_params_st अणु
-	अचिन्हित अक्षर yuv420;
-	अचिन्हित अक्षर yuv420_10bpc;
-	अचिन्हित अक्षर rgbe_alpha;
+struct _vcs_dpi_display_rq_params_st {
+	unsigned char yuv420;
+	unsigned char yuv420_10bpc;
+	unsigned char rgbe_alpha;
 	display_rq_misc_params_st misc;
 	display_rq_sizing_params_st sizing;
 	display_rq_dlg_params_st dlg;
-पूर्ण;
+};
 
-काष्ठा _vcs_dpi_display_dlg_regs_st अणु
-	अचिन्हित पूर्णांक refcyc_h_blank_end;
-	अचिन्हित पूर्णांक dlg_vblank_end;
-	अचिन्हित पूर्णांक min_dst_y_next_start;
-	अचिन्हित पूर्णांक refcyc_per_htotal;
-	अचिन्हित पूर्णांक refcyc_x_after_scaler;
-	अचिन्हित पूर्णांक dst_y_after_scaler;
-	अचिन्हित पूर्णांक dst_y_prefetch;
-	अचिन्हित पूर्णांक dst_y_per_vm_vblank;
-	अचिन्हित पूर्णांक dst_y_per_row_vblank;
-	अचिन्हित पूर्णांक dst_y_per_vm_flip;
-	अचिन्हित पूर्णांक dst_y_per_row_flip;
-	अचिन्हित पूर्णांक ref_freq_to_pix_freq;
-	अचिन्हित पूर्णांक vratio_prefetch;
-	अचिन्हित पूर्णांक vratio_prefetch_c;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_vblank_l;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_vblank_c;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_vblank_l;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_vblank_c;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_flip_l;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_flip_c;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_flip_l;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_flip_c;
-	अचिन्हित पूर्णांक dst_y_per_pte_row_nom_l;
-	अचिन्हित पूर्णांक dst_y_per_pte_row_nom_c;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_nom_l;
-	अचिन्हित पूर्णांक refcyc_per_pte_group_nom_c;
-	अचिन्हित पूर्णांक dst_y_per_meta_row_nom_l;
-	अचिन्हित पूर्णांक dst_y_per_meta_row_nom_c;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_nom_l;
-	अचिन्हित पूर्णांक refcyc_per_meta_chunk_nom_c;
-	अचिन्हित पूर्णांक refcyc_per_line_delivery_pre_l;
-	अचिन्हित पूर्णांक refcyc_per_line_delivery_pre_c;
-	अचिन्हित पूर्णांक refcyc_per_line_delivery_l;
-	अचिन्हित पूर्णांक refcyc_per_line_delivery_c;
-	अचिन्हित पूर्णांक chunk_hdl_adjust_cur0;
-	अचिन्हित पूर्णांक chunk_hdl_adjust_cur1;
-	अचिन्हित पूर्णांक vपढ़ोy_after_vcount0;
-	अचिन्हित पूर्णांक dst_y_offset_cur0;
-	अचिन्हित पूर्णांक dst_y_offset_cur1;
-	अचिन्हित पूर्णांक xfc_reg_transfer_delay;
-	अचिन्हित पूर्णांक xfc_reg_preअक्षरge_delay;
-	अचिन्हित पूर्णांक xfc_reg_remote_surface_flip_latency;
-	अचिन्हित पूर्णांक xfc_reg_prefetch_margin;
-	अचिन्हित पूर्णांक dst_y_delta_drq_limit;
-	अचिन्हित पूर्णांक refcyc_per_vm_group_vblank;
-	अचिन्हित पूर्णांक refcyc_per_vm_group_flip;
-	अचिन्हित पूर्णांक refcyc_per_vm_req_vblank;
-	अचिन्हित पूर्णांक refcyc_per_vm_req_flip;
-	अचिन्हित पूर्णांक refcyc_per_vm_dmdata;
-	अचिन्हित पूर्णांक dmdata_dl_delta;
-पूर्ण;
+struct _vcs_dpi_display_dlg_regs_st {
+	unsigned int refcyc_h_blank_end;
+	unsigned int dlg_vblank_end;
+	unsigned int min_dst_y_next_start;
+	unsigned int refcyc_per_htotal;
+	unsigned int refcyc_x_after_scaler;
+	unsigned int dst_y_after_scaler;
+	unsigned int dst_y_prefetch;
+	unsigned int dst_y_per_vm_vblank;
+	unsigned int dst_y_per_row_vblank;
+	unsigned int dst_y_per_vm_flip;
+	unsigned int dst_y_per_row_flip;
+	unsigned int ref_freq_to_pix_freq;
+	unsigned int vratio_prefetch;
+	unsigned int vratio_prefetch_c;
+	unsigned int refcyc_per_pte_group_vblank_l;
+	unsigned int refcyc_per_pte_group_vblank_c;
+	unsigned int refcyc_per_meta_chunk_vblank_l;
+	unsigned int refcyc_per_meta_chunk_vblank_c;
+	unsigned int refcyc_per_pte_group_flip_l;
+	unsigned int refcyc_per_pte_group_flip_c;
+	unsigned int refcyc_per_meta_chunk_flip_l;
+	unsigned int refcyc_per_meta_chunk_flip_c;
+	unsigned int dst_y_per_pte_row_nom_l;
+	unsigned int dst_y_per_pte_row_nom_c;
+	unsigned int refcyc_per_pte_group_nom_l;
+	unsigned int refcyc_per_pte_group_nom_c;
+	unsigned int dst_y_per_meta_row_nom_l;
+	unsigned int dst_y_per_meta_row_nom_c;
+	unsigned int refcyc_per_meta_chunk_nom_l;
+	unsigned int refcyc_per_meta_chunk_nom_c;
+	unsigned int refcyc_per_line_delivery_pre_l;
+	unsigned int refcyc_per_line_delivery_pre_c;
+	unsigned int refcyc_per_line_delivery_l;
+	unsigned int refcyc_per_line_delivery_c;
+	unsigned int chunk_hdl_adjust_cur0;
+	unsigned int chunk_hdl_adjust_cur1;
+	unsigned int vready_after_vcount0;
+	unsigned int dst_y_offset_cur0;
+	unsigned int dst_y_offset_cur1;
+	unsigned int xfc_reg_transfer_delay;
+	unsigned int xfc_reg_precharge_delay;
+	unsigned int xfc_reg_remote_surface_flip_latency;
+	unsigned int xfc_reg_prefetch_margin;
+	unsigned int dst_y_delta_drq_limit;
+	unsigned int refcyc_per_vm_group_vblank;
+	unsigned int refcyc_per_vm_group_flip;
+	unsigned int refcyc_per_vm_req_vblank;
+	unsigned int refcyc_per_vm_req_flip;
+	unsigned int refcyc_per_vm_dmdata;
+	unsigned int dmdata_dl_delta;
+};
 
-काष्ठा _vcs_dpi_display_ttu_regs_st अणु
-	अचिन्हित पूर्णांक qos_level_low_wm;
-	अचिन्हित पूर्णांक qos_level_high_wm;
-	अचिन्हित पूर्णांक min_ttu_vblank;
-	अचिन्हित पूर्णांक qos_level_flip;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_l;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_c;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_cur0;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_cur1;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_pre_l;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_pre_c;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_pre_cur0;
-	अचिन्हित पूर्णांक refcyc_per_req_delivery_pre_cur1;
-	अचिन्हित पूर्णांक qos_level_fixed_l;
-	अचिन्हित पूर्णांक qos_level_fixed_c;
-	अचिन्हित पूर्णांक qos_level_fixed_cur0;
-	अचिन्हित पूर्णांक qos_level_fixed_cur1;
-	अचिन्हित पूर्णांक qos_ramp_disable_l;
-	अचिन्हित पूर्णांक qos_ramp_disable_c;
-	अचिन्हित पूर्णांक qos_ramp_disable_cur0;
-	अचिन्हित पूर्णांक qos_ramp_disable_cur1;
-पूर्ण;
+struct _vcs_dpi_display_ttu_regs_st {
+	unsigned int qos_level_low_wm;
+	unsigned int qos_level_high_wm;
+	unsigned int min_ttu_vblank;
+	unsigned int qos_level_flip;
+	unsigned int refcyc_per_req_delivery_l;
+	unsigned int refcyc_per_req_delivery_c;
+	unsigned int refcyc_per_req_delivery_cur0;
+	unsigned int refcyc_per_req_delivery_cur1;
+	unsigned int refcyc_per_req_delivery_pre_l;
+	unsigned int refcyc_per_req_delivery_pre_c;
+	unsigned int refcyc_per_req_delivery_pre_cur0;
+	unsigned int refcyc_per_req_delivery_pre_cur1;
+	unsigned int qos_level_fixed_l;
+	unsigned int qos_level_fixed_c;
+	unsigned int qos_level_fixed_cur0;
+	unsigned int qos_level_fixed_cur1;
+	unsigned int qos_ramp_disable_l;
+	unsigned int qos_ramp_disable_c;
+	unsigned int qos_ramp_disable_cur0;
+	unsigned int qos_ramp_disable_cur1;
+};
 
-काष्ठा _vcs_dpi_display_data_rq_regs_st अणु
-	अचिन्हित पूर्णांक chunk_size;
-	अचिन्हित पूर्णांक min_chunk_size;
-	अचिन्हित पूर्णांक meta_chunk_size;
-	अचिन्हित पूर्णांक min_meta_chunk_size;
-	अचिन्हित पूर्णांक dpte_group_size;
-	अचिन्हित पूर्णांक mpte_group_size;
-	अचिन्हित पूर्णांक swath_height;
-	अचिन्हित पूर्णांक pte_row_height_linear;
-पूर्ण;
+struct _vcs_dpi_display_data_rq_regs_st {
+	unsigned int chunk_size;
+	unsigned int min_chunk_size;
+	unsigned int meta_chunk_size;
+	unsigned int min_meta_chunk_size;
+	unsigned int dpte_group_size;
+	unsigned int mpte_group_size;
+	unsigned int swath_height;
+	unsigned int pte_row_height_linear;
+};
 
-काष्ठा _vcs_dpi_display_rq_regs_st अणु
+struct _vcs_dpi_display_rq_regs_st {
 	display_data_rq_regs_st rq_regs_l;
 	display_data_rq_regs_st rq_regs_c;
-	अचिन्हित पूर्णांक drq_expansion_mode;
-	अचिन्हित पूर्णांक prq_expansion_mode;
-	अचिन्हित पूर्णांक mrq_expansion_mode;
-	अचिन्हित पूर्णांक crq_expansion_mode;
-	अचिन्हित पूर्णांक plane1_base_address;
-पूर्ण;
+	unsigned int drq_expansion_mode;
+	unsigned int prq_expansion_mode;
+	unsigned int mrq_expansion_mode;
+	unsigned int crq_expansion_mode;
+	unsigned int plane1_base_address;
+};
 
-काष्ठा _vcs_dpi_display_dlg_sys_params_st अणु
-	द्विगुन t_mclk_wm_us;
-	द्विगुन t_urg_wm_us;
-	द्विगुन t_sr_wm_us;
-	द्विगुन t_extra_us;
-	द्विगुन mem_trip_us;
-	द्विगुन t_srx_delay_us;
-	द्विगुन deepsleep_dcfclk_mhz;
-	द्विगुन total_flip_bw;
-	अचिन्हित पूर्णांक total_flip_bytes;
-पूर्ण;
+struct _vcs_dpi_display_dlg_sys_params_st {
+	double t_mclk_wm_us;
+	double t_urg_wm_us;
+	double t_sr_wm_us;
+	double t_extra_us;
+	double mem_trip_us;
+	double t_srx_delay_us;
+	double deepsleep_dcfclk_mhz;
+	double total_flip_bw;
+	unsigned int total_flip_bytes;
+};
 
-काष्ठा _vcs_dpi_display_arb_params_st अणु
-	पूर्णांक max_req_outstanding;
-	पूर्णांक min_req_outstanding;
-	पूर्णांक sat_level_us;
-पूर्ण;
+struct _vcs_dpi_display_arb_params_st {
+	int max_req_outstanding;
+	int min_req_outstanding;
+	int sat_level_us;
+};
 
-#पूर्ण_अगर /*__DISPLAY_MODE_STRUCTS_H__*/
+#endif /*__DISPLAY_MODE_STRUCTS_H__*/

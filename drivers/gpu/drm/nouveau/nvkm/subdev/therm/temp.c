@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 The Nouveau community
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,151 +21,151 @@
  *
  * Authors: Martin Peres
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल व्योम
-nvkm_therm_temp_set_शेषs(काष्ठा nvkm_therm *therm)
-अणु
-	therm->bios_sensor.offset_स्थिरant = 0;
+static void
+nvkm_therm_temp_set_defaults(struct nvkm_therm *therm)
+{
+	therm->bios_sensor.offset_constant = 0;
 
 	therm->bios_sensor.thrs_fan_boost.temp = 90;
 	therm->bios_sensor.thrs_fan_boost.hysteresis = 3;
 
-	therm->bios_sensor.thrs_करोwn_घड़ी.temp = 95;
-	therm->bios_sensor.thrs_करोwn_घड़ी.hysteresis = 3;
+	therm->bios_sensor.thrs_down_clock.temp = 95;
+	therm->bios_sensor.thrs_down_clock.hysteresis = 3;
 
 	therm->bios_sensor.thrs_critical.temp = 105;
 	therm->bios_sensor.thrs_critical.hysteresis = 5;
 
-	therm->bios_sensor.thrs_shutकरोwn.temp = 135;
-	therm->bios_sensor.thrs_shutकरोwn.hysteresis = 5; /*not that it matters */
-पूर्ण
+	therm->bios_sensor.thrs_shutdown.temp = 135;
+	therm->bios_sensor.thrs_shutdown.hysteresis = 5; /*not that it matters */
+}
 
-अटल व्योम
-nvkm_therm_temp_safety_checks(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvbios_therm_sensor *s = &therm->bios_sensor;
+static void
+nvkm_therm_temp_safety_checks(struct nvkm_therm *therm)
+{
+	struct nvbios_therm_sensor *s = &therm->bios_sensor;
 
-	/* enक्रमce a minimum hysteresis on thresholds */
+	/* enforce a minimum hysteresis on thresholds */
 	s->thrs_fan_boost.hysteresis = max_t(u8, s->thrs_fan_boost.hysteresis, 2);
-	s->thrs_करोwn_घड़ी.hysteresis = max_t(u8, s->thrs_करोwn_घड़ी.hysteresis, 2);
+	s->thrs_down_clock.hysteresis = max_t(u8, s->thrs_down_clock.hysteresis, 2);
 	s->thrs_critical.hysteresis = max_t(u8, s->thrs_critical.hysteresis, 2);
-	s->thrs_shutकरोwn.hysteresis = max_t(u8, s->thrs_shutकरोwn.hysteresis, 2);
-पूर्ण
+	s->thrs_shutdown.hysteresis = max_t(u8, s->thrs_shutdown.hysteresis, 2);
+}
 
 /* must be called with alarm_program_lock taken ! */
-व्योम
-nvkm_therm_sensor_set_threshold_state(काष्ठा nvkm_therm *therm,
-				      क्रमागत nvkm_therm_thrs thrs,
-				      क्रमागत nvkm_therm_thrs_state st)
-अणु
+void
+nvkm_therm_sensor_set_threshold_state(struct nvkm_therm *therm,
+				      enum nvkm_therm_thrs thrs,
+				      enum nvkm_therm_thrs_state st)
+{
 	therm->sensor.alarm_state[thrs] = st;
-पूर्ण
+}
 
 /* must be called with alarm_program_lock taken ! */
-क्रमागत nvkm_therm_thrs_state
-nvkm_therm_sensor_get_threshold_state(काष्ठा nvkm_therm *therm,
-				      क्रमागत nvkm_therm_thrs thrs)
-अणु
-	वापस therm->sensor.alarm_state[thrs];
-पूर्ण
+enum nvkm_therm_thrs_state
+nvkm_therm_sensor_get_threshold_state(struct nvkm_therm *therm,
+				      enum nvkm_therm_thrs thrs)
+{
+	return therm->sensor.alarm_state[thrs];
+}
 
-अटल व्योम
-nv_घातeroff_work(काष्ठा work_काष्ठा *work)
-अणु
-	orderly_घातeroff(true);
-	kमुक्त(work);
-पूर्ण
+static void
+nv_poweroff_work(struct work_struct *work)
+{
+	orderly_poweroff(true);
+	kfree(work);
+}
 
-व्योम
-nvkm_therm_sensor_event(काष्ठा nvkm_therm *therm, क्रमागत nvkm_therm_thrs thrs,
-			क्रमागत nvkm_therm_thrs_direction dir)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
+void
+nvkm_therm_sensor_event(struct nvkm_therm *therm, enum nvkm_therm_thrs thrs,
+			enum nvkm_therm_thrs_direction dir)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
 	bool active;
-	अटल स्थिर अक्षर * स्थिर thresholds[] = अणु
+	static const char * const thresholds[] = {
 		"fanboost", "downclock", "critical", "shutdown"
-	पूर्ण;
-	पूर्णांक temperature = therm->func->temp_get(therm);
+	};
+	int temperature = therm->func->temp_get(therm);
 
-	अगर (thrs < 0 || thrs > 3)
-		वापस;
+	if (thrs < 0 || thrs > 3)
+		return;
 
-	अगर (dir == NVKM_THERM_THRS_FALLING)
+	if (dir == NVKM_THERM_THRS_FALLING)
 		nvkm_info(subdev,
 			  "temperature (%i C) went below the '%s' threshold\n",
 			  temperature, thresholds[thrs]);
-	अन्यथा
+	else
 		nvkm_info(subdev, "temperature (%i C) hit the '%s' threshold\n",
 			  temperature, thresholds[thrs]);
 
 	active = (dir == NVKM_THERM_THRS_RISING);
-	चयन (thrs) अणु
-	हाल NVKM_THERM_THRS_FANBOOST:
-		अगर (active) अणु
+	switch (thrs) {
+	case NVKM_THERM_THRS_FANBOOST:
+		if (active) {
 			nvkm_therm_fan_set(therm, true, 100);
 			nvkm_therm_fan_mode(therm, NVKM_THERM_CTRL_AUTO);
-		पूर्ण
-		अवरोध;
-	हाल NVKM_THERM_THRS_DOWNCLOCK:
-		अगर (therm->emergency.करोwnघड़ी)
-			therm->emergency.करोwnघड़ी(therm, active);
-		अवरोध;
-	हाल NVKM_THERM_THRS_CRITICAL:
-		अगर (therm->emergency.छोड़ो)
-			therm->emergency.छोड़ो(therm, active);
-		अवरोध;
-	हाल NVKM_THERM_THRS_SHUTDOWN:
-		अगर (active) अणु
-			काष्ठा work_काष्ठा *work;
+		}
+		break;
+	case NVKM_THERM_THRS_DOWNCLOCK:
+		if (therm->emergency.downclock)
+			therm->emergency.downclock(therm, active);
+		break;
+	case NVKM_THERM_THRS_CRITICAL:
+		if (therm->emergency.pause)
+			therm->emergency.pause(therm, active);
+		break;
+	case NVKM_THERM_THRS_SHUTDOWN:
+		if (active) {
+			struct work_struct *work;
 
-			work = kदो_स्मृति(माप(*work), GFP_ATOMIC);
-			अगर (work) अणु
-				INIT_WORK(work, nv_घातeroff_work);
+			work = kmalloc(sizeof(*work), GFP_ATOMIC);
+			if (work) {
+				INIT_WORK(work, nv_poweroff_work);
 				schedule_work(work);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल NVKM_THERM_THRS_NR:
-		अवरोध;
-	पूर्ण
+			}
+		}
+		break;
+	case NVKM_THERM_THRS_NR:
+		break;
+	}
 
-पूर्ण
+}
 
 /* must be called with alarm_program_lock taken ! */
-अटल व्योम
-nvkm_therm_threshold_hyst_polling(काष्ठा nvkm_therm *therm,
-				  स्थिर काष्ठा nvbios_therm_threshold *thrs,
-				  क्रमागत nvkm_therm_thrs thrs_name)
-अणु
-	क्रमागत nvkm_therm_thrs_direction direction;
-	क्रमागत nvkm_therm_thrs_state prev_state, new_state;
-	पूर्णांक temp = therm->func->temp_get(therm);
+static void
+nvkm_therm_threshold_hyst_polling(struct nvkm_therm *therm,
+				  const struct nvbios_therm_threshold *thrs,
+				  enum nvkm_therm_thrs thrs_name)
+{
+	enum nvkm_therm_thrs_direction direction;
+	enum nvkm_therm_thrs_state prev_state, new_state;
+	int temp = therm->func->temp_get(therm);
 
 	prev_state = nvkm_therm_sensor_get_threshold_state(therm, thrs_name);
 
-	अगर (temp >= thrs->temp && prev_state == NVKM_THERM_THRS_LOWER) अणु
+	if (temp >= thrs->temp && prev_state == NVKM_THERM_THRS_LOWER) {
 		direction = NVKM_THERM_THRS_RISING;
 		new_state = NVKM_THERM_THRS_HIGHER;
-	पूर्ण अन्यथा अगर (temp <= thrs->temp - thrs->hysteresis &&
-			prev_state == NVKM_THERM_THRS_HIGHER) अणु
+	} else if (temp <= thrs->temp - thrs->hysteresis &&
+			prev_state == NVKM_THERM_THRS_HIGHER) {
 		direction = NVKM_THERM_THRS_FALLING;
 		new_state = NVKM_THERM_THRS_LOWER;
-	पूर्ण अन्यथा
-		वापस; /* nothing to करो */
+	} else
+		return; /* nothing to do */
 
 	nvkm_therm_sensor_set_threshold_state(therm, thrs_name, new_state);
 	nvkm_therm_sensor_event(therm, thrs_name, direction);
-पूर्ण
+}
 
-अटल व्योम
-alarm_समयr_callback(काष्ठा nvkm_alarm *alarm)
-अणु
-	काष्ठा nvkm_therm *therm =
-		container_of(alarm, काष्ठा nvkm_therm, sensor.therm_poll_alarm);
-	काष्ठा nvbios_therm_sensor *sensor = &therm->bios_sensor;
-	काष्ठा nvkm_समयr *पंचांगr = therm->subdev.device->समयr;
-	अचिन्हित दीर्घ flags;
+static void
+alarm_timer_callback(struct nvkm_alarm *alarm)
+{
+	struct nvkm_therm *therm =
+		container_of(alarm, struct nvkm_therm, sensor.therm_poll_alarm);
+	struct nvbios_therm_sensor *sensor = &therm->bios_sensor;
+	struct nvkm_timer *tmr = therm->subdev.device->timer;
+	unsigned long flags;
 
 	spin_lock_irqsave(&therm->sensor.alarm_program_lock, flags);
 
@@ -174,81 +173,81 @@ alarm_समयr_callback(काष्ठा nvkm_alarm *alarm)
 					  NVKM_THERM_THRS_FANBOOST);
 
 	nvkm_therm_threshold_hyst_polling(therm,
-					  &sensor->thrs_करोwn_घड़ी,
+					  &sensor->thrs_down_clock,
 					  NVKM_THERM_THRS_DOWNCLOCK);
 
 	nvkm_therm_threshold_hyst_polling(therm, &sensor->thrs_critical,
 					  NVKM_THERM_THRS_CRITICAL);
 
-	nvkm_therm_threshold_hyst_polling(therm, &sensor->thrs_shutकरोwn,
+	nvkm_therm_threshold_hyst_polling(therm, &sensor->thrs_shutdown,
 					  NVKM_THERM_THRS_SHUTDOWN);
 
 	spin_unlock_irqrestore(&therm->sensor.alarm_program_lock, flags);
 
 	/* schedule the next poll in one second */
-	अगर (therm->func->temp_get(therm) >= 0)
-		nvkm_समयr_alarm(पंचांगr, 1000000000ULL, alarm);
-पूर्ण
+	if (therm->func->temp_get(therm) >= 0)
+		nvkm_timer_alarm(tmr, 1000000000ULL, alarm);
+}
 
-व्योम
-nvkm_therm_program_alarms_polling(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvbios_therm_sensor *sensor = &therm->bios_sensor;
+void
+nvkm_therm_program_alarms_polling(struct nvkm_therm *therm)
+{
+	struct nvbios_therm_sensor *sensor = &therm->bios_sensor;
 
 	nvkm_debug(&therm->subdev,
 		   "programmed thresholds [ %d(%d), %d(%d), %d(%d), %d(%d) ]\n",
 		   sensor->thrs_fan_boost.temp,
 		   sensor->thrs_fan_boost.hysteresis,
-		   sensor->thrs_करोwn_घड़ी.temp,
-		   sensor->thrs_करोwn_घड़ी.hysteresis,
+		   sensor->thrs_down_clock.temp,
+		   sensor->thrs_down_clock.hysteresis,
 		   sensor->thrs_critical.temp,
 		   sensor->thrs_critical.hysteresis,
-		   sensor->thrs_shutकरोwn.temp,
-		   sensor->thrs_shutकरोwn.hysteresis);
+		   sensor->thrs_shutdown.temp,
+		   sensor->thrs_shutdown.hysteresis);
 
-	alarm_समयr_callback(&therm->sensor.therm_poll_alarm);
-पूर्ण
+	alarm_timer_callback(&therm->sensor.therm_poll_alarm);
+}
 
-पूर्णांक
-nvkm_therm_sensor_init(काष्ठा nvkm_therm *therm)
-अणु
+int
+nvkm_therm_sensor_init(struct nvkm_therm *therm)
+{
 	therm->func->program_alarms(therm);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_therm_sensor_fini(काष्ठा nvkm_therm *therm, bool suspend)
-अणु
-	काष्ठा nvkm_समयr *पंचांगr = therm->subdev.device->समयr;
-	अगर (suspend)
-		nvkm_समयr_alarm(पंचांगr, 0, &therm->sensor.therm_poll_alarm);
-	वापस 0;
-पूर्ण
+int
+nvkm_therm_sensor_fini(struct nvkm_therm *therm, bool suspend)
+{
+	struct nvkm_timer *tmr = therm->subdev.device->timer;
+	if (suspend)
+		nvkm_timer_alarm(tmr, 0, &therm->sensor.therm_poll_alarm);
+	return 0;
+}
 
-व्योम
-nvkm_therm_sensor_preinit(काष्ठा nvkm_therm *therm)
-अणु
-	स्थिर अक्षर *sensor_avail = "yes";
+void
+nvkm_therm_sensor_preinit(struct nvkm_therm *therm)
+{
+	const char *sensor_avail = "yes";
 
-	अगर (therm->func->temp_get(therm) < 0)
+	if (therm->func->temp_get(therm) < 0)
 		sensor_avail = "no";
 
 	nvkm_debug(&therm->subdev, "internal sensor: %s\n", sensor_avail);
-पूर्ण
+}
 
-पूर्णांक
-nvkm_therm_sensor_ctor(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_bios *bios = subdev->device->bios;
+int
+nvkm_therm_sensor_ctor(struct nvkm_therm *therm)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_bios *bios = subdev->device->bios;
 
-	nvkm_alarm_init(&therm->sensor.therm_poll_alarm, alarm_समयr_callback);
+	nvkm_alarm_init(&therm->sensor.therm_poll_alarm, alarm_timer_callback);
 
-	nvkm_therm_temp_set_शेषs(therm);
-	अगर (nvbios_therm_sensor_parse(bios, NVBIOS_THERM_DOMAIN_CORE,
+	nvkm_therm_temp_set_defaults(therm);
+	if (nvbios_therm_sensor_parse(bios, NVBIOS_THERM_DOMAIN_CORE,
 				      &therm->bios_sensor))
 		nvkm_error(subdev, "nvbios_therm_sensor_parse failed\n");
 	nvkm_therm_temp_safety_checks(therm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

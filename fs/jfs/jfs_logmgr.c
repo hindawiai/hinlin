@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
@@ -8,16 +7,16 @@
 /*
  *	jfs_logmgr.c: log manager
  *
- * क्रम related inक्रमmation, see transaction manager (jfs_txnmgr.c), and
- * recovery manager (jfs_logreकरो.c).
+ * for related information, see transaction manager (jfs_txnmgr.c), and
+ * recovery manager (jfs_logredo.c).
  *
- * note: क्रम detail, RTFS.
+ * note: for detail, RTFS.
  *
  *	log buffer manager:
  * special purpose buffer manager supporting log i/o requirements.
  * per log serial pageout of logpage
- * queuing i/o requests and redrive i/o at ioकरोne
- * मुख्यtain current logpage buffer
+ * queuing i/o requests and redrive i/o at iodone
+ * maintain current logpage buffer
  * no caching since append only
  * appropriate jfs buffer cache buffers as needed
  *
@@ -31,205 +30,205 @@
  * containing it COMMIT is paged out when it becomes full;
  *
  *	serialization:
- * . a per log lock serialize log ग_लिखो.
+ * . a per log lock serialize log write.
  * . a per log lock serialize group commit.
- * . a per log lock serialize log खोलो/बंद;
+ * . a per log lock serialize log open/close;
  *
- *	TBD log पूर्णांकegrity:
- * careful-ग_लिखो (ping-pong) of last logpage to recover from crash
- * in overग_लिखो.
- * detection of split (out-of-order) ग_लिखो of physical sectors
- * of last logpage via बारtamp at end of each sector
+ *	TBD log integrity:
+ * careful-write (ping-pong) of last logpage to recover from crash
+ * in overwrite.
+ * detection of split (out-of-order) write of physical sectors
+ * of last logpage via timestamp at end of each sector
  * with its mirror data array at trailer).
  *
  *	alternatives:
- * lsn - 64-bit monotonically increasing पूर्णांकeger vs
+ * lsn - 64-bit monotonically increasing integer vs
  * 32-bit lspn and page eor.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/buffer_head.h>		/* क्रम sync_blockdev() */
-#समावेश <linux/bपन.स>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/export.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश "jfs_incore.h"
-#समावेश "jfs_filsys.h"
-#समावेश "jfs_metapage.h"
-#समावेश "jfs_superblock.h"
-#समावेश "jfs_txnmgr.h"
-#समावेश "jfs_debug.h"
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/interrupt.h>
+#include <linux/completion.h>
+#include <linux/kthread.h>
+#include <linux/buffer_head.h>		/* for sync_blockdev() */
+#include <linux/bio.h>
+#include <linux/freezer.h>
+#include <linux/export.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include "jfs_incore.h"
+#include "jfs_filsys.h"
+#include "jfs_metapage.h"
+#include "jfs_superblock.h"
+#include "jfs_txnmgr.h"
+#include "jfs_debug.h"
 
 
 /*
- * lbuf's पढ़ोy to be redriven.  Protected by log_redrive_lock (jfsIO thपढ़ो)
+ * lbuf's ready to be redriven.  Protected by log_redrive_lock (jfsIO thread)
  */
-अटल काष्ठा lbuf *log_redrive_list;
-अटल DEFINE_SPINLOCK(log_redrive_lock);
+static struct lbuf *log_redrive_list;
+static DEFINE_SPINLOCK(log_redrive_lock);
 
 
 /*
- *	log पढ़ो/ग_लिखो serialization (per log)
+ *	log read/write serialization (per log)
  */
-#घोषणा LOG_LOCK_INIT(log)	mutex_init(&(log)->loglock)
-#घोषणा LOG_LOCK(log)		mutex_lock(&((log)->loglock))
-#घोषणा LOG_UNLOCK(log)		mutex_unlock(&((log)->loglock))
+#define LOG_LOCK_INIT(log)	mutex_init(&(log)->loglock)
+#define LOG_LOCK(log)		mutex_lock(&((log)->loglock))
+#define LOG_UNLOCK(log)		mutex_unlock(&((log)->loglock))
 
 
 /*
  *	log group commit serialization (per log)
  */
 
-#घोषणा LOGGC_LOCK_INIT(log)	spin_lock_init(&(log)->gघड़ी)
-#घोषणा LOGGC_LOCK(log)		spin_lock_irq(&(log)->gघड़ी)
-#घोषणा LOGGC_UNLOCK(log)	spin_unlock_irq(&(log)->gघड़ी)
-#घोषणा LOGGC_WAKEUP(tblk)	wake_up_all(&(tblk)->gcरुको)
+#define LOGGC_LOCK_INIT(log)	spin_lock_init(&(log)->gclock)
+#define LOGGC_LOCK(log)		spin_lock_irq(&(log)->gclock)
+#define LOGGC_UNLOCK(log)	spin_unlock_irq(&(log)->gclock)
+#define LOGGC_WAKEUP(tblk)	wake_up_all(&(tblk)->gcwait)
 
 /*
  *	log sync serialization (per log)
  */
-#घोषणा	LOGSYNC_DELTA(logsize)		min((logsize)/8, 128*LOGPSIZE)
-#घोषणा	LOGSYNC_BARRIER(logsize)	((logsize)/4)
+#define	LOGSYNC_DELTA(logsize)		min((logsize)/8, 128*LOGPSIZE)
+#define	LOGSYNC_BARRIER(logsize)	((logsize)/4)
 /*
-#घोषणा	LOGSYNC_DELTA(logsize)		min((logsize)/4, 256*LOGPSIZE)
-#घोषणा	LOGSYNC_BARRIER(logsize)	((logsize)/2)
+#define	LOGSYNC_DELTA(logsize)		min((logsize)/4, 256*LOGPSIZE)
+#define	LOGSYNC_BARRIER(logsize)	((logsize)/2)
 */
 
 
 /*
  *	log buffer cache synchronization
  */
-अटल DEFINE_SPINLOCK(jfsLCacheLock);
+static DEFINE_SPINLOCK(jfsLCacheLock);
 
-#घोषणा	LCACHE_LOCK(flags)	spin_lock_irqsave(&jfsLCacheLock, flags)
-#घोषणा	LCACHE_UNLOCK(flags)	spin_unlock_irqrestore(&jfsLCacheLock, flags)
+#define	LCACHE_LOCK(flags)	spin_lock_irqsave(&jfsLCacheLock, flags)
+#define	LCACHE_UNLOCK(flags)	spin_unlock_irqrestore(&jfsLCacheLock, flags)
 
 /*
  * See __SLEEP_COND in jfs_locks.h
  */
-#घोषणा LCACHE_SLEEP_COND(wq, cond, flags)	\
-करो अणु						\
-	अगर (cond)				\
-		अवरोध;				\
+#define LCACHE_SLEEP_COND(wq, cond, flags)	\
+do {						\
+	if (cond)				\
+		break;				\
 	__SLEEP_COND(wq, cond, LCACHE_LOCK(flags), LCACHE_UNLOCK(flags)); \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा	LCACHE_WAKEUP(event)	wake_up(event)
+#define	LCACHE_WAKEUP(event)	wake_up(event)
 
 
 /*
  *	lbuf buffer cache (lCache) control
  */
 /* log buffer manager pageout control (cumulative, inclusive) */
-#घोषणा	lbmREAD		0x0001
-#घोषणा	lbmWRITE	0x0002	/* enqueue at tail of ग_लिखो queue;
-				 * init pageout अगर at head of queue;
+#define	lbmREAD		0x0001
+#define	lbmWRITE	0x0002	/* enqueue at tail of write queue;
+				 * init pageout if at head of queue;
 				 */
-#घोषणा	lbmRELEASE	0x0004	/* हटाओ from ग_लिखो queue
+#define	lbmRELEASE	0x0004	/* remove from write queue
 				 * at completion of pageout;
-				 * करो not मुक्त/recycle it yet:
-				 * caller will मुक्त it;
+				 * do not free/recycle it yet:
+				 * caller will free it;
 				 */
-#घोषणा	lbmSYNC		0x0008	/* करो not वापस to मुक्तlist
-				 * when हटाओd from ग_लिखो queue;
+#define	lbmSYNC		0x0008	/* do not return to freelist
+				 * when removed from write queue;
 				 */
-#घोषणा lbmFREE		0x0010	/* वापस to मुक्तlist
+#define lbmFREE		0x0010	/* return to freelist
 				 * at completion of pageout;
 				 * the buffer may be recycled;
 				 */
-#घोषणा	lbmDONE		0x0020
-#घोषणा	lbmERROR	0x0040
-#घोषणा lbmGC		0x0080	/* lbmIODone to perक्रमm post-GC processing
+#define	lbmDONE		0x0020
+#define	lbmERROR	0x0040
+#define lbmGC		0x0080	/* lbmIODone to perform post-GC processing
 				 * of log page
 				 */
-#घोषणा lbmसूचीECT	0x0100
+#define lbmDIRECT	0x0100
 
 /*
- * Global list of active बाह्यal journals
+ * Global list of active external journals
  */
-अटल LIST_HEAD(jfs_बाह्यal_logs);
-अटल काष्ठा jfs_log *dummy_log;
-अटल DEFINE_MUTEX(jfs_log_mutex);
+static LIST_HEAD(jfs_external_logs);
+static struct jfs_log *dummy_log;
+static DEFINE_MUTEX(jfs_log_mutex);
 
 /*
- * क्रमward references
+ * forward references
  */
-अटल पूर्णांक lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk,
-			 काष्ठा lrd * lrd, काष्ठा tlock * tlck);
+static int lmWriteRecord(struct jfs_log * log, struct tblock * tblk,
+			 struct lrd * lrd, struct tlock * tlck);
 
-अटल पूर्णांक lmNextPage(काष्ठा jfs_log * log);
-अटल पूर्णांक lmLogFileSystem(काष्ठा jfs_log * log, काष्ठा jfs_sb_info *sbi,
-			   पूर्णांक activate);
+static int lmNextPage(struct jfs_log * log);
+static int lmLogFileSystem(struct jfs_log * log, struct jfs_sb_info *sbi,
+			   int activate);
 
-अटल पूर्णांक खोलो_अंतरभूत_log(काष्ठा super_block *sb);
-अटल पूर्णांक खोलो_dummy_log(काष्ठा super_block *sb);
-अटल पूर्णांक lbmLogInit(काष्ठा jfs_log * log);
-अटल व्योम lbmLogShutकरोwn(काष्ठा jfs_log * log);
-अटल काष्ठा lbuf *lbmAllocate(काष्ठा jfs_log * log, पूर्णांक);
-अटल व्योम lbmFree(काष्ठा lbuf * bp);
-अटल व्योम lbmमुक्त(काष्ठा lbuf * bp);
-अटल पूर्णांक lbmRead(काष्ठा jfs_log * log, पूर्णांक pn, काष्ठा lbuf ** bpp);
-अटल व्योम lbmWrite(काष्ठा jfs_log * log, काष्ठा lbuf * bp, पूर्णांक flag, पूर्णांक cant_block);
-अटल व्योम lbmDirectWrite(काष्ठा jfs_log * log, काष्ठा lbuf * bp, पूर्णांक flag);
-अटल पूर्णांक lbmIOWait(काष्ठा lbuf * bp, पूर्णांक flag);
-अटल bio_end_io_t lbmIODone;
-अटल व्योम lbmStartIO(काष्ठा lbuf * bp);
-अटल व्योम lmGCग_लिखो(काष्ठा jfs_log * log, पूर्णांक cant_block);
-अटल पूर्णांक lmLogSync(काष्ठा jfs_log * log, पूर्णांक hard_sync);
+static int open_inline_log(struct super_block *sb);
+static int open_dummy_log(struct super_block *sb);
+static int lbmLogInit(struct jfs_log * log);
+static void lbmLogShutdown(struct jfs_log * log);
+static struct lbuf *lbmAllocate(struct jfs_log * log, int);
+static void lbmFree(struct lbuf * bp);
+static void lbmfree(struct lbuf * bp);
+static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp);
+static void lbmWrite(struct jfs_log * log, struct lbuf * bp, int flag, int cant_block);
+static void lbmDirectWrite(struct jfs_log * log, struct lbuf * bp, int flag);
+static int lbmIOWait(struct lbuf * bp, int flag);
+static bio_end_io_t lbmIODone;
+static void lbmStartIO(struct lbuf * bp);
+static void lmGCwrite(struct jfs_log * log, int cant_block);
+static int lmLogSync(struct jfs_log * log, int hard_sync);
 
 
 
 /*
  *	statistics
  */
-#अगर_घोषित CONFIG_JFS_STATISTICS
-अटल काष्ठा lmStat अणु
-	uपूर्णांक commit;		/* # of commit */
-	uपूर्णांक pageकरोne;		/* # of page written */
-	uपूर्णांक submitted;		/* # of pages submitted */
-	uपूर्णांक full_page;		/* # of full pages submitted */
-	uपूर्णांक partial_page;	/* # of partial pages submitted */
-पूर्ण lmStat;
-#पूर्ण_अगर
+#ifdef CONFIG_JFS_STATISTICS
+static struct lmStat {
+	uint commit;		/* # of commit */
+	uint pagedone;		/* # of page written */
+	uint submitted;		/* # of pages submitted */
+	uint full_page;		/* # of full pages submitted */
+	uint partial_page;	/* # of partial pages submitted */
+} lmStat;
+#endif
 
-अटल व्योम ग_लिखो_special_inodes(काष्ठा jfs_log *log,
-				 पूर्णांक (*ग_लिखोr)(काष्ठा address_space *))
-अणु
-	काष्ठा jfs_sb_info *sbi;
+static void write_special_inodes(struct jfs_log *log,
+				 int (*writer)(struct address_space *))
+{
+	struct jfs_sb_info *sbi;
 
-	list_क्रम_each_entry(sbi, &log->sb_list, log_list) अणु
-		ग_लिखोr(sbi->ipbmap->i_mapping);
-		ग_लिखोr(sbi->ipimap->i_mapping);
-		ग_लिखोr(sbi->direct_inode->i_mapping);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(sbi, &log->sb_list, log_list) {
+		writer(sbi->ipbmap->i_mapping);
+		writer(sbi->ipimap->i_mapping);
+		writer(sbi->direct_inode->i_mapping);
+	}
+}
 
 /*
  * NAME:	lmLog()
  *
- * FUNCTION:	ग_लिखो a log record;
+ * FUNCTION:	write a log record;
  *
  * PARAMETER:
  *
- * RETURN:	lsn - offset to the next log record to ग_लिखो (end-of-log);
+ * RETURN:	lsn - offset to the next log record to write (end-of-log);
  *		-1  - error;
  *
- * note: toकरो: log error handler
+ * note: todo: log error handler
  */
-पूर्णांक lmLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
-	  काष्ठा tlock * tlck)
-अणु
-	पूर्णांक lsn;
-	पूर्णांक dअगरfp, dअगरft;
-	काष्ठा metapage *mp = शून्य;
-	अचिन्हित दीर्घ flags;
+int lmLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
+	  struct tlock * tlck)
+{
+	int lsn;
+	int diffp, difft;
+	struct metapage *mp = NULL;
+	unsigned long flags;
 
 	jfs_info("lmLog: log:0x%p tblk:0x%p, lrd:0x%p tlck:0x%p",
 		 log, tblk, lrd, tlck);
@@ -237,13 +236,13 @@
 	LOG_LOCK(log);
 
 	/* log by (out-of-transaction) JFS ? */
-	अगर (tblk == शून्य)
-		जाओ ग_लिखोRecord;
+	if (tblk == NULL)
+		goto writeRecord;
 
 	/* log from page ? */
-	अगर (tlck == शून्य ||
-	    tlck->type & tlckBTROOT || (mp = tlck->mp) == शून्य)
-		जाओ ग_लिखोRecord;
+	if (tlck == NULL ||
+	    tlck->type & tlckBTROOT || (mp = tlck->mp) == NULL)
+		goto writeRecord;
 
 	/*
 	 *	initialize/update page/transaction recovery lsn
@@ -253,28 +252,28 @@
 	LOGSYNC_LOCK(log, flags);
 
 	/*
-	 * initialize page lsn अगर first log ग_लिखो of the page
+	 * initialize page lsn if first log write of the page
 	 */
-	अगर (mp->lsn == 0) अणु
+	if (mp->lsn == 0) {
 		mp->log = log;
 		mp->lsn = lsn;
 		log->count++;
 
 		/* insert page at tail of logsynclist */
 		list_add_tail(&mp->synclist, &log->synclist);
-	पूर्ण
+	}
 
 	/*
 	 *	initialize/update lsn of tblock of the page
 	 *
 	 * transaction inherits oldest lsn of pages associated
 	 * with allocation/deallocation of resources (their
-	 * log records are used to reस्थिरruct allocation map
-	 * at recovery समय: inode क्रम inode allocation map,
-	 * B+-tree index of extent descriptors क्रम block
+	 * log records are used to reconstruct allocation map
+	 * at recovery time: inode for inode allocation map,
+	 * B+-tree index of extent descriptors for block
 	 * allocation map);
 	 * allocation map pages inherit transaction lsn at
-	 * commit समय to allow क्रमwarding log syncpt past log
+	 * commit time to allow forwarding log syncpt past log
 	 * records associated with allocation/deallocation of
 	 * resources only after persistent map of these map pages
 	 * have been updated and propagated to home.
@@ -282,43 +281,43 @@
 	/*
 	 * initialize transaction lsn:
 	 */
-	अगर (tblk->lsn == 0) अणु
+	if (tblk->lsn == 0) {
 		/* inherit lsn of its first page logged */
 		tblk->lsn = mp->lsn;
 		log->count++;
 
 		/* insert tblock after the page on logsynclist */
 		list_add(&tblk->synclist, &mp->synclist);
-	पूर्ण
+	}
 	/*
 	 * update transaction lsn:
 	 */
-	अन्यथा अणु
+	else {
 		/* inherit oldest/smallest lsn of page */
-		logdअगरf(dअगरfp, mp->lsn, log);
-		logdअगरf(dअगरft, tblk->lsn, log);
-		अगर (dअगरfp < dअगरft) अणु
+		logdiff(diffp, mp->lsn, log);
+		logdiff(difft, tblk->lsn, log);
+		if (diffp < difft) {
 			/* update tblock lsn with page lsn */
 			tblk->lsn = mp->lsn;
 
 			/* move tblock after page on logsynclist */
 			list_move(&tblk->synclist, &mp->synclist);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	LOGSYNC_UNLOCK(log, flags);
 
 	/*
-	 *	ग_लिखो the log record
+	 *	write the log record
 	 */
-      ग_लिखोRecord:
+      writeRecord:
 	lsn = lmWriteRecord(log, tblk, lrd, tlck);
 
 	/*
-	 * क्रमward log syncpt अगर log reached next syncpt trigger
+	 * forward log syncpt if log reached next syncpt trigger
 	 */
-	logdअगरf(dअगरfp, lsn, log);
-	अगर (dअगरfp >= log->nextsync)
+	logdiff(diffp, lsn, log);
+	if (diffp >= log->nextsync)
 		lsn = lmLogSync(log, 0);
 
 	/* update end-of-log lsn */
@@ -326,9 +325,9 @@
 
 	LOG_UNLOCK(log);
 
-	/* वापस end-of-log address */
-	वापस lsn;
-पूर्ण
+	/* return end-of-log address */
+	return lsn;
+}
 
 /*
  * NAME:	lmWriteRecord()
@@ -339,87 +338,87 @@
  *
  * RETURN:	end-of-log address
  *
- * serialization: LOG_LOCK() held on entry/निकास
+ * serialization: LOG_LOCK() held on entry/exit
  */
-अटल पूर्णांक
-lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
-	      काष्ठा tlock * tlck)
-अणु
-	पूर्णांक lsn = 0;		/* end-of-log address */
-	काष्ठा lbuf *bp;	/* dst log page buffer */
-	काष्ठा logpage *lp;	/* dst log page */
+static int
+lmWriteRecord(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
+	      struct tlock * tlck)
+{
+	int lsn = 0;		/* end-of-log address */
+	struct lbuf *bp;	/* dst log page buffer */
+	struct logpage *lp;	/* dst log page */
 	caddr_t dst;		/* destination address in log page */
-	पूर्णांक dstoffset;		/* end-of-log offset in log page */
-	पूर्णांक मुक्तspace;		/* मुक्त space in log page */
+	int dstoffset;		/* end-of-log offset in log page */
+	int freespace;		/* free space in log page */
 	caddr_t p;		/* src meta-data page */
 	caddr_t src;
-	पूर्णांक srclen;
-	पूर्णांक nbytes;		/* number of bytes to move */
-	पूर्णांक i;
-	पूर्णांक len;
-	काष्ठा linelock *linelock;
-	काष्ठा lv *lv;
-	काष्ठा lvd *lvd;
-	पूर्णांक l2linesize;
+	int srclen;
+	int nbytes;		/* number of bytes to move */
+	int i;
+	int len;
+	struct linelock *linelock;
+	struct lv *lv;
+	struct lvd *lvd;
+	int l2linesize;
 
 	len = 0;
 
-	/* retrieve destination log page to ग_लिखो */
-	bp = (काष्ठा lbuf *) log->bp;
-	lp = (काष्ठा logpage *) bp->l_ldata;
+	/* retrieve destination log page to write */
+	bp = (struct lbuf *) log->bp;
+	lp = (struct logpage *) bp->l_ldata;
 	dstoffset = log->eor;
 
-	/* any log data to ग_लिखो ? */
-	अगर (tlck == शून्य)
-		जाओ moveLrd;
+	/* any log data to write ? */
+	if (tlck == NULL)
+		goto moveLrd;
 
 	/*
 	 *	move log record data
 	 */
 	/* retrieve source meta-data page to log */
-	अगर (tlck->flag & tlckPAGELOCK) अणु
+	if (tlck->flag & tlckPAGELOCK) {
 		p = (caddr_t) (tlck->mp->data);
-		linelock = (काष्ठा linelock *) & tlck->lock;
-	पूर्ण
+		linelock = (struct linelock *) & tlck->lock;
+	}
 	/* retrieve source in-memory inode to log */
-	अन्यथा अगर (tlck->flag & tlckINODELOCK) अणु
-		अगर (tlck->type & tlckDTREE)
+	else if (tlck->flag & tlckINODELOCK) {
+		if (tlck->type & tlckDTREE)
 			p = (caddr_t) &JFS_IP(tlck->ip)->i_dtroot;
-		अन्यथा
+		else
 			p = (caddr_t) &JFS_IP(tlck->ip)->i_xtroot;
-		linelock = (काष्ठा linelock *) & tlck->lock;
-	पूर्ण
-#अगर_घोषित	_JFS_WIP
-	अन्यथा अगर (tlck->flag & tlckINLINELOCK) अणु
+		linelock = (struct linelock *) & tlck->lock;
+	}
+#ifdef	_JFS_WIP
+	else if (tlck->flag & tlckINLINELOCK) {
 
-		अंतरभूतlock = (काष्ठा अंतरभूतlock *) & tlck;
-		p = (caddr_t) & अंतरभूतlock->pxd;
-		linelock = (काष्ठा linelock *) & tlck;
-	पूर्ण
-#पूर्ण_अगर				/* _JFS_WIP */
-	अन्यथा अणु
+		inlinelock = (struct inlinelock *) & tlck;
+		p = (caddr_t) & inlinelock->pxd;
+		linelock = (struct linelock *) & tlck;
+	}
+#endif				/* _JFS_WIP */
+	else {
 		jfs_err("lmWriteRecord: UFO tlck:0x%p", tlck);
-		वापस 0;	/* Probably should trap */
-	पूर्ण
+		return 0;	/* Probably should trap */
+	}
 	l2linesize = linelock->l2linesize;
 
       moveData:
 	ASSERT(linelock->index <= linelock->maxcnt);
 
 	lv = linelock->lv;
-	क्रम (i = 0; i < linelock->index; i++, lv++) अणु
-		अगर (lv->length == 0)
-			जारी;
+	for (i = 0; i < linelock->index; i++, lv++) {
+		if (lv->length == 0)
+			continue;
 
 		/* is page full ? */
-		अगर (dstoffset >= LOGPSIZE - LOGPTLRSIZE) अणु
+		if (dstoffset >= LOGPSIZE - LOGPTLRSIZE) {
 			/* page become full: move on to next page */
 			lmNextPage(log);
 
 			bp = log->bp;
-			lp = (काष्ठा logpage *) bp->l_ldata;
+			lp = (struct logpage *) bp->l_ldata;
 			dstoffset = LOGPHDRSIZE;
-		पूर्ण
+		}
 
 		/*
 		 * move log vector data
@@ -427,44 +426,44 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 		src = (u8 *) p + (lv->offset << l2linesize);
 		srclen = lv->length << l2linesize;
 		len += srclen;
-		जबतक (srclen > 0) अणु
-			मुक्तspace = (LOGPSIZE - LOGPTLRSIZE) - dstoffset;
-			nbytes = min(मुक्तspace, srclen);
+		while (srclen > 0) {
+			freespace = (LOGPSIZE - LOGPTLRSIZE) - dstoffset;
+			nbytes = min(freespace, srclen);
 			dst = (caddr_t) lp + dstoffset;
-			स_नकल(dst, src, nbytes);
+			memcpy(dst, src, nbytes);
 			dstoffset += nbytes;
 
 			/* is page not full ? */
-			अगर (dstoffset < LOGPSIZE - LOGPTLRSIZE)
-				अवरोध;
+			if (dstoffset < LOGPSIZE - LOGPTLRSIZE)
+				break;
 
 			/* page become full: move on to next page */
 			lmNextPage(log);
 
-			bp = (काष्ठा lbuf *) log->bp;
-			lp = (काष्ठा logpage *) bp->l_ldata;
+			bp = (struct lbuf *) log->bp;
+			lp = (struct logpage *) bp->l_ldata;
 			dstoffset = LOGPHDRSIZE;
 
 			srclen -= nbytes;
 			src += nbytes;
-		पूर्ण
+		}
 
 		/*
 		 * move log vector descriptor
 		 */
 		len += 4;
-		lvd = (काष्ठा lvd *) ((caddr_t) lp + dstoffset);
+		lvd = (struct lvd *) ((caddr_t) lp + dstoffset);
 		lvd->offset = cpu_to_le16(lv->offset);
 		lvd->length = cpu_to_le16(lv->length);
 		dstoffset += 4;
 		jfs_info("lmWriteRecord: lv offset:%d length:%d",
 			 lv->offset, lv->length);
-	पूर्ण
+	}
 
-	अगर ((i = linelock->next)) अणु
-		linelock = (काष्ठा linelock *) lid_to_tlock(i);
-		जाओ moveData;
-	पूर्ण
+	if ((i = linelock->next)) {
+		linelock = (struct linelock *) lid_to_tlock(i);
+		goto moveData;
+	}
 
 	/*
 	 *	move log record descriptor
@@ -475,18 +474,18 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 	src = (caddr_t) lrd;
 	srclen = LOGRDSIZE;
 
-	जबतक (srclen > 0) अणु
-		मुक्तspace = (LOGPSIZE - LOGPTLRSIZE) - dstoffset;
-		nbytes = min(मुक्तspace, srclen);
+	while (srclen > 0) {
+		freespace = (LOGPSIZE - LOGPTLRSIZE) - dstoffset;
+		nbytes = min(freespace, srclen);
 		dst = (caddr_t) lp + dstoffset;
-		स_नकल(dst, src, nbytes);
+		memcpy(dst, src, nbytes);
 
 		dstoffset += nbytes;
 		srclen -= nbytes;
 
-		/* are there more to move than मुक्तspace of page ? */
-		अगर (srclen)
-			जाओ pageFull;
+		/* are there more to move than freespace of page ? */
+		if (srclen)
+			goto pageFull;
 
 		/*
 		 * end of log record descriptor
@@ -497,7 +496,7 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 		bp->l_eor = dstoffset;
 		lsn = (log->page << L2LOGPSIZE) + dstoffset;
 
-		अगर (lrd->type & cpu_to_le16(LOG_COMMIT)) अणु
+		if (lrd->type & cpu_to_le16(LOG_COMMIT)) {
 			tblk->clsn = lsn;
 			jfs_info("wr: tclsn:0x%x, beor:0x%x", tblk->clsn,
 				 bp->l_eor);
@@ -505,7 +504,7 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 			INCREMENT(lmStat.commit);	/* # of commit */
 
 			/*
-			 * enqueue tblock क्रम group commit:
+			 * enqueue tblock for group commit:
 			 *
 			 * enqueue tblock of non-trivial/synchronous COMMIT
 			 * at tail of group commit queue
@@ -524,116 +523,116 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 			list_add_tail(&tblk->cqueue, &log->cqueue);
 
 			LOGGC_UNLOCK(log);
-		पूर्ण
+		}
 
 		jfs_info("lmWriteRecord: lrd:0x%04x bp:0x%p pn:%d eor:0x%x",
 			le16_to_cpu(lrd->type), log->bp, log->page, dstoffset);
 
 		/* page not full ? */
-		अगर (dstoffset < LOGPSIZE - LOGPTLRSIZE)
-			वापस lsn;
+		if (dstoffset < LOGPSIZE - LOGPTLRSIZE)
+			return lsn;
 
 	      pageFull:
 		/* page become full: move on to next page */
 		lmNextPage(log);
 
-		bp = (काष्ठा lbuf *) log->bp;
-		lp = (काष्ठा logpage *) bp->l_ldata;
+		bp = (struct lbuf *) log->bp;
+		lp = (struct logpage *) bp->l_ldata;
 		dstoffset = LOGPHDRSIZE;
 		src += nbytes;
-	पूर्ण
+	}
 
-	वापस lsn;
-पूर्ण
+	return lsn;
+}
 
 
 /*
  * NAME:	lmNextPage()
  *
- * FUNCTION:	ग_लिखो current page and allocate next page.
+ * FUNCTION:	write current page and allocate next page.
  *
  * PARAMETER:	log
  *
  * RETURN:	0
  *
- * serialization: LOG_LOCK() held on entry/निकास
+ * serialization: LOG_LOCK() held on entry/exit
  */
-अटल पूर्णांक lmNextPage(काष्ठा jfs_log * log)
-अणु
-	काष्ठा logpage *lp;
-	पूर्णांक lspn;		/* log sequence page number */
-	पूर्णांक pn;			/* current page number */
-	काष्ठा lbuf *bp;
-	काष्ठा lbuf *nextbp;
-	काष्ठा tblock *tblk;
+static int lmNextPage(struct jfs_log * log)
+{
+	struct logpage *lp;
+	int lspn;		/* log sequence page number */
+	int pn;			/* current page number */
+	struct lbuf *bp;
+	struct lbuf *nextbp;
+	struct tblock *tblk;
 
 	/* get current log page number and log sequence page number */
 	pn = log->page;
 	bp = log->bp;
-	lp = (काष्ठा logpage *) bp->l_ldata;
+	lp = (struct logpage *) bp->l_ldata;
 	lspn = le32_to_cpu(lp->h.page);
 
 	LOGGC_LOCK(log);
 
 	/*
-	 *	ग_लिखो or queue the full page at the tail of ग_लिखो queue
+	 *	write or queue the full page at the tail of write queue
 	 */
 	/* get the tail tblk on commit queue */
-	अगर (list_empty(&log->cqueue))
-		tblk = शून्य;
-	अन्यथा
-		tblk = list_entry(log->cqueue.prev, काष्ठा tblock, cqueue);
+	if (list_empty(&log->cqueue))
+		tblk = NULL;
+	else
+		tblk = list_entry(log->cqueue.prev, struct tblock, cqueue);
 
 	/* every tblk who has COMMIT record on the current page,
 	 * and has not been committed, must be on commit queue
-	 * since tblk is queued at commit queueu at the समय
-	 * of writing its COMMIT record on the page beक्रमe
-	 * page becomes full (even though the tblk thपढ़ो
+	 * since tblk is queued at commit queueu at the time
+	 * of writing its COMMIT record on the page before
+	 * page becomes full (even though the tblk thread
 	 * who wrote COMMIT record may have been suspended
 	 * currently);
 	 */
 
 	/* is page bound with outstanding tail tblk ? */
-	अगर (tblk && tblk->pn == pn) अणु
-		/* mark tblk क्रम end-of-page */
+	if (tblk && tblk->pn == pn) {
+		/* mark tblk for end-of-page */
 		tblk->flag |= tblkGC_EOP;
 
-		अगर (log->cflag & logGC_PAGEOUT) अणु
-			/* अगर page is not alपढ़ोy on ग_लिखो queue,
+		if (log->cflag & logGC_PAGEOUT) {
+			/* if page is not already on write queue,
 			 * just enqueue (no lbmWRITE to prevent redrive)
 			 * buffer to wqueue to ensure correct serial order
 			 * of the pages since log pages will be added
 			 * continuously
 			 */
-			अगर (bp->l_wqnext == शून्य)
+			if (bp->l_wqnext == NULL)
 				lbmWrite(log, bp, 0, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * No current GC leader, initiate group commit
 			 */
 			log->cflag |= logGC_PAGEOUT;
-			lmGCग_लिखो(log, 0);
-		पूर्ण
-	पूर्ण
+			lmGCwrite(log, 0);
+		}
+	}
 	/* page is not bound with outstanding tblk:
-	 * init ग_लिखो or mark it to be redriven (lbmWRITE)
+	 * init write or mark it to be redriven (lbmWRITE)
 	 */
-	अन्यथा अणु
+	else {
 		/* finalize the page */
 		bp->l_ceor = bp->l_eor;
 		lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_ceor);
 		lbmWrite(log, bp, lbmWRITE | lbmRELEASE | lbmFREE, 0);
-	पूर्ण
+	}
 	LOGGC_UNLOCK(log);
 
 	/*
 	 *	allocate/initialize next page
 	 */
-	/* अगर log wraps, the first data page of log is 2
+	/* if log wraps, the first data page of log is 2
 	 * (0 never used, 1 is superblock).
 	 */
 	log->page = (pn == log->size - 1) ? 2 : pn + 1;
-	log->eor = LOGPHDRSIZE;	/* ? valid page empty/full at logReकरो() */
+	log->eor = LOGPHDRSIZE;	/* ? valid page empty/full at logRedo() */
 
 	/* allocate/initialize next log page buffer */
 	nextbp = lbmAllocate(log, log->page);
@@ -641,12 +640,12 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 	log->bp = nextbp;
 
 	/* initialize next log page */
-	lp = (काष्ठा logpage *) nextbp->l_ldata;
+	lp = (struct logpage *) nextbp->l_ldata;
 	lp->h.page = lp->t.page = cpu_to_le32(lspn + 1);
 	lp->h.eor = lp->t.eor = cpu_to_le16(LOGPHDRSIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
@@ -664,28 +663,28 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
  *	transaction blocks on the commit queue.
  *	N.B. LOG_LOCK is NOT held during lmGroupCommit().
  */
-पूर्णांक lmGroupCommit(काष्ठा jfs_log * log, काष्ठा tblock * tblk)
-अणु
-	पूर्णांक rc = 0;
+int lmGroupCommit(struct jfs_log * log, struct tblock * tblk)
+{
+	int rc = 0;
 
 	LOGGC_LOCK(log);
 
-	/* group committed alपढ़ोy ? */
-	अगर (tblk->flag & tblkGC_COMMITTED) अणु
-		अगर (tblk->flag & tblkGC_ERROR)
+	/* group committed already ? */
+	if (tblk->flag & tblkGC_COMMITTED) {
+		if (tblk->flag & tblkGC_ERROR)
 			rc = -EIO;
 
 		LOGGC_UNLOCK(log);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	jfs_info("lmGroup Commit: tblk = 0x%p, gcrtc = %d", tblk, log->gcrtc);
 
-	अगर (tblk->xflag & COMMIT_LAZY)
+	if (tblk->xflag & COMMIT_LAZY)
 		tblk->flag |= tblkGC_LAZY;
 
-	अगर ((!(log->cflag & logGC_PAGEOUT)) && (!list_empty(&log->cqueue)) &&
+	if ((!(log->cflag & logGC_PAGEOUT)) && (!list_empty(&log->cqueue)) &&
 	    (!(tblk->xflag & COMMIT_LAZY) || test_bit(log_FLUSH, &log->flag)
-	     || jfs_tlocks_low)) अणु
+	     || jfs_tlocks_low)) {
 		/*
 		 * No pageout in progress
 		 *
@@ -693,48 +692,48 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 		 */
 		log->cflag |= logGC_PAGEOUT;
 
-		lmGCग_लिखो(log, 0);
-	पूर्ण
+		lmGCwrite(log, 0);
+	}
 
-	अगर (tblk->xflag & COMMIT_LAZY) अणु
+	if (tblk->xflag & COMMIT_LAZY) {
 		/*
 		 * Lazy transactions can leave now
 		 */
 		LOGGC_UNLOCK(log);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* lmGCग_लिखो gives up LOGGC_LOCK, check again */
+	/* lmGCwrite gives up LOGGC_LOCK, check again */
 
-	अगर (tblk->flag & tblkGC_COMMITTED) अणु
-		अगर (tblk->flag & tblkGC_ERROR)
+	if (tblk->flag & tblkGC_COMMITTED) {
+		if (tblk->flag & tblkGC_ERROR)
 			rc = -EIO;
 
 		LOGGC_UNLOCK(log);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* upcount transaction रुकोing क्रम completion
+	/* upcount transaction waiting for completion
 	 */
 	log->gcrtc++;
 	tblk->flag |= tblkGC_READY;
 
-	__SLEEP_COND(tblk->gcरुको, (tblk->flag & tblkGC_COMMITTED),
+	__SLEEP_COND(tblk->gcwait, (tblk->flag & tblkGC_COMMITTED),
 		     LOGGC_LOCK(log), LOGGC_UNLOCK(log));
 
-	/* हटाओd from commit queue */
-	अगर (tblk->flag & tblkGC_ERROR)
+	/* removed from commit queue */
+	if (tblk->flag & tblkGC_ERROR)
 		rc = -EIO;
 
 	LOGGC_UNLOCK(log);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * NAME:	lmGCग_लिखो()
+ * NAME:	lmGCwrite()
  *
- * FUNCTION:	group commit ग_लिखो
- *	initiate ग_लिखो of log page, building a group of all transactions
+ * FUNCTION:	group commit write
+ *	initiate write of log page, building a group of all transactions
  *	with commit records on that page.
  *
  * RETURN:	None
@@ -743,13 +742,13 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
  *	LOGGC_LOCK must be held by caller.
  *	N.B. LOG_LOCK is NOT held during lmGroupCommit().
  */
-अटल व्योम lmGCग_लिखो(काष्ठा jfs_log * log, पूर्णांक cant_ग_लिखो)
-अणु
-	काष्ठा lbuf *bp;
-	काष्ठा logpage *lp;
-	पूर्णांक gcpn;		/* group commit page number */
-	काष्ठा tblock *tblk;
-	काष्ठा tblock *xtblk = शून्य;
+static void lmGCwrite(struct jfs_log * log, int cant_write)
+{
+	struct lbuf *bp;
+	struct logpage *lp;
+	int gcpn;		/* group commit page number */
+	struct tblock *tblk;
+	struct tblock *xtblk = NULL;
 
 	/*
 	 * build the commit group of a log page
@@ -758,227 +757,227 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 	 * transactions with COMMIT records on the same log page.
 	 */
 	/* get the head tblk on the commit queue */
-	gcpn = list_entry(log->cqueue.next, काष्ठा tblock, cqueue)->pn;
+	gcpn = list_entry(log->cqueue.next, struct tblock, cqueue)->pn;
 
-	list_क्रम_each_entry(tblk, &log->cqueue, cqueue) अणु
-		अगर (tblk->pn != gcpn)
-			अवरोध;
+	list_for_each_entry(tblk, &log->cqueue, cqueue) {
+		if (tblk->pn != gcpn)
+			break;
 
 		xtblk = tblk;
 
 		/* state transition: (QUEUE, READY) -> COMMIT */
 		tblk->flag |= tblkGC_COMMIT;
-	पूर्ण
+	}
 	tblk = xtblk;		/* last tblk of the page */
 
 	/*
 	 * pageout to commit transactions on the log page.
 	 */
-	bp = (काष्ठा lbuf *) tblk->bp;
-	lp = (काष्ठा logpage *) bp->l_ldata;
-	/* is page alपढ़ोy full ? */
-	अगर (tblk->flag & tblkGC_EOP) अणु
-		/* mark page to मुक्त at end of group commit of the page */
+	bp = (struct lbuf *) tblk->bp;
+	lp = (struct logpage *) bp->l_ldata;
+	/* is page already full ? */
+	if (tblk->flag & tblkGC_EOP) {
+		/* mark page to free at end of group commit of the page */
 		tblk->flag &= ~tblkGC_EOP;
 		tblk->flag |= tblkGC_FREE;
 		bp->l_ceor = bp->l_eor;
 		lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_ceor);
 		lbmWrite(log, bp, lbmWRITE | lbmRELEASE | lbmGC,
-			 cant_ग_लिखो);
+			 cant_write);
 		INCREMENT(lmStat.full_page);
-	पूर्ण
+	}
 	/* page is not yet full */
-	अन्यथा अणु
+	else {
 		bp->l_ceor = tblk->eor;	/* ? bp->l_ceor = bp->l_eor; */
 		lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_ceor);
-		lbmWrite(log, bp, lbmWRITE | lbmGC, cant_ग_लिखो);
+		lbmWrite(log, bp, lbmWRITE | lbmGC, cant_write);
 		INCREMENT(lmStat.partial_page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * NAME:	lmPostGC()
  *
  * FUNCTION:	group commit post-processing
  *	Processes transactions after their commit records have been written
- *	to disk, redriving log I/O अगर necessary.
+ *	to disk, redriving log I/O if necessary.
  *
  * RETURN:	None
  *
  * NOTE:
- *	This routine is called a पूर्णांकerrupt समय by lbmIODone
+ *	This routine is called a interrupt time by lbmIODone
  */
-अटल व्योम lmPostGC(काष्ठा lbuf * bp)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा jfs_log *log = bp->l_log;
-	काष्ठा logpage *lp;
-	काष्ठा tblock *tblk, *temp;
+static void lmPostGC(struct lbuf * bp)
+{
+	unsigned long flags;
+	struct jfs_log *log = bp->l_log;
+	struct logpage *lp;
+	struct tblock *tblk, *temp;
 
 	//LOGGC_LOCK(log);
-	spin_lock_irqsave(&log->gघड़ी, flags);
+	spin_lock_irqsave(&log->gclock, flags);
 	/*
 	 * current pageout of group commit completed.
 	 *
-	 * हटाओ/wakeup transactions from commit queue who were
+	 * remove/wakeup transactions from commit queue who were
 	 * group committed with the current log page
 	 */
-	list_क्रम_each_entry_safe(tblk, temp, &log->cqueue, cqueue) अणु
-		अगर (!(tblk->flag & tblkGC_COMMIT))
-			अवरोध;
-		/* अगर transaction was marked GC_COMMIT then
+	list_for_each_entry_safe(tblk, temp, &log->cqueue, cqueue) {
+		if (!(tblk->flag & tblkGC_COMMIT))
+			break;
+		/* if transaction was marked GC_COMMIT then
 		 * it has been shipped in the current pageout
 		 * and made it to disk - it is committed.
 		 */
 
-		अगर (bp->l_flag & lbmERROR)
+		if (bp->l_flag & lbmERROR)
 			tblk->flag |= tblkGC_ERROR;
 
-		/* हटाओ it from the commit queue */
+		/* remove it from the commit queue */
 		list_del(&tblk->cqueue);
 		tblk->flag &= ~tblkGC_QUEUE;
 
-		अगर (tblk == log->flush_tblk) अणु
+		if (tblk == log->flush_tblk) {
 			/* we can stop flushing the log now */
 			clear_bit(log_FLUSH, &log->flag);
-			log->flush_tblk = शून्य;
-		पूर्ण
+			log->flush_tblk = NULL;
+		}
 
 		jfs_info("lmPostGC: tblk = 0x%p, flag = 0x%x", tblk,
 			 tblk->flag);
 
-		अगर (!(tblk->xflag & COMMIT_FORCE))
+		if (!(tblk->xflag & COMMIT_FORCE))
 			/*
-			 * Hand tblk over to lazy commit thपढ़ो
+			 * Hand tblk over to lazy commit thread
 			 */
 			txLazyUnlock(tblk);
-		अन्यथा अणु
+		else {
 			/* state transition: COMMIT -> COMMITTED */
 			tblk->flag |= tblkGC_COMMITTED;
 
-			अगर (tblk->flag & tblkGC_READY)
+			if (tblk->flag & tblkGC_READY)
 				log->gcrtc--;
 
 			LOGGC_WAKEUP(tblk);
-		पूर्ण
+		}
 
-		/* was page full beक्रमe pageout ?
+		/* was page full before pageout ?
 		 * (and this is the last tblk bound with the page)
 		 */
-		अगर (tblk->flag & tblkGC_FREE)
+		if (tblk->flag & tblkGC_FREE)
 			lbmFree(bp);
 		/* did page become full after pageout ?
 		 * (and this is the last tblk bound with the page)
 		 */
-		अन्यथा अगर (tblk->flag & tblkGC_EOP) अणु
+		else if (tblk->flag & tblkGC_EOP) {
 			/* finalize the page */
-			lp = (काष्ठा logpage *) bp->l_ldata;
+			lp = (struct logpage *) bp->l_ldata;
 			bp->l_ceor = bp->l_eor;
 			lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_eor);
 			jfs_info("lmPostGC: calling lbmWrite");
 			lbmWrite(log, bp, lbmWRITE | lbmRELEASE | lbmFREE,
 				 1);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 	/* are there any transactions who have entered lnGroupCommit()
 	 * (whose COMMITs are after that of the last log page written.
-	 * They are रुकोing क्रम new group commit (above at (SLEEP 1))
+	 * They are waiting for new group commit (above at (SLEEP 1))
 	 * or lazy transactions are on a full (queued) log page,
-	 * select the latest पढ़ोy transaction as new group leader and
+	 * select the latest ready transaction as new group leader and
 	 * wake her up to lead her group.
 	 */
-	अगर ((!list_empty(&log->cqueue)) &&
-	    ((log->gcrtc > 0) || (tblk->bp->l_wqnext != शून्य) ||
+	if ((!list_empty(&log->cqueue)) &&
+	    ((log->gcrtc > 0) || (tblk->bp->l_wqnext != NULL) ||
 	     test_bit(log_FLUSH, &log->flag) || jfs_tlocks_low))
 		/*
-		 * Call lmGCग_लिखो with new group leader
+		 * Call lmGCwrite with new group leader
 		 */
-		lmGCग_लिखो(log, 1);
+		lmGCwrite(log, 1);
 
-	/* no transaction are पढ़ोy yet (transactions are only just
-	 * queued (GC_QUEUE) and not entered क्रम group commit yet).
+	/* no transaction are ready yet (transactions are only just
+	 * queued (GC_QUEUE) and not entered for group commit yet).
 	 * the first transaction entering group commit
 	 * will elect herself as new group leader.
 	 */
-	अन्यथा
+	else
 		log->cflag &= ~logGC_PAGEOUT;
 
 	//LOGGC_UNLOCK(log);
-	spin_unlock_irqrestore(&log->gघड़ी, flags);
-	वापस;
-पूर्ण
+	spin_unlock_irqrestore(&log->gclock, flags);
+	return;
+}
 
 /*
  * NAME:	lmLogSync()
  *
- * FUNCTION:	ग_लिखो log SYNCPT record क्रम specअगरied log
- *	अगर new sync address is available
- *	(normally the हाल अगर sync() is executed by back-ground
+ * FUNCTION:	write log SYNCPT record for specified log
+ *	if new sync address is available
+ *	(normally the case if sync() is executed by back-ground
  *	process).
  *	calculate new value of i_nextsync which determines when
  *	this code is called again.
  *
- * PARAMETERS:	log	- log काष्ठाure
- *		hard_sync - 1 to क्रमce all metadata to be written
+ * PARAMETERS:	log	- log structure
+ *		hard_sync - 1 to force all metadata to be written
  *
  * RETURN:	0
  *
- * serialization: LOG_LOCK() held on entry/निकास
+ * serialization: LOG_LOCK() held on entry/exit
  */
-अटल पूर्णांक lmLogSync(काष्ठा jfs_log * log, पूर्णांक hard_sync)
-अणु
-	पूर्णांक logsize;
-	पूर्णांक written;		/* written since last syncpt */
-	पूर्णांक मुक्त;		/* मुक्त space left available */
-	पूर्णांक delta;		/* additional delta to ग_लिखो normally */
-	पूर्णांक more;		/* additional ग_लिखो granted */
-	काष्ठा lrd lrd;
-	पूर्णांक lsn;
-	काष्ठा logsyncblk *lp;
-	अचिन्हित दीर्घ flags;
+static int lmLogSync(struct jfs_log * log, int hard_sync)
+{
+	int logsize;
+	int written;		/* written since last syncpt */
+	int free;		/* free space left available */
+	int delta;		/* additional delta to write normally */
+	int more;		/* additional write granted */
+	struct lrd lrd;
+	int lsn;
+	struct logsyncblk *lp;
+	unsigned long flags;
 
 	/* push dirty metapages out to disk */
-	अगर (hard_sync)
-		ग_लिखो_special_inodes(log, filemap_fdataग_लिखो);
-	अन्यथा
-		ग_लिखो_special_inodes(log, filemap_flush);
+	if (hard_sync)
+		write_special_inodes(log, filemap_fdatawrite);
+	else
+		write_special_inodes(log, filemap_flush);
 
 	/*
-	 *	क्रमward syncpt
+	 *	forward syncpt
 	 */
-	/* अगर last sync is same as last syncpt,
-	 * invoke sync poपूर्णांक क्रमward processing to update sync.
+	/* if last sync is same as last syncpt,
+	 * invoke sync point forward processing to update sync.
 	 */
 
-	अगर (log->sync == log->syncpt) अणु
+	if (log->sync == log->syncpt) {
 		LOGSYNC_LOCK(log, flags);
-		अगर (list_empty(&log->synclist))
+		if (list_empty(&log->synclist))
 			log->sync = log->lsn;
-		अन्यथा अणु
+		else {
 			lp = list_entry(log->synclist.next,
-					काष्ठा logsyncblk, synclist);
+					struct logsyncblk, synclist);
 			log->sync = lp->lsn;
-		पूर्ण
+		}
 		LOGSYNC_UNLOCK(log, flags);
 
-	पूर्ण
+	}
 
-	/* अगर sync is dअगरferent from last syncpt,
-	 * ग_लिखो a SYNCPT record with syncpt = sync.
+	/* if sync is different from last syncpt,
+	 * write a SYNCPT record with syncpt = sync.
 	 * reset syncpt = sync
 	 */
-	अगर (log->sync != log->syncpt) अणु
+	if (log->sync != log->syncpt) {
 		lrd.logtid = 0;
 		lrd.backchain = 0;
 		lrd.type = cpu_to_le16(LOG_SYNCPT);
 		lrd.length = 0;
 		lrd.log.syncpt.sync = cpu_to_le32(log->sync);
-		lsn = lmWriteRecord(log, शून्य, &lrd, शून्य);
+		lsn = lmWriteRecord(log, NULL, &lrd, NULL);
 
 		log->syncpt = log->sync;
-	पूर्ण अन्यथा
+	} else
 		lsn = log->lsn;
 
 	/*
@@ -986,44 +985,44 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 	 */
 	logsize = log->logsize;
 
-	logdअगरf(written, lsn, log);
-	मुक्त = logsize - written;
+	logdiff(written, lsn, log);
+	free = logsize - written;
 	delta = LOGSYNC_DELTA(logsize);
-	more = min(मुक्त / 2, delta);
-	अगर (more < 2 * LOGPSIZE) अणु
+	more = min(free / 2, delta);
+	if (more < 2 * LOGPSIZE) {
 		jfs_warn("\n ... Log Wrap ... Log Wrap ... Log Wrap ...\n");
 		/*
 		 *	log wrapping
 		 *
 		 * option 1 - panic ? No.!
-		 * option 2 - shutकरोwn file प्रणालीs
+		 * option 2 - shutdown file systems
 		 *	      associated with log ?
 		 * option 3 - extend log ?
 		 * option 4 - second chance
 		 *
-		 * mark log wrapped, and जारी.
+		 * mark log wrapped, and continue.
 		 * when all active transactions are completed,
-		 * mark log valid क्रम recovery.
-		 * अगर crashed during invalid state, log state
-		 * implies invalid log, क्रमcing fsck().
+		 * mark log valid for recovery.
+		 * if crashed during invalid state, log state
+		 * implies invalid log, forcing fsck().
 		 */
 		/* mark log state log wrap in log superblock */
 		/* log->state = LOGWRAP; */
 
-		/* reset sync poपूर्णांक computation */
+		/* reset sync point computation */
 		log->syncpt = log->sync = lsn;
 		log->nextsync = delta;
-	पूर्ण अन्यथा
+	} else
 		/* next syncpt trigger = written + more */
 		log->nextsync = written + more;
 
-	/* अगर number of bytes written from last sync poपूर्णांक is more
+	/* if number of bytes written from last sync point is more
 	 * than 1/4 of the log size, stop new transactions from
 	 * starting until all current transactions are completed
 	 * by setting syncbarrier flag.
 	 */
-	अगर (!test_bit(log_SYNCBARRIER, &log->flag) &&
-	    (written > LOGSYNC_BARRIER(logsize)) && log->active) अणु
+	if (!test_bit(log_SYNCBARRIER, &log->flag) &&
+	    (written > LOGSYNC_BARRIER(logsize)) && log->active) {
 		set_bit(log_SYNCBARRIER, &log->flag);
 		jfs_info("log barrier on: lsn=0x%x syncpt=0x%x", lsn,
 			 log->syncpt);
@@ -1031,90 +1030,90 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 		 * We may have to initiate group commit
 		 */
 		jfs_flush_journal(log, 0);
-	पूर्ण
+	}
 
-	वापस lsn;
-पूर्ण
+	return lsn;
+}
 
 /*
  * NAME:	jfs_syncpt
  *
- * FUNCTION:	ग_लिखो log SYNCPT record क्रम specअगरied log
+ * FUNCTION:	write log SYNCPT record for specified log
  *
- * PARAMETERS:	log	  - log काष्ठाure
- *		hard_sync - set to 1 to क्रमce metadata to be written
+ * PARAMETERS:	log	  - log structure
+ *		hard_sync - set to 1 to force metadata to be written
  */
-व्योम jfs_syncpt(काष्ठा jfs_log *log, पूर्णांक hard_sync)
-अणु	LOG_LOCK(log);
-	अगर (!test_bit(log_QUIESCE, &log->flag))
+void jfs_syncpt(struct jfs_log *log, int hard_sync)
+{	LOG_LOCK(log);
+	if (!test_bit(log_QUIESCE, &log->flag))
 		lmLogSync(log, hard_sync);
 	LOG_UNLOCK(log);
-पूर्ण
+}
 
 /*
  * NAME:	lmLogOpen()
  *
- * FUNCTION:	खोलो the log on first खोलो;
- *	insert fileप्रणाली in the active list of the log.
+ * FUNCTION:	open the log on first open;
+ *	insert filesystem in the active list of the log.
  *
- * PARAMETER:	ipmnt	- file प्रणाली mount inode
+ * PARAMETER:	ipmnt	- file system mount inode
  *		iplog	- log inode (out)
  *
  * RETURN:
  *
  * serialization:
  */
-पूर्णांक lmLogOpen(काष्ठा super_block *sb)
-अणु
-	पूर्णांक rc;
-	काष्ठा block_device *bdev;
-	काष्ठा jfs_log *log;
-	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+int lmLogOpen(struct super_block *sb)
+{
+	int rc;
+	struct block_device *bdev;
+	struct jfs_log *log;
+	struct jfs_sb_info *sbi = JFS_SBI(sb);
 
-	अगर (sbi->flag & JFS_NOINTEGRITY)
-		वापस खोलो_dummy_log(sb);
+	if (sbi->flag & JFS_NOINTEGRITY)
+		return open_dummy_log(sb);
 
-	अगर (sbi->mntflag & JFS_INLINELOG)
-		वापस खोलो_अंतरभूत_log(sb);
+	if (sbi->mntflag & JFS_INLINELOG)
+		return open_inline_log(sb);
 
 	mutex_lock(&jfs_log_mutex);
-	list_क्रम_each_entry(log, &jfs_बाह्यal_logs, journal_list) अणु
-		अगर (log->bdev->bd_dev == sbi->logdev) अणु
-			अगर (!uuid_equal(&log->uuid, &sbi->loguuid)) अणु
+	list_for_each_entry(log, &jfs_external_logs, journal_list) {
+		if (log->bdev->bd_dev == sbi->logdev) {
+			if (!uuid_equal(&log->uuid, &sbi->loguuid)) {
 				jfs_warn("wrong uuid on JFS journal");
 				mutex_unlock(&jfs_log_mutex);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			/*
-			 * add file प्रणाली to log active file प्रणाली list
+			 * add file system to log active file system list
 			 */
-			अगर ((rc = lmLogFileSystem(log, sbi, 1))) अणु
+			if ((rc = lmLogFileSystem(log, sbi, 1))) {
 				mutex_unlock(&jfs_log_mutex);
-				वापस rc;
-			पूर्ण
-			जाओ journal_found;
-		पूर्ण
-	पूर्ण
+				return rc;
+			}
+			goto journal_found;
+		}
+	}
 
-	अगर (!(log = kzalloc(माप(काष्ठा jfs_log), GFP_KERNEL))) अणु
+	if (!(log = kzalloc(sizeof(struct jfs_log), GFP_KERNEL))) {
 		mutex_unlock(&jfs_log_mutex);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	INIT_LIST_HEAD(&log->sb_list);
-	init_रुकोqueue_head(&log->syncरुको);
+	init_waitqueue_head(&log->syncwait);
 
 	/*
-	 *	बाह्यal log as separate logical volume
+	 *	external log as separate logical volume
 	 *
-	 * file प्रणालीs to log may have n-to-1 relationship;
+	 * file systems to log may have n-to-1 relationship;
 	 */
 
 	bdev = blkdev_get_by_dev(sbi->logdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL,
 				 log);
-	अगर (IS_ERR(bdev)) अणु
+	if (IS_ERR(bdev)) {
 		rc = PTR_ERR(bdev);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	log->bdev = bdev;
 	uuid_copy(&log->uuid, &sbi->loguuid);
@@ -1122,16 +1121,16 @@ lmWriteRecord(काष्ठा jfs_log * log, काष्ठा tblock * tblk
 	/*
 	 * initialize log:
 	 */
-	अगर ((rc = lmLogInit(log)))
-		जाओ बंद;
+	if ((rc = lmLogInit(log)))
+		goto close;
 
-	list_add(&log->journal_list, &jfs_बाह्यal_logs);
+	list_add(&log->journal_list, &jfs_external_logs);
 
 	/*
-	 * add file प्रणाली to log active file प्रणाली list
+	 * add file system to log active file system list
 	 */
-	अगर ((rc = lmLogFileSystem(log, sbi, 1)))
-		जाओ shutकरोwn;
+	if ((rc = lmLogFileSystem(log, sbi, 1)))
+		goto shutdown;
 
 journal_found:
 	LOG_LOCK(log);
@@ -1140,35 +1139,35 @@ journal_found:
 	LOG_UNLOCK(log);
 
 	mutex_unlock(&jfs_log_mutex);
-	वापस 0;
+	return 0;
 
 	/*
 	 *	unwind on error
 	 */
-      shutकरोwn:		/* unwind lbmLogInit() */
+      shutdown:		/* unwind lbmLogInit() */
 	list_del(&log->journal_list);
-	lbmLogShutकरोwn(log);
+	lbmLogShutdown(log);
 
-      बंद:		/* बंद बाह्यal log device */
+      close:		/* close external log device */
 	blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
 
-      मुक्त:		/* मुक्त log descriptor */
+      free:		/* free log descriptor */
 	mutex_unlock(&jfs_log_mutex);
-	kमुक्त(log);
+	kfree(log);
 
 	jfs_warn("lmLogOpen: exit(%d)", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक खोलो_अंतरभूत_log(काष्ठा super_block *sb)
-अणु
-	काष्ठा jfs_log *log;
-	पूर्णांक rc;
+static int open_inline_log(struct super_block *sb)
+{
+	struct jfs_log *log;
+	int rc;
 
-	अगर (!(log = kzalloc(माप(काष्ठा jfs_log), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(log = kzalloc(sizeof(struct jfs_log), GFP_KERNEL)))
+		return -ENOMEM;
 	INIT_LIST_HEAD(&log->sb_list);
-	init_रुकोqueue_head(&log->syncरुको);
+	init_waitqueue_head(&log->syncwait);
 
 	set_bit(log_INLINELOG, &log->flag);
 	log->bdev = sb->s_bdev;
@@ -1181,43 +1180,43 @@ journal_found:
 	/*
 	 * initialize log.
 	 */
-	अगर ((rc = lmLogInit(log))) अणु
-		kमुक्त(log);
+	if ((rc = lmLogInit(log))) {
+		kfree(log);
 		jfs_warn("lmLogOpen: exit(%d)", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	list_add(&JFS_SBI(sb)->log_list, &log->sb_list);
 	JFS_SBI(sb)->log = log;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक खोलो_dummy_log(काष्ठा super_block *sb)
-अणु
-	पूर्णांक rc;
+static int open_dummy_log(struct super_block *sb)
+{
+	int rc;
 
 	mutex_lock(&jfs_log_mutex);
-	अगर (!dummy_log) अणु
-		dummy_log = kzalloc(माप(काष्ठा jfs_log), GFP_KERNEL);
-		अगर (!dummy_log) अणु
+	if (!dummy_log) {
+		dummy_log = kzalloc(sizeof(struct jfs_log), GFP_KERNEL);
+		if (!dummy_log) {
 			mutex_unlock(&jfs_log_mutex);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		INIT_LIST_HEAD(&dummy_log->sb_list);
-		init_रुकोqueue_head(&dummy_log->syncरुको);
-		dummy_log->no_पूर्णांकegrity = 1;
+		init_waitqueue_head(&dummy_log->syncwait);
+		dummy_log->no_integrity = 1;
 		/* Make up some stuff */
 		dummy_log->base = 0;
 		dummy_log->size = 1024;
 		rc = lmLogInit(dummy_log);
-		अगर (rc) अणु
-			kमुक्त(dummy_log);
-			dummy_log = शून्य;
+		if (rc) {
+			kfree(dummy_log);
+			dummy_log = NULL;
 			mutex_unlock(&jfs_log_mutex);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
 	LOG_LOCK(dummy_log);
 	list_add(&JFS_SBI(sb)->log_list, &dummy_log->sb_list);
@@ -1225,43 +1224,43 @@ journal_found:
 	LOG_UNLOCK(dummy_log);
 	mutex_unlock(&jfs_log_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * NAME:	lmLogInit()
  *
- * FUNCTION:	log initialization at first log खोलो.
+ * FUNCTION:	log initialization at first log open.
  *
- *	logreकरो() (or logक्रमmat()) should have been run previously.
+ *	logredo() (or logformat()) should have been run previously.
  *	initialize the log from log superblock.
  *	set the log state in the superblock to LOGMOUNT and
- *	ग_लिखो SYNCPT log record.
+ *	write SYNCPT log record.
  *
- * PARAMETER:	log	- log काष्ठाure
+ * PARAMETER:	log	- log structure
  *
- * RETURN:	0	- अगर ok
+ * RETURN:	0	- if ok
  *		-EINVAL	- bad log magic number or superblock dirty
- *		error वापसed from logरुको()
+ *		error returned from logwait()
  *
- * serialization: single first खोलो thपढ़ो
+ * serialization: single first open thread
  */
-पूर्णांक lmLogInit(काष्ठा jfs_log * log)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा lrd lrd;
-	काष्ठा logsuper *logsuper;
-	काष्ठा lbuf *bpsuper;
-	काष्ठा lbuf *bp;
-	काष्ठा logpage *lp;
-	पूर्णांक lsn = 0;
+int lmLogInit(struct jfs_log * log)
+{
+	int rc = 0;
+	struct lrd lrd;
+	struct logsuper *logsuper;
+	struct lbuf *bpsuper;
+	struct lbuf *bp;
+	struct logpage *lp;
+	int lsn = 0;
 
 	jfs_info("lmLogInit: log:0x%p", log);
 
 	/* initialize the group commit serialization lock */
 	LOGGC_LOCK_INIT(log);
 
-	/* allocate/initialize the log ग_लिखो serialization lock */
+	/* allocate/initialize the log write serialization lock */
 	LOG_LOCK_INIT(log);
 
 	LOGSYNC_LOCK_INIT(log);
@@ -1269,81 +1268,81 @@ journal_found:
 	INIT_LIST_HEAD(&log->synclist);
 
 	INIT_LIST_HEAD(&log->cqueue);
-	log->flush_tblk = शून्य;
+	log->flush_tblk = NULL;
 
 	log->count = 0;
 
 	/*
 	 * initialize log i/o
 	 */
-	अगर ((rc = lbmLogInit(log)))
-		वापस rc;
+	if ((rc = lbmLogInit(log)))
+		return rc;
 
-	अगर (!test_bit(log_INLINELOG, &log->flag))
+	if (!test_bit(log_INLINELOG, &log->flag))
 		log->l2bsize = L2LOGPSIZE;
 
-	/* check क्रम disabled journaling to disk */
-	अगर (log->no_पूर्णांकegrity) अणु
+	/* check for disabled journaling to disk */
+	if (log->no_integrity) {
 		/*
-		 * Journal pages will still be filled.  When the समय comes
-		 * to actually करो the I/O, the ग_लिखो is not करोne, and the
+		 * Journal pages will still be filled.  When the time comes
+		 * to actually do the I/O, the write is not done, and the
 		 * endio routine is called directly.
 		 */
 		bp = lbmAllocate(log , 0);
 		log->bp = bp;
 		bp->l_pn = bp->l_eor = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * validate log superblock
 		 */
-		अगर ((rc = lbmRead(log, 1, &bpsuper)))
-			जाओ errout10;
+		if ((rc = lbmRead(log, 1, &bpsuper)))
+			goto errout10;
 
-		logsuper = (काष्ठा logsuper *) bpsuper->l_ldata;
+		logsuper = (struct logsuper *) bpsuper->l_ldata;
 
-		अगर (logsuper->magic != cpu_to_le32(LOGMAGIC)) अणु
+		if (logsuper->magic != cpu_to_le32(LOGMAGIC)) {
 			jfs_warn("*** Log Format Error ! ***");
 			rc = -EINVAL;
-			जाओ errout20;
-		पूर्ण
+			goto errout20;
+		}
 
-		/* logreकरो() should have been run successfully. */
-		अगर (logsuper->state != cpu_to_le32(LOGREDONE)) अणु
+		/* logredo() should have been run successfully. */
+		if (logsuper->state != cpu_to_le32(LOGREDONE)) {
 			jfs_warn("*** Log Is Dirty ! ***");
 			rc = -EINVAL;
-			जाओ errout20;
-		पूर्ण
+			goto errout20;
+		}
 
 		/* initialize log from log superblock */
-		अगर (test_bit(log_INLINELOG,&log->flag)) अणु
-			अगर (log->size != le32_to_cpu(logsuper->size)) अणु
+		if (test_bit(log_INLINELOG,&log->flag)) {
+			if (log->size != le32_to_cpu(logsuper->size)) {
 				rc = -EINVAL;
-				जाओ errout20;
-			पूर्ण
+				goto errout20;
+			}
 			jfs_info("lmLogInit: inline log:0x%p base:0x%Lx size:0x%x",
-				 log, (अचिन्हित दीर्घ दीर्घ)log->base, log->size);
-		पूर्ण अन्यथा अणु
-			अगर (!uuid_equal(&logsuper->uuid, &log->uuid)) अणु
+				 log, (unsigned long long)log->base, log->size);
+		} else {
+			if (!uuid_equal(&logsuper->uuid, &log->uuid)) {
 				jfs_warn("wrong uuid on JFS log device");
-				जाओ errout20;
-			पूर्ण
+				goto errout20;
+			}
 			log->size = le32_to_cpu(logsuper->size);
 			log->l2bsize = le32_to_cpu(logsuper->l2bsize);
 			jfs_info("lmLogInit: external log:0x%p base:0x%Lx size:0x%x",
-				 log, (अचिन्हित दीर्घ दीर्घ)log->base, log->size);
-		पूर्ण
+				 log, (unsigned long long)log->base, log->size);
+		}
 
 		log->page = le32_to_cpu(logsuper->end) / LOGPSIZE;
 		log->eor = le32_to_cpu(logsuper->end) - (LOGPSIZE * log->page);
 
 		/*
-		 * initialize क्रम log append ग_लिखो mode
+		 * initialize for log append write mode
 		 */
 		/* establish current/end-of-log page/buffer */
-		अगर ((rc = lbmRead(log, log->page, &bp)))
-			जाओ errout20;
+		if ((rc = lbmRead(log, log->page, &bp)))
+			goto errout20;
 
-		lp = (काष्ठा logpage *) bp->l_ldata;
+		lp = (struct logpage *) bp->l_ldata;
 
 		jfs_info("lmLogInit: lsn:0x%x page:%d eor:%d:%d",
 			 le32_to_cpu(logsuper->end), log->page, log->eor,
@@ -1353,44 +1352,44 @@ journal_found:
 		bp->l_pn = log->page;
 		bp->l_eor = log->eor;
 
-		/* अगर current page is full, move on to next page */
-		अगर (log->eor >= LOGPSIZE - LOGPTLRSIZE)
+		/* if current page is full, move on to next page */
+		if (log->eor >= LOGPSIZE - LOGPTLRSIZE)
 			lmNextPage(log);
 
 		/*
-		 * initialize log syncpoपूर्णांक
+		 * initialize log syncpoint
 		 */
 		/*
-		 * ग_लिखो the first SYNCPT record with syncpoपूर्णांक = 0
-		 * (i.e., log reकरो up to HERE !);
-		 * हटाओ current page from lbm ग_लिखो queue at end of pageout
-		 * (to ग_लिखो log superblock update), but करो not release to
-		 * मुक्तlist;
+		 * write the first SYNCPT record with syncpoint = 0
+		 * (i.e., log redo up to HERE !);
+		 * remove current page from lbm write queue at end of pageout
+		 * (to write log superblock update), but do not release to
+		 * freelist;
 		 */
 		lrd.logtid = 0;
 		lrd.backchain = 0;
 		lrd.type = cpu_to_le16(LOG_SYNCPT);
 		lrd.length = 0;
 		lrd.log.syncpt.sync = 0;
-		lsn = lmWriteRecord(log, शून्य, &lrd, शून्य);
+		lsn = lmWriteRecord(log, NULL, &lrd, NULL);
 		bp = log->bp;
 		bp->l_ceor = bp->l_eor;
-		lp = (काष्ठा logpage *) bp->l_ldata;
+		lp = (struct logpage *) bp->l_ldata;
 		lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_eor);
 		lbmWrite(log, bp, lbmWRITE | lbmSYNC, 0);
-		अगर ((rc = lbmIOWait(bp, 0)))
-			जाओ errout30;
+		if ((rc = lbmIOWait(bp, 0)))
+			goto errout30;
 
 		/*
-		 * update/ग_लिखो superblock
+		 * update/write superblock
 		 */
 		logsuper->state = cpu_to_le32(LOGMOUNT);
 		log->serial = le32_to_cpu(logsuper->serial) + 1;
 		logsuper->serial = cpu_to_le32(log->serial);
 		lbmDirectWrite(log, bpsuper, lbmWRITE | lbmRELEASE | lbmSYNC);
-		अगर ((rc = lbmIOWait(bpsuper, lbmFREE)))
-			जाओ errout30;
-	पूर्ण
+		if ((rc = lbmIOWait(bpsuper, lbmFREE)))
+			goto errout30;
+	}
 
 	/* initialize logsync parameters */
 	log->logsize = (log->size - 2) << L2LOGPSIZE;
@@ -1403,36 +1402,36 @@ journal_found:
 		 log->lsn, log->syncpt, log->sync);
 
 	/*
-	 * initialize क्रम lazy/group commit
+	 * initialize for lazy/group commit
 	 */
 	log->clsn = lsn;
 
-	वापस 0;
+	return 0;
 
 	/*
 	 *	unwind on error
 	 */
       errout30:		/* release log page */
-	log->wqueue = शून्य;
-	bp->l_wqnext = शून्य;
+	log->wqueue = NULL;
+	bp->l_wqnext = NULL;
 	lbmFree(bp);
 
       errout20:		/* release log superblock */
 	lbmFree(bpsuper);
 
       errout10:		/* unwind lbmLogInit() */
-	lbmLogShutकरोwn(log);
+	lbmLogShutdown(log);
 
 	jfs_warn("lmLogInit: exit(%d)", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*
  * NAME:	lmLogClose()
  *
- * FUNCTION:	हटाओ file प्रणाली <ipmnt> from active list of log <iplog>
- *		and बंद it on last बंद.
+ * FUNCTION:	remove file system <ipmnt> from active list of log <iplog>
+ *		and close it on last close.
  *
  * PARAMETER:	sb	- superblock
  *
@@ -1440,12 +1439,12 @@ journal_found:
  *
  * serialization:
  */
-पूर्णांक lmLogClose(काष्ठा super_block *sb)
-अणु
-	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
-	काष्ठा jfs_log *log = sbi->log;
-	काष्ठा block_device *bdev;
-	पूर्णांक rc = 0;
+int lmLogClose(struct super_block *sb)
+{
+	struct jfs_sb_info *sbi = JFS_SBI(sb);
+	struct jfs_log *log = sbi->log;
+	struct block_device *bdev;
+	int rc = 0;
 
 	jfs_info("lmLogClose: log:0x%p", log);
 
@@ -1453,7 +1452,7 @@ journal_found:
 	LOG_LOCK(log);
 	list_del(&sbi->log_list);
 	LOG_UNLOCK(log);
-	sbi->log = शून्य;
+	sbi->log = NULL;
 
 	/*
 	 * We need to make sure all of the "written" metapages
@@ -1461,89 +1460,89 @@ journal_found:
 	 */
 	sync_blockdev(sb->s_bdev);
 
-	अगर (test_bit(log_INLINELOG, &log->flag)) अणु
+	if (test_bit(log_INLINELOG, &log->flag)) {
 		/*
-		 *	in-line log in host file प्रणाली
+		 *	in-line log in host file system
 		 */
-		rc = lmLogShutकरोwn(log);
-		kमुक्त(log);
-		जाओ out;
-	पूर्ण
+		rc = lmLogShutdown(log);
+		kfree(log);
+		goto out;
+	}
 
-	अगर (!log->no_पूर्णांकegrity)
+	if (!log->no_integrity)
 		lmLogFileSystem(log, sbi, 0);
 
-	अगर (!list_empty(&log->sb_list))
-		जाओ out;
+	if (!list_empty(&log->sb_list))
+		goto out;
 
 	/*
 	 * TODO: ensure that the dummy_log is in a state to allow
-	 * lbmLogShutकरोwn to deallocate all the buffers and call
-	 * kमुक्त against dummy_log.  For now, leave dummy_log & its
-	 * buffers in memory, and resuse अगर another no-पूर्णांकegrity mount
+	 * lbmLogShutdown to deallocate all the buffers and call
+	 * kfree against dummy_log.  For now, leave dummy_log & its
+	 * buffers in memory, and resuse if another no-integrity mount
 	 * is requested.
 	 */
-	अगर (log->no_पूर्णांकegrity)
-		जाओ out;
+	if (log->no_integrity)
+		goto out;
 
 	/*
-	 *	बाह्यal log as separate logical volume
+	 *	external log as separate logical volume
 	 */
 	list_del(&log->journal_list);
 	bdev = log->bdev;
-	rc = lmLogShutकरोwn(log);
+	rc = lmLogShutdown(log);
 
 	blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
 
-	kमुक्त(log);
+	kfree(log);
 
       out:
 	mutex_unlock(&jfs_log_mutex);
 	jfs_info("lmLogClose: exit(%d)", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
 /*
  * NAME:	jfs_flush_journal()
  *
- * FUNCTION:	initiate ग_लिखो of any outstanding transactions to the journal
- *		and optionally रुको until they are all written to disk
+ * FUNCTION:	initiate write of any outstanding transactions to the journal
+ *		and optionally wait until they are all written to disk
  *
- *		रुको == 0  flush until latest txn is committed, करोn't रुको
- *		रुको == 1  flush until latest txn is committed, रुको
- *		रुको > 1   flush until all txn's are complete, रुको
+ *		wait == 0  flush until latest txn is committed, don't wait
+ *		wait == 1  flush until latest txn is committed, wait
+ *		wait > 1   flush until all txn's are complete, wait
  */
-व्योम jfs_flush_journal(काष्ठा jfs_log *log, पूर्णांक रुको)
-अणु
-	पूर्णांक i;
-	काष्ठा tblock *target = शून्य;
+void jfs_flush_journal(struct jfs_log *log, int wait)
+{
+	int i;
+	struct tblock *target = NULL;
 
-	/* jfs_ग_लिखो_inode may call us during पढ़ो-only mount */
-	अगर (!log)
-		वापस;
+	/* jfs_write_inode may call us during read-only mount */
+	if (!log)
+		return;
 
-	jfs_info("jfs_flush_journal: log:0x%p wait=%d", log, रुको);
+	jfs_info("jfs_flush_journal: log:0x%p wait=%d", log, wait);
 
 	LOGGC_LOCK(log);
 
-	अगर (!list_empty(&log->cqueue)) अणु
+	if (!list_empty(&log->cqueue)) {
 		/*
-		 * This ensures that we will keep writing to the journal as दीर्घ
+		 * This ensures that we will keep writing to the journal as long
 		 * as there are unwritten commit records
 		 */
-		target = list_entry(log->cqueue.prev, काष्ठा tblock, cqueue);
+		target = list_entry(log->cqueue.prev, struct tblock, cqueue);
 
-		अगर (test_bit(log_FLUSH, &log->flag)) अणु
+		if (test_bit(log_FLUSH, &log->flag)) {
 			/*
-			 * We're alपढ़ोy flushing.
-			 * अगर flush_tblk is शून्य, we are flushing everything,
+			 * We're already flushing.
+			 * if flush_tblk is NULL, we are flushing everything,
 			 * so leave it that way.  Otherwise, update it to the
 			 * latest transaction
 			 */
-			अगर (log->flush_tblk)
+			if (log->flush_tblk)
 				log->flush_tblk = target;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Only flush until latest transaction is committed */
 			log->flush_tblk = target;
 			set_bit(log_FLUSH, &log->flag);
@@ -1551,108 +1550,108 @@ journal_found:
 			/*
 			 * Initiate I/O on outstanding transactions
 			 */
-			अगर (!(log->cflag & logGC_PAGEOUT)) अणु
+			if (!(log->cflag & logGC_PAGEOUT)) {
 				log->cflag |= logGC_PAGEOUT;
-				lmGCग_लिखो(log, 0);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर ((रुको > 1) || test_bit(log_SYNCBARRIER, &log->flag)) अणु
+				lmGCwrite(log, 0);
+			}
+		}
+	}
+	if ((wait > 1) || test_bit(log_SYNCBARRIER, &log->flag)) {
 		/* Flush until all activity complete */
 		set_bit(log_FLUSH, &log->flag);
-		log->flush_tblk = शून्य;
-	पूर्ण
+		log->flush_tblk = NULL;
+	}
 
-	अगर (रुको && target && !(target->flag & tblkGC_COMMITTED)) अणु
-		DECLARE_WAITQUEUE(__रुको, current);
+	if (wait && target && !(target->flag & tblkGC_COMMITTED)) {
+		DECLARE_WAITQUEUE(__wait, current);
 
-		add_रुको_queue(&target->gcरुको, &__रुको);
+		add_wait_queue(&target->gcwait, &__wait);
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		LOGGC_UNLOCK(log);
 		schedule();
 		LOGGC_LOCK(log);
-		हटाओ_रुको_queue(&target->gcरुको, &__रुको);
-	पूर्ण
+		remove_wait_queue(&target->gcwait, &__wait);
+	}
 	LOGGC_UNLOCK(log);
 
-	अगर (रुको < 2)
-		वापस;
+	if (wait < 2)
+		return;
 
-	ग_लिखो_special_inodes(log, filemap_fdataग_लिखो);
+	write_special_inodes(log, filemap_fdatawrite);
 
 	/*
-	 * If there was recent activity, we may need to रुको
-	 * क्रम the lazycommit thपढ़ो to catch up
+	 * If there was recent activity, we may need to wait
+	 * for the lazycommit thread to catch up
 	 */
-	अगर ((!list_empty(&log->cqueue)) || !list_empty(&log->synclist)) अणु
-		क्रम (i = 0; i < 200; i++) अणु	/* Too much? */
+	if ((!list_empty(&log->cqueue)) || !list_empty(&log->synclist)) {
+		for (i = 0; i < 200; i++) {	/* Too much? */
 			msleep(250);
-			ग_लिखो_special_inodes(log, filemap_fdataग_लिखो);
-			अगर (list_empty(&log->cqueue) &&
+			write_special_inodes(log, filemap_fdatawrite);
+			if (list_empty(&log->cqueue) &&
 			    list_empty(&log->synclist))
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	निश्चित(list_empty(&log->cqueue));
+				break;
+		}
+	}
+	assert(list_empty(&log->cqueue));
 
-#अगर_घोषित CONFIG_JFS_DEBUG
-	अगर (!list_empty(&log->synclist)) अणु
-		काष्ठा logsyncblk *lp;
+#ifdef CONFIG_JFS_DEBUG
+	if (!list_empty(&log->synclist)) {
+		struct logsyncblk *lp;
 
-		prपूर्णांकk(KERN_ERR "jfs_flush_journal: synclist not empty\n");
-		list_क्रम_each_entry(lp, &log->synclist, synclist) अणु
-			अगर (lp->xflag & COMMIT_PAGE) अणु
-				काष्ठा metapage *mp = (काष्ठा metapage *)lp;
-				prपूर्णांक_hex_dump(KERN_ERR, "metapage: ",
+		printk(KERN_ERR "jfs_flush_journal: synclist not empty\n");
+		list_for_each_entry(lp, &log->synclist, synclist) {
+			if (lp->xflag & COMMIT_PAGE) {
+				struct metapage *mp = (struct metapage *)lp;
+				print_hex_dump(KERN_ERR, "metapage: ",
 					       DUMP_PREFIX_ADDRESS, 16, 4,
-					       mp, माप(काष्ठा metapage), 0);
-				prपूर्णांक_hex_dump(KERN_ERR, "page: ",
+					       mp, sizeof(struct metapage), 0);
+				print_hex_dump(KERN_ERR, "page: ",
 					       DUMP_PREFIX_ADDRESS, 16,
-					       माप(दीर्घ), mp->page,
-					       माप(काष्ठा page), 0);
-			पूर्ण अन्यथा
-				prपूर्णांक_hex_dump(KERN_ERR, "tblock:",
+					       sizeof(long), mp->page,
+					       sizeof(struct page), 0);
+			} else
+				print_hex_dump(KERN_ERR, "tblock:",
 					       DUMP_PREFIX_ADDRESS, 16, 4,
-					       lp, माप(काष्ठा tblock), 0);
-		पूर्ण
-	पूर्ण
-#अन्यथा
+					       lp, sizeof(struct tblock), 0);
+		}
+	}
+#else
 	WARN_ON(!list_empty(&log->synclist));
-#पूर्ण_अगर
+#endif
 	clear_bit(log_FLUSH, &log->flag);
-पूर्ण
+}
 
 /*
- * NAME:	lmLogShutकरोwn()
+ * NAME:	lmLogShutdown()
  *
- * FUNCTION:	log shutकरोwn at last LogClose().
+ * FUNCTION:	log shutdown at last LogClose().
  *
- *		ग_लिखो log syncpt record.
- *		update super block to set reकरोne flag to 0.
+ *		write log syncpt record.
+ *		update super block to set redone flag to 0.
  *
  * PARAMETER:	log	- log inode
  *
  * RETURN:	0	- success
  *
- * serialization: single last बंद thपढ़ो
+ * serialization: single last close thread
  */
-पूर्णांक lmLogShutकरोwn(काष्ठा jfs_log * log)
-अणु
-	पूर्णांक rc;
-	काष्ठा lrd lrd;
-	पूर्णांक lsn;
-	काष्ठा logsuper *logsuper;
-	काष्ठा lbuf *bpsuper;
-	काष्ठा lbuf *bp;
-	काष्ठा logpage *lp;
+int lmLogShutdown(struct jfs_log * log)
+{
+	int rc;
+	struct lrd lrd;
+	int lsn;
+	struct logsuper *logsuper;
+	struct lbuf *bpsuper;
+	struct lbuf *bp;
+	struct logpage *lp;
 
 	jfs_info("lmLogShutdown: log:0x%p", log);
 
 	jfs_flush_journal(log, 2);
 
 	/*
-	 * ग_लिखो the last SYNCPT record with syncpoपूर्णांक = 0
-	 * (i.e., log reकरो up to HERE !)
+	 * write the last SYNCPT record with syncpoint = 0
+	 * (i.e., log redo up to HERE !)
 	 */
 	lrd.logtid = 0;
 	lrd.backchain = 0;
@@ -1660,23 +1659,23 @@ journal_found:
 	lrd.length = 0;
 	lrd.log.syncpt.sync = 0;
 
-	lsn = lmWriteRecord(log, शून्य, &lrd, शून्य);
+	lsn = lmWriteRecord(log, NULL, &lrd, NULL);
 	bp = log->bp;
-	lp = (काष्ठा logpage *) bp->l_ldata;
+	lp = (struct logpage *) bp->l_ldata;
 	lp->h.eor = lp->t.eor = cpu_to_le16(bp->l_eor);
 	lbmWrite(log, log->bp, lbmWRITE | lbmRELEASE | lbmSYNC, 0);
 	lbmIOWait(log->bp, lbmFREE);
-	log->bp = शून्य;
+	log->bp = NULL;
 
 	/*
 	 * synchronous update log superblock
-	 * mark log state as shutकरोwn cleanly
-	 * (i.e., Log करोes not need to be replayed).
+	 * mark log state as shutdown cleanly
+	 * (i.e., Log does not need to be replayed).
 	 */
-	अगर ((rc = lbmRead(log, 1, &bpsuper)))
-		जाओ out;
+	if ((rc = lbmRead(log, 1, &bpsuper)))
+		goto out;
 
-	logsuper = (काष्ठा logsuper *) bpsuper->l_ldata;
+	logsuper = (struct logsuper *) bpsuper->l_ldata;
 	logsuper->state = cpu_to_le32(LOGREDONE);
 	logsuper->end = cpu_to_le32(lsn);
 	lbmDirectWrite(log, bpsuper, lbmWRITE | lbmRELEASE | lbmSYNC);
@@ -1687,90 +1686,90 @@ journal_found:
 
       out:
 	/*
-	 * shutकरोwn per log i/o
+	 * shutdown per log i/o
 	 */
-	lbmLogShutकरोwn(log);
+	lbmLogShutdown(log);
 
-	अगर (rc) अणु
+	if (rc) {
 		jfs_warn("lmLogShutdown: exit(%d)", rc);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 
 /*
  * NAME:	lmLogFileSystem()
  *
- * FUNCTION:	insert (<activate> = true)/हटाओ (<activate> = false)
- *	file प्रणाली पूर्णांकo/from log active file प्रणाली list.
+ * FUNCTION:	insert (<activate> = true)/remove (<activate> = false)
+ *	file system into/from log active file system list.
  *
- * PARAMETE:	log	- poपूर्णांकer to logs inode.
- *		fsdev	- kdev_t of fileप्रणाली.
- *		serial	- poपूर्णांकer to वापसed log serial number
- *		activate - insert/हटाओ device from active list.
+ * PARAMETE:	log	- pointer to logs inode.
+ *		fsdev	- kdev_t of filesystem.
+ *		serial	- pointer to returned log serial number
+ *		activate - insert/remove device from active list.
  *
  * RETURN:	0	- success
- *		errors वापसed by vms_ioरुको().
+ *		errors returned by vms_iowait().
  */
-अटल पूर्णांक lmLogFileSystem(काष्ठा jfs_log * log, काष्ठा jfs_sb_info *sbi,
-			   पूर्णांक activate)
-अणु
-	पूर्णांक rc = 0;
-	पूर्णांक i;
-	काष्ठा logsuper *logsuper;
-	काष्ठा lbuf *bpsuper;
+static int lmLogFileSystem(struct jfs_log * log, struct jfs_sb_info *sbi,
+			   int activate)
+{
+	int rc = 0;
+	int i;
+	struct logsuper *logsuper;
+	struct lbuf *bpsuper;
 	uuid_t *uuid = &sbi->uuid;
 
 	/*
-	 * insert/हटाओ file प्रणाली device to log active file प्रणाली list.
+	 * insert/remove file system device to log active file system list.
 	 */
-	अगर ((rc = lbmRead(log, 1, &bpsuper)))
-		वापस rc;
+	if ((rc = lbmRead(log, 1, &bpsuper)))
+		return rc;
 
-	logsuper = (काष्ठा logsuper *) bpsuper->l_ldata;
-	अगर (activate) अणु
-		क्रम (i = 0; i < MAX_ACTIVE; i++)
-			अगर (uuid_is_null(&logsuper->active[i].uuid)) अणु
+	logsuper = (struct logsuper *) bpsuper->l_ldata;
+	if (activate) {
+		for (i = 0; i < MAX_ACTIVE; i++)
+			if (uuid_is_null(&logsuper->active[i].uuid)) {
 				uuid_copy(&logsuper->active[i].uuid, uuid);
 				sbi->aggregate = i;
-				अवरोध;
-			पूर्ण
-		अगर (i == MAX_ACTIVE) अणु
+				break;
+			}
+		if (i == MAX_ACTIVE) {
 			jfs_warn("Too many file systems sharing journal!");
 			lbmFree(bpsuper);
-			वापस -EMखाता;	/* Is there a better rc? */
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < MAX_ACTIVE; i++)
-			अगर (uuid_equal(&logsuper->active[i].uuid, uuid)) अणु
+			return -EMFILE;	/* Is there a better rc? */
+		}
+	} else {
+		for (i = 0; i < MAX_ACTIVE; i++)
+			if (uuid_equal(&logsuper->active[i].uuid, uuid)) {
 				uuid_copy(&logsuper->active[i].uuid,
 					  &uuid_null);
-				अवरोध;
-			पूर्ण
-		अगर (i == MAX_ACTIVE) अणु
+				break;
+			}
+		if (i == MAX_ACTIVE) {
 			jfs_warn("Somebody stomped on the journal!");
 			lbmFree(bpsuper);
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-	पूर्ण
+	}
 
 	/*
-	 * synchronous ग_लिखो log superblock:
+	 * synchronous write log superblock:
 	 *
-	 * ग_लिखो sidestream bypassing ग_लिखो queue:
-	 * at file प्रणाली mount, log super block is updated क्रम
-	 * activation of the file प्रणाली beक्रमe any log record
-	 * (MOUNT record) of the file प्रणाली, and at file प्रणाली
-	 * unmount, all meta data क्रम the file प्रणाली has been
-	 * flushed beक्रमe log super block is updated क्रम deactivation
-	 * of the file प्रणाली.
+	 * write sidestream bypassing write queue:
+	 * at file system mount, log super block is updated for
+	 * activation of the file system before any log record
+	 * (MOUNT record) of the file system, and at file system
+	 * unmount, all meta data for the file system has been
+	 * flushed before log super block is updated for deactivation
+	 * of the file system.
 	 */
 	lbmDirectWrite(log, bpsuper, lbmWRITE | lbmRELEASE | lbmSYNC);
 	rc = lbmIOWait(bpsuper, lbmFREE);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  *		log buffer manager (lbm)
@@ -1778,13 +1777,13 @@ journal_found:
  *
  * special purpose buffer manager supporting log i/o requirements.
  *
- * per log ग_लिखो queue:
- * log pageout occurs in serial order by fअगरo ग_लिखो queue and
- * restricting to a single i/o in pregress at any one समय.
+ * per log write queue:
+ * log pageout occurs in serial order by fifo write queue and
+ * restricting to a single i/o in pregress at any one time.
  * a circular singly-linked list
- * (log->wrqueue poपूर्णांकs to the tail, and buffers are linked via
+ * (log->wrqueue points to the tail, and buffers are linked via
  * bp->wrqueue field), and
- * मुख्यtains log page in pageout ot रुकोing क्रम pageout in serial pageout.
+ * maintains log page in pageout ot waiting for pageout in serial pageout.
  */
 
 /*
@@ -1792,88 +1791,88 @@ journal_found:
  *
  * initialize per log I/O setup at lmLogInit()
  */
-अटल पूर्णांक lbmLogInit(काष्ठा jfs_log * log)
-अणु				/* log inode */
-	पूर्णांक i;
-	काष्ठा lbuf *lbuf;
+static int lbmLogInit(struct jfs_log * log)
+{				/* log inode */
+	int i;
+	struct lbuf *lbuf;
 
 	jfs_info("lbmLogInit: log:0x%p", log);
 
 	/* initialize current buffer cursor */
-	log->bp = शून्य;
+	log->bp = NULL;
 
-	/* initialize log device ग_लिखो queue */
-	log->wqueue = शून्य;
+	/* initialize log device write queue */
+	log->wqueue = NULL;
 
 	/*
 	 * Each log has its own buffer pages allocated to it.  These are
 	 * not managed by the page cache.  This ensures that a transaction
-	 * writing to the log करोes not block trying to allocate a page from
-	 * the page cache (क्रम the log).  This would be bad, since page
-	 * allocation रुकोs on the kswapd thपढ़ो that may be committing inodes
+	 * writing to the log does not block trying to allocate a page from
+	 * the page cache (for the log).  This would be bad, since page
+	 * allocation waits on the kswapd thread that may be committing inodes
 	 * which would cause log activity.  Was that clear?  I'm trying to
-	 * aव्योम deadlock here.
+	 * avoid deadlock here.
 	 */
-	init_रुकोqueue_head(&log->मुक्त_रुको);
+	init_waitqueue_head(&log->free_wait);
 
-	log->lbuf_मुक्त = शून्य;
+	log->lbuf_free = NULL;
 
-	क्रम (i = 0; i < LOGPAGES;) अणु
-		अक्षर *buffer;
-		uपूर्णांक offset;
-		काष्ठा page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
+	for (i = 0; i < LOGPAGES;) {
+		char *buffer;
+		uint offset;
+		struct page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 
-		अगर (!page)
-			जाओ error;
+		if (!page)
+			goto error;
 		buffer = page_address(page);
-		क्रम (offset = 0; offset < PAGE_SIZE; offset += LOGPSIZE) अणु
-			lbuf = kदो_स्मृति(माप(काष्ठा lbuf), GFP_KERNEL);
-			अगर (lbuf == शून्य) अणु
-				अगर (offset == 0)
-					__मुक्त_page(page);
-				जाओ error;
-			पूर्ण
-			अगर (offset) /* we alपढ़ोy have one reference */
+		for (offset = 0; offset < PAGE_SIZE; offset += LOGPSIZE) {
+			lbuf = kmalloc(sizeof(struct lbuf), GFP_KERNEL);
+			if (lbuf == NULL) {
+				if (offset == 0)
+					__free_page(page);
+				goto error;
+			}
+			if (offset) /* we already have one reference */
 				get_page(page);
 			lbuf->l_offset = offset;
 			lbuf->l_ldata = buffer + offset;
 			lbuf->l_page = page;
 			lbuf->l_log = log;
-			init_रुकोqueue_head(&lbuf->l_ioevent);
+			init_waitqueue_head(&lbuf->l_ioevent);
 
-			lbuf->l_मुक्तlist = log->lbuf_मुक्त;
-			log->lbuf_मुक्त = lbuf;
+			lbuf->l_freelist = log->lbuf_free;
+			log->lbuf_free = lbuf;
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (0);
+	return (0);
 
       error:
-	lbmLogShutकरोwn(log);
-	वापस -ENOMEM;
-पूर्ण
+	lbmLogShutdown(log);
+	return -ENOMEM;
+}
 
 
 /*
- *	lbmLogShutकरोwn()
+ *	lbmLogShutdown()
  *
- * finalize per log I/O setup at lmLogShutकरोwn()
+ * finalize per log I/O setup at lmLogShutdown()
  */
-अटल व्योम lbmLogShutकरोwn(काष्ठा jfs_log * log)
-अणु
-	काष्ठा lbuf *lbuf;
+static void lbmLogShutdown(struct jfs_log * log)
+{
+	struct lbuf *lbuf;
 
 	jfs_info("lbmLogShutdown: log:0x%p", log);
 
-	lbuf = log->lbuf_मुक्त;
-	जबतक (lbuf) अणु
-		काष्ठा lbuf *next = lbuf->l_मुक्तlist;
-		__मुक्त_page(lbuf->l_page);
-		kमुक्त(lbuf);
+	lbuf = log->lbuf_free;
+	while (lbuf) {
+		struct lbuf *next = lbuf->l_freelist;
+		__free_page(lbuf->l_page);
+		kfree(lbuf);
 		lbuf = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
@@ -1881,63 +1880,63 @@ journal_found:
  *
  * allocate an empty log buffer
  */
-अटल काष्ठा lbuf *lbmAllocate(काष्ठा jfs_log * log, पूर्णांक pn)
-अणु
-	काष्ठा lbuf *bp;
-	अचिन्हित दीर्घ flags;
+static struct lbuf *lbmAllocate(struct jfs_log * log, int pn)
+{
+	struct lbuf *bp;
+	unsigned long flags;
 
 	/*
-	 * recycle from log buffer मुक्तlist अगर any
+	 * recycle from log buffer freelist if any
 	 */
 	LCACHE_LOCK(flags);
-	LCACHE_SLEEP_COND(log->मुक्त_रुको, (bp = log->lbuf_मुक्त), flags);
-	log->lbuf_मुक्त = bp->l_मुक्तlist;
+	LCACHE_SLEEP_COND(log->free_wait, (bp = log->lbuf_free), flags);
+	log->lbuf_free = bp->l_freelist;
 	LCACHE_UNLOCK(flags);
 
 	bp->l_flag = 0;
 
-	bp->l_wqnext = शून्य;
-	bp->l_मुक्तlist = शून्य;
+	bp->l_wqnext = NULL;
+	bp->l_freelist = NULL;
 
 	bp->l_pn = pn;
 	bp->l_blkno = log->base + (pn << (L2LOGPSIZE - log->l2bsize));
 	bp->l_ceor = 0;
 
-	वापस bp;
-पूर्ण
+	return bp;
+}
 
 
 /*
  *	lbmFree()
  *
- * release a log buffer to मुक्तlist
+ * release a log buffer to freelist
  */
-अटल व्योम lbmFree(काष्ठा lbuf * bp)
-अणु
-	अचिन्हित दीर्घ flags;
+static void lbmFree(struct lbuf * bp)
+{
+	unsigned long flags;
 
 	LCACHE_LOCK(flags);
 
-	lbmमुक्त(bp);
+	lbmfree(bp);
 
 	LCACHE_UNLOCK(flags);
-पूर्ण
+}
 
-अटल व्योम lbmमुक्त(काष्ठा lbuf * bp)
-अणु
-	काष्ठा jfs_log *log = bp->l_log;
+static void lbmfree(struct lbuf * bp)
+{
+	struct jfs_log *log = bp->l_log;
 
-	निश्चित(bp->l_wqnext == शून्य);
+	assert(bp->l_wqnext == NULL);
 
 	/*
-	 * वापस the buffer to head of मुक्तlist
+	 * return the buffer to head of freelist
 	 */
-	bp->l_मुक्तlist = log->lbuf_मुक्त;
-	log->lbuf_मुक्त = bp;
+	bp->l_freelist = log->lbuf_free;
+	log->lbuf_free = bp;
 
-	wake_up(&log->मुक्त_रुको);
-	वापस;
-पूर्ण
+	wake_up(&log->free_wait);
+	return;
+}
 
 
 /*
@@ -1951,26 +1950,26 @@ journal_found:
  * NOTES:
  *	Takes log_redrive_lock.
  */
-अटल अंतरभूत व्योम lbmRedrive(काष्ठा lbuf *bp)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void lbmRedrive(struct lbuf *bp)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&log_redrive_lock, flags);
 	bp->l_redrive_next = log_redrive_list;
 	log_redrive_list = bp;
 	spin_unlock_irqrestore(&log_redrive_lock, flags);
 
-	wake_up_process(jfsIOthपढ़ो);
-पूर्ण
+	wake_up_process(jfsIOthread);
+}
 
 
 /*
  *	lbmRead()
  */
-अटल पूर्णांक lbmRead(काष्ठा jfs_log * log, पूर्णांक pn, काष्ठा lbuf ** bpp)
-अणु
-	काष्ठा bio *bio;
-	काष्ठा lbuf *bp;
+static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+{
+	struct bio *bio;
+	struct lbuf *bp;
 
 	/*
 	 * allocate a log buffer
@@ -1989,20 +1988,20 @@ journal_found:
 	BUG_ON(bio->bi_iter.bi_size != LOGPSIZE);
 
 	bio->bi_end_io = lbmIODone;
-	bio->bi_निजी = bp;
+	bio->bi_private = bp;
 	bio->bi_opf = REQ_OP_READ;
-	/*check अगर journaling to disk has been disabled*/
-	अगर (log->no_पूर्णांकegrity) अणु
+	/*check if journaling to disk has been disabled*/
+	if (log->no_integrity) {
 		bio->bi_iter.bi_size = 0;
 		lbmIODone(bio);
-	पूर्ण अन्यथा अणु
+	} else {
 		submit_bio(bio);
-	पूर्ण
+	}
 
-	रुको_event(bp->l_ioevent, (bp->l_flag != lbmREAD));
+	wait_event(bp->l_ioevent, (bp->l_flag != lbmREAD));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
@@ -2013,18 +2012,18 @@ journal_found:
  * pageout by caller until full-page pageout is completed and
  * released.
  *
- * device driver i/o करोne redrives pageout of new buffer at
+ * device driver i/o done redrives pageout of new buffer at
  * head of pageout queue when current buffer at head of pageout
  * queue is released at the completion of its full-page pageout.
  *
  * LOGGC_LOCK() serializes lbmWrite() by lmNextPage() and lmGroupCommit().
  * LCACHE_LOCK() serializes xflag between lbmWrite() and lbmIODone()
  */
-अटल व्योम lbmWrite(काष्ठा jfs_log * log, काष्ठा lbuf * bp, पूर्णांक flag,
-		     पूर्णांक cant_block)
-अणु
-	काष्ठा lbuf *tail;
-	अचिन्हित दीर्घ flags;
+static void lbmWrite(struct jfs_log * log, struct lbuf * bp, int flag,
+		     int cant_block)
+{
+	struct lbuf *tail;
+	unsigned long flags;
 
 	jfs_info("lbmWrite: bp:0x%p flag:0x%x pn:0x%x", bp, flag, bp->l_pn);
 
@@ -2035,68 +2034,68 @@ journal_found:
 	LCACHE_LOCK(flags);		/* disable+lock */
 
 	/*
-	 * initialize buffer क्रम device driver
+	 * initialize buffer for device driver
 	 */
 	bp->l_flag = flag;
 
 	/*
-	 *	insert bp at tail of ग_लिखो queue associated with log
+	 *	insert bp at tail of write queue associated with log
 	 *
-	 * (request is either क्रम bp alपढ़ोy/currently at head of queue
+	 * (request is either for bp already/currently at head of queue
 	 * or new bp to be inserted at tail)
 	 */
 	tail = log->wqueue;
 
-	/* is buffer not alपढ़ोy on ग_लिखो queue ? */
-	अगर (bp->l_wqnext == शून्य) अणु
+	/* is buffer not already on write queue ? */
+	if (bp->l_wqnext == NULL) {
 		/* insert at tail of wqueue */
-		अगर (tail == शून्य) अणु
+		if (tail == NULL) {
 			log->wqueue = bp;
 			bp->l_wqnext = bp;
-		पूर्ण अन्यथा अणु
+		} else {
 			log->wqueue = bp;
 			bp->l_wqnext = tail->l_wqnext;
 			tail->l_wqnext = bp;
-		पूर्ण
+		}
 
 		tail = bp;
-	पूर्ण
+	}
 
-	/* is buffer at head of wqueue and क्रम ग_लिखो ? */
-	अगर ((bp != tail->l_wqnext) || !(flag & lbmWRITE)) अणु
+	/* is buffer at head of wqueue and for write ? */
+	if ((bp != tail->l_wqnext) || !(flag & lbmWRITE)) {
 		LCACHE_UNLOCK(flags);	/* unlock+enable */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	LCACHE_UNLOCK(flags);	/* unlock+enable */
 
-	अगर (cant_block)
+	if (cant_block)
 		lbmRedrive(bp);
-	अन्यथा अगर (flag & lbmSYNC)
+	else if (flag & lbmSYNC)
 		lbmStartIO(bp);
-	अन्यथा अणु
+	else {
 		LOGGC_UNLOCK(log);
 		lbmStartIO(bp);
 		LOGGC_LOCK(log);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  *	lbmDirectWrite()
  *
- * initiate pageout bypassing ग_लिखो queue क्रम sidestream
- * (e.g., log superblock) ग_लिखो;
+ * initiate pageout bypassing write queue for sidestream
+ * (e.g., log superblock) write;
  */
-अटल व्योम lbmDirectWrite(काष्ठा jfs_log * log, काष्ठा lbuf * bp, पूर्णांक flag)
-अणु
+static void lbmDirectWrite(struct jfs_log * log, struct lbuf * bp, int flag)
+{
 	jfs_info("lbmDirectWrite: bp:0x%p flag:0x%x pn:0x%x",
 		 bp, flag, bp->l_pn);
 
 	/*
-	 * initialize buffer क्रम device driver
+	 * initialize buffer for device driver
 	 */
-	bp->l_flag = flag | lbmसूचीECT;
+	bp->l_flag = flag | lbmDIRECT;
 
 	/* map the logical block address to physical block address */
 	bp->l_blkno =
@@ -2106,7 +2105,7 @@ journal_found:
 	 *	initiate pageout of the page
 	 */
 	lbmStartIO(bp);
-पूर्ण
+}
 
 
 /*
@@ -2118,10 +2117,10 @@ journal_found:
  *
  * serialization: LCACHE_LOCK() is NOT held during log i/o;
  */
-अटल व्योम lbmStartIO(काष्ठा lbuf * bp)
-अणु
-	काष्ठा bio *bio;
-	काष्ठा jfs_log *log = bp->l_log;
+static void lbmStartIO(struct lbuf * bp)
+{
+	struct bio *bio;
+	struct jfs_log *log = bp->l_log;
 
 	jfs_info("lbmStartIO");
 
@@ -2133,27 +2132,27 @@ journal_found:
 	BUG_ON(bio->bi_iter.bi_size != LOGPSIZE);
 
 	bio->bi_end_io = lbmIODone;
-	bio->bi_निजी = bp;
+	bio->bi_private = bp;
 	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC;
 
-	/* check अगर journaling to disk has been disabled */
-	अगर (log->no_पूर्णांकegrity) अणु
+	/* check if journaling to disk has been disabled */
+	if (log->no_integrity) {
 		bio->bi_iter.bi_size = 0;
 		lbmIODone(bio);
-	पूर्ण अन्यथा अणु
+	} else {
 		submit_bio(bio);
 		INCREMENT(lmStat.submitted);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  *	lbmIOWait()
  */
-अटल पूर्णांक lbmIOWait(काष्ठा lbuf * bp, पूर्णांक flag)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+static int lbmIOWait(struct lbuf * bp, int flag)
+{
+	unsigned long flags;
+	int rc = 0;
 
 	jfs_info("lbmIOWait1: bp:0x%p flag:0x%x:0x%x", bp, bp->l_flag, flag);
 
@@ -2163,26 +2162,26 @@ journal_found:
 
 	rc = (bp->l_flag & lbmERROR) ? -EIO : 0;
 
-	अगर (flag & lbmFREE)
-		lbmमुक्त(bp);
+	if (flag & lbmFREE)
+		lbmfree(bp);
 
 	LCACHE_UNLOCK(flags);	/* unlock+enable */
 
 	jfs_info("lbmIOWait2: bp:0x%p flag:0x%x:0x%x", bp, bp->l_flag, flag);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  *	lbmIODone()
  *
  * executed at INTIODONE level
  */
-अटल व्योम lbmIODone(काष्ठा bio *bio)
-अणु
-	काष्ठा lbuf *bp = bio->bi_निजी;
-	काष्ठा lbuf *nextbp, *tail;
-	काष्ठा jfs_log *log;
-	अचिन्हित दीर्घ flags;
+static void lbmIODone(struct bio *bio)
+{
+	struct lbuf *bp = bio->bi_private;
+	struct lbuf *nextbp, *tail;
+	struct jfs_log *log;
+	unsigned long flags;
 
 	/*
 	 * get back jfs buffer bound to the i/o buffer
@@ -2193,18 +2192,18 @@ journal_found:
 
 	bp->l_flag |= lbmDONE;
 
-	अगर (bio->bi_status) अणु
+	if (bio->bi_status) {
 		bp->l_flag |= lbmERROR;
 
 		jfs_err("lbmIODone: I/O error in JFS log");
-	पूर्ण
+	}
 
 	bio_put(bio);
 
 	/*
 	 *	pagein completion
 	 */
-	अगर (bp->l_flag & lbmREAD) अणु
+	if (bp->l_flag & lbmREAD) {
 		bp->l_flag &= ~lbmREAD;
 
 		LCACHE_UNLOCK(flags);	/* unlock+enable */
@@ -2212,144 +2211,144 @@ journal_found:
 		/* wakeup I/O initiator */
 		LCACHE_WAKEUP(&bp->l_ioevent);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 *	pageout completion
 	 *
-	 * the bp at the head of ग_लिखो queue has completed pageout.
+	 * the bp at the head of write queue has completed pageout.
 	 *
-	 * अगर single-commit/full-page pageout, हटाओ the current buffer
+	 * if single-commit/full-page pageout, remove the current buffer
 	 * from head of pageout queue, and redrive pageout with
 	 * the new buffer at head of pageout queue;
 	 * otherwise, the partial-page pageout buffer stays at
-	 * the head of pageout queue to be redriven क्रम pageout
+	 * the head of pageout queue to be redriven for pageout
 	 * by lmGroupCommit() until full-page pageout is completed.
 	 */
 	bp->l_flag &= ~lbmWRITE;
-	INCREMENT(lmStat.pageकरोne);
+	INCREMENT(lmStat.pagedone);
 
 	/* update committed lsn */
 	log = bp->l_log;
 	log->clsn = (bp->l_pn << L2LOGPSIZE) + bp->l_ceor;
 
-	अगर (bp->l_flag & lbmसूचीECT) अणु
+	if (bp->l_flag & lbmDIRECT) {
 		LCACHE_WAKEUP(&bp->l_ioevent);
 		LCACHE_UNLOCK(flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tail = log->wqueue;
 
 	/* single element queue */
-	अगर (bp == tail) अणु
-		/* हटाओ head buffer of full-page pageout
-		 * from log device ग_लिखो queue
+	if (bp == tail) {
+		/* remove head buffer of full-page pageout
+		 * from log device write queue
 		 */
-		अगर (bp->l_flag & lbmRELEASE) अणु
-			log->wqueue = शून्य;
-			bp->l_wqnext = शून्य;
-		पूर्ण
-	पूर्ण
+		if (bp->l_flag & lbmRELEASE) {
+			log->wqueue = NULL;
+			bp->l_wqnext = NULL;
+		}
+	}
 	/* multi element queue */
-	अन्यथा अणु
-		/* हटाओ head buffer of full-page pageout
-		 * from log device ग_लिखो queue
+	else {
+		/* remove head buffer of full-page pageout
+		 * from log device write queue
 		 */
-		अगर (bp->l_flag & lbmRELEASE) अणु
+		if (bp->l_flag & lbmRELEASE) {
 			nextbp = tail->l_wqnext = bp->l_wqnext;
-			bp->l_wqnext = शून्य;
+			bp->l_wqnext = NULL;
 
 			/*
-			 * redrive pageout of next page at head of ग_लिखो queue:
+			 * redrive pageout of next page at head of write queue:
 			 * redrive next page without any bound tblk
 			 * (i.e., page w/o any COMMIT records), or
 			 * first page of new group commit which has been
 			 * queued after current page (subsequent pageout
-			 * is perक्रमmed synchronously, except page without
+			 * is performed synchronously, except page without
 			 * any COMMITs) by lmGroupCommit() as indicated
 			 * by lbmWRITE flag;
 			 */
-			अगर (nextbp->l_flag & lbmWRITE) अणु
+			if (nextbp->l_flag & lbmWRITE) {
 				/*
-				 * We can't करो the I/O at पूर्णांकerrupt समय.
-				 * The jfsIO thपढ़ो can करो it
+				 * We can't do the I/O at interrupt time.
+				 * The jfsIO thread can do it
 				 */
 				lbmRedrive(nextbp);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
 	 *	synchronous pageout:
 	 *
-	 * buffer has not necessarily been हटाओd from ग_लिखो queue
-	 * (e.g., synchronous ग_लिखो of partial-page with COMMIT):
-	 * leave buffer क्रम i/o initiator to dispose
+	 * buffer has not necessarily been removed from write queue
+	 * (e.g., synchronous write of partial-page with COMMIT):
+	 * leave buffer for i/o initiator to dispose
 	 */
-	अगर (bp->l_flag & lbmSYNC) अणु
+	if (bp->l_flag & lbmSYNC) {
 		LCACHE_UNLOCK(flags);	/* unlock+enable */
 
 		/* wakeup I/O initiator */
 		LCACHE_WAKEUP(&bp->l_ioevent);
-	पूर्ण
+	}
 
 	/*
 	 *	Group Commit pageout:
 	 */
-	अन्यथा अगर (bp->l_flag & lbmGC) अणु
+	else if (bp->l_flag & lbmGC) {
 		LCACHE_UNLOCK(flags);
 		lmPostGC(bp);
-	पूर्ण
+	}
 
 	/*
 	 *	asynchronous pageout:
 	 *
-	 * buffer must have been हटाओd from ग_लिखो queue:
-	 * insert buffer at head of मुक्तlist where it can be recycled
+	 * buffer must have been removed from write queue:
+	 * insert buffer at head of freelist where it can be recycled
 	 */
-	अन्यथा अणु
-		निश्चित(bp->l_flag & lbmRELEASE);
-		निश्चित(bp->l_flag & lbmFREE);
-		lbmमुक्त(bp);
+	else {
+		assert(bp->l_flag & lbmRELEASE);
+		assert(bp->l_flag & lbmFREE);
+		lbmfree(bp);
 
 		LCACHE_UNLOCK(flags);	/* unlock+enable */
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक jfsIOWait(व्योम *arg)
-अणु
-	काष्ठा lbuf *bp;
+int jfsIOWait(void *arg)
+{
+	struct lbuf *bp;
 
-	करो अणु
+	do {
 		spin_lock_irq(&log_redrive_lock);
-		जबतक ((bp = log_redrive_list)) अणु
+		while ((bp = log_redrive_list)) {
 			log_redrive_list = bp->l_redrive_next;
-			bp->l_redrive_next = शून्य;
+			bp->l_redrive_next = NULL;
 			spin_unlock_irq(&log_redrive_lock);
 			lbmStartIO(bp);
 			spin_lock_irq(&log_redrive_lock);
-		पूर्ण
+		}
 
-		अगर (मुक्तzing(current)) अणु
+		if (freezing(current)) {
 			spin_unlock_irq(&log_redrive_lock);
-			try_to_मुक्तze();
-		पूर्ण अन्यथा अणु
+			try_to_freeze();
+		} else {
 			set_current_state(TASK_INTERRUPTIBLE);
 			spin_unlock_irq(&log_redrive_lock);
 			schedule();
-		पूर्ण
-	पूर्ण जबतक (!kthपढ़ो_should_stop());
+		}
+	} while (!kthread_should_stop());
 
 	jfs_info("jfsIOWait being killed!");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * NAME:	lmLogFormat()/jfs_logक्रमm()
+ * NAME:	lmLogFormat()/jfs_logform()
  *
- * FUNCTION:	क्रमmat file प्रणाली log
+ * FUNCTION:	format file system log
  *
  * PARAMETERS:
  *	log	- volume log
@@ -2359,24 +2358,24 @@ journal_found:
  * RETURN:	0	- success
  *		-EIO	- i/o error
  *
- * XXX: We're synchronously writing one page at a समय.  This needs to
+ * XXX: We're synchronously writing one page at a time.  This needs to
  *	be improved by writing multiple pages at once.
  */
-पूर्णांक lmLogFormat(काष्ठा jfs_log *log, s64 logAddress, पूर्णांक logSize)
-अणु
-	पूर्णांक rc = -EIO;
-	काष्ठा jfs_sb_info *sbi;
-	काष्ठा logsuper *logsuper;
-	काष्ठा logpage *lp;
-	पूर्णांक lspn;		/* log sequence page number */
-	काष्ठा lrd *lrd_ptr;
-	पूर्णांक npages = 0;
-	काष्ठा lbuf *bp;
+int lmLogFormat(struct jfs_log *log, s64 logAddress, int logSize)
+{
+	int rc = -EIO;
+	struct jfs_sb_info *sbi;
+	struct logsuper *logsuper;
+	struct logpage *lp;
+	int lspn;		/* log sequence page number */
+	struct lrd *lrd_ptr;
+	int npages = 0;
+	struct lbuf *bp;
 
 	jfs_info("lmLogFormat: logAddress:%Ld logSize:%d",
-		 (दीर्घ दीर्घ)logAddress, logSize);
+		 (long long)logAddress, logSize);
 
-	sbi = list_entry(log->sb_list.next, काष्ठा jfs_sb_info, log_list);
+	sbi = list_entry(log->sb_list.next, struct jfs_sb_info, log_list);
 
 	/* allocate a log buffer */
 	bp = lbmAllocate(log, 1);
@@ -2389,13 +2388,13 @@ journal_found:
 	 * page 0 - reserved;
 	 * page 1 - log superblock;
 	 * page 2 - log data page: A SYNC log record is written
-	 *	    पूर्णांकo this page at logक्रमm समय;
+	 *	    into this page at logform time;
 	 * pages 3-N - log data page: set to empty log data pages;
 	 */
 	/*
 	 *	init log superblock: log page 1
 	 */
-	logsuper = (काष्ठा logsuper *) bp->l_ldata;
+	logsuper = (struct logsuper *) bp->l_ldata;
 
 	logsuper->magic = cpu_to_le32(LOGMAGIC);
 	logsuper->version = cpu_to_le32(LOGVERSION);
@@ -2406,11 +2405,11 @@ journal_found:
 	logsuper->l2bsize = cpu_to_le32(sbi->l2bsize);
 	logsuper->end = cpu_to_le32(2 * LOGPSIZE + LOGPHDRSIZE + LOGRDSIZE);
 
-	bp->l_flag = lbmWRITE | lbmSYNC | lbmसूचीECT;
+	bp->l_flag = lbmWRITE | lbmSYNC | lbmDIRECT;
 	bp->l_blkno = logAddress + sbi->nbperpage;
 	lbmStartIO(bp);
-	अगर ((rc = lbmIOWait(bp, 0)))
-		जाओ निकास;
+	if ((rc = lbmIOWait(bp, 0)))
+		goto exit;
 
 	/*
 	 *	init pages 2 to npages-1 as log data pages:
@@ -2422,27 +2421,27 @@ journal_found:
 	 * lspn:             N-1   0     1           N-2
 	 *                   <--- N page circular file ---->
 	 *
-	 * the N (= npages-2) data pages of the log is मुख्यtained as
-	 * a circular file क्रम the log records;
+	 * the N (= npages-2) data pages of the log is maintained as
+	 * a circular file for the log records;
 	 * lpsn grows by 1 monotonically as each log page is written
 	 * to the circular file of the log;
-	 * and setLogpage() will not reset the page number even अगर
-	 * the eor is equal to LOGPHDRSIZE. In order क्रम binary search
+	 * and setLogpage() will not reset the page number even if
+	 * the eor is equal to LOGPHDRSIZE. In order for binary search
 	 * still work in find log end process, we have to simulate the
-	 * log wrap situation at the log क्रमmat समय.
+	 * log wrap situation at the log format time.
 	 * The 1st log page written will have the highest lpsn. Then
 	 * the succeeding log pages will have ascending order of
 	 * the lspn starting from 0, ... (N-2)
 	 */
-	lp = (काष्ठा logpage *) bp->l_ldata;
+	lp = (struct logpage *) bp->l_ldata;
 	/*
 	 * initialize 1st log page to be written: lpsn = N - 1,
-	 * ग_लिखो a SYNCPT log record is written to this page
+	 * write a SYNCPT log record is written to this page
 	 */
 	lp->h.page = lp->t.page = cpu_to_le32(npages - 3);
 	lp->h.eor = lp->t.eor = cpu_to_le16(LOGPHDRSIZE + LOGRDSIZE);
 
-	lrd_ptr = (काष्ठा lrd *) &lp->data;
+	lrd_ptr = (struct lrd *) &lp->data;
 	lrd_ptr->logtid = 0;
 	lrd_ptr->backchain = 0;
 	lrd_ptr->type = cpu_to_le16(LOG_SYNCPT);
@@ -2450,40 +2449,40 @@ journal_found:
 	lrd_ptr->log.syncpt.sync = 0;
 
 	bp->l_blkno += sbi->nbperpage;
-	bp->l_flag = lbmWRITE | lbmSYNC | lbmसूचीECT;
+	bp->l_flag = lbmWRITE | lbmSYNC | lbmDIRECT;
 	lbmStartIO(bp);
-	अगर ((rc = lbmIOWait(bp, 0)))
-		जाओ निकास;
+	if ((rc = lbmIOWait(bp, 0)))
+		goto exit;
 
 	/*
 	 *	initialize succeeding log pages: lpsn = 0, 1, ..., (N-2)
 	 */
-	क्रम (lspn = 0; lspn < npages - 3; lspn++) अणु
+	for (lspn = 0; lspn < npages - 3; lspn++) {
 		lp->h.page = lp->t.page = cpu_to_le32(lspn);
 		lp->h.eor = lp->t.eor = cpu_to_le16(LOGPHDRSIZE);
 
 		bp->l_blkno += sbi->nbperpage;
-		bp->l_flag = lbmWRITE | lbmSYNC | lbmसूचीECT;
+		bp->l_flag = lbmWRITE | lbmSYNC | lbmDIRECT;
 		lbmStartIO(bp);
-		अगर ((rc = lbmIOWait(bp, 0)))
-			जाओ निकास;
-	पूर्ण
+		if ((rc = lbmIOWait(bp, 0)))
+			goto exit;
+	}
 
 	rc = 0;
-निकास:
+exit:
 	/*
 	 *	finalize log
 	 */
 	/* release the buffer */
 	lbmFree(bp);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#अगर_घोषित CONFIG_JFS_STATISTICS
-पूर्णांक jfs_lmstats_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m,
+#ifdef CONFIG_JFS_STATISTICS
+int jfs_lmstats_proc_show(struct seq_file *m, void *v)
+{
+	seq_printf(m,
 		       "JFS Logmgr stats\n"
 		       "================\n"
 		       "commits = %d\n"
@@ -2493,9 +2492,9 @@ journal_found:
 		       "partial pages submitted = %d\n",
 		       lmStat.commit,
 		       lmStat.submitted,
-		       lmStat.pageकरोne,
+		       lmStat.pagedone,
 		       lmStat.full_page,
 		       lmStat.partial_page);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_JFS_STATISTICS */
+	return 0;
+}
+#endif /* CONFIG_JFS_STATISTICS */

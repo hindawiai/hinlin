@@ -1,599 +1,598 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
+// SPDX-License-Identifier: GPL-2.0
+/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
 
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/dynamic_debug.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/utsname.h>
-#समावेश <generated/utsrelease.h>
+#include <linux/printk.h>
+#include <linux/dynamic_debug.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/utsname.h>
+#include <generated/utsrelease.h>
 
-#समावेश "ionic.h"
-#समावेश "ionic_bus.h"
-#समावेश "ionic_lif.h"
-#समावेश "ionic_debugfs.h"
+#include "ionic.h"
+#include "ionic_bus.h"
+#include "ionic_lif.h"
+#include "ionic_debugfs.h"
 
 MODULE_DESCRIPTION(IONIC_DRV_DESCRIPTION);
 MODULE_AUTHOR("Pensando Systems, Inc");
 MODULE_LICENSE("GPL");
 
-अटल स्थिर अक्षर *ionic_error_to_str(क्रमागत ionic_status_code code)
-अणु
-	चयन (code) अणु
-	हाल IONIC_RC_SUCCESS:
-		वापस "IONIC_RC_SUCCESS";
-	हाल IONIC_RC_EVERSION:
-		वापस "IONIC_RC_EVERSION";
-	हाल IONIC_RC_EOPCODE:
-		वापस "IONIC_RC_EOPCODE";
-	हाल IONIC_RC_EIO:
-		वापस "IONIC_RC_EIO";
-	हाल IONIC_RC_EPERM:
-		वापस "IONIC_RC_EPERM";
-	हाल IONIC_RC_EQID:
-		वापस "IONIC_RC_EQID";
-	हाल IONIC_RC_EQTYPE:
-		वापस "IONIC_RC_EQTYPE";
-	हाल IONIC_RC_ENOENT:
-		वापस "IONIC_RC_ENOENT";
-	हाल IONIC_RC_EINTR:
-		वापस "IONIC_RC_EINTR";
-	हाल IONIC_RC_EAGAIN:
-		वापस "IONIC_RC_EAGAIN";
-	हाल IONIC_RC_ENOMEM:
-		वापस "IONIC_RC_ENOMEM";
-	हाल IONIC_RC_EFAULT:
-		वापस "IONIC_RC_EFAULT";
-	हाल IONIC_RC_EBUSY:
-		वापस "IONIC_RC_EBUSY";
-	हाल IONIC_RC_EEXIST:
-		वापस "IONIC_RC_EEXIST";
-	हाल IONIC_RC_EINVAL:
-		वापस "IONIC_RC_EINVAL";
-	हाल IONIC_RC_ENOSPC:
-		वापस "IONIC_RC_ENOSPC";
-	हाल IONIC_RC_दुस्फल:
-		वापस "IONIC_RC_ERANGE";
-	हाल IONIC_RC_BAD_ADDR:
-		वापस "IONIC_RC_BAD_ADDR";
-	हाल IONIC_RC_DEV_CMD:
-		वापस "IONIC_RC_DEV_CMD";
-	हाल IONIC_RC_ENOSUPP:
-		वापस "IONIC_RC_ENOSUPP";
-	हाल IONIC_RC_ERROR:
-		वापस "IONIC_RC_ERROR";
-	हाल IONIC_RC_ERDMA:
-		वापस "IONIC_RC_ERDMA";
-	हाल IONIC_RC_EBAD_FW:
-		वापस "IONIC_RC_EBAD_FW";
-	शेष:
-		वापस "IONIC_RC_UNKNOWN";
-	पूर्ण
-पूर्ण
+static const char *ionic_error_to_str(enum ionic_status_code code)
+{
+	switch (code) {
+	case IONIC_RC_SUCCESS:
+		return "IONIC_RC_SUCCESS";
+	case IONIC_RC_EVERSION:
+		return "IONIC_RC_EVERSION";
+	case IONIC_RC_EOPCODE:
+		return "IONIC_RC_EOPCODE";
+	case IONIC_RC_EIO:
+		return "IONIC_RC_EIO";
+	case IONIC_RC_EPERM:
+		return "IONIC_RC_EPERM";
+	case IONIC_RC_EQID:
+		return "IONIC_RC_EQID";
+	case IONIC_RC_EQTYPE:
+		return "IONIC_RC_EQTYPE";
+	case IONIC_RC_ENOENT:
+		return "IONIC_RC_ENOENT";
+	case IONIC_RC_EINTR:
+		return "IONIC_RC_EINTR";
+	case IONIC_RC_EAGAIN:
+		return "IONIC_RC_EAGAIN";
+	case IONIC_RC_ENOMEM:
+		return "IONIC_RC_ENOMEM";
+	case IONIC_RC_EFAULT:
+		return "IONIC_RC_EFAULT";
+	case IONIC_RC_EBUSY:
+		return "IONIC_RC_EBUSY";
+	case IONIC_RC_EEXIST:
+		return "IONIC_RC_EEXIST";
+	case IONIC_RC_EINVAL:
+		return "IONIC_RC_EINVAL";
+	case IONIC_RC_ENOSPC:
+		return "IONIC_RC_ENOSPC";
+	case IONIC_RC_ERANGE:
+		return "IONIC_RC_ERANGE";
+	case IONIC_RC_BAD_ADDR:
+		return "IONIC_RC_BAD_ADDR";
+	case IONIC_RC_DEV_CMD:
+		return "IONIC_RC_DEV_CMD";
+	case IONIC_RC_ENOSUPP:
+		return "IONIC_RC_ENOSUPP";
+	case IONIC_RC_ERROR:
+		return "IONIC_RC_ERROR";
+	case IONIC_RC_ERDMA:
+		return "IONIC_RC_ERDMA";
+	case IONIC_RC_EBAD_FW:
+		return "IONIC_RC_EBAD_FW";
+	default:
+		return "IONIC_RC_UNKNOWN";
+	}
+}
 
-अटल पूर्णांक ionic_error_to_त्रुटि_सं(क्रमागत ionic_status_code code)
-अणु
-	चयन (code) अणु
-	हाल IONIC_RC_SUCCESS:
-		वापस 0;
-	हाल IONIC_RC_EVERSION:
-	हाल IONIC_RC_EQTYPE:
-	हाल IONIC_RC_EQID:
-	हाल IONIC_RC_EINVAL:
-	हाल IONIC_RC_ENOSUPP:
-		वापस -EINVAL;
-	हाल IONIC_RC_EPERM:
-		वापस -EPERM;
-	हाल IONIC_RC_ENOENT:
-		वापस -ENOENT;
-	हाल IONIC_RC_EAGAIN:
-		वापस -EAGAIN;
-	हाल IONIC_RC_ENOMEM:
-		वापस -ENOMEM;
-	हाल IONIC_RC_EFAULT:
-		वापस -EFAULT;
-	हाल IONIC_RC_EBUSY:
-		वापस -EBUSY;
-	हाल IONIC_RC_EEXIST:
-		वापस -EEXIST;
-	हाल IONIC_RC_ENOSPC:
-		वापस -ENOSPC;
-	हाल IONIC_RC_दुस्फल:
-		वापस -दुस्फल;
-	हाल IONIC_RC_BAD_ADDR:
-		वापस -EFAULT;
-	हाल IONIC_RC_EOPCODE:
-	हाल IONIC_RC_EINTR:
-	हाल IONIC_RC_DEV_CMD:
-	हाल IONIC_RC_ERROR:
-	हाल IONIC_RC_ERDMA:
-	हाल IONIC_RC_EIO:
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+static int ionic_error_to_errno(enum ionic_status_code code)
+{
+	switch (code) {
+	case IONIC_RC_SUCCESS:
+		return 0;
+	case IONIC_RC_EVERSION:
+	case IONIC_RC_EQTYPE:
+	case IONIC_RC_EQID:
+	case IONIC_RC_EINVAL:
+	case IONIC_RC_ENOSUPP:
+		return -EINVAL;
+	case IONIC_RC_EPERM:
+		return -EPERM;
+	case IONIC_RC_ENOENT:
+		return -ENOENT;
+	case IONIC_RC_EAGAIN:
+		return -EAGAIN;
+	case IONIC_RC_ENOMEM:
+		return -ENOMEM;
+	case IONIC_RC_EFAULT:
+		return -EFAULT;
+	case IONIC_RC_EBUSY:
+		return -EBUSY;
+	case IONIC_RC_EEXIST:
+		return -EEXIST;
+	case IONIC_RC_ENOSPC:
+		return -ENOSPC;
+	case IONIC_RC_ERANGE:
+		return -ERANGE;
+	case IONIC_RC_BAD_ADDR:
+		return -EFAULT;
+	case IONIC_RC_EOPCODE:
+	case IONIC_RC_EINTR:
+	case IONIC_RC_DEV_CMD:
+	case IONIC_RC_ERROR:
+	case IONIC_RC_ERDMA:
+	case IONIC_RC_EIO:
+	default:
+		return -EIO;
+	}
+}
 
-अटल स्थिर अक्षर *ionic_opcode_to_str(क्रमागत ionic_cmd_opcode opcode)
-अणु
-	चयन (opcode) अणु
-	हाल IONIC_CMD_NOP:
-		वापस "IONIC_CMD_NOP";
-	हाल IONIC_CMD_INIT:
-		वापस "IONIC_CMD_INIT";
-	हाल IONIC_CMD_RESET:
-		वापस "IONIC_CMD_RESET";
-	हाल IONIC_CMD_IDENTIFY:
-		वापस "IONIC_CMD_IDENTIFY";
-	हाल IONIC_CMD_GETATTR:
-		वापस "IONIC_CMD_GETATTR";
-	हाल IONIC_CMD_SETATTR:
-		वापस "IONIC_CMD_SETATTR";
-	हाल IONIC_CMD_PORT_IDENTIFY:
-		वापस "IONIC_CMD_PORT_IDENTIFY";
-	हाल IONIC_CMD_PORT_INIT:
-		वापस "IONIC_CMD_PORT_INIT";
-	हाल IONIC_CMD_PORT_RESET:
-		वापस "IONIC_CMD_PORT_RESET";
-	हाल IONIC_CMD_PORT_GETATTR:
-		वापस "IONIC_CMD_PORT_GETATTR";
-	हाल IONIC_CMD_PORT_SETATTR:
-		वापस "IONIC_CMD_PORT_SETATTR";
-	हाल IONIC_CMD_LIF_INIT:
-		वापस "IONIC_CMD_LIF_INIT";
-	हाल IONIC_CMD_LIF_RESET:
-		वापस "IONIC_CMD_LIF_RESET";
-	हाल IONIC_CMD_LIF_IDENTIFY:
-		वापस "IONIC_CMD_LIF_IDENTIFY";
-	हाल IONIC_CMD_LIF_SETATTR:
-		वापस "IONIC_CMD_LIF_SETATTR";
-	हाल IONIC_CMD_LIF_GETATTR:
-		वापस "IONIC_CMD_LIF_GETATTR";
-	हाल IONIC_CMD_LIF_SETPHC:
-		वापस "IONIC_CMD_LIF_SETPHC";
-	हाल IONIC_CMD_RX_MODE_SET:
-		वापस "IONIC_CMD_RX_MODE_SET";
-	हाल IONIC_CMD_RX_FILTER_ADD:
-		वापस "IONIC_CMD_RX_FILTER_ADD";
-	हाल IONIC_CMD_RX_FILTER_DEL:
-		वापस "IONIC_CMD_RX_FILTER_DEL";
-	हाल IONIC_CMD_Q_IDENTIFY:
-		वापस "IONIC_CMD_Q_IDENTIFY";
-	हाल IONIC_CMD_Q_INIT:
-		वापस "IONIC_CMD_Q_INIT";
-	हाल IONIC_CMD_Q_CONTROL:
-		वापस "IONIC_CMD_Q_CONTROL";
-	हाल IONIC_CMD_RDMA_RESET_LIF:
-		वापस "IONIC_CMD_RDMA_RESET_LIF";
-	हाल IONIC_CMD_RDMA_CREATE_EQ:
-		वापस "IONIC_CMD_RDMA_CREATE_EQ";
-	हाल IONIC_CMD_RDMA_CREATE_CQ:
-		वापस "IONIC_CMD_RDMA_CREATE_CQ";
-	हाल IONIC_CMD_RDMA_CREATE_ADMINQ:
-		वापस "IONIC_CMD_RDMA_CREATE_ADMINQ";
-	हाल IONIC_CMD_FW_DOWNLOAD:
-		वापस "IONIC_CMD_FW_DOWNLOAD";
-	हाल IONIC_CMD_FW_CONTROL:
-		वापस "IONIC_CMD_FW_CONTROL";
-	हाल IONIC_CMD_FW_DOWNLOAD_V1:
-		वापस "IONIC_CMD_FW_DOWNLOAD_V1";
-	हाल IONIC_CMD_FW_CONTROL_V1:
-		वापस "IONIC_CMD_FW_CONTROL_V1";
-	हाल IONIC_CMD_VF_GETATTR:
-		वापस "IONIC_CMD_VF_GETATTR";
-	हाल IONIC_CMD_VF_SETATTR:
-		वापस "IONIC_CMD_VF_SETATTR";
-	शेष:
-		वापस "DEVCMD_UNKNOWN";
-	पूर्ण
-पूर्ण
+static const char *ionic_opcode_to_str(enum ionic_cmd_opcode opcode)
+{
+	switch (opcode) {
+	case IONIC_CMD_NOP:
+		return "IONIC_CMD_NOP";
+	case IONIC_CMD_INIT:
+		return "IONIC_CMD_INIT";
+	case IONIC_CMD_RESET:
+		return "IONIC_CMD_RESET";
+	case IONIC_CMD_IDENTIFY:
+		return "IONIC_CMD_IDENTIFY";
+	case IONIC_CMD_GETATTR:
+		return "IONIC_CMD_GETATTR";
+	case IONIC_CMD_SETATTR:
+		return "IONIC_CMD_SETATTR";
+	case IONIC_CMD_PORT_IDENTIFY:
+		return "IONIC_CMD_PORT_IDENTIFY";
+	case IONIC_CMD_PORT_INIT:
+		return "IONIC_CMD_PORT_INIT";
+	case IONIC_CMD_PORT_RESET:
+		return "IONIC_CMD_PORT_RESET";
+	case IONIC_CMD_PORT_GETATTR:
+		return "IONIC_CMD_PORT_GETATTR";
+	case IONIC_CMD_PORT_SETATTR:
+		return "IONIC_CMD_PORT_SETATTR";
+	case IONIC_CMD_LIF_INIT:
+		return "IONIC_CMD_LIF_INIT";
+	case IONIC_CMD_LIF_RESET:
+		return "IONIC_CMD_LIF_RESET";
+	case IONIC_CMD_LIF_IDENTIFY:
+		return "IONIC_CMD_LIF_IDENTIFY";
+	case IONIC_CMD_LIF_SETATTR:
+		return "IONIC_CMD_LIF_SETATTR";
+	case IONIC_CMD_LIF_GETATTR:
+		return "IONIC_CMD_LIF_GETATTR";
+	case IONIC_CMD_LIF_SETPHC:
+		return "IONIC_CMD_LIF_SETPHC";
+	case IONIC_CMD_RX_MODE_SET:
+		return "IONIC_CMD_RX_MODE_SET";
+	case IONIC_CMD_RX_FILTER_ADD:
+		return "IONIC_CMD_RX_FILTER_ADD";
+	case IONIC_CMD_RX_FILTER_DEL:
+		return "IONIC_CMD_RX_FILTER_DEL";
+	case IONIC_CMD_Q_IDENTIFY:
+		return "IONIC_CMD_Q_IDENTIFY";
+	case IONIC_CMD_Q_INIT:
+		return "IONIC_CMD_Q_INIT";
+	case IONIC_CMD_Q_CONTROL:
+		return "IONIC_CMD_Q_CONTROL";
+	case IONIC_CMD_RDMA_RESET_LIF:
+		return "IONIC_CMD_RDMA_RESET_LIF";
+	case IONIC_CMD_RDMA_CREATE_EQ:
+		return "IONIC_CMD_RDMA_CREATE_EQ";
+	case IONIC_CMD_RDMA_CREATE_CQ:
+		return "IONIC_CMD_RDMA_CREATE_CQ";
+	case IONIC_CMD_RDMA_CREATE_ADMINQ:
+		return "IONIC_CMD_RDMA_CREATE_ADMINQ";
+	case IONIC_CMD_FW_DOWNLOAD:
+		return "IONIC_CMD_FW_DOWNLOAD";
+	case IONIC_CMD_FW_CONTROL:
+		return "IONIC_CMD_FW_CONTROL";
+	case IONIC_CMD_FW_DOWNLOAD_V1:
+		return "IONIC_CMD_FW_DOWNLOAD_V1";
+	case IONIC_CMD_FW_CONTROL_V1:
+		return "IONIC_CMD_FW_CONTROL_V1";
+	case IONIC_CMD_VF_GETATTR:
+		return "IONIC_CMD_VF_GETATTR";
+	case IONIC_CMD_VF_SETATTR:
+		return "IONIC_CMD_VF_SETATTR";
+	default:
+		return "DEVCMD_UNKNOWN";
+	}
+}
 
-अटल व्योम ionic_adminq_flush(काष्ठा ionic_lअगर *lअगर)
-अणु
-	काष्ठा ionic_desc_info *desc_info;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा ionic_queue *q;
+static void ionic_adminq_flush(struct ionic_lif *lif)
+{
+	struct ionic_desc_info *desc_info;
+	unsigned long irqflags;
+	struct ionic_queue *q;
 
-	spin_lock_irqsave(&lअगर->adminq_lock, irqflags);
-	अगर (!lअगर->adminqcq) अणु
-		spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
-		वापस;
-	पूर्ण
+	spin_lock_irqsave(&lif->adminq_lock, irqflags);
+	if (!lif->adminqcq) {
+		spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
+		return;
+	}
 
-	q = &lअगर->adminqcq->q;
+	q = &lif->adminqcq->q;
 
-	जबतक (q->tail_idx != q->head_idx) अणु
+	while (q->tail_idx != q->head_idx) {
 		desc_info = &q->info[q->tail_idx];
-		स_रखो(desc_info->desc, 0, माप(जोड़ ionic_adminq_cmd));
-		desc_info->cb = शून्य;
-		desc_info->cb_arg = शून्य;
+		memset(desc_info->desc, 0, sizeof(union ionic_adminq_cmd));
+		desc_info->cb = NULL;
+		desc_info->cb_arg = NULL;
 		q->tail_idx = (q->tail_idx + 1) & (q->num_descs - 1);
-	पूर्ण
-	spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
-पूर्ण
+	}
+	spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
+}
 
-अटल पूर्णांक ionic_adminq_check_err(काष्ठा ionic_lअगर *lअगर,
-				  काष्ठा ionic_admin_ctx *ctx,
-				  bool समयout)
-अणु
-	काष्ठा net_device *netdev = lअगर->netdev;
-	स्थिर अक्षर *opcode_str;
-	स्थिर अक्षर *status_str;
-	पूर्णांक err = 0;
+static int ionic_adminq_check_err(struct ionic_lif *lif,
+				  struct ionic_admin_ctx *ctx,
+				  bool timeout)
+{
+	struct net_device *netdev = lif->netdev;
+	const char *opcode_str;
+	const char *status_str;
+	int err = 0;
 
-	अगर (ctx->comp.comp.status || समयout) अणु
+	if (ctx->comp.comp.status || timeout) {
 		opcode_str = ionic_opcode_to_str(ctx->cmd.cmd.opcode);
 		status_str = ionic_error_to_str(ctx->comp.comp.status);
-		err = समयout ? -ETIMEDOUT :
-				ionic_error_to_त्रुटि_सं(ctx->comp.comp.status);
+		err = timeout ? -ETIMEDOUT :
+				ionic_error_to_errno(ctx->comp.comp.status);
 
 		netdev_err(netdev, "%s (%d) failed: %s (%d)\n",
 			   opcode_str, ctx->cmd.cmd.opcode,
-			   समयout ? "TIMEOUT" : status_str, err);
+			   timeout ? "TIMEOUT" : status_str, err);
 
-		अगर (समयout)
-			ionic_adminq_flush(lअगर);
-	पूर्ण
+		if (timeout)
+			ionic_adminq_flush(lif);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ionic_adminq_cb(काष्ठा ionic_queue *q,
-			    काष्ठा ionic_desc_info *desc_info,
-			    काष्ठा ionic_cq_info *cq_info, व्योम *cb_arg)
-अणु
-	काष्ठा ionic_admin_ctx *ctx = cb_arg;
-	काष्ठा ionic_admin_comp *comp;
+static void ionic_adminq_cb(struct ionic_queue *q,
+			    struct ionic_desc_info *desc_info,
+			    struct ionic_cq_info *cq_info, void *cb_arg)
+{
+	struct ionic_admin_ctx *ctx = cb_arg;
+	struct ionic_admin_comp *comp;
 
-	अगर (!ctx)
-		वापस;
+	if (!ctx)
+		return;
 
 	comp = cq_info->cq_desc;
 
-	स_नकल(&ctx->comp, comp, माप(*comp));
+	memcpy(&ctx->comp, comp, sizeof(*comp));
 
 	dev_dbg(q->dev, "comp admin queue command:\n");
 	dynamic_hex_dump("comp ", DUMP_PREFIX_OFFSET, 16, 1,
-			 &ctx->comp, माप(ctx->comp), true);
+			 &ctx->comp, sizeof(ctx->comp), true);
 
 	complete_all(&ctx->work);
-पूर्ण
+}
 
-पूर्णांक ionic_adminq_post(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx)
-अणु
-	काष्ठा ionic_desc_info *desc_info;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा ionic_queue *q;
-	पूर्णांक err = 0;
+int ionic_adminq_post(struct ionic_lif *lif, struct ionic_admin_ctx *ctx)
+{
+	struct ionic_desc_info *desc_info;
+	unsigned long irqflags;
+	struct ionic_queue *q;
+	int err = 0;
 
-	spin_lock_irqsave(&lअगर->adminq_lock, irqflags);
-	अगर (!lअगर->adminqcq) अणु
-		spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
-		वापस -EIO;
-	पूर्ण
+	spin_lock_irqsave(&lif->adminq_lock, irqflags);
+	if (!lif->adminqcq) {
+		spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
+		return -EIO;
+	}
 
-	q = &lअगर->adminqcq->q;
+	q = &lif->adminqcq->q;
 
-	अगर (!ionic_q_has_space(q, 1)) अणु
+	if (!ionic_q_has_space(q, 1)) {
 		err = -ENOSPC;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	err = ionic_heartbeat_check(lअगर->ionic);
-	अगर (err)
-		जाओ err_out;
+	err = ionic_heartbeat_check(lif->ionic);
+	if (err)
+		goto err_out;
 
 	desc_info = &q->info[q->head_idx];
-	स_नकल(desc_info->desc, &ctx->cmd, माप(ctx->cmd));
+	memcpy(desc_info->desc, &ctx->cmd, sizeof(ctx->cmd));
 
-	dev_dbg(&lअगर->netdev->dev, "post admin queue command:\n");
+	dev_dbg(&lif->netdev->dev, "post admin queue command:\n");
 	dynamic_hex_dump("cmd ", DUMP_PREFIX_OFFSET, 16, 1,
-			 &ctx->cmd, माप(ctx->cmd), true);
+			 &ctx->cmd, sizeof(ctx->cmd), true);
 
 	ionic_q_post(q, true, ionic_adminq_cb, ctx);
 
 err_out:
-	spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
+	spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_adminq_रुको(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx, पूर्णांक err)
-अणु
-	काष्ठा net_device *netdev = lअगर->netdev;
-	अचिन्हित दीर्घ reमुख्यing;
-	स्थिर अक्षर *name;
+int ionic_adminq_wait(struct ionic_lif *lif, struct ionic_admin_ctx *ctx, int err)
+{
+	struct net_device *netdev = lif->netdev;
+	unsigned long remaining;
+	const char *name;
 
-	अगर (err) अणु
-		अगर (!test_bit(IONIC_LIF_F_FW_RESET, lअगर->state)) अणु
+	if (err) {
+		if (!test_bit(IONIC_LIF_F_FW_RESET, lif->state)) {
 			name = ionic_opcode_to_str(ctx->cmd.cmd.opcode);
 			netdev_err(netdev, "Posting of %s (%d) failed: %d\n",
 				   name, ctx->cmd.cmd.opcode, err);
-		पूर्ण
-		वापस err;
-	पूर्ण
+		}
+		return err;
+	}
 
-	reमुख्यing = रुको_क्रम_completion_समयout(&ctx->work,
-						HZ * (uदीर्घ)DEVCMD_TIMEOUT);
-	वापस ionic_adminq_check_err(lअगर, ctx, (reमुख्यing == 0));
-पूर्ण
+	remaining = wait_for_completion_timeout(&ctx->work,
+						HZ * (ulong)DEVCMD_TIMEOUT);
+	return ionic_adminq_check_err(lif, ctx, (remaining == 0));
+}
 
-पूर्णांक ionic_adminq_post_रुको(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx)
-अणु
-	पूर्णांक err;
+int ionic_adminq_post_wait(struct ionic_lif *lif, struct ionic_admin_ctx *ctx)
+{
+	int err;
 
-	err = ionic_adminq_post(lअगर, ctx);
+	err = ionic_adminq_post(lif, ctx);
 
-	वापस ionic_adminq_रुको(lअगर, ctx, err);
-पूर्ण
+	return ionic_adminq_wait(lif, ctx, err);
+}
 
-अटल व्योम ionic_dev_cmd_clean(काष्ठा ionic *ionic)
-अणु
-	जोड़ __iomem ionic_dev_cmd_regs *regs = ionic->idev.dev_cmd_regs;
+static void ionic_dev_cmd_clean(struct ionic *ionic)
+{
+	union __iomem ionic_dev_cmd_regs *regs = ionic->idev.dev_cmd_regs;
 
-	ioग_लिखो32(0, &regs->करोorbell);
-	स_रखो_io(&regs->cmd, 0, माप(regs->cmd));
-पूर्ण
+	iowrite32(0, &regs->doorbell);
+	memset_io(&regs->cmd, 0, sizeof(regs->cmd));
+}
 
-पूर्णांक ionic_dev_cmd_रुको(काष्ठा ionic *ionic, अचिन्हित दीर्घ max_seconds)
-अणु
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	अचिन्हित दीर्घ start_समय;
-	अचिन्हित दीर्घ max_रुको;
-	अचिन्हित दीर्घ duration;
-	पूर्णांक opcode;
-	पूर्णांक hb = 0;
-	पूर्णांक करोne;
-	पूर्णांक err;
+int ionic_dev_cmd_wait(struct ionic *ionic, unsigned long max_seconds)
+{
+	struct ionic_dev *idev = &ionic->idev;
+	unsigned long start_time;
+	unsigned long max_wait;
+	unsigned long duration;
+	int opcode;
+	int hb = 0;
+	int done;
+	int err;
 
-	/* Wait क्रम dev cmd to complete, retrying अगर we get EAGAIN,
-	 * but करोn't रुको any दीर्घer than max_seconds.
+	/* Wait for dev cmd to complete, retrying if we get EAGAIN,
+	 * but don't wait any longer than max_seconds.
 	 */
-	max_रुको = jअगरfies + (max_seconds * HZ);
+	max_wait = jiffies + (max_seconds * HZ);
 try_again:
-	opcode = पढ़ोb(&idev->dev_cmd_regs->cmd.cmd.opcode);
-	start_समय = jअगरfies;
-	करो अणु
-		करोne = ionic_dev_cmd_करोne(idev);
-		अगर (करोne)
-			अवरोध;
+	opcode = readb(&idev->dev_cmd_regs->cmd.cmd.opcode);
+	start_time = jiffies;
+	do {
+		done = ionic_dev_cmd_done(idev);
+		if (done)
+			break;
 		usleep_range(100, 200);
 
 		/* Don't check the heartbeat on FW_CONTROL commands as they are
-		 * notorious क्रम पूर्णांकerrupting the firmware's heartbeat update.
+		 * notorious for interrupting the firmware's heartbeat update.
 		 */
-		अगर (opcode != IONIC_CMD_FW_CONTROL)
+		if (opcode != IONIC_CMD_FW_CONTROL)
 			hb = ionic_heartbeat_check(ionic);
-	पूर्ण जबतक (!करोne && !hb && समय_beक्रमe(jअगरfies, max_रुको));
-	duration = jअगरfies - start_समय;
+	} while (!done && !hb && time_before(jiffies, max_wait));
+	duration = jiffies - start_time;
 
 	dev_dbg(ionic->dev, "DEVCMD %s (%d) done=%d took %ld secs (%ld jiffies)\n",
 		ionic_opcode_to_str(opcode), opcode,
-		करोne, duration / HZ, duration);
+		done, duration / HZ, duration);
 
-	अगर (!करोne && hb) अणु
+	if (!done && hb) {
 		/* It is possible (but unlikely) that FW was busy and missed a
 		 * heartbeat check but is still alive and will process this
-		 * request, so करोn't clean the dev_cmd in this हाल.
+		 * request, so don't clean the dev_cmd in this case.
 		 */
 		dev_warn(ionic->dev, "DEVCMD %s (%d) failed - FW halted\n",
 			 ionic_opcode_to_str(opcode), opcode);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	अगर (!करोne && !समय_beक्रमe(jअगरfies, max_रुको)) अणु
+	if (!done && !time_before(jiffies, max_wait)) {
 		ionic_dev_cmd_clean(ionic);
 		dev_warn(ionic->dev, "DEVCMD %s (%d) timeout after %ld secs\n",
 			 ionic_opcode_to_str(opcode), opcode, max_seconds);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	err = ionic_dev_cmd_status(&ionic->idev);
-	अगर (err) अणु
-		अगर (err == IONIC_RC_EAGAIN &&
-		    समय_beक्रमe(jअगरfies, (max_रुको - HZ))) अणु
+	if (err) {
+		if (err == IONIC_RC_EAGAIN &&
+		    time_before(jiffies, (max_wait - HZ))) {
 			dev_dbg(ionic->dev, "DEV_CMD %s (%d), %s (%d) retrying...\n",
 				ionic_opcode_to_str(opcode), opcode,
 				ionic_error_to_str(err), err);
 
 			msleep(1000);
-			ioग_लिखो32(0, &idev->dev_cmd_regs->करोne);
-			ioग_लिखो32(1, &idev->dev_cmd_regs->करोorbell);
-			जाओ try_again;
-		पूर्ण
+			iowrite32(0, &idev->dev_cmd_regs->done);
+			iowrite32(1, &idev->dev_cmd_regs->doorbell);
+			goto try_again;
+		}
 
-		अगर (!(opcode == IONIC_CMD_FW_CONTROL && err == IONIC_RC_EAGAIN))
+		if (!(opcode == IONIC_CMD_FW_CONTROL && err == IONIC_RC_EAGAIN))
 			dev_err(ionic->dev, "DEV_CMD %s (%d) error, %s (%d) failed\n",
 				ionic_opcode_to_str(opcode), opcode,
 				ionic_error_to_str(err), err);
 
-		वापस ionic_error_to_त्रुटि_सं(err);
-	पूर्ण
+		return ionic_error_to_errno(err);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ionic_setup(काष्ठा ionic *ionic)
-अणु
-	पूर्णांक err;
+int ionic_setup(struct ionic *ionic)
+{
+	int err;
 
 	err = ionic_dev_setup(ionic);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ionic_reset(ionic);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ionic_identअगरy(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_identity *ident = &ionic->ident;
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	माप_प्रकार sz;
-	पूर्णांक err;
+int ionic_identify(struct ionic *ionic)
+{
+	struct ionic_identity *ident = &ionic->ident;
+	struct ionic_dev *idev = &ionic->idev;
+	size_t sz;
+	int err;
 
-	स_रखो(ident, 0, माप(*ident));
+	memset(ident, 0, sizeof(*ident));
 
 	ident->drv.os_type = cpu_to_le32(IONIC_OS_TYPE_LINUX);
-	म_नकलन(ident->drv.driver_ver_str, UTS_RELEASE,
-		माप(ident->drv.driver_ver_str) - 1);
+	strncpy(ident->drv.driver_ver_str, UTS_RELEASE,
+		sizeof(ident->drv.driver_ver_str) - 1);
 
 	mutex_lock(&ionic->dev_cmd_lock);
 
-	sz = min(माप(ident->drv), माप(idev->dev_cmd_regs->data));
-	स_नकल_toio(&idev->dev_cmd_regs->data, &ident->drv, sz);
+	sz = min(sizeof(ident->drv), sizeof(idev->dev_cmd_regs->data));
+	memcpy_toio(&idev->dev_cmd_regs->data, &ident->drv, sz);
 
-	ionic_dev_cmd_identअगरy(idev, IONIC_IDENTITY_VERSION_1);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
-	अगर (!err) अणु
-		sz = min(माप(ident->dev), माप(idev->dev_cmd_regs->data));
-		स_नकल_fromio(&ident->dev, &idev->dev_cmd_regs->data, sz);
-	पूर्ण
+	ionic_dev_cmd_identify(idev, IONIC_IDENTITY_VERSION_1);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
+	if (!err) {
+		sz = min(sizeof(ident->dev), sizeof(idev->dev_cmd_regs->data));
+		memcpy_fromio(&ident->dev, &idev->dev_cmd_regs->data, sz);
+	}
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	अगर (err) अणु
+	if (err) {
 		dev_err(ionic->dev, "Cannot identify ionic: %dn", err);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	err = ionic_lअगर_identअगरy(ionic, IONIC_LIF_TYPE_CLASSIC,
-				 &ionic->ident.lअगर);
-	अगर (err) अणु
+	err = ionic_lif_identify(ionic, IONIC_LIF_TYPE_CLASSIC,
+				 &ionic->ident.lif);
+	if (err) {
 		dev_err(ionic->dev, "Cannot identify LIFs: %d\n", err);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_init(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	पूर्णांक err;
+int ionic_init(struct ionic *ionic)
+{
+	struct ionic_dev *idev = &ionic->idev;
+	int err;
 
 	mutex_lock(&ionic->dev_cmd_lock);
 	ionic_dev_cmd_init(idev);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_reset(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	पूर्णांक err;
+int ionic_reset(struct ionic *ionic)
+{
+	struct ionic_dev *idev = &ionic->idev;
+	int err;
 
 	mutex_lock(&ionic->dev_cmd_lock);
 	ionic_dev_cmd_reset(idev);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_port_identअगरy(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_identity *ident = &ionic->ident;
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	माप_प्रकार sz;
-	पूर्णांक err;
+int ionic_port_identify(struct ionic *ionic)
+{
+	struct ionic_identity *ident = &ionic->ident;
+	struct ionic_dev *idev = &ionic->idev;
+	size_t sz;
+	int err;
 
 	mutex_lock(&ionic->dev_cmd_lock);
 
-	ionic_dev_cmd_port_identअगरy(idev);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
-	अगर (!err) अणु
-		sz = min(माप(ident->port), माप(idev->dev_cmd_regs->data));
-		स_नकल_fromio(&ident->port, &idev->dev_cmd_regs->data, sz);
-	पूर्ण
+	ionic_dev_cmd_port_identify(idev);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
+	if (!err) {
+		sz = min(sizeof(ident->port), sizeof(idev->dev_cmd_regs->data));
+		memcpy_fromio(&ident->port, &idev->dev_cmd_regs->data, sz);
+	}
 
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_port_init(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_identity *ident = &ionic->ident;
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	माप_प्रकार sz;
-	पूर्णांक err;
+int ionic_port_init(struct ionic *ionic)
+{
+	struct ionic_identity *ident = &ionic->ident;
+	struct ionic_dev *idev = &ionic->idev;
+	size_t sz;
+	int err;
 
-	अगर (!idev->port_info) अणु
-		idev->port_info_sz = ALIGN(माप(*idev->port_info), PAGE_SIZE);
+	if (!idev->port_info) {
+		idev->port_info_sz = ALIGN(sizeof(*idev->port_info), PAGE_SIZE);
 		idev->port_info = dma_alloc_coherent(ionic->dev,
 						     idev->port_info_sz,
 						     &idev->port_info_pa,
 						     GFP_KERNEL);
-		अगर (!idev->port_info)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!idev->port_info)
+			return -ENOMEM;
+	}
 
-	sz = min(माप(ident->port.config), माप(idev->dev_cmd_regs->data));
+	sz = min(sizeof(ident->port.config), sizeof(idev->dev_cmd_regs->data));
 
 	mutex_lock(&ionic->dev_cmd_lock);
 
-	स_नकल_toio(&idev->dev_cmd_regs->data, &ident->port.config, sz);
+	memcpy_toio(&idev->dev_cmd_regs->data, &ident->port.config, sz);
 	ionic_dev_cmd_port_init(idev);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 
 	ionic_dev_cmd_port_state(&ionic->idev, IONIC_PORT_ADMIN_STATE_UP);
-	(व्योम)ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	(void)ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 
 	mutex_unlock(&ionic->dev_cmd_lock);
-	अगर (err) अणु
+	if (err) {
 		dev_err(ionic->dev, "Failed to init port\n");
-		dma_मुक्त_coherent(ionic->dev, idev->port_info_sz,
+		dma_free_coherent(ionic->dev, idev->port_info_sz,
 				  idev->port_info, idev->port_info_pa);
-		idev->port_info = शून्य;
+		idev->port_info = NULL;
 		idev->port_info_pa = 0;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक ionic_port_reset(काष्ठा ionic *ionic)
-अणु
-	काष्ठा ionic_dev *idev = &ionic->idev;
-	पूर्णांक err;
+int ionic_port_reset(struct ionic *ionic)
+{
+	struct ionic_dev *idev = &ionic->idev;
+	int err;
 
-	अगर (!idev->port_info)
-		वापस 0;
+	if (!idev->port_info)
+		return 0;
 
 	mutex_lock(&ionic->dev_cmd_lock);
 	ionic_dev_cmd_port_reset(idev);
-	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	dma_मुक्त_coherent(ionic->dev, idev->port_info_sz,
+	dma_free_coherent(ionic->dev, idev->port_info_sz,
 			  idev->port_info, idev->port_info_pa);
 
-	idev->port_info = शून्य;
+	idev->port_info = NULL;
 	idev->port_info_pa = 0;
 
-	अगर (err)
+	if (err)
 		dev_err(ionic->dev, "Failed to reset port\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __init ionic_init_module(व्योम)
-अणु
+static int __init ionic_init_module(void)
+{
 	ionic_debugfs_create();
-	वापस ionic_bus_रेजिस्टर_driver();
-पूर्ण
+	return ionic_bus_register_driver();
+}
 
-अटल व्योम __निकास ionic_cleanup_module(व्योम)
-अणु
-	ionic_bus_unरेजिस्टर_driver();
+static void __exit ionic_cleanup_module(void)
+{
+	ionic_bus_unregister_driver();
 	ionic_debugfs_destroy();
 
 	pr_info("%s removed\n", IONIC_DRV_NAME);
-पूर्ण
+}
 
 module_init(ionic_init_module);
-module_निकास(ionic_cleanup_module);
+module_exit(ionic_cleanup_module);

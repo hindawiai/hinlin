@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_GENERIC_CACHEFLUSH_H
-#घोषणा _ASM_GENERIC_CACHEFLUSH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_GENERIC_CACHEFLUSH_H
+#define _ASM_GENERIC_CACHEFLUSH_H
 
-काष्ठा mm_काष्ठा;
-काष्ठा vm_area_काष्ठा;
-काष्ठा page;
-काष्ठा address_space;
+struct mm_struct;
+struct vm_area_struct;
+struct page;
+struct address_space;
 
 /*
- * The cache करोesn't need to be flushed when TLB entries change when
- * the cache is mapped to physical memory, not भव memory
+ * The cache doesn't need to be flushed when TLB entries change when
+ * the cache is mapped to physical memory, not virtual memory
  */
-#अगर_अघोषित flush_cache_all
-अटल अंतरभूत व्योम flush_cache_all(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_all
+static inline void flush_cache_all(void)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_mm
-अटल अंतरभूत व्योम flush_cache_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_mm
+static inline void flush_cache_mm(struct mm_struct *mm)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_dup_mm
-अटल अंतरभूत व्योम flush_cache_dup_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_dup_mm
+static inline void flush_cache_dup_mm(struct mm_struct *mm)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_range
-अटल अंतरभूत व्योम flush_cache_range(काष्ठा vm_area_काष्ठा *vma,
-				     अचिन्हित दीर्घ start,
-				     अचिन्हित दीर्घ end)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_range
+static inline void flush_cache_range(struct vm_area_struct *vma,
+				     unsigned long start,
+				     unsigned long end)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_page
-अटल अंतरभूत व्योम flush_cache_page(काष्ठा vm_area_काष्ठा *vma,
-				    अचिन्हित दीर्घ vmaddr,
-				    अचिन्हित दीर्घ pfn)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_page
+static inline void flush_cache_page(struct vm_area_struct *vma,
+				    unsigned long vmaddr,
+				    unsigned long pfn)
+{
+}
+#endif
 
-#अगर_अघोषित ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE
-अटल अंतरभूत व्योम flush_dcache_page(काष्ठा page *page)
-अणु
-पूर्ण
-#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 0
-#पूर्ण_अगर
+#ifndef ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE
+static inline void flush_dcache_page(struct page *page)
+{
+}
+#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 0
+#endif
 
 
-#अगर_अघोषित flush_dcache_mmap_lock
-अटल अंतरभूत व्योम flush_dcache_mmap_lock(काष्ठा address_space *mapping)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_dcache_mmap_lock
+static inline void flush_dcache_mmap_lock(struct address_space *mapping)
+{
+}
+#endif
 
-#अगर_अघोषित flush_dcache_mmap_unlock
-अटल अंतरभूत व्योम flush_dcache_mmap_unlock(काष्ठा address_space *mapping)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_dcache_mmap_unlock
+static inline void flush_dcache_mmap_unlock(struct address_space *mapping)
+{
+}
+#endif
 
-#अगर_अघोषित flush_icache_range
-अटल अंतरभूत व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_icache_range
+static inline void flush_icache_range(unsigned long start, unsigned long end)
+{
+}
+#endif
 
-#अगर_अघोषित flush_icache_user_range
-#घोषणा flush_icache_user_range flush_icache_range
-#पूर्ण_अगर
+#ifndef flush_icache_user_range
+#define flush_icache_user_range flush_icache_range
+#endif
 
-#अगर_अघोषित flush_icache_page
-अटल अंतरभूत व्योम flush_icache_page(काष्ठा vm_area_काष्ठा *vma,
-				     काष्ठा page *page)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_icache_page
+static inline void flush_icache_page(struct vm_area_struct *vma,
+				     struct page *page)
+{
+}
+#endif
 
-#अगर_अघोषित flush_icache_user_page
-अटल अंतरभूत व्योम flush_icache_user_page(काष्ठा vm_area_काष्ठा *vma,
-					   काष्ठा page *page,
-					   अचिन्हित दीर्घ addr, पूर्णांक len)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_icache_user_page
+static inline void flush_icache_user_page(struct vm_area_struct *vma,
+					   struct page *page,
+					   unsigned long addr, int len)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_vmap
-अटल अंतरभूत व्योम flush_cache_vmap(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_vmap
+static inline void flush_cache_vmap(unsigned long start, unsigned long end)
+{
+}
+#endif
 
-#अगर_अघोषित flush_cache_vunmap
-अटल अंतरभूत व्योम flush_cache_vunmap(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifndef flush_cache_vunmap
+static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
+{
+}
+#endif
 
-#अगर_अघोषित copy_to_user_page
-#घोषणा copy_to_user_page(vma, page, vaddr, dst, src, len)	\
-	करो अणु \
-		स_नकल(dst, src, len); \
+#ifndef copy_to_user_page
+#define copy_to_user_page(vma, page, vaddr, dst, src, len)	\
+	do { \
+		memcpy(dst, src, len); \
 		flush_icache_user_page(vma, page, vaddr, len); \
-	पूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#endif
 
-#अगर_अघोषित copy_from_user_page
-#घोषणा copy_from_user_page(vma, page, vaddr, dst, src, len) \
-	स_नकल(dst, src, len)
-#पूर्ण_अगर
+#ifndef copy_from_user_page
+#define copy_from_user_page(vma, page, vaddr, dst, src, len) \
+	memcpy(dst, src, len)
+#endif
 
-#पूर्ण_अगर /* _ASM_GENERIC_CACHEFLUSH_H */
+#endif /* _ASM_GENERIC_CACHEFLUSH_H */

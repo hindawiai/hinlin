@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * RTC driver क्रम Rockchip RK808
+ * RTC driver for Rockchip RK808
  *
  * Copyright (c) 2014, Fuzhou Rockchip Electronics Co., Ltd
  *
@@ -9,54 +8,54 @@
  * Author: Zhang Qing <zhangqing@rock-chips.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/bcd.h>
-#समावेश <linux/mfd/rk808.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/rtc.h>
+#include <linux/bcd.h>
+#include <linux/mfd/rk808.h>
+#include <linux/platform_device.h>
+#include <linux/i2c.h>
 
 /* RTC_CTRL_REG bitfields */
-#घोषणा BIT_RTC_CTRL_REG_STOP_RTC_M		BIT(0)
+#define BIT_RTC_CTRL_REG_STOP_RTC_M		BIT(0)
 
-/* RK808 has a shaकरोwed रेजिस्टर क्रम saving a "frozen" RTC समय.
- * When user setting "GET_TIME" to 1, the समय will save in this shaकरोwed
- * रेजिस्टर. If set "READSEL" to 1, user पढ़ो rtc समय रेजिस्टर, actually
- * get the समय of that moment. If we need the real समय, clr this bit.
+/* RK808 has a shadowed register for saving a "frozen" RTC time.
+ * When user setting "GET_TIME" to 1, the time will save in this shadowed
+ * register. If set "READSEL" to 1, user read rtc time register, actually
+ * get the time of that moment. If we need the real time, clr this bit.
  */
-#घोषणा BIT_RTC_CTRL_REG_RTC_GET_TIME		BIT(6)
-#घोषणा BIT_RTC_CTRL_REG_RTC_READSEL_M		BIT(7)
-#घोषणा BIT_RTC_INTERRUPTS_REG_IT_ALARM_M	BIT(3)
-#घोषणा RTC_STATUS_MASK		0xFE
+#define BIT_RTC_CTRL_REG_RTC_GET_TIME		BIT(6)
+#define BIT_RTC_CTRL_REG_RTC_READSEL_M		BIT(7)
+#define BIT_RTC_INTERRUPTS_REG_IT_ALARM_M	BIT(3)
+#define RTC_STATUS_MASK		0xFE
 
-#घोषणा SECONDS_REG_MSK		0x7F
-#घोषणा MINUTES_REG_MAK		0x7F
-#घोषणा HOURS_REG_MSK		0x3F
-#घोषणा DAYS_REG_MSK		0x3F
-#घोषणा MONTHS_REG_MSK		0x1F
-#घोषणा YEARS_REG_MSK		0xFF
-#घोषणा WEEKS_REG_MSK		0x7
+#define SECONDS_REG_MSK		0x7F
+#define MINUTES_REG_MAK		0x7F
+#define HOURS_REG_MSK		0x3F
+#define DAYS_REG_MSK		0x3F
+#define MONTHS_REG_MSK		0x1F
+#define YEARS_REG_MSK		0xFF
+#define WEEKS_REG_MSK		0x7
 
-/* REG_SECONDS_REG through REG_YEARS_REG is how many रेजिस्टरs? */
+/* REG_SECONDS_REG through REG_YEARS_REG is how many registers? */
 
-#घोषणा NUM_TIME_REGS	(RK808_WEEKS_REG - RK808_SECONDS_REG + 1)
-#घोषणा NUM_ALARM_REGS	(RK808_ALARM_YEARS_REG - RK808_ALARM_SECONDS_REG + 1)
+#define NUM_TIME_REGS	(RK808_WEEKS_REG - RK808_SECONDS_REG + 1)
+#define NUM_ALARM_REGS	(RK808_ALARM_YEARS_REG - RK808_ALARM_SECONDS_REG + 1)
 
-काष्ठा rk_rtc_compat_reg अणु
-	अचिन्हित पूर्णांक ctrl_reg;
-	अचिन्हित पूर्णांक status_reg;
-	अचिन्हित पूर्णांक alarm_seconds_reg;
-	अचिन्हित पूर्णांक पूर्णांक_reg;
-	अचिन्हित पूर्णांक seconds_reg;
-पूर्ण;
+struct rk_rtc_compat_reg {
+	unsigned int ctrl_reg;
+	unsigned int status_reg;
+	unsigned int alarm_seconds_reg;
+	unsigned int int_reg;
+	unsigned int seconds_reg;
+};
 
-काष्ठा rk808_rtc अणु
-	काष्ठा rk808 *rk808;
-	काष्ठा rtc_device *rtc;
-	काष्ठा rk_rtc_compat_reg *creg;
-	पूर्णांक irq;
-पूर्ण;
+struct rk808_rtc {
+	struct rk808 *rk808;
+	struct rtc_device *rtc;
+	struct rk_rtc_compat_reg *creg;
+	int irq;
+};
 
 /*
  * The Rockchip calendar used by the RK808 counts November with 31 days. We use
@@ -64,246 +63,246 @@
  * calendar used by the rest of the world. We arbitrarily define Jan 1st, 2016
  * as the day when both calendars were in sync, and treat all other dates
  * relative to that.
- * NOTE: Other प्रणाली software (e.g. firmware) that पढ़ोs the same hardware must
+ * NOTE: Other system software (e.g. firmware) that reads the same hardware must
  * implement this exact same conversion algorithm, with the same anchor date.
  */
-अटल समय64_t nov2dec_transitions(काष्ठा rtc_समय *पंचांग)
-अणु
-	वापस (पंचांग->पंचांग_year + 1900) - 2016 + (पंचांग->पंचांग_mon + 1 > 11 ? 1 : 0);
-पूर्ण
+static time64_t nov2dec_transitions(struct rtc_time *tm)
+{
+	return (tm->tm_year + 1900) - 2016 + (tm->tm_mon + 1 > 11 ? 1 : 0);
+}
 
-अटल व्योम rockchip_to_gregorian(काष्ठा rtc_समय *पंचांग)
-अणु
-	/* If it's Nov 31st, rtc_पंचांग_to_समय64() will count that like Dec 1st */
-	समय64_t समय = rtc_पंचांग_to_समय64(पंचांग);
-	rtc_समय64_to_पंचांग(समय + nov2dec_transitions(पंचांग) * 86400, पंचांग);
-पूर्ण
+static void rockchip_to_gregorian(struct rtc_time *tm)
+{
+	/* If it's Nov 31st, rtc_tm_to_time64() will count that like Dec 1st */
+	time64_t time = rtc_tm_to_time64(tm);
+	rtc_time64_to_tm(time + nov2dec_transitions(tm) * 86400, tm);
+}
 
-अटल व्योम gregorian_to_rockchip(काष्ठा rtc_समय *पंचांग)
-अणु
-	समय64_t extra_days = nov2dec_transitions(पंचांग);
-	समय64_t समय = rtc_पंचांग_to_समय64(पंचांग);
-	rtc_समय64_to_पंचांग(समय - extra_days * 86400, पंचांग);
+static void gregorian_to_rockchip(struct rtc_time *tm)
+{
+	time64_t extra_days = nov2dec_transitions(tm);
+	time64_t time = rtc_tm_to_time64(tm);
+	rtc_time64_to_tm(time - extra_days * 86400, tm);
 
-	/* Compensate अगर we went back over Nov 31st (will work up to 2381) */
-	अगर (nov2dec_transitions(पंचांग) < extra_days) अणु
-		अगर (पंचांग->पंचांग_mon + 1 == 11)
-			पंचांग->पंचांग_mday++;	/* This may result in 31! */
-		अन्यथा
-			rtc_समय64_to_पंचांग(समय - (extra_days - 1) * 86400, पंचांग);
-	पूर्ण
-पूर्ण
+	/* Compensate if we went back over Nov 31st (will work up to 2381) */
+	if (nov2dec_transitions(tm) < extra_days) {
+		if (tm->tm_mon + 1 == 11)
+			tm->tm_mday++;	/* This may result in 31! */
+		else
+			rtc_time64_to_tm(time - (extra_days - 1) * 86400, tm);
+	}
+}
 
-/* Read current समय and date in RTC */
-अटल पूर्णांक rk808_rtc_पढ़ोसमय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
+/* Read current time and date in RTC */
+static int rk808_rtc_readtime(struct device *dev, struct rtc_time *tm)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+	struct rk808 *rk808 = rk808_rtc->rk808;
 	u8 rtc_data[NUM_TIME_REGS];
-	पूर्णांक ret;
+	int ret;
 
-	/* Force an update of the shaकरोwed रेजिस्टरs right now */
+	/* Force an update of the shadowed registers right now */
 	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->ctrl_reg,
 				 BIT_RTC_CTRL_REG_RTC_GET_TIME,
 				 BIT_RTC_CTRL_REG_RTC_GET_TIME);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to update bits rtc_ctrl: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * After we set the GET_TIME bit, the rtc समय can't be पढ़ो
-	 * immediately. So we should रुको up to 31.25 us, about one cycle of
-	 * 32khz. If we clear the GET_TIME bit here, the समय of i2c transfer
+	 * After we set the GET_TIME bit, the rtc time can't be read
+	 * immediately. So we should wait up to 31.25 us, about one cycle of
+	 * 32khz. If we clear the GET_TIME bit here, the time of i2c transfer
 	 * certainly more than 31.25us: 16 * 2.5us at 400kHz bus frequency.
 	 */
 	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->ctrl_reg,
 				 BIT_RTC_CTRL_REG_RTC_GET_TIME,
 				 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to update bits rtc_ctrl: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_bulk_पढ़ो(rk808->regmap, rk808_rtc->creg->seconds_reg,
+	ret = regmap_bulk_read(rk808->regmap, rk808_rtc->creg->seconds_reg,
 			       rtc_data, NUM_TIME_REGS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to bulk read rtc_data: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	पंचांग->पंचांग_sec = bcd2bin(rtc_data[0] & SECONDS_REG_MSK);
-	पंचांग->पंचांग_min = bcd2bin(rtc_data[1] & MINUTES_REG_MAK);
-	पंचांग->पंचांग_hour = bcd2bin(rtc_data[2] & HOURS_REG_MSK);
-	पंचांग->पंचांग_mday = bcd2bin(rtc_data[3] & DAYS_REG_MSK);
-	पंचांग->पंचांग_mon = (bcd2bin(rtc_data[4] & MONTHS_REG_MSK)) - 1;
-	पंचांग->पंचांग_year = (bcd2bin(rtc_data[5] & YEARS_REG_MSK)) + 100;
-	पंचांग->पंचांग_wday = bcd2bin(rtc_data[6] & WEEKS_REG_MSK);
-	rockchip_to_gregorian(पंचांग);
-	dev_dbg(dev, "RTC date/time %ptRd(%d) %ptRt\n", पंचांग, पंचांग->पंचांग_wday, पंचांग);
+	tm->tm_sec = bcd2bin(rtc_data[0] & SECONDS_REG_MSK);
+	tm->tm_min = bcd2bin(rtc_data[1] & MINUTES_REG_MAK);
+	tm->tm_hour = bcd2bin(rtc_data[2] & HOURS_REG_MSK);
+	tm->tm_mday = bcd2bin(rtc_data[3] & DAYS_REG_MSK);
+	tm->tm_mon = (bcd2bin(rtc_data[4] & MONTHS_REG_MSK)) - 1;
+	tm->tm_year = (bcd2bin(rtc_data[5] & YEARS_REG_MSK)) + 100;
+	tm->tm_wday = bcd2bin(rtc_data[6] & WEEKS_REG_MSK);
+	rockchip_to_gregorian(tm);
+	dev_dbg(dev, "RTC date/time %ptRd(%d) %ptRt\n", tm, tm->tm_wday, tm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Set current समय and date in RTC */
-अटल पूर्णांक rk808_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
+/* Set current time and date in RTC */
+static int rk808_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+	struct rk808 *rk808 = rk808_rtc->rk808;
 	u8 rtc_data[NUM_TIME_REGS];
-	पूर्णांक ret;
+	int ret;
 
-	dev_dbg(dev, "set RTC date/time %ptRd(%d) %ptRt\n", पंचांग, पंचांग->पंचांग_wday, पंचांग);
-	gregorian_to_rockchip(पंचांग);
-	rtc_data[0] = bin2bcd(पंचांग->पंचांग_sec);
-	rtc_data[1] = bin2bcd(पंचांग->पंचांग_min);
-	rtc_data[2] = bin2bcd(पंचांग->पंचांग_hour);
-	rtc_data[3] = bin2bcd(पंचांग->पंचांग_mday);
-	rtc_data[4] = bin2bcd(पंचांग->पंचांग_mon + 1);
-	rtc_data[5] = bin2bcd(पंचांग->पंचांग_year - 100);
-	rtc_data[6] = bin2bcd(पंचांग->पंचांग_wday);
+	dev_dbg(dev, "set RTC date/time %ptRd(%d) %ptRt\n", tm, tm->tm_wday, tm);
+	gregorian_to_rockchip(tm);
+	rtc_data[0] = bin2bcd(tm->tm_sec);
+	rtc_data[1] = bin2bcd(tm->tm_min);
+	rtc_data[2] = bin2bcd(tm->tm_hour);
+	rtc_data[3] = bin2bcd(tm->tm_mday);
+	rtc_data[4] = bin2bcd(tm->tm_mon + 1);
+	rtc_data[5] = bin2bcd(tm->tm_year - 100);
+	rtc_data[6] = bin2bcd(tm->tm_wday);
 
-	/* Stop RTC जबतक updating the RTC रेजिस्टरs */
+	/* Stop RTC while updating the RTC registers */
 	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->ctrl_reg,
 				 BIT_RTC_CTRL_REG_STOP_RTC_M,
 				 BIT_RTC_CTRL_REG_STOP_RTC_M);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to update RTC control: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_bulk_ग_लिखो(rk808->regmap, rk808_rtc->creg->seconds_reg,
+	ret = regmap_bulk_write(rk808->regmap, rk808_rtc->creg->seconds_reg,
 				rtc_data, NUM_TIME_REGS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to bull write rtc_data: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	/* Start RTC again */
 	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->ctrl_reg,
 				 BIT_RTC_CTRL_REG_STOP_RTC_M, 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to update RTC control: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-/* Read alarm समय and date in RTC */
-अटल पूर्णांक rk808_rtc_पढ़ोalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
+/* Read alarm time and date in RTC */
+static int rk808_rtc_readalarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+	struct rk808 *rk808 = rk808_rtc->rk808;
 	u8 alrm_data[NUM_ALARM_REGS];
-	uपूर्णांक32_t पूर्णांक_reg;
-	पूर्णांक ret;
+	uint32_t int_reg;
+	int ret;
 
-	ret = regmap_bulk_पढ़ो(rk808->regmap,
+	ret = regmap_bulk_read(rk808->regmap,
 			       rk808_rtc->creg->alarm_seconds_reg,
 			       alrm_data, NUM_ALARM_REGS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to read RTC alarm date REG: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	alrm->समय.पंचांग_sec = bcd2bin(alrm_data[0] & SECONDS_REG_MSK);
-	alrm->समय.पंचांग_min = bcd2bin(alrm_data[1] & MINUTES_REG_MAK);
-	alrm->समय.पंचांग_hour = bcd2bin(alrm_data[2] & HOURS_REG_MSK);
-	alrm->समय.पंचांग_mday = bcd2bin(alrm_data[3] & DAYS_REG_MSK);
-	alrm->समय.पंचांग_mon = (bcd2bin(alrm_data[4] & MONTHS_REG_MSK)) - 1;
-	alrm->समय.पंचांग_year = (bcd2bin(alrm_data[5] & YEARS_REG_MSK)) + 100;
-	rockchip_to_gregorian(&alrm->समय);
+	alrm->time.tm_sec = bcd2bin(alrm_data[0] & SECONDS_REG_MSK);
+	alrm->time.tm_min = bcd2bin(alrm_data[1] & MINUTES_REG_MAK);
+	alrm->time.tm_hour = bcd2bin(alrm_data[2] & HOURS_REG_MSK);
+	alrm->time.tm_mday = bcd2bin(alrm_data[3] & DAYS_REG_MSK);
+	alrm->time.tm_mon = (bcd2bin(alrm_data[4] & MONTHS_REG_MSK)) - 1;
+	alrm->time.tm_year = (bcd2bin(alrm_data[5] & YEARS_REG_MSK)) + 100;
+	rockchip_to_gregorian(&alrm->time);
 
-	ret = regmap_पढ़ो(rk808->regmap, rk808_rtc->creg->पूर्णांक_reg, &पूर्णांक_reg);
-	अगर (ret) अणु
+	ret = regmap_read(rk808->regmap, rk808_rtc->creg->int_reg, &int_reg);
+	if (ret) {
 		dev_err(dev, "Failed to read RTC INT REG: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(dev, "alrm read RTC date/time %ptRd(%d) %ptRt\n",
-		&alrm->समय, alrm->समय.पंचांग_wday, &alrm->समय);
+		&alrm->time, alrm->time.tm_wday, &alrm->time);
 
-	alrm->enabled = (पूर्णांक_reg & BIT_RTC_INTERRUPTS_REG_IT_ALARM_M) ? 1 : 0;
+	alrm->enabled = (int_reg & BIT_RTC_INTERRUPTS_REG_IT_ALARM_M) ? 1 : 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rk808_rtc_stop_alarm(काष्ठा rk808_rtc *rk808_rtc)
-अणु
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
-	पूर्णांक ret;
+static int rk808_rtc_stop_alarm(struct rk808_rtc *rk808_rtc)
+{
+	struct rk808 *rk808 = rk808_rtc->rk808;
+	int ret;
 
-	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->पूर्णांक_reg,
+	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->int_reg,
 				 BIT_RTC_INTERRUPTS_REG_IT_ALARM_M, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rk808_rtc_start_alarm(काष्ठा rk808_rtc *rk808_rtc)
-अणु
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
-	पूर्णांक ret;
+static int rk808_rtc_start_alarm(struct rk808_rtc *rk808_rtc)
+{
+	struct rk808 *rk808 = rk808_rtc->rk808;
+	int ret;
 
-	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->पूर्णांक_reg,
+	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->int_reg,
 				 BIT_RTC_INTERRUPTS_REG_IT_ALARM_M,
 				 BIT_RTC_INTERRUPTS_REG_IT_ALARM_M);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rk808_rtc_setalarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
+static int rk808_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+	struct rk808 *rk808 = rk808_rtc->rk808;
 	u8 alrm_data[NUM_ALARM_REGS];
-	पूर्णांक ret;
+	int ret;
 
 	ret = rk808_rtc_stop_alarm(rk808_rtc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to stop alarm: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	dev_dbg(dev, "alrm set RTC date/time %ptRd(%d) %ptRt\n",
-		&alrm->समय, alrm->समय.पंचांग_wday, &alrm->समय);
+		&alrm->time, alrm->time.tm_wday, &alrm->time);
 
-	gregorian_to_rockchip(&alrm->समय);
-	alrm_data[0] = bin2bcd(alrm->समय.पंचांग_sec);
-	alrm_data[1] = bin2bcd(alrm->समय.पंचांग_min);
-	alrm_data[2] = bin2bcd(alrm->समय.पंचांग_hour);
-	alrm_data[3] = bin2bcd(alrm->समय.पंचांग_mday);
-	alrm_data[4] = bin2bcd(alrm->समय.पंचांग_mon + 1);
-	alrm_data[5] = bin2bcd(alrm->समय.पंचांग_year - 100);
+	gregorian_to_rockchip(&alrm->time);
+	alrm_data[0] = bin2bcd(alrm->time.tm_sec);
+	alrm_data[1] = bin2bcd(alrm->time.tm_min);
+	alrm_data[2] = bin2bcd(alrm->time.tm_hour);
+	alrm_data[3] = bin2bcd(alrm->time.tm_mday);
+	alrm_data[4] = bin2bcd(alrm->time.tm_mon + 1);
+	alrm_data[5] = bin2bcd(alrm->time.tm_year - 100);
 
-	ret = regmap_bulk_ग_लिखो(rk808->regmap,
+	ret = regmap_bulk_write(rk808->regmap,
 				rk808_rtc->creg->alarm_seconds_reg,
 				alrm_data, NUM_ALARM_REGS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to bulk write: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	अगर (alrm->enabled) अणु
+		return ret;
+	}
+	if (alrm->enabled) {
 		ret = rk808_rtc_start_alarm(rk808_rtc);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Failed to start alarm: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक rk808_rtc_alarm_irq_enable(काष्ठा device *dev,
-				      अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+static int rk808_rtc_alarm_irq_enable(struct device *dev,
+				      unsigned int enabled)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
 
-	अगर (enabled)
-		वापस rk808_rtc_start_alarm(rk808_rtc);
+	if (enabled)
+		return rk808_rtc_start_alarm(rk808_rtc);
 
-	वापस rk808_rtc_stop_alarm(rk808_rtc);
-पूर्ण
+	return rk808_rtc_stop_alarm(rk808_rtc);
+}
 
 /*
- * We will just handle setting the frequency and make use the framework क्रम
- * पढ़ोing the periodic पूर्णांकerupts.
+ * We will just handle setting the frequency and make use the framework for
+ * reading the periodic interupts.
  *
  * @freq: Current periodic IRQ freq:
  * bit 0: every second
@@ -311,155 +310,155 @@
  * bit 2: every hour
  * bit 3: every day
  */
-अटल irqवापस_t rk808_alarm_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = data;
-	काष्ठा rk808 *rk808 = rk808_rtc->rk808;
-	काष्ठा i2c_client *client = rk808->i2c;
-	पूर्णांक ret;
+static irqreturn_t rk808_alarm_irq(int irq, void *data)
+{
+	struct rk808_rtc *rk808_rtc = data;
+	struct rk808 *rk808 = rk808_rtc->rk808;
+	struct i2c_client *client = rk808->i2c;
+	int ret;
 
-	ret = regmap_ग_लिखो(rk808->regmap, rk808_rtc->creg->status_reg,
+	ret = regmap_write(rk808->regmap, rk808_rtc->creg->status_reg,
 			   RTC_STATUS_MASK);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev,
 			"%s:Failed to update RTC status: %d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	rtc_update_irq(rk808_rtc->rtc, 1, RTC_IRQF | RTC_AF);
 	dev_dbg(&client->dev,
 		 "%s:irq=%d\n", __func__, irq);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops rk808_rtc_ops = अणु
-	.पढ़ो_समय = rk808_rtc_पढ़ोसमय,
-	.set_समय = rk808_rtc_set_समय,
-	.पढ़ो_alarm = rk808_rtc_पढ़ोalarm,
+static const struct rtc_class_ops rk808_rtc_ops = {
+	.read_time = rk808_rtc_readtime,
+	.set_time = rk808_rtc_set_time,
+	.read_alarm = rk808_rtc_readalarm,
 	.set_alarm = rk808_rtc_setalarm,
 	.alarm_irq_enable = rk808_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-/* Turn off the alarm अगर it should not be a wake source. */
-अटल पूर्णांक rk808_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+/* Turn off the alarm if it should not be a wake source. */
+static int rk808_rtc_suspend(struct device *dev)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		enable_irq_wake(rk808_rtc->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Enable the alarm अगर it should be enabled (in हाल it was disabled to
+/* Enable the alarm if it should be enabled (in case it was disabled to
  * prevent use as a wake source).
  */
-अटल पूर्णांक rk808_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
+static int rk808_rtc_resume(struct device *dev)
+{
+	struct rk808_rtc *rk808_rtc = dev_get_drvdata(dev);
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(rk808_rtc->irq);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(rk808_rtc_pm_ops,
+static SIMPLE_DEV_PM_OPS(rk808_rtc_pm_ops,
 	rk808_rtc_suspend, rk808_rtc_resume);
 
-अटल काष्ठा rk_rtc_compat_reg rk808_creg = अणु
+static struct rk_rtc_compat_reg rk808_creg = {
 	.ctrl_reg = RK808_RTC_CTRL_REG,
 	.status_reg = RK808_RTC_STATUS_REG,
 	.alarm_seconds_reg = RK808_ALARM_SECONDS_REG,
-	.पूर्णांक_reg = RK808_RTC_INT_REG,
+	.int_reg = RK808_RTC_INT_REG,
 	.seconds_reg = RK808_SECONDS_REG,
-पूर्ण;
+};
 
-अटल काष्ठा rk_rtc_compat_reg rk817_creg = अणु
+static struct rk_rtc_compat_reg rk817_creg = {
 	.ctrl_reg = RK817_RTC_CTRL_REG,
 	.status_reg = RK817_RTC_STATUS_REG,
 	.alarm_seconds_reg = RK817_ALARM_SECONDS_REG,
-	.पूर्णांक_reg = RK817_RTC_INT_REG,
+	.int_reg = RK817_RTC_INT_REG,
 	.seconds_reg = RK817_SECONDS_REG,
-पूर्ण;
+};
 
-अटल पूर्णांक rk808_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rk808 *rk808 = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा rk808_rtc *rk808_rtc;
-	पूर्णांक ret;
+static int rk808_rtc_probe(struct platform_device *pdev)
+{
+	struct rk808 *rk808 = dev_get_drvdata(pdev->dev.parent);
+	struct rk808_rtc *rk808_rtc;
+	int ret;
 
-	rk808_rtc = devm_kzalloc(&pdev->dev, माप(*rk808_rtc), GFP_KERNEL);
-	अगर (rk808_rtc == शून्य)
-		वापस -ENOMEM;
+	rk808_rtc = devm_kzalloc(&pdev->dev, sizeof(*rk808_rtc), GFP_KERNEL);
+	if (rk808_rtc == NULL)
+		return -ENOMEM;
 
-	चयन (rk808->variant) अणु
-	हाल RK809_ID:
-	हाल RK817_ID:
+	switch (rk808->variant) {
+	case RK809_ID:
+	case RK817_ID:
 		rk808_rtc->creg = &rk817_creg;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rk808_rtc->creg = &rk808_creg;
-		अवरोध;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, rk808_rtc);
+		break;
+	}
+	platform_set_drvdata(pdev, rk808_rtc);
 	rk808_rtc->rk808 = rk808;
 
-	/* start rtc running by शेष, and use shaकरोwed समयr. */
+	/* start rtc running by default, and use shadowed timer. */
 	ret = regmap_update_bits(rk808->regmap, rk808_rtc->creg->ctrl_reg,
 				 BIT_RTC_CTRL_REG_STOP_RTC_M |
 				 BIT_RTC_CTRL_REG_RTC_READSEL_M,
 				 BIT_RTC_CTRL_REG_RTC_READSEL_M);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev,
 			"Failed to update RTC control: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_ग_लिखो(rk808->regmap, rk808_rtc->creg->status_reg,
+	ret = regmap_write(rk808->regmap, rk808_rtc->creg->status_reg,
 			   RTC_STATUS_MASK);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev,
 			"Failed to write RTC status: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	device_init_wakeup(&pdev->dev, 1);
 
 	rk808_rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rk808_rtc->rtc))
-		वापस PTR_ERR(rk808_rtc->rtc);
+	if (IS_ERR(rk808_rtc->rtc))
+		return PTR_ERR(rk808_rtc->rtc);
 
 	rk808_rtc->rtc->ops = &rk808_rtc_ops;
 
-	rk808_rtc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (rk808_rtc->irq < 0)
-		वापस rk808_rtc->irq;
+	rk808_rtc->irq = platform_get_irq(pdev, 0);
+	if (rk808_rtc->irq < 0)
+		return rk808_rtc->irq;
 
 	/* request alarm irq of rk808 */
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, rk808_rtc->irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, rk808_rtc->irq, NULL,
 					rk808_alarm_irq, 0,
 					"RTC alarm", rk808_rtc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to request alarm IRQ %d: %d\n",
 			rk808_rtc->irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस devm_rtc_रेजिस्टर_device(rk808_rtc->rtc);
-पूर्ण
+	return devm_rtc_register_device(rk808_rtc->rtc);
+}
 
-अटल काष्ठा platक्रमm_driver rk808_rtc_driver = अणु
+static struct platform_driver rk808_rtc_driver = {
 	.probe = rk808_rtc_probe,
-	.driver = अणु
+	.driver = {
 		.name = "rk808-rtc",
 		.pm = &rk808_rtc_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(rk808_rtc_driver);
+module_platform_driver(rk808_rtc_driver);
 
 MODULE_DESCRIPTION("RTC driver for the rk808 series PMICs");
 MODULE_AUTHOR("Chris Zhong <zyw@rock-chips.com>");

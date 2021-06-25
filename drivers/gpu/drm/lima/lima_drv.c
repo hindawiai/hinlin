@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <drm/drm_ioctl.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_prime.h>
-#समावेश <drm/lima_drm.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_prime.h>
+#include <drm/lima_drm.h>
 
-#समावेश "lima_device.h"
-#समावेश "lima_drv.h"
-#समावेश "lima_gem.h"
-#समावेश "lima_vm.h"
+#include "lima_device.h"
+#include "lima_drv.h"
+#include "lima_gem.h"
+#include "lima_vm.h"
 
-पूर्णांक lima_sched_समयout_ms;
-uपूर्णांक lima_heap_init_nr_pages = 8;
-uपूर्णांक lima_max_error_tasks;
-uपूर्णांक lima_job_hang_limit;
+int lima_sched_timeout_ms;
+uint lima_heap_init_nr_pages = 8;
+uint lima_max_error_tasks;
+uint lima_job_hang_limit;
 
-MODULE_PARM_DESC(sched_समयout_ms, "task run timeout in ms");
-module_param_named(sched_समयout_ms, lima_sched_समयout_ms, पूर्णांक, 0444);
+MODULE_PARM_DESC(sched_timeout_ms, "task run timeout in ms");
+module_param_named(sched_timeout_ms, lima_sched_timeout_ms, int, 0444);
 
 MODULE_PARM_DESC(heap_init_nr_pages, "heap buffer init number of pages");
-module_param_named(heap_init_nr_pages, lima_heap_init_nr_pages, uपूर्णांक, 0444);
+module_param_named(heap_init_nr_pages, lima_heap_init_nr_pages, uint, 0444);
 
 MODULE_PARM_DESC(max_error_tasks, "max number of error tasks to save");
-module_param_named(max_error_tasks, lima_max_error_tasks, uपूर्णांक, 0644);
+module_param_named(max_error_tasks, lima_max_error_tasks, uint, 0644);
 
 MODULE_PARM_DESC(job_hang_limit, "number of times to allow a job to hang before dropping it (default 0)");
-module_param_named(job_hang_limit, lima_job_hang_limit, uपूर्णांक, 0444);
+module_param_named(job_hang_limit, lima_job_hang_limit, uint, 0444);
 
-अटल पूर्णांक lima_ioctl_get_param(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_get_param *args = data;
-	काष्ठा lima_device *ldev = to_lima_dev(dev);
+static int lima_ioctl_get_param(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_get_param *args = data;
+	struct lima_device *ldev = to_lima_dev(dev);
 
-	अगर (args->pad)
-		वापस -EINVAL;
+	if (args->pad)
+		return -EINVAL;
 
-	चयन (args->param) अणु
-	हाल DRM_LIMA_PARAM_GPU_ID:
-		चयन (ldev->id) अणु
-		हाल lima_gpu_mali400:
+	switch (args->param) {
+	case DRM_LIMA_PARAM_GPU_ID:
+		switch (ldev->id) {
+		case lima_gpu_mali400:
 			args->value = DRM_LIMA_PARAM_GPU_ID_MALI400;
-			अवरोध;
-		हाल lima_gpu_mali450:
+			break;
+		case lima_gpu_mali450:
 			args->value = DRM_LIMA_PARAM_GPU_ID_MALI450;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			args->value = DRM_LIMA_PARAM_GPU_ID_UNKNOWN;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल DRM_LIMA_PARAM_NUM_PP:
+	case DRM_LIMA_PARAM_NUM_PP:
 		args->value = ldev->pipe[lima_pipe_pp].num_processor;
-		अवरोध;
+		break;
 
-	हाल DRM_LIMA_PARAM_GP_VERSION:
+	case DRM_LIMA_PARAM_GP_VERSION:
 		args->value = ldev->gp_version;
-		अवरोध;
+		break;
 
-	हाल DRM_LIMA_PARAM_PP_VERSION:
+	case DRM_LIMA_PARAM_PP_VERSION:
 		args->value = ldev->pp_version;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lima_ioctl_gem_create(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_gem_create *args = data;
+static int lima_ioctl_gem_create(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_gem_create *args = data;
 
-	अगर (args->pad)
-		वापस -EINVAL;
+	if (args->pad)
+		return -EINVAL;
 
-	अगर (args->flags & ~(LIMA_BO_FLAG_HEAP))
-		वापस -EINVAL;
+	if (args->flags & ~(LIMA_BO_FLAG_HEAP))
+		return -EINVAL;
 
-	अगर (args->size == 0)
-		वापस -EINVAL;
+	if (args->size == 0)
+		return -EINVAL;
 
-	वापस lima_gem_create_handle(dev, file, args->size, args->flags, &args->handle);
-पूर्ण
+	return lima_gem_create_handle(dev, file, args->size, args->flags, &args->handle);
+}
 
-अटल पूर्णांक lima_ioctl_gem_info(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_gem_info *args = data;
+static int lima_ioctl_gem_info(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_gem_info *args = data;
 
-	वापस lima_gem_get_info(file, args->handle, &args->va, &args->offset);
-पूर्ण
+	return lima_gem_get_info(file, args->handle, &args->va, &args->offset);
+}
 
-अटल पूर्णांक lima_ioctl_gem_submit(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_gem_submit *args = data;
-	काष्ठा lima_device *ldev = to_lima_dev(dev);
-	काष्ठा lima_drm_priv *priv = file->driver_priv;
-	काष्ठा drm_lima_gem_submit_bo *bos;
-	काष्ठा lima_sched_pipe *pipe;
-	काष्ठा lima_sched_task *task;
-	काष्ठा lima_ctx *ctx;
-	काष्ठा lima_submit submit = अणु0पूर्ण;
-	माप_प्रकार size;
-	पूर्णांक err = 0;
+static int lima_ioctl_gem_submit(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_gem_submit *args = data;
+	struct lima_device *ldev = to_lima_dev(dev);
+	struct lima_drm_priv *priv = file->driver_priv;
+	struct drm_lima_gem_submit_bo *bos;
+	struct lima_sched_pipe *pipe;
+	struct lima_sched_task *task;
+	struct lima_ctx *ctx;
+	struct lima_submit submit = {0};
+	size_t size;
+	int err = 0;
 
-	अगर (args->pipe >= lima_pipe_num || args->nr_bos == 0)
-		वापस -EINVAL;
+	if (args->pipe >= lima_pipe_num || args->nr_bos == 0)
+		return -EINVAL;
 
-	अगर (args->flags & ~(LIMA_SUBMIT_FLAG_EXPLICIT_FENCE))
-		वापस -EINVAL;
+	if (args->flags & ~(LIMA_SUBMIT_FLAG_EXPLICIT_FENCE))
+		return -EINVAL;
 
 	pipe = ldev->pipe + args->pipe;
-	अगर (args->frame_size != pipe->frame_size)
-		वापस -EINVAL;
+	if (args->frame_size != pipe->frame_size)
+		return -EINVAL;
 
-	bos = kvसुस्मृति(args->nr_bos, माप(*submit.bos) + माप(*submit.lbos), GFP_KERNEL);
-	अगर (!bos)
-		वापस -ENOMEM;
+	bos = kvcalloc(args->nr_bos, sizeof(*submit.bos) + sizeof(*submit.lbos), GFP_KERNEL);
+	if (!bos)
+		return -ENOMEM;
 
-	size = args->nr_bos * माप(*submit.bos);
-	अगर (copy_from_user(bos, u64_to_user_ptr(args->bos), size)) अणु
+	size = args->nr_bos * sizeof(*submit.bos);
+	if (copy_from_user(bos, u64_to_user_ptr(args->bos), size)) {
 		err = -EFAULT;
-		जाओ out0;
-	पूर्ण
+		goto out0;
+	}
 
 	task = kmem_cache_zalloc(pipe->task_slab, GFP_KERNEL);
-	अगर (!task) अणु
+	if (!task) {
 		err = -ENOMEM;
-		जाओ out0;
-	पूर्ण
+		goto out0;
+	}
 
 	task->frame = task + 1;
-	अगर (copy_from_user(task->frame, u64_to_user_ptr(args->frame), args->frame_size)) अणु
+	if (copy_from_user(task->frame, u64_to_user_ptr(args->frame), args->frame_size)) {
 		err = -EFAULT;
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
 	err = pipe->task_validate(pipe, task);
-	अगर (err)
-		जाओ out1;
+	if (err)
+		goto out1;
 
 	ctx = lima_ctx_get(&priv->ctx_mgr, args->ctx);
-	अगर (!ctx) अणु
+	if (!ctx) {
 		err = -ENOENT;
-		जाओ out1;
-	पूर्ण
+		goto out1;
+	}
 
 	submit.pipe = args->pipe;
 	submit.bos = bos;
-	submit.lbos = (व्योम *)bos + size;
+	submit.lbos = (void *)bos + size;
 	submit.nr_bos = args->nr_bos;
 	submit.task = task;
 	submit.ctx = ctx;
@@ -169,90 +168,90 @@ module_param_named(job_hang_limit, lima_job_hang_limit, uपूर्णां�
 
 	lima_ctx_put(ctx);
 out1:
-	अगर (err)
-		kmem_cache_मुक्त(pipe->task_slab, task);
+	if (err)
+		kmem_cache_free(pipe->task_slab, task);
 out0:
-	kvमुक्त(bos);
-	वापस err;
-पूर्ण
+	kvfree(bos);
+	return err;
+}
 
-अटल पूर्णांक lima_ioctl_gem_रुको(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_gem_रुको *args = data;
+static int lima_ioctl_gem_wait(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_gem_wait *args = data;
 
-	अगर (args->op & ~(LIMA_GEM_WAIT_READ|LIMA_GEM_WAIT_WRITE))
-		वापस -EINVAL;
+	if (args->op & ~(LIMA_GEM_WAIT_READ|LIMA_GEM_WAIT_WRITE))
+		return -EINVAL;
 
-	वापस lima_gem_रुको(file, args->handle, args->op, args->समयout_ns);
-पूर्ण
+	return lima_gem_wait(file, args->handle, args->op, args->timeout_ns);
+}
 
-अटल पूर्णांक lima_ioctl_ctx_create(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_ctx_create *args = data;
-	काष्ठा lima_drm_priv *priv = file->driver_priv;
-	काष्ठा lima_device *ldev = to_lima_dev(dev);
+static int lima_ioctl_ctx_create(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_ctx_create *args = data;
+	struct lima_drm_priv *priv = file->driver_priv;
+	struct lima_device *ldev = to_lima_dev(dev);
 
-	अगर (args->_pad)
-		वापस -EINVAL;
+	if (args->_pad)
+		return -EINVAL;
 
-	वापस lima_ctx_create(ldev, &priv->ctx_mgr, &args->id);
-पूर्ण
+	return lima_ctx_create(ldev, &priv->ctx_mgr, &args->id);
+}
 
-अटल पूर्णांक lima_ioctl_ctx_मुक्त(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_lima_ctx_create *args = data;
-	काष्ठा lima_drm_priv *priv = file->driver_priv;
+static int lima_ioctl_ctx_free(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_lima_ctx_create *args = data;
+	struct lima_drm_priv *priv = file->driver_priv;
 
-	अगर (args->_pad)
-		वापस -EINVAL;
+	if (args->_pad)
+		return -EINVAL;
 
-	वापस lima_ctx_मुक्त(&priv->ctx_mgr, args->id);
-पूर्ण
+	return lima_ctx_free(&priv->ctx_mgr, args->id);
+}
 
-अटल पूर्णांक lima_drm_driver_खोलो(काष्ठा drm_device *dev, काष्ठा drm_file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा lima_drm_priv *priv;
-	काष्ठा lima_device *ldev = to_lima_dev(dev);
+static int lima_drm_driver_open(struct drm_device *dev, struct drm_file *file)
+{
+	int err;
+	struct lima_drm_priv *priv;
+	struct lima_device *ldev = to_lima_dev(dev);
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->vm = lima_vm_create(ldev);
-	अगर (!priv->vm) अणु
+	if (!priv->vm) {
 		err = -ENOMEM;
-		जाओ err_out0;
-	पूर्ण
+		goto err_out0;
+	}
 
 	lima_ctx_mgr_init(&priv->ctx_mgr);
 
 	file->driver_priv = priv;
-	वापस 0;
+	return 0;
 
 err_out0:
-	kमुक्त(priv);
-	वापस err;
-पूर्ण
+	kfree(priv);
+	return err;
+}
 
-अटल व्योम lima_drm_driver_postबंद(काष्ठा drm_device *dev, काष्ठा drm_file *file)
-अणु
-	काष्ठा lima_drm_priv *priv = file->driver_priv;
+static void lima_drm_driver_postclose(struct drm_device *dev, struct drm_file *file)
+{
+	struct lima_drm_priv *priv = file->driver_priv;
 
 	lima_ctx_mgr_fini(&priv->ctx_mgr);
 	lima_vm_put(priv->vm);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल स्थिर काष्ठा drm_ioctl_desc lima_drm_driver_ioctls[] = अणु
+static const struct drm_ioctl_desc lima_drm_driver_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(LIMA_GET_PARAM, lima_ioctl_get_param, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(LIMA_GEM_CREATE, lima_ioctl_gem_create, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(LIMA_GEM_INFO, lima_ioctl_gem_info, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(LIMA_GEM_SUBMIT, lima_ioctl_gem_submit, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(LIMA_GEM_WAIT, lima_ioctl_gem_रुको, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(LIMA_GEM_WAIT, lima_ioctl_gem_wait, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(LIMA_CTX_CREATE, lima_ioctl_ctx_create, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(LIMA_CTX_FREE, lima_ioctl_ctx_मुक्त, DRM_RENDER_ALLOW),
-पूर्ण;
+	DRM_IOCTL_DEF_DRV(LIMA_CTX_FREE, lima_ioctl_ctx_free, DRM_RENDER_ALLOW),
+};
 
 DEFINE_DRM_GEM_FOPS(lima_drm_driver_fops);
 
@@ -262,10 +261,10 @@ DEFINE_DRM_GEM_FOPS(lima_drm_driver_fops);
  * - 1.1.0 - add heap buffer support
  */
 
-अटल स्थिर काष्ठा drm_driver lima_drm_driver = अणु
+static const struct drm_driver lima_drm_driver = {
 	.driver_features    = DRIVER_RENDER | DRIVER_GEM | DRIVER_SYNCOBJ,
-	.खोलो               = lima_drm_driver_खोलो,
-	.postबंद          = lima_drm_driver_postबंद,
+	.open               = lima_drm_driver_open,
+	.postclose          = lima_drm_driver_postclose,
 	.ioctls             = lima_drm_driver_ioctls,
 	.num_ioctls         = ARRAY_SIZE(lima_drm_driver_ioctls),
 	.fops               = &lima_drm_driver_fops,
@@ -281,155 +280,155 @@ DEFINE_DRM_GEM_FOPS(lima_drm_driver_fops);
 	.gem_prime_import_sg_table = drm_gem_shmem_prime_import_sg_table,
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.gem_prime_mmap = drm_gem_prime_mmap,
-पूर्ण;
+};
 
-काष्ठा lima_block_पढ़ोer अणु
-	व्योम *dst;
-	माप_प्रकार base;
-	माप_प्रकार count;
-	माप_प्रकार off;
-	sमाप_प्रकार पढ़ो;
-पूर्ण;
+struct lima_block_reader {
+	void *dst;
+	size_t base;
+	size_t count;
+	size_t off;
+	ssize_t read;
+};
 
-अटल bool lima_पढ़ो_block(काष्ठा lima_block_पढ़ोer *पढ़ोer,
-			    व्योम *src, माप_प्रकार src_size)
-अणु
-	माप_प्रकार max_off = पढ़ोer->base + src_size;
+static bool lima_read_block(struct lima_block_reader *reader,
+			    void *src, size_t src_size)
+{
+	size_t max_off = reader->base + src_size;
 
-	अगर (पढ़ोer->off < max_off) अणु
-		माप_प्रकार size = min_t(माप_प्रकार, max_off - पढ़ोer->off,
-				    पढ़ोer->count);
+	if (reader->off < max_off) {
+		size_t size = min_t(size_t, max_off - reader->off,
+				    reader->count);
 
-		स_नकल(पढ़ोer->dst, src + (पढ़ोer->off - पढ़ोer->base), size);
+		memcpy(reader->dst, src + (reader->off - reader->base), size);
 
-		पढ़ोer->dst += size;
-		पढ़ोer->off += size;
-		पढ़ोer->पढ़ो += size;
-		पढ़ोer->count -= size;
-	पूर्ण
+		reader->dst += size;
+		reader->off += size;
+		reader->read += size;
+		reader->count -= size;
+	}
 
-	पढ़ोer->base = max_off;
+	reader->base = max_off;
 
-	वापस !!पढ़ोer->count;
-पूर्ण
+	return !!reader->count;
+}
 
-अटल sमाप_प्रकार lima_error_state_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				     काष्ठा bin_attribute *attr, अक्षर *buf,
-				     loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lima_device *ldev = dev_get_drvdata(dev);
-	काष्ठा lima_sched_error_task *et;
-	काष्ठा lima_block_पढ़ोer पढ़ोer = अणु
+static ssize_t lima_error_state_read(struct file *filp, struct kobject *kobj,
+				     struct bin_attribute *attr, char *buf,
+				     loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lima_device *ldev = dev_get_drvdata(dev);
+	struct lima_sched_error_task *et;
+	struct lima_block_reader reader = {
 		.dst = buf,
 		.count = count,
 		.off = off,
-	पूर्ण;
+	};
 
 	mutex_lock(&ldev->error_task_list_lock);
 
-	अगर (lima_पढ़ो_block(&पढ़ोer, &ldev->dump, माप(ldev->dump))) अणु
-		list_क्रम_each_entry(et, &ldev->error_task_list, list) अणु
-			अगर (!lima_पढ़ो_block(&पढ़ोer, et->data, et->size))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+	if (lima_read_block(&reader, &ldev->dump, sizeof(ldev->dump))) {
+		list_for_each_entry(et, &ldev->error_task_list, list) {
+			if (!lima_read_block(&reader, et->data, et->size))
+				break;
+		}
+	}
 
 	mutex_unlock(&ldev->error_task_list_lock);
-	वापस पढ़ोer.पढ़ो;
-पूर्ण
+	return reader.read;
+}
 
-अटल sमाप_प्रकार lima_error_state_ग_लिखो(काष्ठा file *file, काष्ठा kobject *kobj,
-				      काष्ठा bin_attribute *attr, अक्षर *buf,
-				      loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा lima_device *ldev = dev_get_drvdata(dev);
-	काष्ठा lima_sched_error_task *et, *पंचांगp;
+static ssize_t lima_error_state_write(struct file *file, struct kobject *kobj,
+				      struct bin_attribute *attr, char *buf,
+				      loff_t off, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct lima_device *ldev = dev_get_drvdata(dev);
+	struct lima_sched_error_task *et, *tmp;
 
 	mutex_lock(&ldev->error_task_list_lock);
 
-	list_क्रम_each_entry_safe(et, पंचांगp, &ldev->error_task_list, list) अणु
+	list_for_each_entry_safe(et, tmp, &ldev->error_task_list, list) {
 		list_del(&et->list);
-		kvमुक्त(et);
-	पूर्ण
+		kvfree(et);
+	}
 
 	ldev->dump.size = 0;
 	ldev->dump.num_tasks = 0;
 
 	mutex_unlock(&ldev->error_task_list_lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute lima_error_state_attr = अणु
+static const struct bin_attribute lima_error_state_attr = {
 	.attr.name = "error",
 	.attr.mode = 0600,
 	.size = 0,
-	.पढ़ो = lima_error_state_पढ़ो,
-	.ग_लिखो = lima_error_state_ग_लिखो,
-पूर्ण;
+	.read = lima_error_state_read,
+	.write = lima_error_state_write,
+};
 
-अटल पूर्णांक lima_pdev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lima_device *ldev;
-	काष्ठा drm_device *ddev;
-	पूर्णांक err;
+static int lima_pdev_probe(struct platform_device *pdev)
+{
+	struct lima_device *ldev;
+	struct drm_device *ddev;
+	int err;
 
 	err = lima_sched_slab_init();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	ldev = devm_kzalloc(&pdev->dev, माप(*ldev), GFP_KERNEL);
-	अगर (!ldev) अणु
+	ldev = devm_kzalloc(&pdev->dev, sizeof(*ldev), GFP_KERNEL);
+	if (!ldev) {
 		err = -ENOMEM;
-		जाओ err_out0;
-	पूर्ण
+		goto err_out0;
+	}
 
 	ldev->dev = &pdev->dev;
-	ldev->id = (क्रमागत lima_gpu_id)of_device_get_match_data(&pdev->dev);
+	ldev->id = (enum lima_gpu_id)of_device_get_match_data(&pdev->dev);
 
-	platक्रमm_set_drvdata(pdev, ldev);
+	platform_set_drvdata(pdev, ldev);
 
 	/* Allocate and initialize the DRM device. */
 	ddev = drm_dev_alloc(&lima_drm_driver, &pdev->dev);
-	अगर (IS_ERR(ddev))
-		वापस PTR_ERR(ddev);
+	if (IS_ERR(ddev))
+		return PTR_ERR(ddev);
 
-	ddev->dev_निजी = ldev;
+	ddev->dev_private = ldev;
 	ldev->ddev = ddev;
 
 	err = lima_device_init(ldev);
-	अगर (err)
-		जाओ err_out1;
+	if (err)
+		goto err_out1;
 
 	err = lima_devfreq_init(ldev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Fatal error during devfreq init\n");
-		जाओ err_out2;
-	पूर्ण
+		goto err_out2;
+	}
 
-	pm_runसमय_set_active(ldev->dev);
-	pm_runसमय_mark_last_busy(ldev->dev);
-	pm_runसमय_set_स्वतःsuspend_delay(ldev->dev, 200);
-	pm_runसमय_use_स्वतःsuspend(ldev->dev);
-	pm_runसमय_enable(ldev->dev);
+	pm_runtime_set_active(ldev->dev);
+	pm_runtime_mark_last_busy(ldev->dev);
+	pm_runtime_set_autosuspend_delay(ldev->dev, 200);
+	pm_runtime_use_autosuspend(ldev->dev);
+	pm_runtime_enable(ldev->dev);
 
 	/*
 	 * Register the DRM device with the core and the connectors with
 	 * sysfs.
 	 */
-	err = drm_dev_रेजिस्टर(ddev, 0);
-	अगर (err < 0)
-		जाओ err_out3;
+	err = drm_dev_register(ddev, 0);
+	if (err < 0)
+		goto err_out3;
 
-	अगर (sysfs_create_bin_file(&ldev->dev->kobj, &lima_error_state_attr))
+	if (sysfs_create_bin_file(&ldev->dev->kobj, &lima_error_state_attr))
 		dev_warn(ldev->dev, "fail to create error state sysfs\n");
 
-	वापस 0;
+	return 0;
 
 err_out3:
-	pm_runसमय_disable(ldev->dev);
+	pm_runtime_disable(ldev->dev);
 	lima_devfreq_fini(ldev);
 err_out2:
 	lima_device_fini(ldev);
@@ -437,53 +436,53 @@ err_out1:
 	drm_dev_put(ddev);
 err_out0:
 	lima_sched_slab_fini();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक lima_pdev_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lima_device *ldev = platक्रमm_get_drvdata(pdev);
-	काष्ठा drm_device *ddev = ldev->ddev;
+static int lima_pdev_remove(struct platform_device *pdev)
+{
+	struct lima_device *ldev = platform_get_drvdata(pdev);
+	struct drm_device *ddev = ldev->ddev;
 
-	sysfs_हटाओ_bin_file(&ldev->dev->kobj, &lima_error_state_attr);
+	sysfs_remove_bin_file(&ldev->dev->kobj, &lima_error_state_attr);
 
-	drm_dev_unरेजिस्टर(ddev);
+	drm_dev_unregister(ddev);
 
-	/* stop स्वतःsuspend to make sure device is in active state */
-	pm_runसमय_set_स्वतःsuspend_delay(ldev->dev, -1);
-	pm_runसमय_disable(ldev->dev);
+	/* stop autosuspend to make sure device is in active state */
+	pm_runtime_set_autosuspend_delay(ldev->dev, -1);
+	pm_runtime_disable(ldev->dev);
 
 	lima_devfreq_fini(ldev);
 	lima_device_fini(ldev);
 
 	drm_dev_put(ddev);
 	lima_sched_slab_fini();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dt_match[] = अणु
-	अणु .compatible = "arm,mali-400", .data = (व्योम *)lima_gpu_mali400 पूर्ण,
-	अणु .compatible = "arm,mali-450", .data = (व्योम *)lima_gpu_mali450 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dt_match[] = {
+	{ .compatible = "arm,mali-400", .data = (void *)lima_gpu_mali400 },
+	{ .compatible = "arm,mali-450", .data = (void *)lima_gpu_mali450 },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dt_match);
 
-अटल स्थिर काष्ठा dev_pm_ops lima_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend, pm_runसमय_क्रमce_resume)
-	SET_RUNTIME_PM_OPS(lima_device_suspend, lima_device_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops lima_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+	SET_RUNTIME_PM_OPS(lima_device_suspend, lima_device_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver lima_platक्रमm_driver = अणु
+static struct platform_driver lima_platform_driver = {
 	.probe      = lima_pdev_probe,
-	.हटाओ     = lima_pdev_हटाओ,
-	.driver     = अणु
+	.remove     = lima_pdev_remove,
+	.driver     = {
 		.name   = "lima",
 		.pm	= &lima_pm_ops,
 		.of_match_table = dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(lima_platक्रमm_driver);
+module_platform_driver(lima_platform_driver);
 
 MODULE_AUTHOR("Lima Project Developers");
 MODULE_DESCRIPTION("Lima DRM Driver");

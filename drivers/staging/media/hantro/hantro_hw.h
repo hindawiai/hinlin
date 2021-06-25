@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Hantro VPU codec driver
  *
@@ -7,200 +6,200 @@
  *	Tomasz Figa <tfiga@chromium.org>
  */
 
-#अगर_अघोषित HANTRO_HW_H_
-#घोषणा HANTRO_HW_H_
+#ifndef HANTRO_HW_H_
+#define HANTRO_HW_H_
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/v4l2-controls.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/videobuf2-core.h>
+#include <linux/interrupt.h>
+#include <linux/v4l2-controls.h>
+#include <media/v4l2-ctrls.h>
+#include <media/videobuf2-core.h>
 
-#घोषणा DEC_8190_ALIGN_MASK	0x07U
+#define DEC_8190_ALIGN_MASK	0x07U
 
-#घोषणा MB_DIM			16
-#घोषणा MB_WIDTH(w)		DIV_ROUND_UP(w, MB_DIM)
-#घोषणा MB_HEIGHT(h)		DIV_ROUND_UP(h, MB_DIM)
+#define MB_DIM			16
+#define MB_WIDTH(w)		DIV_ROUND_UP(w, MB_DIM)
+#define MB_HEIGHT(h)		DIV_ROUND_UP(h, MB_DIM)
 
-काष्ठा hantro_dev;
-काष्ठा hantro_ctx;
-काष्ठा hantro_buf;
-काष्ठा hantro_variant;
+struct hantro_dev;
+struct hantro_ctx;
+struct hantro_buf;
+struct hantro_variant;
 
 /**
- * काष्ठा hantro_aux_buf - auxiliary DMA buffer क्रम hardware data
+ * struct hantro_aux_buf - auxiliary DMA buffer for hardware data
  *
- * @cpu:	CPU poपूर्णांकer to the buffer.
+ * @cpu:	CPU pointer to the buffer.
  * @dma:	DMA address of the buffer.
  * @size:	Size of the buffer.
  * @attrs:	Attributes of the DMA mapping.
  */
-काष्ठा hantro_aux_buf अणु
-	व्योम *cpu;
+struct hantro_aux_buf {
+	void *cpu;
 	dma_addr_t dma;
-	माप_प्रकार size;
-	अचिन्हित दीर्घ attrs;
-पूर्ण;
+	size_t size;
+	unsigned long attrs;
+};
 
 /**
- * काष्ठा hantro_jpeg_enc_hw_ctx
+ * struct hantro_jpeg_enc_hw_ctx
  *
  * @bounce_buffer:	Bounce buffer
  */
-काष्ठा hantro_jpeg_enc_hw_ctx अणु
-	काष्ठा hantro_aux_buf bounce_buffer;
-पूर्ण;
+struct hantro_jpeg_enc_hw_ctx {
+	struct hantro_aux_buf bounce_buffer;
+};
 
 /* Max. number of entries in the DPB (HW limitation). */
-#घोषणा HANTRO_H264_DPB_SIZE		16
+#define HANTRO_H264_DPB_SIZE		16
 
 /**
- * काष्ठा hantro_h264_dec_ctrls
+ * struct hantro_h264_dec_ctrls
  *
  * @decode:	Decode params
  * @scaling:	Scaling info
  * @sps:	SPS info
  * @pps:	PPS info
  */
-काष्ठा hantro_h264_dec_ctrls अणु
-	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *decode;
-	स्थिर काष्ठा v4l2_ctrl_h264_scaling_matrix *scaling;
-	स्थिर काष्ठा v4l2_ctrl_h264_sps *sps;
-	स्थिर काष्ठा v4l2_ctrl_h264_pps *pps;
-पूर्ण;
+struct hantro_h264_dec_ctrls {
+	const struct v4l2_ctrl_h264_decode_params *decode;
+	const struct v4l2_ctrl_h264_scaling_matrix *scaling;
+	const struct v4l2_ctrl_h264_sps *sps;
+	const struct v4l2_ctrl_h264_pps *pps;
+};
 
 /**
- * काष्ठा hantro_h264_dec_reflists
+ * struct hantro_h264_dec_reflists
  *
  * @p:		P reflist
  * @b0:		B0 reflist
  * @b1:		B1 reflist
  */
-काष्ठा hantro_h264_dec_reflists अणु
+struct hantro_h264_dec_reflists {
 	u8 p[HANTRO_H264_DPB_SIZE];
 	u8 b0[HANTRO_H264_DPB_SIZE];
 	u8 b1[HANTRO_H264_DPB_SIZE];
-पूर्ण;
+};
 
 /**
- * काष्ठा hantro_h264_dec_hw_ctx
+ * struct hantro_h264_dec_hw_ctx
  *
- * @priv:	Private auxiliary buffer क्रम hardware.
+ * @priv:	Private auxiliary buffer for hardware.
  * @dpb:	DPB
  * @reflists:	P/B0/B1 reflists
  * @ctrls:	V4L2 controls attached to a run
  */
-काष्ठा hantro_h264_dec_hw_ctx अणु
-	काष्ठा hantro_aux_buf priv;
-	काष्ठा v4l2_h264_dpb_entry dpb[HANTRO_H264_DPB_SIZE];
-	काष्ठा hantro_h264_dec_reflists reflists;
-	काष्ठा hantro_h264_dec_ctrls ctrls;
-पूर्ण;
+struct hantro_h264_dec_hw_ctx {
+	struct hantro_aux_buf priv;
+	struct v4l2_h264_dpb_entry dpb[HANTRO_H264_DPB_SIZE];
+	struct hantro_h264_dec_reflists reflists;
+	struct hantro_h264_dec_ctrls ctrls;
+};
 
 /**
- * काष्ठा hantro_mpeg2_dec_hw_ctx
+ * struct hantro_mpeg2_dec_hw_ctx
  *
  * @qtable:		Quantization table
  */
-काष्ठा hantro_mpeg2_dec_hw_ctx अणु
-	काष्ठा hantro_aux_buf qtable;
-पूर्ण;
+struct hantro_mpeg2_dec_hw_ctx {
+	struct hantro_aux_buf qtable;
+};
 
 /**
- * काष्ठा hantro_vp8_dec_hw_ctx
+ * struct hantro_vp8_dec_hw_ctx
  *
  * @segment_map:	Segment map buffer.
  * @prob_tbl:		Probability table buffer.
  */
-काष्ठा hantro_vp8_dec_hw_ctx अणु
-	काष्ठा hantro_aux_buf segment_map;
-	काष्ठा hantro_aux_buf prob_tbl;
-पूर्ण;
+struct hantro_vp8_dec_hw_ctx {
+	struct hantro_aux_buf segment_map;
+	struct hantro_aux_buf prob_tbl;
+};
 
 /**
- * काष्ठा hantro_postproc_ctx
+ * struct hantro_postproc_ctx
  *
- * @dec_q:		References buffers, in decoder क्रमmat.
+ * @dec_q:		References buffers, in decoder format.
  */
-काष्ठा hantro_postproc_ctx अणु
-	काष्ठा hantro_aux_buf dec_q[VB2_MAX_FRAME];
-पूर्ण;
+struct hantro_postproc_ctx {
+	struct hantro_aux_buf dec_q[VB2_MAX_FRAME];
+};
 
 /**
- * काष्ठा hantro_codec_ops - codec mode specअगरic operations
+ * struct hantro_codec_ops - codec mode specific operations
  *
- * @init:	If needed, can be used क्रम initialization.
+ * @init:	If needed, can be used for initialization.
  *		Optional and called from process context.
- * @निकास:	If needed, can be used to unकरो the .init phase.
+ * @exit:	If needed, can be used to undo the .init phase.
  *		Optional and called from process context.
- * @run:	Start single अणुen,de)coding job. Called from atomic context
- *		to indicate that a pair of buffers is पढ़ोy and the hardware
+ * @run:	Start single {en,de)coding job. Called from atomic context
+ *		to indicate that a pair of buffers is ready and the hardware
  *		should be programmed and started.
- * @करोne:	Read back processing results and additional data from hardware.
- * @reset:	Reset the hardware in हाल of a समयout.
+ * @done:	Read back processing results and additional data from hardware.
+ * @reset:	Reset the hardware in case of a timeout.
  */
-काष्ठा hantro_codec_ops अणु
-	पूर्णांक (*init)(काष्ठा hantro_ctx *ctx);
-	व्योम (*निकास)(काष्ठा hantro_ctx *ctx);
-	व्योम (*run)(काष्ठा hantro_ctx *ctx);
-	व्योम (*करोne)(काष्ठा hantro_ctx *ctx);
-	व्योम (*reset)(काष्ठा hantro_ctx *ctx);
-पूर्ण;
+struct hantro_codec_ops {
+	int (*init)(struct hantro_ctx *ctx);
+	void (*exit)(struct hantro_ctx *ctx);
+	void (*run)(struct hantro_ctx *ctx);
+	void (*done)(struct hantro_ctx *ctx);
+	void (*reset)(struct hantro_ctx *ctx);
+};
 
 /**
- * क्रमागत hantro_enc_fmt - source क्रमmat ID क्रम hardware रेजिस्टरs.
+ * enum hantro_enc_fmt - source format ID for hardware registers.
  *
- * @RK3288_VPU_ENC_FMT_YUV420P: Y/CbCr 4:2:0 planar क्रमmat
- * @RK3288_VPU_ENC_FMT_YUV420SP: Y/CbCr 4:2:0 semi-planar क्रमmat
- * @RK3288_VPU_ENC_FMT_YUYV422: YUV 4:2:2 packed क्रमmat (YUYV)
- * @RK3288_VPU_ENC_FMT_UYVY422: YUV 4:2:2 packed क्रमmat (UYVY)
+ * @RK3288_VPU_ENC_FMT_YUV420P: Y/CbCr 4:2:0 planar format
+ * @RK3288_VPU_ENC_FMT_YUV420SP: Y/CbCr 4:2:0 semi-planar format
+ * @RK3288_VPU_ENC_FMT_YUYV422: YUV 4:2:2 packed format (YUYV)
+ * @RK3288_VPU_ENC_FMT_UYVY422: YUV 4:2:2 packed format (UYVY)
  */
-क्रमागत hantro_enc_fmt अणु
+enum hantro_enc_fmt {
 	RK3288_VPU_ENC_FMT_YUV420P = 0,
 	RK3288_VPU_ENC_FMT_YUV420SP = 1,
 	RK3288_VPU_ENC_FMT_YUYV422 = 2,
 	RK3288_VPU_ENC_FMT_UYVY422 = 3,
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा hantro_variant rk3399_vpu_variant;
-बाह्य स्थिर काष्ठा hantro_variant rk3328_vpu_variant;
-बाह्य स्थिर काष्ठा hantro_variant rk3288_vpu_variant;
-बाह्य स्थिर काष्ठा hantro_variant imx8mq_vpu_variant;
+extern const struct hantro_variant rk3399_vpu_variant;
+extern const struct hantro_variant rk3328_vpu_variant;
+extern const struct hantro_variant rk3288_vpu_variant;
+extern const struct hantro_variant imx8mq_vpu_variant;
 
-बाह्य स्थिर काष्ठा hantro_postproc_regs hantro_g1_postproc_regs;
+extern const struct hantro_postproc_regs hantro_g1_postproc_regs;
 
-बाह्य स्थिर u32 hantro_vp8_dec_mc_filter[8][6];
+extern const u32 hantro_vp8_dec_mc_filter[8][6];
 
-व्योम hantro_watchकरोg(काष्ठा work_काष्ठा *work);
-व्योम hantro_run(काष्ठा hantro_ctx *ctx);
-व्योम hantro_irq_करोne(काष्ठा hantro_dev *vpu,
-		     क्रमागत vb2_buffer_state result);
-व्योम hantro_start_prepare_run(काष्ठा hantro_ctx *ctx);
-व्योम hantro_end_prepare_run(काष्ठा hantro_ctx *ctx);
+void hantro_watchdog(struct work_struct *work);
+void hantro_run(struct hantro_ctx *ctx);
+void hantro_irq_done(struct hantro_dev *vpu,
+		     enum vb2_buffer_state result);
+void hantro_start_prepare_run(struct hantro_ctx *ctx);
+void hantro_end_prepare_run(struct hantro_ctx *ctx);
 
-व्योम hantro_h1_jpeg_enc_run(काष्ठा hantro_ctx *ctx);
-व्योम rk3399_vpu_jpeg_enc_run(काष्ठा hantro_ctx *ctx);
-पूर्णांक hantro_jpeg_enc_init(काष्ठा hantro_ctx *ctx);
-व्योम hantro_jpeg_enc_निकास(काष्ठा hantro_ctx *ctx);
-व्योम hantro_jpeg_enc_करोne(काष्ठा hantro_ctx *ctx);
+void hantro_h1_jpeg_enc_run(struct hantro_ctx *ctx);
+void rk3399_vpu_jpeg_enc_run(struct hantro_ctx *ctx);
+int hantro_jpeg_enc_init(struct hantro_ctx *ctx);
+void hantro_jpeg_enc_exit(struct hantro_ctx *ctx);
+void hantro_jpeg_enc_done(struct hantro_ctx *ctx);
 
-dma_addr_t hantro_h264_get_ref_buf(काष्ठा hantro_ctx *ctx,
-				   अचिन्हित पूर्णांक dpb_idx);
-पूर्णांक hantro_h264_dec_prepare_run(काष्ठा hantro_ctx *ctx);
-व्योम hantro_g1_h264_dec_run(काष्ठा hantro_ctx *ctx);
-पूर्णांक hantro_h264_dec_init(काष्ठा hantro_ctx *ctx);
-व्योम hantro_h264_dec_निकास(काष्ठा hantro_ctx *ctx);
+dma_addr_t hantro_h264_get_ref_buf(struct hantro_ctx *ctx,
+				   unsigned int dpb_idx);
+int hantro_h264_dec_prepare_run(struct hantro_ctx *ctx);
+void hantro_g1_h264_dec_run(struct hantro_ctx *ctx);
+int hantro_h264_dec_init(struct hantro_ctx *ctx);
+void hantro_h264_dec_exit(struct hantro_ctx *ctx);
 
-अटल अंतरभूत माप_प्रकार
-hantro_h264_mv_size(अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height)
-अणु
+static inline size_t
+hantro_h264_mv_size(unsigned int width, unsigned int height)
+{
 	/*
-	 * A decoded 8-bit 4:2:0 NV12 frame may need memory क्रम up to
+	 * A decoded 8-bit 4:2:0 NV12 frame may need memory for up to
 	 * 448 bytes per macroblock with additional 32 bytes on
 	 * multi-core variants.
 	 *
 	 * The H264 decoder needs extra space on the output buffers
-	 * to store motion vectors. This is needed क्रम reference
-	 * frames and only अगर the क्रमmat is non-post-processed NV12.
+	 * to store motion vectors. This is needed for reference
+	 * frames and only if the format is non-post-processed NV12.
 	 *
 	 * Memory layout is as follow:
 	 *
@@ -214,21 +213,21 @@ hantro_h264_mv_size(अचिन्हित पूर्णांक width, अ
 	 * | MC sync          32 bytes |
 	 * +---------------------------+
 	 */
-	वापस 64 * MB_WIDTH(width) * MB_WIDTH(height) + 32;
-पूर्ण
+	return 64 * MB_WIDTH(width) * MB_WIDTH(height) + 32;
+}
 
-व्योम hantro_g1_mpeg2_dec_run(काष्ठा hantro_ctx *ctx);
-व्योम rk3399_vpu_mpeg2_dec_run(काष्ठा hantro_ctx *ctx);
-व्योम hantro_mpeg2_dec_copy_qtable(u8 *qtable,
-	स्थिर काष्ठा v4l2_ctrl_mpeg2_quantization *ctrl);
-पूर्णांक hantro_mpeg2_dec_init(काष्ठा hantro_ctx *ctx);
-व्योम hantro_mpeg2_dec_निकास(काष्ठा hantro_ctx *ctx);
+void hantro_g1_mpeg2_dec_run(struct hantro_ctx *ctx);
+void rk3399_vpu_mpeg2_dec_run(struct hantro_ctx *ctx);
+void hantro_mpeg2_dec_copy_qtable(u8 *qtable,
+	const struct v4l2_ctrl_mpeg2_quantization *ctrl);
+int hantro_mpeg2_dec_init(struct hantro_ctx *ctx);
+void hantro_mpeg2_dec_exit(struct hantro_ctx *ctx);
 
-व्योम hantro_g1_vp8_dec_run(काष्ठा hantro_ctx *ctx);
-व्योम rk3399_vpu_vp8_dec_run(काष्ठा hantro_ctx *ctx);
-पूर्णांक hantro_vp8_dec_init(काष्ठा hantro_ctx *ctx);
-व्योम hantro_vp8_dec_निकास(काष्ठा hantro_ctx *ctx);
-व्योम hantro_vp8_prob_update(काष्ठा hantro_ctx *ctx,
-			    स्थिर काष्ठा v4l2_ctrl_vp8_frame *hdr);
+void hantro_g1_vp8_dec_run(struct hantro_ctx *ctx);
+void rk3399_vpu_vp8_dec_run(struct hantro_ctx *ctx);
+int hantro_vp8_dec_init(struct hantro_ctx *ctx);
+void hantro_vp8_dec_exit(struct hantro_ctx *ctx);
+void hantro_vp8_prob_update(struct hantro_ctx *ctx,
+			    const struct v4l2_ctrl_vp8_frame *hdr);
 
-#पूर्ण_अगर /* HANTRO_HW_H_ */
+#endif /* HANTRO_HW_H_ */

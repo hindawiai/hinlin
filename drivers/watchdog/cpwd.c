@@ -1,530 +1,529 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* cpwd.c - driver implementation क्रम hardware watchकरोg
- * समयrs found on Sun Microप्रणालीs CP1400 and CP1500 boards.
+// SPDX-License-Identifier: GPL-2.0-only
+/* cpwd.c - driver implementation for hardware watchdog
+ * timers found on Sun Microsystems CP1400 and CP1500 boards.
  *
- * This device supports both the generic Linux watchकरोg
- * पूर्णांकerface and Solaris-compatible ioctls as best it is
+ * This device supports both the generic Linux watchdog
+ * interface and Solaris-compatible ioctls as best it is
  * able.
  *
- * NOTE:	CP1400 प्रणालीs appear to have a defective पूर्णांकr_mask
- *			रेजिस्टर on the PLD, preventing the disabling of
- *			समयr पूर्णांकerrupts.  We use a समयr to periodically
- *			reset 'stopped' watchकरोgs on affected platक्रमms.
+ * NOTE:	CP1400 systems appear to have a defective intr_mask
+ *			register on the PLD, preventing the disabling of
+ *			timer interrupts.  We use a timer to periodically
+ *			reset 'stopped' watchdogs on affected platforms.
  *
  * Copyright (c) 2000 Eric Brower (ebrower@usa.net)
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/major.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/major.h>
+#include <linux/miscdevice.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/timer.h>
+#include <linux/compat.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/watchकरोg.h>
+#include <asm/irq.h>
+#include <asm/watchdog.h>
 
-#घोषणा DRIVER_NAME	"cpwd"
+#define DRIVER_NAME	"cpwd"
 
-#घोषणा WD_OBPNAME	"watchdog"
-#घोषणा WD_BADMODEL	"SUNW,501-5336"
-#घोषणा WD_BTIMEOUT	(jअगरfies + (HZ * 1000))
-#घोषणा WD_BLIMIT	0xFFFF
+#define WD_OBPNAME	"watchdog"
+#define WD_BADMODEL	"SUNW,501-5336"
+#define WD_BTIMEOUT	(jiffies + (HZ * 1000))
+#define WD_BLIMIT	0xFFFF
 
-#घोषणा WD0_MINOR	212
-#घोषणा WD1_MINOR	213
-#घोषणा WD2_MINOR	214
+#define WD0_MINOR	212
+#define WD1_MINOR	213
+#define WD2_MINOR	214
 
 /* Internal driver definitions.  */
-#घोषणा WD0_ID			0
-#घोषणा WD1_ID			1
-#घोषणा WD2_ID			2
-#घोषणा WD_NUMDEVS		3
+#define WD0_ID			0
+#define WD1_ID			1
+#define WD2_ID			2
+#define WD_NUMDEVS		3
 
-#घोषणा WD_INTR_OFF		0
-#घोषणा WD_INTR_ON		1
+#define WD_INTR_OFF		0
+#define WD_INTR_ON		1
 
-#घोषणा WD_STAT_INIT	0x01	/* Watchकरोg समयr is initialized	*/
-#घोषणा WD_STAT_BSTOP	0x02	/* Watchकरोg समयr is brokenstopped	*/
-#घोषणा WD_STAT_SVCD	0x04	/* Watchकरोg पूर्णांकerrupt occurred		*/
+#define WD_STAT_INIT	0x01	/* Watchdog timer is initialized	*/
+#define WD_STAT_BSTOP	0x02	/* Watchdog timer is brokenstopped	*/
+#define WD_STAT_SVCD	0x04	/* Watchdog interrupt occurred		*/
 
 /* Register value definitions
  */
-#घोषणा WD0_INTR_MASK	0x01	/* Watchकरोg device पूर्णांकerrupt masks	*/
-#घोषणा WD1_INTR_MASK	0x02
-#घोषणा WD2_INTR_MASK	0x04
+#define WD0_INTR_MASK	0x01	/* Watchdog device interrupt masks	*/
+#define WD1_INTR_MASK	0x02
+#define WD2_INTR_MASK	0x04
 
-#घोषणा WD_S_RUNNING	0x01	/* Watchकरोg device status running	*/
-#घोषणा WD_S_EXPIRED	0x02	/* Watchकरोg device status expired	*/
+#define WD_S_RUNNING	0x01	/* Watchdog device status running	*/
+#define WD_S_EXPIRED	0x02	/* Watchdog device status expired	*/
 
-काष्ठा cpwd अणु
-	व्योम __iomem	*regs;
+struct cpwd {
+	void __iomem	*regs;
 	spinlock_t	lock;
 
-	अचिन्हित पूर्णांक	irq;
+	unsigned int	irq;
 
-	अचिन्हित दीर्घ	समयout;
+	unsigned long	timeout;
 	bool		enabled;
 	bool		reboot;
 	bool		broken;
 	bool		initialized;
 
-	काष्ठा अणु
-		काष्ठा miscdevice	misc;
-		व्योम __iomem		*regs;
-		u8			पूर्णांकr_mask;
+	struct {
+		struct miscdevice	misc;
+		void __iomem		*regs;
+		u8			intr_mask;
 		u8			runstatus;
-		u16			समयout;
-	पूर्ण devs[WD_NUMDEVS];
-पूर्ण;
+		u16			timeout;
+	} devs[WD_NUMDEVS];
+};
 
-अटल DEFINE_MUTEX(cpwd_mutex);
-अटल काष्ठा cpwd *cpwd_device;
+static DEFINE_MUTEX(cpwd_mutex);
+static struct cpwd *cpwd_device;
 
 /* Sun uses Altera PLD EPF8820ATC144-4
- * providing three hardware watchकरोgs:
+ * providing three hardware watchdogs:
  *
- * 1) RIC - sends an पूर्णांकerrupt when triggered
- * 2) XIR - निश्चितs XIR_B_RESET when triggered, resets CPU
- * 3) POR - निश्चितs POR_B_RESET when triggered, resets CPU, backplane, board
+ * 1) RIC - sends an interrupt when triggered
+ * 2) XIR - asserts XIR_B_RESET when triggered, resets CPU
+ * 3) POR - asserts POR_B_RESET when triggered, resets CPU, backplane, board
  *
- *** Timer रेजिस्टर block definition (काष्ठा wd_समयr_regblk)
+ *** Timer register block definition (struct wd_timer_regblk)
  *
- * dcntr and limit रेजिस्टरs (halfword access):
+ * dcntr and limit registers (halfword access):
  * -------------------
  * | 15 | ...| 1 | 0 |
  * -------------------
  * |-  counter val  -|
  * -------------------
- * dcntr -	Current 16-bit करोwncounter value.
- *			When करोwncounter reaches '0' watchकरोg expires.
- *			Reading this रेजिस्टर resets करोwncounter with
+ * dcntr -	Current 16-bit downcounter value.
+ *			When downcounter reaches '0' watchdog expires.
+ *			Reading this register resets downcounter with
  *			'limit' value.
- * limit -	16-bit countकरोwn value in 1/10th second increments.
- *			Writing this रेजिस्टर begins countकरोwn with input value.
- *			Reading from this रेजिस्टर करोes not affect counter.
- * NOTES:	After watchकरोg reset, dcntr and limit contain '1'
+ * limit -	16-bit countdown value in 1/10th second increments.
+ *			Writing this register begins countdown with input value.
+ *			Reading from this register does not affect counter.
+ * NOTES:	After watchdog reset, dcntr and limit contain '1'
  *
- * status रेजिस्टर (byte access):
+ * status register (byte access):
  * ---------------------------
  * | 7 | ... | 2 |  1  |  0  |
  * --------------+------------
  * |-   UNUSED  -| EXP | RUN |
  * ---------------------------
- * status-	Bit 0 - Watchकरोg is running
- *			Bit 1 - Watchकरोg has expired
+ * status-	Bit 0 - Watchdog is running
+ *			Bit 1 - Watchdog has expired
  *
- *** PLD रेजिस्टर block definition (काष्ठा wd_pld_regblk)
+ *** PLD register block definition (struct wd_pld_regblk)
  *
- * पूर्णांकr_mask रेजिस्टर (byte access):
+ * intr_mask register (byte access):
  * ---------------------------------
  * | 7 | ... | 3 |  2  |  1  |  0  |
  * +-------------+------------------
  * |-   UNUSED  -| WD3 | WD2 | WD1 |
  * ---------------------------------
- * WD3 -  1 == Interrupt disabled क्रम watchकरोg 3
- * WD2 -  1 == Interrupt disabled क्रम watchकरोg 2
- * WD1 -  1 == Interrupt disabled क्रम watchकरोg 1
+ * WD3 -  1 == Interrupt disabled for watchdog 3
+ * WD2 -  1 == Interrupt disabled for watchdog 2
+ * WD1 -  1 == Interrupt disabled for watchdog 1
  *
- * pld_status रेजिस्टर (byte access):
+ * pld_status register (byte access):
  * UNKNOWN, MAGICAL MYSTERY REGISTER
  *
  */
-#घोषणा WD_TIMER_REGSZ	16
-#घोषणा WD0_OFF		0
-#घोषणा WD1_OFF		(WD_TIMER_REGSZ * 1)
-#घोषणा WD2_OFF		(WD_TIMER_REGSZ * 2)
-#घोषणा PLD_OFF		(WD_TIMER_REGSZ * 3)
+#define WD_TIMER_REGSZ	16
+#define WD0_OFF		0
+#define WD1_OFF		(WD_TIMER_REGSZ * 1)
+#define WD2_OFF		(WD_TIMER_REGSZ * 2)
+#define PLD_OFF		(WD_TIMER_REGSZ * 3)
 
-#घोषणा WD_DCNTR	0x00
-#घोषणा WD_LIMIT	0x04
-#घोषणा WD_STATUS	0x08
+#define WD_DCNTR	0x00
+#define WD_LIMIT	0x04
+#define WD_STATUS	0x08
 
-#घोषणा PLD_IMASK	(PLD_OFF + 0x00)
-#घोषणा PLD_STATUS	(PLD_OFF + 0x04)
+#define PLD_IMASK	(PLD_OFF + 0x00)
+#define PLD_STATUS	(PLD_OFF + 0x04)
 
-अटल काष्ठा समयr_list cpwd_समयr;
+static struct timer_list cpwd_timer;
 
-अटल पूर्णांक wd0_समयout;
-अटल पूर्णांक wd1_समयout;
-अटल पूर्णांक wd2_समयout;
+static int wd0_timeout;
+static int wd1_timeout;
+static int wd2_timeout;
 
-module_param(wd0_समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(wd0_समयout, "Default watchdog0 timeout in 1/10secs");
-module_param(wd1_समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(wd1_समयout, "Default watchdog1 timeout in 1/10secs");
-module_param(wd2_समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(wd2_समयout, "Default watchdog2 timeout in 1/10secs");
+module_param(wd0_timeout, int, 0);
+MODULE_PARM_DESC(wd0_timeout, "Default watchdog0 timeout in 1/10secs");
+module_param(wd1_timeout, int, 0);
+MODULE_PARM_DESC(wd1_timeout, "Default watchdog1 timeout in 1/10secs");
+module_param(wd2_timeout, int, 0);
+MODULE_PARM_DESC(wd2_timeout, "Default watchdog2 timeout in 1/10secs");
 
 MODULE_AUTHOR("Eric Brower <ebrower@usa.net>");
 MODULE_DESCRIPTION("Hardware watchdog driver for Sun Microsystems CP1400/1500");
 MODULE_LICENSE("GPL");
 
-अटल व्योम cpwd_ग_लिखोw(u16 val, व्योम __iomem *addr)
-अणु
-	ग_लिखोw(cpu_to_le16(val), addr);
-पूर्ण
-अटल u16 cpwd_पढ़ोw(व्योम __iomem *addr)
-अणु
-	u16 val = पढ़ोw(addr);
+static void cpwd_writew(u16 val, void __iomem *addr)
+{
+	writew(cpu_to_le16(val), addr);
+}
+static u16 cpwd_readw(void __iomem *addr)
+{
+	u16 val = readw(addr);
 
-	वापस le16_to_cpu(val);
-पूर्ण
+	return le16_to_cpu(val);
+}
 
-अटल व्योम cpwd_ग_लिखोb(u8 val, व्योम __iomem *addr)
-अणु
-	ग_लिखोb(val, addr);
-पूर्ण
+static void cpwd_writeb(u8 val, void __iomem *addr)
+{
+	writeb(val, addr);
+}
 
-अटल u8 cpwd_पढ़ोb(व्योम __iomem *addr)
-अणु
-	वापस पढ़ोb(addr);
-पूर्ण
+static u8 cpwd_readb(void __iomem *addr)
+{
+	return readb(addr);
+}
 
-/* Enable or disable watchकरोg पूर्णांकerrupts
+/* Enable or disable watchdog interrupts
  * Because of the CP1400 defect this should only be
- * called during initialzation or by wd_[start|stop]समयr()
+ * called during initialzation or by wd_[start|stop]timer()
  *
- * index	- sub-device index, or -1 क्रम 'all'
- * enable	- non-zero to enable पूर्णांकerrupts, zero to disable
+ * index	- sub-device index, or -1 for 'all'
+ * enable	- non-zero to enable interrupts, zero to disable
  */
-अटल व्योम cpwd_toggleपूर्णांकr(काष्ठा cpwd *p, पूर्णांक index, पूर्णांक enable)
-अणु
-	अचिन्हित अक्षर curregs = cpwd_पढ़ोb(p->regs + PLD_IMASK);
-	अचिन्हित अक्षर setregs =
+static void cpwd_toggleintr(struct cpwd *p, int index, int enable)
+{
+	unsigned char curregs = cpwd_readb(p->regs + PLD_IMASK);
+	unsigned char setregs =
 		(index == -1) ?
 		(WD0_INTR_MASK | WD1_INTR_MASK | WD2_INTR_MASK) :
-		(p->devs[index].पूर्णांकr_mask);
+		(p->devs[index].intr_mask);
 
-	अगर (enable == WD_INTR_ON)
+	if (enable == WD_INTR_ON)
 		curregs &= ~setregs;
-	अन्यथा
+	else
 		curregs |= setregs;
 
-	cpwd_ग_लिखोb(curregs, p->regs + PLD_IMASK);
-पूर्ण
+	cpwd_writeb(curregs, p->regs + PLD_IMASK);
+}
 
-/* Restarts समयr with maximum limit value and
- * करोes not unset 'brokenstop' value.
+/* Restarts timer with maximum limit value and
+ * does not unset 'brokenstop' value.
  */
-अटल व्योम cpwd_resetbrokenसमयr(काष्ठा cpwd *p, पूर्णांक index)
-अणु
-	cpwd_toggleपूर्णांकr(p, index, WD_INTR_ON);
-	cpwd_ग_लिखोw(WD_BLIMIT, p->devs[index].regs + WD_LIMIT);
-पूर्ण
+static void cpwd_resetbrokentimer(struct cpwd *p, int index)
+{
+	cpwd_toggleintr(p, index, WD_INTR_ON);
+	cpwd_writew(WD_BLIMIT, p->devs[index].regs + WD_LIMIT);
+}
 
-/* Timer method called to reset stopped watchकरोgs--
+/* Timer method called to reset stopped watchdogs--
  * because of the PLD bug on CP1400, we cannot mask
- * पूर्णांकerrupts within the PLD so me must continually
- * reset the समयrs ad infinitum.
+ * interrupts within the PLD so me must continually
+ * reset the timers ad infinitum.
  */
-अटल व्योम cpwd_brokenसमयr(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा cpwd *p = cpwd_device;
-	पूर्णांक id, tripped = 0;
+static void cpwd_brokentimer(struct timer_list *unused)
+{
+	struct cpwd *p = cpwd_device;
+	int id, tripped = 0;
 
-	/* समाप्त a running समयr instance, in हाल we
-	 * were called directly instead of by kernel समयr
+	/* kill a running timer instance, in case we
+	 * were called directly instead of by kernel timer
 	 */
-	अगर (समयr_pending(&cpwd_समयr))
-		del_समयr(&cpwd_समयr);
+	if (timer_pending(&cpwd_timer))
+		del_timer(&cpwd_timer);
 
-	क्रम (id = 0; id < WD_NUMDEVS; id++) अणु
-		अगर (p->devs[id].runstatus & WD_STAT_BSTOP) अणु
+	for (id = 0; id < WD_NUMDEVS; id++) {
+		if (p->devs[id].runstatus & WD_STAT_BSTOP) {
 			++tripped;
-			cpwd_resetbrokenसमयr(p, id);
-		पूर्ण
-	पूर्ण
+			cpwd_resetbrokentimer(p, id);
+		}
+	}
 
-	अगर (tripped) अणु
-		/* there is at least one समयr brokenstopped-- reschedule */
-		cpwd_समयr.expires = WD_BTIMEOUT;
-		add_समयr(&cpwd_समयr);
-	पूर्ण
-पूर्ण
+	if (tripped) {
+		/* there is at least one timer brokenstopped-- reschedule */
+		cpwd_timer.expires = WD_BTIMEOUT;
+		add_timer(&cpwd_timer);
+	}
+}
 
-/* Reset countकरोwn समयr with 'limit' value and जारी countकरोwn.
- * This will not start a stopped समयr.
+/* Reset countdown timer with 'limit' value and continue countdown.
+ * This will not start a stopped timer.
  */
-अटल व्योम cpwd_pingसमयr(काष्ठा cpwd *p, पूर्णांक index)
-अणु
-	अगर (cpwd_पढ़ोb(p->devs[index].regs + WD_STATUS) & WD_S_RUNNING)
-		cpwd_पढ़ोw(p->devs[index].regs + WD_DCNTR);
-पूर्ण
+static void cpwd_pingtimer(struct cpwd *p, int index)
+{
+	if (cpwd_readb(p->devs[index].regs + WD_STATUS) & WD_S_RUNNING)
+		cpwd_readw(p->devs[index].regs + WD_DCNTR);
+}
 
-/* Stop a running watchकरोg समयr-- the समयr actually keeps
- * running, but the पूर्णांकerrupt is masked so that no action is
+/* Stop a running watchdog timer-- the timer actually keeps
+ * running, but the interrupt is masked so that no action is
  * taken upon expiration.
  */
-अटल व्योम cpwd_stopसमयr(काष्ठा cpwd *p, पूर्णांक index)
-अणु
-	अगर (cpwd_पढ़ोb(p->devs[index].regs + WD_STATUS) & WD_S_RUNNING) अणु
-		cpwd_toggleपूर्णांकr(p, index, WD_INTR_OFF);
+static void cpwd_stoptimer(struct cpwd *p, int index)
+{
+	if (cpwd_readb(p->devs[index].regs + WD_STATUS) & WD_S_RUNNING) {
+		cpwd_toggleintr(p, index, WD_INTR_OFF);
 
-		अगर (p->broken) अणु
+		if (p->broken) {
 			p->devs[index].runstatus |= WD_STAT_BSTOP;
-			cpwd_brokenसमयr(शून्य);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			cpwd_brokentimer(NULL);
+		}
+	}
+}
 
-/* Start a watchकरोg समयr with the specअगरied limit value
- * If the watchकरोg is running, it will be restarted with
+/* Start a watchdog timer with the specified limit value
+ * If the watchdog is running, it will be restarted with
  * the provided limit value.
  *
- * This function will enable पूर्णांकerrupts on the specअगरied
- * watchकरोg.
+ * This function will enable interrupts on the specified
+ * watchdog.
  */
-अटल व्योम cpwd_startसमयr(काष्ठा cpwd *p, पूर्णांक index)
-अणु
-	अगर (p->broken)
+static void cpwd_starttimer(struct cpwd *p, int index)
+{
+	if (p->broken)
 		p->devs[index].runstatus &= ~WD_STAT_BSTOP;
 
 	p->devs[index].runstatus &= ~WD_STAT_SVCD;
 
-	cpwd_ग_लिखोw(p->devs[index].समयout, p->devs[index].regs + WD_LIMIT);
-	cpwd_toggleपूर्णांकr(p, index, WD_INTR_ON);
-पूर्ण
+	cpwd_writew(p->devs[index].timeout, p->devs[index].regs + WD_LIMIT);
+	cpwd_toggleintr(p, index, WD_INTR_ON);
+}
 
-अटल पूर्णांक cpwd_माला_लोtatus(काष्ठा cpwd *p, पूर्णांक index)
-अणु
-	अचिन्हित अक्षर stat = cpwd_पढ़ोb(p->devs[index].regs + WD_STATUS);
-	अचिन्हित अक्षर पूर्णांकr = cpwd_पढ़ोb(p->devs[index].regs + PLD_IMASK);
-	अचिन्हित अक्षर ret  = WD_STOPPED;
+static int cpwd_getstatus(struct cpwd *p, int index)
+{
+	unsigned char stat = cpwd_readb(p->devs[index].regs + WD_STATUS);
+	unsigned char intr = cpwd_readb(p->devs[index].regs + PLD_IMASK);
+	unsigned char ret  = WD_STOPPED;
 
 	/* determine STOPPED */
-	अगर (!stat)
-		वापस ret;
+	if (!stat)
+		return ret;
 
 	/* determine EXPIRED vs FREERUN vs RUNNING */
-	अन्यथा अगर (WD_S_EXPIRED & stat) अणु
+	else if (WD_S_EXPIRED & stat) {
 		ret = WD_EXPIRED;
-	पूर्ण अन्यथा अगर (WD_S_RUNNING & stat) अणु
-		अगर (पूर्णांकr & p->devs[index].पूर्णांकr_mask) अणु
+	} else if (WD_S_RUNNING & stat) {
+		if (intr & p->devs[index].intr_mask) {
 			ret = WD_FREERUN;
-		पूर्ण अन्यथा अणु
-			/* Fudge WD_EXPIRED status क्रम defective CP1400--
-			 * IF समयr is running
+		} else {
+			/* Fudge WD_EXPIRED status for defective CP1400--
+			 * IF timer is running
 			 *	AND brokenstop is set
-			 *	AND an पूर्णांकerrupt has been serviced
+			 *	AND an interrupt has been serviced
 			 * we are WD_EXPIRED.
 			 *
-			 * IF समयr is running
+			 * IF timer is running
 			 *	AND brokenstop is set
-			 *	AND no पूर्णांकerrupt has been serviced
+			 *	AND no interrupt has been serviced
 			 * we are WD_FREERUN.
 			 */
-			अगर (p->broken &&
-			    (p->devs[index].runstatus & WD_STAT_BSTOP)) अणु
-				अगर (p->devs[index].runstatus & WD_STAT_SVCD) अणु
+			if (p->broken &&
+			    (p->devs[index].runstatus & WD_STAT_BSTOP)) {
+				if (p->devs[index].runstatus & WD_STAT_SVCD) {
 					ret = WD_EXPIRED;
-				पूर्ण अन्यथा अणु
+				} else {
 					/* we could as well pretend
 					 * we are expired */
 					ret = WD_FREERUN;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				ret = WD_RUNNING;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* determine SERVICED */
-	अगर (p->devs[index].runstatus & WD_STAT_SVCD)
+	if (p->devs[index].runstatus & WD_STAT_SVCD)
 		ret |= WD_SERVICED;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t cpwd_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा cpwd *p = dev_id;
+static irqreturn_t cpwd_interrupt(int irq, void *dev_id)
+{
+	struct cpwd *p = dev_id;
 
-	/* Only WD0 will पूर्णांकerrupt-- others are NMI and we won't
+	/* Only WD0 will interrupt-- others are NMI and we won't
 	 * see them here....
 	 */
 	spin_lock_irq(&p->lock);
 
-	cpwd_stopसमयr(p, WD0_ID);
+	cpwd_stoptimer(p, WD0_ID);
 	p->devs[WD0_ID].runstatus |=  WD_STAT_SVCD;
 
 	spin_unlock_irq(&p->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक cpwd_खोलो(काष्ठा inode *inode, काष्ठा file *f)
-अणु
-	काष्ठा cpwd *p = cpwd_device;
+static int cpwd_open(struct inode *inode, struct file *f)
+{
+	struct cpwd *p = cpwd_device;
 
 	mutex_lock(&cpwd_mutex);
-	चयन (iminor(inode)) अणु
-	हाल WD0_MINOR:
-	हाल WD1_MINOR:
-	हाल WD2_MINOR:
-		अवरोध;
+	switch (iminor(inode)) {
+	case WD0_MINOR:
+	case WD1_MINOR:
+	case WD2_MINOR:
+		break;
 
-	शेष:
+	default:
 		mutex_unlock(&cpwd_mutex);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Register IRQ on first खोलो of device */
-	अगर (!p->initialized) अणु
-		अगर (request_irq(p->irq, &cpwd_पूर्णांकerrupt,
-				IRQF_SHARED, DRIVER_NAME, p)) अणु
+	/* Register IRQ on first open of device */
+	if (!p->initialized) {
+		if (request_irq(p->irq, &cpwd_interrupt,
+				IRQF_SHARED, DRIVER_NAME, p)) {
 			pr_err("Cannot register IRQ %d\n", p->irq);
 			mutex_unlock(&cpwd_mutex);
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		p->initialized = true;
-	पूर्ण
+	}
 
 	mutex_unlock(&cpwd_mutex);
 
-	वापस stream_खोलो(inode, f);
-पूर्ण
+	return stream_open(inode, f);
+}
 
-अटल पूर्णांक cpwd_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int cpwd_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल दीर्घ cpwd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अटल स्थिर काष्ठा watchकरोg_info info = अणु
+static long cpwd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	static const struct watchdog_info info = {
 		.options		= WDIOF_SETTIMEOUT,
 		.firmware_version	= 1,
 		.identity		= DRIVER_NAME,
-	पूर्ण;
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक index = iminor(inode) - WD0_MINOR;
-	काष्ठा cpwd *p = cpwd_device;
-	पूर्णांक setopt = 0;
+	};
+	void __user *argp = (void __user *)arg;
+	struct inode *inode = file_inode(file);
+	int index = iminor(inode) - WD0_MINOR;
+	struct cpwd *p = cpwd_device;
+	int setopt = 0;
 
-	चयन (cmd) अणु
+	switch (cmd) {
 	/* Generic Linux IOCTLs */
-	हाल WDIOC_GETSUPPORT:
-		अगर (copy_to_user(argp, &info, माप(काष्ठा watchकरोg_info)))
-			वापस -EFAULT;
-		अवरोध;
+	case WDIOC_GETSUPPORT:
+		if (copy_to_user(argp, &info, sizeof(struct watchdog_info)))
+			return -EFAULT;
+		break;
 
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		अगर (put_user(0, (पूर्णांक __user *)argp))
-			वापस -EFAULT;
-		अवरोध;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		if (put_user(0, (int __user *)argp))
+			return -EFAULT;
+		break;
 
-	हाल WDIOC_KEEPALIVE:
-		cpwd_pingसमयr(p, index);
-		अवरोध;
+	case WDIOC_KEEPALIVE:
+		cpwd_pingtimer(p, index);
+		break;
 
-	हाल WDIOC_SETOPTIONS:
-		अगर (copy_from_user(&setopt, argp, माप(अचिन्हित पूर्णांक)))
-			वापस -EFAULT;
+	case WDIOC_SETOPTIONS:
+		if (copy_from_user(&setopt, argp, sizeof(unsigned int)))
+			return -EFAULT;
 
-		अगर (setopt & WDIOS_DISABLECARD) अणु
-			अगर (p->enabled)
-				वापस -EINVAL;
-			cpwd_stopसमयr(p, index);
-		पूर्ण अन्यथा अगर (setopt & WDIOS_ENABLECARD) अणु
-			cpwd_startसमयr(p, index);
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+		if (setopt & WDIOS_DISABLECARD) {
+			if (p->enabled)
+				return -EINVAL;
+			cpwd_stoptimer(p, index);
+		} else if (setopt & WDIOS_ENABLECARD) {
+			cpwd_starttimer(p, index);
+		} else {
+			return -EINVAL;
+		}
+		break;
 
 	/* Solaris-compatible IOCTLs */
-	हाल WIOCGSTAT:
-		setopt = cpwd_माला_लोtatus(p, index);
-		अगर (copy_to_user(argp, &setopt, माप(अचिन्हित पूर्णांक)))
-			वापस -EFAULT;
-		अवरोध;
+	case WIOCGSTAT:
+		setopt = cpwd_getstatus(p, index);
+		if (copy_to_user(argp, &setopt, sizeof(unsigned int)))
+			return -EFAULT;
+		break;
 
-	हाल WIOCSTART:
-		cpwd_startसमयr(p, index);
-		अवरोध;
+	case WIOCSTART:
+		cpwd_starttimer(p, index);
+		break;
 
-	हाल WIOCSTOP:
-		अगर (p->enabled)
-			वापस -EINVAL;
+	case WIOCSTOP:
+		if (p->enabled)
+			return -EINVAL;
 
-		cpwd_stopसमयr(p, index);
-		अवरोध;
+		cpwd_stoptimer(p, index);
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ cpwd_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस cpwd_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
+static long cpwd_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	return cpwd_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+}
 
-अटल sमाप_प्रकार cpwd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा cpwd *p = cpwd_device;
-	पूर्णांक index = iminor(inode);
+static ssize_t cpwd_write(struct file *file, const char __user *buf,
+			  size_t count, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	struct cpwd *p = cpwd_device;
+	int index = iminor(inode);
 
-	अगर (count) अणु
-		cpwd_pingसमयr(p, index);
-		वापस 1;
-	पूर्ण
+	if (count) {
+		cpwd_pingtimer(p, index);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार cpwd_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	वापस -EINVAL;
-पूर्ण
+static ssize_t cpwd_read(struct file *file, char __user *buffer,
+			 size_t count, loff_t *ppos)
+{
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा file_operations cpwd_fops = अणु
+static const struct file_operations cpwd_fops = {
 	.owner =		THIS_MODULE,
 	.unlocked_ioctl =	cpwd_ioctl,
 	.compat_ioctl =		cpwd_compat_ioctl,
-	.खोलो =			cpwd_खोलो,
-	.ग_लिखो =		cpwd_ग_लिखो,
-	.पढ़ो =			cpwd_पढ़ो,
+	.open =			cpwd_open,
+	.write =		cpwd_write,
+	.read =			cpwd_read,
 	.release =		cpwd_release,
 	.llseek =		no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक cpwd_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *options;
-	स्थिर अक्षर *str_prop;
-	स्थिर व्योम *prop_val;
-	पूर्णांक i, err = -EINVAL;
-	काष्ठा cpwd *p;
+static int cpwd_probe(struct platform_device *op)
+{
+	struct device_node *options;
+	const char *str_prop;
+	const void *prop_val;
+	int i, err = -EINVAL;
+	struct cpwd *p;
 
-	अगर (cpwd_device)
-		वापस -EINVAL;
+	if (cpwd_device)
+		return -EINVAL;
 
-	p = devm_kzalloc(&op->dev, माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	p = devm_kzalloc(&op->dev, sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
 
 	p->irq = op->archdata.irqs[0];
 
@@ -532,132 +531,132 @@ MODULE_LICENSE("GPL");
 
 	p->regs = of_ioremap(&op->resource[0], 0,
 			     4 * WD_TIMER_REGSZ, DRIVER_NAME);
-	अगर (!p->regs) अणु
+	if (!p->regs) {
 		pr_err("Unable to map registers\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	options = of_find_node_by_path("/options");
-	अगर (!options) अणु
+	if (!options) {
 		err = -ENODEV;
 		pr_err("Unable to find /options node\n");
-		जाओ out_iounmap;
-	पूर्ण
+		goto out_iounmap;
+	}
 
-	prop_val = of_get_property(options, "watchdog-enable?", शून्य);
+	prop_val = of_get_property(options, "watchdog-enable?", NULL);
 	p->enabled = (prop_val ? true : false);
 
-	prop_val = of_get_property(options, "watchdog-reboot?", शून्य);
+	prop_val = of_get_property(options, "watchdog-reboot?", NULL);
 	p->reboot = (prop_val ? true : false);
 
-	str_prop = of_get_property(options, "watchdog-timeout", शून्य);
-	अगर (str_prop)
-		p->समयout = simple_म_से_अदीर्घ(str_prop, शून्य, 10);
+	str_prop = of_get_property(options, "watchdog-timeout", NULL);
+	if (str_prop)
+		p->timeout = simple_strtoul(str_prop, NULL, 10);
 
 	of_node_put(options);
 
 	/* CP1400s seem to have broken PLD implementations-- the
-	 * पूर्णांकerrupt_mask रेजिस्टर cannot be written, so no समयr
-	 * पूर्णांकerrupts can be masked within the PLD.
+	 * interrupt_mask register cannot be written, so no timer
+	 * interrupts can be masked within the PLD.
 	 */
-	str_prop = of_get_property(op->dev.of_node, "model", शून्य);
-	p->broken = (str_prop && !म_भेद(str_prop, WD_BADMODEL));
+	str_prop = of_get_property(op->dev.of_node, "model", NULL);
+	p->broken = (str_prop && !strcmp(str_prop, WD_BADMODEL));
 
-	अगर (!p->enabled)
-		cpwd_toggleपूर्णांकr(p, -1, WD_INTR_OFF);
+	if (!p->enabled)
+		cpwd_toggleintr(p, -1, WD_INTR_OFF);
 
-	क्रम (i = 0; i < WD_NUMDEVS; i++) अणु
-		अटल स्थिर अक्षर *cpwd_names[] = अणु "RIC", "XIR", "POR" पूर्ण;
-		अटल पूर्णांक *parms[] = अणु &wd0_समयout,
-					&wd1_समयout,
-					&wd2_समयout पूर्ण;
-		काष्ठा miscdevice *mp = &p->devs[i].misc;
+	for (i = 0; i < WD_NUMDEVS; i++) {
+		static const char *cpwd_names[] = { "RIC", "XIR", "POR" };
+		static int *parms[] = { &wd0_timeout,
+					&wd1_timeout,
+					&wd2_timeout };
+		struct miscdevice *mp = &p->devs[i].misc;
 
 		mp->minor = WD0_MINOR + i;
 		mp->name = cpwd_names[i];
 		mp->fops = &cpwd_fops;
 
 		p->devs[i].regs = p->regs + (i * WD_TIMER_REGSZ);
-		p->devs[i].पूर्णांकr_mask = (WD0_INTR_MASK << i);
+		p->devs[i].intr_mask = (WD0_INTR_MASK << i);
 		p->devs[i].runstatus &= ~WD_STAT_BSTOP;
 		p->devs[i].runstatus |= WD_STAT_INIT;
-		p->devs[i].समयout = p->समयout;
-		अगर (*parms[i])
-			p->devs[i].समयout = *parms[i];
+		p->devs[i].timeout = p->timeout;
+		if (*parms[i])
+			p->devs[i].timeout = *parms[i];
 
-		err = misc_रेजिस्टर(&p->devs[i].misc);
-		अगर (err) अणु
+		err = misc_register(&p->devs[i].misc);
+		if (err) {
 			pr_err("Could not register misc device for dev %d\n",
 			       i);
-			जाओ out_unरेजिस्टर;
-		पूर्ण
-	पूर्ण
+			goto out_unregister;
+		}
+	}
 
-	अगर (p->broken) अणु
-		समयr_setup(&cpwd_समयr, cpwd_brokenसमयr, 0);
-		cpwd_समयr.expires	= WD_BTIMEOUT;
+	if (p->broken) {
+		timer_setup(&cpwd_timer, cpwd_brokentimer, 0);
+		cpwd_timer.expires	= WD_BTIMEOUT;
 
 		pr_info("PLD defect workaround enabled for model %s\n",
 			WD_BADMODEL);
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(op, p);
+	platform_set_drvdata(op, p);
 	cpwd_device = p;
-	वापस 0;
+	return 0;
 
-out_unरेजिस्टर:
-	क्रम (i--; i >= 0; i--)
-		misc_deरेजिस्टर(&p->devs[i].misc);
+out_unregister:
+	for (i--; i >= 0; i--)
+		misc_deregister(&p->devs[i].misc);
 
 out_iounmap:
 	of_iounmap(&op->resource[0], p->regs, 4 * WD_TIMER_REGSZ);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cpwd_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा cpwd *p = platक्रमm_get_drvdata(op);
-	पूर्णांक i;
+static int cpwd_remove(struct platform_device *op)
+{
+	struct cpwd *p = platform_get_drvdata(op);
+	int i;
 
-	क्रम (i = 0; i < WD_NUMDEVS; i++) अणु
-		misc_deरेजिस्टर(&p->devs[i].misc);
+	for (i = 0; i < WD_NUMDEVS; i++) {
+		misc_deregister(&p->devs[i].misc);
 
-		अगर (!p->enabled) अणु
-			cpwd_stopसमयr(p, i);
-			अगर (p->devs[i].runstatus & WD_STAT_BSTOP)
-				cpwd_resetbrokenसमयr(p, i);
-		पूर्ण
-	पूर्ण
+		if (!p->enabled) {
+			cpwd_stoptimer(p, i);
+			if (p->devs[i].runstatus & WD_STAT_BSTOP)
+				cpwd_resetbrokentimer(p, i);
+		}
+	}
 
-	अगर (p->broken)
-		del_समयr_sync(&cpwd_समयr);
+	if (p->broken)
+		del_timer_sync(&cpwd_timer);
 
-	अगर (p->initialized)
-		मुक्त_irq(p->irq, p);
+	if (p->initialized)
+		free_irq(p->irq, p);
 
 	of_iounmap(&op->resource[0], p->regs, 4 * WD_TIMER_REGSZ);
 
-	cpwd_device = शून्य;
+	cpwd_device = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cpwd_match[] = अणु
-	अणु
+static const struct of_device_id cpwd_match[] = {
+	{
 		.name = "watchdog",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, cpwd_match);
 
-अटल काष्ठा platक्रमm_driver cpwd_driver = अणु
-	.driver = अणु
+static struct platform_driver cpwd_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = cpwd_match,
-	पूर्ण,
+	},
 	.probe		= cpwd_probe,
-	.हटाओ		= cpwd_हटाओ,
-पूर्ण;
+	.remove		= cpwd_remove,
+};
 
-module_platक्रमm_driver(cpwd_driver);
+module_platform_driver(cpwd_driver);

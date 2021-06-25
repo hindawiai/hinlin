@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Buddha, Catweasel and X-Surf PATA controller driver
@@ -12,209 +11,209 @@
  *	Copyright (C) 1997, 2001 by Geert Uytterhoeven and others
  */
 
-#समावेश <linux/ata.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/zorro.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/ata.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/libata.h>
+#include <linux/mm.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/zorro.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_host.h>
 
-#समावेश <यंत्र/amigahw.h>
-#समावेश <यंत्र/amigaपूर्णांकs.h>
-#समावेश <यंत्र/ide.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/amigahw.h>
+#include <asm/amigaints.h>
+#include <asm/ide.h>
+#include <asm/setup.h>
 
-#घोषणा DRV_NAME "pata_buddha"
-#घोषणा DRV_VERSION "0.1.1"
+#define DRV_NAME "pata_buddha"
+#define DRV_VERSION "0.1.1"
 
-#घोषणा BUDDHA_BASE1	0x800
-#घोषणा BUDDHA_BASE2	0xa00
-#घोषणा BUDDHA_BASE3	0xc00
-#घोषणा XSURF_BASE1	0xb000 /* 2.5" पूर्णांकerface */
-#घोषणा XSURF_BASE2	0xd000 /* 3.5" पूर्णांकerface */
-#घोषणा BUDDHA_CONTROL	0x11a
-#घोषणा BUDDHA_IRQ	0xf00
-#घोषणा XSURF_IRQ	0x7e
-#घोषणा BUDDHA_IRQ_MR	0xfc0	/* master पूर्णांकerrupt enable */
+#define BUDDHA_BASE1	0x800
+#define BUDDHA_BASE2	0xa00
+#define BUDDHA_BASE3	0xc00
+#define XSURF_BASE1	0xb000 /* 2.5" interface */
+#define XSURF_BASE2	0xd000 /* 3.5" interface */
+#define BUDDHA_CONTROL	0x11a
+#define BUDDHA_IRQ	0xf00
+#define XSURF_IRQ	0x7e
+#define BUDDHA_IRQ_MR	0xfc0	/* master interrupt enable */
 
-क्रमागत अणु
+enum {
 	BOARD_BUDDHA = 0,
 	BOARD_CATWEASEL,
 	BOARD_XSURF
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक buddha_bases[3] = अणु
+static unsigned int buddha_bases[3] = {
 	BUDDHA_BASE1, BUDDHA_BASE2, BUDDHA_BASE3
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक xsurf_bases[2] = अणु
+static unsigned int xsurf_bases[2] = {
 	XSURF_BASE1, XSURF_BASE2
-पूर्ण;
+};
 
-अटल काष्ठा scsi_host_ढाँचा pata_buddha_sht = अणु
+static struct scsi_host_template pata_buddha_sht = {
 	ATA_PIO_SHT(DRV_NAME),
-पूर्ण;
+};
 
 /* FIXME: is this needed? */
-अटल अचिन्हित पूर्णांक pata_buddha_data_xfer(काष्ठा ata_queued_cmd *qc,
-					 अचिन्हित अक्षर *buf,
-					 अचिन्हित पूर्णांक buflen, पूर्णांक rw)
-अणु
-	काष्ठा ata_device *dev = qc->dev;
-	काष्ठा ata_port *ap = dev->link->ap;
-	व्योम __iomem *data_addr = ap->ioaddr.data_addr;
-	अचिन्हित पूर्णांक words = buflen >> 1;
+static unsigned int pata_buddha_data_xfer(struct ata_queued_cmd *qc,
+					 unsigned char *buf,
+					 unsigned int buflen, int rw)
+{
+	struct ata_device *dev = qc->dev;
+	struct ata_port *ap = dev->link->ap;
+	void __iomem *data_addr = ap->ioaddr.data_addr;
+	unsigned int words = buflen >> 1;
 
 	/* Transfer multiple of 2 bytes */
-	अगर (rw == READ)
+	if (rw == READ)
 		raw_insw((u16 *)data_addr, (u16 *)buf, words);
-	अन्यथा
+	else
 		raw_outsw((u16 *)data_addr, (u16 *)buf, words);
 
-	/* Transfer trailing byte, अगर any. */
-	अगर (unlikely(buflen & 0x01)) अणु
-		अचिन्हित अक्षर pad[2] = अणु पूर्ण;
+	/* Transfer trailing byte, if any. */
+	if (unlikely(buflen & 0x01)) {
+		unsigned char pad[2] = { };
 
-		/* Poपूर्णांक buf to the tail of buffer */
+		/* Point buf to the tail of buffer */
 		buf += buflen - 1;
 
-		अगर (rw == READ) अणु
+		if (rw == READ) {
 			raw_insw((u16 *)data_addr, (u16 *)pad, 1);
 			*buf = pad[0];
-		पूर्ण अन्यथा अणु
+		} else {
 			pad[0] = *buf;
 			raw_outsw((u16 *)data_addr, (u16 *)pad, 1);
-		पूर्ण
+		}
 		words++;
-	पूर्ण
+	}
 
-	वापस words << 1;
-पूर्ण
+	return words << 1;
+}
 
 /*
- * Provide our own set_mode() as we करोn't want to change anything that has
- * alपढ़ोy been configured..
+ * Provide our own set_mode() as we don't want to change anything that has
+ * already been configured..
  */
-अटल पूर्णांक pata_buddha_set_mode(काष्ठा ata_link *link,
-				काष्ठा ata_device **unused)
-अणु
-	काष्ठा ata_device *dev;
+static int pata_buddha_set_mode(struct ata_link *link,
+				struct ata_device **unused)
+{
+	struct ata_device *dev;
 
-	ata_क्रम_each_dev(dev, link, ENABLED) अणु
-		/* We करोn't really care */
+	ata_for_each_dev(dev, link, ENABLED) {
+		/* We don't really care */
 		dev->pio_mode = dev->xfer_mode = XFER_PIO_0;
-		dev->xfer_shअगरt = ATA_SHIFT_PIO;
+		dev->xfer_shift = ATA_SHIFT_PIO;
 		dev->flags |= ATA_DFLAG_PIO;
 		ata_dev_info(dev, "configured for PIO\n");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल bool pata_buddha_irq_check(काष्ठा ata_port *ap)
-अणु
+static bool pata_buddha_irq_check(struct ata_port *ap)
+{
 	u8 ch;
 
-	ch = z_पढ़ोb((अचिन्हित दीर्घ)ap->निजी_data);
+	ch = z_readb((unsigned long)ap->private_data);
 
-	वापस !!(ch & 0x80);
-पूर्ण
+	return !!(ch & 0x80);
+}
 
-अटल व्योम pata_xsurf_irq_clear(काष्ठा ata_port *ap)
-अणु
-	z_ग_लिखोb(0, (अचिन्हित दीर्घ)ap->निजी_data);
-पूर्ण
+static void pata_xsurf_irq_clear(struct ata_port *ap)
+{
+	z_writeb(0, (unsigned long)ap->private_data);
+}
 
-अटल काष्ठा ata_port_operations pata_buddha_ops = अणु
+static struct ata_port_operations pata_buddha_ops = {
 	.inherits	= &ata_sff_port_ops,
 	.sff_data_xfer	= pata_buddha_data_xfer,
 	.sff_irq_check	= pata_buddha_irq_check,
 	.cable_detect	= ata_cable_unknown,
 	.set_mode	= pata_buddha_set_mode,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations pata_xsurf_ops = अणु
+static struct ata_port_operations pata_xsurf_ops = {
 	.inherits	= &ata_sff_port_ops,
 	.sff_data_xfer	= pata_buddha_data_xfer,
 	.sff_irq_check	= pata_buddha_irq_check,
 	.sff_irq_clear	= pata_xsurf_irq_clear,
 	.cable_detect	= ata_cable_unknown,
 	.set_mode	= pata_buddha_set_mode,
-पूर्ण;
+};
 
-अटल पूर्णांक pata_buddha_probe(काष्ठा zorro_dev *z,
-			     स्थिर काष्ठा zorro_device_id *ent)
-अणु
-	अटल स्थिर अक्षर * स्थिर board_name[] = अणु
+static int pata_buddha_probe(struct zorro_dev *z,
+			     const struct zorro_device_id *ent)
+{
+	static const char * const board_name[] = {
 		"Buddha", "Catweasel", "X-Surf"
-	पूर्ण;
-	काष्ठा ata_host *host;
-	व्योम __iomem *buddha_board;
-	अचिन्हित दीर्घ board;
-	अचिन्हित पूर्णांक type = ent->driver_data;
-	अचिन्हित पूर्णांक nr_ports = (type == BOARD_CATWEASEL) ? 3 : 2;
-	व्योम *old_drvdata;
-	पूर्णांक i;
+	};
+	struct ata_host *host;
+	void __iomem *buddha_board;
+	unsigned long board;
+	unsigned int type = ent->driver_data;
+	unsigned int nr_ports = (type == BOARD_CATWEASEL) ? 3 : 2;
+	void *old_drvdata;
+	int i;
 
 	dev_info(&z->dev, "%s IDE controller\n", board_name[type]);
 
 	board = z->resource.start;
 
-	अगर (type != BOARD_XSURF) अणु
-		अगर (!devm_request_mem_region(&z->dev,
+	if (type != BOARD_XSURF) {
+		if (!devm_request_mem_region(&z->dev,
 					     board + BUDDHA_BASE1,
 					     0x800, DRV_NAME))
-			वापस -ENXIO;
-	पूर्ण अन्यथा अणु
-		अगर (!devm_request_mem_region(&z->dev,
+			return -ENXIO;
+	} else {
+		if (!devm_request_mem_region(&z->dev,
 					     board + XSURF_BASE1,
 					     0x1000, DRV_NAME))
-			वापस -ENXIO;
-		अगर (!devm_request_mem_region(&z->dev,
+			return -ENXIO;
+		if (!devm_request_mem_region(&z->dev,
 					     board + XSURF_BASE2,
-					     0x1000, DRV_NAME)) अणु
-		पूर्ण
-	पूर्ण
+					     0x1000, DRV_NAME)) {
+		}
+	}
 
-	/* Workaround क्रम X-Surf: Save drvdata in हाल zorro8390 has set it */
-	अगर (type == BOARD_XSURF)
+	/* Workaround for X-Surf: Save drvdata in case zorro8390 has set it */
+	if (type == BOARD_XSURF)
 		old_drvdata = dev_get_drvdata(&z->dev);
 
 	/* allocate host */
 	host = ata_host_alloc(&z->dev, nr_ports);
-	अगर (type == BOARD_XSURF)
+	if (type == BOARD_XSURF)
 		dev_set_drvdata(&z->dev, old_drvdata);
-	अगर (!host)
-		वापस -ENXIO;
+	if (!host)
+		return -ENXIO;
 
 	buddha_board = ZTWO_VADDR(board);
 
 	/* enable the board IRQ on Buddha/Catweasel */
-	अगर (type != BOARD_XSURF)
-		z_ग_लिखोb(0, buddha_board + BUDDHA_IRQ_MR);
+	if (type != BOARD_XSURF)
+		z_writeb(0, buddha_board + BUDDHA_IRQ_MR);
 
-	क्रम (i = 0; i < nr_ports; i++) अणु
-		काष्ठा ata_port *ap = host->ports[i];
-		व्योम __iomem *base, *irqport;
-		अचिन्हित दीर्घ ctl = 0;
+	for (i = 0; i < nr_ports; i++) {
+		struct ata_port *ap = host->ports[i];
+		void __iomem *base, *irqport;
+		unsigned long ctl = 0;
 
-		अगर (type != BOARD_XSURF) अणु
+		if (type != BOARD_XSURF) {
 			ap->ops = &pata_buddha_ops;
 			base = buddha_board + buddha_bases[i];
 			ctl = BUDDHA_CONTROL;
 			irqport = buddha_board + BUDDHA_IRQ + i * 0x40;
-		पूर्ण अन्यथा अणु
+		} else {
 			ap->ops = &pata_xsurf_ops;
 			base = buddha_board + xsurf_bases[i];
 			/* X-Surf has no CS1* (Control/AltStat) */
 			irqport = buddha_board + XSURF_IRQ;
-		पूर्ण
+		}
 
 		ap->pio_mask = ATA_PIO4;
 		ap->flags |= ATA_FLAG_SLAVE_POSS | ATA_FLAG_NO_IORDY;
@@ -230,68 +229,68 @@
 		ap->ioaddr.status_addr		= base + 2 + 7 * 4;
 		ap->ioaddr.command_addr		= base + 2 + 7 * 4;
 
-		अगर (ctl) अणु
+		if (ctl) {
 			ap->ioaddr.altstatus_addr = base + ctl;
 			ap->ioaddr.ctl_addr	  = base + ctl;
-		पूर्ण
+		}
 
-		ap->निजी_data = (व्योम *)irqport;
+		ap->private_data = (void *)irqport;
 
 		ata_port_desc(ap, "cmd 0x%lx ctl 0x%lx", board,
 			      ctl ? board + buddha_bases[i] + ctl : 0);
-	पूर्ण
+	}
 
-	ata_host_activate(host, IRQ_AMIGA_PORTS, ata_sff_पूर्णांकerrupt,
+	ata_host_activate(host, IRQ_AMIGA_PORTS, ata_sff_interrupt,
 			  IRQF_SHARED, &pata_buddha_sht);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pata_buddha_हटाओ(काष्ठा zorro_dev *z)
-अणु
-	काष्ठा ata_host *host = dev_get_drvdata(&z->dev);
+static void pata_buddha_remove(struct zorro_dev *z)
+{
+	struct ata_host *host = dev_get_drvdata(&z->dev);
 
 	ata_host_detach(host);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा zorro_device_id pata_buddha_zorro_tbl[] = अणु
-	अणु ZORRO_PROD_INDIVIDUAL_COMPUTERS_BUDDHA, BOARD_BUDDHAपूर्ण,
-	अणु ZORRO_PROD_INDIVIDUAL_COMPUTERS_CATWEASEL, BOARD_CATWEASELपूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+static const struct zorro_device_id pata_buddha_zorro_tbl[] = {
+	{ ZORRO_PROD_INDIVIDUAL_COMPUTERS_BUDDHA, BOARD_BUDDHA},
+	{ ZORRO_PROD_INDIVIDUAL_COMPUTERS_CATWEASEL, BOARD_CATWEASEL},
+	{ 0 }
+};
 MODULE_DEVICE_TABLE(zorro, pata_buddha_zorro_tbl);
 
-अटल काष्ठा zorro_driver pata_buddha_driver = अणु
+static struct zorro_driver pata_buddha_driver = {
 	.name           = "pata_buddha",
 	.id_table       = pata_buddha_zorro_tbl,
 	.probe          = pata_buddha_probe,
-	.हटाओ         = pata_buddha_हटाओ,
-पूर्ण;
+	.remove         = pata_buddha_remove,
+};
 
 /*
- * We cannot have a modalias क्रम X-Surf boards, as it competes with the
+ * We cannot have a modalias for X-Surf boards, as it competes with the
  * zorro8390 network driver. As a stopgap measure until we have proper
- * MFD support क्रम this board, we manually attach to it late after Zorro
- * has क्रमागतerated its boards.
+ * MFD support for this board, we manually attach to it late after Zorro
+ * has enumerated its boards.
  */
-अटल पूर्णांक __init pata_buddha_late_init(व्योम)
-अणु
-	काष्ठा zorro_dev *z = शून्य;
+static int __init pata_buddha_late_init(void)
+{
+	struct zorro_dev *z = NULL;
 
 	/* Auto-bind to regular boards */
-	zorro_रेजिस्टर_driver(&pata_buddha_driver);
+	zorro_register_driver(&pata_buddha_driver);
 
 	/* Manually bind to all X-Surf boards */
-	जबतक ((z = zorro_find_device(ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, z))) अणु
-		अटल काष्ठा zorro_device_id xsurf_ent = अणु
+	while ((z = zorro_find_device(ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, z))) {
+		static struct zorro_device_id xsurf_ent = {
 			ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, BOARD_XSURF
-		पूर्ण;
+		};
 
 		pata_buddha_probe(z, &xsurf_ent);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(pata_buddha_late_init);
 
 MODULE_AUTHOR("Bartlomiej Zolnierkiewicz");

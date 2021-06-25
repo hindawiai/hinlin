@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 //
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/module.h>
-#समावेश <sound/soc.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of_platform.h>
+#include <linux/module.h>
+#include <sound/soc.h>
 
-काष्ठा es7241_घड़ी_mode अणु
-	अचिन्हित पूर्णांक rate_min;
-	अचिन्हित पूर्णांक rate_max;
-	अचिन्हित पूर्णांक *slv_mfs;
-	अचिन्हित पूर्णांक slv_mfs_num;
-	अचिन्हित पूर्णांक mst_mfs;
-	अचिन्हित पूर्णांक mst_m0:1;
-	अचिन्हित पूर्णांक mst_m1:1;
-पूर्ण;
+struct es7241_clock_mode {
+	unsigned int rate_min;
+	unsigned int rate_max;
+	unsigned int *slv_mfs;
+	unsigned int slv_mfs_num;
+	unsigned int mst_mfs;
+	unsigned int mst_m0:1;
+	unsigned int mst_m1:1;
+};
 
-काष्ठा es7241_chip अणु
-	स्थिर काष्ठा es7241_घड़ी_mode *modes;
-	अचिन्हित पूर्णांक mode_num;
-पूर्ण;
+struct es7241_chip {
+	const struct es7241_clock_mode *modes;
+	unsigned int mode_num;
+};
 
-काष्ठा es7241_data अणु
-	काष्ठा gpio_desc *reset;
-	काष्ठा gpio_desc *m0;
-	काष्ठा gpio_desc *m1;
-	अचिन्हित पूर्णांक fmt;
-	अचिन्हित पूर्णांक mclk;
+struct es7241_data {
+	struct gpio_desc *reset;
+	struct gpio_desc *m0;
+	struct gpio_desc *m1;
+	unsigned int fmt;
+	unsigned int mclk;
 	bool is_slave;
-	स्थिर काष्ठा es7241_chip *chip;
-पूर्ण;
+	const struct es7241_chip *chip;
+};
 
-अटल व्योम es7241_set_mode(काष्ठा es7241_data *priv,  पूर्णांक m0, पूर्णांक m1)
-अणु
+static void es7241_set_mode(struct es7241_data *priv,  int m0, int m1)
+{
 	/* put the device in reset */
 	gpiod_set_value_cansleep(priv->reset, 0);
 
@@ -43,280 +42,280 @@
 	gpiod_set_value_cansleep(priv->m0, m0);
 	gpiod_set_value_cansleep(priv->m1, m1);
 
-	/* take the device out of reset - datasheet करोes not specअगरy a delay */
+	/* take the device out of reset - datasheet does not specify a delay */
 	gpiod_set_value_cansleep(priv->reset, 1);
-पूर्ण
+}
 
-अटल पूर्णांक es7241_set_slave_mode(काष्ठा es7241_data *priv,
-				 स्थिर काष्ठा es7241_घड़ी_mode *mode,
-				 अचिन्हित पूर्णांक mfs)
-अणु
-	पूर्णांक j;
+static int es7241_set_slave_mode(struct es7241_data *priv,
+				 const struct es7241_clock_mode *mode,
+				 unsigned int mfs)
+{
+	int j;
 
-	अगर (!mfs)
-		जाओ out_ok;
+	if (!mfs)
+		goto out_ok;
 
-	क्रम (j = 0; j < mode->slv_mfs_num; j++) अणु
-		अगर (mode->slv_mfs[j] == mfs)
-			जाओ out_ok;
-	पूर्ण
+	for (j = 0; j < mode->slv_mfs_num; j++) {
+		if (mode->slv_mfs[j] == mfs)
+			goto out_ok;
+	}
 
-	वापस -EINVAL;
+	return -EINVAL;
 
 out_ok:
 	es7241_set_mode(priv, 1, 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक es7241_set_master_mode(काष्ठा es7241_data *priv,
-				  स्थिर काष्ठा es7241_घड़ी_mode *mode,
-				  अचिन्हित पूर्णांक mfs)
-अणु
+static int es7241_set_master_mode(struct es7241_data *priv,
+				  const struct es7241_clock_mode *mode,
+				  unsigned int mfs)
+{
 	/*
-	 * We can't really set घड़ी ratio, अगर the mclk/lrclk is dअगरferent
+	 * We can't really set clock ratio, if the mclk/lrclk is different
 	 * from what we provide, then error out
 	 */
-	अगर (mfs && mfs != mode->mst_mfs)
-		वापस -EINVAL;
+	if (mfs && mfs != mode->mst_mfs)
+		return -EINVAL;
 
 	es7241_set_mode(priv, mode->mst_m0, mode->mst_m1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक es7241_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा es7241_data *priv = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित पूर्णांक rate = params_rate(params);
-	अचिन्हित पूर्णांक mfs = priv->mclk / rate;
-	पूर्णांक i;
+static int es7241_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct es7241_data *priv = snd_soc_dai_get_drvdata(dai);
+	unsigned int rate = params_rate(params);
+	unsigned int mfs = priv->mclk / rate;
+	int i;
 
-	क्रम (i = 0; i < priv->chip->mode_num; i++) अणु
-		स्थिर काष्ठा es7241_घड़ी_mode *mode = &priv->chip->modes[i];
+	for (i = 0; i < priv->chip->mode_num; i++) {
+		const struct es7241_clock_mode *mode = &priv->chip->modes[i];
 
-		अगर (rate < mode->rate_min || rate >= mode->rate_max)
-			जारी;
+		if (rate < mode->rate_min || rate >= mode->rate_max)
+			continue;
 
-		अगर (priv->is_slave)
-			वापस es7241_set_slave_mode(priv, mode, mfs);
-		अन्यथा
-			वापस es7241_set_master_mode(priv, mode, mfs);
-	पूर्ण
+		if (priv->is_slave)
+			return es7241_set_slave_mode(priv, mode, mfs);
+		else
+			return es7241_set_master_mode(priv, mode, mfs);
+	}
 
 	/* should not happen */
 	dev_err(dai->dev, "unsupported rate: %u\n", rate);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक es7241_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-			     अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा es7241_data *priv = snd_soc_dai_get_drvdata(dai);
+static int es7241_set_sysclk(struct snd_soc_dai *dai, int clk_id,
+			     unsigned int freq, int dir)
+{
+	struct es7241_data *priv = snd_soc_dai_get_drvdata(dai);
 
-	अगर (dir == SND_SOC_CLOCK_IN && clk_id == 0) अणु
+	if (dir == SND_SOC_CLOCK_IN && clk_id == 0) {
 		priv->mclk = freq;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक es7241_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा es7241_data *priv = snd_soc_dai_get_drvdata(dai);
+static int es7241_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct es7241_data *priv = snd_soc_dai_get_drvdata(dai);
 
-	अगर ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) अणु
+	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) {
 		dev_err(dai->dev, "Unsupported dai clock inversion\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != priv->fmt) अणु
+	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != priv->fmt) {
 		dev_err(dai->dev, "Invalid dai format\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
 		priv->is_slave = true;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		priv->is_slave = false;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(dai->dev, "Unsupported clock configuration\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops es7241_dai_ops = अणु
+static const struct snd_soc_dai_ops es7241_dai_ops = {
 	.set_fmt	= es7241_set_fmt,
 	.hw_params	= es7241_hw_params,
 	.set_sysclk	= es7241_set_sysclk,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver es7241_dai = अणु
+static struct snd_soc_dai_driver es7241_dai = {
 	.name = "es7241-hifi",
-	.capture = अणु
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.क्रमmats = (SNDRV_PCM_FMTBIT_S16_LE  |
+		.formats = (SNDRV_PCM_FMTBIT_S16_LE  |
 			    SNDRV_PCM_FMTBIT_S24_3LE |
 			    SNDRV_PCM_FMTBIT_S24_LE),
-	पूर्ण,
+	},
 	.ops = &es7241_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा es7241_घड़ी_mode es7241_modes[] = अणु
-	अणु
+static const struct es7241_clock_mode es7241_modes[] = {
+	{
 		/* Single speed mode */
 		.rate_min = 8000,
 		.rate_max = 50000,
-		.slv_mfs = (अचिन्हित पूर्णांक[]) अणु 256, 384, 512, 768, 1024 पूर्ण,
+		.slv_mfs = (unsigned int[]) { 256, 384, 512, 768, 1024 },
 		.slv_mfs_num = 5,
 		.mst_mfs = 256,
 		.mst_m0 = 0,
 		.mst_m1 = 0,
-	पूर्ण, अणु
+	}, {
 		/* Double speed mode */
 		.rate_min = 50000,
 		.rate_max = 100000,
-		.slv_mfs = (अचिन्हित पूर्णांक[]) अणु 128, 192 पूर्ण,
+		.slv_mfs = (unsigned int[]) { 128, 192 },
 		.slv_mfs_num = 2,
 		.mst_mfs = 128,
 		.mst_m0 = 1,
 		.mst_m1 = 0,
-	पूर्ण, अणु
+	}, {
 		/* Quad speed mode */
 		.rate_min = 100000,
 		.rate_max = 200000,
-		.slv_mfs = (अचिन्हित पूर्णांक[]) अणु 64 पूर्ण,
+		.slv_mfs = (unsigned int[]) { 64 },
 		.slv_mfs_num = 1,
 		.mst_mfs = 64,
 		.mst_m0 = 0,
 		.mst_m1 = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा es7241_chip es7241_chip __maybe_unused = अणु
+static const struct es7241_chip es7241_chip __maybe_unused = {
 	.modes = es7241_modes,
 	.mode_num = ARRAY_SIZE(es7241_modes),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget es7241_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget es7241_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AINL"),
 	SND_SOC_DAPM_INPUT("AINR"),
 	SND_SOC_DAPM_DAC("ADC", "Capture", SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_REGULATOR_SUPPLY("VDDP", 0, 0),
 	SND_SOC_DAPM_REGULATOR_SUPPLY("VDDD", 0, 0),
 	SND_SOC_DAPM_REGULATOR_SUPPLY("VDDA", 0, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route es7241_dapm_routes[] = अणु
-	अणु "ADC", शून्य, "AINL", पूर्ण,
-	अणु "ADC", शून्य, "AINR", पूर्ण,
-	अणु "ADC", शून्य, "VDDA", पूर्ण,
-	अणु "Capture", शून्य, "VDDP", पूर्ण,
-	अणु "Capture", शून्य, "VDDD", पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route es7241_dapm_routes[] = {
+	{ "ADC", NULL, "AINL", },
+	{ "ADC", NULL, "AINR", },
+	{ "ADC", NULL, "VDDA", },
+	{ "Capture", NULL, "VDDP", },
+	{ "Capture", NULL, "VDDD", },
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver es7241_component_driver = अणु
-	.dapm_widमाला_लो		= es7241_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(es7241_dapm_widमाला_लो),
+static const struct snd_soc_component_driver es7241_component_driver = {
+	.dapm_widgets		= es7241_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(es7241_dapm_widgets),
 	.dapm_routes		= es7241_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(es7241_dapm_routes),
 	.idle_bias_on		= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल व्योम es7241_parse_fmt(काष्ठा device *dev, काष्ठा es7241_data *priv)
-अणु
+static void es7241_parse_fmt(struct device *dev, struct es7241_data *priv)
+{
 	bool is_leftj;
 
 	/*
-	 * The क्रमmat is given by a pull resistor on the SDOUT pin:
-	 * pull-up क्रम i2s, pull-करोwn क्रम left justअगरied.
+	 * The format is given by a pull resistor on the SDOUT pin:
+	 * pull-up for i2s, pull-down for left justified.
 	 */
-	is_leftj = of_property_पढ़ो_bool(dev->of_node,
+	is_leftj = of_property_read_bool(dev->of_node,
 					 "everest,sdout-pull-down");
-	अगर (is_leftj)
+	if (is_leftj)
 		priv->fmt = SND_SOC_DAIFMT_LEFT_J;
-	अन्यथा
+	else
 		priv->fmt = SND_SOC_DAIFMT_I2S;
-पूर्ण
+}
 
-अटल पूर्णांक es7241_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा es7241_data *priv;
-	पूर्णांक err;
+static int es7241_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct es7241_data *priv;
+	int err;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, priv);
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, priv);
 
 	priv->chip = of_device_get_match_data(dev);
-	अगर (!priv->chip) अणु
+	if (!priv->chip) {
 		dev_err(dev, "failed to match device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	es7241_parse_fmt(dev, priv);
 
 	priv->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->reset)) अणु
+	if (IS_ERR(priv->reset)) {
 		err = PTR_ERR(priv->reset);
-		अगर (err != -EPROBE_DEFER)
+		if (err != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'reset' gpio: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	priv->m0 = devm_gpiod_get_optional(dev, "m0", GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->m0)) अणु
+	if (IS_ERR(priv->m0)) {
 		err = PTR_ERR(priv->m0);
-		अगर (err != -EPROBE_DEFER)
+		if (err != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'm0' gpio: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	priv->m1 = devm_gpiod_get_optional(dev, "m1", GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->m1)) अणु
+	if (IS_ERR(priv->m1)) {
 		err = PTR_ERR(priv->m1);
-		अगर (err != -EPROBE_DEFER)
+		if (err != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'm1' gpio: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	return devm_snd_soc_register_component(&pdev->dev,
 				      &es7241_component_driver,
 				      &es7241_dai, 1);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id es7241_ids[] = अणु
-	अणु .compatible = "everest,es7241", .data = &es7241_chip पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id es7241_ids[] = {
+	{ .compatible = "everest,es7241", .data = &es7241_chip },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, es7241_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver es7241_driver = अणु
-	.driver = अणु
+static struct platform_driver es7241_driver = {
+	.driver = {
 		.name = "es7241",
 		.of_match_table = of_match_ptr(es7241_ids),
-	पूर्ण,
+	},
 	.probe = es7241_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(es7241_driver);
+module_platform_driver(es7241_driver);
 
 MODULE_DESCRIPTION("ASoC ES7241 audio codec driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

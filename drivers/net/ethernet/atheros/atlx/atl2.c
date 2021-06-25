@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright(c) 2006 - 2007 Atheros Corporation. All rights reserved.
  * Copyright(c) 2007 - 2008 Chris Snook <csnook@redhat.com>
@@ -8,37 +7,37 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/in.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/net.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/tcp.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/atomic.h>
+#include <linux/crc32.h>
+#include <linux/dma-mapping.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/hardirq.h>
+#include <linux/if_vlan.h>
+#include <linux/in.h>
+#include <linux/interrupt.h>
+#include <linux/ip.h>
+#include <linux/irqflags.h>
+#include <linux/irqreturn.h>
+#include <linux/mii.h>
+#include <linux/net.h>
+#include <linux/netdevice.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/pm.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/tcp.h>
+#include <linux/timer.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#समावेश "atl2.h"
+#include "atl2.h"
 
-अटल स्थिर अक्षर atl2_driver_name[] = "atl2";
-अटल स्थिर काष्ठा ethtool_ops atl2_ethtool_ops;
+static const char atl2_driver_name[] = "atl2";
+static const struct ethtool_ops atl2_ethtool_ops;
 
 MODULE_AUTHOR("Atheros Corporation <xiong.huang@atheros.com>, Chris Snook <csnook@redhat.com>");
 MODULE_DESCRIPTION("Atheros Fast Ethernet Network Driver");
@@ -47,36 +46,36 @@ MODULE_LICENSE("GPL");
 /*
  * atl2_pci_tbl - PCI Device ID Table
  */
-अटल स्थिर काष्ठा pci_device_id atl2_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_ATTANSIC, PCI_DEVICE_ID_ATTANSIC_L2)पूर्ण,
+static const struct pci_device_id atl2_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_ATTANSIC, PCI_DEVICE_ID_ATTANSIC_L2)},
 	/* required last entry */
-	अणु0,पूर्ण
-पूर्ण;
+	{0,}
+};
 MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 
-अटल व्योम atl2_check_options(काष्ठा atl2_adapter *adapter);
+static void atl2_check_options(struct atl2_adapter *adapter);
 
 /**
- * atl2_sw_init - Initialize general software काष्ठाures (काष्ठा atl2_adapter)
- * @adapter: board निजी काष्ठाure to initialize
+ * atl2_sw_init - Initialize general software structures (struct atl2_adapter)
+ * @adapter: board private structure to initialize
  *
- * atl2_sw_init initializes the Adapter निजी data काष्ठाure.
- * Fields are initialized based on PCI device inक्रमmation and
+ * atl2_sw_init initializes the Adapter private data structure.
+ * Fields are initialized based on PCI device information and
  * OS network device settings (MTU size).
  */
-अटल पूर्णांक atl2_sw_init(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा atl2_hw *hw = &adapter->hw;
-	काष्ठा pci_dev *pdev = adapter->pdev;
+static int atl2_sw_init(struct atl2_adapter *adapter)
+{
+	struct atl2_hw *hw = &adapter->hw;
+	struct pci_dev *pdev = adapter->pdev;
 
 	/* PCI config space info */
-	hw->venकरोr_id = pdev->venकरोr;
+	hw->vendor_id = pdev->vendor;
 	hw->device_id = pdev->device;
-	hw->subप्रणाली_venकरोr_id = pdev->subप्रणाली_venकरोr;
-	hw->subप्रणाली_id = pdev->subप्रणाली_device;
+	hw->subsystem_vendor_id = pdev->subsystem_vendor;
+	hw->subsystem_id = pdev->subsystem_device;
 	hw->revision_id  = pdev->revision;
 
-	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &hw->pci_cmd_word);
+	pci_read_config_word(pdev, PCI_COMMAND, &hw->pci_cmd_word);
 
 	adapter->wol = 0;
 	adapter->ict = 50000;  /* ~100ms */
@@ -86,7 +85,7 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	hw->phy_configured = false;
 	hw->preamble_len = 7;
 	hw->ipgt = 0x60;
-	hw->min_अगरg = 0x50;
+	hw->min_ifg = 0x50;
 	hw->ipgr1 = 0x40;
 	hw->ipgr2 = 0x60;
 	hw->retry_buf = 2;
@@ -101,35 +100,35 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 
 	set_bit(__ATL2_DOWN, &adapter->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * atl2_set_multi - Multicast and Promiscuous mode set
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * @netdev: network interface device structure
  *
- * The set_multi entry poपूर्णांक is called whenever the multicast address
- * list or the network पूर्णांकerface flags are updated.  This routine is
- * responsible क्रम configuring the hardware क्रम proper multicast,
+ * The set_multi entry point is called whenever the multicast address
+ * list or the network interface flags are updated.  This routine is
+ * responsible for configuring the hardware for proper multicast,
  * promiscuous mode, and all-multi behavior.
  */
-अटल व्योम atl2_set_multi(काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
-	काष्ठा netdev_hw_addr *ha;
+static void atl2_set_multi(struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
+	struct netdev_hw_addr *ha;
 	u32 rctl;
 	u32 hash_value;
 
-	/* Check क्रम Promiscuous and All Multicast modes */
+	/* Check for Promiscuous and All Multicast modes */
 	rctl = ATL2_READ_REG(hw, REG_MAC_CTRL);
 
-	अगर (netdev->flags & IFF_PROMISC) अणु
+	if (netdev->flags & IFF_PROMISC) {
 		rctl |= MAC_CTRL_PROMIS_EN;
-	पूर्ण अन्यथा अगर (netdev->flags & IFF_ALLMULTI) अणु
+	} else if (netdev->flags & IFF_ALLMULTI) {
 		rctl |= MAC_CTRL_MC_ALL_EN;
 		rctl &= ~MAC_CTRL_PROMIS_EN;
-	पूर्ण अन्यथा
+	} else
 		rctl &= ~(MAC_CTRL_PROMIS_EN | MAC_CTRL_MC_ALL_EN);
 
 	ATL2_WRITE_REG(hw, REG_MAC_CTRL, rctl);
@@ -138,38 +137,38 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	ATL2_WRITE_REG(hw, REG_RX_HASH_TABLE, 0);
 	ATL2_WRITE_REG_ARRAY(hw, REG_RX_HASH_TABLE, 1, 0);
 
-	/* comoute mc addresses' hash value ,and put it पूर्णांकo hash table */
-	netdev_क्रम_each_mc_addr(ha, netdev) अणु
+	/* comoute mc addresses' hash value ,and put it into hash table */
+	netdev_for_each_mc_addr(ha, netdev) {
 		hash_value = atl2_hash_mc_addr(hw, ha->addr);
 		atl2_hash_set(hw, hash_value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम init_ring_ptrs(काष्ठा atl2_adapter *adapter)
-अणु
+static void init_ring_ptrs(struct atl2_adapter *adapter)
+{
 	/* Read / Write Ptr Initialize: */
-	adapter->txd_ग_लिखो_ptr = 0;
-	atomic_set(&adapter->txd_पढ़ो_ptr, 0);
+	adapter->txd_write_ptr = 0;
+	atomic_set(&adapter->txd_read_ptr, 0);
 
-	adapter->rxd_पढ़ो_ptr = 0;
-	adapter->rxd_ग_लिखो_ptr = 0;
+	adapter->rxd_read_ptr = 0;
+	adapter->rxd_write_ptr = 0;
 
-	atomic_set(&adapter->txs_ग_लिखो_ptr, 0);
+	atomic_set(&adapter->txs_write_ptr, 0);
 	adapter->txs_next_clear = 0;
-पूर्ण
+}
 
 /**
  * atl2_configure - Configure Transmit&Receive Unit after Reset
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  *
  * Configure the Tx /Rx unit of the MAC after a reset.
  */
-अटल पूर्णांक atl2_configure(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_configure(struct atl2_adapter *adapter)
+{
+	struct atl2_hw *hw = &adapter->hw;
 	u32 value;
 
-	/* clear पूर्णांकerrupt status */
+	/* clear interrupt status */
 	ATL2_WRITE_REG(&adapter->hw, REG_ISR, 0xffffffff);
 
 	/* set MAC Address */
@@ -208,7 +207,7 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	/* config IPG/IFG */
 	value = (((u32)hw->ipgt & MAC_IPG_IFG_IPGT_MASK) <<
 		MAC_IPG_IFG_IPGT_SHIFT) |
-		(((u32)hw->min_अगरg & MAC_IPG_IFG_MIFG_MASK) <<
+		(((u32)hw->min_ifg & MAC_IPG_IFG_MIFG_MASK) <<
 		MAC_IPG_IFG_MIFG_SHIFT) |
 		(((u32)hw->ipgr1 & MAC_IPG_IFG_IPGR1_MASK) <<
 		MAC_IPG_IFG_IPGR1_SHIFT)|
@@ -245,35 +244,35 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	ATL2_WRITE_REGW(hw, REG_PAUSE_OFF_TH, hw->fc_rxd_lo);
 
 	/* Init mailbox */
-	ATL2_WRITE_REGW(hw, REG_MB_TXD_WR_IDX, (u16)adapter->txd_ग_लिखो_ptr);
-	ATL2_WRITE_REGW(hw, REG_MB_RXD_RD_IDX, (u16)adapter->rxd_पढ़ो_ptr);
+	ATL2_WRITE_REGW(hw, REG_MB_TXD_WR_IDX, (u16)adapter->txd_write_ptr);
+	ATL2_WRITE_REGW(hw, REG_MB_RXD_RD_IDX, (u16)adapter->rxd_read_ptr);
 
-	/* enable DMA पढ़ो/ग_लिखो */
+	/* enable DMA read/write */
 	ATL2_WRITE_REGB(hw, REG_DMAR, DMAR_EN);
 	ATL2_WRITE_REGB(hw, REG_DMAW, DMAW_EN);
 
 	value = ATL2_READ_REG(&adapter->hw, REG_ISR);
-	अगर ((value & ISR_PHY_LINKDOWN) != 0)
+	if ((value & ISR_PHY_LINKDOWN) != 0)
 		value = 1; /* config failed */
-	अन्यथा
+	else
 		value = 0;
 
-	/* clear all पूर्णांकerrupt status */
+	/* clear all interrupt status */
 	ATL2_WRITE_REG(&adapter->hw, REG_ISR, 0x3fffffff);
 	ATL2_WRITE_REG(&adapter->hw, REG_ISR, 0);
-	वापस value;
-पूर्ण
+	return value;
+}
 
 /**
  * atl2_setup_ring_resources - allocate Tx / RX descriptor resources
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  *
  * Return 0 on success, negative on failure
  */
-अटल s32 atl2_setup_ring_resources(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	पूर्णांक size;
+static s32 atl2_setup_ring_resources(struct atl2_adapter *adapter)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	int size;
 	u8 offset = 0;
 
 	/* real ring DMA buffer */
@@ -284,8 +283,8 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 
 	adapter->ring_vir_addr = dma_alloc_coherent(&pdev->dev, size,
 						    &adapter->ring_dma, GFP_KERNEL);
-	अगर (!adapter->ring_vir_addr)
-		वापस -ENOMEM;
+	if (!adapter->ring_vir_addr)
+		return -ENOMEM;
 
 	/* Init TXD Ring */
 	adapter->txd_dma = adapter->ring_dma ;
@@ -297,65 +296,65 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	adapter->txs_dma = adapter->txd_dma + adapter->txd_ring_size;
 	offset = (adapter->txs_dma & 0x7) ? (8 - (adapter->txs_dma & 0x7)) : 0;
 	adapter->txs_dma += offset;
-	adapter->txs_ring = (काष्ठा tx_pkt_status *)
+	adapter->txs_ring = (struct tx_pkt_status *)
 		(((u8 *)adapter->txd_ring) + (adapter->txd_ring_size + offset));
 
 	/* Init RXD Ring */
 	adapter->rxd_dma = adapter->txs_dma + adapter->txs_ring_size * 4;
 	offset = (adapter->rxd_dma & 127) ?
 		(128 - (adapter->rxd_dma & 127)) : 0;
-	अगर (offset > 7)
+	if (offset > 7)
 		offset -= 8;
-	अन्यथा
+	else
 		offset += (128 - 8);
 
 	adapter->rxd_dma += offset;
-	adapter->rxd_ring = (काष्ठा rx_desc *) (((u8 *)adapter->txs_ring) +
+	adapter->rxd_ring = (struct rx_desc *) (((u8 *)adapter->txs_ring) +
 		(adapter->txs_ring_size * 4 + offset));
 
 /*
  * Read / Write Ptr Initialize:
  *      init_ring_ptrs(adapter);
  */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * atl2_irq_enable - Enable शेष पूर्णांकerrupt generation settings
- * @adapter: board निजी काष्ठाure
+ * atl2_irq_enable - Enable default interrupt generation settings
+ * @adapter: board private structure
  */
-अटल अंतरभूत व्योम atl2_irq_enable(काष्ठा atl2_adapter *adapter)
-अणु
+static inline void atl2_irq_enable(struct atl2_adapter *adapter)
+{
 	ATL2_WRITE_REG(&adapter->hw, REG_IMR, IMR_NORMAL_MASK);
 	ATL2_WRITE_FLUSH(&adapter->hw);
-पूर्ण
+}
 
 /**
- * atl2_irq_disable - Mask off पूर्णांकerrupt generation on the NIC
- * @adapter: board निजी काष्ठाure
+ * atl2_irq_disable - Mask off interrupt generation on the NIC
+ * @adapter: board private structure
  */
-अटल अंतरभूत व्योम atl2_irq_disable(काष्ठा atl2_adapter *adapter)
-अणु
+static inline void atl2_irq_disable(struct atl2_adapter *adapter)
+{
     ATL2_WRITE_REG(&adapter->hw, REG_IMR, 0);
     ATL2_WRITE_FLUSH(&adapter->hw);
     synchronize_irq(adapter->pdev->irq);
-पूर्ण
+}
 
-अटल व्योम __atl2_vlan_mode(netdev_features_t features, u32 *ctrl)
-अणु
-	अगर (features & NETIF_F_HW_VLAN_CTAG_RX) अणु
+static void __atl2_vlan_mode(netdev_features_t features, u32 *ctrl)
+{
+	if (features & NETIF_F_HW_VLAN_CTAG_RX) {
 		/* enable VLAN tag insert/strip */
 		*ctrl |= MAC_CTRL_RMV_VLAN;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* disable VLAN tag insert/strip */
 		*ctrl &= ~MAC_CTRL_RMV_VLAN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम atl2_vlan_mode(काष्ठा net_device *netdev,
+static void atl2_vlan_mode(struct net_device *netdev,
 	netdev_features_t features)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 	u32 ctrl;
 
 	atl2_irq_disable(adapter);
@@ -365,341 +364,341 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 	ATL2_WRITE_REG(&adapter->hw, REG_MAC_CTRL, ctrl);
 
 	atl2_irq_enable(adapter);
-पूर्ण
+}
 
-अटल व्योम atl2_restore_vlan(काष्ठा atl2_adapter *adapter)
-अणु
+static void atl2_restore_vlan(struct atl2_adapter *adapter)
+{
 	atl2_vlan_mode(adapter->netdev, adapter->netdev->features);
-पूर्ण
+}
 
-अटल netdev_features_t atl2_fix_features(काष्ठा net_device *netdev,
+static netdev_features_t atl2_fix_features(struct net_device *netdev,
 	netdev_features_t features)
-अणु
+{
 	/*
-	 * Since there is no support क्रम separate rx/tx vlan accel
+	 * Since there is no support for separate rx/tx vlan accel
 	 * enable/disable make sure tx flag is always in same state as rx.
 	 */
-	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (features & NETIF_F_HW_VLAN_CTAG_RX)
 		features |= NETIF_F_HW_VLAN_CTAG_TX;
-	अन्यथा
+	else
 		features &= ~NETIF_F_HW_VLAN_CTAG_TX;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक atl2_set_features(काष्ठा net_device *netdev,
+static int atl2_set_features(struct net_device *netdev,
 	netdev_features_t features)
-अणु
+{
 	netdev_features_t changed = netdev->features ^ features;
 
-	अगर (changed & NETIF_F_HW_VLAN_CTAG_RX)
+	if (changed & NETIF_F_HW_VLAN_CTAG_RX)
 		atl2_vlan_mode(netdev, features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम atl2_पूर्णांकr_rx(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा rx_desc *rxd;
-	काष्ठा sk_buff *skb;
+static void atl2_intr_rx(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	struct rx_desc *rxd;
+	struct sk_buff *skb;
 
-	करो अणु
-		rxd = adapter->rxd_ring+adapter->rxd_ग_लिखो_ptr;
-		अगर (!rxd->status.update)
-			अवरोध; /* end of tx */
+	do {
+		rxd = adapter->rxd_ring+adapter->rxd_write_ptr;
+		if (!rxd->status.update)
+			break; /* end of tx */
 
 		/* clear this flag at once */
 		rxd->status.update = 0;
 
-		अगर (rxd->status.ok && rxd->status.pkt_size >= 60) अणु
-			पूर्णांक rx_size = (पूर्णांक)(rxd->status.pkt_size - 4);
+		if (rxd->status.ok && rxd->status.pkt_size >= 60) {
+			int rx_size = (int)(rxd->status.pkt_size - 4);
 			/* alloc new buffer */
 			skb = netdev_alloc_skb_ip_align(netdev, rx_size);
-			अगर (शून्य == skb) अणु
+			if (NULL == skb) {
 				/*
-				 * Check that some rx space is मुक्त. If not,
-				 * मुक्त one and mark stats->rx_dropped++.
+				 * Check that some rx space is free. If not,
+				 * free one and mark stats->rx_dropped++.
 				 */
 				netdev->stats.rx_dropped++;
-				अवरोध;
-			पूर्ण
-			स_नकल(skb->data, rxd->packet, rx_size);
+				break;
+			}
+			memcpy(skb->data, rxd->packet, rx_size);
 			skb_put(skb, rx_size);
 			skb->protocol = eth_type_trans(skb, netdev);
-			अगर (rxd->status.vlan) अणु
+			if (rxd->status.vlan) {
 				u16 vlan_tag = (rxd->status.vtag>>4) |
 					((rxd->status.vtag&7) << 13) |
 					((rxd->status.vtag&8) << 9);
 
 				__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_tag);
-			पूर्ण
-			netअगर_rx(skb);
+			}
+			netif_rx(skb);
 			netdev->stats.rx_bytes += rx_size;
 			netdev->stats.rx_packets++;
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev->stats.rx_errors++;
 
-			अगर (rxd->status.ok && rxd->status.pkt_size <= 60)
+			if (rxd->status.ok && rxd->status.pkt_size <= 60)
 				netdev->stats.rx_length_errors++;
-			अगर (rxd->status.mcast)
+			if (rxd->status.mcast)
 				netdev->stats.multicast++;
-			अगर (rxd->status.crc)
+			if (rxd->status.crc)
 				netdev->stats.rx_crc_errors++;
-			अगर (rxd->status.align)
+			if (rxd->status.align)
 				netdev->stats.rx_frame_errors++;
-		पूर्ण
+		}
 
-		/* advance ग_लिखो ptr */
-		अगर (++adapter->rxd_ग_लिखो_ptr == adapter->rxd_ring_size)
-			adapter->rxd_ग_लिखो_ptr = 0;
-	पूर्ण जबतक (1);
+		/* advance write ptr */
+		if (++adapter->rxd_write_ptr == adapter->rxd_ring_size)
+			adapter->rxd_write_ptr = 0;
+	} while (1);
 
 	/* update mailbox? */
-	adapter->rxd_पढ़ो_ptr = adapter->rxd_ग_लिखो_ptr;
-	ATL2_WRITE_REGW(&adapter->hw, REG_MB_RXD_RD_IDX, adapter->rxd_पढ़ो_ptr);
-पूर्ण
+	adapter->rxd_read_ptr = adapter->rxd_write_ptr;
+	ATL2_WRITE_REGW(&adapter->hw, REG_MB_RXD_RD_IDX, adapter->rxd_read_ptr);
+}
 
-अटल व्योम atl2_पूर्णांकr_tx(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	u32 txd_पढ़ो_ptr;
-	u32 txs_ग_लिखो_ptr;
-	काष्ठा tx_pkt_status *txs;
-	काष्ठा tx_pkt_header *txph;
-	पूर्णांक मुक्त_hole = 0;
+static void atl2_intr_tx(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	u32 txd_read_ptr;
+	u32 txs_write_ptr;
+	struct tx_pkt_status *txs;
+	struct tx_pkt_header *txph;
+	int free_hole = 0;
 
-	करो अणु
-		txs_ग_लिखो_ptr = (u32) atomic_पढ़ो(&adapter->txs_ग_लिखो_ptr);
-		txs = adapter->txs_ring + txs_ग_लिखो_ptr;
-		अगर (!txs->update)
-			अवरोध; /* tx stop here */
+	do {
+		txs_write_ptr = (u32) atomic_read(&adapter->txs_write_ptr);
+		txs = adapter->txs_ring + txs_write_ptr;
+		if (!txs->update)
+			break; /* tx stop here */
 
-		मुक्त_hole = 1;
+		free_hole = 1;
 		txs->update = 0;
 
-		अगर (++txs_ग_लिखो_ptr == adapter->txs_ring_size)
-			txs_ग_लिखो_ptr = 0;
-		atomic_set(&adapter->txs_ग_लिखो_ptr, (पूर्णांक)txs_ग_लिखो_ptr);
+		if (++txs_write_ptr == adapter->txs_ring_size)
+			txs_write_ptr = 0;
+		atomic_set(&adapter->txs_write_ptr, (int)txs_write_ptr);
 
-		txd_पढ़ो_ptr = (u32) atomic_पढ़ो(&adapter->txd_पढ़ो_ptr);
-		txph = (काष्ठा tx_pkt_header *)
-			(((u8 *)adapter->txd_ring) + txd_पढ़ो_ptr);
+		txd_read_ptr = (u32) atomic_read(&adapter->txd_read_ptr);
+		txph = (struct tx_pkt_header *)
+			(((u8 *)adapter->txd_ring) + txd_read_ptr);
 
-		अगर (txph->pkt_size != txs->pkt_size) अणु
-			काष्ठा tx_pkt_status *old_txs = txs;
-			prपूर्णांकk(KERN_WARNING
+		if (txph->pkt_size != txs->pkt_size) {
+			struct tx_pkt_status *old_txs = txs;
+			printk(KERN_WARNING
 				"%s: txs packet size not consistent with txd"
 				" txd_:0x%08x, txs_:0x%08x!\n",
 				adapter->netdev->name,
 				*(u32 *)txph, *(u32 *)txs);
-			prपूर्णांकk(KERN_WARNING
+			printk(KERN_WARNING
 				"txd read ptr: 0x%x\n",
-				txd_पढ़ो_ptr);
-			txs = adapter->txs_ring + txs_ग_लिखो_ptr;
-			prपूर्णांकk(KERN_WARNING
+				txd_read_ptr);
+			txs = adapter->txs_ring + txs_write_ptr;
+			printk(KERN_WARNING
 				"txs-behind:0x%08x\n",
 				*(u32 *)txs);
-			अगर (txs_ग_लिखो_ptr < 2) अणु
+			if (txs_write_ptr < 2) {
 				txs = adapter->txs_ring +
 					(adapter->txs_ring_size +
-					txs_ग_लिखो_ptr - 2);
-			पूर्ण अन्यथा अणु
-				txs = adapter->txs_ring + (txs_ग_लिखो_ptr - 2);
-			पूर्ण
-			prपूर्णांकk(KERN_WARNING
+					txs_write_ptr - 2);
+			} else {
+				txs = adapter->txs_ring + (txs_write_ptr - 2);
+			}
+			printk(KERN_WARNING
 				"txs-before:0x%08x\n",
 				*(u32 *)txs);
 			txs = old_txs;
-		पूर्ण
+		}
 
-		 /* 4क्रम TPH */
-		txd_पढ़ो_ptr += (((u32)(txph->pkt_size) + 7) & ~3);
-		अगर (txd_पढ़ो_ptr >= adapter->txd_ring_size)
-			txd_पढ़ो_ptr -= adapter->txd_ring_size;
+		 /* 4for TPH */
+		txd_read_ptr += (((u32)(txph->pkt_size) + 7) & ~3);
+		if (txd_read_ptr >= adapter->txd_ring_size)
+			txd_read_ptr -= adapter->txd_ring_size;
 
-		atomic_set(&adapter->txd_पढ़ो_ptr, (पूर्णांक)txd_पढ़ो_ptr);
+		atomic_set(&adapter->txd_read_ptr, (int)txd_read_ptr);
 
 		/* tx statistics: */
-		अगर (txs->ok) अणु
+		if (txs->ok) {
 			netdev->stats.tx_bytes += txs->pkt_size;
 			netdev->stats.tx_packets++;
-		पूर्ण
-		अन्यथा
+		}
+		else
 			netdev->stats.tx_errors++;
 
-		अगर (txs->defer)
+		if (txs->defer)
 			netdev->stats.collisions++;
-		अगर (txs->पात_col)
-			netdev->stats.tx_पातed_errors++;
-		अगर (txs->late_col)
-			netdev->stats.tx_winकरोw_errors++;
-		अगर (txs->underrun)
-			netdev->stats.tx_fअगरo_errors++;
-	पूर्ण जबतक (1);
+		if (txs->abort_col)
+			netdev->stats.tx_aborted_errors++;
+		if (txs->late_col)
+			netdev->stats.tx_window_errors++;
+		if (txs->underrun)
+			netdev->stats.tx_fifo_errors++;
+	} while (1);
 
-	अगर (मुक्त_hole) अणु
-		अगर (netअगर_queue_stopped(adapter->netdev) &&
-			netअगर_carrier_ok(adapter->netdev))
-			netअगर_wake_queue(adapter->netdev);
-	पूर्ण
-पूर्ण
+	if (free_hole) {
+		if (netif_queue_stopped(adapter->netdev) &&
+			netif_carrier_ok(adapter->netdev))
+			netif_wake_queue(adapter->netdev);
+	}
+}
 
-अटल व्योम atl2_check_क्रम_link(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static void atl2_check_for_link(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 	u16 phy_data = 0;
 
 	spin_lock(&adapter->stats_lock);
-	atl2_पढ़ो_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
-	atl2_पढ़ो_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
+	atl2_read_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
+	atl2_read_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
 	spin_unlock(&adapter->stats_lock);
 
-	/* notअगरy upper layer link करोwn ASAP */
-	अगर (!(phy_data & BMSR_LSTATUS)) अणु /* Link Down */
-		अगर (netअगर_carrier_ok(netdev)) अणु /* old link state: Up */
-		prपूर्णांकk(KERN_INFO "%s: %s NIC Link is Down\n",
+	/* notify upper layer link down ASAP */
+	if (!(phy_data & BMSR_LSTATUS)) { /* Link Down */
+		if (netif_carrier_ok(netdev)) { /* old link state: Up */
+		printk(KERN_INFO "%s: %s NIC Link is Down\n",
 			atl2_driver_name, netdev->name);
 		adapter->link_speed = SPEED_0;
-		netअगर_carrier_off(netdev);
-		netअगर_stop_queue(netdev);
-		पूर्ण
-	पूर्ण
+		netif_carrier_off(netdev);
+		netif_stop_queue(netdev);
+		}
+	}
 	schedule_work(&adapter->link_chg_task);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम atl2_clear_phy_पूर्णांक(काष्ठा atl2_adapter *adapter)
-अणु
+static inline void atl2_clear_phy_int(struct atl2_adapter *adapter)
+{
 	u16 phy_data;
 	spin_lock(&adapter->stats_lock);
-	atl2_पढ़ो_phy_reg(&adapter->hw, 19, &phy_data);
+	atl2_read_phy_reg(&adapter->hw, 19, &phy_data);
 	spin_unlock(&adapter->stats_lock);
-पूर्ण
+}
 
 /**
- * atl2_पूर्णांकr - Interrupt Handler
- * @irq: पूर्णांकerrupt number
- * @data: poपूर्णांकer to a network पूर्णांकerface device काष्ठाure
+ * atl2_intr - Interrupt Handler
+ * @irq: interrupt number
+ * @data: pointer to a network interface device structure
  */
-अटल irqवापस_t atl2_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(data);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static irqreturn_t atl2_intr(int irq, void *data)
+{
+	struct atl2_adapter *adapter = netdev_priv(data);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 status;
 
 	status = ATL2_READ_REG(hw, REG_ISR);
-	अगर (0 == status)
-		वापस IRQ_NONE;
+	if (0 == status)
+		return IRQ_NONE;
 
 	/* link event */
-	अगर (status & ISR_PHY)
-		atl2_clear_phy_पूर्णांक(adapter);
+	if (status & ISR_PHY)
+		atl2_clear_phy_int(adapter);
 
 	/* clear ISR status, and Enable CMB DMA/Disable Interrupt */
 	ATL2_WRITE_REG(hw, REG_ISR, status | ISR_DIS_INT);
 
-	/* check अगर PCIE PHY Link करोwn */
-	अगर (status & ISR_PHY_LINKDOWN) अणु
-		अगर (netअगर_running(adapter->netdev)) अणु /* reset MAC */
+	/* check if PCIE PHY Link down */
+	if (status & ISR_PHY_LINKDOWN) {
+		if (netif_running(adapter->netdev)) { /* reset MAC */
 			ATL2_WRITE_REG(hw, REG_ISR, 0);
 			ATL2_WRITE_REG(hw, REG_IMR, 0);
 			ATL2_WRITE_FLUSH(hw);
 			schedule_work(&adapter->reset_task);
-			वापस IRQ_HANDLED;
-		पूर्ण
-	पूर्ण
+			return IRQ_HANDLED;
+		}
+	}
 
-	/* check अगर DMA पढ़ो/ग_लिखो error? */
-	अगर (status & (ISR_DMAR_TO_RST | ISR_DMAW_TO_RST)) अणु
+	/* check if DMA read/write error? */
+	if (status & (ISR_DMAR_TO_RST | ISR_DMAW_TO_RST)) {
 		ATL2_WRITE_REG(hw, REG_ISR, 0);
 		ATL2_WRITE_REG(hw, REG_IMR, 0);
 		ATL2_WRITE_FLUSH(hw);
 		schedule_work(&adapter->reset_task);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/* link event */
-	अगर (status & (ISR_PHY | ISR_MANUAL)) अणु
+	if (status & (ISR_PHY | ISR_MANUAL)) {
 		adapter->netdev->stats.tx_carrier_errors++;
-		atl2_check_क्रम_link(adapter);
-	पूर्ण
+		atl2_check_for_link(adapter);
+	}
 
 	/* transmit event */
-	अगर (status & ISR_TX_EVENT)
-		atl2_पूर्णांकr_tx(adapter);
+	if (status & ISR_TX_EVENT)
+		atl2_intr_tx(adapter);
 
 	/* rx exception */
-	अगर (status & ISR_RX_EVENT)
-		atl2_पूर्णांकr_rx(adapter);
+	if (status & ISR_RX_EVENT)
+		atl2_intr_rx(adapter);
 
 	/* re-enable Interrupt */
 	ATL2_WRITE_REG(&adapter->hw, REG_ISR, 0);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक atl2_request_irq(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	पूर्णांक flags, err = 0;
+static int atl2_request_irq(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	int flags, err = 0;
 
 	flags = IRQF_SHARED;
 	adapter->have_msi = true;
 	err = pci_enable_msi(adapter->pdev);
-	अगर (err)
+	if (err)
 		adapter->have_msi = false;
 
-	अगर (adapter->have_msi)
+	if (adapter->have_msi)
 		flags &= ~IRQF_SHARED;
 
-	वापस request_irq(adapter->pdev->irq, atl2_पूर्णांकr, flags, netdev->name,
+	return request_irq(adapter->pdev->irq, atl2_intr, flags, netdev->name,
 		netdev);
-पूर्ण
+}
 
 /**
- * atl2_मुक्त_ring_resources - Free Tx / RX descriptor Resources
- * @adapter: board निजी काष्ठाure
+ * atl2_free_ring_resources - Free Tx / RX descriptor Resources
+ * @adapter: board private structure
  *
  * Free all transmit software resources
  */
-अटल व्योम atl2_मुक्त_ring_resources(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा pci_dev *pdev = adapter->pdev;
-	dma_मुक्त_coherent(&pdev->dev, adapter->ring_size,
+static void atl2_free_ring_resources(struct atl2_adapter *adapter)
+{
+	struct pci_dev *pdev = adapter->pdev;
+	dma_free_coherent(&pdev->dev, adapter->ring_size,
 			  adapter->ring_vir_addr, adapter->ring_dma);
-पूर्ण
+}
 
 /**
- * atl2_खोलो - Called when a network पूर्णांकerface is made active
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * atl2_open - Called when a network interface is made active
+ * @netdev: network interface device structure
  *
  * Returns 0 on success, negative value on failure
  *
- * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
- * active by the प्रणाली (IFF_UP).  At this poपूर्णांक all resources needed
- * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
- * handler is रेजिस्टरed with the OS, the watchकरोg समयr is started,
- * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
+ * The open entry point is called when a network interface is made
+ * active by the system (IFF_UP).  At this point all resources needed
+ * for transmit and receive operations are allocated, the interrupt
+ * handler is registered with the OS, the watchdog timer is started,
+ * and the stack is notified that the interface is ready.
  */
-अटल पूर्णांक atl2_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक err;
+static int atl2_open(struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	int err;
 	u32 val;
 
-	/* disallow खोलो during test */
-	अगर (test_bit(__ATL2_TESTING, &adapter->flags))
-		वापस -EBUSY;
+	/* disallow open during test */
+	if (test_bit(__ATL2_TESTING, &adapter->flags))
+		return -EBUSY;
 
 	/* allocate transmit descriptors */
 	err = atl2_setup_ring_resources(adapter);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = atl2_init_hw(&adapter->hw);
-	अगर (err) अणु
+	if (err) {
 		err = -EIO;
-		जाओ err_init_hw;
-	पूर्ण
+		goto err_init_hw;
+	}
 
 	/* hardware has been reset, we need to reload some things */
 	atl2_set_multi(netdev);
@@ -707,18 +706,18 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 
 	atl2_restore_vlan(adapter);
 
-	अगर (atl2_configure(adapter)) अणु
+	if (atl2_configure(adapter)) {
 		err = -EIO;
-		जाओ err_config;
-	पूर्ण
+		goto err_config;
+	}
 
 	err = atl2_request_irq(adapter);
-	अगर (err)
-		जाओ err_req_irq;
+	if (err)
+		goto err_req_irq;
 
 	clear_bit(__ATL2_DOWN, &adapter->flags);
 
-	mod_समयr(&adapter->watchकरोg_समयr, round_jअगरfies(jअगरfies + 4*HZ));
+	mod_timer(&adapter->watchdog_timer, round_jiffies(jiffies + 4*HZ));
 
 	val = ATL2_READ_REG(&adapter->hw, REG_MASTER_CTRL);
 	ATL2_WRITE_REG(&adapter->hw, REG_MASTER_CTRL,
@@ -726,26 +725,26 @@ MODULE_DEVICE_TABLE(pci, atl2_pci_tbl);
 
 	atl2_irq_enable(adapter);
 
-	वापस 0;
+	return 0;
 
 err_init_hw:
 err_req_irq:
 err_config:
-	atl2_मुक्त_ring_resources(adapter);
+	atl2_free_ring_resources(adapter);
 	atl2_reset_hw(&adapter->hw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम atl2_करोwn(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static void atl2_down(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 
-	/* संकेत that we're करोwn so the पूर्णांकerrupt handler करोes not
-	 * reschedule our watchकरोg समयr */
+	/* signal that we're down so the interrupt handler does not
+	 * reschedule our watchdog timer */
 	set_bit(__ATL2_DOWN, &adapter->flags);
 
-	netअगर_tx_disable(netdev);
+	netif_tx_disable(netdev);
 
 	/* reset MAC to disable all RX/TX */
 	atl2_reset_hw(&adapter->hw);
@@ -753,157 +752,157 @@ err_config:
 
 	atl2_irq_disable(adapter);
 
-	del_समयr_sync(&adapter->watchकरोg_समयr);
-	del_समयr_sync(&adapter->phy_config_समयr);
+	del_timer_sync(&adapter->watchdog_timer);
+	del_timer_sync(&adapter->phy_config_timer);
 	clear_bit(0, &adapter->cfg_phy);
 
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 	adapter->link_speed = SPEED_0;
 	adapter->link_duplex = -1;
-पूर्ण
+}
 
-अटल व्योम atl2_मुक्त_irq(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static void atl2_free_irq(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 
-	मुक्त_irq(adapter->pdev->irq, netdev);
+	free_irq(adapter->pdev->irq, netdev);
 
-#अगर_घोषित CONFIG_PCI_MSI
-	अगर (adapter->have_msi)
+#ifdef CONFIG_PCI_MSI
+	if (adapter->have_msi)
 		pci_disable_msi(adapter->pdev);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /**
- * atl2_बंद - Disables a network पूर्णांकerface
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * atl2_close - Disables a network interface
+ * @netdev: network interface device structure
  *
  * Returns 0, this is not allowed to fail
  *
- * The बंद entry poपूर्णांक is called when an पूर्णांकerface is de-activated
+ * The close entry point is called when an interface is de-activated
  * by the OS.  The hardware is still under the drivers control, but
  * needs to be disabled.  A global MAC reset is issued to stop the
- * hardware, and all transmit and receive resources are मुक्तd.
+ * hardware, and all transmit and receive resources are freed.
  */
-अटल पूर्णांक atl2_बंद(काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static int atl2_close(struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
 	WARN_ON(test_bit(__ATL2_RESETTING, &adapter->flags));
 
-	atl2_करोwn(adapter);
-	atl2_मुक्त_irq(adapter);
-	atl2_मुक्त_ring_resources(adapter);
+	atl2_down(adapter);
+	atl2_free_irq(adapter);
+	atl2_free_ring_resources(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक TxsFreeUnit(काष्ठा atl2_adapter *adapter)
-अणु
-	u32 txs_ग_लिखो_ptr = (u32) atomic_पढ़ो(&adapter->txs_ग_लिखो_ptr);
+static inline int TxsFreeUnit(struct atl2_adapter *adapter)
+{
+	u32 txs_write_ptr = (u32) atomic_read(&adapter->txs_write_ptr);
 
-	वापस (adapter->txs_next_clear >= txs_ग_लिखो_ptr) ?
-		(पूर्णांक) (adapter->txs_ring_size - adapter->txs_next_clear +
-		txs_ग_लिखो_ptr - 1) :
-		(पूर्णांक) (txs_ग_लिखो_ptr - adapter->txs_next_clear - 1);
-पूर्ण
+	return (adapter->txs_next_clear >= txs_write_ptr) ?
+		(int) (adapter->txs_ring_size - adapter->txs_next_clear +
+		txs_write_ptr - 1) :
+		(int) (txs_write_ptr - adapter->txs_next_clear - 1);
+}
 
-अटल अंतरभूत पूर्णांक TxdFreeBytes(काष्ठा atl2_adapter *adapter)
-अणु
-	u32 txd_पढ़ो_ptr = (u32)atomic_पढ़ो(&adapter->txd_पढ़ो_ptr);
+static inline int TxdFreeBytes(struct atl2_adapter *adapter)
+{
+	u32 txd_read_ptr = (u32)atomic_read(&adapter->txd_read_ptr);
 
-	वापस (adapter->txd_ग_लिखो_ptr >= txd_पढ़ो_ptr) ?
-		(पूर्णांक) (adapter->txd_ring_size - adapter->txd_ग_लिखो_ptr +
-		txd_पढ़ो_ptr - 1) :
-		(पूर्णांक) (txd_पढ़ो_ptr - adapter->txd_ग_लिखो_ptr - 1);
-पूर्ण
+	return (adapter->txd_write_ptr >= txd_read_ptr) ?
+		(int) (adapter->txd_ring_size - adapter->txd_write_ptr +
+		txd_read_ptr - 1) :
+		(int) (txd_read_ptr - adapter->txd_write_ptr - 1);
+}
 
-अटल netdev_tx_t atl2_xmit_frame(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा tx_pkt_header *txph;
+static netdev_tx_t atl2_xmit_frame(struct sk_buff *skb,
+					 struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct tx_pkt_header *txph;
 	u32 offset, copy_len;
-	पूर्णांक txs_unused;
-	पूर्णांक txbuf_unused;
+	int txs_unused;
+	int txbuf_unused;
 
-	अगर (test_bit(__ATL2_DOWN, &adapter->flags)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	if (test_bit(__ATL2_DOWN, &adapter->flags)) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
-	अगर (unlikely(skb->len <= 0)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	if (unlikely(skb->len <= 0)) {
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 
 	txs_unused = TxsFreeUnit(adapter);
 	txbuf_unused = TxdFreeBytes(adapter);
 
-	अगर (skb->len + माप(काष्ठा tx_pkt_header) + 4  > txbuf_unused ||
-		txs_unused < 1) अणु
+	if (skb->len + sizeof(struct tx_pkt_header) + 4  > txbuf_unused ||
+		txs_unused < 1) {
 		/* not enough resources */
-		netअगर_stop_queue(netdev);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		netif_stop_queue(netdev);
+		return NETDEV_TX_BUSY;
+	}
 
-	offset = adapter->txd_ग_लिखो_ptr;
+	offset = adapter->txd_write_ptr;
 
-	txph = (काष्ठा tx_pkt_header *) (((u8 *)adapter->txd_ring) + offset);
+	txph = (struct tx_pkt_header *) (((u8 *)adapter->txd_ring) + offset);
 
 	*(u32 *)txph = 0;
 	txph->pkt_size = skb->len;
 
 	offset += 4;
-	अगर (offset >= adapter->txd_ring_size)
+	if (offset >= adapter->txd_ring_size)
 		offset -= adapter->txd_ring_size;
 	copy_len = adapter->txd_ring_size - offset;
-	अगर (copy_len >= skb->len) अणु
-		स_नकल(((u8 *)adapter->txd_ring) + offset, skb->data, skb->len);
+	if (copy_len >= skb->len) {
+		memcpy(((u8 *)adapter->txd_ring) + offset, skb->data, skb->len);
 		offset += ((u32)(skb->len + 3) & ~3);
-	पूर्ण अन्यथा अणु
-		स_नकल(((u8 *)adapter->txd_ring)+offset, skb->data, copy_len);
-		स_नकल((u8 *)adapter->txd_ring, skb->data+copy_len,
+	} else {
+		memcpy(((u8 *)adapter->txd_ring)+offset, skb->data, copy_len);
+		memcpy((u8 *)adapter->txd_ring, skb->data+copy_len,
 			skb->len-copy_len);
 		offset = ((u32)(skb->len-copy_len + 3) & ~3);
-	पूर्ण
-#अगर_घोषित NETIF_F_HW_VLAN_CTAG_TX
-	अगर (skb_vlan_tag_present(skb)) अणु
+	}
+#ifdef NETIF_F_HW_VLAN_CTAG_TX
+	if (skb_vlan_tag_present(skb)) {
 		u16 vlan_tag = skb_vlan_tag_get(skb);
 		vlan_tag = (vlan_tag << 4) |
 			(vlan_tag >> 13) |
 			((vlan_tag >> 9) & 0x8);
 		txph->ins_vlan = 1;
 		txph->vlan = vlan_tag;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (offset >= adapter->txd_ring_size)
+	}
+#endif
+	if (offset >= adapter->txd_ring_size)
 		offset -= adapter->txd_ring_size;
-	adapter->txd_ग_लिखो_ptr = offset;
+	adapter->txd_write_ptr = offset;
 
-	/* clear txs beक्रमe send */
+	/* clear txs before send */
 	adapter->txs_ring[adapter->txs_next_clear].update = 0;
-	अगर (++adapter->txs_next_clear == adapter->txs_ring_size)
+	if (++adapter->txs_next_clear == adapter->txs_ring_size)
 		adapter->txs_next_clear = 0;
 
 	ATL2_WRITE_REGW(&adapter->hw, REG_MB_TXD_WR_IDX,
-		(adapter->txd_ग_लिखो_ptr >> 2));
+		(adapter->txd_write_ptr >> 2));
 
 	dev_consume_skb_any(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /**
  * atl2_change_mtu - Change the Maximum Transfer Unit
- * @netdev: network पूर्णांकerface device काष्ठाure
- * @new_mtu: new value क्रम maximum frame size
+ * @netdev: network interface device structure
+ * @new_mtu: new value for maximum frame size
  *
  * Returns 0 on success, negative on failure
  */
-अटल पूर्णांक atl2_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_change_mtu(struct net_device *netdev, int new_mtu)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 
 	/* set MTU */
 	netdev->mtu = new_mtu;
@@ -911,111 +910,111 @@ err_config:
 	ATL2_WRITE_REG(hw, REG_MTU, new_mtu + ETH_HLEN +
 		       VLAN_HLEN + ETH_FCS_LEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * atl2_set_mac - Change the Ethernet Address of the NIC
- * @netdev: network पूर्णांकerface device काष्ठाure
- * @p: poपूर्णांकer to an address काष्ठाure
+ * @netdev: network interface device structure
+ * @p: pointer to an address structure
  *
  * Returns 0 on success, negative on failure
  */
-अटल पूर्णांक atl2_set_mac(काष्ठा net_device *netdev, व्योम *p)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा sockaddr *addr = p;
+static int atl2_set_mac(struct net_device *netdev, void *p)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct sockaddr *addr = p;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	अगर (netअगर_running(netdev))
-		वापस -EBUSY;
+	if (netif_running(netdev))
+		return -EBUSY;
 
-	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
-	स_नकल(adapter->hw.mac_addr, addr->sa_data, netdev->addr_len);
+	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	memcpy(adapter->hw.mac_addr, addr->sa_data, netdev->addr_len);
 
 	atl2_set_mac_addr(&adapter->hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक atl2_mii_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा mii_ioctl_data *data = अगर_mii(अगरr);
-	अचिन्हित दीर्घ flags;
+static int atl2_mii_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct mii_ioctl_data *data = if_mii(ifr);
+	unsigned long flags;
 
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:
+	switch (cmd) {
+	case SIOCGMIIPHY:
 		data->phy_id = 0;
-		अवरोध;
-	हाल SIOCGMIIREG:
+		break;
+	case SIOCGMIIREG:
 		spin_lock_irqsave(&adapter->stats_lock, flags);
-		अगर (atl2_पढ़ो_phy_reg(&adapter->hw,
-			data->reg_num & 0x1F, &data->val_out)) अणु
+		if (atl2_read_phy_reg(&adapter->hw,
+			data->reg_num & 0x1F, &data->val_out)) {
 			spin_unlock_irqrestore(&adapter->stats_lock, flags);
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		spin_unlock_irqrestore(&adapter->stats_lock, flags);
-		अवरोध;
-	हाल SIOCSMIIREG:
-		अगर (data->reg_num & ~(0x1F))
-			वापस -EFAULT;
+		break;
+	case SIOCSMIIREG:
+		if (data->reg_num & ~(0x1F))
+			return -EFAULT;
 		spin_lock_irqsave(&adapter->stats_lock, flags);
-		अगर (atl2_ग_लिखो_phy_reg(&adapter->hw, data->reg_num,
-			data->val_in)) अणु
+		if (atl2_write_phy_reg(&adapter->hw, data->reg_num,
+			data->val_in)) {
 			spin_unlock_irqrestore(&adapter->stats_lock, flags);
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 		spin_unlock_irqrestore(&adapter->stats_lock, flags);
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
-अटल पूर्णांक atl2_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:
-	हाल SIOCGMIIREG:
-	हाल SIOCSMIIREG:
-		वापस atl2_mii_ioctl(netdev, अगरr, cmd);
-#अगर_घोषित ETHTOOL_OPS_COMPAT
-	हाल SIOCETHTOOL:
-		वापस ethtool_ioctl(अगरr);
-#पूर्ण_अगर
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int atl2_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+{
+	switch (cmd) {
+	case SIOCGMIIPHY:
+	case SIOCGMIIREG:
+	case SIOCSMIIREG:
+		return atl2_mii_ioctl(netdev, ifr, cmd);
+#ifdef ETHTOOL_OPS_COMPAT
+	case SIOCETHTOOL:
+		return ethtool_ioctl(ifr);
+#endif
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
 /**
- * atl2_tx_समयout - Respond to a Tx Hang
- * @netdev: network पूर्णांकerface device काष्ठाure
+ * atl2_tx_timeout - Respond to a Tx Hang
+ * @netdev: network interface device structure
  * @txqueue: index of the hanging transmit queue
  */
-अटल व्योम atl2_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static void atl2_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
-	/* Do the reset outside of पूर्णांकerrupt context */
+	/* Do the reset outside of interrupt context */
 	schedule_work(&adapter->reset_task);
-पूर्ण
+}
 
 /**
- * atl2_watchकरोg - Timer Call-back
- * @t: समयr list containing a poपूर्णांकer to netdev cast पूर्णांकo an अचिन्हित दीर्घ
+ * atl2_watchdog - Timer Call-back
+ * @t: timer list containing a pointer to netdev cast into an unsigned long
  */
-अटल व्योम atl2_watchकरोg(काष्ठा समयr_list *t)
-अणु
-	काष्ठा atl2_adapter *adapter = from_समयr(adapter, t, watchकरोg_समयr);
+static void atl2_watchdog(struct timer_list *t)
+{
+	struct atl2_adapter *adapter = from_timer(adapter, t, watchdog_timer);
 
-	अगर (!test_bit(__ATL2_DOWN, &adapter->flags)) अणु
+	if (!test_bit(__ATL2_DOWN, &adapter->flags)) {
 		u32 drop_rxd, drop_rxs;
-		अचिन्हित दीर्घ flags;
+		unsigned long flags;
 
 		spin_lock_irqsave(&adapter->stats_lock, flags);
 		drop_rxd = ATL2_READ_REG(&adapter->hw, REG_STS_RXD_OV);
@@ -1024,54 +1023,54 @@ err_config:
 
 		adapter->netdev->stats.rx_over_errors += drop_rxd + drop_rxs;
 
-		/* Reset the समयr */
-		mod_समयr(&adapter->watchकरोg_समयr,
-			  round_jअगरfies(jअगरfies + 4 * HZ));
-	पूर्ण
-पूर्ण
+		/* Reset the timer */
+		mod_timer(&adapter->watchdog_timer,
+			  round_jiffies(jiffies + 4 * HZ));
+	}
+}
 
 /**
  * atl2_phy_config - Timer Call-back
- * @t: समयr list containing a poपूर्णांकer to netdev cast पूर्णांकo an अचिन्हित दीर्घ
+ * @t: timer list containing a pointer to netdev cast into an unsigned long
  */
-अटल व्योम atl2_phy_config(काष्ठा समयr_list *t)
-अणु
-	काष्ठा atl2_adapter *adapter = from_समयr(adapter, t,
-						  phy_config_समयr);
-	काष्ठा atl2_hw *hw = &adapter->hw;
-	अचिन्हित दीर्घ flags;
+static void atl2_phy_config(struct timer_list *t)
+{
+	struct atl2_adapter *adapter = from_timer(adapter, t,
+						  phy_config_timer);
+	struct atl2_hw *hw = &adapter->hw;
+	unsigned long flags;
 
 	spin_lock_irqsave(&adapter->stats_lock, flags);
-	atl2_ग_लिखो_phy_reg(hw, MII_ADVERTISE, hw->mii_स्वतःneg_adv_reg);
-	atl2_ग_लिखो_phy_reg(hw, MII_BMCR, MII_CR_RESET | MII_CR_AUTO_NEG_EN |
+	atl2_write_phy_reg(hw, MII_ADVERTISE, hw->mii_autoneg_adv_reg);
+	atl2_write_phy_reg(hw, MII_BMCR, MII_CR_RESET | MII_CR_AUTO_NEG_EN |
 		MII_CR_RESTART_AUTO_NEG);
 	spin_unlock_irqrestore(&adapter->stats_lock, flags);
 	clear_bit(0, &adapter->cfg_phy);
-पूर्ण
+}
 
-अटल पूर्णांक atl2_up(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	पूर्णांक err = 0;
+static int atl2_up(struct atl2_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	int err = 0;
 	u32 val;
 
 	/* hardware has been reset, we need to reload some things */
 
 	err = atl2_init_hw(&adapter->hw);
-	अगर (err) अणु
+	if (err) {
 		err = -EIO;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	atl2_set_multi(netdev);
 	init_ring_ptrs(adapter);
 
 	atl2_restore_vlan(adapter);
 
-	अगर (atl2_configure(adapter)) अणु
+	if (atl2_configure(adapter)) {
 		err = -EIO;
-		जाओ err_up;
-	पूर्ण
+		goto err_up;
+	}
 
 	clear_bit(__ATL2_DOWN, &adapter->flags);
 
@@ -1082,37 +1081,37 @@ err_config:
 	atl2_irq_enable(adapter);
 
 err_up:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम atl2_reinit_locked(काष्ठा atl2_adapter *adapter)
-अणु
-	जबतक (test_and_set_bit(__ATL2_RESETTING, &adapter->flags))
+static void atl2_reinit_locked(struct atl2_adapter *adapter)
+{
+	while (test_and_set_bit(__ATL2_RESETTING, &adapter->flags))
 		msleep(1);
-	atl2_करोwn(adapter);
+	atl2_down(adapter);
 	atl2_up(adapter);
 	clear_bit(__ATL2_RESETTING, &adapter->flags);
-पूर्ण
+}
 
-अटल व्योम atl2_reset_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा atl2_adapter *adapter;
-	adapter = container_of(work, काष्ठा atl2_adapter, reset_task);
+static void atl2_reset_task(struct work_struct *work)
+{
+	struct atl2_adapter *adapter;
+	adapter = container_of(work, struct atl2_adapter, reset_task);
 
 	atl2_reinit_locked(adapter);
-पूर्ण
+}
 
-अटल व्योम atl2_setup_mac_ctrl(काष्ठा atl2_adapter *adapter)
-अणु
+static void atl2_setup_mac_ctrl(struct atl2_adapter *adapter)
+{
 	u32 value;
-	काष्ठा atl2_hw *hw = &adapter->hw;
-	काष्ठा net_device *netdev = adapter->netdev;
+	struct atl2_hw *hw = &adapter->hw;
+	struct net_device *netdev = adapter->netdev;
 
 	/* Config MAC CTRL Register */
 	value = MAC_CTRL_TX_EN | MAC_CTRL_RX_EN | MAC_CTRL_MACLP_CLK_PHY;
 
 	/* duplex */
-	अगर (FULL_DUPLEX == adapter->link_duplex)
+	if (FULL_DUPLEX == adapter->link_duplex)
 		value |= MAC_CTRL_DUPLX;
 
 	/* flow control */
@@ -1130,9 +1129,9 @@ err_up:
 
 	/* filter mode */
 	value |= MAC_CTRL_BC_EN;
-	अगर (netdev->flags & IFF_PROMISC)
+	if (netdev->flags & IFF_PROMISC)
 		value |= MAC_CTRL_PROMIS_EN;
-	अन्यथा अगर (netdev->flags & IFF_ALLMULTI)
+	else if (netdev->flags & IFF_ALLMULTI)
 		value |= MAC_CTRL_MC_ALL_EN;
 
 	/* half retry buffer */
@@ -1140,78 +1139,78 @@ err_up:
 		MAC_CTRL_HALF_LEFT_BUF_MASK)) << MAC_CTRL_HALF_LEFT_BUF_SHIFT);
 
 	ATL2_WRITE_REG(hw, REG_MAC_CTRL, value);
-पूर्ण
+}
 
-अटल पूर्णांक atl2_check_link(काष्ठा atl2_adapter *adapter)
-अणु
-	काष्ठा atl2_hw *hw = &adapter->hw;
-	काष्ठा net_device *netdev = adapter->netdev;
-	पूर्णांक ret_val;
+static int atl2_check_link(struct atl2_adapter *adapter)
+{
+	struct atl2_hw *hw = &adapter->hw;
+	struct net_device *netdev = adapter->netdev;
+	int ret_val;
 	u16 speed, duplex, phy_data;
-	पूर्णांक reconfig = 0;
+	int reconfig = 0;
 
-	/* MII_BMSR must पढ़ो twise */
-	atl2_पढ़ो_phy_reg(hw, MII_BMSR, &phy_data);
-	atl2_पढ़ो_phy_reg(hw, MII_BMSR, &phy_data);
-	अगर (!(phy_data&BMSR_LSTATUS)) अणु /* link करोwn */
-		अगर (netअगर_carrier_ok(netdev)) अणु /* old link state: Up */
+	/* MII_BMSR must read twise */
+	atl2_read_phy_reg(hw, MII_BMSR, &phy_data);
+	atl2_read_phy_reg(hw, MII_BMSR, &phy_data);
+	if (!(phy_data&BMSR_LSTATUS)) { /* link down */
+		if (netif_carrier_ok(netdev)) { /* old link state: Up */
 			u32 value;
 			/* disable rx */
 			value = ATL2_READ_REG(hw, REG_MAC_CTRL);
 			value &= ~MAC_CTRL_RX_EN;
 			ATL2_WRITE_REG(hw, REG_MAC_CTRL, value);
 			adapter->link_speed = SPEED_0;
-			netअगर_carrier_off(netdev);
-			netअगर_stop_queue(netdev);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			netif_carrier_off(netdev);
+			netif_stop_queue(netdev);
+		}
+		return 0;
+	}
 
 	/* Link Up */
 	ret_val = atl2_get_speed_and_duplex(hw, &speed, &duplex);
-	अगर (ret_val)
-		वापस ret_val;
-	चयन (hw->MediaType) अणु
-	हाल MEDIA_TYPE_100M_FULL:
-		अगर (speed  != SPEED_100 || duplex != FULL_DUPLEX)
+	if (ret_val)
+		return ret_val;
+	switch (hw->MediaType) {
+	case MEDIA_TYPE_100M_FULL:
+		if (speed  != SPEED_100 || duplex != FULL_DUPLEX)
 			reconfig = 1;
-		अवरोध;
-	हाल MEDIA_TYPE_100M_HALF:
-		अगर (speed  != SPEED_100 || duplex != HALF_DUPLEX)
+		break;
+	case MEDIA_TYPE_100M_HALF:
+		if (speed  != SPEED_100 || duplex != HALF_DUPLEX)
 			reconfig = 1;
-		अवरोध;
-	हाल MEDIA_TYPE_10M_FULL:
-		अगर (speed != SPEED_10 || duplex != FULL_DUPLEX)
+		break;
+	case MEDIA_TYPE_10M_FULL:
+		if (speed != SPEED_10 || duplex != FULL_DUPLEX)
 			reconfig = 1;
-		अवरोध;
-	हाल MEDIA_TYPE_10M_HALF:
-		अगर (speed  != SPEED_10 || duplex != HALF_DUPLEX)
+		break;
+	case MEDIA_TYPE_10M_HALF:
+		if (speed  != SPEED_10 || duplex != HALF_DUPLEX)
 			reconfig = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	/* link result is our setting */
-	अगर (reconfig == 0) अणु
-		अगर (adapter->link_speed != speed ||
-			adapter->link_duplex != duplex) अणु
+	if (reconfig == 0) {
+		if (adapter->link_speed != speed ||
+			adapter->link_duplex != duplex) {
 			adapter->link_speed = speed;
 			adapter->link_duplex = duplex;
 			atl2_setup_mac_ctrl(adapter);
-			prपूर्णांकk(KERN_INFO "%s: %s NIC Link is Up<%d Mbps %s>\n",
+			printk(KERN_INFO "%s: %s NIC Link is Up<%d Mbps %s>\n",
 				atl2_driver_name, netdev->name,
 				adapter->link_speed,
 				adapter->link_duplex == FULL_DUPLEX ?
 					"Full Duplex" : "Half Duplex");
-		पूर्ण
+		}
 
-		अगर (!netअगर_carrier_ok(netdev)) अणु /* Link करोwn -> Up */
-			netअगर_carrier_on(netdev);
-			netअगर_wake_queue(netdev);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		if (!netif_carrier_ok(netdev)) { /* Link down -> Up */
+			netif_carrier_on(netdev);
+			netif_wake_queue(netdev);
+		}
+		return 0;
+	}
 
 	/* change original link status */
-	अगर (netअगर_carrier_ok(netdev)) अणु
+	if (netif_carrier_ok(netdev)) {
 		u32 value;
 		/* disable rx */
 		value = ATL2_READ_REG(hw, REG_MAC_CTRL);
@@ -1219,139 +1218,139 @@ err_up:
 		ATL2_WRITE_REG(hw, REG_MAC_CTRL, value);
 
 		adapter->link_speed = SPEED_0;
-		netअगर_carrier_off(netdev);
-		netअगर_stop_queue(netdev);
-	पूर्ण
+		netif_carrier_off(netdev);
+		netif_stop_queue(netdev);
+	}
 
-	/* स्वतः-neg, insert समयr to re-config phy
-	 * (अगर पूर्णांकerval smaller than 5 seconds, something strange) */
-	अगर (!test_bit(__ATL2_DOWN, &adapter->flags)) अणु
-		अगर (!test_and_set_bit(0, &adapter->cfg_phy))
-			mod_समयr(&adapter->phy_config_समयr,
-				  round_jअगरfies(jअगरfies + 5 * HZ));
-	पूर्ण
+	/* auto-neg, insert timer to re-config phy
+	 * (if interval smaller than 5 seconds, something strange) */
+	if (!test_bit(__ATL2_DOWN, &adapter->flags)) {
+		if (!test_and_set_bit(0, &adapter->cfg_phy))
+			mod_timer(&adapter->phy_config_timer,
+				  round_jiffies(jiffies + 5 * HZ));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * atl2_link_chg_task - deal with link change event Out of पूर्णांकerrupt context
- * @work: poपूर्णांकer to work काष्ठा with निजी info
+ * atl2_link_chg_task - deal with link change event Out of interrupt context
+ * @work: pointer to work struct with private info
  */
-अटल व्योम atl2_link_chg_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा atl2_adapter *adapter;
-	अचिन्हित दीर्घ flags;
+static void atl2_link_chg_task(struct work_struct *work)
+{
+	struct atl2_adapter *adapter;
+	unsigned long flags;
 
-	adapter = container_of(work, काष्ठा atl2_adapter, link_chg_task);
+	adapter = container_of(work, struct atl2_adapter, link_chg_task);
 
 	spin_lock_irqsave(&adapter->stats_lock, flags);
 	atl2_check_link(adapter);
 	spin_unlock_irqrestore(&adapter->stats_lock, flags);
-पूर्ण
+}
 
-अटल व्योम atl2_setup_pcicmd(काष्ठा pci_dev *pdev)
-अणु
+static void atl2_setup_pcicmd(struct pci_dev *pdev)
+{
 	u16 cmd;
 
-	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &cmd);
+	pci_read_config_word(pdev, PCI_COMMAND, &cmd);
 
-	अगर (cmd & PCI_COMMAND_INTX_DISABLE)
+	if (cmd & PCI_COMMAND_INTX_DISABLE)
 		cmd &= ~PCI_COMMAND_INTX_DISABLE;
-	अगर (cmd & PCI_COMMAND_IO)
+	if (cmd & PCI_COMMAND_IO)
 		cmd &= ~PCI_COMMAND_IO;
-	अगर (0 == (cmd & PCI_COMMAND_MEMORY))
+	if (0 == (cmd & PCI_COMMAND_MEMORY))
 		cmd |= PCI_COMMAND_MEMORY;
-	अगर (0 == (cmd & PCI_COMMAND_MASTER))
+	if (0 == (cmd & PCI_COMMAND_MASTER))
 		cmd |= PCI_COMMAND_MASTER;
-	pci_ग_लिखो_config_word(pdev, PCI_COMMAND, cmd);
+	pci_write_config_word(pdev, PCI_COMMAND, cmd);
 
 	/*
 	 * some motherboards BIOS(PXE/EFI) driver may set PME
-	 * जबतक they transfer control to OS (Winकरोws/Linux)
-	 * so we should clear this bit beक्रमe NIC work normally
+	 * while they transfer control to OS (Windows/Linux)
+	 * so we should clear this bit before NIC work normally
 	 */
-	pci_ग_लिखो_config_dword(pdev, REG_PM_CTRLSTAT, 0);
-पूर्ण
+	pci_write_config_dword(pdev, REG_PM_CTRLSTAT, 0);
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम atl2_poll_controller(काष्ठा net_device *netdev)
-अणु
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void atl2_poll_controller(struct net_device *netdev)
+{
 	disable_irq(netdev->irq);
-	atl2_पूर्णांकr(netdev->irq, netdev);
+	atl2_intr(netdev->irq, netdev);
 	enable_irq(netdev->irq);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 
-अटल स्थिर काष्ठा net_device_ops atl2_netdev_ops = अणु
-	.nकरो_खोलो		= atl2_खोलो,
-	.nकरो_stop		= atl2_बंद,
-	.nकरो_start_xmit		= atl2_xmit_frame,
-	.nकरो_set_rx_mode	= atl2_set_multi,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= atl2_set_mac,
-	.nकरो_change_mtu		= atl2_change_mtu,
-	.nकरो_fix_features	= atl2_fix_features,
-	.nकरो_set_features	= atl2_set_features,
-	.nकरो_करो_ioctl		= atl2_ioctl,
-	.nकरो_tx_समयout		= atl2_tx_समयout,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= atl2_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops atl2_netdev_ops = {
+	.ndo_open		= atl2_open,
+	.ndo_stop		= atl2_close,
+	.ndo_start_xmit		= atl2_xmit_frame,
+	.ndo_set_rx_mode	= atl2_set_multi,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= atl2_set_mac,
+	.ndo_change_mtu		= atl2_change_mtu,
+	.ndo_fix_features	= atl2_fix_features,
+	.ndo_set_features	= atl2_set_features,
+	.ndo_do_ioctl		= atl2_ioctl,
+	.ndo_tx_timeout		= atl2_tx_timeout,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= atl2_poll_controller,
+#endif
+};
 
 /**
  * atl2_probe - Device Initialization Routine
- * @pdev: PCI device inक्रमmation काष्ठा
+ * @pdev: PCI device information struct
  * @ent: entry in atl2_pci_tbl
  *
  * Returns 0 on success, negative on failure
  *
- * atl2_probe initializes an adapter identअगरied by a pci_dev काष्ठाure.
- * The OS initialization, configuring of the adapter निजी काष्ठाure,
+ * atl2_probe initializes an adapter identified by a pci_dev structure.
+ * The OS initialization, configuring of the adapter private structure,
  * and a hardware reset occur.
  */
-अटल पूर्णांक atl2_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा net_device *netdev;
-	काष्ठा atl2_adapter *adapter;
-	अटल पूर्णांक cards_found = 0;
-	अचिन्हित दीर्घ mmio_start;
-	पूर्णांक mmio_len;
-	पूर्णांक err;
+static int atl2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct net_device *netdev;
+	struct atl2_adapter *adapter;
+	static int cards_found = 0;
+	unsigned long mmio_start;
+	int mmio_len;
+	int err;
 
 	err = pci_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/*
 	 * atl2 is a shared-high-32-bit device, so we're stuck with 32-bit DMA
-	 * until the kernel has the proper infraकाष्ठाure to support 64-bit DMA
+	 * until the kernel has the proper infrastructure to support 64-bit DMA
 	 * on these devices.
 	 */
-	अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)) &&
-	    dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32))) अणु
-		prपूर्णांकk(KERN_ERR "atl2: No usable DMA configuration, aborting\n");
+	if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(32)) &&
+	    dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32))) {
+		printk(KERN_ERR "atl2: No usable DMA configuration, aborting\n");
 		err = -EIO;
-		जाओ err_dma;
-	पूर्ण
+		goto err_dma;
+	}
 
 	/* Mark all PCI regions associated with PCI device
 	 * pdev as being reserved by owner atl2_driver_name */
 	err = pci_request_regions(pdev, atl2_driver_name);
-	अगर (err)
-		जाओ err_pci_reg;
+	if (err)
+		goto err_pci_reg;
 
 	/* Enables bus-mastering on the device and calls
-	 * pcibios_set_master to करो the needed arch specअगरic settings */
+	 * pcibios_set_master to do the needed arch specific settings */
 	pci_set_master(pdev);
 
-	netdev = alloc_etherdev(माप(काष्ठा atl2_adapter));
-	अगर (!netdev) अणु
+	netdev = alloc_etherdev(sizeof(struct atl2_adapter));
+	if (!netdev) {
 		err = -ENOMEM;
-		जाओ err_alloc_etherdev;
-	पूर्ण
+		goto err_alloc_etherdev;
+	}
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
@@ -1366,172 +1365,172 @@ err_up:
 
 	adapter->hw.mem_rang = (u32)mmio_len;
 	adapter->hw.hw_addr = ioremap(mmio_start, mmio_len);
-	अगर (!adapter->hw.hw_addr) अणु
+	if (!adapter->hw.hw_addr) {
 		err = -EIO;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	atl2_setup_pcicmd(pdev);
 
 	netdev->netdev_ops = &atl2_netdev_ops;
 	netdev->ethtool_ops = &atl2_ethtool_ops;
-	netdev->watchकरोg_समयo = 5 * HZ;
+	netdev->watchdog_timeo = 5 * HZ;
 	netdev->min_mtu = 40;
 	netdev->max_mtu = ETH_DATA_LEN + VLAN_HLEN;
-	म_नकलन(netdev->name, pci_name(pdev), माप(netdev->name) - 1);
+	strncpy(netdev->name, pci_name(pdev), sizeof(netdev->name) - 1);
 
 	netdev->mem_start = mmio_start;
 	netdev->mem_end = mmio_start + mmio_len;
 	adapter->bd_number = cards_found;
 	adapter->pci_using_64 = false;
 
-	/* setup the निजी काष्ठाure */
+	/* setup the private structure */
 	err = atl2_sw_init(adapter);
-	अगर (err)
-		जाओ err_sw_init;
+	if (err)
+		goto err_sw_init;
 
 	netdev->hw_features = NETIF_F_HW_VLAN_CTAG_RX;
 	netdev->features |= (NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX);
 
-	/* Init PHY as early as possible due to घातer saving issue  */
+	/* Init PHY as early as possible due to power saving issue  */
 	atl2_phy_init(&adapter->hw);
 
 	/* reset the controller to
 	 * put the device in a known good starting state */
 
-	अगर (atl2_reset_hw(&adapter->hw)) अणु
+	if (atl2_reset_hw(&adapter->hw)) {
 		err = -EIO;
-		जाओ err_reset;
-	पूर्ण
+		goto err_reset;
+	}
 
 	/* copy the MAC address out of the EEPROM */
-	atl2_पढ़ो_mac_addr(&adapter->hw);
-	स_नकल(netdev->dev_addr, adapter->hw.mac_addr, netdev->addr_len);
-	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
+	atl2_read_mac_addr(&adapter->hw);
+	memcpy(netdev->dev_addr, adapter->hw.mac_addr, netdev->addr_len);
+	if (!is_valid_ether_addr(netdev->dev_addr)) {
 		err = -EIO;
-		जाओ err_eeprom;
-	पूर्ण
+		goto err_eeprom;
+	}
 
 	atl2_check_options(adapter);
 
-	समयr_setup(&adapter->watchकरोg_समयr, atl2_watchकरोg, 0);
+	timer_setup(&adapter->watchdog_timer, atl2_watchdog, 0);
 
-	समयr_setup(&adapter->phy_config_समयr, atl2_phy_config, 0);
+	timer_setup(&adapter->phy_config_timer, atl2_phy_config, 0);
 
 	INIT_WORK(&adapter->reset_task, atl2_reset_task);
 	INIT_WORK(&adapter->link_chg_task, atl2_link_chg_task);
 
-	म_नकल(netdev->name, "eth%d"); /* ?? */
-	err = रेजिस्टर_netdev(netdev);
-	अगर (err)
-		जाओ err_रेजिस्टर;
+	strcpy(netdev->name, "eth%d"); /* ?? */
+	err = register_netdev(netdev);
+	if (err)
+		goto err_register;
 
-	/* assume we have no link क्रम now */
-	netअगर_carrier_off(netdev);
-	netअगर_stop_queue(netdev);
+	/* assume we have no link for now */
+	netif_carrier_off(netdev);
+	netif_stop_queue(netdev);
 
 	cards_found++;
 
-	वापस 0;
+	return 0;
 
 err_reset:
-err_रेजिस्टर:
+err_register:
 err_sw_init:
 err_eeprom:
 	iounmap(adapter->hw.hw_addr);
 err_ioremap:
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 err_alloc_etherdev:
 	pci_release_regions(pdev);
 err_pci_reg:
 err_dma:
 	pci_disable_device(pdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * atl2_हटाओ - Device Removal Routine
- * @pdev: PCI device inक्रमmation काष्ठा
+ * atl2_remove - Device Removal Routine
+ * @pdev: PCI device information struct
  *
- * atl2_हटाओ is called by the PCI subप्रणाली to alert the driver
+ * atl2_remove is called by the PCI subsystem to alert the driver
  * that it should release a PCI device.  The could be caused by a
- * Hot-Plug event, or because the driver is going to be हटाओd from
+ * Hot-Plug event, or because the driver is going to be removed from
  * memory.
  */
-/* FIXME: ग_लिखो the original MAC address back in हाल it was changed from a
+/* FIXME: write the original MAC address back in case it was changed from a
  * BIOS-set value, as in atl1 -- CHS */
-अटल व्योम atl2_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static void atl2_remove(struct pci_dev *pdev)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
-	/* flush_scheduled work may reschedule our watchकरोg task, so
-	 * explicitly disable watchकरोg tasks from being rescheduled  */
+	/* flush_scheduled work may reschedule our watchdog task, so
+	 * explicitly disable watchdog tasks from being rescheduled  */
 	set_bit(__ATL2_DOWN, &adapter->flags);
 
-	del_समयr_sync(&adapter->watchकरोg_समयr);
-	del_समयr_sync(&adapter->phy_config_समयr);
+	del_timer_sync(&adapter->watchdog_timer);
+	del_timer_sync(&adapter->phy_config_timer);
 	cancel_work_sync(&adapter->reset_task);
 	cancel_work_sync(&adapter->link_chg_task);
 
-	unरेजिस्टर_netdev(netdev);
+	unregister_netdev(netdev);
 
-	atl2_क्रमce_ps(&adapter->hw);
+	atl2_force_ps(&adapter->hw);
 
 	iounmap(adapter->hw.hw_addr);
 	pci_release_regions(pdev);
 
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल पूर्णांक atl2_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_suspend(struct pci_dev *pdev, pm_message_t state)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u16 speed, duplex;
 	u32 ctrl = 0;
 	u32 wufc = adapter->wol;
 
-#अगर_घोषित CONFIG_PM
-	पूर्णांक retval = 0;
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+	int retval = 0;
+#endif
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
-	अगर (netअगर_running(netdev)) अणु
+	if (netif_running(netdev)) {
 		WARN_ON(test_bit(__ATL2_RESETTING, &adapter->flags));
-		atl2_करोwn(adapter);
-	पूर्ण
+		atl2_down(adapter);
+	}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	retval = pci_save_state(pdev);
-	अगर (retval)
-		वापस retval;
-#पूर्ण_अगर
+	if (retval)
+		return retval;
+#endif
 
-	atl2_पढ़ो_phy_reg(hw, MII_BMSR, (u16 *)&ctrl);
-	atl2_पढ़ो_phy_reg(hw, MII_BMSR, (u16 *)&ctrl);
-	अगर (ctrl & BMSR_LSTATUS)
+	atl2_read_phy_reg(hw, MII_BMSR, (u16 *)&ctrl);
+	atl2_read_phy_reg(hw, MII_BMSR, (u16 *)&ctrl);
+	if (ctrl & BMSR_LSTATUS)
 		wufc &= ~ATLX_WUFC_LNKC;
 
-	अगर (0 != (ctrl & BMSR_LSTATUS) && 0 != wufc) अणु
+	if (0 != (ctrl & BMSR_LSTATUS) && 0 != wufc) {
 		u32 ret_val;
 		/* get current link speed & duplex */
 		ret_val = atl2_get_speed_and_duplex(hw, &speed, &duplex);
-		अगर (ret_val) अणु
-			prपूर्णांकk(KERN_DEBUG
+		if (ret_val) {
+			printk(KERN_DEBUG
 				"%s: get speed&duplex error while suspend\n",
 				atl2_driver_name);
-			जाओ wol_dis;
-		पूर्ण
+			goto wol_dis;
+		}
 
 		ctrl = 0;
 
 		/* turn on magic packet wol */
-		अगर (wufc & ATLX_WUFC_MAG)
+		if (wufc & ATLX_WUFC_MAG)
 			ctrl |= (WOL_MAGIC_EN | WOL_MAGIC_PME_EN);
 
 		/* ignore Link Chg event when Link is up */
@@ -1539,7 +1538,7 @@ err_dma:
 
 		/* Config MAC CTRL Register */
 		ctrl = MAC_CTRL_RX_EN | MAC_CTRL_MACLP_CLK_PHY;
-		अगर (FULL_DUPLEX == adapter->link_duplex)
+		if (FULL_DUPLEX == adapter->link_duplex)
 			ctrl |= MAC_CTRL_DUPLX;
 		ctrl |= (MAC_CTRL_ADD_CRC | MAC_CTRL_PAD);
 		ctrl |= (((u32)adapter->hw.preamble_len &
@@ -1547,10 +1546,10 @@ err_dma:
 		ctrl |= (((u32)(adapter->hw.retry_buf &
 			MAC_CTRL_HALF_LEFT_BUF_MASK)) <<
 			MAC_CTRL_HALF_LEFT_BUF_SHIFT);
-		अगर (wufc & ATLX_WUFC_MAG) अणु
+		if (wufc & ATLX_WUFC_MAG) {
 			/* magic packet maybe Broadcast&multicast&Unicast */
 			ctrl |= MAC_CTRL_BC_EN;
-		पूर्ण
+		}
 
 		ATL2_WRITE_REG(hw, REG_MAC_CTRL, ctrl);
 
@@ -1563,11 +1562,11 @@ err_dma:
 		ATL2_WRITE_REG(hw, REG_PCIE_DLL_TX_CTRL1, ctrl);
 
 		pci_enable_wake(pdev, pci_choose_state(pdev, state), 1);
-		जाओ suspend_निकास;
-	पूर्ण
+		goto suspend_exit;
+	}
 
-	अगर (0 == (ctrl&BMSR_LSTATUS) && 0 != (wufc&ATLX_WUFC_LNKC)) अणु
-		/* link is करोwn, so only LINK CHG WOL event enable */
+	if (0 == (ctrl&BMSR_LSTATUS) && 0 != (wufc&ATLX_WUFC_LNKC)) {
+		/* link is down, so only LINK CHG WOL event enable */
 		ctrl |= (WOL_LINK_CHG_EN | WOL_LINK_CHG_PME_EN);
 		ATL2_WRITE_REG(hw, REG_WOL_CTRL, ctrl);
 		ATL2_WRITE_REG(hw, REG_MAC_CTRL, 0);
@@ -1584,8 +1583,8 @@ err_dma:
 
 		pci_enable_wake(pdev, pci_choose_state(pdev, state), 1);
 
-		जाओ suspend_निकास;
-	पूर्ण
+		goto suspend_exit;
+	}
 
 wol_dis:
 	/* WOL disabled */
@@ -1599,38 +1598,38 @@ wol_dis:
 	ctrl |= PCIE_DLL_TX_CTRL1_SEL_NOR_CLK;
 	ATL2_WRITE_REG(hw, REG_PCIE_DLL_TX_CTRL1, ctrl);
 
-	atl2_क्रमce_ps(hw);
+	atl2_force_ps(hw);
 	hw->phy_configured = false; /* re-init PHY when resume */
 
 	pci_enable_wake(pdev, pci_choose_state(pdev, state), 0);
 
-suspend_निकास:
-	अगर (netअगर_running(netdev))
-		atl2_मुक्त_irq(adapter);
+suspend_exit:
+	if (netif_running(netdev))
+		atl2_free_irq(adapter);
 
 	pci_disable_device(pdev);
 
-	pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
+	pci_set_power_state(pdev, pci_choose_state(pdev, state));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक atl2_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+#ifdef CONFIG_PM
+static int atl2_resume(struct pci_dev *pdev)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 	u32 err;
 
-	pci_set_घातer_state(pdev, PCI_D0);
+	pci_set_power_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR
+	if (err) {
+		printk(KERN_ERR
 			"atl2: Cannot enable PCI device from suspend\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pci_set_master(pdev);
 
@@ -1641,60 +1640,60 @@ suspend_निकास:
 
 	ATL2_WRITE_REG(&adapter->hw, REG_WOL_CTRL, 0);
 
-	अगर (netअगर_running(netdev)) अणु
+	if (netif_running(netdev)) {
 		err = atl2_request_irq(adapter);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	atl2_reset_hw(&adapter->hw);
 
-	अगर (netअगर_running(netdev))
+	if (netif_running(netdev))
 		atl2_up(adapter);
 
-	netअगर_device_attach(netdev);
+	netif_device_attach(netdev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल व्योम atl2_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
+static void atl2_shutdown(struct pci_dev *pdev)
+{
 	atl2_suspend(pdev, PMSG_SUSPEND);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver atl2_driver = अणु
+static struct pci_driver atl2_driver = {
 	.name     = atl2_driver_name,
 	.id_table = atl2_pci_tbl,
 	.probe    = atl2_probe,
-	.हटाओ   = atl2_हटाओ,
+	.remove   = atl2_remove,
 	/* Power Management Hooks */
 	.suspend  = atl2_suspend,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.resume   = atl2_resume,
-#पूर्ण_अगर
-	.shutकरोwn = atl2_shutकरोwn,
-पूर्ण;
+#endif
+	.shutdown = atl2_shutdown,
+};
 
 module_pci_driver(atl2_driver);
 
-अटल व्योम atl2_पढ़ो_pci_cfg(काष्ठा atl2_hw *hw, u32 reg, u16 *value)
-अणु
-	काष्ठा atl2_adapter *adapter = hw->back;
-	pci_पढ़ो_config_word(adapter->pdev, reg, value);
-पूर्ण
+static void atl2_read_pci_cfg(struct atl2_hw *hw, u32 reg, u16 *value)
+{
+	struct atl2_adapter *adapter = hw->back;
+	pci_read_config_word(adapter->pdev, reg, value);
+}
 
-अटल व्योम atl2_ग_लिखो_pci_cfg(काष्ठा atl2_hw *hw, u32 reg, u16 *value)
-अणु
-	काष्ठा atl2_adapter *adapter = hw->back;
-	pci_ग_लिखो_config_word(adapter->pdev, reg, *value);
-पूर्ण
+static void atl2_write_pci_cfg(struct atl2_hw *hw, u32 reg, u16 *value)
+{
+	struct atl2_adapter *adapter = hw->back;
+	pci_write_config_word(adapter->pdev, reg, *value);
+}
 
-अटल पूर्णांक atl2_get_link_ksettings(काष्ठा net_device *netdev,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_get_link_ksettings(struct net_device *netdev,
+				   struct ethtool_link_ksettings *cmd)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 supported, advertising;
 
 	supported = (SUPPORTED_10baseT_Half |
@@ -1706,115 +1705,115 @@ module_pci_driver(atl2_driver);
 	advertising = ADVERTISED_TP;
 
 	advertising |= ADVERTISED_Autoneg;
-	advertising |= hw->स्वतःneg_advertised;
+	advertising |= hw->autoneg_advertised;
 
 	cmd->base.port = PORT_TP;
 	cmd->base.phy_address = 0;
 
-	अगर (adapter->link_speed != SPEED_0) अणु
+	if (adapter->link_speed != SPEED_0) {
 		cmd->base.speed = adapter->link_speed;
-		अगर (adapter->link_duplex == FULL_DUPLEX)
+		if (adapter->link_duplex == FULL_DUPLEX)
 			cmd->base.duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			cmd->base.duplex = DUPLEX_HALF;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	पूर्ण
+	}
 
-	cmd->base.स्वतःneg = AUTONEG_ENABLE;
+	cmd->base.autoneg = AUTONEG_ENABLE;
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
 						supported);
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक atl2_set_link_ksettings(काष्ठा net_device *netdev,
-				   स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_set_link_ksettings(struct net_device *netdev,
+				   const struct ethtool_link_ksettings *cmd)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 advertising;
 
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	जबतक (test_and_set_bit(__ATL2_RESETTING, &adapter->flags))
+	while (test_and_set_bit(__ATL2_RESETTING, &adapter->flags))
 		msleep(1);
 
-	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
-#घोषणा MY_ADV_MASK	(ADVERTISE_10_HALF | \
+	if (cmd->base.autoneg == AUTONEG_ENABLE) {
+#define MY_ADV_MASK	(ADVERTISE_10_HALF | \
 			 ADVERTISE_10_FULL | \
 			 ADVERTISE_100_HALF| \
 			 ADVERTISE_100_FULL)
 
-		अगर ((advertising & MY_ADV_MASK) == MY_ADV_MASK) अणु
+		if ((advertising & MY_ADV_MASK) == MY_ADV_MASK) {
 			hw->MediaType = MEDIA_TYPE_AUTO_SENSOR;
-			hw->स्वतःneg_advertised =  MY_ADV_MASK;
-		पूर्ण अन्यथा अगर ((advertising & MY_ADV_MASK) == ADVERTISE_100_FULL) अणु
+			hw->autoneg_advertised =  MY_ADV_MASK;
+		} else if ((advertising & MY_ADV_MASK) == ADVERTISE_100_FULL) {
 			hw->MediaType = MEDIA_TYPE_100M_FULL;
-			hw->स्वतःneg_advertised = ADVERTISE_100_FULL;
-		पूर्ण अन्यथा अगर ((advertising & MY_ADV_MASK) == ADVERTISE_100_HALF) अणु
+			hw->autoneg_advertised = ADVERTISE_100_FULL;
+		} else if ((advertising & MY_ADV_MASK) == ADVERTISE_100_HALF) {
 			hw->MediaType = MEDIA_TYPE_100M_HALF;
-			hw->स्वतःneg_advertised = ADVERTISE_100_HALF;
-		पूर्ण अन्यथा अगर ((advertising & MY_ADV_MASK) == ADVERTISE_10_FULL) अणु
+			hw->autoneg_advertised = ADVERTISE_100_HALF;
+		} else if ((advertising & MY_ADV_MASK) == ADVERTISE_10_FULL) {
 			hw->MediaType = MEDIA_TYPE_10M_FULL;
-			hw->स्वतःneg_advertised = ADVERTISE_10_FULL;
-		पूर्ण  अन्यथा अगर ((advertising & MY_ADV_MASK) == ADVERTISE_10_HALF) अणु
+			hw->autoneg_advertised = ADVERTISE_10_FULL;
+		}  else if ((advertising & MY_ADV_MASK) == ADVERTISE_10_HALF) {
 			hw->MediaType = MEDIA_TYPE_10M_HALF;
-			hw->स्वतःneg_advertised = ADVERTISE_10_HALF;
-		पूर्ण अन्यथा अणु
+			hw->autoneg_advertised = ADVERTISE_10_HALF;
+		} else {
 			clear_bit(__ATL2_RESETTING, &adapter->flags);
-			वापस -EINVAL;
-		पूर्ण
-		advertising = hw->स्वतःneg_advertised |
+			return -EINVAL;
+		}
+		advertising = hw->autoneg_advertised |
 			ADVERTISED_TP | ADVERTISED_Autoneg;
-	पूर्ण अन्यथा अणु
+	} else {
 		clear_bit(__ATL2_RESETTING, &adapter->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* reset the link */
-	अगर (netअगर_running(adapter->netdev)) अणु
-		atl2_करोwn(adapter);
+	if (netif_running(adapter->netdev)) {
+		atl2_down(adapter);
 		atl2_up(adapter);
-	पूर्ण अन्यथा
+	} else
 		atl2_reset_hw(&adapter->hw);
 
 	clear_bit(__ATL2_RESETTING, &adapter->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 atl2_get_msglevel(काष्ठा net_device *netdev)
-अणु
-	वापस 0;
-पूर्ण
+static u32 atl2_get_msglevel(struct net_device *netdev)
+{
+	return 0;
+}
 
 /*
- * It's sane क्रम this to be empty, but we might want to take advantage of this.
+ * It's sane for this to be empty, but we might want to take advantage of this.
  */
-अटल व्योम atl2_set_msglevel(काष्ठा net_device *netdev, u32 data)
-अणु
-पूर्ण
+static void atl2_set_msglevel(struct net_device *netdev, u32 data)
+{
+}
 
-अटल पूर्णांक atl2_get_regs_len(काष्ठा net_device *netdev)
-अणु
-#घोषणा ATL2_REGS_LEN 42
-	वापस माप(u32) * ATL2_REGS_LEN;
-पूर्ण
+static int atl2_get_regs_len(struct net_device *netdev)
+{
+#define ATL2_REGS_LEN 42
+	return sizeof(u32) * ATL2_REGS_LEN;
+}
 
-अटल व्योम atl2_get_regs(काष्ठा net_device *netdev,
-	काष्ठा ethtool_regs *regs, व्योम *p)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static void atl2_get_regs(struct net_device *netdev,
+	struct ethtool_regs *regs, void *p)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 *regs_buff = p;
 	u16 phy_data;
 
-	स_रखो(p, 0, माप(u32) * ATL2_REGS_LEN);
+	memset(p, 0, sizeof(u32) * ATL2_REGS_LEN);
 
 	regs->version = (1 << 24) | (hw->revision_id << 16) | hw->device_id;
 
@@ -1858,185 +1857,185 @@ module_pci_driver(atl2_driver);
 	regs_buff[38] = ATL2_READ_REG(hw, REG_ISR);
 	regs_buff[39] = ATL2_READ_REG(hw, REG_IMR);
 
-	atl2_पढ़ो_phy_reg(hw, MII_BMCR, &phy_data);
+	atl2_read_phy_reg(hw, MII_BMCR, &phy_data);
 	regs_buff[40] = (u32)phy_data;
-	atl2_पढ़ो_phy_reg(hw, MII_BMSR, &phy_data);
+	atl2_read_phy_reg(hw, MII_BMSR, &phy_data);
 	regs_buff[41] = (u32)phy_data;
-पूर्ण
+}
 
-अटल पूर्णांक atl2_get_eeprom_len(काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static int atl2_get_eeprom_len(struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
-	अगर (!atl2_check_eeprom_exist(&adapter->hw))
-		वापस 512;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (!atl2_check_eeprom_exist(&adapter->hw))
+		return 512;
+	else
+		return 0;
+}
 
-अटल पूर्णांक atl2_get_eeprom(काष्ठा net_device *netdev,
-	काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_get_eeprom(struct net_device *netdev,
+	struct ethtool_eeprom *eeprom, u8 *bytes)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 *eeprom_buff;
-	पूर्णांक first_dword, last_dword;
-	पूर्णांक ret_val = 0;
-	पूर्णांक i;
+	int first_dword, last_dword;
+	int ret_val = 0;
+	int i;
 
-	अगर (eeprom->len == 0)
-		वापस -EINVAL;
+	if (eeprom->len == 0)
+		return -EINVAL;
 
-	अगर (atl2_check_eeprom_exist(hw))
-		वापस -EINVAL;
+	if (atl2_check_eeprom_exist(hw))
+		return -EINVAL;
 
-	eeprom->magic = hw->venकरोr_id | (hw->device_id << 16);
+	eeprom->magic = hw->vendor_id | (hw->device_id << 16);
 
 	first_dword = eeprom->offset >> 2;
 	last_dword = (eeprom->offset + eeprom->len - 1) >> 2;
 
-	eeprom_buff = kदो_स्मृति_array(last_dword - first_dword + 1, माप(u32),
+	eeprom_buff = kmalloc_array(last_dword - first_dword + 1, sizeof(u32),
 				    GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	if (!eeprom_buff)
+		return -ENOMEM;
 
-	क्रम (i = first_dword; i < last_dword; i++) अणु
-		अगर (!atl2_पढ़ो_eeprom(hw, i*4, &(eeprom_buff[i-first_dword]))) अणु
+	for (i = first_dword; i < last_dword; i++) {
+		if (!atl2_read_eeprom(hw, i*4, &(eeprom_buff[i-first_dword]))) {
 			ret_val = -EIO;
-			जाओ मुक्त;
-		पूर्ण
-	पूर्ण
+			goto free;
+		}
+	}
 
-	स_नकल(bytes, (u8 *)eeprom_buff + (eeprom->offset & 3),
+	memcpy(bytes, (u8 *)eeprom_buff + (eeprom->offset & 3),
 		eeprom->len);
-मुक्त:
-	kमुक्त(eeprom_buff);
+free:
+	kfree(eeprom_buff);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल पूर्णांक atl2_set_eeprom(काष्ठा net_device *netdev,
-	काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	काष्ठा atl2_hw *hw = &adapter->hw;
+static int atl2_set_eeprom(struct net_device *netdev,
+	struct ethtool_eeprom *eeprom, u8 *bytes)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	struct atl2_hw *hw = &adapter->hw;
 	u32 *eeprom_buff;
 	u32 *ptr;
-	पूर्णांक max_len, first_dword, last_dword, ret_val = 0;
-	पूर्णांक i;
+	int max_len, first_dword, last_dword, ret_val = 0;
+	int i;
 
-	अगर (eeprom->len == 0)
-		वापस -EOPNOTSUPP;
+	if (eeprom->len == 0)
+		return -EOPNOTSUPP;
 
-	अगर (eeprom->magic != (hw->venकरोr_id | (hw->device_id << 16)))
-		वापस -EFAULT;
+	if (eeprom->magic != (hw->vendor_id | (hw->device_id << 16)))
+		return -EFAULT;
 
 	max_len = 512;
 
 	first_dword = eeprom->offset >> 2;
 	last_dword = (eeprom->offset + eeprom->len - 1) >> 2;
-	eeprom_buff = kदो_स्मृति(max_len, GFP_KERNEL);
-	अगर (!eeprom_buff)
-		वापस -ENOMEM;
+	eeprom_buff = kmalloc(max_len, GFP_KERNEL);
+	if (!eeprom_buff)
+		return -ENOMEM;
 
 	ptr = eeprom_buff;
 
-	अगर (eeprom->offset & 3) अणु
-		/* need पढ़ो/modअगरy/ग_लिखो of first changed EEPROM word */
-		/* only the second byte of the word is being modअगरied */
-		अगर (!atl2_पढ़ो_eeprom(hw, first_dword*4, &(eeprom_buff[0]))) अणु
+	if (eeprom->offset & 3) {
+		/* need read/modify/write of first changed EEPROM word */
+		/* only the second byte of the word is being modified */
+		if (!atl2_read_eeprom(hw, first_dword*4, &(eeprom_buff[0]))) {
 			ret_val = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ptr++;
-	पूर्ण
-	अगर (((eeprom->offset + eeprom->len) & 3)) अणु
+	}
+	if (((eeprom->offset + eeprom->len) & 3)) {
 		/*
-		 * need पढ़ो/modअगरy/ग_लिखो of last changed EEPROM word
-		 * only the first byte of the word is being modअगरied
+		 * need read/modify/write of last changed EEPROM word
+		 * only the first byte of the word is being modified
 		 */
-		अगर (!atl2_पढ़ो_eeprom(hw, last_dword * 4,
-					&(eeprom_buff[last_dword - first_dword]))) अणु
+		if (!atl2_read_eeprom(hw, last_dword * 4,
+					&(eeprom_buff[last_dword - first_dword]))) {
 			ret_val = -EIO;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Device's eeprom is always little-endian, word addressable */
-	स_नकल(ptr, bytes, eeprom->len);
+	memcpy(ptr, bytes, eeprom->len);
 
-	क्रम (i = 0; i < last_dword - first_dword + 1; i++) अणु
-		अगर (!atl2_ग_लिखो_eeprom(hw, ((first_dword+i)*4), eeprom_buff[i])) अणु
+	for (i = 0; i < last_dword - first_dword + 1; i++) {
+		if (!atl2_write_eeprom(hw, ((first_dword+i)*4), eeprom_buff[i])) {
 			ret_val = -EIO;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
  out:
-	kमुक्त(eeprom_buff);
-	वापस ret_val;
-पूर्ण
+	kfree(eeprom_buff);
+	return ret_val;
+}
 
-अटल व्योम atl2_get_drvinfo(काष्ठा net_device *netdev,
-	काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static void atl2_get_drvinfo(struct net_device *netdev,
+	struct ethtool_drvinfo *drvinfo)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(drvinfo->driver,  atl2_driver_name, माप(drvinfo->driver));
-	strlcpy(drvinfo->fw_version, "L2", माप(drvinfo->fw_version));
+	strlcpy(drvinfo->driver,  atl2_driver_name, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->fw_version, "L2", sizeof(drvinfo->fw_version));
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल व्योम atl2_get_wol(काष्ठा net_device *netdev,
-	काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static void atl2_get_wol(struct net_device *netdev,
+	struct ethtool_wolinfo *wol)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
 	wol->supported = WAKE_MAGIC;
 	wol->wolopts = 0;
 
-	अगर (adapter->wol & ATLX_WUFC_EX)
+	if (adapter->wol & ATLX_WUFC_EX)
 		wol->wolopts |= WAKE_UCAST;
-	अगर (adapter->wol & ATLX_WUFC_MC)
+	if (adapter->wol & ATLX_WUFC_MC)
 		wol->wolopts |= WAKE_MCAST;
-	अगर (adapter->wol & ATLX_WUFC_BC)
+	if (adapter->wol & ATLX_WUFC_BC)
 		wol->wolopts |= WAKE_BCAST;
-	अगर (adapter->wol & ATLX_WUFC_MAG)
+	if (adapter->wol & ATLX_WUFC_MAG)
 		wol->wolopts |= WAKE_MAGIC;
-	अगर (adapter->wol & ATLX_WUFC_LNKC)
+	if (adapter->wol & ATLX_WUFC_LNKC)
 		wol->wolopts |= WAKE_PHY;
-पूर्ण
+}
 
-अटल पूर्णांक atl2_set_wol(काष्ठा net_device *netdev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
+static int atl2_set_wol(struct net_device *netdev, struct ethtool_wolinfo *wol)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
 
-	अगर (wol->wolopts & (WAKE_ARP | WAKE_MAGICSECURE))
-		वापस -EOPNOTSUPP;
+	if (wol->wolopts & (WAKE_ARP | WAKE_MAGICSECURE))
+		return -EOPNOTSUPP;
 
-	अगर (wol->wolopts & (WAKE_UCAST | WAKE_BCAST | WAKE_MCAST))
-		वापस -EOPNOTSUPP;
+	if (wol->wolopts & (WAKE_UCAST | WAKE_BCAST | WAKE_MCAST))
+		return -EOPNOTSUPP;
 
 	/* these settings will always override what we currently have */
 	adapter->wol = 0;
 
-	अगर (wol->wolopts & WAKE_MAGIC)
+	if (wol->wolopts & WAKE_MAGIC)
 		adapter->wol |= ATLX_WUFC_MAG;
-	अगर (wol->wolopts & WAKE_PHY)
+	if (wol->wolopts & WAKE_PHY)
 		adapter->wol |= ATLX_WUFC_LNKC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक atl2_nway_reset(काष्ठा net_device *netdev)
-अणु
-	काष्ठा atl2_adapter *adapter = netdev_priv(netdev);
-	अगर (netअगर_running(netdev))
+static int atl2_nway_reset(struct net_device *netdev)
+{
+	struct atl2_adapter *adapter = netdev_priv(netdev);
+	if (netif_running(netdev))
 		atl2_reinit_locked(adapter);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops atl2_ethtool_ops = अणु
+static const struct ethtool_ops atl2_ethtool_ops = {
 	.get_drvinfo		= atl2_get_drvinfo,
 	.get_regs_len		= atl2_get_regs_len,
 	.get_regs		= atl2_get_regs,
@@ -2051,37 +2050,37 @@ module_pci_driver(atl2_driver);
 	.set_eeprom		= atl2_set_eeprom,
 	.get_link_ksettings	= atl2_get_link_ksettings,
 	.set_link_ksettings	= atl2_set_link_ksettings,
-पूर्ण;
+};
 
-#घोषणा LBYTESWAP(a)  ((((a) & 0x00ff00ff) << 8) | \
+#define LBYTESWAP(a)  ((((a) & 0x00ff00ff) << 8) | \
 	(((a) & 0xff00ff00) >> 8))
-#घोषणा LONGSWAP(a)   ((LBYTESWAP(a) << 16) | (LBYTESWAP(a) >> 16))
-#घोषणा SHORTSWAP(a)  (((a) << 8) | ((a) >> 8))
+#define LONGSWAP(a)   ((LBYTESWAP(a) << 16) | (LBYTESWAP(a) >> 16))
+#define SHORTSWAP(a)  (((a) << 8) | ((a) >> 8))
 
 /*
- * Reset the transmit and receive units; mask and clear all पूर्णांकerrupts.
+ * Reset the transmit and receive units; mask and clear all interrupts.
  *
  * hw - Struct containing variables accessed by shared code
- * वापस : 0  or  idle status (अगर error)
+ * return : 0  or  idle status (if error)
  */
-अटल s32 atl2_reset_hw(काष्ठा atl2_hw *hw)
-अणु
+static s32 atl2_reset_hw(struct atl2_hw *hw)
+{
 	u32 icr;
 	u16 pci_cfg_cmd_word;
-	पूर्णांक i;
+	int i;
 
-	/* Workaround क्रम PCI problem when BIOS sets MMRBC incorrectly. */
-	atl2_पढ़ो_pci_cfg(hw, PCI_REG_COMMAND, &pci_cfg_cmd_word);
-	अगर ((pci_cfg_cmd_word &
+	/* Workaround for PCI problem when BIOS sets MMRBC incorrectly. */
+	atl2_read_pci_cfg(hw, PCI_REG_COMMAND, &pci_cfg_cmd_word);
+	if ((pci_cfg_cmd_word &
 		(CMD_IO_SPACE|CMD_MEMORY_SPACE|CMD_BUS_MASTER)) !=
-		(CMD_IO_SPACE|CMD_MEMORY_SPACE|CMD_BUS_MASTER)) अणु
+		(CMD_IO_SPACE|CMD_MEMORY_SPACE|CMD_BUS_MASTER)) {
 		pci_cfg_cmd_word |=
 			(CMD_IO_SPACE|CMD_MEMORY_SPACE|CMD_BUS_MASTER);
-		atl2_ग_लिखो_pci_cfg(hw, PCI_REG_COMMAND, &pci_cfg_cmd_word);
-	पूर्ण
+		atl2_write_pci_cfg(hw, PCI_REG_COMMAND, &pci_cfg_cmd_word);
+	}
 
 	/* Clear Interrupt mask to stop board from generating
-	 * पूर्णांकerrupts & Clear any pending पूर्णांकerrupt events
+	 * interrupts & Clear any pending interrupt events
 	 */
 	/* FIXME */
 	/* ATL2_WRITE_REG(hw, REG_IMR, 0); */
@@ -2096,38 +2095,38 @@ module_pci_driver(atl2_driver);
 	wmb();
 	msleep(1); /* delay about 1ms */
 
-	/* Wait at least 10ms क्रम All module to be Idle */
-	क्रम (i = 0; i < 10; i++) अणु
+	/* Wait at least 10ms for All module to be Idle */
+	for (i = 0; i < 10; i++) {
 		icr = ATL2_READ_REG(hw, REG_IDLE_STATUS);
-		अगर (!icr)
-			अवरोध;
+		if (!icr)
+			break;
 		msleep(1); /* delay 1 ms */
 		cpu_relax();
-	पूर्ण
+	}
 
-	अगर (icr)
-		वापस icr;
+	if (icr)
+		return icr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा CUSTOM_SPI_CS_SETUP        2
-#घोषणा CUSTOM_SPI_CLK_HI          2
-#घोषणा CUSTOM_SPI_CLK_LO          2
-#घोषणा CUSTOM_SPI_CS_HOLD         2
-#घोषणा CUSTOM_SPI_CS_HI           3
+#define CUSTOM_SPI_CS_SETUP        2
+#define CUSTOM_SPI_CLK_HI          2
+#define CUSTOM_SPI_CLK_LO          2
+#define CUSTOM_SPI_CS_HOLD         2
+#define CUSTOM_SPI_CS_HI           3
 
-अटल काष्ठा atl2_spi_flash_dev flash_table[] =
-अणु
+static struct atl2_spi_flash_dev flash_table[] =
+{
 /* MFR    WRSR  READ  PROGRAM WREN  WRDI  RDSR  RDID  SECTOR_ERASE CHIP_ERASE */
-अणु"Atmel", 0x0,  0x03, 0x02,   0x06, 0x04, 0x05, 0x15, 0x52,        0x62 पूर्ण,
-अणु"SST",   0x01, 0x03, 0x02,   0x06, 0x04, 0x05, 0x90, 0x20,        0x60 पूर्ण,
-अणु"ST",    0x01, 0x03, 0x02,   0x06, 0x04, 0x05, 0xAB, 0xD8,        0xC7 पूर्ण,
-पूर्ण;
+{"Atmel", 0x0,  0x03, 0x02,   0x06, 0x04, 0x05, 0x15, 0x52,        0x62 },
+{"SST",   0x01, 0x03, 0x02,   0x06, 0x04, 0x05, 0x90, 0x20,        0x60 },
+{"ST",    0x01, 0x03, 0x02,   0x06, 0x04, 0x05, 0xAB, 0xD8,        0xC7 },
+};
 
-अटल bool atl2_spi_पढ़ो(काष्ठा atl2_hw *hw, u32 addr, u32 *buf)
-अणु
-	पूर्णांक i;
+static bool atl2_spi_read(struct atl2_hw *hw, u32 addr, u32 *buf)
+{
+	int i;
 	u32 value;
 
 	ATL2_WRITE_REG(hw, REG_SPI_DATA, 0);
@@ -2152,145 +2151,145 @@ module_pci_driver(atl2_driver);
 
 	ATL2_WRITE_REG(hw, REG_SPI_FLASH_CTRL, value);
 
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		msleep(1);
 		value = ATL2_READ_REG(hw, REG_SPI_FLASH_CTRL);
-		अगर (!(value & SPI_FLASH_CTRL_START))
-			अवरोध;
-	पूर्ण
+		if (!(value & SPI_FLASH_CTRL_START))
+			break;
+	}
 
-	अगर (value & SPI_FLASH_CTRL_START)
-		वापस false;
+	if (value & SPI_FLASH_CTRL_START)
+		return false;
 
 	*buf = ATL2_READ_REG(hw, REG_SPI_DATA);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * get_permanent_address
- * वापस 0 अगर get valid mac address,
+ * return 0 if get valid mac address,
  */
-अटल पूर्णांक get_permanent_address(काष्ठा atl2_hw *hw)
-अणु
+static int get_permanent_address(struct atl2_hw *hw)
+{
 	u32 Addr[2];
 	u32 i, Control;
 	u16 Register;
 	u8  EthAddr[ETH_ALEN];
 	bool KeyValid;
 
-	अगर (is_valid_ether_addr(hw->perm_mac_addr))
-		वापस 0;
+	if (is_valid_ether_addr(hw->perm_mac_addr))
+		return 0;
 
 	Addr[0] = 0;
 	Addr[1] = 0;
 
-	अगर (!atl2_check_eeprom_exist(hw)) अणु /* eeprom exists */
+	if (!atl2_check_eeprom_exist(hw)) { /* eeprom exists */
 		Register = 0;
 		KeyValid = false;
 
 		/* Read out all EEPROM content */
 		i = 0;
-		जबतक (1) अणु
-			अगर (atl2_पढ़ो_eeprom(hw, i + 0x100, &Control)) अणु
-				अगर (KeyValid) अणु
-					अगर (Register == REG_MAC_STA_ADDR)
+		while (1) {
+			if (atl2_read_eeprom(hw, i + 0x100, &Control)) {
+				if (KeyValid) {
+					if (Register == REG_MAC_STA_ADDR)
 						Addr[0] = Control;
-					अन्यथा अगर (Register ==
+					else if (Register ==
 						(REG_MAC_STA_ADDR + 4))
 						Addr[1] = Control;
 					KeyValid = false;
-				पूर्ण अन्यथा अगर ((Control & 0xff) == 0x5A) अणु
+				} else if ((Control & 0xff) == 0x5A) {
 					KeyValid = true;
 					Register = (u16) (Control >> 16);
-				पूर्ण अन्यथा अणु
-			/* assume data end जबतक encount an invalid KEYWORD */
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध; /* पढ़ो error */
-			पूर्ण
+				} else {
+			/* assume data end while encount an invalid KEYWORD */
+					break;
+				}
+			} else {
+				break; /* read error */
+			}
 			i += 4;
-		पूर्ण
+		}
 
 		*(u32 *) &EthAddr[2] = LONGSWAP(Addr[0]);
 		*(u16 *) &EthAddr[0] = SHORTSWAP(*(u16 *) &Addr[1]);
 
-		अगर (is_valid_ether_addr(EthAddr)) अणु
-			स_नकल(hw->perm_mac_addr, EthAddr, ETH_ALEN);
-			वापस 0;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+		if (is_valid_ether_addr(EthAddr)) {
+			memcpy(hw->perm_mac_addr, EthAddr, ETH_ALEN);
+			return 0;
+		}
+		return 1;
+	}
 
-	/* see अगर SPI flash exists? */
+	/* see if SPI flash exists? */
 	Addr[0] = 0;
 	Addr[1] = 0;
 	Register = 0;
 	KeyValid = false;
 	i = 0;
-	जबतक (1) अणु
-		अगर (atl2_spi_पढ़ो(hw, i + 0x1f000, &Control)) अणु
-			अगर (KeyValid) अणु
-				अगर (Register == REG_MAC_STA_ADDR)
+	while (1) {
+		if (atl2_spi_read(hw, i + 0x1f000, &Control)) {
+			if (KeyValid) {
+				if (Register == REG_MAC_STA_ADDR)
 					Addr[0] = Control;
-				अन्यथा अगर (Register == (REG_MAC_STA_ADDR + 4))
+				else if (Register == (REG_MAC_STA_ADDR + 4))
 					Addr[1] = Control;
 				KeyValid = false;
-			पूर्ण अन्यथा अगर ((Control & 0xff) == 0x5A) अणु
+			} else if ((Control & 0xff) == 0x5A) {
 				KeyValid = true;
 				Register = (u16) (Control >> 16);
-			पूर्ण अन्यथा अणु
-				अवरोध; /* data end */
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अवरोध; /* पढ़ो error */
-		पूर्ण
+			} else {
+				break; /* data end */
+			}
+		} else {
+			break; /* read error */
+		}
 		i += 4;
-	पूर्ण
+	}
 
 	*(u32 *) &EthAddr[2] = LONGSWAP(Addr[0]);
 	*(u16 *) &EthAddr[0] = SHORTSWAP(*(u16 *)&Addr[1]);
-	अगर (is_valid_ether_addr(EthAddr)) अणु
-		स_नकल(hw->perm_mac_addr, EthAddr, ETH_ALEN);
-		वापस 0;
-	पूर्ण
+	if (is_valid_ether_addr(EthAddr)) {
+		memcpy(hw->perm_mac_addr, EthAddr, ETH_ALEN);
+		return 0;
+	}
 	/* maybe MAC-address is from BIOS */
 	Addr[0] = ATL2_READ_REG(hw, REG_MAC_STA_ADDR);
 	Addr[1] = ATL2_READ_REG(hw, REG_MAC_STA_ADDR + 4);
 	*(u32 *) &EthAddr[2] = LONGSWAP(Addr[0]);
 	*(u16 *) &EthAddr[0] = SHORTSWAP(*(u16 *) &Addr[1]);
 
-	अगर (is_valid_ether_addr(EthAddr)) अणु
-		स_नकल(hw->perm_mac_addr, EthAddr, ETH_ALEN);
-		वापस 0;
-	पूर्ण
+	if (is_valid_ether_addr(EthAddr)) {
+		memcpy(hw->perm_mac_addr, EthAddr, ETH_ALEN);
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Reads the adapter's MAC address from the EEPROM
  *
  * hw - Struct containing variables accessed by shared code
  */
-अटल s32 atl2_पढ़ो_mac_addr(काष्ठा atl2_hw *hw)
-अणु
-	अगर (get_permanent_address(hw)) अणु
-		/* क्रम test */
-		/* FIXME: shouldn't we use eth_अक्रमom_addr() here? */
+static s32 atl2_read_mac_addr(struct atl2_hw *hw)
+{
+	if (get_permanent_address(hw)) {
+		/* for test */
+		/* FIXME: shouldn't we use eth_random_addr() here? */
 		hw->perm_mac_addr[0] = 0x00;
 		hw->perm_mac_addr[1] = 0x13;
 		hw->perm_mac_addr[2] = 0x74;
 		hw->perm_mac_addr[3] = 0x00;
 		hw->perm_mac_addr[4] = 0x5c;
 		hw->perm_mac_addr[5] = 0x38;
-	पूर्ण
+	}
 
-	स_नकल(hw->mac_addr, hw->perm_mac_addr, ETH_ALEN);
+	memcpy(hw->mac_addr, hw->perm_mac_addr, ETH_ALEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Hashes an address to determine its location in the multicast table
@@ -2300,24 +2299,24 @@ module_pci_driver(atl2_driver);
  *
  * atl2_hash_mc_addr
  *  purpose
- *      set hash value क्रम a multicast address
+ *      set hash value for a multicast address
  *      hash calcu processing :
- *          1. calcu 32bit CRC क्रम multicast address
+ *          1. calcu 32bit CRC for multicast address
  *          2. reverse crc with MSB to LSB
  */
-अटल u32 atl2_hash_mc_addr(काष्ठा atl2_hw *hw, u8 *mc_addr)
-अणु
+static u32 atl2_hash_mc_addr(struct atl2_hw *hw, u8 *mc_addr)
+{
 	u32 crc32, value;
-	पूर्णांक i;
+	int i;
 
 	value = 0;
 	crc32 = ether_crc_le(6, mc_addr);
 
-	क्रम (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++)
 		value |= (((crc32 >> i) & 1) << (31 - i));
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
 /*
  * Sets the bit in the multicast table corresponding to the hash value.
@@ -2325,18 +2324,18 @@ module_pci_driver(atl2_driver);
  * hw - Struct containing variables accessed by shared code
  * hash_value - Multicast address hash value
  */
-अटल व्योम atl2_hash_set(काष्ठा atl2_hw *hw, u32 hash_value)
-अणु
+static void atl2_hash_set(struct atl2_hw *hw, u32 hash_value)
+{
 	u32 hash_bit, hash_reg;
 	u32 mta;
 
-	/* The HASH Table  is a रेजिस्टर array of 2 32-bit रेजिस्टरs.
+	/* The HASH Table  is a register array of 2 32-bit registers.
 	 * It is treated like an array of 64 bits.  We want to set
-	 * bit BitArray[hash_value]. So we figure out what रेजिस्टर
-	 * the bit is in, पढ़ो it, OR in the new bit, then ग_लिखो
-	 * back the new value.  The रेजिस्टर is determined by the
+	 * bit BitArray[hash_value]. So we figure out what register
+	 * the bit is in, read it, OR in the new bit, then write
+	 * back the new value.  The register is determined by the
 	 * upper 7 bits of the hash value and the bit within that
-	 * रेजिस्टर are determined by the lower 5 bits of the value.
+	 * register are determined by the lower 5 bits of the value.
 	 */
 	hash_reg = (hash_value >> 31) & 0x1;
 	hash_bit = (hash_value >> 26) & 0x1F;
@@ -2346,47 +2345,47 @@ module_pci_driver(atl2_driver);
 	mta |= (1 << hash_bit);
 
 	ATL2_WRITE_REG_ARRAY(hw, REG_RX_HASH_TABLE, hash_reg, mta);
-पूर्ण
+}
 
 /*
  * atl2_init_pcie - init PCIE module
  */
-अटल व्योम atl2_init_pcie(काष्ठा atl2_hw *hw)
-अणु
+static void atl2_init_pcie(struct atl2_hw *hw)
+{
     u32 value;
     value = LTSSM_TEST_MODE_DEF;
     ATL2_WRITE_REG(hw, REG_LTSSM_TEST_MODE, value);
 
     value = PCIE_DLL_TX_CTRL1_DEF;
     ATL2_WRITE_REG(hw, REG_PCIE_DLL_TX_CTRL1, value);
-पूर्ण
+}
 
-अटल व्योम atl2_init_flash_opcode(काष्ठा atl2_hw *hw)
-अणु
-	अगर (hw->flash_venकरोr >= ARRAY_SIZE(flash_table))
-		hw->flash_venकरोr = 0; /* ATMEL */
+static void atl2_init_flash_opcode(struct atl2_hw *hw)
+{
+	if (hw->flash_vendor >= ARRAY_SIZE(flash_table))
+		hw->flash_vendor = 0; /* ATMEL */
 
 	/* Init OP table */
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_PROGRAM,
-		flash_table[hw->flash_venकरोr].cmdPROGRAM);
+		flash_table[hw->flash_vendor].cmdPROGRAM);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_SC_ERASE,
-		flash_table[hw->flash_venकरोr].cmdSECTOR_ERASE);
+		flash_table[hw->flash_vendor].cmdSECTOR_ERASE);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_CHIP_ERASE,
-		flash_table[hw->flash_venकरोr].cmdCHIP_ERASE);
+		flash_table[hw->flash_vendor].cmdCHIP_ERASE);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_RDID,
-		flash_table[hw->flash_venकरोr].cmdRDID);
+		flash_table[hw->flash_vendor].cmdRDID);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_WREN,
-		flash_table[hw->flash_venकरोr].cmdWREN);
+		flash_table[hw->flash_vendor].cmdWREN);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_RDSR,
-		flash_table[hw->flash_venकरोr].cmdRDSR);
+		flash_table[hw->flash_vendor].cmdRDSR);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_WRSR,
-		flash_table[hw->flash_venकरोr].cmdWRSR);
+		flash_table[hw->flash_vendor].cmdWRSR);
 	ATL2_WRITE_REGB(hw, REG_SPI_FLASH_OP_READ,
-		flash_table[hw->flash_venकरोr].cmdREAD);
-पूर्ण
+		flash_table[hw->flash_vendor].cmdREAD);
+}
 
 /********************************************************************
-* Perक्रमms basic configuration of the adapter.
+* Performs basic configuration of the adapter.
 *
 * hw - Struct containing variables accessed by shared code
 * Assumes that the controller has previously been reset and is in a
@@ -2394,8 +2393,8 @@ module_pci_driver(atl2_driver);
 * and  Calls routines to setup link
 * Leaves the transmit and receive units disabled and uninitialized.
 ********************************************************************/
-अटल s32 atl2_init_hw(काष्ठा atl2_hw *hw)
-अणु
+static s32 atl2_init_hw(struct atl2_hw *hw)
+{
 	u32 ret_val = 0;
 
 	atl2_init_pcie(hw);
@@ -2409,8 +2408,8 @@ module_pci_driver(atl2_driver);
 
 	ret_val = atl2_phy_init(hw);
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 /*
  * Detects the current speed and duplex settings of the hardware.
@@ -2419,48 +2418,48 @@ module_pci_driver(atl2_driver);
  * speed - Speed of the connection
  * duplex - Duplex setting of the connection
  */
-अटल s32 atl2_get_speed_and_duplex(काष्ठा atl2_hw *hw, u16 *speed,
+static s32 atl2_get_speed_and_duplex(struct atl2_hw *hw, u16 *speed,
 	u16 *duplex)
-अणु
+{
 	s32 ret_val;
 	u16 phy_data;
 
-	/* Read PHY Specअगरic Status Register (17) */
-	ret_val = atl2_पढ़ो_phy_reg(hw, MII_ATLX_PSSR, &phy_data);
-	अगर (ret_val)
-		वापस ret_val;
+	/* Read PHY Specific Status Register (17) */
+	ret_val = atl2_read_phy_reg(hw, MII_ATLX_PSSR, &phy_data);
+	if (ret_val)
+		return ret_val;
 
-	अगर (!(phy_data & MII_ATLX_PSSR_SPD_DPLX_RESOLVED))
-		वापस ATLX_ERR_PHY_RES;
+	if (!(phy_data & MII_ATLX_PSSR_SPD_DPLX_RESOLVED))
+		return ATLX_ERR_PHY_RES;
 
-	चयन (phy_data & MII_ATLX_PSSR_SPEED) अणु
-	हाल MII_ATLX_PSSR_100MBS:
+	switch (phy_data & MII_ATLX_PSSR_SPEED) {
+	case MII_ATLX_PSSR_100MBS:
 		*speed = SPEED_100;
-		अवरोध;
-	हाल MII_ATLX_PSSR_10MBS:
+		break;
+	case MII_ATLX_PSSR_10MBS:
 		*speed = SPEED_10;
-		अवरोध;
-	शेष:
-		वापस ATLX_ERR_PHY_SPEED;
-	पूर्ण
+		break;
+	default:
+		return ATLX_ERR_PHY_SPEED;
+	}
 
-	अगर (phy_data & MII_ATLX_PSSR_DPLX)
+	if (phy_data & MII_ATLX_PSSR_DPLX)
 		*duplex = FULL_DUPLEX;
-	अन्यथा
+	else
 		*duplex = HALF_DUPLEX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Reads the value from a PHY रेजिस्टर
+ * Reads the value from a PHY register
  * hw - Struct containing variables accessed by shared code
- * reg_addr - address of the PHY रेजिस्टर to पढ़ो
+ * reg_addr - address of the PHY register to read
  */
-अटल s32 atl2_पढ़ो_phy_reg(काष्ठा atl2_hw *hw, u16 reg_addr, u16 *phy_data)
-अणु
+static s32 atl2_read_phy_reg(struct atl2_hw *hw, u16 reg_addr, u16 *phy_data)
+{
 	u32 val;
-	पूर्णांक i;
+	int i;
 
 	val = ((u32)(reg_addr & MDIO_REG_ADDR_MASK)) << MDIO_REG_ADDR_SHIFT |
 		MDIO_START |
@@ -2471,30 +2470,30 @@ module_pci_driver(atl2_driver);
 
 	wmb();
 
-	क्रम (i = 0; i < MDIO_WAIT_TIMES; i++) अणु
+	for (i = 0; i < MDIO_WAIT_TIMES; i++) {
 		udelay(2);
 		val = ATL2_READ_REG(hw, REG_MDIO_CTRL);
-		अगर (!(val & (MDIO_START | MDIO_BUSY)))
-			अवरोध;
+		if (!(val & (MDIO_START | MDIO_BUSY)))
+			break;
 		wmb();
-	पूर्ण
-	अगर (!(val & (MDIO_START | MDIO_BUSY))) अणु
+	}
+	if (!(val & (MDIO_START | MDIO_BUSY))) {
 		*phy_data = (u16)val;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस ATLX_ERR_PHY;
-पूर्ण
+	return ATLX_ERR_PHY;
+}
 
 /*
- * Writes a value to a PHY रेजिस्टर
+ * Writes a value to a PHY register
  * hw - Struct containing variables accessed by shared code
- * reg_addr - address of the PHY रेजिस्टर to ग_लिखो
- * data - data to ग_लिखो to the PHY
+ * reg_addr - address of the PHY register to write
+ * data - data to write to the PHY
  */
-अटल s32 atl2_ग_लिखो_phy_reg(काष्ठा atl2_hw *hw, u32 reg_addr, u16 phy_data)
-अणु
-	पूर्णांक i;
+static s32 atl2_write_phy_reg(struct atl2_hw *hw, u32 reg_addr, u16 phy_data)
+{
+	int i;
 	u32 val;
 
 	val = ((u32)(phy_data & MDIO_DATA_MASK)) << MDIO_DATA_SHIFT |
@@ -2506,166 +2505,166 @@ module_pci_driver(atl2_driver);
 
 	wmb();
 
-	क्रम (i = 0; i < MDIO_WAIT_TIMES; i++) अणु
+	for (i = 0; i < MDIO_WAIT_TIMES; i++) {
 		udelay(2);
 		val = ATL2_READ_REG(hw, REG_MDIO_CTRL);
-		अगर (!(val & (MDIO_START | MDIO_BUSY)))
-			अवरोध;
+		if (!(val & (MDIO_START | MDIO_BUSY)))
+			break;
 
 		wmb();
-	पूर्ण
+	}
 
-	अगर (!(val & (MDIO_START | MDIO_BUSY)))
-		वापस 0;
+	if (!(val & (MDIO_START | MDIO_BUSY)))
+		return 0;
 
-	वापस ATLX_ERR_PHY;
-पूर्ण
+	return ATLX_ERR_PHY;
+}
 
 /*
- * Configures PHY स्वतःneg and flow control advertisement settings
+ * Configures PHY autoneg and flow control advertisement settings
  *
  * hw - Struct containing variables accessed by shared code
  */
-अटल s32 atl2_phy_setup_स्वतःneg_adv(काष्ठा atl2_hw *hw)
-अणु
-	s16 mii_स्वतःneg_adv_reg;
+static s32 atl2_phy_setup_autoneg_adv(struct atl2_hw *hw)
+{
+	s16 mii_autoneg_adv_reg;
 
 	/* Read the MII Auto-Neg Advertisement Register (Address 4). */
-	mii_स्वतःneg_adv_reg = MII_AR_DEFAULT_CAP_MASK;
+	mii_autoneg_adv_reg = MII_AR_DEFAULT_CAP_MASK;
 
-	/* Need to parse स्वतःneg_advertised  and set up
-	 * the appropriate PHY रेजिस्टरs.  First we will parse क्रम
-	 * स्वतःneg_advertised software override.  Since we can advertise
+	/* Need to parse autoneg_advertised  and set up
+	 * the appropriate PHY registers.  First we will parse for
+	 * autoneg_advertised software override.  Since we can advertise
 	 * a plethora of combinations, we need to check each bit
-	 * inभागidually.
+	 * individually.
 	 */
 
 	/* First we clear all the 10/100 mb speed bits in the Auto-Neg
 	 * Advertisement Register (Address 4) and the 1000 mb speed bits in
 	 * the  1000Base-T Control Register (Address 9). */
-	mii_स्वतःneg_adv_reg &= ~MII_AR_SPEED_MASK;
+	mii_autoneg_adv_reg &= ~MII_AR_SPEED_MASK;
 
 	/* Need to parse MediaType and setup the
-	 * appropriate PHY रेजिस्टरs. */
-	चयन (hw->MediaType) अणु
-	हाल MEDIA_TYPE_AUTO_SENSOR:
-		mii_स्वतःneg_adv_reg |=
+	 * appropriate PHY registers. */
+	switch (hw->MediaType) {
+	case MEDIA_TYPE_AUTO_SENSOR:
+		mii_autoneg_adv_reg |=
 			(MII_AR_10T_HD_CAPS |
 			MII_AR_10T_FD_CAPS  |
 			MII_AR_100TX_HD_CAPS|
 			MII_AR_100TX_FD_CAPS);
-		hw->स्वतःneg_advertised =
+		hw->autoneg_advertised =
 			ADVERTISE_10_HALF |
 			ADVERTISE_10_FULL |
 			ADVERTISE_100_HALF|
 			ADVERTISE_100_FULL;
-		अवरोध;
-	हाल MEDIA_TYPE_100M_FULL:
-		mii_स्वतःneg_adv_reg |= MII_AR_100TX_FD_CAPS;
-		hw->स्वतःneg_advertised = ADVERTISE_100_FULL;
-		अवरोध;
-	हाल MEDIA_TYPE_100M_HALF:
-		mii_स्वतःneg_adv_reg |= MII_AR_100TX_HD_CAPS;
-		hw->स्वतःneg_advertised = ADVERTISE_100_HALF;
-		अवरोध;
-	हाल MEDIA_TYPE_10M_FULL:
-		mii_स्वतःneg_adv_reg |= MII_AR_10T_FD_CAPS;
-		hw->स्वतःneg_advertised = ADVERTISE_10_FULL;
-		अवरोध;
-	शेष:
-		mii_स्वतःneg_adv_reg |= MII_AR_10T_HD_CAPS;
-		hw->स्वतःneg_advertised = ADVERTISE_10_HALF;
-		अवरोध;
-	पूर्ण
+		break;
+	case MEDIA_TYPE_100M_FULL:
+		mii_autoneg_adv_reg |= MII_AR_100TX_FD_CAPS;
+		hw->autoneg_advertised = ADVERTISE_100_FULL;
+		break;
+	case MEDIA_TYPE_100M_HALF:
+		mii_autoneg_adv_reg |= MII_AR_100TX_HD_CAPS;
+		hw->autoneg_advertised = ADVERTISE_100_HALF;
+		break;
+	case MEDIA_TYPE_10M_FULL:
+		mii_autoneg_adv_reg |= MII_AR_10T_FD_CAPS;
+		hw->autoneg_advertised = ADVERTISE_10_FULL;
+		break;
+	default:
+		mii_autoneg_adv_reg |= MII_AR_10T_HD_CAPS;
+		hw->autoneg_advertised = ADVERTISE_10_HALF;
+		break;
+	}
 
 	/* flow control fixed to enable all */
-	mii_स्वतःneg_adv_reg |= (MII_AR_ASM_सूची | MII_AR_PAUSE);
+	mii_autoneg_adv_reg |= (MII_AR_ASM_DIR | MII_AR_PAUSE);
 
-	hw->mii_स्वतःneg_adv_reg = mii_स्वतःneg_adv_reg;
+	hw->mii_autoneg_adv_reg = mii_autoneg_adv_reg;
 
-	वापस atl2_ग_लिखो_phy_reg(hw, MII_ADVERTISE, mii_स्वतःneg_adv_reg);
-पूर्ण
+	return atl2_write_phy_reg(hw, MII_ADVERTISE, mii_autoneg_adv_reg);
+}
 
 /*
  * Resets the PHY and make all config validate
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Sets bit 15 and 12 of the MII Control regiser (क्रम F001 bug)
+ * Sets bit 15 and 12 of the MII Control regiser (for F001 bug)
  */
-अटल s32 atl2_phy_commit(काष्ठा atl2_hw *hw)
-अणु
+static s32 atl2_phy_commit(struct atl2_hw *hw)
+{
 	s32 ret_val;
 	u16 phy_data;
 
 	phy_data = MII_CR_RESET | MII_CR_AUTO_NEG_EN | MII_CR_RESTART_AUTO_NEG;
-	ret_val = atl2_ग_लिखो_phy_reg(hw, MII_BMCR, phy_data);
-	अगर (ret_val) अणु
+	ret_val = atl2_write_phy_reg(hw, MII_BMCR, phy_data);
+	if (ret_val) {
 		u32 val;
-		पूर्णांक i;
-		/* pcie serdes link may be करोwn ! */
-		क्रम (i = 0; i < 25; i++) अणु
+		int i;
+		/* pcie serdes link may be down ! */
+		for (i = 0; i < 25; i++) {
 			msleep(1);
 			val = ATL2_READ_REG(hw, REG_MDIO_CTRL);
-			अगर (!(val & (MDIO_START | MDIO_BUSY)))
-				अवरोध;
-		पूर्ण
+			if (!(val & (MDIO_START | MDIO_BUSY)))
+				break;
+		}
 
-		अगर (0 != (val & (MDIO_START | MDIO_BUSY))) अणु
-			prपूर्णांकk(KERN_ERR "atl2: PCIe link down for at least 25ms !\n");
-			वापस ret_val;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (0 != (val & (MDIO_START | MDIO_BUSY))) {
+			printk(KERN_ERR "atl2: PCIe link down for at least 25ms !\n");
+			return ret_val;
+		}
+	}
+	return 0;
+}
 
-अटल s32 atl2_phy_init(काष्ठा atl2_hw *hw)
-अणु
+static s32 atl2_phy_init(struct atl2_hw *hw)
+{
 	s32 ret_val;
 	u16 phy_val;
 
-	अगर (hw->phy_configured)
-		वापस 0;
+	if (hw->phy_configured)
+		return 0;
 
 	/* Enable PHY */
 	ATL2_WRITE_REGW(hw, REG_PHY_ENABLE, 1);
 	ATL2_WRITE_FLUSH(hw);
 	msleep(1);
 
-	/* check अगर the PHY is in घातersaving mode */
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_ADDR, 0);
-	atl2_पढ़ो_phy_reg(hw, MII_DBG_DATA, &phy_val);
+	/* check if the PHY is in powersaving mode */
+	atl2_write_phy_reg(hw, MII_DBG_ADDR, 0);
+	atl2_read_phy_reg(hw, MII_DBG_DATA, &phy_val);
 
 	/* 024E / 124E 0r 0274 / 1274 ? */
-	अगर (phy_val & 0x1000) अणु
+	if (phy_val & 0x1000) {
 		phy_val &= ~0x1000;
-		atl2_ग_लिखो_phy_reg(hw, MII_DBG_DATA, phy_val);
-	पूर्ण
+		atl2_write_phy_reg(hw, MII_DBG_DATA, phy_val);
+	}
 
 	msleep(1);
 
 	/*Enable PHY LinkChange Interrupt */
-	ret_val = atl2_ग_लिखो_phy_reg(hw, 18, 0xC00);
-	अगर (ret_val)
-		वापस ret_val;
+	ret_val = atl2_write_phy_reg(hw, 18, 0xC00);
+	if (ret_val)
+		return ret_val;
 
 	/* setup AutoNeg parameters */
-	ret_val = atl2_phy_setup_स्वतःneg_adv(hw);
-	अगर (ret_val)
-		वापस ret_val;
+	ret_val = atl2_phy_setup_autoneg_adv(hw);
+	if (ret_val)
+		return ret_val;
 
 	/* SW.Reset & En-Auto-Neg to restart Auto-Neg */
 	ret_val = atl2_phy_commit(hw);
-	अगर (ret_val)
-		वापस ret_val;
+	if (ret_val)
+		return ret_val;
 
 	hw->phy_configured = true;
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-अटल व्योम atl2_set_mac_addr(काष्ठा atl2_hw *hw)
-अणु
+static void atl2_set_mac_addr(struct atl2_hw *hw)
+{
 	u32 value;
 	/* 00-0B-6A-F6-00-DC
 	 * 0:  6AF600DC   1: 000B
@@ -2679,116 +2678,116 @@ module_pci_driver(atl2_driver);
 	value = (((u32)hw->mac_addr[0]) << 8) |
 		(((u32)hw->mac_addr[1]));
 	ATL2_WRITE_REG_ARRAY(hw, REG_MAC_STA_ADDR, 1, value);
-पूर्ण
+}
 
 /*
  * check_eeprom_exist
- * वापस 0 अगर eeprom exist
+ * return 0 if eeprom exist
  */
-अटल पूर्णांक atl2_check_eeprom_exist(काष्ठा atl2_hw *hw)
-अणु
+static int atl2_check_eeprom_exist(struct atl2_hw *hw)
+{
 	u32 value;
 
 	value = ATL2_READ_REG(hw, REG_SPI_FLASH_CTRL);
-	अगर (value & SPI_FLASH_CTRL_EN_VPD) अणु
+	if (value & SPI_FLASH_CTRL_EN_VPD) {
 		value &= ~SPI_FLASH_CTRL_EN_VPD;
 		ATL2_WRITE_REG(hw, REG_SPI_FLASH_CTRL, value);
-	पूर्ण
+	}
 	value = ATL2_READ_REGW(hw, REG_PCIE_CAP_LIST);
-	वापस ((value & 0xFF00) == 0x6C00) ? 0 : 1;
-पूर्ण
+	return ((value & 0xFF00) == 0x6C00) ? 0 : 1;
+}
 
-/* FIXME: This करोesn't look right. -- CHS */
-अटल bool atl2_ग_लिखो_eeprom(काष्ठा atl2_hw *hw, u32 offset, u32 value)
-अणु
-	वापस true;
-पूर्ण
+/* FIXME: This doesn't look right. -- CHS */
+static bool atl2_write_eeprom(struct atl2_hw *hw, u32 offset, u32 value)
+{
+	return true;
+}
 
-अटल bool atl2_पढ़ो_eeprom(काष्ठा atl2_hw *hw, u32 Offset, u32 *pValue)
-अणु
-	पूर्णांक i;
+static bool atl2_read_eeprom(struct atl2_hw *hw, u32 Offset, u32 *pValue)
+{
+	int i;
 	u32    Control;
 
-	अगर (Offset & 0x3)
-		वापस false; /* address करो not align */
+	if (Offset & 0x3)
+		return false; /* address do not align */
 
 	ATL2_WRITE_REG(hw, REG_VPD_DATA, 0);
 	Control = (Offset & VPD_CAP_VPD_ADDR_MASK) << VPD_CAP_VPD_ADDR_SHIFT;
 	ATL2_WRITE_REG(hw, REG_VPD_CAP, Control);
 
-	क्रम (i = 0; i < 10; i++) अणु
+	for (i = 0; i < 10; i++) {
 		msleep(2);
 		Control = ATL2_READ_REG(hw, REG_VPD_CAP);
-		अगर (Control & VPD_CAP_VPD_FLAG)
-			अवरोध;
-	पूर्ण
+		if (Control & VPD_CAP_VPD_FLAG)
+			break;
+	}
 
-	अगर (Control & VPD_CAP_VPD_FLAG) अणु
+	if (Control & VPD_CAP_VPD_FLAG) {
 		*pValue = ATL2_READ_REG(hw, REG_VPD_DATA);
-		वापस true;
-	पूर्ण
-	वापस false; /* समयout */
-पूर्ण
+		return true;
+	}
+	return false; /* timeout */
+}
 
-अटल व्योम atl2_क्रमce_ps(काष्ठा atl2_hw *hw)
-अणु
+static void atl2_force_ps(struct atl2_hw *hw)
+{
 	u16 phy_val;
 
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_ADDR, 0);
-	atl2_पढ़ो_phy_reg(hw, MII_DBG_DATA, &phy_val);
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_DATA, phy_val | 0x1000);
+	atl2_write_phy_reg(hw, MII_DBG_ADDR, 0);
+	atl2_read_phy_reg(hw, MII_DBG_DATA, &phy_val);
+	atl2_write_phy_reg(hw, MII_DBG_DATA, phy_val | 0x1000);
 
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_ADDR, 2);
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_DATA, 0x3000);
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_ADDR, 3);
-	atl2_ग_लिखो_phy_reg(hw, MII_DBG_DATA, 0);
-पूर्ण
+	atl2_write_phy_reg(hw, MII_DBG_ADDR, 2);
+	atl2_write_phy_reg(hw, MII_DBG_DATA, 0x3000);
+	atl2_write_phy_reg(hw, MII_DBG_ADDR, 3);
+	atl2_write_phy_reg(hw, MII_DBG_DATA, 0);
+}
 
 /* This is the only thing that needs to be changed to adjust the
  * maximum number of ports that the driver can manage.
  */
-#घोषणा ATL2_MAX_NIC 4
+#define ATL2_MAX_NIC 4
 
-#घोषणा OPTION_UNSET    -1
-#घोषणा OPTION_DISABLED 0
-#घोषणा OPTION_ENABLED  1
+#define OPTION_UNSET    -1
+#define OPTION_DISABLED 0
+#define OPTION_ENABLED  1
 
-/* All parameters are treated the same, as an पूर्णांकeger array of values.
+/* All parameters are treated the same, as an integer array of values.
  * This macro just reduces the need to repeat the same declaration code
- * over and over (plus this helps to aव्योम typo bugs).
+ * over and over (plus this helps to avoid typo bugs).
  */
-#घोषणा ATL2_PARAM_INIT अणु[0 ... ATL2_MAX_NIC] = OPTION_UNSETपूर्ण
-#अगर_अघोषित module_param_array
+#define ATL2_PARAM_INIT {[0 ... ATL2_MAX_NIC] = OPTION_UNSET}
+#ifndef module_param_array
 /* Module Parameters are always initialized to -1, so that the driver
- * can tell the dअगरference between no user specअगरied value or the
- * user asking क्रम the शेष value.
- * The true शेष values are loaded in when atl2_check_options is called.
+ * can tell the difference between no user specified value or the
+ * user asking for the default value.
+ * The true default values are loaded in when atl2_check_options is called.
  *
  * This is a GCC extension to ANSI C.
  * See the item "Labeled Elements in Initializers" in the section
- * "Extensions to the C Language Family" of the GCC करोcumentation.
+ * "Extensions to the C Language Family" of the GCC documentation.
  */
 
-#घोषणा ATL2_PARAM(X, desc) \
-    अटल स्थिर पूर्णांक X[ATL2_MAX_NIC + 1] = ATL2_PARAM_INIT; \
+#define ATL2_PARAM(X, desc) \
+    static const int X[ATL2_MAX_NIC + 1] = ATL2_PARAM_INIT; \
     MODULE_PARM(X, "1-" __MODULE_STRING(ATL2_MAX_NIC) "i"); \
     MODULE_PARM_DESC(X, desc);
-#अन्यथा
-#घोषणा ATL2_PARAM(X, desc) \
-    अटल पूर्णांक X[ATL2_MAX_NIC+1] = ATL2_PARAM_INIT; \
-    अटल अचिन्हित पूर्णांक num_##X; \
-    module_param_array_named(X, X, पूर्णांक, &num_##X, 0); \
+#else
+#define ATL2_PARAM(X, desc) \
+    static int X[ATL2_MAX_NIC+1] = ATL2_PARAM_INIT; \
+    static unsigned int num_##X; \
+    module_param_array_named(X, X, int, &num_##X, 0); \
     MODULE_PARM_DESC(X, desc);
-#पूर्ण_अगर
+#endif
 
 /*
  * Transmit Memory Size
  * Valid Range: 64-2048
  * Default Value: 128
  */
-#घोषणा ATL2_MIN_TX_MEMSIZE		4	/* 4KB */
-#घोषणा ATL2_MAX_TX_MEMSIZE		64	/* 64KB */
-#घोषणा ATL2_DEFAULT_TX_MEMSIZE		8	/* 8KB */
+#define ATL2_MIN_TX_MEMSIZE		4	/* 4KB */
+#define ATL2_MAX_TX_MEMSIZE		64	/* 64KB */
+#define ATL2_DEFAULT_TX_MEMSIZE		8	/* 8KB */
 ATL2_PARAM(TxMemSize, "Bytes of Transmit Memory");
 
 /*
@@ -2796,16 +2795,16 @@ ATL2_PARAM(TxMemSize, "Bytes of Transmit Memory");
  * Valid Range: 16-512
  * Default Value: 128
  */
-#घोषणा ATL2_MIN_RXD_COUNT		16
-#घोषणा ATL2_MAX_RXD_COUNT		512
-#घोषणा ATL2_DEFAULT_RXD_COUNT		64
+#define ATL2_MIN_RXD_COUNT		16
+#define ATL2_MAX_RXD_COUNT		512
+#define ATL2_DEFAULT_RXD_COUNT		64
 ATL2_PARAM(RxMemBlock, "Number of receive memory block");
 
 /*
- * User Specअगरied MediaType Override
+ * User Specified MediaType Override
  *
  * Valid Range: 0-5
- *  - 0    - स्वतः-negotiate at all supported speeds
+ *  - 0    - auto-negotiate at all supported speeds
  *  - 1    - only link at 1000Mbps Full Duplex
  *  - 2    - only link at 100Mbps Full Duplex
  *  - 3    - only link at 100Mbps Half Duplex
@@ -2820,114 +2819,114 @@ ATL2_PARAM(MediaType, "MediaType Select");
  * Valid Range: 10-65535
  * Default Value: 45000(90ms)
  */
-#घोषणा INT_MOD_DEFAULT_CNT	100 /* 200us */
-#घोषणा INT_MOD_MAX_CNT		65000
-#घोषणा INT_MOD_MIN_CNT		50
+#define INT_MOD_DEFAULT_CNT	100 /* 200us */
+#define INT_MOD_MAX_CNT		65000
+#define INT_MOD_MIN_CNT		50
 ATL2_PARAM(IntModTimer, "Interrupt Moderator Timer");
 
 /*
- * FlashVenकरोr
+ * FlashVendor
  * Valid Range: 0-2
- * 0 - Aपंचांगel
+ * 0 - Atmel
  * 1 - SST
  * 2 - ST
  */
-ATL2_PARAM(FlashVenकरोr, "SPI Flash Vendor");
+ATL2_PARAM(FlashVendor, "SPI Flash Vendor");
 
-#घोषणा AUTONEG_ADV_DEFAULT	0x2F
-#घोषणा AUTONEG_ADV_MASK	0x2F
-#घोषणा FLOW_CONTROL_DEFAULT	FLOW_CONTROL_FULL
+#define AUTONEG_ADV_DEFAULT	0x2F
+#define AUTONEG_ADV_MASK	0x2F
+#define FLOW_CONTROL_DEFAULT	FLOW_CONTROL_FULL
 
-#घोषणा FLASH_VENDOR_DEFAULT	0
-#घोषणा FLASH_VENDOR_MIN	0
-#घोषणा FLASH_VENDOR_MAX	2
+#define FLASH_VENDOR_DEFAULT	0
+#define FLASH_VENDOR_MIN	0
+#define FLASH_VENDOR_MAX	2
 
-काष्ठा atl2_option अणु
-	क्रमागत अणु enable_option, range_option, list_option पूर्ण type;
-	अक्षर *name;
-	अक्षर *err;
-	पूर्णांक  def;
-	जोड़ अणु
-		काष्ठा अणु /* range_option info */
-			पूर्णांक min;
-			पूर्णांक max;
-		पूर्ण r;
-		काष्ठा अणु /* list_option info */
-			पूर्णांक nr;
-			काष्ठा atl2_opt_list अणु पूर्णांक i; अक्षर *str; पूर्ण *p;
-		पूर्ण l;
-	पूर्ण arg;
-पूर्ण;
+struct atl2_option {
+	enum { enable_option, range_option, list_option } type;
+	char *name;
+	char *err;
+	int  def;
+	union {
+		struct { /* range_option info */
+			int min;
+			int max;
+		} r;
+		struct { /* list_option info */
+			int nr;
+			struct atl2_opt_list { int i; char *str; } *p;
+		} l;
+	} arg;
+};
 
-अटल पूर्णांक atl2_validate_option(पूर्णांक *value, काष्ठा atl2_option *opt)
-अणु
-	पूर्णांक i;
-	काष्ठा atl2_opt_list *ent;
+static int atl2_validate_option(int *value, struct atl2_option *opt)
+{
+	int i;
+	struct atl2_opt_list *ent;
 
-	अगर (*value == OPTION_UNSET) अणु
+	if (*value == OPTION_UNSET) {
 		*value = opt->def;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (opt->type) अणु
-	हाल enable_option:
-		चयन (*value) अणु
-		हाल OPTION_ENABLED:
-			prपूर्णांकk(KERN_INFO "%s Enabled\n", opt->name);
-			वापस 0;
-		हाल OPTION_DISABLED:
-			prपूर्णांकk(KERN_INFO "%s Disabled\n", opt->name);
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल range_option:
-		अगर (*value >= opt->arg.r.min && *value <= opt->arg.r.max) अणु
-			prपूर्णांकk(KERN_INFO "%s set to %i\n", opt->name, *value);
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	हाल list_option:
-		क्रम (i = 0; i < opt->arg.l.nr; i++) अणु
+	switch (opt->type) {
+	case enable_option:
+		switch (*value) {
+		case OPTION_ENABLED:
+			printk(KERN_INFO "%s Enabled\n", opt->name);
+			return 0;
+		case OPTION_DISABLED:
+			printk(KERN_INFO "%s Disabled\n", opt->name);
+			return 0;
+		}
+		break;
+	case range_option:
+		if (*value >= opt->arg.r.min && *value <= opt->arg.r.max) {
+			printk(KERN_INFO "%s set to %i\n", opt->name, *value);
+			return 0;
+		}
+		break;
+	case list_option:
+		for (i = 0; i < opt->arg.l.nr; i++) {
 			ent = &opt->arg.l.p[i];
-			अगर (*value == ent->i) अणु
-				अगर (ent->str[0] != '\0')
-					prपूर्णांकk(KERN_INFO "%s\n", ent->str);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
+			if (*value == ent->i) {
+				if (ent->str[0] != '\0')
+					printk(KERN_INFO "%s\n", ent->str);
+				return 0;
+			}
+		}
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "Invalid %s specified (%i) %s\n",
+	printk(KERN_INFO "Invalid %s specified (%i) %s\n",
 		opt->name, *value, opt->err);
 	*value = opt->def;
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /**
- * atl2_check_options - Range Checking क्रम Command Line Parameters
- * @adapter: board निजी काष्ठाure
+ * atl2_check_options - Range Checking for Command Line Parameters
+ * @adapter: board private structure
  *
- * This routine checks all command line parameters क्रम valid user
- * input.  If an invalid value is given, or अगर no user specअगरied
- * value exists, a शेष value is used.  The final value is stored
- * in a variable in the adapter काष्ठाure.
+ * This routine checks all command line parameters for valid user
+ * input.  If an invalid value is given, or if no user specified
+ * value exists, a default value is used.  The final value is stored
+ * in a variable in the adapter structure.
  */
-अटल व्योम atl2_check_options(काष्ठा atl2_adapter *adapter)
-अणु
-	पूर्णांक val;
-	काष्ठा atl2_option opt;
-	पूर्णांक bd = adapter->bd_number;
-	अगर (bd >= ATL2_MAX_NIC) अणु
-		prपूर्णांकk(KERN_NOTICE "Warning: no configuration for board #%i\n",
+static void atl2_check_options(struct atl2_adapter *adapter)
+{
+	int val;
+	struct atl2_option opt;
+	int bd = adapter->bd_number;
+	if (bd >= ATL2_MAX_NIC) {
+		printk(KERN_NOTICE "Warning: no configuration for board #%i\n",
 			bd);
-		prपूर्णांकk(KERN_NOTICE "Using defaults for all values\n");
-#अगर_अघोषित module_param_array
+		printk(KERN_NOTICE "Using defaults for all values\n");
+#ifndef module_param_array
 		bd = ATL2_MAX_NIC;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
 	/* Bytes of Transmit Memory */
 	opt.type = range_option;
@@ -2936,19 +2935,19 @@ ATL2_PARAM(FlashVenकरोr, "SPI Flash Vendor");
 	opt.def = ATL2_DEFAULT_TX_MEMSIZE;
 	opt.arg.r.min = ATL2_MIN_TX_MEMSIZE;
 	opt.arg.r.max = ATL2_MAX_TX_MEMSIZE;
-#अगर_घोषित module_param_array
-	अगर (num_TxMemSize > bd) अणु
-#पूर्ण_अगर
+#ifdef module_param_array
+	if (num_TxMemSize > bd) {
+#endif
 		val = TxMemSize[bd];
 		atl2_validate_option(&val, &opt);
 		adapter->txd_ring_size = ((u32) val) * 1024;
-#अगर_घोषित module_param_array
-	पूर्ण अन्यथा
+#ifdef module_param_array
+	} else
 		adapter->txd_ring_size = ((u32)opt.def) * 1024;
-#पूर्ण_अगर
+#endif
 	/* txs ring size: */
 	adapter->txs_ring_size = adapter->txd_ring_size / 128;
-	अगर (adapter->txs_ring_size > 160)
+	if (adapter->txs_ring_size > 160)
 		adapter->txs_ring_size = 160;
 
 	/* Receive Memory Block Count */
@@ -2958,18 +2957,18 @@ ATL2_PARAM(FlashVenकरोr, "SPI Flash Vendor");
 	opt.def = ATL2_DEFAULT_RXD_COUNT;
 	opt.arg.r.min = ATL2_MIN_RXD_COUNT;
 	opt.arg.r.max = ATL2_MAX_RXD_COUNT;
-#अगर_घोषित module_param_array
-	अगर (num_RxMemBlock > bd) अणु
-#पूर्ण_अगर
+#ifdef module_param_array
+	if (num_RxMemBlock > bd) {
+#endif
 		val = RxMemBlock[bd];
 		atl2_validate_option(&val, &opt);
 		adapter->rxd_ring_size = (u32)val;
 		/* FIXME */
 		/* ((u16)val)&~1; */	/* even number */
-#अगर_घोषित module_param_array
-	पूर्ण अन्यथा
+#ifdef module_param_array
+	} else
 		adapter->rxd_ring_size = (u32)opt.def;
-#पूर्ण_अगर
+#endif
 	/* init RXD Flow control value */
 	adapter->hw.fc_rxd_hi = (adapter->rxd_ring_size / 8) * 7;
 	adapter->hw.fc_rxd_lo = (ATL2_MIN_RXD_COUNT / 8) >
@@ -2983,33 +2982,33 @@ ATL2_PARAM(FlashVenकरोr, "SPI Flash Vendor");
 	opt.def = INT_MOD_DEFAULT_CNT;
 	opt.arg.r.min = INT_MOD_MIN_CNT;
 	opt.arg.r.max = INT_MOD_MAX_CNT;
-#अगर_घोषित module_param_array
-	अगर (num_IntModTimer > bd) अणु
-#पूर्ण_अगर
+#ifdef module_param_array
+	if (num_IntModTimer > bd) {
+#endif
 		val = IntModTimer[bd];
 		atl2_validate_option(&val, &opt);
 		adapter->imt = (u16) val;
-#अगर_घोषित module_param_array
-	पूर्ण अन्यथा
+#ifdef module_param_array
+	} else
 		adapter->imt = (u16)(opt.def);
-#पूर्ण_अगर
-	/* Flash Venकरोr */
+#endif
+	/* Flash Vendor */
 	opt.type = range_option;
 	opt.name = "SPI Flash Vendor";
 	opt.err = "using default of " __MODULE_STRING(FLASH_VENDOR_DEFAULT);
 	opt.def = FLASH_VENDOR_DEFAULT;
 	opt.arg.r.min = FLASH_VENDOR_MIN;
 	opt.arg.r.max = FLASH_VENDOR_MAX;
-#अगर_घोषित module_param_array
-	अगर (num_FlashVenकरोr > bd) अणु
-#पूर्ण_अगर
-		val = FlashVenकरोr[bd];
+#ifdef module_param_array
+	if (num_FlashVendor > bd) {
+#endif
+		val = FlashVendor[bd];
 		atl2_validate_option(&val, &opt);
-		adapter->hw.flash_venकरोr = (u8) val;
-#अगर_घोषित module_param_array
-	पूर्ण अन्यथा
-		adapter->hw.flash_venकरोr = (u8)(opt.def);
-#पूर्ण_अगर
+		adapter->hw.flash_vendor = (u8) val;
+#ifdef module_param_array
+	} else
+		adapter->hw.flash_vendor = (u8)(opt.def);
+#endif
 	/* MediaType */
 	opt.type = range_option;
 	opt.name = "Speed/Duplex Selection";
@@ -3017,14 +3016,14 @@ ATL2_PARAM(FlashVenकरोr, "SPI Flash Vendor");
 	opt.def = MEDIA_TYPE_AUTO_SENSOR;
 	opt.arg.r.min = MEDIA_TYPE_AUTO_SENSOR;
 	opt.arg.r.max = MEDIA_TYPE_10M_HALF;
-#अगर_घोषित module_param_array
-	अगर (num_MediaType > bd) अणु
-#पूर्ण_अगर
+#ifdef module_param_array
+	if (num_MediaType > bd) {
+#endif
 		val = MediaType[bd];
 		atl2_validate_option(&val, &opt);
 		adapter->hw.MediaType = (u16) val;
-#अगर_घोषित module_param_array
-	पूर्ण अन्यथा
+#ifdef module_param_array
+	} else
 		adapter->hw.MediaType = (u16)(opt.def);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

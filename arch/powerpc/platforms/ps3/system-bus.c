@@ -1,694 +1,693 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  PS3 प्रणाली bus driver.
+ *  PS3 system bus driver.
  *
  *  Copyright (C) 2006 Sony Computer Entertainment Inc.
  *  Copyright 2006 Sony Corp.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/dma-map-ops.h>
+#include <linux/err.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/lv1call.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/cell-regs.h>
+#include <asm/udbg.h>
+#include <asm/lv1call.h>
+#include <asm/firmware.h>
+#include <asm/cell-regs.h>
 
-#समावेश "platform.h"
+#include "platform.h"
 
-अटल काष्ठा device ps3_प्रणाली_bus = अणु
+static struct device ps3_system_bus = {
 	.init_name = "ps3_system",
-पूर्ण;
+};
 
 /* FIXME: need device usage counters! */
-अटल काष्ठा अणु
-	काष्ठा mutex mutex;
-	पूर्णांक sb_11; /* usb 0 */
-	पूर्णांक sb_12; /* usb 0 */
-	पूर्णांक gpu;
-पूर्ण usage_hack;
+static struct {
+	struct mutex mutex;
+	int sb_11; /* usb 0 */
+	int sb_12; /* usb 0 */
+	int gpu;
+} usage_hack;
 
-अटल पूर्णांक ps3_is_device(काष्ठा ps3_प्रणाली_bus_device *dev, u64 bus_id,
+static int ps3_is_device(struct ps3_system_bus_device *dev, u64 bus_id,
 			 u64 dev_id)
-अणु
-	वापस dev->bus_id == bus_id && dev->dev_id == dev_id;
-पूर्ण
+{
+	return dev->bus_id == bus_id && dev->dev_id == dev_id;
+}
 
-अटल पूर्णांक ps3_खोलो_hv_device_sb(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
+static int ps3_open_hv_device_sb(struct ps3_system_bus_device *dev)
+{
+	int result;
 
 	BUG_ON(!dev->bus_id);
 	mutex_lock(&usage_hack.mutex);
 
-	अगर (ps3_is_device(dev, 1, 1)) अणु
+	if (ps3_is_device(dev, 1, 1)) {
 		usage_hack.sb_11++;
-		अगर (usage_hack.sb_11 > 1) अणु
+		if (usage_hack.sb_11 > 1) {
 			result = 0;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	अगर (ps3_is_device(dev, 1, 2)) अणु
+	if (ps3_is_device(dev, 1, 2)) {
 		usage_hack.sb_12++;
-		अगर (usage_hack.sb_12 > 1) अणु
+		if (usage_hack.sb_12 > 1) {
 			result = 0;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	result = lv1_खोलो_device(dev->bus_id, dev->dev_id, 0);
+	result = lv1_open_device(dev->bus_id, dev->dev_id, 0);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: lv1_open_device failed: %s\n", __func__,
 			__LINE__, ps3_result(result));
 			result = -EPERM;
-	पूर्ण
+	}
 
-करोne:
+done:
 	mutex_unlock(&usage_hack.mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_बंद_hv_device_sb(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
+static int ps3_close_hv_device_sb(struct ps3_system_bus_device *dev)
+{
+	int result;
 
 	BUG_ON(!dev->bus_id);
 	mutex_lock(&usage_hack.mutex);
 
-	अगर (ps3_is_device(dev, 1, 1)) अणु
+	if (ps3_is_device(dev, 1, 1)) {
 		usage_hack.sb_11--;
-		अगर (usage_hack.sb_11) अणु
+		if (usage_hack.sb_11) {
 			result = 0;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	अगर (ps3_is_device(dev, 1, 2)) अणु
+	if (ps3_is_device(dev, 1, 2)) {
 		usage_hack.sb_12--;
-		अगर (usage_hack.sb_12) अणु
+		if (usage_hack.sb_12) {
 			result = 0;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
-	result = lv1_बंद_device(dev->bus_id, dev->dev_id);
+	result = lv1_close_device(dev->bus_id, dev->dev_id);
 	BUG_ON(result);
 
-करोne:
+done:
 	mutex_unlock(&usage_hack.mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_खोलो_hv_device_gpu(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
+static int ps3_open_hv_device_gpu(struct ps3_system_bus_device *dev)
+{
+	int result;
 
 	mutex_lock(&usage_hack.mutex);
 
 	usage_hack.gpu++;
-	अगर (usage_hack.gpu > 1) अणु
+	if (usage_hack.gpu > 1) {
 		result = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	result = lv1_gpu_खोलो(0);
+	result = lv1_gpu_open(0);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: lv1_gpu_open failed: %s\n", __func__,
 			__LINE__, ps3_result(result));
 			result = -EPERM;
-	पूर्ण
+	}
 
-करोne:
+done:
 	mutex_unlock(&usage_hack.mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_बंद_hv_device_gpu(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
+static int ps3_close_hv_device_gpu(struct ps3_system_bus_device *dev)
+{
+	int result;
 
 	mutex_lock(&usage_hack.mutex);
 
 	usage_hack.gpu--;
-	अगर (usage_hack.gpu) अणु
+	if (usage_hack.gpu) {
 		result = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	result = lv1_gpu_बंद();
+	result = lv1_gpu_close();
 	BUG_ON(result);
 
-करोne:
+done:
 	mutex_unlock(&usage_hack.mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक ps3_खोलो_hv_device(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+int ps3_open_hv_device(struct ps3_system_bus_device *dev)
+{
 	BUG_ON(!dev);
 	pr_debug("%s:%d: match_id: %u\n", __func__, __LINE__, dev->match_id);
 
-	चयन (dev->match_id) अणु
-	हाल PS3_MATCH_ID_EHCI:
-	हाल PS3_MATCH_ID_OHCI:
-	हाल PS3_MATCH_ID_GELIC:
-	हाल PS3_MATCH_ID_STOR_DISK:
-	हाल PS3_MATCH_ID_STOR_ROM:
-	हाल PS3_MATCH_ID_STOR_FLASH:
-		वापस ps3_खोलो_hv_device_sb(dev);
+	switch (dev->match_id) {
+	case PS3_MATCH_ID_EHCI:
+	case PS3_MATCH_ID_OHCI:
+	case PS3_MATCH_ID_GELIC:
+	case PS3_MATCH_ID_STOR_DISK:
+	case PS3_MATCH_ID_STOR_ROM:
+	case PS3_MATCH_ID_STOR_FLASH:
+		return ps3_open_hv_device_sb(dev);
 
-	हाल PS3_MATCH_ID_SOUND:
-	हाल PS3_MATCH_ID_GPU:
-		वापस ps3_खोलो_hv_device_gpu(dev);
+	case PS3_MATCH_ID_SOUND:
+	case PS3_MATCH_ID_GPU:
+		return ps3_open_hv_device_gpu(dev);
 
-	हाल PS3_MATCH_ID_AV_SETTINGS:
-	हाल PS3_MATCH_ID_SYSTEM_MANAGER:
+	case PS3_MATCH_ID_AV_SETTINGS:
+	case PS3_MATCH_ID_SYSTEM_MANAGER:
 		pr_debug("%s:%d: unsupported match_id: %u\n", __func__,
 			__LINE__, dev->match_id);
 		pr_debug("%s:%d: bus_id: %llu\n", __func__, __LINE__,
 			dev->bus_id);
 		BUG();
-		वापस -EINVAL;
+		return -EINVAL;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	pr_debug("%s:%d: unknown match_id: %u\n", __func__, __LINE__,
 		dev->match_id);
 	BUG();
-	वापस -ENODEV;
-पूर्ण
-EXPORT_SYMBOL_GPL(ps3_खोलो_hv_device);
+	return -ENODEV;
+}
+EXPORT_SYMBOL_GPL(ps3_open_hv_device);
 
-पूर्णांक ps3_बंद_hv_device(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
+int ps3_close_hv_device(struct ps3_system_bus_device *dev)
+{
 	BUG_ON(!dev);
 	pr_debug("%s:%d: match_id: %u\n", __func__, __LINE__, dev->match_id);
 
-	चयन (dev->match_id) अणु
-	हाल PS3_MATCH_ID_EHCI:
-	हाल PS3_MATCH_ID_OHCI:
-	हाल PS3_MATCH_ID_GELIC:
-	हाल PS3_MATCH_ID_STOR_DISK:
-	हाल PS3_MATCH_ID_STOR_ROM:
-	हाल PS3_MATCH_ID_STOR_FLASH:
-		वापस ps3_बंद_hv_device_sb(dev);
+	switch (dev->match_id) {
+	case PS3_MATCH_ID_EHCI:
+	case PS3_MATCH_ID_OHCI:
+	case PS3_MATCH_ID_GELIC:
+	case PS3_MATCH_ID_STOR_DISK:
+	case PS3_MATCH_ID_STOR_ROM:
+	case PS3_MATCH_ID_STOR_FLASH:
+		return ps3_close_hv_device_sb(dev);
 
-	हाल PS3_MATCH_ID_SOUND:
-	हाल PS3_MATCH_ID_GPU:
-		वापस ps3_बंद_hv_device_gpu(dev);
+	case PS3_MATCH_ID_SOUND:
+	case PS3_MATCH_ID_GPU:
+		return ps3_close_hv_device_gpu(dev);
 
-	हाल PS3_MATCH_ID_AV_SETTINGS:
-	हाल PS3_MATCH_ID_SYSTEM_MANAGER:
+	case PS3_MATCH_ID_AV_SETTINGS:
+	case PS3_MATCH_ID_SYSTEM_MANAGER:
 		pr_debug("%s:%d: unsupported match_id: %u\n", __func__,
 			__LINE__, dev->match_id);
 		pr_debug("%s:%d: bus_id: %llu\n", __func__, __LINE__,
 			dev->bus_id);
 		BUG();
-		वापस -EINVAL;
+		return -EINVAL;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
 	pr_debug("%s:%d: unknown match_id: %u\n", __func__, __LINE__,
 		dev->match_id);
 	BUG();
-	वापस -ENODEV;
-पूर्ण
-EXPORT_SYMBOL_GPL(ps3_बंद_hv_device);
+	return -ENODEV;
+}
+EXPORT_SYMBOL_GPL(ps3_close_hv_device);
 
-#घोषणा dump_mmio_region(_a) _dump_mmio_region(_a, __func__, __LINE__)
-अटल व्योम _dump_mmio_region(स्थिर काष्ठा ps3_mmio_region* r,
-	स्थिर अक्षर* func, पूर्णांक line)
-अणु
+#define dump_mmio_region(_a) _dump_mmio_region(_a, __func__, __LINE__)
+static void _dump_mmio_region(const struct ps3_mmio_region* r,
+	const char* func, int line)
+{
 	pr_debug("%s:%d: dev       %llu:%llu\n", func, line, r->dev->bus_id,
 		r->dev->dev_id);
 	pr_debug("%s:%d: bus_addr  %lxh\n", func, line, r->bus_addr);
 	pr_debug("%s:%d: len       %lxh\n", func, line, r->len);
 	pr_debug("%s:%d: lpar_addr %lxh\n", func, line, r->lpar_addr);
-पूर्ण
+}
 
-अटल पूर्णांक ps3_sb_mmio_region_create(काष्ठा ps3_mmio_region *r)
-अणु
-	पूर्णांक result;
+static int ps3_sb_mmio_region_create(struct ps3_mmio_region *r)
+{
+	int result;
 	u64 lpar_addr;
 
 	result = lv1_map_device_mmio_region(r->dev->bus_id, r->dev->dev_id,
 		r->bus_addr, r->len, r->page_size, &lpar_addr);
 	r->lpar_addr = lpar_addr;
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: lv1_map_device_mmio_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 		r->lpar_addr = 0;
-	पूर्ण
+	}
 
 	dump_mmio_region(r);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_ioc0_mmio_region_create(काष्ठा ps3_mmio_region *r)
-अणु
-	/* device specअगरic; करो nothing currently */
-	वापस 0;
-पूर्ण
+static int ps3_ioc0_mmio_region_create(struct ps3_mmio_region *r)
+{
+	/* device specific; do nothing currently */
+	return 0;
+}
 
-पूर्णांक ps3_mmio_region_create(काष्ठा ps3_mmio_region *r)
-अणु
-	वापस r->mmio_ops->create(r);
-पूर्ण
+int ps3_mmio_region_create(struct ps3_mmio_region *r)
+{
+	return r->mmio_ops->create(r);
+}
 EXPORT_SYMBOL_GPL(ps3_mmio_region_create);
 
-अटल पूर्णांक ps3_sb_मुक्त_mmio_region(काष्ठा ps3_mmio_region *r)
-अणु
-	पूर्णांक result;
+static int ps3_sb_free_mmio_region(struct ps3_mmio_region *r)
+{
+	int result;
 
 	dump_mmio_region(r);
 	result = lv1_unmap_device_mmio_region(r->dev->bus_id, r->dev->dev_id,
 		r->lpar_addr);
 
-	अगर (result)
+	if (result)
 		pr_debug("%s:%d: lv1_unmap_device_mmio_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
 	r->lpar_addr = 0;
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_ioc0_मुक्त_mmio_region(काष्ठा ps3_mmio_region *r)
-अणु
-	/* device specअगरic; करो nothing currently */
-	वापस 0;
-पूर्ण
+static int ps3_ioc0_free_mmio_region(struct ps3_mmio_region *r)
+{
+	/* device specific; do nothing currently */
+	return 0;
+}
 
 
-पूर्णांक ps3_मुक्त_mmio_region(काष्ठा ps3_mmio_region *r)
-अणु
-	वापस r->mmio_ops->मुक्त(r);
-पूर्ण
+int ps3_free_mmio_region(struct ps3_mmio_region *r)
+{
+	return r->mmio_ops->free(r);
+}
 
-EXPORT_SYMBOL_GPL(ps3_मुक्त_mmio_region);
+EXPORT_SYMBOL_GPL(ps3_free_mmio_region);
 
-अटल स्थिर काष्ठा ps3_mmio_region_ops ps3_mmio_sb_region_ops = अणु
+static const struct ps3_mmio_region_ops ps3_mmio_sb_region_ops = {
 	.create = ps3_sb_mmio_region_create,
-	.मुक्त = ps3_sb_मुक्त_mmio_region
-पूर्ण;
+	.free = ps3_sb_free_mmio_region
+};
 
-अटल स्थिर काष्ठा ps3_mmio_region_ops ps3_mmio_ioc0_region_ops = अणु
+static const struct ps3_mmio_region_ops ps3_mmio_ioc0_region_ops = {
 	.create = ps3_ioc0_mmio_region_create,
-	.मुक्त = ps3_ioc0_मुक्त_mmio_region
-पूर्ण;
+	.free = ps3_ioc0_free_mmio_region
+};
 
-पूर्णांक ps3_mmio_region_init(काष्ठा ps3_प्रणाली_bus_device *dev,
-	काष्ठा ps3_mmio_region *r, अचिन्हित दीर्घ bus_addr, अचिन्हित दीर्घ len,
-	क्रमागत ps3_mmio_page_size page_size)
-अणु
+int ps3_mmio_region_init(struct ps3_system_bus_device *dev,
+	struct ps3_mmio_region *r, unsigned long bus_addr, unsigned long len,
+	enum ps3_mmio_page_size page_size)
+{
 	r->dev = dev;
 	r->bus_addr = bus_addr;
 	r->len = len;
 	r->page_size = page_size;
-	चयन (dev->dev_type) अणु
-	हाल PS3_DEVICE_TYPE_SB:
+	switch (dev->dev_type) {
+	case PS3_DEVICE_TYPE_SB:
 		r->mmio_ops = &ps3_mmio_sb_region_ops;
-		अवरोध;
-	हाल PS3_DEVICE_TYPE_IOC0:
+		break;
+	case PS3_DEVICE_TYPE_IOC0:
 		r->mmio_ops = &ps3_mmio_ioc0_region_ops;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ps3_mmio_region_init);
 
-अटल पूर्णांक ps3_प्रणाली_bus_match(काष्ठा device *_dev,
-	काष्ठा device_driver *_drv)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_प्रणाली_bus_driver *drv = ps3_drv_to_प्रणाली_bus_drv(_drv);
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
+static int ps3_system_bus_match(struct device *_dev,
+	struct device_driver *_drv)
+{
+	int result;
+	struct ps3_system_bus_driver *drv = ps3_drv_to_system_bus_drv(_drv);
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
 
-	अगर (!dev->match_sub_id)
+	if (!dev->match_sub_id)
 		result = dev->match_id == drv->match_id;
-	अन्यथा
+	else
 		result = dev->match_sub_id == drv->match_sub_id &&
 			dev->match_id == drv->match_id;
 
-	अगर (result)
+	if (result)
 		pr_info("%s:%d: dev=%u.%u(%s), drv=%u.%u(%s): match\n",
 			__func__, __LINE__,
 			dev->match_id, dev->match_sub_id, dev_name(&dev->core),
 			drv->match_id, drv->match_sub_id, drv->core.name);
-	अन्यथा
+	else
 		pr_debug("%s:%d: dev=%u.%u(%s), drv=%u.%u(%s): miss\n",
 			__func__, __LINE__,
 			dev->match_id, dev->match_sub_id, dev_name(&dev->core),
 			drv->match_id, drv->match_sub_id, drv->core.name);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_प्रणाली_bus_probe(काष्ठा device *_dev)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	काष्ठा ps3_प्रणाली_bus_driver *drv;
+static int ps3_system_bus_probe(struct device *_dev)
+{
+	int result = 0;
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	struct ps3_system_bus_driver *drv;
 
 	BUG_ON(!dev);
 	dev_dbg(_dev, "%s:%d\n", __func__, __LINE__);
 
-	drv = ps3_प्रणाली_bus_dev_to_प्रणाली_bus_drv(dev);
+	drv = ps3_system_bus_dev_to_system_bus_drv(dev);
 	BUG_ON(!drv);
 
-	अगर (drv->probe)
+	if (drv->probe)
 		result = drv->probe(dev);
-	अन्यथा
+	else
 		pr_debug("%s:%d: %s no probe method\n", __func__, __LINE__,
 			dev_name(&dev->core));
 
 	pr_debug(" <- %s:%d: %s\n", __func__, __LINE__, dev_name(&dev->core));
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ps3_प्रणाली_bus_हटाओ(काष्ठा device *_dev)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	काष्ठा ps3_प्रणाली_bus_driver *drv;
+static int ps3_system_bus_remove(struct device *_dev)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	struct ps3_system_bus_driver *drv;
 
 	BUG_ON(!dev);
 	dev_dbg(_dev, "%s:%d\n", __func__, __LINE__);
 
-	drv = ps3_प्रणाली_bus_dev_to_प्रणाली_bus_drv(dev);
+	drv = ps3_system_bus_dev_to_system_bus_drv(dev);
 	BUG_ON(!drv);
 
-	अगर (drv->हटाओ)
-		drv->हटाओ(dev);
-	अन्यथा
+	if (drv->remove)
+		drv->remove(dev);
+	else
 		dev_dbg(&dev->core, "%s:%d %s: no remove method\n",
 			__func__, __LINE__, drv->core.name);
 
 	pr_debug(" <- %s:%d: %s\n", __func__, __LINE__, dev_name(&dev->core));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ps3_प्रणाली_bus_shutकरोwn(काष्ठा device *_dev)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	काष्ठा ps3_प्रणाली_bus_driver *drv;
+static void ps3_system_bus_shutdown(struct device *_dev)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	struct ps3_system_bus_driver *drv;
 
 	BUG_ON(!dev);
 
 	dev_dbg(&dev->core, " -> %s:%d: match_id %d\n", __func__, __LINE__,
 		dev->match_id);
 
-	अगर (!dev->core.driver) अणु
+	if (!dev->core.driver) {
 		dev_dbg(&dev->core, "%s:%d: no driver bound\n", __func__,
 			__LINE__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	drv = ps3_प्रणाली_bus_dev_to_प्रणाली_bus_drv(dev);
+	drv = ps3_system_bus_dev_to_system_bus_drv(dev);
 
 	BUG_ON(!drv);
 
 	dev_dbg(&dev->core, "%s:%d: %s -> %s\n", __func__, __LINE__,
 		dev_name(&dev->core), drv->core.name);
 
-	अगर (drv->shutकरोwn)
-		drv->shutकरोwn(dev);
-	अन्यथा अगर (drv->हटाओ) अणु
+	if (drv->shutdown)
+		drv->shutdown(dev);
+	else if (drv->remove) {
 		dev_dbg(&dev->core, "%s:%d %s: no shutdown, calling remove\n",
 			__func__, __LINE__, drv->core.name);
-		drv->हटाओ(dev);
-	पूर्ण अन्यथा अणु
+		drv->remove(dev);
+	} else {
 		dev_dbg(&dev->core, "%s:%d %s: no shutdown method\n",
 			__func__, __LINE__, drv->core.name);
 		BUG();
-	पूर्ण
+	}
 
 	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
-पूर्ण
+}
 
-अटल पूर्णांक ps3_प्रणाली_bus_uevent(काष्ठा device *_dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
+static int ps3_system_bus_uevent(struct device *_dev, struct kobj_uevent_env *env)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
 
-	अगर (add_uevent_var(env, "MODALIAS=ps3:%d:%d", dev->match_id,
+	if (add_uevent_var(env, "MODALIAS=ps3:%d:%d", dev->match_id,
 			   dev->match_sub_id))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	return 0;
+}
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *_dev, काष्ठा device_attribute *a,
-	अक्षर *buf)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	पूर्णांक len = snम_लिखो(buf, PAGE_SIZE, "ps3:%d:%d\n", dev->match_id,
+static ssize_t modalias_show(struct device *_dev, struct device_attribute *a,
+	char *buf)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	int len = snprintf(buf, PAGE_SIZE, "ps3:%d:%d\n", dev->match_id,
 			   dev->match_sub_id);
 
-	वापस (len >= PAGE_SIZE) ? (PAGE_SIZE - 1) : len;
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return (len >= PAGE_SIZE) ? (PAGE_SIZE - 1) : len;
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल काष्ठा attribute *ps3_प्रणाली_bus_dev_attrs[] = अणु
+static struct attribute *ps3_system_bus_dev_attrs[] = {
 	&dev_attr_modalias.attr,
-	शून्य,
-पूर्ण;
-ATTRIBUTE_GROUPS(ps3_प्रणाली_bus_dev);
+	NULL,
+};
+ATTRIBUTE_GROUPS(ps3_system_bus_dev);
 
-काष्ठा bus_type ps3_प्रणाली_bus_type = अणु
+struct bus_type ps3_system_bus_type = {
 	.name = "ps3_system_bus",
-	.match = ps3_प्रणाली_bus_match,
-	.uevent = ps3_प्रणाली_bus_uevent,
-	.probe = ps3_प्रणाली_bus_probe,
-	.हटाओ = ps3_प्रणाली_bus_हटाओ,
-	.shutकरोwn = ps3_प्रणाली_bus_shutकरोwn,
-	.dev_groups = ps3_प्रणाली_bus_dev_groups,
-पूर्ण;
+	.match = ps3_system_bus_match,
+	.uevent = ps3_system_bus_uevent,
+	.probe = ps3_system_bus_probe,
+	.remove = ps3_system_bus_remove,
+	.shutdown = ps3_system_bus_shutdown,
+	.dev_groups = ps3_system_bus_dev_groups,
+};
 
-अटल पूर्णांक __init ps3_प्रणाली_bus_init(व्योम)
-अणु
-	पूर्णांक result;
+static int __init ps3_system_bus_init(void)
+{
+	int result;
 
-	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		वापस -ENODEV;
+	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		return -ENODEV;
 
 	pr_debug(" -> %s:%d\n", __func__, __LINE__);
 
 	mutex_init(&usage_hack.mutex);
 
-	result = device_रेजिस्टर(&ps3_प्रणाली_bus);
+	result = device_register(&ps3_system_bus);
 	BUG_ON(result);
 
-	result = bus_रेजिस्टर(&ps3_प्रणाली_bus_type);
+	result = bus_register(&ps3_system_bus_type);
 	BUG_ON(result);
 
 	pr_debug(" <- %s:%d\n", __func__, __LINE__);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-core_initcall(ps3_प्रणाली_bus_init);
+core_initcall(ps3_system_bus_init);
 
 /* Allocates a contiguous real buffer and creates mappings over it.
- * Returns the भव address of the buffer and sets dma_handle
+ * Returns the virtual address of the buffer and sets dma_handle
  * to the dma address (mapping) of the first page.
  */
-अटल व्योम * ps3_alloc_coherent(काष्ठा device *_dev, माप_प्रकार size,
+static void * ps3_alloc_coherent(struct device *_dev, size_t size,
 				 dma_addr_t *dma_handle, gfp_t flag,
-				 अचिन्हित दीर्घ attrs)
-अणु
-	पूर्णांक result;
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	अचिन्हित दीर्घ virt_addr;
+				 unsigned long attrs)
+{
+	int result;
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	unsigned long virt_addr;
 
 	flag &= ~(__GFP_DMA | __GFP_HIGHMEM);
 	flag |= __GFP_ZERO;
 
-	virt_addr = __get_मुक्त_pages(flag, get_order(size));
+	virt_addr = __get_free_pages(flag, get_order(size));
 
-	अगर (!virt_addr) अणु
+	if (!virt_addr) {
 		pr_debug("%s:%d: get_free_pages failed\n", __func__, __LINE__);
-		जाओ clean_none;
-	पूर्ण
+		goto clean_none;
+	}
 
 	result = ps3_dma_map(dev->d_region, virt_addr, size, dma_handle,
 			     CBE_IOPTE_PP_W | CBE_IOPTE_PP_R |
 			     CBE_IOPTE_SO_RW | CBE_IOPTE_M);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: ps3_dma_map failed (%d)\n",
 			__func__, __LINE__, result);
 		BUG_ON("check region type");
-		जाओ clean_alloc;
-	पूर्ण
+		goto clean_alloc;
+	}
 
-	वापस (व्योम*)virt_addr;
+	return (void*)virt_addr;
 
 clean_alloc:
-	मुक्त_pages(virt_addr, get_order(size));
+	free_pages(virt_addr, get_order(size));
 clean_none:
-	dma_handle = शून्य;
-	वापस शून्य;
-पूर्ण
+	dma_handle = NULL;
+	return NULL;
+}
 
-अटल व्योम ps3_मुक्त_coherent(काष्ठा device *_dev, माप_प्रकार size, व्योम *vaddr,
-			      dma_addr_t dma_handle, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
+static void ps3_free_coherent(struct device *_dev, size_t size, void *vaddr,
+			      dma_addr_t dma_handle, unsigned long attrs)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
 
 	ps3_dma_unmap(dev->d_region, dma_handle, size);
-	मुक्त_pages((अचिन्हित दीर्घ)vaddr, get_order(size));
-पूर्ण
+	free_pages((unsigned long)vaddr, get_order(size));
+}
 
-/* Creates TCEs क्रम a user provided buffer.  The user buffer must be
- * contiguous real kernel storage (not vदो_स्मृति).  The address passed here
- * comprises a page address and offset पूर्णांकo that page. The dma_addr_t
- * वापसed will poपूर्णांक to the same byte within the page as was passed in.
+/* Creates TCEs for a user provided buffer.  The user buffer must be
+ * contiguous real kernel storage (not vmalloc).  The address passed here
+ * comprises a page address and offset into that page. The dma_addr_t
+ * returned will point to the same byte within the page as was passed in.
  */
 
-अटल dma_addr_t ps3_sb_map_page(काष्ठा device *_dev, काष्ठा page *page,
-	अचिन्हित दीर्घ offset, माप_प्रकार size, क्रमागत dma_data_direction direction,
-	अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	पूर्णांक result;
+static dma_addr_t ps3_sb_map_page(struct device *_dev, struct page *page,
+	unsigned long offset, size_t size, enum dma_data_direction direction,
+	unsigned long attrs)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	int result;
 	dma_addr_t bus_addr;
-	व्योम *ptr = page_address(page) + offset;
+	void *ptr = page_address(page) + offset;
 
-	result = ps3_dma_map(dev->d_region, (अचिन्हित दीर्घ)ptr, size,
+	result = ps3_dma_map(dev->d_region, (unsigned long)ptr, size,
 			     &bus_addr,
 			     CBE_IOPTE_PP_R | CBE_IOPTE_PP_W |
 			     CBE_IOPTE_SO_RW | CBE_IOPTE_M);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: ps3_dma_map failed (%d)\n",
 			__func__, __LINE__, result);
-	पूर्ण
+	}
 
-	वापस bus_addr;
-पूर्ण
+	return bus_addr;
+}
 
-अटल dma_addr_t ps3_ioc0_map_page(काष्ठा device *_dev, काष्ठा page *page,
-				    अचिन्हित दीर्घ offset, माप_प्रकार size,
-				    क्रमागत dma_data_direction direction,
-				    अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	पूर्णांक result;
+static dma_addr_t ps3_ioc0_map_page(struct device *_dev, struct page *page,
+				    unsigned long offset, size_t size,
+				    enum dma_data_direction direction,
+				    unsigned long attrs)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	int result;
 	dma_addr_t bus_addr;
 	u64 iopte_flag;
-	व्योम *ptr = page_address(page) + offset;
+	void *ptr = page_address(page) + offset;
 
 	iopte_flag = CBE_IOPTE_M;
-	चयन (direction) अणु
-	हाल DMA_BIसूचीECTIONAL:
+	switch (direction) {
+	case DMA_BIDIRECTIONAL:
 		iopte_flag |= CBE_IOPTE_PP_R | CBE_IOPTE_PP_W | CBE_IOPTE_SO_RW;
-		अवरोध;
-	हाल DMA_TO_DEVICE:
+		break;
+	case DMA_TO_DEVICE:
 		iopte_flag |= CBE_IOPTE_PP_R | CBE_IOPTE_SO_R;
-		अवरोध;
-	हाल DMA_FROM_DEVICE:
+		break;
+	case DMA_FROM_DEVICE:
 		iopte_flag |= CBE_IOPTE_PP_W | CBE_IOPTE_SO_RW;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* not happned */
 		BUG();
-	पूर्ण;
-	result = ps3_dma_map(dev->d_region, (अचिन्हित दीर्घ)ptr, size,
+	};
+	result = ps3_dma_map(dev->d_region, (unsigned long)ptr, size,
 			     &bus_addr, iopte_flag);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: ps3_dma_map failed (%d)\n",
 			__func__, __LINE__, result);
-	पूर्ण
-	वापस bus_addr;
-पूर्ण
+	}
+	return bus_addr;
+}
 
-अटल व्योम ps3_unmap_page(काष्ठा device *_dev, dma_addr_t dma_addr,
-	माप_प्रकार size, क्रमागत dma_data_direction direction, अचिन्हित दीर्घ attrs)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	पूर्णांक result;
+static void ps3_unmap_page(struct device *_dev, dma_addr_t dma_addr,
+	size_t size, enum dma_data_direction direction, unsigned long attrs)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	int result;
 
 	result = ps3_dma_unmap(dev->d_region, dma_addr, size);
 
-	अगर (result) अणु
+	if (result) {
 		pr_debug("%s:%d: ps3_dma_unmap failed (%d)\n",
 			__func__, __LINE__, result);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ps3_sb_map_sg(काष्ठा device *_dev, काष्ठा scatterlist *sgl,
-	पूर्णांक nents, क्रमागत dma_data_direction direction, अचिन्हित दीर्घ attrs)
-अणु
-#अगर defined(CONFIG_PS3_DYNAMIC_DMA)
+static int ps3_sb_map_sg(struct device *_dev, struct scatterlist *sgl,
+	int nents, enum dma_data_direction direction, unsigned long attrs)
+{
+#if defined(CONFIG_PS3_DYNAMIC_DMA)
 	BUG_ON("do");
-	वापस -EPERM;
-#अन्यथा
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	काष्ठा scatterlist *sg;
-	पूर्णांक i;
+	return -EPERM;
+#else
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	struct scatterlist *sg;
+	int i;
 
-	क्रम_each_sg(sgl, sg, nents, i) अणु
-		पूर्णांक result = ps3_dma_map(dev->d_region, sg_phys(sg),
+	for_each_sg(sgl, sg, nents, i) {
+		int result = ps3_dma_map(dev->d_region, sg_phys(sg),
 					sg->length, &sg->dma_address, 0);
 
-		अगर (result) अणु
+		if (result) {
 			pr_debug("%s:%d: ps3_dma_map failed (%d)\n",
 				__func__, __LINE__, result);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		sg->dma_length = sg->length;
-	पूर्ण
+	}
 
-	वापस nents;
-#पूर्ण_अगर
-पूर्ण
+	return nents;
+#endif
+}
 
-अटल पूर्णांक ps3_ioc0_map_sg(काष्ठा device *_dev, काष्ठा scatterlist *sg,
-			   पूर्णांक nents,
-			   क्रमागत dma_data_direction direction,
-			   अचिन्हित दीर्घ attrs)
-अणु
+static int ps3_ioc0_map_sg(struct device *_dev, struct scatterlist *sg,
+			   int nents,
+			   enum dma_data_direction direction,
+			   unsigned long attrs)
+{
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ps3_sb_unmap_sg(काष्ठा device *_dev, काष्ठा scatterlist *sg,
-	पूर्णांक nents, क्रमागत dma_data_direction direction, अचिन्हित दीर्घ attrs)
-अणु
-#अगर defined(CONFIG_PS3_DYNAMIC_DMA)
+static void ps3_sb_unmap_sg(struct device *_dev, struct scatterlist *sg,
+	int nents, enum dma_data_direction direction, unsigned long attrs)
+{
+#if defined(CONFIG_PS3_DYNAMIC_DMA)
 	BUG_ON("do");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम ps3_ioc0_unmap_sg(काष्ठा device *_dev, काष्ठा scatterlist *sg,
-			    पूर्णांक nents, क्रमागत dma_data_direction direction,
-			    अचिन्हित दीर्घ attrs)
-अणु
+static void ps3_ioc0_unmap_sg(struct device *_dev, struct scatterlist *sg,
+			    int nents, enum dma_data_direction direction,
+			    unsigned long attrs)
+{
 	BUG();
-पूर्ण
+}
 
-अटल पूर्णांक ps3_dma_supported(काष्ठा device *_dev, u64 mask)
-अणु
-	वापस mask >= DMA_BIT_MASK(32);
-पूर्ण
+static int ps3_dma_supported(struct device *_dev, u64 mask)
+{
+	return mask >= DMA_BIT_MASK(32);
+}
 
-अटल स्थिर काष्ठा dma_map_ops ps3_sb_dma_ops = अणु
+static const struct dma_map_ops ps3_sb_dma_ops = {
 	.alloc = ps3_alloc_coherent,
-	.मुक्त = ps3_मुक्त_coherent,
+	.free = ps3_free_coherent,
 	.map_sg = ps3_sb_map_sg,
 	.unmap_sg = ps3_sb_unmap_sg,
 	.dma_supported = ps3_dma_supported,
@@ -697,12 +696,12 @@ clean_none:
 	.mmap = dma_common_mmap,
 	.get_sgtable = dma_common_get_sgtable,
 	.alloc_pages = dma_common_alloc_pages,
-	.मुक्त_pages = dma_common_मुक्त_pages,
-पूर्ण;
+	.free_pages = dma_common_free_pages,
+};
 
-अटल स्थिर काष्ठा dma_map_ops ps3_ioc0_dma_ops = अणु
+static const struct dma_map_ops ps3_ioc0_dma_ops = {
 	.alloc = ps3_alloc_coherent,
-	.मुक्त = ps3_मुक्त_coherent,
+	.free = ps3_free_coherent,
 	.map_sg = ps3_ioc0_map_sg,
 	.unmap_sg = ps3_ioc0_unmap_sg,
 	.dma_supported = ps3_dma_supported,
@@ -711,94 +710,94 @@ clean_none:
 	.mmap = dma_common_mmap,
 	.get_sgtable = dma_common_get_sgtable,
 	.alloc_pages = dma_common_alloc_pages,
-	.मुक्त_pages = dma_common_मुक्त_pages,
-पूर्ण;
+	.free_pages = dma_common_free_pages,
+};
 
 /**
- * ps3_प्रणाली_bus_release_device - हटाओ a device from the प्रणाली bus
+ * ps3_system_bus_release_device - remove a device from the system bus
  */
 
-अटल व्योम ps3_प्रणाली_bus_release_device(काष्ठा device *_dev)
-अणु
-	काष्ठा ps3_प्रणाली_bus_device *dev = ps3_dev_to_प्रणाली_bus_dev(_dev);
-	kमुक्त(dev);
-पूर्ण
+static void ps3_system_bus_release_device(struct device *_dev)
+{
+	struct ps3_system_bus_device *dev = ps3_dev_to_system_bus_dev(_dev);
+	kfree(dev);
+}
 
 /**
- * ps3_प्रणाली_bus_device_रेजिस्टर - add a device to the प्रणाली bus
+ * ps3_system_bus_device_register - add a device to the system bus
  *
- * ps3_प्रणाली_bus_device_रेजिस्टर() expects the dev object to be allocated
- * dynamically by the caller.  The प्रणाली bus takes ownership of the dev
- * object and मुक्तs the object in ps3_प्रणाली_bus_release_device().
+ * ps3_system_bus_device_register() expects the dev object to be allocated
+ * dynamically by the caller.  The system bus takes ownership of the dev
+ * object and frees the object in ps3_system_bus_release_device().
  */
 
-पूर्णांक ps3_प्रणाली_bus_device_रेजिस्टर(काष्ठा ps3_प्रणाली_bus_device *dev)
-अणु
-	पूर्णांक result;
-	अटल अचिन्हित पूर्णांक dev_ioc0_count;
-	अटल अचिन्हित पूर्णांक dev_sb_count;
-	अटल अचिन्हित पूर्णांक dev_vuart_count;
-	अटल अचिन्हित पूर्णांक dev_lpm_count;
+int ps3_system_bus_device_register(struct ps3_system_bus_device *dev)
+{
+	int result;
+	static unsigned int dev_ioc0_count;
+	static unsigned int dev_sb_count;
+	static unsigned int dev_vuart_count;
+	static unsigned int dev_lpm_count;
 
-	अगर (!dev->core.parent)
-		dev->core.parent = &ps3_प्रणाली_bus;
-	dev->core.bus = &ps3_प्रणाली_bus_type;
-	dev->core.release = ps3_प्रणाली_bus_release_device;
+	if (!dev->core.parent)
+		dev->core.parent = &ps3_system_bus;
+	dev->core.bus = &ps3_system_bus_type;
+	dev->core.release = ps3_system_bus_release_device;
 
-	चयन (dev->dev_type) अणु
-	हाल PS3_DEVICE_TYPE_IOC0:
+	switch (dev->dev_type) {
+	case PS3_DEVICE_TYPE_IOC0:
 		dev->core.dma_ops = &ps3_ioc0_dma_ops;
 		dev_set_name(&dev->core, "ioc0_%02x", ++dev_ioc0_count);
-		अवरोध;
-	हाल PS3_DEVICE_TYPE_SB:
+		break;
+	case PS3_DEVICE_TYPE_SB:
 		dev->core.dma_ops = &ps3_sb_dma_ops;
 		dev_set_name(&dev->core, "sb_%02x", ++dev_sb_count);
 
-		अवरोध;
-	हाल PS3_DEVICE_TYPE_VUART:
+		break;
+	case PS3_DEVICE_TYPE_VUART:
 		dev_set_name(&dev->core, "vuart_%02x", ++dev_vuart_count);
-		अवरोध;
-	हाल PS3_DEVICE_TYPE_LPM:
+		break;
+	case PS3_DEVICE_TYPE_LPM:
 		dev_set_name(&dev->core, "lpm_%02x", ++dev_lpm_count);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण;
+	};
 
-	dev->core.of_node = शून्य;
+	dev->core.of_node = NULL;
 	set_dev_node(&dev->core, 0);
 
 	pr_debug("%s:%d add %s\n", __func__, __LINE__, dev_name(&dev->core));
 
-	result = device_रेजिस्टर(&dev->core);
-	वापस result;
-पूर्ण
+	result = device_register(&dev->core);
+	return result;
+}
 
-EXPORT_SYMBOL_GPL(ps3_प्रणाली_bus_device_रेजिस्टर);
+EXPORT_SYMBOL_GPL(ps3_system_bus_device_register);
 
-पूर्णांक ps3_प्रणाली_bus_driver_रेजिस्टर(काष्ठा ps3_प्रणाली_bus_driver *drv)
-अणु
-	पूर्णांक result;
+int ps3_system_bus_driver_register(struct ps3_system_bus_driver *drv)
+{
+	int result;
 
 	pr_debug(" -> %s:%d: %s\n", __func__, __LINE__, drv->core.name);
 
-	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		वापस -ENODEV;
+	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		return -ENODEV;
 
-	drv->core.bus = &ps3_प्रणाली_bus_type;
+	drv->core.bus = &ps3_system_bus_type;
 
-	result = driver_रेजिस्टर(&drv->core);
+	result = driver_register(&drv->core);
 	pr_debug(" <- %s:%d: %s\n", __func__, __LINE__, drv->core.name);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-EXPORT_SYMBOL_GPL(ps3_प्रणाली_bus_driver_रेजिस्टर);
+EXPORT_SYMBOL_GPL(ps3_system_bus_driver_register);
 
-व्योम ps3_प्रणाली_bus_driver_unरेजिस्टर(काष्ठा ps3_प्रणाली_bus_driver *drv)
-अणु
+void ps3_system_bus_driver_unregister(struct ps3_system_bus_driver *drv)
+{
 	pr_debug(" -> %s:%d: %s\n", __func__, __LINE__, drv->core.name);
-	driver_unरेजिस्टर(&drv->core);
+	driver_unregister(&drv->core);
 	pr_debug(" <- %s:%d: %s\n", __func__, __LINE__, drv->core.name);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(ps3_प्रणाली_bus_driver_unरेजिस्टर);
+EXPORT_SYMBOL_GPL(ps3_system_bus_driver_unregister);

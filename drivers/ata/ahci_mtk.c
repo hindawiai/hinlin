@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MediaTek AHCI SATA driver
  *
@@ -7,183 +6,183 @@
  * Author: Ryder Lee <ryder.lee@mediatek.com>
  */
 
-#समावेश <linux/ahci_platक्रमm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश "ahci.h"
+#include <linux/ahci_platform.h>
+#include <linux/kernel.h>
+#include <linux/libata.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include "ahci.h"
 
-#घोषणा DRV_NAME		"ahci-mtk"
+#define DRV_NAME		"ahci-mtk"
 
-#घोषणा SYS_CFG			0x14
-#घोषणा SYS_CFG_SATA_MSK	GENMASK(31, 30)
-#घोषणा SYS_CFG_SATA_EN		BIT(31)
+#define SYS_CFG			0x14
+#define SYS_CFG_SATA_MSK	GENMASK(31, 30)
+#define SYS_CFG_SATA_EN		BIT(31)
 
-काष्ठा mtk_ahci_plat अणु
-	काष्ठा regmap *mode;
-	काष्ठा reset_control *axi_rst;
-	काष्ठा reset_control *sw_rst;
-	काष्ठा reset_control *reg_rst;
-पूर्ण;
+struct mtk_ahci_plat {
+	struct regmap *mode;
+	struct reset_control *axi_rst;
+	struct reset_control *sw_rst;
+	struct reset_control *reg_rst;
+};
 
-अटल स्थिर काष्ठा ata_port_info ahci_port_info = अणु
+static const struct ata_port_info ahci_port_info = {
 	.flags		= AHCI_FLAG_COMMON,
 	.pio_mask	= ATA_PIO4,
 	.udma_mask	= ATA_UDMA6,
-	.port_ops	= &ahci_platक्रमm_ops,
-पूर्ण;
+	.port_ops	= &ahci_platform_ops,
+};
 
-अटल काष्ठा scsi_host_ढाँचा ahci_platक्रमm_sht = अणु
+static struct scsi_host_template ahci_platform_sht = {
 	AHCI_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल पूर्णांक mtk_ahci_platक्रमm_resets(काष्ठा ahci_host_priv *hpriv,
-				    काष्ठा device *dev)
-अणु
-	काष्ठा mtk_ahci_plat *plat = hpriv->plat_data;
-	पूर्णांक err;
+static int mtk_ahci_platform_resets(struct ahci_host_priv *hpriv,
+				    struct device *dev)
+{
+	struct mtk_ahci_plat *plat = hpriv->plat_data;
+	int err;
 
 	/* reset AXI bus and PHY part */
 	plat->axi_rst = devm_reset_control_get_optional_exclusive(dev, "axi");
-	अगर (PTR_ERR(plat->axi_rst) == -EPROBE_DEFER)
-		वापस PTR_ERR(plat->axi_rst);
+	if (PTR_ERR(plat->axi_rst) == -EPROBE_DEFER)
+		return PTR_ERR(plat->axi_rst);
 
 	plat->sw_rst = devm_reset_control_get_optional_exclusive(dev, "sw");
-	अगर (PTR_ERR(plat->sw_rst) == -EPROBE_DEFER)
-		वापस PTR_ERR(plat->sw_rst);
+	if (PTR_ERR(plat->sw_rst) == -EPROBE_DEFER)
+		return PTR_ERR(plat->sw_rst);
 
 	plat->reg_rst = devm_reset_control_get_optional_exclusive(dev, "reg");
-	अगर (PTR_ERR(plat->reg_rst) == -EPROBE_DEFER)
-		वापस PTR_ERR(plat->reg_rst);
+	if (PTR_ERR(plat->reg_rst) == -EPROBE_DEFER)
+		return PTR_ERR(plat->reg_rst);
 
-	err = reset_control_निश्चित(plat->axi_rst);
-	अगर (err) अणु
+	err = reset_control_assert(plat->axi_rst);
+	if (err) {
 		dev_err(dev, "failed to assert AXI bus\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = reset_control_निश्चित(plat->sw_rst);
-	अगर (err) अणु
+	err = reset_control_assert(plat->sw_rst);
+	if (err) {
 		dev_err(dev, "failed to assert PHY digital part\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = reset_control_निश्चित(plat->reg_rst);
-	अगर (err) अणु
+	err = reset_control_assert(plat->reg_rst);
+	if (err) {
 		dev_err(dev, "failed to assert PHY register part\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = reset_control_deनिश्चित(plat->reg_rst);
-	अगर (err) अणु
+	err = reset_control_deassert(plat->reg_rst);
+	if (err) {
 		dev_err(dev, "failed to deassert PHY register part\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = reset_control_deनिश्चित(plat->sw_rst);
-	अगर (err) अणु
+	err = reset_control_deassert(plat->sw_rst);
+	if (err) {
 		dev_err(dev, "failed to deassert PHY digital part\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = reset_control_deनिश्चित(plat->axi_rst);
-	अगर (err) अणु
+	err = reset_control_deassert(plat->axi_rst);
+	if (err) {
 		dev_err(dev, "failed to deassert AXI bus\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_ahci_parse_property(काष्ठा ahci_host_priv *hpriv,
-				   काष्ठा device *dev)
-अणु
-	काष्ठा mtk_ahci_plat *plat = hpriv->plat_data;
-	काष्ठा device_node *np = dev->of_node;
+static int mtk_ahci_parse_property(struct ahci_host_priv *hpriv,
+				   struct device *dev)
+{
+	struct mtk_ahci_plat *plat = hpriv->plat_data;
+	struct device_node *np = dev->of_node;
 
-	/* enable SATA function अगर needed */
-	अगर (of_find_property(np, "mediatek,phy-mode", शून्य)) अणु
+	/* enable SATA function if needed */
+	if (of_find_property(np, "mediatek,phy-mode", NULL)) {
 		plat->mode = syscon_regmap_lookup_by_phandle(
 					np, "mediatek,phy-mode");
-		अगर (IS_ERR(plat->mode)) अणु
+		if (IS_ERR(plat->mode)) {
 			dev_err(dev, "missing phy-mode phandle\n");
-			वापस PTR_ERR(plat->mode);
-		पूर्ण
+			return PTR_ERR(plat->mode);
+		}
 
 		regmap_update_bits(plat->mode, SYS_CFG, SYS_CFG_SATA_MSK,
 				   SYS_CFG_SATA_EN);
-	पूर्ण
+	}
 
-	of_property_पढ़ो_u32(np, "ports-implemented", &hpriv->क्रमce_port_map);
+	of_property_read_u32(np, "ports-implemented", &hpriv->force_port_map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_ahci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा mtk_ahci_plat *plat;
-	काष्ठा ahci_host_priv *hpriv;
-	पूर्णांक err;
+static int mtk_ahci_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct mtk_ahci_plat *plat;
+	struct ahci_host_priv *hpriv;
+	int err;
 
-	plat = devm_kzalloc(dev, माप(*plat), GFP_KERNEL);
-	अगर (!plat)
-		वापस -ENOMEM;
+	plat = devm_kzalloc(dev, sizeof(*plat), GFP_KERNEL);
+	if (!plat)
+		return -ENOMEM;
 
-	hpriv = ahci_platक्रमm_get_resources(pdev, 0);
-	अगर (IS_ERR(hpriv))
-		वापस PTR_ERR(hpriv);
+	hpriv = ahci_platform_get_resources(pdev, 0);
+	if (IS_ERR(hpriv))
+		return PTR_ERR(hpriv);
 
 	hpriv->plat_data = plat;
 
 	err = mtk_ahci_parse_property(hpriv, dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = mtk_ahci_platक्रमm_resets(hpriv, dev);
-	अगर (err)
-		वापस err;
+	err = mtk_ahci_platform_resets(hpriv, dev);
+	if (err)
+		return err;
 
-	err = ahci_platक्रमm_enable_resources(hpriv);
-	अगर (err)
-		वापस err;
+	err = ahci_platform_enable_resources(hpriv);
+	if (err)
+		return err;
 
-	err = ahci_platक्रमm_init_host(pdev, hpriv, &ahci_port_info,
-				      &ahci_platक्रमm_sht);
-	अगर (err)
-		जाओ disable_resources;
+	err = ahci_platform_init_host(pdev, hpriv, &ahci_port_info,
+				      &ahci_platform_sht);
+	if (err)
+		goto disable_resources;
 
-	वापस 0;
+	return 0;
 
 disable_resources:
-	ahci_platक्रमm_disable_resources(hpriv);
-	वापस err;
-पूर्ण
+	ahci_platform_disable_resources(hpriv);
+	return err;
+}
 
-अटल SIMPLE_DEV_PM_OPS(ahci_pm_ops, ahci_platक्रमm_suspend,
-			 ahci_platक्रमm_resume);
+static SIMPLE_DEV_PM_OPS(ahci_pm_ops, ahci_platform_suspend,
+			 ahci_platform_resume);
 
-अटल स्थिर काष्ठा of_device_id ahci_of_match[] = अणु
-	अणु .compatible = "mediatek,mtk-ahci", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ahci_of_match[] = {
+	{ .compatible = "mediatek,mtk-ahci", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ahci_of_match);
 
-अटल काष्ठा platक्रमm_driver mtk_ahci_driver = अणु
+static struct platform_driver mtk_ahci_driver = {
 	.probe = mtk_ahci_probe,
-	.हटाओ = ata_platक्रमm_हटाओ_one,
-	.driver = अणु
+	.remove = ata_platform_remove_one,
+	.driver = {
 		.name = DRV_NAME,
 		.of_match_table = ahci_of_match,
 		.pm = &ahci_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(mtk_ahci_driver);
+	},
+};
+module_platform_driver(mtk_ahci_driver);
 
 MODULE_DESCRIPTION("MediaTek SATA AHCI Driver");
 MODULE_LICENSE("GPL v2");

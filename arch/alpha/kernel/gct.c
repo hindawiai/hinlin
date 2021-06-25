@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/gct.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/errno.h>
 
-#समावेश <यंत्र/hwrpb.h>
-#समावेश <यंत्र/gct.h>
+#include <asm/hwrpb.h>
+#include <asm/gct.h>
 
-पूर्णांक
-gct6_find_nodes(gct6_node *node, gct6_search_काष्ठा *search)
-अणु
-	gct6_search_काष्ठा *wanted;
-	पूर्णांक status = 0;
+int
+gct6_find_nodes(gct6_node *node, gct6_search_struct *search)
+{
+	gct6_search_struct *wanted;
+	int status = 0;
 
 	/* First check the magic number.  */
-	अगर (node->magic != GCT_NODE_MAGIC) अणु
-		prपूर्णांकk(KERN_ERR "GCT Node MAGIC incorrect - GCT invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (node->magic != GCT_NODE_MAGIC) {
+		printk(KERN_ERR "GCT Node MAGIC incorrect - GCT invalid\n");
+		return -EINVAL;
+	}
 
-	/* Check against the search काष्ठा.  */
-	क्रम (wanted = search; 
+	/* Check against the search struct.  */
+	for (wanted = search; 
 	     wanted && (wanted->type | wanted->subtype); 
-	     wanted++) अणु
-		अगर (node->type != wanted->type)
-			जारी;
-		अगर (node->subtype != wanted->subtype)
-			जारी;
+	     wanted++) {
+		if (node->type != wanted->type)
+			continue;
+		if (node->subtype != wanted->subtype)
+			continue;
 
 		/* Found it -- call out.  */
-		अगर (wanted->callout)
+		if (wanted->callout)
 			wanted->callout(node);
-	पूर्ण
+	}
 
 	/* Now walk the tree, siblings first.  */
-	अगर (node->next) 
+	if (node->next) 
 		status |= gct6_find_nodes(GCT_NODE_PTR(node->next), search);
 
 	/* Then the children.  */
-	अगर (node->child) 
+	if (node->child) 
 		status |= gct6_find_nodes(GCT_NODE_PTR(node->child), search);
 
-	वापस status;
-पूर्ण
+	return status;
+}

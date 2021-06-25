@@ -1,170 +1,169 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * DA9052 पूर्णांकerrupt support
+ * DA9052 interrupt support
  *
- * Author: Fabio Estevam <fabio.estevam@मुक्तscale.com>
+ * Author: Fabio Estevam <fabio.estevam@freescale.com>
  * Based on arizona-irq.c, which is:
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#समावेश <linux/mfd/da9052/da9052.h>
-#समावेश <linux/mfd/da9052/reg.h>
+#include <linux/mfd/da9052/da9052.h>
+#include <linux/mfd/da9052/reg.h>
 
-#घोषणा DA9052_NUM_IRQ_REGS		4
-#घोषणा DA9052_IRQ_MASK_POS_1		0x01
-#घोषणा DA9052_IRQ_MASK_POS_2		0x02
-#घोषणा DA9052_IRQ_MASK_POS_3		0x04
-#घोषणा DA9052_IRQ_MASK_POS_4		0x08
-#घोषणा DA9052_IRQ_MASK_POS_5		0x10
-#घोषणा DA9052_IRQ_MASK_POS_6		0x20
-#घोषणा DA9052_IRQ_MASK_POS_7		0x40
-#घोषणा DA9052_IRQ_MASK_POS_8		0x80
+#define DA9052_NUM_IRQ_REGS		4
+#define DA9052_IRQ_MASK_POS_1		0x01
+#define DA9052_IRQ_MASK_POS_2		0x02
+#define DA9052_IRQ_MASK_POS_3		0x04
+#define DA9052_IRQ_MASK_POS_4		0x08
+#define DA9052_IRQ_MASK_POS_5		0x10
+#define DA9052_IRQ_MASK_POS_6		0x20
+#define DA9052_IRQ_MASK_POS_7		0x40
+#define DA9052_IRQ_MASK_POS_8		0x80
 
-अटल स्थिर काष्ठा regmap_irq da9052_irqs[] = अणु
-	[DA9052_IRQ_DCIN] = अणु
+static const struct regmap_irq da9052_irqs[] = {
+	[DA9052_IRQ_DCIN] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_1,
-	पूर्ण,
-	[DA9052_IRQ_VBUS] = अणु
+	},
+	[DA9052_IRQ_VBUS] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_2,
-	पूर्ण,
-	[DA9052_IRQ_DCINREM] = अणु
+	},
+	[DA9052_IRQ_DCINREM] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_3,
-	पूर्ण,
-	[DA9052_IRQ_VBUSREM] = अणु
+	},
+	[DA9052_IRQ_VBUSREM] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_4,
-	पूर्ण,
-	[DA9052_IRQ_VDDLOW] = अणु
+	},
+	[DA9052_IRQ_VDDLOW] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_5,
-	पूर्ण,
-	[DA9052_IRQ_ALARM] = अणु
+	},
+	[DA9052_IRQ_ALARM] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_6,
-	पूर्ण,
-	[DA9052_IRQ_SEQRDY] = अणु
+	},
+	[DA9052_IRQ_SEQRDY] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_7,
-	पूर्ण,
-	[DA9052_IRQ_COMP1V2] = अणु
+	},
+	[DA9052_IRQ_COMP1V2] = {
 		.reg_offset = 0,
 		.mask = DA9052_IRQ_MASK_POS_8,
-	पूर्ण,
-	[DA9052_IRQ_NONKEY] = अणु
+	},
+	[DA9052_IRQ_NONKEY] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_1,
-	पूर्ण,
-	[DA9052_IRQ_IDFLOAT] = अणु
+	},
+	[DA9052_IRQ_IDFLOAT] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_2,
-	पूर्ण,
-	[DA9052_IRQ_IDGND] = अणु
+	},
+	[DA9052_IRQ_IDGND] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_3,
-	पूर्ण,
-	[DA9052_IRQ_CHGEND] = अणु
+	},
+	[DA9052_IRQ_CHGEND] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_4,
-	पूर्ण,
-	[DA9052_IRQ_TBAT] = अणु
+	},
+	[DA9052_IRQ_TBAT] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_5,
-	पूर्ण,
-	[DA9052_IRQ_ADC_EOM] = अणु
+	},
+	[DA9052_IRQ_ADC_EOM] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_6,
-	पूर्ण,
-	[DA9052_IRQ_PENDOWN] = अणु
+	},
+	[DA9052_IRQ_PENDOWN] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_7,
-	पूर्ण,
-	[DA9052_IRQ_TSIREADY] = अणु
+	},
+	[DA9052_IRQ_TSIREADY] = {
 		.reg_offset = 1,
 		.mask = DA9052_IRQ_MASK_POS_8,
-	पूर्ण,
-	[DA9052_IRQ_GPI0] = अणु
+	},
+	[DA9052_IRQ_GPI0] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_1,
-	पूर्ण,
-	[DA9052_IRQ_GPI1] = अणु
+	},
+	[DA9052_IRQ_GPI1] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_2,
-	पूर्ण,
-	[DA9052_IRQ_GPI2] = अणु
+	},
+	[DA9052_IRQ_GPI2] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_3,
-	पूर्ण,
-	[DA9052_IRQ_GPI3] = अणु
+	},
+	[DA9052_IRQ_GPI3] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_4,
-	पूर्ण,
-	[DA9052_IRQ_GPI4] = अणु
+	},
+	[DA9052_IRQ_GPI4] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_5,
-	पूर्ण,
-	[DA9052_IRQ_GPI5] = अणु
+	},
+	[DA9052_IRQ_GPI5] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_6,
-	पूर्ण,
-	[DA9052_IRQ_GPI6] = अणु
+	},
+	[DA9052_IRQ_GPI6] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_7,
-	पूर्ण,
-	[DA9052_IRQ_GPI7] = अणु
+	},
+	[DA9052_IRQ_GPI7] = {
 		.reg_offset = 2,
 		.mask = DA9052_IRQ_MASK_POS_8,
-	पूर्ण,
-	[DA9052_IRQ_GPI8] = अणु
+	},
+	[DA9052_IRQ_GPI8] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_1,
-	पूर्ण,
-	[DA9052_IRQ_GPI9] = अणु
+	},
+	[DA9052_IRQ_GPI9] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_2,
-	पूर्ण,
-	[DA9052_IRQ_GPI10] = अणु
+	},
+	[DA9052_IRQ_GPI10] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_3,
-	पूर्ण,
-	[DA9052_IRQ_GPI11] = अणु
+	},
+	[DA9052_IRQ_GPI11] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_4,
-	पूर्ण,
-	[DA9052_IRQ_GPI12] = अणु
+	},
+	[DA9052_IRQ_GPI12] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_5,
-	पूर्ण,
-	[DA9052_IRQ_GPI13] = अणु
+	},
+	[DA9052_IRQ_GPI13] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_6,
-	पूर्ण,
-	[DA9052_IRQ_GPI14] = अणु
+	},
+	[DA9052_IRQ_GPI14] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_7,
-	पूर्ण,
-	[DA9052_IRQ_GPI15] = अणु
+	},
+	[DA9052_IRQ_GPI15] = {
 		.reg_offset = 3,
 		.mask = DA9052_IRQ_MASK_POS_8,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा regmap_irq_chip da9052_regmap_irq_chip = अणु
+static const struct regmap_irq_chip da9052_regmap_irq_chip = {
 	.name = "da9052_irq",
 	.status_base = DA9052_EVENT_A_REG,
 	.mask_base = DA9052_IRQ_MASK_A_REG,
@@ -172,117 +171,117 @@
 	.num_regs = DA9052_NUM_IRQ_REGS,
 	.irqs = da9052_irqs,
 	.num_irqs = ARRAY_SIZE(da9052_irqs),
-पूर्ण;
+};
 
-अटल पूर्णांक da9052_map_irq(काष्ठा da9052 *da9052, पूर्णांक irq)
-अणु
-	वापस regmap_irq_get_virq(da9052->irq_data, irq);
-पूर्ण
+static int da9052_map_irq(struct da9052 *da9052, int irq)
+{
+	return regmap_irq_get_virq(da9052->irq_data, irq);
+}
 
-पूर्णांक da9052_enable_irq(काष्ठा da9052 *da9052, पूर्णांक irq)
-अणु
+int da9052_enable_irq(struct da9052 *da9052, int irq)
+{
 	irq = da9052_map_irq(da9052, irq);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	enable_irq(irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(da9052_enable_irq);
 
-पूर्णांक da9052_disable_irq(काष्ठा da9052 *da9052, पूर्णांक irq)
-अणु
+int da9052_disable_irq(struct da9052 *da9052, int irq)
+{
 	irq = da9052_map_irq(da9052, irq);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	disable_irq(irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(da9052_disable_irq);
 
-पूर्णांक da9052_disable_irq_nosync(काष्ठा da9052 *da9052, पूर्णांक irq)
-अणु
+int da9052_disable_irq_nosync(struct da9052 *da9052, int irq)
+{
 	irq = da9052_map_irq(da9052, irq);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
 	disable_irq_nosync(irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(da9052_disable_irq_nosync);
 
-पूर्णांक da9052_request_irq(काष्ठा da9052 *da9052, पूर्णांक irq, अक्षर *name,
-			   irq_handler_t handler, व्योम *data)
-अणु
+int da9052_request_irq(struct da9052 *da9052, int irq, char *name,
+			   irq_handler_t handler, void *data)
+{
 	irq = da9052_map_irq(da9052, irq);
-	अगर (irq < 0)
-		वापस irq;
+	if (irq < 0)
+		return irq;
 
-	वापस request_thपढ़ोed_irq(irq, शून्य, handler,
+	return request_threaded_irq(irq, NULL, handler,
 				     IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 				     name, data);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(da9052_request_irq);
 
-व्योम da9052_मुक्त_irq(काष्ठा da9052 *da9052, पूर्णांक irq, व्योम *data)
-अणु
+void da9052_free_irq(struct da9052 *da9052, int irq, void *data)
+{
 	irq = da9052_map_irq(da9052, irq);
-	अगर (irq < 0)
-		वापस;
+	if (irq < 0)
+		return;
 
-	मुक्त_irq(irq, data);
-पूर्ण
-EXPORT_SYMBOL_GPL(da9052_मुक्त_irq);
+	free_irq(irq, data);
+}
+EXPORT_SYMBOL_GPL(da9052_free_irq);
 
-अटल irqवापस_t da9052_auxadc_irq(पूर्णांक irq, व्योम *irq_data)
-अणु
-	काष्ठा da9052 *da9052 = irq_data;
+static irqreturn_t da9052_auxadc_irq(int irq, void *irq_data)
+{
+	struct da9052 *da9052 = irq_data;
 
-	complete(&da9052->करोne);
+	complete(&da9052->done);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक da9052_irq_init(काष्ठा da9052 *da9052)
-अणु
-	पूर्णांक ret;
+int da9052_irq_init(struct da9052 *da9052)
+{
+	int ret;
 
 	ret = regmap_add_irq_chip(da9052->regmap, da9052->chip_irq,
 				  IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 				  -1, &da9052_regmap_irq_chip,
 				  &da9052->irq_data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(da9052->dev, "regmap_add_irq_chip failed: %d\n", ret);
-		जाओ regmap_err;
-	पूर्ण
+		goto regmap_err;
+	}
 
 	enable_irq_wake(da9052->chip_irq);
 
 	ret = da9052_request_irq(da9052, DA9052_IRQ_ADC_EOM, "adc-irq",
 			    da9052_auxadc_irq, da9052);
 
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(da9052->dev, "DA9052_IRQ_ADC_EOM failed: %d\n", ret);
-		जाओ request_irq_err;
-	पूर्ण
+		goto request_irq_err;
+	}
 
-	वापस 0;
+	return 0;
 
 request_irq_err:
 	regmap_del_irq_chip(da9052->chip_irq, da9052->irq_data);
 regmap_err:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-पूर्णांक da9052_irq_निकास(काष्ठा da9052 *da9052)
-अणु
-	da9052_मुक्त_irq(da9052, DA9052_IRQ_ADC_EOM, da9052);
+int da9052_irq_exit(struct da9052 *da9052)
+{
+	da9052_free_irq(da9052, DA9052_IRQ_ADC_EOM, da9052);
 	regmap_del_irq_chip(da9052->chip_irq, da9052->irq_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

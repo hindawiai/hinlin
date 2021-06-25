@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/sysreg.h>
-#समावेश <soc/qcom/kryo-l2-accessors.h>
+#include <linux/spinlock.h>
+#include <asm/barrier.h>
+#include <asm/sysreg.h>
+#include <soc/qcom/kryo-l2-accessors.h>
 
-#घोषणा L2CPUSRSELR_EL1         sys_reg(3, 3, 15, 0, 6)
-#घोषणा L2CPUSRDR_EL1           sys_reg(3, 3, 15, 0, 7)
+#define L2CPUSRSELR_EL1         sys_reg(3, 3, 15, 0, 6)
+#define L2CPUSRDR_EL1           sys_reg(3, 3, 15, 0, 7)
 
-अटल DEFINE_RAW_SPINLOCK(l2_access_lock);
+static DEFINE_RAW_SPINLOCK(l2_access_lock);
 
 /**
- * kryo_l2_set_indirect_reg() - ग_लिखो value to an L2 रेजिस्टर
- * @reg: Address of L2 रेजिस्टर.
- * @val: Value to be written to रेजिस्टर.
+ * kryo_l2_set_indirect_reg() - write value to an L2 register
+ * @reg: Address of L2 register.
+ * @val: Value to be written to register.
  *
- * Use architecturally required barriers क्रम ordering between प्रणाली रेजिस्टर
- * accesses, and प्रणाली रेजिस्टरs with respect to device memory
+ * Use architecturally required barriers for ordering between system register
+ * accesses, and system registers with respect to device memory
  */
-व्योम kryo_l2_set_indirect_reg(u64 reg, u64 val)
-अणु
-	अचिन्हित दीर्घ flags;
+void kryo_l2_set_indirect_reg(u64 reg, u64 val)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&l2_access_lock, flags);
-	ग_लिखो_sysreg_s(reg, L2CPUSRSELR_EL1);
+	write_sysreg_s(reg, L2CPUSRSELR_EL1);
 	isb();
-	ग_लिखो_sysreg_s(val, L2CPUSRDR_EL1);
+	write_sysreg_s(val, L2CPUSRDR_EL1);
 	isb();
 	raw_spin_unlock_irqrestore(&l2_access_lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(kryo_l2_set_indirect_reg);
 
 /**
- * kryo_l2_get_indirect_reg() - पढ़ो an L2 रेजिस्टर value
- * @reg: Address of L2 रेजिस्टर.
+ * kryo_l2_get_indirect_reg() - read an L2 register value
+ * @reg: Address of L2 register.
  *
- * Use architecturally required barriers क्रम ordering between प्रणाली रेजिस्टर
- * accesses, and प्रणाली रेजिस्टरs with respect to device memory
+ * Use architecturally required barriers for ordering between system register
+ * accesses, and system registers with respect to device memory
  */
 u64 kryo_l2_get_indirect_reg(u64 reg)
-अणु
+{
 	u64 val;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&l2_access_lock, flags);
-	ग_लिखो_sysreg_s(reg, L2CPUSRSELR_EL1);
+	write_sysreg_s(reg, L2CPUSRSELR_EL1);
 	isb();
-	val = पढ़ो_sysreg_s(L2CPUSRDR_EL1);
+	val = read_sysreg_s(L2CPUSRDR_EL1);
 	raw_spin_unlock_irqrestore(&l2_access_lock, flags);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 EXPORT_SYMBOL(kryo_l2_get_indirect_reg);

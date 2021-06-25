@@ -1,812 +1,811 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * S5P/EXYNOS4 SoC series camera host पूर्णांकerface media device driver
+ * S5P/EXYNOS4 SoC series camera host interface media device driver
  *
  * Copyright (C) 2011 - 2013 Samsung Electronics Co., Ltd.
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/media-device.h>
-#समावेश <media/drv-पूर्णांकf/exynos-fimc.h>
+#include <linux/bug.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/i2c.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/of_device.h>
+#include <linux/of_graph.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fwnode.h>
+#include <media/media-device.h>
+#include <media/drv-intf/exynos-fimc.h>
 
-#समावेश "media-dev.h"
-#समावेश "fimc-core.h"
-#समावेश "fimc-is.h"
-#समावेश "fimc-lite.h"
-#समावेश "mipi-csis.h"
+#include "media-dev.h"
+#include "fimc-core.h"
+#include "fimc-is.h"
+#include "fimc-lite.h"
+#include "mipi-csis.h"
 
-/* Set up image sensor subdev -> FIMC capture node notअगरications. */
-अटल व्योम __setup_sensor_notअगरication(काष्ठा fimc_md *fmd,
-					काष्ठा v4l2_subdev *sensor,
-					काष्ठा v4l2_subdev *fimc_sd)
-अणु
-	काष्ठा fimc_source_info *src_inf;
-	काष्ठा fimc_sensor_info *md_si;
-	अचिन्हित दीर्घ flags;
+/* Set up image sensor subdev -> FIMC capture node notifications. */
+static void __setup_sensor_notification(struct fimc_md *fmd,
+					struct v4l2_subdev *sensor,
+					struct v4l2_subdev *fimc_sd)
+{
+	struct fimc_source_info *src_inf;
+	struct fimc_sensor_info *md_si;
+	unsigned long flags;
 
 	src_inf = v4l2_get_subdev_hostdata(sensor);
-	अगर (!src_inf || WARN_ON(fmd == शून्य))
-		वापस;
+	if (!src_inf || WARN_ON(fmd == NULL))
+		return;
 
 	md_si = source_to_sensor_info(src_inf);
 	spin_lock_irqsave(&fmd->slock, flags);
 	md_si->host = v4l2_get_subdevdata(fimc_sd);
 	spin_unlock_irqrestore(&fmd->slock, flags);
-पूर्ण
+}
 
 /**
- * fimc_pipeline_prepare - update pipeline inक्रमmation with subdevice poपूर्णांकers
+ * fimc_pipeline_prepare - update pipeline information with subdevice pointers
  * @p: fimc pipeline
  * @me: media entity terminating the pipeline
  *
  * Caller holds the graph mutex.
  */
-अटल व्योम fimc_pipeline_prepare(काष्ठा fimc_pipeline *p,
-					काष्ठा media_entity *me)
-अणु
-	काष्ठा fimc_md *fmd = entity_to_fimc_mdev(me);
-	काष्ठा v4l2_subdev *sd;
-	काष्ठा v4l2_subdev *sensor = शून्य;
-	पूर्णांक i;
+static void fimc_pipeline_prepare(struct fimc_pipeline *p,
+					struct media_entity *me)
+{
+	struct fimc_md *fmd = entity_to_fimc_mdev(me);
+	struct v4l2_subdev *sd;
+	struct v4l2_subdev *sensor = NULL;
+	int i;
 
-	क्रम (i = 0; i < IDX_MAX; i++)
-		p->subdevs[i] = शून्य;
+	for (i = 0; i < IDX_MAX; i++)
+		p->subdevs[i] = NULL;
 
-	जबतक (1) अणु
-		काष्ठा media_pad *pad = शून्य;
+	while (1) {
+		struct media_pad *pad = NULL;
 
 		/* Find remote source pad */
-		क्रम (i = 0; i < me->num_pads; i++) अणु
-			काष्ठा media_pad *spad = &me->pads[i];
-			अगर (!(spad->flags & MEDIA_PAD_FL_SINK))
-				जारी;
+		for (i = 0; i < me->num_pads; i++) {
+			struct media_pad *spad = &me->pads[i];
+			if (!(spad->flags & MEDIA_PAD_FL_SINK))
+				continue;
 			pad = media_entity_remote_pad(spad);
-			अगर (pad)
-				अवरोध;
-		पूर्ण
+			if (pad)
+				break;
+		}
 
-		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			अवरोध;
+		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			break;
 		sd = media_entity_to_v4l2_subdev(pad->entity);
 
-		चयन (sd->grp_id) अणु
-		हाल GRP_ID_SENSOR:
+		switch (sd->grp_id) {
+		case GRP_ID_SENSOR:
 			sensor = sd;
 			fallthrough;
-		हाल GRP_ID_FIMC_IS_SENSOR:
+		case GRP_ID_FIMC_IS_SENSOR:
 			p->subdevs[IDX_SENSOR] = sd;
-			अवरोध;
-		हाल GRP_ID_CSIS:
+			break;
+		case GRP_ID_CSIS:
 			p->subdevs[IDX_CSIS] = sd;
-			अवरोध;
-		हाल GRP_ID_FLITE:
+			break;
+		case GRP_ID_FLITE:
 			p->subdevs[IDX_FLITE] = sd;
-			अवरोध;
-		हाल GRP_ID_FIMC:
+			break;
+		case GRP_ID_FIMC:
 			p->subdevs[IDX_FIMC] = sd;
-			अवरोध;
-		हाल GRP_ID_FIMC_IS:
+			break;
+		case GRP_ID_FIMC_IS:
 			p->subdevs[IDX_IS_ISP] = sd;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 		me = &sd->entity;
-		अगर (me->num_pads == 1)
-			अवरोध;
-	पूर्ण
+		if (me->num_pads == 1)
+			break;
+	}
 
-	अगर (sensor && p->subdevs[IDX_FIMC])
-		__setup_sensor_notअगरication(fmd, sensor, p->subdevs[IDX_FIMC]);
-पूर्ण
+	if (sensor && p->subdevs[IDX_FIMC])
+		__setup_sensor_notification(fmd, sensor, p->subdevs[IDX_FIMC]);
+}
 
 /**
- * __subdev_set_घातer - change घातer state of a single subdev
- * @sd: subdevice to change घातer state क्रम
- * @on: 1 to enable घातer or 0 to disable
+ * __subdev_set_power - change power state of a single subdev
+ * @sd: subdevice to change power state for
+ * @on: 1 to enable power or 0 to disable
  *
- * Return result of s_घातer subdev operation or -ENXIO अगर sd argument
- * is शून्य. Return 0 अगर the subdevice करोes not implement s_घातer.
+ * Return result of s_power subdev operation or -ENXIO if sd argument
+ * is NULL. Return 0 if the subdevice does not implement s_power.
  */
-अटल पूर्णांक __subdev_set_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	पूर्णांक *use_count;
-	पूर्णांक ret;
+static int __subdev_set_power(struct v4l2_subdev *sd, int on)
+{
+	int *use_count;
+	int ret;
 
-	अगर (sd == शून्य)
-		वापस -ENXIO;
+	if (sd == NULL)
+		return -ENXIO;
 
 	use_count = &sd->entity.use_count;
-	अगर (on && (*use_count)++ > 0)
-		वापस 0;
-	अन्यथा अगर (!on && (*use_count == 0 || --(*use_count) > 0))
-		वापस 0;
-	ret = v4l2_subdev_call(sd, core, s_घातer, on);
+	if (on && (*use_count)++ > 0)
+		return 0;
+	else if (!on && (*use_count == 0 || --(*use_count) > 0))
+		return 0;
+	ret = v4l2_subdev_call(sd, core, s_power, on);
 
-	वापस ret != -ENOIOCTLCMD ? ret : 0;
-पूर्ण
+	return ret != -ENOIOCTLCMD ? ret : 0;
+}
 
 /**
- * fimc_pipeline_s_घातer - change घातer state of all pipeline subdevs
+ * fimc_pipeline_s_power - change power state of all pipeline subdevs
  * @p: fimc device terminating the pipeline
- * @on: true to घातer on, false to घातer off
+ * @on: true to power on, false to power off
  *
  * Needs to be called with the graph mutex held.
  */
-अटल पूर्णांक fimc_pipeline_s_घातer(काष्ठा fimc_pipeline *p, bool on)
-अणु
-	अटल स्थिर u8 seq[2][IDX_MAX - 1] = अणु
-		अणु IDX_IS_ISP, IDX_SENSOR, IDX_CSIS, IDX_FLITE पूर्ण,
-		अणु IDX_CSIS, IDX_FLITE, IDX_SENSOR, IDX_IS_ISP पूर्ण,
-	पूर्ण;
-	पूर्णांक i, ret = 0;
+static int fimc_pipeline_s_power(struct fimc_pipeline *p, bool on)
+{
+	static const u8 seq[2][IDX_MAX - 1] = {
+		{ IDX_IS_ISP, IDX_SENSOR, IDX_CSIS, IDX_FLITE },
+		{ IDX_CSIS, IDX_FLITE, IDX_SENSOR, IDX_IS_ISP },
+	};
+	int i, ret = 0;
 
-	अगर (p->subdevs[IDX_SENSOR] == शून्य)
-		वापस -ENXIO;
+	if (p->subdevs[IDX_SENSOR] == NULL)
+		return -ENXIO;
 
-	क्रम (i = 0; i < IDX_MAX - 1; i++) अणु
-		अचिन्हित पूर्णांक idx = seq[on][i];
+	for (i = 0; i < IDX_MAX - 1; i++) {
+		unsigned int idx = seq[on][i];
 
-		ret = __subdev_set_घातer(p->subdevs[idx], on);
+		ret = __subdev_set_power(p->subdevs[idx], on);
 
 
-		अगर (ret < 0 && ret != -ENXIO)
-			जाओ error;
-	पूर्ण
-	वापस 0;
+		if (ret < 0 && ret != -ENXIO)
+			goto error;
+	}
+	return 0;
 error:
-	क्रम (; i >= 0; i--) अणु
-		अचिन्हित पूर्णांक idx = seq[on][i];
-		__subdev_set_घातer(p->subdevs[idx], !on);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	for (; i >= 0; i--) {
+		unsigned int idx = seq[on][i];
+		__subdev_set_power(p->subdevs[idx], !on);
+	}
+	return ret;
+}
 
 /**
- * __fimc_pipeline_enable - enable घातer of all pipeline subdevs
- *			    and the sensor घड़ी
- * @ep: video pipeline काष्ठाure
+ * __fimc_pipeline_enable - enable power of all pipeline subdevs
+ *			    and the sensor clock
+ * @ep: video pipeline structure
  * @fmd: fimc media device
  *
  * Called with the graph mutex held.
  */
-अटल पूर्णांक __fimc_pipeline_enable(काष्ठा exynos_media_pipeline *ep,
-				  काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा fimc_pipeline *p = to_fimc_pipeline(ep);
-	पूर्णांक ret;
+static int __fimc_pipeline_enable(struct exynos_media_pipeline *ep,
+				  struct fimc_md *fmd)
+{
+	struct fimc_pipeline *p = to_fimc_pipeline(ep);
+	int ret;
 
-	/* Enable PXLASYNC घड़ी अगर this pipeline includes FIMC-IS */
-	अगर (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP]) अणु
+	/* Enable PXLASYNC clock if this pipeline includes FIMC-IS */
+	if (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP]) {
 		ret = clk_prepare_enable(fmd->wbclk[CLK_IDX_WB_B]);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	ret = fimc_pipeline_s_घातer(p, 1);
-	अगर (!ret)
-		वापस 0;
+	ret = fimc_pipeline_s_power(p, 1);
+	if (!ret)
+		return 0;
 
-	अगर (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP])
+	if (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP])
 		clk_disable_unprepare(fmd->wbclk[CLK_IDX_WB_B]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * __fimc_pipeline_खोलो - update the pipeline inक्रमmation, enable घातer
- *                        of all pipeline subdevs and the sensor घड़ी
+ * __fimc_pipeline_open - update the pipeline information, enable power
+ *                        of all pipeline subdevs and the sensor clock
  * @ep: fimc device terminating the pipeline
  * @me: media entity to start graph walk with
  * @prepare: true to walk the current pipeline and acquire all subdevs
  *
  * Called with the graph mutex held.
  */
-अटल पूर्णांक __fimc_pipeline_खोलो(काष्ठा exynos_media_pipeline *ep,
-				काष्ठा media_entity *me, bool prepare)
-अणु
-	काष्ठा fimc_md *fmd = entity_to_fimc_mdev(me);
-	काष्ठा fimc_pipeline *p = to_fimc_pipeline(ep);
-	काष्ठा v4l2_subdev *sd;
+static int __fimc_pipeline_open(struct exynos_media_pipeline *ep,
+				struct media_entity *me, bool prepare)
+{
+	struct fimc_md *fmd = entity_to_fimc_mdev(me);
+	struct fimc_pipeline *p = to_fimc_pipeline(ep);
+	struct v4l2_subdev *sd;
 
-	अगर (WARN_ON(p == शून्य || me == शून्य))
-		वापस -EINVAL;
+	if (WARN_ON(p == NULL || me == NULL))
+		return -EINVAL;
 
-	अगर (prepare)
+	if (prepare)
 		fimc_pipeline_prepare(p, me);
 
 	sd = p->subdevs[IDX_SENSOR];
-	अगर (sd == शून्य) अणु
+	if (sd == NULL) {
 		pr_warn("%s(): No sensor subdev\n", __func__);
 		/*
-		 * Pipeline खोलो cannot fail so as to make it possible
-		 * क्रम the user space to configure the pipeline.
+		 * Pipeline open cannot fail so as to make it possible
+		 * for the user space to configure the pipeline.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस __fimc_pipeline_enable(ep, fmd);
-पूर्ण
+	return __fimc_pipeline_enable(ep, fmd);
+}
 
 /**
- * __fimc_pipeline_बंद - disable the sensor घड़ी and pipeline घातer
+ * __fimc_pipeline_close - disable the sensor clock and pipeline power
  * @ep: fimc device terminating the pipeline
  *
- * Disable घातer of all subdevs and turn the बाह्यal sensor घड़ी off.
+ * Disable power of all subdevs and turn the external sensor clock off.
  */
-अटल पूर्णांक __fimc_pipeline_बंद(काष्ठा exynos_media_pipeline *ep)
-अणु
-	काष्ठा fimc_pipeline *p = to_fimc_pipeline(ep);
-	काष्ठा v4l2_subdev *sd = p ? p->subdevs[IDX_SENSOR] : शून्य;
-	काष्ठा fimc_md *fmd;
-	पूर्णांक ret;
+static int __fimc_pipeline_close(struct exynos_media_pipeline *ep)
+{
+	struct fimc_pipeline *p = to_fimc_pipeline(ep);
+	struct v4l2_subdev *sd = p ? p->subdevs[IDX_SENSOR] : NULL;
+	struct fimc_md *fmd;
+	int ret;
 
-	अगर (sd == शून्य) अणु
+	if (sd == NULL) {
 		pr_warn("%s(): No sensor subdev\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = fimc_pipeline_s_घातer(p, 0);
+	ret = fimc_pipeline_s_power(p, 0);
 
 	fmd = entity_to_fimc_mdev(&sd->entity);
 
-	/* Disable PXLASYNC घड़ी अगर this pipeline includes FIMC-IS */
-	अगर (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP])
+	/* Disable PXLASYNC clock if this pipeline includes FIMC-IS */
+	if (!IS_ERR(fmd->wbclk[CLK_IDX_WB_B]) && p->subdevs[IDX_IS_ISP])
 		clk_disable_unprepare(fmd->wbclk[CLK_IDX_WB_B]);
 
-	वापस ret == -ENXIO ? 0 : ret;
-पूर्ण
+	return ret == -ENXIO ? 0 : ret;
+}
 
 /**
  * __fimc_pipeline_s_stream - call s_stream() on pipeline subdevs
- * @ep: video pipeline काष्ठाure
+ * @ep: video pipeline structure
  * @on: passed as the s_stream() callback argument
  */
-अटल पूर्णांक __fimc_pipeline_s_stream(काष्ठा exynos_media_pipeline *ep, bool on)
-अणु
-	अटल स्थिर u8 seq[2][IDX_MAX] = अणु
-		अणु IDX_FIMC, IDX_SENSOR, IDX_IS_ISP, IDX_CSIS, IDX_FLITE पूर्ण,
-		अणु IDX_CSIS, IDX_FLITE, IDX_FIMC, IDX_SENSOR, IDX_IS_ISP पूर्ण,
-	पूर्ण;
-	काष्ठा fimc_pipeline *p = to_fimc_pipeline(ep);
-	क्रमागत fimc_subdev_index sd_id;
-	पूर्णांक i, ret = 0;
+static int __fimc_pipeline_s_stream(struct exynos_media_pipeline *ep, bool on)
+{
+	static const u8 seq[2][IDX_MAX] = {
+		{ IDX_FIMC, IDX_SENSOR, IDX_IS_ISP, IDX_CSIS, IDX_FLITE },
+		{ IDX_CSIS, IDX_FLITE, IDX_FIMC, IDX_SENSOR, IDX_IS_ISP },
+	};
+	struct fimc_pipeline *p = to_fimc_pipeline(ep);
+	enum fimc_subdev_index sd_id;
+	int i, ret = 0;
 
-	अगर (p->subdevs[IDX_SENSOR] == शून्य) अणु
-		काष्ठा fimc_md *fmd;
-		काष्ठा v4l2_subdev *sd = p->subdevs[IDX_CSIS];
+	if (p->subdevs[IDX_SENSOR] == NULL) {
+		struct fimc_md *fmd;
+		struct v4l2_subdev *sd = p->subdevs[IDX_CSIS];
 
-		अगर (!sd)
+		if (!sd)
 			sd = p->subdevs[IDX_FIMC];
 
-		अगर (!sd) अणु
+		if (!sd) {
 			/*
 			 * If neither CSIS nor FIMC was set up,
 			 * it's impossible to have any sensors
 			 */
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		fmd = entity_to_fimc_mdev(&sd->entity);
 
-		अगर (!fmd->user_subdev_api) अणु
+		if (!fmd->user_subdev_api) {
 			/*
-			 * Sensor must be alपढ़ोy discovered अगर we
+			 * Sensor must be already discovered if we
 			 * aren't in the user_subdev_api mode
 			 */
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		/* Get pipeline sink entity */
-		अगर (p->subdevs[IDX_FIMC])
+		if (p->subdevs[IDX_FIMC])
 			sd_id = IDX_FIMC;
-		अन्यथा अगर (p->subdevs[IDX_IS_ISP])
+		else if (p->subdevs[IDX_IS_ISP])
 			sd_id = IDX_IS_ISP;
-		अन्यथा अगर (p->subdevs[IDX_FLITE])
+		else if (p->subdevs[IDX_FLITE])
 			sd_id = IDX_FLITE;
-		अन्यथा
-			वापस -ENODEV;
+		else
+			return -ENODEV;
 
 		/*
-		 * Sensor could have been linked between खोलो and STREAMON -
-		 * check अगर this is the हाल.
+		 * Sensor could have been linked between open and STREAMON -
+		 * check if this is the case.
 		 */
 		fimc_pipeline_prepare(p, &p->subdevs[sd_id]->entity);
 
-		अगर (p->subdevs[IDX_SENSOR] == शून्य)
-			वापस -ENODEV;
+		if (p->subdevs[IDX_SENSOR] == NULL)
+			return -ENODEV;
 
 		ret = __fimc_pipeline_enable(ep, fmd);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < IDX_MAX; i++) अणु
-		अचिन्हित पूर्णांक idx = seq[on][i];
+	for (i = 0; i < IDX_MAX; i++) {
+		unsigned int idx = seq[on][i];
 
 		ret = v4l2_subdev_call(p->subdevs[idx], video, s_stream, on);
 
-		अगर (ret < 0 && ret != -ENOIOCTLCMD && ret != -ENODEV)
-			जाओ error;
-	पूर्ण
+		if (ret < 0 && ret != -ENOIOCTLCMD && ret != -ENODEV)
+			goto error;
+	}
 
-	वापस 0;
+	return 0;
 error:
-	fimc_pipeline_s_घातer(p, !on);
-	क्रम (; i >= 0; i--) अणु
-		अचिन्हित पूर्णांक idx = seq[on][i];
+	fimc_pipeline_s_power(p, !on);
+	for (; i >= 0; i--) {
+		unsigned int idx = seq[on][i];
 		v4l2_subdev_call(p->subdevs[idx], video, s_stream, !on);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* Media pipeline operations क्रम the FIMC/FIMC-LITE video device driver */
-अटल स्थिर काष्ठा exynos_media_pipeline_ops fimc_pipeline_ops = अणु
-	.खोलो		= __fimc_pipeline_खोलो,
-	.बंद		= __fimc_pipeline_बंद,
+/* Media pipeline operations for the FIMC/FIMC-LITE video device driver */
+static const struct exynos_media_pipeline_ops fimc_pipeline_ops = {
+	.open		= __fimc_pipeline_open,
+	.close		= __fimc_pipeline_close,
 	.set_stream	= __fimc_pipeline_s_stream,
-पूर्ण;
+};
 
-अटल काष्ठा exynos_media_pipeline *fimc_md_pipeline_create(
-						काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा fimc_pipeline *p;
+static struct exynos_media_pipeline *fimc_md_pipeline_create(
+						struct fimc_md *fmd)
+{
+	struct fimc_pipeline *p;
 
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस शून्य;
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return NULL;
 
 	list_add_tail(&p->list, &fmd->pipelines);
 
 	p->ep.ops = &fimc_pipeline_ops;
-	वापस &p->ep;
-पूर्ण
+	return &p->ep;
+}
 
-अटल व्योम fimc_md_pipelines_मुक्त(काष्ठा fimc_md *fmd)
-अणु
-	जबतक (!list_empty(&fmd->pipelines)) अणु
-		काष्ठा fimc_pipeline *p;
+static void fimc_md_pipelines_free(struct fimc_md *fmd)
+{
+	while (!list_empty(&fmd->pipelines)) {
+		struct fimc_pipeline *p;
 
 		p = list_entry(fmd->pipelines.next, typeof(*p), list);
 		list_del(&p->list);
-		kमुक्त(p);
-	पूर्ण
-पूर्ण
+		kfree(p);
+	}
+}
 
-अटल पूर्णांक fimc_md_parse_one_endpoपूर्णांक(काष्ठा fimc_md *fmd,
-				   काष्ठा device_node *ep)
-अणु
-	पूर्णांक index = fmd->num_sensors;
-	काष्ठा fimc_source_info *pd = &fmd->sensor[index].pdata;
-	काष्ठा device_node *rem, *np;
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक endpoपूर्णांक = अणु .bus_type = 0 पूर्ण;
-	पूर्णांक ret;
+static int fimc_md_parse_one_endpoint(struct fimc_md *fmd,
+				   struct device_node *ep)
+{
+	int index = fmd->num_sensors;
+	struct fimc_source_info *pd = &fmd->sensor[index].pdata;
+	struct device_node *rem, *np;
+	struct v4l2_async_subdev *asd;
+	struct v4l2_fwnode_endpoint endpoint = { .bus_type = 0 };
+	int ret;
 
-	ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(ep), &endpoपूर्णांक);
-	अगर (ret) अणु
+	ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(ep), &endpoint);
+	if (ret) {
 		of_node_put(ep);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (WARN_ON(endpoपूर्णांक.base.port == 0) || index >= FIMC_MAX_SENSORS) अणु
+	if (WARN_ON(endpoint.base.port == 0) || index >= FIMC_MAX_SENSORS) {
 		of_node_put(ep);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pd->mux_id = (endpoपूर्णांक.base.port - 1) & 0x1;
+	pd->mux_id = (endpoint.base.port - 1) & 0x1;
 
 	rem = of_graph_get_remote_port_parent(ep);
-	अगर (rem == शून्य) अणु
+	if (rem == NULL) {
 		v4l2_info(&fmd->v4l2_dev, "Remote device at %pOF not found\n",
 							ep);
 		of_node_put(ep);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (fimc_input_is_parallel(endpoपूर्णांक.base.port)) अणु
-		अगर (endpoपूर्णांक.bus_type == V4L2_MBUS_PARALLEL)
+	if (fimc_input_is_parallel(endpoint.base.port)) {
+		if (endpoint.bus_type == V4L2_MBUS_PARALLEL)
 			pd->sensor_bus_type = FIMC_BUS_TYPE_ITU_601;
-		अन्यथा
+		else
 			pd->sensor_bus_type = FIMC_BUS_TYPE_ITU_656;
-		pd->flags = endpoपूर्णांक.bus.parallel.flags;
-	पूर्ण अन्यथा अगर (fimc_input_is_mipi_csi(endpoपूर्णांक.base.port)) अणु
+		pd->flags = endpoint.bus.parallel.flags;
+	} else if (fimc_input_is_mipi_csi(endpoint.base.port)) {
 		/*
 		 * MIPI CSI-2: only input mux selection and
-		 * the sensor's घड़ी frequency is needed.
+		 * the sensor's clock frequency is needed.
 		 */
 		pd->sensor_bus_type = FIMC_BUS_TYPE_MIPI_CSI2;
-	पूर्ण अन्यथा अणु
+	} else {
 		v4l2_err(&fmd->v4l2_dev, "Wrong port id (%u) at node %pOF\n",
-			 endpoपूर्णांक.base.port, rem);
-	पूर्ण
+			 endpoint.base.port, rem);
+	}
 	/*
 	 * For FIMC-IS handled sensors, that are placed under i2c-isp device
 	 * node, FIMC is connected to the FIMC-IS through its ISP Writeback
-	 * input. Sensors are attached to the FIMC-LITE hostdata पूर्णांकerface
-	 * directly or through MIPI-CSIS, depending on the बाह्यal media bus
+	 * input. Sensors are attached to the FIMC-LITE hostdata interface
+	 * directly or through MIPI-CSIS, depending on the external media bus
 	 * used. This needs to be handled in a more reliable way, not by just
 	 * checking parent's node name.
 	 */
 	np = of_get_parent(rem);
 	of_node_put(rem);
 
-	अगर (of_node_name_eq(np, "i2c-isp"))
+	if (of_node_name_eq(np, "i2c-isp"))
 		pd->fimc_bus_type = FIMC_BUS_TYPE_ISP_WRITEBACK;
-	अन्यथा
+	else
 		pd->fimc_bus_type = pd->sensor_bus_type;
 	of_node_put(np);
 
-	अगर (WARN_ON(index >= ARRAY_SIZE(fmd->sensor))) अणु
+	if (WARN_ON(index >= ARRAY_SIZE(fmd->sensor))) {
 		of_node_put(ep);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	asd = v4l2_async_notअगरier_add_fwnode_remote_subdev(
-		&fmd->subdev_notअगरier, of_fwnode_handle(ep),
-		काष्ठा v4l2_async_subdev);
+	asd = v4l2_async_notifier_add_fwnode_remote_subdev(
+		&fmd->subdev_notifier, of_fwnode_handle(ep),
+		struct v4l2_async_subdev);
 
 	of_node_put(ep);
 
-	अगर (IS_ERR(asd))
-		वापस PTR_ERR(asd);
+	if (IS_ERR(asd))
+		return PTR_ERR(asd);
 
 	fmd->sensor[index].asd = asd;
 	fmd->num_sensors++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Parse port node and रेजिस्टर as a sub-device any sensor specअगरied there. */
-अटल पूर्णांक fimc_md_parse_port_node(काष्ठा fimc_md *fmd,
-				   काष्ठा device_node *port)
-अणु
-	काष्ठा device_node *ep;
-	पूर्णांक ret;
+/* Parse port node and register as a sub-device any sensor specified there. */
+static int fimc_md_parse_port_node(struct fimc_md *fmd,
+				   struct device_node *port)
+{
+	struct device_node *ep;
+	int ret;
 
-	क्रम_each_child_of_node(port, ep) अणु
-		ret = fimc_md_parse_one_endpoपूर्णांक(fmd, ep);
-		अगर (ret < 0) अणु
+	for_each_child_of_node(port, ep) {
+		ret = fimc_md_parse_one_endpoint(fmd, ep);
+		if (ret < 0) {
 			of_node_put(ep);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Register all SoC बाह्यal sub-devices */
-अटल पूर्णांक fimc_md_रेजिस्टर_sensor_entities(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा device_node *parent = fmd->pdev->dev.of_node;
-	काष्ठा device_node *ports = शून्य;
-	काष्ठा device_node *node;
-	पूर्णांक ret;
+/* Register all SoC external sub-devices */
+static int fimc_md_register_sensor_entities(struct fimc_md *fmd)
+{
+	struct device_node *parent = fmd->pdev->dev.of_node;
+	struct device_node *ports = NULL;
+	struct device_node *node;
+	int ret;
 
 	/*
-	 * Runसमय resume one of the FIMC entities to make sure
-	 * the sclk_cam घड़ीs are not globally disabled.
+	 * Runtime resume one of the FIMC entities to make sure
+	 * the sclk_cam clocks are not globally disabled.
 	 */
-	अगर (!fmd->pmf)
-		वापस -ENXIO;
+	if (!fmd->pmf)
+		return -ENXIO;
 
-	ret = pm_runसमय_get_sync(fmd->pmf);
-	अगर (ret < 0) अणु
-		pm_runसमय_put(fmd->pmf);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(fmd->pmf);
+	if (ret < 0) {
+		pm_runtime_put(fmd->pmf);
+		return ret;
+	}
 
 	fmd->num_sensors = 0;
 
 	/* Attach sensors linked to MIPI CSI-2 receivers */
-	क्रम_each_available_child_of_node(parent, node) अणु
-		काष्ठा device_node *port;
+	for_each_available_child_of_node(parent, node) {
+		struct device_node *port;
 
-		अगर (!of_node_name_eq(node, "csis"))
-			जारी;
+		if (!of_node_name_eq(node, "csis"))
+			continue;
 		/* The csis node can have only port subnode. */
-		port = of_get_next_child(node, शून्य);
-		अगर (!port)
-			जारी;
+		port = of_get_next_child(node, NULL);
+		if (!port)
+			continue;
 
 		ret = fimc_md_parse_port_node(fmd, port);
 		of_node_put(port);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(node);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
 	/* Attach sensors listed in the parallel-ports node */
 	ports = of_get_child_by_name(parent, "parallel-ports");
-	अगर (!ports)
-		जाओ rpm_put;
+	if (!ports)
+		goto rpm_put;
 
-	क्रम_each_child_of_node(ports, node) अणु
+	for_each_child_of_node(ports, node) {
 		ret = fimc_md_parse_port_node(fmd, node);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(node);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 	of_node_put(ports);
 
 rpm_put:
-	pm_runसमय_put(fmd->pmf);
-	वापस 0;
+	pm_runtime_put(fmd->pmf);
+	return 0;
 
 cleanup:
 	of_node_put(ports);
-	v4l2_async_notअगरier_cleanup(&fmd->subdev_notअगरier);
-	pm_runसमय_put(fmd->pmf);
-	वापस ret;
-पूर्ण
+	v4l2_async_notifier_cleanup(&fmd->subdev_notifier);
+	pm_runtime_put(fmd->pmf);
+	return ret;
+}
 
-अटल पूर्णांक __of_get_csis_id(काष्ठा device_node *np)
-अणु
+static int __of_get_csis_id(struct device_node *np)
+{
 	u32 reg = 0;
 
 	np = of_get_child_by_name(np, "port");
-	अगर (!np)
-		वापस -EINVAL;
-	of_property_पढ़ो_u32(np, "reg", &reg);
+	if (!np)
+		return -EINVAL;
+	of_property_read_u32(np, "reg", &reg);
 	of_node_put(np);
-	वापस reg - FIMC_INPUT_MIPI_CSI2_0;
-पूर्ण
+	return reg - FIMC_INPUT_MIPI_CSI2_0;
+}
 
 /*
- * MIPI-CSIS, FIMC and FIMC-LITE platक्रमm devices registration.
+ * MIPI-CSIS, FIMC and FIMC-LITE platform devices registration.
  */
-अटल पूर्णांक रेजिस्टर_fimc_lite_entity(काष्ठा fimc_md *fmd,
-				     काष्ठा fimc_lite *fimc_lite)
-अणु
-	काष्ठा v4l2_subdev *sd;
-	काष्ठा exynos_media_pipeline *ep;
-	पूर्णांक ret;
+static int register_fimc_lite_entity(struct fimc_md *fmd,
+				     struct fimc_lite *fimc_lite)
+{
+	struct v4l2_subdev *sd;
+	struct exynos_media_pipeline *ep;
+	int ret;
 
-	अगर (WARN_ON(fimc_lite->index >= FIMC_LITE_MAX_DEVS ||
+	if (WARN_ON(fimc_lite->index >= FIMC_LITE_MAX_DEVS ||
 		    fmd->fimc_lite[fimc_lite->index]))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	sd = &fimc_lite->subdev;
 	sd->grp_id = GRP_ID_FLITE;
 
 	ep = fimc_md_pipeline_create(fmd);
-	अगर (!ep)
-		वापस -ENOMEM;
+	if (!ep)
+		return -ENOMEM;
 
 	v4l2_set_subdev_hostdata(sd, ep);
 
-	ret = v4l2_device_रेजिस्टर_subdev(&fmd->v4l2_dev, sd);
-	अगर (!ret)
+	ret = v4l2_device_register_subdev(&fmd->v4l2_dev, sd);
+	if (!ret)
 		fmd->fimc_lite[fimc_lite->index] = fimc_lite;
-	अन्यथा
+	else
 		v4l2_err(&fmd->v4l2_dev, "Failed to register FIMC.LITE%d\n",
 			 fimc_lite->index);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक रेजिस्टर_fimc_entity(काष्ठा fimc_md *fmd, काष्ठा fimc_dev *fimc)
-अणु
-	काष्ठा v4l2_subdev *sd;
-	काष्ठा exynos_media_pipeline *ep;
-	पूर्णांक ret;
+static int register_fimc_entity(struct fimc_md *fmd, struct fimc_dev *fimc)
+{
+	struct v4l2_subdev *sd;
+	struct exynos_media_pipeline *ep;
+	int ret;
 
-	अगर (WARN_ON(fimc->id >= FIMC_MAX_DEVS || fmd->fimc[fimc->id]))
-		वापस -EBUSY;
+	if (WARN_ON(fimc->id >= FIMC_MAX_DEVS || fmd->fimc[fimc->id]))
+		return -EBUSY;
 
 	sd = &fimc->vid_cap.subdev;
 	sd->grp_id = GRP_ID_FIMC;
 
 	ep = fimc_md_pipeline_create(fmd);
-	अगर (!ep)
-		वापस -ENOMEM;
+	if (!ep)
+		return -ENOMEM;
 
 	v4l2_set_subdev_hostdata(sd, ep);
 
-	ret = v4l2_device_रेजिस्टर_subdev(&fmd->v4l2_dev, sd);
-	अगर (!ret) अणु
-		अगर (!fmd->pmf && fimc->pdev)
+	ret = v4l2_device_register_subdev(&fmd->v4l2_dev, sd);
+	if (!ret) {
+		if (!fmd->pmf && fimc->pdev)
 			fmd->pmf = &fimc->pdev->dev;
 		fmd->fimc[fimc->id] = fimc;
 		fimc->vid_cap.user_subdev_api = fmd->user_subdev_api;
-	पूर्ण अन्यथा अणु
+	} else {
 		v4l2_err(&fmd->v4l2_dev, "Failed to register FIMC.%d (%d)\n",
 			 fimc->id, ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक रेजिस्टर_csis_entity(काष्ठा fimc_md *fmd,
-				काष्ठा platक्रमm_device *pdev,
-				काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	पूर्णांक id, ret;
+static int register_csis_entity(struct fimc_md *fmd,
+				struct platform_device *pdev,
+				struct v4l2_subdev *sd)
+{
+	struct device_node *node = pdev->dev.of_node;
+	int id, ret;
 
 	id = node ? __of_get_csis_id(node) : max(0, pdev->id);
 
-	अगर (WARN_ON(id < 0 || id >= CSIS_MAX_ENTITIES))
-		वापस -ENOENT;
+	if (WARN_ON(id < 0 || id >= CSIS_MAX_ENTITIES))
+		return -ENOENT;
 
-	अगर (WARN_ON(fmd->csis[id].sd))
-		वापस -EBUSY;
+	if (WARN_ON(fmd->csis[id].sd))
+		return -EBUSY;
 
 	sd->grp_id = GRP_ID_CSIS;
-	ret = v4l2_device_रेजिस्टर_subdev(&fmd->v4l2_dev, sd);
-	अगर (!ret)
+	ret = v4l2_device_register_subdev(&fmd->v4l2_dev, sd);
+	if (!ret)
 		fmd->csis[id].sd = sd;
-	अन्यथा
+	else
 		v4l2_err(&fmd->v4l2_dev,
 			 "Failed to register MIPI-CSIS.%d (%d)\n", id, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक रेजिस्टर_fimc_is_entity(काष्ठा fimc_md *fmd, काष्ठा fimc_is *is)
-अणु
-	काष्ठा v4l2_subdev *sd = &is->isp.subdev;
-	काष्ठा exynos_media_pipeline *ep;
-	पूर्णांक ret;
+static int register_fimc_is_entity(struct fimc_md *fmd, struct fimc_is *is)
+{
+	struct v4l2_subdev *sd = &is->isp.subdev;
+	struct exynos_media_pipeline *ep;
+	int ret;
 
-	/* Allocate pipeline object क्रम the ISP capture video node. */
+	/* Allocate pipeline object for the ISP capture video node. */
 	ep = fimc_md_pipeline_create(fmd);
-	अगर (!ep)
-		वापस -ENOMEM;
+	if (!ep)
+		return -ENOMEM;
 
 	v4l2_set_subdev_hostdata(sd, ep);
 
-	ret = v4l2_device_रेजिस्टर_subdev(&fmd->v4l2_dev, sd);
-	अगर (ret) अणु
+	ret = v4l2_device_register_subdev(&fmd->v4l2_dev, sd);
+	if (ret) {
 		v4l2_err(&fmd->v4l2_dev,
 			 "Failed to register FIMC-ISP (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	fmd->fimc_is = is;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fimc_md_रेजिस्टर_platक्रमm_entity(काष्ठा fimc_md *fmd,
-					    काष्ठा platक्रमm_device *pdev,
-					    पूर्णांक plat_entity)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret = -EPROBE_DEFER;
-	व्योम *drvdata;
+static int fimc_md_register_platform_entity(struct fimc_md *fmd,
+					    struct platform_device *pdev,
+					    int plat_entity)
+{
+	struct device *dev = &pdev->dev;
+	int ret = -EPROBE_DEFER;
+	void *drvdata;
 
 	/* Lock to ensure dev->driver won't change. */
 	device_lock(dev);
 
-	अगर (!dev->driver || !try_module_get(dev->driver->owner))
-		जाओ dev_unlock;
+	if (!dev->driver || !try_module_get(dev->driver->owner))
+		goto dev_unlock;
 
 	drvdata = dev_get_drvdata(dev);
-	/* Some subdev didn't probe successfully id drvdata is शून्य */
-	अगर (drvdata) अणु
-		चयन (plat_entity) अणु
-		हाल IDX_FIMC:
-			ret = रेजिस्टर_fimc_entity(fmd, drvdata);
-			अवरोध;
-		हाल IDX_FLITE:
-			ret = रेजिस्टर_fimc_lite_entity(fmd, drvdata);
-			अवरोध;
-		हाल IDX_CSIS:
-			ret = रेजिस्टर_csis_entity(fmd, pdev, drvdata);
-			अवरोध;
-		हाल IDX_IS_ISP:
-			ret = रेजिस्टर_fimc_is_entity(fmd, drvdata);
-			अवरोध;
-		शेष:
+	/* Some subdev didn't probe successfully id drvdata is NULL */
+	if (drvdata) {
+		switch (plat_entity) {
+		case IDX_FIMC:
+			ret = register_fimc_entity(fmd, drvdata);
+			break;
+		case IDX_FLITE:
+			ret = register_fimc_lite_entity(fmd, drvdata);
+			break;
+		case IDX_CSIS:
+			ret = register_csis_entity(fmd, pdev, drvdata);
+			break;
+		case IDX_IS_ISP:
+			ret = register_fimc_is_entity(fmd, drvdata);
+			break;
+		default:
 			ret = -ENODEV;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	module_put(dev->driver->owner);
 dev_unlock:
 	device_unlock(dev);
-	अगर (ret == -EPROBE_DEFER)
+	if (ret == -EPROBE_DEFER)
 		dev_info(&fmd->pdev->dev, "deferring %s device registration\n",
 			dev_name(dev));
-	अन्यथा अगर (ret < 0)
+	else if (ret < 0)
 		dev_err(&fmd->pdev->dev, "%s device registration failed (%d)\n",
 			dev_name(dev), ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Register FIMC, FIMC-LITE and CSIS media entities */
-अटल पूर्णांक fimc_md_रेजिस्टर_platक्रमm_entities(काष्ठा fimc_md *fmd,
-					      काष्ठा device_node *parent)
-अणु
-	काष्ठा device_node *node;
-	पूर्णांक ret = 0;
+static int fimc_md_register_platform_entities(struct fimc_md *fmd,
+					      struct device_node *parent)
+{
+	struct device_node *node;
+	int ret = 0;
 
-	क्रम_each_available_child_of_node(parent, node) अणु
-		काष्ठा platक्रमm_device *pdev;
-		पूर्णांक plat_entity = -1;
+	for_each_available_child_of_node(parent, node) {
+		struct platform_device *pdev;
+		int plat_entity = -1;
 
 		pdev = of_find_device_by_node(node);
-		अगर (!pdev)
-			जारी;
+		if (!pdev)
+			continue;
 
-		/* If driver of any entity isn't पढ़ोy try all again later. */
-		अगर (of_node_name_eq(node, CSIS_OF_NODE_NAME))
+		/* If driver of any entity isn't ready try all again later. */
+		if (of_node_name_eq(node, CSIS_OF_NODE_NAME))
 			plat_entity = IDX_CSIS;
-		अन्यथा अगर (of_node_name_eq(node, FIMC_IS_OF_NODE_NAME))
+		else if (of_node_name_eq(node, FIMC_IS_OF_NODE_NAME))
 			plat_entity = IDX_IS_ISP;
-		अन्यथा अगर (of_node_name_eq(node, FIMC_LITE_OF_NODE_NAME))
+		else if (of_node_name_eq(node, FIMC_LITE_OF_NODE_NAME))
 			plat_entity = IDX_FLITE;
-		अन्यथा अगर (of_node_name_eq(node, FIMC_OF_NODE_NAME) &&
-			 !of_property_पढ़ो_bool(node, "samsung,lcd-wb"))
+		else if (of_node_name_eq(node, FIMC_OF_NODE_NAME) &&
+			 !of_property_read_bool(node, "samsung,lcd-wb"))
 			plat_entity = IDX_FIMC;
 
-		अगर (plat_entity >= 0)
-			ret = fimc_md_रेजिस्टर_platक्रमm_entity(fmd, pdev,
+		if (plat_entity >= 0)
+			ret = fimc_md_register_platform_entity(fmd, pdev,
 							plat_entity);
 		put_device(&pdev->dev);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(node);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fimc_md_unरेजिस्टर_entities(काष्ठा fimc_md *fmd)
-अणु
-	पूर्णांक i;
+static void fimc_md_unregister_entities(struct fimc_md *fmd)
+{
+	int i;
 
-	क्रम (i = 0; i < FIMC_MAX_DEVS; i++) अणु
-		काष्ठा fimc_dev *dev = fmd->fimc[i];
-		अगर (dev == शून्य)
-			जारी;
-		v4l2_device_unरेजिस्टर_subdev(&dev->vid_cap.subdev);
-		dev->vid_cap.ve.pipe = शून्य;
-		fmd->fimc[i] = शून्य;
-	पूर्ण
-	क्रम (i = 0; i < FIMC_LITE_MAX_DEVS; i++) अणु
-		काष्ठा fimc_lite *dev = fmd->fimc_lite[i];
-		अगर (dev == शून्य)
-			जारी;
-		v4l2_device_unरेजिस्टर_subdev(&dev->subdev);
-		dev->ve.pipe = शून्य;
-		fmd->fimc_lite[i] = शून्य;
-	पूर्ण
-	क्रम (i = 0; i < CSIS_MAX_ENTITIES; i++) अणु
-		अगर (fmd->csis[i].sd == शून्य)
-			जारी;
-		v4l2_device_unरेजिस्टर_subdev(fmd->csis[i].sd);
-		fmd->csis[i].sd = शून्य;
-	पूर्ण
+	for (i = 0; i < FIMC_MAX_DEVS; i++) {
+		struct fimc_dev *dev = fmd->fimc[i];
+		if (dev == NULL)
+			continue;
+		v4l2_device_unregister_subdev(&dev->vid_cap.subdev);
+		dev->vid_cap.ve.pipe = NULL;
+		fmd->fimc[i] = NULL;
+	}
+	for (i = 0; i < FIMC_LITE_MAX_DEVS; i++) {
+		struct fimc_lite *dev = fmd->fimc_lite[i];
+		if (dev == NULL)
+			continue;
+		v4l2_device_unregister_subdev(&dev->subdev);
+		dev->ve.pipe = NULL;
+		fmd->fimc_lite[i] = NULL;
+	}
+	for (i = 0; i < CSIS_MAX_ENTITIES; i++) {
+		if (fmd->csis[i].sd == NULL)
+			continue;
+		v4l2_device_unregister_subdev(fmd->csis[i].sd);
+		fmd->csis[i].sd = NULL;
+	}
 
-	अगर (fmd->fimc_is)
-		v4l2_device_unरेजिस्टर_subdev(&fmd->fimc_is->isp.subdev);
+	if (fmd->fimc_is)
+		v4l2_device_unregister_subdev(&fmd->fimc_is->isp.subdev);
 
 	v4l2_info(&fmd->v4l2_dev, "Unregistered all entities\n");
-पूर्ण
+}
 
 /**
  * __fimc_md_create_fimc_sink_links - create links to all FIMC entities
@@ -814,217 +813,217 @@ dev_unlock:
  * @source: the source entity to create links to all fimc entities from
  * @sensor: sensor subdev linked to FIMC[fimc_id] entity, may be null
  * @pad: the source entity pad index
- * @link_mask: biपंचांगask of the fimc devices क्रम which link should be enabled
+ * @link_mask: bitmask of the fimc devices for which link should be enabled
  */
-अटल पूर्णांक __fimc_md_create_fimc_sink_links(काष्ठा fimc_md *fmd,
-					    काष्ठा media_entity *source,
-					    काष्ठा v4l2_subdev *sensor,
-					    पूर्णांक pad, पूर्णांक link_mask)
-अणु
-	काष्ठा fimc_source_info *si = शून्य;
-	काष्ठा media_entity *sink;
-	अचिन्हित पूर्णांक flags = 0;
-	पूर्णांक i, ret = 0;
+static int __fimc_md_create_fimc_sink_links(struct fimc_md *fmd,
+					    struct media_entity *source,
+					    struct v4l2_subdev *sensor,
+					    int pad, int link_mask)
+{
+	struct fimc_source_info *si = NULL;
+	struct media_entity *sink;
+	unsigned int flags = 0;
+	int i, ret = 0;
 
-	अगर (sensor) अणु
+	if (sensor) {
 		si = v4l2_get_subdev_hostdata(sensor);
 		/* Skip direct FIMC links in the logical FIMC-IS sensor path */
-		अगर (si && si->fimc_bus_type == FIMC_BUS_TYPE_ISP_WRITEBACK)
+		if (si && si->fimc_bus_type == FIMC_BUS_TYPE_ISP_WRITEBACK)
 			ret = 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; !ret && i < FIMC_MAX_DEVS; i++) अणु
-		अगर (!fmd->fimc[i])
-			जारी;
+	for (i = 0; !ret && i < FIMC_MAX_DEVS; i++) {
+		if (!fmd->fimc[i])
+			continue;
 		/*
 		 * Some FIMC variants are not fitted with camera capture
-		 * पूर्णांकerface. Skip creating a link from sensor क्रम those.
+		 * interface. Skip creating a link from sensor for those.
 		 */
-		अगर (!fmd->fimc[i]->variant->has_cam_अगर)
-			जारी;
+		if (!fmd->fimc[i]->variant->has_cam_if)
+			continue;
 
 		flags = ((1 << i) & link_mask) ? MEDIA_LNK_FL_ENABLED : 0;
 
 		sink = &fmd->fimc[i]->vid_cap.subdev.entity;
 		ret = media_create_pad_link(source, pad, sink,
 					      FIMC_SD_PAD_SINK_CAM, flags);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		/* Notअगरy FIMC capture subdev entity */
+		/* Notify FIMC capture subdev entity */
 		ret = media_entity_call(sink, link_setup, &sink->pads[0],
 					&source->pads[pad], flags);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		v4l2_info(&fmd->v4l2_dev, "created link [%s] %c> [%s]\n",
 			  source->name, flags ? '=' : '-', sink->name);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < FIMC_LITE_MAX_DEVS; i++) अणु
-		अगर (!fmd->fimc_lite[i])
-			जारी;
+	for (i = 0; i < FIMC_LITE_MAX_DEVS; i++) {
+		if (!fmd->fimc_lite[i])
+			continue;
 
 		sink = &fmd->fimc_lite[i]->subdev.entity;
 		ret = media_create_pad_link(source, pad, sink,
 					       FLITE_SD_PAD_SINK, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		/* Notअगरy FIMC-LITE subdev entity */
+		/* Notify FIMC-LITE subdev entity */
 		ret = media_entity_call(sink, link_setup, &sink->pads[0],
 					&source->pads[pad], 0);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		v4l2_info(&fmd->v4l2_dev, "created link [%s] -> [%s]\n",
 			  source->name, sink->name);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* Create links from FIMC-LITE source pads to other entities */
-अटल पूर्णांक __fimc_md_create_flite_source_links(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा media_entity *source, *sink;
-	पूर्णांक i, ret = 0;
+static int __fimc_md_create_flite_source_links(struct fimc_md *fmd)
+{
+	struct media_entity *source, *sink;
+	int i, ret = 0;
 
-	क्रम (i = 0; i < FIMC_LITE_MAX_DEVS; i++) अणु
-		काष्ठा fimc_lite *fimc = fmd->fimc_lite[i];
+	for (i = 0; i < FIMC_LITE_MAX_DEVS; i++) {
+		struct fimc_lite *fimc = fmd->fimc_lite[i];
 
-		अगर (fimc == शून्य)
-			जारी;
+		if (fimc == NULL)
+			continue;
 
 		source = &fimc->subdev.entity;
 		sink = &fimc->ve.vdev.entity;
 		/* FIMC-LITE's subdev and video node */
 		ret = media_create_pad_link(source, FLITE_SD_PAD_SOURCE_DMA,
 					       sink, 0, 0);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		/* Link from FIMC-LITE to IS-ISP subdev */
 		sink = &fmd->fimc_is->isp.subdev.entity;
 		ret = media_create_pad_link(source, FLITE_SD_PAD_SOURCE_ISP,
 					       sink, 0, 0);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Create FIMC-IS links */
-अटल पूर्णांक __fimc_md_create_fimc_is_links(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा fimc_isp *isp = &fmd->fimc_is->isp;
-	काष्ठा media_entity *source, *sink;
-	पूर्णांक i, ret;
+static int __fimc_md_create_fimc_is_links(struct fimc_md *fmd)
+{
+	struct fimc_isp *isp = &fmd->fimc_is->isp;
+	struct media_entity *source, *sink;
+	int i, ret;
 
 	source = &isp->subdev.entity;
 
-	क्रम (i = 0; i < FIMC_MAX_DEVS; i++) अणु
-		अगर (fmd->fimc[i] == शून्य)
-			जारी;
+	for (i = 0; i < FIMC_MAX_DEVS; i++) {
+		if (fmd->fimc[i] == NULL)
+			continue;
 
 		/* Link from FIMC-IS-ISP subdev to FIMC */
 		sink = &fmd->fimc[i]->vid_cap.subdev.entity;
 		ret = media_create_pad_link(source, FIMC_ISP_SD_PAD_SRC_FIFO,
 					       sink, FIMC_SD_PAD_SINK_FIFO, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* Link from FIMC-IS-ISP subdev to fimc-is-isp.capture video node */
 	sink = &isp->video_capture.ve.vdev.entity;
 
-	/* Skip this link अगर the fimc-is-isp video node driver isn't built-in */
-	अगर (sink->num_pads == 0)
-		वापस 0;
+	/* Skip this link if the fimc-is-isp video node driver isn't built-in */
+	if (sink->num_pads == 0)
+		return 0;
 
-	वापस media_create_pad_link(source, FIMC_ISP_SD_PAD_SRC_DMA,
+	return media_create_pad_link(source, FIMC_ISP_SD_PAD_SRC_DMA,
 					sink, 0, 0);
-पूर्ण
+}
 
 /**
- * fimc_md_create_links - create शेष links between रेजिस्टरed entities
+ * fimc_md_create_links - create default links between registered entities
  * @fmd: fimc media device
  *
- * Parallel पूर्णांकerface sensor entities are connected directly to FIMC capture
+ * Parallel interface sensor entities are connected directly to FIMC capture
  * entities. The sensors using MIPI CSIS bus are connected through immutable
- * link with CSI receiver entity specअगरied by mux_id. Any रेजिस्टरed CSIS
- * entity has a link to each रेजिस्टरed FIMC capture entity. Enabled links
- * are created by शेष between each subsequent रेजिस्टरed sensor and
- * subsequent FIMC capture entity. The number of शेष active links is
+ * link with CSI receiver entity specified by mux_id. Any registered CSIS
+ * entity has a link to each registered FIMC capture entity. Enabled links
+ * are created by default between each subsequent registered sensor and
+ * subsequent FIMC capture entity. The number of default active links is
  * determined by the number of available sensors or FIMC entities,
  * whichever is less.
  */
-अटल पूर्णांक fimc_md_create_links(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा v4l2_subdev *csi_sensors[CSIS_MAX_ENTITIES] = अणु शून्य पूर्ण;
-	काष्ठा v4l2_subdev *sensor, *csis;
-	काष्ठा fimc_source_info *pdata;
-	काष्ठा media_entity *source, *sink;
-	पूर्णांक i, pad, fimc_id = 0, ret = 0;
+static int fimc_md_create_links(struct fimc_md *fmd)
+{
+	struct v4l2_subdev *csi_sensors[CSIS_MAX_ENTITIES] = { NULL };
+	struct v4l2_subdev *sensor, *csis;
+	struct fimc_source_info *pdata;
+	struct media_entity *source, *sink;
+	int i, pad, fimc_id = 0, ret = 0;
 	u32 flags, link_mask = 0;
 
-	क्रम (i = 0; i < fmd->num_sensors; i++) अणु
-		अगर (fmd->sensor[i].subdev == शून्य)
-			जारी;
+	for (i = 0; i < fmd->num_sensors; i++) {
+		if (fmd->sensor[i].subdev == NULL)
+			continue;
 
 		sensor = fmd->sensor[i].subdev;
 		pdata = v4l2_get_subdev_hostdata(sensor);
-		अगर (!pdata)
-			जारी;
+		if (!pdata)
+			continue;
 
-		source = शून्य;
+		source = NULL;
 
-		चयन (pdata->sensor_bus_type) अणु
-		हाल FIMC_BUS_TYPE_MIPI_CSI2:
-			अगर (WARN(pdata->mux_id >= CSIS_MAX_ENTITIES,
+		switch (pdata->sensor_bus_type) {
+		case FIMC_BUS_TYPE_MIPI_CSI2:
+			if (WARN(pdata->mux_id >= CSIS_MAX_ENTITIES,
 				"Wrong CSI channel id: %d\n", pdata->mux_id))
-				वापस -EINVAL;
+				return -EINVAL;
 
 			csis = fmd->csis[pdata->mux_id].sd;
-			अगर (WARN(csis == शून्य,
+			if (WARN(csis == NULL,
 				 "MIPI-CSI interface specified but s5p-csis module is not loaded!\n"))
-				वापस -EINVAL;
+				return -EINVAL;
 
 			pad = sensor->entity.num_pads - 1;
 			ret = media_create_pad_link(&sensor->entity, pad,
 					      &csis->entity, CSIS_PAD_SINK,
 					      MEDIA_LNK_FL_IMMUTABLE |
 					      MEDIA_LNK_FL_ENABLED);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
 			v4l2_info(&fmd->v4l2_dev, "created link [%s] => [%s]\n",
 				  sensor->entity.name, csis->entity.name);
 
-			source = शून्य;
+			source = NULL;
 			csi_sensors[pdata->mux_id] = sensor;
-			अवरोध;
+			break;
 
-		हाल FIMC_BUS_TYPE_ITU_601...FIMC_BUS_TYPE_ITU_656:
+		case FIMC_BUS_TYPE_ITU_601...FIMC_BUS_TYPE_ITU_656:
 			source = &sensor->entity;
 			pad = 0;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			v4l2_err(&fmd->v4l2_dev, "Wrong bus_type: %x\n",
 				 pdata->sensor_bus_type);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (source == शून्य)
-			जारी;
+			return -EINVAL;
+		}
+		if (source == NULL)
+			continue;
 
 		link_mask = 1 << fimc_id++;
 		ret = __fimc_md_create_fimc_sink_links(fmd, source, sensor,
 						       pad, link_mask);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < CSIS_MAX_ENTITIES; i++) अणु
-		अगर (fmd->csis[i].sd == शून्य)
-			जारी;
+	for (i = 0; i < CSIS_MAX_ENTITIES; i++) {
+		if (fmd->csis[i].sd == NULL)
+			continue;
 
 		source = &fmd->csis[i].sd->entity;
 		pad = CSIS_PAD_SOURCE;
@@ -1033,315 +1032,315 @@ dev_unlock:
 		link_mask = 1 << fimc_id++;
 		ret = __fimc_md_create_fimc_sink_links(fmd, source, sensor,
 						       pad, link_mask);
-	पूर्ण
+	}
 
 	/* Create immutable links between each FIMC's subdev and video node */
 	flags = MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED;
-	क्रम (i = 0; i < FIMC_MAX_DEVS; i++) अणु
-		अगर (!fmd->fimc[i])
-			जारी;
+	for (i = 0; i < FIMC_MAX_DEVS; i++) {
+		if (!fmd->fimc[i])
+			continue;
 
 		source = &fmd->fimc[i]->vid_cap.subdev.entity;
 		sink = &fmd->fimc[i]->vid_cap.ve.vdev.entity;
 
 		ret = media_create_pad_link(source, FIMC_SD_PAD_SOURCE,
 					      sink, 0, flags);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 	ret = __fimc_md_create_flite_source_links(fmd);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (fmd->use_isp)
+	if (fmd->use_isp)
 		ret = __fimc_md_create_fimc_is_links(fmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * The peripheral sensor and CAM_BLK (PIXELASYNCMx) घड़ीs management.
+ * The peripheral sensor and CAM_BLK (PIXELASYNCMx) clocks management.
  */
-अटल व्योम fimc_md_put_घड़ीs(काष्ठा fimc_md *fmd)
-अणु
-	पूर्णांक i = FIMC_MAX_CAMCLKS;
+static void fimc_md_put_clocks(struct fimc_md *fmd)
+{
+	int i = FIMC_MAX_CAMCLKS;
 
-	जबतक (--i >= 0) अणु
-		अगर (IS_ERR(fmd->camclk[i].घड़ी))
-			जारी;
-		clk_put(fmd->camclk[i].घड़ी);
-		fmd->camclk[i].घड़ी = ERR_PTR(-EINVAL);
-	पूर्ण
+	while (--i >= 0) {
+		if (IS_ERR(fmd->camclk[i].clock))
+			continue;
+		clk_put(fmd->camclk[i].clock);
+		fmd->camclk[i].clock = ERR_PTR(-EINVAL);
+	}
 
-	/* Writeback (PIXELASYNCMx) घड़ीs */
-	क्रम (i = 0; i < FIMC_MAX_WBCLKS; i++) अणु
-		अगर (IS_ERR(fmd->wbclk[i]))
-			जारी;
+	/* Writeback (PIXELASYNCMx) clocks */
+	for (i = 0; i < FIMC_MAX_WBCLKS; i++) {
+		if (IS_ERR(fmd->wbclk[i]))
+			continue;
 		clk_put(fmd->wbclk[i]);
 		fmd->wbclk[i] = ERR_PTR(-EINVAL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक fimc_md_get_घड़ीs(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा device *dev = &fmd->pdev->dev;
-	अक्षर clk_name[32];
-	काष्ठा clk *घड़ी;
-	पूर्णांक i, ret = 0;
+static int fimc_md_get_clocks(struct fimc_md *fmd)
+{
+	struct device *dev = &fmd->pdev->dev;
+	char clk_name[32];
+	struct clk *clock;
+	int i, ret = 0;
 
-	क्रम (i = 0; i < FIMC_MAX_CAMCLKS; i++)
-		fmd->camclk[i].घड़ी = ERR_PTR(-EINVAL);
+	for (i = 0; i < FIMC_MAX_CAMCLKS; i++)
+		fmd->camclk[i].clock = ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < FIMC_MAX_CAMCLKS; i++) अणु
-		snम_लिखो(clk_name, माप(clk_name), "sclk_cam%u", i);
-		घड़ी = clk_get(dev, clk_name);
+	for (i = 0; i < FIMC_MAX_CAMCLKS; i++) {
+		snprintf(clk_name, sizeof(clk_name), "sclk_cam%u", i);
+		clock = clk_get(dev, clk_name);
 
-		अगर (IS_ERR(घड़ी)) अणु
+		if (IS_ERR(clock)) {
 			dev_err(dev, "Failed to get clock: %s\n", clk_name);
-			ret = PTR_ERR(घड़ी);
-			अवरोध;
-		पूर्ण
-		fmd->camclk[i].घड़ी = घड़ी;
-	पूर्ण
-	अगर (ret)
-		fimc_md_put_घड़ीs(fmd);
+			ret = PTR_ERR(clock);
+			break;
+		}
+		fmd->camclk[i].clock = clock;
+	}
+	if (ret)
+		fimc_md_put_clocks(fmd);
 
-	अगर (!fmd->use_isp)
-		वापस 0;
+	if (!fmd->use_isp)
+		return 0;
 	/*
-	 * For now get only PIXELASYNCM1 घड़ी (Writeback B/ISP),
-	 * leave PIXELASYNCM0 out क्रम the LCD Writeback driver.
+	 * For now get only PIXELASYNCM1 clock (Writeback B/ISP),
+	 * leave PIXELASYNCM0 out for the LCD Writeback driver.
 	 */
 	fmd->wbclk[CLK_IDX_WB_A] = ERR_PTR(-EINVAL);
 
-	क्रम (i = CLK_IDX_WB_B; i < FIMC_MAX_WBCLKS; i++) अणु
-		snम_लिखो(clk_name, माप(clk_name), "pxl_async%u", i);
-		घड़ी = clk_get(dev, clk_name);
-		अगर (IS_ERR(घड़ी)) अणु
+	for (i = CLK_IDX_WB_B; i < FIMC_MAX_WBCLKS; i++) {
+		snprintf(clk_name, sizeof(clk_name), "pxl_async%u", i);
+		clock = clk_get(dev, clk_name);
+		if (IS_ERR(clock)) {
 			v4l2_err(&fmd->v4l2_dev, "Failed to get clock: %s\n",
 				  clk_name);
-			ret = PTR_ERR(घड़ी);
-			अवरोध;
-		पूर्ण
-		fmd->wbclk[i] = घड़ी;
-	पूर्ण
-	अगर (ret)
-		fimc_md_put_घड़ीs(fmd);
+			ret = PTR_ERR(clock);
+			break;
+		}
+		fmd->wbclk[i] = clock;
+	}
+	if (ret)
+		fimc_md_put_clocks(fmd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __fimc_md_modअगरy_pipeline(काष्ठा media_entity *entity, bool enable)
-अणु
-	काष्ठा exynos_video_entity *ve;
-	काष्ठा fimc_pipeline *p;
-	काष्ठा video_device *vdev;
-	पूर्णांक ret;
+static int __fimc_md_modify_pipeline(struct media_entity *entity, bool enable)
+{
+	struct exynos_video_entity *ve;
+	struct fimc_pipeline *p;
+	struct video_device *vdev;
+	int ret;
 
 	vdev = media_entity_to_video_device(entity);
-	अगर (vdev->entity.use_count == 0)
-		वापस 0;
+	if (vdev->entity.use_count == 0)
+		return 0;
 
 	ve = vdev_to_exynos_video_entity(vdev);
 	p = to_fimc_pipeline(ve->pipe);
 	/*
-	 * Nothing to करो अगर we are disabling the pipeline, some link
+	 * Nothing to do if we are disabling the pipeline, some link
 	 * has been disconnected and p->subdevs array is cleared now.
 	 */
-	अगर (!enable && p->subdevs[IDX_SENSOR] == शून्य)
-		वापस 0;
+	if (!enable && p->subdevs[IDX_SENSOR] == NULL)
+		return 0;
 
-	अगर (enable)
-		ret = __fimc_pipeline_खोलो(ve->pipe, entity, true);
-	अन्यथा
-		ret = __fimc_pipeline_बंद(ve->pipe);
+	if (enable)
+		ret = __fimc_pipeline_open(ve->pipe, entity, true);
+	else
+		ret = __fimc_pipeline_close(ve->pipe);
 
-	अगर (ret == 0 && !enable)
-		स_रखो(p->subdevs, 0, माप(p->subdevs));
+	if (ret == 0 && !enable)
+		memset(p->subdevs, 0, sizeof(p->subdevs));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Locking: called with entity->graph_obj.mdev->graph_mutex mutex held. */
-अटल पूर्णांक __fimc_md_modअगरy_pipelines(काष्ठा media_entity *entity, bool enable,
-				      काष्ठा media_graph *graph)
-अणु
-	काष्ठा media_entity *entity_err = entity;
-	पूर्णांक ret;
+static int __fimc_md_modify_pipelines(struct media_entity *entity, bool enable,
+				      struct media_graph *graph)
+{
+	struct media_entity *entity_err = entity;
+	int ret;
 
 	/*
-	 * Walk current graph and call the pipeline खोलो/बंद routine क्रम each
-	 * खोलोed video node that beदीर्घs to the graph of entities connected
-	 * through active links. This is needed as we cannot घातer on/off the
-	 * subdevs in अक्रमom order.
+	 * Walk current graph and call the pipeline open/close routine for each
+	 * opened video node that belongs to the graph of entities connected
+	 * through active links. This is needed as we cannot power on/off the
+	 * subdevs in random order.
 	 */
 	media_graph_walk_start(graph, entity);
 
-	जबतक ((entity = media_graph_walk_next(graph))) अणु
-		अगर (!is_media_entity_v4l2_video_device(entity))
-			जारी;
+	while ((entity = media_graph_walk_next(graph))) {
+		if (!is_media_entity_v4l2_video_device(entity))
+			continue;
 
-		ret  = __fimc_md_modअगरy_pipeline(entity, enable);
+		ret  = __fimc_md_modify_pipeline(entity, enable);
 
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण
+		if (ret < 0)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	media_graph_walk_start(graph, entity_err);
 
-	जबतक ((entity_err = media_graph_walk_next(graph))) अणु
-		अगर (!is_media_entity_v4l2_video_device(entity_err))
-			जारी;
+	while ((entity_err = media_graph_walk_next(graph))) {
+		if (!is_media_entity_v4l2_video_device(entity_err))
+			continue;
 
-		__fimc_md_modअगरy_pipeline(entity_err, !enable);
+		__fimc_md_modify_pipeline(entity_err, !enable);
 
-		अगर (entity_err == entity)
-			अवरोध;
-	पूर्ण
+		if (entity_err == entity)
+			break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_md_link_notअगरy(काष्ठा media_link *link, अचिन्हित पूर्णांक flags,
-				अचिन्हित पूर्णांक notअगरication)
-अणु
-	काष्ठा media_graph *graph =
-		&container_of(link->graph_obj.mdev, काष्ठा fimc_md,
+static int fimc_md_link_notify(struct media_link *link, unsigned int flags,
+				unsigned int notification)
+{
+	struct media_graph *graph =
+		&container_of(link->graph_obj.mdev, struct fimc_md,
 			      media_dev)->link_setup_graph;
-	काष्ठा media_entity *sink = link->sink->entity;
-	पूर्णांक ret = 0;
+	struct media_entity *sink = link->sink->entity;
+	int ret = 0;
 
-	/* Beक्रमe link disconnection */
-	अगर (notअगरication == MEDIA_DEV_NOTIFY_PRE_LINK_CH) अणु
+	/* Before link disconnection */
+	if (notification == MEDIA_DEV_NOTIFY_PRE_LINK_CH) {
 		ret = media_graph_walk_init(graph,
 						   link->graph_obj.mdev);
-		अगर (ret)
-			वापस ret;
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED))
-			ret = __fimc_md_modअगरy_pipelines(sink, false, graph);
-#अगर 0
-		अन्यथा
+		if (ret)
+			return ret;
+		if (!(flags & MEDIA_LNK_FL_ENABLED))
+			ret = __fimc_md_modify_pipelines(sink, false, graph);
+#if 0
+		else
 			/* TODO: Link state change validation */
-#पूर्ण_अगर
+#endif
 	/* After link activation */
-	पूर्ण अन्यथा अगर (notअगरication == MEDIA_DEV_NOTIFY_POST_LINK_CH) अणु
-		अगर (link->flags & MEDIA_LNK_FL_ENABLED)
-			ret = __fimc_md_modअगरy_pipelines(sink, true, graph);
+	} else if (notification == MEDIA_DEV_NOTIFY_POST_LINK_CH) {
+		if (link->flags & MEDIA_LNK_FL_ENABLED)
+			ret = __fimc_md_modify_pipelines(sink, true, graph);
 		media_graph_walk_cleanup(graph);
-	पूर्ण
+	}
 
-	वापस ret ? -EPIPE : 0;
-पूर्ण
+	return ret ? -EPIPE : 0;
+}
 
-अटल स्थिर काष्ठा media_device_ops fimc_md_ops = अणु
-	.link_notअगरy = fimc_md_link_notअगरy,
-पूर्ण;
+static const struct media_device_ops fimc_md_ops = {
+	.link_notify = fimc_md_link_notify,
+};
 
-अटल sमाप_प्रकार fimc_md_sysfs_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fimc_md *fmd = dev_get_drvdata(dev);
+static ssize_t fimc_md_sysfs_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct fimc_md *fmd = dev_get_drvdata(dev);
 
-	अगर (fmd->user_subdev_api)
-		वापस strscpy(buf, "Sub-device API (sub-dev)\n", PAGE_SIZE);
+	if (fmd->user_subdev_api)
+		return strscpy(buf, "Sub-device API (sub-dev)\n", PAGE_SIZE);
 
-	वापस strscpy(buf, "V4L2 video node only API (vid-dev)\n", PAGE_SIZE);
-पूर्ण
+	return strscpy(buf, "V4L2 video node only API (vid-dev)\n", PAGE_SIZE);
+}
 
-अटल sमाप_प्रकार fimc_md_sysfs_store(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा fimc_md *fmd = dev_get_drvdata(dev);
+static ssize_t fimc_md_sysfs_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct fimc_md *fmd = dev_get_drvdata(dev);
 	bool subdev_api;
-	पूर्णांक i;
+	int i;
 
-	अगर (!म_भेद(buf, "vid-dev\n"))
+	if (!strcmp(buf, "vid-dev\n"))
 		subdev_api = false;
-	अन्यथा अगर (!म_भेद(buf, "sub-dev\n"))
+	else if (!strcmp(buf, "sub-dev\n"))
 		subdev_api = true;
-	अन्यथा
-		वापस count;
+	else
+		return count;
 
 	fmd->user_subdev_api = subdev_api;
-	क्रम (i = 0; i < FIMC_MAX_DEVS; i++)
-		अगर (fmd->fimc[i])
+	for (i = 0; i < FIMC_MAX_DEVS; i++)
+		if (fmd->fimc[i])
 			fmd->fimc[i]->vid_cap.user_subdev_api = subdev_api;
-	वापस count;
-पूर्ण
+	return count;
+}
 /*
  * This device attribute is to select video pipeline configuration method.
  * There are following valid values:
- *  vid-dev - क्रम V4L2 video node API only, subdevice will be configured
+ *  vid-dev - for V4L2 video node API only, subdevice will be configured
  *  by the host driver.
- *  sub-dev - क्रम media controller API, subdevs must be configured in user
- *  space beक्रमe starting streaming.
+ *  sub-dev - for media controller API, subdevs must be configured in user
+ *  space before starting streaming.
  */
-अटल DEVICE_ATTR(subdev_conf_mode, S_IWUSR | S_IRUGO,
+static DEVICE_ATTR(subdev_conf_mode, S_IWUSR | S_IRUGO,
 		   fimc_md_sysfs_show, fimc_md_sysfs_store);
 
-अटल पूर्णांक cam_clk_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cam_clk *camclk = to_cam_clk(hw);
-	पूर्णांक ret;
+static int cam_clk_prepare(struct clk_hw *hw)
+{
+	struct cam_clk *camclk = to_cam_clk(hw);
+	int ret;
 
-	अगर (camclk->fmd->pmf == शून्य)
-		वापस -ENODEV;
+	if (camclk->fmd->pmf == NULL)
+		return -ENODEV;
 
-	ret = pm_runसमय_get_sync(camclk->fmd->pmf);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	ret = pm_runtime_get_sync(camclk->fmd->pmf);
+	return ret < 0 ? ret : 0;
+}
 
-अटल व्योम cam_clk_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा cam_clk *camclk = to_cam_clk(hw);
+static void cam_clk_unprepare(struct clk_hw *hw)
+{
+	struct cam_clk *camclk = to_cam_clk(hw);
 
-	अगर (camclk->fmd->pmf == शून्य)
-		वापस;
+	if (camclk->fmd->pmf == NULL)
+		return;
 
-	pm_runसमय_put_sync(camclk->fmd->pmf);
-पूर्ण
+	pm_runtime_put_sync(camclk->fmd->pmf);
+}
 
-अटल स्थिर काष्ठा clk_ops cam_clk_ops = अणु
+static const struct clk_ops cam_clk_ops = {
 	.prepare = cam_clk_prepare,
 	.unprepare = cam_clk_unprepare,
-पूर्ण;
+};
 
-अटल व्योम fimc_md_unरेजिस्टर_clk_provider(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा cam_clk_provider *cp = &fmd->clk_provider;
-	अचिन्हित पूर्णांक i;
+static void fimc_md_unregister_clk_provider(struct fimc_md *fmd)
+{
+	struct cam_clk_provider *cp = &fmd->clk_provider;
+	unsigned int i;
 
-	अगर (cp->of_node)
+	if (cp->of_node)
 		of_clk_del_provider(cp->of_node);
 
-	क्रम (i = 0; i < cp->num_घड़ीs; i++)
-		clk_unरेजिस्टर(cp->clks[i]);
-पूर्ण
+	for (i = 0; i < cp->num_clocks; i++)
+		clk_unregister(cp->clks[i]);
+}
 
-अटल पूर्णांक fimc_md_रेजिस्टर_clk_provider(काष्ठा fimc_md *fmd)
-अणु
-	काष्ठा cam_clk_provider *cp = &fmd->clk_provider;
-	काष्ठा device *dev = &fmd->pdev->dev;
-	पूर्णांक i, ret;
+static int fimc_md_register_clk_provider(struct fimc_md *fmd)
+{
+	struct cam_clk_provider *cp = &fmd->clk_provider;
+	struct device *dev = &fmd->pdev->dev;
+	int i, ret;
 
-	क्रम (i = 0; i < FIMC_MAX_CAMCLKS; i++) अणु
-		काष्ठा cam_clk *camclk = &cp->camclk[i];
-		काष्ठा clk_init_data init;
-		स्थिर अक्षर *p_name;
+	for (i = 0; i < FIMC_MAX_CAMCLKS; i++) {
+		struct cam_clk *camclk = &cp->camclk[i];
+		struct clk_init_data init;
+		const char *p_name;
 
-		ret = of_property_पढ़ो_string_index(dev->of_node,
+		ret = of_property_read_string_index(dev->of_node,
 					"clock-output-names", i, &init.name);
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
-		p_name = __clk_get_name(fmd->camclk[i].घड़ी);
+		p_name = __clk_get_name(fmd->camclk[i].clock);
 
-		/* It's safe since clk_रेजिस्टर() will duplicate the string. */
+		/* It's safe since clk_register() will duplicate the string. */
 		init.parent_names = &p_name;
 		init.num_parents = 1;
 		init.ops = &cam_clk_ops;
@@ -1349,56 +1348,56 @@ err:
 		camclk->hw.init = &init;
 		camclk->fmd = fmd;
 
-		cp->clks[i] = clk_रेजिस्टर(शून्य, &camclk->hw);
-		अगर (IS_ERR(cp->clks[i])) अणु
+		cp->clks[i] = clk_register(NULL, &camclk->hw);
+		if (IS_ERR(cp->clks[i])) {
 			dev_err(dev, "failed to register clock: %s (%ld)\n",
 					init.name, PTR_ERR(cp->clks[i]));
 			ret = PTR_ERR(cp->clks[i]);
-			जाओ err;
-		पूर्ण
-		cp->num_घड़ीs++;
-	पूर्ण
+			goto err;
+		}
+		cp->num_clocks++;
+	}
 
-	अगर (cp->num_घड़ीs == 0) अणु
+	if (cp->num_clocks == 0) {
 		dev_warn(dev, "clk provider not registered\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	cp->clk_data.clks = cp->clks;
-	cp->clk_data.clk_num = cp->num_घड़ीs;
+	cp->clk_data.clk_num = cp->num_clocks;
 	cp->of_node = dev->of_node;
 	ret = of_clk_add_provider(dev->of_node, of_clk_src_onecell_get,
 				  &cp->clk_data);
-	अगर (ret == 0)
-		वापस 0;
+	if (ret == 0)
+		return 0;
 err:
-	fimc_md_unरेजिस्टर_clk_provider(fmd);
-	वापस ret;
-पूर्ण
+	fimc_md_unregister_clk_provider(fmd);
+	return ret;
+}
 
-अटल पूर्णांक subdev_notअगरier_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
-				 काष्ठा v4l2_subdev *subdev,
-				 काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा fimc_md *fmd = notअगरier_to_fimc_md(notअगरier);
-	काष्ठा fimc_sensor_info *si = शून्य;
-	पूर्णांक i;
+static int subdev_notifier_bound(struct v4l2_async_notifier *notifier,
+				 struct v4l2_subdev *subdev,
+				 struct v4l2_async_subdev *asd)
+{
+	struct fimc_md *fmd = notifier_to_fimc_md(notifier);
+	struct fimc_sensor_info *si = NULL;
+	int i;
 
-	/* Find platक्रमm data क्रम this sensor subdev */
-	क्रम (i = 0; i < ARRAY_SIZE(fmd->sensor); i++)
-		अगर (fmd->sensor[i].asd &&
+	/* Find platform data for this sensor subdev */
+	for (i = 0; i < ARRAY_SIZE(fmd->sensor); i++)
+		if (fmd->sensor[i].asd &&
 		    fmd->sensor[i].asd->match.fwnode ==
 		    of_fwnode_handle(subdev->dev->of_node))
 			si = &fmd->sensor[i];
 
-	अगर (si == शून्य)
-		वापस -EINVAL;
+	if (si == NULL)
+		return -EINVAL;
 
 	v4l2_set_subdev_hostdata(subdev, &si->pdata);
 
-	अगर (si->pdata.fimc_bus_type == FIMC_BUS_TYPE_ISP_WRITEBACK)
+	if (si->pdata.fimc_bus_type == FIMC_BUS_TYPE_ISP_WRITEBACK)
 		subdev->grp_id = GRP_ID_FIMC_IS_SENSOR;
-	अन्यथा
+	else
 		subdev->grp_id = GRP_ID_SENSOR;
 
 	si->subdev = subdev;
@@ -1408,201 +1407,201 @@ err:
 
 	fmd->num_sensors++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक subdev_notअगरier_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा fimc_md *fmd = notअगरier_to_fimc_md(notअगरier);
-	पूर्णांक ret;
+static int subdev_notifier_complete(struct v4l2_async_notifier *notifier)
+{
+	struct fimc_md *fmd = notifier_to_fimc_md(notifier);
+	int ret;
 
 	mutex_lock(&fmd->media_dev.graph_mutex);
 
 	ret = fimc_md_create_links(fmd);
-	अगर (ret < 0)
-		जाओ unlock;
+	if (ret < 0)
+		goto unlock;
 
-	ret = v4l2_device_रेजिस्टर_subdev_nodes(&fmd->v4l2_dev);
+	ret = v4l2_device_register_subdev_nodes(&fmd->v4l2_dev);
 unlock:
 	mutex_unlock(&fmd->media_dev.graph_mutex);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस media_device_रेजिस्टर(&fmd->media_dev);
-पूर्ण
+	return media_device_register(&fmd->media_dev);
+}
 
-अटल स्थिर काष्ठा v4l2_async_notअगरier_operations subdev_notअगरier_ops = अणु
-	.bound = subdev_notअगरier_bound,
-	.complete = subdev_notअगरier_complete,
-पूर्ण;
+static const struct v4l2_async_notifier_operations subdev_notifier_ops = {
+	.bound = subdev_notifier_bound,
+	.complete = subdev_notifier_complete,
+};
 
-अटल पूर्णांक fimc_md_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा v4l2_device *v4l2_dev;
-	काष्ठा pinctrl *pinctrl;
-	काष्ठा fimc_md *fmd;
-	पूर्णांक ret;
+static int fimc_md_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct v4l2_device *v4l2_dev;
+	struct pinctrl *pinctrl;
+	struct fimc_md *fmd;
+	int ret;
 
-	fmd = devm_kzalloc(dev, माप(*fmd), GFP_KERNEL);
-	अगर (!fmd)
-		वापस -ENOMEM;
+	fmd = devm_kzalloc(dev, sizeof(*fmd), GFP_KERNEL);
+	if (!fmd)
+		return -ENOMEM;
 
 	spin_lock_init(&fmd->slock);
 	INIT_LIST_HEAD(&fmd->pipelines);
 	fmd->pdev = pdev;
 
 	strscpy(fmd->media_dev.model, "Samsung S5P FIMC",
-		माप(fmd->media_dev.model));
+		sizeof(fmd->media_dev.model));
 	fmd->media_dev.ops = &fimc_md_ops;
 	fmd->media_dev.dev = dev;
 
 	v4l2_dev = &fmd->v4l2_dev;
 	v4l2_dev->mdev = &fmd->media_dev;
-	v4l2_dev->notअगरy = fimc_sensor_notअगरy;
-	strscpy(v4l2_dev->name, "s5p-fimc-md", माप(v4l2_dev->name));
+	v4l2_dev->notify = fimc_sensor_notify;
+	strscpy(v4l2_dev->name, "s5p-fimc-md", sizeof(v4l2_dev->name));
 
 	fmd->use_isp = fimc_md_is_isp_available(dev->of_node);
 	fmd->user_subdev_api = true;
 
 	media_device_init(&fmd->media_dev);
 
-	ret = v4l2_device_रेजिस्टर(dev, &fmd->v4l2_dev);
-	अगर (ret < 0) अणु
+	ret = v4l2_device_register(dev, &fmd->v4l2_dev);
+	if (ret < 0) {
 		v4l2_err(v4l2_dev, "Failed to register v4l2_device: %d\n", ret);
-		जाओ err_md;
-	पूर्ण
+		goto err_md;
+	}
 
-	ret = fimc_md_get_घड़ीs(fmd);
-	अगर (ret)
-		जाओ err_v4l2dev;
+	ret = fimc_md_get_clocks(fmd);
+	if (ret)
+		goto err_v4l2dev;
 
 	pinctrl = devm_pinctrl_get(dev);
-	अगर (IS_ERR(pinctrl)) अणु
+	if (IS_ERR(pinctrl)) {
 		ret = PTR_ERR(pinctrl);
-		अगर (ret != EPROBE_DEFER)
+		if (ret != EPROBE_DEFER)
 			dev_err(dev, "Failed to get pinctrl: %d\n", ret);
-		जाओ err_clk;
-	पूर्ण
+		goto err_clk;
+	}
 
-	platक्रमm_set_drvdata(pdev, fmd);
+	platform_set_drvdata(pdev, fmd);
 
-	v4l2_async_notअगरier_init(&fmd->subdev_notअगरier);
+	v4l2_async_notifier_init(&fmd->subdev_notifier);
 
-	ret = fimc_md_रेजिस्टर_platक्रमm_entities(fmd, dev->of_node);
-	अगर (ret)
-		जाओ err_clk;
+	ret = fimc_md_register_platform_entities(fmd, dev->of_node);
+	if (ret)
+		goto err_clk;
 
-	ret = fimc_md_रेजिस्टर_sensor_entities(fmd);
-	अगर (ret)
-		जाओ err_m_ent;
+	ret = fimc_md_register_sensor_entities(fmd);
+	if (ret)
+		goto err_m_ent;
 
 	ret = device_create_file(&pdev->dev, &dev_attr_subdev_conf_mode);
-	अगर (ret)
-		जाओ err_cleanup;
+	if (ret)
+		goto err_cleanup;
 	/*
-	 * FIMC platक्रमm devices need to be रेजिस्टरed beक्रमe the sclk_cam
-	 * घड़ीs provider, as one of these devices needs to be activated
-	 * to enable the घड़ी.
+	 * FIMC platform devices need to be registered before the sclk_cam
+	 * clocks provider, as one of these devices needs to be activated
+	 * to enable the clock.
 	 */
-	ret = fimc_md_रेजिस्टर_clk_provider(fmd);
-	अगर (ret < 0) अणु
+	ret = fimc_md_register_clk_provider(fmd);
+	if (ret < 0) {
 		v4l2_err(v4l2_dev, "clock provider registration failed\n");
-		जाओ err_attr;
-	पूर्ण
+		goto err_attr;
+	}
 
-	अगर (fmd->num_sensors > 0) अणु
-		fmd->subdev_notअगरier.ops = &subdev_notअगरier_ops;
+	if (fmd->num_sensors > 0) {
+		fmd->subdev_notifier.ops = &subdev_notifier_ops;
 		fmd->num_sensors = 0;
 
-		ret = v4l2_async_notअगरier_रेजिस्टर(&fmd->v4l2_dev,
-						&fmd->subdev_notअगरier);
-		अगर (ret)
-			जाओ err_clk_p;
-	पूर्ण
+		ret = v4l2_async_notifier_register(&fmd->v4l2_dev,
+						&fmd->subdev_notifier);
+		if (ret)
+			goto err_clk_p;
+	}
 
-	वापस 0;
+	return 0;
 
 err_clk_p:
-	fimc_md_unरेजिस्टर_clk_provider(fmd);
+	fimc_md_unregister_clk_provider(fmd);
 err_attr:
-	device_हटाओ_file(&pdev->dev, &dev_attr_subdev_conf_mode);
+	device_remove_file(&pdev->dev, &dev_attr_subdev_conf_mode);
 err_cleanup:
-	v4l2_async_notअगरier_cleanup(&fmd->subdev_notअगरier);
+	v4l2_async_notifier_cleanup(&fmd->subdev_notifier);
 err_m_ent:
-	fimc_md_unरेजिस्टर_entities(fmd);
+	fimc_md_unregister_entities(fmd);
 err_clk:
-	fimc_md_put_घड़ीs(fmd);
+	fimc_md_put_clocks(fmd);
 err_v4l2dev:
-	v4l2_device_unरेजिस्टर(&fmd->v4l2_dev);
+	v4l2_device_unregister(&fmd->v4l2_dev);
 err_md:
 	media_device_cleanup(&fmd->media_dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fimc_md_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा fimc_md *fmd = platक्रमm_get_drvdata(pdev);
+static int fimc_md_remove(struct platform_device *pdev)
+{
+	struct fimc_md *fmd = platform_get_drvdata(pdev);
 
-	अगर (!fmd)
-		वापस 0;
+	if (!fmd)
+		return 0;
 
-	fimc_md_unरेजिस्टर_clk_provider(fmd);
-	v4l2_async_notअगरier_unरेजिस्टर(&fmd->subdev_notअगरier);
-	v4l2_async_notअगरier_cleanup(&fmd->subdev_notअगरier);
+	fimc_md_unregister_clk_provider(fmd);
+	v4l2_async_notifier_unregister(&fmd->subdev_notifier);
+	v4l2_async_notifier_cleanup(&fmd->subdev_notifier);
 
-	v4l2_device_unरेजिस्टर(&fmd->v4l2_dev);
-	device_हटाओ_file(&pdev->dev, &dev_attr_subdev_conf_mode);
-	fimc_md_unरेजिस्टर_entities(fmd);
-	fimc_md_pipelines_मुक्त(fmd);
-	media_device_unरेजिस्टर(&fmd->media_dev);
+	v4l2_device_unregister(&fmd->v4l2_dev);
+	device_remove_file(&pdev->dev, &dev_attr_subdev_conf_mode);
+	fimc_md_unregister_entities(fmd);
+	fimc_md_pipelines_free(fmd);
+	media_device_unregister(&fmd->media_dev);
 	media_device_cleanup(&fmd->media_dev);
-	fimc_md_put_घड़ीs(fmd);
+	fimc_md_put_clocks(fmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id fimc_driver_ids[] __always_unused = अणु
-	अणु .name = "s5p-fimc-md" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, fimc_driver_ids);
+static const struct platform_device_id fimc_driver_ids[] __always_unused = {
+	{ .name = "s5p-fimc-md" },
+	{ },
+};
+MODULE_DEVICE_TABLE(platform, fimc_driver_ids);
 
-अटल स्थिर काष्ठा of_device_id fimc_md_of_match[] = अणु
-	अणु .compatible = "samsung,fimc" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id fimc_md_of_match[] = {
+	{ .compatible = "samsung,fimc" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, fimc_md_of_match);
 
-अटल काष्ठा platक्रमm_driver fimc_md_driver = अणु
+static struct platform_driver fimc_md_driver = {
 	.probe		= fimc_md_probe,
-	.हटाओ		= fimc_md_हटाओ,
-	.driver = अणु
+	.remove		= fimc_md_remove,
+	.driver = {
 		.of_match_table = of_match_ptr(fimc_md_of_match),
 		.name		= "s5p-fimc-md",
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init fimc_md_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init fimc_md_init(void)
+{
+	int ret;
 
 	request_module("s5p-csis");
-	ret = fimc_रेजिस्टर_driver();
-	अगर (ret)
-		वापस ret;
+	ret = fimc_register_driver();
+	if (ret)
+		return ret;
 
-	वापस platक्रमm_driver_रेजिस्टर(&fimc_md_driver);
-पूर्ण
+	return platform_driver_register(&fimc_md_driver);
+}
 
-अटल व्योम __निकास fimc_md_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&fimc_md_driver);
-	fimc_unरेजिस्टर_driver();
-पूर्ण
+static void __exit fimc_md_exit(void)
+{
+	platform_driver_unregister(&fimc_md_driver);
+	fimc_unregister_driver();
+}
 
 module_init(fimc_md_init);
-module_निकास(fimc_md_निकास);
+module_exit(fimc_md_exit);
 
 MODULE_AUTHOR("Sylwester Nawrocki <s.nawrocki@samsung.com>");
 MODULE_DESCRIPTION("S5P FIMC camera host interface/video postprocessor driver");

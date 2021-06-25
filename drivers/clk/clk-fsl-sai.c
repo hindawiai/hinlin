@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Freescale SAI BCLK as a generic घड़ी driver
+ * Freescale SAI BCLK as a generic clock driver
  *
  * Copyright 2020 Michael Walle <michael@walle.cc>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/clk-provider.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
 
-#घोषणा I2S_CSR		0x00
-#घोषणा I2S_CR2		0x08
-#घोषणा CSR_BCE_BIT	28
-#घोषणा CR2_BCD		BIT(24)
-#घोषणा CR2_DIV_SHIFT	0
-#घोषणा CR2_DIV_WIDTH	8
+#define I2S_CSR		0x00
+#define I2S_CR2		0x08
+#define CSR_BCE_BIT	28
+#define CR2_BCD		BIT(24)
+#define CR2_DIV_SHIFT	0
+#define CR2_DIV_WIDTH	8
 
-काष्ठा fsl_sai_clk अणु
-	काष्ठा clk_भागider भाग;
-	काष्ठा clk_gate gate;
+struct fsl_sai_clk {
+	struct clk_divider div;
+	struct clk_gate gate;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल पूर्णांक fsl_sai_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा fsl_sai_clk *sai_clk;
-	काष्ठा clk_parent_data pdata = अणु .index = 0 पूर्ण;
-	व्योम __iomem *base;
-	काष्ठा clk_hw *hw;
-	काष्ठा resource *res;
+static int fsl_sai_clk_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct fsl_sai_clk *sai_clk;
+	struct clk_parent_data pdata = { .index = 0 };
+	void __iomem *base;
+	struct clk_hw *hw;
+	struct resource *res;
 
-	sai_clk = devm_kzalloc(dev, माप(*sai_clk), GFP_KERNEL);
-	अगर (!sai_clk)
-		वापस -ENOMEM;
+	sai_clk = devm_kzalloc(dev, sizeof(*sai_clk), GFP_KERNEL);
+	if (!sai_clk)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	spin_lock_init(&sai_clk->lock);
 
@@ -51,41 +50,41 @@
 	sai_clk->gate.bit_idx = CSR_BCE_BIT;
 	sai_clk->gate.lock = &sai_clk->lock;
 
-	sai_clk->भाग.reg = base + I2S_CR2;
-	sai_clk->भाग.shअगरt = CR2_DIV_SHIFT;
-	sai_clk->भाग.width = CR2_DIV_WIDTH;
-	sai_clk->भाग.lock = &sai_clk->lock;
+	sai_clk->div.reg = base + I2S_CR2;
+	sai_clk->div.shift = CR2_DIV_SHIFT;
+	sai_clk->div.width = CR2_DIV_WIDTH;
+	sai_clk->div.lock = &sai_clk->lock;
 
-	/* set घड़ी direction, we are the BCLK master */
-	ग_लिखोl(CR2_BCD, base + I2S_CR2);
+	/* set clock direction, we are the BCLK master */
+	writel(CR2_BCD, base + I2S_CR2);
 
-	hw = devm_clk_hw_रेजिस्टर_composite_pdata(dev, dev->of_node->name,
-						  &pdata, 1, शून्य, शून्य,
-						  &sai_clk->भाग.hw,
-						  &clk_भागider_ops,
+	hw = devm_clk_hw_register_composite_pdata(dev, dev->of_node->name,
+						  &pdata, 1, NULL, NULL,
+						  &sai_clk->div.hw,
+						  &clk_divider_ops,
 						  &sai_clk->gate.hw,
 						  &clk_gate_ops,
 						  CLK_SET_RATE_GATE);
-	अगर (IS_ERR(hw))
-		वापस PTR_ERR(hw);
+	if (IS_ERR(hw))
+		return PTR_ERR(hw);
 
-	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
-पूर्ण
+	return devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
+}
 
-अटल स्थिर काष्ठा of_device_id of_fsl_sai_clk_ids[] = अणु
-	अणु .compatible = "fsl,vf610-sai-clock" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id of_fsl_sai_clk_ids[] = {
+	{ .compatible = "fsl,vf610-sai-clock" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, of_fsl_sai_clk_ids);
 
-अटल काष्ठा platक्रमm_driver fsl_sai_clk_driver = अणु
+static struct platform_driver fsl_sai_clk_driver = {
 	.probe = fsl_sai_clk_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "fsl-sai-clk",
 		.of_match_table = of_fsl_sai_clk_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(fsl_sai_clk_driver);
+	},
+};
+module_platform_driver(fsl_sai_clk_driver);
 
 MODULE_DESCRIPTION("Freescale SAI bitclock-as-a-clock driver");
 MODULE_AUTHOR("Michael Walle <michael@walle.cc>");

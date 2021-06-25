@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Power Management Quality of Service (PM QoS) support base.
  *
  * Copyright (C) 2020 Intel Corporation
  *
  * Authors:
- *	Mark Gross <mgross@linux.पूर्णांकel.com>
- *	Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
+ *	Mark Gross <mgross@linux.intel.com>
+ *	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  *
- * Provided here is an पूर्णांकerface क्रम specअगरying PM QoS dependencies.  It allows
- * entities depending on QoS स्थिरraपूर्णांकs to रेजिस्टर their requests which are
- * aggregated as appropriate to produce effective स्थिरraपूर्णांकs (target values)
+ * Provided here is an interface for specifying PM QoS dependencies.  It allows
+ * entities depending on QoS constraints to register their requests which are
+ * aggregated as appropriate to produce effective constraints (target values)
  * that can be monitored by entities needing to respect them, either by polling
- * or through a built-in notअगरication mechanism.
+ * or through a built-in notification mechanism.
  *
- * In addition to the basic functionality, more specअगरic पूर्णांकerfaces क्रम managing
+ * In addition to the basic functionality, more specific interfaces for managing
  * global CPU latency QoS requests and frequency QoS requests are provided.
  */
 
-/*#घोषणा DEBUG*/
+/*#define DEBUG*/
 
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/pm_qos.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/fs.h>
+#include <linux/device.h>
+#include <linux/miscdevice.h>
+#include <linux/string.h>
+#include <linux/platform_device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/export.h>
-#समावेश <trace/events/घातer.h>
+#include <linux/uaccess.h>
+#include <linux/export.h>
+#include <trace/events/power.h>
 
 /*
- * locking rule: all changes to स्थिरraपूर्णांकs or notअगरiers lists
+ * locking rule: all changes to constraints or notifiers lists
  * or pm_qos_object list and pm_qos_objects need to happen with pm_qos_lock
  * held, taken with _irqsave.  One lock to rule them all
  */
-अटल DEFINE_SPINLOCK(pm_qos_lock);
+static DEFINE_SPINLOCK(pm_qos_lock);
 
 /**
- * pm_qos_पढ़ो_value - Return the current effective स्थिरraपूर्णांक value.
- * @c: List of PM QoS स्थिरraपूर्णांक requests.
+ * pm_qos_read_value - Return the current effective constraint value.
+ * @c: List of PM QoS constraint requests.
  */
-s32 pm_qos_पढ़ो_value(काष्ठा pm_qos_स्थिरraपूर्णांकs *c)
-अणु
-	वापस READ_ONCE(c->target_value);
-पूर्ण
+s32 pm_qos_read_value(struct pm_qos_constraints *c)
+{
+	return READ_ONCE(c->target_value);
+}
 
-अटल पूर्णांक pm_qos_get_value(काष्ठा pm_qos_स्थिरraपूर्णांकs *c)
-अणु
-	अगर (plist_head_empty(&c->list))
-		वापस c->no_स्थिरraपूर्णांक_value;
+static int pm_qos_get_value(struct pm_qos_constraints *c)
+{
+	if (plist_head_empty(&c->list))
+		return c->no_constraint_value;
 
-	चयन (c->type) अणु
-	हाल PM_QOS_MIN:
-		वापस plist_first(&c->list)->prio;
+	switch (c->type) {
+	case PM_QOS_MIN:
+		return plist_first(&c->list)->prio;
 
-	हाल PM_QOS_MAX:
-		वापस plist_last(&c->list)->prio;
+	case PM_QOS_MAX:
+		return plist_last(&c->list)->prio;
 
-	शेष:
+	default:
 		WARN(1, "Unknown PM QoS type in %s\n", __func__);
-		वापस PM_QOS_DEFAULT_VALUE;
-	पूर्ण
-पूर्ण
+		return PM_QOS_DEFAULT_VALUE;
+	}
+}
 
-अटल व्योम pm_qos_set_value(काष्ठा pm_qos_स्थिरraपूर्णांकs *c, s32 value)
-अणु
+static void pm_qos_set_value(struct pm_qos_constraints *c, s32 value)
+{
 	WRITE_ONCE(c->target_value, value);
-पूर्ण
+}
 
 /**
- * pm_qos_update_target - Update a list of PM QoS स्थिरraपूर्णांक requests.
+ * pm_qos_update_target - Update a list of PM QoS constraint requests.
  * @c: List of PM QoS requests.
  * @node: Target list entry.
- * @action: Action to carry out (add, update or हटाओ).
- * @value: New request value क्रम the target list entry.
+ * @action: Action to carry out (add, update or remove).
+ * @value: New request value for the target list entry.
  *
- * Update the given list of PM QoS स्थिरraपूर्णांक requests, @c, by carrying an
+ * Update the given list of PM QoS constraint requests, @c, by carrying an
  * @action involving the @node list entry and @value on it.
  *
  * The recognized values of @action are PM_QOS_ADD_REQ (store @value in @node
- * and add it to the list), PM_QOS_UPDATE_REQ (हटाओ @node from the list, store
- * @value in it and add it to the list again), and PM_QOS_REMOVE_REQ (हटाओ
+ * and add it to the list), PM_QOS_UPDATE_REQ (remove @node from the list, store
+ * @value in it and add it to the list again), and PM_QOS_REMOVE_REQ (remove
  * @node from the list, ignore @value).
  *
- * Return: 1 अगर the aggregate स्थिरraपूर्णांक value has changed, 0  otherwise.
+ * Return: 1 if the aggregate constraint value has changed, 0  otherwise.
  */
-पूर्णांक pm_qos_update_target(काष्ठा pm_qos_स्थिरraपूर्णांकs *c, काष्ठा plist_node *node,
-			 क्रमागत pm_qos_req_action action, पूर्णांक value)
-अणु
-	पूर्णांक prev_value, curr_value, new_value;
-	अचिन्हित दीर्घ flags;
+int pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
+			 enum pm_qos_req_action action, int value)
+{
+	int prev_value, curr_value, new_value;
+	unsigned long flags;
 
 	spin_lock_irqsave(&pm_qos_lock, flags);
 
 	prev_value = pm_qos_get_value(c);
-	अगर (value == PM_QOS_DEFAULT_VALUE)
-		new_value = c->शेष_value;
-	अन्यथा
+	if (value == PM_QOS_DEFAULT_VALUE)
+		new_value = c->default_value;
+	else
 		new_value = value;
 
-	चयन (action) अणु
-	हाल PM_QOS_REMOVE_REQ:
+	switch (action) {
+	case PM_QOS_REMOVE_REQ:
 		plist_del(node, &c->list);
-		अवरोध;
-	हाल PM_QOS_UPDATE_REQ:
+		break;
+	case PM_QOS_UPDATE_REQ:
 		/*
-		 * To change the list, atomically हटाओ, reinit with new value
-		 * and add, then see अगर the aggregate has changed.
+		 * To change the list, atomically remove, reinit with new value
+		 * and add, then see if the aggregate has changed.
 		 */
 		plist_del(node, &c->list);
 		fallthrough;
-	हाल PM_QOS_ADD_REQ:
+	case PM_QOS_ADD_REQ:
 		plist_node_init(node, new_value);
 		plist_add(node, &c->list);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* no action */
 		;
-	पूर्ण
+	}
 
 	curr_value = pm_qos_get_value(c);
 	pm_qos_set_value(c, curr_value);
@@ -137,69 +136,69 @@ s32 pm_qos_पढ़ो_value(काष्ठा pm_qos_स्थिरraपू�
 
 	trace_pm_qos_update_target(action, prev_value, curr_value);
 
-	अगर (prev_value == curr_value)
-		वापस 0;
+	if (prev_value == curr_value)
+		return 0;
 
-	अगर (c->notअगरiers)
-		blocking_notअगरier_call_chain(c->notअगरiers, curr_value, शून्य);
+	if (c->notifiers)
+		blocking_notifier_call_chain(c->notifiers, curr_value, NULL);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * pm_qos_flags_हटाओ_req - Remove device PM QoS flags request.
- * @pqf: Device PM QoS flags set to हटाओ the request from.
- * @req: Request to हटाओ from the set.
+ * pm_qos_flags_remove_req - Remove device PM QoS flags request.
+ * @pqf: Device PM QoS flags set to remove the request from.
+ * @req: Request to remove from the set.
  */
-अटल व्योम pm_qos_flags_हटाओ_req(काष्ठा pm_qos_flags *pqf,
-				    काष्ठा pm_qos_flags_request *req)
-अणु
+static void pm_qos_flags_remove_req(struct pm_qos_flags *pqf,
+				    struct pm_qos_flags_request *req)
+{
 	s32 val = 0;
 
 	list_del(&req->node);
-	list_क्रम_each_entry(req, &pqf->list, node)
+	list_for_each_entry(req, &pqf->list, node)
 		val |= req->flags;
 
 	pqf->effective_flags = val;
-पूर्ण
+}
 
 /**
  * pm_qos_update_flags - Update a set of PM QoS flags.
  * @pqf: Set of PM QoS flags to update.
- * @req: Request to add to the set, to modअगरy, or to हटाओ from the set.
+ * @req: Request to add to the set, to modify, or to remove from the set.
  * @action: Action to take on the set.
- * @val: Value of the request to add or modअगरy.
+ * @val: Value of the request to add or modify.
  *
- * Return: 1 अगर the aggregate स्थिरraपूर्णांक value has changed, 0 otherwise.
+ * Return: 1 if the aggregate constraint value has changed, 0 otherwise.
  */
-bool pm_qos_update_flags(काष्ठा pm_qos_flags *pqf,
-			 काष्ठा pm_qos_flags_request *req,
-			 क्रमागत pm_qos_req_action action, s32 val)
-अणु
-	अचिन्हित दीर्घ irqflags;
+bool pm_qos_update_flags(struct pm_qos_flags *pqf,
+			 struct pm_qos_flags_request *req,
+			 enum pm_qos_req_action action, s32 val)
+{
+	unsigned long irqflags;
 	s32 prev_value, curr_value;
 
 	spin_lock_irqsave(&pm_qos_lock, irqflags);
 
 	prev_value = list_empty(&pqf->list) ? 0 : pqf->effective_flags;
 
-	चयन (action) अणु
-	हाल PM_QOS_REMOVE_REQ:
-		pm_qos_flags_हटाओ_req(pqf, req);
-		अवरोध;
-	हाल PM_QOS_UPDATE_REQ:
-		pm_qos_flags_हटाओ_req(pqf, req);
+	switch (action) {
+	case PM_QOS_REMOVE_REQ:
+		pm_qos_flags_remove_req(pqf, req);
+		break;
+	case PM_QOS_UPDATE_REQ:
+		pm_qos_flags_remove_req(pqf, req);
 		fallthrough;
-	हाल PM_QOS_ADD_REQ:
+	case PM_QOS_ADD_REQ:
 		req->flags = val;
 		INIT_LIST_HEAD(&req->node);
 		list_add_tail(&req->node, &pqf->list);
 		pqf->effective_flags |= val;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* no action */
 		;
-	पूर्ण
+	}
 
 	curr_value = list_empty(&pqf->list) ? 0 : pqf->effective_flags;
 
@@ -207,27 +206,27 @@ bool pm_qos_update_flags(काष्ठा pm_qos_flags *pqf,
 
 	trace_pm_qos_update_flags(action, prev_value, curr_value);
 
-	वापस prev_value != curr_value;
-पूर्ण
+	return prev_value != curr_value;
+}
 
-#अगर_घोषित CONFIG_CPU_IDLE
+#ifdef CONFIG_CPU_IDLE
 /* Definitions related to the CPU latency QoS. */
 
-अटल काष्ठा pm_qos_स्थिरraपूर्णांकs cpu_latency_स्थिरraपूर्णांकs = अणु
-	.list = PLIST_HEAD_INIT(cpu_latency_स्थिरraपूर्णांकs.list),
+static struct pm_qos_constraints cpu_latency_constraints = {
+	.list = PLIST_HEAD_INIT(cpu_latency_constraints.list),
 	.target_value = PM_QOS_CPU_LATENCY_DEFAULT_VALUE,
-	.शेष_value = PM_QOS_CPU_LATENCY_DEFAULT_VALUE,
-	.no_स्थिरraपूर्णांक_value = PM_QOS_CPU_LATENCY_DEFAULT_VALUE,
+	.default_value = PM_QOS_CPU_LATENCY_DEFAULT_VALUE,
+	.no_constraint_value = PM_QOS_CPU_LATENCY_DEFAULT_VALUE,
 	.type = PM_QOS_MIN,
-पूर्ण;
+};
 
 /**
- * cpu_latency_qos_limit - Return current प्रणाली-wide CPU latency QoS limit.
+ * cpu_latency_qos_limit - Return current system-wide CPU latency QoS limit.
  */
-s32 cpu_latency_qos_limit(व्योम)
-अणु
-	वापस pm_qos_पढ़ो_value(&cpu_latency_स्थिरraपूर्णांकs);
-पूर्ण
+s32 cpu_latency_qos_limit(void)
+{
+	return pm_qos_read_value(&cpu_latency_constraints);
+}
 
 /**
  * cpu_latency_qos_request_active - Check the given PM QoS request.
@@ -236,439 +235,439 @@ s32 cpu_latency_qos_limit(व्योम)
  * Return: 'true' if @req has been added to the CPU latency QoS list, 'false'
  * otherwise.
  */
-bool cpu_latency_qos_request_active(काष्ठा pm_qos_request *req)
-अणु
-	वापस req->qos == &cpu_latency_स्थिरraपूर्णांकs;
-पूर्ण
+bool cpu_latency_qos_request_active(struct pm_qos_request *req)
+{
+	return req->qos == &cpu_latency_constraints;
+}
 EXPORT_SYMBOL_GPL(cpu_latency_qos_request_active);
 
-अटल व्योम cpu_latency_qos_apply(काष्ठा pm_qos_request *req,
-				  क्रमागत pm_qos_req_action action, s32 value)
-अणु
-	पूर्णांक ret = pm_qos_update_target(req->qos, &req->node, action, value);
-	अगर (ret > 0)
+static void cpu_latency_qos_apply(struct pm_qos_request *req,
+				  enum pm_qos_req_action action, s32 value)
+{
+	int ret = pm_qos_update_target(req->qos, &req->node, action, value);
+	if (ret > 0)
 		wake_up_all_idle_cpus();
-पूर्ण
+}
 
 /**
  * cpu_latency_qos_add_request - Add new CPU latency QoS request.
- * @req: Poपूर्णांकer to a pपुनः_स्मृतिated handle.
- * @value: Requested स्थिरraपूर्णांक value.
+ * @req: Pointer to a preallocated handle.
+ * @value: Requested constraint value.
  *
- * Use @value to initialize the request handle poपूर्णांकed to by @req, insert it as
+ * Use @value to initialize the request handle pointed to by @req, insert it as
  * a new entry to the CPU latency QoS list and recompute the effective QoS
- * स्थिरraपूर्णांक क्रम that list.
+ * constraint for that list.
  *
- * Callers need to save the handle क्रम later use in updates and removal of the
+ * Callers need to save the handle for later use in updates and removal of the
  * QoS request represented by it.
  */
-व्योम cpu_latency_qos_add_request(काष्ठा pm_qos_request *req, s32 value)
-अणु
-	अगर (!req)
-		वापस;
+void cpu_latency_qos_add_request(struct pm_qos_request *req, s32 value)
+{
+	if (!req)
+		return;
 
-	अगर (cpu_latency_qos_request_active(req)) अणु
+	if (cpu_latency_qos_request_active(req)) {
 		WARN(1, KERN_ERR "%s called for already added request\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	trace_pm_qos_add_request(value);
 
-	req->qos = &cpu_latency_स्थिरraपूर्णांकs;
+	req->qos = &cpu_latency_constraints;
 	cpu_latency_qos_apply(req, PM_QOS_ADD_REQ, value);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cpu_latency_qos_add_request);
 
 /**
- * cpu_latency_qos_update_request - Modअगरy existing CPU latency QoS request.
+ * cpu_latency_qos_update_request - Modify existing CPU latency QoS request.
  * @req : QoS request to update.
- * @new_value: New requested स्थिरraपूर्णांक value.
+ * @new_value: New requested constraint value.
  *
  * Use @new_value to update the QoS request represented by @req in the CPU
- * latency QoS list aदीर्घ with updating the effective स्थिरraपूर्णांक value क्रम that
+ * latency QoS list along with updating the effective constraint value for that
  * list.
  */
-व्योम cpu_latency_qos_update_request(काष्ठा pm_qos_request *req, s32 new_value)
-अणु
-	अगर (!req)
-		वापस;
+void cpu_latency_qos_update_request(struct pm_qos_request *req, s32 new_value)
+{
+	if (!req)
+		return;
 
-	अगर (!cpu_latency_qos_request_active(req)) अणु
+	if (!cpu_latency_qos_request_active(req)) {
 		WARN(1, KERN_ERR "%s called for unknown object\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	trace_pm_qos_update_request(new_value);
 
-	अगर (new_value == req->node.prio)
-		वापस;
+	if (new_value == req->node.prio)
+		return;
 
 	cpu_latency_qos_apply(req, PM_QOS_UPDATE_REQ, new_value);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cpu_latency_qos_update_request);
 
 /**
- * cpu_latency_qos_हटाओ_request - Remove existing CPU latency QoS request.
- * @req: QoS request to हटाओ.
+ * cpu_latency_qos_remove_request - Remove existing CPU latency QoS request.
+ * @req: QoS request to remove.
  *
  * Remove the CPU latency QoS request represented by @req from the CPU latency
- * QoS list aदीर्घ with updating the effective स्थिरraपूर्णांक value क्रम that list.
+ * QoS list along with updating the effective constraint value for that list.
  */
-व्योम cpu_latency_qos_हटाओ_request(काष्ठा pm_qos_request *req)
-अणु
-	अगर (!req)
-		वापस;
+void cpu_latency_qos_remove_request(struct pm_qos_request *req)
+{
+	if (!req)
+		return;
 
-	अगर (!cpu_latency_qos_request_active(req)) अणु
+	if (!cpu_latency_qos_request_active(req)) {
 		WARN(1, KERN_ERR "%s called for unknown object\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	trace_pm_qos_हटाओ_request(PM_QOS_DEFAULT_VALUE);
+	trace_pm_qos_remove_request(PM_QOS_DEFAULT_VALUE);
 
 	cpu_latency_qos_apply(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-	स_रखो(req, 0, माप(*req));
-पूर्ण
-EXPORT_SYMBOL_GPL(cpu_latency_qos_हटाओ_request);
+	memset(req, 0, sizeof(*req));
+}
+EXPORT_SYMBOL_GPL(cpu_latency_qos_remove_request);
 
-/* User space पूर्णांकerface to the CPU latency QoS via misc device. */
+/* User space interface to the CPU latency QoS via misc device. */
 
-अटल पूर्णांक cpu_latency_qos_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा pm_qos_request *req;
+static int cpu_latency_qos_open(struct inode *inode, struct file *filp)
+{
+	struct pm_qos_request *req;
 
-	req = kzalloc(माप(*req), GFP_KERNEL);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
 
 	cpu_latency_qos_add_request(req, PM_QOS_DEFAULT_VALUE);
-	filp->निजी_data = req;
+	filp->private_data = req;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpu_latency_qos_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा pm_qos_request *req = filp->निजी_data;
+static int cpu_latency_qos_release(struct inode *inode, struct file *filp)
+{
+	struct pm_qos_request *req = filp->private_data;
 
-	filp->निजी_data = शून्य;
+	filp->private_data = NULL;
 
-	cpu_latency_qos_हटाओ_request(req);
-	kमुक्त(req);
+	cpu_latency_qos_remove_request(req);
+	kfree(req);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार cpu_latency_qos_पढ़ो(काष्ठा file *filp, अक्षर __user *buf,
-				    माप_प्रकार count, loff_t *f_pos)
-अणु
-	काष्ठा pm_qos_request *req = filp->निजी_data;
-	अचिन्हित दीर्घ flags;
+static ssize_t cpu_latency_qos_read(struct file *filp, char __user *buf,
+				    size_t count, loff_t *f_pos)
+{
+	struct pm_qos_request *req = filp->private_data;
+	unsigned long flags;
 	s32 value;
 
-	अगर (!req || !cpu_latency_qos_request_active(req))
-		वापस -EINVAL;
+	if (!req || !cpu_latency_qos_request_active(req))
+		return -EINVAL;
 
 	spin_lock_irqsave(&pm_qos_lock, flags);
-	value = pm_qos_get_value(&cpu_latency_स्थिरraपूर्णांकs);
+	value = pm_qos_get_value(&cpu_latency_constraints);
 	spin_unlock_irqrestore(&pm_qos_lock, flags);
 
-	वापस simple_पढ़ो_from_buffer(buf, count, f_pos, &value, माप(s32));
-पूर्ण
+	return simple_read_from_buffer(buf, count, f_pos, &value, sizeof(s32));
+}
 
-अटल sमाप_प्रकार cpu_latency_qos_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
-				     माप_प्रकार count, loff_t *f_pos)
-अणु
+static ssize_t cpu_latency_qos_write(struct file *filp, const char __user *buf,
+				     size_t count, loff_t *f_pos)
+{
 	s32 value;
 
-	अगर (count == माप(s32)) अणु
-		अगर (copy_from_user(&value, buf, माप(s32)))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		पूर्णांक ret;
+	if (count == sizeof(s32)) {
+		if (copy_from_user(&value, buf, sizeof(s32)))
+			return -EFAULT;
+	} else {
+		int ret;
 
 		ret = kstrtos32_from_user(buf, count, 16, &value);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	cpu_latency_qos_update_request(filp->निजी_data, value);
+	cpu_latency_qos_update_request(filp->private_data, value);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations cpu_latency_qos_fops = अणु
-	.ग_लिखो = cpu_latency_qos_ग_लिखो,
-	.पढ़ो = cpu_latency_qos_पढ़ो,
-	.खोलो = cpu_latency_qos_खोलो,
+static const struct file_operations cpu_latency_qos_fops = {
+	.write = cpu_latency_qos_write,
+	.read = cpu_latency_qos_read,
+	.open = cpu_latency_qos_open,
 	.release = cpu_latency_qos_release,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice cpu_latency_qos_miscdev = अणु
+static struct miscdevice cpu_latency_qos_miscdev = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "cpu_dma_latency",
 	.fops = &cpu_latency_qos_fops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cpu_latency_qos_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init cpu_latency_qos_init(void)
+{
+	int ret;
 
-	ret = misc_रेजिस्टर(&cpu_latency_qos_miscdev);
-	अगर (ret < 0)
+	ret = misc_register(&cpu_latency_qos_miscdev);
+	if (ret < 0)
 		pr_err("%s: %s setup failed\n", __func__,
 		       cpu_latency_qos_miscdev.name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 late_initcall(cpu_latency_qos_init);
-#पूर्ण_अगर /* CONFIG_CPU_IDLE */
+#endif /* CONFIG_CPU_IDLE */
 
 /* Definitions related to the frequency QoS below. */
 
 /**
- * freq_स्थिरraपूर्णांकs_init - Initialize frequency QoS स्थिरraपूर्णांकs.
- * @qos: Frequency QoS स्थिरraपूर्णांकs to initialize.
+ * freq_constraints_init - Initialize frequency QoS constraints.
+ * @qos: Frequency QoS constraints to initialize.
  */
-व्योम freq_स्थिरraपूर्णांकs_init(काष्ठा freq_स्थिरraपूर्णांकs *qos)
-अणु
-	काष्ठा pm_qos_स्थिरraपूर्णांकs *c;
+void freq_constraints_init(struct freq_constraints *qos)
+{
+	struct pm_qos_constraints *c;
 
 	c = &qos->min_freq;
 	plist_head_init(&c->list);
 	c->target_value = FREQ_QOS_MIN_DEFAULT_VALUE;
-	c->शेष_value = FREQ_QOS_MIN_DEFAULT_VALUE;
-	c->no_स्थिरraपूर्णांक_value = FREQ_QOS_MIN_DEFAULT_VALUE;
+	c->default_value = FREQ_QOS_MIN_DEFAULT_VALUE;
+	c->no_constraint_value = FREQ_QOS_MIN_DEFAULT_VALUE;
 	c->type = PM_QOS_MAX;
-	c->notअगरiers = &qos->min_freq_notअगरiers;
-	BLOCKING_INIT_NOTIFIER_HEAD(c->notअगरiers);
+	c->notifiers = &qos->min_freq_notifiers;
+	BLOCKING_INIT_NOTIFIER_HEAD(c->notifiers);
 
 	c = &qos->max_freq;
 	plist_head_init(&c->list);
 	c->target_value = FREQ_QOS_MAX_DEFAULT_VALUE;
-	c->शेष_value = FREQ_QOS_MAX_DEFAULT_VALUE;
-	c->no_स्थिरraपूर्णांक_value = FREQ_QOS_MAX_DEFAULT_VALUE;
+	c->default_value = FREQ_QOS_MAX_DEFAULT_VALUE;
+	c->no_constraint_value = FREQ_QOS_MAX_DEFAULT_VALUE;
 	c->type = PM_QOS_MIN;
-	c->notअगरiers = &qos->max_freq_notअगरiers;
-	BLOCKING_INIT_NOTIFIER_HEAD(c->notअगरiers);
-पूर्ण
+	c->notifiers = &qos->max_freq_notifiers;
+	BLOCKING_INIT_NOTIFIER_HEAD(c->notifiers);
+}
 
 /**
- * freq_qos_पढ़ो_value - Get frequency QoS स्थिरraपूर्णांक क्रम a given list.
- * @qos: Constraपूर्णांकs to evaluate.
+ * freq_qos_read_value - Get frequency QoS constraint for a given list.
+ * @qos: Constraints to evaluate.
  * @type: QoS request type.
  */
-s32 freq_qos_पढ़ो_value(काष्ठा freq_स्थिरraपूर्णांकs *qos,
-			क्रमागत freq_qos_req_type type)
-अणु
+s32 freq_qos_read_value(struct freq_constraints *qos,
+			enum freq_qos_req_type type)
+{
 	s32 ret;
 
-	चयन (type) अणु
-	हाल FREQ_QOS_MIN:
-		ret = IS_ERR_OR_शून्य(qos) ?
+	switch (type) {
+	case FREQ_QOS_MIN:
+		ret = IS_ERR_OR_NULL(qos) ?
 			FREQ_QOS_MIN_DEFAULT_VALUE :
-			pm_qos_पढ़ो_value(&qos->min_freq);
-		अवरोध;
-	हाल FREQ_QOS_MAX:
-		ret = IS_ERR_OR_शून्य(qos) ?
+			pm_qos_read_value(&qos->min_freq);
+		break;
+	case FREQ_QOS_MAX:
+		ret = IS_ERR_OR_NULL(qos) ?
 			FREQ_QOS_MAX_DEFAULT_VALUE :
-			pm_qos_पढ़ो_value(&qos->max_freq);
-		अवरोध;
-	शेष:
+			pm_qos_read_value(&qos->max_freq);
+		break;
+	default:
 		WARN_ON(1);
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * freq_qos_apply - Add/modअगरy/हटाओ frequency QoS request.
- * @req: Constraपूर्णांक request to apply.
- * @action: Action to perक्रमm (add/update/हटाओ).
+ * freq_qos_apply - Add/modify/remove frequency QoS request.
+ * @req: Constraint request to apply.
+ * @action: Action to perform (add/update/remove).
  * @value: Value to assign to the QoS request.
  *
  * This is only meant to be called from inside pm_qos, not drivers.
  */
-पूर्णांक freq_qos_apply(काष्ठा freq_qos_request *req,
-			  क्रमागत pm_qos_req_action action, s32 value)
-अणु
-	पूर्णांक ret;
+int freq_qos_apply(struct freq_qos_request *req,
+			  enum pm_qos_req_action action, s32 value)
+{
+	int ret;
 
-	चयन(req->type) अणु
-	हाल FREQ_QOS_MIN:
+	switch(req->type) {
+	case FREQ_QOS_MIN:
 		ret = pm_qos_update_target(&req->qos->min_freq, &req->pnode,
 					   action, value);
-		अवरोध;
-	हाल FREQ_QOS_MAX:
+		break;
+	case FREQ_QOS_MAX:
 		ret = pm_qos_update_target(&req->qos->max_freq, &req->pnode,
 					   action, value);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * freq_qos_add_request - Insert new frequency QoS request पूर्णांकo a given list.
- * @qos: Constraपूर्णांकs to update.
- * @req: Pपुनः_स्मृतिated request object.
+ * freq_qos_add_request - Insert new frequency QoS request into a given list.
+ * @qos: Constraints to update.
+ * @req: Preallocated request object.
  * @type: Request type.
  * @value: Request value.
  *
- * Insert a new entry पूर्णांकo the @qos list of requests, recompute the effective
- * QoS स्थिरraपूर्णांक value क्रम that list and initialize the @req object.  The
- * caller needs to save that object क्रम later use in updates and removal.
+ * Insert a new entry into the @qos list of requests, recompute the effective
+ * QoS constraint value for that list and initialize the @req object.  The
+ * caller needs to save that object for later use in updates and removal.
  *
- * Return 1 अगर the effective स्थिरraपूर्णांक value has changed, 0 अगर the effective
- * स्थिरraपूर्णांक value has not changed, or a negative error code on failures.
+ * Return 1 if the effective constraint value has changed, 0 if the effective
+ * constraint value has not changed, or a negative error code on failures.
  */
-पूर्णांक freq_qos_add_request(काष्ठा freq_स्थिरraपूर्णांकs *qos,
-			 काष्ठा freq_qos_request *req,
-			 क्रमागत freq_qos_req_type type, s32 value)
-अणु
-	पूर्णांक ret;
+int freq_qos_add_request(struct freq_constraints *qos,
+			 struct freq_qos_request *req,
+			 enum freq_qos_req_type type, s32 value)
+{
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(qos) || !req)
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(qos) || !req)
+		return -EINVAL;
 
-	अगर (WARN(freq_qos_request_active(req),
+	if (WARN(freq_qos_request_active(req),
 		 "%s() called for active request\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	req->qos = qos;
 	req->type = type;
 	ret = freq_qos_apply(req, PM_QOS_ADD_REQ, value);
-	अगर (ret < 0) अणु
-		req->qos = शून्य;
+	if (ret < 0) {
+		req->qos = NULL;
 		req->type = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(freq_qos_add_request);
 
 /**
- * freq_qos_update_request - Modअगरy existing frequency QoS request.
- * @req: Request to modअगरy.
+ * freq_qos_update_request - Modify existing frequency QoS request.
+ * @req: Request to modify.
  * @new_value: New request value.
  *
- * Update an existing frequency QoS request aदीर्घ with the effective स्थिरraपूर्णांक
- * value क्रम the list of requests it beदीर्घs to.
+ * Update an existing frequency QoS request along with the effective constraint
+ * value for the list of requests it belongs to.
  *
- * Return 1 अगर the effective स्थिरraपूर्णांक value has changed, 0 अगर the effective
- * स्थिरraपूर्णांक value has not changed, or a negative error code on failures.
+ * Return 1 if the effective constraint value has changed, 0 if the effective
+ * constraint value has not changed, or a negative error code on failures.
  */
-पूर्णांक freq_qos_update_request(काष्ठा freq_qos_request *req, s32 new_value)
-अणु
-	अगर (!req)
-		वापस -EINVAL;
+int freq_qos_update_request(struct freq_qos_request *req, s32 new_value)
+{
+	if (!req)
+		return -EINVAL;
 
-	अगर (WARN(!freq_qos_request_active(req),
+	if (WARN(!freq_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (req->pnode.prio == new_value)
-		वापस 0;
+	if (req->pnode.prio == new_value)
+		return 0;
 
-	वापस freq_qos_apply(req, PM_QOS_UPDATE_REQ, new_value);
-पूर्ण
+	return freq_qos_apply(req, PM_QOS_UPDATE_REQ, new_value);
+}
 EXPORT_SYMBOL_GPL(freq_qos_update_request);
 
 /**
- * freq_qos_हटाओ_request - Remove frequency QoS request from its list.
- * @req: Request to हटाओ.
+ * freq_qos_remove_request - Remove frequency QoS request from its list.
+ * @req: Request to remove.
  *
- * Remove the given frequency QoS request from the list of स्थिरraपूर्णांकs it
- * beदीर्घs to and recompute the effective स्थिरraपूर्णांक value क्रम that list.
+ * Remove the given frequency QoS request from the list of constraints it
+ * belongs to and recompute the effective constraint value for that list.
  *
- * Return 1 अगर the effective स्थिरraपूर्णांक value has changed, 0 अगर the effective
- * स्थिरraपूर्णांक value has not changed, or a negative error code on failures.
+ * Return 1 if the effective constraint value has changed, 0 if the effective
+ * constraint value has not changed, or a negative error code on failures.
  */
-पूर्णांक freq_qos_हटाओ_request(काष्ठा freq_qos_request *req)
-अणु
-	पूर्णांक ret;
+int freq_qos_remove_request(struct freq_qos_request *req)
+{
+	int ret;
 
-	अगर (!req)
-		वापस -EINVAL;
+	if (!req)
+		return -EINVAL;
 
-	अगर (WARN(!freq_qos_request_active(req),
+	if (WARN(!freq_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ret = freq_qos_apply(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
-	req->qos = शून्य;
+	req->qos = NULL;
 	req->type = 0;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(freq_qos_हटाओ_request);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(freq_qos_remove_request);
 
 /**
- * freq_qos_add_notअगरier - Add frequency QoS change notअगरier.
- * @qos: List of requests to add the notअगरier to.
+ * freq_qos_add_notifier - Add frequency QoS change notifier.
+ * @qos: List of requests to add the notifier to.
  * @type: Request type.
- * @notअगरier: Notअगरier block to add.
+ * @notifier: Notifier block to add.
  */
-पूर्णांक freq_qos_add_notअगरier(काष्ठा freq_स्थिरraपूर्णांकs *qos,
-			  क्रमागत freq_qos_req_type type,
-			  काष्ठा notअगरier_block *notअगरier)
-अणु
-	पूर्णांक ret;
+int freq_qos_add_notifier(struct freq_constraints *qos,
+			  enum freq_qos_req_type type,
+			  struct notifier_block *notifier)
+{
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(qos) || !notअगरier)
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(qos) || !notifier)
+		return -EINVAL;
 
-	चयन (type) अणु
-	हाल FREQ_QOS_MIN:
-		ret = blocking_notअगरier_chain_रेजिस्टर(qos->min_freq.notअगरiers,
-						       notअगरier);
-		अवरोध;
-	हाल FREQ_QOS_MAX:
-		ret = blocking_notअगरier_chain_रेजिस्टर(qos->max_freq.notअगरiers,
-						       notअगरier);
-		अवरोध;
-	शेष:
+	switch (type) {
+	case FREQ_QOS_MIN:
+		ret = blocking_notifier_chain_register(qos->min_freq.notifiers,
+						       notifier);
+		break;
+	case FREQ_QOS_MAX:
+		ret = blocking_notifier_chain_register(qos->max_freq.notifiers,
+						       notifier);
+		break;
+	default:
 		WARN_ON(1);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(freq_qos_add_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(freq_qos_add_notifier);
 
 /**
- * freq_qos_हटाओ_notअगरier - Remove frequency QoS change notअगरier.
- * @qos: List of requests to हटाओ the notअगरier from.
+ * freq_qos_remove_notifier - Remove frequency QoS change notifier.
+ * @qos: List of requests to remove the notifier from.
  * @type: Request type.
- * @notअगरier: Notअगरier block to हटाओ.
+ * @notifier: Notifier block to remove.
  */
-पूर्णांक freq_qos_हटाओ_notअगरier(काष्ठा freq_स्थिरraपूर्णांकs *qos,
-			     क्रमागत freq_qos_req_type type,
-			     काष्ठा notअगरier_block *notअगरier)
-अणु
-	पूर्णांक ret;
+int freq_qos_remove_notifier(struct freq_constraints *qos,
+			     enum freq_qos_req_type type,
+			     struct notifier_block *notifier)
+{
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(qos) || !notअगरier)
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(qos) || !notifier)
+		return -EINVAL;
 
-	चयन (type) अणु
-	हाल FREQ_QOS_MIN:
-		ret = blocking_notअगरier_chain_unरेजिस्टर(qos->min_freq.notअगरiers,
-							 notअगरier);
-		अवरोध;
-	हाल FREQ_QOS_MAX:
-		ret = blocking_notअगरier_chain_unरेजिस्टर(qos->max_freq.notअगरiers,
-							 notअगरier);
-		अवरोध;
-	शेष:
+	switch (type) {
+	case FREQ_QOS_MIN:
+		ret = blocking_notifier_chain_unregister(qos->min_freq.notifiers,
+							 notifier);
+		break;
+	case FREQ_QOS_MAX:
+		ret = blocking_notifier_chain_unregister(qos->max_freq.notifiers,
+							 notifier);
+		break;
+	default:
 		WARN_ON(1);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(freq_qos_हटाओ_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(freq_qos_remove_notifier);

@@ -1,94 +1,93 @@
-<शैली गुरु>
-#घोषणा pr_fmt(fmt)  "Hyper-V: " fmt
+#define pr_fmt(fmt)  "Hyper-V: " fmt
 
-#समावेश <linux/hyperv.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/hyperv.h>
+#include <linux/log2.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/fpu/api.h>
-#समावेश <यंत्र/mshyperv.h>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/tlb.h>
+#include <asm/fpu/api.h>
+#include <asm/mshyperv.h>
+#include <asm/msr.h>
+#include <asm/tlbflush.h>
+#include <asm/tlb.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <यंत्र/trace/hyperv.h>
+#define CREATE_TRACE_POINTS
+#include <asm/trace/hyperv.h>
 
-/* Each gva in gबहु_सूची encodes up to 4096 pages to flush */
-#घोषणा HV_TLB_FLUSH_UNIT (4096 * PAGE_SIZE)
+/* Each gva in gva_list encodes up to 4096 pages to flush */
+#define HV_TLB_FLUSH_UNIT (4096 * PAGE_SIZE)
 
-अटल u64 hyperv_flush_tlb_others_ex(स्थिर काष्ठा cpumask *cpus,
-				      स्थिर काष्ठा flush_tlb_info *info);
+static u64 hyperv_flush_tlb_others_ex(const struct cpumask *cpus,
+				      const struct flush_tlb_info *info);
 
 /*
- * Fills in gबहु_सूची starting from offset. Returns the number of items added.
+ * Fills in gva_list starting from offset. Returns the number of items added.
  */
-अटल अंतरभूत पूर्णांक fill_gबहु_सूची(u64 gबहु_सूची[], पूर्णांक offset,
-				अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	पूर्णांक gva_n = offset;
-	अचिन्हित दीर्घ cur = start, dअगरf;
+static inline int fill_gva_list(u64 gva_list[], int offset,
+				unsigned long start, unsigned long end)
+{
+	int gva_n = offset;
+	unsigned long cur = start, diff;
 
-	करो अणु
-		dअगरf = end > cur ? end - cur : 0;
+	do {
+		diff = end > cur ? end - cur : 0;
 
-		gबहु_सूची[gva_n] = cur & PAGE_MASK;
+		gva_list[gva_n] = cur & PAGE_MASK;
 		/*
 		 * Lower 12 bits encode the number of additional
 		 * pages to flush (in addition to the 'cur' page).
 		 */
-		अगर (dअगरf >= HV_TLB_FLUSH_UNIT) अणु
-			gबहु_सूची[gva_n] |= ~PAGE_MASK;
+		if (diff >= HV_TLB_FLUSH_UNIT) {
+			gva_list[gva_n] |= ~PAGE_MASK;
 			cur += HV_TLB_FLUSH_UNIT;
-		पूर्ण  अन्यथा अगर (dअगरf) अणु
-			gबहु_सूची[gva_n] |= (dअगरf - 1) >> PAGE_SHIFT;
+		}  else if (diff) {
+			gva_list[gva_n] |= (diff - 1) >> PAGE_SHIFT;
 			cur = end;
-		पूर्ण
+		}
 
 		gva_n++;
 
-	पूर्ण जबतक (cur < end);
+	} while (cur < end);
 
-	वापस gva_n - offset;
-पूर्ण
+	return gva_n - offset;
+}
 
-अटल व्योम hyperv_flush_tlb_multi(स्थिर काष्ठा cpumask *cpus,
-				   स्थिर काष्ठा flush_tlb_info *info)
-अणु
-	पूर्णांक cpu, vcpu, gva_n, max_gvas;
-	काष्ठा hv_tlb_flush **flush_pcpu;
-	काष्ठा hv_tlb_flush *flush;
+static void hyperv_flush_tlb_multi(const struct cpumask *cpus,
+				   const struct flush_tlb_info *info)
+{
+	int cpu, vcpu, gva_n, max_gvas;
+	struct hv_tlb_flush **flush_pcpu;
+	struct hv_tlb_flush *flush;
 	u64 status;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	trace_hyperv_mmu_flush_tlb_multi(cpus, info);
 
-	अगर (!hv_hypercall_pg)
-		जाओ करो_native;
+	if (!hv_hypercall_pg)
+		goto do_native;
 
 	local_irq_save(flags);
 
 	/*
-	 * Only check the mask _after_ पूर्णांकerrupt has been disabled to aव्योम the
+	 * Only check the mask _after_ interrupt has been disabled to avoid the
 	 * mask changing under our feet.
 	 */
-	अगर (cpumask_empty(cpus)) अणु
+	if (cpumask_empty(cpus)) {
 		local_irq_restore(flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	flush_pcpu = (काष्ठा hv_tlb_flush **)
+	flush_pcpu = (struct hv_tlb_flush **)
 		     this_cpu_ptr(hyperv_pcpu_input_arg);
 
 	flush = *flush_pcpu;
 
-	अगर (unlikely(!flush)) अणु
+	if (unlikely(!flush)) {
 		local_irq_restore(flags);
-		जाओ करो_native;
-	पूर्ण
+		goto do_native;
+	}
 
-	अगर (info->mm) अणु
+	if (info->mm) {
 		/*
 		 * AddressSpace argument must match the CR3 with PCID bits
 		 * stripped out.
@@ -96,95 +95,95 @@
 		flush->address_space = virt_to_phys(info->mm->pgd);
 		flush->address_space &= CR3_ADDR_MASK;
 		flush->flags = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		flush->address_space = 0;
 		flush->flags = HV_FLUSH_ALL_VIRTUAL_ADDRESS_SPACES;
-	पूर्ण
+	}
 
 	flush->processor_mask = 0;
-	अगर (cpumask_equal(cpus, cpu_present_mask)) अणु
+	if (cpumask_equal(cpus, cpu_present_mask)) {
 		flush->flags |= HV_FLUSH_ALL_PROCESSORS;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * From the supplied CPU set we need to figure out अगर we can get
-		 * away with cheaper HVCALL_FLUSH_VIRTUAL_ADDRESS_अणुLIST,SPACEपूर्ण
+		 * From the supplied CPU set we need to figure out if we can get
+		 * away with cheaper HVCALL_FLUSH_VIRTUAL_ADDRESS_{LIST,SPACE}
 		 * hypercalls. This is possible when the highest VP number in
 		 * the set is < 64. As VP numbers are usually in ascending order
 		 * and match Linux CPU ids, here is an optimization: we check
-		 * the VP number क्रम the highest bit in the supplied set first
-		 * so we can quickly find out अगर using *_EX hypercalls is a
+		 * the VP number for the highest bit in the supplied set first
+		 * so we can quickly find out if using *_EX hypercalls is a
 		 * must. We will also check all VP numbers when walking the
-		 * supplied CPU set to reमुख्य correct in all हालs.
+		 * supplied CPU set to remain correct in all cases.
 		 */
-		अगर (hv_cpu_number_to_vp_number(cpumask_last(cpus)) >= 64)
-			जाओ करो_ex_hypercall;
+		if (hv_cpu_number_to_vp_number(cpumask_last(cpus)) >= 64)
+			goto do_ex_hypercall;
 
-		क्रम_each_cpu(cpu, cpus) अणु
+		for_each_cpu(cpu, cpus) {
 			vcpu = hv_cpu_number_to_vp_number(cpu);
-			अगर (vcpu == VP_INVAL) अणु
+			if (vcpu == VP_INVAL) {
 				local_irq_restore(flags);
-				जाओ करो_native;
-			पूर्ण
+				goto do_native;
+			}
 
-			अगर (vcpu >= 64)
-				जाओ करो_ex_hypercall;
+			if (vcpu >= 64)
+				goto do_ex_hypercall;
 
-			__set_bit(vcpu, (अचिन्हित दीर्घ *)
+			__set_bit(vcpu, (unsigned long *)
 				  &flush->processor_mask);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * We can flush not more than max_gvas with one hypercall. Flush the
-	 * whole address space अगर we were asked to करो more.
+	 * whole address space if we were asked to do more.
 	 */
-	max_gvas = (PAGE_SIZE - माप(*flush)) / माप(flush->gबहु_सूची[0]);
+	max_gvas = (PAGE_SIZE - sizeof(*flush)) / sizeof(flush->gva_list[0]);
 
-	अगर (info->end == TLB_FLUSH_ALL) अणु
+	if (info->end == TLB_FLUSH_ALL) {
 		flush->flags |= HV_FLUSH_NON_GLOBAL_MAPPINGS_ONLY;
-		status = hv_करो_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE,
-					 flush, शून्य);
-	पूर्ण अन्यथा अगर (info->end &&
-		   ((info->end - info->start)/HV_TLB_FLUSH_UNIT) > max_gvas) अणु
-		status = hv_करो_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE,
-					 flush, शून्य);
-	पूर्ण अन्यथा अणु
-		gva_n = fill_gबहु_सूची(flush->gबहु_सूची, 0,
+		status = hv_do_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE,
+					 flush, NULL);
+	} else if (info->end &&
+		   ((info->end - info->start)/HV_TLB_FLUSH_UNIT) > max_gvas) {
+		status = hv_do_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE,
+					 flush, NULL);
+	} else {
+		gva_n = fill_gva_list(flush->gva_list, 0,
 				      info->start, info->end);
-		status = hv_करो_rep_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST,
-					     gva_n, 0, flush, शून्य);
-	पूर्ण
-	जाओ check_status;
+		status = hv_do_rep_hypercall(HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST,
+					     gva_n, 0, flush, NULL);
+	}
+	goto check_status;
 
-करो_ex_hypercall:
+do_ex_hypercall:
 	status = hyperv_flush_tlb_others_ex(cpus, info);
 
 check_status:
 	local_irq_restore(flags);
 
-	अगर (hv_result_success(status))
-		वापस;
-करो_native:
+	if (hv_result_success(status))
+		return;
+do_native:
 	native_flush_tlb_multi(cpus, info);
-पूर्ण
+}
 
-अटल u64 hyperv_flush_tlb_others_ex(स्थिर काष्ठा cpumask *cpus,
-				      स्थिर काष्ठा flush_tlb_info *info)
-अणु
-	पूर्णांक nr_bank = 0, max_gvas, gva_n;
-	काष्ठा hv_tlb_flush_ex **flush_pcpu;
-	काष्ठा hv_tlb_flush_ex *flush;
+static u64 hyperv_flush_tlb_others_ex(const struct cpumask *cpus,
+				      const struct flush_tlb_info *info)
+{
+	int nr_bank = 0, max_gvas, gva_n;
+	struct hv_tlb_flush_ex **flush_pcpu;
+	struct hv_tlb_flush_ex *flush;
 	u64 status;
 
-	अगर (!(ms_hyperv.hपूर्णांकs & HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED))
-		वापस HV_STATUS_INVALID_PARAMETER;
+	if (!(ms_hyperv.hints & HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED))
+		return HV_STATUS_INVALID_PARAMETER;
 
-	flush_pcpu = (काष्ठा hv_tlb_flush_ex **)
+	flush_pcpu = (struct hv_tlb_flush_ex **)
 		     this_cpu_ptr(hyperv_pcpu_input_arg);
 
 	flush = *flush_pcpu;
 
-	अगर (info->mm) अणु
+	if (info->mm) {
 		/*
 		 * AddressSpace argument must match the CR3 with PCID bits
 		 * stripped out.
@@ -192,54 +191,54 @@ check_status:
 		flush->address_space = virt_to_phys(info->mm->pgd);
 		flush->address_space &= CR3_ADDR_MASK;
 		flush->flags = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		flush->address_space = 0;
 		flush->flags = HV_FLUSH_ALL_VIRTUAL_ADDRESS_SPACES;
-	पूर्ण
+	}
 
 	flush->hv_vp_set.valid_bank_mask = 0;
 
-	flush->hv_vp_set.क्रमmat = HV_GENERIC_SET_SPARSE_4K;
+	flush->hv_vp_set.format = HV_GENERIC_SET_SPARSE_4K;
 	nr_bank = cpumask_to_vpset(&(flush->hv_vp_set), cpus);
-	अगर (nr_bank < 0)
-		वापस HV_STATUS_INVALID_PARAMETER;
+	if (nr_bank < 0)
+		return HV_STATUS_INVALID_PARAMETER;
 
 	/*
 	 * We can flush not more than max_gvas with one hypercall. Flush the
-	 * whole address space अगर we were asked to करो more.
+	 * whole address space if we were asked to do more.
 	 */
 	max_gvas =
-		(PAGE_SIZE - माप(*flush) - nr_bank *
-		 माप(flush->hv_vp_set.bank_contents[0])) /
-		माप(flush->gबहु_सूची[0]);
+		(PAGE_SIZE - sizeof(*flush) - nr_bank *
+		 sizeof(flush->hv_vp_set.bank_contents[0])) /
+		sizeof(flush->gva_list[0]);
 
-	अगर (info->end == TLB_FLUSH_ALL) अणु
+	if (info->end == TLB_FLUSH_ALL) {
 		flush->flags |= HV_FLUSH_NON_GLOBAL_MAPPINGS_ONLY;
-		status = hv_करो_rep_hypercall(
+		status = hv_do_rep_hypercall(
 			HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE_EX,
-			0, nr_bank, flush, शून्य);
-	पूर्ण अन्यथा अगर (info->end &&
-		   ((info->end - info->start)/HV_TLB_FLUSH_UNIT) > max_gvas) अणु
-		status = hv_करो_rep_hypercall(
+			0, nr_bank, flush, NULL);
+	} else if (info->end &&
+		   ((info->end - info->start)/HV_TLB_FLUSH_UNIT) > max_gvas) {
+		status = hv_do_rep_hypercall(
 			HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE_EX,
-			0, nr_bank, flush, शून्य);
-	पूर्ण अन्यथा अणु
-		gva_n = fill_gबहु_सूची(flush->gबहु_सूची, nr_bank,
+			0, nr_bank, flush, NULL);
+	} else {
+		gva_n = fill_gva_list(flush->gva_list, nr_bank,
 				      info->start, info->end);
-		status = hv_करो_rep_hypercall(
+		status = hv_do_rep_hypercall(
 			HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST_EX,
-			gva_n, nr_bank, flush, शून्य);
-	पूर्ण
+			gva_n, nr_bank, flush, NULL);
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम hyperv_setup_mmu_ops(व्योम)
-अणु
-	अगर (!(ms_hyperv.hपूर्णांकs & HV_X64_REMOTE_TLB_FLUSH_RECOMMENDED))
-		वापस;
+void hyperv_setup_mmu_ops(void)
+{
+	if (!(ms_hyperv.hints & HV_X64_REMOTE_TLB_FLUSH_RECOMMENDED))
+		return;
 
 	pr_info("Using hypercall for remote TLB flush\n");
 	pv_ops.mmu.flush_tlb_multi = hyperv_flush_tlb_multi;
-	pv_ops.mmu.tlb_हटाओ_table = tlb_हटाओ_table;
-पूर्ण
+	pv_ops.mmu.tlb_remove_table = tlb_remove_table;
+}

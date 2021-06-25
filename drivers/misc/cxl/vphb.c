@@ -1,266 +1,265 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#समावेश <linux/pci.h>
-#समावेश <misc/cxl.h>
-#समावेश "cxl.h"
+#include <linux/pci.h>
+#include <misc/cxl.h>
+#include "cxl.h"
 
-अटल पूर्णांक cxl_pci_probe_mode(काष्ठा pci_bus *bus)
-अणु
-	वापस PCI_PROBE_NORMAL;
-पूर्ण
+static int cxl_pci_probe_mode(struct pci_bus *bus)
+{
+	return PCI_PROBE_NORMAL;
+}
 
-अटल पूर्णांक cxl_setup_msi_irqs(काष्ठा pci_dev *pdev, पूर्णांक nvec, पूर्णांक type)
-अणु
-	वापस -ENODEV;
-पूर्ण
+static int cxl_setup_msi_irqs(struct pci_dev *pdev, int nvec, int type)
+{
+	return -ENODEV;
+}
 
-अटल व्योम cxl_tearकरोwn_msi_irqs(काष्ठा pci_dev *pdev)
-अणु
+static void cxl_teardown_msi_irqs(struct pci_dev *pdev)
+{
 	/*
 	 * MSI should never be set but need still need to provide this call
 	 * back.
 	 */
-पूर्ण
+}
 
-अटल bool cxl_pci_enable_device_hook(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *phb;
-	काष्ठा cxl_afu *afu;
-	काष्ठा cxl_context *ctx;
+static bool cxl_pci_enable_device_hook(struct pci_dev *dev)
+{
+	struct pci_controller *phb;
+	struct cxl_afu *afu;
+	struct cxl_context *ctx;
 
 	phb = pci_bus_to_host(dev->bus);
-	afu = (काष्ठा cxl_afu *)phb->निजी_data;
+	afu = (struct cxl_afu *)phb->private_data;
 
-	अगर (!cxl_ops->link_ok(afu->adapter, afu)) अणु
+	if (!cxl_ops->link_ok(afu->adapter, afu)) {
 		dev_warn(&dev->dev, "%s: Device link is down, refusing to enable AFU\n", __func__);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dev->dev.archdata.dma_offset = PAGE_OFFSET;
 
 	/*
-	 * Allocate a context to करो cxl things too.  If we eventually करो real
-	 * DMA ops, we'll need a शेष context to attach them to
+	 * Allocate a context to do cxl things too.  If we eventually do real
+	 * DMA ops, we'll need a default context to attach them to
 	 */
 	ctx = cxl_dev_context_init(dev);
-	अगर (IS_ERR(ctx))
-		वापस false;
+	if (IS_ERR(ctx))
+		return false;
 	dev->dev.archdata.cxl_ctx = ctx;
 
-	वापस (cxl_ops->afu_check_and_enable(afu) == 0);
-पूर्ण
+	return (cxl_ops->afu_check_and_enable(afu) == 0);
+}
 
-अटल व्योम cxl_pci_disable_device(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा cxl_context *ctx = cxl_get_context(dev);
+static void cxl_pci_disable_device(struct pci_dev *dev)
+{
+	struct cxl_context *ctx = cxl_get_context(dev);
 
-	अगर (ctx) अणु
-		अगर (ctx->status == STARTED) अणु
+	if (ctx) {
+		if (ctx->status == STARTED) {
 			dev_err(&dev->dev, "Default context started\n");
-			वापस;
-		पूर्ण
-		dev->dev.archdata.cxl_ctx = शून्य;
+			return;
+		}
+		dev->dev.archdata.cxl_ctx = NULL;
 		cxl_release_context(ctx);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल resource_माप_प्रकार cxl_pci_winकरोw_alignment(काष्ठा pci_bus *bus,
-						अचिन्हित दीर्घ type)
-अणु
-	वापस 1;
-पूर्ण
+static resource_size_t cxl_pci_window_alignment(struct pci_bus *bus,
+						unsigned long type)
+{
+	return 1;
+}
 
-अटल व्योम cxl_pci_reset_secondary_bus(काष्ठा pci_dev *dev)
-अणु
-	/* Should we करो an AFU reset here ? */
-पूर्ण
+static void cxl_pci_reset_secondary_bus(struct pci_dev *dev)
+{
+	/* Should we do an AFU reset here ? */
+}
 
-अटल पूर्णांक cxl_pcie_cfg_record(u8 bus, u8 devfn)
-अणु
-	वापस (bus << 8) + devfn;
-पूर्ण
+static int cxl_pcie_cfg_record(u8 bus, u8 devfn)
+{
+	return (bus << 8) + devfn;
+}
 
-अटल अंतरभूत काष्ठा cxl_afu *pci_bus_to_afu(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *phb = bus ? pci_bus_to_host(bus) : शून्य;
+static inline struct cxl_afu *pci_bus_to_afu(struct pci_bus *bus)
+{
+	struct pci_controller *phb = bus ? pci_bus_to_host(bus) : NULL;
 
-	वापस phb ? phb->निजी_data : शून्य;
-पूर्ण
+	return phb ? phb->private_data : NULL;
+}
 
-अटल व्योम cxl_afu_configured_put(काष्ठा cxl_afu *afu)
-अणु
-	atomic_dec_अगर_positive(&afu->configured_state);
-पूर्ण
+static void cxl_afu_configured_put(struct cxl_afu *afu)
+{
+	atomic_dec_if_positive(&afu->configured_state);
+}
 
-अटल bool cxl_afu_configured_get(काष्ठा cxl_afu *afu)
-अणु
-	वापस atomic_inc_unless_negative(&afu->configured_state);
-पूर्ण
+static bool cxl_afu_configured_get(struct cxl_afu *afu)
+{
+	return atomic_inc_unless_negative(&afu->configured_state);
+}
 
-अटल अंतरभूत पूर्णांक cxl_pcie_config_info(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				       काष्ठा cxl_afu *afu, पूर्णांक *_record)
-अणु
-	पूर्णांक record;
+static inline int cxl_pcie_config_info(struct pci_bus *bus, unsigned int devfn,
+				       struct cxl_afu *afu, int *_record)
+{
+	int record;
 
 	record = cxl_pcie_cfg_record(bus->number, devfn);
-	अगर (record > afu->crs_num)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if (record > afu->crs_num)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	*_record = record;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cxl_pcie_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				पूर्णांक offset, पूर्णांक len, u32 *val)
-अणु
-	पूर्णांक rc, record;
-	काष्ठा cxl_afu *afu;
+static int cxl_pcie_read_config(struct pci_bus *bus, unsigned int devfn,
+				int offset, int len, u32 *val)
+{
+	int rc, record;
+	struct cxl_afu *afu;
 	u8 val8;
 	u16 val16;
 	u32 val32;
 
 	afu = pci_bus_to_afu(bus);
-	/* Grab a पढ़ोer lock on afu. */
-	अगर (afu == शून्य || !cxl_afu_configured_get(afu))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	/* Grab a reader lock on afu. */
+	if (afu == NULL || !cxl_afu_configured_get(afu))
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	rc = cxl_pcie_config_info(bus, devfn, afu, &record);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	चयन (len) अणु
-	हाल 1:
-		rc = cxl_ops->afu_cr_पढ़ो8(afu, record, offset,	&val8);
+	switch (len) {
+	case 1:
+		rc = cxl_ops->afu_cr_read8(afu, record, offset,	&val8);
 		*val = val8;
-		अवरोध;
-	हाल 2:
-		rc = cxl_ops->afu_cr_पढ़ो16(afu, record, offset, &val16);
+		break;
+	case 2:
+		rc = cxl_ops->afu_cr_read16(afu, record, offset, &val16);
 		*val = val16;
-		अवरोध;
-	हाल 4:
-		rc = cxl_ops->afu_cr_पढ़ो32(afu, record, offset, &val32);
+		break;
+	case 4:
+		rc = cxl_ops->afu_cr_read32(afu, record, offset, &val32);
 		*val = val32;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 
 out:
 	cxl_afu_configured_put(afu);
-	वापस rc ? PCIBIOS_DEVICE_NOT_FOUND : 0;
-पूर्ण
+	return rc ? PCIBIOS_DEVICE_NOT_FOUND : 0;
+}
 
-अटल पूर्णांक cxl_pcie_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				 पूर्णांक offset, पूर्णांक len, u32 val)
-अणु
-	पूर्णांक rc, record;
-	काष्ठा cxl_afu *afu;
+static int cxl_pcie_write_config(struct pci_bus *bus, unsigned int devfn,
+				 int offset, int len, u32 val)
+{
+	int rc, record;
+	struct cxl_afu *afu;
 
 	afu = pci_bus_to_afu(bus);
-	/* Grab a पढ़ोer lock on afu. */
-	अगर (afu == शून्य || !cxl_afu_configured_get(afu))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	/* Grab a reader lock on afu. */
+	if (afu == NULL || !cxl_afu_configured_get(afu))
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	rc = cxl_pcie_config_info(bus, devfn, afu, &record);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	चयन (len) अणु
-	हाल 1:
-		rc = cxl_ops->afu_cr_ग_लिखो8(afu, record, offset, val & 0xff);
-		अवरोध;
-	हाल 2:
-		rc = cxl_ops->afu_cr_ग_लिखो16(afu, record, offset, val & 0xffff);
-		अवरोध;
-	हाल 4:
-		rc = cxl_ops->afu_cr_ग_लिखो32(afu, record, offset, val);
-		अवरोध;
-	शेष:
+	switch (len) {
+	case 1:
+		rc = cxl_ops->afu_cr_write8(afu, record, offset, val & 0xff);
+		break;
+	case 2:
+		rc = cxl_ops->afu_cr_write16(afu, record, offset, val & 0xffff);
+		break;
+	case 4:
+		rc = cxl_ops->afu_cr_write32(afu, record, offset, val);
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 
 out:
 	cxl_afu_configured_put(afu);
-	वापस rc ? PCIBIOS_SET_FAILED : 0;
-पूर्ण
+	return rc ? PCIBIOS_SET_FAILED : 0;
+}
 
-अटल काष्ठा pci_ops cxl_pcie_pci_ops =
-अणु
-	.पढ़ो = cxl_pcie_पढ़ो_config,
-	.ग_लिखो = cxl_pcie_ग_लिखो_config,
-पूर्ण;
+static struct pci_ops cxl_pcie_pci_ops =
+{
+	.read = cxl_pcie_read_config,
+	.write = cxl_pcie_write_config,
+};
 
 
-अटल काष्ठा pci_controller_ops cxl_pci_controller_ops =
-अणु
+static struct pci_controller_ops cxl_pci_controller_ops =
+{
 	.probe_mode = cxl_pci_probe_mode,
 	.enable_device_hook = cxl_pci_enable_device_hook,
 	.disable_device = cxl_pci_disable_device,
 	.release_device = cxl_pci_disable_device,
-	.winकरोw_alignment = cxl_pci_winकरोw_alignment,
+	.window_alignment = cxl_pci_window_alignment,
 	.reset_secondary_bus = cxl_pci_reset_secondary_bus,
 	.setup_msi_irqs = cxl_setup_msi_irqs,
-	.tearकरोwn_msi_irqs = cxl_tearकरोwn_msi_irqs,
-पूर्ण;
+	.teardown_msi_irqs = cxl_teardown_msi_irqs,
+};
 
-पूर्णांक cxl_pci_vphb_add(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा pci_controller *phb;
-	काष्ठा device_node *vphb_dn;
-	काष्ठा device *parent;
+int cxl_pci_vphb_add(struct cxl_afu *afu)
+{
+	struct pci_controller *phb;
+	struct device_node *vphb_dn;
+	struct device *parent;
 
 	/*
 	 * If there are no AFU configuration records we won't have anything to
-	 * expose under the vPHB, so skip creating one, वापसing success since
-	 * this is still a valid हाल. This will also opt us out of EEH
-	 * handling since we won't have anything special to करो अगर there are no
+	 * expose under the vPHB, so skip creating one, returning success since
+	 * this is still a valid case. This will also opt us out of EEH
+	 * handling since we won't have anything special to do if there are no
 	 * kernel drivers attached to the vPHB, and EEH handling is not yet
 	 * supported in the peer model.
 	 */
-	अगर (!afu->crs_num)
-		वापस 0;
+	if (!afu->crs_num)
+		return 0;
 
 	/* The parent device is the adapter. Reuse the device node of
 	 * the adapter.
-	 * We करोn't seem to care what device node is used क्रम the vPHB,
+	 * We don't seem to care what device node is used for the vPHB,
 	 * but tools such as lsvpd walk up the device parents looking
-	 * क्रम a valid location code, so we might as well show devices
+	 * for a valid location code, so we might as well show devices
 	 * attached to the adapter as being located on that adapter.
 	 */
 	parent = afu->adapter->dev.parent;
 	vphb_dn = parent->of_node;
 
-	/* Alloc and setup PHB data काष्ठाure */
+	/* Alloc and setup PHB data structure */
 	phb = pcibios_alloc_controller(vphb_dn);
-	अगर (!phb)
-		वापस -ENODEV;
+	if (!phb)
+		return -ENODEV;
 
 	/* Setup parent in sysfs */
 	phb->parent = parent;
 
 	/* Setup the PHB using arch provided callback */
 	phb->ops = &cxl_pcie_pci_ops;
-	phb->cfg_addr = शून्य;
-	phb->cfg_data = शून्य;
-	phb->निजी_data = afu;
+	phb->cfg_addr = NULL;
+	phb->cfg_data = NULL;
+	phb->private_data = afu;
 	phb->controller_ops = cxl_pci_controller_ops;
 
 	/* Scan the bus */
 	pcibios_scan_phb(phb);
-	अगर (phb->bus == शून्य)
-		वापस -ENXIO;
+	if (phb->bus == NULL)
+		return -ENXIO;
 
 	/* Set release hook on root bus */
 	pci_set_host_bridge_release(to_pci_host_bridge(phb->bus->bridge),
-				    pcibios_मुक्त_controller_deferred,
-				    (व्योम *) phb);
+				    pcibios_free_controller_deferred,
+				    (void *) phb);
 
 	/* Claim resources. This might need some rework as well depending
-	 * whether we are करोing probe-only or not, like assigning unasचिन्हित
+	 * whether we are doing probe-only or not, like assigning unassigned
 	 * resources etc...
 	 */
 	pcibios_claim_one_bus(phb->bus);
@@ -270,48 +269,48 @@ out:
 
 	afu->phb = phb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cxl_pci_vphb_हटाओ(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा pci_controller *phb;
+void cxl_pci_vphb_remove(struct cxl_afu *afu)
+{
+	struct pci_controller *phb;
 
 	/* If there is no configuration record we won't have one of these */
-	अगर (!afu || !afu->phb)
-		वापस;
+	if (!afu || !afu->phb)
+		return;
 
 	phb = afu->phb;
-	afu->phb = शून्य;
+	afu->phb = NULL;
 
-	pci_हटाओ_root_bus(phb->bus);
+	pci_remove_root_bus(phb->bus);
 	/*
-	 * We करोn't free phb here - that's handled by
-	 * pcibios_मुक्त_controller_deferred()
+	 * We don't free phb here - that's handled by
+	 * pcibios_free_controller_deferred()
 	 */
-पूर्ण
+}
 
-bool cxl_pci_is_vphb_device(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *phb;
-
-	phb = pci_bus_to_host(dev->bus);
-
-	वापस (phb->ops == &cxl_pcie_pci_ops);
-पूर्ण
-
-काष्ठा cxl_afu *cxl_pci_to_afu(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_controller *phb;
+bool cxl_pci_is_vphb_device(struct pci_dev *dev)
+{
+	struct pci_controller *phb;
 
 	phb = pci_bus_to_host(dev->bus);
 
-	वापस (काष्ठा cxl_afu *)phb->निजी_data;
-पूर्ण
+	return (phb->ops == &cxl_pcie_pci_ops);
+}
+
+struct cxl_afu *cxl_pci_to_afu(struct pci_dev *dev)
+{
+	struct pci_controller *phb;
+
+	phb = pci_bus_to_host(dev->bus);
+
+	return (struct cxl_afu *)phb->private_data;
+}
 EXPORT_SYMBOL_GPL(cxl_pci_to_afu);
 
-अचिन्हित पूर्णांक cxl_pci_to_cfg_record(काष्ठा pci_dev *dev)
-अणु
-	वापस cxl_pcie_cfg_record(dev->bus->number, dev->devfn);
-पूर्ण
+unsigned int cxl_pci_to_cfg_record(struct pci_dev *dev)
+{
+	return cxl_pcie_cfg_record(dev->bus->number, dev->devfn);
+}
 EXPORT_SYMBOL_GPL(cxl_pci_to_cfg_record);

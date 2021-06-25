@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * PCI Hot Plug Controller Driver क्रम System z
+ * PCI Hot Plug Controller Driver for System z
  *
  * Copyright 2012 IBM Corp.
  *
@@ -9,98 +8,98 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "zpci"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "zpci"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_hotplug.h>
-#समावेश <यंत्र/pci_debug.h>
-#समावेश <यंत्र/sclp.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/pci_hotplug.h>
+#include <asm/pci_debug.h>
+#include <asm/sclp.h>
 
-#घोषणा SLOT_NAME_SIZE	10
+#define SLOT_NAME_SIZE	10
 
-अटल पूर्णांक enable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा zpci_dev *zdev = container_of(hotplug_slot, काष्ठा zpci_dev,
+static int enable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct zpci_dev *zdev = container_of(hotplug_slot, struct zpci_dev,
 					     hotplug_slot);
-	पूर्णांक rc;
+	int rc;
 
-	अगर (zdev->state != ZPCI_FN_STATE_STANDBY)
-		वापस -EIO;
+	if (zdev->state != ZPCI_FN_STATE_STANDBY)
+		return -EIO;
 
 	rc = sclp_pci_configure(zdev->fid);
 	zpci_dbg(3, "conf fid:%x, rc:%d\n", zdev->fid, rc);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	zdev->state = ZPCI_FN_STATE_CONFIGURED;
 
-	वापस zpci_scan_configured_device(zdev, zdev->fh);
-पूर्ण
+	return zpci_scan_configured_device(zdev, zdev->fh);
+}
 
-अटल पूर्णांक disable_slot(काष्ठा hotplug_slot *hotplug_slot)
-अणु
-	काष्ठा zpci_dev *zdev = container_of(hotplug_slot, काष्ठा zpci_dev,
+static int disable_slot(struct hotplug_slot *hotplug_slot)
+{
+	struct zpci_dev *zdev = container_of(hotplug_slot, struct zpci_dev,
 					     hotplug_slot);
-	काष्ठा pci_dev *pdev;
+	struct pci_dev *pdev;
 
-	अगर (zdev->state != ZPCI_FN_STATE_CONFIGURED)
-		वापस -EIO;
+	if (zdev->state != ZPCI_FN_STATE_CONFIGURED)
+		return -EIO;
 
 	pdev = pci_get_slot(zdev->zbus->bus, zdev->devfn);
-	अगर (pdev && pci_num_vf(pdev)) अणु
+	if (pdev && pci_num_vf(pdev)) {
 		pci_dev_put(pdev);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	pci_dev_put(pdev);
 
-	वापस zpci_deconfigure_device(zdev);
-पूर्ण
+	return zpci_deconfigure_device(zdev);
+}
 
-अटल पूर्णांक get_घातer_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	काष्ठा zpci_dev *zdev = container_of(hotplug_slot, काष्ठा zpci_dev,
+static int get_power_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	struct zpci_dev *zdev = container_of(hotplug_slot, struct zpci_dev,
 					     hotplug_slot);
 
-	चयन (zdev->state) अणु
-	हाल ZPCI_FN_STATE_STANDBY:
+	switch (zdev->state) {
+	case ZPCI_FN_STATE_STANDBY:
 		*value = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*value = 1;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक get_adapter_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
-अणु
-	/* अगर the slot निकासs it always contains a function */
+static int get_adapter_status(struct hotplug_slot *hotplug_slot, u8 *value)
+{
+	/* if the slot exits it always contains a function */
 	*value = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hotplug_slot_ops s390_hotplug_slot_ops = अणु
+static const struct hotplug_slot_ops s390_hotplug_slot_ops = {
 	.enable_slot =		enable_slot,
 	.disable_slot =		disable_slot,
-	.get_घातer_status =	get_घातer_status,
+	.get_power_status =	get_power_status,
 	.get_adapter_status =	get_adapter_status,
-पूर्ण;
+};
 
-पूर्णांक zpci_init_slot(काष्ठा zpci_dev *zdev)
-अणु
-	अक्षर name[SLOT_NAME_SIZE];
-	काष्ठा zpci_bus *zbus = zdev->zbus;
+int zpci_init_slot(struct zpci_dev *zdev)
+{
+	char name[SLOT_NAME_SIZE];
+	struct zpci_bus *zbus = zdev->zbus;
 
 	zdev->hotplug_slot.ops = &s390_hotplug_slot_ops;
 
-	snम_लिखो(name, SLOT_NAME_SIZE, "%08x", zdev->fid);
-	वापस pci_hp_रेजिस्टर(&zdev->hotplug_slot, zbus->bus,
+	snprintf(name, SLOT_NAME_SIZE, "%08x", zdev->fid);
+	return pci_hp_register(&zdev->hotplug_slot, zbus->bus,
 			       zdev->devfn, name);
-पूर्ण
+}
 
-व्योम zpci_निकास_slot(काष्ठा zpci_dev *zdev)
-अणु
-	pci_hp_deरेजिस्टर(&zdev->hotplug_slot);
-पूर्ण
+void zpci_exit_slot(struct zpci_dev *zdev)
+{
+	pci_hp_deregister(&zdev->hotplug_slot);
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,25 +19,25 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "ovly.h"
-#समावेश "atom.h"
+#include "ovly.h"
+#include "atom.h"
 
-#समावेश <nvअगर/push507c.h>
+#include <nvif/push507c.h>
 
-#समावेश <nvhw/class/cl907e.h>
+#include <nvhw/class/cl907e.h>
 
-अटल पूर्णांक
-ovly907e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
-अणु
-	काष्ठा nvअगर_push *push = wndw->wndw.push;
-	पूर्णांक ret;
+static int
+ovly907e_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
+{
+	struct nvif_push *push = wndw->wndw.push;
+	int ret;
 
-	अगर ((ret = PUSH_WAIT(push, 12)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 12)))
+		return ret;
 
 	PUSH_MTHD(push, NV907E, SET_PRESENT_CONTROL,
 		  NVDEF(NV907E, SET_PRESENT_CONTROL, BEGIN_MODE, ASAP) |
-		  NVVAL(NV907E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.पूर्णांकerval));
+		  NVVAL(NV907E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.interval));
 
 	PUSH_MTHD(push, NV907E, SET_CONTEXT_DMA_ISO, asyw->image.handle[0]);
 
@@ -58,27 +57,27 @@ ovly907e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_w
 		  NVVAL(NV907E, SURFACE_SET_STORAGE, MEMORY_LAYOUT, asyw->image.layout),
 
 				SURFACE_SET_PARAMS,
-		  NVVAL(NV907E, SURFACE_SET_PARAMS, FORMAT, asyw->image.क्रमmat) |
+		  NVVAL(NV907E, SURFACE_SET_PARAMS, FORMAT, asyw->image.format) |
 		  NVVAL(NV907E, SURFACE_SET_PARAMS, COLOR_SPACE, asyw->image.colorspace));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा nv50_wndw_func
-ovly907e = अणु
+const struct nv50_wndw_func
+ovly907e = {
 	.acquire = ovly507e_acquire,
 	.release = ovly507e_release,
 	.ntfy_set = base507c_ntfy_set,
 	.ntfy_clr = base507c_ntfy_clr,
 	.ntfy_reset = ovly827e_ntfy_reset,
-	.ntfy_रुको_begun = ovly827e_ntfy_रुको_begun,
+	.ntfy_wait_begun = ovly827e_ntfy_wait_begun,
 	.image_set = ovly907e_image_set,
 	.image_clr = base507c_image_clr,
 	.scale_set = ovly507e_scale_set,
 	.update = base507c_update,
-पूर्ण;
+};
 
-अटल स्थिर u32
-ovly907e_क्रमmat[] = अणु
+static const u32
+ovly907e_format[] = {
 	DRM_FORMAT_YUYV,
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_XRGB8888,
@@ -86,12 +85,12 @@ ovly907e_क्रमmat[] = अणु
 	DRM_FORMAT_XBGR2101010,
 	DRM_FORMAT_XBGR16161616F,
 	0
-पूर्ण;
+};
 
-पूर्णांक
-ovly907e_new(काष्ठा nouveau_drm *drm, पूर्णांक head, s32 oclass,
-	     काष्ठा nv50_wndw **pwndw)
-अणु
-	वापस ovly507e_new_(&ovly907e, ovly907e_क्रमmat, drm, head, oclass,
+int
+ovly907e_new(struct nouveau_drm *drm, int head, s32 oclass,
+	     struct nv50_wndw **pwndw)
+{
+	return ovly507e_new_(&ovly907e, ovly907e_format, drm, head, oclass,
 			     0x00000004 << (head * 4), pwndw);
-पूर्ण
+}

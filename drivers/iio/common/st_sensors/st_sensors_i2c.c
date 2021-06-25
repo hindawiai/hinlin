@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics sensors i2c library driver
  *
@@ -8,52 +7,52 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/iio/iio.h>
+#include <linux/regmap.h>
 
-#समावेश <linux/iio/common/st_sensors_i2c.h>
+#include <linux/iio/common/st_sensors_i2c.h>
 
 
-#घोषणा ST_SENSORS_I2C_MULTIREAD	0x80
+#define ST_SENSORS_I2C_MULTIREAD	0x80
 
-अटल स्थिर काष्ठा regmap_config st_sensors_i2c_regmap_config = अणु
+static const struct regmap_config st_sensors_i2c_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config st_sensors_i2c_regmap_multiपढ़ो_bit_config = अणु
+static const struct regmap_config st_sensors_i2c_regmap_multiread_bit_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.पढ़ो_flag_mask = ST_SENSORS_I2C_MULTIREAD,
-पूर्ण;
+	.read_flag_mask = ST_SENSORS_I2C_MULTIREAD,
+};
 
 /*
- * st_sensors_i2c_configure() - configure I2C पूर्णांकerface
+ * st_sensors_i2c_configure() - configure I2C interface
  * @indio_dev: IIO device reference.
  * @client: i2c client reference.
  *
- * Return: 0 on success, अन्यथा a negative error code.
+ * Return: 0 on success, else a negative error code.
  */
-पूर्णांक st_sensors_i2c_configure(काष्ठा iio_dev *indio_dev,
-			     काष्ठा i2c_client *client)
-अणु
-	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
-	स्थिर काष्ठा regmap_config *config;
+int st_sensors_i2c_configure(struct iio_dev *indio_dev,
+			     struct i2c_client *client)
+{
+	struct st_sensor_data *sdata = iio_priv(indio_dev);
+	const struct regmap_config *config;
 
-	अगर (sdata->sensor_settings->multi_पढ़ो_bit)
-		config = &st_sensors_i2c_regmap_multiपढ़ो_bit_config;
-	अन्यथा
+	if (sdata->sensor_settings->multi_read_bit)
+		config = &st_sensors_i2c_regmap_multiread_bit_config;
+	else
 		config = &st_sensors_i2c_regmap_config;
 
 	sdata->regmap = devm_regmap_init_i2c(client, config);
-	अगर (IS_ERR(sdata->regmap)) अणु
+	if (IS_ERR(sdata->regmap)) {
 		dev_err(&client->dev, "Failed to register i2c regmap (%ld)\n",
 			PTR_ERR(sdata->regmap));
-		वापस PTR_ERR(sdata->regmap);
-	पूर्ण
+		return PTR_ERR(sdata->regmap);
+	}
 
 	i2c_set_clientdata(client, indio_dev);
 
@@ -62,8 +61,8 @@
 	sdata->dev = &client->dev;
 	sdata->irq = client->irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(st_sensors_i2c_configure);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/ethtool_netlink.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/vxlan.h>
+#include <linux/ethtool_netlink.h>
+#include <net/udp_tunnel.h>
+#include <net/vxlan.h>
 
-#समावेश "bitset.h"
-#समावेश "common.h"
-#समावेश "netlink.h"
+#include "bitset.h"
+#include "common.h"
+#include "netlink.h"
 
-स्थिर काष्ठा nla_policy ethnl_tunnel_info_get_policy[] = अणु
+const struct nla_policy ethnl_tunnel_info_get_policy[] = {
 	[ETHTOOL_A_TUNNEL_INFO_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-पूर्ण;
+};
 
-अटल_निश्चित(ETHTOOL_UDP_TUNNEL_TYPE_VXLAN == ilog2(UDP_TUNNEL_TYPE_VXLAN));
-अटल_निश्चित(ETHTOOL_UDP_TUNNEL_TYPE_GENEVE == ilog2(UDP_TUNNEL_TYPE_GENEVE));
-अटल_निश्चित(ETHTOOL_UDP_TUNNEL_TYPE_VXLAN_GPE ==
+static_assert(ETHTOOL_UDP_TUNNEL_TYPE_VXLAN == ilog2(UDP_TUNNEL_TYPE_VXLAN));
+static_assert(ETHTOOL_UDP_TUNNEL_TYPE_GENEVE == ilog2(UDP_TUNNEL_TYPE_GENEVE));
+static_assert(ETHTOOL_UDP_TUNNEL_TYPE_VXLAN_GPE ==
 	      ilog2(UDP_TUNNEL_TYPE_VXLAN_GPE));
 
-अटल sमाप_प्रकार ethnl_udp_table_reply_size(अचिन्हित पूर्णांक types, bool compact)
-अणु
-	sमाप_प्रकार size;
+static ssize_t ethnl_udp_table_reply_size(unsigned int types, bool compact)
+{
+	ssize_t size;
 
-	size = ethnl_bitset32_size(&types, शून्य, __ETHTOOL_UDP_TUNNEL_TYPE_CNT,
+	size = ethnl_bitset32_size(&types, NULL, __ETHTOOL_UDP_TUNNEL_TYPE_CNT,
 				   udp_tunnel_type_names, compact);
-	अगर (size < 0)
-		वापस size;
+	if (size < 0)
+		return size;
 
-	वापस size +
+	return size +
 		nla_total_size(0) + /* _UDP_TABLE */
-		nla_total_size(माप(u32)); /* _UDP_TABLE_SIZE */
-पूर्ण
+		nla_total_size(sizeof(u32)); /* _UDP_TABLE_SIZE */
+}
 
-अटल sमाप_प्रकार
-ethnl_tunnel_info_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
+static ssize_t
+ethnl_tunnel_info_reply_size(const struct ethnl_req_info *req_base,
+			     struct netlink_ext_ack *extack)
+{
 	bool compact = req_base->flags & ETHTOOL_FLAG_COMPACT_BITSETS;
-	स्थिर काष्ठा udp_tunnel_nic_info *info;
-	अचिन्हित पूर्णांक i;
-	sमाप_प्रकार ret;
-	माप_प्रकार size;
+	const struct udp_tunnel_nic_info *info;
+	unsigned int i;
+	ssize_t ret;
+	size_t size;
 
 	info = req_base->dev->udp_tunnel_nic_info;
-	अगर (!info) अणु
+	if (!info) {
 		NL_SET_ERR_MSG(extack,
 			       "device does not report tunnel offload info");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	size =	nla_total_size(0); /* _INFO_UDP_PORTS */
 
-	क्रम (i = 0; i < UDP_TUNNEL_NIC_MAX_TABLES; i++) अणु
-		अगर (!info->tables[i].n_entries)
-			अवरोध;
+	for (i = 0; i < UDP_TUNNEL_NIC_MAX_TABLES; i++) {
+		if (!info->tables[i].n_entries)
+			break;
 
 		ret = ethnl_udp_table_reply_size(info->tables[i].tunnel_types,
 						 compact);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		size += ret;
 
 		size += udp_tunnel_nic_dump_size(req_base->dev, i);
-	पूर्ण
+	}
 
-	अगर (info->flags & UDP_TUNNEL_NIC_INFO_STATIC_IANA_VXLAN) अणु
+	if (info->flags & UDP_TUNNEL_NIC_INFO_STATIC_IANA_VXLAN) {
 		ret = ethnl_udp_table_reply_size(0, compact);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		size += ret;
 
 		size += nla_total_size(0) +		 /* _TABLE_ENTRY */
-			nla_total_size(माप(__be16)) + /* _ENTRY_PORT */
-			nla_total_size(माप(u32));	 /* _ENTRY_TYPE */
-	पूर्ण
+			nla_total_size(sizeof(__be16)) + /* _ENTRY_PORT */
+			nla_total_size(sizeof(u32));	 /* _ENTRY_TYPE */
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक
-ethnl_tunnel_info_fill_reply(स्थिर काष्ठा ethnl_req_info *req_base,
-			     काष्ठा sk_buff *skb)
-अणु
+static int
+ethnl_tunnel_info_fill_reply(const struct ethnl_req_info *req_base,
+			     struct sk_buff *skb)
+{
 	bool compact = req_base->flags & ETHTOOL_FLAG_COMPACT_BITSETS;
-	स्थिर काष्ठा udp_tunnel_nic_info *info;
-	काष्ठा nlattr *ports, *table, *entry;
-	अचिन्हित पूर्णांक i;
+	const struct udp_tunnel_nic_info *info;
+	struct nlattr *ports, *table, *entry;
+	unsigned int i;
 
 	info = req_base->dev->udp_tunnel_nic_info;
-	अगर (!info)
-		वापस -EOPNOTSUPP;
+	if (!info)
+		return -EOPNOTSUPP;
 
 	ports = nla_nest_start(skb, ETHTOOL_A_TUNNEL_INFO_UDP_PORTS);
-	अगर (!ports)
-		वापस -EMSGSIZE;
+	if (!ports)
+		return -EMSGSIZE;
 
-	क्रम (i = 0; i < UDP_TUNNEL_NIC_MAX_TABLES; i++) अणु
-		अगर (!info->tables[i].n_entries)
-			अवरोध;
+	for (i = 0; i < UDP_TUNNEL_NIC_MAX_TABLES; i++) {
+		if (!info->tables[i].n_entries)
+			break;
 
 		table = nla_nest_start(skb, ETHTOOL_A_TUNNEL_UDP_TABLE);
-		अगर (!table)
-			जाओ err_cancel_ports;
+		if (!table)
+			goto err_cancel_ports;
 
-		अगर (nla_put_u32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE,
+		if (nla_put_u32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE,
 				info->tables[i].n_entries))
-			जाओ err_cancel_table;
+			goto err_cancel_table;
 
-		अगर (ethnl_put_bitset32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,
-				       &info->tables[i].tunnel_types, शून्य,
+		if (ethnl_put_bitset32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,
+				       &info->tables[i].tunnel_types, NULL,
 				       __ETHTOOL_UDP_TUNNEL_TYPE_CNT,
 				       udp_tunnel_type_names, compact))
-			जाओ err_cancel_table;
+			goto err_cancel_table;
 
-		अगर (udp_tunnel_nic_dump_ग_लिखो(req_base->dev, i, skb))
-			जाओ err_cancel_table;
+		if (udp_tunnel_nic_dump_write(req_base->dev, i, skb))
+			goto err_cancel_table;
 
 		nla_nest_end(skb, table);
-	पूर्ण
+	}
 
-	अगर (info->flags & UDP_TUNNEL_NIC_INFO_STATIC_IANA_VXLAN) अणु
+	if (info->flags & UDP_TUNNEL_NIC_INFO_STATIC_IANA_VXLAN) {
 		u32 zero = 0;
 
 		table = nla_nest_start(skb, ETHTOOL_A_TUNNEL_UDP_TABLE);
-		अगर (!table)
-			जाओ err_cancel_ports;
+		if (!table)
+			goto err_cancel_ports;
 
-		अगर (nla_put_u32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE, 1))
-			जाओ err_cancel_table;
+		if (nla_put_u32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_SIZE, 1))
+			goto err_cancel_table;
 
-		अगर (ethnl_put_bitset32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,
-				       &zero, शून्य,
+		if (ethnl_put_bitset32(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_TYPES,
+				       &zero, NULL,
 				       __ETHTOOL_UDP_TUNNEL_TYPE_CNT,
 				       udp_tunnel_type_names, compact))
-			जाओ err_cancel_table;
+			goto err_cancel_table;
 
 		entry = nla_nest_start(skb, ETHTOOL_A_TUNNEL_UDP_TABLE_ENTRY);
 
-		अगर (nla_put_be16(skb, ETHTOOL_A_TUNNEL_UDP_ENTRY_PORT,
+		if (nla_put_be16(skb, ETHTOOL_A_TUNNEL_UDP_ENTRY_PORT,
 				 htons(IANA_VXLAN_UDP_PORT)) ||
 		    nla_put_u32(skb, ETHTOOL_A_TUNNEL_UDP_ENTRY_TYPE,
 				ilog2(UDP_TUNNEL_TYPE_VXLAN)))
-			जाओ err_cancel_entry;
+			goto err_cancel_entry;
 
 		nla_nest_end(skb, entry);
 		nla_nest_end(skb, table);
-	पूर्ण
+	}
 
 	nla_nest_end(skb, ports);
 
-	वापस 0;
+	return 0;
 
 err_cancel_entry:
 	nla_nest_cancel(skb, entry);
@@ -158,134 +157,134 @@ err_cancel_table:
 	nla_nest_cancel(skb, table);
 err_cancel_ports:
 	nla_nest_cancel(skb, ports);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-पूर्णांक ethnl_tunnel_info_करोit(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
-अणु
-	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
-	काष्ठा nlattr **tb = info->attrs;
-	काष्ठा sk_buff *rskb;
-	व्योम *reply_payload;
-	पूर्णांक reply_len;
-	पूर्णांक ret;
+int ethnl_tunnel_info_doit(struct sk_buff *skb, struct genl_info *info)
+{
+	struct ethnl_req_info req_info = {};
+	struct nlattr **tb = info->attrs;
+	struct sk_buff *rskb;
+	void *reply_payload;
+	int reply_len;
+	int ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_TUNNEL_INFO_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	rtnl_lock();
 	ret = ethnl_tunnel_info_reply_size(&req_info, info->extack);
-	अगर (ret < 0)
-		जाओ err_unlock_rtnl;
+	if (ret < 0)
+		goto err_unlock_rtnl;
 	reply_len = ret + ethnl_reply_header_size();
 
 	rskb = ethnl_reply_init(reply_len, req_info.dev,
 				ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY,
 				ETHTOOL_A_TUNNEL_INFO_HEADER,
 				info, &reply_payload);
-	अगर (!rskb) अणु
+	if (!rskb) {
 		ret = -ENOMEM;
-		जाओ err_unlock_rtnl;
-	पूर्ण
+		goto err_unlock_rtnl;
+	}
 
 	ret = ethnl_tunnel_info_fill_reply(&req_info, rskb);
-	अगर (ret)
-		जाओ err_मुक्त_msg;
+	if (ret)
+		goto err_free_msg;
 	rtnl_unlock();
 	dev_put(req_info.dev);
 	genlmsg_end(rskb, reply_payload);
 
-	वापस genlmsg_reply(rskb, info);
+	return genlmsg_reply(rskb, info);
 
-err_मुक्त_msg:
-	nlmsg_मुक्त(rskb);
+err_free_msg:
+	nlmsg_free(rskb);
 err_unlock_rtnl:
 	rtnl_unlock();
 	dev_put(req_info.dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा ethnl_tunnel_info_dump_ctx अणु
-	काष्ठा ethnl_req_info	req_info;
-	पूर्णांक			pos_hash;
-	पूर्णांक			pos_idx;
-पूर्ण;
+struct ethnl_tunnel_info_dump_ctx {
+	struct ethnl_req_info	req_info;
+	int			pos_hash;
+	int			pos_idx;
+};
 
-पूर्णांक ethnl_tunnel_info_start(काष्ठा netlink_callback *cb)
-अणु
-	स्थिर काष्ठा genl_dumpit_info *info = genl_dumpit_info(cb);
-	काष्ठा ethnl_tunnel_info_dump_ctx *ctx = (व्योम *)cb->ctx;
-	काष्ठा nlattr **tb = info->attrs;
-	पूर्णांक ret;
+int ethnl_tunnel_info_start(struct netlink_callback *cb)
+{
+	const struct genl_dumpit_info *info = genl_dumpit_info(cb);
+	struct ethnl_tunnel_info_dump_ctx *ctx = (void *)cb->ctx;
+	struct nlattr **tb = info->attrs;
+	int ret;
 
-	BUILD_BUG_ON(माप(*ctx) > माप(cb->ctx));
+	BUILD_BUG_ON(sizeof(*ctx) > sizeof(cb->ctx));
 
-	स_रखो(ctx, 0, माप(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	ret = ethnl_parse_header_dev_get(&ctx->req_info,
 					 tb[ETHTOOL_A_TUNNEL_INFO_HEADER],
 					 sock_net(cb->skb->sk), cb->extack,
 					 false);
-	अगर (ctx->req_info.dev) अणु
+	if (ctx->req_info.dev) {
 		dev_put(ctx->req_info.dev);
-		ctx->req_info.dev = शून्य;
-	पूर्ण
+		ctx->req_info.dev = NULL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ethnl_tunnel_info_dumpit(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा ethnl_tunnel_info_dump_ctx *ctx = (व्योम *)cb->ctx;
-	काष्ठा net *net = sock_net(skb->sk);
-	पूर्णांक s_idx = ctx->pos_idx;
-	पूर्णांक h, idx = 0;
-	पूर्णांक ret = 0;
-	व्योम *ehdr;
+int ethnl_tunnel_info_dumpit(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct ethnl_tunnel_info_dump_ctx *ctx = (void *)cb->ctx;
+	struct net *net = sock_net(skb->sk);
+	int s_idx = ctx->pos_idx;
+	int h, idx = 0;
+	int ret = 0;
+	void *ehdr;
 
 	rtnl_lock();
 	cb->seq = net->dev_base_seq;
-	क्रम (h = ctx->pos_hash; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
-		काष्ठा hlist_head *head;
-		काष्ठा net_device *dev;
+	for (h = ctx->pos_hash; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
+		struct hlist_head *head;
+		struct net_device *dev;
 
 		head = &net->dev_index_head[h];
 		idx = 0;
-		hlist_क्रम_each_entry(dev, head, index_hlist) अणु
-			अगर (idx < s_idx)
-				जाओ cont;
+		hlist_for_each_entry(dev, head, index_hlist) {
+			if (idx < s_idx)
+				goto cont;
 
 			ehdr = ethnl_dump_put(skb, cb,
 					      ETHTOOL_MSG_TUNNEL_INFO_GET_REPLY);
-			अगर (!ehdr) अणु
+			if (!ehdr) {
 				ret = -EMSGSIZE;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ret = ethnl_fill_reply_header(skb, dev, ETHTOOL_A_TUNNEL_INFO_HEADER);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				genlmsg_cancel(skb, ehdr);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ctx->req_info.dev = dev;
 			ret = ethnl_tunnel_info_fill_reply(&ctx->req_info, skb);
-			ctx->req_info.dev = शून्य;
-			अगर (ret < 0) अणु
+			ctx->req_info.dev = NULL;
+			if (ret < 0) {
 				genlmsg_cancel(skb, ehdr);
-				अगर (ret == -EOPNOTSUPP)
-					जाओ cont;
-				जाओ out;
-			पूर्ण
+				if (ret == -EOPNOTSUPP)
+					goto cont;
+				goto out;
+			}
 			genlmsg_end(skb, ehdr);
 cont:
 			idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	rtnl_unlock();
 
@@ -293,7 +292,7 @@ out:
 	ctx->pos_idx = idx;
 	nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 
-	अगर (ret == -EMSGSIZE && skb->len)
-		वापस skb->len;
-	वापस ret;
-पूर्ण
+	if (ret == -EMSGSIZE && skb->len)
+		return skb->len;
+	return ret;
+}

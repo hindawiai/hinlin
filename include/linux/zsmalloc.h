@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * zsदो_स्मृति memory allocator
+ * zsmalloc memory allocator
  *
  * Copyright (C) 2011  Nitin Gupta
  * Copyright (C) 2012, 2013 Minchan Kim
@@ -12,49 +11,49 @@
  * Released under the terms of GNU General Public License Version 2.0
  */
 
-#अगर_अघोषित _ZS_MALLOC_H_
-#घोषणा _ZS_MALLOC_H_
+#ifndef _ZS_MALLOC_H_
+#define _ZS_MALLOC_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * zsदो_स्मृति mapping modes
+ * zsmalloc mapping modes
  *
- * NOTE: These only make a dअगरference when a mapped object spans pages.
+ * NOTE: These only make a difference when a mapped object spans pages.
  */
-क्रमागत zs_mapmode अणु
-	ZS_MM_RW, /* normal पढ़ो-ग_लिखो mapping */
-	ZS_MM_RO, /* पढ़ो-only (no copy-out at unmap समय) */
-	ZS_MM_WO /* ग_लिखो-only (no copy-in at map समय) */
+enum zs_mapmode {
+	ZS_MM_RW, /* normal read-write mapping */
+	ZS_MM_RO, /* read-only (no copy-out at unmap time) */
+	ZS_MM_WO /* write-only (no copy-in at map time) */
 	/*
-	 * NOTE: ZS_MM_WO should only be used क्रम initializing new
-	 * (uninitialized) allocations.  Partial ग_लिखोs to alपढ़ोy
+	 * NOTE: ZS_MM_WO should only be used for initializing new
+	 * (uninitialized) allocations.  Partial writes to already
 	 * initialized allocations should use ZS_MM_RW to preserve the
 	 * existing data.
 	 */
-पूर्ण;
+};
 
-काष्ठा zs_pool_stats अणु
-	/* How many pages were migrated (मुक्तd) */
-	atomic_दीर्घ_t pages_compacted;
-पूर्ण;
+struct zs_pool_stats {
+	/* How many pages were migrated (freed) */
+	atomic_long_t pages_compacted;
+};
 
-काष्ठा zs_pool;
+struct zs_pool;
 
-काष्ठा zs_pool *zs_create_pool(स्थिर अक्षर *name);
-व्योम zs_destroy_pool(काष्ठा zs_pool *pool);
+struct zs_pool *zs_create_pool(const char *name);
+void zs_destroy_pool(struct zs_pool *pool);
 
-अचिन्हित दीर्घ zs_दो_स्मृति(काष्ठा zs_pool *pool, माप_प्रकार size, gfp_t flags);
-व्योम zs_मुक्त(काष्ठा zs_pool *pool, अचिन्हित दीर्घ obj);
+unsigned long zs_malloc(struct zs_pool *pool, size_t size, gfp_t flags);
+void zs_free(struct zs_pool *pool, unsigned long obj);
 
-माप_प्रकार zs_huge_class_size(काष्ठा zs_pool *pool);
+size_t zs_huge_class_size(struct zs_pool *pool);
 
-व्योम *zs_map_object(काष्ठा zs_pool *pool, अचिन्हित दीर्घ handle,
-			क्रमागत zs_mapmode mm);
-व्योम zs_unmap_object(काष्ठा zs_pool *pool, अचिन्हित दीर्घ handle);
+void *zs_map_object(struct zs_pool *pool, unsigned long handle,
+			enum zs_mapmode mm);
+void zs_unmap_object(struct zs_pool *pool, unsigned long handle);
 
-अचिन्हित दीर्घ zs_get_total_pages(काष्ठा zs_pool *pool);
-अचिन्हित दीर्घ zs_compact(काष्ठा zs_pool *pool);
+unsigned long zs_get_total_pages(struct zs_pool *pool);
+unsigned long zs_compact(struct zs_pool *pool);
 
-व्योम zs_pool_stats(काष्ठा zs_pool *pool, काष्ठा zs_pool_stats *stats);
-#पूर्ण_अगर
+void zs_pool_stats(struct zs_pool *pool, struct zs_pool_stats *stats);
+#endif

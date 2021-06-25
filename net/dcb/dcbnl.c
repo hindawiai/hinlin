@@ -1,197 +1,196 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2011, Intel Corporation.
  *
- * Description: Data Center Bridging netlink पूर्णांकerface
- * Author: Lucy Liu <lucy.liu@पूर्णांकel.com>
+ * Description: Data Center Bridging netlink interface
+ * Author: Lucy Liu <lucy.liu@intel.com>
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/slab.h>
-#समावेश <net/netlink.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <linux/dcbnl.h>
-#समावेश <net/dcbevent.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/init.h>
-#समावेश <net/sock.h>
+#include <linux/netdevice.h>
+#include <linux/netlink.h>
+#include <linux/slab.h>
+#include <net/netlink.h>
+#include <net/rtnetlink.h>
+#include <linux/dcbnl.h>
+#include <net/dcbevent.h>
+#include <linux/rtnetlink.h>
+#include <linux/init.h>
+#include <net/sock.h>
 
 /* Data Center Bridging (DCB) is a collection of Ethernet enhancements
- * पूर्णांकended to allow network traffic with dअगरfering requirements
- * (highly reliable, no drops vs. best efक्रमt vs. low latency) to operate
+ * intended to allow network traffic with differing requirements
+ * (highly reliable, no drops vs. best effort vs. low latency) to operate
  * and co-exist on Ethernet.  Current DCB features are:
  *
  * Enhanced Transmission Selection (aka Priority Grouping [PG]) - provides a
- *   framework क्रम assigning bandwidth guarantees to traffic classes.
+ *   framework for assigning bandwidth guarantees to traffic classes.
  *
  * Priority-based Flow Control (PFC) - provides a flow control mechanism which
- *   can work independently क्रम each 802.1p priority.
+ *   can work independently for each 802.1p priority.
  *
- * Congestion Notअगरication - provides a mechanism क्रम end-to-end congestion
- *   control क्रम protocols which करो not have built-in congestion management.
+ * Congestion Notification - provides a mechanism for end-to-end congestion
+ *   control for protocols which do not have built-in congestion management.
  *
- * More inक्रमmation about the emerging standards क्रम these Ethernet features
- * can be found at: http://www.ieee802.org/1/pages/dcbridges.hपंचांगl
+ * More information about the emerging standards for these Ethernet features
+ * can be found at: http://www.ieee802.org/1/pages/dcbridges.html
  *
- * This file implements an rtnetlink पूर्णांकerface to allow configuration of DCB
- * features क्रम capable devices.
+ * This file implements an rtnetlink interface to allow configuration of DCB
+ * features for capable devices.
  */
 
 /**************** DCB attribute policies *************************************/
 
 /* DCB netlink attributes policy */
-अटल स्थिर काष्ठा nla_policy dcbnl_rtnl_policy[DCB_ATTR_MAX + 1] = अणु
-	[DCB_ATTR_IFNAME]      = अणु.type = NLA_NUL_STRING, .len = IFNAMSIZ - 1पूर्ण,
-	[DCB_ATTR_STATE]       = अणु.type = NLA_U8पूर्ण,
-	[DCB_ATTR_PFC_CFG]     = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_PG_CFG]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_SET_ALL]     = अणु.type = NLA_U8पूर्ण,
-	[DCB_ATTR_PERM_HWADDR] = अणु.type = NLA_FLAGपूर्ण,
-	[DCB_ATTR_CAP]         = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_PFC_STATE]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_ATTR_BCN]         = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_APP]         = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_IEEE]	       = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_DCBX]        = अणु.type = NLA_U8पूर्ण,
-	[DCB_ATTR_FEATCFG]     = अणु.type = NLA_NESTEDपूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_rtnl_policy[DCB_ATTR_MAX + 1] = {
+	[DCB_ATTR_IFNAME]      = {.type = NLA_NUL_STRING, .len = IFNAMSIZ - 1},
+	[DCB_ATTR_STATE]       = {.type = NLA_U8},
+	[DCB_ATTR_PFC_CFG]     = {.type = NLA_NESTED},
+	[DCB_ATTR_PG_CFG]      = {.type = NLA_NESTED},
+	[DCB_ATTR_SET_ALL]     = {.type = NLA_U8},
+	[DCB_ATTR_PERM_HWADDR] = {.type = NLA_FLAG},
+	[DCB_ATTR_CAP]         = {.type = NLA_NESTED},
+	[DCB_ATTR_PFC_STATE]   = {.type = NLA_U8},
+	[DCB_ATTR_BCN]         = {.type = NLA_NESTED},
+	[DCB_ATTR_APP]         = {.type = NLA_NESTED},
+	[DCB_ATTR_IEEE]	       = {.type = NLA_NESTED},
+	[DCB_ATTR_DCBX]        = {.type = NLA_U8},
+	[DCB_ATTR_FEATCFG]     = {.type = NLA_NESTED},
+};
 
 /* DCB priority flow control to User Priority nested attributes */
-अटल स्थिर काष्ठा nla_policy dcbnl_pfc_up_nest[DCB_PFC_UP_ATTR_MAX + 1] = अणु
-	[DCB_PFC_UP_ATTR_0]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_1]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_2]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_3]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_4]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_5]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_6]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_7]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PFC_UP_ATTR_ALL] = अणु.type = NLA_FLAGपूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_pfc_up_nest[DCB_PFC_UP_ATTR_MAX + 1] = {
+	[DCB_PFC_UP_ATTR_0]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_1]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_2]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_3]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_4]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_5]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_6]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_7]   = {.type = NLA_U8},
+	[DCB_PFC_UP_ATTR_ALL] = {.type = NLA_FLAG},
+};
 
 /* DCB priority grouping nested attributes */
-अटल स्थिर काष्ठा nla_policy dcbnl_pg_nest[DCB_PG_ATTR_MAX + 1] = अणु
-	[DCB_PG_ATTR_TC_0]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_1]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_2]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_3]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_4]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_5]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_6]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_7]      = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_TC_ALL]    = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_PG_ATTR_BW_ID_0]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_1]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_2]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_3]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_4]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_5]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_6]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_7]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_PG_ATTR_BW_ID_ALL] = अणु.type = NLA_FLAGपूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_pg_nest[DCB_PG_ATTR_MAX + 1] = {
+	[DCB_PG_ATTR_TC_0]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_1]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_2]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_3]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_4]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_5]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_6]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_7]      = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_TC_ALL]    = {.type = NLA_NESTED},
+	[DCB_PG_ATTR_BW_ID_0]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_1]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_2]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_3]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_4]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_5]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_6]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_7]   = {.type = NLA_U8},
+	[DCB_PG_ATTR_BW_ID_ALL] = {.type = NLA_FLAG},
+};
 
 /* DCB traffic class nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_tc_param_nest[DCB_TC_ATTR_PARAM_MAX + 1] = अणु
-	[DCB_TC_ATTR_PARAM_PGID]            = अणु.type = NLA_U8पूर्ण,
-	[DCB_TC_ATTR_PARAM_UP_MAPPING]      = अणु.type = NLA_U8पूर्ण,
-	[DCB_TC_ATTR_PARAM_STRICT_PRIO]     = अणु.type = NLA_U8पूर्ण,
-	[DCB_TC_ATTR_PARAM_BW_PCT]          = अणु.type = NLA_U8पूर्ण,
-	[DCB_TC_ATTR_PARAM_ALL]             = अणु.type = NLA_FLAGपूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_tc_param_nest[DCB_TC_ATTR_PARAM_MAX + 1] = {
+	[DCB_TC_ATTR_PARAM_PGID]            = {.type = NLA_U8},
+	[DCB_TC_ATTR_PARAM_UP_MAPPING]      = {.type = NLA_U8},
+	[DCB_TC_ATTR_PARAM_STRICT_PRIO]     = {.type = NLA_U8},
+	[DCB_TC_ATTR_PARAM_BW_PCT]          = {.type = NLA_U8},
+	[DCB_TC_ATTR_PARAM_ALL]             = {.type = NLA_FLAG},
+};
 
 /* DCB capabilities nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_cap_nest[DCB_CAP_ATTR_MAX + 1] = अणु
-	[DCB_CAP_ATTR_ALL]     = अणु.type = NLA_FLAGपूर्ण,
-	[DCB_CAP_ATTR_PG]      = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_PFC]     = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_UP2TC]   = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_PG_TCS]  = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_PFC_TCS] = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_GSP]     = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_BCN]     = अणु.type = NLA_U8पूर्ण,
-	[DCB_CAP_ATTR_DCBX]    = अणु.type = NLA_U8पूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_cap_nest[DCB_CAP_ATTR_MAX + 1] = {
+	[DCB_CAP_ATTR_ALL]     = {.type = NLA_FLAG},
+	[DCB_CAP_ATTR_PG]      = {.type = NLA_U8},
+	[DCB_CAP_ATTR_PFC]     = {.type = NLA_U8},
+	[DCB_CAP_ATTR_UP2TC]   = {.type = NLA_U8},
+	[DCB_CAP_ATTR_PG_TCS]  = {.type = NLA_U8},
+	[DCB_CAP_ATTR_PFC_TCS] = {.type = NLA_U8},
+	[DCB_CAP_ATTR_GSP]     = {.type = NLA_U8},
+	[DCB_CAP_ATTR_BCN]     = {.type = NLA_U8},
+	[DCB_CAP_ATTR_DCBX]    = {.type = NLA_U8},
+};
 
 /* DCB capabilities nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_numtcs_nest[DCB_NUMTCS_ATTR_MAX + 1] = अणु
-	[DCB_NUMTCS_ATTR_ALL]     = अणु.type = NLA_FLAGपूर्ण,
-	[DCB_NUMTCS_ATTR_PG]      = अणु.type = NLA_U8पूर्ण,
-	[DCB_NUMTCS_ATTR_PFC]     = अणु.type = NLA_U8पूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_numtcs_nest[DCB_NUMTCS_ATTR_MAX + 1] = {
+	[DCB_NUMTCS_ATTR_ALL]     = {.type = NLA_FLAG},
+	[DCB_NUMTCS_ATTR_PG]      = {.type = NLA_U8},
+	[DCB_NUMTCS_ATTR_PFC]     = {.type = NLA_U8},
+};
 
 /* DCB BCN nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_bcn_nest[DCB_BCN_ATTR_MAX + 1] = अणु
-	[DCB_BCN_ATTR_RP_0]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_1]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_2]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_3]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_4]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_5]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_6]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_7]         = अणु.type = NLA_U8पूर्ण,
-	[DCB_BCN_ATTR_RP_ALL]       = अणु.type = NLA_FLAGपूर्ण,
-	[DCB_BCN_ATTR_BCNA_0]       = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_BCNA_1]       = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_ALPHA]        = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_BETA]         = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_GD]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_GI]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_TMAX]         = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_TD]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_RMIN]         = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_W]            = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_RD]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_RU]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_WRTT]         = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_RI]           = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_C]            = अणु.type = NLA_U32पूर्ण,
-	[DCB_BCN_ATTR_ALL]          = अणु.type = NLA_FLAGपूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_bcn_nest[DCB_BCN_ATTR_MAX + 1] = {
+	[DCB_BCN_ATTR_RP_0]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_1]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_2]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_3]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_4]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_5]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_6]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_7]         = {.type = NLA_U8},
+	[DCB_BCN_ATTR_RP_ALL]       = {.type = NLA_FLAG},
+	[DCB_BCN_ATTR_BCNA_0]       = {.type = NLA_U32},
+	[DCB_BCN_ATTR_BCNA_1]       = {.type = NLA_U32},
+	[DCB_BCN_ATTR_ALPHA]        = {.type = NLA_U32},
+	[DCB_BCN_ATTR_BETA]         = {.type = NLA_U32},
+	[DCB_BCN_ATTR_GD]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_GI]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_TMAX]         = {.type = NLA_U32},
+	[DCB_BCN_ATTR_TD]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_RMIN]         = {.type = NLA_U32},
+	[DCB_BCN_ATTR_W]            = {.type = NLA_U32},
+	[DCB_BCN_ATTR_RD]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_RU]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_WRTT]         = {.type = NLA_U32},
+	[DCB_BCN_ATTR_RI]           = {.type = NLA_U32},
+	[DCB_BCN_ATTR_C]            = {.type = NLA_U32},
+	[DCB_BCN_ATTR_ALL]          = {.type = NLA_FLAG},
+};
 
 /* DCB APP nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_app_nest[DCB_APP_ATTR_MAX + 1] = अणु
-	[DCB_APP_ATTR_IDTYPE]       = अणु.type = NLA_U8पूर्ण,
-	[DCB_APP_ATTR_ID]           = अणु.type = NLA_U16पूर्ण,
-	[DCB_APP_ATTR_PRIORITY]     = अणु.type = NLA_U8पूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_app_nest[DCB_APP_ATTR_MAX + 1] = {
+	[DCB_APP_ATTR_IDTYPE]       = {.type = NLA_U8},
+	[DCB_APP_ATTR_ID]           = {.type = NLA_U16},
+	[DCB_APP_ATTR_PRIORITY]     = {.type = NLA_U8},
+};
 
 /* IEEE 802.1Qaz nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_ieee_policy[DCB_ATTR_IEEE_MAX + 1] = अणु
-	[DCB_ATTR_IEEE_ETS]	    = अणु.len = माप(काष्ठा ieee_ets)पूर्ण,
-	[DCB_ATTR_IEEE_PFC]	    = अणु.len = माप(काष्ठा ieee_pfc)पूर्ण,
-	[DCB_ATTR_IEEE_APP_TABLE]   = अणु.type = NLA_NESTEDपूर्ण,
-	[DCB_ATTR_IEEE_MAXRATE]   = अणु.len = माप(काष्ठा ieee_maxrate)पूर्ण,
-	[DCB_ATTR_IEEE_QCN]         = अणु.len = माप(काष्ठा ieee_qcn)पूर्ण,
-	[DCB_ATTR_IEEE_QCN_STATS]   = अणु.len = माप(काष्ठा ieee_qcn_stats)पूर्ण,
-	[DCB_ATTR_DCB_BUFFER]       = अणु.len = माप(काष्ठा dcbnl_buffer)पूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_ieee_policy[DCB_ATTR_IEEE_MAX + 1] = {
+	[DCB_ATTR_IEEE_ETS]	    = {.len = sizeof(struct ieee_ets)},
+	[DCB_ATTR_IEEE_PFC]	    = {.len = sizeof(struct ieee_pfc)},
+	[DCB_ATTR_IEEE_APP_TABLE]   = {.type = NLA_NESTED},
+	[DCB_ATTR_IEEE_MAXRATE]   = {.len = sizeof(struct ieee_maxrate)},
+	[DCB_ATTR_IEEE_QCN]         = {.len = sizeof(struct ieee_qcn)},
+	[DCB_ATTR_IEEE_QCN_STATS]   = {.len = sizeof(struct ieee_qcn_stats)},
+	[DCB_ATTR_DCB_BUFFER]       = {.len = sizeof(struct dcbnl_buffer)},
+};
 
 /* DCB number of traffic classes nested attributes. */
-अटल स्थिर काष्ठा nla_policy dcbnl_featcfg_nest[DCB_FEATCFG_ATTR_MAX + 1] = अणु
-	[DCB_FEATCFG_ATTR_ALL]      = अणु.type = NLA_FLAGपूर्ण,
-	[DCB_FEATCFG_ATTR_PG]       = अणु.type = NLA_U8पूर्ण,
-	[DCB_FEATCFG_ATTR_PFC]      = अणु.type = NLA_U8पूर्ण,
-	[DCB_FEATCFG_ATTR_APP]      = अणु.type = NLA_U8पूर्ण,
-पूर्ण;
+static const struct nla_policy dcbnl_featcfg_nest[DCB_FEATCFG_ATTR_MAX + 1] = {
+	[DCB_FEATCFG_ATTR_ALL]      = {.type = NLA_FLAG},
+	[DCB_FEATCFG_ATTR_PG]       = {.type = NLA_U8},
+	[DCB_FEATCFG_ATTR_PFC]      = {.type = NLA_U8},
+	[DCB_FEATCFG_ATTR_APP]      = {.type = NLA_U8},
+};
 
-अटल LIST_HEAD(dcb_app_list);
-अटल DEFINE_SPINLOCK(dcb_lock);
+static LIST_HEAD(dcb_app_list);
+static DEFINE_SPINLOCK(dcb_lock);
 
-अटल काष्ठा sk_buff *dcbnl_newmsg(पूर्णांक type, u8 cmd, u32 port, u32 seq,
-				    u32 flags, काष्ठा nlmsghdr **nlhp)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा dcbmsg *dcb;
-	काष्ठा nlmsghdr *nlh;
+static struct sk_buff *dcbnl_newmsg(int type, u8 cmd, u32 port, u32 seq,
+				    u32 flags, struct nlmsghdr **nlhp)
+{
+	struct sk_buff *skb;
+	struct dcbmsg *dcb;
+	struct nlmsghdr *nlh;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	nlh = nlmsg_put(skb, port, seq, type, माप(*dcb), flags);
+	nlh = nlmsg_put(skb, port, seq, type, sizeof(*dcb), flags);
 	BUG_ON(!nlh);
 
 	dcb = nlmsg_data(nlh);
@@ -199,806 +198,806 @@
 	dcb->cmd = cmd;
 	dcb->dcb_pad = 0;
 
-	अगर (nlhp)
+	if (nlhp)
 		*nlhp = nlh;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल पूर्णांक dcbnl_माला_लोtate(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			  u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	/* अगर (!tb[DCB_ATTR_STATE] || !netdev->dcbnl_ops->माला_लोtate) */
-	अगर (!netdev->dcbnl_ops->माला_लोtate)
-		वापस -EOPNOTSUPP;
+static int dcbnl_getstate(struct net_device *netdev, struct nlmsghdr *nlh,
+			  u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	/* if (!tb[DCB_ATTR_STATE] || !netdev->dcbnl_ops->getstate) */
+	if (!netdev->dcbnl_ops->getstate)
+		return -EOPNOTSUPP;
 
-	वापस nla_put_u8(skb, DCB_ATTR_STATE,
-			  netdev->dcbnl_ops->माला_लोtate(netdev));
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_STATE,
+			  netdev->dcbnl_ops->getstate(netdev));
+}
 
-अटल पूर्णांक dcbnl_getpfccfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			   u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_PFC_UP_ATTR_MAX + 1], *nest;
+static int dcbnl_getpfccfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			   u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_PFC_UP_ATTR_MAX + 1], *nest;
 	u8 value;
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक getall = 0;
+	int ret;
+	int i;
+	int getall = 0;
 
-	अगर (!tb[DCB_ATTR_PFC_CFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_PFC_CFG])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->getpfccfg)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->getpfccfg)
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_PFC_UP_ATTR_MAX,
 					  tb[DCB_ATTR_PFC_CFG],
-					  dcbnl_pfc_up_nest, शून्य);
-	अगर (ret)
-		वापस ret;
+					  dcbnl_pfc_up_nest, NULL);
+	if (ret)
+		return ret;
 
 	nest = nla_nest_start_noflag(skb, DCB_ATTR_PFC_CFG);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (data[DCB_PFC_UP_ATTR_ALL])
+	if (data[DCB_PFC_UP_ATTR_ALL])
 		getall = 1;
 
-	क्रम (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) अणु
-		अगर (!getall && !data[i])
-			जारी;
+	for (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) {
+		if (!getall && !data[i])
+			continue;
 
 		netdev->dcbnl_ops->getpfccfg(netdev, i - DCB_PFC_UP_ATTR_0,
 		                             &value);
 		ret = nla_put_u8(skb, i, value);
-		अगर (ret) अणु
+		if (ret) {
 			nla_nest_cancel(skb, nest);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	nla_nest_end(skb, nest);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dcbnl_getperm_hwaddr(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-				u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
+static int dcbnl_getperm_hwaddr(struct net_device *netdev, struct nlmsghdr *nlh,
+				u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
 	u8 perm_addr[MAX_ADDR_LEN];
 
-	अगर (!netdev->dcbnl_ops->getpermhwaddr)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->getpermhwaddr)
+		return -EOPNOTSUPP;
 
-	स_रखो(perm_addr, 0, माप(perm_addr));
+	memset(perm_addr, 0, sizeof(perm_addr));
 	netdev->dcbnl_ops->getpermhwaddr(netdev, perm_addr);
 
-	वापस nla_put(skb, DCB_ATTR_PERM_HWADDR, माप(perm_addr), perm_addr);
-पूर्ण
+	return nla_put(skb, DCB_ATTR_PERM_HWADDR, sizeof(perm_addr), perm_addr);
+}
 
-अटल पूर्णांक dcbnl_अ_लोap(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_CAP_ATTR_MAX + 1], *nest;
+static int dcbnl_getcap(struct net_device *netdev, struct nlmsghdr *nlh,
+			u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_CAP_ATTR_MAX + 1], *nest;
 	u8 value;
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक getall = 0;
+	int ret;
+	int i;
+	int getall = 0;
 
-	अगर (!tb[DCB_ATTR_CAP])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_CAP])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->अ_लोap)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->getcap)
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_CAP_ATTR_MAX,
 					  tb[DCB_ATTR_CAP], dcbnl_cap_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
 	nest = nla_nest_start_noflag(skb, DCB_ATTR_CAP);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (data[DCB_CAP_ATTR_ALL])
+	if (data[DCB_CAP_ATTR_ALL])
 		getall = 1;
 
-	क्रम (i = DCB_CAP_ATTR_ALL+1; i <= DCB_CAP_ATTR_MAX; i++) अणु
-		अगर (!getall && !data[i])
-			जारी;
+	for (i = DCB_CAP_ATTR_ALL+1; i <= DCB_CAP_ATTR_MAX; i++) {
+		if (!getall && !data[i])
+			continue;
 
-		अगर (!netdev->dcbnl_ops->अ_लोap(netdev, i, &value)) अणु
+		if (!netdev->dcbnl_ops->getcap(netdev, i, &value)) {
 			ret = nla_put_u8(skb, i, value);
-			अगर (ret) अणु
+			if (ret) {
 				nla_nest_cancel(skb, nest);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		}
+	}
 	nla_nest_end(skb, nest);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dcbnl_getnumtcs(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			   u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_NUMTCS_ATTR_MAX + 1], *nest;
+static int dcbnl_getnumtcs(struct net_device *netdev, struct nlmsghdr *nlh,
+			   u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_NUMTCS_ATTR_MAX + 1], *nest;
 	u8 value;
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक getall = 0;
+	int ret;
+	int i;
+	int getall = 0;
 
-	अगर (!tb[DCB_ATTR_NUMTCS])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_NUMTCS])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->getnumtcs)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->getnumtcs)
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_NUMTCS_ATTR_MAX,
 					  tb[DCB_ATTR_NUMTCS],
-					  dcbnl_numtcs_nest, शून्य);
-	अगर (ret)
-		वापस ret;
+					  dcbnl_numtcs_nest, NULL);
+	if (ret)
+		return ret;
 
 	nest = nla_nest_start_noflag(skb, DCB_ATTR_NUMTCS);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (data[DCB_NUMTCS_ATTR_ALL])
+	if (data[DCB_NUMTCS_ATTR_ALL])
 		getall = 1;
 
-	क्रम (i = DCB_NUMTCS_ATTR_ALL+1; i <= DCB_NUMTCS_ATTR_MAX; i++) अणु
-		अगर (!getall && !data[i])
-			जारी;
+	for (i = DCB_NUMTCS_ATTR_ALL+1; i <= DCB_NUMTCS_ATTR_MAX; i++) {
+		if (!getall && !data[i])
+			continue;
 
 		ret = netdev->dcbnl_ops->getnumtcs(netdev, i, &value);
-		अगर (!ret) अणु
+		if (!ret) {
 			ret = nla_put_u8(skb, i, value);
-			अगर (ret) अणु
+			if (ret) {
 				nla_nest_cancel(skb, nest);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा
-			वापस -EINVAL;
-	पूर्ण
+				return ret;
+			}
+		} else
+			return -EINVAL;
+	}
 	nla_nest_end(skb, nest);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dcbnl_setnumtcs(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			   u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_NUMTCS_ATTR_MAX + 1];
-	पूर्णांक ret;
+static int dcbnl_setnumtcs(struct net_device *netdev, struct nlmsghdr *nlh,
+			   u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_NUMTCS_ATTR_MAX + 1];
+	int ret;
 	u8 value;
-	पूर्णांक i;
+	int i;
 
-	अगर (!tb[DCB_ATTR_NUMTCS])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_NUMTCS])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setnumtcs)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setnumtcs)
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_NUMTCS_ATTR_MAX,
 					  tb[DCB_ATTR_NUMTCS],
-					  dcbnl_numtcs_nest, शून्य);
-	अगर (ret)
-		वापस ret;
+					  dcbnl_numtcs_nest, NULL);
+	if (ret)
+		return ret;
 
-	क्रम (i = DCB_NUMTCS_ATTR_ALL+1; i <= DCB_NUMTCS_ATTR_MAX; i++) अणु
-		अगर (data[i] == शून्य)
-			जारी;
+	for (i = DCB_NUMTCS_ATTR_ALL+1; i <= DCB_NUMTCS_ATTR_MAX; i++) {
+		if (data[i] == NULL)
+			continue;
 
 		value = nla_get_u8(data[i]);
 
 		ret = netdev->dcbnl_ops->setnumtcs(netdev, i, value);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
-	वापस nla_put_u8(skb, DCB_ATTR_NUMTCS, !!ret);
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_NUMTCS, !!ret);
+}
 
-अटल पूर्णांक dcbnl_getpfcstate(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	अगर (!netdev->dcbnl_ops->getpfcstate)
-		वापस -EOPNOTSUPP;
+static int dcbnl_getpfcstate(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	if (!netdev->dcbnl_ops->getpfcstate)
+		return -EOPNOTSUPP;
 
-	वापस nla_put_u8(skb, DCB_ATTR_PFC_STATE,
+	return nla_put_u8(skb, DCB_ATTR_PFC_STATE,
 			  netdev->dcbnl_ops->getpfcstate(netdev));
-पूर्ण
+}
 
-अटल पूर्णांक dcbnl_setpfcstate(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
+static int dcbnl_setpfcstate(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
 	u8 value;
 
-	अगर (!tb[DCB_ATTR_PFC_STATE])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_PFC_STATE])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setpfcstate)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setpfcstate)
+		return -EOPNOTSUPP;
 
 	value = nla_get_u8(tb[DCB_ATTR_PFC_STATE]);
 
 	netdev->dcbnl_ops->setpfcstate(netdev, value);
 
-	वापस nla_put_u8(skb, DCB_ATTR_PFC_STATE, 0);
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_PFC_STATE, 0);
+}
 
-अटल पूर्णांक dcbnl_getapp(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *app_nest;
-	काष्ठा nlattr *app_tb[DCB_APP_ATTR_MAX + 1];
+static int dcbnl_getapp(struct net_device *netdev, struct nlmsghdr *nlh,
+			u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *app_nest;
+	struct nlattr *app_tb[DCB_APP_ATTR_MAX + 1];
 	u16 id;
 	u8 up, idtype;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!tb[DCB_ATTR_APP])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_APP])
+		return -EINVAL;
 
 	ret = nla_parse_nested_deprecated(app_tb, DCB_APP_ATTR_MAX,
 					  tb[DCB_ATTR_APP], dcbnl_app_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
 	/* all must be non-null */
-	अगर ((!app_tb[DCB_APP_ATTR_IDTYPE]) ||
+	if ((!app_tb[DCB_APP_ATTR_IDTYPE]) ||
 	    (!app_tb[DCB_APP_ATTR_ID]))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* either by eth type or by socket number */
 	idtype = nla_get_u8(app_tb[DCB_APP_ATTR_IDTYPE]);
-	अगर ((idtype != DCB_APP_IDTYPE_ETHTYPE) &&
+	if ((idtype != DCB_APP_IDTYPE_ETHTYPE) &&
 	    (idtype != DCB_APP_IDTYPE_PORTNUM))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	id = nla_get_u16(app_tb[DCB_APP_ATTR_ID]);
 
-	अगर (netdev->dcbnl_ops->getapp) अणु
+	if (netdev->dcbnl_ops->getapp) {
 		ret = netdev->dcbnl_ops->getapp(netdev, idtype, id);
-		अगर (ret < 0)
-			वापस ret;
-		अन्यथा
+		if (ret < 0)
+			return ret;
+		else
 			up = ret;
-	पूर्ण अन्यथा अणु
-		काष्ठा dcb_app app = अणु
+	} else {
+		struct dcb_app app = {
 					.selector = idtype,
 					.protocol = id,
-				     पूर्ण;
+				     };
 		up = dcb_getapp(netdev, &app);
-	पूर्ण
+	}
 
 	app_nest = nla_nest_start_noflag(skb, DCB_ATTR_APP);
-	अगर (!app_nest)
-		वापस -EMSGSIZE;
+	if (!app_nest)
+		return -EMSGSIZE;
 
 	ret = nla_put_u8(skb, DCB_APP_ATTR_IDTYPE, idtype);
-	अगर (ret)
-		जाओ out_cancel;
+	if (ret)
+		goto out_cancel;
 
 	ret = nla_put_u16(skb, DCB_APP_ATTR_ID, id);
-	अगर (ret)
-		जाओ out_cancel;
+	if (ret)
+		goto out_cancel;
 
 	ret = nla_put_u8(skb, DCB_APP_ATTR_PRIORITY, up);
-	अगर (ret)
-		जाओ out_cancel;
+	if (ret)
+		goto out_cancel;
 
 	nla_nest_end(skb, app_nest);
 
-	वापस 0;
+	return 0;
 
 out_cancel:
 	nla_nest_cancel(skb, app_nest);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dcbnl_setapp(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
+static int dcbnl_setapp(struct net_device *netdev, struct nlmsghdr *nlh,
+			u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	int ret;
 	u16 id;
 	u8 up, idtype;
-	काष्ठा nlattr *app_tb[DCB_APP_ATTR_MAX + 1];
+	struct nlattr *app_tb[DCB_APP_ATTR_MAX + 1];
 
-	अगर (!tb[DCB_ATTR_APP])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_APP])
+		return -EINVAL;
 
 	ret = nla_parse_nested_deprecated(app_tb, DCB_APP_ATTR_MAX,
 					  tb[DCB_ATTR_APP], dcbnl_app_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
 	/* all must be non-null */
-	अगर ((!app_tb[DCB_APP_ATTR_IDTYPE]) ||
+	if ((!app_tb[DCB_APP_ATTR_IDTYPE]) ||
 	    (!app_tb[DCB_APP_ATTR_ID]) ||
 	    (!app_tb[DCB_APP_ATTR_PRIORITY]))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* either by eth type or by socket number */
 	idtype = nla_get_u8(app_tb[DCB_APP_ATTR_IDTYPE]);
-	अगर ((idtype != DCB_APP_IDTYPE_ETHTYPE) &&
+	if ((idtype != DCB_APP_IDTYPE_ETHTYPE) &&
 	    (idtype != DCB_APP_IDTYPE_PORTNUM))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	id = nla_get_u16(app_tb[DCB_APP_ATTR_ID]);
 	up = nla_get_u8(app_tb[DCB_APP_ATTR_PRIORITY]);
 
-	अगर (netdev->dcbnl_ops->setapp) अणु
+	if (netdev->dcbnl_ops->setapp) {
 		ret = netdev->dcbnl_ops->setapp(netdev, idtype, id, up);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		काष्ठा dcb_app app;
+		if (ret < 0)
+			return ret;
+	} else {
+		struct dcb_app app;
 		app.selector = idtype;
 		app.protocol = id;
 		app.priority = up;
 		ret = dcb_setapp(netdev, &app);
-	पूर्ण
+	}
 
 	ret = nla_put_u8(skb, DCB_ATTR_APP, ret);
-	dcbnl_cee_notअगरy(netdev, RTM_SETDCB, DCB_CMD_SAPP, seq, 0);
+	dcbnl_cee_notify(netdev, RTM_SETDCB, DCB_CMD_SAPP, seq, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __dcbnl_pg_अ_लोfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     काष्ठा nlattr **tb, काष्ठा sk_buff *skb, पूर्णांक dir)
-अणु
-	काष्ठा nlattr *pg_nest, *param_nest, *data;
-	काष्ठा nlattr *pg_tb[DCB_PG_ATTR_MAX + 1];
-	काष्ठा nlattr *param_tb[DCB_TC_ATTR_PARAM_MAX + 1];
+static int __dcbnl_pg_getcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     struct nlattr **tb, struct sk_buff *skb, int dir)
+{
+	struct nlattr *pg_nest, *param_nest, *data;
+	struct nlattr *pg_tb[DCB_PG_ATTR_MAX + 1];
+	struct nlattr *param_tb[DCB_TC_ATTR_PARAM_MAX + 1];
 	u8 prio, pgid, tc_pct, up_map;
-	पूर्णांक ret;
-	पूर्णांक getall = 0;
-	पूर्णांक i;
+	int ret;
+	int getall = 0;
+	int i;
 
-	अगर (!tb[DCB_ATTR_PG_CFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_PG_CFG])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->getpgtccfgtx ||
+	if (!netdev->dcbnl_ops->getpgtccfgtx ||
 	    !netdev->dcbnl_ops->getpgtccfgrx ||
 	    !netdev->dcbnl_ops->getpgbwgcfgtx ||
 	    !netdev->dcbnl_ops->getpgbwgcfgrx)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(pg_tb, DCB_PG_ATTR_MAX,
 					  tb[DCB_ATTR_PG_CFG], dcbnl_pg_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
 	pg_nest = nla_nest_start_noflag(skb, DCB_ATTR_PG_CFG);
-	अगर (!pg_nest)
-		वापस -EMSGSIZE;
+	if (!pg_nest)
+		return -EMSGSIZE;
 
-	अगर (pg_tb[DCB_PG_ATTR_TC_ALL])
+	if (pg_tb[DCB_PG_ATTR_TC_ALL])
 		getall = 1;
 
-	क्रम (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) अणु
-		अगर (!getall && !pg_tb[i])
-			जारी;
+	for (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) {
+		if (!getall && !pg_tb[i])
+			continue;
 
-		अगर (pg_tb[DCB_PG_ATTR_TC_ALL])
+		if (pg_tb[DCB_PG_ATTR_TC_ALL])
 			data = pg_tb[DCB_PG_ATTR_TC_ALL];
-		अन्यथा
+		else
 			data = pg_tb[i];
 		ret = nla_parse_nested_deprecated(param_tb,
 						  DCB_TC_ATTR_PARAM_MAX, data,
-						  dcbnl_tc_param_nest, शून्य);
-		अगर (ret)
-			जाओ err_pg;
+						  dcbnl_tc_param_nest, NULL);
+		if (ret)
+			goto err_pg;
 
 		param_nest = nla_nest_start_noflag(skb, i);
-		अगर (!param_nest)
-			जाओ err_pg;
+		if (!param_nest)
+			goto err_pg;
 
 		pgid = DCB_ATTR_VALUE_UNDEFINED;
 		prio = DCB_ATTR_VALUE_UNDEFINED;
 		tc_pct = DCB_ATTR_VALUE_UNDEFINED;
 		up_map = DCB_ATTR_VALUE_UNDEFINED;
 
-		अगर (dir) अणु
+		if (dir) {
 			/* Rx */
 			netdev->dcbnl_ops->getpgtccfgrx(netdev,
 						i - DCB_PG_ATTR_TC_0, &prio,
 						&pgid, &tc_pct, &up_map);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Tx */
 			netdev->dcbnl_ops->getpgtccfgtx(netdev,
 						i - DCB_PG_ATTR_TC_0, &prio,
 						&pgid, &tc_pct, &up_map);
-		पूर्ण
+		}
 
-		अगर (param_tb[DCB_TC_ATTR_PARAM_PGID] ||
-		    param_tb[DCB_TC_ATTR_PARAM_ALL]) अणु
+		if (param_tb[DCB_TC_ATTR_PARAM_PGID] ||
+		    param_tb[DCB_TC_ATTR_PARAM_ALL]) {
 			ret = nla_put_u8(skb,
 			                 DCB_TC_ATTR_PARAM_PGID, pgid);
-			अगर (ret)
-				जाओ err_param;
-		पूर्ण
-		अगर (param_tb[DCB_TC_ATTR_PARAM_UP_MAPPING] ||
-		    param_tb[DCB_TC_ATTR_PARAM_ALL]) अणु
+			if (ret)
+				goto err_param;
+		}
+		if (param_tb[DCB_TC_ATTR_PARAM_UP_MAPPING] ||
+		    param_tb[DCB_TC_ATTR_PARAM_ALL]) {
 			ret = nla_put_u8(skb,
 			                 DCB_TC_ATTR_PARAM_UP_MAPPING, up_map);
-			अगर (ret)
-				जाओ err_param;
-		पूर्ण
-		अगर (param_tb[DCB_TC_ATTR_PARAM_STRICT_PRIO] ||
-		    param_tb[DCB_TC_ATTR_PARAM_ALL]) अणु
+			if (ret)
+				goto err_param;
+		}
+		if (param_tb[DCB_TC_ATTR_PARAM_STRICT_PRIO] ||
+		    param_tb[DCB_TC_ATTR_PARAM_ALL]) {
 			ret = nla_put_u8(skb,
 			                 DCB_TC_ATTR_PARAM_STRICT_PRIO, prio);
-			अगर (ret)
-				जाओ err_param;
-		पूर्ण
-		अगर (param_tb[DCB_TC_ATTR_PARAM_BW_PCT] ||
-		    param_tb[DCB_TC_ATTR_PARAM_ALL]) अणु
+			if (ret)
+				goto err_param;
+		}
+		if (param_tb[DCB_TC_ATTR_PARAM_BW_PCT] ||
+		    param_tb[DCB_TC_ATTR_PARAM_ALL]) {
 			ret = nla_put_u8(skb, DCB_TC_ATTR_PARAM_BW_PCT,
 			                 tc_pct);
-			अगर (ret)
-				जाओ err_param;
-		पूर्ण
+			if (ret)
+				goto err_param;
+		}
 		nla_nest_end(skb, param_nest);
-	पूर्ण
+	}
 
-	अगर (pg_tb[DCB_PG_ATTR_BW_ID_ALL])
+	if (pg_tb[DCB_PG_ATTR_BW_ID_ALL])
 		getall = 1;
-	अन्यथा
+	else
 		getall = 0;
 
-	क्रम (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) अणु
-		अगर (!getall && !pg_tb[i])
-			जारी;
+	for (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) {
+		if (!getall && !pg_tb[i])
+			continue;
 
 		tc_pct = DCB_ATTR_VALUE_UNDEFINED;
 
-		अगर (dir) अणु
+		if (dir) {
 			/* Rx */
 			netdev->dcbnl_ops->getpgbwgcfgrx(netdev,
 					i - DCB_PG_ATTR_BW_ID_0, &tc_pct);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Tx */
 			netdev->dcbnl_ops->getpgbwgcfgtx(netdev,
 					i - DCB_PG_ATTR_BW_ID_0, &tc_pct);
-		पूर्ण
+		}
 		ret = nla_put_u8(skb, i, tc_pct);
-		अगर (ret)
-			जाओ err_pg;
-	पूर्ण
+		if (ret)
+			goto err_pg;
+	}
 
 	nla_nest_end(skb, pg_nest);
 
-	वापस 0;
+	return 0;
 
 err_param:
 	nla_nest_cancel(skb, param_nest);
 err_pg:
 	nla_nest_cancel(skb, pg_nest);
 
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक dcbnl_pgtx_अ_लोfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	वापस __dcbnl_pg_अ_लोfg(netdev, nlh, tb, skb, 0);
-पूर्ण
+static int dcbnl_pgtx_getcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	return __dcbnl_pg_getcfg(netdev, nlh, tb, skb, 0);
+}
 
-अटल पूर्णांक dcbnl_pgrx_अ_लोfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	वापस __dcbnl_pg_अ_लोfg(netdev, nlh, tb, skb, 1);
-पूर्ण
+static int dcbnl_pgrx_getcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	return __dcbnl_pg_getcfg(netdev, nlh, tb, skb, 1);
+}
 
-अटल पूर्णांक dcbnl_setstate(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			  u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
+static int dcbnl_setstate(struct net_device *netdev, struct nlmsghdr *nlh,
+			  u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
 	u8 value;
 
-	अगर (!tb[DCB_ATTR_STATE])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_STATE])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setstate)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setstate)
+		return -EOPNOTSUPP;
 
 	value = nla_get_u8(tb[DCB_ATTR_STATE]);
 
-	वापस nla_put_u8(skb, DCB_ATTR_STATE,
+	return nla_put_u8(skb, DCB_ATTR_STATE,
 			  netdev->dcbnl_ops->setstate(netdev, value));
-पूर्ण
+}
 
-अटल पूर्णांक dcbnl_setpfccfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			   u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_PFC_UP_ATTR_MAX + 1];
-	पूर्णांक i;
-	पूर्णांक ret;
+static int dcbnl_setpfccfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			   u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_PFC_UP_ATTR_MAX + 1];
+	int i;
+	int ret;
 	u8 value;
 
-	अगर (!tb[DCB_ATTR_PFC_CFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_PFC_CFG])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setpfccfg)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setpfccfg)
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_PFC_UP_ATTR_MAX,
 					  tb[DCB_ATTR_PFC_CFG],
-					  dcbnl_pfc_up_nest, शून्य);
-	अगर (ret)
-		वापस ret;
+					  dcbnl_pfc_up_nest, NULL);
+	if (ret)
+		return ret;
 
-	क्रम (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) अणु
-		अगर (data[i] == शून्य)
-			जारी;
+	for (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) {
+		if (data[i] == NULL)
+			continue;
 		value = nla_get_u8(data[i]);
 		netdev->dcbnl_ops->setpfccfg(netdev,
 			data[i]->nla_type - DCB_PFC_UP_ATTR_0, value);
-	पूर्ण
+	}
 
-	वापस nla_put_u8(skb, DCB_ATTR_PFC_CFG, 0);
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_PFC_CFG, 0);
+}
 
-अटल पूर्णांक dcbnl_setall(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
+static int dcbnl_setall(struct net_device *netdev, struct nlmsghdr *nlh,
+			u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	int ret;
 
-	अगर (!tb[DCB_ATTR_SET_ALL])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_SET_ALL])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setall)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setall)
+		return -EOPNOTSUPP;
 
 	ret = nla_put_u8(skb, DCB_ATTR_SET_ALL,
 			 netdev->dcbnl_ops->setall(netdev));
-	dcbnl_cee_notअगरy(netdev, RTM_SETDCB, DCB_CMD_SET_ALL, seq, 0);
+	dcbnl_cee_notify(netdev, RTM_SETDCB, DCB_CMD_SET_ALL, seq, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __dcbnl_pg_setcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb,
-			     पूर्णांक dir)
-अणु
-	काष्ठा nlattr *pg_tb[DCB_PG_ATTR_MAX + 1];
-	काष्ठा nlattr *param_tb[DCB_TC_ATTR_PARAM_MAX + 1];
-	पूर्णांक ret;
-	पूर्णांक i;
+static int __dcbnl_pg_setcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb,
+			     int dir)
+{
+	struct nlattr *pg_tb[DCB_PG_ATTR_MAX + 1];
+	struct nlattr *param_tb[DCB_TC_ATTR_PARAM_MAX + 1];
+	int ret;
+	int i;
 	u8 pgid;
 	u8 up_map;
 	u8 prio;
 	u8 tc_pct;
 
-	अगर (!tb[DCB_ATTR_PG_CFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_PG_CFG])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setpgtccfgtx ||
+	if (!netdev->dcbnl_ops->setpgtccfgtx ||
 	    !netdev->dcbnl_ops->setpgtccfgrx ||
 	    !netdev->dcbnl_ops->setpgbwgcfgtx ||
 	    !netdev->dcbnl_ops->setpgbwgcfgrx)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(pg_tb, DCB_PG_ATTR_MAX,
 					  tb[DCB_ATTR_PG_CFG], dcbnl_pg_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
-	क्रम (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) अणु
-		अगर (!pg_tb[i])
-			जारी;
+	for (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) {
+		if (!pg_tb[i])
+			continue;
 
 		ret = nla_parse_nested_deprecated(param_tb,
 						  DCB_TC_ATTR_PARAM_MAX,
 						  pg_tb[i],
-						  dcbnl_tc_param_nest, शून्य);
-		अगर (ret)
-			वापस ret;
+						  dcbnl_tc_param_nest, NULL);
+		if (ret)
+			return ret;
 
 		pgid = DCB_ATTR_VALUE_UNDEFINED;
 		prio = DCB_ATTR_VALUE_UNDEFINED;
 		tc_pct = DCB_ATTR_VALUE_UNDEFINED;
 		up_map = DCB_ATTR_VALUE_UNDEFINED;
 
-		अगर (param_tb[DCB_TC_ATTR_PARAM_STRICT_PRIO])
+		if (param_tb[DCB_TC_ATTR_PARAM_STRICT_PRIO])
 			prio =
 			    nla_get_u8(param_tb[DCB_TC_ATTR_PARAM_STRICT_PRIO]);
 
-		अगर (param_tb[DCB_TC_ATTR_PARAM_PGID])
+		if (param_tb[DCB_TC_ATTR_PARAM_PGID])
 			pgid = nla_get_u8(param_tb[DCB_TC_ATTR_PARAM_PGID]);
 
-		अगर (param_tb[DCB_TC_ATTR_PARAM_BW_PCT])
+		if (param_tb[DCB_TC_ATTR_PARAM_BW_PCT])
 			tc_pct = nla_get_u8(param_tb[DCB_TC_ATTR_PARAM_BW_PCT]);
 
-		अगर (param_tb[DCB_TC_ATTR_PARAM_UP_MAPPING])
+		if (param_tb[DCB_TC_ATTR_PARAM_UP_MAPPING])
 			up_map =
 			     nla_get_u8(param_tb[DCB_TC_ATTR_PARAM_UP_MAPPING]);
 
 		/* dir: Tx = 0, Rx = 1 */
-		अगर (dir) अणु
+		if (dir) {
 			/* Rx */
 			netdev->dcbnl_ops->setpgtccfgrx(netdev,
 				i - DCB_PG_ATTR_TC_0,
 				prio, pgid, tc_pct, up_map);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Tx */
 			netdev->dcbnl_ops->setpgtccfgtx(netdev,
 				i - DCB_PG_ATTR_TC_0,
 				prio, pgid, tc_pct, up_map);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) अणु
-		अगर (!pg_tb[i])
-			जारी;
+	for (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) {
+		if (!pg_tb[i])
+			continue;
 
 		tc_pct = nla_get_u8(pg_tb[i]);
 
 		/* dir: Tx = 0, Rx = 1 */
-		अगर (dir) अणु
+		if (dir) {
 			/* Rx */
 			netdev->dcbnl_ops->setpgbwgcfgrx(netdev,
 					 i - DCB_PG_ATTR_BW_ID_0, tc_pct);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Tx */
 			netdev->dcbnl_ops->setpgbwgcfgtx(netdev,
 					 i - DCB_PG_ATTR_BW_ID_0, tc_pct);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस nla_put_u8(skb, DCB_ATTR_PG_CFG, 0);
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_PG_CFG, 0);
+}
 
-अटल पूर्णांक dcbnl_pgtx_setcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	वापस __dcbnl_pg_setcfg(netdev, nlh, seq, tb, skb, 0);
-पूर्ण
+static int dcbnl_pgtx_setcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	return __dcbnl_pg_setcfg(netdev, nlh, seq, tb, skb, 0);
+}
 
-अटल पूर्णांक dcbnl_pgrx_setcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			     u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	वापस __dcbnl_pg_setcfg(netdev, nlh, seq, tb, skb, 1);
-पूर्ण
+static int dcbnl_pgrx_setcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			     u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	return __dcbnl_pg_setcfg(netdev, nlh, seq, tb, skb, 1);
+}
 
-अटल पूर्णांक dcbnl_bcn_अ_लोfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			    u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *bcn_nest;
-	काष्ठा nlattr *bcn_tb[DCB_BCN_ATTR_MAX + 1];
+static int dcbnl_bcn_getcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			    u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *bcn_nest;
+	struct nlattr *bcn_tb[DCB_BCN_ATTR_MAX + 1];
 	u8 value_byte;
-	u32 value_पूर्णांकeger;
-	पूर्णांक ret;
+	u32 value_integer;
+	int ret;
 	bool getall = false;
-	पूर्णांक i;
+	int i;
 
-	अगर (!tb[DCB_ATTR_BCN])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_BCN])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->getbcnrp ||
+	if (!netdev->dcbnl_ops->getbcnrp ||
 	    !netdev->dcbnl_ops->getbcncfg)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(bcn_tb, DCB_BCN_ATTR_MAX,
 					  tb[DCB_ATTR_BCN], dcbnl_bcn_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
 	bcn_nest = nla_nest_start_noflag(skb, DCB_ATTR_BCN);
-	अगर (!bcn_nest)
-		वापस -EMSGSIZE;
+	if (!bcn_nest)
+		return -EMSGSIZE;
 
-	अगर (bcn_tb[DCB_BCN_ATTR_ALL])
+	if (bcn_tb[DCB_BCN_ATTR_ALL])
 		getall = true;
 
-	क्रम (i = DCB_BCN_ATTR_RP_0; i <= DCB_BCN_ATTR_RP_7; i++) अणु
-		अगर (!getall && !bcn_tb[i])
-			जारी;
+	for (i = DCB_BCN_ATTR_RP_0; i <= DCB_BCN_ATTR_RP_7; i++) {
+		if (!getall && !bcn_tb[i])
+			continue;
 
 		netdev->dcbnl_ops->getbcnrp(netdev, i - DCB_BCN_ATTR_RP_0,
 		                            &value_byte);
 		ret = nla_put_u8(skb, i, value_byte);
-		अगर (ret)
-			जाओ err_bcn;
-	पूर्ण
+		if (ret)
+			goto err_bcn;
+	}
 
-	क्रम (i = DCB_BCN_ATTR_BCNA_0; i <= DCB_BCN_ATTR_RI; i++) अणु
-		अगर (!getall && !bcn_tb[i])
-			जारी;
+	for (i = DCB_BCN_ATTR_BCNA_0; i <= DCB_BCN_ATTR_RI; i++) {
+		if (!getall && !bcn_tb[i])
+			continue;
 
 		netdev->dcbnl_ops->getbcncfg(netdev, i,
-		                             &value_पूर्णांकeger);
-		ret = nla_put_u32(skb, i, value_पूर्णांकeger);
-		अगर (ret)
-			जाओ err_bcn;
-	पूर्ण
+		                             &value_integer);
+		ret = nla_put_u32(skb, i, value_integer);
+		if (ret)
+			goto err_bcn;
+	}
 
 	nla_nest_end(skb, bcn_nest);
 
-	वापस 0;
+	return 0;
 
 err_bcn:
 	nla_nest_cancel(skb, bcn_nest);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dcbnl_bcn_setcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			    u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_BCN_ATTR_MAX + 1];
-	पूर्णांक i;
-	पूर्णांक ret;
+static int dcbnl_bcn_setcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			    u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_BCN_ATTR_MAX + 1];
+	int i;
+	int ret;
 	u8 value_byte;
-	u32 value_पूर्णांक;
+	u32 value_int;
 
-	अगर (!tb[DCB_ATTR_BCN])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_BCN])
+		return -EINVAL;
 
-	अगर (!netdev->dcbnl_ops->setbcncfg ||
+	if (!netdev->dcbnl_ops->setbcncfg ||
 	    !netdev->dcbnl_ops->setbcnrp)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	ret = nla_parse_nested_deprecated(data, DCB_BCN_ATTR_MAX,
 					  tb[DCB_ATTR_BCN], dcbnl_pfc_up_nest,
-					  शून्य);
-	अगर (ret)
-		वापस ret;
+					  NULL);
+	if (ret)
+		return ret;
 
-	क्रम (i = DCB_BCN_ATTR_RP_0; i <= DCB_BCN_ATTR_RP_7; i++) अणु
-		अगर (data[i] == शून्य)
-			जारी;
+	for (i = DCB_BCN_ATTR_RP_0; i <= DCB_BCN_ATTR_RP_7; i++) {
+		if (data[i] == NULL)
+			continue;
 		value_byte = nla_get_u8(data[i]);
 		netdev->dcbnl_ops->setbcnrp(netdev,
 			data[i]->nla_type - DCB_BCN_ATTR_RP_0, value_byte);
-	पूर्ण
+	}
 
-	क्रम (i = DCB_BCN_ATTR_BCNA_0; i <= DCB_BCN_ATTR_RI; i++) अणु
-		अगर (data[i] == शून्य)
-			जारी;
-		value_पूर्णांक = nla_get_u32(data[i]);
+	for (i = DCB_BCN_ATTR_BCNA_0; i <= DCB_BCN_ATTR_RI; i++) {
+		if (data[i] == NULL)
+			continue;
+		value_int = nla_get_u32(data[i]);
 		netdev->dcbnl_ops->setbcncfg(netdev,
-	                                     i, value_पूर्णांक);
-	पूर्ण
+	                                     i, value_int);
+	}
 
-	वापस nla_put_u8(skb, DCB_ATTR_BCN, 0);
-पूर्ण
+	return nla_put_u8(skb, DCB_ATTR_BCN, 0);
+}
 
-अटल पूर्णांक dcbnl_build_peer_app(काष्ठा net_device *netdev, काष्ठा sk_buff* skb,
-				पूर्णांक app_nested_type, पूर्णांक app_info_type,
-				पूर्णांक app_entry_type)
-अणु
-	काष्ठा dcb_peer_app_info info;
-	काष्ठा dcb_app *table = शून्य;
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+static int dcbnl_build_peer_app(struct net_device *netdev, struct sk_buff* skb,
+				int app_nested_type, int app_info_type,
+				int app_entry_type)
+{
+	struct dcb_peer_app_info info;
+	struct dcb_app *table = NULL;
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
 	u16 app_count;
-	पूर्णांक err;
+	int err;
 
 
 	/**
-	 * retrieve the peer app configuration क्रमm the driver. If the driver
-	 * handlers fail निकास without करोing anything
+	 * retrieve the peer app configuration form the driver. If the driver
+	 * handlers fail exit without doing anything
 	 */
 	err = ops->peer_getappinfo(netdev, &info, &app_count);
-	अगर (!err && app_count) अणु
-		table = kदो_स्मृति_array(app_count, माप(काष्ठा dcb_app),
+	if (!err && app_count) {
+		table = kmalloc_array(app_count, sizeof(struct dcb_app),
 				      GFP_KERNEL);
-		अगर (!table)
-			वापस -ENOMEM;
+		if (!table)
+			return -ENOMEM;
 
 		err = ops->peer_getapptable(netdev, table);
-	पूर्ण
+	}
 
-	अगर (!err) अणु
+	if (!err) {
 		u16 i;
-		काष्ठा nlattr *app;
+		struct nlattr *app;
 
 		/**
 		 * build the message, from here on the only possible failure
@@ -1007,1080 +1006,1080 @@ err_bcn:
 		err = -EMSGSIZE;
 
 		app = nla_nest_start_noflag(skb, app_nested_type);
-		अगर (!app)
-			जाओ nla_put_failure;
+		if (!app)
+			goto nla_put_failure;
 
-		अगर (app_info_type &&
-		    nla_put(skb, app_info_type, माप(info), &info))
-			जाओ nla_put_failure;
+		if (app_info_type &&
+		    nla_put(skb, app_info_type, sizeof(info), &info))
+			goto nla_put_failure;
 
-		क्रम (i = 0; i < app_count; i++) अणु
-			अगर (nla_put(skb, app_entry_type, माप(काष्ठा dcb_app),
+		for (i = 0; i < app_count; i++) {
+			if (nla_put(skb, app_entry_type, sizeof(struct dcb_app),
 				    &table[i]))
-				जाओ nla_put_failure;
-		पूर्ण
+				goto nla_put_failure;
+		}
 		nla_nest_end(skb, app);
-	पूर्ण
+	}
 	err = 0;
 
 nla_put_failure:
-	kमुक्त(table);
-	वापस err;
-पूर्ण
+	kfree(table);
+	return err;
+}
 
 /* Handle IEEE 802.1Qaz/802.1Qau/802.1Qbb GET commands. */
-अटल पूर्णांक dcbnl_ieee_fill(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
-अणु
-	काष्ठा nlattr *ieee, *app;
-	काष्ठा dcb_app_type *itr;
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
-	पूर्णांक dcbx;
-	पूर्णांक err;
+static int dcbnl_ieee_fill(struct sk_buff *skb, struct net_device *netdev)
+{
+	struct nlattr *ieee, *app;
+	struct dcb_app_type *itr;
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+	int dcbx;
+	int err;
 
-	अगर (nla_put_string(skb, DCB_ATTR_IFNAME, netdev->name))
-		वापस -EMSGSIZE;
+	if (nla_put_string(skb, DCB_ATTR_IFNAME, netdev->name))
+		return -EMSGSIZE;
 
 	ieee = nla_nest_start_noflag(skb, DCB_ATTR_IEEE);
-	अगर (!ieee)
-		वापस -EMSGSIZE;
+	if (!ieee)
+		return -EMSGSIZE;
 
-	अगर (ops->ieee_getets) अणु
-		काष्ठा ieee_ets ets;
-		स_रखो(&ets, 0, माप(ets));
+	if (ops->ieee_getets) {
+		struct ieee_ets ets;
+		memset(&ets, 0, sizeof(ets));
 		err = ops->ieee_getets(netdev, &ets);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_IEEE_ETS, माप(ets), &ets))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_IEEE_ETS, sizeof(ets), &ets))
+			return -EMSGSIZE;
+	}
 
-	अगर (ops->ieee_geपंचांगaxrate) अणु
-		काष्ठा ieee_maxrate maxrate;
-		स_रखो(&maxrate, 0, माप(maxrate));
-		err = ops->ieee_geपंचांगaxrate(netdev, &maxrate);
-		अगर (!err) अणु
+	if (ops->ieee_getmaxrate) {
+		struct ieee_maxrate maxrate;
+		memset(&maxrate, 0, sizeof(maxrate));
+		err = ops->ieee_getmaxrate(netdev, &maxrate);
+		if (!err) {
 			err = nla_put(skb, DCB_ATTR_IEEE_MAXRATE,
-				      माप(maxrate), &maxrate);
-			अगर (err)
-				वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+				      sizeof(maxrate), &maxrate);
+			if (err)
+				return -EMSGSIZE;
+		}
+	}
 
-	अगर (ops->ieee_getqcn) अणु
-		काष्ठा ieee_qcn qcn;
+	if (ops->ieee_getqcn) {
+		struct ieee_qcn qcn;
 
-		स_रखो(&qcn, 0, माप(qcn));
+		memset(&qcn, 0, sizeof(qcn));
 		err = ops->ieee_getqcn(netdev, &qcn);
-		अगर (!err) अणु
+		if (!err) {
 			err = nla_put(skb, DCB_ATTR_IEEE_QCN,
-				      माप(qcn), &qcn);
-			अगर (err)
-				वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+				      sizeof(qcn), &qcn);
+			if (err)
+				return -EMSGSIZE;
+		}
+	}
 
-	अगर (ops->ieee_getqcnstats) अणु
-		काष्ठा ieee_qcn_stats qcn_stats;
+	if (ops->ieee_getqcnstats) {
+		struct ieee_qcn_stats qcn_stats;
 
-		स_रखो(&qcn_stats, 0, माप(qcn_stats));
+		memset(&qcn_stats, 0, sizeof(qcn_stats));
 		err = ops->ieee_getqcnstats(netdev, &qcn_stats);
-		अगर (!err) अणु
+		if (!err) {
 			err = nla_put(skb, DCB_ATTR_IEEE_QCN_STATS,
-				      माप(qcn_stats), &qcn_stats);
-			अगर (err)
-				वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+				      sizeof(qcn_stats), &qcn_stats);
+			if (err)
+				return -EMSGSIZE;
+		}
+	}
 
-	अगर (ops->ieee_getpfc) अणु
-		काष्ठा ieee_pfc pfc;
-		स_रखो(&pfc, 0, माप(pfc));
+	if (ops->ieee_getpfc) {
+		struct ieee_pfc pfc;
+		memset(&pfc, 0, sizeof(pfc));
 		err = ops->ieee_getpfc(netdev, &pfc);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_IEEE_PFC, माप(pfc), &pfc))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_IEEE_PFC, sizeof(pfc), &pfc))
+			return -EMSGSIZE;
+	}
 
-	अगर (ops->dcbnl_getbuffer) अणु
-		काष्ठा dcbnl_buffer buffer;
+	if (ops->dcbnl_getbuffer) {
+		struct dcbnl_buffer buffer;
 
-		स_रखो(&buffer, 0, माप(buffer));
+		memset(&buffer, 0, sizeof(buffer));
 		err = ops->dcbnl_getbuffer(netdev, &buffer);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_DCB_BUFFER, माप(buffer), &buffer))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_DCB_BUFFER, sizeof(buffer), &buffer))
+			return -EMSGSIZE;
+	}
 
 	app = nla_nest_start_noflag(skb, DCB_ATTR_IEEE_APP_TABLE);
-	अगर (!app)
-		वापस -EMSGSIZE;
+	if (!app)
+		return -EMSGSIZE;
 
 	spin_lock_bh(&dcb_lock);
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->अगरindex == netdev->अगरindex) अणु
-			err = nla_put(skb, DCB_ATTR_IEEE_APP, माप(itr->app),
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->ifindex == netdev->ifindex) {
+			err = nla_put(skb, DCB_ATTR_IEEE_APP, sizeof(itr->app),
 					 &itr->app);
-			अगर (err) अणु
+			if (err) {
 				spin_unlock_bh(&dcb_lock);
-				वापस -EMSGSIZE;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EMSGSIZE;
+			}
+		}
+	}
 
-	अगर (netdev->dcbnl_ops->getdcbx)
+	if (netdev->dcbnl_ops->getdcbx)
 		dcbx = netdev->dcbnl_ops->getdcbx(netdev);
-	अन्यथा
+	else
 		dcbx = -EOPNOTSUPP;
 
 	spin_unlock_bh(&dcb_lock);
 	nla_nest_end(skb, app);
 
-	/* get peer info अगर available */
-	अगर (ops->ieee_peer_getets) अणु
-		काष्ठा ieee_ets ets;
-		स_रखो(&ets, 0, माप(ets));
+	/* get peer info if available */
+	if (ops->ieee_peer_getets) {
+		struct ieee_ets ets;
+		memset(&ets, 0, sizeof(ets));
 		err = ops->ieee_peer_getets(netdev, &ets);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_IEEE_PEER_ETS, माप(ets), &ets))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_IEEE_PEER_ETS, sizeof(ets), &ets))
+			return -EMSGSIZE;
+	}
 
-	अगर (ops->ieee_peer_getpfc) अणु
-		काष्ठा ieee_pfc pfc;
-		स_रखो(&pfc, 0, माप(pfc));
+	if (ops->ieee_peer_getpfc) {
+		struct ieee_pfc pfc;
+		memset(&pfc, 0, sizeof(pfc));
 		err = ops->ieee_peer_getpfc(netdev, &pfc);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_IEEE_PEER_PFC, माप(pfc), &pfc))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_IEEE_PEER_PFC, sizeof(pfc), &pfc))
+			return -EMSGSIZE;
+	}
 
-	अगर (ops->peer_getappinfo && ops->peer_getapptable) अणु
+	if (ops->peer_getappinfo && ops->peer_getapptable) {
 		err = dcbnl_build_peer_app(netdev, skb,
 					   DCB_ATTR_IEEE_PEER_APP,
 					   DCB_ATTR_IEEE_APP_UNSPEC,
 					   DCB_ATTR_IEEE_APP);
-		अगर (err)
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (err)
+			return -EMSGSIZE;
+	}
 
 	nla_nest_end(skb, ieee);
-	अगर (dcbx >= 0) अणु
+	if (dcbx >= 0) {
 		err = nla_put_u8(skb, DCB_ATTR_DCBX, dcbx);
-		अगर (err)
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (err)
+			return -EMSGSIZE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dcbnl_cee_pg_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			     पूर्णांक dir)
-अणु
+static int dcbnl_cee_pg_fill(struct sk_buff *skb, struct net_device *dev,
+			     int dir)
+{
 	u8 pgid, up_map, prio, tc_pct;
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = dev->dcbnl_ops;
-	पूर्णांक i = dir ? DCB_ATTR_CEE_TX_PG : DCB_ATTR_CEE_RX_PG;
-	काष्ठा nlattr *pg = nla_nest_start_noflag(skb, i);
+	const struct dcbnl_rtnl_ops *ops = dev->dcbnl_ops;
+	int i = dir ? DCB_ATTR_CEE_TX_PG : DCB_ATTR_CEE_RX_PG;
+	struct nlattr *pg = nla_nest_start_noflag(skb, i);
 
-	अगर (!pg)
-		वापस -EMSGSIZE;
+	if (!pg)
+		return -EMSGSIZE;
 
-	क्रम (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) अणु
-		काष्ठा nlattr *tc_nest = nla_nest_start_noflag(skb, i);
+	for (i = DCB_PG_ATTR_TC_0; i <= DCB_PG_ATTR_TC_7; i++) {
+		struct nlattr *tc_nest = nla_nest_start_noflag(skb, i);
 
-		अगर (!tc_nest)
-			वापस -EMSGSIZE;
+		if (!tc_nest)
+			return -EMSGSIZE;
 
 		pgid = DCB_ATTR_VALUE_UNDEFINED;
 		prio = DCB_ATTR_VALUE_UNDEFINED;
 		tc_pct = DCB_ATTR_VALUE_UNDEFINED;
 		up_map = DCB_ATTR_VALUE_UNDEFINED;
 
-		अगर (!dir)
+		if (!dir)
 			ops->getpgtccfgrx(dev, i - DCB_PG_ATTR_TC_0,
 					  &prio, &pgid, &tc_pct, &up_map);
-		अन्यथा
+		else
 			ops->getpgtccfgtx(dev, i - DCB_PG_ATTR_TC_0,
 					  &prio, &pgid, &tc_pct, &up_map);
 
-		अगर (nla_put_u8(skb, DCB_TC_ATTR_PARAM_PGID, pgid) ||
+		if (nla_put_u8(skb, DCB_TC_ATTR_PARAM_PGID, pgid) ||
 		    nla_put_u8(skb, DCB_TC_ATTR_PARAM_UP_MAPPING, up_map) ||
 		    nla_put_u8(skb, DCB_TC_ATTR_PARAM_STRICT_PRIO, prio) ||
 		    nla_put_u8(skb, DCB_TC_ATTR_PARAM_BW_PCT, tc_pct))
-			वापस -EMSGSIZE;
+			return -EMSGSIZE;
 		nla_nest_end(skb, tc_nest);
-	पूर्ण
+	}
 
-	क्रम (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) अणु
+	for (i = DCB_PG_ATTR_BW_ID_0; i <= DCB_PG_ATTR_BW_ID_7; i++) {
 		tc_pct = DCB_ATTR_VALUE_UNDEFINED;
 
-		अगर (!dir)
+		if (!dir)
 			ops->getpgbwgcfgrx(dev, i - DCB_PG_ATTR_BW_ID_0,
 					   &tc_pct);
-		अन्यथा
+		else
 			ops->getpgbwgcfgtx(dev, i - DCB_PG_ATTR_BW_ID_0,
 					   &tc_pct);
-		अगर (nla_put_u8(skb, i, tc_pct))
-			वापस -EMSGSIZE;
-	पूर्ण
+		if (nla_put_u8(skb, i, tc_pct))
+			return -EMSGSIZE;
+	}
 	nla_nest_end(skb, pg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dcbnl_cee_fill(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
-अणु
-	काष्ठा nlattr *cee, *app;
-	काष्ठा dcb_app_type *itr;
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
-	पूर्णांक dcbx, i, err = -EMSGSIZE;
+static int dcbnl_cee_fill(struct sk_buff *skb, struct net_device *netdev)
+{
+	struct nlattr *cee, *app;
+	struct dcb_app_type *itr;
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+	int dcbx, i, err = -EMSGSIZE;
 	u8 value;
 
-	अगर (nla_put_string(skb, DCB_ATTR_IFNAME, netdev->name))
-		जाओ nla_put_failure;
+	if (nla_put_string(skb, DCB_ATTR_IFNAME, netdev->name))
+		goto nla_put_failure;
 	cee = nla_nest_start_noflag(skb, DCB_ATTR_CEE);
-	अगर (!cee)
-		जाओ nla_put_failure;
+	if (!cee)
+		goto nla_put_failure;
 
 	/* local pg */
-	अगर (ops->getpgtccfgtx && ops->getpgbwgcfgtx) अणु
+	if (ops->getpgtccfgtx && ops->getpgbwgcfgtx) {
 		err = dcbnl_cee_pg_fill(skb, netdev, 1);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
-	अगर (ops->getpgtccfgrx && ops->getpgbwgcfgrx) अणु
+	if (ops->getpgtccfgrx && ops->getpgbwgcfgrx) {
 		err = dcbnl_cee_pg_fill(skb, netdev, 0);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 
 	/* local pfc */
-	अगर (ops->getpfccfg) अणु
-		काष्ठा nlattr *pfc_nest = nla_nest_start_noflag(skb,
+	if (ops->getpfccfg) {
+		struct nlattr *pfc_nest = nla_nest_start_noflag(skb,
 								DCB_ATTR_CEE_PFC);
 
-		अगर (!pfc_nest)
-			जाओ nla_put_failure;
+		if (!pfc_nest)
+			goto nla_put_failure;
 
-		क्रम (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) अणु
+		for (i = DCB_PFC_UP_ATTR_0; i <= DCB_PFC_UP_ATTR_7; i++) {
 			ops->getpfccfg(netdev, i - DCB_PFC_UP_ATTR_0, &value);
-			अगर (nla_put_u8(skb, i, value))
-				जाओ nla_put_failure;
-		पूर्ण
+			if (nla_put_u8(skb, i, value))
+				goto nla_put_failure;
+		}
 		nla_nest_end(skb, pfc_nest);
-	पूर्ण
+	}
 
 	/* local app */
 	spin_lock_bh(&dcb_lock);
 	app = nla_nest_start_noflag(skb, DCB_ATTR_CEE_APP_TABLE);
-	अगर (!app)
-		जाओ dcb_unlock;
+	if (!app)
+		goto dcb_unlock;
 
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->अगरindex == netdev->अगरindex) अणु
-			काष्ठा nlattr *app_nest = nla_nest_start_noflag(skb,
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->ifindex == netdev->ifindex) {
+			struct nlattr *app_nest = nla_nest_start_noflag(skb,
 									DCB_ATTR_APP);
-			अगर (!app_nest)
-				जाओ dcb_unlock;
+			if (!app_nest)
+				goto dcb_unlock;
 
 			err = nla_put_u8(skb, DCB_APP_ATTR_IDTYPE,
 					 itr->app.selector);
-			अगर (err)
-				जाओ dcb_unlock;
+			if (err)
+				goto dcb_unlock;
 
 			err = nla_put_u16(skb, DCB_APP_ATTR_ID,
 					  itr->app.protocol);
-			अगर (err)
-				जाओ dcb_unlock;
+			if (err)
+				goto dcb_unlock;
 
 			err = nla_put_u8(skb, DCB_APP_ATTR_PRIORITY,
 					 itr->app.priority);
-			अगर (err)
-				जाओ dcb_unlock;
+			if (err)
+				goto dcb_unlock;
 
 			nla_nest_end(skb, app_nest);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	nla_nest_end(skb, app);
 
-	अगर (netdev->dcbnl_ops->getdcbx)
+	if (netdev->dcbnl_ops->getdcbx)
 		dcbx = netdev->dcbnl_ops->getdcbx(netdev);
-	अन्यथा
+	else
 		dcbx = -EOPNOTSUPP;
 
 	spin_unlock_bh(&dcb_lock);
 
 	/* features flags */
-	अगर (ops->getfeatcfg) अणु
-		काष्ठा nlattr *feat = nla_nest_start_noflag(skb,
+	if (ops->getfeatcfg) {
+		struct nlattr *feat = nla_nest_start_noflag(skb,
 							    DCB_ATTR_CEE_FEAT);
-		अगर (!feat)
-			जाओ nla_put_failure;
+		if (!feat)
+			goto nla_put_failure;
 
-		क्रम (i = DCB_FEATCFG_ATTR_ALL + 1; i <= DCB_FEATCFG_ATTR_MAX;
+		for (i = DCB_FEATCFG_ATTR_ALL + 1; i <= DCB_FEATCFG_ATTR_MAX;
 		     i++)
-			अगर (!ops->getfeatcfg(netdev, i, &value) &&
+			if (!ops->getfeatcfg(netdev, i, &value) &&
 			    nla_put_u8(skb, i, value))
-				जाओ nla_put_failure;
+				goto nla_put_failure;
 
 		nla_nest_end(skb, feat);
-	पूर्ण
+	}
 
-	/* peer info अगर available */
-	अगर (ops->cee_peer_getpg) अणु
-		काष्ठा cee_pg pg;
-		स_रखो(&pg, 0, माप(pg));
+	/* peer info if available */
+	if (ops->cee_peer_getpg) {
+		struct cee_pg pg;
+		memset(&pg, 0, sizeof(pg));
 		err = ops->cee_peer_getpg(netdev, &pg);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_CEE_PEER_PG, माप(pg), &pg))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_CEE_PEER_PG, sizeof(pg), &pg))
+			goto nla_put_failure;
+	}
 
-	अगर (ops->cee_peer_getpfc) अणु
-		काष्ठा cee_pfc pfc;
-		स_रखो(&pfc, 0, माप(pfc));
+	if (ops->cee_peer_getpfc) {
+		struct cee_pfc pfc;
+		memset(&pfc, 0, sizeof(pfc));
 		err = ops->cee_peer_getpfc(netdev, &pfc);
-		अगर (!err &&
-		    nla_put(skb, DCB_ATTR_CEE_PEER_PFC, माप(pfc), &pfc))
-			जाओ nla_put_failure;
-	पूर्ण
+		if (!err &&
+		    nla_put(skb, DCB_ATTR_CEE_PEER_PFC, sizeof(pfc), &pfc))
+			goto nla_put_failure;
+	}
 
-	अगर (ops->peer_getappinfo && ops->peer_getapptable) अणु
+	if (ops->peer_getappinfo && ops->peer_getapptable) {
 		err = dcbnl_build_peer_app(netdev, skb,
 					   DCB_ATTR_CEE_PEER_APP_TABLE,
 					   DCB_ATTR_CEE_PEER_APP_INFO,
 					   DCB_ATTR_CEE_PEER_APP);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
+		if (err)
+			goto nla_put_failure;
+	}
 	nla_nest_end(skb, cee);
 
 	/* DCBX state */
-	अगर (dcbx >= 0) अणु
+	if (dcbx >= 0) {
 		err = nla_put_u8(skb, DCB_ATTR_DCBX, dcbx);
-		अगर (err)
-			जाओ nla_put_failure;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto nla_put_failure;
+	}
+	return 0;
 
 dcb_unlock:
 	spin_unlock_bh(&dcb_lock);
 nla_put_failure:
 	err = -EMSGSIZE;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dcbnl_notअगरy(काष्ठा net_device *dev, पूर्णांक event, पूर्णांक cmd,
-			u32 seq, u32 portid, पूर्णांक dcbx_ver)
-अणु
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा sk_buff *skb;
-	काष्ठा nlmsghdr *nlh;
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = dev->dcbnl_ops;
-	पूर्णांक err;
+static int dcbnl_notify(struct net_device *dev, int event, int cmd,
+			u32 seq, u32 portid, int dcbx_ver)
+{
+	struct net *net = dev_net(dev);
+	struct sk_buff *skb;
+	struct nlmsghdr *nlh;
+	const struct dcbnl_rtnl_ops *ops = dev->dcbnl_ops;
+	int err;
 
-	अगर (!ops)
-		वापस -EOPNOTSUPP;
+	if (!ops)
+		return -EOPNOTSUPP;
 
 	skb = dcbnl_newmsg(event, cmd, portid, seq, 0, &nlh);
-	अगर (!skb)
-		वापस -ENOBUFS;
+	if (!skb)
+		return -ENOBUFS;
 
-	अगर (dcbx_ver == DCB_CAP_DCBX_VER_IEEE)
+	if (dcbx_ver == DCB_CAP_DCBX_VER_IEEE)
 		err = dcbnl_ieee_fill(skb, dev);
-	अन्यथा
+	else
 		err = dcbnl_cee_fill(skb, dev);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* Report error to broadcast listeners */
-		nlmsg_मुक्त(skb);
+		nlmsg_free(skb);
 		rtnl_set_sk_err(net, RTNLGRP_DCB, err);
-	पूर्ण अन्यथा अणु
-		/* End nlmsg and notअगरy broadcast listeners */
+	} else {
+		/* End nlmsg and notify broadcast listeners */
 		nlmsg_end(skb, nlh);
-		rtnl_notअगरy(skb, net, 0, RTNLGRP_DCB, शून्य, GFP_KERNEL);
-	पूर्ण
+		rtnl_notify(skb, net, 0, RTNLGRP_DCB, NULL, GFP_KERNEL);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक dcbnl_ieee_notअगरy(काष्ठा net_device *dev, पूर्णांक event, पूर्णांक cmd,
+int dcbnl_ieee_notify(struct net_device *dev, int event, int cmd,
 		      u32 seq, u32 portid)
-अणु
-	वापस dcbnl_notअगरy(dev, event, cmd, seq, portid, DCB_CAP_DCBX_VER_IEEE);
-पूर्ण
-EXPORT_SYMBOL(dcbnl_ieee_notअगरy);
+{
+	return dcbnl_notify(dev, event, cmd, seq, portid, DCB_CAP_DCBX_VER_IEEE);
+}
+EXPORT_SYMBOL(dcbnl_ieee_notify);
 
-पूर्णांक dcbnl_cee_notअगरy(काष्ठा net_device *dev, पूर्णांक event, पूर्णांक cmd,
+int dcbnl_cee_notify(struct net_device *dev, int event, int cmd,
 		     u32 seq, u32 portid)
-अणु
-	वापस dcbnl_notअगरy(dev, event, cmd, seq, portid, DCB_CAP_DCBX_VER_CEE);
-पूर्ण
-EXPORT_SYMBOL(dcbnl_cee_notअगरy);
+{
+	return dcbnl_notify(dev, event, cmd, seq, portid, DCB_CAP_DCBX_VER_CEE);
+}
+EXPORT_SYMBOL(dcbnl_cee_notify);
 
 /* Handle IEEE 802.1Qaz/802.1Qau/802.1Qbb SET commands.
  * If any requested operation can not be completed
- * the entire msg is पातed and error value is वापसed.
- * No attempt is made to reconcile the हाल where only part of the
+ * the entire msg is aborted and error value is returned.
+ * No attempt is made to reconcile the case where only part of the
  * cmd can be completed.
  */
-अटल पूर्णांक dcbnl_ieee_set(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			  u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
-	काष्ठा nlattr *ieee[DCB_ATTR_IEEE_MAX + 1];
-	पूर्णांक prio;
-	पूर्णांक err;
+static int dcbnl_ieee_set(struct net_device *netdev, struct nlmsghdr *nlh,
+			  u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+	struct nlattr *ieee[DCB_ATTR_IEEE_MAX + 1];
+	int prio;
+	int err;
 
-	अगर (!ops)
-		वापस -EOPNOTSUPP;
+	if (!ops)
+		return -EOPNOTSUPP;
 
-	अगर (!tb[DCB_ATTR_IEEE])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_IEEE])
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(ieee, DCB_ATTR_IEEE_MAX,
 					  tb[DCB_ATTR_IEEE],
-					  dcbnl_ieee_policy, शून्य);
-	अगर (err)
-		वापस err;
+					  dcbnl_ieee_policy, NULL);
+	if (err)
+		return err;
 
-	अगर (ieee[DCB_ATTR_IEEE_ETS] && ops->ieee_setets) अणु
-		काष्ठा ieee_ets *ets = nla_data(ieee[DCB_ATTR_IEEE_ETS]);
+	if (ieee[DCB_ATTR_IEEE_ETS] && ops->ieee_setets) {
+		struct ieee_ets *ets = nla_data(ieee[DCB_ATTR_IEEE_ETS]);
 		err = ops->ieee_setets(netdev, ets);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (ieee[DCB_ATTR_IEEE_MAXRATE] && ops->ieee_seपंचांगaxrate) अणु
-		काष्ठा ieee_maxrate *maxrate =
+	if (ieee[DCB_ATTR_IEEE_MAXRATE] && ops->ieee_setmaxrate) {
+		struct ieee_maxrate *maxrate =
 			nla_data(ieee[DCB_ATTR_IEEE_MAXRATE]);
-		err = ops->ieee_seपंचांगaxrate(netdev, maxrate);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		err = ops->ieee_setmaxrate(netdev, maxrate);
+		if (err)
+			goto err;
+	}
 
-	अगर (ieee[DCB_ATTR_IEEE_QCN] && ops->ieee_setqcn) अणु
-		काष्ठा ieee_qcn *qcn =
+	if (ieee[DCB_ATTR_IEEE_QCN] && ops->ieee_setqcn) {
+		struct ieee_qcn *qcn =
 			nla_data(ieee[DCB_ATTR_IEEE_QCN]);
 
 		err = ops->ieee_setqcn(netdev, qcn);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (ieee[DCB_ATTR_IEEE_PFC] && ops->ieee_setpfc) अणु
-		काष्ठा ieee_pfc *pfc = nla_data(ieee[DCB_ATTR_IEEE_PFC]);
+	if (ieee[DCB_ATTR_IEEE_PFC] && ops->ieee_setpfc) {
+		struct ieee_pfc *pfc = nla_data(ieee[DCB_ATTR_IEEE_PFC]);
 		err = ops->ieee_setpfc(netdev, pfc);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		if (err)
+			goto err;
+	}
 
-	अगर (ieee[DCB_ATTR_DCB_BUFFER] && ops->dcbnl_रखो_बफfer) अणु
-		काष्ठा dcbnl_buffer *buffer =
+	if (ieee[DCB_ATTR_DCB_BUFFER] && ops->dcbnl_setbuffer) {
+		struct dcbnl_buffer *buffer =
 			nla_data(ieee[DCB_ATTR_DCB_BUFFER]);
 
-		क्रम (prio = 0; prio < ARRAY_SIZE(buffer->prio2buffer); prio++) अणु
-			अगर (buffer->prio2buffer[prio] >= DCBX_MAX_BUFFERS) अणु
+		for (prio = 0; prio < ARRAY_SIZE(buffer->prio2buffer); prio++) {
+			if (buffer->prio2buffer[prio] >= DCBX_MAX_BUFFERS) {
 				err = -EINVAL;
-				जाओ err;
-			पूर्ण
-		पूर्ण
+				goto err;
+			}
+		}
 
-		err = ops->dcbnl_रखो_बफfer(netdev, buffer);
-		अगर (err)
-			जाओ err;
-	पूर्ण
+		err = ops->dcbnl_setbuffer(netdev, buffer);
+		if (err)
+			goto err;
+	}
 
-	अगर (ieee[DCB_ATTR_IEEE_APP_TABLE]) अणु
-		काष्ठा nlattr *attr;
-		पूर्णांक rem;
+	if (ieee[DCB_ATTR_IEEE_APP_TABLE]) {
+		struct nlattr *attr;
+		int rem;
 
-		nla_क्रम_each_nested(attr, ieee[DCB_ATTR_IEEE_APP_TABLE], rem) अणु
-			काष्ठा dcb_app *app_data;
+		nla_for_each_nested(attr, ieee[DCB_ATTR_IEEE_APP_TABLE], rem) {
+			struct dcb_app *app_data;
 
-			अगर (nla_type(attr) != DCB_ATTR_IEEE_APP)
-				जारी;
+			if (nla_type(attr) != DCB_ATTR_IEEE_APP)
+				continue;
 
-			अगर (nla_len(attr) < माप(काष्ठा dcb_app)) अणु
-				err = -दुस्फल;
-				जाओ err;
-			पूर्ण
+			if (nla_len(attr) < sizeof(struct dcb_app)) {
+				err = -ERANGE;
+				goto err;
+			}
 
 			app_data = nla_data(attr);
-			अगर (ops->ieee_setapp)
+			if (ops->ieee_setapp)
 				err = ops->ieee_setapp(netdev, app_data);
-			अन्यथा
+			else
 				err = dcb_ieee_setapp(netdev, app_data);
-			अगर (err)
-				जाओ err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto err;
+		}
+	}
 
 err:
 	err = nla_put_u8(skb, DCB_ATTR_IEEE, err);
-	dcbnl_ieee_notअगरy(netdev, RTM_SETDCB, DCB_CMD_IEEE_SET, seq, 0);
-	वापस err;
-पूर्ण
+	dcbnl_ieee_notify(netdev, RTM_SETDCB, DCB_CMD_IEEE_SET, seq, 0);
+	return err;
+}
 
-अटल पूर्णांक dcbnl_ieee_get(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			  u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+static int dcbnl_ieee_get(struct net_device *netdev, struct nlmsghdr *nlh,
+			  u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
 
-	अगर (!ops)
-		वापस -EOPNOTSUPP;
+	if (!ops)
+		return -EOPNOTSUPP;
 
-	वापस dcbnl_ieee_fill(skb, netdev);
-पूर्ण
+	return dcbnl_ieee_fill(skb, netdev);
+}
 
-अटल पूर्णांक dcbnl_ieee_del(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			  u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
-	काष्ठा nlattr *ieee[DCB_ATTR_IEEE_MAX + 1];
-	पूर्णांक err;
+static int dcbnl_ieee_del(struct net_device *netdev, struct nlmsghdr *nlh,
+			  u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+	struct nlattr *ieee[DCB_ATTR_IEEE_MAX + 1];
+	int err;
 
-	अगर (!ops)
-		वापस -EOPNOTSUPP;
+	if (!ops)
+		return -EOPNOTSUPP;
 
-	अगर (!tb[DCB_ATTR_IEEE])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_IEEE])
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(ieee, DCB_ATTR_IEEE_MAX,
 					  tb[DCB_ATTR_IEEE],
-					  dcbnl_ieee_policy, शून्य);
-	अगर (err)
-		वापस err;
+					  dcbnl_ieee_policy, NULL);
+	if (err)
+		return err;
 
-	अगर (ieee[DCB_ATTR_IEEE_APP_TABLE]) अणु
-		काष्ठा nlattr *attr;
-		पूर्णांक rem;
+	if (ieee[DCB_ATTR_IEEE_APP_TABLE]) {
+		struct nlattr *attr;
+		int rem;
 
-		nla_क्रम_each_nested(attr, ieee[DCB_ATTR_IEEE_APP_TABLE], rem) अणु
-			काष्ठा dcb_app *app_data;
+		nla_for_each_nested(attr, ieee[DCB_ATTR_IEEE_APP_TABLE], rem) {
+			struct dcb_app *app_data;
 
-			अगर (nla_type(attr) != DCB_ATTR_IEEE_APP)
-				जारी;
+			if (nla_type(attr) != DCB_ATTR_IEEE_APP)
+				continue;
 			app_data = nla_data(attr);
-			अगर (ops->ieee_delapp)
+			if (ops->ieee_delapp)
 				err = ops->ieee_delapp(netdev, app_data);
-			अन्यथा
+			else
 				err = dcb_ieee_delapp(netdev, app_data);
-			अगर (err)
-				जाओ err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto err;
+		}
+	}
 
 err:
 	err = nla_put_u8(skb, DCB_ATTR_IEEE, err);
-	dcbnl_ieee_notअगरy(netdev, RTM_SETDCB, DCB_CMD_IEEE_DEL, seq, 0);
-	वापस err;
-पूर्ण
+	dcbnl_ieee_notify(netdev, RTM_SETDCB, DCB_CMD_IEEE_DEL, seq, 0);
+	return err;
+}
 
 
 /* DCBX configuration */
-अटल पूर्णांक dcbnl_getdcbx(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			 u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	अगर (!netdev->dcbnl_ops->getdcbx)
-		वापस -EOPNOTSUPP;
+static int dcbnl_getdcbx(struct net_device *netdev, struct nlmsghdr *nlh,
+			 u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	if (!netdev->dcbnl_ops->getdcbx)
+		return -EOPNOTSUPP;
 
-	वापस nla_put_u8(skb, DCB_ATTR_DCBX,
+	return nla_put_u8(skb, DCB_ATTR_DCBX,
 			  netdev->dcbnl_ops->getdcbx(netdev));
-पूर्ण
+}
 
-अटल पूर्णांक dcbnl_setdcbx(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			 u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
+static int dcbnl_setdcbx(struct net_device *netdev, struct nlmsghdr *nlh,
+			 u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
 	u8 value;
 
-	अगर (!netdev->dcbnl_ops->setdcbx)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->setdcbx)
+		return -EOPNOTSUPP;
 
-	अगर (!tb[DCB_ATTR_DCBX])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_DCBX])
+		return -EINVAL;
 
 	value = nla_get_u8(tb[DCB_ATTR_DCBX]);
 
-	वापस nla_put_u8(skb, DCB_ATTR_DCBX,
+	return nla_put_u8(skb, DCB_ATTR_DCBX,
 			  netdev->dcbnl_ops->setdcbx(netdev, value));
-पूर्ण
+}
 
-अटल पूर्णांक dcbnl_getfeatcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			    u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_FEATCFG_ATTR_MAX + 1], *nest;
+static int dcbnl_getfeatcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			    u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_FEATCFG_ATTR_MAX + 1], *nest;
 	u8 value;
-	पूर्णांक ret, i;
-	पूर्णांक getall = 0;
+	int ret, i;
+	int getall = 0;
 
-	अगर (!netdev->dcbnl_ops->getfeatcfg)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops->getfeatcfg)
+		return -EOPNOTSUPP;
 
-	अगर (!tb[DCB_ATTR_FEATCFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_FEATCFG])
+		return -EINVAL;
 
 	ret = nla_parse_nested_deprecated(data, DCB_FEATCFG_ATTR_MAX,
 					  tb[DCB_ATTR_FEATCFG],
-					  dcbnl_featcfg_nest, शून्य);
-	अगर (ret)
-		वापस ret;
+					  dcbnl_featcfg_nest, NULL);
+	if (ret)
+		return ret;
 
 	nest = nla_nest_start_noflag(skb, DCB_ATTR_FEATCFG);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (data[DCB_FEATCFG_ATTR_ALL])
+	if (data[DCB_FEATCFG_ATTR_ALL])
 		getall = 1;
 
-	क्रम (i = DCB_FEATCFG_ATTR_ALL+1; i <= DCB_FEATCFG_ATTR_MAX; i++) अणु
-		अगर (!getall && !data[i])
-			जारी;
+	for (i = DCB_FEATCFG_ATTR_ALL+1; i <= DCB_FEATCFG_ATTR_MAX; i++) {
+		if (!getall && !data[i])
+			continue;
 
 		ret = netdev->dcbnl_ops->getfeatcfg(netdev, i, &value);
-		अगर (!ret)
+		if (!ret)
 			ret = nla_put_u8(skb, i, value);
 
-		अगर (ret) अणु
+		if (ret) {
 			nla_nest_cancel(skb, nest);
-			जाओ nla_put_failure;
-		पूर्ण
-	पूर्ण
+			goto nla_put_failure;
+		}
+	}
 	nla_nest_end(skb, nest);
 
 nla_put_failure:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dcbnl_setfeatcfg(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			    u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *data[DCB_FEATCFG_ATTR_MAX + 1];
-	पूर्णांक ret, i;
+static int dcbnl_setfeatcfg(struct net_device *netdev, struct nlmsghdr *nlh,
+			    u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	struct nlattr *data[DCB_FEATCFG_ATTR_MAX + 1];
+	int ret, i;
 	u8 value;
 
-	अगर (!netdev->dcbnl_ops->setfeatcfg)
-		वापस -ENOTSUPP;
+	if (!netdev->dcbnl_ops->setfeatcfg)
+		return -ENOTSUPP;
 
-	अगर (!tb[DCB_ATTR_FEATCFG])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_FEATCFG])
+		return -EINVAL;
 
 	ret = nla_parse_nested_deprecated(data, DCB_FEATCFG_ATTR_MAX,
 					  tb[DCB_ATTR_FEATCFG],
-					  dcbnl_featcfg_nest, शून्य);
+					  dcbnl_featcfg_nest, NULL);
 
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	क्रम (i = DCB_FEATCFG_ATTR_ALL+1; i <= DCB_FEATCFG_ATTR_MAX; i++) अणु
-		अगर (data[i] == शून्य)
-			जारी;
+	for (i = DCB_FEATCFG_ATTR_ALL+1; i <= DCB_FEATCFG_ATTR_MAX; i++) {
+		if (data[i] == NULL)
+			continue;
 
 		value = nla_get_u8(data[i]);
 
 		ret = netdev->dcbnl_ops->setfeatcfg(netdev, i, value);
 
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 err:
 	ret = nla_put_u8(skb, DCB_ATTR_FEATCFG, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Handle CEE DCBX GET commands. */
-अटल पूर्णांक dcbnl_cee_get(काष्ठा net_device *netdev, काष्ठा nlmsghdr *nlh,
-			 u32 seq, काष्ठा nlattr **tb, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
+static int dcbnl_cee_get(struct net_device *netdev, struct nlmsghdr *nlh,
+			 u32 seq, struct nlattr **tb, struct sk_buff *skb)
+{
+	const struct dcbnl_rtnl_ops *ops = netdev->dcbnl_ops;
 
-	अगर (!ops)
-		वापस -EOPNOTSUPP;
+	if (!ops)
+		return -EOPNOTSUPP;
 
-	वापस dcbnl_cee_fill(skb, netdev);
-पूर्ण
+	return dcbnl_cee_fill(skb, netdev);
+}
 
-काष्ठा reply_func अणु
+struct reply_func {
 	/* reply netlink message type */
-	पूर्णांक	type;
+	int	type;
 
 	/* function to fill message contents */
-	पूर्णांक   (*cb)(काष्ठा net_device *, काष्ठा nlmsghdr *, u32,
-		    काष्ठा nlattr **, काष्ठा sk_buff *);
-पूर्ण;
+	int   (*cb)(struct net_device *, struct nlmsghdr *, u32,
+		    struct nlattr **, struct sk_buff *);
+};
 
-अटल स्थिर काष्ठा reply_func reply_funcs[DCB_CMD_MAX+1] = अणु
-	[DCB_CMD_GSTATE]	= अणु RTM_GETDCB, dcbnl_माला_लोtate पूर्ण,
-	[DCB_CMD_SSTATE]	= अणु RTM_SETDCB, dcbnl_setstate पूर्ण,
-	[DCB_CMD_PFC_GCFG]	= अणु RTM_GETDCB, dcbnl_getpfccfg पूर्ण,
-	[DCB_CMD_PFC_SCFG]	= अणु RTM_SETDCB, dcbnl_setpfccfg पूर्ण,
-	[DCB_CMD_GPERM_HWADDR]	= अणु RTM_GETDCB, dcbnl_getperm_hwaddr पूर्ण,
-	[DCB_CMD_GCAP]		= अणु RTM_GETDCB, dcbnl_अ_लोap पूर्ण,
-	[DCB_CMD_GNUMTCS]	= अणु RTM_GETDCB, dcbnl_getnumtcs पूर्ण,
-	[DCB_CMD_SNUMTCS]	= अणु RTM_SETDCB, dcbnl_setnumtcs पूर्ण,
-	[DCB_CMD_PFC_GSTATE]	= अणु RTM_GETDCB, dcbnl_getpfcstate पूर्ण,
-	[DCB_CMD_PFC_SSTATE]	= अणु RTM_SETDCB, dcbnl_setpfcstate पूर्ण,
-	[DCB_CMD_GAPP]		= अणु RTM_GETDCB, dcbnl_getapp पूर्ण,
-	[DCB_CMD_SAPP]		= अणु RTM_SETDCB, dcbnl_setapp पूर्ण,
-	[DCB_CMD_PGTX_GCFG]	= अणु RTM_GETDCB, dcbnl_pgtx_अ_लोfg पूर्ण,
-	[DCB_CMD_PGTX_SCFG]	= अणु RTM_SETDCB, dcbnl_pgtx_setcfg पूर्ण,
-	[DCB_CMD_PGRX_GCFG]	= अणु RTM_GETDCB, dcbnl_pgrx_अ_लोfg पूर्ण,
-	[DCB_CMD_PGRX_SCFG]	= अणु RTM_SETDCB, dcbnl_pgrx_setcfg पूर्ण,
-	[DCB_CMD_SET_ALL]	= अणु RTM_SETDCB, dcbnl_setall पूर्ण,
-	[DCB_CMD_BCN_GCFG]	= अणु RTM_GETDCB, dcbnl_bcn_अ_लोfg पूर्ण,
-	[DCB_CMD_BCN_SCFG]	= अणु RTM_SETDCB, dcbnl_bcn_setcfg पूर्ण,
-	[DCB_CMD_IEEE_GET]	= अणु RTM_GETDCB, dcbnl_ieee_get पूर्ण,
-	[DCB_CMD_IEEE_SET]	= अणु RTM_SETDCB, dcbnl_ieee_set पूर्ण,
-	[DCB_CMD_IEEE_DEL]	= अणु RTM_SETDCB, dcbnl_ieee_del पूर्ण,
-	[DCB_CMD_GDCBX]		= अणु RTM_GETDCB, dcbnl_getdcbx पूर्ण,
-	[DCB_CMD_SDCBX]		= अणु RTM_SETDCB, dcbnl_setdcbx पूर्ण,
-	[DCB_CMD_GFEATCFG]	= अणु RTM_GETDCB, dcbnl_getfeatcfg पूर्ण,
-	[DCB_CMD_SFEATCFG]	= अणु RTM_SETDCB, dcbnl_setfeatcfg पूर्ण,
-	[DCB_CMD_CEE_GET]	= अणु RTM_GETDCB, dcbnl_cee_get पूर्ण,
-पूर्ण;
+static const struct reply_func reply_funcs[DCB_CMD_MAX+1] = {
+	[DCB_CMD_GSTATE]	= { RTM_GETDCB, dcbnl_getstate },
+	[DCB_CMD_SSTATE]	= { RTM_SETDCB, dcbnl_setstate },
+	[DCB_CMD_PFC_GCFG]	= { RTM_GETDCB, dcbnl_getpfccfg },
+	[DCB_CMD_PFC_SCFG]	= { RTM_SETDCB, dcbnl_setpfccfg },
+	[DCB_CMD_GPERM_HWADDR]	= { RTM_GETDCB, dcbnl_getperm_hwaddr },
+	[DCB_CMD_GCAP]		= { RTM_GETDCB, dcbnl_getcap },
+	[DCB_CMD_GNUMTCS]	= { RTM_GETDCB, dcbnl_getnumtcs },
+	[DCB_CMD_SNUMTCS]	= { RTM_SETDCB, dcbnl_setnumtcs },
+	[DCB_CMD_PFC_GSTATE]	= { RTM_GETDCB, dcbnl_getpfcstate },
+	[DCB_CMD_PFC_SSTATE]	= { RTM_SETDCB, dcbnl_setpfcstate },
+	[DCB_CMD_GAPP]		= { RTM_GETDCB, dcbnl_getapp },
+	[DCB_CMD_SAPP]		= { RTM_SETDCB, dcbnl_setapp },
+	[DCB_CMD_PGTX_GCFG]	= { RTM_GETDCB, dcbnl_pgtx_getcfg },
+	[DCB_CMD_PGTX_SCFG]	= { RTM_SETDCB, dcbnl_pgtx_setcfg },
+	[DCB_CMD_PGRX_GCFG]	= { RTM_GETDCB, dcbnl_pgrx_getcfg },
+	[DCB_CMD_PGRX_SCFG]	= { RTM_SETDCB, dcbnl_pgrx_setcfg },
+	[DCB_CMD_SET_ALL]	= { RTM_SETDCB, dcbnl_setall },
+	[DCB_CMD_BCN_GCFG]	= { RTM_GETDCB, dcbnl_bcn_getcfg },
+	[DCB_CMD_BCN_SCFG]	= { RTM_SETDCB, dcbnl_bcn_setcfg },
+	[DCB_CMD_IEEE_GET]	= { RTM_GETDCB, dcbnl_ieee_get },
+	[DCB_CMD_IEEE_SET]	= { RTM_SETDCB, dcbnl_ieee_set },
+	[DCB_CMD_IEEE_DEL]	= { RTM_SETDCB, dcbnl_ieee_del },
+	[DCB_CMD_GDCBX]		= { RTM_GETDCB, dcbnl_getdcbx },
+	[DCB_CMD_SDCBX]		= { RTM_SETDCB, dcbnl_setdcbx },
+	[DCB_CMD_GFEATCFG]	= { RTM_GETDCB, dcbnl_getfeatcfg },
+	[DCB_CMD_SFEATCFG]	= { RTM_SETDCB, dcbnl_setfeatcfg },
+	[DCB_CMD_CEE_GET]	= { RTM_GETDCB, dcbnl_cee_get },
+};
 
-अटल पूर्णांक dcb_करोit(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-		    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा net_device *netdev;
-	काष्ठा dcbmsg *dcb = nlmsg_data(nlh);
-	काष्ठा nlattr *tb[DCB_ATTR_MAX + 1];
+static int dcb_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
+		    struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct net_device *netdev;
+	struct dcbmsg *dcb = nlmsg_data(nlh);
+	struct nlattr *tb[DCB_ATTR_MAX + 1];
 	u32 portid = NETLINK_CB(skb).portid;
-	पूर्णांक ret = -EINVAL;
-	काष्ठा sk_buff *reply_skb;
-	काष्ठा nlmsghdr *reply_nlh = शून्य;
-	स्थिर काष्ठा reply_func *fn;
+	int ret = -EINVAL;
+	struct sk_buff *reply_skb;
+	struct nlmsghdr *reply_nlh = NULL;
+	const struct reply_func *fn;
 
-	अगर ((nlh->nlmsg_type == RTM_SETDCB) && !netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if ((nlh->nlmsg_type == RTM_SETDCB) && !netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
 
-	ret = nlmsg_parse_deprecated(nlh, माप(*dcb), tb, DCB_ATTR_MAX,
+	ret = nlmsg_parse_deprecated(nlh, sizeof(*dcb), tb, DCB_ATTR_MAX,
 				     dcbnl_rtnl_policy, extack);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (dcb->cmd > DCB_CMD_MAX)
-		वापस -EINVAL;
+	if (dcb->cmd > DCB_CMD_MAX)
+		return -EINVAL;
 
-	/* check अगर a reply function has been defined क्रम the command */
+	/* check if a reply function has been defined for the command */
 	fn = &reply_funcs[dcb->cmd];
-	अगर (!fn->cb)
-		वापस -EOPNOTSUPP;
-	अगर (fn->type == RTM_SETDCB && !netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!fn->cb)
+		return -EOPNOTSUPP;
+	if (fn->type == RTM_SETDCB && !netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (!tb[DCB_ATTR_IFNAME])
-		वापस -EINVAL;
+	if (!tb[DCB_ATTR_IFNAME])
+		return -EINVAL;
 
 	netdev = __dev_get_by_name(net, nla_data(tb[DCB_ATTR_IFNAME]));
-	अगर (!netdev)
-		वापस -ENODEV;
+	if (!netdev)
+		return -ENODEV;
 
-	अगर (!netdev->dcbnl_ops)
-		वापस -EOPNOTSUPP;
+	if (!netdev->dcbnl_ops)
+		return -EOPNOTSUPP;
 
 	reply_skb = dcbnl_newmsg(fn->type, dcb->cmd, portid, nlh->nlmsg_seq,
 				 nlh->nlmsg_flags, &reply_nlh);
-	अगर (!reply_skb)
-		वापस -ENOBUFS;
+	if (!reply_skb)
+		return -ENOBUFS;
 
 	ret = fn->cb(netdev, nlh, nlh->nlmsg_seq, tb, reply_skb);
-	अगर (ret < 0) अणु
-		nlmsg_मुक्त(reply_skb);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		nlmsg_free(reply_skb);
+		goto out;
+	}
 
 	nlmsg_end(reply_skb, reply_nlh);
 
 	ret = rtnl_unicast(reply_skb, net, portid);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा dcb_app_type *dcb_app_lookup(स्थिर काष्ठा dcb_app *app,
-					   पूर्णांक अगरindex, पूर्णांक prio)
-अणु
-	काष्ठा dcb_app_type *itr;
+static struct dcb_app_type *dcb_app_lookup(const struct dcb_app *app,
+					   int ifindex, int prio)
+{
+	struct dcb_app_type *itr;
 
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->app.selector == app->selector &&
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->app.selector == app->selector &&
 		    itr->app.protocol == app->protocol &&
-		    itr->अगरindex == अगरindex &&
+		    itr->ifindex == ifindex &&
 		    ((prio == -1) || itr->app.priority == prio))
-			वापस itr;
-	पूर्ण
+			return itr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dcb_app_add(स्थिर काष्ठा dcb_app *app, पूर्णांक अगरindex)
-अणु
-	काष्ठा dcb_app_type *entry;
+static int dcb_app_add(const struct dcb_app *app, int ifindex)
+{
+	struct dcb_app_type *entry;
 
-	entry = kदो_स्मृति(माप(*entry), GFP_ATOMIC);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kmalloc(sizeof(*entry), GFP_ATOMIC);
+	if (!entry)
+		return -ENOMEM;
 
-	स_नकल(&entry->app, app, माप(*app));
-	entry->अगरindex = अगरindex;
+	memcpy(&entry->app, app, sizeof(*app));
+	entry->ifindex = ifindex;
 	list_add(&entry->list, &dcb_app_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * dcb_getapp - retrieve the DCBX application user priority
- * @dev: network पूर्णांकerface
+ * @dev: network interface
  * @app: application to get user priority of
  *
- * On success वापसs a non-zero 802.1p user priority biपंचांगap
- * otherwise वापसs 0 as the invalid user priority biपंचांगap to
+ * On success returns a non-zero 802.1p user priority bitmap
+ * otherwise returns 0 as the invalid user priority bitmap to
  * indicate an error.
  */
-u8 dcb_getapp(काष्ठा net_device *dev, काष्ठा dcb_app *app)
-अणु
-	काष्ठा dcb_app_type *itr;
+u8 dcb_getapp(struct net_device *dev, struct dcb_app *app)
+{
+	struct dcb_app_type *itr;
 	u8 prio = 0;
 
 	spin_lock_bh(&dcb_lock);
-	itr = dcb_app_lookup(app, dev->अगरindex, -1);
-	अगर (itr)
+	itr = dcb_app_lookup(app, dev->ifindex, -1);
+	if (itr)
 		prio = itr->app.priority;
 	spin_unlock_bh(&dcb_lock);
 
-	वापस prio;
-पूर्ण
+	return prio;
+}
 EXPORT_SYMBOL(dcb_getapp);
 
 /**
  * dcb_setapp - add CEE dcb application data to app list
- * @dev: network पूर्णांकerface
+ * @dev: network interface
  * @new: application data to add
  *
  * Priority 0 is an invalid priority in CEE spec. This routine
- * हटाओs applications from the app list अगर the priority is
- * set to zero. Priority is expected to be 8-bit 802.1p user priority biपंचांगap
+ * removes applications from the app list if the priority is
+ * set to zero. Priority is expected to be 8-bit 802.1p user priority bitmap
  */
-पूर्णांक dcb_setapp(काष्ठा net_device *dev, काष्ठा dcb_app *new)
-अणु
-	काष्ठा dcb_app_type *itr;
-	काष्ठा dcb_app_type event;
-	पूर्णांक err = 0;
+int dcb_setapp(struct net_device *dev, struct dcb_app *new)
+{
+	struct dcb_app_type *itr;
+	struct dcb_app_type event;
+	int err = 0;
 
-	event.अगरindex = dev->अगरindex;
-	स_नकल(&event.app, new, माप(event.app));
-	अगर (dev->dcbnl_ops->getdcbx)
+	event.ifindex = dev->ifindex;
+	memcpy(&event.app, new, sizeof(event.app));
+	if (dev->dcbnl_ops->getdcbx)
 		event.dcbx = dev->dcbnl_ops->getdcbx(dev);
 
 	spin_lock_bh(&dcb_lock);
-	/* Search क्रम existing match and replace */
-	itr = dcb_app_lookup(new, dev->अगरindex, -1);
-	अगर (itr) अणु
-		अगर (new->priority)
+	/* Search for existing match and replace */
+	itr = dcb_app_lookup(new, dev->ifindex, -1);
+	if (itr) {
+		if (new->priority)
 			itr->app.priority = new->priority;
-		अन्यथा अणु
+		else {
 			list_del(&itr->list);
-			kमुक्त(itr);
-		पूर्ण
-		जाओ out;
-	पूर्ण
-	/* App type करोes not exist add new application type */
-	अगर (new->priority)
-		err = dcb_app_add(new, dev->अगरindex);
+			kfree(itr);
+		}
+		goto out;
+	}
+	/* App type does not exist add new application type */
+	if (new->priority)
+		err = dcb_app_add(new, dev->ifindex);
 out:
 	spin_unlock_bh(&dcb_lock);
-	अगर (!err)
-		call_dcbevent_notअगरiers(DCB_APP_EVENT, &event);
-	वापस err;
-पूर्ण
+	if (!err)
+		call_dcbevent_notifiers(DCB_APP_EVENT, &event);
+	return err;
+}
 EXPORT_SYMBOL(dcb_setapp);
 
 /**
  * dcb_ieee_getapp_mask - retrieve the IEEE DCB application priority
- * @dev: network पूर्णांकerface
+ * @dev: network interface
  * @app: where to store the retrieve application data
  *
- * Helper routine which on success वापसs a non-zero 802.1Qaz user
- * priority biपंचांगap otherwise वापसs 0 to indicate the dcb_app was
+ * Helper routine which on success returns a non-zero 802.1Qaz user
+ * priority bitmap otherwise returns 0 to indicate the dcb_app was
  * not found in APP list.
  */
-u8 dcb_ieee_getapp_mask(काष्ठा net_device *dev, काष्ठा dcb_app *app)
-अणु
-	काष्ठा dcb_app_type *itr;
+u8 dcb_ieee_getapp_mask(struct net_device *dev, struct dcb_app *app)
+{
+	struct dcb_app_type *itr;
 	u8 prio = 0;
 
 	spin_lock_bh(&dcb_lock);
-	itr = dcb_app_lookup(app, dev->अगरindex, -1);
-	अगर (itr)
+	itr = dcb_app_lookup(app, dev->ifindex, -1);
+	if (itr)
 		prio |= 1 << itr->app.priority;
 	spin_unlock_bh(&dcb_lock);
 
-	वापस prio;
-पूर्ण
+	return prio;
+}
 EXPORT_SYMBOL(dcb_ieee_getapp_mask);
 
 /**
  * dcb_ieee_setapp - add IEEE dcb application data to app list
- * @dev: network पूर्णांकerface
+ * @dev: network interface
  * @new: application data to add
  *
  * This adds Application data to the list. Multiple application
- * entries may exists क्रम the same selector and protocol as दीर्घ
- * as the priorities are dअगरferent. Priority is expected to be a
- * 3-bit अचिन्हित पूर्णांकeger
+ * entries may exists for the same selector and protocol as long
+ * as the priorities are different. Priority is expected to be a
+ * 3-bit unsigned integer
  */
-पूर्णांक dcb_ieee_setapp(काष्ठा net_device *dev, काष्ठा dcb_app *new)
-अणु
-	काष्ठा dcb_app_type event;
-	पूर्णांक err = 0;
+int dcb_ieee_setapp(struct net_device *dev, struct dcb_app *new)
+{
+	struct dcb_app_type event;
+	int err = 0;
 
-	event.अगरindex = dev->अगरindex;
-	स_नकल(&event.app, new, माप(event.app));
-	अगर (dev->dcbnl_ops->getdcbx)
+	event.ifindex = dev->ifindex;
+	memcpy(&event.app, new, sizeof(event.app));
+	if (dev->dcbnl_ops->getdcbx)
 		event.dcbx = dev->dcbnl_ops->getdcbx(dev);
 
 	spin_lock_bh(&dcb_lock);
-	/* Search क्रम existing match and पात अगर found */
-	अगर (dcb_app_lookup(new, dev->अगरindex, new->priority)) अणु
+	/* Search for existing match and abort if found */
+	if (dcb_app_lookup(new, dev->ifindex, new->priority)) {
 		err = -EEXIST;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = dcb_app_add(new, dev->अगरindex);
+	err = dcb_app_add(new, dev->ifindex);
 out:
 	spin_unlock_bh(&dcb_lock);
-	अगर (!err)
-		call_dcbevent_notअगरiers(DCB_APP_EVENT, &event);
-	वापस err;
-पूर्ण
+	if (!err)
+		call_dcbevent_notifiers(DCB_APP_EVENT, &event);
+	return err;
+}
 EXPORT_SYMBOL(dcb_ieee_setapp);
 
 /**
  * dcb_ieee_delapp - delete IEEE dcb application data from list
- * @dev: network पूर्णांकerface
+ * @dev: network interface
  * @del: application data to delete
  *
- * This हटाओs a matching APP data from the APP list
+ * This removes a matching APP data from the APP list
  */
-पूर्णांक dcb_ieee_delapp(काष्ठा net_device *dev, काष्ठा dcb_app *del)
-अणु
-	काष्ठा dcb_app_type *itr;
-	काष्ठा dcb_app_type event;
-	पूर्णांक err = -ENOENT;
+int dcb_ieee_delapp(struct net_device *dev, struct dcb_app *del)
+{
+	struct dcb_app_type *itr;
+	struct dcb_app_type event;
+	int err = -ENOENT;
 
-	event.अगरindex = dev->अगरindex;
-	स_नकल(&event.app, del, माप(event.app));
-	अगर (dev->dcbnl_ops->getdcbx)
+	event.ifindex = dev->ifindex;
+	memcpy(&event.app, del, sizeof(event.app));
+	if (dev->dcbnl_ops->getdcbx)
 		event.dcbx = dev->dcbnl_ops->getdcbx(dev);
 
 	spin_lock_bh(&dcb_lock);
-	/* Search क्रम existing match and हटाओ it. */
-	अगर ((itr = dcb_app_lookup(del, dev->अगरindex, del->priority))) अणु
+	/* Search for existing match and remove it. */
+	if ((itr = dcb_app_lookup(del, dev->ifindex, del->priority))) {
 		list_del(&itr->list);
-		kमुक्त(itr);
+		kfree(itr);
 		err = 0;
-	पूर्ण
+	}
 
 	spin_unlock_bh(&dcb_lock);
-	अगर (!err)
-		call_dcbevent_notअगरiers(DCB_APP_EVENT, &event);
-	वापस err;
-पूर्ण
+	if (!err)
+		call_dcbevent_notifiers(DCB_APP_EVENT, &event);
+	return err;
+}
 EXPORT_SYMBOL(dcb_ieee_delapp);
 
 /*
  * dcb_ieee_getapp_prio_dscp_mask_map - For a given device, find mapping from
- * priorities to the DSCP values asचिन्हित to that priority. Initialize p_map
- * such that each map element holds a bit mask of DSCP values configured क्रम
+ * priorities to the DSCP values assigned to that priority. Initialize p_map
+ * such that each map element holds a bit mask of DSCP values configured for
  * that priority by APP entries.
  */
-व्योम dcb_ieee_getapp_prio_dscp_mask_map(स्थिर काष्ठा net_device *dev,
-					काष्ठा dcb_ieee_app_prio_map *p_map)
-अणु
-	पूर्णांक अगरindex = dev->अगरindex;
-	काष्ठा dcb_app_type *itr;
+void dcb_ieee_getapp_prio_dscp_mask_map(const struct net_device *dev,
+					struct dcb_ieee_app_prio_map *p_map)
+{
+	int ifindex = dev->ifindex;
+	struct dcb_app_type *itr;
 	u8 prio;
 
-	स_रखो(p_map->map, 0, माप(p_map->map));
+	memset(p_map->map, 0, sizeof(p_map->map));
 
 	spin_lock_bh(&dcb_lock);
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->अगरindex == अगरindex &&
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->ifindex == ifindex &&
 		    itr->app.selector == IEEE_8021QAZ_APP_SEL_DSCP &&
 		    itr->app.protocol < 64 &&
-		    itr->app.priority < IEEE_8021QAZ_MAX_TCS) अणु
+		    itr->app.priority < IEEE_8021QAZ_MAX_TCS) {
 			prio = itr->app.priority;
 			p_map->map[prio] |= 1ULL << itr->app.protocol;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&dcb_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(dcb_ieee_getapp_prio_dscp_mask_map);
 
 /*
  * dcb_ieee_getapp_dscp_prio_mask_map - For a given device, find mapping from
- * DSCP values to the priorities asचिन्हित to that DSCP value. Initialize p_map
- * such that each map element holds a bit mask of priorities configured क्रम a
+ * DSCP values to the priorities assigned to that DSCP value. Initialize p_map
+ * such that each map element holds a bit mask of priorities configured for a
  * given DSCP value by APP entries.
  */
-व्योम
-dcb_ieee_getapp_dscp_prio_mask_map(स्थिर काष्ठा net_device *dev,
-				   काष्ठा dcb_ieee_app_dscp_map *p_map)
-अणु
-	पूर्णांक अगरindex = dev->अगरindex;
-	काष्ठा dcb_app_type *itr;
+void
+dcb_ieee_getapp_dscp_prio_mask_map(const struct net_device *dev,
+				   struct dcb_ieee_app_dscp_map *p_map)
+{
+	int ifindex = dev->ifindex;
+	struct dcb_app_type *itr;
 
-	स_रखो(p_map->map, 0, माप(p_map->map));
+	memset(p_map->map, 0, sizeof(p_map->map));
 
 	spin_lock_bh(&dcb_lock);
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->अगरindex == अगरindex &&
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->ifindex == ifindex &&
 		    itr->app.selector == IEEE_8021QAZ_APP_SEL_DSCP &&
 		    itr->app.protocol < 64 &&
 		    itr->app.priority < IEEE_8021QAZ_MAX_TCS)
 			p_map->map[itr->app.protocol] |= 1 << itr->app.priority;
-	पूर्ण
+	}
 	spin_unlock_bh(&dcb_lock);
-पूर्ण
+}
 EXPORT_SYMBOL(dcb_ieee_getapp_dscp_prio_mask_map);
 
 /*
- * Per 802.1Q-2014, the selector value of 1 is used क्रम matching on Ethernet
- * type, with valid PID values >= 1536. A special meaning is then asचिन्हित to
- * protocol value of 0: "शेष priority. For use when priority is not
- * otherwise specअगरied".
+ * Per 802.1Q-2014, the selector value of 1 is used for matching on Ethernet
+ * type, with valid PID values >= 1536. A special meaning is then assigned to
+ * protocol value of 0: "default priority. For use when priority is not
+ * otherwise specified".
  *
- * dcb_ieee_getapp_शेष_prio_mask - For a given device, find all APP entries
- * of the क्रमm अणु$PRIO, ETHERTYPE, 0पूर्ण and स्थिरruct a bit mask of all शेष
+ * dcb_ieee_getapp_default_prio_mask - For a given device, find all APP entries
+ * of the form {$PRIO, ETHERTYPE, 0} and construct a bit mask of all default
  * priorities set by these entries.
  */
-u8 dcb_ieee_getapp_शेष_prio_mask(स्थिर काष्ठा net_device *dev)
-अणु
-	पूर्णांक अगरindex = dev->अगरindex;
-	काष्ठा dcb_app_type *itr;
+u8 dcb_ieee_getapp_default_prio_mask(const struct net_device *dev)
+{
+	int ifindex = dev->ifindex;
+	struct dcb_app_type *itr;
 	u8 mask = 0;
 
 	spin_lock_bh(&dcb_lock);
-	list_क्रम_each_entry(itr, &dcb_app_list, list) अणु
-		अगर (itr->अगरindex == अगरindex &&
+	list_for_each_entry(itr, &dcb_app_list, list) {
+		if (itr->ifindex == ifindex &&
 		    itr->app.selector == IEEE_8021QAZ_APP_SEL_ETHERTYPE &&
 		    itr->app.protocol == 0 &&
 		    itr->app.priority < IEEE_8021QAZ_MAX_TCS)
 			mask |= 1 << itr->app.priority;
-	पूर्ण
+	}
 	spin_unlock_bh(&dcb_lock);
 
-	वापस mask;
-पूर्ण
-EXPORT_SYMBOL(dcb_ieee_getapp_शेष_prio_mask);
+	return mask;
+}
+EXPORT_SYMBOL(dcb_ieee_getapp_default_prio_mask);
 
-अटल पूर्णांक __init dcbnl_init(व्योम)
-अणु
+static int __init dcbnl_init(void)
+{
 	INIT_LIST_HEAD(&dcb_app_list);
 
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETDCB, dcb_करोit, शून्य, 0);
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_SETDCB, dcb_करोit, शून्य, 0);
+	rtnl_register(PF_UNSPEC, RTM_GETDCB, dcb_doit, NULL, 0);
+	rtnl_register(PF_UNSPEC, RTM_SETDCB, dcb_doit, NULL, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(dcbnl_init);

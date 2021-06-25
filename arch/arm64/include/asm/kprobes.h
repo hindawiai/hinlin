@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * arch/arm64/include/यंत्र/kprobes.h
+ * arch/arm64/include/asm/kprobes.h
  *
  * Copyright (C) 2013 Linaro Limited
  */
 
-#अगर_अघोषित _ARM_KPROBES_H
-#घोषणा _ARM_KPROBES_H
+#ifndef _ARM_KPROBES_H
+#define _ARM_KPROBES_H
 
-#समावेश <यंत्र-generic/kprobes.h>
+#include <asm-generic/kprobes.h>
 
-#अगर_घोषित CONFIG_KPROBES
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/percpu.h>
+#ifdef CONFIG_KPROBES
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/percpu.h>
 
-#घोषणा __ARCH_WANT_KPROBES_INSN_SLOT
-#घोषणा MAX_INSN_SIZE			2
+#define __ARCH_WANT_KPROBES_INSN_SLOT
+#define MAX_INSN_SIZE			2
 
-#घोषणा flush_insn_slot(p)		करो अणु पूर्ण जबतक (0)
-#घोषणा kretprobe_blacklist_size	0
+#define flush_insn_slot(p)		do { } while (0)
+#define kretprobe_blacklist_size	0
 
-#समावेश <यंत्र/probes.h>
+#include <asm/probes.h>
 
-काष्ठा prev_kprobe अणु
-	काष्ठा kprobe *kp;
-	अचिन्हित पूर्णांक status;
-पूर्ण;
+struct prev_kprobe {
+	struct kprobe *kp;
+	unsigned int status;
+};
 
 /* per-cpu kprobe control block */
-काष्ठा kprobe_ctlblk अणु
-	अचिन्हित पूर्णांक kprobe_status;
-	अचिन्हित दीर्घ saved_irqflag;
-	काष्ठा prev_kprobe prev_kprobe;
-पूर्ण;
+struct kprobe_ctlblk {
+	unsigned int kprobe_status;
+	unsigned long saved_irqflag;
+	struct prev_kprobe prev_kprobe;
+};
 
-व्योम arch_हटाओ_kprobe(काष्ठा kprobe *);
-पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक fsr);
-पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
-			     अचिन्हित दीर्घ val, व्योम *data);
-व्योम kretprobe_trampoline(व्योम);
-व्योम __kprobes *trampoline_probe_handler(काष्ठा pt_regs *regs);
+void arch_remove_kprobe(struct kprobe *);
+int kprobe_fault_handler(struct pt_regs *regs, unsigned int fsr);
+int kprobe_exceptions_notify(struct notifier_block *self,
+			     unsigned long val, void *data);
+void kretprobe_trampoline(void);
+void __kprobes *trampoline_probe_handler(struct pt_regs *regs);
 
-#पूर्ण_अगर /* CONFIG_KPROBES */
-#पूर्ण_अगर /* _ARM_KPROBES_H */
+#endif /* CONFIG_KPROBES */
+#endif /* _ARM_KPROBES_H */

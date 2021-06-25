@@ -1,353 +1,352 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2019 NXP */
 
-#समावेश "dpaa2-eth.h"
-#समावेश "dpaa2-mac.h"
+#include "dpaa2-eth.h"
+#include "dpaa2-mac.h"
 
-#घोषणा phylink_to_dpaa2_mac(config) \
-	container_of((config), काष्ठा dpaa2_mac, phylink_config)
+#define phylink_to_dpaa2_mac(config) \
+	container_of((config), struct dpaa2_mac, phylink_config)
 
-अटल पूर्णांक phy_mode(क्रमागत dpmac_eth_अगर eth_अगर, phy_पूर्णांकerface_t *अगर_mode)
-अणु
-	*अगर_mode = PHY_INTERFACE_MODE_NA;
+static int phy_mode(enum dpmac_eth_if eth_if, phy_interface_t *if_mode)
+{
+	*if_mode = PHY_INTERFACE_MODE_NA;
 
-	चयन (eth_अगर) अणु
-	हाल DPMAC_ETH_IF_RGMII:
-		*अगर_mode = PHY_INTERFACE_MODE_RGMII;
-		अवरोध;
-	हाल DPMAC_ETH_IF_USXGMII:
-		*अगर_mode = PHY_INTERFACE_MODE_USXGMII;
-		अवरोध;
-	हाल DPMAC_ETH_IF_QSGMII:
-		*अगर_mode = PHY_INTERFACE_MODE_QSGMII;
-		अवरोध;
-	हाल DPMAC_ETH_IF_SGMII:
-		*अगर_mode = PHY_INTERFACE_MODE_SGMII;
-		अवरोध;
-	हाल DPMAC_ETH_IF_XFI:
-		*अगर_mode = PHY_INTERFACE_MODE_10GBASER;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (eth_if) {
+	case DPMAC_ETH_IF_RGMII:
+		*if_mode = PHY_INTERFACE_MODE_RGMII;
+		break;
+	case DPMAC_ETH_IF_USXGMII:
+		*if_mode = PHY_INTERFACE_MODE_USXGMII;
+		break;
+	case DPMAC_ETH_IF_QSGMII:
+		*if_mode = PHY_INTERFACE_MODE_QSGMII;
+		break;
+	case DPMAC_ETH_IF_SGMII:
+		*if_mode = PHY_INTERFACE_MODE_SGMII;
+		break;
+	case DPMAC_ETH_IF_XFI:
+		*if_mode = PHY_INTERFACE_MODE_10GBASER;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Caller must call of_node_put on the वापसed value */
-अटल काष्ठा device_node *dpaa2_mac_get_node(u16 dpmac_id)
-अणु
-	काष्ठा device_node *dpmacs, *dpmac = शून्य;
+/* Caller must call of_node_put on the returned value */
+static struct device_node *dpaa2_mac_get_node(u16 dpmac_id)
+{
+	struct device_node *dpmacs, *dpmac = NULL;
 	u32 id;
-	पूर्णांक err;
+	int err;
 
-	dpmacs = of_find_node_by_name(शून्य, "dpmacs");
-	अगर (!dpmacs)
-		वापस शून्य;
+	dpmacs = of_find_node_by_name(NULL, "dpmacs");
+	if (!dpmacs)
+		return NULL;
 
-	जबतक ((dpmac = of_get_next_child(dpmacs, dpmac)) != शून्य) अणु
-		err = of_property_पढ़ो_u32(dpmac, "reg", &id);
-		अगर (err)
-			जारी;
-		अगर (id == dpmac_id)
-			अवरोध;
-	पूर्ण
+	while ((dpmac = of_get_next_child(dpmacs, dpmac)) != NULL) {
+		err = of_property_read_u32(dpmac, "reg", &id);
+		if (err)
+			continue;
+		if (id == dpmac_id)
+			break;
+	}
 
 	of_node_put(dpmacs);
 
-	वापस dpmac;
-पूर्ण
+	return dpmac;
+}
 
-अटल पूर्णांक dpaa2_mac_get_अगर_mode(काष्ठा device_node *node,
-				 काष्ठा dpmac_attr attr)
-अणु
-	phy_पूर्णांकerface_t अगर_mode;
-	पूर्णांक err;
+static int dpaa2_mac_get_if_mode(struct device_node *node,
+				 struct dpmac_attr attr)
+{
+	phy_interface_t if_mode;
+	int err;
 
-	err = of_get_phy_mode(node, &अगर_mode);
-	अगर (!err)
-		वापस अगर_mode;
+	err = of_get_phy_mode(node, &if_mode);
+	if (!err)
+		return if_mode;
 
-	err = phy_mode(attr.eth_अगर, &अगर_mode);
-	अगर (!err)
-		वापस अगर_mode;
+	err = phy_mode(attr.eth_if, &if_mode);
+	if (!err)
+		return if_mode;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool dpaa2_mac_phy_mode_mismatch(काष्ठा dpaa2_mac *mac,
-					phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	चयन (पूर्णांकerface) अणु
-	/* We can चयन between SGMII and 1000BASE-X at runसमय with
+static bool dpaa2_mac_phy_mode_mismatch(struct dpaa2_mac *mac,
+					phy_interface_t interface)
+{
+	switch (interface) {
+	/* We can switch between SGMII and 1000BASE-X at runtime with
 	 * pcs-lynx
 	 */
-	हाल PHY_INTERFACE_MODE_SGMII:
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-		अगर (mac->pcs &&
-		    (mac->अगर_mode == PHY_INTERFACE_MODE_SGMII ||
-		     mac->अगर_mode == PHY_INTERFACE_MODE_1000BASEX))
-			वापस false;
-		वापस पूर्णांकerface != mac->अगर_mode;
+	case PHY_INTERFACE_MODE_SGMII:
+	case PHY_INTERFACE_MODE_1000BASEX:
+		if (mac->pcs &&
+		    (mac->if_mode == PHY_INTERFACE_MODE_SGMII ||
+		     mac->if_mode == PHY_INTERFACE_MODE_1000BASEX))
+			return false;
+		return interface != mac->if_mode;
 
-	हाल PHY_INTERFACE_MODE_10GBASER:
-	हाल PHY_INTERFACE_MODE_USXGMII:
-	हाल PHY_INTERFACE_MODE_QSGMII:
-	हाल PHY_INTERFACE_MODE_RGMII:
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
-		वापस (पूर्णांकerface != mac->अगर_mode);
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_USXGMII:
+	case PHY_INTERFACE_MODE_QSGMII:
+	case PHY_INTERFACE_MODE_RGMII:
+	case PHY_INTERFACE_MODE_RGMII_ID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
+		return (interface != mac->if_mode);
+	default:
+		return true;
+	}
+}
 
-अटल व्योम dpaa2_mac_validate(काष्ठा phylink_config *config,
-			       अचिन्हित दीर्घ *supported,
-			       काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
+static void dpaa2_mac_validate(struct phylink_config *config,
+			       unsigned long *supported,
+			       struct phylink_link_state *state)
+{
+	struct dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
 
-	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA &&
-	    dpaa2_mac_phy_mode_mismatch(mac, state->पूर्णांकerface)) अणु
-		जाओ empty_set;
-	पूर्ण
+	if (state->interface != PHY_INTERFACE_MODE_NA &&
+	    dpaa2_mac_phy_mode_mismatch(mac, state->interface)) {
+		goto empty_set;
+	}
 
 	phylink_set_port_modes(mask);
 	phylink_set(mask, Autoneg);
 	phylink_set(mask, Pause);
 	phylink_set(mask, Asym_Pause);
 
-	चयन (state->पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_NA:
-	हाल PHY_INTERFACE_MODE_10GBASER:
-	हाल PHY_INTERFACE_MODE_USXGMII:
+	switch (state->interface) {
+	case PHY_INTERFACE_MODE_NA:
+	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_USXGMII:
 		phylink_set(mask, 10000baseT_Full);
-		अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_10GBASER)
-			अवरोध;
+		if (state->interface == PHY_INTERFACE_MODE_10GBASER)
+			break;
 		phylink_set(mask, 5000baseT_Full);
 		phylink_set(mask, 2500baseT_Full);
 		fallthrough;
-	हाल PHY_INTERFACE_MODE_SGMII:
-	हाल PHY_INTERFACE_MODE_QSGMII:
-	हाल PHY_INTERFACE_MODE_1000BASEX:
-	हाल PHY_INTERFACE_MODE_RGMII:
-	हाल PHY_INTERFACE_MODE_RGMII_ID:
-	हाल PHY_INTERFACE_MODE_RGMII_RXID:
-	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	case PHY_INTERFACE_MODE_SGMII:
+	case PHY_INTERFACE_MODE_QSGMII:
+	case PHY_INTERFACE_MODE_1000BASEX:
+	case PHY_INTERFACE_MODE_RGMII:
+	case PHY_INTERFACE_MODE_RGMII_ID:
+	case PHY_INTERFACE_MODE_RGMII_RXID:
+	case PHY_INTERFACE_MODE_RGMII_TXID:
 		phylink_set(mask, 1000baseX_Full);
 		phylink_set(mask, 1000baseT_Full);
-		अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_1000BASEX)
-			अवरोध;
+		if (state->interface == PHY_INTERFACE_MODE_1000BASEX)
+			break;
 		phylink_set(mask, 100baseT_Full);
 		phylink_set(mask, 10baseT_Full);
-		अवरोध;
-	शेष:
-		जाओ empty_set;
-	पूर्ण
+		break;
+	default:
+		goto empty_set;
+	}
 
 	linkmode_and(supported, supported, mask);
 	linkmode_and(state->advertising, state->advertising, mask);
 
-	वापस;
+	return;
 
 empty_set:
 	linkmode_zero(supported);
-पूर्ण
+}
 
-अटल व्योम dpaa2_mac_config(काष्ठा phylink_config *config, अचिन्हित पूर्णांक mode,
-			     स्थिर काष्ठा phylink_link_state *state)
-अणु
-	काष्ठा dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
-	काष्ठा dpmac_link_state *dpmac_state = &mac->state;
-	पूर्णांक err;
+static void dpaa2_mac_config(struct phylink_config *config, unsigned int mode,
+			     const struct phylink_link_state *state)
+{
+	struct dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
+	struct dpmac_link_state *dpmac_state = &mac->state;
+	int err;
 
-	अगर (state->an_enabled)
+	if (state->an_enabled)
 		dpmac_state->options |= DPMAC_LINK_OPT_AUTONEG;
-	अन्यथा
+	else
 		dpmac_state->options &= ~DPMAC_LINK_OPT_AUTONEG;
 
 	err = dpmac_set_link_state(mac->mc_io, 0,
 				   mac->mc_dev->mc_handle, dpmac_state);
-	अगर (err)
+	if (err)
 		netdev_err(mac->net_dev, "%s: dpmac_set_link_state() = %d\n",
 			   __func__, err);
-पूर्ण
+}
 
-अटल व्योम dpaa2_mac_link_up(काष्ठा phylink_config *config,
-			      काष्ठा phy_device *phy,
-			      अचिन्हित पूर्णांक mode, phy_पूर्णांकerface_t पूर्णांकerface,
-			      पूर्णांक speed, पूर्णांक duplex,
-			      bool tx_छोड़ो, bool rx_छोड़ो)
-अणु
-	काष्ठा dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
-	काष्ठा dpmac_link_state *dpmac_state = &mac->state;
-	पूर्णांक err;
+static void dpaa2_mac_link_up(struct phylink_config *config,
+			      struct phy_device *phy,
+			      unsigned int mode, phy_interface_t interface,
+			      int speed, int duplex,
+			      bool tx_pause, bool rx_pause)
+{
+	struct dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
+	struct dpmac_link_state *dpmac_state = &mac->state;
+	int err;
 
 	dpmac_state->up = 1;
 
 	dpmac_state->rate = speed;
 
-	अगर (duplex == DUPLEX_HALF)
+	if (duplex == DUPLEX_HALF)
 		dpmac_state->options |= DPMAC_LINK_OPT_HALF_DUPLEX;
-	अन्यथा अगर (duplex == DUPLEX_FULL)
+	else if (duplex == DUPLEX_FULL)
 		dpmac_state->options &= ~DPMAC_LINK_OPT_HALF_DUPLEX;
 
-	अगर (rx_छोड़ो)
+	if (rx_pause)
 		dpmac_state->options |= DPMAC_LINK_OPT_PAUSE;
-	अन्यथा
+	else
 		dpmac_state->options &= ~DPMAC_LINK_OPT_PAUSE;
 
-	अगर (rx_छोड़ो ^ tx_छोड़ो)
+	if (rx_pause ^ tx_pause)
 		dpmac_state->options |= DPMAC_LINK_OPT_ASYM_PAUSE;
-	अन्यथा
+	else
 		dpmac_state->options &= ~DPMAC_LINK_OPT_ASYM_PAUSE;
 
 	err = dpmac_set_link_state(mac->mc_io, 0,
 				   mac->mc_dev->mc_handle, dpmac_state);
-	अगर (err)
+	if (err)
 		netdev_err(mac->net_dev, "%s: dpmac_set_link_state() = %d\n",
 			   __func__, err);
-पूर्ण
+}
 
-अटल व्योम dpaa2_mac_link_करोwn(काष्ठा phylink_config *config,
-				अचिन्हित पूर्णांक mode,
-				phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
-	काष्ठा dpmac_link_state *dpmac_state = &mac->state;
-	पूर्णांक err;
+static void dpaa2_mac_link_down(struct phylink_config *config,
+				unsigned int mode,
+				phy_interface_t interface)
+{
+	struct dpaa2_mac *mac = phylink_to_dpaa2_mac(config);
+	struct dpmac_link_state *dpmac_state = &mac->state;
+	int err;
 
 	dpmac_state->up = 0;
 	err = dpmac_set_link_state(mac->mc_io, 0,
 				   mac->mc_dev->mc_handle, dpmac_state);
-	अगर (err)
+	if (err)
 		netdev_err(mac->net_dev, "dpmac_set_link_state() = %d\n", err);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा phylink_mac_ops dpaa2_mac_phylink_ops = अणु
+static const struct phylink_mac_ops dpaa2_mac_phylink_ops = {
 	.validate = dpaa2_mac_validate,
 	.mac_config = dpaa2_mac_config,
 	.mac_link_up = dpaa2_mac_link_up,
-	.mac_link_करोwn = dpaa2_mac_link_करोwn,
-पूर्ण;
+	.mac_link_down = dpaa2_mac_link_down,
+};
 
-अटल पूर्णांक dpaa2_pcs_create(काष्ठा dpaa2_mac *mac,
-			    काष्ठा device_node *dpmac_node, पूर्णांक id)
-अणु
-	काष्ठा mdio_device *mdiodev;
-	काष्ठा device_node *node;
+static int dpaa2_pcs_create(struct dpaa2_mac *mac,
+			    struct device_node *dpmac_node, int id)
+{
+	struct mdio_device *mdiodev;
+	struct device_node *node;
 
 	node = of_parse_phandle(dpmac_node, "pcs-handle", 0);
-	अगर (!node) अणु
-		/* करो not error out on old DTS files */
+	if (!node) {
+		/* do not error out on old DTS files */
 		netdev_warn(mac->net_dev, "pcs-handle node not found\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!of_device_is_available(node)) अणु
+	if (!of_device_is_available(node)) {
 		netdev_err(mac->net_dev, "pcs-handle node not available\n");
 		of_node_put(node);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mdiodev = of_mdio_find_device(node);
 	of_node_put(node);
-	अगर (!mdiodev)
-		वापस -EPROBE_DEFER;
+	if (!mdiodev)
+		return -EPROBE_DEFER;
 
 	mac->pcs = lynx_pcs_create(mdiodev);
-	अगर (!mac->pcs) अणु
+	if (!mac->pcs) {
 		netdev_err(mac->net_dev, "lynx_pcs_create() failed\n");
 		put_device(&mdiodev->dev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpaa2_pcs_destroy(काष्ठा dpaa2_mac *mac)
-अणु
-	काष्ठा lynx_pcs *pcs = mac->pcs;
+static void dpaa2_pcs_destroy(struct dpaa2_mac *mac)
+{
+	struct lynx_pcs *pcs = mac->pcs;
 
-	अगर (pcs) अणु
-		काष्ठा device *dev = &pcs->mdio->dev;
+	if (pcs) {
+		struct device *dev = &pcs->mdio->dev;
 		lynx_pcs_destroy(pcs);
 		put_device(dev);
-		mac->pcs = शून्य;
-	पूर्ण
-पूर्ण
+		mac->pcs = NULL;
+	}
+}
 
-पूर्णांक dpaa2_mac_connect(काष्ठा dpaa2_mac *mac)
-अणु
-	काष्ठा net_device *net_dev = mac->net_dev;
-	काष्ठा device_node *dpmac_node;
-	काष्ठा phylink *phylink;
-	पूर्णांक err;
+int dpaa2_mac_connect(struct dpaa2_mac *mac)
+{
+	struct net_device *net_dev = mac->net_dev;
+	struct device_node *dpmac_node;
+	struct phylink *phylink;
+	int err;
 
-	mac->अगर_link_type = mac->attr.link_type;
+	mac->if_link_type = mac->attr.link_type;
 
 	dpmac_node = dpaa2_mac_get_node(mac->attr.id);
-	अगर (!dpmac_node) अणु
+	if (!dpmac_node) {
 		netdev_err(net_dev, "No dpmac@%d node found.\n", mac->attr.id);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	err = dpaa2_mac_get_अगर_mode(dpmac_node, mac->attr);
-	अगर (err < 0) अणु
+	err = dpaa2_mac_get_if_mode(dpmac_node, mac->attr);
+	if (err < 0) {
 		err = -EINVAL;
-		जाओ err_put_node;
-	पूर्ण
-	mac->अगर_mode = err;
+		goto err_put_node;
+	}
+	mac->if_mode = err;
 
-	/* The MAC करोes not have the capability to add RGMII delays so
-	 * error out अगर the पूर्णांकerface mode requests them and there is no PHY
+	/* The MAC does not have the capability to add RGMII delays so
+	 * error out if the interface mode requests them and there is no PHY
 	 * to act upon them
 	 */
-	अगर (of_phy_is_fixed_link(dpmac_node) &&
-	    (mac->अगर_mode == PHY_INTERFACE_MODE_RGMII_ID ||
-	     mac->अगर_mode == PHY_INTERFACE_MODE_RGMII_RXID ||
-	     mac->अगर_mode == PHY_INTERFACE_MODE_RGMII_TXID)) अणु
+	if (of_phy_is_fixed_link(dpmac_node) &&
+	    (mac->if_mode == PHY_INTERFACE_MODE_RGMII_ID ||
+	     mac->if_mode == PHY_INTERFACE_MODE_RGMII_RXID ||
+	     mac->if_mode == PHY_INTERFACE_MODE_RGMII_TXID)) {
 		netdev_err(net_dev, "RGMII delay not supported\n");
 		err = -EINVAL;
-		जाओ err_put_node;
-	पूर्ण
+		goto err_put_node;
+	}
 
-	अगर ((mac->attr.link_type == DPMAC_LINK_TYPE_PHY &&
-	     mac->attr.eth_अगर != DPMAC_ETH_IF_RGMII) ||
-	    mac->attr.link_type == DPMAC_LINK_TYPE_BACKPLANE) अणु
+	if ((mac->attr.link_type == DPMAC_LINK_TYPE_PHY &&
+	     mac->attr.eth_if != DPMAC_ETH_IF_RGMII) ||
+	    mac->attr.link_type == DPMAC_LINK_TYPE_BACKPLANE) {
 		err = dpaa2_pcs_create(mac, dpmac_node, mac->attr.id);
-		अगर (err)
-			जाओ err_put_node;
-	पूर्ण
+		if (err)
+			goto err_put_node;
+	}
 
 	mac->phylink_config.dev = &net_dev->dev;
 	mac->phylink_config.type = PHYLINK_NETDEV;
 
 	phylink = phylink_create(&mac->phylink_config,
-				 of_fwnode_handle(dpmac_node), mac->अगर_mode,
+				 of_fwnode_handle(dpmac_node), mac->if_mode,
 				 &dpaa2_mac_phylink_ops);
-	अगर (IS_ERR(phylink)) अणु
+	if (IS_ERR(phylink)) {
 		err = PTR_ERR(phylink);
-		जाओ err_pcs_destroy;
-	पूर्ण
+		goto err_pcs_destroy;
+	}
 	mac->phylink = phylink;
 
-	अगर (mac->pcs)
+	if (mac->pcs)
 		phylink_set_pcs(mac->phylink, &mac->pcs->pcs);
 
 	err = phylink_of_phy_connect(mac->phylink, dpmac_node, 0);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(net_dev, "phylink_of_phy_connect() = %d\n", err);
-		जाओ err_phylink_destroy;
-	पूर्ण
+		goto err_phylink_destroy;
+	}
 
 	of_node_put(dpmac_node);
 
-	वापस 0;
+	return 0;
 
 err_phylink_destroy:
 	phylink_destroy(mac->phylink);
@@ -356,54 +355,54 @@ err_pcs_destroy:
 err_put_node:
 	of_node_put(dpmac_node);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम dpaa2_mac_disconnect(काष्ठा dpaa2_mac *mac)
-अणु
-	अगर (!mac->phylink)
-		वापस;
+void dpaa2_mac_disconnect(struct dpaa2_mac *mac)
+{
+	if (!mac->phylink)
+		return;
 
 	phylink_disconnect_phy(mac->phylink);
 	phylink_destroy(mac->phylink);
 	dpaa2_pcs_destroy(mac);
-पूर्ण
+}
 
-पूर्णांक dpaa2_mac_खोलो(काष्ठा dpaa2_mac *mac)
-अणु
-	काष्ठा fsl_mc_device *dpmac_dev = mac->mc_dev;
-	काष्ठा net_device *net_dev = mac->net_dev;
-	पूर्णांक err;
+int dpaa2_mac_open(struct dpaa2_mac *mac)
+{
+	struct fsl_mc_device *dpmac_dev = mac->mc_dev;
+	struct net_device *net_dev = mac->net_dev;
+	int err;
 
-	err = dpmac_खोलो(mac->mc_io, 0, dpmac_dev->obj_desc.id,
+	err = dpmac_open(mac->mc_io, 0, dpmac_dev->obj_desc.id,
 			 &dpmac_dev->mc_handle);
-	अगर (err || !dpmac_dev->mc_handle) अणु
+	if (err || !dpmac_dev->mc_handle) {
 		netdev_err(net_dev, "dpmac_open() = %d\n", err);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	err = dpmac_get_attributes(mac->mc_io, 0, dpmac_dev->mc_handle,
 				   &mac->attr);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(net_dev, "dpmac_get_attributes() = %d\n", err);
-		जाओ err_बंद_dpmac;
-	पूर्ण
+		goto err_close_dpmac;
+	}
 
-	वापस 0;
+	return 0;
 
-err_बंद_dpmac:
-	dpmac_बंद(mac->mc_io, 0, dpmac_dev->mc_handle);
-	वापस err;
-पूर्ण
+err_close_dpmac:
+	dpmac_close(mac->mc_io, 0, dpmac_dev->mc_handle);
+	return err;
+}
 
-व्योम dpaa2_mac_बंद(काष्ठा dpaa2_mac *mac)
-अणु
-	काष्ठा fsl_mc_device *dpmac_dev = mac->mc_dev;
+void dpaa2_mac_close(struct dpaa2_mac *mac)
+{
+	struct fsl_mc_device *dpmac_dev = mac->mc_dev;
 
-	dpmac_बंद(mac->mc_io, 0, dpmac_dev->mc_handle);
-पूर्ण
+	dpmac_close(mac->mc_io, 0, dpmac_dev->mc_handle);
+}
 
-अटल अक्षर dpaa2_mac_ethtool_stats[][ETH_GSTRING_LEN] = अणु
+static char dpaa2_mac_ethtool_stats[][ETH_GSTRING_LEN] = {
 	[DPMAC_CNT_ING_ALL_FRAME]		= "[mac] rx all frames",
 	[DPMAC_CNT_ING_GOOD_FRAME]		= "[mac] rx frames ok",
 	[DPMAC_CNT_ING_ERR_FRAME]		= "[mac] rx frame errors",
@@ -432,41 +431,41 @@ err_बंद_dpmac:
 	[DPMAC_CNT_EGR_UNDERSIZED]		= "[mac] tx undersized",
 	[DPMAC_CNT_EGR_VALID_PAUSE_FRAME]	= "[mac] tx b-pause",
 	[DPMAC_CNT_EGR_BYTE]			= "[mac] tx bytes",
-पूर्ण;
+};
 
-#घोषणा DPAA2_MAC_NUM_STATS	ARRAY_SIZE(dpaa2_mac_ethtool_stats)
+#define DPAA2_MAC_NUM_STATS	ARRAY_SIZE(dpaa2_mac_ethtool_stats)
 
-पूर्णांक dpaa2_mac_get_sset_count(व्योम)
-अणु
-	वापस DPAA2_MAC_NUM_STATS;
-पूर्ण
+int dpaa2_mac_get_sset_count(void)
+{
+	return DPAA2_MAC_NUM_STATS;
+}
 
-व्योम dpaa2_mac_get_strings(u8 *data)
-अणु
+void dpaa2_mac_get_strings(u8 *data)
+{
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < DPAA2_MAC_NUM_STATS; i++) अणु
+	for (i = 0; i < DPAA2_MAC_NUM_STATS; i++) {
 		strlcpy(p, dpaa2_mac_ethtool_stats[i], ETH_GSTRING_LEN);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dpaa2_mac_get_ethtool_stats(काष्ठा dpaa2_mac *mac, u64 *data)
-अणु
-	काष्ठा fsl_mc_device *dpmac_dev = mac->mc_dev;
-	पूर्णांक i, err;
+void dpaa2_mac_get_ethtool_stats(struct dpaa2_mac *mac, u64 *data)
+{
+	struct fsl_mc_device *dpmac_dev = mac->mc_dev;
+	int i, err;
 	u64 value;
 
-	क्रम (i = 0; i < DPAA2_MAC_NUM_STATS; i++) अणु
+	for (i = 0; i < DPAA2_MAC_NUM_STATS; i++) {
 		err = dpmac_get_counter(mac->mc_io, 0, dpmac_dev->mc_handle,
 					i, &value);
-		अगर (err) अणु
+		if (err) {
 			netdev_err_once(mac->net_dev,
 					"dpmac_get_counter error %d\n", err);
 			*(data + i) = U64_MAX;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		*(data + i) = value;
-	पूर्ण
-पूर्ण
+	}
+}

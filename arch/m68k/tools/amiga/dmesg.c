@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  *  linux/arch/m68k/tools/amiga/dmesg.c -- Retrieve the kernel messages stored
  *					   in Chip RAM with the kernel command
  *					   line option `debug=mem'.
  *
- *  तऊ Copyright 1996 by Geert Uytterhoeven <geert@linux-m68k.org>
+ *  © Copyright 1996 by Geert Uytterhoeven <geert@linux-m68k.org>
  *
  *
  *  Usage:
@@ -14,57 +13,57 @@
  *
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the मुख्य directory of the Linux
- *  distribution क्रम more details.
+ *  License.  See the file COPYING in the main directory of the Linux
+ *  distribution for more details.
  */
 
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
-#घोषणा CHIPMEM_START	0x00000000
-#घोषणा CHIPMEM_END	0x00200000	/* overridden by argv[1] */
+#define CHIPMEM_START	0x00000000
+#define CHIPMEM_END	0x00200000	/* overridden by argv[1] */
 
-#घोषणा SAVEKMSG_MAGIC1	0x53415645	/* 'SAVE' */
-#घोषणा SAVEKMSG_MAGIC2	0x4B4D5347	/* 'KMSG' */
+#define SAVEKMSG_MAGIC1	0x53415645	/* 'SAVE' */
+#define SAVEKMSG_MAGIC2	0x4B4D5347	/* 'KMSG' */
 
-काष्ठा savekmsg अणु
-    u_दीर्घ magic1;	/* SAVEKMSG_MAGIC1 */
-    u_दीर्घ magic2;	/* SAVEKMSG_MAGIC2 */
-    u_दीर्घ magicptr;	/* address of magic1 */
-    u_दीर्घ size;
-    अक्षर data[];
-पूर्ण;
+struct savekmsg {
+    u_long magic1;	/* SAVEKMSG_MAGIC1 */
+    u_long magic2;	/* SAVEKMSG_MAGIC2 */
+    u_long magicptr;	/* address of magic1 */
+    u_long size;
+    char data[];
+};
 
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-    u_दीर्घ start = CHIPMEM_START, end = CHIPMEM_END, p;
-    पूर्णांक found = 0;
-    काष्ठा savekmsg *m = शून्य;
+int main(int argc, char *argv[])
+{
+    u_long start = CHIPMEM_START, end = CHIPMEM_END, p;
+    int found = 0;
+    struct savekmsg *m = NULL;
 
-    अगर (argc >= 2)
-	end = म_से_अदीर्घ(argv[1], शून्य, 0);
-    म_लिखो("Searching for SAVEKMSG magic...\n");
-    क्रम (p = start; p <= end-माप(काष्ठा savekmsg); p += 4) अणु
-	m = (काष्ठा savekmsg *)p;
-	अगर ((m->magic1 == SAVEKMSG_MAGIC1) && (m->magic2 == SAVEKMSG_MAGIC2) &&
-	    (m->magicptr == p)) अणु
+    if (argc >= 2)
+	end = strtoul(argv[1], NULL, 0);
+    printf("Searching for SAVEKMSG magic...\n");
+    for (p = start; p <= end-sizeof(struct savekmsg); p += 4) {
+	m = (struct savekmsg *)p;
+	if ((m->magic1 == SAVEKMSG_MAGIC1) && (m->magic2 == SAVEKMSG_MAGIC2) &&
+	    (m->magicptr == p)) {
 	    found = 1;
-	    अवरोध;
-	पूर्ण
-    पूर्ण
-    अगर (!found)
-	म_लिखो("Not found\n");
-    अन्यथा अणु
-	म_लिखो("Found %ld bytes at 0x%08lx\n", m->size, (u_दीर्घ)&m->data);
-	माला_दो(">>>>>>>>>>>>>>>>>>>>");
-	ख_साफ(मानक_निकास);
-	ग_लिखो(1, &m->data, m->size);
-	ख_साफ(मानक_निकास);
-	माला_दो("<<<<<<<<<<<<<<<<<<<<");
-    पूर्ण
-    वापस(0);
-पूर्ण
+	    break;
+	}
+    }
+    if (!found)
+	printf("Not found\n");
+    else {
+	printf("Found %ld bytes at 0x%08lx\n", m->size, (u_long)&m->data);
+	puts(">>>>>>>>>>>>>>>>>>>>");
+	fflush(stdout);
+	write(1, &m->data, m->size);
+	fflush(stdout);
+	puts("<<<<<<<<<<<<<<<<<<<<");
+    }
+    return(0);
+}

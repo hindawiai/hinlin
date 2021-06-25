@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2014 STMicroelectronics
  *
- * STMicroelectronics Generic PHY driver क्रम STiH407 USB2.
+ * STMicroelectronics Generic PHY driver for STiH407 USB2.
  *
  * Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
  */
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/clk.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
+#include <linux/mfd/syscon.h>
+#include <linux/phy/phy.h>
 
-#घोषणा PHYPARAM_REG	1
-#घोषणा PHYCTRL_REG	2
+#define PHYPARAM_REG	1
+#define PHYCTRL_REG	2
 
 /* Default PHY_SEL and REFCLKSEL configuration */
-#घोषणा STIH407_USB_PICOPHY_CTRL_PORT_CONF	0x6
-#घोषणा STIH407_USB_PICOPHY_CTRL_PORT_MASK	0x1f
+#define STIH407_USB_PICOPHY_CTRL_PORT_CONF	0x6
+#define STIH407_USB_PICOPHY_CTRL_PORT_MASK	0x1f
 
 /* ports parameters overriding */
-#घोषणा STIH407_USB_PICOPHY_PARAM_DEF		0x39a4dc
-#घोषणा STIH407_USB_PICOPHY_PARAM_MASK		0xffffffff
+#define STIH407_USB_PICOPHY_PARAM_DEF		0x39a4dc
+#define STIH407_USB_PICOPHY_PARAM_MASK		0xffffffff
 
-काष्ठा stih407_usb2_picophy अणु
-	काष्ठा phy *phy;
-	काष्ठा regmap *regmap;
-	काष्ठा device *dev;
-	काष्ठा reset_control *rstc;
-	काष्ठा reset_control *rstport;
-	पूर्णांक ctrl;
-	पूर्णांक param;
-पूर्ण;
+struct stih407_usb2_picophy {
+	struct phy *phy;
+	struct regmap *regmap;
+	struct device *dev;
+	struct reset_control *rstc;
+	struct reset_control *rstport;
+	int ctrl;
+	int param;
+};
 
-अटल पूर्णांक stih407_usb2_pico_ctrl(काष्ठा stih407_usb2_picophy *phy_dev)
-अणु
-	reset_control_deनिश्चित(phy_dev->rstc);
+static int stih407_usb2_pico_ctrl(struct stih407_usb2_picophy *phy_dev)
+{
+	reset_control_deassert(phy_dev->rstc);
 
-	वापस regmap_update_bits(phy_dev->regmap, phy_dev->ctrl,
+	return regmap_update_bits(phy_dev->regmap, phy_dev->ctrl,
 				  STIH407_USB_PICOPHY_CTRL_PORT_MASK,
 				  STIH407_USB_PICOPHY_CTRL_PORT_CONF);
-पूर्ण
+}
 
-अटल पूर्णांक stih407_usb2_init_port(काष्ठा phy *phy)
-अणु
-	पूर्णांक ret;
-	काष्ठा stih407_usb2_picophy *phy_dev = phy_get_drvdata(phy);
+static int stih407_usb2_init_port(struct phy *phy)
+{
+	int ret;
+	struct stih407_usb2_picophy *phy_dev = phy_get_drvdata(phy);
 
 	stih407_usb2_pico_ctrl(phy_dev);
 
@@ -60,117 +59,117 @@
 				 phy_dev->param,
 				 STIH407_USB_PICOPHY_PARAM_MASK,
 				 STIH407_USB_PICOPHY_PARAM_DEF);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस reset_control_deनिश्चित(phy_dev->rstport);
-पूर्ण
+	return reset_control_deassert(phy_dev->rstport);
+}
 
-अटल पूर्णांक stih407_usb2_निकास_port(काष्ठा phy *phy)
-अणु
-	काष्ठा stih407_usb2_picophy *phy_dev = phy_get_drvdata(phy);
+static int stih407_usb2_exit_port(struct phy *phy)
+{
+	struct stih407_usb2_picophy *phy_dev = phy_get_drvdata(phy);
 
 	/*
-	 * Only port reset is निश्चितed, phy global reset is kept untouched
+	 * Only port reset is asserted, phy global reset is kept untouched
 	 * as other ports may still be active. When all ports are in reset
-	 * state, assumption is made that घातer will be cut off on the phy, in
-	 * हाल of suspend क्रम instance. Theoretically, निश्चितing inभागidual
+	 * state, assumption is made that power will be cut off on the phy, in
+	 * case of suspend for instance. Theoretically, asserting individual
 	 * reset (like here) or global reset should be equivalent.
 	 */
-	वापस reset_control_निश्चित(phy_dev->rstport);
-पूर्ण
+	return reset_control_assert(phy_dev->rstport);
+}
 
-अटल स्थिर काष्ठा phy_ops stih407_usb2_picophy_data = अणु
+static const struct phy_ops stih407_usb2_picophy_data = {
 	.init = stih407_usb2_init_port,
-	.निकास = stih407_usb2_निकास_port,
+	.exit = stih407_usb2_exit_port,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक stih407_usb2_picophy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा stih407_usb2_picophy *phy_dev;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा phy *phy;
-	पूर्णांक ret;
+static int stih407_usb2_picophy_probe(struct platform_device *pdev)
+{
+	struct stih407_usb2_picophy *phy_dev;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct phy_provider *phy_provider;
+	struct phy *phy;
+	int ret;
 
-	phy_dev = devm_kzalloc(dev, माप(*phy_dev), GFP_KERNEL);
-	अगर (!phy_dev)
-		वापस -ENOMEM;
+	phy_dev = devm_kzalloc(dev, sizeof(*phy_dev), GFP_KERNEL);
+	if (!phy_dev)
+		return -ENOMEM;
 
 	phy_dev->dev = dev;
 	dev_set_drvdata(dev, phy_dev);
 
 	phy_dev->rstc = devm_reset_control_get_shared(dev, "global");
-	अगर (IS_ERR(phy_dev->rstc)) अणु
+	if (IS_ERR(phy_dev->rstc)) {
 		dev_err(dev, "failed to ctrl picoPHY reset\n");
-		वापस PTR_ERR(phy_dev->rstc);
-	पूर्ण
+		return PTR_ERR(phy_dev->rstc);
+	}
 
 	phy_dev->rstport = devm_reset_control_get_exclusive(dev, "port");
-	अगर (IS_ERR(phy_dev->rstport)) अणु
+	if (IS_ERR(phy_dev->rstport)) {
 		dev_err(dev, "failed to ctrl picoPHY reset\n");
-		वापस PTR_ERR(phy_dev->rstport);
-	पूर्ण
+		return PTR_ERR(phy_dev->rstport);
+	}
 
-	/* Reset port by शेष: only deनिश्चित it in phy init */
-	reset_control_निश्चित(phy_dev->rstport);
+	/* Reset port by default: only deassert it in phy init */
+	reset_control_assert(phy_dev->rstport);
 
 	phy_dev->regmap = syscon_regmap_lookup_by_phandle(np, "st,syscfg");
-	अगर (IS_ERR(phy_dev->regmap)) अणु
+	if (IS_ERR(phy_dev->regmap)) {
 		dev_err(dev, "No syscfg phandle specified\n");
-		वापस PTR_ERR(phy_dev->regmap);
-	पूर्ण
+		return PTR_ERR(phy_dev->regmap);
+	}
 
-	ret = of_property_पढ़ो_u32_index(np, "st,syscfg", PHYPARAM_REG,
+	ret = of_property_read_u32_index(np, "st,syscfg", PHYPARAM_REG,
 					&phy_dev->param);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can't get phyparam offset (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32_index(np, "st,syscfg", PHYCTRL_REG,
+	ret = of_property_read_u32_index(np, "st,syscfg", PHYCTRL_REG,
 					&phy_dev->ctrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can't get phyctrl offset (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	phy = devm_phy_create(dev, शून्य, &stih407_usb2_picophy_data);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(dev, NULL, &stih407_usb2_picophy_data);
+	if (IS_ERR(phy)) {
 		dev_err(dev, "failed to create Display Port PHY\n");
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 
 	phy_dev->phy = phy;
 	phy_set_drvdata(phy, phy_dev);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	अगर (IS_ERR(phy_provider))
-		वापस PTR_ERR(phy_provider);
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	if (IS_ERR(phy_provider))
+		return PTR_ERR(phy_provider);
 
 	dev_info(dev, "STiH407 USB Generic picoPHY driver probed!");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id stih407_usb2_picophy_of_match[] = अणु
-	अणु .compatible = "st,stih407-usb2-phy" पूर्ण,
-	अणु /*sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id stih407_usb2_picophy_of_match[] = {
+	{ .compatible = "st,stih407-usb2-phy" },
+	{ /*sentinel */ },
+};
 
 MODULE_DEVICE_TABLE(of, stih407_usb2_picophy_of_match);
 
-अटल काष्ठा platक्रमm_driver stih407_usb2_picophy_driver = अणु
+static struct platform_driver stih407_usb2_picophy_driver = {
 	.probe = stih407_usb2_picophy_probe,
-	.driver = अणु
+	.driver = {
 		   .name = "stih407-usb-genphy",
 		   .of_match_table = stih407_usb2_picophy_of_match,
-		   पूर्ण
-पूर्ण;
+		   }
+};
 
-module_platक्रमm_driver(stih407_usb2_picophy_driver);
+module_platform_driver(stih407_usb2_picophy_driver);
 
 MODULE_AUTHOR("Giuseppe Cavallaro <peppe.cavallaro@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics Generic picoPHY driver for STiH407");

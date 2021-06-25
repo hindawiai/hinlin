@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/omap2/dss/dpi.c
  *
@@ -10,220 +9,220 @@
  * by Imre Deak.
  */
 
-#घोषणा DSS_SUBSYS_NAME "DPI"
+#define DSS_SUBSYS_NAME "DPI"
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/of.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/string.h>
+#include <linux/of.h>
+#include <linux/clk.h>
+#include <linux/component.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-#समावेश "dss.h"
-#समावेश "dss_features.h"
+#include "dss.h"
+#include "dss_features.h"
 
-#घोषणा HSDIV_DISPC	0
+#define HSDIV_DISPC	0
 
-काष्ठा dpi_data अणु
-	काष्ठा platक्रमm_device *pdev;
+struct dpi_data {
+	struct platform_device *pdev;
 
-	काष्ठा regulator *vdds_dsi_reg;
-	काष्ठा dss_pll *pll;
+	struct regulator *vdds_dsi_reg;
+	struct dss_pll *pll;
 
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	काष्ठा omap_video_timings timings;
-	काष्ठा dss_lcd_mgr_config mgr_config;
-	पूर्णांक data_lines;
+	struct omap_video_timings timings;
+	struct dss_lcd_mgr_config mgr_config;
+	int data_lines;
 
-	काष्ठा omap_dss_device output;
+	struct omap_dss_device output;
 
 	bool port_initialized;
-पूर्ण;
+};
 
-अटल काष्ठा dpi_data *dpi_get_data_from_dssdev(काष्ठा omap_dss_device *dssdev)
-अणु
-	वापस container_of(dssdev, काष्ठा dpi_data, output);
-पूर्ण
+static struct dpi_data *dpi_get_data_from_dssdev(struct omap_dss_device *dssdev)
+{
+	return container_of(dssdev, struct dpi_data, output);
+}
 
 /* only used in non-DT mode */
-अटल काष्ठा dpi_data *dpi_get_data_from_pdev(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस platक्रमm_get_drvdata(pdev);
-पूर्ण
+static struct dpi_data *dpi_get_data_from_pdev(struct platform_device *pdev)
+{
+	return platform_get_drvdata(pdev);
+}
 
-अटल काष्ठा dss_pll *dpi_get_pll(क्रमागत omap_channel channel)
-अणु
+static struct dss_pll *dpi_get_pll(enum omap_channel channel)
+{
 	/*
-	 * XXX we can't currently use DSI PLL क्रम DPI with OMAP3, as the DSI PLL
-	 * would also be used क्रम DISPC fclk. Meaning, when the DPI output is
-	 * disabled, DISPC घड़ी will be disabled, and TV out will stop.
+	 * XXX we can't currently use DSI PLL for DPI with OMAP3, as the DSI PLL
+	 * would also be used for DISPC fclk. Meaning, when the DPI output is
+	 * disabled, DISPC clock will be disabled, and TV out will stop.
 	 */
-	चयन (omapdss_get_version()) अणु
-	हाल OMAPDSS_VER_OMAP24xx:
-	हाल OMAPDSS_VER_OMAP34xx_ES1:
-	हाल OMAPDSS_VER_OMAP34xx_ES3:
-	हाल OMAPDSS_VER_OMAP3630:
-	हाल OMAPDSS_VER_AM35xx:
-	हाल OMAPDSS_VER_AM43xx:
-		वापस शून्य;
+	switch (omapdss_get_version()) {
+	case OMAPDSS_VER_OMAP24xx:
+	case OMAPDSS_VER_OMAP34xx_ES1:
+	case OMAPDSS_VER_OMAP34xx_ES3:
+	case OMAPDSS_VER_OMAP3630:
+	case OMAPDSS_VER_AM35xx:
+	case OMAPDSS_VER_AM43xx:
+		return NULL;
 
-	हाल OMAPDSS_VER_OMAP4430_ES1:
-	हाल OMAPDSS_VER_OMAP4430_ES2:
-	हाल OMAPDSS_VER_OMAP4:
-		चयन (channel) अणु
-		हाल OMAP_DSS_CHANNEL_LCD:
-			वापस dss_pll_find("dsi0");
-		हाल OMAP_DSS_CHANNEL_LCD2:
-			वापस dss_pll_find("dsi1");
-		शेष:
-			वापस शून्य;
-		पूर्ण
+	case OMAPDSS_VER_OMAP4430_ES1:
+	case OMAPDSS_VER_OMAP4430_ES2:
+	case OMAPDSS_VER_OMAP4:
+		switch (channel) {
+		case OMAP_DSS_CHANNEL_LCD:
+			return dss_pll_find("dsi0");
+		case OMAP_DSS_CHANNEL_LCD2:
+			return dss_pll_find("dsi1");
+		default:
+			return NULL;
+		}
 
-	हाल OMAPDSS_VER_OMAP5:
-		चयन (channel) अणु
-		हाल OMAP_DSS_CHANNEL_LCD:
-			वापस dss_pll_find("dsi0");
-		हाल OMAP_DSS_CHANNEL_LCD3:
-			वापस dss_pll_find("dsi1");
-		शेष:
-			वापस शून्य;
-		पूर्ण
+	case OMAPDSS_VER_OMAP5:
+		switch (channel) {
+		case OMAP_DSS_CHANNEL_LCD:
+			return dss_pll_find("dsi0");
+		case OMAP_DSS_CHANNEL_LCD3:
+			return dss_pll_find("dsi1");
+		default:
+			return NULL;
+		}
 
-	हाल OMAPDSS_VER_DRA7xx:
-		चयन (channel) अणु
-		हाल OMAP_DSS_CHANNEL_LCD:
-		हाल OMAP_DSS_CHANNEL_LCD2:
-			वापस dss_pll_find("video0");
-		हाल OMAP_DSS_CHANNEL_LCD3:
-			वापस dss_pll_find("video1");
-		शेष:
-			वापस शून्य;
-		पूर्ण
+	case OMAPDSS_VER_DRA7xx:
+		switch (channel) {
+		case OMAP_DSS_CHANNEL_LCD:
+		case OMAP_DSS_CHANNEL_LCD2:
+			return dss_pll_find("video0");
+		case OMAP_DSS_CHANNEL_LCD3:
+			return dss_pll_find("video1");
+		default:
+			return NULL;
+		}
 
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+	default:
+		return NULL;
+	}
+}
 
-अटल क्रमागत omap_dss_clk_source dpi_get_alt_clk_src(क्रमागत omap_channel channel)
-अणु
-	चयन (channel) अणु
-	हाल OMAP_DSS_CHANNEL_LCD:
-		वापस OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC;
-	हाल OMAP_DSS_CHANNEL_LCD2:
-		वापस OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC;
-	हाल OMAP_DSS_CHANNEL_LCD3:
-		वापस OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC;
-	शेष:
+static enum omap_dss_clk_source dpi_get_alt_clk_src(enum omap_channel channel)
+{
+	switch (channel) {
+	case OMAP_DSS_CHANNEL_LCD:
+		return OMAP_DSS_CLK_SRC_DSI_PLL_HSDIV_DISPC;
+	case OMAP_DSS_CHANNEL_LCD2:
+		return OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC;
+	case OMAP_DSS_CHANNEL_LCD3:
+		return OMAP_DSS_CLK_SRC_DSI2_PLL_HSDIV_DISPC;
+	default:
 		/* this shouldn't happen */
 		WARN_ON(1);
-		वापस OMAP_DSS_CLK_SRC_FCK;
-	पूर्ण
-पूर्ण
+		return OMAP_DSS_CLK_SRC_FCK;
+	}
+}
 
-काष्ठा dpi_clk_calc_ctx अणु
-	काष्ठा dss_pll *pll;
+struct dpi_clk_calc_ctx {
+	struct dss_pll *pll;
 
-	/* inमाला_दो */
+	/* inputs */
 
-	अचिन्हित दीर्घ pck_min, pck_max;
+	unsigned long pck_min, pck_max;
 
-	/* outमाला_दो */
+	/* outputs */
 
-	काष्ठा dss_pll_घड़ी_info dsi_cinfo;
-	अचिन्हित दीर्घ fck;
-	काष्ठा dispc_घड़ी_info dispc_cinfo;
-पूर्ण;
+	struct dss_pll_clock_info dsi_cinfo;
+	unsigned long fck;
+	struct dispc_clock_info dispc_cinfo;
+};
 
-अटल bool dpi_calc_dispc_cb(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
-		अचिन्हित दीर्घ pck, व्योम *data)
-अणु
-	काष्ठा dpi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_dispc_cb(int lckd, int pckd, unsigned long lck,
+		unsigned long pck, void *data)
+{
+	struct dpi_clk_calc_ctx *ctx = data;
 
 	/*
-	 * Odd भागiders give us uneven duty cycle, causing problem when level
-	 * shअगरted. So skip all odd भागiders when the pixel घड़ी is on the
+	 * Odd dividers give us uneven duty cycle, causing problem when level
+	 * shifted. So skip all odd dividers when the pixel clock is on the
 	 * higher side.
 	 */
-	अगर (ctx->pck_min >= 100000000) अणु
-		अगर (lckd > 1 && lckd % 2 != 0)
-			वापस false;
+	if (ctx->pck_min >= 100000000) {
+		if (lckd > 1 && lckd % 2 != 0)
+			return false;
 
-		अगर (pckd > 1 && pckd % 2 != 0)
-			वापस false;
-	पूर्ण
+		if (pckd > 1 && pckd % 2 != 0)
+			return false;
+	}
 
-	ctx->dispc_cinfo.lck_भाग = lckd;
-	ctx->dispc_cinfo.pck_भाग = pckd;
+	ctx->dispc_cinfo.lck_div = lckd;
+	ctx->dispc_cinfo.pck_div = pckd;
 	ctx->dispc_cinfo.lck = lck;
 	ctx->dispc_cinfo.pck = pck;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-अटल bool dpi_calc_hsभाग_cb(पूर्णांक m_dispc, अचिन्हित दीर्घ dispc,
-		व्योम *data)
-अणु
-	काष्ठा dpi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_hsdiv_cb(int m_dispc, unsigned long dispc,
+		void *data)
+{
+	struct dpi_clk_calc_ctx *ctx = data;
 
 	/*
-	 * Odd भागiders give us uneven duty cycle, causing problem when level
-	 * shअगरted. So skip all odd भागiders when the pixel घड़ी is on the
+	 * Odd dividers give us uneven duty cycle, causing problem when level
+	 * shifted. So skip all odd dividers when the pixel clock is on the
 	 * higher side.
 	 */
-	अगर (m_dispc > 1 && m_dispc % 2 != 0 && ctx->pck_min >= 100000000)
-		वापस false;
+	if (m_dispc > 1 && m_dispc % 2 != 0 && ctx->pck_min >= 100000000)
+		return false;
 
 	ctx->dsi_cinfo.mX[HSDIV_DISPC] = m_dispc;
 	ctx->dsi_cinfo.clkout[HSDIV_DISPC] = dispc;
 
-	वापस dispc_भाग_calc(dispc, ctx->pck_min, ctx->pck_max,
+	return dispc_div_calc(dispc, ctx->pck_min, ctx->pck_max,
 			dpi_calc_dispc_cb, ctx);
-पूर्ण
+}
 
 
-अटल bool dpi_calc_pll_cb(पूर्णांक n, पूर्णांक m, अचिन्हित दीर्घ fपूर्णांक,
-		अचिन्हित दीर्घ clkdco,
-		व्योम *data)
-अणु
-	काष्ठा dpi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_pll_cb(int n, int m, unsigned long fint,
+		unsigned long clkdco,
+		void *data)
+{
+	struct dpi_clk_calc_ctx *ctx = data;
 
 	ctx->dsi_cinfo.n = n;
 	ctx->dsi_cinfo.m = m;
-	ctx->dsi_cinfo.fपूर्णांक = fपूर्णांक;
+	ctx->dsi_cinfo.fint = fint;
 	ctx->dsi_cinfo.clkdco = clkdco;
 
-	वापस dss_pll_hsभाग_calc(ctx->pll, clkdco,
+	return dss_pll_hsdiv_calc(ctx->pll, clkdco,
 		ctx->pck_min, dss_feat_get_param_max(FEAT_PARAM_DSS_FCK),
-		dpi_calc_hsभाग_cb, ctx);
-पूर्ण
+		dpi_calc_hsdiv_cb, ctx);
+}
 
-अटल bool dpi_calc_dss_cb(अचिन्हित दीर्घ fck, व्योम *data)
-अणु
-	काष्ठा dpi_clk_calc_ctx *ctx = data;
+static bool dpi_calc_dss_cb(unsigned long fck, void *data)
+{
+	struct dpi_clk_calc_ctx *ctx = data;
 
 	ctx->fck = fck;
 
-	वापस dispc_भाग_calc(fck, ctx->pck_min, ctx->pck_max,
+	return dispc_div_calc(fck, ctx->pck_min, ctx->pck_max,
 			dpi_calc_dispc_cb, ctx);
-पूर्ण
+}
 
-अटल bool dpi_dsi_clk_calc(काष्ठा dpi_data *dpi, अचिन्हित दीर्घ pck,
-		काष्ठा dpi_clk_calc_ctx *ctx)
-अणु
-	अचिन्हित दीर्घ clkin;
-	अचिन्हित दीर्घ pll_min, pll_max;
+static bool dpi_dsi_clk_calc(struct dpi_data *dpi, unsigned long pck,
+		struct dpi_clk_calc_ctx *ctx)
+{
+	unsigned long clkin;
+	unsigned long pll_min, pll_max;
 
-	स_रखो(ctx, 0, माप(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 	ctx->pll = dpi->pll;
 	ctx->pck_min = pck - 1000;
 	ctx->pck_max = pck + 1000;
@@ -233,243 +232,243 @@
 
 	clkin = clk_get_rate(ctx->pll->clkin);
 
-	वापस dss_pll_calc(ctx->pll, clkin,
+	return dss_pll_calc(ctx->pll, clkin,
 			pll_min, pll_max,
 			dpi_calc_pll_cb, ctx);
-पूर्ण
+}
 
-अटल bool dpi_dss_clk_calc(अचिन्हित दीर्घ pck, काष्ठा dpi_clk_calc_ctx *ctx)
-अणु
-	पूर्णांक i;
+static bool dpi_dss_clk_calc(unsigned long pck, struct dpi_clk_calc_ctx *ctx)
+{
+	int i;
 
 	/*
 	 * DSS fck gives us very few possibilities, so finding a good pixel
-	 * घड़ी may not be possible. We try multiple बार to find the घड़ी,
-	 * each समय widening the pixel घड़ी range we look क्रम, up to
+	 * clock may not be possible. We try multiple times to find the clock,
+	 * each time widening the pixel clock range we look for, up to
 	 * +/- ~15MHz.
 	 */
 
-	क्रम (i = 0; i < 25; ++i) अणु
+	for (i = 0; i < 25; ++i) {
 		bool ok;
 
-		स_रखो(ctx, 0, माप(*ctx));
-		अगर (pck > 1000 * i * i * i)
+		memset(ctx, 0, sizeof(*ctx));
+		if (pck > 1000 * i * i * i)
 			ctx->pck_min = max(pck - 1000 * i * i * i, 0lu);
-		अन्यथा
+		else
 			ctx->pck_min = 0;
 		ctx->pck_max = pck + 1000 * i * i * i;
 
-		ok = dss_भाग_calc(pck, ctx->pck_min, dpi_calc_dss_cb, ctx);
-		अगर (ok)
-			वापस ok;
-	पूर्ण
+		ok = dss_div_calc(pck, ctx->pck_min, dpi_calc_dss_cb, ctx);
+		if (ok)
+			return ok;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
 
-अटल पूर्णांक dpi_set_dsi_clk(काष्ठा dpi_data *dpi, क्रमागत omap_channel channel,
-		अचिन्हित दीर्घ pck_req, अचिन्हित दीर्घ *fck, पूर्णांक *lck_भाग,
-		पूर्णांक *pck_भाग)
-अणु
-	काष्ठा dpi_clk_calc_ctx ctx;
-	पूर्णांक r;
+static int dpi_set_dsi_clk(struct dpi_data *dpi, enum omap_channel channel,
+		unsigned long pck_req, unsigned long *fck, int *lck_div,
+		int *pck_div)
+{
+	struct dpi_clk_calc_ctx ctx;
+	int r;
 	bool ok;
 
 	ok = dpi_dsi_clk_calc(dpi, pck_req, &ctx);
-	अगर (!ok)
-		वापस -EINVAL;
+	if (!ok)
+		return -EINVAL;
 
 	r = dss_pll_set_config(dpi->pll, &ctx.dsi_cinfo);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dss_select_lcd_clk_source(channel,
 			dpi_get_alt_clk_src(channel));
 
-	dpi->mgr_config.घड़ी_info = ctx.dispc_cinfo;
+	dpi->mgr_config.clock_info = ctx.dispc_cinfo;
 
 	*fck = ctx.dsi_cinfo.clkout[HSDIV_DISPC];
-	*lck_भाग = ctx.dispc_cinfo.lck_भाग;
-	*pck_भाग = ctx.dispc_cinfo.pck_भाग;
+	*lck_div = ctx.dispc_cinfo.lck_div;
+	*pck_div = ctx.dispc_cinfo.pck_div;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpi_set_dispc_clk(काष्ठा dpi_data *dpi, अचिन्हित दीर्घ pck_req,
-		अचिन्हित दीर्घ *fck, पूर्णांक *lck_भाग, पूर्णांक *pck_भाग)
-अणु
-	काष्ठा dpi_clk_calc_ctx ctx;
-	पूर्णांक r;
+static int dpi_set_dispc_clk(struct dpi_data *dpi, unsigned long pck_req,
+		unsigned long *fck, int *lck_div, int *pck_div)
+{
+	struct dpi_clk_calc_ctx ctx;
+	int r;
 	bool ok;
 
 	ok = dpi_dss_clk_calc(pck_req, &ctx);
-	अगर (!ok)
-		वापस -EINVAL;
+	if (!ok)
+		return -EINVAL;
 
 	r = dss_set_fck_rate(ctx.fck);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	dpi->mgr_config.घड़ी_info = ctx.dispc_cinfo;
+	dpi->mgr_config.clock_info = ctx.dispc_cinfo;
 
 	*fck = ctx.fck;
-	*lck_भाग = ctx.dispc_cinfo.lck_भाग;
-	*pck_भाग = ctx.dispc_cinfo.pck_भाग;
+	*lck_div = ctx.dispc_cinfo.lck_div;
+	*pck_div = ctx.dispc_cinfo.pck_div;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpi_set_mode(काष्ठा dpi_data *dpi)
-अणु
-	काष्ठा omap_dss_device *out = &dpi->output;
-	काष्ठा omap_overlay_manager *mgr = out->manager;
-	काष्ठा omap_video_timings *t = &dpi->timings;
-	पूर्णांक lck_भाग = 0, pck_भाग = 0;
-	अचिन्हित दीर्घ fck = 0;
-	अचिन्हित दीर्घ pck;
-	पूर्णांक r = 0;
+static int dpi_set_mode(struct dpi_data *dpi)
+{
+	struct omap_dss_device *out = &dpi->output;
+	struct omap_overlay_manager *mgr = out->manager;
+	struct omap_video_timings *t = &dpi->timings;
+	int lck_div = 0, pck_div = 0;
+	unsigned long fck = 0;
+	unsigned long pck;
+	int r = 0;
 
-	अगर (dpi->pll)
-		r = dpi_set_dsi_clk(dpi, mgr->id, t->pixelघड़ी, &fck,
-				&lck_भाग, &pck_भाग);
-	अन्यथा
-		r = dpi_set_dispc_clk(dpi, t->pixelघड़ी, &fck,
-				&lck_भाग, &pck_भाग);
-	अगर (r)
-		वापस r;
+	if (dpi->pll)
+		r = dpi_set_dsi_clk(dpi, mgr->id, t->pixelclock, &fck,
+				&lck_div, &pck_div);
+	else
+		r = dpi_set_dispc_clk(dpi, t->pixelclock, &fck,
+				&lck_div, &pck_div);
+	if (r)
+		return r;
 
-	pck = fck / lck_भाग / pck_भाग;
+	pck = fck / lck_div / pck_div;
 
-	अगर (pck != t->pixelघड़ी) अणु
+	if (pck != t->pixelclock) {
 		DSSWARN("Could not find exact pixel clock. Requested %d Hz, got %lu Hz\n",
-			t->pixelघड़ी, pck);
+			t->pixelclock, pck);
 
-		t->pixelघड़ी = pck;
-	पूर्ण
+		t->pixelclock = pck;
+	}
 
 	dss_mgr_set_timings(mgr, t);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpi_config_lcd_manager(काष्ठा dpi_data *dpi)
-अणु
-	काष्ठा omap_dss_device *out = &dpi->output;
-	काष्ठा omap_overlay_manager *mgr = out->manager;
+static void dpi_config_lcd_manager(struct dpi_data *dpi)
+{
+	struct omap_dss_device *out = &dpi->output;
+	struct omap_overlay_manager *mgr = out->manager;
 
 	dpi->mgr_config.io_pad_mode = DSS_IO_PAD_MODE_BYPASS;
 
 	dpi->mgr_config.stallmode = false;
-	dpi->mgr_config.fअगरohandcheck = false;
+	dpi->mgr_config.fifohandcheck = false;
 
 	dpi->mgr_config.video_port_width = dpi->data_lines;
 
 	dpi->mgr_config.lcden_sig_polarity = 0;
 
 	dss_mgr_set_lcd_config(mgr, &dpi->mgr_config);
-पूर्ण
+}
 
-अटल पूर्णांक dpi_display_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
-	काष्ठा omap_dss_device *out = &dpi->output;
-	पूर्णांक r;
+static int dpi_display_enable(struct omap_dss_device *dssdev)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+	struct omap_dss_device *out = &dpi->output;
+	int r;
 
 	mutex_lock(&dpi->lock);
 
-	अगर (dss_has_feature(FEAT_DPI_USES_VDDS_DSI) && !dpi->vdds_dsi_reg) अणु
+	if (dss_has_feature(FEAT_DPI_USES_VDDS_DSI) && !dpi->vdds_dsi_reg) {
 		DSSERR("no VDSS_DSI regulator\n");
 		r = -ENODEV;
-		जाओ err_no_reg;
-	पूर्ण
+		goto err_no_reg;
+	}
 
-	अगर (out->manager == शून्य) अणु
+	if (out->manager == NULL) {
 		DSSERR("failed to enable display: no output/manager\n");
 		r = -ENODEV;
-		जाओ err_no_out_mgr;
-	पूर्ण
+		goto err_no_out_mgr;
+	}
 
-	अगर (dss_has_feature(FEAT_DPI_USES_VDDS_DSI)) अणु
+	if (dss_has_feature(FEAT_DPI_USES_VDDS_DSI)) {
 		r = regulator_enable(dpi->vdds_dsi_reg);
-		अगर (r)
-			जाओ err_reg_enable;
-	पूर्ण
+		if (r)
+			goto err_reg_enable;
+	}
 
-	r = dispc_runसमय_get();
-	अगर (r)
-		जाओ err_get_dispc;
+	r = dispc_runtime_get();
+	if (r)
+		goto err_get_dispc;
 
 	r = dss_dpi_select_source(out->port_num, out->manager->id);
-	अगर (r)
-		जाओ err_src_sel;
+	if (r)
+		goto err_src_sel;
 
-	अगर (dpi->pll) अणु
+	if (dpi->pll) {
 		r = dss_pll_enable(dpi->pll);
-		अगर (r)
-			जाओ err_dsi_pll_init;
-	पूर्ण
+		if (r)
+			goto err_dsi_pll_init;
+	}
 
 	r = dpi_set_mode(dpi);
-	अगर (r)
-		जाओ err_set_mode;
+	if (r)
+		goto err_set_mode;
 
 	dpi_config_lcd_manager(dpi);
 
 	mdelay(2);
 
 	r = dss_mgr_enable(out->manager);
-	अगर (r)
-		जाओ err_mgr_enable;
+	if (r)
+		goto err_mgr_enable;
 
 	mutex_unlock(&dpi->lock);
 
-	वापस 0;
+	return 0;
 
 err_mgr_enable:
 err_set_mode:
-	अगर (dpi->pll)
+	if (dpi->pll)
 		dss_pll_disable(dpi->pll);
 err_dsi_pll_init:
 err_src_sel:
-	dispc_runसमय_put();
+	dispc_runtime_put();
 err_get_dispc:
-	अगर (dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
+	if (dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
 		regulator_disable(dpi->vdds_dsi_reg);
 err_reg_enable:
 err_no_out_mgr:
 err_no_reg:
 	mutex_unlock(&dpi->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dpi_display_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
-	काष्ठा omap_overlay_manager *mgr = dpi->output.manager;
+static void dpi_display_disable(struct omap_dss_device *dssdev)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+	struct omap_overlay_manager *mgr = dpi->output.manager;
 
 	mutex_lock(&dpi->lock);
 
 	dss_mgr_disable(mgr);
 
-	अगर (dpi->pll) अणु
+	if (dpi->pll) {
 		dss_select_lcd_clk_source(mgr->id, OMAP_DSS_CLK_SRC_FCK);
 		dss_pll_disable(dpi->pll);
-	पूर्ण
+	}
 
-	dispc_runसमय_put();
+	dispc_runtime_put();
 
-	अगर (dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
+	if (dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
 		regulator_disable(dpi->vdds_dsi_reg);
 
 	mutex_unlock(&dpi->lock);
-पूर्ण
+}
 
-अटल व्योम dpi_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+static void dpi_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
 
 	DSSDBG("dpi_set_timings\n");
 
@@ -478,221 +477,221 @@ err_no_reg:
 	dpi->timings = *timings;
 
 	mutex_unlock(&dpi->lock);
-पूर्ण
+}
 
-अटल व्योम dpi_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+static void dpi_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
 
 	mutex_lock(&dpi->lock);
 
 	*timings = dpi->timings;
 
 	mutex_unlock(&dpi->lock);
-पूर्ण
+}
 
-अटल पूर्णांक dpi_check_timings(काष्ठा omap_dss_device *dssdev,
-			काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
-	काष्ठा omap_overlay_manager *mgr = dpi->output.manager;
-	पूर्णांक lck_भाग, pck_भाग;
-	अचिन्हित दीर्घ fck;
-	अचिन्हित दीर्घ pck;
-	काष्ठा dpi_clk_calc_ctx ctx;
+static int dpi_check_timings(struct omap_dss_device *dssdev,
+			struct omap_video_timings *timings)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+	struct omap_overlay_manager *mgr = dpi->output.manager;
+	int lck_div, pck_div;
+	unsigned long fck;
+	unsigned long pck;
+	struct dpi_clk_calc_ctx ctx;
 	bool ok;
 
-	अगर (mgr && !dispc_mgr_timings_ok(mgr->id, timings))
-		वापस -EINVAL;
+	if (mgr && !dispc_mgr_timings_ok(mgr->id, timings))
+		return -EINVAL;
 
-	अगर (timings->pixelघड़ी == 0)
-		वापस -EINVAL;
+	if (timings->pixelclock == 0)
+		return -EINVAL;
 
-	अगर (dpi->pll) अणु
-		ok = dpi_dsi_clk_calc(dpi, timings->pixelघड़ी, &ctx);
-		अगर (!ok)
-			वापस -EINVAL;
+	if (dpi->pll) {
+		ok = dpi_dsi_clk_calc(dpi, timings->pixelclock, &ctx);
+		if (!ok)
+			return -EINVAL;
 
 		fck = ctx.dsi_cinfo.clkout[HSDIV_DISPC];
-	पूर्ण अन्यथा अणु
-		ok = dpi_dss_clk_calc(timings->pixelघड़ी, &ctx);
-		अगर (!ok)
-			वापस -EINVAL;
+	} else {
+		ok = dpi_dss_clk_calc(timings->pixelclock, &ctx);
+		if (!ok)
+			return -EINVAL;
 
 		fck = ctx.fck;
-	पूर्ण
+	}
 
-	lck_भाग = ctx.dispc_cinfo.lck_भाग;
-	pck_भाग = ctx.dispc_cinfo.pck_भाग;
+	lck_div = ctx.dispc_cinfo.lck_div;
+	pck_div = ctx.dispc_cinfo.pck_div;
 
-	pck = fck / lck_भाग / pck_भाग;
+	pck = fck / lck_div / pck_div;
 
-	timings->pixelघड़ी = pck;
+	timings->pixelclock = pck;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpi_set_data_lines(काष्ठा omap_dss_device *dssdev, पूर्णांक data_lines)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+static void dpi_set_data_lines(struct omap_dss_device *dssdev, int data_lines)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
 
 	mutex_lock(&dpi->lock);
 
 	dpi->data_lines = data_lines;
 
 	mutex_unlock(&dpi->lock);
-पूर्ण
+}
 
-अटल पूर्णांक dpi_verअगरy_dsi_pll(काष्ठा dss_pll *pll)
-अणु
-	पूर्णांक r;
+static int dpi_verify_dsi_pll(struct dss_pll *pll)
+{
+	int r;
 
-	/* करो initial setup with the PLL to see अगर it is operational */
+	/* do initial setup with the PLL to see if it is operational */
 
 	r = dss_pll_enable(pll);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dss_pll_disable(pll);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpi_init_regulator(काष्ठा dpi_data *dpi)
-अणु
-	काष्ठा regulator *vdds_dsi;
+static int dpi_init_regulator(struct dpi_data *dpi)
+{
+	struct regulator *vdds_dsi;
 
-	अगर (!dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
-		वापस 0;
+	if (!dss_has_feature(FEAT_DPI_USES_VDDS_DSI))
+		return 0;
 
-	अगर (dpi->vdds_dsi_reg)
-		वापस 0;
+	if (dpi->vdds_dsi_reg)
+		return 0;
 
 	vdds_dsi = devm_regulator_get(&dpi->pdev->dev, "vdds_dsi");
-	अगर (IS_ERR(vdds_dsi)) अणु
-		अगर (PTR_ERR(vdds_dsi) != -EPROBE_DEFER)
+	if (IS_ERR(vdds_dsi)) {
+		if (PTR_ERR(vdds_dsi) != -EPROBE_DEFER)
 			DSSERR("can't get VDDS_DSI regulator\n");
-		वापस PTR_ERR(vdds_dsi);
-	पूर्ण
+		return PTR_ERR(vdds_dsi);
+	}
 
 	dpi->vdds_dsi_reg = vdds_dsi;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpi_init_pll(काष्ठा dpi_data *dpi)
-अणु
-	काष्ठा dss_pll *pll;
+static void dpi_init_pll(struct dpi_data *dpi)
+{
+	struct dss_pll *pll;
 
-	अगर (dpi->pll)
-		वापस;
+	if (dpi->pll)
+		return;
 
 	pll = dpi_get_pll(dpi->output.dispc_channel);
-	अगर (!pll)
-		वापस;
+	if (!pll)
+		return;
 
 	/* On DRA7 we need to set a mux to use the PLL */
-	अगर (omapdss_get_version() == OMAPDSS_VER_DRA7xx)
+	if (omapdss_get_version() == OMAPDSS_VER_DRA7xx)
 		dss_ctrl_pll_set_control_mux(pll->id, dpi->output.dispc_channel);
 
-	अगर (dpi_verअगरy_dsi_pll(pll)) अणु
+	if (dpi_verify_dsi_pll(pll)) {
 		DSSWARN("DSI PLL not operational\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dpi->pll = pll;
-पूर्ण
+}
 
 /*
- * Return a hardcoded channel क्रम the DPI output. This should work क्रम
- * current use हालs, but this can be later expanded to either resolve
+ * Return a hardcoded channel for the DPI output. This should work for
+ * current use cases, but this can be later expanded to either resolve
  * the channel in some more dynamic manner, or get the channel as a user
  * parameter.
  */
-अटल क्रमागत omap_channel dpi_get_channel(पूर्णांक port_num)
-अणु
-	चयन (omapdss_get_version()) अणु
-	हाल OMAPDSS_VER_OMAP24xx:
-	हाल OMAPDSS_VER_OMAP34xx_ES1:
-	हाल OMAPDSS_VER_OMAP34xx_ES3:
-	हाल OMAPDSS_VER_OMAP3630:
-	हाल OMAPDSS_VER_AM35xx:
-	हाल OMAPDSS_VER_AM43xx:
-		वापस OMAP_DSS_CHANNEL_LCD;
+static enum omap_channel dpi_get_channel(int port_num)
+{
+	switch (omapdss_get_version()) {
+	case OMAPDSS_VER_OMAP24xx:
+	case OMAPDSS_VER_OMAP34xx_ES1:
+	case OMAPDSS_VER_OMAP34xx_ES3:
+	case OMAPDSS_VER_OMAP3630:
+	case OMAPDSS_VER_AM35xx:
+	case OMAPDSS_VER_AM43xx:
+		return OMAP_DSS_CHANNEL_LCD;
 
-	हाल OMAPDSS_VER_DRA7xx:
-		चयन (port_num) अणु
-		हाल 2:
-			वापस OMAP_DSS_CHANNEL_LCD3;
-		हाल 1:
-			वापस OMAP_DSS_CHANNEL_LCD2;
-		हाल 0:
-		शेष:
-			वापस OMAP_DSS_CHANNEL_LCD;
-		पूर्ण
+	case OMAPDSS_VER_DRA7xx:
+		switch (port_num) {
+		case 2:
+			return OMAP_DSS_CHANNEL_LCD3;
+		case 1:
+			return OMAP_DSS_CHANNEL_LCD2;
+		case 0:
+		default:
+			return OMAP_DSS_CHANNEL_LCD;
+		}
 
-	हाल OMAPDSS_VER_OMAP4430_ES1:
-	हाल OMAPDSS_VER_OMAP4430_ES2:
-	हाल OMAPDSS_VER_OMAP4:
-		वापस OMAP_DSS_CHANNEL_LCD2;
+	case OMAPDSS_VER_OMAP4430_ES1:
+	case OMAPDSS_VER_OMAP4430_ES2:
+	case OMAPDSS_VER_OMAP4:
+		return OMAP_DSS_CHANNEL_LCD2;
 
-	हाल OMAPDSS_VER_OMAP5:
-		वापस OMAP_DSS_CHANNEL_LCD3;
+	case OMAPDSS_VER_OMAP5:
+		return OMAP_DSS_CHANNEL_LCD3;
 
-	शेष:
+	default:
 		DSSWARN("unsupported DSS version\n");
-		वापस OMAP_DSS_CHANNEL_LCD;
-	पूर्ण
-पूर्ण
+		return OMAP_DSS_CHANNEL_LCD;
+	}
+}
 
-अटल पूर्णांक dpi_connect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
-	काष्ठा omap_overlay_manager *mgr;
-	पूर्णांक r;
+static int dpi_connect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct dpi_data *dpi = dpi_get_data_from_dssdev(dssdev);
+	struct omap_overlay_manager *mgr;
+	int r;
 
 	r = dpi_init_regulator(dpi);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dpi_init_pll(dpi);
 
 	mgr = omap_dss_get_overlay_manager(dssdev->dispc_channel);
-	अगर (!mgr)
-		वापस -ENODEV;
+	if (!mgr)
+		return -ENODEV;
 
 	r = dss_mgr_connect(mgr, dssdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	r = omapdss_output_set_device(dssdev, dst);
-	अगर (r) अणु
+	if (r) {
 		DSSERR("failed to connect output to new device: %s\n",
 				dst->name);
 		dss_mgr_disconnect(mgr, dssdev);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpi_disconnect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
+static void dpi_disconnect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
 	WARN_ON(dst != dssdev->dst);
 
-	अगर (dst != dssdev->dst)
-		वापस;
+	if (dst != dssdev->dst)
+		return;
 
 	omapdss_output_unset_device(dssdev);
 
-	अगर (dssdev->manager)
+	if (dssdev->manager)
 		dss_mgr_disconnect(dssdev->manager, dssdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा omapdss_dpi_ops dpi_ops = अणु
+static const struct omapdss_dpi_ops dpi_ops = {
 	.connect = dpi_connect,
 	.disconnect = dpi_disconnect,
 
@@ -704,12 +703,12 @@ err_no_reg:
 	.get_timings = dpi_get_timings,
 
 	.set_data_lines = dpi_set_data_lines,
-पूर्ण;
+};
 
-अटल व्योम dpi_init_output(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_pdev(pdev);
-	काष्ठा omap_dss_device *out = &dpi->output;
+static void dpi_init_output(struct platform_device *pdev)
+{
+	struct dpi_data *dpi = dpi_get_data_from_pdev(pdev);
+	struct omap_dss_device *out = &dpi->output;
 
 	out->dev = &pdev->dev;
 	out->id = OMAP_DSS_OUTPUT_DPI;
@@ -719,41 +718,41 @@ err_no_reg:
 	out->ops.dpi = &dpi_ops;
 	out->owner = THIS_MODULE;
 
-	omapdss_रेजिस्टर_output(out);
-पूर्ण
+	omapdss_register_output(out);
+}
 
-अटल व्योम dpi_uninit_output(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dpi_data *dpi = dpi_get_data_from_pdev(pdev);
-	काष्ठा omap_dss_device *out = &dpi->output;
+static void dpi_uninit_output(struct platform_device *pdev)
+{
+	struct dpi_data *dpi = dpi_get_data_from_pdev(pdev);
+	struct omap_dss_device *out = &dpi->output;
 
-	omapdss_unरेजिस्टर_output(out);
-पूर्ण
+	omapdss_unregister_output(out);
+}
 
-अटल व्योम dpi_init_output_port(काष्ठा platक्रमm_device *pdev,
-	काष्ठा device_node *port)
-अणु
-	काष्ठा dpi_data *dpi = port->data;
-	काष्ठा omap_dss_device *out = &dpi->output;
-	पूर्णांक r;
+static void dpi_init_output_port(struct platform_device *pdev,
+	struct device_node *port)
+{
+	struct dpi_data *dpi = port->data;
+	struct omap_dss_device *out = &dpi->output;
+	int r;
 	u32 port_num;
 
-	r = of_property_पढ़ो_u32(port, "reg", &port_num);
-	अगर (r)
+	r = of_property_read_u32(port, "reg", &port_num);
+	if (r)
 		port_num = 0;
 
-	चयन (port_num) अणु
-	हाल 2:
+	switch (port_num) {
+	case 2:
 		out->name = "dpi.2";
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		out->name = "dpi.1";
-		अवरोध;
-	हाल 0:
-	शेष:
+		break;
+	case 0:
+	default:
 		out->name = "dpi.0";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	out->dev = &pdev->dev;
 	out->id = OMAP_DSS_OUTPUT_DPI;
@@ -763,99 +762,99 @@ err_no_reg:
 	out->ops.dpi = &dpi_ops;
 	out->owner = THIS_MODULE;
 
-	omapdss_रेजिस्टर_output(out);
-पूर्ण
+	omapdss_register_output(out);
+}
 
-अटल व्योम dpi_uninit_output_port(काष्ठा device_node *port)
-अणु
-	काष्ठा dpi_data *dpi = port->data;
-	काष्ठा omap_dss_device *out = &dpi->output;
+static void dpi_uninit_output_port(struct device_node *port)
+{
+	struct dpi_data *dpi = port->data;
+	struct omap_dss_device *out = &dpi->output;
 
-	omapdss_unरेजिस्टर_output(out);
-पूर्ण
+	omapdss_unregister_output(out);
+}
 
-अटल पूर्णांक dpi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा dpi_data *dpi;
+static int dpi_bind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct dpi_data *dpi;
 
-	dpi = devm_kzalloc(&pdev->dev, माप(*dpi), GFP_KERNEL);
-	अगर (!dpi)
-		वापस -ENOMEM;
+	dpi = devm_kzalloc(&pdev->dev, sizeof(*dpi), GFP_KERNEL);
+	if (!dpi)
+		return -ENOMEM;
 
 	dpi->pdev = pdev;
 
-	platक्रमm_set_drvdata(pdev, dpi);
+	platform_set_drvdata(pdev, dpi);
 
 	mutex_init(&dpi->lock);
 
 	dpi_init_output(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dpi_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+static void dpi_unbind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
 
 	dpi_uninit_output(pdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा component_ops dpi_component_ops = अणु
+static const struct component_ops dpi_component_ops = {
 	.bind	= dpi_bind,
 	.unbind	= dpi_unbind,
-पूर्ण;
+};
 
-अटल पूर्णांक dpi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस component_add(&pdev->dev, &dpi_component_ops);
-पूर्ण
+static int dpi_probe(struct platform_device *pdev)
+{
+	return component_add(&pdev->dev, &dpi_component_ops);
+}
 
-अटल पूर्णांक dpi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
+static int dpi_remove(struct platform_device *pdev)
+{
 	component_del(&pdev->dev, &dpi_component_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver omap_dpi_driver = अणु
+static struct platform_driver omap_dpi_driver = {
 	.probe		= dpi_probe,
-	.हटाओ		= dpi_हटाओ,
-	.driver         = अणु
+	.remove		= dpi_remove,
+	.driver         = {
 		.name   = "omapdss_dpi",
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-पूर्णांक __init dpi_init_platक्रमm_driver(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&omap_dpi_driver);
-पूर्ण
+int __init dpi_init_platform_driver(void)
+{
+	return platform_driver_register(&omap_dpi_driver);
+}
 
-व्योम dpi_uninit_platक्रमm_driver(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&omap_dpi_driver);
-पूर्ण
+void dpi_uninit_platform_driver(void)
+{
+	platform_driver_unregister(&omap_dpi_driver);
+}
 
-पूर्णांक dpi_init_port(काष्ठा platक्रमm_device *pdev, काष्ठा device_node *port)
-अणु
-	काष्ठा dpi_data *dpi;
-	काष्ठा device_node *ep;
+int dpi_init_port(struct platform_device *pdev, struct device_node *port)
+{
+	struct dpi_data *dpi;
+	struct device_node *ep;
 	u32 datalines;
-	पूर्णांक r;
+	int r;
 
-	dpi = devm_kzalloc(&pdev->dev, माप(*dpi), GFP_KERNEL);
-	अगर (!dpi)
-		वापस -ENOMEM;
+	dpi = devm_kzalloc(&pdev->dev, sizeof(*dpi), GFP_KERNEL);
+	if (!dpi)
+		return -ENOMEM;
 
-	ep = omapdss_of_get_next_endpoपूर्णांक(port, शून्य);
-	अगर (!ep)
-		वापस 0;
+	ep = omapdss_of_get_next_endpoint(port, NULL);
+	if (!ep)
+		return 0;
 
-	r = of_property_पढ़ो_u32(ep, "data-lines", &datalines);
-	अगर (r) अणु
+	r = of_property_read_u32(ep, "data-lines", &datalines);
+	if (r) {
 		DSSERR("failed to parse datalines\n");
-		जाओ err_datalines;
-	पूर्ण
+		goto err_datalines;
+	}
 
 	dpi->data_lines = datalines;
 
@@ -870,20 +869,20 @@ err_no_reg:
 
 	dpi->port_initialized = true;
 
-	वापस 0;
+	return 0;
 
 err_datalines:
 	of_node_put(ep);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम dpi_uninit_port(काष्ठा device_node *port)
-अणु
-	काष्ठा dpi_data *dpi = port->data;
+void dpi_uninit_port(struct device_node *port)
+{
+	struct dpi_data *dpi = port->data;
 
-	अगर (!dpi->port_initialized)
-		वापस;
+	if (!dpi->port_initialized)
+		return;
 
 	dpi_uninit_output_port(port);
-पूर्ण
+}

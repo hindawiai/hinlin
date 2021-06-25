@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,29 +19,29 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#अगर_अघोषित __AMDGPU_SMU_H__
-#घोषणा __AMDGPU_SMU_H__
+#ifndef __AMDGPU_SMU_H__
+#define __AMDGPU_SMU_H__
 
-#समावेश "amdgpu.h"
-#समावेश "kgd_pp_interface.h"
-#समावेश "dm_pp_interface.h"
-#समावेश "dm_pp_smu.h"
-#समावेश "smu_types.h"
+#include "amdgpu.h"
+#include "kgd_pp_interface.h"
+#include "dm_pp_interface.h"
+#include "dm_pp_smu.h"
+#include "smu_types.h"
 
-#घोषणा SMU_THERMAL_MINIMUM_ALERT_TEMP		0
-#घोषणा SMU_THERMAL_MAXIMUM_ALERT_TEMP		255
-#घोषणा SMU_TEMPERATURE_UNITS_PER_CENTIGRADES	1000
-#घोषणा SMU_FW_NAME_LEN			0x24
+#define SMU_THERMAL_MINIMUM_ALERT_TEMP		0
+#define SMU_THERMAL_MAXIMUM_ALERT_TEMP		255
+#define SMU_TEMPERATURE_UNITS_PER_CENTIGRADES	1000
+#define SMU_FW_NAME_LEN			0x24
 
-#घोषणा SMU_DPM_USER_PROखाता_RESTORE (1 << 0)
+#define SMU_DPM_USER_PROFILE_RESTORE (1 << 0)
 
-काष्ठा smu_hw_घातer_state अणु
-	अचिन्हित पूर्णांक magic;
-पूर्ण;
+struct smu_hw_power_state {
+	unsigned int magic;
+};
 
-काष्ठा smu_घातer_state;
+struct smu_power_state;
 
-क्रमागत smu_state_ui_label अणु
+enum smu_state_ui_label {
 	SMU_STATE_UI_LABEL_NONE,
 	SMU_STATE_UI_LABEL_BATTERY,
 	SMU_STATE_UI_TABEL_MIDDLE_LOW,
@@ -50,9 +49,9 @@
 	SMU_STATE_UI_LABEL_MIDDLE_HIGHT,
 	SMU_STATE_UI_LABEL_PERFORMANCE,
 	SMU_STATE_UI_LABEL_BACO,
-पूर्ण;
+};
 
-क्रमागत smu_state_classअगरication_flag अणु
+enum smu_state_classification_flag {
 	SMU_STATE_CLASSIFICATION_FLAG_BOOT                     = 0x0001,
 	SMU_STATE_CLASSIFICATION_FLAG_THERMAL                  = 0x0002,
 	SMU_STATE_CLASSIFICATIN_FLAG_LIMITED_POWER_SOURCE      = 0x0004,
@@ -61,7 +60,7 @@
 	SMU_STATE_CLASSIFICATION_FLAG_USER_3D_PERFORMANCE      = 0x0020,
 	SMU_STATE_CLASSIFICATION_FLAG_USER_2D_PERFORMANCE      = 0x0040,
 	SMU_STATE_CLASSIFICATION_FLAG_3D_PERFORMANCE           = 0x0080,
-	SMU_STATE_CLASSIFICATION_FLAG_AC_OVERसूचीVER_TEMPLATE   = 0x0100,
+	SMU_STATE_CLASSIFICATION_FLAG_AC_OVERDIRVER_TEMPLATE   = 0x0100,
 	SMU_STATE_CLASSIFICATION_FLAG_UVD                      = 0x0200,
 	SMU_STATE_CLASSIFICATION_FLAG_3D_PERFORMANCE_LOW       = 0x0400,
 	SMU_STATE_CLASSIFICATION_FLAG_ACPI                     = 0x0800,
@@ -69,202 +68,202 @@
 	SMU_STATE_CLASSIFICATION_FLAG_UVD_HD                   = 0x2000,
 	SMU_STATE_CLASSIFICATION_FLAG_UVD_SD                   = 0x4000,
 	SMU_STATE_CLASSIFICATION_FLAG_USER_DC_PERFORMANCE      = 0x8000,
-	SMU_STATE_CLASSIFICATION_FLAG_DC_OVERसूचीVER_TEMPLATE   = 0x10000,
+	SMU_STATE_CLASSIFICATION_FLAG_DC_OVERDIRVER_TEMPLATE   = 0x10000,
 	SMU_STATE_CLASSIFICATION_FLAG_BACO                     = 0x20000,
 	SMU_STATE_CLASSIFICATIN_FLAG_LIMITED_POWER_SOURCE2      = 0x40000,
 	SMU_STATE_CLASSIFICATION_FLAG_ULV                      = 0x80000,
 	SMU_STATE_CLASSIFICATION_FLAG_UVD_MVC                  = 0x100000,
-पूर्ण;
+};
 
-काष्ठा smu_state_classअगरication_block अणु
-	क्रमागत smu_state_ui_label         ui_label;
-	क्रमागत smu_state_classअगरication_flag  flags;
-	पूर्णांक                          bios_index;
+struct smu_state_classification_block {
+	enum smu_state_ui_label         ui_label;
+	enum smu_state_classification_flag  flags;
+	int                          bios_index;
 	bool                      temporary_state;
 	bool                      to_be_deleted;
-पूर्ण;
+};
 
-काष्ठा smu_state_pcie_block अणु
-	अचिन्हित पूर्णांक lanes;
-पूर्ण;
+struct smu_state_pcie_block {
+	unsigned int lanes;
+};
 
-क्रमागत smu_refreshrate_source अणु
+enum smu_refreshrate_source {
 	SMU_REFRESHRATE_SOURCE_EDID,
 	SMU_REFRESHRATE_SOURCE_EXPLICIT
-पूर्ण;
+};
 
-काष्ठा smu_state_display_block अणु
+struct smu_state_display_block {
 	bool              disable_frame_modulation;
 	bool              limit_refreshrate;
-	क्रमागत smu_refreshrate_source refreshrate_source;
-	पूर्णांक                  explicit_refreshrate;
-	पूर्णांक                  edid_refreshrate_index;
+	enum smu_refreshrate_source refreshrate_source;
+	int                  explicit_refreshrate;
+	int                  edid_refreshrate_index;
 	bool              enable_vari_bright;
-पूर्ण;
+};
 
-काष्ठा smu_state_memory_block अणु
+struct smu_state_memory_block {
 	bool              dll_off;
-	uपूर्णांक8_t                 m3arb;
-	uपूर्णांक8_t                 unused[3];
-पूर्ण;
+	uint8_t                 m3arb;
+	uint8_t                 unused[3];
+};
 
-काष्ठा smu_state_software_algorithm_block अणु
+struct smu_state_software_algorithm_block {
 	bool disable_load_balancing;
-	bool enable_sleep_क्रम_बारtamps;
-पूर्ण;
+	bool enable_sleep_for_timestamps;
+};
 
-काष्ठा smu_temperature_range अणु
-	पूर्णांक min;
-	पूर्णांक max;
-	पूर्णांक edge_emergency_max;
-	पूर्णांक hotspot_min;
-	पूर्णांक hotspot_crit_max;
-	पूर्णांक hotspot_emergency_max;
-	पूर्णांक mem_min;
-	पूर्णांक mem_crit_max;
-	पूर्णांक mem_emergency_max;
-	पूर्णांक software_shutकरोwn_temp;
-पूर्ण;
+struct smu_temperature_range {
+	int min;
+	int max;
+	int edge_emergency_max;
+	int hotspot_min;
+	int hotspot_crit_max;
+	int hotspot_emergency_max;
+	int mem_min;
+	int mem_crit_max;
+	int mem_emergency_max;
+	int software_shutdown_temp;
+};
 
-काष्ठा smu_state_validation_block अणु
+struct smu_state_validation_block {
 	bool single_display_only;
 	bool disallow_on_dc;
-	uपूर्णांक8_t supported_घातer_levels;
-पूर्ण;
+	uint8_t supported_power_levels;
+};
 
-काष्ठा smu_uvd_घड़ीs अणु
-	uपूर्णांक32_t vclk;
-	uपूर्णांक32_t dclk;
-पूर्ण;
+struct smu_uvd_clocks {
+	uint32_t vclk;
+	uint32_t dclk;
+};
 
 /**
 * Structure to hold a SMU Power State.
 */
-काष्ठा smu_घातer_state अणु
-	uपूर्णांक32_t                                      id;
-	काष्ठा list_head                              ordered_list;
-	काष्ठा list_head                              all_states_list;
+struct smu_power_state {
+	uint32_t                                      id;
+	struct list_head                              ordered_list;
+	struct list_head                              all_states_list;
 
-	काष्ठा smu_state_classअगरication_block         classअगरication;
-	काष्ठा smu_state_validation_block             validation;
-	काष्ठा smu_state_pcie_block                   pcie;
-	काष्ठा smu_state_display_block                display;
-	काष्ठा smu_state_memory_block                 memory;
-	काष्ठा smu_state_software_algorithm_block     software;
-	काष्ठा smu_uvd_घड़ीs                         uvd_घड़ीs;
-	काष्ठा smu_hw_घातer_state                     hardware;
-पूर्ण;
+	struct smu_state_classification_block         classification;
+	struct smu_state_validation_block             validation;
+	struct smu_state_pcie_block                   pcie;
+	struct smu_state_display_block                display;
+	struct smu_state_memory_block                 memory;
+	struct smu_state_software_algorithm_block     software;
+	struct smu_uvd_clocks                         uvd_clocks;
+	struct smu_hw_power_state                     hardware;
+};
 
-क्रमागत smu_घातer_src_type
-अणु
+enum smu_power_src_type
+{
 	SMU_POWER_SOURCE_AC,
 	SMU_POWER_SOURCE_DC,
 	SMU_POWER_SOURCE_COUNT,
-पूर्ण;
+};
 
-क्रमागत smu_ppt_limit_type
-अणु
+enum smu_ppt_limit_type
+{
 	SMU_DEFAULT_PPT_LIMIT = 0,
 	SMU_FAST_PPT_LIMIT,
-पूर्ण;
+};
 
-क्रमागत smu_ppt_limit_level
-अणु
+enum smu_ppt_limit_level
+{
 	SMU_PPT_LIMIT_MIN = -1,
 	SMU_PPT_LIMIT_CURRENT,
 	SMU_PPT_LIMIT_DEFAULT,
 	SMU_PPT_LIMIT_MAX,
-पूर्ण;
+};
 
-क्रमागत smu_memory_pool_size
-अणु
+enum smu_memory_pool_size
+{
     SMU_MEMORY_POOL_SIZE_ZERO   = 0,
     SMU_MEMORY_POOL_SIZE_256_MB = 0x10000000,
     SMU_MEMORY_POOL_SIZE_512_MB = 0x20000000,
     SMU_MEMORY_POOL_SIZE_1_GB   = 0x40000000,
     SMU_MEMORY_POOL_SIZE_2_GB   = 0x80000000,
-पूर्ण;
+};
 
-काष्ठा smu_user_dpm_profile अणु
-	uपूर्णांक32_t fan_mode;
-	uपूर्णांक32_t घातer_limit;
-	uपूर्णांक32_t fan_speed_percent;
-	uपूर्णांक32_t flags;
+struct smu_user_dpm_profile {
+	uint32_t fan_mode;
+	uint32_t power_limit;
+	uint32_t fan_speed_percent;
+	uint32_t flags;
 
-	/* user घड़ी state inक्रमmation */
-	uपूर्णांक32_t clk_mask[SMU_CLK_COUNT];
-	uपूर्णांक32_t clk_dependency;
-पूर्ण;
+	/* user clock state information */
+	uint32_t clk_mask[SMU_CLK_COUNT];
+	uint32_t clk_dependency;
+};
 
-क्रमागत smu_event_type अणु
+enum smu_event_type {
 
 	SMU_EVENT_RESET_COMPLETE = 0,
-पूर्ण;
+};
 
-#घोषणा SMU_TABLE_INIT(tables, table_id, s, a, d)	\
-	करो अणु						\
+#define SMU_TABLE_INIT(tables, table_id, s, a, d)	\
+	do {						\
 		tables[table_id].size = s;		\
 		tables[table_id].align = a;		\
-		tables[table_id].करोमुख्य = d;		\
-	पूर्ण जबतक (0)
+		tables[table_id].domain = d;		\
+	} while (0)
 
-काष्ठा smu_table अणु
-	uपूर्णांक64_t size;
-	uपूर्णांक32_t align;
-	uपूर्णांक8_t करोमुख्य;
-	uपूर्णांक64_t mc_address;
-	व्योम *cpu_addr;
-	काष्ठा amdgpu_bo *bo;
-पूर्ण;
+struct smu_table {
+	uint64_t size;
+	uint32_t align;
+	uint8_t domain;
+	uint64_t mc_address;
+	void *cpu_addr;
+	struct amdgpu_bo *bo;
+};
 
-क्रमागत smu_perf_level_designation अणु
+enum smu_perf_level_designation {
 	PERF_LEVEL_ACTIVITY,
 	PERF_LEVEL_POWER_CONTAINMENT,
-पूर्ण;
+};
 
-काष्ठा smu_perक्रमmance_level अणु
-	uपूर्णांक32_t core_घड़ी;
-	uपूर्णांक32_t memory_घड़ी;
-	uपूर्णांक32_t vddc;
-	uपूर्णांक32_t vddci;
-	uपूर्णांक32_t non_local_mem_freq;
-	uपूर्णांक32_t non_local_mem_width;
-पूर्ण;
+struct smu_performance_level {
+	uint32_t core_clock;
+	uint32_t memory_clock;
+	uint32_t vddc;
+	uint32_t vddci;
+	uint32_t non_local_mem_freq;
+	uint32_t non_local_mem_width;
+};
 
-काष्ठा smu_घड़ी_info अणु
-	uपूर्णांक32_t min_mem_clk;
-	uपूर्णांक32_t max_mem_clk;
-	uपूर्णांक32_t min_eng_clk;
-	uपूर्णांक32_t max_eng_clk;
-	uपूर्णांक32_t min_bus_bandwidth;
-	uपूर्णांक32_t max_bus_bandwidth;
-पूर्ण;
+struct smu_clock_info {
+	uint32_t min_mem_clk;
+	uint32_t max_mem_clk;
+	uint32_t min_eng_clk;
+	uint32_t max_eng_clk;
+	uint32_t min_bus_bandwidth;
+	uint32_t max_bus_bandwidth;
+};
 
-काष्ठा smu_bios_boot_up_values
-अणु
-	uपूर्णांक32_t			revision;
-	uपूर्णांक32_t			gfxclk;
-	uपूर्णांक32_t			uclk;
-	uपूर्णांक32_t			socclk;
-	uपूर्णांक32_t			dcefclk;
-	uपूर्णांक32_t			eclk;
-	uपूर्णांक32_t			vclk;
-	uपूर्णांक32_t			dclk;
-	uपूर्णांक16_t			vddc;
-	uपूर्णांक16_t			vddci;
-	uपूर्णांक16_t			mvddc;
-	uपूर्णांक16_t			vdd_gfx;
-	uपूर्णांक8_t				cooling_id;
-	uपूर्णांक32_t			pp_table_id;
-	uपूर्णांक32_t			क्रमmat_revision;
-	uपूर्णांक32_t			content_revision;
-	uपूर्णांक32_t			fclk;
-	uपूर्णांक32_t			lclk;
-	uपूर्णांक32_t			firmware_caps;
-पूर्ण;
+struct smu_bios_boot_up_values
+{
+	uint32_t			revision;
+	uint32_t			gfxclk;
+	uint32_t			uclk;
+	uint32_t			socclk;
+	uint32_t			dcefclk;
+	uint32_t			eclk;
+	uint32_t			vclk;
+	uint32_t			dclk;
+	uint16_t			vddc;
+	uint16_t			vddci;
+	uint16_t			mvddc;
+	uint16_t			vdd_gfx;
+	uint8_t				cooling_id;
+	uint32_t			pp_table_id;
+	uint32_t			format_revision;
+	uint32_t			content_revision;
+	uint32_t			fclk;
+	uint32_t			lclk;
+	uint32_t			firmware_caps;
+};
 
-क्रमागत smu_table_id
-अणु
+enum smu_table_id
+{
 	SMU_TABLE_PPTABLE = 0,
 	SMU_TABLE_WATERMARKS,
 	SMU_TABLE_CUSTOM_DPM,
@@ -280,289 +279,289 @@
 	SMU_TABLE_I2C_COMMANDS,
 	SMU_TABLE_PACE,
 	SMU_TABLE_COUNT,
-पूर्ण;
+};
 
-काष्ठा smu_table_context
-अणु
-	व्योम				*घातer_play_table;
-	uपूर्णांक32_t			घातer_play_table_size;
-	व्योम				*hardcode_pptable;
-	अचिन्हित दीर्घ			metrics_समय;
-	व्योम				*metrics_table;
-	व्योम				*घड़ीs_table;
-	व्योम				*watermarks_table;
+struct smu_table_context
+{
+	void				*power_play_table;
+	uint32_t			power_play_table_size;
+	void				*hardcode_pptable;
+	unsigned long			metrics_time;
+	void				*metrics_table;
+	void				*clocks_table;
+	void				*watermarks_table;
 
-	व्योम				*max_sustainable_घड़ीs;
-	काष्ठा smu_bios_boot_up_values	boot_values;
-	व्योम                            *driver_pptable;
-	काष्ठा smu_table		tables[SMU_TABLE_COUNT];
+	void				*max_sustainable_clocks;
+	struct smu_bios_boot_up_values	boot_values;
+	void                            *driver_pptable;
+	struct smu_table		tables[SMU_TABLE_COUNT];
 	/*
-	 * The driver table is just a staging buffer क्रम
-	 * uploading/करोwnloading content from the SMU.
+	 * The driver table is just a staging buffer for
+	 * uploading/downloading content from the SMU.
 	 *
-	 * And the table_id क्रम SMU_MSG_TransferTableSmu2Dram/
-	 * SMU_MSG_TransferTableDram2Smu inकाष्ठाs SMU
-	 * which content driver is पूर्णांकerested.
+	 * And the table_id for SMU_MSG_TransferTableSmu2Dram/
+	 * SMU_MSG_TransferTableDram2Smu instructs SMU
+	 * which content driver is interested.
 	 */
-	काष्ठा smu_table		driver_table;
-	काष्ठा smu_table		memory_pool;
-	काष्ठा smu_table		dummy_पढ़ो_1_table;
-	uपूर्णांक8_t                         thermal_controller_type;
+	struct smu_table		driver_table;
+	struct smu_table		memory_pool;
+	struct smu_table		dummy_read_1_table;
+	uint8_t                         thermal_controller_type;
 
-	व्योम				*overdrive_table;
-	व्योम                            *boot_overdrive_table;
+	void				*overdrive_table;
+	void                            *boot_overdrive_table;
 
-	uपूर्णांक32_t			gpu_metrics_table_size;
-	व्योम				*gpu_metrics_table;
-पूर्ण;
+	uint32_t			gpu_metrics_table_size;
+	void				*gpu_metrics_table;
+};
 
-काष्ठा smu_dpm_context अणु
-	uपूर्णांक32_t dpm_context_size;
-	व्योम *dpm_context;
-	व्योम *golden_dpm_context;
+struct smu_dpm_context {
+	uint32_t dpm_context_size;
+	void *dpm_context;
+	void *golden_dpm_context;
 	bool enable_umd_pstate;
-	क्रमागत amd_dpm_क्रमced_level dpm_level;
-	क्रमागत amd_dpm_क्रमced_level saved_dpm_level;
-	क्रमागत amd_dpm_क्रमced_level requested_dpm_level;
-	काष्ठा smu_घातer_state *dpm_request_घातer_state;
-	काष्ठा smu_घातer_state *dpm_current_घातer_state;
-	काष्ठा mघड़ी_latency_table *mclk_latency_table;
-पूर्ण;
+	enum amd_dpm_forced_level dpm_level;
+	enum amd_dpm_forced_level saved_dpm_level;
+	enum amd_dpm_forced_level requested_dpm_level;
+	struct smu_power_state *dpm_request_power_state;
+	struct smu_power_state *dpm_current_power_state;
+	struct mclock_latency_table *mclk_latency_table;
+};
 
-काष्ठा smu_घातer_gate अणु
+struct smu_power_gate {
 	bool uvd_gated;
 	bool vce_gated;
 	atomic_t vcn_gated;
 	atomic_t jpeg_gated;
-	काष्ठा mutex vcn_gate_lock;
-	काष्ठा mutex jpeg_gate_lock;
-पूर्ण;
+	struct mutex vcn_gate_lock;
+	struct mutex jpeg_gate_lock;
+};
 
-काष्ठा smu_घातer_context अणु
-	व्योम *घातer_context;
-	uपूर्णांक32_t घातer_context_size;
-	काष्ठा smu_घातer_gate घातer_gate;
-पूर्ण;
+struct smu_power_context {
+	void *power_context;
+	uint32_t power_context_size;
+	struct smu_power_gate power_gate;
+};
 
-#घोषणा SMU_FEATURE_MAX	(64)
-काष्ठा smu_feature
-अणु
-	uपूर्णांक32_t feature_num;
+#define SMU_FEATURE_MAX	(64)
+struct smu_feature
+{
+	uint32_t feature_num;
 	DECLARE_BITMAP(supported, SMU_FEATURE_MAX);
 	DECLARE_BITMAP(allowed, SMU_FEATURE_MAX);
 	DECLARE_BITMAP(enabled, SMU_FEATURE_MAX);
-	काष्ठा mutex mutex;
-पूर्ण;
+	struct mutex mutex;
+};
 
-काष्ठा smu_घड़ीs अणु
-	uपूर्णांक32_t engine_घड़ी;
-	uपूर्णांक32_t memory_घड़ी;
-	uपूर्णांक32_t bus_bandwidth;
-	uपूर्णांक32_t engine_घड़ी_in_sr;
-	uपूर्णांक32_t dcef_घड़ी;
-	uपूर्णांक32_t dcef_घड़ी_in_sr;
-पूर्ण;
+struct smu_clocks {
+	uint32_t engine_clock;
+	uint32_t memory_clock;
+	uint32_t bus_bandwidth;
+	uint32_t engine_clock_in_sr;
+	uint32_t dcef_clock;
+	uint32_t dcef_clock_in_sr;
+};
 
-#घोषणा MAX_REGULAR_DPM_NUM 16
-काष्ठा mclk_latency_entries अणु
-	uपूर्णांक32_t  frequency;
-	uपूर्णांक32_t  latency;
-पूर्ण;
-काष्ठा mघड़ी_latency_table अणु
-	uपूर्णांक32_t  count;
-	काष्ठा mclk_latency_entries  entries[MAX_REGULAR_DPM_NUM];
-पूर्ण;
+#define MAX_REGULAR_DPM_NUM 16
+struct mclk_latency_entries {
+	uint32_t  frequency;
+	uint32_t  latency;
+};
+struct mclock_latency_table {
+	uint32_t  count;
+	struct mclk_latency_entries  entries[MAX_REGULAR_DPM_NUM];
+};
 
-क्रमागत smu_reset_mode
-अणु
+enum smu_reset_mode
+{
     SMU_RESET_MODE_0,
     SMU_RESET_MODE_1,
     SMU_RESET_MODE_2,
-पूर्ण;
+};
 
-क्रमागत smu_baco_state
-अणु
+enum smu_baco_state
+{
 	SMU_BACO_STATE_ENTER = 0,
 	SMU_BACO_STATE_EXIT,
-पूर्ण;
+};
 
-काष्ठा smu_baco_context
-अणु
-	काष्ठा mutex mutex;
-	uपूर्णांक32_t state;
-	bool platक्रमm_support;
-पूर्ण;
+struct smu_baco_context
+{
+	struct mutex mutex;
+	uint32_t state;
+	bool platform_support;
+};
 
-काष्ठा pstates_clk_freq अणु
-	uपूर्णांक32_t			min;
-	uपूर्णांक32_t			standard;
-	uपूर्णांक32_t			peak;
-पूर्ण;
+struct pstates_clk_freq {
+	uint32_t			min;
+	uint32_t			standard;
+	uint32_t			peak;
+};
 
-काष्ठा smu_umd_pstate_table अणु
-	काष्ठा pstates_clk_freq		gfxclk_pstate;
-	काष्ठा pstates_clk_freq		socclk_pstate;
-	काष्ठा pstates_clk_freq		uclk_pstate;
-	काष्ठा pstates_clk_freq		vclk_pstate;
-	काष्ठा pstates_clk_freq		dclk_pstate;
-पूर्ण;
+struct smu_umd_pstate_table {
+	struct pstates_clk_freq		gfxclk_pstate;
+	struct pstates_clk_freq		socclk_pstate;
+	struct pstates_clk_freq		uclk_pstate;
+	struct pstates_clk_freq		vclk_pstate;
+	struct pstates_clk_freq		dclk_pstate;
+};
 
-काष्ठा cmn2asic_msg_mapping अणु
-	पूर्णांक	valid_mapping;
-	पूर्णांक	map_to;
-	पूर्णांक	valid_in_vf;
-पूर्ण;
+struct cmn2asic_msg_mapping {
+	int	valid_mapping;
+	int	map_to;
+	int	valid_in_vf;
+};
 
-काष्ठा cmn2asic_mapping अणु
-	पूर्णांक	valid_mapping;
-	पूर्णांक	map_to;
-पूर्ण;
+struct cmn2asic_mapping {
+	int	valid_mapping;
+	int	map_to;
+};
 
-#घोषणा WORKLOAD_POLICY_MAX 7
-काष्ठा smu_context
-अणु
-	काष्ठा amdgpu_device            *adev;
-	काष्ठा amdgpu_irq_src		irq_source;
+#define WORKLOAD_POLICY_MAX 7
+struct smu_context
+{
+	struct amdgpu_device            *adev;
+	struct amdgpu_irq_src		irq_source;
 
-	स्थिर काष्ठा pptable_funcs	*ppt_funcs;
-	स्थिर काष्ठा cmn2asic_msg_mapping	*message_map;
-	स्थिर काष्ठा cmn2asic_mapping	*घड़ी_map;
-	स्थिर काष्ठा cmn2asic_mapping	*feature_map;
-	स्थिर काष्ठा cmn2asic_mapping	*table_map;
-	स्थिर काष्ठा cmn2asic_mapping	*pwr_src_map;
-	स्थिर काष्ठा cmn2asic_mapping	*workload_map;
-	काष्ठा mutex			mutex;
-	काष्ठा mutex			sensor_lock;
-	काष्ठा mutex			metrics_lock;
-	काष्ठा mutex			message_lock;
-	uपूर्णांक64_t pool_size;
+	const struct pptable_funcs	*ppt_funcs;
+	const struct cmn2asic_msg_mapping	*message_map;
+	const struct cmn2asic_mapping	*clock_map;
+	const struct cmn2asic_mapping	*feature_map;
+	const struct cmn2asic_mapping	*table_map;
+	const struct cmn2asic_mapping	*pwr_src_map;
+	const struct cmn2asic_mapping	*workload_map;
+	struct mutex			mutex;
+	struct mutex			sensor_lock;
+	struct mutex			metrics_lock;
+	struct mutex			message_lock;
+	uint64_t pool_size;
 
-	काष्ठा smu_table_context	smu_table;
-	काष्ठा smu_dpm_context		smu_dpm;
-	काष्ठा smu_घातer_context	smu_घातer;
-	काष्ठा smu_feature		smu_feature;
-	काष्ठा amd_pp_display_configuration  *display_config;
-	काष्ठा smu_baco_context		smu_baco;
-	काष्ठा smu_temperature_range	thermal_range;
-	व्योम *od_settings;
+	struct smu_table_context	smu_table;
+	struct smu_dpm_context		smu_dpm;
+	struct smu_power_context	smu_power;
+	struct smu_feature		smu_feature;
+	struct amd_pp_display_configuration  *display_config;
+	struct smu_baco_context		smu_baco;
+	struct smu_temperature_range	thermal_range;
+	void *od_settings;
 
-	काष्ठा smu_umd_pstate_table	pstate_table;
-	uपूर्णांक32_t pstate_sclk;
-	uपूर्णांक32_t pstate_mclk;
+	struct smu_umd_pstate_table	pstate_table;
+	uint32_t pstate_sclk;
+	uint32_t pstate_mclk;
 
 	bool od_enabled;
-	uपूर्णांक32_t current_घातer_limit;
-	uपूर्णांक32_t शेष_घातer_limit;
-	uपूर्णांक32_t max_घातer_limit;
+	uint32_t current_power_limit;
+	uint32_t default_power_limit;
+	uint32_t max_power_limit;
 
 	/* soft pptable */
-	uपूर्णांक32_t ppt_offset_bytes;
-	uपूर्णांक32_t ppt_size_bytes;
-	uपूर्णांक8_t  *ppt_start_addr;
+	uint32_t ppt_offset_bytes;
+	uint32_t ppt_size_bytes;
+	uint8_t  *ppt_start_addr;
 
-	bool support_घातer_containment;
+	bool support_power_containment;
 	bool disable_watermark;
 
-#घोषणा WATERMARKS_EXIST	(1 << 0)
-#घोषणा WATERMARKS_LOADED	(1 << 1)
-	uपूर्णांक32_t watermarks_biपंचांगap;
-	uपूर्णांक32_t hard_min_uclk_req_from_dal;
-	bool disable_uclk_चयन;
+#define WATERMARKS_EXIST	(1 << 0)
+#define WATERMARKS_LOADED	(1 << 1)
+	uint32_t watermarks_bitmap;
+	uint32_t hard_min_uclk_req_from_dal;
+	bool disable_uclk_switch;
 
-	uपूर्णांक32_t workload_mask;
-	uपूर्णांक32_t workload_prority[WORKLOAD_POLICY_MAX];
-	uपूर्णांक32_t workload_setting[WORKLOAD_POLICY_MAX];
-	uपूर्णांक32_t घातer_profile_mode;
-	uपूर्णांक32_t शेष_घातer_profile_mode;
+	uint32_t workload_mask;
+	uint32_t workload_prority[WORKLOAD_POLICY_MAX];
+	uint32_t workload_setting[WORKLOAD_POLICY_MAX];
+	uint32_t power_profile_mode;
+	uint32_t default_power_profile_mode;
 	bool pm_enabled;
 	bool is_apu;
 
-	uपूर्णांक32_t smc_driver_अगर_version;
-	uपूर्णांक32_t smc_fw_अगर_version;
-	uपूर्णांक32_t smc_fw_version;
+	uint32_t smc_driver_if_version;
+	uint32_t smc_fw_if_version;
+	uint32_t smc_fw_version;
 
 	bool uploading_custom_pp_table;
 	bool dc_controlled_by_gpio;
 
-	काष्ठा work_काष्ठा throttling_logging_work;
-	atomic64_t throttle_पूर्णांक_counter;
-	काष्ठा work_काष्ठा पूर्णांकerrupt_work;
+	struct work_struct throttling_logging_work;
+	atomic64_t throttle_int_counter;
+	struct work_struct interrupt_work;
 
-	अचिन्हित fan_max_rpm;
-	अचिन्हित manual_fan_speed_percent;
+	unsigned fan_max_rpm;
+	unsigned manual_fan_speed_percent;
 
-	uपूर्णांक32_t gfx_शेष_hard_min_freq;
-	uपूर्णांक32_t gfx_शेष_soft_max_freq;
-	uपूर्णांक32_t gfx_actual_hard_min_freq;
-	uपूर्णांक32_t gfx_actual_soft_max_freq;
+	uint32_t gfx_default_hard_min_freq;
+	uint32_t gfx_default_soft_max_freq;
+	uint32_t gfx_actual_hard_min_freq;
+	uint32_t gfx_actual_soft_max_freq;
 
 	/* APU only */
-	uपूर्णांक32_t cpu_शेष_soft_min_freq;
-	uपूर्णांक32_t cpu_शेष_soft_max_freq;
-	uपूर्णांक32_t cpu_actual_soft_min_freq;
-	uपूर्णांक32_t cpu_actual_soft_max_freq;
-	uपूर्णांक32_t cpu_core_id_select;
-	uपूर्णांक16_t cpu_core_num;
+	uint32_t cpu_default_soft_min_freq;
+	uint32_t cpu_default_soft_max_freq;
+	uint32_t cpu_actual_soft_min_freq;
+	uint32_t cpu_actual_soft_max_freq;
+	uint32_t cpu_core_id_select;
+	uint16_t cpu_core_num;
 
-	काष्ठा smu_user_dpm_profile user_dpm_profile;
-पूर्ण;
+	struct smu_user_dpm_profile user_dpm_profile;
+};
 
-काष्ठा i2c_adapter;
+struct i2c_adapter;
 
 /**
- * काष्ठा pptable_funcs - Callbacks used to पूर्णांकeract with the SMU.
+ * struct pptable_funcs - Callbacks used to interact with the SMU.
  */
-काष्ठा pptable_funcs अणु
+struct pptable_funcs {
 	/**
-	 * @run_btc: Calibrate voltage/frequency curve to fit the प्रणाली's
-	 *           घातer delivery and voltage margins. Required क्रम adaptive
+	 * @run_btc: Calibrate voltage/frequency curve to fit the system's
+	 *           power delivery and voltage margins. Required for adaptive
 	 *           voltage frequency scaling (AVFS).
 	 */
-	पूर्णांक (*run_btc)(काष्ठा smu_context *smu);
+	int (*run_btc)(struct smu_context *smu);
 
 	/**
 	 * @get_allowed_feature_mask: Get allowed feature mask.
 	 * &feature_mask: Array to store feature mask.
 	 * &num: Elements in &feature_mask.
 	 */
-	पूर्णांक (*get_allowed_feature_mask)(काष्ठा smu_context *smu, uपूर्णांक32_t *feature_mask, uपूर्णांक32_t num);
+	int (*get_allowed_feature_mask)(struct smu_context *smu, uint32_t *feature_mask, uint32_t num);
 
 	/**
-	 * @get_current_घातer_state: Get the current घातer state.
+	 * @get_current_power_state: Get the current power state.
 	 *
-	 * Return: Current घातer state on success, negative त्रुटि_सं on failure.
+	 * Return: Current power state on success, negative errno on failure.
 	 */
-	क्रमागत amd_pm_state_type (*get_current_घातer_state)(काष्ठा smu_context *smu);
+	enum amd_pm_state_type (*get_current_power_state)(struct smu_context *smu);
 
 	/**
-	 * @set_शेष_dpm_table: Retrieve the शेष overdrive settings from
+	 * @set_default_dpm_table: Retrieve the default overdrive settings from
 	 *                         the SMU.
 	 */
-	पूर्णांक (*set_शेष_dpm_table)(काष्ठा smu_context *smu);
+	int (*set_default_dpm_table)(struct smu_context *smu);
 
-	पूर्णांक (*set_घातer_state)(काष्ठा smu_context *smu);
+	int (*set_power_state)(struct smu_context *smu);
 
 	/**
-	 * @populate_umd_state_clk: Populate the UMD घातer state table with
-	 *                          शेषs.
+	 * @populate_umd_state_clk: Populate the UMD power state table with
+	 *                          defaults.
 	 */
-	पूर्णांक (*populate_umd_state_clk)(काष्ठा smu_context *smu);
+	int (*populate_umd_state_clk)(struct smu_context *smu);
 
 	/**
-	 * @prपूर्णांक_clk_levels: Prपूर्णांक DPM घड़ी levels क्रम a घड़ी करोमुख्य
+	 * @print_clk_levels: Print DPM clock levels for a clock domain
 	 *                    to buffer. Star current level.
 	 *
-	 * Used क्रम sysfs पूर्णांकerfaces.
+	 * Used for sysfs interfaces.
 	 */
-	पूर्णांक (*prपूर्णांक_clk_levels)(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type, अक्षर *buf);
+	int (*print_clk_levels)(struct smu_context *smu, enum smu_clk_type clk_type, char *buf);
 
 	/**
-	 * @क्रमce_clk_levels: Set a range of allowed DPM levels क्रम a घड़ी
-	 *                    करोमुख्य.
-	 * &clk_type: Clock करोमुख्य.
+	 * @force_clk_levels: Set a range of allowed DPM levels for a clock
+	 *                    domain.
+	 * &clk_type: Clock domain.
 	 * &mask: Range of allowed DPM levels.
 	 */
-	पूर्णांक (*क्रमce_clk_levels)(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type, uपूर्णांक32_t mask);
+	int (*force_clk_levels)(struct smu_context *smu, enum smu_clk_type clk_type, uint32_t mask);
 
 	/**
 	 * @od_edit_dpm_table: Edit the custom overdrive DPM table.
@@ -570,341 +569,341 @@
 	 * &input: Edit parameters.
 	 * &size: Size of &input.
 	 */
-	पूर्णांक (*od_edit_dpm_table)(काष्ठा smu_context *smu,
-				 क्रमागत PP_OD_DPM_TABLE_COMMAND type,
-				 दीर्घ *input, uपूर्णांक32_t size);
+	int (*od_edit_dpm_table)(struct smu_context *smu,
+				 enum PP_OD_DPM_TABLE_COMMAND type,
+				 long *input, uint32_t size);
 
 	/**
-	 * @get_घड़ी_by_type_with_latency: Get the speed and latency of a घड़ी
-	 *                                  करोमुख्य.
+	 * @get_clock_by_type_with_latency: Get the speed and latency of a clock
+	 *                                  domain.
 	 */
-	पूर्णांक (*get_घड़ी_by_type_with_latency)(काष्ठा smu_context *smu,
-					      क्रमागत smu_clk_type clk_type,
-					      काष्ठा
-					      pp_घड़ी_levels_with_latency
-					      *घड़ीs);
+	int (*get_clock_by_type_with_latency)(struct smu_context *smu,
+					      enum smu_clk_type clk_type,
+					      struct
+					      pp_clock_levels_with_latency
+					      *clocks);
 	/**
-	 * @get_घड़ी_by_type_with_voltage: Get the speed and voltage of a घड़ी
-	 *                                  करोमुख्य.
+	 * @get_clock_by_type_with_voltage: Get the speed and voltage of a clock
+	 *                                  domain.
 	 */
-	पूर्णांक (*get_घड़ी_by_type_with_voltage)(काष्ठा smu_context *smu,
-					      क्रमागत amd_pp_घड़ी_प्रकारype type,
-					      काष्ठा
-					      pp_घड़ी_levels_with_voltage
-					      *घड़ीs);
+	int (*get_clock_by_type_with_voltage)(struct smu_context *smu,
+					      enum amd_pp_clock_type type,
+					      struct
+					      pp_clock_levels_with_voltage
+					      *clocks);
 
 	/**
-	 * @get_घातer_profile_mode: Prपूर्णांक all घातer profile modes to
+	 * @get_power_profile_mode: Print all power profile modes to
 	 *                          buffer. Star current mode.
 	 */
-	पूर्णांक (*get_घातer_profile_mode)(काष्ठा smu_context *smu, अक्षर *buf);
+	int (*get_power_profile_mode)(struct smu_context *smu, char *buf);
 
 	/**
-	 * @set_घातer_profile_mode: Set a घातer profile mode. Also used to
-	 *                          create/set custom घातer profile modes.
+	 * @set_power_profile_mode: Set a power profile mode. Also used to
+	 *                          create/set custom power profile modes.
 	 * &input: Power profile mode parameters.
 	 * &size: Size of &input.
 	 */
-	पूर्णांक (*set_घातer_profile_mode)(काष्ठा smu_context *smu, दीर्घ *input, uपूर्णांक32_t size);
+	int (*set_power_profile_mode)(struct smu_context *smu, long *input, uint32_t size);
 
 	/**
-	 * @dpm_set_vcn_enable: Enable/disable VCN engine dynamic घातer
+	 * @dpm_set_vcn_enable: Enable/disable VCN engine dynamic power
 	 *                      management.
 	 */
-	पूर्णांक (*dpm_set_vcn_enable)(काष्ठा smu_context *smu, bool enable);
+	int (*dpm_set_vcn_enable)(struct smu_context *smu, bool enable);
 
 	/**
-	 * @dpm_set_jpeg_enable: Enable/disable JPEG engine dynamic घातer
+	 * @dpm_set_jpeg_enable: Enable/disable JPEG engine dynamic power
 	 *                       management.
 	 */
-	पूर्णांक (*dpm_set_jpeg_enable)(काष्ठा smu_context *smu, bool enable);
+	int (*dpm_set_jpeg_enable)(struct smu_context *smu, bool enable);
 
 	/**
-	 * @पढ़ो_sensor: Read data from a sensor.
-	 * &sensor: Sensor to पढ़ो data from.
-	 * &data: Sensor पढ़ोing.
+	 * @read_sensor: Read data from a sensor.
+	 * &sensor: Sensor to read data from.
+	 * &data: Sensor reading.
 	 * &size: Size of &data.
 	 */
-	पूर्णांक (*पढ़ो_sensor)(काष्ठा smu_context *smu, क्रमागत amd_pp_sensors sensor,
-			   व्योम *data, uपूर्णांक32_t *size);
+	int (*read_sensor)(struct smu_context *smu, enum amd_pp_sensors sensor,
+			   void *data, uint32_t *size);
 
 	/**
-	 * @pre_display_config_changed: Prepare GPU क्रम a display configuration
+	 * @pre_display_config_changed: Prepare GPU for a display configuration
 	 *                              change.
 	 *
-	 * Disable display tracking and pin memory घड़ी speed to maximum. Used
+	 * Disable display tracking and pin memory clock speed to maximum. Used
 	 * in display component synchronization.
 	 */
-	पूर्णांक (*pre_display_config_changed)(काष्ठा smu_context *smu);
+	int (*pre_display_config_changed)(struct smu_context *smu);
 
 	/**
-	 * @display_config_changed: Notअगरy the SMU of the current display
+	 * @display_config_changed: Notify the SMU of the current display
 	 *                          configuration.
 	 *
-	 * Allows SMU to properly track blanking periods क्रम memory घड़ी
-	 * adjusपंचांगent. Used in display component synchronization.
+	 * Allows SMU to properly track blanking periods for memory clock
+	 * adjustment. Used in display component synchronization.
 	 */
-	पूर्णांक (*display_config_changed)(काष्ठा smu_context *smu);
+	int (*display_config_changed)(struct smu_context *smu);
 
-	पूर्णांक (*apply_घड़ीs_adjust_rules)(काष्ठा smu_context *smu);
+	int (*apply_clocks_adjust_rules)(struct smu_context *smu);
 
 	/**
-	 * @notअगरy_smc_display_config: Applies display requirements to the
-	 *                             current घातer state.
+	 * @notify_smc_display_config: Applies display requirements to the
+	 *                             current power state.
 	 *
-	 * Optimize deep sleep DCEFclk and mclk क्रम the current display
+	 * Optimize deep sleep DCEFclk and mclk for the current display
 	 * configuration. Used in display component synchronization.
 	 */
-	पूर्णांक (*notअगरy_smc_display_config)(काष्ठा smu_context *smu);
+	int (*notify_smc_display_config)(struct smu_context *smu);
 
 	/**
-	 * @is_dpm_running: Check अगर DPM is running.
+	 * @is_dpm_running: Check if DPM is running.
 	 *
-	 * Return: True अगर DPM is running, false otherwise.
+	 * Return: True if DPM is running, false otherwise.
 	 */
-	bool (*is_dpm_running)(काष्ठा smu_context *smu);
+	bool (*is_dpm_running)(struct smu_context *smu);
 
 	/**
 	 * @get_fan_speed_percent: Get the current fan speed in percent.
 	 */
-	पूर्णांक (*get_fan_speed_percent)(काष्ठा smu_context *smu, uपूर्णांक32_t *speed);
+	int (*get_fan_speed_percent)(struct smu_context *smu, uint32_t *speed);
 
 	/**
 	 * @set_watermarks_table: Configure and upload the watermarks tables to
 	 *                        the SMU.
 	 */
-	पूर्णांक (*set_watermarks_table)(काष्ठा smu_context *smu,
-				    काष्ठा pp_smu_wm_range_sets *घड़ी_ranges);
+	int (*set_watermarks_table)(struct smu_context *smu,
+				    struct pp_smu_wm_range_sets *clock_ranges);
 
 	/**
 	 * @get_thermal_temperature_range: Get safe thermal limits in Celcius.
 	 */
-	पूर्णांक (*get_thermal_temperature_range)(काष्ठा smu_context *smu, काष्ठा smu_temperature_range *range);
+	int (*get_thermal_temperature_range)(struct smu_context *smu, struct smu_temperature_range *range);
 
 	/**
-	 * @get_uclk_dpm_states: Get memory घड़ी DPM levels in kHz.
-	 * &घड़ीs_in_khz: Array of DPM levels.
-	 * &num_states: Elements in &घड़ीs_in_khz.
+	 * @get_uclk_dpm_states: Get memory clock DPM levels in kHz.
+	 * &clocks_in_khz: Array of DPM levels.
+	 * &num_states: Elements in &clocks_in_khz.
 	 */
-	पूर्णांक (*get_uclk_dpm_states)(काष्ठा smu_context *smu, uपूर्णांक32_t *घड़ीs_in_khz, uपूर्णांक32_t *num_states);
+	int (*get_uclk_dpm_states)(struct smu_context *smu, uint32_t *clocks_in_khz, uint32_t *num_states);
 
 	/**
-	 * @set_शेष_od_settings: Set the overdrive tables to शेषs.
+	 * @set_default_od_settings: Set the overdrive tables to defaults.
 	 */
-	पूर्णांक (*set_शेष_od_settings)(काष्ठा smu_context *smu);
+	int (*set_default_od_settings)(struct smu_context *smu);
 
 	/**
-	 * @set_perक्रमmance_level: Set a perक्रमmance level.
+	 * @set_performance_level: Set a performance level.
 	 */
-	पूर्णांक (*set_perक्रमmance_level)(काष्ठा smu_context *smu, क्रमागत amd_dpm_क्रमced_level level);
+	int (*set_performance_level)(struct smu_context *smu, enum amd_dpm_forced_level level);
 
 	/**
-	 * @display_disable_memory_घड़ी_चयन: Enable/disable dynamic memory
-	 *                                       घड़ी चयनing.
+	 * @display_disable_memory_clock_switch: Enable/disable dynamic memory
+	 *                                       clock switching.
 	 *
-	 * Disabling this feature क्रमces memory घड़ी speed to maximum.
-	 * Enabling sets the minimum memory घड़ी capable of driving the
+	 * Disabling this feature forces memory clock speed to maximum.
+	 * Enabling sets the minimum memory clock capable of driving the
 	 * current display configuration.
 	 */
-	पूर्णांक (*display_disable_memory_घड़ी_चयन)(काष्ठा smu_context *smu, bool disable_memory_घड़ी_चयन);
+	int (*display_disable_memory_clock_switch)(struct smu_context *smu, bool disable_memory_clock_switch);
 
 	/**
-	 * @dump_pptable: Prपूर्णांक the घातer play table to the प्रणाली log.
+	 * @dump_pptable: Print the power play table to the system log.
 	 */
-	व्योम (*dump_pptable)(काष्ठा smu_context *smu);
+	void (*dump_pptable)(struct smu_context *smu);
 
 	/**
-	 * @get_घातer_limit: Get the device's घातer limits.
+	 * @get_power_limit: Get the device's power limits.
 	 */
-	पूर्णांक (*get_घातer_limit)(काष्ठा smu_context *smu);
+	int (*get_power_limit)(struct smu_context *smu);
 
 	/**
 	 * @get_ppt_limit: Get the device's ppt limits.
 	 */
-	पूर्णांक (*get_ppt_limit)(काष्ठा smu_context *smu, uपूर्णांक32_t *ppt_limit,
-			क्रमागत smu_ppt_limit_type limit_type, क्रमागत smu_ppt_limit_level limit_level);
+	int (*get_ppt_limit)(struct smu_context *smu, uint32_t *ppt_limit,
+			enum smu_ppt_limit_type limit_type, enum smu_ppt_limit_level limit_level);
 
 	/**
 	 * @set_df_cstate: Set data fabric cstate.
 	 */
-	पूर्णांक (*set_df_cstate)(काष्ठा smu_context *smu, क्रमागत pp_df_cstate state);
+	int (*set_df_cstate)(struct smu_context *smu, enum pp_df_cstate state);
 
 	/**
-	 * @allow_xgmi_घातer_करोwn: Enable/disable बाह्यal global memory
-	 *                         पूर्णांकerconnect घातer करोwn.
+	 * @allow_xgmi_power_down: Enable/disable external global memory
+	 *                         interconnect power down.
 	 */
-	पूर्णांक (*allow_xgmi_घातer_करोwn)(काष्ठा smu_context *smu, bool en);
+	int (*allow_xgmi_power_down)(struct smu_context *smu, bool en);
 
 	/**
-	 * @update_pcie_parameters: Update and upload the प्रणाली's PCIe
+	 * @update_pcie_parameters: Update and upload the system's PCIe
 	 *                          capabilites to the SMU.
 	 * &pcie_gen_cap: Maximum allowed PCIe generation.
 	 * &pcie_width_cap: Maximum allowed PCIe width.
 	 */
-	पूर्णांक (*update_pcie_parameters)(काष्ठा smu_context *smu, uपूर्णांक32_t pcie_gen_cap, uपूर्णांक32_t pcie_width_cap);
+	int (*update_pcie_parameters)(struct smu_context *smu, uint32_t pcie_gen_cap, uint32_t pcie_width_cap);
 
 	/**
 	 * @i2c_init: Initialize i2c.
 	 *
-	 * The i2c bus is used पूर्णांकernally by the SMU voltage regulators and
+	 * The i2c bus is used internally by the SMU voltage regulators and
 	 * other devices. The i2c's EEPROM also stores bad page tables on boards
 	 * with ECC.
 	 */
-	पूर्णांक (*i2c_init)(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control);
+	int (*i2c_init)(struct smu_context *smu, struct i2c_adapter *control);
 
 	/**
-	 * @i2c_fini: Tear करोwn i2c.
+	 * @i2c_fini: Tear down i2c.
 	 */
-	व्योम (*i2c_fini)(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control);
+	void (*i2c_fini)(struct smu_context *smu, struct i2c_adapter *control);
 
 	/**
-	 * @get_unique_id: Get the GPU's unique id. Used क्रम asset tracking.
+	 * @get_unique_id: Get the GPU's unique id. Used for asset tracking.
 	 */
-	व्योम (*get_unique_id)(काष्ठा smu_context *smu);
+	void (*get_unique_id)(struct smu_context *smu);
 
 	/**
-	 * @get_dpm_घड़ी_प्रकारable: Get a copy of the DPM घड़ी table.
+	 * @get_dpm_clock_table: Get a copy of the DPM clock table.
 	 *
 	 * Used by display component in bandwidth and watermark calculations.
 	 */
-	पूर्णांक (*get_dpm_घड़ी_प्रकारable)(काष्ठा smu_context *smu, काष्ठा dpm_घड़ीs *घड़ी_प्रकारable);
+	int (*get_dpm_clock_table)(struct smu_context *smu, struct dpm_clocks *clock_table);
 
 	/**
 	 * @init_microcode: Request the SMU's firmware from the kernel.
 	 */
-	पूर्णांक (*init_microcode)(काष्ठा smu_context *smu);
+	int (*init_microcode)(struct smu_context *smu);
 
 	/**
 	 * @load_microcode: Load firmware onto the SMU.
 	 */
-	पूर्णांक (*load_microcode)(काष्ठा smu_context *smu);
+	int (*load_microcode)(struct smu_context *smu);
 
 	/**
 	 * @fini_microcode: Release the SMU's firmware.
 	 */
-	व्योम (*fini_microcode)(काष्ठा smu_context *smu);
+	void (*fini_microcode)(struct smu_context *smu);
 
 	/**
 	 * @init_smc_tables: Initialize the SMU tables.
 	 */
-	पूर्णांक (*init_smc_tables)(काष्ठा smu_context *smu);
+	int (*init_smc_tables)(struct smu_context *smu);
 
 	/**
 	 * @fini_smc_tables: Release the SMU tables.
 	 */
-	पूर्णांक (*fini_smc_tables)(काष्ठा smu_context *smu);
+	int (*fini_smc_tables)(struct smu_context *smu);
 
 	/**
-	 * @init_घातer: Initialize the घातer gate table context.
+	 * @init_power: Initialize the power gate table context.
 	 */
-	पूर्णांक (*init_घातer)(काष्ठा smu_context *smu);
+	int (*init_power)(struct smu_context *smu);
 
 	/**
-	 * @fini_घातer: Release the घातer gate table context.
+	 * @fini_power: Release the power gate table context.
 	 */
-	पूर्णांक (*fini_घातer)(काष्ठा smu_context *smu);
+	int (*fini_power)(struct smu_context *smu);
 
 	/**
 	 * @check_fw_status: Check the SMU's firmware status.
 	 *
-	 * Return: Zero अगर check passes, negative त्रुटि_सं on failure.
+	 * Return: Zero if check passes, negative errno on failure.
 	 */
-	पूर्णांक (*check_fw_status)(काष्ठा smu_context *smu);
+	int (*check_fw_status)(struct smu_context *smu);
 
 	/**
-	 * @set_mp1_state: put SMU पूर्णांकo a correct state क्रम comming
+	 * @set_mp1_state: put SMU into a correct state for comming
 	 *                 resume from runpm or gpu reset.
 	 */
-	पूर्णांक (*set_mp1_state)(काष्ठा smu_context *smu,
-			     क्रमागत pp_mp1_state mp1_state);
+	int (*set_mp1_state)(struct smu_context *smu,
+			     enum pp_mp1_state mp1_state);
 
 	/**
-	 * @setup_pptable: Initialize the घातer play table and populate it with
-	 *                 शेष values.
+	 * @setup_pptable: Initialize the power play table and populate it with
+	 *                 default values.
 	 */
-	पूर्णांक (*setup_pptable)(काष्ठा smu_context *smu);
+	int (*setup_pptable)(struct smu_context *smu);
 
 	/**
-	 * @get_vbios_bootup_values: Get शेष boot values from the VBIOS.
+	 * @get_vbios_bootup_values: Get default boot values from the VBIOS.
 	 */
-	पूर्णांक (*get_vbios_bootup_values)(काष्ठा smu_context *smu);
+	int (*get_vbios_bootup_values)(struct smu_context *smu);
 
 	/**
-	 * @check_fw_version: Prपूर्णांक driver and SMU पूर्णांकerface versions to the
-	 *                    प्रणाली log.
+	 * @check_fw_version: Print driver and SMU interface versions to the
+	 *                    system log.
 	 *
 	 * Interface mismatch is not a critical failure.
 	 */
-	पूर्णांक (*check_fw_version)(काष्ठा smu_context *smu);
+	int (*check_fw_version)(struct smu_context *smu);
 
 	/**
-	 * @घातergate_sdma: Power up/करोwn प्रणाली direct memory access.
+	 * @powergate_sdma: Power up/down system direct memory access.
 	 */
-	पूर्णांक (*घातergate_sdma)(काष्ठा smu_context *smu, bool gate);
+	int (*powergate_sdma)(struct smu_context *smu, bool gate);
 
 	/**
-	 * @set_gfx_cgpg: Enable/disable graphics engine course grain घातer
+	 * @set_gfx_cgpg: Enable/disable graphics engine course grain power
 	 *                gating.
 	 */
-	पूर्णांक (*set_gfx_cgpg)(काष्ठा smu_context *smu, bool enable);
+	int (*set_gfx_cgpg)(struct smu_context *smu, bool enable);
 
 	/**
-	 * @ग_लिखो_pptable: Write the घातer play table to the SMU.
+	 * @write_pptable: Write the power play table to the SMU.
 	 */
-	पूर्णांक (*ग_लिखो_pptable)(काष्ठा smu_context *smu);
+	int (*write_pptable)(struct smu_context *smu);
 
 	/**
 	 * @set_driver_table_location: Send the location of the driver table to
 	 *                             the SMU.
 	 */
-	पूर्णांक (*set_driver_table_location)(काष्ठा smu_context *smu);
+	int (*set_driver_table_location)(struct smu_context *smu);
 
 	/**
 	 * @set_tool_table_location: Send the location of the tool table to the
 	 *                           SMU.
 	 */
-	पूर्णांक (*set_tool_table_location)(काष्ठा smu_context *smu);
+	int (*set_tool_table_location)(struct smu_context *smu);
 
 	/**
-	 * @notअगरy_memory_pool_location: Send the location of the memory pool to
+	 * @notify_memory_pool_location: Send the location of the memory pool to
 	 *                               the SMU.
 	 */
-	पूर्णांक (*notअगरy_memory_pool_location)(काष्ठा smu_context *smu);
+	int (*notify_memory_pool_location)(struct smu_context *smu);
 
 	/**
-	 * @प्रणाली_features_control: Enable/disable all SMU features.
+	 * @system_features_control: Enable/disable all SMU features.
 	 */
-	पूर्णांक (*प्रणाली_features_control)(काष्ठा smu_context *smu, bool en);
+	int (*system_features_control)(struct smu_context *smu, bool en);
 
 	/**
 	 * @send_smc_msg_with_param: Send a message with a parameter to the SMU.
 	 * &msg: Type of message.
 	 * &param: Message parameter.
-	 * &पढ़ो_arg: SMU response (optional).
+	 * &read_arg: SMU response (optional).
 	 */
-	पूर्णांक (*send_smc_msg_with_param)(काष्ठा smu_context *smu,
-				       क्रमागत smu_message_type msg, uपूर्णांक32_t param, uपूर्णांक32_t *पढ़ो_arg);
+	int (*send_smc_msg_with_param)(struct smu_context *smu,
+				       enum smu_message_type msg, uint32_t param, uint32_t *read_arg);
 
 	/**
 	 * @send_smc_msg: Send a message to the SMU.
 	 * &msg: Type of message.
-	 * &पढ़ो_arg: SMU response (optional).
+	 * &read_arg: SMU response (optional).
 	 */
-	पूर्णांक (*send_smc_msg)(काष्ठा smu_context *smu,
-			    क्रमागत smu_message_type msg,
-			    uपूर्णांक32_t *पढ़ो_arg);
+	int (*send_smc_msg)(struct smu_context *smu,
+			    enum smu_message_type msg,
+			    uint32_t *read_arg);
 
 	/**
-	 * @init_display_count: Notअगरy the SMU of the number of display
+	 * @init_display_count: Notify the SMU of the number of display
 	 *                      components in current display configuration.
 	 */
-	पूर्णांक (*init_display_count)(काष्ठा smu_context *smu, uपूर्णांक32_t count);
+	int (*init_display_count)(struct smu_context *smu, uint32_t count);
 
 	/**
-	 * @set_allowed_mask: Notअगरy the SMU of the features currently allowed
+	 * @set_allowed_mask: Notify the SMU of the features currently allowed
 	 *                    by the driver.
 	 */
-	पूर्णांक (*set_allowed_mask)(काष्ठा smu_context *smu);
+	int (*set_allowed_mask)(struct smu_context *smu);
 
 	/**
 	 * @get_enabled_mask: Get a mask of features that are currently enabled
@@ -912,275 +911,275 @@
 	 * &feature_mask: Array representing enabled feature mask.
 	 * &num: Elements in &feature_mask.
 	 */
-	पूर्णांक (*get_enabled_mask)(काष्ठा smu_context *smu, uपूर्णांक32_t *feature_mask, uपूर्णांक32_t num);
+	int (*get_enabled_mask)(struct smu_context *smu, uint32_t *feature_mask, uint32_t num);
 
 	/**
-	 * @feature_is_enabled: Test अगर a feature is enabled.
+	 * @feature_is_enabled: Test if a feature is enabled.
 	 *
-	 * Return: One अगर enabled, zero अगर disabled.
+	 * Return: One if enabled, zero if disabled.
 	 */
-	पूर्णांक (*feature_is_enabled)(काष्ठा smu_context *smu, क्रमागत smu_feature_mask mask);
+	int (*feature_is_enabled)(struct smu_context *smu, enum smu_feature_mask mask);
 
 	/**
 	 * @disable_all_features_with_exception: Disable all features with
 	 *                                       exception to those in &mask.
 	 */
-	पूर्णांक (*disable_all_features_with_exception)(काष्ठा smu_context *smu, क्रमागत smu_feature_mask mask);
+	int (*disable_all_features_with_exception)(struct smu_context *smu, enum smu_feature_mask mask);
 
 	/**
-	 * @notअगरy_display_change: Enable fast memory घड़ी चयनing.
+	 * @notify_display_change: Enable fast memory clock switching.
 	 *
-	 * Allows क्रम fine grained memory घड़ी चयनing but has more stringent
+	 * Allows for fine grained memory clock switching but has more stringent
 	 * timing requirements.
 	 */
-	पूर्णांक (*notअगरy_display_change)(काष्ठा smu_context *smu);
+	int (*notify_display_change)(struct smu_context *smu);
 
 	/**
-	 * @set_घातer_limit: Set घातer limit in watts.
+	 * @set_power_limit: Set power limit in watts.
 	 */
-	पूर्णांक (*set_घातer_limit)(काष्ठा smu_context *smu, uपूर्णांक32_t n);
+	int (*set_power_limit)(struct smu_context *smu, uint32_t n);
 
 	/**
-	 * @init_max_sustainable_घड़ीs: Populate max sustainable घड़ी speed
+	 * @init_max_sustainable_clocks: Populate max sustainable clock speed
 	 *                               table with values from the SMU.
 	 */
-	पूर्णांक (*init_max_sustainable_घड़ीs)(काष्ठा smu_context *smu);
+	int (*init_max_sustainable_clocks)(struct smu_context *smu);
 
 	/**
-	 * @enable_thermal_alert: Enable thermal alert पूर्णांकerrupts.
+	 * @enable_thermal_alert: Enable thermal alert interrupts.
 	 */
-	पूर्णांक (*enable_thermal_alert)(काष्ठा smu_context *smu);
+	int (*enable_thermal_alert)(struct smu_context *smu);
 
 	/**
-	 * @disable_thermal_alert: Disable thermal alert पूर्णांकerrupts.
+	 * @disable_thermal_alert: Disable thermal alert interrupts.
 	 */
-	पूर्णांक (*disable_thermal_alert)(काष्ठा smu_context *smu);
+	int (*disable_thermal_alert)(struct smu_context *smu);
 
 	/**
 	 * @set_min_dcef_deep_sleep: Set a minimum display fabric deep sleep
-	 *                           घड़ी speed in MHz.
+	 *                           clock speed in MHz.
 	 */
-	पूर्णांक (*set_min_dcef_deep_sleep)(काष्ठा smu_context *smu, uपूर्णांक32_t clk);
+	int (*set_min_dcef_deep_sleep)(struct smu_context *smu, uint32_t clk);
 
 	/**
-	 * @display_घड़ी_voltage_request: Set a hard minimum frequency
-	 * क्रम a घड़ी करोमुख्य.
+	 * @display_clock_voltage_request: Set a hard minimum frequency
+	 * for a clock domain.
 	 */
-	पूर्णांक (*display_घड़ी_voltage_request)(काष्ठा smu_context *smu, काष्ठा
-					     pp_display_घड़ी_request
-					     *घड़ी_req);
+	int (*display_clock_voltage_request)(struct smu_context *smu, struct
+					     pp_display_clock_request
+					     *clock_req);
 
 	/**
 	 * @get_fan_control_mode: Get the current fan control mode.
 	 */
-	uपूर्णांक32_t (*get_fan_control_mode)(काष्ठा smu_context *smu);
+	uint32_t (*get_fan_control_mode)(struct smu_context *smu);
 
 	/**
 	 * @set_fan_control_mode: Set the fan control mode.
 	 */
-	पूर्णांक (*set_fan_control_mode)(काष्ठा smu_context *smu, uपूर्णांक32_t mode);
+	int (*set_fan_control_mode)(struct smu_context *smu, uint32_t mode);
 
 	/**
-	 * @set_fan_speed_percent: Set a अटल fan speed in percent.
+	 * @set_fan_speed_percent: Set a static fan speed in percent.
 	 */
-	पूर्णांक (*set_fan_speed_percent)(काष्ठा smu_context *smu, uपूर्णांक32_t speed);
+	int (*set_fan_speed_percent)(struct smu_context *smu, uint32_t speed);
 
 	/**
-	 * @set_xgmi_pstate: Set पूर्णांकer-chip global memory पूर्णांकerconnect pstate.
-	 * &pstate: Pstate to set. D0 अगर Nonzero, D3 otherwise.
+	 * @set_xgmi_pstate: Set inter-chip global memory interconnect pstate.
+	 * &pstate: Pstate to set. D0 if Nonzero, D3 otherwise.
 	 */
-	पूर्णांक (*set_xgmi_pstate)(काष्ठा smu_context *smu, uपूर्णांक32_t pstate);
+	int (*set_xgmi_pstate)(struct smu_context *smu, uint32_t pstate);
 
 	/**
-	 * @gfx_off_control: Enable/disable graphics engine घातeroff.
+	 * @gfx_off_control: Enable/disable graphics engine poweroff.
 	 */
-	पूर्णांक (*gfx_off_control)(काष्ठा smu_context *smu, bool enable);
+	int (*gfx_off_control)(struct smu_context *smu, bool enable);
 
 
 	/**
-	 * @get_gfx_off_status: Get graphics engine घातeroff status.
+	 * @get_gfx_off_status: Get graphics engine poweroff status.
 	 *
 	 * Return:
-	 * 0 - GFXOFF(शेष).
+	 * 0 - GFXOFF(default).
 	 * 1 - Transition out of GFX State.
 	 * 2 - Not in GFXOFF.
-	 * 3 - Transition पूर्णांकo GFXOFF.
+	 * 3 - Transition into GFXOFF.
 	 */
-	uपूर्णांक32_t (*get_gfx_off_status)(काष्ठा smu_context *smu);
+	uint32_t (*get_gfx_off_status)(struct smu_context *smu);
 
 	/**
-	 * @रेजिस्टर_irq_handler: Register पूर्णांकerupt request handlers.
+	 * @register_irq_handler: Register interupt request handlers.
 	 */
-	पूर्णांक (*रेजिस्टर_irq_handler)(काष्ठा smu_context *smu);
+	int (*register_irq_handler)(struct smu_context *smu);
 
 	/**
 	 * @set_azalia_d3_pme: Wake the audio decode engine from d3 sleep.
 	 */
-	पूर्णांक (*set_azalia_d3_pme)(काष्ठा smu_context *smu);
+	int (*set_azalia_d3_pme)(struct smu_context *smu);
 
 	/**
-	 * @get_max_sustainable_घड़ीs_by_dc: Get a copy of the max sustainable
-	 *                                    घड़ी speeds table.
+	 * @get_max_sustainable_clocks_by_dc: Get a copy of the max sustainable
+	 *                                    clock speeds table.
 	 *
-	 * Provides a way क्रम the display component (DC) to get the max
-	 * sustainable घड़ीs from the SMU.
+	 * Provides a way for the display component (DC) to get the max
+	 * sustainable clocks from the SMU.
 	 */
-	पूर्णांक (*get_max_sustainable_घड़ीs_by_dc)(काष्ठा smu_context *smu, काष्ठा pp_smu_nv_घड़ी_प्रकारable *max_घड़ीs);
+	int (*get_max_sustainable_clocks_by_dc)(struct smu_context *smu, struct pp_smu_nv_clock_table *max_clocks);
 
 	/**
-	 * @baco_is_support: Check अगर GPU supports BACO (Bus Active, Chip Off).
+	 * @baco_is_support: Check if GPU supports BACO (Bus Active, Chip Off).
 	 */
-	bool (*baco_is_support)(काष्ठा smu_context *smu);
+	bool (*baco_is_support)(struct smu_context *smu);
 
 	/**
 	 * @baco_get_state: Get the current BACO state.
 	 *
 	 * Return: Current BACO state.
 	 */
-	क्रमागत smu_baco_state (*baco_get_state)(काष्ठा smu_context *smu);
+	enum smu_baco_state (*baco_get_state)(struct smu_context *smu);
 
 	/**
-	 * @baco_set_state: Enter/निकास BACO.
+	 * @baco_set_state: Enter/exit BACO.
 	 */
-	पूर्णांक (*baco_set_state)(काष्ठा smu_context *smu, क्रमागत smu_baco_state state);
+	int (*baco_set_state)(struct smu_context *smu, enum smu_baco_state state);
 
 	/**
 	 * @baco_enter: Enter BACO.
 	 */
-	पूर्णांक (*baco_enter)(काष्ठा smu_context *smu);
+	int (*baco_enter)(struct smu_context *smu);
 
 	/**
-	 * @baco_निकास: Exit Baco.
+	 * @baco_exit: Exit Baco.
 	 */
-	पूर्णांक (*baco_निकास)(काष्ठा smu_context *smu);
+	int (*baco_exit)(struct smu_context *smu);
 
 	/**
-	 * @mode1_reset_is_support: Check अगर GPU supports mode1 reset.
+	 * @mode1_reset_is_support: Check if GPU supports mode1 reset.
 	 */
-	bool (*mode1_reset_is_support)(काष्ठा smu_context *smu);
+	bool (*mode1_reset_is_support)(struct smu_context *smu);
 	/**
-	 * @mode2_reset_is_support: Check अगर GPU supports mode2 reset.
+	 * @mode2_reset_is_support: Check if GPU supports mode2 reset.
 	 */
-	bool (*mode2_reset_is_support)(काष्ठा smu_context *smu);
+	bool (*mode2_reset_is_support)(struct smu_context *smu);
 
 	/**
-	 * @mode1_reset: Perक्रमm mode1 reset.
+	 * @mode1_reset: Perform mode1 reset.
 	 *
 	 * Complete GPU reset.
 	 */
-	पूर्णांक (*mode1_reset)(काष्ठा smu_context *smu);
+	int (*mode1_reset)(struct smu_context *smu);
 
 	/**
-	 * @mode2_reset: Perक्रमm mode2 reset.
+	 * @mode2_reset: Perform mode2 reset.
 	 *
-	 * Mode2 reset generally करोes not reset as many IPs as mode1 reset. The
+	 * Mode2 reset generally does not reset as many IPs as mode1 reset. The
 	 * IPs reset varies by asic.
 	 */
-	पूर्णांक (*mode2_reset)(काष्ठा smu_context *smu);
+	int (*mode2_reset)(struct smu_context *smu);
 
 	/**
-	 * @get_dpm_ultimate_freq: Get the hard frequency range of a घड़ी
-	 *                         करोमुख्य in MHz.
+	 * @get_dpm_ultimate_freq: Get the hard frequency range of a clock
+	 *                         domain in MHz.
 	 */
-	पूर्णांक (*get_dpm_ultimate_freq)(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type, uपूर्णांक32_t *min, uपूर्णांक32_t *max);
+	int (*get_dpm_ultimate_freq)(struct smu_context *smu, enum smu_clk_type clk_type, uint32_t *min, uint32_t *max);
 
 	/**
-	 * @set_soft_freq_limited_range: Set the soft frequency range of a घड़ी
-	 *                               करोमुख्य in MHz.
+	 * @set_soft_freq_limited_range: Set the soft frequency range of a clock
+	 *                               domain in MHz.
 	 */
-	पूर्णांक (*set_soft_freq_limited_range)(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type, uपूर्णांक32_t min, uपूर्णांक32_t max);
+	int (*set_soft_freq_limited_range)(struct smu_context *smu, enum smu_clk_type clk_type, uint32_t min, uint32_t max);
 
 	/**
-	 * @set_घातer_source: Notअगरy the SMU of the current घातer source.
+	 * @set_power_source: Notify the SMU of the current power source.
 	 */
-	पूर्णांक (*set_घातer_source)(काष्ठा smu_context *smu, क्रमागत smu_घातer_src_type घातer_src);
+	int (*set_power_source)(struct smu_context *smu, enum smu_power_src_type power_src);
 
 	/**
-	 * @log_thermal_throttling_event: Prपूर्णांक a thermal throttling warning to
-	 *                                the प्रणाली's log.
+	 * @log_thermal_throttling_event: Print a thermal throttling warning to
+	 *                                the system's log.
 	 */
-	व्योम (*log_thermal_throttling_event)(काष्ठा smu_context *smu);
+	void (*log_thermal_throttling_event)(struct smu_context *smu);
 
 	/**
-	 * @get_pp_feature_mask: Prपूर्णांक a human पढ़ोable table of enabled
+	 * @get_pp_feature_mask: Print a human readable table of enabled
 	 *                       features to buffer.
 	 */
-	माप_प्रकार (*get_pp_feature_mask)(काष्ठा smu_context *smu, अक्षर *buf);
+	size_t (*get_pp_feature_mask)(struct smu_context *smu, char *buf);
 
 	/**
 	 * @set_pp_feature_mask: Request the SMU enable/disable features to
 	 *                       match those enabled in &new_mask.
 	 */
-	पूर्णांक (*set_pp_feature_mask)(काष्ठा smu_context *smu, uपूर्णांक64_t new_mask);
+	int (*set_pp_feature_mask)(struct smu_context *smu, uint64_t new_mask);
 
 	/**
 	 * @get_gpu_metrics: Get a copy of the GPU metrics table from the SMU.
 	 *
 	 * Return: Size of &table
 	 */
-	sमाप_प्रकार (*get_gpu_metrics)(काष्ठा smu_context *smu, व्योम **table);
+	ssize_t (*get_gpu_metrics)(struct smu_context *smu, void **table);
 
 	/**
 	 * @enable_mgpu_fan_boost: Enable multi-GPU fan boost.
 	 */
-	पूर्णांक (*enable_mgpu_fan_boost)(काष्ठा smu_context *smu);
+	int (*enable_mgpu_fan_boost)(struct smu_context *smu);
 
 	/**
 	 * @gfx_ulv_control: Enable/disable ultra low voltage.
 	 */
-	पूर्णांक (*gfx_ulv_control)(काष्ठा smu_context *smu, bool enablement);
+	int (*gfx_ulv_control)(struct smu_context *smu, bool enablement);
 
 	/**
 	 * @deep_sleep_control: Enable/disable deep sleep.
 	 */
-	पूर्णांक (*deep_sleep_control)(काष्ठा smu_context *smu, bool enablement);
+	int (*deep_sleep_control)(struct smu_context *smu, bool enablement);
 
 	/**
 	 * @get_fan_parameters: Get fan parameters.
 	 *
-	 * Get maximum fan speed from the घातer play table.
+	 * Get maximum fan speed from the power play table.
 	 */
-	पूर्णांक (*get_fan_parameters)(काष्ठा smu_context *smu);
+	int (*get_fan_parameters)(struct smu_context *smu);
 
 	/**
-	 * @post_init: Helper function क्रम asic specअगरic workarounds.
+	 * @post_init: Helper function for asic specific workarounds.
 	 */
-	पूर्णांक (*post_init)(काष्ठा smu_context *smu);
+	int (*post_init)(struct smu_context *smu);
 
 	/**
-	 * @पूर्णांकerrupt_work: Work task scheduled from SMU पूर्णांकerrupt handler.
+	 * @interrupt_work: Work task scheduled from SMU interrupt handler.
 	 */
-	व्योम (*पूर्णांकerrupt_work)(काष्ठा smu_context *smu);
+	void (*interrupt_work)(struct smu_context *smu);
 
 	/**
-	 * @gpo_control: Enable/disable graphics घातer optimization अगर supported.
+	 * @gpo_control: Enable/disable graphics power optimization if supported.
 	 */
-	पूर्णांक (*gpo_control)(काष्ठा smu_context *smu, bool enablement);
+	int (*gpo_control)(struct smu_context *smu, bool enablement);
 
 	/**
 	 * @gfx_state_change_set: Send the current graphics state to the SMU.
 	 */
-	पूर्णांक (*gfx_state_change_set)(काष्ठा smu_context *smu, uपूर्णांक32_t state);
+	int (*gfx_state_change_set)(struct smu_context *smu, uint32_t state);
 
 	/**
-	 * @set_fine_grain_gfx_freq_parameters: Set fine grain graphics घड़ी
-	 *                                      parameters to शेषs.
+	 * @set_fine_grain_gfx_freq_parameters: Set fine grain graphics clock
+	 *                                      parameters to defaults.
 	 */
-	पूर्णांक (*set_fine_grain_gfx_freq_parameters)(काष्ठा smu_context *smu);
+	int (*set_fine_grain_gfx_freq_parameters)(struct smu_context *smu);
 
 	/**
-	 * @set_light_sbr:  Set light sbr mode क्रम the SMU.
+	 * @set_light_sbr:  Set light sbr mode for the SMU.
 	 */
-	पूर्णांक (*set_light_sbr)(काष्ठा smu_context *smu, bool enable);
+	int (*set_light_sbr)(struct smu_context *smu, bool enable);
 
 	/**
-	 * @रुको_क्रम_event:  Wait क्रम events from SMU.
+	 * @wait_for_event:  Wait for events from SMU.
 	 */
-	पूर्णांक (*रुको_क्रम_event)(काष्ठा smu_context *smu,
-			      क्रमागत smu_event_type event, uपूर्णांक64_t event_arg);
-पूर्ण;
+	int (*wait_for_event)(struct smu_context *smu,
+			      enum smu_event_type event, uint64_t event_arg);
+};
 
-प्रकार क्रमागत अणु
+typedef enum {
 	METRICS_CURR_GFXCLK,
 	METRICS_CURR_SOCCLK,
 	METRICS_CURR_UCLK,
@@ -1211,82 +1210,82 @@
 	METRICS_CURR_FANSPEED,
 	METRICS_VOLTAGE_VDDSOC,
 	METRICS_VOLTAGE_VDDGFX,
-पूर्ण MetricsMember_t;
+} MetricsMember_t;
 
-क्रमागत smu_cmn2asic_mapping_type अणु
+enum smu_cmn2asic_mapping_type {
 	CMN2ASIC_MAPPING_MSG,
 	CMN2ASIC_MAPPING_CLK,
 	CMN2ASIC_MAPPING_FEATURE,
 	CMN2ASIC_MAPPING_TABLE,
 	CMN2ASIC_MAPPING_PWR,
 	CMN2ASIC_MAPPING_WORKLOAD,
-पूर्ण;
+};
 
-#घोषणा MSG_MAP(msg, index, valid_in_vf) \
-	[SMU_MSG_##msg] = अणु1, (index), (valid_in_vf)पूर्ण
+#define MSG_MAP(msg, index, valid_in_vf) \
+	[SMU_MSG_##msg] = {1, (index), (valid_in_vf)}
 
-#घोषणा CLK_MAP(clk, index) \
-	[SMU_##clk] = अणु1, (index)पूर्ण
+#define CLK_MAP(clk, index) \
+	[SMU_##clk] = {1, (index)}
 
-#घोषणा FEA_MAP(fea) \
-	[SMU_FEATURE_##fea##_BIT] = अणु1, FEATURE_##fea##_BITपूर्ण
+#define FEA_MAP(fea) \
+	[SMU_FEATURE_##fea##_BIT] = {1, FEATURE_##fea##_BIT}
 
-#घोषणा FEA_MAP_REVERSE(fea) \
-	[SMU_FEATURE_DPM_##fea##_BIT] = अणु1, FEATURE_##fea##_DPM_BITपूर्ण
+#define FEA_MAP_REVERSE(fea) \
+	[SMU_FEATURE_DPM_##fea##_BIT] = {1, FEATURE_##fea##_DPM_BIT}
 
-#घोषणा FEA_MAP_HALF_REVERSE(fea) \
-	[SMU_FEATURE_DPM_##fea##CLK_BIT] = अणु1, FEATURE_##fea##_DPM_BITपूर्ण
+#define FEA_MAP_HALF_REVERSE(fea) \
+	[SMU_FEATURE_DPM_##fea##CLK_BIT] = {1, FEATURE_##fea##_DPM_BIT}
 
-#घोषणा TAB_MAP(tab) \
-	[SMU_TABLE_##tab] = अणु1, TABLE_##tabपूर्ण
+#define TAB_MAP(tab) \
+	[SMU_TABLE_##tab] = {1, TABLE_##tab}
 
-#घोषणा TAB_MAP_VALID(tab) \
-	[SMU_TABLE_##tab] = अणु1, TABLE_##tabपूर्ण
+#define TAB_MAP_VALID(tab) \
+	[SMU_TABLE_##tab] = {1, TABLE_##tab}
 
-#घोषणा TAB_MAP_INVALID(tab) \
-	[SMU_TABLE_##tab] = अणु0, TABLE_##tabपूर्ण
+#define TAB_MAP_INVALID(tab) \
+	[SMU_TABLE_##tab] = {0, TABLE_##tab}
 
-#घोषणा PWR_MAP(tab) \
-	[SMU_POWER_SOURCE_##tab] = अणु1, POWER_SOURCE_##tabपूर्ण
+#define PWR_MAP(tab) \
+	[SMU_POWER_SOURCE_##tab] = {1, POWER_SOURCE_##tab}
 
-#घोषणा WORKLOAD_MAP(profile, workload) \
-	[profile] = अणु1, (workload)पूर्ण
+#define WORKLOAD_MAP(profile, workload) \
+	[profile] = {1, (workload)}
 
-#अगर !defined(SWSMU_CODE_LAYER_L2) && !defined(SWSMU_CODE_LAYER_L3) && !defined(SWSMU_CODE_LAYER_L4)
-पूर्णांक smu_get_घातer_limit(काष्ठा smu_context *smu,
-			uपूर्णांक32_t *limit,
-			क्रमागत smu_ppt_limit_level limit_level);
+#if !defined(SWSMU_CODE_LAYER_L2) && !defined(SWSMU_CODE_LAYER_L3) && !defined(SWSMU_CODE_LAYER_L4)
+int smu_get_power_limit(struct smu_context *smu,
+			uint32_t *limit,
+			enum smu_ppt_limit_level limit_level);
 
-bool smu_mode1_reset_is_support(काष्ठा smu_context *smu);
-bool smu_mode2_reset_is_support(काष्ठा smu_context *smu);
-पूर्णांक smu_mode1_reset(काष्ठा smu_context *smu);
+bool smu_mode1_reset_is_support(struct smu_context *smu);
+bool smu_mode2_reset_is_support(struct smu_context *smu);
+int smu_mode1_reset(struct smu_context *smu);
 
-बाह्य स्थिर काष्ठा amd_ip_funcs smu_ip_funcs;
+extern const struct amd_ip_funcs smu_ip_funcs;
 
-बाह्य स्थिर काष्ठा amdgpu_ip_block_version smu_v11_0_ip_block;
-बाह्य स्थिर काष्ठा amdgpu_ip_block_version smu_v12_0_ip_block;
-बाह्य स्थिर काष्ठा amdgpu_ip_block_version smu_v13_0_ip_block;
+extern const struct amdgpu_ip_block_version smu_v11_0_ip_block;
+extern const struct amdgpu_ip_block_version smu_v12_0_ip_block;
+extern const struct amdgpu_ip_block_version smu_v13_0_ip_block;
 
-bool is_support_sw_smu(काष्ठा amdgpu_device *adev);
-bool is_support_cclk_dpm(काष्ठा amdgpu_device *adev);
-पूर्णांक smu_ग_लिखो_watermarks_table(काष्ठा smu_context *smu);
+bool is_support_sw_smu(struct amdgpu_device *adev);
+bool is_support_cclk_dpm(struct amdgpu_device *adev);
+int smu_write_watermarks_table(struct smu_context *smu);
 
-पूर्णांक smu_get_dpm_freq_range(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type,
-			   uपूर्णांक32_t *min, uपूर्णांक32_t *max);
+int smu_get_dpm_freq_range(struct smu_context *smu, enum smu_clk_type clk_type,
+			   uint32_t *min, uint32_t *max);
 
-पूर्णांक smu_set_soft_freq_range(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type,
-			    uपूर्णांक32_t min, uपूर्णांक32_t max);
+int smu_set_soft_freq_range(struct smu_context *smu, enum smu_clk_type clk_type,
+			    uint32_t min, uint32_t max);
 
-पूर्णांक smu_set_ac_dc(काष्ठा smu_context *smu);
+int smu_set_ac_dc(struct smu_context *smu);
 
-पूर्णांक smu_allow_xgmi_घातer_करोwn(काष्ठा smu_context *smu, bool en);
+int smu_allow_xgmi_power_down(struct smu_context *smu, bool en);
 
-पूर्णांक smu_get_status_gfxoff(काष्ठा amdgpu_device *adev, uपूर्णांक32_t *value);
+int smu_get_status_gfxoff(struct amdgpu_device *adev, uint32_t *value);
 
-पूर्णांक smu_set_light_sbr(काष्ठा smu_context *smu, bool enable);
+int smu_set_light_sbr(struct smu_context *smu, bool enable);
 
-पूर्णांक smu_रुको_क्रम_event(काष्ठा amdgpu_device *adev, क्रमागत smu_event_type event,
-		       uपूर्णांक64_t event_arg);
+int smu_wait_for_event(struct amdgpu_device *adev, enum smu_event_type event,
+		       uint64_t event_arg);
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

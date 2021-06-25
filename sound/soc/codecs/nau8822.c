@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // nau8822.c  --  NAU8822 ALSA Soc Audio driver
 //
@@ -11,279 +10,279 @@
 //
 // Based on WM8974.c
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <यंत्र/भाग64.h>
-#समावेश "nau8822.h"
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <asm/div64.h>
+#include "nau8822.h"
 
-#घोषणा NAU_PLL_FREQ_MAX 100000000
-#घोषणा NAU_PLL_FREQ_MIN 90000000
-#घोषणा NAU_PLL_REF_MAX 33000000
-#घोषणा NAU_PLL_REF_MIN 8000000
-#घोषणा NAU_PLL_OPTOP_MIN 6
+#define NAU_PLL_FREQ_MAX 100000000
+#define NAU_PLL_FREQ_MIN 90000000
+#define NAU_PLL_REF_MAX 33000000
+#define NAU_PLL_REF_MIN 8000000
+#define NAU_PLL_OPTOP_MIN 6
 
-अटल स्थिर पूर्णांक nau8822_mclk_scaler[] = अणु 10, 15, 20, 30, 40, 60, 80, 120 पूर्ण;
+static const int nau8822_mclk_scaler[] = { 10, 15, 20, 30, 40, 60, 80, 120 };
 
-अटल स्थिर काष्ठा reg_शेष nau8822_reg_शेषs[] = अणु
-	अणु NAU8822_REG_POWER_MANAGEMENT_1, 0x0000 पूर्ण,
-	अणु NAU8822_REG_POWER_MANAGEMENT_2, 0x0000 पूर्ण,
-	अणु NAU8822_REG_POWER_MANAGEMENT_3, 0x0000 पूर्ण,
-	अणु NAU8822_REG_AUDIO_INTERFACE, 0x0050 पूर्ण,
-	अणु NAU8822_REG_COMPANDING_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_CLOCKING, 0x0140 पूर्ण,
-	अणु NAU8822_REG_ADDITIONAL_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_GPIO_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_JACK_DETECT_CONTROL_1, 0x0000 पूर्ण,
-	अणु NAU8822_REG_DAC_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_LEFT_DAC_DIGITAL_VOLUME, 0x00ff पूर्ण,
-	अणु NAU8822_REG_RIGHT_DAC_DIGITAL_VOLUME, 0x00ff पूर्ण,
-	अणु NAU8822_REG_JACK_DETECT_CONTROL_2, 0x0000 पूर्ण,
-	अणु NAU8822_REG_ADC_CONTROL, 0x0100 पूर्ण,
-	अणु NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME, 0x00ff पूर्ण,
-	अणु NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME, 0x00ff पूर्ण,
-	अणु NAU8822_REG_EQ1, 0x012c पूर्ण,
-	अणु NAU8822_REG_EQ2, 0x002c पूर्ण,
-	अणु NAU8822_REG_EQ3, 0x002c पूर्ण,
-	अणु NAU8822_REG_EQ4, 0x002c पूर्ण,
-	अणु NAU8822_REG_EQ5, 0x002c पूर्ण,
-	अणु NAU8822_REG_DAC_LIMITER_1, 0x0032 पूर्ण,
-	अणु NAU8822_REG_DAC_LIMITER_2, 0x0000 पूर्ण,
-	अणु NAU8822_REG_NOTCH_FILTER_1, 0x0000 पूर्ण,
-	अणु NAU8822_REG_NOTCH_FILTER_2, 0x0000 पूर्ण,
-	अणु NAU8822_REG_NOTCH_FILTER_3, 0x0000 पूर्ण,
-	अणु NAU8822_REG_NOTCH_FILTER_4, 0x0000 पूर्ण,
-	अणु NAU8822_REG_ALC_CONTROL_1, 0x0038 पूर्ण,
-	अणु NAU8822_REG_ALC_CONTROL_2, 0x000b पूर्ण,
-	अणु NAU8822_REG_ALC_CONTROL_3, 0x0032 पूर्ण,
-	अणु NAU8822_REG_NOISE_GATE, 0x0010 पूर्ण,
-	अणु NAU8822_REG_PLL_N, 0x0008 पूर्ण,
-	अणु NAU8822_REG_PLL_K1, 0x000c पूर्ण,
-	अणु NAU8822_REG_PLL_K2, 0x0093 पूर्ण,
-	अणु NAU8822_REG_PLL_K3, 0x00e9 पूर्ण,
-	अणु NAU8822_REG_3D_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_RIGHT_SPEAKER_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_INPUT_CONTROL, 0x0033 पूर्ण,
-	अणु NAU8822_REG_LEFT_INP_PGA_CONTROL, 0x0010 पूर्ण,
-	अणु NAU8822_REG_RIGHT_INP_PGA_CONTROL, 0x0010 पूर्ण,
-	अणु NAU8822_REG_LEFT_ADC_BOOST_CONTROL, 0x0100 पूर्ण,
-	अणु NAU8822_REG_RIGHT_ADC_BOOST_CONTROL, 0x0100 पूर्ण,
-	अणु NAU8822_REG_OUTPUT_CONTROL, 0x0002 पूर्ण,
-	अणु NAU8822_REG_LEFT_MIXER_CONTROL, 0x0001 पूर्ण,
-	अणु NAU8822_REG_RIGHT_MIXER_CONTROL, 0x0001 पूर्ण,
-	अणु NAU8822_REG_LHP_VOLUME, 0x0039 पूर्ण,
-	अणु NAU8822_REG_RHP_VOLUME, 0x0039 पूर्ण,
-	अणु NAU8822_REG_LSPKOUT_VOLUME, 0x0039 पूर्ण,
-	अणु NAU8822_REG_RSPKOUT_VOLUME, 0x0039 पूर्ण,
-	अणु NAU8822_REG_AUX2_MIXER, 0x0001 पूर्ण,
-	अणु NAU8822_REG_AUX1_MIXER, 0x0001 पूर्ण,
-	अणु NAU8822_REG_POWER_MANAGEMENT_4, 0x0000 पूर्ण,
-	अणु NAU8822_REG_LEFT_TIME_SLOT, 0x0000 पूर्ण,
-	अणु NAU8822_REG_MISC, 0x0020 पूर्ण,
-	अणु NAU8822_REG_RIGHT_TIME_SLOT, 0x0000 पूर्ण,
-	अणु NAU8822_REG_DEVICE_REVISION, 0x007f पूर्ण,
-	अणु NAU8822_REG_DEVICE_ID, 0x001a पूर्ण,
-	अणु NAU8822_REG_DAC_DITHER, 0x0114 पूर्ण,
-	अणु NAU8822_REG_ALC_ENHANCE_1, 0x0000 पूर्ण,
-	अणु NAU8822_REG_ALC_ENHANCE_2, 0x0000 पूर्ण,
-	अणु NAU8822_REG_192KHZ_SAMPLING, 0x0008 पूर्ण,
-	अणु NAU8822_REG_MISC_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_INPUT_TIखातापूर्णF, 0x0000 पूर्ण,
-	अणु NAU8822_REG_POWER_REDUCTION, 0x0000 पूर्ण,
-	अणु NAU8822_REG_AGC_PEAK2PEAK, 0x0000 पूर्ण,
-	अणु NAU8822_REG_AGC_PEAK_DETECT, 0x0000 पूर्ण,
-	अणु NAU8822_REG_AUTOMUTE_CONTROL, 0x0000 पूर्ण,
-	अणु NAU8822_REG_OUTPUT_TIखातापूर्णF, 0x0000 पूर्ण,
-पूर्ण;
+static const struct reg_default nau8822_reg_defaults[] = {
+	{ NAU8822_REG_POWER_MANAGEMENT_1, 0x0000 },
+	{ NAU8822_REG_POWER_MANAGEMENT_2, 0x0000 },
+	{ NAU8822_REG_POWER_MANAGEMENT_3, 0x0000 },
+	{ NAU8822_REG_AUDIO_INTERFACE, 0x0050 },
+	{ NAU8822_REG_COMPANDING_CONTROL, 0x0000 },
+	{ NAU8822_REG_CLOCKING, 0x0140 },
+	{ NAU8822_REG_ADDITIONAL_CONTROL, 0x0000 },
+	{ NAU8822_REG_GPIO_CONTROL, 0x0000 },
+	{ NAU8822_REG_JACK_DETECT_CONTROL_1, 0x0000 },
+	{ NAU8822_REG_DAC_CONTROL, 0x0000 },
+	{ NAU8822_REG_LEFT_DAC_DIGITAL_VOLUME, 0x00ff },
+	{ NAU8822_REG_RIGHT_DAC_DIGITAL_VOLUME, 0x00ff },
+	{ NAU8822_REG_JACK_DETECT_CONTROL_2, 0x0000 },
+	{ NAU8822_REG_ADC_CONTROL, 0x0100 },
+	{ NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME, 0x00ff },
+	{ NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME, 0x00ff },
+	{ NAU8822_REG_EQ1, 0x012c },
+	{ NAU8822_REG_EQ2, 0x002c },
+	{ NAU8822_REG_EQ3, 0x002c },
+	{ NAU8822_REG_EQ4, 0x002c },
+	{ NAU8822_REG_EQ5, 0x002c },
+	{ NAU8822_REG_DAC_LIMITER_1, 0x0032 },
+	{ NAU8822_REG_DAC_LIMITER_2, 0x0000 },
+	{ NAU8822_REG_NOTCH_FILTER_1, 0x0000 },
+	{ NAU8822_REG_NOTCH_FILTER_2, 0x0000 },
+	{ NAU8822_REG_NOTCH_FILTER_3, 0x0000 },
+	{ NAU8822_REG_NOTCH_FILTER_4, 0x0000 },
+	{ NAU8822_REG_ALC_CONTROL_1, 0x0038 },
+	{ NAU8822_REG_ALC_CONTROL_2, 0x000b },
+	{ NAU8822_REG_ALC_CONTROL_3, 0x0032 },
+	{ NAU8822_REG_NOISE_GATE, 0x0010 },
+	{ NAU8822_REG_PLL_N, 0x0008 },
+	{ NAU8822_REG_PLL_K1, 0x000c },
+	{ NAU8822_REG_PLL_K2, 0x0093 },
+	{ NAU8822_REG_PLL_K3, 0x00e9 },
+	{ NAU8822_REG_3D_CONTROL, 0x0000 },
+	{ NAU8822_REG_RIGHT_SPEAKER_CONTROL, 0x0000 },
+	{ NAU8822_REG_INPUT_CONTROL, 0x0033 },
+	{ NAU8822_REG_LEFT_INP_PGA_CONTROL, 0x0010 },
+	{ NAU8822_REG_RIGHT_INP_PGA_CONTROL, 0x0010 },
+	{ NAU8822_REG_LEFT_ADC_BOOST_CONTROL, 0x0100 },
+	{ NAU8822_REG_RIGHT_ADC_BOOST_CONTROL, 0x0100 },
+	{ NAU8822_REG_OUTPUT_CONTROL, 0x0002 },
+	{ NAU8822_REG_LEFT_MIXER_CONTROL, 0x0001 },
+	{ NAU8822_REG_RIGHT_MIXER_CONTROL, 0x0001 },
+	{ NAU8822_REG_LHP_VOLUME, 0x0039 },
+	{ NAU8822_REG_RHP_VOLUME, 0x0039 },
+	{ NAU8822_REG_LSPKOUT_VOLUME, 0x0039 },
+	{ NAU8822_REG_RSPKOUT_VOLUME, 0x0039 },
+	{ NAU8822_REG_AUX2_MIXER, 0x0001 },
+	{ NAU8822_REG_AUX1_MIXER, 0x0001 },
+	{ NAU8822_REG_POWER_MANAGEMENT_4, 0x0000 },
+	{ NAU8822_REG_LEFT_TIME_SLOT, 0x0000 },
+	{ NAU8822_REG_MISC, 0x0020 },
+	{ NAU8822_REG_RIGHT_TIME_SLOT, 0x0000 },
+	{ NAU8822_REG_DEVICE_REVISION, 0x007f },
+	{ NAU8822_REG_DEVICE_ID, 0x001a },
+	{ NAU8822_REG_DAC_DITHER, 0x0114 },
+	{ NAU8822_REG_ALC_ENHANCE_1, 0x0000 },
+	{ NAU8822_REG_ALC_ENHANCE_2, 0x0000 },
+	{ NAU8822_REG_192KHZ_SAMPLING, 0x0008 },
+	{ NAU8822_REG_MISC_CONTROL, 0x0000 },
+	{ NAU8822_REG_INPUT_TIEOFF, 0x0000 },
+	{ NAU8822_REG_POWER_REDUCTION, 0x0000 },
+	{ NAU8822_REG_AGC_PEAK2PEAK, 0x0000 },
+	{ NAU8822_REG_AGC_PEAK_DETECT, 0x0000 },
+	{ NAU8822_REG_AUTOMUTE_CONTROL, 0x0000 },
+	{ NAU8822_REG_OUTPUT_TIEOFF, 0x0000 },
+};
 
-अटल bool nau8822_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल NAU8822_REG_RESET ... NAU8822_REG_JACK_DETECT_CONTROL_1:
-	हाल NAU8822_REG_DAC_CONTROL ... NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME:
-	हाल NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME:
-	हाल NAU8822_REG_EQ1 ... NAU8822_REG_EQ5:
-	हाल NAU8822_REG_DAC_LIMITER_1 ... NAU8822_REG_DAC_LIMITER_2:
-	हाल NAU8822_REG_NOTCH_FILTER_1 ... NAU8822_REG_NOTCH_FILTER_4:
-	हाल NAU8822_REG_ALC_CONTROL_1 ...NAU8822_REG_PLL_K3:
-	हाल NAU8822_REG_3D_CONTROL:
-	हाल NAU8822_REG_RIGHT_SPEAKER_CONTROL:
-	हाल NAU8822_REG_INPUT_CONTROL ... NAU8822_REG_LEFT_ADC_BOOST_CONTROL:
-	हाल NAU8822_REG_RIGHT_ADC_BOOST_CONTROL ... NAU8822_REG_AUX1_MIXER:
-	हाल NAU8822_REG_POWER_MANAGEMENT_4 ... NAU8822_REG_DEVICE_ID:
-	हाल NAU8822_REG_DAC_DITHER:
-	हाल NAU8822_REG_ALC_ENHANCE_1 ... NAU8822_REG_MISC_CONTROL:
-	हाल NAU8822_REG_INPUT_TIखातापूर्णF ... NAU8822_REG_OUTPUT_TIखातापूर्णF:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool nau8822_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case NAU8822_REG_RESET ... NAU8822_REG_JACK_DETECT_CONTROL_1:
+	case NAU8822_REG_DAC_CONTROL ... NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME:
+	case NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME:
+	case NAU8822_REG_EQ1 ... NAU8822_REG_EQ5:
+	case NAU8822_REG_DAC_LIMITER_1 ... NAU8822_REG_DAC_LIMITER_2:
+	case NAU8822_REG_NOTCH_FILTER_1 ... NAU8822_REG_NOTCH_FILTER_4:
+	case NAU8822_REG_ALC_CONTROL_1 ...NAU8822_REG_PLL_K3:
+	case NAU8822_REG_3D_CONTROL:
+	case NAU8822_REG_RIGHT_SPEAKER_CONTROL:
+	case NAU8822_REG_INPUT_CONTROL ... NAU8822_REG_LEFT_ADC_BOOST_CONTROL:
+	case NAU8822_REG_RIGHT_ADC_BOOST_CONTROL ... NAU8822_REG_AUX1_MIXER:
+	case NAU8822_REG_POWER_MANAGEMENT_4 ... NAU8822_REG_DEVICE_ID:
+	case NAU8822_REG_DAC_DITHER:
+	case NAU8822_REG_ALC_ENHANCE_1 ... NAU8822_REG_MISC_CONTROL:
+	case NAU8822_REG_INPUT_TIEOFF ... NAU8822_REG_OUTPUT_TIEOFF:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool nau8822_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल NAU8822_REG_RESET ... NAU8822_REG_JACK_DETECT_CONTROL_1:
-	हाल NAU8822_REG_DAC_CONTROL ... NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME:
-	हाल NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME:
-	हाल NAU8822_REG_EQ1 ... NAU8822_REG_EQ5:
-	हाल NAU8822_REG_DAC_LIMITER_1 ... NAU8822_REG_DAC_LIMITER_2:
-	हाल NAU8822_REG_NOTCH_FILTER_1 ... NAU8822_REG_NOTCH_FILTER_4:
-	हाल NAU8822_REG_ALC_CONTROL_1 ...NAU8822_REG_PLL_K3:
-	हाल NAU8822_REG_3D_CONTROL:
-	हाल NAU8822_REG_RIGHT_SPEAKER_CONTROL:
-	हाल NAU8822_REG_INPUT_CONTROL ... NAU8822_REG_LEFT_ADC_BOOST_CONTROL:
-	हाल NAU8822_REG_RIGHT_ADC_BOOST_CONTROL ... NAU8822_REG_AUX1_MIXER:
-	हाल NAU8822_REG_POWER_MANAGEMENT_4 ... NAU8822_REG_DEVICE_ID:
-	हाल NAU8822_REG_DAC_DITHER:
-	हाल NAU8822_REG_ALC_ENHANCE_1 ... NAU8822_REG_MISC_CONTROL:
-	हाल NAU8822_REG_INPUT_TIखातापूर्णF ... NAU8822_REG_OUTPUT_TIखातापूर्णF:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool nau8822_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case NAU8822_REG_RESET ... NAU8822_REG_JACK_DETECT_CONTROL_1:
+	case NAU8822_REG_DAC_CONTROL ... NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME:
+	case NAU8822_REG_RIGHT_ADC_DIGITAL_VOLUME:
+	case NAU8822_REG_EQ1 ... NAU8822_REG_EQ5:
+	case NAU8822_REG_DAC_LIMITER_1 ... NAU8822_REG_DAC_LIMITER_2:
+	case NAU8822_REG_NOTCH_FILTER_1 ... NAU8822_REG_NOTCH_FILTER_4:
+	case NAU8822_REG_ALC_CONTROL_1 ...NAU8822_REG_PLL_K3:
+	case NAU8822_REG_3D_CONTROL:
+	case NAU8822_REG_RIGHT_SPEAKER_CONTROL:
+	case NAU8822_REG_INPUT_CONTROL ... NAU8822_REG_LEFT_ADC_BOOST_CONTROL:
+	case NAU8822_REG_RIGHT_ADC_BOOST_CONTROL ... NAU8822_REG_AUX1_MIXER:
+	case NAU8822_REG_POWER_MANAGEMENT_4 ... NAU8822_REG_DEVICE_ID:
+	case NAU8822_REG_DAC_DITHER:
+	case NAU8822_REG_ALC_ENHANCE_1 ... NAU8822_REG_MISC_CONTROL:
+	case NAU8822_REG_INPUT_TIEOFF ... NAU8822_REG_OUTPUT_TIEOFF:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool nau8822_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल NAU8822_REG_RESET:
-	हाल NAU8822_REG_DEVICE_REVISION:
-	हाल NAU8822_REG_DEVICE_ID:
-	हाल NAU8822_REG_AGC_PEAK2PEAK:
-	हाल NAU8822_REG_AGC_PEAK_DETECT:
-	हाल NAU8822_REG_AUTOMUTE_CONTROL:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool nau8822_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case NAU8822_REG_RESET:
+	case NAU8822_REG_DEVICE_REVISION:
+	case NAU8822_REG_DEVICE_ID:
+	case NAU8822_REG_AGC_PEAK2PEAK:
+	case NAU8822_REG_AGC_PEAK_DETECT:
+	case NAU8822_REG_AUTOMUTE_CONTROL:
+		return true;
+	default:
+		return false;
+	}
+}
 
 /* The EQ parameters get function is to get the 5 band equalizer control.
- * The regmap raw पढ़ो can't work here because regmap doesn't provide
- * value क्रमmat क्रम value width of 9 bits. Thereक्रमe, the driver पढ़ोs data
- * from cache and makes value क्रमmat according to the endianness of
+ * The regmap raw read can't work here because regmap doesn't provide
+ * value format for value width of 9 bits. Therefore, the driver reads data
+ * from cache and makes value format according to the endianness of
  * bytes type control element.
  */
-अटल पूर्णांक nau8822_eq_get(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component =
+static int nau8822_eq_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	काष्ठा soc_bytes_ext *params = (व्योम *)kcontrol->निजी_value;
-	पूर्णांक i, reg;
+	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
+	int i, reg;
 	u16 reg_val, *val;
 
 	val = (u16 *)ucontrol->value.bytes.data;
 	reg = NAU8822_REG_EQ1;
-	क्रम (i = 0; i < params->max / माप(u16); i++) अणु
-		reg_val = snd_soc_component_पढ़ो(component, reg + i);
-		/* conversion of 16-bit पूर्णांकegers between native CPU क्रमmat
-		 * and big endian क्रमmat
+	for (i = 0; i < params->max / sizeof(u16); i++) {
+		reg_val = snd_soc_component_read(component, reg + i);
+		/* conversion of 16-bit integers between native CPU format
+		 * and big endian format
 		 */
 		reg_val = cpu_to_be16(reg_val);
-		स_नकल(val + i, &reg_val, माप(reg_val));
-	पूर्ण
+		memcpy(val + i, &reg_val, sizeof(reg_val));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The EQ parameters put function is to make configuration of 5 band equalizer
  * control. These configuration includes central frequency, equalizer gain,
  * cut-off frequency, bandwidth control, and equalizer path.
- * The regmap raw ग_लिखो can't work here because regmap doesn't provide
- * रेजिस्टर and value क्रमmat क्रम रेजिस्टर with address 7 bits and value 9 bits.
- * Thereक्रमe, the driver makes value क्रमmat according to the endianness of
- * bytes type control element and ग_लिखोs data to codec.
+ * The regmap raw write can't work here because regmap doesn't provide
+ * register and value format for register with address 7 bits and value 9 bits.
+ * Therefore, the driver makes value format according to the endianness of
+ * bytes type control element and writes data to codec.
  */
-अटल पूर्णांक nau8822_eq_put(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component =
+static int nau8822_eq_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	काष्ठा soc_bytes_ext *params = (व्योम *)kcontrol->निजी_value;
-	व्योम *data;
+	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
+	void *data;
 	u16 *val, value;
-	पूर्णांक i, reg, ret;
+	int i, reg, ret;
 
 	data = kmemdup(ucontrol->value.bytes.data,
 		params->max, GFP_KERNEL | GFP_DMA);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	val = (u16 *)data;
 	reg = NAU8822_REG_EQ1;
-	क्रम (i = 0; i < params->max / माप(u16); i++) अणु
-		/* conversion of 16-bit पूर्णांकegers between native CPU क्रमmat
-		 * and big endian क्रमmat
+	for (i = 0; i < params->max / sizeof(u16); i++) {
+		/* conversion of 16-bit integers between native CPU format
+		 * and big endian format
 		 */
 		value = be16_to_cpu(*(val + i));
-		ret = snd_soc_component_ग_लिखो(component, reg + i, value);
-		अगर (ret) अणु
+		ret = snd_soc_component_write(component, reg + i, value);
+		if (ret) {
 			dev_err(component->dev,
 			    "EQ configuration fail, register: %x ret: %d\n",
 			    reg + i, ret);
-			kमुक्त(data);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	kमुक्त(data);
+			kfree(data);
+			return ret;
+		}
+	}
+	kfree(data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर * स्थिर nau8822_companding[] = अणु
-	"Off", "NC", "u-law", "A-law"पूर्ण;
+static const char * const nau8822_companding[] = {
+	"Off", "NC", "u-law", "A-law"};
 
-अटल स्थिर काष्ठा soc_क्रमागत nau8822_companding_adc_क्रमागत =
+static const struct soc_enum nau8822_companding_adc_enum =
 	SOC_ENUM_SINGLE(NAU8822_REG_COMPANDING_CONTROL, NAU8822_ADCCM_SFT,
 		ARRAY_SIZE(nau8822_companding), nau8822_companding);
 
-अटल स्थिर काष्ठा soc_क्रमागत nau8822_companding_dac_क्रमागत =
+static const struct soc_enum nau8822_companding_dac_enum =
 	SOC_ENUM_SINGLE(NAU8822_REG_COMPANDING_CONTROL, NAU8822_DACCM_SFT,
 		ARRAY_SIZE(nau8822_companding), nau8822_companding);
 
-अटल स्थिर अक्षर * स्थिर nau8822_eqmode[] = अणु"Capture", "Playback"पूर्ण;
+static const char * const nau8822_eqmode[] = {"Capture", "Playback"};
 
-अटल स्थिर काष्ठा soc_क्रमागत nau8822_eqmode_क्रमागत =
+static const struct soc_enum nau8822_eqmode_enum =
 	SOC_ENUM_SINGLE(NAU8822_REG_EQ1, NAU8822_EQM_SFT,
 		ARRAY_SIZE(nau8822_eqmode), nau8822_eqmode);
 
-अटल स्थिर अक्षर * स्थिर nau8822_alc1[] = अणु"Off", "Right", "Left", "Both"पूर्ण;
-अटल स्थिर अक्षर * स्थिर nau8822_alc3[] = अणु"Normal", "Limiter"पूर्ण;
+static const char * const nau8822_alc1[] = {"Off", "Right", "Left", "Both"};
+static const char * const nau8822_alc3[] = {"Normal", "Limiter"};
 
-अटल स्थिर काष्ठा soc_क्रमागत nau8822_alc_enable_क्रमागत =
+static const struct soc_enum nau8822_alc_enable_enum =
 	SOC_ENUM_SINGLE(NAU8822_REG_ALC_CONTROL_1, NAU8822_ALCEN_SFT,
 		ARRAY_SIZE(nau8822_alc1), nau8822_alc1);
 
-अटल स्थिर काष्ठा soc_क्रमागत nau8822_alc_mode_क्रमागत =
+static const struct soc_enum nau8822_alc_mode_enum =
 	SOC_ENUM_SINGLE(NAU8822_REG_ALC_CONTROL_3, NAU8822_ALCM_SFT,
 		ARRAY_SIZE(nau8822_alc3), nau8822_alc3);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(digital_tlv, -12750, 50, 1);
-अटल स्थिर DECLARE_TLV_DB_SCALE(inpga_tlv, -1200, 75, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(spk_tlv, -5700, 100, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(pga_boost_tlv, 0, 2000, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(boost_tlv, -1500, 300, 1);
-अटल स्थिर DECLARE_TLV_DB_SCALE(limiter_tlv, 0, 100, 0);
+static const DECLARE_TLV_DB_SCALE(digital_tlv, -12750, 50, 1);
+static const DECLARE_TLV_DB_SCALE(inpga_tlv, -1200, 75, 0);
+static const DECLARE_TLV_DB_SCALE(spk_tlv, -5700, 100, 0);
+static const DECLARE_TLV_DB_SCALE(pga_boost_tlv, 0, 2000, 0);
+static const DECLARE_TLV_DB_SCALE(boost_tlv, -1500, 300, 1);
+static const DECLARE_TLV_DB_SCALE(limiter_tlv, 0, 100, 0);
 
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_snd_controls[] = अणु
-	SOC_ENUM("ADC Companding", nau8822_companding_adc_क्रमागत),
-	SOC_ENUM("DAC Companding", nau8822_companding_dac_क्रमागत),
+static const struct snd_kcontrol_new nau8822_snd_controls[] = {
+	SOC_ENUM("ADC Companding", nau8822_companding_adc_enum),
+	SOC_ENUM("DAC Companding", nau8822_companding_dac_enum),
 
-	SOC_ENUM("EQ Function", nau8822_eqmode_क्रमागत),
+	SOC_ENUM("EQ Function", nau8822_eqmode_enum),
 	SND_SOC_BYTES_EXT("EQ Parameters", 10,
 		  nau8822_eq_get, nau8822_eq_put),
 
@@ -315,8 +314,8 @@
 	SOC_SINGLE_TLV("DAC Limiter Volume",
 		NAU8822_REG_DAC_LIMITER_2, 0, 12, 0, limiter_tlv),
 
-	SOC_ENUM("ALC Mode", nau8822_alc_mode_क्रमागत),
-	SOC_ENUM("ALC Enable Switch", nau8822_alc_enable_क्रमागत),
+	SOC_ENUM("ALC Mode", nau8822_alc_mode_enum),
+	SOC_ENUM("ALC Enable Switch", nau8822_alc_enable_enum),
 	SOC_SINGLE("ALC Min Gain",
 		NAU8822_REG_ALC_CONTROL_1, 0, 7, 0),
 	SOC_SINGLE("ALC Max Gain",
@@ -380,10 +379,10 @@
 		NAU8822_REG_DAC_CONTROL, 5, 1, 0),
 	SOC_SINGLE("ADC 128x Oversampling Switch",
 		NAU8822_REG_ADC_CONTROL, 5, 1, 0),
-पूर्ण;
+};
 
 /* LMAIN and RMAIN Mixer */
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_left_out_mixer[] = अणु
+static const struct snd_kcontrol_new nau8822_left_out_mixer[] = {
 	SOC_DAPM_SINGLE("LINMIX Switch",
 		NAU8822_REG_LEFT_MIXER_CONTROL, 1, 1, 0),
 	SOC_DAPM_SINGLE("LAUX Switch",
@@ -392,9 +391,9 @@
 		NAU8822_REG_LEFT_MIXER_CONTROL, 0, 1, 0),
 	SOC_DAPM_SINGLE("RDAC Switch",
 		NAU8822_REG_OUTPUT_CONTROL, 5, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_right_out_mixer[] = अणु
+static const struct snd_kcontrol_new nau8822_right_out_mixer[] = {
 	SOC_DAPM_SINGLE("RINMIX Switch",
 		NAU8822_REG_RIGHT_MIXER_CONTROL, 1, 1, 0),
 	SOC_DAPM_SINGLE("RAUX Switch",
@@ -403,55 +402,55 @@
 		NAU8822_REG_RIGHT_MIXER_CONTROL, 0, 1, 0),
 	SOC_DAPM_SINGLE("LDAC Switch",
 		NAU8822_REG_OUTPUT_CONTROL, 6, 1, 0),
-पूर्ण;
+};
 
 /* AUX1 and AUX2 Mixer */
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_auxout1_mixer[] = अणु
+static const struct snd_kcontrol_new nau8822_auxout1_mixer[] = {
 	SOC_DAPM_SINGLE("RDAC Switch", NAU8822_REG_AUX1_MIXER, 0, 1, 0),
 	SOC_DAPM_SINGLE("RMIX Switch", NAU8822_REG_AUX1_MIXER, 1, 1, 0),
 	SOC_DAPM_SINGLE("RINMIX Switch", NAU8822_REG_AUX1_MIXER, 2, 1, 0),
 	SOC_DAPM_SINGLE("LDAC Switch", NAU8822_REG_AUX1_MIXER, 3, 1, 0),
 	SOC_DAPM_SINGLE("LMIX Switch", NAU8822_REG_AUX1_MIXER, 4, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_auxout2_mixer[] = अणु
+static const struct snd_kcontrol_new nau8822_auxout2_mixer[] = {
 	SOC_DAPM_SINGLE("LDAC Switch", NAU8822_REG_AUX2_MIXER, 0, 1, 0),
 	SOC_DAPM_SINGLE("LMIX Switch", NAU8822_REG_AUX2_MIXER, 1, 1, 0),
 	SOC_DAPM_SINGLE("LINMIX Switch", NAU8822_REG_AUX2_MIXER, 2, 1, 0),
 	SOC_DAPM_SINGLE("AUX1MIX Output Switch",
 		NAU8822_REG_AUX2_MIXER, 3, 1, 0),
-पूर्ण;
+};
 
 /* Input PGA */
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_left_input_mixer[] = अणु
+static const struct snd_kcontrol_new nau8822_left_input_mixer[] = {
 	SOC_DAPM_SINGLE("L2 Switch", NAU8822_REG_INPUT_CONTROL, 2, 1, 0),
 	SOC_DAPM_SINGLE("MicN Switch", NAU8822_REG_INPUT_CONTROL, 1, 1, 0),
 	SOC_DAPM_SINGLE("MicP Switch", NAU8822_REG_INPUT_CONTROL, 0, 1, 0),
-पूर्ण;
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_right_input_mixer[] = अणु
+};
+static const struct snd_kcontrol_new nau8822_right_input_mixer[] = {
 	SOC_DAPM_SINGLE("R2 Switch", NAU8822_REG_INPUT_CONTROL, 6, 1, 0),
 	SOC_DAPM_SINGLE("MicN Switch", NAU8822_REG_INPUT_CONTROL, 5, 1, 0),
 	SOC_DAPM_SINGLE("MicP Switch", NAU8822_REG_INPUT_CONTROL, 4, 1, 0),
-पूर्ण;
+};
 
 /* Loopback Switch */
-अटल स्थिर काष्ठा snd_kcontrol_new nau8822_loopback =
+static const struct snd_kcontrol_new nau8822_loopback =
 	SOC_DAPM_SINGLE("Switch", NAU8822_REG_COMPANDING_CONTROL,
 		NAU8822_ADDAP_SFT, 1, 0);
 
-अटल पूर्णांक check_mclk_select_pll(काष्ठा snd_soc_dapm_widget *source,
-			 काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_component *component =
+static int check_mclk_select_pll(struct snd_soc_dapm_widget *source,
+			 struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(source->dapm);
-	अचिन्हित पूर्णांक value;
+	unsigned int value;
 
-	value = snd_soc_component_पढ़ो(component, NAU8822_REG_CLOCKING);
+	value = snd_soc_component_read(component, NAU8822_REG_CLOCKING);
 
-	वापस (value & NAU8822_CLKM_MASK);
-पूर्ण
+	return (value & NAU8822_CLKM_MASK);
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget nau8822_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget nau8822_dapm_widgets[] = {
 	SND_SOC_DAPM_DAC("Left DAC", "Left HiFi Playback",
 		NAU8822_REG_POWER_MANAGEMENT_3, 0, 0),
 	SND_SOC_DAPM_DAC("Right DAC", "Right HiFi Playback",
@@ -478,34 +477,34 @@
 		3, 0, nau8822_right_input_mixer),
 
 	SND_SOC_DAPM_PGA("Left Boost Mixer",
-		NAU8822_REG_POWER_MANAGEMENT_2, 4, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_2, 4, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Boost Mixer",
-		NAU8822_REG_POWER_MANAGEMENT_2, 5, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_2, 5, 0, NULL, 0),
 
 	SND_SOC_DAPM_PGA("Left Capture PGA",
-		NAU8822_REG_LEFT_INP_PGA_CONTROL, 6, 1, शून्य, 0),
+		NAU8822_REG_LEFT_INP_PGA_CONTROL, 6, 1, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Capture PGA",
-		NAU8822_REG_RIGHT_INP_PGA_CONTROL, 6, 1, शून्य, 0),
+		NAU8822_REG_RIGHT_INP_PGA_CONTROL, 6, 1, NULL, 0),
 
 	SND_SOC_DAPM_PGA("Left Headphone Out",
-		NAU8822_REG_POWER_MANAGEMENT_2, 7, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_2, 7, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Headphone Out",
-		NAU8822_REG_POWER_MANAGEMENT_2, 8, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_2, 8, 0, NULL, 0),
 
 	SND_SOC_DAPM_PGA("Left Speaker Out",
-		 NAU8822_REG_POWER_MANAGEMENT_3, 6, 0, शून्य, 0),
+		 NAU8822_REG_POWER_MANAGEMENT_3, 6, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("Right Speaker Out",
-		NAU8822_REG_POWER_MANAGEMENT_3,	5, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_3,	5, 0, NULL, 0),
 
 	SND_SOC_DAPM_PGA("AUX1 Out",
-		NAU8822_REG_POWER_MANAGEMENT_3,	8, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_3,	8, 0, NULL, 0),
 	SND_SOC_DAPM_PGA("AUX2 Out",
-		NAU8822_REG_POWER_MANAGEMENT_3,	7, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_3,	7, 0, NULL, 0),
 
 	SND_SOC_DAPM_SUPPLY("Mic Bias",
-		NAU8822_REG_POWER_MANAGEMENT_1,	4, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_1,	4, 0, NULL, 0),
 	SND_SOC_DAPM_SUPPLY("PLL",
-		NAU8822_REG_POWER_MANAGEMENT_1,	5, 0, शून्य, 0),
+		NAU8822_REG_POWER_MANAGEMENT_1,	5, 0, NULL, 0),
 
 	SND_SOC_DAPM_SWITCH("Digital Loopback", SND_SOC_NOPM, 0, 0,
 		&nau8822_loopback),
@@ -524,234 +523,234 @@
 	SND_SOC_DAPM_OUTPUT("RSPK"),
 	SND_SOC_DAPM_OUTPUT("AUXOUT1"),
 	SND_SOC_DAPM_OUTPUT("AUXOUT2"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route nau8822_dapm_routes[] = अणु
-	अणु"Right DAC", शून्य, "PLL", check_mclk_select_pllपूर्ण,
-	अणु"Left DAC", शून्य, "PLL", check_mclk_select_pllपूर्ण,
+static const struct snd_soc_dapm_route nau8822_dapm_routes[] = {
+	{"Right DAC", NULL, "PLL", check_mclk_select_pll},
+	{"Left DAC", NULL, "PLL", check_mclk_select_pll},
 
 	/* LMAIN and RMAIN Mixer */
-	अणु"Right Output Mixer", "LDAC Switch", "Left DAC"पूर्ण,
-	अणु"Right Output Mixer", "RDAC Switch", "Right DAC"पूर्ण,
-	अणु"Right Output Mixer", "RAUX Switch", "RAUX"पूर्ण,
-	अणु"Right Output Mixer", "RINMIX Switch", "Right Boost Mixer"पूर्ण,
+	{"Right Output Mixer", "LDAC Switch", "Left DAC"},
+	{"Right Output Mixer", "RDAC Switch", "Right DAC"},
+	{"Right Output Mixer", "RAUX Switch", "RAUX"},
+	{"Right Output Mixer", "RINMIX Switch", "Right Boost Mixer"},
 
-	अणु"Left Output Mixer", "LDAC Switch", "Left DAC"पूर्ण,
-	अणु"Left Output Mixer", "RDAC Switch", "Right DAC"पूर्ण,
-	अणु"Left Output Mixer", "LAUX Switch", "LAUX"पूर्ण,
-	अणु"Left Output Mixer", "LINMIX Switch", "Left Boost Mixer"पूर्ण,
+	{"Left Output Mixer", "LDAC Switch", "Left DAC"},
+	{"Left Output Mixer", "RDAC Switch", "Right DAC"},
+	{"Left Output Mixer", "LAUX Switch", "LAUX"},
+	{"Left Output Mixer", "LINMIX Switch", "Left Boost Mixer"},
 
 	/* AUX1 and AUX2 Mixer */
-	अणु"AUX1 Output Mixer", "RDAC Switch", "Right DAC"पूर्ण,
-	अणु"AUX1 Output Mixer", "RMIX Switch", "Right Output Mixer"पूर्ण,
-	अणु"AUX1 Output Mixer", "RINMIX Switch", "Right Boost Mixer"पूर्ण,
-	अणु"AUX1 Output Mixer", "LDAC Switch", "Left DAC"पूर्ण,
-	अणु"AUX1 Output Mixer", "LMIX Switch", "Left Output Mixer"पूर्ण,
+	{"AUX1 Output Mixer", "RDAC Switch", "Right DAC"},
+	{"AUX1 Output Mixer", "RMIX Switch", "Right Output Mixer"},
+	{"AUX1 Output Mixer", "RINMIX Switch", "Right Boost Mixer"},
+	{"AUX1 Output Mixer", "LDAC Switch", "Left DAC"},
+	{"AUX1 Output Mixer", "LMIX Switch", "Left Output Mixer"},
 
-	अणु"AUX2 Output Mixer", "LDAC Switch", "Left DAC"पूर्ण,
-	अणु"AUX2 Output Mixer", "LMIX Switch", "Left Output Mixer"पूर्ण,
-	अणु"AUX2 Output Mixer", "LINMIX Switch", "Left Boost Mixer"पूर्ण,
-	अणु"AUX2 Output Mixer", "AUX1MIX Output Switch", "AUX1 Output Mixer"पूर्ण,
+	{"AUX2 Output Mixer", "LDAC Switch", "Left DAC"},
+	{"AUX2 Output Mixer", "LMIX Switch", "Left Output Mixer"},
+	{"AUX2 Output Mixer", "LINMIX Switch", "Left Boost Mixer"},
+	{"AUX2 Output Mixer", "AUX1MIX Output Switch", "AUX1 Output Mixer"},
 
-	/* Outमाला_दो */
-	अणु"Right Headphone Out", शून्य, "Right Output Mixer"पूर्ण,
-	अणु"RHP", शून्य, "Right Headphone Out"पूर्ण,
+	/* Outputs */
+	{"Right Headphone Out", NULL, "Right Output Mixer"},
+	{"RHP", NULL, "Right Headphone Out"},
 
-	अणु"Left Headphone Out", शून्य, "Left Output Mixer"पूर्ण,
-	अणु"LHP", शून्य, "Left Headphone Out"पूर्ण,
+	{"Left Headphone Out", NULL, "Left Output Mixer"},
+	{"LHP", NULL, "Left Headphone Out"},
 
-	अणु"Right Speaker Out", शून्य, "Right Output Mixer"पूर्ण,
-	अणु"RSPK", शून्य, "Right Speaker Out"पूर्ण,
+	{"Right Speaker Out", NULL, "Right Output Mixer"},
+	{"RSPK", NULL, "Right Speaker Out"},
 
-	अणु"Left Speaker Out", शून्य, "Left Output Mixer"पूर्ण,
-	अणु"LSPK", शून्य, "Left Speaker Out"पूर्ण,
+	{"Left Speaker Out", NULL, "Left Output Mixer"},
+	{"LSPK", NULL, "Left Speaker Out"},
 
-	अणु"AUX1 Out", शून्य, "AUX1 Output Mixer"पूर्ण,
-	अणु"AUX2 Out", शून्य, "AUX2 Output Mixer"पूर्ण,
-	अणु"AUXOUT1", शून्य, "AUX1 Out"पूर्ण,
-	अणु"AUXOUT2", शून्य, "AUX2 Out"पूर्ण,
+	{"AUX1 Out", NULL, "AUX1 Output Mixer"},
+	{"AUX2 Out", NULL, "AUX2 Output Mixer"},
+	{"AUXOUT1", NULL, "AUX1 Out"},
+	{"AUXOUT2", NULL, "AUX2 Out"},
 
 	/* Boost Mixer */
-	अणु"Right ADC", शून्य, "PLL", check_mclk_select_pllपूर्ण,
-	अणु"Left ADC", शून्य, "PLL", check_mclk_select_pllपूर्ण,
+	{"Right ADC", NULL, "PLL", check_mclk_select_pll},
+	{"Left ADC", NULL, "PLL", check_mclk_select_pll},
 
-	अणु"Right ADC", शून्य, "Right Boost Mixer"पूर्ण,
+	{"Right ADC", NULL, "Right Boost Mixer"},
 
-	अणु"Right Boost Mixer", शून्य, "RAUX"पूर्ण,
-	अणु"Right Boost Mixer", शून्य, "Right Capture PGA"पूर्ण,
-	अणु"Right Boost Mixer", शून्य, "R2"पूर्ण,
+	{"Right Boost Mixer", NULL, "RAUX"},
+	{"Right Boost Mixer", NULL, "Right Capture PGA"},
+	{"Right Boost Mixer", NULL, "R2"},
 
-	अणु"Left ADC", शून्य, "Left Boost Mixer"पूर्ण,
+	{"Left ADC", NULL, "Left Boost Mixer"},
 
-	अणु"Left Boost Mixer", शून्य, "LAUX"पूर्ण,
-	अणु"Left Boost Mixer", शून्य, "Left Capture PGA"पूर्ण,
-	अणु"Left Boost Mixer", शून्य, "L2"पूर्ण,
+	{"Left Boost Mixer", NULL, "LAUX"},
+	{"Left Boost Mixer", NULL, "Left Capture PGA"},
+	{"Left Boost Mixer", NULL, "L2"},
 
 	/* Input PGA */
-	अणु"Right Capture PGA", शून्य, "Right Input Mixer"पूर्ण,
-	अणु"Left Capture PGA", शून्य, "Left Input Mixer"पूर्ण,
+	{"Right Capture PGA", NULL, "Right Input Mixer"},
+	{"Left Capture PGA", NULL, "Left Input Mixer"},
 
 	/* Enable Microphone Power */
-	अणु"Right Capture PGA", शून्य, "Mic Bias"पूर्ण,
-	अणु"Left Capture PGA", शून्य, "Mic Bias"पूर्ण,
+	{"Right Capture PGA", NULL, "Mic Bias"},
+	{"Left Capture PGA", NULL, "Mic Bias"},
 
-	अणु"Right Input Mixer", "R2 Switch", "R2"पूर्ण,
-	अणु"Right Input Mixer", "MicN Switch", "RMICN"पूर्ण,
-	अणु"Right Input Mixer", "MicP Switch", "RMICP"पूर्ण,
+	{"Right Input Mixer", "R2 Switch", "R2"},
+	{"Right Input Mixer", "MicN Switch", "RMICN"},
+	{"Right Input Mixer", "MicP Switch", "RMICP"},
 
-	अणु"Left Input Mixer", "L2 Switch", "L2"पूर्ण,
-	अणु"Left Input Mixer", "MicN Switch", "LMICN"पूर्ण,
-	अणु"Left Input Mixer", "MicP Switch", "LMICP"पूर्ण,
+	{"Left Input Mixer", "L2 Switch", "L2"},
+	{"Left Input Mixer", "MicN Switch", "LMICN"},
+	{"Left Input Mixer", "MicP Switch", "LMICP"},
 
 	/* Digital Loopback */
-	अणु"Digital Loopback", "Switch", "Left ADC"पूर्ण,
-	अणु"Digital Loopback", "Switch", "Right ADC"पूर्ण,
-	अणु"Left DAC", शून्य, "Digital Loopback"पूर्ण,
-	अणु"Right DAC", शून्य, "Digital Loopback"पूर्ण,
-पूर्ण;
+	{"Digital Loopback", "Switch", "Left ADC"},
+	{"Digital Loopback", "Switch", "Right ADC"},
+	{"Left DAC", NULL, "Digital Loopback"},
+	{"Right DAC", NULL, "Digital Loopback"},
+};
 
-अटल पूर्णांक nau8822_set_dai_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-				 अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+static int nau8822_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
+				 unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
 
-	nau8822->भाग_id = clk_id;
+	nau8822->div_id = clk_id;
 	nau8822->sysclk = freq;
 	dev_dbg(component->dev, "master sysclk %dHz, source %s\n", freq,
 		clk_id == NAU8822_CLK_PLL ? "PLL" : "MCLK");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_calc_pll(अचिन्हित पूर्णांक pll_in, अचिन्हित पूर्णांक fs,
-				काष्ठा nau8822_pll *pll_param)
-अणु
+static int nau8822_calc_pll(unsigned int pll_in, unsigned int fs,
+				struct nau8822_pll *pll_param)
+{
 	u64 f2, f2_max, pll_ratio;
-	पूर्णांक i, scal_sel;
+	int i, scal_sel;
 
-	अगर (pll_in > NAU_PLL_REF_MAX || pll_in < NAU_PLL_REF_MIN)
-		वापस -EINVAL;
+	if (pll_in > NAU_PLL_REF_MAX || pll_in < NAU_PLL_REF_MIN)
+		return -EINVAL;
 	f2_max = 0;
 	scal_sel = ARRAY_SIZE(nau8822_mclk_scaler);
 
-	क्रम (i = 0; i < scal_sel; i++) अणु
+	for (i = 0; i < scal_sel; i++) {
 		f2 = 256 * fs * 4 * nau8822_mclk_scaler[i] / 10;
-		अगर (f2 > NAU_PLL_FREQ_MIN && f2 < NAU_PLL_FREQ_MAX &&
-			f2_max < f2) अणु
+		if (f2 > NAU_PLL_FREQ_MIN && f2 < NAU_PLL_FREQ_MAX &&
+			f2_max < f2) {
 			f2_max = f2;
 			scal_sel = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ARRAY_SIZE(nau8822_mclk_scaler) == scal_sel)
-		वापस -EINVAL;
+	if (ARRAY_SIZE(nau8822_mclk_scaler) == scal_sel)
+		return -EINVAL;
 	pll_param->mclk_scaler = scal_sel;
 	f2 = f2_max;
 
-	/* Calculate the PLL 4-bit पूर्णांकeger input and the PLL 24-bit fractional
+	/* Calculate the PLL 4-bit integer input and the PLL 24-bit fractional
 	 * input; round up the 24+4bit.
 	 */
-	pll_ratio = भाग_u64(f2 << 28, pll_in);
+	pll_ratio = div_u64(f2 << 28, pll_in);
 	pll_param->pre_factor = 0;
-	अगर (((pll_ratio >> 28) & 0xF) < NAU_PLL_OPTOP_MIN) अणु
+	if (((pll_ratio >> 28) & 0xF) < NAU_PLL_OPTOP_MIN) {
 		pll_ratio <<= 1;
 		pll_param->pre_factor = 1;
-	पूर्ण
-	pll_param->pll_पूर्णांक = (pll_ratio >> 28) & 0xF;
+	}
+	pll_param->pll_int = (pll_ratio >> 28) & 0xF;
 	pll_param->pll_frac = ((pll_ratio & 0xFFFFFFF) >> 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_config_clkभाग(काष्ठा snd_soc_dai *dai, पूर्णांक भाग, पूर्णांक rate)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
-	काष्ठा nau8822_pll *pll = &nau8822->pll;
-	पूर्णांक i, sclk, imclk;
+static int nau8822_config_clkdiv(struct snd_soc_dai *dai, int div, int rate)
+{
+	struct snd_soc_component *component = dai->component;
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+	struct nau8822_pll *pll = &nau8822->pll;
+	int i, sclk, imclk;
 
-	चयन (nau8822->भाग_id) अणु
-	हाल NAU8822_CLK_MCLK:
-		/* Configure the master घड़ी prescaler भाग to make प्रणाली
-		 * घड़ी to approximate the पूर्णांकernal master घड़ी (IMCLK);
+	switch (nau8822->div_id) {
+	case NAU8822_CLK_MCLK:
+		/* Configure the master clock prescaler div to make system
+		 * clock to approximate the internal master clock (IMCLK);
 		 * and large or equal to IMCLK.
 		 */
-		भाग = 0;
+		div = 0;
 		imclk = rate * 256;
-		क्रम (i = 1; i < ARRAY_SIZE(nau8822_mclk_scaler); i++) अणु
+		for (i = 1; i < ARRAY_SIZE(nau8822_mclk_scaler); i++) {
 			sclk = (nau8822->sysclk * 10) /	nau8822_mclk_scaler[i];
-			अगर (sclk < imclk)
-				अवरोध;
-			भाग = i;
-		पूर्ण
+			if (sclk < imclk)
+				break;
+			div = i;
+		}
 		dev_dbg(component->dev, "master clock prescaler %x for fs %d\n",
-			भाग, rate);
+			div, rate);
 
-		/* master घड़ी from MCLK and disable PLL */
+		/* master clock from MCLK and disable PLL */
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_CLOCKING, NAU8822_MCLKSEL_MASK,
-			(भाग << NAU8822_MCLKSEL_SFT));
+			(div << NAU8822_MCLKSEL_SFT));
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_CLOCKING, NAU8822_CLKM_MASK,
 			NAU8822_CLKM_MCLK);
-		अवरोध;
+		break;
 
-	हाल NAU8822_CLK_PLL:
-		/* master घड़ी from PLL and enable PLL */
-		अगर (pll->mclk_scaler != भाग) अणु
+	case NAU8822_CLK_PLL:
+		/* master clock from PLL and enable PLL */
+		if (pll->mclk_scaler != div) {
 			dev_err(component->dev,
 			"master clock prescaler not meet PLL parameters\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_CLOCKING, NAU8822_MCLKSEL_MASK,
-			(भाग << NAU8822_MCLKSEL_SFT));
+			(div << NAU8822_MCLKSEL_SFT));
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_CLOCKING, NAU8822_CLKM_MASK,
 			NAU8822_CLKM_PLL);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_set_pll(काष्ठा snd_soc_dai *dai, पूर्णांक pll_id, पूर्णांक source,
-				अचिन्हित पूर्णांक freq_in, अचिन्हित पूर्णांक freq_out)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
-	काष्ठा nau8822_pll *pll_param = &nau8822->pll;
-	पूर्णांक ret, fs;
+static int nau8822_set_pll(struct snd_soc_dai *dai, int pll_id, int source,
+				unsigned int freq_in, unsigned int freq_out)
+{
+	struct snd_soc_component *component = dai->component;
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+	struct nau8822_pll *pll_param = &nau8822->pll;
+	int ret, fs;
 
 	fs = freq_out / 256;
 
 	ret = nau8822_calc_pll(freq_in, fs, pll_param);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(component->dev, "Unsupported input clock %d\n",
 			freq_in);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(component->dev,
 		"pll_int=%x pll_frac=%x mclk_scaler=%x pre_factor=%x\n",
-		pll_param->pll_पूर्णांक, pll_param->pll_frac,
+		pll_param->pll_int, pll_param->pll_frac,
 		pll_param->mclk_scaler, pll_param->pre_factor);
 
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_PLL_N, NAU8822_PLLMCLK_DIV2 | NAU8822_PLLN_MASK,
 		(pll_param->pre_factor ? NAU8822_PLLMCLK_DIV2 : 0) |
-		pll_param->pll_पूर्णांक);
-	snd_soc_component_ग_लिखो(component,
+		pll_param->pll_int);
+	snd_soc_component_write(component,
 		NAU8822_REG_PLL_K1, (pll_param->pll_frac >> NAU8822_PLLK1_SFT) &
 		NAU8822_PLLK1_MASK);
-	snd_soc_component_ग_लिखो(component,
+	snd_soc_component_write(component,
 		NAU8822_REG_PLL_K2, (pll_param->pll_frac >> NAU8822_PLLK2_SFT) &
 		NAU8822_PLLK2_MASK);
-	snd_soc_component_ग_लिखो(component,
+	snd_soc_component_write(component,
 		NAU8822_REG_PLL_K3, pll_param->pll_frac & NAU8822_PLLK3_MASK);
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_CLOCKING, NAU8822_MCLKSEL_MASK,
@@ -759,58 +758,58 @@
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_CLOCKING, NAU8822_CLKM_MASK, NAU8822_CLKM_PLL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
+static int nau8822_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = dai->component;
 	u16 ctrl1_val = 0, ctrl2_val = 0;
 
 	dev_dbg(component->dev, "%s\n", __func__);
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBM_CFM:
 		ctrl2_val |= 1;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFS:
 		ctrl2_val &= ~1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		ctrl1_val |= 0x10;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		ctrl1_val |= 0x8;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A:
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
 		ctrl1_val |= 0x18;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_IF:
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_IF:
 		ctrl1_val |= 0x180;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
 		ctrl1_val |= 0x100;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_IF:
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
 		ctrl1_val |= 0x80;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_AUDIO_INTERFACE,
@@ -819,211 +818,211 @@
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_CLOCKING, NAU8822_CLKIOEN_MASK, ctrl2_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
-	पूर्णांक val_len = 0, val_rate = 0;
-	अचिन्हित पूर्णांक ctrl_val, bclk_fs, bclk_भाग;
+static int nau8822_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+	int val_len = 0, val_rate = 0;
+	unsigned int ctrl_val, bclk_fs, bclk_div;
 
-	/* make BCLK and LRC भागide configuration अगर the codec as master. */
-	ctrl_val = snd_soc_component_पढ़ो(component, NAU8822_REG_CLOCKING);
-	अगर (ctrl_val & NAU8822_CLK_MASTER) अणु
+	/* make BCLK and LRC divide configuration if the codec as master. */
+	ctrl_val = snd_soc_component_read(component, NAU8822_REG_CLOCKING);
+	if (ctrl_val & NAU8822_CLK_MASTER) {
 		/* get the bclk and fs ratio */
 		bclk_fs = snd_soc_params_to_bclk(params) / params_rate(params);
-		अगर (bclk_fs <= 32)
-			bclk_भाग = NAU8822_BCLKDIV_8;
-		अन्यथा अगर (bclk_fs <= 64)
-			bclk_भाग = NAU8822_BCLKDIV_4;
-		अन्यथा अगर (bclk_fs <= 128)
-			bclk_भाग = NAU8822_BCLKDIV_2;
-		अन्यथा
-			वापस -EINVAL;
+		if (bclk_fs <= 32)
+			bclk_div = NAU8822_BCLKDIV_8;
+		else if (bclk_fs <= 64)
+			bclk_div = NAU8822_BCLKDIV_4;
+		else if (bclk_fs <= 128)
+			bclk_div = NAU8822_BCLKDIV_2;
+		else
+			return -EINVAL;
 		snd_soc_component_update_bits(component, NAU8822_REG_CLOCKING,
-				NAU8822_BCLKSEL_MASK, bclk_भाग);
-	पूर्ण
+				NAU8822_BCLKSEL_MASK, bclk_div);
+	}
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S20_3LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S20_3LE:
 		val_len |= NAU8822_WLEN_20;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		val_len |= NAU8822_WLEN_24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
 		val_len |= NAU8822_WLEN_32;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (params_rate(params)) अणु
-	हाल 8000:
+	switch (params_rate(params)) {
+	case 8000:
 		val_rate |= NAU8822_SMPLR_8K;
-		अवरोध;
-	हाल 11025:
+		break;
+	case 11025:
 		val_rate |= NAU8822_SMPLR_12K;
-		अवरोध;
-	हाल 16000:
+		break;
+	case 16000:
 		val_rate |= NAU8822_SMPLR_16K;
-		अवरोध;
-	हाल 22050:
+		break;
+	case 22050:
 		val_rate |= NAU8822_SMPLR_24K;
-		अवरोध;
-	हाल 32000:
+		break;
+	case 32000:
 		val_rate |= NAU8822_SMPLR_32K;
-		अवरोध;
-	हाल 44100:
-	हाल 48000:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case 44100:
+	case 48000:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_AUDIO_INTERFACE, NAU8822_WLEN_MASK, val_len);
 	snd_soc_component_update_bits(component,
 		NAU8822_REG_ADDITIONAL_CONTROL, NAU8822_SMPLR_MASK, val_rate);
 
-	/* If the master घड़ी is from MCLK, provide the runसमय FS क्रम driver
-	 * to get the master घड़ी prescaler configuration.
+	/* If the master clock is from MCLK, provide the runtime FS for driver
+	 * to get the master clock prescaler configuration.
 	 */
-	अगर (nau8822->भाग_id == NAU8822_CLK_MCLK)
-		nau8822_config_clkभाग(dai, 0, params_rate(params));
+	if (nau8822->div_id == NAU8822_CLK_MCLK)
+		nau8822_config_clkdiv(dai, 0, params_rate(params));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
+static int nau8822_mute(struct snd_soc_dai *dai, int mute, int direction)
+{
+	struct snd_soc_component *component = dai->component;
 
 	dev_dbg(component->dev, "%s: %d\n", __func__, mute);
 
-	अगर (mute)
+	if (mute)
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_DAC_CONTROL, 0x40, 0x40);
-	अन्यथा
+	else
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_DAC_CONTROL, 0x40, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-	हाल SND_SOC_BIAS_PREPARE:
+static int nau8822_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+	case SND_SOC_BIAS_PREPARE:
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_POWER_MANAGEMENT_1,
 			NAU8822_REFIMP_MASK, NAU8822_REFIMP_80K);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
+	case SND_SOC_BIAS_STANDBY:
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_POWER_MANAGEMENT_1,
 			NAU8822_IOBUF_EN | NAU8822_ABIAS_EN,
 			NAU8822_IOBUF_EN | NAU8822_ABIAS_EN);
 
-		अगर (snd_soc_component_get_bias_level(component) ==
-			SND_SOC_BIAS_OFF) अणु
+		if (snd_soc_component_get_bias_level(component) ==
+			SND_SOC_BIAS_OFF) {
 			snd_soc_component_update_bits(component,
 				NAU8822_REG_POWER_MANAGEMENT_1,
 				NAU8822_REFIMP_MASK, NAU8822_REFIMP_3K);
 			mdelay(100);
-		पूर्ण
+		}
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_POWER_MANAGEMENT_1,
 			NAU8822_REFIMP_MASK, NAU8822_REFIMP_300K);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
-		snd_soc_component_ग_लिखो(component,
+	case SND_SOC_BIAS_OFF:
+		snd_soc_component_write(component,
 			NAU8822_REG_POWER_MANAGEMENT_1, 0);
-		snd_soc_component_ग_लिखो(component,
+		snd_soc_component_write(component,
 			NAU8822_REG_POWER_MANAGEMENT_2, 0);
-		snd_soc_component_ग_लिखो(component,
+		snd_soc_component_write(component,
 			NAU8822_REG_POWER_MANAGEMENT_3, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev_dbg(component->dev, "%s: %d\n", __func__, level);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा NAU8822_RATES (SNDRV_PCM_RATE_8000_48000)
+#define NAU8822_RATES (SNDRV_PCM_RATE_8000_48000)
 
-#घोषणा NAU8822_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
+#define NAU8822_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
 	SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops nau8822_dai_ops = अणु
+static const struct snd_soc_dai_ops nau8822_dai_ops = {
 	.hw_params	= nau8822_hw_params,
 	.mute_stream	= nau8822_mute,
 	.set_fmt	= nau8822_set_dai_fmt,
 	.set_sysclk	= nau8822_set_dai_sysclk,
 	.set_pll	= nau8822_set_pll,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver nau8822_dai = अणु
+static struct snd_soc_dai_driver nau8822_dai = {
 	.name = "nau8822-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = NAU8822_RATES,
-		.क्रमmats = NAU8822_FORMATS,
-	पूर्ण,
-	.capture = अणु
+		.formats = NAU8822_FORMATS,
+	},
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = NAU8822_RATES,
-		.क्रमmats = NAU8822_FORMATS,
-	पूर्ण,
+		.formats = NAU8822_FORMATS,
+	},
 	.ops = &nau8822_dai_ops,
 	.symmetric_rate = 1,
-पूर्ण;
+};
 
-अटल पूर्णांक nau8822_suspend(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+static int nau8822_suspend(struct snd_soc_component *component)
+{
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
 
-	snd_soc_component_क्रमce_bias_level(component, SND_SOC_BIAS_OFF);
+	snd_soc_component_force_bias_level(component, SND_SOC_BIAS_OFF);
 
 	regcache_mark_dirty(nau8822->regmap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nau8822_resume(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
+static int nau8822_resume(struct snd_soc_component *component)
+{
+	struct nau8822 *nau8822 = snd_soc_component_get_drvdata(component);
 
 	regcache_sync(nau8822->regmap);
 
-	snd_soc_component_क्रमce_bias_level(component, SND_SOC_BIAS_STANDBY);
+	snd_soc_component_force_bias_level(component, SND_SOC_BIAS_STANDBY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * These रेजिस्टरs contain an "update" bit - bit 8. This means, क्रम example,
- * that one can ग_लिखो new DAC digital volume क्रम both channels, but only when
- * the update bit is set, will also the volume be updated - simultaneously क्रम
+ * These registers contain an "update" bit - bit 8. This means, for example,
+ * that one can write new DAC digital volume for both channels, but only when
+ * the update bit is set, will also the volume be updated - simultaneously for
  * both channels.
  */
-अटल स्थिर पूर्णांक update_reg[] = अणु
+static const int update_reg[] = {
 	NAU8822_REG_LEFT_DAC_DIGITAL_VOLUME,
 	NAU8822_REG_RIGHT_DAC_DIGITAL_VOLUME,
 	NAU8822_REG_LEFT_ADC_DIGITAL_VOLUME,
@@ -1034,117 +1033,117 @@
 	NAU8822_REG_RHP_VOLUME,
 	NAU8822_REG_LSPKOUT_VOLUME,
 	NAU8822_REG_RSPKOUT_VOLUME,
-पूर्ण;
+};
 
-अटल पूर्णांक nau8822_probe(काष्ठा snd_soc_component *component)
-अणु
-	पूर्णांक i;
+static int nau8822_probe(struct snd_soc_component *component)
+{
+	int i;
 
 	/*
-	 * Set the update bit in all रेजिस्टरs, that have one. This way all
-	 * ग_लिखोs to those रेजिस्टरs will also cause the update bit to be
+	 * Set the update bit in all registers, that have one. This way all
+	 * writes to those registers will also cause the update bit to be
 	 * written.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(update_reg); i++)
+	for (i = 0; i < ARRAY_SIZE(update_reg); i++)
 		snd_soc_component_update_bits(component,
 			update_reg[i], 0x100, 0x100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_nau8822 = अणु
+static const struct snd_soc_component_driver soc_component_dev_nau8822 = {
 	.probe				= nau8822_probe,
 	.suspend			= nau8822_suspend,
 	.resume				= nau8822_resume,
 	.set_bias_level			= nau8822_set_bias_level,
 	.controls			= nau8822_snd_controls,
 	.num_controls			= ARRAY_SIZE(nau8822_snd_controls),
-	.dapm_widमाला_लो			= nau8822_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो		= ARRAY_SIZE(nau8822_dapm_widमाला_लो),
+	.dapm_widgets			= nau8822_dapm_widgets,
+	.num_dapm_widgets		= ARRAY_SIZE(nau8822_dapm_widgets),
 	.dapm_routes			= nau8822_dapm_routes,
 	.num_dapm_routes		= ARRAY_SIZE(nau8822_dapm_routes),
 	.idle_bias_on			= 1,
-	.use_pmकरोwn_समय		= 1,
+	.use_pmdown_time		= 1,
 	.endianness			= 1,
 	.non_legacy_dai_naming		= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config nau8822_regmap_config = अणु
+static const struct regmap_config nau8822_regmap_config = {
 	.reg_bits = 7,
 	.val_bits = 9,
 
-	.max_रेजिस्टर = NAU8822_REG_MAX_REGISTER,
-	.अस्थिर_reg = nau8822_अस्थिर,
+	.max_register = NAU8822_REG_MAX_REGISTER,
+	.volatile_reg = nau8822_volatile,
 
-	.पढ़ोable_reg = nau8822_पढ़ोable_reg,
-	.ग_लिखोable_reg = nau8822_ग_लिखोable_reg,
+	.readable_reg = nau8822_readable_reg,
+	.writeable_reg = nau8822_writeable_reg,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_शेषs = nau8822_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(nau8822_reg_शेषs),
-पूर्ण;
+	.reg_defaults = nau8822_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(nau8822_reg_defaults),
+};
 
-अटल पूर्णांक nau8822_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &i2c->dev;
-	काष्ठा nau8822 *nau8822 = dev_get_platdata(dev);
-	पूर्णांक ret;
+static int nau8822_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct device *dev = &i2c->dev;
+	struct nau8822 *nau8822 = dev_get_platdata(dev);
+	int ret;
 
-	अगर (!nau8822) अणु
-		nau8822 = devm_kzalloc(dev, माप(*nau8822), GFP_KERNEL);
-		अगर (nau8822 == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!nau8822) {
+		nau8822 = devm_kzalloc(dev, sizeof(*nau8822), GFP_KERNEL);
+		if (nau8822 == NULL)
+			return -ENOMEM;
+	}
 	i2c_set_clientdata(i2c, nau8822);
 
 	nau8822->regmap = devm_regmap_init_i2c(i2c, &nau8822_regmap_config);
-	अगर (IS_ERR(nau8822->regmap)) अणु
+	if (IS_ERR(nau8822->regmap)) {
 		ret = PTR_ERR(nau8822->regmap);
 		dev_err(&i2c->dev, "Failed to allocate regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	nau8822->dev = dev;
 
 	/* Reset the codec */
-	ret = regmap_ग_लिखो(nau8822->regmap, NAU8822_REG_RESET, 0x00);
-	अगर (ret != 0) अणु
+	ret = regmap_write(nau8822->regmap, NAU8822_REG_RESET, 0x00);
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to issue reset: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_snd_soc_रेजिस्टर_component(dev, &soc_component_dev_nau8822,
+	ret = devm_snd_soc_register_component(dev, &soc_component_dev_nau8822,
 						&nau8822_dai, 1);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(&i2c->dev, "Failed to register CODEC: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id nau8822_i2c_id[] = अणु
-	अणु "nau8822", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id nau8822_i2c_id[] = {
+	{ "nau8822", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, nau8822_i2c_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id nau8822_of_match[] = अणु
-	अणु .compatible = "nuvoton,nau8822", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id nau8822_of_match[] = {
+	{ .compatible = "nuvoton,nau8822", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, nau8822_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver nau8822_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver nau8822_i2c_driver = {
+	.driver = {
 		.name = "nau8822",
 		.of_match_table = of_match_ptr(nau8822_of_match),
-	पूर्ण,
+	},
 	.probe =    nau8822_i2c_probe,
 	.id_table = nau8822_i2c_id,
-पूर्ण;
+};
 module_i2c_driver(nau8822_i2c_driver);
 
 MODULE_DESCRIPTION("ASoC NAU8822 codec driver");

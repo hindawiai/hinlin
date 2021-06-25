@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * IUCV special message driver
  *
@@ -8,174 +7,174 @@
  * Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <net/iucv/iucv.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश "smsgiucv.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <net/iucv/iucv.h>
+#include <asm/cpcmd.h>
+#include <asm/ebcdic.h>
+#include "smsgiucv.h"
 
-काष्ठा smsg_callback अणु
-	काष्ठा list_head list;
-	स्थिर अक्षर *prefix;
-	पूर्णांक len;
-	व्योम (*callback)(स्थिर अक्षर *from, अक्षर *str);
-पूर्ण;
+struct smsg_callback {
+	struct list_head list;
+	const char *prefix;
+	int len;
+	void (*callback)(const char *from, char *str);
+};
 
 MODULE_AUTHOR
    ("(C) 2003 IBM Corporation by Martin Schwidefsky (schwidefsky@de.ibm.com)");
 MODULE_DESCRIPTION ("Linux for S/390 IUCV special message driver");
 
-अटल काष्ठा iucv_path *smsg_path;
+static struct iucv_path *smsg_path;
 
-अटल DEFINE_SPINLOCK(smsg_list_lock);
-अटल LIST_HEAD(smsg_list);
+static DEFINE_SPINLOCK(smsg_list_lock);
+static LIST_HEAD(smsg_list);
 
-अटल पूर्णांक smsg_path_pending(काष्ठा iucv_path *, u8 *, u8 *);
-अटल व्योम smsg_message_pending(काष्ठा iucv_path *, काष्ठा iucv_message *);
+static int smsg_path_pending(struct iucv_path *, u8 *, u8 *);
+static void smsg_message_pending(struct iucv_path *, struct iucv_message *);
 
-अटल काष्ठा iucv_handler smsg_handler = अणु
+static struct iucv_handler smsg_handler = {
 	.path_pending	 = smsg_path_pending,
 	.message_pending = smsg_message_pending,
-पूर्ण;
+};
 
-अटल पूर्णांक smsg_path_pending(काष्ठा iucv_path *path, u8 *ipvmid, u8 *ipuser)
-अणु
-	अगर (म_भेदन(ipvmid, "*MSG    ", 8) != 0)
-		वापस -EINVAL;
+static int smsg_path_pending(struct iucv_path *path, u8 *ipvmid, u8 *ipuser)
+{
+	if (strncmp(ipvmid, "*MSG    ", 8) != 0)
+		return -EINVAL;
 	/* Path pending from *MSG. */
-	वापस iucv_path_accept(path, &smsg_handler, "SMSGIUCV        ", शून्य);
-पूर्ण
+	return iucv_path_accept(path, &smsg_handler, "SMSGIUCV        ", NULL);
+}
 
-अटल व्योम smsg_message_pending(काष्ठा iucv_path *path,
-				 काष्ठा iucv_message *msg)
-अणु
-	काष्ठा smsg_callback *cb;
-	अचिन्हित अक्षर *buffer;
-	अचिन्हित अक्षर sender[9];
-	पूर्णांक rc, i;
+static void smsg_message_pending(struct iucv_path *path,
+				 struct iucv_message *msg)
+{
+	struct smsg_callback *cb;
+	unsigned char *buffer;
+	unsigned char sender[9];
+	int rc, i;
 
-	buffer = kदो_स्मृति(msg->length + 1, GFP_ATOMIC | GFP_DMA);
-	अगर (!buffer) अणु
+	buffer = kmalloc(msg->length + 1, GFP_ATOMIC | GFP_DMA);
+	if (!buffer) {
 		iucv_message_reject(path, msg);
-		वापस;
-	पूर्ण
-	rc = iucv_message_receive(path, msg, 0, buffer, msg->length, शून्य);
-	अगर (rc == 0) अणु
+		return;
+	}
+	rc = iucv_message_receive(path, msg, 0, buffer, msg->length, NULL);
+	if (rc == 0) {
 		buffer[msg->length] = 0;
 		EBCASC(buffer, msg->length);
-		स_नकल(sender, buffer, 8);
+		memcpy(sender, buffer, 8);
 		sender[8] = 0;
 		/* Remove trailing whitespace from the sender name. */
-		क्रम (i = 7; i >= 0; i--) अणु
-			अगर (sender[i] != ' ' && sender[i] != '\t')
-				अवरोध;
+		for (i = 7; i >= 0; i--) {
+			if (sender[i] != ' ' && sender[i] != '\t')
+				break;
 			sender[i] = 0;
-		पूर्ण
+		}
 		spin_lock(&smsg_list_lock);
-		list_क्रम_each_entry(cb, &smsg_list, list)
-			अगर (म_भेदन(buffer + 8, cb->prefix, cb->len) == 0) अणु
+		list_for_each_entry(cb, &smsg_list, list)
+			if (strncmp(buffer + 8, cb->prefix, cb->len) == 0) {
 				cb->callback(sender, buffer + 8);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 		spin_unlock(&smsg_list_lock);
-	पूर्ण
-	kमुक्त(buffer);
-पूर्ण
+	}
+	kfree(buffer);
+}
 
-पूर्णांक smsg_रेजिस्टर_callback(स्थिर अक्षर *prefix,
-			   व्योम (*callback)(स्थिर अक्षर *from, अक्षर *str))
-अणु
-	काष्ठा smsg_callback *cb;
+int smsg_register_callback(const char *prefix,
+			   void (*callback)(const char *from, char *str))
+{
+	struct smsg_callback *cb;
 
-	cb = kदो_स्मृति(माप(काष्ठा smsg_callback), GFP_KERNEL);
-	अगर (!cb)
-		वापस -ENOMEM;
+	cb = kmalloc(sizeof(struct smsg_callback), GFP_KERNEL);
+	if (!cb)
+		return -ENOMEM;
 	cb->prefix = prefix;
-	cb->len = म_माप(prefix);
+	cb->len = strlen(prefix);
 	cb->callback = callback;
 	spin_lock_bh(&smsg_list_lock);
 	list_add_tail(&cb->list, &smsg_list);
 	spin_unlock_bh(&smsg_list_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम smsg_unरेजिस्टर_callback(स्थिर अक्षर *prefix,
-			      व्योम (*callback)(स्थिर अक्षर *from,
-					       अक्षर *str))
-अणु
-	काष्ठा smsg_callback *cb, *पंचांगp;
+void smsg_unregister_callback(const char *prefix,
+			      void (*callback)(const char *from,
+					       char *str))
+{
+	struct smsg_callback *cb, *tmp;
 
 	spin_lock_bh(&smsg_list_lock);
-	cb = शून्य;
-	list_क्रम_each_entry(पंचांगp, &smsg_list, list)
-		अगर (पंचांगp->callback == callback &&
-		    म_भेद(पंचांगp->prefix, prefix) == 0) अणु
-			cb = पंचांगp;
+	cb = NULL;
+	list_for_each_entry(tmp, &smsg_list, list)
+		if (tmp->callback == callback &&
+		    strcmp(tmp->prefix, prefix) == 0) {
+			cb = tmp;
 			list_del(&cb->list);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 	spin_unlock_bh(&smsg_list_lock);
-	kमुक्त(cb);
-पूर्ण
+	kfree(cb);
+}
 
-अटल काष्ठा device_driver smsg_driver = अणु
+static struct device_driver smsg_driver = {
 	.owner = THIS_MODULE,
 	.name = SMSGIUCV_DRV_NAME,
 	.bus  = &iucv_bus,
-पूर्ण;
+};
 
-अटल व्योम __निकास smsg_निकास(व्योम)
-अणु
-	cpcmd("SET SMSG OFF", शून्य, 0, शून्य);
-	iucv_unरेजिस्टर(&smsg_handler, 1);
-	driver_unरेजिस्टर(&smsg_driver);
-पूर्ण
+static void __exit smsg_exit(void)
+{
+	cpcmd("SET SMSG OFF", NULL, 0, NULL);
+	iucv_unregister(&smsg_handler, 1);
+	driver_unregister(&smsg_driver);
+}
 
-अटल पूर्णांक __init smsg_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init smsg_init(void)
+{
+	int rc;
 
-	अगर (!MACHINE_IS_VM) अणु
+	if (!MACHINE_IS_VM) {
 		rc = -EPROTONOSUPPORT;
-		जाओ out;
-	पूर्ण
-	rc = driver_रेजिस्टर(&smsg_driver);
-	अगर (rc != 0)
-		जाओ out;
-	rc = iucv_रेजिस्टर(&smsg_handler, 1);
-	अगर (rc)
-		जाओ out_driver;
+		goto out;
+	}
+	rc = driver_register(&smsg_driver);
+	if (rc != 0)
+		goto out;
+	rc = iucv_register(&smsg_handler, 1);
+	if (rc)
+		goto out_driver;
 	smsg_path = iucv_path_alloc(255, 0, GFP_KERNEL);
-	अगर (!smsg_path) अणु
+	if (!smsg_path) {
 		rc = -ENOMEM;
-		जाओ out_रेजिस्टर;
-	पूर्ण
+		goto out_register;
+	}
 	rc = iucv_path_connect(smsg_path, &smsg_handler, "*MSG    ",
-			       शून्य, शून्य, शून्य);
-	अगर (rc)
-		जाओ out_मुक्त_path;
+			       NULL, NULL, NULL);
+	if (rc)
+		goto out_free_path;
 
-	cpcmd("SET SMSG IUCV", शून्य, 0, शून्य);
-	वापस 0;
+	cpcmd("SET SMSG IUCV", NULL, 0, NULL);
+	return 0;
 
-out_मुक्त_path:
-	iucv_path_मुक्त(smsg_path);
-	smsg_path = शून्य;
-out_रेजिस्टर:
-	iucv_unरेजिस्टर(&smsg_handler, 1);
+out_free_path:
+	iucv_path_free(smsg_path);
+	smsg_path = NULL;
+out_register:
+	iucv_unregister(&smsg_handler, 1);
 out_driver:
-	driver_unरेजिस्टर(&smsg_driver);
+	driver_unregister(&smsg_driver);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 module_init(smsg_init);
-module_निकास(smsg_निकास);
+module_exit(smsg_exit);
 MODULE_LICENSE("GPL");
 
-EXPORT_SYMBOL(smsg_रेजिस्टर_callback);
-EXPORT_SYMBOL(smsg_unरेजिस्टर_callback);
+EXPORT_SYMBOL(smsg_register_callback);
+EXPORT_SYMBOL(smsg_unregister_callback);

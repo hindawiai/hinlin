@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Authors: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
-//	    Ranjani Sridharan <ranjani.sridharan@linux.पूर्णांकel.com>
-//	    Rander Wang <अक्रमer.wang@पूर्णांकel.com>
-//          Keyon Jie <yang.jie@linux.पूर्णांकel.com>
+// Authors: Liam Girdwood <liam.r.girdwood@linux.intel.com>
+//	    Ranjani Sridharan <ranjani.sridharan@linux.intel.com>
+//	    Rander Wang <rander.wang@intel.com>
+//          Keyon Jie <yang.jie@linux.intel.com>
 //
 
 /*
- * Hardware पूर्णांकerface क्रम audio DSP on Cannonlake.
+ * Hardware interface for audio DSP on Cannonlake.
  */
 
-#समावेश "../ops.h"
-#समावेश "hda.h"
-#समावेश "hda-ipc.h"
-#समावेश "../sof-audio.h"
+#include "../ops.h"
+#include "hda.h"
+#include "hda-ipc.h"
+#include "../sof-audio.h"
 
-अटल स्थिर काष्ठा snd_sof_debugfs_map cnl_dsp_debugfs[] = अणु
-	अणु"hda", HDA_DSP_HDA_BAR, 0, 0x4000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
-	अणु"pp", HDA_DSP_PP_BAR,  0, 0x1000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
-	अणु"dsp", HDA_DSP_BAR,  0, 0x10000, SOF_DEBUGFS_ACCESS_ALWAYSपूर्ण,
-पूर्ण;
+static const struct snd_sof_debugfs_map cnl_dsp_debugfs[] = {
+	{"hda", HDA_DSP_HDA_BAR, 0, 0x4000, SOF_DEBUGFS_ACCESS_ALWAYS},
+	{"pp", HDA_DSP_PP_BAR,  0, 0x1000, SOF_DEBUGFS_ACCESS_ALWAYS},
+	{"dsp", HDA_DSP_BAR,  0, 0x10000, SOF_DEBUGFS_ACCESS_ALWAYS},
+};
 
-अटल व्योम cnl_ipc_host_करोne(काष्ठा snd_sof_dev *sdev);
-अटल व्योम cnl_ipc_dsp_करोne(काष्ठा snd_sof_dev *sdev);
+static void cnl_ipc_host_done(struct snd_sof_dev *sdev);
+static void cnl_ipc_dsp_done(struct snd_sof_dev *sdev);
 
-irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व्योम *context)
-अणु
-	काष्ठा snd_sof_dev *sdev = context;
+irqreturn_t cnl_ipc_irq_thread(int irq, void *context)
+{
+	struct snd_sof_dev *sdev = context;
 	u32 hipci;
 	u32 hipcida;
 	u32 hipctdr;
@@ -41,13 +40,13 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 	u32 msg_ext;
 	bool ipc_irq = false;
 
-	hipcida = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDA);
-	hipctdr = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDR);
-	hipctdd = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDD);
-	hipci = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR);
+	hipcida = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDA);
+	hipctdr = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDR);
+	hipctdd = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDD);
+	hipci = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR);
 
 	/* reply message from DSP */
-	अगर (hipcida & CNL_DSP_REG_HIPCIDA_DONE) अणु
+	if (hipcida & CNL_DSP_REG_HIPCIDA_DONE) {
 		msg_ext = hipci & CNL_DSP_REG_HIPCIDR_MSG_MASK;
 		msg = hipcida & CNL_DSP_REG_HIPCIDA_MSG_MASK;
 
@@ -55,7 +54,7 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 			 "ipc: firmware response, msg:0x%x, msg_ext:0x%x\n",
 			 msg, msg_ext);
 
-		/* mask Done पूर्णांकerrupt */
+		/* mask Done interrupt */
 		snd_sof_dsp_update_bits(sdev, HDA_DSP_BAR,
 					CNL_DSP_REG_HIPCCTL,
 					CNL_DSP_REG_HIPCCTL_DONE, 0);
@@ -66,15 +65,15 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 		hda_dsp_ipc_get_reply(sdev);
 		snd_sof_ipc_reply(sdev, msg);
 
-		cnl_ipc_dsp_करोne(sdev);
+		cnl_ipc_dsp_done(sdev);
 
 		spin_unlock_irq(&sdev->ipc_lock);
 
 		ipc_irq = true;
-	पूर्ण
+	}
 
 	/* new message from DSP */
-	अगर (hipctdr & CNL_DSP_REG_HIPCTDR_BUSY) अणु
+	if (hipctdr & CNL_DSP_REG_HIPCTDR_BUSY) {
 		msg = hipctdr & CNL_DSP_REG_HIPCTDR_MSG_MASK;
 		msg_ext = hipctdd & CNL_DSP_REG_HIPCTDD_MSG_MASK;
 
@@ -83,187 +82,187 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 			 msg, msg_ext);
 
 		/* handle messages from DSP */
-		अगर ((hipctdr & SOF_IPC_PANIC_MAGIC_MASK) ==
-		   SOF_IPC_PANIC_MAGIC) अणु
+		if ((hipctdr & SOF_IPC_PANIC_MAGIC_MASK) ==
+		   SOF_IPC_PANIC_MAGIC) {
 			snd_sof_dsp_panic(sdev, HDA_DSP_PANIC_OFFSET(msg_ext));
-		पूर्ण अन्यथा अणु
+		} else {
 			snd_sof_ipc_msgs_rx(sdev);
-		पूर्ण
+		}
 
-		cnl_ipc_host_करोne(sdev);
+		cnl_ipc_host_done(sdev);
 
 		ipc_irq = true;
-	पूर्ण
+	}
 
-	अगर (!ipc_irq) अणु
+	if (!ipc_irq) {
 		/*
-		 * This पूर्णांकerrupt is not shared so no need to वापस IRQ_NONE.
+		 * This interrupt is not shared so no need to return IRQ_NONE.
 		 */
 		dev_dbg_ratelimited(sdev->dev,
 				    "nothing to do in IPC IRQ thread\n");
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम cnl_ipc_host_करोne(काष्ठा snd_sof_dev *sdev)
-अणु
+static void cnl_ipc_host_done(struct snd_sof_dev *sdev)
+{
 	/*
-	 * clear busy पूर्णांकerrupt to tell dsp controller this
-	 * पूर्णांकerrupt has been accepted, not trigger it again
+	 * clear busy interrupt to tell dsp controller this
+	 * interrupt has been accepted, not trigger it again
 	 */
-	snd_sof_dsp_update_bits_क्रमced(sdev, HDA_DSP_BAR,
+	snd_sof_dsp_update_bits_forced(sdev, HDA_DSP_BAR,
 				       CNL_DSP_REG_HIPCTDR,
 				       CNL_DSP_REG_HIPCTDR_BUSY,
 				       CNL_DSP_REG_HIPCTDR_BUSY);
 	/*
-	 * set करोne bit to ack dsp the msg has been
+	 * set done bit to ack dsp the msg has been
 	 * processed and send reply msg to dsp
 	 */
-	snd_sof_dsp_update_bits_क्रमced(sdev, HDA_DSP_BAR,
+	snd_sof_dsp_update_bits_forced(sdev, HDA_DSP_BAR,
 				       CNL_DSP_REG_HIPCTDA,
 				       CNL_DSP_REG_HIPCTDA_DONE,
 				       CNL_DSP_REG_HIPCTDA_DONE);
-पूर्ण
+}
 
-अटल व्योम cnl_ipc_dsp_करोne(काष्ठा snd_sof_dev *sdev)
-अणु
+static void cnl_ipc_dsp_done(struct snd_sof_dev *sdev)
+{
 	/*
 	 * set DONE bit - tell DSP we have received the reply msg
-	 * from DSP, and processed it, करोn't send more reply to host
+	 * from DSP, and processed it, don't send more reply to host
 	 */
-	snd_sof_dsp_update_bits_क्रमced(sdev, HDA_DSP_BAR,
+	snd_sof_dsp_update_bits_forced(sdev, HDA_DSP_BAR,
 				       CNL_DSP_REG_HIPCIDA,
 				       CNL_DSP_REG_HIPCIDA_DONE,
 				       CNL_DSP_REG_HIPCIDA_DONE);
 
-	/* unmask Done पूर्णांकerrupt */
+	/* unmask Done interrupt */
 	snd_sof_dsp_update_bits(sdev, HDA_DSP_BAR,
 				CNL_DSP_REG_HIPCCTL,
 				CNL_DSP_REG_HIPCCTL_DONE,
 				CNL_DSP_REG_HIPCCTL_DONE);
-पूर्ण
+}
 
-अटल bool cnl_compact_ipc_compress(काष्ठा snd_sof_ipc_msg *msg,
+static bool cnl_compact_ipc_compress(struct snd_sof_ipc_msg *msg,
 				     u32 *dr, u32 *dd)
-अणु
-	काष्ठा sof_ipc_pm_gate *pm_gate;
+{
+	struct sof_ipc_pm_gate *pm_gate;
 
-	अगर (msg->header == (SOF_IPC_GLB_PM_MSG | SOF_IPC_PM_GATE)) अणु
+	if (msg->header == (SOF_IPC_GLB_PM_MSG | SOF_IPC_PM_GATE)) {
 		pm_gate = msg->msg_data;
 
-		/* send the compact message via the primary रेजिस्टर */
+		/* send the compact message via the primary register */
 		*dr = HDA_IPC_MSG_COMPACT | HDA_IPC_PM_GATE;
 
-		/* send payload via the extended data रेजिस्टर */
+		/* send payload via the extended data register */
 		*dd = pm_gate->flags;
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक cnl_ipc_send_msg(काष्ठा snd_sof_dev *sdev, काष्ठा snd_sof_ipc_msg *msg)
-अणु
-	काष्ठा sof_पूर्णांकel_hda_dev *hdev = sdev->pdata->hw_pdata;
-	काष्ठा sof_ipc_cmd_hdr *hdr;
+int cnl_ipc_send_msg(struct snd_sof_dev *sdev, struct snd_sof_ipc_msg *msg)
+{
+	struct sof_intel_hda_dev *hdev = sdev->pdata->hw_pdata;
+	struct sof_ipc_cmd_hdr *hdr;
 	u32 dr = 0;
 	u32 dd = 0;
 
 	/*
 	 * Currently the only compact IPC supported is the PM_GATE
-	 * IPC which is used क्रम transitioning the DSP between the
+	 * IPC which is used for transitioning the DSP between the
 	 * D0I0 and D0I3 states. And these are sent only during the
-	 * set_घातer_state() op. Thereक्रमe, there will never be a हाल
-	 * that a compact IPC results in the DSP निकासing D0I3 without
+	 * set_power_state() op. Therefore, there will never be a case
+	 * that a compact IPC results in the DSP exiting D0I3 without
 	 * the host and FW being in sync.
 	 */
-	अगर (cnl_compact_ipc_compress(msg, &dr, &dd)) अणु
-		/* send the message via IPC रेजिस्टरs */
-		snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDD,
+	if (cnl_compact_ipc_compress(msg, &dr, &dd)) {
+		/* send the message via IPC registers */
+		snd_sof_dsp_write(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDD,
 				  dd);
-		snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR,
+		snd_sof_dsp_write(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR,
 				  CNL_DSP_REG_HIPCIDR_BUSY | dr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* send the message via mailbox */
-	sof_mailbox_ग_लिखो(sdev, sdev->host_box.offset, msg->msg_data,
+	sof_mailbox_write(sdev, sdev->host_box.offset, msg->msg_data,
 			  msg->msg_size);
-	snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR,
+	snd_sof_dsp_write(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDR,
 			  CNL_DSP_REG_HIPCIDR_BUSY);
 
 	hdr = msg->msg_data;
 
 	/*
 	 * Use mod_delayed_work() to schedule the delayed work
-	 * to aव्योम scheduling multiple workqueue items when
+	 * to avoid scheduling multiple workqueue items when
 	 * IPCs are sent at a high-rate. mod_delayed_work()
-	 * modअगरies the समयr अगर the work is pending.
+	 * modifies the timer if the work is pending.
 	 * Also, a new delayed work should not be queued after the
-	 * CTX_SAVE IPC, which is sent beक्रमe the DSP enters D3.
+	 * CTX_SAVE IPC, which is sent before the DSP enters D3.
 	 */
-	अगर (hdr->cmd != (SOF_IPC_GLB_PM_MSG | SOF_IPC_PM_CTX_SAVE))
-		mod_delayed_work(प्रणाली_wq, &hdev->d0i3_work,
-				 msecs_to_jअगरfies(SOF_HDA_D0I3_WORK_DELAY_MS));
+	if (hdr->cmd != (SOF_IPC_GLB_PM_MSG | SOF_IPC_PM_CTX_SAVE))
+		mod_delayed_work(system_wq, &hdev->d0i3_work,
+				 msecs_to_jiffies(SOF_HDA_D0I3_WORK_DELAY_MS));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cnl_ipc_dump(काष्ठा snd_sof_dev *sdev)
-अणु
+void cnl_ipc_dump(struct snd_sof_dev *sdev)
+{
 	u32 hipcctl;
 	u32 hipcida;
 	u32 hipctdr;
 
 	hda_ipc_irq_dump(sdev);
 
-	/* पढ़ो IPC status */
-	hipcida = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDA);
-	hipcctl = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCCTL);
-	hipctdr = snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDR);
+	/* read IPC status */
+	hipcida = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCIDA);
+	hipcctl = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCCTL);
+	hipctdr = snd_sof_dsp_read(sdev, HDA_DSP_BAR, CNL_DSP_REG_HIPCTDR);
 
 	/* dump the IPC regs */
 	/* TODO: parse the raw msg */
 	dev_err(sdev->dev,
 		"error: host status 0x%8.8x dsp status 0x%8.8x mask 0x%8.8x\n",
 		hipcida, hipctdr, hipcctl);
-पूर्ण
+}
 
 /* cannonlake ops */
-स्थिर काष्ठा snd_sof_dsp_ops sof_cnl_ops = अणु
-	/* probe/हटाओ/shutकरोwn */
+const struct snd_sof_dsp_ops sof_cnl_ops = {
+	/* probe/remove/shutdown */
 	.probe		= hda_dsp_probe,
-	.हटाओ		= hda_dsp_हटाओ,
-	.shutकरोwn	= hda_dsp_shutकरोwn,
+	.remove		= hda_dsp_remove,
+	.shutdown	= hda_dsp_shutdown,
 
 	/* Register IO */
-	.ग_लिखो		= sof_io_ग_लिखो,
-	.पढ़ो		= sof_io_पढ़ो,
-	.ग_लिखो64	= sof_io_ग_लिखो64,
-	.पढ़ो64		= sof_io_पढ़ो64,
+	.write		= sof_io_write,
+	.read		= sof_io_read,
+	.write64	= sof_io_write64,
+	.read64		= sof_io_read64,
 
 	/* Block IO */
-	.block_पढ़ो	= sof_block_पढ़ो,
-	.block_ग_लिखो	= sof_block_ग_लिखो,
+	.block_read	= sof_block_read,
+	.block_write	= sof_block_write,
 
-	/* करोorbell */
-	.irq_thपढ़ो	= cnl_ipc_irq_thपढ़ो,
+	/* doorbell */
+	.irq_thread	= cnl_ipc_irq_thread,
 
 	/* ipc */
 	.send_msg	= cnl_ipc_send_msg,
-	.fw_पढ़ोy	= sof_fw_पढ़ोy,
+	.fw_ready	= sof_fw_ready,
 	.get_mailbox_offset = hda_dsp_ipc_get_mailbox_offset,
-	.get_winकरोw_offset = hda_dsp_ipc_get_winकरोw_offset,
+	.get_window_offset = hda_dsp_ipc_get_window_offset,
 
 	.ipc_msg_data	= hda_ipc_msg_data,
 	.ipc_pcm_params	= hda_ipc_pcm_params,
 
 	/* machine driver */
 	.machine_select = hda_machine_select,
-	.machine_रेजिस्टर = sof_machine_रेजिस्टर,
-	.machine_unरेजिस्टर = sof_machine_unरेजिस्टर,
+	.machine_register = sof_machine_register,
+	.machine_unregister = sof_machine_unregister,
 	.set_mach_params = hda_set_mach_params,
 
 	/* debug */
@@ -273,21 +272,21 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 	.ipc_dump	= cnl_ipc_dump,
 
 	/* stream callbacks */
-	.pcm_खोलो	= hda_dsp_pcm_खोलो,
-	.pcm_बंद	= hda_dsp_pcm_बंद,
+	.pcm_open	= hda_dsp_pcm_open,
+	.pcm_close	= hda_dsp_pcm_close,
 	.pcm_hw_params	= hda_dsp_pcm_hw_params,
-	.pcm_hw_मुक्त	= hda_dsp_stream_hw_मुक्त,
+	.pcm_hw_free	= hda_dsp_stream_hw_free,
 	.pcm_trigger	= hda_dsp_pcm_trigger,
-	.pcm_poपूर्णांकer	= hda_dsp_pcm_poपूर्णांकer,
+	.pcm_pointer	= hda_dsp_pcm_pointer,
 
-#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_PROBES)
+#if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_PROBES)
 	/* probe callbacks */
 	.probe_assign	= hda_probe_compr_assign,
-	.probe_मुक्त	= hda_probe_compr_मुक्त,
+	.probe_free	= hda_probe_compr_free,
 	.probe_set_params	= hda_probe_compr_set_params,
 	.probe_trigger	= hda_probe_compr_trigger,
-	.probe_poपूर्णांकer	= hda_probe_compr_poपूर्णांकer,
-#पूर्ण_अगर
+	.probe_pointer	= hda_probe_compr_pointer,
+#endif
 
 	/* firmware loading */
 	.load_firmware = snd_sof_load_firmware_raw,
@@ -296,12 +295,12 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 	.pre_fw_run = hda_dsp_pre_fw_run,
 	.post_fw_run = hda_dsp_post_fw_run,
 
-	/* parse platक्रमm specअगरic extended manअगरest */
-	.parse_platक्रमm_ext_manअगरest = hda_dsp_ext_man_get_cavs_config_data,
+	/* parse platform specific extended manifest */
+	.parse_platform_ext_manifest = hda_dsp_ext_man_get_cavs_config_data,
 
-	/* dsp core घातer up/करोwn */
-	.core_घातer_up = hda_dsp_enable_core,
-	.core_घातer_करोwn = hda_dsp_core_reset_घातer_करोwn,
+	/* dsp core power up/down */
+	.core_power_up = hda_dsp_enable_core,
+	.core_power_down = hda_dsp_core_reset_power_down,
 
 	/* firmware run */
 	.run = hda_dsp_cl_boot_firmware,
@@ -318,11 +317,11 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 	/* PM */
 	.suspend		= hda_dsp_suspend,
 	.resume			= hda_dsp_resume,
-	.runसमय_suspend	= hda_dsp_runसमय_suspend,
-	.runसमय_resume		= hda_dsp_runसमय_resume,
-	.runसमय_idle		= hda_dsp_runसमय_idle,
+	.runtime_suspend	= hda_dsp_runtime_suspend,
+	.runtime_resume		= hda_dsp_runtime_resume,
+	.runtime_idle		= hda_dsp_runtime_idle,
 	.set_hw_params_upon_resume = hda_dsp_set_hw_params_upon_resume,
-	.set_घातer_state	= hda_dsp_set_घातer_state,
+	.set_power_state	= hda_dsp_set_power_state,
 
 	/* ALSA HW info flags */
 	.hw_info =	SNDRV_PCM_INFO_MMAP |
@@ -332,10 +331,10 @@ irqवापस_t cnl_ipc_irq_thपढ़ो(पूर्णांक irq, व�
 			SNDRV_PCM_INFO_NO_PERIOD_WAKEUP,
 
 	.arch_ops = &sof_xtensa_arch_ops,
-पूर्ण;
+};
 EXPORT_SYMBOL_NS(sof_cnl_ops, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-स्थिर काष्ठा sof_पूर्णांकel_dsp_desc cnl_chip_info = अणु
+const struct sof_intel_dsp_desc cnl_chip_info = {
 	/* Cannonlake */
 	.cores_num = 4,
 	.init_core_mask = 1,
@@ -345,13 +344,13 @@ EXPORT_SYMBOL_NS(sof_cnl_ops, SND_SOC_SOF_INTEL_HDA_COMMON);
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_समयout	= 300,
+	.rom_init_timeout	= 300,
 	.ssp_count = CNL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-पूर्ण;
+};
 EXPORT_SYMBOL_NS(cnl_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);
 
-स्थिर काष्ठा sof_पूर्णांकel_dsp_desc jsl_chip_info = अणु
+const struct sof_intel_dsp_desc jsl_chip_info = {
 	/* Jasperlake */
 	.cores_num = 2,
 	.init_core_mask = 1,
@@ -361,8 +360,8 @@ EXPORT_SYMBOL_NS(cnl_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);
 	.ipc_ack = CNL_DSP_REG_HIPCIDA,
 	.ipc_ack_mask = CNL_DSP_REG_HIPCIDA_DONE,
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
-	.rom_init_समयout	= 300,
+	.rom_init_timeout	= 300,
 	.ssp_count = ICL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
-पूर्ण;
+};
 EXPORT_SYMBOL_NS(jsl_chip_info, SND_SOC_SOF_INTEL_HDA_COMMON);

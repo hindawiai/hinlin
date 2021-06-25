@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_SIGHANDLING_H
-#घोषणा _ASM_X86_SIGHANDLING_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_SIGHANDLING_H
+#define _ASM_X86_SIGHANDLING_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/संकेत.स>
+#include <linux/compiler.h>
+#include <linux/ptrace.h>
+#include <linux/signal.h>
 
-#समावेश <यंत्र/processor-flags.h>
+#include <asm/processor-flags.h>
 
-#घोषणा FIX_EFLAGS	(X86_EFLAGS_AC | X86_EFLAGS_OF | \
+#define FIX_EFLAGS	(X86_EFLAGS_AC | X86_EFLAGS_OF | \
 			 X86_EFLAGS_DF | X86_EFLAGS_TF | X86_EFLAGS_SF | \
 			 X86_EFLAGS_ZF | X86_EFLAGS_AF | X86_EFLAGS_PF | \
 			 X86_EFLAGS_CF | X86_EFLAGS_RF)
 
-व्योम संकेत_fault(काष्ठा pt_regs *regs, व्योम __user *frame, अक्षर *where);
+void signal_fault(struct pt_regs *regs, void __user *frame, char *where);
 
-#पूर्ण_अगर /* _ASM_X86_SIGHANDLING_H */
+#endif /* _ASM_X86_SIGHANDLING_H */

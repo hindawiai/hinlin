@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <माला.स>
-#समावेश "perf_regs.h"
-#समावेश "thread.h"
-#समावेश "map.h"
-#समावेश "maps.h"
-#समावेश "event.h"
-#समावेश "debug.h"
-#समावेश "tests/tests.h"
-#समावेश "arch-tests.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <string.h>
+#include "perf_regs.h"
+#include "thread.h"
+#include "map.h"
+#include "maps.h"
+#include "event.h"
+#include "debug.h"
+#include "tests/tests.h"
+#include "arch-tests.h"
 
-#घोषणा STACK_SIZE 8192
+#define STACK_SIZE 8192
 
-अटल पूर्णांक sample_ustack(काष्ठा perf_sample *sample,
-			 काष्ठा thपढ़ो *thपढ़ो, u64 *regs)
-अणु
-	काष्ठा stack_dump *stack = &sample->user_stack;
-	काष्ठा map *map;
-	अचिन्हित दीर्घ sp;
+static int sample_ustack(struct perf_sample *sample,
+			 struct thread *thread, u64 *regs)
+{
+	struct stack_dump *stack = &sample->user_stack;
+	struct map *map;
+	unsigned long sp;
 	u64 stack_size, *buf;
 
-	buf = दो_स्मृति(STACK_SIZE);
-	अगर (!buf) अणु
+	buf = malloc(STACK_SIZE);
+	if (!buf) {
 		pr_debug("failed to allocate sample uregs data\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	sp = (अचिन्हित दीर्घ) regs[PERF_REG_X86_SP];
+	sp = (unsigned long) regs[PERF_REG_X86_SP];
 
-	map = maps__find(thपढ़ो->maps, (u64)sp);
-	अगर (!map) अणु
+	map = maps__find(thread->maps, (u64)sp);
+	if (!map) {
 		pr_debug("failed to get stack map\n");
-		मुक्त(buf);
-		वापस -1;
-	पूर्ण
+		free(buf);
+		return -1;
+	}
 
 	stack_size = map->end - sp;
 	stack_size = stack_size > STACK_SIZE ? STACK_SIZE : stack_size;
 
-	स_नकल(buf, (व्योम *) sp, stack_size);
-#अगर_घोषित MEMORY_SANITIZER
+	memcpy(buf, (void *) sp, stack_size);
+#ifdef MEMORY_SANITIZER
 	/*
-	 * Copying the stack may copy msan poison, aव्योम false positives in the
+	 * Copying the stack may copy msan poison, avoid false positives in the
 	 * unwinder by removing the poison here.
 	 */
 	__msan_unpoison(buf, stack_size);
-#पूर्ण_अगर
-	stack->data = (अक्षर *) buf;
+#endif
+	stack->data = (char *) buf;
 	stack->size = stack_size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक test__arch_unwind_sample(काष्ठा perf_sample *sample,
-			     काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	काष्ठा regs_dump *regs = &sample->user_regs;
+int test__arch_unwind_sample(struct perf_sample *sample,
+			     struct thread *thread)
+{
+	struct regs_dump *regs = &sample->user_regs;
 	u64 *buf;
 
-	buf = दो_स्मृति(माप(u64) * PERF_REGS_MAX);
-	अगर (!buf) अणु
+	buf = malloc(sizeof(u64) * PERF_REGS_MAX);
+	if (!buf) {
 		pr_debug("failed to allocate sample uregs data\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-#अगर_घोषित MEMORY_SANITIZER
+#ifdef MEMORY_SANITIZER
 	/*
 	 * Assignments to buf in the assembly function perf_regs_load aren't
 	 * seen by memory sanitizer. Zero the memory to convince memory
 	 * sanitizer the memory is initialized.
 	 */
-	स_रखो(buf, 0, माप(u64) * PERF_REGS_MAX);
-#पूर्ण_अगर
+	memset(buf, 0, sizeof(u64) * PERF_REGS_MAX);
+#endif
 	perf_regs_load(buf);
 	regs->abi  = PERF_SAMPLE_REGS_ABI;
 	regs->regs = buf;
 	regs->mask = PERF_REGS_MASK;
 
-	वापस sample_ustack(sample, thपढ़ो, buf);
-पूर्ण
+	return sample_ustack(sample, thread, buf);
+}

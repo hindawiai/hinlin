@@ -1,302 +1,301 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-/* MDIO Bus पूर्णांकerface
+// SPDX-License-Identifier: GPL-2.0+
+/* MDIO Bus interface
  *
  * Author: Andy Fleming
  *
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/phy.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/unistd.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mii.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/of_mdio.h>
+#include <linux/phy.h>
+#include <linux/reset.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/uaccess.h>
+#include <linux/unistd.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/mdपन.स>
+#define CREATE_TRACE_POINTS
+#include <trace/events/mdio.h>
 
-#समावेश "mdio-boardinfo.h"
+#include "mdio-boardinfo.h"
 
-अटल पूर्णांक mdiobus_रेजिस्टर_gpiod(काष्ठा mdio_device *mdiodev)
-अणु
-	/* Deनिश्चित the optional reset संकेत */
+static int mdiobus_register_gpiod(struct mdio_device *mdiodev)
+{
+	/* Deassert the optional reset signal */
 	mdiodev->reset_gpio = gpiod_get_optional(&mdiodev->dev,
 						 "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(mdiodev->reset_gpio))
-		वापस PTR_ERR(mdiodev->reset_gpio);
+	if (IS_ERR(mdiodev->reset_gpio))
+		return PTR_ERR(mdiodev->reset_gpio);
 
-	अगर (mdiodev->reset_gpio)
+	if (mdiodev->reset_gpio)
 		gpiod_set_consumer_name(mdiodev->reset_gpio, "PHY reset");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mdiobus_रेजिस्टर_reset(काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा reset_control *reset;
+static int mdiobus_register_reset(struct mdio_device *mdiodev)
+{
+	struct reset_control *reset;
 
 	reset = reset_control_get_optional_exclusive(&mdiodev->dev, "phy");
-	अगर (IS_ERR(reset))
-		वापस PTR_ERR(reset);
+	if (IS_ERR(reset))
+		return PTR_ERR(reset);
 
 	mdiodev->reset_ctrl = reset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mdiobus_रेजिस्टर_device(काष्ठा mdio_device *mdiodev)
-अणु
-	पूर्णांक err;
+int mdiobus_register_device(struct mdio_device *mdiodev)
+{
+	int err;
 
-	अगर (mdiodev->bus->mdio_map[mdiodev->addr])
-		वापस -EBUSY;
+	if (mdiodev->bus->mdio_map[mdiodev->addr])
+		return -EBUSY;
 
-	अगर (mdiodev->flags & MDIO_DEVICE_FLAG_PHY) अणु
-		err = mdiobus_रेजिस्टर_gpiod(mdiodev);
-		अगर (err)
-			वापस err;
+	if (mdiodev->flags & MDIO_DEVICE_FLAG_PHY) {
+		err = mdiobus_register_gpiod(mdiodev);
+		if (err)
+			return err;
 
-		err = mdiobus_रेजिस्टर_reset(mdiodev);
-		अगर (err)
-			वापस err;
+		err = mdiobus_register_reset(mdiodev);
+		if (err)
+			return err;
 
-		/* Assert the reset संकेत */
+		/* Assert the reset signal */
 		mdio_device_reset(mdiodev, 1);
-	पूर्ण
+	}
 
 	mdiodev->bus->mdio_map[mdiodev->addr] = mdiodev;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_रेजिस्टर_device);
+	return 0;
+}
+EXPORT_SYMBOL(mdiobus_register_device);
 
-पूर्णांक mdiobus_unरेजिस्टर_device(काष्ठा mdio_device *mdiodev)
-अणु
-	अगर (mdiodev->bus->mdio_map[mdiodev->addr] != mdiodev)
-		वापस -EINVAL;
+int mdiobus_unregister_device(struct mdio_device *mdiodev)
+{
+	if (mdiodev->bus->mdio_map[mdiodev->addr] != mdiodev)
+		return -EINVAL;
 
 	reset_control_put(mdiodev->reset_ctrl);
 
-	mdiodev->bus->mdio_map[mdiodev->addr] = शून्य;
+	mdiodev->bus->mdio_map[mdiodev->addr] = NULL;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_unरेजिस्टर_device);
+	return 0;
+}
+EXPORT_SYMBOL(mdiobus_unregister_device);
 
-काष्ठा phy_device *mdiobus_get_phy(काष्ठा mii_bus *bus, पूर्णांक addr)
-अणु
-	काष्ठा mdio_device *mdiodev = bus->mdio_map[addr];
+struct phy_device *mdiobus_get_phy(struct mii_bus *bus, int addr)
+{
+	struct mdio_device *mdiodev = bus->mdio_map[addr];
 
-	अगर (!mdiodev)
-		वापस शून्य;
+	if (!mdiodev)
+		return NULL;
 
-	अगर (!(mdiodev->flags & MDIO_DEVICE_FLAG_PHY))
-		वापस शून्य;
+	if (!(mdiodev->flags & MDIO_DEVICE_FLAG_PHY))
+		return NULL;
 
-	वापस container_of(mdiodev, काष्ठा phy_device, mdio);
-पूर्ण
+	return container_of(mdiodev, struct phy_device, mdio);
+}
 EXPORT_SYMBOL(mdiobus_get_phy);
 
-bool mdiobus_is_रेजिस्टरed_device(काष्ठा mii_bus *bus, पूर्णांक addr)
-अणु
-	वापस bus->mdio_map[addr];
-पूर्ण
-EXPORT_SYMBOL(mdiobus_is_रेजिस्टरed_device);
+bool mdiobus_is_registered_device(struct mii_bus *bus, int addr)
+{
+	return bus->mdio_map[addr];
+}
+EXPORT_SYMBOL(mdiobus_is_registered_device);
 
 /**
- * mdiobus_alloc_size - allocate a mii_bus काष्ठाure
- * @size: extra amount of memory to allocate क्रम निजी storage.
- * If non-zero, then bus->priv is poपूर्णांकs to that memory.
+ * mdiobus_alloc_size - allocate a mii_bus structure
+ * @size: extra amount of memory to allocate for private storage.
+ * If non-zero, then bus->priv is points to that memory.
  *
  * Description: called by a bus driver to allocate an mii_bus
- * काष्ठाure to fill in.
+ * structure to fill in.
  */
-काष्ठा mii_bus *mdiobus_alloc_size(माप_प्रकार size)
-अणु
-	काष्ठा mii_bus *bus;
-	माप_प्रकार aligned_size = ALIGN(माप(*bus), NETDEV_ALIGN);
-	माप_प्रकार alloc_size;
-	पूर्णांक i;
+struct mii_bus *mdiobus_alloc_size(size_t size)
+{
+	struct mii_bus *bus;
+	size_t aligned_size = ALIGN(sizeof(*bus), NETDEV_ALIGN);
+	size_t alloc_size;
+	int i;
 
 	/* If we alloc extra space, it should be aligned */
-	अगर (size)
+	if (size)
 		alloc_size = aligned_size + size;
-	अन्यथा
-		alloc_size = माप(*bus);
+	else
+		alloc_size = sizeof(*bus);
 
 	bus = kzalloc(alloc_size, GFP_KERNEL);
-	अगर (!bus)
-		वापस शून्य;
+	if (!bus)
+		return NULL;
 
 	bus->state = MDIOBUS_ALLOCATED;
-	अगर (size)
-		bus->priv = (व्योम *)bus + aligned_size;
+	if (size)
+		bus->priv = (void *)bus + aligned_size;
 
-	/* Initialise the पूर्णांकerrupts to polling and 64-bit seqcounts */
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++) अणु
+	/* Initialise the interrupts to polling and 64-bit seqcounts */
+	for (i = 0; i < PHY_MAX_ADDR; i++) {
 		bus->irq[i] = PHY_POLL;
 		u64_stats_init(&bus->stats[i].syncp);
-	पूर्ण
+	}
 
-	वापस bus;
-पूर्ण
+	return bus;
+}
 EXPORT_SYMBOL(mdiobus_alloc_size);
 
 /**
  * mdiobus_release - mii_bus device release callback
- * @d: the target काष्ठा device that contains the mii_bus
+ * @d: the target struct device that contains the mii_bus
  *
  * Description: called when the last reference to an mii_bus is
- * dropped, to मुक्त the underlying memory.
+ * dropped, to free the underlying memory.
  */
-अटल व्योम mdiobus_release(काष्ठा device *d)
-अणु
-	काष्ठा mii_bus *bus = to_mii_bus(d);
+static void mdiobus_release(struct device *d)
+{
+	struct mii_bus *bus = to_mii_bus(d);
 	BUG_ON(bus->state != MDIOBUS_RELEASED &&
-	       /* क्रम compatibility with error handling in drivers */
+	       /* for compatibility with error handling in drivers */
 	       bus->state != MDIOBUS_ALLOCATED);
-	kमुक्त(bus);
-पूर्ण
+	kfree(bus);
+}
 
-काष्ठा mdio_bus_stat_attr अणु
-	पूर्णांक addr;
-	अचिन्हित पूर्णांक field_offset;
-पूर्ण;
+struct mdio_bus_stat_attr {
+	int addr;
+	unsigned int field_offset;
+};
 
-अटल u64 mdio_bus_get_stat(काष्ठा mdio_bus_stats *s, अचिन्हित पूर्णांक offset)
-अणु
-	स्थिर अक्षर *p = (स्थिर अक्षर *)s + offset;
-	अचिन्हित पूर्णांक start;
+static u64 mdio_bus_get_stat(struct mdio_bus_stats *s, unsigned int offset)
+{
+	const char *p = (const char *)s + offset;
+	unsigned int start;
 	u64 val = 0;
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin(&s->syncp);
-		val = u64_stats_पढ़ो((स्थिर u64_stats_t *)p);
-	पूर्ण जबतक (u64_stats_fetch_retry(&s->syncp, start));
+		val = u64_stats_read((const u64_stats_t *)p);
+	} while (u64_stats_fetch_retry(&s->syncp, start));
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u64 mdio_bus_get_global_stat(काष्ठा mii_bus *bus, अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित पूर्णांक i;
+static u64 mdio_bus_get_global_stat(struct mii_bus *bus, unsigned int offset)
+{
+	unsigned int i;
 	u64 val = 0;
 
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++)
+	for (i = 0; i < PHY_MAX_ADDR; i++)
 		val += mdio_bus_get_stat(&bus->stats[i], offset);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल sमाप_प्रकार mdio_bus_stat_field_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा mii_bus *bus = to_mii_bus(dev);
-	काष्ठा mdio_bus_stat_attr *sattr;
-	काष्ठा dev_ext_attribute *eattr;
+static ssize_t mdio_bus_stat_field_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct mii_bus *bus = to_mii_bus(dev);
+	struct mdio_bus_stat_attr *sattr;
+	struct dev_ext_attribute *eattr;
 	u64 val;
 
-	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
+	eattr = container_of(attr, struct dev_ext_attribute, attr);
 	sattr = eattr->var;
 
-	अगर (sattr->addr < 0)
+	if (sattr->addr < 0)
 		val = mdio_bus_get_global_stat(bus, sattr->field_offset);
-	अन्यथा
+	else
 		val = mdio_bus_get_stat(&bus->stats[sattr->addr],
 					sattr->field_offset);
 
-	वापस प्र_लिखो(buf, "%llu\n", val);
-पूर्ण
+	return sprintf(buf, "%llu\n", val);
+}
 
-अटल sमाप_प्रकार mdio_bus_device_stat_field_show(काष्ठा device *dev,
-					       काष्ठा device_attribute *attr,
-					       अक्षर *buf)
-अणु
-	काष्ठा mdio_device *mdiodev = to_mdio_device(dev);
-	काष्ठा mii_bus *bus = mdiodev->bus;
-	काष्ठा mdio_bus_stat_attr *sattr;
-	काष्ठा dev_ext_attribute *eattr;
-	पूर्णांक addr = mdiodev->addr;
+static ssize_t mdio_bus_device_stat_field_show(struct device *dev,
+					       struct device_attribute *attr,
+					       char *buf)
+{
+	struct mdio_device *mdiodev = to_mdio_device(dev);
+	struct mii_bus *bus = mdiodev->bus;
+	struct mdio_bus_stat_attr *sattr;
+	struct dev_ext_attribute *eattr;
+	int addr = mdiodev->addr;
 	u64 val;
 
-	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
+	eattr = container_of(attr, struct dev_ext_attribute, attr);
 	sattr = eattr->var;
 
 	val = mdio_bus_get_stat(&bus->stats[addr], sattr->field_offset);
 
-	वापस प्र_लिखो(buf, "%llu\n", val);
-पूर्ण
+	return sprintf(buf, "%llu\n", val);
+}
 
-#घोषणा MDIO_BUS_STATS_ATTR_DECL(field, file)				\
-अटल काष्ठा dev_ext_attribute dev_attr_mdio_bus_##field = अणु		\
-	.attr = अणु .attr = अणु .name = file, .mode = 0444 पूर्ण,		\
+#define MDIO_BUS_STATS_ATTR_DECL(field, file)				\
+static struct dev_ext_attribute dev_attr_mdio_bus_##field = {		\
+	.attr = { .attr = { .name = file, .mode = 0444 },		\
 		     .show = mdio_bus_stat_field_show,			\
-	पूर्ण,								\
-	.var = &((काष्ठा mdio_bus_stat_attr) अणु				\
-		-1, दुरत्व(काष्ठा mdio_bus_stats, field)		\
-	पूर्ण),								\
-पूर्ण;									\
-अटल काष्ठा dev_ext_attribute dev_attr_mdio_bus_device_##field = अणु	\
-	.attr = अणु .attr = अणु .name = file, .mode = 0444 पूर्ण,		\
+	},								\
+	.var = &((struct mdio_bus_stat_attr) {				\
+		-1, offsetof(struct mdio_bus_stats, field)		\
+	}),								\
+};									\
+static struct dev_ext_attribute dev_attr_mdio_bus_device_##field = {	\
+	.attr = { .attr = { .name = file, .mode = 0444 },		\
 		     .show = mdio_bus_device_stat_field_show,		\
-	पूर्ण,								\
-	.var = &((काष्ठा mdio_bus_stat_attr) अणु				\
-		-1, दुरत्व(काष्ठा mdio_bus_stats, field)		\
-	पूर्ण),								\
-पूर्ण;
+	},								\
+	.var = &((struct mdio_bus_stat_attr) {				\
+		-1, offsetof(struct mdio_bus_stats, field)		\
+	}),								\
+};
 
-#घोषणा MDIO_BUS_STATS_ATTR(field)					\
-	MDIO_BUS_STATS_ATTR_DECL(field, __stringअगरy(field))
+#define MDIO_BUS_STATS_ATTR(field)					\
+	MDIO_BUS_STATS_ATTR_DECL(field, __stringify(field))
 
 MDIO_BUS_STATS_ATTR(transfers);
 MDIO_BUS_STATS_ATTR(errors);
-MDIO_BUS_STATS_ATTR(ग_लिखोs);
-MDIO_BUS_STATS_ATTR(पढ़ोs);
+MDIO_BUS_STATS_ATTR(writes);
+MDIO_BUS_STATS_ATTR(reads);
 
-#घोषणा MDIO_BUS_STATS_ADDR_ATTR_DECL(field, addr, file)		\
-अटल काष्ठा dev_ext_attribute dev_attr_mdio_bus_addr_##field##_##addr = अणु \
-	.attr = अणु .attr = अणु .name = file, .mode = 0444 पूर्ण,		\
+#define MDIO_BUS_STATS_ADDR_ATTR_DECL(field, addr, file)		\
+static struct dev_ext_attribute dev_attr_mdio_bus_addr_##field##_##addr = { \
+	.attr = { .attr = { .name = file, .mode = 0444 },		\
 		     .show = mdio_bus_stat_field_show,			\
-	पूर्ण,								\
-	.var = &((काष्ठा mdio_bus_stat_attr) अणु				\
-		addr, दुरत्व(काष्ठा mdio_bus_stats, field)		\
-	पूर्ण),								\
-पूर्ण
+	},								\
+	.var = &((struct mdio_bus_stat_attr) {				\
+		addr, offsetof(struct mdio_bus_stats, field)		\
+	}),								\
+}
 
-#घोषणा MDIO_BUS_STATS_ADDR_ATTR(field, addr)				\
+#define MDIO_BUS_STATS_ADDR_ATTR(field, addr)				\
 	MDIO_BUS_STATS_ADDR_ATTR_DECL(field, addr,			\
-				 __stringअगरy(field) "_" __stringअगरy(addr))
+				 __stringify(field) "_" __stringify(addr))
 
-#घोषणा MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(addr)			\
+#define MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(addr)			\
 	MDIO_BUS_STATS_ADDR_ATTR(transfers, addr);			\
 	MDIO_BUS_STATS_ADDR_ATTR(errors, addr);				\
-	MDIO_BUS_STATS_ADDR_ATTR(ग_लिखोs, addr);				\
-	MDIO_BUS_STATS_ADDR_ATTR(पढ़ोs, addr)				\
+	MDIO_BUS_STATS_ADDR_ATTR(writes, addr);				\
+	MDIO_BUS_STATS_ADDR_ATTR(reads, addr)				\
 
 MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(0);
 MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(1);
@@ -331,17 +330,17 @@ MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(29);
 MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(30);
 MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(31);
 
-#घोषणा MDIO_BUS_STATS_ADDR_ATTR_GROUP(addr)				\
+#define MDIO_BUS_STATS_ADDR_ATTR_GROUP(addr)				\
 	&dev_attr_mdio_bus_addr_transfers_##addr.attr.attr,		\
 	&dev_attr_mdio_bus_addr_errors_##addr.attr.attr,		\
-	&dev_attr_mdio_bus_addr_ग_लिखोs_##addr.attr.attr,		\
-	&dev_attr_mdio_bus_addr_पढ़ोs_##addr.attr.attr			\
+	&dev_attr_mdio_bus_addr_writes_##addr.attr.attr,		\
+	&dev_attr_mdio_bus_addr_reads_##addr.attr.attr			\
 
-अटल काष्ठा attribute *mdio_bus_statistics_attrs[] = अणु
+static struct attribute *mdio_bus_statistics_attrs[] = {
 	&dev_attr_mdio_bus_transfers.attr.attr,
 	&dev_attr_mdio_bus_errors.attr.attr,
-	&dev_attr_mdio_bus_ग_लिखोs.attr.attr,
-	&dev_attr_mdio_bus_पढ़ोs.attr.attr,
+	&dev_attr_mdio_bus_writes.attr.attr,
+	&dev_attr_mdio_bus_reads.attr.attr,
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(0),
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(1),
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(2),
@@ -374,157 +373,157 @@ MDIO_BUS_STATS_ADDR_ATTR_GROUP_DECL(31);
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(29),
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(30),
 	MDIO_BUS_STATS_ADDR_ATTR_GROUP(31),
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group mdio_bus_statistics_group = अणु
+static const struct attribute_group mdio_bus_statistics_group = {
 	.name	= "statistics",
 	.attrs	= mdio_bus_statistics_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *mdio_bus_groups[] = अणु
+static const struct attribute_group *mdio_bus_groups[] = {
 	&mdio_bus_statistics_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा class mdio_bus_class = अणु
+static struct class mdio_bus_class = {
 	.name		= "mdio_bus",
 	.dev_release	= mdiobus_release,
 	.dev_groups	= mdio_bus_groups,
-पूर्ण;
+};
 
 /**
  * mdio_find_bus - Given the name of a mdiobus, find the mii_bus.
  * @mdio_name: The name of a mdiobus.
  *
- * Returns a reference to the mii_bus, or शून्य अगर none found.  The
- * embedded काष्ठा device will have its reference count incremented,
+ * Returns a reference to the mii_bus, or NULL if none found.  The
+ * embedded struct device will have its reference count incremented,
  * and this must be put_deviced'ed once the bus is finished with.
  */
-काष्ठा mii_bus *mdio_find_bus(स्थिर अक्षर *mdio_name)
-अणु
-	काष्ठा device *d;
+struct mii_bus *mdio_find_bus(const char *mdio_name)
+{
+	struct device *d;
 
 	d = class_find_device_by_name(&mdio_bus_class, mdio_name);
-	वापस d ? to_mii_bus(d) : शून्य;
-पूर्ण
+	return d ? to_mii_bus(d) : NULL;
+}
 EXPORT_SYMBOL(mdio_find_bus);
 
-#अगर IS_ENABLED(CONFIG_OF_MDIO)
+#if IS_ENABLED(CONFIG_OF_MDIO)
 /**
  * of_mdio_find_bus - Given an mii_bus node, find the mii_bus.
- * @mdio_bus_np: Poपूर्णांकer to the mii_bus.
+ * @mdio_bus_np: Pointer to the mii_bus.
  *
- * Returns a reference to the mii_bus, or शून्य अगर none found.  The
- * embedded काष्ठा device will have its reference count incremented,
+ * Returns a reference to the mii_bus, or NULL if none found.  The
+ * embedded struct device will have its reference count incremented,
  * and this must be put once the bus is finished with.
  *
  * Because the association of a device_node and mii_bus is made via
- * of_mdiobus_रेजिस्टर(), the mii_bus cannot be found beक्रमe it is
- * रेजिस्टरed with of_mdiobus_रेजिस्टर().
+ * of_mdiobus_register(), the mii_bus cannot be found before it is
+ * registered with of_mdiobus_register().
  *
  */
-काष्ठा mii_bus *of_mdio_find_bus(काष्ठा device_node *mdio_bus_np)
-अणु
-	काष्ठा device *d;
+struct mii_bus *of_mdio_find_bus(struct device_node *mdio_bus_np)
+{
+	struct device *d;
 
-	अगर (!mdio_bus_np)
-		वापस शून्य;
+	if (!mdio_bus_np)
+		return NULL;
 
 	d = class_find_device_by_of_node(&mdio_bus_class, mdio_bus_np);
-	वापस d ? to_mii_bus(d) : शून्य;
-पूर्ण
+	return d ? to_mii_bus(d) : NULL;
+}
 EXPORT_SYMBOL(of_mdio_find_bus);
 
-/* Walk the list of subnodes of a mdio bus and look क्रम a node that
+/* Walk the list of subnodes of a mdio bus and look for a node that
  * matches the mdio device's address with its 'reg' property. If
- * found, set the of_node poपूर्णांकer क्रम the mdio device. This allows
- * स्वतः-probed phy devices to be supplied with inक्रमmation passed in
+ * found, set the of_node pointer for the mdio device. This allows
+ * auto-probed phy devices to be supplied with information passed in
  * via DT.
  */
-अटल व्योम of_mdiobus_link_mdiodev(काष्ठा mii_bus *bus,
-				    काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा device *dev = &mdiodev->dev;
-	काष्ठा device_node *child;
+static void of_mdiobus_link_mdiodev(struct mii_bus *bus,
+				    struct mdio_device *mdiodev)
+{
+	struct device *dev = &mdiodev->dev;
+	struct device_node *child;
 
-	अगर (dev->of_node || !bus->dev.of_node)
-		वापस;
+	if (dev->of_node || !bus->dev.of_node)
+		return;
 
-	क्रम_each_available_child_of_node(bus->dev.of_node, child) अणु
-		पूर्णांक addr;
+	for_each_available_child_of_node(bus->dev.of_node, child) {
+		int addr;
 
 		addr = of_mdio_parse_addr(dev, child);
-		अगर (addr < 0)
-			जारी;
+		if (addr < 0)
+			continue;
 
-		अगर (addr == mdiodev->addr) अणु
+		if (addr == mdiodev->addr) {
 			dev->of_node = child;
 			dev->fwnode = of_fwnode_handle(child);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा /* !IS_ENABLED(CONFIG_OF_MDIO) */
-अटल अंतरभूत व्योम of_mdiobus_link_mdiodev(काष्ठा mii_bus *mdio,
-					   काष्ठा mdio_device *mdiodev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+			return;
+		}
+	}
+}
+#else /* !IS_ENABLED(CONFIG_OF_MDIO) */
+static inline void of_mdiobus_link_mdiodev(struct mii_bus *mdio,
+					   struct mdio_device *mdiodev)
+{
+}
+#endif
 
 /**
  * mdiobus_create_device - create a full MDIO device given
- * a mdio_board_info काष्ठाure
+ * a mdio_board_info structure
  * @bus: MDIO bus to create the devices on
- * @bi: mdio_board_info काष्ठाure describing the devices
+ * @bi: mdio_board_info structure describing the devices
  *
  * Returns 0 on success or < 0 on error.
  */
-अटल पूर्णांक mdiobus_create_device(काष्ठा mii_bus *bus,
-				 काष्ठा mdio_board_info *bi)
-अणु
-	काष्ठा mdio_device *mdiodev;
-	पूर्णांक ret = 0;
+static int mdiobus_create_device(struct mii_bus *bus,
+				 struct mdio_board_info *bi)
+{
+	struct mdio_device *mdiodev;
+	int ret = 0;
 
 	mdiodev = mdio_device_create(bus, bi->mdio_addr);
-	अगर (IS_ERR(mdiodev))
-		वापस -ENODEV;
+	if (IS_ERR(mdiodev))
+		return -ENODEV;
 
-	म_नकलन(mdiodev->modalias, bi->modalias,
-		माप(mdiodev->modalias));
+	strncpy(mdiodev->modalias, bi->modalias,
+		sizeof(mdiodev->modalias));
 	mdiodev->bus_match = mdio_device_bus_match;
-	mdiodev->dev.platक्रमm_data = (व्योम *)bi->platक्रमm_data;
+	mdiodev->dev.platform_data = (void *)bi->platform_data;
 
-	ret = mdio_device_रेजिस्टर(mdiodev);
-	अगर (ret)
-		mdio_device_मुक्त(mdiodev);
+	ret = mdio_device_register(mdiodev);
+	if (ret)
+		mdio_device_free(mdiodev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * __mdiobus_रेजिस्टर - bring up all the PHYs on a given bus and attach them to bus
+ * __mdiobus_register - bring up all the PHYs on a given bus and attach them to bus
  * @bus: target mii_bus
  * @owner: module containing bus accessor functions
  *
  * Description: Called by a bus driver to bring up all the PHYs
  *   on a given bus, and attach them to the bus. Drivers should use
- *   mdiobus_रेजिस्टर() rather than __mdiobus_रेजिस्टर() unless they
- *   need to pass a specअगरic owner module. MDIO devices which are not
+ *   mdiobus_register() rather than __mdiobus_register() unless they
+ *   need to pass a specific owner module. MDIO devices which are not
  *   PHYs will not be brought up by this function. They are expected
- *   to be explicitly listed in DT and instantiated by of_mdiobus_रेजिस्टर().
+ *   to be explicitly listed in DT and instantiated by of_mdiobus_register().
  *
  * Returns 0 on success or < 0 on error.
  */
-पूर्णांक __mdiobus_रेजिस्टर(काष्ठा mii_bus *bus, काष्ठा module *owner)
-अणु
-	काष्ठा mdio_device *mdiodev;
-	पूर्णांक i, err;
-	काष्ठा gpio_desc *gpiod;
+int __mdiobus_register(struct mii_bus *bus, struct module *owner)
+{
+	struct mdio_device *mdiodev;
+	int i, err;
+	struct gpio_desc *gpiod;
 
-	अगर (शून्य == bus || शून्य == bus->name ||
-	    शून्य == bus->पढ़ो || शून्य == bus->ग_लिखो)
-		वापस -EINVAL;
+	if (NULL == bus || NULL == bus->name ||
+	    NULL == bus->read || NULL == bus->write)
+		return -EINVAL;
 
 	BUG_ON(bus->state != MDIOBUS_ALLOCATED &&
 	       bus->state != MDIOBUS_UNREGISTERED);
@@ -532,487 +531,487 @@ EXPORT_SYMBOL(of_mdio_find_bus);
 	bus->owner = owner;
 	bus->dev.parent = bus->parent;
 	bus->dev.class = &mdio_bus_class;
-	bus->dev.groups = शून्य;
+	bus->dev.groups = NULL;
 	dev_set_name(&bus->dev, "%s", bus->id);
 
-	err = device_रेजिस्टर(&bus->dev);
-	अगर (err) अणु
+	err = device_register(&bus->dev);
+	if (err) {
 		pr_err("mii_bus %s failed to register\n", bus->id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_init(&bus->mdio_lock);
 	mutex_init(&bus->shared_lock);
 
-	/* निश्चित bus level PHY GPIO reset */
+	/* assert bus level PHY GPIO reset */
 	gpiod = devm_gpiod_get_optional(&bus->dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(gpiod)) अणु
+	if (IS_ERR(gpiod)) {
 		err = dev_err_probe(&bus->dev, PTR_ERR(gpiod),
 				    "mii_bus %s couldn't get reset GPIO\n",
 				    bus->id);
 		device_del(&bus->dev);
-		वापस err;
-	पूर्ण अन्यथा	अगर (gpiod) अणु
+		return err;
+	} else	if (gpiod) {
 		bus->reset_gpiod = gpiod;
 		fsleep(bus->reset_delay_us);
 		gpiod_set_value_cansleep(gpiod, 0);
-		अगर (bus->reset_post_delay_us > 0)
+		if (bus->reset_post_delay_us > 0)
 			fsleep(bus->reset_post_delay_us);
-	पूर्ण
+	}
 
-	अगर (bus->reset) अणु
+	if (bus->reset) {
 		err = bus->reset(bus);
-		अगर (err)
-			जाओ error_reset_gpiod;
-	पूर्ण
+		if (err)
+			goto error_reset_gpiod;
+	}
 
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++) अणु
-		अगर ((bus->phy_mask & (1 << i)) == 0) अणु
-			काष्ठा phy_device *phydev;
+	for (i = 0; i < PHY_MAX_ADDR; i++) {
+		if ((bus->phy_mask & (1 << i)) == 0) {
+			struct phy_device *phydev;
 
 			phydev = mdiobus_scan(bus, i);
-			अगर (IS_ERR(phydev) && (PTR_ERR(phydev) != -ENODEV)) अणु
+			if (IS_ERR(phydev) && (PTR_ERR(phydev) != -ENODEV)) {
 				err = PTR_ERR(phydev);
-				जाओ error;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto error;
+			}
+		}
+	}
 
 	mdiobus_setup_mdiodev_from_board_info(bus, mdiobus_create_device);
 
 	bus->state = MDIOBUS_REGISTERED;
 	pr_info("%s: probed\n", bus->name);
-	वापस 0;
+	return 0;
 
 error:
-	जबतक (--i >= 0) अणु
+	while (--i >= 0) {
 		mdiodev = bus->mdio_map[i];
-		अगर (!mdiodev)
-			जारी;
+		if (!mdiodev)
+			continue;
 
-		mdiodev->device_हटाओ(mdiodev);
-		mdiodev->device_मुक्त(mdiodev);
-	पूर्ण
+		mdiodev->device_remove(mdiodev);
+		mdiodev->device_free(mdiodev);
+	}
 error_reset_gpiod:
-	/* Put PHYs in RESET to save घातer */
-	अगर (bus->reset_gpiod)
+	/* Put PHYs in RESET to save power */
+	if (bus->reset_gpiod)
 		gpiod_set_value_cansleep(bus->reset_gpiod, 1);
 
 	device_del(&bus->dev);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(__mdiobus_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL(__mdiobus_register);
 
-व्योम mdiobus_unरेजिस्टर(काष्ठा mii_bus *bus)
-अणु
-	काष्ठा mdio_device *mdiodev;
-	पूर्णांक i;
+void mdiobus_unregister(struct mii_bus *bus)
+{
+	struct mdio_device *mdiodev;
+	int i;
 
-	अगर (WARN_ON_ONCE(bus->state != MDIOBUS_REGISTERED))
-		वापस;
+	if (WARN_ON_ONCE(bus->state != MDIOBUS_REGISTERED))
+		return;
 	bus->state = MDIOBUS_UNREGISTERED;
 
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++) अणु
+	for (i = 0; i < PHY_MAX_ADDR; i++) {
 		mdiodev = bus->mdio_map[i];
-		अगर (!mdiodev)
-			जारी;
+		if (!mdiodev)
+			continue;
 
-		अगर (mdiodev->reset_gpio)
+		if (mdiodev->reset_gpio)
 			gpiod_put(mdiodev->reset_gpio);
 
-		mdiodev->device_हटाओ(mdiodev);
-		mdiodev->device_मुक्त(mdiodev);
-	पूर्ण
+		mdiodev->device_remove(mdiodev);
+		mdiodev->device_free(mdiodev);
+	}
 
-	/* Put PHYs in RESET to save घातer */
-	अगर (bus->reset_gpiod)
+	/* Put PHYs in RESET to save power */
+	if (bus->reset_gpiod)
 		gpiod_set_value_cansleep(bus->reset_gpiod, 1);
 
 	device_del(&bus->dev);
-पूर्ण
-EXPORT_SYMBOL(mdiobus_unरेजिस्टर);
+}
+EXPORT_SYMBOL(mdiobus_unregister);
 
 /**
- * mdiobus_मुक्त - मुक्त a काष्ठा mii_bus
- * @bus: mii_bus to मुक्त
+ * mdiobus_free - free a struct mii_bus
+ * @bus: mii_bus to free
  *
  * This function releases the reference to the underlying device
  * object in the mii_bus.  If this is the last reference, the mii_bus
- * will be मुक्तd.
+ * will be freed.
  */
-व्योम mdiobus_मुक्त(काष्ठा mii_bus *bus)
-अणु
+void mdiobus_free(struct mii_bus *bus)
+{
 	/* For compatibility with error handling in drivers. */
-	अगर (bus->state == MDIOBUS_ALLOCATED) अणु
-		kमुक्त(bus);
-		वापस;
-	पूर्ण
+	if (bus->state == MDIOBUS_ALLOCATED) {
+		kfree(bus);
+		return;
+	}
 
 	BUG_ON(bus->state != MDIOBUS_UNREGISTERED);
 	bus->state = MDIOBUS_RELEASED;
 
 	put_device(&bus->dev);
-पूर्ण
-EXPORT_SYMBOL(mdiobus_मुक्त);
+}
+EXPORT_SYMBOL(mdiobus_free);
 
 /**
- * mdiobus_scan - scan a bus क्रम MDIO devices.
+ * mdiobus_scan - scan a bus for MDIO devices.
  * @bus: mii_bus to scan
  * @addr: address on bus to scan
  *
- * This function scans the MDIO bus, looking क्रम devices which can be
- * identअगरied using a venकरोr/product ID in रेजिस्टरs 2 and 3. Not all
- * MDIO devices have such रेजिस्टरs, but PHY devices typically
- * करो. Hence this function assumes anything found is a PHY, or can be
- * treated as a PHY. Other MDIO devices, such as चयनes, will
+ * This function scans the MDIO bus, looking for devices which can be
+ * identified using a vendor/product ID in registers 2 and 3. Not all
+ * MDIO devices have such registers, but PHY devices typically
+ * do. Hence this function assumes anything found is a PHY, or can be
+ * treated as a PHY. Other MDIO devices, such as switches, will
  * probably not be found during the scan.
  */
-काष्ठा phy_device *mdiobus_scan(काष्ठा mii_bus *bus, पूर्णांक addr)
-अणु
-	काष्ठा phy_device *phydev = ERR_PTR(-ENODEV);
-	पूर्णांक err;
+struct phy_device *mdiobus_scan(struct mii_bus *bus, int addr)
+{
+	struct phy_device *phydev = ERR_PTR(-ENODEV);
+	int err;
 
-	चयन (bus->probe_capabilities) अणु
-	हाल MDIOBUS_NO_CAP:
-	हाल MDIOBUS_C22:
+	switch (bus->probe_capabilities) {
+	case MDIOBUS_NO_CAP:
+	case MDIOBUS_C22:
 		phydev = get_phy_device(bus, addr, false);
-		अवरोध;
-	हाल MDIOBUS_C45:
+		break;
+	case MDIOBUS_C45:
 		phydev = get_phy_device(bus, addr, true);
-		अवरोध;
-	हाल MDIOBUS_C22_C45:
+		break;
+	case MDIOBUS_C22_C45:
 		phydev = get_phy_device(bus, addr, false);
-		अगर (IS_ERR(phydev))
+		if (IS_ERR(phydev))
 			phydev = get_phy_device(bus, addr, true);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (IS_ERR(phydev))
-		वापस phydev;
+	if (IS_ERR(phydev))
+		return phydev;
 
 	/*
-	 * For DT, see अगर the स्वतः-probed phy has a correspoding child
-	 * in the bus node, and set the of_node poपूर्णांकer in this हाल.
+	 * For DT, see if the auto-probed phy has a correspoding child
+	 * in the bus node, and set the of_node pointer in this case.
 	 */
 	of_mdiobus_link_mdiodev(bus, &phydev->mdio);
 
-	err = phy_device_रेजिस्टर(phydev);
-	अगर (err) अणु
-		phy_device_मुक्त(phydev);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+	err = phy_device_register(phydev);
+	if (err) {
+		phy_device_free(phydev);
+		return ERR_PTR(-ENODEV);
+	}
 
-	वापस phydev;
-पूर्ण
+	return phydev;
+}
 EXPORT_SYMBOL(mdiobus_scan);
 
-अटल व्योम mdiobus_stats_acct(काष्ठा mdio_bus_stats *stats, bool op, पूर्णांक ret)
-अणु
+static void mdiobus_stats_acct(struct mdio_bus_stats *stats, bool op, int ret)
+{
 	preempt_disable();
 	u64_stats_update_begin(&stats->syncp);
 
 	u64_stats_inc(&stats->transfers);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		u64_stats_inc(&stats->errors);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (op)
-		u64_stats_inc(&stats->पढ़ोs);
-	अन्यथा
-		u64_stats_inc(&stats->ग_लिखोs);
+	if (op)
+		u64_stats_inc(&stats->reads);
+	else
+		u64_stats_inc(&stats->writes);
 out:
 	u64_stats_update_end(&stats->syncp);
 	preempt_enable();
-पूर्ण
+}
 
 /**
- * __mdiobus_पढ़ो - Unlocked version of the mdiobus_पढ़ो function
- * @bus: the mii_bus काष्ठा
+ * __mdiobus_read - Unlocked version of the mdiobus_read function
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to पढ़ो
+ * @regnum: register number to read
  *
- * Read a MDIO bus रेजिस्टर. Caller must hold the mdio bus lock.
+ * Read a MDIO bus register. Caller must hold the mdio bus lock.
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context.
+ * NOTE: MUST NOT be called from interrupt context.
  */
-पूर्णांक __mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum)
-अणु
-	पूर्णांक retval;
+int __mdiobus_read(struct mii_bus *bus, int addr, u32 regnum)
+{
+	int retval;
 
-	lockdep_निश्चित_held_once(&bus->mdio_lock);
+	lockdep_assert_held_once(&bus->mdio_lock);
 
-	retval = bus->पढ़ो(bus, addr, regnum);
+	retval = bus->read(bus, addr, regnum);
 
 	trace_mdio_access(bus, 1, addr, regnum, retval, retval);
 	mdiobus_stats_acct(&bus->stats[addr], true, retval);
 
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL(__mdiobus_पढ़ो);
+	return retval;
+}
+EXPORT_SYMBOL(__mdiobus_read);
 
 /**
- * __mdiobus_ग_लिखो - Unlocked version of the mdiobus_ग_लिखो function
- * @bus: the mii_bus काष्ठा
+ * __mdiobus_write - Unlocked version of the mdiobus_write function
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to ग_लिखो
- * @val: value to ग_लिखो to @regnum
+ * @regnum: register number to write
+ * @val: value to write to @regnum
  *
- * Write a MDIO bus रेजिस्टर. Caller must hold the mdio bus lock.
+ * Write a MDIO bus register. Caller must hold the mdio bus lock.
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context.
+ * NOTE: MUST NOT be called from interrupt context.
  */
-पूर्णांक __mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val)
-अणु
-	पूर्णांक err;
+int __mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val)
+{
+	int err;
 
-	lockdep_निश्चित_held_once(&bus->mdio_lock);
+	lockdep_assert_held_once(&bus->mdio_lock);
 
-	err = bus->ग_लिखो(bus, addr, regnum, val);
+	err = bus->write(bus, addr, regnum, val);
 
 	trace_mdio_access(bus, 0, addr, regnum, val, err);
 	mdiobus_stats_acct(&bus->stats[addr], false, err);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(__mdiobus_ग_लिखो);
+	return err;
+}
+EXPORT_SYMBOL(__mdiobus_write);
 
 /**
- * __mdiobus_modअगरy_changed - Unlocked version of the mdiobus_modअगरy function
- * @bus: the mii_bus काष्ठा
+ * __mdiobus_modify_changed - Unlocked version of the mdiobus_modify function
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to modअगरy
+ * @regnum: register number to modify
  * @mask: bit mask of bits to clear
  * @set: bit mask of bits to set
  *
- * Read, modअगरy, and अगर any change, ग_लिखो the रेजिस्टर value back to the
- * device. Any error वापसs a negative number.
+ * Read, modify, and if any change, write the register value back to the
+ * device. Any error returns a negative number.
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context.
+ * NOTE: MUST NOT be called from interrupt context.
  */
-पूर्णांक __mdiobus_modअगरy_changed(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum,
+int __mdiobus_modify_changed(struct mii_bus *bus, int addr, u32 regnum,
 			     u16 mask, u16 set)
-अणु
-	पूर्णांक new, ret;
+{
+	int new, ret;
 
-	ret = __mdiobus_पढ़ो(bus, addr, regnum);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __mdiobus_read(bus, addr, regnum);
+	if (ret < 0)
+		return ret;
 
 	new = (ret & ~mask) | set;
-	अगर (new == ret)
-		वापस 0;
+	if (new == ret)
+		return 0;
 
-	ret = __mdiobus_ग_लिखो(bus, addr, regnum, new);
+	ret = __mdiobus_write(bus, addr, regnum, new);
 
-	वापस ret < 0 ? ret : 1;
-पूर्ण
-EXPORT_SYMBOL_GPL(__mdiobus_modअगरy_changed);
+	return ret < 0 ? ret : 1;
+}
+EXPORT_SYMBOL_GPL(__mdiobus_modify_changed);
 
 /**
- * mdiobus_पढ़ो_nested - Nested version of the mdiobus_पढ़ो function
- * @bus: the mii_bus काष्ठा
+ * mdiobus_read_nested - Nested version of the mdiobus_read function
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to पढ़ो
+ * @regnum: register number to read
  *
- * In हाल of nested MDIO bus access aव्योम lockdep false positives by
+ * In case of nested MDIO bus access avoid lockdep false positives by
  * using mutex_lock_nested().
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक mdiobus_पढ़ो_nested(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum)
-अणु
-	पूर्णांक retval;
+int mdiobus_read_nested(struct mii_bus *bus, int addr, u32 regnum)
+{
+	int retval;
 
 	mutex_lock_nested(&bus->mdio_lock, MDIO_MUTEX_NESTED);
-	retval = __mdiobus_पढ़ो(bus, addr, regnum);
+	retval = __mdiobus_read(bus, addr, regnum);
 	mutex_unlock(&bus->mdio_lock);
 
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_पढ़ो_nested);
+	return retval;
+}
+EXPORT_SYMBOL(mdiobus_read_nested);
 
 /**
- * mdiobus_पढ़ो - Convenience function क्रम पढ़ोing a given MII mgmt रेजिस्टर
- * @bus: the mii_bus काष्ठा
+ * mdiobus_read - Convenience function for reading a given MII mgmt register
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to पढ़ो
+ * @regnum: register number to read
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक mdiobus_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum)
-अणु
-	पूर्णांक retval;
+int mdiobus_read(struct mii_bus *bus, int addr, u32 regnum)
+{
+	int retval;
 
 	mutex_lock(&bus->mdio_lock);
-	retval = __mdiobus_पढ़ो(bus, addr, regnum);
+	retval = __mdiobus_read(bus, addr, regnum);
 	mutex_unlock(&bus->mdio_lock);
 
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_पढ़ो);
+	return retval;
+}
+EXPORT_SYMBOL(mdiobus_read);
 
 /**
- * mdiobus_ग_लिखो_nested - Nested version of the mdiobus_ग_लिखो function
- * @bus: the mii_bus काष्ठा
+ * mdiobus_write_nested - Nested version of the mdiobus_write function
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to ग_लिखो
- * @val: value to ग_लिखो to @regnum
+ * @regnum: register number to write
+ * @val: value to write to @regnum
  *
- * In हाल of nested MDIO bus access aव्योम lockdep false positives by
+ * In case of nested MDIO bus access avoid lockdep false positives by
  * using mutex_lock_nested().
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक mdiobus_ग_लिखो_nested(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val)
-अणु
-	पूर्णांक err;
+int mdiobus_write_nested(struct mii_bus *bus, int addr, u32 regnum, u16 val)
+{
+	int err;
 
 	mutex_lock_nested(&bus->mdio_lock, MDIO_MUTEX_NESTED);
-	err = __mdiobus_ग_लिखो(bus, addr, regnum, val);
+	err = __mdiobus_write(bus, addr, regnum, val);
 	mutex_unlock(&bus->mdio_lock);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_ग_लिखो_nested);
+	return err;
+}
+EXPORT_SYMBOL(mdiobus_write_nested);
 
 /**
- * mdiobus_ग_लिखो - Convenience function क्रम writing a given MII mgmt रेजिस्टर
- * @bus: the mii_bus काष्ठा
+ * mdiobus_write - Convenience function for writing a given MII mgmt register
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to ग_लिखो
- * @val: value to ग_लिखो to @regnum
+ * @regnum: register number to write
+ * @val: value to write to @regnum
  *
- * NOTE: MUST NOT be called from पूर्णांकerrupt context,
- * because the bus पढ़ो/ग_लिखो functions may रुको क्रम an पूर्णांकerrupt
+ * NOTE: MUST NOT be called from interrupt context,
+ * because the bus read/write functions may wait for an interrupt
  * to conclude the operation.
  */
-पूर्णांक mdiobus_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 val)
-अणु
-	पूर्णांक err;
+int mdiobus_write(struct mii_bus *bus, int addr, u32 regnum, u16 val)
+{
+	int err;
 
 	mutex_lock(&bus->mdio_lock);
-	err = __mdiobus_ग_लिखो(bus, addr, regnum, val);
+	err = __mdiobus_write(bus, addr, regnum, val);
 	mutex_unlock(&bus->mdio_lock);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(mdiobus_ग_लिखो);
+	return err;
+}
+EXPORT_SYMBOL(mdiobus_write);
 
 /**
- * mdiobus_modअगरy - Convenience function क्रम modअगरying a given mdio device
- *	रेजिस्टर
- * @bus: the mii_bus काष्ठा
+ * mdiobus_modify - Convenience function for modifying a given mdio device
+ *	register
+ * @bus: the mii_bus struct
  * @addr: the phy address
- * @regnum: रेजिस्टर number to ग_लिखो
+ * @regnum: register number to write
  * @mask: bit mask of bits to clear
  * @set: bit mask of bits to set
  */
-पूर्णांक mdiobus_modअगरy(काष्ठा mii_bus *bus, पूर्णांक addr, u32 regnum, u16 mask, u16 set)
-अणु
-	पूर्णांक err;
+int mdiobus_modify(struct mii_bus *bus, int addr, u32 regnum, u16 mask, u16 set)
+{
+	int err;
 
 	mutex_lock(&bus->mdio_lock);
-	err = __mdiobus_modअगरy_changed(bus, addr, regnum, mask, set);
+	err = __mdiobus_modify_changed(bus, addr, regnum, mask, set);
 	mutex_unlock(&bus->mdio_lock);
 
-	वापस err < 0 ? err : 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(mdiobus_modअगरy);
+	return err < 0 ? err : 0;
+}
+EXPORT_SYMBOL_GPL(mdiobus_modify);
 
 /**
- * mdio_bus_match - determine अगर given MDIO driver supports the given
+ * mdio_bus_match - determine if given MDIO driver supports the given
  *		    MDIO device
  * @dev: target MDIO device
  * @drv: given MDIO driver
  *
- * Description: Given a MDIO device, and a MDIO driver, वापस 1 अगर
- *   the driver supports the device.  Otherwise, वापस 0. This may
- *   require calling the devices own match function, since dअगरferent classes
- *   of MDIO devices have dअगरferent match criteria.
+ * Description: Given a MDIO device, and a MDIO driver, return 1 if
+ *   the driver supports the device.  Otherwise, return 0. This may
+ *   require calling the devices own match function, since different classes
+ *   of MDIO devices have different match criteria.
  */
-अटल पूर्णांक mdio_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा mdio_device *mdio = to_mdio_device(dev);
+static int mdio_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct mdio_device *mdio = to_mdio_device(dev);
 
-	अगर (of_driver_match_device(dev, drv))
-		वापस 1;
+	if (of_driver_match_device(dev, drv))
+		return 1;
 
-	अगर (mdio->bus_match)
-		वापस mdio->bus_match(dev, drv);
+	if (mdio->bus_match)
+		return mdio->bus_match(dev, drv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mdio_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	पूर्णांक rc;
+static int mdio_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	int rc;
 
 	/* Some devices have extra OF data and an OF-style MODALIAS */
 	rc = of_device_uevent_modalias(dev, env);
-	अगर (rc != -ENODEV)
-		वापस rc;
+	if (rc != -ENODEV)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा attribute *mdio_bus_device_statistics_attrs[] = अणु
+static struct attribute *mdio_bus_device_statistics_attrs[] = {
 	&dev_attr_mdio_bus_device_transfers.attr.attr,
 	&dev_attr_mdio_bus_device_errors.attr.attr,
-	&dev_attr_mdio_bus_device_ग_लिखोs.attr.attr,
-	&dev_attr_mdio_bus_device_पढ़ोs.attr.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_mdio_bus_device_writes.attr.attr,
+	&dev_attr_mdio_bus_device_reads.attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group mdio_bus_device_statistics_group = अणु
+static const struct attribute_group mdio_bus_device_statistics_group = {
 	.name	= "statistics",
 	.attrs	= mdio_bus_device_statistics_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *mdio_bus_dev_groups[] = अणु
+static const struct attribute_group *mdio_bus_dev_groups[] = {
 	&mdio_bus_device_statistics_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-काष्ठा bus_type mdio_bus_type = अणु
+struct bus_type mdio_bus_type = {
 	.name		= "mdio_bus",
 	.dev_groups	= mdio_bus_dev_groups,
 	.match		= mdio_bus_match,
 	.uevent		= mdio_uevent,
-पूर्ण;
+};
 EXPORT_SYMBOL(mdio_bus_type);
 
-पूर्णांक __init mdio_bus_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init mdio_bus_init(void)
+{
+	int ret;
 
-	ret = class_रेजिस्टर(&mdio_bus_class);
-	अगर (!ret) अणु
-		ret = bus_रेजिस्टर(&mdio_bus_type);
-		अगर (ret)
-			class_unरेजिस्टर(&mdio_bus_class);
-	पूर्ण
+	ret = class_register(&mdio_bus_class);
+	if (!ret) {
+		ret = bus_register(&mdio_bus_type);
+		if (ret)
+			class_unregister(&mdio_bus_class);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(mdio_bus_init);
 
-#अगर IS_ENABLED(CONFIG_PHYLIB)
-व्योम mdio_bus_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&mdio_bus_class);
-	bus_unरेजिस्टर(&mdio_bus_type);
-पूर्ण
-EXPORT_SYMBOL_GPL(mdio_bus_निकास);
-#अन्यथा
+#if IS_ENABLED(CONFIG_PHYLIB)
+void mdio_bus_exit(void)
+{
+	class_unregister(&mdio_bus_class);
+	bus_unregister(&mdio_bus_type);
+}
+EXPORT_SYMBOL_GPL(mdio_bus_exit);
+#else
 module_init(mdio_bus_init);
-/* no module_निकास, पूर्णांकentional */
+/* no module_exit, intentional */
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("MDIO bus/device layer");
-#पूर्ण_अगर
+#endif

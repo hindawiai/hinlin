@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/kernel/devtree.c
  *
  *  Copyright (C) 2009 Canonical Ltd. <jeremy.kerr@canonical.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/smp.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/memblock.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/of_irq.h>
+#include <linux/of_platform.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach-types.h>
+#include <asm/cputype.h>
+#include <asm/setup.h>
+#include <asm/page.h>
+#include <asm/prom.h>
+#include <asm/smp_plat.h>
+#include <asm/mach/arch.h>
+#include <asm/mach-types.h>
 
 
-#अगर_घोषित CONFIG_SMP
-बाह्य काष्ठा of_cpu_method __cpu_method_of_table[];
+#ifdef CONFIG_SMP
+extern struct of_cpu_method __cpu_method_of_table[];
 
-अटल स्थिर काष्ठा of_cpu_method __cpu_method_of_table_sentinel
+static const struct of_cpu_method __cpu_method_of_table_sentinel
 	__used __section("__cpu_method_of_table_end");
 
 
-अटल पूर्णांक __init set_smp_ops_by_method(काष्ठा device_node *node)
-अणु
-	स्थिर अक्षर *method;
-	काष्ठा of_cpu_method *m = __cpu_method_of_table;
+static int __init set_smp_ops_by_method(struct device_node *node)
+{
+	const char *method;
+	struct of_cpu_method *m = __cpu_method_of_table;
 
-	अगर (of_property_पढ़ो_string(node, "enable-method", &method))
-		वापस 0;
+	if (of_property_read_string(node, "enable-method", &method))
+		return 0;
 
-	क्रम (; m->method; m++)
-		अगर (!म_भेद(m->method, method)) अणु
+	for (; m->method; m++)
+		if (!strcmp(m->method, method)) {
 			smp_set_ops(m->ops);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक set_smp_ops_by_method(काष्ठा device_node *node)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else
+static inline int set_smp_ops_by_method(struct device_node *node)
+{
+	return 1;
+}
+#endif
 
 
 /*
@@ -64,29 +63,29 @@
  *
  * Updates the cpu possible mask with the number of parsed cpu nodes
  */
-व्योम __init arm_dt_init_cpu_maps(व्योम)
-अणु
+void __init arm_dt_init_cpu_maps(void)
+{
 	/*
-	 * Temp logical map is initialized with अच_पूर्णांक_उच्च values that are
+	 * Temp logical map is initialized with UINT_MAX values that are
 	 * considered invalid logical map entries since the logical map must
 	 * contain a list of MPIDR[23:0] values where MPIDR[31:24] must
-	 * पढ़ो as 0.
+	 * read as 0.
 	 */
-	काष्ठा device_node *cpu, *cpus;
-	पूर्णांक found_method = 0;
+	struct device_node *cpu, *cpus;
+	int found_method = 0;
 	u32 i, j, cpuidx = 1;
-	u32 mpidr = is_smp() ? पढ़ो_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
+	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
 
-	u32 पंचांगp_map[NR_CPUS] = अणु [0 ... NR_CPUS-1] = MPIDR_INVALID पूर्ण;
+	u32 tmp_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 	bool bootcpu_valid = false;
 	cpus = of_find_node_by_path("/cpus");
 
-	अगर (!cpus)
-		वापस;
+	if (!cpus)
+		return;
 
-	क्रम_each_of_cpu_node(cpu) अणु
-		स्थिर __be32 *cell;
-		पूर्णांक prop_bytes;
+	for_each_of_cpu_node(cpu) {
+		const __be32 *cell;
+		int prop_bytes;
 		u32 hwid;
 
 		pr_debug(" * %pOF...\n", cpu);
@@ -96,159 +95,159 @@
 		 * cpu_logical_map.
 		 */
 		cell = of_get_property(cpu, "reg", &prop_bytes);
-		अगर (!cell || prop_bytes < माप(*cell)) अणु
+		if (!cell || prop_bytes < sizeof(*cell)) {
 			pr_debug(" * %pOF missing reg property\n", cpu);
 			of_node_put(cpu);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
 		 * Bits n:24 must be set to 0 in the DT since the reg property
 		 * defines the MPIDR[23:0].
 		 */
-		करो अणु
+		do {
 			hwid = be32_to_cpu(*cell++);
-			prop_bytes -= माप(*cell);
-		पूर्ण जबतक (!hwid && prop_bytes > 0);
+			prop_bytes -= sizeof(*cell);
+		} while (!hwid && prop_bytes > 0);
 
-		अगर (prop_bytes || (hwid & ~MPIDR_HWID_BITMASK)) अणु
+		if (prop_bytes || (hwid & ~MPIDR_HWID_BITMASK)) {
 			of_node_put(cpu);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
-		 * Duplicate MPIDRs are a recipe क्रम disaster.
-		 * Scan all initialized entries and check क्रम
+		 * Duplicate MPIDRs are a recipe for disaster.
+		 * Scan all initialized entries and check for
 		 * duplicates. If any is found just bail out.
-		 * temp values were initialized to अच_पूर्णांक_उच्च
-		 * to aव्योम matching valid MPIDR[23:0] values.
+		 * temp values were initialized to UINT_MAX
+		 * to avoid matching valid MPIDR[23:0] values.
 		 */
-		क्रम (j = 0; j < cpuidx; j++)
-			अगर (WARN(पंचांगp_map[j] == hwid,
-				 "Duplicate /cpu reg properties in the DT\n")) अणु
+		for (j = 0; j < cpuidx; j++)
+			if (WARN(tmp_map[j] == hwid,
+				 "Duplicate /cpu reg properties in the DT\n")) {
 				of_node_put(cpu);
-				वापस;
-			पूर्ण
+				return;
+			}
 
 		/*
 		 * Build a stashed array of MPIDR values. Numbering scheme
-		 * requires that अगर detected the boot CPU must be asचिन्हित
+		 * requires that if detected the boot CPU must be assigned
 		 * logical id 0. Other CPUs get sequential indexes starting
 		 * from 1. If a CPU node with a reg property matching the
 		 * boot CPU MPIDR is detected, this is recorded so that the
 		 * logical map built from DT is validated and can be used
 		 * to override the map created in smp_setup_processor_id().
 		 */
-		अगर (hwid == mpidr) अणु
+		if (hwid == mpidr) {
 			i = 0;
 			bootcpu_valid = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			i = cpuidx++;
-		पूर्ण
+		}
 
-		अगर (WARN(cpuidx > nr_cpu_ids, "DT /cpu %u nodes greater than "
+		if (WARN(cpuidx > nr_cpu_ids, "DT /cpu %u nodes greater than "
 					       "max cores %u, capping them\n",
-					       cpuidx, nr_cpu_ids)) अणु
+					       cpuidx, nr_cpu_ids)) {
 			cpuidx = nr_cpu_ids;
 			of_node_put(cpu);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		पंचांगp_map[i] = hwid;
+		tmp_map[i] = hwid;
 
-		अगर (!found_method)
+		if (!found_method)
 			found_method = set_smp_ops_by_method(cpu);
-	पूर्ण
+	}
 
 	/*
-	 * Fallback to an enable-method in the cpus node अगर nothing found in
+	 * Fallback to an enable-method in the cpus node if nothing found in
 	 * a cpu node.
 	 */
-	अगर (!found_method)
+	if (!found_method)
 		set_smp_ops_by_method(cpus);
 
-	अगर (!bootcpu_valid) अणु
+	if (!bootcpu_valid) {
 		pr_warn("DT missing boot CPU MPIDR[23:0], fall back to default cpu_logical_map\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Since the boot CPU node contains proper data, and all nodes have
 	 * a reg property, the DT CPU list can be considered valid and the
 	 * logical map created in smp_setup_processor_id() can be overridden
 	 */
-	क्रम (i = 0; i < cpuidx; i++) अणु
+	for (i = 0; i < cpuidx; i++) {
 		set_cpu_possible(i, true);
-		cpu_logical_map(i) = पंचांगp_map[i];
+		cpu_logical_map(i) = tmp_map[i];
 		pr_debug("cpu logical map 0x%x\n", cpu_logical_map(i));
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool arch_match_cpu_phys_id(पूर्णांक cpu, u64 phys_id)
-अणु
-	वापस phys_id == cpu_logical_map(cpu);
-पूर्ण
+bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
+{
+	return phys_id == cpu_logical_map(cpu);
+}
 
-अटल स्थिर व्योम * __init arch_get_next_mach(स्थिर अक्षर *स्थिर **match)
-अणु
-	अटल स्थिर काष्ठा machine_desc *mdesc = __arch_info_begin;
-	स्थिर काष्ठा machine_desc *m = mdesc;
+static const void * __init arch_get_next_mach(const char *const **match)
+{
+	static const struct machine_desc *mdesc = __arch_info_begin;
+	const struct machine_desc *m = mdesc;
 
-	अगर (m >= __arch_info_end)
-		वापस शून्य;
+	if (m >= __arch_info_end)
+		return NULL;
 
 	mdesc++;
 	*match = m->dt_compat;
-	वापस m;
-पूर्ण
+	return m;
+}
 
 /**
  * setup_machine_fdt - Machine setup when an dtb was passed to the kernel
- * @dt_virt: भव address of dt blob
+ * @dt_virt: virtual address of dt blob
  *
  * If a dtb was passed to the kernel in r2, then use it to choose the
- * correct machine_desc and to setup the प्रणाली.
+ * correct machine_desc and to setup the system.
  */
-स्थिर काष्ठा machine_desc * __init setup_machine_fdt(व्योम *dt_virt)
-अणु
-	स्थिर काष्ठा machine_desc *mdesc, *mdesc_best = शून्य;
+const struct machine_desc * __init setup_machine_fdt(void *dt_virt)
+{
+	const struct machine_desc *mdesc, *mdesc_best = NULL;
 
-#अगर defined(CONFIG_ARCH_MULTIPLATFORM) || defined(CONFIG_ARM_SINGLE_ARMV7M)
+#if defined(CONFIG_ARCH_MULTIPLATFORM) || defined(CONFIG_ARM_SINGLE_ARMV7M)
 	DT_MACHINE_START(GENERIC_DT, "Generic DT based system")
 		.l2c_aux_val = 0x0,
 		.l2c_aux_mask = ~0x0,
 	MACHINE_END
 
 	mdesc_best = &__mach_desc_GENERIC_DT;
-#पूर्ण_अगर
+#endif
 
-	अगर (!dt_virt || !early_init_dt_verअगरy(dt_virt))
-		वापस शून्य;
+	if (!dt_virt || !early_init_dt_verify(dt_virt))
+		return NULL;
 
 	mdesc = of_flat_dt_match_machine(mdesc_best, arch_get_next_mach);
 
-	अगर (!mdesc) अणु
-		स्थिर अक्षर *prop;
-		पूर्णांक size;
-		अचिन्हित दीर्घ dt_root;
+	if (!mdesc) {
+		const char *prop;
+		int size;
+		unsigned long dt_root;
 
-		early_prपूर्णांक("\nError: unrecognized/unsupported "
+		early_print("\nError: unrecognized/unsupported "
 			    "device tree compatible list:\n[ ");
 
 		dt_root = of_get_flat_dt_root();
 		prop = of_get_flat_dt_prop(dt_root, "compatible", &size);
-		जबतक (size > 0) अणु
-			early_prपूर्णांक("'%s' ", prop);
-			size -= म_माप(prop) + 1;
-			prop += म_माप(prop) + 1;
-		पूर्ण
-		early_prपूर्णांक("]\n\n");
+		while (size > 0) {
+			early_print("'%s' ", prop);
+			size -= strlen(prop) + 1;
+			prop += strlen(prop) + 1;
+		}
+		early_print("]\n\n");
 
-		dump_machine_table(); /* करोes not वापस */
-	पूर्ण
+		dump_machine_table(); /* does not return */
+	}
 
-	/* We really करोn't want to करो this, but someबार firmware provides buggy data */
-	अगर (mdesc->dt_fixup)
+	/* We really don't want to do this, but sometimes firmware provides buggy data */
+	if (mdesc->dt_fixup)
 		mdesc->dt_fixup();
 
 	early_init_dt_scan_nodes();
@@ -256,5 +255,5 @@ bool arch_match_cpu_phys_id(पूर्णांक cpu, u64 phys_id)
 	/* Change machine number to match the mdesc we're using */
 	__machine_arch_type = mdesc->nr;
 
-	वापस mdesc;
-पूर्ण
+	return mdesc;
+}

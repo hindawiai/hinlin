@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 
-#अगर_अघोषित I2C_HID_H
-#घोषणा I2C_HID_H
+#ifndef I2C_HID_H
+#define I2C_HID_H
 
-#समावेश <linux/i2c.h>
+#include <linux/i2c.h>
 
-#अगर_घोषित CONFIG_DMI
-काष्ठा i2c_hid_desc *i2c_hid_get_dmi_i2c_hid_desc_override(uपूर्णांक8_t *i2c_name);
-अक्षर *i2c_hid_get_dmi_hid_report_desc_override(uपूर्णांक8_t *i2c_name,
-					       अचिन्हित पूर्णांक *size);
-#अन्यथा
-अटल अंतरभूत काष्ठा i2c_hid_desc
-		   *i2c_hid_get_dmi_i2c_hid_desc_override(uपूर्णांक8_t *i2c_name)
-अणु वापस शून्य; पूर्ण
-अटल अंतरभूत अक्षर *i2c_hid_get_dmi_hid_report_desc_override(uपूर्णांक8_t *i2c_name,
-							     अचिन्हित पूर्णांक *size)
-अणु वापस शून्य; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DMI
+struct i2c_hid_desc *i2c_hid_get_dmi_i2c_hid_desc_override(uint8_t *i2c_name);
+char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
+					       unsigned int *size);
+#else
+static inline struct i2c_hid_desc
+		   *i2c_hid_get_dmi_i2c_hid_desc_override(uint8_t *i2c_name)
+{ return NULL; }
+static inline char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
+							     unsigned int *size)
+{ return NULL; }
+#endif
 
 /**
- * काष्ठा i2chid_ops - Ops provided to the core.
+ * struct i2chid_ops - Ops provided to the core.
  *
- * @घातer_up: करो sequencing to घातer up the device.
- * @घातer_करोwn: करो sequencing to घातer करोwn the device.
- * @shutकरोwn_tail: called at the end of shutकरोwn.
+ * @power_up: do sequencing to power up the device.
+ * @power_down: do sequencing to power down the device.
+ * @shutdown_tail: called at the end of shutdown.
  */
-काष्ठा i2chid_ops अणु
-	पूर्णांक (*घातer_up)(काष्ठा i2chid_ops *ops);
-	व्योम (*घातer_करोwn)(काष्ठा i2chid_ops *ops);
-	व्योम (*shutकरोwn_tail)(काष्ठा i2chid_ops *ops);
-पूर्ण;
+struct i2chid_ops {
+	int (*power_up)(struct i2chid_ops *ops);
+	void (*power_down)(struct i2chid_ops *ops);
+	void (*shutdown_tail)(struct i2chid_ops *ops);
+};
 
-पूर्णांक i2c_hid_core_probe(काष्ठा i2c_client *client, काष्ठा i2chid_ops *ops,
+int i2c_hid_core_probe(struct i2c_client *client, struct i2chid_ops *ops,
 		       u16 hid_descriptor_address);
-पूर्णांक i2c_hid_core_हटाओ(काष्ठा i2c_client *client);
+int i2c_hid_core_remove(struct i2c_client *client);
 
-व्योम i2c_hid_core_shutकरोwn(काष्ठा i2c_client *client);
+void i2c_hid_core_shutdown(struct i2c_client *client);
 
-बाह्य स्थिर काष्ठा dev_pm_ops i2c_hid_core_pm;
+extern const struct dev_pm_ops i2c_hid_core_pm;
 
-#पूर्ण_अगर
+#endif

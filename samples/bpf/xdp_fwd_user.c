@@ -1,171 +1,170 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017-18 David Ahern <dsahern@gmail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of version 2 of the GNU General Public
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  */
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/अगर_link.h>
-#समावेश <linux/सीमा.स>
-#समावेश <net/अगर.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <fcntl.h>
-#समावेश <libgen.h>
+#include <linux/bpf.h>
+#include <linux/if_link.h>
+#include <linux/limits.h>
+#include <net/if.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <libgen.h>
 
-#समावेश <bpf/libbpf.h>
-#समावेश <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include <bpf/bpf.h>
 
-अटल __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+static __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
 
-अटल पूर्णांक करो_attach(पूर्णांक idx, पूर्णांक prog_fd, पूर्णांक map_fd, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+static int do_attach(int idx, int prog_fd, int map_fd, const char *name)
+{
+	int err;
 
 	err = bpf_set_link_xdp_fd(idx, prog_fd, xdp_flags);
-	अगर (err < 0) अणु
-		म_लिखो("ERROR: failed to attach program to %s\n", name);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		printf("ERROR: failed to attach program to %s\n", name);
+		return err;
+	}
 
-	/* Adding अगरindex as a possible egress TX port */
+	/* Adding ifindex as a possible egress TX port */
 	err = bpf_map_update_elem(map_fd, &idx, &idx, 0);
-	अगर (err)
-		म_लिखो("ERROR: failed using device %s as TX-port\n", name);
+	if (err)
+		printf("ERROR: failed using device %s as TX-port\n", name);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक करो_detach(पूर्णांक idx, स्थिर अक्षर *name)
-अणु
-	पूर्णांक err;
+static int do_detach(int idx, const char *name)
+{
+	int err;
 
 	err = bpf_set_link_xdp_fd(idx, -1, xdp_flags);
-	अगर (err < 0)
-		म_लिखो("ERROR: failed to detach program from %s\n", name);
+	if (err < 0)
+		printf("ERROR: failed to detach program from %s\n", name);
 
 	/* TODO: Remember to cleanup map, when adding use of shared map
 	 *  bpf_map_delete_elem((map_fd, &idx);
 	 */
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम usage(स्थिर अक्षर *prog)
-अणु
-	ख_लिखो(मानक_त्रुटि,
+static void usage(const char *prog)
+{
+	fprintf(stderr,
 		"usage: %s [OPTS] interface-list\n"
 		"\nOPTS:\n"
 		"    -d    detach program\n"
 		"    -D    direct table lookups (skip fib rules)\n",
 		prog);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा bpf_prog_load_attr prog_load_attr = अणु
+int main(int argc, char **argv)
+{
+	struct bpf_prog_load_attr prog_load_attr = {
 		.prog_type	= BPF_PROG_TYPE_XDP,
-	पूर्ण;
-	स्थिर अक्षर *prog_name = "xdp_fwd";
-	काष्ठा bpf_program *prog;
-	पूर्णांक prog_fd, map_fd = -1;
-	अक्षर filename[PATH_MAX];
-	काष्ठा bpf_object *obj;
-	पूर्णांक opt, i, idx, err;
-	पूर्णांक attach = 1;
-	पूर्णांक ret = 0;
+	};
+	const char *prog_name = "xdp_fwd";
+	struct bpf_program *prog;
+	int prog_fd, map_fd = -1;
+	char filename[PATH_MAX];
+	struct bpf_object *obj;
+	int opt, i, idx, err;
+	int attach = 1;
+	int ret = 0;
 
-	जबतक ((opt = getopt(argc, argv, ":dDSF")) != -1) अणु
-		चयन (opt) अणु
-		हाल 'd':
+	while ((opt = getopt(argc, argv, ":dDSF")) != -1) {
+		switch (opt) {
+		case 'd':
 			attach = 0;
-			अवरोध;
-		हाल 'S':
+			break;
+		case 'S':
 			xdp_flags |= XDP_FLAGS_SKB_MODE;
-			अवरोध;
-		हाल 'F':
+			break;
+		case 'F':
 			xdp_flags &= ~XDP_FLAGS_UPDATE_IF_NOEXIST;
-			अवरोध;
-		हाल 'D':
+			break;
+		case 'D':
 			prog_name = "xdp_fwd_direct";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			usage(basename(argv[0]));
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	अगर (!(xdp_flags & XDP_FLAGS_SKB_MODE))
+	if (!(xdp_flags & XDP_FLAGS_SKB_MODE))
 		xdp_flags |= XDP_FLAGS_DRV_MODE;
 
-	अगर (optind == argc) अणु
+	if (optind == argc) {
 		usage(basename(argv[0]));
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (attach) अणु
-		snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
+	if (attach) {
+		snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
 		prog_load_attr.file = filename;
 
-		अगर (access(filename, O_RDONLY) < 0) अणु
-			म_लिखो("error accessing file %s: %s\n",
-				filename, म_त्रुटि(त्रुटि_सं));
-			वापस 1;
-		पूर्ण
+		if (access(filename, O_RDONLY) < 0) {
+			printf("error accessing file %s: %s\n",
+				filename, strerror(errno));
+			return 1;
+		}
 
 		err = bpf_prog_load_xattr(&prog_load_attr, &obj, &prog_fd);
-		अगर (err) अणु
-			म_लिखो("Does kernel support devmap lookup?\n");
+		if (err) {
+			printf("Does kernel support devmap lookup?\n");
 			/* If not, the error message will be:
 			 *  "cannot pass map_type 14 into func bpf_map_lookup_elem#1"
 			 */
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		prog = bpf_object__find_program_by_title(obj, prog_name);
 		prog_fd = bpf_program__fd(prog);
-		अगर (prog_fd < 0) अणु
-			म_लिखो("program not found: %s\n", म_त्रुटि(prog_fd));
-			वापस 1;
-		पूर्ण
+		if (prog_fd < 0) {
+			printf("program not found: %s\n", strerror(prog_fd));
+			return 1;
+		}
 		map_fd = bpf_map__fd(bpf_object__find_map_by_name(obj,
 							"xdp_tx_ports"));
-		अगर (map_fd < 0) अणु
-			म_लिखो("map not found: %s\n", म_त्रुटि(map_fd));
-			वापस 1;
-		पूर्ण
-	पूर्ण
+		if (map_fd < 0) {
+			printf("map not found: %s\n", strerror(map_fd));
+			return 1;
+		}
+	}
 
-	क्रम (i = optind; i < argc; ++i) अणु
-		idx = अगर_nametoindex(argv[i]);
-		अगर (!idx)
-			idx = म_से_अदीर्घ(argv[i], शून्य, 0);
+	for (i = optind; i < argc; ++i) {
+		idx = if_nametoindex(argv[i]);
+		if (!idx)
+			idx = strtoul(argv[i], NULL, 0);
 
-		अगर (!idx) अणु
-			ख_लिखो(मानक_त्रुटि, "Invalid arg\n");
-			वापस 1;
-		पूर्ण
-		अगर (!attach) अणु
-			err = करो_detach(idx, argv[i]);
-			अगर (err)
+		if (!idx) {
+			fprintf(stderr, "Invalid arg\n");
+			return 1;
+		}
+		if (!attach) {
+			err = do_detach(idx, argv[i]);
+			if (err)
 				ret = err;
-		पूर्ण अन्यथा अणु
-			err = करो_attach(idx, prog_fd, map_fd, argv[i]);
-			अगर (err)
+		} else {
+			err = do_attach(idx, prog_fd, map_fd, argv[i]);
+			if (err)
 				ret = err;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

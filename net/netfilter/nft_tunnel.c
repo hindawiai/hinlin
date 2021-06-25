@@ -1,654 +1,653 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/dst_metadata.h>
-#समावेश <net/ip_tunnels.h>
-#समावेश <net/vxlan.h>
-#समावेश <net/erspan.h>
-#समावेश <net/geneve.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/seqlock.h>
+#include <linux/netlink.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/dst_metadata.h>
+#include <net/ip_tunnels.h>
+#include <net/vxlan.h>
+#include <net/erspan.h>
+#include <net/geneve.h>
 
-काष्ठा nft_tunnel अणु
-	क्रमागत nft_tunnel_keys	key:8;
+struct nft_tunnel {
+	enum nft_tunnel_keys	key:8;
 	u8			dreg;
-	क्रमागत nft_tunnel_mode	mode:8;
-पूर्ण;
+	enum nft_tunnel_mode	mode:8;
+};
 
-अटल व्योम nft_tunnel_get_eval(स्थिर काष्ठा nft_expr *expr,
-				काष्ठा nft_regs *regs,
-				स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	स्थिर काष्ठा nft_tunnel *priv = nft_expr_priv(expr);
+static void nft_tunnel_get_eval(const struct nft_expr *expr,
+				struct nft_regs *regs,
+				const struct nft_pktinfo *pkt)
+{
+	const struct nft_tunnel *priv = nft_expr_priv(expr);
 	u32 *dest = &regs->data[priv->dreg];
-	काष्ठा ip_tunnel_info *tun_info;
+	struct ip_tunnel_info *tun_info;
 
 	tun_info = skb_tunnel_info(pkt->skb);
 
-	चयन (priv->key) अणु
-	हाल NFT_TUNNEL_PATH:
-		अगर (!tun_info) अणु
+	switch (priv->key) {
+	case NFT_TUNNEL_PATH:
+		if (!tun_info) {
 			nft_reg_store8(dest, false);
-			वापस;
-		पूर्ण
-		अगर (priv->mode == NFT_TUNNEL_MODE_NONE ||
+			return;
+		}
+		if (priv->mode == NFT_TUNNEL_MODE_NONE ||
 		    (priv->mode == NFT_TUNNEL_MODE_RX &&
 		     !(tun_info->mode & IP_TUNNEL_INFO_TX)) ||
 		    (priv->mode == NFT_TUNNEL_MODE_TX &&
 		     (tun_info->mode & IP_TUNNEL_INFO_TX)))
 			nft_reg_store8(dest, true);
-		अन्यथा
+		else
 			nft_reg_store8(dest, false);
-		अवरोध;
-	हाल NFT_TUNNEL_ID:
-		अगर (!tun_info) अणु
+		break;
+	case NFT_TUNNEL_ID:
+		if (!tun_info) {
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
-		अगर (priv->mode == NFT_TUNNEL_MODE_NONE ||
+			return;
+		}
+		if (priv->mode == NFT_TUNNEL_MODE_NONE ||
 		    (priv->mode == NFT_TUNNEL_MODE_RX &&
 		     !(tun_info->mode & IP_TUNNEL_INFO_TX)) ||
 		    (priv->mode == NFT_TUNNEL_MODE_TX &&
 		     (tun_info->mode & IP_TUNNEL_INFO_TX)))
 			*dest = ntohl(tunnel_id_to_key32(tun_info->key.tun_id));
-		अन्यथा
+		else
 			regs->verdict.code = NFT_BREAK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
 		regs->verdict.code = NFT_BREAK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_policy[NFTA_TUNNEL_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_TUNNEL_DREG]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_TUNNEL_MODE]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_policy[NFTA_TUNNEL_MAX + 1] = {
+	[NFTA_TUNNEL_KEY]	= { .type = NLA_U32 },
+	[NFTA_TUNNEL_DREG]	= { .type = NLA_U32 },
+	[NFTA_TUNNEL_MODE]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_tunnel_get_init(स्थिर काष्ठा nft_ctx *ctx,
-			       स्थिर काष्ठा nft_expr *expr,
-			       स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_tunnel *priv = nft_expr_priv(expr);
+static int nft_tunnel_get_init(const struct nft_ctx *ctx,
+			       const struct nft_expr *expr,
+			       const struct nlattr * const tb[])
+{
+	struct nft_tunnel *priv = nft_expr_priv(expr);
 	u32 len;
 
-	अगर (!tb[NFTA_TUNNEL_KEY] ||
+	if (!tb[NFTA_TUNNEL_KEY] ||
 	    !tb[NFTA_TUNNEL_DREG])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	priv->key = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY]));
-	चयन (priv->key) अणु
-	हाल NFT_TUNNEL_PATH:
-		len = माप(u8);
-		अवरोध;
-	हाल NFT_TUNNEL_ID:
-		len = माप(u32);
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch (priv->key) {
+	case NFT_TUNNEL_PATH:
+		len = sizeof(u8);
+		break;
+	case NFT_TUNNEL_ID:
+		len = sizeof(u32);
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	अगर (tb[NFTA_TUNNEL_MODE]) अणु
+	if (tb[NFTA_TUNNEL_MODE]) {
 		priv->mode = ntohl(nla_get_be32(tb[NFTA_TUNNEL_MODE]));
-		अगर (priv->mode > NFT_TUNNEL_MODE_MAX)
-			वापस -EOPNOTSUPP;
-	पूर्ण अन्यथा अणु
+		if (priv->mode > NFT_TUNNEL_MODE_MAX)
+			return -EOPNOTSUPP;
+	} else {
 		priv->mode = NFT_TUNNEL_MODE_NONE;
-	पूर्ण
+	}
 
-	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_TUNNEL_DREG], &priv->dreg,
-					शून्य, NFT_DATA_VALUE, len);
-पूर्ण
+	return nft_parse_register_store(ctx, tb[NFTA_TUNNEL_DREG], &priv->dreg,
+					NULL, NFT_DATA_VALUE, len);
+}
 
-अटल पूर्णांक nft_tunnel_get_dump(काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_tunnel *priv = nft_expr_priv(expr);
+static int nft_tunnel_get_dump(struct sk_buff *skb,
+			       const struct nft_expr *expr)
+{
+	const struct nft_tunnel *priv = nft_expr_priv(expr);
 
-	अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY, htonl(priv->key)))
-		जाओ nla_put_failure;
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_TUNNEL_DREG, priv->dreg))
-		जाओ nla_put_failure;
-	अगर (nla_put_be32(skb, NFTA_TUNNEL_MODE, htonl(priv->mode)))
-		जाओ nla_put_failure;
-	वापस 0;
+	if (nla_put_be32(skb, NFTA_TUNNEL_KEY, htonl(priv->key)))
+		goto nla_put_failure;
+	if (nft_dump_register(skb, NFTA_TUNNEL_DREG, priv->dreg))
+		goto nla_put_failure;
+	if (nla_put_be32(skb, NFTA_TUNNEL_MODE, htonl(priv->mode)))
+		goto nla_put_failure;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा nft_expr_type nft_tunnel_type;
-अटल स्थिर काष्ठा nft_expr_ops nft_tunnel_get_ops = अणु
+static struct nft_expr_type nft_tunnel_type;
+static const struct nft_expr_ops nft_tunnel_get_ops = {
 	.type		= &nft_tunnel_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_tunnel)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_tunnel)),
 	.eval		= nft_tunnel_get_eval,
 	.init		= nft_tunnel_get_init,
 	.dump		= nft_tunnel_get_dump,
-पूर्ण;
+};
 
-अटल काष्ठा nft_expr_type nft_tunnel_type __पढ़ो_mostly = अणु
+static struct nft_expr_type nft_tunnel_type __read_mostly = {
 	.name		= "tunnel",
 	.ops		= &nft_tunnel_get_ops,
 	.policy		= nft_tunnel_policy,
 	.maxattr	= NFTA_TUNNEL_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-काष्ठा nft_tunnel_opts अणु
-	जोड़ अणु
-		काष्ठा vxlan_metadata	vxlan;
-		काष्ठा erspan_metadata	erspan;
+struct nft_tunnel_opts {
+	union {
+		struct vxlan_metadata	vxlan;
+		struct erspan_metadata	erspan;
 		u8	data[IP_TUNNEL_OPTS_MAX];
-	पूर्ण u;
+	} u;
 	u32	len;
 	__be16	flags;
-पूर्ण;
+};
 
-काष्ठा nft_tunnel_obj अणु
-	काष्ठा metadata_dst	*md;
-	काष्ठा nft_tunnel_opts	opts;
-पूर्ण;
+struct nft_tunnel_obj {
+	struct metadata_dst	*md;
+	struct nft_tunnel_opts	opts;
+};
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_ip_policy[NFTA_TUNNEL_KEY_IP_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_IP_SRC]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_TUNNEL_KEY_IP_DST]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_ip_policy[NFTA_TUNNEL_KEY_IP_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_IP_SRC]	= { .type = NLA_U32 },
+	[NFTA_TUNNEL_KEY_IP_DST]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_tunnel_obj_ip_init(स्थिर काष्ठा nft_ctx *ctx,
-				  स्थिर काष्ठा nlattr *attr,
-				  काष्ठा ip_tunnel_info *info)
-अणु
-	काष्ठा nlattr *tb[NFTA_TUNNEL_KEY_IP_MAX + 1];
-	पूर्णांक err;
+static int nft_tunnel_obj_ip_init(const struct nft_ctx *ctx,
+				  const struct nlattr *attr,
+				  struct ip_tunnel_info *info)
+{
+	struct nlattr *tb[NFTA_TUNNEL_KEY_IP_MAX + 1];
+	int err;
 
 	err = nla_parse_nested_deprecated(tb, NFTA_TUNNEL_KEY_IP_MAX, attr,
-					  nft_tunnel_ip_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  nft_tunnel_ip_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_IP_DST])
-		वापस -EINVAL;
+	if (!tb[NFTA_TUNNEL_KEY_IP_DST])
+		return -EINVAL;
 
-	अगर (tb[NFTA_TUNNEL_KEY_IP_SRC])
+	if (tb[NFTA_TUNNEL_KEY_IP_SRC])
 		info->key.u.ipv4.src = nla_get_be32(tb[NFTA_TUNNEL_KEY_IP_SRC]);
-	अगर (tb[NFTA_TUNNEL_KEY_IP_DST])
+	if (tb[NFTA_TUNNEL_KEY_IP_DST])
 		info->key.u.ipv4.dst = nla_get_be32(tb[NFTA_TUNNEL_KEY_IP_DST]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_ip6_policy[NFTA_TUNNEL_KEY_IP6_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_IP6_SRC]	= अणु .len = माप(काष्ठा in6_addr), पूर्ण,
-	[NFTA_TUNNEL_KEY_IP6_DST]	= अणु .len = माप(काष्ठा in6_addr), पूर्ण,
-	[NFTA_TUNNEL_KEY_IP6_FLOWLABEL]	= अणु .type = NLA_U32, पूर्ण
-पूर्ण;
+static const struct nla_policy nft_tunnel_ip6_policy[NFTA_TUNNEL_KEY_IP6_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_IP6_SRC]	= { .len = sizeof(struct in6_addr), },
+	[NFTA_TUNNEL_KEY_IP6_DST]	= { .len = sizeof(struct in6_addr), },
+	[NFTA_TUNNEL_KEY_IP6_FLOWLABEL]	= { .type = NLA_U32, }
+};
 
-अटल पूर्णांक nft_tunnel_obj_ip6_init(स्थिर काष्ठा nft_ctx *ctx,
-				   स्थिर काष्ठा nlattr *attr,
-				   काष्ठा ip_tunnel_info *info)
-अणु
-	काष्ठा nlattr *tb[NFTA_TUNNEL_KEY_IP6_MAX + 1];
-	पूर्णांक err;
+static int nft_tunnel_obj_ip6_init(const struct nft_ctx *ctx,
+				   const struct nlattr *attr,
+				   struct ip_tunnel_info *info)
+{
+	struct nlattr *tb[NFTA_TUNNEL_KEY_IP6_MAX + 1];
+	int err;
 
 	err = nla_parse_nested_deprecated(tb, NFTA_TUNNEL_KEY_IP6_MAX, attr,
-					  nft_tunnel_ip6_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  nft_tunnel_ip6_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_IP6_DST])
-		वापस -EINVAL;
+	if (!tb[NFTA_TUNNEL_KEY_IP6_DST])
+		return -EINVAL;
 
-	अगर (tb[NFTA_TUNNEL_KEY_IP6_SRC]) अणु
-		स_नकल(&info->key.u.ipv6.src,
+	if (tb[NFTA_TUNNEL_KEY_IP6_SRC]) {
+		memcpy(&info->key.u.ipv6.src,
 		       nla_data(tb[NFTA_TUNNEL_KEY_IP6_SRC]),
-		       माप(काष्ठा in6_addr));
-	पूर्ण
-	अगर (tb[NFTA_TUNNEL_KEY_IP6_DST]) अणु
-		स_नकल(&info->key.u.ipv6.dst,
+		       sizeof(struct in6_addr));
+	}
+	if (tb[NFTA_TUNNEL_KEY_IP6_DST]) {
+		memcpy(&info->key.u.ipv6.dst,
 		       nla_data(tb[NFTA_TUNNEL_KEY_IP6_DST]),
-		       माप(काष्ठा in6_addr));
-	पूर्ण
-	अगर (tb[NFTA_TUNNEL_KEY_IP6_FLOWLABEL])
+		       sizeof(struct in6_addr));
+	}
+	if (tb[NFTA_TUNNEL_KEY_IP6_FLOWLABEL])
 		info->key.label = nla_get_be32(tb[NFTA_TUNNEL_KEY_IP6_FLOWLABEL]);
 
 	info->mode |= IP_TUNNEL_INFO_IPV6;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_opts_vxlan_policy[NFTA_TUNNEL_KEY_VXLAN_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_VXLAN_GBP]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_opts_vxlan_policy[NFTA_TUNNEL_KEY_VXLAN_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_VXLAN_GBP]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_tunnel_obj_vxlan_init(स्थिर काष्ठा nlattr *attr,
-				     काष्ठा nft_tunnel_opts *opts)
-अणु
-	काष्ठा nlattr *tb[NFTA_TUNNEL_KEY_VXLAN_MAX + 1];
-	पूर्णांक err;
+static int nft_tunnel_obj_vxlan_init(const struct nlattr *attr,
+				     struct nft_tunnel_opts *opts)
+{
+	struct nlattr *tb[NFTA_TUNNEL_KEY_VXLAN_MAX + 1];
+	int err;
 
 	err = nla_parse_nested_deprecated(tb, NFTA_TUNNEL_KEY_VXLAN_MAX, attr,
-					  nft_tunnel_opts_vxlan_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  nft_tunnel_opts_vxlan_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_VXLAN_GBP])
-		वापस -EINVAL;
+	if (!tb[NFTA_TUNNEL_KEY_VXLAN_GBP])
+		return -EINVAL;
 
 	opts->u.vxlan.gbp = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_VXLAN_GBP]));
 
-	opts->len	= माप(काष्ठा vxlan_metadata);
+	opts->len	= sizeof(struct vxlan_metadata);
 	opts->flags	= TUNNEL_VXLAN_OPT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_opts_erspan_policy[NFTA_TUNNEL_KEY_ERSPAN_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_ERSPAN_VERSION]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX]	= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_TUNNEL_KEY_ERSPAN_V2_सूची]		= अणु .type = NLA_U8 पूर्ण,
-	[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID]	= अणु .type = NLA_U8 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_opts_erspan_policy[NFTA_TUNNEL_KEY_ERSPAN_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_ERSPAN_VERSION]	= { .type = NLA_U32 },
+	[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX]	= { .type = NLA_U32 },
+	[NFTA_TUNNEL_KEY_ERSPAN_V2_DIR]		= { .type = NLA_U8 },
+	[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID]	= { .type = NLA_U8 },
+};
 
-अटल पूर्णांक nft_tunnel_obj_erspan_init(स्थिर काष्ठा nlattr *attr,
-				      काष्ठा nft_tunnel_opts *opts)
-अणु
-	काष्ठा nlattr *tb[NFTA_TUNNEL_KEY_ERSPAN_MAX + 1];
-	uपूर्णांक8_t hwid, dir;
-	पूर्णांक err, version;
+static int nft_tunnel_obj_erspan_init(const struct nlattr *attr,
+				      struct nft_tunnel_opts *opts)
+{
+	struct nlattr *tb[NFTA_TUNNEL_KEY_ERSPAN_MAX + 1];
+	uint8_t hwid, dir;
+	int err, version;
 
 	err = nla_parse_nested_deprecated(tb, NFTA_TUNNEL_KEY_ERSPAN_MAX,
 					  attr, nft_tunnel_opts_erspan_policy,
-					  शून्य);
-	अगर (err < 0)
-		वापस err;
+					  NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_ERSPAN_VERSION])
-		 वापस -EINVAL;
+	if (!tb[NFTA_TUNNEL_KEY_ERSPAN_VERSION])
+		 return -EINVAL;
 
 	version = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_ERSPAN_VERSION]));
-	चयन (version) अणु
-	हाल ERSPAN_VERSION:
-		अगर (!tb[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX])
-			वापस -EINVAL;
+	switch (version) {
+	case ERSPAN_VERSION:
+		if (!tb[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX])
+			return -EINVAL;
 
 		opts->u.erspan.u.index =
 			nla_get_be32(tb[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX]);
-		अवरोध;
-	हाल ERSPAN_VERSION2:
-		अगर (!tb[NFTA_TUNNEL_KEY_ERSPAN_V2_सूची] ||
+		break;
+	case ERSPAN_VERSION2:
+		if (!tb[NFTA_TUNNEL_KEY_ERSPAN_V2_DIR] ||
 		    !tb[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID])
-			वापस -EINVAL;
+			return -EINVAL;
 
 		hwid = nla_get_u8(tb[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID]);
-		dir = nla_get_u8(tb[NFTA_TUNNEL_KEY_ERSPAN_V2_सूची]);
+		dir = nla_get_u8(tb[NFTA_TUNNEL_KEY_ERSPAN_V2_DIR]);
 
 		set_hwid(&opts->u.erspan.u.md2, hwid);
 		opts->u.erspan.u.md2.dir = dir;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 	opts->u.erspan.version = version;
 
-	opts->len	= माप(काष्ठा erspan_metadata);
+	opts->len	= sizeof(struct erspan_metadata);
 	opts->flags	= TUNNEL_ERSPAN_OPT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_opts_geneve_policy[NFTA_TUNNEL_KEY_GENEVE_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_GENEVE_CLASS]	= अणु .type = NLA_U16 पूर्ण,
-	[NFTA_TUNNEL_KEY_GENEVE_TYPE]	= अणु .type = NLA_U8 पूर्ण,
-	[NFTA_TUNNEL_KEY_GENEVE_DATA]	= अणु .type = NLA_BINARY, .len = 128 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_opts_geneve_policy[NFTA_TUNNEL_KEY_GENEVE_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_GENEVE_CLASS]	= { .type = NLA_U16 },
+	[NFTA_TUNNEL_KEY_GENEVE_TYPE]	= { .type = NLA_U8 },
+	[NFTA_TUNNEL_KEY_GENEVE_DATA]	= { .type = NLA_BINARY, .len = 128 },
+};
 
-अटल पूर्णांक nft_tunnel_obj_geneve_init(स्थिर काष्ठा nlattr *attr,
-				      काष्ठा nft_tunnel_opts *opts)
-अणु
-	काष्ठा geneve_opt *opt = (काष्ठा geneve_opt *)opts->u.data + opts->len;
-	काष्ठा nlattr *tb[NFTA_TUNNEL_KEY_GENEVE_MAX + 1];
-	पूर्णांक err, data_len;
+static int nft_tunnel_obj_geneve_init(const struct nlattr *attr,
+				      struct nft_tunnel_opts *opts)
+{
+	struct geneve_opt *opt = (struct geneve_opt *)opts->u.data + opts->len;
+	struct nlattr *tb[NFTA_TUNNEL_KEY_GENEVE_MAX + 1];
+	int err, data_len;
 
 	err = nla_parse_nested(tb, NFTA_TUNNEL_KEY_GENEVE_MAX, attr,
-			       nft_tunnel_opts_geneve_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+			       nft_tunnel_opts_geneve_policy, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_GENEVE_CLASS] ||
+	if (!tb[NFTA_TUNNEL_KEY_GENEVE_CLASS] ||
 	    !tb[NFTA_TUNNEL_KEY_GENEVE_TYPE] ||
 	    !tb[NFTA_TUNNEL_KEY_GENEVE_DATA])
-		वापस -EINVAL;
+		return -EINVAL;
 
 	attr = tb[NFTA_TUNNEL_KEY_GENEVE_DATA];
 	data_len = nla_len(attr);
-	अगर (data_len % 4)
-		वापस -EINVAL;
+	if (data_len % 4)
+		return -EINVAL;
 
-	opts->len += माप(*opt) + data_len;
-	अगर (opts->len > IP_TUNNEL_OPTS_MAX)
-		वापस -EINVAL;
+	opts->len += sizeof(*opt) + data_len;
+	if (opts->len > IP_TUNNEL_OPTS_MAX)
+		return -EINVAL;
 
-	स_नकल(opt->opt_data, nla_data(attr), data_len);
+	memcpy(opt->opt_data, nla_data(attr), data_len);
 	opt->length = data_len / 4;
 	opt->opt_class = nla_get_be16(tb[NFTA_TUNNEL_KEY_GENEVE_CLASS]);
 	opt->type = nla_get_u8(tb[NFTA_TUNNEL_KEY_GENEVE_TYPE]);
 	opts->flags = TUNNEL_GENEVE_OPT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_opts_policy[NFTA_TUNNEL_KEY_OPTS_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_OPTS_UNSPEC]	= अणु
-		.strict_start_type = NFTA_TUNNEL_KEY_OPTS_GENEVE पूर्ण,
-	[NFTA_TUNNEL_KEY_OPTS_VXLAN]	= अणु .type = NLA_NESTED, पूर्ण,
-	[NFTA_TUNNEL_KEY_OPTS_ERSPAN]	= अणु .type = NLA_NESTED, पूर्ण,
-	[NFTA_TUNNEL_KEY_OPTS_GENEVE]	= अणु .type = NLA_NESTED, पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_opts_policy[NFTA_TUNNEL_KEY_OPTS_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_OPTS_UNSPEC]	= {
+		.strict_start_type = NFTA_TUNNEL_KEY_OPTS_GENEVE },
+	[NFTA_TUNNEL_KEY_OPTS_VXLAN]	= { .type = NLA_NESTED, },
+	[NFTA_TUNNEL_KEY_OPTS_ERSPAN]	= { .type = NLA_NESTED, },
+	[NFTA_TUNNEL_KEY_OPTS_GENEVE]	= { .type = NLA_NESTED, },
+};
 
-अटल पूर्णांक nft_tunnel_obj_opts_init(स्थिर काष्ठा nft_ctx *ctx,
-				    स्थिर काष्ठा nlattr *attr,
-				    काष्ठा ip_tunnel_info *info,
-				    काष्ठा nft_tunnel_opts *opts)
-अणु
-	पूर्णांक err, rem, type = 0;
-	काष्ठा nlattr *nla;
+static int nft_tunnel_obj_opts_init(const struct nft_ctx *ctx,
+				    const struct nlattr *attr,
+				    struct ip_tunnel_info *info,
+				    struct nft_tunnel_opts *opts)
+{
+	int err, rem, type = 0;
+	struct nlattr *nla;
 
 	err = nla_validate_nested_deprecated(attr, NFTA_TUNNEL_KEY_OPTS_MAX,
-					     nft_tunnel_opts_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					     nft_tunnel_opts_policy, NULL);
+	if (err < 0)
+		return err;
 
-	nla_क्रम_each_attr(nla, nla_data(attr), nla_len(attr), rem) अणु
-		चयन (nla_type(nla)) अणु
-		हाल NFTA_TUNNEL_KEY_OPTS_VXLAN:
-			अगर (type)
-				वापस -EINVAL;
+	nla_for_each_attr(nla, nla_data(attr), nla_len(attr), rem) {
+		switch (nla_type(nla)) {
+		case NFTA_TUNNEL_KEY_OPTS_VXLAN:
+			if (type)
+				return -EINVAL;
 			err = nft_tunnel_obj_vxlan_init(nla, opts);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			type = TUNNEL_VXLAN_OPT;
-			अवरोध;
-		हाल NFTA_TUNNEL_KEY_OPTS_ERSPAN:
-			अगर (type)
-				वापस -EINVAL;
+			break;
+		case NFTA_TUNNEL_KEY_OPTS_ERSPAN:
+			if (type)
+				return -EINVAL;
 			err = nft_tunnel_obj_erspan_init(nla, opts);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			type = TUNNEL_ERSPAN_OPT;
-			अवरोध;
-		हाल NFTA_TUNNEL_KEY_OPTS_GENEVE:
-			अगर (type && type != TUNNEL_GENEVE_OPT)
-				वापस -EINVAL;
+			break;
+		case NFTA_TUNNEL_KEY_OPTS_GENEVE:
+			if (type && type != TUNNEL_GENEVE_OPT)
+				return -EINVAL;
 			err = nft_tunnel_obj_geneve_init(nla, opts);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 			type = TUNNEL_GENEVE_OPT;
-			अवरोध;
-		शेष:
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EOPNOTSUPP;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा nla_policy nft_tunnel_key_policy[NFTA_TUNNEL_KEY_MAX + 1] = अणु
-	[NFTA_TUNNEL_KEY_IP]	= अणु .type = NLA_NESTED, पूर्ण,
-	[NFTA_TUNNEL_KEY_IP6]	= अणु .type = NLA_NESTED, पूर्ण,
-	[NFTA_TUNNEL_KEY_ID]	= अणु .type = NLA_U32, पूर्ण,
-	[NFTA_TUNNEL_KEY_FLAGS]	= अणु .type = NLA_U32, पूर्ण,
-	[NFTA_TUNNEL_KEY_TOS]	= अणु .type = NLA_U8, पूर्ण,
-	[NFTA_TUNNEL_KEY_TTL]	= अणु .type = NLA_U8, पूर्ण,
-	[NFTA_TUNNEL_KEY_SPORT]	= अणु .type = NLA_U16, पूर्ण,
-	[NFTA_TUNNEL_KEY_DPORT]	= अणु .type = NLA_U16, पूर्ण,
-	[NFTA_TUNNEL_KEY_OPTS]	= अणु .type = NLA_NESTED, पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_tunnel_key_policy[NFTA_TUNNEL_KEY_MAX + 1] = {
+	[NFTA_TUNNEL_KEY_IP]	= { .type = NLA_NESTED, },
+	[NFTA_TUNNEL_KEY_IP6]	= { .type = NLA_NESTED, },
+	[NFTA_TUNNEL_KEY_ID]	= { .type = NLA_U32, },
+	[NFTA_TUNNEL_KEY_FLAGS]	= { .type = NLA_U32, },
+	[NFTA_TUNNEL_KEY_TOS]	= { .type = NLA_U8, },
+	[NFTA_TUNNEL_KEY_TTL]	= { .type = NLA_U8, },
+	[NFTA_TUNNEL_KEY_SPORT]	= { .type = NLA_U16, },
+	[NFTA_TUNNEL_KEY_DPORT]	= { .type = NLA_U16, },
+	[NFTA_TUNNEL_KEY_OPTS]	= { .type = NLA_NESTED, },
+};
 
-अटल पूर्णांक nft_tunnel_obj_init(स्थिर काष्ठा nft_ctx *ctx,
-			       स्थिर काष्ठा nlattr * स्थिर tb[],
-			       काष्ठा nft_object *obj)
-अणु
-	काष्ठा nft_tunnel_obj *priv = nft_obj_data(obj);
-	काष्ठा ip_tunnel_info info;
-	काष्ठा metadata_dst *md;
-	पूर्णांक err;
+static int nft_tunnel_obj_init(const struct nft_ctx *ctx,
+			       const struct nlattr * const tb[],
+			       struct nft_object *obj)
+{
+	struct nft_tunnel_obj *priv = nft_obj_data(obj);
+	struct ip_tunnel_info info;
+	struct metadata_dst *md;
+	int err;
 
-	अगर (!tb[NFTA_TUNNEL_KEY_ID])
-		वापस -EINVAL;
+	if (!tb[NFTA_TUNNEL_KEY_ID])
+		return -EINVAL;
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.mode		= IP_TUNNEL_INFO_TX;
 	info.key.tun_id		= key32_to_tunnel_id(nla_get_be32(tb[NFTA_TUNNEL_KEY_ID]));
 	info.key.tun_flags	= TUNNEL_KEY | TUNNEL_CSUM | TUNNEL_NOCACHE;
 
-	अगर (tb[NFTA_TUNNEL_KEY_IP]) अणु
+	if (tb[NFTA_TUNNEL_KEY_IP]) {
 		err = nft_tunnel_obj_ip_init(ctx, tb[NFTA_TUNNEL_KEY_IP], &info);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अगर (tb[NFTA_TUNNEL_KEY_IP6]) अणु
+		if (err < 0)
+			return err;
+	} else if (tb[NFTA_TUNNEL_KEY_IP6]) {
 		err = nft_tunnel_obj_ip6_init(ctx, tb[NFTA_TUNNEL_KEY_IP6], &info);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+		if (err < 0)
+			return err;
+	} else {
+		return -EINVAL;
+	}
 
-	अगर (tb[NFTA_TUNNEL_KEY_SPORT]) अणु
+	if (tb[NFTA_TUNNEL_KEY_SPORT]) {
 		info.key.tp_src = nla_get_be16(tb[NFTA_TUNNEL_KEY_SPORT]);
-	पूर्ण
-	अगर (tb[NFTA_TUNNEL_KEY_DPORT]) अणु
+	}
+	if (tb[NFTA_TUNNEL_KEY_DPORT]) {
 		info.key.tp_dst = nla_get_be16(tb[NFTA_TUNNEL_KEY_DPORT]);
-	पूर्ण
+	}
 
-	अगर (tb[NFTA_TUNNEL_KEY_FLAGS]) अणु
+	if (tb[NFTA_TUNNEL_KEY_FLAGS]) {
 		u32 tun_flags;
 
 		tun_flags = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_FLAGS]));
-		अगर (tun_flags & ~NFT_TUNNEL_F_MASK)
-			वापस -EOPNOTSUPP;
+		if (tun_flags & ~NFT_TUNNEL_F_MASK)
+			return -EOPNOTSUPP;
 
-		अगर (tun_flags & NFT_TUNNEL_F_ZERO_CSUM_TX)
+		if (tun_flags & NFT_TUNNEL_F_ZERO_CSUM_TX)
 			info.key.tun_flags &= ~TUNNEL_CSUM;
-		अगर (tun_flags & NFT_TUNNEL_F_DONT_FRAGMENT)
+		if (tun_flags & NFT_TUNNEL_F_DONT_FRAGMENT)
 			info.key.tun_flags |= TUNNEL_DONT_FRAGMENT;
-		अगर (tun_flags & NFT_TUNNEL_F_SEQ_NUMBER)
+		if (tun_flags & NFT_TUNNEL_F_SEQ_NUMBER)
 			info.key.tun_flags |= TUNNEL_SEQ;
-	पूर्ण
-	अगर (tb[NFTA_TUNNEL_KEY_TOS])
+	}
+	if (tb[NFTA_TUNNEL_KEY_TOS])
 		info.key.tos = nla_get_u8(tb[NFTA_TUNNEL_KEY_TOS]);
-	अगर (tb[NFTA_TUNNEL_KEY_TTL])
+	if (tb[NFTA_TUNNEL_KEY_TTL])
 		info.key.ttl = nla_get_u8(tb[NFTA_TUNNEL_KEY_TTL]);
-	अन्यथा
+	else
 		info.key.ttl = U8_MAX;
 
-	अगर (tb[NFTA_TUNNEL_KEY_OPTS]) अणु
+	if (tb[NFTA_TUNNEL_KEY_OPTS]) {
 		err = nft_tunnel_obj_opts_init(ctx, tb[NFTA_TUNNEL_KEY_OPTS],
 					       &info, &priv->opts);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
 	md = metadata_dst_alloc(priv->opts.len, METADATA_IP_TUNNEL, GFP_KERNEL);
-	अगर (!md)
-		वापस -ENOMEM;
+	if (!md)
+		return -ENOMEM;
 
-	स_नकल(&md->u.tun_info, &info, माप(info));
-#अगर_घोषित CONFIG_DST_CACHE
+	memcpy(&md->u.tun_info, &info, sizeof(info));
+#ifdef CONFIG_DST_CACHE
 	err = dst_cache_init(&md->u.tun_info.dst_cache, GFP_KERNEL);
-	अगर (err < 0) अणु
-		metadata_dst_मुक्त(md);
-		वापस err;
-	पूर्ण
-#पूर्ण_अगर
+	if (err < 0) {
+		metadata_dst_free(md);
+		return err;
+	}
+#endif
 	ip_tunnel_info_opts_set(&md->u.tun_info, &priv->opts.u, priv->opts.len,
 				priv->opts.flags);
 	priv->md = md;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम nft_tunnel_obj_eval(काष्ठा nft_object *obj,
-				       काष्ठा nft_regs *regs,
-				       स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	काष्ठा nft_tunnel_obj *priv = nft_obj_data(obj);
-	काष्ठा sk_buff *skb = pkt->skb;
+static inline void nft_tunnel_obj_eval(struct nft_object *obj,
+				       struct nft_regs *regs,
+				       const struct nft_pktinfo *pkt)
+{
+	struct nft_tunnel_obj *priv = nft_obj_data(obj);
+	struct sk_buff *skb = pkt->skb;
 
 	skb_dst_drop(skb);
-	dst_hold((काष्ठा dst_entry *) priv->md);
-	skb_dst_set(skb, (काष्ठा dst_entry *) priv->md);
-पूर्ण
+	dst_hold((struct dst_entry *) priv->md);
+	skb_dst_set(skb, (struct dst_entry *) priv->md);
+}
 
-अटल पूर्णांक nft_tunnel_ip_dump(काष्ठा sk_buff *skb, काष्ठा ip_tunnel_info *info)
-अणु
-	काष्ठा nlattr *nest;
+static int nft_tunnel_ip_dump(struct sk_buff *skb, struct ip_tunnel_info *info)
+{
+	struct nlattr *nest;
 
-	अगर (info->mode & IP_TUNNEL_INFO_IPV6) अणु
+	if (info->mode & IP_TUNNEL_INFO_IPV6) {
 		nest = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_IP6);
-		अगर (!nest)
-			वापस -1;
+		if (!nest)
+			return -1;
 
-		अगर (nla_put_in6_addr(skb, NFTA_TUNNEL_KEY_IP6_SRC,
+		if (nla_put_in6_addr(skb, NFTA_TUNNEL_KEY_IP6_SRC,
 				     &info->key.u.ipv6.src) < 0 ||
 		    nla_put_in6_addr(skb, NFTA_TUNNEL_KEY_IP6_DST,
 				     &info->key.u.ipv6.dst) < 0 ||
 		    nla_put_be32(skb, NFTA_TUNNEL_KEY_IP6_FLOWLABEL,
-				 info->key.label)) अणु
+				 info->key.label)) {
 			nla_nest_cancel(skb, nest);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		nla_nest_end(skb, nest);
-	पूर्ण अन्यथा अणु
+	} else {
 		nest = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_IP);
-		अगर (!nest)
-			वापस -1;
+		if (!nest)
+			return -1;
 
-		अगर (nla_put_in_addr(skb, NFTA_TUNNEL_KEY_IP_SRC,
+		if (nla_put_in_addr(skb, NFTA_TUNNEL_KEY_IP_SRC,
 				    info->key.u.ipv4.src) < 0 ||
 		    nla_put_in_addr(skb, NFTA_TUNNEL_KEY_IP_DST,
-				    info->key.u.ipv4.dst) < 0) अणु
+				    info->key.u.ipv4.dst) < 0) {
 			nla_nest_cancel(skb, nest);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		nla_nest_end(skb, nest);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_tunnel_opts_dump(काष्ठा sk_buff *skb,
-				काष्ठा nft_tunnel_obj *priv)
-अणु
-	काष्ठा nft_tunnel_opts *opts = &priv->opts;
-	काष्ठा nlattr *nest, *inner;
+static int nft_tunnel_opts_dump(struct sk_buff *skb,
+				struct nft_tunnel_obj *priv)
+{
+	struct nft_tunnel_opts *opts = &priv->opts;
+	struct nlattr *nest, *inner;
 
 	nest = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_OPTS);
-	अगर (!nest)
-		वापस -1;
+	if (!nest)
+		return -1;
 
-	अगर (opts->flags & TUNNEL_VXLAN_OPT) अणु
+	if (opts->flags & TUNNEL_VXLAN_OPT) {
 		inner = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_OPTS_VXLAN);
-		अगर (!inner)
-			जाओ failure;
-		अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY_VXLAN_GBP,
+		if (!inner)
+			goto failure;
+		if (nla_put_be32(skb, NFTA_TUNNEL_KEY_VXLAN_GBP,
 				 htonl(opts->u.vxlan.gbp)))
-			जाओ inner_failure;
+			goto inner_failure;
 		nla_nest_end(skb, inner);
-	पूर्ण अन्यथा अगर (opts->flags & TUNNEL_ERSPAN_OPT) अणु
+	} else if (opts->flags & TUNNEL_ERSPAN_OPT) {
 		inner = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_OPTS_ERSPAN);
-		अगर (!inner)
-			जाओ failure;
-		अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY_ERSPAN_VERSION,
+		if (!inner)
+			goto failure;
+		if (nla_put_be32(skb, NFTA_TUNNEL_KEY_ERSPAN_VERSION,
 				 htonl(opts->u.erspan.version)))
-			जाओ inner_failure;
-		चयन (opts->u.erspan.version) अणु
-		हाल ERSPAN_VERSION:
-			अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX,
+			goto inner_failure;
+		switch (opts->u.erspan.version) {
+		case ERSPAN_VERSION:
+			if (nla_put_be32(skb, NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX,
 					 opts->u.erspan.u.index))
-				जाओ inner_failure;
-			अवरोध;
-		हाल ERSPAN_VERSION2:
-			अगर (nla_put_u8(skb, NFTA_TUNNEL_KEY_ERSPAN_V2_HWID,
+				goto inner_failure;
+			break;
+		case ERSPAN_VERSION2:
+			if (nla_put_u8(skb, NFTA_TUNNEL_KEY_ERSPAN_V2_HWID,
 				       get_hwid(&opts->u.erspan.u.md2)) ||
-			    nla_put_u8(skb, NFTA_TUNNEL_KEY_ERSPAN_V2_सूची,
+			    nla_put_u8(skb, NFTA_TUNNEL_KEY_ERSPAN_V2_DIR,
 				       opts->u.erspan.u.md2.dir))
-				जाओ inner_failure;
-			अवरोध;
-		पूर्ण
+				goto inner_failure;
+			break;
+		}
 		nla_nest_end(skb, inner);
-	पूर्ण अन्यथा अगर (opts->flags & TUNNEL_GENEVE_OPT) अणु
-		काष्ठा geneve_opt *opt;
-		पूर्णांक offset = 0;
+	} else if (opts->flags & TUNNEL_GENEVE_OPT) {
+		struct geneve_opt *opt;
+		int offset = 0;
 
 		inner = nla_nest_start_noflag(skb, NFTA_TUNNEL_KEY_OPTS_GENEVE);
-		अगर (!inner)
-			जाओ failure;
-		जबतक (opts->len > offset) अणु
-			opt = (काष्ठा geneve_opt *)opts->u.data + offset;
-			अगर (nla_put_be16(skb, NFTA_TUNNEL_KEY_GENEVE_CLASS,
+		if (!inner)
+			goto failure;
+		while (opts->len > offset) {
+			opt = (struct geneve_opt *)opts->u.data + offset;
+			if (nla_put_be16(skb, NFTA_TUNNEL_KEY_GENEVE_CLASS,
 					 opt->opt_class) ||
 			    nla_put_u8(skb, NFTA_TUNNEL_KEY_GENEVE_TYPE,
 				       opt->type) ||
 			    nla_put(skb, NFTA_TUNNEL_KEY_GENEVE_DATA,
 				    opt->length * 4, opt->opt_data))
-				जाओ inner_failure;
-			offset += माप(*opt) + opt->length * 4;
-		पूर्ण
+				goto inner_failure;
+			offset += sizeof(*opt) + opt->length * 4;
+		}
 		nla_nest_end(skb, inner);
-	पूर्ण
+	}
 	nla_nest_end(skb, nest);
-	वापस 0;
+	return 0;
 
 inner_failure:
 	nla_nest_cancel(skb, inner);
 failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक nft_tunnel_ports_dump(काष्ठा sk_buff *skb,
-				 काष्ठा ip_tunnel_info *info)
-अणु
-	अगर (nla_put_be16(skb, NFTA_TUNNEL_KEY_SPORT, info->key.tp_src) < 0 ||
+static int nft_tunnel_ports_dump(struct sk_buff *skb,
+				 struct ip_tunnel_info *info)
+{
+	if (nla_put_be16(skb, NFTA_TUNNEL_KEY_SPORT, info->key.tp_src) < 0 ||
 	    nla_put_be16(skb, NFTA_TUNNEL_KEY_DPORT, info->key.tp_dst) < 0)
-		वापस -1;
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_tunnel_flags_dump(काष्ठा sk_buff *skb,
-				 काष्ठा ip_tunnel_info *info)
-अणु
+static int nft_tunnel_flags_dump(struct sk_buff *skb,
+				 struct ip_tunnel_info *info)
+{
 	u32 flags = 0;
 
-	अगर (info->key.tun_flags & TUNNEL_DONT_FRAGMENT)
+	if (info->key.tun_flags & TUNNEL_DONT_FRAGMENT)
 		flags |= NFT_TUNNEL_F_DONT_FRAGMENT;
-	अगर (!(info->key.tun_flags & TUNNEL_CSUM))
+	if (!(info->key.tun_flags & TUNNEL_CSUM))
 		flags |= NFT_TUNNEL_F_ZERO_CSUM_TX;
-	अगर (info->key.tun_flags & TUNNEL_SEQ)
+	if (info->key.tun_flags & TUNNEL_SEQ)
 		flags |= NFT_TUNNEL_F_SEQ_NUMBER;
 
-	अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY_FLAGS, htonl(flags)) < 0)
-		वापस -1;
+	if (nla_put_be32(skb, NFTA_TUNNEL_KEY_FLAGS, htonl(flags)) < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nft_tunnel_obj_dump(काष्ठा sk_buff *skb,
-			       काष्ठा nft_object *obj, bool reset)
-अणु
-	काष्ठा nft_tunnel_obj *priv = nft_obj_data(obj);
-	काष्ठा ip_tunnel_info *info = &priv->md->u.tun_info;
+static int nft_tunnel_obj_dump(struct sk_buff *skb,
+			       struct nft_object *obj, bool reset)
+{
+	struct nft_tunnel_obj *priv = nft_obj_data(obj);
+	struct ip_tunnel_info *info = &priv->md->u.tun_info;
 
-	अगर (nla_put_be32(skb, NFTA_TUNNEL_KEY_ID,
+	if (nla_put_be32(skb, NFTA_TUNNEL_KEY_ID,
 			 tunnel_id_to_key32(info->key.tun_id)) ||
 	    nft_tunnel_ip_dump(skb, info) < 0 ||
 	    nft_tunnel_ports_dump(skb, info) < 0 ||
@@ -656,63 +655,63 @@ failure:
 	    nla_put_u8(skb, NFTA_TUNNEL_KEY_TOS, info->key.tos) ||
 	    nla_put_u8(skb, NFTA_TUNNEL_KEY_TTL, info->key.ttl) ||
 	    nft_tunnel_opts_dump(skb, priv) < 0)
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम nft_tunnel_obj_destroy(स्थिर काष्ठा nft_ctx *ctx,
-				   काष्ठा nft_object *obj)
-अणु
-	काष्ठा nft_tunnel_obj *priv = nft_obj_data(obj);
+static void nft_tunnel_obj_destroy(const struct nft_ctx *ctx,
+				   struct nft_object *obj)
+{
+	struct nft_tunnel_obj *priv = nft_obj_data(obj);
 
-	metadata_dst_मुक्त(priv->md);
-पूर्ण
+	metadata_dst_free(priv->md);
+}
 
-अटल काष्ठा nft_object_type nft_tunnel_obj_type;
-अटल स्थिर काष्ठा nft_object_ops nft_tunnel_obj_ops = अणु
+static struct nft_object_type nft_tunnel_obj_type;
+static const struct nft_object_ops nft_tunnel_obj_ops = {
 	.type		= &nft_tunnel_obj_type,
-	.size		= माप(काष्ठा nft_tunnel_obj),
+	.size		= sizeof(struct nft_tunnel_obj),
 	.eval		= nft_tunnel_obj_eval,
 	.init		= nft_tunnel_obj_init,
 	.destroy	= nft_tunnel_obj_destroy,
 	.dump		= nft_tunnel_obj_dump,
-पूर्ण;
+};
 
-अटल काष्ठा nft_object_type nft_tunnel_obj_type __पढ़ो_mostly = अणु
+static struct nft_object_type nft_tunnel_obj_type __read_mostly = {
 	.type		= NFT_OBJECT_TUNNEL,
 	.ops		= &nft_tunnel_obj_ops,
 	.maxattr	= NFTA_TUNNEL_KEY_MAX,
 	.policy		= nft_tunnel_key_policy,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nft_tunnel_module_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init nft_tunnel_module_init(void)
+{
+	int err;
 
-	err = nft_रेजिस्टर_expr(&nft_tunnel_type);
-	अगर (err < 0)
-		वापस err;
+	err = nft_register_expr(&nft_tunnel_type);
+	if (err < 0)
+		return err;
 
-	err = nft_रेजिस्टर_obj(&nft_tunnel_obj_type);
-	अगर (err < 0)
-		nft_unरेजिस्टर_expr(&nft_tunnel_type);
+	err = nft_register_obj(&nft_tunnel_obj_type);
+	if (err < 0)
+		nft_unregister_expr(&nft_tunnel_type);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास nft_tunnel_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_obj(&nft_tunnel_obj_type);
-	nft_unरेजिस्टर_expr(&nft_tunnel_type);
-पूर्ण
+static void __exit nft_tunnel_module_exit(void)
+{
+	nft_unregister_obj(&nft_tunnel_obj_type);
+	nft_unregister_expr(&nft_tunnel_type);
+}
 
 module_init(nft_tunnel_module_init);
-module_निकास(nft_tunnel_module_निकास);
+module_exit(nft_tunnel_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

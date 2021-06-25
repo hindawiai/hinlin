@@ -1,286 +1,285 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved
  */
 
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/cpufreq.h>
+#include <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
 
-#समावेश <soc/tegra/bpmp.h>
-#समावेश <soc/tegra/bpmp-abi.h>
+#include <soc/tegra/bpmp.h>
+#include <soc/tegra/bpmp-abi.h>
 
-#घोषणा TEGRA186_NUM_CLUSTERS		2
-#घोषणा EDVD_OFFSET_A57(core)		((SZ_64K * 6) + (0x20 + (core) * 0x4))
-#घोषणा EDVD_OFFSET_DENVER(core)	((SZ_64K * 7) + (0x20 + (core) * 0x4))
-#घोषणा EDVD_CORE_VOLT_FREQ_F_SHIFT	0
-#घोषणा EDVD_CORE_VOLT_FREQ_F_MASK	0xffff
-#घोषणा EDVD_CORE_VOLT_FREQ_V_SHIFT	16
+#define TEGRA186_NUM_CLUSTERS		2
+#define EDVD_OFFSET_A57(core)		((SZ_64K * 6) + (0x20 + (core) * 0x4))
+#define EDVD_OFFSET_DENVER(core)	((SZ_64K * 7) + (0x20 + (core) * 0x4))
+#define EDVD_CORE_VOLT_FREQ_F_SHIFT	0
+#define EDVD_CORE_VOLT_FREQ_F_MASK	0xffff
+#define EDVD_CORE_VOLT_FREQ_V_SHIFT	16
 
-काष्ठा tegra186_cpufreq_cpu अणु
-	अचिन्हित पूर्णांक bpmp_cluster_id;
-	अचिन्हित पूर्णांक edvd_offset;
-पूर्ण;
+struct tegra186_cpufreq_cpu {
+	unsigned int bpmp_cluster_id;
+	unsigned int edvd_offset;
+};
 
-अटल स्थिर काष्ठा tegra186_cpufreq_cpu tegra186_cpus[] = अणु
+static const struct tegra186_cpufreq_cpu tegra186_cpus[] = {
 	/* CPU0 - A57 Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 1,
 		.edvd_offset = EDVD_OFFSET_A57(0)
-	पूर्ण,
+	},
 	/* CPU1 - Denver Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 0,
 		.edvd_offset = EDVD_OFFSET_DENVER(0)
-	पूर्ण,
+	},
 	/* CPU2 - Denver Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 0,
 		.edvd_offset = EDVD_OFFSET_DENVER(1)
-	पूर्ण,
+	},
 	/* CPU3 - A57 Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 1,
 		.edvd_offset = EDVD_OFFSET_A57(1)
-	पूर्ण,
+	},
 	/* CPU4 - A57 Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 1,
 		.edvd_offset = EDVD_OFFSET_A57(2)
-	पूर्ण,
+	},
 	/* CPU5 - A57 Cluster */
-	अणु
+	{
 		.bpmp_cluster_id = 1,
 		.edvd_offset = EDVD_OFFSET_A57(3)
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा tegra186_cpufreq_cluster अणु
-	काष्ठा cpufreq_frequency_table *table;
+struct tegra186_cpufreq_cluster {
+	struct cpufreq_frequency_table *table;
 	u32 ref_clk_khz;
-	u32 भाग;
-पूर्ण;
+	u32 div;
+};
 
-काष्ठा tegra186_cpufreq_data अणु
-	व्योम __iomem *regs;
-	काष्ठा tegra186_cpufreq_cluster *clusters;
-	स्थिर काष्ठा tegra186_cpufreq_cpu *cpus;
-पूर्ण;
+struct tegra186_cpufreq_data {
+	void __iomem *regs;
+	struct tegra186_cpufreq_cluster *clusters;
+	const struct tegra186_cpufreq_cpu *cpus;
+};
 
-अटल पूर्णांक tegra186_cpufreq_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा tegra186_cpufreq_data *data = cpufreq_get_driver_data();
-	अचिन्हित पूर्णांक cluster = data->cpus[policy->cpu].bpmp_cluster_id;
+static int tegra186_cpufreq_init(struct cpufreq_policy *policy)
+{
+	struct tegra186_cpufreq_data *data = cpufreq_get_driver_data();
+	unsigned int cluster = data->cpus[policy->cpu].bpmp_cluster_id;
 
 	policy->freq_table = data->clusters[cluster].table;
 	policy->cpuinfo.transition_latency = 300 * 1000;
-	policy->driver_data = शून्य;
+	policy->driver_data = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra186_cpufreq_set_target(काष्ठा cpufreq_policy *policy,
-				       अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा tegra186_cpufreq_data *data = cpufreq_get_driver_data();
-	काष्ठा cpufreq_frequency_table *tbl = policy->freq_table + index;
-	अचिन्हित पूर्णांक edvd_offset = data->cpus[policy->cpu].edvd_offset;
+static int tegra186_cpufreq_set_target(struct cpufreq_policy *policy,
+				       unsigned int index)
+{
+	struct tegra186_cpufreq_data *data = cpufreq_get_driver_data();
+	struct cpufreq_frequency_table *tbl = policy->freq_table + index;
+	unsigned int edvd_offset = data->cpus[policy->cpu].edvd_offset;
 	u32 edvd_val = tbl->driver_data;
 
-	ग_लिखोl(edvd_val, data->regs + edvd_offset);
+	writel(edvd_val, data->regs + edvd_offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक tegra186_cpufreq_get(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा tegra186_cpufreq_data *data = cpufreq_get_driver_data();
-	काष्ठा tegra186_cpufreq_cluster *cluster;
-	काष्ठा cpufreq_policy *policy;
-	अचिन्हित पूर्णांक edvd_offset, cluster_id;
-	u32 nभाग;
+static unsigned int tegra186_cpufreq_get(unsigned int cpu)
+{
+	struct tegra186_cpufreq_data *data = cpufreq_get_driver_data();
+	struct tegra186_cpufreq_cluster *cluster;
+	struct cpufreq_policy *policy;
+	unsigned int edvd_offset, cluster_id;
+	u32 ndiv;
 
 	policy = cpufreq_cpu_get(cpu);
-	अगर (!policy)
-		वापस 0;
+	if (!policy)
+		return 0;
 
 	edvd_offset = data->cpus[policy->cpu].edvd_offset;
-	nभाग = पढ़ोl(data->regs + edvd_offset) & EDVD_CORE_VOLT_FREQ_F_MASK;
+	ndiv = readl(data->regs + edvd_offset) & EDVD_CORE_VOLT_FREQ_F_MASK;
 	cluster_id = data->cpus[policy->cpu].bpmp_cluster_id;
 	cluster = &data->clusters[cluster_id];
 	cpufreq_cpu_put(policy);
 
-	वापस (cluster->ref_clk_khz * nभाग) / cluster->भाग;
-पूर्ण
+	return (cluster->ref_clk_khz * ndiv) / cluster->div;
+}
 
-अटल काष्ठा cpufreq_driver tegra186_cpufreq_driver = अणु
+static struct cpufreq_driver tegra186_cpufreq_driver = {
 	.name = "tegra186",
 	.flags = CPUFREQ_HAVE_GOVERNOR_PER_POLICY |
 			CPUFREQ_NEED_INITIAL_FREQ_CHECK,
 	.get = tegra186_cpufreq_get,
-	.verअगरy = cpufreq_generic_frequency_table_verअगरy,
+	.verify = cpufreq_generic_frequency_table_verify,
 	.target_index = tegra186_cpufreq_set_target,
 	.init = tegra186_cpufreq_init,
 	.attr = cpufreq_generic_attr,
-पूर्ण;
+};
 
-अटल काष्ठा cpufreq_frequency_table *init_vhपूर्णांक_table(
-	काष्ठा platक्रमm_device *pdev, काष्ठा tegra_bpmp *bpmp,
-	काष्ठा tegra186_cpufreq_cluster *cluster, अचिन्हित पूर्णांक cluster_id)
-अणु
-	काष्ठा cpufreq_frequency_table *table;
-	काष्ठा mrq_cpu_vhपूर्णांक_request req;
-	काष्ठा tegra_bpmp_message msg;
-	काष्ठा cpu_vhपूर्णांक_data *data;
-	पूर्णांक err, i, j, num_rates = 0;
+static struct cpufreq_frequency_table *init_vhint_table(
+	struct platform_device *pdev, struct tegra_bpmp *bpmp,
+	struct tegra186_cpufreq_cluster *cluster, unsigned int cluster_id)
+{
+	struct cpufreq_frequency_table *table;
+	struct mrq_cpu_vhint_request req;
+	struct tegra_bpmp_message msg;
+	struct cpu_vhint_data *data;
+	int err, i, j, num_rates = 0;
 	dma_addr_t phys;
-	व्योम *virt;
+	void *virt;
 
-	virt = dma_alloc_coherent(bpmp->dev, माप(*data), &phys,
+	virt = dma_alloc_coherent(bpmp->dev, sizeof(*data), &phys,
 				  GFP_KERNEL);
-	अगर (!virt)
-		वापस ERR_PTR(-ENOMEM);
+	if (!virt)
+		return ERR_PTR(-ENOMEM);
 
-	data = (काष्ठा cpu_vhपूर्णांक_data *)virt;
+	data = (struct cpu_vhint_data *)virt;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 	req.addr = phys;
 	req.cluster_id = cluster_id;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.mrq = MRQ_CPU_VHINT;
 	msg.tx.data = &req;
-	msg.tx.size = माप(req);
+	msg.tx.size = sizeof(req);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	अगर (err) अणु
+	if (err) {
 		table = ERR_PTR(err);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
-	क्रम (i = data->vन्यूनमान; i <= data->vउच्चमान; i++) अणु
-		u16 nभाग = data->nभाग[i];
+	for (i = data->vfloor; i <= data->vceil; i++) {
+		u16 ndiv = data->ndiv[i];
 
-		अगर (nभाग < data->nभाग_min || nभाग > data->nभाग_max)
-			जारी;
+		if (ndiv < data->ndiv_min || ndiv > data->ndiv_max)
+			continue;
 
-		/* Only store lowest voltage index क्रम each rate */
-		अगर (i > 0 && nभाग == data->nभाग[i - 1])
-			जारी;
+		/* Only store lowest voltage index for each rate */
+		if (i > 0 && ndiv == data->ndiv[i - 1])
+			continue;
 
 		num_rates++;
-	पूर्ण
+	}
 
-	table = devm_kसुस्मृति(&pdev->dev, num_rates + 1, माप(*table),
+	table = devm_kcalloc(&pdev->dev, num_rates + 1, sizeof(*table),
 			     GFP_KERNEL);
-	अगर (!table) अणु
+	if (!table) {
 		table = ERR_PTR(-ENOMEM);
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	cluster->ref_clk_khz = data->ref_clk_hz / 1000;
-	cluster->भाग = data->pभाग * data->mभाग;
+	cluster->div = data->pdiv * data->mdiv;
 
-	क्रम (i = data->vन्यूनमान, j = 0; i <= data->vउच्चमान; i++) अणु
-		काष्ठा cpufreq_frequency_table *poपूर्णांक;
-		u16 nभाग = data->nभाग[i];
+	for (i = data->vfloor, j = 0; i <= data->vceil; i++) {
+		struct cpufreq_frequency_table *point;
+		u16 ndiv = data->ndiv[i];
 		u32 edvd_val = 0;
 
-		अगर (nभाग < data->nभाग_min || nभाग > data->nभाग_max)
-			जारी;
+		if (ndiv < data->ndiv_min || ndiv > data->ndiv_max)
+			continue;
 
-		/* Only store lowest voltage index क्रम each rate */
-		अगर (i > 0 && nभाग == data->nभाग[i - 1])
-			जारी;
+		/* Only store lowest voltage index for each rate */
+		if (i > 0 && ndiv == data->ndiv[i - 1])
+			continue;
 
 		edvd_val |= i << EDVD_CORE_VOLT_FREQ_V_SHIFT;
-		edvd_val |= nभाग << EDVD_CORE_VOLT_FREQ_F_SHIFT;
+		edvd_val |= ndiv << EDVD_CORE_VOLT_FREQ_F_SHIFT;
 
-		poपूर्णांक = &table[j++];
-		poपूर्णांक->driver_data = edvd_val;
-		poपूर्णांक->frequency = (cluster->ref_clk_khz * nभाग) / cluster->भाग;
-	पूर्ण
+		point = &table[j++];
+		point->driver_data = edvd_val;
+		point->frequency = (cluster->ref_clk_khz * ndiv) / cluster->div;
+	}
 
 	table[j].frequency = CPUFREQ_TABLE_END;
 
-मुक्त:
-	dma_मुक्त_coherent(bpmp->dev, माप(*data), virt, phys);
+free:
+	dma_free_coherent(bpmp->dev, sizeof(*data), virt, phys);
 
-	वापस table;
-पूर्ण
+	return table;
+}
 
-अटल पूर्णांक tegra186_cpufreq_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra186_cpufreq_data *data;
-	काष्ठा tegra_bpmp *bpmp;
-	अचिन्हित पूर्णांक i = 0, err;
+static int tegra186_cpufreq_probe(struct platform_device *pdev)
+{
+	struct tegra186_cpufreq_data *data;
+	struct tegra_bpmp *bpmp;
+	unsigned int i = 0, err;
 
-	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	data->clusters = devm_kसुस्मृति(&pdev->dev, TEGRA186_NUM_CLUSTERS,
-				      माप(*data->clusters), GFP_KERNEL);
-	अगर (!data->clusters)
-		वापस -ENOMEM;
+	data->clusters = devm_kcalloc(&pdev->dev, TEGRA186_NUM_CLUSTERS,
+				      sizeof(*data->clusters), GFP_KERNEL);
+	if (!data->clusters)
+		return -ENOMEM;
 
 	data->cpus = tegra186_cpus;
 
 	bpmp = tegra_bpmp_get(&pdev->dev);
-	अगर (IS_ERR(bpmp))
-		वापस PTR_ERR(bpmp);
+	if (IS_ERR(bpmp))
+		return PTR_ERR(bpmp);
 
-	data->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(data->regs)) अणु
+	data->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(data->regs)) {
 		err = PTR_ERR(data->regs);
-		जाओ put_bpmp;
-	पूर्ण
+		goto put_bpmp;
+	}
 
-	क्रम (i = 0; i < TEGRA186_NUM_CLUSTERS; i++) अणु
-		काष्ठा tegra186_cpufreq_cluster *cluster = &data->clusters[i];
+	for (i = 0; i < TEGRA186_NUM_CLUSTERS; i++) {
+		struct tegra186_cpufreq_cluster *cluster = &data->clusters[i];
 
-		cluster->table = init_vhपूर्णांक_table(pdev, bpmp, cluster, i);
-		अगर (IS_ERR(cluster->table)) अणु
+		cluster->table = init_vhint_table(pdev, bpmp, cluster, i);
+		if (IS_ERR(cluster->table)) {
 			err = PTR_ERR(cluster->table);
-			जाओ put_bpmp;
-		पूर्ण
-	पूर्ण
+			goto put_bpmp;
+		}
+	}
 
 	tegra186_cpufreq_driver.driver_data = data;
 
-	err = cpufreq_रेजिस्टर_driver(&tegra186_cpufreq_driver);
+	err = cpufreq_register_driver(&tegra186_cpufreq_driver);
 
 put_bpmp:
 	tegra_bpmp_put(bpmp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tegra186_cpufreq_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	cpufreq_unरेजिस्टर_driver(&tegra186_cpufreq_driver);
+static int tegra186_cpufreq_remove(struct platform_device *pdev)
+{
+	cpufreq_unregister_driver(&tegra186_cpufreq_driver);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tegra186_cpufreq_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra186-ccplex-cluster", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tegra186_cpufreq_of_match[] = {
+	{ .compatible = "nvidia,tegra186-ccplex-cluster", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tegra186_cpufreq_of_match);
 
-अटल काष्ठा platक्रमm_driver tegra186_cpufreq_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver tegra186_cpufreq_platform_driver = {
+	.driver = {
 		.name = "tegra186-cpufreq",
 		.of_match_table = tegra186_cpufreq_of_match,
-	पूर्ण,
+	},
 	.probe = tegra186_cpufreq_probe,
-	.हटाओ = tegra186_cpufreq_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(tegra186_cpufreq_platक्रमm_driver);
+	.remove = tegra186_cpufreq_remove,
+};
+module_platform_driver(tegra186_cpufreq_platform_driver);
 
 MODULE_AUTHOR("Mikko Perttunen <mperttunen@nvidia.com>");
 MODULE_DESCRIPTION("NVIDIA Tegra186 cpufreq driver");

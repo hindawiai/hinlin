@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2019 Google LLC
  */
@@ -7,137 +6,137 @@
 /**
  * DOC: The Keyslot Manager
  *
- * Many devices with अंतरभूत encryption support have a limited number of "slots"
- * पूर्णांकo which encryption contexts may be programmed, and requests can be tagged
- * with a slot number to specअगरy the key to use क्रम en/decryption.
+ * Many devices with inline encryption support have a limited number of "slots"
+ * into which encryption contexts may be programmed, and requests can be tagged
+ * with a slot number to specify the key to use for en/decryption.
  *
  * As the number of slots is limited, and programming keys is expensive on
- * many अंतरभूत encryption hardware, we करोn't want to program the same key पूर्णांकo
- * multiple slots - अगर multiple requests are using the same key, we want to
- * program just one slot with that key and use that slot क्रम all requests.
+ * many inline encryption hardware, we don't want to program the same key into
+ * multiple slots - if multiple requests are using the same key, we want to
+ * program just one slot with that key and use that slot for all requests.
  *
  * The keyslot manager manages these keyslots appropriately, and also acts as
- * an असलtraction between the अंतरभूत encryption hardware and the upper layers.
+ * an abstraction between the inline encryption hardware and the upper layers.
  *
  * Lower layer devices will set up a keyslot manager in their request queue
- * and tell it how to perक्रमm device specअगरic operations like programming/
+ * and tell it how to perform device specific operations like programming/
  * evicting keys from keyslots.
  *
- * Upper layers will call blk_ksm_get_slot_क्रम_key() to program a
- * key पूर्णांकo some slot in the अंतरभूत encryption hardware.
+ * Upper layers will call blk_ksm_get_slot_for_key() to program a
+ * key into some slot in the inline encryption hardware.
  */
 
-#घोषणा pr_fmt(fmt) "blk-crypto: " fmt
+#define pr_fmt(fmt) "blk-crypto: " fmt
 
-#समावेश <linux/keyslot-manager.h>
-#समावेश <linux/device.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/blkdev.h>
+#include <linux/keyslot-manager.h>
+#include <linux/device.h>
+#include <linux/atomic.h>
+#include <linux/mutex.h>
+#include <linux/pm_runtime.h>
+#include <linux/wait.h>
+#include <linux/blkdev.h>
 
-काष्ठा blk_ksm_keyslot अणु
+struct blk_ksm_keyslot {
 	atomic_t slot_refs;
-	काष्ठा list_head idle_slot_node;
-	काष्ठा hlist_node hash_node;
-	स्थिर काष्ठा blk_crypto_key *key;
-	काष्ठा blk_keyslot_manager *ksm;
-पूर्ण;
+	struct list_head idle_slot_node;
+	struct hlist_node hash_node;
+	const struct blk_crypto_key *key;
+	struct blk_keyslot_manager *ksm;
+};
 
-अटल अंतरभूत व्योम blk_ksm_hw_enter(काष्ठा blk_keyslot_manager *ksm)
-अणु
+static inline void blk_ksm_hw_enter(struct blk_keyslot_manager *ksm)
+{
 	/*
-	 * Calling पूर्णांकo the driver requires ksm->lock held and the device
+	 * Calling into the driver requires ksm->lock held and the device
 	 * resumed.  But we must resume the device first, since that can acquire
 	 * and release ksm->lock via blk_ksm_reprogram_all_keys().
 	 */
-	अगर (ksm->dev)
-		pm_runसमय_get_sync(ksm->dev);
-	करोwn_ग_लिखो(&ksm->lock);
-पूर्ण
+	if (ksm->dev)
+		pm_runtime_get_sync(ksm->dev);
+	down_write(&ksm->lock);
+}
 
-अटल अंतरभूत व्योम blk_ksm_hw_निकास(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	up_ग_लिखो(&ksm->lock);
-	अगर (ksm->dev)
-		pm_runसमय_put_sync(ksm->dev);
-पूर्ण
+static inline void blk_ksm_hw_exit(struct blk_keyslot_manager *ksm)
+{
+	up_write(&ksm->lock);
+	if (ksm->dev)
+		pm_runtime_put_sync(ksm->dev);
+}
 
-अटल अंतरभूत bool blk_ksm_is_passthrough(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	वापस ksm->num_slots == 0;
-पूर्ण
+static inline bool blk_ksm_is_passthrough(struct blk_keyslot_manager *ksm)
+{
+	return ksm->num_slots == 0;
+}
 
 /**
  * blk_ksm_init() - Initialize a keyslot manager
  * @ksm: The keyslot_manager to initialize.
  * @num_slots: The number of key slots to manage.
  *
- * Allocate memory क्रम keyslots and initialize a keyslot manager. Called by
+ * Allocate memory for keyslots and initialize a keyslot manager. Called by
  * e.g. storage drivers to set up a keyslot manager in their request_queue.
  *
- * Return: 0 on success, or अन्यथा a negative error code.
+ * Return: 0 on success, or else a negative error code.
  */
-पूर्णांक blk_ksm_init(काष्ठा blk_keyslot_manager *ksm, अचिन्हित पूर्णांक num_slots)
-अणु
-	अचिन्हित पूर्णांक slot;
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक slot_hashtable_size;
+int blk_ksm_init(struct blk_keyslot_manager *ksm, unsigned int num_slots)
+{
+	unsigned int slot;
+	unsigned int i;
+	unsigned int slot_hashtable_size;
 
-	स_रखो(ksm, 0, माप(*ksm));
+	memset(ksm, 0, sizeof(*ksm));
 
-	अगर (num_slots == 0)
-		वापस -EINVAL;
+	if (num_slots == 0)
+		return -EINVAL;
 
-	ksm->slots = kvसुस्मृति(num_slots, माप(ksm->slots[0]), GFP_KERNEL);
-	अगर (!ksm->slots)
-		वापस -ENOMEM;
+	ksm->slots = kvcalloc(num_slots, sizeof(ksm->slots[0]), GFP_KERNEL);
+	if (!ksm->slots)
+		return -ENOMEM;
 
 	ksm->num_slots = num_slots;
 
 	init_rwsem(&ksm->lock);
 
-	init_रुकोqueue_head(&ksm->idle_slots_रुको_queue);
+	init_waitqueue_head(&ksm->idle_slots_wait_queue);
 	INIT_LIST_HEAD(&ksm->idle_slots);
 
-	क्रम (slot = 0; slot < num_slots; slot++) अणु
+	for (slot = 0; slot < num_slots; slot++) {
 		ksm->slots[slot].ksm = ksm;
 		list_add_tail(&ksm->slots[slot].idle_slot_node,
 			      &ksm->idle_slots);
-	पूर्ण
+	}
 
 	spin_lock_init(&ksm->idle_slots_lock);
 
-	slot_hashtable_size = roundup_घात_of_two(num_slots);
+	slot_hashtable_size = roundup_pow_of_two(num_slots);
 	/*
 	 * hash_ptr() assumes bits != 0, so ensure the hash table has at least 2
-	 * buckets.  This only makes a dअगरference when there is only 1 keyslot.
+	 * buckets.  This only makes a difference when there is only 1 keyslot.
 	 */
-	अगर (slot_hashtable_size < 2)
+	if (slot_hashtable_size < 2)
 		slot_hashtable_size = 2;
 
 	ksm->log_slot_ht_size = ilog2(slot_hashtable_size);
-	ksm->slot_hashtable = kvदो_स्मृति_array(slot_hashtable_size,
-					     माप(ksm->slot_hashtable[0]),
+	ksm->slot_hashtable = kvmalloc_array(slot_hashtable_size,
+					     sizeof(ksm->slot_hashtable[0]),
 					     GFP_KERNEL);
-	अगर (!ksm->slot_hashtable)
-		जाओ err_destroy_ksm;
-	क्रम (i = 0; i < slot_hashtable_size; i++)
+	if (!ksm->slot_hashtable)
+		goto err_destroy_ksm;
+	for (i = 0; i < slot_hashtable_size; i++)
 		INIT_HLIST_HEAD(&ksm->slot_hashtable[i]);
 
-	वापस 0;
+	return 0;
 
 err_destroy_ksm:
 	blk_ksm_destroy(ksm);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 EXPORT_SYMBOL_GPL(blk_ksm_init);
 
-अटल व्योम blk_ksm_destroy_callback(व्योम *ksm)
-अणु
+static void blk_ksm_destroy_callback(void *ksm)
+{
 	blk_ksm_destroy(ksm);
-पूर्ण
+}
 
 /**
  * devm_blk_ksm_init() - Resource-managed blk_ksm_init()
@@ -145,157 +144,157 @@ EXPORT_SYMBOL_GPL(blk_ksm_init);
  * @ksm: The blk_keyslot_manager to initialize.
  * @num_slots: The number of key slots to manage.
  *
- * Like blk_ksm_init(), but causes blk_ksm_destroy() to be called स्वतःmatically
+ * Like blk_ksm_init(), but causes blk_ksm_destroy() to be called automatically
  * on driver detach.
  *
- * Return: 0 on success, or अन्यथा a negative error code.
+ * Return: 0 on success, or else a negative error code.
  */
-पूर्णांक devm_blk_ksm_init(काष्ठा device *dev, काष्ठा blk_keyslot_manager *ksm,
-		      अचिन्हित पूर्णांक num_slots)
-अणु
-	पूर्णांक err = blk_ksm_init(ksm, num_slots);
+int devm_blk_ksm_init(struct device *dev, struct blk_keyslot_manager *ksm,
+		      unsigned int num_slots)
+{
+	int err = blk_ksm_init(ksm, num_slots);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस devm_add_action_or_reset(dev, blk_ksm_destroy_callback, ksm);
-पूर्ण
+	return devm_add_action_or_reset(dev, blk_ksm_destroy_callback, ksm);
+}
 EXPORT_SYMBOL_GPL(devm_blk_ksm_init);
 
-अटल अंतरभूत काष्ठा hlist_head *
-blk_ksm_hash_bucket_क्रम_key(काष्ठा blk_keyslot_manager *ksm,
-			    स्थिर काष्ठा blk_crypto_key *key)
-अणु
-	वापस &ksm->slot_hashtable[hash_ptr(key, ksm->log_slot_ht_size)];
-पूर्ण
+static inline struct hlist_head *
+blk_ksm_hash_bucket_for_key(struct blk_keyslot_manager *ksm,
+			    const struct blk_crypto_key *key)
+{
+	return &ksm->slot_hashtable[hash_ptr(key, ksm->log_slot_ht_size)];
+}
 
-अटल व्योम blk_ksm_हटाओ_slot_from_lru_list(काष्ठा blk_ksm_keyslot *slot)
-अणु
-	काष्ठा blk_keyslot_manager *ksm = slot->ksm;
-	अचिन्हित दीर्घ flags;
+static void blk_ksm_remove_slot_from_lru_list(struct blk_ksm_keyslot *slot)
+{
+	struct blk_keyslot_manager *ksm = slot->ksm;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ksm->idle_slots_lock, flags);
 	list_del(&slot->idle_slot_node);
 	spin_unlock_irqrestore(&ksm->idle_slots_lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा blk_ksm_keyslot *blk_ksm_find_keyslot(
-					काष्ठा blk_keyslot_manager *ksm,
-					स्थिर काष्ठा blk_crypto_key *key)
-अणु
-	स्थिर काष्ठा hlist_head *head = blk_ksm_hash_bucket_क्रम_key(ksm, key);
-	काष्ठा blk_ksm_keyslot *slotp;
+static struct blk_ksm_keyslot *blk_ksm_find_keyslot(
+					struct blk_keyslot_manager *ksm,
+					const struct blk_crypto_key *key)
+{
+	const struct hlist_head *head = blk_ksm_hash_bucket_for_key(ksm, key);
+	struct blk_ksm_keyslot *slotp;
 
-	hlist_क्रम_each_entry(slotp, head, hash_node) अणु
-		अगर (slotp->key == key)
-			वापस slotp;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry(slotp, head, hash_node) {
+		if (slotp->key == key)
+			return slotp;
+	}
+	return NULL;
+}
 
-अटल काष्ठा blk_ksm_keyslot *blk_ksm_find_and_grab_keyslot(
-					काष्ठा blk_keyslot_manager *ksm,
-					स्थिर काष्ठा blk_crypto_key *key)
-अणु
-	काष्ठा blk_ksm_keyslot *slot;
+static struct blk_ksm_keyslot *blk_ksm_find_and_grab_keyslot(
+					struct blk_keyslot_manager *ksm,
+					const struct blk_crypto_key *key)
+{
+	struct blk_ksm_keyslot *slot;
 
 	slot = blk_ksm_find_keyslot(ksm, key);
-	अगर (!slot)
-		वापस शून्य;
-	अगर (atomic_inc_वापस(&slot->slot_refs) == 1) अणु
-		/* Took first reference to this slot; हटाओ it from LRU list */
-		blk_ksm_हटाओ_slot_from_lru_list(slot);
-	पूर्ण
-	वापस slot;
-पूर्ण
+	if (!slot)
+		return NULL;
+	if (atomic_inc_return(&slot->slot_refs) == 1) {
+		/* Took first reference to this slot; remove it from LRU list */
+		blk_ksm_remove_slot_from_lru_list(slot);
+	}
+	return slot;
+}
 
-अचिन्हित पूर्णांक blk_ksm_get_slot_idx(काष्ठा blk_ksm_keyslot *slot)
-अणु
-	वापस slot - slot->ksm->slots;
-पूर्ण
+unsigned int blk_ksm_get_slot_idx(struct blk_ksm_keyslot *slot)
+{
+	return slot - slot->ksm->slots;
+}
 EXPORT_SYMBOL_GPL(blk_ksm_get_slot_idx);
 
 /**
- * blk_ksm_get_slot_क्रम_key() - Program a key पूर्णांकo a keyslot.
- * @ksm: The keyslot manager to program the key पूर्णांकo.
- * @key: Poपूर्णांकer to the key object to program, including the raw key, crypto
+ * blk_ksm_get_slot_for_key() - Program a key into a keyslot.
+ * @ksm: The keyslot manager to program the key into.
+ * @key: Pointer to the key object to program, including the raw key, crypto
  *	 mode, and data unit size.
- * @slot_ptr: A poपूर्णांकer to वापस the poपूर्णांकer of the allocated keyslot.
+ * @slot_ptr: A pointer to return the pointer of the allocated keyslot.
  *
- * Get a keyslot that's been programmed with the specअगरied key.  If one alपढ़ोy
- * exists, वापस it with incremented refcount.  Otherwise, रुको क्रम a keyslot
+ * Get a keyslot that's been programmed with the specified key.  If one already
+ * exists, return it with incremented refcount.  Otherwise, wait for a keyslot
  * to become idle and program it.
  *
  * Context: Process context. Takes and releases ksm->lock.
- * Return: BLK_STS_OK on success (and keyslot is set to the poपूर्णांकer of the
+ * Return: BLK_STS_OK on success (and keyslot is set to the pointer of the
  *	   allocated keyslot), or some other blk_status_t otherwise (and
- *	   keyslot is set to शून्य).
+ *	   keyslot is set to NULL).
  */
-blk_status_t blk_ksm_get_slot_क्रम_key(काष्ठा blk_keyslot_manager *ksm,
-				      स्थिर काष्ठा blk_crypto_key *key,
-				      काष्ठा blk_ksm_keyslot **slot_ptr)
-अणु
-	काष्ठा blk_ksm_keyslot *slot;
-	पूर्णांक slot_idx;
-	पूर्णांक err;
+blk_status_t blk_ksm_get_slot_for_key(struct blk_keyslot_manager *ksm,
+				      const struct blk_crypto_key *key,
+				      struct blk_ksm_keyslot **slot_ptr)
+{
+	struct blk_ksm_keyslot *slot;
+	int slot_idx;
+	int err;
 
-	*slot_ptr = शून्य;
+	*slot_ptr = NULL;
 
-	अगर (blk_ksm_is_passthrough(ksm))
-		वापस BLK_STS_OK;
+	if (blk_ksm_is_passthrough(ksm))
+		return BLK_STS_OK;
 
-	करोwn_पढ़ो(&ksm->lock);
+	down_read(&ksm->lock);
 	slot = blk_ksm_find_and_grab_keyslot(ksm, key);
-	up_पढ़ो(&ksm->lock);
-	अगर (slot)
-		जाओ success;
+	up_read(&ksm->lock);
+	if (slot)
+		goto success;
 
-	क्रम (;;) अणु
+	for (;;) {
 		blk_ksm_hw_enter(ksm);
 		slot = blk_ksm_find_and_grab_keyslot(ksm, key);
-		अगर (slot) अणु
-			blk_ksm_hw_निकास(ksm);
-			जाओ success;
-		पूर्ण
+		if (slot) {
+			blk_ksm_hw_exit(ksm);
+			goto success;
+		}
 
 		/*
 		 * If we're here, that means there wasn't a slot that was
-		 * alपढ़ोy programmed with the key. So try to program it.
+		 * already programmed with the key. So try to program it.
 		 */
-		अगर (!list_empty(&ksm->idle_slots))
-			अवरोध;
+		if (!list_empty(&ksm->idle_slots))
+			break;
 
-		blk_ksm_hw_निकास(ksm);
-		रुको_event(ksm->idle_slots_रुको_queue,
+		blk_ksm_hw_exit(ksm);
+		wait_event(ksm->idle_slots_wait_queue,
 			   !list_empty(&ksm->idle_slots));
-	पूर्ण
+	}
 
-	slot = list_first_entry(&ksm->idle_slots, काष्ठा blk_ksm_keyslot,
+	slot = list_first_entry(&ksm->idle_slots, struct blk_ksm_keyslot,
 				idle_slot_node);
 	slot_idx = blk_ksm_get_slot_idx(slot);
 
 	err = ksm->ksm_ll_ops.keyslot_program(ksm, key, slot_idx);
-	अगर (err) अणु
-		wake_up(&ksm->idle_slots_रुको_queue);
-		blk_ksm_hw_निकास(ksm);
-		वापस त्रुटि_सं_to_blk_status(err);
-	पूर्ण
+	if (err) {
+		wake_up(&ksm->idle_slots_wait_queue);
+		blk_ksm_hw_exit(ksm);
+		return errno_to_blk_status(err);
+	}
 
-	/* Move this slot to the hash list क्रम the new key. */
-	अगर (slot->key)
+	/* Move this slot to the hash list for the new key. */
+	if (slot->key)
 		hlist_del(&slot->hash_node);
 	slot->key = key;
-	hlist_add_head(&slot->hash_node, blk_ksm_hash_bucket_क्रम_key(ksm, key));
+	hlist_add_head(&slot->hash_node, blk_ksm_hash_bucket_for_key(ksm, key));
 
 	atomic_set(&slot->slot_refs, 1);
 
-	blk_ksm_हटाओ_slot_from_lru_list(slot);
+	blk_ksm_remove_slot_from_lru_list(slot);
 
-	blk_ksm_hw_निकास(ksm);
+	blk_ksm_hw_exit(ksm);
 success:
 	*slot_ptr = slot;
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
 /**
  * blk_ksm_put_slot() - Release a reference to a slot
@@ -303,227 +302,227 @@ success:
  *
  * Context: Any context.
  */
-व्योम blk_ksm_put_slot(काष्ठा blk_ksm_keyslot *slot)
-अणु
-	काष्ठा blk_keyslot_manager *ksm;
-	अचिन्हित दीर्घ flags;
+void blk_ksm_put_slot(struct blk_ksm_keyslot *slot)
+{
+	struct blk_keyslot_manager *ksm;
+	unsigned long flags;
 
-	अगर (!slot)
-		वापस;
+	if (!slot)
+		return;
 
 	ksm = slot->ksm;
 
-	अगर (atomic_dec_and_lock_irqsave(&slot->slot_refs,
-					&ksm->idle_slots_lock, flags)) अणु
+	if (atomic_dec_and_lock_irqsave(&slot->slot_refs,
+					&ksm->idle_slots_lock, flags)) {
 		list_add_tail(&slot->idle_slot_node, &ksm->idle_slots);
 		spin_unlock_irqrestore(&ksm->idle_slots_lock, flags);
-		wake_up(&ksm->idle_slots_रुको_queue);
-	पूर्ण
-पूर्ण
+		wake_up(&ksm->idle_slots_wait_queue);
+	}
+}
 
 /**
- * blk_ksm_crypto_cfg_supported() - Find out अगर a crypto configuration is
+ * blk_ksm_crypto_cfg_supported() - Find out if a crypto configuration is
  *				    supported by a ksm.
  * @ksm: The keyslot manager to check
- * @cfg: The crypto configuration to check क्रम.
+ * @cfg: The crypto configuration to check for.
  *
- * Checks क्रम crypto_mode/data unit size/dun bytes support.
+ * Checks for crypto_mode/data unit size/dun bytes support.
  *
- * Return: Whether or not this ksm supports the specअगरied crypto config.
+ * Return: Whether or not this ksm supports the specified crypto config.
  */
-bool blk_ksm_crypto_cfg_supported(काष्ठा blk_keyslot_manager *ksm,
-				  स्थिर काष्ठा blk_crypto_config *cfg)
-अणु
-	अगर (!ksm)
-		वापस false;
-	अगर (!(ksm->crypto_modes_supported[cfg->crypto_mode] &
+bool blk_ksm_crypto_cfg_supported(struct blk_keyslot_manager *ksm,
+				  const struct blk_crypto_config *cfg)
+{
+	if (!ksm)
+		return false;
+	if (!(ksm->crypto_modes_supported[cfg->crypto_mode] &
 	      cfg->data_unit_size))
-		वापस false;
-	अगर (ksm->max_dun_bytes_supported < cfg->dun_bytes)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	if (ksm->max_dun_bytes_supported < cfg->dun_bytes)
+		return false;
+	return true;
+}
 
 /**
  * blk_ksm_evict_key() - Evict a key from the lower layer device.
  * @ksm: The keyslot manager to evict from
  * @key: The key to evict
  *
- * Find the keyslot that the specअगरied key was programmed पूर्णांकo, and evict that
+ * Find the keyslot that the specified key was programmed into, and evict that
  * slot from the lower layer device. The slot must not be in use by any
  * in-flight IO when this function is called.
  *
  * Context: Process context. Takes and releases ksm->lock.
- * Return: 0 on success or अगर there's no keyslot with the specअगरied key, -EBUSY
- *	   अगर the keyslot is still in use, or another -त्रुटि_सं value on other
+ * Return: 0 on success or if there's no keyslot with the specified key, -EBUSY
+ *	   if the keyslot is still in use, or another -errno value on other
  *	   error.
  */
-पूर्णांक blk_ksm_evict_key(काष्ठा blk_keyslot_manager *ksm,
-		      स्थिर काष्ठा blk_crypto_key *key)
-अणु
-	काष्ठा blk_ksm_keyslot *slot;
-	पूर्णांक err = 0;
+int blk_ksm_evict_key(struct blk_keyslot_manager *ksm,
+		      const struct blk_crypto_key *key)
+{
+	struct blk_ksm_keyslot *slot;
+	int err = 0;
 
-	अगर (blk_ksm_is_passthrough(ksm)) अणु
-		अगर (ksm->ksm_ll_ops.keyslot_evict) अणु
+	if (blk_ksm_is_passthrough(ksm)) {
+		if (ksm->ksm_ll_ops.keyslot_evict) {
 			blk_ksm_hw_enter(ksm);
 			err = ksm->ksm_ll_ops.keyslot_evict(ksm, key, -1);
-			blk_ksm_hw_निकास(ksm);
-			वापस err;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			blk_ksm_hw_exit(ksm);
+			return err;
+		}
+		return 0;
+	}
 
 	blk_ksm_hw_enter(ksm);
 	slot = blk_ksm_find_keyslot(ksm, key);
-	अगर (!slot)
-		जाओ out_unlock;
+	if (!slot)
+		goto out_unlock;
 
-	अगर (WARN_ON_ONCE(atomic_पढ़ो(&slot->slot_refs) != 0)) अणु
+	if (WARN_ON_ONCE(atomic_read(&slot->slot_refs) != 0)) {
 		err = -EBUSY;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	err = ksm->ksm_ll_ops.keyslot_evict(ksm, key,
 					    blk_ksm_get_slot_idx(slot));
-	अगर (err)
-		जाओ out_unlock;
+	if (err)
+		goto out_unlock;
 
 	hlist_del(&slot->hash_node);
-	slot->key = शून्य;
+	slot->key = NULL;
 	err = 0;
 out_unlock:
-	blk_ksm_hw_निकास(ksm);
-	वापस err;
-पूर्ण
+	blk_ksm_hw_exit(ksm);
+	return err;
+}
 
 /**
  * blk_ksm_reprogram_all_keys() - Re-program all keyslots.
  * @ksm: The keyslot manager
  *
  * Re-program all keyslots that are supposed to have a key programmed.  This is
- * पूर्णांकended only क्रम use by drivers क्रम hardware that loses its keys on reset.
+ * intended only for use by drivers for hardware that loses its keys on reset.
  *
  * Context: Process context. Takes and releases ksm->lock.
  */
-व्योम blk_ksm_reprogram_all_keys(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	अचिन्हित पूर्णांक slot;
+void blk_ksm_reprogram_all_keys(struct blk_keyslot_manager *ksm)
+{
+	unsigned int slot;
 
-	अगर (blk_ksm_is_passthrough(ksm))
-		वापस;
+	if (blk_ksm_is_passthrough(ksm))
+		return;
 
-	/* This is क्रम device initialization, so करोn't resume the device */
-	करोwn_ग_लिखो(&ksm->lock);
-	क्रम (slot = 0; slot < ksm->num_slots; slot++) अणु
-		स्थिर काष्ठा blk_crypto_key *key = ksm->slots[slot].key;
-		पूर्णांक err;
+	/* This is for device initialization, so don't resume the device */
+	down_write(&ksm->lock);
+	for (slot = 0; slot < ksm->num_slots; slot++) {
+		const struct blk_crypto_key *key = ksm->slots[slot].key;
+		int err;
 
-		अगर (!key)
-			जारी;
+		if (!key)
+			continue;
 
 		err = ksm->ksm_ll_ops.keyslot_program(ksm, key, slot);
 		WARN_ON(err);
-	पूर्ण
-	up_ग_लिखो(&ksm->lock);
-पूर्ण
+	}
+	up_write(&ksm->lock);
+}
 EXPORT_SYMBOL_GPL(blk_ksm_reprogram_all_keys);
 
-व्योम blk_ksm_destroy(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	अगर (!ksm)
-		वापस;
-	kvमुक्त(ksm->slot_hashtable);
-	kvमुक्त_sensitive(ksm->slots, माप(ksm->slots[0]) * ksm->num_slots);
-	memzero_explicit(ksm, माप(*ksm));
-पूर्ण
+void blk_ksm_destroy(struct blk_keyslot_manager *ksm)
+{
+	if (!ksm)
+		return;
+	kvfree(ksm->slot_hashtable);
+	kvfree_sensitive(ksm->slots, sizeof(ksm->slots[0]) * ksm->num_slots);
+	memzero_explicit(ksm, sizeof(*ksm));
+}
 EXPORT_SYMBOL_GPL(blk_ksm_destroy);
 
-bool blk_ksm_रेजिस्टर(काष्ठा blk_keyslot_manager *ksm, काष्ठा request_queue *q)
-अणु
-	अगर (blk_पूर्णांकegrity_queue_supports_पूर्णांकegrity(q)) अणु
+bool blk_ksm_register(struct blk_keyslot_manager *ksm, struct request_queue *q)
+{
+	if (blk_integrity_queue_supports_integrity(q)) {
 		pr_warn("Integrity and hardware inline encryption are not supported together. Disabling hardware inline encryption.\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	q->ksm = ksm;
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL_GPL(blk_ksm_रेजिस्टर);
+	return true;
+}
+EXPORT_SYMBOL_GPL(blk_ksm_register);
 
-व्योम blk_ksm_unरेजिस्टर(काष्ठा request_queue *q)
-अणु
-	q->ksm = शून्य;
-पूर्ण
+void blk_ksm_unregister(struct request_queue *q)
+{
+	q->ksm = NULL;
+}
 
 /**
- * blk_ksm_पूर्णांकersect_modes() - restrict supported modes by child device
- * @parent: The keyslot manager क्रम parent device
- * @child: The keyslot manager क्रम child device, or शून्य
+ * blk_ksm_intersect_modes() - restrict supported modes by child device
+ * @parent: The keyslot manager for parent device
+ * @child: The keyslot manager for child device, or NULL
  *
  * Clear any crypto mode support bits in @parent that aren't set in @child.
- * If @child is शून्य, then all parent bits are cleared.
+ * If @child is NULL, then all parent bits are cleared.
  *
- * Only use this when setting up the keyslot manager क्रम a layered device,
- * beक्रमe it's been exposed yet.
+ * Only use this when setting up the keyslot manager for a layered device,
+ * before it's been exposed yet.
  */
-व्योम blk_ksm_पूर्णांकersect_modes(काष्ठा blk_keyslot_manager *parent,
-			     स्थिर काष्ठा blk_keyslot_manager *child)
-अणु
-	अगर (child) अणु
-		अचिन्हित पूर्णांक i;
+void blk_ksm_intersect_modes(struct blk_keyslot_manager *parent,
+			     const struct blk_keyslot_manager *child)
+{
+	if (child) {
+		unsigned int i;
 
 		parent->max_dun_bytes_supported =
 			min(parent->max_dun_bytes_supported,
 			    child->max_dun_bytes_supported);
-		क्रम (i = 0; i < ARRAY_SIZE(child->crypto_modes_supported);
-		     i++) अणु
+		for (i = 0; i < ARRAY_SIZE(child->crypto_modes_supported);
+		     i++) {
 			parent->crypto_modes_supported[i] &=
 				child->crypto_modes_supported[i];
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		parent->max_dun_bytes_supported = 0;
-		स_रखो(parent->crypto_modes_supported, 0,
-		       माप(parent->crypto_modes_supported));
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(blk_ksm_पूर्णांकersect_modes);
+		memset(parent->crypto_modes_supported, 0,
+		       sizeof(parent->crypto_modes_supported));
+	}
+}
+EXPORT_SYMBOL_GPL(blk_ksm_intersect_modes);
 
 /**
- * blk_ksm_is_superset() - Check अगर a KSM supports a superset of crypto modes
+ * blk_ksm_is_superset() - Check if a KSM supports a superset of crypto modes
  *			   and DUN bytes that another KSM supports. Here,
  *			   "superset" refers to the mathematical meaning of the
- *			   word - i.e. अगर two KSMs have the *same* capabilities,
+ *			   word - i.e. if two KSMs have the *same* capabilities,
  *			   they *are* considered supersets of each other.
- * @ksm_superset: The KSM that we want to verअगरy is a superset
- * @ksm_subset: The KSM that we want to verअगरy is a subset
+ * @ksm_superset: The KSM that we want to verify is a superset
+ * @ksm_subset: The KSM that we want to verify is a subset
  *
- * Return: True अगर @ksm_superset supports a superset of the crypto modes and DUN
+ * Return: True if @ksm_superset supports a superset of the crypto modes and DUN
  *	   bytes that @ksm_subset supports.
  */
-bool blk_ksm_is_superset(काष्ठा blk_keyslot_manager *ksm_superset,
-			 काष्ठा blk_keyslot_manager *ksm_subset)
-अणु
-	पूर्णांक i;
+bool blk_ksm_is_superset(struct blk_keyslot_manager *ksm_superset,
+			 struct blk_keyslot_manager *ksm_subset)
+{
+	int i;
 
-	अगर (!ksm_subset)
-		वापस true;
+	if (!ksm_subset)
+		return true;
 
-	अगर (!ksm_superset)
-		वापस false;
+	if (!ksm_superset)
+		return false;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ksm_superset->crypto_modes_supported); i++) अणु
-		अगर (ksm_subset->crypto_modes_supported[i] &
-		    (~ksm_superset->crypto_modes_supported[i])) अणु
-			वापस false;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(ksm_superset->crypto_modes_supported); i++) {
+		if (ksm_subset->crypto_modes_supported[i] &
+		    (~ksm_superset->crypto_modes_supported[i])) {
+			return false;
+		}
+	}
 
-	अगर (ksm_subset->max_dun_bytes_supported >
-	    ksm_superset->max_dun_bytes_supported) अणु
-		वापस false;
-	पूर्ण
+	if (ksm_subset->max_dun_bytes_supported >
+	    ksm_superset->max_dun_bytes_supported) {
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(blk_ksm_is_superset);
 
 /**
@@ -534,31 +533,31 @@ EXPORT_SYMBOL_GPL(blk_ksm_is_superset);
  *		   @target_ksm's restrictions to.
  *
  * Blk-crypto requires that crypto capabilities that were
- * advertised when a bio was created जारी to be supported by the
+ * advertised when a bio was created continue to be supported by the
  * device until that bio is ended. This is turn means that a device cannot
  * shrink its advertised crypto capabilities without any explicit
- * synchronization with upper layers. So अगर there's no such explicit
+ * synchronization with upper layers. So if there's no such explicit
  * synchronization, @reference_ksm must support all the crypto capabilities that
- * @target_ksm करोes
+ * @target_ksm does
  * (i.e. we need blk_ksm_is_superset(@reference_ksm, @target_ksm) == true).
  *
- * Note also that as दीर्घ as the crypto capabilities are being expanded, the
+ * Note also that as long as the crypto capabilities are being expanded, the
  * order of updates becoming visible is not important because it's alright
- * क्रम blk-crypto to see stale values - they only cause blk-crypto to
+ * for blk-crypto to see stale values - they only cause blk-crypto to
  * believe that a crypto capability isn't supported when it actually is (which
- * might result in blk-crypto-fallback being used अगर available, or the bio being
+ * might result in blk-crypto-fallback being used if available, or the bio being
  * failed).
  */
-व्योम blk_ksm_update_capabilities(काष्ठा blk_keyslot_manager *target_ksm,
-				 काष्ठा blk_keyslot_manager *reference_ksm)
-अणु
-	स_नकल(target_ksm->crypto_modes_supported,
+void blk_ksm_update_capabilities(struct blk_keyslot_manager *target_ksm,
+				 struct blk_keyslot_manager *reference_ksm)
+{
+	memcpy(target_ksm->crypto_modes_supported,
 	       reference_ksm->crypto_modes_supported,
-	       माप(target_ksm->crypto_modes_supported));
+	       sizeof(target_ksm->crypto_modes_supported));
 
 	target_ksm->max_dun_bytes_supported =
 				reference_ksm->max_dun_bytes_supported;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(blk_ksm_update_capabilities);
 
 /**
@@ -568,12 +567,12 @@ EXPORT_SYMBOL_GPL(blk_ksm_update_capabilities);
  * Initialize a passthrough keyslot manager.
  * Called by e.g. storage drivers to set up a keyslot manager in their
  * request_queue, when the storage driver wants to manage its keys by itself.
- * This is useful क्रम अंतरभूत encryption hardware that करोesn't have the concept
- * of keyslots, and क्रम layered devices.
+ * This is useful for inline encryption hardware that doesn't have the concept
+ * of keyslots, and for layered devices.
  */
-व्योम blk_ksm_init_passthrough(काष्ठा blk_keyslot_manager *ksm)
-अणु
-	स_रखो(ksm, 0, माप(*ksm));
+void blk_ksm_init_passthrough(struct blk_keyslot_manager *ksm)
+{
+	memset(ksm, 0, sizeof(*ksm));
 	init_rwsem(&ksm->lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(blk_ksm_init_passthrough);

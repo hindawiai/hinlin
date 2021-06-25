@@ -1,242 +1,241 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ngene.c: nGene PCIe bridge driver
  *
  * Copyright (C) 2005-2007 Micronas
  *
  * Copyright (C) 2008-2009 Ralph Metzler <rjkm@metzlerbros.de>
- *                         Modअगरications क्रम new nGene firmware,
- *                         support क्रम EEPROM-copying,
- *                         support क्रम new dual DVB-S2 card prototype
+ *                         Modifications for new nGene firmware,
+ *                         support for EEPROM-copying,
+ *                         support for new dual DVB-S2 card prototype
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/भाग64.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/byteorder/generic.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/poll.h>
+#include <linux/io.h>
+#include <asm/div64.h>
+#include <linux/pci.h>
+#include <linux/timer.h>
+#include <linux/byteorder/generic.h>
+#include <linux/firmware.h>
+#include <linux/vmalloc.h>
 
-#समावेश "ngene.h"
+#include "ngene.h"
 
-अटल पूर्णांक one_adapter;
-module_param(one_adapter, पूर्णांक, 0444);
+static int one_adapter;
+module_param(one_adapter, int, 0444);
 MODULE_PARM_DESC(one_adapter, "Use only one adapter.");
 
-अटल पूर्णांक shutकरोwn_workaround;
-module_param(shutकरोwn_workaround, पूर्णांक, 0644);
-MODULE_PARM_DESC(shutकरोwn_workaround, "Activate workaround for shutdown problem with some chipsets.");
+static int shutdown_workaround;
+module_param(shutdown_workaround, int, 0644);
+MODULE_PARM_DESC(shutdown_workaround, "Activate workaround for shutdown problem with some chipsets.");
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, 0444);
+static int debug;
+module_param(debug, int, 0444);
 MODULE_PARM_DESC(debug, "Print debugging information.");
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-#घोषणा ngग_लिखोb(dat, adr)         ग_लिखोb((dat), dev->iomem + (adr))
-#घोषणा ngग_लिखोl(dat, adr)         ग_लिखोl((dat), dev->iomem + (adr))
-#घोषणा ngग_लिखोb(dat, adr)         ग_लिखोb((dat), dev->iomem + (adr))
-#घोषणा ngपढ़ोl(adr)               पढ़ोl(dev->iomem + (adr))
-#घोषणा ngपढ़ोb(adr)               पढ़ोb(dev->iomem + (adr))
-#घोषणा ngcpyto(adr, src, count)   स_नकल_toio(dev->iomem + (adr), (src), (count))
-#घोषणा ngcpyfrom(dst, adr, count) स_नकल_fromio((dst), dev->iomem + (adr), (count))
+#define ngwriteb(dat, adr)         writeb((dat), dev->iomem + (adr))
+#define ngwritel(dat, adr)         writel((dat), dev->iomem + (adr))
+#define ngwriteb(dat, adr)         writeb((dat), dev->iomem + (adr))
+#define ngreadl(adr)               readl(dev->iomem + (adr))
+#define ngreadb(adr)               readb(dev->iomem + (adr))
+#define ngcpyto(adr, src, count)   memcpy_toio(dev->iomem + (adr), (src), (count))
+#define ngcpyfrom(dst, adr, count) memcpy_fromio((dst), dev->iomem + (adr), (count))
 
 /****************************************************************************/
-/* nGene पूर्णांकerrupt handler **************************************************/
+/* nGene interrupt handler **************************************************/
 /****************************************************************************/
 
-अटल व्योम event_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा ngene *dev = from_tasklet(dev, t, event_tasklet);
+static void event_tasklet(struct tasklet_struct *t)
+{
+	struct ngene *dev = from_tasklet(dev, t, event_tasklet);
 
-	जबतक (dev->EventQueueReadIndex != dev->EventQueueWriteIndex) अणु
-		काष्ठा EVENT_BUFFER Event =
+	while (dev->EventQueueReadIndex != dev->EventQueueWriteIndex) {
+		struct EVENT_BUFFER Event =
 			dev->EventQueue[dev->EventQueueReadIndex];
 		dev->EventQueueReadIndex =
 			(dev->EventQueueReadIndex + 1) & (EVENT_QUEUE_SIZE - 1);
 
-		अगर ((Event.UARTStatus & 0x01) && (dev->TxEventNotअगरy))
-			dev->TxEventNotअगरy(dev, Event.TimeStamp);
-		अगर ((Event.UARTStatus & 0x02) && (dev->RxEventNotअगरy))
-			dev->RxEventNotअगरy(dev, Event.TimeStamp,
+		if ((Event.UARTStatus & 0x01) && (dev->TxEventNotify))
+			dev->TxEventNotify(dev, Event.TimeStamp);
+		if ((Event.UARTStatus & 0x02) && (dev->RxEventNotify))
+			dev->RxEventNotify(dev, Event.TimeStamp,
 					   Event.RXCharacter);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम demux_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा ngene_channel *chan = from_tasklet(chan, t, demux_tasklet);
-	काष्ठा device *pdev = &chan->dev->pci_dev->dev;
-	काष्ठा SBufferHeader *Cur = chan->nextBuffer;
+static void demux_tasklet(struct tasklet_struct *t)
+{
+	struct ngene_channel *chan = from_tasklet(chan, t, demux_tasklet);
+	struct device *pdev = &chan->dev->pci_dev->dev;
+	struct SBufferHeader *Cur = chan->nextBuffer;
 
 	spin_lock_irq(&chan->state_lock);
 
-	जबतक (Cur->ngeneBuffer.SR.Flags & 0x80) अणु
-		अगर (chan->mode & NGENE_IO_TSOUT) अणु
+	while (Cur->ngeneBuffer.SR.Flags & 0x80) {
+		if (chan->mode & NGENE_IO_TSOUT) {
 			u32 Flags = chan->DataFormatFlags;
-			अगर (Cur->ngeneBuffer.SR.Flags & 0x20)
+			if (Cur->ngeneBuffer.SR.Flags & 0x20)
 				Flags |= BEF_OVERFLOW;
-			अगर (chan->pBufferExchange) अणु
-				अगर (!chan->pBufferExchange(chan,
+			if (chan->pBufferExchange) {
+				if (!chan->pBufferExchange(chan,
 							   Cur->Buffer1,
 							   chan->Capture1Length,
 							   Cur->ngeneBuffer.SR.
-							   Clock, Flags)) अणु
+							   Clock, Flags)) {
 					/*
 					   We didn't get data
 					   Clear in service flag to make sure we
-					   get called on next पूर्णांकerrupt again.
+					   get called on next interrupt again.
 					   leave fill/empty (0x80) flag alone
-					   to aव्योम hardware running out of
+					   to avoid hardware running out of
 					   buffers during startup, we hold only
 					   in run state ( the source may be late
 					   delivering data )
 					*/
 
-					अगर (chan->HWState == HWSTATE_RUN) अणु
+					if (chan->HWState == HWSTATE_RUN) {
 						Cur->ngeneBuffer.SR.Flags &=
 							~0x40;
-						अवरोध;
+						break;
 						/* Stop processing stream */
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					/* We got a valid buffer,
-					   so चयन to run state */
+					   so switch to run state */
 					chan->HWState = HWSTATE_RUN;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				dev_err(pdev, "OOPS\n");
-				अगर (chan->HWState == HWSTATE_RUN) अणु
+				if (chan->HWState == HWSTATE_RUN) {
 					Cur->ngeneBuffer.SR.Flags &= ~0x40;
-					अवरोध;	/* Stop processing stream */
-				पूर्ण
-			पूर्ण
-			अगर (chan->AudioDTOUpdated) अणु
+					break;	/* Stop processing stream */
+				}
+			}
+			if (chan->AudioDTOUpdated) {
 				dev_info(pdev, "Update AudioDTO = %d\n",
 					 chan->AudioDTOValue);
 				Cur->ngeneBuffer.SR.DTOUpdate =
 					chan->AudioDTOValue;
 				chan->AudioDTOUpdated = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (chan->HWState == HWSTATE_RUN) अणु
+			}
+		} else {
+			if (chan->HWState == HWSTATE_RUN) {
 				u32 Flags = chan->DataFormatFlags;
 				IBufferExchange *exch1 = chan->pBufferExchange;
 				IBufferExchange *exch2 = chan->pBufferExchange2;
-				अगर (Cur->ngeneBuffer.SR.Flags & 0x01)
+				if (Cur->ngeneBuffer.SR.Flags & 0x01)
 					Flags |= BEF_EVEN_FIELD;
-				अगर (Cur->ngeneBuffer.SR.Flags & 0x20)
+				if (Cur->ngeneBuffer.SR.Flags & 0x20)
 					Flags |= BEF_OVERFLOW;
 				spin_unlock_irq(&chan->state_lock);
-				अगर (exch1)
+				if (exch1)
 					exch1(chan, Cur->Buffer1,
 						chan->Capture1Length,
 						Cur->ngeneBuffer.SR.Clock,
 						Flags);
-				अगर (exch2)
+				if (exch2)
 					exch2(chan, Cur->Buffer2,
 						chan->Capture2Length,
 						Cur->ngeneBuffer.SR.Clock,
 						Flags);
 				spin_lock_irq(&chan->state_lock);
-			पूर्ण अन्यथा अगर (chan->HWState != HWSTATE_STOP)
+			} else if (chan->HWState != HWSTATE_STOP)
 				chan->HWState = HWSTATE_RUN;
-		पूर्ण
+		}
 		Cur->ngeneBuffer.SR.Flags = 0x00;
 		Cur = Cur->Next;
-	पूर्ण
+	}
 	chan->nextBuffer = Cur;
 
 	spin_unlock_irq(&chan->state_lock);
-पूर्ण
+}
 
-अटल irqवापस_t irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा ngene *dev = (काष्ठा ngene *)dev_id;
-	काष्ठा device *pdev = &dev->pci_dev->dev;
+static irqreturn_t irq_handler(int irq, void *dev_id)
+{
+	struct ngene *dev = (struct ngene *)dev_id;
+	struct device *pdev = &dev->pci_dev->dev;
 	u32 icounts = 0;
-	irqवापस_t rc = IRQ_NONE;
+	irqreturn_t rc = IRQ_NONE;
 	u32 i = MAX_STREAM;
-	u8 *पंचांगpCmdDoneByte;
+	u8 *tmpCmdDoneByte;
 
-	अगर (dev->BootFirmware) अणु
-		icounts = ngपढ़ोl(NGENE_INT_COUNTS);
-		अगर (icounts != dev->icounts) अणु
-			ngग_लिखोl(0, FORCE_NMI);
-			dev->cmd_करोne = 1;
+	if (dev->BootFirmware) {
+		icounts = ngreadl(NGENE_INT_COUNTS);
+		if (icounts != dev->icounts) {
+			ngwritel(0, FORCE_NMI);
+			dev->cmd_done = 1;
 			wake_up(&dev->cmd_wq);
 			dev->icounts = icounts;
 			rc = IRQ_HANDLED;
-		पूर्ण
-		वापस rc;
-	पूर्ण
+		}
+		return rc;
+	}
 
-	ngग_लिखोl(0, FORCE_NMI);
+	ngwritel(0, FORCE_NMI);
 
 	spin_lock(&dev->cmd_lock);
-	पंचांगpCmdDoneByte = dev->CmdDoneByte;
-	अगर (पंचांगpCmdDoneByte &&
-	    (*पंचांगpCmdDoneByte ||
-	    (dev->ngenetohost[0] == 1 && dev->ngenetohost[1] != 0))) अणु
-		dev->CmdDoneByte = शून्य;
-		dev->cmd_करोne = 1;
+	tmpCmdDoneByte = dev->CmdDoneByte;
+	if (tmpCmdDoneByte &&
+	    (*tmpCmdDoneByte ||
+	    (dev->ngenetohost[0] == 1 && dev->ngenetohost[1] != 0))) {
+		dev->CmdDoneByte = NULL;
+		dev->cmd_done = 1;
 		wake_up(&dev->cmd_wq);
 		rc = IRQ_HANDLED;
-	पूर्ण
+	}
 	spin_unlock(&dev->cmd_lock);
 
-	अगर (dev->EventBuffer->EventStatus & 0x80) अणु
+	if (dev->EventBuffer->EventStatus & 0x80) {
 		u8 nextWriteIndex =
 			(dev->EventQueueWriteIndex + 1) &
 			(EVENT_QUEUE_SIZE - 1);
-		अगर (nextWriteIndex != dev->EventQueueReadIndex) अणु
+		if (nextWriteIndex != dev->EventQueueReadIndex) {
 			dev->EventQueue[dev->EventQueueWriteIndex] =
 				*(dev->EventBuffer);
 			dev->EventQueueWriteIndex = nextWriteIndex;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(pdev, "event overflow\n");
 			dev->EventQueueOverflowCount += 1;
 			dev->EventQueueOverflowFlag = 1;
-		पूर्ण
+		}
 		dev->EventBuffer->EventStatus &= ~0x80;
 		tasklet_schedule(&dev->event_tasklet);
 		rc = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	जबतक (i > 0) अणु
+	while (i > 0) {
 		i--;
 		spin_lock(&dev->channel[i].state_lock);
-		/* अगर (dev->channel[i].State>=KSSTATE_RUN) अणु */
-		अगर (dev->channel[i].nextBuffer) अणु
-			अगर ((dev->channel[i].nextBuffer->
-			     ngeneBuffer.SR.Flags & 0xC0) == 0x80) अणु
+		/* if (dev->channel[i].State>=KSSTATE_RUN) { */
+		if (dev->channel[i].nextBuffer) {
+			if ((dev->channel[i].nextBuffer->
+			     ngeneBuffer.SR.Flags & 0xC0) == 0x80) {
 				dev->channel[i].nextBuffer->
 					ngeneBuffer.SR.Flags |= 0x40;
 				tasklet_schedule(
 					&dev->channel[i].demux_tasklet);
 				rc = IRQ_HANDLED;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		spin_unlock(&dev->channel[i].state_lock);
-	पूर्ण
+	}
 
 	/* Request might have been processed by a previous call. */
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /****************************************************************************/
-/* nGene command पूर्णांकerface **************************************************/
+/* nGene command interface **************************************************/
 /****************************************************************************/
 
-अटल व्योम dump_command_io(काष्ठा ngene *dev)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
+static void dump_command_io(struct ngene *dev)
+{
+	struct device *pdev = &dev->pci_dev->dev;
 	u8 buf[8], *b;
 
 	ngcpyfrom(buf, HOST_TO_NGENE, 8);
@@ -250,93 +249,93 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	b = dev->ngenetohost;
 	dev_err(pdev, "dev->ngenetohost (%p): %*ph\n", b, 8, b);
-पूर्ण
+}
 
-अटल पूर्णांक ngene_command_mutex(काष्ठा ngene *dev, काष्ठा ngene_command *com)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
-	पूर्णांक ret;
-	u8 *पंचांगpCmdDoneByte;
+static int ngene_command_mutex(struct ngene *dev, struct ngene_command *com)
+{
+	struct device *pdev = &dev->pci_dev->dev;
+	int ret;
+	u8 *tmpCmdDoneByte;
 
-	dev->cmd_करोne = 0;
+	dev->cmd_done = 0;
 
-	अगर (com->cmd.hdr.Opcode == CMD_FWLOAD_PREPARE) अणु
+	if (com->cmd.hdr.Opcode == CMD_FWLOAD_PREPARE) {
 		dev->BootFirmware = 1;
-		dev->icounts = ngपढ़ोl(NGENE_INT_COUNTS);
-		ngग_लिखोl(0, NGENE_COMMAND);
-		ngग_लिखोl(0, NGENE_COMMAND_HI);
-		ngग_लिखोl(0, NGENE_STATUS);
-		ngग_लिखोl(0, NGENE_STATUS_HI);
-		ngग_लिखोl(0, NGENE_EVENT);
-		ngग_लिखोl(0, NGENE_EVENT_HI);
-	पूर्ण अन्यथा अगर (com->cmd.hdr.Opcode == CMD_FWLOAD_FINISH) अणु
+		dev->icounts = ngreadl(NGENE_INT_COUNTS);
+		ngwritel(0, NGENE_COMMAND);
+		ngwritel(0, NGENE_COMMAND_HI);
+		ngwritel(0, NGENE_STATUS);
+		ngwritel(0, NGENE_STATUS_HI);
+		ngwritel(0, NGENE_EVENT);
+		ngwritel(0, NGENE_EVENT_HI);
+	} else if (com->cmd.hdr.Opcode == CMD_FWLOAD_FINISH) {
 		u64 fwio = dev->PAFWInterfaceBuffer;
 
-		ngग_लिखोl(fwio & 0xffffffff, NGENE_COMMAND);
-		ngग_लिखोl(fwio >> 32, NGENE_COMMAND_HI);
-		ngग_लिखोl((fwio + 256) & 0xffffffff, NGENE_STATUS);
-		ngग_लिखोl((fwio + 256) >> 32, NGENE_STATUS_HI);
-		ngग_लिखोl((fwio + 512) & 0xffffffff, NGENE_EVENT);
-		ngग_लिखोl((fwio + 512) >> 32, NGENE_EVENT_HI);
-	पूर्ण
+		ngwritel(fwio & 0xffffffff, NGENE_COMMAND);
+		ngwritel(fwio >> 32, NGENE_COMMAND_HI);
+		ngwritel((fwio + 256) & 0xffffffff, NGENE_STATUS);
+		ngwritel((fwio + 256) >> 32, NGENE_STATUS_HI);
+		ngwritel((fwio + 512) & 0xffffffff, NGENE_EVENT);
+		ngwritel((fwio + 512) >> 32, NGENE_EVENT_HI);
+	}
 
-	स_नकल(dev->FWInterfaceBuffer, com->cmd.raw8, com->in_len + 2);
+	memcpy(dev->FWInterfaceBuffer, com->cmd.raw8, com->in_len + 2);
 
-	अगर (dev->BootFirmware)
+	if (dev->BootFirmware)
 		ngcpyto(HOST_TO_NGENE, com->cmd.raw8, com->in_len + 2);
 
 	spin_lock_irq(&dev->cmd_lock);
-	पंचांगpCmdDoneByte = dev->ngenetohost + com->out_len;
-	अगर (!com->out_len)
-		पंचांगpCmdDoneByte++;
-	*पंचांगpCmdDoneByte = 0;
+	tmpCmdDoneByte = dev->ngenetohost + com->out_len;
+	if (!com->out_len)
+		tmpCmdDoneByte++;
+	*tmpCmdDoneByte = 0;
 	dev->ngenetohost[0] = 0;
 	dev->ngenetohost[1] = 0;
-	dev->CmdDoneByte = पंचांगpCmdDoneByte;
+	dev->CmdDoneByte = tmpCmdDoneByte;
 	spin_unlock_irq(&dev->cmd_lock);
 
-	/* Notअगरy 8051. */
-	ngग_लिखोl(1, FORCE_INT);
+	/* Notify 8051. */
+	ngwritel(1, FORCE_INT);
 
-	ret = रुको_event_समयout(dev->cmd_wq, dev->cmd_करोne == 1, 2 * HZ);
-	अगर (!ret) अणु
-		/*ngग_लिखोl(0, FORCE_NMI);*/
+	ret = wait_event_timeout(dev->cmd_wq, dev->cmd_done == 1, 2 * HZ);
+	if (!ret) {
+		/*ngwritel(0, FORCE_NMI);*/
 
 		dev_err(pdev, "Command timeout cmd=%02x prev=%02x\n",
 			com->cmd.hdr.Opcode, dev->prev_cmd);
 		dump_command_io(dev);
-		वापस -1;
-	पूर्ण
-	अगर (com->cmd.hdr.Opcode == CMD_FWLOAD_FINISH)
+		return -1;
+	}
+	if (com->cmd.hdr.Opcode == CMD_FWLOAD_FINISH)
 		dev->BootFirmware = 0;
 
 	dev->prev_cmd = com->cmd.hdr.Opcode;
 
-	अगर (!com->out_len)
-		वापस 0;
+	if (!com->out_len)
+		return 0;
 
-	स_नकल(com->cmd.raw8, dev->ngenetohost, com->out_len);
+	memcpy(com->cmd.raw8, dev->ngenetohost, com->out_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ngene_command(काष्ठा ngene *dev, काष्ठा ngene_command *com)
-अणु
-	पूर्णांक result;
+int ngene_command(struct ngene *dev, struct ngene_command *com)
+{
+	int result;
 
 	mutex_lock(&dev->cmd_mutex);
 	result = ngene_command_mutex(dev, com);
 	mutex_unlock(&dev->cmd_mutex);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-अटल पूर्णांक ngene_command_load_firmware(काष्ठा ngene *dev,
+static int ngene_command_load_firmware(struct ngene *dev,
 				       u8 *ngene_fw, u32 size)
-अणु
-#घोषणा FIRSTCHUNK (1024)
+{
+#define FIRSTCHUNK (1024)
 	u32 cleft;
-	काष्ठा ngene_command com;
+	struct ngene_command com;
 
 	com.cmd.hdr.Opcode = CMD_FWLOAD_PREPARE;
 	com.cmd.hdr.Length = 0;
@@ -346,28 +345,28 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	ngene_command(dev, &com);
 
 	cleft = (size + 3) & ~3;
-	अगर (cleft > FIRSTCHUNK) अणु
+	if (cleft > FIRSTCHUNK) {
 		ngcpyto(PROGRAM_SRAM + FIRSTCHUNK, ngene_fw + FIRSTCHUNK,
 			cleft - FIRSTCHUNK);
 		cleft = FIRSTCHUNK;
-	पूर्ण
+	}
 	ngcpyto(DATA_FIFO_AREA, ngene_fw, cleft);
 
-	स_रखो(&com, 0, माप(काष्ठा ngene_command));
+	memset(&com, 0, sizeof(struct ngene_command));
 	com.cmd.hdr.Opcode = CMD_FWLOAD_FINISH;
 	com.cmd.hdr.Length = 4;
 	com.cmd.FWLoadFinish.Address = DATA_FIFO_AREA;
-	com.cmd.FWLoadFinish.Length = (अचिन्हित लघु)cleft;
+	com.cmd.FWLoadFinish.Length = (unsigned short)cleft;
 	com.in_len = 4;
 	com.out_len = 0;
 
-	वापस ngene_command(dev, &com);
-पूर्ण
+	return ngene_command(dev, &com);
+}
 
 
-अटल पूर्णांक ngene_command_config_buf(काष्ठा ngene *dev, u8 config)
-अणु
-	काष्ठा ngene_command com;
+static int ngene_command_config_buf(struct ngene *dev, u8 config)
+{
+	struct ngene_command com;
 
 	com.cmd.hdr.Opcode = CMD_CONFIGURE_BUFFER;
 	com.cmd.hdr.Length = 1;
@@ -375,30 +374,30 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	com.in_len = 1;
 	com.out_len = 0;
 
-	अगर (ngene_command(dev, &com) < 0)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (ngene_command(dev, &com) < 0)
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक ngene_command_config_मुक्त_buf(काष्ठा ngene *dev, u8 *config)
-अणु
-	काष्ठा ngene_command com;
+static int ngene_command_config_free_buf(struct ngene *dev, u8 *config)
+{
+	struct ngene_command com;
 
 	com.cmd.hdr.Opcode = CMD_CONFIGURE_FREE_BUFFER;
 	com.cmd.hdr.Length = 6;
-	स_नकल(&com.cmd.ConfigureBuffers.config, config, 6);
+	memcpy(&com.cmd.ConfigureBuffers.config, config, 6);
 	com.in_len = 6;
 	com.out_len = 0;
 
-	अगर (ngene_command(dev, &com) < 0)
-		वापस -EIO;
+	if (ngene_command(dev, &com) < 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ngene_command_gpio_set(काष्ठा ngene *dev, u8 select, u8 level)
-अणु
-	काष्ठा ngene_command com;
+int ngene_command_gpio_set(struct ngene *dev, u8 select, u8 level)
+{
+	struct ngene_command com;
 
 	com.cmd.hdr.Opcode = CMD_SET_GPIO_PIN;
 	com.cmd.hdr.Length = 1;
@@ -406,14 +405,14 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	com.in_len = 1;
 	com.out_len = 0;
 
-	वापस ngene_command(dev, &com);
-पूर्ण
+	return ngene_command(dev, &com);
+}
 
 
 /*
  02000640 is sample on rising edge.
  02000740 is sample on falling edge.
- 02000040 is ignore "valid" संकेत
+ 02000040 is ignore "valid" signal
 
  0: FD_CTL1 Bit 7,6 must be 0,1
     7   disable(fw controlled)
@@ -423,7 +422,7 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
     3,2 reserved
     1,0 0-no sync, 1-use ext. start, 2-use 0x47, 3-both
  1: FD_CTL2 has 3-valid must be hi, 2-use valid, 1-edge
- 2: FD_STA is पढ़ो-only. 0-sync
+ 2: FD_STA is read-only. 0-sync
  3: FD_INSYNC is number of 47s to trigger "in sync".
  4: FD_OUTSYNC is number of 47s to trigger "out of sync".
  5: FD_MAXBYTE1 is low-order of bytes per packet.
@@ -433,40 +432,40 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 /****************************************************************************/
 
-अटल u8 TSFeatureDecoderSetup[8 * 5] = अणु
+static u8 TSFeatureDecoderSetup[8 * 5] = {
 	0x42, 0x00, 0x00, 0x02, 0x02, 0xbc, 0x00, 0x00,
 	0x40, 0x06, 0x00, 0x02, 0x02, 0xbc, 0x00, 0x00,	/* DRXH */
 	0x71, 0x07, 0x00, 0x02, 0x02, 0xbc, 0x00, 0x00,	/* DRXHser */
 	0x72, 0x00, 0x00, 0x02, 0x02, 0xbc, 0x00, 0x00,	/* S2ser */
 	0x40, 0x07, 0x00, 0x02, 0x02, 0xbc, 0x00, 0x00, /* LGDT3303 */
-पूर्ण;
+};
 
 /* Set NGENE I2S Config to 16 bit packed */
-अटल u8 I2SConfiguration[] = अणु
+static u8 I2SConfiguration[] = {
 	0x00, 0x10, 0x00, 0x00,
 	0x80, 0x10, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल u8 SPDIFConfiguration[10] = अणु
+static u8 SPDIFConfiguration[10] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
 /* Set NGENE I2S Config to transport stream compatible mode */
 
-अटल u8 TS_I2SConfiguration[4] = अणु 0x3E, 0x18, 0x00, 0x00 पूर्ण;
+static u8 TS_I2SConfiguration[4] = { 0x3E, 0x18, 0x00, 0x00 };
 
-अटल u8 TS_I2SOutConfiguration[4] = अणु 0x80, 0x04, 0x00, 0x00 पूर्ण;
+static u8 TS_I2SOutConfiguration[4] = { 0x80, 0x04, 0x00, 0x00 };
 
-अटल u8 ITUDecoderSetup[4][16] = अणु
-	अणु0x1c, 0x13, 0x01, 0x68, 0x3d, 0x90, 0x14, 0x20,  /* SDTV */
-	 0x00, 0x00, 0x01, 0xb0, 0x9c, 0x00, 0x00, 0x00पूर्ण,
-	अणु0x9c, 0x03, 0x23, 0xC0, 0x60, 0x0E, 0x13, 0x00,
-	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00पूर्ण,
-	अणु0x9f, 0x00, 0x23, 0xC0, 0x60, 0x0F, 0x13, 0x00,  /* HDTV 1080i50 */
-	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00पूर्ण,
-	अणु0x9c, 0x01, 0x23, 0xC0, 0x60, 0x0E, 0x13, 0x00,  /* HDTV 1080i60 */
-	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00पूर्ण,
-पूर्ण;
+static u8 ITUDecoderSetup[4][16] = {
+	{0x1c, 0x13, 0x01, 0x68, 0x3d, 0x90, 0x14, 0x20,  /* SDTV */
+	 0x00, 0x00, 0x01, 0xb0, 0x9c, 0x00, 0x00, 0x00},
+	{0x9c, 0x03, 0x23, 0xC0, 0x60, 0x0E, 0x13, 0x00,
+	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00},
+	{0x9f, 0x00, 0x23, 0xC0, 0x60, 0x0F, 0x13, 0x00,  /* HDTV 1080i50 */
+	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00},
+	{0x9c, 0x01, 0x23, 0xC0, 0x60, 0x0E, 0x13, 0x00,  /* HDTV 1080i60 */
+	 0x00, 0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x00},
+};
 
 /*
  * 50 48 60 gleich
@@ -474,91 +473,91 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
  * 27p60 93 00 22 80 82 69 1c ...
  */
 
-/* Maxbyte to 1144 (क्रम raw data) */
-अटल u8 ITUFeatureDecoderSetup[8] = अणु
+/* Maxbyte to 1144 (for raw data) */
+static u8 ITUFeatureDecoderSetup[8] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x04, 0x00
-पूर्ण;
+};
 
-व्योम FillTSBuffer(व्योम *Buffer, पूर्णांक Length, u32 Flags)
-अणु
+void FillTSBuffer(void *Buffer, int Length, u32 Flags)
+{
 	u32 *ptr = Buffer;
 
-	स_रखो(Buffer, TS_FILLER, Length);
-	जबतक (Length > 0) अणु
-		अगर (Flags & DF_SWAP32)
+	memset(Buffer, TS_FILLER, Length);
+	while (Length > 0) {
+		if (Flags & DF_SWAP32)
 			*ptr = 0x471FFF10;
-		अन्यथा
+		else
 			*ptr = 0x10FF1F47;
 		ptr += (188 / 4);
 		Length -= 188;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम flush_buffers(काष्ठा ngene_channel *chan)
-अणु
+static void flush_buffers(struct ngene_channel *chan)
+{
 	u8 val;
 
-	करो अणु
+	do {
 		msleep(1);
 		spin_lock_irq(&chan->state_lock);
 		val = chan->nextBuffer->ngeneBuffer.SR.Flags & 0x80;
 		spin_unlock_irq(&chan->state_lock);
-	पूर्ण जबतक (val);
-पूर्ण
+	} while (val);
+}
 
-अटल व्योम clear_buffers(काष्ठा ngene_channel *chan)
-अणु
-	काष्ठा SBufferHeader *Cur = chan->nextBuffer;
+static void clear_buffers(struct ngene_channel *chan)
+{
+	struct SBufferHeader *Cur = chan->nextBuffer;
 
-	करो अणु
-		स_रखो(&Cur->ngeneBuffer.SR, 0, माप(Cur->ngeneBuffer.SR));
-		अगर (chan->mode & NGENE_IO_TSOUT)
+	do {
+		memset(&Cur->ngeneBuffer.SR, 0, sizeof(Cur->ngeneBuffer.SR));
+		if (chan->mode & NGENE_IO_TSOUT)
 			FillTSBuffer(Cur->Buffer1,
 				     chan->Capture1Length,
 				     chan->DataFormatFlags);
 		Cur = Cur->Next;
-	पूर्ण जबतक (Cur != chan->nextBuffer);
+	} while (Cur != chan->nextBuffer);
 
-	अगर (chan->mode & NGENE_IO_TSOUT) अणु
+	if (chan->mode & NGENE_IO_TSOUT) {
 		chan->nextBuffer->ngeneBuffer.SR.DTOUpdate =
 			chan->AudioDTOValue;
 		chan->AudioDTOUpdated = 0;
 
 		Cur = chan->TSIdleBuffer.Head;
 
-		करो अणु
-			स_रखो(&Cur->ngeneBuffer.SR, 0,
-			       माप(Cur->ngeneBuffer.SR));
+		do {
+			memset(&Cur->ngeneBuffer.SR, 0,
+			       sizeof(Cur->ngeneBuffer.SR));
 			FillTSBuffer(Cur->Buffer1,
 				     chan->Capture1Length,
 				     chan->DataFormatFlags);
 			Cur = Cur->Next;
-		पूर्ण जबतक (Cur != chan->TSIdleBuffer.Head);
-	पूर्ण
-पूर्ण
+		} while (Cur != chan->TSIdleBuffer.Head);
+	}
+}
 
-अटल पूर्णांक ngene_command_stream_control(काष्ठा ngene *dev, u8 stream,
+static int ngene_command_stream_control(struct ngene *dev, u8 stream,
 					u8 control, u8 mode, u8 flags)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
-	काष्ठा ngene_channel *chan = &dev->channel[stream];
-	काष्ठा ngene_command com;
+{
+	struct device *pdev = &dev->pci_dev->dev;
+	struct ngene_channel *chan = &dev->channel[stream];
+	struct ngene_command com;
 	u16 BsUVI = ((stream & 1) ? 0x9400 : 0x9300);
 	u16 BsSDI = ((stream & 1) ? 0x9600 : 0x9500);
 	u16 BsSPI = ((stream & 1) ? 0x9800 : 0x9700);
 	u16 BsSDO = 0x9B00;
 
-	स_रखो(&com, 0, माप(com));
+	memset(&com, 0, sizeof(com));
 	com.cmd.hdr.Opcode = CMD_CONTROL;
-	com.cmd.hdr.Length = माप(काष्ठा FW_STREAM_CONTROL) - 2;
+	com.cmd.hdr.Length = sizeof(struct FW_STREAM_CONTROL) - 2;
 	com.cmd.StreamControl.Stream = stream | (control ? 8 : 0);
-	अगर (chan->mode & NGENE_IO_TSOUT)
+	if (chan->mode & NGENE_IO_TSOUT)
 		com.cmd.StreamControl.Stream |= 0x07;
 	com.cmd.StreamControl.Control = control |
 		(flags & SFLAG_ORDER_LUMA_CHROMA);
 	com.cmd.StreamControl.Mode = mode;
-	com.in_len = माप(काष्ठा FW_STREAM_CONTROL);
+	com.in_len = sizeof(struct FW_STREAM_CONTROL);
 	com.out_len = 0;
 
 	dev_dbg(pdev, "Stream=%02x, Control=%02x, Mode=%02x\n",
@@ -567,304 +566,304 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 	chan->Mode = mode;
 
-	अगर (!(control & 0x80)) अणु
+	if (!(control & 0x80)) {
 		spin_lock_irq(&chan->state_lock);
-		अगर (chan->State == KSSTATE_RUN) अणु
+		if (chan->State == KSSTATE_RUN) {
 			chan->State = KSSTATE_ACQUIRE;
 			chan->HWState = HWSTATE_STOP;
 			spin_unlock_irq(&chan->state_lock);
-			अगर (ngene_command(dev, &com) < 0)
-				वापस -1;
+			if (ngene_command(dev, &com) < 0)
+				return -1;
 			/* clear_buffers(chan); */
 			flush_buffers(chan);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		spin_unlock_irq(&chan->state_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (mode & SMODE_AUDIO_CAPTURE) अणु
+	if (mode & SMODE_AUDIO_CAPTURE) {
 		com.cmd.StreamControl.CaptureBlockCount =
 			chan->Capture1Length / AUDIO_BLOCK_SIZE;
 		com.cmd.StreamControl.Buffer_Address = chan->RingBuffer.PAHead;
-	पूर्ण अन्यथा अगर (mode & SMODE_TRANSPORT_STREAM) अणु
+	} else if (mode & SMODE_TRANSPORT_STREAM) {
 		com.cmd.StreamControl.CaptureBlockCount =
 			chan->Capture1Length / TS_BLOCK_SIZE;
 		com.cmd.StreamControl.MaxLinesPerField =
 			chan->Capture1Length / TS_BLOCK_SIZE;
 		com.cmd.StreamControl.Buffer_Address =
 			chan->TSRingBuffer.PAHead;
-		अगर (chan->mode & NGENE_IO_TSOUT) अणु
+		if (chan->mode & NGENE_IO_TSOUT) {
 			com.cmd.StreamControl.BytesPerVBILine =
 				chan->Capture1Length / TS_BLOCK_SIZE;
 			com.cmd.StreamControl.Stream |= 0x07;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		com.cmd.StreamControl.BytesPerVideoLine = chan->nBytesPerLine;
 		com.cmd.StreamControl.MaxLinesPerField = chan->nLines;
 		com.cmd.StreamControl.MinLinesPerField = 100;
 		com.cmd.StreamControl.Buffer_Address = chan->RingBuffer.PAHead;
 
-		अगर (mode & SMODE_VBI_CAPTURE) अणु
+		if (mode & SMODE_VBI_CAPTURE) {
 			com.cmd.StreamControl.MaxVBILinesPerField =
 				chan->nVBILines;
 			com.cmd.StreamControl.MinVBILinesPerField = 0;
 			com.cmd.StreamControl.BytesPerVBILine =
 				chan->nBytesPerVBILine;
-		पूर्ण
-		अगर (flags & SFLAG_COLORBAR)
+		}
+		if (flags & SFLAG_COLORBAR)
 			com.cmd.StreamControl.Stream |= 0x04;
-	पूर्ण
+	}
 
 	spin_lock_irq(&chan->state_lock);
-	अगर (mode & SMODE_AUDIO_CAPTURE) अणु
+	if (mode & SMODE_AUDIO_CAPTURE) {
 		chan->nextBuffer = chan->RingBuffer.Head;
-		अगर (mode & SMODE_AUDIO_SPDIF) अणु
+		if (mode & SMODE_AUDIO_SPDIF) {
 			com.cmd.StreamControl.SetupDataLen =
-				माप(SPDIFConfiguration);
+				sizeof(SPDIFConfiguration);
 			com.cmd.StreamControl.SetupDataAddr = BsSPI;
-			स_नकल(com.cmd.StreamControl.SetupData,
-			       SPDIFConfiguration, माप(SPDIFConfiguration));
-		पूर्ण अन्यथा अणु
+			memcpy(com.cmd.StreamControl.SetupData,
+			       SPDIFConfiguration, sizeof(SPDIFConfiguration));
+		} else {
 			com.cmd.StreamControl.SetupDataLen = 4;
 			com.cmd.StreamControl.SetupDataAddr = BsSDI;
-			स_नकल(com.cmd.StreamControl.SetupData,
+			memcpy(com.cmd.StreamControl.SetupData,
 			       I2SConfiguration +
 			       4 * dev->card_info->i2s[stream], 4);
-		पूर्ण
-	पूर्ण अन्यथा अगर (mode & SMODE_TRANSPORT_STREAM) अणु
+		}
+	} else if (mode & SMODE_TRANSPORT_STREAM) {
 		chan->nextBuffer = chan->TSRingBuffer.Head;
-		अगर (stream >= STREAM_AUDIOIN1) अणु
-			अगर (chan->mode & NGENE_IO_TSOUT) अणु
+		if (stream >= STREAM_AUDIOIN1) {
+			if (chan->mode & NGENE_IO_TSOUT) {
 				com.cmd.StreamControl.SetupDataLen =
-					माप(TS_I2SOutConfiguration);
+					sizeof(TS_I2SOutConfiguration);
 				com.cmd.StreamControl.SetupDataAddr = BsSDO;
-				स_नकल(com.cmd.StreamControl.SetupData,
+				memcpy(com.cmd.StreamControl.SetupData,
 				       TS_I2SOutConfiguration,
-				       माप(TS_I2SOutConfiguration));
-			पूर्ण अन्यथा अणु
+				       sizeof(TS_I2SOutConfiguration));
+			} else {
 				com.cmd.StreamControl.SetupDataLen =
-					माप(TS_I2SConfiguration);
+					sizeof(TS_I2SConfiguration);
 				com.cmd.StreamControl.SetupDataAddr = BsSDI;
-				स_नकल(com.cmd.StreamControl.SetupData,
+				memcpy(com.cmd.StreamControl.SetupData,
 				       TS_I2SConfiguration,
-				       माप(TS_I2SConfiguration));
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				       sizeof(TS_I2SConfiguration));
+			}
+		} else {
 			com.cmd.StreamControl.SetupDataLen = 8;
 			com.cmd.StreamControl.SetupDataAddr = BsUVI + 0x10;
-			स_नकल(com.cmd.StreamControl.SetupData,
+			memcpy(com.cmd.StreamControl.SetupData,
 			       TSFeatureDecoderSetup +
 			       8 * dev->card_info->tsf[stream], 8);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		chan->nextBuffer = chan->RingBuffer.Head;
 		com.cmd.StreamControl.SetupDataLen =
-			16 + माप(ITUFeatureDecoderSetup);
+			16 + sizeof(ITUFeatureDecoderSetup);
 		com.cmd.StreamControl.SetupDataAddr = BsUVI;
-		स_नकल(com.cmd.StreamControl.SetupData,
+		memcpy(com.cmd.StreamControl.SetupData,
 		       ITUDecoderSetup[chan->itumode], 16);
-		स_नकल(com.cmd.StreamControl.SetupData + 16,
-		       ITUFeatureDecoderSetup, माप(ITUFeatureDecoderSetup));
-	पूर्ण
+		memcpy(com.cmd.StreamControl.SetupData + 16,
+		       ITUFeatureDecoderSetup, sizeof(ITUFeatureDecoderSetup));
+	}
 	clear_buffers(chan);
 	chan->State = KSSTATE_RUN;
-	अगर (mode & SMODE_TRANSPORT_STREAM)
+	if (mode & SMODE_TRANSPORT_STREAM)
 		chan->HWState = HWSTATE_RUN;
-	अन्यथा
+	else
 		chan->HWState = HWSTATE_STARTUP;
 	spin_unlock_irq(&chan->state_lock);
 
-	अगर (ngene_command(dev, &com) < 0)
-		वापस -1;
+	if (ngene_command(dev, &com) < 0)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम set_transfer(काष्ठा ngene_channel *chan, पूर्णांक state)
-अणु
-	काष्ठा device *pdev = &chan->dev->pci_dev->dev;
+void set_transfer(struct ngene_channel *chan, int state)
+{
+	struct device *pdev = &chan->dev->pci_dev->dev;
 	u8 control = 0, mode = 0, flags = 0;
-	काष्ठा ngene *dev = chan->dev;
-	पूर्णांक ret;
+	struct ngene *dev = chan->dev;
+	int ret;
 
 	/*
 	dev_info(pdev, "st %d\n", state);
 	msleep(100);
 	*/
 
-	अगर (state) अणु
-		अगर (chan->running) अणु
+	if (state) {
+		if (chan->running) {
 			dev_info(pdev, "already running\n");
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (!chan->running) अणु
+			return;
+		}
+	} else {
+		if (!chan->running) {
 			dev_info(pdev, "already stopped\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	अगर (dev->card_info->चयन_ctrl)
-		dev->card_info->चयन_ctrl(chan, 1, state ^ 1);
+	if (dev->card_info->switch_ctrl)
+		dev->card_info->switch_ctrl(chan, 1, state ^ 1);
 
-	अगर (state) अणु
+	if (state) {
 		spin_lock_irq(&chan->state_lock);
 
 		/* dev_info(pdev, "lock=%08x\n",
-			  ngपढ़ोl(0x9310)); */
+			  ngreadl(0x9310)); */
 		dvb_ringbuffer_flush(&dev->tsout_rbuf);
 		control = 0x80;
-		अगर (chan->mode & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) अणु
+		if (chan->mode & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) {
 			chan->Capture1Length = 512 * 188;
 			mode = SMODE_TRANSPORT_STREAM;
-		पूर्ण
-		अगर (chan->mode & NGENE_IO_TSOUT) अणु
+		}
+		if (chan->mode & NGENE_IO_TSOUT) {
 			chan->pBufferExchange = tsout_exchange;
 			/* 0x66666666 = 50MHz *2^33 /250MHz */
 			chan->AudioDTOValue = 0x80000000;
 			chan->AudioDTOUpdated = 1;
-		पूर्ण
-		अगर (chan->mode & NGENE_IO_TSIN)
+		}
+		if (chan->mode & NGENE_IO_TSIN)
 			chan->pBufferExchange = tsin_exchange;
 		spin_unlock_irq(&chan->state_lock);
-	पूर्ण
-		/* अन्यथा dev_info(pdev, "lock=%08x\n",
-			   ngपढ़ोl(0x9310)); */
+	}
+		/* else dev_info(pdev, "lock=%08x\n",
+			   ngreadl(0x9310)); */
 
 	mutex_lock(&dev->stream_mutex);
 	ret = ngene_command_stream_control(dev, chan->number,
 					   control, mode, flags);
 	mutex_unlock(&dev->stream_mutex);
 
-	अगर (!ret)
+	if (!ret)
 		chan->running = state;
-	अन्यथा
+	else
 		dev_err(pdev, "%s %d failed\n", __func__, state);
-	अगर (!state) अणु
+	if (!state) {
 		spin_lock_irq(&chan->state_lock);
-		chan->pBufferExchange = शून्य;
+		chan->pBufferExchange = NULL;
 		dvb_ringbuffer_flush(&dev->tsout_rbuf);
 		spin_unlock_irq(&chan->state_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /****************************************************************************/
 /* nGene hardware init and release functions ********************************/
 /****************************************************************************/
 
-अटल व्योम मुक्त_ringbuffer(काष्ठा ngene *dev, काष्ठा SRingBufferDescriptor *rb)
-अणु
-	काष्ठा SBufferHeader *Cur = rb->Head;
+static void free_ringbuffer(struct ngene *dev, struct SRingBufferDescriptor *rb)
+{
+	struct SBufferHeader *Cur = rb->Head;
 	u32 j;
 
-	अगर (!Cur)
-		वापस;
+	if (!Cur)
+		return;
 
-	क्रम (j = 0; j < rb->NumBuffers; j++, Cur = Cur->Next) अणु
-		अगर (Cur->Buffer1)
-			dma_मुक्त_coherent(&dev->pci_dev->dev,
+	for (j = 0; j < rb->NumBuffers; j++, Cur = Cur->Next) {
+		if (Cur->Buffer1)
+			dma_free_coherent(&dev->pci_dev->dev,
 					  rb->Buffer1Length, Cur->Buffer1,
 					  Cur->scList1->Address);
 
-		अगर (Cur->Buffer2)
-			dma_मुक्त_coherent(&dev->pci_dev->dev,
+		if (Cur->Buffer2)
+			dma_free_coherent(&dev->pci_dev->dev,
 					  rb->Buffer2Length, Cur->Buffer2,
 					  Cur->scList2->Address);
-	पूर्ण
+	}
 
-	अगर (rb->SCListMem)
-		dma_मुक्त_coherent(&dev->pci_dev->dev, rb->SCListMemSize,
+	if (rb->SCListMem)
+		dma_free_coherent(&dev->pci_dev->dev, rb->SCListMemSize,
 				  rb->SCListMem, rb->PASCListMem);
 
-	dma_मुक्त_coherent(&dev->pci_dev->dev, rb->MemSize, rb->Head,
+	dma_free_coherent(&dev->pci_dev->dev, rb->MemSize, rb->Head,
 			  rb->PAHead);
-पूर्ण
+}
 
-अटल व्योम मुक्त_idlebuffer(काष्ठा ngene *dev,
-		     काष्ठा SRingBufferDescriptor *rb,
-		     काष्ठा SRingBufferDescriptor *tb)
-अणु
-	पूर्णांक j;
-	काष्ठा SBufferHeader *Cur = tb->Head;
+static void free_idlebuffer(struct ngene *dev,
+		     struct SRingBufferDescriptor *rb,
+		     struct SRingBufferDescriptor *tb)
+{
+	int j;
+	struct SBufferHeader *Cur = tb->Head;
 
-	अगर (!rb->Head)
-		वापस;
-	मुक्त_ringbuffer(dev, rb);
-	क्रम (j = 0; j < tb->NumBuffers; j++, Cur = Cur->Next) अणु
-		Cur->Buffer2 = शून्य;
-		Cur->scList2 = शून्य;
+	if (!rb->Head)
+		return;
+	free_ringbuffer(dev, rb);
+	for (j = 0; j < tb->NumBuffers; j++, Cur = Cur->Next) {
+		Cur->Buffer2 = NULL;
+		Cur->scList2 = NULL;
 		Cur->ngeneBuffer.Address_of_first_entry_2 = 0;
 		Cur->ngeneBuffer.Number_of_entries_2 = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम मुक्त_common_buffers(काष्ठा ngene *dev)
-अणु
+static void free_common_buffers(struct ngene *dev)
+{
 	u32 i;
-	काष्ठा ngene_channel *chan;
+	struct ngene_channel *chan;
 
-	क्रम (i = STREAM_VIDEOIN1; i < MAX_STREAM; i++) अणु
+	for (i = STREAM_VIDEOIN1; i < MAX_STREAM; i++) {
 		chan = &dev->channel[i];
-		मुक्त_idlebuffer(dev, &chan->TSIdleBuffer, &chan->TSRingBuffer);
-		मुक्त_ringbuffer(dev, &chan->RingBuffer);
-		मुक्त_ringbuffer(dev, &chan->TSRingBuffer);
-	पूर्ण
+		free_idlebuffer(dev, &chan->TSIdleBuffer, &chan->TSRingBuffer);
+		free_ringbuffer(dev, &chan->RingBuffer);
+		free_ringbuffer(dev, &chan->TSRingBuffer);
+	}
 
-	अगर (dev->OverflowBuffer)
-		dma_मुक्त_coherent(&dev->pci_dev->dev, OVERFLOW_BUFFER_SIZE,
+	if (dev->OverflowBuffer)
+		dma_free_coherent(&dev->pci_dev->dev, OVERFLOW_BUFFER_SIZE,
 				  dev->OverflowBuffer, dev->PAOverflowBuffer);
 
-	अगर (dev->FWInterfaceBuffer)
-		dma_मुक्त_coherent(&dev->pci_dev->dev, 4096,
+	if (dev->FWInterfaceBuffer)
+		dma_free_coherent(&dev->pci_dev->dev, 4096,
 				  dev->FWInterfaceBuffer,
 				  dev->PAFWInterfaceBuffer);
-पूर्ण
+}
 
 /****************************************************************************/
 /* Ring buffer handling *****************************************************/
 /****************************************************************************/
 
-अटल पूर्णांक create_ring_buffer(काष्ठा pci_dev *pci_dev,
-		       काष्ठा SRingBufferDescriptor *descr, u32 NumBuffers)
-अणु
-	dma_addr_t पंचांगp;
-	काष्ठा SBufferHeader *Head;
+static int create_ring_buffer(struct pci_dev *pci_dev,
+		       struct SRingBufferDescriptor *descr, u32 NumBuffers)
+{
+	dma_addr_t tmp;
+	struct SBufferHeader *Head;
 	u32 i;
-	u32 MemSize = SIZखातापूर्ण_SBufferHeader * NumBuffers;
+	u32 MemSize = SIZEOF_SBufferHeader * NumBuffers;
 	u64 PARingBufferHead;
 	u64 PARingBufferCur;
 	u64 PARingBufferNext;
-	काष्ठा SBufferHeader *Cur, *Next;
+	struct SBufferHeader *Cur, *Next;
 
-	descr->Head = शून्य;
+	descr->Head = NULL;
 	descr->MemSize = 0;
 	descr->PAHead = 0;
 	descr->NumBuffers = 0;
 
-	अगर (MemSize < 4096)
+	if (MemSize < 4096)
 		MemSize = 4096;
 
-	Head = dma_alloc_coherent(&pci_dev->dev, MemSize, &पंचांगp, GFP_KERNEL);
-	PARingBufferHead = पंचांगp;
+	Head = dma_alloc_coherent(&pci_dev->dev, MemSize, &tmp, GFP_KERNEL);
+	PARingBufferHead = tmp;
 
-	अगर (!Head)
-		वापस -ENOMEM;
+	if (!Head)
+		return -ENOMEM;
 
 	PARingBufferCur = PARingBufferHead;
 	Cur = Head;
 
-	क्रम (i = 0; i < NumBuffers - 1; i++) अणु
-		Next = (काष्ठा SBufferHeader *)
-			(((u8 *) Cur) + SIZखातापूर्ण_SBufferHeader);
-		PARingBufferNext = PARingBufferCur + SIZखातापूर्ण_SBufferHeader;
+	for (i = 0; i < NumBuffers - 1; i++) {
+		Next = (struct SBufferHeader *)
+			(((u8 *) Cur) + SIZEOF_SBufferHeader);
+		PARingBufferNext = PARingBufferCur + SIZEOF_SBufferHeader;
 		Cur->Next = Next;
 		Cur->ngeneBuffer.Next = PARingBufferNext;
 		Cur = Next;
 		PARingBufferCur = PARingBufferNext;
-	पूर्ण
-	/* Last Buffer poपूर्णांकs back to first one */
+	}
+	/* Last Buffer points back to first one */
 	Cur->Next = Head;
 	Cur->ngeneBuffer.Next = PARingBufferHead;
 
@@ -873,36 +872,36 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	descr->PAHead     = PARingBufferHead;
 	descr->NumBuffers = NumBuffers;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक AllocateRingBuffers(काष्ठा pci_dev *pci_dev,
+static int AllocateRingBuffers(struct pci_dev *pci_dev,
 			       dma_addr_t of,
-			       काष्ठा SRingBufferDescriptor *pRingBuffer,
+			       struct SRingBufferDescriptor *pRingBuffer,
 			       u32 Buffer1Length, u32 Buffer2Length)
-अणु
-	dma_addr_t पंचांगp;
+{
+	dma_addr_t tmp;
 	u32 i, j;
 	u32 SCListMemSize = pRingBuffer->NumBuffers
 		* ((Buffer2Length != 0) ? (NUM_SCATTER_GATHER_ENTRIES * 2) :
 		    NUM_SCATTER_GATHER_ENTRIES)
-		* माप(काष्ठा HW_SCATTER_GATHER_ELEMENT);
+		* sizeof(struct HW_SCATTER_GATHER_ELEMENT);
 
 	u64 PASCListMem;
-	काष्ठा HW_SCATTER_GATHER_ELEMENT *SCListEntry;
+	struct HW_SCATTER_GATHER_ELEMENT *SCListEntry;
 	u64 PASCListEntry;
-	काष्ठा SBufferHeader *Cur;
-	व्योम *SCListMem;
+	struct SBufferHeader *Cur;
+	void *SCListMem;
 
-	अगर (SCListMemSize < 4096)
+	if (SCListMemSize < 4096)
 		SCListMemSize = 4096;
 
-	SCListMem = dma_alloc_coherent(&pci_dev->dev, SCListMemSize, &पंचांगp,
+	SCListMem = dma_alloc_coherent(&pci_dev->dev, SCListMemSize, &tmp,
 				       GFP_KERNEL);
 
-	PASCListMem = पंचांगp;
-	अगर (SCListMem == शून्य)
-		वापस -ENOMEM;
+	PASCListMem = tmp;
+	if (SCListMem == NULL)
+		return -ENOMEM;
 
 	pRingBuffer->SCListMem = SCListMem;
 	pRingBuffer->PASCListMem = PASCListMem;
@@ -914,15 +913,15 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	PASCListEntry = PASCListMem;
 	Cur = pRingBuffer->Head;
 
-	क्रम (i = 0; i < pRingBuffer->NumBuffers; i += 1, Cur = Cur->Next) अणु
+	for (i = 0; i < pRingBuffer->NumBuffers; i += 1, Cur = Cur->Next) {
 		u64 PABuffer;
 
-		व्योम *Buffer = dma_alloc_coherent(&pci_dev->dev,
-						  Buffer1Length, &पंचांगp, GFP_KERNEL);
-		PABuffer = पंचांगp;
+		void *Buffer = dma_alloc_coherent(&pci_dev->dev,
+						  Buffer1Length, &tmp, GFP_KERNEL);
+		PABuffer = tmp;
 
-		अगर (Buffer == शून्य)
-			वापस -ENOMEM;
+		if (Buffer == NULL)
+			return -ENOMEM;
 
 		Cur->Buffer1 = Buffer;
 
@@ -935,27 +934,27 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			NUM_SCATTER_GATHER_ENTRIES;
 
 		SCListEntry += 1;
-		PASCListEntry += माप(काष्ठा HW_SCATTER_GATHER_ELEMENT);
+		PASCListEntry += sizeof(struct HW_SCATTER_GATHER_ELEMENT);
 
-#अगर NUM_SCATTER_GATHER_ENTRIES > 1
-		क्रम (j = 0; j < NUM_SCATTER_GATHER_ENTRIES - 1; j += 1) अणु
+#if NUM_SCATTER_GATHER_ENTRIES > 1
+		for (j = 0; j < NUM_SCATTER_GATHER_ENTRIES - 1; j += 1) {
 			SCListEntry->Address = of;
 			SCListEntry->Length = OVERFLOW_BUFFER_SIZE;
 			SCListEntry += 1;
 			PASCListEntry +=
-				माप(काष्ठा HW_SCATTER_GATHER_ELEMENT);
-		पूर्ण
-#पूर्ण_अगर
+				sizeof(struct HW_SCATTER_GATHER_ELEMENT);
+		}
+#endif
 
-		अगर (!Buffer2Length)
-			जारी;
+		if (!Buffer2Length)
+			continue;
 
 		Buffer = dma_alloc_coherent(&pci_dev->dev, Buffer2Length,
-					    &पंचांगp, GFP_KERNEL);
-		PABuffer = पंचांगp;
+					    &tmp, GFP_KERNEL);
+		PABuffer = tmp;
 
-		अगर (Buffer == शून्य)
-			वापस -ENOMEM;
+		if (Buffer == NULL)
+			return -ENOMEM;
 
 		Cur->Buffer2 = Buffer;
 
@@ -968,37 +967,37 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 			NUM_SCATTER_GATHER_ENTRIES;
 
 		SCListEntry   += 1;
-		PASCListEntry += माप(काष्ठा HW_SCATTER_GATHER_ELEMENT);
+		PASCListEntry += sizeof(struct HW_SCATTER_GATHER_ELEMENT);
 
-#अगर NUM_SCATTER_GATHER_ENTRIES > 1
-		क्रम (j = 0; j < NUM_SCATTER_GATHER_ENTRIES - 1; j++) अणु
+#if NUM_SCATTER_GATHER_ENTRIES > 1
+		for (j = 0; j < NUM_SCATTER_GATHER_ENTRIES - 1; j++) {
 			SCListEntry->Address = of;
 			SCListEntry->Length = OVERFLOW_BUFFER_SIZE;
 			SCListEntry += 1;
 			PASCListEntry +=
-				माप(काष्ठा HW_SCATTER_GATHER_ELEMENT);
-		पूर्ण
-#पूर्ण_अगर
+				sizeof(struct HW_SCATTER_GATHER_ELEMENT);
+		}
+#endif
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक FillTSIdleBuffer(काष्ठा SRingBufferDescriptor *pIdleBuffer,
-			    काष्ठा SRingBufferDescriptor *pRingBuffer)
-अणु
-	/* Copy poपूर्णांकer to scatter gather list in TSRingbuffer
-	   काष्ठाure क्रम buffer 2
+static int FillTSIdleBuffer(struct SRingBufferDescriptor *pIdleBuffer,
+			    struct SRingBufferDescriptor *pRingBuffer)
+{
+	/* Copy pointer to scatter gather list in TSRingbuffer
+	   structure for buffer 2
 	   Load number of buffer
 	*/
 	u32 n = pRingBuffer->NumBuffers;
 
-	/* Poपूर्णांक to first buffer entry */
-	काष्ठा SBufferHeader *Cur = pRingBuffer->Head;
-	पूर्णांक i;
-	/* Loop through all buffer and set Buffer 2 poपूर्णांकers to TSIdlebuffer */
-	क्रम (i = 0; i < n; i++) अणु
+	/* Point to first buffer entry */
+	struct SBufferHeader *Cur = pRingBuffer->Head;
+	int i;
+	/* Loop through all buffer and set Buffer 2 pointers to TSIdlebuffer */
+	for (i = 0; i < n; i++) {
 		Cur->Buffer2 = pIdleBuffer->Head->Buffer1;
 		Cur->scList2 = pIdleBuffer->Head->scList1;
 		Cur->ngeneBuffer.Address_of_first_entry_2 =
@@ -1007,44 +1006,44 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 		Cur->ngeneBuffer.Number_of_entries_2 =
 			pIdleBuffer->Head->ngeneBuffer.Number_of_entries_1;
 		Cur = Cur->Next;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल u32 RingBufferSizes[MAX_STREAM] = अणु
+static u32 RingBufferSizes[MAX_STREAM] = {
 	RING_SIZE_VIDEO,
 	RING_SIZE_VIDEO,
 	RING_SIZE_AUDIO,
 	RING_SIZE_AUDIO,
 	RING_SIZE_AUDIO,
-पूर्ण;
+};
 
-अटल u32 Buffer1Sizes[MAX_STREAM] = अणु
+static u32 Buffer1Sizes[MAX_STREAM] = {
 	MAX_VIDEO_BUFFER_SIZE,
 	MAX_VIDEO_BUFFER_SIZE,
 	MAX_AUDIO_BUFFER_SIZE,
 	MAX_AUDIO_BUFFER_SIZE,
 	MAX_AUDIO_BUFFER_SIZE
-पूर्ण;
+};
 
-अटल u32 Buffer2Sizes[MAX_STREAM] = अणु
+static u32 Buffer2Sizes[MAX_STREAM] = {
 	MAX_VBI_BUFFER_SIZE,
 	MAX_VBI_BUFFER_SIZE,
 	0,
 	0,
 	0
-पूर्ण;
+};
 
 
-अटल पूर्णांक AllocCommonBuffers(काष्ठा ngene *dev)
-अणु
-	पूर्णांक status = 0, i;
+static int AllocCommonBuffers(struct ngene *dev)
+{
+	int status = 0, i;
 
 	dev->FWInterfaceBuffer = dma_alloc_coherent(&dev->pci_dev->dev, 4096,
 						    &dev->PAFWInterfaceBuffer,
 						    GFP_KERNEL);
-	अगर (!dev->FWInterfaceBuffer)
-		वापस -ENOMEM;
+	if (!dev->FWInterfaceBuffer)
+		return -ENOMEM;
 	dev->hosttongene = dev->FWInterfaceBuffer;
 	dev->ngenetohost = dev->FWInterfaceBuffer + 256;
 	dev->EventBuffer = dev->FWInterfaceBuffer + 512;
@@ -1052,22 +1051,22 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 	dev->OverflowBuffer = dma_alloc_coherent(&dev->pci_dev->dev,
 						 OVERFLOW_BUFFER_SIZE,
 						 &dev->PAOverflowBuffer, GFP_KERNEL);
-	अगर (!dev->OverflowBuffer)
-		वापस -ENOMEM;
+	if (!dev->OverflowBuffer)
+		return -ENOMEM;
 
-	क्रम (i = STREAM_VIDEOIN1; i < MAX_STREAM; i++) अणु
-		पूर्णांक type = dev->card_info->io_type[i];
+	for (i = STREAM_VIDEOIN1; i < MAX_STREAM; i++) {
+		int type = dev->card_info->io_type[i];
 
 		dev->channel[i].State = KSSTATE_STOP;
 
-		अगर (type & (NGENE_IO_TV | NGENE_IO_HDTV | NGENE_IO_AIN)) अणु
+		if (type & (NGENE_IO_TV | NGENE_IO_HDTV | NGENE_IO_AIN)) {
 			status = create_ring_buffer(dev->pci_dev,
 						    &dev->channel[i].RingBuffer,
 						    RingBufferSizes[i]);
-			अगर (status < 0)
-				अवरोध;
+			if (status < 0)
+				break;
 
-			अगर (type & (NGENE_IO_TV | NGENE_IO_AIN)) अणु
+			if (type & (NGENE_IO_TV | NGENE_IO_AIN)) {
 				status = AllocateRingBuffers(dev->pci_dev,
 							     dev->
 							     PAOverflowBuffer,
@@ -1075,9 +1074,9 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 							     RingBuffer,
 							     Buffer1Sizes[i],
 							     Buffer2Sizes[i]);
-				अगर (status < 0)
-					अवरोध;
-			पूर्ण अन्यथा अगर (type & NGENE_IO_HDTV) अणु
+				if (status < 0)
+					break;
+			} else if (type & NGENE_IO_HDTV) {
 				status = AllocateRingBuffers(dev->pci_dev,
 							     dev->
 							     PAOverflowBuffer,
@@ -1085,438 +1084,438 @@ DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 							     RingBuffer,
 							   MAX_HDTV_BUFFER_SIZE,
 							     0);
-				अगर (status < 0)
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (status < 0)
+					break;
+			}
+		}
 
-		अगर (type & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) अणु
+		if (type & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) {
 
 			status = create_ring_buffer(dev->pci_dev,
 						    &dev->channel[i].
 						    TSRingBuffer, RING_SIZE_TS);
-			अगर (status < 0)
-				अवरोध;
+			if (status < 0)
+				break;
 
 			status = AllocateRingBuffers(dev->pci_dev,
 						     dev->PAOverflowBuffer,
 						     &dev->channel[i].
 						     TSRingBuffer,
 						     MAX_TS_BUFFER_SIZE, 0);
-			अगर (status)
-				अवरोध;
-		पूर्ण
+			if (status)
+				break;
+		}
 
-		अगर (type & NGENE_IO_TSOUT) अणु
+		if (type & NGENE_IO_TSOUT) {
 			status = create_ring_buffer(dev->pci_dev,
 						    &dev->channel[i].
 						    TSIdleBuffer, 1);
-			अगर (status < 0)
-				अवरोध;
+			if (status < 0)
+				break;
 			status = AllocateRingBuffers(dev->pci_dev,
 						     dev->PAOverflowBuffer,
 						     &dev->channel[i].
 						     TSIdleBuffer,
 						     MAX_TS_BUFFER_SIZE, 0);
-			अगर (status)
-				अवरोध;
+			if (status)
+				break;
 			FillTSIdleBuffer(&dev->channel[i].TSIdleBuffer,
 					 &dev->channel[i].TSRingBuffer);
-		पूर्ण
-	पूर्ण
-	वापस status;
-पूर्ण
+		}
+	}
+	return status;
+}
 
-अटल व्योम ngene_release_buffers(काष्ठा ngene *dev)
-अणु
-	अगर (dev->iomem)
+static void ngene_release_buffers(struct ngene *dev)
+{
+	if (dev->iomem)
 		iounmap(dev->iomem);
-	मुक्त_common_buffers(dev);
-	vमुक्त(dev->tsout_buf);
-	vमुक्त(dev->tsin_buf);
-	vमुक्त(dev->ain_buf);
-	vमुक्त(dev->vin_buf);
-	vमुक्त(dev);
-पूर्ण
+	free_common_buffers(dev);
+	vfree(dev->tsout_buf);
+	vfree(dev->tsin_buf);
+	vfree(dev->ain_buf);
+	vfree(dev->vin_buf);
+	vfree(dev);
+}
 
-अटल पूर्णांक ngene_get_buffers(काष्ठा ngene *dev)
-अणु
-	अगर (AllocCommonBuffers(dev))
-		वापस -ENOMEM;
-	अगर (dev->card_info->io_type[4] & NGENE_IO_TSOUT) अणु
-		dev->tsout_buf = vदो_स्मृति(TSOUT_BUF_SIZE);
-		अगर (!dev->tsout_buf)
-			वापस -ENOMEM;
+static int ngene_get_buffers(struct ngene *dev)
+{
+	if (AllocCommonBuffers(dev))
+		return -ENOMEM;
+	if (dev->card_info->io_type[4] & NGENE_IO_TSOUT) {
+		dev->tsout_buf = vmalloc(TSOUT_BUF_SIZE);
+		if (!dev->tsout_buf)
+			return -ENOMEM;
 		dvb_ringbuffer_init(&dev->tsout_rbuf,
 				    dev->tsout_buf, TSOUT_BUF_SIZE);
-	पूर्ण
-	अगर (dev->card_info->io_type[2]&NGENE_IO_TSIN) अणु
-		dev->tsin_buf = vदो_स्मृति(TSIN_BUF_SIZE);
-		अगर (!dev->tsin_buf)
-			वापस -ENOMEM;
+	}
+	if (dev->card_info->io_type[2]&NGENE_IO_TSIN) {
+		dev->tsin_buf = vmalloc(TSIN_BUF_SIZE);
+		if (!dev->tsin_buf)
+			return -ENOMEM;
 		dvb_ringbuffer_init(&dev->tsin_rbuf,
 				    dev->tsin_buf, TSIN_BUF_SIZE);
-	पूर्ण
-	अगर (dev->card_info->io_type[2] & NGENE_IO_AIN) अणु
-		dev->ain_buf = vदो_स्मृति(AIN_BUF_SIZE);
-		अगर (!dev->ain_buf)
-			वापस -ENOMEM;
+	}
+	if (dev->card_info->io_type[2] & NGENE_IO_AIN) {
+		dev->ain_buf = vmalloc(AIN_BUF_SIZE);
+		if (!dev->ain_buf)
+			return -ENOMEM;
 		dvb_ringbuffer_init(&dev->ain_rbuf, dev->ain_buf, AIN_BUF_SIZE);
-	पूर्ण
-	अगर (dev->card_info->io_type[0] & NGENE_IO_HDTV) अणु
-		dev->vin_buf = vदो_स्मृति(VIN_BUF_SIZE);
-		अगर (!dev->vin_buf)
-			वापस -ENOMEM;
+	}
+	if (dev->card_info->io_type[0] & NGENE_IO_HDTV) {
+		dev->vin_buf = vmalloc(VIN_BUF_SIZE);
+		if (!dev->vin_buf)
+			return -ENOMEM;
 		dvb_ringbuffer_init(&dev->vin_rbuf, dev->vin_buf, VIN_BUF_SIZE);
-	पूर्ण
+	}
 	dev->iomem = ioremap(pci_resource_start(dev->pci_dev, 0),
 			     pci_resource_len(dev->pci_dev, 0));
-	अगर (!dev->iomem)
-		वापस -ENOMEM;
+	if (!dev->iomem)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ngene_init(काष्ठा ngene *dev)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
-	पूर्णांक i;
+static void ngene_init(struct ngene *dev)
+{
+	struct device *pdev = &dev->pci_dev->dev;
+	int i;
 
 	tasklet_setup(&dev->event_tasklet, event_tasklet);
 
-	स_रखो_io(dev->iomem + 0xc000, 0x00, 0x220);
-	स_रखो_io(dev->iomem + 0xc400, 0x00, 0x100);
+	memset_io(dev->iomem + 0xc000, 0x00, 0x220);
+	memset_io(dev->iomem + 0xc400, 0x00, 0x100);
 
-	क्रम (i = 0; i < MAX_STREAM; i++) अणु
+	for (i = 0; i < MAX_STREAM; i++) {
 		dev->channel[i].dev = dev;
 		dev->channel[i].number = i;
-	पूर्ण
+	}
 
-	dev->fw_पूर्णांकerface_version = 0;
+	dev->fw_interface_version = 0;
 
-	ngग_लिखोl(0, NGENE_INT_ENABLE);
+	ngwritel(0, NGENE_INT_ENABLE);
 
-	dev->icounts = ngपढ़ोl(NGENE_INT_COUNTS);
+	dev->icounts = ngreadl(NGENE_INT_COUNTS);
 
-	dev->device_version = ngपढ़ोl(DEV_VER) & 0x0f;
+	dev->device_version = ngreadl(DEV_VER) & 0x0f;
 	dev_info(pdev, "Device version %d\n", dev->device_version);
-पूर्ण
+}
 
-अटल पूर्णांक ngene_load_firm(काष्ठा ngene *dev)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
+static int ngene_load_firm(struct ngene *dev)
+{
+	struct device *pdev = &dev->pci_dev->dev;
 	u32 size;
-	स्थिर काष्ठा firmware *fw = शून्य;
+	const struct firmware *fw = NULL;
 	u8 *ngene_fw;
-	अक्षर *fw_name;
-	पूर्णांक err, version;
+	char *fw_name;
+	int err, version;
 
 	version = dev->card_info->fw_version;
 
-	चयन (version) अणु
-	शेष:
-	हाल 15:
+	switch (version) {
+	default:
+	case 15:
 		version = 15;
 		size = 23466;
 		fw_name = "ngene_15.fw";
-		dev->cmd_समयout_workaround = true;
-		अवरोध;
-	हाल 16:
+		dev->cmd_timeout_workaround = true;
+		break;
+	case 16:
 		size = 23498;
 		fw_name = "ngene_16.fw";
-		dev->cmd_समयout_workaround = true;
-		अवरोध;
-	हाल 17:
+		dev->cmd_timeout_workaround = true;
+		break;
+	case 17:
 		size = 24446;
 		fw_name = "ngene_17.fw";
-		dev->cmd_समयout_workaround = true;
-		अवरोध;
-	हाल 18:
+		dev->cmd_timeout_workaround = true;
+		break;
+	case 18:
 		size = 0;
 		fw_name = "ngene_18.fw";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (request_firmware(&fw, fw_name, &dev->pci_dev->dev) < 0) अणु
+	if (request_firmware(&fw, fw_name, &dev->pci_dev->dev) < 0) {
 		dev_err(pdev, "Could not load firmware file %s.\n", fw_name);
 		dev_info(pdev, "Copy %s to your hotplug directory!\n",
 			 fw_name);
-		वापस -1;
-	पूर्ण
-	अगर (size == 0)
+		return -1;
+	}
+	if (size == 0)
 		size = fw->size;
-	अगर (size != fw->size) अणु
+	if (size != fw->size) {
 		dev_err(pdev, "Firmware %s has invalid size!", fw_name);
 		err = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(pdev, "Loading firmware file %s.\n", fw_name);
 		ngene_fw = (u8 *) fw->data;
 		err = ngene_command_load_firmware(dev, ngene_fw, size);
-	पूर्ण
+	}
 
 	release_firmware(fw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ngene_stop(काष्ठा ngene *dev)
-अणु
+static void ngene_stop(struct ngene *dev)
+{
 	mutex_destroy(&dev->cmd_mutex);
 	i2c_del_adapter(&(dev->channel[0].i2c_adapter));
 	i2c_del_adapter(&(dev->channel[1].i2c_adapter));
-	ngग_लिखोl(0, NGENE_INT_ENABLE);
-	ngग_लिखोl(0, NGENE_COMMAND);
-	ngग_लिखोl(0, NGENE_COMMAND_HI);
-	ngग_लिखोl(0, NGENE_STATUS);
-	ngग_लिखोl(0, NGENE_STATUS_HI);
-	ngग_लिखोl(0, NGENE_EVENT);
-	ngग_लिखोl(0, NGENE_EVENT_HI);
-	मुक्त_irq(dev->pci_dev->irq, dev);
-#अगर_घोषित CONFIG_PCI_MSI
-	अगर (dev->msi_enabled)
+	ngwritel(0, NGENE_INT_ENABLE);
+	ngwritel(0, NGENE_COMMAND);
+	ngwritel(0, NGENE_COMMAND_HI);
+	ngwritel(0, NGENE_STATUS);
+	ngwritel(0, NGENE_STATUS_HI);
+	ngwritel(0, NGENE_EVENT);
+	ngwritel(0, NGENE_EVENT_HI);
+	free_irq(dev->pci_dev->irq, dev);
+#ifdef CONFIG_PCI_MSI
+	if (dev->msi_enabled)
 		pci_disable_msi(dev->pci_dev);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक ngene_buffer_config(काष्ठा ngene *dev)
-अणु
-	पूर्णांक stat;
+static int ngene_buffer_config(struct ngene *dev)
+{
+	int stat;
 
-	अगर (dev->card_info->fw_version >= 17) अणु
-		u8 tsin12_config[6]   = अणु 0x60, 0x60, 0x00, 0x00, 0x00, 0x00 पूर्ण;
-		u8 tsin1234_config[6] = अणु 0x30, 0x30, 0x00, 0x30, 0x30, 0x00 पूर्ण;
-		u8 tsio1235_config[6] = अणु 0x30, 0x30, 0x00, 0x28, 0x00, 0x38 पूर्ण;
+	if (dev->card_info->fw_version >= 17) {
+		u8 tsin12_config[6]   = { 0x60, 0x60, 0x00, 0x00, 0x00, 0x00 };
+		u8 tsin1234_config[6] = { 0x30, 0x30, 0x00, 0x30, 0x30, 0x00 };
+		u8 tsio1235_config[6] = { 0x30, 0x30, 0x00, 0x28, 0x00, 0x38 };
 		u8 *bconf = tsin12_config;
 
-		अगर (dev->card_info->io_type[2]&NGENE_IO_TSIN &&
-		    dev->card_info->io_type[3]&NGENE_IO_TSIN) अणु
+		if (dev->card_info->io_type[2]&NGENE_IO_TSIN &&
+		    dev->card_info->io_type[3]&NGENE_IO_TSIN) {
 			bconf = tsin1234_config;
-			अगर (dev->card_info->io_type[4]&NGENE_IO_TSOUT &&
+			if (dev->card_info->io_type[4]&NGENE_IO_TSOUT &&
 			    dev->ci.en)
 				bconf = tsio1235_config;
-		पूर्ण
-		stat = ngene_command_config_मुक्त_buf(dev, bconf);
-	पूर्ण अन्यथा अणु
-		पूर्णांक bconf = BUFFER_CONFIG_4422;
+		}
+		stat = ngene_command_config_free_buf(dev, bconf);
+	} else {
+		int bconf = BUFFER_CONFIG_4422;
 
-		अगर (dev->card_info->io_type[3] == NGENE_IO_TSIN)
+		if (dev->card_info->io_type[3] == NGENE_IO_TSIN)
 			bconf = BUFFER_CONFIG_3333;
 		stat = ngene_command_config_buf(dev, bconf);
-	पूर्ण
-	वापस stat;
-पूर्ण
+	}
+	return stat;
+}
 
 
-अटल पूर्णांक ngene_start(काष्ठा ngene *dev)
-अणु
-	पूर्णांक stat;
-	पूर्णांक i;
+static int ngene_start(struct ngene *dev)
+{
+	int stat;
+	int i;
 
 	pci_set_master(dev->pci_dev);
 	ngene_init(dev);
 
 	stat = request_irq(dev->pci_dev->irq, irq_handler,
 			   IRQF_SHARED, "nGene",
-			   (व्योम *)dev);
-	अगर (stat < 0)
-		वापस stat;
+			   (void *)dev);
+	if (stat < 0)
+		return stat;
 
-	init_रुकोqueue_head(&dev->cmd_wq);
-	init_रुकोqueue_head(&dev->tx_wq);
-	init_रुकोqueue_head(&dev->rx_wq);
+	init_waitqueue_head(&dev->cmd_wq);
+	init_waitqueue_head(&dev->tx_wq);
+	init_waitqueue_head(&dev->rx_wq);
 	mutex_init(&dev->cmd_mutex);
 	mutex_init(&dev->stream_mutex);
 	sema_init(&dev->pll_mutex, 1);
-	mutex_init(&dev->i2c_चयन_mutex);
+	mutex_init(&dev->i2c_switch_mutex);
 	spin_lock_init(&dev->cmd_lock);
-	क्रम (i = 0; i < MAX_STREAM; i++)
+	for (i = 0; i < MAX_STREAM; i++)
 		spin_lock_init(&dev->channel[i].state_lock);
-	ngग_लिखोl(1, TIMESTAMPS);
+	ngwritel(1, TIMESTAMPS);
 
-	ngग_लिखोl(1, NGENE_INT_ENABLE);
+	ngwritel(1, NGENE_INT_ENABLE);
 
 	stat = ngene_load_firm(dev);
-	अगर (stat < 0)
-		जाओ fail;
+	if (stat < 0)
+		goto fail;
 
-#अगर_घोषित CONFIG_PCI_MSI
-	/* enable MSI अगर kernel and card support it */
-	अगर (pci_msi_enabled() && dev->card_info->msi_supported) अणु
-		काष्ठा device *pdev = &dev->pci_dev->dev;
-		अचिन्हित दीर्घ flags;
+#ifdef CONFIG_PCI_MSI
+	/* enable MSI if kernel and card support it */
+	if (pci_msi_enabled() && dev->card_info->msi_supported) {
+		struct device *pdev = &dev->pci_dev->dev;
+		unsigned long flags;
 
-		ngग_लिखोl(0, NGENE_INT_ENABLE);
-		मुक्त_irq(dev->pci_dev->irq, dev);
+		ngwritel(0, NGENE_INT_ENABLE);
+		free_irq(dev->pci_dev->irq, dev);
 		stat = pci_enable_msi(dev->pci_dev);
-		अगर (stat) अणु
+		if (stat) {
 			dev_info(pdev, "MSI not available\n");
 			flags = IRQF_SHARED;
-		पूर्ण अन्यथा अणु
+		} else {
 			flags = 0;
 			dev->msi_enabled = true;
-		पूर्ण
+		}
 		stat = request_irq(dev->pci_dev->irq, irq_handler,
 					flags, "nGene", dev);
-		अगर (stat < 0)
-			जाओ fail2;
-		ngग_लिखोl(1, NGENE_INT_ENABLE);
-	पूर्ण
-#पूर्ण_अगर
+		if (stat < 0)
+			goto fail2;
+		ngwritel(1, NGENE_INT_ENABLE);
+	}
+#endif
 
 	stat = ngene_i2c_init(dev, 0);
-	अगर (stat < 0)
-		जाओ fail;
+	if (stat < 0)
+		goto fail;
 
 	stat = ngene_i2c_init(dev, 1);
-	अगर (stat < 0)
-		जाओ fail;
+	if (stat < 0)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
 fail:
-	ngग_लिखोl(0, NGENE_INT_ENABLE);
-	मुक्त_irq(dev->pci_dev->irq, dev);
-#अगर_घोषित CONFIG_PCI_MSI
+	ngwritel(0, NGENE_INT_ENABLE);
+	free_irq(dev->pci_dev->irq, dev);
+#ifdef CONFIG_PCI_MSI
 fail2:
-	अगर (dev->msi_enabled)
+	if (dev->msi_enabled)
 		pci_disable_msi(dev->pci_dev);
-#पूर्ण_अगर
-	वापस stat;
-पूर्ण
+#endif
+	return stat;
+}
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 
-अटल व्योम release_channel(काष्ठा ngene_channel *chan)
-अणु
-	काष्ठा dvb_demux *dvbdemux = &chan->demux;
-	काष्ठा ngene *dev = chan->dev;
+static void release_channel(struct ngene_channel *chan)
+{
+	struct dvb_demux *dvbdemux = &chan->demux;
+	struct ngene *dev = chan->dev;
 
-	अगर (chan->running)
+	if (chan->running)
 		set_transfer(chan, 0);
 
-	tasklet_समाप्त(&chan->demux_tasklet);
+	tasklet_kill(&chan->demux_tasklet);
 
-	अगर (chan->ci_dev) अणु
-		dvb_unरेजिस्टर_device(chan->ci_dev);
-		chan->ci_dev = शून्य;
-	पूर्ण
+	if (chan->ci_dev) {
+		dvb_unregister_device(chan->ci_dev);
+		chan->ci_dev = NULL;
+	}
 
-	अगर (chan->fe2)
-		dvb_unरेजिस्टर_frontend(chan->fe2);
+	if (chan->fe2)
+		dvb_unregister_frontend(chan->fe2);
 
-	अगर (chan->fe) अणु
-		dvb_unरेजिस्टर_frontend(chan->fe);
+	if (chan->fe) {
+		dvb_unregister_frontend(chan->fe);
 
-		/* release I2C client (tuner) अगर needed */
-		अगर (chan->i2c_client_fe) अणु
+		/* release I2C client (tuner) if needed */
+		if (chan->i2c_client_fe) {
 			dvb_module_release(chan->i2c_client[0]);
-			chan->i2c_client[0] = शून्य;
-		पूर्ण
+			chan->i2c_client[0] = NULL;
+		}
 
 		dvb_frontend_detach(chan->fe);
-		chan->fe = शून्य;
-	पूर्ण
+		chan->fe = NULL;
+	}
 
-	अगर (chan->has_demux) अणु
+	if (chan->has_demux) {
 		dvb_net_release(&chan->dvbnet);
-		dvbdemux->dmx.बंद(&dvbdemux->dmx);
-		dvbdemux->dmx.हटाओ_frontend(&dvbdemux->dmx,
+		dvbdemux->dmx.close(&dvbdemux->dmx);
+		dvbdemux->dmx.remove_frontend(&dvbdemux->dmx,
 					      &chan->hw_frontend);
-		dvbdemux->dmx.हटाओ_frontend(&dvbdemux->dmx,
+		dvbdemux->dmx.remove_frontend(&dvbdemux->dmx,
 					      &chan->mem_frontend);
 		dvb_dmxdev_release(&chan->dmxdev);
 		dvb_dmx_release(&chan->demux);
 		chan->has_demux = false;
-	पूर्ण
+	}
 
-	अगर (chan->has_adapter) अणु
-		dvb_unरेजिस्टर_adapter(&dev->adapter[chan->number]);
+	if (chan->has_adapter) {
+		dvb_unregister_adapter(&dev->adapter[chan->number]);
 		chan->has_adapter = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक init_channel(काष्ठा ngene_channel *chan)
-अणु
-	पूर्णांक ret = 0, nr = chan->number;
-	काष्ठा dvb_adapter *adapter = शून्य;
-	काष्ठा dvb_demux *dvbdemux = &chan->demux;
-	काष्ठा ngene *dev = chan->dev;
-	काष्ठा ngene_info *ni = dev->card_info;
-	पूर्णांक io = ni->io_type[nr];
+static int init_channel(struct ngene_channel *chan)
+{
+	int ret = 0, nr = chan->number;
+	struct dvb_adapter *adapter = NULL;
+	struct dvb_demux *dvbdemux = &chan->demux;
+	struct ngene *dev = chan->dev;
+	struct ngene_info *ni = dev->card_info;
+	int io = ni->io_type[nr];
 
 	tasklet_setup(&chan->demux_tasklet, demux_tasklet);
 	chan->users = 0;
 	chan->type = io;
-	chan->mode = chan->type;	/* क्रम now only one mode */
+	chan->mode = chan->type;	/* for now only one mode */
 	chan->i2c_client_fe = 0;	/* be sure this is set to zero */
 
-	अगर (io & NGENE_IO_TSIN) अणु
-		chan->fe = शून्य;
-		अगर (ni->demod_attach[nr]) अणु
+	if (io & NGENE_IO_TSIN) {
+		chan->fe = NULL;
+		if (ni->demod_attach[nr]) {
 			ret = ni->demod_attach[nr](chan);
-			अगर (ret < 0)
-				जाओ err;
-		पूर्ण
-		अगर (chan->fe && ni->tuner_attach[nr]) अणु
+			if (ret < 0)
+				goto err;
+		}
+		if (chan->fe && ni->tuner_attach[nr]) {
 			ret = ni->tuner_attach[nr](chan);
-			अगर (ret < 0)
-				जाओ err;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				goto err;
+		}
+	}
 
-	अगर (!dev->ci.en && (io & NGENE_IO_TSOUT))
-		वापस 0;
+	if (!dev->ci.en && (io & NGENE_IO_TSOUT))
+		return 0;
 
-	अगर (io & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) अणु
-		अगर (nr >= STREAM_AUDIOIN1)
+	if (io & (NGENE_IO_TSIN | NGENE_IO_TSOUT)) {
+		if (nr >= STREAM_AUDIOIN1)
 			chan->DataFormatFlags = DF_SWAP32;
 
-		अगर (nr == 0 || !one_adapter || dev->first_adapter == शून्य) अणु
+		if (nr == 0 || !one_adapter || dev->first_adapter == NULL) {
 			adapter = &dev->adapter[nr];
-			ret = dvb_रेजिस्टर_adapter(adapter, "nGene",
+			ret = dvb_register_adapter(adapter, "nGene",
 						   THIS_MODULE,
 						   &chan->dev->pci_dev->dev,
 						   adapter_nr);
-			अगर (ret < 0)
-				जाओ err;
-			अगर (dev->first_adapter == शून्य)
+			if (ret < 0)
+				goto err;
+			if (dev->first_adapter == NULL)
 				dev->first_adapter = adapter;
 			chan->has_adapter = true;
-		पूर्ण अन्यथा
+		} else
 			adapter = dev->first_adapter;
-	पूर्ण
+	}
 
-	अगर (dev->ci.en && (io & NGENE_IO_TSOUT)) अणु
+	if (dev->ci.en && (io & NGENE_IO_TSOUT)) {
 		dvb_ca_en50221_init(adapter, dev->ci.en, 0, 1);
 		set_transfer(chan, 1);
 		chan->dev->channel[2].DataFormatFlags = DF_SWAP32;
 		set_transfer(&chan->dev->channel[2], 1);
-		dvb_रेजिस्टर_device(adapter, &chan->ci_dev,
-				    &ngene_dvbdev_ci, (व्योम *) chan,
+		dvb_register_device(adapter, &chan->ci_dev,
+				    &ngene_dvbdev_ci, (void *) chan,
 				    DVB_DEVICE_SEC, 0);
-		अगर (!chan->ci_dev)
-			जाओ err;
-	पूर्ण
+		if (!chan->ci_dev)
+			goto err;
+	}
 
-	अगर (chan->fe) अणु
-		अगर (dvb_रेजिस्टर_frontend(adapter, chan->fe) < 0)
-			जाओ err;
+	if (chan->fe) {
+		if (dvb_register_frontend(adapter, chan->fe) < 0)
+			goto err;
 		chan->has_demux = true;
-	पूर्ण
-	अगर (chan->fe2) अणु
-		अगर (dvb_रेजिस्टर_frontend(adapter, chan->fe2) < 0)
-			जाओ err;
-		अगर (chan->fe) अणु
+	}
+	if (chan->fe2) {
+		if (dvb_register_frontend(adapter, chan->fe2) < 0)
+			goto err;
+		if (chan->fe) {
 			chan->fe2->tuner_priv = chan->fe->tuner_priv;
-			स_नकल(&chan->fe2->ops.tuner_ops,
+			memcpy(&chan->fe2->ops.tuner_ops,
 			       &chan->fe->ops.tuner_ops,
-			       माप(काष्ठा dvb_tuner_ops));
-		पूर्ण
-	पूर्ण
+			       sizeof(struct dvb_tuner_ops));
+		}
+	}
 
-	अगर (chan->has_demux) अणु
+	if (chan->has_demux) {
 		ret = my_dvb_dmx_ts_card_init(dvbdemux, "SW demux",
 					      ngene_start_feed,
 					      ngene_stop_feed, chan);
@@ -1524,95 +1523,95 @@ fail2:
 						 &chan->hw_frontend,
 						 &chan->mem_frontend, adapter);
 		ret = dvb_net_init(adapter, &chan->dvbnet, &chan->demux.dmx);
-	पूर्ण
+	}
 
-	वापस ret;
+	return ret;
 
 err:
-	अगर (chan->fe) अणु
+	if (chan->fe) {
 		dvb_frontend_detach(chan->fe);
-		chan->fe = शून्य;
-	पूर्ण
+		chan->fe = NULL;
+	}
 	release_channel(chan);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_channels(काष्ठा ngene *dev)
-अणु
-	पूर्णांक i, j;
+static int init_channels(struct ngene *dev)
+{
+	int i, j;
 
-	क्रम (i = 0; i < MAX_STREAM; i++) अणु
+	for (i = 0; i < MAX_STREAM; i++) {
 		dev->channel[i].number = i;
-		अगर (init_channel(&dev->channel[i]) < 0) अणु
-			क्रम (j = i - 1; j >= 0; j--)
+		if (init_channel(&dev->channel[i]) < 0) {
+			for (j = i - 1; j >= 0; j--)
 				release_channel(&dev->channel[j]);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा cxd2099_cfg cxd_cfgपंचांगpl = अणु
+static const struct cxd2099_cfg cxd_cfgtmpl = {
 	.bitrate = 62000,
 	.polarity = 0,
-	.घड़ी_mode = 0,
-पूर्ण;
+	.clock_mode = 0,
+};
 
-अटल व्योम cxd_attach(काष्ठा ngene *dev)
-अणु
-	काष्ठा device *pdev = &dev->pci_dev->dev;
-	काष्ठा ngene_ci *ci = &dev->ci;
-	काष्ठा cxd2099_cfg cxd_cfg = cxd_cfgपंचांगpl;
-	काष्ठा i2c_client *client;
-	पूर्णांक ret;
+static void cxd_attach(struct ngene *dev)
+{
+	struct device *pdev = &dev->pci_dev->dev;
+	struct ngene_ci *ci = &dev->ci;
+	struct cxd2099_cfg cxd_cfg = cxd_cfgtmpl;
+	struct i2c_client *client;
+	int ret;
 	u8 type;
 
-	/* check क्रम CXD2099AR presence beक्रमe attaching */
+	/* check for CXD2099AR presence before attaching */
 	ret = ngene_port_has_cxd2099(&dev->channel[0].i2c_adapter, &type);
-	अगर (!ret) अणु
+	if (!ret) {
 		dev_dbg(pdev, "No CXD2099AR found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (type != 1) अणु
+	if (type != 1) {
 		dev_warn(pdev, "CXD2099AR is uninitialized!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cxd_cfg.en = &ci->en;
-	client = dvb_module_probe("cxd2099", शून्य,
+	client = dvb_module_probe("cxd2099", NULL,
 				  &dev->channel[0].i2c_adapter,
 				  0x40, &cxd_cfg);
-	अगर (!client)
-		जाओ err;
+	if (!client)
+		goto err;
 
 	ci->dev = dev;
 	dev->channel[0].i2c_client[0] = client;
-	वापस;
+	return;
 
 err:
 	dev_err(pdev, "CXD2099AR attach failed\n");
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम cxd_detach(काष्ठा ngene *dev)
-अणु
-	काष्ठा ngene_ci *ci = &dev->ci;
+static void cxd_detach(struct ngene *dev)
+{
+	struct ngene_ci *ci = &dev->ci;
 
 	dvb_ca_en50221_release(ci->en);
 
 	dvb_module_release(dev->channel[0].i2c_client[0]);
-	dev->channel[0].i2c_client[0] = शून्य;
-	ci->en = शून्य;
-पूर्ण
+	dev->channel[0].i2c_client[0] = NULL;
+	ci->en = NULL;
+}
 
 /***********************************/
-/* workaround क्रम shutकरोwn failure */
+/* workaround for shutdown failure */
 /***********************************/
 
-अटल व्योम ngene_unlink(काष्ठा ngene *dev)
-अणु
-	काष्ठा ngene_command com;
+static void ngene_unlink(struct ngene *dev)
+{
+	struct ngene_command com;
 
 	com.cmd.hdr.Opcode = CMD_MEM_WRITE;
 	com.cmd.hdr.Length = 3;
@@ -1622,85 +1621,85 @@ err:
 	com.out_len = 1;
 
 	mutex_lock(&dev->cmd_mutex);
-	ngग_लिखोl(0, NGENE_INT_ENABLE);
+	ngwritel(0, NGENE_INT_ENABLE);
 	ngene_command_mutex(dev, &com);
 	mutex_unlock(&dev->cmd_mutex);
-पूर्ण
+}
 
-व्योम ngene_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ngene *dev = pci_get_drvdata(pdev);
+void ngene_shutdown(struct pci_dev *pdev)
+{
+	struct ngene *dev = pci_get_drvdata(pdev);
 
-	अगर (!dev || !shutकरोwn_workaround)
-		वापस;
+	if (!dev || !shutdown_workaround)
+		return;
 
 	dev_info(&pdev->dev, "shutdown workaround...\n");
 	ngene_unlink(dev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
 /****************************************************************************/
-/* device probe/हटाओ calls ************************************************/
+/* device probe/remove calls ************************************************/
 /****************************************************************************/
 
-व्योम ngene_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ngene *dev = pci_get_drvdata(pdev);
-	पूर्णांक i;
+void ngene_remove(struct pci_dev *pdev)
+{
+	struct ngene *dev = pci_get_drvdata(pdev);
+	int i;
 
-	tasklet_समाप्त(&dev->event_tasklet);
-	क्रम (i = MAX_STREAM - 1; i >= 0; i--)
+	tasklet_kill(&dev->event_tasklet);
+	for (i = MAX_STREAM - 1; i >= 0; i--)
 		release_channel(&dev->channel[i]);
-	अगर (dev->ci.en)
+	if (dev->ci.en)
 		cxd_detach(dev);
 	ngene_stop(dev);
 	ngene_release_buffers(dev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-पूर्णांक ngene_probe(काष्ठा pci_dev *pci_dev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ngene *dev;
-	पूर्णांक stat = 0;
+int ngene_probe(struct pci_dev *pci_dev, const struct pci_device_id *id)
+{
+	struct ngene *dev;
+	int stat = 0;
 
-	अगर (pci_enable_device(pci_dev) < 0)
-		वापस -ENODEV;
+	if (pci_enable_device(pci_dev) < 0)
+		return -ENODEV;
 
-	dev = vzalloc(माप(काष्ठा ngene));
-	अगर (dev == शून्य) अणु
+	dev = vzalloc(sizeof(struct ngene));
+	if (dev == NULL) {
 		stat = -ENOMEM;
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 
 	dev->pci_dev = pci_dev;
-	dev->card_info = (काष्ठा ngene_info *)id->driver_data;
+	dev->card_info = (struct ngene_info *)id->driver_data;
 	dev_info(&pci_dev->dev, "Found %s\n", dev->card_info->name);
 
 	pci_set_drvdata(pci_dev, dev);
 
 	/* Alloc buffers and start nGene */
 	stat = ngene_get_buffers(dev);
-	अगर (stat < 0)
-		जाओ fail1;
+	if (stat < 0)
+		goto fail1;
 	stat = ngene_start(dev);
-	अगर (stat < 0)
-		जाओ fail1;
+	if (stat < 0)
+		goto fail1;
 
 	cxd_attach(dev);
 
 	stat = ngene_buffer_config(dev);
-	अगर (stat < 0)
-		जाओ fail1;
+	if (stat < 0)
+		goto fail1;
 
 
 	dev->i2c_current_bus = -1;
 
-	/* Register DVB adapters and devices क्रम both channels */
+	/* Register DVB adapters and devices for both channels */
 	stat = init_channels(dev);
-	अगर (stat < 0)
-		जाओ fail2;
+	if (stat < 0)
+		goto fail2;
 
-	वापस 0;
+	return 0;
 
 fail2:
 	ngene_stop(dev);
@@ -1708,5 +1707,5 @@ fail1:
 	ngene_release_buffers(dev);
 fail0:
 	pci_disable_device(pci_dev);
-	वापस stat;
-पूर्ण
+	return stat;
+}

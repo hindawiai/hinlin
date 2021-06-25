@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,115 +20,115 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/pci.h>
+#include <core/pci.h>
 
-काष्ठा priv अणु
-	काष्ठा pci_dev *pdev;
-	व्योम __iomem *rom;
-	माप_प्रकार size;
-पूर्ण;
+struct priv {
+	struct pci_dev *pdev;
+	void __iomem *rom;
+	size_t size;
+};
 
-अटल u32
-pcirom_पढ़ो(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
-अणु
-	काष्ठा priv *priv = data;
-	अगर (offset + length <= priv->size) अणु
-		स_नकल_fromio(bios->data + offset, priv->rom + offset, length);
-		वापस length;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static u32
+pcirom_read(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
+{
+	struct priv *priv = data;
+	if (offset + length <= priv->size) {
+		memcpy_fromio(bios->data + offset, priv->rom + offset, length);
+		return length;
+	}
+	return 0;
+}
 
-अटल व्योम
-pcirom_fini(व्योम *data)
-अणु
-	काष्ठा priv *priv = data;
+static void
+pcirom_fini(void *data)
+{
+	struct priv *priv = data;
 	pci_unmap_rom(priv->pdev, priv->rom);
 	pci_disable_rom(priv->pdev);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-अटल व्योम *
-pcirom_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
-अणु
-	काष्ठा nvkm_device *device = bios->subdev.device;
-	काष्ठा priv *priv = शून्य;
-	काष्ठा pci_dev *pdev;
-	पूर्णांक ret;
+static void *
+pcirom_init(struct nvkm_bios *bios, const char *name)
+{
+	struct nvkm_device *device = bios->subdev.device;
+	struct priv *priv = NULL;
+	struct pci_dev *pdev;
+	int ret;
 
-	अगर (device->func->pci)
+	if (device->func->pci)
 		pdev = device->func->pci(device)->pdev;
-	अन्यथा
-		वापस ERR_PTR(-ENODEV);
+	else
+		return ERR_PTR(-ENODEV);
 
-	अगर (!(ret = pci_enable_rom(pdev))) अणु
-		अगर (ret = -ENOMEM,
-		    (priv = kदो_स्मृति(माप(*priv), GFP_KERNEL))) अणु
-			अगर (ret = -EFAULT,
-			    (priv->rom = pci_map_rom(pdev, &priv->size))) अणु
+	if (!(ret = pci_enable_rom(pdev))) {
+		if (ret = -ENOMEM,
+		    (priv = kmalloc(sizeof(*priv), GFP_KERNEL))) {
+			if (ret = -EFAULT,
+			    (priv->rom = pci_map_rom(pdev, &priv->size))) {
 				priv->pdev = pdev;
-				वापस priv;
-			पूर्ण
-			kमुक्त(priv);
-		पूर्ण
+				return priv;
+			}
+			kfree(priv);
+		}
 		pci_disable_rom(pdev);
-	पूर्ण
+	}
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-स्थिर काष्ठा nvbios_source
-nvbios_pcirom = अणु
+const struct nvbios_source
+nvbios_pcirom = {
 	.name = "PCIROM",
 	.init = pcirom_init,
 	.fini = pcirom_fini,
-	.पढ़ो = pcirom_पढ़ो,
+	.read = pcirom_read,
 	.rw = true,
-पूर्ण;
+};
 
-अटल व्योम *
-platक्रमm_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
-अणु
-	काष्ठा nvkm_device *device = bios->subdev.device;
-	काष्ठा pci_dev *pdev;
-	काष्ठा priv *priv;
-	पूर्णांक ret = -ENOMEM;
+static void *
+platform_init(struct nvkm_bios *bios, const char *name)
+{
+	struct nvkm_device *device = bios->subdev.device;
+	struct pci_dev *pdev;
+	struct priv *priv;
+	int ret = -ENOMEM;
 
-	अगर (device->func->pci)
+	if (device->func->pci)
 		pdev = device->func->pci(device)->pdev;
-	अन्यथा
-		वापस ERR_PTR(-ENODEV);
+	else
+		return ERR_PTR(-ENODEV);
 
-	अगर (!pdev->rom || pdev->romlen == 0)
-		वापस ERR_PTR(-ENODEV);
+	if (!pdev->rom || pdev->romlen == 0)
+		return ERR_PTR(-ENODEV);
 
-	अगर ((priv = kदो_स्मृति(माप(*priv), GFP_KERNEL))) अणु
+	if ((priv = kmalloc(sizeof(*priv), GFP_KERNEL))) {
 		priv->size = pdev->romlen;
-		अगर (ret = -ENODEV,
+		if (ret = -ENODEV,
 		    (priv->rom = ioremap(pdev->rom, pdev->romlen)))
-			वापस priv;
-		kमुक्त(priv);
-	पूर्ण
+			return priv;
+		kfree(priv);
+	}
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम
-platक्रमm_fini(व्योम *data)
-अणु
-	काष्ठा priv *priv = data;
+static void
+platform_fini(void *data)
+{
+	struct priv *priv = data;
 
 	iounmap(priv->rom);
-	kमुक्त(priv);
-पूर्ण
+	kfree(priv);
+}
 
-स्थिर काष्ठा nvbios_source
-nvbios_platक्रमm = अणु
+const struct nvbios_source
+nvbios_platform = {
 	.name = "PLATFORM",
-	.init = platक्रमm_init,
-	.fini = platक्रमm_fini,
-	.पढ़ो = pcirom_पढ़ो,
+	.init = platform_init,
+	.fini = platform_fini,
+	.read = pcirom_read,
 	.rw = true,
-पूर्ण;
+};

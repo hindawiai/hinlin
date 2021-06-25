@@ -1,378 +1,377 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* net/aपंचांग/svc.c - ATM SVC sockets */
+// SPDX-License-Identifier: GPL-2.0
+/* net/atm/svc.c - ATM SVC sockets */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#समावेश <linux/माला.स>
-#समावेश <linux/net.h>		/* काष्ठा socket, काष्ठा proto_ops */
-#समावेश <linux/त्रुटिसं.स>	/* error codes */
-#समावेश <linux/kernel.h>	/* prपूर्णांकk */
-#समावेश <linux/skbuff.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/fcntl.h>	/* O_NONBLOCK */
-#समावेश <linux/init.h>
-#समावेश <linux/aपंचांग.h>		/* ATM stuff */
-#समावेश <linux/aपंचांगsap.h>
-#समावेश <linux/aपंचांगsvc.h>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/bitops.h>
-#समावेश <net/sock.h>		/* क्रम sock_no_* */
-#समावेश <linux/uaccess.h>
-#समावेश <linux/export.h>
+#include <linux/string.h>
+#include <linux/net.h>		/* struct socket, struct proto_ops */
+#include <linux/errno.h>	/* error codes */
+#include <linux/kernel.h>	/* printk */
+#include <linux/skbuff.h>
+#include <linux/wait.h>
+#include <linux/sched/signal.h>
+#include <linux/fcntl.h>	/* O_NONBLOCK */
+#include <linux/init.h>
+#include <linux/atm.h>		/* ATM stuff */
+#include <linux/atmsap.h>
+#include <linux/atmsvc.h>
+#include <linux/atmdev.h>
+#include <linux/bitops.h>
+#include <net/sock.h>		/* for sock_no_* */
+#include <linux/uaccess.h>
+#include <linux/export.h>
 
-#समावेश "resources.h"
-#समावेश "common.h"		/* common क्रम PVCs and SVCs */
-#समावेश "signaling.h"
-#समावेश "addr.h"
+#include "resources.h"
+#include "common.h"		/* common for PVCs and SVCs */
+#include "signaling.h"
+#include "addr.h"
 
-अटल पूर्णांक svc_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		      पूर्णांक kern);
+static int svc_create(struct net *net, struct socket *sock, int protocol,
+		      int kern);
 
 /*
- * Note: since all this is still nicely synchronized with the संकेतing demon,
- *       there's no need to protect sleep loops with clis. If संकेतing is
- *       moved पूर्णांकo the kernel, that would change.
+ * Note: since all this is still nicely synchronized with the signaling demon,
+ *       there's no need to protect sleep loops with clis. If signaling is
+ *       moved into the kernel, that would change.
  */
 
 
-अटल पूर्णांक svc_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
-अणु
-	वापस 0;
-पूर्ण
+static int svc_shutdown(struct socket *sock, int how)
+{
+	return 0;
+}
 
-अटल व्योम svc_disconnect(काष्ठा aपंचांग_vcc *vcc)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sk_buff *skb;
-	काष्ठा sock *sk = sk_aपंचांग(vcc);
+static void svc_disconnect(struct atm_vcc *vcc)
+{
+	DEFINE_WAIT(wait);
+	struct sk_buff *skb;
+	struct sock *sk = sk_atm(vcc);
 
 	pr_debug("%p\n", vcc);
-	अगर (test_bit(ATM_VF_REGIS, &vcc->flags)) अणु
-		sigd_enq(vcc, as_बंद, शून्य, शून्य, शून्य);
-		क्रम (;;) अणु
-			prepare_to_रुको(sk_sleep(sk), &रुको, TASK_UNINTERRUPTIBLE);
-			अगर (test_bit(ATM_VF_RELEASED, &vcc->flags) || !sigd)
-				अवरोध;
+	if (test_bit(ATM_VF_REGIS, &vcc->flags)) {
+		sigd_enq(vcc, as_close, NULL, NULL, NULL);
+		for (;;) {
+			prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
+			if (test_bit(ATM_VF_RELEASED, &vcc->flags) || !sigd)
+				break;
 			schedule();
-		पूर्ण
-		finish_रुको(sk_sleep(sk), &रुको);
-	पूर्ण
-	/* beware - socket is still in use by aपंचांगsigd until the last
+		}
+		finish_wait(sk_sleep(sk), &wait);
+	}
+	/* beware - socket is still in use by atmsigd until the last
 	   as_indicate has been answered */
-	जबतक ((skb = skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
-		aपंचांग_वापस(vcc, skb->truesize);
+	while ((skb = skb_dequeue(&sk->sk_receive_queue)) != NULL) {
+		atm_return(vcc, skb->truesize);
 		pr_debug("LISTEN REL\n");
-		sigd_enq2(शून्य, as_reject, vcc, शून्य, शून्य, &vcc->qos, 0);
-		dev_kमुक्त_skb(skb);
-	पूर्ण
+		sigd_enq2(NULL, as_reject, vcc, NULL, NULL, &vcc->qos, 0);
+		dev_kfree_skb(skb);
+	}
 	clear_bit(ATM_VF_REGIS, &vcc->flags);
 	/* ... may retry later */
-पूर्ण
+}
 
-अटल पूर्णांक svc_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा aपंचांग_vcc *vcc;
+static int svc_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct atm_vcc *vcc;
 
-	अगर (sk) अणु
+	if (sk) {
 		vcc = ATM_SD(sock);
 		pr_debug("%p\n", vcc);
 		clear_bit(ATM_VF_READY, &vcc->flags);
 		/*
-		 * VCC poपूर्णांकer is used as a reference,
-		 * so we must not मुक्त it (thereby subjecting it to re-use)
-		 * beक्रमe all pending connections are बंदd
+		 * VCC pointer is used as a reference,
+		 * so we must not free it (thereby subjecting it to re-use)
+		 * before all pending connections are closed
 		 */
 		svc_disconnect(vcc);
 		vcc_release(sock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक svc_bind(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		    पूर्णांक sockaddr_len)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_aपंचांगsvc *addr;
-	काष्ठा aपंचांग_vcc *vcc;
-	पूर्णांक error;
+static int svc_bind(struct socket *sock, struct sockaddr *sockaddr,
+		    int sockaddr_len)
+{
+	DEFINE_WAIT(wait);
+	struct sock *sk = sock->sk;
+	struct sockaddr_atmsvc *addr;
+	struct atm_vcc *vcc;
+	int error;
 
-	अगर (sockaddr_len != माप(काष्ठा sockaddr_aपंचांगsvc))
-		वापस -EINVAL;
+	if (sockaddr_len != sizeof(struct sockaddr_atmsvc))
+		return -EINVAL;
 	lock_sock(sk);
-	अगर (sock->state == SS_CONNECTED) अणु
+	if (sock->state == SS_CONNECTED) {
 		error = -EISCONN;
-		जाओ out;
-	पूर्ण
-	अगर (sock->state != SS_UNCONNECTED) अणु
+		goto out;
+	}
+	if (sock->state != SS_UNCONNECTED) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	vcc = ATM_SD(sock);
-	addr = (काष्ठा sockaddr_aपंचांगsvc *) sockaddr;
-	अगर (addr->sas_family != AF_ATMSVC) अणु
+	addr = (struct sockaddr_atmsvc *) sockaddr;
+	if (addr->sas_family != AF_ATMSVC) {
 		error = -EAFNOSUPPORT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	clear_bit(ATM_VF_BOUND, &vcc->flags);
-	    /* failing rebind will समाप्त old binding */
+	    /* failing rebind will kill old binding */
 	/* @@@ check memory (de)allocation on rebind */
-	अगर (!test_bit(ATM_VF_HASQOS, &vcc->flags)) अणु
+	if (!test_bit(ATM_VF_HASQOS, &vcc->flags)) {
 		error = -EBADFD;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	vcc->local = *addr;
 	set_bit(ATM_VF_WAITING, &vcc->flags);
-	sigd_enq(vcc, as_bind, शून्य, शून्य, &vcc->local);
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_UNINTERRUPTIBLE);
-		अगर (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
-			अवरोध;
+	sigd_enq(vcc, as_bind, NULL, NULL, &vcc->local);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
+		if (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
+			break;
 		schedule();
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	clear_bit(ATM_VF_REGIS, &vcc->flags); /* करोesn't count */
-	अगर (!sigd) अणु
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	clear_bit(ATM_VF_REGIS, &vcc->flags); /* doesn't count */
+	if (!sigd) {
 		error = -EUNATCH;
-		जाओ out;
-	पूर्ण
-	अगर (!sk->sk_err)
+		goto out;
+	}
+	if (!sk->sk_err)
 		set_bit(ATM_VF_BOUND, &vcc->flags);
 	error = -sk->sk_err;
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_connect(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		       पूर्णांक sockaddr_len, पूर्णांक flags)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_aपंचांगsvc *addr;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक error;
+static int svc_connect(struct socket *sock, struct sockaddr *sockaddr,
+		       int sockaddr_len, int flags)
+{
+	DEFINE_WAIT(wait);
+	struct sock *sk = sock->sk;
+	struct sockaddr_atmsvc *addr;
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int error;
 
 	pr_debug("%p\n", vcc);
 	lock_sock(sk);
-	अगर (sockaddr_len != माप(काष्ठा sockaddr_aपंचांगsvc)) अणु
+	if (sockaddr_len != sizeof(struct sockaddr_atmsvc)) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (sock->state) अणु
-	शेष:
+	switch (sock->state) {
+	default:
 		error = -EINVAL;
-		जाओ out;
-	हाल SS_CONNECTED:
+		goto out;
+	case SS_CONNECTED:
 		error = -EISCONN;
-		जाओ out;
-	हाल SS_CONNECTING:
-		अगर (test_bit(ATM_VF_WAITING, &vcc->flags)) अणु
+		goto out;
+	case SS_CONNECTING:
+		if (test_bit(ATM_VF_WAITING, &vcc->flags)) {
 			error = -EALREADY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sock->state = SS_UNCONNECTED;
-		अगर (sk->sk_err) अणु
+		if (sk->sk_err) {
 			error = -sk->sk_err;
-			जाओ out;
-		पूर्ण
-		अवरोध;
-	हाल SS_UNCONNECTED:
-		addr = (काष्ठा sockaddr_aपंचांगsvc *) sockaddr;
-		अगर (addr->sas_family != AF_ATMSVC) अणु
+			goto out;
+		}
+		break;
+	case SS_UNCONNECTED:
+		addr = (struct sockaddr_atmsvc *) sockaddr;
+		if (addr->sas_family != AF_ATMSVC) {
 			error = -EAFNOSUPPORT;
-			जाओ out;
-		पूर्ण
-		अगर (!test_bit(ATM_VF_HASQOS, &vcc->flags)) अणु
+			goto out;
+		}
+		if (!test_bit(ATM_VF_HASQOS, &vcc->flags)) {
 			error = -EBADFD;
-			जाओ out;
-		पूर्ण
-		अगर (vcc->qos.txtp.traffic_class == ATM_ANYCLASS ||
-		    vcc->qos.rxtp.traffic_class == ATM_ANYCLASS) अणु
+			goto out;
+		}
+		if (vcc->qos.txtp.traffic_class == ATM_ANYCLASS ||
+		    vcc->qos.rxtp.traffic_class == ATM_ANYCLASS) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (!vcc->qos.txtp.traffic_class &&
-		    !vcc->qos.rxtp.traffic_class) अणु
+			goto out;
+		}
+		if (!vcc->qos.txtp.traffic_class &&
+		    !vcc->qos.rxtp.traffic_class) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		vcc->remote = *addr;
 		set_bit(ATM_VF_WAITING, &vcc->flags);
-		sigd_enq(vcc, as_connect, शून्य, शून्य, &vcc->remote);
-		अगर (flags & O_NONBLOCK) अणु
+		sigd_enq(vcc, as_connect, NULL, NULL, &vcc->remote);
+		if (flags & O_NONBLOCK) {
 			sock->state = SS_CONNECTING;
 			error = -EINPROGRESS;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		error = 0;
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-		जबतक (test_bit(ATM_VF_WAITING, &vcc->flags) && sigd) अणु
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		while (test_bit(ATM_VF_WAITING, &vcc->flags) && sigd) {
 			schedule();
-			अगर (!संकेत_pending(current)) अणु
-				prepare_to_रुको(sk_sleep(sk), &रुको,
+			if (!signal_pending(current)) {
+				prepare_to_wait(sk_sleep(sk), &wait,
 						TASK_INTERRUPTIBLE);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			pr_debug("*ABORT*\n");
 			/*
 			 * This is tricky:
-			 *   Kernel ---बंद--> Demon
-			 *   Kernel <--बंद--- Demon
+			 *   Kernel ---close--> Demon
+			 *   Kernel <--close--- Demon
 			 * or
-			 *   Kernel ---बंद--> Demon
+			 *   Kernel ---close--> Demon
 			 *   Kernel <--error--- Demon
 			 * or
-			 *   Kernel ---बंद--> Demon
+			 *   Kernel ---close--> Demon
 			 *   Kernel <--okay---- Demon
-			 *   Kernel <--बंद--- Demon
+			 *   Kernel <--close--- Demon
 			 */
-			sigd_enq(vcc, as_बंद, शून्य, शून्य, शून्य);
-			जबतक (test_bit(ATM_VF_WAITING, &vcc->flags) && sigd) अणु
-				prepare_to_रुको(sk_sleep(sk), &रुको,
+			sigd_enq(vcc, as_close, NULL, NULL, NULL);
+			while (test_bit(ATM_VF_WAITING, &vcc->flags) && sigd) {
+				prepare_to_wait(sk_sleep(sk), &wait,
 						TASK_INTERRUPTIBLE);
 				schedule();
-			पूर्ण
-			अगर (!sk->sk_err)
-				जबतक (!test_bit(ATM_VF_RELEASED, &vcc->flags) &&
-				       sigd) अणु
-					prepare_to_रुको(sk_sleep(sk), &रुको,
+			}
+			if (!sk->sk_err)
+				while (!test_bit(ATM_VF_RELEASED, &vcc->flags) &&
+				       sigd) {
+					prepare_to_wait(sk_sleep(sk), &wait,
 							TASK_INTERRUPTIBLE);
 					schedule();
-				पूर्ण
+				}
 			clear_bit(ATM_VF_REGIS, &vcc->flags);
 			clear_bit(ATM_VF_RELEASED, &vcc->flags);
 			clear_bit(ATM_VF_CLOSE, &vcc->flags);
 			    /* we're gone now but may connect later */
 			error = -EINTR;
-			अवरोध;
-		पूर्ण
-		finish_रुको(sk_sleep(sk), &रुको);
-		अगर (error)
-			जाओ out;
-		अगर (!sigd) अणु
+			break;
+		}
+		finish_wait(sk_sleep(sk), &wait);
+		if (error)
+			goto out;
+		if (!sigd) {
 			error = -EUNATCH;
-			जाओ out;
-		पूर्ण
-		अगर (sk->sk_err) अणु
+			goto out;
+		}
+		if (sk->sk_err) {
 			error = -sk->sk_err;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	vcc->qos.txtp.max_pcr = SELECT_TOP_PCR(vcc->qos.txtp);
 	vcc->qos.txtp.pcr = 0;
 	vcc->qos.txtp.min_pcr = 0;
 
 	error = vcc_connect(sock, vcc->itf, vcc->vpi, vcc->vci);
-	अगर (!error)
+	if (!error)
 		sock->state = SS_CONNECTED;
-	अन्यथा
-		(व्योम)svc_disconnect(vcc);
+	else
+		(void)svc_disconnect(vcc);
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक error;
+static int svc_listen(struct socket *sock, int backlog)
+{
+	DEFINE_WAIT(wait);
+	struct sock *sk = sock->sk;
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int error;
 
 	pr_debug("%p\n", vcc);
 	lock_sock(sk);
 	/* let server handle listen on unbound sockets */
-	अगर (test_bit(ATM_VF_SESSION, &vcc->flags)) अणु
+	if (test_bit(ATM_VF_SESSION, &vcc->flags)) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (test_bit(ATM_VF_LISTEN, &vcc->flags)) अणु
+		goto out;
+	}
+	if (test_bit(ATM_VF_LISTEN, &vcc->flags)) {
 		error = -EADDRINUSE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	set_bit(ATM_VF_WAITING, &vcc->flags);
-	sigd_enq(vcc, as_listen, शून्य, शून्य, &vcc->local);
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_UNINTERRUPTIBLE);
-		अगर (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
-			अवरोध;
+	sigd_enq(vcc, as_listen, NULL, NULL, &vcc->local);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
+		if (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
+			break;
 		schedule();
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	अगर (!sigd) अणु
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	if (!sigd) {
 		error = -EUNATCH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	set_bit(ATM_VF_LISTEN, &vcc->flags);
 	vcc_insert_socket(sk);
 	sk->sk_max_ack_backlog = backlog > 0 ? backlog : ATM_BACKLOG_DEFAULT;
 	error = -sk->sk_err;
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int svc_accept(struct socket *sock, struct socket *newsock, int flags,
 		      bool kern)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sk_buff *skb;
-	काष्ठा aपंचांगsvc_msg *msg;
-	काष्ठा aपंचांग_vcc *old_vcc = ATM_SD(sock);
-	काष्ठा aपंचांग_vcc *new_vcc;
-	पूर्णांक error;
+{
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb;
+	struct atmsvc_msg *msg;
+	struct atm_vcc *old_vcc = ATM_SD(sock);
+	struct atm_vcc *new_vcc;
+	int error;
 
 	lock_sock(sk);
 
 	error = svc_create(sock_net(sk), newsock, 0, kern);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	new_vcc = ATM_SD(newsock);
 
 	pr_debug("%p -> %p\n", old_vcc, new_vcc);
-	जबतक (1) अणु
-		DEFINE_WAIT(रुको);
+	while (1) {
+		DEFINE_WAIT(wait);
 
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-		जबतक (!(skb = skb_dequeue(&sk->sk_receive_queue)) &&
-		       sigd) अणु
-			अगर (test_bit(ATM_VF_RELEASED, &old_vcc->flags))
-				अवरोध;
-			अगर (test_bit(ATM_VF_CLOSE, &old_vcc->flags)) अणु
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		while (!(skb = skb_dequeue(&sk->sk_receive_queue)) &&
+		       sigd) {
+			if (test_bit(ATM_VF_RELEASED, &old_vcc->flags))
+				break;
+			if (test_bit(ATM_VF_CLOSE, &old_vcc->flags)) {
 				error = -sk->sk_err;
-				अवरोध;
-			पूर्ण
-			अगर (flags & O_NONBLOCK) अणु
+				break;
+			}
+			if (flags & O_NONBLOCK) {
 				error = -EAGAIN;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			release_sock(sk);
 			schedule();
 			lock_sock(sk);
-			अगर (संकेत_pending(current)) अणु
+			if (signal_pending(current)) {
 				error = -ERESTARTSYS;
-				अवरोध;
-			पूर्ण
-			prepare_to_रुको(sk_sleep(sk), &रुको,
+				break;
+			}
+			prepare_to_wait(sk_sleep(sk), &wait,
 					TASK_INTERRUPTIBLE);
-		पूर्ण
-		finish_रुको(sk_sleep(sk), &रुको);
-		अगर (error)
-			जाओ out;
-		अगर (!skb) अणु
+		}
+		finish_wait(sk_sleep(sk), &wait);
+		if (error)
+			goto out;
+		if (!skb) {
 			error = -EUNATCH;
-			जाओ out;
-		पूर्ण
-		msg = (काष्ठा aपंचांगsvc_msg *)skb->data;
+			goto out;
+		}
+		msg = (struct atmsvc_msg *)skb->data;
 		new_vcc->qos = msg->qos;
 		set_bit(ATM_VF_HASQOS, &new_vcc->flags);
 		new_vcc->remote = msg->svc;
@@ -381,253 +380,253 @@ out:
 		error = vcc_connect(newsock, msg->pvc.sap_addr.itf,
 				    msg->pvc.sap_addr.vpi,
 				    msg->pvc.sap_addr.vci);
-		dev_kमुक्त_skb(skb);
-		sk_acceptq_हटाओd(sk);
-		अगर (error) अणु
-			sigd_enq2(शून्य, as_reject, old_vcc, शून्य, शून्य,
+		dev_kfree_skb(skb);
+		sk_acceptq_removed(sk);
+		if (error) {
+			sigd_enq2(NULL, as_reject, old_vcc, NULL, NULL,
 				  &old_vcc->qos, error);
 			error = error == -EAGAIN ? -EBUSY : error;
-			जाओ out;
-		पूर्ण
-		/* रुको should be लघु, so we ignore the non-blocking flag */
+			goto out;
+		}
+		/* wait should be short, so we ignore the non-blocking flag */
 		set_bit(ATM_VF_WAITING, &new_vcc->flags);
-		sigd_enq(new_vcc, as_accept, old_vcc, शून्य, शून्य);
-		क्रम (;;) अणु
-			prepare_to_रुको(sk_sleep(sk_aपंचांग(new_vcc)), &रुको,
+		sigd_enq(new_vcc, as_accept, old_vcc, NULL, NULL);
+		for (;;) {
+			prepare_to_wait(sk_sleep(sk_atm(new_vcc)), &wait,
 					TASK_UNINTERRUPTIBLE);
-			अगर (!test_bit(ATM_VF_WAITING, &new_vcc->flags) || !sigd)
-				अवरोध;
+			if (!test_bit(ATM_VF_WAITING, &new_vcc->flags) || !sigd)
+				break;
 			release_sock(sk);
 			schedule();
 			lock_sock(sk);
-		पूर्ण
-		finish_रुको(sk_sleep(sk_aपंचांग(new_vcc)), &रुको);
-		अगर (!sigd) अणु
+		}
+		finish_wait(sk_sleep(sk_atm(new_vcc)), &wait);
+		if (!sigd) {
 			error = -EUNATCH;
-			जाओ out;
-		पूर्ण
-		अगर (!sk_aपंचांग(new_vcc)->sk_err)
-			अवरोध;
-		अगर (sk_aपंचांग(new_vcc)->sk_err != ERESTARTSYS) अणु
-			error = -sk_aपंचांग(new_vcc)->sk_err;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+		if (!sk_atm(new_vcc)->sk_err)
+			break;
+		if (sk_atm(new_vcc)->sk_err != ERESTARTSYS) {
+			error = -sk_atm(new_vcc)->sk_err;
+			goto out;
+		}
+	}
 	newsock->state = SS_CONNECTED;
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_getname(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-		       पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_aपंचांगsvc *addr;
+static int svc_getname(struct socket *sock, struct sockaddr *sockaddr,
+		       int peer)
+{
+	struct sockaddr_atmsvc *addr;
 
-	addr = (काष्ठा sockaddr_aपंचांगsvc *) sockaddr;
-	स_नकल(addr, peer ? &ATM_SD(sock)->remote : &ATM_SD(sock)->local,
-	       माप(काष्ठा sockaddr_aपंचांगsvc));
-	वापस माप(काष्ठा sockaddr_aपंचांगsvc);
-पूर्ण
+	addr = (struct sockaddr_atmsvc *) sockaddr;
+	memcpy(addr, peer ? &ATM_SD(sock)->remote : &ATM_SD(sock)->local,
+	       sizeof(struct sockaddr_atmsvc));
+	return sizeof(struct sockaddr_atmsvc);
+}
 
-पूर्णांक svc_change_qos(काष्ठा aपंचांग_vcc *vcc, काष्ठा aपंचांग_qos *qos)
-अणु
-	काष्ठा sock *sk = sk_aपंचांग(vcc);
-	DEFINE_WAIT(रुको);
+int svc_change_qos(struct atm_vcc *vcc, struct atm_qos *qos)
+{
+	struct sock *sk = sk_atm(vcc);
+	DEFINE_WAIT(wait);
 
 	set_bit(ATM_VF_WAITING, &vcc->flags);
-	sigd_enq2(vcc, as_modअगरy, शून्य, शून्य, &vcc->local, qos, 0);
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_UNINTERRUPTIBLE);
-		अगर (!test_bit(ATM_VF_WAITING, &vcc->flags) ||
-		    test_bit(ATM_VF_RELEASED, &vcc->flags) || !sigd) अणु
-			अवरोध;
-		पूर्ण
+	sigd_enq2(vcc, as_modify, NULL, NULL, &vcc->local, qos, 0);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_UNINTERRUPTIBLE);
+		if (!test_bit(ATM_VF_WAITING, &vcc->flags) ||
+		    test_bit(ATM_VF_RELEASED, &vcc->flags) || !sigd) {
+			break;
+		}
 		schedule();
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	अगर (!sigd)
-		वापस -EUNATCH;
-	वापस -sk->sk_err;
-पूर्ण
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	if (!sigd)
+		return -EUNATCH;
+	return -sk->sk_err;
+}
 
-अटल पूर्णांक svc_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक value, error = 0;
+static int svc_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct sock *sk = sock->sk;
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int value, error = 0;
 
 	lock_sock(sk);
-	चयन (optname) अणु
-	हाल SO_ATMSAP:
-		अगर (level != SOL_ATM || optlen != माप(काष्ठा aपंचांग_sap)) अणु
+	switch (optname) {
+	case SO_ATMSAP:
+		if (level != SOL_ATM || optlen != sizeof(struct atm_sap)) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (copy_from_sockptr(&vcc->sap, optval, optlen)) अणु
+			goto out;
+		}
+		if (copy_from_sockptr(&vcc->sap, optval, optlen)) {
 			error = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		set_bit(ATM_VF_HASSAP, &vcc->flags);
-		अवरोध;
-	हाल SO_MULTIPOINT:
-		अगर (level != SOL_ATM || optlen != माप(पूर्णांक)) अणु
+		break;
+	case SO_MULTIPOINT:
+		if (level != SOL_ATM || optlen != sizeof(int)) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (copy_from_sockptr(&value, optval, माप(पूर्णांक))) अणु
+			goto out;
+		}
+		if (copy_from_sockptr(&value, optval, sizeof(int))) {
 			error = -EFAULT;
-			जाओ out;
-		पूर्ण
-		अगर (value == 1)
+			goto out;
+		}
+		if (value == 1)
 			set_bit(ATM_VF_SESSION, &vcc->flags);
-		अन्यथा अगर (value == 0)
+		else if (value == 0)
 			clear_bit(ATM_VF_SESSION, &vcc->flags);
-		अन्यथा
+		else
 			error = -EINVAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error = vcc_setsockopt(sock, level, optname, optval, optlen);
-	पूर्ण
+	}
 
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक error = 0, len;
+static int svc_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	int error = 0, len;
 
 	lock_sock(sk);
-	अगर (!__SO_LEVEL_MATCH(optname, level) || optname != SO_ATMSAP) अणु
-		error = vcc_माला_लोockopt(sock, level, optname, optval, optlen);
-		जाओ out;
-	पूर्ण
-	अगर (get_user(len, optlen)) अणु
+	if (!__SO_LEVEL_MATCH(optname, level) || optname != SO_ATMSAP) {
+		error = vcc_getsockopt(sock, level, optname, optval, optlen);
+		goto out;
+	}
+	if (get_user(len, optlen)) {
 		error = -EFAULT;
-		जाओ out;
-	पूर्ण
-	अगर (len != माप(काष्ठा aपंचांग_sap)) अणु
+		goto out;
+	}
+	if (len != sizeof(struct atm_sap)) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (copy_to_user(optval, &ATM_SD(sock)->sap, माप(काष्ठा aपंचांग_sap))) अणु
+		goto out;
+	}
+	if (copy_to_user(optval, &ATM_SD(sock)->sap, sizeof(struct atm_sap))) {
 		error = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_addparty(काष्ठा socket *sock, काष्ठा sockaddr *sockaddr,
-			पूर्णांक sockaddr_len, पूर्णांक flags)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक error;
+static int svc_addparty(struct socket *sock, struct sockaddr *sockaddr,
+			int sockaddr_len, int flags)
+{
+	DEFINE_WAIT(wait);
+	struct sock *sk = sock->sk;
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int error;
 
 	lock_sock(sk);
 	set_bit(ATM_VF_WAITING, &vcc->flags);
-	sigd_enq(vcc, as_addparty, शून्य, शून्य,
-		 (काष्ठा sockaddr_aपंचांगsvc *) sockaddr);
-	अगर (flags & O_NONBLOCK) अणु
+	sigd_enq(vcc, as_addparty, NULL, NULL,
+		 (struct sockaddr_atmsvc *) sockaddr);
+	if (flags & O_NONBLOCK) {
 		error = -EINPROGRESS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	pr_debug("added wait queue\n");
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-		अगर (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
-			अवरोध;
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		if (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
+			break;
 		schedule();
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
+	}
+	finish_wait(sk_sleep(sk), &wait);
 	error = -xchg(&sk->sk_err_soft, 0);
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_dropparty(काष्ठा socket *sock, पूर्णांक ep_ref)
-अणु
-	DEFINE_WAIT(रुको);
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
-	पूर्णांक error;
+static int svc_dropparty(struct socket *sock, int ep_ref)
+{
+	DEFINE_WAIT(wait);
+	struct sock *sk = sock->sk;
+	struct atm_vcc *vcc = ATM_SD(sock);
+	int error;
 
 	lock_sock(sk);
 	set_bit(ATM_VF_WAITING, &vcc->flags);
-	sigd_enq2(vcc, as_dropparty, शून्य, शून्य, शून्य, शून्य, ep_ref);
-	क्रम (;;) अणु
-		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
-		अगर (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
-			अवरोध;
+	sigd_enq2(vcc, as_dropparty, NULL, NULL, NULL, NULL, ep_ref);
+	for (;;) {
+		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		if (!test_bit(ATM_VF_WAITING, &vcc->flags) || !sigd)
+			break;
 		schedule();
-	पूर्ण
-	finish_रुको(sk_sleep(sk), &रुको);
-	अगर (!sigd) अणु
+	}
+	finish_wait(sk_sleep(sk), &wait);
+	if (!sigd) {
 		error = -EUNATCH;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	error = -xchg(&sk->sk_err_soft, 0);
 out:
 	release_sock(sk);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक svc_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक error, ep_ref;
-	काष्ठा sockaddr_aपंचांगsvc sa;
-	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
+static int svc_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	int error, ep_ref;
+	struct sockaddr_atmsvc sa;
+	struct atm_vcc *vcc = ATM_SD(sock);
 
-	चयन (cmd) अणु
-	हाल ATM_ADDPARTY:
-		अगर (!test_bit(ATM_VF_SESSION, &vcc->flags))
-			वापस -EINVAL;
-		अगर (copy_from_user(&sa, (व्योम __user *) arg, माप(sa)))
-			वापस -EFAULT;
-		error = svc_addparty(sock, (काष्ठा sockaddr *)&sa, माप(sa),
+	switch (cmd) {
+	case ATM_ADDPARTY:
+		if (!test_bit(ATM_VF_SESSION, &vcc->flags))
+			return -EINVAL;
+		if (copy_from_user(&sa, (void __user *) arg, sizeof(sa)))
+			return -EFAULT;
+		error = svc_addparty(sock, (struct sockaddr *)&sa, sizeof(sa),
 				     0);
-		अवरोध;
-	हाल ATM_DROPPARTY:
-		अगर (!test_bit(ATM_VF_SESSION, &vcc->flags))
-			वापस -EINVAL;
-		अगर (copy_from_user(&ep_ref, (व्योम __user *) arg, माप(पूर्णांक)))
-			वापस -EFAULT;
+		break;
+	case ATM_DROPPARTY:
+		if (!test_bit(ATM_VF_SESSION, &vcc->flags))
+			return -EINVAL;
+		if (copy_from_user(&ep_ref, (void __user *) arg, sizeof(int)))
+			return -EFAULT;
 		error = svc_dropparty(sock, ep_ref);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error = vcc_ioctl(sock, cmd, arg);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक svc_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-			    अचिन्हित दीर्घ arg)
-अणु
-	/* The definition of ATM_ADDPARTY uses the size of काष्ठा aपंचांग_iobuf.
-	   But actually it takes a काष्ठा sockaddr_aपंचांगsvc, which करोesn't need
-	   compat handling. So all we have to करो is fix up cmd... */
-	अगर (cmd == COMPAT_ATM_ADDPARTY)
+#ifdef CONFIG_COMPAT
+static int svc_compat_ioctl(struct socket *sock, unsigned int cmd,
+			    unsigned long arg)
+{
+	/* The definition of ATM_ADDPARTY uses the size of struct atm_iobuf.
+	   But actually it takes a struct sockaddr_atmsvc, which doesn't need
+	   compat handling. So all we have to do is fix up cmd... */
+	if (cmd == COMPAT_ATM_ADDPARTY)
 		cmd = ATM_ADDPARTY;
 
-	अगर (cmd == ATM_ADDPARTY || cmd == ATM_DROPPARTY)
-		वापस svc_ioctl(sock, cmd, arg);
-	अन्यथा
-		वापस vcc_compat_ioctl(sock, cmd, arg);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COMPAT */
+	if (cmd == ATM_ADDPARTY || cmd == ATM_DROPPARTY)
+		return svc_ioctl(sock, cmd, arg);
+	else
+		return vcc_compat_ioctl(sock, cmd, arg);
+}
+#endif /* CONFIG_COMPAT */
 
-अटल स्थिर काष्ठा proto_ops svc_proto_ops = अणु
+static const struct proto_ops svc_proto_ops = {
 	.family =	PF_ATMSVC,
 	.owner =	THIS_MODULE,
 
@@ -639,55 +638,55 @@ out:
 	.getname =	svc_getname,
 	.poll =		vcc_poll,
 	.ioctl =	svc_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl =	svc_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.gettstamp =	sock_gettstamp,
 	.listen =	svc_listen,
-	.shutकरोwn =	svc_shutकरोwn,
+	.shutdown =	svc_shutdown,
 	.setsockopt =	svc_setsockopt,
-	.माला_लोockopt =	svc_माला_लोockopt,
+	.getsockopt =	svc_getsockopt,
 	.sendmsg =	vcc_sendmsg,
 	.recvmsg =	vcc_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	sock_no_sendpage,
-पूर्ण;
+};
 
 
-अटल पूर्णांक svc_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		      पूर्णांक kern)
-अणु
-	पूर्णांक error;
+static int svc_create(struct net *net, struct socket *sock, int protocol,
+		      int kern)
+{
+	int error;
 
-	अगर (!net_eq(net, &init_net))
-		वापस -EAFNOSUPPORT;
+	if (!net_eq(net, &init_net))
+		return -EAFNOSUPPORT;
 
 	sock->ops = &svc_proto_ops;
 	error = vcc_create(net, sock, protocol, AF_ATMSVC, kern);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	ATM_SD(sock)->local.sas_family = AF_ATMSVC;
 	ATM_SD(sock)->remote.sas_family = AF_ATMSVC;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा net_proto_family svc_family_ops = अणु
+static const struct net_proto_family svc_family_ops = {
 	.family = PF_ATMSVC,
 	.create = svc_create,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 
 /*
  *	Initialize the ATM SVC protocol family
  */
 
-पूर्णांक __init aपंचांगsvc_init(व्योम)
-अणु
-	वापस sock_रेजिस्टर(&svc_family_ops);
-पूर्ण
+int __init atmsvc_init(void)
+{
+	return sock_register(&svc_family_ops);
+}
 
-व्योम aपंचांगsvc_निकास(व्योम)
-अणु
-	sock_unरेजिस्टर(PF_ATMSVC);
-पूर्ण
+void atmsvc_exit(void)
+{
+	sock_unregister(PF_ATMSVC);
+}

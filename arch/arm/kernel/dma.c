@@ -1,284 +1,283 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/kernel/dma.c
  *
  *  Copyright (C) 1995-2000 Russell King
  *
- *  Front-end to the DMA handling.  This handles the allocation/मुक्तing
- *  of DMA channels, and provides a unअगरied पूर्णांकerface to the machines
+ *  Front-end to the DMA handling.  This handles the allocation/freeing
+ *  of DMA channels, and provides a unified interface to the machines
  *  DMA facilities.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/proc_fs.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/errno.h>
+#include <linux/scatterlist.h>
+#include <linux/seq_file.h>
+#include <linux/proc_fs.h>
 
-#समावेश <यंत्र/dma.h>
+#include <asm/dma.h>
 
-#समावेश <यंत्र/mach/dma.h>
+#include <asm/mach/dma.h>
 
 DEFINE_RAW_SPINLOCK(dma_spin_lock);
 EXPORT_SYMBOL(dma_spin_lock);
 
-अटल dma_t *dma_chan[MAX_DMA_CHANNELS];
+static dma_t *dma_chan[MAX_DMA_CHANNELS];
 
-अटल अंतरभूत dma_t *dma_channel(अचिन्हित पूर्णांक chan)
-अणु
-	अगर (chan >= MAX_DMA_CHANNELS)
-		वापस शून्य;
+static inline dma_t *dma_channel(unsigned int chan)
+{
+	if (chan >= MAX_DMA_CHANNELS)
+		return NULL;
 
-	वापस dma_chan[chan];
-पूर्ण
+	return dma_chan[chan];
+}
 
-पूर्णांक __init isa_dma_add(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	अगर (!dma->d_ops)
-		वापस -EINVAL;
+int __init isa_dma_add(unsigned int chan, dma_t *dma)
+{
+	if (!dma->d_ops)
+		return -EINVAL;
 
 	sg_init_table(&dma->buf, 1);
 
-	अगर (dma_chan[chan])
-		वापस -EBUSY;
+	if (dma_chan[chan])
+		return -EBUSY;
 	dma_chan[chan] = dma;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Request DMA channel
  *
- * On certain platक्रमms, we have to allocate an पूर्णांकerrupt as well...
+ * On certain platforms, we have to allocate an interrupt as well...
  */
-पूर्णांक request_dma(अचिन्हित पूर्णांक chan, स्थिर अक्षर *device_id)
-अणु
+int request_dma(unsigned int chan, const char *device_id)
+{
 	dma_t *dma = dma_channel(chan);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!dma)
-		जाओ bad_dma;
+	if (!dma)
+		goto bad_dma;
 
-	अगर (xchg(&dma->lock, 1) != 0)
-		जाओ busy;
+	if (xchg(&dma->lock, 1) != 0)
+		goto busy;
 
 	dma->device_id = device_id;
 	dma->active    = 0;
 	dma->invalid   = 1;
 
 	ret = 0;
-	अगर (dma->d_ops->request)
+	if (dma->d_ops->request)
 		ret = dma->d_ops->request(chan, dma);
 
-	अगर (ret)
+	if (ret)
 		xchg(&dma->lock, 0);
 
-	वापस ret;
+	return ret;
 
 bad_dma:
 	pr_err("dma: trying to allocate DMA%d\n", chan);
-	वापस -EINVAL;
+	return -EINVAL;
 
 busy:
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 EXPORT_SYMBOL(request_dma);
 
 /*
  * Free DMA channel
  *
- * On certain platक्रमms, we have to मुक्त पूर्णांकerrupt as well...
+ * On certain platforms, we have to free interrupt as well...
  */
-व्योम मुक्त_dma(अचिन्हित पूर्णांक chan)
-अणु
+void free_dma(unsigned int chan)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (!dma)
-		जाओ bad_dma;
+	if (!dma)
+		goto bad_dma;
 
-	अगर (dma->active) अणु
+	if (dma->active) {
 		pr_err("dma%d: freeing active DMA\n", chan);
 		dma->d_ops->disable(chan, dma);
 		dma->active = 0;
-	पूर्ण
+	}
 
-	अगर (xchg(&dma->lock, 0) != 0) अणु
-		अगर (dma->d_ops->मुक्त)
-			dma->d_ops->मुक्त(chan, dma);
-		वापस;
-	पूर्ण
+	if (xchg(&dma->lock, 0) != 0) {
+		if (dma->d_ops->free)
+			dma->d_ops->free(chan, dma);
+		return;
+	}
 
 	pr_err("dma%d: trying to free free DMA\n", chan);
-	वापस;
+	return;
 
 bad_dma:
 	pr_err("dma: trying to free DMA%d\n", chan);
-पूर्ण
-EXPORT_SYMBOL(मुक्त_dma);
+}
+EXPORT_SYMBOL(free_dma);
 
 /* Set DMA Scatter-Gather list
  */
-व्योम set_dma_sg (अचिन्हित पूर्णांक chan, काष्ठा scatterlist *sg, पूर्णांक nr_sg)
-अणु
+void set_dma_sg (unsigned int chan, struct scatterlist *sg, int nr_sg)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (dma->active)
+	if (dma->active)
 		pr_err("dma%d: altering DMA SG while DMA active\n", chan);
 
 	dma->sg = sg;
 	dma->sgcount = nr_sg;
 	dma->invalid = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(set_dma_sg);
 
 /* Set DMA address
  *
- * Copy address to the काष्ठाure, and set the invalid bit
+ * Copy address to the structure, and set the invalid bit
  */
-व्योम __set_dma_addr (अचिन्हित पूर्णांक chan, व्योम *addr)
-अणु
+void __set_dma_addr (unsigned int chan, void *addr)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (dma->active)
+	if (dma->active)
 		pr_err("dma%d: altering DMA address while DMA active\n", chan);
 
-	dma->sg = शून्य;
+	dma->sg = NULL;
 	dma->addr = addr;
 	dma->invalid = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(__set_dma_addr);
 
 /* Set DMA byte count
  *
- * Copy address to the काष्ठाure, and set the invalid bit
+ * Copy address to the structure, and set the invalid bit
  */
-व्योम set_dma_count (अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ count)
-अणु
+void set_dma_count (unsigned int chan, unsigned long count)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (dma->active)
+	if (dma->active)
 		pr_err("dma%d: altering DMA count while DMA active\n", chan);
 
-	dma->sg = शून्य;
+	dma->sg = NULL;
 	dma->count = count;
 	dma->invalid = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(set_dma_count);
 
 /* Set DMA direction mode
  */
-व्योम set_dma_mode (अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक mode)
-अणु
+void set_dma_mode (unsigned int chan, unsigned int mode)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (dma->active)
+	if (dma->active)
 		pr_err("dma%d: altering DMA mode while DMA active\n", chan);
 
 	dma->dma_mode = mode;
 	dma->invalid = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(set_dma_mode);
 
 /* Enable DMA channel
  */
-व्योम enable_dma (अचिन्हित पूर्णांक chan)
-अणु
+void enable_dma (unsigned int chan)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (!dma->lock)
-		जाओ मुक्त_dma;
+	if (!dma->lock)
+		goto free_dma;
 
-	अगर (dma->active == 0) अणु
+	if (dma->active == 0) {
 		dma->active = 1;
 		dma->d_ops->enable(chan, dma);
-	पूर्ण
-	वापस;
+	}
+	return;
 
-मुक्त_dma:
+free_dma:
 	pr_err("dma%d: trying to enable free DMA\n", chan);
 	BUG();
-पूर्ण
+}
 EXPORT_SYMBOL(enable_dma);
 
 /* Disable DMA channel
  */
-व्योम disable_dma (अचिन्हित पूर्णांक chan)
-अणु
+void disable_dma (unsigned int chan)
+{
 	dma_t *dma = dma_channel(chan);
 
-	अगर (!dma->lock)
-		जाओ मुक्त_dma;
+	if (!dma->lock)
+		goto free_dma;
 
-	अगर (dma->active == 1) अणु
+	if (dma->active == 1) {
 		dma->active = 0;
 		dma->d_ops->disable(chan, dma);
-	पूर्ण
-	वापस;
+	}
+	return;
 
-मुक्त_dma:
+free_dma:
 	pr_err("dma%d: trying to disable free DMA\n", chan);
 	BUG();
-पूर्ण
+}
 EXPORT_SYMBOL(disable_dma);
 
 /*
- * Is the specअगरied DMA channel active?
+ * Is the specified DMA channel active?
  */
-पूर्णांक dma_channel_active(अचिन्हित पूर्णांक chan)
-अणु
+int dma_channel_active(unsigned int chan)
+{
 	dma_t *dma = dma_channel(chan);
-	वापस dma->active;
-पूर्ण
+	return dma->active;
+}
 EXPORT_SYMBOL(dma_channel_active);
 
-व्योम set_dma_page(अचिन्हित पूर्णांक chan, अक्षर pagenr)
-अणु
+void set_dma_page(unsigned int chan, char pagenr)
+{
 	pr_err("dma%d: trying to set_dma_page\n", chan);
-पूर्ण
+}
 EXPORT_SYMBOL(set_dma_page);
 
-व्योम set_dma_speed(अचिन्हित पूर्णांक chan, पूर्णांक cycle_ns)
-अणु
+void set_dma_speed(unsigned int chan, int cycle_ns)
+{
 	dma_t *dma = dma_channel(chan);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (dma->d_ops->setspeed)
+	if (dma->d_ops->setspeed)
 		ret = dma->d_ops->setspeed(chan, dma, cycle_ns);
 	dma->speed = ret;
-पूर्ण
+}
 EXPORT_SYMBOL(set_dma_speed);
 
-पूर्णांक get_dma_residue(अचिन्हित पूर्णांक chan)
-अणु
+int get_dma_residue(unsigned int chan)
+{
 	dma_t *dma = dma_channel(chan);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (dma->d_ops->residue)
+	if (dma->d_ops->residue)
 		ret = dma->d_ops->residue(chan, dma);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(get_dma_residue);
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक proc_dma_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_PROC_FS
+static int proc_dma_show(struct seq_file *m, void *v)
+{
+	int i;
 
-	क्रम (i = 0 ; i < MAX_DMA_CHANNELS ; i++) अणु
+	for (i = 0 ; i < MAX_DMA_CHANNELS ; i++) {
 		dma_t *dma = dma_channel(i);
-		अगर (dma && dma->lock)
-			seq_म_लिखो(m, "%2d: %s\n", i, dma->device_id);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (dma && dma->lock)
+			seq_printf(m, "%2d: %s\n", i, dma->device_id);
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init proc_dma_init(व्योम)
-अणु
-	proc_create_single("dma", 0, शून्य, proc_dma_show);
-	वापस 0;
-पूर्ण
+static int __init proc_dma_init(void)
+{
+	proc_create_single("dma", 0, NULL, proc_dma_show);
+	return 0;
+}
 
 __initcall(proc_dma_init);
-#पूर्ण_अगर
+#endif

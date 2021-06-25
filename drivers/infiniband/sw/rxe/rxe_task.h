@@ -1,70 +1,69 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#अगर_अघोषित RXE_TASK_H
-#घोषणा RXE_TASK_H
+#ifndef RXE_TASK_H
+#define RXE_TASK_H
 
-क्रमागत अणु
+enum {
 	TASK_STATE_START	= 0,
 	TASK_STATE_BUSY		= 1,
 	TASK_STATE_ARMED	= 2,
-पूर्ण;
+};
 
 /*
- * data काष्ठाure to describe a 'task' which is a लघु
- * function that वापसs 0 as दीर्घ as it needs to be
+ * data structure to describe a 'task' which is a short
+ * function that returns 0 as long as it needs to be
  * called again.
  */
-काष्ठा rxe_task अणु
-	व्योम			*obj;
-	काष्ठा tasklet_काष्ठा	tasklet;
-	पूर्णांक			state;
-	spinlock_t		state_lock; /* spinlock क्रम task state */
-	व्योम			*arg;
-	पूर्णांक			(*func)(व्योम *arg);
-	पूर्णांक			ret;
-	अक्षर			name[16];
+struct rxe_task {
+	void			*obj;
+	struct tasklet_struct	tasklet;
+	int			state;
+	spinlock_t		state_lock; /* spinlock for task state */
+	void			*arg;
+	int			(*func)(void *arg);
+	int			ret;
+	char			name[16];
 	bool			destroyed;
-पूर्ण;
+};
 
 /*
- * init rxe_task काष्ठाure
+ * init rxe_task structure
  *	arg  => parameter to pass to fcn
- *	func => function to call until it वापसs != 0
+ *	func => function to call until it returns != 0
  */
-पूर्णांक rxe_init_task(व्योम *obj, काष्ठा rxe_task *task,
-		  व्योम *arg, पूर्णांक (*func)(व्योम *), अक्षर *name);
+int rxe_init_task(void *obj, struct rxe_task *task,
+		  void *arg, int (*func)(void *), char *name);
 
 /* cleanup task */
-व्योम rxe_cleanup_task(काष्ठा rxe_task *task);
+void rxe_cleanup_task(struct rxe_task *task);
 
 /*
  * raw call to func in loop without any checking
  * can call when tasklets are disabled
  */
-पूर्णांक __rxe_करो_task(काष्ठा rxe_task *task);
+int __rxe_do_task(struct rxe_task *task);
 
 /*
- * common function called by any of the मुख्य tasklets
+ * common function called by any of the main tasklets
  * If there is any chance that there is additional
- * work to करो someone must reschedule the task beक्रमe
+ * work to do someone must reschedule the task before
  * leaving
  */
-व्योम rxe_करो_task(काष्ठा tasklet_काष्ठा *t);
+void rxe_do_task(struct tasklet_struct *t);
 
-/* run a task, अन्यथा schedule it to run as a tasklet, The decision
+/* run a task, else schedule it to run as a tasklet, The decision
  * to run or schedule tasklet is based on the parameter sched.
  */
-व्योम rxe_run_task(काष्ठा rxe_task *task, पूर्णांक sched);
+void rxe_run_task(struct rxe_task *task, int sched);
 
 /* keep a task from scheduling */
-व्योम rxe_disable_task(काष्ठा rxe_task *task);
+void rxe_disable_task(struct rxe_task *task);
 
 /* allow task to run */
-व्योम rxe_enable_task(काष्ठा rxe_task *task);
+void rxe_enable_task(struct rxe_task *task);
 
-#पूर्ण_अगर /* RXE_TASK_H */
+#endif /* RXE_TASK_H */

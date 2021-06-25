@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2013, Michael Ellerman, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकपन.स>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <sys/prctl.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <sys/prctl.h>
 
-#समावेश "event.h"
-#समावेश "utils.h"
-#समावेश "lib.h"
+#include "event.h"
+#include "utils.h"
+#include "lib.h"
 
-बाह्य व्योम thirty_two_inकाष्ठाion_loop(u64 loops);
+extern void thirty_two_instruction_loop(u64 loops);
 
-अटल व्योम setup_event(काष्ठा event *e, u64 config, अक्षर *name)
-अणु
+static void setup_event(struct event *e, u64 config, char *name)
+{
 	event_init_opts(e, config, PERF_TYPE_HARDWARE, name);
 
 	e->attr.disabled = 1;
 	e->attr.exclude_kernel = 1;
 	e->attr.exclude_hv = 1;
 	e->attr.exclude_idle = 1;
-पूर्ण
+}
 
-अटल पूर्णांक करो_count_loop(काष्ठा event *events, u64 inकाष्ठाions,
+static int do_count_loop(struct event *events, u64 instructions,
 			 u64 overhead, bool report)
-अणु
-	s64 dअगरference, expected;
-	द्विगुन percentage;
+{
+	s64 difference, expected;
+	double percentage;
 
 	prctl(PR_TASK_PERF_EVENTS_ENABLE);
 
-	/* Run क्रम 1M inकाष्ठाions */
-	thirty_two_inकाष्ठाion_loop(inकाष्ठाions >> 5);
+	/* Run for 1M instructions */
+	thirty_two_instruction_loop(instructions >> 5);
 
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-	event_पढ़ो(&events[0]);
-	event_पढ़ो(&events[1]);
+	event_read(&events[0]);
+	event_read(&events[1]);
 
-	expected = inकाष्ठाions + overhead;
-	dअगरference = events[0].result.value - expected;
-	percentage = (द्विगुन)dअगरference / events[0].result.value * 100;
+	expected = instructions + overhead;
+	difference = events[0].result.value - expected;
+	percentage = (double)difference / events[0].result.value * 100;
 
-	अगर (report) अणु
+	if (report) {
 		event_report(&events[0]);
 		event_report(&events[1]);
 
-		म_लिखो("Looped for %llu instructions, overhead %llu\n", inकाष्ठाions, overhead);
-		म_लिखो("Expected %llu\n", expected);
-		म_लिखो("Actual   %llu\n", events[0].result.value);
-		म_लिखो("Delta    %lld, %f%%\n", dअगरference, percentage);
-	पूर्ण
+		printf("Looped for %llu instructions, overhead %llu\n", instructions, overhead);
+		printf("Expected %llu\n", expected);
+		printf("Actual   %llu\n", events[0].result.value);
+		printf("Delta    %lld, %f%%\n", difference, percentage);
+	}
 
 	event_reset(&events[0]);
 	event_reset(&events[1]);
 
-	अगर (dअगरference < 0)
-		dअगरference = -dअगरference;
+	if (difference < 0)
+		difference = -difference;
 
-	/* Tolerate a dअगरference below 0.0001 % */
-	dअगरference *= 10000 * 100;
-	अगर (dअगरference / events[0].result.value)
-		वापस -1;
+	/* Tolerate a difference below 0.0001 % */
+	difference *= 10000 * 100;
+	if (difference / events[0].result.value)
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Count how many inकाष्ठाions it takes to करो a null loop */
-अटल u64 determine_overhead(काष्ठा event *events)
-अणु
+/* Count how many instructions it takes to do a null loop */
+static u64 determine_overhead(struct event *events)
+{
 	u64 current, overhead;
-	पूर्णांक i;
+	int i;
 
-	करो_count_loop(events, 0, 0, false);
+	do_count_loop(events, 0, 0, false);
 	overhead = events[0].result.value;
 
-	क्रम (i = 0; i < 100; i++) अणु
-		करो_count_loop(events, 0, 0, false);
+	for (i = 0; i < 100; i++) {
+		do_count_loop(events, 0, 0, false);
 		current = events[0].result.value;
-		अगर (current < overhead) अणु
-			म_लिखो("Replacing overhead %llu with %llu\n", overhead, current);
+		if (current < overhead) {
+			printf("Replacing overhead %llu with %llu\n", overhead, current);
 			overhead = current;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस overhead;
-पूर्ण
+	return overhead;
+}
 
-अटल पूर्णांक test_body(व्योम)
-अणु
-	काष्ठा event events[2];
+static int test_body(void)
+{
+	struct event events[2];
 	u64 overhead;
 
 	setup_event(&events[0], PERF_COUNT_HW_INSTRUCTIONS, "instructions");
 	setup_event(&events[1], PERF_COUNT_HW_CPU_CYCLES, "cycles");
 
-	अगर (event_खोलो(&events[0])) अणु
-		लिखो_त्रुटि("perf_event_open");
-		वापस -1;
-	पूर्ण
+	if (event_open(&events[0])) {
+		perror("perf_event_open");
+		return -1;
+	}
 
-	अगर (event_खोलो_with_group(&events[1], events[0].fd)) अणु
-		लिखो_त्रुटि("perf_event_open");
-		वापस -1;
-	पूर्ण
+	if (event_open_with_group(&events[1], events[0].fd)) {
+		perror("perf_event_open");
+		return -1;
+	}
 
 	overhead = determine_overhead(events);
-	म_लिखो("Overhead of null loop: %llu instructions\n", overhead);
+	printf("Overhead of null loop: %llu instructions\n", overhead);
 
-	/* Run क्रम 1Mi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 1000000, overhead, true));
+	/* Run for 1Mi instructions */
+	FAIL_IF(do_count_loop(events, 1000000, overhead, true));
 
-	/* Run क्रम 10Mi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 10000000, overhead, true));
+	/* Run for 10Mi instructions */
+	FAIL_IF(do_count_loop(events, 10000000, overhead, true));
 
-	/* Run क्रम 100Mi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 100000000, overhead, true));
+	/* Run for 100Mi instructions */
+	FAIL_IF(do_count_loop(events, 100000000, overhead, true));
 
-	/* Run क्रम 1Bi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 1000000000, overhead, true));
+	/* Run for 1Bi instructions */
+	FAIL_IF(do_count_loop(events, 1000000000, overhead, true));
 
-	/* Run क्रम 16Bi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 16000000000, overhead, true));
+	/* Run for 16Bi instructions */
+	FAIL_IF(do_count_loop(events, 16000000000, overhead, true));
 
-	/* Run क्रम 64Bi inकाष्ठाions */
-	FAIL_IF(करो_count_loop(events, 64000000000, overhead, true));
+	/* Run for 64Bi instructions */
+	FAIL_IF(do_count_loop(events, 64000000000, overhead, true));
 
-	event_बंद(&events[0]);
-	event_बंद(&events[1]);
+	event_close(&events[0]);
+	event_close(&events[1]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक count_inकाष्ठाions(व्योम)
-अणु
-	वापस eat_cpu(test_body);
-पूर्ण
+static int count_instructions(void)
+{
+	return eat_cpu(test_body);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(count_inकाष्ठाions, "count_instructions");
-पूर्ण
+int main(void)
+{
+	return test_harness(count_instructions, "count_instructions");
+}

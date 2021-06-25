@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <माला.स>
-#समावेश "debug.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <string.h>
+#include "debug.h"
 
-#समावेश "demangle-rust.h"
+#include "demangle-rust.h"
 
 /*
  * Mangled Rust symbols look like this:
@@ -14,12 +13,12 @@
  *
  *     <std::sys::fd::FileDesc as core::ops::Drop>::drop
  *
- * The last component of the path is a 64-bit hash in lowerहाल hex, prefixed
- * with "h". Rust करोes not have a global namespace between crates, an illusion
- * which Rust मुख्यtains by using the hash to distinguish things that would
+ * The last component of the path is a 64-bit hash in lowercase hex, prefixed
+ * with "h". Rust does not have a global namespace between crates, an illusion
+ * which Rust maintains by using the hash to distinguish things that would
  * otherwise have the same symbol.
  *
- * Any path component not starting with a XID_Start अक्षरacter is prefixed with
+ * Any path component not starting with a XID_Start character is prefixed with
  * "_".
  *
  * The following escape sequences are used:
@@ -38,165 +37,165 @@
  *     "]"  =>  $u5d$
  *     "~"  =>  $u7e$
  *
- * A द्विगुन ".." means "::" and a single "." means "-".
+ * A double ".." means "::" and a single "." means "-".
  *
- * The only अक्षरacters allowed in the mangled symbol are a-zA-Z0-9 and _.:$
+ * The only characters allowed in the mangled symbol are a-zA-Z0-9 and _.:$
  */
 
-अटल स्थिर अक्षर *hash_prefix = "::h";
-अटल स्थिर माप_प्रकार hash_prefix_len = 3;
-अटल स्थिर माप_प्रकार hash_len = 16;
+static const char *hash_prefix = "::h";
+static const size_t hash_prefix_len = 3;
+static const size_t hash_len = 16;
 
-अटल bool is_prefixed_hash(स्थिर अक्षर *start);
-अटल bool looks_like_rust(स्थिर अक्षर *sym, माप_प्रकार len);
-अटल bool unescape(स्थिर अक्षर **in, अक्षर **out, स्थिर अक्षर *seq, अक्षर value);
+static bool is_prefixed_hash(const char *start);
+static bool looks_like_rust(const char *sym, size_t len);
+static bool unescape(const char **in, char **out, const char *seq, char value);
 
 /*
  * INPUT:
  *     sym: symbol that has been through BFD-demangling
  *
- * This function looks क्रम the following indicators:
+ * This function looks for the following indicators:
  *
- *  1. The hash must consist of "h" followed by 16 lowerहाल hex digits.
+ *  1. The hash must consist of "h" followed by 16 lowercase hex digits.
  *
  *  2. As a sanity check, the hash must use between 5 and 15 of the 16 possible
- *     hex digits. This is true of 99.9998% of hashes so once in your lअगरe you
- *     may see a false negative. The poपूर्णांक is to notice path components that
+ *     hex digits. This is true of 99.9998% of hashes so once in your life you
+ *     may see a false negative. The point is to notice path components that
  *     could be Rust hashes but are probably not, like "haaaaaaaaaaaaaaaa". In
- *     this हाल a false positive (non-Rust symbol has an important path
- *     component हटाओd because it looks like a Rust hash) is worse than a
+ *     this case a false positive (non-Rust symbol has an important path
+ *     component removed because it looks like a Rust hash) is worse than a
  *     false negative (the rare Rust symbol is not demangled) so this sets the
  *     balance in favor of false negatives.
  *
- *  3. There must be no अक्षरacters other than a-zA-Z0-9 and _.:$
+ *  3. There must be no characters other than a-zA-Z0-9 and _.:$
  *
  *  4. There must be no unrecognized $-sign sequences.
  *
- *  5. There must be no sequence of three or more करोts in a row ("...").
+ *  5. There must be no sequence of three or more dots in a row ("...").
  */
 bool
-rust_is_mangled(स्थिर अक्षर *sym)
-अणु
-	माप_प्रकार len, len_without_hash;
+rust_is_mangled(const char *sym)
+{
+	size_t len, len_without_hash;
 
-	अगर (!sym)
-		वापस false;
+	if (!sym)
+		return false;
 
-	len = म_माप(sym);
-	अगर (len <= hash_prefix_len + hash_len)
-		/* Not दीर्घ enough to contain "::h" + hash + something अन्यथा */
-		वापस false;
+	len = strlen(sym);
+	if (len <= hash_prefix_len + hash_len)
+		/* Not long enough to contain "::h" + hash + something else */
+		return false;
 
 	len_without_hash = len - (hash_prefix_len + hash_len);
-	अगर (!is_prefixed_hash(sym + len_without_hash))
-		वापस false;
+	if (!is_prefixed_hash(sym + len_without_hash))
+		return false;
 
-	वापस looks_like_rust(sym, len_without_hash);
-पूर्ण
+	return looks_like_rust(sym, len_without_hash);
+}
 
 /*
- * A hash is the prefix "::h" followed by 16 lowerहाल hex digits. The hex
+ * A hash is the prefix "::h" followed by 16 lowercase hex digits. The hex
  * digits must comprise between 5 and 15 (inclusive) distinct digits.
  */
-अटल bool is_prefixed_hash(स्थिर अक्षर *str)
-अणु
-	स्थिर अक्षर *end;
+static bool is_prefixed_hash(const char *str)
+{
+	const char *end;
 	bool seen[16];
-	माप_प्रकार i;
-	पूर्णांक count;
+	size_t i;
+	int count;
 
-	अगर (म_भेदन(str, hash_prefix, hash_prefix_len))
-		वापस false;
+	if (strncmp(str, hash_prefix, hash_prefix_len))
+		return false;
 	str += hash_prefix_len;
 
-	स_रखो(seen, false, माप(seen));
-	क्रम (end = str + hash_len; str < end; str++)
-		अगर (*str >= '0' && *str <= '9')
+	memset(seen, false, sizeof(seen));
+	for (end = str + hash_len; str < end; str++)
+		if (*str >= '0' && *str <= '9')
 			seen[*str - '0'] = true;
-		अन्यथा अगर (*str >= 'a' && *str <= 'f')
+		else if (*str >= 'a' && *str <= 'f')
 			seen[*str - 'a' + 10] = true;
-		अन्यथा
-			वापस false;
+		else
+			return false;
 
 	/* Count how many distinct digits seen */
 	count = 0;
-	क्रम (i = 0; i < 16; i++)
-		अगर (seen[i])
+	for (i = 0; i < 16; i++)
+		if (seen[i])
 			count++;
 
-	वापस count >= 5 && count <= 15;
-पूर्ण
+	return count >= 5 && count <= 15;
+}
 
-अटल bool looks_like_rust(स्थिर अक्षर *str, माप_प्रकार len)
-अणु
-	स्थिर अक्षर *end = str + len;
+static bool looks_like_rust(const char *str, size_t len)
+{
+	const char *end = str + len;
 
-	जबतक (str < end)
-		चयन (*str) अणु
-		हाल '$':
-			अगर (!म_भेदन(str, "$C$", 3))
+	while (str < end)
+		switch (*str) {
+		case '$':
+			if (!strncmp(str, "$C$", 3))
 				str += 3;
-			अन्यथा अगर (!म_भेदन(str, "$SP$", 4)
-					|| !म_भेदन(str, "$BP$", 4)
-					|| !म_भेदन(str, "$RF$", 4)
-					|| !म_भेदन(str, "$LT$", 4)
-					|| !म_भेदन(str, "$GT$", 4)
-					|| !म_भेदन(str, "$LP$", 4)
-					|| !म_भेदन(str, "$RP$", 4))
+			else if (!strncmp(str, "$SP$", 4)
+					|| !strncmp(str, "$BP$", 4)
+					|| !strncmp(str, "$RF$", 4)
+					|| !strncmp(str, "$LT$", 4)
+					|| !strncmp(str, "$GT$", 4)
+					|| !strncmp(str, "$LP$", 4)
+					|| !strncmp(str, "$RP$", 4))
 				str += 4;
-			अन्यथा अगर (!म_भेदन(str, "$u20$", 5)
-					|| !म_भेदन(str, "$u27$", 5)
-					|| !म_भेदन(str, "$u5b$", 5)
-					|| !म_भेदन(str, "$u5d$", 5)
-					|| !म_भेदन(str, "$u7e$", 5))
+			else if (!strncmp(str, "$u20$", 5)
+					|| !strncmp(str, "$u27$", 5)
+					|| !strncmp(str, "$u5b$", 5)
+					|| !strncmp(str, "$u5d$", 5)
+					|| !strncmp(str, "$u7e$", 5))
 				str += 5;
-			अन्यथा
-				वापस false;
-			अवरोध;
-		हाल '.':
-			/* Do not allow three or more consecutive करोts */
-			अगर (!म_भेदन(str, "...", 3))
-				वापस false;
+			else
+				return false;
+			break;
+		case '.':
+			/* Do not allow three or more consecutive dots */
+			if (!strncmp(str, "...", 3))
+				return false;
 			/* Fall through */
-		हाल 'a' ... 'z':
-		हाल 'A' ... 'Z':
-		हाल '0' ... '9':
-		हाल '_':
-		हाल ':':
+		case 'a' ... 'z':
+		case 'A' ... 'Z':
+		case '0' ... '9':
+		case '_':
+		case ':':
 			str++;
-			अवरोध;
-		शेष:
-			वापस false;
-		पूर्ण
+			break;
+		default:
+			return false;
+		}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * INPUT:
- *     sym: symbol क्रम which rust_is_mangled(sym) वापसs true
+ *     sym: symbol for which rust_is_mangled(sym) returns true
  *
- * The input is demangled in-place because the mangled name is always दीर्घer
+ * The input is demangled in-place because the mangled name is always longer
  * than the demangled one.
  */
-व्योम
-rust_demangle_sym(अक्षर *sym)
-अणु
-	स्थिर अक्षर *in;
-	अक्षर *out;
-	स्थिर अक्षर *end;
+void
+rust_demangle_sym(char *sym)
+{
+	const char *in;
+	char *out;
+	const char *end;
 
-	अगर (!sym)
-		वापस;
+	if (!sym)
+		return;
 
 	in = sym;
 	out = sym;
-	end = sym + म_माप(sym) - (hash_prefix_len + hash_len);
+	end = sym + strlen(sym) - (hash_prefix_len + hash_len);
 
-	जबतक (in < end)
-		चयन (*in) अणु
-		हाल '$':
-			अगर (!(unescape(&in, &out, "$C$", ',')
+	while (in < end)
+		switch (*in) {
+		case '$':
+			if (!(unescape(&in, &out, "$C$", ',')
 					|| unescape(&in, &out, "$SP$", '@')
 					|| unescape(&in, &out, "$BP$", '*')
 					|| unescape(&in, &out, "$RF$", '&')
@@ -208,63 +207,63 @@ rust_demangle_sym(अक्षर *sym)
 					|| unescape(&in, &out, "$u27$", '\'')
 					|| unescape(&in, &out, "$u5b$", '[')
 					|| unescape(&in, &out, "$u5d$", ']')
-					|| unescape(&in, &out, "$u7e$", '~'))) अणु
+					|| unescape(&in, &out, "$u7e$", '~'))) {
 				pr_err("demangle-rust: unexpected escape sequence");
-				जाओ करोne;
-			पूर्ण
-			अवरोध;
-		हाल '_':
+				goto done;
+			}
+			break;
+		case '_':
 			/*
 			 * If this is the start of a path component and the next
-			 * अक्षरacter is an escape sequence, ignore the
+			 * character is an escape sequence, ignore the
 			 * underscore. The mangler inserts an underscore to make
 			 * sure the path component begins with a XID_Start
-			 * अक्षरacter.
+			 * character.
 			 */
-			अगर ((in == sym || in[-1] == ':') && in[1] == '$')
+			if ((in == sym || in[-1] == ':') && in[1] == '$')
 				in++;
-			अन्यथा
+			else
 				*out++ = *in++;
-			अवरोध;
-		हाल '.':
-			अगर (in[1] == '.') अणु
+			break;
+		case '.':
+			if (in[1] == '.') {
 				/* ".." becomes "::" */
 				*out++ = ':';
 				*out++ = ':';
 				in += 2;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* "." becomes "-" */
 				*out++ = '-';
 				in++;
-			पूर्ण
-			अवरोध;
-		हाल 'a' ... 'z':
-		हाल 'A' ... 'Z':
-		हाल '0' ... '9':
-		हाल ':':
+			}
+			break;
+		case 'a' ... 'z':
+		case 'A' ... 'Z':
+		case '0' ... '9':
+		case ':':
 			*out++ = *in++;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("demangle-rust: unexpected character '%c' in symbol\n",
 				*in);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-करोne:
+done:
 	*out = '\0';
-पूर्ण
+}
 
-अटल bool unescape(स्थिर अक्षर **in, अक्षर **out, स्थिर अक्षर *seq, अक्षर value)
-अणु
-	माप_प्रकार len = म_माप(seq);
+static bool unescape(const char **in, char **out, const char *seq, char value)
+{
+	size_t len = strlen(seq);
 
-	अगर (म_भेदन(*in, seq, len))
-		वापस false;
+	if (strncmp(*in, seq, len))
+		return false;
 
 	**out = value;
 
 	*in += len;
 	*out += 1;
 
-	वापस true;
-पूर्ण
+	return true;
+}

@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  * Copyright (c) BayLibre, SAS.
  * Author : Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
+#include <linux/kernel.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
 
-#समावेश <dt-bindings/घड़ी/qcom,gcc-mdm9615.h>
-#समावेश <dt-bindings/reset/qcom,gcc-mdm9615.h>
+#include <dt-bindings/clock/qcom,gcc-mdm9615.h>
+#include <dt-bindings/reset/qcom,gcc-mdm9615.h>
 
-#समावेश "common.h"
-#समावेश "clk-regmap.h"
-#समावेश "clk-pll.h"
-#समावेश "clk-rcg.h"
-#समावेश "clk-branch.h"
-#समावेश "reset.h"
+#include "common.h"
+#include "clk-regmap.h"
+#include "clk-pll.h"
+#include "clk-rcg.h"
+#include "clk-branch.h"
+#include "reset.h"
 
-अटल काष्ठा clk_fixed_factor cxo = अणु
+static struct clk_fixed_factor cxo = {
 	.mult = 1,
-	.भाग = 1,
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	.div = 1,
+	.hw.init = &(struct clk_init_data){
 		.name = "cxo",
-		.parent_names = (स्थिर अक्षर *[])अणु "cxo_board" पूर्ण,
+		.parent_names = (const char *[]){ "cxo_board" },
 		.num_parents = 1,
 		.ops = &clk_fixed_factor_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_pll pll0 = अणु
+static struct clk_pll pll0 = {
 	.l_reg = 0x30c4,
 	.m_reg = 0x30c8,
 	.n_reg = 0x30cc,
@@ -46,37 +45,37 @@
 	.mode_reg = 0x30c0,
 	.status_reg = 0x30d8,
 	.status_bit = 16,
-	.clkr.hw.init = &(काष्ठा clk_init_data)अणु
+	.clkr.hw.init = &(struct clk_init_data){
 		.name = "pll0",
-		.parent_names = (स्थिर अक्षर *[])अणु "cxo" पूर्ण,
+		.parent_names = (const char *[]){ "cxo" },
 		.num_parents = 1,
 		.ops = &clk_pll_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_regmap pll0_vote = अणु
+static struct clk_regmap pll0_vote = {
 	.enable_reg = 0x34c0,
 	.enable_mask = BIT(0),
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	.hw.init = &(struct clk_init_data){
 		.name = "pll0_vote",
-		.parent_names = (स्थिर अक्षर *[])अणु "pll8" पूर्ण,
+		.parent_names = (const char *[]){ "pll8" },
 		.num_parents = 1,
 		.ops = &clk_pll_vote_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_regmap pll4_vote = अणु
+static struct clk_regmap pll4_vote = {
 	.enable_reg = 0x34c0,
 	.enable_mask = BIT(4),
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	.hw.init = &(struct clk_init_data){
 		.name = "pll4_vote",
-		.parent_names = (स्थिर अक्षर *[])अणु "pll4" पूर्ण,
+		.parent_names = (const char *[]){ "pll4" },
 		.num_parents = 1,
 		.ops = &clk_pll_vote_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_pll pll8 = अणु
+static struct clk_pll pll8 = {
 	.l_reg = 0x3144,
 	.m_reg = 0x3148,
 	.n_reg = 0x314c,
@@ -84,26 +83,26 @@
 	.mode_reg = 0x3140,
 	.status_reg = 0x3158,
 	.status_bit = 16,
-	.clkr.hw.init = &(काष्ठा clk_init_data)अणु
+	.clkr.hw.init = &(struct clk_init_data){
 		.name = "pll8",
-		.parent_names = (स्थिर अक्षर *[])अणु "cxo" पूर्ण,
+		.parent_names = (const char *[]){ "cxo" },
 		.num_parents = 1,
 		.ops = &clk_pll_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_regmap pll8_vote = अणु
+static struct clk_regmap pll8_vote = {
 	.enable_reg = 0x34c0,
 	.enable_mask = BIT(8),
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	.hw.init = &(struct clk_init_data){
 		.name = "pll8_vote",
-		.parent_names = (स्थिर अक्षर *[])अणु "pll8" पूर्ण,
+		.parent_names = (const char *[]){ "pll8" },
 		.num_parents = 1,
 		.ops = &clk_pll_vote_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_pll pll14 = अणु
+static struct clk_pll pll14 = {
 	.l_reg = 0x31c4,
 	.m_reg = 0x31c8,
 	.n_reg = 0x31cc,
@@ -111,1482 +110,1482 @@
 	.mode_reg = 0x31c0,
 	.status_reg = 0x31d8,
 	.status_bit = 16,
-	.clkr.hw.init = &(काष्ठा clk_init_data)अणु
+	.clkr.hw.init = &(struct clk_init_data){
 		.name = "pll14",
-		.parent_names = (स्थिर अक्षर *[])अणु "cxo" पूर्ण,
+		.parent_names = (const char *[]){ "cxo" },
 		.num_parents = 1,
 		.ops = &clk_pll_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा clk_regmap pll14_vote = अणु
+static struct clk_regmap pll14_vote = {
 	.enable_reg = 0x34c0,
 	.enable_mask = BIT(11),
-	.hw.init = &(काष्ठा clk_init_data)अणु
+	.hw.init = &(struct clk_init_data){
 		.name = "pll14_vote",
-		.parent_names = (स्थिर अक्षर *[])अणु "pll14" पूर्ण,
+		.parent_names = (const char *[]){ "pll14" },
 		.num_parents = 1,
 		.ops = &clk_pll_vote_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-क्रमागत अणु
+enum {
 	P_CXO,
 	P_PLL8,
 	P_PLL14,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा parent_map gcc_cxo_pll8_map[] = अणु
-	अणु P_CXO, 0 पूर्ण,
-	अणु P_PLL8, 3 पूर्ण
-पूर्ण;
+static const struct parent_map gcc_cxo_pll8_map[] = {
+	{ P_CXO, 0 },
+	{ P_PLL8, 3 }
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_cxo_pll8[] = अणु
+static const char * const gcc_cxo_pll8[] = {
 	"cxo",
 	"pll8_vote",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा parent_map gcc_cxo_pll14_map[] = अणु
-	अणु P_CXO, 0 पूर्ण,
-	अणु P_PLL14, 4 पूर्ण
-पूर्ण;
+static const struct parent_map gcc_cxo_pll14_map[] = {
+	{ P_CXO, 0 },
+	{ P_PLL14, 4 }
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_cxo_pll14[] = अणु
+static const char * const gcc_cxo_pll14[] = {
 	"cxo",
 	"pll14_vote",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा parent_map gcc_cxo_map[] = अणु
-	अणु P_CXO, 0 पूर्ण,
-पूर्ण;
+static const struct parent_map gcc_cxo_map[] = {
+	{ P_CXO, 0 },
+};
 
-अटल स्थिर अक्षर * स्थिर gcc_cxo[] = अणु
+static const char * const gcc_cxo[] = {
 	"cxo",
-पूर्ण;
+};
 
-अटल काष्ठा freq_tbl clk_tbl_gsbi_uart[] = अणु
-	अणु  1843200, P_PLL8, 2,  6, 625 पूर्ण,
-	अणु  3686400, P_PLL8, 2, 12, 625 पूर्ण,
-	अणु  7372800, P_PLL8, 2, 24, 625 पूर्ण,
-	अणु 14745600, P_PLL8, 2, 48, 625 पूर्ण,
-	अणु 16000000, P_PLL8, 4,  1,   6 पूर्ण,
-	अणु 24000000, P_PLL8, 4,  1,   4 पूर्ण,
-	अणु 32000000, P_PLL8, 4,  1,   3 पूर्ण,
-	अणु 40000000, P_PLL8, 1,  5,  48 पूर्ण,
-	अणु 46400000, P_PLL8, 1, 29, 240 पूर्ण,
-	अणु 48000000, P_PLL8, 4,  1,   2 पूर्ण,
-	अणु 51200000, P_PLL8, 1,  2,  15 पूर्ण,
-	अणु 56000000, P_PLL8, 1,  7,  48 पूर्ण,
-	अणु 58982400, P_PLL8, 1, 96, 625 पूर्ण,
-	अणु 64000000, P_PLL8, 2,  1,   3 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct freq_tbl clk_tbl_gsbi_uart[] = {
+	{  1843200, P_PLL8, 2,  6, 625 },
+	{  3686400, P_PLL8, 2, 12, 625 },
+	{  7372800, P_PLL8, 2, 24, 625 },
+	{ 14745600, P_PLL8, 2, 48, 625 },
+	{ 16000000, P_PLL8, 4,  1,   6 },
+	{ 24000000, P_PLL8, 4,  1,   4 },
+	{ 32000000, P_PLL8, 4,  1,   3 },
+	{ 40000000, P_PLL8, 1,  5,  48 },
+	{ 46400000, P_PLL8, 1, 29, 240 },
+	{ 48000000, P_PLL8, 4,  1,   2 },
+	{ 51200000, P_PLL8, 1,  2,  15 },
+	{ 56000000, P_PLL8, 1,  7,  48 },
+	{ 58982400, P_PLL8, 1, 96, 625 },
+	{ 64000000, P_PLL8, 2,  1,   3 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg gsbi1_uart_src = अणु
+static struct clk_rcg gsbi1_uart_src = {
 	.ns_reg = 0x29d4,
 	.md_reg = 0x29d0,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 16,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_uart,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29d4,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi1_uart_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi1_uart_clk = अणु
+static struct clk_branch gsbi1_uart_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 10,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29d4,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi1_uart_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु
+			.parent_names = (const char *[]){
 				"gsbi1_uart_src",
-			पूर्ण,
+			},
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi2_uart_src = अणु
+static struct clk_rcg gsbi2_uart_src = {
 	.ns_reg = 0x29f4,
 	.md_reg = 0x29f0,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 16,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_uart,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29f4,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi2_uart_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi2_uart_clk = अणु
+static struct clk_branch gsbi2_uart_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 6,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29f4,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi2_uart_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु
+			.parent_names = (const char *[]){
 				"gsbi2_uart_src",
-			पूर्ण,
+			},
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi3_uart_src = अणु
+static struct clk_rcg gsbi3_uart_src = {
 	.ns_reg = 0x2a14,
 	.md_reg = 0x2a10,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 16,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_uart,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a14,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi3_uart_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi3_uart_clk = अणु
+static struct clk_branch gsbi3_uart_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 2,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a14,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi3_uart_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु
+			.parent_names = (const char *[]){
 				"gsbi3_uart_src",
-			पूर्ण,
+			},
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi4_uart_src = अणु
+static struct clk_rcg gsbi4_uart_src = {
 	.ns_reg = 0x2a34,
 	.md_reg = 0x2a30,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 16,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_uart,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a34,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi4_uart_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi4_uart_clk = अणु
+static struct clk_branch gsbi4_uart_clk = {
 	.halt_reg = 0x2fd0,
 	.halt_bit = 26,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a34,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi4_uart_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु
+			.parent_names = (const char *[]){
 				"gsbi4_uart_src",
-			पूर्ण,
+			},
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi5_uart_src = अणु
+static struct clk_rcg gsbi5_uart_src = {
 	.ns_reg = 0x2a54,
 	.md_reg = 0x2a50,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 16,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_uart,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a54,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi5_uart_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi5_uart_clk = अणु
+static struct clk_branch gsbi5_uart_clk = {
 	.halt_reg = 0x2fd0,
 	.halt_bit = 22,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a54,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi5_uart_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु
+			.parent_names = (const char *[]){
 				"gsbi5_uart_src",
-			पूर्ण,
+			},
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा freq_tbl clk_tbl_gsbi_qup[] = अणु
-	अणु   960000, P_CXO,  4, 1,  5 पूर्ण,
-	अणु  4800000, P_CXO,  4, 0,  1 पूर्ण,
-	अणु  9600000, P_CXO,  2, 0,  1 पूर्ण,
-	अणु 15060000, P_PLL8, 1, 2, 51 पूर्ण,
-	अणु 24000000, P_PLL8, 4, 1,  4 पूर्ण,
-	अणु 25600000, P_PLL8, 1, 1, 15 पूर्ण,
-	अणु 48000000, P_PLL8, 4, 1,  2 पूर्ण,
-	अणु 51200000, P_PLL8, 1, 2, 15 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct freq_tbl clk_tbl_gsbi_qup[] = {
+	{   960000, P_CXO,  4, 1,  5 },
+	{  4800000, P_CXO,  4, 0,  1 },
+	{  9600000, P_CXO,  2, 0,  1 },
+	{ 15060000, P_PLL8, 1, 2, 51 },
+	{ 24000000, P_PLL8, 4, 1,  4 },
+	{ 25600000, P_PLL8, 1, 1, 15 },
+	{ 48000000, P_PLL8, 4, 1,  2 },
+	{ 51200000, P_PLL8, 1, 2, 15 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg gsbi1_qup_src = अणु
+static struct clk_rcg gsbi1_qup_src = {
 	.ns_reg = 0x29cc,
 	.md_reg = 0x29c8,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_qup,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29cc,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi1_qup_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi1_qup_clk = अणु
+static struct clk_branch gsbi1_qup_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 9,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29cc,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi1_qup_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gsbi1_qup_src" पूर्ण,
+			.parent_names = (const char *[]){ "gsbi1_qup_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi2_qup_src = अणु
+static struct clk_rcg gsbi2_qup_src = {
 	.ns_reg = 0x29ec,
 	.md_reg = 0x29e8,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_qup,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29ec,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi2_qup_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi2_qup_clk = अणु
+static struct clk_branch gsbi2_qup_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 4,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29ec,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi2_qup_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gsbi2_qup_src" पूर्ण,
+			.parent_names = (const char *[]){ "gsbi2_qup_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi3_qup_src = अणु
+static struct clk_rcg gsbi3_qup_src = {
 	.ns_reg = 0x2a0c,
 	.md_reg = 0x2a08,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_qup,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a0c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi3_qup_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi3_qup_clk = अणु
+static struct clk_branch gsbi3_qup_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 0,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a0c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi3_qup_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gsbi3_qup_src" पूर्ण,
+			.parent_names = (const char *[]){ "gsbi3_qup_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi4_qup_src = अणु
+static struct clk_rcg gsbi4_qup_src = {
 	.ns_reg = 0x2a2c,
 	.md_reg = 0x2a28,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_qup,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a2c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi4_qup_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi4_qup_clk = अणु
+static struct clk_branch gsbi4_qup_clk = {
 	.halt_reg = 0x2fd0,
 	.halt_bit = 24,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a2c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi4_qup_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gsbi4_qup_src" पूर्ण,
+			.parent_names = (const char *[]){ "gsbi4_qup_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gsbi5_qup_src = अणु
+static struct clk_rcg gsbi5_qup_src = {
 	.ns_reg = 0x2a4c,
 	.md_reg = 0x2a48,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gsbi_qup,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a4c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi5_qup_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi5_qup_clk = अणु
+static struct clk_branch gsbi5_qup_clk = {
 	.halt_reg = 0x2fd0,
 	.halt_bit = 20,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a4c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi5_qup_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gsbi5_qup_src" पूर्ण,
+			.parent_names = (const char *[]){ "gsbi5_qup_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_gp[] = अणु
-	अणु 9600000, P_CXO,  2, 0, 0 पूर्ण,
-	अणु 19200000, P_CXO,  1, 0, 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_gp[] = {
+	{ 9600000, P_CXO,  2, 0, 0 },
+	{ 19200000, P_CXO,  1, 0, 0 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg gp0_src = अणु
+static struct clk_rcg gp0_src = {
 	.ns_reg = 0x2d24,
 	.md_reg = 0x2d00,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gp,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d24,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp0_src",
 			.parent_names = gcc_cxo,
 			.num_parents = 1,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_PARENT_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch gp0_clk = अणु
+static struct clk_branch gp0_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_bit = 7,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d24,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp0_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gp0_src" पूर्ण,
+			.parent_names = (const char *[]){ "gp0_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gp1_src = अणु
+static struct clk_rcg gp1_src = {
 	.ns_reg = 0x2d44,
 	.md_reg = 0x2d40,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gp,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d44,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp1_src",
 			.parent_names = gcc_cxo,
 			.num_parents = 1,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch gp1_clk = अणु
+static struct clk_branch gp1_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_bit = 6,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d44,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp1_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gp1_src" पूर्ण,
+			.parent_names = (const char *[]){ "gp1_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg gp2_src = अणु
+static struct clk_rcg gp2_src = {
 	.ns_reg = 0x2d64,
 	.md_reg = 0x2d60,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_gp,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d64,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp2_src",
 			.parent_names = gcc_cxo,
 			.num_parents = 1,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch gp2_clk = अणु
+static struct clk_branch gp2_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_bit = 5,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2d64,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gp2_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "gp2_src" पूर्ण,
+			.parent_names = (const char *[]){ "gp2_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch pmem_clk = अणु
+static struct clk_branch pmem_clk = {
 	.hwcg_reg = 0x25a0,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fc8,
 	.halt_bit = 20,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x25a0,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "pmem_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg prng_src = अणु
+static struct clk_rcg prng_src = {
 	.ns_reg = 0x2e80,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 4,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 4,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
-	.clkr = अणु
-		.hw.init = &(काष्ठा clk_init_data)अणु
+	},
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
 			.name = "prng_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch prng_clk = अणु
+static struct clk_branch prng_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 10,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(10),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "prng_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "prng_src" पूर्ण,
+			.parent_names = (const char *[]){ "prng_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_sdc[] = अणु
-	अणु    144000, P_CXO,   1, 1, 133 पूर्ण,
-	अणु    400000, P_PLL8,  4, 1, 240 पूर्ण,
-	अणु  16000000, P_PLL8,  4, 1,   6 पूर्ण,
-	अणु  17070000, P_PLL8,  1, 2,  45 पूर्ण,
-	अणु  20210000, P_PLL8,  1, 1,  19 पूर्ण,
-	अणु  24000000, P_PLL8,  4, 1,   4 पूर्ण,
-	अणु  38400000, P_PLL8,  2, 1,   5 पूर्ण,
-	अणु  48000000, P_PLL8,  4, 1,   2 पूर्ण,
-	अणु  64000000, P_PLL8,  3, 1,   2 पूर्ण,
-	अणु  76800000, P_PLL8,  1, 1,   5 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_sdc[] = {
+	{    144000, P_CXO,   1, 1, 133 },
+	{    400000, P_PLL8,  4, 1, 240 },
+	{  16000000, P_PLL8,  4, 1,   6 },
+	{  17070000, P_PLL8,  1, 2,  45 },
+	{  20210000, P_PLL8,  1, 1,  19 },
+	{  24000000, P_PLL8,  4, 1,   4 },
+	{  38400000, P_PLL8,  2, 1,   5 },
+	{  48000000, P_PLL8,  4, 1,   2 },
+	{  64000000, P_PLL8,  3, 1,   2 },
+	{  76800000, P_PLL8,  1, 1,   5 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg sdc1_src = अणु
+static struct clk_rcg sdc1_src = {
 	.ns_reg = 0x282c,
 	.md_reg = 0x2828,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_sdc,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x282c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc1_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch sdc1_clk = अणु
+static struct clk_branch sdc1_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 6,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x282c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc1_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "sdc1_src" पूर्ण,
+			.parent_names = (const char *[]){ "sdc1_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg sdc2_src = अणु
+static struct clk_rcg sdc2_src = {
 	.ns_reg = 0x284c,
 	.md_reg = 0x2848,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_sdc,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x284c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc2_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch sdc2_clk = अणु
+static struct clk_branch sdc2_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 5,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x284c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc2_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "sdc2_src" पूर्ण,
+			.parent_names = (const char *[]){ "sdc2_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_usb[] = अणु
-	अणु 60000000, P_PLL8, 1, 5, 32 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_usb[] = {
+	{ 60000000, P_PLL8, 1, 5, 32 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg usb_hs1_xcvr_src = अणु
+static struct clk_rcg usb_hs1_xcvr_src = {
 	.ns_reg = 0x290c,
 	.md_reg = 0x2908,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_usb,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x290c,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hs1_xcvr_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch usb_hs1_xcvr_clk = अणु
+static struct clk_branch usb_hs1_xcvr_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 0,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x290c,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hs1_xcvr_clk",
-			.parent_names = (स्थिर अक्षर *[])अणु "usb_hs1_xcvr_src" पूर्ण,
+			.parent_names = (const char *[]){ "usb_hs1_xcvr_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_rcg usb_hsic_xcvr_fs_src = अणु
+static struct clk_rcg usb_hsic_xcvr_fs_src = {
 	.ns_reg = 0x2928,
 	.md_reg = 0x2924,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_usb,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2928,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hsic_xcvr_fs_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch usb_hsic_xcvr_fs_clk = अणु
+static struct clk_branch usb_hsic_xcvr_fs_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 9,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2928,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hsic_xcvr_fs_clk",
 			.parent_names =
-				(स्थिर अक्षर *[])अणु "usb_hsic_xcvr_fs_src" पूर्ण,
+				(const char *[]){ "usb_hsic_xcvr_fs_src" },
 			.num_parents = 1,
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_usb_hs1_प्रणाली[] = अणु
-	अणु 60000000, P_PLL8, 1, 5, 32 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_usb_hs1_system[] = {
+	{ 60000000, P_PLL8, 1, 5, 32 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg usb_hs1_प्रणाली_src = अणु
+static struct clk_rcg usb_hs1_system_src = {
 	.ns_reg = 0x36a4,
 	.md_reg = 0x36a0,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
-	.freq_tbl = clk_tbl_usb_hs1_प्रणाली,
-	.clkr = अणु
+	},
+	.freq_tbl = clk_tbl_usb_hs1_system,
+	.clkr = {
 		.enable_reg = 0x36a4,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hs1_system_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch usb_hs1_प्रणाली_clk = अणु
+static struct clk_branch usb_hs1_system_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 4,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x36a4,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.parent_names =
-				(स्थिर अक्षर *[])अणु "usb_hs1_system_src" पूर्ण,
+				(const char *[]){ "usb_hs1_system_src" },
 			.num_parents = 1,
 			.name = "usb_hs1_system_clk",
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_usb_hsic_प्रणाली[] = अणु
-	अणु 64000000, P_PLL8, 1, 1, 6 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_usb_hsic_system[] = {
+	{ 64000000, P_PLL8, 1, 1, 6 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg usb_hsic_प्रणाली_src = अणु
+static struct clk_rcg usb_hsic_system_src = {
 	.ns_reg = 0x2b58,
 	.md_reg = 0x2b54,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll8_map,
-	पूर्ण,
-	.freq_tbl = clk_tbl_usb_hsic_प्रणाली,
-	.clkr = अणु
+	},
+	.freq_tbl = clk_tbl_usb_hsic_system,
+	.clkr = {
 		.enable_reg = 0x2b58,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hsic_system_src",
 			.parent_names = gcc_cxo_pll8,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch usb_hsic_प्रणाली_clk = अणु
+static struct clk_branch usb_hsic_system_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 7,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2b58,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.parent_names =
-				(स्थिर अक्षर *[])अणु "usb_hsic_system_src" पूर्ण,
+				(const char *[]){ "usb_hsic_system_src" },
 			.num_parents = 1,
 			.name = "usb_hsic_system_clk",
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा freq_tbl clk_tbl_usb_hsic_hsic[] = अणु
-	अणु 48000000, P_PLL14, 1, 0, 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct freq_tbl clk_tbl_usb_hsic_hsic[] = {
+	{ 48000000, P_PLL14, 1, 0, 0 },
+	{ }
+};
 
-अटल काष्ठा clk_rcg usb_hsic_hsic_src = अणु
+static struct clk_rcg usb_hsic_hsic_src = {
 	.ns_reg = 0x2b50,
 	.md_reg = 0x2b4c,
-	.mn = अणु
+	.mn = {
 		.mnctr_en_bit = 8,
 		.mnctr_reset_bit = 7,
-		.mnctr_mode_shअगरt = 5,
-		.n_val_shअगरt = 16,
-		.m_val_shअगरt = 16,
+		.mnctr_mode_shift = 5,
+		.n_val_shift = 16,
+		.m_val_shift = 16,
 		.width = 8,
-	पूर्ण,
-	.p = अणु
-		.pre_भाग_shअगरt = 3,
-		.pre_भाग_width = 2,
-	पूर्ण,
-	.s = अणु
-		.src_sel_shअगरt = 0,
+	},
+	.p = {
+		.pre_div_shift = 3,
+		.pre_div_width = 2,
+	},
+	.s = {
+		.src_sel_shift = 0,
 		.parent_map = gcc_cxo_pll14_map,
-	पूर्ण,
+	},
 	.freq_tbl = clk_tbl_usb_hsic_hsic,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2b50,
 		.enable_mask = BIT(11),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hsic_hsic_src",
 			.parent_names = gcc_cxo_pll14,
 			.num_parents = 2,
 			.ops = &clk_rcg_ops,
 			.flags = CLK_SET_RATE_GATE,
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा clk_branch usb_hsic_hsic_clk = अणु
+static struct clk_branch usb_hsic_hsic_clk = {
 	.halt_check = BRANCH_HALT_DELAY,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2b50,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
-			.parent_names = (स्थिर अक्षर *[])अणु "usb_hsic_hsic_src" पूर्ण,
+		.hw.init = &(struct clk_init_data){
+			.parent_names = (const char *[]){ "usb_hsic_hsic_src" },
 			.num_parents = 1,
 			.name = "usb_hsic_hsic_clk",
 			.ops = &clk_branch_ops,
 			.flags = CLK_SET_RATE_PARENT,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch usb_hsic_hsio_cal_clk = अणु
+static struct clk_branch usb_hsic_hsio_cal_clk = {
 	.halt_reg = 0x2fc8,
 	.halt_bit = 8,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2b48,
 		.enable_mask = BIT(0),
-		.hw.init = &(काष्ठा clk_init_data)अणु
-			.parent_names = (स्थिर अक्षर *[])अणु "cxo" पूर्ण,
+		.hw.init = &(struct clk_init_data){
+			.parent_names = (const char *[]){ "cxo" },
 			.num_parents = 1,
 			.name = "usb_hsic_hsio_cal_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch ce1_core_clk = अणु
+static struct clk_branch ce1_core_clk = {
 	.hwcg_reg = 0x2724,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fd4,
 	.halt_bit = 27,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2724,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "ce1_core_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch ce1_h_clk = अणु
+static struct clk_branch ce1_h_clk = {
 	.halt_reg = 0x2fd4,
 	.halt_bit = 1,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2720,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "ce1_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch dma_bam_h_clk = अणु
+static struct clk_branch dma_bam_h_clk = {
 	.hwcg_reg = 0x25c0,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fc8,
 	.halt_bit = 12,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x25c0,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "dma_bam_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi1_h_clk = अणु
+static struct clk_branch gsbi1_h_clk = {
 	.hwcg_reg = 0x29c0,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fcc,
 	.halt_bit = 11,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29c0,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi1_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi2_h_clk = अणु
+static struct clk_branch gsbi2_h_clk = {
 	.hwcg_reg = 0x29e0,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fcc,
 	.halt_bit = 7,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x29e0,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi2_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi3_h_clk = अणु
+static struct clk_branch gsbi3_h_clk = {
 	.hwcg_reg = 0x2a00,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fcc,
 	.halt_bit = 3,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a00,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi3_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi4_h_clk = अणु
+static struct clk_branch gsbi4_h_clk = {
 	.hwcg_reg = 0x2a20,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fd0,
 	.halt_bit = 27,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a20,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi4_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch gsbi5_h_clk = अणु
+static struct clk_branch gsbi5_h_clk = {
 	.hwcg_reg = 0x2a40,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fd0,
 	.halt_bit = 23,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2a40,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "gsbi5_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch usb_hs1_h_clk = अणु
+static struct clk_branch usb_hs1_h_clk = {
 	.hwcg_reg = 0x2900,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fc8,
 	.halt_bit = 1,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2900,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hs1_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch usb_hsic_h_clk = अणु
+static struct clk_branch usb_hsic_h_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 28,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2920,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "usb_hsic_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch sdc1_h_clk = अणु
+static struct clk_branch sdc1_h_clk = {
 	.hwcg_reg = 0x2820,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fc8,
 	.halt_bit = 11,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2820,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc1_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch sdc2_h_clk = अणु
+static struct clk_branch sdc2_h_clk = {
 	.hwcg_reg = 0x2840,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fc8,
 	.halt_bit = 10,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2840,
 		.enable_mask = BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "sdc2_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch adm0_clk = अणु
+static struct clk_branch adm0_clk = {
 	.halt_reg = 0x2fdc,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 14,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(2),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "adm0_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch adm0_pbus_clk = अणु
+static struct clk_branch adm0_pbus_clk = {
 	.hwcg_reg = 0x2208,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fdc,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 13,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(3),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "adm0_pbus_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch pmic_arb0_h_clk = अणु
+static struct clk_branch pmic_arb0_h_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 22,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(8),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "pmic_arb0_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch pmic_arb1_h_clk = अणु
+static struct clk_branch pmic_arb1_h_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 21,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(9),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "pmic_arb1_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch pmic_ssbi2_clk = अणु
+static struct clk_branch pmic_ssbi2_clk = {
 	.halt_reg = 0x2fd8,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 23,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(7),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "pmic_ssbi2_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch rpm_msg_ram_h_clk = अणु
+static struct clk_branch rpm_msg_ram_h_clk = {
 	.hwcg_reg = 0x27e0,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fd8,
 	.halt_check = BRANCH_HALT_VOTED,
 	.halt_bit = 12,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x3080,
 		.enable_mask = BIT(6),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "rpm_msg_ram_h_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch ebi2_clk = अणु
+static struct clk_branch ebi2_clk = {
 	.hwcg_reg = 0x2664,
 	.hwcg_bit = 6,
 	.halt_reg = 0x2fcc,
 	.halt_bit = 24,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2664,
 		.enable_mask = BIT(6) | BIT(4),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "ebi2_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_branch ebi2_aon_clk = अणु
+static struct clk_branch ebi2_aon_clk = {
 	.halt_reg = 0x2fcc,
 	.halt_bit = 23,
-	.clkr = अणु
+	.clkr = {
 		.enable_reg = 0x2664,
 		.enable_mask = BIT(8),
-		.hw.init = &(काष्ठा clk_init_data)अणु
+		.hw.init = &(struct clk_init_data){
 			.name = "ebi2_aon_clk",
 			.ops = &clk_branch_ops,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा clk_hw *gcc_mdm9615_hws[] = अणु
+static struct clk_hw *gcc_mdm9615_hws[] = {
 	&cxo.hw,
-पूर्ण;
+};
 
-अटल काष्ठा clk_regmap *gcc_mdm9615_clks[] = अणु
+static struct clk_regmap *gcc_mdm9615_clks[] = {
 	[PLL0] = &pll0.clkr,
 	[PLL0_VOTE] = &pll0_vote,
 	[PLL4_VOTE] = &pll4_vote,
@@ -1629,12 +1628,12 @@
 	[SDC2_CLK] = &sdc2_clk.clkr,
 	[USB_HS1_XCVR_SRC] = &usb_hs1_xcvr_src.clkr,
 	[USB_HS1_XCVR_CLK] = &usb_hs1_xcvr_clk.clkr,
-	[USB_HS1_SYSTEM_CLK_SRC] = &usb_hs1_प्रणाली_src.clkr,
-	[USB_HS1_SYSTEM_CLK] = &usb_hs1_प्रणाली_clk.clkr,
+	[USB_HS1_SYSTEM_CLK_SRC] = &usb_hs1_system_src.clkr,
+	[USB_HS1_SYSTEM_CLK] = &usb_hs1_system_clk.clkr,
 	[USB_HSIC_XCVR_FS_SRC] = &usb_hsic_xcvr_fs_src.clkr,
 	[USB_HSIC_XCVR_FS_CLK] = &usb_hsic_xcvr_fs_clk.clkr,
-	[USB_HSIC_SYSTEM_CLK_SRC] = &usb_hsic_प्रणाली_src.clkr,
-	[USB_HSIC_SYSTEM_CLK] = &usb_hsic_प्रणाली_clk.clkr,
+	[USB_HSIC_SYSTEM_CLK_SRC] = &usb_hsic_system_src.clkr,
+	[USB_HSIC_SYSTEM_CLK] = &usb_hsic_system_clk.clkr,
 	[USB_HSIC_HSIC_CLK_SRC] = &usb_hsic_hsic_src.clkr,
 	[USB_HSIC_HSIC_CLK] = &usb_hsic_hsic_clk.clkr,
 	[USB_HSIC_HSIO_CAL_CLK] = &usb_hsic_hsio_cal_clk.clkr,
@@ -1658,38 +1657,38 @@
 	[RPM_MSG_RAM_H_CLK] = &rpm_msg_ram_h_clk.clkr,
 	[EBI2_CLK] = &ebi2_clk.clkr,
 	[EBI2_AON_CLK] = &ebi2_aon_clk.clkr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_reset_map gcc_mdm9615_resets[] = अणु
-	[DMA_BAM_RESET] = अणु 0x25c0, 7 पूर्ण,
-	[CE1_H_RESET] = अणु 0x2720, 7 पूर्ण,
-	[CE1_CORE_RESET] = अणु 0x2724, 7 पूर्ण,
-	[SDC1_RESET] = अणु 0x2830 पूर्ण,
-	[SDC2_RESET] = अणु 0x2850 पूर्ण,
-	[ADM0_C2_RESET] = अणु 0x220c, 4 पूर्ण,
-	[ADM0_C1_RESET] = अणु 0x220c, 3 पूर्ण,
-	[ADM0_C0_RESET] = अणु 0x220c, 2 पूर्ण,
-	[ADM0_PBUS_RESET] = अणु 0x220c, 1 पूर्ण,
-	[ADM0_RESET] = अणु 0x220c पूर्ण,
-	[USB_HS1_RESET] = अणु 0x2910 पूर्ण,
-	[USB_HSIC_RESET] = अणु 0x2934 पूर्ण,
-	[GSBI1_RESET] = अणु 0x29dc पूर्ण,
-	[GSBI2_RESET] = अणु 0x29fc पूर्ण,
-	[GSBI3_RESET] = अणु 0x2a1c पूर्ण,
-	[GSBI4_RESET] = अणु 0x2a3c पूर्ण,
-	[GSBI5_RESET] = अणु 0x2a5c पूर्ण,
-	[PDM_RESET] = अणु 0x2CC0, 12 पूर्ण,
-पूर्ण;
+static const struct qcom_reset_map gcc_mdm9615_resets[] = {
+	[DMA_BAM_RESET] = { 0x25c0, 7 },
+	[CE1_H_RESET] = { 0x2720, 7 },
+	[CE1_CORE_RESET] = { 0x2724, 7 },
+	[SDC1_RESET] = { 0x2830 },
+	[SDC2_RESET] = { 0x2850 },
+	[ADM0_C2_RESET] = { 0x220c, 4 },
+	[ADM0_C1_RESET] = { 0x220c, 3 },
+	[ADM0_C0_RESET] = { 0x220c, 2 },
+	[ADM0_PBUS_RESET] = { 0x220c, 1 },
+	[ADM0_RESET] = { 0x220c },
+	[USB_HS1_RESET] = { 0x2910 },
+	[USB_HSIC_RESET] = { 0x2934 },
+	[GSBI1_RESET] = { 0x29dc },
+	[GSBI2_RESET] = { 0x29fc },
+	[GSBI3_RESET] = { 0x2a1c },
+	[GSBI4_RESET] = { 0x2a3c },
+	[GSBI5_RESET] = { 0x2a5c },
+	[PDM_RESET] = { 0x2CC0, 12 },
+};
 
-अटल स्थिर काष्ठा regmap_config gcc_mdm9615_regmap_config = अणु
+static const struct regmap_config gcc_mdm9615_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= 0x3660,
+	.max_register	= 0x3660,
 	.fast_io	= true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा qcom_cc_desc gcc_mdm9615_desc = अणु
+static const struct qcom_cc_desc gcc_mdm9615_desc = {
 	.config = &gcc_mdm9615_regmap_config,
 	.clks = gcc_mdm9615_clks,
 	.num_clks = ARRAY_SIZE(gcc_mdm9615_clks),
@@ -1697,44 +1696,44 @@
 	.num_resets = ARRAY_SIZE(gcc_mdm9615_resets),
 	.clk_hws = gcc_mdm9615_hws,
 	.num_clk_hws = ARRAY_SIZE(gcc_mdm9615_hws),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id gcc_mdm9615_match_table[] = अणु
-	अणु .compatible = "qcom,gcc-mdm9615" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id gcc_mdm9615_match_table[] = {
+	{ .compatible = "qcom,gcc-mdm9615" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, gcc_mdm9615_match_table);
 
-अटल पूर्णांक gcc_mdm9615_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा regmap *regmap;
+static int gcc_mdm9615_probe(struct platform_device *pdev)
+{
+	struct regmap *regmap;
 
 	regmap = qcom_cc_map(pdev, &gcc_mdm9615_desc);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस qcom_cc_really_probe(pdev, &gcc_mdm9615_desc, regmap);
-पूर्ण
+	return qcom_cc_really_probe(pdev, &gcc_mdm9615_desc, regmap);
+}
 
-अटल काष्ठा platक्रमm_driver gcc_mdm9615_driver = अणु
+static struct platform_driver gcc_mdm9615_driver = {
 	.probe		= gcc_mdm9615_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "gcc-mdm9615",
 		.of_match_table = gcc_mdm9615_match_table,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init gcc_mdm9615_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&gcc_mdm9615_driver);
-पूर्ण
+static int __init gcc_mdm9615_init(void)
+{
+	return platform_driver_register(&gcc_mdm9615_driver);
+}
 core_initcall(gcc_mdm9615_init);
 
-अटल व्योम __निकास gcc_mdm9615_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&gcc_mdm9615_driver);
-पूर्ण
-module_निकास(gcc_mdm9615_निकास);
+static void __exit gcc_mdm9615_exit(void)
+{
+	platform_driver_unregister(&gcc_mdm9615_driver);
+}
+module_exit(gcc_mdm9615_exit);
 
 MODULE_DESCRIPTION("QCOM GCC MDM9615 Driver");
 MODULE_LICENSE("GPL v2");

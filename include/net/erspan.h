@@ -1,25 +1,24 @@
-<शैली गुरु>
-#अगर_अघोषित __LINUX_ERSPAN_H
-#घोषणा __LINUX_ERSPAN_H
+#ifndef __LINUX_ERSPAN_H
+#define __LINUX_ERSPAN_H
 
 /*
- * GRE header क्रम ERSPAN type I encapsulation (4 octets [34:37])
+ * GRE header for ERSPAN type I encapsulation (4 octets [34:37])
  *      0                   1                   2                   3
  *      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *     |0|0|0|0|0|00000|000000000|00000|    Protocol Type क्रम ERSPAN   |
+ *     |0|0|0|0|0|00000|000000000|00000|    Protocol Type for ERSPAN   |
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- *  The Type I ERSPAN frame क्रमmat is based on the barebones IP + GRE
+ *  The Type I ERSPAN frame format is based on the barebones IP + GRE
  *  encapsulation (as described above) on top of the raw mirrored frame.
  *  There is no extra ERSPAN header.
  *
  *
- * GRE header क्रम ERSPAN type II and II encapsulation (8 octets [34:41])
+ * GRE header for ERSPAN type II and II encapsulation (8 octets [34:41])
  *       0                   1                   2                   3
  *      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *     |0|0|0|1|0|00000|000000000|00000|    Protocol Type क्रम ERSPAN   |
+ *     |0|0|0|1|0|00000|000000000|00000|    Protocol Type for ERSPAN   |
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |      Sequence Number (increments per packet per session)      |
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -49,52 +48,52 @@
  * |             SGT               |P|    FT   |   Hw ID   |D|Gra|O|
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- *      Platक्रमm Specअगरic SubHeader (8 octets, optional)
+ *      Platform Specific SubHeader (8 octets, optional)
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |  Platf ID |               Platक्रमm Specअगरic Info              |
+ * |  Platf ID |               Platform Specific Info              |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                  Platक्रमm Specअगरic Info                       |
+ * |                  Platform Specific Info                       |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * GRE proto ERSPAN type I/II = 0x88BE, type III = 0x22EB
  */
 
-#समावेश <uapi/linux/erspan.h>
+#include <uapi/linux/erspan.h>
 
-#घोषणा ERSPAN_VERSION	0x1	/* ERSPAN type II */
-#घोषणा VER_MASK	0xf000
-#घोषणा VLAN_MASK	0x0fff
-#घोषणा COS_MASK	0xe000
-#घोषणा EN_MASK		0x1800
-#घोषणा T_MASK		0x0400
-#घोषणा ID_MASK		0x03ff
-#घोषणा INDEX_MASK	0xfffff
+#define ERSPAN_VERSION	0x1	/* ERSPAN type II */
+#define VER_MASK	0xf000
+#define VLAN_MASK	0x0fff
+#define COS_MASK	0xe000
+#define EN_MASK		0x1800
+#define T_MASK		0x0400
+#define ID_MASK		0x03ff
+#define INDEX_MASK	0xfffff
 
-#घोषणा ERSPAN_VERSION2	0x2	/* ERSPAN type III*/
-#घोषणा BSO_MASK	EN_MASK
-#घोषणा SGT_MASK	0xffff0000
-#घोषणा P_MASK		0x8000
-#घोषणा FT_MASK		0x7c00
-#घोषणा HWID_MASK	0x03f0
-#घोषणा सूची_MASK	0x0008
-#घोषणा GRA_MASK	0x0006
-#घोषणा O_MASK		0x0001
+#define ERSPAN_VERSION2	0x2	/* ERSPAN type III*/
+#define BSO_MASK	EN_MASK
+#define SGT_MASK	0xffff0000
+#define P_MASK		0x8000
+#define FT_MASK		0x7c00
+#define HWID_MASK	0x03f0
+#define DIR_MASK	0x0008
+#define GRA_MASK	0x0006
+#define O_MASK		0x0001
 
-#घोषणा HWID_OFFSET    4
-#घोषणा सूची_OFFSET     3
+#define HWID_OFFSET    4
+#define DIR_OFFSET     3
 
-क्रमागत erspan_encap_type अणु
+enum erspan_encap_type {
 	ERSPAN_ENCAP_NOVLAN = 0x0,	/* originally without VLAN tag */
 	ERSPAN_ENCAP_ISL = 0x1,		/* originally ISL encapsulated */
 	ERSPAN_ENCAP_8021Q = 0x2,	/* originally 802.1Q encapsulated */
 	ERSPAN_ENCAP_INFRAME = 0x3,	/* VLAN tag perserved in frame */
-पूर्ण;
+};
 
-#घोषणा ERSPAN_V1_MDSIZE	4
-#घोषणा ERSPAN_V2_MDSIZE	8
+#define ERSPAN_V1_MDSIZE	4
+#define ERSPAN_V2_MDSIZE	8
 
-काष्ठा erspan_base_hdr अणु
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+struct erspan_base_hdr {
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8	vlan_upper:4,
 		ver:4;
 	__u8	vlan:8;
@@ -103,7 +102,7 @@
 		en:2,
 		cos:3;
 	__u8	session_id:8;
-#या_अगर defined(__BIG_ENDIAN_BITFIELD)
+#elif defined(__BIG_ENDIAN_BITFIELD)
 	__u8	ver: 4,
 		vlan_upper:4;
 	__u8	vlan:8;
@@ -112,73 +111,73 @@
 		t:1,
 		session_id_upper:2;
 	__u8	session_id:8;
-#अन्यथा
-#त्रुटि "Please fix <asm/byteorder.h>"
-#पूर्ण_अगर
-पूर्ण;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
+};
 
-अटल अंतरभूत व्योम set_session_id(काष्ठा erspan_base_hdr *ershdr, u16 id)
-अणु
+static inline void set_session_id(struct erspan_base_hdr *ershdr, u16 id)
+{
 	ershdr->session_id = id & 0xff;
 	ershdr->session_id_upper = (id >> 8) & 0x3;
-पूर्ण
+}
 
-अटल अंतरभूत u16 get_session_id(स्थिर काष्ठा erspan_base_hdr *ershdr)
-अणु
-	वापस (ershdr->session_id_upper << 8) + ershdr->session_id;
-पूर्ण
+static inline u16 get_session_id(const struct erspan_base_hdr *ershdr)
+{
+	return (ershdr->session_id_upper << 8) + ershdr->session_id;
+}
 
-अटल अंतरभूत व्योम set_vlan(काष्ठा erspan_base_hdr *ershdr, u16 vlan)
-अणु
+static inline void set_vlan(struct erspan_base_hdr *ershdr, u16 vlan)
+{
 	ershdr->vlan = vlan & 0xff;
 	ershdr->vlan_upper = (vlan >> 8) & 0xf;
-पूर्ण
+}
 
-अटल अंतरभूत u16 get_vlan(स्थिर काष्ठा erspan_base_hdr *ershdr)
-अणु
-	वापस (ershdr->vlan_upper << 8) + ershdr->vlan;
-पूर्ण
+static inline u16 get_vlan(const struct erspan_base_hdr *ershdr)
+{
+	return (ershdr->vlan_upper << 8) + ershdr->vlan;
+}
 
-अटल अंतरभूत व्योम set_hwid(काष्ठा erspan_md2 *md2, u8 hwid)
-अणु
+static inline void set_hwid(struct erspan_md2 *md2, u8 hwid)
+{
 	md2->hwid = hwid & 0xf;
 	md2->hwid_upper = (hwid >> 4) & 0x3;
-पूर्ण
+}
 
-अटल अंतरभूत u8 get_hwid(स्थिर काष्ठा erspan_md2 *md2)
-अणु
-	वापस (md2->hwid_upper << 4) + md2->hwid;
-पूर्ण
+static inline u8 get_hwid(const struct erspan_md2 *md2)
+{
+	return (md2->hwid_upper << 4) + md2->hwid;
+}
 
-अटल अंतरभूत पूर्णांक erspan_hdr_len(पूर्णांक version)
-अणु
-	अगर (version == 0)
-		वापस 0;
+static inline int erspan_hdr_len(int version)
+{
+	if (version == 0)
+		return 0;
 
-	वापस माप(काष्ठा erspan_base_hdr) +
+	return sizeof(struct erspan_base_hdr) +
 	       (version == 1 ? ERSPAN_V1_MDSIZE : ERSPAN_V2_MDSIZE);
-पूर्ण
+}
 
-अटल अंतरभूत u8 tos_to_cos(u8 tos)
-अणु
+static inline u8 tos_to_cos(u8 tos)
+{
 	u8 dscp, cos;
 
 	dscp = tos >> 2;
 	cos = dscp >> 3;
-	वापस cos;
-पूर्ण
+	return cos;
+}
 
-अटल अंतरभूत व्योम erspan_build_header(काष्ठा sk_buff *skb,
+static inline void erspan_build_header(struct sk_buff *skb,
 				u32 id, u32 index,
 				bool truncate, bool is_ipv4)
-अणु
-	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb->data;
-	क्रमागत erspan_encap_type enc_type;
-	काष्ठा erspan_base_hdr *ershdr;
-	काष्ठा qtag_prefix अणु
+{
+	struct ethhdr *eth = (struct ethhdr *)skb->data;
+	enum erspan_encap_type enc_type;
+	struct erspan_base_hdr *ershdr;
+	struct qtag_prefix {
 		__be16 eth_type;
 		__be16 tci;
-	पूर्ण *qp;
+	} *qp;
 	u16 vlan_tci = 0;
 	u8 tos;
 	__be32 *idx;
@@ -192,15 +191,15 @@
 	/* If mirrored packet has vlan tag, extract tci and
 	 *  perserve vlan header in the mirrored frame.
 	 */
-	अगर (eth->h_proto == htons(ETH_P_8021Q)) अणु
-		qp = (काष्ठा qtag_prefix *)(skb->data + 2 * ETH_ALEN);
+	if (eth->h_proto == htons(ETH_P_8021Q)) {
+		qp = (struct qtag_prefix *)(skb->data + 2 * ETH_ALEN);
 		vlan_tci = ntohs(qp->tci);
 		enc_type = ERSPAN_ENCAP_INFRAME;
-	पूर्ण
+	}
 
-	skb_push(skb, माप(*ershdr) + ERSPAN_V1_MDSIZE);
-	ershdr = (काष्ठा erspan_base_hdr *)skb->data;
-	स_रखो(ershdr, 0, माप(*ershdr) + ERSPAN_V1_MDSIZE);
+	skb_push(skb, sizeof(*ershdr) + ERSPAN_V1_MDSIZE);
+	ershdr = (struct erspan_base_hdr *)skb->data;
+	memset(ershdr, 0, sizeof(*ershdr) + ERSPAN_V1_MDSIZE);
 
 	/* Build base header */
 	ershdr->ver = ERSPAN_VERSION;
@@ -213,66 +212,66 @@
 	/* Build metadata */
 	idx = (__be32 *)(ershdr + 1);
 	*idx = htonl(index & INDEX_MASK);
-पूर्ण
+}
 
-/* ERSPAN GRA: बारtamp granularity
+/* ERSPAN GRA: timestamp granularity
  *   00b --> granularity = 100 microseconds
  *   01b --> granularity = 100 nanoseconds
  *   10b --> granularity = IEEE 1588
  * Here we only support 100 microseconds.
  */
-अटल अंतरभूत __be32 erspan_get_बारtamp(व्योम)
-अणु
+static inline __be32 erspan_get_timestamp(void)
+{
 	u64 h_usecs;
-	kसमय_प्रकार kt;
+	ktime_t kt;
 
-	kt = kसमय_get_real();
-	h_usecs = kसमय_भागns(kt, 100 * NSEC_PER_USEC);
+	kt = ktime_get_real();
+	h_usecs = ktime_divns(kt, 100 * NSEC_PER_USEC);
 
 	/* ERSPAN base header only has 32-bit,
 	 * so it wraps around 4 days.
 	 */
-	वापस htonl((u32)h_usecs);
-पूर्ण
+	return htonl((u32)h_usecs);
+}
 
 /* ERSPAN BSO (Bad/Short/Oversized), see RFC1757
- *   00b --> Good frame with no error, or unknown पूर्णांकegrity
+ *   00b --> Good frame with no error, or unknown integrity
  *   01b --> Payload is a Short Frame
  *   10b --> Payload is an Oversized Frame
  *   11b --> Payload is a Bad Frame with CRC or Alignment Error
  */
-क्रमागत erspan_bso अणु
+enum erspan_bso {
 	BSO_NOERROR = 0x0,
 	BSO_SHORT = 0x1,
 	BSO_OVERSIZED = 0x2,
 	BSO_BAD = 0x3,
-पूर्ण;
+};
 
-अटल अंतरभूत u8 erspan_detect_bso(काष्ठा sk_buff *skb)
-अणु
+static inline u8 erspan_detect_bso(struct sk_buff *skb)
+{
 	/* BSO_BAD is not handled because the frame CRC
-	 * or alignment error inक्रमmation is in FCS.
+	 * or alignment error information is in FCS.
 	 */
-	अगर (skb->len < ETH_ZLEN)
-		वापस BSO_SHORT;
+	if (skb->len < ETH_ZLEN)
+		return BSO_SHORT;
 
-	अगर (skb->len > ETH_FRAME_LEN)
-		वापस BSO_OVERSIZED;
+	if (skb->len > ETH_FRAME_LEN)
+		return BSO_OVERSIZED;
 
-	वापस BSO_NOERROR;
-पूर्ण
+	return BSO_NOERROR;
+}
 
-अटल अंतरभूत व्योम erspan_build_header_v2(काष्ठा sk_buff *skb,
+static inline void erspan_build_header_v2(struct sk_buff *skb,
 					  u32 id, u8 direction, u16 hwid,
 					  bool truncate, bool is_ipv4)
-अणु
-	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb->data;
-	काष्ठा erspan_base_hdr *ershdr;
-	काष्ठा erspan_md2 *md2;
-	काष्ठा qtag_prefix अणु
+{
+	struct ethhdr *eth = (struct ethhdr *)skb->data;
+	struct erspan_base_hdr *ershdr;
+	struct erspan_md2 *md2;
+	struct qtag_prefix {
 		__be16 eth_type;
 		__be16 tci;
-	पूर्ण *qp;
+	} *qp;
 	u16 vlan_tci = 0;
 	u8 gra = 0; /* 100 usec */
 	u8 bso = 0; /* Bad/Short/Oversized */
@@ -283,18 +282,18 @@
 			(ipv6_hdr(skb)->priority << 4) +
 			(ipv6_hdr(skb)->flow_lbl[0] >> 4);
 
-	/* Unlike v1, v2 करोes not have En field,
+	/* Unlike v1, v2 does not have En field,
 	 * so only extract vlan tci field.
 	 */
-	अगर (eth->h_proto == htons(ETH_P_8021Q)) अणु
-		qp = (काष्ठा qtag_prefix *)(skb->data + 2 * ETH_ALEN);
+	if (eth->h_proto == htons(ETH_P_8021Q)) {
+		qp = (struct qtag_prefix *)(skb->data + 2 * ETH_ALEN);
 		vlan_tci = ntohs(qp->tci);
-	पूर्ण
+	}
 
 	bso = erspan_detect_bso(skb);
-	skb_push(skb, माप(*ershdr) + ERSPAN_V2_MDSIZE);
-	ershdr = (काष्ठा erspan_base_hdr *)skb->data;
-	स_रखो(ershdr, 0, माप(*ershdr) + ERSPAN_V2_MDSIZE);
+	skb_push(skb, sizeof(*ershdr) + ERSPAN_V2_MDSIZE);
+	ershdr = (struct erspan_base_hdr *)skb->data;
+	memset(ershdr, 0, sizeof(*ershdr) + ERSPAN_V2_MDSIZE);
 
 	/* Build base header */
 	ershdr->ver = ERSPAN_VERSION2;
@@ -305,8 +304,8 @@
 	set_session_id(ershdr, id);
 
 	/* Build metadata */
-	md2 = (काष्ठा erspan_md2 *)(ershdr + 1);
-	md2->बारtamp = erspan_get_बारtamp();
+	md2 = (struct erspan_md2 *)(ershdr + 1);
+	md2->timestamp = erspan_get_timestamp();
 	md2->sgt = htons(sgt);
 	md2->p = 1;
 	md2->ft = 0;
@@ -314,6 +313,6 @@
 	md2->gra = gra;
 	md2->o = 0;
 	set_hwid(md2, hwid);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

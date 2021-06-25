@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
- * Combined Ethernet driver क्रम Motorola MPC8xx and MPC82xx.
+ * Combined Ethernet driver for Motorola MPC8xx and MPC82xx.
  *
  * Copyright (c) 2003 Intracom S.A.
- *  by Pantelis Antoniou <panto@पूर्णांकracom.gr>
+ *  by Pantelis Antoniou <panto@intracom.gr>
  *
  * 2005 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
@@ -13,150 +12,150 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pgtable.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/ptrace.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/mii.h>
+#include <linux/ethtool.h>
+#include <linux/bitops.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/mpc5xxx.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
+#include <asm/mpc5xxx.h>
 
-#समावेश "fs_enet.h"
-#समावेश "fec.h"
+#include "fs_enet.h"
+#include "fec.h"
 
-/* Make MII पढ़ो/ग_लिखो commands क्रम the FEC.
+/* Make MII read/write commands for the FEC.
 */
-#घोषणा mk_mii_पढ़ो(REG)	(0x60020000 | ((REG & 0x1f) << 18))
-#घोषणा mk_mii_ग_लिखो(REG, VAL)	(0x50020000 | ((REG & 0x1f) << 18) | (VAL & 0xffff))
-#घोषणा mk_mii_end		0
+#define mk_mii_read(REG)	(0x60020000 | ((REG & 0x1f) << 18))
+#define mk_mii_write(REG, VAL)	(0x50020000 | ((REG & 0x1f) << 18) | (VAL & 0xffff))
+#define mk_mii_end		0
 
-#घोषणा FEC_MII_LOOPS	10000
+#define FEC_MII_LOOPS	10000
 
-अटल पूर्णांक fs_enet_fec_mii_पढ़ो(काष्ठा mii_bus *bus , पूर्णांक phy_id, पूर्णांक location)
-अणु
-	काष्ठा fec_info* fec = bus->priv;
-	काष्ठा fec __iomem *fecp = fec->fecp;
-	पूर्णांक i, ret = -1;
+static int fs_enet_fec_mii_read(struct mii_bus *bus , int phy_id, int location)
+{
+	struct fec_info* fec = bus->priv;
+	struct fec __iomem *fecp = fec->fecp;
+	int i, ret = -1;
 
 	BUG_ON((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0);
 
-	/* Add PHY address to रेजिस्टर command.  */
-	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_पढ़ो(location));
+	/* Add PHY address to register command.  */
+	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_read(location));
 
-	क्रम (i = 0; i < FEC_MII_LOOPS; i++)
-		अगर ((in_be32(&fecp->fec_ievent) & FEC_ENET_MII) != 0)
-			अवरोध;
+	for (i = 0; i < FEC_MII_LOOPS; i++)
+		if ((in_be32(&fecp->fec_ievent) & FEC_ENET_MII) != 0)
+			break;
 
-	अगर (i < FEC_MII_LOOPS) अणु
+	if (i < FEC_MII_LOOPS) {
 		out_be32(&fecp->fec_ievent, FEC_ENET_MII);
 		ret = in_be32(&fecp->fec_mii_data) & 0xffff;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fs_enet_fec_mii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक location, u16 val)
-अणु
-	काष्ठा fec_info* fec = bus->priv;
-	काष्ठा fec __iomem *fecp = fec->fecp;
-	पूर्णांक i;
+static int fs_enet_fec_mii_write(struct mii_bus *bus, int phy_id, int location, u16 val)
+{
+	struct fec_info* fec = bus->priv;
+	struct fec __iomem *fecp = fec->fecp;
+	int i;
 
 	/* this must never happen */
 	BUG_ON((in_be32(&fecp->fec_r_cntrl) & FEC_RCNTRL_MII_MODE) == 0);
 
-	/* Add PHY address to रेजिस्टर command.  */
-	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_ग_लिखो(location, val));
+	/* Add PHY address to register command.  */
+	out_be32(&fecp->fec_mii_data, (phy_id << 23) | mk_mii_write(location, val));
 
-	क्रम (i = 0; i < FEC_MII_LOOPS; i++)
-		अगर ((in_be32(&fecp->fec_ievent) & FEC_ENET_MII) != 0)
-			अवरोध;
+	for (i = 0; i < FEC_MII_LOOPS; i++)
+		if ((in_be32(&fecp->fec_ievent) & FEC_ENET_MII) != 0)
+			break;
 
-	अगर (i < FEC_MII_LOOPS)
+	if (i < FEC_MII_LOOPS)
 		out_be32(&fecp->fec_ievent, FEC_ENET_MII);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id fs_enet_mdio_fec_match[];
-अटल पूर्णांक fs_enet_mdio_probe(काष्ठा platक्रमm_device *ofdev)
-अणु
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा resource res;
-	काष्ठा mii_bus *new_bus;
-	काष्ठा fec_info *fec;
-	पूर्णांक (*get_bus_freq)(काष्ठा device_node *);
-	पूर्णांक ret = -ENOMEM, घड़ी, speed;
+static const struct of_device_id fs_enet_mdio_fec_match[];
+static int fs_enet_mdio_probe(struct platform_device *ofdev)
+{
+	const struct of_device_id *match;
+	struct resource res;
+	struct mii_bus *new_bus;
+	struct fec_info *fec;
+	int (*get_bus_freq)(struct device_node *);
+	int ret = -ENOMEM, clock, speed;
 
 	match = of_match_device(fs_enet_mdio_fec_match, &ofdev->dev);
-	अगर (!match)
-		वापस -EINVAL;
+	if (!match)
+		return -EINVAL;
 	get_bus_freq = match->data;
 
 	new_bus = mdiobus_alloc();
-	अगर (!new_bus)
-		जाओ out;
+	if (!new_bus)
+		goto out;
 
-	fec = kzalloc(माप(काष्ठा fec_info), GFP_KERNEL);
-	अगर (!fec)
-		जाओ out_mii;
+	fec = kzalloc(sizeof(struct fec_info), GFP_KERNEL);
+	if (!fec)
+		goto out_mii;
 
 	new_bus->priv = fec;
 	new_bus->name = "FEC MII Bus";
-	new_bus->पढ़ो = &fs_enet_fec_mii_पढ़ो;
-	new_bus->ग_लिखो = &fs_enet_fec_mii_ग_लिखो;
+	new_bus->read = &fs_enet_fec_mii_read;
+	new_bus->write = &fs_enet_fec_mii_write;
 
 	ret = of_address_to_resource(ofdev->dev.of_node, 0, &res);
-	अगर (ret)
-		जाओ out_res;
+	if (ret)
+		goto out_res;
 
-	snम_लिखो(new_bus->id, MII_BUS_ID_SIZE, "%x", res.start);
+	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%x", res.start);
 
 	fec->fecp = ioremap(res.start, resource_size(&res));
-	अगर (!fec->fecp) अणु
+	if (!fec->fecp) {
 		ret = -ENOMEM;
-		जाओ out_fec;
-	पूर्ण
+		goto out_fec;
+	}
 
-	अगर (get_bus_freq) अणु
-		घड़ी = get_bus_freq(ofdev->dev.of_node);
-		अगर (!घड़ी) अणु
-			/* Use maximum भागider अगर घड़ी is unknown */
+	if (get_bus_freq) {
+		clock = get_bus_freq(ofdev->dev.of_node);
+		if (!clock) {
+			/* Use maximum divider if clock is unknown */
 			dev_warn(&ofdev->dev, "could not determine IPS clock\n");
-			घड़ी = 0x3F * 5000000;
-		पूर्ण
-	पूर्ण अन्यथा
-		घड़ी = ppc_proc_freq;
+			clock = 0x3F * 5000000;
+		}
+	} else
+		clock = ppc_proc_freq;
 
 	/*
-	 * Scale क्रम a MII घड़ी <= 2.5 MHz
-	 * Note that only 6 bits (25:30) are available क्रम MII speed.
+	 * Scale for a MII clock <= 2.5 MHz
+	 * Note that only 6 bits (25:30) are available for MII speed.
 	 */
-	speed = (घड़ी + 4999999) / 5000000;
-	अगर (speed > 0x3F) अणु
+	speed = (clock + 4999999) / 5000000;
+	if (speed > 0x3F) {
 		speed = 0x3F;
 		dev_err(&ofdev->dev,
 			"MII clock (%d Hz) exceeds max (2.5 MHz)\n",
-			घड़ी / speed);
-	पूर्ण
+			clock / speed);
+	}
 
 	fec->mii_speed = speed << 1;
 
@@ -169,60 +168,60 @@
 	new_bus->phy_mask = ~0;
 
 	new_bus->parent = &ofdev->dev;
-	platक्रमm_set_drvdata(ofdev, new_bus);
+	platform_set_drvdata(ofdev, new_bus);
 
-	ret = of_mdiobus_रेजिस्टर(new_bus, ofdev->dev.of_node);
-	अगर (ret)
-		जाओ out_unmap_regs;
+	ret = of_mdiobus_register(new_bus, ofdev->dev.of_node);
+	if (ret)
+		goto out_unmap_regs;
 
-	वापस 0;
+	return 0;
 
 out_unmap_regs:
 	iounmap(fec->fecp);
 out_res:
 out_fec:
-	kमुक्त(fec);
+	kfree(fec);
 out_mii:
-	mdiobus_मुक्त(new_bus);
+	mdiobus_free(new_bus);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fs_enet_mdio_हटाओ(काष्ठा platक्रमm_device *ofdev)
-अणु
-	काष्ठा mii_bus *bus = platक्रमm_get_drvdata(ofdev);
-	काष्ठा fec_info *fec = bus->priv;
+static int fs_enet_mdio_remove(struct platform_device *ofdev)
+{
+	struct mii_bus *bus = platform_get_drvdata(ofdev);
+	struct fec_info *fec = bus->priv;
 
-	mdiobus_unरेजिस्टर(bus);
+	mdiobus_unregister(bus);
 	iounmap(fec->fecp);
-	kमुक्त(fec);
-	mdiobus_मुक्त(bus);
+	kfree(fec);
+	mdiobus_free(bus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id fs_enet_mdio_fec_match[] = अणु
-	अणु
+static const struct of_device_id fs_enet_mdio_fec_match[] = {
+	{
 		.compatible = "fsl,pq1-fec-mdio",
-	पूर्ण,
-#अगर defined(CONFIG_PPC_MPC512x)
-	अणु
+	},
+#if defined(CONFIG_PPC_MPC512x)
+	{
 		.compatible = "fsl,mpc5121-fec-mdio",
 		.data = mpc5xxx_get_bus_frequency,
-	पूर्ण,
-#पूर्ण_अगर
-	अणुपूर्ण,
-पूर्ण;
+	},
+#endif
+	{},
+};
 MODULE_DEVICE_TABLE(of, fs_enet_mdio_fec_match);
 
-अटल काष्ठा platक्रमm_driver fs_enet_fec_mdio_driver = अणु
-	.driver = अणु
+static struct platform_driver fs_enet_fec_mdio_driver = {
+	.driver = {
 		.name = "fsl-fec-mdio",
 		.of_match_table = fs_enet_mdio_fec_match,
-	पूर्ण,
+	},
 	.probe = fs_enet_mdio_probe,
-	.हटाओ = fs_enet_mdio_हटाओ,
-पूर्ण;
+	.remove = fs_enet_mdio_remove,
+};
 
-module_platक्रमm_driver(fs_enet_fec_mdio_driver);
+module_platform_driver(fs_enet_fec_mdio_driver);
 MODULE_LICENSE("GPL");

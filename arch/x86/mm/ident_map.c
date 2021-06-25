@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Helper routines क्रम building identity mapping page tables. This is
+ * Helper routines for building identity mapping page tables. This is
  * included by both the compressed kernel and the regular kernel.
  */
 
-अटल व्योम ident_pmd_init(काष्ठा x86_mapping_info *info, pmd_t *pmd_page,
-			   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
+static void ident_pmd_init(struct x86_mapping_info *info, pmd_t *pmd_page,
+			   unsigned long addr, unsigned long end)
+{
 	addr &= PMD_MASK;
-	क्रम (; addr < end; addr += PMD_SIZE) अणु
+	for (; addr < end; addr += PMD_SIZE) {
 		pmd_t *pmd = pmd_page + pmd_index(addr);
 
-		अगर (pmd_present(*pmd))
-			जारी;
+		if (pmd_present(*pmd))
+			continue;
 
 		set_pmd(pmd, __pmd((addr - info->offset) | info->page_flag));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ident_pud_init(काष्ठा x86_mapping_info *info, pud_t *pud_page,
-			  अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ next;
+static int ident_pud_init(struct x86_mapping_info *info, pud_t *pud_page,
+			  unsigned long addr, unsigned long end)
+{
+	unsigned long next;
 
-	क्रम (; addr < end; addr = next) अणु
+	for (; addr < end; addr = next) {
 		pud_t *pud = pud_page + pud_index(addr);
 		pmd_t *pmd;
 
 		next = (addr & PUD_MASK) + PUD_SIZE;
-		अगर (next > end)
+		if (next > end)
 			next = end;
 
-		अगर (info->direct_gbpages) अणु
+		if (info->direct_gbpages) {
 			pud_t pudval;
 
-			अगर (pud_present(*pud))
-				जारी;
+			if (pud_present(*pud))
+				continue;
 
 			addr &= PUD_MASK;
 			pudval = __pud((addr - info->offset) | info->page_flag);
 			set_pud(pud, pudval);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (pud_present(*pud)) अणु
+		if (pud_present(*pud)) {
 			pmd = pmd_offset(pud, 0);
 			ident_pmd_init(info, pmd, addr, next);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		pmd = (pmd_t *)info->alloc_pgt_page(info->context);
-		अगर (!pmd)
-			वापस -ENOMEM;
+		if (!pmd)
+			return -ENOMEM;
 		ident_pmd_init(info, pmd, addr, next);
 		set_pud(pud, __pud(__pa(pmd) | info->kernpg_flag));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ident_p4d_init(काष्ठा x86_mapping_info *info, p4d_t *p4d_page,
-			  अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ next;
-	पूर्णांक result;
+static int ident_p4d_init(struct x86_mapping_info *info, p4d_t *p4d_page,
+			  unsigned long addr, unsigned long end)
+{
+	unsigned long next;
+	int result;
 
-	क्रम (; addr < end; addr = next) अणु
+	for (; addr < end; addr = next) {
 		p4d_t *p4d = p4d_page + p4d_index(addr);
 		pud_t *pud;
 
 		next = (addr & P4D_MASK) + P4D_SIZE;
-		अगर (next > end)
+		if (next > end)
 			next = end;
 
-		अगर (p4d_present(*p4d)) अणु
+		if (p4d_present(*p4d)) {
 			pud = pud_offset(p4d, 0);
 			result = ident_pud_init(info, pud, addr, next);
-			अगर (result)
-				वापस result;
+			if (result)
+				return result;
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 		pud = (pud_t *)info->alloc_pgt_page(info->context);
-		अगर (!pud)
-			वापस -ENOMEM;
+		if (!pud)
+			return -ENOMEM;
 
 		result = ident_pud_init(info, pud, addr, next);
-		अगर (result)
-			वापस result;
+		if (result)
+			return result;
 
 		set_p4d(p4d, __p4d(__pa(pud) | info->kernpg_flag));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक kernel_ident_mapping_init(काष्ठा x86_mapping_info *info, pgd_t *pgd_page,
-			      अचिन्हित दीर्घ pstart, अचिन्हित दीर्घ pend)
-अणु
-	अचिन्हित दीर्घ addr = pstart + info->offset;
-	अचिन्हित दीर्घ end = pend + info->offset;
-	अचिन्हित दीर्घ next;
-	पूर्णांक result;
+int kernel_ident_mapping_init(struct x86_mapping_info *info, pgd_t *pgd_page,
+			      unsigned long pstart, unsigned long pend)
+{
+	unsigned long addr = pstart + info->offset;
+	unsigned long end = pend + info->offset;
+	unsigned long next;
+	int result;
 
-	/* Set the शेष pagetable flags अगर not supplied */
-	अगर (!info->kernpg_flag)
+	/* Set the default pagetable flags if not supplied */
+	if (!info->kernpg_flag)
 		info->kernpg_flag = _KERNPG_TABLE;
 
 	/* Filter out unsupported __PAGE_KERNEL_* bits: */
-	info->kernpg_flag &= __शेष_kernel_pte_mask;
+	info->kernpg_flag &= __default_kernel_pte_mask;
 
-	क्रम (; addr < end; addr = next) अणु
+	for (; addr < end; addr = next) {
 		pgd_t *pgd = pgd_page + pgd_index(addr);
 		p4d_t *p4d;
 
-		next = (addr & PGसूची_MASK) + PGसूची_SIZE;
-		अगर (next > end)
+		next = (addr & PGDIR_MASK) + PGDIR_SIZE;
+		if (next > end)
 			next = end;
 
-		अगर (pgd_present(*pgd)) अणु
+		if (pgd_present(*pgd)) {
 			p4d = p4d_offset(pgd, 0);
 			result = ident_p4d_init(info, p4d, addr, next);
-			अगर (result)
-				वापस result;
-			जारी;
-		पूर्ण
+			if (result)
+				return result;
+			continue;
+		}
 
 		p4d = (p4d_t *)info->alloc_pgt_page(info->context);
-		अगर (!p4d)
-			वापस -ENOMEM;
+		if (!p4d)
+			return -ENOMEM;
 		result = ident_p4d_init(info, p4d, addr, next);
-		अगर (result)
-			वापस result;
-		अगर (pgtable_l5_enabled()) अणु
+		if (result)
+			return result;
+		if (pgtable_l5_enabled()) {
 			set_pgd(pgd, __pgd(__pa(p4d) | info->kernpg_flag));
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * With p4d folded, pgd is equal to p4d.
-			 * The pgd entry has to poपूर्णांक to the pud page table in this हाल.
+			 * The pgd entry has to point to the pud page table in this case.
 			 */
 			pud_t *pud = pud_offset(p4d, 0);
 			set_pgd(pgd, __pgd(__pa(pud) | info->kernpg_flag));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

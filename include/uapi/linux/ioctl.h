@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _LINUX_IOCTL_H
-#घोषणा _LINUX_IOCTL_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _LINUX_IOCTL_H
+#define _LINUX_IOCTL_H
 
-#समावेश <यंत्र/ioctl.h>
+#include <asm/ioctl.h>
 
-#पूर्ण_अगर /* _LINUX_IOCTL_H */
+#endif /* _LINUX_IOCTL_H */
 

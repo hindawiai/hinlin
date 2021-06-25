@@ -1,281 +1,280 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * fault.c:  Page fault handlers क्रम the Sparc.
+ * fault.c:  Page fault handlers for the Sparc.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 1996 Eddie C. Dost (ecd@skynet.be)
  * Copyright (C) 1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
-#समावेश <यंत्र/head.h>
+#include <asm/head.h>
 
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/extable.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <linux/ptrace.h>
+#include <linux/mman.h>
+#include <linux/threads.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/mm.h>
+#include <linux/smp.h>
+#include <linux/perf_event.h>
+#include <linux/interrupt.h>
+#include <linux/kdebug.h>
+#include <linux/uaccess.h>
+#include <linux/extable.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/खोलोprom.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/page.h>
+#include <asm/openprom.h>
+#include <asm/oplib.h>
+#include <asm/setup.h>
+#include <asm/smp.h>
+#include <asm/traps.h>
 
-#समावेश "mm_32.h"
+#include "mm_32.h"
 
-पूर्णांक show_unhandled_संकेतs = 1;
+int show_unhandled_signals = 1;
 
-अटल व्योम __noवापस unhandled_fault(अचिन्हित दीर्घ address,
-				       काष्ठा task_काष्ठा *tsk,
-				       काष्ठा pt_regs *regs)
-अणु
-	अगर ((अचिन्हित दीर्घ) address < PAGE_SIZE) अणु
-		prपूर्णांकk(KERN_ALERT
+static void __noreturn unhandled_fault(unsigned long address,
+				       struct task_struct *tsk,
+				       struct pt_regs *regs)
+{
+	if ((unsigned long) address < PAGE_SIZE) {
+		printk(KERN_ALERT
 		    "Unable to handle kernel NULL pointer dereference\n");
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ALERT "Unable to handle kernel paging request at virtual address %08lx\n",
+	} else {
+		printk(KERN_ALERT "Unable to handle kernel paging request at virtual address %08lx\n",
 		       address);
-	पूर्ण
-	prपूर्णांकk(KERN_ALERT "tsk->{mm,active_mm}->context = %08lx\n",
+	}
+	printk(KERN_ALERT "tsk->{mm,active_mm}->context = %08lx\n",
 		(tsk->mm ? tsk->mm->context : tsk->active_mm->context));
-	prपूर्णांकk(KERN_ALERT "tsk->{mm,active_mm}->pgd = %08lx\n",
-		(tsk->mm ? (अचिन्हित दीर्घ) tsk->mm->pgd :
-			(अचिन्हित दीर्घ) tsk->active_mm->pgd));
-	die_अगर_kernel("Oops", regs);
-पूर्ण
+	printk(KERN_ALERT "tsk->{mm,active_mm}->pgd = %08lx\n",
+		(tsk->mm ? (unsigned long) tsk->mm->pgd :
+			(unsigned long) tsk->active_mm->pgd));
+	die_if_kernel("Oops", regs);
+}
 
-अटल अंतरभूत व्योम
-show_संकेत_msg(काष्ठा pt_regs *regs, पूर्णांक sig, पूर्णांक code,
-		अचिन्हित दीर्घ address, काष्ठा task_काष्ठा *tsk)
-अणु
-	अगर (!unhandled_संकेत(tsk, sig))
-		वापस;
+static inline void
+show_signal_msg(struct pt_regs *regs, int sig, int code,
+		unsigned long address, struct task_struct *tsk)
+{
+	if (!unhandled_signal(tsk, sig))
+		return;
 
-	अगर (!prपूर्णांकk_ratelimit())
-		वापस;
+	if (!printk_ratelimit())
+		return;
 
-	prपूर्णांकk("%s%s[%d]: segfault at %lx ip %px (rpc %px) sp %px error %x",
+	printk("%s%s[%d]: segfault at %lx ip %px (rpc %px) sp %px error %x",
 	       task_pid_nr(tsk) > 1 ? KERN_INFO : KERN_EMERG,
 	       tsk->comm, task_pid_nr(tsk), address,
-	       (व्योम *)regs->pc, (व्योम *)regs->u_regs[UREG_I7],
-	       (व्योम *)regs->u_regs[UREG_FP], code);
+	       (void *)regs->pc, (void *)regs->u_regs[UREG_I7],
+	       (void *)regs->u_regs[UREG_FP], code);
 
-	prपूर्णांक_vma_addr(KERN_CONT " in ", regs->pc);
+	print_vma_addr(KERN_CONT " in ", regs->pc);
 
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	printk(KERN_CONT "\n");
+}
 
-अटल व्योम __करो_fault_siginfo(पूर्णांक code, पूर्णांक sig, काष्ठा pt_regs *regs,
-			       अचिन्हित दीर्घ addr)
-अणु
-	अगर (unlikely(show_unhandled_संकेतs))
-		show_संकेत_msg(regs, sig, code,
+static void __do_fault_siginfo(int code, int sig, struct pt_regs *regs,
+			       unsigned long addr)
+{
+	if (unlikely(show_unhandled_signals))
+		show_signal_msg(regs, sig, code,
 				addr, current);
 
-	क्रमce_sig_fault(sig, code, (व्योम __user *) addr, 0);
-पूर्ण
+	force_sig_fault(sig, code, (void __user *) addr, 0);
+}
 
-अटल अचिन्हित दीर्घ compute_si_addr(काष्ठा pt_regs *regs, पूर्णांक text_fault)
-अणु
-	अचिन्हित पूर्णांक insn;
+static unsigned long compute_si_addr(struct pt_regs *regs, int text_fault)
+{
+	unsigned int insn;
 
-	अगर (text_fault)
-		वापस regs->pc;
+	if (text_fault)
+		return regs->pc;
 
-	अगर (regs->psr & PSR_PS)
-		insn = *(अचिन्हित पूर्णांक *) regs->pc;
-	अन्यथा
-		__get_user(insn, (अचिन्हित पूर्णांक *) regs->pc);
+	if (regs->psr & PSR_PS)
+		insn = *(unsigned int *) regs->pc;
+	else
+		__get_user(insn, (unsigned int *) regs->pc);
 
-	वापस safe_compute_effective_address(regs, insn);
-पूर्ण
+	return safe_compute_effective_address(regs, insn);
+}
 
-अटल noअंतरभूत व्योम करो_fault_siginfo(पूर्णांक code, पूर्णांक sig, काष्ठा pt_regs *regs,
-				      पूर्णांक text_fault)
-अणु
-	अचिन्हित दीर्घ addr = compute_si_addr(regs, text_fault);
+static noinline void do_fault_siginfo(int code, int sig, struct pt_regs *regs,
+				      int text_fault)
+{
+	unsigned long addr = compute_si_addr(regs, text_fault);
 
-	__करो_fault_siginfo(code, sig, regs, addr);
-पूर्ण
+	__do_fault_siginfo(code, sig, regs, addr);
+}
 
-यंत्रlinkage व्योम करो_sparc_fault(काष्ठा pt_regs *regs, पूर्णांक text_fault, पूर्णांक ग_लिखो,
-			       अचिन्हित दीर्घ address)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा task_काष्ठा *tsk = current;
-	काष्ठा mm_काष्ठा *mm = tsk->mm;
-	पूर्णांक from_user = !(regs->psr & PSR_PS);
-	पूर्णांक code;
+asmlinkage void do_sparc_fault(struct pt_regs *regs, int text_fault, int write,
+			       unsigned long address)
+{
+	struct vm_area_struct *vma;
+	struct task_struct *tsk = current;
+	struct mm_struct *mm = tsk->mm;
+	int from_user = !(regs->psr & PSR_PS);
+	int code;
 	vm_fault_t fault;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
+	unsigned int flags = FAULT_FLAG_DEFAULT;
 
-	अगर (text_fault)
+	if (text_fault)
 		address = regs->pc;
 
 	/*
-	 * We fault-in kernel-space भव memory on-demand. The
+	 * We fault-in kernel-space virtual memory on-demand. The
 	 * 'reference' page table is init_mm.pgd.
 	 *
-	 * NOTE! We MUST NOT take any locks क्रम this हाल. We may
-	 * be in an पूर्णांकerrupt or a critical region, and should
-	 * only copy the inक्रमmation from the master page table,
+	 * NOTE! We MUST NOT take any locks for this case. We may
+	 * be in an interrupt or a critical region, and should
+	 * only copy the information from the master page table,
 	 * nothing more.
 	 */
 	code = SEGV_MAPERR;
-	अगर (address >= TASK_SIZE)
-		जाओ vदो_स्मृति_fault;
+	if (address >= TASK_SIZE)
+		goto vmalloc_fault;
 
 	/*
-	 * If we're in an पूर्णांकerrupt or have no user
+	 * If we're in an interrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	अगर (pagefault_disabled() || !mm)
-		जाओ no_context;
+	if (pagefault_disabled() || !mm)
+		goto no_context;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 
 retry:
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 
-	अगर (!from_user && address >= PAGE_OFFSET)
-		जाओ bad_area;
+	if (!from_user && address >= PAGE_OFFSET)
+		goto bad_area;
 
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ bad_area;
-	अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ bad_area;
-	अगर (expand_stack(vma, address))
-		जाओ bad_area;
+	if (!vma)
+		goto bad_area;
+	if (vma->vm_start <= address)
+		goto good_area;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto bad_area;
+	if (expand_stack(vma, address))
+		goto bad_area;
 	/*
-	 * Ok, we have a good vm_area क्रम this memory access, so
+	 * Ok, we have a good vm_area for this memory access, so
 	 * we can handle it..
 	 */
 good_area:
 	code = SEGV_ACCERR;
-	अगर (ग_लिखो) अणु
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ bad_area;
-	पूर्ण अन्यथा अणु
-		/* Allow पढ़ोs even क्रम ग_लिखो-only mappings */
-		अगर (!(vma->vm_flags & (VM_READ | VM_EXEC)))
-			जाओ bad_area;
-	पूर्ण
+	if (write) {
+		if (!(vma->vm_flags & VM_WRITE))
+			goto bad_area;
+	} else {
+		/* Allow reads even for write-only mappings */
+		if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+			goto bad_area;
+	}
 
-	अगर (from_user)
+	if (from_user)
 		flags |= FAULT_FLAG_USER;
-	अगर (ग_लिखो)
+	if (write)
 		flags |= FAULT_FLAG_WRITE;
 
 	/*
-	 * If क्रम any reason at all we couldn't handle the fault,
-	 * make sure we निकास gracefully rather than endlessly reकरो
+	 * If for any reason at all we couldn't handle the fault,
+	 * make sure we exit gracefully rather than endlessly redo
 	 * the fault.
 	 */
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	अगर (fault_संकेत_pending(fault, regs))
-		वापस;
+	if (fault_signal_pending(fault, regs))
+		return;
 
-	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
-		अगर (fault & VM_FAULT_OOM)
-			जाओ out_of_memory;
-		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
-			जाओ bad_area;
-		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
-			जाओ करो_sigbus;
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		if (fault & VM_FAULT_OOM)
+			goto out_of_memory;
+		else if (fault & VM_FAULT_SIGSEGV)
+			goto bad_area;
+		else if (fault & VM_FAULT_SIGBUS)
+			goto do_sigbus;
 		BUG();
-	पूर्ण
+	}
 
-	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
-		अगर (fault & VM_FAULT_RETRY) अणु
+	if (flags & FAULT_FLAG_ALLOW_RETRY) {
+		if (fault & VM_FAULT_RETRY) {
 			flags |= FAULT_FLAG_TRIED;
 
-			/* No need to mmap_पढ़ो_unlock(mm) as we would
-			 * have alपढ़ोy released it in __lock_page_or_retry
+			/* No need to mmap_read_unlock(mm) as we would
+			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
 
-			जाओ retry;
-		पूर्ण
-	पूर्ण
+			goto retry;
+		}
+	}
 
-	mmap_पढ़ो_unlock(mm);
-	वापस;
+	mmap_read_unlock(mm);
+	return;
 
 	/*
 	 * Something tried to access memory that isn't in our memory map..
-	 * Fix it, but check अगर it's kernel or user first..
+	 * Fix it, but check if it's kernel or user first..
 	 */
 bad_area:
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
 bad_area_nosemaphore:
-	/* User mode accesses just cause a संक_अंश */
-	अगर (from_user) अणु
-		करो_fault_siginfo(code, संक_अंश, regs, text_fault);
-		वापस;
-	पूर्ण
+	/* User mode accesses just cause a SIGSEGV */
+	if (from_user) {
+		do_fault_siginfo(code, SIGSEGV, regs, text_fault);
+		return;
+	}
 
 	/* Is this in ex_table? */
 no_context:
-	अगर (!from_user) अणु
-		स्थिर काष्ठा exception_table_entry *entry;
+	if (!from_user) {
+		const struct exception_table_entry *entry;
 
 		entry = search_exception_tables(regs->pc);
-#अगर_घोषित DEBUG_EXCEPTIONS
-		prपूर्णांकk("Exception: PC<%08lx> faddr<%08lx>\n",
+#ifdef DEBUG_EXCEPTIONS
+		printk("Exception: PC<%08lx> faddr<%08lx>\n",
 		       regs->pc, address);
-		prपूर्णांकk("EX_TABLE: insn<%08lx> fixup<%08x>\n",
+		printk("EX_TABLE: insn<%08lx> fixup<%08x>\n",
 			regs->pc, entry->fixup);
-#पूर्ण_अगर
+#endif
 		regs->pc = entry->fixup;
 		regs->npc = regs->pc + 4;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	unhandled_fault(address, tsk, regs);
-	करो_निकास(SIGKILL);
+	do_exit(SIGKILL);
 
 /*
  * We ran out of memory, or some other thing happened to us that made
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	mmap_पढ़ो_unlock(mm);
-	अगर (from_user) अणु
+	mmap_read_unlock(mm);
+	if (from_user) {
 		pagefault_out_of_memory();
-		वापस;
-	पूर्ण
-	जाओ no_context;
+		return;
+	}
+	goto no_context;
 
-करो_sigbus:
-	mmap_पढ़ो_unlock(mm);
-	करो_fault_siginfo(BUS_ADRERR, SIGBUS, regs, text_fault);
-	अगर (!from_user)
-		जाओ no_context;
+do_sigbus:
+	mmap_read_unlock(mm);
+	do_fault_siginfo(BUS_ADRERR, SIGBUS, regs, text_fault);
+	if (!from_user)
+		goto no_context;
 
-vदो_स्मृति_fault:
-	अणु
+vmalloc_fault:
+	{
 		/*
 		 * Synchronize this task's top level page-table
 		 * with the 'reference' page table.
 		 */
-		पूर्णांक offset = pgd_index(address);
+		int offset = pgd_index(address);
 		pgd_t *pgd, *pgd_k;
 		p4d_t *p4d, *p4d_k;
 		pud_t *pud, *pud_k;
@@ -284,12 +283,12 @@ vदो_स्मृति_fault:
 		pgd = tsk->active_mm->pgd + offset;
 		pgd_k = init_mm.pgd + offset;
 
-		अगर (!pgd_present(*pgd)) अणु
-			अगर (!pgd_present(*pgd_k))
-				जाओ bad_area_nosemaphore;
+		if (!pgd_present(*pgd)) {
+			if (!pgd_present(*pgd_k))
+				goto bad_area_nosemaphore;
 			pgd_val(*pgd) = pgd_val(*pgd_k);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		p4d = p4d_offset(pgd, address);
 		pud = pud_offset(p4d, address);
@@ -299,97 +298,97 @@ vदो_स्मृति_fault:
 		pud_k = pud_offset(p4d_k, address);
 		pmd_k = pmd_offset(pud_k, address);
 
-		अगर (pmd_present(*pmd) || !pmd_present(*pmd_k))
-			जाओ bad_area_nosemaphore;
+		if (pmd_present(*pmd) || !pmd_present(*pmd_k))
+			goto bad_area_nosemaphore;
 
 		*pmd = *pmd_k;
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
 /* This always deals with user addresses. */
-अटल व्योम क्रमce_user_fault(अचिन्हित दीर्घ address, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा task_काष्ठा *tsk = current;
-	काष्ठा mm_काष्ठा *mm = tsk->mm;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_USER;
-	पूर्णांक code;
+static void force_user_fault(unsigned long address, int write)
+{
+	struct vm_area_struct *vma;
+	struct task_struct *tsk = current;
+	struct mm_struct *mm = tsk->mm;
+	unsigned int flags = FAULT_FLAG_USER;
+	int code;
 
 	code = SEGV_MAPERR;
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ bad_area;
-	अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ bad_area;
-	अगर (expand_stack(vma, address))
-		जाओ bad_area;
+	if (!vma)
+		goto bad_area;
+	if (vma->vm_start <= address)
+		goto good_area;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto bad_area;
+	if (expand_stack(vma, address))
+		goto bad_area;
 good_area:
 	code = SEGV_ACCERR;
-	अगर (ग_लिखो) अणु
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ bad_area;
+	if (write) {
+		if (!(vma->vm_flags & VM_WRITE))
+			goto bad_area;
 		flags |= FAULT_FLAG_WRITE;
-	पूर्ण अन्यथा अणु
-		अगर (!(vma->vm_flags & (VM_READ | VM_EXEC)))
-			जाओ bad_area;
-	पूर्ण
-	चयन (handle_mm_fault(vma, address, flags, शून्य)) अणु
-	हाल VM_FAULT_SIGBUS:
-	हाल VM_FAULT_OOM:
-		जाओ करो_sigbus;
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
-	वापस;
+	} else {
+		if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+			goto bad_area;
+	}
+	switch (handle_mm_fault(vma, address, flags, NULL)) {
+	case VM_FAULT_SIGBUS:
+	case VM_FAULT_OOM:
+		goto do_sigbus;
+	}
+	mmap_read_unlock(mm);
+	return;
 bad_area:
-	mmap_पढ़ो_unlock(mm);
-	__करो_fault_siginfo(code, संक_अंश, tsk->thपढ़ो.kregs, address);
-	वापस;
+	mmap_read_unlock(mm);
+	__do_fault_siginfo(code, SIGSEGV, tsk->thread.kregs, address);
+	return;
 
-करो_sigbus:
-	mmap_पढ़ो_unlock(mm);
-	__करो_fault_siginfo(BUS_ADRERR, SIGBUS, tsk->thपढ़ो.kregs, address);
-पूर्ण
+do_sigbus:
+	mmap_read_unlock(mm);
+	__do_fault_siginfo(BUS_ADRERR, SIGBUS, tsk->thread.kregs, address);
+}
 
-अटल व्योम check_stack_aligned(अचिन्हित दीर्घ sp)
-अणु
-	अगर (sp & 0x7UL)
-		क्रमce_sig(संक_अवैध);
-पूर्ण
+static void check_stack_aligned(unsigned long sp)
+{
+	if (sp & 0x7UL)
+		force_sig(SIGILL);
+}
 
-व्योम winकरोw_overflow_fault(व्योम)
-अणु
-	अचिन्हित दीर्घ sp;
+void window_overflow_fault(void)
+{
+	unsigned long sp;
 
-	sp = current_thपढ़ो_info()->rwbuf_stkptrs[0];
-	अगर (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
-		क्रमce_user_fault(sp + 0x38, 1);
-	क्रमce_user_fault(sp, 1);
-
-	check_stack_aligned(sp);
-पूर्ण
-
-व्योम winकरोw_underflow_fault(अचिन्हित दीर्घ sp)
-अणु
-	अगर (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
-		क्रमce_user_fault(sp + 0x38, 0);
-	क्रमce_user_fault(sp, 0);
+	sp = current_thread_info()->rwbuf_stkptrs[0];
+	if (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
+		force_user_fault(sp + 0x38, 1);
+	force_user_fault(sp, 1);
 
 	check_stack_aligned(sp);
-पूर्ण
+}
 
-व्योम winकरोw_ret_fault(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ sp;
+void window_underflow_fault(unsigned long sp)
+{
+	if (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
+		force_user_fault(sp + 0x38, 0);
+	force_user_fault(sp, 0);
+
+	check_stack_aligned(sp);
+}
+
+void window_ret_fault(struct pt_regs *regs)
+{
+	unsigned long sp;
 
 	sp = regs->u_regs[UREG_FP];
-	अगर (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
-		क्रमce_user_fault(sp + 0x38, 0);
-	क्रमce_user_fault(sp, 0);
+	if (((sp + 0x38) & PAGE_MASK) != (sp & PAGE_MASK))
+		force_user_fault(sp + 0x38, 0);
+	force_user_fault(sp, 0);
 
 	check_stack_aligned(sp);
-पूर्ण
+}

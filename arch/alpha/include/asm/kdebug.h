@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <यंत्र-generic/kdebug.h>
+#include <asm-generic/kdebug.h>

@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/arch/arm/mach-footbridge/ebsa285-pci.c
  *
- * PCI bios-type initialisation क्रम PCI machines
+ * PCI bios-type initialisation for PCI machines
  *
  * Bits taken from various places.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/init.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach/pci.h>
-#समावेश <यंत्र/mach-types.h>
+#include <asm/irq.h>
+#include <asm/mach/pci.h>
+#include <asm/mach-types.h>
 
-अटल पूर्णांक irqmap_ebsa285[] = अणु IRQ_IN3, IRQ_IN1, IRQ_IN0, IRQ_PCI पूर्ण;
+static int irqmap_ebsa285[] = { IRQ_IN3, IRQ_IN1, IRQ_IN0, IRQ_PCI };
 
-अटल पूर्णांक ebsa285_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
-अणु
-	अगर (dev->venकरोr == PCI_VENDOR_ID_CONTAQ &&
+static int ebsa285_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
+{
+	if (dev->vendor == PCI_VENDOR_ID_CONTAQ &&
 	    dev->device == PCI_DEVICE_ID_CONTAQ_82C693)
-		चयन (PCI_FUNC(dev->devfn)) अणु
-		हाल 1:	वापस 14;
-		हाल 2:	वापस 15;
-		हाल 3:	वापस 12;
-		पूर्ण
+		switch (PCI_FUNC(dev->devfn)) {
+		case 1:	return 14;
+		case 2:	return 15;
+		case 3:	return 12;
+		}
 
-	वापस irqmap_ebsa285[(slot + pin) & 3];
-पूर्ण
+	return irqmap_ebsa285[(slot + pin) & 3];
+}
 
-अटल काष्ठा hw_pci ebsa285_pci __initdata = अणु
+static struct hw_pci ebsa285_pci __initdata = {
 	.map_irq		= ebsa285_map_irq,
 	.nr_controllers		= 1,
 	.ops			= &dc21285_ops,
 	.setup			= dc21285_setup,
 	.preinit		= dc21285_preinit,
 	.postinit		= dc21285_postinit,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ebsa285_init_pci(व्योम)
-अणु
-	अगर (machine_is_ebsa285())
+static int __init ebsa285_init_pci(void)
+{
+	if (machine_is_ebsa285())
 		pci_common_init(&ebsa285_pci);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(ebsa285_init_pci);

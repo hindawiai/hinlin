@@ -1,724 +1,723 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2018-2020 Linaro Ltd.
  */
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/soc/qcom/qmi.h>
+#include <linux/stddef.h>
+#include <linux/soc/qcom/qmi.h>
 
-#समावेश "ipa_qmi_msg.h"
+#include "ipa_qmi_msg.h"
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_indication_रेजिस्टर_req */
-काष्ठा qmi_elem_info ipa_indication_रेजिस्टर_req_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_indication_register_req */
+struct qmi_elem_info ipa_indication_register_req_ei[] = {
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     master_driver_init_complete_valid),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   master_driver_init_complete_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     master_driver_init_complete),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   master_driver_init_complete),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     data_usage_quota_reached_valid),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   data_usage_quota_reached_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     data_usage_quota_reached),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   data_usage_quota_reached),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
-				     ipa_mhi_पढ़ोy_ind_valid),
+			sizeof_field(struct ipa_indication_register_req,
+				     ipa_mhi_ready_ind_valid),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
-					   ipa_mhi_पढ़ोy_ind_valid),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_indication_register_req,
+					   ipa_mhi_ready_ind_valid),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
-				     ipa_mhi_पढ़ोy_ind),
+			sizeof_field(struct ipa_indication_register_req,
+				     ipa_mhi_ready_ind),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
-					   ipa_mhi_पढ़ोy_ind),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_indication_register_req,
+					   ipa_mhi_ready_ind),
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
-				     endpoपूर्णांक_desc_ind_valid),
+			sizeof_field(struct ipa_indication_register_req,
+				     endpoint_desc_ind_valid),
 		.tlv_type	= 0x13,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
-					   endpoपूर्णांक_desc_ind_valid),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_indication_register_req,
+					   endpoint_desc_ind_valid),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
-				     endpoपूर्णांक_desc_ind),
+			sizeof_field(struct ipa_indication_register_req,
+				     endpoint_desc_ind),
 		.tlv_type	= 0x13,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
-					   endpoपूर्णांक_desc_ind),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_indication_register_req,
+					   endpoint_desc_ind),
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     bw_change_ind_valid),
 		.tlv_type	= 0x14,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   bw_change_ind_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_req,
+			sizeof_field(struct ipa_indication_register_req,
 				     bw_change_ind),
 		.tlv_type	= 0x14,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_req,
+		.offset		= offsetof(struct ipa_indication_register_req,
 					   bw_change_ind),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_indication_रेजिस्टर_rsp */
-काष्ठा qmi_elem_info ipa_indication_रेजिस्टर_rsp_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_indication_register_rsp */
+struct qmi_elem_info ipa_indication_register_rsp_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_indication_रेजिस्टर_rsp,
+			sizeof_field(struct ipa_indication_register_rsp,
 				     rsp),
 		.tlv_type	= 0x02,
-		.offset		= दुरत्व(काष्ठा ipa_indication_रेजिस्टर_rsp,
+		.offset		= offsetof(struct ipa_indication_register_rsp,
 					   rsp),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_driver_init_complete_req */
-काष्ठा qmi_elem_info ipa_driver_init_complete_req_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_driver_init_complete_req */
+struct qmi_elem_info ipa_driver_init_complete_req_ei[] = {
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_driver_init_complete_req,
+			sizeof_field(struct ipa_driver_init_complete_req,
 				     status),
 		.tlv_type	= 0x01,
-		.offset		= दुरत्व(काष्ठा ipa_driver_init_complete_req,
+		.offset		= offsetof(struct ipa_driver_init_complete_req,
 					   status),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_driver_init_complete_rsp */
-काष्ठा qmi_elem_info ipa_driver_init_complete_rsp_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_driver_init_complete_rsp */
+struct qmi_elem_info ipa_driver_init_complete_rsp_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_driver_init_complete_rsp,
+			sizeof_field(struct ipa_driver_init_complete_rsp,
 				     rsp),
 		.tlv_type	= 0x02,
-		.offset		= दुरत्व(काष्ठा ipa_driver_init_complete_rsp,
+		.offset		= offsetof(struct ipa_driver_init_complete_rsp,
 					   rsp),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_init_complete_ind */
-काष्ठा qmi_elem_info ipa_init_complete_ind_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_init_complete_ind */
+struct qmi_elem_info ipa_init_complete_ind_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_complete_ind,
+			sizeof_field(struct ipa_init_complete_ind,
 				     status),
 		.tlv_type	= 0x02,
-		.offset		= दुरत्व(काष्ठा ipa_init_complete_ind,
+		.offset		= offsetof(struct ipa_init_complete_ind,
 					   status),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_mem_bounds */
-काष्ठा qmi_elem_info ipa_mem_bounds_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_mem_bounds */
+struct qmi_elem_info ipa_mem_bounds_ei[] = {
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_bounds, start),
-		.offset		= दुरत्व(काष्ठा ipa_mem_bounds, start),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_bounds, start),
+		.offset		= offsetof(struct ipa_mem_bounds, start),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_bounds, end),
-		.offset		= दुरत्व(काष्ठा ipa_mem_bounds, end),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_bounds, end),
+		.offset		= offsetof(struct ipa_mem_bounds, end),
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_mem_array */
-काष्ठा qmi_elem_info ipa_mem_array_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_mem_array */
+struct qmi_elem_info ipa_mem_array_ei[] = {
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_array, start),
-		.offset		= दुरत्व(काष्ठा ipa_mem_array, start),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_array, start),
+		.offset		= offsetof(struct ipa_mem_array, start),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_array, count),
-		.offset		= दुरत्व(काष्ठा ipa_mem_array, count),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_array, count),
+		.offset		= offsetof(struct ipa_mem_array, count),
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_mem_range */
-काष्ठा qmi_elem_info ipa_mem_range_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_mem_range */
+struct qmi_elem_info ipa_mem_range_ei[] = {
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_range, start),
-		.offset		= दुरत्व(काष्ठा ipa_mem_range, start),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_range, start),
+		.offset		= offsetof(struct ipa_mem_range, start),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_mem_range, size),
-		.offset		= दुरत्व(काष्ठा ipa_mem_range, size),
-	पूर्ण,
-	अणु
+			sizeof_field(struct ipa_mem_range, size),
+		.offset		= offsetof(struct ipa_mem_range, size),
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_init_modem_driver_req */
-काष्ठा qmi_elem_info ipa_init_modem_driver_req_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_init_modem_driver_req */
+struct qmi_elem_info ipa_init_modem_driver_req_ei[] = {
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
-				     platक्रमm_type_valid),
+			sizeof_field(struct ipa_init_modem_driver_req,
+				     platform_type_valid),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
-					   platक्रमm_type_valid),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
+					   platform_type_valid),
+	},
+	{
 		.data_type	= QMI_SIGNED_4_BYTE_ENUM,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
-				     platक्रमm_type),
+			sizeof_field(struct ipa_init_modem_driver_req,
+				     platform_type),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
-					   platक्रमm_type),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
+					   platform_type),
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hdr_tbl_info_valid),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hdr_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hdr_tbl_info),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hdr_tbl_info),
 		.ei_array	= ipa_mem_bounds_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_route_tbl_info_valid),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_route_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_route_tbl_info),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_route_tbl_info),
 		.ei_array	= ipa_mem_array_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_route_tbl_info_valid),
 		.tlv_type	= 0x13,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_route_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_route_tbl_info),
 		.tlv_type	= 0x13,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_route_tbl_info),
 		.ei_array	= ipa_mem_array_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_filter_tbl_start_valid),
 		.tlv_type	= 0x14,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_filter_tbl_start_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_filter_tbl_start),
 		.tlv_type	= 0x14,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_filter_tbl_start),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_filter_tbl_start_valid),
 		.tlv_type	= 0x15,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_filter_tbl_start_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_filter_tbl_start),
 		.tlv_type	= 0x15,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_filter_tbl_start),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     modem_mem_info_valid),
 		.tlv_type	= 0x16,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   modem_mem_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     modem_mem_info),
 		.tlv_type	= 0x16,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   modem_mem_info),
 		.ei_array	= ipa_mem_range_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     ctrl_comm_dest_end_pt_valid),
 		.tlv_type	= 0x17,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   ctrl_comm_dest_end_pt_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     ctrl_comm_dest_end_pt),
 		.tlv_type	= 0x17,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   ctrl_comm_dest_end_pt),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     skip_uc_load_valid),
 		.tlv_type	= 0x18,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   skip_uc_load_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     skip_uc_load),
 		.tlv_type	= 0x18,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   skip_uc_load),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hdr_proc_ctx_tbl_info_valid),
 		.tlv_type	= 0x19,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hdr_proc_ctx_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hdr_proc_ctx_tbl_info),
 		.tlv_type	= 0x19,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hdr_proc_ctx_tbl_info),
 		.ei_array	= ipa_mem_bounds_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     zip_tbl_info_valid),
 		.tlv_type	= 0x1a,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   zip_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     zip_tbl_info),
 		.tlv_type	= 0x1a,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   zip_tbl_info),
 		.ei_array	= ipa_mem_bounds_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_hash_route_tbl_info_valid),
 		.tlv_type	= 0x1b,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_hash_route_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_hash_route_tbl_info),
 		.tlv_type	= 0x1b,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_hash_route_tbl_info),
 		.ei_array	= ipa_mem_array_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_hash_route_tbl_info_valid),
 		.tlv_type	= 0x1c,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_hash_route_tbl_info_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_hash_route_tbl_info),
 		.tlv_type	= 0x1c,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_hash_route_tbl_info),
 		.ei_array	= ipa_mem_array_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_hash_filter_tbl_start_valid),
 		.tlv_type	= 0x1d,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_hash_filter_tbl_start_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v4_hash_filter_tbl_start),
 		.tlv_type	= 0x1d,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v4_hash_filter_tbl_start),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_hash_filter_tbl_start_valid),
 		.tlv_type	= 0x1e,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_hash_filter_tbl_start_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     v6_hash_filter_tbl_start),
 		.tlv_type	= 0x1e,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   v6_hash_filter_tbl_start),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_quota_base_addr_valid),
 		.tlv_type	= 0x1f,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_quota_base_addr_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_quota_base_addr),
 		.tlv_type	= 0x1f,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_quota_base_addr),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_quota_size_valid),
 		.tlv_type	= 0x20,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_quota_size_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_quota_size),
 		.tlv_type	= 0x20,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_quota_size),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_drop_base_addr_valid),
 		.tlv_type	= 0x21,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_drop_base_addr_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_drop_base_addr),
 		.tlv_type	= 0x21,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_drop_base_addr),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_drop_size_valid),
 		.tlv_type	= 0x22,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_drop_size_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_req,
+			sizeof_field(struct ipa_init_modem_driver_req,
 				     hw_stats_drop_size),
 		.tlv_type	= 0x22,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_req,
+		.offset		= offsetof(struct ipa_init_modem_driver_req,
 					   hw_stats_drop_size),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* QMI message काष्ठाure definition क्रम काष्ठा ipa_init_modem_driver_rsp */
-काष्ठा qmi_elem_info ipa_init_modem_driver_rsp_ei[] = अणु
-	अणु
+/* QMI message structure definition for struct ipa_init_modem_driver_rsp */
+struct qmi_elem_info ipa_init_modem_driver_rsp_ei[] = {
+	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
+			sizeof_field(struct ipa_init_modem_driver_rsp,
 				     rsp),
 		.tlv_type	= 0x02,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
 					   rsp),
 		.ei_array	= qmi_response_type_v01_ei,
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
+			sizeof_field(struct ipa_init_modem_driver_rsp,
 				     ctrl_comm_dest_end_pt_valid),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
 					   ctrl_comm_dest_end_pt_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
+			sizeof_field(struct ipa_init_modem_driver_rsp,
 				     ctrl_comm_dest_end_pt),
 		.tlv_type	= 0x10,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
 					   ctrl_comm_dest_end_pt),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
-				     शेष_end_pt_valid),
+			sizeof_field(struct ipa_init_modem_driver_rsp,
+				     default_end_pt_valid),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
-					   शेष_end_pt_valid),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
+					   default_end_pt_valid),
+	},
+	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
-				     शेष_end_pt),
+			sizeof_field(struct ipa_init_modem_driver_rsp,
+				     default_end_pt),
 		.tlv_type	= 0x11,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
-					   शेष_end_pt),
-	पूर्ण,
-	अणु
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
+					   default_end_pt),
+	},
+	{
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
+			sizeof_field(struct ipa_init_modem_driver_rsp,
 				     modem_driver_init_pending_valid),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
 					   modem_driver_init_pending_valid),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_UNSIGNED_1_BYTE,
 		.elem_len	= 1,
 		.elem_size	=
-			माप_field(काष्ठा ipa_init_modem_driver_rsp,
+			sizeof_field(struct ipa_init_modem_driver_rsp,
 				     modem_driver_init_pending),
 		.tlv_type	= 0x12,
-		.offset		= दुरत्व(काष्ठा ipa_init_modem_driver_rsp,
+		.offset		= offsetof(struct ipa_init_modem_driver_rsp,
 					   modem_driver_init_pending),
-	पूर्ण,
-	अणु
+	},
+	{
 		.data_type	= QMI_EOTI,
-	पूर्ण,
-पूर्ण;
+	},
+};

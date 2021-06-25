@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * ALSA Soc PCM3008 codec support
  *
@@ -12,107 +11,107 @@
  * Generic PCM3008 support.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/soc.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/gpio.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/initval.h>
+#include <sound/soc.h>
 
-#समावेश "pcm3008.h"
+#include "pcm3008.h"
 
-अटल पूर्णांक pcm3008_dac_ev(काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा snd_kcontrol *kcontrol,
-			  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा pcm3008_setup_data *setup = component->dev->platक्रमm_data;
+static int pcm3008_dac_ev(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol,
+			  int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct pcm3008_setup_data *setup = component->dev->platform_data;
 
 	gpio_set_value_cansleep(setup->pdda_pin,
 				SND_SOC_DAPM_EVENT_ON(event));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcm3008_adc_ev(काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा snd_kcontrol *kcontrol,
-			  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा pcm3008_setup_data *setup = component->dev->platक्रमm_data;
+static int pcm3008_adc_ev(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol,
+			  int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct pcm3008_setup_data *setup = component->dev->platform_data;
 
 	gpio_set_value_cansleep(setup->pdad_pin,
 				SND_SOC_DAPM_EVENT_ON(event));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget pcm3008_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget pcm3008_dapm_widgets[] = {
 SND_SOC_DAPM_INPUT("VINL"),
 SND_SOC_DAPM_INPUT("VINR"),
 
-SND_SOC_DAPM_DAC_E("DAC", शून्य, SND_SOC_NOPM, 0, 0, pcm3008_dac_ev,
+SND_SOC_DAPM_DAC_E("DAC", NULL, SND_SOC_NOPM, 0, 0, pcm3008_dac_ev,
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_ADC_E("ADC", शून्य, SND_SOC_NOPM, 0, 0, pcm3008_adc_ev,
+SND_SOC_DAPM_ADC_E("ADC", NULL, SND_SOC_NOPM, 0, 0, pcm3008_adc_ev,
 		   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 SND_SOC_DAPM_OUTPUT("VOUTL"),
 SND_SOC_DAPM_OUTPUT("VOUTR"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route pcm3008_dapm_routes[] = अणु
-	अणु "PCM3008 Capture", शून्य, "ADC" पूर्ण,
-	अणु "ADC", शून्य, "VINL" पूर्ण,
-	अणु "ADC", शून्य, "VINR" पूर्ण,
+static const struct snd_soc_dapm_route pcm3008_dapm_routes[] = {
+	{ "PCM3008 Capture", NULL, "ADC" },
+	{ "ADC", NULL, "VINL" },
+	{ "ADC", NULL, "VINR" },
 
-	अणु "DAC", शून्य, "PCM3008 Playback" पूर्ण,
-	अणु "VOUTL", शून्य, "DAC" पूर्ण,
-	अणु "VOUTR", शून्य, "DAC" पूर्ण,
-पूर्ण;
+	{ "DAC", NULL, "PCM3008 Playback" },
+	{ "VOUTL", NULL, "DAC" },
+	{ "VOUTR", NULL, "DAC" },
+};
 
-#घोषणा PCM3008_RATES (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |	\
+#define PCM3008_RATES (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |	\
 		       SNDRV_PCM_RATE_48000)
 
-अटल काष्ठा snd_soc_dai_driver pcm3008_dai = अणु
+static struct snd_soc_dai_driver pcm3008_dai = {
 	.name = "pcm3008-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "PCM3008 Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = PCM3008_RATES,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
-	.capture = अणु
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
+	.capture = {
 		.stream_name = "PCM3008 Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = PCM3008_RATES,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
-पूर्ण;
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_pcm3008 = अणु
-	.dapm_widमाला_लो		= pcm3008_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(pcm3008_dapm_widमाला_लो),
+static const struct snd_soc_component_driver soc_component_dev_pcm3008 = {
+	.dapm_widgets		= pcm3008_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(pcm3008_dapm_widgets),
 	.dapm_routes		= pcm3008_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(pcm3008_dapm_routes),
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक pcm3008_codec_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pcm3008_setup_data *setup = pdev->dev.platक्रमm_data;
-	पूर्णांक ret;
+static int pcm3008_codec_probe(struct platform_device *pdev)
+{
+	struct pcm3008_setup_data *setup = pdev->dev.platform_data;
+	int ret;
 
-	अगर (!setup)
-		वापस -EINVAL;
+	if (!setup)
+		return -EINVAL;
 
 	/* DEM1  DEM0  DE-EMPHASIS_MODE
 	 * Low   Low   De-emphasis 44.1 kHz ON
@@ -124,41 +123,41 @@ SND_SOC_DAPM_OUTPUT("VOUTR"),
 	/* Configure DEM0 GPIO (turning OFF DAC De-emphasis). */
 	ret = devm_gpio_request_one(&pdev->dev, setup->dem0_pin,
 				    GPIOF_OUT_INIT_HIGH, "codec_dem0");
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	/* Configure DEM1 GPIO (turning OFF DAC De-emphasis). */
 	ret = devm_gpio_request_one(&pdev->dev, setup->dem1_pin,
 				    GPIOF_OUT_INIT_LOW, "codec_dem1");
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	/* Configure PDAD GPIO. */
 	ret = devm_gpio_request_one(&pdev->dev, setup->pdad_pin,
 				    GPIOF_OUT_INIT_LOW, "codec_pdad");
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	/* Configure PDDA GPIO. */
 	ret = devm_gpio_request_one(&pdev->dev, setup->pdda_pin,
 				    GPIOF_OUT_INIT_LOW, "codec_pdda");
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	return devm_snd_soc_register_component(&pdev->dev,
 			&soc_component_dev_pcm3008, &pcm3008_dai, 1);
-पूर्ण
+}
 
 MODULE_ALIAS("platform:pcm3008-codec");
 
-अटल काष्ठा platक्रमm_driver pcm3008_codec_driver = अणु
+static struct platform_driver pcm3008_codec_driver = {
 	.probe		= pcm3008_codec_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "pcm3008-codec",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(pcm3008_codec_driver);
+module_platform_driver(pcm3008_codec_driver);
 
 MODULE_DESCRIPTION("Soc PCM3008 driver");
 MODULE_AUTHOR("Hugo Villeneuve");

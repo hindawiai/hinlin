@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/misc/xillybus_core.c
  *
  * Copyright 2011 Xillybus Ltd, http://xillybus.com
  *
- * Driver क्रम the Xillybus FPGA/host framework.
+ * Driver for the Xillybus FPGA/host framework.
  *
- * This driver पूर्णांकerfaces with a special IP core in an FPGA, setting up
+ * This driver interfaces with a special IP core in an FPGA, setting up
  * a pipe between a hardware FIFO in the programmable logic and a device
  * file in the host. The number of such pipes and their attributes are
- * set up on the logic. This driver detects these स्वतःmatically and
+ * set up on the logic. This driver detects these automatically and
  * creates the device files accordingly.
  */
 
-#समावेश <linux/list.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश "xillybus.h"
+#include <linux/list.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/crc32.h>
+#include <linux/poll.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include "xillybus.h"
 
 MODULE_DESCRIPTION("Xillybus core functions");
 MODULE_AUTHOR("Eli Billauer, Xillybus Ltd.");
@@ -38,71 +37,71 @@ MODULE_VERSION("1.07");
 MODULE_ALIAS("xillybus_core");
 MODULE_LICENSE("GPL v2");
 
-/* General समयout is 100 ms, rx समयout is 10 ms */
-#घोषणा XILLY_RX_TIMEOUT (10*HZ/1000)
-#घोषणा XILLY_TIMEOUT (100*HZ/1000)
+/* General timeout is 100 ms, rx timeout is 10 ms */
+#define XILLY_RX_TIMEOUT (10*HZ/1000)
+#define XILLY_TIMEOUT (100*HZ/1000)
 
-#घोषणा fpga_msg_ctrl_reg              0x0008
-#घोषणा fpga_dma_control_reg           0x0020
-#घोषणा fpga_dma_bufno_reg             0x0024
-#घोषणा fpga_dma_bufaddr_lowaddr_reg   0x0028
-#घोषणा fpga_dma_bufaddr_highaddr_reg  0x002c
-#घोषणा fpga_buf_ctrl_reg              0x0030
-#घोषणा fpga_buf_offset_reg            0x0034
-#घोषणा fpga_endian_reg                0x0040
+#define fpga_msg_ctrl_reg              0x0008
+#define fpga_dma_control_reg           0x0020
+#define fpga_dma_bufno_reg             0x0024
+#define fpga_dma_bufaddr_lowaddr_reg   0x0028
+#define fpga_dma_bufaddr_highaddr_reg  0x002c
+#define fpga_buf_ctrl_reg              0x0030
+#define fpga_buf_offset_reg            0x0034
+#define fpga_endian_reg                0x0040
 
-#घोषणा XILLYMSG_OPCODE_RELEASEBUF 1
-#घोषणा XILLYMSG_OPCODE_QUIESCEACK 2
-#घोषणा XILLYMSG_OPCODE_FIFOखातापूर्ण 3
-#घोषणा XILLYMSG_OPCODE_FATAL_ERROR 4
-#घोषणा XILLYMSG_OPCODE_NONEMPTY 5
+#define XILLYMSG_OPCODE_RELEASEBUF 1
+#define XILLYMSG_OPCODE_QUIESCEACK 2
+#define XILLYMSG_OPCODE_FIFOEOF 3
+#define XILLYMSG_OPCODE_FATAL_ERROR 4
+#define XILLYMSG_OPCODE_NONEMPTY 5
 
-अटल स्थिर अक्षर xillyname[] = "xillybus";
+static const char xillyname[] = "xillybus";
 
-अटल काष्ठा class *xillybus_class;
+static struct class *xillybus_class;
 
 /*
  * ep_list_lock is the last lock to be taken; No other lock requests are
- * allowed जबतक holding it. It merely protects list_of_endpoपूर्णांकs, and not
- * the endpoपूर्णांकs listed in it.
+ * allowed while holding it. It merely protects list_of_endpoints, and not
+ * the endpoints listed in it.
  */
 
-अटल LIST_HEAD(list_of_endpoपूर्णांकs);
-अटल काष्ठा mutex ep_list_lock;
-अटल काष्ठा workqueue_काष्ठा *xillybus_wq;
+static LIST_HEAD(list_of_endpoints);
+static struct mutex ep_list_lock;
+static struct workqueue_struct *xillybus_wq;
 
 /*
- * Locking scheme: Mutexes protect invocations of अक्षरacter device methods.
+ * Locking scheme: Mutexes protect invocations of character device methods.
  * If both locks are taken, wr_mutex is taken first, rd_mutex second.
  *
- * wr_spinlock protects wr_*_buf_idx, wr_empty, wr_sleepy, wr_पढ़ोy and the
+ * wr_spinlock protects wr_*_buf_idx, wr_empty, wr_sleepy, wr_ready and the
  * buffers' end_offset fields against changes made by IRQ handler (and in
  * theory, other file request handlers, but the mutex handles that). Nothing
- * अन्यथा.
- * They are held क्रम लघु direct memory manipulations. Needless to say,
+ * else.
+ * They are held for short direct memory manipulations. Needless to say,
  * no mutex locking is allowed when a spinlock is held.
  *
- * rd_spinlock करोes the same with rd_*_buf_idx, rd_empty and end_offset.
+ * rd_spinlock does the same with rd_*_buf_idx, rd_empty and end_offset.
  *
- * रेजिस्टर_mutex is endpoपूर्णांक-specअगरic, and is held when non-atomic
- * रेजिस्टर operations are perक्रमmed. wr_mutex and rd_mutex may be
- * held when रेजिस्टर_mutex is taken, but none of the spinlocks. Note that
- * रेजिस्टर_mutex करोesn't protect against sporadic buf_ctrl_reg ग_लिखोs
+ * register_mutex is endpoint-specific, and is held when non-atomic
+ * register operations are performed. wr_mutex and rd_mutex may be
+ * held when register_mutex is taken, but none of the spinlocks. Note that
+ * register_mutex doesn't protect against sporadic buf_ctrl_reg writes
  * which are unrelated to buf_offset_reg, since they are harmless.
  *
- * Blocking on the रुको queues is allowed with mutexes held, but not with
+ * Blocking on the wait queues is allowed with mutexes held, but not with
  * spinlocks.
  *
- * Only पूर्णांकerruptible blocking is allowed on mutexes and रुको queues.
+ * Only interruptible blocking is allowed on mutexes and wait queues.
  *
  * All in all, the locking order goes (with skips allowed, of course):
- * wr_mutex -> rd_mutex -> रेजिस्टर_mutex -> wr_spinlock -> rd_spinlock
+ * wr_mutex -> rd_mutex -> register_mutex -> wr_spinlock -> rd_spinlock
  */
 
-अटल व्योम malक्रमmed_message(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक, u32 *buf)
-अणु
-	पूर्णांक opcode;
-	पूर्णांक msg_channel, msg_bufno, msg_data, msg_dir;
+static void malformed_message(struct xilly_endpoint *endpoint, u32 *buf)
+{
+	int opcode;
+	int msg_channel, msg_bufno, msg_data, msg_dir;
 
 	opcode = (buf[0] >> 24) & 0xff;
 	msg_dir = buf[0] & 1;
@@ -110,70 +109,70 @@ MODULE_LICENSE("GPL v2");
 	msg_bufno = (buf[0] >> 12) & 0x3ff;
 	msg_data = buf[1] & 0xfffffff;
 
-	dev_warn(endpoपूर्णांक->dev,
+	dev_warn(endpoint->dev,
 		 "Malformed message (skipping): opcode=%d, channel=%03x, dir=%d, bufno=%03x, data=%07x\n",
 		 opcode, msg_channel, msg_dir, msg_bufno, msg_data);
-पूर्ण
+}
 
 /*
- * xillybus_isr assumes the पूर्णांकerrupt is allocated exclusively to it,
- * which is the natural हाल MSI and several other hardware-oriented
- * पूर्णांकerrupts. Sharing is not allowed.
+ * xillybus_isr assumes the interrupt is allocated exclusively to it,
+ * which is the natural case MSI and several other hardware-oriented
+ * interrupts. Sharing is not allowed.
  */
 
-irqवापस_t xillybus_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा xilly_endpoपूर्णांक *ep = data;
+irqreturn_t xillybus_isr(int irq, void *data)
+{
+	struct xilly_endpoint *ep = data;
 	u32 *buf;
-	अचिन्हित पूर्णांक buf_size;
-	पूर्णांक i;
-	पूर्णांक opcode;
-	अचिन्हित पूर्णांक msg_channel, msg_bufno, msg_data, msg_dir;
-	काष्ठा xilly_channel *channel;
+	unsigned int buf_size;
+	int i;
+	int opcode;
+	unsigned int msg_channel, msg_bufno, msg_data, msg_dir;
+	struct xilly_channel *channel;
 
 	buf = ep->msgbuf_addr;
-	buf_size = ep->msg_buf_size/माप(u32);
+	buf_size = ep->msg_buf_size/sizeof(u32);
 
-	ep->ephw->hw_sync_sgl_क्रम_cpu(ep,
+	ep->ephw->hw_sync_sgl_for_cpu(ep,
 				      ep->msgbuf_dma_addr,
 				      ep->msg_buf_size,
 				      DMA_FROM_DEVICE);
 
-	क्रम (i = 0; i < buf_size; i += 2) अणु
-		अगर (((buf[i+1] >> 28) & 0xf) != ep->msg_counter) अणु
-			malक्रमmed_message(ep, &buf[i]);
+	for (i = 0; i < buf_size; i += 2) {
+		if (((buf[i+1] >> 28) & 0xf) != ep->msg_counter) {
+			malformed_message(ep, &buf[i]);
 			dev_warn(ep->dev,
 				 "Sending a NACK on counter %x (instead of %x) on entry %d\n",
 				 ((buf[i+1] >> 28) & 0xf),
 				 ep->msg_counter,
 				 i/2);
 
-			अगर (++ep->failed_messages > 10) अणु
+			if (++ep->failed_messages > 10) {
 				dev_err(ep->dev,
 					"Lost sync with interrupt messages. Stopping.\n");
-			पूर्ण अन्यथा अणु
-				ep->ephw->hw_sync_sgl_क्रम_device(
+			} else {
+				ep->ephw->hw_sync_sgl_for_device(
 					ep,
 					ep->msgbuf_dma_addr,
 					ep->msg_buf_size,
 					DMA_FROM_DEVICE);
 
-				ioग_लिखो32(0x01,  /* Message NACK */
-					  ep->रेजिस्टरs + fpga_msg_ctrl_reg);
-			पूर्ण
-			वापस IRQ_HANDLED;
-		पूर्ण अन्यथा अगर (buf[i] & (1 << 22)) /* Last message */
-			अवरोध;
-	पूर्ण
+				iowrite32(0x01,  /* Message NACK */
+					  ep->registers + fpga_msg_ctrl_reg);
+			}
+			return IRQ_HANDLED;
+		} else if (buf[i] & (1 << 22)) /* Last message */
+			break;
+	}
 
-	अगर (i >= buf_size) अणु
+	if (i >= buf_size) {
 		dev_err(ep->dev, "Bad interrupt message. Stopping.\n");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	buf_size = i + 2;
 
-	क्रम (i = 0; i < buf_size; i += 2) अणु /* Scan through messages */
+	for (i = 0; i < buf_size; i += 2) { /* Scan through messages */
 		opcode = (buf[i] >> 24) & 0xff;
 
 		msg_dir = buf[i] & 1;
@@ -181,21 +180,21 @@ irqवापस_t xillybus_isr(पूर्णांक irq, व्योम *da
 		msg_bufno = (buf[i] >> 12) & 0x3ff;
 		msg_data = buf[i+1] & 0xfffffff;
 
-		चयन (opcode) अणु
-		हाल XILLYMSG_OPCODE_RELEASEBUF:
-			अगर ((msg_channel > ep->num_channels) ||
-			    (msg_channel == 0)) अणु
-				malक्रमmed_message(ep, &buf[i]);
-				अवरोध;
-			पूर्ण
+		switch (opcode) {
+		case XILLYMSG_OPCODE_RELEASEBUF:
+			if ((msg_channel > ep->num_channels) ||
+			    (msg_channel == 0)) {
+				malformed_message(ep, &buf[i]);
+				break;
+			}
 
 			channel = ep->channels[msg_channel];
 
-			अगर (msg_dir) अणु /* Write channel */
-				अगर (msg_bufno >= channel->num_wr_buffers) अणु
-					malक्रमmed_message(ep, &buf[i]);
-					अवरोध;
-				पूर्ण
+			if (msg_dir) { /* Write channel */
+				if (msg_bufno >= channel->num_wr_buffers) {
+					malformed_message(ep, &buf[i]);
+					break;
+				}
 				spin_lock(&channel->wr_spinlock);
 				channel->wr_buffers[msg_bufno]->end_offset =
 					msg_data;
@@ -204,64 +203,64 @@ irqवापस_t xillybus_isr(पूर्णांक irq, व्योम *da
 				channel->wr_sleepy = 0;
 				spin_unlock(&channel->wr_spinlock);
 
-				wake_up_पूर्णांकerruptible(&channel->wr_रुको);
+				wake_up_interruptible(&channel->wr_wait);
 
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Read channel */
 
-				अगर (msg_bufno >= channel->num_rd_buffers) अणु
-					malक्रमmed_message(ep, &buf[i]);
-					अवरोध;
-				पूर्ण
+				if (msg_bufno >= channel->num_rd_buffers) {
+					malformed_message(ep, &buf[i]);
+					break;
+				}
 
 				spin_lock(&channel->rd_spinlock);
 				channel->rd_fpga_buf_idx = msg_bufno;
 				channel->rd_full = 0;
 				spin_unlock(&channel->rd_spinlock);
 
-				wake_up_पूर्णांकerruptible(&channel->rd_रुको);
-				अगर (!channel->rd_synchronous)
+				wake_up_interruptible(&channel->rd_wait);
+				if (!channel->rd_synchronous)
 					queue_delayed_work(
 						xillybus_wq,
 						&channel->rd_workitem,
 						XILLY_RX_TIMEOUT);
-			पूर्ण
+			}
 
-			अवरोध;
-		हाल XILLYMSG_OPCODE_NONEMPTY:
-			अगर ((msg_channel > ep->num_channels) ||
+			break;
+		case XILLYMSG_OPCODE_NONEMPTY:
+			if ((msg_channel > ep->num_channels) ||
 			    (msg_channel == 0) || (!msg_dir) ||
-			    !ep->channels[msg_channel]->wr_supports_nonempty) अणु
-				malक्रमmed_message(ep, &buf[i]);
-				अवरोध;
-			पूर्ण
+			    !ep->channels[msg_channel]->wr_supports_nonempty) {
+				malformed_message(ep, &buf[i]);
+				break;
+			}
 
 			channel = ep->channels[msg_channel];
 
-			अगर (msg_bufno >= channel->num_wr_buffers) अणु
-				malक्रमmed_message(ep, &buf[i]);
-				अवरोध;
-			पूर्ण
+			if (msg_bufno >= channel->num_wr_buffers) {
+				malformed_message(ep, &buf[i]);
+				break;
+			}
 			spin_lock(&channel->wr_spinlock);
-			अगर (msg_bufno == channel->wr_host_buf_idx)
-				channel->wr_पढ़ोy = 1;
+			if (msg_bufno == channel->wr_host_buf_idx)
+				channel->wr_ready = 1;
 			spin_unlock(&channel->wr_spinlock);
 
-			wake_up_पूर्णांकerruptible(&channel->wr_पढ़ोy_रुको);
+			wake_up_interruptible(&channel->wr_ready_wait);
 
-			अवरोध;
-		हाल XILLYMSG_OPCODE_QUIESCEACK:
+			break;
+		case XILLYMSG_OPCODE_QUIESCEACK:
 			ep->idtlen = msg_data;
-			wake_up_पूर्णांकerruptible(&ep->ep_रुको);
+			wake_up_interruptible(&ep->ep_wait);
 
-			अवरोध;
-		हाल XILLYMSG_OPCODE_FIFOखातापूर्ण:
-			अगर ((msg_channel > ep->num_channels) ||
+			break;
+		case XILLYMSG_OPCODE_FIFOEOF:
+			if ((msg_channel > ep->num_channels) ||
 			    (msg_channel == 0) || (!msg_dir) ||
-			    !ep->channels[msg_channel]->num_wr_buffers) अणु
-				malक्रमmed_message(ep, &buf[i]);
-				अवरोध;
-			पूर्ण
+			    !ep->channels[msg_channel]->num_wr_buffers) {
+				malformed_message(ep, &buf[i]);
+				break;
+			}
 			channel = ep->channels[msg_channel];
 			spin_lock(&channel->wr_spinlock);
 			channel->wr_eof = msg_bufno;
@@ -272,188 +271,188 @@ irqवापस_t xillybus_isr(पूर्णांक irq, व्योम *da
 
 			spin_unlock(&channel->wr_spinlock);
 
-			wake_up_पूर्णांकerruptible(&channel->wr_रुको);
+			wake_up_interruptible(&channel->wr_wait);
 
-			अवरोध;
-		हाल XILLYMSG_OPCODE_FATAL_ERROR:
+			break;
+		case XILLYMSG_OPCODE_FATAL_ERROR:
 			ep->fatal_error = 1;
-			wake_up_पूर्णांकerruptible(&ep->ep_रुको); /* For select() */
+			wake_up_interruptible(&ep->ep_wait); /* For select() */
 			dev_err(ep->dev,
 				"FPGA reported a fatal error. This means that the low-level communication with the device has failed. This hardware problem is most likely unrelated to Xillybus (neither kernel module nor FPGA core), but reports are still welcome. All I/O is aborted.\n");
-			अवरोध;
-		शेष:
-			malक्रमmed_message(ep, &buf[i]);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			malformed_message(ep, &buf[i]);
+			break;
+		}
+	}
 
-	ep->ephw->hw_sync_sgl_क्रम_device(ep,
+	ep->ephw->hw_sync_sgl_for_device(ep,
 					 ep->msgbuf_dma_addr,
 					 ep->msg_buf_size,
 					 DMA_FROM_DEVICE);
 
 	ep->msg_counter = (ep->msg_counter + 1) & 0xf;
 	ep->failed_messages = 0;
-	ioग_लिखो32(0x03, ep->रेजिस्टरs + fpga_msg_ctrl_reg); /* Message ACK */
+	iowrite32(0x03, ep->registers + fpga_msg_ctrl_reg); /* Message ACK */
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 EXPORT_SYMBOL(xillybus_isr);
 
 /*
  * A few trivial memory management functions.
- * NOTE: These functions are used only on probe and हटाओ, and thereक्रमe
+ * NOTE: These functions are used only on probe and remove, and therefore
  * no locks are applied!
  */
 
-अटल व्योम xillybus_स्वतःflush(काष्ठा work_काष्ठा *work);
+static void xillybus_autoflush(struct work_struct *work);
 
-काष्ठा xilly_alloc_state अणु
-	व्योम *salami;
-	पूर्णांक left_of_salami;
-	पूर्णांक nbuffer;
-	क्रमागत dma_data_direction direction;
+struct xilly_alloc_state {
+	void *salami;
+	int left_of_salami;
+	int nbuffer;
+	enum dma_data_direction direction;
 	u32 regdirection;
-पूर्ण;
+};
 
-अटल पूर्णांक xilly_get_dma_buffers(काष्ठा xilly_endpoपूर्णांक *ep,
-				 काष्ठा xilly_alloc_state *s,
-				 काष्ठा xilly_buffer **buffers,
-				 पूर्णांक bufnum, पूर्णांक bytebufsize)
-अणु
-	पूर्णांक i, rc;
+static int xilly_get_dma_buffers(struct xilly_endpoint *ep,
+				 struct xilly_alloc_state *s,
+				 struct xilly_buffer **buffers,
+				 int bufnum, int bytebufsize)
+{
+	int i, rc;
 	dma_addr_t dma_addr;
-	काष्ठा device *dev = ep->dev;
-	काष्ठा xilly_buffer *this_buffer = शून्य; /* Init to silence warning */
+	struct device *dev = ep->dev;
+	struct xilly_buffer *this_buffer = NULL; /* Init to silence warning */
 
-	अगर (buffers) अणु /* Not the message buffer */
-		this_buffer = devm_kसुस्मृति(dev, bufnum,
-					   माप(काष्ठा xilly_buffer),
+	if (buffers) { /* Not the message buffer */
+		this_buffer = devm_kcalloc(dev, bufnum,
+					   sizeof(struct xilly_buffer),
 					   GFP_KERNEL);
-		अगर (!this_buffer)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!this_buffer)
+			return -ENOMEM;
+	}
 
-	क्रम (i = 0; i < bufnum; i++) अणु
+	for (i = 0; i < bufnum; i++) {
 		/*
 		 * Buffers are expected in descending size order, so there
-		 * is either enough space क्रम this buffer or none at all.
+		 * is either enough space for this buffer or none at all.
 		 */
 
-		अगर ((s->left_of_salami < bytebufsize) &&
-		    (s->left_of_salami > 0)) अणु
+		if ((s->left_of_salami < bytebufsize) &&
+		    (s->left_of_salami > 0)) {
 			dev_err(ep->dev,
 				"Corrupt buffer allocation in IDT. Aborting.\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		अगर (s->left_of_salami == 0) अणु
-			पूर्णांक allocorder, allocsize;
+		if (s->left_of_salami == 0) {
+			int allocorder, allocsize;
 
 			allocsize = PAGE_SIZE;
 			allocorder = 0;
-			जबतक (bytebufsize > allocsize) अणु
+			while (bytebufsize > allocsize) {
 				allocsize *= 2;
 				allocorder++;
-			पूर्ण
+			}
 
-			s->salami = (व्योम *) devm_get_मुक्त_pages(
+			s->salami = (void *) devm_get_free_pages(
 				dev,
 				GFP_KERNEL | __GFP_DMA32 | __GFP_ZERO,
 				allocorder);
-			अगर (!s->salami)
-				वापस -ENOMEM;
+			if (!s->salami)
+				return -ENOMEM;
 
 			s->left_of_salami = allocsize;
-		पूर्ण
+		}
 
 		rc = ep->ephw->map_single(ep, s->salami,
 					  bytebufsize, s->direction,
 					  &dma_addr);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
-		ioग_लिखो32((u32) (dma_addr & 0xffffffff),
-			  ep->रेजिस्टरs + fpga_dma_bufaddr_lowaddr_reg);
-		ioग_लिखो32(((u32) ((((u64) dma_addr) >> 32) & 0xffffffff)),
-			  ep->रेजिस्टरs + fpga_dma_bufaddr_highaddr_reg);
+		iowrite32((u32) (dma_addr & 0xffffffff),
+			  ep->registers + fpga_dma_bufaddr_lowaddr_reg);
+		iowrite32(((u32) ((((u64) dma_addr) >> 32) & 0xffffffff)),
+			  ep->registers + fpga_dma_bufaddr_highaddr_reg);
 
-		अगर (buffers) अणु /* Not the message buffer */
+		if (buffers) { /* Not the message buffer */
 			this_buffer->addr = s->salami;
 			this_buffer->dma_addr = dma_addr;
 			buffers[i] = this_buffer++;
 
-			ioग_लिखो32(s->regdirection | s->nbuffer++,
-				  ep->रेजिस्टरs + fpga_dma_bufno_reg);
-		पूर्ण अन्यथा अणु
+			iowrite32(s->regdirection | s->nbuffer++,
+				  ep->registers + fpga_dma_bufno_reg);
+		} else {
 			ep->msgbuf_addr = s->salami;
 			ep->msgbuf_dma_addr = dma_addr;
 			ep->msg_buf_size = bytebufsize;
 
-			ioग_लिखो32(s->regdirection,
-				  ep->रेजिस्टरs + fpga_dma_bufno_reg);
-		पूर्ण
+			iowrite32(s->regdirection,
+				  ep->registers + fpga_dma_bufno_reg);
+		}
 
 		s->left_of_salami -= bytebufsize;
 		s->salami += bytebufsize;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक xilly_setupchannels(काष्ठा xilly_endpoपूर्णांक *ep,
-			       अचिन्हित अक्षर *chandesc,
-			       पूर्णांक entries)
-अणु
-	काष्ठा device *dev = ep->dev;
-	पूर्णांक i, entry, rc;
-	काष्ठा xilly_channel *channel;
-	पूर्णांक channelnum, bufnum, bufsize, क्रमmat, is_ग_लिखोbuf;
-	पूर्णांक bytebufsize;
-	पूर्णांक synchronous, allowpartial, exclusive_खोलो, seekable;
-	पूर्णांक supports_nonempty;
-	पूर्णांक msg_buf_करोne = 0;
+static int xilly_setupchannels(struct xilly_endpoint *ep,
+			       unsigned char *chandesc,
+			       int entries)
+{
+	struct device *dev = ep->dev;
+	int i, entry, rc;
+	struct xilly_channel *channel;
+	int channelnum, bufnum, bufsize, format, is_writebuf;
+	int bytebufsize;
+	int synchronous, allowpartial, exclusive_open, seekable;
+	int supports_nonempty;
+	int msg_buf_done = 0;
 
-	काष्ठा xilly_alloc_state rd_alloc = अणु
-		.salami = शून्य,
+	struct xilly_alloc_state rd_alloc = {
+		.salami = NULL,
 		.left_of_salami = 0,
 		.nbuffer = 1,
 		.direction = DMA_TO_DEVICE,
 		.regdirection = 0,
-	पूर्ण;
+	};
 
-	काष्ठा xilly_alloc_state wr_alloc = अणु
-		.salami = शून्य,
+	struct xilly_alloc_state wr_alloc = {
+		.salami = NULL,
 		.left_of_salami = 0,
 		.nbuffer = 1,
 		.direction = DMA_FROM_DEVICE,
 		.regdirection = 0x80000000,
-	पूर्ण;
+	};
 
-	channel = devm_kसुस्मृति(dev, ep->num_channels,
-			       माप(काष्ठा xilly_channel), GFP_KERNEL);
-	अगर (!channel)
-		वापस -ENOMEM;
+	channel = devm_kcalloc(dev, ep->num_channels,
+			       sizeof(struct xilly_channel), GFP_KERNEL);
+	if (!channel)
+		return -ENOMEM;
 
-	ep->channels = devm_kसुस्मृति(dev, ep->num_channels + 1,
-				    माप(काष्ठा xilly_channel *),
+	ep->channels = devm_kcalloc(dev, ep->num_channels + 1,
+				    sizeof(struct xilly_channel *),
 				    GFP_KERNEL);
-	अगर (!ep->channels)
-		वापस -ENOMEM;
+	if (!ep->channels)
+		return -ENOMEM;
 
-	ep->channels[0] = शून्य; /* Channel 0 is message buf. */
+	ep->channels[0] = NULL; /* Channel 0 is message buf. */
 
-	/* Initialize all channels with शेषs */
+	/* Initialize all channels with defaults */
 
-	क्रम (i = 1; i <= ep->num_channels; i++) अणु
-		channel->wr_buffers = शून्य;
-		channel->rd_buffers = शून्य;
+	for (i = 1; i <= ep->num_channels; i++) {
+		channel->wr_buffers = NULL;
+		channel->rd_buffers = NULL;
 		channel->num_wr_buffers = 0;
 		channel->num_rd_buffers = 0;
 		channel->wr_fpga_buf_idx = -1;
 		channel->wr_host_buf_idx = 0;
 		channel->wr_host_buf_pos = 0;
 		channel->wr_empty = 1;
-		channel->wr_पढ़ोy = 0;
+		channel->wr_ready = 0;
 		channel->wr_sleepy = 1;
 		channel->rd_fpga_buf_idx = 0;
 		channel->rd_host_buf_idx = 0;
@@ -466,71 +465,71 @@ EXPORT_SYMBOL(xillybus_isr);
 		spin_lock_init(&channel->rd_spinlock);
 		mutex_init(&channel->wr_mutex);
 		mutex_init(&channel->rd_mutex);
-		init_रुकोqueue_head(&channel->rd_रुको);
-		init_रुकोqueue_head(&channel->wr_रुको);
-		init_रुकोqueue_head(&channel->wr_पढ़ोy_रुको);
+		init_waitqueue_head(&channel->rd_wait);
+		init_waitqueue_head(&channel->wr_wait);
+		init_waitqueue_head(&channel->wr_ready_wait);
 
-		INIT_DELAYED_WORK(&channel->rd_workitem, xillybus_स्वतःflush);
+		INIT_DELAYED_WORK(&channel->rd_workitem, xillybus_autoflush);
 
-		channel->endpoपूर्णांक = ep;
+		channel->endpoint = ep;
 		channel->chan_num = i;
 
 		channel->log2_element_size = 0;
 
 		ep->channels[i] = channel++;
-	पूर्ण
+	}
 
-	क्रम (entry = 0; entry < entries; entry++, chandesc += 4) अणु
-		काष्ठा xilly_buffer **buffers = शून्य;
+	for (entry = 0; entry < entries; entry++, chandesc += 4) {
+		struct xilly_buffer **buffers = NULL;
 
-		is_ग_लिखोbuf = chandesc[0] & 0x01;
+		is_writebuf = chandesc[0] & 0x01;
 		channelnum = (chandesc[0] >> 1) | ((chandesc[1] & 0x0f) << 7);
-		क्रमmat = (chandesc[1] >> 4) & 0x03;
+		format = (chandesc[1] >> 4) & 0x03;
 		allowpartial = (chandesc[1] >> 6) & 0x01;
 		synchronous = (chandesc[1] >> 7) & 0x01;
 		bufsize = 1 << (chandesc[2] & 0x1f);
 		bufnum = 1 << (chandesc[3] & 0x0f);
-		exclusive_खोलो = (chandesc[2] >> 7) & 0x01;
+		exclusive_open = (chandesc[2] >> 7) & 0x01;
 		seekable = (chandesc[2] >> 6) & 0x01;
 		supports_nonempty = (chandesc[2] >> 5) & 0x01;
 
-		अगर ((channelnum > ep->num_channels) ||
-		    ((channelnum == 0) && !is_ग_लिखोbuf)) अणु
+		if ((channelnum > ep->num_channels) ||
+		    ((channelnum == 0) && !is_writebuf)) {
 			dev_err(ep->dev,
 				"IDT requests channel out of range. Aborting.\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		channel = ep->channels[channelnum]; /* शून्य क्रम msg channel */
+		channel = ep->channels[channelnum]; /* NULL for msg channel */
 
-		अगर (!is_ग_लिखोbuf || channelnum > 0) अणु
-			channel->log2_element_size = ((क्रमmat > 2) ?
-						      2 : क्रमmat);
+		if (!is_writebuf || channelnum > 0) {
+			channel->log2_element_size = ((format > 2) ?
+						      2 : format);
 
 			bytebufsize = bufsize *
 				(1 << channel->log2_element_size);
 
-			buffers = devm_kसुस्मृति(dev, bufnum,
-					       माप(काष्ठा xilly_buffer *),
+			buffers = devm_kcalloc(dev, bufnum,
+					       sizeof(struct xilly_buffer *),
 					       GFP_KERNEL);
-			अगर (!buffers)
-				वापस -ENOMEM;
-		पूर्ण अन्यथा अणु
+			if (!buffers)
+				return -ENOMEM;
+		} else {
 			bytebufsize = bufsize << 2;
-		पूर्ण
+		}
 
-		अगर (!is_ग_लिखोbuf) अणु
+		if (!is_writebuf) {
 			channel->num_rd_buffers = bufnum;
 			channel->rd_buf_size = bytebufsize;
 			channel->rd_allow_partial = allowpartial;
 			channel->rd_synchronous = synchronous;
-			channel->rd_exclusive_खोलो = exclusive_खोलो;
+			channel->rd_exclusive_open = exclusive_open;
 			channel->seekable = seekable;
 
 			channel->rd_buffers = buffers;
 			rc = xilly_get_dma_buffers(ep, &rd_alloc, buffers,
 						   bufnum, bytebufsize);
-		पूर्ण अन्यथा अगर (channelnum > 0) अणु
+		} else if (channelnum > 0) {
 			channel->num_wr_buffers = bufnum;
 			channel->wr_buf_size = bytebufsize;
 
@@ -539,165 +538,165 @@ EXPORT_SYMBOL(xillybus_isr);
 
 			channel->wr_allow_partial = allowpartial;
 			channel->wr_synchronous = synchronous;
-			channel->wr_exclusive_खोलो = exclusive_खोलो;
+			channel->wr_exclusive_open = exclusive_open;
 
 			channel->wr_buffers = buffers;
 			rc = xilly_get_dma_buffers(ep, &wr_alloc, buffers,
 						   bufnum, bytebufsize);
-		पूर्ण अन्यथा अणु
-			rc = xilly_get_dma_buffers(ep, &wr_alloc, शून्य,
+		} else {
+			rc = xilly_get_dma_buffers(ep, &wr_alloc, NULL,
 						   bufnum, bytebufsize);
-			msg_buf_करोne++;
-		पूर्ण
+			msg_buf_done++;
+		}
 
-		अगर (rc)
-			वापस -ENOMEM;
-	पूर्ण
+		if (rc)
+			return -ENOMEM;
+	}
 
-	अगर (!msg_buf_करोne) अणु
+	if (!msg_buf_done) {
 		dev_err(ep->dev,
 			"Corrupt IDT: No message buffer. Aborting.\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल पूर्णांक xilly_scan_idt(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक,
-			  काष्ठा xilly_idt_handle *idt_handle)
-अणु
-	पूर्णांक count = 0;
-	अचिन्हित अक्षर *idt = endpoपूर्णांक->channels[1]->wr_buffers[0]->addr;
-	अचिन्हित अक्षर *end_of_idt = idt + endpoपूर्णांक->idtlen - 4;
-	अचिन्हित अक्षर *scan;
-	पूर्णांक len;
+static int xilly_scan_idt(struct xilly_endpoint *endpoint,
+			  struct xilly_idt_handle *idt_handle)
+{
+	int count = 0;
+	unsigned char *idt = endpoint->channels[1]->wr_buffers[0]->addr;
+	unsigned char *end_of_idt = idt + endpoint->idtlen - 4;
+	unsigned char *scan;
+	int len;
 
 	scan = idt;
 	idt_handle->idt = idt;
 
 	scan++; /* Skip version number */
 
-	जबतक ((scan <= end_of_idt) && *scan) अणु
-		जबतक ((scan <= end_of_idt) && *scan++)
+	while ((scan <= end_of_idt) && *scan) {
+		while ((scan <= end_of_idt) && *scan++)
 			/* Do nothing, just scan thru string */;
 		count++;
-	पूर्ण
+	}
 
 	scan++;
 
-	अगर (scan > end_of_idt) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if (scan > end_of_idt) {
+		dev_err(endpoint->dev,
 			"IDT device name list overflow. Aborting.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	idt_handle->chandesc = scan;
 
-	len = endpoपूर्णांक->idtlen - (3 + ((पूर्णांक) (scan - idt)));
+	len = endpoint->idtlen - (3 + ((int) (scan - idt)));
 
-	अगर (len & 0x03) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if (len & 0x03) {
+		dev_err(endpoint->dev,
 			"Corrupt IDT device name list. Aborting.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	idt_handle->entries = len >> 2;
-	endpoपूर्णांक->num_channels = count;
+	endpoint->num_channels = count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xilly_obtain_idt(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	काष्ठा xilly_channel *channel;
-	अचिन्हित अक्षर *version;
-	दीर्घ t;
+static int xilly_obtain_idt(struct xilly_endpoint *endpoint)
+{
+	struct xilly_channel *channel;
+	unsigned char *version;
+	long t;
 
-	channel = endpoपूर्णांक->channels[1]; /* This should be generated ad-hoc */
+	channel = endpoint->channels[1]; /* This should be generated ad-hoc */
 
 	channel->wr_sleepy = 1;
 
-	ioग_लिखो32(1 |
-		  (3 << 24), /* Opcode 3 क्रम channel 0 = Send IDT */
-		  endpoपूर्णांक->रेजिस्टरs + fpga_buf_ctrl_reg);
+	iowrite32(1 |
+		  (3 << 24), /* Opcode 3 for channel 0 = Send IDT */
+		  endpoint->registers + fpga_buf_ctrl_reg);
 
-	t = रुको_event_पूर्णांकerruptible_समयout(channel->wr_रुको,
+	t = wait_event_interruptible_timeout(channel->wr_wait,
 					     (!channel->wr_sleepy),
 					     XILLY_TIMEOUT);
 
-	अगर (t <= 0) अणु
-		dev_err(endpoपूर्णांक->dev, "Failed to obtain IDT. Aborting.\n");
+	if (t <= 0) {
+		dev_err(endpoint->dev, "Failed to obtain IDT. Aborting.\n");
 
-		अगर (endpoपूर्णांक->fatal_error)
-			वापस -EIO;
+		if (endpoint->fatal_error)
+			return -EIO;
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_cpu(
-		channel->endpoपूर्णांक,
+	endpoint->ephw->hw_sync_sgl_for_cpu(
+		channel->endpoint,
 		channel->wr_buffers[0]->dma_addr,
 		channel->wr_buf_size,
 		DMA_FROM_DEVICE);
 
-	अगर (channel->wr_buffers[0]->end_offset != endpoपूर्णांक->idtlen) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if (channel->wr_buffers[0]->end_offset != endpoint->idtlen) {
+		dev_err(endpoint->dev,
 			"IDT length mismatch (%d != %d). Aborting.\n",
-			channel->wr_buffers[0]->end_offset, endpoपूर्णांक->idtlen);
-		वापस -ENODEV;
-	पूर्ण
+			channel->wr_buffers[0]->end_offset, endpoint->idtlen);
+		return -ENODEV;
+	}
 
-	अगर (crc32_le(~0, channel->wr_buffers[0]->addr,
-		     endpoपूर्णांक->idtlen+1) != 0) अणु
-		dev_err(endpoपूर्णांक->dev, "IDT failed CRC check. Aborting.\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (crc32_le(~0, channel->wr_buffers[0]->addr,
+		     endpoint->idtlen+1) != 0) {
+		dev_err(endpoint->dev, "IDT failed CRC check. Aborting.\n");
+		return -ENODEV;
+	}
 
 	version = channel->wr_buffers[0]->addr;
 
 	/* Check version number. Reject anything above 0x82. */
-	अगर (*version > 0x82) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if (*version > 0x82) {
+		dev_err(endpoint->dev,
 			"No support for IDT version 0x%02x. Maybe the xillybus driver needs an upgrade. Aborting.\n",
 			*version);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार xillybus_पढ़ो(काष्ठा file *filp, अक्षर __user *userbuf,
-			     माप_प्रकार count, loff_t *f_pos)
-अणु
-	sमाप_प्रकार rc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक bytes_करोne = 0;
-	पूर्णांक no_समय_left = 0;
-	दीर्घ deadline, left_to_sleep;
-	काष्ठा xilly_channel *channel = filp->निजी_data;
+static ssize_t xillybus_read(struct file *filp, char __user *userbuf,
+			     size_t count, loff_t *f_pos)
+{
+	ssize_t rc;
+	unsigned long flags;
+	int bytes_done = 0;
+	int no_time_left = 0;
+	long deadline, left_to_sleep;
+	struct xilly_channel *channel = filp->private_data;
 
-	पूर्णांक empty, reached_eof, exhausted, पढ़ोy;
+	int empty, reached_eof, exhausted, ready;
 	/* Initializations are there only to silence warnings */
 
-	पूर्णांक howmany = 0, bufpos = 0, bufidx = 0, bufferकरोne = 0;
-	पूर्णांक रुकोing_bufidx;
+	int howmany = 0, bufpos = 0, bufidx = 0, bufferdone = 0;
+	int waiting_bufidx;
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	deadline = jअगरfies + 1 + XILLY_RX_TIMEOUT;
+	deadline = jiffies + 1 + XILLY_RX_TIMEOUT;
 
-	rc = mutex_lock_पूर्णांकerruptible(&channel->wr_mutex);
-	अगर (rc)
-		वापस rc;
+	rc = mutex_lock_interruptible(&channel->wr_mutex);
+	if (rc)
+		return rc;
 
-	जबतक (1) अणु /* Note that we may drop mutex within this loop */
-		पूर्णांक bytes_to_करो = count - bytes_करोne;
+	while (1) { /* Note that we may drop mutex within this loop */
+		int bytes_to_do = count - bytes_done;
 
 		spin_lock_irqsave(&channel->wr_spinlock, flags);
 
 		empty = channel->wr_empty;
-		पढ़ोy = !empty || channel->wr_पढ़ोy;
+		ready = !empty || channel->wr_ready;
 
-		अगर (!empty) अणु
+		if (!empty) {
 			bufidx = channel->wr_host_buf_idx;
 			bufpos = channel->wr_host_buf_pos;
 			howmany = ((channel->wr_buffers[bufidx]->end_offset
@@ -705,34 +704,34 @@ EXPORT_SYMBOL(xillybus_isr);
 				- bufpos;
 
 			/* Update wr_host_* to its post-operation state */
-			अगर (howmany > bytes_to_करो) अणु
-				bufferकरोne = 0;
+			if (howmany > bytes_to_do) {
+				bufferdone = 0;
 
-				howmany = bytes_to_करो;
+				howmany = bytes_to_do;
 				channel->wr_host_buf_pos += howmany;
-			पूर्ण अन्यथा अणु
-				bufferकरोne = 1;
+			} else {
+				bufferdone = 1;
 
 				channel->wr_host_buf_pos = 0;
 
-				अगर (bufidx == channel->wr_fpga_buf_idx) अणु
+				if (bufidx == channel->wr_fpga_buf_idx) {
 					channel->wr_empty = 1;
 					channel->wr_sleepy = 1;
-					channel->wr_पढ़ोy = 0;
-				पूर्ण
+					channel->wr_ready = 0;
+				}
 
-				अगर (bufidx >= (channel->num_wr_buffers - 1))
+				if (bufidx >= (channel->num_wr_buffers - 1))
 					channel->wr_host_buf_idx = 0;
-				अन्यथा
+				else
 					channel->wr_host_buf_idx++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
 		 * Marking our situation after the possible changes above,
-		 * क्रम use after releasing the spinlock.
+		 * for use after releasing the spinlock.
 		 *
-		 * empty = empty beक्रमe change
+		 * empty = empty before change
 		 * exhasted = empty after possible change
 		 */
 
@@ -740,281 +739,281 @@ EXPORT_SYMBOL(xillybus_isr);
 			(channel->wr_host_buf_idx == channel->wr_eof);
 		channel->wr_hangup = reached_eof;
 		exhausted = channel->wr_empty;
-		रुकोing_bufidx = channel->wr_host_buf_idx;
+		waiting_bufidx = channel->wr_host_buf_idx;
 
 		spin_unlock_irqrestore(&channel->wr_spinlock, flags);
 
-		अगर (!empty) अणु /* Go on, now without the spinlock */
+		if (!empty) { /* Go on, now without the spinlock */
 
-			अगर (bufpos == 0) /* Position zero means it's virgin */
-				channel->endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_cpu(
-					channel->endpoपूर्णांक,
+			if (bufpos == 0) /* Position zero means it's virgin */
+				channel->endpoint->ephw->hw_sync_sgl_for_cpu(
+					channel->endpoint,
 					channel->wr_buffers[bufidx]->dma_addr,
 					channel->wr_buf_size,
 					DMA_FROM_DEVICE);
 
-			अगर (copy_to_user(
+			if (copy_to_user(
 				    userbuf,
 				    channel->wr_buffers[bufidx]->addr
 				    + bufpos, howmany))
 				rc = -EFAULT;
 
 			userbuf += howmany;
-			bytes_करोne += howmany;
+			bytes_done += howmany;
 
-			अगर (bufferकरोne) अणु
-				channel->endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_device(
-					channel->endpoपूर्णांक,
+			if (bufferdone) {
+				channel->endpoint->ephw->hw_sync_sgl_for_device(
+					channel->endpoint,
 					channel->wr_buffers[bufidx]->dma_addr,
 					channel->wr_buf_size,
 					DMA_FROM_DEVICE);
 
 				/*
-				 * Tell FPGA the buffer is करोne with. It's an
+				 * Tell FPGA the buffer is done with. It's an
 				 * atomic operation to the FPGA, so what
-				 * happens with other channels करोesn't matter,
-				 * and the certain channel is रक्षित with
-				 * the channel-specअगरic mutex.
+				 * happens with other channels doesn't matter,
+				 * and the certain channel is protected with
+				 * the channel-specific mutex.
 				 */
 
-				ioग_लिखो32(1 | (channel->chan_num << 1) |
+				iowrite32(1 | (channel->chan_num << 1) |
 					  (bufidx << 12),
-					  channel->endpoपूर्णांक->रेजिस्टरs +
+					  channel->endpoint->registers +
 					  fpga_buf_ctrl_reg);
-			पूर्ण
+			}
 
-			अगर (rc) अणु
+			if (rc) {
 				mutex_unlock(&channel->wr_mutex);
-				वापस rc;
-			पूर्ण
-		पूर्ण
+				return rc;
+			}
+		}
 
-		/* This includes a zero-count वापस = खातापूर्ण */
-		अगर ((bytes_करोne >= count) || reached_eof)
-			अवरोध;
+		/* This includes a zero-count return = EOF */
+		if ((bytes_done >= count) || reached_eof)
+			break;
 
-		अगर (!exhausted)
-			जारी; /* More in RAM buffer(s)? Just go on. */
+		if (!exhausted)
+			continue; /* More in RAM buffer(s)? Just go on. */
 
-		अगर ((bytes_करोne > 0) &&
-		    (no_समय_left ||
+		if ((bytes_done > 0) &&
+		    (no_time_left ||
 		     (channel->wr_synchronous && channel->wr_allow_partial)))
-			अवरोध;
+			break;
 
 		/*
-		 * Nonblocking पढ़ो: The "ready" flag tells us that the FPGA
-		 * has data to send. In non-blocking mode, अगर it isn't on,
-		 * just वापस. But अगर there is, we jump directly to the poपूर्णांक
-		 * where we ask क्रम the FPGA to send all it has, and रुको
-		 * until that data arrives. So in a sense, we *करो* block in
-		 * nonblocking mode, but only क्रम a very लघु समय.
+		 * Nonblocking read: The "ready" flag tells us that the FPGA
+		 * has data to send. In non-blocking mode, if it isn't on,
+		 * just return. But if there is, we jump directly to the point
+		 * where we ask for the FPGA to send all it has, and wait
+		 * until that data arrives. So in a sense, we *do* block in
+		 * nonblocking mode, but only for a very short time.
 		 */
 
-		अगर (!no_समय_left && (filp->f_flags & O_NONBLOCK)) अणु
-			अगर (bytes_करोne > 0)
-				अवरोध;
+		if (!no_time_left && (filp->f_flags & O_NONBLOCK)) {
+			if (bytes_done > 0)
+				break;
 
-			अगर (पढ़ोy)
-				जाओ desperate;
+			if (ready)
+				goto desperate;
 
 			rc = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!no_समय_left || (bytes_करोne > 0)) अणु
+		if (!no_time_left || (bytes_done > 0)) {
 			/*
-			 * Note that in हाल of an element-misaligned पढ़ो
+			 * Note that in case of an element-misaligned read
 			 * request, offsetlimit will include the last element,
-			 * which will be partially पढ़ो from.
+			 * which will be partially read from.
 			 */
-			पूर्णांक offsetlimit = ((count - bytes_करोne) - 1) >>
+			int offsetlimit = ((count - bytes_done) - 1) >>
 				channel->log2_element_size;
-			पूर्णांक buf_elements = channel->wr_buf_size >>
+			int buf_elements = channel->wr_buf_size >>
 				channel->log2_element_size;
 
 			/*
 			 * In synchronous mode, always send an offset limit.
-			 * Just करोn't send a value too big.
+			 * Just don't send a value too big.
 			 */
 
-			अगर (channel->wr_synchronous) अणु
+			if (channel->wr_synchronous) {
 				/* Don't request more than one buffer */
-				अगर (channel->wr_allow_partial &&
+				if (channel->wr_allow_partial &&
 				    (offsetlimit >= buf_elements))
 					offsetlimit = buf_elements - 1;
 
 				/* Don't request more than all buffers */
-				अगर (!channel->wr_allow_partial &&
+				if (!channel->wr_allow_partial &&
 				    (offsetlimit >=
 				     (buf_elements * channel->num_wr_buffers)))
 					offsetlimit = buf_elements *
 						channel->num_wr_buffers - 1;
-			पूर्ण
+			}
 
 			/*
-			 * In asynchronous mode, क्रमce early flush of a buffer
-			 * only अगर that will allow वापसing a full count. The
+			 * In asynchronous mode, force early flush of a buffer
+			 * only if that will allow returning a full count. The
 			 * "offsetlimit < ( ... )" rather than "<=" excludes
 			 * requesting a full buffer, which would obviously
 			 * cause a buffer transmission anyhow
 			 */
 
-			अगर (channel->wr_synchronous ||
-			    (offsetlimit < (buf_elements - 1))) अणु
-				mutex_lock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
+			if (channel->wr_synchronous ||
+			    (offsetlimit < (buf_elements - 1))) {
+				mutex_lock(&channel->endpoint->register_mutex);
 
-				ioग_लिखो32(offsetlimit,
-					  channel->endpoपूर्णांक->रेजिस्टरs +
+				iowrite32(offsetlimit,
+					  channel->endpoint->registers +
 					  fpga_buf_offset_reg);
 
-				ioग_लिखो32(1 | (channel->chan_num << 1) |
+				iowrite32(1 | (channel->chan_num << 1) |
 					  (2 << 24) |  /* 2 = offset limit */
-					  (रुकोing_bufidx << 12),
-					  channel->endpoपूर्णांक->रेजिस्टरs +
+					  (waiting_bufidx << 12),
+					  channel->endpoint->registers +
 					  fpga_buf_ctrl_reg);
 
-				mutex_unlock(&channel->endpoपूर्णांक->
-					     रेजिस्टर_mutex);
-			पूर्ण
-		पूर्ण
+				mutex_unlock(&channel->endpoint->
+					     register_mutex);
+			}
+		}
 
 		/*
-		 * If partial completion is disallowed, there is no poपूर्णांक in
-		 * समयout sleeping. Neither अगर no_समय_left is set and
+		 * If partial completion is disallowed, there is no point in
+		 * timeout sleeping. Neither if no_time_left is set and
 		 * there's no data.
 		 */
 
-		अगर (!channel->wr_allow_partial ||
-		    (no_समय_left && (bytes_करोne == 0))) अणु
+		if (!channel->wr_allow_partial ||
+		    (no_time_left && (bytes_done == 0))) {
 			/*
-			 * This करो-loop will run more than once अगर another
-			 * thपढ़ो reनिश्चितed wr_sleepy beक्रमe we got the mutex
+			 * This do-loop will run more than once if another
+			 * thread reasserted wr_sleepy before we got the mutex
 			 * back, so we try again.
 			 */
 
-			करो अणु
+			do {
 				mutex_unlock(&channel->wr_mutex);
 
-				अगर (रुको_event_पूर्णांकerruptible(
-					    channel->wr_रुको,
+				if (wait_event_interruptible(
+					    channel->wr_wait,
 					    (!channel->wr_sleepy)))
-					जाओ पूर्णांकerrupted;
+					goto interrupted;
 
-				अगर (mutex_lock_पूर्णांकerruptible(
+				if (mutex_lock_interruptible(
 					    &channel->wr_mutex))
-					जाओ पूर्णांकerrupted;
-			पूर्ण जबतक (channel->wr_sleepy);
+					goto interrupted;
+			} while (channel->wr_sleepy);
 
-			जारी;
+			continue;
 
-पूर्णांकerrupted: /* Mutex is not held अगर got here */
-			अगर (channel->endpoपूर्णांक->fatal_error)
-				वापस -EIO;
-			अगर (bytes_करोne)
-				वापस bytes_करोne;
-			अगर (filp->f_flags & O_NONBLOCK)
-				वापस -EAGAIN; /* Don't admit snoozing */
-			वापस -EINTR;
-		पूर्ण
+interrupted: /* Mutex is not held if got here */
+			if (channel->endpoint->fatal_error)
+				return -EIO;
+			if (bytes_done)
+				return bytes_done;
+			if (filp->f_flags & O_NONBLOCK)
+				return -EAGAIN; /* Don't admit snoozing */
+			return -EINTR;
+		}
 
-		left_to_sleep = deadline - ((दीर्घ) jअगरfies);
+		left_to_sleep = deadline - ((long) jiffies);
 
 		/*
-		 * If our समय is out, skip the रुकोing. We may miss wr_sleepy
-		 * being deनिश्चितed but hey, almost missing the train is like
+		 * If our time is out, skip the waiting. We may miss wr_sleepy
+		 * being deasserted but hey, almost missing the train is like
 		 * missing it.
 		 */
 
-		अगर (left_to_sleep > 0) अणु
+		if (left_to_sleep > 0) {
 			left_to_sleep =
-				रुको_event_पूर्णांकerruptible_समयout(
-					channel->wr_रुको,
+				wait_event_interruptible_timeout(
+					channel->wr_wait,
 					(!channel->wr_sleepy),
 					left_to_sleep);
 
-			अगर (left_to_sleep > 0) /* wr_sleepy deनिश्चितed */
-				जारी;
+			if (left_to_sleep > 0) /* wr_sleepy deasserted */
+				continue;
 
-			अगर (left_to_sleep < 0) अणु /* Interrupt */
+			if (left_to_sleep < 0) { /* Interrupt */
 				mutex_unlock(&channel->wr_mutex);
-				अगर (channel->endpoपूर्णांक->fatal_error)
-					वापस -EIO;
-				अगर (bytes_करोne)
-					वापस bytes_करोne;
-				वापस -EINTR;
-			पूर्ण
-		पूर्ण
+				if (channel->endpoint->fatal_error)
+					return -EIO;
+				if (bytes_done)
+					return bytes_done;
+				return -EINTR;
+			}
+		}
 
 desperate:
-		no_समय_left = 1; /* We're out of sleeping समय. Desperate! */
+		no_time_left = 1; /* We're out of sleeping time. Desperate! */
 
-		अगर (bytes_करोne == 0) अणु
+		if (bytes_done == 0) {
 			/*
-			 * Reaching here means that we allow partial वापस,
-			 * that we've run out of समय, and that we have
-			 * nothing to वापस.
-			 * So tell the FPGA to send anything it has or माला_लो.
+			 * Reaching here means that we allow partial return,
+			 * that we've run out of time, and that we have
+			 * nothing to return.
+			 * So tell the FPGA to send anything it has or gets.
 			 */
 
-			ioग_लिखो32(1 | (channel->chan_num << 1) |
+			iowrite32(1 | (channel->chan_num << 1) |
 				  (3 << 24) |  /* Opcode 3, flush it all! */
-				  (रुकोing_bufidx << 12),
-				  channel->endpoपूर्णांक->रेजिस्टरs +
+				  (waiting_bufidx << 12),
+				  channel->endpoint->registers +
 				  fpga_buf_ctrl_reg);
-		पूर्ण
+		}
 
 		/*
-		 * Reaching here means that we *करो* have data in the buffer,
-		 * but the "partial" flag disallows वापसing less than
-		 * required. And we करोn't have as much. So loop again,
+		 * Reaching here means that we *do* have data in the buffer,
+		 * but the "partial" flag disallows returning less than
+		 * required. And we don't have as much. So loop again,
 		 * which is likely to end up blocking indefinitely until
 		 * enough data has arrived.
 		 */
-	पूर्ण
+	}
 
 	mutex_unlock(&channel->wr_mutex);
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस bytes_करोne;
-पूर्ण
+	return bytes_done;
+}
 
 /*
- * The समयout argument takes values as follows:
- *  >0 : Flush with समयout
- * ==0 : Flush, and रुको idefinitely क्रम the flush to complete
- *  <0 : Autoflush: Flush only अगर there's a single buffer occupied
+ * The timeout argument takes values as follows:
+ *  >0 : Flush with timeout
+ * ==0 : Flush, and wait idefinitely for the flush to complete
+ *  <0 : Autoflush: Flush only if there's a single buffer occupied
  */
 
-अटल पूर्णांक xillybus_myflush(काष्ठा xilly_channel *channel, दीर्घ समयout)
-अणु
-	पूर्णांक rc;
-	अचिन्हित दीर्घ flags;
+static int xillybus_myflush(struct xilly_channel *channel, long timeout)
+{
+	int rc;
+	unsigned long flags;
 
-	पूर्णांक end_offset_plus1;
-	पूर्णांक bufidx, bufidx_minus1;
-	पूर्णांक i;
-	पूर्णांक empty;
-	पूर्णांक new_rd_host_buf_pos;
+	int end_offset_plus1;
+	int bufidx, bufidx_minus1;
+	int i;
+	int empty;
+	int new_rd_host_buf_pos;
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
-	rc = mutex_lock_पूर्णांकerruptible(&channel->rd_mutex);
-	अगर (rc)
-		वापस rc;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
+	rc = mutex_lock_interruptible(&channel->rd_mutex);
+	if (rc)
+		return rc;
 
 	/*
-	 * Don't flush a बंदd channel. This can happen when the work queued
-	 * स्वतःflush thपढ़ो fires off after the file has बंदd. This is not
+	 * Don't flush a closed channel. This can happen when the work queued
+	 * autoflush thread fires off after the file has closed. This is not
 	 * an error, just something to dismiss.
 	 */
 
-	अगर (!channel->rd_ref_count)
-		जाओ करोne;
+	if (!channel->rd_ref_count)
+		goto done;
 
 	bufidx = channel->rd_host_buf_idx;
 
@@ -1028,186 +1027,186 @@ desperate:
 	new_rd_host_buf_pos = channel->rd_host_buf_pos -
 		(end_offset_plus1 << channel->log2_element_size);
 
-	/* Submit the current buffer अगर it's nonempty */
-	अगर (end_offset_plus1) अणु
-		अचिन्हित अक्षर *tail = channel->rd_buffers[bufidx]->addr +
+	/* Submit the current buffer if it's nonempty */
+	if (end_offset_plus1) {
+		unsigned char *tail = channel->rd_buffers[bufidx]->addr +
 			(end_offset_plus1 << channel->log2_element_size);
 
 		/* Copy  unflushed data, so we can put it in next buffer */
-		क्रम (i = 0; i < new_rd_host_buf_pos; i++)
+		for (i = 0; i < new_rd_host_buf_pos; i++)
 			channel->rd_leftovers[i] = *tail++;
 
 		spin_lock_irqsave(&channel->rd_spinlock, flags);
 
-		/* Autoflush only अगर a single buffer is occupied */
+		/* Autoflush only if a single buffer is occupied */
 
-		अगर ((समयout < 0) &&
+		if ((timeout < 0) &&
 		    (channel->rd_full ||
-		     (bufidx_minus1 != channel->rd_fpga_buf_idx))) अणु
+		     (bufidx_minus1 != channel->rd_fpga_buf_idx))) {
 			spin_unlock_irqrestore(&channel->rd_spinlock, flags);
 			/*
 			 * A new work item may be queued by the ISR exactly
 			 * now, since the execution of a work item allows the
-			 * queuing of a new one जबतक it's running.
+			 * queuing of a new one while it's running.
 			 */
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
-		/* The 4th element is never needed क्रम data, so it's a flag */
+		/* The 4th element is never needed for data, so it's a flag */
 		channel->rd_leftovers[3] = (new_rd_host_buf_pos != 0);
 
 		/* Set up rd_full to reflect a certain moment's state */
 
-		अगर (bufidx == channel->rd_fpga_buf_idx)
+		if (bufidx == channel->rd_fpga_buf_idx)
 			channel->rd_full = 1;
 		spin_unlock_irqrestore(&channel->rd_spinlock, flags);
 
-		अगर (bufidx >= (channel->num_rd_buffers - 1))
+		if (bufidx >= (channel->num_rd_buffers - 1))
 			channel->rd_host_buf_idx = 0;
-		अन्यथा
+		else
 			channel->rd_host_buf_idx++;
 
-		channel->endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_device(
-			channel->endpoपूर्णांक,
+		channel->endpoint->ephw->hw_sync_sgl_for_device(
+			channel->endpoint,
 			channel->rd_buffers[bufidx]->dma_addr,
 			channel->rd_buf_size,
 			DMA_TO_DEVICE);
 
-		mutex_lock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
+		mutex_lock(&channel->endpoint->register_mutex);
 
-		ioग_लिखो32(end_offset_plus1 - 1,
-			  channel->endpoपूर्णांक->रेजिस्टरs + fpga_buf_offset_reg);
+		iowrite32(end_offset_plus1 - 1,
+			  channel->endpoint->registers + fpga_buf_offset_reg);
 
-		ioग_लिखो32((channel->chan_num << 1) | /* Channel ID */
+		iowrite32((channel->chan_num << 1) | /* Channel ID */
 			  (2 << 24) |  /* Opcode 2, submit buffer */
 			  (bufidx << 12),
-			  channel->endpoपूर्णांक->रेजिस्टरs + fpga_buf_ctrl_reg);
+			  channel->endpoint->registers + fpga_buf_ctrl_reg);
 
-		mutex_unlock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
-	पूर्ण अन्यथा अगर (bufidx == 0) अणु
+		mutex_unlock(&channel->endpoint->register_mutex);
+	} else if (bufidx == 0) {
 		bufidx = channel->num_rd_buffers - 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		bufidx--;
-	पूर्ण
+	}
 
 	channel->rd_host_buf_pos = new_rd_host_buf_pos;
 
-	अगर (समयout < 0)
-		जाओ करोne; /* Autoflush */
+	if (timeout < 0)
+		goto done; /* Autoflush */
 
 	/*
 	 * bufidx is now the last buffer written to (or equal to
-	 * rd_fpga_buf_idx अगर buffer was never written to), and
+	 * rd_fpga_buf_idx if buffer was never written to), and
 	 * channel->rd_host_buf_idx the one after it.
 	 *
 	 * If bufidx == channel->rd_fpga_buf_idx we're either empty or full.
 	 */
 
-	जबतक (1) अणु /* Loop रुकोing क्रम draining of buffers */
+	while (1) { /* Loop waiting for draining of buffers */
 		spin_lock_irqsave(&channel->rd_spinlock, flags);
 
-		अगर (bufidx != channel->rd_fpga_buf_idx)
+		if (bufidx != channel->rd_fpga_buf_idx)
 			channel->rd_full = 1; /*
 					       * Not really full,
-					       * but needs रुकोing.
+					       * but needs waiting.
 					       */
 
 		empty = !channel->rd_full;
 
 		spin_unlock_irqrestore(&channel->rd_spinlock, flags);
 
-		अगर (empty)
-			अवरोध;
+		if (empty)
+			break;
 
 		/*
-		 * Indefinite sleep with mutex taken. With data रुकोing क्रम
-		 * flushing user should not be surprised अगर खोलो() क्रम ग_लिखो
+		 * Indefinite sleep with mutex taken. With data waiting for
+		 * flushing user should not be surprised if open() for write
 		 * sleeps.
 		 */
-		अगर (समयout == 0)
-			रुको_event_पूर्णांकerruptible(channel->rd_रुको,
+		if (timeout == 0)
+			wait_event_interruptible(channel->rd_wait,
 						 (!channel->rd_full));
 
-		अन्यथा अगर (रुको_event_पूर्णांकerruptible_समयout(
-				 channel->rd_रुको,
+		else if (wait_event_interruptible_timeout(
+				 channel->rd_wait,
 				 (!channel->rd_full),
-				 समयout) == 0) अणु
-			dev_warn(channel->endpoपूर्णांक->dev,
+				 timeout) == 0) {
+			dev_warn(channel->endpoint->dev,
 				 "Timed out while flushing. Output data may be lost.\n");
 
 			rc = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (channel->rd_full) अणु
+		if (channel->rd_full) {
 			rc = -EINTR;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-करोne:
+done:
 	mutex_unlock(&channel->rd_mutex);
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xillybus_flush(काष्ठा file *filp, fl_owner_t id)
-अणु
-	अगर (!(filp->f_mode & FMODE_WRITE))
-		वापस 0;
+static int xillybus_flush(struct file *filp, fl_owner_t id)
+{
+	if (!(filp->f_mode & FMODE_WRITE))
+		return 0;
 
-	वापस xillybus_myflush(filp->निजी_data, HZ); /* 1 second समयout */
-पूर्ण
+	return xillybus_myflush(filp->private_data, HZ); /* 1 second timeout */
+}
 
-अटल व्योम xillybus_स्वतःflush(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *workitem = container_of(
-		work, काष्ठा delayed_work, work);
-	काष्ठा xilly_channel *channel = container_of(
-		workitem, काष्ठा xilly_channel, rd_workitem);
-	पूर्णांक rc;
+static void xillybus_autoflush(struct work_struct *work)
+{
+	struct delayed_work *workitem = container_of(
+		work, struct delayed_work, work);
+	struct xilly_channel *channel = container_of(
+		workitem, struct xilly_channel, rd_workitem);
+	int rc;
 
 	rc = xillybus_myflush(channel, -1);
-	अगर (rc == -EINTR)
-		dev_warn(channel->endpoपूर्णांक->dev,
+	if (rc == -EINTR)
+		dev_warn(channel->endpoint->dev,
 			 "Autoflush failed because work queue thread got a signal.\n");
-	अन्यथा अगर (rc)
-		dev_err(channel->endpoपूर्णांक->dev,
+	else if (rc)
+		dev_err(channel->endpoint->dev,
 			"Autoflush failed under weird circumstances.\n");
-पूर्ण
+}
 
-अटल sमाप_प्रकार xillybus_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *userbuf,
-			      माप_प्रकार count, loff_t *f_pos)
-अणु
-	sमाप_प्रकार rc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक bytes_करोne = 0;
-	काष्ठा xilly_channel *channel = filp->निजी_data;
+static ssize_t xillybus_write(struct file *filp, const char __user *userbuf,
+			      size_t count, loff_t *f_pos)
+{
+	ssize_t rc;
+	unsigned long flags;
+	int bytes_done = 0;
+	struct xilly_channel *channel = filp->private_data;
 
-	पूर्णांक full, exhausted;
+	int full, exhausted;
 	/* Initializations are there only to silence warnings */
 
-	पूर्णांक howmany = 0, bufpos = 0, bufidx = 0, bufferकरोne = 0;
-	पूर्णांक end_offset_plus1 = 0;
+	int howmany = 0, bufpos = 0, bufidx = 0, bufferdone = 0;
+	int end_offset_plus1 = 0;
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	rc = mutex_lock_पूर्णांकerruptible(&channel->rd_mutex);
-	अगर (rc)
-		वापस rc;
+	rc = mutex_lock_interruptible(&channel->rd_mutex);
+	if (rc)
+		return rc;
 
-	जबतक (1) अणु
-		पूर्णांक bytes_to_करो = count - bytes_करोne;
+	while (1) {
+		int bytes_to_do = count - bytes_done;
 
 		spin_lock_irqsave(&channel->rd_spinlock, flags);
 
 		full = channel->rd_full;
 
-		अगर (!full) अणु
+		if (!full) {
 			bufidx = channel->rd_host_buf_idx;
 			bufpos = channel->rd_host_buf_pos;
 			howmany = channel->rd_buf_size - bufpos;
@@ -1218,24 +1217,24 @@ desperate:
 			 * which is like flushing, but not necessarily block.
 			 */
 
-			अगर ((howmany > bytes_to_करो) &&
+			if ((howmany > bytes_to_do) &&
 			    (count ||
-			     ((bufpos >> channel->log2_element_size) == 0))) अणु
-				bufferकरोne = 0;
+			     ((bufpos >> channel->log2_element_size) == 0))) {
+				bufferdone = 0;
 
-				howmany = bytes_to_करो;
+				howmany = bytes_to_do;
 				channel->rd_host_buf_pos += howmany;
-			पूर्ण अन्यथा अणु
-				bufferकरोne = 1;
+			} else {
+				bufferdone = 1;
 
-				अगर (count) अणु
+				if (count) {
 					end_offset_plus1 =
 						channel->rd_buf_size >>
 						channel->log2_element_size;
 					channel->rd_host_buf_pos = 0;
-				पूर्ण अन्यथा अणु
-					अचिन्हित अक्षर *tail;
-					पूर्णांक i;
+				} else {
+					unsigned char *tail;
+					int i;
 
 					howmany = 0;
 
@@ -1251,28 +1250,28 @@ desperate:
 						(end_offset_plus1 <<
 						 channel->log2_element_size);
 
-					क्रम (i = 0;
+					for (i = 0;
 					     i < channel->rd_host_buf_pos;
 					     i++)
 						channel->rd_leftovers[i] =
 							*tail++;
-				पूर्ण
+				}
 
-				अगर (bufidx == channel->rd_fpga_buf_idx)
+				if (bufidx == channel->rd_fpga_buf_idx)
 					channel->rd_full = 1;
 
-				अगर (bufidx >= (channel->num_rd_buffers - 1))
+				if (bufidx >= (channel->num_rd_buffers - 1))
 					channel->rd_host_buf_idx = 0;
-				अन्यथा
+				else
 					channel->rd_host_buf_idx++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
 		 * Marking our situation after the possible changes above,
-		 * क्रम use  after releasing the spinlock.
+		 * for use  after releasing the spinlock.
 		 *
-		 * full = full beक्रमe change
+		 * full = full before change
 		 * exhasted = full after possible change
 		 */
 
@@ -1280,253 +1279,253 @@ desperate:
 
 		spin_unlock_irqrestore(&channel->rd_spinlock, flags);
 
-		अगर (!full) अणु /* Go on, now without the spinlock */
-			अचिन्हित अक्षर *head =
+		if (!full) { /* Go on, now without the spinlock */
+			unsigned char *head =
 				channel->rd_buffers[bufidx]->addr;
-			पूर्णांक i;
+			int i;
 
-			अगर ((bufpos == 0) || /* Zero means it's virgin */
-			    (channel->rd_leftovers[3] != 0)) अणु
-				channel->endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_cpu(
-					channel->endpoपूर्णांक,
+			if ((bufpos == 0) || /* Zero means it's virgin */
+			    (channel->rd_leftovers[3] != 0)) {
+				channel->endpoint->ephw->hw_sync_sgl_for_cpu(
+					channel->endpoint,
 					channel->rd_buffers[bufidx]->dma_addr,
 					channel->rd_buf_size,
 					DMA_TO_DEVICE);
 
 				/* Virgin, but leftovers are due */
-				क्रम (i = 0; i < bufpos; i++)
+				for (i = 0; i < bufpos; i++)
 					*head++ = channel->rd_leftovers[i];
 
 				channel->rd_leftovers[3] = 0; /* Clear flag */
-			पूर्ण
+			}
 
-			अगर (copy_from_user(
+			if (copy_from_user(
 				    channel->rd_buffers[bufidx]->addr + bufpos,
 				    userbuf, howmany))
 				rc = -EFAULT;
 
 			userbuf += howmany;
-			bytes_करोne += howmany;
+			bytes_done += howmany;
 
-			अगर (bufferकरोne) अणु
-				channel->endpoपूर्णांक->ephw->hw_sync_sgl_क्रम_device(
-					channel->endpoपूर्णांक,
+			if (bufferdone) {
+				channel->endpoint->ephw->hw_sync_sgl_for_device(
+					channel->endpoint,
 					channel->rd_buffers[bufidx]->dma_addr,
 					channel->rd_buf_size,
 					DMA_TO_DEVICE);
 
-				mutex_lock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
+				mutex_lock(&channel->endpoint->register_mutex);
 
-				ioग_लिखो32(end_offset_plus1 - 1,
-					  channel->endpoपूर्णांक->रेजिस्टरs +
+				iowrite32(end_offset_plus1 - 1,
+					  channel->endpoint->registers +
 					  fpga_buf_offset_reg);
 
-				ioग_लिखो32((channel->chan_num << 1) |
+				iowrite32((channel->chan_num << 1) |
 					  (2 << 24) |  /* 2 = submit buffer */
 					  (bufidx << 12),
-					  channel->endpoपूर्णांक->रेजिस्टरs +
+					  channel->endpoint->registers +
 					  fpga_buf_ctrl_reg);
 
-				mutex_unlock(&channel->endpoपूर्णांक->
-					     रेजिस्टर_mutex);
+				mutex_unlock(&channel->endpoint->
+					     register_mutex);
 
 				channel->rd_leftovers[3] =
 					(channel->rd_host_buf_pos != 0);
-			पूर्ण
+			}
 
-			अगर (rc) अणु
+			if (rc) {
 				mutex_unlock(&channel->rd_mutex);
 
-				अगर (channel->endpoपूर्णांक->fatal_error)
-					वापस -EIO;
+				if (channel->endpoint->fatal_error)
+					return -EIO;
 
-				अगर (!channel->rd_synchronous)
+				if (!channel->rd_synchronous)
 					queue_delayed_work(
 						xillybus_wq,
 						&channel->rd_workitem,
 						XILLY_RX_TIMEOUT);
 
-				वापस rc;
-			पूर्ण
-		पूर्ण
+				return rc;
+			}
+		}
 
-		अगर (bytes_करोne >= count)
-			अवरोध;
+		if (bytes_done >= count)
+			break;
 
-		अगर (!exhausted)
-			जारी; /* If there's more space, just go on */
+		if (!exhausted)
+			continue; /* If there's more space, just go on */
 
-		अगर ((bytes_करोne > 0) && channel->rd_allow_partial)
-			अवरोध;
+		if ((bytes_done > 0) && channel->rd_allow_partial)
+			break;
 
 		/*
-		 * Indefinite sleep with mutex taken. With data रुकोing क्रम
-		 * flushing, user should not be surprised अगर खोलो() क्रम ग_लिखो
+		 * Indefinite sleep with mutex taken. With data waiting for
+		 * flushing, user should not be surprised if open() for write
 		 * sleeps.
 		 */
 
-		अगर (filp->f_flags & O_NONBLOCK) अणु
+		if (filp->f_flags & O_NONBLOCK) {
 			rc = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (रुको_event_पूर्णांकerruptible(channel->rd_रुको,
-					     (!channel->rd_full))) अणु
+		if (wait_event_interruptible(channel->rd_wait,
+					     (!channel->rd_full))) {
 			mutex_unlock(&channel->rd_mutex);
 
-			अगर (channel->endpoपूर्णांक->fatal_error)
-				वापस -EIO;
+			if (channel->endpoint->fatal_error)
+				return -EIO;
 
-			अगर (bytes_करोne)
-				वापस bytes_करोne;
-			वापस -EINTR;
-		पूर्ण
-	पूर्ण
+			if (bytes_done)
+				return bytes_done;
+			return -EINTR;
+		}
+	}
 
 	mutex_unlock(&channel->rd_mutex);
 
-	अगर (!channel->rd_synchronous)
+	if (!channel->rd_synchronous)
 		queue_delayed_work(xillybus_wq,
 				   &channel->rd_workitem,
 				   XILLY_RX_TIMEOUT);
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर ((channel->rd_synchronous) && (bytes_करोne > 0)) अणु
-		rc = xillybus_myflush(filp->निजी_data, 0); /* No समयout */
+	if ((channel->rd_synchronous) && (bytes_done > 0)) {
+		rc = xillybus_myflush(filp->private_data, 0); /* No timeout */
 
-		अगर (rc && (rc != -EINTR))
-			वापस rc;
-	पूर्ण
+		if (rc && (rc != -EINTR))
+			return rc;
+	}
 
-	वापस bytes_करोne;
-पूर्ण
+	return bytes_done;
+}
 
-अटल पूर्णांक xillybus_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक minor = iminor(inode);
-	पूर्णांक major = imajor(inode);
-	काष्ठा xilly_endpoपूर्णांक *ep_iter, *endpoपूर्णांक = शून्य;
-	काष्ठा xilly_channel *channel;
+static int xillybus_open(struct inode *inode, struct file *filp)
+{
+	int rc = 0;
+	unsigned long flags;
+	int minor = iminor(inode);
+	int major = imajor(inode);
+	struct xilly_endpoint *ep_iter, *endpoint = NULL;
+	struct xilly_channel *channel;
 
 	mutex_lock(&ep_list_lock);
 
-	list_क्रम_each_entry(ep_iter, &list_of_endpoपूर्णांकs, ep_list) अणु
-		अगर ((ep_iter->major == major) &&
+	list_for_each_entry(ep_iter, &list_of_endpoints, ep_list) {
+		if ((ep_iter->major == major) &&
 		    (minor >= ep_iter->lowest_minor) &&
 		    (minor < (ep_iter->lowest_minor +
-			      ep_iter->num_channels))) अणु
-			endpoपूर्णांक = ep_iter;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			      ep_iter->num_channels))) {
+			endpoint = ep_iter;
+			break;
+		}
+	}
 	mutex_unlock(&ep_list_lock);
 
-	अगर (!endpoपूर्णांक) अणु
+	if (!endpoint) {
 		pr_err("xillybus: open() failed to find a device for major=%d and minor=%d\n",
 		       major, minor);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (endpoint->fatal_error)
+		return -EIO;
 
-	channel = endpoपूर्णांक->channels[1 + minor - endpoपूर्णांक->lowest_minor];
-	filp->निजी_data = channel;
+	channel = endpoint->channels[1 + minor - endpoint->lowest_minor];
+	filp->private_data = channel;
 
 	/*
-	 * It माला_लो complicated because:
-	 * 1. We करोn't want to take a mutex we don't have to
-	 * 2. We करोn't want to खोलो one direction अगर the other will fail.
+	 * It gets complicated because:
+	 * 1. We don't want to take a mutex we don't have to
+	 * 2. We don't want to open one direction if the other will fail.
 	 */
 
-	अगर ((filp->f_mode & FMODE_READ) && (!channel->num_wr_buffers))
-		वापस -ENODEV;
+	if ((filp->f_mode & FMODE_READ) && (!channel->num_wr_buffers))
+		return -ENODEV;
 
-	अगर ((filp->f_mode & FMODE_WRITE) && (!channel->num_rd_buffers))
-		वापस -ENODEV;
+	if ((filp->f_mode & FMODE_WRITE) && (!channel->num_rd_buffers))
+		return -ENODEV;
 
-	अगर ((filp->f_mode & FMODE_READ) && (filp->f_flags & O_NONBLOCK) &&
+	if ((filp->f_mode & FMODE_READ) && (filp->f_flags & O_NONBLOCK) &&
 	    (channel->wr_synchronous || !channel->wr_allow_partial ||
-	     !channel->wr_supports_nonempty)) अणु
-		dev_err(endpoपूर्णांक->dev,
+	     !channel->wr_supports_nonempty)) {
+		dev_err(endpoint->dev,
 			"open() failed: O_NONBLOCK not allowed for read on this device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर ((filp->f_mode & FMODE_WRITE) && (filp->f_flags & O_NONBLOCK) &&
-	    (channel->rd_synchronous || !channel->rd_allow_partial)) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if ((filp->f_mode & FMODE_WRITE) && (filp->f_flags & O_NONBLOCK) &&
+	    (channel->rd_synchronous || !channel->rd_allow_partial)) {
+		dev_err(endpoint->dev,
 			"open() failed: O_NONBLOCK not allowed for write on this device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
-	 * Note: खोलो() may block on getting mutexes despite O_NONBLOCK.
-	 * This shouldn't occur normally, since multiple खोलो of the same
+	 * Note: open() may block on getting mutexes despite O_NONBLOCK.
+	 * This shouldn't occur normally, since multiple open of the same
 	 * file descriptor is almost always prohibited anyhow
-	 * (*_exclusive_खोलो is normally set in real-lअगरe प्रणालीs).
+	 * (*_exclusive_open is normally set in real-life systems).
 	 */
 
-	अगर (filp->f_mode & FMODE_READ) अणु
-		rc = mutex_lock_पूर्णांकerruptible(&channel->wr_mutex);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (filp->f_mode & FMODE_READ) {
+		rc = mutex_lock_interruptible(&channel->wr_mutex);
+		if (rc)
+			return rc;
+	}
 
-	अगर (filp->f_mode & FMODE_WRITE) अणु
-		rc = mutex_lock_पूर्णांकerruptible(&channel->rd_mutex);
-		अगर (rc)
-			जाओ unlock_wr;
-	पूर्ण
+	if (filp->f_mode & FMODE_WRITE) {
+		rc = mutex_lock_interruptible(&channel->rd_mutex);
+		if (rc)
+			goto unlock_wr;
+	}
 
-	अगर ((filp->f_mode & FMODE_READ) &&
+	if ((filp->f_mode & FMODE_READ) &&
 	    (channel->wr_ref_count != 0) &&
-	    (channel->wr_exclusive_खोलो)) अणु
+	    (channel->wr_exclusive_open)) {
 		rc = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर ((filp->f_mode & FMODE_WRITE) &&
+	if ((filp->f_mode & FMODE_WRITE) &&
 	    (channel->rd_ref_count != 0) &&
-	    (channel->rd_exclusive_खोलो)) अणु
+	    (channel->rd_exclusive_open)) {
 		rc = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (filp->f_mode & FMODE_READ) अणु
-		अगर (channel->wr_ref_count == 0) अणु /* First खोलो of file */
+	if (filp->f_mode & FMODE_READ) {
+		if (channel->wr_ref_count == 0) { /* First open of file */
 			/* Move the host to first buffer */
 			spin_lock_irqsave(&channel->wr_spinlock, flags);
 			channel->wr_host_buf_idx = 0;
 			channel->wr_host_buf_pos = 0;
 			channel->wr_fpga_buf_idx = -1;
 			channel->wr_empty = 1;
-			channel->wr_पढ़ोy = 0;
+			channel->wr_ready = 0;
 			channel->wr_sleepy = 1;
 			channel->wr_eof = -1;
 			channel->wr_hangup = 0;
 
 			spin_unlock_irqrestore(&channel->wr_spinlock, flags);
 
-			ioग_लिखो32(1 | (channel->chan_num << 1) |
-				  (4 << 24) |  /* Opcode 4, खोलो channel */
+			iowrite32(1 | (channel->chan_num << 1) |
+				  (4 << 24) |  /* Opcode 4, open channel */
 				  ((channel->wr_synchronous & 1) << 23),
-				  channel->endpoपूर्णांक->रेजिस्टरs +
+				  channel->endpoint->registers +
 				  fpga_buf_ctrl_reg);
-		पूर्ण
+		}
 
 		channel->wr_ref_count++;
-	पूर्ण
+	}
 
-	अगर (filp->f_mode & FMODE_WRITE) अणु
-		अगर (channel->rd_ref_count == 0) अणु /* First खोलो of file */
+	if (filp->f_mode & FMODE_WRITE) {
+		if (channel->rd_ref_count == 0) { /* First open of file */
 			/* Move the host to first buffer */
 			spin_lock_irqsave(&channel->rd_spinlock, flags);
 			channel->rd_host_buf_idx = 0;
@@ -1537,80 +1536,80 @@ desperate:
 
 			spin_unlock_irqrestore(&channel->rd_spinlock, flags);
 
-			ioग_लिखो32((channel->chan_num << 1) |
-				  (4 << 24),   /* Opcode 4, खोलो channel */
-				  channel->endpoपूर्णांक->रेजिस्टरs +
+			iowrite32((channel->chan_num << 1) |
+				  (4 << 24),   /* Opcode 4, open channel */
+				  channel->endpoint->registers +
 				  fpga_buf_ctrl_reg);
-		पूर्ण
+		}
 
 		channel->rd_ref_count++;
-	पूर्ण
+	}
 
 unlock:
-	अगर (filp->f_mode & FMODE_WRITE)
+	if (filp->f_mode & FMODE_WRITE)
 		mutex_unlock(&channel->rd_mutex);
 unlock_wr:
-	अगर (filp->f_mode & FMODE_READ)
+	if (filp->f_mode & FMODE_READ)
 		mutex_unlock(&channel->wr_mutex);
 
-	अगर (!rc && (!channel->seekable))
-		वापस nonseekable_खोलो(inode, filp);
+	if (!rc && (!channel->seekable))
+		return nonseekable_open(inode, filp);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक xillybus_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xilly_channel *channel = filp->निजी_data;
+static int xillybus_release(struct inode *inode, struct file *filp)
+{
+	unsigned long flags;
+	struct xilly_channel *channel = filp->private_data;
 
-	पूर्णांक buf_idx;
-	पूर्णांक eof;
+	int buf_idx;
+	int eof;
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
-	अगर (filp->f_mode & FMODE_WRITE) अणु
+	if (filp->f_mode & FMODE_WRITE) {
 		mutex_lock(&channel->rd_mutex);
 
 		channel->rd_ref_count--;
 
-		अगर (channel->rd_ref_count == 0) अणु
+		if (channel->rd_ref_count == 0) {
 			/*
 			 * We rely on the kernel calling flush()
-			 * beक्रमe we get here.
+			 * before we get here.
 			 */
 
-			ioग_लिखो32((channel->chan_num << 1) | /* Channel ID */
-				  (5 << 24),  /* Opcode 5, बंद channel */
-				  channel->endpoपूर्णांक->रेजिस्टरs +
+			iowrite32((channel->chan_num << 1) | /* Channel ID */
+				  (5 << 24),  /* Opcode 5, close channel */
+				  channel->endpoint->registers +
 				  fpga_buf_ctrl_reg);
-		पूर्ण
+		}
 		mutex_unlock(&channel->rd_mutex);
-	पूर्ण
+	}
 
-	अगर (filp->f_mode & FMODE_READ) अणु
+	if (filp->f_mode & FMODE_READ) {
 		mutex_lock(&channel->wr_mutex);
 
 		channel->wr_ref_count--;
 
-		अगर (channel->wr_ref_count == 0) अणु
-			ioग_लिखो32(1 | (channel->chan_num << 1) |
-				  (5 << 24),  /* Opcode 5, बंद channel */
-				  channel->endpoपूर्णांक->रेजिस्टरs +
+		if (channel->wr_ref_count == 0) {
+			iowrite32(1 | (channel->chan_num << 1) |
+				  (5 << 24),  /* Opcode 5, close channel */
+				  channel->endpoint->registers +
 				  fpga_buf_ctrl_reg);
 
 			/*
 			 * This is crazily cautious: We make sure that not
-			 * only that we got an खातापूर्ण (be it because we बंदd
-			 * the channel or because of a user's खातापूर्ण), but verअगरy
+			 * only that we got an EOF (be it because we closed
+			 * the channel or because of a user's EOF), but verify
 			 * that it's one beyond the last buffer arrived, so
-			 * we have no leftover buffers pending beक्रमe wrapping
+			 * we have no leftover buffers pending before wrapping
 			 * up (which can only happen in asynchronous channels,
 			 * BTW)
 			 */
 
-			जबतक (1) अणु
+			while (1) {
 				spin_lock_irqsave(&channel->wr_spinlock,
 						  flags);
 				buf_idx = channel->wr_fpga_buf_idx;
@@ -1620,486 +1619,486 @@ unlock_wr:
 						       flags);
 
 				/*
-				 * Check अगर eof poपूर्णांकs at the buffer after
+				 * Check if eof points at the buffer after
 				 * the last one the FPGA submitted. Note that
-				 * no खातापूर्ण is marked by negative eof.
+				 * no EOF is marked by negative eof.
 				 */
 
 				buf_idx++;
-				अगर (buf_idx == channel->num_wr_buffers)
+				if (buf_idx == channel->num_wr_buffers)
 					buf_idx = 0;
 
-				अगर (buf_idx == eof)
-					अवरोध;
+				if (buf_idx == eof)
+					break;
 
 				/*
-				 * Steal extra 100 ms अगर awaken by पूर्णांकerrupt.
-				 * This is a simple workaround क्रम an
-				 * पूर्णांकerrupt pending when entering, which would
+				 * Steal extra 100 ms if awaken by interrupt.
+				 * This is a simple workaround for an
+				 * interrupt pending when entering, which would
 				 * otherwise result in declaring the hardware
 				 * non-responsive.
 				 */
 
-				अगर (रुको_event_पूर्णांकerruptible(
-					    channel->wr_रुको,
+				if (wait_event_interruptible(
+					    channel->wr_wait,
 					    (!channel->wr_sleepy)))
 					msleep(100);
 
-				अगर (channel->wr_sleepy) अणु
+				if (channel->wr_sleepy) {
 					mutex_unlock(&channel->wr_mutex);
-					dev_warn(channel->endpoपूर्णांक->dev,
+					dev_warn(channel->endpoint->dev,
 						 "Hardware failed to respond to close command, therefore left in messy state.\n");
-					वापस -EINTR;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					return -EINTR;
+				}
+			}
+		}
 
 		mutex_unlock(&channel->wr_mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल loff_t xillybus_llseek(काष्ठा file *filp, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा xilly_channel *channel = filp->निजी_data;
+static loff_t xillybus_llseek(struct file *filp, loff_t offset, int whence)
+{
+	struct xilly_channel *channel = filp->private_data;
 	loff_t pos = filp->f_pos;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/*
-	 * Take both mutexes not allowing पूर्णांकerrupts, since it seems like
-	 * common applications करोn't expect an -EINTR here. Besides, multiple
+	 * Take both mutexes not allowing interrupts, since it seems like
+	 * common applications don't expect an -EINTR here. Besides, multiple
 	 * access to a single file descriptor on seekable devices is a mess
 	 * anyhow.
 	 */
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
-		वापस -EIO;
+	if (channel->endpoint->fatal_error)
+		return -EIO;
 
 	mutex_lock(&channel->wr_mutex);
 	mutex_lock(&channel->rd_mutex);
 
-	चयन (whence) अणु
-	हाल शुरू_से:
+	switch (whence) {
+	case SEEK_SET:
 		pos = offset;
-		अवरोध;
-	हाल प्रस्तुत_से:
+		break;
+	case SEEK_CUR:
 		pos += offset;
-		अवरोध;
-	हाल अंत_से:
+		break;
+	case SEEK_END:
 		pos = offset; /* Going to the end => to the beginning */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	/* In any हाल, we must finish on an element boundary */
-	अगर (pos & ((1 << channel->log2_element_size) - 1)) अणु
+	/* In any case, we must finish on an element boundary */
+	if (pos & ((1 << channel->log2_element_size) - 1)) {
 		rc = -EINVAL;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
-	mutex_lock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
+	mutex_lock(&channel->endpoint->register_mutex);
 
-	ioग_लिखो32(pos >> channel->log2_element_size,
-		  channel->endpoपूर्णांक->रेजिस्टरs + fpga_buf_offset_reg);
+	iowrite32(pos >> channel->log2_element_size,
+		  channel->endpoint->registers + fpga_buf_offset_reg);
 
-	ioग_लिखो32((channel->chan_num << 1) |
+	iowrite32((channel->chan_num << 1) |
 		  (6 << 24),  /* Opcode 6, set address */
-		  channel->endpoपूर्णांक->रेजिस्टरs + fpga_buf_ctrl_reg);
+		  channel->endpoint->registers + fpga_buf_ctrl_reg);
 
-	mutex_unlock(&channel->endpoपूर्णांक->रेजिस्टर_mutex);
+	mutex_unlock(&channel->endpoint->register_mutex);
 
 end:
 	mutex_unlock(&channel->rd_mutex);
 	mutex_unlock(&channel->wr_mutex);
 
-	अगर (rc) /* Return error after releasing mutexes */
-		वापस rc;
+	if (rc) /* Return error after releasing mutexes */
+		return rc;
 
 	filp->f_pos = pos;
 
 	/*
 	 * Since seekable devices are allowed only when the channel is
 	 * synchronous, we assume that there is no data pending in either
-	 * direction (which holds true as दीर्घ as no concurrent access on the
+	 * direction (which holds true as long as no concurrent access on the
 	 * file descriptor takes place).
 	 * The only thing we may need to throw away is leftovers from partial
-	 * ग_लिखो() flush.
+	 * write() flush.
 	 */
 
 	channel->rd_leftovers[3] = 0;
 
-	वापस pos;
-पूर्ण
+	return pos;
+}
 
-अटल __poll_t xillybus_poll(काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा xilly_channel *channel = filp->निजी_data;
+static __poll_t xillybus_poll(struct file *filp, poll_table *wait)
+{
+	struct xilly_channel *channel = filp->private_data;
 	__poll_t mask = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	poll_रुको(filp, &channel->endpoपूर्णांक->ep_रुको, रुको);
+	poll_wait(filp, &channel->endpoint->ep_wait, wait);
 
 	/*
-	 * poll() won't play ball regarding पढ़ो() channels which
+	 * poll() won't play ball regarding read() channels which
 	 * aren't asynchronous and support the nonempty message. Allowing
 	 * that will create situations where data has been delivered at
 	 * the FPGA, and users expecting select() to wake up, which it may
 	 * not.
 	 */
 
-	अगर (!channel->wr_synchronous && channel->wr_supports_nonempty) अणु
-		poll_रुको(filp, &channel->wr_रुको, रुको);
-		poll_रुको(filp, &channel->wr_पढ़ोy_रुको, रुको);
+	if (!channel->wr_synchronous && channel->wr_supports_nonempty) {
+		poll_wait(filp, &channel->wr_wait, wait);
+		poll_wait(filp, &channel->wr_ready_wait, wait);
 
 		spin_lock_irqsave(&channel->wr_spinlock, flags);
-		अगर (!channel->wr_empty || channel->wr_पढ़ोy)
+		if (!channel->wr_empty || channel->wr_ready)
 			mask |= EPOLLIN | EPOLLRDNORM;
 
-		अगर (channel->wr_hangup)
+		if (channel->wr_hangup)
 			/*
 			 * Not EPOLLHUP, because its behavior is in the
-			 * mist, and EPOLLIN करोes what we want: Wake up
-			 * the पढ़ो file descriptor so it sees खातापूर्ण.
+			 * mist, and EPOLLIN does what we want: Wake up
+			 * the read file descriptor so it sees EOF.
 			 */
 			mask |=  EPOLLIN | EPOLLRDNORM;
 		spin_unlock_irqrestore(&channel->wr_spinlock, flags);
-	पूर्ण
+	}
 
 	/*
-	 * If partial data ग_लिखो is disallowed on a ग_लिखो() channel,
-	 * it's poपूर्णांकless to ever संकेत OK to ग_लिखो, because is could
+	 * If partial data write is disallowed on a write() channel,
+	 * it's pointless to ever signal OK to write, because is could
 	 * block despite some space being available.
 	 */
 
-	अगर (channel->rd_allow_partial) अणु
-		poll_रुको(filp, &channel->rd_रुको, रुको);
+	if (channel->rd_allow_partial) {
+		poll_wait(filp, &channel->rd_wait, wait);
 
 		spin_lock_irqsave(&channel->rd_spinlock, flags);
-		अगर (!channel->rd_full)
+		if (!channel->rd_full)
 			mask |= EPOLLOUT | EPOLLWRNORM;
 		spin_unlock_irqrestore(&channel->rd_spinlock, flags);
-	पूर्ण
+	}
 
-	अगर (channel->endpoपूर्णांक->fatal_error)
+	if (channel->endpoint->fatal_error)
 		mask |= EPOLLERR;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations xillybus_fops = अणु
+static const struct file_operations xillybus_fops = {
 	.owner      = THIS_MODULE,
-	.पढ़ो       = xillybus_पढ़ो,
-	.ग_लिखो      = xillybus_ग_लिखो,
-	.खोलो       = xillybus_खोलो,
+	.read       = xillybus_read,
+	.write      = xillybus_write,
+	.open       = xillybus_open,
 	.flush      = xillybus_flush,
 	.release    = xillybus_release,
 	.llseek     = xillybus_llseek,
 	.poll       = xillybus_poll,
-पूर्ण;
+};
 
-अटल पूर्णांक xillybus_init_chrdev(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक,
-				स्थिर अचिन्हित अक्षर *idt)
-अणु
-	पूर्णांक rc;
+static int xillybus_init_chrdev(struct xilly_endpoint *endpoint,
+				const unsigned char *idt)
+{
+	int rc;
 	dev_t dev;
-	पूर्णांक devnum, i, minor, major;
-	अक्षर devname[48];
-	काष्ठा device *device;
+	int devnum, i, minor, major;
+	char devname[48];
+	struct device *device;
 
 	rc = alloc_chrdev_region(&dev, 0, /* minor start */
-				 endpoपूर्णांक->num_channels,
+				 endpoint->num_channels,
 				 xillyname);
-	अगर (rc) अणु
-		dev_warn(endpoपूर्णांक->dev, "Failed to obtain major/minors");
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		dev_warn(endpoint->dev, "Failed to obtain major/minors");
+		return rc;
+	}
 
-	endpoपूर्णांक->major = major = MAJOR(dev);
-	endpoपूर्णांक->lowest_minor = minor = MINOR(dev);
+	endpoint->major = major = MAJOR(dev);
+	endpoint->lowest_minor = minor = MINOR(dev);
 
-	cdev_init(&endpoपूर्णांक->cdev, &xillybus_fops);
-	endpoपूर्णांक->cdev.owner = endpoपूर्णांक->ephw->owner;
-	rc = cdev_add(&endpoपूर्णांक->cdev, MKDEV(major, minor),
-		      endpoपूर्णांक->num_channels);
-	अगर (rc) अणु
-		dev_warn(endpoपूर्णांक->dev, "Failed to add cdev. Aborting.\n");
-		जाओ unरेजिस्टर_chrdev;
-	पूर्ण
+	cdev_init(&endpoint->cdev, &xillybus_fops);
+	endpoint->cdev.owner = endpoint->ephw->owner;
+	rc = cdev_add(&endpoint->cdev, MKDEV(major, minor),
+		      endpoint->num_channels);
+	if (rc) {
+		dev_warn(endpoint->dev, "Failed to add cdev. Aborting.\n");
+		goto unregister_chrdev;
+	}
 
 	idt++;
 
-	क्रम (i = minor, devnum = 0;
-	     devnum < endpoपूर्णांक->num_channels;
-	     devnum++, i++) अणु
-		snम_लिखो(devname, माप(devname)-1, "xillybus_%s", idt);
+	for (i = minor, devnum = 0;
+	     devnum < endpoint->num_channels;
+	     devnum++, i++) {
+		snprintf(devname, sizeof(devname)-1, "xillybus_%s", idt);
 
-		devname[माप(devname)-1] = 0; /* Should never matter */
+		devname[sizeof(devname)-1] = 0; /* Should never matter */
 
-		जबतक (*idt++)
+		while (*idt++)
 			/* Skip to next */;
 
 		device = device_create(xillybus_class,
-				       शून्य,
+				       NULL,
 				       MKDEV(major, i),
-				       शून्य,
+				       NULL,
 				       "%s", devname);
 
-		अगर (IS_ERR(device)) अणु
-			dev_warn(endpoपूर्णांक->dev,
+		if (IS_ERR(device)) {
+			dev_warn(endpoint->dev,
 				 "Failed to create %s device. Aborting.\n",
 				 devname);
 			rc = -ENODEV;
-			जाओ unroll_device_create;
-		पूर्ण
-	पूर्ण
+			goto unroll_device_create;
+		}
+	}
 
-	dev_info(endpoपूर्णांक->dev, "Created %d device files.\n",
-		 endpoपूर्णांक->num_channels);
-	वापस 0; /* succeed */
+	dev_info(endpoint->dev, "Created %d device files.\n",
+		 endpoint->num_channels);
+	return 0; /* succeed */
 
 unroll_device_create:
 	devnum--; i--;
-	क्रम (; devnum >= 0; devnum--, i--)
+	for (; devnum >= 0; devnum--, i--)
 		device_destroy(xillybus_class, MKDEV(major, i));
 
-	cdev_del(&endpoपूर्णांक->cdev);
-unरेजिस्टर_chrdev:
-	unरेजिस्टर_chrdev_region(MKDEV(major, minor), endpoपूर्णांक->num_channels);
+	cdev_del(&endpoint->cdev);
+unregister_chrdev:
+	unregister_chrdev_region(MKDEV(major, minor), endpoint->num_channels);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम xillybus_cleanup_chrdev(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	पूर्णांक minor;
+static void xillybus_cleanup_chrdev(struct xilly_endpoint *endpoint)
+{
+	int minor;
 
-	क्रम (minor = endpoपूर्णांक->lowest_minor;
-	     minor < (endpoपूर्णांक->lowest_minor + endpoपूर्णांक->num_channels);
+	for (minor = endpoint->lowest_minor;
+	     minor < (endpoint->lowest_minor + endpoint->num_channels);
 	     minor++)
-		device_destroy(xillybus_class, MKDEV(endpoपूर्णांक->major, minor));
-	cdev_del(&endpoपूर्णांक->cdev);
-	unरेजिस्टर_chrdev_region(MKDEV(endpoपूर्णांक->major,
-				       endpoपूर्णांक->lowest_minor),
-				 endpoपूर्णांक->num_channels);
+		device_destroy(xillybus_class, MKDEV(endpoint->major, minor));
+	cdev_del(&endpoint->cdev);
+	unregister_chrdev_region(MKDEV(endpoint->major,
+				       endpoint->lowest_minor),
+				 endpoint->num_channels);
 
-	dev_info(endpoपूर्णांक->dev, "Removed %d device files.\n",
-		 endpoपूर्णांक->num_channels);
-पूर्ण
+	dev_info(endpoint->dev, "Removed %d device files.\n",
+		 endpoint->num_channels);
+}
 
-काष्ठा xilly_endpoपूर्णांक *xillybus_init_endpoपूर्णांक(काष्ठा pci_dev *pdev,
-					      काष्ठा device *dev,
-					      काष्ठा xilly_endpoपूर्णांक_hardware
+struct xilly_endpoint *xillybus_init_endpoint(struct pci_dev *pdev,
+					      struct device *dev,
+					      struct xilly_endpoint_hardware
 					      *ephw)
-अणु
-	काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक;
+{
+	struct xilly_endpoint *endpoint;
 
-	endpoपूर्णांक = devm_kzalloc(dev, माप(*endpoपूर्णांक), GFP_KERNEL);
-	अगर (!endpoपूर्णांक)
-		वापस शून्य;
+	endpoint = devm_kzalloc(dev, sizeof(*endpoint), GFP_KERNEL);
+	if (!endpoint)
+		return NULL;
 
-	endpoपूर्णांक->pdev = pdev;
-	endpoपूर्णांक->dev = dev;
-	endpoपूर्णांक->ephw = ephw;
-	endpoपूर्णांक->msg_counter = 0x0b;
-	endpoपूर्णांक->failed_messages = 0;
-	endpoपूर्णांक->fatal_error = 0;
+	endpoint->pdev = pdev;
+	endpoint->dev = dev;
+	endpoint->ephw = ephw;
+	endpoint->msg_counter = 0x0b;
+	endpoint->failed_messages = 0;
+	endpoint->fatal_error = 0;
 
-	init_रुकोqueue_head(&endpoपूर्णांक->ep_रुको);
-	mutex_init(&endpoपूर्णांक->रेजिस्टर_mutex);
+	init_waitqueue_head(&endpoint->ep_wait);
+	mutex_init(&endpoint->register_mutex);
 
-	वापस endpoपूर्णांक;
-पूर्ण
-EXPORT_SYMBOL(xillybus_init_endpoपूर्णांक);
+	return endpoint;
+}
+EXPORT_SYMBOL(xillybus_init_endpoint);
 
-अटल पूर्णांक xilly_quiesce(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	दीर्घ t;
+static int xilly_quiesce(struct xilly_endpoint *endpoint)
+{
+	long t;
 
-	endpoपूर्णांक->idtlen = -1;
+	endpoint->idtlen = -1;
 
-	ioग_लिखो32((u32) (endpoपूर्णांक->dma_using_dac & 0x0001),
-		  endpoपूर्णांक->रेजिस्टरs + fpga_dma_control_reg);
+	iowrite32((u32) (endpoint->dma_using_dac & 0x0001),
+		  endpoint->registers + fpga_dma_control_reg);
 
-	t = रुको_event_पूर्णांकerruptible_समयout(endpoपूर्णांक->ep_रुको,
-					     (endpoपूर्णांक->idtlen >= 0),
+	t = wait_event_interruptible_timeout(endpoint->ep_wait,
+					     (endpoint->idtlen >= 0),
 					     XILLY_TIMEOUT);
-	अगर (t <= 0) अणु
-		dev_err(endpoपूर्णांक->dev,
+	if (t <= 0) {
+		dev_err(endpoint->dev,
 			"Failed to quiesce the device on exit.\n");
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-पूर्णांक xillybus_endpoपूर्णांक_discovery(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	पूर्णांक rc;
-	दीर्घ t;
+int xillybus_endpoint_discovery(struct xilly_endpoint *endpoint)
+{
+	int rc;
+	long t;
 
-	व्योम *bootstrap_resources;
-	पूर्णांक idtbuffersize = (1 << PAGE_SHIFT);
-	काष्ठा device *dev = endpoपूर्णांक->dev;
+	void *bootstrap_resources;
+	int idtbuffersize = (1 << PAGE_SHIFT);
+	struct device *dev = endpoint->dev;
 
 	/*
-	 * The bogus IDT is used during bootstrap क्रम allocating the initial
-	 * message buffer, and then the message buffer and space क्रम the IDT
+	 * The bogus IDT is used during bootstrap for allocating the initial
+	 * message buffer, and then the message buffer and space for the IDT
 	 * itself. The initial message buffer is of a single page's size, but
-	 * it's soon replaced with a more modest one (and memory is मुक्तd).
+	 * it's soon replaced with a more modest one (and memory is freed).
 	 */
 
-	अचिन्हित अक्षर bogus_idt[8] = अणु 1, 224, (PAGE_SHIFT)-2, 0,
-				       3, 192, PAGE_SHIFT, 0 पूर्ण;
-	काष्ठा xilly_idt_handle idt_handle;
+	unsigned char bogus_idt[8] = { 1, 224, (PAGE_SHIFT)-2, 0,
+				       3, 192, PAGE_SHIFT, 0 };
+	struct xilly_idt_handle idt_handle;
 
 	/*
-	 * Writing the value 0x00000001 to Endianness रेजिस्टर संकेतs which
+	 * Writing the value 0x00000001 to Endianness register signals which
 	 * endianness this processor is using, so the FPGA can swap words as
 	 * necessary.
 	 */
 
-	ioग_लिखो32(1, endpoपूर्णांक->रेजिस्टरs + fpga_endian_reg);
+	iowrite32(1, endpoint->registers + fpga_endian_reg);
 
 	/* Bootstrap phase I: Allocate temporary message buffer */
 
-	bootstrap_resources = devres_खोलो_group(dev, शून्य, GFP_KERNEL);
-	अगर (!bootstrap_resources)
-		वापस -ENOMEM;
+	bootstrap_resources = devres_open_group(dev, NULL, GFP_KERNEL);
+	if (!bootstrap_resources)
+		return -ENOMEM;
 
-	endpoपूर्णांक->num_channels = 0;
+	endpoint->num_channels = 0;
 
-	rc = xilly_setupchannels(endpoपूर्णांक, bogus_idt, 1);
-	अगर (rc)
-		वापस rc;
+	rc = xilly_setupchannels(endpoint, bogus_idt, 1);
+	if (rc)
+		return rc;
 
-	/* Clear the message subप्रणाली (and counter in particular) */
-	ioग_लिखो32(0x04, endpoपूर्णांक->रेजिस्टरs + fpga_msg_ctrl_reg);
+	/* Clear the message subsystem (and counter in particular) */
+	iowrite32(0x04, endpoint->registers + fpga_msg_ctrl_reg);
 
-	endpoपूर्णांक->idtlen = -1;
+	endpoint->idtlen = -1;
 
 	/*
 	 * Set DMA 32/64 bit mode, quiesce the device (?!) and get IDT
 	 * buffer size.
 	 */
-	ioग_लिखो32((u32) (endpoपूर्णांक->dma_using_dac & 0x0001),
-		  endpoपूर्णांक->रेजिस्टरs + fpga_dma_control_reg);
+	iowrite32((u32) (endpoint->dma_using_dac & 0x0001),
+		  endpoint->registers + fpga_dma_control_reg);
 
-	t = रुको_event_पूर्णांकerruptible_समयout(endpoपूर्णांक->ep_रुको,
-					     (endpoपूर्णांक->idtlen >= 0),
+	t = wait_event_interruptible_timeout(endpoint->ep_wait,
+					     (endpoint->idtlen >= 0),
 					     XILLY_TIMEOUT);
-	अगर (t <= 0) अणु
-		dev_err(endpoपूर्णांक->dev, "No response from FPGA. Aborting.\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (t <= 0) {
+		dev_err(endpoint->dev, "No response from FPGA. Aborting.\n");
+		return -ENODEV;
+	}
 
 	/* Enable DMA */
-	ioग_लिखो32((u32) (0x0002 | (endpoपूर्णांक->dma_using_dac & 0x0001)),
-		  endpoपूर्णांक->रेजिस्टरs + fpga_dma_control_reg);
+	iowrite32((u32) (0x0002 | (endpoint->dma_using_dac & 0x0001)),
+		  endpoint->registers + fpga_dma_control_reg);
 
-	/* Bootstrap phase II: Allocate buffer क्रम IDT and obtain it */
-	जबतक (endpoपूर्णांक->idtlen >= idtbuffersize) अणु
+	/* Bootstrap phase II: Allocate buffer for IDT and obtain it */
+	while (endpoint->idtlen >= idtbuffersize) {
 		idtbuffersize *= 2;
 		bogus_idt[6]++;
-	पूर्ण
+	}
 
-	endpoपूर्णांक->num_channels = 1;
+	endpoint->num_channels = 1;
 
-	rc = xilly_setupchannels(endpoपूर्णांक, bogus_idt, 2);
-	अगर (rc)
-		जाओ failed_idt;
+	rc = xilly_setupchannels(endpoint, bogus_idt, 2);
+	if (rc)
+		goto failed_idt;
 
-	rc = xilly_obtain_idt(endpoपूर्णांक);
-	अगर (rc)
-		जाओ failed_idt;
+	rc = xilly_obtain_idt(endpoint);
+	if (rc)
+		goto failed_idt;
 
-	rc = xilly_scan_idt(endpoपूर्णांक, &idt_handle);
-	अगर (rc)
-		जाओ failed_idt;
+	rc = xilly_scan_idt(endpoint, &idt_handle);
+	if (rc)
+		goto failed_idt;
 
-	devres_बंद_group(dev, bootstrap_resources);
+	devres_close_group(dev, bootstrap_resources);
 
 	/* Bootstrap phase III: Allocate buffers according to IDT */
 
-	rc = xilly_setupchannels(endpoपूर्णांक,
+	rc = xilly_setupchannels(endpoint,
 				 idt_handle.chandesc,
 				 idt_handle.entries);
-	अगर (rc)
-		जाओ failed_idt;
+	if (rc)
+		goto failed_idt;
 
 	/*
-	 * endpoपूर्णांक is now completely configured. We put it on the list
-	 * available to खोलो() beक्रमe रेजिस्टरing the अक्षर device(s)
+	 * endpoint is now completely configured. We put it on the list
+	 * available to open() before registering the char device(s)
 	 */
 
 	mutex_lock(&ep_list_lock);
-	list_add_tail(&endpoपूर्णांक->ep_list, &list_of_endpoपूर्णांकs);
+	list_add_tail(&endpoint->ep_list, &list_of_endpoints);
 	mutex_unlock(&ep_list_lock);
 
-	rc = xillybus_init_chrdev(endpoपूर्णांक, idt_handle.idt);
-	अगर (rc)
-		जाओ failed_chrdevs;
+	rc = xillybus_init_chrdev(endpoint, idt_handle.idt);
+	if (rc)
+		goto failed_chrdevs;
 
 	devres_release_group(dev, bootstrap_resources);
 
-	वापस 0;
+	return 0;
 
 failed_chrdevs:
 	mutex_lock(&ep_list_lock);
-	list_del(&endpoपूर्णांक->ep_list);
+	list_del(&endpoint->ep_list);
 	mutex_unlock(&ep_list_lock);
 
 failed_idt:
-	xilly_quiesce(endpoपूर्णांक);
+	xilly_quiesce(endpoint);
 	flush_workqueue(xillybus_wq);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL(xillybus_endpoपूर्णांक_discovery);
+	return rc;
+}
+EXPORT_SYMBOL(xillybus_endpoint_discovery);
 
-व्योम xillybus_endpoपूर्णांक_हटाओ(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	xillybus_cleanup_chrdev(endpoपूर्णांक);
+void xillybus_endpoint_remove(struct xilly_endpoint *endpoint)
+{
+	xillybus_cleanup_chrdev(endpoint);
 
 	mutex_lock(&ep_list_lock);
-	list_del(&endpoपूर्णांक->ep_list);
+	list_del(&endpoint->ep_list);
 	mutex_unlock(&ep_list_lock);
 
-	xilly_quiesce(endpoपूर्णांक);
+	xilly_quiesce(endpoint);
 
 	/*
-	 * Flushing is करोne upon endpoपूर्णांक release to prevent access to memory
+	 * Flushing is done upon endpoint release to prevent access to memory
 	 * just about to be released. This makes the quiesce complete.
 	 */
 	flush_workqueue(xillybus_wq);
-पूर्ण
-EXPORT_SYMBOL(xillybus_endpoपूर्णांक_हटाओ);
+}
+EXPORT_SYMBOL(xillybus_endpoint_remove);
 
-अटल पूर्णांक __init xillybus_init(व्योम)
-अणु
+static int __init xillybus_init(void)
+{
 	mutex_init(&ep_list_lock);
 
 	xillybus_class = class_create(THIS_MODULE, xillyname);
-	अगर (IS_ERR(xillybus_class))
-		वापस PTR_ERR(xillybus_class);
+	if (IS_ERR(xillybus_class))
+		return PTR_ERR(xillybus_class);
 
 	xillybus_wq = alloc_workqueue(xillyname, 0, 0);
-	अगर (!xillybus_wq) अणु
+	if (!xillybus_wq) {
 		class_destroy(xillybus_class);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास xillybus_निकास(व्योम)
-अणु
-	/* flush_workqueue() was called क्रम each endpoपूर्णांक released */
+static void __exit xillybus_exit(void)
+{
+	/* flush_workqueue() was called for each endpoint released */
 	destroy_workqueue(xillybus_wq);
 
 	class_destroy(xillybus_class);
-पूर्ण
+}
 
 module_init(xillybus_init);
-module_निकास(xillybus_निकास);
+module_exit(xillybus_exit);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * netup-init.c
  *
@@ -10,19 +9,19 @@
  * Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
-#समावेश "cx23885.h"
-#समावेश "netup-init.h"
+#include "cx23885.h"
+#include "netup-init.h"
 
-अटल व्योम i2c_av_ग_लिखो(काष्ठा i2c_adapter *i2c, u16 reg, u8 val)
-अणु
-	पूर्णांक ret;
+static void i2c_av_write(struct i2c_adapter *i2c, u16 reg, u8 val)
+{
+	int ret;
 	u8 buf[3];
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr	= 0x88 >> 1,
 		.flags	= 0,
 		.buf	= buf,
 		.len	= 3
-	पूर्ण;
+	};
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -30,20 +29,20 @@
 
 	ret = i2c_transfer(i2c, &msg, 1);
 
-	अगर (ret != 1)
+	if (ret != 1)
 		pr_err("%s: i2c write error!\n", __func__);
-पूर्ण
+}
 
-अटल व्योम i2c_av_ग_लिखो4(काष्ठा i2c_adapter *i2c, u16 reg, u32 val)
-अणु
-	पूर्णांक ret;
+static void i2c_av_write4(struct i2c_adapter *i2c, u16 reg, u32 val)
+{
+	int ret;
 	u8 buf[6];
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr	= 0x88 >> 1,
 		.flags	= 0,
 		.buf	= buf,
 		.len	= 6
-	पूर्ण;
+	};
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -54,27 +53,27 @@
 
 	ret = i2c_transfer(i2c, &msg, 1);
 
-	अगर (ret != 1)
+	if (ret != 1)
 		pr_err("%s: i2c write error!\n", __func__);
-पूर्ण
+}
 
-अटल u8 i2c_av_पढ़ो(काष्ठा i2c_adapter *i2c, u16 reg)
-अणु
-	पूर्णांक ret;
+static u8 i2c_av_read(struct i2c_adapter *i2c, u16 reg)
+{
+	int ret;
 	u8 buf[2];
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr	= 0x88 >> 1,
 		.flags	= 0,
 		.buf	= buf,
 		.len	= 2
-	पूर्ण;
+	};
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
 
 	ret = i2c_transfer(i2c, &msg, 1);
 
-	अगर (ret != 1)
+	if (ret != 1)
 		pr_err("%s: i2c write error!\n", __func__);
 
 	msg.flags = I2C_M_RD;
@@ -82,32 +81,32 @@
 
 	ret = i2c_transfer(i2c, &msg, 1);
 
-	अगर (ret != 1)
+	if (ret != 1)
 		pr_err("%s: i2c read error!\n", __func__);
 
-	वापस buf[0];
-पूर्ण
+	return buf[0];
+}
 
-अटल व्योम i2c_av_and_or(काष्ठा i2c_adapter *i2c, u16 reg, अचिन्हित and_mask,
+static void i2c_av_and_or(struct i2c_adapter *i2c, u16 reg, unsigned and_mask,
 								u8 or_value)
-अणु
-	i2c_av_ग_लिखो(i2c, reg, (i2c_av_पढ़ो(i2c, reg) & and_mask) | or_value);
-पूर्ण
+{
+	i2c_av_write(i2c, reg, (i2c_av_read(i2c, reg) & and_mask) | or_value);
+}
 /* set 27MHz on AUX_CLK */
-व्योम netup_initialize(काष्ठा cx23885_dev *dev)
-अणु
-	काष्ठा cx23885_i2c *i2c_bus = &dev->i2c_bus[2];
-	काष्ठा i2c_adapter *i2c = &i2c_bus->i2c_adap;
+void netup_initialize(struct cx23885_dev *dev)
+{
+	struct cx23885_i2c *i2c_bus = &dev->i2c_bus[2];
+	struct i2c_adapter *i2c = &i2c_bus->i2c_adap;
 
 	/* Stop microcontroller */
 	i2c_av_and_or(i2c, 0x803, ~0x10, 0x00);
 
-	/* Aux PLL frac क्रम 27 MHz */
-	i2c_av_ग_लिखो4(i2c, 0x114, 0xea0eb3);
+	/* Aux PLL frac for 27 MHz */
+	i2c_av_write4(i2c, 0x114, 0xea0eb3);
 
-	/* Aux PLL पूर्णांक क्रम 27 MHz */
-	i2c_av_ग_लिखो4(i2c, 0x110, 0x090319);
+	/* Aux PLL int for 27 MHz */
+	i2c_av_write4(i2c, 0x110, 0x090319);
 
 	/* start microcontroller */
 	i2c_av_and_or(i2c, 0x803, ~0x10, 0x10);
-पूर्ण
+}

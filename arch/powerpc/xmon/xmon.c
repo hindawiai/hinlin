@@ -1,292 +1,291 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Routines providing a simple monitor क्रम use on the PowerMac.
+ * Routines providing a simple monitor for use on the PowerMac.
  *
  * Copyright (C) 1996-2005 Paul Mackerras.
  * Copyright (C) 2001 PPC64 Team, IBM Corp
  * Copyrignt (C) 2006 Michael Ellerman, IBM Corp
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/smp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/kmsg_dump.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sysrq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/security.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/sched/signal.h>
+#include <linux/smp.h>
+#include <linux/mm.h>
+#include <linux/reboot.h>
+#include <linux/delay.h>
+#include <linux/kallsyms.h>
+#include <linux/kmsg_dump.h>
+#include <linux/cpumask.h>
+#include <linux/export.h>
+#include <linux/sysrq.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/bug.h>
+#include <linux/nmi.h>
+#include <linux/ctype.h>
+#include <linux/highmem.h>
+#include <linux/security.h>
 
-#समावेश <यंत्र/debugfs.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/माला.स>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/xmon.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/plpar_wrappers.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/sstep.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/spu.h>
-#समावेश <यंत्र/spu_priv1.h>
-#समावेश <यंत्र/समलाँघ.स>
-#समावेश <यंत्र/reg.h>
-#समावेश <यंत्र/debug.h>
-#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
-#समावेश <यंत्र/xive.h>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/code-patching.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/inst.h>
-#समावेश <यंत्र/पूर्णांकerrupt.h>
+#include <asm/debugfs.h>
+#include <asm/ptrace.h>
+#include <asm/smp.h>
+#include <asm/string.h>
+#include <asm/prom.h>
+#include <asm/machdep.h>
+#include <asm/xmon.h>
+#include <asm/processor.h>
+#include <asm/mmu.h>
+#include <asm/mmu_context.h>
+#include <asm/plpar_wrappers.h>
+#include <asm/cputable.h>
+#include <asm/rtas.h>
+#include <asm/sstep.h>
+#include <asm/irq_regs.h>
+#include <asm/spu.h>
+#include <asm/spu_priv1.h>
+#include <asm/setjmp.h>
+#include <asm/reg.h>
+#include <asm/debug.h>
+#include <asm/hw_breakpoint.h>
+#include <asm/xive.h>
+#include <asm/opal.h>
+#include <asm/firmware.h>
+#include <asm/code-patching.h>
+#include <asm/sections.h>
+#include <asm/inst.h>
+#include <asm/interrupt.h>
 
-#अगर_घोषित CONFIG_PPC64
-#समावेश <यंत्र/hvcall.h>
-#समावेश <यंत्र/paca.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#include <asm/hvcall.h>
+#include <asm/paca.h>
+#endif
 
-#समावेश "nonstdio.h"
-#समावेश "dis-asm.h"
-#समावेश "xmon_bpts.h"
+#include "nonstdio.h"
+#include "dis-asm.h"
+#include "xmon_bpts.h"
 
-#अगर_घोषित CONFIG_SMP
-अटल cpumask_t cpus_in_xmon = CPU_MASK_NONE;
-अटल अचिन्हित दीर्घ xmon_taken = 1;
-अटल पूर्णांक xmon_owner;
-अटल पूर्णांक xmon_gate;
-#अन्यथा
-#घोषणा xmon_owner 0
-#पूर्ण_अगर /* CONFIG_SMP */
+#ifdef CONFIG_SMP
+static cpumask_t cpus_in_xmon = CPU_MASK_NONE;
+static unsigned long xmon_taken = 1;
+static int xmon_owner;
+static int xmon_gate;
+#else
+#define xmon_owner 0
+#endif /* CONFIG_SMP */
 
-#अगर_घोषित CONFIG_PPC_PSERIES
-अटल पूर्णांक set_indicator_token = RTAS_UNKNOWN_SERVICE;
-#पूर्ण_अगर
-अटल अचिन्हित दीर्घ in_xmon __पढ़ो_mostly = 0;
-अटल पूर्णांक xmon_on = IS_ENABLED(CONFIG_XMON_DEFAULT);
-अटल bool xmon_is_ro = IS_ENABLED(CONFIG_XMON_DEFAULT_RO_MODE);
+#ifdef CONFIG_PPC_PSERIES
+static int set_indicator_token = RTAS_UNKNOWN_SERVICE;
+#endif
+static unsigned long in_xmon __read_mostly = 0;
+static int xmon_on = IS_ENABLED(CONFIG_XMON_DEFAULT);
+static bool xmon_is_ro = IS_ENABLED(CONFIG_XMON_DEFAULT_RO_MODE);
 
-अटल अचिन्हित दीर्घ adrs;
-अटल पूर्णांक size = 1;
-#घोषणा MAX_DUMP (64 * 1024)
-अटल अचिन्हित दीर्घ ndump = 64;
-#घोषणा MAX_IDUMP (MAX_DUMP >> 2)
-अटल अचिन्हित दीर्घ nidump = 16;
-अटल अचिन्हित दीर्घ ncsum = 4096;
-अटल पूर्णांक termch;
-अटल अक्षर पंचांगpstr[128];
-अटल पूर्णांक tracing_enabled;
+static unsigned long adrs;
+static int size = 1;
+#define MAX_DUMP (64 * 1024)
+static unsigned long ndump = 64;
+#define MAX_IDUMP (MAX_DUMP >> 2)
+static unsigned long nidump = 16;
+static unsigned long ncsum = 4096;
+static int termch;
+static char tmpstr[128];
+static int tracing_enabled;
 
-अटल दीर्घ bus_error_jmp[JMP_BUF_LEN];
-अटल पूर्णांक catch_memory_errors;
-अटल पूर्णांक catch_spr_faults;
-अटल दीर्घ *xmon_fault_jmp[NR_CPUS];
+static long bus_error_jmp[JMP_BUF_LEN];
+static int catch_memory_errors;
+static int catch_spr_faults;
+static long *xmon_fault_jmp[NR_CPUS];
 
-/* Breakpoपूर्णांक stuff */
-काष्ठा bpt अणु
-	अचिन्हित दीर्घ	address;
-	काष्ठा ppc_inst	*instr;
+/* Breakpoint stuff */
+struct bpt {
+	unsigned long	address;
+	struct ppc_inst	*instr;
 	atomic_t	ref_count;
-	पूर्णांक		enabled;
-	अचिन्हित दीर्घ	pad;
-पूर्ण;
+	int		enabled;
+	unsigned long	pad;
+};
 
 /* Bits in bpt.enabled */
-#घोषणा BP_CIABR	1
-#घोषणा BP_TRAP		2
-#घोषणा BP_DABR		4
+#define BP_CIABR	1
+#define BP_TRAP		2
+#define BP_DABR		4
 
-अटल काष्ठा bpt bpts[NBPTS];
-अटल काष्ठा bpt dabr[HBP_NUM_MAX];
-अटल काष्ठा bpt *iabr;
-अटल अचिन्हित bpinstr = 0x7fe00008;	/* trap */
+static struct bpt bpts[NBPTS];
+static struct bpt dabr[HBP_NUM_MAX];
+static struct bpt *iabr;
+static unsigned bpinstr = 0x7fe00008;	/* trap */
 
-#घोषणा BP_NUM(bp)	((bp) - bpts + 1)
+#define BP_NUM(bp)	((bp) - bpts + 1)
 
 /* Prototypes */
-अटल पूर्णांक cmds(काष्ठा pt_regs *);
-अटल पूर्णांक mपढ़ो(अचिन्हित दीर्घ, व्योम *, पूर्णांक);
-अटल पूर्णांक mग_लिखो(अचिन्हित दीर्घ, व्योम *, पूर्णांक);
-अटल पूर्णांक mपढ़ो_instr(अचिन्हित दीर्घ, काष्ठा ppc_inst *);
-अटल पूर्णांक handle_fault(काष्ठा pt_regs *);
-अटल व्योम byterev(अचिन्हित अक्षर *, पूर्णांक);
-अटल व्योम memex(व्योम);
-अटल पूर्णांक bsesc(व्योम);
-अटल व्योम dump(व्योम);
-अटल व्योम show_pte(अचिन्हित दीर्घ);
-अटल व्योम prdump(अचिन्हित दीर्घ, दीर्घ);
-अटल पूर्णांक ppc_inst_dump(अचिन्हित दीर्घ, दीर्घ, पूर्णांक);
-अटल व्योम dump_log_buf(व्योम);
+static int cmds(struct pt_regs *);
+static int mread(unsigned long, void *, int);
+static int mwrite(unsigned long, void *, int);
+static int mread_instr(unsigned long, struct ppc_inst *);
+static int handle_fault(struct pt_regs *);
+static void byterev(unsigned char *, int);
+static void memex(void);
+static int bsesc(void);
+static void dump(void);
+static void show_pte(unsigned long);
+static void prdump(unsigned long, long);
+static int ppc_inst_dump(unsigned long, long, int);
+static void dump_log_buf(void);
 
-#अगर_घोषित CONFIG_PPC_POWERNV
-अटल व्योम dump_opal_msglog(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम dump_opal_msglog(व्योम)
-अणु
-	म_लिखो("Machine is not running OPAL firmware.\n");
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_POWERNV
+static void dump_opal_msglog(void);
+#else
+static inline void dump_opal_msglog(void)
+{
+	printf("Machine is not running OPAL firmware.\n");
+}
+#endif
 
-अटल व्योम backtrace(काष्ठा pt_regs *);
-अटल व्योम excprपूर्णांक(काष्ठा pt_regs *);
-अटल व्योम prregs(काष्ठा pt_regs *);
-अटल व्योम memops(पूर्णांक);
-अटल व्योम memlocate(व्योम);
-अटल व्योम memzcan(व्योम);
-अटल व्योम memdअगरfs(अचिन्हित अक्षर *, अचिन्हित अक्षर *, अचिन्हित, अचिन्हित);
-पूर्णांक skipbl(व्योम);
-पूर्णांक scanhex(अचिन्हित दीर्घ *valp);
-अटल व्योम scannl(व्योम);
-अटल पूर्णांक hexdigit(पूर्णांक);
-व्योम माला_लोtring(अक्षर *, पूर्णांक);
-अटल व्योम flush_input(व्योम);
-अटल पूर्णांक inअक्षर(व्योम);
-अटल व्योम take_input(अक्षर *);
-अटल पूर्णांक  पढ़ो_spr(पूर्णांक, अचिन्हित दीर्घ *);
-अटल व्योम ग_लिखो_spr(पूर्णांक, अचिन्हित दीर्घ);
-अटल व्योम super_regs(व्योम);
-अटल व्योम हटाओ_bpts(व्योम);
-अटल व्योम insert_bpts(व्योम);
-अटल व्योम हटाओ_cpu_bpts(व्योम);
-अटल व्योम insert_cpu_bpts(व्योम);
-अटल काष्ठा bpt *at_अवरोधpoपूर्णांक(अचिन्हित दीर्घ pc);
-अटल काष्ठा bpt *in_अवरोधpoपूर्णांक_table(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ *offp);
-अटल पूर्णांक  करो_step(काष्ठा pt_regs *);
-अटल व्योम bpt_cmds(व्योम);
-अटल व्योम cacheflush(व्योम);
-अटल पूर्णांक  cpu_cmd(व्योम);
-अटल व्योम csum(व्योम);
-अटल व्योम bootcmds(व्योम);
-अटल व्योम proccall(व्योम);
-अटल व्योम show_tasks(व्योम);
-व्योम dump_segments(व्योम);
-अटल व्योम symbol_lookup(व्योम);
-अटल व्योम xmon_show_stack(अचिन्हित दीर्घ sp, अचिन्हित दीर्घ lr,
-			    अचिन्हित दीर्घ pc);
-अटल व्योम xmon_prपूर्णांक_symbol(अचिन्हित दीर्घ address, स्थिर अक्षर *mid,
-			      स्थिर अक्षर *after);
-अटल स्थिर अक्षर *getvecname(अचिन्हित दीर्घ vec);
+static void backtrace(struct pt_regs *);
+static void excprint(struct pt_regs *);
+static void prregs(struct pt_regs *);
+static void memops(int);
+static void memlocate(void);
+static void memzcan(void);
+static void memdiffs(unsigned char *, unsigned char *, unsigned, unsigned);
+int skipbl(void);
+int scanhex(unsigned long *valp);
+static void scannl(void);
+static int hexdigit(int);
+void getstring(char *, int);
+static void flush_input(void);
+static int inchar(void);
+static void take_input(char *);
+static int  read_spr(int, unsigned long *);
+static void write_spr(int, unsigned long);
+static void super_regs(void);
+static void remove_bpts(void);
+static void insert_bpts(void);
+static void remove_cpu_bpts(void);
+static void insert_cpu_bpts(void);
+static struct bpt *at_breakpoint(unsigned long pc);
+static struct bpt *in_breakpoint_table(unsigned long pc, unsigned long *offp);
+static int  do_step(struct pt_regs *);
+static void bpt_cmds(void);
+static void cacheflush(void);
+static int  cpu_cmd(void);
+static void csum(void);
+static void bootcmds(void);
+static void proccall(void);
+static void show_tasks(void);
+void dump_segments(void);
+static void symbol_lookup(void);
+static void xmon_show_stack(unsigned long sp, unsigned long lr,
+			    unsigned long pc);
+static void xmon_print_symbol(unsigned long address, const char *mid,
+			      const char *after);
+static const char *getvecname(unsigned long vec);
 
-अटल पूर्णांक करो_spu_cmd(व्योम);
+static int do_spu_cmd(void);
 
-#अगर_घोषित CONFIG_44x
-अटल व्योम dump_tlb_44x(व्योम);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_BOOK3E
-अटल व्योम dump_tlb_book3e(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_44x
+static void dump_tlb_44x(void);
+#endif
+#ifdef CONFIG_PPC_BOOK3E
+static void dump_tlb_book3e(void);
+#endif
 
-अटल व्योम clear_all_bpt(व्योम);
+static void clear_all_bpt(void);
 
-#अगर_घोषित CONFIG_PPC64
-#घोषणा REG		"%.16lx"
-#अन्यथा
-#घोषणा REG		"%.8lx"
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#define REG		"%.16lx"
+#else
+#define REG		"%.8lx"
+#endif
 
-#अगर_घोषित __LITTLE_ENDIAN__
-#घोषणा GETWORD(v)	(((v)[3] << 24) + ((v)[2] << 16) + ((v)[1] << 8) + (v)[0])
-#अन्यथा
-#घोषणा GETWORD(v)	(((v)[0] << 24) + ((v)[1] << 16) + ((v)[2] << 8) + (v)[3])
-#पूर्ण_अगर
+#ifdef __LITTLE_ENDIAN__
+#define GETWORD(v)	(((v)[3] << 24) + ((v)[2] << 16) + ((v)[1] << 8) + (v)[0])
+#else
+#define GETWORD(v)	(((v)[0] << 24) + ((v)[1] << 16) + ((v)[2] << 8) + (v)[3])
+#endif
 
-अटल स्थिर अक्षर *xmon_ro_msg = "Operation disabled: xmon in read-only mode\n";
+static const char *xmon_ro_msg = "Operation disabled: xmon in read-only mode\n";
 
-अटल अक्षर *help_string = "\
-Commands:\न\
-  b	show अवरोधpoपूर्णांकs\न\
-  bd	set data अवरोधpoपूर्णांक\न\
-  bi	set inकाष्ठाion अवरोधpoपूर्णांक\न\
-  bc	clear अवरोधpoपूर्णांक\न"
-#अगर_घोषित CONFIG_SMP
+static char *help_string = "\
+Commands:\n\
+  b	show breakpoints\n\
+  bd	set data breakpoint\n\
+  bi	set instruction breakpoint\n\
+  bc	clear breakpoint\n"
+#ifdef CONFIG_SMP
   "\
-  c	prपूर्णांक cpus stopped in xmon\न\
-  c#	try to चयन to cpu number h (in hex)\न"
-#पूर्ण_अगर
+  c	print cpus stopped in xmon\n\
+  c#	try to switch to cpu number h (in hex)\n"
+#endif
   "\
-  C	checksum\न\
-  d	dump bytes\न\
-  d1	dump 1 byte values\न\
-  d2	dump 2 byte values\न\
-  d4	dump 4 byte values\न\
-  d8	dump 8 byte values\न\
-  di	dump inकाष्ठाions\न\
-  df	dump भग्न values\न\
-  dd	dump द्विगुन values\न\
-  dl    dump the kernel log buffer\न"
-#अगर_घोषित CONFIG_PPC_POWERNV
+  C	checksum\n\
+  d	dump bytes\n\
+  d1	dump 1 byte values\n\
+  d2	dump 2 byte values\n\
+  d4	dump 4 byte values\n\
+  d8	dump 8 byte values\n\
+  di	dump instructions\n\
+  df	dump float values\n\
+  dd	dump double values\n\
+  dl    dump the kernel log buffer\n"
+#ifdef CONFIG_PPC_POWERNV
   "\
-  करो    dump the OPAL message log\न"
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC64
+  do    dump the OPAL message log\n"
+#endif
+#ifdef CONFIG_PPC64
   "\
-  dp[#]	dump paca क्रम current cpu, or cpu #\न\
-  dpa	dump paca क्रम all possible cpus\न"
-#पूर्ण_अगर
+  dp[#]	dump paca for current cpu, or cpu #\n\
+  dpa	dump paca for all possible cpus\n"
+#endif
   "\
-  dr	dump stream of raw bytes\न\
-  dv	dump भव address translation \न\
-  dt	dump the tracing buffers (uses prपूर्णांकk)\न\
-  dtc	dump the tracing buffers क्रम current CPU (uses prपूर्णांकk)\न\
+  dr	dump stream of raw bytes\n\
+  dv	dump virtual address translation \n\
+  dt	dump the tracing buffers (uses printk)\n\
+  dtc	dump the tracing buffers for current CPU (uses printk)\n\
 "
-#अगर_घोषित CONFIG_PPC_POWERNV
-"  dx#   dump xive on CPU #\न\
-  dxi#  dump xive irq state #\न\
-  dxa   dump xive on all CPUs\न"
-#पूर्ण_अगर
-"  e	prपूर्णांक exception inक्रमmation\न\
-  f	flush cache\न\
-  la	lookup symbol+offset of specअगरied address\न\
-  ls	lookup address of specअगरied symbol\न\
-  lp s [#]	lookup address of percpu symbol s क्रम current cpu, or cpu #\न\
-  m	examine/change memory\न\
-  mm	move a block of memory\न\
-  ms	set a block of memory\न\
-  md	compare two blocks of memory\न\
-  ml	locate a block of memory\न\
-  mz	zero a block of memory\न\
-  mi	show inक्रमmation about memory allocation\न\
-  p 	call a procedure\न\
-  P 	list processes/tasks\न\
-  r	prपूर्णांक रेजिस्टरs\न\
-  s	single step\न"
-#अगर_घोषित CONFIG_SPU_BASE
-"  ss	stop execution on all spus\न\
-  sr	restore execution on stopped spus\न\
-  sf  #	dump spu fields क्रम spu # (in hex)\न\
-  sd  #	dump spu local store क्रम spu # (in hex)\न\
-  sdi #	disassemble spu local store क्रम spu # (in hex)\न"
-#पूर्ण_अगर
-"  S	prपूर्णांक special रेजिस्टरs\न\
-  Sa    prपूर्णांक all SPRs\न\
-  Sr #	पढ़ो SPR #\न\
-  Sw #v ग_लिखो v to SPR #\न\
-  t	prपूर्णांक backtrace\न\
-  x	निकास monitor and recover\न\
-  X	निकास monitor and करोn't recover\न"
-#अगर defined(CONFIG_PPC64) && !defined(CONFIG_PPC_BOOK3E)
+#ifdef CONFIG_PPC_POWERNV
+"  dx#   dump xive on CPU #\n\
+  dxi#  dump xive irq state #\n\
+  dxa   dump xive on all CPUs\n"
+#endif
+"  e	print exception information\n\
+  f	flush cache\n\
+  la	lookup symbol+offset of specified address\n\
+  ls	lookup address of specified symbol\n\
+  lp s [#]	lookup address of percpu symbol s for current cpu, or cpu #\n\
+  m	examine/change memory\n\
+  mm	move a block of memory\n\
+  ms	set a block of memory\n\
+  md	compare two blocks of memory\n\
+  ml	locate a block of memory\n\
+  mz	zero a block of memory\n\
+  mi	show information about memory allocation\n\
+  p 	call a procedure\n\
+  P 	list processes/tasks\n\
+  r	print registers\n\
+  s	single step\n"
+#ifdef CONFIG_SPU_BASE
+"  ss	stop execution on all spus\n\
+  sr	restore execution on stopped spus\n\
+  sf  #	dump spu fields for spu # (in hex)\n\
+  sd  #	dump spu local store for spu # (in hex)\n\
+  sdi #	disassemble spu local store for spu # (in hex)\n"
+#endif
+"  S	print special registers\n\
+  Sa    print all SPRs\n\
+  Sr #	read SPR #\n\
+  Sw #v write v to SPR #\n\
+  t	print backtrace\n\
+  x	exit monitor and recover\n\
+  X	exit monitor and don't recover\n"
+#if defined(CONFIG_PPC64) && !defined(CONFIG_PPC_BOOK3E)
 "  u	dump segment table or SLB\n"
-#या_अगर defined(CONFIG_PPC_BOOK3S_32)
+#elif defined(CONFIG_PPC_BOOK3S_32)
 "  u	dump segment registers\n"
-#या_अगर defined(CONFIG_44x) || defined(CONFIG_PPC_BOOK3E)
+#elif defined(CONFIG_44x) || defined(CONFIG_PPC_BOOK3E)
 "  u	dump TLB\n"
-#पूर्ण_अगर
+#endif
 "  U	show uptime information\n"
 "  ?	help\n"
 "  # n	limit output to n lines per page (for dp, dpa, dl)\n"
@@ -294,1015 +293,1015 @@ Commands:\न\
 "  zh	halt\n"
 ;
 
-#अगर_घोषित CONFIG_SECURITY
-अटल bool xmon_is_locked_करोwn(व्योम)
-अणु
-	अटल bool lockकरोwn;
+#ifdef CONFIG_SECURITY
+static bool xmon_is_locked_down(void)
+{
+	static bool lockdown;
 
-	अगर (!lockकरोwn) अणु
-		lockकरोwn = !!security_locked_करोwn(LOCKDOWN_XMON_RW);
-		अगर (lockकरोwn) अणु
-			म_लिखो("xmon: Disabled due to kernel lockdown\n");
+	if (!lockdown) {
+		lockdown = !!security_locked_down(LOCKDOWN_XMON_RW);
+		if (lockdown) {
+			printf("xmon: Disabled due to kernel lockdown\n");
 			xmon_is_ro = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!xmon_is_ro) अणु
-		xmon_is_ro = !!security_locked_करोwn(LOCKDOWN_XMON_WR);
-		अगर (xmon_is_ro)
-			म_लिखो("xmon: Read-only due to kernel lockdown\n");
-	पूर्ण
+	if (!xmon_is_ro) {
+		xmon_is_ro = !!security_locked_down(LOCKDOWN_XMON_WR);
+		if (xmon_is_ro)
+			printf("xmon: Read-only due to kernel lockdown\n");
+	}
 
-	वापस lockकरोwn;
-पूर्ण
-#अन्यथा /* CONFIG_SECURITY */
-अटल अंतरभूत bool xmon_is_locked_करोwn(व्योम)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	return lockdown;
+}
+#else /* CONFIG_SECURITY */
+static inline bool xmon_is_locked_down(void)
+{
+	return false;
+}
+#endif
 
-अटल काष्ठा pt_regs *xmon_regs;
+static struct pt_regs *xmon_regs;
 
-अटल अंतरभूत व्योम sync(व्योम)
-अणु
-	यंत्र अस्थिर("sync; isync");
-पूर्ण
+static inline void sync(void)
+{
+	asm volatile("sync; isync");
+}
 
-अटल अंतरभूत व्योम cflush(व्योम *p)
-अणु
-	यंत्र अस्थिर ("dcbf 0,%0; icbi 0,%0" : : "r" (p));
-पूर्ण
+static inline void cflush(void *p)
+{
+	asm volatile ("dcbf 0,%0; icbi 0,%0" : : "r" (p));
+}
 
-अटल अंतरभूत व्योम cinval(व्योम *p)
-अणु
-	यंत्र अस्थिर ("dcbi 0,%0; icbi 0,%0" : : "r" (p));
-पूर्ण
+static inline void cinval(void *p)
+{
+	asm volatile ("dcbi 0,%0; icbi 0,%0" : : "r" (p));
+}
 
 /**
- * ग_लिखो_ciabr() - ग_लिखो the CIABR SPR
- * @ciabr:	The value to ग_लिखो.
+ * write_ciabr() - write the CIABR SPR
+ * @ciabr:	The value to write.
  *
- * This function ग_लिखोs a value to the CIARB रेजिस्टर either directly
- * through mtspr inकाष्ठाion अगर the kernel is in HV privilege mode or
- * call a hypervisor function to achieve the same in हाल the kernel
+ * This function writes a value to the CIARB register either directly
+ * through mtspr instruction if the kernel is in HV privilege mode or
+ * call a hypervisor function to achieve the same in case the kernel
  * is in supervisor privilege mode.
  */
-अटल व्योम ग_लिखो_ciabr(अचिन्हित दीर्घ ciabr)
-अणु
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस;
+static void write_ciabr(unsigned long ciabr)
+{
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return;
 
-	अगर (cpu_has_feature(CPU_FTR_HVMODE)) अणु
+	if (cpu_has_feature(CPU_FTR_HVMODE)) {
 		mtspr(SPRN_CIABR, ciabr);
-		वापस;
-	पूर्ण
+		return;
+	}
 	plpar_set_ciabr(ciabr);
-पूर्ण
+}
 
 /**
  * set_ciabr() - set the CIABR
  * @addr:	The value to set.
  *
- * This function sets the correct privilege value पूर्णांकo the the HW
- * अवरोधpoपूर्णांक address beक्रमe writing it up in the CIABR रेजिस्टर.
+ * This function sets the correct privilege value into the the HW
+ * breakpoint address before writing it up in the CIABR register.
  */
-अटल व्योम set_ciabr(अचिन्हित दीर्घ addr)
-अणु
+static void set_ciabr(unsigned long addr)
+{
 	addr &= ~CIABR_PRIV;
 
-	अगर (cpu_has_feature(CPU_FTR_HVMODE))
+	if (cpu_has_feature(CPU_FTR_HVMODE))
 		addr |= CIABR_PRIV_HYPER;
-	अन्यथा
+	else
 		addr |= CIABR_PRIV_SUPER;
-	ग_लिखो_ciabr(addr);
-पूर्ण
+	write_ciabr(addr);
+}
 
 /*
- * Disable surveillance (the service processor watchकरोg function)
- * जबतक we are in xmon.
+ * Disable surveillance (the service processor watchdog function)
+ * while we are in xmon.
  * XXX we should re-enable it when we leave. :)
  */
-#घोषणा SURVEILLANCE_TOKEN	9000
+#define SURVEILLANCE_TOKEN	9000
 
-अटल अंतरभूत व्योम disable_surveillance(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC_PSERIES
+static inline void disable_surveillance(void)
+{
+#ifdef CONFIG_PPC_PSERIES
 	/* Since this can't be a module, args should end up below 4GB. */
-	अटल काष्ठा rtas_args args;
+	static struct rtas_args args;
 
 	/*
-	 * At this poपूर्णांक we have got all the cpus we can पूर्णांकo
+	 * At this point we have got all the cpus we can into
 	 * xmon, so there is hopefully no other cpu calling RTAS
-	 * at the moment, even though we करोn't take rtas.lock.
+	 * at the moment, even though we don't take rtas.lock.
 	 * If we did try to take rtas.lock there would be a
 	 * real possibility of deadlock.
 	 */
-	अगर (set_indicator_token == RTAS_UNKNOWN_SERVICE)
-		वापस;
+	if (set_indicator_token == RTAS_UNKNOWN_SERVICE)
+		return;
 
-	rtas_call_unlocked(&args, set_indicator_token, 3, 1, शून्य,
+	rtas_call_unlocked(&args, set_indicator_token, 3, 1, NULL,
 			   SURVEILLANCE_TOKEN, 0, 0);
 
-#पूर्ण_अगर /* CONFIG_PPC_PSERIES */
-पूर्ण
+#endif /* CONFIG_PPC_PSERIES */
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक xmon_speaker;
+#ifdef CONFIG_SMP
+static int xmon_speaker;
 
-अटल व्योम get_output_lock(व्योम)
-अणु
-	पूर्णांक me = smp_processor_id() + 0x100;
-	पूर्णांक last_speaker = 0, prev;
-	दीर्घ समयout;
+static void get_output_lock(void)
+{
+	int me = smp_processor_id() + 0x100;
+	int last_speaker = 0, prev;
+	long timeout;
 
-	अगर (xmon_speaker == me)
-		वापस;
+	if (xmon_speaker == me)
+		return;
 
-	क्रम (;;) अणु
+	for (;;) {
 		last_speaker = cmpxchg(&xmon_speaker, 0, me);
-		अगर (last_speaker == 0)
-			वापस;
+		if (last_speaker == 0)
+			return;
 
 		/*
-		 * Wait a full second क्रम the lock, we might be on a slow
+		 * Wait a full second for the lock, we might be on a slow
 		 * console, but check every 100us.
 		 */
-		समयout = 10000;
-		जबतक (xmon_speaker == last_speaker) अणु
-			अगर (--समयout > 0) अणु
+		timeout = 10000;
+		while (xmon_speaker == last_speaker) {
+			if (--timeout > 0) {
 				udelay(100);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* hostile takeover */
 			prev = cmpxchg(&xmon_speaker, last_speaker, me);
-			अगर (prev == last_speaker)
-				वापस;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			if (prev == last_speaker)
+				return;
+			break;
+		}
+	}
+}
 
-अटल व्योम release_output_lock(व्योम)
-अणु
+static void release_output_lock(void)
+{
 	xmon_speaker = 0;
-पूर्ण
+}
 
-पूर्णांक cpus_are_in_xmon(व्योम)
-अणु
-	वापस !cpumask_empty(&cpus_in_xmon);
-पूर्ण
+int cpus_are_in_xmon(void)
+{
+	return !cpumask_empty(&cpus_in_xmon);
+}
 
-अटल bool रुको_क्रम_other_cpus(पूर्णांक ncpus)
-अणु
-	अचिन्हित दीर्घ समयout;
+static bool wait_for_other_cpus(int ncpus)
+{
+	unsigned long timeout;
 
-	/* We रुको क्रम 2s, which is a metric "little while" */
-	क्रम (समयout = 20000; समयout != 0; --समयout) अणु
-		अगर (cpumask_weight(&cpus_in_xmon) >= ncpus)
-			वापस true;
+	/* We wait for 2s, which is a metric "little while" */
+	for (timeout = 20000; timeout != 0; --timeout) {
+		if (cpumask_weight(&cpus_in_xmon) >= ncpus)
+			return true;
 		udelay(100);
 		barrier();
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
-#अन्यथा /* CONFIG_SMP */
-अटल अंतरभूत व्योम get_output_lock(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम release_output_lock(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+	return false;
+}
+#else /* CONFIG_SMP */
+static inline void get_output_lock(void) {}
+static inline void release_output_lock(void) {}
+#endif
 
-अटल अंतरभूत पूर्णांक unrecoverable_excp(काष्ठा pt_regs *regs)
-अणु
-#अगर defined(CONFIG_4xx) || defined(CONFIG_PPC_BOOK3E)
-	/* We have no MSR_RI bit on 4xx or Book3e, so we simply वापस false */
-	वापस 0;
-#अन्यथा
-	वापस ((regs->msr & MSR_RI) == 0);
-#पूर्ण_अगर
-पूर्ण
+static inline int unrecoverable_excp(struct pt_regs *regs)
+{
+#if defined(CONFIG_4xx) || defined(CONFIG_PPC_BOOK3E)
+	/* We have no MSR_RI bit on 4xx or Book3e, so we simply return false */
+	return 0;
+#else
+	return ((regs->msr & MSR_RI) == 0);
+#endif
+}
 
-अटल व्योम xmon_touch_watchकरोgs(व्योम)
-अणु
-	touch_softlockup_watchकरोg_sync();
+static void xmon_touch_watchdogs(void)
+{
+	touch_softlockup_watchdog_sync();
 	rcu_cpu_stall_reset();
-	touch_nmi_watchकरोg();
-पूर्ण
+	touch_nmi_watchdog();
+}
 
-अटल पूर्णांक xmon_core(काष्ठा pt_regs *regs, पूर्णांक fromipi)
-अणु
-	पूर्णांक cmd = 0;
-	काष्ठा bpt *bp;
-	दीर्घ recurse_jmp[JMP_BUF_LEN];
-	bool locked_करोwn;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ flags;
-#अगर_घोषित CONFIG_SMP
-	पूर्णांक cpu;
-	पूर्णांक secondary;
-#पूर्ण_अगर
+static int xmon_core(struct pt_regs *regs, int fromipi)
+{
+	int cmd = 0;
+	struct bpt *bp;
+	long recurse_jmp[JMP_BUF_LEN];
+	bool locked_down;
+	unsigned long offset;
+	unsigned long flags;
+#ifdef CONFIG_SMP
+	int cpu;
+	int secondary;
+#endif
 
 	local_irq_save(flags);
 	hard_irq_disable();
 
-	locked_करोwn = xmon_is_locked_करोwn();
+	locked_down = xmon_is_locked_down();
 
-	अगर (!fromipi) अणु
+	if (!fromipi) {
 		tracing_enabled = tracing_is_on();
 		tracing_off();
-	पूर्ण
+	}
 
-	bp = in_अवरोधpoपूर्णांक_table(regs->nip, &offset);
-	अगर (bp != शून्य) अणु
+	bp = in_breakpoint_table(regs->nip, &offset);
+	if (bp != NULL) {
 		regs->nip = bp->address + offset;
 		atomic_dec(&bp->ref_count);
-	पूर्ण
+	}
 
-	हटाओ_cpu_bpts();
+	remove_cpu_bpts();
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	cpu = smp_processor_id();
-	अगर (cpumask_test_cpu(cpu, &cpus_in_xmon)) अणु
+	if (cpumask_test_cpu(cpu, &cpus_in_xmon)) {
 		/*
-		 * We catch SPR पढ़ो/ग_लिखो faults here because the 0x700, 0xf60
-		 * etc. handlers करोn't call debugger_fault_handler().
+		 * We catch SPR read/write faults here because the 0x700, 0xf60
+		 * etc. handlers don't call debugger_fault_handler().
 		 */
-		अगर (catch_spr_faults)
-			दीर्घ_लाँघ(bus_error_jmp, 1);
+		if (catch_spr_faults)
+			longjmp(bus_error_jmp, 1);
 		get_output_lock();
-		excprपूर्णांक(regs);
-		म_लिखो("cpu 0x%x: Exception %lx %s in xmon, "
+		excprint(regs);
+		printf("cpu 0x%x: Exception %lx %s in xmon, "
 		       "returning to main loop\n",
 		       cpu, regs->trap, getvecname(TRAP(regs)));
 		release_output_lock();
-		दीर्घ_लाँघ(xmon_fault_jmp[cpu], 1);
-	पूर्ण
+		longjmp(xmon_fault_jmp[cpu], 1);
+	}
 
-	अगर (बनाओ_लाँघ(recurse_jmp) != 0) अणु
-		अगर (!in_xmon || !xmon_gate) अणु
+	if (setjmp(recurse_jmp) != 0) {
+		if (!in_xmon || !xmon_gate) {
 			get_output_lock();
-			म_लिखो("xmon: WARNING: bad recursive fault "
+			printf("xmon: WARNING: bad recursive fault "
 			       "on cpu 0x%x\n", cpu);
 			release_output_lock();
-			जाओ रुकोing;
-		पूर्ण
+			goto waiting;
+		}
 		secondary = !(xmon_taken && cpu == xmon_owner);
-		जाओ cmdloop;
-	पूर्ण
+		goto cmdloop;
+	}
 
 	xmon_fault_jmp[cpu] = recurse_jmp;
 
-	bp = शून्य;
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT))
-		bp = at_अवरोधpoपूर्णांक(regs->nip);
-	अगर (bp || unrecoverable_excp(regs))
+	bp = NULL;
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT))
+		bp = at_breakpoint(regs->nip);
+	if (bp || unrecoverable_excp(regs))
 		fromipi = 0;
 
-	अगर (!fromipi) अणु
+	if (!fromipi) {
 		get_output_lock();
-		अगर (!locked_करोwn)
-			excprपूर्णांक(regs);
-		अगर (bp) अणु
-			म_लिखो("cpu 0x%x stopped at breakpoint 0x%tx (",
+		if (!locked_down)
+			excprint(regs);
+		if (bp) {
+			printf("cpu 0x%x stopped at breakpoint 0x%tx (",
 			       cpu, BP_NUM(bp));
-			xmon_prपूर्णांक_symbol(regs->nip, " ", ")\n");
-		पूर्ण
-		अगर (unrecoverable_excp(regs))
-			म_लिखो("WARNING: exception is not recoverable, "
+			xmon_print_symbol(regs->nip, " ", ")\n");
+		}
+		if (unrecoverable_excp(regs))
+			printf("WARNING: exception is not recoverable, "
 			       "can't continue\n");
 		release_output_lock();
-	पूर्ण
+	}
 
 	cpumask_set_cpu(cpu, &cpus_in_xmon);
 
- रुकोing:
+ waiting:
 	secondary = 1;
 	spin_begin();
-	जबतक (secondary && !xmon_gate) अणु
-		अगर (in_xmon == 0) अणु
-			अगर (fromipi) अणु
+	while (secondary && !xmon_gate) {
+		if (in_xmon == 0) {
+			if (fromipi) {
 				spin_end();
-				जाओ leave;
-			पूर्ण
+				goto leave;
+			}
 			secondary = test_and_set_bit(0, &in_xmon);
-		पूर्ण
+		}
 		spin_cpu_relax();
-		touch_nmi_watchकरोg();
-	पूर्ण
+		touch_nmi_watchdog();
+	}
 	spin_end();
 
-	अगर (!secondary && !xmon_gate) अणु
+	if (!secondary && !xmon_gate) {
 		/* we are the first cpu to come in */
-		/* पूर्णांकerrupt other cpu(s) */
-		पूर्णांक ncpus = num_online_cpus();
+		/* interrupt other cpu(s) */
+		int ncpus = num_online_cpus();
 
 		xmon_owner = cpu;
 		mb();
-		अगर (ncpus > 1) अणु
+		if (ncpus > 1) {
 			/*
-			 * A प्रणाली reset (trap == 0x100) can be triggered on
-			 * all CPUs, so when we come in via 0x100 try रुकोing
-			 * क्रम the other CPUs to come in beक्रमe we send the
-			 * debugger अवरोध (IPI). This is similar to
+			 * A system reset (trap == 0x100) can be triggered on
+			 * all CPUs, so when we come in via 0x100 try waiting
+			 * for the other CPUs to come in before we send the
+			 * debugger break (IPI). This is similar to
 			 * crash_kexec_secondary().
 			 */
-			अगर (TRAP(regs) !=  INTERRUPT_SYSTEM_RESET || !रुको_क्रम_other_cpus(ncpus))
-				smp_send_debugger_अवरोध();
+			if (TRAP(regs) !=  INTERRUPT_SYSTEM_RESET || !wait_for_other_cpus(ncpus))
+				smp_send_debugger_break();
 
-			रुको_क्रम_other_cpus(ncpus);
-		पूर्ण
-		हटाओ_bpts();
+			wait_for_other_cpus(ncpus);
+		}
+		remove_bpts();
 		disable_surveillance();
 
-		अगर (!locked_करोwn) अणु
-			/* क्रम अवरोधpoपूर्णांक or single step, prपूर्णांक curr insn */
-			अगर (bp || TRAP(regs) == INTERRUPT_TRACE)
+		if (!locked_down) {
+			/* for breakpoint or single step, print curr insn */
+			if (bp || TRAP(regs) == INTERRUPT_TRACE)
 				ppc_inst_dump(regs->nip, 1, 0);
-			म_लिखो("enter ? for help\n");
-		पूर्ण
+			printf("enter ? for help\n");
+		}
 
 		mb();
 		xmon_gate = 1;
 		barrier();
-		touch_nmi_watchकरोg();
-	पूर्ण
+		touch_nmi_watchdog();
+	}
 
  cmdloop:
-	जबतक (in_xmon) अणु
-		अगर (secondary) अणु
+	while (in_xmon) {
+		if (secondary) {
 			spin_begin();
-			अगर (cpu == xmon_owner) अणु
-				अगर (!test_and_set_bit(0, &xmon_taken)) अणु
+			if (cpu == xmon_owner) {
+				if (!test_and_set_bit(0, &xmon_taken)) {
 					secondary = 0;
 					spin_end();
-					जारी;
-				पूर्ण
+					continue;
+				}
 				/* missed it */
-				जबतक (cpu == xmon_owner)
+				while (cpu == xmon_owner)
 					spin_cpu_relax();
-			पूर्ण
+			}
 			spin_cpu_relax();
-			touch_nmi_watchकरोg();
-		पूर्ण अन्यथा अणु
-			अगर (!locked_करोwn)
+			touch_nmi_watchdog();
+		} else {
+			if (!locked_down)
 				cmd = cmds(regs);
-			अगर (locked_करोwn || cmd != 0) अणु
-				/* निकासing xmon */
+			if (locked_down || cmd != 0) {
+				/* exiting xmon */
 				insert_bpts();
 				xmon_gate = 0;
 				wmb();
 				in_xmon = 0;
-				अवरोध;
-			पूर्ण
-			/* have चयनed to some other cpu */
+				break;
+			}
+			/* have switched to some other cpu */
 			secondary = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
  leave:
 	cpumask_clear_cpu(cpu, &cpus_in_xmon);
-	xmon_fault_jmp[cpu] = शून्य;
-#अन्यथा
+	xmon_fault_jmp[cpu] = NULL;
+#else
 	/* UP is simple... */
-	अगर (in_xmon) अणु
-		म_लिखो("Exception %lx %s in xmon, returning to main loop\n",
+	if (in_xmon) {
+		printf("Exception %lx %s in xmon, returning to main loop\n",
 		       regs->trap, getvecname(TRAP(regs)));
-		दीर्घ_लाँघ(xmon_fault_jmp[0], 1);
-	पूर्ण
-	अगर (बनाओ_लाँघ(recurse_jmp) == 0) अणु
+		longjmp(xmon_fault_jmp[0], 1);
+	}
+	if (setjmp(recurse_jmp) == 0) {
 		xmon_fault_jmp[0] = recurse_jmp;
 		in_xmon = 1;
 
-		excprपूर्णांक(regs);
-		bp = at_अवरोधpoपूर्णांक(regs->nip);
-		अगर (bp) अणु
-			म_लिखो("Stopped at breakpoint %tx (", BP_NUM(bp));
-			xmon_prपूर्णांक_symbol(regs->nip, " ", ")\n");
-		पूर्ण
-		अगर (unrecoverable_excp(regs))
-			म_लिखो("WARNING: exception is not recoverable, "
+		excprint(regs);
+		bp = at_breakpoint(regs->nip);
+		if (bp) {
+			printf("Stopped at breakpoint %tx (", BP_NUM(bp));
+			xmon_print_symbol(regs->nip, " ", ")\n");
+		}
+		if (unrecoverable_excp(regs))
+			printf("WARNING: exception is not recoverable, "
 			       "can't continue\n");
-		हटाओ_bpts();
+		remove_bpts();
 		disable_surveillance();
-		अगर (!locked_करोwn) अणु
-			/* क्रम अवरोधpoपूर्णांक or single step, prपूर्णांक current insn */
-			अगर (bp || TRAP(regs) == INTERRUPT_TRACE)
+		if (!locked_down) {
+			/* for breakpoint or single step, print current insn */
+			if (bp || TRAP(regs) == INTERRUPT_TRACE)
 				ppc_inst_dump(regs->nip, 1, 0);
-			म_लिखो("enter ? for help\n");
-		पूर्ण
-	पूर्ण
+			printf("enter ? for help\n");
+		}
+	}
 
-	अगर (!locked_करोwn)
+	if (!locked_down)
 		cmd = cmds(regs);
 
 	insert_bpts();
 	in_xmon = 0;
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_BOOKE
-	अगर (regs->msr & MSR_DE) अणु
-		bp = at_अवरोधpoपूर्णांक(regs->nip);
-		अगर (bp != शून्य) अणु
-			regs->nip = (अचिन्हित दीर्घ) &bp->instr[0];
+#ifdef CONFIG_BOOKE
+	if (regs->msr & MSR_DE) {
+		bp = at_breakpoint(regs->nip);
+		if (bp != NULL) {
+			regs->nip = (unsigned long) &bp->instr[0];
 			atomic_inc(&bp->ref_count);
-		पूर्ण
-	पूर्ण
-#अन्यथा
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT)) अणु
-		bp = at_अवरोधpoपूर्णांक(regs->nip);
-		अगर (bp != शून्य) अणु
-			पूर्णांक stepped = emulate_step(regs, ppc_inst_पढ़ो(bp->instr));
-			अगर (stepped == 0) अणु
-				regs->nip = (अचिन्हित दीर्घ) &bp->instr[0];
+		}
+	}
+#else
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT)) {
+		bp = at_breakpoint(regs->nip);
+		if (bp != NULL) {
+			int stepped = emulate_step(regs, ppc_inst_read(bp->instr));
+			if (stepped == 0) {
+				regs->nip = (unsigned long) &bp->instr[0];
 				atomic_inc(&bp->ref_count);
-			पूर्ण अन्यथा अगर (stepped < 0) अणु
-				म_लिखो("Couldn't single-step %s instruction\n",
-				    IS_RFID(ppc_inst_पढ़ो(bp->instr))? "rfid": "mtmsrd");
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	अगर (locked_करोwn)
+			} else if (stepped < 0) {
+				printf("Couldn't single-step %s instruction\n",
+				    IS_RFID(ppc_inst_read(bp->instr))? "rfid": "mtmsrd");
+			}
+		}
+	}
+#endif
+	if (locked_down)
 		clear_all_bpt();
-	अन्यथा
+	else
 		insert_cpu_bpts();
 
-	xmon_touch_watchकरोgs();
+	xmon_touch_watchdogs();
 	local_irq_restore(flags);
 
-	वापस cmd != 'X' && cmd != खातापूर्ण;
-पूर्ण
+	return cmd != 'X' && cmd != EOF;
+}
 
-पूर्णांक xmon(काष्ठा pt_regs *excp)
-अणु
-	काष्ठा pt_regs regs;
+int xmon(struct pt_regs *excp)
+{
+	struct pt_regs regs;
 
-	अगर (excp == शून्य) अणु
+	if (excp == NULL) {
 		ppc_save_regs(&regs);
 		excp = &regs;
-	पूर्ण
+	}
 
-	वापस xmon_core(excp, 0);
-पूर्ण
+	return xmon_core(excp, 0);
+}
 EXPORT_SYMBOL(xmon);
 
-irqवापस_t xmon_irq(पूर्णांक irq, व्योम *d)
-अणु
-	अचिन्हित दीर्घ flags;
+irqreturn_t xmon_irq(int irq, void *d)
+{
+	unsigned long flags;
 	local_irq_save(flags);
-	म_लिखो("Keyboard interrupt\n");
+	printf("Keyboard interrupt\n");
 	xmon(get_irq_regs());
 	local_irq_restore(flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xmon_bpt(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा bpt *bp;
-	अचिन्हित दीर्घ offset;
+static int xmon_bpt(struct pt_regs *regs)
+{
+	struct bpt *bp;
+	unsigned long offset;
 
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
-		वापस 0;
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
+		return 0;
 
-	/* Are we at the trap at bp->instr[1] क्रम some bp? */
-	bp = in_अवरोधpoपूर्णांक_table(regs->nip, &offset);
-	अगर (bp != शून्य && (offset == 4 || offset == 8)) अणु
+	/* Are we at the trap at bp->instr[1] for some bp? */
+	bp = in_breakpoint_table(regs->nip, &offset);
+	if (bp != NULL && (offset == 4 || offset == 8)) {
 		regs->nip = bp->address + offset;
 		atomic_dec(&bp->ref_count);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	/* Are we at a अवरोधpoपूर्णांक? */
-	bp = at_अवरोधpoपूर्णांक(regs->nip);
-	अगर (!bp)
-		वापस 0;
+	/* Are we at a breakpoint? */
+	bp = at_breakpoint(regs->nip);
+	if (!bp)
+		return 0;
 
 	xmon_core(regs, 0);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक xmon_sstep(काष्ठा pt_regs *regs)
-अणु
-	अगर (user_mode(regs))
-		वापस 0;
+static int xmon_sstep(struct pt_regs *regs)
+{
+	if (user_mode(regs))
+		return 0;
 	xmon_core(regs, 0);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक xmon_अवरोध_match(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i;
+static int xmon_break_match(struct pt_regs *regs)
+{
+	int i;
 
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
-		वापस 0;
-	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
-		अगर (dabr[i].enabled)
-			जाओ found;
-	पूर्ण
-	वापस 0;
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
+		return 0;
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (dabr[i].enabled)
+			goto found;
+	}
+	return 0;
 
 found:
 	xmon_core(regs, 0);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक xmon_iabr_match(काष्ठा pt_regs *regs)
-अणु
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
-		वापस 0;
-	अगर (iabr == शून्य)
-		वापस 0;
+static int xmon_iabr_match(struct pt_regs *regs)
+{
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) != (MSR_IR|MSR_64BIT))
+		return 0;
+	if (iabr == NULL)
+		return 0;
 	xmon_core(regs, 0);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक xmon_ipi(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_SMP
-	अगर (in_xmon && !cpumask_test_cpu(smp_processor_id(), &cpus_in_xmon))
+static int xmon_ipi(struct pt_regs *regs)
+{
+#ifdef CONFIG_SMP
+	if (in_xmon && !cpumask_test_cpu(smp_processor_id(), &cpus_in_xmon))
 		xmon_core(regs, 1);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक xmon_fault_handler(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा bpt *bp;
-	अचिन्हित दीर्घ offset;
+static int xmon_fault_handler(struct pt_regs *regs)
+{
+	struct bpt *bp;
+	unsigned long offset;
 
-	अगर (in_xmon && catch_memory_errors)
-		handle_fault(regs);	/* करोesn't वापस */
+	if (in_xmon && catch_memory_errors)
+		handle_fault(regs);	/* doesn't return */
 
-	अगर ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT)) अणु
-		bp = in_अवरोधpoपूर्णांक_table(regs->nip, &offset);
-		अगर (bp != शून्य) अणु
+	if ((regs->msr & (MSR_IR|MSR_PR|MSR_64BIT)) == (MSR_IR|MSR_64BIT)) {
+		bp = in_breakpoint_table(regs->nip, &offset);
+		if (bp != NULL) {
 			regs->nip = bp->address + offset;
 			atomic_dec(&bp->ref_count);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Force enable xmon अगर not alपढ़ोy enabled */
-अटल अंतरभूत व्योम क्रमce_enable_xmon(व्योम)
-अणु
-	/* Enable xmon hooks अगर needed */
-	अगर (!xmon_on) अणु
-		म_लिखो("xmon: Enabling debugger hooks\n");
+/* Force enable xmon if not already enabled */
+static inline void force_enable_xmon(void)
+{
+	/* Enable xmon hooks if needed */
+	if (!xmon_on) {
+		printf("xmon: Enabling debugger hooks\n");
 		xmon_on = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा bpt *at_अवरोधpoपूर्णांक(अचिन्हित दीर्घ pc)
-अणु
-	पूर्णांक i;
-	काष्ठा bpt *bp;
+static struct bpt *at_breakpoint(unsigned long pc)
+{
+	int i;
+	struct bpt *bp;
 
 	bp = bpts;
-	क्रम (i = 0; i < NBPTS; ++i, ++bp)
-		अगर (bp->enabled && pc == bp->address)
-			वापस bp;
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < NBPTS; ++i, ++bp)
+		if (bp->enabled && pc == bp->address)
+			return bp;
+	return NULL;
+}
 
-अटल काष्ठा bpt *in_अवरोधpoपूर्णांक_table(अचिन्हित दीर्घ nip, अचिन्हित दीर्घ *offp)
-अणु
-	अचिन्हित दीर्घ off;
+static struct bpt *in_breakpoint_table(unsigned long nip, unsigned long *offp)
+{
+	unsigned long off;
 
-	off = nip - (अचिन्हित दीर्घ)bpt_table;
-	अगर (off >= माप(bpt_table))
-		वापस शून्य;
+	off = nip - (unsigned long)bpt_table;
+	if (off >= sizeof(bpt_table))
+		return NULL;
 	*offp = off & (BPT_SIZE - 1);
-	अगर (off & 3)
-		वापस शून्य;
-	वापस bpts + (off / BPT_SIZE);
-पूर्ण
+	if (off & 3)
+		return NULL;
+	return bpts + (off / BPT_SIZE);
+}
 
-अटल काष्ठा bpt *new_अवरोधpoपूर्णांक(अचिन्हित दीर्घ a)
-अणु
-	काष्ठा bpt *bp;
+static struct bpt *new_breakpoint(unsigned long a)
+{
+	struct bpt *bp;
 
 	a &= ~3UL;
-	bp = at_अवरोधpoपूर्णांक(a);
-	अगर (bp)
-		वापस bp;
+	bp = at_breakpoint(a);
+	if (bp)
+		return bp;
 
-	क्रम (bp = bpts; bp < &bpts[NBPTS]; ++bp) अणु
-		अगर (!bp->enabled && atomic_पढ़ो(&bp->ref_count) == 0) अणु
+	for (bp = bpts; bp < &bpts[NBPTS]; ++bp) {
+		if (!bp->enabled && atomic_read(&bp->ref_count) == 0) {
 			bp->address = a;
-			bp->instr = (व्योम *)(bpt_table + ((bp - bpts) * BPT_WORDS));
-			वापस bp;
-		पूर्ण
-	पूर्ण
+			bp->instr = (void *)(bpt_table + ((bp - bpts) * BPT_WORDS));
+			return bp;
+		}
+	}
 
-	म_लिखो("Sorry, no free breakpoints.  Please clear one first.\n");
-	वापस शून्य;
-पूर्ण
+	printf("Sorry, no free breakpoints.  Please clear one first.\n");
+	return NULL;
+}
 
-अटल व्योम insert_bpts(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा ppc_inst instr, instr2;
-	काष्ठा bpt *bp, *bp2;
+static void insert_bpts(void)
+{
+	int i;
+	struct ppc_inst instr, instr2;
+	struct bpt *bp, *bp2;
 
 	bp = bpts;
-	क्रम (i = 0; i < NBPTS; ++i, ++bp) अणु
-		अगर ((bp->enabled & (BP_TRAP|BP_CIABR)) == 0)
-			जारी;
-		अगर (!mपढ़ो_instr(bp->address, &instr)) अणु
-			म_लिखो("Couldn't read instruction at %lx, "
+	for (i = 0; i < NBPTS; ++i, ++bp) {
+		if ((bp->enabled & (BP_TRAP|BP_CIABR)) == 0)
+			continue;
+		if (!mread_instr(bp->address, &instr)) {
+			printf("Couldn't read instruction at %lx, "
 			       "disabling breakpoint there\n", bp->address);
 			bp->enabled = 0;
-			जारी;
-		पूर्ण
-		अगर (IS_MTMSRD(instr) || IS_RFID(instr)) अणु
-			म_लिखो("Breakpoint at %lx is on an mtmsrd or rfid "
+			continue;
+		}
+		if (IS_MTMSRD(instr) || IS_RFID(instr)) {
+			printf("Breakpoint at %lx is on an mtmsrd or rfid "
 			       "instruction, disabling it\n", bp->address);
 			bp->enabled = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		 * Check the address is not a suffix by looking क्रम a prefix in
+		 * Check the address is not a suffix by looking for a prefix in
 		 * front of it.
 		 */
-		अगर (mपढ़ो_instr(bp->address - 4, &instr2) == 8) अणु
-			म_लिखो("Breakpoint at %lx is on the second word of a prefixed instruction, disabling it\n",
+		if (mread_instr(bp->address - 4, &instr2) == 8) {
+			printf("Breakpoint at %lx is on the second word of a prefixed instruction, disabling it\n",
 			       bp->address);
 			bp->enabled = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/*
-		 * We might still be a suffix - अगर the prefix has alपढ़ोy been
-		 * replaced by a अवरोधpoपूर्णांक we won't catch it with the above
+		 * We might still be a suffix - if the prefix has already been
+		 * replaced by a breakpoint we won't catch it with the above
 		 * test.
 		 */
-		bp2 = at_अवरोधpoपूर्णांक(bp->address - 4);
-		अगर (bp2 && ppc_inst_prefixed(ppc_inst_पढ़ो(bp2->instr))) अणु
-			म_लिखो("Breakpoint at %lx is on the second word of a prefixed instruction, disabling it\n",
+		bp2 = at_breakpoint(bp->address - 4);
+		if (bp2 && ppc_inst_prefixed(ppc_inst_read(bp2->instr))) {
+			printf("Breakpoint at %lx is on the second word of a prefixed instruction, disabling it\n",
 			       bp->address);
 			bp->enabled = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		patch_inकाष्ठाion(bp->instr, instr);
-		patch_inकाष्ठाion(ppc_inst_next(bp->instr, &instr),
+		patch_instruction(bp->instr, instr);
+		patch_instruction(ppc_inst_next(bp->instr, &instr),
 				  ppc_inst(bpinstr));
-		अगर (bp->enabled & BP_CIABR)
-			जारी;
-		अगर (patch_inकाष्ठाion((काष्ठा ppc_inst *)bp->address,
-				      ppc_inst(bpinstr)) != 0) अणु
-			म_लिखो("Couldn't write instruction at %lx, "
+		if (bp->enabled & BP_CIABR)
+			continue;
+		if (patch_instruction((struct ppc_inst *)bp->address,
+				      ppc_inst(bpinstr)) != 0) {
+			printf("Couldn't write instruction at %lx, "
 			       "disabling breakpoint there\n", bp->address);
 			bp->enabled &= ~BP_TRAP;
-			जारी;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			continue;
+		}
+	}
+}
 
-अटल व्योम insert_cpu_bpts(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा arch_hw_अवरोधpoपूर्णांक brk;
+static void insert_cpu_bpts(void)
+{
+	int i;
+	struct arch_hw_breakpoint brk;
 
-	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
-		अगर (dabr[i].enabled) अणु
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (dabr[i].enabled) {
 			brk.address = dabr[i].address;
 			brk.type = (dabr[i].enabled & HW_BRK_TYPE_DABR) | HW_BRK_TYPE_PRIV_ALL;
 			brk.len = 8;
 			brk.hw_len = 8;
-			__set_अवरोधpoपूर्णांक(i, &brk);
-		पूर्ण
-	पूर्ण
+			__set_breakpoint(i, &brk);
+		}
+	}
 
-	अगर (iabr)
+	if (iabr)
 		set_ciabr(iabr->address);
-पूर्ण
+}
 
-अटल व्योम हटाओ_bpts(व्योम)
-अणु
-	पूर्णांक i;
-	काष्ठा bpt *bp;
-	काष्ठा ppc_inst instr;
+static void remove_bpts(void)
+{
+	int i;
+	struct bpt *bp;
+	struct ppc_inst instr;
 
 	bp = bpts;
-	क्रम (i = 0; i < NBPTS; ++i, ++bp) अणु
-		अगर ((bp->enabled & (BP_TRAP|BP_CIABR)) != BP_TRAP)
-			जारी;
-		अगर (mपढ़ो_instr(bp->address, &instr)
+	for (i = 0; i < NBPTS; ++i, ++bp) {
+		if ((bp->enabled & (BP_TRAP|BP_CIABR)) != BP_TRAP)
+			continue;
+		if (mread_instr(bp->address, &instr)
 		    && ppc_inst_equal(instr, ppc_inst(bpinstr))
-		    && patch_inकाष्ठाion(
-			(काष्ठा ppc_inst *)bp->address, ppc_inst_पढ़ो(bp->instr)) != 0)
-			म_लिखो("Couldn't remove breakpoint at %lx\n",
+		    && patch_instruction(
+			(struct ppc_inst *)bp->address, ppc_inst_read(bp->instr)) != 0)
+			printf("Couldn't remove breakpoint at %lx\n",
 			       bp->address);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम हटाओ_cpu_bpts(व्योम)
-अणु
-	hw_अवरोधpoपूर्णांक_disable();
-	ग_लिखो_ciabr(0);
-पूर्ण
+static void remove_cpu_bpts(void)
+{
+	hw_breakpoint_disable();
+	write_ciabr(0);
+}
 
-/* Based on upसमय_proc_show(). */
-अटल व्योम
-show_upसमय(व्योम)
-अणु
-	काष्ठा बारpec64 upसमय;
+/* Based on uptime_proc_show(). */
+static void
+show_uptime(void)
+{
+	struct timespec64 uptime;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
 
-		kसमय_get_coarse_bootसमय_प्रकारs64(&upसमय);
-		म_लिखो("Uptime: %lu.%.2lu seconds\n", (अचिन्हित दीर्घ)upसमय.tv_sec,
-			((अचिन्हित दीर्घ)upसमय.tv_nsec / (NSEC_PER_SEC/100)));
+		ktime_get_coarse_boottime_ts64(&uptime);
+		printf("Uptime: %lu.%.2lu seconds\n", (unsigned long)uptime.tv_sec,
+			((unsigned long)uptime.tv_nsec / (NSEC_PER_SEC/100)));
 
 		sync();
 		__delay(200);						\
-	पूर्ण
+	}
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-अटल व्योम set_lpp_cmd(व्योम)
-अणु
-	अचिन्हित दीर्घ lpp;
+static void set_lpp_cmd(void)
+{
+	unsigned long lpp;
 
-	अगर (!scanhex(&lpp)) अणु
-		म_लिखो("Invalid number.\n");
+	if (!scanhex(&lpp)) {
+		printf("Invalid number.\n");
 		lpp = 0;
-	पूर्ण
+	}
 	xmon_set_pagination_lpp(lpp);
-पूर्ण
-/* Command पूर्णांकerpreting routine */
-अटल अक्षर *last_cmd;
+}
+/* Command interpreting routine */
+static char *last_cmd;
 
-अटल पूर्णांक
-cmds(काष्ठा pt_regs *excp)
-अणु
-	पूर्णांक cmd = 0;
+static int
+cmds(struct pt_regs *excp)
+{
+	int cmd = 0;
 
-	last_cmd = शून्य;
+	last_cmd = NULL;
 	xmon_regs = excp;
 
 	xmon_show_stack(excp->gpr[1], excp->link, excp->nip);
 
-	क्रम(;;) अणु
-#अगर_घोषित CONFIG_SMP
-		म_लिखो("%x:", smp_processor_id());
-#पूर्ण_अगर /* CONFIG_SMP */
-		म_लिखो("mon> ");
+	for(;;) {
+#ifdef CONFIG_SMP
+		printf("%x:", smp_processor_id());
+#endif /* CONFIG_SMP */
+		printf("mon> ");
 		flush_input();
 		termch = 0;
 		cmd = skipbl();
-		अगर( cmd == '\n' ) अणु
-			अगर (last_cmd == शून्य)
-				जारी;
+		if( cmd == '\n' ) {
+			if (last_cmd == NULL)
+				continue;
 			take_input(last_cmd);
-			last_cmd = शून्य;
-			cmd = inअक्षर();
-		पूर्ण
-		चयन (cmd) अणु
-		हाल 'm':
-			cmd = inअक्षर();
-			चयन (cmd) अणु
-			हाल 'm':
-			हाल 's':
-			हाल 'd':
+			last_cmd = NULL;
+			cmd = inchar();
+		}
+		switch (cmd) {
+		case 'm':
+			cmd = inchar();
+			switch (cmd) {
+			case 'm':
+			case 's':
+			case 'd':
 				memops(cmd);
-				अवरोध;
-			हाल 'l':
+				break;
+			case 'l':
 				memlocate();
-				अवरोध;
-			हाल 'z':
-				अगर (xmon_is_ro) अणु
-					म_लिखो(xmon_ro_msg);
-					अवरोध;
-				पूर्ण
+				break;
+			case 'z':
+				if (xmon_is_ro) {
+					printf(xmon_ro_msg);
+					break;
+				}
 				memzcan();
-				अवरोध;
-			हाल 'i':
-				show_mem(0, शून्य);
-				अवरोध;
-			शेष:
+				break;
+			case 'i':
+				show_mem(0, NULL);
+				break;
+			default:
 				termch = cmd;
 				memex();
-			पूर्ण
-			अवरोध;
-		हाल 'd':
+			}
+			break;
+		case 'd':
 			dump();
-			अवरोध;
-		हाल 'l':
+			break;
+		case 'l':
 			symbol_lookup();
-			अवरोध;
-		हाल 'r':
-			prregs(excp);	/* prपूर्णांक regs */
-			अवरोध;
-		हाल 'e':
-			excprपूर्णांक(excp);
-			अवरोध;
-		हाल 'S':
+			break;
+		case 'r':
+			prregs(excp);	/* print regs */
+			break;
+		case 'e':
+			excprint(excp);
+			break;
+		case 'S':
 			super_regs();
-			अवरोध;
-		हाल 't':
+			break;
+		case 't':
 			backtrace(excp);
-			अवरोध;
-		हाल 'f':
+			break;
+		case 'f':
 			cacheflush();
-			अवरोध;
-		हाल 's':
-			अगर (करो_spu_cmd() == 0)
-				अवरोध;
-			अगर (करो_step(excp))
-				वापस cmd;
-			अवरोध;
-		हाल 'x':
-		हाल 'X':
-			अगर (tracing_enabled)
+			break;
+		case 's':
+			if (do_spu_cmd() == 0)
+				break;
+			if (do_step(excp))
+				return cmd;
+			break;
+		case 'x':
+		case 'X':
+			if (tracing_enabled)
 				tracing_on();
-			वापस cmd;
-		हाल खातापूर्ण:
-			म_लिखो(" <no input ...>\n");
+			return cmd;
+		case EOF:
+			printf(" <no input ...>\n");
 			mdelay(2000);
-			वापस cmd;
-		हाल '?':
-			xmon_माला_दो(help_string);
-			अवरोध;
-		हाल '#':
+			return cmd;
+		case '?':
+			xmon_puts(help_string);
+			break;
+		case '#':
 			set_lpp_cmd();
-			अवरोध;
-		हाल 'b':
+			break;
+		case 'b':
 			bpt_cmds();
-			अवरोध;
-		हाल 'C':
+			break;
+		case 'C':
 			csum();
-			अवरोध;
-		हाल 'c':
-			अगर (cpu_cmd())
-				वापस 0;
-			अवरोध;
-		हाल 'z':
+			break;
+		case 'c':
+			if (cpu_cmd())
+				return 0;
+			break;
+		case 'z':
 			bootcmds();
-			अवरोध;
-		हाल 'p':
-			अगर (xmon_is_ro) अणु
-				म_लिखो(xmon_ro_msg);
-				अवरोध;
-			पूर्ण
+			break;
+		case 'p':
+			if (xmon_is_ro) {
+				printf(xmon_ro_msg);
+				break;
+			}
 			proccall();
-			अवरोध;
-		हाल 'P':
+			break;
+		case 'P':
 			show_tasks();
-			अवरोध;
-#अगर_घोषित CONFIG_PPC_BOOK3S
-		हाल 'u':
+			break;
+#ifdef CONFIG_PPC_BOOK3S
+		case 'u':
 			dump_segments();
-			अवरोध;
-#या_अगर defined(CONFIG_44x)
-		हाल 'u':
+			break;
+#elif defined(CONFIG_44x)
+		case 'u':
 			dump_tlb_44x();
-			अवरोध;
-#या_अगर defined(CONFIG_PPC_BOOK3E)
-		हाल 'u':
+			break;
+#elif defined(CONFIG_PPC_BOOK3E)
+		case 'u':
 			dump_tlb_book3e();
-			अवरोध;
-#पूर्ण_अगर
-		हाल 'U':
-			show_upसमय();
-			अवरोध;
-		शेष:
-			म_लिखो("Unrecognized command: ");
-			करो अणु
-				अगर (' ' < cmd && cmd <= '~')
-					अक्षर_दो(cmd);
-				अन्यथा
-					म_लिखो("\\x%x", cmd);
-				cmd = inअक्षर();
-			पूर्ण जबतक (cmd != '\n');
-			म_लिखो(" (type ? for help)\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+#endif
+		case 'U':
+			show_uptime();
+			break;
+		default:
+			printf("Unrecognized command: ");
+			do {
+				if (' ' < cmd && cmd <= '~')
+					putchar(cmd);
+				else
+					printf("\\x%x", cmd);
+				cmd = inchar();
+			} while (cmd != '\n');
+			printf(" (type ? for help)\n");
+			break;
+		}
+	}
+}
 
-#अगर_घोषित CONFIG_BOOKE
-अटल पूर्णांक करो_step(काष्ठा pt_regs *regs)
-अणु
+#ifdef CONFIG_BOOKE
+static int do_step(struct pt_regs *regs)
+{
 	regs->msr |= MSR_DE;
 	mtspr(SPRN_DBCR0, mfspr(SPRN_DBCR0) | DBCR0_IC | DBCR0_IDM);
-	वापस 1;
-पूर्ण
-#अन्यथा
+	return 1;
+}
+#else
 /*
- * Step a single inकाष्ठाion.
- * Some inकाष्ठाions we emulate, others we execute with MSR_SE set.
+ * Step a single instruction.
+ * Some instructions we emulate, others we execute with MSR_SE set.
  */
-अटल पूर्णांक करो_step(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा ppc_inst instr;
-	पूर्णांक stepped;
+static int do_step(struct pt_regs *regs)
+{
+	struct ppc_inst instr;
+	int stepped;
 
-	क्रमce_enable_xmon();
+	force_enable_xmon();
 	/* check we are in 64-bit kernel mode, translation enabled */
-	अगर ((regs->msr & (MSR_64BIT|MSR_PR|MSR_IR)) == (MSR_64BIT|MSR_IR)) अणु
-		अगर (mपढ़ो_instr(regs->nip, &instr)) अणु
+	if ((regs->msr & (MSR_64BIT|MSR_PR|MSR_IR)) == (MSR_64BIT|MSR_IR)) {
+		if (mread_instr(regs->nip, &instr)) {
 			stepped = emulate_step(regs, instr);
-			अगर (stepped < 0) अणु
-				म_लिखो("Couldn't single-step %s instruction\n",
+			if (stepped < 0) {
+				printf("Couldn't single-step %s instruction\n",
 				       (IS_RFID(instr)? "rfid": "mtmsrd"));
-				वापस 0;
-			पूर्ण
-			अगर (stepped > 0) अणु
+				return 0;
+			}
+			if (stepped > 0) {
 				set_trap(regs, 0xd00);
-				म_लिखो("stepped to ");
-				xmon_prपूर्णांक_symbol(regs->nip, " ", "\n");
+				printf("stepped to ");
+				xmon_print_symbol(regs->nip, " ", "\n");
 				ppc_inst_dump(regs->nip, 1, 0);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 	regs->msr |= MSR_SE;
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-अटल व्योम bootcmds(व्योम)
-अणु
-	अक्षर पंचांगp[64];
-	पूर्णांक cmd;
+static void bootcmds(void)
+{
+	char tmp[64];
+	int cmd;
 
-	cmd = inअक्षर();
-	अगर (cmd == 'r') अणु
-		माला_लोtring(पंचांगp, 64);
-		ppc_md.restart(पंचांगp);
-	पूर्ण अन्यथा अगर (cmd == 'h') अणु
+	cmd = inchar();
+	if (cmd == 'r') {
+		getstring(tmp, 64);
+		ppc_md.restart(tmp);
+	} else if (cmd == 'h') {
 		ppc_md.halt();
-	पूर्ण अन्यथा अगर (cmd == 'p') अणु
-		अगर (pm_घातer_off)
-			pm_घातer_off();
-	पूर्ण
-पूर्ण
+	} else if (cmd == 'p') {
+		if (pm_power_off)
+			pm_power_off();
+	}
+}
 
-अटल पूर्णांक cpu_cmd(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
-	अचिन्हित दीर्घ cpu, first_cpu, last_cpu;
-	पूर्णांक समयout;
+static int cpu_cmd(void)
+{
+#ifdef CONFIG_SMP
+	unsigned long cpu, first_cpu, last_cpu;
+	int timeout;
 
-	अगर (!scanhex(&cpu)) अणु
-		/* prपूर्णांक cpus रुकोing or in xmon */
-		म_लिखो("cpus stopped:");
+	if (!scanhex(&cpu)) {
+		/* print cpus waiting or in xmon */
+		printf("cpus stopped:");
 		last_cpu = first_cpu = NR_CPUS;
-		क्रम_each_possible_cpu(cpu) अणु
-			अगर (cpumask_test_cpu(cpu, &cpus_in_xmon)) अणु
-				अगर (cpu == last_cpu + 1) अणु
+		for_each_possible_cpu(cpu) {
+			if (cpumask_test_cpu(cpu, &cpus_in_xmon)) {
+				if (cpu == last_cpu + 1) {
 					last_cpu = cpu;
-				पूर्ण अन्यथा अणु
-					अगर (last_cpu != first_cpu)
-						म_लिखो("-0x%lx", last_cpu);
+				} else {
+					if (last_cpu != first_cpu)
+						printf("-0x%lx", last_cpu);
 					last_cpu = first_cpu = cpu;
-					म_लिखो(" 0x%lx", cpu);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (last_cpu != first_cpu)
-			म_लिखो("-0x%lx", last_cpu);
-		म_लिखो("\n");
-		वापस 0;
-	पूर्ण
-	/* try to चयन to cpu specअगरied */
-	अगर (!cpumask_test_cpu(cpu, &cpus_in_xmon)) अणु
-		म_लिखो("cpu 0x%lx isn't in xmon\n", cpu);
-#अगर_घोषित CONFIG_PPC64
-		म_लिखो("backtrace of paca[0x%lx].saved_r1 (possibly stale):\n", cpu);
+					printf(" 0x%lx", cpu);
+				}
+			}
+		}
+		if (last_cpu != first_cpu)
+			printf("-0x%lx", last_cpu);
+		printf("\n");
+		return 0;
+	}
+	/* try to switch to cpu specified */
+	if (!cpumask_test_cpu(cpu, &cpus_in_xmon)) {
+		printf("cpu 0x%lx isn't in xmon\n", cpu);
+#ifdef CONFIG_PPC64
+		printf("backtrace of paca[0x%lx].saved_r1 (possibly stale):\n", cpu);
 		xmon_show_stack(paca_ptrs[cpu]->saved_r1, 0, 0);
-#पूर्ण_अगर
-		वापस 0;
-	पूर्ण
+#endif
+		return 0;
+	}
 	xmon_taken = 0;
 	mb();
 	xmon_owner = cpu;
-	समयout = 10000000;
-	जबतक (!xmon_taken) अणु
-		अगर (--समयout == 0) अणु
-			अगर (test_and_set_bit(0, &xmon_taken))
-				अवरोध;
+	timeout = 10000000;
+	while (!xmon_taken) {
+		if (--timeout == 0) {
+			if (test_and_set_bit(0, &xmon_taken))
+				break;
 			/* take control back */
 			mb();
 			xmon_owner = smp_processor_id();
-			म_लिखो("cpu 0x%lx didn't take control\n", cpu);
-			वापस 0;
-		पूर्ण
+			printf("cpu 0x%lx didn't take control\n", cpu);
+			return 0;
+		}
 		barrier();
-	पूर्ण
-	वापस 1;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर /* CONFIG_SMP */
-पूर्ण
+	}
+	return 1;
+#else
+	return 0;
+#endif /* CONFIG_SMP */
+}
 
-अटल अचिन्हित लघु fcstab[256] = अणु
+static unsigned short fcstab[256] = {
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
 	0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -1335,86 +1334,86 @@ cmds(काष्ठा pt_regs *excp)
 	0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
 	0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
 	0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
-पूर्ण;
+};
 
-#घोषणा FCS(fcs, c)	(((fcs) >> 8) ^ fcstab[((fcs) ^ (c)) & 0xff])
+#define FCS(fcs, c)	(((fcs) >> 8) ^ fcstab[((fcs) ^ (c)) & 0xff])
 
-अटल व्योम
-csum(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित लघु fcs;
-	अचिन्हित अक्षर v;
+static void
+csum(void)
+{
+	unsigned int i;
+	unsigned short fcs;
+	unsigned char v;
 
-	अगर (!scanhex(&adrs))
-		वापस;
-	अगर (!scanhex(&ncsum))
-		वापस;
+	if (!scanhex(&adrs))
+		return;
+	if (!scanhex(&ncsum))
+		return;
 	fcs = 0xffff;
-	क्रम (i = 0; i < ncsum; ++i) अणु
-		अगर (mपढ़ो(adrs+i, &v, 1) == 0) अणु
-			म_लिखो("csum stopped at "REG"\n", adrs+i);
-			अवरोध;
-		पूर्ण
+	for (i = 0; i < ncsum; ++i) {
+		if (mread(adrs+i, &v, 1) == 0) {
+			printf("csum stopped at "REG"\n", adrs+i);
+			break;
+		}
 		fcs = FCS(fcs, v);
-	पूर्ण
-	म_लिखो("%x\n", fcs);
-पूर्ण
+	}
+	printf("%x\n", fcs);
+}
 
 /*
- * Check अगर this is a suitable place to put a अवरोधpoपूर्णांक.
+ * Check if this is a suitable place to put a breakpoint.
  */
-अटल दीर्घ check_bp_loc(अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा ppc_inst instr;
+static long check_bp_loc(unsigned long addr)
+{
+	struct ppc_inst instr;
 
 	addr &= ~3;
-	अगर (!is_kernel_addr(addr)) अणु
-		म_लिखो("Breakpoints may only be placed at kernel addresses\n");
-		वापस 0;
-	पूर्ण
-	अगर (!mपढ़ो_instr(addr, &instr)) अणु
-		म_लिखो("Can't read instruction at address %lx\n", addr);
-		वापस 0;
-	पूर्ण
-	अगर (IS_MTMSRD(instr) || IS_RFID(instr)) अणु
-		म_लिखो("Breakpoints may not be placed on mtmsrd or rfid "
+	if (!is_kernel_addr(addr)) {
+		printf("Breakpoints may only be placed at kernel addresses\n");
+		return 0;
+	}
+	if (!mread_instr(addr, &instr)) {
+		printf("Can't read instruction at address %lx\n", addr);
+		return 0;
+	}
+	if (IS_MTMSRD(instr) || IS_RFID(instr)) {
+		printf("Breakpoints may not be placed on mtmsrd or rfid "
 		       "instructions\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 
-अटल पूर्णांक find_मुक्त_data_bpt(व्योम)
-अणु
-	पूर्णांक i;
+static int find_free_data_bpt(void)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
-		अगर (!dabr[i].enabled)
-			वापस i;
-	पूर्ण
-	म_लिखो("Couldn't find free breakpoint register\n");
-	वापस -1;
-पूर्ण
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (!dabr[i].enabled)
+			return i;
+	}
+	printf("Couldn't find free breakpoint register\n");
+	return -1;
+}
 
-अटल व्योम prपूर्णांक_data_bpts(व्योम)
-अणु
-	पूर्णांक i;
+static void print_data_bpts(void)
+{
+	int i;
 
-	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
-		अगर (!dabr[i].enabled)
-			जारी;
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (!dabr[i].enabled)
+			continue;
 
-		म_लिखो("   data   "REG"  [", dabr[i].address);
-		अगर (dabr[i].enabled & 1)
-			म_लिखो("r");
-		अगर (dabr[i].enabled & 2)
-			म_लिखो("w");
-		म_लिखो("]\n");
-	पूर्ण
-पूर्ण
+		printf("   data   "REG"  [", dabr[i].address);
+		if (dabr[i].enabled & 1)
+			printf("r");
+		if (dabr[i].enabled & 2)
+			printf("w");
+		printf("]\n");
+	}
+}
 
-अटल अक्षर *अवरोधpoपूर्णांक_help_string =
+static char *breakpoint_help_string =
     "Breakpoint command usage:\n"
     "b                show breakpoints\n"
     "b <addr> [cnt]   set breakpoint at given instr addr\n"
@@ -1424,472 +1423,472 @@ csum(व्योम)
     "bd <addr> [cnt]  set hardware data breakpoint\n"
     "";
 
-अटल व्योम
-bpt_cmds(व्योम)
-अणु
-	पूर्णांक cmd;
-	अचिन्हित दीर्घ a;
-	पूर्णांक i;
-	काष्ठा bpt *bp;
+static void
+bpt_cmds(void)
+{
+	int cmd;
+	unsigned long a;
+	int i;
+	struct bpt *bp;
 
-	cmd = inअक्षर();
+	cmd = inchar();
 
-	चयन (cmd) अणु
-	अटल स्थिर अक्षर badaddr[] = "Only kernel addresses are permitted for breakpoints\n";
-	पूर्णांक mode;
-	हाल 'd':	/* bd - hardware data अवरोधpoपूर्णांक */
-		अगर (xmon_is_ro) अणु
-			म_लिखो(xmon_ro_msg);
-			अवरोध;
-		पूर्ण
-		अगर (!ppc_अवरोधpoपूर्णांक_available()) अणु
-			म_लिखो("Hardware data breakpoint not supported on this cpu\n");
-			अवरोध;
-		पूर्ण
-		i = find_मुक्त_data_bpt();
-		अगर (i < 0)
-			अवरोध;
+	switch (cmd) {
+	static const char badaddr[] = "Only kernel addresses are permitted for breakpoints\n";
+	int mode;
+	case 'd':	/* bd - hardware data breakpoint */
+		if (xmon_is_ro) {
+			printf(xmon_ro_msg);
+			break;
+		}
+		if (!ppc_breakpoint_available()) {
+			printf("Hardware data breakpoint not supported on this cpu\n");
+			break;
+		}
+		i = find_free_data_bpt();
+		if (i < 0)
+			break;
 		mode = 7;
-		cmd = inअक्षर();
-		अगर (cmd == 'r')
+		cmd = inchar();
+		if (cmd == 'r')
 			mode = 5;
-		अन्यथा अगर (cmd == 'w')
+		else if (cmd == 'w')
 			mode = 6;
-		अन्यथा
+		else
 			termch = cmd;
 		dabr[i].address = 0;
 		dabr[i].enabled = 0;
-		अगर (scanhex(&dabr[i].address)) अणु
-			अगर (!is_kernel_addr(dabr[i].address)) अणु
-				म_लिखो(badaddr);
-				अवरोध;
-			पूर्ण
+		if (scanhex(&dabr[i].address)) {
+			if (!is_kernel_addr(dabr[i].address)) {
+				printf(badaddr);
+				break;
+			}
 			dabr[i].address &= ~HW_BRK_TYPE_DABR;
 			dabr[i].enabled = mode | BP_DABR;
-		पूर्ण
+		}
 
-		क्रमce_enable_xmon();
-		अवरोध;
+		force_enable_xmon();
+		break;
 
-	हाल 'i':	/* bi - hardware instr अवरोधpoपूर्णांक */
-		अगर (xmon_is_ro) अणु
-			म_लिखो(xmon_ro_msg);
-			अवरोध;
-		पूर्ण
-		अगर (!cpu_has_feature(CPU_FTR_ARCH_207S)) अणु
-			म_लिखो("Hardware instruction breakpoint "
+	case 'i':	/* bi - hardware instr breakpoint */
+		if (xmon_is_ro) {
+			printf(xmon_ro_msg);
+			break;
+		}
+		if (!cpu_has_feature(CPU_FTR_ARCH_207S)) {
+			printf("Hardware instruction breakpoint "
 			       "not supported on this cpu\n");
-			अवरोध;
-		पूर्ण
-		अगर (iabr) अणु
+			break;
+		}
+		if (iabr) {
 			iabr->enabled &= ~BP_CIABR;
-			iabr = शून्य;
-		पूर्ण
-		अगर (!scanhex(&a))
-			अवरोध;
-		अगर (!check_bp_loc(a))
-			अवरोध;
-		bp = new_अवरोधpoपूर्णांक(a);
-		अगर (bp != शून्य) अणु
+			iabr = NULL;
+		}
+		if (!scanhex(&a))
+			break;
+		if (!check_bp_loc(a))
+			break;
+		bp = new_breakpoint(a);
+		if (bp != NULL) {
 			bp->enabled |= BP_CIABR;
 			iabr = bp;
-			क्रमce_enable_xmon();
-		पूर्ण
-		अवरोध;
+			force_enable_xmon();
+		}
+		break;
 
-	हाल 'c':
-		अगर (!scanhex(&a)) अणु
-			/* clear all अवरोधpoपूर्णांकs */
-			क्रम (i = 0; i < NBPTS; ++i)
+	case 'c':
+		if (!scanhex(&a)) {
+			/* clear all breakpoints */
+			for (i = 0; i < NBPTS; ++i)
 				bpts[i].enabled = 0;
-			iabr = शून्य;
-			क्रम (i = 0; i < nr_wp_slots(); i++)
+			iabr = NULL;
+			for (i = 0; i < nr_wp_slots(); i++)
 				dabr[i].enabled = 0;
 
-			म_लिखो("All breakpoints cleared\n");
-			अवरोध;
-		पूर्ण
+			printf("All breakpoints cleared\n");
+			break;
+		}
 
-		अगर (a <= NBPTS && a >= 1) अणु
-			/* assume a अवरोधpoपूर्णांक number */
+		if (a <= NBPTS && a >= 1) {
+			/* assume a breakpoint number */
 			bp = &bpts[a-1];	/* bp nums are 1 based */
-		पूर्ण अन्यथा अणु
-			/* assume a अवरोधpoपूर्णांक address */
-			bp = at_अवरोधpoपूर्णांक(a);
-			अगर (bp == शून्य) अणु
-				म_लिखो("No breakpoint at %lx\n", a);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		} else {
+			/* assume a breakpoint address */
+			bp = at_breakpoint(a);
+			if (bp == NULL) {
+				printf("No breakpoint at %lx\n", a);
+				break;
+			}
+		}
 
-		म_लिखो("Cleared breakpoint %tx (", BP_NUM(bp));
-		xmon_prपूर्णांक_symbol(bp->address, " ", ")\n");
+		printf("Cleared breakpoint %tx (", BP_NUM(bp));
+		xmon_print_symbol(bp->address, " ", ")\n");
 		bp->enabled = 0;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		termch = cmd;
 		cmd = skipbl();
-		अगर (cmd == '?') अणु
-			म_लिखो(अवरोधpoपूर्णांक_help_string);
-			अवरोध;
-		पूर्ण
+		if (cmd == '?') {
+			printf(breakpoint_help_string);
+			break;
+		}
 		termch = cmd;
 
-		अगर (xmon_is_ro || !scanhex(&a)) अणु
-			/* prपूर्णांक all अवरोधpoपूर्णांकs */
-			म_लिखो("   type            address\n");
-			prपूर्णांक_data_bpts();
-			क्रम (bp = bpts; bp < &bpts[NBPTS]; ++bp) अणु
-				अगर (!bp->enabled)
-					जारी;
-				म_लिखो("%tx %s   ", BP_NUM(bp),
+		if (xmon_is_ro || !scanhex(&a)) {
+			/* print all breakpoints */
+			printf("   type            address\n");
+			print_data_bpts();
+			for (bp = bpts; bp < &bpts[NBPTS]; ++bp) {
+				if (!bp->enabled)
+					continue;
+				printf("%tx %s   ", BP_NUM(bp),
 				    (bp->enabled & BP_CIABR) ? "inst": "trap");
-				xmon_prपूर्णांक_symbol(bp->address, "  ", "\n");
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				xmon_print_symbol(bp->address, "  ", "\n");
+			}
+			break;
+		}
 
-		अगर (!check_bp_loc(a))
-			अवरोध;
-		bp = new_अवरोधpoपूर्णांक(a);
-		अगर (bp != शून्य) अणु
+		if (!check_bp_loc(a))
+			break;
+		bp = new_breakpoint(a);
+		if (bp != NULL) {
 			bp->enabled |= BP_TRAP;
-			क्रमce_enable_xmon();
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			force_enable_xmon();
+		}
+		break;
+	}
+}
 
-/* Very cheap human name क्रम vector lookup. */
-अटल
-स्थिर अक्षर *getvecname(अचिन्हित दीर्घ vec)
-अणु
-	अक्षर *ret;
+/* Very cheap human name for vector lookup. */
+static
+const char *getvecname(unsigned long vec)
+{
+	char *ret;
 
-	चयन (vec) अणु
-	हाल 0x100:	ret = "(System Reset)"; अवरोध;
-	हाल 0x200:	ret = "(Machine Check)"; अवरोध;
-	हाल 0x300:	ret = "(Data Access)"; अवरोध;
-	हाल 0x380:
-		अगर (radix_enabled())
+	switch (vec) {
+	case 0x100:	ret = "(System Reset)"; break;
+	case 0x200:	ret = "(Machine Check)"; break;
+	case 0x300:	ret = "(Data Access)"; break;
+	case 0x380:
+		if (radix_enabled())
 			ret = "(Data Access Out of Range)";
-		अन्यथा
+		else
 			ret = "(Data SLB Access)";
-		अवरोध;
-	हाल 0x400:	ret = "(Instruction Access)"; अवरोध;
-	हाल 0x480:
-		अगर (radix_enabled())
+		break;
+	case 0x400:	ret = "(Instruction Access)"; break;
+	case 0x480:
+		if (radix_enabled())
 			ret = "(Instruction Access Out of Range)";
-		अन्यथा
+		else
 			ret = "(Instruction SLB Access)";
-		अवरोध;
-	हाल 0x500:	ret = "(Hardware Interrupt)"; अवरोध;
-	हाल 0x600:	ret = "(Alignment)"; अवरोध;
-	हाल 0x700:	ret = "(Program Check)"; अवरोध;
-	हाल 0x800:	ret = "(FPU Unavailable)"; अवरोध;
-	हाल 0x900:	ret = "(Decrementer)"; अवरोध;
-	हाल 0x980:	ret = "(Hypervisor Decrementer)"; अवरोध;
-	हाल 0xa00:	ret = "(Doorbell)"; अवरोध;
-	हाल 0xc00:	ret = "(System Call)"; अवरोध;
-	हाल 0xd00:	ret = "(Single Step)"; अवरोध;
-	हाल 0xe40:	ret = "(Emulation Assist)"; अवरोध;
-	हाल 0xe60:	ret = "(HMI)"; अवरोध;
-	हाल 0xe80:	ret = "(Hypervisor Doorbell)"; अवरोध;
-	हाल 0xf00:	ret = "(Performance Monitor)"; अवरोध;
-	हाल 0xf20:	ret = "(Altivec Unavailable)"; अवरोध;
-	हाल 0x1300:	ret = "(Instruction Breakpoint)"; अवरोध;
-	हाल 0x1500:	ret = "(Denormalisation)"; अवरोध;
-	हाल 0x1700:	ret = "(Altivec Assist)"; अवरोध;
-	हाल 0x3000:	ret = "(System Call Vectored)"; अवरोध;
-	शेष: ret = "";
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	case 0x500:	ret = "(Hardware Interrupt)"; break;
+	case 0x600:	ret = "(Alignment)"; break;
+	case 0x700:	ret = "(Program Check)"; break;
+	case 0x800:	ret = "(FPU Unavailable)"; break;
+	case 0x900:	ret = "(Decrementer)"; break;
+	case 0x980:	ret = "(Hypervisor Decrementer)"; break;
+	case 0xa00:	ret = "(Doorbell)"; break;
+	case 0xc00:	ret = "(System Call)"; break;
+	case 0xd00:	ret = "(Single Step)"; break;
+	case 0xe40:	ret = "(Emulation Assist)"; break;
+	case 0xe60:	ret = "(HMI)"; break;
+	case 0xe80:	ret = "(Hypervisor Doorbell)"; break;
+	case 0xf00:	ret = "(Performance Monitor)"; break;
+	case 0xf20:	ret = "(Altivec Unavailable)"; break;
+	case 0x1300:	ret = "(Instruction Breakpoint)"; break;
+	case 0x1500:	ret = "(Denormalisation)"; break;
+	case 0x1700:	ret = "(Altivec Assist)"; break;
+	case 0x3000:	ret = "(System Call Vectored)"; break;
+	default: ret = "";
+	}
+	return ret;
+}
 
-अटल व्योम get_function_bounds(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ *startp,
-				अचिन्हित दीर्घ *endp)
-अणु
-	अचिन्हित दीर्घ size, offset;
-	स्थिर अक्षर *name;
+static void get_function_bounds(unsigned long pc, unsigned long *startp,
+				unsigned long *endp)
+{
+	unsigned long size, offset;
+	const char *name;
 
 	*startp = *endp = 0;
-	अगर (pc == 0)
-		वापस;
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (pc == 0)
+		return;
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
-		name = kallsyms_lookup(pc, &size, &offset, शून्य, पंचांगpstr);
-		अगर (name != शून्य) अणु
+		name = kallsyms_lookup(pc, &size, &offset, NULL, tmpstr);
+		if (name != NULL) {
 			*startp = pc - offset;
 			*endp = pc - offset + size;
-		पूर्ण
+		}
 		sync();
-	पूर्ण
+	}
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-#घोषणा LRSAVE_OFFSET		(STACK_FRAME_LR_SAVE * माप(अचिन्हित दीर्घ))
-#घोषणा MARKER_OFFSET		(STACK_FRAME_MARKER * माप(अचिन्हित दीर्घ))
+#define LRSAVE_OFFSET		(STACK_FRAME_LR_SAVE * sizeof(unsigned long))
+#define MARKER_OFFSET		(STACK_FRAME_MARKER * sizeof(unsigned long))
 
-अटल व्योम xmon_show_stack(अचिन्हित दीर्घ sp, अचिन्हित दीर्घ lr,
-			    अचिन्हित दीर्घ pc)
-अणु
-	पूर्णांक max_to_prपूर्णांक = 64;
-	अचिन्हित दीर्घ ip;
-	अचिन्हित दीर्घ newsp;
-	अचिन्हित दीर्घ marker;
-	काष्ठा pt_regs regs;
+static void xmon_show_stack(unsigned long sp, unsigned long lr,
+			    unsigned long pc)
+{
+	int max_to_print = 64;
+	unsigned long ip;
+	unsigned long newsp;
+	unsigned long marker;
+	struct pt_regs regs;
 
-	जबतक (max_to_prपूर्णांक--) अणु
-		अगर (!is_kernel_addr(sp)) अणु
-			अगर (sp != 0)
-				म_लिखो("SP (%lx) is in userspace\n", sp);
-			अवरोध;
-		पूर्ण
+	while (max_to_print--) {
+		if (!is_kernel_addr(sp)) {
+			if (sp != 0)
+				printf("SP (%lx) is in userspace\n", sp);
+			break;
+		}
 
-		अगर (!mपढ़ो(sp + LRSAVE_OFFSET, &ip, माप(अचिन्हित दीर्घ))
-		    || !mपढ़ो(sp, &newsp, माप(अचिन्हित दीर्घ))) अणु
-			म_लिखो("Couldn't read stack frame at %lx\n", sp);
-			अवरोध;
-		पूर्ण
+		if (!mread(sp + LRSAVE_OFFSET, &ip, sizeof(unsigned long))
+		    || !mread(sp, &newsp, sizeof(unsigned long))) {
+			printf("Couldn't read stack frame at %lx\n", sp);
+			break;
+		}
 
 		/*
-		 * For the first stack frame, try to work out अगर
+		 * For the first stack frame, try to work out if
 		 * LR and/or the saved LR value in the bottommost
 		 * stack frame are valid.
 		 */
-		अगर ((pc | lr) != 0) अणु
-			अचिन्हित दीर्घ fnstart, fnend;
-			अचिन्हित दीर्घ nextip;
-			पूर्णांक prपूर्णांकip = 1;
+		if ((pc | lr) != 0) {
+			unsigned long fnstart, fnend;
+			unsigned long nextip;
+			int printip = 1;
 
 			get_function_bounds(pc, &fnstart, &fnend);
 			nextip = 0;
-			अगर (newsp > sp)
-				mपढ़ो(newsp + LRSAVE_OFFSET, &nextip,
-				      माप(अचिन्हित दीर्घ));
-			अगर (lr == ip) अणु
-				अगर (!is_kernel_addr(lr)
+			if (newsp > sp)
+				mread(newsp + LRSAVE_OFFSET, &nextip,
+				      sizeof(unsigned long));
+			if (lr == ip) {
+				if (!is_kernel_addr(lr)
 				    || (fnstart <= lr && lr < fnend))
-					prपूर्णांकip = 0;
-			पूर्ण अन्यथा अगर (lr == nextip) अणु
-				prपूर्णांकip = 0;
-			पूर्ण अन्यथा अगर (is_kernel_addr(lr)
-				   && !(fnstart <= lr && lr < fnend)) अणु
-				म_लिखो("[link register   ] ");
-				xmon_prपूर्णांक_symbol(lr, " ", "\n");
-			पूर्ण
-			अगर (prपूर्णांकip) अणु
-				म_लिखो("["REG"] ", sp);
-				xmon_prपूर्णांक_symbol(ip, " ", " (unreliable)\n");
-			पूर्ण
+					printip = 0;
+			} else if (lr == nextip) {
+				printip = 0;
+			} else if (is_kernel_addr(lr)
+				   && !(fnstart <= lr && lr < fnend)) {
+				printf("[link register   ] ");
+				xmon_print_symbol(lr, " ", "\n");
+			}
+			if (printip) {
+				printf("["REG"] ", sp);
+				xmon_print_symbol(ip, " ", " (unreliable)\n");
+			}
 			pc = lr = 0;
 
-		पूर्ण अन्यथा अणु
-			म_लिखो("["REG"] ", sp);
-			xmon_prपूर्णांक_symbol(ip, " ", "\n");
-		पूर्ण
+		} else {
+			printf("["REG"] ", sp);
+			xmon_print_symbol(ip, " ", "\n");
+		}
 
-		/* Look क्रम "regshere" marker to see अगर this is
+		/* Look for "regshere" marker to see if this is
 		   an exception frame. */
-		अगर (mपढ़ो(sp + MARKER_OFFSET, &marker, माप(अचिन्हित दीर्घ))
-		    && marker == STACK_FRAME_REGS_MARKER) अणु
-			अगर (mपढ़ो(sp + STACK_FRAME_OVERHEAD, &regs, माप(regs))
-			    != माप(regs)) अणु
-				म_लिखो("Couldn't read registers at %lx\n",
+		if (mread(sp + MARKER_OFFSET, &marker, sizeof(unsigned long))
+		    && marker == STACK_FRAME_REGS_MARKER) {
+			if (mread(sp + STACK_FRAME_OVERHEAD, &regs, sizeof(regs))
+			    != sizeof(regs)) {
+				printf("Couldn't read registers at %lx\n",
 				       sp + STACK_FRAME_OVERHEAD);
-				अवरोध;
-			पूर्ण
-			म_लिखो("--- Exception: %lx %s at ", regs.trap,
+				break;
+			}
+			printf("--- Exception: %lx %s at ", regs.trap,
 			       getvecname(TRAP(&regs)));
 			pc = regs.nip;
 			lr = regs.link;
-			xmon_prपूर्णांक_symbol(pc, " ", "\n");
-		पूर्ण
+			xmon_print_symbol(pc, " ", "\n");
+		}
 
-		अगर (newsp == 0)
-			अवरोध;
+		if (newsp == 0)
+			break;
 
 		sp = newsp;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम backtrace(काष्ठा pt_regs *excp)
-अणु
-	अचिन्हित दीर्घ sp;
+static void backtrace(struct pt_regs *excp)
+{
+	unsigned long sp;
 
-	अगर (scanhex(&sp))
+	if (scanhex(&sp))
 		xmon_show_stack(sp, 0, 0);
-	अन्यथा
+	else
 		xmon_show_stack(excp->gpr[1], excp->link, excp->nip);
 	scannl();
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_bug_trap(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित CONFIG_BUG
-	स्थिर काष्ठा bug_entry *bug;
-	अचिन्हित दीर्घ addr;
+static void print_bug_trap(struct pt_regs *regs)
+{
+#ifdef CONFIG_BUG
+	const struct bug_entry *bug;
+	unsigned long addr;
 
-	अगर (regs->msr & MSR_PR)
-		वापस;		/* not in kernel */
-	addr = regs->nip;	/* address of trap inकाष्ठाion */
-	अगर (!is_kernel_addr(addr))
-		वापस;
+	if (regs->msr & MSR_PR)
+		return;		/* not in kernel */
+	addr = regs->nip;	/* address of trap instruction */
+	if (!is_kernel_addr(addr))
+		return;
 	bug = find_bug(regs->nip);
-	अगर (bug == शून्य)
-		वापस;
-	अगर (is_warning_bug(bug))
-		वापस;
+	if (bug == NULL)
+		return;
+	if (is_warning_bug(bug))
+		return;
 
-#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
-	म_लिखो("kernel BUG at %s:%u!\n",
-	       (अक्षर *)bug + bug->file_disp, bug->line);
-#अन्यथा
-	म_लिखो("kernel BUG at %px!\n", (व्योम *)bug + bug->bug_addr_disp);
-#पूर्ण_अगर
-#पूर्ण_अगर /* CONFIG_BUG */
-पूर्ण
+#ifdef CONFIG_DEBUG_BUGVERBOSE
+	printf("kernel BUG at %s:%u!\n",
+	       (char *)bug + bug->file_disp, bug->line);
+#else
+	printf("kernel BUG at %px!\n", (void *)bug + bug->bug_addr_disp);
+#endif
+#endif /* CONFIG_BUG */
+}
 
-अटल व्योम excprपूर्णांक(काष्ठा pt_regs *fp)
-अणु
-	अचिन्हित दीर्घ trap;
+static void excprint(struct pt_regs *fp)
+{
+	unsigned long trap;
 
-#अगर_घोषित CONFIG_SMP
-	म_लिखो("cpu 0x%x: ", smp_processor_id());
-#पूर्ण_अगर /* CONFIG_SMP */
+#ifdef CONFIG_SMP
+	printf("cpu 0x%x: ", smp_processor_id());
+#endif /* CONFIG_SMP */
 
 	trap = TRAP(fp);
-	म_लिखो("Vector: %lx %s at [%px]\n", fp->trap, getvecname(trap), fp);
-	म_लिखो("    pc: ");
-	xmon_prपूर्णांक_symbol(fp->nip, ": ", "\n");
+	printf("Vector: %lx %s at [%px]\n", fp->trap, getvecname(trap), fp);
+	printf("    pc: ");
+	xmon_print_symbol(fp->nip, ": ", "\n");
 
-	म_लिखो("    lr: ");
-	xmon_prपूर्णांक_symbol(fp->link, ": ", "\n");
+	printf("    lr: ");
+	xmon_print_symbol(fp->link, ": ", "\n");
 
-	म_लिखो("    sp: %lx\n", fp->gpr[1]);
-	म_लिखो("   msr: %lx\n", fp->msr);
+	printf("    sp: %lx\n", fp->gpr[1]);
+	printf("   msr: %lx\n", fp->msr);
 
-	अगर (trap == INTERRUPT_DATA_STORAGE ||
+	if (trap == INTERRUPT_DATA_STORAGE ||
 	    trap == INTERRUPT_DATA_SEGMENT ||
 	    trap == INTERRUPT_ALIGNMENT ||
-	    trap == INTERRUPT_MACHINE_CHECK) अणु
-		म_लिखो("   dar: %lx\n", fp->dar);
-		अगर (trap != INTERRUPT_DATA_SEGMENT)
-			म_लिखो(" dsisr: %lx\n", fp->dsisr);
-	पूर्ण
+	    trap == INTERRUPT_MACHINE_CHECK) {
+		printf("   dar: %lx\n", fp->dar);
+		if (trap != INTERRUPT_DATA_SEGMENT)
+			printf(" dsisr: %lx\n", fp->dsisr);
+	}
 
-	म_लिखो("  current = 0x%px\n", current);
-#अगर_घोषित CONFIG_PPC64
-	म_लिखो("  paca    = 0x%px\t irqmask: 0x%02x\t irq_happened: 0x%02x\n",
+	printf("  current = 0x%px\n", current);
+#ifdef CONFIG_PPC64
+	printf("  paca    = 0x%px\t irqmask: 0x%02x\t irq_happened: 0x%02x\n",
 	       local_paca, local_paca->irq_soft_mask, local_paca->irq_happened);
-#पूर्ण_अगर
-	अगर (current) अणु
-		म_लिखो("    pid   = %d, comm = %s\n",
+#endif
+	if (current) {
+		printf("    pid   = %d, comm = %s\n",
 		       current->pid, current->comm);
-	पूर्ण
+	}
 
-	अगर (trap == INTERRUPT_PROGRAM)
-		prपूर्णांक_bug_trap(fp);
+	if (trap == INTERRUPT_PROGRAM)
+		print_bug_trap(fp);
 
-	म_लिखो(linux_banner);
-पूर्ण
+	printf(linux_banner);
+}
 
-अटल व्योम prregs(काष्ठा pt_regs *fp)
-अणु
-	पूर्णांक n, trap;
-	अचिन्हित दीर्घ base;
-	काष्ठा pt_regs regs;
+static void prregs(struct pt_regs *fp)
+{
+	int n, trap;
+	unsigned long base;
+	struct pt_regs regs;
 
-	अगर (scanhex(&base)) अणु
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (scanhex(&base)) {
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
-			regs = *(काष्ठा pt_regs *)base;
+			regs = *(struct pt_regs *)base;
 			sync();
 			__delay(200);
-		पूर्ण अन्यथा अणु
+		} else {
 			catch_memory_errors = 0;
-			म_लिखो("*** Error reading registers from "REG"\n",
+			printf("*** Error reading registers from "REG"\n",
 			       base);
-			वापस;
-		पूर्ण
+			return;
+		}
 		catch_memory_errors = 0;
 		fp = &regs;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_PPC64
-#घोषणा R_PER_LINE 2
-#अन्यथा
-#घोषणा R_PER_LINE 4
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#define R_PER_LINE 2
+#else
+#define R_PER_LINE 4
+#endif
 
-	क्रम (n = 0; n < 32; ++n) अणु
-		म_लिखो("R%.2d = "REG"%s", n, fp->gpr[n],
+	for (n = 0; n < 32; ++n) {
+		printf("R%.2d = "REG"%s", n, fp->gpr[n],
 			(n % R_PER_LINE) == R_PER_LINE - 1 ? "\n" : "   ");
-	पूर्ण
+	}
 
-	म_लिखो("pc  = ");
-	xmon_prपूर्णांक_symbol(fp->nip, " ", "\n");
-	अगर (!trap_is_syscall(fp) && cpu_has_feature(CPU_FTR_CFAR)) अणु
-		म_लिखो("cfar= ");
-		xmon_prपूर्णांक_symbol(fp->orig_gpr3, " ", "\n");
-	पूर्ण
-	म_लिखो("lr  = ");
-	xmon_prपूर्णांक_symbol(fp->link, " ", "\n");
-	म_लिखो("msr = "REG"   cr  = %.8lx\n", fp->msr, fp->ccr);
-	म_लिखो("ctr = "REG"   xer = "REG"   trap = %4lx\n",
+	printf("pc  = ");
+	xmon_print_symbol(fp->nip, " ", "\n");
+	if (!trap_is_syscall(fp) && cpu_has_feature(CPU_FTR_CFAR)) {
+		printf("cfar= ");
+		xmon_print_symbol(fp->orig_gpr3, " ", "\n");
+	}
+	printf("lr  = ");
+	xmon_print_symbol(fp->link, " ", "\n");
+	printf("msr = "REG"   cr  = %.8lx\n", fp->msr, fp->ccr);
+	printf("ctr = "REG"   xer = "REG"   trap = %4lx\n",
 	       fp->ctr, fp->xer, fp->trap);
 	trap = TRAP(fp);
-	अगर (trap == INTERRUPT_DATA_STORAGE ||
+	if (trap == INTERRUPT_DATA_STORAGE ||
 	    trap == INTERRUPT_DATA_SEGMENT ||
 	    trap == INTERRUPT_ALIGNMENT)
-		म_लिखो("dar = "REG"   dsisr = %.8lx\n", fp->dar, fp->dsisr);
-पूर्ण
+		printf("dar = "REG"   dsisr = %.8lx\n", fp->dar, fp->dsisr);
+}
 
-अटल व्योम cacheflush(व्योम)
-अणु
-	पूर्णांक cmd;
-	अचिन्हित दीर्घ nflush;
+static void cacheflush(void)
+{
+	int cmd;
+	unsigned long nflush;
 
-	cmd = inअक्षर();
-	अगर (cmd != 'i')
+	cmd = inchar();
+	if (cmd != 'i')
 		termch = cmd;
-	scanhex((व्योम *)&adrs);
-	अगर (termch != '\n')
+	scanhex((void *)&adrs);
+	if (termch != '\n')
 		termch = 0;
 	nflush = 1;
 	scanhex(&nflush);
 	nflush = (nflush + L1_CACHE_BYTES - 1) / L1_CACHE_BYTES;
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
 
-		अगर (cmd != 'i' || IS_ENABLED(CONFIG_PPC_BOOK3S_64)) अणु
-			क्रम (; nflush > 0; --nflush, adrs += L1_CACHE_BYTES)
-				cflush((व्योम *) adrs);
-		पूर्ण अन्यथा अणु
-			क्रम (; nflush > 0; --nflush, adrs += L1_CACHE_BYTES)
-				cinval((व्योम *) adrs);
-		पूर्ण
+		if (cmd != 'i' || IS_ENABLED(CONFIG_PPC_BOOK3S_64)) {
+			for (; nflush > 0; --nflush, adrs += L1_CACHE_BYTES)
+				cflush((void *) adrs);
+		} else {
+			for (; nflush > 0; --nflush, adrs += L1_CACHE_BYTES)
+				cinval((void *) adrs);
+		}
 		sync();
-		/* रुको a little जबतक to see अगर we get a machine check */
+		/* wait a little while to see if we get a machine check */
 		__delay(200);
-	पूर्ण
+	}
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-बाह्य अचिन्हित दीर्घ xmon_mfspr(पूर्णांक spr, अचिन्हित दीर्घ शेष_value);
-बाह्य व्योम xmon_mtspr(पूर्णांक spr, अचिन्हित दीर्घ value);
+extern unsigned long xmon_mfspr(int spr, unsigned long default_value);
+extern void xmon_mtspr(int spr, unsigned long value);
 
-अटल पूर्णांक
-पढ़ो_spr(पूर्णांक n, अचिन्हित दीर्घ *vp)
-अणु
-	अचिन्हित दीर्घ ret = -1UL;
-	पूर्णांक ok = 0;
+static int
+read_spr(int n, unsigned long *vp)
+{
+	unsigned long ret = -1UL;
+	int ok = 0;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_spr_faults = 1;
 		sync();
 
@@ -1898,385 +1897,385 @@ bpt_cmds(व्योम)
 		sync();
 		*vp = ret;
 		ok = 1;
-	पूर्ण
+	}
 	catch_spr_faults = 0;
 
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-अटल व्योम
-ग_लिखो_spr(पूर्णांक n, अचिन्हित दीर्घ val)
-अणु
-	अगर (xmon_is_ro) अणु
-		म_लिखो(xmon_ro_msg);
-		वापस;
-	पूर्ण
+static void
+write_spr(int n, unsigned long val)
+{
+	if (xmon_is_ro) {
+		printf(xmon_ro_msg);
+		return;
+	}
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_spr_faults = 1;
 		sync();
 
 		xmon_mtspr(n, val);
 
 		sync();
-	पूर्ण अन्यथा अणु
-		म_लिखो("SPR 0x%03x (%4d) Faulted during write\n", n, n);
-	पूर्ण
+	} else {
+		printf("SPR 0x%03x (%4d) Faulted during write\n", n, n);
+	}
 	catch_spr_faults = 0;
-पूर्ण
+}
 
-अटल व्योम dump_206_sprs(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_206))
-		वापस;
+static void dump_206_sprs(void)
+{
+#ifdef CONFIG_PPC64
+	if (!cpu_has_feature(CPU_FTR_ARCH_206))
+		return;
 
 	/* Actually some of these pre-date 2.06, but whatevs */
 
-	म_लिखो("srr0   = %.16lx  srr1  = %.16lx dsisr  = %.8lx\n",
+	printf("srr0   = %.16lx  srr1  = %.16lx dsisr  = %.8lx\n",
 		mfspr(SPRN_SRR0), mfspr(SPRN_SRR1), mfspr(SPRN_DSISR));
-	म_लिखो("dscr   = %.16lx  ppr   = %.16lx pir    = %.8lx\n",
+	printf("dscr   = %.16lx  ppr   = %.16lx pir    = %.8lx\n",
 		mfspr(SPRN_DSCR), mfspr(SPRN_PPR), mfspr(SPRN_PIR));
-	म_लिखो("amr    = %.16lx  uamor = %.16lx\n",
+	printf("amr    = %.16lx  uamor = %.16lx\n",
 		mfspr(SPRN_AMR), mfspr(SPRN_UAMOR));
 
-	अगर (!(mfmsr() & MSR_HV))
-		वापस;
+	if (!(mfmsr() & MSR_HV))
+		return;
 
-	म_लिखो("sdr1   = %.16lx  hdar  = %.16lx hdsisr = %.8lx\n",
+	printf("sdr1   = %.16lx  hdar  = %.16lx hdsisr = %.8lx\n",
 		mfspr(SPRN_SDR1), mfspr(SPRN_HDAR), mfspr(SPRN_HDSISR));
-	म_लिखो("hsrr0  = %.16lx hsrr1  = %.16lx hdec   = %.16lx\n",
+	printf("hsrr0  = %.16lx hsrr1  = %.16lx hdec   = %.16lx\n",
 		mfspr(SPRN_HSRR0), mfspr(SPRN_HSRR1), mfspr(SPRN_HDEC));
-	म_लिखो("lpcr   = %.16lx  pcr   = %.16lx lpidr  = %.8lx\n",
+	printf("lpcr   = %.16lx  pcr   = %.16lx lpidr  = %.8lx\n",
 		mfspr(SPRN_LPCR), mfspr(SPRN_PCR), mfspr(SPRN_LPID));
-	म_लिखो("hsprg0 = %.16lx hsprg1 = %.16lx amor   = %.16lx\n",
+	printf("hsprg0 = %.16lx hsprg1 = %.16lx amor   = %.16lx\n",
 		mfspr(SPRN_HSPRG0), mfspr(SPRN_HSPRG1), mfspr(SPRN_AMOR));
-	म_लिखो("dabr   = %.16lx dabrx  = %.16lx\n",
+	printf("dabr   = %.16lx dabrx  = %.16lx\n",
 		mfspr(SPRN_DABR), mfspr(SPRN_DABRX));
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम dump_207_sprs(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
-	अचिन्हित दीर्घ msr;
+static void dump_207_sprs(void)
+{
+#ifdef CONFIG_PPC64
+	unsigned long msr;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_207S))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
+		return;
 
-	म_लिखो("dpdes  = %.16lx  tir   = %.16lx cir    = %.8lx\n",
+	printf("dpdes  = %.16lx  tir   = %.16lx cir    = %.8lx\n",
 		mfspr(SPRN_DPDES), mfspr(SPRN_TIR), mfspr(SPRN_CIR));
 
-	म_लिखो("fscr   = %.16lx  tar   = %.16lx pspb   = %.8lx\n",
+	printf("fscr   = %.16lx  tar   = %.16lx pspb   = %.8lx\n",
 		mfspr(SPRN_FSCR), mfspr(SPRN_TAR), mfspr(SPRN_PSPB));
 
 	msr = mfmsr();
-	अगर (msr & MSR_TM) अणु
-		/* Only अगर TM has been enabled in the kernel */
-		म_लिखो("tfhar  = %.16lx  tfiar = %.16lx texasr = %.16lx\n",
+	if (msr & MSR_TM) {
+		/* Only if TM has been enabled in the kernel */
+		printf("tfhar  = %.16lx  tfiar = %.16lx texasr = %.16lx\n",
 			mfspr(SPRN_TFHAR), mfspr(SPRN_TFIAR),
 			mfspr(SPRN_TEXASR));
-	पूर्ण
+	}
 
-	म_लिखो("mmcr0  = %.16lx  mmcr1 = %.16lx mmcr2  = %.16lx\n",
+	printf("mmcr0  = %.16lx  mmcr1 = %.16lx mmcr2  = %.16lx\n",
 		mfspr(SPRN_MMCR0), mfspr(SPRN_MMCR1), mfspr(SPRN_MMCR2));
-	म_लिखो("pmc1   = %.8lx pmc2 = %.8lx  pmc3 = %.8lx  pmc4   = %.8lx\n",
+	printf("pmc1   = %.8lx pmc2 = %.8lx  pmc3 = %.8lx  pmc4   = %.8lx\n",
 		mfspr(SPRN_PMC1), mfspr(SPRN_PMC2),
 		mfspr(SPRN_PMC3), mfspr(SPRN_PMC4));
-	म_लिखो("mmcra  = %.16lx   siar = %.16lx pmc5   = %.8lx\n",
+	printf("mmcra  = %.16lx   siar = %.16lx pmc5   = %.8lx\n",
 		mfspr(SPRN_MMCRA), mfspr(SPRN_SIAR), mfspr(SPRN_PMC5));
-	म_लिखो("sdar   = %.16lx   sier = %.16lx pmc6   = %.8lx\n",
+	printf("sdar   = %.16lx   sier = %.16lx pmc6   = %.8lx\n",
 		mfspr(SPRN_SDAR), mfspr(SPRN_SIER), mfspr(SPRN_PMC6));
-	म_लिखो("ebbhr  = %.16lx  ebbrr = %.16lx bescr  = %.16lx\n",
+	printf("ebbhr  = %.16lx  ebbrr = %.16lx bescr  = %.16lx\n",
 		mfspr(SPRN_EBBHR), mfspr(SPRN_EBBRR), mfspr(SPRN_BESCR));
-	म_लिखो("iamr   = %.16lx\n", mfspr(SPRN_IAMR));
+	printf("iamr   = %.16lx\n", mfspr(SPRN_IAMR));
 
-	अगर (!(msr & MSR_HV))
-		वापस;
+	if (!(msr & MSR_HV))
+		return;
 
-	म_लिखो("hfscr  = %.16lx  dhdes = %.16lx rpr    = %.16lx\n",
+	printf("hfscr  = %.16lx  dhdes = %.16lx rpr    = %.16lx\n",
 		mfspr(SPRN_HFSCR), mfspr(SPRN_DHDES), mfspr(SPRN_RPR));
-	म_लिखो("dawr0  = %.16lx dawrx0 = %.16lx\n",
+	printf("dawr0  = %.16lx dawrx0 = %.16lx\n",
 	       mfspr(SPRN_DAWR0), mfspr(SPRN_DAWRX0));
-	अगर (nr_wp_slots() > 1) अणु
-		म_लिखो("dawr1  = %.16lx dawrx1 = %.16lx\n",
+	if (nr_wp_slots() > 1) {
+		printf("dawr1  = %.16lx dawrx1 = %.16lx\n",
 		       mfspr(SPRN_DAWR1), mfspr(SPRN_DAWRX1));
-	पूर्ण
-	म_लिखो("ciabr  = %.16lx\n", mfspr(SPRN_CIABR));
-#पूर्ण_अगर
-पूर्ण
+	}
+	printf("ciabr  = %.16lx\n", mfspr(SPRN_CIABR));
+#endif
+}
 
-अटल व्योम dump_300_sprs(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
+static void dump_300_sprs(void)
+{
+#ifdef CONFIG_PPC64
 	bool hv = mfmsr() & MSR_HV;
 
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_ARCH_300))
+		return;
 
-	म_लिखो("pidr   = %.16lx  tidr  = %.16lx\n",
+	printf("pidr   = %.16lx  tidr  = %.16lx\n",
 		mfspr(SPRN_PID), mfspr(SPRN_TIDR));
-	म_लिखो("psscr  = %.16lx\n",
+	printf("psscr  = %.16lx\n",
 		hv ? mfspr(SPRN_PSSCR) : mfspr(SPRN_PSSCR_PR));
 
-	अगर (!hv)
-		वापस;
+	if (!hv)
+		return;
 
-	म_लिखो("ptcr   = %.16lx  asdr  = %.16lx\n",
+	printf("ptcr   = %.16lx  asdr  = %.16lx\n",
 		mfspr(SPRN_PTCR), mfspr(SPRN_ASDR));
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम dump_310_sprs(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC64
-	अगर (!cpu_has_feature(CPU_FTR_ARCH_31))
-		वापस;
+static void dump_310_sprs(void)
+{
+#ifdef CONFIG_PPC64
+	if (!cpu_has_feature(CPU_FTR_ARCH_31))
+		return;
 
-	म_लिखो("mmcr3  = %.16lx, sier2  = %.16lx, sier3  = %.16lx\n",
+	printf("mmcr3  = %.16lx, sier2  = %.16lx, sier3  = %.16lx\n",
 		mfspr(SPRN_MMCR3), mfspr(SPRN_SIER2), mfspr(SPRN_SIER3));
 
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम dump_one_spr(पूर्णांक spr, bool show_unimplemented)
-अणु
-	अचिन्हित दीर्घ val;
+static void dump_one_spr(int spr, bool show_unimplemented)
+{
+	unsigned long val;
 
 	val = 0xdeadbeef;
-	अगर (!पढ़ो_spr(spr, &val)) अणु
-		म_लिखो("SPR 0x%03x (%4d) Faulted during read\n", spr, spr);
-		वापस;
-	पूर्ण
+	if (!read_spr(spr, &val)) {
+		printf("SPR 0x%03x (%4d) Faulted during read\n", spr, spr);
+		return;
+	}
 
-	अगर (val == 0xdeadbeef) अणु
-		/* Looks like पढ़ो was a nop, confirm */
+	if (val == 0xdeadbeef) {
+		/* Looks like read was a nop, confirm */
 		val = 0x0badcafe;
-		अगर (!पढ़ो_spr(spr, &val)) अणु
-			म_लिखो("SPR 0x%03x (%4d) Faulted during read\n", spr, spr);
-			वापस;
-		पूर्ण
+		if (!read_spr(spr, &val)) {
+			printf("SPR 0x%03x (%4d) Faulted during read\n", spr, spr);
+			return;
+		}
 
-		अगर (val == 0x0badcafe) अणु
-			अगर (show_unimplemented)
-				म_लिखो("SPR 0x%03x (%4d) Unimplemented\n", spr, spr);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (val == 0x0badcafe) {
+			if (show_unimplemented)
+				printf("SPR 0x%03x (%4d) Unimplemented\n", spr, spr);
+			return;
+		}
+	}
 
-	म_लिखो("SPR 0x%03x (%4d) = 0x%lx\n", spr, spr, val);
-पूर्ण
+	printf("SPR 0x%03x (%4d) = 0x%lx\n", spr, spr, val);
+}
 
-अटल व्योम super_regs(व्योम)
-अणु
-	अटल अचिन्हित दीर्घ regno;
-	पूर्णांक cmd;
-	पूर्णांक spr;
+static void super_regs(void)
+{
+	static unsigned long regno;
+	int cmd;
+	int spr;
 
 	cmd = skipbl();
 
-	चयन (cmd) अणु
-	हाल '\n': अणु
-		अचिन्हित दीर्घ sp, toc;
-		यंत्र("mr %0,1" : "=r" (sp) :);
-		यंत्र("mr %0,2" : "=r" (toc) :);
+	switch (cmd) {
+	case '\n': {
+		unsigned long sp, toc;
+		asm("mr %0,1" : "=r" (sp) :);
+		asm("mr %0,2" : "=r" (toc) :);
 
-		म_लिखो("msr    = "REG"  sprg0 = "REG"\n",
+		printf("msr    = "REG"  sprg0 = "REG"\n",
 		       mfmsr(), mfspr(SPRN_SPRG0));
-		म_लिखो("pvr    = "REG"  sprg1 = "REG"\n",
+		printf("pvr    = "REG"  sprg1 = "REG"\n",
 		       mfspr(SPRN_PVR), mfspr(SPRN_SPRG1));
-		म_लिखो("dec    = "REG"  sprg2 = "REG"\n",
+		printf("dec    = "REG"  sprg2 = "REG"\n",
 		       mfspr(SPRN_DEC), mfspr(SPRN_SPRG2));
-		म_लिखो("sp     = "REG"  sprg3 = "REG"\n", sp, mfspr(SPRN_SPRG3));
-		म_लिखो("toc    = "REG"  dar   = "REG"\n", toc, mfspr(SPRN_DAR));
+		printf("sp     = "REG"  sprg3 = "REG"\n", sp, mfspr(SPRN_SPRG3));
+		printf("toc    = "REG"  dar   = "REG"\n", toc, mfspr(SPRN_DAR));
 
 		dump_206_sprs();
 		dump_207_sprs();
 		dump_300_sprs();
 		dump_310_sprs();
 
-		वापस;
-	पूर्ण
-	हाल 'w': अणु
-		अचिन्हित दीर्घ val;
+		return;
+	}
+	case 'w': {
+		unsigned long val;
 		scanhex(&regno);
 		val = 0;
-		पढ़ो_spr(regno, &val);
+		read_spr(regno, &val);
 		scanhex(&val);
-		ग_लिखो_spr(regno, val);
+		write_spr(regno, val);
 		dump_one_spr(regno, true);
-		अवरोध;
-	पूर्ण
-	हाल 'r':
+		break;
+	}
+	case 'r':
 		scanhex(&regno);
 		dump_one_spr(regno, true);
-		अवरोध;
-	हाल 'a':
+		break;
+	case 'a':
 		/* dump ALL SPRs */
-		क्रम (spr = 1; spr < 1024; ++spr)
+		for (spr = 1; spr < 1024; ++spr)
 			dump_one_spr(spr, false);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	scannl();
-पूर्ण
+}
 
 /*
- * Stuff क्रम पढ़ोing and writing memory safely
+ * Stuff for reading and writing memory safely
  */
-अटल पूर्णांक
-mपढ़ो(अचिन्हित दीर्घ adrs, व्योम *buf, पूर्णांक size)
-अणु
-	अस्थिर पूर्णांक n;
-	अक्षर *p, *q;
+static int
+mread(unsigned long adrs, void *buf, int size)
+{
+	volatile int n;
+	char *p, *q;
 
 	n = 0;
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
-		p = (अक्षर *)adrs;
-		q = (अक्षर *)buf;
-		चयन (size) अणु
-		हाल 2:
+		p = (char *)adrs;
+		q = (char *)buf;
+		switch (size) {
+		case 2:
 			*(u16 *)q = *(u16 *)p;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			*(u32 *)q = *(u32 *)p;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			*(u64 *)q = *(u64 *)p;
-			अवरोध;
-		शेष:
-			क्रम( ; n < size; ++n) अणु
+			break;
+		default:
+			for( ; n < size; ++n) {
 				*q++ = *p++;
 				sync();
-			पूर्ण
-		पूर्ण
+			}
+		}
 		sync();
-		/* रुको a little जबतक to see अगर we get a machine check */
+		/* wait a little while to see if we get a machine check */
 		__delay(200);
 		n = size;
-	पूर्ण
+	}
 	catch_memory_errors = 0;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक
-mग_लिखो(अचिन्हित दीर्घ adrs, व्योम *buf, पूर्णांक size)
-अणु
-	अस्थिर पूर्णांक n;
-	अक्षर *p, *q;
+static int
+mwrite(unsigned long adrs, void *buf, int size)
+{
+	volatile int n;
+	char *p, *q;
 
 	n = 0;
 
-	अगर (xmon_is_ro) अणु
-		म_लिखो(xmon_ro_msg);
-		वापस n;
-	पूर्ण
+	if (xmon_is_ro) {
+		printf(xmon_ro_msg);
+		return n;
+	}
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
-		p = (अक्षर *) adrs;
-		q = (अक्षर *) buf;
-		चयन (size) अणु
-		हाल 2:
+		p = (char *) adrs;
+		q = (char *) buf;
+		switch (size) {
+		case 2:
 			*(u16 *)p = *(u16 *)q;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			*(u32 *)p = *(u32 *)q;
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			*(u64 *)p = *(u64 *)q;
-			अवरोध;
-		शेष:
-			क्रम ( ; n < size; ++n) अणु
+			break;
+		default:
+			for ( ; n < size; ++n) {
 				*p++ = *q++;
 				sync();
-			पूर्ण
-		पूर्ण
+			}
+		}
 		sync();
-		/* रुको a little जबतक to see अगर we get a machine check */
+		/* wait a little while to see if we get a machine check */
 		__delay(200);
 		n = size;
-	पूर्ण अन्यथा अणु
-		म_लिखो("*** Error writing address "REG"\n", adrs + n);
-	पूर्ण
+	} else {
+		printf("*** Error writing address "REG"\n", adrs + n);
+	}
 	catch_memory_errors = 0;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक
-mपढ़ो_instr(अचिन्हित दीर्घ adrs, काष्ठा ppc_inst *instr)
-अणु
-	अस्थिर पूर्णांक n;
+static int
+mread_instr(unsigned long adrs, struct ppc_inst *instr)
+{
+	volatile int n;
 
 	n = 0;
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
-		*instr = ppc_inst_पढ़ो((काष्ठा ppc_inst *)adrs);
+		*instr = ppc_inst_read((struct ppc_inst *)adrs);
 		sync();
-		/* रुको a little जबतक to see अगर we get a machine check */
+		/* wait a little while to see if we get a machine check */
 		__delay(200);
 		n = ppc_inst_len(*instr);
-	पूर्ण
+	}
 	catch_memory_errors = 0;
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक fault_type;
-अटल पूर्णांक fault_except;
-अटल अक्षर *fault_अक्षरs[] = अणु "--", "**", "##" पूर्ण;
+static int fault_type;
+static int fault_except;
+static char *fault_chars[] = { "--", "**", "##" };
 
-अटल पूर्णांक handle_fault(काष्ठा pt_regs *regs)
-अणु
+static int handle_fault(struct pt_regs *regs)
+{
 	fault_except = TRAP(regs);
-	चयन (TRAP(regs)) अणु
-	हाल 0x200:
+	switch (TRAP(regs)) {
+	case 0x200:
 		fault_type = 0;
-		अवरोध;
-	हाल 0x300:
-	हाल 0x380:
+		break;
+	case 0x300:
+	case 0x380:
 		fault_type = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fault_type = 2;
-	पूर्ण
+	}
 
-	दीर्घ_लाँघ(bus_error_jmp, 1);
+	longjmp(bus_error_jmp, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा SWAP(a, b, t)	((t) = (a), (a) = (b), (b) = (t))
+#define SWAP(a, b, t)	((t) = (a), (a) = (b), (b) = (t))
 
-अटल व्योम
-byterev(अचिन्हित अक्षर *val, पूर्णांक size)
-अणु
-	पूर्णांक t;
+static void
+byterev(unsigned char *val, int size)
+{
+	int t;
 	
-	चयन (size) अणु
-	हाल 2:
+	switch (size) {
+	case 2:
 		SWAP(val[0], val[1], t);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		SWAP(val[0], val[3], t);
 		SWAP(val[1], val[2], t);
-		अवरोध;
-	हाल 8: /* is there really any use क्रम this? */
+		break;
+	case 8: /* is there really any use for this? */
 		SWAP(val[0], val[7], t);
 		SWAP(val[1], val[6], t);
 		SWAP(val[2], val[5], t);
 		SWAP(val[3], val[4], t);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक brev;
-अटल पूर्णांक mnoपढ़ो;
+static int brev;
+static int mnoread;
 
-अटल अक्षर *memex_help_string =
+static char *memex_help_string =
     "Memory examine command usage:\n"
     "m [addr] [flags] examine/change memory\n"
     "  addr is optional.  will start where left off.\n"
@@ -2291,12 +2290,12 @@ byterev(अचिन्हित अक्षर *val, पूर्णांक 
     "NOTE: flags are saved as defaults\n"
     "";
 
-अटल अक्षर *memex_subcmd_help_string =
+static char *memex_subcmd_help_string =
     "Memory examine subcommands:\n"
     "  hexval   write this val to current location\n"
     "  'string' write chars from string to this location\n"
     "  '        increment address\n"
-    "  ^        decrement address\न"
+    "  ^        decrement address\n"
     "  /        increment addr by 0x10.  //=0x100, ///=0x1000, etc\n"
     "  \\        decrement addr by 0x10.  \\\\=0x100, \\\\\\=0x1000, etc\n"
     "  `        clear no-read flag\n"
@@ -2313,231 +2312,231 @@ byterev(अचिन्हित अक्षर *val, पूर्णांक 
     "  x        exit this mode\n"
     "";
 
-अटल व्योम
-memex(व्योम)
-अणु
-	पूर्णांक cmd, inc, i, nslash;
-	अचिन्हित दीर्घ n;
-	अचिन्हित अक्षर val[16];
+static void
+memex(void)
+{
+	int cmd, inc, i, nslash;
+	unsigned long n;
+	unsigned char val[16];
 
-	scanhex((व्योम *)&adrs);
+	scanhex((void *)&adrs);
 	cmd = skipbl();
-	अगर (cmd == '?') अणु
-		म_लिखो(memex_help_string);
-		वापस;
-	पूर्ण अन्यथा अणु
+	if (cmd == '?') {
+		printf(memex_help_string);
+		return;
+	} else {
 		termch = cmd;
-	पूर्ण
+	}
 	last_cmd = "m\n";
-	जबतक ((cmd = skipbl()) != '\n') अणु
-		चयन( cmd )अणु
-		हाल 'b':	size = 1;	अवरोध;
-		हाल 'w':	size = 2;	अवरोध;
-		हाल 'l':	size = 4;	अवरोध;
-		हाल 'd':	size = 8;	अवरोध;
-		हाल 'r': 	brev = !brev;	अवरोध;
-		हाल 'n':	mnoपढ़ो = 1;	अवरोध;
-		हाल '.':	mnoपढ़ो = 0;	अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर( size <= 0 )
+	while ((cmd = skipbl()) != '\n') {
+		switch( cmd ){
+		case 'b':	size = 1;	break;
+		case 'w':	size = 2;	break;
+		case 'l':	size = 4;	break;
+		case 'd':	size = 8;	break;
+		case 'r': 	brev = !brev;	break;
+		case 'n':	mnoread = 1;	break;
+		case '.':	mnoread = 0;	break;
+		}
+	}
+	if( size <= 0 )
 		size = 1;
-	अन्यथा अगर( size > 8 )
+	else if( size > 8 )
 		size = 8;
-	क्रम(;;)अणु
-		अगर (!mnoपढ़ो)
-			n = mपढ़ो(adrs, val, size);
-		म_लिखो(REG"%c", adrs, brev? 'r': ' ');
-		अगर (!mnoपढ़ो) अणु
-			अगर (brev)
+	for(;;){
+		if (!mnoread)
+			n = mread(adrs, val, size);
+		printf(REG"%c", adrs, brev? 'r': ' ');
+		if (!mnoread) {
+			if (brev)
 				byterev(val, size);
-			अक्षर_दो(' ');
-			क्रम (i = 0; i < n; ++i)
-				म_लिखो("%.2x", val[i]);
-			क्रम (; i < size; ++i)
-				म_लिखो("%s", fault_अक्षरs[fault_type]);
-		पूर्ण
-		अक्षर_दो(' ');
+			putchar(' ');
+			for (i = 0; i < n; ++i)
+				printf("%.2x", val[i]);
+			for (; i < size; ++i)
+				printf("%s", fault_chars[fault_type]);
+		}
+		putchar(' ');
 		inc = size;
 		nslash = 0;
-		क्रम(;;)अणु
-			अगर( scanhex(&n) )अणु
-				क्रम (i = 0; i < size; ++i)
+		for(;;){
+			if( scanhex(&n) ){
+				for (i = 0; i < size; ++i)
 					val[i] = n >> (i * 8);
-				अगर (!brev)
+				if (!brev)
 					byterev(val, size);
-				mग_लिखो(adrs, val, size);
+				mwrite(adrs, val, size);
 				inc = size;
-			पूर्ण
+			}
 			cmd = skipbl();
-			अगर (cmd == '\n')
-				अवरोध;
+			if (cmd == '\n')
+				break;
 			inc = 0;
-			चयन (cmd) अणु
-			हाल '\'':
-				क्रम(;;)अणु
-					n = inअक्षर();
-					अगर( n == '\\' )
+			switch (cmd) {
+			case '\'':
+				for(;;){
+					n = inchar();
+					if( n == '\\' )
 						n = bsesc();
-					अन्यथा अगर( n == '\'' )
-						अवरोध;
-					क्रम (i = 0; i < size; ++i)
+					else if( n == '\'' )
+						break;
+					for (i = 0; i < size; ++i)
 						val[i] = n >> (i * 8);
-					अगर (!brev)
+					if (!brev)
 						byterev(val, size);
-					mग_लिखो(adrs, val, size);
+					mwrite(adrs, val, size);
 					adrs += size;
-				पूर्ण
+				}
 				adrs -= size;
 				inc = size;
-				अवरोध;
-			हाल ',':
+				break;
+			case ',':
 				adrs += size;
-				अवरोध;
-			हाल '.':
-				mnoपढ़ो = 0;
-				अवरोध;
-			हाल ';':
-				अवरोध;
-			हाल 'x':
-			हाल खातापूर्ण:
+				break;
+			case '.':
+				mnoread = 0;
+				break;
+			case ';':
+				break;
+			case 'x':
+			case EOF:
 				scannl();
-				वापस;
-			हाल 'b':
-			हाल 'v':
+				return;
+			case 'b':
+			case 'v':
 				size = 1;
-				अवरोध;
-			हाल 'w':
+				break;
+			case 'w':
 				size = 2;
-				अवरोध;
-			हाल 'l':
+				break;
+			case 'l':
 				size = 4;
-				अवरोध;
-			हाल 'u':
+				break;
+			case 'u':
 				size = 8;
-				अवरोध;
-			हाल '^':
+				break;
+			case '^':
 				adrs -= size;
-				अवरोध;
-			हाल '/':
-				अगर (nslash > 0)
+				break;
+			case '/':
+				if (nslash > 0)
 					adrs -= 1 << nslash;
-				अन्यथा
+				else
 					nslash = 0;
 				nslash += 4;
 				adrs += 1 << nslash;
-				अवरोध;
-			हाल '\\':
-				अगर (nslash < 0)
+				break;
+			case '\\':
+				if (nslash < 0)
 					adrs += 1 << -nslash;
-				अन्यथा
+				else
 					nslash = 0;
 				nslash -= 4;
 				adrs -= 1 << -nslash;
-				अवरोध;
-			हाल 'm':
-				scanhex((व्योम *)&adrs);
-				अवरोध;
-			हाल 'n':
-				mnoपढ़ो = 1;
-				अवरोध;
-			हाल 'r':
+				break;
+			case 'm':
+				scanhex((void *)&adrs);
+				break;
+			case 'n':
+				mnoread = 1;
+				break;
+			case 'r':
 				brev = !brev;
-				अवरोध;
-			हाल '<':
+				break;
+			case '<':
 				n = size;
 				scanhex(&n);
 				adrs -= n;
-				अवरोध;
-			हाल '>':
+				break;
+			case '>':
 				n = size;
 				scanhex(&n);
 				adrs += n;
-				अवरोध;
-			हाल '?':
-				म_लिखो(memex_subcmd_help_string);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			case '?':
+				printf(memex_subcmd_help_string);
+				break;
+			}
+		}
 		adrs += inc;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-bsesc(व्योम)
-अणु
-	पूर्णांक c;
+static int
+bsesc(void)
+{
+	int c;
 
-	c = inअक्षर();
-	चयन( c )अणु
-	हाल 'n':	c = '\n';	अवरोध;
-	हाल 'r':	c = '\r';	अवरोध;
-	हाल 'b':	c = '\b';	अवरोध;
-	हाल 't':	c = '\t';	अवरोध;
-	पूर्ण
-	वापस c;
-पूर्ण
+	c = inchar();
+	switch( c ){
+	case 'n':	c = '\n';	break;
+	case 'r':	c = '\r';	break;
+	case 'b':	c = '\b';	break;
+	case 't':	c = '\t';	break;
+	}
+	return c;
+}
 
-अटल व्योम xmon_rawdump (अचिन्हित दीर्घ adrs, दीर्घ ndump)
-अणु
-	दीर्घ n, m, r, nr;
-	अचिन्हित अक्षर temp[16];
+static void xmon_rawdump (unsigned long adrs, long ndump)
+{
+	long n, m, r, nr;
+	unsigned char temp[16];
 
-	क्रम (n = ndump; n > 0;) अणु
+	for (n = ndump; n > 0;) {
 		r = n < 16? n: 16;
-		nr = mपढ़ो(adrs, temp, r);
+		nr = mread(adrs, temp, r);
 		adrs += nr;
-		क्रम (m = 0; m < r; ++m) अणु
-			अगर (m < nr)
-				म_लिखो("%.2x", temp[m]);
-			अन्यथा
-				म_लिखो("%s", fault_अक्षरs[fault_type]);
-		पूर्ण
+		for (m = 0; m < r; ++m) {
+			if (m < nr)
+				printf("%.2x", temp[m]);
+			else
+				printf("%s", fault_chars[fault_type]);
+		}
 		n -= r;
-		अगर (nr < r)
-			अवरोध;
-	पूर्ण
-	म_लिखो("\n");
-पूर्ण
+		if (nr < r)
+			break;
+	}
+	printf("\n");
+}
 
-अटल व्योम dump_tracing(व्योम)
-अणु
-	पूर्णांक c;
+static void dump_tracing(void)
+{
+	int c;
 
-	c = inअक्षर();
-	अगर (c == 'c')
+	c = inchar();
+	if (c == 'c')
 		ftrace_dump(DUMP_ORIG);
-	अन्यथा
+	else
 		ftrace_dump(DUMP_ALL);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC64
-अटल व्योम dump_one_paca(पूर्णांक cpu)
-अणु
-	काष्ठा paca_काष्ठा *p;
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	पूर्णांक i = 0;
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+static void dump_one_paca(int cpu)
+{
+	struct paca_struct *p;
+#ifdef CONFIG_PPC_BOOK3S_64
+	int i = 0;
+#endif
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
-		म_लिखो("*** Error dumping paca for cpu 0x%x!\n", cpu);
-		वापस;
-	पूर्ण
+	if (setjmp(bus_error_jmp) != 0) {
+		printf("*** Error dumping paca for cpu 0x%x!\n", cpu);
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
 
 	p = paca_ptrs[cpu];
 
-	म_लिखो("paca for cpu 0x%x @ %px:\n", cpu, p);
+	printf("paca for cpu 0x%x @ %px:\n", cpu, p);
 
-	म_लिखो(" %-*s = %s\n", 25, "possible", cpu_possible(cpu) ? "yes" : "no");
-	म_लिखो(" %-*s = %s\n", 25, "present", cpu_present(cpu) ? "yes" : "no");
-	म_लिखो(" %-*s = %s\n", 25, "online", cpu_online(cpu) ? "yes" : "no");
+	printf(" %-*s = %s\n", 25, "possible", cpu_possible(cpu) ? "yes" : "no");
+	printf(" %-*s = %s\n", 25, "present", cpu_present(cpu) ? "yes" : "no");
+	printf(" %-*s = %s\n", 25, "online", cpu_online(cpu) ? "yes" : "no");
 
-#घोषणा DUMP(paca, name, क्रमmat)				\
-	म_लिखो(" %-*s = "क्रमmat"\t(0x%lx)\n", 25, #name, 18, paca->name, \
-		दुरत्व(काष्ठा paca_काष्ठा, name));
+#define DUMP(paca, name, format)				\
+	printf(" %-*s = "format"\t(0x%lx)\n", 25, #name, 18, paca->name, \
+		offsetof(struct paca_struct, name));
 
 	DUMP(p, lock_token, "%#-*x");
 	DUMP(p, paca_index, "%#-*x");
@@ -2545,629 +2544,629 @@ bsesc(व्योम)
 	DUMP(p, kernelbase, "%#-*llx");
 	DUMP(p, kernel_msr, "%#-*llx");
 	DUMP(p, emergency_sp, "%-*px");
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#ifdef CONFIG_PPC_BOOK3S_64
 	DUMP(p, nmi_emergency_sp, "%-*px");
 	DUMP(p, mc_emergency_sp, "%-*px");
 	DUMP(p, in_nmi, "%#-*x");
 	DUMP(p, in_mce, "%#-*x");
 	DUMP(p, hmi_event_available, "%#-*x");
-#पूर्ण_अगर
+#endif
 	DUMP(p, data_offset, "%#-*llx");
 	DUMP(p, hw_cpu_id, "%#-*x");
 	DUMP(p, cpu_start, "%#-*x");
 	DUMP(p, kexec_state, "%#-*x");
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	अगर (!early_radix_enabled()) अणु
-		क्रम (i = 0; i < SLB_NUM_BOLTED; i++) अणु
+#ifdef CONFIG_PPC_BOOK3S_64
+	if (!early_radix_enabled()) {
+		for (i = 0; i < SLB_NUM_BOLTED; i++) {
 			u64 esid, vsid;
 
-			अगर (!p->slb_shaकरोw_ptr)
-				जारी;
+			if (!p->slb_shadow_ptr)
+				continue;
 
-			esid = be64_to_cpu(p->slb_shaकरोw_ptr->save_area[i].esid);
-			vsid = be64_to_cpu(p->slb_shaकरोw_ptr->save_area[i].vsid);
+			esid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].esid);
+			vsid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].vsid);
 
-			अगर (esid || vsid) अणु
-				म_लिखो(" %-*s[%d] = 0x%016llx 0x%016llx\n",
+			if (esid || vsid) {
+				printf(" %-*s[%d] = 0x%016llx 0x%016llx\n",
 				       22, "slb_shadow", i, esid, vsid);
-			पूर्ण
-		पूर्ण
-		DUMP(p, vदो_स्मृति_sllp, "%#-*x");
+			}
+		}
+		DUMP(p, vmalloc_sllp, "%#-*x");
 		DUMP(p, stab_rr, "%#-*x");
-		DUMP(p, slb_used_biपंचांगap, "%#-*x");
-		DUMP(p, slb_kern_biपंचांगap, "%#-*x");
+		DUMP(p, slb_used_bitmap, "%#-*x");
+		DUMP(p, slb_kern_bitmap, "%#-*x");
 
-		अगर (!early_cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+		if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
 			DUMP(p, slb_cache_ptr, "%#-*x");
-			क्रम (i = 0; i < SLB_CACHE_ENTRIES; i++)
-				म_लिखो(" %-*s[%d] = 0x%016x\n",
+			for (i = 0; i < SLB_CACHE_ENTRIES; i++)
+				printf(" %-*s[%d] = 0x%016x\n",
 				       22, "slb_cache", i, p->slb_cache[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	DUMP(p, rfi_flush_fallback_area, "%-*px");
-#पूर्ण_अगर
-	DUMP(p, dscr_शेष, "%#-*llx");
-#अगर_घोषित CONFIG_PPC_BOOK3E
+#endif
+	DUMP(p, dscr_default, "%#-*llx");
+#ifdef CONFIG_PPC_BOOK3E
 	DUMP(p, pgd, "%-*px");
 	DUMP(p, kernel_pgd, "%-*px");
 	DUMP(p, tcd_ptr, "%-*px");
 	DUMP(p, mc_kstack, "%-*px");
 	DUMP(p, crit_kstack, "%-*px");
 	DUMP(p, dbg_kstack, "%-*px");
-#पूर्ण_अगर
+#endif
 	DUMP(p, __current, "%-*px");
 	DUMP(p, kstack, "%#-*llx");
-	म_लिखो(" %-*s = 0x%016llx\n", 25, "kstack_base", p->kstack & ~(THREAD_SIZE - 1));
-#अगर_घोषित CONFIG_STACKPROTECTOR
+	printf(" %-*s = 0x%016llx\n", 25, "kstack_base", p->kstack & ~(THREAD_SIZE - 1));
+#ifdef CONFIG_STACKPROTECTOR
 	DUMP(p, canary, "%#-*lx");
-#पूर्ण_अगर
+#endif
 	DUMP(p, saved_r1, "%#-*llx");
-#अगर_घोषित CONFIG_PPC_BOOK3E
+#ifdef CONFIG_PPC_BOOK3E
 	DUMP(p, trap_save, "%#-*x");
-#पूर्ण_अगर
+#endif
 	DUMP(p, irq_soft_mask, "%#-*x");
 	DUMP(p, irq_happened, "%#-*x");
-#अगर_घोषित CONFIG_MMIOWB
+#ifdef CONFIG_MMIOWB
 	DUMP(p, mmiowb_state.nesting_count, "%#-*x");
 	DUMP(p, mmiowb_state.mmiowb_pending, "%#-*x");
-#पूर्ण_अगर
+#endif
 	DUMP(p, irq_work_pending, "%#-*x");
 	DUMP(p, sprg_vdso, "%#-*llx");
 
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
-	DUMP(p, पंचांग_scratch, "%#-*llx");
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+	DUMP(p, tm_scratch, "%#-*llx");
+#endif
 
-#अगर_घोषित CONFIG_PPC_POWERNV
+#ifdef CONFIG_PPC_POWERNV
 	DUMP(p, idle_state, "%#-*lx");
-	अगर (!early_cpu_has_feature(CPU_FTR_ARCH_300)) अणु
-		DUMP(p, thपढ़ो_idle_state, "%#-*x");
+	if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
+		DUMP(p, thread_idle_state, "%#-*x");
 		DUMP(p, subcore_sibling_mask, "%#-*x");
-	पूर्ण अन्यथा अणु
-#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	} else {
+#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 		DUMP(p, requested_psscr, "%#-*llx");
-		DUMP(p, करोnt_stop.counter, "%#-*x");
-#पूर्ण_अगर
-	पूर्ण
-#पूर्ण_अगर
+		DUMP(p, dont_stop.counter, "%#-*x");
+#endif
+	}
+#endif
 
-	DUMP(p, accounting.uसमय, "%#-*lx");
-	DUMP(p, accounting.sसमय, "%#-*lx");
-#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
-	DUMP(p, accounting.uसमय_scaled, "%#-*lx");
-#पूर्ण_अगर
-	DUMP(p, accounting.startसमय, "%#-*lx");
-	DUMP(p, accounting.startसमय_user, "%#-*lx");
-#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+	DUMP(p, accounting.utime, "%#-*lx");
+	DUMP(p, accounting.stime, "%#-*lx");
+#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
+	DUMP(p, accounting.utime_scaled, "%#-*lx");
+#endif
+	DUMP(p, accounting.starttime, "%#-*lx");
+	DUMP(p, accounting.starttime_user, "%#-*lx");
+#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
 	DUMP(p, accounting.startspurr, "%#-*lx");
-	DUMP(p, accounting.uसमय_sspurr, "%#-*lx");
-#पूर्ण_अगर
-	DUMP(p, accounting.steal_समय, "%#-*lx");
-#अघोषित DUMP
+	DUMP(p, accounting.utime_sspurr, "%#-*lx");
+#endif
+	DUMP(p, accounting.steal_time, "%#-*lx");
+#undef DUMP
 
 	catch_memory_errors = 0;
 	sync();
-पूर्ण
+}
 
-अटल व्योम dump_all_pacas(व्योम)
-अणु
-	पूर्णांक cpu;
+static void dump_all_pacas(void)
+{
+	int cpu;
 
-	अगर (num_possible_cpus() == 0) अणु
-		म_लिखो("No possible cpus, use 'dp #' to dump individual cpus\n");
-		वापस;
-	पूर्ण
+	if (num_possible_cpus() == 0) {
+		printf("No possible cpus, use 'dp #' to dump individual cpus\n");
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		dump_one_paca(cpu);
-पूर्ण
+}
 
-अटल व्योम dump_pacas(व्योम)
-अणु
-	अचिन्हित दीर्घ num;
-	पूर्णांक c;
+static void dump_pacas(void)
+{
+	unsigned long num;
+	int c;
 
-	c = inअक्षर();
-	अगर (c == 'a') अणु
+	c = inchar();
+	if (c == 'a') {
 		dump_all_pacas();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	termch = c;	/* Put c back, it wasn't 'a' */
 
-	अगर (scanhex(&num))
+	if (scanhex(&num))
 		dump_one_paca(num);
-	अन्यथा
+	else
 		dump_one_paca(xmon_owner);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_PPC_POWERNV
-अटल व्योम dump_one_xive(पूर्णांक cpu)
-अणु
-	अचिन्हित पूर्णांक hwid = get_hard_smp_processor_id(cpu);
+#ifdef CONFIG_PPC_POWERNV
+static void dump_one_xive(int cpu)
+{
+	unsigned int hwid = get_hard_smp_processor_id(cpu);
 	bool hv = cpu_has_feature(CPU_FTR_HVMODE);
 
-	अगर (hv) अणु
+	if (hv) {
 		opal_xive_dump(XIVE_DUMP_TM_HYP, hwid);
 		opal_xive_dump(XIVE_DUMP_TM_POOL, hwid);
 		opal_xive_dump(XIVE_DUMP_TM_OS, hwid);
 		opal_xive_dump(XIVE_DUMP_TM_USER, hwid);
 		opal_xive_dump(XIVE_DUMP_VP, hwid);
 		opal_xive_dump(XIVE_DUMP_EMU_STATE, hwid);
-	पूर्ण
+	}
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
+	if (setjmp(bus_error_jmp) != 0) {
 		catch_memory_errors = 0;
-		म_लिखो("*** Error dumping xive on cpu %d\n", cpu);
-		वापस;
-	पूर्ण
+		printf("*** Error dumping xive on cpu %d\n", cpu);
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
-	xmon_xive_करो_dump(cpu);
+	xmon_xive_do_dump(cpu);
 	sync();
 	__delay(200);
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-अटल व्योम dump_all_xives(व्योम)
-अणु
-	पूर्णांक cpu;
+static void dump_all_xives(void)
+{
+	int cpu;
 
-	अगर (num_possible_cpus() == 0) अणु
-		म_लिखो("No possible cpus, use 'dx #' to dump individual cpus\n");
-		वापस;
-	पूर्ण
+	if (num_possible_cpus() == 0) {
+		printf("No possible cpus, use 'dx #' to dump individual cpus\n");
+		return;
+	}
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		dump_one_xive(cpu);
-पूर्ण
+}
 
-अटल व्योम dump_xives(व्योम)
-अणु
-	अचिन्हित दीर्घ num;
-	पूर्णांक c;
+static void dump_xives(void)
+{
+	unsigned long num;
+	int c;
 
-	अगर (!xive_enabled()) अणु
-		म_लिखो("Xive disabled on this system\n");
-		वापस;
-	पूर्ण
+	if (!xive_enabled()) {
+		printf("Xive disabled on this system\n");
+		return;
+	}
 
-	c = inअक्षर();
-	अगर (c == 'a') अणु
+	c = inchar();
+	if (c == 'a') {
 		dump_all_xives();
-		वापस;
-	पूर्ण अन्यथा अगर (c == 'i') अणु
-		अगर (scanhex(&num))
-			xmon_xive_get_irq_config(num, शून्य);
-		अन्यथा
+		return;
+	} else if (c == 'i') {
+		if (scanhex(&num))
+			xmon_xive_get_irq_config(num, NULL);
+		else
 			xmon_xive_get_irq_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	termch = c;	/* Put c back, it wasn't 'a' */
 
-	अगर (scanhex(&num))
+	if (scanhex(&num))
 		dump_one_xive(num);
-	अन्यथा
+	else
 		dump_one_xive(xmon_owner);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_POWERNV */
+}
+#endif /* CONFIG_PPC_POWERNV */
 
-अटल व्योम dump_by_size(अचिन्हित दीर्घ addr, दीर्घ count, पूर्णांक size)
-अणु
-	अचिन्हित अक्षर temp[16];
-	पूर्णांक i, j;
+static void dump_by_size(unsigned long addr, long count, int size)
+{
+	unsigned char temp[16];
+	int i, j;
 	u64 val;
 
 	count = ALIGN(count, 16);
 
-	क्रम (i = 0; i < count; i += 16, addr += 16) अणु
-		म_लिखो(REG, addr);
+	for (i = 0; i < count; i += 16, addr += 16) {
+		printf(REG, addr);
 
-		अगर (mपढ़ो(addr, temp, 16) != 16) अणु
-			म_लिखो("\nFaulted reading %d bytes from 0x"REG"\n", 16, addr);
-			वापस;
-		पूर्ण
+		if (mread(addr, temp, 16) != 16) {
+			printf("\nFaulted reading %d bytes from 0x"REG"\n", 16, addr);
+			return;
+		}
 
-		क्रम (j = 0; j < 16; j += size) अणु
-			अक्षर_दो(' ');
-			चयन (size) अणु
-			हाल 1: val = temp[j]; अवरोध;
-			हाल 2: val = *(u16 *)&temp[j]; अवरोध;
-			हाल 4: val = *(u32 *)&temp[j]; अवरोध;
-			हाल 8: val = *(u64 *)&temp[j]; अवरोध;
-			शेष: val = 0;
-			पूर्ण
+		for (j = 0; j < 16; j += size) {
+			putchar(' ');
+			switch (size) {
+			case 1: val = temp[j]; break;
+			case 2: val = *(u16 *)&temp[j]; break;
+			case 4: val = *(u32 *)&temp[j]; break;
+			case 8: val = *(u64 *)&temp[j]; break;
+			default: val = 0;
+			}
 
-			म_लिखो("%0*llx", size * 2, val);
-		पूर्ण
-		म_लिखो("  |");
-		क्रम (j = 0; j < 16; ++j) अणु
+			printf("%0*llx", size * 2, val);
+		}
+		printf("  |");
+		for (j = 0; j < 16; ++j) {
 			val = temp[j];
-			अक्षर_दो(' ' <= val && val <= '~' ? val : '.');
-		पूर्ण
-		म_लिखो("|\n");
-	पूर्ण
-पूर्ण
+			putchar(' ' <= val && val <= '~' ? val : '.');
+		}
+		printf("|\n");
+	}
+}
 
-अटल व्योम
-dump(व्योम)
-अणु
-	अटल अक्षर last[] = अणु "d?\n" पूर्ण;
-	पूर्णांक c;
+static void
+dump(void)
+{
+	static char last[] = { "d?\n" };
+	int c;
 
-	c = inअक्षर();
+	c = inchar();
 
-#अगर_घोषित CONFIG_PPC64
-	अगर (c == 'p') अणु
+#ifdef CONFIG_PPC64
+	if (c == 'p') {
 		xmon_start_pagination();
 		dump_pacas();
 		xmon_end_pagination();
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PPC_POWERNV
-	अगर (c == 'x') अणु
+		return;
+	}
+#endif
+#ifdef CONFIG_PPC_POWERNV
+	if (c == 'x') {
 		xmon_start_pagination();
 		dump_xives();
 		xmon_end_pagination();
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
+		return;
+	}
+#endif
 
-	अगर (c == 't') अणु
+	if (c == 't') {
 		dump_tracing();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (c == '\n')
+	if (c == '\n')
 		termch = c;
 
-	scanhex((व्योम *)&adrs);
-	अगर (termch != '\n')
+	scanhex((void *)&adrs);
+	if (termch != '\n')
 		termch = 0;
-	अगर (c == 'i') अणु
+	if (c == 'i') {
 		scanhex(&nidump);
-		अगर (nidump == 0)
+		if (nidump == 0)
 			nidump = 16;
-		अन्यथा अगर (nidump > MAX_IDUMP)
+		else if (nidump > MAX_IDUMP)
 			nidump = MAX_IDUMP;
 		adrs += ppc_inst_dump(adrs, nidump, 1);
 		last_cmd = "di\n";
-	पूर्ण अन्यथा अगर (c == 'l') अणु
+	} else if (c == 'l') {
 		dump_log_buf();
-	पूर्ण अन्यथा अगर (c == 'o') अणु
+	} else if (c == 'o') {
 		dump_opal_msglog();
-	पूर्ण अन्यथा अगर (c == 'v') अणु
-		/* dump भव to physical translation */
+	} else if (c == 'v') {
+		/* dump virtual to physical translation */
 		show_pte(adrs);
-	पूर्ण अन्यथा अगर (c == 'r') अणु
+	} else if (c == 'r') {
 		scanhex(&ndump);
-		अगर (ndump == 0)
+		if (ndump == 0)
 			ndump = 64;
 		xmon_rawdump(adrs, ndump);
 		adrs += ndump;
 		last_cmd = "dr\n";
-	पूर्ण अन्यथा अणु
+	} else {
 		scanhex(&ndump);
-		अगर (ndump == 0)
+		if (ndump == 0)
 			ndump = 64;
-		अन्यथा अगर (ndump > MAX_DUMP)
+		else if (ndump > MAX_DUMP)
 			ndump = MAX_DUMP;
 
-		चयन (c) अणु
-		हाल '8':
-		हाल '4':
-		हाल '2':
-		हाल '1':
+		switch (c) {
+		case '8':
+		case '4':
+		case '2':
+		case '1':
 			ndump = ALIGN(ndump, 16);
 			dump_by_size(adrs, ndump, c - '0');
 			last[1] = c;
 			last_cmd = last;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			prdump(adrs, ndump);
 			last_cmd = "d\n";
-		पूर्ण
+		}
 
 		adrs += ndump;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-prdump(अचिन्हित दीर्घ adrs, दीर्घ ndump)
-अणु
-	दीर्घ n, m, c, r, nr;
-	अचिन्हित अक्षर temp[16];
+static void
+prdump(unsigned long adrs, long ndump)
+{
+	long n, m, c, r, nr;
+	unsigned char temp[16];
 
-	क्रम (n = ndump; n > 0;) अणु
-		म_लिखो(REG, adrs);
-		अक्षर_दो(' ');
+	for (n = ndump; n > 0;) {
+		printf(REG, adrs);
+		putchar(' ');
 		r = n < 16? n: 16;
-		nr = mपढ़ो(adrs, temp, r);
+		nr = mread(adrs, temp, r);
 		adrs += nr;
-		क्रम (m = 0; m < r; ++m) अणु
-			अगर ((m & (माप(दीर्घ) - 1)) == 0 && m > 0)
-				अक्षर_दो(' ');
-			अगर (m < nr)
-				म_लिखो("%.2x", temp[m]);
-			अन्यथा
-				म_लिखो("%s", fault_अक्षरs[fault_type]);
-		पूर्ण
-		क्रम (; m < 16; ++m) अणु
-			अगर ((m & (माप(दीर्घ) - 1)) == 0)
-				अक्षर_दो(' ');
-			म_लिखो("  ");
-		पूर्ण
-		म_लिखो("  |");
-		क्रम (m = 0; m < r; ++m) अणु
-			अगर (m < nr) अणु
+		for (m = 0; m < r; ++m) {
+			if ((m & (sizeof(long) - 1)) == 0 && m > 0)
+				putchar(' ');
+			if (m < nr)
+				printf("%.2x", temp[m]);
+			else
+				printf("%s", fault_chars[fault_type]);
+		}
+		for (; m < 16; ++m) {
+			if ((m & (sizeof(long) - 1)) == 0)
+				putchar(' ');
+			printf("  ");
+		}
+		printf("  |");
+		for (m = 0; m < r; ++m) {
+			if (m < nr) {
 				c = temp[m];
-				अक्षर_दो(' ' <= c && c <= '~'? c: '.');
-			पूर्ण अन्यथा
-				अक्षर_दो(' ');
-		पूर्ण
+				putchar(' ' <= c && c <= '~'? c: '.');
+			} else
+				putchar(' ');
+		}
 		n -= r;
-		क्रम (; m < 16; ++m)
-			अक्षर_दो(' ');
-		म_लिखो("|\n");
-		अगर (nr < r)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		for (; m < 16; ++m)
+			putchar(' ');
+		printf("|\n");
+		if (nr < r)
+			break;
+	}
+}
 
-प्रकार पूर्णांक (*inकाष्ठाion_dump_func)(अचिन्हित दीर्घ inst, अचिन्हित दीर्घ addr);
+typedef int (*instruction_dump_func)(unsigned long inst, unsigned long addr);
 
-अटल पूर्णांक
-generic_inst_dump(अचिन्हित दीर्घ adr, दीर्घ count, पूर्णांक praddr,
-			inकाष्ठाion_dump_func dump_func)
-अणु
-	पूर्णांक nr, करोtted;
-	अचिन्हित दीर्घ first_adr;
-	काष्ठा ppc_inst inst, last_inst = ppc_inst(0);
+static int
+generic_inst_dump(unsigned long adr, long count, int praddr,
+			instruction_dump_func dump_func)
+{
+	int nr, dotted;
+	unsigned long first_adr;
+	struct ppc_inst inst, last_inst = ppc_inst(0);
 
-	करोtted = 0;
-	क्रम (first_adr = adr; count > 0; --count, adr += ppc_inst_len(inst)) अणु
-		nr = mपढ़ो_instr(adr, &inst);
-		अगर (nr == 0) अणु
-			अगर (praddr) अणु
-				स्थिर अक्षर *x = fault_अक्षरs[fault_type];
-				म_लिखो(REG"  %s%s%s%s\n", adr, x, x, x, x);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-		अगर (adr > first_adr && ppc_inst_equal(inst, last_inst)) अणु
-			अगर (!करोtted) अणु
-				म_लिखो(" ...\n");
-				करोtted = 1;
-			पूर्ण
-			जारी;
-		पूर्ण
-		करोtted = 0;
+	dotted = 0;
+	for (first_adr = adr; count > 0; --count, adr += ppc_inst_len(inst)) {
+		nr = mread_instr(adr, &inst);
+		if (nr == 0) {
+			if (praddr) {
+				const char *x = fault_chars[fault_type];
+				printf(REG"  %s%s%s%s\n", adr, x, x, x, x);
+			}
+			break;
+		}
+		if (adr > first_adr && ppc_inst_equal(inst, last_inst)) {
+			if (!dotted) {
+				printf(" ...\n");
+				dotted = 1;
+			}
+			continue;
+		}
+		dotted = 0;
 		last_inst = inst;
-		अगर (praddr)
-			म_लिखो(REG"  %s", adr, ppc_inst_as_str(inst));
-		म_लिखो("\t");
-		अगर (!ppc_inst_prefixed(inst))
+		if (praddr)
+			printf(REG"  %s", adr, ppc_inst_as_str(inst));
+		printf("\t");
+		if (!ppc_inst_prefixed(inst))
 			dump_func(ppc_inst_val(inst), adr);
-		अन्यथा
-			dump_func(ppc_inst_as_uदीर्घ(inst), adr);
-		म_लिखो("\n");
-	पूर्ण
-	वापस adr - first_adr;
-पूर्ण
+		else
+			dump_func(ppc_inst_as_ulong(inst), adr);
+		printf("\n");
+	}
+	return adr - first_adr;
+}
 
-अटल पूर्णांक
-ppc_inst_dump(अचिन्हित दीर्घ adr, दीर्घ count, पूर्णांक praddr)
-अणु
-	वापस generic_inst_dump(adr, count, praddr, prपूर्णांक_insn_घातerpc);
-पूर्ण
+static int
+ppc_inst_dump(unsigned long adr, long count, int praddr)
+{
+	return generic_inst_dump(adr, count, praddr, print_insn_powerpc);
+}
 
-व्योम
-prपूर्णांक_address(अचिन्हित दीर्घ addr)
-अणु
-	xmon_prपूर्णांक_symbol(addr, "\t# ", "");
-पूर्ण
+void
+print_address(unsigned long addr)
+{
+	xmon_print_symbol(addr, "\t# ", "");
+}
 
-अटल व्योम
-dump_log_buf(व्योम)
-अणु
-	काष्ठा kmsg_dump_iter iter;
-	अचिन्हित अक्षर buf[128];
-	माप_प्रकार len;
+static void
+dump_log_buf(void)
+{
+	struct kmsg_dump_iter iter;
+	unsigned char buf[128];
+	size_t len;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
-		म_लिखो("Error dumping printk buffer!\n");
-		वापस;
-	पूर्ण
+	if (setjmp(bus_error_jmp) != 0) {
+		printf("Error dumping printk buffer!\n");
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
 
-	kmsg_dump_शुरुआत(&iter);
+	kmsg_dump_rewind(&iter);
 	xmon_start_pagination();
-	जबतक (kmsg_dump_get_line(&iter, false, buf, माप(buf), &len)) अणु
+	while (kmsg_dump_get_line(&iter, false, buf, sizeof(buf), &len)) {
 		buf[len] = '\0';
-		म_लिखो("%s", buf);
-	पूर्ण
+		printf("%s", buf);
+	}
 	xmon_end_pagination();
 
 	sync();
-	/* रुको a little जबतक to see अगर we get a machine check */
+	/* wait a little while to see if we get a machine check */
 	__delay(200);
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_POWERNV
-अटल व्योम dump_opal_msglog(व्योम)
-अणु
-	अचिन्हित अक्षर buf[128];
-	sमाप_प्रकार res;
+#ifdef CONFIG_PPC_POWERNV
+static void dump_opal_msglog(void)
+{
+	unsigned char buf[128];
+	ssize_t res;
 	loff_t pos = 0;
 
-	अगर (!firmware_has_feature(FW_FEATURE_OPAL)) अणु
-		म_लिखो("Machine is not running OPAL firmware.\n");
-		वापस;
-	पूर्ण
+	if (!firmware_has_feature(FW_FEATURE_OPAL)) {
+		printf("Machine is not running OPAL firmware.\n");
+		return;
+	}
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
-		म_लिखो("Error dumping OPAL msglog!\n");
-		वापस;
-	पूर्ण
+	if (setjmp(bus_error_jmp) != 0) {
+		printf("Error dumping OPAL msglog!\n");
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
 
 	xmon_start_pagination();
-	जबतक ((res = opal_msglog_copy(buf, pos, माप(buf) - 1))) अणु
-		अगर (res < 0) अणु
-			म_लिखो("Error dumping OPAL msglog! Error: %zd\n", res);
-			अवरोध;
-		पूर्ण
+	while ((res = opal_msglog_copy(buf, pos, sizeof(buf) - 1))) {
+		if (res < 0) {
+			printf("Error dumping OPAL msglog! Error: %zd\n", res);
+			break;
+		}
 		buf[res] = '\0';
-		म_लिखो("%s", buf);
+		printf("%s", buf);
 		pos += res;
-	पूर्ण
+	}
 	xmon_end_pagination();
 
 	sync();
-	/* रुको a little जबतक to see अगर we get a machine check */
+	/* wait a little while to see if we get a machine check */
 	__delay(200);
 	catch_memory_errors = 0;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /*
- * Memory operations - move, set, prपूर्णांक dअगरferences
+ * Memory operations - move, set, print differences
  */
-अटल अचिन्हित दीर्घ mdest;		/* destination address */
-अटल अचिन्हित दीर्घ msrc;		/* source address */
-अटल अचिन्हित दीर्घ mval;		/* byte value to set memory to */
-अटल अचिन्हित दीर्घ mcount;		/* # bytes to affect */
-अटल अचिन्हित दीर्घ mdअगरfs;		/* max # dअगरferences to prपूर्णांक */
+static unsigned long mdest;		/* destination address */
+static unsigned long msrc;		/* source address */
+static unsigned long mval;		/* byte value to set memory to */
+static unsigned long mcount;		/* # bytes to affect */
+static unsigned long mdiffs;		/* max # differences to print */
 
-अटल व्योम
-memops(पूर्णांक cmd)
-अणु
-	scanhex((व्योम *)&mdest);
-	अगर( termch != '\n' )
+static void
+memops(int cmd)
+{
+	scanhex((void *)&mdest);
+	if( termch != '\n' )
 		termch = 0;
-	scanhex((व्योम *)(cmd == 's'? &mval: &msrc));
-	अगर( termch != '\n' )
+	scanhex((void *)(cmd == 's'? &mval: &msrc));
+	if( termch != '\n' )
 		termch = 0;
-	scanhex((व्योम *)&mcount);
-	चयन( cmd )अणु
-	हाल 'm':
-		अगर (xmon_is_ro) अणु
-			म_लिखो(xmon_ro_msg);
-			अवरोध;
-		पूर्ण
-		स_हटाओ((व्योम *)mdest, (व्योम *)msrc, mcount);
-		अवरोध;
-	हाल 's':
-		अगर (xmon_is_ro) अणु
-			म_लिखो(xmon_ro_msg);
-			अवरोध;
-		पूर्ण
-		स_रखो((व्योम *)mdest, mval, mcount);
-		अवरोध;
-	हाल 'd':
-		अगर( termch != '\n' )
+	scanhex((void *)&mcount);
+	switch( cmd ){
+	case 'm':
+		if (xmon_is_ro) {
+			printf(xmon_ro_msg);
+			break;
+		}
+		memmove((void *)mdest, (void *)msrc, mcount);
+		break;
+	case 's':
+		if (xmon_is_ro) {
+			printf(xmon_ro_msg);
+			break;
+		}
+		memset((void *)mdest, mval, mcount);
+		break;
+	case 'd':
+		if( termch != '\n' )
 			termch = 0;
-		scanhex((व्योम *)&mdअगरfs);
-		memdअगरfs((अचिन्हित अक्षर *)mdest, (अचिन्हित अक्षर *)msrc, mcount, mdअगरfs);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		scanhex((void *)&mdiffs);
+		memdiffs((unsigned char *)mdest, (unsigned char *)msrc, mcount, mdiffs);
+		break;
+	}
+}
 
-अटल व्योम
-memdअगरfs(अचिन्हित अक्षर *p1, अचिन्हित अक्षर *p2, अचिन्हित nb, अचिन्हित maxpr)
-अणु
-	अचिन्हित n, prt;
+static void
+memdiffs(unsigned char *p1, unsigned char *p2, unsigned nb, unsigned maxpr)
+{
+	unsigned n, prt;
 
 	prt = 0;
-	क्रम( n = nb; n > 0; --n )
-		अगर( *p1++ != *p2++ )
-			अगर( ++prt <= maxpr )
-				म_लिखो("%px %.2x # %px %.2x\n", p1 - 1,
+	for( n = nb; n > 0; --n )
+		if( *p1++ != *p2++ )
+			if( ++prt <= maxpr )
+				printf("%px %.2x # %px %.2x\n", p1 - 1,
 					p1[-1], p2 - 1, p2[-1]);
-	अगर( prt > maxpr )
-		म_लिखो("Total of %d differences\n", prt);
-पूर्ण
+	if( prt > maxpr )
+		printf("Total of %d differences\n", prt);
+}
 
-अटल अचिन्हित mend;
-अटल अचिन्हित mask;
+static unsigned mend;
+static unsigned mask;
 
-अटल व्योम
-memlocate(व्योम)
-अणु
-	अचिन्हित a, n;
-	अचिन्हित अक्षर val[4];
+static void
+memlocate(void)
+{
+	unsigned a, n;
+	unsigned char val[4];
 
 	last_cmd = "ml";
-	scanhex((व्योम *)&mdest);
-	अगर (termch != '\n') अणु
+	scanhex((void *)&mdest);
+	if (termch != '\n') {
 		termch = 0;
-		scanhex((व्योम *)&mend);
-		अगर (termch != '\n') अणु
+		scanhex((void *)&mend);
+		if (termch != '\n') {
 			termch = 0;
-			scanhex((व्योम *)&mval);
+			scanhex((void *)&mval);
 			mask = ~0;
-			अगर (termch != '\n') termch = 0;
-			scanhex((व्योम *)&mask);
-		पूर्ण
-	पूर्ण
+			if (termch != '\n') termch = 0;
+			scanhex((void *)&mask);
+		}
+	}
 	n = 0;
-	क्रम (a = mdest; a < mend; a += 4) अणु
-		अगर (mपढ़ो(a, val, 4) == 4
-			&& ((GETWORD(val) ^ mval) & mask) == 0) अणु
-			म_लिखो("%.16x:  %.16x\n", a, GETWORD(val));
-			अगर (++n >= 10)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (a = mdest; a < mend; a += 4) {
+		if (mread(a, val, 4) == 4
+			&& ((GETWORD(val) ^ mval) & mask) == 0) {
+			printf("%.16x:  %.16x\n", a, GETWORD(val));
+			if (++n >= 10)
+				break;
+		}
+	}
+}
 
-अटल अचिन्हित दीर्घ mskip = 0x1000;
-अटल अचिन्हित दीर्घ mlim = 0xffffffff;
+static unsigned long mskip = 0x1000;
+static unsigned long mlim = 0xffffffff;
 
-अटल व्योम
-memzcan(व्योम)
-अणु
-	अचिन्हित अक्षर v;
-	अचिन्हित a;
-	पूर्णांक ok, ook;
+static void
+memzcan(void)
+{
+	unsigned char v;
+	unsigned a;
+	int ok, ook;
 
 	scanhex(&mdest);
-	अगर (termch != '\n') termch = 0;
+	if (termch != '\n') termch = 0;
 	scanhex(&mskip);
-	अगर (termch != '\n') termch = 0;
+	if (termch != '\n') termch = 0;
 	scanhex(&mlim);
 	ook = 0;
-	क्रम (a = mdest; a < mlim; a += mskip) अणु
-		ok = mपढ़ो(a, &v, 1);
-		अगर (ok && !ook) अणु
-			म_लिखो("%.8x .. ", a);
-		पूर्ण अन्यथा अगर (!ok && ook)
-			म_लिखो("%.8lx\n", a - mskip);
+	for (a = mdest; a < mlim; a += mskip) {
+		ok = mread(a, &v, 1);
+		if (ok && !ook) {
+			printf("%.8x .. ", a);
+		} else if (!ok && ook)
+			printf("%.8lx\n", a - mskip);
 		ook = ok;
-		अगर (a + mskip < a)
-			अवरोध;
-	पूर्ण
-	अगर (ook)
-		म_लिखो("%.8lx\n", a - mskip);
-पूर्ण
+		if (a + mskip < a)
+			break;
+	}
+	if (ook)
+		printf("%.8lx\n", a - mskip);
+}
 
-अटल व्योम show_task(काष्ठा task_काष्ठा *tsk)
-अणु
-	अक्षर state;
+static void show_task(struct task_struct *tsk)
+{
+	char state;
 
 	/*
-	 * Cloned from kdb_task_state_अक्षर(), which is not entirely
-	 * appropriate क्रम calling from xmon. This could be moved
+	 * Cloned from kdb_task_state_char(), which is not entirely
+	 * appropriate for calling from xmon. This could be moved
 	 * to a common, generic, routine used by both.
 	 */
 	state = (tsk->state == 0) ? 'R' :
@@ -3175,542 +3174,542 @@ memzcan(व्योम)
 		(tsk->state & TASK_UNINTERRUPTIBLE) ? 'D' :
 		(tsk->state & TASK_STOPPED) ? 'T' :
 		(tsk->state & TASK_TRACED) ? 'C' :
-		(tsk->निकास_state & EXIT_ZOMBIE) ? 'Z' :
-		(tsk->निकास_state & EXIT_DEAD) ? 'E' :
+		(tsk->exit_state & EXIT_ZOMBIE) ? 'Z' :
+		(tsk->exit_state & EXIT_DEAD) ? 'E' :
 		(tsk->state & TASK_INTERRUPTIBLE) ? 'S' : '?';
 
-	म_लिखो("%16px %16lx %16px %6d %6d %c %2d %s\n", tsk,
-		tsk->thपढ़ो.ksp, tsk->thपढ़ो.regs,
+	printf("%16px %16lx %16px %6d %6d %c %2d %s\n", tsk,
+		tsk->thread.ksp, tsk->thread.regs,
 		tsk->pid, rcu_dereference(tsk->parent)->pid,
 		state, task_cpu(tsk),
 		tsk->comm);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-अटल व्योम क्रमmat_pte(व्योम *ptep, अचिन्हित दीर्घ pte)
-अणु
+#ifdef CONFIG_PPC_BOOK3S_64
+static void format_pte(void *ptep, unsigned long pte)
+{
 	pte_t entry = __pte(pte);
 
-	म_लिखो("ptep @ 0x%016lx = 0x%016lx\n", (अचिन्हित दीर्घ)ptep, pte);
-	म_लिखो("Maps physical address = 0x%016lx\n", pte & PTE_RPN_MASK);
+	printf("ptep @ 0x%016lx = 0x%016lx\n", (unsigned long)ptep, pte);
+	printf("Maps physical address = 0x%016lx\n", pte & PTE_RPN_MASK);
 
-	म_लिखो("Flags = %s%s%s%s%s\n",
+	printf("Flags = %s%s%s%s%s\n",
 	       pte_young(entry) ? "Accessed " : "",
 	       pte_dirty(entry) ? "Dirty " : "",
-	       pte_पढ़ो(entry)  ? "Read " : "",
-	       pte_ग_लिखो(entry) ? "Write " : "",
+	       pte_read(entry)  ? "Read " : "",
+	       pte_write(entry) ? "Write " : "",
 	       pte_exec(entry)  ? "Exec " : "");
-पूर्ण
+}
 
-अटल व्योम show_pte(अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ tskv = 0;
-	काष्ठा task_काष्ठा *tsk = शून्य;
-	काष्ठा mm_काष्ठा *mm;
+static void show_pte(unsigned long addr)
+{
+	unsigned long tskv = 0;
+	struct task_struct *tsk = NULL;
+	struct mm_struct *mm;
 	pgd_t *pgdp;
 	p4d_t *p4dp;
 	pud_t *pudp;
 	pmd_t *pmdp;
 	pte_t *ptep;
 
-	अगर (!scanhex(&tskv))
+	if (!scanhex(&tskv))
 		mm = &init_mm;
-	अन्यथा
-		tsk = (काष्ठा task_काष्ठा *)tskv;
+	else
+		tsk = (struct task_struct *)tskv;
 
-	अगर (tsk == शून्य)
+	if (tsk == NULL)
 		mm = &init_mm;
-	अन्यथा
+	else
 		mm = tsk->active_mm;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
+	if (setjmp(bus_error_jmp) != 0) {
 		catch_memory_errors = 0;
-		म_लिखो("*** Error dumping pte for task %px\n", tsk);
-		वापस;
-	पूर्ण
+		printf("*** Error dumping pte for task %px\n", tsk);
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
 
-	अगर (mm == &init_mm)
+	if (mm == &init_mm)
 		pgdp = pgd_offset_k(addr);
-	अन्यथा
+	else
 		pgdp = pgd_offset(mm, addr);
 
 	p4dp = p4d_offset(pgdp, addr);
 
-	अगर (p4d_none(*p4dp)) अणु
-		म_लिखो("No valid P4D\n");
-		वापस;
-	पूर्ण
+	if (p4d_none(*p4dp)) {
+		printf("No valid P4D\n");
+		return;
+	}
 
-	अगर (p4d_is_leaf(*p4dp)) अणु
-		क्रमmat_pte(p4dp, p4d_val(*p4dp));
-		वापस;
-	पूर्ण
+	if (p4d_is_leaf(*p4dp)) {
+		format_pte(p4dp, p4d_val(*p4dp));
+		return;
+	}
 
-	म_लिखो("p4dp @ 0x%px = 0x%016lx\n", p4dp, p4d_val(*p4dp));
+	printf("p4dp @ 0x%px = 0x%016lx\n", p4dp, p4d_val(*p4dp));
 
 	pudp = pud_offset(p4dp, addr);
 
-	अगर (pud_none(*pudp)) अणु
-		म_लिखो("No valid PUD\n");
-		वापस;
-	पूर्ण
+	if (pud_none(*pudp)) {
+		printf("No valid PUD\n");
+		return;
+	}
 
-	अगर (pud_is_leaf(*pudp)) अणु
-		क्रमmat_pte(pudp, pud_val(*pudp));
-		वापस;
-	पूर्ण
+	if (pud_is_leaf(*pudp)) {
+		format_pte(pudp, pud_val(*pudp));
+		return;
+	}
 
-	म_लिखो("pudp @ 0x%px = 0x%016lx\n", pudp, pud_val(*pudp));
+	printf("pudp @ 0x%px = 0x%016lx\n", pudp, pud_val(*pudp));
 
 	pmdp = pmd_offset(pudp, addr);
 
-	अगर (pmd_none(*pmdp)) अणु
-		म_लिखो("No valid PMD\n");
-		वापस;
-	पूर्ण
+	if (pmd_none(*pmdp)) {
+		printf("No valid PMD\n");
+		return;
+	}
 
-	अगर (pmd_is_leaf(*pmdp)) अणु
-		क्रमmat_pte(pmdp, pmd_val(*pmdp));
-		वापस;
-	पूर्ण
-	म_लिखो("pmdp @ 0x%px = 0x%016lx\n", pmdp, pmd_val(*pmdp));
+	if (pmd_is_leaf(*pmdp)) {
+		format_pte(pmdp, pmd_val(*pmdp));
+		return;
+	}
+	printf("pmdp @ 0x%px = 0x%016lx\n", pmdp, pmd_val(*pmdp));
 
 	ptep = pte_offset_map(pmdp, addr);
-	अगर (pte_none(*ptep)) अणु
-		म_लिखो("no valid PTE\n");
-		वापस;
-	पूर्ण
+	if (pte_none(*ptep)) {
+		printf("no valid PTE\n");
+		return;
+	}
 
-	क्रमmat_pte(ptep, pte_val(*ptep));
+	format_pte(ptep, pte_val(*ptep));
 
 	sync();
 	__delay(200);
 	catch_memory_errors = 0;
-पूर्ण
-#अन्यथा
-अटल व्योम show_pte(अचिन्हित दीर्घ addr)
-अणु
-	म_लिखो("show_pte not yet implemented\n");
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
+}
+#else
+static void show_pte(unsigned long addr)
+{
+	printf("show_pte not yet implemented\n");
+}
+#endif /* CONFIG_PPC_BOOK3S_64 */
 
-अटल व्योम show_tasks(व्योम)
-अणु
-	अचिन्हित दीर्घ tskv;
-	काष्ठा task_काष्ठा *tsk = शून्य;
+static void show_tasks(void)
+{
+	unsigned long tskv;
+	struct task_struct *tsk = NULL;
 
-	म_लिखो("     task_struct     ->thread.ksp    ->thread.regs    PID   PPID S  P CMD\n");
+	printf("     task_struct     ->thread.ksp    ->thread.regs    PID   PPID S  P CMD\n");
 
-	अगर (scanhex(&tskv))
-		tsk = (काष्ठा task_काष्ठा *)tskv;
+	if (scanhex(&tskv))
+		tsk = (struct task_struct *)tskv;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) != 0) अणु
+	if (setjmp(bus_error_jmp) != 0) {
 		catch_memory_errors = 0;
-		म_लिखो("*** Error dumping task %px\n", tsk);
-		वापस;
-	पूर्ण
+		printf("*** Error dumping task %px\n", tsk);
+		return;
+	}
 
 	catch_memory_errors = 1;
 	sync();
 
-	अगर (tsk)
+	if (tsk)
 		show_task(tsk);
-	अन्यथा
-		क्रम_each_process(tsk)
+	else
+		for_each_process(tsk)
 			show_task(tsk);
 
 	sync();
 	__delay(200);
 	catch_memory_errors = 0;
-पूर्ण
+}
 
-अटल व्योम proccall(व्योम)
-अणु
-	अचिन्हित दीर्घ args[8];
-	अचिन्हित दीर्घ ret;
-	पूर्णांक i;
-	प्रकार अचिन्हित दीर्घ (*callfunc_t)(अचिन्हित दीर्घ, अचिन्हित दीर्घ,
-			अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ,
-			अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+static void proccall(void)
+{
+	unsigned long args[8];
+	unsigned long ret;
+	int i;
+	typedef unsigned long (*callfunc_t)(unsigned long, unsigned long,
+			unsigned long, unsigned long, unsigned long,
+			unsigned long, unsigned long, unsigned long);
 	callfunc_t func;
 
-	अगर (!scanhex(&adrs))
-		वापस;
-	अगर (termch != '\n')
+	if (!scanhex(&adrs))
+		return;
+	if (termch != '\n')
 		termch = 0;
-	क्रम (i = 0; i < 8; ++i)
+	for (i = 0; i < 8; ++i)
 		args[i] = 0;
-	क्रम (i = 0; i < 8; ++i) अणु
-		अगर (!scanhex(&args[i]) || termch == '\n')
-			अवरोध;
+	for (i = 0; i < 8; ++i) {
+		if (!scanhex(&args[i]) || termch == '\n')
+			break;
 		termch = 0;
-	पूर्ण
+	}
 	func = (callfunc_t) adrs;
 	ret = 0;
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
 		ret = func(args[0], args[1], args[2], args[3],
 			   args[4], args[5], args[6], args[7]);
 		sync();
-		म_लिखो("return value is 0x%lx\n", ret);
-	पूर्ण अन्यथा अणु
-		म_लिखो("*** %x exception occurred\n", fault_except);
-	पूर्ण
+		printf("return value is 0x%lx\n", ret);
+	} else {
+		printf("*** %x exception occurred\n", fault_except);
+	}
 	catch_memory_errors = 0;
-पूर्ण
+}
 
 /* Input scanning routines */
-पूर्णांक
-skipbl(व्योम)
-अणु
-	पूर्णांक c;
+int
+skipbl(void)
+{
+	int c;
 
-	अगर( termch != 0 )अणु
+	if( termch != 0 ){
 		c = termch;
 		termch = 0;
-	पूर्ण अन्यथा
-		c = inअक्षर();
-	जबतक( c == ' ' || c == '\t' )
-		c = inअक्षर();
-	वापस c;
-पूर्ण
+	} else
+		c = inchar();
+	while( c == ' ' || c == '\t' )
+		c = inchar();
+	return c;
+}
 
-#घोषणा N_PTREGS	44
-अटल स्थिर अक्षर *regnames[N_PTREGS] = अणु
+#define N_PTREGS	44
+static const char *regnames[N_PTREGS] = {
 	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
 	"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
 	"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
 	"pc", "msr", "or3", "ctr", "lr", "xer", "ccr",
-#अगर_घोषित CONFIG_PPC64
+#ifdef CONFIG_PPC64
 	"softe",
-#अन्यथा
+#else
 	"mq",
-#पूर्ण_अगर
+#endif
 	"trap", "dar", "dsisr", "res"
-पूर्ण;
+};
 
-पूर्णांक
-scanhex(अचिन्हित दीर्घ *vp)
-अणु
-	पूर्णांक c, d;
-	अचिन्हित दीर्घ v;
+int
+scanhex(unsigned long *vp)
+{
+	int c, d;
+	unsigned long v;
 
 	c = skipbl();
-	अगर (c == '%') अणु
-		/* parse रेजिस्टर name */
-		अक्षर regname[8];
-		पूर्णांक i;
+	if (c == '%') {
+		/* parse register name */
+		char regname[8];
+		int i;
 
-		क्रम (i = 0; i < माप(regname) - 1; ++i) अणु
-			c = inअक्षर();
-			अगर (!है_अक्षर_अंक(c)) अणु
+		for (i = 0; i < sizeof(regname) - 1; ++i) {
+			c = inchar();
+			if (!isalnum(c)) {
 				termch = c;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			regname[i] = c;
-		पूर्ण
+		}
 		regname[i] = 0;
 		i = match_string(regnames, N_PTREGS, regname);
-		अगर (i < 0) अणु
-			म_लिखो("invalid register name '%%%s'\n", regname);
-			वापस 0;
-		पूर्ण
-		अगर (xmon_regs == शून्य) अणु
-			म_लिखो("regs not available\n");
-			वापस 0;
-		पूर्ण
-		*vp = ((अचिन्हित दीर्घ *)xmon_regs)[i];
-		वापस 1;
-	पूर्ण
+		if (i < 0) {
+			printf("invalid register name '%%%s'\n", regname);
+			return 0;
+		}
+		if (xmon_regs == NULL) {
+			printf("regs not available\n");
+			return 0;
+		}
+		*vp = ((unsigned long *)xmon_regs)[i];
+		return 1;
+	}
 
-	/* skip leading "0x" अगर any */
+	/* skip leading "0x" if any */
 
-	अगर (c == '0') अणु
-		c = inअक्षर();
-		अगर (c == 'x') अणु
-			c = inअक्षर();
-		पूर्ण अन्यथा अणु
+	if (c == '0') {
+		c = inchar();
+		if (c == 'x') {
+			c = inchar();
+		} else {
 			d = hexdigit(c);
-			अगर (d == खातापूर्ण) अणु
+			if (d == EOF) {
 				termch = c;
 				*vp = 0;
-				वापस 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (c == '$') अणु
-		पूर्णांक i;
-		क्रम (i=0; i<63; i++) अणु
-			c = inअक्षर();
-			अगर (है_खाली(c) || c == '\0') अणु
+				return 1;
+			}
+		}
+	} else if (c == '$') {
+		int i;
+		for (i=0; i<63; i++) {
+			c = inchar();
+			if (isspace(c) || c == '\0') {
 				termch = c;
-				अवरोध;
-			पूर्ण
-			पंचांगpstr[i] = c;
-		पूर्ण
-		पंचांगpstr[i++] = 0;
+				break;
+			}
+			tmpstr[i] = c;
+		}
+		tmpstr[i++] = 0;
 		*vp = 0;
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
-			*vp = kallsyms_lookup_name(पंचांगpstr);
+			*vp = kallsyms_lookup_name(tmpstr);
 			sync();
-		पूर्ण
+		}
 		catch_memory_errors = 0;
-		अगर (!(*vp)) अणु
-			म_लिखो("unknown symbol '%s'\n", पंचांगpstr);
-			वापस 0;
-		पूर्ण
-		वापस 1;
-	पूर्ण
+		if (!(*vp)) {
+			printf("unknown symbol '%s'\n", tmpstr);
+			return 0;
+		}
+		return 1;
+	}
 
 	d = hexdigit(c);
-	अगर (d == खातापूर्ण) अणु
+	if (d == EOF) {
 		termch = c;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	v = 0;
-	करो अणु
+	do {
 		v = (v << 4) + d;
-		c = inअक्षर();
+		c = inchar();
 		d = hexdigit(c);
-	पूर्ण जबतक (d != खातापूर्ण);
+	} while (d != EOF);
 	termch = c;
 	*vp = v;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम
-scannl(व्योम)
-अणु
-	पूर्णांक c;
+static void
+scannl(void)
+{
+	int c;
 
 	c = termch;
 	termch = 0;
-	जबतक( c != '\n' )
-		c = inअक्षर();
-पूर्ण
+	while( c != '\n' )
+		c = inchar();
+}
 
-अटल पूर्णांक hexdigit(पूर्णांक c)
-अणु
-	अगर( '0' <= c && c <= '9' )
-		वापस c - '0';
-	अगर( 'A' <= c && c <= 'F' )
-		वापस c - ('A' - 10);
-	अगर( 'a' <= c && c <= 'f' )
-		वापस c - ('a' - 10);
-	वापस खातापूर्ण;
-पूर्ण
+static int hexdigit(int c)
+{
+	if( '0' <= c && c <= '9' )
+		return c - '0';
+	if( 'A' <= c && c <= 'F' )
+		return c - ('A' - 10);
+	if( 'a' <= c && c <= 'f' )
+		return c - ('a' - 10);
+	return EOF;
+}
 
-व्योम
-माला_लोtring(अक्षर *s, पूर्णांक size)
-अणु
-	पूर्णांक c;
+void
+getstring(char *s, int size)
+{
+	int c;
 
 	c = skipbl();
-	अगर (c == '\n') अणु
+	if (c == '\n') {
 		*s = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	करो अणु
-		अगर( size > 1 )अणु
+	do {
+		if( size > 1 ){
 			*s++ = c;
 			--size;
-		पूर्ण
-		c = inअक्षर();
-	पूर्ण जबतक( c != ' ' && c != '\t' && c != '\n' );
+		}
+		c = inchar();
+	} while( c != ' ' && c != '\t' && c != '\n' );
 	termch = c;
 	*s = 0;
-पूर्ण
+}
 
-अटल अक्षर line[256];
-अटल अक्षर *lineptr;
+static char line[256];
+static char *lineptr;
 
-अटल व्योम
-flush_input(व्योम)
-अणु
-	lineptr = शून्य;
-पूर्ण
+static void
+flush_input(void)
+{
+	lineptr = NULL;
+}
 
-अटल पूर्णांक
-inअक्षर(व्योम)
-अणु
-	अगर (lineptr == शून्य || *lineptr == 0) अणु
-		अगर (xmon_माला_लो(line, माप(line)) == शून्य) अणु
-			lineptr = शून्य;
-			वापस खातापूर्ण;
-		पूर्ण
+static int
+inchar(void)
+{
+	if (lineptr == NULL || *lineptr == 0) {
+		if (xmon_gets(line, sizeof(line)) == NULL) {
+			lineptr = NULL;
+			return EOF;
+		}
 		lineptr = line;
-	पूर्ण
-	वापस *lineptr++;
-पूर्ण
+	}
+	return *lineptr++;
+}
 
-अटल व्योम
-take_input(अक्षर *str)
-अणु
+static void
+take_input(char *str)
+{
 	lineptr = str;
-पूर्ण
+}
 
 
-अटल व्योम
-symbol_lookup(व्योम)
-अणु
-	पूर्णांक type = inअक्षर();
-	अचिन्हित दीर्घ addr, cpu;
-	व्योम __percpu *ptr = शून्य;
-	अटल अक्षर पंचांगp[64];
+static void
+symbol_lookup(void)
+{
+	int type = inchar();
+	unsigned long addr, cpu;
+	void __percpu *ptr = NULL;
+	static char tmp[64];
 
-	चयन (type) अणु
-	हाल 'a':
-		अगर (scanhex(&addr))
-			xmon_prपूर्णांक_symbol(addr, ": ", "\n");
+	switch (type) {
+	case 'a':
+		if (scanhex(&addr))
+			xmon_print_symbol(addr, ": ", "\n");
 		termch = 0;
-		अवरोध;
-	हाल 's':
-		माला_लोtring(पंचांगp, 64);
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+		break;
+	case 's':
+		getstring(tmp, 64);
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
-			addr = kallsyms_lookup_name(पंचांगp);
-			अगर (addr)
-				म_लिखो("%s: %lx\n", पंचांगp, addr);
-			अन्यथा
-				म_लिखो("Symbol '%s' not found.\n", पंचांगp);
+			addr = kallsyms_lookup_name(tmp);
+			if (addr)
+				printf("%s: %lx\n", tmp, addr);
+			else
+				printf("Symbol '%s' not found.\n", tmp);
 			sync();
-		पूर्ण
+		}
 		catch_memory_errors = 0;
 		termch = 0;
-		अवरोध;
-	हाल 'p':
-		माला_लोtring(पंचांगp, 64);
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+		break;
+	case 'p':
+		getstring(tmp, 64);
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
-			ptr = (व्योम __percpu *)kallsyms_lookup_name(पंचांगp);
+			ptr = (void __percpu *)kallsyms_lookup_name(tmp);
 			sync();
-		पूर्ण
+		}
 
-		अगर (ptr &&
-		    ptr >= (व्योम __percpu *)__per_cpu_start &&
-		    ptr < (व्योम __percpu *)__per_cpu_end)
-		अणु
-			अगर (scanhex(&cpu) && cpu < num_possible_cpus()) अणु
-				addr = (अचिन्हित दीर्घ)per_cpu_ptr(ptr, cpu);
-			पूर्ण अन्यथा अणु
+		if (ptr &&
+		    ptr >= (void __percpu *)__per_cpu_start &&
+		    ptr < (void __percpu *)__per_cpu_end)
+		{
+			if (scanhex(&cpu) && cpu < num_possible_cpus()) {
+				addr = (unsigned long)per_cpu_ptr(ptr, cpu);
+			} else {
 				cpu = raw_smp_processor_id();
-				addr = (अचिन्हित दीर्घ)this_cpu_ptr(ptr);
-			पूर्ण
+				addr = (unsigned long)this_cpu_ptr(ptr);
+			}
 
-			म_लिखो("%s for cpu 0x%lx: %lx\n", पंचांगp, cpu, addr);
-		पूर्ण अन्यथा अणु
-			म_लिखो("Percpu symbol '%s' not found.\n", पंचांगp);
-		पूर्ण
+			printf("%s for cpu 0x%lx: %lx\n", tmp, cpu, addr);
+		} else {
+			printf("Percpu symbol '%s' not found.\n", tmp);
+		}
 
 		catch_memory_errors = 0;
 		termch = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 
-/* Prपूर्णांक an address in numeric and symbolic क्रमm (अगर possible) */
-अटल व्योम xmon_prपूर्णांक_symbol(अचिन्हित दीर्घ address, स्थिर अक्षर *mid,
-			      स्थिर अक्षर *after)
-अणु
-	अक्षर *modname;
-	स्थिर अक्षर *name = शून्य;
-	अचिन्हित दीर्घ offset, size;
+/* Print an address in numeric and symbolic form (if possible) */
+static void xmon_print_symbol(unsigned long address, const char *mid,
+			      const char *after)
+{
+	char *modname;
+	const char *name = NULL;
+	unsigned long offset, size;
 
-	म_लिखो(REG, address);
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	printf(REG, address);
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
 		name = kallsyms_lookup(address, &size, &offset, &modname,
-				       पंचांगpstr);
+				       tmpstr);
 		sync();
-		/* रुको a little जबतक to see अगर we get a machine check */
+		/* wait a little while to see if we get a machine check */
 		__delay(200);
-	पूर्ण
+	}
 
 	catch_memory_errors = 0;
 
-	अगर (name) अणु
-		म_लिखो("%s%s+%#lx/%#lx", mid, name, offset, size);
-		अगर (modname)
-			म_लिखो(" [%s]", modname);
-	पूर्ण
-	म_लिखो("%s", after);
-पूर्ण
+	if (name) {
+		printf("%s%s+%#lx/%#lx", mid, name, offset, size);
+		if (modname)
+			printf(" [%s]", modname);
+	}
+	printf("%s", after);
+}
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-व्योम dump_segments(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ esid,vsid;
-	अचिन्हित दीर्घ llp;
+#ifdef CONFIG_PPC_BOOK3S_64
+void dump_segments(void)
+{
+	int i;
+	unsigned long esid,vsid;
+	unsigned long llp;
 
-	म_लिखो("SLB contents of cpu 0x%x\n", smp_processor_id());
+	printf("SLB contents of cpu 0x%x\n", smp_processor_id());
 
-	क्रम (i = 0; i < mmu_slb_size; i++) अणु
-		यंत्र अस्थिर("slbmfee  %0,%1" : "=r" (esid) : "r" (i));
-		यंत्र अस्थिर("slbmfev  %0,%1" : "=r" (vsid) : "r" (i));
+	for (i = 0; i < mmu_slb_size; i++) {
+		asm volatile("slbmfee  %0,%1" : "=r" (esid) : "r" (i));
+		asm volatile("slbmfev  %0,%1" : "=r" (vsid) : "r" (i));
 
-		अगर (!esid && !vsid)
-			जारी;
+		if (!esid && !vsid)
+			continue;
 
-		म_लिखो("%02d %016lx %016lx", i, esid, vsid);
+		printf("%02d %016lx %016lx", i, esid, vsid);
 
-		अगर (!(esid & SLB_ESID_V)) अणु
-			म_लिखो("\n");
-			जारी;
-		पूर्ण
+		if (!(esid & SLB_ESID_V)) {
+			printf("\n");
+			continue;
+		}
 
 		llp = vsid & SLB_VSID_LLP;
-		अगर (vsid & SLB_VSID_B_1T) अणु
-			म_लिखो("  1T  ESID=%9lx  VSID=%13lx LLP:%3lx \n",
+		if (vsid & SLB_VSID_B_1T) {
+			printf("  1T  ESID=%9lx  VSID=%13lx LLP:%3lx \n",
 				GET_ESID_1T(esid),
 				(vsid & ~SLB_VSID_B) >> SLB_VSID_SHIFT_1T,
 				llp);
-		पूर्ण अन्यथा अणु
-			म_लिखो(" 256M ESID=%9lx  VSID=%13lx LLP:%3lx \n",
+		} else {
+			printf(" 256M ESID=%9lx  VSID=%13lx LLP:%3lx \n",
 				GET_ESID(esid),
 				(vsid & ~SLB_VSID_B) >> SLB_VSID_SHIFT,
 				llp);
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-#अगर_घोषित CONFIG_PPC_BOOK3S_32
-व्योम dump_segments(व्योम)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_PPC_BOOK3S_32
+void dump_segments(void)
+{
+	int i;
 
-	म_लिखो("sr0-15 =");
-	क्रम (i = 0; i < 16; ++i)
-		म_लिखो(" %x", mfsr(i << 28));
-	म_लिखो("\n");
-पूर्ण
-#पूर्ण_अगर
+	printf("sr0-15 =");
+	for (i = 0; i < 16; ++i)
+		printf(" %x", mfsr(i << 28));
+	printf("\n");
+}
+#endif
 
-#अगर_घोषित CONFIG_44x
-अटल व्योम dump_tlb_44x(व्योम)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_44x
+static void dump_tlb_44x(void)
+{
+	int i;
 
-	क्रम (i = 0; i < PPC44x_TLB_SIZE; i++) अणु
-		अचिन्हित दीर्घ w0,w1,w2;
-		यंत्र अस्थिर("tlbre  %0,%1,0" : "=r" (w0) : "r" (i));
-		यंत्र अस्थिर("tlbre  %0,%1,1" : "=r" (w1) : "r" (i));
-		यंत्र अस्थिर("tlbre  %0,%1,2" : "=r" (w2) : "r" (i));
-		म_लिखो("[%02x] %08lx %08lx %08lx ", i, w0, w1, w2);
-		अगर (w0 & PPC44x_TLB_VALID) अणु
-			म_लिखो("V %08lx -> %01lx%08lx %c%c%c%c%c",
+	for (i = 0; i < PPC44x_TLB_SIZE; i++) {
+		unsigned long w0,w1,w2;
+		asm volatile("tlbre  %0,%1,0" : "=r" (w0) : "r" (i));
+		asm volatile("tlbre  %0,%1,1" : "=r" (w1) : "r" (i));
+		asm volatile("tlbre  %0,%1,2" : "=r" (w2) : "r" (i));
+		printf("[%02x] %08lx %08lx %08lx ", i, w0, w1, w2);
+		if (w0 & PPC44x_TLB_VALID) {
+			printf("V %08lx -> %01lx%08lx %c%c%c%c%c",
 			       w0 & PPC44x_TLB_EPN_MASK,
 			       w1 & PPC44x_TLB_ERPN_MASK,
 			       w1 & PPC44x_TLB_RPN_MASK,
@@ -3719,20 +3718,20 @@ symbol_lookup(व्योम)
 			       (w2 & PPC44x_TLB_M) ? 'M' : 'm',
 			       (w2 & PPC44x_TLB_G) ? 'G' : 'g',
 			       (w2 & PPC44x_TLB_E) ? 'E' : 'e');
-		पूर्ण
-		म_लिखो("\n");
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_44x */
+		}
+		printf("\n");
+	}
+}
+#endif /* CONFIG_44x */
 
-#अगर_घोषित CONFIG_PPC_BOOK3E
-अटल व्योम dump_tlb_book3e(व्योम)
-अणु
+#ifdef CONFIG_PPC_BOOK3E
+static void dump_tlb_book3e(void)
+{
 	u32 mmucfg, pidmask, lpidmask;
 	u64 ramask;
-	पूर्णांक i, tlb, ntlbs, pidsz, lpidsz, rasz, lrat = 0;
-	पूर्णांक mmu_version;
-	अटल स्थिर अक्षर *pgsz_names[] = अणु
+	int i, tlb, ntlbs, pidsz, lpidsz, rasz, lrat = 0;
+	int mmu_version;
+	static const char *pgsz_names[] = {
 		"  1K",
 		"  2K",
 		"  4K",
@@ -3765,7 +3764,7 @@ symbol_lookup(व्योम)
 		"512G",
 		"  1T",
 		"  2T",
-	पूर्ण;
+	};
 
 	/* Gather some infos about the MMU */
 	mmucfg = mfspr(SPRN_MMUCFG);
@@ -3774,77 +3773,77 @@ symbol_lookup(व्योम)
 	pidsz = ((mmucfg >> 6) & 0x1f) + 1;
 	lpidsz = (mmucfg >> 24) & 0xf;
 	rasz = (mmucfg >> 16) & 0x7f;
-	अगर ((mmu_version > 1) && (mmucfg & 0x10000))
+	if ((mmu_version > 1) && (mmucfg & 0x10000))
 		lrat = 1;
-	म_लिखो("Book3E MMU MAV=%d.0,%d TLBs,%d-bit PID,%d-bit LPID,%d-bit RA\n",
+	printf("Book3E MMU MAV=%d.0,%d TLBs,%d-bit PID,%d-bit LPID,%d-bit RA\n",
 	       mmu_version, ntlbs, pidsz, lpidsz, rasz);
 	pidmask = (1ul << pidsz) - 1;
 	lpidmask = (1ul << lpidsz) - 1;
 	ramask = (1ull << rasz) - 1;
 
-	क्रम (tlb = 0; tlb < ntlbs; tlb++) अणु
+	for (tlb = 0; tlb < ntlbs; tlb++) {
 		u32 tlbcfg;
-		पूर्णांक nent, assoc, new_cc = 1;
-		म_लिखो("TLB %d:\n------\n", tlb);
-		चयन(tlb) अणु
-		हाल 0:
+		int nent, assoc, new_cc = 1;
+		printf("TLB %d:\n------\n", tlb);
+		switch(tlb) {
+		case 0:
 			tlbcfg = mfspr(SPRN_TLB0CFG);
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			tlbcfg = mfspr(SPRN_TLB1CFG);
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			tlbcfg = mfspr(SPRN_TLB2CFG);
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			tlbcfg = mfspr(SPRN_TLB3CFG);
-			अवरोध;
-		शेष:
-			म_लिखो("Unsupported TLB number !\n");
-			जारी;
-		पूर्ण
+			break;
+		default:
+			printf("Unsupported TLB number !\n");
+			continue;
+		}
 		nent = tlbcfg & 0xfff;
 		assoc = (tlbcfg >> 24) & 0xff;
-		क्रम (i = 0; i < nent; i++) अणु
+		for (i = 0; i < nent; i++) {
 			u32 mas0 = MAS0_TLBSEL(tlb);
 			u32 mas1 = MAS1_TSIZE(BOOK3E_PAGESZ_4K);
 			u64 mas2 = 0;
 			u64 mas7_mas3;
-			पूर्णांक esel = i, cc = i;
+			int esel = i, cc = i;
 
-			अगर (assoc != 0) अणु
+			if (assoc != 0) {
 				cc = i / assoc;
 				esel = i % assoc;
 				mas2 = cc * 0x1000;
-			पूर्ण
+			}
 
 			mas0 |= MAS0_ESEL(esel);
 			mtspr(SPRN_MAS0, mas0);
 			mtspr(SPRN_MAS1, mas1);
 			mtspr(SPRN_MAS2, mas2);
-			यंत्र अस्थिर("tlbre  0,0,0" : : : "memory");
+			asm volatile("tlbre  0,0,0" : : : "memory");
 			mas1 = mfspr(SPRN_MAS1);
 			mas2 = mfspr(SPRN_MAS2);
 			mas7_mas3 = mfspr(SPRN_MAS7_MAS3);
-			अगर (assoc && (i % assoc) == 0)
+			if (assoc && (i % assoc) == 0)
 				new_cc = 1;
-			अगर (!(mas1 & MAS1_VALID))
-				जारी;
-			अगर (assoc == 0)
-				म_लिखो("%04x- ", i);
-			अन्यथा अगर (new_cc)
-				म_लिखो("%04x-%c", cc, 'A' + esel);
-			अन्यथा
-				म_लिखो("    |%c", 'A' + esel);
+			if (!(mas1 & MAS1_VALID))
+				continue;
+			if (assoc == 0)
+				printf("%04x- ", i);
+			else if (new_cc)
+				printf("%04x-%c", cc, 'A' + esel);
+			else
+				printf("    |%c", 'A' + esel);
 			new_cc = 0;
-			म_लिखो(" %016llx %04x %s %c%c AS%c",
+			printf(" %016llx %04x %s %c%c AS%c",
 			       mas2 & ~0x3ffull,
 			       (mas1 >> 16) & 0x3fff,
 			       pgsz_names[(mas1 >> 7) & 0x1f],
 			       mas1 & MAS1_IND ? 'I' : ' ',
 			       mas1 & MAS1_IPROT ? 'P' : ' ',
 			       mas1 & MAS1_TS ? '1' : '0');
-			म_लिखो(" %c%c%c%c%c%c%c",
+			printf(" %c%c%c%c%c%c%c",
 			       mas2 & MAS2_X0 ? 'a' : ' ',
 			       mas2 & MAS2_X1 ? 'v' : ' ',
 			       mas2 & MAS2_W  ? 'w' : ' ',
@@ -3852,217 +3851,217 @@ symbol_lookup(व्योम)
 			       mas2 & MAS2_M  ? 'm' : ' ',
 			       mas2 & MAS2_G  ? 'g' : ' ',
 			       mas2 & MAS2_E  ? 'e' : ' ');
-			म_लिखो(" %016llx", mas7_mas3 & ramask & ~0x7ffull);
-			अगर (mas1 & MAS1_IND)
-				म_लिखो(" %s\n",
+			printf(" %016llx", mas7_mas3 & ramask & ~0x7ffull);
+			if (mas1 & MAS1_IND)
+				printf(" %s\n",
 				       pgsz_names[(mas7_mas3 >> 1) & 0x1f]);
-			अन्यथा
-				म_लिखो(" U%c%c%c S%c%c%c\n",
+			else
+				printf(" U%c%c%c S%c%c%c\n",
 				       mas7_mas3 & MAS3_UX ? 'x' : ' ',
 				       mas7_mas3 & MAS3_UW ? 'w' : ' ',
 				       mas7_mas3 & MAS3_UR ? 'r' : ' ',
 				       mas7_mas3 & MAS3_SX ? 'x' : ' ',
 				       mas7_mas3 & MAS3_SW ? 'w' : ' ',
 				       mas7_mas3 & MAS3_SR ? 'r' : ' ');
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PPC_BOOK3E */
+		}
+	}
+}
+#endif /* CONFIG_PPC_BOOK3E */
 
-अटल व्योम xmon_init(पूर्णांक enable)
-अणु
-	अगर (enable) अणु
+static void xmon_init(int enable)
+{
+	if (enable) {
 		__debugger = xmon;
 		__debugger_ipi = xmon_ipi;
 		__debugger_bpt = xmon_bpt;
 		__debugger_sstep = xmon_sstep;
 		__debugger_iabr_match = xmon_iabr_match;
-		__debugger_अवरोध_match = xmon_अवरोध_match;
+		__debugger_break_match = xmon_break_match;
 		__debugger_fault_handler = xmon_fault_handler;
 
-#अगर_घोषित CONFIG_PPC_PSERIES
+#ifdef CONFIG_PPC_PSERIES
 		/*
-		 * Get the token here to aव्योम trying to get a lock
+		 * Get the token here to avoid trying to get a lock
 		 * during the crash, causing a deadlock.
 		 */
 		set_indicator_token = rtas_token("set-indicator");
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		__debugger = शून्य;
-		__debugger_ipi = शून्य;
-		__debugger_bpt = शून्य;
-		__debugger_sstep = शून्य;
-		__debugger_iabr_match = शून्य;
-		__debugger_अवरोध_match = शून्य;
-		__debugger_fault_handler = शून्य;
-	पूर्ण
-पूर्ण
+#endif
+	} else {
+		__debugger = NULL;
+		__debugger_ipi = NULL;
+		__debugger_bpt = NULL;
+		__debugger_sstep = NULL;
+		__debugger_iabr_match = NULL;
+		__debugger_break_match = NULL;
+		__debugger_fault_handler = NULL;
+	}
+}
 
-#अगर_घोषित CONFIG_MAGIC_SYSRQ
-अटल व्योम sysrq_handle_xmon(पूर्णांक key)
-अणु
-	अगर (xmon_is_locked_करोwn()) अणु
+#ifdef CONFIG_MAGIC_SYSRQ
+static void sysrq_handle_xmon(int key)
+{
+	if (xmon_is_locked_down()) {
 		clear_all_bpt();
 		xmon_init(0);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* ensure xmon is enabled */
 	xmon_init(1);
 	debugger(get_irq_regs());
-	अगर (!xmon_on)
+	if (!xmon_on)
 		xmon_init(0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा sysrq_key_op sysrq_xmon_op = अणु
+static const struct sysrq_key_op sysrq_xmon_op = {
 	.handler =	sysrq_handle_xmon,
 	.help_msg =	"xmon(x)",
 	.action_msg =	"Entering xmon",
-पूर्ण;
+};
 
-अटल पूर्णांक __init setup_xmon_sysrq(व्योम)
-अणु
-	रेजिस्टर_sysrq_key('x', &sysrq_xmon_op);
-	वापस 0;
-पूर्ण
+static int __init setup_xmon_sysrq(void)
+{
+	register_sysrq_key('x', &sysrq_xmon_op);
+	return 0;
+}
 device_initcall(setup_xmon_sysrq);
-#पूर्ण_अगर /* CONFIG_MAGIC_SYSRQ */
+#endif /* CONFIG_MAGIC_SYSRQ */
 
-अटल व्योम clear_all_bpt(व्योम)
-अणु
-	पूर्णांक i;
+static void clear_all_bpt(void)
+{
+	int i;
 
-	/* clear/unpatch all अवरोधpoपूर्णांकs */
-	हटाओ_bpts();
-	हटाओ_cpu_bpts();
+	/* clear/unpatch all breakpoints */
+	remove_bpts();
+	remove_cpu_bpts();
 
-	/* Disable all अवरोधpoपूर्णांकs */
-	क्रम (i = 0; i < NBPTS; ++i)
+	/* Disable all breakpoints */
+	for (i = 0; i < NBPTS; ++i)
 		bpts[i].enabled = 0;
 
-	/* Clear any data or iabr अवरोधpoपूर्णांकs */
-	iabr = शून्य;
-	क्रम (i = 0; i < nr_wp_slots(); i++)
+	/* Clear any data or iabr breakpoints */
+	iabr = NULL;
+	for (i = 0; i < nr_wp_slots(); i++)
 		dabr[i].enabled = 0;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल पूर्णांक xmon_dbgfs_set(व्योम *data, u64 val)
-अणु
+#ifdef CONFIG_DEBUG_FS
+static int xmon_dbgfs_set(void *data, u64 val)
+{
 	xmon_on = !!val;
 	xmon_init(xmon_on);
 
-	/* make sure all अवरोधpoपूर्णांकs हटाओd when disabling */
-	अगर (!xmon_on) अणु
+	/* make sure all breakpoints removed when disabling */
+	if (!xmon_on) {
 		clear_all_bpt();
 		get_output_lock();
-		म_लिखो("xmon: All breakpoints cleared\n");
+		printf("xmon: All breakpoints cleared\n");
 		release_output_lock();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xmon_dbgfs_get(व्योम *data, u64 *val)
-अणु
+static int xmon_dbgfs_get(void *data, u64 *val)
+{
 	*val = xmon_on;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SIMPLE_ATTRIBUTE(xmon_dbgfs_ops, xmon_dbgfs_get,
 			xmon_dbgfs_set, "%llu\n");
 
-अटल पूर्णांक __init setup_xmon_dbgfs(व्योम)
-अणु
-	debugfs_create_file("xmon", 0600, घातerpc_debugfs_root, शून्य,
+static int __init setup_xmon_dbgfs(void)
+{
+	debugfs_create_file("xmon", 0600, powerpc_debugfs_root, NULL,
 				&xmon_dbgfs_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(setup_xmon_dbgfs);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_DEBUG_FS */
 
-अटल पूर्णांक xmon_early __initdata;
+static int xmon_early __initdata;
 
-अटल पूर्णांक __init early_parse_xmon(अक्षर *p)
-अणु
-	अगर (xmon_is_locked_करोwn()) अणु
+static int __init early_parse_xmon(char *p)
+{
+	if (xmon_is_locked_down()) {
 		xmon_init(0);
 		xmon_early = 0;
 		xmon_on = 0;
-	पूर्ण अन्यथा अगर (!p || म_भेदन(p, "early", 5) == 0) अणु
+	} else if (!p || strncmp(p, "early", 5) == 0) {
 		/* just "xmon" is equivalent to "xmon=early" */
 		xmon_init(1);
 		xmon_early = 1;
 		xmon_on = 1;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "on", 2) == 0) अणु
+	} else if (strncmp(p, "on", 2) == 0) {
 		xmon_init(1);
 		xmon_on = 1;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "rw", 2) == 0) अणु
+	} else if (strncmp(p, "rw", 2) == 0) {
 		xmon_init(1);
 		xmon_on = 1;
 		xmon_is_ro = false;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "ro", 2) == 0) अणु
+	} else if (strncmp(p, "ro", 2) == 0) {
 		xmon_init(1);
 		xmon_on = 1;
 		xmon_is_ro = true;
-	पूर्ण अन्यथा अगर (म_भेदन(p, "off", 3) == 0)
+	} else if (strncmp(p, "off", 3) == 0)
 		xmon_on = 0;
-	अन्यथा
-		वापस 1;
+	else
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("xmon", early_parse_xmon);
 
-व्योम __init xmon_setup(व्योम)
-अणु
-	अगर (xmon_on)
+void __init xmon_setup(void)
+{
+	if (xmon_on)
 		xmon_init(1);
-	अगर (xmon_early)
-		debugger(शून्य);
-पूर्ण
+	if (xmon_early)
+		debugger(NULL);
+}
 
-#अगर_घोषित CONFIG_SPU_BASE
+#ifdef CONFIG_SPU_BASE
 
-काष्ठा spu_info अणु
-	काष्ठा spu *spu;
+struct spu_info {
+	struct spu *spu;
 	u64 saved_mfc_sr1_RW;
 	u32 saved_spu_runcntl_RW;
-	अचिन्हित दीर्घ dump_addr;
+	unsigned long dump_addr;
 	u8 stopped_ok;
-पूर्ण;
+};
 
-#घोषणा XMON_NUM_SPUS	16	/* Enough क्रम current hardware */
+#define XMON_NUM_SPUS	16	/* Enough for current hardware */
 
-अटल काष्ठा spu_info spu_info[XMON_NUM_SPUS];
+static struct spu_info spu_info[XMON_NUM_SPUS];
 
-व्योम xmon_रेजिस्टर_spus(काष्ठा list_head *list)
-अणु
-	काष्ठा spu *spu;
+void xmon_register_spus(struct list_head *list)
+{
+	struct spu *spu;
 
-	list_क्रम_each_entry(spu, list, full_list) अणु
-		अगर (spu->number >= XMON_NUM_SPUS) अणु
+	list_for_each_entry(spu, list, full_list) {
+		if (spu->number >= XMON_NUM_SPUS) {
 			WARN_ON(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		spu_info[spu->number].spu = spu;
 		spu_info[spu->number].stopped_ok = 0;
-		spu_info[spu->number].dump_addr = (अचिन्हित दीर्घ)
+		spu_info[spu->number].dump_addr = (unsigned long)
 				spu_info[spu->number].spu->local_store;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम stop_spus(व्योम)
-अणु
-	काष्ठा spu *spu;
-	पूर्णांक i;
-	u64 पंचांगp;
+static void stop_spus(void)
+{
+	struct spu *spu;
+	int i;
+	u64 tmp;
 
-	क्रम (i = 0; i < XMON_NUM_SPUS; i++) अणु
-		अगर (!spu_info[i].spu)
-			जारी;
+	for (i = 0; i < XMON_NUM_SPUS; i++) {
+		if (!spu_info[i].spu)
+			continue;
 
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
 
@@ -4071,44 +4070,44 @@ early_param("xmon", early_parse_xmon);
 			spu_info[i].saved_spu_runcntl_RW =
 				in_be32(&spu->problem->spu_runcntl_RW);
 
-			पंचांगp = spu_mfc_sr1_get(spu);
-			spu_info[i].saved_mfc_sr1_RW = पंचांगp;
+			tmp = spu_mfc_sr1_get(spu);
+			spu_info[i].saved_mfc_sr1_RW = tmp;
 
-			पंचांगp &= ~MFC_STATE1_MASTER_RUN_CONTROL_MASK;
-			spu_mfc_sr1_set(spu, पंचांगp);
+			tmp &= ~MFC_STATE1_MASTER_RUN_CONTROL_MASK;
+			spu_mfc_sr1_set(spu, tmp);
 
 			sync();
 			__delay(200);
 
 			spu_info[i].stopped_ok = 1;
 
-			म_लिखो("Stopped spu %.2d (was %s)\n", i,
+			printf("Stopped spu %.2d (was %s)\n", i,
 					spu_info[i].saved_spu_runcntl_RW ?
 					"running" : "stopped");
-		पूर्ण अन्यथा अणु
+		} else {
 			catch_memory_errors = 0;
-			म_लिखो("*** Error stopping spu %.2d\n", i);
-		पूर्ण
+			printf("*** Error stopping spu %.2d\n", i);
+		}
 		catch_memory_errors = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम restart_spus(व्योम)
-अणु
-	काष्ठा spu *spu;
-	पूर्णांक i;
+static void restart_spus(void)
+{
+	struct spu *spu;
+	int i;
 
-	क्रम (i = 0; i < XMON_NUM_SPUS; i++) अणु
-		अगर (!spu_info[i].spu)
-			जारी;
+	for (i = 0; i < XMON_NUM_SPUS; i++) {
+		if (!spu_info[i].spu)
+			continue;
 
-		अगर (!spu_info[i].stopped_ok) अणु
-			म_लिखो("*** Error, spu %d was not successfully stopped"
+		if (!spu_info[i].stopped_ok) {
+			printf("*** Error, spu %d was not successfully stopped"
 					", not restarting\n", i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+		if (setjmp(bus_error_jmp) == 0) {
 			catch_memory_errors = 1;
 			sync();
 
@@ -4120,39 +4119,39 @@ early_param("xmon", early_parse_xmon);
 			sync();
 			__delay(200);
 
-			म_लिखो("Restarted spu %.2d\n", i);
-		पूर्ण अन्यथा अणु
+			printf("Restarted spu %.2d\n", i);
+		} else {
 			catch_memory_errors = 0;
-			म_लिखो("*** Error restarting spu %.2d\n", i);
-		पूर्ण
+			printf("*** Error restarting spu %.2d\n", i);
+		}
 		catch_memory_errors = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा DUMP_WIDTH	23
-#घोषणा DUMP_VALUE(क्रमmat, field, value)				\
-करो अणु									\
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु				\
+#define DUMP_WIDTH	23
+#define DUMP_VALUE(format, field, value)				\
+do {									\
+	if (setjmp(bus_error_jmp) == 0) {				\
 		catch_memory_errors = 1;				\
 		sync();							\
-		म_लिखो("  %-*s = "क्रमmat"\n", DUMP_WIDTH,		\
+		printf("  %-*s = "format"\n", DUMP_WIDTH,		\
 				#field, value);				\
 		sync();							\
 		__delay(200);						\
-	पूर्ण अन्यथा अणु							\
+	} else {							\
 		catch_memory_errors = 0;				\
-		म_लिखो("  %-*s = *** Error reading field.\n",		\
+		printf("  %-*s = *** Error reading field.\n",		\
 					DUMP_WIDTH, #field);		\
-	पूर्ण								\
+	}								\
 	catch_memory_errors = 0;					\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा DUMP_FIELD(obj, क्रमmat, field)	\
-	DUMP_VALUE(क्रमmat, field, obj->field)
+#define DUMP_FIELD(obj, format, field)	\
+	DUMP_VALUE(format, field, obj->field)
 
-अटल व्योम dump_spu_fields(काष्ठा spu *spu)
-अणु
-	म_लिखो("Dumping spu fields at address %p:\n", spu);
+static void dump_spu_fields(struct spu *spu)
+{
+	printf("Dumping spu fields at address %p:\n", spu);
 
 	DUMP_FIELD(spu, "0x%x", number);
 	DUMP_FIELD(spu, "%s", name);
@@ -4173,7 +4172,7 @@ early_param("xmon", early_parse_xmon);
 	DUMP_FIELD(spu, "0x%p", mm);
 	DUMP_FIELD(spu, "0x%p", ctx);
 	DUMP_FIELD(spu, "0x%p", rq);
-	DUMP_FIELD(spu, "0x%llx", बारtamp);
+	DUMP_FIELD(spu, "0x%llx", timestamp);
 	DUMP_FIELD(spu, "0x%lx", problem_phys);
 	DUMP_FIELD(spu, "0x%p", problem);
 	DUMP_VALUE("0x%x", problem->spu_runcntl_RW,
@@ -4184,99 +4183,99 @@ early_param("xmon", early_parse_xmon);
 			in_be32(&spu->problem->spu_npc_RW));
 	DUMP_FIELD(spu, "0x%p", priv2);
 	DUMP_FIELD(spu, "0x%p", pdata);
-पूर्ण
+}
 
-अटल पूर्णांक spu_inst_dump(अचिन्हित दीर्घ adr, दीर्घ count, पूर्णांक praddr)
-अणु
-	वापस generic_inst_dump(adr, count, praddr, prपूर्णांक_insn_spu);
-पूर्ण
+static int spu_inst_dump(unsigned long adr, long count, int praddr)
+{
+	return generic_inst_dump(adr, count, praddr, print_insn_spu);
+}
 
-अटल व्योम dump_spu_ls(अचिन्हित दीर्घ num, पूर्णांक subcmd)
-अणु
-	अचिन्हित दीर्घ offset, addr, ls_addr;
+static void dump_spu_ls(unsigned long num, int subcmd)
+{
+	unsigned long offset, addr, ls_addr;
 
-	अगर (बनाओ_लाँघ(bus_error_jmp) == 0) अणु
+	if (setjmp(bus_error_jmp) == 0) {
 		catch_memory_errors = 1;
 		sync();
-		ls_addr = (अचिन्हित दीर्घ)spu_info[num].spu->local_store;
+		ls_addr = (unsigned long)spu_info[num].spu->local_store;
 		sync();
 		__delay(200);
-	पूर्ण अन्यथा अणु
+	} else {
 		catch_memory_errors = 0;
-		म_लिखो("*** Error: accessing spu info for spu %ld\n", num);
-		वापस;
-	पूर्ण
+		printf("*** Error: accessing spu info for spu %ld\n", num);
+		return;
+	}
 	catch_memory_errors = 0;
 
-	अगर (scanhex(&offset))
+	if (scanhex(&offset))
 		addr = ls_addr + offset;
-	अन्यथा
+	else
 		addr = spu_info[num].dump_addr;
 
-	अगर (addr >= ls_addr + LS_SIZE) अणु
-		म_लिखो("*** Error: address outside of local store\n");
-		वापस;
-	पूर्ण
+	if (addr >= ls_addr + LS_SIZE) {
+		printf("*** Error: address outside of local store\n");
+		return;
+	}
 
-	चयन (subcmd) अणु
-	हाल 'i':
+	switch (subcmd) {
+	case 'i':
 		addr += spu_inst_dump(addr, 16, 1);
 		last_cmd = "sdi\n";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		prdump(addr, 64);
 		addr += 64;
 		last_cmd = "sd\n";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spu_info[num].dump_addr = addr;
-पूर्ण
+}
 
-अटल पूर्णांक करो_spu_cmd(व्योम)
-अणु
-	अटल अचिन्हित दीर्घ num = 0;
-	पूर्णांक cmd, subcmd = 0;
+static int do_spu_cmd(void)
+{
+	static unsigned long num = 0;
+	int cmd, subcmd = 0;
 
-	cmd = inअक्षर();
-	चयन (cmd) अणु
-	हाल 's':
+	cmd = inchar();
+	switch (cmd) {
+	case 's':
 		stop_spus();
-		अवरोध;
-	हाल 'r':
+		break;
+	case 'r':
 		restart_spus();
-		अवरोध;
-	हाल 'd':
-		subcmd = inअक्षर();
-		अगर (है_षष्ठादशक(subcmd) || subcmd == '\n')
+		break;
+	case 'd':
+		subcmd = inchar();
+		if (isxdigit(subcmd) || subcmd == '\n')
 			termch = subcmd;
 		fallthrough;
-	हाल 'f':
+	case 'f':
 		scanhex(&num);
-		अगर (num >= XMON_NUM_SPUS || !spu_info[num].spu) अणु
-			म_लिखो("*** Error: invalid spu number\n");
-			वापस 0;
-		पूर्ण
+		if (num >= XMON_NUM_SPUS || !spu_info[num].spu) {
+			printf("*** Error: invalid spu number\n");
+			return 0;
+		}
 
-		चयन (cmd) अणु
-		हाल 'f':
+		switch (cmd) {
+		case 'f':
 			dump_spu_fields(spu_info[num].spu);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dump_spu_ls(num, subcmd);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+		break;
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा /* ! CONFIG_SPU_BASE */
-अटल पूर्णांक करो_spu_cmd(व्योम)
-अणु
-	वापस -1;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#else /* ! CONFIG_SPU_BASE */
+static int do_spu_cmd(void)
+{
+	return -1;
+}
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2007-2012 Siemens AG
  *
@@ -10,136 +9,136 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/crc-ccitt.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/crc-ccitt.h>
+#include <asm/unaligned.h>
 
-#समावेश <net/mac802154.h>
-#समावेश <net/ieee802154_netdev.h>
-#समावेश <net/nl802154.h>
+#include <net/mac802154.h>
+#include <net/ieee802154_netdev.h>
+#include <net/nl802154.h>
 
-#समावेश "ieee802154_i.h"
+#include "ieee802154_i.h"
 
-अटल पूर्णांक ieee802154_deliver_skb(काष्ठा sk_buff *skb)
-अणु
+static int ieee802154_deliver_skb(struct sk_buff *skb)
+{
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb->protocol = htons(ETH_P_IEEE802154);
 
-	वापस netअगर_receive_skb(skb);
-पूर्ण
+	return netif_receive_skb(skb);
+}
 
-अटल पूर्णांक
-ieee802154_subअगर_frame(काष्ठा ieee802154_sub_अगर_data *sdata,
-		       काष्ठा sk_buff *skb, स्थिर काष्ठा ieee802154_hdr *hdr)
-अणु
-	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
-	__le16 span, sलघु;
-	पूर्णांक rc;
+static int
+ieee802154_subif_frame(struct ieee802154_sub_if_data *sdata,
+		       struct sk_buff *skb, const struct ieee802154_hdr *hdr)
+{
+	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
+	__le16 span, sshort;
+	int rc;
 
 	pr_debug("getting packet via slave interface %s\n", sdata->dev->name);
 
 	span = wpan_dev->pan_id;
-	sलघु = wpan_dev->लघु_addr;
+	sshort = wpan_dev->short_addr;
 
-	चयन (mac_cb(skb)->dest.mode) अणु
-	हाल IEEE802154_ADDR_NONE:
-		अगर (mac_cb(skb)->dest.mode != IEEE802154_ADDR_NONE)
-			/* FIXME: check अगर we are PAN coordinator */
+	switch (mac_cb(skb)->dest.mode) {
+	case IEEE802154_ADDR_NONE:
+		if (mac_cb(skb)->dest.mode != IEEE802154_ADDR_NONE)
+			/* FIXME: check if we are PAN coordinator */
 			skb->pkt_type = PACKET_OTHERHOST;
-		अन्यथा
+		else
 			/* ACK comes with both addresses empty */
 			skb->pkt_type = PACKET_HOST;
-		अवरोध;
-	हाल IEEE802154_ADDR_LONG:
-		अगर (mac_cb(skb)->dest.pan_id != span &&
+		break;
+	case IEEE802154_ADDR_LONG:
+		if (mac_cb(skb)->dest.pan_id != span &&
 		    mac_cb(skb)->dest.pan_id != cpu_to_le16(IEEE802154_PANID_BROADCAST))
 			skb->pkt_type = PACKET_OTHERHOST;
-		अन्यथा अगर (mac_cb(skb)->dest.extended_addr == wpan_dev->extended_addr)
+		else if (mac_cb(skb)->dest.extended_addr == wpan_dev->extended_addr)
 			skb->pkt_type = PACKET_HOST;
-		अन्यथा
+		else
 			skb->pkt_type = PACKET_OTHERHOST;
-		अवरोध;
-	हाल IEEE802154_ADDR_SHORT:
-		अगर (mac_cb(skb)->dest.pan_id != span &&
+		break;
+	case IEEE802154_ADDR_SHORT:
+		if (mac_cb(skb)->dest.pan_id != span &&
 		    mac_cb(skb)->dest.pan_id != cpu_to_le16(IEEE802154_PANID_BROADCAST))
 			skb->pkt_type = PACKET_OTHERHOST;
-		अन्यथा अगर (mac_cb(skb)->dest.लघु_addr == sलघु)
+		else if (mac_cb(skb)->dest.short_addr == sshort)
 			skb->pkt_type = PACKET_HOST;
-		अन्यथा अगर (mac_cb(skb)->dest.लघु_addr ==
+		else if (mac_cb(skb)->dest.short_addr ==
 			  cpu_to_le16(IEEE802154_ADDR_BROADCAST))
 			skb->pkt_type = PACKET_BROADCAST;
-		अन्यथा
+		else
 			skb->pkt_type = PACKET_OTHERHOST;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_debug("invalid dest mode\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	skb->dev = sdata->dev;
 
-	/* TODO this should be moved after netअगर_receive_skb call, otherwise
+	/* TODO this should be moved after netif_receive_skb call, otherwise
 	 * wireshark will show a mac header with security fields and the
-	 * payload is alपढ़ोy decrypted.
+	 * payload is already decrypted.
 	 */
 	rc = mac802154_llsec_decrypt(&sdata->sec, skb);
-	अगर (rc) अणु
+	if (rc) {
 		pr_debug("decryption failed: %i\n", rc);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	sdata->dev->stats.rx_packets++;
 	sdata->dev->stats.rx_bytes += skb->len;
 
-	चयन (mac_cb(skb)->type) अणु
-	हाल IEEE802154_FC_TYPE_BEACON:
-	हाल IEEE802154_FC_TYPE_ACK:
-	हाल IEEE802154_FC_TYPE_MAC_CMD:
-		जाओ fail;
+	switch (mac_cb(skb)->type) {
+	case IEEE802154_FC_TYPE_BEACON:
+	case IEEE802154_FC_TYPE_ACK:
+	case IEEE802154_FC_TYPE_MAC_CMD:
+		goto fail;
 
-	हाल IEEE802154_FC_TYPE_DATA:
-		वापस ieee802154_deliver_skb(skb);
-	शेष:
+	case IEEE802154_FC_TYPE_DATA:
+		return ieee802154_deliver_skb(skb);
+	default:
 		pr_warn_ratelimited("ieee802154: bad frame received "
 				    "(type = %d)\n", mac_cb(skb)->type);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 fail:
-	kमुक्त_skb(skb);
-	वापस NET_RX_DROP;
-पूर्ण
+	kfree_skb(skb);
+	return NET_RX_DROP;
+}
 
-अटल व्योम
-ieee802154_prपूर्णांक_addr(स्थिर अक्षर *name, स्थिर काष्ठा ieee802154_addr *addr)
-अणु
-	अगर (addr->mode == IEEE802154_ADDR_NONE)
+static void
+ieee802154_print_addr(const char *name, const struct ieee802154_addr *addr)
+{
+	if (addr->mode == IEEE802154_ADDR_NONE)
 		pr_debug("%s not present\n", name);
 
 	pr_debug("%s PAN ID: %04x\n", name, le16_to_cpu(addr->pan_id));
-	अगर (addr->mode == IEEE802154_ADDR_SHORT) अणु
+	if (addr->mode == IEEE802154_ADDR_SHORT) {
 		pr_debug("%s is short: %04x\n", name,
-			 le16_to_cpu(addr->लघु_addr));
-	पूर्ण अन्यथा अणु
-		u64 hw = swab64((__क्रमce u64)addr->extended_addr);
+			 le16_to_cpu(addr->short_addr));
+	} else {
+		u64 hw = swab64((__force u64)addr->extended_addr);
 
 		pr_debug("%s is hardware: %8phC\n", name, &hw);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-ieee802154_parse_frame_start(काष्ठा sk_buff *skb, काष्ठा ieee802154_hdr *hdr)
-अणु
-	पूर्णांक hlen;
-	काष्ठा ieee802154_mac_cb *cb = mac_cb_init(skb);
+static int
+ieee802154_parse_frame_start(struct sk_buff *skb, struct ieee802154_hdr *hdr)
+{
+	int hlen;
+	struct ieee802154_mac_cb *cb = mac_cb_init(skb);
 
 	skb_reset_mac_header(skb);
 
 	hlen = ieee802154_hdr_pull(skb, hdr);
-	अगर (hlen < 0)
-		वापस -EINVAL;
+	if (hlen < 0)
+		return -EINVAL;
 
 	skb->mac_len = hlen;
 
@@ -150,155 +149,155 @@ ieee802154_parse_frame_start(काष्ठा sk_buff *skb, काष्ठा
 	cb->ackreq = hdr->fc.ack_request;
 	cb->secen = hdr->fc.security_enabled;
 
-	ieee802154_prपूर्णांक_addr("destination", &hdr->dest);
-	ieee802154_prपूर्णांक_addr("source", &hdr->source);
+	ieee802154_print_addr("destination", &hdr->dest);
+	ieee802154_print_addr("source", &hdr->source);
 
 	cb->source = hdr->source;
 	cb->dest = hdr->dest;
 
-	अगर (hdr->fc.security_enabled) अणु
+	if (hdr->fc.security_enabled) {
 		u64 key;
 
 		pr_debug("seclevel %i\n", hdr->sec.level);
 
-		चयन (hdr->sec.key_id_mode) अणु
-		हाल IEEE802154_SCF_KEY_IMPLICIT:
+		switch (hdr->sec.key_id_mode) {
+		case IEEE802154_SCF_KEY_IMPLICIT:
 			pr_debug("implicit key\n");
-			अवरोध;
+			break;
 
-		हाल IEEE802154_SCF_KEY_INDEX:
+		case IEEE802154_SCF_KEY_INDEX:
 			pr_debug("key %02x\n", hdr->sec.key_id);
-			अवरोध;
+			break;
 
-		हाल IEEE802154_SCF_KEY_SHORT_INDEX:
+		case IEEE802154_SCF_KEY_SHORT_INDEX:
 			pr_debug("key %04x:%04x %02x\n",
-				 le32_to_cpu(hdr->sec.लघु_src) >> 16,
-				 le32_to_cpu(hdr->sec.लघु_src) & 0xffff,
+				 le32_to_cpu(hdr->sec.short_src) >> 16,
+				 le32_to_cpu(hdr->sec.short_src) & 0xffff,
 				 hdr->sec.key_id);
-			अवरोध;
+			break;
 
-		हाल IEEE802154_SCF_KEY_HW_INDEX:
-			key = swab64((__क्रमce u64)hdr->sec.extended_src);
+		case IEEE802154_SCF_KEY_HW_INDEX:
+			key = swab64((__force u64)hdr->sec.extended_src);
 			pr_debug("key source %8phC %02x\n", &key,
 				 hdr->sec.key_id);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-__ieee802154_rx_handle_packet(काष्ठा ieee802154_local *local,
-			      काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
-	काष्ठा ieee802154_sub_अगर_data *sdata;
-	काष्ठा ieee802154_hdr hdr;
+static void
+__ieee802154_rx_handle_packet(struct ieee802154_local *local,
+			      struct sk_buff *skb)
+{
+	int ret;
+	struct ieee802154_sub_if_data *sdata;
+	struct ieee802154_hdr hdr;
 
 	ret = ieee802154_parse_frame_start(skb, &hdr);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("got invalid frame\n");
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list) अणु
-		अगर (sdata->wpan_dev.अगरtype != NL802154_IFTYPE_NODE)
-			जारी;
+	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
+		if (sdata->wpan_dev.iftype != NL802154_IFTYPE_NODE)
+			continue;
 
-		अगर (!ieee802154_sdata_running(sdata))
-			जारी;
+		if (!ieee802154_sdata_running(sdata))
+			continue;
 
-		ieee802154_subअगर_frame(sdata, skb, &hdr);
-		skb = शून्य;
-		अवरोध;
-	पूर्ण
+		ieee802154_subif_frame(sdata, skb, &hdr);
+		skb = NULL;
+		break;
+	}
 
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल व्योम
-ieee802154_monitors_rx(काष्ठा ieee802154_local *local, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *skb2;
-	काष्ठा ieee802154_sub_अगर_data *sdata;
+static void
+ieee802154_monitors_rx(struct ieee802154_local *local, struct sk_buff *skb)
+{
+	struct sk_buff *skb2;
+	struct ieee802154_sub_if_data *sdata;
 
 	skb_reset_mac_header(skb);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb->pkt_type = PACKET_OTHERHOST;
 	skb->protocol = htons(ETH_P_IEEE802154);
 
-	list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list) अणु
-		अगर (sdata->wpan_dev.अगरtype != NL802154_IFTYPE_MONITOR)
-			जारी;
+	list_for_each_entry_rcu(sdata, &local->interfaces, list) {
+		if (sdata->wpan_dev.iftype != NL802154_IFTYPE_MONITOR)
+			continue;
 
-		अगर (!ieee802154_sdata_running(sdata))
-			जारी;
+		if (!ieee802154_sdata_running(sdata))
+			continue;
 
 		skb2 = skb_clone(skb, GFP_ATOMIC);
-		अगर (skb2) अणु
+		if (skb2) {
 			skb2->dev = sdata->dev;
 			ieee802154_deliver_skb(skb2);
 
 			sdata->dev->stats.rx_packets++;
 			sdata->dev->stats.rx_bytes += skb->len;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम ieee802154_rx(काष्ठा ieee802154_local *local, काष्ठा sk_buff *skb)
-अणु
+void ieee802154_rx(struct ieee802154_local *local, struct sk_buff *skb)
+{
 	u16 crc;
 
 	WARN_ON_ONCE(softirq_count() == 0);
 
-	अगर (local->suspended)
-		जाओ drop;
+	if (local->suspended)
+		goto drop;
 
 	/* TODO: When a transceiver omits the checksum here, we
 	 * add an own calculated one. This is currently an ugly
 	 * solution because the monitor needs a crc here.
 	 */
-	अगर (local->hw.flags & IEEE802154_HW_RX_OMIT_CKSUM) अणु
+	if (local->hw.flags & IEEE802154_HW_RX_OMIT_CKSUM) {
 		crc = crc_ccitt(0, skb->data, skb->len);
 		put_unaligned_le16(crc, skb_put(skb, 2));
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	ieee802154_monitors_rx(local, skb);
 
-	/* Check अगर transceiver करोesn't validate the checksum.
+	/* Check if transceiver doesn't validate the checksum.
 	 * If not we validate the checksum here.
 	 */
-	अगर (local->hw.flags & IEEE802154_HW_RX_DROP_BAD_CKSUM) अणु
+	if (local->hw.flags & IEEE802154_HW_RX_DROP_BAD_CKSUM) {
 		crc = crc_ccitt(0, skb->data, skb->len);
-		अगर (crc) अणु
-			rcu_पढ़ो_unlock();
-			जाओ drop;
-		पूर्ण
-	पूर्ण
-	/* हटाओ crc */
+		if (crc) {
+			rcu_read_unlock();
+			goto drop;
+		}
+	}
+	/* remove crc */
 	skb_trim(skb, skb->len - 2);
 
 	__ieee802154_rx_handle_packet(local, skb);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस;
+	return;
 drop:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-व्योम
-ieee802154_rx_irqsafe(काष्ठा ieee802154_hw *hw, काष्ठा sk_buff *skb, u8 lqi)
-अणु
-	काष्ठा ieee802154_local *local = hw_to_local(hw);
+void
+ieee802154_rx_irqsafe(struct ieee802154_hw *hw, struct sk_buff *skb, u8 lqi)
+{
+	struct ieee802154_local *local = hw_to_local(hw);
 
 	mac_cb(skb)->lqi = lqi;
 	skb->pkt_type = IEEE802154_RX_MSG;
 	skb_queue_tail(&local->skb_queue, skb);
 	tasklet_schedule(&local->tasklet);
-पूर्ण
+}
 EXPORT_SYMBOL(ieee802154_rx_irqsafe);

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_MACH_EP93XX_SPI_H
-#घोषणा __ASM_MACH_EP93XX_SPI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_MACH_EP93XX_SPI_H
+#define __ASM_MACH_EP93XX_SPI_H
 
-काष्ठा spi_device;
+struct spi_device;
 
 /**
- * काष्ठा ep93xx_spi_info - EP93xx specअगरic SPI descriptor
- * @use_dma: use DMA क्रम the transfers
+ * struct ep93xx_spi_info - EP93xx specific SPI descriptor
+ * @use_dma: use DMA for the transfers
  */
-काष्ठा ep93xx_spi_info अणु
+struct ep93xx_spi_info {
 	bool	use_dma;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_MACH_EP93XX_SPI_H */
+#endif /* __ASM_MACH_EP93XX_SPI_H */

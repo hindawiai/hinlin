@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_RECV_C_
+#define _RTW_RECV_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <rtw_recv.h>
-#समावेश <net/cfg80211.h>
-#समावेश <यंत्र/unaligned.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <linux/jiffies.h>
+#include <rtw_recv.h>
+#include <net/cfg80211.h>
+#include <asm/unaligned.h>
 
-अटल u8 SNAP_ETH_TYPE_IPX[2] = अणु0x81, 0x37पूर्ण;
-अटल u8 SNAP_ETH_TYPE_APPLETALK_AARP[2] = अणु0x80, 0xf3पूर्ण;
+static u8 SNAP_ETH_TYPE_IPX[2] = {0x81, 0x37};
+static u8 SNAP_ETH_TYPE_APPLETALK_AARP[2] = {0x80, 0xf3};
 
-अटल व्योम rtw_संकेत_stat_समयr_hdl(काष्ठा समयr_list *t);
+static void rtw_signal_stat_timer_hdl(struct timer_list *t);
 
-व्योम _rtw_init_sta_recv_priv(काष्ठा sta_recv_priv *psta_recvpriv)
-अणु
-	स_रखो((u8 *)psta_recvpriv, 0, माप(काष्ठा sta_recv_priv));
+void _rtw_init_sta_recv_priv(struct sta_recv_priv *psta_recvpriv)
+{
+	memset((u8 *)psta_recvpriv, 0, sizeof(struct sta_recv_priv));
 
 	spin_lock_init(&psta_recvpriv->lock);
 
-	/* क्रम (i = 0; i<MAX_RX_NUMBLKS; i++) */
+	/* for (i = 0; i<MAX_RX_NUMBLKS; i++) */
 	/* _rtw_init_queue(&psta_recvpriv->blk_strms[i]); */
 
 	_rtw_init_queue(&psta_recvpriv->defrag_q);
-पूर्ण
+}
 
-चिन्हित पूर्णांक _rtw_init_recv_priv(काष्ठा recv_priv *precvpriv, काष्ठा adapter *padapter)
-अणु
-	चिन्हित पूर्णांक i;
-	जोड़ recv_frame *precvframe;
-	चिन्हित पूर्णांक	res = _SUCCESS;
+signed int _rtw_init_recv_priv(struct recv_priv *precvpriv, struct adapter *padapter)
+{
+	signed int i;
+	union recv_frame *precvframe;
+	signed int	res = _SUCCESS;
 
 	spin_lock_init(&precvpriv->lock);
 
-	_rtw_init_queue(&precvpriv->मुक्त_recv_queue);
+	_rtw_init_queue(&precvpriv->free_recv_queue);
 	_rtw_init_queue(&precvpriv->recv_pending_queue);
 	_rtw_init_queue(&precvpriv->uc_swdec_pending_queue);
 
 	precvpriv->adapter = padapter;
 
-	precvpriv->मुक्त_recvframe_cnt = NR_RECVFRAME;
+	precvpriv->free_recvframe_cnt = NR_RECVFRAME;
 
-	precvpriv->pallocated_frame_buf = vzalloc(NR_RECVFRAME * माप(जोड़ recv_frame) + RXFRAME_ALIGN_SZ);
+	precvpriv->pallocated_frame_buf = vzalloc(NR_RECVFRAME * sizeof(union recv_frame) + RXFRAME_ALIGN_SZ);
 
-	अगर (!precvpriv->pallocated_frame_buf) अणु
+	if (!precvpriv->pallocated_frame_buf) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	precvpriv->precv_frame_buf = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(precvpriv->pallocated_frame_buf), RXFRAME_ALIGN_SZ);
 	/* precvpriv->precv_frame_buf = precvpriv->pallocated_frame_buf + RXFRAME_ALIGN_SZ - */
 	/* ((SIZE_PTR) (precvpriv->pallocated_frame_buf) &(RXFRAME_ALIGN_SZ-1)); */
 
-	precvframe = (जोड़ recv_frame *) precvpriv->precv_frame_buf;
+	precvframe = (union recv_frame *) precvpriv->precv_frame_buf;
 
 
-	क्रम (i = 0; i < NR_RECVFRAME; i++) अणु
+	for (i = 0; i < NR_RECVFRAME; i++) {
 		INIT_LIST_HEAD(&(precvframe->u.list));
 
-		list_add_tail(&(precvframe->u.list), &(precvpriv->मुक्त_recv_queue.queue));
+		list_add_tail(&(precvframe->u.list), &(precvpriv->free_recv_queue.queue));
 
 		rtw_os_recv_resource_alloc(padapter, precvframe);
 
@@ -73,107 +72,107 @@
 		precvframe->u.hdr.adapter = padapter;
 		precvframe++;
 
-	पूर्ण
+	}
 
 	res = rtw_hal_init_recv_priv(padapter);
 
-	समयr_setup(&precvpriv->संकेत_stat_समयr, rtw_संकेत_stat_समयr_hdl,
+	timer_setup(&precvpriv->signal_stat_timer, rtw_signal_stat_timer_hdl,
 		    0);
 
-	precvpriv->संकेत_stat_sampling_पूर्णांकerval = 2000; /* ms */
+	precvpriv->signal_stat_sampling_interval = 2000; /* ms */
 
-	rtw_set_संकेत_stat_समयr(precvpriv);
+	rtw_set_signal_stat_timer(precvpriv);
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
-व्योम _rtw_मुक्त_recv_priv(काष्ठा recv_priv *precvpriv)
-अणु
-	काष्ठा adapter	*padapter = precvpriv->adapter;
+void _rtw_free_recv_priv(struct recv_priv *precvpriv)
+{
+	struct adapter	*padapter = precvpriv->adapter;
 
-	rtw_मुक्त_uc_swdec_pending_queue(padapter);
+	rtw_free_uc_swdec_pending_queue(padapter);
 
-	rtw_os_recv_resource_मुक्त(precvpriv);
+	rtw_os_recv_resource_free(precvpriv);
 
-	vमुक्त(precvpriv->pallocated_frame_buf);
+	vfree(precvpriv->pallocated_frame_buf);
 
-	rtw_hal_मुक्त_recv_priv(padapter);
-पूर्ण
+	rtw_hal_free_recv_priv(padapter);
+}
 
-जोड़ recv_frame *_rtw_alloc_recvframe(काष्ठा __queue *pमुक्त_recv_queue)
-अणु
+union recv_frame *_rtw_alloc_recvframe(struct __queue *pfree_recv_queue)
+{
 
-	जोड़ recv_frame  *precvframe;
-	काष्ठा list_head	*plist, *phead;
-	काष्ठा adapter *padapter;
-	काष्ठा recv_priv *precvpriv;
+	union recv_frame  *precvframe;
+	struct list_head	*plist, *phead;
+	struct adapter *padapter;
+	struct recv_priv *precvpriv;
 
-	अगर (list_empty(&pमुक्त_recv_queue->queue))
-		precvframe = शून्य;
-	अन्यथा अणु
-		phead = get_list_head(pमुक्त_recv_queue);
+	if (list_empty(&pfree_recv_queue->queue))
+		precvframe = NULL;
+	else {
+		phead = get_list_head(pfree_recv_queue);
 
 		plist = get_next(phead);
 
-		precvframe = (जोड़ recv_frame *)plist;
+		precvframe = (union recv_frame *)plist;
 
 		list_del_init(&precvframe->u.hdr.list);
 		padapter = precvframe->u.hdr.adapter;
-		अगर (padapter) अणु
+		if (padapter) {
 			precvpriv = &padapter->recvpriv;
-			अगर (pमुक्त_recv_queue == &precvpriv->मुक्त_recv_queue)
-				precvpriv->मुक्त_recvframe_cnt--;
-		पूर्ण
-	पूर्ण
-	वापस precvframe;
-पूर्ण
+			if (pfree_recv_queue == &precvpriv->free_recv_queue)
+				precvpriv->free_recvframe_cnt--;
+		}
+	}
+	return precvframe;
+}
 
-जोड़ recv_frame *rtw_alloc_recvframe(काष्ठा __queue *pमुक्त_recv_queue)
-अणु
-	जोड़ recv_frame  *precvframe;
+union recv_frame *rtw_alloc_recvframe(struct __queue *pfree_recv_queue)
+{
+	union recv_frame  *precvframe;
 
-	spin_lock_bh(&pमुक्त_recv_queue->lock);
+	spin_lock_bh(&pfree_recv_queue->lock);
 
-	precvframe = _rtw_alloc_recvframe(pमुक्त_recv_queue);
+	precvframe = _rtw_alloc_recvframe(pfree_recv_queue);
 
-	spin_unlock_bh(&pमुक्त_recv_queue->lock);
+	spin_unlock_bh(&pfree_recv_queue->lock);
 
-	वापस precvframe;
-पूर्ण
+	return precvframe;
+}
 
-पूर्णांक rtw_मुक्त_recvframe(जोड़ recv_frame *precvframe, काष्ठा __queue *pमुक्त_recv_queue)
-अणु
-	काष्ठा adapter *padapter = precvframe->u.hdr.adapter;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+int rtw_free_recvframe(union recv_frame *precvframe, struct __queue *pfree_recv_queue)
+{
+	struct adapter *padapter = precvframe->u.hdr.adapter;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
 
-	rtw_os_मुक्त_recvframe(precvframe);
+	rtw_os_free_recvframe(precvframe);
 
 
-	spin_lock_bh(&pमुक्त_recv_queue->lock);
+	spin_lock_bh(&pfree_recv_queue->lock);
 
 	list_del_init(&(precvframe->u.hdr.list));
 
 	precvframe->u.hdr.len = 0;
 
-	list_add_tail(&(precvframe->u.hdr.list), get_list_head(pमुक्त_recv_queue));
+	list_add_tail(&(precvframe->u.hdr.list), get_list_head(pfree_recv_queue));
 
-	अगर (padapter) अणु
-		अगर (pमुक्त_recv_queue == &precvpriv->मुक्त_recv_queue)
-				precvpriv->मुक्त_recvframe_cnt++;
-	पूर्ण
-	spin_unlock_bh(&pमुक्त_recv_queue->lock);
-	वापस _SUCCESS;
-पूर्ण
-
-
+	if (padapter) {
+		if (pfree_recv_queue == &precvpriv->free_recv_queue)
+				precvpriv->free_recvframe_cnt++;
+	}
+	spin_unlock_bh(&pfree_recv_queue->lock);
+	return _SUCCESS;
+}
 
 
-चिन्हित पूर्णांक _rtw_enqueue_recvframe(जोड़ recv_frame *precvframe, काष्ठा __queue *queue)
-अणु
 
-	काष्ठा adapter *padapter = precvframe->u.hdr.adapter;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+
+signed int _rtw_enqueue_recvframe(union recv_frame *precvframe, struct __queue *queue)
+{
+
+	struct adapter *padapter = precvframe->u.hdr.adapter;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
 
 	/* INIT_LIST_HEAD(&(precvframe->u.hdr.list)); */
 	list_del_init(&(precvframe->u.hdr.list));
@@ -181,80 +180,80 @@
 
 	list_add_tail(&(precvframe->u.hdr.list), get_list_head(queue));
 
-	अगर (padapter)
-		अगर (queue == &precvpriv->मुक्त_recv_queue)
-			precvpriv->मुक्त_recvframe_cnt++;
+	if (padapter)
+		if (queue == &precvpriv->free_recv_queue)
+			precvpriv->free_recvframe_cnt++;
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-चिन्हित पूर्णांक rtw_enqueue_recvframe(जोड़ recv_frame *precvframe, काष्ठा __queue *queue)
-अणु
-	चिन्हित पूर्णांक ret;
+signed int rtw_enqueue_recvframe(union recv_frame *precvframe, struct __queue *queue)
+{
+	signed int ret;
 
-	/* _spinlock(&pमुक्त_recv_queue->lock); */
+	/* _spinlock(&pfree_recv_queue->lock); */
 	spin_lock_bh(&queue->lock);
 	ret = _rtw_enqueue_recvframe(precvframe, queue);
-	/* spin_unlock(&pमुक्त_recv_queue->lock); */
+	/* spin_unlock(&pfree_recv_queue->lock); */
 	spin_unlock_bh(&queue->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
-चिन्हित पूर्णांक	rtw_enqueue_recvframe(जोड़ recv_frame *precvframe, काष्ठा __queue *queue)
-अणु
-	वापस rtw_मुक्त_recvframe(precvframe, queue);
-पूर्ण
+signed int	rtw_enqueue_recvframe(union recv_frame *precvframe, struct __queue *queue)
+{
+	return rtw_free_recvframe(precvframe, queue);
+}
 */
 
 
 
 
 /*
-caller : defrag ; recvframe_chk_defrag in recv_thपढ़ो  (passive)
-pframequeue: defrag_queue : will be accessed in recv_thपढ़ो  (passive)
+caller : defrag ; recvframe_chk_defrag in recv_thread  (passive)
+pframequeue: defrag_queue : will be accessed in recv_thread  (passive)
 
 using spinlock to protect
 
 */
 
-व्योम rtw_मुक्त_recvframe_queue(काष्ठा __queue *pframequeue,  काष्ठा __queue *pमुक्त_recv_queue)
-अणु
-	जोड़	recv_frame	*precvframe;
-	काष्ठा list_head	*plist, *phead;
+void rtw_free_recvframe_queue(struct __queue *pframequeue,  struct __queue *pfree_recv_queue)
+{
+	union	recv_frame	*precvframe;
+	struct list_head	*plist, *phead;
 
 	spin_lock(&pframequeue->lock);
 
 	phead = get_list_head(pframequeue);
 	plist = get_next(phead);
 
-	जबतक (phead != plist) अणु
-		precvframe = (जोड़ recv_frame *)plist;
+	while (phead != plist) {
+		precvframe = (union recv_frame *)plist;
 
 		plist = get_next(plist);
 
-		rtw_मुक्त_recvframe(precvframe, pमुक्त_recv_queue);
-	पूर्ण
+		rtw_free_recvframe(precvframe, pfree_recv_queue);
+	}
 
 	spin_unlock(&pframequeue->lock);
-पूर्ण
+}
 
-u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapter)
-अणु
+u32 rtw_free_uc_swdec_pending_queue(struct adapter *adapter)
+{
 	u32 cnt = 0;
-	जोड़ recv_frame *pending_frame;
-	जबतक ((pending_frame = rtw_alloc_recvframe(&adapter->recvpriv.uc_swdec_pending_queue))) अणु
-		rtw_मुक्त_recvframe(pending_frame, &adapter->recvpriv.मुक्त_recv_queue);
+	union recv_frame *pending_frame;
+	while ((pending_frame = rtw_alloc_recvframe(&adapter->recvpriv.uc_swdec_pending_queue))) {
+		rtw_free_recvframe(pending_frame, &adapter->recvpriv.free_recv_queue);
 		cnt++;
-	पूर्ण
+	}
 
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
 
-चिन्हित पूर्णांक rtw_enqueue_recvbuf_to_head(काष्ठा recv_buf *precvbuf, काष्ठा __queue *queue)
-अणु
+signed int rtw_enqueue_recvbuf_to_head(struct recv_buf *precvbuf, struct __queue *queue)
+{
 	spin_lock_bh(&queue->lock);
 
 	list_del_init(&precvbuf->list);
@@ -262,220 +261,220 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 
 	spin_unlock_bh(&queue->lock);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-चिन्हित पूर्णांक rtw_enqueue_recvbuf(काष्ठा recv_buf *precvbuf, काष्ठा __queue *queue)
-अणु
+signed int rtw_enqueue_recvbuf(struct recv_buf *precvbuf, struct __queue *queue)
+{
 	spin_lock_bh(&queue->lock);
 
 	list_del_init(&precvbuf->list);
 
 	list_add_tail(&precvbuf->list, get_list_head(queue));
 	spin_unlock_bh(&queue->lock);
-	वापस _SUCCESS;
+	return _SUCCESS;
 
-पूर्ण
+}
 
-काष्ठा recv_buf *rtw_dequeue_recvbuf(काष्ठा __queue *queue)
-अणु
-	काष्ठा recv_buf *precvbuf;
-	काष्ठा list_head	*plist, *phead;
+struct recv_buf *rtw_dequeue_recvbuf(struct __queue *queue)
+{
+	struct recv_buf *precvbuf;
+	struct list_head	*plist, *phead;
 
 	spin_lock_bh(&queue->lock);
 
-	अगर (list_empty(&queue->queue))
-		precvbuf = शून्य;
-	अन्यथा अणु
+	if (list_empty(&queue->queue))
+		precvbuf = NULL;
+	else {
 		phead = get_list_head(queue);
 
 		plist = get_next(phead);
 
-		precvbuf = container_of(plist, काष्ठा recv_buf, list);
+		precvbuf = container_of(plist, struct recv_buf, list);
 
 		list_del_init(&precvbuf->list);
 
-	पूर्ण
+	}
 
 	spin_unlock_bh(&queue->lock);
 
-	वापस precvbuf;
+	return precvbuf;
 
-पूर्ण
+}
 
-अटल चिन्हित पूर्णांक recvframe_chkmic(काष्ठा adapter *adapter,  जोड़ recv_frame *precvframe)
-अणु
+static signed int recvframe_chkmic(struct adapter *adapter,  union recv_frame *precvframe)
+{
 
-	चिन्हित पूर्णांक	i, res = _SUCCESS;
+	signed int	i, res = _SUCCESS;
 	u32 datalen;
 	u8 miccode[8];
 	u8 bmic_err = false, brpt_micerror = true;
 	u8 *pframe, *payload, *pframemic;
 	u8 *mickey;
 	/* u8 *iv, rxdata_key_idx = 0; */
-	काष्ठा sta_info *stainfo;
-	काष्ठा rx_pkt_attrib *prxattrib = &precvframe->u.hdr.attrib;
-	काष्ठा security_priv *psecuritypriv = &adapter->securitypriv;
+	struct sta_info *stainfo;
+	struct rx_pkt_attrib *prxattrib = &precvframe->u.hdr.attrib;
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
 
-	काष्ठा mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	stainfo = rtw_get_stainfo(&adapter->stapriv, &prxattrib->ta[0]);
 
-	अगर (prxattrib->encrypt == _TKIP_) अणु
+	if (prxattrib->encrypt == _TKIP_) {
 		/* calculate mic code */
-		अगर (stainfo) अणु
-			अगर (IS_MCAST(prxattrib->ra)) अणु
-				/* mickey =&psecuritypriv->करोt118021XGrprxmickey.skey[0]; */
+		if (stainfo) {
+			if (IS_MCAST(prxattrib->ra)) {
+				/* mickey =&psecuritypriv->dot118021XGrprxmickey.skey[0]; */
 				/* iv = precvframe->u.hdr.rx_data+prxattrib->hdrlen; */
 				/* rxdata_key_idx =(((iv[3])>>6)&0x3) ; */
-				mickey = &psecuritypriv->करोt118021XGrprxmickey[prxattrib->key_index].skey[0];
+				mickey = &psecuritypriv->dot118021XGrprxmickey[prxattrib->key_index].skey[0];
 
-				/* psecuritypriv->करोt118021XGrpKeyid, pmlmeinfo->key_index, rxdata_key_idx); */
+				/* psecuritypriv->dot118021XGrpKeyid, pmlmeinfo->key_index, rxdata_key_idx); */
 
-				अगर (psecuritypriv->binstallGrpkey == false) अणु
+				if (psecuritypriv->binstallGrpkey == false) {
 					res = _FAIL;
-					जाओ निकास;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				mickey = &stainfo->करोt11tkiprxmickey.skey[0];
-			पूर्ण
+					goto exit;
+				}
+			} else {
+				mickey = &stainfo->dot11tkiprxmickey.skey[0];
+			}
 
 			datalen = precvframe->u.hdr.len-prxattrib->hdrlen-prxattrib->iv_len-prxattrib->icv_len-8;/* icv_len included the mic code */
 			pframe = precvframe->u.hdr.rx_data;
 			payload = pframe+prxattrib->hdrlen+prxattrib->iv_len;
 
-			rtw_seccalctkipmic(mickey, pframe, payload, datalen, &miccode[0], (अचिन्हित अक्षर)prxattrib->priority); /* care the length of the data */
+			rtw_seccalctkipmic(mickey, pframe, payload, datalen, &miccode[0], (unsigned char)prxattrib->priority); /* care the length of the data */
 
 			pframemic = payload+datalen;
 
 			bmic_err = false;
 
-			क्रम (i = 0; i < 8; i++) अणु
-				अगर (miccode[i] != *(pframemic + i))
+			for (i = 0; i < 8; i++) {
+				if (miccode[i] != *(pframemic + i))
 					bmic_err = true;
-			पूर्ण
+			}
 
 
-			अगर (bmic_err == true) अणु
-				/*  द्विगुन check key_index क्रम some timing issue , */
-				/*  cannot compare with psecuritypriv->करोt118021XGrpKeyid also cause timing issue */
-				अगर ((IS_MCAST(prxattrib->ra) == true)  && (prxattrib->key_index != pmlmeinfo->key_index))
+			if (bmic_err == true) {
+				/*  double check key_index for some timing issue , */
+				/*  cannot compare with psecuritypriv->dot118021XGrpKeyid also cause timing issue */
+				if ((IS_MCAST(prxattrib->ra) == true)  && (prxattrib->key_index != pmlmeinfo->key_index))
 					brpt_micerror = false;
 
-				अगर (prxattrib->bdecrypted && brpt_micerror)
+				if (prxattrib->bdecrypted && brpt_micerror)
 					rtw_handle_tkip_mic_err(adapter, (u8)IS_MCAST(prxattrib->ra));
 
 				res = _FAIL;
 
-			पूर्ण अन्यथा अणु
+			} else {
 				/* mic checked ok */
-				अगर (!psecuritypriv->bcheck_grpkey &&
+				if (!psecuritypriv->bcheck_grpkey &&
 				    IS_MCAST(prxattrib->ra))
 					psecuritypriv->bcheck_grpkey = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		recvframe_pull_tail(precvframe, 8);
 
-	पूर्ण
+	}
 
-निकास:
-	वापस res;
+exit:
+	return res;
 
-पूर्ण
+}
 
 /* decrypt and set the ivlen, icvlen of the recv_frame */
-अटल जोड़ recv_frame *decryptor(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
+static union recv_frame *decryptor(struct adapter *padapter, union recv_frame *precv_frame)
+{
 
-	काष्ठा rx_pkt_attrib *prxattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	जोड़ recv_frame *वापस_packet = precv_frame;
+	struct rx_pkt_attrib *prxattrib = &precv_frame->u.hdr.attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	union recv_frame *return_packet = precv_frame;
 	u32  res = _SUCCESS;
 
-	अगर (prxattrib->encrypt > 0) अणु
+	if (prxattrib->encrypt > 0) {
 		u8 *iv = precv_frame->u.hdr.rx_data+prxattrib->hdrlen;
 		prxattrib->key_index = (((iv[3])>>6)&0x3);
 
-		अगर (prxattrib->key_index > WEP_KEYS) अणु
-			चयन (prxattrib->encrypt) अणु
-			हाल _WEP40_:
-			हाल _WEP104_:
-				prxattrib->key_index = psecuritypriv->करोt11PrivacyKeyIndex;
-				अवरोध;
-			हाल _TKIP_:
-			हाल _AES_:
-			शेष:
-				prxattrib->key_index = psecuritypriv->करोt118021XGrpKeyid;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		if (prxattrib->key_index > WEP_KEYS) {
+			switch (prxattrib->encrypt) {
+			case _WEP40_:
+			case _WEP104_:
+				prxattrib->key_index = psecuritypriv->dot11PrivacyKeyIndex;
+				break;
+			case _TKIP_:
+			case _AES_:
+			default:
+				prxattrib->key_index = psecuritypriv->dot118021XGrpKeyid;
+				break;
+			}
+		}
+	}
 
-	अगर ((prxattrib->encrypt > 0) && ((prxattrib->bdecrypted == 0) || (psecuritypriv->sw_decrypt == true))) अणु
+	if ((prxattrib->encrypt > 0) && ((prxattrib->bdecrypted == 0) || (psecuritypriv->sw_decrypt == true))) {
 		psecuritypriv->hw_decrypted = false;
 
-		चयन (prxattrib->encrypt) अणु
-		हाल _WEP40_:
-		हाल _WEP104_:
+		switch (prxattrib->encrypt) {
+		case _WEP40_:
+		case _WEP104_:
 			rtw_wep_decrypt(padapter, (u8 *)precv_frame);
-			अवरोध;
-		हाल _TKIP_:
+			break;
+		case _TKIP_:
 			res = rtw_tkip_decrypt(padapter, (u8 *)precv_frame);
-			अवरोध;
-		हाल _AES_:
+			break;
+		case _AES_:
 			res = rtw_aes_decrypt(padapter, (u8 *)precv_frame);
-			अवरोध;
-		शेष:
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (prxattrib->bdecrypted == 1 && prxattrib->encrypt > 0 &&
+			break;
+		default:
+				break;
+		}
+	} else if (prxattrib->bdecrypted == 1 && prxattrib->encrypt > 0 &&
 		   (psecuritypriv->busetkipkey == 1 || prxattrib->encrypt != _TKIP_)
-		) अणु
+		) {
 		psecuritypriv->hw_decrypted = true;
-	पूर्ण अन्यथा अणु
-	पूर्ण
+	} else {
+	}
 
-	अगर (res == _FAIL) अणु
-		rtw_मुक्त_recvframe(वापस_packet, &padapter->recvpriv.मुक्त_recv_queue);
-		वापस_packet = शून्य;
-	पूर्ण अन्यथा
+	if (res == _FAIL) {
+		rtw_free_recvframe(return_packet, &padapter->recvpriv.free_recv_queue);
+		return_packet = NULL;
+	} else
 		prxattrib->bdecrypted = true;
 
-	वापस वापस_packet;
-पूर्ण
+	return return_packet;
+}
 
-/* set the security inक्रमmation in the recv_frame */
-अटल जोड़ recv_frame *portctrl(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame)
-अणु
-	u8 *psta_addr = शून्य;
+/* set the security information in the recv_frame */
+static union recv_frame *portctrl(struct adapter *adapter, union recv_frame *precv_frame)
+{
+	u8 *psta_addr = NULL;
 	u8 *ptr;
-	uपूर्णांक  auth_alg;
-	काष्ठा recv_frame_hdr *pfhdr;
-	काष्ठा sta_info *psta;
-	काष्ठा sta_priv *pstapriv;
-	जोड़ recv_frame *prtnframe;
+	uint  auth_alg;
+	struct recv_frame_hdr *pfhdr;
+	struct sta_info *psta;
+	struct sta_priv *pstapriv;
+	union recv_frame *prtnframe;
 	u16 ether_type = 0;
-	u16  eapol_type = 0x888e;/* क्रम Funia BD's WPA issue */
-	काष्ठा rx_pkt_attrib *pattrib;
+	u16  eapol_type = 0x888e;/* for Funia BD's WPA issue */
+	struct rx_pkt_attrib *pattrib;
 
 	pstapriv = &adapter->stapriv;
 
-	auth_alg = adapter->securitypriv.करोt11AuthAlgrthm;
+	auth_alg = adapter->securitypriv.dot11AuthAlgrthm;
 
 	ptr = get_recvframe_data(precv_frame);
 	pfhdr = &precv_frame->u.hdr;
 	pattrib = &pfhdr->attrib;
 	psta_addr = pattrib->ta;
 
-	prtnframe = शून्य;
+	prtnframe = NULL;
 
 	psta = rtw_get_stainfo(pstapriv, psta_addr);
 
-	अगर (auth_alg == 2) अणु
-		अगर ((psta) && (psta->ieee8021x_blocked)) अणु
-			__be16 be_पंचांगp;
+	if (auth_alg == 2) {
+		if ((psta) && (psta->ieee8021x_blocked)) {
+			__be16 be_tmp;
 
 			/* blocked */
 			/* only accept EAPOL frame */
@@ -484,479 +483,479 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 
 			/* get ether_type */
 			ptr = ptr+pfhdr->attrib.hdrlen+pfhdr->attrib.iv_len+LLC_HEADER_SIZE;
-			स_नकल(&be_पंचांगp, ptr, 2);
-			ether_type = ntohs(be_पंचांगp);
+			memcpy(&be_tmp, ptr, 2);
+			ether_type = ntohs(be_tmp);
 
-			अगर (ether_type == eapol_type)
+			if (ether_type == eapol_type)
 				prtnframe = precv_frame;
-			अन्यथा अणु
-				/* मुक्त this frame */
-				rtw_मुक्त_recvframe(precv_frame, &adapter->recvpriv.मुक्त_recv_queue);
-				prtnframe = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			else {
+				/* free this frame */
+				rtw_free_recvframe(precv_frame, &adapter->recvpriv.free_recv_queue);
+				prtnframe = NULL;
+			}
+		} else {
 			/* allowed */
-			/* check decryption status, and decrypt the frame अगर needed */
+			/* check decryption status, and decrypt the frame if needed */
 
 			prtnframe = precv_frame;
 			/* check is the EAPOL frame or not (Rekey) */
-			/* अगर (ether_type == eapol_type) अणु */
+			/* if (ether_type == eapol_type) { */
 				/* check Rekey */
 
 			/* prtnframe =precv_frame; */
 			/*  */
-			/* अन्यथा अणु */
+			/* else { */
 			/*  */
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		prtnframe = precv_frame;
 
-	वापस prtnframe;
-पूर्ण
+	return prtnframe;
+}
 
-अटल चिन्हित पूर्णांक recv_decache(जोड़ recv_frame *precv_frame, u8 bretry, काष्ठा stainfo_rxcache *prxcache)
-अणु
-	चिन्हित पूर्णांक tid = precv_frame->u.hdr.attrib.priority;
+static signed int recv_decache(union recv_frame *precv_frame, u8 bretry, struct stainfo_rxcache *prxcache)
+{
+	signed int tid = precv_frame->u.hdr.attrib.priority;
 
 	u16 seq_ctrl = ((precv_frame->u.hdr.attrib.seq_num&0xffff) << 4) |
 		(precv_frame->u.hdr.attrib.frag_num & 0xf);
 
-	अगर (tid > 15)
-		वापस _FAIL;
+	if (tid > 15)
+		return _FAIL;
 
-	अगर (1) अणु /* अगर (bretry) */
-		अगर (seq_ctrl == prxcache->tid_rxseq[tid])
-			वापस _FAIL;
-	पूर्ण
+	if (1) { /* if (bretry) */
+		if (seq_ctrl == prxcache->tid_rxseq[tid])
+			return _FAIL;
+	}
 
 	prxcache->tid_rxseq[tid] = seq_ctrl;
 
-	वापस _SUCCESS;
+	return _SUCCESS;
 
-पूर्ण
+}
 
-अटल व्योम process_pwrbit_data(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
-	अचिन्हित अक्षर pwrbit;
+static void process_pwrbit_data(struct adapter *padapter, union recv_frame *precv_frame)
+{
+	unsigned char pwrbit;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा sta_info *psta = शून्य;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct sta_info *psta = NULL;
 
 	psta = rtw_get_stainfo(pstapriv, pattrib->src);
 
 	pwrbit = GetPwrMgt(ptr);
 
-	अगर (psta) अणु
-		अगर (pwrbit) अणु
-			अगर (!(psta->state & WIFI_SLEEP_STATE)) अणु
+	if (psta) {
+		if (pwrbit) {
+			if (!(psta->state & WIFI_SLEEP_STATE)) {
 				/* psta->state |= WIFI_SLEEP_STATE; */
-				/* pstapriv->sta_dz_biपंचांगap |= BIT(psta->aid); */
+				/* pstapriv->sta_dz_bitmap |= BIT(psta->aid); */
 
 				stop_sta_xmit(padapter, psta);
 
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (psta->state & WIFI_SLEEP_STATE) अणु
+			}
+		} else {
+			if (psta->state & WIFI_SLEEP_STATE) {
 				/* psta->state ^= WIFI_SLEEP_STATE; */
-				/* pstapriv->sta_dz_biपंचांगap &= ~BIT(psta->aid); */
+				/* pstapriv->sta_dz_bitmap &= ~BIT(psta->aid); */
 
 				wakeup_sta_to_xmit(padapter, psta);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम process_wmmps_data(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा sta_info *psta = शून्य;
+static void process_wmmps_data(struct adapter *padapter, union recv_frame *precv_frame)
+{
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct sta_info *psta = NULL;
 
 	psta = rtw_get_stainfo(pstapriv, pattrib->src);
 
-	अगर (!psta)
-		वापस;
+	if (!psta)
+		return;
 
-	अगर (!psta->qos_option)
-		वापस;
+	if (!psta->qos_option)
+		return;
 
-	अगर (!(psta->qos_info&0xf))
-		वापस;
+	if (!(psta->qos_info&0xf))
+		return;
 
-	अगर (psta->state&WIFI_SLEEP_STATE) अणु
+	if (psta->state&WIFI_SLEEP_STATE) {
 		u8 wmmps_ac = 0;
 
-		चयन (pattrib->priority) अणु
-		हाल 1:
-		हाल 2:
+		switch (pattrib->priority) {
+		case 1:
+		case 2:
 			wmmps_ac = psta->uapsd_bk&BIT(1);
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			wmmps_ac = psta->uapsd_vi&BIT(1);
-			अवरोध;
-		हाल 6:
-		हाल 7:
+			break;
+		case 6:
+		case 7:
 			wmmps_ac = psta->uapsd_vo&BIT(1);
-			अवरोध;
-		हाल 0:
-		हाल 3:
-		शेष:
+			break;
+		case 0:
+		case 3:
+		default:
 			wmmps_ac = psta->uapsd_be&BIT(1);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (wmmps_ac) अणु
-			अगर (psta->sleepq_ac_len > 0)
+		if (wmmps_ac) {
+			if (psta->sleepq_ac_len > 0)
 				/* process received triggered frame */
 				xmit_delivery_enabled_frames(padapter, psta);
-			अन्यथा
+			else
 				/* issue one qos null frame with More data bit = 0 and the EOSP bit set (= 1) */
 				issue_qos_nulldata(padapter, psta->hwaddr, (u16)pattrib->priority, 0, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम count_rx_stats(काष्ठा adapter *padapter, जोड़ recv_frame *prframe, काष्ठा sta_info *sta)
-अणु
-	पूर्णांक sz;
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा stainfo_stats *pstats = शून्य;
-	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+static void count_rx_stats(struct adapter *padapter, union recv_frame *prframe, struct sta_info *sta)
+{
+	int sz;
+	struct sta_info *psta = NULL;
+	struct stainfo_stats *pstats = NULL;
+	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
 
 	sz = get_recvframe_len(prframe);
 	precvpriv->rx_bytes += sz;
 
 	padapter->mlmepriv.LinkDetectInfo.NumRxOkInPeriod++;
 
-	अगर ((!MacAddr_isBcst(pattrib->dst)) && (!IS_MCAST(pattrib->dst)))
+	if ((!MacAddr_isBcst(pattrib->dst)) && (!IS_MCAST(pattrib->dst)))
 		padapter->mlmepriv.LinkDetectInfo.NumRxUnicastOkInPeriod++;
 
-	अगर (sta)
+	if (sta)
 		psta = sta;
-	अन्यथा
+	else
 		psta = prframe->u.hdr.psta;
 
-	अगर (psta) अणु
+	if (psta) {
 		pstats = &psta->sta_stats;
 
 		pstats->rx_data_pkts++;
 		pstats->rx_bytes += sz;
-	पूर्ण
+	}
 
-	traffic_check_क्रम_leave_lps(padapter, false, 0);
-पूर्ण
+	traffic_check_for_leave_lps(padapter, false, 0);
+}
 
-अटल चिन्हित पूर्णांक sta2sta_data_frame(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame,
-			काष्ठा sta_info **psta)
-अणु
+static signed int sta2sta_data_frame(struct adapter *adapter, union recv_frame *precv_frame,
+			struct sta_info **psta)
+{
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	चिन्हित पूर्णांक ret = _SUCCESS;
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा sta_priv *pstapriv = &adapter->stapriv;
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	signed int ret = _SUCCESS;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct sta_priv *pstapriv = &adapter->stapriv;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
 	u8 *mybssid  = get_bssid(pmlmepriv);
 	u8 *myhwaddr = myid(&adapter->eeprompriv);
-	u8 *sta_addr = शून्य;
-	चिन्हित पूर्णांक bmcast = IS_MCAST(pattrib->dst);
+	u8 *sta_addr = NULL;
+	signed int bmcast = IS_MCAST(pattrib->dst);
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
-		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) अणु
+	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
+		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) {
 
 		/*  filter packets that SA is myself or multicast or broadcast */
-		अगर (!स_भेद(myhwaddr, pattrib->src, ETH_ALEN)) अणु
+		if (!memcmp(myhwaddr, pattrib->src, ETH_ALEN)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर ((स_भेद(myhwaddr, pattrib->dst, ETH_ALEN))	&& (!bmcast)) अणु
+		if ((memcmp(myhwaddr, pattrib->dst, ETH_ALEN))	&& (!bmcast)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (!स_भेद(pattrib->bssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
-		   !स_भेद(mybssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
-		   (स_भेद(pattrib->bssid, mybssid, ETH_ALEN))) अणु
+		if (!memcmp(pattrib->bssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
+		   !memcmp(mybssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
+		   (memcmp(pattrib->bssid, mybssid, ETH_ALEN))) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		sta_addr = pattrib->src;
 
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) अणु
+	} else if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) {
 		/*  For Station mode, sa and bssid should always be BSSID, and DA is my mac-address */
-		अगर (स_भेद(pattrib->bssid, pattrib->src, ETH_ALEN)) अणु
+		if (memcmp(pattrib->bssid, pattrib->src, ETH_ALEN)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		sta_addr = pattrib->bssid;
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) अणु
-		अगर (bmcast) अणु
-			/*  For AP mode, अगर DA == MCAST, then BSSID should be also MCAST */
-			अगर (!IS_MCAST(pattrib->bssid)) अणु
+	} else if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) {
+		if (bmcast) {
+			/*  For AP mode, if DA == MCAST, then BSSID should be also MCAST */
+			if (!IS_MCAST(pattrib->bssid)) {
 					ret = _FAIL;
-					जाओ निकास;
-			पूर्ण
-		पूर्ण अन्यथा अणु /*  not mc-frame */
-			/*  For AP mode, अगर DA is non-MCAST, then it must be BSSID, and bssid == BSSID */
-			अगर (स_भेद(pattrib->bssid, pattrib->dst, ETH_ALEN)) अणु
+					goto exit;
+			}
+		} else { /*  not mc-frame */
+			/*  For AP mode, if DA is non-MCAST, then it must be BSSID, and bssid == BSSID */
+			if (memcmp(pattrib->bssid, pattrib->dst, ETH_ALEN)) {
 				ret = _FAIL;
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 
 			sta_addr = pattrib->src;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) अणु
-		स_नकल(pattrib->dst, GetAddr1Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->src, GetAddr2Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->bssid, GetAddr3Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->ra, pattrib->dst, ETH_ALEN);
-		स_नकल(pattrib->ta, pattrib->src, ETH_ALEN);
+	} else if (check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) {
+		memcpy(pattrib->dst, GetAddr1Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->src, GetAddr2Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->bssid, GetAddr3Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
+		memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
 
 		sta_addr = mybssid;
-	पूर्ण अन्यथा
+	} else
 		ret  = _FAIL;
 
 
 
-	अगर (bmcast)
+	if (bmcast)
 		*psta = rtw_get_bcmc_stainfo(adapter);
-	अन्यथा
+	else
 		*psta = rtw_get_stainfo(pstapriv, sta_addr); /*  get ap_info */
 
-	अगर (!*psta) अणु
+	if (!*psta) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल चिन्हित पूर्णांक ap2sta_data_frame(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame,
-		       काष्ठा sta_info **psta)
-अणु
+static signed int ap2sta_data_frame(struct adapter *adapter, union recv_frame *precv_frame,
+		       struct sta_info **psta)
+{
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	चिन्हित पूर्णांक ret = _SUCCESS;
-	काष्ठा sta_priv *pstapriv = &adapter->stapriv;
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	signed int ret = _SUCCESS;
+	struct sta_priv *pstapriv = &adapter->stapriv;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
 	u8 *mybssid  = get_bssid(pmlmepriv);
 	u8 *myhwaddr = myid(&adapter->eeprompriv);
-	चिन्हित पूर्णांक bmcast = IS_MCAST(pattrib->dst);
+	signed int bmcast = IS_MCAST(pattrib->dst);
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) &&
+	if ((check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) &&
 	    (check_fwstate(pmlmepriv, _FW_LINKED) == true ||
 	     check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == true)
-		) अणु
+		) {
 
 		/*  filter packets that SA is myself or multicast or broadcast */
-		अगर (!स_भेद(myhwaddr, pattrib->src, ETH_ALEN)) अणु
+		if (!memcmp(myhwaddr, pattrib->src, ETH_ALEN)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		/*  da should be क्रम me */
-		अगर ((स_भेद(myhwaddr, pattrib->dst, ETH_ALEN)) && (!bmcast)) अणु
+		/*  da should be for me */
+		if ((memcmp(myhwaddr, pattrib->dst, ETH_ALEN)) && (!bmcast)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 
 		/*  check BSSID */
-		अगर (!स_भेद(pattrib->bssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
-		     !स_भेद(mybssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
-		     (स_भेद(pattrib->bssid, mybssid, ETH_ALEN))) अणु
+		if (!memcmp(pattrib->bssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
+		     !memcmp(mybssid, "\x0\x0\x0\x0\x0\x0", ETH_ALEN) ||
+		     (memcmp(pattrib->bssid, mybssid, ETH_ALEN))) {
 
-			अगर (!bmcast)
+			if (!bmcast)
 				issue_deauth(adapter, pattrib->bssid, WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
 
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (bmcast)
+		if (bmcast)
 			*psta = rtw_get_bcmc_stainfo(adapter);
-		अन्यथा
+		else
 			*psta = rtw_get_stainfo(pstapriv, pattrib->bssid); /*  get ap_info */
 
-		अगर (!*psta) अणु
+		if (!*psta) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (GetFrameSubType(ptr) & BIT(6)) अणु
+		if (GetFrameSubType(ptr) & BIT(6)) {
 			/* No data, will not indicate to upper layer, temporily count it here */
 			count_rx_stats(adapter, precv_frame, *psta);
 			ret = RTW_RX_HANDLED;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-	पूर्ण अन्यथा अगर ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) &&
-		     (check_fwstate(pmlmepriv, _FW_LINKED) == true)) अणु
-		स_नकल(pattrib->dst, GetAddr1Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->src, GetAddr2Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->bssid, GetAddr3Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->ra, pattrib->dst, ETH_ALEN);
-		स_नकल(pattrib->ta, pattrib->src, ETH_ALEN);
+	} else if ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) &&
+		     (check_fwstate(pmlmepriv, _FW_LINKED) == true)) {
+		memcpy(pattrib->dst, GetAddr1Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->src, GetAddr2Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->bssid, GetAddr3Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
+		memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
 
 		/*  */
-		स_नकल(pattrib->bssid,  mybssid, ETH_ALEN);
+		memcpy(pattrib->bssid,  mybssid, ETH_ALEN);
 
 
 		*psta = rtw_get_stainfo(pstapriv, pattrib->bssid); /*  get sta_info */
-		अगर (!*psta) अणु
+		if (!*psta) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) अणु
-		/* Special हाल */
+	} else if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) {
+		/* Special case */
 		ret = RTW_RX_HANDLED;
-		जाओ निकास;
-	पूर्ण अन्यथा अणु
-		अगर (!स_भेद(myhwaddr, pattrib->dst, ETH_ALEN) && (!bmcast)) अणु
+		goto exit;
+	} else {
+		if (!memcmp(myhwaddr, pattrib->dst, ETH_ALEN) && (!bmcast)) {
 			*psta = rtw_get_stainfo(pstapriv, pattrib->bssid); /*  get sta_info */
-			अगर (!*psta) अणु
+			if (!*psta) {
 
-				/* क्रम AP multicast issue , modअगरy by yiwei */
-				अटल अचिन्हित दीर्घ send_issue_deauth_समय;
+				/* for AP multicast issue , modify by yiwei */
+				static unsigned long send_issue_deauth_time;
 
-				अगर (jअगरfies_to_msecs(jअगरfies - send_issue_deauth_समय) > 10000 || send_issue_deauth_समय == 0) अणु
-					send_issue_deauth_समय = jअगरfies;
+				if (jiffies_to_msecs(jiffies - send_issue_deauth_time) > 10000 || send_issue_deauth_time == 0) {
+					send_issue_deauth_time = jiffies;
 
 					issue_deauth(adapter, pattrib->bssid, WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		ret = _FAIL;
-	पूर्ण
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल चिन्हित पूर्णांक sta2ap_data_frame(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame,
-		       काष्ठा sta_info **psta)
-अणु
+static signed int sta2ap_data_frame(struct adapter *adapter, union recv_frame *precv_frame,
+		       struct sta_info **psta)
+{
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा sta_priv *pstapriv = &adapter->stapriv;
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	अचिन्हित अक्षर *mybssid  = get_bssid(pmlmepriv);
-	चिन्हित पूर्णांक ret = _SUCCESS;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct sta_priv *pstapriv = &adapter->stapriv;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	unsigned char *mybssid  = get_bssid(pmlmepriv);
+	signed int ret = _SUCCESS;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) अणु
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) {
 		/* For AP mode, RA =BSSID, TX =STA(SRC_ADDR), A3 =DST_ADDR */
-		अगर (स_भेद(pattrib->bssid, mybssid, ETH_ALEN)) अणु
+		if (memcmp(pattrib->bssid, mybssid, ETH_ALEN)) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		*psta = rtw_get_stainfo(pstapriv, pattrib->src);
-		अगर (!*psta) अणु
+		if (!*psta) {
 			issue_deauth(adapter, pattrib->src, WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
 
 			ret = RTW_RX_HANDLED;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		process_pwrbit_data(adapter, precv_frame);
 
-		अगर ((GetFrameSubType(ptr) & WIFI_QOS_DATA_TYPE) == WIFI_QOS_DATA_TYPE)
+		if ((GetFrameSubType(ptr) & WIFI_QOS_DATA_TYPE) == WIFI_QOS_DATA_TYPE)
 			process_wmmps_data(adapter, precv_frame);
 
-		अगर (GetFrameSubType(ptr) & BIT(6)) अणु
+		if (GetFrameSubType(ptr) & BIT(6)) {
 			/* No data, will not indicate to upper layer, temporily count it here */
 			count_rx_stats(adapter, precv_frame, *psta);
 			ret = RTW_RX_HANDLED;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto exit;
+		}
+	} else {
 		u8 *myhwaddr = myid(&adapter->eeprompriv);
-		अगर (स_भेद(pattrib->ra, myhwaddr, ETH_ALEN)) अणु
+		if (memcmp(pattrib->ra, myhwaddr, ETH_ALEN)) {
 			ret = RTW_RX_HANDLED;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 		issue_deauth(adapter, pattrib->src, WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
 		ret = RTW_RX_HANDLED;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल चिन्हित पूर्णांक validate_recv_ctrl_frame(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+static signed int validate_recv_ctrl_frame(struct adapter *padapter, union recv_frame *precv_frame)
+{
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *pframe = precv_frame->u.hdr.rx_data;
-	काष्ठा sta_info *psta = शून्य;
-	/* uपूर्णांक len = precv_frame->u.hdr.len; */
+	struct sta_info *psta = NULL;
+	/* uint len = precv_frame->u.hdr.len; */
 
-	अगर (GetFrameType(pframe) != WIFI_CTRL_TYPE)
-		वापस _FAIL;
+	if (GetFrameType(pframe) != WIFI_CTRL_TYPE)
+		return _FAIL;
 
 	/* receive the frames that ra(a1) is my address */
-	अगर (स_भेद(GetAddr1Ptr(pframe), myid(&padapter->eeprompriv), ETH_ALEN))
-		वापस _FAIL;
+	if (memcmp(GetAddr1Ptr(pframe), myid(&padapter->eeprompriv), ETH_ALEN))
+		return _FAIL;
 
 	psta = rtw_get_stainfo(pstapriv, GetAddr2Ptr(pframe));
-	अगर (!psta)
-		वापस _FAIL;
+	if (!psta)
+		return _FAIL;
 
-	/* क्रम rx pkt statistics */
+	/* for rx pkt statistics */
 	psta->sta_stats.rx_ctrl_pkts++;
 
 	/* only handle ps-poll */
-	अगर (GetFrameSubType(pframe) == WIFI_PSPOLL) अणु
+	if (GetFrameSubType(pframe) == WIFI_PSPOLL) {
 		u16 aid;
 		u8 wmmps_ac = 0;
 
 		aid = GetAid(pframe);
-		अगर (psta->aid != aid)
-			वापस _FAIL;
+		if (psta->aid != aid)
+			return _FAIL;
 
-		चयन (pattrib->priority) अणु
-		हाल 1:
-		हाल 2:
+		switch (pattrib->priority) {
+		case 1:
+		case 2:
 			wmmps_ac = psta->uapsd_bk&BIT(0);
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			wmmps_ac = psta->uapsd_vi&BIT(0);
-			अवरोध;
-		हाल 6:
-		हाल 7:
+			break;
+		case 6:
+		case 7:
 			wmmps_ac = psta->uapsd_vo&BIT(0);
-			अवरोध;
-		हाल 0:
-		हाल 3:
-		शेष:
+			break;
+		case 0:
+		case 3:
+		default:
 			wmmps_ac = psta->uapsd_be&BIT(0);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (wmmps_ac)
-			वापस _FAIL;
+		if (wmmps_ac)
+			return _FAIL;
 
-		अगर (psta->state & WIFI_STA_ALIVE_CHK_STATE) अणु
+		if (psta->state & WIFI_STA_ALIVE_CHK_STATE) {
 			psta->expire_to = pstapriv->expire_to;
 			psta->state ^= WIFI_STA_ALIVE_CHK_STATE;
-		पूर्ण
+		}
 
-		अगर ((psta->state&WIFI_SLEEP_STATE) && (pstapriv->sta_dz_biपंचांगap&BIT(psta->aid))) अणु
-			काष्ठा list_head	*xmitframe_plist, *xmitframe_phead;
-			काष्ठा xmit_frame *pxmitframe = शून्य;
-			काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+		if ((psta->state&WIFI_SLEEP_STATE) && (pstapriv->sta_dz_bitmap&BIT(psta->aid))) {
+			struct list_head	*xmitframe_plist, *xmitframe_phead;
+			struct xmit_frame *pxmitframe = NULL;
+			struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 			/* spin_lock_bh(&psta->sleep_q.lock); */
 			spin_lock_bh(&pxmitpriv->lock);
@@ -964,8 +963,8 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 			xmitframe_phead = get_list_head(&psta->sleep_q);
 			xmitframe_plist = get_next(xmitframe_phead);
 
-			अगर (xmitframe_phead != xmitframe_plist) अणु
-				pxmitframe = container_of(xmitframe_plist, काष्ठा xmit_frame, list);
+			if (xmitframe_phead != xmitframe_plist) {
+				pxmitframe = container_of(xmitframe_plist, struct xmit_frame, list);
 
 				xmitframe_plist = get_next(xmitframe_plist);
 
@@ -973,80 +972,80 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 
 				psta->sleepq_len--;
 
-				अगर (psta->sleepq_len > 0)
+				if (psta->sleepq_len > 0)
 					pxmitframe->attrib.mdata = 1;
-				अन्यथा
+				else
 					pxmitframe->attrib.mdata = 0;
 
 				pxmitframe->attrib.triggered = 1;
 
 				rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
 
-				अगर (psta->sleepq_len == 0) अणु
-					pstapriv->tim_biपंचांगap &= ~BIT(psta->aid);
+				if (psta->sleepq_len == 0) {
+					pstapriv->tim_bitmap &= ~BIT(psta->aid);
 
-					/* update BCN क्रम TIM IE */
+					/* update BCN for TIM IE */
 					/* update_BCNTIM(padapter); */
-					update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-				पूर्ण
+					update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+				}
 
 				/* spin_unlock_bh(&psta->sleep_q.lock); */
 				spin_unlock_bh(&pxmitpriv->lock);
 
-			पूर्ण अन्यथा अणु
+			} else {
 				/* spin_unlock_bh(&psta->sleep_q.lock); */
 				spin_unlock_bh(&pxmitpriv->lock);
 
-				अगर (pstapriv->tim_biपंचांगap&BIT(psta->aid)) अणु
-					अगर (psta->sleepq_len == 0) अणु
+				if (pstapriv->tim_bitmap&BIT(psta->aid)) {
+					if (psta->sleepq_len == 0) {
 						/* issue nulldata with More data bit = 0 to indicate we have no buffered packets */
-						issue_nulldata_in_पूर्णांकerrupt(padapter, psta->hwaddr);
-					पूर्ण अन्यथा अणु
+						issue_nulldata_in_interrupt(padapter, psta->hwaddr);
+					} else {
 						psta->sleepq_len = 0;
-					पूर्ण
+					}
 
-					pstapriv->tim_biपंचांगap &= ~BIT(psta->aid);
+					pstapriv->tim_bitmap &= ~BIT(psta->aid);
 
-					/* update BCN क्रम TIM IE */
+					/* update BCN for TIM IE */
 					/* update_BCNTIM(padapter); */
-					update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+				}
+			}
+		}
+	}
 
-	वापस _FAIL;
+	return _FAIL;
 
-पूर्ण
+}
 
-/* perक्रमm defrag */
-अटल जोड़ recv_frame *recvframe_defrag(काष्ठा adapter *adapter,
-					  काष्ठा __queue *defrag_q)
-अणु
-	काष्ठा list_head	 *plist, *phead;
+/* perform defrag */
+static union recv_frame *recvframe_defrag(struct adapter *adapter,
+					  struct __queue *defrag_q)
+{
+	struct list_head	 *plist, *phead;
 	u8  wlanhdr_offset;
 	u8 curfragnum;
-	काष्ठा recv_frame_hdr *pfhdr, *pnfhdr;
-	जोड़ recv_frame *prframe, *pnextrframe;
-	काष्ठा __queue	*pमुक्त_recv_queue;
+	struct recv_frame_hdr *pfhdr, *pnfhdr;
+	union recv_frame *prframe, *pnextrframe;
+	struct __queue	*pfree_recv_queue;
 
 	curfragnum = 0;
-	pमुक्त_recv_queue = &adapter->recvpriv.मुक्त_recv_queue;
+	pfree_recv_queue = &adapter->recvpriv.free_recv_queue;
 
 	phead = get_list_head(defrag_q);
 	plist = get_next(phead);
-	prframe = (जोड़ recv_frame *)plist;
+	prframe = (union recv_frame *)plist;
 	pfhdr = &prframe->u.hdr;
 	list_del_init(&(prframe->u.list));
 
-	अगर (curfragnum != pfhdr->attrib.frag_num) अणु
+	if (curfragnum != pfhdr->attrib.frag_num) {
 		/* the first fragment number must be 0 */
-		/* मुक्त the whole queue */
-		rtw_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
-		rtw_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
+		/* free the whole queue */
+		rtw_free_recvframe(prframe, pfree_recv_queue);
+		rtw_free_recvframe_queue(defrag_q, pfree_recv_queue);
 
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	curfragnum++;
 
@@ -1054,20 +1053,20 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 
 	plist = get_next(plist);
 
-	जबतक (phead != plist) अणु
-		pnextrframe = (जोड़ recv_frame *)plist;
+	while (phead != plist) {
+		pnextrframe = (union recv_frame *)plist;
 		pnfhdr = &pnextrframe->u.hdr;
 
 
 		/* check the fragment sequence  (2nd ~n fragment frame) */
 
-		अगर (curfragnum != pnfhdr->attrib.frag_num) अणु
+		if (curfragnum != pnfhdr->attrib.frag_num) {
 			/* the fragment number must be increasing  (after decache) */
 			/* release the defrag_q & prframe */
-			rtw_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
-			rtw_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
-			वापस शून्य;
-		पूर्ण
+			rtw_free_recvframe(prframe, pfree_recv_queue);
+			rtw_free_recvframe_queue(defrag_q, pfree_recv_queue);
+			return NULL;
+		}
 
 		curfragnum++;
 
@@ -1078,95 +1077,95 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 
 		recvframe_pull(pnextrframe, wlanhdr_offset);
 
-		/* append  to first fragment frame's tail (अगर privacy frame, pull the ICV) */
+		/* append  to first fragment frame's tail (if privacy frame, pull the ICV) */
 		recvframe_pull_tail(prframe, pfhdr->attrib.icv_len);
 
-		/* स_नकल */
-		स_नकल(pfhdr->rx_tail, pnfhdr->rx_data, pnfhdr->len);
+		/* memcpy */
+		memcpy(pfhdr->rx_tail, pnfhdr->rx_data, pnfhdr->len);
 
 		recvframe_put(prframe, pnfhdr->len);
 
 		pfhdr->attrib.icv_len = pnfhdr->attrib.icv_len;
 		plist = get_next(plist);
 
-	पूर्ण
+	}
 
-	/* मुक्त the defrag_q queue and वापस the prframe */
-	rtw_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
+	/* free the defrag_q queue and return the prframe */
+	rtw_free_recvframe_queue(defrag_q, pfree_recv_queue);
 
-	वापस prframe;
-पूर्ण
+	return prframe;
+}
 
-/* check अगर need to defrag, अगर needed queue the frame to defrag_q */
-अटल जोड़ recv_frame *recvframe_chk_defrag(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
+/* check if need to defrag, if needed queue the frame to defrag_q */
+static union recv_frame *recvframe_chk_defrag(struct adapter *padapter, union recv_frame *precv_frame)
+{
 	u8 ismfrag;
 	u8 fragnum;
 	u8 *psta_addr;
-	काष्ठा recv_frame_hdr *pfhdr;
-	काष्ठा sta_info *psta;
-	काष्ठा sta_priv *pstapriv;
-	काष्ठा list_head *phead;
-	जोड़ recv_frame *prtnframe = शून्य;
-	काष्ठा __queue *pमुक्त_recv_queue, *pdefrag_q;
+	struct recv_frame_hdr *pfhdr;
+	struct sta_info *psta;
+	struct sta_priv *pstapriv;
+	struct list_head *phead;
+	union recv_frame *prtnframe = NULL;
+	struct __queue *pfree_recv_queue, *pdefrag_q;
 
 	pstapriv = &padapter->stapriv;
 
 	pfhdr = &precv_frame->u.hdr;
 
-	pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
+	pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
 
-	/* need to define काष्ठा of wlan header frame ctrl */
+	/* need to define struct of wlan header frame ctrl */
 	ismfrag = pfhdr->attrib.mfrag;
 	fragnum = pfhdr->attrib.frag_num;
 
 	psta_addr = pfhdr->attrib.ta;
 	psta = rtw_get_stainfo(pstapriv, psta_addr);
-	अगर (!psta) अणु
+	if (!psta) {
 		u8 type = GetFrameType(pfhdr->rx_data);
-		अगर (type != WIFI_DATA_TYPE) अणु
+		if (type != WIFI_DATA_TYPE) {
 			psta = rtw_get_bcmc_stainfo(padapter);
 			pdefrag_q = &psta->sta_recvpriv.defrag_q;
-		पूर्ण अन्यथा
-			pdefrag_q = शून्य;
-	पूर्ण अन्यथा
+		} else
+			pdefrag_q = NULL;
+	} else
 		pdefrag_q = &psta->sta_recvpriv.defrag_q;
 
-	अगर ((ismfrag == 0) && (fragnum == 0))
+	if ((ismfrag == 0) && (fragnum == 0))
 		prtnframe = precv_frame;/* isn't a fragment frame */
 
-	अगर (ismfrag == 1) अणु
+	if (ismfrag == 1) {
 		/* 0~(n-1) fragment frame */
 		/* enqueue to defraf_g */
-		अगर (pdefrag_q) अणु
-			अगर (fragnum == 0)
+		if (pdefrag_q) {
+			if (fragnum == 0)
 				/* the first fragment */
-				अगर (!list_empty(&pdefrag_q->queue))
-					/* मुक्त current defrag_q */
-					rtw_मुक्त_recvframe_queue(pdefrag_q, pमुक्त_recv_queue);
+				if (!list_empty(&pdefrag_q->queue))
+					/* free current defrag_q */
+					rtw_free_recvframe_queue(pdefrag_q, pfree_recv_queue);
 
 
-			/* Then enqueue the 0~(n-1) fragment पूर्णांकo the defrag_q */
+			/* Then enqueue the 0~(n-1) fragment into the defrag_q */
 
 			/* spin_lock(&pdefrag_q->lock); */
 			phead = get_list_head(pdefrag_q);
 			list_add_tail(&pfhdr->list, phead);
 			/* spin_unlock(&pdefrag_q->lock); */
 
-			prtnframe = शून्य;
+			prtnframe = NULL;
 
-		पूर्ण अन्यथा अणु
-			/* can't find this ta's defrag_queue, so मुक्त this recv_frame */
-			rtw_मुक्त_recvframe(precv_frame, pमुक्त_recv_queue);
-			prtnframe = शून्य;
-		पूर्ण
+		} else {
+			/* can't find this ta's defrag_queue, so free this recv_frame */
+			rtw_free_recvframe(precv_frame, pfree_recv_queue);
+			prtnframe = NULL;
+		}
 
-	पूर्ण
+	}
 
-	अगर ((ismfrag == 0) && (fragnum != 0)) अणु
+	if ((ismfrag == 0) && (fragnum != 0)) {
 		/* the last fragment frame */
 		/* enqueue the last fragment */
-		अगर (pdefrag_q) अणु
+		if (pdefrag_q) {
 			/* spin_lock(&pdefrag_q->lock); */
 			phead = get_list_head(pdefrag_q);
 			list_add_tail(&pfhdr->list, phead);
@@ -1176,274 +1175,274 @@ u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapt
 			precv_frame = recvframe_defrag(padapter, pdefrag_q);
 			prtnframe = precv_frame;
 
-		पूर्ण अन्यथा अणु
-			/* can't find this ta's defrag_queue, so मुक्त this recv_frame */
-			rtw_मुक्त_recvframe(precv_frame, pमुक्त_recv_queue);
-			prtnframe = शून्य;
-		पूर्ण
+		} else {
+			/* can't find this ta's defrag_queue, so free this recv_frame */
+			rtw_free_recvframe(precv_frame, pfree_recv_queue);
+			prtnframe = NULL;
+		}
 
-	पूर्ण
+	}
 
 
-	अगर ((prtnframe) && (prtnframe->u.hdr.attrib.privacy)) अणु
+	if ((prtnframe) && (prtnframe->u.hdr.attrib.privacy)) {
 		/* after defrag we must check tkip mic code */
-		अगर (recvframe_chkmic(padapter,  prtnframe) == _FAIL) अणु
-			rtw_मुक्त_recvframe(prtnframe, pमुक्त_recv_queue);
-			prtnframe = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस prtnframe;
-पूर्ण
+		if (recvframe_chkmic(padapter,  prtnframe) == _FAIL) {
+			rtw_free_recvframe(prtnframe, pfree_recv_queue);
+			prtnframe = NULL;
+		}
+	}
+	return prtnframe;
+}
 
-अटल चिन्हित पूर्णांक validate_recv_mgnt_frame(काष्ठा adapter *padapter, जोड़ recv_frame *precv_frame)
-अणु
-	/* काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv; */
+static signed int validate_recv_mgnt_frame(struct adapter *padapter, union recv_frame *precv_frame)
+{
+	/* struct mlme_priv *pmlmepriv = &adapter->mlmepriv; */
 
 	precv_frame = recvframe_chk_defrag(padapter, precv_frame);
-	अगर (!precv_frame)
-		वापस _SUCCESS;
+	if (!precv_frame)
+		return _SUCCESS;
 
-	अणु
-		/* क्रम rx pkt statistics */
-		काष्ठा sta_info *psta = rtw_get_stainfo(&padapter->stapriv, GetAddr2Ptr(precv_frame->u.hdr.rx_data));
-		अगर (psta) अणु
+	{
+		/* for rx pkt statistics */
+		struct sta_info *psta = rtw_get_stainfo(&padapter->stapriv, GetAddr2Ptr(precv_frame->u.hdr.rx_data));
+		if (psta) {
 			psta->sta_stats.rx_mgnt_pkts++;
-			अगर (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_BEACON)
+			if (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_BEACON)
 				psta->sta_stats.rx_beacon_pkts++;
-			अन्यथा अगर (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_PROBEREQ)
+			else if (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_PROBEREQ)
 				psta->sta_stats.rx_probereq_pkts++;
-			अन्यथा अगर (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_PROBERSP) अणु
-				अगर (!स_भेद(padapter->eeprompriv.mac_addr, GetAddr1Ptr(precv_frame->u.hdr.rx_data), ETH_ALEN))
+			else if (GetFrameSubType(precv_frame->u.hdr.rx_data) == WIFI_PROBERSP) {
+				if (!memcmp(padapter->eeprompriv.mac_addr, GetAddr1Ptr(precv_frame->u.hdr.rx_data), ETH_ALEN))
 					psta->sta_stats.rx_probersp_pkts++;
-				अन्यथा अगर (is_broadcast_mac_addr(GetAddr1Ptr(precv_frame->u.hdr.rx_data)) ||
+				else if (is_broadcast_mac_addr(GetAddr1Ptr(precv_frame->u.hdr.rx_data)) ||
 					 is_multicast_mac_addr(GetAddr1Ptr(precv_frame->u.hdr.rx_data)))
 					psta->sta_stats.rx_probersp_bm_pkts++;
-				अन्यथा
+				else
 					psta->sta_stats.rx_probersp_uo_pkts++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	mgt_dispatcher(padapter, precv_frame);
 
-	वापस _SUCCESS;
+	return _SUCCESS;
 
-पूर्ण
+}
 
-अटल चिन्हित पूर्णांक validate_recv_data_frame(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame)
-अणु
+static signed int validate_recv_data_frame(struct adapter *adapter, union recv_frame *precv_frame)
+{
 	u8 bretry;
 	u8 *psa, *pda, *pbssid;
-	काष्ठा sta_info *psta = शून्य;
+	struct sta_info *psta = NULL;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	काष्ठा rx_pkt_attrib	*pattrib = &precv_frame->u.hdr.attrib;
-	काष्ठा security_priv *psecuritypriv = &adapter->securitypriv;
-	चिन्हित पूर्णांक ret = _SUCCESS;
+	struct rx_pkt_attrib	*pattrib = &precv_frame->u.hdr.attrib;
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
+	signed int ret = _SUCCESS;
 
 	bretry = GetRetry(ptr);
 	pda = get_da(ptr);
 	psa = get_sa(ptr);
 	pbssid = get_hdr_bssid(ptr);
 
-	अगर (!pbssid) अणु
+	if (!pbssid) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(pattrib->dst, pda, ETH_ALEN);
-	स_नकल(pattrib->src, psa, ETH_ALEN);
+	memcpy(pattrib->dst, pda, ETH_ALEN);
+	memcpy(pattrib->src, psa, ETH_ALEN);
 
-	स_नकल(pattrib->bssid, pbssid, ETH_ALEN);
+	memcpy(pattrib->bssid, pbssid, ETH_ALEN);
 
-	चयन (pattrib->to_fr_ds) अणु
-	हाल 0:
-		स_नकल(pattrib->ra, pda, ETH_ALEN);
-		स_नकल(pattrib->ta, psa, ETH_ALEN);
+	switch (pattrib->to_fr_ds) {
+	case 0:
+		memcpy(pattrib->ra, pda, ETH_ALEN);
+		memcpy(pattrib->ta, psa, ETH_ALEN);
 		ret = sta2sta_data_frame(adapter, precv_frame, &psta);
-		अवरोध;
+		break;
 
-	हाल 1:
-		स_नकल(pattrib->ra, pda, ETH_ALEN);
-		स_नकल(pattrib->ta, pbssid, ETH_ALEN);
+	case 1:
+		memcpy(pattrib->ra, pda, ETH_ALEN);
+		memcpy(pattrib->ta, pbssid, ETH_ALEN);
 		ret = ap2sta_data_frame(adapter, precv_frame, &psta);
-		अवरोध;
+		break;
 
-	हाल 2:
-		स_नकल(pattrib->ra, pbssid, ETH_ALEN);
-		स_नकल(pattrib->ta, psa, ETH_ALEN);
+	case 2:
+		memcpy(pattrib->ra, pbssid, ETH_ALEN);
+		memcpy(pattrib->ta, psa, ETH_ALEN);
 		ret = sta2ap_data_frame(adapter, precv_frame, &psta);
-		अवरोध;
+		break;
 
-	हाल 3:
-		स_नकल(pattrib->ra, GetAddr1Ptr(ptr), ETH_ALEN);
-		स_नकल(pattrib->ta, GetAddr2Ptr(ptr), ETH_ALEN);
+	case 3:
+		memcpy(pattrib->ra, GetAddr1Ptr(ptr), ETH_ALEN);
+		memcpy(pattrib->ta, GetAddr2Ptr(ptr), ETH_ALEN);
 		ret = _FAIL;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = _FAIL;
-		अवरोध;
+		break;
 
-	पूर्ण
+	}
 
-	अगर (ret == _FAIL) अणु
-		जाओ निकास;
-	पूर्ण अन्यथा अगर (ret == RTW_RX_HANDLED) अणु
-		जाओ निकास;
-	पूर्ण
+	if (ret == _FAIL) {
+		goto exit;
+	} else if (ret == RTW_RX_HANDLED) {
+		goto exit;
+	}
 
 
-	अगर (!psta) अणु
+	if (!psta) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* psta->rssi = prxcmd->rssi; */
-	/* psta->संकेत_quality = prxcmd->sq; */
+	/* psta->signal_quality = prxcmd->sq; */
 	precv_frame->u.hdr.psta = psta;
 
 
 	pattrib->amsdu = 0;
 	pattrib->ack_policy = 0;
 	/* parsing QC field */
-	अगर (pattrib->qos == 1) अणु
+	if (pattrib->qos == 1) {
 		pattrib->priority = GetPriority((ptr + 24));
 		pattrib->ack_policy = GetAckpolicy((ptr + 24));
 		pattrib->amsdu = GetAMsdu((ptr + 24));
 		pattrib->hdrlen = pattrib->to_fr_ds == 3 ? 32 : 26;
 
-		अगर (pattrib->priority != 0 && pattrib->priority != 3)
+		if (pattrib->priority != 0 && pattrib->priority != 3)
 			adapter->recvpriv.bIsAnyNonBEPkts = true;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		pattrib->priority = 0;
 		pattrib->hdrlen = pattrib->to_fr_ds == 3 ? 30 : 24;
-	पूर्ण
+	}
 
 
-	अगर (pattrib->order)/* HT-CTRL 11n */
+	if (pattrib->order)/* HT-CTRL 11n */
 		pattrib->hdrlen += 4;
 
 	precv_frame->u.hdr.preorder_ctrl = &psta->recvreorder_ctrl[pattrib->priority];
 
 	/*  decache, drop duplicate recv packets */
-	अगर (recv_decache(precv_frame, bretry, &psta->sta_recvpriv.rxcache) == _FAIL) अणु
+	if (recv_decache(precv_frame, bretry, &psta->sta_recvpriv.rxcache) == _FAIL) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (pattrib->privacy) अणु
+	if (pattrib->privacy) {
 		GET_ENCRY_ALGO(psecuritypriv, psta, pattrib->encrypt, IS_MCAST(pattrib->ra));
 
 		SET_ICE_IV_LEN(pattrib->iv_len, pattrib->icv_len, pattrib->encrypt);
-	पूर्ण अन्यथा अणु
+	} else {
 		pattrib->encrypt = 0;
 		pattrib->iv_len = pattrib->icv_len = 0;
-	पूर्ण
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल चिन्हित पूर्णांक validate_80211w_mgmt(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+static signed int validate_80211w_mgmt(struct adapter *adapter, union recv_frame *precv_frame)
+{
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	u8 subtype;
 
 	subtype = GetFrameSubType(ptr); /* bit(7)~bit(2) */
 
 	/* only support station mode */
-	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) && check_fwstate(pmlmepriv, _FW_LINKED) &&
-	    adapter->securitypriv.binstallBIPkey == true) अणु
+	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) && check_fwstate(pmlmepriv, _FW_LINKED) &&
+	    adapter->securitypriv.binstallBIPkey == true) {
 		/* unicast management frame decrypt */
-		अगर (pattrib->privacy && !(IS_MCAST(GetAddr1Ptr(ptr))) &&
-			(subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC || subtype == WIFI_ACTION)) अणु
+		if (pattrib->privacy && !(IS_MCAST(GetAddr1Ptr(ptr))) &&
+			(subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC || subtype == WIFI_ACTION)) {
 			u8 *mgmt_DATA;
 			u32 data_len = 0;
 
 			pattrib->bdecrypted = 0;
 			pattrib->encrypt = _AES_;
-			pattrib->hdrlen = माप(काष्ठा ieee80211_hdr_3addr);
+			pattrib->hdrlen = sizeof(struct ieee80211_hdr_3addr);
 			/* set iv and icv length */
 			SET_ICE_IV_LEN(pattrib->iv_len, pattrib->icv_len, pattrib->encrypt);
-			स_नकल(pattrib->ra, GetAddr1Ptr(ptr), ETH_ALEN);
-			स_नकल(pattrib->ta, GetAddr2Ptr(ptr), ETH_ALEN);
+			memcpy(pattrib->ra, GetAddr1Ptr(ptr), ETH_ALEN);
+			memcpy(pattrib->ta, GetAddr2Ptr(ptr), ETH_ALEN);
 			/* actual management data frame body */
 			data_len = pattrib->pkt_len - pattrib->hdrlen - pattrib->iv_len - pattrib->icv_len;
-			mgmt_DATA = rtw_zदो_स्मृति(data_len);
-			अगर (!mgmt_DATA) अणु
-				जाओ validate_80211w_fail;
-			पूर्ण
+			mgmt_DATA = rtw_zmalloc(data_len);
+			if (!mgmt_DATA) {
+				goto validate_80211w_fail;
+			}
 			precv_frame = decryptor(adapter, precv_frame);
 			/* save actual management data frame body */
-			स_नकल(mgmt_DATA, ptr+pattrib->hdrlen+pattrib->iv_len, data_len);
-			/* overग_लिखो the iv field */
-			स_नकल(ptr+pattrib->hdrlen, mgmt_DATA, data_len);
-			/* हटाओ the iv and icv length */
+			memcpy(mgmt_DATA, ptr+pattrib->hdrlen+pattrib->iv_len, data_len);
+			/* overwrite the iv field */
+			memcpy(ptr+pattrib->hdrlen, mgmt_DATA, data_len);
+			/* remove the iv and icv length */
 			pattrib->pkt_len = pattrib->pkt_len - pattrib->iv_len - pattrib->icv_len;
-			kमुक्त(mgmt_DATA);
-			अगर (!precv_frame) अणु
-				जाओ validate_80211w_fail;
-			पूर्ण
-		पूर्ण अन्यथा अगर (IS_MCAST(GetAddr1Ptr(ptr)) &&
-			(subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC)) अणु
-			चिन्हित पूर्णांक BIP_ret = _SUCCESS;
-			/* verअगरy BIP MME IE of broadcast/multicast de-auth/disassoc packet */
-			BIP_ret = rtw_BIP_verअगरy(adapter, (u8 *)precv_frame);
-			अगर (BIP_ret == _FAIL) अणु
-				जाओ validate_80211w_fail;
-			पूर्ण अन्यथा अगर (BIP_ret == RTW_RX_HANDLED) अणु
+			kfree(mgmt_DATA);
+			if (!precv_frame) {
+				goto validate_80211w_fail;
+			}
+		} else if (IS_MCAST(GetAddr1Ptr(ptr)) &&
+			(subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC)) {
+			signed int BIP_ret = _SUCCESS;
+			/* verify BIP MME IE of broadcast/multicast de-auth/disassoc packet */
+			BIP_ret = rtw_BIP_verify(adapter, (u8 *)precv_frame);
+			if (BIP_ret == _FAIL) {
+				goto validate_80211w_fail;
+			} else if (BIP_ret == RTW_RX_HANDLED) {
 				/* issue sa query request */
-				issue_action_SA_Query(adapter, शून्य, 0, 0);
-				जाओ validate_80211w_fail;
-			पूर्ण
-		पूर्ण अन्यथा अणु /* 802.11w protect */
-			अगर (subtype == WIFI_ACTION) अणु
+				issue_action_SA_Query(adapter, NULL, 0, 0);
+				goto validate_80211w_fail;
+			}
+		} else { /* 802.11w protect */
+			if (subtype == WIFI_ACTION) {
 				/* according 802.11-2012 standard, these five types are not robust types */
-				अगर (ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_PUBLIC          &&
+				if (ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_PUBLIC          &&
 					ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_HT              &&
 					ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_UNPROTECTED_WNM &&
 					ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_SELF_PROTECTED  &&
-					ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_P2P) अणु
-					जाओ validate_80211w_fail;
-				पूर्ण
-			पूर्ण अन्यथा अगर (subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC) अणु
+					ptr[WLAN_HDR_A3_LEN] != RTW_WLAN_CATEGORY_P2P) {
+					goto validate_80211w_fail;
+				}
+			} else if (subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC) {
 				/* issue sa query request */
-				issue_action_SA_Query(adapter, शून्य, 0, 0);
-				जाओ validate_80211w_fail;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस _SUCCESS;
+				issue_action_SA_Query(adapter, NULL, 0, 0);
+				goto validate_80211w_fail;
+			}
+		}
+	}
+	return _SUCCESS;
 
 validate_80211w_fail:
-	वापस _FAIL;
+	return _FAIL;
 
-पूर्ण
+}
 
-अटल चिन्हित पूर्णांक validate_recv_frame(काष्ठा adapter *adapter, जोड़ recv_frame *precv_frame)
-अणु
+static signed int validate_recv_frame(struct adapter *adapter, union recv_frame *precv_frame)
+{
 	/* shall check frame subtype, to / from ds, da, bssid */
 
-	/* then call check अगर rx seq/frag. duplicated. */
+	/* then call check if rx seq/frag. duplicated. */
 
 	u8 type;
 	u8 subtype;
-	चिन्हित पूर्णांक retval = _SUCCESS;
+	signed int retval = _SUCCESS;
 	u8 bDumpRxPkt;
 
-	काष्ठा rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
+	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
 
 	u8 *ptr = precv_frame->u.hdr.rx_data;
-	u8  ver = (अचिन्हित अक्षर) (*ptr)&0x3;
+	u8  ver = (unsigned char) (*ptr)&0x3;
 
 	/* add version chk */
-	अगर (ver != 0) अणु
+	if (ver != 0) {
 		retval = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	type =  GetFrameType(ptr);
 	subtype = GetFrameSubType(ptr); /* bit(7)~bit(2) */
@@ -1460,239 +1459,239 @@ validate_80211w_fail:
 	pattrib->order = GetOrder(ptr);
 	rtw_hal_get_def_var(adapter, HAL_DEF_DBG_DUMP_RXPKT, &(bDumpRxPkt));
 
-	चयन (type) अणु
-	हाल WIFI_MGT_TYPE: /* mgnt */
-		अगर (validate_80211w_mgmt(adapter, precv_frame) == _FAIL) अणु
+	switch (type) {
+	case WIFI_MGT_TYPE: /* mgnt */
+		if (validate_80211w_mgmt(adapter, precv_frame) == _FAIL) {
 			retval = _FAIL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		retval = validate_recv_mgnt_frame(adapter, precv_frame);
-		retval = _FAIL; /*  only data frame वापस _SUCCESS */
-		अवरोध;
-	हाल WIFI_CTRL_TYPE: /* ctrl */
+		retval = _FAIL; /*  only data frame return _SUCCESS */
+		break;
+	case WIFI_CTRL_TYPE: /* ctrl */
 		retval = validate_recv_ctrl_frame(adapter, precv_frame);
-		retval = _FAIL; /*  only data frame वापस _SUCCESS */
-		अवरोध;
-	हाल WIFI_DATA_TYPE: /* data */
+		retval = _FAIL; /*  only data frame return _SUCCESS */
+		break;
+	case WIFI_DATA_TYPE: /* data */
 		pattrib->qos = (subtype & BIT(7)) ? 1:0;
 		retval = validate_recv_data_frame(adapter, precv_frame);
-		अगर (retval == _FAIL) अणु
-			काष्ठा recv_priv *precvpriv = &adapter->recvpriv;
+		if (retval == _FAIL) {
+			struct recv_priv *precvpriv = &adapter->recvpriv;
 			precvpriv->rx_drop++;
-		पूर्ण अन्यथा अगर (retval == _SUCCESS) अणु
-#अगर_घोषित DBG_RX_DUMP_EAP
+		} else if (retval == _SUCCESS) {
+#ifdef DBG_RX_DUMP_EAP
 			u8 bDumpRxPkt;
 			u16 eth_type;
 
 			/*  dump eapol */
 			rtw_hal_get_def_var(adapter, HAL_DEF_DBG_DUMP_RXPKT, &(bDumpRxPkt));
 			/*  get ether_type */
-			स_नकल(&eth_type, ptr + pattrib->hdrlen + pattrib->iv_len + LLC_HEADER_SIZE, 2);
-			eth_type = ntohs((अचिन्हित लघु) eth_type);
-#पूर्ण_अगर
-		पूर्ण
-		अवरोध;
-	शेष:
+			memcpy(&eth_type, ptr + pattrib->hdrlen + pattrib->iv_len + LLC_HEADER_SIZE, 2);
+			eth_type = ntohs((unsigned short) eth_type);
+#endif
+		}
+		break;
+	default:
 		retval = _FAIL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-/* हटाओ the wlanhdr and add the eth_hdr */
-अटल चिन्हित पूर्णांक wlanhdr_to_ethhdr(जोड़ recv_frame *precvframe)
-अणु
-	चिन्हित पूर्णांक	rmv_len;
+/* remove the wlanhdr and add the eth_hdr */
+static signed int wlanhdr_to_ethhdr(union recv_frame *precvframe)
+{
+	signed int	rmv_len;
 	u16 eth_type, len;
 	u8 bsnaphdr;
 	u8 *psnap_type;
-	काष्ठा ieee80211_snap_hdr	*psnap;
-	__be16 be_पंचांगp;
-	काष्ठा adapter			*adapter = precvframe->u.hdr.adapter;
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	u8 *ptr = get_recvframe_data(precvframe) ; /*  poपूर्णांक to frame_ctrl field */
-	काष्ठा rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;
+	struct ieee80211_snap_hdr	*psnap;
+	__be16 be_tmp;
+	struct adapter			*adapter = precvframe->u.hdr.adapter;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	u8 *ptr = get_recvframe_data(precvframe) ; /*  point to frame_ctrl field */
+	struct rx_pkt_attrib *pattrib = &precvframe->u.hdr.attrib;
 
-	अगर (pattrib->encrypt)
+	if (pattrib->encrypt)
 		recvframe_pull_tail(precvframe, pattrib->icv_len);
 
-	psnap = (काष्ठा ieee80211_snap_hdr	*)(ptr+pattrib->hdrlen + pattrib->iv_len);
+	psnap = (struct ieee80211_snap_hdr	*)(ptr+pattrib->hdrlen + pattrib->iv_len);
 	psnap_type = ptr+pattrib->hdrlen + pattrib->iv_len+SNAP_SIZE;
-	/* convert hdr + possible LLC headers पूर्णांकo Ethernet header */
+	/* convert hdr + possible LLC headers into Ethernet header */
 	/* eth_type = (psnap_type[0] << 8) | psnap_type[1]; */
-	अगर ((!स_भेद(psnap, rfc1042_header, SNAP_SIZE) &&
-		(स_भेद(psnap_type, SNAP_ETH_TYPE_IPX, 2)) &&
-		(स_भेद(psnap_type, SNAP_ETH_TYPE_APPLETALK_AARP, 2))) ||
+	if ((!memcmp(psnap, rfc1042_header, SNAP_SIZE) &&
+		(memcmp(psnap_type, SNAP_ETH_TYPE_IPX, 2)) &&
+		(memcmp(psnap_type, SNAP_ETH_TYPE_APPLETALK_AARP, 2))) ||
 		/* eth_type != ETH_P_AARP && eth_type != ETH_P_IPX) || */
-		 !स_भेद(psnap, bridge_tunnel_header, SNAP_SIZE)) अणु
-		/* हटाओ RFC1042 or Bridge-Tunnel encapsulation and replace EtherType */
+		 !memcmp(psnap, bridge_tunnel_header, SNAP_SIZE)) {
+		/* remove RFC1042 or Bridge-Tunnel encapsulation and replace EtherType */
 		bsnaphdr = true;
-	पूर्ण अन्यथा
+	} else
 		/* Leave Ethernet header part of hdr and full payload */
 		bsnaphdr = false;
 
 	rmv_len = pattrib->hdrlen + pattrib->iv_len + (bsnaphdr?SNAP_SIZE:0);
 	len = precvframe->u.hdr.len - rmv_len;
 
-	स_नकल(&be_पंचांगp, ptr+rmv_len, 2);
-	eth_type = ntohs(be_पंचांगp); /* pattrib->ether_type */
+	memcpy(&be_tmp, ptr+rmv_len, 2);
+	eth_type = ntohs(be_tmp); /* pattrib->ether_type */
 	pattrib->eth_type = eth_type;
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true)) अणु
+	if ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true)) {
 		ptr += rmv_len;
 		*ptr = 0x87;
 		*(ptr+1) = 0x12;
 
 		eth_type = 0x8712;
-		/*  append rx status क्रम mp test packets */
-		ptr = recvframe_pull(precvframe, (rmv_len-माप(काष्ठा ethhdr)+2)-24);
-		स_नकल(ptr, get_rxmem(precvframe), 24);
+		/*  append rx status for mp test packets */
+		ptr = recvframe_pull(precvframe, (rmv_len-sizeof(struct ethhdr)+2)-24);
+		memcpy(ptr, get_rxmem(precvframe), 24);
 		ptr += 24;
-	पूर्ण अन्यथा
-		ptr = recvframe_pull(precvframe, (rmv_len-माप(काष्ठा ethhdr) + (bsnaphdr?2:0)));
+	} else
+		ptr = recvframe_pull(precvframe, (rmv_len-sizeof(struct ethhdr) + (bsnaphdr?2:0)));
 
-	स_नकल(ptr, pattrib->dst, ETH_ALEN);
-	स_नकल(ptr+ETH_ALEN, pattrib->src, ETH_ALEN);
+	memcpy(ptr, pattrib->dst, ETH_ALEN);
+	memcpy(ptr+ETH_ALEN, pattrib->src, ETH_ALEN);
 
-	अगर (!bsnaphdr) अणु
-		be_पंचांगp = htons(len);
-		स_नकल(ptr+12, &be_पंचांगp, 2);
-	पूर्ण
+	if (!bsnaphdr) {
+		be_tmp = htons(len);
+		memcpy(ptr+12, &be_tmp, 2);
+	}
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-अटल पूर्णांक amsdu_to_msdu(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
-अणु
-	पूर्णांक	a_len, padding_len;
+static int amsdu_to_msdu(struct adapter *padapter, union recv_frame *prframe)
+{
+	int	a_len, padding_len;
 	u16 nSubframe_Length;
 	u8 nr_subframes, i;
 	u8 *pdata;
-	काष्ठा sk_buff *sub_pkt, *subframes[MAX_SUBFRAME_COUNT];
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
-	काष्ठा __queue *pमुक्त_recv_queue = &(precvpriv->मुक्त_recv_queue);
+	struct sk_buff *sub_pkt, *subframes[MAX_SUBFRAME_COUNT];
+	struct recv_priv *precvpriv = &padapter->recvpriv;
+	struct __queue *pfree_recv_queue = &(precvpriv->free_recv_queue);
 
 	nr_subframes = 0;
 
 	recvframe_pull(prframe, prframe->u.hdr.attrib.hdrlen);
 
-	अगर (prframe->u.hdr.attrib.iv_len > 0)
+	if (prframe->u.hdr.attrib.iv_len > 0)
 		recvframe_pull(prframe, prframe->u.hdr.attrib.iv_len);
 
 	a_len = prframe->u.hdr.len;
 
 	pdata = prframe->u.hdr.rx_data;
 
-	जबतक (a_len > ETH_HLEN) अणु
+	while (a_len > ETH_HLEN) {
 
 		/* Offset 12 denote 2 mac address */
 		nSubframe_Length = get_unaligned_be16(pdata + 12);
 
-		अगर (a_len < (ETHERNET_HEADER_SIZE + nSubframe_Length))
-			अवरोध;
+		if (a_len < (ETHERNET_HEADER_SIZE + nSubframe_Length))
+			break;
 
 		sub_pkt = rtw_os_alloc_msdu_pkt(prframe, nSubframe_Length, pdata);
-		अगर (!sub_pkt)
-			अवरोध;
+		if (!sub_pkt)
+			break;
 
-		/* move the data poपूर्णांक to data content */
+		/* move the data point to data content */
 		pdata += ETH_HLEN;
 		a_len -= ETH_HLEN;
 
 		subframes[nr_subframes++] = sub_pkt;
 
-		अगर (nr_subframes >= MAX_SUBFRAME_COUNT)
-			अवरोध;
+		if (nr_subframes >= MAX_SUBFRAME_COUNT)
+			break;
 
 		pdata += nSubframe_Length;
 		a_len -= nSubframe_Length;
-		अगर (a_len != 0) अणु
+		if (a_len != 0) {
 			padding_len = 4 - ((nSubframe_Length + ETH_HLEN) & (4-1));
-			अगर (padding_len == 4)
+			if (padding_len == 4)
 				padding_len = 0;
 
-			अगर (a_len < padding_len)
-				अवरोध;
+			if (a_len < padding_len)
+				break;
 
 			pdata += padding_len;
 			a_len -= padding_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < nr_subframes; i++) अणु
+	for (i = 0; i < nr_subframes; i++) {
 		sub_pkt = subframes[i];
 
 		/* Indicate the packets to upper layer */
-		अगर (sub_pkt)
+		if (sub_pkt)
 			rtw_os_recv_indicate_pkt(padapter, sub_pkt, &prframe->u.hdr.attrib);
-	पूर्ण
+	}
 
 	prframe->u.hdr.len = 0;
-	rtw_मुक्त_recvframe(prframe, pमुक्त_recv_queue);/* मुक्त this recv_frame */
+	rtw_free_recvframe(prframe, pfree_recv_queue);/* free this recv_frame */
 
-	वापस  _SUCCESS;
-पूर्ण
+	return  _SUCCESS;
+}
 
-अटल पूर्णांक check_indicate_seq(काष्ठा recv_reorder_ctrl *preorder_ctrl, u16 seq_num)
-अणु
-	काष्ठा adapter *padapter = preorder_ctrl->padapter;
-	काष्ठा dvobj_priv *psdpriv = padapter->dvobj;
-	काष्ठा debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+static int check_indicate_seq(struct recv_reorder_ctrl *preorder_ctrl, u16 seq_num)
+{
+	struct adapter *padapter = preorder_ctrl->padapter;
+	struct dvobj_priv *psdpriv = padapter->dvobj;
+	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
 	u8 wsize = preorder_ctrl->wsize_b;
 	u16 wend = (preorder_ctrl->indicate_seq + wsize - 1) & 0xFFF;/*  4096; */
 
 	/*  Rx Reorder initialize condition. */
-	अगर (preorder_ctrl->indicate_seq == 0xFFFF) अणु
+	if (preorder_ctrl->indicate_seq == 0xFFFF) {
 		preorder_ctrl->indicate_seq = seq_num;
 
-		/* DbgPrपूर्णांक("check_indicate_seq, 1st->indicate_seq =%d\n", precvpriv->indicate_seq); */
-	पूर्ण
+		/* DbgPrint("check_indicate_seq, 1st->indicate_seq =%d\n", precvpriv->indicate_seq); */
+	}
 
-	/* DbgPrपूर्णांक("enter->check_indicate_seq(): IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
+	/* DbgPrint("enter->check_indicate_seq(): IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
 
 	/*  Drop out the packet which SeqNum is smaller than WinStart */
-	अगर (SN_LESS(seq_num, preorder_ctrl->indicate_seq)) अणु
-		/* DbgPrपूर्णांक("CheckRxTsIndicateSeq(): Packet Drop! IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
+	if (SN_LESS(seq_num, preorder_ctrl->indicate_seq)) {
+		/* DbgPrint("CheckRxTsIndicateSeq(): Packet Drop! IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/*  */
-	/*  Sliding winकरोw manipulation. Conditions includes: */
-	/*  1. Incoming SeqNum is equal to WinStart =>Winकरोw shअगरt 1 */
-	/*  2. Incoming SeqNum is larger than the WinEnd => Winकरोw shअगरt N */
+	/*  Sliding window manipulation. Conditions includes: */
+	/*  1. Incoming SeqNum is equal to WinStart =>Window shift 1 */
+	/*  2. Incoming SeqNum is larger than the WinEnd => Window shift N */
 	/*  */
-	अगर (SN_EQUAL(seq_num, preorder_ctrl->indicate_seq)) अणु
+	if (SN_EQUAL(seq_num, preorder_ctrl->indicate_seq)) {
 		preorder_ctrl->indicate_seq = (preorder_ctrl->indicate_seq + 1) & 0xFFF;
 
-	पूर्ण अन्यथा अगर (SN_LESS(wend, seq_num)) अणु
-		/* DbgPrपूर्णांक("CheckRxTsIndicateSeq(): Window Shift! IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
+	} else if (SN_LESS(wend, seq_num)) {
+		/* DbgPrint("CheckRxTsIndicateSeq(): Window Shift! IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
 
 		/*  boundary situation, when seq_num cross 0xFFF */
-		अगर (seq_num >= (wsize - 1))
+		if (seq_num >= (wsize - 1))
 			preorder_ctrl->indicate_seq = seq_num + 1 - wsize;
-		अन्यथा
+		else
 			preorder_ctrl->indicate_seq = 0xFFF - (wsize - (seq_num + 1)) + 1;
-		pdbgpriv->dbg_rx_ampdu_winकरोw_shअगरt_cnt++;
-	पूर्ण
+		pdbgpriv->dbg_rx_ampdu_window_shift_cnt++;
+	}
 
-	/* DbgPrपूर्णांक("exit->check_indicate_seq(): IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
+	/* DbgPrint("exit->check_indicate_seq(): IndicateSeq: %d, NewSeq: %d\n", precvpriv->indicate_seq, seq_num); */
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक enqueue_reorder_recvframe(काष्ठा recv_reorder_ctrl *preorder_ctrl, जोड़ recv_frame *prframe)
-अणु
-	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	काष्ठा __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
-	काष्ठा list_head	*phead, *plist;
-	जोड़ recv_frame *pnextrframe;
-	काष्ठा rx_pkt_attrib *pnextattrib;
+static int enqueue_reorder_recvframe(struct recv_reorder_ctrl *preorder_ctrl, union recv_frame *prframe)
+{
+	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	struct __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+	struct list_head	*phead, *plist;
+	union recv_frame *pnextrframe;
+	struct rx_pkt_attrib *pnextattrib;
 
-	/* DbgPrपूर्णांक("+enqueue_reorder_recvframe()\n"); */
+	/* DbgPrint("+enqueue_reorder_recvframe()\n"); */
 
 	/* spin_lock_irqsave(&ppending_recvframe_queue->lock, irql); */
 	/* spin_lock(&ppending_recvframe_queue->lock); */
@@ -1701,22 +1700,22 @@ validate_80211w_fail:
 	phead = get_list_head(ppending_recvframe_queue);
 	plist = get_next(phead);
 
-	जबतक (phead != plist) अणु
-		pnextrframe = (जोड़ recv_frame *)plist;
+	while (phead != plist) {
+		pnextrframe = (union recv_frame *)plist;
 		pnextattrib = &pnextrframe->u.hdr.attrib;
 
-		अगर (SN_LESS(pnextattrib->seq_num, pattrib->seq_num))
+		if (SN_LESS(pnextattrib->seq_num, pattrib->seq_num))
 			plist = get_next(plist);
-		अन्यथा अगर (SN_EQUAL(pnextattrib->seq_num, pattrib->seq_num))
+		else if (SN_EQUAL(pnextattrib->seq_num, pattrib->seq_num))
 			/* Duplicate entry is found!! Do not insert current entry. */
 			/* spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql); */
-			वापस false;
-		अन्यथा
-			अवरोध;
+			return false;
+		else
+			break;
 
-		/* DbgPrपूर्णांक("enqueue_reorder_recvframe():while\n"); */
+		/* DbgPrint("enqueue_reorder_recvframe():while\n"); */
 
-	पूर्ण
+	}
 
 
 	/* spin_lock_irqsave(&ppending_recvframe_queue->lock, irql); */
@@ -1729,32 +1728,32 @@ validate_80211w_fail:
 	/* spin_unlock(&ppending_recvframe_queue->lock); */
 	/* spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql); */
 
-	वापस true;
+	return true;
 
-पूर्ण
+}
 
-अटल व्योम recv_indicatepkts_pkt_loss_cnt(काष्ठा debug_priv *pdbgpriv, u64 prev_seq, u64 current_seq)
-अणु
-	अगर (current_seq < prev_seq)
+static void recv_indicatepkts_pkt_loss_cnt(struct debug_priv *pdbgpriv, u64 prev_seq, u64 current_seq)
+{
+	if (current_seq < prev_seq)
 		pdbgpriv->dbg_rx_ampdu_loss_count += (4096 + current_seq - prev_seq);
-	अन्यथा
+	else
 		pdbgpriv->dbg_rx_ampdu_loss_count += (current_seq - prev_seq);
 
-पूर्ण
+}
 
-अटल पूर्णांक recv_indicatepkts_in_order(काष्ठा adapter *padapter, काष्ठा recv_reorder_ctrl *preorder_ctrl, पूर्णांक bक्रमced)
-अणु
-	काष्ठा list_head	*phead, *plist;
-	जोड़ recv_frame *prframe;
-	काष्ठा rx_pkt_attrib *pattrib;
+static int recv_indicatepkts_in_order(struct adapter *padapter, struct recv_reorder_ctrl *preorder_ctrl, int bforced)
+{
+	struct list_head	*phead, *plist;
+	union recv_frame *prframe;
+	struct rx_pkt_attrib *pattrib;
 	/* u8 index = 0; */
-	पूर्णांक bPktInBuf = false;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
-	काष्ठा __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
-	काष्ठा dvobj_priv *psdpriv = padapter->dvobj;
-	काष्ठा debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+	int bPktInBuf = false;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
+	struct __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+	struct dvobj_priv *psdpriv = padapter->dvobj;
+	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
 
-	/* DbgPrपूर्णांक("+recv_indicatepkts_in_order\n"); */
+	/* DbgPrint("+recv_indicatepkts_in_order\n"); */
 
 	/* spin_lock_irqsave(&ppending_recvframe_queue->lock, irql); */
 	/* spin_lock(&ppending_recvframe_queue->lock); */
@@ -1762,38 +1761,38 @@ validate_80211w_fail:
 	phead =		get_list_head(ppending_recvframe_queue);
 	plist = get_next(phead);
 
-	/*  Handling some condition क्रम क्रमced indicate हाल. */
-	अगर (bक्रमced == true) अणु
-		pdbgpriv->dbg_rx_ampdu_क्रमced_indicate_count++;
-		अगर (list_empty(phead)) अणु
+	/*  Handling some condition for forced indicate case. */
+	if (bforced == true) {
+		pdbgpriv->dbg_rx_ampdu_forced_indicate_count++;
+		if (list_empty(phead)) {
 			/*  spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql); */
 			/* spin_unlock(&ppending_recvframe_queue->lock); */
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		prframe = (जोड़ recv_frame *)plist;
+		prframe = (union recv_frame *)plist;
 		pattrib = &prframe->u.hdr.attrib;
 
 		recv_indicatepkts_pkt_loss_cnt(pdbgpriv, preorder_ctrl->indicate_seq, pattrib->seq_num);
 		preorder_ctrl->indicate_seq = pattrib->seq_num;
 
-	पूर्ण
+	}
 
 	/*  Prepare indication list and indication. */
-	/*  Check अगर there is any packet need indicate. */
-	जबतक (!list_empty(phead)) अणु
+	/*  Check if there is any packet need indicate. */
+	while (!list_empty(phead)) {
 
-		prframe = (जोड़ recv_frame *)plist;
+		prframe = (union recv_frame *)plist;
 		pattrib = &prframe->u.hdr.attrib;
 
-		अगर (!SN_LESS(preorder_ctrl->indicate_seq, pattrib->seq_num)) अणु
+		if (!SN_LESS(preorder_ctrl->indicate_seq, pattrib->seq_num)) {
 			plist = get_next(plist);
 			list_del_init(&(prframe->u.hdr.list));
 
-			अगर (SN_EQUAL(preorder_ctrl->indicate_seq, pattrib->seq_num))
+			if (SN_EQUAL(preorder_ctrl->indicate_seq, pattrib->seq_num))
 				preorder_ctrl->indicate_seq = (preorder_ctrl->indicate_seq + 1) & 0xFFF;
 
-			/* Set this as a lock to make sure that only one thपढ़ो is indicating packet. */
+			/* Set this as a lock to make sure that only one thread is indicating packet. */
 			/* pTS->RxIndicateState = RXTS_INDICATE_PROCESSING; */
 
 			/*  Indicate packets */
@@ -1801,65 +1800,65 @@ validate_80211w_fail:
 
 
 			/* indicate this recv_frame */
-			/* DbgPrपूर्णांक("recv_indicatepkts_in_order, indicate_seq =%d, seq_num =%d\n", precvpriv->indicate_seq, pattrib->seq_num); */
-			अगर (!pattrib->amsdu) अणु
-				अगर ((padapter->bDriverStopped == false) &&
+			/* DbgPrint("recv_indicatepkts_in_order, indicate_seq =%d, seq_num =%d\n", precvpriv->indicate_seq, pattrib->seq_num); */
+			if (!pattrib->amsdu) {
+				if ((padapter->bDriverStopped == false) &&
 				    (padapter->bSurpriseRemoved == false))
 					rtw_recv_indicatepkt(padapter, prframe);/* indicate this recv_frame */
 
-			पूर्ण अन्यथा अगर (pattrib->amsdu == 1) अणु
-				अगर (amsdu_to_msdu(padapter, prframe) != _SUCCESS)
-					rtw_मुक्त_recvframe(prframe, &precvpriv->मुक्त_recv_queue);
+			} else if (pattrib->amsdu == 1) {
+				if (amsdu_to_msdu(padapter, prframe) != _SUCCESS)
+					rtw_free_recvframe(prframe, &precvpriv->free_recv_queue);
 
-			पूर्ण अन्यथा अणु
+			} else {
 				/* error condition; */
-			पूर्ण
+			}
 
 
 			/* Update local variables. */
 			bPktInBuf = false;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			bPktInBuf = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* DbgPrपूर्णांक("recv_indicatepkts_in_order():while\n"); */
+		/* DbgPrint("recv_indicatepkts_in_order():while\n"); */
 
-	पूर्ण
+	}
 
 	/* spin_unlock(&ppending_recvframe_queue->lock); */
 	/* spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql); */
 
-	वापस bPktInBuf;
-पूर्ण
+	return bPktInBuf;
+}
 
-अटल पूर्णांक recv_indicatepkt_reorder(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
-अणु
-	पूर्णांक retval = _SUCCESS;
-	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	काष्ठा recv_reorder_ctrl *preorder_ctrl = prframe->u.hdr.preorder_ctrl;
-	काष्ठा __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
-	काष्ठा dvobj_priv *psdpriv = padapter->dvobj;
-	काष्ठा debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+static int recv_indicatepkt_reorder(struct adapter *padapter, union recv_frame *prframe)
+{
+	int retval = _SUCCESS;
+	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	struct recv_reorder_ctrl *preorder_ctrl = prframe->u.hdr.preorder_ctrl;
+	struct __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+	struct dvobj_priv *psdpriv = padapter->dvobj;
+	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
 
-	अगर (!pattrib->amsdu) अणु
+	if (!pattrib->amsdu) {
 		/* s1. */
 		wlanhdr_to_ethhdr(prframe);
 
-		अगर (pattrib->qos != 1) अणु
-			अगर ((padapter->bDriverStopped == false) &&
-			    (padapter->bSurpriseRemoved == false)) अणु
+		if (pattrib->qos != 1) {
+			if ((padapter->bDriverStopped == false) &&
+			    (padapter->bSurpriseRemoved == false)) {
 				rtw_recv_indicatepkt(padapter, prframe);
-				वापस _SUCCESS;
+				return _SUCCESS;
 
-			पूर्ण
+			}
 
-			वापस _FAIL;
+			return _FAIL;
 
-		पूर्ण
+		}
 
-		अगर (preorder_ctrl->enable == false) अणु
+		if (preorder_ctrl->enable == false) {
 			/* indicate this recv_frame */
 			preorder_ctrl->indicate_seq = pattrib->seq_num;
 
@@ -1867,44 +1866,44 @@ validate_80211w_fail:
 
 			preorder_ctrl->indicate_seq = (preorder_ctrl->indicate_seq + 1)%4096;
 
-			वापस _SUCCESS;
-		पूर्ण
-	पूर्ण अन्यथा अगर (pattrib->amsdu == 1) अणु /* temp filter -> means didn't support A-MSDUs in a A-MPDU */
-		अगर (preorder_ctrl->enable == false) अणु
+			return _SUCCESS;
+		}
+	} else if (pattrib->amsdu == 1) { /* temp filter -> means didn't support A-MSDUs in a A-MPDU */
+		if (preorder_ctrl->enable == false) {
 			preorder_ctrl->indicate_seq = pattrib->seq_num;
 
 			retval = amsdu_to_msdu(padapter, prframe);
 
 			preorder_ctrl->indicate_seq = (preorder_ctrl->indicate_seq + 1)%4096;
 
-			अगर (retval != _SUCCESS) अणु
-			पूर्ण
+			if (retval != _SUCCESS) {
+			}
 
-			वापस retval;
-		पूर्ण
-	पूर्ण
+			return retval;
+		}
+	}
 
 	spin_lock_bh(&ppending_recvframe_queue->lock);
 
-	/* s2. check अगर winstart_b(indicate_seq) needs to been updated */
-	अगर (!check_indicate_seq(preorder_ctrl, pattrib->seq_num)) अणु
+	/* s2. check if winstart_b(indicate_seq) needs to been updated */
+	if (!check_indicate_seq(preorder_ctrl, pattrib->seq_num)) {
 		pdbgpriv->dbg_rx_ampdu_drop_count++;
-		जाओ _err_निकास;
-	पूर्ण
+		goto _err_exit;
+	}
 
 
-	/* s3. Insert all packet पूर्णांकo Reorder Queue to मुख्यtain its ordering. */
-	अगर (!enqueue_reorder_recvframe(preorder_ctrl, prframe)) अणु
-		/* DbgPrपूर्णांक("recv_indicatepkt_reorder, enqueue_reorder_recvframe fail!\n"); */
+	/* s3. Insert all packet into Reorder Queue to maintain its ordering. */
+	if (!enqueue_reorder_recvframe(preorder_ctrl, prframe)) {
+		/* DbgPrint("recv_indicatepkt_reorder, enqueue_reorder_recvframe fail!\n"); */
 		/* spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql); */
-		/* वापस _FAIL; */
-		जाओ _err_निकास;
-	पूर्ण
+		/* return _FAIL; */
+		goto _err_exit;
+	}
 
 
 	/* s4. */
 	/*  Indication process. */
-	/*  After Packet dropping and Sliding Winकरोw shअगरting as above, we can now just indicate the packets */
+	/*  After Packet dropping and Sliding Window shifting as above, we can now just indicate the packets */
 	/*  with the SeqNum smaller than latest WinStart and buffer other packets. */
 	/*  */
 	/*  For Rx Reorder condition: */
@@ -1913,186 +1912,186 @@ validate_80211w_fail:
 	/*  */
 
 	/* recv_indicatepkts_in_order(padapter, preorder_ctrl, true); */
-	अगर (recv_indicatepkts_in_order(padapter, preorder_ctrl, false) == true) अणु
-		_set_समयr(&preorder_ctrl->reordering_ctrl_समयr, REORDER_WAIT_TIME);
+	if (recv_indicatepkts_in_order(padapter, preorder_ctrl, false) == true) {
+		_set_timer(&preorder_ctrl->reordering_ctrl_timer, REORDER_WAIT_TIME);
 		spin_unlock_bh(&ppending_recvframe_queue->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock_bh(&ppending_recvframe_queue->lock);
-		del_समयr_sync(&preorder_ctrl->reordering_ctrl_समयr);
-	पूर्ण
+		del_timer_sync(&preorder_ctrl->reordering_ctrl_timer);
+	}
 
-	वापस _SUCCESS;
+	return _SUCCESS;
 
-_err_निकास:
+_err_exit:
 	spin_unlock_bh(&ppending_recvframe_queue->lock);
 
-	वापस _FAIL;
-पूर्ण
+	return _FAIL;
+}
 
 
-व्योम rtw_reordering_ctrl_समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा recv_reorder_ctrl *preorder_ctrl =
-		from_समयr(preorder_ctrl, t, reordering_ctrl_समयr);
-	काष्ठा adapter *padapter = preorder_ctrl->padapter;
-	काष्ठा __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+void rtw_reordering_ctrl_timeout_handler(struct timer_list *t)
+{
+	struct recv_reorder_ctrl *preorder_ctrl =
+		from_timer(preorder_ctrl, t, reordering_ctrl_timer);
+	struct adapter *padapter = preorder_ctrl->padapter;
+	struct __queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
 
 
-	अगर (padapter->bDriverStopped || padapter->bSurpriseRemoved)
-		वापस;
+	if (padapter->bDriverStopped || padapter->bSurpriseRemoved)
+		return;
 
 	spin_lock_bh(&ppending_recvframe_queue->lock);
 
-	अगर (recv_indicatepkts_in_order(padapter, preorder_ctrl, true) == true)
-		_set_समयr(&preorder_ctrl->reordering_ctrl_समयr, REORDER_WAIT_TIME);
+	if (recv_indicatepkts_in_order(padapter, preorder_ctrl, true) == true)
+		_set_timer(&preorder_ctrl->reordering_ctrl_timer, REORDER_WAIT_TIME);
 
 	spin_unlock_bh(&ppending_recvframe_queue->lock);
 
-पूर्ण
+}
 
-अटल पूर्णांक process_recv_indicatepkts(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
-अणु
-	पूर्णांक retval = _SUCCESS;
-	/* काष्ठा recv_priv *precvpriv = &padapter->recvpriv; */
-	/* काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib; */
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv *phtpriv = &pmlmepriv->htpriv;
+static int process_recv_indicatepkts(struct adapter *padapter, union recv_frame *prframe)
+{
+	int retval = _SUCCESS;
+	/* struct recv_priv *precvpriv = &padapter->recvpriv; */
+	/* struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib; */
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv *phtpriv = &pmlmepriv->htpriv;
 
-	अगर (phtpriv->ht_option == true) अणु /* B/G/N Mode */
+	if (phtpriv->ht_option == true) { /* B/G/N Mode */
 		/* prframe->u.hdr.preorder_ctrl = &precvpriv->recvreorder_ctrl[pattrib->priority]; */
 
-		अगर (recv_indicatepkt_reorder(padapter, prframe) != _SUCCESS) अणु /*  including perक्रमm A-MPDU Rx Ordering Buffer Control */
+		if (recv_indicatepkt_reorder(padapter, prframe) != _SUCCESS) { /*  including perform A-MPDU Rx Ordering Buffer Control */
 
-			अगर ((padapter->bDriverStopped == false) &&
-			    (padapter->bSurpriseRemoved == false)) अणु
+			if ((padapter->bDriverStopped == false) &&
+			    (padapter->bSurpriseRemoved == false)) {
 				retval = _FAIL;
-				वापस retval;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु /* B/G mode */
+				return retval;
+			}
+		}
+	} else { /* B/G mode */
 		retval = wlanhdr_to_ethhdr(prframe);
-		अगर (retval != _SUCCESS)
-			वापस retval;
+		if (retval != _SUCCESS)
+			return retval;
 
-		अगर ((padapter->bDriverStopped == false) && (padapter->bSurpriseRemoved == false)) अणु
+		if ((padapter->bDriverStopped == false) && (padapter->bSurpriseRemoved == false)) {
 			/* indicate this recv_frame */
 			rtw_recv_indicatepkt(padapter, prframe);
-		पूर्ण अन्यथा अणु
+		} else {
 			retval = _FAIL;
-			वापस retval;
-		पूर्ण
+			return retval;
+		}
 
-	पूर्ण
+	}
 
-	वापस retval;
+	return retval;
 
-पूर्ण
+}
 
-अटल पूर्णांक recv_func_prehandle(काष्ठा adapter *padapter, जोड़ recv_frame *rframe)
-अणु
-	पूर्णांक ret = _SUCCESS;
-	काष्ठा __queue *pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
+static int recv_func_prehandle(struct adapter *padapter, union recv_frame *rframe)
+{
+	int ret = _SUCCESS;
+	struct __queue *pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
 
 	/* check the frame crtl field and decache */
 	ret = validate_recv_frame(padapter, rframe);
-	अगर (ret != _SUCCESS) अणु
-		rtw_मुक्त_recvframe(rframe, pमुक्त_recv_queue);/* मुक्त this recv_frame */
-		जाओ निकास;
-	पूर्ण
+	if (ret != _SUCCESS) {
+		rtw_free_recvframe(rframe, pfree_recv_queue);/* free this recv_frame */
+		goto exit;
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल पूर्णांक recv_func_posthandle(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
-अणु
-	पूर्णांक ret = _SUCCESS;
-	जोड़ recv_frame *orig_prframe = prframe;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
-	काष्ठा __queue *pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
+static int recv_func_posthandle(struct adapter *padapter, union recv_frame *prframe)
+{
+	int ret = _SUCCESS;
+	union recv_frame *orig_prframe = prframe;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
+	struct __queue *pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
 
 	prframe = decryptor(padapter, prframe);
-	अगर (!prframe) अणु
+	if (!prframe) {
 		ret = _FAIL;
-		जाओ _recv_data_drop;
-	पूर्ण
+		goto _recv_data_drop;
+	}
 
 	prframe = recvframe_chk_defrag(padapter, prframe);
-	अगर (!prframe)
-		जाओ _recv_data_drop;
+	if (!prframe)
+		goto _recv_data_drop;
 
 	prframe = portctrl(padapter, prframe);
-	अगर (!prframe) अणु
+	if (!prframe) {
 		ret = _FAIL;
-		जाओ _recv_data_drop;
-	पूर्ण
+		goto _recv_data_drop;
+	}
 
-	count_rx_stats(padapter, prframe, शून्य);
+	count_rx_stats(padapter, prframe, NULL);
 
 	ret = process_recv_indicatepkts(padapter, prframe);
-	अगर (ret != _SUCCESS) अणु
-		rtw_मुक्त_recvframe(orig_prframe, pमुक्त_recv_queue);/* मुक्त this recv_frame */
-		जाओ _recv_data_drop;
-	पूर्ण
+	if (ret != _SUCCESS) {
+		rtw_free_recvframe(orig_prframe, pfree_recv_queue);/* free this recv_frame */
+		goto _recv_data_drop;
+	}
 
 _recv_data_drop:
 	precvpriv->rx_drop++;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक recv_func(काष्ठा adapter *padapter, जोड़ recv_frame *rframe)
-अणु
-	पूर्णांक ret;
-	काष्ठा rx_pkt_attrib *prxattrib = &rframe->u.hdr.attrib;
-	काष्ठा recv_priv *recvpriv = &padapter->recvpriv;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	काष्ठा mlme_priv *mlmepriv = &padapter->mlmepriv;
+static int recv_func(struct adapter *padapter, union recv_frame *rframe)
+{
+	int ret;
+	struct rx_pkt_attrib *prxattrib = &rframe->u.hdr.attrib;
+	struct recv_priv *recvpriv = &padapter->recvpriv;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct mlme_priv *mlmepriv = &padapter->mlmepriv;
 
-	/* check अगर need to handle uc_swdec_pending_queue*/
-	अगर (check_fwstate(mlmepriv, WIFI_STATION_STATE) && psecuritypriv->busetkipkey) अणु
-		जोड़ recv_frame *pending_frame;
-		पूर्णांक cnt = 0;
+	/* check if need to handle uc_swdec_pending_queue*/
+	if (check_fwstate(mlmepriv, WIFI_STATION_STATE) && psecuritypriv->busetkipkey) {
+		union recv_frame *pending_frame;
+		int cnt = 0;
 
-		जबतक ((pending_frame = rtw_alloc_recvframe(&padapter->recvpriv.uc_swdec_pending_queue))) अणु
+		while ((pending_frame = rtw_alloc_recvframe(&padapter->recvpriv.uc_swdec_pending_queue))) {
 			cnt++;
 			recv_func_posthandle(padapter, pending_frame);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = recv_func_prehandle(padapter, rframe);
 
-	अगर (ret == _SUCCESS) अणु
+	if (ret == _SUCCESS) {
 
-		/* check अगर need to enqueue पूर्णांकo uc_swdec_pending_queue*/
-		अगर (check_fwstate(mlmepriv, WIFI_STATION_STATE) &&
+		/* check if need to enqueue into uc_swdec_pending_queue*/
+		if (check_fwstate(mlmepriv, WIFI_STATION_STATE) &&
 			!IS_MCAST(prxattrib->ra) && prxattrib->encrypt > 0 &&
 			(prxattrib->bdecrypted == 0 || psecuritypriv->sw_decrypt == true) &&
 			psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPAPSK &&
-			!psecuritypriv->busetkipkey) अणु
+			!psecuritypriv->busetkipkey) {
 			rtw_enqueue_recvframe(rframe, &padapter->recvpriv.uc_swdec_pending_queue);
 
-			अगर (recvpriv->मुक्त_recvframe_cnt < NR_RECVFRAME/4) अणु
-				/* to prevent from recvframe starvation, get recvframe from uc_swdec_pending_queue to मुक्त_recvframe_cnt  */
+			if (recvpriv->free_recvframe_cnt < NR_RECVFRAME/4) {
+				/* to prevent from recvframe starvation, get recvframe from uc_swdec_pending_queue to free_recvframe_cnt  */
 				rframe = rtw_alloc_recvframe(&padapter->recvpriv.uc_swdec_pending_queue);
-				अगर (rframe)
-					जाओ करो_posthandle;
-			पूर्ण
-			जाओ निकास;
-		पूर्ण
+				if (rframe)
+					goto do_posthandle;
+			}
+			goto exit;
+		}
 
-करो_posthandle:
+do_posthandle:
 		ret = recv_func_posthandle(padapter, rframe);
-	पूर्ण
+	}
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
 
-s32 rtw_recv_entry(जोड़ recv_frame *precvframe)
-अणु
-	काष्ठा adapter *padapter;
-	काष्ठा recv_priv *precvpriv;
+s32 rtw_recv_entry(union recv_frame *precvframe)
+{
+	struct adapter *padapter;
+	struct recv_priv *precvpriv;
 	s32 ret = _SUCCESS;
 
 	padapter = precvframe->u.hdr.adapter;
@@ -2100,90 +2099,90 @@ s32 rtw_recv_entry(जोड़ recv_frame *precvframe)
 	precvpriv = &padapter->recvpriv;
 
 	ret = recv_func(padapter, precvframe);
-	अगर (ret == _FAIL) अणु
-		जाओ _recv_entry_drop;
-	पूर्ण
+	if (ret == _FAIL) {
+		goto _recv_entry_drop;
+	}
 
 
 	precvpriv->rx_pkts++;
 
-	वापस ret;
+	return ret;
 
 _recv_entry_drop:
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rtw_संकेत_stat_समयr_hdl(काष्ठा समयr_list *t)
-अणु
-	काष्ठा adapter *adapter =
-		from_समयr(adapter, t, recvpriv.संकेत_stat_समयr);
-	काष्ठा recv_priv *recvpriv = &adapter->recvpriv;
+static void rtw_signal_stat_timer_hdl(struct timer_list *t)
+{
+	struct adapter *adapter =
+		from_timer(adapter, t, recvpriv.signal_stat_timer);
+	struct recv_priv *recvpriv = &adapter->recvpriv;
 
-	u32 पंचांगp_s, पंचांगp_q;
-	u8 avg_संकेत_strength = 0;
-	u8 avg_संकेत_qual = 0;
-	u32 num_संकेत_strength = 0;
-	u32 num_संकेत_qual = 0;
-	u8 _alpha = 5; /*  this value is based on converging_स्थिरant = 5000 and sampling_पूर्णांकerval = 1000 */
+	u32 tmp_s, tmp_q;
+	u8 avg_signal_strength = 0;
+	u8 avg_signal_qual = 0;
+	u32 num_signal_strength = 0;
+	u32 num_signal_qual = 0;
+	u8 _alpha = 5; /*  this value is based on converging_constant = 5000 and sampling_interval = 1000 */
 
-	अगर (adapter->recvpriv.is_संकेत_dbg) अणु
-		/* update the user specअगरic value, संकेत_strength_dbg, to संकेत_strength, rssi */
-		adapter->recvpriv.संकेत_strength = adapter->recvpriv.संकेत_strength_dbg;
-		adapter->recvpriv.rssi = (s8)translate_percentage_to_dbm((u8)adapter->recvpriv.संकेत_strength_dbg);
-	पूर्ण अन्यथा अणु
+	if (adapter->recvpriv.is_signal_dbg) {
+		/* update the user specific value, signal_strength_dbg, to signal_strength, rssi */
+		adapter->recvpriv.signal_strength = adapter->recvpriv.signal_strength_dbg;
+		adapter->recvpriv.rssi = (s8)translate_percentage_to_dbm((u8)adapter->recvpriv.signal_strength_dbg);
+	} else {
 
-		अगर (recvpriv->संकेत_strength_data.update_req == 0) अणु/*  update_req is clear, means we got rx */
-			avg_संकेत_strength = recvpriv->संकेत_strength_data.avg_val;
-			num_संकेत_strength = recvpriv->संकेत_strength_data.total_num;
-			/*  after avg_vals are acquired, we can re-stat the संकेत values */
-			recvpriv->संकेत_strength_data.update_req = 1;
-		पूर्ण
+		if (recvpriv->signal_strength_data.update_req == 0) {/*  update_req is clear, means we got rx */
+			avg_signal_strength = recvpriv->signal_strength_data.avg_val;
+			num_signal_strength = recvpriv->signal_strength_data.total_num;
+			/*  after avg_vals are acquired, we can re-stat the signal values */
+			recvpriv->signal_strength_data.update_req = 1;
+		}
 
-		अगर (recvpriv->संकेत_qual_data.update_req == 0) अणु/*  update_req is clear, means we got rx */
-			avg_संकेत_qual = recvpriv->संकेत_qual_data.avg_val;
-			num_संकेत_qual = recvpriv->संकेत_qual_data.total_num;
-			/*  after avg_vals are acquired, we can re-stat the संकेत values */
-			recvpriv->संकेत_qual_data.update_req = 1;
-		पूर्ण
+		if (recvpriv->signal_qual_data.update_req == 0) {/*  update_req is clear, means we got rx */
+			avg_signal_qual = recvpriv->signal_qual_data.avg_val;
+			num_signal_qual = recvpriv->signal_qual_data.total_num;
+			/*  after avg_vals are acquired, we can re-stat the signal values */
+			recvpriv->signal_qual_data.update_req = 1;
+		}
 
-		अगर (num_संकेत_strength == 0) अणु
-			अगर (rtw_get_on_cur_ch_समय(adapter) == 0 ||
-			    jअगरfies_to_msecs(jअगरfies - rtw_get_on_cur_ch_समय(adapter)) < 2 * adapter->mlmeextpriv.mlmext_info.bcn_पूर्णांकerval
-			) अणु
-				जाओ set_समयr;
-			पूर्ण
-		पूर्ण
+		if (num_signal_strength == 0) {
+			if (rtw_get_on_cur_ch_time(adapter) == 0 ||
+			    jiffies_to_msecs(jiffies - rtw_get_on_cur_ch_time(adapter)) < 2 * adapter->mlmeextpriv.mlmext_info.bcn_interval
+			) {
+				goto set_timer;
+			}
+		}
 
-		अगर (check_fwstate(&adapter->mlmepriv, _FW_UNDER_SURVEY) == true ||
+		if (check_fwstate(&adapter->mlmepriv, _FW_UNDER_SURVEY) == true ||
 		    check_fwstate(&adapter->mlmepriv, _FW_LINKED) == false
-		) अणु
-			जाओ set_समयr;
-		पूर्ण
+		) {
+			goto set_timer;
+		}
 
-		/* update value of संकेत_strength, rssi, संकेत_qual */
-		पंचांगp_s = (avg_संकेत_strength+(_alpha-1)*recvpriv->संकेत_strength);
-		अगर (पंचांगp_s % _alpha)
-			पंचांगp_s = पंचांगp_s/_alpha + 1;
-		अन्यथा
-			पंचांगp_s = पंचांगp_s/_alpha;
-		अगर (पंचांगp_s > 100)
-			पंचांगp_s = 100;
+		/* update value of signal_strength, rssi, signal_qual */
+		tmp_s = (avg_signal_strength+(_alpha-1)*recvpriv->signal_strength);
+		if (tmp_s % _alpha)
+			tmp_s = tmp_s/_alpha + 1;
+		else
+			tmp_s = tmp_s/_alpha;
+		if (tmp_s > 100)
+			tmp_s = 100;
 
-		पंचांगp_q = (avg_संकेत_qual+(_alpha-1)*recvpriv->संकेत_qual);
-		अगर (पंचांगp_q % _alpha)
-			पंचांगp_q = पंचांगp_q/_alpha + 1;
-		अन्यथा
-			पंचांगp_q = पंचांगp_q/_alpha;
-		अगर (पंचांगp_q > 100)
-			पंचांगp_q = 100;
+		tmp_q = (avg_signal_qual+(_alpha-1)*recvpriv->signal_qual);
+		if (tmp_q % _alpha)
+			tmp_q = tmp_q/_alpha + 1;
+		else
+			tmp_q = tmp_q/_alpha;
+		if (tmp_q > 100)
+			tmp_q = 100;
 
-		recvpriv->संकेत_strength = पंचांगp_s;
-		recvpriv->rssi = (s8)translate_percentage_to_dbm(पंचांगp_s);
-		recvpriv->संकेत_qual = पंचांगp_q;
-	पूर्ण
+		recvpriv->signal_strength = tmp_s;
+		recvpriv->rssi = (s8)translate_percentage_to_dbm(tmp_s);
+		recvpriv->signal_qual = tmp_q;
+	}
 
-set_समयr:
-	rtw_set_संकेत_stat_समयr(recvpriv);
+set_timer:
+	rtw_set_signal_stat_timer(recvpriv);
 
-पूर्ण
+}

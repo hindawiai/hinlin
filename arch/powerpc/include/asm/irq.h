@@ -1,64 +1,63 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_घोषित __KERNEL__
-#अगर_अघोषित _ASM_POWERPC_IRQ_H
-#घोषणा _ASM_POWERPC_IRQ_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifdef __KERNEL__
+#ifndef _ASM_POWERPC_IRQ_H
+#define _ASM_POWERPC_IRQ_H
 
 /*
  */
 
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/list.h>
-#समावेश <linux/radix-tree.h>
+#include <linux/irqdomain.h>
+#include <linux/threads.h>
+#include <linux/list.h>
+#include <linux/radix-tree.h>
 
-#समावेश <यंत्र/types.h>
-#समावेश <linux/atomic.h>
+#include <asm/types.h>
+#include <linux/atomic.h>
 
 
-बाह्य atomic_t ppc_n_lost_पूर्णांकerrupts;
+extern atomic_t ppc_n_lost_interrupts;
 
-/* This number is used when no पूर्णांकerrupt has been asचिन्हित */
-#घोषणा NO_IRQ			(0)
+/* This number is used when no interrupt has been assigned */
+#define NO_IRQ			(0)
 
-/* Total number of virq in the platक्रमm */
-#घोषणा NR_IRQS		CONFIG_NR_IRQS
+/* Total number of virq in the platform */
+#define NR_IRQS		CONFIG_NR_IRQS
 
 /* Same thing, used by the generic IRQ code */
-#घोषणा NR_IRQS_LEGACY		NUM_ISA_INTERRUPTS
+#define NR_IRQS_LEGACY		NUM_ISA_INTERRUPTS
 
-बाह्य irq_hw_number_t virq_to_hw(अचिन्हित पूर्णांक virq);
+extern irq_hw_number_t virq_to_hw(unsigned int virq);
 
-अटल __अंतरभूत__ पूर्णांक irq_canonicalize(पूर्णांक irq)
-अणु
-	वापस irq;
-पूर्ण
+static __inline__ int irq_canonicalize(int irq)
+{
+	return irq;
+}
 
-बाह्य पूर्णांक distribute_irqs;
+extern int distribute_irqs;
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-#अगर defined(CONFIG_BOOKE) || defined(CONFIG_40x)
+#if defined(CONFIG_BOOKE) || defined(CONFIG_40x)
 /*
- * Per-cpu stacks क्रम handling critical, debug and machine check
- * level पूर्णांकerrupts.
+ * Per-cpu stacks for handling critical, debug and machine check
+ * level interrupts.
  */
-बाह्य व्योम *critirq_ctx[NR_CPUS];
-बाह्य व्योम *dbgirq_ctx[NR_CPUS];
-बाह्य व्योम *mcheckirq_ctx[NR_CPUS];
-#पूर्ण_अगर
+extern void *critirq_ctx[NR_CPUS];
+extern void *dbgirq_ctx[NR_CPUS];
+extern void *mcheckirq_ctx[NR_CPUS];
+#endif
 
 /*
- * Per-cpu stacks क्रम handling hard and soft पूर्णांकerrupts.
+ * Per-cpu stacks for handling hard and soft interrupts.
  */
-बाह्य व्योम *hardirq_ctx[NR_CPUS];
-बाह्य व्योम *softirq_ctx[NR_CPUS];
+extern void *hardirq_ctx[NR_CPUS];
+extern void *softirq_ctx[NR_CPUS];
 
-बाह्य व्योम करो_IRQ(काष्ठा pt_regs *regs);
-बाह्य व्योम __init init_IRQ(व्योम);
-बाह्य व्योम __करो_irq(काष्ठा pt_regs *regs);
+extern void do_IRQ(struct pt_regs *regs);
+extern void __init init_IRQ(void);
+extern void __do_irq(struct pt_regs *regs);
 
-पूर्णांक irq_choose_cpu(स्थिर काष्ठा cpumask *mask);
+int irq_choose_cpu(const struct cpumask *mask);
 
-#पूर्ण_अगर /* _ASM_IRQ_H */
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* _ASM_IRQ_H */
+#endif /* __KERNEL__ */

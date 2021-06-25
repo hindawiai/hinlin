@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Atheros CARL9170 driver
  *
- * mac80211 पूर्णांकeraction code
+ * mac80211 interaction code
  *
  * Copyright 2008, Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2009, 2010, Christian Lamparter <chunkeey@googlemail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -15,54 +14,54 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; see the file COPYING.  If not, see
+ * along with this program; see the file COPYING.  If not, see
  * http://www.gnu.org/licenses/.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *    Copyright (c) 2007-2008 Atheros Communications, Inc.
  *
- *    Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
  *    copyright notice and this permission notice appear in all copies.
  *
  *    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  *    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  *    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *    ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  *    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <net/mac80211.h>
-#समावेश <net/cfg80211.h>
-#समावेश "hw.h"
-#समावेश "carl9170.h"
-#समावेश "cmd.h"
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/etherdevice.h>
+#include <linux/random.h>
+#include <net/mac80211.h>
+#include <net/cfg80211.h>
+#include "hw.h"
+#include "carl9170.h"
+#include "cmd.h"
 
-अटल bool modparam_nohwcrypt;
+static bool modparam_nohwcrypt;
 module_param_named(nohwcrypt, modparam_nohwcrypt, bool, 0444);
 MODULE_PARM_DESC(nohwcrypt, "Disable hardware crypto offload.");
 
-पूर्णांक modparam_noht;
-module_param_named(noht, modparam_noht, पूर्णांक, 0444);
+int modparam_noht;
+module_param_named(noht, modparam_noht, int, 0444);
 MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 
-#घोषणा RATE(_bitrate, _hw_rate, _txpidx, _flags) अणु	\
+#define RATE(_bitrate, _hw_rate, _txpidx, _flags) {	\
 	.bitrate	= (_bitrate),			\
 	.flags		= (_flags),			\
 	.hw_value	= (_hw_rate) | (_txpidx) << 4,	\
-पूर्ण
+}
 
-काष्ठा ieee80211_rate __carl9170_ratetable[] = अणु
+struct ieee80211_rate __carl9170_ratetable[] = {
 	RATE(10, 0, 0, 0),
 	RATE(20, 1, 1, IEEE80211_RATE_SHORT_PREAMBLE),
 	RATE(55, 2, 2, IEEE80211_RATE_SHORT_PREAMBLE),
@@ -75,25 +74,25 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 	RATE(360, 0xd, 1, 0),
 	RATE(480, 0x8, 2, 0),
 	RATE(540, 0xc, 3, 0),
-पूर्ण;
-#अघोषित RATE
+};
+#undef RATE
 
-#घोषणा carl9170_g_ratetable	(__carl9170_ratetable + 0)
-#घोषणा carl9170_g_ratetable_size	12
-#घोषणा carl9170_a_ratetable	(__carl9170_ratetable + 4)
-#घोषणा carl9170_a_ratetable_size	8
+#define carl9170_g_ratetable	(__carl9170_ratetable + 0)
+#define carl9170_g_ratetable_size	12
+#define carl9170_a_ratetable	(__carl9170_ratetable + 4)
+#define carl9170_a_ratetable_size	8
 
 /*
- * NB: The hw_value is used as an index पूर्णांकo the carl9170_phy_freq_params
- *     array in phy.c so that we करोn't have to करो frequency lookups!
+ * NB: The hw_value is used as an index into the carl9170_phy_freq_params
+ *     array in phy.c so that we don't have to do frequency lookups!
  */
-#घोषणा CHAN(_freq, _idx) अणु		\
+#define CHAN(_freq, _idx) {		\
 	.center_freq	= (_freq),	\
 	.hw_value	= (_idx),	\
-	.max_घातer	= 18, /* XXX */	\
-पूर्ण
+	.max_power	= 18, /* XXX */	\
+}
 
-अटल काष्ठा ieee80211_channel carl9170_2ghz_chantable[] = अणु
+static struct ieee80211_channel carl9170_2ghz_chantable[] = {
 	CHAN(2412,  0),
 	CHAN(2417,  1),
 	CHAN(2422,  2),
@@ -108,9 +107,9 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 	CHAN(2467, 11),
 	CHAN(2472, 12),
 	CHAN(2484, 13),
-पूर्ण;
+};
 
-अटल काष्ठा ieee80211_channel carl9170_5ghz_chantable[] = अणु
+static struct ieee80211_channel carl9170_5ghz_chantable[] = {
 	CHAN(4920, 14),
 	CHAN(4940, 15),
 	CHAN(4960, 16),
@@ -146,11 +145,11 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 	CHAN(5190, 46),
 	CHAN(5210, 47),
 	CHAN(5230, 48),
-पूर्ण;
-#अघोषित CHAN
+};
+#undef CHAN
 
-#घोषणा CARL9170_HT_CAP							\
-अणु									\
+#define CARL9170_HT_CAP							\
+{									\
 	.ht_supported	= true,						\
 	.cap		= IEEE80211_HT_CAP_MAX_AMSDU |			\
 			  IEEE80211_HT_CAP_SUP_WIDTH_20_40 |		\
@@ -159,135 +158,135 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 			  IEEE80211_HT_CAP_SM_PS,			\
 	.ampdu_factor	= IEEE80211_HT_MAX_AMPDU_64K,			\
 	.ampdu_density	= IEEE80211_HT_MPDU_DENSITY_8,			\
-	.mcs		= अणु						\
-		.rx_mask = अणु 0xff, 0xff, 0, 0, 0x1, 0, 0, 0, 0, 0, पूर्ण,	\
+	.mcs		= {						\
+		.rx_mask = { 0xff, 0xff, 0, 0, 0x1, 0, 0, 0, 0, 0, },	\
 		.rx_highest = cpu_to_le16(300),				\
 		.tx_params = IEEE80211_HT_MCS_TX_DEFINED,		\
-	पूर्ण,								\
-पूर्ण
+	},								\
+}
 
-अटल काष्ठा ieee80211_supported_band carl9170_band_2GHz = अणु
+static struct ieee80211_supported_band carl9170_band_2GHz = {
 	.channels	= carl9170_2ghz_chantable,
 	.n_channels	= ARRAY_SIZE(carl9170_2ghz_chantable),
 	.bitrates	= carl9170_g_ratetable,
 	.n_bitrates	= carl9170_g_ratetable_size,
 	.ht_cap		= CARL9170_HT_CAP,
-पूर्ण;
+};
 
-अटल काष्ठा ieee80211_supported_band carl9170_band_5GHz = अणु
+static struct ieee80211_supported_band carl9170_band_5GHz = {
 	.channels	= carl9170_5ghz_chantable,
 	.n_channels	= ARRAY_SIZE(carl9170_5ghz_chantable),
 	.bitrates	= carl9170_a_ratetable,
 	.n_bitrates	= carl9170_a_ratetable_size,
 	.ht_cap		= CARL9170_HT_CAP,
-पूर्ण;
+};
 
-अटल व्योम carl9170_ampdu_gc(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा carl9170_sta_tid *tid_info;
+static void carl9170_ampdu_gc(struct ar9170 *ar)
+{
+	struct carl9170_sta_tid *tid_info;
 	LIST_HEAD(tid_gc);
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(tid_info, &ar->tx_ampdu_list, list) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(tid_info, &ar->tx_ampdu_list, list) {
 		spin_lock_bh(&ar->tx_ampdu_list_lock);
-		अगर (tid_info->state == CARL9170_TID_STATE_SHUTDOWN) अणु
+		if (tid_info->state == CARL9170_TID_STATE_SHUTDOWN) {
 			tid_info->state = CARL9170_TID_STATE_KILLED;
 			list_del_rcu(&tid_info->list);
 			ar->tx_ampdu_list_len--;
-			list_add_tail(&tid_info->पंचांगp_list, &tid_gc);
-		पूर्ण
+			list_add_tail(&tid_info->tmp_list, &tid_gc);
+		}
 		spin_unlock_bh(&ar->tx_ampdu_list_lock);
 
-	पूर्ण
-	rcu_assign_poपूर्णांकer(ar->tx_ampdu_iter, tid_info);
-	rcu_पढ़ो_unlock();
+	}
+	rcu_assign_pointer(ar->tx_ampdu_iter, tid_info);
+	rcu_read_unlock();
 
 	synchronize_rcu();
 
-	जबतक (!list_empty(&tid_gc)) अणु
-		काष्ठा sk_buff *skb;
-		tid_info = list_first_entry(&tid_gc, काष्ठा carl9170_sta_tid,
-					    पंचांगp_list);
+	while (!list_empty(&tid_gc)) {
+		struct sk_buff *skb;
+		tid_info = list_first_entry(&tid_gc, struct carl9170_sta_tid,
+					    tmp_list);
 
-		जबतक ((skb = __skb_dequeue(&tid_info->queue)))
+		while ((skb = __skb_dequeue(&tid_info->queue)))
 			carl9170_tx_status(ar, skb, false);
 
-		list_del_init(&tid_info->पंचांगp_list);
-		kमुक्त(tid_info);
-	पूर्ण
-पूर्ण
+		list_del_init(&tid_info->tmp_list);
+		kfree(tid_info);
+	}
+}
 
-अटल व्योम carl9170_flush(काष्ठा ar9170 *ar, bool drop_queued)
-अणु
-	अगर (drop_queued) अणु
-		पूर्णांक i;
+static void carl9170_flush(struct ar9170 *ar, bool drop_queued)
+{
+	if (drop_queued) {
+		int i;
 
 		/*
 		 * We can only drop frames which have not been uploaded
 		 * to the device yet.
 		 */
 
-		क्रम (i = 0; i < ar->hw->queues; i++) अणु
-			काष्ठा sk_buff *skb;
+		for (i = 0; i < ar->hw->queues; i++) {
+			struct sk_buff *skb;
 
-			जबतक ((skb = skb_dequeue(&ar->tx_pending[i]))) अणु
-				काष्ठा ieee80211_tx_info *info;
+			while ((skb = skb_dequeue(&ar->tx_pending[i]))) {
+				struct ieee80211_tx_info *info;
 
 				info = IEEE80211_SKB_CB(skb);
-				अगर (info->flags & IEEE80211_TX_CTL_AMPDU)
+				if (info->flags & IEEE80211_TX_CTL_AMPDU)
 					atomic_dec(&ar->tx_ampdu_upload);
 
 				carl9170_tx_status(ar, skb, false);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* Wait क्रम all other outstanding frames to समयout. */
-	अगर (atomic_पढ़ो(&ar->tx_total_queued))
-		WARN_ON(रुको_क्रम_completion_समयout(&ar->tx_flush, HZ) == 0);
-पूर्ण
+	/* Wait for all other outstanding frames to timeout. */
+	if (atomic_read(&ar->tx_total_queued))
+		WARN_ON(wait_for_completion_timeout(&ar->tx_flush, HZ) == 0);
+}
 
-अटल व्योम carl9170_flush_ba(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा sk_buff_head मुक्त;
-	काष्ठा carl9170_sta_tid *tid_info;
-	काष्ठा sk_buff *skb;
+static void carl9170_flush_ba(struct ar9170 *ar)
+{
+	struct sk_buff_head free;
+	struct carl9170_sta_tid *tid_info;
+	struct sk_buff *skb;
 
-	__skb_queue_head_init(&मुक्त);
+	__skb_queue_head_init(&free);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	spin_lock_bh(&ar->tx_ampdu_list_lock);
-	list_क्रम_each_entry_rcu(tid_info, &ar->tx_ampdu_list, list) अणु
-		अगर (tid_info->state > CARL9170_TID_STATE_SUSPEND) अणु
+	list_for_each_entry_rcu(tid_info, &ar->tx_ampdu_list, list) {
+		if (tid_info->state > CARL9170_TID_STATE_SUSPEND) {
 			tid_info->state = CARL9170_TID_STATE_SUSPEND;
 
 			spin_lock(&tid_info->lock);
-			जबतक ((skb = __skb_dequeue(&tid_info->queue)))
-				__skb_queue_tail(&मुक्त, skb);
+			while ((skb = __skb_dequeue(&tid_info->queue)))
+				__skb_queue_tail(&free, skb);
 			spin_unlock(&tid_info->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&ar->tx_ampdu_list_lock);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	जबतक ((skb = __skb_dequeue(&मुक्त)))
+	while ((skb = __skb_dequeue(&free)))
 		carl9170_tx_status(ar, skb, false);
-पूर्ण
+}
 
-अटल व्योम carl9170_zap_queues(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा carl9170_vअगर_info *cvअगर;
-	अचिन्हित पूर्णांक i;
+static void carl9170_zap_queues(struct ar9170 *ar)
+{
+	struct carl9170_vif_info *cvif;
+	unsigned int i;
 
 	carl9170_ampdu_gc(ar);
 
 	carl9170_flush_ba(ar);
 	carl9170_flush(ar, true);
 
-	क्रम (i = 0; i < ar->hw->queues; i++) अणु
+	for (i = 0; i < ar->hw->queues; i++) {
 		spin_lock_bh(&ar->tx_status[i].lock);
-		जबतक (!skb_queue_empty(&ar->tx_status[i])) अणु
-			काष्ठा sk_buff *skb;
+		while (!skb_queue_empty(&ar->tx_status[i])) {
+			struct sk_buff *skb;
 
 			skb = skb_peek(&ar->tx_status[i]);
 			carl9170_tx_get_skb(skb);
@@ -295,56 +294,56 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 			carl9170_tx_drop(ar, skb);
 			spin_lock_bh(&ar->tx_status[i].lock);
 			carl9170_tx_put_skb(skb);
-		पूर्ण
+		}
 		spin_unlock_bh(&ar->tx_status[i].lock);
-	पूर्ण
+	}
 
 	BUILD_BUG_ON(CARL9170_NUM_TX_LIMIT_SOFT < 1);
 	BUILD_BUG_ON(CARL9170_NUM_TX_LIMIT_HARD < CARL9170_NUM_TX_LIMIT_SOFT);
 	BUILD_BUG_ON(CARL9170_NUM_TX_LIMIT_HARD >= CARL9170_BAW_BITS);
 
 	/* reinitialize queues statistics */
-	स_रखो(&ar->tx_stats, 0, माप(ar->tx_stats));
-	क्रम (i = 0; i < ar->hw->queues; i++)
+	memset(&ar->tx_stats, 0, sizeof(ar->tx_stats));
+	for (i = 0; i < ar->hw->queues; i++)
 		ar->tx_stats[i].limit = CARL9170_NUM_TX_LIMIT_HARD;
 
-	क्रम (i = 0; i < DIV_ROUND_UP(ar->fw.mem_blocks, BITS_PER_LONG); i++)
-		ar->mem_biपंचांगap[i] = 0;
+	for (i = 0; i < DIV_ROUND_UP(ar->fw.mem_blocks, BITS_PER_LONG); i++)
+		ar->mem_bitmap[i] = 0;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(cvअगर, &ar->vअगर_list, list) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(cvif, &ar->vif_list, list) {
 		spin_lock_bh(&ar->beacon_lock);
-		dev_kमुक्त_skb_any(cvअगर->beacon);
-		cvअगर->beacon = शून्य;
+		dev_kfree_skb_any(cvif->beacon);
+		cvif->beacon = NULL;
 		spin_unlock_bh(&ar->beacon_lock);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
 	atomic_set(&ar->tx_ampdu_upload, 0);
 	atomic_set(&ar->tx_ampdu_scheduler, 0);
 	atomic_set(&ar->tx_total_pending, 0);
 	atomic_set(&ar->tx_total_queued, 0);
-	atomic_set(&ar->mem_मुक्त_blocks, ar->fw.mem_blocks);
-पूर्ण
+	atomic_set(&ar->mem_free_blocks, ar->fw.mem_blocks);
+}
 
-#घोषणा CARL9170_FILL_QUEUE(queue, ai_fs, cwmin, cwmax, _txop)		\
-करो अणु									\
-	queue.aअगरs = ai_fs;						\
+#define CARL9170_FILL_QUEUE(queue, ai_fs, cwmin, cwmax, _txop)		\
+do {									\
+	queue.aifs = ai_fs;						\
 	queue.cw_min = cwmin;						\
 	queue.cw_max = cwmax;						\
 	queue.txop = _txop;						\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक carl9170_op_start(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	पूर्णांक err, i;
+static int carl9170_op_start(struct ieee80211_hw *hw)
+{
+	struct ar9170 *ar = hw->priv;
+	int err, i;
 
 	mutex_lock(&ar->mutex);
 
 	carl9170_zap_queues(ar);
 
-	/* reset QoS शेषs */
+	/* reset QoS defaults */
 	CARL9170_FILL_QUEUE(ar->edcf[AR9170_TXQ_VO], 2, 3,     7, 47);
 	CARL9170_FILL_QUEUE(ar->edcf[AR9170_TXQ_VI], 2, 7,    15, 94);
 	CARL9170_FILL_QUEUE(ar->edcf[AR9170_TXQ_BE], 3, 15, 1023,  0);
@@ -355,1155 +354,1155 @@ MODULE_PARM_DESC(noht, "Disable MPDU aggregation.");
 	/* "The first key is unique." */
 	ar->usedkeys = 1;
 	ar->filter_state = 0;
-	ar->ps.last_action = jअगरfies;
-	ar->ps.last_slept = jअगरfies;
+	ar->ps.last_action = jiffies;
+	ar->ps.last_slept = jiffies;
 	ar->erp_mode = CARL9170_ERP_AUTO;
 
 	/* Set "disable hw crypto offload" whenever the module parameter
-	 * nohwcrypt is true or अगर the firmware करोes not support it.
+	 * nohwcrypt is true or if the firmware does not support it.
 	 */
 	ar->disable_offload = modparam_nohwcrypt |
 		ar->fw.disable_offload_fw;
 	ar->rx_software_decryption = ar->disable_offload;
 
-	क्रम (i = 0; i < ar->hw->queues; i++) अणु
-		ar->queue_stop_समयout[i] = jअगरfies;
-		ar->max_queue_stop_समयout[i] = 0;
-	पूर्ण
+	for (i = 0; i < ar->hw->queues; i++) {
+		ar->queue_stop_timeout[i] = jiffies;
+		ar->max_queue_stop_timeout[i] = 0;
+	}
 
 	atomic_set(&ar->mem_allocs, 0);
 
-	err = carl9170_usb_खोलो(ar);
-	अगर (err)
-		जाओ out;
+	err = carl9170_usb_open(ar);
+	if (err)
+		goto out;
 
 	err = carl9170_init_mac(ar);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = carl9170_set_qos(ar);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (ar->fw.rx_filter) अणु
+	if (ar->fw.rx_filter) {
 		err = carl9170_rx_filter(ar, CARL9170_RX_FILTER_OTHER_RA |
 			CARL9170_RX_FILTER_CTL_OTHER | CARL9170_RX_FILTER_BAD);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	err = carl9170_ग_लिखो_reg(ar, AR9170_MAC_REG_DMA_TRIGGER,
+	err = carl9170_write_reg(ar, AR9170_MAC_REG_DMA_TRIGGER,
 				 AR9170_DMA_TRIGGER_RXQ);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	/* Clear key-cache */
-	क्रम (i = 0; i < AR9170_CAM_MAX_USER + 4; i++) अणु
-		err = carl9170_upload_key(ar, i, शून्य, AR9170_ENC_ALG_NONE,
-					  0, शून्य, 0);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < AR9170_CAM_MAX_USER + 4; i++) {
+		err = carl9170_upload_key(ar, i, NULL, AR9170_ENC_ALG_NONE,
+					  0, NULL, 0);
+		if (err)
+			goto out;
 
-		err = carl9170_upload_key(ar, i, शून्य, AR9170_ENC_ALG_NONE,
-					  1, शून्य, 0);
-		अगर (err)
-			जाओ out;
+		err = carl9170_upload_key(ar, i, NULL, AR9170_ENC_ALG_NONE,
+					  1, NULL, 0);
+		if (err)
+			goto out;
 
-		अगर (i < AR9170_CAM_MAX_USER) अणु
+		if (i < AR9170_CAM_MAX_USER) {
 			err = carl9170_disable_key(ar, i);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto out;
+		}
+	}
 
 	carl9170_set_state_when(ar, CARL9170_IDLE, CARL9170_STARTED);
 
 	ieee80211_queue_delayed_work(ar->hw, &ar->stat_work,
-		round_jअगरfies(msecs_to_jअगरfies(CARL9170_STAT_WORK)));
+		round_jiffies(msecs_to_jiffies(CARL9170_STAT_WORK)));
 
 	ieee80211_wake_queues(ar->hw);
 	err = 0;
 
 out:
 	mutex_unlock(&ar->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम carl9170_cancel_worker(काष्ठा ar9170 *ar)
-अणु
+static void carl9170_cancel_worker(struct ar9170 *ar)
+{
 	cancel_delayed_work_sync(&ar->stat_work);
 	cancel_delayed_work_sync(&ar->tx_janitor);
-#अगर_घोषित CONFIG_CARL9170_LEDS
+#ifdef CONFIG_CARL9170_LEDS
 	cancel_delayed_work_sync(&ar->led_work);
-#पूर्ण_अगर /* CONFIG_CARL9170_LEDS */
+#endif /* CONFIG_CARL9170_LEDS */
 	cancel_work_sync(&ar->ps_work);
 	cancel_work_sync(&ar->ping_work);
 	cancel_work_sync(&ar->ampdu_work);
-पूर्ण
+}
 
-अटल व्योम carl9170_op_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
+static void carl9170_op_stop(struct ieee80211_hw *hw)
+{
+	struct ar9170 *ar = hw->priv;
 
 	carl9170_set_state_when(ar, CARL9170_STARTED, CARL9170_IDLE);
 
 	ieee80211_stop_queues(ar->hw);
 
 	mutex_lock(&ar->mutex);
-	अगर (IS_ACCEPTING_CMD(ar)) अणु
-		RCU_INIT_POINTER(ar->beacon_iter, शून्य);
+	if (IS_ACCEPTING_CMD(ar)) {
+		RCU_INIT_POINTER(ar->beacon_iter, NULL);
 
 		carl9170_led_set_state(ar, 0);
 
 		/* stop DMA */
-		carl9170_ग_लिखो_reg(ar, AR9170_MAC_REG_DMA_TRIGGER, 0);
+		carl9170_write_reg(ar, AR9170_MAC_REG_DMA_TRIGGER, 0);
 		carl9170_usb_stop(ar);
-	पूर्ण
+	}
 
 	carl9170_zap_queues(ar);
 	mutex_unlock(&ar->mutex);
 
 	carl9170_cancel_worker(ar);
-पूर्ण
+}
 
-अटल व्योम carl9170_restart_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170,
+static void carl9170_restart_work(struct work_struct *work)
+{
+	struct ar9170 *ar = container_of(work, struct ar9170,
 					 restart_work);
-	पूर्णांक err = -EIO;
+	int err = -EIO;
 
 	ar->usedkeys = 0;
 	ar->filter_state = 0;
 	carl9170_cancel_worker(ar);
 
 	mutex_lock(&ar->mutex);
-	अगर (!ar->क्रमce_usb_reset) अणु
+	if (!ar->force_usb_reset) {
 		err = carl9170_usb_restart(ar);
-		अगर (net_ratelimit()) अणु
-			अगर (err)
+		if (net_ratelimit()) {
+			if (err)
 				dev_err(&ar->udev->dev, "Failed to restart device (%d).\n", err);
-			अन्यथा
+			else
 				dev_info(&ar->udev->dev, "device restarted successfully.\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	carl9170_zap_queues(ar);
 	mutex_unlock(&ar->mutex);
 
-	अगर (!err && !ar->क्रमce_usb_reset) अणु
+	if (!err && !ar->force_usb_reset) {
 		ar->restart_counter++;
 		atomic_set(&ar->pending_restarts, 0);
 
 		ieee80211_restart_hw(ar->hw);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * The reset was unsuccessful and the device seems to
 		 * be dead. But there's still one option: a low-level
-		 * usb subप्रणाली reset...
+		 * usb subsystem reset...
 		 */
 
 		carl9170_usb_reset(ar);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम carl9170_restart(काष्ठा ar9170 *ar, स्थिर क्रमागत carl9170_restart_reasons r)
-अणु
+void carl9170_restart(struct ar9170 *ar, const enum carl9170_restart_reasons r)
+{
 	carl9170_set_state_when(ar, CARL9170_STARTED, CARL9170_IDLE);
 
 	/*
-	 * Someबार, an error can trigger several dअगरferent reset events.
+	 * Sometimes, an error can trigger several different reset events.
 	 * By ignoring these *surplus* reset events, the device won't be
-	 * समाप्तed again, right after it has recovered.
+	 * killed again, right after it has recovered.
 	 */
-	अगर (atomic_inc_वापस(&ar->pending_restarts) > 1) अणु
+	if (atomic_inc_return(&ar->pending_restarts) > 1) {
 		dev_dbg(&ar->udev->dev, "ignoring restart (%d)\n", r);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ieee80211_stop_queues(ar->hw);
 
 	dev_err(&ar->udev->dev, "restart device (%d)\n", r);
 
-	अगर (!WARN_ON(r == CARL9170_RR_NO_REASON) ||
+	if (!WARN_ON(r == CARL9170_RR_NO_REASON) ||
 	    !WARN_ON(r >= __CARL9170_RR_LAST))
 		ar->last_reason = r;
 
-	अगर (!ar->रेजिस्टरed)
-		वापस;
+	if (!ar->registered)
+		return;
 
-	अगर (!IS_ACCEPTING_CMD(ar) || ar->needs_full_reset)
-		ar->क्रमce_usb_reset = true;
+	if (!IS_ACCEPTING_CMD(ar) || ar->needs_full_reset)
+		ar->force_usb_reset = true;
 
 	ieee80211_queue_work(ar->hw, &ar->restart_work);
 
 	/*
-	 * At this poपूर्णांक, the device instance might have vanished/disabled.
-	 * So, करोn't put any code which access the ar9170 काष्ठा
+	 * At this point, the device instance might have vanished/disabled.
+	 * So, don't put any code which access the ar9170 struct
 	 * without proper protection.
 	 */
-पूर्ण
+}
 
-अटल व्योम carl9170_ping_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170, ping_work);
-	पूर्णांक err;
+static void carl9170_ping_work(struct work_struct *work)
+{
+	struct ar9170 *ar = container_of(work, struct ar9170, ping_work);
+	int err;
 
-	अगर (!IS_STARTED(ar))
-		वापस;
+	if (!IS_STARTED(ar))
+		return;
 
 	mutex_lock(&ar->mutex);
 	err = carl9170_echo_test(ar, 0xdeadbeef);
-	अगर (err)
+	if (err)
 		carl9170_restart(ar, CARL9170_RR_UNRESPONSIVE_DEVICE);
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक carl9170_init_पूर्णांकerface(काष्ठा ar9170 *ar,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ath_common *common = &ar->common;
-	पूर्णांक err;
+static int carl9170_init_interface(struct ar9170 *ar,
+				   struct ieee80211_vif *vif)
+{
+	struct ath_common *common = &ar->common;
+	int err;
 
-	अगर (!vअगर) अणु
+	if (!vif) {
 		WARN_ON_ONCE(IS_STARTED(ar));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_नकल(common->macaddr, vअगर->addr, ETH_ALEN);
+	memcpy(common->macaddr, vif->addr, ETH_ALEN);
 
 	/* We have to fall back to software crypto, whenever
 	 * the user choose to participates in an IBSS. HW
-	 * offload क्रम IBSS RSN is not supported by this driver.
+	 * offload for IBSS RSN is not supported by this driver.
 	 *
-	 * NOTE: If the previous मुख्य पूर्णांकerface has alपढ़ोy
+	 * NOTE: If the previous main interface has already
 	 * disabled hw crypto offload, we have to keep this
 	 * previous disable_offload setting as it was.
-	 * Altough ideally, we should notअगरy mac80211 and tell
-	 * it to क्रमget about any HW crypto offload क्रम now.
+	 * Altough ideally, we should notify mac80211 and tell
+	 * it to forget about any HW crypto offload for now.
 	 */
-	ar->disable_offload |= ((vअगर->type != NL80211_IFTYPE_STATION) &&
-	    (vअगर->type != NL80211_IFTYPE_AP));
+	ar->disable_offload |= ((vif->type != NL80211_IFTYPE_STATION) &&
+	    (vif->type != NL80211_IFTYPE_AP));
 
 	/* The driver used to have P2P GO+CLIENT support,
-	 * but since this was dropped and we करोn't know अगर
-	 * there are any gremlins lurking in the shaकरोws,
-	 * so best we keep HW offload disabled क्रम P2P.
+	 * but since this was dropped and we don't know if
+	 * there are any gremlins lurking in the shadows,
+	 * so best we keep HW offload disabled for P2P.
 	 */
-	ar->disable_offload |= vअगर->p2p;
+	ar->disable_offload |= vif->p2p;
 
 	ar->rx_software_decryption = ar->disable_offload;
 
 	err = carl9170_set_operating_mode(ar);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक carl9170_op_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा carl9170_vअगर_info *vअगर_priv = (व्योम *) vअगर->drv_priv;
-	काष्ठा ieee80211_vअगर *मुख्य_vअगर, *old_मुख्य = शून्य;
-	काष्ठा ar9170 *ar = hw->priv;
-	पूर्णांक vअगर_id = -1, err = 0;
+static int carl9170_op_add_interface(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif)
+{
+	struct carl9170_vif_info *vif_priv = (void *) vif->drv_priv;
+	struct ieee80211_vif *main_vif, *old_main = NULL;
+	struct ar9170 *ar = hw->priv;
+	int vif_id = -1, err = 0;
 
 	mutex_lock(&ar->mutex);
-	rcu_पढ़ो_lock();
-	अगर (vअगर_priv->active) अणु
+	rcu_read_lock();
+	if (vif_priv->active) {
 		/*
-		 * Skip the पूर्णांकerface काष्ठाure initialization,
-		 * अगर the vअगर survived the _restart call.
+		 * Skip the interface structure initialization,
+		 * if the vif survived the _restart call.
 		 */
-		vअगर_id = vअगर_priv->id;
-		vअगर_priv->enable_beacon = false;
+		vif_id = vif_priv->id;
+		vif_priv->enable_beacon = false;
 
 		spin_lock_bh(&ar->beacon_lock);
-		dev_kमुक्त_skb_any(vअगर_priv->beacon);
-		vअगर_priv->beacon = शून्य;
+		dev_kfree_skb_any(vif_priv->beacon);
+		vif_priv->beacon = NULL;
 		spin_unlock_bh(&ar->beacon_lock);
 
-		जाओ init;
-	पूर्ण
+		goto init;
+	}
 
-	/* Because the AR9170 HW's MAC doesn't provide full support क्रम
-	 * multiple, independent पूर्णांकerfaces [of dअगरferent operation modes].
-	 * We have to select ONE मुख्य पूर्णांकerface [मुख्य mode of HW], but we
+	/* Because the AR9170 HW's MAC doesn't provide full support for
+	 * multiple, independent interfaces [of different operation modes].
+	 * We have to select ONE main interface [main mode of HW], but we
 	 * can have multiple slaves [AKA: entry in the ACK-table].
 	 *
-	 * The first (from HEAD/TOP) पूर्णांकerface in the ar->vअगर_list is
-	 * always the मुख्य पूर्णांकf. All following पूर्णांकfs in this list
-	 * are considered to be slave पूर्णांकfs.
+	 * The first (from HEAD/TOP) interface in the ar->vif_list is
+	 * always the main intf. All following intfs in this list
+	 * are considered to be slave intfs.
 	 */
-	मुख्य_vअगर = carl9170_get_मुख्य_vअगर(ar);
+	main_vif = carl9170_get_main_vif(ar);
 
-	अगर (मुख्य_vअगर) अणु
-		चयन (मुख्य_vअगर->type) अणु
-		हाल NL80211_IFTYPE_STATION:
-			अगर (vअगर->type == NL80211_IFTYPE_STATION)
-				अवरोध;
-
-			err = -EBUSY;
-			rcu_पढ़ो_unlock();
-
-			जाओ unlock;
-
-		हाल NL80211_IFTYPE_MESH_POINT:
-		हाल NL80211_IFTYPE_AP:
-			अगर ((vअगर->type == NL80211_IFTYPE_STATION) ||
-			    (vअगर->type == NL80211_IFTYPE_AP) ||
-			    (vअगर->type == NL80211_IFTYPE_MESH_POINT))
-				अवरोध;
+	if (main_vif) {
+		switch (main_vif->type) {
+		case NL80211_IFTYPE_STATION:
+			if (vif->type == NL80211_IFTYPE_STATION)
+				break;
 
 			err = -EBUSY;
-			rcu_पढ़ो_unlock();
-			जाओ unlock;
+			rcu_read_unlock();
 
-		शेष:
-			rcu_पढ़ो_unlock();
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
 
-	vअगर_id = biपंचांगap_find_मुक्त_region(&ar->vअगर_biपंचांगap, ar->fw.vअगर_num, 0);
+		case NL80211_IFTYPE_MESH_POINT:
+		case NL80211_IFTYPE_AP:
+			if ((vif->type == NL80211_IFTYPE_STATION) ||
+			    (vif->type == NL80211_IFTYPE_AP) ||
+			    (vif->type == NL80211_IFTYPE_MESH_POINT))
+				break;
 
-	अगर (vअगर_id < 0) अणु
-		rcu_पढ़ो_unlock();
+			err = -EBUSY;
+			rcu_read_unlock();
+			goto unlock;
+
+		default:
+			rcu_read_unlock();
+			goto unlock;
+		}
+	}
+
+	vif_id = bitmap_find_free_region(&ar->vif_bitmap, ar->fw.vif_num, 0);
+
+	if (vif_id < 0) {
+		rcu_read_unlock();
 
 		err = -ENOSPC;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	BUG_ON(ar->vअगर_priv[vअगर_id].id != vअगर_id);
+	BUG_ON(ar->vif_priv[vif_id].id != vif_id);
 
-	vअगर_priv->active = true;
-	vअगर_priv->id = vअगर_id;
-	vअगर_priv->enable_beacon = false;
-	ar->vअगरs++;
-	अगर (old_मुख्य) अणु
-		/* We end up in here, अगर the मुख्य पूर्णांकerface is being replaced.
-		 * Put the new मुख्य पूर्णांकerface at the HEAD of the list and the
-		 * previous पूर्णांकeface will स्वतःmatically become second in line.
+	vif_priv->active = true;
+	vif_priv->id = vif_id;
+	vif_priv->enable_beacon = false;
+	ar->vifs++;
+	if (old_main) {
+		/* We end up in here, if the main interface is being replaced.
+		 * Put the new main interface at the HEAD of the list and the
+		 * previous inteface will automatically become second in line.
 		 */
-		list_add_rcu(&vअगर_priv->list, &ar->vअगर_list);
-	पूर्ण अन्यथा अणु
-		/* Add new पूर्णांकeface. If the list is empty, it will become the
-		 * मुख्य पूर्णांकeface, otherwise it will be slave.
+		list_add_rcu(&vif_priv->list, &ar->vif_list);
+	} else {
+		/* Add new inteface. If the list is empty, it will become the
+		 * main inteface, otherwise it will be slave.
 		 */
-		list_add_tail_rcu(&vअगर_priv->list, &ar->vअगर_list);
-	पूर्ण
-	rcu_assign_poपूर्णांकer(ar->vअगर_priv[vअगर_id].vअगर, vअगर);
+		list_add_tail_rcu(&vif_priv->list, &ar->vif_list);
+	}
+	rcu_assign_pointer(ar->vif_priv[vif_id].vif, vif);
 
 init:
-	मुख्य_vअगर = carl9170_get_मुख्य_vअगर(ar);
+	main_vif = carl9170_get_main_vif(ar);
 
-	अगर (मुख्य_vअगर == vअगर) अणु
-		rcu_assign_poपूर्णांकer(ar->beacon_iter, vअगर_priv);
-		rcu_पढ़ो_unlock();
+	if (main_vif == vif) {
+		rcu_assign_pointer(ar->beacon_iter, vif_priv);
+		rcu_read_unlock();
 
-		अगर (old_मुख्य) अणु
-			काष्ठा carl9170_vअगर_info *old_मुख्य_priv =
-				(व्योम *) old_मुख्य->drv_priv;
-			/* करोwngrade old मुख्य पूर्णांकf to slave पूर्णांकf.
-			 * NOTE: We are no दीर्घer under rcu_पढ़ो_lock.
+		if (old_main) {
+			struct carl9170_vif_info *old_main_priv =
+				(void *) old_main->drv_priv;
+			/* downgrade old main intf to slave intf.
+			 * NOTE: We are no longer under rcu_read_lock.
 			 * But we are still holding ar->mutex, so the
-			 * vअगर data [id, addr] is safe.
+			 * vif data [id, addr] is safe.
 			 */
-			err = carl9170_mod_भव_mac(ar, old_मुख्य_priv->id,
-						       old_मुख्य->addr);
-			अगर (err)
-				जाओ unlock;
-		पूर्ण
+			err = carl9170_mod_virtual_mac(ar, old_main_priv->id,
+						       old_main->addr);
+			if (err)
+				goto unlock;
+		}
 
-		err = carl9170_init_पूर्णांकerface(ar, vअगर);
-		अगर (err)
-			जाओ unlock;
-	पूर्ण अन्यथा अणु
-		rcu_पढ़ो_unlock();
-		err = carl9170_mod_भव_mac(ar, vअगर_id, vअगर->addr);
+		err = carl9170_init_interface(ar, vif);
+		if (err)
+			goto unlock;
+	} else {
+		rcu_read_unlock();
+		err = carl9170_mod_virtual_mac(ar, vif_id, vif->addr);
 
-		अगर (err)
-			जाओ unlock;
-	पूर्ण
+		if (err)
+			goto unlock;
+	}
 
-	अगर (ar->fw.tx_seq_table) अणु
-		err = carl9170_ग_लिखो_reg(ar, ar->fw.tx_seq_table + vअगर_id * 4,
+	if (ar->fw.tx_seq_table) {
+		err = carl9170_write_reg(ar, ar->fw.tx_seq_table + vif_id * 4,
 					 0);
-		अगर (err)
-			जाओ unlock;
-	पूर्ण
+		if (err)
+			goto unlock;
+	}
 
 unlock:
-	अगर (err && (vअगर_id >= 0)) अणु
-		vअगर_priv->active = false;
-		biपंचांगap_release_region(&ar->vअगर_biपंचांगap, vअगर_id, 0);
-		ar->vअगरs--;
-		RCU_INIT_POINTER(ar->vअगर_priv[vअगर_id].vअगर, शून्य);
-		list_del_rcu(&vअगर_priv->list);
+	if (err && (vif_id >= 0)) {
+		vif_priv->active = false;
+		bitmap_release_region(&ar->vif_bitmap, vif_id, 0);
+		ar->vifs--;
+		RCU_INIT_POINTER(ar->vif_priv[vif_id].vif, NULL);
+		list_del_rcu(&vif_priv->list);
 		mutex_unlock(&ar->mutex);
 		synchronize_rcu();
-	पूर्ण अन्यथा अणु
-		अगर (ar->vअगरs > 1)
+	} else {
+		if (ar->vifs > 1)
 			ar->ps.off_override |= PS_OFF_VIF;
 
 		mutex_unlock(&ar->mutex);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम carl9170_op_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा carl9170_vअगर_info *vअगर_priv = (व्योम *) vअगर->drv_priv;
-	काष्ठा ieee80211_vअगर *मुख्य_vअगर;
-	काष्ठा ar9170 *ar = hw->priv;
-	अचिन्हित पूर्णांक id;
+static void carl9170_op_remove_interface(struct ieee80211_hw *hw,
+					 struct ieee80211_vif *vif)
+{
+	struct carl9170_vif_info *vif_priv = (void *) vif->drv_priv;
+	struct ieee80211_vif *main_vif;
+	struct ar9170 *ar = hw->priv;
+	unsigned int id;
 
 	mutex_lock(&ar->mutex);
 
-	अगर (WARN_ON_ONCE(!vअगर_priv->active))
-		जाओ unlock;
+	if (WARN_ON_ONCE(!vif_priv->active))
+		goto unlock;
 
-	ar->vअगरs--;
+	ar->vifs--;
 
-	rcu_पढ़ो_lock();
-	मुख्य_vअगर = carl9170_get_मुख्य_vअगर(ar);
+	rcu_read_lock();
+	main_vif = carl9170_get_main_vif(ar);
 
-	id = vअगर_priv->id;
+	id = vif_priv->id;
 
-	vअगर_priv->active = false;
-	WARN_ON(vअगर_priv->enable_beacon);
-	vअगर_priv->enable_beacon = false;
-	list_del_rcu(&vअगर_priv->list);
-	RCU_INIT_POINTER(ar->vअगर_priv[id].vअगर, शून्य);
+	vif_priv->active = false;
+	WARN_ON(vif_priv->enable_beacon);
+	vif_priv->enable_beacon = false;
+	list_del_rcu(&vif_priv->list);
+	RCU_INIT_POINTER(ar->vif_priv[id].vif, NULL);
 
-	अगर (vअगर == मुख्य_vअगर) अणु
-		rcu_पढ़ो_unlock();
+	if (vif == main_vif) {
+		rcu_read_unlock();
 
-		अगर (ar->vअगरs) अणु
-			WARN_ON(carl9170_init_पूर्णांकerface(ar,
-					carl9170_get_मुख्य_vअगर(ar)));
-		पूर्ण अन्यथा अणु
+		if (ar->vifs) {
+			WARN_ON(carl9170_init_interface(ar,
+					carl9170_get_main_vif(ar)));
+		} else {
 			carl9170_set_operating_mode(ar);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rcu_पढ़ो_unlock();
+		}
+	} else {
+		rcu_read_unlock();
 
-		WARN_ON(carl9170_mod_भव_mac(ar, id, शून्य));
-	पूर्ण
+		WARN_ON(carl9170_mod_virtual_mac(ar, id, NULL));
+	}
 
 	carl9170_update_beacon(ar, false);
 	carl9170_flush_cab(ar, id);
 
 	spin_lock_bh(&ar->beacon_lock);
-	dev_kमुक्त_skb_any(vअगर_priv->beacon);
-	vअगर_priv->beacon = शून्य;
+	dev_kfree_skb_any(vif_priv->beacon);
+	vif_priv->beacon = NULL;
 	spin_unlock_bh(&ar->beacon_lock);
 
-	biपंचांगap_release_region(&ar->vअगर_biपंचांगap, id, 0);
+	bitmap_release_region(&ar->vif_bitmap, id, 0);
 
-	carl9170_set_beacon_समयrs(ar);
+	carl9170_set_beacon_timers(ar);
 
-	अगर (ar->vअगरs == 1)
+	if (ar->vifs == 1)
 		ar->ps.off_override &= ~PS_OFF_VIF;
 
 unlock:
 	mutex_unlock(&ar->mutex);
 
 	synchronize_rcu();
-पूर्ण
+}
 
-व्योम carl9170_ps_check(काष्ठा ar9170 *ar)
-अणु
+void carl9170_ps_check(struct ar9170 *ar)
+{
 	ieee80211_queue_work(ar->hw, &ar->ps_work);
-पूर्ण
+}
 
 /* caller must hold ar->mutex */
-अटल पूर्णांक carl9170_ps_update(काष्ठा ar9170 *ar)
-अणु
+static int carl9170_ps_update(struct ar9170 *ar)
+{
 	bool ps = false;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (!ar->ps.off_override)
+	if (!ar->ps.off_override)
 		ps = (ar->hw->conf.flags & IEEE80211_CONF_PS);
 
-	अगर (ps != ar->ps.state) अणु
-		err = carl9170_घातersave(ar, ps);
-		अगर (err)
-			वापस err;
+	if (ps != ar->ps.state) {
+		err = carl9170_powersave(ar, ps);
+		if (err)
+			return err;
 
-		अगर (ar->ps.state && !ps) अणु
-			ar->ps.sleep_ms = jअगरfies_to_msecs(jअगरfies -
+		if (ar->ps.state && !ps) {
+			ar->ps.sleep_ms = jiffies_to_msecs(jiffies -
 				ar->ps.last_action);
-		पूर्ण
+		}
 
-		अगर (ps)
-			ar->ps.last_slept = jअगरfies;
+		if (ps)
+			ar->ps.last_slept = jiffies;
 
-		ar->ps.last_action = jअगरfies;
+		ar->ps.last_action = jiffies;
 		ar->ps.state = ps;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम carl9170_ps_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170,
+static void carl9170_ps_work(struct work_struct *work)
+{
+	struct ar9170 *ar = container_of(work, struct ar9170,
 					 ps_work);
 	mutex_lock(&ar->mutex);
-	अगर (IS_STARTED(ar))
+	if (IS_STARTED(ar))
 		WARN_ON_ONCE(carl9170_ps_update(ar) != 0);
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक carl9170_update_survey(काष्ठा ar9170 *ar, bool flush, bool noise)
-अणु
-	पूर्णांक err;
+static int carl9170_update_survey(struct ar9170 *ar, bool flush, bool noise)
+{
+	int err;
 
-	अगर (noise) अणु
-		err = carl9170_get_noiseन्यूनमान(ar);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	if (noise) {
+		err = carl9170_get_noisefloor(ar);
+		if (err)
+			return err;
+	}
 
-	अगर (ar->fw.hw_counters) अणु
+	if (ar->fw.hw_counters) {
 		err = carl9170_collect_tally(ar);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (flush)
-		स_रखो(&ar->tally, 0, माप(ar->tally));
+	if (flush)
+		memset(&ar->tally, 0, sizeof(ar->tally));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम carl9170_stat_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170, stat_work.work);
-	पूर्णांक err;
+static void carl9170_stat_work(struct work_struct *work)
+{
+	struct ar9170 *ar = container_of(work, struct ar9170, stat_work.work);
+	int err;
 
 	mutex_lock(&ar->mutex);
 	err = carl9170_update_survey(ar, false, true);
 	mutex_unlock(&ar->mutex);
 
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 
 	ieee80211_queue_delayed_work(ar->hw, &ar->stat_work,
-		round_jअगरfies(msecs_to_jअगरfies(CARL9170_STAT_WORK)));
-पूर्ण
+		round_jiffies(msecs_to_jiffies(CARL9170_STAT_WORK)));
+}
 
-अटल पूर्णांक carl9170_op_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	पूर्णांक err = 0;
+static int carl9170_op_config(struct ieee80211_hw *hw, u32 changed)
+{
+	struct ar9170 *ar = hw->priv;
+	int err = 0;
 
 	mutex_lock(&ar->mutex);
-	अगर (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) अणु
+	if (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) {
 		/* TODO */
 		err = 0;
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_PS) अणु
+	if (changed & IEEE80211_CONF_CHANGE_PS) {
 		err = carl9170_ps_update(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_SMPS) अणु
+	if (changed & IEEE80211_CONF_CHANGE_SMPS) {
 		/* TODO */
 		err = 0;
-	पूर्ण
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_CHANNEL) अणु
-		क्रमागत nl80211_channel_type channel_type =
+	if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
+		enum nl80211_channel_type channel_type =
 			cfg80211_get_chandef_type(&hw->conf.chandef);
 
-		/* adjust slot समय क्रम 5 GHz */
-		err = carl9170_set_slot_समय(ar);
-		अगर (err)
-			जाओ out;
+		/* adjust slot time for 5 GHz */
+		err = carl9170_set_slot_time(ar);
+		if (err)
+			goto out;
 
 		err = carl9170_update_survey(ar, true, false);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		err = carl9170_set_channel(ar, hw->conf.chandef.chan,
 					   channel_type);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
 		err = carl9170_update_survey(ar, false, true);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		err = carl9170_set_dyn_sअगरs_ack(ar);
-		अगर (err)
-			जाओ out;
+		err = carl9170_set_dyn_sifs_ack(ar);
+		if (err)
+			goto out;
 
 		err = carl9170_set_rts_cts_rate(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & IEEE80211_CONF_CHANGE_POWER) अणु
+	if (changed & IEEE80211_CONF_CHANGE_POWER) {
 		err = carl9170_set_mac_tpc(ar, ar->hw->conf.chandef.chan);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 out:
 	mutex_unlock(&ar->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u64 carl9170_op_prepare_multicast(काष्ठा ieee80211_hw *hw,
-					 काष्ठा netdev_hw_addr_list *mc_list)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static u64 carl9170_op_prepare_multicast(struct ieee80211_hw *hw,
+					 struct netdev_hw_addr_list *mc_list)
+{
+	struct netdev_hw_addr *ha;
 	u64 mchash;
 
 	/* always get broadcast frames */
 	mchash = 1ULL << (0xff >> 2);
 
-	netdev_hw_addr_list_क्रम_each(ha, mc_list)
+	netdev_hw_addr_list_for_each(ha, mc_list)
 		mchash |= 1ULL << (ha->addr[5] >> 2);
 
-	वापस mchash;
-पूर्ण
+	return mchash;
+}
 
-अटल व्योम carl9170_op_configure_filter(काष्ठा ieee80211_hw *hw,
-					 अचिन्हित पूर्णांक changed_flags,
-					 अचिन्हित पूर्णांक *new_flags,
+static void carl9170_op_configure_filter(struct ieee80211_hw *hw,
+					 unsigned int changed_flags,
+					 unsigned int *new_flags,
 					 u64 multicast)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
+{
+	struct ar9170 *ar = hw->priv;
 
 	/* mask supported flags */
 	*new_flags &= FIF_ALLMULTI | ar->rx_filter_caps;
 
-	अगर (!IS_ACCEPTING_CMD(ar))
-		वापस;
+	if (!IS_ACCEPTING_CMD(ar))
+		return;
 
 	mutex_lock(&ar->mutex);
 
 	ar->filter_state = *new_flags;
 	/*
-	 * We can support more by setting the snअगरfer bit and
+	 * We can support more by setting the sniffer bit and
 	 * then checking the error flags, later.
 	 */
 
-	अगर (*new_flags & FIF_ALLMULTI)
+	if (*new_flags & FIF_ALLMULTI)
 		multicast = ~0ULL;
 
-	अगर (multicast != ar->cur_mc_hash)
+	if (multicast != ar->cur_mc_hash)
 		WARN_ON(carl9170_update_multicast(ar, multicast));
 
-	अगर (changed_flags & FIF_OTHER_BSS) अणु
-		ar->snअगरfer_enabled = !!(*new_flags & FIF_OTHER_BSS);
+	if (changed_flags & FIF_OTHER_BSS) {
+		ar->sniffer_enabled = !!(*new_flags & FIF_OTHER_BSS);
 
 		WARN_ON(carl9170_set_operating_mode(ar));
-	पूर्ण
+	}
 
-	अगर (ar->fw.rx_filter && changed_flags & ar->rx_filter_caps) अणु
+	if (ar->fw.rx_filter && changed_flags & ar->rx_filter_caps) {
 		u32 rx_filter = 0;
 
-		अगर (!ar->fw.ba_filter)
+		if (!ar->fw.ba_filter)
 			rx_filter |= CARL9170_RX_FILTER_CTL_OTHER;
 
-		अगर (!(*new_flags & (FIF_FCSFAIL | FIF_PLCPFAIL)))
+		if (!(*new_flags & (FIF_FCSFAIL | FIF_PLCPFAIL)))
 			rx_filter |= CARL9170_RX_FILTER_BAD;
 
-		अगर (!(*new_flags & FIF_CONTROL))
+		if (!(*new_flags & FIF_CONTROL))
 			rx_filter |= CARL9170_RX_FILTER_CTL_OTHER;
 
-		अगर (!(*new_flags & FIF_PSPOLL))
+		if (!(*new_flags & FIF_PSPOLL))
 			rx_filter |= CARL9170_RX_FILTER_CTL_PSPOLL;
 
-		अगर (!(*new_flags & FIF_OTHER_BSS)) अणु
+		if (!(*new_flags & FIF_OTHER_BSS)) {
 			rx_filter |= CARL9170_RX_FILTER_OTHER_RA;
 			rx_filter |= CARL9170_RX_FILTER_DECRY_FAIL;
-		पूर्ण
+		}
 
 		WARN_ON(carl9170_rx_filter(ar, rx_filter));
-	पूर्ण
+	}
 
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
 
-अटल व्योम carl9170_op_bss_info_changed(काष्ठा ieee80211_hw *hw,
-					 काष्ठा ieee80211_vअगर *vअगर,
-					 काष्ठा ieee80211_bss_conf *bss_conf,
+static void carl9170_op_bss_info_changed(struct ieee80211_hw *hw,
+					 struct ieee80211_vif *vif,
+					 struct ieee80211_bss_conf *bss_conf,
 					 u32 changed)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	काष्ठा ath_common *common = &ar->common;
-	पूर्णांक err = 0;
-	काष्ठा carl9170_vअगर_info *vअगर_priv;
-	काष्ठा ieee80211_vअगर *मुख्य_vअगर;
+{
+	struct ar9170 *ar = hw->priv;
+	struct ath_common *common = &ar->common;
+	int err = 0;
+	struct carl9170_vif_info *vif_priv;
+	struct ieee80211_vif *main_vif;
 
 	mutex_lock(&ar->mutex);
-	vअगर_priv = (व्योम *) vअगर->drv_priv;
-	मुख्य_vअगर = carl9170_get_मुख्य_vअगर(ar);
-	अगर (WARN_ON(!मुख्य_vअगर))
-		जाओ out;
+	vif_priv = (void *) vif->drv_priv;
+	main_vif = carl9170_get_main_vif(ar);
+	if (WARN_ON(!main_vif))
+		goto out;
 
-	अगर (changed & BSS_CHANGED_BEACON_ENABLED) अणु
-		काष्ठा carl9170_vअगर_info *iter;
-		पूर्णांक i = 0;
+	if (changed & BSS_CHANGED_BEACON_ENABLED) {
+		struct carl9170_vif_info *iter;
+		int i = 0;
 
-		vअगर_priv->enable_beacon = bss_conf->enable_beacon;
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(iter, &ar->vअगर_list, list) अणु
-			अगर (iter->active && iter->enable_beacon)
+		vif_priv->enable_beacon = bss_conf->enable_beacon;
+		rcu_read_lock();
+		list_for_each_entry_rcu(iter, &ar->vif_list, list) {
+			if (iter->active && iter->enable_beacon)
 				i++;
 
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		}
+		rcu_read_unlock();
 
 		ar->beacon_enabled = i;
-	पूर्ण
+	}
 
-	अगर (changed & BSS_CHANGED_BEACON) अणु
+	if (changed & BSS_CHANGED_BEACON) {
 		err = carl9170_update_beacon(ar, false);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON |
-		       BSS_CHANGED_BEACON_INT)) अणु
+	if (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON |
+		       BSS_CHANGED_BEACON_INT)) {
 
-		अगर (मुख्य_vअगर != vअगर) अणु
-			bss_conf->beacon_पूर्णांक = मुख्य_vअगर->bss_conf.beacon_पूर्णांक;
-			bss_conf->dtim_period = मुख्य_vअगर->bss_conf.dtim_period;
-		पूर्ण
+		if (main_vif != vif) {
+			bss_conf->beacon_int = main_vif->bss_conf.beacon_int;
+			bss_conf->dtim_period = main_vif->bss_conf.dtim_period;
+		}
 
 		/*
-		 * Thereक्रमe a hard limit क्रम the broadcast traffic should
+		 * Therefore a hard limit for the broadcast traffic should
 		 * prevent false alarms.
 		 */
-		अगर (vअगर->type != NL80211_IFTYPE_STATION &&
-		    (bss_conf->beacon_पूर्णांक * bss_conf->dtim_period >=
-		     (CARL9170_QUEUE_STUCK_TIMEOUT / 2))) अणु
+		if (vif->type != NL80211_IFTYPE_STATION &&
+		    (bss_conf->beacon_int * bss_conf->dtim_period >=
+		     (CARL9170_QUEUE_STUCK_TIMEOUT / 2))) {
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		err = carl9170_set_beacon_समयrs(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = carl9170_set_beacon_timers(ar);
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_HT) अणु
+	if (changed & BSS_CHANGED_HT) {
 		/* TODO */
 		err = 0;
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (मुख्य_vअगर != vअगर)
-		जाओ out;
+	if (main_vif != vif)
+		goto out;
 
 	/*
 	 * The following settings can only be changed by the
-	 * master पूर्णांकerface.
+	 * master interface.
 	 */
 
-	अगर (changed & BSS_CHANGED_BSSID) अणु
-		स_नकल(common->curbssid, bss_conf->bssid, ETH_ALEN);
+	if (changed & BSS_CHANGED_BSSID) {
+		memcpy(common->curbssid, bss_conf->bssid, ETH_ALEN);
 		err = carl9170_set_operating_mode(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_ASSOC) अणु
+	if (changed & BSS_CHANGED_ASSOC) {
 		ar->common.curaid = bss_conf->aid;
-		err = carl9170_set_beacon_समयrs(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = carl9170_set_beacon_timers(ar);
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
-		err = carl9170_set_slot_समय(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+	if (changed & BSS_CHANGED_ERP_SLOT) {
+		err = carl9170_set_slot_time(ar);
+		if (err)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_BASIC_RATES) अणु
+	if (changed & BSS_CHANGED_BASIC_RATES) {
 		err = carl9170_set_mac_rates(ar);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 out:
 	WARN_ON_ONCE(err && IS_STARTED(ar));
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
-अटल u64 carl9170_op_get_tsf(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	काष्ठा carl9170_tsf_rsp tsf;
-	पूर्णांक err;
+static u64 carl9170_op_get_tsf(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif)
+{
+	struct ar9170 *ar = hw->priv;
+	struct carl9170_tsf_rsp tsf;
+	int err;
 
 	mutex_lock(&ar->mutex);
 	err = carl9170_exec_cmd(ar, CARL9170_CMD_READ_TSF,
-				0, शून्य, माप(tsf), &tsf);
+				0, NULL, sizeof(tsf), &tsf);
 	mutex_unlock(&ar->mutex);
-	अगर (WARN_ON(err))
-		वापस 0;
+	if (WARN_ON(err))
+		return 0;
 
-	वापस le64_to_cpu(tsf.tsf_64);
-पूर्ण
+	return le64_to_cpu(tsf.tsf_64);
+}
 
-अटल पूर्णांक carl9170_op_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
-			       काष्ठा ieee80211_vअगर *vअगर,
-			       काष्ठा ieee80211_sta *sta,
-			       काष्ठा ieee80211_key_conf *key)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	पूर्णांक err = 0, i;
+static int carl9170_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
+			       struct ieee80211_vif *vif,
+			       struct ieee80211_sta *sta,
+			       struct ieee80211_key_conf *key)
+{
+	struct ar9170 *ar = hw->priv;
+	int err = 0, i;
 	u8 ktype;
 
-	अगर (ar->disable_offload || !vअगर)
-		वापस -EOPNOTSUPP;
+	if (ar->disable_offload || !vif)
+		return -EOPNOTSUPP;
 
 	/* Fall back to software encryption whenever the driver is connected
 	 * to more than one network.
 	 *
-	 * This is very unक्रमtunate, because some machines cannot handle
+	 * This is very unfortunate, because some machines cannot handle
 	 * the high througput speed in 802.11n networks.
 	 */
 
-	अगर (!is_मुख्य_vअगर(ar, vअगर)) अणु
+	if (!is_main_vif(ar, vif)) {
 		mutex_lock(&ar->mutex);
-		जाओ err_softw;
-	पूर्ण
+		goto err_softw;
+	}
 
 	/*
-	 * While the hardware supports *catch-all* key, क्रम offloading
+	 * While the hardware supports *catch-all* key, for offloading
 	 * group-key en-/de-cryption. The way of how the hardware
-	 * decides which keyId maps to which key, reमुख्यs a mystery...
+	 * decides which keyId maps to which key, remains a mystery...
 	 */
-	अगर ((vअगर->type != NL80211_IFTYPE_STATION &&
-	     vअगर->type != NL80211_IFTYPE_ADHOC) &&
+	if ((vif->type != NL80211_IFTYPE_STATION &&
+	     vif->type != NL80211_IFTYPE_ADHOC) &&
 	    !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	चयन (key->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
+	switch (key->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
 		ktype = AR9170_ENC_ALG_WEP64;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_WEP104:
+		break;
+	case WLAN_CIPHER_SUITE_WEP104:
 		ktype = AR9170_ENC_ALG_WEP128;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		ktype = AR9170_ENC_ALG_TKIP;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		ktype = AR9170_ENC_ALG_AESCCMP;
 		key->flags |= IEEE80211_KEY_FLAG_SW_MGMT_TX;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	mutex_lock(&ar->mutex);
-	अगर (cmd == SET_KEY) अणु
-		अगर (!IS_STARTED(ar)) अणु
+	if (cmd == SET_KEY) {
+		if (!IS_STARTED(ar)) {
 			err = -EOPNOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)) अणु
-			sta = शून्य;
+		if (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE)) {
+			sta = NULL;
 
 			i = 64 + key->keyidx;
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < 64; i++)
-				अगर (!(ar->usedkeys & BIT(i)))
-					अवरोध;
-			अगर (i == 64)
-				जाओ err_softw;
-		पूर्ण
+		} else {
+			for (i = 0; i < 64; i++)
+				if (!(ar->usedkeys & BIT(i)))
+					break;
+			if (i == 64)
+				goto err_softw;
+		}
 
 		key->hw_key_idx = i;
 
-		err = carl9170_upload_key(ar, i, sta ? sta->addr : शून्य,
+		err = carl9170_upload_key(ar, i, sta ? sta->addr : NULL,
 					  ktype, 0, key->key,
 					  min_t(u8, 16, key->keylen));
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		अगर (key->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+		if (key->cipher == WLAN_CIPHER_SUITE_TKIP) {
 			err = carl9170_upload_key(ar, i, sta ? sta->addr :
-						  शून्य, ktype, 1,
+						  NULL, ktype, 1,
 						  key->key + 16, 16);
-			अगर (err)
-				जाओ out;
+			if (err)
+				goto out;
 
 			/*
 			 * hardware is not capable generating MMIC
 			 * of fragmented frames!
 			 */
 			key->flags |= IEEE80211_KEY_FLAG_GENERATE_MMIC;
-		पूर्ण
+		}
 
-		अगर (i < 64)
+		if (i < 64)
 			ar->usedkeys |= BIT(i);
 
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
-	पूर्ण अन्यथा अणु
-		अगर (!IS_STARTED(ar)) अणु
+	} else {
+		if (!IS_STARTED(ar)) {
 			/* The device is gone... together with the key ;-) */
 			err = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (key->hw_key_idx < 64) अणु
+		if (key->hw_key_idx < 64) {
 			ar->usedkeys &= ~BIT(key->hw_key_idx);
-		पूर्ण अन्यथा अणु
-			err = carl9170_upload_key(ar, key->hw_key_idx, शून्य,
+		} else {
+			err = carl9170_upload_key(ar, key->hw_key_idx, NULL,
 						  AR9170_ENC_ALG_NONE, 0,
-						  शून्य, 0);
-			अगर (err)
-				जाओ out;
+						  NULL, 0);
+			if (err)
+				goto out;
 
-			अगर (key->cipher == WLAN_CIPHER_SUITE_TKIP) अणु
+			if (key->cipher == WLAN_CIPHER_SUITE_TKIP) {
 				err = carl9170_upload_key(ar, key->hw_key_idx,
-							  शून्य,
+							  NULL,
 							  AR9170_ENC_ALG_NONE,
-							  1, शून्य, 0);
-				अगर (err)
-					जाओ out;
-			पूर्ण
+							  1, NULL, 0);
+				if (err)
+					goto out;
+			}
 
-		पूर्ण
+		}
 
 		err = carl9170_disable_key(ar, key->hw_key_idx);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 out:
 	mutex_unlock(&ar->mutex);
-	वापस err;
+	return err;
 
 err_softw:
-	अगर (!ar->rx_software_decryption) अणु
+	if (!ar->rx_software_decryption) {
 		ar->rx_software_decryption = true;
 		carl9170_set_operating_mode(ar);
-	पूर्ण
+	}
 	mutex_unlock(&ar->mutex);
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक carl9170_op_sta_add(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर,
-			       काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा carl9170_sta_info *sta_info = (व्योम *) sta->drv_priv;
-	अचिन्हित पूर्णांक i;
+static int carl9170_op_sta_add(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif,
+			       struct ieee80211_sta *sta)
+{
+	struct carl9170_sta_info *sta_info = (void *) sta->drv_priv;
+	unsigned int i;
 
 	atomic_set(&sta_info->pending_frames, 0);
 
-	अगर (sta->ht_cap.ht_supported) अणु
-		अगर (sta->ht_cap.ampdu_density > 6) अणु
+	if (sta->ht_cap.ht_supported) {
+		if (sta->ht_cap.ampdu_density > 6) {
 			/*
-			 * HW करोes support 16us AMPDU density.
-			 * No HT-Xmit क्रम station.
+			 * HW does support 16us AMPDU density.
+			 * No HT-Xmit for station.
 			 */
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		क्रम (i = 0; i < ARRAY_SIZE(sta_info->agg); i++)
-			RCU_INIT_POINTER(sta_info->agg[i], शून्य);
+		for (i = 0; i < ARRAY_SIZE(sta_info->agg); i++)
+			RCU_INIT_POINTER(sta_info->agg[i], NULL);
 
 		sta_info->ampdu_max_len = 1 << (3 + sta->ht_cap.ampdu_factor);
 		sta_info->ht_sta = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक carl9170_op_sta_हटाओ(काष्ठा ieee80211_hw *hw,
-				काष्ठा ieee80211_vअगर *vअगर,
-				काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	काष्ठा carl9170_sta_info *sta_info = (व्योम *) sta->drv_priv;
-	अचिन्हित पूर्णांक i;
+static int carl9170_op_sta_remove(struct ieee80211_hw *hw,
+				struct ieee80211_vif *vif,
+				struct ieee80211_sta *sta)
+{
+	struct ar9170 *ar = hw->priv;
+	struct carl9170_sta_info *sta_info = (void *) sta->drv_priv;
+	unsigned int i;
 	bool cleanup = false;
 
-	अगर (sta->ht_cap.ht_supported) अणु
+	if (sta->ht_cap.ht_supported) {
 
 		sta_info->ht_sta = false;
 
-		rcu_पढ़ो_lock();
-		क्रम (i = 0; i < ARRAY_SIZE(sta_info->agg); i++) अणु
-			काष्ठा carl9170_sta_tid *tid_info;
+		rcu_read_lock();
+		for (i = 0; i < ARRAY_SIZE(sta_info->agg); i++) {
+			struct carl9170_sta_tid *tid_info;
 
 			tid_info = rcu_dereference(sta_info->agg[i]);
-			RCU_INIT_POINTER(sta_info->agg[i], शून्य);
+			RCU_INIT_POINTER(sta_info->agg[i], NULL);
 
-			अगर (!tid_info)
-				जारी;
+			if (!tid_info)
+				continue;
 
 			spin_lock_bh(&ar->tx_ampdu_list_lock);
-			अगर (tid_info->state > CARL9170_TID_STATE_SHUTDOWN)
+			if (tid_info->state > CARL9170_TID_STATE_SHUTDOWN)
 				tid_info->state = CARL9170_TID_STATE_SHUTDOWN;
 			spin_unlock_bh(&ar->tx_ampdu_list_lock);
 			cleanup = true;
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		}
+		rcu_read_unlock();
 
-		अगर (cleanup)
+		if (cleanup)
 			carl9170_ampdu_gc(ar);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक carl9170_op_conf_tx(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर, u16 queue,
-			       स्थिर काष्ठा ieee80211_tx_queue_params *param)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	पूर्णांक ret;
+static int carl9170_op_conf_tx(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif, u16 queue,
+			       const struct ieee80211_tx_queue_params *param)
+{
+	struct ar9170 *ar = hw->priv;
+	int ret;
 
 	mutex_lock(&ar->mutex);
-	स_नकल(&ar->edcf[ar9170_qmap(queue)], param, माप(*param));
+	memcpy(&ar->edcf[ar9170_qmap(queue)], param, sizeof(*param));
 	ret = carl9170_set_qos(ar);
 	mutex_unlock(&ar->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम carl9170_ampdu_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170,
+static void carl9170_ampdu_work(struct work_struct *work)
+{
+	struct ar9170 *ar = container_of(work, struct ar9170,
 					 ampdu_work);
 
-	अगर (!IS_STARTED(ar))
-		वापस;
+	if (!IS_STARTED(ar))
+		return;
 
 	mutex_lock(&ar->mutex);
 	carl9170_ampdu_gc(ar);
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक carl9170_op_ampdu_action(काष्ठा ieee80211_hw *hw,
-				    काष्ठा ieee80211_vअगर *vअगर,
-				    काष्ठा ieee80211_ampdu_params *params)
-अणु
-	काष्ठा ieee80211_sta *sta = params->sta;
-	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
+static int carl9170_op_ampdu_action(struct ieee80211_hw *hw,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_ampdu_params *params)
+{
+	struct ieee80211_sta *sta = params->sta;
+	enum ieee80211_ampdu_mlme_action action = params->action;
 	u16 tid = params->tid;
 	u16 *ssn = &params->ssn;
-	काष्ठा ar9170 *ar = hw->priv;
-	काष्ठा carl9170_sta_info *sta_info = (व्योम *) sta->drv_priv;
-	काष्ठा carl9170_sta_tid *tid_info;
+	struct ar9170 *ar = hw->priv;
+	struct carl9170_sta_info *sta_info = (void *) sta->drv_priv;
+	struct carl9170_sta_tid *tid_info;
 
-	अगर (modparam_noht)
-		वापस -EOPNOTSUPP;
+	if (modparam_noht)
+		return -EOPNOTSUPP;
 
-	चयन (action) अणु
-	हाल IEEE80211_AMPDU_TX_START:
-		अगर (!sta_info->ht_sta)
-			वापस -EOPNOTSUPP;
+	switch (action) {
+	case IEEE80211_AMPDU_TX_START:
+		if (!sta_info->ht_sta)
+			return -EOPNOTSUPP;
 
-		tid_info = kzalloc(माप(काष्ठा carl9170_sta_tid),
+		tid_info = kzalloc(sizeof(struct carl9170_sta_tid),
 				   GFP_ATOMIC);
-		अगर (!tid_info)
-			वापस -ENOMEM;
+		if (!tid_info)
+			return -ENOMEM;
 
 		tid_info->hsn = tid_info->bsn = tid_info->snx = (*ssn);
 		tid_info->state = CARL9170_TID_STATE_PROGRESS;
 		tid_info->tid = tid;
 		tid_info->max = sta_info->ampdu_max_len;
 		tid_info->sta = sta;
-		tid_info->vअगर = vअगर;
+		tid_info->vif = vif;
 
 		INIT_LIST_HEAD(&tid_info->list);
-		INIT_LIST_HEAD(&tid_info->पंचांगp_list);
+		INIT_LIST_HEAD(&tid_info->tmp_list);
 		skb_queue_head_init(&tid_info->queue);
 		spin_lock_init(&tid_info->lock);
 
 		spin_lock_bh(&ar->tx_ampdu_list_lock);
 		ar->tx_ampdu_list_len++;
 		list_add_tail_rcu(&tid_info->list, &ar->tx_ampdu_list);
-		rcu_assign_poपूर्णांकer(sta_info->agg[tid], tid_info);
+		rcu_assign_pointer(sta_info->agg[tid], tid_info);
 		spin_unlock_bh(&ar->tx_ampdu_list_lock);
 
-		वापस IEEE80211_AMPDU_TX_START_IMMEDIATE;
+		return IEEE80211_AMPDU_TX_START_IMMEDIATE;
 
-	हाल IEEE80211_AMPDU_TX_STOP_CONT:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
-		rcu_पढ़ो_lock();
+	case IEEE80211_AMPDU_TX_STOP_CONT:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+		rcu_read_lock();
 		tid_info = rcu_dereference(sta_info->agg[tid]);
-		अगर (tid_info) अणु
+		if (tid_info) {
 			spin_lock_bh(&ar->tx_ampdu_list_lock);
-			अगर (tid_info->state > CARL9170_TID_STATE_SHUTDOWN)
+			if (tid_info->state > CARL9170_TID_STATE_SHUTDOWN)
 				tid_info->state = CARL9170_TID_STATE_SHUTDOWN;
 			spin_unlock_bh(&ar->tx_ampdu_list_lock);
-		पूर्ण
+		}
 
-		RCU_INIT_POINTER(sta_info->agg[tid], शून्य);
-		rcu_पढ़ो_unlock();
+		RCU_INIT_POINTER(sta_info->agg[tid], NULL);
+		rcu_read_unlock();
 
-		ieee80211_stop_tx_ba_cb_irqsafe(vअगर, sta->addr, tid);
+		ieee80211_stop_tx_ba_cb_irqsafe(vif, sta->addr, tid);
 		ieee80211_queue_work(ar->hw, &ar->ampdu_work);
-		अवरोध;
+		break;
 
-	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
-		rcu_पढ़ो_lock();
+	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		rcu_read_lock();
 		tid_info = rcu_dereference(sta_info->agg[tid]);
 
 		sta_info->stats[tid].clear = true;
 		sta_info->stats[tid].req = false;
 
-		अगर (tid_info) अणु
-			biपंचांगap_zero(tid_info->biपंचांगap, CARL9170_BAW_SIZE);
+		if (tid_info) {
+			bitmap_zero(tid_info->bitmap, CARL9170_BAW_SIZE);
 			tid_info->state = CARL9170_TID_STATE_IDLE;
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		}
+		rcu_read_unlock();
 
-		अगर (WARN_ON_ONCE(!tid_info))
-			वापस -EFAULT;
+		if (WARN_ON_ONCE(!tid_info))
+			return -EFAULT;
 
-		अवरोध;
+		break;
 
-	हाल IEEE80211_AMPDU_RX_START:
-	हाल IEEE80211_AMPDU_RX_STOP:
+	case IEEE80211_AMPDU_RX_START:
+	case IEEE80211_AMPDU_RX_STOP:
 		/* Handled by hardware */
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_CARL9170_WPC
-अटल पूर्णांक carl9170_रेजिस्टर_wps_button(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा input_dev *input;
-	पूर्णांक err;
+#ifdef CONFIG_CARL9170_WPC
+static int carl9170_register_wps_button(struct ar9170 *ar)
+{
+	struct input_dev *input;
+	int err;
 
-	अगर (!(ar->features & CARL9170_WPS_BUTTON))
-		वापस 0;
+	if (!(ar->features & CARL9170_WPS_BUTTON))
+		return 0;
 
 	input = input_allocate_device();
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
-	snम_लिखो(ar->wps.name, माप(ar->wps.name), "%s WPS Button",
+	snprintf(ar->wps.name, sizeof(ar->wps.name), "%s WPS Button",
 		 wiphy_name(ar->hw->wiphy));
 
-	snम_लिखो(ar->wps.phys, माप(ar->wps.phys),
+	snprintf(ar->wps.phys, sizeof(ar->wps.phys),
 		 "ieee80211/%s/input0", wiphy_name(ar->hw->wiphy));
 
 	input->name = ar->wps.name;
@@ -1513,233 +1512,233 @@ err_softw:
 
 	input_set_capability(input, EV_KEY, KEY_WPS_BUTTON);
 
-	err = input_रेजिस्टर_device(input);
-	अगर (err) अणु
-		input_मुक्त_device(input);
-		वापस err;
-	पूर्ण
+	err = input_register_device(input);
+	if (err) {
+		input_free_device(input);
+		return err;
+	}
 
 	ar->wps.pbc = input;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CARL9170_WPC */
+	return 0;
+}
+#endif /* CONFIG_CARL9170_WPC */
 
-#अगर_घोषित CONFIG_CARL9170_HWRNG
-अटल पूर्णांक carl9170_rng_get(काष्ठा ar9170 *ar)
-अणु
+#ifdef CONFIG_CARL9170_HWRNG
+static int carl9170_rng_get(struct ar9170 *ar)
+{
 
-#घोषणा RW	(CARL9170_MAX_CMD_PAYLOAD_LEN / माप(u32))
-#घोषणा RB	(CARL9170_MAX_CMD_PAYLOAD_LEN)
+#define RW	(CARL9170_MAX_CMD_PAYLOAD_LEN / sizeof(u32))
+#define RB	(CARL9170_MAX_CMD_PAYLOAD_LEN)
 
-	अटल स्थिर __le32 rng_load[RW] = अणु
-		[0 ... (RW - 1)] = cpu_to_le32(AR9170_RAND_REG_NUM)पूर्ण;
+	static const __le32 rng_load[RW] = {
+		[0 ... (RW - 1)] = cpu_to_le32(AR9170_RAND_REG_NUM)};
 
 	u32 buf[RW];
 
-	अचिन्हित पूर्णांक i, off = 0, transfer, count;
-	पूर्णांक err;
+	unsigned int i, off = 0, transfer, count;
+	int err;
 
 	BUILD_BUG_ON(RB > CARL9170_MAX_CMD_PAYLOAD_LEN);
 
-	अगर (!IS_ACCEPTING_CMD(ar) || !ar->rng.initialized)
-		वापस -EAGAIN;
+	if (!IS_ACCEPTING_CMD(ar) || !ar->rng.initialized)
+		return -EAGAIN;
 
 	count = ARRAY_SIZE(ar->rng.cache);
-	जबतक (count) अणु
+	while (count) {
 		err = carl9170_exec_cmd(ar, CARL9170_CMD_RREG,
 					RB, (u8 *) rng_load,
 					RB, (u8 *) buf);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		transfer = min_t(अचिन्हित पूर्णांक, count, RW);
-		क्रम (i = 0; i < transfer; i++)
+		transfer = min_t(unsigned int, count, RW);
+		for (i = 0; i < transfer; i++)
 			ar->rng.cache[off + i] = buf[i];
 
 		off += transfer;
 		count -= transfer;
-	पूर्ण
+	}
 
 	ar->rng.cache_idx = 0;
 
-#अघोषित RW
-#अघोषित RB
-	वापस 0;
-पूर्ण
+#undef RW
+#undef RB
+	return 0;
+}
 
-अटल पूर्णांक carl9170_rng_पढ़ो(काष्ठा hwrng *rng, u32 *data)
-अणु
-	काष्ठा ar9170 *ar = (काष्ठा ar9170 *)rng->priv;
-	पूर्णांक ret = -EIO;
+static int carl9170_rng_read(struct hwrng *rng, u32 *data)
+{
+	struct ar9170 *ar = (struct ar9170 *)rng->priv;
+	int ret = -EIO;
 
 	mutex_lock(&ar->mutex);
-	अगर (ar->rng.cache_idx >= ARRAY_SIZE(ar->rng.cache)) अणु
+	if (ar->rng.cache_idx >= ARRAY_SIZE(ar->rng.cache)) {
 		ret = carl9170_rng_get(ar);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&ar->mutex);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	*data = ar->rng.cache[ar->rng.cache_idx++];
 	mutex_unlock(&ar->mutex);
 
-	वापस माप(u16);
-पूर्ण
+	return sizeof(u16);
+}
 
-अटल व्योम carl9170_unरेजिस्टर_hwrng(काष्ठा ar9170 *ar)
-अणु
-	अगर (ar->rng.initialized) अणु
-		hwrng_unरेजिस्टर(&ar->rng.rng);
+static void carl9170_unregister_hwrng(struct ar9170 *ar)
+{
+	if (ar->rng.initialized) {
+		hwrng_unregister(&ar->rng.rng);
 		ar->rng.initialized = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक carl9170_रेजिस्टर_hwrng(काष्ठा ar9170 *ar)
-अणु
-	पूर्णांक err;
+static int carl9170_register_hwrng(struct ar9170 *ar)
+{
+	int err;
 
-	snम_लिखो(ar->rng.name, ARRAY_SIZE(ar->rng.name),
+	snprintf(ar->rng.name, ARRAY_SIZE(ar->rng.name),
 		 "%s_%s", KBUILD_MODNAME, wiphy_name(ar->hw->wiphy));
 	ar->rng.rng.name = ar->rng.name;
-	ar->rng.rng.data_पढ़ो = carl9170_rng_पढ़ो;
-	ar->rng.rng.priv = (अचिन्हित दीर्घ)ar;
+	ar->rng.rng.data_read = carl9170_rng_read;
+	ar->rng.rng.priv = (unsigned long)ar;
 
-	अगर (WARN_ON(ar->rng.initialized))
-		वापस -EALREADY;
+	if (WARN_ON(ar->rng.initialized))
+		return -EALREADY;
 
-	err = hwrng_रेजिस्टर(&ar->rng.rng);
-	अगर (err) अणु
+	err = hwrng_register(&ar->rng.rng);
+	if (err) {
 		dev_err(&ar->udev->dev, "Failed to register the random "
 			"number generator (%d)\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	ar->rng.initialized = true;
 
 	err = carl9170_rng_get(ar);
-	अगर (err) अणु
-		carl9170_unरेजिस्टर_hwrng(ar);
-		वापस err;
-	पूर्ण
+	if (err) {
+		carl9170_unregister_hwrng(ar);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CARL9170_HWRNG */
+	return 0;
+}
+#endif /* CONFIG_CARL9170_HWRNG */
 
-अटल पूर्णांक carl9170_op_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
-				काष्ठा survey_info *survey)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	काष्ठा ieee80211_channel *chan;
-	काष्ठा ieee80211_supported_band *band;
-	पूर्णांक err, b, i;
+static int carl9170_op_get_survey(struct ieee80211_hw *hw, int idx,
+				struct survey_info *survey)
+{
+	struct ar9170 *ar = hw->priv;
+	struct ieee80211_channel *chan;
+	struct ieee80211_supported_band *band;
+	int err, b, i;
 
 	chan = ar->channel;
-	अगर (!chan)
-		वापस -ENODEV;
+	if (!chan)
+		return -ENODEV;
 
-	अगर (idx == chan->hw_value) अणु
+	if (idx == chan->hw_value) {
 		mutex_lock(&ar->mutex);
 		err = carl9170_update_survey(ar, false, true);
 		mutex_unlock(&ar->mutex);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	क्रम (b = 0; b < NUM_NL80211_BANDS; b++) अणु
+	for (b = 0; b < NUM_NL80211_BANDS; b++) {
 		band = ar->hw->wiphy->bands[b];
 
-		अगर (!band)
-			जारी;
+		if (!band)
+			continue;
 
-		क्रम (i = 0; i < band->n_channels; i++) अणु
-			अगर (band->channels[i].hw_value == idx) अणु
+		for (i = 0; i < band->n_channels; i++) {
+			if (band->channels[i].hw_value == idx) {
 				chan = &band->channels[i];
-				जाओ found;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस -ENOENT;
+				goto found;
+			}
+		}
+	}
+	return -ENOENT;
 
 found:
-	स_नकल(survey, &ar->survey[idx], माप(*survey));
+	memcpy(survey, &ar->survey[idx], sizeof(*survey));
 
 	survey->channel = chan;
 	survey->filled = SURVEY_INFO_NOISE_DBM;
 
-	अगर (ar->channel == chan)
+	if (ar->channel == chan)
 		survey->filled |= SURVEY_INFO_IN_USE;
 
-	अगर (ar->fw.hw_counters) अणु
+	if (ar->fw.hw_counters) {
 		survey->filled |= SURVEY_INFO_TIME |
 				  SURVEY_INFO_TIME_BUSY |
 				  SURVEY_INFO_TIME_TX;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम carl9170_op_flush(काष्ठा ieee80211_hw *hw,
-			      काष्ठा ieee80211_vअगर *vअगर,
+static void carl9170_op_flush(struct ieee80211_hw *hw,
+			      struct ieee80211_vif *vif,
 			      u32 queues, bool drop)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
-	अचिन्हित पूर्णांक vid;
+{
+	struct ar9170 *ar = hw->priv;
+	unsigned int vid;
 
 	mutex_lock(&ar->mutex);
-	क्रम_each_set_bit(vid, &ar->vअगर_biपंचांगap, ar->fw.vअगर_num)
+	for_each_set_bit(vid, &ar->vif_bitmap, ar->fw.vif_num)
 		carl9170_flush_cab(ar, vid);
 
 	carl9170_flush(ar, drop);
 	mutex_unlock(&ar->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक carl9170_op_get_stats(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_low_level_stats *stats)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
+static int carl9170_op_get_stats(struct ieee80211_hw *hw,
+				 struct ieee80211_low_level_stats *stats)
+{
+	struct ar9170 *ar = hw->priv;
 
-	स_रखो(stats, 0, माप(*stats));
-	stats->करोt11ACKFailureCount = ar->tx_ack_failures;
-	stats->करोt11FCSErrorCount = ar->tx_fcs_errors;
-	वापस 0;
-पूर्ण
+	memset(stats, 0, sizeof(*stats));
+	stats->dot11ACKFailureCount = ar->tx_ack_failures;
+	stats->dot11FCSErrorCount = ar->tx_fcs_errors;
+	return 0;
+}
 
-अटल व्योम carl9170_op_sta_notअगरy(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   क्रमागत sta_notअगरy_cmd cmd,
-				   काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा carl9170_sta_info *sta_info = (व्योम *) sta->drv_priv;
+static void carl9170_op_sta_notify(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif,
+				   enum sta_notify_cmd cmd,
+				   struct ieee80211_sta *sta)
+{
+	struct carl9170_sta_info *sta_info = (void *) sta->drv_priv;
 
-	चयन (cmd) अणु
-	हाल STA_NOTIFY_SLEEP:
+	switch (cmd) {
+	case STA_NOTIFY_SLEEP:
 		sta_info->sleeping = true;
-		अगर (atomic_पढ़ो(&sta_info->pending_frames))
+		if (atomic_read(&sta_info->pending_frames))
 			ieee80211_sta_block_awake(hw, sta, true);
-		अवरोध;
+		break;
 
-	हाल STA_NOTIFY_AWAKE:
+	case STA_NOTIFY_AWAKE:
 		sta_info->sleeping = false;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल bool carl9170_tx_frames_pending(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा ar9170 *ar = hw->priv;
+static bool carl9170_tx_frames_pending(struct ieee80211_hw *hw)
+{
+	struct ar9170 *ar = hw->priv;
 
-	वापस !!atomic_पढ़ो(&ar->tx_total_queued);
-पूर्ण
+	return !!atomic_read(&ar->tx_total_queued);
+}
 
-अटल स्थिर काष्ठा ieee80211_ops carl9170_ops = अणु
+static const struct ieee80211_ops carl9170_ops = {
 	.start			= carl9170_op_start,
 	.stop			= carl9170_op_stop,
 	.tx			= carl9170_op_tx,
 	.flush			= carl9170_op_flush,
-	.add_पूर्णांकerface		= carl9170_op_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface	= carl9170_op_हटाओ_पूर्णांकerface,
+	.add_interface		= carl9170_op_add_interface,
+	.remove_interface	= carl9170_op_remove_interface,
 	.config			= carl9170_op_config,
 	.prepare_multicast	= carl9170_op_prepare_multicast,
 	.configure_filter	= carl9170_op_configure_filter,
@@ -1748,40 +1747,40 @@ found:
 	.get_tsf		= carl9170_op_get_tsf,
 	.set_key		= carl9170_op_set_key,
 	.sta_add		= carl9170_op_sta_add,
-	.sta_हटाओ		= carl9170_op_sta_हटाओ,
-	.sta_notअगरy		= carl9170_op_sta_notअगरy,
+	.sta_remove		= carl9170_op_sta_remove,
+	.sta_notify		= carl9170_op_sta_notify,
 	.get_survey		= carl9170_op_get_survey,
 	.get_stats		= carl9170_op_get_stats,
 	.ampdu_action		= carl9170_op_ampdu_action,
 	.tx_frames_pending	= carl9170_tx_frames_pending,
-पूर्ण;
+};
 
-व्योम *carl9170_alloc(माप_प्रकार priv_size)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा ar9170 *ar;
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+void *carl9170_alloc(size_t priv_size)
+{
+	struct ieee80211_hw *hw;
+	struct ar9170 *ar;
+	struct sk_buff *skb;
+	int i;
 
 	/*
-	 * this buffer is used क्रम rx stream reस्थिरruction.
+	 * this buffer is used for rx stream reconstruction.
 	 * Under heavy load this device (or the transport layer?)
-	 * tends to split the streams पूर्णांकo separate rx descriptors.
+	 * tends to split the streams into separate rx descriptors.
 	 */
 
 	skb = __dev_alloc_skb(AR9170_RX_STREAM_MAX_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		जाओ err_nomem;
+	if (!skb)
+		goto err_nomem;
 
 	hw = ieee80211_alloc_hw(priv_size, &carl9170_ops);
-	अगर (!hw)
-		जाओ err_nomem;
+	if (!hw)
+		goto err_nomem;
 
 	ar = hw->priv;
 	ar->hw = hw;
 	ar->rx_failover = skb;
 
-	स_रखो(&ar->rx_plcp, 0, माप(काष्ठा ar9170_rx_head));
+	memset(&ar->rx_plcp, 0, sizeof(struct ar9170_rx_head));
 	ar->rx_has_plcp = false;
 
 	/*
@@ -1789,7 +1788,7 @@ found:
 	 *
 	 * All 4 AC queues work perfectly well under _legacy_ operation.
 	 * However as soon as aggregation is enabled, the traffic flow
-	 * माला_लो very bumpy. Thereक्रमe we have to _चयन_ to a
+	 * gets very bumpy. Therefore we have to _switch_ to a
 	 * software AC with a single HW queue.
 	 */
 	hw->queues = __AR9170_NUM_TXQ;
@@ -1802,14 +1801,14 @@ found:
 	spin_lock_init(&ar->mem_lock);
 	spin_lock_init(&ar->state_lock);
 	atomic_set(&ar->pending_restarts, 0);
-	ar->vअगरs = 0;
-	क्रम (i = 0; i < ar->hw->queues; i++) अणु
+	ar->vifs = 0;
+	for (i = 0; i < ar->hw->queues; i++) {
 		skb_queue_head_init(&ar->tx_status[i]);
 		skb_queue_head_init(&ar->tx_pending[i]);
 
 		INIT_LIST_HEAD(&ar->bar_list[i]);
 		spin_lock_init(&ar->bar_list_lock[i]);
-	पूर्ण
+	}
 	INIT_WORK(&ar->ps_work, carl9170_ps_work);
 	INIT_WORK(&ar->ping_work, carl9170_ping_work);
 	INIT_WORK(&ar->restart_work, carl9170_restart_work);
@@ -1817,100 +1816,100 @@ found:
 	INIT_DELAYED_WORK(&ar->stat_work, carl9170_stat_work);
 	INIT_DELAYED_WORK(&ar->tx_janitor, carl9170_tx_janitor);
 	INIT_LIST_HEAD(&ar->tx_ampdu_list);
-	rcu_assign_poपूर्णांकer(ar->tx_ampdu_iter,
-			   (काष्ठा carl9170_sta_tid *) &ar->tx_ampdu_list);
+	rcu_assign_pointer(ar->tx_ampdu_iter,
+			   (struct carl9170_sta_tid *) &ar->tx_ampdu_list);
 
-	biपंचांगap_zero(&ar->vअगर_biपंचांगap, ar->fw.vअगर_num);
-	INIT_LIST_HEAD(&ar->vअगर_list);
+	bitmap_zero(&ar->vif_bitmap, ar->fw.vif_num);
+	INIT_LIST_HEAD(&ar->vif_list);
 	init_completion(&ar->tx_flush);
 
 	/* firmware decides which modes we support */
-	hw->wiphy->पूर्णांकerface_modes = 0;
+	hw->wiphy->interface_modes = 0;
 
 	ieee80211_hw_set(hw, RX_INCLUDES_FCS);
 	ieee80211_hw_set(hw, MFP_CAPABLE);
 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
 	ieee80211_hw_set(hw, SUPPORTS_PS);
-	ieee80211_hw_set(hw, PS_शून्यFUNC_STACK);
+	ieee80211_hw_set(hw, PS_NULLFUNC_STACK);
 	ieee80211_hw_set(hw, NEED_DTIM_BEFORE_ASSOC);
 	ieee80211_hw_set(hw, SUPPORTS_RC_TABLE);
 	ieee80211_hw_set(hw, SIGNAL_DBM);
 	ieee80211_hw_set(hw, SUPPORTS_HT_CCK_RATES);
 
-	अगर (!modparam_noht) अणु
+	if (!modparam_noht) {
 		/*
 		 * see the comment above, why we allow the user
 		 * to disable HT by a module parameter.
 		 */
 		ieee80211_hw_set(hw, AMPDU_AGGREGATION);
-	पूर्ण
+	}
 
-	hw->extra_tx_headroom = माप(काष्ठा _carl9170_tx_superframe);
-	hw->sta_data_size = माप(काष्ठा carl9170_sta_info);
-	hw->vअगर_data_size = माप(काष्ठा carl9170_vअगर_info);
+	hw->extra_tx_headroom = sizeof(struct _carl9170_tx_superframe);
+	hw->sta_data_size = sizeof(struct carl9170_sta_info);
+	hw->vif_data_size = sizeof(struct carl9170_vif_info);
 
 	hw->max_rates = CARL9170_TX_MAX_RATES;
 	hw->max_rate_tries = CARL9170_TX_USER_RATE_TRIES;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ar->noise); i++)
+	for (i = 0; i < ARRAY_SIZE(ar->noise); i++)
 		ar->noise[i] = -95; /* ATH_DEFAULT_NOISE_FLOOR */
 
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 
-	वापस ar;
+	return ar;
 
 err_nomem:
-	kमुक्त_skb(skb);
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	kfree_skb(skb);
+	return ERR_PTR(-ENOMEM);
+}
 
-अटल पूर्णांक carl9170_पढ़ो_eeprom(काष्ठा ar9170 *ar)
-अणु
-#घोषणा RW	8	/* number of words to पढ़ो at once */
-#घोषणा RB	(माप(u32) * RW)
-	u8 *eeprom = (व्योम *)&ar->eeprom;
+static int carl9170_read_eeprom(struct ar9170 *ar)
+{
+#define RW	8	/* number of words to read at once */
+#define RB	(sizeof(u32) * RW)
+	u8 *eeprom = (void *)&ar->eeprom;
 	__le32 offsets[RW];
-	पूर्णांक i, j, err;
+	int i, j, err;
 
-	BUILD_BUG_ON(माप(ar->eeprom) & 3);
+	BUILD_BUG_ON(sizeof(ar->eeprom) & 3);
 
 	BUILD_BUG_ON(RB > CARL9170_MAX_CMD_LEN - 4);
-#अगर_अघोषित __CHECKER__
-	/* करोn't want to handle trailing reमुख्यs */
-	BUILD_BUG_ON(माप(ar->eeprom) % RB);
-#पूर्ण_अगर
+#ifndef __CHECKER__
+	/* don't want to handle trailing remains */
+	BUILD_BUG_ON(sizeof(ar->eeprom) % RB);
+#endif
 
-	क्रम (i = 0; i < माप(ar->eeprom) / RB; i++) अणु
-		क्रम (j = 0; j < RW; j++)
+	for (i = 0; i < sizeof(ar->eeprom) / RB; i++) {
+		for (j = 0; j < RW; j++)
 			offsets[j] = cpu_to_le32(AR9170_EEPROM_START +
 						 RB * i + 4 * j);
 
 		err = carl9170_exec_cmd(ar, CARL9170_CMD_RREG,
 					RB, (u8 *) &offsets,
 					RB, eeprom + RB * i);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-#अघोषित RW
-#अघोषित RB
-	वापस 0;
-पूर्ण
+#undef RW
+#undef RB
+	return 0;
+}
 
-अटल पूर्णांक carl9170_parse_eeprom(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा ath_regulatory *regulatory = &ar->common.regulatory;
-	अचिन्हित पूर्णांक rx_streams, tx_streams, tx_params = 0;
-	पूर्णांक bands = 0;
-	पूर्णांक chans = 0;
+static int carl9170_parse_eeprom(struct ar9170 *ar)
+{
+	struct ath_regulatory *regulatory = &ar->common.regulatory;
+	unsigned int rx_streams, tx_streams, tx_params = 0;
+	int bands = 0;
+	int chans = 0;
 
-	अगर (ar->eeprom.length == cpu_to_le16(0xffff))
-		वापस -ENODATA;
+	if (ar->eeprom.length == cpu_to_le16(0xffff))
+		return -ENODATA;
 
 	rx_streams = hweight8(ar->eeprom.rx_mask);
 	tx_streams = hweight8(ar->eeprom.tx_mask);
 
-	अगर (rx_streams != tx_streams) अणु
+	if (rx_streams != tx_streams) {
 		tx_params = IEEE80211_HT_MCS_TX_RX_DIFF;
 
 		WARN_ON(!(tx_streams >= 1 && tx_streams <=
@@ -1921,178 +1920,178 @@ err_nomem:
 
 		carl9170_band_2GHz.ht_cap.mcs.tx_params |= tx_params;
 		carl9170_band_5GHz.ht_cap.mcs.tx_params |= tx_params;
-	पूर्ण
+	}
 
-	अगर (ar->eeprom.operating_flags & AR9170_OPFLAG_2GHZ) अणु
+	if (ar->eeprom.operating_flags & AR9170_OPFLAG_2GHZ) {
 		ar->hw->wiphy->bands[NL80211_BAND_2GHZ] =
 			&carl9170_band_2GHz;
 		chans += carl9170_band_2GHz.n_channels;
 		bands++;
-	पूर्ण
-	अगर (ar->eeprom.operating_flags & AR9170_OPFLAG_5GHZ) अणु
+	}
+	if (ar->eeprom.operating_flags & AR9170_OPFLAG_5GHZ) {
 		ar->hw->wiphy->bands[NL80211_BAND_5GHZ] =
 			&carl9170_band_5GHz;
 		chans += carl9170_band_5GHz.n_channels;
 		bands++;
-	पूर्ण
+	}
 
-	अगर (!bands)
-		वापस -EINVAL;
+	if (!bands)
+		return -EINVAL;
 
-	ar->survey = kसुस्मृति(chans, माप(काष्ठा survey_info), GFP_KERNEL);
-	अगर (!ar->survey)
-		वापस -ENOMEM;
+	ar->survey = kcalloc(chans, sizeof(struct survey_info), GFP_KERNEL);
+	if (!ar->survey)
+		return -ENOMEM;
 	ar->num_channels = chans;
 
-	regulatory->current_rd = le16_to_cpu(ar->eeprom.reg_करोमुख्य[0]);
+	regulatory->current_rd = le16_to_cpu(ar->eeprom.reg_domain[0]);
 
 	/* second part of wiphy init */
 	SET_IEEE80211_PERM_ADDR(ar->hw, ar->eeprom.mac_address);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम carl9170_reg_notअगरier(काष्ठा wiphy *wiphy,
-				  काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा ar9170 *ar = hw->priv;
+static void carl9170_reg_notifier(struct wiphy *wiphy,
+				  struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct ar9170 *ar = hw->priv;
 
-	ath_reg_notअगरier_apply(wiphy, request, &ar->common.regulatory);
-पूर्ण
+	ath_reg_notifier_apply(wiphy, request, &ar->common.regulatory);
+}
 
-पूर्णांक carl9170_रेजिस्टर(काष्ठा ar9170 *ar)
-अणु
-	काष्ठा ath_regulatory *regulatory = &ar->common.regulatory;
-	पूर्णांक err = 0, i;
+int carl9170_register(struct ar9170 *ar)
+{
+	struct ath_regulatory *regulatory = &ar->common.regulatory;
+	int err = 0, i;
 
-	अगर (WARN_ON(ar->mem_biपंचांगap))
-		वापस -EINVAL;
+	if (WARN_ON(ar->mem_bitmap))
+		return -EINVAL;
 
-	ar->mem_biपंचांगap = kसुस्मृति(roundup(ar->fw.mem_blocks, BITS_PER_LONG),
-				 माप(अचिन्हित दीर्घ),
+	ar->mem_bitmap = kcalloc(roundup(ar->fw.mem_blocks, BITS_PER_LONG),
+				 sizeof(unsigned long),
 				 GFP_KERNEL);
 
-	अगर (!ar->mem_biपंचांगap)
-		वापस -ENOMEM;
+	if (!ar->mem_bitmap)
+		return -ENOMEM;
 
-	/* try to पढ़ो EEPROM, init MAC addr */
-	err = carl9170_पढ़ो_eeprom(ar);
-	अगर (err)
-		वापस err;
+	/* try to read EEPROM, init MAC addr */
+	err = carl9170_read_eeprom(ar);
+	if (err)
+		return err;
 
 	err = carl9170_parse_eeprom(ar);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = ath_regd_init(regulatory, ar->hw->wiphy,
-			    carl9170_reg_notअगरier);
-	अगर (err)
-		वापस err;
+			    carl9170_reg_notifier);
+	if (err)
+		return err;
 
-	अगर (modparam_noht) अणु
+	if (modparam_noht) {
 		carl9170_band_2GHz.ht_cap.ht_supported = false;
 		carl9170_band_5GHz.ht_cap.ht_supported = false;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ar->fw.vअगर_num; i++) अणु
-		ar->vअगर_priv[i].id = i;
-		ar->vअगर_priv[i].vअगर = शून्य;
-	पूर्ण
+	for (i = 0; i < ar->fw.vif_num; i++) {
+		ar->vif_priv[i].id = i;
+		ar->vif_priv[i].vif = NULL;
+	}
 
-	err = ieee80211_रेजिस्टर_hw(ar->hw);
-	अगर (err)
-		वापस err;
+	err = ieee80211_register_hw(ar->hw);
+	if (err)
+		return err;
 
-	/* mac80211 पूर्णांकerface is now रेजिस्टरed */
-	ar->रेजिस्टरed = true;
+	/* mac80211 interface is now registered */
+	ar->registered = true;
 
-	अगर (!ath_is_world_regd(regulatory))
-		regulatory_hपूर्णांक(ar->hw->wiphy, regulatory->alpha2);
+	if (!ath_is_world_regd(regulatory))
+		regulatory_hint(ar->hw->wiphy, regulatory->alpha2);
 
-#अगर_घोषित CONFIG_CARL9170_DEBUGFS
-	carl9170_debugfs_रेजिस्टर(ar);
-#पूर्ण_अगर /* CONFIG_CARL9170_DEBUGFS */
+#ifdef CONFIG_CARL9170_DEBUGFS
+	carl9170_debugfs_register(ar);
+#endif /* CONFIG_CARL9170_DEBUGFS */
 
 	err = carl9170_led_init(ar);
-	अगर (err)
-		जाओ err_unreg;
+	if (err)
+		goto err_unreg;
 
-#अगर_घोषित CONFIG_CARL9170_LEDS
-	err = carl9170_led_रेजिस्टर(ar);
-	अगर (err)
-		जाओ err_unreg;
-#पूर्ण_अगर /* CONFIG_CARL9170_LEDS */
+#ifdef CONFIG_CARL9170_LEDS
+	err = carl9170_led_register(ar);
+	if (err)
+		goto err_unreg;
+#endif /* CONFIG_CARL9170_LEDS */
 
-#अगर_घोषित CONFIG_CARL9170_WPC
-	err = carl9170_रेजिस्टर_wps_button(ar);
-	अगर (err)
-		जाओ err_unreg;
-#पूर्ण_अगर /* CONFIG_CARL9170_WPC */
+#ifdef CONFIG_CARL9170_WPC
+	err = carl9170_register_wps_button(ar);
+	if (err)
+		goto err_unreg;
+#endif /* CONFIG_CARL9170_WPC */
 
-#अगर_घोषित CONFIG_CARL9170_HWRNG
-	err = carl9170_रेजिस्टर_hwrng(ar);
-	अगर (err)
-		जाओ err_unreg;
-#पूर्ण_अगर /* CONFIG_CARL9170_HWRNG */
+#ifdef CONFIG_CARL9170_HWRNG
+	err = carl9170_register_hwrng(ar);
+	if (err)
+		goto err_unreg;
+#endif /* CONFIG_CARL9170_HWRNG */
 
 	dev_info(&ar->udev->dev, "Atheros AR9170 is registered as '%s'\n",
 		 wiphy_name(ar->hw->wiphy));
 
-	वापस 0;
+	return 0;
 
 err_unreg:
-	carl9170_unरेजिस्टर(ar);
-	वापस err;
-पूर्ण
+	carl9170_unregister(ar);
+	return err;
+}
 
-व्योम carl9170_unरेजिस्टर(काष्ठा ar9170 *ar)
-अणु
-	अगर (!ar->रेजिस्टरed)
-		वापस;
+void carl9170_unregister(struct ar9170 *ar)
+{
+	if (!ar->registered)
+		return;
 
-	ar->रेजिस्टरed = false;
+	ar->registered = false;
 
-#अगर_घोषित CONFIG_CARL9170_LEDS
-	carl9170_led_unरेजिस्टर(ar);
-#पूर्ण_अगर /* CONFIG_CARL9170_LEDS */
+#ifdef CONFIG_CARL9170_LEDS
+	carl9170_led_unregister(ar);
+#endif /* CONFIG_CARL9170_LEDS */
 
-#अगर_घोषित CONFIG_CARL9170_DEBUGFS
-	carl9170_debugfs_unरेजिस्टर(ar);
-#पूर्ण_अगर /* CONFIG_CARL9170_DEBUGFS */
+#ifdef CONFIG_CARL9170_DEBUGFS
+	carl9170_debugfs_unregister(ar);
+#endif /* CONFIG_CARL9170_DEBUGFS */
 
-#अगर_घोषित CONFIG_CARL9170_WPC
-	अगर (ar->wps.pbc) अणु
-		input_unरेजिस्टर_device(ar->wps.pbc);
-		ar->wps.pbc = शून्य;
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_CARL9170_WPC */
+#ifdef CONFIG_CARL9170_WPC
+	if (ar->wps.pbc) {
+		input_unregister_device(ar->wps.pbc);
+		ar->wps.pbc = NULL;
+	}
+#endif /* CONFIG_CARL9170_WPC */
 
-#अगर_घोषित CONFIG_CARL9170_HWRNG
-	carl9170_unरेजिस्टर_hwrng(ar);
-#पूर्ण_अगर /* CONFIG_CARL9170_HWRNG */
+#ifdef CONFIG_CARL9170_HWRNG
+	carl9170_unregister_hwrng(ar);
+#endif /* CONFIG_CARL9170_HWRNG */
 
 	carl9170_cancel_worker(ar);
 	cancel_work_sync(&ar->restart_work);
 
-	ieee80211_unरेजिस्टर_hw(ar->hw);
-पूर्ण
+	ieee80211_unregister_hw(ar->hw);
+}
 
-व्योम carl9170_मुक्त(काष्ठा ar9170 *ar)
-अणु
-	WARN_ON(ar->रेजिस्टरed);
+void carl9170_free(struct ar9170 *ar)
+{
+	WARN_ON(ar->registered);
 	WARN_ON(IS_INITIALIZED(ar));
 
-	kमुक्त_skb(ar->rx_failover);
-	ar->rx_failover = शून्य;
+	kfree_skb(ar->rx_failover);
+	ar->rx_failover = NULL;
 
-	kमुक्त(ar->mem_biपंचांगap);
-	ar->mem_biपंचांगap = शून्य;
+	kfree(ar->mem_bitmap);
+	ar->mem_bitmap = NULL;
 
-	kमुक्त(ar->survey);
-	ar->survey = शून्य;
+	kfree(ar->survey);
+	ar->survey = NULL;
 
 	mutex_destroy(&ar->mutex);
 
-	ieee80211_मुक्त_hw(ar->hw);
-पूर्ण
+	ieee80211_free_hw(ar->hw);
+}

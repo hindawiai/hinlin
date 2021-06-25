@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2015 Regents of the University of Calअगरornia
+ * Copyright (C) 2015 Regents of the University of California
  */
 
-#अगर_अघोषित _ASM_RISCV_LINKAGE_H
-#घोषणा _ASM_RISCV_LINKAGE_H
+#ifndef _ASM_RISCV_LINKAGE_H
+#define _ASM_RISCV_LINKAGE_H
 
-#घोषणा __ALIGN		.balign 4
-#घोषणा __ALIGN_STR	".balign 4"
+#define __ALIGN		.balign 4
+#define __ALIGN_STR	".balign 4"
 
-#पूर्ण_अगर /* _ASM_RISCV_LINKAGE_H */
+#endif /* _ASM_RISCV_LINKAGE_H */

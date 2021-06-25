@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <linux/of_platform.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "common.h"
-#समावेश "hardware.h"
+#include "common.h"
+#include "hardware.h"
 
-#घोषणा MX1_AVIC_ADDR	0x00223000
+#define MX1_AVIC_ADDR	0x00223000
 
-अटल व्योम __init imx1_init_early(व्योम)
-अणु
+static void __init imx1_init_early(void)
+{
 	mxc_set_cpu_type(MXC_CPU_MX1);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर imx1_dt_board_compat[] __initस्थिर = अणु
+static const char * const imx1_dt_board_compat[] __initconst = {
 	"fsl,imx1",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(IMX1_DT, "Freescale i.MX1 (Device Tree Support)")
 	.init_early	= imx1_init_early,

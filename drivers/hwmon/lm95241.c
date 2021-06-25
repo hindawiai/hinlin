@@ -1,416 +1,415 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2008, 2010 Davide Rizzo <elpa.rizzo@gmail.com>
  *
  * The LM95241 is a sensor chip made by National Semiconductors.
- * It reports up to three temperatures (its own plus up to two बाह्यal ones).
+ * It reports up to three temperatures (its own plus up to two external ones).
  * Complete datasheet can be obtained from National's website at:
  *   http://www.national.com/ds.cgi/LM/LM95241.pdf
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/hwmon.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
-#घोषणा DEVNAME "lm95241"
+#define DEVNAME "lm95241"
 
-अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु
-	0x19, 0x2a, 0x2b, I2C_CLIENT_END पूर्ण;
+static const unsigned short normal_i2c[] = {
+	0x19, 0x2a, 0x2b, I2C_CLIENT_END };
 
-/* LM95241 रेजिस्टरs */
-#घोषणा LM95241_REG_R_MAN_ID		0xFE
-#घोषणा LM95241_REG_R_CHIP_ID		0xFF
-#घोषणा LM95241_REG_R_STATUS		0x02
-#घोषणा LM95241_REG_RW_CONFIG		0x03
-#घोषणा LM95241_REG_RW_REM_FILTER	0x06
-#घोषणा LM95241_REG_RW_TRUTHERM		0x07
-#घोषणा LM95241_REG_W_ONE_SHOT		0x0F
-#घोषणा LM95241_REG_R_LOCAL_TEMPH	0x10
-#घोषणा LM95241_REG_R_REMOTE1_TEMPH	0x11
-#घोषणा LM95241_REG_R_REMOTE2_TEMPH	0x12
-#घोषणा LM95241_REG_R_LOCAL_TEMPL	0x20
-#घोषणा LM95241_REG_R_REMOTE1_TEMPL	0x21
-#घोषणा LM95241_REG_R_REMOTE2_TEMPL	0x22
-#घोषणा LM95241_REG_RW_REMOTE_MODEL	0x30
+/* LM95241 registers */
+#define LM95241_REG_R_MAN_ID		0xFE
+#define LM95241_REG_R_CHIP_ID		0xFF
+#define LM95241_REG_R_STATUS		0x02
+#define LM95241_REG_RW_CONFIG		0x03
+#define LM95241_REG_RW_REM_FILTER	0x06
+#define LM95241_REG_RW_TRUTHERM		0x07
+#define LM95241_REG_W_ONE_SHOT		0x0F
+#define LM95241_REG_R_LOCAL_TEMPH	0x10
+#define LM95241_REG_R_REMOTE1_TEMPH	0x11
+#define LM95241_REG_R_REMOTE2_TEMPH	0x12
+#define LM95241_REG_R_LOCAL_TEMPL	0x20
+#define LM95241_REG_R_REMOTE1_TEMPL	0x21
+#define LM95241_REG_R_REMOTE2_TEMPL	0x22
+#define LM95241_REG_RW_REMOTE_MODEL	0x30
 
-/* LM95241 specअगरic bitfields */
-#घोषणा CFG_STOP	BIT(6)
-#घोषणा CFG_CR0076	0x00
-#घोषणा CFG_CR0182	BIT(4)
-#घोषणा CFG_CR1000	BIT(5)
-#घोषणा CFG_CR2700	(BIT(4) | BIT(5))
-#घोषणा CFG_CRMASK	(BIT(4) | BIT(5))
-#घोषणा R1MS_MASK	BIT(0)
-#घोषणा R2MS_MASK	BIT(2)
-#घोषणा R1DF_MASK	BIT(1)
-#घोषणा R2DF_MASK	BIT(2)
-#घोषणा R1FE_MASK	BIT(0)
-#घोषणा R2FE_MASK	BIT(2)
-#घोषणा R1DM		BIT(0)
-#घोषणा R2DM		BIT(1)
-#घोषणा TT1_SHIFT	0
-#घोषणा TT2_SHIFT	4
-#घोषणा TT_OFF		0
-#घोषणा TT_ON		1
-#घोषणा TT_MASK		7
-#घोषणा NATSEMI_MAN_ID	0x01
-#घोषणा LM95231_CHIP_ID	0xA1
-#घोषणा LM95241_CHIP_ID	0xA4
+/* LM95241 specific bitfields */
+#define CFG_STOP	BIT(6)
+#define CFG_CR0076	0x00
+#define CFG_CR0182	BIT(4)
+#define CFG_CR1000	BIT(5)
+#define CFG_CR2700	(BIT(4) | BIT(5))
+#define CFG_CRMASK	(BIT(4) | BIT(5))
+#define R1MS_MASK	BIT(0)
+#define R2MS_MASK	BIT(2)
+#define R1DF_MASK	BIT(1)
+#define R2DF_MASK	BIT(2)
+#define R1FE_MASK	BIT(0)
+#define R2FE_MASK	BIT(2)
+#define R1DM		BIT(0)
+#define R2DM		BIT(1)
+#define TT1_SHIFT	0
+#define TT2_SHIFT	4
+#define TT_OFF		0
+#define TT_ON		1
+#define TT_MASK		7
+#define NATSEMI_MAN_ID	0x01
+#define LM95231_CHIP_ID	0xA1
+#define LM95241_CHIP_ID	0xA4
 
-अटल स्थिर u8 lm95241_reg_address[] = अणु
+static const u8 lm95241_reg_address[] = {
 	LM95241_REG_R_LOCAL_TEMPH,
 	LM95241_REG_R_LOCAL_TEMPL,
 	LM95241_REG_R_REMOTE1_TEMPH,
 	LM95241_REG_R_REMOTE1_TEMPL,
 	LM95241_REG_R_REMOTE2_TEMPH,
 	LM95241_REG_R_REMOTE2_TEMPL
-पूर्ण;
+};
 
-/* Client data (each client माला_लो its own) */
-काष्ठा lm95241_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex update_lock;
-	अचिन्हित दीर्घ last_updated;	/* in jअगरfies */
-	अचिन्हित दीर्घ पूर्णांकerval;		/* in milli-seconds */
-	अक्षर valid;		/* zero until following fields are valid */
-	/* रेजिस्टरs values */
+/* Client data (each client gets its own) */
+struct lm95241_data {
+	struct i2c_client *client;
+	struct mutex update_lock;
+	unsigned long last_updated;	/* in jiffies */
+	unsigned long interval;		/* in milli-seconds */
+	char valid;		/* zero until following fields are valid */
+	/* registers values */
 	u8 temp[ARRAY_SIZE(lm95241_reg_address)];
 	u8 status, config, model, trutherm;
-पूर्ण;
+};
 
 /* Conversions */
-अटल पूर्णांक temp_from_reg_चिन्हित(u8 val_h, u8 val_l)
-अणु
+static int temp_from_reg_signed(u8 val_h, u8 val_l)
+{
 	s16 val_hl = (val_h << 8) | val_l;
-	वापस val_hl * 1000 / 256;
-पूर्ण
+	return val_hl * 1000 / 256;
+}
 
-अटल पूर्णांक temp_from_reg_अचिन्हित(u8 val_h, u8 val_l)
-अणु
+static int temp_from_reg_unsigned(u8 val_h, u8 val_l)
+{
 	u16 val_hl = (val_h << 8) | val_l;
-	वापस val_hl * 1000 / 256;
-पूर्ण
+	return val_hl * 1000 / 256;
+}
 
-अटल काष्ठा lm95241_data *lm95241_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा lm95241_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
+static struct lm95241_data *lm95241_update_device(struct device *dev)
+{
+	struct lm95241_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
 
 	mutex_lock(&data->update_lock);
 
-	अगर (समय_after(jअगरfies, data->last_updated
-		       + msecs_to_jअगरfies(data->पूर्णांकerval)) ||
-	    !data->valid) अणु
-		पूर्णांक i;
+	if (time_after(jiffies, data->last_updated
+		       + msecs_to_jiffies(data->interval)) ||
+	    !data->valid) {
+		int i;
 
 		dev_dbg(dev, "Updating lm95241 data.\n");
-		क्रम (i = 0; i < ARRAY_SIZE(lm95241_reg_address); i++)
+		for (i = 0; i < ARRAY_SIZE(lm95241_reg_address); i++)
 			data->temp[i]
-			  = i2c_smbus_पढ़ो_byte_data(client,
+			  = i2c_smbus_read_byte_data(client,
 						     lm95241_reg_address[i]);
 
-		data->status = i2c_smbus_पढ़ो_byte_data(client,
+		data->status = i2c_smbus_read_byte_data(client,
 							LM95241_REG_R_STATUS);
-		data->last_updated = jअगरfies;
+		data->last_updated = jiffies;
 		data->valid = 1;
-	पूर्ण
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल पूर्णांक lm95241_पढ़ो_chip(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			     दीर्घ *val)
-अणु
-	काष्ठा lm95241_data *data = dev_get_drvdata(dev);
+static int lm95241_read_chip(struct device *dev, u32 attr, int channel,
+			     long *val)
+{
+	struct lm95241_data *data = dev_get_drvdata(dev);
 
-	चयन (attr) अणु
-	हाल hwmon_chip_update_पूर्णांकerval:
-		*val = data->पूर्णांकerval;
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (attr) {
+	case hwmon_chip_update_interval:
+		*val = data->interval;
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक lm95241_पढ़ो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			     दीर्घ *val)
-अणु
-	काष्ठा lm95241_data *data = lm95241_update_device(dev);
+static int lm95241_read_temp(struct device *dev, u32 attr, int channel,
+			     long *val)
+{
+	struct lm95241_data *data = lm95241_update_device(dev);
 
-	चयन (attr) अणु
-	हाल hwmon_temp_input:
-		अगर (!channel || (data->config & BIT(channel - 1)))
-			*val = temp_from_reg_चिन्हित(data->temp[channel * 2],
+	switch (attr) {
+	case hwmon_temp_input:
+		if (!channel || (data->config & BIT(channel - 1)))
+			*val = temp_from_reg_signed(data->temp[channel * 2],
 						data->temp[channel * 2 + 1]);
-		अन्यथा
-			*val = temp_from_reg_अचिन्हित(data->temp[channel * 2],
+		else
+			*val = temp_from_reg_unsigned(data->temp[channel * 2],
 						data->temp[channel * 2 + 1]);
-		वापस 0;
-	हाल hwmon_temp_min:
-		अगर (channel == 1)
+		return 0;
+	case hwmon_temp_min:
+		if (channel == 1)
 			*val = (data->config & R1DF_MASK) ? -128000 : 0;
-		अन्यथा
+		else
 			*val = (data->config & R2DF_MASK) ? -128000 : 0;
-		वापस 0;
-	हाल hwmon_temp_max:
-		अगर (channel == 1)
+		return 0;
+	case hwmon_temp_max:
+		if (channel == 1)
 			*val = (data->config & R1DF_MASK) ? 127875 : 255875;
-		अन्यथा
+		else
 			*val = (data->config & R2DF_MASK) ? 127875 : 255875;
-		वापस 0;
-	हाल hwmon_temp_type:
-		अगर (channel == 1)
+		return 0;
+	case hwmon_temp_type:
+		if (channel == 1)
 			*val = (data->model & R1MS_MASK) ? 1 : 2;
-		अन्यथा
+		else
 			*val = (data->model & R2MS_MASK) ? 1 : 2;
-		वापस 0;
-	हाल hwmon_temp_fault:
-		अगर (channel == 1)
+		return 0;
+	case hwmon_temp_fault:
+		if (channel == 1)
 			*val = !!(data->status & R1DM);
-		अन्यथा
+		else
 			*val = !!(data->status & R2DM);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक lm95241_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_chip:
-		वापस lm95241_पढ़ो_chip(dev, attr, channel, val);
-	हाल hwmon_temp:
-		वापस lm95241_पढ़ो_temp(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int lm95241_read(struct device *dev, enum hwmon_sensor_types type,
+			u32 attr, int channel, long *val)
+{
+	switch (type) {
+	case hwmon_chip:
+		return lm95241_read_chip(dev, attr, channel, val);
+	case hwmon_temp:
+		return lm95241_read_temp(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक lm95241_ग_लिखो_chip(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			      दीर्घ val)
-अणु
-	काष्ठा lm95241_data *data = dev_get_drvdata(dev);
-	पूर्णांक convrate;
+static int lm95241_write_chip(struct device *dev, u32 attr, int channel,
+			      long val)
+{
+	struct lm95241_data *data = dev_get_drvdata(dev);
+	int convrate;
 	u8 config;
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&data->update_lock);
 
-	चयन (attr) अणु
-	हाल hwmon_chip_update_पूर्णांकerval:
+	switch (attr) {
+	case hwmon_chip_update_interval:
 		config = data->config & ~CFG_CRMASK;
-		अगर (val < 130) अणु
+		if (val < 130) {
 			convrate = 76;
 			config |= CFG_CR0076;
-		पूर्ण अन्यथा अगर (val < 590) अणु
+		} else if (val < 590) {
 			convrate = 182;
 			config |= CFG_CR0182;
-		पूर्ण अन्यथा अगर (val < 1850) अणु
+		} else if (val < 1850) {
 			convrate = 1000;
 			config |= CFG_CR1000;
-		पूर्ण अन्यथा अणु
+		} else {
 			convrate = 2700;
 			config |= CFG_CR2700;
-		पूर्ण
-		data->पूर्णांकerval = convrate;
+		}
+		data->interval = convrate;
 		data->config = config;
-		ret = i2c_smbus_ग_लिखो_byte_data(data->client,
+		ret = i2c_smbus_write_byte_data(data->client,
 						LM95241_REG_RW_CONFIG, config);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	mutex_unlock(&data->update_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lm95241_ग_लिखो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			      दीर्घ val)
-अणु
-	काष्ठा lm95241_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
+static int lm95241_write_temp(struct device *dev, u32 attr, int channel,
+			      long val)
+{
+	struct lm95241_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int ret;
 
 	mutex_lock(&data->update_lock);
 
-	चयन (attr) अणु
-	हाल hwmon_temp_min:
-		अगर (channel == 1) अणु
-			अगर (val < 0)
+	switch (attr) {
+	case hwmon_temp_min:
+		if (channel == 1) {
+			if (val < 0)
 				data->config |= R1DF_MASK;
-			अन्यथा
+			else
 				data->config &= ~R1DF_MASK;
-		पूर्ण अन्यथा अणु
-			अगर (val < 0)
+		} else {
+			if (val < 0)
 				data->config |= R2DF_MASK;
-			अन्यथा
+			else
 				data->config &= ~R2DF_MASK;
-		पूर्ण
+		}
 		data->valid = 0;
-		ret = i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_CONFIG,
+		ret = i2c_smbus_write_byte_data(client, LM95241_REG_RW_CONFIG,
 						data->config);
-		अवरोध;
-	हाल hwmon_temp_max:
-		अगर (channel == 1) अणु
-			अगर (val <= 127875)
+		break;
+	case hwmon_temp_max:
+		if (channel == 1) {
+			if (val <= 127875)
 				data->config |= R1DF_MASK;
-			अन्यथा
+			else
 				data->config &= ~R1DF_MASK;
-		पूर्ण अन्यथा अणु
-			अगर (val <= 127875)
+		} else {
+			if (val <= 127875)
 				data->config |= R2DF_MASK;
-			अन्यथा
+			else
 				data->config &= ~R2DF_MASK;
-		पूर्ण
+		}
 		data->valid = 0;
-		ret = i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_CONFIG,
+		ret = i2c_smbus_write_byte_data(client, LM95241_REG_RW_CONFIG,
 						data->config);
-		अवरोध;
-	हाल hwmon_temp_type:
-		अगर (val != 1 && val != 2) अणु
+		break;
+	case hwmon_temp_type:
+		if (val != 1 && val != 2) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (channel == 1) अणु
+			break;
+		}
+		if (channel == 1) {
 			data->trutherm &= ~(TT_MASK << TT1_SHIFT);
-			अगर (val == 1) अणु
+			if (val == 1) {
 				data->model |= R1MS_MASK;
 				data->trutherm |= (TT_ON << TT1_SHIFT);
-			पूर्ण अन्यथा अणु
+			} else {
 				data->model &= ~R1MS_MASK;
 				data->trutherm |= (TT_OFF << TT1_SHIFT);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			data->trutherm &= ~(TT_MASK << TT2_SHIFT);
-			अगर (val == 1) अणु
+			if (val == 1) {
 				data->model |= R2MS_MASK;
 				data->trutherm |= (TT_ON << TT2_SHIFT);
-			पूर्ण अन्यथा अणु
+			} else {
 				data->model &= ~R2MS_MASK;
 				data->trutherm |= (TT_OFF << TT2_SHIFT);
-			पूर्ण
-		पूर्ण
-		ret = i2c_smbus_ग_लिखो_byte_data(client,
+			}
+		}
+		ret = i2c_smbus_write_byte_data(client,
 						LM95241_REG_RW_REMOTE_MODEL,
 						data->model);
-		अगर (ret < 0)
-			अवरोध;
-		ret = i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_TRUTHERM,
+		if (ret < 0)
+			break;
+		ret = i2c_smbus_write_byte_data(client, LM95241_REG_RW_TRUTHERM,
 						data->trutherm);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lm95241_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_chip:
-		वापस lm95241_ग_लिखो_chip(dev, attr, channel, val);
-	हाल hwmon_temp:
-		वापस lm95241_ग_लिखो_temp(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int lm95241_write(struct device *dev, enum hwmon_sensor_types type,
+			 u32 attr, int channel, long val)
+{
+	switch (type) {
+	case hwmon_chip:
+		return lm95241_write_chip(dev, attr, channel, val);
+	case hwmon_temp:
+		return lm95241_write_temp(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल umode_t lm95241_is_visible(स्थिर व्योम *data,
-				  क्रमागत hwmon_sensor_types type,
-				  u32 attr, पूर्णांक channel)
-अणु
-	चयन (type) अणु
-	हाल hwmon_chip:
-		चयन (attr) अणु
-		हाल hwmon_chip_update_पूर्णांकerval:
-			वापस 0644;
-		पूर्ण
-		अवरोध;
-	हाल hwmon_temp:
-		चयन (attr) अणु
-		हाल hwmon_temp_input:
-			वापस 0444;
-		हाल hwmon_temp_fault:
-			वापस 0444;
-		हाल hwmon_temp_min:
-		हाल hwmon_temp_max:
-		हाल hwmon_temp_type:
-			वापस 0644;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static umode_t lm95241_is_visible(const void *data,
+				  enum hwmon_sensor_types type,
+				  u32 attr, int channel)
+{
+	switch (type) {
+	case hwmon_chip:
+		switch (attr) {
+		case hwmon_chip_update_interval:
+			return 0644;
+		}
+		break;
+	case hwmon_temp:
+		switch (attr) {
+		case hwmon_temp_input:
+			return 0444;
+		case hwmon_temp_fault:
+			return 0444;
+		case hwmon_temp_min:
+		case hwmon_temp_max:
+		case hwmon_temp_type:
+			return 0644;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-/* Return 0 अगर detection is successful, -ENODEV otherwise */
-अटल पूर्णांक lm95241_detect(काष्ठा i2c_client *new_client,
-			  काष्ठा i2c_board_info *info)
-अणु
-	काष्ठा i2c_adapter *adapter = new_client->adapter;
-	स्थिर अक्षर *name;
-	पूर्णांक mfg_id, chip_id;
+/* Return 0 if detection is successful, -ENODEV otherwise */
+static int lm95241_detect(struct i2c_client *new_client,
+			  struct i2c_board_info *info)
+{
+	struct i2c_adapter *adapter = new_client->adapter;
+	const char *name;
+	int mfg_id, chip_id;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		return -ENODEV;
 
-	mfg_id = i2c_smbus_पढ़ो_byte_data(new_client, LM95241_REG_R_MAN_ID);
-	अगर (mfg_id != NATSEMI_MAN_ID)
-		वापस -ENODEV;
+	mfg_id = i2c_smbus_read_byte_data(new_client, LM95241_REG_R_MAN_ID);
+	if (mfg_id != NATSEMI_MAN_ID)
+		return -ENODEV;
 
-	chip_id = i2c_smbus_पढ़ो_byte_data(new_client, LM95241_REG_R_CHIP_ID);
-	चयन (chip_id) अणु
-	हाल LM95231_CHIP_ID:
+	chip_id = i2c_smbus_read_byte_data(new_client, LM95241_REG_R_CHIP_ID);
+	switch (chip_id) {
+	case LM95231_CHIP_ID:
 		name = "lm95231";
-		अवरोध;
-	हाल LM95241_CHIP_ID:
+		break;
+	case LM95241_CHIP_ID:
 		name = "lm95241";
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
 
 	/* Fill the i2c board info */
 	strlcpy(info->type, name, I2C_NAME_SIZE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lm95241_init_client(काष्ठा i2c_client *client,
-				काष्ठा lm95241_data *data)
-अणु
-	data->पूर्णांकerval = 1000;
+static void lm95241_init_client(struct i2c_client *client,
+				struct lm95241_data *data)
+{
+	data->interval = 1000;
 	data->config = CFG_CR1000;
 	data->trutherm = (TT_OFF << TT1_SHIFT) | (TT_OFF << TT2_SHIFT);
 
-	i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_CONFIG, data->config);
-	i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_REM_FILTER,
+	i2c_smbus_write_byte_data(client, LM95241_REG_RW_CONFIG, data->config);
+	i2c_smbus_write_byte_data(client, LM95241_REG_RW_REM_FILTER,
 				  R1FE_MASK | R2FE_MASK);
-	i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_TRUTHERM,
+	i2c_smbus_write_byte_data(client, LM95241_REG_RW_TRUTHERM,
 				  data->trutherm);
-	i2c_smbus_ग_लिखो_byte_data(client, LM95241_REG_RW_REMOTE_MODEL,
+	i2c_smbus_write_byte_data(client, LM95241_REG_RW_REMOTE_MODEL,
 				  data->model);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hwmon_channel_info *lm95241_info[] = अणु
+static const struct hwmon_channel_info *lm95241_info[] = {
 	HWMON_CHANNEL_INFO(chip,
 			   HWMON_C_UPDATE_INTERVAL),
 	HWMON_CHANNEL_INFO(temp,
@@ -419,29 +418,29 @@
 			   HWMON_T_TYPE | HWMON_T_FAULT,
 			   HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_MIN |
 			   HWMON_T_TYPE | HWMON_T_FAULT),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops lm95241_hwmon_ops = अणु
+static const struct hwmon_ops lm95241_hwmon_ops = {
 	.is_visible = lm95241_is_visible,
-	.पढ़ो = lm95241_पढ़ो,
-	.ग_लिखो = lm95241_ग_लिखो,
-पूर्ण;
+	.read = lm95241_read,
+	.write = lm95241_write,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info lm95241_chip_info = अणु
+static const struct hwmon_chip_info lm95241_chip_info = {
 	.ops = &lm95241_hwmon_ops,
 	.info = lm95241_info,
-पूर्ण;
+};
 
-अटल पूर्णांक lm95241_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा lm95241_data *data;
-	काष्ठा device *hwmon_dev;
+static int lm95241_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct lm95241_data *data;
+	struct device *hwmon_dev;
 
-	data = devm_kzalloc(dev, माप(काष्ठा lm95241_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct lm95241_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->update_lock);
@@ -449,31 +448,31 @@
 	/* Initialize the LM95241 chip */
 	lm95241_init_client(client, data);
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_info(dev, client->name,
 							   data,
 							   &lm95241_chip_info,
-							   शून्य);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+							   NULL);
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
 /* Driver data (common to all clients) */
-अटल स्थिर काष्ठा i2c_device_id lm95241_id[] = अणु
-	अणु "lm95231", 0 पूर्ण,
-	अणु "lm95241", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id lm95241_id[] = {
+	{ "lm95231", 0 },
+	{ "lm95241", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, lm95241_id);
 
-अटल काष्ठा i2c_driver lm95241_driver = अणु
+static struct i2c_driver lm95241_driver = {
 	.class		= I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name	= DEVNAME,
-	पूर्ण,
+	},
 	.probe_new	= lm95241_probe,
 	.id_table	= lm95241_id,
 	.detect		= lm95241_detect,
 	.address_list	= normal_i2c,
-पूर्ण;
+};
 
 module_i2c_driver(lm95241_driver);
 

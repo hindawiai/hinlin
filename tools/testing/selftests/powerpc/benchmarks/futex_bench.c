@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright 2016, Anton Blanअक्षरd, Michael Ellerman, IBM Corp.
+ * Copyright 2016, Anton Blanchard, Michael Ellerman, IBM Corp.
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकपन.स>
-#समावेश <sys/syscall.h>
-#समावेश <समय.स>
-#समावेश <unistd.h>
-#समावेश <linux/futex.h>
+#include <stdio.h>
+#include <sys/syscall.h>
+#include <time.h>
+#include <unistd.h>
+#include <linux/futex.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-#घोषणा ITERATIONS 100000000
+#define ITERATIONS 100000000
 
-#घोषणा futex(A, B, C, D, E, F)	 syscall(__NR_futex, A, B, C, D, E, F)
+#define futex(A, B, C, D, E, F)	 syscall(__NR_futex, A, B, C, D, E, F)
 
-पूर्णांक test_futex(व्योम)
-अणु
-	काष्ठा बारpec ts_start, ts_end;
-	अचिन्हित दीर्घ i = ITERATIONS;
+int test_futex(void)
+{
+	struct timespec ts_start, ts_end;
+	unsigned long i = ITERATIONS;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts_start);
+	clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-	जबतक (i--) अणु
-		अचिन्हित पूर्णांक addr = 0;
-		futex(&addr, FUTEX_WAKE, 1, शून्य, शून्य, 0);
-	पूर्ण
+	while (i--) {
+		unsigned int addr = 0;
+		futex(&addr, FUTEX_WAKE, 1, NULL, NULL, 0);
+	}
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts_end);
+	clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
-	म_लिखो("time = %.6f\n", ts_end.tv_sec - ts_start.tv_sec + (ts_end.tv_nsec - ts_start.tv_nsec) / 1e9);
+	printf("time = %.6f\n", ts_end.tv_sec - ts_start.tv_sec + (ts_end.tv_nsec - ts_start.tv_nsec) / 1e9);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	test_harness_set_समयout(300);
-	वापस test_harness(test_futex, "futex_bench");
-पूर्ण
+int main(void)
+{
+	test_harness_set_timeout(300);
+	return test_harness(test_futex, "futex_bench");
+}

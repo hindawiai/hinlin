@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Test हालs क्रम bitfield helpers.
+ * Test cases for bitfield helpers.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <kunit/test.h>
-#समावेश <linux/bitfield.h>
+#include <kunit/test.h>
+#include <linux/bitfield.h>
 
-#घोषणा CHECK_ENC_GET_U(tp, v, field, res) करो अणु				\
-		अणु							\
+#define CHECK_ENC_GET_U(tp, v, field, res) do {				\
+		{							\
 			u##tp _res;					\
 									\
 			_res = u##tp##_encode_bits(v, field);		\
@@ -19,11 +18,11 @@
 				       (u64)_res);			\
 			KUNIT_ASSERT_FALSE(context,			\
 				   u##tp##_get_bits(_res, field) != v);	\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-#घोषणा CHECK_ENC_GET_LE(tp, v, field, res) करो अणु			\
-		अणु							\
+#define CHECK_ENC_GET_LE(tp, v, field, res) do {			\
+		{							\
 			__le##tp _res;					\
 									\
 			_res = le##tp##_encode_bits(v, field);		\
@@ -34,11 +33,11 @@
 				       (u64)(res));			\
 			KUNIT_ASSERT_FALSE(context,			\
 				   le##tp##_get_bits(_res, field) != v);\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-#घोषणा CHECK_ENC_GET_BE(tp, v, field, res) करो अणु			\
-		अणु							\
+#define CHECK_ENC_GET_BE(tp, v, field, res) do {			\
+		{							\
 			__be##tp _res;					\
 									\
 			_res = be##tp##_encode_bits(v, field);		\
@@ -49,20 +48,20 @@
 				       (u64)(res));			\
 			KUNIT_ASSERT_FALSE(context,			\
 				   be##tp##_get_bits(_res, field) != v);\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
-#घोषणा CHECK_ENC_GET(tp, v, field, res) करो अणु				\
+#define CHECK_ENC_GET(tp, v, field, res) do {				\
 		CHECK_ENC_GET_U(tp, v, field, res);			\
 		CHECK_ENC_GET_LE(tp, v, field, res);			\
 		CHECK_ENC_GET_BE(tp, v, field, res);			\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल व्योम __init test_bitfields_स्थिरants(काष्ठा kunit *context)
-अणु
+static void __init test_bitfields_constants(struct kunit *context)
+{
 	/*
 	 * NOTE
-	 * This whole function compiles (or at least should, अगर everything
+	 * This whole function compiles (or at least should, if everything
 	 * is going according to plan) to nothing after optimisation.
 	 */
 
@@ -91,18 +90,18 @@
 	CHECK_ENC_GET(64,  7, 0x00f0000000000000ull, 0x0070000000000000ull);
 	CHECK_ENC_GET(64, 14, 0x0f00000000000000ull, 0x0e00000000000000ull);
 	CHECK_ENC_GET(64, 15, 0xf000000000000000ull, 0xf000000000000000ull);
-पूर्ण
+}
 
-#घोषणा CHECK(tp, mask) करो अणु						\
+#define CHECK(tp, mask) do {						\
 		u64 v;							\
 									\
-		क्रम (v = 0; v < 1 << hweight32(mask); v++)		\
+		for (v = 0; v < 1 << hweight32(mask); v++)		\
 			KUNIT_ASSERT_FALSE(context,			\
 				tp##_encode_bits(v, mask) != v << __ffs64(mask));\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल व्योम __init test_bitfields_variables(काष्ठा kunit *context)
-अणु
+static void __init test_bitfields_variables(struct kunit *context)
+{
 	CHECK(u8, 0x0f);
 	CHECK(u8, 0xf0);
 	CHECK(u8, 0x38);
@@ -124,30 +123,30 @@
 	CHECK(u64, 0x000000007f000000ull);
 	CHECK(u64, 0x0000000018000000ull);
 	CHECK(u64, 0x0000001f8000000ull);
-पूर्ण
+}
 
-#अगर_घोषित TEST_BITFIELD_COMPILE
-अटल व्योम __init test_bitfields_compile(काष्ठा kunit *context)
-अणु
+#ifdef TEST_BITFIELD_COMPILE
+static void __init test_bitfields_compile(struct kunit *context)
+{
 	/* these should fail compilation */
 	CHECK_ENC_GET(16, 16, 0x0f00, 0x1000);
 	u32_encode_bits(7, 0x06000000);
 
 	/* this should at least give a warning */
 	u16_encode_bits(0, 0x60000);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल काष्ठा kunit_हाल __refdata bitfields_test_हालs[] = अणु
-	KUNIT_CASE(test_bitfields_स्थिरants),
+static struct kunit_case __refdata bitfields_test_cases[] = {
+	KUNIT_CASE(test_bitfields_constants),
 	KUNIT_CASE(test_bitfields_variables),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल काष्ठा kunit_suite bitfields_test_suite = अणु
+static struct kunit_suite bitfields_test_suite = {
 	.name = "bitfields",
-	.test_हालs = bitfields_test_हालs,
-पूर्ण;
+	.test_cases = bitfields_test_cases,
+};
 
 kunit_test_suites(&bitfields_test_suite);
 

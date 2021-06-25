@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2014 Marvell Technology Group Ltd.
  *
- * Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com>
+ * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
-#अगर_अघोषित __BERLIN2_DIV_H
-#घोषणा __BERLIN2_DIV_H
+#ifndef __BERLIN2_DIV_H
+#define __BERLIN2_DIV_H
 
-काष्ठा clk_hw;
+struct clk_hw;
 
-#घोषणा BERLIN2_DIV_HAS_GATE		BIT(0)
-#घोषणा BERLIN2_DIV_HAS_MUX		BIT(1)
+#define BERLIN2_DIV_HAS_GATE		BIT(0)
+#define BERLIN2_DIV_HAS_MUX		BIT(1)
 
-#घोषणा BERLIN2_PLL_SELECT(_off, _sh)	\
+#define BERLIN2_PLL_SELECT(_off, _sh)	\
 	.pll_select_offs = _off,	\
-	.pll_select_shअगरt = _sh
+	.pll_select_shift = _sh
 
-#घोषणा BERLIN2_PLL_SWITCH(_off, _sh)	\
-	.pll_चयन_offs = _off,	\
-	.pll_चयन_shअगरt = _sh
+#define BERLIN2_PLL_SWITCH(_off, _sh)	\
+	.pll_switch_offs = _off,	\
+	.pll_switch_shift = _sh
 
-#घोषणा BERLIN2_DIV_SELECT(_off, _sh)	\
-	.भाग_select_offs = _off,	\
-	.भाग_select_shअगरt = _sh
+#define BERLIN2_DIV_SELECT(_off, _sh)	\
+	.div_select_offs = _off,	\
+	.div_select_shift = _sh
 
-#घोषणा BERLIN2_DIV_SWITCH(_off, _sh)	\
-	.भाग_चयन_offs = _off,	\
-	.भाग_चयन_shअगरt = _sh
+#define BERLIN2_DIV_SWITCH(_off, _sh)	\
+	.div_switch_offs = _off,	\
+	.div_switch_shift = _sh
 
-#घोषणा BERLIN2_DIV_D3SWITCH(_off, _sh)	\
-	.भाग3_चयन_offs = _off,	\
-	.भाग3_चयन_shअगरt = _sh
+#define BERLIN2_DIV_D3SWITCH(_off, _sh)	\
+	.div3_switch_offs = _off,	\
+	.div3_switch_shift = _sh
 
-#घोषणा BERLIN2_DIV_GATE(_off, _sh)	\
+#define BERLIN2_DIV_GATE(_off, _sh)	\
 	.gate_offs = _off,		\
-	.gate_shअगरt = _sh
+	.gate_shift = _sh
 
-#घोषणा BERLIN2_SINGLE_DIV(_off)	\
+#define BERLIN2_SINGLE_DIV(_off)	\
 	BERLIN2_DIV_GATE(_off, 0),	\
 	BERLIN2_PLL_SELECT(_off, 1),	\
 	BERLIN2_PLL_SWITCH(_off, 4),	\
@@ -46,34 +45,34 @@
 	BERLIN2_DIV_D3SWITCH(_off, 6),	\
 	BERLIN2_DIV_SELECT(_off, 7)
 
-काष्ठा berlin2_भाग_map अणु
+struct berlin2_div_map {
 	u16 pll_select_offs;
-	u16 pll_चयन_offs;
-	u16 भाग_select_offs;
-	u16 भाग_चयन_offs;
-	u16 भाग3_चयन_offs;
+	u16 pll_switch_offs;
+	u16 div_select_offs;
+	u16 div_switch_offs;
+	u16 div3_switch_offs;
 	u16 gate_offs;
-	u8 pll_select_shअगरt;
-	u8 pll_चयन_shअगरt;
-	u8 भाग_select_shअगरt;
-	u8 भाग_चयन_shअगरt;
-	u8 भाग3_चयन_shअगरt;
-	u8 gate_shअगरt;
-पूर्ण;
+	u8 pll_select_shift;
+	u8 pll_switch_shift;
+	u8 div_select_shift;
+	u8 div_switch_shift;
+	u8 div3_switch_shift;
+	u8 gate_shift;
+};
 
-काष्ठा berlin2_भाग_data अणु
-	स्थिर अक्षर *name;
-	स्थिर u8 *parent_ids;
-	पूर्णांक num_parents;
-	अचिन्हित दीर्घ flags;
-	काष्ठा berlin2_भाग_map map;
-	u8 भाग_flags;
-पूर्ण;
+struct berlin2_div_data {
+	const char *name;
+	const u8 *parent_ids;
+	int num_parents;
+	unsigned long flags;
+	struct berlin2_div_map map;
+	u8 div_flags;
+};
 
-काष्ठा clk_hw *
-berlin2_भाग_रेजिस्टर(स्थिर काष्ठा berlin2_भाग_map *map,
-	     व्योम __iomem *base,  स्थिर अक्षर *name, u8 भाग_flags,
-	     स्थिर अक्षर **parent_names, पूर्णांक num_parents,
-	     अचिन्हित दीर्घ flags,  spinlock_t *lock);
+struct clk_hw *
+berlin2_div_register(const struct berlin2_div_map *map,
+	     void __iomem *base,  const char *name, u8 div_flags,
+	     const char **parent_names, int num_parents,
+	     unsigned long flags,  spinlock_t *lock);
 
-#पूर्ण_अगर /* __BERLIN2_DIV_H */
+#endif /* __BERLIN2_DIV_H */

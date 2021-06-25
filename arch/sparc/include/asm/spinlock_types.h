@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SPARC_SPINLOCK_TYPES_H
-#घोषणा __SPARC_SPINLOCK_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SPARC_SPINLOCK_TYPES_H
+#define __SPARC_SPINLOCK_TYPES_H
 
-#अगर_घोषित CONFIG_QUEUED_SPINLOCKS
-#समावेश <यंत्र-generic/qspinlock_types.h>
-#अन्यथा
+#ifdef CONFIG_QUEUED_SPINLOCKS
+#include <asm-generic/qspinlock_types.h>
+#else
 
-प्रकार काष्ठा अणु
-	अस्थिर अचिन्हित अक्षर lock;
-पूर्ण arch_spinlock_t;
+typedef struct {
+	volatile unsigned char lock;
+} arch_spinlock_t;
 
-#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु 0 पूर्ण
-#पूर्ण_अगर /* CONFIG_QUEUED_SPINLOCKS */
+#define __ARCH_SPIN_LOCK_UNLOCKED	{ 0 }
+#endif /* CONFIG_QUEUED_SPINLOCKS */
 
-#अगर_घोषित CONFIG_QUEUED_RWLOCKS
-#समावेश <यंत्र-generic/qrwlock_types.h>
-#अन्यथा
-प्रकार काष्ठा अणु
-	अस्थिर अचिन्हित पूर्णांक lock;
-पूर्ण arch_rwlock_t;
+#ifdef CONFIG_QUEUED_RWLOCKS
+#include <asm-generic/qrwlock_types.h>
+#else
+typedef struct {
+	volatile unsigned int lock;
+} arch_rwlock_t;
 
-#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु 0 पूर्ण
-#पूर्ण_अगर /* CONFIG_QUEUED_RWLOCKS */
-#पूर्ण_अगर
+#define __ARCH_RW_LOCK_UNLOCKED		{ 0 }
+#endif /* CONFIG_QUEUED_RWLOCKS */
+#endif

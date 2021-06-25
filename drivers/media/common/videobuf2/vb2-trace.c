@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <media/videobuf2-core.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <media/videobuf2-core.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/vb2.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/vb2.h>
 
-EXPORT_TRACEPOINT_SYMBOL_GPL(vb2_buf_करोne);
+EXPORT_TRACEPOINT_SYMBOL_GPL(vb2_buf_done);
 EXPORT_TRACEPOINT_SYMBOL_GPL(vb2_buf_queue);
 EXPORT_TRACEPOINT_SYMBOL_GPL(vb2_dqbuf);
 EXPORT_TRACEPOINT_SYMBOL_GPL(vb2_qbuf);

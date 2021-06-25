@@ -1,506 +1,505 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // rc-ir-raw.c - handle IR pulse/space events
 //
 // Copyright (C) 2010 by Mauro Carvalho Chehab
 
-#समावेश <linux/export.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/sched.h>
-#समावेश "rc-core-priv.h"
+#include <linux/export.h>
+#include <linux/kthread.h>
+#include <linux/mutex.h>
+#include <linux/kmod.h>
+#include <linux/sched.h>
+#include "rc-core-priv.h"
 
-/* Used to keep track of IR raw clients, रक्षित by ir_raw_handler_lock */
-अटल LIST_HEAD(ir_raw_client_list);
+/* Used to keep track of IR raw clients, protected by ir_raw_handler_lock */
+static LIST_HEAD(ir_raw_client_list);
 
 /* Used to handle IR raw handler extensions */
 DEFINE_MUTEX(ir_raw_handler_lock);
-अटल LIST_HEAD(ir_raw_handler_list);
-अटल atomic64_t available_protocols = ATOMIC64_INIT(0);
+static LIST_HEAD(ir_raw_handler_list);
+static atomic64_t available_protocols = ATOMIC64_INIT(0);
 
-अटल पूर्णांक ir_raw_event_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा ir_raw_event ev;
-	काष्ठा ir_raw_handler *handler;
-	काष्ठा ir_raw_event_ctrl *raw = data;
-	काष्ठा rc_dev *dev = raw->dev;
+static int ir_raw_event_thread(void *data)
+{
+	struct ir_raw_event ev;
+	struct ir_raw_handler *handler;
+	struct ir_raw_event_ctrl *raw = data;
+	struct rc_dev *dev = raw->dev;
 
-	जबतक (1) अणु
+	while (1) {
 		mutex_lock(&ir_raw_handler_lock);
-		जबतक (kfअगरo_out(&raw->kfअगरo, &ev, 1)) अणु
-			अगर (is_timing_event(ev)) अणु
-				अगर (ev.duration == 0)
+		while (kfifo_out(&raw->kfifo, &ev, 1)) {
+			if (is_timing_event(ev)) {
+				if (ev.duration == 0)
 					dev_warn_once(&dev->dev, "nonsensical timing event of duration 0");
-				अगर (is_timing_event(raw->prev_ev) &&
+				if (is_timing_event(raw->prev_ev) &&
 				    !is_transition(&ev, &raw->prev_ev))
 					dev_warn_once(&dev->dev, "two consecutive events of type %s",
 						      TO_STR(ev.pulse));
-				अगर (raw->prev_ev.reset && ev.pulse == 0)
+				if (raw->prev_ev.reset && ev.pulse == 0)
 					dev_warn_once(&dev->dev, "timing event after reset should be pulse");
-			पूर्ण
-			list_क्रम_each_entry(handler, &ir_raw_handler_list, list)
-				अगर (dev->enabled_protocols &
+			}
+			list_for_each_entry(handler, &ir_raw_handler_list, list)
+				if (dev->enabled_protocols &
 				    handler->protocols || !handler->protocols)
 					handler->decode(dev, ev);
 			lirc_raw_event(dev, ev);
 			raw->prev_ev = ev;
-		पूर्ण
+		}
 		mutex_unlock(&ir_raw_handler_lock);
 
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		अगर (kthपढ़ो_should_stop()) अणु
+		if (kthread_should_stop()) {
 			__set_current_state(TASK_RUNNING);
-			अवरोध;
-		पूर्ण अन्यथा अगर (!kfअगरo_is_empty(&raw->kfअगरo))
+			break;
+		} else if (!kfifo_is_empty(&raw->kfifo))
 			set_current_state(TASK_RUNNING);
 
 		schedule();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ir_raw_event_store() - pass a pulse/space duration to the raw ir decoders
- * @dev:	the काष्ठा rc_dev device descriptor
- * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
+ * @dev:	the struct rc_dev device descriptor
+ * @ev:		the struct ir_raw_event descriptor of the pulse/space
  *
- * This routine (which may be called from an पूर्णांकerrupt context) stores a
- * pulse/space duration क्रम the raw ir decoding state machines. Pulses are
- * संकेतled as positive values and spaces as negative values. A zero value
+ * This routine (which may be called from an interrupt context) stores a
+ * pulse/space duration for the raw ir decoding state machines. Pulses are
+ * signalled as positive values and spaces as negative values. A zero value
  * will reset the decoding state machines.
  */
-पूर्णांक ir_raw_event_store(काष्ठा rc_dev *dev, काष्ठा ir_raw_event *ev)
-अणु
-	अगर (!dev->raw)
-		वापस -EINVAL;
+int ir_raw_event_store(struct rc_dev *dev, struct ir_raw_event *ev)
+{
+	if (!dev->raw)
+		return -EINVAL;
 
 	dev_dbg(&dev->dev, "sample: (%05dus %s)\n",
 		ev->duration, TO_STR(ev->pulse));
 
-	अगर (!kfअगरo_put(&dev->raw->kfअगरo, *ev)) अणु
+	if (!kfifo_put(&dev->raw->kfifo, *ev)) {
 		dev_err(&dev->dev, "IR event FIFO is full!\n");
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ir_raw_event_store);
 
 /**
- * ir_raw_event_store_edge() - notअगरy raw ir decoders of the start of a pulse/space
- * @dev:	the काष्ठा rc_dev device descriptor
- * @pulse:	true क्रम pulse, false क्रम space
+ * ir_raw_event_store_edge() - notify raw ir decoders of the start of a pulse/space
+ * @dev:	the struct rc_dev device descriptor
+ * @pulse:	true for pulse, false for space
  *
- * This routine (which may be called from an पूर्णांकerrupt context) is used to
+ * This routine (which may be called from an interrupt context) is used to
  * store the beginning of an ir pulse or space (or the start/end of ir
- * reception) क्रम the raw ir decoding state machines. This is used by
- * hardware which करोes not provide durations directly but only पूर्णांकerrupts
+ * reception) for the raw ir decoding state machines. This is used by
+ * hardware which does not provide durations directly but only interrupts
  * (or similar events) on state change.
  */
-पूर्णांक ir_raw_event_store_edge(काष्ठा rc_dev *dev, bool pulse)
-अणु
-	kसमय_प्रकार			now;
-	काष्ठा ir_raw_event	ev = अणुपूर्ण;
+int ir_raw_event_store_edge(struct rc_dev *dev, bool pulse)
+{
+	ktime_t			now;
+	struct ir_raw_event	ev = {};
 
-	अगर (!dev->raw)
-		वापस -EINVAL;
+	if (!dev->raw)
+		return -EINVAL;
 
-	now = kसमय_get();
-	ev.duration = kसमय_प्रकारo_us(kसमय_sub(now, dev->raw->last_event));
+	now = ktime_get();
+	ev.duration = ktime_to_us(ktime_sub(now, dev->raw->last_event));
 	ev.pulse = !pulse;
 
-	वापस ir_raw_event_store_with_समयout(dev, &ev);
-पूर्ण
+	return ir_raw_event_store_with_timeout(dev, &ev);
+}
 EXPORT_SYMBOL_GPL(ir_raw_event_store_edge);
 
 /*
- * ir_raw_event_store_with_समयout() - pass a pulse/space duration to the raw
+ * ir_raw_event_store_with_timeout() - pass a pulse/space duration to the raw
  *				       ir decoders, schedule decoding and
- *				       समयout
- * @dev:	the काष्ठा rc_dev device descriptor
- * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
+ *				       timeout
+ * @dev:	the struct rc_dev device descriptor
+ * @ev:		the struct ir_raw_event descriptor of the pulse/space
  *
- * This routine (which may be called from an पूर्णांकerrupt context) stores a
- * pulse/space duration क्रम the raw ir decoding state machines, schedules
- * decoding and generates a समयout.
+ * This routine (which may be called from an interrupt context) stores a
+ * pulse/space duration for the raw ir decoding state machines, schedules
+ * decoding and generates a timeout.
  */
-पूर्णांक ir_raw_event_store_with_समयout(काष्ठा rc_dev *dev, काष्ठा ir_raw_event *ev)
-अणु
-	kसमय_प्रकार		now;
-	पूर्णांक		rc = 0;
+int ir_raw_event_store_with_timeout(struct rc_dev *dev, struct ir_raw_event *ev)
+{
+	ktime_t		now;
+	int		rc = 0;
 
-	अगर (!dev->raw)
-		वापस -EINVAL;
+	if (!dev->raw)
+		return -EINVAL;
 
-	now = kसमय_get();
+	now = ktime_get();
 
 	spin_lock(&dev->raw->edge_spinlock);
 	rc = ir_raw_event_store(dev, ev);
 
 	dev->raw->last_event = now;
 
-	/* समयr could be set to समयout (125ms by शेष) */
-	अगर (!समयr_pending(&dev->raw->edge_handle) ||
-	    समय_after(dev->raw->edge_handle.expires,
-		       jअगरfies + msecs_to_jअगरfies(15))) अणु
-		mod_समयr(&dev->raw->edge_handle,
-			  jअगरfies + msecs_to_jअगरfies(15));
-	पूर्ण
+	/* timer could be set to timeout (125ms by default) */
+	if (!timer_pending(&dev->raw->edge_handle) ||
+	    time_after(dev->raw->edge_handle.expires,
+		       jiffies + msecs_to_jiffies(15))) {
+		mod_timer(&dev->raw->edge_handle,
+			  jiffies + msecs_to_jiffies(15));
+	}
 	spin_unlock(&dev->raw->edge_spinlock);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(ir_raw_event_store_with_समयout);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(ir_raw_event_store_with_timeout);
 
 /**
  * ir_raw_event_store_with_filter() - pass next pulse/space to decoders with some processing
- * @dev:	the काष्ठा rc_dev device descriptor
+ * @dev:	the struct rc_dev device descriptor
  * @ev:		the event that has occurred
  *
- * This routine (which may be called from an पूर्णांकerrupt context) works
+ * This routine (which may be called from an interrupt context) works
  * in similar manner to ir_raw_event_store_edge.
- * This routine is पूर्णांकended क्रम devices with limited पूर्णांकernal buffer
- * It स्वतःmerges samples of same type, and handles समयouts. Returns non-zero
- * अगर the event was added, and zero अगर the event was ignored due to idle
+ * This routine is intended for devices with limited internal buffer
+ * It automerges samples of same type, and handles timeouts. Returns non-zero
+ * if the event was added, and zero if the event was ignored due to idle
  * processing.
  */
-पूर्णांक ir_raw_event_store_with_filter(काष्ठा rc_dev *dev, काष्ठा ir_raw_event *ev)
-अणु
-	अगर (!dev->raw)
-		वापस -EINVAL;
+int ir_raw_event_store_with_filter(struct rc_dev *dev, struct ir_raw_event *ev)
+{
+	if (!dev->raw)
+		return -EINVAL;
 
 	/* Ignore spaces in idle mode */
-	अगर (dev->idle && !ev->pulse)
-		वापस 0;
-	अन्यथा अगर (dev->idle)
+	if (dev->idle && !ev->pulse)
+		return 0;
+	else if (dev->idle)
 		ir_raw_event_set_idle(dev, false);
 
-	अगर (!dev->raw->this_ev.duration)
+	if (!dev->raw->this_ev.duration)
 		dev->raw->this_ev = *ev;
-	अन्यथा अगर (ev->pulse == dev->raw->this_ev.pulse)
+	else if (ev->pulse == dev->raw->this_ev.pulse)
 		dev->raw->this_ev.duration += ev->duration;
-	अन्यथा अणु
+	else {
 		ir_raw_event_store(dev, &dev->raw->this_ev);
 		dev->raw->this_ev = *ev;
-	पूर्ण
+	}
 
-	/* Enter idle mode अगर necessary */
-	अगर (!ev->pulse && dev->समयout &&
-	    dev->raw->this_ev.duration >= dev->समयout)
+	/* Enter idle mode if necessary */
+	if (!ev->pulse && dev->timeout &&
+	    dev->raw->this_ev.duration >= dev->timeout)
 		ir_raw_event_set_idle(dev, true);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(ir_raw_event_store_with_filter);
 
 /**
- * ir_raw_event_set_idle() - provide hपूर्णांक to rc-core when the device is idle or not
- * @dev:	the काष्ठा rc_dev device descriptor
+ * ir_raw_event_set_idle() - provide hint to rc-core when the device is idle or not
+ * @dev:	the struct rc_dev device descriptor
  * @idle:	whether the device is idle or not
  */
-व्योम ir_raw_event_set_idle(काष्ठा rc_dev *dev, bool idle)
-अणु
-	अगर (!dev->raw)
-		वापस;
+void ir_raw_event_set_idle(struct rc_dev *dev, bool idle)
+{
+	if (!dev->raw)
+		return;
 
 	dev_dbg(&dev->dev, "%s idle mode\n", idle ? "enter" : "leave");
 
-	अगर (idle) अणु
-		dev->raw->this_ev.समयout = true;
+	if (idle) {
+		dev->raw->this_ev.timeout = true;
 		ir_raw_event_store(dev, &dev->raw->this_ev);
-		dev->raw->this_ev = (काष्ठा ir_raw_event) अणुपूर्ण;
-	पूर्ण
+		dev->raw->this_ev = (struct ir_raw_event) {};
+	}
 
-	अगर (dev->s_idle)
+	if (dev->s_idle)
 		dev->s_idle(dev, idle);
 
 	dev->idle = idle;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ir_raw_event_set_idle);
 
 /**
  * ir_raw_event_handle() - schedules the decoding of stored ir data
- * @dev:	the काष्ठा rc_dev device descriptor
+ * @dev:	the struct rc_dev device descriptor
  *
  * This routine will tell rc-core to start decoding stored ir data.
  */
-व्योम ir_raw_event_handle(काष्ठा rc_dev *dev)
-अणु
-	अगर (!dev->raw || !dev->raw->thपढ़ो)
-		वापस;
+void ir_raw_event_handle(struct rc_dev *dev)
+{
+	if (!dev->raw || !dev->raw->thread)
+		return;
 
-	wake_up_process(dev->raw->thपढ़ो);
-पूर्ण
+	wake_up_process(dev->raw->thread);
+}
 EXPORT_SYMBOL_GPL(ir_raw_event_handle);
 
-/* used पूर्णांकernally by the sysfs पूर्णांकerface */
+/* used internally by the sysfs interface */
 u64
-ir_raw_get_allowed_protocols(व्योम)
-अणु
-	वापस atomic64_पढ़ो(&available_protocols);
-पूर्ण
+ir_raw_get_allowed_protocols(void)
+{
+	return atomic64_read(&available_protocols);
+}
 
-अटल पूर्णांक change_protocol(काष्ठा rc_dev *dev, u64 *rc_proto)
-अणु
-	काष्ठा ir_raw_handler *handler;
-	u32 समयout = 0;
+static int change_protocol(struct rc_dev *dev, u64 *rc_proto)
+{
+	struct ir_raw_handler *handler;
+	u32 timeout = 0;
 
 	mutex_lock(&ir_raw_handler_lock);
-	list_क्रम_each_entry(handler, &ir_raw_handler_list, list) अणु
-		अगर (!(dev->enabled_protocols & handler->protocols) &&
-		    (*rc_proto & handler->protocols) && handler->raw_रेजिस्टर)
-			handler->raw_रेजिस्टर(dev);
+	list_for_each_entry(handler, &ir_raw_handler_list, list) {
+		if (!(dev->enabled_protocols & handler->protocols) &&
+		    (*rc_proto & handler->protocols) && handler->raw_register)
+			handler->raw_register(dev);
 
-		अगर ((dev->enabled_protocols & handler->protocols) &&
+		if ((dev->enabled_protocols & handler->protocols) &&
 		    !(*rc_proto & handler->protocols) &&
-		    handler->raw_unरेजिस्टर)
-			handler->raw_unरेजिस्टर(dev);
-	पूर्ण
+		    handler->raw_unregister)
+			handler->raw_unregister(dev);
+	}
 	mutex_unlock(&ir_raw_handler_lock);
 
-	अगर (!dev->max_समयout)
-		वापस 0;
+	if (!dev->max_timeout)
+		return 0;
 
 	mutex_lock(&ir_raw_handler_lock);
-	list_क्रम_each_entry(handler, &ir_raw_handler_list, list) अणु
-		अगर (handler->protocols & *rc_proto) अणु
-			अगर (समयout < handler->min_समयout)
-				समयout = handler->min_समयout;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(handler, &ir_raw_handler_list, list) {
+		if (handler->protocols & *rc_proto) {
+			if (timeout < handler->min_timeout)
+				timeout = handler->min_timeout;
+		}
+	}
 	mutex_unlock(&ir_raw_handler_lock);
 
-	अगर (समयout == 0)
-		समयout = IR_DEFAULT_TIMEOUT;
-	अन्यथा
-		समयout += MS_TO_US(10);
+	if (timeout == 0)
+		timeout = IR_DEFAULT_TIMEOUT;
+	else
+		timeout += MS_TO_US(10);
 
-	अगर (समयout < dev->min_समयout)
-		समयout = dev->min_समयout;
-	अन्यथा अगर (समयout > dev->max_समयout)
-		समयout = dev->max_समयout;
+	if (timeout < dev->min_timeout)
+		timeout = dev->min_timeout;
+	else if (timeout > dev->max_timeout)
+		timeout = dev->max_timeout;
 
-	अगर (dev->s_समयout)
-		dev->s_समयout(dev, समयout);
-	अन्यथा
-		dev->समयout = समयout;
+	if (dev->s_timeout)
+		dev->s_timeout(dev, timeout);
+	else
+		dev->timeout = timeout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ir_raw_disable_protocols(काष्ठा rc_dev *dev, u64 protocols)
-अणु
+static void ir_raw_disable_protocols(struct rc_dev *dev, u64 protocols)
+{
 	mutex_lock(&dev->lock);
 	dev->enabled_protocols &= ~protocols;
 	mutex_unlock(&dev->lock);
-पूर्ण
+}
 
 /**
  * ir_raw_gen_manchester() - Encode data with Manchester (bi-phase) modulation.
- * @ev:		Poपूर्णांकer to poपूर्णांकer to next मुक्त event. *@ev is incremented क्रम
+ * @ev:		Pointer to pointer to next free event. *@ev is incremented for
  *		each raw event filled.
  * @max:	Maximum number of raw events to fill.
  * @timings:	Manchester modulation timings.
  * @n:		Number of bits of data.
  * @data:	Data bits to encode.
  *
- * Encodes the @n least signअगरicant bits of @data using Manchester (bi-phase)
- * modulation with the timing अक्षरacteristics described by @timings, writing up
- * to @max raw IR events using the *@ev poपूर्णांकer.
+ * Encodes the @n least significant bits of @data using Manchester (bi-phase)
+ * modulation with the timing characteristics described by @timings, writing up
+ * to @max raw IR events using the *@ev pointer.
  *
  * Returns:	0 on success.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		full encoded data. In this हाल all @max events will have been
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		full encoded data. In this case all @max events will have been
  *		written.
  */
-पूर्णांक ir_raw_gen_manchester(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
-			  स्थिर काष्ठा ir_raw_timings_manchester *timings,
-			  अचिन्हित पूर्णांक n, u64 data)
-अणु
+int ir_raw_gen_manchester(struct ir_raw_event **ev, unsigned int max,
+			  const struct ir_raw_timings_manchester *timings,
+			  unsigned int n, u64 data)
+{
 	bool need_pulse;
 	u64 i;
-	पूर्णांक ret = -ENOBUFS;
+	int ret = -ENOBUFS;
 
 	i = BIT_ULL(n - 1);
 
-	अगर (timings->leader_pulse) अणु
-		अगर (!max--)
-			वापस ret;
+	if (timings->leader_pulse) {
+		if (!max--)
+			return ret;
 		init_ir_raw_event_duration((*ev), 1, timings->leader_pulse);
-		अगर (timings->leader_space) अणु
-			अगर (!max--)
-				वापस ret;
+		if (timings->leader_space) {
+			if (!max--)
+				return ret;
 			init_ir_raw_event_duration(++(*ev), 0,
 						   timings->leader_space);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* जारी existing संकेत */
+		}
+	} else {
+		/* continue existing signal */
 		--(*ev);
-	पूर्ण
-	/* from here on *ev will poपूर्णांक to the last event rather than the next */
+	}
+	/* from here on *ev will point to the last event rather than the next */
 
-	जबतक (n && i > 0) अणु
+	while (n && i > 0) {
 		need_pulse = !(data & i);
-		अगर (timings->invert)
+		if (timings->invert)
 			need_pulse = !need_pulse;
-		अगर (need_pulse == !!(*ev)->pulse) अणु
-			(*ev)->duration += timings->घड़ी;
-		पूर्ण अन्यथा अणु
-			अगर (!max--)
-				जाओ nobufs;
+		if (need_pulse == !!(*ev)->pulse) {
+			(*ev)->duration += timings->clock;
+		} else {
+			if (!max--)
+				goto nobufs;
 			init_ir_raw_event_duration(++(*ev), need_pulse,
-						   timings->घड़ी);
-		पूर्ण
+						   timings->clock);
+		}
 
-		अगर (!max--)
-			जाओ nobufs;
+		if (!max--)
+			goto nobufs;
 		init_ir_raw_event_duration(++(*ev), !need_pulse,
-					   timings->घड़ी);
+					   timings->clock);
 		i >>= 1;
-	पूर्ण
+	}
 
-	अगर (timings->trailer_space) अणु
-		अगर (!(*ev)->pulse)
+	if (timings->trailer_space) {
+		if (!(*ev)->pulse)
 			(*ev)->duration += timings->trailer_space;
-		अन्यथा अगर (!max--)
-			जाओ nobufs;
-		अन्यथा
+		else if (!max--)
+			goto nobufs;
+		else
 			init_ir_raw_event_duration(++(*ev), 0,
 						   timings->trailer_space);
-	पूर्ण
+	}
 
 	ret = 0;
 nobufs:
-	/* poपूर्णांक to the next event rather than last event beक्रमe वापसing */
+	/* point to the next event rather than last event before returning */
 	++(*ev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ir_raw_gen_manchester);
 
 /**
  * ir_raw_gen_pd() - Encode data to raw events with pulse-distance modulation.
- * @ev:		Poपूर्णांकer to poपूर्णांकer to next मुक्त event. *@ev is incremented क्रम
+ * @ev:		Pointer to pointer to next free event. *@ev is incremented for
  *		each raw event filled.
  * @max:	Maximum number of raw events to fill.
  * @timings:	Pulse distance modulation timings.
  * @n:		Number of bits of data.
  * @data:	Data bits to encode.
  *
- * Encodes the @n least signअगरicant bits of @data using pulse-distance
- * modulation with the timing अक्षरacteristics described by @timings, writing up
- * to @max raw IR events using the *@ev poपूर्णांकer.
+ * Encodes the @n least significant bits of @data using pulse-distance
+ * modulation with the timing characteristics described by @timings, writing up
+ * to @max raw IR events using the *@ev pointer.
  *
  * Returns:	0 on success.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		full encoded data. In this हाल all @max events will have been
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		full encoded data. In this case all @max events will have been
  *		written.
  */
-पूर्णांक ir_raw_gen_pd(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
-		  स्थिर काष्ठा ir_raw_timings_pd *timings,
-		  अचिन्हित पूर्णांक n, u64 data)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक space;
+int ir_raw_gen_pd(struct ir_raw_event **ev, unsigned int max,
+		  const struct ir_raw_timings_pd *timings,
+		  unsigned int n, u64 data)
+{
+	int i;
+	int ret;
+	unsigned int space;
 
-	अगर (timings->header_pulse) अणु
+	if (timings->header_pulse) {
 		ret = ir_raw_gen_pulse_space(ev, &max, timings->header_pulse,
 					     timings->header_space);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (timings->msb_first) अणु
-		क्रम (i = n - 1; i >= 0; --i) अणु
+	if (timings->msb_first) {
+		for (i = n - 1; i >= 0; --i) {
 			space = timings->bit_space[(data >> i) & 1];
 			ret = ir_raw_gen_pulse_space(ev, &max,
 						     timings->bit_pulse,
 						     space);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < n; ++i, data >>= 1) अणु
+			if (ret)
+				return ret;
+		}
+	} else {
+		for (i = 0; i < n; ++i, data >>= 1) {
 			space = timings->bit_space[data & 1];
 			ret = ir_raw_gen_pulse_space(ev, &max,
 						     timings->bit_pulse,
 						     space);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
 
 	ret = ir_raw_gen_pulse_space(ev, &max, timings->trailer_pulse,
 				     timings->trailer_space);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ir_raw_gen_pd);
 
 /**
  * ir_raw_gen_pl() - Encode data to raw events with pulse-length modulation.
- * @ev:		Poपूर्णांकer to poपूर्णांकer to next मुक्त event. *@ev is incremented क्रम
+ * @ev:		Pointer to pointer to next free event. *@ev is incremented for
  *		each raw event filled.
  * @max:	Maximum number of raw events to fill.
  * @timings:	Pulse distance modulation timings.
  * @n:		Number of bits of data.
  * @data:	Data bits to encode.
  *
- * Encodes the @n least signअगरicant bits of @data using space-distance
- * modulation with the timing अक्षरacteristics described by @timings, writing up
- * to @max raw IR events using the *@ev poपूर्णांकer.
+ * Encodes the @n least significant bits of @data using space-distance
+ * modulation with the timing characteristics described by @timings, writing up
+ * to @max raw IR events using the *@ev pointer.
  *
  * Returns:	0 on success.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		full encoded data. In this हाल all @max events will have been
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		full encoded data. In this case all @max events will have been
  *		written.
  */
-पूर्णांक ir_raw_gen_pl(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
-		  स्थिर काष्ठा ir_raw_timings_pl *timings,
-		  अचिन्हित पूर्णांक n, u64 data)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret = -ENOBUFS;
-	अचिन्हित पूर्णांक pulse;
+int ir_raw_gen_pl(struct ir_raw_event **ev, unsigned int max,
+		  const struct ir_raw_timings_pl *timings,
+		  unsigned int n, u64 data)
+{
+	int i;
+	int ret = -ENOBUFS;
+	unsigned int pulse;
 
-	अगर (!max--)
-		वापस ret;
+	if (!max--)
+		return ret;
 
 	init_ir_raw_event_duration((*ev)++, 1, timings->header_pulse);
 
-	अगर (timings->msb_first) अणु
-		क्रम (i = n - 1; i >= 0; --i) अणु
-			अगर (!max--)
-				वापस ret;
+	if (timings->msb_first) {
+		for (i = n - 1; i >= 0; --i) {
+			if (!max--)
+				return ret;
 			init_ir_raw_event_duration((*ev)++, 0,
 						   timings->bit_space);
-			अगर (!max--)
-				वापस ret;
+			if (!max--)
+				return ret;
 			pulse = timings->bit_pulse[(data >> i) & 1];
 			init_ir_raw_event_duration((*ev)++, 1, pulse);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < n; ++i, data >>= 1) अणु
-			अगर (!max--)
-				वापस ret;
+		}
+	} else {
+		for (i = 0; i < n; ++i, data >>= 1) {
+			if (!max--)
+				return ret;
 			init_ir_raw_event_duration((*ev)++, 0,
 						   timings->bit_space);
-			अगर (!max--)
-				वापस ret;
+			if (!max--)
+				return ret;
 			pulse = timings->bit_pulse[data & 1];
 			init_ir_raw_event_duration((*ev)++, 1, pulse);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!max--)
-		वापस ret;
+	if (!max--)
+		return ret;
 
 	init_ir_raw_event_duration((*ev)++, 0, timings->trailer_space);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ir_raw_gen_pl);
 
 /**
@@ -508,213 +507,213 @@ EXPORT_SYMBOL(ir_raw_gen_pl);
  *
  * @protocol:		protocol
  * @scancode:		scancode filter describing a single scancode
- * @events:		array of raw events to ग_लिखो पूर्णांकo
+ * @events:		array of raw events to write into
  * @max:		max number of raw events
  *
  * Attempts to encode the scancode as raw events.
  *
  * Returns:	The number of events written.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		encoding. In this हाल all @max events will have been written.
- *		-EINVAL अगर the scancode is ambiguous or invalid, or अगर no
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		encoding. In this case all @max events will have been written.
+ *		-EINVAL if the scancode is ambiguous or invalid, or if no
  *		compatible encoder was found.
  */
-पूर्णांक ir_raw_encode_scancode(क्रमागत rc_proto protocol, u32 scancode,
-			   काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
-अणु
-	काष्ठा ir_raw_handler *handler;
-	पूर्णांक ret = -EINVAL;
+int ir_raw_encode_scancode(enum rc_proto protocol, u32 scancode,
+			   struct ir_raw_event *events, unsigned int max)
+{
+	struct ir_raw_handler *handler;
+	int ret = -EINVAL;
 	u64 mask = 1ULL << protocol;
 
 	ir_raw_load_modules(&mask);
 
 	mutex_lock(&ir_raw_handler_lock);
-	list_क्रम_each_entry(handler, &ir_raw_handler_list, list) अणु
-		अगर (handler->protocols & mask && handler->encode) अणु
+	list_for_each_entry(handler, &ir_raw_handler_list, list) {
+		if (handler->protocols & mask && handler->encode) {
 			ret = handler->encode(protocol, scancode, events, max);
-			अगर (ret >= 0 || ret == -ENOBUFS)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (ret >= 0 || ret == -ENOBUFS)
+				break;
+		}
+	}
 	mutex_unlock(&ir_raw_handler_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ir_raw_encode_scancode);
 
 /**
  * ir_raw_edge_handle() - Handle ir_raw_event_store_edge() processing
  *
- * @t:		समयr_list
+ * @t:		timer_list
  *
- * This callback is armed by ir_raw_event_store_edge(). It करोes two things:
- * first of all, rather than calling ir_raw_event_handle() क्रम each
- * edge and waking up the rc thपढ़ो, 15 ms after the first edge
- * ir_raw_event_handle() is called. Secondly, generate a समयout event
- * no more IR is received after the rc_dev समयout.
+ * This callback is armed by ir_raw_event_store_edge(). It does two things:
+ * first of all, rather than calling ir_raw_event_handle() for each
+ * edge and waking up the rc thread, 15 ms after the first edge
+ * ir_raw_event_handle() is called. Secondly, generate a timeout event
+ * no more IR is received after the rc_dev timeout.
  */
-अटल व्योम ir_raw_edge_handle(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ir_raw_event_ctrl *raw = from_समयr(raw, t, edge_handle);
-	काष्ठा rc_dev *dev = raw->dev;
-	अचिन्हित दीर्घ flags;
-	kसमय_प्रकार पूर्णांकerval;
+static void ir_raw_edge_handle(struct timer_list *t)
+{
+	struct ir_raw_event_ctrl *raw = from_timer(raw, t, edge_handle);
+	struct rc_dev *dev = raw->dev;
+	unsigned long flags;
+	ktime_t interval;
 
 	spin_lock_irqsave(&dev->raw->edge_spinlock, flags);
-	पूर्णांकerval = kसमय_sub(kसमय_get(), dev->raw->last_event);
-	अगर (kसमय_प्रकारo_us(पूर्णांकerval) >= dev->समयout) अणु
-		काष्ठा ir_raw_event ev = अणु
-			.समयout = true,
-			.duration = kसमय_प्रकारo_us(पूर्णांकerval)
-		पूर्ण;
+	interval = ktime_sub(ktime_get(), dev->raw->last_event);
+	if (ktime_to_us(interval) >= dev->timeout) {
+		struct ir_raw_event ev = {
+			.timeout = true,
+			.duration = ktime_to_us(interval)
+		};
 
 		ir_raw_event_store(dev, &ev);
-	पूर्ण अन्यथा अणु
-		mod_समयr(&dev->raw->edge_handle,
-			  jअगरfies + usecs_to_jअगरfies(dev->समयout -
-						     kसमय_प्रकारo_us(पूर्णांकerval)));
-	पूर्ण
+	} else {
+		mod_timer(&dev->raw->edge_handle,
+			  jiffies + usecs_to_jiffies(dev->timeout -
+						     ktime_to_us(interval)));
+	}
 	spin_unlock_irqrestore(&dev->raw->edge_spinlock, flags);
 
 	ir_raw_event_handle(dev);
-पूर्ण
+}
 
 /**
- * ir_raw_encode_carrier() - Get carrier used क्रम protocol
+ * ir_raw_encode_carrier() - Get carrier used for protocol
  *
  * @protocol:		protocol
  *
- * Attempts to find the carrier क्रम the specअगरied protocol
+ * Attempts to find the carrier for the specified protocol
  *
  * Returns:	The carrier in Hz
- *		-EINVAL अगर the protocol is invalid, or अगर no
+ *		-EINVAL if the protocol is invalid, or if no
  *		compatible encoder was found.
  */
-पूर्णांक ir_raw_encode_carrier(क्रमागत rc_proto protocol)
-अणु
-	काष्ठा ir_raw_handler *handler;
-	पूर्णांक ret = -EINVAL;
+int ir_raw_encode_carrier(enum rc_proto protocol)
+{
+	struct ir_raw_handler *handler;
+	int ret = -EINVAL;
 	u64 mask = BIT_ULL(protocol);
 
 	mutex_lock(&ir_raw_handler_lock);
-	list_क्रम_each_entry(handler, &ir_raw_handler_list, list) अणु
-		अगर (handler->protocols & mask && handler->encode) अणु
+	list_for_each_entry(handler, &ir_raw_handler_list, list) {
+		if (handler->protocols & mask && handler->encode) {
 			ret = handler->carrier;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&ir_raw_handler_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ir_raw_encode_carrier);
 
 /*
- * Used to (un)रेजिस्टर raw event clients
+ * Used to (un)register raw event clients
  */
-पूर्णांक ir_raw_event_prepare(काष्ठा rc_dev *dev)
-अणु
-	अगर (!dev)
-		वापस -EINVAL;
+int ir_raw_event_prepare(struct rc_dev *dev)
+{
+	if (!dev)
+		return -EINVAL;
 
-	dev->raw = kzalloc(माप(*dev->raw), GFP_KERNEL);
-	अगर (!dev->raw)
-		वापस -ENOMEM;
+	dev->raw = kzalloc(sizeof(*dev->raw), GFP_KERNEL);
+	if (!dev->raw)
+		return -ENOMEM;
 
 	dev->raw->dev = dev;
 	dev->change_protocol = change_protocol;
 	dev->idle = true;
 	spin_lock_init(&dev->raw->edge_spinlock);
-	समयr_setup(&dev->raw->edge_handle, ir_raw_edge_handle, 0);
-	INIT_KFIFO(dev->raw->kfअगरo);
+	timer_setup(&dev->raw->edge_handle, ir_raw_edge_handle, 0);
+	INIT_KFIFO(dev->raw->kfifo);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ir_raw_event_रेजिस्टर(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा task_काष्ठा *thपढ़ो;
+int ir_raw_event_register(struct rc_dev *dev)
+{
+	struct task_struct *thread;
 
-	thपढ़ो = kthपढ़ो_run(ir_raw_event_thपढ़ो, dev->raw, "rc%u", dev->minor);
-	अगर (IS_ERR(thपढ़ो))
-		वापस PTR_ERR(thपढ़ो);
+	thread = kthread_run(ir_raw_event_thread, dev->raw, "rc%u", dev->minor);
+	if (IS_ERR(thread))
+		return PTR_ERR(thread);
 
-	dev->raw->thपढ़ो = thपढ़ो;
+	dev->raw->thread = thread;
 
 	mutex_lock(&ir_raw_handler_lock);
 	list_add_tail(&dev->raw->list, &ir_raw_client_list);
 	mutex_unlock(&ir_raw_handler_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ir_raw_event_मुक्त(काष्ठा rc_dev *dev)
-अणु
-	अगर (!dev)
-		वापस;
+void ir_raw_event_free(struct rc_dev *dev)
+{
+	if (!dev)
+		return;
 
-	kमुक्त(dev->raw);
-	dev->raw = शून्य;
-पूर्ण
+	kfree(dev->raw);
+	dev->raw = NULL;
+}
 
-व्योम ir_raw_event_unरेजिस्टर(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा ir_raw_handler *handler;
+void ir_raw_event_unregister(struct rc_dev *dev)
+{
+	struct ir_raw_handler *handler;
 
-	अगर (!dev || !dev->raw)
-		वापस;
+	if (!dev || !dev->raw)
+		return;
 
-	kthपढ़ो_stop(dev->raw->thपढ़ो);
-	del_समयr_sync(&dev->raw->edge_handle);
+	kthread_stop(dev->raw->thread);
+	del_timer_sync(&dev->raw->edge_handle);
 
 	mutex_lock(&ir_raw_handler_lock);
 	list_del(&dev->raw->list);
-	list_क्रम_each_entry(handler, &ir_raw_handler_list, list)
-		अगर (handler->raw_unरेजिस्टर &&
+	list_for_each_entry(handler, &ir_raw_handler_list, list)
+		if (handler->raw_unregister &&
 		    (handler->protocols & dev->enabled_protocols))
-			handler->raw_unरेजिस्टर(dev);
+			handler->raw_unregister(dev);
 
-	lirc_bpf_मुक्त(dev);
+	lirc_bpf_free(dev);
 
-	ir_raw_event_मुक्त(dev);
+	ir_raw_event_free(dev);
 
 	/*
-	 * A user can be calling bpf(BPF_PROG_अणुQUERY|ATTACH|DETACHपूर्ण), so
+	 * A user can be calling bpf(BPF_PROG_{QUERY|ATTACH|DETACH}), so
 	 * ensure that the raw member is null on unlock; this is how
 	 * "device gone" is checked.
 	 */
 	mutex_unlock(&ir_raw_handler_lock);
-पूर्ण
+}
 
 /*
- * Extension पूर्णांकerface - used to रेजिस्टर the IR decoders
+ * Extension interface - used to register the IR decoders
  */
 
-पूर्णांक ir_raw_handler_रेजिस्टर(काष्ठा ir_raw_handler *ir_raw_handler)
-अणु
+int ir_raw_handler_register(struct ir_raw_handler *ir_raw_handler)
+{
 	mutex_lock(&ir_raw_handler_lock);
 	list_add_tail(&ir_raw_handler->list, &ir_raw_handler_list);
 	atomic64_or(ir_raw_handler->protocols, &available_protocols);
 	mutex_unlock(&ir_raw_handler_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(ir_raw_handler_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(ir_raw_handler_register);
 
-व्योम ir_raw_handler_unरेजिस्टर(काष्ठा ir_raw_handler *ir_raw_handler)
-अणु
-	काष्ठा ir_raw_event_ctrl *raw;
+void ir_raw_handler_unregister(struct ir_raw_handler *ir_raw_handler)
+{
+	struct ir_raw_event_ctrl *raw;
 	u64 protocols = ir_raw_handler->protocols;
 
 	mutex_lock(&ir_raw_handler_lock);
 	list_del(&ir_raw_handler->list);
-	list_क्रम_each_entry(raw, &ir_raw_client_list, list) अणु
-		अगर (ir_raw_handler->raw_unरेजिस्टर &&
+	list_for_each_entry(raw, &ir_raw_client_list, list) {
+		if (ir_raw_handler->raw_unregister &&
 		    (raw->dev->enabled_protocols & protocols))
-			ir_raw_handler->raw_unरेजिस्टर(raw->dev);
+			ir_raw_handler->raw_unregister(raw->dev);
 		ir_raw_disable_protocols(raw->dev, protocols);
-	पूर्ण
+	}
 	atomic64_andnot(protocols, &available_protocols);
 	mutex_unlock(&ir_raw_handler_lock);
-पूर्ण
-EXPORT_SYMBOL(ir_raw_handler_unरेजिस्टर);
+}
+EXPORT_SYMBOL(ir_raw_handler_unregister);

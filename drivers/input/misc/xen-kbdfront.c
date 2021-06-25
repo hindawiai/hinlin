@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Xen para-भव input device
+ * Xen para-virtual input device
  *
  * Copyright (C) 2005 Anthony Liguori <aliguori@us.ibm.com>
  * Copyright (C) 2006-2008 Red Hat, Inc., Markus Armbruster <armbru@redhat.com>
@@ -8,470 +7,470 @@
  *  Based on linux/drivers/input/mouse/sermouse.c
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License. See the file COPYING in the main directory of this archive for
  *  more details.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/input/mt.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/xen/hypervisor.h>
+#include <asm/xen/hypervisor.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/events.h>
-#समावेश <xen/page.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/पूर्णांकerface/grant_table.h>
-#समावेश <xen/पूर्णांकerface/io/fbअगर.h>
-#समावेश <xen/पूर्णांकerface/io/kbdअगर.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/platक्रमm_pci.h>
+#include <xen/xen.h>
+#include <xen/events.h>
+#include <xen/page.h>
+#include <xen/grant_table.h>
+#include <xen/interface/grant_table.h>
+#include <xen/interface/io/fbif.h>
+#include <xen/interface/io/kbdif.h>
+#include <xen/xenbus.h>
+#include <xen/platform_pci.h>
 
-काष्ठा xenkbd_info अणु
-	काष्ठा input_dev *kbd;
-	काष्ठा input_dev *ptr;
-	काष्ठा input_dev *mtouch;
-	काष्ठा xenkbd_page *page;
-	पूर्णांक gref;
-	पूर्णांक irq;
-	काष्ठा xenbus_device *xbdev;
-	अक्षर phys[32];
+struct xenkbd_info {
+	struct input_dev *kbd;
+	struct input_dev *ptr;
+	struct input_dev *mtouch;
+	struct xenkbd_page *page;
+	int gref;
+	int irq;
+	struct xenbus_device *xbdev;
+	char phys[32];
 	/* current MT slot/contact ID we are injecting events in */
-	पूर्णांक mtouch_cur_contact_id;
-पूर्ण;
+	int mtouch_cur_contact_id;
+};
 
-क्रमागत अणु KPARAM_X, KPARAM_Y, KPARAM_CNT पूर्ण;
-अटल पूर्णांक ptr_size[KPARAM_CNT] = अणु XENFB_WIDTH, XENFB_HEIGHT पूर्ण;
-module_param_array(ptr_size, पूर्णांक, शून्य, 0444);
+enum { KPARAM_X, KPARAM_Y, KPARAM_CNT };
+static int ptr_size[KPARAM_CNT] = { XENFB_WIDTH, XENFB_HEIGHT };
+module_param_array(ptr_size, int, NULL, 0444);
 MODULE_PARM_DESC(ptr_size,
 	"Pointing device width, height in pixels (default 800,600)");
 
-अटल पूर्णांक xenkbd_हटाओ(काष्ठा xenbus_device *);
-अटल पूर्णांक xenkbd_connect_backend(काष्ठा xenbus_device *, काष्ठा xenkbd_info *);
-अटल व्योम xenkbd_disconnect_backend(काष्ठा xenkbd_info *);
+static int xenkbd_remove(struct xenbus_device *);
+static int xenkbd_connect_backend(struct xenbus_device *, struct xenkbd_info *);
+static void xenkbd_disconnect_backend(struct xenkbd_info *);
 
 /*
- * Note: अगर you need to send out events, see xenfb_करो_update() क्रम how
- * to करो that.
+ * Note: if you need to send out events, see xenfb_do_update() for how
+ * to do that.
  */
 
-अटल व्योम xenkbd_handle_motion_event(काष्ठा xenkbd_info *info,
-				       काष्ठा xenkbd_motion *motion)
-अणु
-	अगर (unlikely(!info->ptr))
-		वापस;
+static void xenkbd_handle_motion_event(struct xenkbd_info *info,
+				       struct xenkbd_motion *motion)
+{
+	if (unlikely(!info->ptr))
+		return;
 
 	input_report_rel(info->ptr, REL_X, motion->rel_x);
 	input_report_rel(info->ptr, REL_Y, motion->rel_y);
-	अगर (motion->rel_z)
+	if (motion->rel_z)
 		input_report_rel(info->ptr, REL_WHEEL, -motion->rel_z);
 	input_sync(info->ptr);
-पूर्ण
+}
 
-अटल व्योम xenkbd_handle_position_event(काष्ठा xenkbd_info *info,
-					 काष्ठा xenkbd_position *pos)
-अणु
-	अगर (unlikely(!info->ptr))
-		वापस;
+static void xenkbd_handle_position_event(struct xenkbd_info *info,
+					 struct xenkbd_position *pos)
+{
+	if (unlikely(!info->ptr))
+		return;
 
-	input_report_असल(info->ptr, ABS_X, pos->असल_x);
-	input_report_असल(info->ptr, ABS_Y, pos->असल_y);
-	अगर (pos->rel_z)
+	input_report_abs(info->ptr, ABS_X, pos->abs_x);
+	input_report_abs(info->ptr, ABS_Y, pos->abs_y);
+	if (pos->rel_z)
 		input_report_rel(info->ptr, REL_WHEEL, -pos->rel_z);
 	input_sync(info->ptr);
-पूर्ण
+}
 
-अटल व्योम xenkbd_handle_key_event(काष्ठा xenkbd_info *info,
-				    काष्ठा xenkbd_key *key)
-अणु
-	काष्ठा input_dev *dev;
-	पूर्णांक value = key->pressed;
+static void xenkbd_handle_key_event(struct xenkbd_info *info,
+				    struct xenkbd_key *key)
+{
+	struct input_dev *dev;
+	int value = key->pressed;
 
-	अगर (test_bit(key->keycode, info->ptr->keybit)) अणु
+	if (test_bit(key->keycode, info->ptr->keybit)) {
 		dev = info->ptr;
-	पूर्ण अन्यथा अगर (test_bit(key->keycode, info->kbd->keybit)) अणु
+	} else if (test_bit(key->keycode, info->kbd->keybit)) {
 		dev = info->kbd;
-		अगर (key->pressed && test_bit(key->keycode, info->kbd->key))
-			value = 2; /* Mark as स्वतःrepeat */
-	पूर्ण अन्यथा अणु
+		if (key->pressed && test_bit(key->keycode, info->kbd->key))
+			value = 2; /* Mark as autorepeat */
+	} else {
 		pr_warn("unhandled keycode 0x%x\n", key->keycode);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (unlikely(!dev))
-		वापस;
+	if (unlikely(!dev))
+		return;
 
 	input_event(dev, EV_KEY, key->keycode, value);
 	input_sync(dev);
-पूर्ण
+}
 
-अटल व्योम xenkbd_handle_mt_event(काष्ठा xenkbd_info *info,
-				   काष्ठा xenkbd_mtouch *mtouch)
-अणु
-	अगर (unlikely(!info->mtouch))
-		वापस;
+static void xenkbd_handle_mt_event(struct xenkbd_info *info,
+				   struct xenkbd_mtouch *mtouch)
+{
+	if (unlikely(!info->mtouch))
+		return;
 
-	अगर (mtouch->contact_id != info->mtouch_cur_contact_id) अणु
+	if (mtouch->contact_id != info->mtouch_cur_contact_id) {
 		info->mtouch_cur_contact_id = mtouch->contact_id;
 		input_mt_slot(info->mtouch, mtouch->contact_id);
-	पूर्ण
+	}
 
-	चयन (mtouch->event_type) अणु
-	हाल XENKBD_MT_EV_DOWN:
+	switch (mtouch->event_type) {
+	case XENKBD_MT_EV_DOWN:
 		input_mt_report_slot_state(info->mtouch, MT_TOOL_FINGER, true);
 		fallthrough;
 
-	हाल XENKBD_MT_EV_MOTION:
-		input_report_असल(info->mtouch, ABS_MT_POSITION_X,
-				 mtouch->u.pos.असल_x);
-		input_report_असल(info->mtouch, ABS_MT_POSITION_Y,
-				 mtouch->u.pos.असल_y);
-		अवरोध;
+	case XENKBD_MT_EV_MOTION:
+		input_report_abs(info->mtouch, ABS_MT_POSITION_X,
+				 mtouch->u.pos.abs_x);
+		input_report_abs(info->mtouch, ABS_MT_POSITION_Y,
+				 mtouch->u.pos.abs_y);
+		break;
 
-	हाल XENKBD_MT_EV_SHAPE:
-		input_report_असल(info->mtouch, ABS_MT_TOUCH_MAJOR,
+	case XENKBD_MT_EV_SHAPE:
+		input_report_abs(info->mtouch, ABS_MT_TOUCH_MAJOR,
 				 mtouch->u.shape.major);
-		input_report_असल(info->mtouch, ABS_MT_TOUCH_MINOR,
+		input_report_abs(info->mtouch, ABS_MT_TOUCH_MINOR,
 				 mtouch->u.shape.minor);
-		अवरोध;
+		break;
 
-	हाल XENKBD_MT_EV_ORIENT:
-		input_report_असल(info->mtouch, ABS_MT_ORIENTATION,
+	case XENKBD_MT_EV_ORIENT:
+		input_report_abs(info->mtouch, ABS_MT_ORIENTATION,
 				 mtouch->u.orientation);
-		अवरोध;
+		break;
 
-	हाल XENKBD_MT_EV_UP:
+	case XENKBD_MT_EV_UP:
 		input_mt_report_slot_inactive(info->mtouch);
-		अवरोध;
+		break;
 
-	हाल XENKBD_MT_EV_SYN:
+	case XENKBD_MT_EV_SYN:
 		input_mt_sync_frame(info->mtouch);
 		input_sync(info->mtouch);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम xenkbd_handle_event(काष्ठा xenkbd_info *info,
-				जोड़ xenkbd_in_event *event)
-अणु
-	चयन (event->type) अणु
-	हाल XENKBD_TYPE_MOTION:
+static void xenkbd_handle_event(struct xenkbd_info *info,
+				union xenkbd_in_event *event)
+{
+	switch (event->type) {
+	case XENKBD_TYPE_MOTION:
 		xenkbd_handle_motion_event(info, &event->motion);
-		अवरोध;
+		break;
 
-	हाल XENKBD_TYPE_KEY:
+	case XENKBD_TYPE_KEY:
 		xenkbd_handle_key_event(info, &event->key);
-		अवरोध;
+		break;
 
-	हाल XENKBD_TYPE_POS:
+	case XENKBD_TYPE_POS:
 		xenkbd_handle_position_event(info, &event->pos);
-		अवरोध;
+		break;
 
-	हाल XENKBD_TYPE_MTOUCH:
+	case XENKBD_TYPE_MTOUCH:
 		xenkbd_handle_mt_event(info, &event->mtouch);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल irqवापस_t input_handler(पूर्णांक rq, व्योम *dev_id)
-अणु
-	काष्ठा xenkbd_info *info = dev_id;
-	काष्ठा xenkbd_page *page = info->page;
+static irqreturn_t input_handler(int rq, void *dev_id)
+{
+	struct xenkbd_info *info = dev_id;
+	struct xenkbd_page *page = info->page;
 	__u32 cons, prod;
 
 	prod = page->in_prod;
-	अगर (prod == page->in_cons)
-		वापस IRQ_HANDLED;
+	if (prod == page->in_cons)
+		return IRQ_HANDLED;
 	rmb();			/* ensure we see ring contents up to prod */
-	क्रम (cons = page->in_cons; cons != prod; cons++)
+	for (cons = page->in_cons; cons != prod; cons++)
 		xenkbd_handle_event(info, &XENKBD_IN_RING_REF(page, cons));
 	mb();			/* ensure we got ring contents */
 	page->in_cons = cons;
-	notअगरy_remote_via_irq(info->irq);
+	notify_remote_via_irq(info->irq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xenkbd_probe(काष्ठा xenbus_device *dev,
-				  स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक ret, i;
+static int xenkbd_probe(struct xenbus_device *dev,
+				  const struct xenbus_device_id *id)
+{
+	int ret, i;
 	bool with_mtouch, with_kbd, with_ptr;
-	काष्ठा xenkbd_info *info;
-	काष्ठा input_dev *kbd, *ptr, *mtouch;
+	struct xenkbd_info *info;
+	struct input_dev *kbd, *ptr, *mtouch;
 
-	info = kzalloc(माप(*info), GFP_KERNEL);
-	अगर (!info) अणु
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) {
 		xenbus_dev_fatal(dev, -ENOMEM, "allocating info structure");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dev_set_drvdata(&dev->dev, info);
 	info->xbdev = dev;
 	info->irq = -1;
 	info->gref = -1;
-	snम_लिखो(info->phys, माप(info->phys), "xenbus/%s", dev->nodename);
+	snprintf(info->phys, sizeof(info->phys), "xenbus/%s", dev->nodename);
 
-	info->page = (व्योम *)__get_मुक्त_page(GFP_KERNEL | __GFP_ZERO);
-	अगर (!info->page)
-		जाओ error_nomem;
+	info->page = (void *)__get_free_page(GFP_KERNEL | __GFP_ZERO);
+	if (!info->page)
+		goto error_nomem;
 
 	/*
-	 * The below are reverse logic, e.g. अगर the feature is set, then
-	 * करो not expose the corresponding भव device.
+	 * The below are reverse logic, e.g. if the feature is set, then
+	 * do not expose the corresponding virtual device.
 	 */
-	with_kbd = !xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	with_kbd = !xenbus_read_unsigned(dev->otherend,
 					 XENKBD_FIELD_FEAT_DSBL_KEYBRD, 0);
 
-	with_ptr = !xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	with_ptr = !xenbus_read_unsigned(dev->otherend,
 					 XENKBD_FIELD_FEAT_DSBL_POINTER, 0);
 
-	/* Direct logic: अगर set, then create multi-touch device. */
-	with_mtouch = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	/* Direct logic: if set, then create multi-touch device. */
+	with_mtouch = xenbus_read_unsigned(dev->otherend,
 					   XENKBD_FIELD_FEAT_MTOUCH, 0);
-	अगर (with_mtouch) अणु
-		ret = xenbus_ग_लिखो(XBT_NIL, dev->nodename,
+	if (with_mtouch) {
+		ret = xenbus_write(XBT_NIL, dev->nodename,
 				   XENKBD_FIELD_REQ_MTOUCH, "1");
-		अगर (ret) अणु
+		if (ret) {
 			pr_warn("xenkbd: can't request multi-touch");
 			with_mtouch = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* keyboard */
-	अगर (with_kbd) अणु
+	if (with_kbd) {
 		kbd = input_allocate_device();
-		अगर (!kbd)
-			जाओ error_nomem;
+		if (!kbd)
+			goto error_nomem;
 		kbd->name = "Xen Virtual Keyboard";
 		kbd->phys = info->phys;
 		kbd->id.bustype = BUS_PCI;
-		kbd->id.venकरोr = 0x5853;
+		kbd->id.vendor = 0x5853;
 		kbd->id.product = 0xffff;
 
 		__set_bit(EV_KEY, kbd->evbit);
-		क्रम (i = KEY_ESC; i < KEY_UNKNOWN; i++)
+		for (i = KEY_ESC; i < KEY_UNKNOWN; i++)
 			__set_bit(i, kbd->keybit);
-		क्रम (i = KEY_OK; i < KEY_MAX; i++)
+		for (i = KEY_OK; i < KEY_MAX; i++)
 			__set_bit(i, kbd->keybit);
 
-		ret = input_रेजिस्टर_device(kbd);
-		अगर (ret) अणु
-			input_मुक्त_device(kbd);
+		ret = input_register_device(kbd);
+		if (ret) {
+			input_free_device(kbd);
 			xenbus_dev_fatal(dev, ret,
 					 "input_register_device(kbd)");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		info->kbd = kbd;
-	पूर्ण
+	}
 
-	/* poपूर्णांकing device */
-	अगर (with_ptr) अणु
-		अचिन्हित पूर्णांक असल;
+	/* pointing device */
+	if (with_ptr) {
+		unsigned int abs;
 
-		/* Set input असल params to match backend screen res */
-		असल = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+		/* Set input abs params to match backend screen res */
+		abs = xenbus_read_unsigned(dev->otherend,
 					   XENKBD_FIELD_FEAT_ABS_POINTER, 0);
-		ptr_size[KPARAM_X] = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+		ptr_size[KPARAM_X] = xenbus_read_unsigned(dev->otherend,
 							  XENKBD_FIELD_WIDTH,
 							  ptr_size[KPARAM_X]);
-		ptr_size[KPARAM_Y] = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+		ptr_size[KPARAM_Y] = xenbus_read_unsigned(dev->otherend,
 							  XENKBD_FIELD_HEIGHT,
 							  ptr_size[KPARAM_Y]);
-		अगर (असल) अणु
-			ret = xenbus_ग_लिखो(XBT_NIL, dev->nodename,
+		if (abs) {
+			ret = xenbus_write(XBT_NIL, dev->nodename,
 					   XENKBD_FIELD_REQ_ABS_POINTER, "1");
-			अगर (ret) अणु
+			if (ret) {
 				pr_warn("xenkbd: can't request abs-pointer\n");
-				असल = 0;
-			पूर्ण
-		पूर्ण
+				abs = 0;
+			}
+		}
 
 		ptr = input_allocate_device();
-		अगर (!ptr)
-			जाओ error_nomem;
+		if (!ptr)
+			goto error_nomem;
 		ptr->name = "Xen Virtual Pointer";
 		ptr->phys = info->phys;
 		ptr->id.bustype = BUS_PCI;
-		ptr->id.venकरोr = 0x5853;
+		ptr->id.vendor = 0x5853;
 		ptr->id.product = 0xfffe;
 
-		अगर (असल) अणु
+		if (abs) {
 			__set_bit(EV_ABS, ptr->evbit);
-			input_set_असल_params(ptr, ABS_X, 0,
+			input_set_abs_params(ptr, ABS_X, 0,
 					     ptr_size[KPARAM_X], 0, 0);
-			input_set_असल_params(ptr, ABS_Y, 0,
+			input_set_abs_params(ptr, ABS_Y, 0,
 					     ptr_size[KPARAM_Y], 0, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			input_set_capability(ptr, EV_REL, REL_X);
 			input_set_capability(ptr, EV_REL, REL_Y);
-		पूर्ण
+		}
 		input_set_capability(ptr, EV_REL, REL_WHEEL);
 
 		__set_bit(EV_KEY, ptr->evbit);
-		क्रम (i = BTN_LEFT; i <= BTN_TASK; i++)
+		for (i = BTN_LEFT; i <= BTN_TASK; i++)
 			__set_bit(i, ptr->keybit);
 
-		ret = input_रेजिस्टर_device(ptr);
-		अगर (ret) अणु
-			input_मुक्त_device(ptr);
+		ret = input_register_device(ptr);
+		if (ret) {
+			input_free_device(ptr);
 			xenbus_dev_fatal(dev, ret,
 					 "input_register_device(ptr)");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		info->ptr = ptr;
-	पूर्ण
+	}
 
 	/* multi-touch device */
-	अगर (with_mtouch) अणु
-		पूर्णांक num_cont, width, height;
+	if (with_mtouch) {
+		int num_cont, width, height;
 
 		mtouch = input_allocate_device();
-		अगर (!mtouch)
-			जाओ error_nomem;
+		if (!mtouch)
+			goto error_nomem;
 
-		num_cont = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+		num_cont = xenbus_read_unsigned(info->xbdev->otherend,
 						XENKBD_FIELD_MT_NUM_CONTACTS,
 						1);
-		width = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+		width = xenbus_read_unsigned(info->xbdev->otherend,
 					     XENKBD_FIELD_MT_WIDTH,
 					     XENFB_WIDTH);
-		height = xenbus_पढ़ो_अचिन्हित(info->xbdev->otherend,
+		height = xenbus_read_unsigned(info->xbdev->otherend,
 					      XENKBD_FIELD_MT_HEIGHT,
 					      XENFB_HEIGHT);
 
 		mtouch->name = "Xen Virtual Multi-touch";
 		mtouch->phys = info->phys;
 		mtouch->id.bustype = BUS_PCI;
-		mtouch->id.venकरोr = 0x5853;
+		mtouch->id.vendor = 0x5853;
 		mtouch->id.product = 0xfffd;
 
-		input_set_असल_params(mtouch, ABS_MT_TOUCH_MAJOR,
+		input_set_abs_params(mtouch, ABS_MT_TOUCH_MAJOR,
 				     0, 255, 0, 0);
-		input_set_असल_params(mtouch, ABS_MT_POSITION_X,
+		input_set_abs_params(mtouch, ABS_MT_POSITION_X,
 				     0, width, 0, 0);
-		input_set_असल_params(mtouch, ABS_MT_POSITION_Y,
+		input_set_abs_params(mtouch, ABS_MT_POSITION_Y,
 				     0, height, 0, 0);
 
-		ret = input_mt_init_slots(mtouch, num_cont, INPUT_MT_सूचीECT);
-		अगर (ret) अणु
-			input_मुक्त_device(mtouch);
+		ret = input_mt_init_slots(mtouch, num_cont, INPUT_MT_DIRECT);
+		if (ret) {
+			input_free_device(mtouch);
 			xenbus_dev_fatal(info->xbdev, ret,
 					 "input_mt_init_slots");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		ret = input_रेजिस्टर_device(mtouch);
-		अगर (ret) अणु
-			input_मुक्त_device(mtouch);
+		ret = input_register_device(mtouch);
+		if (ret) {
+			input_free_device(mtouch);
 			xenbus_dev_fatal(info->xbdev, ret,
 					 "input_register_device(mtouch)");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		info->mtouch_cur_contact_id = -1;
 		info->mtouch = mtouch;
-	पूर्ण
+	}
 
-	अगर (!(with_kbd || with_ptr || with_mtouch)) अणु
+	if (!(with_kbd || with_ptr || with_mtouch)) {
 		ret = -ENXIO;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = xenkbd_connect_backend(dev, info);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
  error_nomem:
 	ret = -ENOMEM;
 	xenbus_dev_fatal(dev, ret, "allocating device memory");
  error:
-	xenkbd_हटाओ(dev);
-	वापस ret;
-पूर्ण
+	xenkbd_remove(dev);
+	return ret;
+}
 
-अटल पूर्णांक xenkbd_resume(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा xenkbd_info *info = dev_get_drvdata(&dev->dev);
-
-	xenkbd_disconnect_backend(info);
-	स_रखो(info->page, 0, PAGE_SIZE);
-	वापस xenkbd_connect_backend(dev, info);
-पूर्ण
-
-अटल पूर्णांक xenkbd_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा xenkbd_info *info = dev_get_drvdata(&dev->dev);
+static int xenkbd_resume(struct xenbus_device *dev)
+{
+	struct xenkbd_info *info = dev_get_drvdata(&dev->dev);
 
 	xenkbd_disconnect_backend(info);
-	अगर (info->kbd)
-		input_unरेजिस्टर_device(info->kbd);
-	अगर (info->ptr)
-		input_unरेजिस्टर_device(info->ptr);
-	अगर (info->mtouch)
-		input_unरेजिस्टर_device(info->mtouch);
-	मुक्त_page((अचिन्हित दीर्घ)info->page);
-	kमुक्त(info);
-	वापस 0;
-पूर्ण
+	memset(info->page, 0, PAGE_SIZE);
+	return xenkbd_connect_backend(dev, info);
+}
 
-अटल पूर्णांक xenkbd_connect_backend(काष्ठा xenbus_device *dev,
-				  काष्ठा xenkbd_info *info)
-अणु
-	पूर्णांक ret, evtchn;
-	काष्ठा xenbus_transaction xbt;
+static int xenkbd_remove(struct xenbus_device *dev)
+{
+	struct xenkbd_info *info = dev_get_drvdata(&dev->dev);
 
-	ret = gnttab_grant_क्रमeign_access(dev->otherend_id,
+	xenkbd_disconnect_backend(info);
+	if (info->kbd)
+		input_unregister_device(info->kbd);
+	if (info->ptr)
+		input_unregister_device(info->ptr);
+	if (info->mtouch)
+		input_unregister_device(info->mtouch);
+	free_page((unsigned long)info->page);
+	kfree(info);
+	return 0;
+}
+
+static int xenkbd_connect_backend(struct xenbus_device *dev,
+				  struct xenkbd_info *info)
+{
+	int ret, evtchn;
+	struct xenbus_transaction xbt;
+
+	ret = gnttab_grant_foreign_access(dev->otherend_id,
 	                                  virt_to_gfn(info->page), 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	info->gref = ret;
 
 	ret = xenbus_alloc_evtchn(dev, &evtchn);
-	अगर (ret)
-		जाओ error_grant;
+	if (ret)
+		goto error_grant;
 	ret = bind_evtchn_to_irqhandler(evtchn, input_handler,
 					0, dev->devicetype, info);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		xenbus_dev_fatal(dev, ret, "bind_evtchn_to_irqhandler");
-		जाओ error_evtchan;
-	पूर्ण
+		goto error_evtchan;
+	}
 	info->irq = ret;
 
  again:
 	ret = xenbus_transaction_start(&xbt);
-	अगर (ret) अणु
+	if (ret) {
 		xenbus_dev_fatal(dev, ret, "starting transaction");
-		जाओ error_irqh;
-	पूर्ण
-	ret = xenbus_म_लिखो(xbt, dev->nodename, XENKBD_FIELD_RING_REF, "%lu",
+		goto error_irqh;
+	}
+	ret = xenbus_printf(xbt, dev->nodename, XENKBD_FIELD_RING_REF, "%lu",
 			    virt_to_gfn(info->page));
-	अगर (ret)
-		जाओ error_xenbus;
-	ret = xenbus_म_लिखो(xbt, dev->nodename, XENKBD_FIELD_RING_GREF,
+	if (ret)
+		goto error_xenbus;
+	ret = xenbus_printf(xbt, dev->nodename, XENKBD_FIELD_RING_GREF,
 			    "%u", info->gref);
-	अगर (ret)
-		जाओ error_xenbus;
-	ret = xenbus_म_लिखो(xbt, dev->nodename, XENKBD_FIELD_EVT_CHANNEL, "%u",
+	if (ret)
+		goto error_xenbus;
+	ret = xenbus_printf(xbt, dev->nodename, XENKBD_FIELD_EVT_CHANNEL, "%u",
 			    evtchn);
-	अगर (ret)
-		जाओ error_xenbus;
+	if (ret)
+		goto error_xenbus;
 	ret = xenbus_transaction_end(xbt, 0);
-	अगर (ret) अणु
-		अगर (ret == -EAGAIN)
-			जाओ again;
+	if (ret) {
+		if (ret == -EAGAIN)
+			goto again;
 		xenbus_dev_fatal(dev, ret, "completing transaction");
-		जाओ error_irqh;
-	पूर्ण
+		goto error_irqh;
+	}
 
-	xenbus_चयन_state(dev, XenbusStateInitialised);
-	वापस 0;
+	xenbus_switch_state(dev, XenbusStateInitialised);
+	return 0;
 
  error_xenbus:
 	xenbus_transaction_end(xbt, 1);
@@ -480,93 +479,93 @@ MODULE_PARM_DESC(ptr_size,
 	unbind_from_irqhandler(info->irq, info);
 	info->irq = -1;
  error_evtchan:
-	xenbus_मुक्त_evtchn(dev, evtchn);
+	xenbus_free_evtchn(dev, evtchn);
  error_grant:
-	gnttab_end_क्रमeign_access(info->gref, 0, 0UL);
+	gnttab_end_foreign_access(info->gref, 0, 0UL);
 	info->gref = -1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xenkbd_disconnect_backend(काष्ठा xenkbd_info *info)
-अणु
-	अगर (info->irq >= 0)
+static void xenkbd_disconnect_backend(struct xenkbd_info *info)
+{
+	if (info->irq >= 0)
 		unbind_from_irqhandler(info->irq, info);
 	info->irq = -1;
-	अगर (info->gref >= 0)
-		gnttab_end_क्रमeign_access(info->gref, 0, 0UL);
+	if (info->gref >= 0)
+		gnttab_end_foreign_access(info->gref, 0, 0UL);
 	info->gref = -1;
-पूर्ण
+}
 
-अटल व्योम xenkbd_backend_changed(काष्ठा xenbus_device *dev,
-				   क्रमागत xenbus_state backend_state)
-अणु
-	चयन (backend_state) अणु
-	हाल XenbusStateInitialising:
-	हाल XenbusStateInitialised:
-	हाल XenbusStateReconfiguring:
-	हाल XenbusStateReconfigured:
-	हाल XenbusStateUnknown:
-		अवरोध;
+static void xenkbd_backend_changed(struct xenbus_device *dev,
+				   enum xenbus_state backend_state)
+{
+	switch (backend_state) {
+	case XenbusStateInitialising:
+	case XenbusStateInitialised:
+	case XenbusStateReconfiguring:
+	case XenbusStateReconfigured:
+	case XenbusStateUnknown:
+		break;
 
-	हाल XenbusStateInitWait:
-		xenbus_चयन_state(dev, XenbusStateConnected);
-		अवरोध;
+	case XenbusStateInitWait:
+		xenbus_switch_state(dev, XenbusStateConnected);
+		break;
 
-	हाल XenbusStateConnected:
+	case XenbusStateConnected:
 		/*
 		 * Work around xenbus race condition: If backend goes
 		 * through InitWait to Connected fast enough, we can
 		 * get Connected twice here.
 		 */
-		अगर (dev->state != XenbusStateConnected)
-			xenbus_चयन_state(dev, XenbusStateConnected);
-		अवरोध;
+		if (dev->state != XenbusStateConnected)
+			xenbus_switch_state(dev, XenbusStateConnected);
+		break;
 
-	हाल XenbusStateClosed:
-		अगर (dev->state == XenbusStateClosed)
-			अवरोध;
+	case XenbusStateClosed:
+		if (dev->state == XenbusStateClosed)
+			break;
 		fallthrough;	/* Missed the backend's CLOSING state */
-	हाल XenbusStateClosing:
-		xenbus_frontend_बंदd(dev);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case XenbusStateClosing:
+		xenbus_frontend_closed(dev);
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा xenbus_device_id xenkbd_ids[] = अणु
-	अणु XENKBD_DRIVER_NAME पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id xenkbd_ids[] = {
+	{ XENKBD_DRIVER_NAME },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver xenkbd_driver = अणु
+static struct xenbus_driver xenkbd_driver = {
 	.ids = xenkbd_ids,
 	.probe = xenkbd_probe,
-	.हटाओ = xenkbd_हटाओ,
+	.remove = xenkbd_remove,
 	.resume = xenkbd_resume,
 	.otherend_changed = xenkbd_backend_changed,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xenkbd_init(व्योम)
-अणु
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+static int __init xenkbd_init(void)
+{
+	if (!xen_domain())
+		return -ENODEV;
 
-	/* Nothing to करो अगर running in करोm0. */
-	अगर (xen_initial_करोमुख्य())
-		वापस -ENODEV;
+	/* Nothing to do if running in dom0. */
+	if (xen_initial_domain())
+		return -ENODEV;
 
-	अगर (!xen_has_pv_devices())
-		वापस -ENODEV;
+	if (!xen_has_pv_devices())
+		return -ENODEV;
 
-	वापस xenbus_रेजिस्टर_frontend(&xenkbd_driver);
-पूर्ण
+	return xenbus_register_frontend(&xenkbd_driver);
+}
 
-अटल व्योम __निकास xenkbd_cleanup(व्योम)
-अणु
-	xenbus_unरेजिस्टर_driver(&xenkbd_driver);
-पूर्ण
+static void __exit xenkbd_cleanup(void)
+{
+	xenbus_unregister_driver(&xenkbd_driver);
+}
 
 module_init(xenkbd_init);
-module_निकास(xenkbd_cleanup);
+module_exit(xenkbd_cleanup);
 
 MODULE_DESCRIPTION("Xen virtual keyboard/pointer device frontend");
 MODULE_LICENSE("GPL");

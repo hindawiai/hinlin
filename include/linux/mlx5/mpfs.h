@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
  * Copyright (c) 2021 Mellanox Technologies Ltd.
  */
 
-#अगर_अघोषित _MLX5_MPFS_
-#घोषणा _MLX5_MPFS_
+#ifndef _MLX5_MPFS_
+#define _MLX5_MPFS_
 
-काष्ठा mlx5_core_dev;
+struct mlx5_core_dev;
 
-#अगर_घोषित CONFIG_MLX5_MPFS
-पूर्णांक  mlx5_mpfs_add_mac(काष्ठा mlx5_core_dev *dev, u8 *mac);
-पूर्णांक  mlx5_mpfs_del_mac(काष्ठा mlx5_core_dev *dev, u8 *mac);
-#अन्यथा /* #अगर_अघोषित CONFIG_MLX5_MPFS */
-अटल अंतरभूत पूर्णांक  mlx5_mpfs_add_mac(काष्ठा mlx5_core_dev *dev, u8 *mac) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक  mlx5_mpfs_del_mac(काष्ठा mlx5_core_dev *dev, u8 *mac) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MLX5_MPFS
+int  mlx5_mpfs_add_mac(struct mlx5_core_dev *dev, u8 *mac);
+int  mlx5_mpfs_del_mac(struct mlx5_core_dev *dev, u8 *mac);
+#else /* #ifndef CONFIG_MLX5_MPFS */
+static inline int  mlx5_mpfs_add_mac(struct mlx5_core_dev *dev, u8 *mac) { return 0; }
+static inline int  mlx5_mpfs_del_mac(struct mlx5_core_dev *dev, u8 *mac) { return 0; }
+#endif
 
-#पूर्ण_अगर
+#endif

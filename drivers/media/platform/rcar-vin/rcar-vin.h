@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Driver क्रम Renesas R-Car VIN
+ * Driver for Renesas R-Car VIN
  *
  * Copyright (C) 2016 Renesas Electronics Corp.
  * Copyright (C) 2011-2013 Renesas Solutions Corp.
@@ -11,62 +10,62 @@
  * Based on the soc-camera rcar_vin driver
  */
 
-#अगर_अघोषित __RCAR_VIN__
-#घोषणा __RCAR_VIN__
+#ifndef __RCAR_VIN__
+#define __RCAR_VIN__
 
-#समावेश <linux/kref.h>
+#include <linux/kref.h>
 
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/videobuf2-v4l2.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/videobuf2-v4l2.h>
 
 /* Number of HW buffers */
-#घोषणा HW_BUFFER_NUM 3
+#define HW_BUFFER_NUM 3
 
-/* Address alignment mask क्रम HW buffers */
-#घोषणा HW_BUFFER_MASK 0x7f
+/* Address alignment mask for HW buffers */
+#define HW_BUFFER_MASK 0x7f
 
-/* Max number on VIN instances that can be in a प्रणाली */
-#घोषणा RCAR_VIN_NUM 8
+/* Max number on VIN instances that can be in a system */
+#define RCAR_VIN_NUM 8
 
-काष्ठा rvin_group;
+struct rvin_group;
 
-क्रमागत model_id अणु
+enum model_id {
 	RCAR_H1,
 	RCAR_M1,
 	RCAR_GEN2,
 	RCAR_GEN3,
-पूर्ण;
+};
 
-क्रमागत rvin_csi_id अणु
+enum rvin_csi_id {
 	RVIN_CSI20,
 	RVIN_CSI21,
 	RVIN_CSI40,
 	RVIN_CSI41,
 	RVIN_CSI_MAX,
-पूर्ण;
+};
 
 /**
- * क्रमागत rvin_dma_state - DMA states
+ * enum rvin_dma_state - DMA states
  * @STOPPED:   No operation in progress
  * @STARTING:  Capture starting up
  * @RUNNING:   Operation in progress have buffers
  * @STOPPING:  Stopping operation
  * @SUSPENDED: Capture is suspended
  */
-क्रमागत rvin_dma_state अणु
+enum rvin_dma_state {
 	STOPPED = 0,
 	STARTING,
 	RUNNING,
 	STOPPING,
 	SUSPENDED,
-पूर्ण;
+};
 
 /**
- * क्रमागत rvin_buffer_type
+ * enum rvin_buffer_type
  *
  * Describes how a buffer is given to the hardware. To be able
  * to capture SEQ_TB/BT it's needed to capture to the same vb2
@@ -76,25 +75,25 @@
  * @HALF_TOP: One capture fills the top half of the vb2 buffer
  * @HALF_BOTTOM: One capture fills the bottom half of the vb2 buffer
  */
-क्रमागत rvin_buffer_type अणु
+enum rvin_buffer_type {
 	FULL,
 	HALF_TOP,
 	HALF_BOTTOM,
-पूर्ण;
+};
 
 /**
- * काष्ठा rvin_video_क्रमmat - Data क्रमmat stored in memory
- * @fourcc:	Pixelक्रमmat
+ * struct rvin_video_format - Data format stored in memory
+ * @fourcc:	Pixelformat
  * @bpp:	Bytes per pixel
  */
-काष्ठा rvin_video_क्रमmat अणु
+struct rvin_video_format {
 	u32 fourcc;
 	u8 bpp;
-पूर्ण;
+};
 
 /**
- * काष्ठा rvin_parallel_entity - Parallel video input endpoपूर्णांक descriptor
- * @asd:	sub-device descriptor क्रम async framework
+ * struct rvin_parallel_entity - Parallel video input endpoint descriptor
+ * @asd:	sub-device descriptor for async framework
  * @subdev:	subdevice matched using async framework
  * @mbus_type:	media bus type
  * @bus:	media bus parallel configuration
@@ -102,26 +101,26 @@
  * @sink_pad:	sink pad of remote subdevice
  *
  */
-काष्ठा rvin_parallel_entity अणु
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा v4l2_subdev *subdev;
+struct rvin_parallel_entity {
+	struct v4l2_async_subdev *asd;
+	struct v4l2_subdev *subdev;
 
-	क्रमागत v4l2_mbus_type mbus_type;
-	काष्ठा v4l2_fwnode_bus_parallel bus;
+	enum v4l2_mbus_type mbus_type;
+	struct v4l2_fwnode_bus_parallel bus;
 
-	अचिन्हित पूर्णांक source_pad;
-	अचिन्हित पूर्णांक sink_pad;
-पूर्ण;
+	unsigned int source_pad;
+	unsigned int sink_pad;
+};
 
 /**
- * काष्ठा rvin_group_route - describes a route from a channel of a
+ * struct rvin_group_route - describes a route from a channel of a
  *	CSI-2 receiver to a VIN
  *
  * @csi:	CSI-2 receiver ID.
  * @channel:	Output channel of the CSI-2 receiver.
  * @vin:	VIN ID.
- * @mask:	Biपंचांगask of the dअगरferent CHSEL रेजिस्टर values that
- *		allow क्रम a route from @csi + @chan to @vin.
+ * @mask:	Bitmask of the different CHSEL register values that
+ *		allow for a route from @csi + @chan to @vin.
  *
  * .. note::
  *	Each R-Car CSI-2 receiver has four output channels facing the VIN
@@ -130,60 +129,60 @@
  *	up to the CSI-2 receiver driver to configure which VC is output
  *	on which channel, the VIN devices only care about output channels.
  *
- *	There are in some हालs multiple CHSEL रेजिस्टर settings which would
- *	allow क्रम the same route from @csi + @channel to @vin. For example
- *	on R-Car H3 both the CHSEL values 0 and 3 allow क्रम a route from
- *	CSI40/VC0 to VIN0. All possible CHSEL values क्रम a route need to be
- *	recorded as a biपंचांगask in @mask, in this example bit 0 and 3 should
+ *	There are in some cases multiple CHSEL register settings which would
+ *	allow for the same route from @csi + @channel to @vin. For example
+ *	on R-Car H3 both the CHSEL values 0 and 3 allow for a route from
+ *	CSI40/VC0 to VIN0. All possible CHSEL values for a route need to be
+ *	recorded as a bitmask in @mask, in this example bit 0 and 3 should
  *	be set.
  */
-काष्ठा rvin_group_route अणु
-	क्रमागत rvin_csi_id csi;
-	अचिन्हित पूर्णांक channel;
-	अचिन्हित पूर्णांक vin;
-	अचिन्हित पूर्णांक mask;
-पूर्ण;
+struct rvin_group_route {
+	enum rvin_csi_id csi;
+	unsigned int channel;
+	unsigned int vin;
+	unsigned int mask;
+};
 
 /**
- * काष्ठा rvin_info - Inक्रमmation about the particular VIN implementation
+ * struct rvin_info - Information about the particular VIN implementation
  * @model:		VIN model
  * @use_mc:		use media controller instead of controlling subdevice
- * @nv12:		support outputing NV12 pixel क्रमmat
+ * @nv12:		support outputing NV12 pixel format
  * @max_width:		max input width the VIN supports
  * @max_height:		max input height the VIN supports
  * @routes:		list of possible routes from the CSI-2 recivers to
- *			all VINs. The list mush be शून्य terminated.
+ *			all VINs. The list mush be NULL terminated.
  */
-काष्ठा rvin_info अणु
-	क्रमागत model_id model;
+struct rvin_info {
+	enum model_id model;
 	bool use_mc;
 	bool nv12;
 
-	अचिन्हित पूर्णांक max_width;
-	अचिन्हित पूर्णांक max_height;
-	स्थिर काष्ठा rvin_group_route *routes;
-पूर्ण;
+	unsigned int max_width;
+	unsigned int max_height;
+	const struct rvin_group_route *routes;
+};
 
 /**
- * काष्ठा rvin_dev - Renesas VIN device काष्ठाure
+ * struct rvin_dev - Renesas VIN device structure
  * @dev:		(OF) device
- * @base:		device I/O रेजिस्टर space remapped to भव memory
+ * @base:		device I/O register space remapped to virtual memory
  * @info:		info about VIN instance
  *
  * @vdev:		V4L2 video device associated with VIN
  * @v4l2_dev:		V4L2 device
  * @ctrl_handler:	V4L2 control handler
- * @notअगरier:		V4L2 asynchronous subdevs notअगरier
+ * @notifier:		V4L2 asynchronous subdevs notifier
  *
  * @parallel:		parallel input subdevice descriptor
  *
  * @group:		Gen3 CSI group
- * @id:			Gen3 group id क्रम this VIN
- * @pad:		media pad क्रम the video device entity
+ * @id:			Gen3 group id for this VIN
+ * @pad:		media pad for the video device entity
  *
  * @lock:		protects @queue
  * @queue:		vb2 buffers queue
- * @scratch:		cpu address क्रम scratch buffer
+ * @scratch:		cpu address for scratch buffer
  * @scratch_phys:	physical address of the scratch buffer
  *
  * @qlock:		protects @buf_hw, @buf_list, @sequence and @state
@@ -195,115 +194,115 @@
  * @is_csi:		flag to mark the VIN as using a CSI-2 subdevice
  * @chsel:		Cached value of the current CSI-2 channel selection
  *
- * @mbus_code:		media bus क्रमmat code
- * @क्रमmat:		active V4L2 pixel क्रमmat
+ * @mbus_code:		media bus format code
+ * @format:		active V4L2 pixel format
  *
  * @crop:		active cropping
  * @compose:		active composing
  * @src_rect:		active size of the video source
  * @std:		active video standard of the video source
  *
- * @alpha:		Alpha component to fill in क्रम supported pixel क्रमmats
+ * @alpha:		Alpha component to fill in for supported pixel formats
  */
-काष्ठा rvin_dev अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	स्थिर काष्ठा rvin_info *info;
+struct rvin_dev {
+	struct device *dev;
+	void __iomem *base;
+	const struct rvin_info *info;
 
-	काष्ठा video_device vdev;
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	काष्ठा v4l2_async_notअगरier notअगरier;
+	struct video_device vdev;
+	struct v4l2_device v4l2_dev;
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct v4l2_async_notifier notifier;
 
-	काष्ठा rvin_parallel_entity parallel;
+	struct rvin_parallel_entity parallel;
 
-	काष्ठा rvin_group *group;
-	अचिन्हित पूर्णांक id;
-	काष्ठा media_pad pad;
+	struct rvin_group *group;
+	unsigned int id;
+	struct media_pad pad;
 
-	काष्ठा mutex lock;
-	काष्ठा vb2_queue queue;
-	व्योम *scratch;
+	struct mutex lock;
+	struct vb2_queue queue;
+	void *scratch;
 	dma_addr_t scratch_phys;
 
 	spinlock_t qlock;
-	काष्ठा अणु
-		काष्ठा vb2_v4l2_buffer *buffer;
-		क्रमागत rvin_buffer_type type;
+	struct {
+		struct vb2_v4l2_buffer *buffer;
+		enum rvin_buffer_type type;
 		dma_addr_t phys;
-	पूर्ण buf_hw[HW_BUFFER_NUM];
-	काष्ठा list_head buf_list;
-	अचिन्हित पूर्णांक sequence;
-	क्रमागत rvin_dma_state state;
+	} buf_hw[HW_BUFFER_NUM];
+	struct list_head buf_list;
+	unsigned int sequence;
+	enum rvin_dma_state state;
 
 	bool is_csi;
-	अचिन्हित पूर्णांक chsel;
+	unsigned int chsel;
 
 	u32 mbus_code;
-	काष्ठा v4l2_pix_क्रमmat क्रमmat;
+	struct v4l2_pix_format format;
 
-	काष्ठा v4l2_rect crop;
-	काष्ठा v4l2_rect compose;
-	काष्ठा v4l2_rect src_rect;
+	struct v4l2_rect crop;
+	struct v4l2_rect compose;
+	struct v4l2_rect src_rect;
 	v4l2_std_id std;
 
-	अचिन्हित पूर्णांक alpha;
-पूर्ण;
+	unsigned int alpha;
+};
 
-#घोषणा vin_to_source(vin)		((vin)->parallel.subdev)
+#define vin_to_source(vin)		((vin)->parallel.subdev)
 
 /* Debug */
-#घोषणा vin_dbg(d, fmt, arg...)		dev_dbg(d->dev, fmt, ##arg)
-#घोषणा vin_info(d, fmt, arg...)	dev_info(d->dev, fmt, ##arg)
-#घोषणा vin_warn(d, fmt, arg...)	dev_warn(d->dev, fmt, ##arg)
-#घोषणा vin_err(d, fmt, arg...)		dev_err(d->dev, fmt, ##arg)
+#define vin_dbg(d, fmt, arg...)		dev_dbg(d->dev, fmt, ##arg)
+#define vin_info(d, fmt, arg...)	dev_info(d->dev, fmt, ##arg)
+#define vin_warn(d, fmt, arg...)	dev_warn(d->dev, fmt, ##arg)
+#define vin_err(d, fmt, arg...)		dev_err(d->dev, fmt, ##arg)
 
 /**
- * काष्ठा rvin_group - VIN CSI2 group inक्रमmation
+ * struct rvin_group - VIN CSI2 group information
  * @refcount:		number of VIN instances using the group
  *
  * @mdev:		media device which represents the group
  *
- * @lock:		protects the count, notअगरier, vin and csi members
+ * @lock:		protects the count, notifier, vin and csi members
  * @count:		number of enabled VIN instances found in DT
- * @notअगरier:		group notअगरier क्रम CSI-2 async subdevices
+ * @notifier:		group notifier for CSI-2 async subdevices
  * @vin:		VIN instances which are part of the group
- * @csi:		array of pairs of fwnode and subdev poपूर्णांकers
+ * @csi:		array of pairs of fwnode and subdev pointers
  *			to all CSI-2 subdevices.
  */
-काष्ठा rvin_group अणु
-	काष्ठा kref refcount;
+struct rvin_group {
+	struct kref refcount;
 
-	काष्ठा media_device mdev;
+	struct media_device mdev;
 
-	काष्ठा mutex lock;
-	अचिन्हित पूर्णांक count;
-	काष्ठा v4l2_async_notअगरier notअगरier;
-	काष्ठा rvin_dev *vin[RCAR_VIN_NUM];
+	struct mutex lock;
+	unsigned int count;
+	struct v4l2_async_notifier notifier;
+	struct rvin_dev *vin[RCAR_VIN_NUM];
 
-	काष्ठा अणु
-		काष्ठा v4l2_async_subdev *asd;
-		काष्ठा v4l2_subdev *subdev;
-	पूर्ण csi[RVIN_CSI_MAX];
-पूर्ण;
+	struct {
+		struct v4l2_async_subdev *asd;
+		struct v4l2_subdev *subdev;
+	} csi[RVIN_CSI_MAX];
+};
 
-पूर्णांक rvin_dma_रेजिस्टर(काष्ठा rvin_dev *vin, पूर्णांक irq);
-व्योम rvin_dma_unरेजिस्टर(काष्ठा rvin_dev *vin);
+int rvin_dma_register(struct rvin_dev *vin, int irq);
+void rvin_dma_unregister(struct rvin_dev *vin);
 
-पूर्णांक rvin_v4l2_रेजिस्टर(काष्ठा rvin_dev *vin);
-व्योम rvin_v4l2_unरेजिस्टर(काष्ठा rvin_dev *vin);
+int rvin_v4l2_register(struct rvin_dev *vin);
+void rvin_v4l2_unregister(struct rvin_dev *vin);
 
-स्थिर काष्ठा rvin_video_क्रमmat *rvin_क्रमmat_from_pixel(काष्ठा rvin_dev *vin,
-						       u32 pixelक्रमmat);
+const struct rvin_video_format *rvin_format_from_pixel(struct rvin_dev *vin,
+						       u32 pixelformat);
 
 
 /* Cropping, composing and scaling */
-व्योम rvin_crop_scale_comp(काष्ठा rvin_dev *vin);
+void rvin_crop_scale_comp(struct rvin_dev *vin);
 
-पूर्णांक rvin_set_channel_routing(काष्ठा rvin_dev *vin, u8 chsel);
-व्योम rvin_set_alpha(काष्ठा rvin_dev *vin, अचिन्हित पूर्णांक alpha);
+int rvin_set_channel_routing(struct rvin_dev *vin, u8 chsel);
+void rvin_set_alpha(struct rvin_dev *vin, unsigned int alpha);
 
-पूर्णांक rvin_start_streaming(काष्ठा rvin_dev *vin);
-व्योम rvin_stop_streaming(काष्ठा rvin_dev *vin);
+int rvin_start_streaming(struct rvin_dev *vin);
+void rvin_stop_streaming(struct rvin_dev *vin);
 
-#पूर्ण_अगर
+#endif

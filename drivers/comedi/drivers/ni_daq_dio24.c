@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Comedi driver क्रम National Instruments PCMCIA DAQ-Card DIO-24
+ * Comedi driver for National Instruments PCMCIA DAQ-Card DIO-24
  * Copyright (C) 2002 Daniel Vecino Castel <dvecino@able.es>
  *
  * PCMCIA crap at end of file is adapted from dummy_cs.c 1.31
  * 2001/08/24 12:13:13 from the pcmcia package.
  * The initial developer of the pcmcia dummy_cs.c code is David A. Hinds
- * <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
+ * <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  */
 
@@ -20,61 +19,61 @@
  * Updated: Thu, 07 Nov 2002 21:53:06 -0800
  *
  * This is just a wrapper around the 8255.o driver to properly handle
- * the PCMCIA पूर्णांकerface.
+ * the PCMCIA interface.
  */
 
-#समावेश <linux/module.h>
-#समावेश "../comedi_pcmcia.h"
+#include <linux/module.h>
+#include "../comedi_pcmcia.h"
 
-#समावेश "8255.h"
+#include "8255.h"
 
-अटल पूर्णांक dio24_स्वतः_attach(काष्ठा comedi_device *dev,
-			     अचिन्हित दीर्घ context)
-अणु
-	काष्ठा pcmcia_device *link = comedi_to_pcmcia_dev(dev);
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int dio24_auto_attach(struct comedi_device *dev,
+			     unsigned long context)
+{
+	struct pcmcia_device *link = comedi_to_pcmcia_dev(dev);
+	struct comedi_subdevice *s;
+	int ret;
 
 	link->config_flags |= CONF_AUTO_SET_IO;
-	ret = comedi_pcmcia_enable(dev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = comedi_pcmcia_enable(dev, NULL);
+	if (ret)
+		return ret;
 	dev->iobase = link->resource[0]->start;
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* 8255 dio */
 	s = &dev->subdevices[0];
-	वापस subdev_8255_init(dev, s, शून्य, 0x00);
-पूर्ण
+	return subdev_8255_init(dev, s, NULL, 0x00);
+}
 
-अटल काष्ठा comedi_driver driver_dio24 = अणु
+static struct comedi_driver driver_dio24 = {
 	.driver_name	= "ni_daq_dio24",
 	.module		= THIS_MODULE,
-	.स्वतः_attach	= dio24_स्वतः_attach,
+	.auto_attach	= dio24_auto_attach,
 	.detach		= comedi_pcmcia_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक dio24_cs_attach(काष्ठा pcmcia_device *link)
-अणु
-	वापस comedi_pcmcia_स्वतः_config(link, &driver_dio24);
-पूर्ण
+static int dio24_cs_attach(struct pcmcia_device *link)
+{
+	return comedi_pcmcia_auto_config(link, &driver_dio24);
+}
 
-अटल स्थिर काष्ठा pcmcia_device_id dio24_cs_ids[] = अणु
+static const struct pcmcia_device_id dio24_cs_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x010b, 0x475c),	/* daqcard-dio24 */
-	PCMCIA_DEVICE_शून्य
-पूर्ण;
+	PCMCIA_DEVICE_NULL
+};
 MODULE_DEVICE_TABLE(pcmcia, dio24_cs_ids);
 
-अटल काष्ठा pcmcia_driver dio24_cs_driver = अणु
+static struct pcmcia_driver dio24_cs_driver = {
 	.name		= "ni_daq_dio24",
 	.owner		= THIS_MODULE,
 	.id_table	= dio24_cs_ids,
 	.probe		= dio24_cs_attach,
-	.हटाओ		= comedi_pcmcia_स्वतः_unconfig,
-पूर्ण;
+	.remove		= comedi_pcmcia_auto_unconfig,
+};
 module_comedi_pcmcia_driver(driver_dio24, dio24_cs_driver);
 
 MODULE_AUTHOR("Daniel Vecino Castel <dvecino@able.es>");

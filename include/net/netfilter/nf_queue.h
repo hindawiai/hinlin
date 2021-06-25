@@ -1,131 +1,130 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_QUEUE_H
-#घोषणा _NF_QUEUE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_QUEUE_H
+#define _NF_QUEUE_H
 
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/jhash.h>
+#include <linux/netfilter.h>
+#include <linux/skbuff.h>
 
 /* Each queued (to userspace) skbuff has one of these. */
-काष्ठा nf_queue_entry अणु
-	काष्ठा list_head	list;
-	काष्ठा sk_buff		*skb;
-	अचिन्हित पूर्णांक		id;
-	अचिन्हित पूर्णांक		hook_index;	/* index in hook_entries->hook[] */
-#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-	काष्ठा net_device	*physin;
-	काष्ठा net_device	*physout;
-#पूर्ण_अगर
-	काष्ठा nf_hook_state	state;
-	u16			size; /* माप(entry) + saved route keys */
+struct nf_queue_entry {
+	struct list_head	list;
+	struct sk_buff		*skb;
+	unsigned int		id;
+	unsigned int		hook_index;	/* index in hook_entries->hook[] */
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+	struct net_device	*physin;
+	struct net_device	*physout;
+#endif
+	struct nf_hook_state	state;
+	u16			size; /* sizeof(entry) + saved route keys */
 
 	/* extra space to store route keys */
-पूर्ण;
+};
 
-#घोषणा nf_queue_entry_reroute(x) ((व्योम *)x + माप(काष्ठा nf_queue_entry))
+#define nf_queue_entry_reroute(x) ((void *)x + sizeof(struct nf_queue_entry))
 
 /* Packet queuing */
-काष्ठा nf_queue_handler अणु
-	पूर्णांक		(*outfn)(काष्ठा nf_queue_entry *entry,
-				 अचिन्हित पूर्णांक queuक्रमागत);
-	व्योम		(*nf_hook_drop)(काष्ठा net *net);
-पूर्ण;
+struct nf_queue_handler {
+	int		(*outfn)(struct nf_queue_entry *entry,
+				 unsigned int queuenum);
+	void		(*nf_hook_drop)(struct net *net);
+};
 
-व्योम nf_रेजिस्टर_queue_handler(काष्ठा net *net, स्थिर काष्ठा nf_queue_handler *qh);
-व्योम nf_unरेजिस्टर_queue_handler(काष्ठा net *net);
-व्योम nf_reinject(काष्ठा nf_queue_entry *entry, अचिन्हित पूर्णांक verdict);
+void nf_register_queue_handler(struct net *net, const struct nf_queue_handler *qh);
+void nf_unregister_queue_handler(struct net *net);
+void nf_reinject(struct nf_queue_entry *entry, unsigned int verdict);
 
-व्योम nf_queue_entry_get_refs(काष्ठा nf_queue_entry *entry);
-व्योम nf_queue_entry_मुक्त(काष्ठा nf_queue_entry *entry);
+void nf_queue_entry_get_refs(struct nf_queue_entry *entry);
+void nf_queue_entry_free(struct nf_queue_entry *entry);
 
-अटल अंतरभूत व्योम init_hashअक्रमom(u32 *jhash_initval)
-अणु
-	जबतक (*jhash_initval == 0)
-		*jhash_initval = pअक्रमom_u32();
-पूर्ण
+static inline void init_hashrandom(u32 *jhash_initval)
+{
+	while (*jhash_initval == 0)
+		*jhash_initval = prandom_u32();
+}
 
-अटल अंतरभूत u32 hash_v4(स्थिर काष्ठा iphdr *iph, u32 initval)
-अणु
-	/* packets in either direction go पूर्णांकo same queue */
-	अगर ((__क्रमce u32)iph->saddr < (__क्रमce u32)iph->daddr)
-		वापस jhash_3words((__क्रमce u32)iph->saddr,
-			(__क्रमce u32)iph->daddr, iph->protocol, initval);
+static inline u32 hash_v4(const struct iphdr *iph, u32 initval)
+{
+	/* packets in either direction go into same queue */
+	if ((__force u32)iph->saddr < (__force u32)iph->daddr)
+		return jhash_3words((__force u32)iph->saddr,
+			(__force u32)iph->daddr, iph->protocol, initval);
 
-	वापस jhash_3words((__क्रमce u32)iph->daddr,
-			(__क्रमce u32)iph->saddr, iph->protocol, initval);
-पूर्ण
+	return jhash_3words((__force u32)iph->daddr,
+			(__force u32)iph->saddr, iph->protocol, initval);
+}
 
-अटल अंतरभूत u32 hash_v6(स्थिर काष्ठा ipv6hdr *ip6h, u32 initval)
-अणु
+static inline u32 hash_v6(const struct ipv6hdr *ip6h, u32 initval)
+{
 	u32 a, b, c;
 
-	अगर ((__क्रमce u32)ip6h->saddr.s6_addr32[3] <
-	    (__क्रमce u32)ip6h->daddr.s6_addr32[3]) अणु
-		a = (__क्रमce u32) ip6h->saddr.s6_addr32[3];
-		b = (__क्रमce u32) ip6h->daddr.s6_addr32[3];
-	पूर्ण अन्यथा अणु
-		b = (__क्रमce u32) ip6h->saddr.s6_addr32[3];
-		a = (__क्रमce u32) ip6h->daddr.s6_addr32[3];
-	पूर्ण
+	if ((__force u32)ip6h->saddr.s6_addr32[3] <
+	    (__force u32)ip6h->daddr.s6_addr32[3]) {
+		a = (__force u32) ip6h->saddr.s6_addr32[3];
+		b = (__force u32) ip6h->daddr.s6_addr32[3];
+	} else {
+		b = (__force u32) ip6h->saddr.s6_addr32[3];
+		a = (__force u32) ip6h->daddr.s6_addr32[3];
+	}
 
-	अगर ((__क्रमce u32)ip6h->saddr.s6_addr32[1] <
-	    (__क्रमce u32)ip6h->daddr.s6_addr32[1])
-		c = (__क्रमce u32) ip6h->saddr.s6_addr32[1];
-	अन्यथा
-		c = (__क्रमce u32) ip6h->daddr.s6_addr32[1];
+	if ((__force u32)ip6h->saddr.s6_addr32[1] <
+	    (__force u32)ip6h->daddr.s6_addr32[1])
+		c = (__force u32) ip6h->saddr.s6_addr32[1];
+	else
+		c = (__force u32) ip6h->daddr.s6_addr32[1];
 
-	वापस jhash_3words(a, b, c, initval);
-पूर्ण
+	return jhash_3words(a, b, c, initval);
+}
 
-अटल अंतरभूत u32 hash_bridge(स्थिर काष्ठा sk_buff *skb, u32 initval)
-अणु
-	काष्ठा ipv6hdr *ip6h, _ip6h;
-	काष्ठा iphdr *iph, _iph;
+static inline u32 hash_bridge(const struct sk_buff *skb, u32 initval)
+{
+	struct ipv6hdr *ip6h, _ip6h;
+	struct iphdr *iph, _iph;
 
-	चयन (eth_hdr(skb)->h_proto) अणु
-	हाल htons(ETH_P_IP):
-		iph = skb_header_poपूर्णांकer(skb, skb_network_offset(skb),
-					 माप(*iph), &_iph);
-		अगर (iph)
-			वापस hash_v4(iph, initval);
-		अवरोध;
-	हाल htons(ETH_P_IPV6):
-		ip6h = skb_header_poपूर्णांकer(skb, skb_network_offset(skb),
-					  माप(*ip6h), &_ip6h);
-		अगर (ip6h)
-			वापस hash_v6(ip6h, initval);
-		अवरोध;
-	पूर्ण
+	switch (eth_hdr(skb)->h_proto) {
+	case htons(ETH_P_IP):
+		iph = skb_header_pointer(skb, skb_network_offset(skb),
+					 sizeof(*iph), &_iph);
+		if (iph)
+			return hash_v4(iph, initval);
+		break;
+	case htons(ETH_P_IPV6):
+		ip6h = skb_header_pointer(skb, skb_network_offset(skb),
+					  sizeof(*ip6h), &_ip6h);
+		if (ip6h)
+			return hash_v6(ip6h, initval);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32
-nfqueue_hash(स्थिर काष्ठा sk_buff *skb, u16 queue, u16 queues_total, u8 family,
+static inline u32
+nfqueue_hash(const struct sk_buff *skb, u16 queue, u16 queues_total, u8 family,
 	     u32 initval)
-अणु
-	चयन (family) अणु
-	हाल NFPROTO_IPV4:
+{
+	switch (family) {
+	case NFPROTO_IPV4:
 		queue += reciprocal_scale(hash_v4(ip_hdr(skb), initval),
 					  queues_total);
-		अवरोध;
-	हाल NFPROTO_IPV6:
+		break;
+	case NFPROTO_IPV6:
 		queue += reciprocal_scale(hash_v6(ipv6_hdr(skb), initval),
 					  queues_total);
-		अवरोध;
-	हाल NFPROTO_BRIDGE:
+		break;
+	case NFPROTO_BRIDGE:
 		queue += reciprocal_scale(hash_bridge(skb, initval),
 					  queues_total);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस queue;
-पूर्ण
+	return queue;
+}
 
-पूर्णांक nf_queue(काष्ठा sk_buff *skb, काष्ठा nf_hook_state *state,
-	     अचिन्हित पूर्णांक index, अचिन्हित पूर्णांक verdict);
+int nf_queue(struct sk_buff *skb, struct nf_hook_state *state,
+	     unsigned int index, unsigned int verdict);
 
-#पूर्ण_अगर /* _NF_QUEUE_H */
+#endif /* _NF_QUEUE_H */

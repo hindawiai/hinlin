@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * htu21.c - Support क्रम Measurement-Specialties
+ * htu21.c - Support for Measurement-Specialties
  *           htu21 temperature & humidity sensor
  *	     and humidity part of MS8607 sensor
  *
@@ -10,194 +9,194 @@
  * (7-bit I2C slave address 0x40)
  *
  * Datasheet:
- *  http://www.meas-spec.com/करोwnloads/HTU21D.pdf
+ *  http://www.meas-spec.com/downloads/HTU21D.pdf
  * Datasheet:
- *  http://www.meas-spec.com/करोwnloads/MS8607-02BA01.pdf
+ *  http://www.meas-spec.com/downloads/MS8607-02BA01.pdf
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/stat.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#समावेश "../common/ms_sensors/ms_sensors_i2c.h"
+#include "../common/ms_sensors/ms_sensors_i2c.h"
 
-#घोषणा HTU21_RESET				0xFE
+#define HTU21_RESET				0xFE
 
-क्रमागत अणु
+enum {
 	HTU21,
 	MS8607
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक htu21_samp_freq[4] = अणु 20, 40, 70, 120 पूर्ण;
-/* String copy of the above स्थिर क्रम पढ़ोability purpose */
-अटल स्थिर अक्षर htu21_show_samp_freq[] = "20 40 70 120";
+static const int htu21_samp_freq[4] = { 20, 40, 70, 120 };
+/* String copy of the above const for readability purpose */
+static const char htu21_show_samp_freq[] = "20 40 70 120";
 
-अटल पूर्णांक htu21_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			  काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *val,
-			  पूर्णांक *val2, दीर्घ mask)
-अणु
-	पूर्णांक ret, temperature;
-	अचिन्हित पूर्णांक humidity;
-	काष्ठा ms_ht_dev *dev_data = iio_priv(indio_dev);
+static int htu21_read_raw(struct iio_dev *indio_dev,
+			  struct iio_chan_spec const *channel, int *val,
+			  int *val2, long mask)
+{
+	int ret, temperature;
+	unsigned int humidity;
+	struct ms_ht_dev *dev_data = iio_priv(indio_dev);
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_PROCESSED:
-		चयन (channel->type) अणु
-		हाल IIO_TEMP:	/* in milli तओC */
-			ret = ms_sensors_ht_पढ़ो_temperature(dev_data,
+	switch (mask) {
+	case IIO_CHAN_INFO_PROCESSED:
+		switch (channel->type) {
+		case IIO_TEMP:	/* in milli °C */
+			ret = ms_sensors_ht_read_temperature(dev_data,
 							     &temperature);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 			*val = temperature;
 
-			वापस IIO_VAL_INT;
-		हाल IIO_HUMIDITYRELATIVE:	/* in milli %RH */
-			ret = ms_sensors_ht_पढ़ो_humidity(dev_data,
+			return IIO_VAL_INT;
+		case IIO_HUMIDITYRELATIVE:	/* in milli %RH */
+			ret = ms_sensors_ht_read_humidity(dev_data,
 							  &humidity);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 			*val = humidity;
 
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		*val = htu21_samp_freq[dev_data->res_index];
 
-		वापस IIO_VAL_INT;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक htu21_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा ms_ht_dev *dev_data = iio_priv(indio_dev);
-	पूर्णांक i, ret;
+static int htu21_write_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int val, int val2, long mask)
+{
+	struct ms_ht_dev *dev_data = iio_priv(indio_dev);
+	int i, ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		i = ARRAY_SIZE(htu21_samp_freq);
-		जबतक (i-- > 0)
-			अगर (val == htu21_samp_freq[i])
-				अवरोध;
-		अगर (i < 0)
-			वापस -EINVAL;
+		while (i-- > 0)
+			if (val == htu21_samp_freq[i])
+				break;
+		if (i < 0)
+			return -EINVAL;
 		mutex_lock(&dev_data->lock);
 		dev_data->res_index = i;
-		ret = ms_sensors_ग_लिखो_resolution(dev_data, i);
+		ret = ms_sensors_write_resolution(dev_data, i);
 		mutex_unlock(&dev_data->lock);
 
-		वापस ret;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return ret;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_chan_spec htu21_channels[] = अणु
-	अणु
+static const struct iio_chan_spec htu21_channels[] = {
+	{
 		.type = IIO_TEMP,
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_PROCESSED),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
-	 पूर्ण,
-	अणु
+	 },
+	{
 		.type = IIO_HUMIDITYRELATIVE,
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_PROCESSED),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
-	 पूर्ण
-पूर्ण;
+	 }
+};
 
 /*
- * Meas Spec recommendation is to not पढ़ो temperature
- * on this driver part क्रम MS8607
+ * Meas Spec recommendation is to not read temperature
+ * on this driver part for MS8607
  */
-अटल स्थिर काष्ठा iio_chan_spec ms8607_channels[] = अणु
-	अणु
+static const struct iio_chan_spec ms8607_channels[] = {
+	{
 		.type = IIO_HUMIDITYRELATIVE,
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_PROCESSED),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
-	 पूर्ण
-पूर्ण;
+	 }
+};
 
-अटल sमाप_प्रकार htu21_show_battery_low(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा ms_ht_dev *dev_data = iio_priv(indio_dev);
+static ssize_t htu21_show_battery_low(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct ms_ht_dev *dev_data = iio_priv(indio_dev);
 
-	वापस ms_sensors_show_battery_low(dev_data, buf);
-पूर्ण
+	return ms_sensors_show_battery_low(dev_data, buf);
+}
 
-अटल sमाप_प्रकार htu21_show_heater(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा ms_ht_dev *dev_data = iio_priv(indio_dev);
+static ssize_t htu21_show_heater(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct ms_ht_dev *dev_data = iio_priv(indio_dev);
 
-	वापस ms_sensors_show_heater(dev_data, buf);
-पूर्ण
+	return ms_sensors_show_heater(dev_data, buf);
+}
 
-अटल sमाप_प्रकार htu21_ग_लिखो_heater(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा ms_ht_dev *dev_data = iio_priv(indio_dev);
+static ssize_t htu21_write_heater(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct ms_ht_dev *dev_data = iio_priv(indio_dev);
 
-	वापस ms_sensors_ग_लिखो_heater(dev_data, buf, len);
-पूर्ण
+	return ms_sensors_write_heater(dev_data, buf, len);
+}
 
-अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL(htu21_show_samp_freq);
-अटल IIO_DEVICE_ATTR(battery_low, S_IRUGO,
-		       htu21_show_battery_low, शून्य, 0);
-अटल IIO_DEVICE_ATTR(heater_enable, S_IRUGO | S_IWUSR,
-		       htu21_show_heater, htu21_ग_लिखो_heater, 0);
+static IIO_CONST_ATTR_SAMP_FREQ_AVAIL(htu21_show_samp_freq);
+static IIO_DEVICE_ATTR(battery_low, S_IRUGO,
+		       htu21_show_battery_low, NULL, 0);
+static IIO_DEVICE_ATTR(heater_enable, S_IRUGO | S_IWUSR,
+		       htu21_show_heater, htu21_write_heater, 0);
 
-अटल काष्ठा attribute *htu21_attributes[] = अणु
-	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+static struct attribute *htu21_attributes[] = {
+	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_battery_low.dev_attr.attr,
 	&iio_dev_attr_heater_enable.dev_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group htu21_attribute_group = अणु
+static const struct attribute_group htu21_attribute_group = {
 	.attrs = htu21_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info htu21_info = अणु
-	.पढ़ो_raw = htu21_पढ़ो_raw,
-	.ग_लिखो_raw = htu21_ग_लिखो_raw,
+static const struct iio_info htu21_info = {
+	.read_raw = htu21_read_raw,
+	.write_raw = htu21_write_raw,
 	.attrs = &htu21_attribute_group,
-पूर्ण;
+};
 
-अटल पूर्णांक htu21_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा ms_ht_dev *dev_data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int htu21_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct ms_ht_dev *dev_data;
+	struct iio_dev *indio_dev;
+	int ret;
 	u64 serial_number;
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_WRITE_BYTE_DATA |
 				     I2C_FUNC_SMBUS_WRITE_BYTE |
-				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) अणु
+				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) {
 		dev_err(&client->dev,
 			"Adapter does not support some i2c transaction\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*dev_data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*dev_data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	dev_data = iio_priv(indio_dev);
 	dev_data->client = client;
@@ -206,52 +205,52 @@
 
 	indio_dev->info = &htu21_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	अगर (id->driver_data == MS8607) अणु
+	if (id->driver_data == MS8607) {
 		indio_dev->channels = ms8607_channels;
 		indio_dev->num_channels = ARRAY_SIZE(ms8607_channels);
-	पूर्ण अन्यथा अणु
+	} else {
 		indio_dev->channels = htu21_channels;
 		indio_dev->num_channels = ARRAY_SIZE(htu21_channels);
-	पूर्ण
+	}
 
 	i2c_set_clientdata(client, indio_dev);
 
 	ret = ms_sensors_reset(client, HTU21_RESET, 15000);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ms_sensors_पढ़ो_serial(client, &serial_number);
-	अगर (ret)
-		वापस ret;
+	ret = ms_sensors_read_serial(client, &serial_number);
+	if (ret)
+		return ret;
 	dev_info(&client->dev, "Serial number : %llx", serial_number);
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id htu21_id[] = अणु
-	अणु"htu21", HTU21पूर्ण,
-	अणु"ms8607-humidity", MS8607पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id htu21_id[] = {
+	{"htu21", HTU21},
+	{"ms8607-humidity", MS8607},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, htu21_id);
 
-अटल स्थिर काष्ठा of_device_id htu21_of_match[] = अणु
-	अणु .compatible = "meas,htu21", पूर्ण,
-	अणु .compatible = "meas,ms8607-humidity", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id htu21_of_match[] = {
+	{ .compatible = "meas,htu21", },
+	{ .compatible = "meas,ms8607-humidity", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, htu21_of_match);
 
-अटल काष्ठा i2c_driver htu21_driver = अणु
+static struct i2c_driver htu21_driver = {
 	.probe = htu21_probe,
 	.id_table = htu21_id,
-	.driver = अणु
+	.driver = {
 		   .name = "htu21",
 		   .of_match_table = htu21_of_match,
-		   पूर्ण,
-पूर्ण;
+		   },
+};
 
 module_i2c_driver(htu21_driver);
 

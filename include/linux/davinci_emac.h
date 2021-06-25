@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * TI DaVinci EMAC platक्रमm support
+ * TI DaVinci EMAC platform support
  *
  * Author: Kevin Hilman, Deep Root Systems, LLC
  *
@@ -9,18 +8,18 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#अगर_अघोषित _LINUX_DAVINCI_EMAC_H
-#घोषणा _LINUX_DAVINCI_EMAC_H
+#ifndef _LINUX_DAVINCI_EMAC_H
+#define _LINUX_DAVINCI_EMAC_H
 
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/nvmem-consumer.h>
+#include <linux/if_ether.h>
+#include <linux/nvmem-consumer.h>
 
-काष्ठा mdio_platक्रमm_data अणु
-	अचिन्हित दीर्घ		bus_freq;
-पूर्ण;
+struct mdio_platform_data {
+	unsigned long		bus_freq;
+};
 
-काष्ठा emac_platक्रमm_data अणु
-	अक्षर mac_addr[ETH_ALEN];
+struct emac_platform_data {
+	char mac_addr[ETH_ALEN];
 	u32 ctrl_reg_offset;
 	u32 ctrl_mod_reg_offset;
 	u32 ctrl_ram_offset;
@@ -29,22 +28,22 @@
 
 	/*
 	 * phy_id can be one of the following:
-	 *   - शून्य		: use the first phy on the bus,
-	 *   - ""		: क्रमce to 100/full, no mdio control
-	 *   - "<bus>:<addr>"	: use the specअगरied bus and phy
+	 *   - NULL		: use the first phy on the bus,
+	 *   - ""		: force to 100/full, no mdio control
+	 *   - "<bus>:<addr>"	: use the specified bus and phy
 	 */
-	स्थिर अक्षर *phy_id;
+	const char *phy_id;
 
 	u8 rmii_en;
 	u8 version;
 	bool no_bd_ram;
-	व्योम (*पूर्णांकerrupt_enable) (व्योम);
-	व्योम (*पूर्णांकerrupt_disable) (व्योम);
-पूर्ण;
+	void (*interrupt_enable) (void);
+	void (*interrupt_disable) (void);
+};
 
-क्रमागत अणु
+enum {
 	EMAC_VERSION_1,	/* DM644x */
 	EMAC_VERSION_2,	/* DM646x */
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

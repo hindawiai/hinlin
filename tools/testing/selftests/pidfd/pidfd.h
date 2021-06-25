@@ -1,112 +1,111 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __PIDFD_H
-#घोषणा __PIDFD_H
+#ifndef __PIDFD_H
+#define __PIDFD_H
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <sched.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <syscall.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syscall.h>
+#include <sys/mount.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-#अगर_अघोषित P_PIDFD
-#घोषणा P_PIDFD 3
-#पूर्ण_अगर
+#ifndef P_PIDFD
+#define P_PIDFD 3
+#endif
 
-#अगर_अघोषित CLONE_NEWTIME
-#घोषणा CLONE_NEWTIME 0x00000080
-#पूर्ण_अगर
+#ifndef CLONE_NEWTIME
+#define CLONE_NEWTIME 0x00000080
+#endif
 
-#अगर_अघोषित CLONE_PIDFD
-#घोषणा CLONE_PIDFD 0x00001000
-#पूर्ण_अगर
+#ifndef CLONE_PIDFD
+#define CLONE_PIDFD 0x00001000
+#endif
 
-#अगर_अघोषित __NR_pidfd_खोलो
-#घोषणा __NR_pidfd_खोलो -1
-#पूर्ण_अगर
+#ifndef __NR_pidfd_open
+#define __NR_pidfd_open -1
+#endif
 
-#अगर_अघोषित __NR_pidfd_send_संकेत
-#घोषणा __NR_pidfd_send_संकेत -1
-#पूर्ण_अगर
+#ifndef __NR_pidfd_send_signal
+#define __NR_pidfd_send_signal -1
+#endif
 
-#अगर_अघोषित __NR_clone3
-#घोषणा __NR_clone3 -1
-#पूर्ण_अगर
+#ifndef __NR_clone3
+#define __NR_clone3 -1
+#endif
 
-#अगर_अघोषित __NR_pidfd_getfd
-#घोषणा __NR_pidfd_getfd -1
-#पूर्ण_अगर
+#ifndef __NR_pidfd_getfd
+#define __NR_pidfd_getfd -1
+#endif
 
-#अगर_अघोषित PIDFD_NONBLOCK
-#घोषणा PIDFD_NONBLOCK O_NONBLOCK
-#पूर्ण_अगर
+#ifndef PIDFD_NONBLOCK
+#define PIDFD_NONBLOCK O_NONBLOCK
+#endif
 
 /*
  * The kernel reserves 300 pids via RESERVED_PIDS in kernel/pid.c
  * That means, when it wraps around any pid < 300 will be skipped.
  * So we need to use a pid > 300 in order to test recycling.
  */
-#घोषणा PID_RECYCLE 1000
+#define PID_RECYCLE 1000
 
 /*
- * Define a few custom error codes क्रम the child process to clearly indicate
- * what is happening. This way we can tell the dअगरference between a प्रणाली
+ * Define a few custom error codes for the child process to clearly indicate
+ * what is happening. This way we can tell the difference between a system
  * error, a test error, etc.
  */
-#घोषणा PIDFD_PASS 0
-#घोषणा PIDFD_FAIL 1
-#घोषणा PIDFD_ERROR 2
-#घोषणा PIDFD_SKIP 3
-#घोषणा PIDFD_XFAIL 4
+#define PIDFD_PASS 0
+#define PIDFD_FAIL 1
+#define PIDFD_ERROR 2
+#define PIDFD_SKIP 3
+#define PIDFD_XFAIL 4
 
-पूर्णांक रुको_क्रम_pid(pid_t pid)
-अणु
-	पूर्णांक status, ret;
+int wait_for_pid(pid_t pid)
+{
+	int status, ret;
 
 again:
-	ret = रुकोpid(pid, &status, 0);
-	अगर (ret == -1) अणु
-		अगर (त्रुटि_सं == EINTR)
-			जाओ again;
+	ret = waitpid(pid, &status, 0);
+	if (ret == -1) {
+		if (errno == EINTR)
+			goto again;
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (!WIFEXITED(status))
-		वापस -1;
+	if (!WIFEXITED(status))
+		return -1;
 
-	वापस WEXITSTATUS(status);
-पूर्ण
+	return WEXITSTATUS(status);
+}
 
-अटल अंतरभूत पूर्णांक sys_pidfd_खोलो(pid_t pid, अचिन्हित पूर्णांक flags)
-अणु
-	वापस syscall(__NR_pidfd_खोलो, pid, flags);
-पूर्ण
+static inline int sys_pidfd_open(pid_t pid, unsigned int flags)
+{
+	return syscall(__NR_pidfd_open, pid, flags);
+}
 
-अटल अंतरभूत पूर्णांक sys_pidfd_send_संकेत(पूर्णांक pidfd, पूर्णांक sig, siginfo_t *info,
-					अचिन्हित पूर्णांक flags)
-अणु
-	वापस syscall(__NR_pidfd_send_संकेत, pidfd, sig, info, flags);
-पूर्ण
+static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
+					unsigned int flags)
+{
+	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
+}
 
-अटल अंतरभूत पूर्णांक sys_pidfd_getfd(पूर्णांक pidfd, पूर्णांक fd, पूर्णांक flags)
-अणु
-	वापस syscall(__NR_pidfd_getfd, pidfd, fd, flags);
-पूर्ण
+static inline int sys_pidfd_getfd(int pidfd, int fd, int flags)
+{
+	return syscall(__NR_pidfd_getfd, pidfd, fd, flags);
+}
 
-अटल अंतरभूत पूर्णांक sys_memfd_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक flags)
-अणु
-	वापस syscall(__NR_memfd_create, name, flags);
-पूर्ण
+static inline int sys_memfd_create(const char *name, unsigned int flags)
+{
+	return syscall(__NR_memfd_create, name, flags);
+}
 
-#पूर्ण_अगर /* __PIDFD_H */
+#endif /* __PIDFD_H */

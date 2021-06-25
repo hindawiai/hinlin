@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Texas Instruments Ethernet Switch media-access-controller (MAC) submodule/
  * Ethernet MAC Sliver (CPGMAC_SL) APIs
@@ -8,12 +7,12 @@
  *
  */
 
-#अगर_अघोषित __TI_CPSW_SL_H__
-#घोषणा __TI_CPSW_SL_H__
+#ifndef __TI_CPSW_SL_H__
+#define __TI_CPSW_SL_H__
 
-#समावेश <linux/device.h>
+#include <linux/device.h>
 
-क्रमागत cpsw_sl_regs अणु
+enum cpsw_sl_regs {
 	CPSW_SL_IDVER,
 	CPSW_SL_MACCONTROL,
 	CPSW_SL_MACSTATUS,
@@ -25,9 +24,9 @@
 	CPSW_SL_EMCONTROL,
 	CPSW_SL_RX_PRI_MAP,
 	CPSW_SL_TX_GAP,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CPSW_SL_CTL_FULLDUPLEX = BIT(0), /* Full Duplex mode */
 	CPSW_SL_CTL_LOOPBACK = BIT(1), /* Loop Back Mode */
 	CPSW_SL_CTL_MTEST = BIT(2), /* Manufacturing Test mode */
@@ -54,21 +53,21 @@
 	CPSW_SL_CTL_EXT_EN_XGIG = BIT(25),  /* Ext XGIG Control En, k3 only */
 
 	CPSW_SL_CTL_FUNCS_COUNT
-पूर्ण;
+};
 
-काष्ठा cpsw_sl;
+struct cpsw_sl;
 
-काष्ठा cpsw_sl *cpsw_sl_get(स्थिर अक्षर *device_id, काष्ठा device *dev,
-			    व्योम __iomem *sl_base);
+struct cpsw_sl *cpsw_sl_get(const char *device_id, struct device *dev,
+			    void __iomem *sl_base);
 
-व्योम cpsw_sl_reset(काष्ठा cpsw_sl *sl, अचिन्हित दीर्घ पंचांगo);
+void cpsw_sl_reset(struct cpsw_sl *sl, unsigned long tmo);
 
-u32 cpsw_sl_ctl_set(काष्ठा cpsw_sl *sl, u32 ctl_funcs);
-u32 cpsw_sl_ctl_clr(काष्ठा cpsw_sl *sl, u32 ctl_funcs);
-व्योम cpsw_sl_ctl_reset(काष्ठा cpsw_sl *sl);
-पूर्णांक cpsw_sl_रुको_क्रम_idle(काष्ठा cpsw_sl *sl, अचिन्हित दीर्घ पंचांगo);
+u32 cpsw_sl_ctl_set(struct cpsw_sl *sl, u32 ctl_funcs);
+u32 cpsw_sl_ctl_clr(struct cpsw_sl *sl, u32 ctl_funcs);
+void cpsw_sl_ctl_reset(struct cpsw_sl *sl);
+int cpsw_sl_wait_for_idle(struct cpsw_sl *sl, unsigned long tmo);
 
-u32 cpsw_sl_reg_पढ़ो(काष्ठा cpsw_sl *sl, क्रमागत cpsw_sl_regs reg);
-व्योम cpsw_sl_reg_ग_लिखो(काष्ठा cpsw_sl *sl, क्रमागत cpsw_sl_regs reg, u32 val);
+u32 cpsw_sl_reg_read(struct cpsw_sl *sl, enum cpsw_sl_regs reg);
+void cpsw_sl_reg_write(struct cpsw_sl *sl, enum cpsw_sl_regs reg, u32 val);
 
-#पूर्ण_अगर /* __TI_CPSW_SL_H__ */
+#endif /* __TI_CPSW_SL_H__ */

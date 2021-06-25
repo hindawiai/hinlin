@@ -1,504 +1,503 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * The USB Monitor, inspired by Dave Harding's USBMon.
  *
- * This is a binary क्रमmat पढ़ोer.
+ * This is a binary format reader.
  *
  * Copyright (C) 2006 Paolo Abeni (paolo.abeni@email.it)
  * Copyright (C) 2006,2007 Pete Zaitcev (zaitcev@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/export.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय64.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/export.h>
+#include <linux/usb.h>
+#include <linux/poll.h>
+#include <linux/compat.h>
+#include <linux/mm.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include <linux/time64.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "usb_mon.h"
+#include "usb_mon.h"
 
 /*
  * Defined by USB 2.0 clause 9.3, table 9.2.
  */
-#घोषणा SETUP_LEN  8
+#define SETUP_LEN  8
 
 /* ioctl macros */
-#घोषणा MON_IOC_MAGIC 0x92
+#define MON_IOC_MAGIC 0x92
 
-#घोषणा MON_IOCQ_URB_LEN _IO(MON_IOC_MAGIC, 1)
-/* #2 used to be MON_IOCX_URB, हटाओd beक्रमe it got पूर्णांकo Linus tree */
-#घोषणा MON_IOCG_STATS _IOR(MON_IOC_MAGIC, 3, काष्ठा mon_bin_stats)
-#घोषणा MON_IOCT_RING_SIZE _IO(MON_IOC_MAGIC, 4)
-#घोषणा MON_IOCQ_RING_SIZE _IO(MON_IOC_MAGIC, 5)
-#घोषणा MON_IOCX_GET   _IOW(MON_IOC_MAGIC, 6, काष्ठा mon_bin_get)
-#घोषणा MON_IOCX_MFETCH _IOWR(MON_IOC_MAGIC, 7, काष्ठा mon_bin_mfetch)
-#घोषणा MON_IOCH_MFLUSH _IO(MON_IOC_MAGIC, 8)
+#define MON_IOCQ_URB_LEN _IO(MON_IOC_MAGIC, 1)
+/* #2 used to be MON_IOCX_URB, removed before it got into Linus tree */
+#define MON_IOCG_STATS _IOR(MON_IOC_MAGIC, 3, struct mon_bin_stats)
+#define MON_IOCT_RING_SIZE _IO(MON_IOC_MAGIC, 4)
+#define MON_IOCQ_RING_SIZE _IO(MON_IOC_MAGIC, 5)
+#define MON_IOCX_GET   _IOW(MON_IOC_MAGIC, 6, struct mon_bin_get)
+#define MON_IOCX_MFETCH _IOWR(MON_IOC_MAGIC, 7, struct mon_bin_mfetch)
+#define MON_IOCH_MFLUSH _IO(MON_IOC_MAGIC, 8)
 /* #9 was MON_IOCT_SETAPI */
-#घोषणा MON_IOCX_GETX   _IOW(MON_IOC_MAGIC, 10, काष्ठा mon_bin_get)
+#define MON_IOCX_GETX   _IOW(MON_IOC_MAGIC, 10, struct mon_bin_get)
 
-#अगर_घोषित CONFIG_COMPAT
-#घोषणा MON_IOCX_GET32 _IOW(MON_IOC_MAGIC, 6, काष्ठा mon_bin_get32)
-#घोषणा MON_IOCX_MFETCH32 _IOWR(MON_IOC_MAGIC, 7, काष्ठा mon_bin_mfetch32)
-#घोषणा MON_IOCX_GETX32   _IOW(MON_IOC_MAGIC, 10, काष्ठा mon_bin_get32)
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+#define MON_IOCX_GET32 _IOW(MON_IOC_MAGIC, 6, struct mon_bin_get32)
+#define MON_IOCX_MFETCH32 _IOWR(MON_IOC_MAGIC, 7, struct mon_bin_mfetch32)
+#define MON_IOCX_GETX32   _IOW(MON_IOC_MAGIC, 10, struct mon_bin_get32)
+#endif
 
 /*
- * Some architectures have enormous basic pages (16KB क्रम ia64, 64KB क्रम ppc).
+ * Some architectures have enormous basic pages (16KB for ia64, 64KB for ppc).
  * But it's all right. Just use a simple way to make sure the chunk is never
  * smaller than a page.
  *
- * N.B. An application करोes not know our chunk size.
+ * N.B. An application does not know our chunk size.
  *
- * Woops, get_zeroed_page() वापसs a single page. I guess we're stuck with
- * page-sized chunks क्रम the समय being.
+ * Woops, get_zeroed_page() returns a single page. I guess we're stuck with
+ * page-sized chunks for the time being.
  */
-#घोषणा CHUNK_SIZE   PAGE_SIZE
-#घोषणा CHUNK_ALIGN(x)   (((x)+CHUNK_SIZE-1) & ~(CHUNK_SIZE-1))
+#define CHUNK_SIZE   PAGE_SIZE
+#define CHUNK_ALIGN(x)   (((x)+CHUNK_SIZE-1) & ~(CHUNK_SIZE-1))
 
 /*
  * The magic limit was calculated so that it allows the monitoring
  * application to pick data once in two ticks. This way, another application,
- * which presumably drives the bus, माला_लो to hog CPU, yet we collect our data.
- * If HZ is 100, a 480 mbit/s bus drives 614 KB every jअगरfy. USB has an
- * enormous overhead built पूर्णांकo the bus protocol, so we need about 1000 KB.
+ * which presumably drives the bus, gets to hog CPU, yet we collect our data.
+ * If HZ is 100, a 480 mbit/s bus drives 614 KB every jiffy. USB has an
+ * enormous overhead built into the bus protocol, so we need about 1000 KB.
  *
- * This is still too much क्रम most हालs, where we just snoop a few
- * descriptor fetches क्रम क्रमागतeration. So, the शेष is a "reasonable"
- * amount क्रम प्रणालीs with HZ=250 and incomplete bus saturation.
+ * This is still too much for most cases, where we just snoop a few
+ * descriptor fetches for enumeration. So, the default is a "reasonable"
+ * amount for systems with HZ=250 and incomplete bus saturation.
  *
  * XXX What about multi-megabyte URBs which take minutes to transfer?
  */
-#घोषणा BUFF_MAX  CHUNK_ALIGN(1200*1024)
-#घोषणा BUFF_DFL   CHUNK_ALIGN(300*1024)
-#घोषणा BUFF_MIN     CHUNK_ALIGN(8*1024)
+#define BUFF_MAX  CHUNK_ALIGN(1200*1024)
+#define BUFF_DFL   CHUNK_ALIGN(300*1024)
+#define BUFF_MIN     CHUNK_ALIGN(8*1024)
 
 /*
  * The per-event API header (2 per URB).
  *
- * This काष्ठाure is seen in userland as defined by the करोcumentation.
+ * This structure is seen in userland as defined by the documentation.
  */
-काष्ठा mon_bin_hdr अणु
+struct mon_bin_hdr {
 	u64 id;			/* URB ID - from submission to callback */
-	अचिन्हित अक्षर type;	/* Same as in text API; extensible. */
-	अचिन्हित अक्षर xfer_type;	/* ISO, Intr, Control, Bulk */
-	अचिन्हित अक्षर epnum;	/* Endpoपूर्णांक number and transfer direction */
-	अचिन्हित अक्षर devnum;	/* Device address */
-	अचिन्हित लघु busnum;	/* Bus number */
-	अक्षर flag_setup;
-	अक्षर flag_data;
-	s64 ts_sec;		/* kसमय_get_real_ts64 */
-	s32 ts_usec;		/* kसमय_get_real_ts64 */
-	पूर्णांक status;
-	अचिन्हित पूर्णांक len_urb;	/* Length of data (submitted or actual) */
-	अचिन्हित पूर्णांक len_cap;	/* Delivered length */
-	जोड़ अणु
-		अचिन्हित अक्षर setup[SETUP_LEN];	/* Only क्रम Control S-type */
-		काष्ठा iso_rec अणु
-			पूर्णांक error_count;
-			पूर्णांक numdesc;
-		पूर्ण iso;
-	पूर्ण s;
-	पूर्णांक पूर्णांकerval;
-	पूर्णांक start_frame;
-	अचिन्हित पूर्णांक xfer_flags;
-	अचिन्हित पूर्णांक ndesc;	/* Actual number of ISO descriptors */
-पूर्ण;
+	unsigned char type;	/* Same as in text API; extensible. */
+	unsigned char xfer_type;	/* ISO, Intr, Control, Bulk */
+	unsigned char epnum;	/* Endpoint number and transfer direction */
+	unsigned char devnum;	/* Device address */
+	unsigned short busnum;	/* Bus number */
+	char flag_setup;
+	char flag_data;
+	s64 ts_sec;		/* ktime_get_real_ts64 */
+	s32 ts_usec;		/* ktime_get_real_ts64 */
+	int status;
+	unsigned int len_urb;	/* Length of data (submitted or actual) */
+	unsigned int len_cap;	/* Delivered length */
+	union {
+		unsigned char setup[SETUP_LEN];	/* Only for Control S-type */
+		struct iso_rec {
+			int error_count;
+			int numdesc;
+		} iso;
+	} s;
+	int interval;
+	int start_frame;
+	unsigned int xfer_flags;
+	unsigned int ndesc;	/* Actual number of ISO descriptors */
+};
 
 /*
- * ISO vector, packed पूर्णांकo the head of data stream.
+ * ISO vector, packed into the head of data stream.
  * This has to take 16 bytes to make sure that the end of buffer
  * wrap is not happening in the middle of a descriptor.
  */
-काष्ठा mon_bin_isodesc अणु
-	पूर्णांक          iso_status;
-	अचिन्हित पूर्णांक iso_off;
-	अचिन्हित पूर्णांक iso_len;
+struct mon_bin_isodesc {
+	int          iso_status;
+	unsigned int iso_off;
+	unsigned int iso_len;
 	u32 _pad;
-पूर्ण;
+};
 
 /* per file statistic */
-काष्ठा mon_bin_stats अणु
+struct mon_bin_stats {
 	u32 queued;
 	u32 dropped;
-पूर्ण;
+};
 
-काष्ठा mon_bin_get अणु
-	काष्ठा mon_bin_hdr __user *hdr;	/* Can be 48 bytes or 64. */
-	व्योम __user *data;
-	माप_प्रकार alloc;		/* Length of data (can be zero) */
-पूर्ण;
+struct mon_bin_get {
+	struct mon_bin_hdr __user *hdr;	/* Can be 48 bytes or 64. */
+	void __user *data;
+	size_t alloc;		/* Length of data (can be zero) */
+};
 
-काष्ठा mon_bin_mfetch अणु
+struct mon_bin_mfetch {
 	u32 __user *offvec;	/* Vector of events fetched */
 	u32 nfetch;		/* Number of events to fetch (out: fetched) */
 	u32 nflush;		/* Number of events to flush */
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_COMPAT
-काष्ठा mon_bin_get32 अणु
+#ifdef CONFIG_COMPAT
+struct mon_bin_get32 {
 	u32 hdr32;
 	u32 data32;
 	u32 alloc32;
-पूर्ण;
+};
 
-काष्ठा mon_bin_mfetch32 अणु
+struct mon_bin_mfetch32 {
         u32 offvec32;
         u32 nfetch32;
         u32 nflush32;
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /* Having these two values same prevents wrapping of the mon_bin_hdr */
-#घोषणा PKT_ALIGN   64
-#घोषणा PKT_SIZE    64
+#define PKT_ALIGN   64
+#define PKT_SIZE    64
 
-#घोषणा PKT_SZ_API0 48	/* API 0 (2.6.20) size */
-#घोषणा PKT_SZ_API1 64	/* API 1 size: extra fields */
+#define PKT_SZ_API0 48	/* API 0 (2.6.20) size */
+#define PKT_SZ_API1 64	/* API 1 size: extra fields */
 
-#घोषणा ISODESC_MAX   128	/* Same number as usbfs allows, 2048 bytes. */
+#define ISODESC_MAX   128	/* Same number as usbfs allows, 2048 bytes. */
 
 /* max number of USB bus supported */
-#घोषणा MON_BIN_MAX_MINOR 128
+#define MON_BIN_MAX_MINOR 128
 
 /*
  * The buffer: map of used pages.
  */
-काष्ठा mon_pgmap अणु
-	काष्ठा page *pg;
-	अचिन्हित अक्षर *ptr;	/* XXX just use page_to_virt everywhere? */
-पूर्ण;
+struct mon_pgmap {
+	struct page *pg;
+	unsigned char *ptr;	/* XXX just use page_to_virt everywhere? */
+};
 
 /*
- * This माला_लो associated with an खोलो file काष्ठा.
+ * This gets associated with an open file struct.
  */
-काष्ठा mon_पढ़ोer_bin अणु
-	/* The buffer: one per खोलो. */
+struct mon_reader_bin {
+	/* The buffer: one per open. */
 	spinlock_t b_lock;		/* Protect b_cnt, b_in */
-	अचिन्हित पूर्णांक b_size;		/* Current size of the buffer - bytes */
-	अचिन्हित पूर्णांक b_cnt;		/* Bytes used */
-	अचिन्हित पूर्णांक b_in, b_out;	/* Offsets पूर्णांकo buffer - bytes */
-	अचिन्हित पूर्णांक b_पढ़ो;		/* Amount of पढ़ो data in curr. pkt. */
-	काष्ठा mon_pgmap *b_vec;	/* The map array */
-	रुको_queue_head_t b_रुको;	/* Wait क्रम data here */
+	unsigned int b_size;		/* Current size of the buffer - bytes */
+	unsigned int b_cnt;		/* Bytes used */
+	unsigned int b_in, b_out;	/* Offsets into buffer - bytes */
+	unsigned int b_read;		/* Amount of read data in curr. pkt. */
+	struct mon_pgmap *b_vec;	/* The map array */
+	wait_queue_head_t b_wait;	/* Wait for data here */
 
-	काष्ठा mutex fetch_lock;	/* Protect b_पढ़ो, b_out */
-	पूर्णांक mmap_active;
+	struct mutex fetch_lock;	/* Protect b_read, b_out */
+	int mmap_active;
 
-	/* A list of these is needed क्रम "bus 0". Some समय later. */
-	काष्ठा mon_पढ़ोer r;
+	/* A list of these is needed for "bus 0". Some time later. */
+	struct mon_reader r;
 
 	/* Stats */
-	अचिन्हित पूर्णांक cnt_lost;
-पूर्ण;
+	unsigned int cnt_lost;
+};
 
-अटल अंतरभूत काष्ठा mon_bin_hdr *MON_OFF2HDR(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक offset)
-अणु
-	वापस (काष्ठा mon_bin_hdr *)
+static inline struct mon_bin_hdr *MON_OFF2HDR(const struct mon_reader_bin *rp,
+    unsigned int offset)
+{
+	return (struct mon_bin_hdr *)
 	    (rp->b_vec[offset / CHUNK_SIZE].ptr + offset % CHUNK_SIZE);
-पूर्ण
+}
 
-#घोषणा MON_RING_EMPTY(rp)	((rp)->b_cnt == 0)
+#define MON_RING_EMPTY(rp)	((rp)->b_cnt == 0)
 
-अटल अचिन्हित अक्षर xfer_to_pipe[4] = अणु
+static unsigned char xfer_to_pipe[4] = {
 	PIPE_CONTROL, PIPE_ISOCHRONOUS, PIPE_BULK, PIPE_INTERRUPT
-पूर्ण;
+};
 
-अटल काष्ठा class *mon_bin_class;
-अटल dev_t mon_bin_dev0;
-अटल काष्ठा cdev mon_bin_cdev;
+static struct class *mon_bin_class;
+static dev_t mon_bin_dev0;
+static struct cdev mon_bin_cdev;
 
-अटल व्योम mon_buff_area_fill(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size);
-अटल पूर्णांक mon_bin_रुको_event(काष्ठा file *file, काष्ठा mon_पढ़ोer_bin *rp);
-अटल पूर्णांक mon_alloc_buff(काष्ठा mon_pgmap *map, पूर्णांक npages);
-अटल व्योम mon_मुक्त_buff(काष्ठा mon_pgmap *map, पूर्णांक npages);
+static void mon_buff_area_fill(const struct mon_reader_bin *rp,
+    unsigned int offset, unsigned int size);
+static int mon_bin_wait_event(struct file *file, struct mon_reader_bin *rp);
+static int mon_alloc_buff(struct mon_pgmap *map, int npages);
+static void mon_free_buff(struct mon_pgmap *map, int npages);
 
 /*
- * This is a "chunked memcpy". It करोes not manipulate any counters.
+ * This is a "chunked memcpy". It does not manipulate any counters.
  */
-अटल अचिन्हित पूर्णांक mon_copy_to_buff(स्थिर काष्ठा mon_पढ़ोer_bin *this,
-    अचिन्हित पूर्णांक off, स्थिर अचिन्हित अक्षर *from, अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक step_len;
-	अचिन्हित अक्षर *buf;
-	अचिन्हित पूर्णांक in_page;
+static unsigned int mon_copy_to_buff(const struct mon_reader_bin *this,
+    unsigned int off, const unsigned char *from, unsigned int length)
+{
+	unsigned int step_len;
+	unsigned char *buf;
+	unsigned int in_page;
 
-	जबतक (length) अणु
+	while (length) {
 		/*
 		 * Determine step_len.
 		 */
 		step_len = length;
 		in_page = CHUNK_SIZE - (off & (CHUNK_SIZE-1));
-		अगर (in_page < step_len)
+		if (in_page < step_len)
 			step_len = in_page;
 
 		/*
-		 * Copy data and advance poपूर्णांकers.
+		 * Copy data and advance pointers.
 		 */
 		buf = this->b_vec[off / CHUNK_SIZE].ptr + off % CHUNK_SIZE;
-		स_नकल(buf, from, step_len);
-		अगर ((off += step_len) >= this->b_size) off = 0;
+		memcpy(buf, from, step_len);
+		if ((off += step_len) >= this->b_size) off = 0;
 		from += step_len;
 		length -= step_len;
-	पूर्ण
-	वापस off;
-पूर्ण
+	}
+	return off;
+}
 
 /*
  * This is a little worse than the above because it's "chunked copy_to_user".
- * The वापस value is an error code, not an offset.
+ * The return value is an error code, not an offset.
  */
-अटल पूर्णांक copy_from_buf(स्थिर काष्ठा mon_पढ़ोer_bin *this, अचिन्हित पूर्णांक off,
-    अक्षर __user *to, पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक step_len;
-	अचिन्हित अक्षर *buf;
-	अचिन्हित पूर्णांक in_page;
+static int copy_from_buf(const struct mon_reader_bin *this, unsigned int off,
+    char __user *to, int length)
+{
+	unsigned int step_len;
+	unsigned char *buf;
+	unsigned int in_page;
 
-	जबतक (length) अणु
+	while (length) {
 		/*
 		 * Determine step_len.
 		 */
 		step_len = length;
 		in_page = CHUNK_SIZE - (off & (CHUNK_SIZE-1));
-		अगर (in_page < step_len)
+		if (in_page < step_len)
 			step_len = in_page;
 
 		/*
-		 * Copy data and advance poपूर्णांकers.
+		 * Copy data and advance pointers.
 		 */
 		buf = this->b_vec[off / CHUNK_SIZE].ptr + off % CHUNK_SIZE;
-		अगर (copy_to_user(to, buf, step_len))
-			वापस -EINVAL;
-		अगर ((off += step_len) >= this->b_size) off = 0;
+		if (copy_to_user(to, buf, step_len))
+			return -EINVAL;
+		if ((off += step_len) >= this->b_size) off = 0;
 		to += step_len;
 		length -= step_len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Allocate an (aligned) area in the buffer.
  * This is called under b_lock.
  * Returns ~0 on failure.
  */
-अटल अचिन्हित पूर्णांक mon_buff_area_alloc(काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक offset;
+static unsigned int mon_buff_area_alloc(struct mon_reader_bin *rp,
+    unsigned int size)
+{
+	unsigned int offset;
 
 	size = (size + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
-	अगर (rp->b_cnt + size > rp->b_size)
-		वापस ~0;
+	if (rp->b_cnt + size > rp->b_size)
+		return ~0;
 	offset = rp->b_in;
 	rp->b_cnt += size;
-	अगर ((rp->b_in += size) >= rp->b_size)
+	if ((rp->b_in += size) >= rp->b_size)
 		rp->b_in -= rp->b_size;
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
 /*
- * This is the same thing as mon_buff_area_alloc, only it करोes not allow
+ * This is the same thing as mon_buff_area_alloc, only it does not allow
  * buffers to wrap. This is needed by applications which pass references
- * पूर्णांकo mmap-ed buffers up their stacks (libpcap can करो that).
+ * into mmap-ed buffers up their stacks (libpcap can do that).
  *
  * Currently, we always have the header stuck with the data, although
  * it is not strictly speaking necessary.
  *
  * When a buffer would wrap, we place a filler packet to mark the space.
  */
-अटल अचिन्हित पूर्णांक mon_buff_area_alloc_contiguous(काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक fill_size;
+static unsigned int mon_buff_area_alloc_contiguous(struct mon_reader_bin *rp,
+    unsigned int size)
+{
+	unsigned int offset;
+	unsigned int fill_size;
 
 	size = (size + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
-	अगर (rp->b_cnt + size > rp->b_size)
-		वापस ~0;
-	अगर (rp->b_in + size > rp->b_size) अणु
+	if (rp->b_cnt + size > rp->b_size)
+		return ~0;
+	if (rp->b_in + size > rp->b_size) {
 		/*
-		 * This would wrap. Find अगर we still have space after
-		 * skipping to the end of the buffer. If we करो, place
+		 * This would wrap. Find if we still have space after
+		 * skipping to the end of the buffer. If we do, place
 		 * a filler packet and allocate a new packet.
 		 */
 		fill_size = rp->b_size - rp->b_in;
-		अगर (rp->b_cnt + size + fill_size > rp->b_size)
-			वापस ~0;
+		if (rp->b_cnt + size + fill_size > rp->b_size)
+			return ~0;
 		mon_buff_area_fill(rp, rp->b_in, fill_size);
 
 		offset = 0;
 		rp->b_in = size;
 		rp->b_cnt += size + fill_size;
-	पूर्ण अन्यथा अगर (rp->b_in + size == rp->b_size) अणु
+	} else if (rp->b_in + size == rp->b_size) {
 		offset = rp->b_in;
 		rp->b_in = 0;
 		rp->b_cnt += size;
-	पूर्ण अन्यथा अणु
+	} else {
 		offset = rp->b_in;
 		rp->b_in += size;
 		rp->b_cnt += size;
-	पूर्ण
-	वापस offset;
-पूर्ण
+	}
+	return offset;
+}
 
 /*
  * Return a few (kilo-)bytes to the head of the buffer.
- * This is used अगर a data fetch fails.
+ * This is used if a data fetch fails.
  */
-अटल व्योम mon_buff_area_shrink(काष्ठा mon_पढ़ोer_bin *rp, अचिन्हित पूर्णांक size)
-अणु
+static void mon_buff_area_shrink(struct mon_reader_bin *rp, unsigned int size)
+{
 
 	/* size &= ~(PKT_ALIGN-1);  -- we're called with aligned size */
 	rp->b_cnt -= size;
-	अगर (rp->b_in < size)
+	if (rp->b_in < size)
 		rp->b_in += rp->b_size;
 	rp->b_in -= size;
-पूर्ण
+}
 
 /*
  * This has to be called under both b_lock and fetch_lock, because
  * it accesses both b_cnt and b_out.
  */
-अटल व्योम mon_buff_area_मुक्त(काष्ठा mon_पढ़ोer_bin *rp, अचिन्हित पूर्णांक size)
-अणु
+static void mon_buff_area_free(struct mon_reader_bin *rp, unsigned int size)
+{
 
 	size = (size + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
 	rp->b_cnt -= size;
-	अगर ((rp->b_out += size) >= rp->b_size)
+	if ((rp->b_out += size) >= rp->b_size)
 		rp->b_out -= rp->b_size;
-पूर्ण
+}
 
-अटल व्योम mon_buff_area_fill(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size)
-अणु
-	काष्ठा mon_bin_hdr *ep;
+static void mon_buff_area_fill(const struct mon_reader_bin *rp,
+    unsigned int offset, unsigned int size)
+{
+	struct mon_bin_hdr *ep;
 
 	ep = MON_OFF2HDR(rp, offset);
-	स_रखो(ep, 0, PKT_SIZE);
+	memset(ep, 0, PKT_SIZE);
 	ep->type = '@';
 	ep->len_cap = size - PKT_SIZE;
-पूर्ण
+}
 
-अटल अंतरभूत अक्षर mon_bin_get_setup(अचिन्हित अक्षर *setupb,
-    स्थिर काष्ठा urb *urb, अक्षर ev_type)
-अणु
+static inline char mon_bin_get_setup(unsigned char *setupb,
+    const struct urb *urb, char ev_type)
+{
 
-	अगर (urb->setup_packet == शून्य)
-		वापस 'Z';
-	स_नकल(setupb, urb->setup_packet, SETUP_LEN);
-	वापस 0;
-पूर्ण
+	if (urb->setup_packet == NULL)
+		return 'Z';
+	memcpy(setupb, urb->setup_packet, SETUP_LEN);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक mon_bin_get_data(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक offset, काष्ठा urb *urb, अचिन्हित पूर्णांक length,
-    अक्षर *flag)
-अणु
-	पूर्णांक i;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक this_len;
+static unsigned int mon_bin_get_data(const struct mon_reader_bin *rp,
+    unsigned int offset, struct urb *urb, unsigned int length,
+    char *flag)
+{
+	int i;
+	struct scatterlist *sg;
+	unsigned int this_len;
 
 	*flag = 0;
-	अगर (urb->num_sgs == 0) अणु
-		अगर (urb->transfer_buffer == शून्य) अणु
+	if (urb->num_sgs == 0) {
+		if (urb->transfer_buffer == NULL) {
 			*flag = 'Z';
-			वापस length;
-		पूर्ण
+			return length;
+		}
 		mon_copy_to_buff(rp, offset, urb->transfer_buffer, length);
 		length = 0;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* If IOMMU coalescing occurred, we cannot trust sg_page */
-		अगर (urb->transfer_flags & URB_DMA_SG_COMBINED) अणु
+		if (urb->transfer_flags & URB_DMA_SG_COMBINED) {
 			*flag = 'D';
-			वापस length;
-		पूर्ण
+			return length;
+		}
 
 		/* Copy up to the first non-addressable segment */
-		क्रम_each_sg(urb->sg, sg, urb->num_sgs, i) अणु
-			अगर (length == 0 || PageHighMem(sg_page(sg)))
-				अवरोध;
-			this_len = min_t(अचिन्हित पूर्णांक, sg->length, length);
+		for_each_sg(urb->sg, sg, urb->num_sgs, i) {
+			if (length == 0 || PageHighMem(sg_page(sg)))
+				break;
+			this_len = min_t(unsigned int, sg->length, length);
 			offset = mon_copy_to_buff(rp, offset, sg_virt(sg),
 					this_len);
 			length -= this_len;
-		पूर्ण
-		अगर (i == 0)
+		}
+		if (i == 0)
 			*flag = 'D';
-	पूर्ण
+	}
 
-	वापस length;
-पूर्ण
+	return length;
+}
 
 /*
- * This is the look-ahead pass in हाल of 'C Zi', when actual_length cannot
+ * This is the look-ahead pass in case of 'C Zi', when actual_length cannot
  * be used to determine the length of the whole contiguous buffer.
  */
-अटल अचिन्हित पूर्णांक mon_bin_collate_isodesc(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    काष्ठा urb *urb, अचिन्हित पूर्णांक ndesc)
-अणु
-	काष्ठा usb_iso_packet_descriptor *fp;
-	अचिन्हित पूर्णांक length;
+static unsigned int mon_bin_collate_isodesc(const struct mon_reader_bin *rp,
+    struct urb *urb, unsigned int ndesc)
+{
+	struct usb_iso_packet_descriptor *fp;
+	unsigned int length;
 
 	length = 0;
 	fp = urb->iso_frame_desc;
-	जबतक (ndesc-- != 0) अणु
-		अगर (fp->actual_length != 0) अणु
-			अगर (fp->offset + fp->actual_length > length)
+	while (ndesc-- != 0) {
+		if (fp->actual_length != 0) {
+			if (fp->offset + fp->actual_length > length)
 				length = fp->offset + fp->actual_length;
-		पूर्ण
+		}
 		fp++;
-	पूर्ण
-	वापस length;
-पूर्ण
+	}
+	return length;
+}
 
-अटल व्योम mon_bin_get_isodesc(स्थिर काष्ठा mon_पढ़ोer_bin *rp,
-    अचिन्हित पूर्णांक offset, काष्ठा urb *urb, अक्षर ev_type, अचिन्हित पूर्णांक ndesc)
-अणु
-	काष्ठा mon_bin_isodesc *dp;
-	काष्ठा usb_iso_packet_descriptor *fp;
+static void mon_bin_get_isodesc(const struct mon_reader_bin *rp,
+    unsigned int offset, struct urb *urb, char ev_type, unsigned int ndesc)
+{
+	struct mon_bin_isodesc *dp;
+	struct usb_iso_packet_descriptor *fp;
 
 	fp = urb->iso_frame_desc;
-	जबतक (ndesc-- != 0) अणु
-		dp = (काष्ठा mon_bin_isodesc *)
+	while (ndesc-- != 0) {
+		dp = (struct mon_bin_isodesc *)
 		    (rp->b_vec[offset / CHUNK_SIZE].ptr + offset % CHUNK_SIZE);
 		dp->iso_status = fp->status;
 		dp->iso_off = fp->offset;
 		dp->iso_len = (ev_type == 'S') ? fp->length : fp->actual_length;
 		dp->_pad = 0;
-		अगर ((offset += माप(काष्ठा mon_bin_isodesc)) >= rp->b_size)
+		if ((offset += sizeof(struct mon_bin_isodesc)) >= rp->b_size)
 			offset = 0;
 		fp++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mon_bin_event(काष्ठा mon_पढ़ोer_bin *rp, काष्ठा urb *urb,
-    अक्षर ev_type, पूर्णांक status)
-अणु
-	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *epd = &urb->ep->desc;
-	काष्ठा बारpec64 ts;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक urb_length;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक length;
-	अचिन्हित पूर्णांक delta;
-	अचिन्हित पूर्णांक ndesc, lendesc;
-	अचिन्हित अक्षर dir;
-	काष्ठा mon_bin_hdr *ep;
-	अक्षर data_tag = 0;
+static void mon_bin_event(struct mon_reader_bin *rp, struct urb *urb,
+    char ev_type, int status)
+{
+	const struct usb_endpoint_descriptor *epd = &urb->ep->desc;
+	struct timespec64 ts;
+	unsigned long flags;
+	unsigned int urb_length;
+	unsigned int offset;
+	unsigned int length;
+	unsigned int delta;
+	unsigned int ndesc, lendesc;
+	unsigned char dir;
+	struct mon_bin_hdr *ep;
+	char data_tag = 0;
 
-	kसमय_get_real_ts64(&ts);
+	ktime_get_real_ts64(&ts);
 
 	spin_lock_irqsave(&rp->b_lock, flags);
 
@@ -509,68 +508,68 @@
 	    urb->transfer_buffer_length : urb->actual_length;
 	length = urb_length;
 
-	अगर (usb_endpoपूर्णांक_xfer_isoc(epd)) अणु
-		अगर (urb->number_of_packets < 0) अणु
+	if (usb_endpoint_xfer_isoc(epd)) {
+		if (urb->number_of_packets < 0) {
 			ndesc = 0;
-		पूर्ण अन्यथा अगर (urb->number_of_packets >= ISODESC_MAX) अणु
+		} else if (urb->number_of_packets >= ISODESC_MAX) {
 			ndesc = ISODESC_MAX;
-		पूर्ण अन्यथा अणु
+		} else {
 			ndesc = urb->number_of_packets;
-		पूर्ण
-		अगर (ev_type == 'C' && usb_urb_dir_in(urb))
+		}
+		if (ev_type == 'C' && usb_urb_dir_in(urb))
 			length = mon_bin_collate_isodesc(rp, urb, ndesc);
-	पूर्ण अन्यथा अणु
+	} else {
 		ndesc = 0;
-	पूर्ण
-	lendesc = ndesc*माप(काष्ठा mon_bin_isodesc);
+	}
+	lendesc = ndesc*sizeof(struct mon_bin_isodesc);
 
 	/* not an issue unless there's a subtle bug in a HCD somewhere */
-	अगर (length >= urb->transfer_buffer_length)
+	if (length >= urb->transfer_buffer_length)
 		length = urb->transfer_buffer_length;
 
-	अगर (length >= rp->b_size/5)
+	if (length >= rp->b_size/5)
 		length = rp->b_size/5;
 
-	अगर (usb_urb_dir_in(urb)) अणु
-		अगर (ev_type == 'S') अणु
+	if (usb_urb_dir_in(urb)) {
+		if (ev_type == 'S') {
 			length = 0;
 			data_tag = '<';
-		पूर्ण
-		/* Cannot rely on endpoपूर्णांक number in हाल of control ep.0 */
-		dir = USB_सूची_IN;
-	पूर्ण अन्यथा अणु
-		अगर (ev_type == 'C') अणु
+		}
+		/* Cannot rely on endpoint number in case of control ep.0 */
+		dir = USB_DIR_IN;
+	} else {
+		if (ev_type == 'C') {
 			length = 0;
 			data_tag = '>';
-		पूर्ण
+		}
 		dir = 0;
-	पूर्ण
+	}
 
-	अगर (rp->mmap_active) अणु
+	if (rp->mmap_active) {
 		offset = mon_buff_area_alloc_contiguous(rp,
 						 length + PKT_SIZE + lendesc);
-	पूर्ण अन्यथा अणु
+	} else {
 		offset = mon_buff_area_alloc(rp, length + PKT_SIZE + lendesc);
-	पूर्ण
-	अगर (offset == ~0) अणु
+	}
+	if (offset == ~0) {
 		rp->cnt_lost++;
 		spin_unlock_irqrestore(&rp->b_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ep = MON_OFF2HDR(rp, offset);
-	अगर ((offset += PKT_SIZE) >= rp->b_size) offset = 0;
+	if ((offset += PKT_SIZE) >= rp->b_size) offset = 0;
 
 	/*
 	 * Fill the allocated area.
 	 */
-	स_रखो(ep, 0, PKT_SIZE);
+	memset(ep, 0, PKT_SIZE);
 	ep->type = ev_type;
-	ep->xfer_type = xfer_to_pipe[usb_endpoपूर्णांक_type(epd)];
-	ep->epnum = dir | usb_endpoपूर्णांक_num(epd);
+	ep->xfer_type = xfer_to_pipe[usb_endpoint_type(epd)];
+	ep->epnum = dir | usb_endpoint_num(epd);
 	ep->devnum = urb->dev->devnum;
 	ep->busnum = urb->dev->bus->busnum;
-	ep->id = (अचिन्हित दीर्घ) urb;
+	ep->id = (unsigned long) urb;
 	ep->ts_sec = ts.tv_sec;
 	ep->ts_usec = ts.tv_nsec / NSEC_PER_USEC;
 	ep->status = status;
@@ -578,87 +577,87 @@
 	ep->len_cap = length + lendesc;
 	ep->xfer_flags = urb->transfer_flags;
 
-	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(epd)) अणु
-		ep->पूर्णांकerval = urb->पूर्णांकerval;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_isoc(epd)) अणु
-		ep->पूर्णांकerval = urb->पूर्णांकerval;
+	if (usb_endpoint_xfer_int(epd)) {
+		ep->interval = urb->interval;
+	} else if (usb_endpoint_xfer_isoc(epd)) {
+		ep->interval = urb->interval;
 		ep->start_frame = urb->start_frame;
 		ep->s.iso.error_count = urb->error_count;
 		ep->s.iso.numdesc = urb->number_of_packets;
-	पूर्ण
+	}
 
-	अगर (usb_endpoपूर्णांक_xfer_control(epd) && ev_type == 'S') अणु
+	if (usb_endpoint_xfer_control(epd) && ev_type == 'S') {
 		ep->flag_setup = mon_bin_get_setup(ep->s.setup, urb, ev_type);
-	पूर्ण अन्यथा अणु
+	} else {
 		ep->flag_setup = '-';
-	पूर्ण
+	}
 
-	अगर (ndesc != 0) अणु
+	if (ndesc != 0) {
 		ep->ndesc = ndesc;
 		mon_bin_get_isodesc(rp, offset, urb, ev_type, ndesc);
-		अगर ((offset += lendesc) >= rp->b_size)
+		if ((offset += lendesc) >= rp->b_size)
 			offset -= rp->b_size;
-	पूर्ण
+	}
 
-	अगर (length != 0) अणु
+	if (length != 0) {
 		length = mon_bin_get_data(rp, offset, urb, length,
 				&ep->flag_data);
-		अगर (length > 0) अणु
+		if (length > 0) {
 			delta = (ep->len_cap + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
 			ep->len_cap -= length;
 			delta -= (ep->len_cap + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
 			mon_buff_area_shrink(rp, delta);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ep->flag_data = data_tag;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&rp->b_lock, flags);
 
-	wake_up(&rp->b_रुको);
-पूर्ण
+	wake_up(&rp->b_wait);
+}
 
-अटल व्योम mon_bin_submit(व्योम *data, काष्ठा urb *urb)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = data;
+static void mon_bin_submit(void *data, struct urb *urb)
+{
+	struct mon_reader_bin *rp = data;
 	mon_bin_event(rp, urb, 'S', -EINPROGRESS);
-पूर्ण
+}
 
-अटल व्योम mon_bin_complete(व्योम *data, काष्ठा urb *urb, पूर्णांक status)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = data;
+static void mon_bin_complete(void *data, struct urb *urb, int status)
+{
+	struct mon_reader_bin *rp = data;
 	mon_bin_event(rp, urb, 'C', status);
-पूर्ण
+}
 
-अटल व्योम mon_bin_error(व्योम *data, काष्ठा urb *urb, पूर्णांक error)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = data;
-	काष्ठा बारpec64 ts;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक offset;
-	काष्ठा mon_bin_hdr *ep;
+static void mon_bin_error(void *data, struct urb *urb, int error)
+{
+	struct mon_reader_bin *rp = data;
+	struct timespec64 ts;
+	unsigned long flags;
+	unsigned int offset;
+	struct mon_bin_hdr *ep;
 
-	kसमय_get_real_ts64(&ts);
+	ktime_get_real_ts64(&ts);
 
 	spin_lock_irqsave(&rp->b_lock, flags);
 
 	offset = mon_buff_area_alloc(rp, PKT_SIZE);
-	अगर (offset == ~0) अणु
+	if (offset == ~0) {
 		/* Not incrementing cnt_lost. Just because. */
 		spin_unlock_irqrestore(&rp->b_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ep = MON_OFF2HDR(rp, offset);
 
-	स_रखो(ep, 0, PKT_SIZE);
+	memset(ep, 0, PKT_SIZE);
 	ep->type = 'E';
-	ep->xfer_type = xfer_to_pipe[usb_endpoपूर्णांक_type(&urb->ep->desc)];
-	ep->epnum = usb_urb_dir_in(urb) ? USB_सूची_IN : 0;
-	ep->epnum |= usb_endpoपूर्णांक_num(&urb->ep->desc);
+	ep->xfer_type = xfer_to_pipe[usb_endpoint_type(&urb->ep->desc)];
+	ep->epnum = usb_urb_dir_in(urb) ? USB_DIR_IN : 0;
+	ep->epnum |= usb_endpoint_num(&urb->ep->desc);
 	ep->devnum = urb->dev->devnum;
 	ep->busnum = urb->dev->bus->busnum;
-	ep->id = (अचिन्हित दीर्घ) urb;
+	ep->id = (unsigned long) urb;
 	ep->ts_sec = ts.tv_sec;
 	ep->ts_usec = ts.tv_nsec / NSEC_PER_USEC;
 	ep->status = error;
@@ -668,46 +667,46 @@
 
 	spin_unlock_irqrestore(&rp->b_lock, flags);
 
-	wake_up(&rp->b_रुको);
-पूर्ण
+	wake_up(&rp->b_wait);
+}
 
-अटल पूर्णांक mon_bin_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mon_bus *mbus;
-	काष्ठा mon_पढ़ोer_bin *rp;
-	माप_प्रकार size;
-	पूर्णांक rc;
+static int mon_bin_open(struct inode *inode, struct file *file)
+{
+	struct mon_bus *mbus;
+	struct mon_reader_bin *rp;
+	size_t size;
+	int rc;
 
 	mutex_lock(&mon_lock);
 	mbus = mon_bus_lookup(iminor(inode));
-	अगर (mbus == शून्य) अणु
+	if (mbus == NULL) {
 		mutex_unlock(&mon_lock);
-		वापस -ENODEV;
-	पूर्ण
-	अगर (mbus != &mon_bus0 && mbus->u_bus == शून्य) अणु
-		prपूर्णांकk(KERN_ERR TAG ": consistency error on open\n");
+		return -ENODEV;
+	}
+	if (mbus != &mon_bus0 && mbus->u_bus == NULL) {
+		printk(KERN_ERR TAG ": consistency error on open\n");
 		mutex_unlock(&mon_lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	rp = kzalloc(माप(काष्ठा mon_पढ़ोer_bin), GFP_KERNEL);
-	अगर (rp == शून्य) अणु
+	rp = kzalloc(sizeof(struct mon_reader_bin), GFP_KERNEL);
+	if (rp == NULL) {
 		rc = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 	spin_lock_init(&rp->b_lock);
-	init_रुकोqueue_head(&rp->b_रुको);
+	init_waitqueue_head(&rp->b_wait);
 	mutex_init(&rp->fetch_lock);
 	rp->b_size = BUFF_DFL;
 
-	size = माप(काष्ठा mon_pgmap) * (rp->b_size/CHUNK_SIZE);
-	अगर ((rp->b_vec = kzalloc(size, GFP_KERNEL)) == शून्य) अणु
+	size = sizeof(struct mon_pgmap) * (rp->b_size/CHUNK_SIZE);
+	if ((rp->b_vec = kzalloc(size, GFP_KERNEL)) == NULL) {
 		rc = -ENOMEM;
-		जाओ err_allocvec;
-	पूर्ण
+		goto err_allocvec;
+	}
 
-	अगर ((rc = mon_alloc_buff(rp->b_vec, rp->b_size/CHUNK_SIZE)) < 0)
-		जाओ err_allocbuff;
+	if ((rc = mon_alloc_buff(rp->b_vec, rp->b_size/CHUNK_SIZE)) < 0)
+		goto err_allocbuff;
 
 	rp->r.m_bus = mbus;
 	rp->r.r_data = rp;
@@ -715,204 +714,204 @@
 	rp->r.rnf_error = mon_bin_error;
 	rp->r.rnf_complete = mon_bin_complete;
 
-	mon_पढ़ोer_add(mbus, &rp->r);
+	mon_reader_add(mbus, &rp->r);
 
-	file->निजी_data = rp;
+	file->private_data = rp;
 	mutex_unlock(&mon_lock);
-	वापस 0;
+	return 0;
 
 err_allocbuff:
-	kमुक्त(rp->b_vec);
+	kfree(rp->b_vec);
 err_allocvec:
-	kमुक्त(rp);
+	kfree(rp);
 err_alloc:
 	mutex_unlock(&mon_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Extract an event from buffer and copy it to user space.
- * Wait अगर there is no event पढ़ोy.
+ * Wait if there is no event ready.
  * Returns zero or error.
  */
-अटल पूर्णांक mon_bin_get_event(काष्ठा file *file, काष्ठा mon_पढ़ोer_bin *rp,
-    काष्ठा mon_bin_hdr __user *hdr, अचिन्हित पूर्णांक hdrbytes,
-    व्योम __user *data, अचिन्हित पूर्णांक nbytes)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा mon_bin_hdr *ep;
-	माप_प्रकार step_len;
-	अचिन्हित पूर्णांक offset;
-	पूर्णांक rc;
+static int mon_bin_get_event(struct file *file, struct mon_reader_bin *rp,
+    struct mon_bin_hdr __user *hdr, unsigned int hdrbytes,
+    void __user *data, unsigned int nbytes)
+{
+	unsigned long flags;
+	struct mon_bin_hdr *ep;
+	size_t step_len;
+	unsigned int offset;
+	int rc;
 
 	mutex_lock(&rp->fetch_lock);
 
-	अगर ((rc = mon_bin_रुको_event(file, rp)) < 0) अणु
+	if ((rc = mon_bin_wait_event(file, rp)) < 0) {
 		mutex_unlock(&rp->fetch_lock);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	ep = MON_OFF2HDR(rp, rp->b_out);
 
-	अगर (copy_to_user(hdr, ep, hdrbytes)) अणु
+	if (copy_to_user(hdr, ep, hdrbytes)) {
 		mutex_unlock(&rp->fetch_lock);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	step_len = min(ep->len_cap, nbytes);
-	अगर ((offset = rp->b_out + PKT_SIZE) >= rp->b_size) offset = 0;
+	if ((offset = rp->b_out + PKT_SIZE) >= rp->b_size) offset = 0;
 
-	अगर (copy_from_buf(rp, offset, data, step_len)) अणु
+	if (copy_from_buf(rp, offset, data, step_len)) {
 		mutex_unlock(&rp->fetch_lock);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	spin_lock_irqsave(&rp->b_lock, flags);
-	mon_buff_area_मुक्त(rp, PKT_SIZE + ep->len_cap);
+	mon_buff_area_free(rp, PKT_SIZE + ep->len_cap);
 	spin_unlock_irqrestore(&rp->b_lock, flags);
-	rp->b_पढ़ो = 0;
+	rp->b_read = 0;
 
 	mutex_unlock(&rp->fetch_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mon_bin_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = file->निजी_data;
-	काष्ठा mon_bus* mbus = rp->r.m_bus;
+static int mon_bin_release(struct inode *inode, struct file *file)
+{
+	struct mon_reader_bin *rp = file->private_data;
+	struct mon_bus* mbus = rp->r.m_bus;
 
 	mutex_lock(&mon_lock);
 
-	अगर (mbus->nपढ़ोers <= 0) अणु
-		prपूर्णांकk(KERN_ERR TAG ": consistency error on close\n");
+	if (mbus->nreaders <= 0) {
+		printk(KERN_ERR TAG ": consistency error on close\n");
 		mutex_unlock(&mon_lock);
-		वापस 0;
-	पूर्ण
-	mon_पढ़ोer_del(mbus, &rp->r);
+		return 0;
+	}
+	mon_reader_del(mbus, &rp->r);
 
-	mon_मुक्त_buff(rp->b_vec, rp->b_size/CHUNK_SIZE);
-	kमुक्त(rp->b_vec);
-	kमुक्त(rp);
+	mon_free_buff(rp->b_vec, rp->b_size/CHUNK_SIZE);
+	kfree(rp->b_vec);
+	kfree(rp);
 
 	mutex_unlock(&mon_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार mon_bin_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-    माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = file->निजी_data;
-	अचिन्हित पूर्णांक hdrbytes = PKT_SZ_API0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा mon_bin_hdr *ep;
-	अचिन्हित पूर्णांक offset;
-	माप_प्रकार step_len;
-	अक्षर *ptr;
-	sमाप_प्रकार करोne = 0;
-	पूर्णांक rc;
+static ssize_t mon_bin_read(struct file *file, char __user *buf,
+    size_t nbytes, loff_t *ppos)
+{
+	struct mon_reader_bin *rp = file->private_data;
+	unsigned int hdrbytes = PKT_SZ_API0;
+	unsigned long flags;
+	struct mon_bin_hdr *ep;
+	unsigned int offset;
+	size_t step_len;
+	char *ptr;
+	ssize_t done = 0;
+	int rc;
 
 	mutex_lock(&rp->fetch_lock);
 
-	अगर ((rc = mon_bin_रुको_event(file, rp)) < 0) अणु
+	if ((rc = mon_bin_wait_event(file, rp)) < 0) {
 		mutex_unlock(&rp->fetch_lock);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	ep = MON_OFF2HDR(rp, rp->b_out);
 
-	अगर (rp->b_पढ़ो < hdrbytes) अणु
-		step_len = min(nbytes, (माप_प्रकार)(hdrbytes - rp->b_पढ़ो));
-		ptr = ((अक्षर *)ep) + rp->b_पढ़ो;
-		अगर (step_len && copy_to_user(buf, ptr, step_len)) अणु
+	if (rp->b_read < hdrbytes) {
+		step_len = min(nbytes, (size_t)(hdrbytes - rp->b_read));
+		ptr = ((char *)ep) + rp->b_read;
+		if (step_len && copy_to_user(buf, ptr, step_len)) {
 			mutex_unlock(&rp->fetch_lock);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		nbytes -= step_len;
 		buf += step_len;
-		rp->b_पढ़ो += step_len;
-		करोne += step_len;
-	पूर्ण
+		rp->b_read += step_len;
+		done += step_len;
+	}
 
-	अगर (rp->b_पढ़ो >= hdrbytes) अणु
+	if (rp->b_read >= hdrbytes) {
 		step_len = ep->len_cap;
-		step_len -= rp->b_पढ़ो - hdrbytes;
-		अगर (step_len > nbytes)
+		step_len -= rp->b_read - hdrbytes;
+		if (step_len > nbytes)
 			step_len = nbytes;
 		offset = rp->b_out + PKT_SIZE;
-		offset += rp->b_पढ़ो - hdrbytes;
-		अगर (offset >= rp->b_size)
+		offset += rp->b_read - hdrbytes;
+		if (offset >= rp->b_size)
 			offset -= rp->b_size;
-		अगर (copy_from_buf(rp, offset, buf, step_len)) अणु
+		if (copy_from_buf(rp, offset, buf, step_len)) {
 			mutex_unlock(&rp->fetch_lock);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		nbytes -= step_len;
 		buf += step_len;
-		rp->b_पढ़ो += step_len;
-		करोne += step_len;
-	पूर्ण
+		rp->b_read += step_len;
+		done += step_len;
+	}
 
 	/*
-	 * Check अगर whole packet was पढ़ो, and अगर so, jump to the next one.
+	 * Check if whole packet was read, and if so, jump to the next one.
 	 */
-	अगर (rp->b_पढ़ो >= hdrbytes + ep->len_cap) अणु
+	if (rp->b_read >= hdrbytes + ep->len_cap) {
 		spin_lock_irqsave(&rp->b_lock, flags);
-		mon_buff_area_मुक्त(rp, PKT_SIZE + ep->len_cap);
+		mon_buff_area_free(rp, PKT_SIZE + ep->len_cap);
 		spin_unlock_irqrestore(&rp->b_lock, flags);
-		rp->b_पढ़ो = 0;
-	पूर्ण
+		rp->b_read = 0;
+	}
 
 	mutex_unlock(&rp->fetch_lock);
-	वापस करोne;
-पूर्ण
+	return done;
+}
 
 /*
  * Remove at most nevents from chunked buffer.
- * Returns the number of हटाओd events.
+ * Returns the number of removed events.
  */
-अटल पूर्णांक mon_bin_flush(काष्ठा mon_पढ़ोer_bin *rp, अचिन्हित nevents)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा mon_bin_hdr *ep;
-	पूर्णांक i;
+static int mon_bin_flush(struct mon_reader_bin *rp, unsigned nevents)
+{
+	unsigned long flags;
+	struct mon_bin_hdr *ep;
+	int i;
 
 	mutex_lock(&rp->fetch_lock);
 	spin_lock_irqsave(&rp->b_lock, flags);
-	क्रम (i = 0; i < nevents; ++i) अणु
-		अगर (MON_RING_EMPTY(rp))
-			अवरोध;
+	for (i = 0; i < nevents; ++i) {
+		if (MON_RING_EMPTY(rp))
+			break;
 
 		ep = MON_OFF2HDR(rp, rp->b_out);
-		mon_buff_area_मुक्त(rp, PKT_SIZE + ep->len_cap);
-	पूर्ण
+		mon_buff_area_free(rp, PKT_SIZE + ep->len_cap);
+	}
 	spin_unlock_irqrestore(&rp->b_lock, flags);
-	rp->b_पढ़ो = 0;
+	rp->b_read = 0;
 	mutex_unlock(&rp->fetch_lock);
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /*
- * Fetch at most max event offsets पूर्णांकo the buffer and put them पूर्णांकo vec.
- * The events are usually मुक्तd later with mon_bin_flush.
+ * Fetch at most max event offsets into the buffer and put them into vec.
+ * The events are usually freed later with mon_bin_flush.
  * Return the effective number of events fetched.
  */
-अटल पूर्णांक mon_bin_fetch(काष्ठा file *file, काष्ठा mon_पढ़ोer_bin *rp,
-    u32 __user *vec, अचिन्हित पूर्णांक max)
-अणु
-	अचिन्हित पूर्णांक cur_out;
-	अचिन्हित पूर्णांक bytes, avail;
-	अचिन्हित पूर्णांक size;
-	अचिन्हित पूर्णांक nevents;
-	काष्ठा mon_bin_hdr *ep;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+static int mon_bin_fetch(struct file *file, struct mon_reader_bin *rp,
+    u32 __user *vec, unsigned int max)
+{
+	unsigned int cur_out;
+	unsigned int bytes, avail;
+	unsigned int size;
+	unsigned int nevents;
+	struct mon_bin_hdr *ep;
+	unsigned long flags;
+	int rc;
 
 	mutex_lock(&rp->fetch_lock);
 
-	अगर ((rc = mon_bin_रुको_event(file, rp)) < 0) अणु
+	if ((rc = mon_bin_wait_event(file, rp)) < 0) {
 		mutex_unlock(&rp->fetch_lock);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	spin_lock_irqsave(&rp->b_lock, flags);
 	avail = rp->b_cnt;
@@ -921,40 +920,40 @@ err_alloc:
 	cur_out = rp->b_out;
 	nevents = 0;
 	bytes = 0;
-	जबतक (bytes < avail) अणु
-		अगर (nevents >= max)
-			अवरोध;
+	while (bytes < avail) {
+		if (nevents >= max)
+			break;
 
 		ep = MON_OFF2HDR(rp, cur_out);
-		अगर (put_user(cur_out, &vec[nevents])) अणु
+		if (put_user(cur_out, &vec[nevents])) {
 			mutex_unlock(&rp->fetch_lock);
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
 		nevents++;
 		size = ep->len_cap + PKT_SIZE;
 		size = (size + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
-		अगर ((cur_out += size) >= rp->b_size)
+		if ((cur_out += size) >= rp->b_size)
 			cur_out -= rp->b_size;
 		bytes += size;
-	पूर्ण
+	}
 
 	mutex_unlock(&rp->fetch_lock);
-	वापस nevents;
-पूर्ण
+	return nevents;
+}
 
 /*
  * Count events. This is almost the same as the above mon_bin_fetch,
- * only we करो not store offsets पूर्णांकo user vector, and we have no limit.
+ * only we do not store offsets into user vector, and we have no limit.
  */
-अटल पूर्णांक mon_bin_queued(काष्ठा mon_पढ़ोer_bin *rp)
-अणु
-	अचिन्हित पूर्णांक cur_out;
-	अचिन्हित पूर्णांक bytes, avail;
-	अचिन्हित पूर्णांक size;
-	अचिन्हित पूर्णांक nevents;
-	काष्ठा mon_bin_hdr *ep;
-	अचिन्हित दीर्घ flags;
+static int mon_bin_queued(struct mon_reader_bin *rp)
+{
+	unsigned int cur_out;
+	unsigned int bytes, avail;
+	unsigned int size;
+	unsigned int nevents;
+	struct mon_bin_hdr *ep;
+	unsigned long flags;
 
 	mutex_lock(&rp->fetch_lock);
 
@@ -965,149 +964,149 @@ err_alloc:
 	cur_out = rp->b_out;
 	nevents = 0;
 	bytes = 0;
-	जबतक (bytes < avail) अणु
+	while (bytes < avail) {
 		ep = MON_OFF2HDR(rp, cur_out);
 
 		nevents++;
 		size = ep->len_cap + PKT_SIZE;
 		size = (size + PKT_ALIGN-1) & ~(PKT_ALIGN-1);
-		अगर ((cur_out += size) >= rp->b_size)
+		if ((cur_out += size) >= rp->b_size)
 			cur_out -= rp->b_size;
 		bytes += size;
-	पूर्ण
+	}
 
 	mutex_unlock(&rp->fetch_lock);
-	वापस nevents;
-पूर्ण
+	return nevents;
+}
 
 /*
  */
-अटल दीर्घ mon_bin_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = file->निजी_data;
-	// काष्ठा mon_bus* mbus = rp->r.m_bus;
-	पूर्णांक ret = 0;
-	काष्ठा mon_bin_hdr *ep;
-	अचिन्हित दीर्घ flags;
+static long mon_bin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct mon_reader_bin *rp = file->private_data;
+	// struct mon_bus* mbus = rp->r.m_bus;
+	int ret = 0;
+	struct mon_bin_hdr *ep;
+	unsigned long flags;
 
-	चयन (cmd) अणु
+	switch (cmd) {
 
-	हाल MON_IOCQ_URB_LEN:
+	case MON_IOCQ_URB_LEN:
 		/*
-		 * N.B. This only वापसs the size of data, without the header.
+		 * N.B. This only returns the size of data, without the header.
 		 */
 		spin_lock_irqsave(&rp->b_lock, flags);
-		अगर (!MON_RING_EMPTY(rp)) अणु
+		if (!MON_RING_EMPTY(rp)) {
 			ep = MON_OFF2HDR(rp, rp->b_out);
 			ret = ep->len_cap;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&rp->b_lock, flags);
-		अवरोध;
+		break;
 
-	हाल MON_IOCQ_RING_SIZE:
+	case MON_IOCQ_RING_SIZE:
 		mutex_lock(&rp->fetch_lock);
 		ret = rp->b_size;
 		mutex_unlock(&rp->fetch_lock);
-		अवरोध;
+		break;
 
-	हाल MON_IOCT_RING_SIZE:
+	case MON_IOCT_RING_SIZE:
 		/*
 		 * Changing the buffer size will flush it's contents; the new
-		 * buffer is allocated beक्रमe releasing the old one to be sure
-		 * the device will stay functional also in हाल of memory
+		 * buffer is allocated before releasing the old one to be sure
+		 * the device will stay functional also in case of memory
 		 * pressure.
 		 */
-		अणु
-		पूर्णांक size;
-		काष्ठा mon_pgmap *vec;
+		{
+		int size;
+		struct mon_pgmap *vec;
 
-		अगर (arg < BUFF_MIN || arg > BUFF_MAX)
-			वापस -EINVAL;
+		if (arg < BUFF_MIN || arg > BUFF_MAX)
+			return -EINVAL;
 
 		size = CHUNK_ALIGN(arg);
-		vec = kसुस्मृति(size / CHUNK_SIZE, माप(काष्ठा mon_pgmap),
+		vec = kcalloc(size / CHUNK_SIZE, sizeof(struct mon_pgmap),
 			      GFP_KERNEL);
-		अगर (vec == शून्य) अणु
+		if (vec == NULL) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = mon_alloc_buff(vec, size/CHUNK_SIZE);
-		अगर (ret < 0) अणु
-			kमुक्त(vec);
-			अवरोध;
-		पूर्ण
+		if (ret < 0) {
+			kfree(vec);
+			break;
+		}
 
 		mutex_lock(&rp->fetch_lock);
 		spin_lock_irqsave(&rp->b_lock, flags);
-		अगर (rp->mmap_active) अणु
-			mon_मुक्त_buff(vec, size/CHUNK_SIZE);
-			kमुक्त(vec);
+		if (rp->mmap_active) {
+			mon_free_buff(vec, size/CHUNK_SIZE);
+			kfree(vec);
 			ret = -EBUSY;
-		पूर्ण अन्यथा अणु
-			mon_मुक्त_buff(rp->b_vec, rp->b_size/CHUNK_SIZE);
-			kमुक्त(rp->b_vec);
+		} else {
+			mon_free_buff(rp->b_vec, rp->b_size/CHUNK_SIZE);
+			kfree(rp->b_vec);
 			rp->b_vec  = vec;
 			rp->b_size = size;
-			rp->b_पढ़ो = rp->b_in = rp->b_out = rp->b_cnt = 0;
+			rp->b_read = rp->b_in = rp->b_out = rp->b_cnt = 0;
 			rp->cnt_lost = 0;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&rp->b_lock, flags);
 		mutex_unlock(&rp->fetch_lock);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल MON_IOCH_MFLUSH:
+	case MON_IOCH_MFLUSH:
 		ret = mon_bin_flush(rp, arg);
-		अवरोध;
+		break;
 
-	हाल MON_IOCX_GET:
-	हाल MON_IOCX_GETX:
-		अणु
-		काष्ठा mon_bin_get getb;
+	case MON_IOCX_GET:
+	case MON_IOCX_GETX:
+		{
+		struct mon_bin_get getb;
 
-		अगर (copy_from_user(&getb, (व्योम __user *)arg,
-					    माप(काष्ठा mon_bin_get)))
-			वापस -EFAULT;
+		if (copy_from_user(&getb, (void __user *)arg,
+					    sizeof(struct mon_bin_get)))
+			return -EFAULT;
 
-		अगर (getb.alloc > 0x10000000)	/* Want to cast to u32 */
-			वापस -EINVAL;
+		if (getb.alloc > 0x10000000)	/* Want to cast to u32 */
+			return -EINVAL;
 		ret = mon_bin_get_event(file, rp, getb.hdr,
 		    (cmd == MON_IOCX_GET)? PKT_SZ_API0: PKT_SZ_API1,
-		    getb.data, (अचिन्हित पूर्णांक)getb.alloc);
-		पूर्ण
-		अवरोध;
+		    getb.data, (unsigned int)getb.alloc);
+		}
+		break;
 
-	हाल MON_IOCX_MFETCH:
-		अणु
-		काष्ठा mon_bin_mfetch mfetch;
-		काष्ठा mon_bin_mfetch __user *uptr;
+	case MON_IOCX_MFETCH:
+		{
+		struct mon_bin_mfetch mfetch;
+		struct mon_bin_mfetch __user *uptr;
 
-		uptr = (काष्ठा mon_bin_mfetch __user *)arg;
+		uptr = (struct mon_bin_mfetch __user *)arg;
 
-		अगर (copy_from_user(&mfetch, uptr, माप(mfetch)))
-			वापस -EFAULT;
+		if (copy_from_user(&mfetch, uptr, sizeof(mfetch)))
+			return -EFAULT;
 
-		अगर (mfetch.nflush) अणु
+		if (mfetch.nflush) {
 			ret = mon_bin_flush(rp, mfetch.nflush);
-			अगर (ret < 0)
-				वापस ret;
-			अगर (put_user(ret, &uptr->nflush))
-				वापस -EFAULT;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+			if (put_user(ret, &uptr->nflush))
+				return -EFAULT;
+		}
 		ret = mon_bin_fetch(file, rp, mfetch.offvec, mfetch.nfetch);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (put_user(ret, &uptr->nfetch))
-			वापस -EFAULT;
+		if (ret < 0)
+			return ret;
+		if (put_user(ret, &uptr->nfetch))
+			return -EFAULT;
 		ret = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल MON_IOCG_STATS: अणु
-		काष्ठा mon_bin_stats __user *sp;
-		अचिन्हित पूर्णांक nevents;
-		अचिन्हित पूर्णांक ndropped;
+	case MON_IOCG_STATS: {
+		struct mon_bin_stats __user *sp;
+		unsigned int nevents;
+		unsigned int ndropped;
 
 		spin_lock_irqsave(&rp->b_lock, flags);
 		ndropped = rp->cnt_lost;
@@ -1115,297 +1114,297 @@ err_alloc:
 		spin_unlock_irqrestore(&rp->b_lock, flags);
 		nevents = mon_bin_queued(rp);
 
-		sp = (काष्ठा mon_bin_stats __user *)arg;
-		अगर (put_user(ndropped, &sp->dropped))
-			वापस -EFAULT;
-		अगर (put_user(nevents, &sp->queued))
-			वापस -EFAULT;
+		sp = (struct mon_bin_stats __user *)arg;
+		if (put_user(ndropped, &sp->dropped))
+			return -EFAULT;
+		if (put_user(nevents, &sp->queued))
+			return -EFAULT;
 
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
+	default:
+		return -ENOTTY;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ mon_bin_compat_ioctl(काष्ठा file *file,
-    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = file->निजी_data;
-	पूर्णांक ret;
+#ifdef CONFIG_COMPAT
+static long mon_bin_compat_ioctl(struct file *file,
+    unsigned int cmd, unsigned long arg)
+{
+	struct mon_reader_bin *rp = file->private_data;
+	int ret;
 
-	चयन (cmd) अणु
+	switch (cmd) {
 
-	हाल MON_IOCX_GET32:
-	हाल MON_IOCX_GETX32:
-		अणु
-		काष्ठा mon_bin_get32 getb;
+	case MON_IOCX_GET32:
+	case MON_IOCX_GETX32:
+		{
+		struct mon_bin_get32 getb;
 
-		अगर (copy_from_user(&getb, (व्योम __user *)arg,
-					    माप(काष्ठा mon_bin_get32)))
-			वापस -EFAULT;
+		if (copy_from_user(&getb, (void __user *)arg,
+					    sizeof(struct mon_bin_get32)))
+			return -EFAULT;
 
 		ret = mon_bin_get_event(file, rp, compat_ptr(getb.hdr32),
 		    (cmd == MON_IOCX_GET32)? PKT_SZ_API0: PKT_SZ_API1,
 		    compat_ptr(getb.data32), getb.alloc32);
-		अगर (ret < 0)
-			वापस ret;
-		पूर्ण
-		वापस 0;
+		if (ret < 0)
+			return ret;
+		}
+		return 0;
 
-	हाल MON_IOCX_MFETCH32:
-		अणु
-		काष्ठा mon_bin_mfetch32 mfetch;
-		काष्ठा mon_bin_mfetch32 __user *uptr;
+	case MON_IOCX_MFETCH32:
+		{
+		struct mon_bin_mfetch32 mfetch;
+		struct mon_bin_mfetch32 __user *uptr;
 
-		uptr = (काष्ठा mon_bin_mfetch32 __user *) compat_ptr(arg);
+		uptr = (struct mon_bin_mfetch32 __user *) compat_ptr(arg);
 
-		अगर (copy_from_user(&mfetch, uptr, माप(mfetch)))
-			वापस -EFAULT;
+		if (copy_from_user(&mfetch, uptr, sizeof(mfetch)))
+			return -EFAULT;
 
-		अगर (mfetch.nflush32) अणु
+		if (mfetch.nflush32) {
 			ret = mon_bin_flush(rp, mfetch.nflush32);
-			अगर (ret < 0)
-				वापस ret;
-			अगर (put_user(ret, &uptr->nflush32))
-				वापस -EFAULT;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+			if (put_user(ret, &uptr->nflush32))
+				return -EFAULT;
+		}
 		ret = mon_bin_fetch(file, rp, compat_ptr(mfetch.offvec32),
 		    mfetch.nfetch32);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (put_user(ret, &uptr->nfetch32))
-			वापस -EFAULT;
-		पूर्ण
-		वापस 0;
+		if (ret < 0)
+			return ret;
+		if (put_user(ret, &uptr->nfetch32))
+			return -EFAULT;
+		}
+		return 0;
 
-	हाल MON_IOCG_STATS:
-		वापस mon_bin_ioctl(file, cmd, (अचिन्हित दीर्घ) compat_ptr(arg));
+	case MON_IOCG_STATS:
+		return mon_bin_ioctl(file, cmd, (unsigned long) compat_ptr(arg));
 
-	हाल MON_IOCQ_URB_LEN:
-	हाल MON_IOCQ_RING_SIZE:
-	हाल MON_IOCT_RING_SIZE:
-	हाल MON_IOCH_MFLUSH:
-		वापस mon_bin_ioctl(file, cmd, arg);
+	case MON_IOCQ_URB_LEN:
+	case MON_IOCQ_RING_SIZE:
+	case MON_IOCT_RING_SIZE:
+	case MON_IOCH_MFLUSH:
+		return mon_bin_ioctl(file, cmd, arg);
 
-	शेष:
+	default:
 		;
-	पूर्ण
-	वापस -ENOTTY;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COMPAT */
+	}
+	return -ENOTTY;
+}
+#endif /* CONFIG_COMPAT */
 
-अटल __poll_t
-mon_bin_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = file->निजी_data;
+static __poll_t
+mon_bin_poll(struct file *file, struct poll_table_struct *wait)
+{
+	struct mon_reader_bin *rp = file->private_data;
 	__poll_t mask = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (file->f_mode & FMODE_READ)
-		poll_रुको(file, &rp->b_रुको, रुको);
+	if (file->f_mode & FMODE_READ)
+		poll_wait(file, &rp->b_wait, wait);
 
 	spin_lock_irqsave(&rp->b_lock, flags);
-	अगर (!MON_RING_EMPTY(rp))
-		mask |= EPOLLIN | EPOLLRDNORM;    /* पढ़ोable */
+	if (!MON_RING_EMPTY(rp))
+		mask |= EPOLLIN | EPOLLRDNORM;    /* readable */
 	spin_unlock_irqrestore(&rp->b_lock, flags);
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
 /*
- * खोलो and बंद: just keep track of how many बार the device is
+ * open and close: just keep track of how many times the device is
  * mapped, to use the proper memory allocation function.
  */
-अटल व्योम mon_bin_vma_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = vma->vm_निजी_data;
-	अचिन्हित दीर्घ flags;
+static void mon_bin_vma_open(struct vm_area_struct *vma)
+{
+	struct mon_reader_bin *rp = vma->vm_private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&rp->b_lock, flags);
 	rp->mmap_active++;
 	spin_unlock_irqrestore(&rp->b_lock, flags);
-पूर्ण
+}
 
-अटल व्योम mon_bin_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ flags;
+static void mon_bin_vma_close(struct vm_area_struct *vma)
+{
+	unsigned long flags;
 
-	काष्ठा mon_पढ़ोer_bin *rp = vma->vm_निजी_data;
+	struct mon_reader_bin *rp = vma->vm_private_data;
 	spin_lock_irqsave(&rp->b_lock, flags);
 	rp->mmap_active--;
 	spin_unlock_irqrestore(&rp->b_lock, flags);
-पूर्ण
+}
 
 /*
  * Map ring pages to user space.
  */
-अटल vm_fault_t mon_bin_vma_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा mon_पढ़ोer_bin *rp = vmf->vma->vm_निजी_data;
-	अचिन्हित दीर्घ offset, chunk_idx;
-	काष्ठा page *pageptr;
+static vm_fault_t mon_bin_vma_fault(struct vm_fault *vmf)
+{
+	struct mon_reader_bin *rp = vmf->vma->vm_private_data;
+	unsigned long offset, chunk_idx;
+	struct page *pageptr;
 
 	offset = vmf->pgoff << PAGE_SHIFT;
-	अगर (offset >= rp->b_size)
-		वापस VM_FAULT_SIGBUS;
+	if (offset >= rp->b_size)
+		return VM_FAULT_SIGBUS;
 	chunk_idx = offset / CHUNK_SIZE;
 	pageptr = rp->b_vec[chunk_idx].pg;
 	get_page(pageptr);
 	vmf->page = pageptr;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा mon_bin_vm_ops = अणु
-	.खोलो =     mon_bin_vma_खोलो,
-	.बंद =    mon_bin_vma_बंद,
+static const struct vm_operations_struct mon_bin_vm_ops = {
+	.open =     mon_bin_vma_open,
+	.close =    mon_bin_vma_close,
 	.fault =    mon_bin_vma_fault,
-पूर्ण;
+};
 
-अटल पूर्णांक mon_bin_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	/* करोn't करो anything here: "fault" will set up page table entries */
+static int mon_bin_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	/* don't do anything here: "fault" will set up page table entries */
 	vma->vm_ops = &mon_bin_vm_ops;
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-	vma->vm_निजी_data = filp->निजी_data;
-	mon_bin_vma_खोलो(vma);
-	वापस 0;
-पूर्ण
+	vma->vm_private_data = filp->private_data;
+	mon_bin_vma_open(vma);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mon_fops_binary = अणु
+static const struct file_operations mon_fops_binary = {
 	.owner =	THIS_MODULE,
-	.खोलो =		mon_bin_खोलो,
+	.open =		mon_bin_open,
 	.llseek =	no_llseek,
-	.पढ़ो =		mon_bin_पढ़ो,
-	/* .ग_लिखो =	mon_text_ग_लिखो, */
+	.read =		mon_bin_read,
+	/* .write =	mon_text_write, */
 	.poll =		mon_bin_poll,
 	.unlocked_ioctl = mon_bin_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl =	mon_bin_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.release =	mon_bin_release,
 	.mmap =		mon_bin_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक mon_bin_रुको_event(काष्ठा file *file, काष्ठा mon_पढ़ोer_bin *rp)
-अणु
-	DECLARE_WAITQUEUE(रुकोa, current);
-	अचिन्हित दीर्घ flags;
+static int mon_bin_wait_event(struct file *file, struct mon_reader_bin *rp)
+{
+	DECLARE_WAITQUEUE(waita, current);
+	unsigned long flags;
 
-	add_रुको_queue(&rp->b_रुको, &रुकोa);
+	add_wait_queue(&rp->b_wait, &waita);
 	set_current_state(TASK_INTERRUPTIBLE);
 
 	spin_lock_irqsave(&rp->b_lock, flags);
-	जबतक (MON_RING_EMPTY(rp)) अणु
+	while (MON_RING_EMPTY(rp)) {
 		spin_unlock_irqrestore(&rp->b_lock, flags);
 
-		अगर (file->f_flags & O_NONBLOCK) अणु
+		if (file->f_flags & O_NONBLOCK) {
 			set_current_state(TASK_RUNNING);
-			हटाओ_रुको_queue(&rp->b_रुको, &रुकोa);
-			वापस -EWOULDBLOCK; /* Same as EAGAIN in Linux */
-		पूर्ण
+			remove_wait_queue(&rp->b_wait, &waita);
+			return -EWOULDBLOCK; /* Same as EAGAIN in Linux */
+		}
 		schedule();
-		अगर (संकेत_pending(current)) अणु
-			हटाओ_रुको_queue(&rp->b_रुको, &रुकोa);
-			वापस -EINTR;
-		पूर्ण
+		if (signal_pending(current)) {
+			remove_wait_queue(&rp->b_wait, &waita);
+			return -EINTR;
+		}
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		spin_lock_irqsave(&rp->b_lock, flags);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&rp->b_lock, flags);
 
 	set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(&rp->b_रुको, &रुकोa);
-	वापस 0;
-पूर्ण
+	remove_wait_queue(&rp->b_wait, &waita);
+	return 0;
+}
 
-अटल पूर्णांक mon_alloc_buff(काष्ठा mon_pgmap *map, पूर्णांक npages)
-अणु
-	पूर्णांक n;
-	अचिन्हित दीर्घ vaddr;
+static int mon_alloc_buff(struct mon_pgmap *map, int npages)
+{
+	int n;
+	unsigned long vaddr;
 
-	क्रम (n = 0; n < npages; n++) अणु
+	for (n = 0; n < npages; n++) {
 		vaddr = get_zeroed_page(GFP_KERNEL);
-		अगर (vaddr == 0) अणु
-			जबतक (n-- != 0)
-				मुक्त_page((अचिन्हित दीर्घ) map[n].ptr);
-			वापस -ENOMEM;
-		पूर्ण
-		map[n].ptr = (अचिन्हित अक्षर *) vaddr;
-		map[n].pg = virt_to_page((व्योम *) vaddr);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (vaddr == 0) {
+			while (n-- != 0)
+				free_page((unsigned long) map[n].ptr);
+			return -ENOMEM;
+		}
+		map[n].ptr = (unsigned char *) vaddr;
+		map[n].pg = virt_to_page((void *) vaddr);
+	}
+	return 0;
+}
 
-अटल व्योम mon_मुक्त_buff(काष्ठा mon_pgmap *map, पूर्णांक npages)
-अणु
-	पूर्णांक n;
+static void mon_free_buff(struct mon_pgmap *map, int npages)
+{
+	int n;
 
-	क्रम (n = 0; n < npages; n++)
-		मुक्त_page((अचिन्हित दीर्घ) map[n].ptr);
-पूर्ण
+	for (n = 0; n < npages; n++)
+		free_page((unsigned long) map[n].ptr);
+}
 
-पूर्णांक mon_bin_add(काष्ठा mon_bus *mbus, स्थिर काष्ठा usb_bus *ubus)
-अणु
-	काष्ठा device *dev;
-	अचिन्हित minor = ubus? ubus->busnum: 0;
+int mon_bin_add(struct mon_bus *mbus, const struct usb_bus *ubus)
+{
+	struct device *dev;
+	unsigned minor = ubus? ubus->busnum: 0;
 
-	अगर (minor >= MON_BIN_MAX_MINOR)
-		वापस 0;
+	if (minor >= MON_BIN_MAX_MINOR)
+		return 0;
 
-	dev = device_create(mon_bin_class, ubus ? ubus->controller : शून्य,
-			    MKDEV(MAJOR(mon_bin_dev0), minor), शून्य,
+	dev = device_create(mon_bin_class, ubus ? ubus->controller : NULL,
+			    MKDEV(MAJOR(mon_bin_dev0), minor), NULL,
 			    "usbmon%d", minor);
-	अगर (IS_ERR(dev))
-		वापस 0;
+	if (IS_ERR(dev))
+		return 0;
 
 	mbus->classdev = dev;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-व्योम mon_bin_del(काष्ठा mon_bus *mbus)
-अणु
+void mon_bin_del(struct mon_bus *mbus)
+{
 	device_destroy(mon_bin_class, mbus->classdev->devt);
-पूर्ण
+}
 
-पूर्णांक __init mon_bin_init(व्योम)
-अणु
-	पूर्णांक rc;
+int __init mon_bin_init(void)
+{
+	int rc;
 
 	mon_bin_class = class_create(THIS_MODULE, "usbmon");
-	अगर (IS_ERR(mon_bin_class)) अणु
+	if (IS_ERR(mon_bin_class)) {
 		rc = PTR_ERR(mon_bin_class);
-		जाओ err_class;
-	पूर्ण
+		goto err_class;
+	}
 
 	rc = alloc_chrdev_region(&mon_bin_dev0, 0, MON_BIN_MAX_MINOR, "usbmon");
-	अगर (rc < 0)
-		जाओ err_dev;
+	if (rc < 0)
+		goto err_dev;
 
 	cdev_init(&mon_bin_cdev, &mon_fops_binary);
 	mon_bin_cdev.owner = THIS_MODULE;
 
 	rc = cdev_add(&mon_bin_cdev, mon_bin_dev0, MON_BIN_MAX_MINOR);
-	अगर (rc < 0)
-		जाओ err_add;
+	if (rc < 0)
+		goto err_add;
 
-	वापस 0;
+	return 0;
 
 err_add:
-	unरेजिस्टर_chrdev_region(mon_bin_dev0, MON_BIN_MAX_MINOR);
+	unregister_chrdev_region(mon_bin_dev0, MON_BIN_MAX_MINOR);
 err_dev:
 	class_destroy(mon_bin_class);
 err_class:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम mon_bin_निकास(व्योम)
-अणु
+void mon_bin_exit(void)
+{
 	cdev_del(&mon_bin_cdev);
-	unरेजिस्टर_chrdev_region(mon_bin_dev0, MON_BIN_MAX_MINOR);
+	unregister_chrdev_region(mon_bin_dev0, MON_BIN_MAX_MINOR);
 	class_destroy(mon_bin_class);
-पूर्ण
+}

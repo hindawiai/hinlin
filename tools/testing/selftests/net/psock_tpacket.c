@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2013 Red Hat, Inc.
  * Author: Daniel Borkmann <dborkman@redhat.com>
@@ -8,142 +7,142 @@
  * A basic test of packet socket's TPACKET_V1/TPACKET_V2/TPACKET_V3 behavior.
  *
  * Control:
- *   Test the setup of the TPACKET socket with dअगरferent patterns that are
+ *   Test the setup of the TPACKET socket with different patterns that are
  *   known to fail (TODO) resp. succeed (OK).
  *
  * Datapath:
  *   Open a pair of packet sockets and send resp. receive an a priori known
- *   packet pattern accross the sockets and check अगर it was received resp.
+ *   packet pattern accross the sockets and check if it was received resp.
  *   sent correctly. Fanout in combination with RX_RING is currently not
  *   tested here.
  *
- *   The test currently runs क्रम
+ *   The test currently runs for
  *   - TPACKET_V1: RX_RING, TX_RING
  *   - TPACKET_V2: RX_RING, TX_RING
  *   - TPACKET_V3: RX_RING
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/socket.h>
-#समावेश <sys/mman.h>
-#समावेश <linux/अगर_packet.h>
-#समावेश <linux/filter.h>
-#समावेश <प्रकार.स>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <bits/wordsize.h>
-#समावेश <net/ethernet.h>
-#समावेश <netinet/ip.h>
-#समावेश <arpa/inet.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
-#समावेश <net/अगर.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/mman.h>
+#include <linux/if_packet.h>
+#include <linux/filter.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <bits/wordsize.h>
+#include <net/ethernet.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <stdint.h>
+#include <string.h>
+#include <assert.h>
+#include <net/if.h>
+#include <inttypes.h>
+#include <poll.h>
 
-#समावेश "psock_lib.h"
+#include "psock_lib.h"
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-#अगर_अघोषित bug_on
-# define bug_on(cond)		निश्चित(!(cond))
-#पूर्ण_अगर
+#ifndef bug_on
+# define bug_on(cond)		assert(!(cond))
+#endif
 
-#अगर_अघोषित __aligned_tpacket
+#ifndef __aligned_tpacket
 # define __aligned_tpacket	__attribute__((aligned(TPACKET_ALIGNMENT)))
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित __align_tpacket
+#ifndef __align_tpacket
 # define __align_tpacket(x)	__attribute__((aligned(TPACKET_ALIGN(x))))
-#पूर्ण_अगर
+#endif
 
-#घोषणा NUM_PACKETS		100
-#घोषणा ALIGN_8(x)		(((x) + 8 - 1) & ~(8 - 1))
+#define NUM_PACKETS		100
+#define ALIGN_8(x)		(((x) + 8 - 1) & ~(8 - 1))
 
-काष्ठा ring अणु
-	काष्ठा iovec *rd;
-	uपूर्णांक8_t *mm_space;
-	माप_प्रकार mm_len, rd_len;
-	काष्ठा sockaddr_ll ll;
-	व्योम (*walk)(पूर्णांक sock, काष्ठा ring *ring);
-	पूर्णांक type, rd_num, flen, version;
-	जोड़ अणु
-		काष्ठा tpacket_req  req;
-		काष्ठा tpacket_req3 req3;
-	पूर्ण;
-पूर्ण;
+struct ring {
+	struct iovec *rd;
+	uint8_t *mm_space;
+	size_t mm_len, rd_len;
+	struct sockaddr_ll ll;
+	void (*walk)(int sock, struct ring *ring);
+	int type, rd_num, flen, version;
+	union {
+		struct tpacket_req  req;
+		struct tpacket_req3 req3;
+	};
+};
 
-काष्ठा block_desc अणु
-	uपूर्णांक32_t version;
-	uपूर्णांक32_t offset_to_priv;
-	काष्ठा tpacket_hdr_v1 h1;
-पूर्ण;
+struct block_desc {
+	uint32_t version;
+	uint32_t offset_to_priv;
+	struct tpacket_hdr_v1 h1;
+};
 
-जोड़ frame_map अणु
-	काष्ठा अणु
-		काष्ठा tpacket_hdr tp_h __aligned_tpacket;
-		काष्ठा sockaddr_ll s_ll __align_tpacket(माप(काष्ठा tpacket_hdr));
-	पूर्ण *v1;
-	काष्ठा अणु
-		काष्ठा tpacket2_hdr tp_h __aligned_tpacket;
-		काष्ठा sockaddr_ll s_ll __align_tpacket(माप(काष्ठा tpacket2_hdr));
-	पूर्ण *v2;
-	व्योम *raw;
-पूर्ण;
+union frame_map {
+	struct {
+		struct tpacket_hdr tp_h __aligned_tpacket;
+		struct sockaddr_ll s_ll __align_tpacket(sizeof(struct tpacket_hdr));
+	} *v1;
+	struct {
+		struct tpacket2_hdr tp_h __aligned_tpacket;
+		struct sockaddr_ll s_ll __align_tpacket(sizeof(struct tpacket2_hdr));
+	} *v2;
+	void *raw;
+};
 
-अटल अचिन्हित पूर्णांक total_packets, total_bytes;
+static unsigned int total_packets, total_bytes;
 
-अटल पूर्णांक pfsocket(पूर्णांक ver)
-अणु
-	पूर्णांक ret, sock = socket(PF_PACKET, SOCK_RAW, 0);
-	अगर (sock == -1) अणु
-		लिखो_त्रुटि("socket");
-		निकास(1);
-	पूर्ण
+static int pfsocket(int ver)
+{
+	int ret, sock = socket(PF_PACKET, SOCK_RAW, 0);
+	if (sock == -1) {
+		perror("socket");
+		exit(1);
+	}
 
-	ret = setsockopt(sock, SOL_PACKET, PACKET_VERSION, &ver, माप(ver));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("setsockopt");
-		निकास(1);
-	पूर्ण
+	ret = setsockopt(sock, SOL_PACKET, PACKET_VERSION, &ver, sizeof(ver));
+	if (ret == -1) {
+		perror("setsockopt");
+		exit(1);
+	}
 
-	वापस sock;
-पूर्ण
+	return sock;
+}
 
-अटल व्योम status_bar_update(व्योम)
-अणु
-	अगर (total_packets % 10 == 0) अणु
-		ख_लिखो(मानक_त्रुटि, ".");
-		ख_साफ(मानक_त्रुटि);
-	पूर्ण
-पूर्ण
+static void status_bar_update(void)
+{
+	if (total_packets % 10 == 0) {
+		fprintf(stderr, ".");
+		fflush(stderr);
+	}
+}
 
-अटल व्योम test_payload(व्योम *pay, माप_प्रकार len)
-अणु
-	काष्ठा ethhdr *eth = pay;
+static void test_payload(void *pay, size_t len)
+{
+	struct ethhdr *eth = pay;
 
-	अगर (len < माप(काष्ठा ethhdr)) अणु
-		ख_लिखो(मानक_त्रुटि, "test_payload: packet too "
+	if (len < sizeof(struct ethhdr)) {
+		fprintf(stderr, "test_payload: packet too "
 			"small: %zu bytes!\n", len);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	अगर (eth->h_proto != htons(ETH_P_IP)) अणु
-		ख_लिखो(मानक_त्रुटि, "test_payload: wrong ethernet "
+	if (eth->h_proto != htons(ETH_P_IP)) {
+		fprintf(stderr, "test_payload: wrong ethernet "
 			"type: 0x%x!\n", ntohs(eth->h_proto));
-		निकास(1);
-	पूर्ण
-पूर्ण
+		exit(1);
+	}
+}
 
-अटल व्योम create_payload(व्योम *pay, माप_प्रकार *len)
-अणु
-	पूर्णांक i;
-	काष्ठा ethhdr *eth = pay;
-	काष्ठा iphdr *ip = pay + माप(*eth);
+static void create_payload(void *pay, size_t *len)
+{
+	int i;
+	struct ethhdr *eth = pay;
+	struct iphdr *ip = pay + sizeof(*eth);
 
 	/* Lets create some broken crap, that still passes
 	 * our BPF filter.
@@ -151,264 +150,264 @@
 
 	*len = DATA_LEN + 42;
 
-	स_रखो(pay, 0xff, ETH_ALEN * 2);
+	memset(pay, 0xff, ETH_ALEN * 2);
 	eth->h_proto = htons(ETH_P_IP);
 
-	क्रम (i = 0; i < माप(*ip); ++i)
-		((uपूर्णांक8_t *) pay)[i + माप(*eth)] = (uपूर्णांक8_t) अक्रम();
+	for (i = 0; i < sizeof(*ip); ++i)
+		((uint8_t *) pay)[i + sizeof(*eth)] = (uint8_t) rand();
 
 	ip->ihl = 5;
 	ip->version = 4;
 	ip->protocol = 0x11;
 	ip->frag_off = 0;
 	ip->ttl = 64;
-	ip->tot_len = htons((uपूर्णांक16_t) *len - माप(*eth));
+	ip->tot_len = htons((uint16_t) *len - sizeof(*eth));
 
 	ip->saddr = htonl(INADDR_LOOPBACK);
 	ip->daddr = htonl(INADDR_LOOPBACK);
 
-	स_रखो(pay + माप(*eth) + माप(*ip),
+	memset(pay + sizeof(*eth) + sizeof(*ip),
 	       DATA_CHAR, DATA_LEN);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __v1_rx_kernel_पढ़ोy(काष्ठा tpacket_hdr *hdr)
-अणु
-	वापस ((hdr->tp_status & TP_STATUS_USER) == TP_STATUS_USER);
-पूर्ण
+static inline int __v1_rx_kernel_ready(struct tpacket_hdr *hdr)
+{
+	return ((hdr->tp_status & TP_STATUS_USER) == TP_STATUS_USER);
+}
 
-अटल अंतरभूत व्योम __v1_rx_user_पढ़ोy(काष्ठा tpacket_hdr *hdr)
-अणु
+static inline void __v1_rx_user_ready(struct tpacket_hdr *hdr)
+{
 	hdr->tp_status = TP_STATUS_KERNEL;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __v2_rx_kernel_पढ़ोy(काष्ठा tpacket2_hdr *hdr)
-अणु
-	वापस ((hdr->tp_status & TP_STATUS_USER) == TP_STATUS_USER);
-पूर्ण
+static inline int __v2_rx_kernel_ready(struct tpacket2_hdr *hdr)
+{
+	return ((hdr->tp_status & TP_STATUS_USER) == TP_STATUS_USER);
+}
 
-अटल अंतरभूत व्योम __v2_rx_user_पढ़ोy(काष्ठा tpacket2_hdr *hdr)
-अणु
+static inline void __v2_rx_user_ready(struct tpacket2_hdr *hdr)
+{
 	hdr->tp_status = TP_STATUS_KERNEL;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __v1_v2_rx_kernel_पढ़ोy(व्योम *base, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल TPACKET_V1:
-		वापस __v1_rx_kernel_पढ़ोy(base);
-	हाल TPACKET_V2:
-		वापस __v2_rx_kernel_पढ़ोy(base);
-	शेष:
+static inline int __v1_v2_rx_kernel_ready(void *base, int version)
+{
+	switch (version) {
+	case TPACKET_V1:
+		return __v1_rx_kernel_ready(base);
+	case TPACKET_V2:
+		return __v2_rx_kernel_ready(base);
+	default:
 		bug_on(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल अंतरभूत व्योम __v1_v2_rx_user_पढ़ोy(व्योम *base, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल TPACKET_V1:
-		__v1_rx_user_पढ़ोy(base);
-		अवरोध;
-	हाल TPACKET_V2:
-		__v2_rx_user_पढ़ोy(base);
-		अवरोध;
-	पूर्ण
-पूर्ण
+static inline void __v1_v2_rx_user_ready(void *base, int version)
+{
+	switch (version) {
+	case TPACKET_V1:
+		__v1_rx_user_ready(base);
+		break;
+	case TPACKET_V2:
+		__v2_rx_user_ready(base);
+		break;
+	}
+}
 
-अटल व्योम walk_v1_v2_rx(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	काष्ठा pollfd pfd;
-	पूर्णांक udp_sock[2];
-	जोड़ frame_map ppd;
-	अचिन्हित पूर्णांक frame_num = 0;
+static void walk_v1_v2_rx(int sock, struct ring *ring)
+{
+	struct pollfd pfd;
+	int udp_sock[2];
+	union frame_map ppd;
+	unsigned int frame_num = 0;
 
 	bug_on(ring->type != PACKET_RX_RING);
 
-	pair_udp_खोलो(udp_sock, PORT_BASE);
+	pair_udp_open(udp_sock, PORT_BASE);
 
-	स_रखो(&pfd, 0, माप(pfd));
+	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = sock;
 	pfd.events = POLLIN | POLLERR;
 	pfd.revents = 0;
 
 	pair_udp_send(udp_sock, NUM_PACKETS);
 
-	जबतक (total_packets < NUM_PACKETS * 2) अणु
-		जबतक (__v1_v2_rx_kernel_पढ़ोy(ring->rd[frame_num].iov_base,
-					       ring->version)) अणु
+	while (total_packets < NUM_PACKETS * 2) {
+		while (__v1_v2_rx_kernel_ready(ring->rd[frame_num].iov_base,
+					       ring->version)) {
 			ppd.raw = ring->rd[frame_num].iov_base;
 
-			चयन (ring->version) अणु
-			हाल TPACKET_V1:
-				test_payload((uपूर्णांक8_t *) ppd.raw + ppd.v1->tp_h.tp_mac,
+			switch (ring->version) {
+			case TPACKET_V1:
+				test_payload((uint8_t *) ppd.raw + ppd.v1->tp_h.tp_mac,
 					     ppd.v1->tp_h.tp_snaplen);
 				total_bytes += ppd.v1->tp_h.tp_snaplen;
-				अवरोध;
+				break;
 
-			हाल TPACKET_V2:
-				test_payload((uपूर्णांक8_t *) ppd.raw + ppd.v2->tp_h.tp_mac,
+			case TPACKET_V2:
+				test_payload((uint8_t *) ppd.raw + ppd.v2->tp_h.tp_mac,
 					     ppd.v2->tp_h.tp_snaplen);
 				total_bytes += ppd.v2->tp_h.tp_snaplen;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			status_bar_update();
 			total_packets++;
 
-			__v1_v2_rx_user_पढ़ोy(ppd.raw, ring->version);
+			__v1_v2_rx_user_ready(ppd.raw, ring->version);
 
 			frame_num = (frame_num + 1) % ring->rd_num;
-		पूर्ण
+		}
 
 		poll(&pfd, 1, 1);
-	पूर्ण
+	}
 
-	pair_udp_बंद(udp_sock);
+	pair_udp_close(udp_sock);
 
-	अगर (total_packets != 2 * NUM_PACKETS) अणु
-		ख_लिखो(मानक_त्रुटि, "walk_v%d_rx: received %u out of %u pkts\n",
+	if (total_packets != 2 * NUM_PACKETS) {
+		fprintf(stderr, "walk_v%d_rx: received %u out of %u pkts\n",
 			ring->version, total_packets, NUM_PACKETS);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	ख_लिखो(मानक_त्रुटि, " %u pkts (%u bytes)", NUM_PACKETS, total_bytes >> 1);
-पूर्ण
+	fprintf(stderr, " %u pkts (%u bytes)", NUM_PACKETS, total_bytes >> 1);
+}
 
-अटल अंतरभूत पूर्णांक __v1_tx_kernel_पढ़ोy(काष्ठा tpacket_hdr *hdr)
-अणु
-	वापस !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
-पूर्ण
+static inline int __v1_tx_kernel_ready(struct tpacket_hdr *hdr)
+{
+	return !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
+}
 
-अटल अंतरभूत व्योम __v1_tx_user_पढ़ोy(काष्ठा tpacket_hdr *hdr)
-अणु
+static inline void __v1_tx_user_ready(struct tpacket_hdr *hdr)
+{
 	hdr->tp_status = TP_STATUS_SEND_REQUEST;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __v2_tx_kernel_पढ़ोy(काष्ठा tpacket2_hdr *hdr)
-अणु
-	वापस !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
-पूर्ण
+static inline int __v2_tx_kernel_ready(struct tpacket2_hdr *hdr)
+{
+	return !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
+}
 
-अटल अंतरभूत व्योम __v2_tx_user_पढ़ोy(काष्ठा tpacket2_hdr *hdr)
-अणु
+static inline void __v2_tx_user_ready(struct tpacket2_hdr *hdr)
+{
 	hdr->tp_status = TP_STATUS_SEND_REQUEST;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __v3_tx_kernel_पढ़ोy(काष्ठा tpacket3_hdr *hdr)
-अणु
-	वापस !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
-पूर्ण
+static inline int __v3_tx_kernel_ready(struct tpacket3_hdr *hdr)
+{
+	return !(hdr->tp_status & (TP_STATUS_SEND_REQUEST | TP_STATUS_SENDING));
+}
 
-अटल अंतरभूत व्योम __v3_tx_user_पढ़ोy(काष्ठा tpacket3_hdr *hdr)
-अणु
+static inline void __v3_tx_user_ready(struct tpacket3_hdr *hdr)
+{
 	hdr->tp_status = TP_STATUS_SEND_REQUEST;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक __tx_kernel_पढ़ोy(व्योम *base, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल TPACKET_V1:
-		वापस __v1_tx_kernel_पढ़ोy(base);
-	हाल TPACKET_V2:
-		वापस __v2_tx_kernel_पढ़ोy(base);
-	हाल TPACKET_V3:
-		वापस __v3_tx_kernel_पढ़ोy(base);
-	शेष:
+static inline int __tx_kernel_ready(void *base, int version)
+{
+	switch (version) {
+	case TPACKET_V1:
+		return __v1_tx_kernel_ready(base);
+	case TPACKET_V2:
+		return __v2_tx_kernel_ready(base);
+	case TPACKET_V3:
+		return __v3_tx_kernel_ready(base);
+	default:
 		bug_on(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल अंतरभूत व्योम __tx_user_पढ़ोy(व्योम *base, पूर्णांक version)
-अणु
-	चयन (version) अणु
-	हाल TPACKET_V1:
-		__v1_tx_user_पढ़ोy(base);
-		अवरोध;
-	हाल TPACKET_V2:
-		__v2_tx_user_पढ़ोy(base);
-		अवरोध;
-	हाल TPACKET_V3:
-		__v3_tx_user_पढ़ोy(base);
-		अवरोध;
-	पूर्ण
-पूर्ण
+static inline void __tx_user_ready(void *base, int version)
+{
+	switch (version) {
+	case TPACKET_V1:
+		__v1_tx_user_ready(base);
+		break;
+	case TPACKET_V2:
+		__v2_tx_user_ready(base);
+		break;
+	case TPACKET_V3:
+		__v3_tx_user_ready(base);
+		break;
+	}
+}
 
-अटल व्योम __v1_v2_set_packet_loss_discard(पूर्णांक sock)
-अणु
-	पूर्णांक ret, discard = 1;
+static void __v1_v2_set_packet_loss_discard(int sock)
+{
+	int ret, discard = 1;
 
-	ret = setsockopt(sock, SOL_PACKET, PACKET_LOSS, (व्योम *) &discard,
-			 माप(discard));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("setsockopt");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	ret = setsockopt(sock, SOL_PACKET, PACKET_LOSS, (void *) &discard,
+			 sizeof(discard));
+	if (ret == -1) {
+		perror("setsockopt");
+		exit(1);
+	}
+}
 
-अटल अंतरभूत व्योम *get_next_frame(काष्ठा ring *ring, पूर्णांक n)
-अणु
-	uपूर्णांक8_t *f0 = ring->rd[0].iov_base;
+static inline void *get_next_frame(struct ring *ring, int n)
+{
+	uint8_t *f0 = ring->rd[0].iov_base;
 
-	चयन (ring->version) अणु
-	हाल TPACKET_V1:
-	हाल TPACKET_V2:
-		वापस ring->rd[n].iov_base;
-	हाल TPACKET_V3:
-		वापस f0 + (n * ring->req3.tp_frame_size);
-	शेष:
+	switch (ring->version) {
+	case TPACKET_V1:
+	case TPACKET_V2:
+		return ring->rd[n].iov_base;
+	case TPACKET_V3:
+		return f0 + (n * ring->req3.tp_frame_size);
+	default:
 		bug_on(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम walk_tx(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	काष्ठा pollfd pfd;
-	पूर्णांक rcv_sock, ret;
-	माप_प्रकार packet_len;
-	जोड़ frame_map ppd;
-	अक्षर packet[1024];
-	अचिन्हित पूर्णांक frame_num = 0, got = 0;
-	काष्ठा sockaddr_ll ll = अणु
+static void walk_tx(int sock, struct ring *ring)
+{
+	struct pollfd pfd;
+	int rcv_sock, ret;
+	size_t packet_len;
+	union frame_map ppd;
+	char packet[1024];
+	unsigned int frame_num = 0, got = 0;
+	struct sockaddr_ll ll = {
 		.sll_family = PF_PACKET,
 		.sll_halen = ETH_ALEN,
-	पूर्ण;
-	पूर्णांक nframes;
+	};
+	int nframes;
 
-	/* TPACKET_Vअणु1,2पूर्ण sets up the ring->rd* related variables based
+	/* TPACKET_V{1,2} sets up the ring->rd* related variables based
 	 * on frames (e.g., rd_num is tp_frame_nr) whereas V3 sets these
 	 * up based on blocks (e.g, rd_num is  tp_block_nr)
 	 */
-	अगर (ring->version <= TPACKET_V2)
+	if (ring->version <= TPACKET_V2)
 		nframes = ring->rd_num;
-	अन्यथा
+	else
 		nframes = ring->req3.tp_frame_nr;
 
 	bug_on(ring->type != PACKET_TX_RING);
 	bug_on(nframes < NUM_PACKETS);
 
 	rcv_sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-	अगर (rcv_sock == -1) अणु
-		लिखो_त्रुटि("socket");
-		निकास(1);
-	पूर्ण
+	if (rcv_sock == -1) {
+		perror("socket");
+		exit(1);
+	}
 
 	pair_udp_setfilter(rcv_sock);
 
-	ll.sll_अगरindex = अगर_nametoindex("lo");
-	ret = bind(rcv_sock, (काष्ठा sockaddr *) &ll, माप(ll));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("bind");
-		निकास(1);
-	पूर्ण
+	ll.sll_ifindex = if_nametoindex("lo");
+	ret = bind(rcv_sock, (struct sockaddr *) &ll, sizeof(ll));
+	if (ret == -1) {
+		perror("bind");
+		exit(1);
+	}
 
-	स_रखो(&pfd, 0, माप(pfd));
+	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = sock;
 	pfd.events = POLLOUT | POLLERR;
 	pfd.revents = 0;
@@ -416,220 +415,220 @@
 	total_packets = NUM_PACKETS;
 	create_payload(packet, &packet_len);
 
-	जबतक (total_packets > 0) अणु
-		व्योम *next = get_next_frame(ring, frame_num);
+	while (total_packets > 0) {
+		void *next = get_next_frame(ring, frame_num);
 
-		जबतक (__tx_kernel_पढ़ोy(next, ring->version) &&
-		       total_packets > 0) अणु
+		while (__tx_kernel_ready(next, ring->version) &&
+		       total_packets > 0) {
 			ppd.raw = next;
 
-			चयन (ring->version) अणु
-			हाल TPACKET_V1:
+			switch (ring->version) {
+			case TPACKET_V1:
 				ppd.v1->tp_h.tp_snaplen = packet_len;
 				ppd.v1->tp_h.tp_len = packet_len;
 
-				स_नकल((uपूर्णांक8_t *) ppd.raw + TPACKET_HDRLEN -
-				       माप(काष्ठा sockaddr_ll), packet,
+				memcpy((uint8_t *) ppd.raw + TPACKET_HDRLEN -
+				       sizeof(struct sockaddr_ll), packet,
 				       packet_len);
 				total_bytes += ppd.v1->tp_h.tp_snaplen;
-				अवरोध;
+				break;
 
-			हाल TPACKET_V2:
+			case TPACKET_V2:
 				ppd.v2->tp_h.tp_snaplen = packet_len;
 				ppd.v2->tp_h.tp_len = packet_len;
 
-				स_नकल((uपूर्णांक8_t *) ppd.raw + TPACKET2_HDRLEN -
-				       माप(काष्ठा sockaddr_ll), packet,
+				memcpy((uint8_t *) ppd.raw + TPACKET2_HDRLEN -
+				       sizeof(struct sockaddr_ll), packet,
 				       packet_len);
 				total_bytes += ppd.v2->tp_h.tp_snaplen;
-				अवरोध;
-			हाल TPACKET_V3: अणु
-				काष्ठा tpacket3_hdr *tx = next;
+				break;
+			case TPACKET_V3: {
+				struct tpacket3_hdr *tx = next;
 
 				tx->tp_snaplen = packet_len;
 				tx->tp_len = packet_len;
 				tx->tp_next_offset = 0;
 
-				स_नकल((uपूर्णांक8_t *)tx + TPACKET3_HDRLEN -
-				       माप(काष्ठा sockaddr_ll), packet,
+				memcpy((uint8_t *)tx + TPACKET3_HDRLEN -
+				       sizeof(struct sockaddr_ll), packet,
 				       packet_len);
 				total_bytes += tx->tp_snaplen;
-				अवरोध;
-			पूर्ण
-			पूर्ण
+				break;
+			}
+			}
 
 			status_bar_update();
 			total_packets--;
 
-			__tx_user_पढ़ोy(next, ring->version);
+			__tx_user_ready(next, ring->version);
 
 			frame_num = (frame_num + 1) % nframes;
-		पूर्ण
+		}
 
 		poll(&pfd, 1, 1);
-	पूर्ण
+	}
 
 	bug_on(total_packets != 0);
 
-	ret = sendto(sock, शून्य, 0, 0, शून्य, 0);
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("sendto");
-		निकास(1);
-	पूर्ण
+	ret = sendto(sock, NULL, 0, 0, NULL, 0);
+	if (ret == -1) {
+		perror("sendto");
+		exit(1);
+	}
 
-	जबतक ((ret = recvfrom(rcv_sock, packet, माप(packet),
-			       0, शून्य, शून्य)) > 0 &&
-	       total_packets < NUM_PACKETS) अणु
+	while ((ret = recvfrom(rcv_sock, packet, sizeof(packet),
+			       0, NULL, NULL)) > 0 &&
+	       total_packets < NUM_PACKETS) {
 		got += ret;
 		test_payload(packet, ret);
 
 		status_bar_update();
 		total_packets++;
-	पूर्ण
+	}
 
-	बंद(rcv_sock);
+	close(rcv_sock);
 
-	अगर (total_packets != NUM_PACKETS) अणु
-		ख_लिखो(मानक_त्रुटि, "walk_v%d_rx: received %u out of %u pkts\n",
+	if (total_packets != NUM_PACKETS) {
+		fprintf(stderr, "walk_v%d_rx: received %u out of %u pkts\n",
 			ring->version, total_packets, NUM_PACKETS);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	ख_लिखो(मानक_त्रुटि, " %u pkts (%u bytes)", NUM_PACKETS, got);
-पूर्ण
+	fprintf(stderr, " %u pkts (%u bytes)", NUM_PACKETS, got);
+}
 
-अटल व्योम walk_v1_v2(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	अगर (ring->type == PACKET_RX_RING)
+static void walk_v1_v2(int sock, struct ring *ring)
+{
+	if (ring->type == PACKET_RX_RING)
 		walk_v1_v2_rx(sock, ring);
-	अन्यथा
+	else
 		walk_tx(sock, ring);
-पूर्ण
+}
 
-अटल uपूर्णांक64_t __v3_prev_block_seq_num = 0;
+static uint64_t __v3_prev_block_seq_num = 0;
 
-व्योम __v3_test_block_seq_num(काष्ठा block_desc *pbd)
-अणु
-	अगर (__v3_prev_block_seq_num + 1 != pbd->h1.seq_num) अणु
-		ख_लिखो(मानक_त्रुटि, "\nprev_block_seq_num:%"PRIu64", expected "
+void __v3_test_block_seq_num(struct block_desc *pbd)
+{
+	if (__v3_prev_block_seq_num + 1 != pbd->h1.seq_num) {
+		fprintf(stderr, "\nprev_block_seq_num:%"PRIu64", expected "
 			"seq:%"PRIu64" != actual seq:%"PRIu64"\n",
 			__v3_prev_block_seq_num, __v3_prev_block_seq_num + 1,
-			(uपूर्णांक64_t) pbd->h1.seq_num);
-		निकास(1);
-	पूर्ण
+			(uint64_t) pbd->h1.seq_num);
+		exit(1);
+	}
 
 	__v3_prev_block_seq_num = pbd->h1.seq_num;
-पूर्ण
+}
 
-अटल व्योम __v3_test_block_len(काष्ठा block_desc *pbd, uपूर्णांक32_t bytes, पूर्णांक block_num)
-अणु
-	अगर (pbd->h1.num_pkts && bytes != pbd->h1.blk_len) अणु
-		ख_लिखो(मानक_त्रुटि, "\nblock:%u with %upackets, expected "
+static void __v3_test_block_len(struct block_desc *pbd, uint32_t bytes, int block_num)
+{
+	if (pbd->h1.num_pkts && bytes != pbd->h1.blk_len) {
+		fprintf(stderr, "\nblock:%u with %upackets, expected "
 			"len:%u != actual len:%u\n", block_num,
 			pbd->h1.num_pkts, bytes, pbd->h1.blk_len);
-		निकास(1);
-	पूर्ण
-पूर्ण
+		exit(1);
+	}
+}
 
-अटल व्योम __v3_test_block_header(काष्ठा block_desc *pbd, स्थिर पूर्णांक block_num)
-अणु
-	अगर ((pbd->h1.block_status & TP_STATUS_USER) == 0) अणु
-		ख_लिखो(मानक_त्रुटि, "\nblock %u: not in TP_STATUS_USER\n", block_num);
-		निकास(1);
-	पूर्ण
+static void __v3_test_block_header(struct block_desc *pbd, const int block_num)
+{
+	if ((pbd->h1.block_status & TP_STATUS_USER) == 0) {
+		fprintf(stderr, "\nblock %u: not in TP_STATUS_USER\n", block_num);
+		exit(1);
+	}
 
 	__v3_test_block_seq_num(pbd);
-पूर्ण
+}
 
-अटल व्योम __v3_walk_block(काष्ठा block_desc *pbd, स्थिर पूर्णांक block_num)
-अणु
-	पूर्णांक num_pkts = pbd->h1.num_pkts, i;
-	अचिन्हित दीर्घ bytes = 0, bytes_with_padding = ALIGN_8(माप(*pbd));
-	काष्ठा tpacket3_hdr *ppd;
+static void __v3_walk_block(struct block_desc *pbd, const int block_num)
+{
+	int num_pkts = pbd->h1.num_pkts, i;
+	unsigned long bytes = 0, bytes_with_padding = ALIGN_8(sizeof(*pbd));
+	struct tpacket3_hdr *ppd;
 
 	__v3_test_block_header(pbd, block_num);
 
-	ppd = (काष्ठा tpacket3_hdr *) ((uपूर्णांक8_t *) pbd +
+	ppd = (struct tpacket3_hdr *) ((uint8_t *) pbd +
 				       pbd->h1.offset_to_first_pkt);
 
-	क्रम (i = 0; i < num_pkts; ++i) अणु
+	for (i = 0; i < num_pkts; ++i) {
 		bytes += ppd->tp_snaplen;
 
-		अगर (ppd->tp_next_offset)
+		if (ppd->tp_next_offset)
 			bytes_with_padding += ppd->tp_next_offset;
-		अन्यथा
+		else
 			bytes_with_padding += ALIGN_8(ppd->tp_snaplen + ppd->tp_mac);
 
-		test_payload((uपूर्णांक8_t *) ppd + ppd->tp_mac, ppd->tp_snaplen);
+		test_payload((uint8_t *) ppd + ppd->tp_mac, ppd->tp_snaplen);
 
 		status_bar_update();
 		total_packets++;
 
-		ppd = (काष्ठा tpacket3_hdr *) ((uपूर्णांक8_t *) ppd + ppd->tp_next_offset);
+		ppd = (struct tpacket3_hdr *) ((uint8_t *) ppd + ppd->tp_next_offset);
 		__sync_synchronize();
-	पूर्ण
+	}
 
 	__v3_test_block_len(pbd, bytes_with_padding, block_num);
 	total_bytes += bytes;
-पूर्ण
+}
 
-व्योम __v3_flush_block(काष्ठा block_desc *pbd)
-अणु
+void __v3_flush_block(struct block_desc *pbd)
+{
 	pbd->h1.block_status = TP_STATUS_KERNEL;
 	__sync_synchronize();
-पूर्ण
+}
 
-अटल व्योम walk_v3_rx(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	अचिन्हित पूर्णांक block_num = 0;
-	काष्ठा pollfd pfd;
-	काष्ठा block_desc *pbd;
-	पूर्णांक udp_sock[2];
+static void walk_v3_rx(int sock, struct ring *ring)
+{
+	unsigned int block_num = 0;
+	struct pollfd pfd;
+	struct block_desc *pbd;
+	int udp_sock[2];
 
 	bug_on(ring->type != PACKET_RX_RING);
 
-	pair_udp_खोलो(udp_sock, PORT_BASE);
+	pair_udp_open(udp_sock, PORT_BASE);
 
-	स_रखो(&pfd, 0, माप(pfd));
+	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = sock;
 	pfd.events = POLLIN | POLLERR;
 	pfd.revents = 0;
 
 	pair_udp_send(udp_sock, NUM_PACKETS);
 
-	जबतक (total_packets < NUM_PACKETS * 2) अणु
-		pbd = (काष्ठा block_desc *) ring->rd[block_num].iov_base;
+	while (total_packets < NUM_PACKETS * 2) {
+		pbd = (struct block_desc *) ring->rd[block_num].iov_base;
 
-		जबतक ((pbd->h1.block_status & TP_STATUS_USER) == 0)
+		while ((pbd->h1.block_status & TP_STATUS_USER) == 0)
 			poll(&pfd, 1, 1);
 
 		__v3_walk_block(pbd, block_num);
 		__v3_flush_block(pbd);
 
 		block_num = (block_num + 1) % ring->rd_num;
-	पूर्ण
+	}
 
-	pair_udp_बंद(udp_sock);
+	pair_udp_close(udp_sock);
 
-	अगर (total_packets != 2 * NUM_PACKETS) अणु
-		ख_लिखो(मानक_त्रुटि, "walk_v3_rx: received %u out of %u pkts\n",
+	if (total_packets != 2 * NUM_PACKETS) {
+		fprintf(stderr, "walk_v3_rx: received %u out of %u pkts\n",
 			total_packets, NUM_PACKETS);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
-	ख_लिखो(मानक_त्रुटि, " %u pkts (%u bytes)", NUM_PACKETS, total_bytes >> 1);
-पूर्ण
+	fprintf(stderr, " %u pkts (%u bytes)", NUM_PACKETS, total_bytes >> 1);
+}
 
-अटल व्योम walk_v3(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	अगर (ring->type == PACKET_RX_RING)
+static void walk_v3(int sock, struct ring *ring)
+{
+	if (ring->type == PACKET_RX_RING)
 		walk_v3_rx(sock, ring);
-	अन्यथा
+	else
 		walk_tx(sock, ring);
-पूर्ण
+}
 
-अटल व्योम __v1_v2_fill(काष्ठा ring *ring, अचिन्हित पूर्णांक blocks)
-अणु
+static void __v1_v2_fill(struct ring *ring, unsigned int blocks)
+{
 	ring->req.tp_block_size = getpagesize() << 2;
 	ring->req.tp_frame_size = TPACKET_ALIGNMENT << 7;
 	ring->req.tp_block_nr = blocks;
@@ -642,15 +641,15 @@
 	ring->walk = walk_v1_v2;
 	ring->rd_num = ring->req.tp_frame_nr;
 	ring->flen = ring->req.tp_frame_size;
-पूर्ण
+}
 
-अटल व्योम __v3_fill(काष्ठा ring *ring, अचिन्हित पूर्णांक blocks, पूर्णांक type)
-अणु
-	अगर (type == PACKET_RX_RING) अणु
+static void __v3_fill(struct ring *ring, unsigned int blocks, int type)
+{
+	if (type == PACKET_RX_RING) {
 		ring->req3.tp_retire_blk_tov = 64;
-		ring->req3.tp_माप_priv = 0;
+		ring->req3.tp_sizeof_priv = 0;
 		ring->req3.tp_feature_req_word = TP_FT_REQ_FILL_RXHASH;
-	पूर्ण
+	}
 	ring->req3.tp_block_size = getpagesize() << 2;
 	ring->req3.tp_frame_size = TPACKET_ALIGNMENT << 7;
 	ring->req3.tp_block_nr = blocks;
@@ -663,176 +662,176 @@
 	ring->walk = walk_v3;
 	ring->rd_num = ring->req3.tp_block_nr;
 	ring->flen = ring->req3.tp_block_size;
-पूर्ण
+}
 
-अटल व्योम setup_ring(पूर्णांक sock, काष्ठा ring *ring, पूर्णांक version, पूर्णांक type)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक blocks = 256;
+static void setup_ring(int sock, struct ring *ring, int version, int type)
+{
+	int ret = 0;
+	unsigned int blocks = 256;
 
 	ring->type = type;
 	ring->version = version;
 
-	चयन (version) अणु
-	हाल TPACKET_V1:
-	हाल TPACKET_V2:
-		अगर (type == PACKET_TX_RING)
+	switch (version) {
+	case TPACKET_V1:
+	case TPACKET_V2:
+		if (type == PACKET_TX_RING)
 			__v1_v2_set_packet_loss_discard(sock);
 		__v1_v2_fill(ring, blocks);
 		ret = setsockopt(sock, SOL_PACKET, type, &ring->req,
-				 माप(ring->req));
-		अवरोध;
+				 sizeof(ring->req));
+		break;
 
-	हाल TPACKET_V3:
+	case TPACKET_V3:
 		__v3_fill(ring, blocks, type);
 		ret = setsockopt(sock, SOL_PACKET, type, &ring->req3,
-				 माप(ring->req3));
-		अवरोध;
-	पूर्ण
+				 sizeof(ring->req3));
+		break;
+	}
 
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("setsockopt");
-		निकास(1);
-	पूर्ण
+	if (ret == -1) {
+		perror("setsockopt");
+		exit(1);
+	}
 
-	ring->rd_len = ring->rd_num * माप(*ring->rd);
-	ring->rd = दो_स्मृति(ring->rd_len);
-	अगर (ring->rd == शून्य) अणु
-		लिखो_त्रुटि("malloc");
-		निकास(1);
-	पूर्ण
+	ring->rd_len = ring->rd_num * sizeof(*ring->rd);
+	ring->rd = malloc(ring->rd_len);
+	if (ring->rd == NULL) {
+		perror("malloc");
+		exit(1);
+	}
 
 	total_packets = 0;
 	total_bytes = 0;
-पूर्ण
+}
 
-अटल व्योम mmap_ring(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	पूर्णांक i;
+static void mmap_ring(int sock, struct ring *ring)
+{
+	int i;
 
 	ring->mm_space = mmap(0, ring->mm_len, PROT_READ | PROT_WRITE,
 			      MAP_SHARED | MAP_LOCKED | MAP_POPULATE, sock, 0);
-	अगर (ring->mm_space == MAP_FAILED) अणु
-		लिखो_त्रुटि("mmap");
-		निकास(1);
-	पूर्ण
+	if (ring->mm_space == MAP_FAILED) {
+		perror("mmap");
+		exit(1);
+	}
 
-	स_रखो(ring->rd, 0, ring->rd_len);
-	क्रम (i = 0; i < ring->rd_num; ++i) अणु
+	memset(ring->rd, 0, ring->rd_len);
+	for (i = 0; i < ring->rd_num; ++i) {
 		ring->rd[i].iov_base = ring->mm_space + (i * ring->flen);
 		ring->rd[i].iov_len = ring->flen;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bind_ring(पूर्णांक sock, काष्ठा ring *ring)
-अणु
-	पूर्णांक ret;
+static void bind_ring(int sock, struct ring *ring)
+{
+	int ret;
 
 	pair_udp_setfilter(sock);
 
 	ring->ll.sll_family = PF_PACKET;
 	ring->ll.sll_protocol = htons(ETH_P_ALL);
-	ring->ll.sll_अगरindex = अगर_nametoindex("lo");
+	ring->ll.sll_ifindex = if_nametoindex("lo");
 	ring->ll.sll_hatype = 0;
 	ring->ll.sll_pkttype = 0;
 	ring->ll.sll_halen = 0;
 
-	ret = bind(sock, (काष्ठा sockaddr *) &ring->ll, माप(ring->ll));
-	अगर (ret == -1) अणु
-		लिखो_त्रुटि("bind");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	ret = bind(sock, (struct sockaddr *) &ring->ll, sizeof(ring->ll));
+	if (ret == -1) {
+		perror("bind");
+		exit(1);
+	}
+}
 
-अटल व्योम walk_ring(पूर्णांक sock, काष्ठा ring *ring)
-अणु
+static void walk_ring(int sock, struct ring *ring)
+{
 	ring->walk(sock, ring);
-पूर्ण
+}
 
-अटल व्योम unmap_ring(पूर्णांक sock, काष्ठा ring *ring)
-अणु
+static void unmap_ring(int sock, struct ring *ring)
+{
 	munmap(ring->mm_space, ring->mm_len);
-	मुक्त(ring->rd);
-पूर्ण
+	free(ring->rd);
+}
 
-अटल पूर्णांक test_kernel_bit_width(व्योम)
-अणु
-	अक्षर in[512], *ptr;
-	पूर्णांक num = 0, fd;
-	sमाप_प्रकार ret;
+static int test_kernel_bit_width(void)
+{
+	char in[512], *ptr;
+	int num = 0, fd;
+	ssize_t ret;
 
-	fd = खोलो("/proc/kallsyms", O_RDONLY);
-	अगर (fd == -1) अणु
-		लिखो_त्रुटि("open");
-		निकास(1);
-	पूर्ण
+	fd = open("/proc/kallsyms", O_RDONLY);
+	if (fd == -1) {
+		perror("open");
+		exit(1);
+	}
 
-	ret = पढ़ो(fd, in, माप(in));
-	अगर (ret <= 0) अणु
-		लिखो_त्रुटि("read");
-		निकास(1);
-	पूर्ण
+	ret = read(fd, in, sizeof(in));
+	if (ret <= 0) {
+		perror("read");
+		exit(1);
+	}
 
-	बंद(fd);
+	close(fd);
 
 	ptr = in;
-	जबतक(!है_खाली(*ptr)) अणु
+	while(!isspace(*ptr)) {
 		num++;
 		ptr++;
-	पूर्ण
+	}
 
-	वापस num * 4;
-पूर्ण
+	return num * 4;
+}
 
-अटल पूर्णांक test_user_bit_width(व्योम)
-अणु
-	वापस __WORDSIZE;
-पूर्ण
+static int test_user_bit_width(void)
+{
+	return __WORDSIZE;
+}
 
-अटल स्थिर अक्षर *tpacket_str[] = अणु
+static const char *tpacket_str[] = {
 	[TPACKET_V1] = "TPACKET_V1",
 	[TPACKET_V2] = "TPACKET_V2",
 	[TPACKET_V3] = "TPACKET_V3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *type_str[] = अणु
+static const char *type_str[] = {
 	[PACKET_RX_RING] = "PACKET_RX_RING",
 	[PACKET_TX_RING] = "PACKET_TX_RING",
-पूर्ण;
+};
 
-अटल पूर्णांक test_tpacket(पूर्णांक version, पूर्णांक type)
-अणु
-	पूर्णांक sock;
-	काष्ठा ring ring;
+static int test_tpacket(int version, int type)
+{
+	int sock;
+	struct ring ring;
 
-	ख_लिखो(मानक_त्रुटि, "test: %s with %s ", tpacket_str[version],
+	fprintf(stderr, "test: %s with %s ", tpacket_str[version],
 		type_str[type]);
-	ख_साफ(मानक_त्रुटि);
+	fflush(stderr);
 
-	अगर (version == TPACKET_V1 &&
-	    test_kernel_bit_width() != test_user_bit_width()) अणु
-		ख_लिखो(मानक_त्रुटि, "test: skip %s %s since user and kernel "
+	if (version == TPACKET_V1 &&
+	    test_kernel_bit_width() != test_user_bit_width()) {
+		fprintf(stderr, "test: skip %s %s since user and kernel "
 			"space have different bit width\n",
 			tpacket_str[version], type_str[type]);
-		वापस KSFT_SKIP;
-	पूर्ण
+		return KSFT_SKIP;
+	}
 
 	sock = pfsocket(version);
-	स_रखो(&ring, 0, माप(ring));
+	memset(&ring, 0, sizeof(ring));
 	setup_ring(sock, &ring, version, type);
 	mmap_ring(sock, &ring);
 	bind_ring(sock, &ring);
 	walk_ring(sock, &ring);
 	unmap_ring(sock, &ring);
-	बंद(sock);
+	close(sock);
 
-	ख_लिखो(मानक_त्रुटि, "\n");
-	वापस 0;
-पूर्ण
+	fprintf(stderr, "\n");
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	पूर्णांक ret = 0;
+int main(void)
+{
+	int ret = 0;
 
 	ret |= test_tpacket(TPACKET_V1, PACKET_RX_RING);
 	ret |= test_tpacket(TPACKET_V1, PACKET_TX_RING);
@@ -843,9 +842,9 @@
 	ret |= test_tpacket(TPACKET_V3, PACKET_RX_RING);
 	ret |= test_tpacket(TPACKET_V3, PACKET_TX_RING);
 
-	अगर (ret)
-		वापस 1;
+	if (ret)
+		return 1;
 
-	म_लिखो("OK. All tests passed\n");
-	वापस 0;
-पूर्ण
+	printf("OK. All tests passed\n");
+	return 0;
+}

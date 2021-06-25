@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * STMicroelectronics pressures driver
  *
@@ -8,116 +7,116 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/iio/iपन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/spi/spi.h>
+#include <linux/iio/iio.h>
 
-#समावेश <linux/iio/common/st_sensors.h>
-#समावेश <linux/iio/common/st_sensors_spi.h>
-#समावेश "st_pressure.h"
+#include <linux/iio/common/st_sensors.h>
+#include <linux/iio/common/st_sensors_spi.h>
+#include "st_pressure.h"
 
 /*
  * For new single-chip sensors use <device_name> as compatible string.
- * For old single-chip devices keep <device_name>-press to मुख्यtain
+ * For old single-chip devices keep <device_name>-press to maintain
  * compatibility
  */
-अटल स्थिर काष्ठा of_device_id st_press_of_match[] = अणु
-	अणु
+static const struct of_device_id st_press_of_match[] = {
+	{
 		.compatible = "st,lps001wp-press",
 		.data = LPS001WP_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps25h-press",
 		.data = LPS25H_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps331ap-press",
 		.data = LPS331AP_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps22hb-press",
 		.data = LPS22HB_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps33hw",
 		.data = LPS33HW_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps35hw",
 		.data = LPS35HW_PRESS_DEV_NAME,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "st,lps22hh",
 		.data = LPS22HH_PRESS_DEV_NAME,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, st_press_of_match);
 
-अटल पूर्णांक st_press_spi_probe(काष्ठा spi_device *spi)
-अणु
-	स्थिर काष्ठा st_sensor_settings *settings;
-	काष्ठा st_sensor_data *press_data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक err;
+static int st_press_spi_probe(struct spi_device *spi)
+{
+	const struct st_sensor_settings *settings;
+	struct st_sensor_data *press_data;
+	struct iio_dev *indio_dev;
+	int err;
 
-	st_sensors_dev_name_probe(&spi->dev, spi->modalias, माप(spi->modalias));
+	st_sensors_dev_name_probe(&spi->dev, spi->modalias, sizeof(spi->modalias));
 
 	settings = st_press_get_settings(spi->modalias);
-	अगर (!settings) अणु
+	if (!settings) {
 		dev_err(&spi->dev, "device name %s not recognized.\n",
 			spi->modalias);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*press_data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*press_data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	press_data = iio_priv(indio_dev);
-	press_data->sensor_settings = (काष्ठा st_sensor_settings *)settings;
+	press_data->sensor_settings = (struct st_sensor_settings *)settings;
 
 	err = st_sensors_spi_configure(indio_dev, spi);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	err = st_press_common_probe(indio_dev);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक st_press_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	st_press_common_हटाओ(spi_get_drvdata(spi));
+static int st_press_spi_remove(struct spi_device *spi)
+{
+	st_press_common_remove(spi_get_drvdata(spi));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id st_press_id_table[] = अणु
-	अणु LPS001WP_PRESS_DEV_NAME पूर्ण,
-	अणु LPS25H_PRESS_DEV_NAME पूर्ण,
-	अणु LPS331AP_PRESS_DEV_NAME पूर्ण,
-	अणु LPS22HB_PRESS_DEV_NAME पूर्ण,
-	अणु LPS33HW_PRESS_DEV_NAME पूर्ण,
-	अणु LPS35HW_PRESS_DEV_NAME पूर्ण,
-	अणु LPS22HH_PRESS_DEV_NAME पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct spi_device_id st_press_id_table[] = {
+	{ LPS001WP_PRESS_DEV_NAME },
+	{ LPS25H_PRESS_DEV_NAME },
+	{ LPS331AP_PRESS_DEV_NAME },
+	{ LPS22HB_PRESS_DEV_NAME },
+	{ LPS33HW_PRESS_DEV_NAME },
+	{ LPS35HW_PRESS_DEV_NAME },
+	{ LPS22HH_PRESS_DEV_NAME },
+	{},
+};
 MODULE_DEVICE_TABLE(spi, st_press_id_table);
 
-अटल काष्ठा spi_driver st_press_driver = अणु
-	.driver = अणु
+static struct spi_driver st_press_driver = {
+	.driver = {
 		.name = "st-press-spi",
 		.of_match_table = st_press_of_match,
-	पूर्ण,
+	},
 	.probe = st_press_spi_probe,
-	.हटाओ = st_press_spi_हटाओ,
+	.remove = st_press_spi_remove,
 	.id_table = st_press_id_table,
-पूर्ण;
+};
 module_spi_driver(st_press_driver);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

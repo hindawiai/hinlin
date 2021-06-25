@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Analog Devices ADV7511 HDMI Transmitter Device Driver
  *
  * Copyright 2013 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#अगर_अघोषित ADV7511_H
-#घोषणा ADV7511_H
+#ifndef ADV7511_H
+#define ADV7511_H
 
-/* notअगरy events */
-#घोषणा ADV7511_MONITOR_DETECT 0
-#घोषणा ADV7511_EDID_DETECT 1
+/* notify events */
+#define ADV7511_MONITOR_DETECT 0
+#define ADV7511_EDID_DETECT 1
 
 
-काष्ठा adv7511_monitor_detect अणु
-	पूर्णांक present;
-पूर्ण;
+struct adv7511_monitor_detect {
+	int present;
+};
 
-काष्ठा adv7511_edid_detect अणु
-	पूर्णांक present;
-	पूर्णांक segment;
-	uपूर्णांक16_t phys_addr;
-पूर्ण;
+struct adv7511_edid_detect {
+	int present;
+	int segment;
+	uint16_t phys_addr;
+};
 
-काष्ठा adv7511_platक्रमm_data अणु
+struct adv7511_platform_data {
 	u8 i2c_edid;
 	u8 i2c_cec;
-	u8 i2c_pkपंचांगem;
+	u8 i2c_pktmem;
 	u32 cec_clk;
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

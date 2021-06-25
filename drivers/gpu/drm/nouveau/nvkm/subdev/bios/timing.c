@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,75 +21,75 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/bit.h>
-#समावेश <subdev/bios/timing.h>
+#include <subdev/bios.h>
+#include <subdev/bios/bit.h>
+#include <subdev/bios/timing.h>
 
 u32
-nvbios_timingTe(काष्ठा nvkm_bios *bios,
+nvbios_timingTe(struct nvkm_bios *bios,
 		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, u8 *snr, u8 *ssz)
-अणु
-	काष्ठा bit_entry bit_P;
+{
+	struct bit_entry bit_P;
 	u32 timing = 0;
 
-	अगर (!bit_entry(bios, 'P', &bit_P)) अणु
-		अगर (bit_P.version == 1)
+	if (!bit_entry(bios, 'P', &bit_P)) {
+		if (bit_P.version == 1)
 			timing = nvbios_rd32(bios, bit_P.offset + 4);
-		अन्यथा
-		अगर (bit_P.version == 2)
+		else
+		if (bit_P.version == 2)
 			timing = nvbios_rd32(bios, bit_P.offset + 8);
 
-		अगर (timing) अणु
+		if (timing) {
 			*ver = nvbios_rd08(bios, timing + 0);
-			चयन (*ver) अणु
-			हाल 0x10:
+			switch (*ver) {
+			case 0x10:
 				*hdr = nvbios_rd08(bios, timing + 1);
 				*cnt = nvbios_rd08(bios, timing + 2);
 				*len = nvbios_rd08(bios, timing + 3);
 				*snr = 0;
 				*ssz = 0;
-				वापस timing;
-			हाल 0x20:
+				return timing;
+			case 0x20:
 				*hdr = nvbios_rd08(bios, timing + 1);
 				*cnt = nvbios_rd08(bios, timing + 5);
 				*len = nvbios_rd08(bios, timing + 2);
 				*snr = nvbios_rd08(bios, timing + 4);
 				*ssz = nvbios_rd08(bios, timing + 3);
-				वापस timing;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return timing;
+			default:
+				break;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 u32
-nvbios_timingEe(काष्ठा nvkm_bios *bios, पूर्णांक idx,
+nvbios_timingEe(struct nvkm_bios *bios, int idx,
 		u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-अणु
+{
 	u8  snr, ssz;
 	u32 timing = nvbios_timingTe(bios, ver, hdr, cnt, len, &snr, &ssz);
-	अगर (timing && idx < *cnt) अणु
+	if (timing && idx < *cnt) {
 		timing += *hdr + idx * (*len + (snr * ssz));
 		*hdr = *len;
 		*cnt = snr;
 		*len = ssz;
-		वापस timing;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return timing;
+	}
+	return 0;
+}
 
 u32
-nvbios_timingEp(काष्ठा nvkm_bios *bios, पूर्णांक idx,
-		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_ramcfg *p)
-अणु
+nvbios_timingEp(struct nvkm_bios *bios, int idx,
+		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_ramcfg *p)
+{
 	u32 data = nvbios_timingEe(bios, idx, ver, hdr, cnt, len), temp;
 	p->timing_ver = *ver;
 	p->timing_hdr = *hdr;
-	चयन (!!data * *ver) अणु
-	हाल 0x10:
+	switch (!!data * *ver) {
+	case 0x10:
 		p->timing_10_WR    = nvbios_rd08(bios, data + 0x00);
 		p->timing_10_WTR   = nvbios_rd08(bios, data + 0x01);
 		p->timing_10_CL    = nvbios_rd08(bios, data + 0x02);
@@ -103,7 +102,7 @@ nvbios_timingEp(काष्ठा nvkm_bios *bios, पूर्णांक idx
 		p->timing_10_RRD   = nvbios_rd08(bios, data + 0x0c);
 		p->timing_10_13    = nvbios_rd08(bios, data + 0x0d);
 		p->timing_10_ODT   = nvbios_rd08(bios, data + 0x0e) & 0x07;
-		अगर (p->ramcfg_ver >= 0x10)
+		if (p->ramcfg_ver >= 0x10)
 			p->ramcfg_RON = nvbios_rd08(bios, data + 0x0e) & 0x07;
 
 		p->timing_10_24  = 0xff;
@@ -113,31 +112,31 @@ nvbios_timingEp(काष्ठा nvkm_bios *bios, पूर्णांक idx
 		p->timing_10_18  = 0;
 		p->timing_10_16  = 0;
 
-		चयन (min_t(u8, *hdr, 25)) अणु
-		हाल 25:
+		switch (min_t(u8, *hdr, 25)) {
+		case 25:
 			p->timing_10_24  = nvbios_rd08(bios, data + 0x18);
 			fallthrough;
-		हाल 24:
-		हाल 23:
-		हाल 22:
+		case 24:
+		case 23:
+		case 22:
 			p->timing_10_21  = nvbios_rd08(bios, data + 0x15);
 			fallthrough;
-		हाल 21:
+		case 21:
 			p->timing_10_20  = nvbios_rd08(bios, data + 0x14);
 			fallthrough;
-		हाल 20:
+		case 20:
 			p->timing_10_CWL = nvbios_rd08(bios, data + 0x13);
 			fallthrough;
-		हाल 19:
+		case 19:
 			p->timing_10_18  = nvbios_rd08(bios, data + 0x12);
 			fallthrough;
-		हाल 18:
-		हाल 17:
+		case 18:
+		case 17:
 			p->timing_10_16  = nvbios_rd08(bios, data + 0x10);
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल 0x20:
+		break;
+	case 0x20:
 		p->timing[0] = nvbios_rd32(bios, data + 0x00);
 		p->timing[1] = nvbios_rd32(bios, data + 0x04);
 		p->timing[2] = nvbios_rd32(bios, data + 0x08);
@@ -165,10 +164,10 @@ nvbios_timingEp(काष्ठा nvkm_bios *bios, पूर्णांक idx
 		p->timing_20_31_0800 = (temp & 0x0800) >> 11;
 		p->timing_20_31_7000 = (temp & 0x7000) >> 12;
 		p->timing_20_31_8000 = (temp & 0x8000) >> 15;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data = 0;
-		अवरोध;
-	पूर्ण
-	वापस data;
-पूर्ण
+		break;
+	}
+	return data;
+}

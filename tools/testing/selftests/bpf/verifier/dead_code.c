@@ -1,34 +1,33 @@
-<शैली गुरु>
-अणु
+{
 	"dead code: start",
-	.insns = अणु
+	.insns = {
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_8, BPF_REG_9, 0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 10, -4),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "R9 !read_ok",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: mid 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 10, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: mid 2",
-	.insns = अणु
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
+	.insns = {
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
 	BPF_JMP_IMM(BPF_JSET, BPF_REG_0, 1, 4),
 	BPF_JMP_IMM(BPF_JSET, BPF_REG_0, 1, 1),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
@@ -36,36 +35,36 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 1,
-पूर्ण,
-अणु
+},
+{
 	"dead code: end 1",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 10, 1),
 	BPF_EXIT_INSN(),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: end 2",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 10, 1),
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 12),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: end 3",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 8, 1),
 	BPF_EXIT_INSN(),
@@ -73,13 +72,13 @@
 	BPF_JMP_IMM(BPF_JA, 0, 0, 1),
 	BPF_MOV64_IMM(BPF_REG_0, 12),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -5),
-	पूर्ण,
+	},
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: tail of main + func",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 8, 1),
 	BPF_EXIT_INSN(),
@@ -87,15 +86,15 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 12),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "loading/calling other bpf or kernel functions are allowed for",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: tail of main + two functions",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_0, 7),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 8, 1),
 	BPF_EXIT_INSN(),
@@ -105,15 +104,15 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 12),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "loading/calling other bpf or kernel functions are allowed for",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: function in the middle and mid of another func",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 7),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 3),
 	BPF_EXIT_INSN(),
@@ -123,15 +122,15 @@
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 7, 1),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, -5),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "loading/calling other bpf or kernel functions are allowed for",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 7,
-पूर्ण,
-अणु
+},
+{
 	"dead code: middle of main before call",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 2),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 2, 1),
 	BPF_MOV64_IMM(BPF_REG_1, 5),
@@ -139,24 +138,24 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "loading/calling other bpf or kernel functions are allowed for",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
-अणु
+},
+{
 	"dead code: start of a function",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_1, 2),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 1),
 	BPF_EXIT_INSN(),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 0),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_1),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr_unpriv = "loading/calling other bpf or kernel functions are allowed for",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 2,
-पूर्ण,
+},

@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * arch/घातerpc/include/यंत्र/mpic_समयr.h
+ * arch/powerpc/include/asm/mpic_timer.h
  *
- * Header file क्रम Mpic Global Timer
+ * Header file for Mpic Global Timer
  *
  * Copyright 2013 Freescale Semiconductor, Inc.
  *
- * Author: Wang Dongsheng <Dongsheng.Wang@मुक्तscale.com>
- *	   Li Yang <leoli@मुक्तscale.com>
+ * Author: Wang Dongsheng <Dongsheng.Wang@freescale.com>
+ *	   Li Yang <leoli@freescale.com>
  */
 
-#अगर_अघोषित __MPIC_TIMER__
-#घोषणा __MPIC_TIMER__
+#ifndef __MPIC_TIMER__
+#define __MPIC_TIMER__
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समय.स>
+#include <linux/interrupt.h>
+#include <linux/time.h>
 
-काष्ठा mpic_समयr अणु
-	व्योम			*dev;
-	काष्ठा cascade_priv	*cascade_handle;
-	अचिन्हित पूर्णांक		num;
-	अचिन्हित पूर्णांक		irq;
-पूर्ण;
+struct mpic_timer {
+	void			*dev;
+	struct cascade_priv	*cascade_handle;
+	unsigned int		num;
+	unsigned int		irq;
+};
 
-#अगर_घोषित CONFIG_MPIC_TIMER
-काष्ठा mpic_समयr *mpic_request_समयr(irq_handler_t fn,  व्योम *dev,
-		समय64_t समय);
-व्योम mpic_start_समयr(काष्ठा mpic_समयr *handle);
-व्योम mpic_stop_समयr(काष्ठा mpic_समयr *handle);
-व्योम mpic_get_reमुख्य_समय(काष्ठा mpic_समयr *handle, समय64_t *समय);
-व्योम mpic_मुक्त_समयr(काष्ठा mpic_समयr *handle);
-#अन्यथा
-काष्ठा mpic_समयr *mpic_request_समयr(irq_handler_t fn,  व्योम *dev,
-		समय64_t समय) अणु वापस शून्य; पूर्ण
-व्योम mpic_start_समयr(काष्ठा mpic_समयr *handle) अणु पूर्ण
-व्योम mpic_stop_समयr(काष्ठा mpic_समयr *handle) अणु पूर्ण
-व्योम mpic_get_reमुख्य_समय(काष्ठा mpic_समयr *handle, समय64_t *समय) अणु पूर्ण
-व्योम mpic_मुक्त_समयr(काष्ठा mpic_समयr *handle) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MPIC_TIMER
+struct mpic_timer *mpic_request_timer(irq_handler_t fn,  void *dev,
+		time64_t time);
+void mpic_start_timer(struct mpic_timer *handle);
+void mpic_stop_timer(struct mpic_timer *handle);
+void mpic_get_remain_time(struct mpic_timer *handle, time64_t *time);
+void mpic_free_timer(struct mpic_timer *handle);
+#else
+struct mpic_timer *mpic_request_timer(irq_handler_t fn,  void *dev,
+		time64_t time) { return NULL; }
+void mpic_start_timer(struct mpic_timer *handle) { }
+void mpic_stop_timer(struct mpic_timer *handle) { }
+void mpic_get_remain_time(struct mpic_timer *handle, time64_t *time) { }
+void mpic_free_timer(struct mpic_timer *handle) { }
+#endif
 
-#पूर्ण_अगर
+#endif

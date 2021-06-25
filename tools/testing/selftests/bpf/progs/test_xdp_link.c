@@ -1,13 +1,12 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-अक्षर LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";
 
 SEC("xdp/handler")
-पूर्णांक xdp_handler(काष्ठा xdp_md *xdp)
-अणु
-	वापस 0;
-पूर्ण
+int xdp_handler(struct xdp_md *xdp)
+{
+	return 0;
+}

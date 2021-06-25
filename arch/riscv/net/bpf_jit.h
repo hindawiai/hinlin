@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Common functionality क्रम RV32 and RV64 BPF JIT compilers
+ * Common functionality for RV32 and RV64 BPF JIT compilers
  *
- * Copyright (c) 2019 Bjथघrn Tथघpel <bjorn.topel@gmail.com>
+ * Copyright (c) 2019 Björn Töpel <bjorn.topel@gmail.com>
  *
  */
 
-#अगर_अघोषित _BPF_JIT_H
-#घोषणा _BPF_JIT_H
+#ifndef _BPF_JIT_H
+#define _BPF_JIT_H
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/filter.h>
-#समावेश <यंत्र/cacheflush.h>
+#include <linux/bpf.h>
+#include <linux/filter.h>
+#include <asm/cacheflush.h>
 
-अटल अंतरभूत bool rvc_enabled(व्योम)
-अणु
-	वापस IS_ENABLED(CONFIG_RISCV_ISA_C);
-पूर्ण
+static inline bool rvc_enabled(void)
+{
+	return IS_ENABLED(CONFIG_RISCV_ISA_C);
+}
 
-क्रमागत अणु
-	RV_REG_ZERO =	0,	/* The स्थिरant value 0 */
+enum {
+	RV_REG_ZERO =	0,	/* The constant value 0 */
 	RV_REG_RA =	1,	/* Return address */
-	RV_REG_SP =	2,	/* Stack poपूर्णांकer */
-	RV_REG_GP =	3,	/* Global poपूर्णांकer */
-	RV_REG_TP =	4,	/* Thपढ़ो poपूर्णांकer */
+	RV_REG_SP =	2,	/* Stack pointer */
+	RV_REG_GP =	3,	/* Global pointer */
+	RV_REG_TP =	4,	/* Thread pointer */
 	RV_REG_T0 =	5,	/* Temporaries */
 	RV_REG_T1 =	6,
 	RV_REG_T2 =	7,
-	RV_REG_FP =	8,	/* Saved रेजिस्टर/frame poपूर्णांकer */
-	RV_REG_S1 =	9,	/* Saved रेजिस्टर */
-	RV_REG_A0 =	10,	/* Function argument/वापस values */
+	RV_REG_FP =	8,	/* Saved register/frame pointer */
+	RV_REG_S1 =	9,	/* Saved register */
+	RV_REG_A0 =	10,	/* Function argument/return values */
 	RV_REG_A1 =	11,	/* Function arguments */
 	RV_REG_A2 =	12,
 	RV_REG_A3 =	13,
@@ -38,7 +37,7 @@
 	RV_REG_A5 =	15,
 	RV_REG_A6 =	16,
 	RV_REG_A7 =	17,
-	RV_REG_S2 =	18,	/* Saved रेजिस्टरs */
+	RV_REG_S2 =	18,	/* Saved registers */
 	RV_REG_S3 =	19,
 	RV_REG_S4 =	20,
 	RV_REG_S5 =	21,
@@ -52,11 +51,11 @@
 	RV_REG_T4 =	29,
 	RV_REG_T5 =	30,
 	RV_REG_T6 =	31,
-पूर्ण;
+};
 
-अटल अंतरभूत bool is_creg(u8 reg)
-अणु
-	वापस (1 << reg) & (BIT(RV_REG_FP) |
+static inline bool is_creg(u8 reg)
+{
+	return (1 << reg) & (BIT(RV_REG_FP) |
 			     BIT(RV_REG_S1) |
 			     BIT(RV_REG_A0) |
 			     BIT(RV_REG_A1) |
@@ -64,929 +63,929 @@
 			     BIT(RV_REG_A3) |
 			     BIT(RV_REG_A4) |
 			     BIT(RV_REG_A5));
-पूर्ण
+}
 
-काष्ठा rv_jit_context अणु
-	काष्ठा bpf_prog *prog;
+struct rv_jit_context {
+	struct bpf_prog *prog;
 	u16 *insns;		/* RV insns */
-	पूर्णांक ninsns;
-	पूर्णांक epilogue_offset;
-	पूर्णांक *offset;		/* BPF to RV */
-	अचिन्हित दीर्घ flags;
-	पूर्णांक stack_size;
-पूर्ण;
+	int ninsns;
+	int epilogue_offset;
+	int *offset;		/* BPF to RV */
+	unsigned long flags;
+	int stack_size;
+};
 
 /* Convert from ninsns to bytes. */
-अटल अंतरभूत पूर्णांक ninsns_rvoff(पूर्णांक ninsns)
-अणु
-	वापस ninsns << 1;
-पूर्ण
+static inline int ninsns_rvoff(int ninsns)
+{
+	return ninsns << 1;
+}
 
-काष्ठा rv_jit_data अणु
-	काष्ठा bpf_binary_header *header;
+struct rv_jit_data {
+	struct bpf_binary_header *header;
 	u8 *image;
-	काष्ठा rv_jit_context ctx;
-पूर्ण;
+	struct rv_jit_context ctx;
+};
 
-अटल अंतरभूत व्योम bpf_fill_ill_insns(व्योम *area, अचिन्हित पूर्णांक size)
-अणु
-	स_रखो(area, 0, size);
-पूर्ण
+static inline void bpf_fill_ill_insns(void *area, unsigned int size)
+{
+	memset(area, 0, size);
+}
 
-अटल अंतरभूत व्योम bpf_flush_icache(व्योम *start, व्योम *end)
-अणु
-	flush_icache_range((अचिन्हित दीर्घ)start, (अचिन्हित दीर्घ)end);
-पूर्ण
+static inline void bpf_flush_icache(void *start, void *end)
+{
+	flush_icache_range((unsigned long)start, (unsigned long)end);
+}
 
-/* Emit a 4-byte riscv inकाष्ठाion. */
-अटल अंतरभूत व्योम emit(स्थिर u32 insn, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (ctx->insns) अणु
+/* Emit a 4-byte riscv instruction. */
+static inline void emit(const u32 insn, struct rv_jit_context *ctx)
+{
+	if (ctx->insns) {
 		ctx->insns[ctx->ninsns] = insn;
 		ctx->insns[ctx->ninsns + 1] = (insn >> 16);
-	पूर्ण
+	}
 
 	ctx->ninsns += 2;
-पूर्ण
+}
 
-/* Emit a 2-byte riscv compressed inकाष्ठाion. */
-अटल अंतरभूत व्योम emitc(स्थिर u16 insn, काष्ठा rv_jit_context *ctx)
-अणु
+/* Emit a 2-byte riscv compressed instruction. */
+static inline void emitc(const u16 insn, struct rv_jit_context *ctx)
+{
 	BUILD_BUG_ON(!rvc_enabled());
 
-	अगर (ctx->insns)
+	if (ctx->insns)
 		ctx->insns[ctx->ninsns] = insn;
 
 	ctx->ninsns++;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक epilogue_offset(काष्ठा rv_jit_context *ctx)
-अणु
-	पूर्णांक to = ctx->epilogue_offset, from = ctx->ninsns;
+static inline int epilogue_offset(struct rv_jit_context *ctx)
+{
+	int to = ctx->epilogue_offset, from = ctx->ninsns;
 
-	वापस ninsns_rvoff(to - from);
-पूर्ण
+	return ninsns_rvoff(to - from);
+}
 
 /* Return -1 or inverted cond. */
-अटल अंतरभूत पूर्णांक invert_bpf_cond(u8 cond)
-अणु
-	चयन (cond) अणु
-	हाल BPF_JEQ:
-		वापस BPF_JNE;
-	हाल BPF_JGT:
-		वापस BPF_JLE;
-	हाल BPF_JLT:
-		वापस BPF_JGE;
-	हाल BPF_JGE:
-		वापस BPF_JLT;
-	हाल BPF_JLE:
-		वापस BPF_JGT;
-	हाल BPF_JNE:
-		वापस BPF_JEQ;
-	हाल BPF_JSGT:
-		वापस BPF_JSLE;
-	हाल BPF_JSLT:
-		वापस BPF_JSGE;
-	हाल BPF_JSGE:
-		वापस BPF_JSLT;
-	हाल BPF_JSLE:
-		वापस BPF_JSGT;
-	पूर्ण
-	वापस -1;
-पूर्ण
+static inline int invert_bpf_cond(u8 cond)
+{
+	switch (cond) {
+	case BPF_JEQ:
+		return BPF_JNE;
+	case BPF_JGT:
+		return BPF_JLE;
+	case BPF_JLT:
+		return BPF_JGE;
+	case BPF_JGE:
+		return BPF_JLT;
+	case BPF_JLE:
+		return BPF_JGT;
+	case BPF_JNE:
+		return BPF_JEQ;
+	case BPF_JSGT:
+		return BPF_JSLE;
+	case BPF_JSLT:
+		return BPF_JSGE;
+	case BPF_JSGE:
+		return BPF_JSLT;
+	case BPF_JSLE:
+		return BPF_JSGT;
+	}
+	return -1;
+}
 
-अटल अंतरभूत bool is_6b_पूर्णांक(दीर्घ val)
-अणु
-	वापस -(1L << 5) <= val && val < (1L << 5);
-पूर्ण
+static inline bool is_6b_int(long val)
+{
+	return -(1L << 5) <= val && val < (1L << 5);
+}
 
-अटल अंतरभूत bool is_7b_uपूर्णांक(अचिन्हित दीर्घ val)
-अणु
-	वापस val < (1UL << 7);
-पूर्ण
+static inline bool is_7b_uint(unsigned long val)
+{
+	return val < (1UL << 7);
+}
 
-अटल अंतरभूत bool is_8b_uपूर्णांक(अचिन्हित दीर्घ val)
-अणु
-	वापस val < (1UL << 8);
-पूर्ण
+static inline bool is_8b_uint(unsigned long val)
+{
+	return val < (1UL << 8);
+}
 
-अटल अंतरभूत bool is_9b_uपूर्णांक(अचिन्हित दीर्घ val)
-अणु
-	वापस val < (1UL << 9);
-पूर्ण
+static inline bool is_9b_uint(unsigned long val)
+{
+	return val < (1UL << 9);
+}
 
-अटल अंतरभूत bool is_10b_पूर्णांक(दीर्घ val)
-अणु
-	वापस -(1L << 9) <= val && val < (1L << 9);
-पूर्ण
+static inline bool is_10b_int(long val)
+{
+	return -(1L << 9) <= val && val < (1L << 9);
+}
 
-अटल अंतरभूत bool is_10b_uपूर्णांक(अचिन्हित दीर्घ val)
-अणु
-	वापस val < (1UL << 10);
-पूर्ण
+static inline bool is_10b_uint(unsigned long val)
+{
+	return val < (1UL << 10);
+}
 
-अटल अंतरभूत bool is_12b_पूर्णांक(दीर्घ val)
-अणु
-	वापस -(1L << 11) <= val && val < (1L << 11);
-पूर्ण
+static inline bool is_12b_int(long val)
+{
+	return -(1L << 11) <= val && val < (1L << 11);
+}
 
-अटल अंतरभूत पूर्णांक is_12b_check(पूर्णांक off, पूर्णांक insn)
-अणु
-	अगर (!is_12b_पूर्णांक(off)) अणु
+static inline int is_12b_check(int off, int insn)
+{
+	if (!is_12b_int(off)) {
 		pr_err("bpf-jit: insn=%d 12b < offset=%d not supported yet!\n",
-		       insn, (पूर्णांक)off);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		       insn, (int)off);
+		return -1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत bool is_13b_पूर्णांक(दीर्घ val)
-अणु
-	वापस -(1L << 12) <= val && val < (1L << 12);
-पूर्ण
+static inline bool is_13b_int(long val)
+{
+	return -(1L << 12) <= val && val < (1L << 12);
+}
 
-अटल अंतरभूत bool is_21b_पूर्णांक(दीर्घ val)
-अणु
-	वापस -(1L << 20) <= val && val < (1L << 20);
-पूर्ण
+static inline bool is_21b_int(long val)
+{
+	return -(1L << 20) <= val && val < (1L << 20);
+}
 
-अटल अंतरभूत पूर्णांक rv_offset(पूर्णांक insn, पूर्णांक off, काष्ठा rv_jit_context *ctx)
-अणु
-	पूर्णांक from, to;
+static inline int rv_offset(int insn, int off, struct rv_jit_context *ctx)
+{
+	int from, to;
 
 	off++; /* BPF branch is from PC+1, RV is from PC */
 	from = (insn > 0) ? ctx->offset[insn - 1] : 0;
 	to = (insn + off > 0) ? ctx->offset[insn + off - 1] : 0;
-	वापस ninsns_rvoff(to - from);
-पूर्ण
+	return ninsns_rvoff(to - from);
+}
 
-/* Inकाष्ठाion क्रमmats. */
+/* Instruction formats. */
 
-अटल अंतरभूत u32 rv_r_insn(u8 funct7, u8 rs2, u8 rs1, u8 funct3, u8 rd,
+static inline u32 rv_r_insn(u8 funct7, u8 rs2, u8 rs1, u8 funct3, u8 rd,
 			    u8 opcode)
-अणु
-	वापस (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
+{
+	return (funct7 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
 		(rd << 7) | opcode;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rv_i_insn(u16 imm11_0, u8 rs1, u8 funct3, u8 rd, u8 opcode)
-अणु
-	वापस (imm11_0 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) |
+static inline u32 rv_i_insn(u16 imm11_0, u8 rs1, u8 funct3, u8 rd, u8 opcode)
+{
+	return (imm11_0 << 20) | (rs1 << 15) | (funct3 << 12) | (rd << 7) |
 		opcode;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rv_s_insn(u16 imm11_0, u8 rs2, u8 rs1, u8 funct3, u8 opcode)
-अणु
+static inline u32 rv_s_insn(u16 imm11_0, u8 rs2, u8 rs1, u8 funct3, u8 opcode)
+{
 	u8 imm11_5 = imm11_0 >> 5, imm4_0 = imm11_0 & 0x1f;
 
-	वापस (imm11_5 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
+	return (imm11_5 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
 		(imm4_0 << 7) | opcode;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rv_b_insn(u16 imm12_1, u8 rs2, u8 rs1, u8 funct3, u8 opcode)
-अणु
+static inline u32 rv_b_insn(u16 imm12_1, u8 rs2, u8 rs1, u8 funct3, u8 opcode)
+{
 	u8 imm12 = ((imm12_1 & 0x800) >> 5) | ((imm12_1 & 0x3f0) >> 4);
 	u8 imm4_1 = ((imm12_1 & 0xf) << 1) | ((imm12_1 & 0x400) >> 10);
 
-	वापस (imm12 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
+	return (imm12 << 25) | (rs2 << 20) | (rs1 << 15) | (funct3 << 12) |
 		(imm4_1 << 7) | opcode;
-पूर्ण
+}
 
-अटल अंतरभूत u32 rv_u_insn(u32 imm31_12, u8 rd, u8 opcode)
-अणु
-	वापस (imm31_12 << 12) | (rd << 7) | opcode;
-पूर्ण
+static inline u32 rv_u_insn(u32 imm31_12, u8 rd, u8 opcode)
+{
+	return (imm31_12 << 12) | (rd << 7) | opcode;
+}
 
-अटल अंतरभूत u32 rv_j_insn(u32 imm20_1, u8 rd, u8 opcode)
-अणु
+static inline u32 rv_j_insn(u32 imm20_1, u8 rd, u8 opcode)
+{
 	u32 imm;
 
 	imm = (imm20_1 & 0x80000) | ((imm20_1 & 0x3ff) << 9) |
 		((imm20_1 & 0x400) >> 2) | ((imm20_1 & 0x7f800) >> 11);
 
-	वापस (imm << 12) | (rd << 7) | opcode;
-पूर्ण
+	return (imm << 12) | (rd << 7) | opcode;
+}
 
-अटल अंतरभूत u32 rv_amo_insn(u8 funct5, u8 aq, u8 rl, u8 rs2, u8 rs1,
+static inline u32 rv_amo_insn(u8 funct5, u8 aq, u8 rl, u8 rs2, u8 rs1,
 			      u8 funct3, u8 rd, u8 opcode)
-अणु
+{
 	u8 funct7 = (funct5 << 2) | (aq << 1) | rl;
 
-	वापस rv_r_insn(funct7, rs2, rs1, funct3, rd, opcode);
-पूर्ण
+	return rv_r_insn(funct7, rs2, rs1, funct3, rd, opcode);
+}
 
-/* RISC-V compressed inकाष्ठाion क्रमmats. */
+/* RISC-V compressed instruction formats. */
 
-अटल अंतरभूत u16 rv_cr_insn(u8 funct4, u8 rd, u8 rs2, u8 op)
-अणु
-	वापस (funct4 << 12) | (rd << 7) | (rs2 << 2) | op;
-पूर्ण
+static inline u16 rv_cr_insn(u8 funct4, u8 rd, u8 rs2, u8 op)
+{
+	return (funct4 << 12) | (rd << 7) | (rs2 << 2) | op;
+}
 
-अटल अंतरभूत u16 rv_ci_insn(u8 funct3, u32 imm6, u8 rd, u8 op)
-अणु
+static inline u16 rv_ci_insn(u8 funct3, u32 imm6, u8 rd, u8 op)
+{
 	u32 imm;
 
 	imm = ((imm6 & 0x20) << 7) | ((imm6 & 0x1f) << 2);
-	वापस (funct3 << 13) | (rd << 7) | op | imm;
-पूर्ण
+	return (funct3 << 13) | (rd << 7) | op | imm;
+}
 
-अटल अंतरभूत u16 rv_css_insn(u8 funct3, u32 uimm, u8 rs2, u8 op)
-अणु
-	वापस (funct3 << 13) | (uimm << 7) | (rs2 << 2) | op;
-पूर्ण
+static inline u16 rv_css_insn(u8 funct3, u32 uimm, u8 rs2, u8 op)
+{
+	return (funct3 << 13) | (uimm << 7) | (rs2 << 2) | op;
+}
 
-अटल अंतरभूत u16 rv_ciw_insn(u8 funct3, u32 uimm, u8 rd, u8 op)
-अणु
-	वापस (funct3 << 13) | (uimm << 5) | ((rd & 0x7) << 2) | op;
-पूर्ण
+static inline u16 rv_ciw_insn(u8 funct3, u32 uimm, u8 rd, u8 op)
+{
+	return (funct3 << 13) | (uimm << 5) | ((rd & 0x7) << 2) | op;
+}
 
-अटल अंतरभूत u16 rv_cl_insn(u8 funct3, u32 imm_hi, u8 rs1, u32 imm_lo, u8 rd,
+static inline u16 rv_cl_insn(u8 funct3, u32 imm_hi, u8 rs1, u32 imm_lo, u8 rd,
 			     u8 op)
-अणु
-	वापस (funct3 << 13) | (imm_hi << 10) | ((rs1 & 0x7) << 7) |
+{
+	return (funct3 << 13) | (imm_hi << 10) | ((rs1 & 0x7) << 7) |
 		(imm_lo << 5) | ((rd & 0x7) << 2) | op;
-पूर्ण
+}
 
-अटल अंतरभूत u16 rv_cs_insn(u8 funct3, u32 imm_hi, u8 rs1, u32 imm_lo, u8 rs2,
+static inline u16 rv_cs_insn(u8 funct3, u32 imm_hi, u8 rs1, u32 imm_lo, u8 rs2,
 			     u8 op)
-अणु
-	वापस (funct3 << 13) | (imm_hi << 10) | ((rs1 & 0x7) << 7) |
+{
+	return (funct3 << 13) | (imm_hi << 10) | ((rs1 & 0x7) << 7) |
 		(imm_lo << 5) | ((rs2 & 0x7) << 2) | op;
-पूर्ण
+}
 
-अटल अंतरभूत u16 rv_ca_insn(u8 funct6, u8 rd, u8 funct2, u8 rs2, u8 op)
-अणु
-	वापस (funct6 << 10) | ((rd & 0x7) << 7) | (funct2 << 5) |
+static inline u16 rv_ca_insn(u8 funct6, u8 rd, u8 funct2, u8 rs2, u8 op)
+{
+	return (funct6 << 10) | ((rd & 0x7) << 7) | (funct2 << 5) |
 		((rs2 & 0x7) << 2) | op;
-पूर्ण
+}
 
-अटल अंतरभूत u16 rv_cb_insn(u8 funct3, u32 imm6, u8 funct2, u8 rd, u8 op)
-अणु
+static inline u16 rv_cb_insn(u8 funct3, u32 imm6, u8 funct2, u8 rd, u8 op)
+{
 	u32 imm;
 
 	imm = ((imm6 & 0x20) << 7) | ((imm6 & 0x1f) << 2);
-	वापस (funct3 << 13) | (funct2 << 10) | ((rd & 0x7) << 7) | op | imm;
-पूर्ण
+	return (funct3 << 13) | (funct2 << 10) | ((rd & 0x7) << 7) | op | imm;
+}
 
-/* Inकाष्ठाions shared by both RV32 and RV64. */
+/* Instructions shared by both RV32 and RV64. */
 
-अटल अंतरभूत u32 rv_addi(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 0, rd, 0x13);
-पूर्ण
+static inline u32 rv_addi(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 0, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_andi(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 7, rd, 0x13);
-पूर्ण
+static inline u32 rv_andi(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 7, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_ori(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 6, rd, 0x13);
-पूर्ण
+static inline u32 rv_ori(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 6, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_xori(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 4, rd, 0x13);
-पूर्ण
+static inline u32 rv_xori(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 4, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_slli(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 1, rd, 0x13);
-पूर्ण
+static inline u32 rv_slli(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 1, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_srli(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 5, rd, 0x13);
-पूर्ण
+static inline u32 rv_srli(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 5, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_srai(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(0x400 | imm11_0, rs1, 5, rd, 0x13);
-पूर्ण
+static inline u32 rv_srai(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(0x400 | imm11_0, rs1, 5, rd, 0x13);
+}
 
-अटल अंतरभूत u32 rv_lui(u8 rd, u32 imm31_12)
-अणु
-	वापस rv_u_insn(imm31_12, rd, 0x37);
-पूर्ण
+static inline u32 rv_lui(u8 rd, u32 imm31_12)
+{
+	return rv_u_insn(imm31_12, rd, 0x37);
+}
 
-अटल अंतरभूत u32 rv_auipc(u8 rd, u32 imm31_12)
-अणु
-	वापस rv_u_insn(imm31_12, rd, 0x17);
-पूर्ण
+static inline u32 rv_auipc(u8 rd, u32 imm31_12)
+{
+	return rv_u_insn(imm31_12, rd, 0x17);
+}
 
-अटल अंतरभूत u32 rv_add(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 0, rd, 0x33);
-पूर्ण
+static inline u32 rv_add(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 0, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_sub(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0x20, rs2, rs1, 0, rd, 0x33);
-पूर्ण
+static inline u32 rv_sub(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0x20, rs2, rs1, 0, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_sltu(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 3, rd, 0x33);
-पूर्ण
+static inline u32 rv_sltu(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 3, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_and(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 7, rd, 0x33);
-पूर्ण
+static inline u32 rv_and(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 7, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_or(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 6, rd, 0x33);
-पूर्ण
+static inline u32 rv_or(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 6, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_xor(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 4, rd, 0x33);
-पूर्ण
+static inline u32 rv_xor(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 4, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_sll(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 1, rd, 0x33);
-पूर्ण
+static inline u32 rv_sll(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 1, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_srl(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 5, rd, 0x33);
-पूर्ण
+static inline u32 rv_srl(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 5, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_sra(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0x20, rs2, rs1, 5, rd, 0x33);
-पूर्ण
+static inline u32 rv_sra(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0x20, rs2, rs1, 5, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_mul(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 0, rd, 0x33);
-पूर्ण
+static inline u32 rv_mul(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 0, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_mulhu(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 3, rd, 0x33);
-पूर्ण
+static inline u32 rv_mulhu(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 3, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_भागu(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 5, rd, 0x33);
-पूर्ण
+static inline u32 rv_divu(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 5, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_remu(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 7, rd, 0x33);
-पूर्ण
+static inline u32 rv_remu(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 7, rd, 0x33);
+}
 
-अटल अंतरभूत u32 rv_jal(u8 rd, u32 imm20_1)
-अणु
-	वापस rv_j_insn(imm20_1, rd, 0x6f);
-पूर्ण
+static inline u32 rv_jal(u8 rd, u32 imm20_1)
+{
+	return rv_j_insn(imm20_1, rd, 0x6f);
+}
 
-अटल अंतरभूत u32 rv_jalr(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 0, rd, 0x67);
-पूर्ण
+static inline u32 rv_jalr(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 0, rd, 0x67);
+}
 
-अटल अंतरभूत u32 rv_beq(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 0, 0x63);
-पूर्ण
+static inline u32 rv_beq(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 0, 0x63);
+}
 
-अटल अंतरभूत u32 rv_bne(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 1, 0x63);
-पूर्ण
+static inline u32 rv_bne(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 1, 0x63);
+}
 
-अटल अंतरभूत u32 rv_bltu(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 6, 0x63);
-पूर्ण
+static inline u32 rv_bltu(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 6, 0x63);
+}
 
-अटल अंतरभूत u32 rv_bgtu(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_bltu(rs2, rs1, imm12_1);
-पूर्ण
+static inline u32 rv_bgtu(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_bltu(rs2, rs1, imm12_1);
+}
 
-अटल अंतरभूत u32 rv_bgeu(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 7, 0x63);
-पूर्ण
+static inline u32 rv_bgeu(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 7, 0x63);
+}
 
-अटल अंतरभूत u32 rv_bleu(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_bgeu(rs2, rs1, imm12_1);
-पूर्ण
+static inline u32 rv_bleu(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_bgeu(rs2, rs1, imm12_1);
+}
 
-अटल अंतरभूत u32 rv_blt(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 4, 0x63);
-पूर्ण
+static inline u32 rv_blt(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 4, 0x63);
+}
 
-अटल अंतरभूत u32 rv_bgt(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_blt(rs2, rs1, imm12_1);
-पूर्ण
+static inline u32 rv_bgt(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_blt(rs2, rs1, imm12_1);
+}
 
-अटल अंतरभूत u32 rv_bge(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_b_insn(imm12_1, rs2, rs1, 5, 0x63);
-पूर्ण
+static inline u32 rv_bge(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_b_insn(imm12_1, rs2, rs1, 5, 0x63);
+}
 
-अटल अंतरभूत u32 rv_ble(u8 rs1, u8 rs2, u16 imm12_1)
-अणु
-	वापस rv_bge(rs2, rs1, imm12_1);
-पूर्ण
+static inline u32 rv_ble(u8 rs1, u8 rs2, u16 imm12_1)
+{
+	return rv_bge(rs2, rs1, imm12_1);
+}
 
-अटल अंतरभूत u32 rv_lw(u8 rd, u16 imm11_0, u8 rs1)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 2, rd, 0x03);
-पूर्ण
+static inline u32 rv_lw(u8 rd, u16 imm11_0, u8 rs1)
+{
+	return rv_i_insn(imm11_0, rs1, 2, rd, 0x03);
+}
 
-अटल अंतरभूत u32 rv_lbu(u8 rd, u16 imm11_0, u8 rs1)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 4, rd, 0x03);
-पूर्ण
+static inline u32 rv_lbu(u8 rd, u16 imm11_0, u8 rs1)
+{
+	return rv_i_insn(imm11_0, rs1, 4, rd, 0x03);
+}
 
-अटल अंतरभूत u32 rv_lhu(u8 rd, u16 imm11_0, u8 rs1)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 5, rd, 0x03);
-पूर्ण
+static inline u32 rv_lhu(u8 rd, u16 imm11_0, u8 rs1)
+{
+	return rv_i_insn(imm11_0, rs1, 5, rd, 0x03);
+}
 
-अटल अंतरभूत u32 rv_sb(u8 rs1, u16 imm11_0, u8 rs2)
-अणु
-	वापस rv_s_insn(imm11_0, rs2, rs1, 0, 0x23);
-पूर्ण
+static inline u32 rv_sb(u8 rs1, u16 imm11_0, u8 rs2)
+{
+	return rv_s_insn(imm11_0, rs2, rs1, 0, 0x23);
+}
 
-अटल अंतरभूत u32 rv_sh(u8 rs1, u16 imm11_0, u8 rs2)
-अणु
-	वापस rv_s_insn(imm11_0, rs2, rs1, 1, 0x23);
-पूर्ण
+static inline u32 rv_sh(u8 rs1, u16 imm11_0, u8 rs2)
+{
+	return rv_s_insn(imm11_0, rs2, rs1, 1, 0x23);
+}
 
-अटल अंतरभूत u32 rv_sw(u8 rs1, u16 imm11_0, u8 rs2)
-अणु
-	वापस rv_s_insn(imm11_0, rs2, rs1, 2, 0x23);
-पूर्ण
+static inline u32 rv_sw(u8 rs1, u16 imm11_0, u8 rs2)
+{
+	return rv_s_insn(imm11_0, rs2, rs1, 2, 0x23);
+}
 
-अटल अंतरभूत u32 rv_amoadd_w(u8 rd, u8 rs2, u8 rs1, u8 aq, u8 rl)
-अणु
-	वापस rv_amo_insn(0, aq, rl, rs2, rs1, 2, rd, 0x2f);
-पूर्ण
+static inline u32 rv_amoadd_w(u8 rd, u8 rs2, u8 rs1, u8 aq, u8 rl)
+{
+	return rv_amo_insn(0, aq, rl, rs2, rs1, 2, rd, 0x2f);
+}
 
 /* RVC instrutions. */
 
-अटल अंतरभूत u16 rvc_addi4spn(u8 rd, u32 imm10)
-अणु
+static inline u16 rvc_addi4spn(u8 rd, u32 imm10)
+{
 	u32 imm;
 
 	imm = ((imm10 & 0x30) << 2) | ((imm10 & 0x3c0) >> 4) |
 		((imm10 & 0x4) >> 1) | ((imm10 & 0x8) >> 3);
-	वापस rv_ciw_insn(0x0, imm, rd, 0x0);
-पूर्ण
+	return rv_ciw_insn(0x0, imm, rd, 0x0);
+}
 
-अटल अंतरभूत u16 rvc_lw(u8 rd, u32 imm7, u8 rs1)
-अणु
+static inline u16 rvc_lw(u8 rd, u32 imm7, u8 rs1)
+{
 	u32 imm_hi, imm_lo;
 
 	imm_hi = (imm7 & 0x38) >> 3;
 	imm_lo = ((imm7 & 0x4) >> 1) | ((imm7 & 0x40) >> 6);
-	वापस rv_cl_insn(0x2, imm_hi, rs1, imm_lo, rd, 0x0);
-पूर्ण
+	return rv_cl_insn(0x2, imm_hi, rs1, imm_lo, rd, 0x0);
+}
 
-अटल अंतरभूत u16 rvc_sw(u8 rs1, u32 imm7, u8 rs2)
-अणु
+static inline u16 rvc_sw(u8 rs1, u32 imm7, u8 rs2)
+{
 	u32 imm_hi, imm_lo;
 
 	imm_hi = (imm7 & 0x38) >> 3;
 	imm_lo = ((imm7 & 0x4) >> 1) | ((imm7 & 0x40) >> 6);
-	वापस rv_cs_insn(0x6, imm_hi, rs1, imm_lo, rs2, 0x0);
-पूर्ण
+	return rv_cs_insn(0x6, imm_hi, rs1, imm_lo, rs2, 0x0);
+}
 
-अटल अंतरभूत u16 rvc_addi(u8 rd, u32 imm6)
-अणु
-	वापस rv_ci_insn(0, imm6, rd, 0x1);
-पूर्ण
+static inline u16 rvc_addi(u8 rd, u32 imm6)
+{
+	return rv_ci_insn(0, imm6, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_li(u8 rd, u32 imm6)
-अणु
-	वापस rv_ci_insn(0x2, imm6, rd, 0x1);
-पूर्ण
+static inline u16 rvc_li(u8 rd, u32 imm6)
+{
+	return rv_ci_insn(0x2, imm6, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_addi16sp(u32 imm10)
-अणु
+static inline u16 rvc_addi16sp(u32 imm10)
+{
 	u32 imm;
 
 	imm = ((imm10 & 0x200) >> 4) | (imm10 & 0x10) | ((imm10 & 0x40) >> 3) |
 		((imm10 & 0x180) >> 6) | ((imm10 & 0x20) >> 5);
-	वापस rv_ci_insn(0x3, imm, RV_REG_SP, 0x1);
-पूर्ण
+	return rv_ci_insn(0x3, imm, RV_REG_SP, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_lui(u8 rd, u32 imm6)
-अणु
-	वापस rv_ci_insn(0x3, imm6, rd, 0x1);
-पूर्ण
+static inline u16 rvc_lui(u8 rd, u32 imm6)
+{
+	return rv_ci_insn(0x3, imm6, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_srli(u8 rd, u32 imm6)
-अणु
-	वापस rv_cb_insn(0x4, imm6, 0, rd, 0x1);
-पूर्ण
+static inline u16 rvc_srli(u8 rd, u32 imm6)
+{
+	return rv_cb_insn(0x4, imm6, 0, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_srai(u8 rd, u32 imm6)
-अणु
-	वापस rv_cb_insn(0x4, imm6, 0x1, rd, 0x1);
-पूर्ण
+static inline u16 rvc_srai(u8 rd, u32 imm6)
+{
+	return rv_cb_insn(0x4, imm6, 0x1, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_andi(u8 rd, u32 imm6)
-अणु
-	वापस rv_cb_insn(0x4, imm6, 0x2, rd, 0x1);
-पूर्ण
+static inline u16 rvc_andi(u8 rd, u32 imm6)
+{
+	return rv_cb_insn(0x4, imm6, 0x2, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_sub(u8 rd, u8 rs)
-अणु
-	वापस rv_ca_insn(0x23, rd, 0, rs, 0x1);
-पूर्ण
+static inline u16 rvc_sub(u8 rd, u8 rs)
+{
+	return rv_ca_insn(0x23, rd, 0, rs, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_xor(u8 rd, u8 rs)
-अणु
-	वापस rv_ca_insn(0x23, rd, 0x1, rs, 0x1);
-पूर्ण
+static inline u16 rvc_xor(u8 rd, u8 rs)
+{
+	return rv_ca_insn(0x23, rd, 0x1, rs, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_or(u8 rd, u8 rs)
-अणु
-	वापस rv_ca_insn(0x23, rd, 0x2, rs, 0x1);
-पूर्ण
+static inline u16 rvc_or(u8 rd, u8 rs)
+{
+	return rv_ca_insn(0x23, rd, 0x2, rs, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_and(u8 rd, u8 rs)
-अणु
-	वापस rv_ca_insn(0x23, rd, 0x3, rs, 0x1);
-पूर्ण
+static inline u16 rvc_and(u8 rd, u8 rs)
+{
+	return rv_ca_insn(0x23, rd, 0x3, rs, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_slli(u8 rd, u32 imm6)
-अणु
-	वापस rv_ci_insn(0, imm6, rd, 0x2);
-पूर्ण
+static inline u16 rvc_slli(u8 rd, u32 imm6)
+{
+	return rv_ci_insn(0, imm6, rd, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_lwsp(u8 rd, u32 imm8)
-अणु
+static inline u16 rvc_lwsp(u8 rd, u32 imm8)
+{
 	u32 imm;
 
 	imm = ((imm8 & 0xc0) >> 6) | (imm8 & 0x3c);
-	वापस rv_ci_insn(0x2, imm, rd, 0x2);
-पूर्ण
+	return rv_ci_insn(0x2, imm, rd, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_jr(u8 rs1)
-अणु
-	वापस rv_cr_insn(0x8, rs1, RV_REG_ZERO, 0x2);
-पूर्ण
+static inline u16 rvc_jr(u8 rs1)
+{
+	return rv_cr_insn(0x8, rs1, RV_REG_ZERO, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_mv(u8 rd, u8 rs)
-अणु
-	वापस rv_cr_insn(0x8, rd, rs, 0x2);
-पूर्ण
+static inline u16 rvc_mv(u8 rd, u8 rs)
+{
+	return rv_cr_insn(0x8, rd, rs, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_jalr(u8 rs1)
-अणु
-	वापस rv_cr_insn(0x9, rs1, RV_REG_ZERO, 0x2);
-पूर्ण
+static inline u16 rvc_jalr(u8 rs1)
+{
+	return rv_cr_insn(0x9, rs1, RV_REG_ZERO, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_add(u8 rd, u8 rs)
-अणु
-	वापस rv_cr_insn(0x9, rd, rs, 0x2);
-पूर्ण
+static inline u16 rvc_add(u8 rd, u8 rs)
+{
+	return rv_cr_insn(0x9, rd, rs, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_swsp(u32 imm8, u8 rs2)
-अणु
+static inline u16 rvc_swsp(u32 imm8, u8 rs2)
+{
 	u32 imm;
 
 	imm = (imm8 & 0x3c) | ((imm8 & 0xc0) >> 6);
-	वापस rv_css_insn(0x6, imm, rs2, 0x2);
-पूर्ण
+	return rv_css_insn(0x6, imm, rs2, 0x2);
+}
 
 /*
- * RV64-only inकाष्ठाions.
+ * RV64-only instructions.
  *
- * These inकाष्ठाions are not available on RV32.  Wrap them below a #अगर to
- * ensure that the RV32 JIT करोesn't emit any of these inकाष्ठाions.
+ * These instructions are not available on RV32.  Wrap them below a #if to
+ * ensure that the RV32 JIT doesn't emit any of these instructions.
  */
 
-#अगर __riscv_xlen == 64
+#if __riscv_xlen == 64
 
-अटल अंतरभूत u32 rv_addiw(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 0, rd, 0x1b);
-पूर्ण
+static inline u32 rv_addiw(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 0, rd, 0x1b);
+}
 
-अटल अंतरभूत u32 rv_slliw(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 1, rd, 0x1b);
-पूर्ण
+static inline u32 rv_slliw(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 1, rd, 0x1b);
+}
 
-अटल अंतरभूत u32 rv_srliw(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 5, rd, 0x1b);
-पूर्ण
+static inline u32 rv_srliw(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(imm11_0, rs1, 5, rd, 0x1b);
+}
 
-अटल अंतरभूत u32 rv_sraiw(u8 rd, u8 rs1, u16 imm11_0)
-अणु
-	वापस rv_i_insn(0x400 | imm11_0, rs1, 5, rd, 0x1b);
-पूर्ण
+static inline u32 rv_sraiw(u8 rd, u8 rs1, u16 imm11_0)
+{
+	return rv_i_insn(0x400 | imm11_0, rs1, 5, rd, 0x1b);
+}
 
-अटल अंतरभूत u32 rv_addw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 0, rd, 0x3b);
-पूर्ण
+static inline u32 rv_addw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 0, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_subw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0x20, rs2, rs1, 0, rd, 0x3b);
-पूर्ण
+static inline u32 rv_subw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0x20, rs2, rs1, 0, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_sllw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 1, rd, 0x3b);
-पूर्ण
+static inline u32 rv_sllw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 1, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_srlw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0, rs2, rs1, 5, rd, 0x3b);
-पूर्ण
+static inline u32 rv_srlw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0, rs2, rs1, 5, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_sraw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(0x20, rs2, rs1, 5, rd, 0x3b);
-पूर्ण
+static inline u32 rv_sraw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(0x20, rs2, rs1, 5, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_mulw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 0, rd, 0x3b);
-पूर्ण
+static inline u32 rv_mulw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 0, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_भागuw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 5, rd, 0x3b);
-पूर्ण
+static inline u32 rv_divuw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 5, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_remuw(u8 rd, u8 rs1, u8 rs2)
-अणु
-	वापस rv_r_insn(1, rs2, rs1, 7, rd, 0x3b);
-पूर्ण
+static inline u32 rv_remuw(u8 rd, u8 rs1, u8 rs2)
+{
+	return rv_r_insn(1, rs2, rs1, 7, rd, 0x3b);
+}
 
-अटल अंतरभूत u32 rv_ld(u8 rd, u16 imm11_0, u8 rs1)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 3, rd, 0x03);
-पूर्ण
+static inline u32 rv_ld(u8 rd, u16 imm11_0, u8 rs1)
+{
+	return rv_i_insn(imm11_0, rs1, 3, rd, 0x03);
+}
 
-अटल अंतरभूत u32 rv_lwu(u8 rd, u16 imm11_0, u8 rs1)
-अणु
-	वापस rv_i_insn(imm11_0, rs1, 6, rd, 0x03);
-पूर्ण
+static inline u32 rv_lwu(u8 rd, u16 imm11_0, u8 rs1)
+{
+	return rv_i_insn(imm11_0, rs1, 6, rd, 0x03);
+}
 
-अटल अंतरभूत u32 rv_sd(u8 rs1, u16 imm11_0, u8 rs2)
-अणु
-	वापस rv_s_insn(imm11_0, rs2, rs1, 3, 0x23);
-पूर्ण
+static inline u32 rv_sd(u8 rs1, u16 imm11_0, u8 rs2)
+{
+	return rv_s_insn(imm11_0, rs2, rs1, 3, 0x23);
+}
 
-अटल अंतरभूत u32 rv_amoadd_d(u8 rd, u8 rs2, u8 rs1, u8 aq, u8 rl)
-अणु
-	वापस rv_amo_insn(0, aq, rl, rs2, rs1, 3, rd, 0x2f);
-पूर्ण
+static inline u32 rv_amoadd_d(u8 rd, u8 rs2, u8 rs1, u8 aq, u8 rl)
+{
+	return rv_amo_insn(0, aq, rl, rs2, rs1, 3, rd, 0x2f);
+}
 
-/* RV64-only RVC inकाष्ठाions. */
+/* RV64-only RVC instructions. */
 
-अटल अंतरभूत u16 rvc_ld(u8 rd, u32 imm8, u8 rs1)
-अणु
+static inline u16 rvc_ld(u8 rd, u32 imm8, u8 rs1)
+{
 	u32 imm_hi, imm_lo;
 
 	imm_hi = (imm8 & 0x38) >> 3;
 	imm_lo = (imm8 & 0xc0) >> 6;
-	वापस rv_cl_insn(0x3, imm_hi, rs1, imm_lo, rd, 0x0);
-पूर्ण
+	return rv_cl_insn(0x3, imm_hi, rs1, imm_lo, rd, 0x0);
+}
 
-अटल अंतरभूत u16 rvc_sd(u8 rs1, u32 imm8, u8 rs2)
-अणु
+static inline u16 rvc_sd(u8 rs1, u32 imm8, u8 rs2)
+{
 	u32 imm_hi, imm_lo;
 
 	imm_hi = (imm8 & 0x38) >> 3;
 	imm_lo = (imm8 & 0xc0) >> 6;
-	वापस rv_cs_insn(0x7, imm_hi, rs1, imm_lo, rs2, 0x0);
-पूर्ण
+	return rv_cs_insn(0x7, imm_hi, rs1, imm_lo, rs2, 0x0);
+}
 
-अटल अंतरभूत u16 rvc_subw(u8 rd, u8 rs)
-अणु
-	वापस rv_ca_insn(0x27, rd, 0, rs, 0x1);
-पूर्ण
+static inline u16 rvc_subw(u8 rd, u8 rs)
+{
+	return rv_ca_insn(0x27, rd, 0, rs, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_addiw(u8 rd, u32 imm6)
-अणु
-	वापस rv_ci_insn(0x1, imm6, rd, 0x1);
-पूर्ण
+static inline u16 rvc_addiw(u8 rd, u32 imm6)
+{
+	return rv_ci_insn(0x1, imm6, rd, 0x1);
+}
 
-अटल अंतरभूत u16 rvc_ldsp(u8 rd, u32 imm9)
-अणु
+static inline u16 rvc_ldsp(u8 rd, u32 imm9)
+{
 	u32 imm;
 
 	imm = ((imm9 & 0x1c0) >> 6) | (imm9 & 0x38);
-	वापस rv_ci_insn(0x3, imm, rd, 0x2);
-पूर्ण
+	return rv_ci_insn(0x3, imm, rd, 0x2);
+}
 
-अटल अंतरभूत u16 rvc_sdsp(u32 imm9, u8 rs2)
-अणु
+static inline u16 rvc_sdsp(u32 imm9, u8 rs2)
+{
 	u32 imm;
 
 	imm = (imm9 & 0x38) | ((imm9 & 0x1c0) >> 6);
-	वापस rv_css_insn(0x7, imm, rs2, 0x2);
-पूर्ण
+	return rv_css_insn(0x7, imm, rs2, 0x2);
+}
 
-#पूर्ण_अगर /* __riscv_xlen == 64 */
+#endif /* __riscv_xlen == 64 */
 
-/* Helper functions that emit RVC inकाष्ठाions when possible. */
+/* Helper functions that emit RVC instructions when possible. */
 
-अटल अंतरभूत व्योम emit_jalr(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd == RV_REG_RA && rs && !imm)
+static inline void emit_jalr(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd == RV_REG_RA && rs && !imm)
 		emitc(rvc_jalr(rs), ctx);
-	अन्यथा अगर (rvc_enabled() && !rd && rs && !imm)
+	else if (rvc_enabled() && !rd && rs && !imm)
 		emitc(rvc_jr(rs), ctx);
-	अन्यथा
+	else
 		emit(rv_jalr(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_mv(u8 rd, u8 rs, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && rs)
+static inline void emit_mv(u8 rd, u8 rs, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && rs)
 		emitc(rvc_mv(rd, rs), ctx);
-	अन्यथा
+	else
 		emit(rv_addi(rd, rs, 0), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_add(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && rd == rs1 && rs2)
+static inline void emit_add(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && rd == rs1 && rs2)
 		emitc(rvc_add(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_add(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_addi(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd == RV_REG_SP && rd == rs && is_10b_पूर्णांक(imm) && imm && !(imm & 0xf))
+static inline void emit_addi(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd == RV_REG_SP && rd == rs && is_10b_int(imm) && imm && !(imm & 0xf))
 		emitc(rvc_addi16sp(imm), ctx);
-	अन्यथा अगर (rvc_enabled() && is_creg(rd) && rs == RV_REG_SP && is_10b_uपूर्णांक(imm) &&
+	else if (rvc_enabled() && is_creg(rd) && rs == RV_REG_SP && is_10b_uint(imm) &&
 		 !(imm & 0x3) && imm)
 		emitc(rvc_addi4spn(rd, imm), ctx);
-	अन्यथा अगर (rvc_enabled() && rd && rd == rs && imm && is_6b_पूर्णांक(imm))
+	else if (rvc_enabled() && rd && rd == rs && imm && is_6b_int(imm))
 		emitc(rvc_addi(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_addi(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_li(u8 rd, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && is_6b_पूर्णांक(imm))
+static inline void emit_li(u8 rd, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && is_6b_int(imm))
 		emitc(rvc_li(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_addi(rd, RV_REG_ZERO, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_lui(u8 rd, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && rd != RV_REG_SP && is_6b_पूर्णांक(imm) && imm)
+static inline void emit_lui(u8 rd, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && rd != RV_REG_SP && is_6b_int(imm) && imm)
 		emitc(rvc_lui(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_lui(rd, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_slli(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && rd == rs && imm && (u32)imm < __riscv_xlen)
+static inline void emit_slli(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && rd == rs && imm && (u32)imm < __riscv_xlen)
 		emitc(rvc_slli(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_slli(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_andi(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs && is_6b_पूर्णांक(imm))
+static inline void emit_andi(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs && is_6b_int(imm))
 		emitc(rvc_andi(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_andi(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_srli(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs && imm && (u32)imm < __riscv_xlen)
+static inline void emit_srli(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs && imm && (u32)imm < __riscv_xlen)
 		emitc(rvc_srli(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_srli(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_srai(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs && imm && (u32)imm < __riscv_xlen)
+static inline void emit_srai(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs && imm && (u32)imm < __riscv_xlen)
 		emitc(rvc_srai(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_srai(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_sub(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
+static inline void emit_sub(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
 		emitc(rvc_sub(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_sub(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_or(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
+static inline void emit_or(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
 		emitc(rvc_or(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_or(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_and(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
+static inline void emit_and(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
 		emitc(rvc_and(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_and(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_xor(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
+static inline void emit_xor(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
 		emitc(rvc_xor(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_xor(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_lw(u8 rd, s32 off, u8 rs1, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rs1 == RV_REG_SP && rd && is_8b_uपूर्णांक(off) && !(off & 0x3))
+static inline void emit_lw(u8 rd, s32 off, u8 rs1, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rs1 == RV_REG_SP && rd && is_8b_uint(off) && !(off & 0x3))
 		emitc(rvc_lwsp(rd, off), ctx);
-	अन्यथा अगर (rvc_enabled() && is_creg(rd) && is_creg(rs1) && is_7b_uपूर्णांक(off) && !(off & 0x3))
+	else if (rvc_enabled() && is_creg(rd) && is_creg(rs1) && is_7b_uint(off) && !(off & 0x3))
 		emitc(rvc_lw(rd, off, rs1), ctx);
-	अन्यथा
+	else
 		emit(rv_lw(rd, off, rs1), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_sw(u8 rs1, s32 off, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rs1 == RV_REG_SP && is_8b_uपूर्णांक(off) && !(off & 0x3))
+static inline void emit_sw(u8 rs1, s32 off, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rs1 == RV_REG_SP && is_8b_uint(off) && !(off & 0x3))
 		emitc(rvc_swsp(off, rs2), ctx);
-	अन्यथा अगर (rvc_enabled() && is_creg(rs1) && is_creg(rs2) && is_7b_uपूर्णांक(off) && !(off & 0x3))
+	else if (rvc_enabled() && is_creg(rs1) && is_creg(rs2) && is_7b_uint(off) && !(off & 0x3))
 		emitc(rvc_sw(rs1, off, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_sw(rs1, off, rs2), ctx);
-पूर्ण
+}
 
 /* RV64-only helper functions. */
-#अगर __riscv_xlen == 64
+#if __riscv_xlen == 64
 
-अटल अंतरभूत व्योम emit_addiw(u8 rd, u8 rs, s32 imm, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rd && rd == rs && is_6b_पूर्णांक(imm))
+static inline void emit_addiw(u8 rd, u8 rs, s32 imm, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rd && rd == rs && is_6b_int(imm))
 		emitc(rvc_addiw(rd, imm), ctx);
-	अन्यथा
+	else
 		emit(rv_addiw(rd, rs, imm), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_ld(u8 rd, s32 off, u8 rs1, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rs1 == RV_REG_SP && rd && is_9b_uपूर्णांक(off) && !(off & 0x7))
+static inline void emit_ld(u8 rd, s32 off, u8 rs1, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rs1 == RV_REG_SP && rd && is_9b_uint(off) && !(off & 0x7))
 		emitc(rvc_ldsp(rd, off), ctx);
-	अन्यथा अगर (rvc_enabled() && is_creg(rd) && is_creg(rs1) && is_8b_uपूर्णांक(off) && !(off & 0x7))
+	else if (rvc_enabled() && is_creg(rd) && is_creg(rs1) && is_8b_uint(off) && !(off & 0x7))
 		emitc(rvc_ld(rd, off, rs1), ctx);
-	अन्यथा
+	else
 		emit(rv_ld(rd, off, rs1), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_sd(u8 rs1, s32 off, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && rs1 == RV_REG_SP && is_9b_uपूर्णांक(off) && !(off & 0x7))
+static inline void emit_sd(u8 rs1, s32 off, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && rs1 == RV_REG_SP && is_9b_uint(off) && !(off & 0x7))
 		emitc(rvc_sdsp(off, rs2), ctx);
-	अन्यथा अगर (rvc_enabled() && is_creg(rs1) && is_creg(rs2) && is_8b_uपूर्णांक(off) && !(off & 0x7))
+	else if (rvc_enabled() && is_creg(rs1) && is_creg(rs2) && is_8b_uint(off) && !(off & 0x7))
 		emitc(rvc_sd(rs1, off, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_sd(rs1, off, rs2), ctx);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम emit_subw(u8 rd, u8 rs1, u8 rs2, काष्ठा rv_jit_context *ctx)
-अणु
-	अगर (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
+static inline void emit_subw(u8 rd, u8 rs1, u8 rs2, struct rv_jit_context *ctx)
+{
+	if (rvc_enabled() && is_creg(rd) && rd == rs1 && is_creg(rs2))
 		emitc(rvc_subw(rd, rs2), ctx);
-	अन्यथा
+	else
 		emit(rv_subw(rd, rs1, rs2), ctx);
-पूर्ण
+}
 
-#पूर्ण_अगर /* __riscv_xlen == 64 */
+#endif /* __riscv_xlen == 64 */
 
-व्योम bpf_jit_build_prologue(काष्ठा rv_jit_context *ctx);
-व्योम bpf_jit_build_epilogue(काष्ठा rv_jit_context *ctx);
+void bpf_jit_build_prologue(struct rv_jit_context *ctx);
+void bpf_jit_build_epilogue(struct rv_jit_context *ctx);
 
-पूर्णांक bpf_jit_emit_insn(स्थिर काष्ठा bpf_insn *insn, काष्ठा rv_jit_context *ctx,
+int bpf_jit_emit_insn(const struct bpf_insn *insn, struct rv_jit_context *ctx,
 		      bool extra_pass);
 
-#पूर्ण_अगर /* _BPF_JIT_H */
+#endif /* _BPF_JIT_H */

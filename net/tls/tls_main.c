@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016-2017, Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016-2017, Dave Watson <davejwatson@fb.com>. All rights reserved.
@@ -6,20 +5,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,649 +31,649 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश <net/tcp.h>
-#समावेश <net/inet_common.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/inet_diag.h>
+#include <net/tcp.h>
+#include <net/inet_common.h>
+#include <linux/highmem.h>
+#include <linux/netdevice.h>
+#include <linux/sched/signal.h>
+#include <linux/inetdevice.h>
+#include <linux/inet_diag.h>
 
-#समावेश <net/snmp.h>
-#समावेश <net/tls.h>
-#समावेश <net/tls_toe.h>
+#include <net/snmp.h>
+#include <net/tls.h>
+#include <net/tls_toe.h>
 
 MODULE_AUTHOR("Mellanox Technologies");
 MODULE_DESCRIPTION("Transport Layer Security Support");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_ALIAS_TCP_ULP("tls");
 
-क्रमागत अणु
+enum {
 	TLSV4,
 	TLSV6,
 	TLS_NUM_PROTS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proto *saved_tcpv6_prot;
-अटल DEFINE_MUTEX(tcpv6_prot_mutex);
-अटल स्थिर काष्ठा proto *saved_tcpv4_prot;
-अटल DEFINE_MUTEX(tcpv4_prot_mutex);
-अटल काष्ठा proto tls_prots[TLS_NUM_PROTS][TLS_NUM_CONFIG][TLS_NUM_CONFIG];
-अटल काष्ठा proto_ops tls_sw_proto_ops;
-अटल व्योम build_protos(काष्ठा proto prot[TLS_NUM_CONFIG][TLS_NUM_CONFIG],
-			 स्थिर काष्ठा proto *base);
+static const struct proto *saved_tcpv6_prot;
+static DEFINE_MUTEX(tcpv6_prot_mutex);
+static const struct proto *saved_tcpv4_prot;
+static DEFINE_MUTEX(tcpv4_prot_mutex);
+static struct proto tls_prots[TLS_NUM_PROTS][TLS_NUM_CONFIG][TLS_NUM_CONFIG];
+static struct proto_ops tls_sw_proto_ops;
+static void build_protos(struct proto prot[TLS_NUM_CONFIG][TLS_NUM_CONFIG],
+			 const struct proto *base);
 
-व्योम update_sk_prot(काष्ठा sock *sk, काष्ठा tls_context *ctx)
-अणु
-	पूर्णांक ip_ver = sk->sk_family == AF_INET6 ? TLSV6 : TLSV4;
+void update_sk_prot(struct sock *sk, struct tls_context *ctx)
+{
+	int ip_ver = sk->sk_family == AF_INET6 ? TLSV6 : TLSV4;
 
 	WRITE_ONCE(sk->sk_prot,
 		   &tls_prots[ip_ver][ctx->tx_conf][ctx->rx_conf]);
-पूर्ण
+}
 
-पूर्णांक रुको_on_pending_ग_लिखोr(काष्ठा sock *sk, दीर्घ *समयo)
-अणु
-	पूर्णांक rc = 0;
-	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+int wait_on_pending_writer(struct sock *sk, long *timeo)
+{
+	int rc = 0;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-	add_रुको_queue(sk_sleep(sk), &रुको);
-	जबतक (1) अणु
-		अगर (!*समयo) अणु
+	add_wait_queue(sk_sleep(sk), &wait);
+	while (1) {
+		if (!*timeo) {
 			rc = -EAGAIN;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (संकेत_pending(current)) अणु
-			rc = sock_पूर्णांकr_त्रुटि_सं(*समयo);
-			अवरोध;
-		पूर्ण
+		if (signal_pending(current)) {
+			rc = sock_intr_errno(*timeo);
+			break;
+		}
 
-		अगर (sk_रुको_event(sk, समयo, !sk->sk_ग_लिखो_pending, &रुको))
-			अवरोध;
-	पूर्ण
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस rc;
-पूर्ण
+		if (sk_wait_event(sk, timeo, !sk->sk_write_pending, &wait))
+			break;
+	}
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return rc;
+}
 
-पूर्णांक tls_push_sg(काष्ठा sock *sk,
-		काष्ठा tls_context *ctx,
-		काष्ठा scatterlist *sg,
+int tls_push_sg(struct sock *sk,
+		struct tls_context *ctx,
+		struct scatterlist *sg,
 		u16 first_offset,
-		पूर्णांक flags)
-अणु
-	पूर्णांक sendpage_flags = flags | MSG_SENDPAGE_NOTLAST;
-	पूर्णांक ret = 0;
-	काष्ठा page *p;
-	माप_प्रकार size;
-	पूर्णांक offset = first_offset;
+		int flags)
+{
+	int sendpage_flags = flags | MSG_SENDPAGE_NOTLAST;
+	int ret = 0;
+	struct page *p;
+	size_t size;
+	int offset = first_offset;
 
 	size = sg->length - offset;
 	offset += sg->offset;
 
 	ctx->in_tcp_sendpages = true;
-	जबतक (1) अणु
-		अगर (sg_is_last(sg))
+	while (1) {
+		if (sg_is_last(sg))
 			sendpage_flags = flags;
 
 		/* is sending application-limited? */
 		tcp_rate_check_app_limited(sk);
 		p = sg_page(sg);
 retry:
-		ret = करो_tcp_sendpages(sk, p, offset, size, sendpage_flags);
+		ret = do_tcp_sendpages(sk, p, offset, size, sendpage_flags);
 
-		अगर (ret != size) अणु
-			अगर (ret > 0) अणु
+		if (ret != size) {
+			if (ret > 0) {
 				offset += ret;
 				size -= ret;
-				जाओ retry;
-			पूर्ण
+				goto retry;
+			}
 
 			offset -= sg->offset;
 			ctx->partially_sent_offset = offset;
-			ctx->partially_sent_record = (व्योम *)sg;
+			ctx->partially_sent_record = (void *)sg;
 			ctx->in_tcp_sendpages = false;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		put_page(p);
-		sk_mem_unअक्षरge(sk, sg->length);
+		sk_mem_uncharge(sk, sg->length);
 		sg = sg_next(sg);
-		अगर (!sg)
-			अवरोध;
+		if (!sg)
+			break;
 
 		offset = sg->offset;
 		size = sg->length;
-	पूर्ण
+	}
 
 	ctx->in_tcp_sendpages = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tls_handle_खोलो_record(काष्ठा sock *sk, पूर्णांक flags)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static int tls_handle_open_record(struct sock *sk, int flags)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	अगर (tls_is_pending_खोलो_record(ctx))
-		वापस ctx->push_pending_record(sk, flags);
+	if (tls_is_pending_open_record(ctx))
+		return ctx->push_pending_record(sk, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tls_proccess_cmsg(काष्ठा sock *sk, काष्ठा msghdr *msg,
-		      अचिन्हित अक्षर *record_type)
-अणु
-	काष्ठा cmsghdr *cmsg;
-	पूर्णांक rc = -EINVAL;
+int tls_proccess_cmsg(struct sock *sk, struct msghdr *msg,
+		      unsigned char *record_type)
+{
+	struct cmsghdr *cmsg;
+	int rc = -EINVAL;
 
-	क्रम_each_cmsghdr(cmsg, msg) अणु
-		अगर (!CMSG_OK(msg, cmsg))
-			वापस -EINVAL;
-		अगर (cmsg->cmsg_level != SOL_TLS)
-			जारी;
+	for_each_cmsghdr(cmsg, msg) {
+		if (!CMSG_OK(msg, cmsg))
+			return -EINVAL;
+		if (cmsg->cmsg_level != SOL_TLS)
+			continue;
 
-		चयन (cmsg->cmsg_type) अणु
-		हाल TLS_SET_RECORD_TYPE:
-			अगर (cmsg->cmsg_len < CMSG_LEN(माप(*record_type)))
-				वापस -EINVAL;
+		switch (cmsg->cmsg_type) {
+		case TLS_SET_RECORD_TYPE:
+			if (cmsg->cmsg_len < CMSG_LEN(sizeof(*record_type)))
+				return -EINVAL;
 
-			अगर (msg->msg_flags & MSG_MORE)
-				वापस -EINVAL;
+			if (msg->msg_flags & MSG_MORE)
+				return -EINVAL;
 
-			rc = tls_handle_खोलो_record(sk, msg->msg_flags);
-			अगर (rc)
-				वापस rc;
+			rc = tls_handle_open_record(sk, msg->msg_flags);
+			if (rc)
+				return rc;
 
-			*record_type = *(अचिन्हित अक्षर *)CMSG_DATA(cmsg);
+			*record_type = *(unsigned char *)CMSG_DATA(cmsg);
 			rc = 0;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक tls_push_partial_record(काष्ठा sock *sk, काष्ठा tls_context *ctx,
-			    पूर्णांक flags)
-अणु
-	काष्ठा scatterlist *sg;
+int tls_push_partial_record(struct sock *sk, struct tls_context *ctx,
+			    int flags)
+{
+	struct scatterlist *sg;
 	u16 offset;
 
 	sg = ctx->partially_sent_record;
 	offset = ctx->partially_sent_offset;
 
-	ctx->partially_sent_record = शून्य;
-	वापस tls_push_sg(sk, ctx, sg, offset, flags);
-पूर्ण
+	ctx->partially_sent_record = NULL;
+	return tls_push_sg(sk, ctx, sg, offset, flags);
+}
 
-व्योम tls_मुक्त_partial_record(काष्ठा sock *sk, काष्ठा tls_context *ctx)
-अणु
-	काष्ठा scatterlist *sg;
+void tls_free_partial_record(struct sock *sk, struct tls_context *ctx)
+{
+	struct scatterlist *sg;
 
-	क्रम (sg = ctx->partially_sent_record; sg; sg = sg_next(sg)) अणु
+	for (sg = ctx->partially_sent_record; sg; sg = sg_next(sg)) {
 		put_page(sg_page(sg));
-		sk_mem_unअक्षरge(sk, sg->length);
-	पूर्ण
-	ctx->partially_sent_record = शून्य;
-पूर्ण
+		sk_mem_uncharge(sk, sg->length);
+	}
+	ctx->partially_sent_record = NULL;
+}
 
-अटल व्योम tls_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static void tls_write_space(struct sock *sk)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	/* If in_tcp_sendpages call lower protocol ग_लिखो space handler
-	 * to ensure we wake up any रुकोing operations there. For example
-	 * अगर करो_tcp_sendpages where to call sk_रुको_event.
+	/* If in_tcp_sendpages call lower protocol write space handler
+	 * to ensure we wake up any waiting operations there. For example
+	 * if do_tcp_sendpages where to call sk_wait_event.
 	 */
-	अगर (ctx->in_tcp_sendpages) अणु
-		ctx->sk_ग_लिखो_space(sk);
-		वापस;
-	पूर्ण
+	if (ctx->in_tcp_sendpages) {
+		ctx->sk_write_space(sk);
+		return;
+	}
 
-#अगर_घोषित CONFIG_TLS_DEVICE
-	अगर (ctx->tx_conf == TLS_HW)
-		tls_device_ग_लिखो_space(sk, ctx);
-	अन्यथा
-#पूर्ण_अगर
-		tls_sw_ग_लिखो_space(sk, ctx);
+#ifdef CONFIG_TLS_DEVICE
+	if (ctx->tx_conf == TLS_HW)
+		tls_device_write_space(sk, ctx);
+	else
+#endif
+		tls_sw_write_space(sk, ctx);
 
-	ctx->sk_ग_लिखो_space(sk);
-पूर्ण
+	ctx->sk_write_space(sk);
+}
 
 /**
- * tls_ctx_मुक्त() - मुक्त TLS ULP context
+ * tls_ctx_free() - free TLS ULP context
  * @sk:  socket to with @ctx is attached
- * @ctx: TLS context काष्ठाure
+ * @ctx: TLS context structure
  *
- * Free TLS context. If @sk is %शून्य caller guarantees that the socket
+ * Free TLS context. If @sk is %NULL caller guarantees that the socket
  * to which @ctx was attached has no outstanding references.
  */
-व्योम tls_ctx_मुक्त(काष्ठा sock *sk, काष्ठा tls_context *ctx)
-अणु
-	अगर (!ctx)
-		वापस;
+void tls_ctx_free(struct sock *sk, struct tls_context *ctx)
+{
+	if (!ctx)
+		return;
 
-	memzero_explicit(&ctx->crypto_send, माप(ctx->crypto_send));
-	memzero_explicit(&ctx->crypto_recv, माप(ctx->crypto_recv));
+	memzero_explicit(&ctx->crypto_send, sizeof(ctx->crypto_send));
+	memzero_explicit(&ctx->crypto_recv, sizeof(ctx->crypto_recv));
 	mutex_destroy(&ctx->tx_lock);
 
-	अगर (sk)
-		kमुक्त_rcu(ctx, rcu);
-	अन्यथा
-		kमुक्त(ctx);
-पूर्ण
+	if (sk)
+		kfree_rcu(ctx, rcu);
+	else
+		kfree(ctx);
+}
 
-अटल व्योम tls_sk_proto_cleanup(काष्ठा sock *sk,
-				 काष्ठा tls_context *ctx, दीर्घ समयo)
-अणु
-	अगर (unlikely(sk->sk_ग_लिखो_pending) &&
-	    !रुको_on_pending_ग_लिखोr(sk, &समयo))
-		tls_handle_खोलो_record(sk, 0);
+static void tls_sk_proto_cleanup(struct sock *sk,
+				 struct tls_context *ctx, long timeo)
+{
+	if (unlikely(sk->sk_write_pending) &&
+	    !wait_on_pending_writer(sk, &timeo))
+		tls_handle_open_record(sk, 0);
 
-	/* We need these क्रम tls_sw_fallback handling of other packets */
-	अगर (ctx->tx_conf == TLS_SW) अणु
-		kमुक्त(ctx->tx.rec_seq);
-		kमुक्त(ctx->tx.iv);
+	/* We need these for tls_sw_fallback handling of other packets */
+	if (ctx->tx_conf == TLS_SW) {
+		kfree(ctx->tx.rec_seq);
+		kfree(ctx->tx.iv);
 		tls_sw_release_resources_tx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRTXSW);
-	पूर्ण अन्यथा अगर (ctx->tx_conf == TLS_HW) अणु
-		tls_device_मुक्त_resources_tx(sk);
+	} else if (ctx->tx_conf == TLS_HW) {
+		tls_device_free_resources_tx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRTXDEVICE);
-	पूर्ण
+	}
 
-	अगर (ctx->rx_conf == TLS_SW) अणु
+	if (ctx->rx_conf == TLS_SW) {
 		tls_sw_release_resources_rx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXSW);
-	पूर्ण अन्यथा अगर (ctx->rx_conf == TLS_HW) अणु
+	} else if (ctx->rx_conf == TLS_HW) {
 		tls_device_offload_cleanup_rx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXDEVICE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tls_sk_proto_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
-	दीर्घ समयo = sock_sndसमयo(sk, 0);
-	bool मुक्त_ctx;
+static void tls_sk_proto_close(struct sock *sk, long timeout)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct tls_context *ctx = tls_get_ctx(sk);
+	long timeo = sock_sndtimeo(sk, 0);
+	bool free_ctx;
 
-	अगर (ctx->tx_conf == TLS_SW)
+	if (ctx->tx_conf == TLS_SW)
 		tls_sw_cancel_work_tx(ctx);
 
 	lock_sock(sk);
-	मुक्त_ctx = ctx->tx_conf != TLS_HW && ctx->rx_conf != TLS_HW;
+	free_ctx = ctx->tx_conf != TLS_HW && ctx->rx_conf != TLS_HW;
 
-	अगर (ctx->tx_conf != TLS_BASE || ctx->rx_conf != TLS_BASE)
-		tls_sk_proto_cleanup(sk, ctx, समयo);
+	if (ctx->tx_conf != TLS_BASE || ctx->rx_conf != TLS_BASE)
+		tls_sk_proto_cleanup(sk, ctx, timeo);
 
-	ग_लिखो_lock_bh(&sk->sk_callback_lock);
-	अगर (मुक्त_ctx)
-		rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, शून्य);
+	write_lock_bh(&sk->sk_callback_lock);
+	if (free_ctx)
+		rcu_assign_pointer(icsk->icsk_ulp_data, NULL);
 	WRITE_ONCE(sk->sk_prot, ctx->sk_proto);
-	अगर (sk->sk_ग_लिखो_space == tls_ग_लिखो_space)
-		sk->sk_ग_लिखो_space = ctx->sk_ग_लिखो_space;
-	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+	if (sk->sk_write_space == tls_write_space)
+		sk->sk_write_space = ctx->sk_write_space;
+	write_unlock_bh(&sk->sk_callback_lock);
 	release_sock(sk);
-	अगर (ctx->tx_conf == TLS_SW)
-		tls_sw_मुक्त_ctx_tx(ctx);
-	अगर (ctx->rx_conf == TLS_SW || ctx->rx_conf == TLS_HW)
-		tls_sw_strparser_करोne(ctx);
-	अगर (ctx->rx_conf == TLS_SW)
-		tls_sw_मुक्त_ctx_rx(ctx);
-	ctx->sk_proto->बंद(sk, समयout);
+	if (ctx->tx_conf == TLS_SW)
+		tls_sw_free_ctx_tx(ctx);
+	if (ctx->rx_conf == TLS_SW || ctx->rx_conf == TLS_HW)
+		tls_sw_strparser_done(ctx);
+	if (ctx->rx_conf == TLS_SW)
+		tls_sw_free_ctx_rx(ctx);
+	ctx->sk_proto->close(sk, timeout);
 
-	अगर (मुक्त_ctx)
-		tls_ctx_मुक्त(sk, ctx);
-पूर्ण
+	if (free_ctx)
+		tls_ctx_free(sk, ctx);
+}
 
-अटल पूर्णांक करो_tls_माला_लोockopt_conf(काष्ठा sock *sk, अक्षर __user *optval,
-				  पूर्णांक __user *optlen, पूर्णांक tx)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
-	काष्ठा tls_crypto_info *crypto_info;
-	काष्ठा cipher_context *cctx;
-	पूर्णांक len;
+static int do_tls_getsockopt_conf(struct sock *sk, char __user *optval,
+				  int __user *optlen, int tx)
+{
+	int rc = 0;
+	struct tls_context *ctx = tls_get_ctx(sk);
+	struct tls_crypto_info *crypto_info;
+	struct cipher_context *cctx;
+	int len;
 
-	अगर (get_user(len, optlen))
-		वापस -EFAULT;
+	if (get_user(len, optlen))
+		return -EFAULT;
 
-	अगर (!optval || (len < माप(*crypto_info))) अणु
+	if (!optval || (len < sizeof(*crypto_info))) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!ctx) अणु
+	if (!ctx) {
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* get user crypto info */
-	अगर (tx) अणु
+	if (tx) {
 		crypto_info = &ctx->crypto_send.info;
 		cctx = &ctx->tx;
-	पूर्ण अन्यथा अणु
+	} else {
 		crypto_info = &ctx->crypto_recv.info;
 		cctx = &ctx->rx;
-	पूर्ण
+	}
 
-	अगर (!TLS_CRYPTO_INFO_READY(crypto_info)) अणु
+	if (!TLS_CRYPTO_INFO_READY(crypto_info)) {
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (len == माप(*crypto_info)) अणु
-		अगर (copy_to_user(optval, crypto_info, माप(*crypto_info)))
+	if (len == sizeof(*crypto_info)) {
+		if (copy_to_user(optval, crypto_info, sizeof(*crypto_info)))
 			rc = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (crypto_info->cipher_type) अणु
-	हाल TLS_CIPHER_AES_GCM_128: अणु
-		काष्ठा tls12_crypto_info_aes_gcm_128 *
+	switch (crypto_info->cipher_type) {
+	case TLS_CIPHER_AES_GCM_128: {
+		struct tls12_crypto_info_aes_gcm_128 *
 		  crypto_info_aes_gcm_128 =
 		  container_of(crypto_info,
-			       काष्ठा tls12_crypto_info_aes_gcm_128,
+			       struct tls12_crypto_info_aes_gcm_128,
 			       info);
 
-		अगर (len != माप(*crypto_info_aes_gcm_128)) अणु
+		if (len != sizeof(*crypto_info_aes_gcm_128)) {
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		lock_sock(sk);
-		स_नकल(crypto_info_aes_gcm_128->iv,
+		memcpy(crypto_info_aes_gcm_128->iv,
 		       cctx->iv + TLS_CIPHER_AES_GCM_128_SALT_SIZE,
 		       TLS_CIPHER_AES_GCM_128_IV_SIZE);
-		स_नकल(crypto_info_aes_gcm_128->rec_seq, cctx->rec_seq,
+		memcpy(crypto_info_aes_gcm_128->rec_seq, cctx->rec_seq,
 		       TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
 		release_sock(sk);
-		अगर (copy_to_user(optval,
+		if (copy_to_user(optval,
 				 crypto_info_aes_gcm_128,
-				 माप(*crypto_info_aes_gcm_128)))
+				 sizeof(*crypto_info_aes_gcm_128)))
 			rc = -EFAULT;
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_AES_GCM_256: अणु
-		काष्ठा tls12_crypto_info_aes_gcm_256 *
+		break;
+	}
+	case TLS_CIPHER_AES_GCM_256: {
+		struct tls12_crypto_info_aes_gcm_256 *
 		  crypto_info_aes_gcm_256 =
 		  container_of(crypto_info,
-			       काष्ठा tls12_crypto_info_aes_gcm_256,
+			       struct tls12_crypto_info_aes_gcm_256,
 			       info);
 
-		अगर (len != माप(*crypto_info_aes_gcm_256)) अणु
+		if (len != sizeof(*crypto_info_aes_gcm_256)) {
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		lock_sock(sk);
-		स_नकल(crypto_info_aes_gcm_256->iv,
+		memcpy(crypto_info_aes_gcm_256->iv,
 		       cctx->iv + TLS_CIPHER_AES_GCM_256_SALT_SIZE,
 		       TLS_CIPHER_AES_GCM_256_IV_SIZE);
-		स_नकल(crypto_info_aes_gcm_256->rec_seq, cctx->rec_seq,
+		memcpy(crypto_info_aes_gcm_256->rec_seq, cctx->rec_seq,
 		       TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
 		release_sock(sk);
-		अगर (copy_to_user(optval,
+		if (copy_to_user(optval,
 				 crypto_info_aes_gcm_256,
-				 माप(*crypto_info_aes_gcm_256)))
+				 sizeof(*crypto_info_aes_gcm_256)))
 			rc = -EFAULT;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		rc = -EINVAL;
-	पूर्ण
+	}
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक करो_tls_माला_लोockopt(काष्ठा sock *sk, पूर्णांक optname,
-			     अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	पूर्णांक rc = 0;
+static int do_tls_getsockopt(struct sock *sk, int optname,
+			     char __user *optval, int __user *optlen)
+{
+	int rc = 0;
 
-	चयन (optname) अणु
-	हाल TLS_TX:
-	हाल TLS_RX:
-		rc = करो_tls_माला_लोockopt_conf(sk, optval, optlen,
+	switch (optname) {
+	case TLS_TX:
+	case TLS_RX:
+		rc = do_tls_getsockopt_conf(sk, optval, optlen,
 					    optname == TLS_TX);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल पूर्णांक tls_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static int tls_getsockopt(struct sock *sk, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	अगर (level != SOL_TLS)
-		वापस ctx->sk_proto->माला_लोockopt(sk, level,
+	if (level != SOL_TLS)
+		return ctx->sk_proto->getsockopt(sk, level,
 						 optname, optval, optlen);
 
-	वापस करो_tls_माला_लोockopt(sk, optname, optval, optlen);
-पूर्ण
+	return do_tls_getsockopt(sk, optname, optval, optlen);
+}
 
-अटल पूर्णांक करो_tls_setsockopt_conf(काष्ठा sock *sk, sockptr_t optval,
-				  अचिन्हित पूर्णांक optlen, पूर्णांक tx)
-अणु
-	काष्ठा tls_crypto_info *crypto_info;
-	काष्ठा tls_crypto_info *alt_crypto_info;
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
-	माप_प्रकार optsize;
-	पूर्णांक rc = 0;
-	पूर्णांक conf;
+static int do_tls_setsockopt_conf(struct sock *sk, sockptr_t optval,
+				  unsigned int optlen, int tx)
+{
+	struct tls_crypto_info *crypto_info;
+	struct tls_crypto_info *alt_crypto_info;
+	struct tls_context *ctx = tls_get_ctx(sk);
+	size_t optsize;
+	int rc = 0;
+	int conf;
 
-	अगर (sockptr_is_null(optval) || (optlen < माप(*crypto_info))) अणु
+	if (sockptr_is_null(optval) || (optlen < sizeof(*crypto_info))) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (tx) अणु
+	if (tx) {
 		crypto_info = &ctx->crypto_send.info;
 		alt_crypto_info = &ctx->crypto_recv.info;
-	पूर्ण अन्यथा अणु
+	} else {
 		crypto_info = &ctx->crypto_recv.info;
 		alt_crypto_info = &ctx->crypto_send.info;
-	पूर्ण
+	}
 
-	/* Currently we करोn't support set crypto info more than one समय */
-	अगर (TLS_CRYPTO_INFO_READY(crypto_info)) अणु
+	/* Currently we don't support set crypto info more than one time */
+	if (TLS_CRYPTO_INFO_READY(crypto_info)) {
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = copy_from_sockptr(crypto_info, optval, माप(*crypto_info));
-	अगर (rc) अणु
+	rc = copy_from_sockptr(crypto_info, optval, sizeof(*crypto_info));
+	if (rc) {
 		rc = -EFAULT;
-		जाओ err_crypto_info;
-	पूर्ण
+		goto err_crypto_info;
+	}
 
 	/* check version */
-	अगर (crypto_info->version != TLS_1_2_VERSION &&
-	    crypto_info->version != TLS_1_3_VERSION) अणु
+	if (crypto_info->version != TLS_1_2_VERSION &&
+	    crypto_info->version != TLS_1_3_VERSION) {
 		rc = -EINVAL;
-		जाओ err_crypto_info;
-	पूर्ण
+		goto err_crypto_info;
+	}
 
 	/* Ensure that TLS version and ciphers are same in both directions */
-	अगर (TLS_CRYPTO_INFO_READY(alt_crypto_info)) अणु
-		अगर (alt_crypto_info->version != crypto_info->version ||
-		    alt_crypto_info->cipher_type != crypto_info->cipher_type) अणु
+	if (TLS_CRYPTO_INFO_READY(alt_crypto_info)) {
+		if (alt_crypto_info->version != crypto_info->version ||
+		    alt_crypto_info->cipher_type != crypto_info->cipher_type) {
 			rc = -EINVAL;
-			जाओ err_crypto_info;
-		पूर्ण
-	पूर्ण
+			goto err_crypto_info;
+		}
+	}
 
-	चयन (crypto_info->cipher_type) अणु
-	हाल TLS_CIPHER_AES_GCM_128:
-		optsize = माप(काष्ठा tls12_crypto_info_aes_gcm_128);
-		अवरोध;
-	हाल TLS_CIPHER_AES_GCM_256: अणु
-		optsize = माप(काष्ठा tls12_crypto_info_aes_gcm_256);
-		अवरोध;
-	पूर्ण
-	हाल TLS_CIPHER_AES_CCM_128:
-		optsize = माप(काष्ठा tls12_crypto_info_aes_ccm_128);
-		अवरोध;
-	हाल TLS_CIPHER_CHACHA20_POLY1305:
-		optsize = माप(काष्ठा tls12_crypto_info_chacha20_poly1305);
-		अवरोध;
-	शेष:
+	switch (crypto_info->cipher_type) {
+	case TLS_CIPHER_AES_GCM_128:
+		optsize = sizeof(struct tls12_crypto_info_aes_gcm_128);
+		break;
+	case TLS_CIPHER_AES_GCM_256: {
+		optsize = sizeof(struct tls12_crypto_info_aes_gcm_256);
+		break;
+	}
+	case TLS_CIPHER_AES_CCM_128:
+		optsize = sizeof(struct tls12_crypto_info_aes_ccm_128);
+		break;
+	case TLS_CIPHER_CHACHA20_POLY1305:
+		optsize = sizeof(struct tls12_crypto_info_chacha20_poly1305);
+		break;
+	default:
 		rc = -EINVAL;
-		जाओ err_crypto_info;
-	पूर्ण
+		goto err_crypto_info;
+	}
 
-	अगर (optlen != optsize) अणु
+	if (optlen != optsize) {
 		rc = -EINVAL;
-		जाओ err_crypto_info;
-	पूर्ण
+		goto err_crypto_info;
+	}
 
 	rc = copy_from_sockptr_offset(crypto_info + 1, optval,
-				      माप(*crypto_info),
-				      optlen - माप(*crypto_info));
-	अगर (rc) अणु
+				      sizeof(*crypto_info),
+				      optlen - sizeof(*crypto_info));
+	if (rc) {
 		rc = -EFAULT;
-		जाओ err_crypto_info;
-	पूर्ण
+		goto err_crypto_info;
+	}
 
-	अगर (tx) अणु
+	if (tx) {
 		rc = tls_set_device_offload(sk, ctx);
 		conf = TLS_HW;
-		अगर (!rc) अणु
+		if (!rc) {
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSTXDEVICE);
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSCURRTXDEVICE);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = tls_set_sw_offload(sk, ctx, 1);
-			अगर (rc)
-				जाओ err_crypto_info;
+			if (rc)
+				goto err_crypto_info;
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSTXSW);
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSCURRTXSW);
 			conf = TLS_SW;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		rc = tls_set_device_offload_rx(sk, ctx);
 		conf = TLS_HW;
-		अगर (!rc) अणु
+		if (!rc) {
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSRXDEVICE);
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXDEVICE);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = tls_set_sw_offload(sk, ctx, 0);
-			अगर (rc)
-				जाओ err_crypto_info;
+			if (rc)
+				goto err_crypto_info;
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSRXSW);
 			TLS_INC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXSW);
 			conf = TLS_SW;
-		पूर्ण
+		}
 		tls_sw_strparser_arm(sk, ctx);
-	पूर्ण
+	}
 
-	अगर (tx)
+	if (tx)
 		ctx->tx_conf = conf;
-	अन्यथा
+	else
 		ctx->rx_conf = conf;
 	update_sk_prot(sk, ctx);
-	अगर (tx) अणु
-		ctx->sk_ग_लिखो_space = sk->sk_ग_लिखो_space;
-		sk->sk_ग_लिखो_space = tls_ग_लिखो_space;
-	पूर्ण अन्यथा अणु
+	if (tx) {
+		ctx->sk_write_space = sk->sk_write_space;
+		sk->sk_write_space = tls_write_space;
+	} else {
 		sk->sk_socket->ops = &tls_sw_proto_ops;
-	पूर्ण
-	जाओ out;
+	}
+	goto out;
 
 err_crypto_info:
-	memzero_explicit(crypto_info, माप(जोड़ tls_crypto_context));
+	memzero_explicit(crypto_info, sizeof(union tls_crypto_context));
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक करो_tls_setsockopt(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
-			     अचिन्हित पूर्णांक optlen)
-अणु
-	पूर्णांक rc = 0;
+static int do_tls_setsockopt(struct sock *sk, int optname, sockptr_t optval,
+			     unsigned int optlen)
+{
+	int rc = 0;
 
-	चयन (optname) अणु
-	हाल TLS_TX:
-	हाल TLS_RX:
+	switch (optname) {
+	case TLS_TX:
+	case TLS_RX:
 		lock_sock(sk);
-		rc = करो_tls_setsockopt_conf(sk, optval, optlen,
+		rc = do_tls_setsockopt_conf(sk, optval, optlen,
 					    optname == TLS_TX);
 		release_sock(sk);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -ENOPROTOOPT;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
-अटल पूर्णांक tls_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	काष्ठा tls_context *ctx = tls_get_ctx(sk);
+static int tls_setsockopt(struct sock *sk, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
 
-	अगर (level != SOL_TLS)
-		वापस ctx->sk_proto->setsockopt(sk, level, optname, optval,
+	if (level != SOL_TLS)
+		return ctx->sk_proto->setsockopt(sk, level, optname, optval,
 						 optlen);
 
-	वापस करो_tls_setsockopt(sk, optname, optval, optlen);
-पूर्ण
+	return do_tls_setsockopt(sk, optname, optval, optlen);
+}
 
-काष्ठा tls_context *tls_ctx_create(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा tls_context *ctx;
+struct tls_context *tls_ctx_create(struct sock *sk)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct tls_context *ctx;
 
-	ctx = kzalloc(माप(*ctx), GFP_ATOMIC);
-	अगर (!ctx)
-		वापस शून्य;
+	ctx = kzalloc(sizeof(*ctx), GFP_ATOMIC);
+	if (!ctx)
+		return NULL;
 
 	mutex_init(&ctx->tx_lock);
-	rcu_assign_poपूर्णांकer(icsk->icsk_ulp_data, ctx);
+	rcu_assign_pointer(icsk->icsk_ulp_data, ctx);
 	ctx->sk_proto = READ_ONCE(sk->sk_prot);
 	ctx->sk = sk;
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल व्योम tls_build_proto(काष्ठा sock *sk)
-अणु
-	पूर्णांक ip_ver = sk->sk_family == AF_INET6 ? TLSV6 : TLSV4;
-	काष्ठा proto *prot = READ_ONCE(sk->sk_prot);
+static void tls_build_proto(struct sock *sk)
+{
+	int ip_ver = sk->sk_family == AF_INET6 ? TLSV6 : TLSV4;
+	struct proto *prot = READ_ONCE(sk->sk_prot);
 
 	/* Build IPv6 TLS whenever the address of tcpv6 _prot changes */
-	अगर (ip_ver == TLSV6 &&
-	    unlikely(prot != smp_load_acquire(&saved_tcpv6_prot))) अणु
+	if (ip_ver == TLSV6 &&
+	    unlikely(prot != smp_load_acquire(&saved_tcpv6_prot))) {
 		mutex_lock(&tcpv6_prot_mutex);
-		अगर (likely(prot != saved_tcpv6_prot)) अणु
+		if (likely(prot != saved_tcpv6_prot)) {
 			build_protos(tls_prots[TLSV6], prot);
 			smp_store_release(&saved_tcpv6_prot, prot);
-		पूर्ण
+		}
 		mutex_unlock(&tcpv6_prot_mutex);
-	पूर्ण
+	}
 
-	अगर (ip_ver == TLSV4 &&
-	    unlikely(prot != smp_load_acquire(&saved_tcpv4_prot))) अणु
+	if (ip_ver == TLSV4 &&
+	    unlikely(prot != smp_load_acquire(&saved_tcpv4_prot))) {
 		mutex_lock(&tcpv4_prot_mutex);
-		अगर (likely(prot != saved_tcpv4_prot)) अणु
+		if (likely(prot != saved_tcpv4_prot)) {
 			build_protos(tls_prots[TLSV4], prot);
 			smp_store_release(&saved_tcpv4_prot, prot);
-		पूर्ण
+		}
 		mutex_unlock(&tcpv4_prot_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम build_protos(काष्ठा proto prot[TLS_NUM_CONFIG][TLS_NUM_CONFIG],
-			 स्थिर काष्ठा proto *base)
-अणु
+static void build_protos(struct proto prot[TLS_NUM_CONFIG][TLS_NUM_CONFIG],
+			 const struct proto *base)
+{
 	prot[TLS_BASE][TLS_BASE] = *base;
 	prot[TLS_BASE][TLS_BASE].setsockopt	= tls_setsockopt;
-	prot[TLS_BASE][TLS_BASE].माला_लोockopt	= tls_माला_लोockopt;
-	prot[TLS_BASE][TLS_BASE].बंद		= tls_sk_proto_बंद;
+	prot[TLS_BASE][TLS_BASE].getsockopt	= tls_getsockopt;
+	prot[TLS_BASE][TLS_BASE].close		= tls_sk_proto_close;
 
 	prot[TLS_SW][TLS_BASE] = prot[TLS_BASE][TLS_BASE];
 	prot[TLS_SW][TLS_BASE].sendmsg		= tls_sw_sendmsg;
@@ -682,15 +681,15 @@ out:
 
 	prot[TLS_BASE][TLS_SW] = prot[TLS_BASE][TLS_BASE];
 	prot[TLS_BASE][TLS_SW].recvmsg		  = tls_sw_recvmsg;
-	prot[TLS_BASE][TLS_SW].stream_memory_पढ़ो = tls_sw_stream_पढ़ो;
-	prot[TLS_BASE][TLS_SW].बंद		  = tls_sk_proto_बंद;
+	prot[TLS_BASE][TLS_SW].stream_memory_read = tls_sw_stream_read;
+	prot[TLS_BASE][TLS_SW].close		  = tls_sk_proto_close;
 
 	prot[TLS_SW][TLS_SW] = prot[TLS_SW][TLS_BASE];
 	prot[TLS_SW][TLS_SW].recvmsg		= tls_sw_recvmsg;
-	prot[TLS_SW][TLS_SW].stream_memory_पढ़ो	= tls_sw_stream_पढ़ो;
-	prot[TLS_SW][TLS_SW].बंद		= tls_sk_proto_बंद;
+	prot[TLS_SW][TLS_SW].stream_memory_read	= tls_sw_stream_read;
+	prot[TLS_SW][TLS_SW].close		= tls_sk_proto_close;
 
-#अगर_घोषित CONFIG_TLS_DEVICE
+#ifdef CONFIG_TLS_DEVICE
 	prot[TLS_HW][TLS_BASE] = prot[TLS_BASE][TLS_BASE];
 	prot[TLS_HW][TLS_BASE].sendmsg		= tls_device_sendmsg;
 	prot[TLS_HW][TLS_BASE].sendpage		= tls_device_sendpage;
@@ -704,190 +703,190 @@ out:
 	prot[TLS_SW][TLS_HW] = prot[TLS_SW][TLS_SW];
 
 	prot[TLS_HW][TLS_HW] = prot[TLS_HW][TLS_SW];
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_TLS_TOE
+#endif
+#ifdef CONFIG_TLS_TOE
 	prot[TLS_HW_RECORD][TLS_HW_RECORD] = *base;
 	prot[TLS_HW_RECORD][TLS_HW_RECORD].hash		= tls_toe_hash;
 	prot[TLS_HW_RECORD][TLS_HW_RECORD].unhash	= tls_toe_unhash;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक tls_init(काष्ठा sock *sk)
-अणु
-	काष्ठा tls_context *ctx;
-	पूर्णांक rc = 0;
+static int tls_init(struct sock *sk)
+{
+	struct tls_context *ctx;
+	int rc = 0;
 
 	tls_build_proto(sk);
 
-#अगर_घोषित CONFIG_TLS_TOE
-	अगर (tls_toe_bypass(sk))
-		वापस 0;
-#पूर्ण_अगर
+#ifdef CONFIG_TLS_TOE
+	if (tls_toe_bypass(sk))
+		return 0;
+#endif
 
-	/* The TLS ulp is currently supported only क्रम TCP sockets
+	/* The TLS ulp is currently supported only for TCP sockets
 	 * in ESTABLISHED state.
 	 * Supporting sockets in LISTEN state will require us
-	 * to modअगरy the accept implementation to clone rather then
+	 * to modify the accept implementation to clone rather then
 	 * share the ulp context.
 	 */
-	अगर (sk->sk_state != TCP_ESTABLISHED)
-		वापस -ENOTCONN;
+	if (sk->sk_state != TCP_ESTABLISHED)
+		return -ENOTCONN;
 
 	/* allocate tls context */
-	ग_लिखो_lock_bh(&sk->sk_callback_lock);
+	write_lock_bh(&sk->sk_callback_lock);
 	ctx = tls_ctx_create(sk);
-	अगर (!ctx) अणु
+	if (!ctx) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ctx->tx_conf = TLS_BASE;
 	ctx->rx_conf = TLS_BASE;
 	update_sk_prot(sk, ctx);
 out:
-	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
-	वापस rc;
-पूर्ण
+	write_unlock_bh(&sk->sk_callback_lock);
+	return rc;
+}
 
-अटल व्योम tls_update(काष्ठा sock *sk, काष्ठा proto *p,
-		       व्योम (*ग_लिखो_space)(काष्ठा sock *sk))
-अणु
-	काष्ठा tls_context *ctx;
+static void tls_update(struct sock *sk, struct proto *p,
+		       void (*write_space)(struct sock *sk))
+{
+	struct tls_context *ctx;
 
 	ctx = tls_get_ctx(sk);
-	अगर (likely(ctx)) अणु
-		ctx->sk_ग_लिखो_space = ग_लिखो_space;
+	if (likely(ctx)) {
+		ctx->sk_write_space = write_space;
 		ctx->sk_proto = p;
-	पूर्ण अन्यथा अणु
-		/* Pairs with lockless पढ़ो in sk_clone_lock(). */
+	} else {
+		/* Pairs with lockless read in sk_clone_lock(). */
 		WRITE_ONCE(sk->sk_prot, p);
-		sk->sk_ग_लिखो_space = ग_लिखो_space;
-	पूर्ण
-पूर्ण
+		sk->sk_write_space = write_space;
+	}
+}
 
-अटल पूर्णांक tls_get_info(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
+static int tls_get_info(const struct sock *sk, struct sk_buff *skb)
+{
 	u16 version, cipher_type;
-	काष्ठा tls_context *ctx;
-	काष्ठा nlattr *start;
-	पूर्णांक err;
+	struct tls_context *ctx;
+	struct nlattr *start;
+	int err;
 
 	start = nla_nest_start_noflag(skb, INET_ULP_INFO_TLS);
-	अगर (!start)
-		वापस -EMSGSIZE;
+	if (!start)
+		return -EMSGSIZE;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ctx = rcu_dereference(inet_csk(sk)->icsk_ulp_data);
-	अगर (!ctx) अणु
+	if (!ctx) {
 		err = 0;
-		जाओ nla_failure;
-	पूर्ण
+		goto nla_failure;
+	}
 	version = ctx->prot_info.version;
-	अगर (version) अणु
+	if (version) {
 		err = nla_put_u16(skb, TLS_INFO_VERSION, version);
-		अगर (err)
-			जाओ nla_failure;
-	पूर्ण
+		if (err)
+			goto nla_failure;
+	}
 	cipher_type = ctx->prot_info.cipher_type;
-	अगर (cipher_type) अणु
+	if (cipher_type) {
 		err = nla_put_u16(skb, TLS_INFO_CIPHER, cipher_type);
-		अगर (err)
-			जाओ nla_failure;
-	पूर्ण
+		if (err)
+			goto nla_failure;
+	}
 	err = nla_put_u16(skb, TLS_INFO_TXCONF, tls_user_config(ctx, true));
-	अगर (err)
-		जाओ nla_failure;
+	if (err)
+		goto nla_failure;
 
 	err = nla_put_u16(skb, TLS_INFO_RXCONF, tls_user_config(ctx, false));
-	अगर (err)
-		जाओ nla_failure;
+	if (err)
+		goto nla_failure;
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	nla_nest_end(skb, start);
-	वापस 0;
+	return 0;
 
 nla_failure:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	nla_nest_cancel(skb, start);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल माप_प्रकार tls_get_info_size(स्थिर काष्ठा sock *sk)
-अणु
-	माप_प्रकार size = 0;
+static size_t tls_get_info_size(const struct sock *sk)
+{
+	size_t size = 0;
 
 	size += nla_total_size(0) +		/* INET_ULP_INFO_TLS */
-		nla_total_size(माप(u16)) +	/* TLS_INFO_VERSION */
-		nla_total_size(माप(u16)) +	/* TLS_INFO_CIPHER */
-		nla_total_size(माप(u16)) +	/* TLS_INFO_RXCONF */
-		nla_total_size(माप(u16)) +	/* TLS_INFO_TXCONF */
+		nla_total_size(sizeof(u16)) +	/* TLS_INFO_VERSION */
+		nla_total_size(sizeof(u16)) +	/* TLS_INFO_CIPHER */
+		nla_total_size(sizeof(u16)) +	/* TLS_INFO_RXCONF */
+		nla_total_size(sizeof(u16)) +	/* TLS_INFO_TXCONF */
 		0;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक __net_init tls_init_net(काष्ठा net *net)
-अणु
-	पूर्णांक err;
+static int __net_init tls_init_net(struct net *net)
+{
+	int err;
 
-	net->mib.tls_statistics = alloc_percpu(काष्ठा linux_tls_mib);
-	अगर (!net->mib.tls_statistics)
-		वापस -ENOMEM;
+	net->mib.tls_statistics = alloc_percpu(struct linux_tls_mib);
+	if (!net->mib.tls_statistics)
+		return -ENOMEM;
 
 	err = tls_proc_init(net);
-	अगर (err)
-		जाओ err_मुक्त_stats;
+	if (err)
+		goto err_free_stats;
 
-	वापस 0;
-err_मुक्त_stats:
-	मुक्त_percpu(net->mib.tls_statistics);
-	वापस err;
-पूर्ण
+	return 0;
+err_free_stats:
+	free_percpu(net->mib.tls_statistics);
+	return err;
+}
 
-अटल व्योम __net_निकास tls_निकास_net(काष्ठा net *net)
-अणु
+static void __net_exit tls_exit_net(struct net *net)
+{
 	tls_proc_fini(net);
-	मुक्त_percpu(net->mib.tls_statistics);
-पूर्ण
+	free_percpu(net->mib.tls_statistics);
+}
 
-अटल काष्ठा pernet_operations tls_proc_ops = अणु
+static struct pernet_operations tls_proc_ops = {
 	.init = tls_init_net,
-	.निकास = tls_निकास_net,
-पूर्ण;
+	.exit = tls_exit_net,
+};
 
-अटल काष्ठा tcp_ulp_ops tcp_tls_ulp_ops __पढ़ो_mostly = अणु
+static struct tcp_ulp_ops tcp_tls_ulp_ops __read_mostly = {
 	.name			= "tls",
 	.owner			= THIS_MODULE,
 	.init			= tls_init,
 	.update			= tls_update,
 	.get_info		= tls_get_info,
 	.get_info_size		= tls_get_info_size,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tls_रेजिस्टर(व्योम)
-अणु
-	पूर्णांक err;
+static int __init tls_register(void)
+{
+	int err;
 
-	err = रेजिस्टर_pernet_subsys(&tls_proc_ops);
-	अगर (err)
-		वापस err;
+	err = register_pernet_subsys(&tls_proc_ops);
+	if (err)
+		return err;
 
 	tls_sw_proto_ops = inet_stream_ops;
-	tls_sw_proto_ops.splice_पढ़ो = tls_sw_splice_पढ़ो;
+	tls_sw_proto_ops.splice_read = tls_sw_splice_read;
 	tls_sw_proto_ops.sendpage_locked   = tls_sw_sendpage_locked;
 
 	tls_device_init();
-	tcp_रेजिस्टर_ulp(&tcp_tls_ulp_ops);
+	tcp_register_ulp(&tcp_tls_ulp_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास tls_unरेजिस्टर(व्योम)
-अणु
-	tcp_unरेजिस्टर_ulp(&tcp_tls_ulp_ops);
+static void __exit tls_unregister(void)
+{
+	tcp_unregister_ulp(&tcp_tls_ulp_ops);
 	tls_device_cleanup();
-	unरेजिस्टर_pernet_subsys(&tls_proc_ops);
-पूर्ण
+	unregister_pernet_subsys(&tls_proc_ops);
+}
 
-module_init(tls_रेजिस्टर);
-module_निकास(tls_unरेजिस्टर);
+module_init(tls_register);
+module_exit(tls_unregister);

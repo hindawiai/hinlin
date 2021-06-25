@@ -1,192 +1,191 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Device driver to expose SGX enclave memory to KVM guests.
  *
  * Copyright(c) 2021 Intel Corporation.
  */
 
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/xarray.h>
-#समावेश <यंत्र/sgx.h>
-#समावेश <uapi/यंत्र/sgx.h>
+#include <linux/miscdevice.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/xarray.h>
+#include <asm/sgx.h>
+#include <uapi/asm/sgx.h>
 
-#समावेश "encls.h"
-#समावेश "sgx.h"
+#include "encls.h"
+#include "sgx.h"
 
-काष्ठा sgx_vepc अणु
-	काष्ठा xarray page_array;
-	काष्ठा mutex lock;
-पूर्ण;
+struct sgx_vepc {
+	struct xarray page_array;
+	struct mutex lock;
+};
 
 /*
  * Temporary SECS pages that cannot be EREMOVE'd due to having child in other
- * भव EPC instances, and the lock to protect it.
+ * virtual EPC instances, and the lock to protect it.
  */
-अटल काष्ठा mutex zombie_secs_pages_lock;
-अटल काष्ठा list_head zombie_secs_pages;
+static struct mutex zombie_secs_pages_lock;
+static struct list_head zombie_secs_pages;
 
-अटल पूर्णांक __sgx_vepc_fault(काष्ठा sgx_vepc *vepc,
-			    काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा sgx_epc_page *epc_page;
-	अचिन्हित दीर्घ index, pfn;
-	पूर्णांक ret;
+static int __sgx_vepc_fault(struct sgx_vepc *vepc,
+			    struct vm_area_struct *vma, unsigned long addr)
+{
+	struct sgx_epc_page *epc_page;
+	unsigned long index, pfn;
+	int ret;
 
 	WARN_ON(!mutex_is_locked(&vepc->lock));
 
-	/* Calculate index of EPC page in भव EPC's page_array */
+	/* Calculate index of EPC page in virtual EPC's page_array */
 	index = vma->vm_pgoff + PFN_DOWN(addr - vma->vm_start);
 
 	epc_page = xa_load(&vepc->page_array, index);
-	अगर (epc_page)
-		वापस 0;
+	if (epc_page)
+		return 0;
 
 	epc_page = sgx_alloc_epc_page(vepc, false);
-	अगर (IS_ERR(epc_page))
-		वापस PTR_ERR(epc_page);
+	if (IS_ERR(epc_page))
+		return PTR_ERR(epc_page);
 
 	ret = xa_err(xa_store(&vepc->page_array, index, epc_page, GFP_KERNEL));
-	अगर (ret)
-		जाओ err_मुक्त;
+	if (ret)
+		goto err_free;
 
 	pfn = PFN_DOWN(sgx_get_epc_phys_addr(epc_page));
 
 	ret = vmf_insert_pfn(vma, addr, pfn);
-	अगर (ret != VM_FAULT_NOPAGE) अणु
+	if (ret != VM_FAULT_NOPAGE) {
 		ret = -EFAULT;
-		जाओ err_delete;
-	पूर्ण
+		goto err_delete;
+	}
 
-	वापस 0;
+	return 0;
 
 err_delete:
 	xa_erase(&vepc->page_array, index);
-err_मुक्त:
-	sgx_मुक्त_epc_page(epc_page);
-	वापस ret;
-पूर्ण
+err_free:
+	sgx_free_epc_page(epc_page);
+	return ret;
+}
 
-अटल vm_fault_t sgx_vepc_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा sgx_vepc *vepc = vma->vm_निजी_data;
-	पूर्णांक ret;
+static vm_fault_t sgx_vepc_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct sgx_vepc *vepc = vma->vm_private_data;
+	int ret;
 
 	mutex_lock(&vepc->lock);
 	ret = __sgx_vepc_fault(vepc, vma, vmf->address);
 	mutex_unlock(&vepc->lock);
 
-	अगर (!ret)
-		वापस VM_FAULT_NOPAGE;
+	if (!ret)
+		return VM_FAULT_NOPAGE;
 
-	अगर (ret == -EBUSY && (vmf->flags & FAULT_FLAG_ALLOW_RETRY)) अणु
-		mmap_पढ़ो_unlock(vma->vm_mm);
-		वापस VM_FAULT_RETRY;
-	पूर्ण
+	if (ret == -EBUSY && (vmf->flags & FAULT_FLAG_ALLOW_RETRY)) {
+		mmap_read_unlock(vma->vm_mm);
+		return VM_FAULT_RETRY;
+	}
 
-	वापस VM_FAULT_SIGBUS;
-पूर्ण
+	return VM_FAULT_SIGBUS;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा sgx_vepc_vm_ops = अणु
+static const struct vm_operations_struct sgx_vepc_vm_ops = {
 	.fault = sgx_vepc_fault,
-पूर्ण;
+};
 
-अटल पूर्णांक sgx_vepc_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा sgx_vepc *vepc = file->निजी_data;
+static int sgx_vepc_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct sgx_vepc *vepc = file->private_data;
 
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_ops = &sgx_vepc_vm_ops;
-	/* Don't copy VMA in विभाजन() */
+	/* Don't copy VMA in fork() */
 	vma->vm_flags |= VM_PFNMAP | VM_IO | VM_DONTDUMP | VM_DONTCOPY;
-	vma->vm_निजी_data = vepc;
+	vma->vm_private_data = vepc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_vepc_मुक्त_page(काष्ठा sgx_epc_page *epc_page)
-अणु
-	पूर्णांक ret;
+static int sgx_vepc_free_page(struct sgx_epc_page *epc_page)
+{
+	int ret;
 
 	/*
-	 * Take a previously guest-owned EPC page and वापस it to the
+	 * Take a previously guest-owned EPC page and return it to the
 	 * general EPC page pool.
 	 *
 	 * Guests can not be trusted to have left this page in a good
 	 * state, so run EREMOVE on the page unconditionally.  In the
-	 * हाल that a guest properly EREMOVE'd this page, a superfluous
+	 * case that a guest properly EREMOVE'd this page, a superfluous
 	 * EREMOVE is harmless.
 	 */
-	ret = __eहटाओ(sgx_get_epc_virt_addr(epc_page));
-	अगर (ret) अणु
+	ret = __eremove(sgx_get_epc_virt_addr(epc_page));
+	if (ret) {
 		/*
 		 * Only SGX_CHILD_PRESENT is expected, which is because of
-		 * EREMOVE'ing an SECS still with child, in which हाल it can
+		 * EREMOVE'ing an SECS still with child, in which case it can
 		 * be handled by EREMOVE'ing the SECS again after all pages in
-		 * भव EPC have been EREMOVE'd. See comments in below in
+		 * virtual EPC have been EREMOVE'd. See comments in below in
 		 * sgx_vepc_release().
 		 *
-		 * The user of भव EPC (KVM) needs to guarantee there's no
+		 * The user of virtual EPC (KVM) needs to guarantee there's no
 		 * logical processor is still running in the enclave in guest,
 		 * otherwise EREMOVE will get SGX_ENCLAVE_ACT which cannot be
 		 * handled here.
 		 */
 		WARN_ONCE(ret != SGX_CHILD_PRESENT, EREMOVE_ERROR_MESSAGE,
 			  ret, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sgx_मुक्त_epc_page(epc_page);
+	sgx_free_epc_page(epc_page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_vepc_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा sgx_vepc *vepc = file->निजी_data;
-	काष्ठा sgx_epc_page *epc_page, *पंचांगp, *entry;
-	अचिन्हित दीर्घ index;
+static int sgx_vepc_release(struct inode *inode, struct file *file)
+{
+	struct sgx_vepc *vepc = file->private_data;
+	struct sgx_epc_page *epc_page, *tmp, *entry;
+	unsigned long index;
 
 	LIST_HEAD(secs_pages);
 
-	xa_क्रम_each(&vepc->page_array, index, entry) अणु
+	xa_for_each(&vepc->page_array, index, entry) {
 		/*
-		 * Remove all normal, child pages.  sgx_vepc_मुक्त_page()
-		 * will fail अगर EREMOVE fails, but this is OK and expected on
+		 * Remove all normal, child pages.  sgx_vepc_free_page()
+		 * will fail if EREMOVE fails, but this is OK and expected on
 		 * SECS pages.  Those can only be EREMOVE'd *after* all their
 		 * child pages. Retries below will clean them up.
 		 */
-		अगर (sgx_vepc_मुक्त_page(entry))
-			जारी;
+		if (sgx_vepc_free_page(entry))
+			continue;
 
 		xa_erase(&vepc->page_array, index);
-	पूर्ण
+	}
 
 	/*
 	 * Retry EREMOVE'ing pages.  This will clean up any SECS pages that
 	 * only had children in this 'epc' area.
 	 */
-	xa_क्रम_each(&vepc->page_array, index, entry) अणु
+	xa_for_each(&vepc->page_array, index, entry) {
 		epc_page = entry;
 		/*
 		 * An EREMOVE failure here means that the SECS page still
 		 * has children.  But, since all children in this 'sgx_vepc'
-		 * have been हटाओd, the SECS page must have a child on
+		 * have been removed, the SECS page must have a child on
 		 * another instance.
 		 */
-		अगर (sgx_vepc_मुक्त_page(epc_page))
+		if (sgx_vepc_free_page(epc_page))
 			list_add_tail(&epc_page->list, &secs_pages);
 
 		xa_erase(&vepc->page_array, index);
-	पूर्ण
+	}
 
 	/*
 	 * SECS pages are "pinned" by child pages, and "unpinned" once all
@@ -196,183 +195,183 @@ err_मुक्त:
 	 * try to EREMOVE all zombies in the hopes that one was unpinned.
 	 */
 	mutex_lock(&zombie_secs_pages_lock);
-	list_क्रम_each_entry_safe(epc_page, पंचांगp, &zombie_secs_pages, list) अणु
+	list_for_each_entry_safe(epc_page, tmp, &zombie_secs_pages, list) {
 		/*
-		 * Speculatively हटाओ the page from the list of zombies,
-		 * अगर the page is successfully EREMOVE'd it will be added to
-		 * the list of मुक्त pages.  If EREMOVE fails, throw the page
+		 * Speculatively remove the page from the list of zombies,
+		 * if the page is successfully EREMOVE'd it will be added to
+		 * the list of free pages.  If EREMOVE fails, throw the page
 		 * on the local list, which will be spliced on at the end.
 		 */
 		list_del(&epc_page->list);
 
-		अगर (sgx_vepc_मुक्त_page(epc_page))
+		if (sgx_vepc_free_page(epc_page))
 			list_add_tail(&epc_page->list, &secs_pages);
-	पूर्ण
+	}
 
-	अगर (!list_empty(&secs_pages))
+	if (!list_empty(&secs_pages))
 		list_splice_tail(&secs_pages, &zombie_secs_pages);
 	mutex_unlock(&zombie_secs_pages_lock);
 
 	xa_destroy(&vepc->page_array);
-	kमुक्त(vepc);
+	kfree(vepc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sgx_vepc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा sgx_vepc *vepc;
+static int sgx_vepc_open(struct inode *inode, struct file *file)
+{
+	struct sgx_vepc *vepc;
 
-	vepc = kzalloc(माप(काष्ठा sgx_vepc), GFP_KERNEL);
-	अगर (!vepc)
-		वापस -ENOMEM;
+	vepc = kzalloc(sizeof(struct sgx_vepc), GFP_KERNEL);
+	if (!vepc)
+		return -ENOMEM;
 	mutex_init(&vepc->lock);
 	xa_init(&vepc->page_array);
 
-	file->निजी_data = vepc;
+	file->private_data = vepc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations sgx_vepc_fops = अणु
+static const struct file_operations sgx_vepc_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= sgx_vepc_खोलो,
+	.open		= sgx_vepc_open,
 	.release	= sgx_vepc_release,
 	.mmap		= sgx_vepc_mmap,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice sgx_vepc_dev = अणु
+static struct miscdevice sgx_vepc_dev = {
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "sgx_vepc",
 	.nodename	= "sgx_vepc",
 	.fops		= &sgx_vepc_fops,
-पूर्ण;
+};
 
-पूर्णांक __init sgx_vepc_init(व्योम)
-अणु
-	/* SGX भवization requires KVM to work */
-	अगर (!cpu_feature_enabled(X86_FEATURE_VMX))
-		वापस -ENODEV;
+int __init sgx_vepc_init(void)
+{
+	/* SGX virtualization requires KVM to work */
+	if (!cpu_feature_enabled(X86_FEATURE_VMX))
+		return -ENODEV;
 
 	INIT_LIST_HEAD(&zombie_secs_pages);
 	mutex_init(&zombie_secs_pages_lock);
 
-	वापस misc_रेजिस्टर(&sgx_vepc_dev);
-पूर्ण
+	return misc_register(&sgx_vepc_dev);
+}
 
 /**
  * sgx_virt_ecreate() - Run ECREATE on behalf of guest
- * @pageinfo:	Poपूर्णांकer to PAGEINFO काष्ठाure
- * @secs:	Userspace poपूर्णांकer to SECS page
- * @trapnr:	trap number injected to guest in हाल of ECREATE error
+ * @pageinfo:	Pointer to PAGEINFO structure
+ * @secs:	Userspace pointer to SECS page
+ * @trapnr:	trap number injected to guest in case of ECREATE error
  *
- * Run ECREATE on behalf of guest after KVM traps ECREATE क्रम the purpose
- * of enक्रमcing policies of guest's enclaves, and वापस the trap number
- * which should be injected to guest in हाल of any ECREATE error.
+ * Run ECREATE on behalf of guest after KVM traps ECREATE for the purpose
+ * of enforcing policies of guest's enclaves, and return the trap number
+ * which should be injected to guest in case of any ECREATE error.
  *
  * Return:
  * -  0:	ECREATE was successful.
  * - <0:	on error.
  */
-पूर्णांक sgx_virt_ecreate(काष्ठा sgx_pageinfo *pageinfo, व्योम __user *secs,
-		     पूर्णांक *trapnr)
-अणु
-	पूर्णांक ret;
+int sgx_virt_ecreate(struct sgx_pageinfo *pageinfo, void __user *secs,
+		     int *trapnr)
+{
+	int ret;
 
 	/*
 	 * @secs is an untrusted, userspace-provided address.  It comes from
-	 * KVM and is assumed to be a valid poपूर्णांकer which poपूर्णांकs somewhere in
+	 * KVM and is assumed to be a valid pointer which points somewhere in
 	 * userspace.  This can fault and call SGX or other fault handlers when
-	 * userspace mapping @secs करोesn't exist.
+	 * userspace mapping @secs doesn't exist.
 	 *
-	 * Add a WARN() to make sure @secs is alपढ़ोy valid userspace poपूर्णांकer
-	 * from caller (KVM), who should alपढ़ोy have handled invalid poपूर्णांकer
-	 * हाल (क्रम instance, made by malicious guest).  All other checks,
+	 * Add a WARN() to make sure @secs is already valid userspace pointer
+	 * from caller (KVM), who should already have handled invalid pointer
+	 * case (for instance, made by malicious guest).  All other checks,
 	 * such as alignment of @secs, are deferred to ENCLS itself.
 	 */
-	अगर (WARN_ON_ONCE(!access_ok(secs, PAGE_SIZE)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!access_ok(secs, PAGE_SIZE)))
+		return -EINVAL;
 
 	__uaccess_begin();
-	ret = __ecreate(pageinfo, (व्योम *)secs);
+	ret = __ecreate(pageinfo, (void *)secs);
 	__uaccess_end();
 
-	अगर (encls_faulted(ret)) अणु
+	if (encls_faulted(ret)) {
 		*trapnr = ENCLS_TRAPNR(ret);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	/* ECREATE करोesn't वापस an error code, it faults or succeeds. */
+	/* ECREATE doesn't return an error code, it faults or succeeds. */
 	WARN_ON_ONCE(ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sgx_virt_ecreate);
 
-अटल पूर्णांक __sgx_virt_einit(व्योम __user *sigकाष्ठा, व्योम __user *token,
-			    व्योम __user *secs)
-अणु
-	पूर्णांक ret;
+static int __sgx_virt_einit(void __user *sigstruct, void __user *token,
+			    void __user *secs)
+{
+	int ret;
 
 	/*
-	 * Make sure all userspace poपूर्णांकers from caller (KVM) are valid.
+	 * Make sure all userspace pointers from caller (KVM) are valid.
 	 * All other checks deferred to ENCLS itself.  Also see comment
-	 * क्रम @secs in sgx_virt_ecreate().
+	 * for @secs in sgx_virt_ecreate().
 	 */
-#घोषणा SGX_EINITTOKEN_SIZE	304
-	अगर (WARN_ON_ONCE(!access_ok(sigकाष्ठा, माप(काष्ठा sgx_sigकाष्ठा)) ||
+#define SGX_EINITTOKEN_SIZE	304
+	if (WARN_ON_ONCE(!access_ok(sigstruct, sizeof(struct sgx_sigstruct)) ||
 			 !access_ok(token, SGX_EINITTOKEN_SIZE) ||
 			 !access_ok(secs, PAGE_SIZE)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	__uaccess_begin();
-	ret = __einit((व्योम *)sigकाष्ठा, (व्योम *)token, (व्योम *)secs);
+	ret = __einit((void *)sigstruct, (void *)token, (void *)secs);
 	__uaccess_end();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * sgx_virt_einit() - Run EINIT on behalf of guest
- * @sigकाष्ठा:		Userspace poपूर्णांकer to SIGSTRUCT काष्ठाure
- * @token:		Userspace poपूर्णांकer to EINITTOKEN काष्ठाure
- * @secs:		Userspace poपूर्णांकer to SECS page
- * @lepubkeyhash:	Poपूर्णांकer to guest's *भव* SGX_LEPUBKEYHASH MSR values
- * @trapnr:		trap number injected to guest in हाल of EINIT error
+ * @sigstruct:		Userspace pointer to SIGSTRUCT structure
+ * @token:		Userspace pointer to EINITTOKEN structure
+ * @secs:		Userspace pointer to SECS page
+ * @lepubkeyhash:	Pointer to guest's *virtual* SGX_LEPUBKEYHASH MSR values
+ * @trapnr:		trap number injected to guest in case of EINIT error
  *
  * Run EINIT on behalf of guest after KVM traps EINIT. If SGX_LC is available
- * in host, SGX driver may reग_लिखो the hardware values at wish, thereक्रमe KVM
- * needs to update hardware values to guest's भव MSR values in order to
+ * in host, SGX driver may rewrite the hardware values at wish, therefore KVM
+ * needs to update hardware values to guest's virtual MSR values in order to
  * ensure EINIT is executed with expected hardware values.
  *
  * Return:
  * -  0:	EINIT was successful.
  * - <0:	on error.
  */
-पूर्णांक sgx_virt_einit(व्योम __user *sigकाष्ठा, व्योम __user *token,
-		   व्योम __user *secs, u64 *lepubkeyhash, पूर्णांक *trapnr)
-अणु
-	पूर्णांक ret;
+int sgx_virt_einit(void __user *sigstruct, void __user *token,
+		   void __user *secs, u64 *lepubkeyhash, int *trapnr)
+{
+	int ret;
 
-	अगर (!cpu_feature_enabled(X86_FEATURE_SGX_LC)) अणु
-		ret = __sgx_virt_einit(sigकाष्ठा, token, secs);
-	पूर्ण अन्यथा अणु
+	if (!cpu_feature_enabled(X86_FEATURE_SGX_LC)) {
+		ret = __sgx_virt_einit(sigstruct, token, secs);
+	} else {
 		preempt_disable();
 
 		sgx_update_lepubkeyhash(lepubkeyhash);
 
-		ret = __sgx_virt_einit(sigकाष्ठा, token, secs);
+		ret = __sgx_virt_einit(sigstruct, token, secs);
 		preempt_enable();
-	पूर्ण
+	}
 
 	/* Propagate up the error from the WARN_ON_ONCE in __sgx_virt_einit() */
-	अगर (ret == -EINVAL)
-		वापस ret;
+	if (ret == -EINVAL)
+		return ret;
 
-	अगर (encls_faulted(ret)) अणु
+	if (encls_faulted(ret)) {
 		*trapnr = ENCLS_TRAPNR(ret);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sgx_virt_einit);

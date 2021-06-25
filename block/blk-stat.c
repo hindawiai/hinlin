@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Block stat tracking code
  *
  * Copyright (C) 2016 Jens Axboe
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/blk-mq.h>
+#include <linux/kernel.h>
+#include <linux/rculist.h>
+#include <linux/blk-mq.h>
 
-#समावेश "blk-stat.h"
-#समावेश "blk-mq.h"
-#समावेश "blk.h"
+#include "blk-stat.h"
+#include "blk-mq.h"
+#include "blk.h"
 
-काष्ठा blk_queue_stats अणु
-	काष्ठा list_head callbacks;
+struct blk_queue_stats {
+	struct list_head callbacks;
 	spinlock_t lock;
 	bool enable_accounting;
-पूर्ण;
+};
 
-व्योम blk_rq_stat_init(काष्ठा blk_rq_stat *stat)
-अणु
+void blk_rq_stat_init(struct blk_rq_stat *stat)
+{
 	stat->min = -1ULL;
 	stat->max = stat->nr_samples = stat->mean = 0;
 	stat->batch = 0;
-पूर्ण
+}
 
 /* src is a per-cpu stat, mean isn't initialized */
-व्योम blk_rq_stat_sum(काष्ठा blk_rq_stat *dst, काष्ठा blk_rq_stat *src)
-अणु
-	अगर (!src->nr_samples)
-		वापस;
+void blk_rq_stat_sum(struct blk_rq_stat *dst, struct blk_rq_stat *src)
+{
+	if (!src->nr_samples)
+		return;
 
 	dst->min = min(dst->min, src->min);
 	dst->max = max(dst->max, src->max);
 
-	dst->mean = भाग_u64(src->batch + dst->mean * dst->nr_samples,
+	dst->mean = div_u64(src->batch + dst->mean * dst->nr_samples,
 				dst->nr_samples + src->nr_samples);
 
 	dst->nr_samples += src->nr_samples;
-पूर्ण
+}
 
-व्योम blk_rq_stat_add(काष्ठा blk_rq_stat *stat, u64 value)
-अणु
+void blk_rq_stat_add(struct blk_rq_stat *stat, u64 value)
+{
 	stat->min = min(stat->min, value);
 	stat->max = max(stat->max, value);
 	stat->batch += value;
 	stat->nr_samples++;
-पूर्ण
+}
 
-व्योम blk_stat_add(काष्ठा request *rq, u64 now)
-अणु
-	काष्ठा request_queue *q = rq->q;
-	काष्ठा blk_stat_callback *cb;
-	काष्ठा blk_rq_stat *stat;
-	पूर्णांक bucket, cpu;
+void blk_stat_add(struct request *rq, u64 now)
+{
+	struct request_queue *q = rq->q;
+	struct blk_stat_callback *cb;
+	struct blk_rq_stat *stat;
+	int bucket, cpu;
 	u64 value;
 
-	value = (now >= rq->io_start_समय_ns) ? now - rq->io_start_समय_ns : 0;
+	value = (now >= rq->io_start_time_ns) ? now - rq->io_start_time_ns : 0;
 
 	blk_throtl_stat_add(rq, value);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	cpu = get_cpu();
-	list_क्रम_each_entry_rcu(cb, &q->stats->callbacks, list) अणु
-		अगर (!blk_stat_is_active(cb))
-			जारी;
+	list_for_each_entry_rcu(cb, &q->stats->callbacks, list) {
+		if (!blk_stat_is_active(cb))
+			continue;
 
 		bucket = cb->bucket_fn(rq);
-		अगर (bucket < 0)
-			जारी;
+		if (bucket < 0)
+			continue;
 
 		stat = &per_cpu_ptr(cb->cpu_stat, cpu)[bucket];
 		blk_rq_stat_add(stat, value);
-	पूर्ण
+	}
 	put_cpu();
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम blk_stat_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा blk_stat_callback *cb = from_समयr(cb, t, समयr);
-	अचिन्हित पूर्णांक bucket;
-	पूर्णांक cpu;
+static void blk_stat_timer_fn(struct timer_list *t)
+{
+	struct blk_stat_callback *cb = from_timer(cb, t, timer);
+	unsigned int bucket;
+	int cpu;
 
-	क्रम (bucket = 0; bucket < cb->buckets; bucket++)
+	for (bucket = 0; bucket < cb->buckets; bucket++)
 		blk_rq_stat_init(&cb->stat[bucket]);
 
-	क्रम_each_online_cpu(cpu) अणु
-		काष्ठा blk_rq_stat *cpu_stat;
+	for_each_online_cpu(cpu) {
+		struct blk_rq_stat *cpu_stat;
 
 		cpu_stat = per_cpu_ptr(cb->cpu_stat, cpu);
-		क्रम (bucket = 0; bucket < cb->buckets; bucket++) अणु
+		for (bucket = 0; bucket < cb->buckets; bucket++) {
 			blk_rq_stat_sum(&cb->stat[bucket], &cpu_stat[bucket]);
 			blk_rq_stat_init(&cpu_stat[bucket]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	cb->समयr_fn(cb);
-पूर्ण
+	cb->timer_fn(cb);
+}
 
-काष्ठा blk_stat_callback *
-blk_stat_alloc_callback(व्योम (*समयr_fn)(काष्ठा blk_stat_callback *),
-			पूर्णांक (*bucket_fn)(स्थिर काष्ठा request *),
-			अचिन्हित पूर्णांक buckets, व्योम *data)
-अणु
-	काष्ठा blk_stat_callback *cb;
+struct blk_stat_callback *
+blk_stat_alloc_callback(void (*timer_fn)(struct blk_stat_callback *),
+			int (*bucket_fn)(const struct request *),
+			unsigned int buckets, void *data)
+{
+	struct blk_stat_callback *cb;
 
-	cb = kदो_स्मृति(माप(*cb), GFP_KERNEL);
-	अगर (!cb)
-		वापस शून्य;
+	cb = kmalloc(sizeof(*cb), GFP_KERNEL);
+	if (!cb)
+		return NULL;
 
-	cb->stat = kदो_स्मृति_array(buckets, माप(काष्ठा blk_rq_stat),
+	cb->stat = kmalloc_array(buckets, sizeof(struct blk_rq_stat),
 				 GFP_KERNEL);
-	अगर (!cb->stat) अणु
-		kमुक्त(cb);
-		वापस शून्य;
-	पूर्ण
-	cb->cpu_stat = __alloc_percpu(buckets * माप(काष्ठा blk_rq_stat),
-				      __alignof__(काष्ठा blk_rq_stat));
-	अगर (!cb->cpu_stat) अणु
-		kमुक्त(cb->stat);
-		kमुक्त(cb);
-		वापस शून्य;
-	पूर्ण
+	if (!cb->stat) {
+		kfree(cb);
+		return NULL;
+	}
+	cb->cpu_stat = __alloc_percpu(buckets * sizeof(struct blk_rq_stat),
+				      __alignof__(struct blk_rq_stat));
+	if (!cb->cpu_stat) {
+		kfree(cb->stat);
+		kfree(cb);
+		return NULL;
+	}
 
-	cb->समयr_fn = समयr_fn;
+	cb->timer_fn = timer_fn;
 	cb->bucket_fn = bucket_fn;
 	cb->data = data;
 	cb->buckets = buckets;
-	समयr_setup(&cb->समयr, blk_stat_समयr_fn, 0);
+	timer_setup(&cb->timer, blk_stat_timer_fn, 0);
 
-	वापस cb;
-पूर्ण
+	return cb;
+}
 
-व्योम blk_stat_add_callback(काष्ठा request_queue *q,
-			   काष्ठा blk_stat_callback *cb)
-अणु
-	अचिन्हित पूर्णांक bucket;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक cpu;
+void blk_stat_add_callback(struct request_queue *q,
+			   struct blk_stat_callback *cb)
+{
+	unsigned int bucket;
+	unsigned long flags;
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा blk_rq_stat *cpu_stat;
+	for_each_possible_cpu(cpu) {
+		struct blk_rq_stat *cpu_stat;
 
 		cpu_stat = per_cpu_ptr(cb->cpu_stat, cpu);
-		क्रम (bucket = 0; bucket < cb->buckets; bucket++)
+		for (bucket = 0; bucket < cb->buckets; bucket++)
 			blk_rq_stat_init(&cpu_stat[bucket]);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&q->stats->lock, flags);
 	list_add_tail_rcu(&cb->list, &q->stats->callbacks);
 	blk_queue_flag_set(QUEUE_FLAG_STATS, q);
 	spin_unlock_irqrestore(&q->stats->lock, flags);
-पूर्ण
+}
 
-व्योम blk_stat_हटाओ_callback(काष्ठा request_queue *q,
-			      काष्ठा blk_stat_callback *cb)
-अणु
-	अचिन्हित दीर्घ flags;
+void blk_stat_remove_callback(struct request_queue *q,
+			      struct blk_stat_callback *cb)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&q->stats->lock, flags);
 	list_del_rcu(&cb->list);
-	अगर (list_empty(&q->stats->callbacks) && !q->stats->enable_accounting)
+	if (list_empty(&q->stats->callbacks) && !q->stats->enable_accounting)
 		blk_queue_flag_clear(QUEUE_FLAG_STATS, q);
 	spin_unlock_irqrestore(&q->stats->lock, flags);
 
-	del_समयr_sync(&cb->समयr);
-पूर्ण
+	del_timer_sync(&cb->timer);
+}
 
-अटल व्योम blk_stat_मुक्त_callback_rcu(काष्ठा rcu_head *head)
-अणु
-	काष्ठा blk_stat_callback *cb;
+static void blk_stat_free_callback_rcu(struct rcu_head *head)
+{
+	struct blk_stat_callback *cb;
 
-	cb = container_of(head, काष्ठा blk_stat_callback, rcu);
-	मुक्त_percpu(cb->cpu_stat);
-	kमुक्त(cb->stat);
-	kमुक्त(cb);
-पूर्ण
+	cb = container_of(head, struct blk_stat_callback, rcu);
+	free_percpu(cb->cpu_stat);
+	kfree(cb->stat);
+	kfree(cb);
+}
 
-व्योम blk_stat_मुक्त_callback(काष्ठा blk_stat_callback *cb)
-अणु
-	अगर (cb)
-		call_rcu(&cb->rcu, blk_stat_मुक्त_callback_rcu);
-पूर्ण
+void blk_stat_free_callback(struct blk_stat_callback *cb)
+{
+	if (cb)
+		call_rcu(&cb->rcu, blk_stat_free_callback_rcu);
+}
 
-व्योम blk_stat_enable_accounting(काष्ठा request_queue *q)
-अणु
-	अचिन्हित दीर्घ flags;
+void blk_stat_enable_accounting(struct request_queue *q)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&q->stats->lock, flags);
 	q->stats->enable_accounting = true;
 	blk_queue_flag_set(QUEUE_FLAG_STATS, q);
 	spin_unlock_irqrestore(&q->stats->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(blk_stat_enable_accounting);
 
-काष्ठा blk_queue_stats *blk_alloc_queue_stats(व्योम)
-अणु
-	काष्ठा blk_queue_stats *stats;
+struct blk_queue_stats *blk_alloc_queue_stats(void)
+{
+	struct blk_queue_stats *stats;
 
-	stats = kदो_स्मृति(माप(*stats), GFP_KERNEL);
-	अगर (!stats)
-		वापस शून्य;
+	stats = kmalloc(sizeof(*stats), GFP_KERNEL);
+	if (!stats)
+		return NULL;
 
 	INIT_LIST_HEAD(&stats->callbacks);
 	spin_lock_init(&stats->lock);
 	stats->enable_accounting = false;
 
-	वापस stats;
-पूर्ण
+	return stats;
+}
 
-व्योम blk_मुक्त_queue_stats(काष्ठा blk_queue_stats *stats)
-अणु
-	अगर (!stats)
-		वापस;
+void blk_free_queue_stats(struct blk_queue_stats *stats)
+{
+	if (!stats)
+		return;
 
 	WARN_ON(!list_empty(&stats->callbacks));
 
-	kमुक्त(stats);
-पूर्ण
+	kfree(stats);
+}

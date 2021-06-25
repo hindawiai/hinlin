@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001 Dave Engebretsen IBM Corporation
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/of.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/irq_work.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/of.h>
+#include <linux/fs.h>
+#include <linux/reboot.h>
+#include <linux/irq_work.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/mce.h>
+#include <asm/machdep.h>
+#include <asm/rtas.h>
+#include <asm/firmware.h>
+#include <asm/mce.h>
 
-#समावेश "pseries.h"
+#include "pseries.h"
 
-अटल अचिन्हित अक्षर ras_log_buf[RTAS_ERROR_LOG_MAX];
-अटल DEFINE_SPINLOCK(ras_log_buf_lock);
+static unsigned char ras_log_buf[RTAS_ERROR_LOG_MAX];
+static DEFINE_SPINLOCK(ras_log_buf_lock);
 
-अटल पूर्णांक ras_check_exception_token;
+static int ras_check_exception_token;
 
-अटल व्योम mce_process_errlog_event(काष्ठा irq_work *work);
-अटल काष्ठा irq_work mce_errlog_process_work = अणु
+static void mce_process_errlog_event(struct irq_work *work);
+static struct irq_work mce_errlog_process_work = {
 	.func = mce_process_errlog_event,
-पूर्ण;
+};
 
-#घोषणा EPOW_SENSOR_TOKEN	9
-#घोषणा EPOW_SENSOR_INDEX	0
+#define EPOW_SENSOR_TOKEN	9
+#define EPOW_SENSOR_INDEX	0
 
 /* EPOW events counter variable */
-अटल पूर्णांक num_eघात_events;
+static int num_epow_events;
 
-अटल irqवापस_t ras_hotplug_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल irqवापस_t ras_eघात_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
-अटल irqवापस_t ras_error_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+static irqreturn_t ras_hotplug_interrupt(int irq, void *dev_id);
+static irqreturn_t ras_epow_interrupt(int irq, void *dev_id);
+static irqreturn_t ras_error_interrupt(int irq, void *dev_id);
 
 /* RTAS pseries MCE errorlog section. */
-काष्ठा pseries_mc_errorlog अणु
+struct pseries_mc_errorlog {
 	__be32	fru_id;
 	__be32	proc_id;
 	u8	error_type;
@@ -71,664 +70,664 @@
 	u8	reserved_1[6];
 	__be64	effective_address;
 	__be64	logical_address;
-पूर्ण __packed;
+} __packed;
 
 /* RTAS pseries MCE error types */
-#घोषणा MC_ERROR_TYPE_UE		0x00
-#घोषणा MC_ERROR_TYPE_SLB		0x01
-#घोषणा MC_ERROR_TYPE_ERAT		0x02
-#घोषणा MC_ERROR_TYPE_UNKNOWN		0x03
-#घोषणा MC_ERROR_TYPE_TLB		0x04
-#घोषणा MC_ERROR_TYPE_D_CACHE		0x05
-#घोषणा MC_ERROR_TYPE_I_CACHE		0x07
+#define MC_ERROR_TYPE_UE		0x00
+#define MC_ERROR_TYPE_SLB		0x01
+#define MC_ERROR_TYPE_ERAT		0x02
+#define MC_ERROR_TYPE_UNKNOWN		0x03
+#define MC_ERROR_TYPE_TLB		0x04
+#define MC_ERROR_TYPE_D_CACHE		0x05
+#define MC_ERROR_TYPE_I_CACHE		0x07
 
 /* RTAS pseries MCE error sub types */
-#घोषणा MC_ERROR_UE_INDETERMINATE		0
-#घोषणा MC_ERROR_UE_IFETCH			1
-#घोषणा MC_ERROR_UE_PAGE_TABLE_WALK_IFETCH	2
-#घोषणा MC_ERROR_UE_LOAD_STORE			3
-#घोषणा MC_ERROR_UE_PAGE_TABLE_WALK_LOAD_STORE	4
+#define MC_ERROR_UE_INDETERMINATE		0
+#define MC_ERROR_UE_IFETCH			1
+#define MC_ERROR_UE_PAGE_TABLE_WALK_IFETCH	2
+#define MC_ERROR_UE_LOAD_STORE			3
+#define MC_ERROR_UE_PAGE_TABLE_WALK_LOAD_STORE	4
 
-#घोषणा UE_EFFECTIVE_ADDR_PROVIDED		0x40
-#घोषणा UE_LOGICAL_ADDR_PROVIDED		0x20
+#define UE_EFFECTIVE_ADDR_PROVIDED		0x40
+#define UE_LOGICAL_ADDR_PROVIDED		0x20
 
-#घोषणा MC_ERROR_SLB_PARITY		0
-#घोषणा MC_ERROR_SLB_MULTIHIT		1
-#घोषणा MC_ERROR_SLB_INDETERMINATE	2
+#define MC_ERROR_SLB_PARITY		0
+#define MC_ERROR_SLB_MULTIHIT		1
+#define MC_ERROR_SLB_INDETERMINATE	2
 
-#घोषणा MC_ERROR_ERAT_PARITY		1
-#घोषणा MC_ERROR_ERAT_MULTIHIT		2
-#घोषणा MC_ERROR_ERAT_INDETERMINATE	3
+#define MC_ERROR_ERAT_PARITY		1
+#define MC_ERROR_ERAT_MULTIHIT		2
+#define MC_ERROR_ERAT_INDETERMINATE	3
 
-#घोषणा MC_ERROR_TLB_PARITY		1
-#घोषणा MC_ERROR_TLB_MULTIHIT		2
-#घोषणा MC_ERROR_TLB_INDETERMINATE	3
+#define MC_ERROR_TLB_PARITY		1
+#define MC_ERROR_TLB_MULTIHIT		2
+#define MC_ERROR_TLB_INDETERMINATE	3
 
-अटल अंतरभूत u8 rtas_mc_error_sub_type(स्थिर काष्ठा pseries_mc_errorlog *mlog)
-अणु
-	चयन (mlog->error_type) अणु
-	हाल	MC_ERROR_TYPE_UE:
-		वापस (mlog->sub_err_type & 0x07);
-	हाल	MC_ERROR_TYPE_SLB:
-	हाल	MC_ERROR_TYPE_ERAT:
-	हाल	MC_ERROR_TYPE_TLB:
-		वापस (mlog->sub_err_type & 0x03);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static inline u8 rtas_mc_error_sub_type(const struct pseries_mc_errorlog *mlog)
+{
+	switch (mlog->error_type) {
+	case	MC_ERROR_TYPE_UE:
+		return (mlog->sub_err_type & 0x07);
+	case	MC_ERROR_TYPE_SLB:
+	case	MC_ERROR_TYPE_ERAT:
+	case	MC_ERROR_TYPE_TLB:
+		return (mlog->sub_err_type & 0x03);
+	default:
+		return 0;
+	}
+}
 
 /*
- * Enable the hotplug पूर्णांकerrupt late because processing them may touch other
- * devices or प्रणालीs (e.g. hugepages) that have not been initialized at the
+ * Enable the hotplug interrupt late because processing them may touch other
+ * devices or systems (e.g. hugepages) that have not been initialized at the
  * subsys stage.
  */
-अटल पूर्णांक __init init_ras_hotplug_IRQ(व्योम)
-अणु
-	काष्ठा device_node *np;
+static int __init init_ras_hotplug_IRQ(void)
+{
+	struct device_node *np;
 
 	/* Hotplug Events */
 	np = of_find_node_by_path("/event-sources/hot-plug-events");
-	अगर (np != शून्य) अणु
-		अगर (dlpar_workqueue_init() == 0)
-			request_event_sources_irqs(np, ras_hotplug_पूर्णांकerrupt,
+	if (np != NULL) {
+		if (dlpar_workqueue_init() == 0)
+			request_event_sources_irqs(np, ras_hotplug_interrupt,
 						   "RAS_HOTPLUG");
 		of_node_put(np);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_late_initcall(pseries, init_ras_hotplug_IRQ);
 
 /*
- * Initialize handlers क्रम the set of पूर्णांकerrupts caused by hardware errors
- * and घातer प्रणाली events.
+ * Initialize handlers for the set of interrupts caused by hardware errors
+ * and power system events.
  */
-अटल पूर्णांक __init init_ras_IRQ(व्योम)
-अणु
-	काष्ठा device_node *np;
+static int __init init_ras_IRQ(void)
+{
+	struct device_node *np;
 
 	ras_check_exception_token = rtas_token("check-exception");
 
 	/* Internal Errors */
 	np = of_find_node_by_path("/event-sources/internal-errors");
-	अगर (np != शून्य) अणु
-		request_event_sources_irqs(np, ras_error_पूर्णांकerrupt,
+	if (np != NULL) {
+		request_event_sources_irqs(np, ras_error_interrupt,
 					   "RAS_ERROR");
 		of_node_put(np);
-	पूर्ण
+	}
 
 	/* EPOW Events */
 	np = of_find_node_by_path("/event-sources/epow-events");
-	अगर (np != शून्य) अणु
-		request_event_sources_irqs(np, ras_eघात_पूर्णांकerrupt, "RAS_EPOW");
+	if (np != NULL) {
+		request_event_sources_irqs(np, ras_epow_interrupt, "RAS_EPOW");
 		of_node_put(np);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 machine_subsys_initcall(pseries, init_ras_IRQ);
 
-#घोषणा EPOW_SHUTDOWN_NORMAL				1
-#घोषणा EPOW_SHUTDOWN_ON_UPS				2
-#घोषणा EPOW_SHUTDOWN_LOSS_OF_CRITICAL_FUNCTIONS	3
-#घोषणा EPOW_SHUTDOWN_AMBIENT_TEMPERATURE_TOO_HIGH	4
+#define EPOW_SHUTDOWN_NORMAL				1
+#define EPOW_SHUTDOWN_ON_UPS				2
+#define EPOW_SHUTDOWN_LOSS_OF_CRITICAL_FUNCTIONS	3
+#define EPOW_SHUTDOWN_AMBIENT_TEMPERATURE_TOO_HIGH	4
 
-अटल व्योम handle_प्रणाली_shutकरोwn(अक्षर event_modअगरier)
-अणु
-	चयन (event_modअगरier) अणु
-	हाल EPOW_SHUTDOWN_NORMAL:
+static void handle_system_shutdown(char event_modifier)
+{
+	switch (event_modifier) {
+	case EPOW_SHUTDOWN_NORMAL:
 		pr_emerg("Power off requested\n");
-		orderly_घातeroff(true);
-		अवरोध;
+		orderly_poweroff(true);
+		break;
 
-	हाल EPOW_SHUTDOWN_ON_UPS:
+	case EPOW_SHUTDOWN_ON_UPS:
 		pr_emerg("Loss of system power detected. System is running on"
 			 " UPS/battery. Check RTAS error log for details\n");
-		अवरोध;
+		break;
 
-	हाल EPOW_SHUTDOWN_LOSS_OF_CRITICAL_FUNCTIONS:
+	case EPOW_SHUTDOWN_LOSS_OF_CRITICAL_FUNCTIONS:
 		pr_emerg("Loss of system critical functions detected. Check"
 			 " RTAS error log for details\n");
-		orderly_घातeroff(true);
-		अवरोध;
+		orderly_poweroff(true);
+		break;
 
-	हाल EPOW_SHUTDOWN_AMBIENT_TEMPERATURE_TOO_HIGH:
+	case EPOW_SHUTDOWN_AMBIENT_TEMPERATURE_TOO_HIGH:
 		pr_emerg("High ambient temperature detected. Check RTAS"
 			 " error log for details\n");
-		orderly_घातeroff(true);
-		अवरोध;
+		orderly_poweroff(true);
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown power/cooling shutdown event (modifier = %d)\n",
-			event_modअगरier);
-	पूर्ण
-पूर्ण
+			event_modifier);
+	}
+}
 
-काष्ठा eघात_errorlog अणु
-	अचिन्हित अक्षर sensor_value;
-	अचिन्हित अक्षर event_modअगरier;
-	अचिन्हित अक्षर extended_modअगरier;
-	अचिन्हित अक्षर reserved;
-	अचिन्हित अक्षर platक्रमm_reason;
-पूर्ण;
+struct epow_errorlog {
+	unsigned char sensor_value;
+	unsigned char event_modifier;
+	unsigned char extended_modifier;
+	unsigned char reserved;
+	unsigned char platform_reason;
+};
 
-#घोषणा EPOW_RESET			0
-#घोषणा EPOW_WARN_COOLING		1
-#घोषणा EPOW_WARN_POWER			2
-#घोषणा EPOW_SYSTEM_SHUTDOWN		3
-#घोषणा EPOW_SYSTEM_HALT		4
-#घोषणा EPOW_MAIN_ENCLOSURE		5
-#घोषणा EPOW_POWER_OFF			7
+#define EPOW_RESET			0
+#define EPOW_WARN_COOLING		1
+#define EPOW_WARN_POWER			2
+#define EPOW_SYSTEM_SHUTDOWN		3
+#define EPOW_SYSTEM_HALT		4
+#define EPOW_MAIN_ENCLOSURE		5
+#define EPOW_POWER_OFF			7
 
-अटल व्योम rtas_parse_eघात_errlog(काष्ठा rtas_error_log *log)
-अणु
-	काष्ठा pseries_errorlog *pseries_log;
-	काष्ठा eघात_errorlog *eघात_log;
-	अक्षर action_code;
-	अक्षर modअगरier;
+static void rtas_parse_epow_errlog(struct rtas_error_log *log)
+{
+	struct pseries_errorlog *pseries_log;
+	struct epow_errorlog *epow_log;
+	char action_code;
+	char modifier;
 
 	pseries_log = get_pseries_errorlog(log, PSERIES_ELOG_SECT_ID_EPOW);
-	अगर (pseries_log == शून्य)
-		वापस;
+	if (pseries_log == NULL)
+		return;
 
-	eघात_log = (काष्ठा eघात_errorlog *)pseries_log->data;
-	action_code = eघात_log->sensor_value & 0xF;	/* bottom 4 bits */
-	modअगरier = eघात_log->event_modअगरier & 0xF;	/* bottom 4 bits */
+	epow_log = (struct epow_errorlog *)pseries_log->data;
+	action_code = epow_log->sensor_value & 0xF;	/* bottom 4 bits */
+	modifier = epow_log->event_modifier & 0xF;	/* bottom 4 bits */
 
-	चयन (action_code) अणु
-	हाल EPOW_RESET:
-		अगर (num_eघात_events) अणु
+	switch (action_code) {
+	case EPOW_RESET:
+		if (num_epow_events) {
 			pr_info("Non critical power/cooling issue cleared\n");
-			num_eघात_events--;
-		पूर्ण
-		अवरोध;
+			num_epow_events--;
+		}
+		break;
 
-	हाल EPOW_WARN_COOLING:
+	case EPOW_WARN_COOLING:
 		pr_info("Non-critical cooling issue detected. Check RTAS error"
 			" log for details\n");
-		अवरोध;
+		break;
 
-	हाल EPOW_WARN_POWER:
+	case EPOW_WARN_POWER:
 		pr_info("Non-critical power issue detected. Check RTAS error"
 			" log for details\n");
-		अवरोध;
+		break;
 
-	हाल EPOW_SYSTEM_SHUTDOWN:
-		handle_प्रणाली_shutकरोwn(modअगरier);
-		अवरोध;
+	case EPOW_SYSTEM_SHUTDOWN:
+		handle_system_shutdown(modifier);
+		break;
 
-	हाल EPOW_SYSTEM_HALT:
+	case EPOW_SYSTEM_HALT:
 		pr_emerg("Critical power/cooling issue detected. Check RTAS"
 			 " error log for details. Powering off.\n");
-		orderly_घातeroff(true);
-		अवरोध;
+		orderly_poweroff(true);
+		break;
 
-	हाल EPOW_MAIN_ENCLOSURE:
-	हाल EPOW_POWER_OFF:
+	case EPOW_MAIN_ENCLOSURE:
+	case EPOW_POWER_OFF:
 		pr_emerg("System about to lose power. Check RTAS error log "
 			 " for details. Powering off immediately.\n");
 		emergency_sync();
-		kernel_घातer_off();
-		अवरोध;
+		kernel_power_off();
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown power/cooling event (action code  = %d)\n",
 			action_code);
-	पूर्ण
+	}
 
-	/* Increment eघात events counter variable */
-	अगर (action_code != EPOW_RESET)
-		num_eघात_events++;
-पूर्ण
+	/* Increment epow events counter variable */
+	if (action_code != EPOW_RESET)
+		num_epow_events++;
+}
 
-अटल irqवापस_t ras_hotplug_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा pseries_errorlog *pseries_log;
-	काष्ठा pseries_hp_errorlog *hp_elog;
+static irqreturn_t ras_hotplug_interrupt(int irq, void *dev_id)
+{
+	struct pseries_errorlog *pseries_log;
+	struct pseries_hp_errorlog *hp_elog;
 
 	spin_lock(&ras_log_buf_lock);
 
-	rtas_call(ras_check_exception_token, 6, 1, शून्य,
+	rtas_call(ras_check_exception_token, 6, 1, NULL,
 		  RTAS_VECTOR_EXTERNAL_INTERRUPT, virq_to_hw(irq),
 		  RTAS_HOTPLUG_EVENTS, 0, __pa(&ras_log_buf),
 		  rtas_get_error_log_max());
 
-	pseries_log = get_pseries_errorlog((काष्ठा rtas_error_log *)ras_log_buf,
+	pseries_log = get_pseries_errorlog((struct rtas_error_log *)ras_log_buf,
 					   PSERIES_ELOG_SECT_ID_HOTPLUG);
-	hp_elog = (काष्ठा pseries_hp_errorlog *)pseries_log->data;
+	hp_elog = (struct pseries_hp_errorlog *)pseries_log->data;
 
 	/*
 	 * Since PCI hotplug is not currently supported on pseries, put PCI
 	 * hotplug events on the ras_log_buf to be handled by rtas_errd.
 	 */
-	अगर (hp_elog->resource == PSERIES_HP_ELOG_RESOURCE_MEM ||
+	if (hp_elog->resource == PSERIES_HP_ELOG_RESOURCE_MEM ||
 	    hp_elog->resource == PSERIES_HP_ELOG_RESOURCE_CPU ||
 	    hp_elog->resource == PSERIES_HP_ELOG_RESOURCE_PMEM)
 		queue_hotplug_event(hp_elog);
-	अन्यथा
+	else
 		log_error(ras_log_buf, ERR_TYPE_RTAS_LOG, 0);
 
 	spin_unlock(&ras_log_buf_lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* Handle environmental and घातer warning (EPOW) पूर्णांकerrupts. */
-अटल irqवापस_t ras_eघात_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	पूर्णांक state;
-	पूर्णांक critical;
+/* Handle environmental and power warning (EPOW) interrupts. */
+static irqreturn_t ras_epow_interrupt(int irq, void *dev_id)
+{
+	int state;
+	int critical;
 
 	rtas_get_sensor_fast(EPOW_SENSOR_TOKEN, EPOW_SENSOR_INDEX, &state);
 
-	अगर (state > 3)
+	if (state > 3)
 		critical = 1;		/* Time Critical */
-	अन्यथा
+	else
 		critical = 0;
 
 	spin_lock(&ras_log_buf_lock);
 
-	rtas_call(ras_check_exception_token, 6, 1, शून्य, RTAS_VECTOR_EXTERNAL_INTERRUPT,
+	rtas_call(ras_check_exception_token, 6, 1, NULL, RTAS_VECTOR_EXTERNAL_INTERRUPT,
 		  virq_to_hw(irq), RTAS_EPOW_WARNING, critical, __pa(&ras_log_buf),
 		  rtas_get_error_log_max());
 
 	log_error(ras_log_buf, ERR_TYPE_RTAS_LOG, 0);
 
-	rtas_parse_eघात_errlog((काष्ठा rtas_error_log *)ras_log_buf);
+	rtas_parse_epow_errlog((struct rtas_error_log *)ras_log_buf);
 
 	spin_unlock(&ras_log_buf_lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Handle hardware error पूर्णांकerrupts.
+ * Handle hardware error interrupts.
  *
  * RTAS check-exception is called to collect data on the exception.  If
- * the error is deemed recoverable, we log a warning and वापस.
+ * the error is deemed recoverable, we log a warning and return.
  * For nonrecoverable errors, an error is logged and we stop all processing
  * as quickly as possible in order to prevent propagation of the failure.
  */
-अटल irqवापस_t ras_error_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rtas_error_log *rtas_elog;
-	पूर्णांक status;
-	पूर्णांक fatal;
+static irqreturn_t ras_error_interrupt(int irq, void *dev_id)
+{
+	struct rtas_error_log *rtas_elog;
+	int status;
+	int fatal;
 
 	spin_lock(&ras_log_buf_lock);
 
-	status = rtas_call(ras_check_exception_token, 6, 1, शून्य,
+	status = rtas_call(ras_check_exception_token, 6, 1, NULL,
 			   RTAS_VECTOR_EXTERNAL_INTERRUPT,
 			   virq_to_hw(irq),
 			   RTAS_INTERNAL_ERROR, 1 /* Time Critical */,
 			   __pa(&ras_log_buf),
 				rtas_get_error_log_max());
 
-	rtas_elog = (काष्ठा rtas_error_log *)ras_log_buf;
+	rtas_elog = (struct rtas_error_log *)ras_log_buf;
 
-	अगर (status == 0 &&
+	if (status == 0 &&
 	    rtas_error_severity(rtas_elog) >= RTAS_SEVERITY_ERROR_SYNC)
 		fatal = 1;
-	अन्यथा
+	else
 		fatal = 0;
 
-	/* क्रमmat and prपूर्णांक the extended inक्रमmation */
+	/* format and print the extended information */
 	log_error(ras_log_buf, ERR_TYPE_RTAS_LOG, fatal);
 
-	अगर (fatal) अणु
+	if (fatal) {
 		pr_emerg("Fatal hardware error detected. Check RTAS error"
 			 " log for details. Powering off immediately\n");
 		emergency_sync();
-		kernel_घातer_off();
-	पूर्ण अन्यथा अणु
+		kernel_power_off();
+	} else {
 		pr_err("Recoverable hardware error detected\n");
-	पूर्ण
+	}
 
 	spin_unlock(&ras_log_buf_lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * Some versions of FWNMI place the buffer inside the 4kB page starting at
  * 0x7000. Other versions place it inside the rtas buffer. We check both.
  * Minimum size of the buffer is 16 bytes.
  */
-#घोषणा VALID_FWNMI_BUFFER(A) \
+#define VALID_FWNMI_BUFFER(A) \
 	((((A) >= 0x7000) && ((A) <= 0x8000 - 16)) || \
 	(((A) >= rtas.base) && ((A) <= (rtas.base + rtas.size - 16))))
 
-अटल अंतरभूत काष्ठा rtas_error_log *fwnmi_get_errlog(व्योम)
-अणु
-	वापस (काष्ठा rtas_error_log *)local_paca->mce_data_buf;
-पूर्ण
+static inline struct rtas_error_log *fwnmi_get_errlog(void)
+{
+	return (struct rtas_error_log *)local_paca->mce_data_buf;
+}
 
-अटल __be64 *fwnmi_get_savep(काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ savep_ra;
+static __be64 *fwnmi_get_savep(struct pt_regs *regs)
+{
+	unsigned long savep_ra;
 
 	/* Mask top two bits */
 	savep_ra = regs->gpr[3] & ~(0x3UL << 62);
-	अगर (!VALID_FWNMI_BUFFER(savep_ra)) अणु
-		prपूर्णांकk(KERN_ERR "FWNMI: corrupt r3 0x%016lx\n", regs->gpr[3]);
-		वापस शून्य;
-	पूर्ण
+	if (!VALID_FWNMI_BUFFER(savep_ra)) {
+		printk(KERN_ERR "FWNMI: corrupt r3 0x%016lx\n", regs->gpr[3]);
+		return NULL;
+	}
 
-	वापस __va(savep_ra);
-पूर्ण
+	return __va(savep_ra);
+}
 
 /*
- * Get the error inक्रमmation क्रम errors coming through the
+ * Get the error information for errors coming through the
  * FWNMI vectors.  The pt_regs' r3 will be updated to reflect
- * the actual r3 अगर possible, and a ptr to the error log entry
- * will be वापसed अगर found.
+ * the actual r3 if possible, and a ptr to the error log entry
+ * will be returned if found.
  *
  * Use one buffer mce_data_buf per cpu to store RTAS error.
  *
- * The mce_data_buf करोes not have any locks or protection around it,
- * अगर a second machine check comes in, or a प्रणाली reset is करोne
- * beक्रमe we have logged the error, then we will get corruption in the
+ * The mce_data_buf does not have any locks or protection around it,
+ * if a second machine check comes in, or a system reset is done
+ * before we have logged the error, then we will get corruption in the
  * error log.  This is preferable over holding off on calling
- * ibm,nmi-पूर्णांकerlock which would result in us checkstopping अगर a
+ * ibm,nmi-interlock which would result in us checkstopping if a
  * second machine check did come in.
  */
-अटल काष्ठा rtas_error_log *fwnmi_get_errinfo(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा rtas_error_log *h;
+static struct rtas_error_log *fwnmi_get_errinfo(struct pt_regs *regs)
+{
+	struct rtas_error_log *h;
 	__be64 *savep;
 
 	savep = fwnmi_get_savep(regs);
-	अगर (!savep)
-		वापस शून्य;
+	if (!savep)
+		return NULL;
 
 	regs->gpr[3] = be64_to_cpu(savep[0]); /* restore original r3 */
 
-	h = (काष्ठा rtas_error_log *)&savep[1];
+	h = (struct rtas_error_log *)&savep[1];
 	/* Use the per cpu buffer from paca to store rtas error log */
-	स_रखो(local_paca->mce_data_buf, 0, RTAS_ERROR_LOG_MAX);
-	अगर (!rtas_error_extended(h)) अणु
-		स_नकल(local_paca->mce_data_buf, h, माप(__u64));
-	पूर्ण अन्यथा अणु
-		पूर्णांक len, error_log_length;
+	memset(local_paca->mce_data_buf, 0, RTAS_ERROR_LOG_MAX);
+	if (!rtas_error_extended(h)) {
+		memcpy(local_paca->mce_data_buf, h, sizeof(__u64));
+	} else {
+		int len, error_log_length;
 
 		error_log_length = 8 + rtas_error_extended_log_length(h);
-		len = min_t(पूर्णांक, error_log_length, RTAS_ERROR_LOG_MAX);
-		स_नकल(local_paca->mce_data_buf, h, len);
-	पूर्ण
+		len = min_t(int, error_log_length, RTAS_ERROR_LOG_MAX);
+		memcpy(local_paca->mce_data_buf, h, len);
+	}
 
-	वापस (काष्ठा rtas_error_log *)local_paca->mce_data_buf;
-पूर्ण
+	return (struct rtas_error_log *)local_paca->mce_data_buf;
+}
 
-/* Call this when करोne with the data वापसed by FWNMI_get_errinfo.
- * It will release the saved data area क्रम other CPUs in the
+/* Call this when done with the data returned by FWNMI_get_errinfo.
+ * It will release the saved data area for other CPUs in the
  * partition to receive FWNMI errors.
  */
-अटल व्योम fwnmi_release_errinfo(व्योम)
-अणु
-	काष्ठा rtas_args rtas_args;
-	पूर्णांक ret;
+static void fwnmi_release_errinfo(void)
+{
+	struct rtas_args rtas_args;
+	int ret;
 
 	/*
 	 * On pseries, the machine check stack is limited to under 4GB, so
 	 * args can be on-stack.
 	 */
-	rtas_call_unlocked(&rtas_args, ibm_nmi_पूर्णांकerlock_token, 0, 1, शून्य);
+	rtas_call_unlocked(&rtas_args, ibm_nmi_interlock_token, 0, 1, NULL);
 	ret = be32_to_cpu(rtas_args.rets[0]);
-	अगर (ret != 0)
-		prपूर्णांकk(KERN_ERR "FWNMI: nmi-interlock failed: %d\n", ret);
-पूर्ण
+	if (ret != 0)
+		printk(KERN_ERR "FWNMI: nmi-interlock failed: %d\n", ret);
+}
 
-पूर्णांक pSeries_प्रणाली_reset_exception(काष्ठा pt_regs *regs)
-अणु
-#अगर_घोषित __LITTLE_ENDIAN__
+int pSeries_system_reset_exception(struct pt_regs *regs)
+{
+#ifdef __LITTLE_ENDIAN__
 	/*
-	 * Some firmware byteswaps SRR रेजिस्टरs and gives incorrect SRR1. Try
+	 * Some firmware byteswaps SRR registers and gives incorrect SRR1. Try
 	 * to detect the bad SRR1 pattern here. Flip the NIP back to correct
-	 * endian क्रम reporting purposes. Unक्रमtunately the MSR can't be fixed,
+	 * endian for reporting purposes. Unfortunately the MSR can't be fixed,
 	 * so clear it. It will be missing MSR_RI so we won't try to recover.
 	 */
-	अगर ((be64_to_cpu(regs->msr) &
+	if ((be64_to_cpu(regs->msr) &
 			(MSR_LE|MSR_RI|MSR_DR|MSR_IR|MSR_ME|MSR_PR|
-			 MSR_ILE|MSR_HV|MSR_SF)) == (MSR_DR|MSR_SF)) अणु
+			 MSR_ILE|MSR_HV|MSR_SF)) == (MSR_DR|MSR_SF)) {
 		regs->nip = be64_to_cpu((__be64)regs->nip);
 		regs->msr = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (fwnmi_active) अणु
+	if (fwnmi_active) {
 		__be64 *savep;
 
 		/*
 		 * Firmware (PowerVM and KVM) saves r3 to a save area like
 		 * machine check, which is not exactly what PAPR (2.9)
 		 * suggests but there is no way to detect otherwise, so this
-		 * is the पूर्णांकerface now.
+		 * is the interface now.
 		 *
-		 * System resets करो not save any error log or require an
+		 * System resets do not save any error log or require an
 		 * "ibm,nmi-interlock" rtas call to release.
 		 */
 
 		savep = fwnmi_get_savep(regs);
-		अगर (savep)
+		if (savep)
 			regs->gpr[3] = be64_to_cpu(savep[0]); /* restore original r3 */
-	पूर्ण
+	}
 
-	अगर (smp_handle_nmi_ipi(regs))
-		वापस 1;
+	if (smp_handle_nmi_ipi(regs))
+		return 1;
 
-	वापस 0; /* need to perक्रमm reset */
-पूर्ण
+	return 0; /* need to perform reset */
+}
 
-अटल पूर्णांक mce_handle_err_realmode(पूर्णांक disposition, u8 error_type)
-अणु
-#अगर_घोषित CONFIG_PPC_BOOK3S_64
-	अगर (disposition == RTAS_DISP_NOT_RECOVERED) अणु
-		चयन (error_type) अणु
-		हाल	MC_ERROR_TYPE_ERAT:
+static int mce_handle_err_realmode(int disposition, u8 error_type)
+{
+#ifdef CONFIG_PPC_BOOK3S_64
+	if (disposition == RTAS_DISP_NOT_RECOVERED) {
+		switch (error_type) {
+		case	MC_ERROR_TYPE_ERAT:
 			flush_erat();
 			disposition = RTAS_DISP_FULLY_RECOVERED;
-			अवरोध;
-		हाल	MC_ERROR_TYPE_SLB:
+			break;
+		case	MC_ERROR_TYPE_SLB:
 			/*
-			 * Store the old slb content in paca beक्रमe flushing.
-			 * Prपूर्णांक this when we go to भव mode.
-			 * There are chances that we may hit MCE again अगर there
-			 * is a parity error on the SLB entry we trying to पढ़ो
-			 * क्रम saving. Hence limit the slb saving to single
+			 * Store the old slb content in paca before flushing.
+			 * Print this when we go to virtual mode.
+			 * There are chances that we may hit MCE again if there
+			 * is a parity error on the SLB entry we trying to read
+			 * for saving. Hence limit the slb saving to single
 			 * level of recursion.
 			 */
-			अगर (local_paca->in_mce == 1)
+			if (local_paca->in_mce == 1)
 				slb_save_contents(local_paca->mce_faulty_slbs);
 			flush_and_reload_slb();
 			disposition = RTAS_DISP_FULLY_RECOVERED;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (disposition == RTAS_DISP_LIMITED_RECOVERY) अणु
-		/* Platक्रमm corrected itself but could be degraded */
+			break;
+		default:
+			break;
+		}
+	} else if (disposition == RTAS_DISP_LIMITED_RECOVERY) {
+		/* Platform corrected itself but could be degraded */
 		pr_err("MCE: limited recovery, system may be degraded\n");
 		disposition = RTAS_DISP_FULLY_RECOVERED;
-	पूर्ण
-#पूर्ण_अगर
-	वापस disposition;
-पूर्ण
+	}
+#endif
+	return disposition;
+}
 
-अटल पूर्णांक mce_handle_err_virपंचांगode(काष्ठा pt_regs *regs,
-				   काष्ठा rtas_error_log *errp,
-				   काष्ठा pseries_mc_errorlog *mce_log,
-				   पूर्णांक disposition)
-अणु
-	काष्ठा mce_error_info mce_err = अणु 0 पूर्ण;
-	पूर्णांक initiator = rtas_error_initiator(errp);
-	पूर्णांक severity = rtas_error_severity(errp);
-	अचिन्हित दीर्घ eaddr = 0, paddr = 0;
+static int mce_handle_err_virtmode(struct pt_regs *regs,
+				   struct rtas_error_log *errp,
+				   struct pseries_mc_errorlog *mce_log,
+				   int disposition)
+{
+	struct mce_error_info mce_err = { 0 };
+	int initiator = rtas_error_initiator(errp);
+	int severity = rtas_error_severity(errp);
+	unsigned long eaddr = 0, paddr = 0;
 	u8 error_type, err_sub_type;
 
-	अगर (!mce_log)
-		जाओ out;
+	if (!mce_log)
+		goto out;
 
 	error_type = mce_log->error_type;
 	err_sub_type = rtas_mc_error_sub_type(mce_log);
 
-	अगर (initiator == RTAS_INITIATOR_UNKNOWN)
+	if (initiator == RTAS_INITIATOR_UNKNOWN)
 		mce_err.initiator = MCE_INITIATOR_UNKNOWN;
-	अन्यथा अगर (initiator == RTAS_INITIATOR_CPU)
+	else if (initiator == RTAS_INITIATOR_CPU)
 		mce_err.initiator = MCE_INITIATOR_CPU;
-	अन्यथा अगर (initiator == RTAS_INITIATOR_PCI)
+	else if (initiator == RTAS_INITIATOR_PCI)
 		mce_err.initiator = MCE_INITIATOR_PCI;
-	अन्यथा अगर (initiator == RTAS_INITIATOR_ISA)
+	else if (initiator == RTAS_INITIATOR_ISA)
 		mce_err.initiator = MCE_INITIATOR_ISA;
-	अन्यथा अगर (initiator == RTAS_INITIATOR_MEMORY)
+	else if (initiator == RTAS_INITIATOR_MEMORY)
 		mce_err.initiator = MCE_INITIATOR_MEMORY;
-	अन्यथा अगर (initiator == RTAS_INITIATOR_POWERMGM)
+	else if (initiator == RTAS_INITIATOR_POWERMGM)
 		mce_err.initiator = MCE_INITIATOR_POWERMGM;
-	अन्यथा
+	else
 		mce_err.initiator = MCE_INITIATOR_UNKNOWN;
 
-	अगर (severity == RTAS_SEVERITY_NO_ERROR)
+	if (severity == RTAS_SEVERITY_NO_ERROR)
 		mce_err.severity = MCE_SEV_NO_ERROR;
-	अन्यथा अगर (severity == RTAS_SEVERITY_EVENT)
+	else if (severity == RTAS_SEVERITY_EVENT)
 		mce_err.severity = MCE_SEV_WARNING;
-	अन्यथा अगर (severity == RTAS_SEVERITY_WARNING)
+	else if (severity == RTAS_SEVERITY_WARNING)
 		mce_err.severity = MCE_SEV_WARNING;
-	अन्यथा अगर (severity == RTAS_SEVERITY_ERROR_SYNC)
+	else if (severity == RTAS_SEVERITY_ERROR_SYNC)
 		mce_err.severity = MCE_SEV_SEVERE;
-	अन्यथा अगर (severity == RTAS_SEVERITY_ERROR)
+	else if (severity == RTAS_SEVERITY_ERROR)
 		mce_err.severity = MCE_SEV_SEVERE;
-	अन्यथा अगर (severity == RTAS_SEVERITY_FATAL)
+	else if (severity == RTAS_SEVERITY_FATAL)
 		mce_err.severity = MCE_SEV_FATAL;
-	अन्यथा
+	else
 		mce_err.severity = MCE_SEV_FATAL;
 
-	अगर (severity <= RTAS_SEVERITY_ERROR_SYNC)
+	if (severity <= RTAS_SEVERITY_ERROR_SYNC)
 		mce_err.sync_error = true;
-	अन्यथा
+	else
 		mce_err.sync_error = false;
 
 	mce_err.error_type = MCE_ERROR_TYPE_UNKNOWN;
 	mce_err.error_class = MCE_ECLASS_UNKNOWN;
 
-	चयन (error_type) अणु
-	हाल MC_ERROR_TYPE_UE:
+	switch (error_type) {
+	case MC_ERROR_TYPE_UE:
 		mce_err.error_type = MCE_ERROR_TYPE_UE;
 		mce_common_process_ue(regs, &mce_err);
-		अगर (mce_err.ignore_event)
+		if (mce_err.ignore_event)
 			disposition = RTAS_DISP_FULLY_RECOVERED;
-		चयन (err_sub_type) अणु
-		हाल MC_ERROR_UE_IFETCH:
+		switch (err_sub_type) {
+		case MC_ERROR_UE_IFETCH:
 			mce_err.u.ue_error_type = MCE_UE_ERROR_IFETCH;
-			अवरोध;
-		हाल MC_ERROR_UE_PAGE_TABLE_WALK_IFETCH:
+			break;
+		case MC_ERROR_UE_PAGE_TABLE_WALK_IFETCH:
 			mce_err.u.ue_error_type = MCE_UE_ERROR_PAGE_TABLE_WALK_IFETCH;
-			अवरोध;
-		हाल MC_ERROR_UE_LOAD_STORE:
+			break;
+		case MC_ERROR_UE_LOAD_STORE:
 			mce_err.u.ue_error_type = MCE_UE_ERROR_LOAD_STORE;
-			अवरोध;
-		हाल MC_ERROR_UE_PAGE_TABLE_WALK_LOAD_STORE:
+			break;
+		case MC_ERROR_UE_PAGE_TABLE_WALK_LOAD_STORE:
 			mce_err.u.ue_error_type = MCE_UE_ERROR_PAGE_TABLE_WALK_LOAD_STORE;
-			अवरोध;
-		हाल MC_ERROR_UE_INDETERMINATE:
-		शेष:
+			break;
+		case MC_ERROR_UE_INDETERMINATE:
+		default:
 			mce_err.u.ue_error_type = MCE_UE_ERROR_INDETERMINATE;
-			अवरोध;
-		पूर्ण
-		अगर (mce_log->sub_err_type & UE_EFFECTIVE_ADDR_PROVIDED)
+			break;
+		}
+		if (mce_log->sub_err_type & UE_EFFECTIVE_ADDR_PROVIDED)
 			eaddr = be64_to_cpu(mce_log->effective_address);
 
-		अगर (mce_log->sub_err_type & UE_LOGICAL_ADDR_PROVIDED) अणु
+		if (mce_log->sub_err_type & UE_LOGICAL_ADDR_PROVIDED) {
 			paddr = be64_to_cpu(mce_log->logical_address);
-		पूर्ण अन्यथा अगर (mce_log->sub_err_type & UE_EFFECTIVE_ADDR_PROVIDED) अणु
-			अचिन्हित दीर्घ pfn;
+		} else if (mce_log->sub_err_type & UE_EFFECTIVE_ADDR_PROVIDED) {
+			unsigned long pfn;
 
 			pfn = addr_to_pfn(regs, eaddr);
-			अगर (pfn != अच_दीर्घ_उच्च)
+			if (pfn != ULONG_MAX)
 				paddr = pfn << PAGE_SHIFT;
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल MC_ERROR_TYPE_SLB:
+		break;
+	case MC_ERROR_TYPE_SLB:
 		mce_err.error_type = MCE_ERROR_TYPE_SLB;
-		चयन (err_sub_type) अणु
-		हाल MC_ERROR_SLB_PARITY:
+		switch (err_sub_type) {
+		case MC_ERROR_SLB_PARITY:
 			mce_err.u.slb_error_type = MCE_SLB_ERROR_PARITY;
-			अवरोध;
-		हाल MC_ERROR_SLB_MULTIHIT:
+			break;
+		case MC_ERROR_SLB_MULTIHIT:
 			mce_err.u.slb_error_type = MCE_SLB_ERROR_MULTIHIT;
-			अवरोध;
-		हाल MC_ERROR_SLB_INDETERMINATE:
-		शेष:
+			break;
+		case MC_ERROR_SLB_INDETERMINATE:
+		default:
 			mce_err.u.slb_error_type = MCE_SLB_ERROR_INDETERMINATE;
-			अवरोध;
-		पूर्ण
-		अगर (mce_log->sub_err_type & 0x80)
+			break;
+		}
+		if (mce_log->sub_err_type & 0x80)
 			eaddr = be64_to_cpu(mce_log->effective_address);
-		अवरोध;
-	हाल MC_ERROR_TYPE_ERAT:
+		break;
+	case MC_ERROR_TYPE_ERAT:
 		mce_err.error_type = MCE_ERROR_TYPE_ERAT;
-		चयन (err_sub_type) अणु
-		हाल MC_ERROR_ERAT_PARITY:
+		switch (err_sub_type) {
+		case MC_ERROR_ERAT_PARITY:
 			mce_err.u.erat_error_type = MCE_ERAT_ERROR_PARITY;
-			अवरोध;
-		हाल MC_ERROR_ERAT_MULTIHIT:
+			break;
+		case MC_ERROR_ERAT_MULTIHIT:
 			mce_err.u.erat_error_type = MCE_ERAT_ERROR_MULTIHIT;
-			अवरोध;
-		हाल MC_ERROR_ERAT_INDETERMINATE:
-		शेष:
+			break;
+		case MC_ERROR_ERAT_INDETERMINATE:
+		default:
 			mce_err.u.erat_error_type = MCE_ERAT_ERROR_INDETERMINATE;
-			अवरोध;
-		पूर्ण
-		अगर (mce_log->sub_err_type & 0x80)
+			break;
+		}
+		if (mce_log->sub_err_type & 0x80)
 			eaddr = be64_to_cpu(mce_log->effective_address);
-		अवरोध;
-	हाल MC_ERROR_TYPE_TLB:
+		break;
+	case MC_ERROR_TYPE_TLB:
 		mce_err.error_type = MCE_ERROR_TYPE_TLB;
-		चयन (err_sub_type) अणु
-		हाल MC_ERROR_TLB_PARITY:
+		switch (err_sub_type) {
+		case MC_ERROR_TLB_PARITY:
 			mce_err.u.tlb_error_type = MCE_TLB_ERROR_PARITY;
-			अवरोध;
-		हाल MC_ERROR_TLB_MULTIHIT:
+			break;
+		case MC_ERROR_TLB_MULTIHIT:
 			mce_err.u.tlb_error_type = MCE_TLB_ERROR_MULTIHIT;
-			अवरोध;
-		हाल MC_ERROR_TLB_INDETERMINATE:
-		शेष:
+			break;
+		case MC_ERROR_TLB_INDETERMINATE:
+		default:
 			mce_err.u.tlb_error_type = MCE_TLB_ERROR_INDETERMINATE;
-			अवरोध;
-		पूर्ण
-		अगर (mce_log->sub_err_type & 0x80)
+			break;
+		}
+		if (mce_log->sub_err_type & 0x80)
 			eaddr = be64_to_cpu(mce_log->effective_address);
-		अवरोध;
-	हाल MC_ERROR_TYPE_D_CACHE:
+		break;
+	case MC_ERROR_TYPE_D_CACHE:
 		mce_err.error_type = MCE_ERROR_TYPE_DCACHE;
-		अवरोध;
-	हाल MC_ERROR_TYPE_I_CACHE:
+		break;
+	case MC_ERROR_TYPE_I_CACHE:
 		mce_err.error_type = MCE_ERROR_TYPE_ICACHE;
-		अवरोध;
-	हाल MC_ERROR_TYPE_UNKNOWN:
-	शेष:
+		break;
+	case MC_ERROR_TYPE_UNKNOWN:
+	default:
 		mce_err.error_type = MCE_ERROR_TYPE_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
 	save_mce_event(regs, disposition == RTAS_DISP_FULLY_RECOVERED,
 		       &mce_err, regs->nip, eaddr, paddr);
-	वापस disposition;
-पूर्ण
+	return disposition;
+}
 
-अटल पूर्णांक mce_handle_error(काष्ठा pt_regs *regs, काष्ठा rtas_error_log *errp)
-अणु
-	काष्ठा pseries_errorlog *pseries_log;
-	काष्ठा pseries_mc_errorlog *mce_log = शून्य;
-	पूर्णांक disposition = rtas_error_disposition(errp);
-	अचिन्हित दीर्घ msr;
+static int mce_handle_error(struct pt_regs *regs, struct rtas_error_log *errp)
+{
+	struct pseries_errorlog *pseries_log;
+	struct pseries_mc_errorlog *mce_log = NULL;
+	int disposition = rtas_error_disposition(errp);
+	unsigned long msr;
 	u8 error_type;
 
-	अगर (!rtas_error_extended(errp))
-		जाओ out;
+	if (!rtas_error_extended(errp))
+		goto out;
 
 	pseries_log = get_pseries_errorlog(errp, PSERIES_ELOG_SECT_ID_MCE);
-	अगर (!pseries_log)
-		जाओ out;
+	if (!pseries_log)
+		goto out;
 
-	mce_log = (काष्ठा pseries_mc_errorlog *)pseries_log->data;
+	mce_log = (struct pseries_mc_errorlog *)pseries_log->data;
 	error_type = mce_log->error_type;
 
 	disposition = mce_handle_err_realmode(disposition, error_type);
@@ -740,146 +739,146 @@ out:
 	 * to workqueues where again per-cpu variables accessed, besides
 	 * fwnmi_release_errinfo() crashes when called in realmode on
 	 * pseries.
-	 * Note: All the realmode handling like flushing SLB entries क्रम
-	 *       SLB multihit is करोne by now.
+	 * Note: All the realmode handling like flushing SLB entries for
+	 *       SLB multihit is done by now.
 	 */
 out:
 	msr = mfmsr();
-	mपंचांगsr(msr | MSR_IR | MSR_DR);
+	mtmsr(msr | MSR_IR | MSR_DR);
 
-	disposition = mce_handle_err_virपंचांगode(regs, errp, mce_log,
+	disposition = mce_handle_err_virtmode(regs, errp, mce_log,
 					      disposition);
 
 	/*
 	 * Queue irq work to log this rtas event later.
-	 * irq_work_queue uses per-cpu variables, so करो this in virt
+	 * irq_work_queue uses per-cpu variables, so do this in virt
 	 * mode as well.
 	 */
 	irq_work_queue(&mce_errlog_process_work);
 
-	mपंचांगsr(msr);
+	mtmsr(msr);
 
-	वापस disposition;
-पूर्ण
+	return disposition;
+}
 
 /*
  * Process MCE rtas errlog event.
  */
-अटल व्योम mce_process_errlog_event(काष्ठा irq_work *work)
-अणु
-	काष्ठा rtas_error_log *err;
+static void mce_process_errlog_event(struct irq_work *work)
+{
+	struct rtas_error_log *err;
 
 	err = fwnmi_get_errlog();
-	log_error((अक्षर *)err, ERR_TYPE_RTAS_LOG, 0);
-पूर्ण
+	log_error((char *)err, ERR_TYPE_RTAS_LOG, 0);
+}
 
 /*
- * See अगर we can recover from a machine check exception.
- * This is only called on घातer4 (or above) and only via
+ * See if we can recover from a machine check exception.
+ * This is only called on power4 (or above) and only via
  * the Firmware Non-Maskable Interrupts (fwnmi) handler
- * which provides the error analysis क्रम us.
+ * which provides the error analysis for us.
  *
- * Return 1 अगर corrected (or delivered a संकेत).
- * Return 0 अगर there is nothing we can करो.
+ * Return 1 if corrected (or delivered a signal).
+ * Return 0 if there is nothing we can do.
  */
-अटल पूर्णांक recover_mce(काष्ठा pt_regs *regs, काष्ठा machine_check_event *evt)
-अणु
-	पूर्णांक recovered = 0;
+static int recover_mce(struct pt_regs *regs, struct machine_check_event *evt)
+{
+	int recovered = 0;
 
-	अगर (!(regs->msr & MSR_RI)) अणु
+	if (!(regs->msr & MSR_RI)) {
 		/* If MSR_RI isn't set, we cannot recover */
 		pr_err("Machine check interrupt unrecoverable: MSR(RI=0)\n");
 		recovered = 0;
-	पूर्ण अन्यथा अगर (evt->disposition == MCE_DISPOSITION_RECOVERED) अणु
-		/* Platक्रमm corrected itself */
+	} else if (evt->disposition == MCE_DISPOSITION_RECOVERED) {
+		/* Platform corrected itself */
 		recovered = 1;
-	पूर्ण अन्यथा अगर (evt->severity == MCE_SEV_FATAL) अणु
+	} else if (evt->severity == MCE_SEV_FATAL) {
 		/* Fatal machine check */
 		pr_err("Machine check interrupt is fatal\n");
 		recovered = 0;
-	पूर्ण
+	}
 
-	अगर (!recovered && evt->sync_error) अणु
+	if (!recovered && evt->sync_error) {
 		/*
-		 * Try to समाप्त processes अगर we get a synchronous machine check
-		 * (e.g., one caused by execution of this inकाष्ठाion). This
-		 * will devolve पूर्णांकo a panic अगर we try to समाप्त init or are in
-		 * an पूर्णांकerrupt etc.
+		 * Try to kill processes if we get a synchronous machine check
+		 * (e.g., one caused by execution of this instruction). This
+		 * will devolve into a panic if we try to kill init or are in
+		 * an interrupt etc.
 		 *
-		 * TODO: Queue up this address क्रम hwpoisioning later.
-		 * TODO: This is not quite right क्रम d-side machine
+		 * TODO: Queue up this address for hwpoisioning later.
+		 * TODO: This is not quite right for d-side machine
 		 *       checks ->nip is not necessarily the important
 		 *       address.
 		 */
-		अगर ((user_mode(regs))) अणु
+		if ((user_mode(regs))) {
 			_exception(SIGBUS, regs, BUS_MCEERR_AR, regs->nip);
 			recovered = 1;
-		पूर्ण अन्यथा अगर (die_will_crash()) अणु
+		} else if (die_will_crash()) {
 			/*
-			 * die() would समाप्त the kernel, so better to go via
-			 * the platक्रमm reboot code that will log the
+			 * die() would kill the kernel, so better to go via
+			 * the platform reboot code that will log the
 			 * machine check.
 			 */
 			recovered = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			die_mce("Machine check", regs, SIGBUS);
 			recovered = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस recovered;
-पूर्ण
+	return recovered;
+}
 
 /*
  * Handle a machine check.
  *
  * Note that on Power 4 and beyond Firmware Non-Maskable Interrupts (fwnmi)
- * should be present.  If so the handler which called us tells us अगर the
- * error was recovered (never true अगर RI=0).
+ * should be present.  If so the handler which called us tells us if the
+ * error was recovered (never true if RI=0).
  *
  * On hardware prior to Power 4 these exceptions were asynchronous which
  * means we can't tell exactly where it occurred and so we can't recover.
  */
-पूर्णांक pSeries_machine_check_exception(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा machine_check_event evt;
+int pSeries_machine_check_exception(struct pt_regs *regs)
+{
+	struct machine_check_event evt;
 
-	अगर (!get_mce_event(&evt, MCE_EVENT_RELEASE))
-		वापस 0;
+	if (!get_mce_event(&evt, MCE_EVENT_RELEASE))
+		return 0;
 
-	/* Prपूर्णांक things out */
-	अगर (evt.version != MCE_V1) अणु
+	/* Print things out */
+	if (evt.version != MCE_V1) {
 		pr_err("Machine Check Exception, Unknown event version %d !\n",
 		       evt.version);
-		वापस 0;
-	पूर्ण
-	machine_check_prपूर्णांक_event_info(&evt, user_mode(regs), false);
+		return 0;
+	}
+	machine_check_print_event_info(&evt, user_mode(regs), false);
 
-	अगर (recover_mce(regs, &evt))
-		वापस 1;
+	if (recover_mce(regs, &evt))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ pseries_machine_check_realmode(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा rtas_error_log *errp;
-	पूर्णांक disposition;
+long pseries_machine_check_realmode(struct pt_regs *regs)
+{
+	struct rtas_error_log *errp;
+	int disposition;
 
-	अगर (fwnmi_active) अणु
+	if (fwnmi_active) {
 		errp = fwnmi_get_errinfo(regs);
 		/*
 		 * Call to fwnmi_release_errinfo() in real mode causes kernel
-		 * to panic. Hence we will call it as soon as we go पूर्णांकo
-		 * भव mode.
+		 * to panic. Hence we will call it as soon as we go into
+		 * virtual mode.
 		 */
 		disposition = mce_handle_error(regs, errp);
 
 		fwnmi_release_errinfo();
 
-		अगर (disposition == RTAS_DISP_FULLY_RECOVERED)
-			वापस 1;
-	पूर्ण
+		if (disposition == RTAS_DISP_FULLY_RECOVERED)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

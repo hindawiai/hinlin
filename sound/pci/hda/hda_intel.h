@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  */
-#अगर_अघोषित __SOUND_HDA_INTEL_H
-#घोषणा __SOUND_HDA_INTEL_H
+#ifndef __SOUND_HDA_INTEL_H
+#define __SOUND_HDA_INTEL_H
 
-#समावेश "hda_controller.h"
+#include "hda_controller.h"
 
-काष्ठा hda_पूर्णांकel अणु
-	काष्ठा azx chip;
+struct hda_intel {
+	struct azx chip;
 
-	/* क्रम pending irqs */
-	काष्ठा work_काष्ठा irq_pending_work;
+	/* for pending irqs */
+	struct work_struct irq_pending_work;
 
 	/* sync probing */
-	काष्ठा completion probe_रुको;
-	काष्ठा work_काष्ठा probe_work;
+	struct completion probe_wait;
+	struct work_struct probe_work;
 
-	/* card list (क्रम घातer_save trigger) */
-	काष्ठा list_head list;
+	/* card list (for power_save trigger) */
+	struct list_head list;
 
 	/* extra flags */
-	अचिन्हित पूर्णांक irq_pending_warned:1;
-	अचिन्हित पूर्णांक probe_जारीd:1;
+	unsigned int irq_pending_warned:1;
+	unsigned int probe_continued:1;
 
-	/* vga_चयनeroo setup */
-	अचिन्हित पूर्णांक use_vga_चयनeroo:1;
-	अचिन्हित पूर्णांक vga_चयनeroo_रेजिस्टरed:1;
-	अचिन्हित पूर्णांक init_failed:1; /* delayed init failed */
-	अचिन्हित पूर्णांक मुक्तd:1; /* resources alपढ़ोy released */
+	/* vga_switcheroo setup */
+	unsigned int use_vga_switcheroo:1;
+	unsigned int vga_switcheroo_registered:1;
+	unsigned int init_failed:1; /* delayed init failed */
+	unsigned int freed:1; /* resources already released */
 
-	bool need_i915_घातer:1; /* the hda controller needs i915 घातer */
-पूर्ण;
+	bool need_i915_power:1; /* the hda controller needs i915 power */
+};
 
-#पूर्ण_अगर
+#endif

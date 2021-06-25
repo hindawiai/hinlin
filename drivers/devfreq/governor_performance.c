@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  linux/drivers/devfreq/governor_perक्रमmance.c
+ *  linux/drivers/devfreq/governor_performance.c
  *
  *  Copyright (C) 2011 Samsung Electronics
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#समावेश <linux/devfreq.h>
-#समावेश <linux/module.h>
-#समावेश "governor.h"
+#include <linux/devfreq.h>
+#include <linux/module.h>
+#include "governor.h"
 
-अटल पूर्णांक devfreq_perक्रमmance_func(काष्ठा devfreq *df,
-				    अचिन्हित दीर्घ *freq)
-अणु
+static int devfreq_performance_func(struct devfreq *df,
+				    unsigned long *freq)
+{
 	/*
-	 * target callback should be able to get न्यूनमान value as
+	 * target callback should be able to get floor value as
 	 * said in devfreq.h
 	 */
 	*freq = DEVFREQ_MAX_FREQ;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devfreq_perक्रमmance_handler(काष्ठा devfreq *devfreq,
-				अचिन्हित पूर्णांक event, व्योम *data)
-अणु
-	पूर्णांक ret = 0;
+static int devfreq_performance_handler(struct devfreq *devfreq,
+				unsigned int event, void *data)
+{
+	int ret = 0;
 
-	अगर (event == DEVFREQ_GOV_START) अणु
+	if (event == DEVFREQ_GOV_START) {
 		mutex_lock(&devfreq->lock);
 		ret = update_devfreq(devfreq);
 		mutex_unlock(&devfreq->lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा devfreq_governor devfreq_perक्रमmance = अणु
+static struct devfreq_governor devfreq_performance = {
 	.name = DEVFREQ_GOV_PERFORMANCE,
-	.get_target_freq = devfreq_perक्रमmance_func,
-	.event_handler = devfreq_perक्रमmance_handler,
-पूर्ण;
+	.get_target_freq = devfreq_performance_func,
+	.event_handler = devfreq_performance_handler,
+};
 
-अटल पूर्णांक __init devfreq_perक्रमmance_init(व्योम)
-अणु
-	वापस devfreq_add_governor(&devfreq_perक्रमmance);
-पूर्ण
-subsys_initcall(devfreq_perक्रमmance_init);
+static int __init devfreq_performance_init(void)
+{
+	return devfreq_add_governor(&devfreq_performance);
+}
+subsys_initcall(devfreq_performance_init);
 
-अटल व्योम __निकास devfreq_perक्रमmance_निकास(व्योम)
-अणु
-	पूर्णांक ret;
+static void __exit devfreq_performance_exit(void)
+{
+	int ret;
 
-	ret = devfreq_हटाओ_governor(&devfreq_perक्रमmance);
-	अगर (ret)
+	ret = devfreq_remove_governor(&devfreq_performance);
+	if (ret)
 		pr_err("%s: failed remove governor %d\n", __func__, ret);
 
-	वापस;
-पूर्ण
-module_निकास(devfreq_perक्रमmance_निकास);
+	return;
+}
+module_exit(devfreq_performance_exit);
 MODULE_LICENSE("GPL");

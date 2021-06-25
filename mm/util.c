@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/export.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/security.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/userfaultfd_k.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/elf-अक्रमomize.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/processor.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/compat.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/compiler.h>
+#include <linux/export.h>
+#include <linux/err.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task_stack.h>
+#include <linux/security.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
+#include <linux/mman.h>
+#include <linux/hugetlb.h>
+#include <linux/vmalloc.h>
+#include <linux/userfaultfd_k.h>
+#include <linux/elf.h>
+#include <linux/elf-randomize.h>
+#include <linux/personality.h>
+#include <linux/random.h>
+#include <linux/processor.h>
+#include <linux/sizes.h>
+#include <linux/compat.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
 /**
- * kमुक्त_स्थिर - conditionally मुक्त memory
- * @x: poपूर्णांकer to the memory
+ * kfree_const - conditionally free memory
+ * @x: pointer to the memory
  *
- * Function calls kमुक्त only अगर @x is not in .rodata section.
+ * Function calls kfree only if @x is not in .rodata section.
  */
-व्योम kमुक्त_स्थिर(स्थिर व्योम *x)
-अणु
-	अगर (!is_kernel_rodata((अचिन्हित दीर्घ)x))
-		kमुक्त(x);
-पूर्ण
-EXPORT_SYMBOL(kमुक्त_स्थिर);
+void kfree_const(const void *x)
+{
+	if (!is_kernel_rodata((unsigned long)x))
+		kfree(x);
+}
+EXPORT_SYMBOL(kfree_const);
 
 /**
- * kstrdup - allocate space क्रम and copy an existing string
+ * kstrdup - allocate space for and copy an existing string
  * @s: the string to duplicate
- * @gfp: the GFP mask used in the kदो_स्मृति() call when allocating memory
+ * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  *
- * Return: newly allocated copy of @s or %शून्य in हाल of error
+ * Return: newly allocated copy of @s or %NULL in case of error
  */
-अक्षर *kstrdup(स्थिर अक्षर *s, gfp_t gfp)
-अणु
-	माप_प्रकार len;
-	अक्षर *buf;
+char *kstrdup(const char *s, gfp_t gfp)
+{
+	size_t len;
+	char *buf;
 
-	अगर (!s)
-		वापस शून्य;
+	if (!s)
+		return NULL;
 
-	len = म_माप(s) + 1;
-	buf = kदो_स्मृति_track_caller(len, gfp);
-	अगर (buf)
-		स_नकल(buf, s, len);
-	वापस buf;
-पूर्ण
+	len = strlen(s) + 1;
+	buf = kmalloc_track_caller(len, gfp);
+	if (buf)
+		memcpy(buf, s, len);
+	return buf;
+}
 EXPORT_SYMBOL(kstrdup);
 
 /**
- * kstrdup_स्थिर - conditionally duplicate an existing स्थिर string
+ * kstrdup_const - conditionally duplicate an existing const string
  * @s: the string to duplicate
- * @gfp: the GFP mask used in the kदो_स्मृति() call when allocating memory
+ * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  *
- * Note: Strings allocated by kstrdup_स्थिर should be मुक्तd by kमुक्त_स्थिर and
- * must not be passed to kपुनः_स्मृति().
+ * Note: Strings allocated by kstrdup_const should be freed by kfree_const and
+ * must not be passed to krealloc().
  *
- * Return: source string अगर it is in .rodata section otherwise
+ * Return: source string if it is in .rodata section otherwise
  * fallback to kstrdup.
  */
-स्थिर अक्षर *kstrdup_स्थिर(स्थिर अक्षर *s, gfp_t gfp)
-अणु
-	अगर (is_kernel_rodata((अचिन्हित दीर्घ)s))
-		वापस s;
+const char *kstrdup_const(const char *s, gfp_t gfp)
+{
+	if (is_kernel_rodata((unsigned long)s))
+		return s;
 
-	वापस kstrdup(s, gfp);
-पूर्ण
-EXPORT_SYMBOL(kstrdup_स्थिर);
+	return kstrdup(s, gfp);
+}
+EXPORT_SYMBOL(kstrdup_const);
 
 /**
- * kstrndup - allocate space क्रम and copy an existing string
+ * kstrndup - allocate space for and copy an existing string
  * @s: the string to duplicate
- * @max: पढ़ो at most @max अक्षरs from @s
- * @gfp: the GFP mask used in the kदो_स्मृति() call when allocating memory
+ * @max: read at most @max chars from @s
+ * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  *
- * Note: Use kmemdup_nul() instead अगर the size is known exactly.
+ * Note: Use kmemdup_nul() instead if the size is known exactly.
  *
- * Return: newly allocated copy of @s or %शून्य in हाल of error
+ * Return: newly allocated copy of @s or %NULL in case of error
  */
-अक्षर *kstrndup(स्थिर अक्षर *s, माप_प्रकार max, gfp_t gfp)
-अणु
-	माप_प्रकार len;
-	अक्षर *buf;
+char *kstrndup(const char *s, size_t max, gfp_t gfp)
+{
+	size_t len;
+	char *buf;
 
-	अगर (!s)
-		वापस शून्य;
+	if (!s)
+		return NULL;
 
 	len = strnlen(s, max);
-	buf = kदो_स्मृति_track_caller(len+1, gfp);
-	अगर (buf) अणु
-		स_नकल(buf, s, len);
+	buf = kmalloc_track_caller(len+1, gfp);
+	if (buf) {
+		memcpy(buf, s, len);
 		buf[len] = '\0';
-	पूर्ण
-	वापस buf;
-पूर्ण
+	}
+	return buf;
+}
 EXPORT_SYMBOL(kstrndup);
 
 /**
@@ -120,42 +119,42 @@ EXPORT_SYMBOL(kstrndup);
  * @len: memory region length
  * @gfp: GFP mask to use
  *
- * Return: newly allocated copy of @src or %शून्य in हाल of error
+ * Return: newly allocated copy of @src or %NULL in case of error
  */
-व्योम *kmemdup(स्थिर व्योम *src, माप_प्रकार len, gfp_t gfp)
-अणु
-	व्योम *p;
+void *kmemdup(const void *src, size_t len, gfp_t gfp)
+{
+	void *p;
 
-	p = kदो_स्मृति_track_caller(len, gfp);
-	अगर (p)
-		स_नकल(p, src, len);
-	वापस p;
-पूर्ण
+	p = kmalloc_track_caller(len, gfp);
+	if (p)
+		memcpy(p, src, len);
+	return p;
+}
 EXPORT_SYMBOL(kmemdup);
 
 /**
  * kmemdup_nul - Create a NUL-terminated string from unterminated data
- * @s: The data to stringअगरy
+ * @s: The data to stringify
  * @len: The size of the data
- * @gfp: the GFP mask used in the kदो_स्मृति() call when allocating memory
+ * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  *
- * Return: newly allocated copy of @s with NUL-termination or %शून्य in
- * हाल of error
+ * Return: newly allocated copy of @s with NUL-termination or %NULL in
+ * case of error
  */
-अक्षर *kmemdup_nul(स्थिर अक्षर *s, माप_प्रकार len, gfp_t gfp)
-अणु
-	अक्षर *buf;
+char *kmemdup_nul(const char *s, size_t len, gfp_t gfp)
+{
+	char *buf;
 
-	अगर (!s)
-		वापस शून्य;
+	if (!s)
+		return NULL;
 
-	buf = kदो_स्मृति_track_caller(len + 1, gfp);
-	अगर (buf) अणु
-		स_नकल(buf, s, len);
+	buf = kmalloc_track_caller(len + 1, gfp);
+	if (buf) {
+		memcpy(buf, s, len);
 		buf[len] = '\0';
-	पूर्ण
-	वापस buf;
-पूर्ण
+	}
+	return buf;
+}
 EXPORT_SYMBOL(kmemdup_nul);
 
 /**
@@ -165,23 +164,23 @@ EXPORT_SYMBOL(kmemdup_nul);
  * @len: number of bytes to copy
  *
  * Return: an ERR_PTR() on failure.  Result is physically
- * contiguous, to be मुक्तd by kमुक्त().
+ * contiguous, to be freed by kfree().
  */
-व्योम *memdup_user(स्थिर व्योम __user *src, माप_प्रकार len)
-अणु
-	व्योम *p;
+void *memdup_user(const void __user *src, size_t len)
+{
+	void *p;
 
-	p = kदो_स्मृति_track_caller(len, GFP_USER | __GFP_NOWARN);
-	अगर (!p)
-		वापस ERR_PTR(-ENOMEM);
+	p = kmalloc_track_caller(len, GFP_USER | __GFP_NOWARN);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (copy_from_user(p, src, len)) अणु
-		kमुक्त(p);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	if (copy_from_user(p, src, len)) {
+		kfree(p);
+		return ERR_PTR(-EFAULT);
+	}
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(memdup_user);
 
 /**
@@ -191,23 +190,23 @@ EXPORT_SYMBOL(memdup_user);
  * @len: number of bytes to copy
  *
  * Return: an ERR_PTR() on failure.  Result may be not
- * physically contiguous.  Use kvमुक्त() to मुक्त.
+ * physically contiguous.  Use kvfree() to free.
  */
-व्योम *vmemdup_user(स्थिर व्योम __user *src, माप_प्रकार len)
-अणु
-	व्योम *p;
+void *vmemdup_user(const void __user *src, size_t len)
+{
+	void *p;
 
-	p = kvदो_स्मृति(len, GFP_USER);
-	अगर (!p)
-		वापस ERR_PTR(-ENOMEM);
+	p = kvmalloc(len, GFP_USER);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (copy_from_user(p, src, len)) अणु
-		kvमुक्त(p);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	if (copy_from_user(p, src, len)) {
+		kvfree(p);
+		return ERR_PTR(-EFAULT);
+	}
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(vmemdup_user);
 
 /**
@@ -215,30 +214,30 @@ EXPORT_SYMBOL(vmemdup_user);
  * @s: The string to duplicate
  * @n: Maximum number of bytes to copy, including the trailing NUL.
  *
- * Return: newly allocated copy of @s or an ERR_PTR() in हाल of error
+ * Return: newly allocated copy of @s or an ERR_PTR() in case of error
  */
-अक्षर *strndup_user(स्थिर अक्षर __user *s, दीर्घ n)
-अणु
-	अक्षर *p;
-	दीर्घ length;
+char *strndup_user(const char __user *s, long n)
+{
+	char *p;
+	long length;
 
 	length = strnlen_user(s, n);
 
-	अगर (!length)
-		वापस ERR_PTR(-EFAULT);
+	if (!length)
+		return ERR_PTR(-EFAULT);
 
-	अगर (length > n)
-		वापस ERR_PTR(-EINVAL);
+	if (length > n)
+		return ERR_PTR(-EINVAL);
 
 	p = memdup_user(s, length);
 
-	अगर (IS_ERR(p))
-		वापस p;
+	if (IS_ERR(p))
+		return p;
 
 	p[length - 1] = '\0';
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(strndup_user);
 
 /**
@@ -249,604 +248,604 @@ EXPORT_SYMBOL(strndup_user);
  *
  * Return: an ERR_PTR() on failure.
  */
-व्योम *memdup_user_nul(स्थिर व्योम __user *src, माप_प्रकार len)
-अणु
-	अक्षर *p;
+void *memdup_user_nul(const void __user *src, size_t len)
+{
+	char *p;
 
 	/*
 	 * Always use GFP_KERNEL, since copy_from_user() can sleep and
-	 * cause pagefault, which makes it poपूर्णांकless to use GFP_NOFS
+	 * cause pagefault, which makes it pointless to use GFP_NOFS
 	 * or GFP_ATOMIC.
 	 */
-	p = kदो_स्मृति_track_caller(len + 1, GFP_KERNEL);
-	अगर (!p)
-		वापस ERR_PTR(-ENOMEM);
+	p = kmalloc_track_caller(len + 1, GFP_KERNEL);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (copy_from_user(p, src, len)) अणु
-		kमुक्त(p);
-		वापस ERR_PTR(-EFAULT);
-	पूर्ण
+	if (copy_from_user(p, src, len)) {
+		kfree(p);
+		return ERR_PTR(-EFAULT);
+	}
 	p[len] = '\0';
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(memdup_user_nul);
 
-व्योम __vma_link_list(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा vm_area_काष्ठा *prev)
-अणु
-	काष्ठा vm_area_काष्ठा *next;
+void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
+		struct vm_area_struct *prev)
+{
+	struct vm_area_struct *next;
 
 	vma->vm_prev = prev;
-	अगर (prev) अणु
+	if (prev) {
 		next = prev->vm_next;
 		prev->vm_next = vma;
-	पूर्ण अन्यथा अणु
+	} else {
 		next = mm->mmap;
 		mm->mmap = vma;
-	पूर्ण
+	}
 	vma->vm_next = next;
-	अगर (next)
+	if (next)
 		next->vm_prev = vma;
-पूर्ण
+}
 
-व्योम __vma_unlink_list(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vm_area_काष्ठा *prev, *next;
+void __vma_unlink_list(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	struct vm_area_struct *prev, *next;
 
 	next = vma->vm_next;
 	prev = vma->vm_prev;
-	अगर (prev)
+	if (prev)
 		prev->vm_next = next;
-	अन्यथा
+	else
 		mm->mmap = next;
-	अगर (next)
+	if (next)
 		next->vm_prev = prev;
-पूर्ण
+}
 
-/* Check अगर the vma is being used as a stack by this task */
-पूर्णांक vma_is_stack_क्रम_current(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा task_काष्ठा * __maybe_unused t = current;
+/* Check if the vma is being used as a stack by this task */
+int vma_is_stack_for_current(struct vm_area_struct *vma)
+{
+	struct task_struct * __maybe_unused t = current;
 
-	वापस (vma->vm_start <= KSTK_ESP(t) && vma->vm_end >= KSTK_ESP(t));
-पूर्ण
+	return (vma->vm_start <= KSTK_ESP(t) && vma->vm_end >= KSTK_ESP(t));
+}
 
 /*
  * Change backing file, only valid to use during initial VMA setup.
  */
-व्योम vma_set_file(काष्ठा vm_area_काष्ठा *vma, काष्ठा file *file)
-अणु
+void vma_set_file(struct vm_area_struct *vma, struct file *file)
+{
 	/* Changing an anonymous vma with this is illegal */
 	get_file(file);
 	swap(vma->vm_file, file);
 	fput(file);
-पूर्ण
+}
 EXPORT_SYMBOL(vma_set_file);
 
-#अगर_अघोषित STACK_RND_MASK
-#घोषणा STACK_RND_MASK (0x7ff >> (PAGE_SHIFT - 12))     /* 8MB of VA */
-#पूर्ण_अगर
+#ifndef STACK_RND_MASK
+#define STACK_RND_MASK (0x7ff >> (PAGE_SHIFT - 12))     /* 8MB of VA */
+#endif
 
-अचिन्हित दीर्घ अक्रमomize_stack_top(अचिन्हित दीर्घ stack_top)
-अणु
-	अचिन्हित दीर्घ अक्रमom_variable = 0;
+unsigned long randomize_stack_top(unsigned long stack_top)
+{
+	unsigned long random_variable = 0;
 
-	अगर (current->flags & PF_RANDOMIZE) अणु
-		अक्रमom_variable = get_अक्रमom_दीर्घ();
-		अक्रमom_variable &= STACK_RND_MASK;
-		अक्रमom_variable <<= PAGE_SHIFT;
-	पूर्ण
-#अगर_घोषित CONFIG_STACK_GROWSUP
-	वापस PAGE_ALIGN(stack_top) + अक्रमom_variable;
-#अन्यथा
-	वापस PAGE_ALIGN(stack_top) - अक्रमom_variable;
-#पूर्ण_अगर
-पूर्ण
+	if (current->flags & PF_RANDOMIZE) {
+		random_variable = get_random_long();
+		random_variable &= STACK_RND_MASK;
+		random_variable <<= PAGE_SHIFT;
+	}
+#ifdef CONFIG_STACK_GROWSUP
+	return PAGE_ALIGN(stack_top) + random_variable;
+#else
+	return PAGE_ALIGN(stack_top) - random_variable;
+#endif
+}
 
-#अगर_घोषित CONFIG_ARCH_WANT_DEFAULT_TOPDOWN_MMAP_LAYOUT
-अचिन्हित दीर्घ arch_अक्रमomize_brk(काष्ठा mm_काष्ठा *mm)
-अणु
+#ifdef CONFIG_ARCH_WANT_DEFAULT_TOPDOWN_MMAP_LAYOUT
+unsigned long arch_randomize_brk(struct mm_struct *mm)
+{
 	/* Is the current task 32bit ? */
-	अगर (!IS_ENABLED(CONFIG_64BIT) || is_compat_task())
-		वापस अक्रमomize_page(mm->brk, SZ_32M);
+	if (!IS_ENABLED(CONFIG_64BIT) || is_compat_task())
+		return randomize_page(mm->brk, SZ_32M);
 
-	वापस अक्रमomize_page(mm->brk, SZ_1G);
-पूर्ण
+	return randomize_page(mm->brk, SZ_1G);
+}
 
-अचिन्हित दीर्घ arch_mmap_rnd(व्योम)
-अणु
-	अचिन्हित दीर्घ rnd;
+unsigned long arch_mmap_rnd(void)
+{
+	unsigned long rnd;
 
-#अगर_घोषित CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
-	अगर (is_compat_task())
-		rnd = get_अक्रमom_दीर्घ() & ((1UL << mmap_rnd_compat_bits) - 1);
-	अन्यथा
-#पूर्ण_अगर /* CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS */
-		rnd = get_अक्रमom_दीर्घ() & ((1UL << mmap_rnd_bits) - 1);
+#ifdef CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS
+	if (is_compat_task())
+		rnd = get_random_long() & ((1UL << mmap_rnd_compat_bits) - 1);
+	else
+#endif /* CONFIG_HAVE_ARCH_MMAP_RND_COMPAT_BITS */
+		rnd = get_random_long() & ((1UL << mmap_rnd_bits) - 1);
 
-	वापस rnd << PAGE_SHIFT;
-पूर्ण
+	return rnd << PAGE_SHIFT;
+}
 
-अटल पूर्णांक mmap_is_legacy(काष्ठा rlimit *rlim_stack)
-अणु
-	अगर (current->personality & ADDR_COMPAT_LAYOUT)
-		वापस 1;
+static int mmap_is_legacy(struct rlimit *rlim_stack)
+{
+	if (current->personality & ADDR_COMPAT_LAYOUT)
+		return 1;
 
-	अगर (rlim_stack->rlim_cur == RLIM_अनन्त)
-		वापस 1;
+	if (rlim_stack->rlim_cur == RLIM_INFINITY)
+		return 1;
 
-	वापस sysctl_legacy_va_layout;
-पूर्ण
+	return sysctl_legacy_va_layout;
+}
 
 /*
  * Leave enough space between the mmap area and the stack to honour ulimit in
- * the face of अक्रमomisation.
+ * the face of randomisation.
  */
-#घोषणा MIN_GAP		(SZ_128M)
-#घोषणा MAX_GAP		(STACK_TOP / 6 * 5)
+#define MIN_GAP		(SZ_128M)
+#define MAX_GAP		(STACK_TOP / 6 * 5)
 
-अटल अचिन्हित दीर्घ mmap_base(अचिन्हित दीर्घ rnd, काष्ठा rlimit *rlim_stack)
-अणु
-	अचिन्हित दीर्घ gap = rlim_stack->rlim_cur;
-	अचिन्हित दीर्घ pad = stack_guard_gap;
+static unsigned long mmap_base(unsigned long rnd, struct rlimit *rlim_stack)
+{
+	unsigned long gap = rlim_stack->rlim_cur;
+	unsigned long pad = stack_guard_gap;
 
-	/* Account क्रम stack अक्रमomization अगर necessary */
-	अगर (current->flags & PF_RANDOMIZE)
+	/* Account for stack randomization if necessary */
+	if (current->flags & PF_RANDOMIZE)
 		pad += (STACK_RND_MASK << PAGE_SHIFT);
 
-	/* Values बंद to RLIM_अनन्त can overflow. */
-	अगर (gap + pad > gap)
+	/* Values close to RLIM_INFINITY can overflow. */
+	if (gap + pad > gap)
 		gap += pad;
 
-	अगर (gap < MIN_GAP)
+	if (gap < MIN_GAP)
 		gap = MIN_GAP;
-	अन्यथा अगर (gap > MAX_GAP)
+	else if (gap > MAX_GAP)
 		gap = MAX_GAP;
 
-	वापस PAGE_ALIGN(STACK_TOP - gap - rnd);
-पूर्ण
+	return PAGE_ALIGN(STACK_TOP - gap - rnd);
+}
 
-व्योम arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm, काष्ठा rlimit *rlim_stack)
-अणु
-	अचिन्हित दीर्घ अक्रमom_factor = 0UL;
+void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
+{
+	unsigned long random_factor = 0UL;
 
-	अगर (current->flags & PF_RANDOMIZE)
-		अक्रमom_factor = arch_mmap_rnd();
+	if (current->flags & PF_RANDOMIZE)
+		random_factor = arch_mmap_rnd();
 
-	अगर (mmap_is_legacy(rlim_stack)) अणु
-		mm->mmap_base = TASK_UNMAPPED_BASE + अक्रमom_factor;
+	if (mmap_is_legacy(rlim_stack)) {
+		mm->mmap_base = TASK_UNMAPPED_BASE + random_factor;
 		mm->get_unmapped_area = arch_get_unmapped_area;
-	पूर्ण अन्यथा अणु
-		mm->mmap_base = mmap_base(अक्रमom_factor, rlim_stack);
-		mm->get_unmapped_area = arch_get_unmapped_area_topकरोwn;
-	पूर्ण
-पूर्ण
-#या_अगर defined(CONFIG_MMU) && !defined(HAVE_ARCH_PICK_MMAP_LAYOUT)
-व्योम arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm, काष्ठा rlimit *rlim_stack)
-अणु
+	} else {
+		mm->mmap_base = mmap_base(random_factor, rlim_stack);
+		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
+	}
+}
+#elif defined(CONFIG_MMU) && !defined(HAVE_ARCH_PICK_MMAP_LAYOUT)
+void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
+{
 	mm->mmap_base = TASK_UNMAPPED_BASE;
 	mm->get_unmapped_area = arch_get_unmapped_area;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /**
  * __account_locked_vm - account locked pages to an mm's locked_vm
  * @mm:          mm to account against
  * @pages:       number of pages to account
- * @inc:         %true अगर @pages should be considered positive, %false अगर not
+ * @inc:         %true if @pages should be considered positive, %false if not
  * @task:        task used to check RLIMIT_MEMLOCK
- * @bypass_rlim: %true अगर checking RLIMIT_MEMLOCK should be skipped
+ * @bypass_rlim: %true if checking RLIMIT_MEMLOCK should be skipped
  *
  * Assumes @task and @mm are valid (i.e. at least one reference on each), and
- * that mmap_lock is held as ग_लिखोr.
+ * that mmap_lock is held as writer.
  *
  * Return:
  * * 0       on success
- * * -ENOMEM अगर RLIMIT_MEMLOCK would be exceeded.
+ * * -ENOMEM if RLIMIT_MEMLOCK would be exceeded.
  */
-पूर्णांक __account_locked_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pages, bool inc,
-			काष्ठा task_काष्ठा *task, bool bypass_rlim)
-अणु
-	अचिन्हित दीर्घ locked_vm, limit;
-	पूर्णांक ret = 0;
+int __account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc,
+			struct task_struct *task, bool bypass_rlim)
+{
+	unsigned long locked_vm, limit;
+	int ret = 0;
 
-	mmap_निश्चित_ग_लिखो_locked(mm);
+	mmap_assert_write_locked(mm);
 
 	locked_vm = mm->locked_vm;
-	अगर (inc) अणु
-		अगर (!bypass_rlim) अणु
+	if (inc) {
+		if (!bypass_rlim) {
 			limit = task_rlimit(task, RLIMIT_MEMLOCK) >> PAGE_SHIFT;
-			अगर (locked_vm + pages > limit)
+			if (locked_vm + pages > limit)
 				ret = -ENOMEM;
-		पूर्ण
-		अगर (!ret)
+		}
+		if (!ret)
 			mm->locked_vm = locked_vm + pages;
-	पूर्ण अन्यथा अणु
+	} else {
 		WARN_ON_ONCE(pages > locked_vm);
 		mm->locked_vm = locked_vm - pages;
-	पूर्ण
+	}
 
 	pr_debug("%s: [%d] caller %ps %c%lu %lu/%lu%s\n", __func__, task->pid,
-		 (व्योम *)_RET_IP_, (inc) ? '+' : '-', pages << PAGE_SHIFT,
+		 (void *)_RET_IP_, (inc) ? '+' : '-', pages << PAGE_SHIFT,
 		 locked_vm << PAGE_SHIFT, task_rlimit(task, RLIMIT_MEMLOCK),
 		 ret ? " - exceeded" : "");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__account_locked_vm);
 
 /**
  * account_locked_vm - account locked pages to an mm's locked_vm
- * @mm:          mm to account against, may be शून्य
+ * @mm:          mm to account against, may be NULL
  * @pages:       number of pages to account
- * @inc:         %true अगर @pages should be considered positive, %false अगर not
+ * @inc:         %true if @pages should be considered positive, %false if not
  *
- * Assumes a non-शून्य @mm is valid (i.e. at least one reference on it).
+ * Assumes a non-NULL @mm is valid (i.e. at least one reference on it).
  *
  * Return:
- * * 0       on success, or अगर mm is शून्य
- * * -ENOMEM अगर RLIMIT_MEMLOCK would be exceeded.
+ * * 0       on success, or if mm is NULL
+ * * -ENOMEM if RLIMIT_MEMLOCK would be exceeded.
  */
-पूर्णांक account_locked_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pages, bool inc)
-अणु
-	पूर्णांक ret;
+int account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc)
+{
+	int ret;
 
-	अगर (pages == 0 || !mm)
-		वापस 0;
+	if (pages == 0 || !mm)
+		return 0;
 
-	mmap_ग_लिखो_lock(mm);
+	mmap_write_lock(mm);
 	ret = __account_locked_vm(mm, pages, inc, current,
 				  capable(CAP_IPC_LOCK));
-	mmap_ग_लिखो_unlock(mm);
+	mmap_write_unlock(mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(account_locked_vm);
 
-अचिन्हित दीर्घ vm_mmap_pgoff(काष्ठा file *file, अचिन्हित दीर्घ addr,
-	अचिन्हित दीर्घ len, अचिन्हित दीर्घ prot,
-	अचिन्हित दीर्घ flag, अचिन्हित दीर्घ pgoff)
-अणु
-	अचिन्हित दीर्घ ret;
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ populate;
+unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+	unsigned long len, unsigned long prot,
+	unsigned long flag, unsigned long pgoff)
+{
+	unsigned long ret;
+	struct mm_struct *mm = current->mm;
+	unsigned long populate;
 	LIST_HEAD(uf);
 
 	ret = security_mmap_file(file, prot, flag);
-	अगर (!ret) अणु
-		अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-			वापस -EINTR;
-		ret = करो_mmap(file, addr, len, prot, flag, pgoff, &populate,
+	if (!ret) {
+		if (mmap_write_lock_killable(mm))
+			return -EINTR;
+		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
 			      &uf);
-		mmap_ग_लिखो_unlock(mm);
+		mmap_write_unlock(mm);
 		userfaultfd_unmap_complete(mm, &uf);
-		अगर (populate)
+		if (populate)
 			mm_populate(ret, populate);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अचिन्हित दीर्घ vm_mmap(काष्ठा file *file, अचिन्हित दीर्घ addr,
-	अचिन्हित दीर्घ len, अचिन्हित दीर्घ prot,
-	अचिन्हित दीर्घ flag, अचिन्हित दीर्घ offset)
-अणु
-	अगर (unlikely(offset + PAGE_ALIGN(len) < offset))
-		वापस -EINVAL;
-	अगर (unlikely(offset_in_page(offset)))
-		वापस -EINVAL;
+unsigned long vm_mmap(struct file *file, unsigned long addr,
+	unsigned long len, unsigned long prot,
+	unsigned long flag, unsigned long offset)
+{
+	if (unlikely(offset + PAGE_ALIGN(len) < offset))
+		return -EINVAL;
+	if (unlikely(offset_in_page(offset)))
+		return -EINVAL;
 
-	वापस vm_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
-पूर्ण
+	return vm_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
+}
 EXPORT_SYMBOL(vm_mmap);
 
 /**
- * kvदो_स्मृति_node - attempt to allocate physically contiguous memory, but upon
- * failure, fall back to non-contiguous (vदो_स्मृति) allocation.
+ * kvmalloc_node - attempt to allocate physically contiguous memory, but upon
+ * failure, fall back to non-contiguous (vmalloc) allocation.
  * @size: size of the request.
- * @flags: gfp mask क्रम the allocation - must be compatible (superset) with GFP_KERNEL.
+ * @flags: gfp mask for the allocation - must be compatible (superset) with GFP_KERNEL.
  * @node: numa node to allocate from
  *
- * Uses kदो_स्मृति to get the memory but अगर the allocation fails then falls back
- * to the vदो_स्मृति allocator. Use kvमुक्त क्रम मुक्तing the memory.
+ * Uses kmalloc to get the memory but if the allocation fails then falls back
+ * to the vmalloc allocator. Use kvfree for freeing the memory.
  *
- * Reclaim modअगरiers - __GFP_NORETRY and __GFP_NOFAIL are not supported.
- * __GFP_RETRY_MAYFAIL is supported, and it should be used only अगर kदो_स्मृति is
- * preferable to the vदो_स्मृति fallback, due to visible perक्रमmance drawbacks.
+ * Reclaim modifiers - __GFP_NORETRY and __GFP_NOFAIL are not supported.
+ * __GFP_RETRY_MAYFAIL is supported, and it should be used only if kmalloc is
+ * preferable to the vmalloc fallback, due to visible performance drawbacks.
  *
  * Please note that any use of gfp flags outside of GFP_KERNEL is careful to not
- * fall back to vदो_स्मृति.
+ * fall back to vmalloc.
  *
- * Return: poपूर्णांकer to the allocated memory of %शून्य in हाल of failure
+ * Return: pointer to the allocated memory of %NULL in case of failure
  */
-व्योम *kvदो_स्मृति_node(माप_प्रकार size, gfp_t flags, पूर्णांक node)
-अणु
-	gfp_t kदो_स्मृति_flags = flags;
-	व्योम *ret;
+void *kvmalloc_node(size_t size, gfp_t flags, int node)
+{
+	gfp_t kmalloc_flags = flags;
+	void *ret;
 
 	/*
-	 * vदो_स्मृति uses GFP_KERNEL क्रम some पूर्णांकernal allocations (e.g page tables)
+	 * vmalloc uses GFP_KERNEL for some internal allocations (e.g page tables)
 	 * so the given set of flags has to be compatible.
 	 */
-	अगर ((flags & GFP_KERNEL) != GFP_KERNEL)
-		वापस kदो_स्मृति_node(size, flags, node);
+	if ((flags & GFP_KERNEL) != GFP_KERNEL)
+		return kmalloc_node(size, flags, node);
 
 	/*
 	 * We want to attempt a large physically contiguous block first because
-	 * it is less likely to fragment multiple larger blocks and thereक्रमe
-	 * contribute to a दीर्घ term fragmentation less than vदो_स्मृति fallback.
+	 * it is less likely to fragment multiple larger blocks and therefore
+	 * contribute to a long term fragmentation less than vmalloc fallback.
 	 * However make sure that larger requests are not too disruptive - no
-	 * OOM समाप्तer and no allocation failure warnings as we have a fallback.
+	 * OOM killer and no allocation failure warnings as we have a fallback.
 	 */
-	अगर (size > PAGE_SIZE) अणु
-		kदो_स्मृति_flags |= __GFP_NOWARN;
+	if (size > PAGE_SIZE) {
+		kmalloc_flags |= __GFP_NOWARN;
 
-		अगर (!(kदो_स्मृति_flags & __GFP_RETRY_MAYFAIL))
-			kदो_स्मृति_flags |= __GFP_NORETRY;
-	पूर्ण
+		if (!(kmalloc_flags & __GFP_RETRY_MAYFAIL))
+			kmalloc_flags |= __GFP_NORETRY;
+	}
 
-	ret = kदो_स्मृति_node(size, kदो_स्मृति_flags, node);
+	ret = kmalloc_node(size, kmalloc_flags, node);
 
 	/*
-	 * It करोesn't really make sense to fallback to vदो_स्मृति क्रम sub page
+	 * It doesn't really make sense to fallback to vmalloc for sub page
 	 * requests
 	 */
-	अगर (ret || size <= PAGE_SIZE)
-		वापस ret;
+	if (ret || size <= PAGE_SIZE)
+		return ret;
 
-	वापस __vदो_स्मृति_node(size, 1, flags, node,
-			__builtin_वापस_address(0));
-पूर्ण
-EXPORT_SYMBOL(kvदो_स्मृति_node);
+	return __vmalloc_node(size, 1, flags, node,
+			__builtin_return_address(0));
+}
+EXPORT_SYMBOL(kvmalloc_node);
 
 /**
- * kvमुक्त() - Free memory.
- * @addr: Poपूर्णांकer to allocated memory.
+ * kvfree() - Free memory.
+ * @addr: Pointer to allocated memory.
  *
- * kvमुक्त मुक्तs memory allocated by any of vदो_स्मृति(), kदो_स्मृति() or kvदो_स्मृति().
- * It is slightly more efficient to use kमुक्त() or vमुक्त() अगर you are certain
+ * kvfree frees memory allocated by any of vmalloc(), kmalloc() or kvmalloc().
+ * It is slightly more efficient to use kfree() or vfree() if you are certain
  * that you know which one to use.
  *
- * Context: Either preemptible task context or not-NMI पूर्णांकerrupt.
+ * Context: Either preemptible task context or not-NMI interrupt.
  */
-व्योम kvमुक्त(स्थिर व्योम *addr)
-अणु
-	अगर (is_vदो_स्मृति_addr(addr))
-		vमुक्त(addr);
-	अन्यथा
-		kमुक्त(addr);
-पूर्ण
-EXPORT_SYMBOL(kvमुक्त);
+void kvfree(const void *addr)
+{
+	if (is_vmalloc_addr(addr))
+		vfree(addr);
+	else
+		kfree(addr);
+}
+EXPORT_SYMBOL(kvfree);
 
 /**
- * kvमुक्त_sensitive - Free a data object containing sensitive inक्रमmation.
- * @addr: address of the data object to be मुक्तd.
+ * kvfree_sensitive - Free a data object containing sensitive information.
+ * @addr: address of the data object to be freed.
  * @len: length of the data object.
  *
  * Use the special memzero_explicit() function to clear the content of a
- * kvदो_स्मृति'ed object containing sensitive data to make sure that the
+ * kvmalloc'ed object containing sensitive data to make sure that the
  * compiler won't optimize out the data clearing.
  */
-व्योम kvमुक्त_sensitive(स्थिर व्योम *addr, माप_प्रकार len)
-अणु
-	अगर (likely(!ZERO_OR_शून्य_PTR(addr))) अणु
-		memzero_explicit((व्योम *)addr, len);
-		kvमुक्त(addr);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(kvमुक्त_sensitive);
+void kvfree_sensitive(const void *addr, size_t len)
+{
+	if (likely(!ZERO_OR_NULL_PTR(addr))) {
+		memzero_explicit((void *)addr, len);
+		kvfree(addr);
+	}
+}
+EXPORT_SYMBOL(kvfree_sensitive);
 
-अटल अंतरभूत व्योम *__page_rmapping(काष्ठा page *page)
-अणु
-	अचिन्हित दीर्घ mapping;
+static inline void *__page_rmapping(struct page *page)
+{
+	unsigned long mapping;
 
-	mapping = (अचिन्हित दीर्घ)page->mapping;
+	mapping = (unsigned long)page->mapping;
 	mapping &= ~PAGE_MAPPING_FLAGS;
 
-	वापस (व्योम *)mapping;
-पूर्ण
+	return (void *)mapping;
+}
 
-/* Neutral page->mapping poपूर्णांकer to address_space or anon_vma or other */
-व्योम *page_rmapping(काष्ठा page *page)
-अणु
+/* Neutral page->mapping pointer to address_space or anon_vma or other */
+void *page_rmapping(struct page *page)
+{
 	page = compound_head(page);
-	वापस __page_rmapping(page);
-पूर्ण
+	return __page_rmapping(page);
+}
 
 /*
- * Return true अगर this page is mapped पूर्णांकo pagetables.
- * For compound page it वापसs true अगर any subpage of compound page is mapped.
+ * Return true if this page is mapped into pagetables.
+ * For compound page it returns true if any subpage of compound page is mapped.
  */
-bool page_mapped(काष्ठा page *page)
-अणु
-	पूर्णांक i;
+bool page_mapped(struct page *page)
+{
+	int i;
 
-	अगर (likely(!PageCompound(page)))
-		वापस atomic_पढ़ो(&page->_mapcount) >= 0;
+	if (likely(!PageCompound(page)))
+		return atomic_read(&page->_mapcount) >= 0;
 	page = compound_head(page);
-	अगर (atomic_पढ़ो(compound_mapcount_ptr(page)) >= 0)
-		वापस true;
-	अगर (PageHuge(page))
-		वापस false;
-	क्रम (i = 0; i < compound_nr(page); i++) अणु
-		अगर (atomic_पढ़ो(&page[i]._mapcount) >= 0)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	if (atomic_read(compound_mapcount_ptr(page)) >= 0)
+		return true;
+	if (PageHuge(page))
+		return false;
+	for (i = 0; i < compound_nr(page); i++) {
+		if (atomic_read(&page[i]._mapcount) >= 0)
+			return true;
+	}
+	return false;
+}
 EXPORT_SYMBOL(page_mapped);
 
-काष्ठा anon_vma *page_anon_vma(काष्ठा page *page)
-अणु
-	अचिन्हित दीर्घ mapping;
+struct anon_vma *page_anon_vma(struct page *page)
+{
+	unsigned long mapping;
 
 	page = compound_head(page);
-	mapping = (अचिन्हित दीर्घ)page->mapping;
-	अगर ((mapping & PAGE_MAPPING_FLAGS) != PAGE_MAPPING_ANON)
-		वापस शून्य;
-	वापस __page_rmapping(page);
-पूर्ण
+	mapping = (unsigned long)page->mapping;
+	if ((mapping & PAGE_MAPPING_FLAGS) != PAGE_MAPPING_ANON)
+		return NULL;
+	return __page_rmapping(page);
+}
 
-काष्ठा address_space *page_mapping(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping;
+struct address_space *page_mapping(struct page *page)
+{
+	struct address_space *mapping;
 
 	page = compound_head(page);
 
-	/* This happens अगर someone calls flush_dcache_page on slab page */
-	अगर (unlikely(PageSlab(page)))
-		वापस शून्य;
+	/* This happens if someone calls flush_dcache_page on slab page */
+	if (unlikely(PageSlab(page)))
+		return NULL;
 
-	अगर (unlikely(PageSwapCache(page))) अणु
+	if (unlikely(PageSwapCache(page))) {
 		swp_entry_t entry;
 
-		entry.val = page_निजी(page);
-		वापस swap_address_space(entry);
-	पूर्ण
+		entry.val = page_private(page);
+		return swap_address_space(entry);
+	}
 
 	mapping = page->mapping;
-	अगर ((अचिन्हित दीर्घ)mapping & PAGE_MAPPING_ANON)
-		वापस शून्य;
+	if ((unsigned long)mapping & PAGE_MAPPING_ANON)
+		return NULL;
 
-	वापस (व्योम *)((अचिन्हित दीर्घ)mapping & ~PAGE_MAPPING_FLAGS);
-पूर्ण
+	return (void *)((unsigned long)mapping & ~PAGE_MAPPING_FLAGS);
+}
 EXPORT_SYMBOL(page_mapping);
 
-/* Slow path of page_mapcount() क्रम compound pages */
-पूर्णांक __page_mapcount(काष्ठा page *page)
-अणु
-	पूर्णांक ret;
+/* Slow path of page_mapcount() for compound pages */
+int __page_mapcount(struct page *page)
+{
+	int ret;
 
-	ret = atomic_पढ़ो(&page->_mapcount) + 1;
+	ret = atomic_read(&page->_mapcount) + 1;
 	/*
 	 * For file THP page->_mapcount contains total number of mapping
-	 * of the page: no need to look पूर्णांकo compound_mapcount.
+	 * of the page: no need to look into compound_mapcount.
 	 */
-	अगर (!PageAnon(page) && !PageHuge(page))
-		वापस ret;
+	if (!PageAnon(page) && !PageHuge(page))
+		return ret;
 	page = compound_head(page);
-	ret += atomic_पढ़ो(compound_mapcount_ptr(page)) + 1;
-	अगर (PageDoubleMap(page))
+	ret += atomic_read(compound_mapcount_ptr(page)) + 1;
+	if (PageDoubleMap(page))
 		ret--;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__page_mapcount);
 
-पूर्णांक sysctl_overcommit_memory __पढ़ो_mostly = OVERCOMMIT_GUESS;
-पूर्णांक sysctl_overcommit_ratio __पढ़ो_mostly = 50;
-अचिन्हित दीर्घ sysctl_overcommit_kbytes __पढ़ो_mostly;
-पूर्णांक sysctl_max_map_count __पढ़ो_mostly = DEFAULT_MAX_MAP_COUNT;
-अचिन्हित दीर्घ sysctl_user_reserve_kbytes __पढ़ो_mostly = 1UL << 17; /* 128MB */
-अचिन्हित दीर्घ sysctl_admin_reserve_kbytes __पढ़ो_mostly = 1UL << 13; /* 8MB */
+int sysctl_overcommit_memory __read_mostly = OVERCOMMIT_GUESS;
+int sysctl_overcommit_ratio __read_mostly = 50;
+unsigned long sysctl_overcommit_kbytes __read_mostly;
+int sysctl_max_map_count __read_mostly = DEFAULT_MAX_MAP_COUNT;
+unsigned long sysctl_user_reserve_kbytes __read_mostly = 1UL << 17; /* 128MB */
+unsigned long sysctl_admin_reserve_kbytes __read_mostly = 1UL << 13; /* 8MB */
 
-पूर्णांक overcommit_ratio_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
-		माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret;
+int overcommit_ratio_handler(struct ctl_table *table, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	int ret;
 
-	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
-	अगर (ret == 0 && ग_लिखो)
+	ret = proc_dointvec(table, write, buffer, lenp, ppos);
+	if (ret == 0 && write)
 		sysctl_overcommit_kbytes = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sync_overcommit_as(काष्ठा work_काष्ठा *dummy)
-अणु
+static void sync_overcommit_as(struct work_struct *dummy)
+{
 	percpu_counter_sync(&vm_committed_as);
-पूर्ण
+}
 
-पूर्णांक overcommit_policy_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
-		माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	काष्ठा ctl_table t;
-	पूर्णांक new_policy;
-	पूर्णांक ret;
+int overcommit_policy_handler(struct ctl_table *table, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	struct ctl_table t;
+	int new_policy;
+	int ret;
 
 	/*
 	 * The deviation of sync_overcommit_as could be big with loose policy
 	 * like OVERCOMMIT_ALWAYS/OVERCOMMIT_GUESS. When changing policy to
 	 * strict OVERCOMMIT_NEVER, we need to reduce the deviation to comply
-	 * with the strict "NEVER", and to aव्योम possible race condition (even
-	 * though user usually won't too frequently करो the चयनing to policy
-	 * OVERCOMMIT_NEVER), the चयन is करोne in the following order:
+	 * with the strict "NEVER", and to avoid possible race condition (even
+	 * though user usually won't too frequently do the switching to policy
+	 * OVERCOMMIT_NEVER), the switch is done in the following order:
 	 *	1. changing the batch
 	 *	2. sync percpu count on each CPU
-	 *	3. चयन the policy
+	 *	3. switch the policy
 	 */
-	अगर (ग_लिखो) अणु
+	if (write) {
 		t = *table;
 		t.data = &new_policy;
-		ret = proc_करोपूर्णांकvec_minmax(&t, ग_लिखो, buffer, lenp, ppos);
-		अगर (ret)
-			वापस ret;
+		ret = proc_dointvec_minmax(&t, write, buffer, lenp, ppos);
+		if (ret)
+			return ret;
 
 		mm_compute_batch(new_policy);
-		अगर (new_policy == OVERCOMMIT_NEVER)
+		if (new_policy == OVERCOMMIT_NEVER)
 			schedule_on_each_cpu(sync_overcommit_as);
 		sysctl_overcommit_memory = new_policy;
-	पूर्ण अन्यथा अणु
-		ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
-	पूर्ण
+	} else {
+		ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक overcommit_kbytes_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
-		माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	पूर्णांक ret;
+int overcommit_kbytes_handler(struct ctl_table *table, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	int ret;
 
-	ret = proc_करोuदीर्घvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
-	अगर (ret == 0 && ग_लिखो)
+	ret = proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
+	if (ret == 0 && write)
 		sysctl_overcommit_ratio = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Committed memory limit enक्रमced when OVERCOMMIT_NEVER policy is used
+ * Committed memory limit enforced when OVERCOMMIT_NEVER policy is used
  */
-अचिन्हित दीर्घ vm_commit_limit(व्योम)
-अणु
-	अचिन्हित दीर्घ allowed;
+unsigned long vm_commit_limit(void)
+{
+	unsigned long allowed;
 
-	अगर (sysctl_overcommit_kbytes)
+	if (sysctl_overcommit_kbytes)
 		allowed = sysctl_overcommit_kbytes >> (PAGE_SHIFT - 10);
-	अन्यथा
+	else
 		allowed = ((totalram_pages() - hugetlb_total_pages())
 			   * sysctl_overcommit_ratio / 100);
 	allowed += total_swap_pages;
 
-	वापस allowed;
-पूर्ण
+	return allowed;
+}
 
 /*
  * Make sure vm_committed_as in one cacheline and not cacheline shared with
  * other variables. It can be updated by several CPUs frequently.
  */
-काष्ठा percpu_counter vm_committed_as ____cacheline_aligned_in_smp;
+struct percpu_counter vm_committed_as ____cacheline_aligned_in_smp;
 
 /*
- * The global memory commiपंचांगent made in the प्रणाली can be a metric
+ * The global memory commitment made in the system can be a metric
  * that can be used to drive ballooning decisions when Linux is hosted
- * as a guest. On Hyper-V, the host implements a policy engine क्रम dynamically
- * balancing memory across competing भव machines that are hosted.
+ * as a guest. On Hyper-V, the host implements a policy engine for dynamically
+ * balancing memory across competing virtual machines that are hosted.
  * Several metrics drive this policy engine including the guest reported
- * memory commiपंचांगent.
+ * memory commitment.
  *
- * The समय cost of this is very low क्रम small platक्रमms, and क्रम big
- * platक्रमm like a 2S/36C/72T Skylake server, in worst हाल where
- * vm_committed_as's spinlock is under severe contention, the समय cost
+ * The time cost of this is very low for small platforms, and for big
+ * platform like a 2S/36C/72T Skylake server, in worst case where
+ * vm_committed_as's spinlock is under severe contention, the time cost
  * could be about 30~40 microseconds.
  */
-अचिन्हित दीर्घ vm_memory_committed(व्योम)
-अणु
-	वापस percpu_counter_sum_positive(&vm_committed_as);
-पूर्ण
+unsigned long vm_memory_committed(void)
+{
+	return percpu_counter_sum_positive(&vm_committed_as);
+}
 EXPORT_SYMBOL_GPL(vm_memory_committed);
 
 /*
- * Check that a process has enough memory to allocate a new भव
- * mapping. 0 means there is enough memory क्रम the allocation to
+ * Check that a process has enough memory to allocate a new virtual
+ * mapping. 0 means there is enough memory for the allocation to
  * succeed and -ENOMEM implies there is not.
  *
  * We currently support three overcommit policies, which are set via the
@@ -855,52 +854,52 @@ EXPORT_SYMBOL_GPL(vm_memory_committed);
  * Strict overcommit modes added 2002 Feb 26 by Alan Cox.
  * Additional code 2002 Jul 20 by Robert Love.
  *
- * cap_sys_admin is 1 अगर the process has admin privileges, 0 otherwise.
+ * cap_sys_admin is 1 if the process has admin privileges, 0 otherwise.
  *
- * Note this is a helper function पूर्णांकended to be used by LSMs which
+ * Note this is a helper function intended to be used by LSMs which
  * wish to use this logic.
  */
-पूर्णांक __vm_enough_memory(काष्ठा mm_काष्ठा *mm, दीर्घ pages, पूर्णांक cap_sys_admin)
-अणु
-	दीर्घ allowed;
+int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
+{
+	long allowed;
 
 	vm_acct_memory(pages);
 
 	/*
-	 * Someबार we want to use more memory than we have
+	 * Sometimes we want to use more memory than we have
 	 */
-	अगर (sysctl_overcommit_memory == OVERCOMMIT_ALWAYS)
-		वापस 0;
+	if (sysctl_overcommit_memory == OVERCOMMIT_ALWAYS)
+		return 0;
 
-	अगर (sysctl_overcommit_memory == OVERCOMMIT_GUESS) अणु
-		अगर (pages > totalram_pages() + total_swap_pages)
-			जाओ error;
-		वापस 0;
-	पूर्ण
+	if (sysctl_overcommit_memory == OVERCOMMIT_GUESS) {
+		if (pages > totalram_pages() + total_swap_pages)
+			goto error;
+		return 0;
+	}
 
 	allowed = vm_commit_limit();
 	/*
-	 * Reserve some क्रम root
+	 * Reserve some for root
 	 */
-	अगर (!cap_sys_admin)
+	if (!cap_sys_admin)
 		allowed -= sysctl_admin_reserve_kbytes >> (PAGE_SHIFT - 10);
 
 	/*
 	 * Don't let a single process grow so big a user can't recover
 	 */
-	अगर (mm) अणु
-		दीर्घ reserve = sysctl_user_reserve_kbytes >> (PAGE_SHIFT - 10);
+	if (mm) {
+		long reserve = sysctl_user_reserve_kbytes >> (PAGE_SHIFT - 10);
 
-		allowed -= min_t(दीर्घ, mm->total_vm / 32, reserve);
-	पूर्ण
+		allowed -= min_t(long, mm->total_vm / 32, reserve);
+	}
 
-	अगर (percpu_counter_पढ़ो_positive(&vm_committed_as) < allowed)
-		वापस 0;
+	if (percpu_counter_read_positive(&vm_committed_as) < allowed)
+		return 0;
 error:
 	vm_unacct_memory(pages);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
  * get_cmdline() - copy the cmdline value to a buffer.
@@ -909,19 +908,19 @@ error:
  * @buflen:   the length of the buffer. Larger cmdline values are truncated
  *            to this length.
  *
- * Return: the size of the cmdline field copied. Note that the copy करोes
- * not guarantee an ending शून्य byte.
+ * Return: the size of the cmdline field copied. Note that the copy does
+ * not guarantee an ending NULL byte.
  */
-पूर्णांक get_cmdline(काष्ठा task_काष्ठा *task, अक्षर *buffer, पूर्णांक buflen)
-अणु
-	पूर्णांक res = 0;
-	अचिन्हित पूर्णांक len;
-	काष्ठा mm_काष्ठा *mm = get_task_mm(task);
-	अचिन्हित दीर्घ arg_start, arg_end, env_start, env_end;
-	अगर (!mm)
-		जाओ out;
-	अगर (!mm->arg_end)
-		जाओ out_mm;	/* Shh! No looking beक्रमe we're करोne */
+int get_cmdline(struct task_struct *task, char *buffer, int buflen)
+{
+	int res = 0;
+	unsigned int len;
+	struct mm_struct *mm = get_task_mm(task);
+	unsigned long arg_start, arg_end, env_start, env_end;
+	if (!mm)
+		goto out;
+	if (!mm->arg_end)
+		goto out_mm;	/* Shh! No looking before we're done */
 
 	spin_lock(&mm->arg_lock);
 	arg_start = mm->arg_start;
@@ -932,7 +931,7 @@ error:
 
 	len = arg_end - arg_start;
 
-	अगर (len > buflen)
+	if (len > buflen)
 		len = buflen;
 
 	res = access_process_vm(task, arg_start, buffer, len, FOLL_FORCE);
@@ -941,73 +940,73 @@ error:
 	 * If the nul at the end of args has been overwritten, then
 	 * assume application is using setproctitle(3).
 	 */
-	अगर (res > 0 && buffer[res-1] != '\0' && len < buflen) अणु
+	if (res > 0 && buffer[res-1] != '\0' && len < buflen) {
 		len = strnlen(buffer, res);
-		अगर (len < res) अणु
+		if (len < res) {
 			res = len;
-		पूर्ण अन्यथा अणु
+		} else {
 			len = env_end - env_start;
-			अगर (len > buflen - res)
+			if (len > buflen - res)
 				len = buflen - res;
 			res += access_process_vm(task, env_start,
 						 buffer+res, len,
 						 FOLL_FORCE);
 			res = strnlen(buffer, res);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out_mm:
 	mmput(mm);
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक __weak स_भेद_pages(काष्ठा page *page1, काष्ठा page *page2)
-अणु
-	अक्षर *addr1, *addr2;
-	पूर्णांक ret;
+int __weak memcmp_pages(struct page *page1, struct page *page2)
+{
+	char *addr1, *addr2;
+	int ret;
 
 	addr1 = kmap_atomic(page1);
 	addr2 = kmap_atomic(page2);
-	ret = स_भेद(addr1, addr2, PAGE_SIZE);
+	ret = memcmp(addr1, addr2, PAGE_SIZE);
 	kunmap_atomic(addr2);
 	kunmap_atomic(addr1);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PRINTK
+#ifdef CONFIG_PRINTK
 /**
- * mem_dump_obj - Prपूर्णांक available provenance inक्रमmation
- * @object: object क्रम which to find provenance inक्रमmation.
+ * mem_dump_obj - Print available provenance information
+ * @object: object for which to find provenance information.
  *
  * This function uses pr_cont(), so that the caller is expected to have
- * prपूर्णांकed out whatever preamble is appropriate.  The provenance inक्रमmation
+ * printed out whatever preamble is appropriate.  The provenance information
  * depends on the type of object and on how much debugging is enabled.
- * For example, क्रम a slab-cache object, the slab name is prपूर्णांकed, and,
- * अगर available, the वापस address and stack trace from the allocation
+ * For example, for a slab-cache object, the slab name is printed, and,
+ * if available, the return address and stack trace from the allocation
  * of that object.
  */
-व्योम mem_dump_obj(व्योम *object)
-अणु
-	स्थिर अक्षर *type;
+void mem_dump_obj(void *object)
+{
+	const char *type;
 
-	अगर (kmem_valid_obj(object)) अणु
+	if (kmem_valid_obj(object)) {
 		kmem_dump_obj(object);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (vदो_स्मृति_dump_obj(object))
-		वापस;
+	if (vmalloc_dump_obj(object))
+		return;
 
-	अगर (virt_addr_valid(object))
+	if (virt_addr_valid(object))
 		type = "non-slab/vmalloc memory";
-	अन्यथा अगर (object == शून्य)
+	else if (object == NULL)
 		type = "NULL pointer";
-	अन्यथा अगर (object == ZERO_SIZE_PTR)
+	else if (object == ZERO_SIZE_PTR)
 		type = "zero-size pointer";
-	अन्यथा
+	else
 		type = "non-paged memory";
 
 	pr_cont(" %s\n", type);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mem_dump_obj);
-#पूर्ण_अगर
+#endif

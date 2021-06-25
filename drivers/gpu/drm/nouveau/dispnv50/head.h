@@ -1,98 +1,97 @@
-<शैली गुरु>
-#अगर_अघोषित __NV50_KMS_HEAD_H__
-#घोषणा __NV50_KMS_HEAD_H__
-#घोषणा nv50_head(c) container_of((c), काष्ठा nv50_head, base.base)
-#समावेश <linux/workqueue.h>
+#ifndef __NV50_KMS_HEAD_H__
+#define __NV50_KMS_HEAD_H__
+#define nv50_head(c) container_of((c), struct nv50_head, base.base)
+#include <linux/workqueue.h>
 
-#समावेश "disp.h"
-#समावेश "atom.h"
-#समावेश "crc.h"
-#समावेश "lut.h"
+#include "disp.h"
+#include "atom.h"
+#include "crc.h"
+#include "lut.h"
 
-#समावेश "nouveau_crtc.h"
-#समावेश "nouveau_encoder.h"
+#include "nouveau_crtc.h"
+#include "nouveau_encoder.h"
 
-काष्ठा nv50_head अणु
-	स्थिर काष्ठा nv50_head_func *func;
-	काष्ठा nouveau_crtc base;
-	काष्ठा nv50_crc crc;
-	काष्ठा nv50_lut olut;
-	काष्ठा nv50_msto *msto;
-पूर्ण;
+struct nv50_head {
+	const struct nv50_head_func *func;
+	struct nouveau_crtc base;
+	struct nv50_crc crc;
+	struct nv50_lut olut;
+	struct nv50_msto *msto;
+};
 
-काष्ठा nv50_head *nv50_head_create(काष्ठा drm_device *, पूर्णांक index);
-व्योम nv50_head_flush_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh);
-व्योम nv50_head_flush_clr(काष्ठा nv50_head *head,
-			 काष्ठा nv50_head_atom *asyh, bool flush);
+struct nv50_head *nv50_head_create(struct drm_device *, int index);
+void nv50_head_flush_set(struct nv50_head *head, struct nv50_head_atom *asyh);
+void nv50_head_flush_clr(struct nv50_head *head,
+			 struct nv50_head_atom *asyh, bool flush);
 
-काष्ठा nv50_head_func अणु
-	पूर्णांक (*view)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*mode)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	bool (*olut)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *, पूर्णांक);
+struct nv50_head_func {
+	int (*view)(struct nv50_head *, struct nv50_head_atom *);
+	int (*mode)(struct nv50_head *, struct nv50_head_atom *);
+	bool (*olut)(struct nv50_head *, struct nv50_head_atom *, int);
 	bool olut_identity;
-	पूर्णांक  olut_size;
-	पूर्णांक (*olut_set)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*olut_clr)(काष्ठा nv50_head *);
-	व्योम (*core_calc)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*core_set)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*core_clr)(काष्ठा nv50_head *);
-	पूर्णांक (*curs_layout)(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			   काष्ठा nv50_head_atom *);
-	पूर्णांक (*curs_क्रमmat)(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			   काष्ठा nv50_head_atom *);
-	पूर्णांक (*curs_set)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*curs_clr)(काष्ठा nv50_head *);
-	पूर्णांक (*base)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*ovly)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*dither)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*procamp)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	पूर्णांक (*or)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-	व्योम (*अटल_wndw_map)(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्ण;
+	int  olut_size;
+	int (*olut_set)(struct nv50_head *, struct nv50_head_atom *);
+	int (*olut_clr)(struct nv50_head *);
+	void (*core_calc)(struct nv50_head *, struct nv50_head_atom *);
+	int (*core_set)(struct nv50_head *, struct nv50_head_atom *);
+	int (*core_clr)(struct nv50_head *);
+	int (*curs_layout)(struct nv50_head *, struct nv50_wndw_atom *,
+			   struct nv50_head_atom *);
+	int (*curs_format)(struct nv50_head *, struct nv50_wndw_atom *,
+			   struct nv50_head_atom *);
+	int (*curs_set)(struct nv50_head *, struct nv50_head_atom *);
+	int (*curs_clr)(struct nv50_head *);
+	int (*base)(struct nv50_head *, struct nv50_head_atom *);
+	int (*ovly)(struct nv50_head *, struct nv50_head_atom *);
+	int (*dither)(struct nv50_head *, struct nv50_head_atom *);
+	int (*procamp)(struct nv50_head *, struct nv50_head_atom *);
+	int (*or)(struct nv50_head *, struct nv50_head_atom *);
+	void (*static_wndw_map)(struct nv50_head *, struct nv50_head_atom *);
+};
 
-बाह्य स्थिर काष्ठा nv50_head_func head507d;
-पूर्णांक head507d_view(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head507d_mode(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-bool head507d_olut(काष्ठा nv50_head *, काष्ठा nv50_head_atom *, पूर्णांक);
-व्योम head507d_core_calc(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head507d_core_clr(काष्ठा nv50_head *);
-पूर्णांक head507d_curs_layout(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			 काष्ठा nv50_head_atom *);
-पूर्णांक head507d_curs_क्रमmat(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			 काष्ठा nv50_head_atom *);
-पूर्णांक head507d_base(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head507d_ovly(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head507d_dither(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head507d_procamp(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
+extern const struct nv50_head_func head507d;
+int head507d_view(struct nv50_head *, struct nv50_head_atom *);
+int head507d_mode(struct nv50_head *, struct nv50_head_atom *);
+bool head507d_olut(struct nv50_head *, struct nv50_head_atom *, int);
+void head507d_core_calc(struct nv50_head *, struct nv50_head_atom *);
+int head507d_core_clr(struct nv50_head *);
+int head507d_curs_layout(struct nv50_head *, struct nv50_wndw_atom *,
+			 struct nv50_head_atom *);
+int head507d_curs_format(struct nv50_head *, struct nv50_wndw_atom *,
+			 struct nv50_head_atom *);
+int head507d_base(struct nv50_head *, struct nv50_head_atom *);
+int head507d_ovly(struct nv50_head *, struct nv50_head_atom *);
+int head507d_dither(struct nv50_head *, struct nv50_head_atom *);
+int head507d_procamp(struct nv50_head *, struct nv50_head_atom *);
 
-बाह्य स्थिर काष्ठा nv50_head_func head827d;
+extern const struct nv50_head_func head827d;
 
-बाह्य स्थिर काष्ठा nv50_head_func head907d;
-पूर्णांक head907d_view(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_mode(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-bool head907d_olut(काष्ठा nv50_head *, काष्ठा nv50_head_atom *, पूर्णांक);
-पूर्णांक head907d_olut_set(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_olut_clr(काष्ठा nv50_head *);
-पूर्णांक head907d_core_set(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_core_clr(काष्ठा nv50_head *);
-पूर्णांक head907d_curs_set(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_curs_clr(काष्ठा nv50_head *);
-पूर्णांक head907d_ovly(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_procamp(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक head907d_or(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
+extern const struct nv50_head_func head907d;
+int head907d_view(struct nv50_head *, struct nv50_head_atom *);
+int head907d_mode(struct nv50_head *, struct nv50_head_atom *);
+bool head907d_olut(struct nv50_head *, struct nv50_head_atom *, int);
+int head907d_olut_set(struct nv50_head *, struct nv50_head_atom *);
+int head907d_olut_clr(struct nv50_head *);
+int head907d_core_set(struct nv50_head *, struct nv50_head_atom *);
+int head907d_core_clr(struct nv50_head *);
+int head907d_curs_set(struct nv50_head *, struct nv50_head_atom *);
+int head907d_curs_clr(struct nv50_head *);
+int head907d_ovly(struct nv50_head *, struct nv50_head_atom *);
+int head907d_procamp(struct nv50_head *, struct nv50_head_atom *);
+int head907d_or(struct nv50_head *, struct nv50_head_atom *);
 
-बाह्य स्थिर काष्ठा nv50_head_func head917d;
-पूर्णांक head917d_curs_layout(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			 काष्ठा nv50_head_atom *);
+extern const struct nv50_head_func head917d;
+int head917d_curs_layout(struct nv50_head *, struct nv50_wndw_atom *,
+			 struct nv50_head_atom *);
 
-बाह्य स्थिर काष्ठा nv50_head_func headc37d;
-पूर्णांक headc37d_view(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक headc37d_curs_क्रमmat(काष्ठा nv50_head *, काष्ठा nv50_wndw_atom *,
-			 काष्ठा nv50_head_atom *);
-पूर्णांक headc37d_curs_set(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-पूर्णांक headc37d_curs_clr(काष्ठा nv50_head *);
-पूर्णांक headc37d_dither(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
-व्योम headc37d_अटल_wndw_map(काष्ठा nv50_head *, काष्ठा nv50_head_atom *);
+extern const struct nv50_head_func headc37d;
+int headc37d_view(struct nv50_head *, struct nv50_head_atom *);
+int headc37d_curs_format(struct nv50_head *, struct nv50_wndw_atom *,
+			 struct nv50_head_atom *);
+int headc37d_curs_set(struct nv50_head *, struct nv50_head_atom *);
+int headc37d_curs_clr(struct nv50_head *);
+int headc37d_dither(struct nv50_head *, struct nv50_head_atom *);
+void headc37d_static_wndw_map(struct nv50_head *, struct nv50_head_atom *);
 
-बाह्य स्थिर काष्ठा nv50_head_func headc57d;
-#पूर्ण_अगर
+extern const struct nv50_head_func headc57d;
+#endif

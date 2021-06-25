@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -26,184 +25,184 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#अगर_अघोषित __RADEON_OBJECT_H__
-#घोषणा __RADEON_OBJECT_H__
+#ifndef __RADEON_OBJECT_H__
+#define __RADEON_OBJECT_H__
 
-#समावेश <drm/radeon_drm.h>
-#समावेश "radeon.h"
+#include <drm/radeon_drm.h>
+#include "radeon.h"
 
 /**
- * radeon_mem_type_to_करोमुख्य - वापस करोमुख्य corresponding to mem_type
- * @mem_type:	tपंचांग memory type
+ * radeon_mem_type_to_domain - return domain corresponding to mem_type
+ * @mem_type:	ttm memory type
  *
- * Returns corresponding करोमुख्य of the tपंचांग mem_type
+ * Returns corresponding domain of the ttm mem_type
  */
-अटल अंतरभूत अचिन्हित radeon_mem_type_to_करोमुख्य(u32 mem_type)
-अणु
-	चयन (mem_type) अणु
-	हाल TTM_PL_VRAM:
-		वापस RADEON_GEM_DOMAIN_VRAM;
-	हाल TTM_PL_TT:
-		वापस RADEON_GEM_DOMAIN_GTT;
-	हाल TTM_PL_SYSTEM:
-		वापस RADEON_GEM_DOMAIN_CPU;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline unsigned radeon_mem_type_to_domain(u32 mem_type)
+{
+	switch (mem_type) {
+	case TTM_PL_VRAM:
+		return RADEON_GEM_DOMAIN_VRAM;
+	case TTM_PL_TT:
+		return RADEON_GEM_DOMAIN_GTT;
+	case TTM_PL_SYSTEM:
+		return RADEON_GEM_DOMAIN_CPU;
+	default:
+		break;
+	}
+	return 0;
+}
 
 /**
  * radeon_bo_reserve - reserve bo
- * @bo:		bo काष्ठाure
- * @no_पूर्णांकr:	करोn't वापस -ERESTARTSYS on pending संकेत
+ * @bo:		bo structure
+ * @no_intr:	don't return -ERESTARTSYS on pending signal
  *
  * Returns:
- * -ERESTARTSYS: A रुको क्रम the buffer to become unreserved was पूर्णांकerrupted by
- * a संकेत. Release all buffer reservations and वापस to user-space.
+ * -ERESTARTSYS: A wait for the buffer to become unreserved was interrupted by
+ * a signal. Release all buffer reservations and return to user-space.
  */
-अटल अंतरभूत पूर्णांक radeon_bo_reserve(काष्ठा radeon_bo *bo, bool no_पूर्णांकr)
-अणु
-	पूर्णांक r;
+static inline int radeon_bo_reserve(struct radeon_bo *bo, bool no_intr)
+{
+	int r;
 
-	r = tपंचांग_bo_reserve(&bo->tbo, !no_पूर्णांकr, false, शून्य);
-	अगर (unlikely(r != 0)) अणु
-		अगर (r != -ERESTARTSYS)
+	r = ttm_bo_reserve(&bo->tbo, !no_intr, false, NULL);
+	if (unlikely(r != 0)) {
+		if (r != -ERESTARTSYS)
 			dev_err(bo->rdev->dev, "%p reserve failed\n", bo);
-		वापस r;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return r;
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम radeon_bo_unreserve(काष्ठा radeon_bo *bo)
-अणु
-	tपंचांग_bo_unreserve(&bo->tbo);
-पूर्ण
+static inline void radeon_bo_unreserve(struct radeon_bo *bo)
+{
+	ttm_bo_unreserve(&bo->tbo);
+}
 
 /**
- * radeon_bo_gpu_offset - वापस GPU offset of bo
- * @bo:	radeon object क्रम which we query the offset
+ * radeon_bo_gpu_offset - return GPU offset of bo
+ * @bo:	radeon object for which we query the offset
  *
  * Returns current GPU offset of the object.
  *
  * Note: object should either be pinned or reserved when calling this
- * function, it might be useful to add check क्रम this क्रम debugging.
+ * function, it might be useful to add check for this for debugging.
  */
-अटल अंतरभूत u64 radeon_bo_gpu_offset(काष्ठा radeon_bo *bo)
-अणु
-	काष्ठा radeon_device *rdev;
+static inline u64 radeon_bo_gpu_offset(struct radeon_bo *bo)
+{
+	struct radeon_device *rdev;
 	u64 start = 0;
 
 	rdev = radeon_get_rdev(bo->tbo.bdev);
 
-	चयन (bo->tbo.mem.mem_type) अणु
-	हाल TTM_PL_TT:
+	switch (bo->tbo.mem.mem_type) {
+	case TTM_PL_TT:
 		start = rdev->mc.gtt_start;
-		अवरोध;
-	हाल TTM_PL_VRAM:
+		break;
+	case TTM_PL_VRAM:
 		start = rdev->mc.vram_start;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस (bo->tbo.mem.start << PAGE_SHIFT) + start;
-पूर्ण
+	return (bo->tbo.mem.start << PAGE_SHIFT) + start;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ radeon_bo_size(काष्ठा radeon_bo *bo)
-अणु
-	वापस bo->tbo.base.size;
-पूर्ण
+static inline unsigned long radeon_bo_size(struct radeon_bo *bo)
+{
+	return bo->tbo.base.size;
+}
 
-अटल अंतरभूत अचिन्हित radeon_bo_ngpu_pages(काष्ठा radeon_bo *bo)
-अणु
-	वापस bo->tbo.base.size / RADEON_GPU_PAGE_SIZE;
-पूर्ण
+static inline unsigned radeon_bo_ngpu_pages(struct radeon_bo *bo)
+{
+	return bo->tbo.base.size / RADEON_GPU_PAGE_SIZE;
+}
 
-अटल अंतरभूत अचिन्हित radeon_bo_gpu_page_alignment(काष्ठा radeon_bo *bo)
-अणु
-	वापस (bo->tbo.mem.page_alignment << PAGE_SHIFT) / RADEON_GPU_PAGE_SIZE;
-पूर्ण
+static inline unsigned radeon_bo_gpu_page_alignment(struct radeon_bo *bo)
+{
+	return (bo->tbo.mem.page_alignment << PAGE_SHIFT) / RADEON_GPU_PAGE_SIZE;
+}
 
 /**
- * radeon_bo_mmap_offset - वापस mmap offset of bo
- * @bo:	radeon object क्रम which we query the offset
+ * radeon_bo_mmap_offset - return mmap offset of bo
+ * @bo:	radeon object for which we query the offset
  *
  * Returns mmap offset of the object.
  */
-अटल अंतरभूत u64 radeon_bo_mmap_offset(काष्ठा radeon_bo *bo)
-अणु
-	वापस drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
-पूर्ण
+static inline u64 radeon_bo_mmap_offset(struct radeon_bo *bo)
+{
+	return drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
+}
 
-बाह्य पूर्णांक radeon_bo_create(काष्ठा radeon_device *rdev,
-			    अचिन्हित दीर्घ size, पूर्णांक byte_align,
-			    bool kernel, u32 करोमुख्य, u32 flags,
-			    काष्ठा sg_table *sg,
-			    काष्ठा dma_resv *resv,
-			    काष्ठा radeon_bo **bo_ptr);
-बाह्य पूर्णांक radeon_bo_kmap(काष्ठा radeon_bo *bo, व्योम **ptr);
-बाह्य व्योम radeon_bo_kunmap(काष्ठा radeon_bo *bo);
-बाह्य काष्ठा radeon_bo *radeon_bo_ref(काष्ठा radeon_bo *bo);
-बाह्य व्योम radeon_bo_unref(काष्ठा radeon_bo **bo);
-बाह्य पूर्णांक radeon_bo_pin(काष्ठा radeon_bo *bo, u32 करोमुख्य, u64 *gpu_addr);
-बाह्य पूर्णांक radeon_bo_pin_restricted(काष्ठा radeon_bo *bo, u32 करोमुख्य,
+extern int radeon_bo_create(struct radeon_device *rdev,
+			    unsigned long size, int byte_align,
+			    bool kernel, u32 domain, u32 flags,
+			    struct sg_table *sg,
+			    struct dma_resv *resv,
+			    struct radeon_bo **bo_ptr);
+extern int radeon_bo_kmap(struct radeon_bo *bo, void **ptr);
+extern void radeon_bo_kunmap(struct radeon_bo *bo);
+extern struct radeon_bo *radeon_bo_ref(struct radeon_bo *bo);
+extern void radeon_bo_unref(struct radeon_bo **bo);
+extern int radeon_bo_pin(struct radeon_bo *bo, u32 domain, u64 *gpu_addr);
+extern int radeon_bo_pin_restricted(struct radeon_bo *bo, u32 domain,
 				    u64 max_offset, u64 *gpu_addr);
-बाह्य व्योम radeon_bo_unpin(काष्ठा radeon_bo *bo);
-बाह्य पूर्णांक radeon_bo_evict_vram(काष्ठा radeon_device *rdev);
-बाह्य व्योम radeon_bo_क्रमce_delete(काष्ठा radeon_device *rdev);
-बाह्य पूर्णांक radeon_bo_init(काष्ठा radeon_device *rdev);
-बाह्य व्योम radeon_bo_fini(काष्ठा radeon_device *rdev);
-बाह्य पूर्णांक radeon_bo_list_validate(काष्ठा radeon_device *rdev,
-				   काष्ठा ww_acquire_ctx *ticket,
-				   काष्ठा list_head *head, पूर्णांक ring);
-बाह्य पूर्णांक radeon_bo_set_tiling_flags(काष्ठा radeon_bo *bo,
+extern void radeon_bo_unpin(struct radeon_bo *bo);
+extern int radeon_bo_evict_vram(struct radeon_device *rdev);
+extern void radeon_bo_force_delete(struct radeon_device *rdev);
+extern int radeon_bo_init(struct radeon_device *rdev);
+extern void radeon_bo_fini(struct radeon_device *rdev);
+extern int radeon_bo_list_validate(struct radeon_device *rdev,
+				   struct ww_acquire_ctx *ticket,
+				   struct list_head *head, int ring);
+extern int radeon_bo_set_tiling_flags(struct radeon_bo *bo,
 				u32 tiling_flags, u32 pitch);
-बाह्य व्योम radeon_bo_get_tiling_flags(काष्ठा radeon_bo *bo,
+extern void radeon_bo_get_tiling_flags(struct radeon_bo *bo,
 				u32 *tiling_flags, u32 *pitch);
-बाह्य पूर्णांक radeon_bo_check_tiling(काष्ठा radeon_bo *bo, bool has_moved,
-				bool क्रमce_drop);
-बाह्य व्योम radeon_bo_move_notअगरy(काष्ठा tपंचांग_buffer_object *bo,
+extern int radeon_bo_check_tiling(struct radeon_bo *bo, bool has_moved,
+				bool force_drop);
+extern void radeon_bo_move_notify(struct ttm_buffer_object *bo,
 				  bool evict,
-				  काष्ठा tपंचांग_resource *new_mem);
-बाह्य vm_fault_t radeon_bo_fault_reserve_notअगरy(काष्ठा tपंचांग_buffer_object *bo);
-बाह्य पूर्णांक radeon_bo_get_surface_reg(काष्ठा radeon_bo *bo);
-बाह्य व्योम radeon_bo_fence(काष्ठा radeon_bo *bo, काष्ठा radeon_fence *fence,
+				  struct ttm_resource *new_mem);
+extern vm_fault_t radeon_bo_fault_reserve_notify(struct ttm_buffer_object *bo);
+extern int radeon_bo_get_surface_reg(struct radeon_bo *bo);
+extern void radeon_bo_fence(struct radeon_bo *bo, struct radeon_fence *fence,
 			    bool shared);
 
 /*
  * sub allocation
  */
 
-अटल अंतरभूत uपूर्णांक64_t radeon_sa_bo_gpu_addr(काष्ठा radeon_sa_bo *sa_bo)
-अणु
-	वापस sa_bo->manager->gpu_addr + sa_bo->soffset;
-पूर्ण
+static inline uint64_t radeon_sa_bo_gpu_addr(struct radeon_sa_bo *sa_bo)
+{
+	return sa_bo->manager->gpu_addr + sa_bo->soffset;
+}
 
-अटल अंतरभूत व्योम * radeon_sa_bo_cpu_addr(काष्ठा radeon_sa_bo *sa_bo)
-अणु
-	वापस sa_bo->manager->cpu_ptr + sa_bo->soffset;
-पूर्ण
+static inline void * radeon_sa_bo_cpu_addr(struct radeon_sa_bo *sa_bo)
+{
+	return sa_bo->manager->cpu_ptr + sa_bo->soffset;
+}
 
-बाह्य पूर्णांक radeon_sa_bo_manager_init(काष्ठा radeon_device *rdev,
-				     काष्ठा radeon_sa_manager *sa_manager,
-				     अचिन्हित size, u32 align, u32 करोमुख्य,
+extern int radeon_sa_bo_manager_init(struct radeon_device *rdev,
+				     struct radeon_sa_manager *sa_manager,
+				     unsigned size, u32 align, u32 domain,
 				     u32 flags);
-बाह्य व्योम radeon_sa_bo_manager_fini(काष्ठा radeon_device *rdev,
-				      काष्ठा radeon_sa_manager *sa_manager);
-बाह्य पूर्णांक radeon_sa_bo_manager_start(काष्ठा radeon_device *rdev,
-				      काष्ठा radeon_sa_manager *sa_manager);
-बाह्य पूर्णांक radeon_sa_bo_manager_suspend(काष्ठा radeon_device *rdev,
-					काष्ठा radeon_sa_manager *sa_manager);
-बाह्य पूर्णांक radeon_sa_bo_new(काष्ठा radeon_device *rdev,
-			    काष्ठा radeon_sa_manager *sa_manager,
-			    काष्ठा radeon_sa_bo **sa_bo,
-			    अचिन्हित size, अचिन्हित align);
-बाह्य व्योम radeon_sa_bo_मुक्त(काष्ठा radeon_device *rdev,
-			      काष्ठा radeon_sa_bo **sa_bo,
-			      काष्ठा radeon_fence *fence);
-#अगर defined(CONFIG_DEBUG_FS)
-बाह्य व्योम radeon_sa_bo_dump_debug_info(काष्ठा radeon_sa_manager *sa_manager,
-					 काष्ठा seq_file *m);
-#पूर्ण_अगर
+extern void radeon_sa_bo_manager_fini(struct radeon_device *rdev,
+				      struct radeon_sa_manager *sa_manager);
+extern int radeon_sa_bo_manager_start(struct radeon_device *rdev,
+				      struct radeon_sa_manager *sa_manager);
+extern int radeon_sa_bo_manager_suspend(struct radeon_device *rdev,
+					struct radeon_sa_manager *sa_manager);
+extern int radeon_sa_bo_new(struct radeon_device *rdev,
+			    struct radeon_sa_manager *sa_manager,
+			    struct radeon_sa_bo **sa_bo,
+			    unsigned size, unsigned align);
+extern void radeon_sa_bo_free(struct radeon_device *rdev,
+			      struct radeon_sa_bo **sa_bo,
+			      struct radeon_fence *fence);
+#if defined(CONFIG_DEBUG_FS)
+extern void radeon_sa_bo_dump_debug_info(struct radeon_sa_manager *sa_manager,
+					 struct seq_file *m);
+#endif
 
 
-#पूर्ण_अगर
+#endif

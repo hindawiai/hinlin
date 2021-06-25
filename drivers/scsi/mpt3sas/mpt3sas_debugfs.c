@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Debugfs पूर्णांकerface Support क्रम MPT (Message Passing Technology) based
+ * Debugfs interface Support for MPT (Message Passing Technology) based
  * controllers.
  *
  * Copyright (C) 2020  Broadcom Inc.
@@ -14,145 +13,145 @@
  *
  **/
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/uपन.स>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/compat.h>
+#include <linux/uio.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश "mpt3sas_base.h"
-#समावेश <linux/debugfs.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include "mpt3sas_base.h"
+#include <linux/debugfs.h>
 
-अटल काष्ठा dentry *mpt3sas_debugfs_root;
+static struct dentry *mpt3sas_debugfs_root;
 
 /*
- * _debugfs_iocdump_पढ़ो - copy ioc dump from debugfs buffer
- * @filep:	File Poपूर्णांकer
+ * _debugfs_iocdump_read - copy ioc dump from debugfs buffer
+ * @filep:	File Pointer
  * @ubuf:	Buffer to fill data
  * @cnt:	Length of the buffer
  * @ppos:	Offset in the file
  */
 
-अटल sमाप_प्रकार
-_debugfs_iocdump_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
+static ssize_t
+_debugfs_iocdump_read(struct file *filp, char __user *ubuf, size_t cnt,
 	loff_t *ppos)
 
-अणु
-	काष्ठा mpt3sas_debugfs_buffer *debug = filp->निजी_data;
+{
+	struct mpt3sas_debugfs_buffer *debug = filp->private_data;
 
-	अगर (!debug || !debug->buf)
-		वापस 0;
+	if (!debug || !debug->buf)
+		return 0;
 
-	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, debug->buf, debug->len);
-पूर्ण
+	return simple_read_from_buffer(ubuf, cnt, ppos, debug->buf, debug->len);
+}
 
 /*
- * _debugfs_iocdump_खोलो :	खोलो the ioc_dump debugfs attribute file
+ * _debugfs_iocdump_open :	open the ioc_dump debugfs attribute file
  */
-अटल पूर्णांक
-_debugfs_iocdump_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा MPT3SAS_ADAPTER *ioc = inode->i_निजी;
-	काष्ठा mpt3sas_debugfs_buffer *debug;
+static int
+_debugfs_iocdump_open(struct inode *inode, struct file *file)
+{
+	struct MPT3SAS_ADAPTER *ioc = inode->i_private;
+	struct mpt3sas_debugfs_buffer *debug;
 
-	debug = kzalloc(माप(काष्ठा mpt3sas_debugfs_buffer), GFP_KERNEL);
-	अगर (!debug)
-		वापस -ENOMEM;
+	debug = kzalloc(sizeof(struct mpt3sas_debugfs_buffer), GFP_KERNEL);
+	if (!debug)
+		return -ENOMEM;
 
-	debug->buf = (व्योम *)ioc;
-	debug->len = माप(काष्ठा MPT3SAS_ADAPTER);
-	file->निजी_data = debug;
-	वापस 0;
-पूर्ण
+	debug->buf = (void *)ioc;
+	debug->len = sizeof(struct MPT3SAS_ADAPTER);
+	file->private_data = debug;
+	return 0;
+}
 
 /*
  * _debugfs_iocdump_release :	release the ioc_dump debugfs attribute
- * @inode: inode काष्ठाure to the corresponds device
- * @file: File poपूर्णांकer
+ * @inode: inode structure to the corresponds device
+ * @file: File pointer
  */
-अटल पूर्णांक
-_debugfs_iocdump_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mpt3sas_debugfs_buffer *debug = file->निजी_data;
+static int
+_debugfs_iocdump_release(struct inode *inode, struct file *file)
+{
+	struct mpt3sas_debugfs_buffer *debug = file->private_data;
 
-	अगर (!debug)
-		वापस 0;
+	if (!debug)
+		return 0;
 
-	file->निजी_data = शून्य;
-	kमुक्त(debug);
-	वापस 0;
-पूर्ण
+	file->private_data = NULL;
+	kfree(debug);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mpt3sas_debugfs_iocdump_fops = अणु
+static const struct file_operations mpt3sas_debugfs_iocdump_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो           = _debugfs_iocdump_खोलो,
-	.पढ़ो           = _debugfs_iocdump_पढ़ो,
+	.open           = _debugfs_iocdump_open,
+	.read           = _debugfs_iocdump_read,
 	.release        = _debugfs_iocdump_release,
-पूर्ण;
+};
 
 /*
- * mpt3sas_init_debugfs :	Create debugfs root क्रम mpt3sas driver
+ * mpt3sas_init_debugfs :	Create debugfs root for mpt3sas driver
  */
-व्योम mpt3sas_init_debugfs(व्योम)
-अणु
-	mpt3sas_debugfs_root = debugfs_create_dir("mpt3sas", शून्य);
-	अगर (!mpt3sas_debugfs_root)
+void mpt3sas_init_debugfs(void)
+{
+	mpt3sas_debugfs_root = debugfs_create_dir("mpt3sas", NULL);
+	if (!mpt3sas_debugfs_root)
 		pr_info("mpt3sas: Cannot create debugfs root\n");
-पूर्ण
+}
 
 /*
- * mpt3sas_निकास_debugfs :	Remove debugfs root क्रम mpt3sas driver
+ * mpt3sas_exit_debugfs :	Remove debugfs root for mpt3sas driver
  */
-व्योम mpt3sas_निकास_debugfs(व्योम)
-अणु
-	debugfs_हटाओ_recursive(mpt3sas_debugfs_root);
-पूर्ण
+void mpt3sas_exit_debugfs(void)
+{
+	debugfs_remove_recursive(mpt3sas_debugfs_root);
+}
 
 /*
  * mpt3sas_setup_debugfs :	Setup debugfs per HBA adapter
  * ioc:				MPT3SAS_ADAPTER object
  */
-व्योम
-mpt3sas_setup_debugfs(काष्ठा MPT3SAS_ADAPTER *ioc)
-अणु
-	अक्षर name[64];
+void
+mpt3sas_setup_debugfs(struct MPT3SAS_ADAPTER *ioc)
+{
+	char name[64];
 
-	snम_लिखो(name, माप(name), "scsi_host%d", ioc->shost->host_no);
-	अगर (!ioc->debugfs_root) अणु
+	snprintf(name, sizeof(name), "scsi_host%d", ioc->shost->host_no);
+	if (!ioc->debugfs_root) {
 		ioc->debugfs_root =
 		    debugfs_create_dir(name, mpt3sas_debugfs_root);
-		अगर (!ioc->debugfs_root) अणु
+		if (!ioc->debugfs_root) {
 			dev_err(&ioc->pdev->dev,
 			    "Cannot create per adapter debugfs directory\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	snम_लिखो(name, माप(name), "ioc_dump");
+	snprintf(name, sizeof(name), "ioc_dump");
 	ioc->ioc_dump =	debugfs_create_file(name, 0444,
 	    ioc->debugfs_root, ioc, &mpt3sas_debugfs_iocdump_fops);
-	अगर (!ioc->ioc_dump) अणु
+	if (!ioc->ioc_dump) {
 		dev_err(&ioc->pdev->dev,
 		    "Cannot create ioc_dump debugfs file\n");
-		debugfs_हटाओ(ioc->debugfs_root);
-		वापस;
-	पूर्ण
+		debugfs_remove(ioc->debugfs_root);
+		return;
+	}
 
-	snम_लिखो(name, माप(name), "host_recovery");
+	snprintf(name, sizeof(name), "host_recovery");
 	debugfs_create_u8(name, 0444, ioc->debugfs_root, &ioc->shost_recovery);
 
-पूर्ण
+}
 
 /*
  * mpt3sas_destroy_debugfs :	Destroy debugfs per HBA adapter
  * @ioc:	MPT3SAS_ADAPTER object
  */
-व्योम mpt3sas_destroy_debugfs(काष्ठा MPT3SAS_ADAPTER *ioc)
-अणु
-	debugfs_हटाओ_recursive(ioc->debugfs_root);
-पूर्ण
+void mpt3sas_destroy_debugfs(struct MPT3SAS_ADAPTER *ioc)
+{
+	debugfs_remove_recursive(ioc->debugfs_root);
+}
 

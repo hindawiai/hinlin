@@ -1,177 +1,176 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Supports क्रम the button array on SoC tablets originally running
- * Winकरोws 8.
+ * Supports for the button array on SoC tablets originally running
+ * Windows 8.
  *
  * (C) Copyright 2014 Intel Corporation
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio_keys.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/acpi.h>
+#include <linux/dmi.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio_keys.h>
+#include <linux/gpio.h>
+#include <linux/platform_device.h>
 
-काष्ठा soc_button_info अणु
-	स्थिर अक्षर *name;
-	पूर्णांक acpi_index;
-	अचिन्हित पूर्णांक event_type;
-	अचिन्हित पूर्णांक event_code;
-	bool स्वतःrepeat;
+struct soc_button_info {
+	const char *name;
+	int acpi_index;
+	unsigned int event_type;
+	unsigned int event_code;
+	bool autorepeat;
 	bool wakeup;
 	bool active_low;
-पूर्ण;
+};
 
-काष्ठा soc_device_data अणु
-	स्थिर काष्ठा soc_button_info *button_info;
-	पूर्णांक (*check)(काष्ठा device *dev);
-पूर्ण;
+struct soc_device_data {
+	const struct soc_button_info *button_info;
+	int (*check)(struct device *dev);
+};
 
 /*
- * Some of the buttons like volume up/करोwn are स्वतः repeat, जबतक others
- * are not. To support both, we रेजिस्टर two platक्रमm devices, and put
- * buttons पूर्णांकo them based on whether the key should be स्वतः repeat.
+ * Some of the buttons like volume up/down are auto repeat, while others
+ * are not. To support both, we register two platform devices, and put
+ * buttons into them based on whether the key should be auto repeat.
  */
-#घोषणा BUTTON_TYPES	2
+#define BUTTON_TYPES	2
 
-काष्ठा soc_button_data अणु
-	काष्ठा platक्रमm_device *children[BUTTON_TYPES];
-पूर्ण;
+struct soc_button_data {
+	struct platform_device *children[BUTTON_TYPES];
+};
 
 /*
  * Some 2-in-1s which use the soc_button_array driver have this ugly issue in
- * their DSDT where the _LID method modअगरies the irq-type settings of the GPIOs
- * used क्रम the घातer and home buttons. The पूर्णांकend of this AML code is to
- * disable these buttons when the lid is बंदd.
- * The AML करोes this by directly poking the GPIO controllers रेजिस्टरs. This is
+ * their DSDT where the _LID method modifies the irq-type settings of the GPIOs
+ * used for the power and home buttons. The intend of this AML code is to
+ * disable these buttons when the lid is closed.
+ * The AML does this by directly poking the GPIO controllers registers. This is
  * problematic because when re-enabling the irq, which happens whenever _LID
- * माला_लो called with the lid खोलो (e.g. on boot and on resume), it sets the
+ * gets called with the lid open (e.g. on boot and on resume), it sets the
  * irq-type to IRQ_TYPE_LEVEL_LOW. Where as the gpio-keys driver programs the
  * type to, and expects it to be, IRQ_TYPE_EDGE_BOTH.
- * To work around this we करोn't set gpio_keys_button.gpio on these 2-in-1s,
- * instead we get the irq क्रम the GPIO ourselves, configure it as
+ * To work around this we don't set gpio_keys_button.gpio on these 2-in-1s,
+ * instead we get the irq for the GPIO ourselves, configure it as
  * IRQ_TYPE_LEVEL_LOW (to match how the _LID AML code configures it) and pass
  * the irq in gpio_keys_button.irq. Below is a list of affected devices.
  */
-अटल स्थिर काष्ठा dmi_प्रणाली_id dmi_use_low_level_irq[] = अणु
-	अणु
+static const struct dmi_system_id dmi_use_low_level_irq[] = {
+	{
 		/*
 		 * Acer Switch 10 SW5-012. _LID method messes with home- and
-		 * घातer-button GPIO IRQ settings. When (re-)enabling the irq
+		 * power-button GPIO IRQ settings. When (re-)enabling the irq
 		 * it ors in its own flags without clearing the previous set
 		 * ones, leading to an irq-type of IRQ_TYPE_LEVEL_LOW |
-		 * IRQ_TYPE_LEVEL_HIGH causing a continuous पूर्णांकerrupt storm.
+		 * IRQ_TYPE_LEVEL_HIGH causing a continuous interrupt storm.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire SW5-012"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
-		 * Acer One S1003. _LID method messes with घातer-button GPIO
-		 * IRQ settings, leading to a non working घातer-button.
+		 * Acer One S1003. _LID method messes with power-button GPIO
+		 * IRQ settings, leading to a non working power-button.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "One S1003"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
 		 * Lenovo Yoga Tab2 1051L, something messes with the home-button
 		 * IRQ settings, leading to a non working home-button.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "60073"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "1051L"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण /* Terminating entry */
-पूर्ण;
+		},
+	},
+	{} /* Terminating entry */
+};
 
 /*
  * Get the Nth GPIO number from the ACPI object.
  */
-अटल पूर्णांक soc_button_lookup_gpio(काष्ठा device *dev, पूर्णांक acpi_index,
-				  पूर्णांक *gpio_ret, पूर्णांक *irq_ret)
-अणु
-	काष्ठा gpio_desc *desc;
+static int soc_button_lookup_gpio(struct device *dev, int acpi_index,
+				  int *gpio_ret, int *irq_ret)
+{
+	struct gpio_desc *desc;
 
-	desc = gpiod_get_index(dev, शून्य, acpi_index, GPIOD_ASIS);
-	अगर (IS_ERR(desc))
-		वापस PTR_ERR(desc);
+	desc = gpiod_get_index(dev, NULL, acpi_index, GPIOD_ASIS);
+	if (IS_ERR(desc))
+		return PTR_ERR(desc);
 
 	*gpio_ret = desc_to_gpio(desc);
 	*irq_ret = gpiod_to_irq(desc);
 
 	gpiod_put(desc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_device *
-soc_button_device_create(काष्ठा platक्रमm_device *pdev,
-			 स्थिर काष्ठा soc_button_info *button_info,
-			 bool स्वतःrepeat)
-अणु
-	स्थिर काष्ठा soc_button_info *info;
-	काष्ठा platक्रमm_device *pd;
-	काष्ठा gpio_keys_button *gpio_keys;
-	काष्ठा gpio_keys_platक्रमm_data *gpio_keys_pdata;
-	पूर्णांक error, gpio, irq;
-	पूर्णांक n_buttons = 0;
+static struct platform_device *
+soc_button_device_create(struct platform_device *pdev,
+			 const struct soc_button_info *button_info,
+			 bool autorepeat)
+{
+	const struct soc_button_info *info;
+	struct platform_device *pd;
+	struct gpio_keys_button *gpio_keys;
+	struct gpio_keys_platform_data *gpio_keys_pdata;
+	int error, gpio, irq;
+	int n_buttons = 0;
 
-	क्रम (info = button_info; info->name; info++)
-		अगर (info->स्वतःrepeat == स्वतःrepeat)
+	for (info = button_info; info->name; info++)
+		if (info->autorepeat == autorepeat)
 			n_buttons++;
 
 	gpio_keys_pdata = devm_kzalloc(&pdev->dev,
-				       माप(*gpio_keys_pdata) +
-					माप(*gpio_keys) * n_buttons,
+				       sizeof(*gpio_keys_pdata) +
+					sizeof(*gpio_keys) * n_buttons,
 				       GFP_KERNEL);
-	अगर (!gpio_keys_pdata)
-		वापस ERR_PTR(-ENOMEM);
+	if (!gpio_keys_pdata)
+		return ERR_PTR(-ENOMEM);
 
-	gpio_keys = (व्योम *)(gpio_keys_pdata + 1);
+	gpio_keys = (void *)(gpio_keys_pdata + 1);
 	n_buttons = 0;
 
-	क्रम (info = button_info; info->name; info++) अणु
-		अगर (info->स्वतःrepeat != स्वतःrepeat)
-			जारी;
+	for (info = button_info; info->name; info++) {
+		if (info->autorepeat != autorepeat)
+			continue;
 
 		error = soc_button_lookup_gpio(&pdev->dev, info->acpi_index, &gpio, &irq);
-		अगर (error || irq < 0) अणु
+		if (error || irq < 0) {
 			/*
-			 * Skip GPIO अगर not present. Note we deliberately
+			 * Skip GPIO if not present. Note we deliberately
 			 * ignore -EPROBE_DEFER errors here. On some devices
-			 * Intel is using so called भव GPIOs which are not
-			 * GPIOs at all but some way क्रम AML code to check some
-			 * अक्रमom status bits without need a custom opregion.
-			 * In some हालs the resources table we parse poपूर्णांकs to
-			 * such a भव GPIO, since these are not real GPIOs
-			 * we करो not have a driver क्रम these so they will never
-			 * show up, thereक्रमe we ignore -EPROBE_DEFER.
+			 * Intel is using so called virtual GPIOs which are not
+			 * GPIOs at all but some way for AML code to check some
+			 * random status bits without need a custom opregion.
+			 * In some cases the resources table we parse points to
+			 * such a virtual GPIO, since these are not real GPIOs
+			 * we do not have a driver for these so they will never
+			 * show up, therefore we ignore -EPROBE_DEFER.
 			 */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* See dmi_use_low_level_irq[] comment */
-		अगर (!स्वतःrepeat && dmi_check_प्रणाली(dmi_use_low_level_irq)) अणु
+		if (!autorepeat && dmi_check_system(dmi_use_low_level_irq)) {
 			irq_set_irq_type(irq, IRQ_TYPE_LEVEL_LOW);
 			gpio_keys[n_buttons].irq = irq;
 			gpio_keys[n_buttons].gpio = -ENOENT;
-		पूर्ण अन्यथा अणु
+		} else {
 			gpio_keys[n_buttons].gpio = gpio;
-		पूर्ण
+		}
 
 		gpio_keys[n_buttons].type = info->event_type;
 		gpio_keys[n_buttons].code = info->event_code;
@@ -179,379 +178,379 @@ soc_button_device_create(काष्ठा platक्रमm_device *pdev,
 		gpio_keys[n_buttons].desc = info->name;
 		gpio_keys[n_buttons].wakeup = info->wakeup;
 		/* These devices often use cheap buttons, use 50 ms debounce */
-		gpio_keys[n_buttons].debounce_पूर्णांकerval = 50;
+		gpio_keys[n_buttons].debounce_interval = 50;
 		n_buttons++;
-	पूर्ण
+	}
 
-	अगर (n_buttons == 0) अणु
+	if (n_buttons == 0) {
 		error = -ENODEV;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	gpio_keys_pdata->buttons = gpio_keys;
 	gpio_keys_pdata->nbuttons = n_buttons;
-	gpio_keys_pdata->rep = स्वतःrepeat;
+	gpio_keys_pdata->rep = autorepeat;
 
-	pd = platक्रमm_device_रेजिस्टर_resndata(&pdev->dev, "gpio-keys",
-					       PLATFORM_DEVID_AUTO, शून्य, 0,
+	pd = platform_device_register_resndata(&pdev->dev, "gpio-keys",
+					       PLATFORM_DEVID_AUTO, NULL, 0,
 					       gpio_keys_pdata,
-					       माप(*gpio_keys_pdata));
+					       sizeof(*gpio_keys_pdata));
 	error = PTR_ERR_OR_ZERO(pd);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev,
 			"failed registering gpio-keys: %d\n", error);
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	वापस pd;
+	return pd;
 
-err_मुक्त_mem:
-	devm_kमुक्त(&pdev->dev, gpio_keys_pdata);
-	वापस ERR_PTR(error);
-पूर्ण
+err_free_mem:
+	devm_kfree(&pdev->dev, gpio_keys_pdata);
+	return ERR_PTR(error);
+}
 
-अटल पूर्णांक soc_button_get_acpi_object_पूर्णांक(स्थिर जोड़ acpi_object *obj)
-अणु
-	अगर (obj->type != ACPI_TYPE_INTEGER)
-		वापस -1;
+static int soc_button_get_acpi_object_int(const union acpi_object *obj)
+{
+	if (obj->type != ACPI_TYPE_INTEGER)
+		return -1;
 
-	वापस obj->पूर्णांकeger.value;
-पूर्ण
+	return obj->integer.value;
+}
 
 /* Parse a single ACPI0011 _DSD button descriptor */
-अटल पूर्णांक soc_button_parse_btn_desc(काष्ठा device *dev,
-				     स्थिर जोड़ acpi_object *desc,
-				     पूर्णांक collection_uid,
-				     काष्ठा soc_button_info *info)
-अणु
-	पूर्णांक upage, usage;
+static int soc_button_parse_btn_desc(struct device *dev,
+				     const union acpi_object *desc,
+				     int collection_uid,
+				     struct soc_button_info *info)
+{
+	int upage, usage;
 
-	अगर (desc->type != ACPI_TYPE_PACKAGE ||
+	if (desc->type != ACPI_TYPE_PACKAGE ||
 	    desc->package.count != 5 ||
 	    /* First byte should be 1 (control) */
-	    soc_button_get_acpi_object_पूर्णांक(&desc->package.elements[0]) != 1 ||
+	    soc_button_get_acpi_object_int(&desc->package.elements[0]) != 1 ||
 	    /* Third byte should be collection uid */
-	    soc_button_get_acpi_object_पूर्णांक(&desc->package.elements[2]) !=
-							    collection_uid) अणु
+	    soc_button_get_acpi_object_int(&desc->package.elements[2]) !=
+							    collection_uid) {
 		dev_err(dev, "Invalid ACPI Button Descriptor\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	info->event_type = EV_KEY;
 	info->active_low = true;
 	info->acpi_index =
-		soc_button_get_acpi_object_पूर्णांक(&desc->package.elements[1]);
-	upage = soc_button_get_acpi_object_पूर्णांक(&desc->package.elements[3]);
-	usage = soc_button_get_acpi_object_पूर्णांक(&desc->package.elements[4]);
+		soc_button_get_acpi_object_int(&desc->package.elements[1]);
+	upage = soc_button_get_acpi_object_int(&desc->package.elements[3]);
+	usage = soc_button_get_acpi_object_int(&desc->package.elements[4]);
 
 	/*
 	 * The UUID: fa6bd625-9ce8-470d-a2c7-b3ca36c4282e descriptors use HID
 	 * usage page and usage codes, but otherwise the device is not HID
 	 * compliant: it uses one irq per button instead of generating HID
 	 * input reports and some buttons should generate wakeups where as
-	 * others should not, so we cannot use the HID subप्रणाली.
+	 * others should not, so we cannot use the HID subsystem.
 	 *
 	 * Luckily all devices only use a few usage page + usage combinations,
-	 * so we can simply check क्रम the known combinations here.
+	 * so we can simply check for the known combinations here.
 	 */
-	अगर (upage == 0x01 && usage == 0x81) अणु
+	if (upage == 0x01 && usage == 0x81) {
 		info->name = "power";
 		info->event_code = KEY_POWER;
 		info->wakeup = true;
-	पूर्ण अन्यथा अगर (upage == 0x01 && usage == 0xca) अणु
+	} else if (upage == 0x01 && usage == 0xca) {
 		info->name = "rotation lock switch";
 		info->event_type = EV_SW;
 		info->event_code = SW_ROTATE_LOCK;
-	पूर्ण अन्यथा अगर (upage == 0x07 && usage == 0xe3) अणु
+	} else if (upage == 0x07 && usage == 0xe3) {
 		info->name = "home";
 		info->event_code = KEY_LEFTMETA;
 		info->wakeup = true;
-	पूर्ण अन्यथा अगर (upage == 0x0c && usage == 0xe9) अणु
+	} else if (upage == 0x0c && usage == 0xe9) {
 		info->name = "volume_up";
 		info->event_code = KEY_VOLUMEUP;
-		info->स्वतःrepeat = true;
-	पूर्ण अन्यथा अगर (upage == 0x0c && usage == 0xea) अणु
+		info->autorepeat = true;
+	} else if (upage == 0x0c && usage == 0xea) {
 		info->name = "volume_down";
 		info->event_code = KEY_VOLUMEDOWN;
-		info->स्वतःrepeat = true;
-	पूर्ण अन्यथा अणु
+		info->autorepeat = true;
+	} else {
 		dev_warn(dev, "Unknown button index %d upage %02x usage %02x, ignoring\n",
 			 info->acpi_index, upage, usage);
 		info->name = "unknown";
 		info->event_code = KEY_RESERVED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ACPI0011 _DSD btns descriptors UUID: fa6bd625-9ce8-470d-a2c7-b3ca36c4282e */
-अटल स्थिर u8 btns_desc_uuid[16] = अणु
+static const u8 btns_desc_uuid[16] = {
 	0x25, 0xd6, 0x6b, 0xfa, 0xe8, 0x9c, 0x0d, 0x47,
 	0xa2, 0xc7, 0xb3, 0xca, 0x36, 0xc4, 0x28, 0x2e
-पूर्ण;
+};
 
 /* Parse ACPI0011 _DSD button descriptors */
-अटल काष्ठा soc_button_info *soc_button_get_button_info(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER पूर्ण;
-	स्थिर जोड़ acpi_object *desc, *el0, *uuid, *btns_desc = शून्य;
-	काष्ठा soc_button_info *button_info;
+static struct soc_button_info *soc_button_get_button_info(struct device *dev)
+{
+	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER };
+	const union acpi_object *desc, *el0, *uuid, *btns_desc = NULL;
+	struct soc_button_info *button_info;
 	acpi_status status;
-	पूर्णांक i, btn, collection_uid = -1;
+	int i, btn, collection_uid = -1;
 
-	status = acpi_evaluate_object_typed(ACPI_HANDLE(dev), "_DSD", शून्य,
+	status = acpi_evaluate_object_typed(ACPI_HANDLE(dev), "_DSD", NULL,
 					    &buf, ACPI_TYPE_PACKAGE);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "ACPI _DSD object not found\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 
-	/* Look क्रम the Button Descriptors UUID */
-	desc = buf.poपूर्णांकer;
-	क्रम (i = 0; (i + 1) < desc->package.count; i += 2) अणु
+	/* Look for the Button Descriptors UUID */
+	desc = buf.pointer;
+	for (i = 0; (i + 1) < desc->package.count; i += 2) {
 		uuid = &desc->package.elements[i];
 
-		अगर (uuid->type != ACPI_TYPE_BUFFER ||
+		if (uuid->type != ACPI_TYPE_BUFFER ||
 		    uuid->buffer.length != 16 ||
-		    desc->package.elements[i + 1].type != ACPI_TYPE_PACKAGE) अणु
-			अवरोध;
-		पूर्ण
+		    desc->package.elements[i + 1].type != ACPI_TYPE_PACKAGE) {
+			break;
+		}
 
-		अगर (स_भेद(uuid->buffer.poपूर्णांकer, btns_desc_uuid, 16) == 0) अणु
+		if (memcmp(uuid->buffer.pointer, btns_desc_uuid, 16) == 0) {
 			btns_desc = &desc->package.elements[i + 1];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!btns_desc) अणु
+	if (!btns_desc) {
 		dev_err(dev, "ACPI Button Descriptors not found\n");
 		button_info = ERR_PTR(-ENODEV);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* The first package describes the collection */
 	el0 = &btns_desc->package.elements[0];
-	अगर (el0->type == ACPI_TYPE_PACKAGE &&
+	if (el0->type == ACPI_TYPE_PACKAGE &&
 	    el0->package.count == 5 &&
 	    /* First byte should be 0 (collection) */
-	    soc_button_get_acpi_object_पूर्णांक(&el0->package.elements[0]) == 0 &&
+	    soc_button_get_acpi_object_int(&el0->package.elements[0]) == 0 &&
 	    /* Third byte should be 0 (top level collection) */
-	    soc_button_get_acpi_object_पूर्णांक(&el0->package.elements[2]) == 0) अणु
-		collection_uid = soc_button_get_acpi_object_पूर्णांक(
+	    soc_button_get_acpi_object_int(&el0->package.elements[2]) == 0) {
+		collection_uid = soc_button_get_acpi_object_int(
 						&el0->package.elements[1]);
-	पूर्ण
-	अगर (collection_uid == -1) अणु
+	}
+	if (collection_uid == -1) {
 		dev_err(dev, "Invalid Button Collection Descriptor\n");
 		button_info = ERR_PTR(-ENODEV);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* There are package.count - 1 buttons + 1 terminating empty entry */
-	button_info = devm_kसुस्मृति(dev, btns_desc->package.count,
-				   माप(*button_info), GFP_KERNEL);
-	अगर (!button_info) अणु
+	button_info = devm_kcalloc(dev, btns_desc->package.count,
+				   sizeof(*button_info), GFP_KERNEL);
+	if (!button_info) {
 		button_info = ERR_PTR(-ENOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Parse the button descriptors */
-	क्रम (i = 1, btn = 0; i < btns_desc->package.count; i++, btn++) अणु
-		अगर (soc_button_parse_btn_desc(dev,
+	for (i = 1, btn = 0; i < btns_desc->package.count; i++, btn++) {
+		if (soc_button_parse_btn_desc(dev,
 					      &btns_desc->package.elements[i],
 					      collection_uid,
-					      &button_info[btn])) अणु
+					      &button_info[btn])) {
 			button_info = ERR_PTR(-ENODEV);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	kमुक्त(buf.poपूर्णांकer);
-	वापस button_info;
-पूर्ण
+	kfree(buf.pointer);
+	return button_info;
+}
 
-अटल पूर्णांक soc_button_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा soc_button_data *priv = platक्रमm_get_drvdata(pdev);
+static int soc_button_remove(struct platform_device *pdev)
+{
+	struct soc_button_data *priv = platform_get_drvdata(pdev);
 
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < BUTTON_TYPES; i++)
-		अगर (priv->children[i])
-			platक्रमm_device_unरेजिस्टर(priv->children[i]);
+	for (i = 0; i < BUTTON_TYPES; i++)
+		if (priv->children[i])
+			platform_device_unregister(priv->children[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक soc_button_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा soc_device_data *device_data;
-	स्थिर काष्ठा soc_button_info *button_info;
-	काष्ठा soc_button_data *priv;
-	काष्ठा platक्रमm_device *pd;
-	पूर्णांक i;
-	पूर्णांक error;
+static int soc_button_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct soc_device_data *device_data;
+	const struct soc_button_info *button_info;
+	struct soc_button_data *priv;
+	struct platform_device *pd;
+	int i;
+	int error;
 
 	device_data = acpi_device_get_match_data(dev);
-	अगर (device_data && device_data->check) अणु
+	if (device_data && device_data->check) {
 		error = device_data->check(dev);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (device_data && device_data->button_info) अणु
+	if (device_data && device_data->button_info) {
 		button_info = device_data->button_info;
-	पूर्ण अन्यथा अणु
+	} else {
 		button_info = soc_button_get_button_info(dev);
-		अगर (IS_ERR(button_info))
-			वापस PTR_ERR(button_info);
-	पूर्ण
+		if (IS_ERR(button_info))
+			return PTR_ERR(button_info);
+	}
 
-	error = gpiod_count(dev, शून्य);
-	अगर (error < 0) अणु
+	error = gpiod_count(dev, NULL);
+	if (error < 0) {
 		dev_dbg(dev, "no GPIO attached, ignoring...\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	क्रम (i = 0; i < BUTTON_TYPES; i++) अणु
+	for (i = 0; i < BUTTON_TYPES; i++) {
 		pd = soc_button_device_create(pdev, button_info, i == 0);
-		अगर (IS_ERR(pd)) अणु
+		if (IS_ERR(pd)) {
 			error = PTR_ERR(pd);
-			अगर (error != -ENODEV) अणु
-				soc_button_हटाओ(pdev);
-				वापस error;
-			पूर्ण
-			जारी;
-		पूर्ण
+			if (error != -ENODEV) {
+				soc_button_remove(pdev);
+				return error;
+			}
+			continue;
+		}
 
 		priv->children[i] = pd;
-	पूर्ण
+	}
 
-	अगर (!priv->children[0] && !priv->children[1])
-		वापस -ENODEV;
+	if (!priv->children[0] && !priv->children[1])
+		return -ENODEV;
 
-	अगर (!device_data || !device_data->button_info)
-		devm_kमुक्त(dev, button_info);
+	if (!device_data || !device_data->button_info)
+		devm_kfree(dev, button_info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Definition of buttons on the tablet. The ACPI index of each button
- * is defined in section 2.8.7.2 of "Winकरोws ACPI Design Guide क्रम SoC
- * Platक्रमms"
+ * is defined in section 2.8.7.2 of "Windows ACPI Design Guide for SoC
+ * Platforms"
  */
-अटल स्थिर काष्ठा soc_button_info soc_button_PNP0C40[] = अणु
-	अणु "power", 0, EV_KEY, KEY_POWER, false, true, true पूर्ण,
-	अणु "home", 1, EV_KEY, KEY_LEFTMETA, false, true, true पूर्ण,
-	अणु "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true पूर्ण,
-	अणु "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false, true पूर्ण,
-	अणु "rotation_lock", 4, EV_KEY, KEY_ROTATE_LOCK_TOGGLE, false, false, true पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct soc_button_info soc_button_PNP0C40[] = {
+	{ "power", 0, EV_KEY, KEY_POWER, false, true, true },
+	{ "home", 1, EV_KEY, KEY_LEFTMETA, false, true, true },
+	{ "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true },
+	{ "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false, true },
+	{ "rotation_lock", 4, EV_KEY, KEY_ROTATE_LOCK_TOGGLE, false, false, true },
+	{ }
+};
 
-अटल स्थिर काष्ठा soc_device_data soc_device_PNP0C40 = अणु
+static const struct soc_device_data soc_device_PNP0C40 = {
 	.button_info = soc_button_PNP0C40,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_button_info soc_button_INT33D3[] = अणु
-	अणु "tablet_mode", 0, EV_SW, SW_TABLET_MODE, false, false, false पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct soc_button_info soc_button_INT33D3[] = {
+	{ "tablet_mode", 0, EV_SW, SW_TABLET_MODE, false, false, false },
+	{ }
+};
 
-अटल स्थिर काष्ठा soc_device_data soc_device_INT33D3 = अणु
+static const struct soc_device_data soc_device_INT33D3 = {
 	.button_info = soc_button_INT33D3,
-पूर्ण;
+};
 
 /*
- * Special device check क्रम Surface Book 2 and Surface Pro (2017).
+ * Special device check for Surface Book 2 and Surface Pro (2017).
  * Both, the Surface Pro 4 (surfacepro3_button.c) and the above mentioned
- * devices use MSHW0040 क्रम घातer and volume buttons, however the way they
- * have to be addressed dअगरfers. Make sure that we only load this drivers
- * क्रम the correct devices by checking the OEM Platक्रमm Revision provided by
+ * devices use MSHW0040 for power and volume buttons, however the way they
+ * have to be addressed differs. Make sure that we only load this drivers
+ * for the correct devices by checking the OEM Platform Revision provided by
  * the _DSM method.
  */
-#घोषणा MSHW0040_DSM_REVISION		0x01
-#घोषणा MSHW0040_DSM_GET_OMPR		0x02	// get OEM Platक्रमm Revision
-अटल स्थिर guid_t MSHW0040_DSM_UUID =
+#define MSHW0040_DSM_REVISION		0x01
+#define MSHW0040_DSM_GET_OMPR		0x02	// get OEM Platform Revision
+static const guid_t MSHW0040_DSM_UUID =
 	GUID_INIT(0x6fd05c69, 0xcde3, 0x49f4, 0x95, 0xed, 0xab, 0x16, 0x65,
 		  0x49, 0x80, 0x35);
 
-अटल पूर्णांक soc_device_check_MSHW0040(काष्ठा device *dev)
-अणु
+static int soc_device_check_MSHW0040(struct device *dev)
+{
 	acpi_handle handle = ACPI_HANDLE(dev);
-	जोड़ acpi_object *result;
-	u64 oem_platक्रमm_rev = 0;	// valid revisions are nonzero
+	union acpi_object *result;
+	u64 oem_platform_rev = 0;	// valid revisions are nonzero
 
-	// get OEM platक्रमm revision
+	// get OEM platform revision
 	result = acpi_evaluate_dsm_typed(handle, &MSHW0040_DSM_UUID,
 					 MSHW0040_DSM_REVISION,
-					 MSHW0040_DSM_GET_OMPR, शून्य,
+					 MSHW0040_DSM_GET_OMPR, NULL,
 					 ACPI_TYPE_INTEGER);
 
-	अगर (result) अणु
-		oem_platक्रमm_rev = result->पूर्णांकeger.value;
+	if (result) {
+		oem_platform_rev = result->integer.value;
 		ACPI_FREE(result);
-	पूर्ण
+	}
 
 	/*
 	 * If the revision is zero here, the _DSM evaluation has failed. This
 	 * indicates that we have a Pro 4 or Book 1 and this driver should not
 	 * be used.
 	 */
-	अगर (oem_platक्रमm_rev == 0)
-		वापस -ENODEV;
+	if (oem_platform_rev == 0)
+		return -ENODEV;
 
-	dev_dbg(dev, "OEM Platform Revision %llu\n", oem_platक्रमm_rev);
+	dev_dbg(dev, "OEM Platform Revision %llu\n", oem_platform_rev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Button infos क्रम Microsoft Surface Book 2 and Surface Pro (2017).
+ * Button infos for Microsoft Surface Book 2 and Surface Pro (2017).
  * Obtained from DSDT/testing.
  */
-अटल स्थिर काष्ठा soc_button_info soc_button_MSHW0040[] = अणु
-	अणु "power", 0, EV_KEY, KEY_POWER, false, true, true पूर्ण,
-	अणु "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true पूर्ण,
-	अणु "volume_down", 4, EV_KEY, KEY_VOLUMEDOWN, true, false, true पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct soc_button_info soc_button_MSHW0040[] = {
+	{ "power", 0, EV_KEY, KEY_POWER, false, true, true },
+	{ "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true },
+	{ "volume_down", 4, EV_KEY, KEY_VOLUMEDOWN, true, false, true },
+	{ }
+};
 
-अटल स्थिर काष्ठा soc_device_data soc_device_MSHW0040 = अणु
+static const struct soc_device_data soc_device_MSHW0040 = {
 	.button_info = soc_button_MSHW0040,
 	.check = soc_device_check_MSHW0040,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा acpi_device_id soc_button_acpi_match[] = अणु
-	अणु "PNP0C40", (अचिन्हित दीर्घ)&soc_device_PNP0C40 पूर्ण,
-	अणु "INT33D3", (अचिन्हित दीर्घ)&soc_device_INT33D3 पूर्ण,
-	अणु "ID9001", (अचिन्हित दीर्घ)&soc_device_INT33D3 पूर्ण,
-	अणु "ACPI0011", 0 पूर्ण,
+static const struct acpi_device_id soc_button_acpi_match[] = {
+	{ "PNP0C40", (unsigned long)&soc_device_PNP0C40 },
+	{ "INT33D3", (unsigned long)&soc_device_INT33D3 },
+	{ "ID9001", (unsigned long)&soc_device_INT33D3 },
+	{ "ACPI0011", 0 },
 
 	/* Microsoft Surface Devices (5th and 6th generation) */
-	अणु "MSHW0040", (अचिन्हित दीर्घ)&soc_device_MSHW0040 पूर्ण,
+	{ "MSHW0040", (unsigned long)&soc_device_MSHW0040 },
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
 MODULE_DEVICE_TABLE(acpi, soc_button_acpi_match);
 
-अटल काष्ठा platक्रमm_driver soc_button_driver = अणु
+static struct platform_driver soc_button_driver = {
 	.probe          = soc_button_probe,
-	.हटाओ		= soc_button_हटाओ,
-	.driver		= अणु
+	.remove		= soc_button_remove,
+	.driver		= {
 		.name = KBUILD_MODNAME,
 		.acpi_match_table = ACPI_PTR(soc_button_acpi_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(soc_button_driver);
+	},
+};
+module_platform_driver(soc_button_driver);
 
 MODULE_LICENSE("GPL");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2020
  *
@@ -8,24 +7,24 @@
  *
  */
 
-#अगर_अघोषित __S390_PCI_IOV_H
-#घोषणा __S390_PCI_IOV_H
+#ifndef __S390_PCI_IOV_H
+#define __S390_PCI_IOV_H
 
-#अगर_घोषित CONFIG_PCI_IOV
-व्योम zpci_iov_हटाओ_virtfn(काष्ठा pci_dev *pdev, पूर्णांक vfn);
+#ifdef CONFIG_PCI_IOV
+void zpci_iov_remove_virtfn(struct pci_dev *pdev, int vfn);
 
-व्योम zpci_iov_map_resources(काष्ठा pci_dev *pdev);
+void zpci_iov_map_resources(struct pci_dev *pdev);
 
-पूर्णांक zpci_iov_setup_virtfn(काष्ठा zpci_bus *zbus, काष्ठा pci_dev *virtfn, पूर्णांक vfn);
+int zpci_iov_setup_virtfn(struct zpci_bus *zbus, struct pci_dev *virtfn, int vfn);
 
-#अन्यथा /* CONFIG_PCI_IOV */
-अटल अंतरभूत व्योम zpci_iov_हटाओ_virtfn(काष्ठा pci_dev *pdev, पूर्णांक vfn) अणुपूर्ण
+#else /* CONFIG_PCI_IOV */
+static inline void zpci_iov_remove_virtfn(struct pci_dev *pdev, int vfn) {}
 
-अटल अंतरभूत व्योम zpci_iov_map_resources(काष्ठा pci_dev *pdev) अणुपूर्ण
+static inline void zpci_iov_map_resources(struct pci_dev *pdev) {}
 
-अटल अंतरभूत पूर्णांक zpci_iov_setup_virtfn(काष्ठा zpci_bus *zbus, काष्ठा pci_dev *virtfn, पूर्णांक vfn)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI_IOV */
-#पूर्ण_अगर /* __S390_PCI_IOV_h */
+static inline int zpci_iov_setup_virtfn(struct zpci_bus *zbus, struct pci_dev *virtfn, int vfn)
+{
+	return 0;
+}
+#endif /* CONFIG_PCI_IOV */
+#endif /* __S390_PCI_IOV_h */

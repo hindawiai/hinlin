@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
    drm_edid_load.c: use a built-in EDID data set or load it via the firmware
-		    पूर्णांकerface
+		    interface
 
    Copyright (C) 2012 Carsten Emde <C.Emde@osadl.org>
 
 */
 
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_edid.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_edid.h>
+#include <drm/drm_print.h>
 
-अटल अक्षर edid_firmware[PATH_MAX];
-module_param_string(edid_firmware, edid_firmware, माप(edid_firmware), 0644);
+static char edid_firmware[PATH_MAX];
+module_param_string(edid_firmware, edid_firmware, sizeof(edid_firmware), 0644);
 MODULE_PARM_DESC(edid_firmware, "Do not probe monitor, use specified EDID blob "
 	"from built-in data or /lib/firmware instead. ");
 
-/* Use only क्रम backward compatibility with drm_kms_helper.edid_firmware */
-पूर्णांक __drm_set_edid_firmware_path(स्थिर अक्षर *path)
-अणु
-	scnम_लिखो(edid_firmware, माप(edid_firmware), "%s", path);
+/* Use only for backward compatibility with drm_kms_helper.edid_firmware */
+int __drm_set_edid_firmware_path(const char *path)
+{
+	scnprintf(edid_firmware, sizeof(edid_firmware), "%s", path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__drm_set_edid_firmware_path);
 
-/* Use only क्रम backward compatibility with drm_kms_helper.edid_firmware */
-पूर्णांक __drm_get_edid_firmware_path(अक्षर *buf, माप_प्रकार bufsize)
-अणु
-	वापस scnम_लिखो(buf, bufsize, "%s", edid_firmware);
-पूर्ण
+/* Use only for backward compatibility with drm_kms_helper.edid_firmware */
+int __drm_get_edid_firmware_path(char *buf, size_t bufsize)
+{
+	return scnprintf(buf, bufsize, "%s", edid_firmware);
+}
 EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 
-#घोषणा GENERIC_EDIDS 6
-अटल स्थिर अक्षर * स्थिर generic_edid_name[GENERIC_EDIDS] = अणु
+#define GENERIC_EDIDS 6
+static const char * const generic_edid_name[GENERIC_EDIDS] = {
 	"edid/800x600.bin",
 	"edid/1024x768.bin",
 	"edid/1280x1024.bin",
 	"edid/1600x1200.bin",
 	"edid/1680x1050.bin",
 	"edid/1920x1080.bin",
-पूर्ण;
+};
 
-अटल स्थिर u8 generic_edid[GENERIC_EDIDS][128] = अणु
-	अणु
+static const u8 generic_edid[GENERIC_EDIDS][128] = {
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x1b, 0x14, 0x78,
@@ -67,8 +66,8 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x53,
 	0x56, 0x47, 0x41, 0x0a, 0x20, 0x20, 0x00, 0xc2,
-	पूर्ण,
-	अणु
+	},
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x23, 0x1a, 0x78,
@@ -85,8 +84,8 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x58,
 	0x47, 0x41, 0x0a, 0x20, 0x20, 0x20, 0x00, 0x55,
-	पूर्ण,
-	अणु
+	},
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x2c, 0x23, 0x78,
@@ -103,8 +102,8 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x53,
 	0x58, 0x47, 0x41, 0x0a, 0x20, 0x20, 0x00, 0xa0,
-	पूर्ण,
-	अणु
+	},
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x37, 0x29, 0x78,
@@ -121,8 +120,8 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x55,
 	0x58, 0x47, 0x41, 0x0a, 0x20, 0x20, 0x00, 0x9d,
-	पूर्ण,
-	अणु
+	},
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x2b, 0x1b, 0x78,
@@ -139,8 +138,8 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x57,
 	0x53, 0x58, 0x47, 0x41, 0x0a, 0x20, 0x00, 0x26,
-	पूर्ण,
-	अणु
+	},
+	{
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x05, 0x16, 0x01, 0x03, 0x6d, 0x32, 0x1c, 0x78,
@@ -157,89 +156,89 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 	0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0xfc,
 	0x00, 0x4c, 0x69, 0x6e, 0x75, 0x78, 0x20, 0x46,
 	0x48, 0x44, 0x0a, 0x20, 0x20, 0x20, 0x00, 0x05,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक edid_size(स्थिर u8 *edid, पूर्णांक data_size)
-अणु
-	अगर (data_size < EDID_LENGTH)
-		वापस 0;
+static int edid_size(const u8 *edid, int data_size)
+{
+	if (data_size < EDID_LENGTH)
+		return 0;
 
-	वापस (edid[0x7e] + 1) * EDID_LENGTH;
-पूर्ण
+	return (edid[0x7e] + 1) * EDID_LENGTH;
+}
 
-अटल व्योम *edid_load(काष्ठा drm_connector *connector, स्थिर अक्षर *name,
-			स्थिर अक्षर *connector_name)
-अणु
-	स्थिर काष्ठा firmware *fw = शून्य;
-	स्थिर u8 *fwdata;
+static void *edid_load(struct drm_connector *connector, const char *name,
+			const char *connector_name)
+{
+	const struct firmware *fw = NULL;
+	const u8 *fwdata;
 	u8 *edid;
-	पूर्णांक fwsize, builtin;
-	पूर्णांक i, valid_extensions = 0;
-	bool prपूर्णांक_bad_edid = !connector->bad_edid_counter || drm_debug_enabled(DRM_UT_KMS);
+	int fwsize, builtin;
+	int i, valid_extensions = 0;
+	bool print_bad_edid = !connector->bad_edid_counter || drm_debug_enabled(DRM_UT_KMS);
 
 	builtin = match_string(generic_edid_name, GENERIC_EDIDS, name);
-	अगर (builtin >= 0) अणु
+	if (builtin >= 0) {
 		fwdata = generic_edid[builtin];
-		fwsize = माप(generic_edid[builtin]);
-	पूर्ण अन्यथा अणु
-		काष्ठा platक्रमm_device *pdev;
-		पूर्णांक err;
+		fwsize = sizeof(generic_edid[builtin]);
+	} else {
+		struct platform_device *pdev;
+		int err;
 
-		pdev = platक्रमm_device_रेजिस्टर_simple(connector_name, -1, शून्य, 0);
-		अगर (IS_ERR(pdev)) अणु
+		pdev = platform_device_register_simple(connector_name, -1, NULL, 0);
+		if (IS_ERR(pdev)) {
 			DRM_ERROR("Failed to register EDID firmware platform device "
 				  "for connector \"%s\"\n", connector_name);
-			वापस ERR_CAST(pdev);
-		पूर्ण
+			return ERR_CAST(pdev);
+		}
 
 		err = request_firmware(&fw, name, &pdev->dev);
-		platक्रमm_device_unरेजिस्टर(pdev);
-		अगर (err) अणु
+		platform_device_unregister(pdev);
+		if (err) {
 			DRM_ERROR("Requesting EDID firmware \"%s\" failed (err=%d)\n",
 				  name, err);
-			वापस ERR_PTR(err);
-		पूर्ण
+			return ERR_PTR(err);
+		}
 
 		fwdata = fw->data;
 		fwsize = fw->size;
-	पूर्ण
+	}
 
-	अगर (edid_size(fwdata, fwsize) != fwsize) अणु
+	if (edid_size(fwdata, fwsize) != fwsize) {
 		DRM_ERROR("Size of EDID firmware \"%s\" is invalid "
 			  "(expected %d, got %d\n", name,
-			  edid_size(fwdata, fwsize), (पूर्णांक)fwsize);
+			  edid_size(fwdata, fwsize), (int)fwsize);
 		edid = ERR_PTR(-EINVAL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	edid = kmemdup(fwdata, fwsize, GFP_KERNEL);
-	अगर (edid == शून्य) अणु
+	if (edid == NULL) {
 		edid = ERR_PTR(-ENOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!drm_edid_block_valid(edid, 0, prपूर्णांक_bad_edid,
-				  &connector->edid_corrupt)) अणु
+	if (!drm_edid_block_valid(edid, 0, print_bad_edid,
+				  &connector->edid_corrupt)) {
 		connector->bad_edid_counter++;
 		DRM_ERROR("Base block of EDID firmware \"%s\" is invalid ",
 		    name);
-		kमुक्त(edid);
+		kfree(edid);
 		edid = ERR_PTR(-EINVAL);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 1; i <= edid[0x7e]; i++) अणु
-		अगर (i != valid_extensions + 1)
-			स_नकल(edid + (valid_extensions + 1) * EDID_LENGTH,
+	for (i = 1; i <= edid[0x7e]; i++) {
+		if (i != valid_extensions + 1)
+			memcpy(edid + (valid_extensions + 1) * EDID_LENGTH,
 			    edid + i * EDID_LENGTH, EDID_LENGTH);
-		अगर (drm_edid_block_valid(edid + i * EDID_LENGTH, i,
-					 prपूर्णांक_bad_edid,
-					 शून्य))
+		if (drm_edid_block_valid(edid + i * EDID_LENGTH, i,
+					 print_bad_edid,
+					 NULL))
 			valid_extensions++;
-	पूर्ण
+	}
 
-	अगर (valid_extensions != edid[0x7e]) अणु
+	if (valid_extensions != edid[0x7e]) {
 		u8 *new_edid;
 
 		edid[EDID_LENGTH-1] += edid[0x7e] - valid_extensions;
@@ -248,11 +247,11 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 		    edid[0x7e], name, connector_name);
 		edid[0x7e] = valid_extensions;
 
-		new_edid = kपुनः_स्मृति(edid, (valid_extensions + 1) * EDID_LENGTH,
+		new_edid = krealloc(edid, (valid_extensions + 1) * EDID_LENGTH,
 				    GFP_KERNEL);
-		अगर (new_edid)
+		if (new_edid)
 			edid = new_edid;
-	पूर्ण
+	}
 
 	DRM_INFO("Got %s EDID base block and %d extension%s from "
 	    "\"%s\" for connector \"%s\"\n", (builtin >= 0) ? "built-in" :
@@ -261,58 +260,58 @@ EXPORT_SYMBOL(__drm_get_edid_firmware_path);
 
 out:
 	release_firmware(fw);
-	वापस edid;
-पूर्ण
+	return edid;
+}
 
-काष्ठा edid *drm_load_edid_firmware(काष्ठा drm_connector *connector)
-अणु
-	स्थिर अक्षर *connector_name = connector->name;
-	अक्षर *edidname, *last, *colon, *fwstr, *edidstr, *fallback = शून्य;
-	काष्ठा edid *edid;
+struct edid *drm_load_edid_firmware(struct drm_connector *connector)
+{
+	const char *connector_name = connector->name;
+	char *edidname, *last, *colon, *fwstr, *edidstr, *fallback = NULL;
+	struct edid *edid;
 
-	अगर (edid_firmware[0] == '\0')
-		वापस ERR_PTR(-ENOENT);
+	if (edid_firmware[0] == '\0')
+		return ERR_PTR(-ENOENT);
 
 	/*
-	 * If there are multiple edid files specअगरied and separated
-	 * by commas, search through the list looking क्रम one that
+	 * If there are multiple edid files specified and separated
+	 * by commas, search through the list looking for one that
 	 * matches the connector.
 	 *
-	 * If there's one or more that doesn't specअगरy a connector, keep
+	 * If there's one or more that doesn't specify a connector, keep
 	 * the last one found one as a fallback.
 	 */
 	fwstr = kstrdup(edid_firmware, GFP_KERNEL);
-	अगर (!fwstr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fwstr)
+		return ERR_PTR(-ENOMEM);
 	edidstr = fwstr;
 
-	जबतक ((edidname = strsep(&edidstr, ","))) अणु
-		colon = म_अक्षर(edidname, ':');
-		अगर (colon != शून्य) अणु
-			अगर (म_भेदन(connector_name, edidname, colon - edidname))
-				जारी;
+	while ((edidname = strsep(&edidstr, ","))) {
+		colon = strchr(edidname, ':');
+		if (colon != NULL) {
+			if (strncmp(connector_name, edidname, colon - edidname))
+				continue;
 			edidname = colon + 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (*edidname != '\0') /* corner case: multiple ',' */
+		if (*edidname != '\0') /* corner case: multiple ',' */
 			fallback = edidname;
-	पूर्ण
+	}
 
-	अगर (!edidname) अणु
-		अगर (!fallback) अणु
-			kमुक्त(fwstr);
-			वापस ERR_PTR(-ENOENT);
-		पूर्ण
+	if (!edidname) {
+		if (!fallback) {
+			kfree(fwstr);
+			return ERR_PTR(-ENOENT);
+		}
 		edidname = fallback;
-	पूर्ण
+	}
 
-	last = edidname + म_माप(edidname) - 1;
-	अगर (*last == '\n')
+	last = edidname + strlen(edidname) - 1;
+	if (*last == '\n')
 		*last = '\0';
 
 	edid = edid_load(connector, edidname, connector_name);
-	kमुक्त(fwstr);
+	kfree(fwstr);
 
-	वापस edid;
-पूर्ण
+	return edid;
+}

@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित BOOT_COMPRESSED_DECOMPRESSOR_H
-#घोषणा BOOT_COMPRESSED_DECOMPRESSOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef BOOT_COMPRESSED_DECOMPRESSOR_H
+#define BOOT_COMPRESSED_DECOMPRESSOR_H
 
-#समावेश <linux/मानकघोष.स>
+#include <linux/stddef.h>
 
-#अगर_घोषित CONFIG_KERNEL_UNCOMPRESSED
-अटल अंतरभूत व्योम *decompress_kernel(व्योम) अणु वापस शून्य; पूर्ण
-#अन्यथा
-व्योम *decompress_kernel(व्योम);
-#पूर्ण_अगर
-अचिन्हित दीर्घ mem_safe_offset(व्योम);
-व्योम error(अक्षर *m);
+#ifdef CONFIG_KERNEL_UNCOMPRESSED
+static inline void *decompress_kernel(void) { return NULL; }
+#else
+void *decompress_kernel(void);
+#endif
+unsigned long mem_safe_offset(void);
+void error(char *m);
 
-काष्ठा vmlinux_info अणु
-	अचिन्हित दीर्घ शेष_lma;
-	व्योम (*entry)(व्योम);
-	अचिन्हित दीर्घ image_size;	/* करोes not include .bss */
-	अचिन्हित दीर्घ bss_size;		/* uncompressed image .bss size */
-	अचिन्हित दीर्घ bootdata_off;
-	अचिन्हित दीर्घ bootdata_size;
-	अचिन्हित दीर्घ bootdata_preserved_off;
-	अचिन्हित दीर्घ bootdata_preserved_size;
-	अचिन्हित दीर्घ dynsym_start;
-	अचिन्हित दीर्घ rela_dyn_start;
-	अचिन्हित दीर्घ rela_dyn_end;
-पूर्ण;
+struct vmlinux_info {
+	unsigned long default_lma;
+	void (*entry)(void);
+	unsigned long image_size;	/* does not include .bss */
+	unsigned long bss_size;		/* uncompressed image .bss size */
+	unsigned long bootdata_off;
+	unsigned long bootdata_size;
+	unsigned long bootdata_preserved_off;
+	unsigned long bootdata_preserved_size;
+	unsigned long dynsym_start;
+	unsigned long rela_dyn_start;
+	unsigned long rela_dyn_end;
+};
 
-बाह्य अक्षर _vmlinux_info[];
-#घोषणा vmlinux (*(काष्ठा vmlinux_info *)_vmlinux_info)
+extern char _vmlinux_info[];
+#define vmlinux (*(struct vmlinux_info *)_vmlinux_info)
 
-#पूर्ण_अगर /* BOOT_COMPRESSED_DECOMPRESSOR_H */
+#endif /* BOOT_COMPRESSED_DECOMPRESSOR_H */

@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
 /*
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#समावेश <crypto/aes.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/authenc.h>
-#समावेश <crypto/पूर्णांकernal/des.h>
-#समावेश <crypto/xts.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/err.h>
-#समावेश <linux/list.h>
-#समावेश <linux/scatterlist.h>
+#include <crypto/aes.h>
+#include <crypto/algapi.h>
+#include <crypto/authenc.h>
+#include <crypto/internal/des.h>
+#include <crypto/xts.h>
+#include <linux/crypto.h>
+#include <linux/err.h>
+#include <linux/list.h>
+#include <linux/scatterlist.h>
 
-#समावेश "cptvf.h"
-#समावेश "cptvf_algs.h"
+#include "cptvf.h"
+#include "cptvf_algs.h"
 
-काष्ठा cpt_device_handle अणु
-	व्योम *cdev[MAX_DEVICES];
+struct cpt_device_handle {
+	void *cdev[MAX_DEVICES];
 	u32 dev_count;
-पूर्ण;
+};
 
-अटल काष्ठा cpt_device_handle dev_handle;
+static struct cpt_device_handle dev_handle;
 
-अटल व्योम cvm_callback(u32 status, व्योम *arg)
-अणु
-	काष्ठा crypto_async_request *req = (काष्ठा crypto_async_request *)arg;
+static void cvm_callback(u32 status, void *arg)
+{
+	struct crypto_async_request *req = (struct crypto_async_request *)arg;
 
 	req->complete(req, !status);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम update_input_iv(काष्ठा cpt_request_info *req_info,
+static inline void update_input_iv(struct cpt_request_info *req_info,
 				   u8 *iv, u32 enc_iv_len,
 				   u32 *argcnt)
-अणु
-	/* Setting the iv inक्रमmation */
-	req_info->in[*argcnt].vptr = (व्योम *)iv;
+{
+	/* Setting the iv information */
+	req_info->in[*argcnt].vptr = (void *)iv;
 	req_info->in[*argcnt].size = enc_iv_len;
 	req_info->req.dlen += enc_iv_len;
 
 	++(*argcnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम update_output_iv(काष्ठा cpt_request_info *req_info,
+static inline void update_output_iv(struct cpt_request_info *req_info,
 				    u8 *iv, u32 enc_iv_len,
 				    u32 *argcnt)
-अणु
-	/* Setting the iv inक्रमmation */
-	req_info->out[*argcnt].vptr = (व्योम *)iv;
+{
+	/* Setting the iv information */
+	req_info->out[*argcnt].vptr = (void *)iv;
 	req_info->out[*argcnt].size = enc_iv_len;
 	req_info->rlen += enc_iv_len;
 
 	++(*argcnt);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम update_input_data(काष्ठा cpt_request_info *req_info,
-				     काष्ठा scatterlist *inp_sg,
+static inline void update_input_data(struct cpt_request_info *req_info,
+				     struct scatterlist *inp_sg,
 				     u32 nbytes, u32 *argcnt)
-अणु
+{
 	req_info->req.dlen += nbytes;
 
-	जबतक (nbytes) अणु
+	while (nbytes) {
 		u32 len = min(nbytes, inp_sg->length);
 		u8 *ptr = sg_virt(inp_sg);
 
-		req_info->in[*argcnt].vptr = (व्योम *)ptr;
+		req_info->in[*argcnt].vptr = (void *)ptr;
 		req_info->in[*argcnt].size = len;
 		nbytes -= len;
 
 		++(*argcnt);
 		++inp_sg;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम update_output_data(काष्ठा cpt_request_info *req_info,
-				      काष्ठा scatterlist *outp_sg,
+static inline void update_output_data(struct cpt_request_info *req_info,
+				      struct scatterlist *outp_sg,
 				      u32 nbytes, u32 *argcnt)
-अणु
+{
 	req_info->rlen += nbytes;
 
-	जबतक (nbytes) अणु
+	while (nbytes) {
 		u32 len = min(nbytes, outp_sg->length);
 		u8 *ptr = sg_virt(outp_sg);
 
-		req_info->out[*argcnt].vptr = (व्योम *)ptr;
+		req_info->out[*argcnt].vptr = (void *)ptr;
 		req_info->out[*argcnt].size = len;
 		nbytes -= len;
 		++(*argcnt);
 		++outp_sg;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u32 create_ctx_hdr(काष्ठा skcipher_request *req, u32 enc,
+static inline u32 create_ctx_hdr(struct skcipher_request *req, u32 enc,
 				 u32 *argcnt)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा cvm_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
-	काष्ठा cvm_req_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा fc_context *fctx = &rctx->fctx;
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct cvm_enc_ctx *ctx = crypto_skcipher_ctx(tfm);
+	struct cvm_req_ctx *rctx = skcipher_request_ctx(req);
+	struct fc_context *fctx = &rctx->fctx;
 	u32 enc_iv_len = crypto_skcipher_ivsize(tfm);
-	काष्ठा cpt_request_info *req_info = &rctx->cpt_req;
-	__be64 *ctrl_flags = शून्य;
+	struct cpt_request_info *req_info = &rctx->cpt_req;
+	__be64 *ctrl_flags = NULL;
 	__be64 *offset_control;
 
 	req_info->ctrl.s.grp = 0;
@@ -111,9 +110,9 @@
 
 	req_info->req.opcode.s.major = MAJOR_OP_FC |
 					DMA_MODE_FLAG(DMA_GATHER_SCATTER);
-	अगर (enc)
+	if (enc)
 		req_info->req.opcode.s.minor = 2;
-	अन्यथा
+	else
 		req_info->req.opcode.s.minor = 3;
 
 	req_info->req.param1 = req->cryptlen; /* Encryption Data length */
@@ -123,16 +122,16 @@
 	fctx->enc.enc_ctrl.e.aes_key = ctx->key_type;
 	fctx->enc.enc_ctrl.e.iv_source = FROM_DPTR;
 
-	अगर (ctx->cipher_type == AES_XTS)
-		स_नकल(fctx->enc.encr_key, ctx->enc_key, ctx->key_len * 2);
-	अन्यथा
-		स_नकल(fctx->enc.encr_key, ctx->enc_key, ctx->key_len);
+	if (ctx->cipher_type == AES_XTS)
+		memcpy(fctx->enc.encr_key, ctx->enc_key, ctx->key_len * 2);
+	else
+		memcpy(fctx->enc.encr_key, ctx->enc_key, ctx->key_len);
 	ctrl_flags = (__be64 *)&fctx->enc.enc_ctrl.flags;
 	*ctrl_flags = cpu_to_be64(fctx->enc.enc_ctrl.flags);
 
 	offset_control = (__be64 *)&rctx->control_word;
 	*offset_control = cpu_to_be64(((u64)(enc_iv_len) << 16));
-	/* Storing  Packet Data Inक्रमmation in offset
+	/* Storing  Packet Data Information in offset
 	 * Control Word First 8 bytes
 	 */
 	req_info->in[*argcnt].vptr = (u8 *)offset_control;
@@ -141,19 +140,19 @@
 	++(*argcnt);
 
 	req_info->in[*argcnt].vptr = (u8 *)fctx;
-	req_info->in[*argcnt].size = माप(काष्ठा fc_context);
-	req_info->req.dlen += माप(काष्ठा fc_context);
+	req_info->in[*argcnt].size = sizeof(struct fc_context);
+	req_info->req.dlen += sizeof(struct fc_context);
 
 	++(*argcnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32 create_input_list(काष्ठा skcipher_request  *req, u32 enc,
+static inline u32 create_input_list(struct skcipher_request  *req, u32 enc,
 				    u32 enc_iv_len)
-अणु
-	काष्ठा cvm_req_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा cpt_request_info *req_info = &rctx->cpt_req;
+{
+	struct cvm_req_ctx *rctx = skcipher_request_ctx(req);
+	struct cpt_request_info *req_info = &rctx->cpt_req;
 	u32 argcnt =  0;
 
 	create_ctx_hdr(req, enc, &argcnt);
@@ -161,191 +160,191 @@
 	update_input_data(req_info, req->src, req->cryptlen, &argcnt);
 	req_info->incnt = argcnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम store_cb_info(काष्ठा skcipher_request *req,
-				 काष्ठा cpt_request_info *req_info)
-अणु
-	req_info->callback = (व्योम *)cvm_callback;
-	req_info->callback_arg = (व्योम *)&req->base;
-पूर्ण
+static inline void store_cb_info(struct skcipher_request *req,
+				 struct cpt_request_info *req_info)
+{
+	req_info->callback = (void *)cvm_callback;
+	req_info->callback_arg = (void *)&req->base;
+}
 
-अटल अंतरभूत व्योम create_output_list(काष्ठा skcipher_request *req,
+static inline void create_output_list(struct skcipher_request *req,
 				      u32 enc_iv_len)
-अणु
-	काष्ठा cvm_req_ctx *rctx = skcipher_request_ctx(req);
-	काष्ठा cpt_request_info *req_info = &rctx->cpt_req;
+{
+	struct cvm_req_ctx *rctx = skcipher_request_ctx(req);
+	struct cpt_request_info *req_info = &rctx->cpt_req;
 	u32 argcnt = 0;
 
 	/* OUTPUT Buffer Processing
 	 * AES encryption/decryption output would be
-	 * received in the following क्रमmat
+	 * received in the following format
 	 *
 	 * ------IV--------|------ENCRYPTED/DECRYPTED DATA-----|
 	 * [ 16 Bytes/     [   Request Enc/Dec/ DATA Len AES CBC ]
 	 */
-	/* Reading IV inक्रमmation */
+	/* Reading IV information */
 	update_output_iv(req_info, req->iv, enc_iv_len, &argcnt);
 	update_output_data(req_info, req->dst, req->cryptlen, &argcnt);
 	req_info->outcnt = argcnt;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक cvm_enc_dec(काष्ठा skcipher_request *req, u32 enc)
-अणु
-	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	काष्ठा cvm_req_ctx *rctx = skcipher_request_ctx(req);
+static inline int cvm_enc_dec(struct skcipher_request *req, u32 enc)
+{
+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	struct cvm_req_ctx *rctx = skcipher_request_ctx(req);
 	u32 enc_iv_len = crypto_skcipher_ivsize(tfm);
-	काष्ठा fc_context *fctx = &rctx->fctx;
-	काष्ठा cpt_request_info *req_info = &rctx->cpt_req;
-	व्योम *cdev = शून्य;
-	पूर्णांक status;
+	struct fc_context *fctx = &rctx->fctx;
+	struct cpt_request_info *req_info = &rctx->cpt_req;
+	void *cdev = NULL;
+	int status;
 
-	स_रखो(req_info, 0, माप(काष्ठा cpt_request_info));
+	memset(req_info, 0, sizeof(struct cpt_request_info));
 	req_info->may_sleep = (req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP) != 0;
-	स_रखो(fctx, 0, माप(काष्ठा fc_context));
+	memset(fctx, 0, sizeof(struct fc_context));
 	create_input_list(req, enc, enc_iv_len);
 	create_output_list(req, enc_iv_len);
 	store_cb_info(req, req_info);
 	cdev = dev_handle.cdev[smp_processor_id()];
-	status = cptvf_करो_request(cdev, req_info);
-	/* We perक्रमm an asynchronous send and once
+	status = cptvf_do_request(cdev, req_info);
+	/* We perform an asynchronous send and once
 	 * the request is completed the driver would
-	 * पूर्णांकimate through  रेजिस्टरed call back functions
+	 * intimate through  registered call back functions
 	 */
 
-	अगर (status)
-		वापस status;
-	अन्यथा
-		वापस -EINPROGRESS;
-पूर्ण
+	if (status)
+		return status;
+	else
+		return -EINPROGRESS;
+}
 
-अटल पूर्णांक cvm_encrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस cvm_enc_dec(req, true);
-पूर्ण
+static int cvm_encrypt(struct skcipher_request *req)
+{
+	return cvm_enc_dec(req, true);
+}
 
-अटल पूर्णांक cvm_decrypt(काष्ठा skcipher_request *req)
-अणु
-	वापस cvm_enc_dec(req, false);
-पूर्ण
+static int cvm_decrypt(struct skcipher_request *req)
+{
+	return cvm_enc_dec(req, false);
+}
 
-अटल पूर्णांक cvm_xts_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_xts_setkey(struct crypto_skcipher *cipher, const u8 *key,
 		   u32 keylen)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(cipher);
-	काष्ठा cvm_enc_ctx *ctx = crypto_tfm_ctx(tfm);
-	पूर्णांक err;
-	स्थिर u8 *key1 = key;
-	स्थिर u8 *key2 = key + (keylen / 2);
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(cipher);
+	struct cvm_enc_ctx *ctx = crypto_tfm_ctx(tfm);
+	int err;
+	const u8 *key1 = key;
+	const u8 *key2 = key + (keylen / 2);
 
 	err = xts_check_key(tfm, key, keylen);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ctx->key_len = keylen;
-	स_नकल(ctx->enc_key, key1, keylen / 2);
-	स_नकल(ctx->enc_key + KEY2_OFFSET, key2, keylen / 2);
+	memcpy(ctx->enc_key, key1, keylen / 2);
+	memcpy(ctx->enc_key + KEY2_OFFSET, key2, keylen / 2);
 	ctx->cipher_type = AES_XTS;
-	चयन (ctx->key_len) अणु
-	हाल 32:
+	switch (ctx->key_len) {
+	case 32:
 		ctx->key_type = AES_128_BIT;
-		अवरोध;
-	हाल 64:
+		break;
+	case 64:
 		ctx->key_type = AES_256_BIT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cvm_validate_keylen(काष्ठा cvm_enc_ctx *ctx, u32 keylen)
-अणु
-	अगर ((keylen == 16) || (keylen == 24) || (keylen == 32)) अणु
+static int cvm_validate_keylen(struct cvm_enc_ctx *ctx, u32 keylen)
+{
+	if ((keylen == 16) || (keylen == 24) || (keylen == 32)) {
 		ctx->key_len = keylen;
-		चयन (ctx->key_len) अणु
-		हाल 16:
+		switch (ctx->key_len) {
+		case 16:
 			ctx->key_type = AES_128_BIT;
-			अवरोध;
-		हाल 24:
+			break;
+		case 24:
 			ctx->key_type = AES_192_BIT;
-			अवरोध;
-		हाल 32:
+			break;
+		case 32:
 			ctx->key_type = AES_256_BIT;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		अगर (ctx->cipher_type == DES3_CBC)
+		if (ctx->cipher_type == DES3_CBC)
 			ctx->key_type = 0;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक cvm_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_setkey(struct crypto_skcipher *cipher, const u8 *key,
 		      u32 keylen, u8 cipher_type)
-अणु
-	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(cipher);
-	काष्ठा cvm_enc_ctx *ctx = crypto_tfm_ctx(tfm);
+{
+	struct crypto_tfm *tfm = crypto_skcipher_tfm(cipher);
+	struct cvm_enc_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	ctx->cipher_type = cipher_type;
-	अगर (!cvm_validate_keylen(ctx, keylen)) अणु
-		स_नकल(ctx->enc_key, key, keylen);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	if (!cvm_validate_keylen(ctx, keylen)) {
+		memcpy(ctx->enc_key, key, keylen);
+		return 0;
+	} else {
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक cvm_cbc_aes_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_cbc_aes_setkey(struct crypto_skcipher *cipher, const u8 *key,
 			      u32 keylen)
-अणु
-	वापस cvm_setkey(cipher, key, keylen, AES_CBC);
-पूर्ण
+{
+	return cvm_setkey(cipher, key, keylen, AES_CBC);
+}
 
-अटल पूर्णांक cvm_ecb_aes_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_ecb_aes_setkey(struct crypto_skcipher *cipher, const u8 *key,
 			      u32 keylen)
-अणु
-	वापस cvm_setkey(cipher, key, keylen, AES_ECB);
-पूर्ण
+{
+	return cvm_setkey(cipher, key, keylen, AES_ECB);
+}
 
-अटल पूर्णांक cvm_cfb_aes_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_cfb_aes_setkey(struct crypto_skcipher *cipher, const u8 *key,
 			      u32 keylen)
-अणु
-	वापस cvm_setkey(cipher, key, keylen, AES_CFB);
-पूर्ण
+{
+	return cvm_setkey(cipher, key, keylen, AES_CFB);
+}
 
-अटल पूर्णांक cvm_cbc_des3_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_cbc_des3_setkey(struct crypto_skcipher *cipher, const u8 *key,
 			       u32 keylen)
-अणु
-	वापस verअगरy_skcipher_des3_key(cipher, key) ?:
+{
+	return verify_skcipher_des3_key(cipher, key) ?:
 	       cvm_setkey(cipher, key, keylen, DES3_CBC);
-पूर्ण
+}
 
-अटल पूर्णांक cvm_ecb_des3_setkey(काष्ठा crypto_skcipher *cipher, स्थिर u8 *key,
+static int cvm_ecb_des3_setkey(struct crypto_skcipher *cipher, const u8 *key,
 			       u32 keylen)
-अणु
-	वापस verअगरy_skcipher_des3_key(cipher, key) ?:
+{
+	return verify_skcipher_des3_key(cipher, key) ?:
 	       cvm_setkey(cipher, key, keylen, DES3_ECB);
-पूर्ण
+}
 
-अटल पूर्णांक cvm_enc_dec_init(काष्ठा crypto_skcipher *tfm)
-अणु
-	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा cvm_req_ctx));
+static int cvm_enc_dec_init(struct crypto_skcipher *tfm)
+{
+	crypto_skcipher_set_reqsize(tfm, sizeof(struct cvm_req_ctx));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा skcipher_alg algs[] = अणु अणु
+static struct skcipher_alg algs[] = { {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_enc_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_enc_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "xts(aes)",
@@ -359,11 +358,11 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण, अणु
+}, {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_enc_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_enc_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "cbc(aes)",
@@ -377,11 +376,11 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण, अणु
+}, {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_enc_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_enc_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "ecb(aes)",
@@ -394,11 +393,11 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण, अणु
+}, {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_enc_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_enc_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "cfb(aes)",
@@ -412,11 +411,11 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण, अणु
+}, {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= DES3_EDE_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_des3_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_des3_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "cbc(des3_ede)",
@@ -430,11 +429,11 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण, अणु
+}, {
 	.base.cra_flags		= CRYPTO_ALG_ASYNC |
 				  CRYPTO_ALG_ALLOCATES_MEMORY,
 	.base.cra_blocksize	= DES3_EDE_BLOCK_SIZE,
-	.base.cra_ctxsize	= माप(काष्ठा cvm_des3_ctx),
+	.base.cra_ctxsize	= sizeof(struct cvm_des3_ctx),
 	.base.cra_alignmask	= 7,
 	.base.cra_priority	= 4001,
 	.base.cra_name		= "ecb(des3_ede)",
@@ -448,42 +447,42 @@
 	.encrypt		= cvm_encrypt,
 	.decrypt		= cvm_decrypt,
 	.init			= cvm_enc_dec_init,
-पूर्ण पूर्ण;
+} };
 
-अटल अंतरभूत पूर्णांक cav_रेजिस्टर_algs(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_skciphers(algs, ARRAY_SIZE(algs));
-पूर्ण
+static inline int cav_register_algs(void)
+{
+	return crypto_register_skciphers(algs, ARRAY_SIZE(algs));
+}
 
-अटल अंतरभूत व्योम cav_unरेजिस्टर_algs(व्योम)
-अणु
-	crypto_unरेजिस्टर_skciphers(algs, ARRAY_SIZE(algs));
-पूर्ण
+static inline void cav_unregister_algs(void)
+{
+	crypto_unregister_skciphers(algs, ARRAY_SIZE(algs));
+}
 
-पूर्णांक cvm_crypto_init(काष्ठा cpt_vf *cptvf)
-अणु
-	काष्ठा pci_dev *pdev = cptvf->pdev;
+int cvm_crypto_init(struct cpt_vf *cptvf)
+{
+	struct pci_dev *pdev = cptvf->pdev;
 	u32 dev_count;
 
 	dev_count = dev_handle.dev_count;
 	dev_handle.cdev[dev_count] = cptvf;
 	dev_handle.dev_count++;
 
-	अगर (dev_count == 3) अणु
-		अगर (cav_रेजिस्टर_algs()) अणु
+	if (dev_count == 3) {
+		if (cav_register_algs()) {
 			dev_err(&pdev->dev, "Error in registering crypto algorithms\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cvm_crypto_निकास(व्योम)
-अणु
+void cvm_crypto_exit(void)
+{
 	u32 dev_count;
 
 	dev_count = --dev_handle.dev_count;
-	अगर (!dev_count)
-		cav_unरेजिस्टर_algs();
-पूर्ण
+	if (!dev_count)
+		cav_unregister_algs();
+}

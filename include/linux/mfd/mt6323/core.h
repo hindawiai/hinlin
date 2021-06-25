@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Chen Zhong <chen.zhong@mediatek.com>
  */
 
-#अगर_अघोषित __MFD_MT6323_CORE_H__
-#घोषणा __MFD_MT6323_CORE_H__
+#ifndef __MFD_MT6323_CORE_H__
+#define __MFD_MT6323_CORE_H__
 
-क्रमागत MT6323_IRQ_STATUS_numbers अणु
+enum MT6323_IRQ_STATUS_numbers {
 	MT6323_IRQ_STATUS_SPKL_AB = 0,
 	MT6323_IRQ_STATUS_SPKL,
 	MT6323_IRQ_STATUS_BAT_L,
@@ -29,6 +28,6 @@
 	MT6323_IRQ_STATUS_VSYS,
 	MT6323_IRQ_STATUS_VPA,
 	MT6323_IRQ_STATUS_NR,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __MFD_MT6323_CORE_H__ */
+#endif /* __MFD_MT6323_CORE_H__ */

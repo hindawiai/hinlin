@@ -1,358 +1,357 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2005-2007 Red Hat GmbH
  *
- * A target that delays पढ़ोs and/or ग_लिखोs and can send
- * them to dअगरferent devices.
+ * A target that delays reads and/or writes and can send
+ * them to different devices.
  *
  * This file is released under the GPL.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/blkdev.h>
+#include <linux/bio.h>
+#include <linux/slab.h>
 
-#समावेश <linux/device-mapper.h>
+#include <linux/device-mapper.h>
 
-#घोषणा DM_MSG_PREFIX "delay"
+#define DM_MSG_PREFIX "delay"
 
-काष्ठा delay_class अणु
-	काष्ठा dm_dev *dev;
+struct delay_class {
+	struct dm_dev *dev;
 	sector_t start;
-	अचिन्हित delay;
-	अचिन्हित ops;
-पूर्ण;
+	unsigned delay;
+	unsigned ops;
+};
 
-काष्ठा delay_c अणु
-	काष्ठा समयr_list delay_समयr;
-	काष्ठा mutex समयr_lock;
-	काष्ठा workqueue_काष्ठा *kdelayd_wq;
-	काष्ठा work_काष्ठा flush_expired_bios;
-	काष्ठा list_head delayed_bios;
+struct delay_c {
+	struct timer_list delay_timer;
+	struct mutex timer_lock;
+	struct workqueue_struct *kdelayd_wq;
+	struct work_struct flush_expired_bios;
+	struct list_head delayed_bios;
 	atomic_t may_delay;
 
-	काष्ठा delay_class पढ़ो;
-	काष्ठा delay_class ग_लिखो;
-	काष्ठा delay_class flush;
+	struct delay_class read;
+	struct delay_class write;
+	struct delay_class flush;
 
-	पूर्णांक argc;
-पूर्ण;
+	int argc;
+};
 
-काष्ठा dm_delay_info अणु
-	काष्ठा delay_c *context;
-	काष्ठा delay_class *class;
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ expires;
-पूर्ण;
+struct dm_delay_info {
+	struct delay_c *context;
+	struct delay_class *class;
+	struct list_head list;
+	unsigned long expires;
+};
 
-अटल DEFINE_MUTEX(delayed_bios_lock);
+static DEFINE_MUTEX(delayed_bios_lock);
 
-अटल व्योम handle_delayed_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा delay_c *dc = from_समयr(dc, t, delay_समयr);
+static void handle_delayed_timer(struct timer_list *t)
+{
+	struct delay_c *dc = from_timer(dc, t, delay_timer);
 
 	queue_work(dc->kdelayd_wq, &dc->flush_expired_bios);
-पूर्ण
+}
 
-अटल व्योम queue_समयout(काष्ठा delay_c *dc, अचिन्हित दीर्घ expires)
-अणु
-	mutex_lock(&dc->समयr_lock);
+static void queue_timeout(struct delay_c *dc, unsigned long expires)
+{
+	mutex_lock(&dc->timer_lock);
 
-	अगर (!समयr_pending(&dc->delay_समयr) || expires < dc->delay_समयr.expires)
-		mod_समयr(&dc->delay_समयr, expires);
+	if (!timer_pending(&dc->delay_timer) || expires < dc->delay_timer.expires)
+		mod_timer(&dc->delay_timer, expires);
 
-	mutex_unlock(&dc->समयr_lock);
-पूर्ण
+	mutex_unlock(&dc->timer_lock);
+}
 
-अटल व्योम flush_bios(काष्ठा bio *bio)
-अणु
-	काष्ठा bio *n;
+static void flush_bios(struct bio *bio)
+{
+	struct bio *n;
 
-	जबतक (bio) अणु
+	while (bio) {
 		n = bio->bi_next;
-		bio->bi_next = शून्य;
+		bio->bi_next = NULL;
 		submit_bio_noacct(bio);
 		bio = n;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा bio *flush_delayed_bios(काष्ठा delay_c *dc, पूर्णांक flush_all)
-अणु
-	काष्ठा dm_delay_info *delayed, *next;
-	अचिन्हित दीर्घ next_expires = 0;
-	अचिन्हित दीर्घ start_समयr = 0;
-	काष्ठा bio_list flush_bios = अणु पूर्ण;
+static struct bio *flush_delayed_bios(struct delay_c *dc, int flush_all)
+{
+	struct dm_delay_info *delayed, *next;
+	unsigned long next_expires = 0;
+	unsigned long start_timer = 0;
+	struct bio_list flush_bios = { };
 
 	mutex_lock(&delayed_bios_lock);
-	list_क्रम_each_entry_safe(delayed, next, &dc->delayed_bios, list) अणु
-		अगर (flush_all || समय_after_eq(jअगरfies, delayed->expires)) अणु
-			काष्ठा bio *bio = dm_bio_from_per_bio_data(delayed,
-						माप(काष्ठा dm_delay_info));
+	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
+		if (flush_all || time_after_eq(jiffies, delayed->expires)) {
+			struct bio *bio = dm_bio_from_per_bio_data(delayed,
+						sizeof(struct dm_delay_info));
 			list_del(&delayed->list);
 			bio_list_add(&flush_bios, bio);
 			delayed->class->ops--;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!start_समयr) अणु
-			start_समयr = 1;
+		if (!start_timer) {
+			start_timer = 1;
 			next_expires = delayed->expires;
-		पूर्ण अन्यथा
+		} else
 			next_expires = min(next_expires, delayed->expires);
-	पूर्ण
+	}
 	mutex_unlock(&delayed_bios_lock);
 
-	अगर (start_समयr)
-		queue_समयout(dc, next_expires);
+	if (start_timer)
+		queue_timeout(dc, next_expires);
 
-	वापस bio_list_get(&flush_bios);
-पूर्ण
+	return bio_list_get(&flush_bios);
+}
 
-अटल व्योम flush_expired_bios(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delay_c *dc;
+static void flush_expired_bios(struct work_struct *work)
+{
+	struct delay_c *dc;
 
-	dc = container_of(work, काष्ठा delay_c, flush_expired_bios);
+	dc = container_of(work, struct delay_c, flush_expired_bios);
 	flush_bios(flush_delayed_bios(dc, 0));
-पूर्ण
+}
 
-अटल व्योम delay_dtr(काष्ठा dm_target *ti)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
+static void delay_dtr(struct dm_target *ti)
+{
+	struct delay_c *dc = ti->private;
 
-	अगर (dc->kdelayd_wq)
+	if (dc->kdelayd_wq)
 		destroy_workqueue(dc->kdelayd_wq);
 
-	अगर (dc->पढ़ो.dev)
-		dm_put_device(ti, dc->पढ़ो.dev);
-	अगर (dc->ग_लिखो.dev)
-		dm_put_device(ti, dc->ग_लिखो.dev);
-	अगर (dc->flush.dev)
+	if (dc->read.dev)
+		dm_put_device(ti, dc->read.dev);
+	if (dc->write.dev)
+		dm_put_device(ti, dc->write.dev);
+	if (dc->flush.dev)
 		dm_put_device(ti, dc->flush.dev);
 
-	mutex_destroy(&dc->समयr_lock);
+	mutex_destroy(&dc->timer_lock);
 
-	kमुक्त(dc);
-पूर्ण
+	kfree(dc);
+}
 
-अटल पूर्णांक delay_class_ctr(काष्ठा dm_target *ti, काष्ठा delay_class *c, अक्षर **argv)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ दीर्घ पंचांगpll;
-	अक्षर dummy;
+static int delay_class_ctr(struct dm_target *ti, struct delay_class *c, char **argv)
+{
+	int ret;
+	unsigned long long tmpll;
+	char dummy;
 
-	अगर (माला_पूछो(argv[1], "%llu%c", &पंचांगpll, &dummy) != 1 || पंचांगpll != (sector_t)पंचांगpll) अणु
+	if (sscanf(argv[1], "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
 		ti->error = "Invalid device sector";
-		वापस -EINVAL;
-	पूर्ण
-	c->start = पंचांगpll;
+		return -EINVAL;
+	}
+	c->start = tmpll;
 
-	अगर (माला_पूछो(argv[2], "%u%c", &c->delay, &dummy) != 1) अणु
+	if (sscanf(argv[2], "%u%c", &c->delay, &dummy) != 1) {
 		ti->error = "Invalid delay";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &c->dev);
-	अगर (ret) अणु
+	if (ret) {
 		ti->error = "Device lookup failed";
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Mapping parameters:
- *    <device> <offset> <delay> [<ग_लिखो_device> <ग_लिखो_offset> <ग_लिखो_delay>]
+ *    <device> <offset> <delay> [<write_device> <write_offset> <write_delay>]
  *
- * With separate ग_लिखो parameters, the first set is only used क्रम पढ़ोs.
- * Offsets are specअगरied in sectors.
- * Delays are specअगरied in milliseconds.
+ * With separate write parameters, the first set is only used for reads.
+ * Offsets are specified in sectors.
+ * Delays are specified in milliseconds.
  */
-अटल पूर्णांक delay_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा delay_c *dc;
-	पूर्णांक ret;
+static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+{
+	struct delay_c *dc;
+	int ret;
 
-	अगर (argc != 3 && argc != 6 && argc != 9) अणु
+	if (argc != 3 && argc != 6 && argc != 9) {
 		ti->error = "Requires exactly 3, 6 or 9 arguments";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	dc = kzalloc(माप(*dc), GFP_KERNEL);
-	अगर (!dc) अणु
+	dc = kzalloc(sizeof(*dc), GFP_KERNEL);
+	if (!dc) {
 		ti->error = "Cannot allocate context";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	ti->निजी = dc;
-	समयr_setup(&dc->delay_समयr, handle_delayed_समयr, 0);
+	ti->private = dc;
+	timer_setup(&dc->delay_timer, handle_delayed_timer, 0);
 	INIT_WORK(&dc->flush_expired_bios, flush_expired_bios);
 	INIT_LIST_HEAD(&dc->delayed_bios);
-	mutex_init(&dc->समयr_lock);
+	mutex_init(&dc->timer_lock);
 	atomic_set(&dc->may_delay, 1);
 	dc->argc = argc;
 
-	ret = delay_class_ctr(ti, &dc->पढ़ो, argv);
-	अगर (ret)
-		जाओ bad;
+	ret = delay_class_ctr(ti, &dc->read, argv);
+	if (ret)
+		goto bad;
 
-	अगर (argc == 3) अणु
-		ret = delay_class_ctr(ti, &dc->ग_लिखो, argv);
-		अगर (ret)
-			जाओ bad;
+	if (argc == 3) {
+		ret = delay_class_ctr(ti, &dc->write, argv);
+		if (ret)
+			goto bad;
 		ret = delay_class_ctr(ti, &dc->flush, argv);
-		अगर (ret)
-			जाओ bad;
-		जाओ out;
-	पूर्ण
+		if (ret)
+			goto bad;
+		goto out;
+	}
 
-	ret = delay_class_ctr(ti, &dc->ग_लिखो, argv + 3);
-	अगर (ret)
-		जाओ bad;
-	अगर (argc == 6) अणु
+	ret = delay_class_ctr(ti, &dc->write, argv + 3);
+	if (ret)
+		goto bad;
+	if (argc == 6) {
 		ret = delay_class_ctr(ti, &dc->flush, argv + 3);
-		अगर (ret)
-			जाओ bad;
-		जाओ out;
-	पूर्ण
+		if (ret)
+			goto bad;
+		goto out;
+	}
 
 	ret = delay_class_ctr(ti, &dc->flush, argv + 6);
-	अगर (ret)
-		जाओ bad;
+	if (ret)
+		goto bad;
 
 out:
 	dc->kdelayd_wq = alloc_workqueue("kdelayd", WQ_MEM_RECLAIM, 0);
-	अगर (!dc->kdelayd_wq) अणु
+	if (!dc->kdelayd_wq) {
 		ret = -EINVAL;
 		DMERR("Couldn't start kdelayd");
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
-	ti->per_io_data_size = माप(काष्ठा dm_delay_info);
-	वापस 0;
+	ti->per_io_data_size = sizeof(struct dm_delay_info);
+	return 0;
 
 bad:
 	delay_dtr(ti);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक delay_bio(काष्ठा delay_c *dc, काष्ठा delay_class *c, काष्ठा bio *bio)
-अणु
-	काष्ठा dm_delay_info *delayed;
-	अचिन्हित दीर्घ expires = 0;
+static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+{
+	struct dm_delay_info *delayed;
+	unsigned long expires = 0;
 
-	अगर (!c->delay || !atomic_पढ़ो(&dc->may_delay))
-		वापस DM_MAPIO_REMAPPED;
+	if (!c->delay || !atomic_read(&dc->may_delay))
+		return DM_MAPIO_REMAPPED;
 
-	delayed = dm_per_bio_data(bio, माप(काष्ठा dm_delay_info));
+	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
 
 	delayed->context = dc;
-	delayed->expires = expires = jअगरfies + msecs_to_jअगरfies(c->delay);
+	delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
 
 	mutex_lock(&delayed_bios_lock);
 	c->ops++;
 	list_add_tail(&delayed->list, &dc->delayed_bios);
 	mutex_unlock(&delayed_bios_lock);
 
-	queue_समयout(dc, expires);
+	queue_timeout(dc, expires);
 
-	वापस DM_MAPIO_SUBMITTED;
-पूर्ण
+	return DM_MAPIO_SUBMITTED;
+}
 
-अटल व्योम delay_presuspend(काष्ठा dm_target *ti)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
+static void delay_presuspend(struct dm_target *ti)
+{
+	struct delay_c *dc = ti->private;
 
 	atomic_set(&dc->may_delay, 0);
-	del_समयr_sync(&dc->delay_समयr);
+	del_timer_sync(&dc->delay_timer);
 	flush_bios(flush_delayed_bios(dc, 1));
-पूर्ण
+}
 
-अटल व्योम delay_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
+static void delay_resume(struct dm_target *ti)
+{
+	struct delay_c *dc = ti->private;
 
 	atomic_set(&dc->may_delay, 1);
-पूर्ण
+}
 
-अटल पूर्णांक delay_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
-	काष्ठा delay_class *c;
-	काष्ठा dm_delay_info *delayed = dm_per_bio_data(bio, माप(काष्ठा dm_delay_info));
+static int delay_map(struct dm_target *ti, struct bio *bio)
+{
+	struct delay_c *dc = ti->private;
+	struct delay_class *c;
+	struct dm_delay_info *delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
 
-	अगर (bio_data_dir(bio) == WRITE) अणु
-		अगर (unlikely(bio->bi_opf & REQ_PREFLUSH))
+	if (bio_data_dir(bio) == WRITE) {
+		if (unlikely(bio->bi_opf & REQ_PREFLUSH))
 			c = &dc->flush;
-		अन्यथा
-			c = &dc->ग_लिखो;
-	पूर्ण अन्यथा अणु
-		c = &dc->पढ़ो;
-	पूर्ण
+		else
+			c = &dc->write;
+	} else {
+		c = &dc->read;
+	}
 	delayed->class = c;
 	bio_set_dev(bio, c->dev->bdev);
-	अगर (bio_sectors(bio))
+	if (bio_sectors(bio))
 		bio->bi_iter.bi_sector = c->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
 
-	वापस delay_bio(dc, c, bio);
-पूर्ण
+	return delay_bio(dc, c, bio);
+}
 
-#घोषणा DMEMIT_DELAY_CLASS(c) \
-	DMEMIT("%s %llu %u", (c)->dev->name, (अचिन्हित दीर्घ दीर्घ)(c)->start, (c)->delay)
+#define DMEMIT_DELAY_CLASS(c) \
+	DMEMIT("%s %llu %u", (c)->dev->name, (unsigned long long)(c)->start, (c)->delay)
 
-अटल व्योम delay_status(काष्ठा dm_target *ti, status_type_t type,
-			 अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
-	पूर्णांक sz = 0;
+static void delay_status(struct dm_target *ti, status_type_t type,
+			 unsigned status_flags, char *result, unsigned maxlen)
+{
+	struct delay_c *dc = ti->private;
+	int sz = 0;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
-		DMEMIT("%u %u %u", dc->पढ़ो.ops, dc->ग_लिखो.ops, dc->flush.ops);
-		अवरोध;
+	switch (type) {
+	case STATUSTYPE_INFO:
+		DMEMIT("%u %u %u", dc->read.ops, dc->write.ops, dc->flush.ops);
+		break;
 
-	हाल STATUSTYPE_TABLE:
-		DMEMIT_DELAY_CLASS(&dc->पढ़ो);
-		अगर (dc->argc >= 6) अणु
+	case STATUSTYPE_TABLE:
+		DMEMIT_DELAY_CLASS(&dc->read);
+		if (dc->argc >= 6) {
 			DMEMIT(" ");
-			DMEMIT_DELAY_CLASS(&dc->ग_लिखो);
-		पूर्ण
-		अगर (dc->argc >= 9) अणु
+			DMEMIT_DELAY_CLASS(&dc->write);
+		}
+		if (dc->argc >= 9) {
 			DMEMIT(" ");
 			DMEMIT_DELAY_CLASS(&dc->flush);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक delay_iterate_devices(काष्ठा dm_target *ti,
-				 iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	काष्ठा delay_c *dc = ti->निजी;
-	पूर्णांक ret = 0;
+static int delay_iterate_devices(struct dm_target *ti,
+				 iterate_devices_callout_fn fn, void *data)
+{
+	struct delay_c *dc = ti->private;
+	int ret = 0;
 
-	ret = fn(ti, dc->पढ़ो.dev, dc->पढ़ो.start, ti->len, data);
-	अगर (ret)
-		जाओ out;
-	ret = fn(ti, dc->ग_लिखो.dev, dc->ग_लिखो.start, ti->len, data);
-	अगर (ret)
-		जाओ out;
+	ret = fn(ti, dc->read.dev, dc->read.start, ti->len, data);
+	if (ret)
+		goto out;
+	ret = fn(ti, dc->write.dev, dc->write.start, ti->len, data);
+	if (ret)
+		goto out;
 	ret = fn(ti, dc->flush.dev, dc->flush.start, ti->len, data);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा target_type delay_target = अणु
+static struct target_type delay_target = {
 	.name	     = "delay",
-	.version     = अणु1, 2, 1पूर्ण,
+	.version     = {1, 2, 1},
 	.features    = DM_TARGET_PASSES_INTEGRITY,
 	.module      = THIS_MODULE,
 	.ctr	     = delay_ctr,
@@ -362,32 +361,32 @@ out:
 	.resume	     = delay_resume,
 	.status	     = delay_status,
 	.iterate_devices = delay_iterate_devices,
-पूर्ण;
+};
 
-अटल पूर्णांक __init dm_delay_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_delay_init(void)
+{
+	int r;
 
-	r = dm_रेजिस्टर_target(&delay_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&delay_target);
+	if (r < 0) {
 		DMERR("register failed %d", r);
-		जाओ bad_रेजिस्टर;
-	पूर्ण
+		goto bad_register;
+	}
 
-	वापस 0;
+	return 0;
 
-bad_रेजिस्टर:
-	वापस r;
-पूर्ण
+bad_register:
+	return r;
+}
 
-अटल व्योम __निकास dm_delay_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&delay_target);
-पूर्ण
+static void __exit dm_delay_exit(void)
+{
+	dm_unregister_target(&delay_target);
+}
 
 /* Module hooks */
 module_init(dm_delay_init);
-module_निकास(dm_delay_निकास);
+module_exit(dm_delay_exit);
 
 MODULE_DESCRIPTION(DM_NAME " delay target");
 MODULE_AUTHOR("Heinz Mauelshagen <mauelshagen@redhat.com>");

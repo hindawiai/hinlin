@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * lib/ts_fsm.c	   A naive finite state machine text search approach
  *
@@ -7,41 +6,41 @@
  *
  * ==========================================================================
  *
- *   A finite state machine consists of n states (काष्ठा ts_fsm_token)
- *   representing the pattern as a finite स्वतःmaton. The data is पढ़ो
- *   sequentially on an octet basis. Every state token specअगरies the number
+ *   A finite state machine consists of n states (struct ts_fsm_token)
+ *   representing the pattern as a finite automaton. The data is read
+ *   sequentially on an octet basis. Every state token specifies the number
  *   of recurrences and the type of value accepted which can be either a
- *   specअगरic अक्षरacter or ctype based set of अक्षरacters. The available
+ *   specific character or ctype based set of characters. The available
  *   type of recurrences include 1, (0|1), [0 n], and [1 n].
  *
- *   The algorithm dअगरfers between strict/non-strict mode specअगरying
+ *   The algorithm differs between strict/non-strict mode specifying
  *   whether the pattern has to start at the first octet. Strict mode
- *   is enabled by शेष and can be disabled by inserting
+ *   is enabled by default and can be disabled by inserting
  *   TS_FSM_HEAD_IGNORE as the first token in the chain.
  *
- *   The runसमय perक्रमmance of the algorithm should be around O(n),
- *   however जबतक in strict mode the average runसमय can be better.
+ *   The runtime performance of the algorithm should be around O(n),
+ *   however while in strict mode the average runtime can be better.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/textsearch.h>
-#समावेश <linux/textsearch_fsm.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
+#include <linux/textsearch.h>
+#include <linux/textsearch_fsm.h>
 
-काष्ठा ts_fsm
-अणु
-	अचिन्हित पूर्णांक		ntokens;
-	काष्ठा ts_fsm_token	tokens[];
-पूर्ण;
+struct ts_fsm
+{
+	unsigned int		ntokens;
+	struct ts_fsm_token	tokens[];
+};
 
-/* other values derived from प्रकार.स */
-#घोषणा _A		0x100 /* ascii */
-#घोषणा _W		0x200 /* wildcard */
+/* other values derived from ctype.h */
+#define _A		0x100 /* ascii */
+#define _W		0x200 /* wildcard */
 
 /* Map to _ctype flags and some magic numbers */
-अटल स्थिर u16 token_map[TS_FSM_TYPE_MAX+1] = अणु
+static const u16 token_map[TS_FSM_TYPE_MAX+1] = {
 	[TS_FSM_SPECIFIC] = 0,
 	[TS_FSM_WILDCARD] = _W,
 	[TS_FSM_CNTRL]	  = _C,
@@ -56,9 +55,9 @@
 	[TS_FSM_PRINT]	  = _P | _U | _L | _D | _SP,
 	[TS_FSM_GRAPH]	  = _P | _U | _L | _D,
 	[TS_FSM_ASCII]	  = _A,
-पूर्ण;
+};
 
-अटल स्थिर u16 token_lookup_tbl[256] = अणु
+static const u16 token_lookup_tbl[256] = {
 _W|_A|_C,      _W|_A|_C,     _W|_A|_C,     _W|_A|_C,		/*   0-  3 */
 _W|_A|_C,      _W|_A|_C,     _W|_A|_C,     _W|_A|_C,		/*   4-  7 */
 _W|_A|_C,      _W|_A|_C|_S,  _W|_A|_C|_S,  _W|_A|_C|_S,		/*   8- 11 */
@@ -122,197 +121,197 @@ _W|_L,         _W|_L,        _W|_L,        _W|_L,		/* 236-239 */
 _W|_L,         _W|_L,        _W|_L,        _W|_L,		/* 240-243 */
 _W|_L,         _W|_L,        _W|_L,        _W|_P,		/* 244-247 */
 _W|_L,         _W|_L,        _W|_L,        _W|_L,		/* 248-251 */
-_W|_L,         _W|_L,        _W|_L,        _W|_Lपूर्ण;		/* 252-255 */
+_W|_L,         _W|_L,        _W|_L,        _W|_L};		/* 252-255 */
 
-अटल अंतरभूत पूर्णांक match_token(काष्ठा ts_fsm_token *t, u8 d)
-अणु
-	अगर (t->type)
-		वापस (token_lookup_tbl[d] & t->type) != 0;
-	अन्यथा
-		वापस t->value == d;
-पूर्ण
+static inline int match_token(struct ts_fsm_token *t, u8 d)
+{
+	if (t->type)
+		return (token_lookup_tbl[d] & t->type) != 0;
+	else
+		return t->value == d;
+}
 
-अटल अचिन्हित पूर्णांक fsm_find(काष्ठा ts_config *conf, काष्ठा ts_state *state)
-अणु
-	काष्ठा ts_fsm *fsm = ts_config_priv(conf);
-	काष्ठा ts_fsm_token *cur = शून्य, *next;
-	अचिन्हित पूर्णांक match_start, block_idx = 0, tok_idx;
-	अचिन्हित block_len = 0, strict, consumed = state->offset;
-	स्थिर u8 *data;
+static unsigned int fsm_find(struct ts_config *conf, struct ts_state *state)
+{
+	struct ts_fsm *fsm = ts_config_priv(conf);
+	struct ts_fsm_token *cur = NULL, *next;
+	unsigned int match_start, block_idx = 0, tok_idx;
+	unsigned block_len = 0, strict, consumed = state->offset;
+	const u8 *data;
 
-#घोषणा GET_NEXT_BLOCK()		\
-(अणु	consumed += block_idx;		\
+#define GET_NEXT_BLOCK()		\
+({	consumed += block_idx;		\
 	block_idx = 0;			\
-	block_len = conf->get_next_block(consumed, &data, conf, state); पूर्ण)
+	block_len = conf->get_next_block(consumed, &data, conf, state); })
 
-#घोषणा TOKEN_MISMATCH()		\
-	करो अणु				\
-		अगर (strict)		\
-			जाओ no_match;	\
+#define TOKEN_MISMATCH()		\
+	do {				\
+		if (strict)		\
+			goto no_match;	\
 		block_idx++;		\
-		जाओ startover;		\
-	पूर्ण जबतक(0)
+		goto startover;		\
+	} while(0)
 
-#घोषणा end_of_data() unlikely(block_idx >= block_len && !GET_NEXT_BLOCK())
+#define end_of_data() unlikely(block_idx >= block_len && !GET_NEXT_BLOCK())
 
-	अगर (end_of_data())
-		जाओ no_match;
+	if (end_of_data())
+		goto no_match;
 
 	strict = fsm->tokens[0].recur != TS_FSM_HEAD_IGNORE;
 
 startover:
 	match_start = consumed + block_idx;
 
-	क्रम (tok_idx = 0; tok_idx < fsm->ntokens; tok_idx++) अणु
+	for (tok_idx = 0; tok_idx < fsm->ntokens; tok_idx++) {
 		cur = &fsm->tokens[tok_idx];
 
-		अगर (likely(tok_idx < (fsm->ntokens - 1)))
+		if (likely(tok_idx < (fsm->ntokens - 1)))
 			next = &fsm->tokens[tok_idx + 1];
-		अन्यथा
-			next = शून्य;
+		else
+			next = NULL;
 
-		चयन (cur->recur) अणु
-		हाल TS_FSM_SINGLE:
-			अगर (end_of_data())
-				जाओ no_match;
+		switch (cur->recur) {
+		case TS_FSM_SINGLE:
+			if (end_of_data())
+				goto no_match;
 
-			अगर (!match_token(cur, data[block_idx]))
+			if (!match_token(cur, data[block_idx]))
 				TOKEN_MISMATCH();
-			अवरोध;
+			break;
 
-		हाल TS_FSM_PERHAPS:
-			अगर (end_of_data() ||
+		case TS_FSM_PERHAPS:
+			if (end_of_data() ||
 			    !match_token(cur, data[block_idx]))
-				जारी;
-			अवरोध;
+				continue;
+			break;
 
-		हाल TS_FSM_MULTI:
-			अगर (end_of_data())
-				जाओ no_match;
+		case TS_FSM_MULTI:
+			if (end_of_data())
+				goto no_match;
 
-			अगर (!match_token(cur, data[block_idx]))
+			if (!match_token(cur, data[block_idx]))
 				TOKEN_MISMATCH();
 
 			block_idx++;
 			fallthrough;
 
-		हाल TS_FSM_ANY:
-			अगर (next == शून्य)
-				जाओ found_match;
+		case TS_FSM_ANY:
+			if (next == NULL)
+				goto found_match;
 
-			अगर (end_of_data())
-				जारी;
+			if (end_of_data())
+				continue;
 
-			जबतक (!match_token(next, data[block_idx])) अणु
-				अगर (!match_token(cur, data[block_idx]))
+			while (!match_token(next, data[block_idx])) {
+				if (!match_token(cur, data[block_idx]))
 					TOKEN_MISMATCH();
 				block_idx++;
-				अगर (end_of_data())
-					जाओ no_match;
-			पूर्ण
-			जारी;
+				if (end_of_data())
+					goto no_match;
+			}
+			continue;
 
 		/*
 		 * Optimization: Prefer small local loop over jumping
-		 * back and क्रमth until garbage at head is munched.
+		 * back and forth until garbage at head is munched.
 		 */
-		हाल TS_FSM_HEAD_IGNORE:
-			अगर (end_of_data())
-				जारी;
+		case TS_FSM_HEAD_IGNORE:
+			if (end_of_data())
+				continue;
 
-			जबतक (!match_token(next, data[block_idx])) अणु
+			while (!match_token(next, data[block_idx])) {
 				/*
-				 * Special हाल, करोn't start over upon
+				 * Special case, don't start over upon
 				 * a mismatch, give the user the
-				 * chance to specअगरy the type of data
+				 * chance to specify the type of data
 				 * allowed to be ignored.
 				 */
-				अगर (!match_token(cur, data[block_idx]))
-					जाओ no_match;
+				if (!match_token(cur, data[block_idx]))
+					goto no_match;
 
 				block_idx++;
-				अगर (end_of_data())
-					जाओ no_match;
-			पूर्ण
+				if (end_of_data())
+					goto no_match;
+			}
 
 			match_start = consumed + block_idx;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		block_idx++;
-	पूर्ण
+	}
 
-	अगर (end_of_data())
-		जाओ found_match;
+	if (end_of_data())
+		goto found_match;
 
 no_match:
-	वापस अच_पूर्णांक_उच्च;
+	return UINT_MAX;
 
 found_match:
 	state->offset = consumed + block_idx;
-	वापस match_start;
-पूर्ण
+	return match_start;
+}
 
-अटल काष्ठा ts_config *fsm_init(स्थिर व्योम *pattern, अचिन्हित पूर्णांक len,
-				    gfp_t gfp_mask, पूर्णांक flags)
-अणु
-	पूर्णांक i, err = -EINVAL;
-	काष्ठा ts_config *conf;
-	काष्ठा ts_fsm *fsm;
-	काष्ठा ts_fsm_token *tokens = (काष्ठा ts_fsm_token *) pattern;
-	अचिन्हित पूर्णांक ntokens = len / माप(*tokens);
-	माप_प्रकार priv_size = माप(*fsm) + len;
+static struct ts_config *fsm_init(const void *pattern, unsigned int len,
+				    gfp_t gfp_mask, int flags)
+{
+	int i, err = -EINVAL;
+	struct ts_config *conf;
+	struct ts_fsm *fsm;
+	struct ts_fsm_token *tokens = (struct ts_fsm_token *) pattern;
+	unsigned int ntokens = len / sizeof(*tokens);
+	size_t priv_size = sizeof(*fsm) + len;
 
-	अगर (len  % माप(काष्ठा ts_fsm_token) || ntokens < 1)
-		जाओ errout;
+	if (len  % sizeof(struct ts_fsm_token) || ntokens < 1)
+		goto errout;
 
-	अगर (flags & TS_IGNORECASE)
-		जाओ errout;
+	if (flags & TS_IGNORECASE)
+		goto errout;
 
-	क्रम (i = 0; i < ntokens; i++) अणु
-		काष्ठा ts_fsm_token *t = &tokens[i];
+	for (i = 0; i < ntokens; i++) {
+		struct ts_fsm_token *t = &tokens[i];
 
-		अगर (t->type > TS_FSM_TYPE_MAX || t->recur > TS_FSM_RECUR_MAX)
-			जाओ errout;
+		if (t->type > TS_FSM_TYPE_MAX || t->recur > TS_FSM_RECUR_MAX)
+			goto errout;
 
-		अगर (t->recur == TS_FSM_HEAD_IGNORE &&
+		if (t->recur == TS_FSM_HEAD_IGNORE &&
 		    (i != 0 || i == (ntokens - 1)))
-			जाओ errout;
-	पूर्ण
+			goto errout;
+	}
 
 	conf = alloc_ts_config(priv_size, gfp_mask);
-	अगर (IS_ERR(conf))
-		वापस conf;
+	if (IS_ERR(conf))
+		return conf;
 
 	conf->flags = flags;
 	fsm = ts_config_priv(conf);
 	fsm->ntokens = ntokens;
-	स_नकल(fsm->tokens, pattern, len);
+	memcpy(fsm->tokens, pattern, len);
 
-	क्रम (i = 0; i < fsm->ntokens; i++) अणु
-		काष्ठा ts_fsm_token *t = &fsm->tokens[i];
+	for (i = 0; i < fsm->ntokens; i++) {
+		struct ts_fsm_token *t = &fsm->tokens[i];
 		t->type = token_map[t->type];
-	पूर्ण
+	}
 
-	वापस conf;
+	return conf;
 
 errout:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम *fsm_get_pattern(काष्ठा ts_config *conf)
-अणु
-	काष्ठा ts_fsm *fsm = ts_config_priv(conf);
-	वापस fsm->tokens;
-पूर्ण
+static void *fsm_get_pattern(struct ts_config *conf)
+{
+	struct ts_fsm *fsm = ts_config_priv(conf);
+	return fsm->tokens;
+}
 
-अटल अचिन्हित पूर्णांक fsm_get_pattern_len(काष्ठा ts_config *conf)
-अणु
-	काष्ठा ts_fsm *fsm = ts_config_priv(conf);
-	वापस fsm->ntokens * माप(काष्ठा ts_fsm_token);
-पूर्ण
+static unsigned int fsm_get_pattern_len(struct ts_config *conf)
+{
+	struct ts_fsm *fsm = ts_config_priv(conf);
+	return fsm->ntokens * sizeof(struct ts_fsm_token);
+}
 
-अटल काष्ठा ts_ops fsm_ops = अणु
+static struct ts_ops fsm_ops = {
 	.name		  = "fsm",
 	.find		  = fsm_find,
 	.init		  = fsm_init,
@@ -320,19 +319,19 @@ errout:
 	.get_pattern_len  = fsm_get_pattern_len,
 	.owner		  = THIS_MODULE,
 	.list		  = LIST_HEAD_INIT(fsm_ops.list)
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_fsm(व्योम)
-अणु
-	वापस textsearch_रेजिस्टर(&fsm_ops);
-पूर्ण
+static int __init init_fsm(void)
+{
+	return textsearch_register(&fsm_ops);
+}
 
-अटल व्योम __निकास निकास_fsm(व्योम)
-अणु
-	textsearch_unरेजिस्टर(&fsm_ops);
-पूर्ण
+static void __exit exit_fsm(void)
+{
+	textsearch_unregister(&fsm_ops);
+}
 
 MODULE_LICENSE("GPL");
 
 module_init(init_fsm);
-module_निकास(निकास_fsm);
+module_exit(exit_fsm);

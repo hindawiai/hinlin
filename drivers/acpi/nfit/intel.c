@@ -1,593 +1,592 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2018 Intel Corporation. All rights reserved. */
-#समावेश <linux/libnvdimm.h>
-#समावेश <linux/ndctl.h>
-#समावेश <linux/acpi.h>
-#समावेश <यंत्र/smp.h>
-#समावेश "intel.h"
-#समावेश "nfit.h"
+#include <linux/libnvdimm.h>
+#include <linux/ndctl.h>
+#include <linux/acpi.h>
+#include <asm/smp.h>
+#include "intel.h"
+#include "nfit.h"
 
-अटल sमाप_प्रकार firmware_activate_noidle_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+static ssize_t firmware_activate_noidle_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	वापस प्र_लिखो(buf, "%s\n", acpi_desc->fwa_noidle ? "Y" : "N");
-पूर्ण
+	return sprintf(buf, "%s\n", acpi_desc->fwa_noidle ? "Y" : "N");
+}
 
-अटल sमाप_प्रकार firmware_activate_noidle_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	sमाप_प्रकार rc;
+static ssize_t firmware_activate_noidle_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	ssize_t rc;
 	bool val;
 
 	rc = kstrtobool(buf, &val);
-	अगर (rc)
-		वापस rc;
-	अगर (val != acpi_desc->fwa_noidle)
+	if (rc)
+		return rc;
+	if (val != acpi_desc->fwa_noidle)
 		acpi_desc->fwa_cap = NVDIMM_FWA_CAP_INVALID;
 	acpi_desc->fwa_noidle = val;
-	वापस size;
-पूर्ण
+	return size;
+}
 DEVICE_ATTR_RW(firmware_activate_noidle);
 
-bool पूर्णांकel_fwa_supported(काष्ठा nvdimm_bus *nvdimm_bus)
-अणु
-	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	अचिन्हित दीर्घ *mask;
+bool intel_fwa_supported(struct nvdimm_bus *nvdimm_bus)
+{
+	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	unsigned long *mask;
 
-	अगर (!test_bit(NVDIMM_BUS_FAMILY_INTEL, &nd_desc->bus_family_mask))
-		वापस false;
+	if (!test_bit(NVDIMM_BUS_FAMILY_INTEL, &nd_desc->bus_family_mask))
+		return false;
 
 	mask = &acpi_desc->family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL];
-	वापस *mask == NVDIMM_BUS_INTEL_FW_ACTIVATE_CMDMASK;
-पूर्ण
+	return *mask == NVDIMM_BUS_INTEL_FW_ACTIVATE_CMDMASK;
+}
 
-अटल अचिन्हित दीर्घ पूर्णांकel_security_flags(काष्ठा nvdimm *nvdimm,
-		क्रमागत nvdimm_passphrase_type ptype)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	अचिन्हित दीर्घ security_flags = 0;
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_get_security_state cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static unsigned long intel_security_flags(struct nvdimm *nvdimm,
+		enum nvdimm_passphrase_type ptype)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	unsigned long security_flags = 0;
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_get_security_state cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_GET_SECURITY_STATE,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_out =
-				माप(काष्ठा nd_पूर्णांकel_get_security_state),
+				sizeof(struct nd_intel_get_security_state),
 			.nd_fw_size =
-				माप(काष्ठा nd_पूर्णांकel_get_security_state),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+				sizeof(struct nd_intel_get_security_state),
+		},
+	};
+	int rc;
 
-	अगर (!test_bit(NVDIMM_INTEL_GET_SECURITY_STATE, &nfit_mem->dsm_mask))
-		वापस 0;
+	if (!test_bit(NVDIMM_INTEL_GET_SECURITY_STATE, &nfit_mem->dsm_mask))
+		return 0;
 
 	/*
-	 * Short circuit the state retrieval जबतक we are करोing overग_लिखो.
+	 * Short circuit the state retrieval while we are doing overwrite.
 	 * The DSM spec states that the security state is indeterminate
-	 * until the overग_लिखो DSM completes.
+	 * until the overwrite DSM completes.
 	 */
-	अगर (nvdimm_in_overग_लिखो(nvdimm) && ptype == NVDIMM_USER)
-		वापस BIT(NVDIMM_SECURITY_OVERWRITE);
+	if (nvdimm_in_overwrite(nvdimm) && ptype == NVDIMM_USER)
+		return BIT(NVDIMM_SECURITY_OVERWRITE);
 
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0 || nd_cmd.cmd.status) अणु
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0 || nd_cmd.cmd.status) {
 		pr_err("%s: security state retrieval failed (%d:%#x)\n",
 				nvdimm_name(nvdimm), rc, nd_cmd.cmd.status);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* check and see अगर security is enabled and locked */
-	अगर (ptype == NVDIMM_MASTER) अणु
-		अगर (nd_cmd.cmd.extended_state & ND_INTEL_SEC_ESTATE_ENABLED)
+	/* check and see if security is enabled and locked */
+	if (ptype == NVDIMM_MASTER) {
+		if (nd_cmd.cmd.extended_state & ND_INTEL_SEC_ESTATE_ENABLED)
 			set_bit(NVDIMM_SECURITY_UNLOCKED, &security_flags);
-		अन्यथा
+		else
 			set_bit(NVDIMM_SECURITY_DISABLED, &security_flags);
-		अगर (nd_cmd.cmd.extended_state & ND_INTEL_SEC_ESTATE_PLIMIT)
+		if (nd_cmd.cmd.extended_state & ND_INTEL_SEC_ESTATE_PLIMIT)
 			set_bit(NVDIMM_SECURITY_FROZEN, &security_flags);
-		वापस security_flags;
-	पूर्ण
+		return security_flags;
+	}
 
-	अगर (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_UNSUPPORTED)
-		वापस 0;
+	if (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_UNSUPPORTED)
+		return 0;
 
-	अगर (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_ENABLED) अणु
-		अगर (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_FROZEN ||
+	if (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_ENABLED) {
+		if (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_FROZEN ||
 		    nd_cmd.cmd.state & ND_INTEL_SEC_STATE_PLIMIT)
 			set_bit(NVDIMM_SECURITY_FROZEN, &security_flags);
 
-		अगर (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_LOCKED)
+		if (nd_cmd.cmd.state & ND_INTEL_SEC_STATE_LOCKED)
 			set_bit(NVDIMM_SECURITY_LOCKED, &security_flags);
-		अन्यथा
+		else
 			set_bit(NVDIMM_SECURITY_UNLOCKED, &security_flags);
-	पूर्ण अन्यथा
+	} else
 		set_bit(NVDIMM_SECURITY_DISABLED, &security_flags);
 
-	वापस security_flags;
-पूर्ण
+	return security_flags;
+}
 
-अटल पूर्णांक पूर्णांकel_security_मुक्तze(काष्ठा nvdimm *nvdimm)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_मुक्तze_lock cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_security_freeze(struct nvdimm *nvdimm)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_freeze_lock cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_FREEZE_LOCK,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+		},
+	};
+	int rc;
 
-	अगर (!test_bit(NVDIMM_INTEL_FREEZE_LOCK, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(NVDIMM_INTEL_FREEZE_LOCK, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
-	अगर (nd_cmd.cmd.status)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
+	if (nd_cmd.cmd.status)
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_security_change_key(काष्ठा nvdimm *nvdimm,
-		स्थिर काष्ठा nvdimm_key_data *old_data,
-		स्थिर काष्ठा nvdimm_key_data *new_data,
-		क्रमागत nvdimm_passphrase_type ptype)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	अचिन्हित पूर्णांक cmd = ptype == NVDIMM_MASTER ?
+static int intel_security_change_key(struct nvdimm *nvdimm,
+		const struct nvdimm_key_data *old_data,
+		const struct nvdimm_key_data *new_data,
+		enum nvdimm_passphrase_type ptype)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	unsigned int cmd = ptype == NVDIMM_MASTER ?
 		NVDIMM_INTEL_SET_MASTER_PASSPHRASE :
 		NVDIMM_INTEL_SET_PASSPHRASE;
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_set_passphrase cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_set_passphrase cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_in = ND_INTEL_PASSPHRASE_SIZE * 2,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
 			.nd_command = cmd,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+		},
+	};
+	int rc;
 
-	अगर (!test_bit(cmd, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(cmd, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	स_नकल(nd_cmd.cmd.old_pass, old_data->data,
-			माप(nd_cmd.cmd.old_pass));
-	स_नकल(nd_cmd.cmd.new_pass, new_data->data,
-			माप(nd_cmd.cmd.new_pass));
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
+	memcpy(nd_cmd.cmd.old_pass, old_data->data,
+			sizeof(nd_cmd.cmd.old_pass));
+	memcpy(nd_cmd.cmd.new_pass, new_data->data,
+			sizeof(nd_cmd.cmd.new_pass));
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
 
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		वापस 0;
-	हाल ND_INTEL_STATUS_INVALID_PASS:
-		वापस -EINVAL;
-	हाल ND_INTEL_STATUS_NOT_SUPPORTED:
-		वापस -EOPNOTSUPP;
-	हाल ND_INTEL_STATUS_INVALID_STATE:
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		return 0;
+	case ND_INTEL_STATUS_INVALID_PASS:
+		return -EINVAL;
+	case ND_INTEL_STATUS_NOT_SUPPORTED:
+		return -EOPNOTSUPP;
+	case ND_INTEL_STATUS_INVALID_STATE:
+	default:
+		return -EIO;
+	}
+}
 
-अटल व्योम nvdimm_invalidate_cache(व्योम);
+static void nvdimm_invalidate_cache(void);
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_security_unlock(काष्ठा nvdimm *nvdimm,
-		स्थिर काष्ठा nvdimm_key_data *key_data)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_unlock_unit cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int __maybe_unused intel_security_unlock(struct nvdimm *nvdimm,
+		const struct nvdimm_key_data *key_data)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_unlock_unit cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_UNLOCK_UNIT,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_in = ND_INTEL_PASSPHRASE_SIZE,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+		},
+	};
+	int rc;
 
-	अगर (!test_bit(NVDIMM_INTEL_UNLOCK_UNIT, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(NVDIMM_INTEL_UNLOCK_UNIT, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	स_नकल(nd_cmd.cmd.passphrase, key_data->data,
-			माप(nd_cmd.cmd.passphrase));
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		अवरोध;
-	हाल ND_INTEL_STATUS_INVALID_PASS:
-		वापस -EINVAL;
-	शेष:
-		वापस -EIO;
-	पूर्ण
+	memcpy(nd_cmd.cmd.passphrase, key_data->data,
+			sizeof(nd_cmd.cmd.passphrase));
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		break;
+	case ND_INTEL_STATUS_INVALID_PASS:
+		return -EINVAL;
+	default:
+		return -EIO;
+	}
 
-	/* DIMM unlocked, invalidate all CPU caches beक्रमe we पढ़ो it */
+	/* DIMM unlocked, invalidate all CPU caches before we read it */
 	nvdimm_invalidate_cache();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_security_disable(काष्ठा nvdimm *nvdimm,
-		स्थिर काष्ठा nvdimm_key_data *key_data)
-अणु
-	पूर्णांक rc;
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_disable_passphrase cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_security_disable(struct nvdimm *nvdimm,
+		const struct nvdimm_key_data *key_data)
+{
+	int rc;
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_disable_passphrase cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_DISABLE_PASSPHRASE,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_in = ND_INTEL_PASSPHRASE_SIZE,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!test_bit(NVDIMM_INTEL_DISABLE_PASSPHRASE, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(NVDIMM_INTEL_DISABLE_PASSPHRASE, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	स_नकल(nd_cmd.cmd.passphrase, key_data->data,
-			माप(nd_cmd.cmd.passphrase));
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
+	memcpy(nd_cmd.cmd.passphrase, key_data->data,
+			sizeof(nd_cmd.cmd.passphrase));
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
 
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		अवरोध;
-	हाल ND_INTEL_STATUS_INVALID_PASS:
-		वापस -EINVAL;
-	हाल ND_INTEL_STATUS_INVALID_STATE:
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		break;
+	case ND_INTEL_STATUS_INVALID_PASS:
+		return -EINVAL;
+	case ND_INTEL_STATUS_INVALID_STATE:
+	default:
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_security_erase(काष्ठा nvdimm *nvdimm,
-		स्थिर काष्ठा nvdimm_key_data *key,
-		क्रमागत nvdimm_passphrase_type ptype)
-अणु
-	पूर्णांक rc;
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	अचिन्हित पूर्णांक cmd = ptype == NVDIMM_MASTER ?
+static int __maybe_unused intel_security_erase(struct nvdimm *nvdimm,
+		const struct nvdimm_key_data *key,
+		enum nvdimm_passphrase_type ptype)
+{
+	int rc;
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	unsigned int cmd = ptype == NVDIMM_MASTER ?
 		NVDIMM_INTEL_MASTER_SECURE_ERASE : NVDIMM_INTEL_SECURE_ERASE;
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_secure_erase cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_secure_erase cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_in = ND_INTEL_PASSPHRASE_SIZE,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
 			.nd_command = cmd,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!test_bit(cmd, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(cmd, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	/* flush all cache beक्रमe we erase DIMM */
+	/* flush all cache before we erase DIMM */
 	nvdimm_invalidate_cache();
-	स_नकल(nd_cmd.cmd.passphrase, key->data,
-			माप(nd_cmd.cmd.passphrase));
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
+	memcpy(nd_cmd.cmd.passphrase, key->data,
+			sizeof(nd_cmd.cmd.passphrase));
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
 
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		अवरोध;
-	हाल ND_INTEL_STATUS_NOT_SUPPORTED:
-		वापस -EOPNOTSUPP;
-	हाल ND_INTEL_STATUS_INVALID_PASS:
-		वापस -EINVAL;
-	हाल ND_INTEL_STATUS_INVALID_STATE:
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		break;
+	case ND_INTEL_STATUS_NOT_SUPPORTED:
+		return -EOPNOTSUPP;
+	case ND_INTEL_STATUS_INVALID_PASS:
+		return -EINVAL;
+	case ND_INTEL_STATUS_INVALID_STATE:
+	default:
+		return -ENXIO;
+	}
 
-	/* DIMM erased, invalidate all CPU caches beक्रमe we पढ़ो it */
+	/* DIMM erased, invalidate all CPU caches before we read it */
 	nvdimm_invalidate_cache();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_security_query_overग_लिखो(काष्ठा nvdimm *nvdimm)
-अणु
-	पूर्णांक rc;
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_query_overग_लिखो cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int __maybe_unused intel_security_query_overwrite(struct nvdimm *nvdimm)
+{
+	int rc;
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_query_overwrite cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_QUERY_OVERWRITE,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!test_bit(NVDIMM_INTEL_QUERY_OVERWRITE, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(NVDIMM_INTEL_QUERY_OVERWRITE, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
 
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		अवरोध;
-	हाल ND_INTEL_STATUS_OQUERY_INPROGRESS:
-		वापस -EBUSY;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		break;
+	case ND_INTEL_STATUS_OQUERY_INPROGRESS:
+		return -EBUSY;
+	default:
+		return -ENXIO;
+	}
 
-	/* flush all cache beक्रमe we make the nvdimms available */
+	/* flush all cache before we make the nvdimms available */
 	nvdimm_invalidate_cache();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_security_overग_लिखो(काष्ठा nvdimm *nvdimm,
-		स्थिर काष्ठा nvdimm_key_data *nkey)
-अणु
-	पूर्णांक rc;
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_overग_लिखो cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int __maybe_unused intel_security_overwrite(struct nvdimm *nvdimm,
+		const struct nvdimm_key_data *nkey)
+{
+	int rc;
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_overwrite cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_OVERWRITE,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_in = ND_INTEL_PASSPHRASE_SIZE,
 			.nd_size_out = ND_INTEL_STATUS_SIZE,
 			.nd_fw_size = ND_INTEL_STATUS_SIZE,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!test_bit(NVDIMM_INTEL_OVERWRITE, &nfit_mem->dsm_mask))
-		वापस -ENOTTY;
+	if (!test_bit(NVDIMM_INTEL_OVERWRITE, &nfit_mem->dsm_mask))
+		return -ENOTTY;
 
-	/* flush all cache beक्रमe we erase DIMM */
+	/* flush all cache before we erase DIMM */
 	nvdimm_invalidate_cache();
-	स_नकल(nd_cmd.cmd.passphrase, nkey->data,
-			माप(nd_cmd.cmd.passphrase));
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
-	अगर (rc < 0)
-		वापस rc;
+	memcpy(nd_cmd.cmd.passphrase, nkey->data,
+			sizeof(nd_cmd.cmd.passphrase));
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
+	if (rc < 0)
+		return rc;
 
-	चयन (nd_cmd.cmd.status) अणु
-	हाल 0:
-		वापस 0;
-	हाल ND_INTEL_STATUS_OVERWRITE_UNSUPPORTED:
-		वापस -ENOTSUPP;
-	हाल ND_INTEL_STATUS_INVALID_PASS:
-		वापस -EINVAL;
-	हाल ND_INTEL_STATUS_INVALID_STATE:
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
-पूर्ण
+	switch (nd_cmd.cmd.status) {
+	case 0:
+		return 0;
+	case ND_INTEL_STATUS_OVERWRITE_UNSUPPORTED:
+		return -ENOTSUPP;
+	case ND_INTEL_STATUS_INVALID_PASS:
+		return -EINVAL;
+	case ND_INTEL_STATUS_INVALID_STATE:
+	default:
+		return -ENXIO;
+	}
+}
 
 /*
- * TODO: define a cross arch wbinvd equivalent when/अगर
+ * TODO: define a cross arch wbinvd equivalent when/if
  * NVDIMM_FAMILY_INTEL command support arrives on another arch.
  */
-#अगर_घोषित CONFIG_X86
-अटल व्योम nvdimm_invalidate_cache(व्योम)
-अणु
+#ifdef CONFIG_X86
+static void nvdimm_invalidate_cache(void)
+{
 	wbinvd_on_all_cpus();
-पूर्ण
-#अन्यथा
-अटल व्योम nvdimm_invalidate_cache(व्योम)
-अणु
+}
+#else
+static void nvdimm_invalidate_cache(void)
+{
 	WARN_ON_ONCE("cache invalidation required after unlock\n");
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल स्थिर काष्ठा nvdimm_security_ops __पूर्णांकel_security_ops = अणु
-	.get_flags = पूर्णांकel_security_flags,
-	.मुक्तze = पूर्णांकel_security_मुक्तze,
-	.change_key = पूर्णांकel_security_change_key,
-	.disable = पूर्णांकel_security_disable,
-#अगर_घोषित CONFIG_X86
-	.unlock = पूर्णांकel_security_unlock,
-	.erase = पूर्णांकel_security_erase,
-	.overग_लिखो = पूर्णांकel_security_overग_लिखो,
-	.query_overग_लिखो = पूर्णांकel_security_query_overग_लिखो,
-#पूर्ण_अगर
-पूर्ण;
+static const struct nvdimm_security_ops __intel_security_ops = {
+	.get_flags = intel_security_flags,
+	.freeze = intel_security_freeze,
+	.change_key = intel_security_change_key,
+	.disable = intel_security_disable,
+#ifdef CONFIG_X86
+	.unlock = intel_security_unlock,
+	.erase = intel_security_erase,
+	.overwrite = intel_security_overwrite,
+	.query_overwrite = intel_security_query_overwrite,
+#endif
+};
 
-स्थिर काष्ठा nvdimm_security_ops *पूर्णांकel_security_ops = &__पूर्णांकel_security_ops;
+const struct nvdimm_security_ops *intel_security_ops = &__intel_security_ops;
 
-अटल पूर्णांक पूर्णांकel_bus_fwa_businfo(काष्ठा nvdimm_bus_descriptor *nd_desc,
-		काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo *info)
-अणु
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_bus_fwa_businfo(struct nvdimm_bus_descriptor *nd_desc,
+		struct nd_intel_bus_fw_activate_businfo *info)
+{
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_bus_fw_activate_businfo cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_BUS_INTEL_FW_ACTIVATE_BUSINFO,
 			.nd_family = NVDIMM_BUS_FAMILY_INTEL,
 			.nd_size_out =
-				माप(काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo),
+				sizeof(struct nd_intel_bus_fw_activate_businfo),
 			.nd_fw_size =
-				माप(काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+				sizeof(struct nd_intel_bus_fw_activate_businfo),
+		},
+	};
+	int rc;
 
-	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_CALL, &nd_cmd, माप(nd_cmd),
-			शून्य);
+	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd),
+			NULL);
 	*info = nd_cmd.cmd;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* The fw_ops expect to be called with the nvdimm_bus_lock() held */
-अटल क्रमागत nvdimm_fwa_state पूर्णांकel_bus_fwa_state(
-		काष्ठा nvdimm_bus_descriptor *nd_desc)
-अणु
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	काष्ठा nd_पूर्णांकel_bus_fw_activate_businfo info;
-	काष्ठा device *dev = acpi_desc->dev;
-	क्रमागत nvdimm_fwa_state state;
-	पूर्णांक rc;
+static enum nvdimm_fwa_state intel_bus_fwa_state(
+		struct nvdimm_bus_descriptor *nd_desc)
+{
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	struct nd_intel_bus_fw_activate_businfo info;
+	struct device *dev = acpi_desc->dev;
+	enum nvdimm_fwa_state state;
+	int rc;
 
 	/*
-	 * It should not be possible क्रम platक्रमm firmware to वापस
+	 * It should not be possible for platform firmware to return
 	 * busy because activate is a synchronous operation. Treat it
 	 * similar to invalid, i.e. always refresh / poll the status.
 	 */
-	चयन (acpi_desc->fwa_state) अणु
-	हाल NVDIMM_FWA_INVALID:
-	हाल NVDIMM_FWA_BUSY:
-		अवरोध;
-	शेष:
-		/* check अगर capability needs to be refreshed */
-		अगर (acpi_desc->fwa_cap == NVDIMM_FWA_CAP_INVALID)
-			अवरोध;
-		वापस acpi_desc->fwa_state;
-	पूर्ण
+	switch (acpi_desc->fwa_state) {
+	case NVDIMM_FWA_INVALID:
+	case NVDIMM_FWA_BUSY:
+		break;
+	default:
+		/* check if capability needs to be refreshed */
+		if (acpi_desc->fwa_cap == NVDIMM_FWA_CAP_INVALID)
+			break;
+		return acpi_desc->fwa_state;
+	}
 
-	/* Refresh with platक्रमm firmware */
-	rc = पूर्णांकel_bus_fwa_businfo(nd_desc, &info);
-	अगर (rc)
-		वापस NVDIMM_FWA_INVALID;
+	/* Refresh with platform firmware */
+	rc = intel_bus_fwa_businfo(nd_desc, &info);
+	if (rc)
+		return NVDIMM_FWA_INVALID;
 
-	चयन (info.state) अणु
-	हाल ND_INTEL_FWA_IDLE:
+	switch (info.state) {
+	case ND_INTEL_FWA_IDLE:
 		state = NVDIMM_FWA_IDLE;
-		अवरोध;
-	हाल ND_INTEL_FWA_BUSY:
+		break;
+	case ND_INTEL_FWA_BUSY:
 		state = NVDIMM_FWA_BUSY;
-		अवरोध;
-	हाल ND_INTEL_FWA_ARMED:
-		अगर (info.activate_पंचांगo > info.max_quiesce_पंचांगo)
+		break;
+	case ND_INTEL_FWA_ARMED:
+		if (info.activate_tmo > info.max_quiesce_tmo)
 			state = NVDIMM_FWA_ARM_OVERFLOW;
-		अन्यथा
+		else
 			state = NVDIMM_FWA_ARMED;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err_once(dev, "invalid firmware activate state %d\n",
 				info.state);
-		वापस NVDIMM_FWA_INVALID;
-	पूर्ण
+		return NVDIMM_FWA_INVALID;
+	}
 
 	/*
 	 * Capability data is available in the same payload as state. It
-	 * is expected to be अटल.
+	 * is expected to be static.
 	 */
-	अगर (acpi_desc->fwa_cap == NVDIMM_FWA_CAP_INVALID) अणु
-		अगर (info.capability & ND_INTEL_BUS_FWA_CAP_FWQUIESCE)
+	if (acpi_desc->fwa_cap == NVDIMM_FWA_CAP_INVALID) {
+		if (info.capability & ND_INTEL_BUS_FWA_CAP_FWQUIESCE)
 			acpi_desc->fwa_cap = NVDIMM_FWA_CAP_QUIESCE;
-		अन्यथा अगर (info.capability & ND_INTEL_BUS_FWA_CAP_OSQUIESCE) अणु
+		else if (info.capability & ND_INTEL_BUS_FWA_CAP_OSQUIESCE) {
 			/*
-			 * Skip hibernate cycle by शेष अगर platक्रमm
-			 * indicates that it करोes not need devices to be
+			 * Skip hibernate cycle by default if platform
+			 * indicates that it does not need devices to be
 			 * quiesced.
 			 */
 			acpi_desc->fwa_cap = NVDIMM_FWA_CAP_LIVE;
-		पूर्ण अन्यथा
+		} else
 			acpi_desc->fwa_cap = NVDIMM_FWA_CAP_NONE;
-	पूर्ण
+	}
 
 	acpi_desc->fwa_state = state;
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल क्रमागत nvdimm_fwa_capability पूर्णांकel_bus_fwa_capability(
-		काष्ठा nvdimm_bus_descriptor *nd_desc)
-अणु
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+static enum nvdimm_fwa_capability intel_bus_fwa_capability(
+		struct nvdimm_bus_descriptor *nd_desc)
+{
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	अगर (acpi_desc->fwa_cap > NVDIMM_FWA_CAP_INVALID)
-		वापस acpi_desc->fwa_cap;
+	if (acpi_desc->fwa_cap > NVDIMM_FWA_CAP_INVALID)
+		return acpi_desc->fwa_cap;
 
-	अगर (पूर्णांकel_bus_fwa_state(nd_desc) > NVDIMM_FWA_INVALID)
-		वापस acpi_desc->fwa_cap;
+	if (intel_bus_fwa_state(nd_desc) > NVDIMM_FWA_INVALID)
+		return acpi_desc->fwa_cap;
 
-	वापस NVDIMM_FWA_CAP_INVALID;
-पूर्ण
+	return NVDIMM_FWA_CAP_INVALID;
+}
 
-अटल पूर्णांक पूर्णांकel_bus_fwa_activate(काष्ठा nvdimm_bus_descriptor *nd_desc)
-अणु
-	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_bus_fw_activate cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_bus_fwa_activate(struct nvdimm_bus_descriptor *nd_desc)
+{
+	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_bus_fw_activate cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_BUS_INTEL_FW_ACTIVATE,
 			.nd_family = NVDIMM_BUS_FAMILY_INTEL,
-			.nd_size_in = माप(nd_cmd.cmd.iodev_state),
+			.nd_size_in = sizeof(nd_cmd.cmd.iodev_state),
 			.nd_size_out =
-				माप(काष्ठा nd_पूर्णांकel_bus_fw_activate),
+				sizeof(struct nd_intel_bus_fw_activate),
 			.nd_fw_size =
-				माप(काष्ठा nd_पूर्णांकel_bus_fw_activate),
-		पूर्ण,
+				sizeof(struct nd_intel_bus_fw_activate),
+		},
 		/*
 		 * Even though activate is run from a suspended context,
-		 * क्रम safety, still ask platक्रमm firmware to क्रमce
-		 * quiesce devices by शेष. Let a module
+		 * for safety, still ask platform firmware to force
+		 * quiesce devices by default. Let a module
 		 * parameter override that policy.
 		 */
-		.cmd = अणु
+		.cmd = {
 			.iodev_state = acpi_desc->fwa_noidle
 				? ND_INTEL_BUS_FWA_IODEV_OS_IDLE
 				: ND_INTEL_BUS_FWA_IODEV_FORCE_IDLE,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+		},
+	};
+	int rc;
 
-	चयन (पूर्णांकel_bus_fwa_state(nd_desc)) अणु
-	हाल NVDIMM_FWA_ARMED:
-	हाल NVDIMM_FWA_ARM_OVERFLOW:
-		अवरोध;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (intel_bus_fwa_state(nd_desc)) {
+	case NVDIMM_FWA_ARMED:
+	case NVDIMM_FWA_ARM_OVERFLOW:
+		break;
+	default:
+		return -ENXIO;
+	}
 
-	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_CALL, &nd_cmd, माप(nd_cmd),
-			शून्य);
+	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd),
+			NULL);
 
 	/*
 	 * Whether the command succeeded, or failed, the agent checking
-	 * क्रम the result needs to query the DIMMs inभागidually.
+	 * for the result needs to query the DIMMs individually.
 	 * Increment the activation count to invalidate all the DIMM
 	 * states at once (it's otherwise not possible to take
 	 * acpi_desc->init_mutex in this context)
@@ -597,163 +596,163 @@ bool पूर्णांकel_fwa_supported(काष्ठा nvdimm_bus *nvd
 
 	dev_dbg(acpi_desc->dev, "result: %d\n", rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा nvdimm_bus_fw_ops __पूर्णांकel_bus_fw_ops = अणु
-	.activate_state = पूर्णांकel_bus_fwa_state,
-	.capability = पूर्णांकel_bus_fwa_capability,
-	.activate = पूर्णांकel_bus_fwa_activate,
-पूर्ण;
+static const struct nvdimm_bus_fw_ops __intel_bus_fw_ops = {
+	.activate_state = intel_bus_fwa_state,
+	.capability = intel_bus_fwa_capability,
+	.activate = intel_bus_fwa_activate,
+};
 
-स्थिर काष्ठा nvdimm_bus_fw_ops *पूर्णांकel_bus_fw_ops = &__पूर्णांकel_bus_fw_ops;
+const struct nvdimm_bus_fw_ops *intel_bus_fw_ops = &__intel_bus_fw_ops;
 
-अटल पूर्णांक पूर्णांकel_fwa_dimminfo(काष्ठा nvdimm *nvdimm,
-		काष्ठा nd_पूर्णांकel_fw_activate_dimminfo *info)
-अणु
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_fw_activate_dimminfo cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_fwa_dimminfo(struct nvdimm *nvdimm,
+		struct nd_intel_fw_activate_dimminfo *info)
+{
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_fw_activate_dimminfo cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_FW_ACTIVATE_DIMMINFO,
 			.nd_family = NVDIMM_FAMILY_INTEL,
 			.nd_size_out =
-				माप(काष्ठा nd_पूर्णांकel_fw_activate_dimminfo),
+				sizeof(struct nd_intel_fw_activate_dimminfo),
 			.nd_fw_size =
-				माप(काष्ठा nd_पूर्णांकel_fw_activate_dimminfo),
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+				sizeof(struct nd_intel_fw_activate_dimminfo),
+		},
+	};
+	int rc;
 
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
 	*info = nd_cmd.cmd;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल क्रमागत nvdimm_fwa_state पूर्णांकel_fwa_state(काष्ठा nvdimm *nvdimm)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
-	काष्ठा nd_पूर्णांकel_fw_activate_dimminfo info;
-	पूर्णांक rc;
+static enum nvdimm_fwa_state intel_fwa_state(struct nvdimm *nvdimm)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
+	struct nd_intel_fw_activate_dimminfo info;
+	int rc;
 
 	/*
 	 * Similar to the bus state, since activate is synchronous the
 	 * busy state should resolve within the context of 'activate'.
 	 */
-	चयन (nfit_mem->fwa_state) अणु
-	हाल NVDIMM_FWA_INVALID:
-	हाल NVDIMM_FWA_BUSY:
-		अवरोध;
-	शेष:
+	switch (nfit_mem->fwa_state) {
+	case NVDIMM_FWA_INVALID:
+	case NVDIMM_FWA_BUSY:
+		break;
+	default:
 		/* If no activations occurred the old state is still valid */
-		अगर (nfit_mem->fwa_count == acpi_desc->fwa_count)
-			वापस nfit_mem->fwa_state;
-	पूर्ण
+		if (nfit_mem->fwa_count == acpi_desc->fwa_count)
+			return nfit_mem->fwa_state;
+	}
 
-	rc = पूर्णांकel_fwa_dimminfo(nvdimm, &info);
-	अगर (rc)
-		वापस NVDIMM_FWA_INVALID;
+	rc = intel_fwa_dimminfo(nvdimm, &info);
+	if (rc)
+		return NVDIMM_FWA_INVALID;
 
-	चयन (info.state) अणु
-	हाल ND_INTEL_FWA_IDLE:
+	switch (info.state) {
+	case ND_INTEL_FWA_IDLE:
 		nfit_mem->fwa_state = NVDIMM_FWA_IDLE;
-		अवरोध;
-	हाल ND_INTEL_FWA_BUSY:
+		break;
+	case ND_INTEL_FWA_BUSY:
 		nfit_mem->fwa_state = NVDIMM_FWA_BUSY;
-		अवरोध;
-	हाल ND_INTEL_FWA_ARMED:
+		break;
+	case ND_INTEL_FWA_ARMED:
 		nfit_mem->fwa_state = NVDIMM_FWA_ARMED;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		nfit_mem->fwa_state = NVDIMM_FWA_INVALID;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (info.result) अणु
-	हाल ND_INTEL_DIMM_FWA_NONE:
+	switch (info.result) {
+	case ND_INTEL_DIMM_FWA_NONE:
 		nfit_mem->fwa_result = NVDIMM_FWA_RESULT_NONE;
-		अवरोध;
-	हाल ND_INTEL_DIMM_FWA_SUCCESS:
+		break;
+	case ND_INTEL_DIMM_FWA_SUCCESS:
 		nfit_mem->fwa_result = NVDIMM_FWA_RESULT_SUCCESS;
-		अवरोध;
-	हाल ND_INTEL_DIMM_FWA_NOTSTAGED:
+		break;
+	case ND_INTEL_DIMM_FWA_NOTSTAGED:
 		nfit_mem->fwa_result = NVDIMM_FWA_RESULT_NOTSTAGED;
-		अवरोध;
-	हाल ND_INTEL_DIMM_FWA_NEEDRESET:
+		break;
+	case ND_INTEL_DIMM_FWA_NEEDRESET:
 		nfit_mem->fwa_result = NVDIMM_FWA_RESULT_NEEDRESET;
-		अवरोध;
-	हाल ND_INTEL_DIMM_FWA_MEDIAFAILED:
-	हाल ND_INTEL_DIMM_FWA_ABORT:
-	हाल ND_INTEL_DIMM_FWA_NOTSUPP:
-	हाल ND_INTEL_DIMM_FWA_ERROR:
-	शेष:
+		break;
+	case ND_INTEL_DIMM_FWA_MEDIAFAILED:
+	case ND_INTEL_DIMM_FWA_ABORT:
+	case ND_INTEL_DIMM_FWA_NOTSUPP:
+	case ND_INTEL_DIMM_FWA_ERROR:
+	default:
 		nfit_mem->fwa_result = NVDIMM_FWA_RESULT_FAIL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	nfit_mem->fwa_count = acpi_desc->fwa_count;
 
-	वापस nfit_mem->fwa_state;
-पूर्ण
+	return nfit_mem->fwa_state;
+}
 
-अटल क्रमागत nvdimm_fwa_result पूर्णांकel_fwa_result(काष्ठा nvdimm *nvdimm)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
+static enum nvdimm_fwa_result intel_fwa_result(struct nvdimm *nvdimm)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
 
-	अगर (nfit_mem->fwa_count == acpi_desc->fwa_count
+	if (nfit_mem->fwa_count == acpi_desc->fwa_count
 			&& nfit_mem->fwa_result > NVDIMM_FWA_RESULT_INVALID)
-		वापस nfit_mem->fwa_result;
+		return nfit_mem->fwa_result;
 
-	अगर (पूर्णांकel_fwa_state(nvdimm) > NVDIMM_FWA_INVALID)
-		वापस nfit_mem->fwa_result;
+	if (intel_fwa_state(nvdimm) > NVDIMM_FWA_INVALID)
+		return nfit_mem->fwa_result;
 
-	वापस NVDIMM_FWA_RESULT_INVALID;
-पूर्ण
+	return NVDIMM_FWA_RESULT_INVALID;
+}
 
-अटल पूर्णांक पूर्णांकel_fwa_arm(काष्ठा nvdimm *nvdimm, क्रमागत nvdimm_fwa_trigger arm)
-अणु
-	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	काष्ठा acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
-	काष्ठा अणु
-		काष्ठा nd_cmd_pkg pkg;
-		काष्ठा nd_पूर्णांकel_fw_activate_arm cmd;
-	पूर्ण nd_cmd = अणु
-		.pkg = अणु
+static int intel_fwa_arm(struct nvdimm *nvdimm, enum nvdimm_fwa_trigger arm)
+{
+	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	struct acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
+	struct {
+		struct nd_cmd_pkg pkg;
+		struct nd_intel_fw_activate_arm cmd;
+	} nd_cmd = {
+		.pkg = {
 			.nd_command = NVDIMM_INTEL_FW_ACTIVATE_ARM,
 			.nd_family = NVDIMM_FAMILY_INTEL,
-			.nd_size_in = माप(nd_cmd.cmd.activate_arm),
+			.nd_size_in = sizeof(nd_cmd.cmd.activate_arm),
 			.nd_size_out =
-				माप(काष्ठा nd_पूर्णांकel_fw_activate_arm),
+				sizeof(struct nd_intel_fw_activate_arm),
 			.nd_fw_size =
-				माप(काष्ठा nd_पूर्णांकel_fw_activate_arm),
-		पूर्ण,
-		.cmd = अणु
+				sizeof(struct nd_intel_fw_activate_arm),
+		},
+		.cmd = {
 			.activate_arm = arm == NVDIMM_FWA_ARM
 				? ND_INTEL_DIMM_FWA_ARM
 				: ND_INTEL_DIMM_FWA_DISARM,
-		पूर्ण,
-	पूर्ण;
-	पूर्णांक rc;
+		},
+	};
+	int rc;
 
-	चयन (पूर्णांकel_fwa_state(nvdimm)) अणु
-	हाल NVDIMM_FWA_INVALID:
-		वापस -ENXIO;
-	हाल NVDIMM_FWA_BUSY:
-		वापस -EBUSY;
-	हाल NVDIMM_FWA_IDLE:
-		अगर (arm == NVDIMM_FWA_DISARM)
-			वापस 0;
-		अवरोध;
-	हाल NVDIMM_FWA_ARMED:
-		अगर (arm == NVDIMM_FWA_ARM)
-			वापस 0;
-		अवरोध;
-	शेष:
-		वापस -ENXIO;
-	पूर्ण
+	switch (intel_fwa_state(nvdimm)) {
+	case NVDIMM_FWA_INVALID:
+		return -ENXIO;
+	case NVDIMM_FWA_BUSY:
+		return -EBUSY;
+	case NVDIMM_FWA_IDLE:
+		if (arm == NVDIMM_FWA_DISARM)
+			return 0;
+		break;
+	case NVDIMM_FWA_ARMED:
+		if (arm == NVDIMM_FWA_ARM)
+			return 0;
+		break;
+	default:
+		return -ENXIO;
+	}
 
 	/*
 	 * Invalidate the bus-level state, now that we're committed to
@@ -762,17 +761,17 @@ bool पूर्णांकel_fwa_supported(काष्ठा nvdimm_bus *nvd
 	acpi_desc->fwa_state = NVDIMM_FWA_INVALID;
 	nfit_mem->fwa_state = NVDIMM_FWA_INVALID;
 
-	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, माप(nd_cmd), शून्य);
+	rc = nvdimm_ctl(nvdimm, ND_CMD_CALL, &nd_cmd, sizeof(nd_cmd), NULL);
 
 	dev_dbg(acpi_desc->dev, "%s result: %d\n", arm == NVDIMM_FWA_ARM
 			? "arm" : "disarm", rc);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा nvdimm_fw_ops __पूर्णांकel_fw_ops = अणु
-	.activate_state = पूर्णांकel_fwa_state,
-	.activate_result = पूर्णांकel_fwa_result,
-	.arm = पूर्णांकel_fwa_arm,
-पूर्ण;
+static const struct nvdimm_fw_ops __intel_fw_ops = {
+	.activate_state = intel_fwa_state,
+	.activate_result = intel_fwa_result,
+	.arm = intel_fwa_arm,
+};
 
-स्थिर काष्ठा nvdimm_fw_ops *पूर्णांकel_fw_ops = &__पूर्णांकel_fw_ops;
+const struct nvdimm_fw_ops *intel_fw_ops = &__intel_fw_ops;

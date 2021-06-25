@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  SR-IPv6 implementation
  *
@@ -6,18 +5,18 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  *
  *
- *  This program is मुक्त software; you can redistribute it and/or
- *      modअगरy it under the terms of the GNU General Public License
+ *  This program is free software; you can redistribute it and/or
+ *      modify it under the terms of the GNU General Public License
  *      as published by the Free Software Foundation; either version
  *      2 of the License, or (at your option) any later version.
  */
 
-#अगर_अघोषित _UAPI_LINUX_SEG6_LOCAL_H
-#घोषणा _UAPI_LINUX_SEG6_LOCAL_H
+#ifndef _UAPI_LINUX_SEG6_LOCAL_H
+#define _UAPI_LINUX_SEG6_LOCAL_H
 
-#समावेश <linux/seg6.h>
+#include <linux/seg6.h>
 
-क्रमागत अणु
+enum {
 	SEG6_LOCAL_UNSPEC,
 	SEG6_LOCAL_ACTION,
 	SEG6_LOCAL_SRH,
@@ -30,10 +29,10 @@
 	SEG6_LOCAL_VRFTABLE,
 	SEG6_LOCAL_COUNTERS,
 	__SEG6_LOCAL_MAX,
-पूर्ण;
-#घोषणा SEG6_LOCAL_MAX (__SEG6_LOCAL_MAX - 1)
+};
+#define SEG6_LOCAL_MAX (__SEG6_LOCAL_MAX - 1)
 
-क्रमागत अणु
+enum {
 	SEG6_LOCAL_ACTION_UNSPEC	= 0,
 	/* node segment */
 	SEG6_LOCAL_ACTION_END		= 1,
@@ -59,54 +58,54 @@
 	SEG6_LOCAL_ACTION_END_BM	= 11,
 	/* lookup last seg in table */
 	SEG6_LOCAL_ACTION_END_S		= 12,
-	/* क्रमward to SR-unaware VNF with अटल proxy */
+	/* forward to SR-unaware VNF with static proxy */
 	SEG6_LOCAL_ACTION_END_AS	= 13,
-	/* क्रमward to SR-unaware VNF with masquerading */
+	/* forward to SR-unaware VNF with masquerading */
 	SEG6_LOCAL_ACTION_END_AM	= 14,
 	/* custom BPF action */
 	SEG6_LOCAL_ACTION_END_BPF	= 15,
 
 	__SEG6_LOCAL_ACTION_MAX,
-पूर्ण;
+};
 
-#घोषणा SEG6_LOCAL_ACTION_MAX (__SEG6_LOCAL_ACTION_MAX - 1)
+#define SEG6_LOCAL_ACTION_MAX (__SEG6_LOCAL_ACTION_MAX - 1)
 
-क्रमागत अणु
+enum {
 	SEG6_LOCAL_BPF_PROG_UNSPEC,
 	SEG6_LOCAL_BPF_PROG,
 	SEG6_LOCAL_BPF_PROG_NAME,
 	__SEG6_LOCAL_BPF_PROG_MAX,
-पूर्ण;
+};
 
-#घोषणा SEG6_LOCAL_BPF_PROG_MAX (__SEG6_LOCAL_BPF_PROG_MAX - 1)
+#define SEG6_LOCAL_BPF_PROG_MAX (__SEG6_LOCAL_BPF_PROG_MAX - 1)
 
 /* SRv6 Behavior counters are encoded as netlink attributes guaranteeing the
  * correct alignment.
- * Each counter is identअगरied by a dअगरferent attribute type (i.e.
+ * Each counter is identified by a different attribute type (i.e.
  * SEG6_LOCAL_CNT_PACKETS).
  *
- * - SEG6_LOCAL_CNT_PACKETS: identअगरies a counter that counts the number of
+ * - SEG6_LOCAL_CNT_PACKETS: identifies a counter that counts the number of
  *   packets that have been CORRECTLY processed by an SRv6 Behavior instance
  *   (i.e., packets that generate errors or are dropped are NOT counted).
  *
- * - SEG6_LOCAL_CNT_BYTES: identअगरies a counter that counts the total amount
+ * - SEG6_LOCAL_CNT_BYTES: identifies a counter that counts the total amount
  *   of traffic in bytes of all packets that have been CORRECTLY processed by
  *   an SRv6 Behavior instance (i.e., packets that generate errors or are
  *   dropped are NOT counted).
  *
- * - SEG6_LOCAL_CNT_ERRORS: identअगरies a counter that counts the number of
+ * - SEG6_LOCAL_CNT_ERRORS: identifies a counter that counts the number of
  *   packets that have NOT been properly processed by an SRv6 Behavior instance
  *   (i.e., packets that generate errors or are dropped).
  */
-क्रमागत अणु
+enum {
 	SEG6_LOCAL_CNT_UNSPEC,
-	SEG6_LOCAL_CNT_PAD,		/* pad क्रम 64 bits values */
+	SEG6_LOCAL_CNT_PAD,		/* pad for 64 bits values */
 	SEG6_LOCAL_CNT_PACKETS,
 	SEG6_LOCAL_CNT_BYTES,
 	SEG6_LOCAL_CNT_ERRORS,
 	__SEG6_LOCAL_CNT_MAX,
-पूर्ण;
+};
 
-#घोषणा SEG6_LOCAL_CNT_MAX (__SEG6_LOCAL_CNT_MAX - 1)
+#define SEG6_LOCAL_CNT_MAX (__SEG6_LOCAL_CNT_MAX - 1)
 
-#पूर्ण_अगर
+#endif

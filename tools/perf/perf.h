@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PERF_PERF_H
-#घोषणा _PERF_PERF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PERF_PERF_H
+#define _PERF_PERF_H
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-#अगर_अघोषित MAX_NR_CPUS
-#घोषणा MAX_NR_CPUS			2048
-#पूर्ण_अगर
+#ifndef MAX_NR_CPUS
+#define MAX_NR_CPUS			2048
+#endif
 
-बाह्य स्थिर अक्षर *input_name;
-बाह्य bool perf_host, perf_guest;
-बाह्य स्थिर अक्षर perf_version_string[];
+extern const char *input_name;
+extern bool perf_host, perf_guest;
+extern const char perf_version_string[];
 
-व्योम pthपढ़ो__unblock_sigwinch(व्योम);
+void pthread__unblock_sigwinch(void);
 
-क्रमागत perf_affinity अणु
+enum perf_affinity {
 	PERF_AFFINITY_SYS = 0,
 	PERF_AFFINITY_NODE,
 	PERF_AFFINITY_CPU,
 	PERF_AFFINITY_MAX
-पूर्ण;
+};
 
-बाह्य पूर्णांक version_verbose;
-#पूर्ण_अगर
+extern int version_verbose;
+#endif

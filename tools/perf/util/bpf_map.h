@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
-#अगर_अघोषित __PERF_BPF_MAP_H
-#घोषणा __PERF_BPF_MAP_H 1
+// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+#ifndef __PERF_BPF_MAP_H
+#define __PERF_BPF_MAP_H 1
 
-#समावेश <मानकपन.स>
-#समावेश <linux/compiler.h>
-काष्ठा bpf_map;
+#include <stdio.h>
+#include <linux/compiler.h>
+struct bpf_map;
 
-#अगर_घोषित HAVE_LIBBPF_SUPPORT
+#ifdef HAVE_LIBBPF_SUPPORT
 
-पूर्णांक bpf_map__ख_लिखो(काष्ठा bpf_map *map, खाता *fp);
+int bpf_map__fprintf(struct bpf_map *map, FILE *fp);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक bpf_map__ख_लिखो(काष्ठा bpf_map *map __maybe_unused, खाता *fp __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static inline int bpf_map__fprintf(struct bpf_map *map __maybe_unused, FILE *fp __maybe_unused)
+{
+	return 0;
+}
 
-#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT
+#endif // HAVE_LIBBPF_SUPPORT
 
-#पूर्ण_अगर // __PERF_BPF_MAP_H
+#endif // __PERF_BPF_MAP_H

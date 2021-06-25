@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Extensible Firmware Interface
  *
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  *
- * Based on Extensible Firmware Interface Specअगरication version 2.4
- * Adapted from drivers/firmware/efi/arm-runसमय.c
+ * Based on Extensible Firmware Interface Specification version 2.4
+ * Adapted from drivers/firmware/efi/arm-runtime.c
  *
  */
 
-#समावेश <linux/dmi.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/memblock.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/pgtable.h>
+#include <linux/dmi.h>
+#include <linux/efi.h>
+#include <linux/io.h>
+#include <linux/memblock.h>
+#include <linux/mm_types.h>
+#include <linux/preempt.h>
+#include <linux/rbtree.h>
+#include <linux/rwsem.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/efi.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/pgभाग.स>
+#include <asm/cacheflush.h>
+#include <asm/efi.h>
+#include <asm/mmu.h>
+#include <asm/pgalloc.h>
 
-अटल bool __init efi_virपंचांगap_init(व्योम)
-अणु
+static bool __init efi_virtmap_init(void)
+{
 	efi_memory_desc_t *md;
 
 	efi_mm.pgd = pgd_alloc(&efi_mm);
 	mm_init_cpumask(&efi_mm);
-	init_new_context(शून्य, &efi_mm);
+	init_new_context(NULL, &efi_mm);
 
-	क्रम_each_efi_memory_desc(md) अणु
+	for_each_efi_memory_desc(md) {
 		phys_addr_t phys = md->phys_addr;
-		पूर्णांक ret;
+		int ret;
 
-		अगर (!(md->attribute & EFI_MEMORY_RUNTIME))
-			जारी;
-		अगर (md->virt_addr == 0)
-			वापस false;
+		if (!(md->attribute & EFI_MEMORY_RUNTIME))
+			continue;
+		if (md->virt_addr == 0)
+			return false;
 
 		ret = efi_create_mapping(&efi_mm, md);
-		अगर (ret) अणु
+		if (ret) {
 			pr_warn("  EFI remap %pa: failed to create mapping (%d)\n",
 				&phys, ret);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	अगर (efi_memattr_apply_permissions(&efi_mm, efi_set_mapping_permissions))
-		वापस false;
+	if (efi_memattr_apply_permissions(&efi_mm, efi_set_mapping_permissions))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Enable the UEFI Runसमय Services अगर all prerequisites are in place, i.e.,
- * non-early mapping of the UEFI प्रणाली table and भव mappings क्रम all
+ * Enable the UEFI Runtime Services if all prerequisites are in place, i.e.,
+ * non-early mapping of the UEFI system table and virtual mappings for all
  * EFI_MEMORY_RUNTIME regions.
  */
-अटल पूर्णांक __init riscv_enable_runसमय_services(व्योम)
-अणु
+static int __init riscv_enable_runtime_services(void)
+{
 	u64 mapsize;
 
-	अगर (!efi_enabled(EFI_BOOT)) अणु
+	if (!efi_enabled(EFI_BOOT)) {
 		pr_info("EFI services will not be available.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	efi_memmap_unmap();
 
 	mapsize = efi.memmap.desc_size * efi.memmap.nr_map;
 
-	अगर (efi_memmap_init_late(efi.memmap.phys_map, mapsize)) अणु
+	if (efi_memmap_init_late(efi.memmap.phys_map, mapsize)) {
 		pr_err("Failed to remap EFI memory map\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (efi_soft_reserve_enabled()) अणु
+	if (efi_soft_reserve_enabled()) {
 		efi_memory_desc_t *md;
 
-		क्रम_each_efi_memory_desc(md) अणु
-			पूर्णांक md_size = md->num_pages << EFI_PAGE_SHIFT;
-			काष्ठा resource *res;
+		for_each_efi_memory_desc(md) {
+			int md_size = md->num_pages << EFI_PAGE_SHIFT;
+			struct resource *res;
 
-			अगर (!(md->attribute & EFI_MEMORY_SP))
-				जारी;
+			if (!(md->attribute & EFI_MEMORY_SP))
+				continue;
 
-			res = kzalloc(माप(*res), GFP_KERNEL);
-			अगर (WARN_ON(!res))
-				अवरोध;
+			res = kzalloc(sizeof(*res), GFP_KERNEL);
+			if (WARN_ON(!res))
+				break;
 
 			res->start	= md->phys_addr;
 			res->end	= md->phys_addr + md_size - 1;
@@ -103,42 +102,42 @@
 			res->desc	= IORES_DESC_SOFT_RESERVED;
 
 			insert_resource(&iomem_resource, res);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (efi_runसमय_disabled()) अणु
+	if (efi_runtime_disabled()) {
 		pr_info("EFI runtime services will be disabled.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (efi_enabled(EFI_RUNTIME_SERVICES)) अणु
+	if (efi_enabled(EFI_RUNTIME_SERVICES)) {
 		pr_info("EFI runtime services access via paravirt.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_info("Remapping and enabling EFI services.\n");
 
-	अगर (!efi_virपंचांगap_init()) अणु
+	if (!efi_virtmap_init()) {
 		pr_err("UEFI virtual mapping missing or invalid -- runtime services will not be available\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Set up runसमय services function poपूर्णांकers */
-	efi_native_runसमय_setup();
+	/* Set up runtime services function pointers */
+	efi_native_runtime_setup();
 	set_bit(EFI_RUNTIME_SERVICES, &efi.flags);
 
-	वापस 0;
-पूर्ण
-early_initcall(riscv_enable_runसमय_services);
+	return 0;
+}
+early_initcall(riscv_enable_runtime_services);
 
-व्योम efi_virपंचांगap_load(व्योम)
-अणु
+void efi_virtmap_load(void)
+{
 	preempt_disable();
-	चयन_mm(current->active_mm, &efi_mm, शून्य);
-पूर्ण
+	switch_mm(current->active_mm, &efi_mm, NULL);
+}
 
-व्योम efi_virपंचांगap_unload(व्योम)
-अणु
-	चयन_mm(&efi_mm, current->active_mm, शून्य);
+void efi_virtmap_unload(void)
+{
+	switch_mm(&efi_mm, current->active_mm, NULL);
 	preempt_enable();
-पूर्ण
+}

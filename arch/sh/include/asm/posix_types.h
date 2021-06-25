@@ -1,3 +1,2 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <यंत्र/posix_types_32.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <asm/posix_types_32.h>

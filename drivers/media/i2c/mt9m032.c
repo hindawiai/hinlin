@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम MT9M032 CMOS Image Sensor from Micron
+ * Driver for MT9M032 CMOS Image Sensor from Micron
  *
  * Copyright (C) 2010-2011 Lund Engineering
  * Contact: Gil Lund <gwlund@lundeng.com>
  * Author: Martin Hostettler <martin@neutronstar.dyndns.org>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/v4l2-mediabus.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/v4l2-mediabus.h>
 
-#समावेश <media/media-entity.h>
-#समावेश <media/i2c/mt9m032.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/media-entity.h>
+#include <media/i2c/mt9m032.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "aptina-pll.h"
+#include "aptina-pll.h"
 
 /*
  * width and height include active boundary and black parts
@@ -41,410 +40,410 @@
  * row    1148-1151 black
  */
 
-#घोषणा MT9M032_PIXEL_ARRAY_WIDTH			1600
-#घोषणा MT9M032_PIXEL_ARRAY_HEIGHT			1152
+#define MT9M032_PIXEL_ARRAY_WIDTH			1600
+#define MT9M032_PIXEL_ARRAY_HEIGHT			1152
 
-#घोषणा MT9M032_CHIP_VERSION				0x00
-#घोषणा		MT9M032_CHIP_VERSION_VALUE		0x1402
-#घोषणा MT9M032_ROW_START				0x01
-#घोषणा		MT9M032_ROW_START_MIN			0
-#घोषणा		MT9M032_ROW_START_MAX			1152
-#घोषणा		MT9M032_ROW_START_DEF			60
-#घोषणा MT9M032_COLUMN_START				0x02
-#घोषणा		MT9M032_COLUMN_START_MIN		0
-#घोषणा		MT9M032_COLUMN_START_MAX		1600
-#घोषणा		MT9M032_COLUMN_START_DEF		16
-#घोषणा MT9M032_ROW_SIZE				0x03
-#घोषणा		MT9M032_ROW_SIZE_MIN			32
-#घोषणा		MT9M032_ROW_SIZE_MAX			1152
-#घोषणा		MT9M032_ROW_SIZE_DEF			1080
-#घोषणा MT9M032_COLUMN_SIZE				0x04
-#घोषणा		MT9M032_COLUMN_SIZE_MIN			32
-#घोषणा		MT9M032_COLUMN_SIZE_MAX			1600
-#घोषणा		MT9M032_COLUMN_SIZE_DEF			1440
-#घोषणा MT9M032_HBLANK					0x05
-#घोषणा MT9M032_VBLANK					0x06
-#घोषणा		MT9M032_VBLANK_MAX			0x7ff
-#घोषणा MT9M032_SHUTTER_WIDTH_HIGH			0x08
-#घोषणा MT9M032_SHUTTER_WIDTH_LOW			0x09
-#घोषणा		MT9M032_SHUTTER_WIDTH_MIN		1
-#घोषणा		MT9M032_SHUTTER_WIDTH_MAX		1048575
-#घोषणा		MT9M032_SHUTTER_WIDTH_DEF		1943
-#घोषणा MT9M032_PIX_CLK_CTRL				0x0a
-#घोषणा		MT9M032_PIX_CLK_CTRL_INV_PIXCLK		0x8000
-#घोषणा MT9M032_RESTART					0x0b
-#घोषणा MT9M032_RESET					0x0d
-#घोषणा MT9M032_PLL_CONFIG1				0x11
-#घोषणा		MT9M032_PLL_CONFIG1_PREDIV_MASK		0x3f
-#घोषणा		MT9M032_PLL_CONFIG1_MUL_SHIFT		8
-#घोषणा MT9M032_READ_MODE1				0x1e
-#घोषणा		MT9M032_READ_MODE1_OUTPUT_BAD_FRAMES	(1 << 13)
-#घोषणा		MT9M032_READ_MODE1_MAINTAIN_FRAME_RATE	(1 << 12)
-#घोषणा		MT9M032_READ_MODE1_XOR_LINE_VALID	(1 << 11)
-#घोषणा		MT9M032_READ_MODE1_CONT_LINE_VALID	(1 << 10)
-#घोषणा		MT9M032_READ_MODE1_INVERT_TRIGGER	(1 << 9)
-#घोषणा		MT9M032_READ_MODE1_SNAPSHOT		(1 << 8)
-#घोषणा		MT9M032_READ_MODE1_GLOBAL_RESET		(1 << 7)
-#घोषणा		MT9M032_READ_MODE1_BULB_EXPOSURE	(1 << 6)
-#घोषणा		MT9M032_READ_MODE1_INVERT_STROBE	(1 << 5)
-#घोषणा		MT9M032_READ_MODE1_STROBE_ENABLE	(1 << 4)
-#घोषणा		MT9M032_READ_MODE1_STROBE_START_TRIG1	(0 << 2)
-#घोषणा		MT9M032_READ_MODE1_STROBE_START_EXP	(1 << 2)
-#घोषणा		MT9M032_READ_MODE1_STROBE_START_SHUTTER	(2 << 2)
-#घोषणा		MT9M032_READ_MODE1_STROBE_START_TRIG2	(3 << 2)
-#घोषणा		MT9M032_READ_MODE1_STROBE_END_TRIG1	(0 << 0)
-#घोषणा		MT9M032_READ_MODE1_STROBE_END_EXP	(1 << 0)
-#घोषणा		MT9M032_READ_MODE1_STROBE_END_SHUTTER	(2 << 0)
-#घोषणा		MT9M032_READ_MODE1_STROBE_END_TRIG2	(3 << 0)
-#घोषणा MT9M032_READ_MODE2				0x20
-#घोषणा		MT9M032_READ_MODE2_VFLIP_SHIFT		15
-#घोषणा		MT9M032_READ_MODE2_HFLIP_SHIFT		14
-#घोषणा		MT9M032_READ_MODE2_ROW_BLC		0x40
-#घोषणा MT9M032_GAIN_GREEN1				0x2b
-#घोषणा MT9M032_GAIN_BLUE				0x2c
-#घोषणा MT9M032_GAIN_RED				0x2d
-#घोषणा MT9M032_GAIN_GREEN2				0x2e
+#define MT9M032_CHIP_VERSION				0x00
+#define		MT9M032_CHIP_VERSION_VALUE		0x1402
+#define MT9M032_ROW_START				0x01
+#define		MT9M032_ROW_START_MIN			0
+#define		MT9M032_ROW_START_MAX			1152
+#define		MT9M032_ROW_START_DEF			60
+#define MT9M032_COLUMN_START				0x02
+#define		MT9M032_COLUMN_START_MIN		0
+#define		MT9M032_COLUMN_START_MAX		1600
+#define		MT9M032_COLUMN_START_DEF		16
+#define MT9M032_ROW_SIZE				0x03
+#define		MT9M032_ROW_SIZE_MIN			32
+#define		MT9M032_ROW_SIZE_MAX			1152
+#define		MT9M032_ROW_SIZE_DEF			1080
+#define MT9M032_COLUMN_SIZE				0x04
+#define		MT9M032_COLUMN_SIZE_MIN			32
+#define		MT9M032_COLUMN_SIZE_MAX			1600
+#define		MT9M032_COLUMN_SIZE_DEF			1440
+#define MT9M032_HBLANK					0x05
+#define MT9M032_VBLANK					0x06
+#define		MT9M032_VBLANK_MAX			0x7ff
+#define MT9M032_SHUTTER_WIDTH_HIGH			0x08
+#define MT9M032_SHUTTER_WIDTH_LOW			0x09
+#define		MT9M032_SHUTTER_WIDTH_MIN		1
+#define		MT9M032_SHUTTER_WIDTH_MAX		1048575
+#define		MT9M032_SHUTTER_WIDTH_DEF		1943
+#define MT9M032_PIX_CLK_CTRL				0x0a
+#define		MT9M032_PIX_CLK_CTRL_INV_PIXCLK		0x8000
+#define MT9M032_RESTART					0x0b
+#define MT9M032_RESET					0x0d
+#define MT9M032_PLL_CONFIG1				0x11
+#define		MT9M032_PLL_CONFIG1_PREDIV_MASK		0x3f
+#define		MT9M032_PLL_CONFIG1_MUL_SHIFT		8
+#define MT9M032_READ_MODE1				0x1e
+#define		MT9M032_READ_MODE1_OUTPUT_BAD_FRAMES	(1 << 13)
+#define		MT9M032_READ_MODE1_MAINTAIN_FRAME_RATE	(1 << 12)
+#define		MT9M032_READ_MODE1_XOR_LINE_VALID	(1 << 11)
+#define		MT9M032_READ_MODE1_CONT_LINE_VALID	(1 << 10)
+#define		MT9M032_READ_MODE1_INVERT_TRIGGER	(1 << 9)
+#define		MT9M032_READ_MODE1_SNAPSHOT		(1 << 8)
+#define		MT9M032_READ_MODE1_GLOBAL_RESET		(1 << 7)
+#define		MT9M032_READ_MODE1_BULB_EXPOSURE	(1 << 6)
+#define		MT9M032_READ_MODE1_INVERT_STROBE	(1 << 5)
+#define		MT9M032_READ_MODE1_STROBE_ENABLE	(1 << 4)
+#define		MT9M032_READ_MODE1_STROBE_START_TRIG1	(0 << 2)
+#define		MT9M032_READ_MODE1_STROBE_START_EXP	(1 << 2)
+#define		MT9M032_READ_MODE1_STROBE_START_SHUTTER	(2 << 2)
+#define		MT9M032_READ_MODE1_STROBE_START_TRIG2	(3 << 2)
+#define		MT9M032_READ_MODE1_STROBE_END_TRIG1	(0 << 0)
+#define		MT9M032_READ_MODE1_STROBE_END_EXP	(1 << 0)
+#define		MT9M032_READ_MODE1_STROBE_END_SHUTTER	(2 << 0)
+#define		MT9M032_READ_MODE1_STROBE_END_TRIG2	(3 << 0)
+#define MT9M032_READ_MODE2				0x20
+#define		MT9M032_READ_MODE2_VFLIP_SHIFT		15
+#define		MT9M032_READ_MODE2_HFLIP_SHIFT		14
+#define		MT9M032_READ_MODE2_ROW_BLC		0x40
+#define MT9M032_GAIN_GREEN1				0x2b
+#define MT9M032_GAIN_BLUE				0x2c
+#define MT9M032_GAIN_RED				0x2d
+#define MT9M032_GAIN_GREEN2				0x2e
 
-/* ग_लिखो only */
-#घोषणा MT9M032_GAIN_ALL				0x35
-#घोषणा		MT9M032_GAIN_DIGITAL_MASK		0x7f
-#घोषणा		MT9M032_GAIN_DIGITAL_SHIFT		8
-#घोषणा		MT9M032_GAIN_AMUL_SHIFT			6
-#घोषणा		MT9M032_GAIN_ANALOG_MASK		0x3f
-#घोषणा MT9M032_FORMATTER1				0x9e
-#घोषणा		MT9M032_FORMATTER1_PLL_P1_6		(1 << 8)
-#घोषणा		MT9M032_FORMATTER1_PARALLEL		(1 << 12)
-#घोषणा MT9M032_FORMATTER2				0x9f
-#घोषणा		MT9M032_FORMATTER2_DOUT_EN		0x1000
-#घोषणा		MT9M032_FORMATTER2_PIXCLK_EN		0x2000
+/* write only */
+#define MT9M032_GAIN_ALL				0x35
+#define		MT9M032_GAIN_DIGITAL_MASK		0x7f
+#define		MT9M032_GAIN_DIGITAL_SHIFT		8
+#define		MT9M032_GAIN_AMUL_SHIFT			6
+#define		MT9M032_GAIN_ANALOG_MASK		0x3f
+#define MT9M032_FORMATTER1				0x9e
+#define		MT9M032_FORMATTER1_PLL_P1_6		(1 << 8)
+#define		MT9M032_FORMATTER1_PARALLEL		(1 << 12)
+#define MT9M032_FORMATTER2				0x9f
+#define		MT9M032_FORMATTER2_DOUT_EN		0x1000
+#define		MT9M032_FORMATTER2_PIXCLK_EN		0x2000
 
 /*
- * The available MT9M032 datasheet is missing करोcumentation क्रम रेजिस्टर 0x10
- * MT9P031 seems to be बंद enough, so use स्थिरants from that datasheet क्रम
+ * The available MT9M032 datasheet is missing documentation for register 0x10
+ * MT9P031 seems to be close enough, so use constants from that datasheet for
  * now.
  * But keep the name MT9P031 to remind us, that this isn't really confirmed
- * क्रम this sensor.
+ * for this sensor.
  */
-#घोषणा MT9P031_PLL_CONTROL				0x10
-#घोषणा		MT9P031_PLL_CONTROL_PWROFF		0x0050
-#घोषणा		MT9P031_PLL_CONTROL_PWRON		0x0051
-#घोषणा		MT9P031_PLL_CONTROL_USEPLL		0x0052
+#define MT9P031_PLL_CONTROL				0x10
+#define		MT9P031_PLL_CONTROL_PWROFF		0x0050
+#define		MT9P031_PLL_CONTROL_PWRON		0x0051
+#define		MT9P031_PLL_CONTROL_USEPLL		0x0052
 
-काष्ठा mt9m032 अणु
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा media_pad pad;
-	काष्ठा mt9m032_platक्रमm_data *pdata;
+struct mt9m032 {
+	struct v4l2_subdev subdev;
+	struct media_pad pad;
+	struct mt9m032_platform_data *pdata;
 
-	अचिन्हित पूर्णांक pix_घड़ी;
+	unsigned int pix_clock;
 
-	काष्ठा v4l2_ctrl_handler ctrls;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *hflip;
-		काष्ठा v4l2_ctrl *vflip;
-	पूर्ण;
+	struct v4l2_ctrl_handler ctrls;
+	struct {
+		struct v4l2_ctrl *hflip;
+		struct v4l2_ctrl *vflip;
+	};
 
-	काष्ठा mutex lock; /* Protects streaming, क्रमmat, पूर्णांकerval and crop */
+	struct mutex lock; /* Protects streaming, format, interval and crop */
 
 	bool streaming;
 
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
-	काष्ठा v4l2_rect crop;
-	काष्ठा v4l2_fract frame_पूर्णांकerval;
-पूर्ण;
+	struct v4l2_mbus_framefmt format;
+	struct v4l2_rect crop;
+	struct v4l2_fract frame_interval;
+};
 
-#घोषणा to_mt9m032(sd)	container_of(sd, काष्ठा mt9m032, subdev)
-#घोषणा to_dev(sensor) \
-	(&((काष्ठा i2c_client *)v4l2_get_subdevdata(&(sensor)->subdev))->dev)
+#define to_mt9m032(sd)	container_of(sd, struct mt9m032, subdev)
+#define to_dev(sensor) \
+	(&((struct i2c_client *)v4l2_get_subdevdata(&(sensor)->subdev))->dev)
 
-अटल पूर्णांक mt9m032_पढ़ो(काष्ठा i2c_client *client, u8 reg)
-अणु
-	वापस i2c_smbus_पढ़ो_word_swapped(client, reg);
-पूर्ण
+static int mt9m032_read(struct i2c_client *client, u8 reg)
+{
+	return i2c_smbus_read_word_swapped(client, reg);
+}
 
-अटल पूर्णांक mt9m032_ग_लिखो(काष्ठा i2c_client *client, u8 reg, स्थिर u16 data)
-अणु
-	वापस i2c_smbus_ग_लिखो_word_swapped(client, reg, data);
-पूर्ण
+static int mt9m032_write(struct i2c_client *client, u8 reg, const u16 data)
+{
+	return i2c_smbus_write_word_swapped(client, reg, data);
+}
 
-अटल u32 mt9m032_row_समय(काष्ठा mt9m032 *sensor, अचिन्हित पूर्णांक width)
-अणु
-	अचिन्हित पूर्णांक effective_width;
+static u32 mt9m032_row_time(struct mt9m032 *sensor, unsigned int width)
+{
+	unsigned int effective_width;
 	u32 ns;
 
 	effective_width = width + 716; /* empirical value */
-	ns = भाग_u64(1000000000ULL * effective_width, sensor->pix_घड़ी);
+	ns = div_u64(1000000000ULL * effective_width, sensor->pix_clock);
 	dev_dbg(to_dev(sensor),	"MT9M032 line time: %u ns\n", ns);
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
-अटल पूर्णांक mt9m032_update_timing(काष्ठा mt9m032 *sensor,
-				 काष्ठा v4l2_fract *पूर्णांकerval)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	काष्ठा v4l2_rect *crop = &sensor->crop;
-	अचिन्हित पूर्णांक min_vblank;
-	अचिन्हित पूर्णांक vblank;
-	u32 row_समय;
+static int mt9m032_update_timing(struct mt9m032 *sensor,
+				 struct v4l2_fract *interval)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	struct v4l2_rect *crop = &sensor->crop;
+	unsigned int min_vblank;
+	unsigned int vblank;
+	u32 row_time;
 
-	अगर (!पूर्णांकerval)
-		पूर्णांकerval = &sensor->frame_पूर्णांकerval;
+	if (!interval)
+		interval = &sensor->frame_interval;
 
-	row_समय = mt9m032_row_समय(sensor, crop->width);
+	row_time = mt9m032_row_time(sensor, crop->width);
 
-	vblank = भाग_u64(1000000000ULL * पूर्णांकerval->numerator,
-			 (u64)row_समय * पूर्णांकerval->denominator)
+	vblank = div_u64(1000000000ULL * interval->numerator,
+			 (u64)row_time * interval->denominator)
 	       - crop->height;
 
-	अगर (vblank > MT9M032_VBLANK_MAX) अणु
+	if (vblank > MT9M032_VBLANK_MAX) {
 		/* hardware limits to 11 bit values */
-		पूर्णांकerval->denominator = 1000;
-		पूर्णांकerval->numerator =
-			भाग_u64((crop->height + MT9M032_VBLANK_MAX) *
-				(u64)row_समय * पूर्णांकerval->denominator,
+		interval->denominator = 1000;
+		interval->numerator =
+			div_u64((crop->height + MT9M032_VBLANK_MAX) *
+				(u64)row_time * interval->denominator,
 				1000000000ULL);
-		vblank = भाग_u64(1000000000ULL * पूर्णांकerval->numerator,
-				 (u64)row_समय * पूर्णांकerval->denominator)
+		vblank = div_u64(1000000000ULL * interval->numerator,
+				 (u64)row_time * interval->denominator)
 		       - crop->height;
-	पूर्ण
-	/* enक्रमce minimal 1.6ms blanking समय. */
-	min_vblank = 1600000 / row_समय;
-	vblank = clamp_t(अचिन्हित पूर्णांक, vblank, min_vblank, MT9M032_VBLANK_MAX);
+	}
+	/* enforce minimal 1.6ms blanking time. */
+	min_vblank = 1600000 / row_time;
+	vblank = clamp_t(unsigned int, vblank, min_vblank, MT9M032_VBLANK_MAX);
 
-	वापस mt9m032_ग_लिखो(client, MT9M032_VBLANK, vblank);
-पूर्ण
+	return mt9m032_write(client, MT9M032_VBLANK, vblank);
+}
 
-अटल पूर्णांक mt9m032_update_geom_timing(काष्ठा mt9m032 *sensor)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	पूर्णांक ret;
+static int mt9m032_update_geom_timing(struct mt9m032 *sensor)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	int ret;
 
-	ret = mt9m032_ग_लिखो(client, MT9M032_COLUMN_SIZE,
+	ret = mt9m032_write(client, MT9M032_COLUMN_SIZE,
 			    sensor->crop.width - 1);
-	अगर (!ret)
-		ret = mt9m032_ग_लिखो(client, MT9M032_ROW_SIZE,
+	if (!ret)
+		ret = mt9m032_write(client, MT9M032_ROW_SIZE,
 				    sensor->crop.height - 1);
-	अगर (!ret)
-		ret = mt9m032_ग_लिखो(client, MT9M032_COLUMN_START,
+	if (!ret)
+		ret = mt9m032_write(client, MT9M032_COLUMN_START,
 				    sensor->crop.left);
-	अगर (!ret)
-		ret = mt9m032_ग_लिखो(client, MT9M032_ROW_START,
+	if (!ret)
+		ret = mt9m032_write(client, MT9M032_ROW_START,
 				    sensor->crop.top);
-	अगर (!ret)
-		ret = mt9m032_update_timing(sensor, शून्य);
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ret = mt9m032_update_timing(sensor, NULL);
+	return ret;
+}
 
-अटल पूर्णांक update_क्रमmatter2(काष्ठा mt9m032 *sensor, bool streaming)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+static int update_formatter2(struct mt9m032 *sensor, bool streaming)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
 	u16 reg_val =   MT9M032_FORMATTER2_DOUT_EN
 		      | 0x0070;  /* parts reserved! */
-				 /* possibly क्रम changing to 14-bit mode */
+				 /* possibly for changing to 14-bit mode */
 
-	अगर (streaming)
-		reg_val |= MT9M032_FORMATTER2_PIXCLK_EN;   /* pixघड़ी enable */
+	if (streaming)
+		reg_val |= MT9M032_FORMATTER2_PIXCLK_EN;   /* pixclock enable */
 
-	वापस mt9m032_ग_लिखो(client, MT9M032_FORMATTER2, reg_val);
-पूर्ण
+	return mt9m032_write(client, MT9M032_FORMATTER2, reg_val);
+}
 
-अटल पूर्णांक mt9m032_setup_pll(काष्ठा mt9m032 *sensor)
-अणु
-	अटल स्थिर काष्ठा aptina_pll_limits limits = अणु
-		.ext_घड़ी_min = 8000000,
-		.ext_घड़ी_max = 16500000,
-		.पूर्णांक_घड़ी_min = 2000000,
-		.पूर्णांक_घड़ी_max = 24000000,
-		.out_घड़ी_min = 322000000,
-		.out_घड़ी_max = 693000000,
-		.pix_घड़ी_max = 99000000,
+static int mt9m032_setup_pll(struct mt9m032 *sensor)
+{
+	static const struct aptina_pll_limits limits = {
+		.ext_clock_min = 8000000,
+		.ext_clock_max = 16500000,
+		.int_clock_min = 2000000,
+		.int_clock_max = 24000000,
+		.out_clock_min = 322000000,
+		.out_clock_max = 693000000,
+		.pix_clock_max = 99000000,
 		.n_min = 1,
 		.n_max = 64,
 		.m_min = 16,
 		.m_max = 255,
 		.p1_min = 6,
 		.p1_max = 7,
-	पूर्ण;
+	};
 
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	काष्ठा mt9m032_platक्रमm_data *pdata = sensor->pdata;
-	काष्ठा aptina_pll pll;
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	struct mt9m032_platform_data *pdata = sensor->pdata;
+	struct aptina_pll pll;
 	u16 reg_val;
-	पूर्णांक ret;
+	int ret;
 
-	pll.ext_घड़ी = pdata->ext_घड़ी;
-	pll.pix_घड़ी = pdata->pix_घड़ी;
+	pll.ext_clock = pdata->ext_clock;
+	pll.pix_clock = pdata->pix_clock;
 
 	ret = aptina_pll_calculate(&client->dev, &limits, &pll);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	sensor->pix_घड़ी = pdata->pix_घड़ी;
+	sensor->pix_clock = pdata->pix_clock;
 
-	ret = mt9m032_ग_लिखो(client, MT9M032_PLL_CONFIG1,
+	ret = mt9m032_write(client, MT9M032_PLL_CONFIG1,
 			    (pll.m << MT9M032_PLL_CONFIG1_MUL_SHIFT) |
 			    ((pll.n - 1) & MT9M032_PLL_CONFIG1_PREDIV_MASK));
-	अगर (!ret)
-		ret = mt9m032_ग_लिखो(client, MT9P031_PLL_CONTROL,
+	if (!ret)
+		ret = mt9m032_write(client, MT9P031_PLL_CONTROL,
 				    MT9P031_PLL_CONTROL_PWRON |
 				    MT9P031_PLL_CONTROL_USEPLL);
-	अगर (!ret)		/* more reserved, Continuous, Master Mode */
-		ret = mt9m032_ग_लिखो(client, MT9M032_READ_MODE1, 0x8000 |
+	if (!ret)		/* more reserved, Continuous, Master Mode */
+		ret = mt9m032_write(client, MT9M032_READ_MODE1, 0x8000 |
 				    MT9M032_READ_MODE1_STROBE_START_EXP |
 				    MT9M032_READ_MODE1_STROBE_END_SHUTTER);
-	अगर (!ret) अणु
+	if (!ret) {
 		reg_val = (pll.p1 == 6 ? MT9M032_FORMATTER1_PLL_P1_6 : 0)
 			| MT9M032_FORMATTER1_PARALLEL | 0x001e; /* 14-bit */
-		ret = mt9m032_ग_लिखो(client, MT9M032_FORMATTER1, reg_val);
-	पूर्ण
+		ret = mt9m032_write(client, MT9M032_FORMATTER1, reg_val);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * Subdev pad operations
  */
 
-अटल पूर्णांक mt9m032_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->index != 0)
-		वापस -EINVAL;
+static int mt9m032_enum_mbus_code(struct v4l2_subdev *subdev,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->index != 0)
+		return -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_Y8_1X8;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	अगर (fse->index != 0 || fse->code != MEDIA_BUS_FMT_Y8_1X8)
-		वापस -EINVAL;
+static int mt9m032_enum_frame_size(struct v4l2_subdev *subdev,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_frame_size_enum *fse)
+{
+	if (fse->index != 0 || fse->code != MEDIA_BUS_FMT_Y8_1X8)
+		return -EINVAL;
 
 	fse->min_width = MT9M032_COLUMN_SIZE_DEF;
 	fse->max_width = MT9M032_COLUMN_SIZE_DEF;
 	fse->min_height = MT9M032_ROW_SIZE_DEF;
 	fse->max_height = MT9M032_ROW_SIZE_DEF;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * __mt9m032_get_pad_crop() - get crop rect
- * @sensor: poपूर्णांकer to the sensor काष्ठा
- * @cfg: v4l2_subdev_pad_config क्रम getting the try crop rect from
+ * @sensor: pointer to the sensor struct
+ * @cfg: v4l2_subdev_pad_config for getting the try crop rect from
  * @which: select try or active crop rect
  *
- * Returns a poपूर्णांकer the current active or fh relative try crop rect
+ * Returns a pointer the current active or fh relative try crop rect
  */
-अटल काष्ठा v4l2_rect *
-__mt9m032_get_pad_crop(काष्ठा mt9m032 *sensor, काष्ठा v4l2_subdev_pad_config *cfg,
-		       क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	चयन (which) अणु
-	हाल V4L2_SUBDEV_FORMAT_TRY:
-		वापस v4l2_subdev_get_try_crop(&sensor->subdev, cfg, 0);
-	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
-		वापस &sensor->crop;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static struct v4l2_rect *
+__mt9m032_get_pad_crop(struct mt9m032 *sensor, struct v4l2_subdev_pad_config *cfg,
+		       enum v4l2_subdev_format_whence which)
+{
+	switch (which) {
+	case V4L2_SUBDEV_FORMAT_TRY:
+		return v4l2_subdev_get_try_crop(&sensor->subdev, cfg, 0);
+	case V4L2_SUBDEV_FORMAT_ACTIVE:
+		return &sensor->crop;
+	default:
+		return NULL;
+	}
+}
 
 /**
- * __mt9m032_get_pad_क्रमmat() - get क्रमmat
- * @sensor: poपूर्णांकer to the sensor काष्ठा
- * @cfg: v4l2_subdev_pad_config क्रम getting the try क्रमmat from
- * @which: select try or active क्रमmat
+ * __mt9m032_get_pad_format() - get format
+ * @sensor: pointer to the sensor struct
+ * @cfg: v4l2_subdev_pad_config for getting the try format from
+ * @which: select try or active format
  *
- * Returns a poपूर्णांकer the current active or fh relative try क्रमmat
+ * Returns a pointer the current active or fh relative try format
  */
-अटल काष्ठा v4l2_mbus_framefmt *
-__mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष्ठा v4l2_subdev_pad_config *cfg,
-			 क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	चयन (which) अणु
-	हाल V4L2_SUBDEV_FORMAT_TRY:
-		वापस v4l2_subdev_get_try_क्रमmat(&sensor->subdev, cfg, 0);
-	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
-		वापस &sensor->क्रमmat;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static struct v4l2_mbus_framefmt *
+__mt9m032_get_pad_format(struct mt9m032 *sensor, struct v4l2_subdev_pad_config *cfg,
+			 enum v4l2_subdev_format_whence which)
+{
+	switch (which) {
+	case V4L2_SUBDEV_FORMAT_TRY:
+		return v4l2_subdev_get_try_format(&sensor->subdev, cfg, 0);
+	case V4L2_SUBDEV_FORMAT_ACTIVE:
+		return &sensor->format;
+	default:
+		return NULL;
+	}
+}
 
-अटल पूर्णांक mt9m032_get_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
+static int mt9m032_get_pad_format(struct v4l2_subdev *subdev,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_format *fmt)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
 
 	mutex_lock(&sensor->lock);
-	fmt->क्रमmat = *__mt9m032_get_pad_क्रमmat(sensor, cfg, fmt->which);
+	fmt->format = *__mt9m032_get_pad_format(sensor, cfg, fmt->which);
 	mutex_unlock(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_set_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
-	पूर्णांक ret;
+static int mt9m032_set_pad_format(struct v4l2_subdev *subdev,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_format *fmt)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
+	int ret;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming && fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+	if (sensor->streaming && fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Scaling is not supported, the क्रमmat is thus fixed. */
-	fmt->क्रमmat = *__mt9m032_get_pad_क्रमmat(sensor, cfg, fmt->which);
+	/* Scaling is not supported, the format is thus fixed. */
+	fmt->format = *__mt9m032_get_pad_format(sensor, cfg, fmt->which);
 	ret = 0;
 
-करोne:
+done:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m032_get_pad_selection(काष्ठा v4l2_subdev *subdev,
-				     काष्ठा v4l2_subdev_pad_config *cfg,
-				     काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
+static int mt9m032_get_pad_selection(struct v4l2_subdev *subdev,
+				     struct v4l2_subdev_pad_config *cfg,
+				     struct v4l2_subdev_selection *sel)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
 
 	mutex_lock(&sensor->lock);
 	sel->r = *__mt9m032_get_pad_crop(sensor, cfg, sel->which);
 	mutex_unlock(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_set_pad_selection(काष्ठा v4l2_subdev *subdev,
-				     काष्ठा v4l2_subdev_pad_config *cfg,
-				     काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *__crop;
-	काष्ठा v4l2_rect rect;
-	पूर्णांक ret = 0;
+static int mt9m032_set_pad_selection(struct v4l2_subdev *subdev,
+				     struct v4l2_subdev_pad_config *cfg,
+				     struct v4l2_subdev_selection *sel)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *__crop;
+	struct v4l2_rect rect;
+	int ret = 0;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming && sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+	if (sensor->streaming && sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Clamp the crop rectangle boundaries and align them to a multiple of 2
 	 * pixels to ensure a GRBG Bayer pattern.
@@ -453,161 +452,161 @@ __mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष�
 			  MT9M032_COLUMN_START_MAX);
 	rect.top = clamp(ALIGN(sel->r.top, 2), MT9M032_ROW_START_MIN,
 			 MT9M032_ROW_START_MAX);
-	rect.width = clamp_t(अचिन्हित पूर्णांक, ALIGN(sel->r.width, 2),
+	rect.width = clamp_t(unsigned int, ALIGN(sel->r.width, 2),
 			     MT9M032_COLUMN_SIZE_MIN, MT9M032_COLUMN_SIZE_MAX);
-	rect.height = clamp_t(अचिन्हित पूर्णांक, ALIGN(sel->r.height, 2),
+	rect.height = clamp_t(unsigned int, ALIGN(sel->r.height, 2),
 			      MT9M032_ROW_SIZE_MIN, MT9M032_ROW_SIZE_MAX);
 
-	rect.width = min_t(अचिन्हित पूर्णांक, rect.width,
+	rect.width = min_t(unsigned int, rect.width,
 			   MT9M032_PIXEL_ARRAY_WIDTH - rect.left);
-	rect.height = min_t(अचिन्हित पूर्णांक, rect.height,
+	rect.height = min_t(unsigned int, rect.height,
 			    MT9M032_PIXEL_ARRAY_HEIGHT - rect.top);
 
 	__crop = __mt9m032_get_pad_crop(sensor, cfg, sel->which);
 
-	अगर (rect.width != __crop->width || rect.height != __crop->height) अणु
-		/* Reset the output image size अगर the crop rectangle size has
-		 * been modअगरied.
+	if (rect.width != __crop->width || rect.height != __crop->height) {
+		/* Reset the output image size if the crop rectangle size has
+		 * been modified.
 		 */
-		क्रमmat = __mt9m032_get_pad_क्रमmat(sensor, cfg, sel->which);
-		क्रमmat->width = rect.width;
-		क्रमmat->height = rect.height;
-	पूर्ण
+		format = __mt9m032_get_pad_format(sensor, cfg, sel->which);
+		format->width = rect.width;
+		format->height = rect.height;
+	}
 
 	*__crop = rect;
 	sel->r = rect;
 
-	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE)
 		ret = mt9m032_update_geom_timing(sensor);
 
-करोne:
+done:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m032_get_frame_पूर्णांकerval(काष्ठा v4l2_subdev *subdev,
-				      काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
+static int mt9m032_get_frame_interval(struct v4l2_subdev *subdev,
+				      struct v4l2_subdev_frame_interval *fi)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
 
 	mutex_lock(&sensor->lock);
-	स_रखो(fi, 0, माप(*fi));
-	fi->पूर्णांकerval = sensor->frame_पूर्णांकerval;
+	memset(fi, 0, sizeof(*fi));
+	fi->interval = sensor->frame_interval;
 	mutex_unlock(&sensor->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_set_frame_पूर्णांकerval(काष्ठा v4l2_subdev *subdev,
-				      काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
-	पूर्णांक ret;
+static int mt9m032_set_frame_interval(struct v4l2_subdev *subdev,
+				      struct v4l2_subdev_frame_interval *fi)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
+	int ret;
 
 	mutex_lock(&sensor->lock);
 
-	अगर (sensor->streaming) अणु
+	if (sensor->streaming) {
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Aव्योम भागisions by 0. */
-	अगर (fi->पूर्णांकerval.denominator == 0)
-		fi->पूर्णांकerval.denominator = 1;
+	/* Avoid divisions by 0. */
+	if (fi->interval.denominator == 0)
+		fi->interval.denominator = 1;
 
-	ret = mt9m032_update_timing(sensor, &fi->पूर्णांकerval);
-	अगर (!ret)
-		sensor->frame_पूर्णांकerval = fi->पूर्णांकerval;
+	ret = mt9m032_update_timing(sensor, &fi->interval);
+	if (!ret)
+		sensor->frame_interval = fi->interval;
 
-करोne:
+done:
 	mutex_unlock(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m032_s_stream(काष्ठा v4l2_subdev *subdev, पूर्णांक streaming)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
-	पूर्णांक ret;
+static int mt9m032_s_stream(struct v4l2_subdev *subdev, int streaming)
+{
+	struct mt9m032 *sensor = to_mt9m032(subdev);
+	int ret;
 
 	mutex_lock(&sensor->lock);
-	ret = update_क्रमmatter2(sensor, streaming);
-	अगर (!ret)
+	ret = update_formatter2(sensor, streaming);
+	if (!ret)
 		sensor->streaming = streaming;
 	mutex_unlock(&sensor->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev core operations
  */
 
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-अटल पूर्णांक mt9m032_g_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	पूर्णांक val;
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int mt9m032_g_register(struct v4l2_subdev *sd,
+			      struct v4l2_dbg_register *reg)
+{
+	struct mt9m032 *sensor = to_mt9m032(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	int val;
 
-	अगर (reg->reg > 0xff)
-		वापस -EINVAL;
+	if (reg->reg > 0xff)
+		return -EINVAL;
 
-	val = mt9m032_पढ़ो(client, reg->reg);
-	अगर (val < 0)
-		वापस -EIO;
+	val = mt9m032_read(client, reg->reg);
+	if (val < 0)
+		return -EIO;
 
 	reg->size = 2;
 	reg->val = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_s_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			      स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा mt9m032 *sensor = to_mt9m032(sd);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+static int mt9m032_s_register(struct v4l2_subdev *sd,
+			      const struct v4l2_dbg_register *reg)
+{
+	struct mt9m032 *sensor = to_mt9m032(sd);
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
 
-	अगर (reg->reg > 0xff)
-		वापस -EINVAL;
+	if (reg->reg > 0xff)
+		return -EINVAL;
 
-	वापस mt9m032_ग_लिखो(client, reg->reg, reg->val);
-पूर्ण
-#पूर्ण_अगर
+	return mt9m032_write(client, reg->reg, reg->val);
+}
+#endif
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev control operations
  */
 
-अटल पूर्णांक update_पढ़ो_mode2(काष्ठा mt9m032 *sensor, bool vflip, bool hflip)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	पूर्णांक reg_val = (vflip << MT9M032_READ_MODE2_VFLIP_SHIFT)
+static int update_read_mode2(struct mt9m032 *sensor, bool vflip, bool hflip)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	int reg_val = (vflip << MT9M032_READ_MODE2_VFLIP_SHIFT)
 		    | (hflip << MT9M032_READ_MODE2_HFLIP_SHIFT)
 		    | MT9M032_READ_MODE2_ROW_BLC
 		    | 0x0007;
 
-	वापस mt9m032_ग_लिखो(client, MT9M032_READ_MODE2, reg_val);
-पूर्ण
+	return mt9m032_write(client, MT9M032_READ_MODE2, reg_val);
+}
 
-अटल पूर्णांक mt9m032_set_gain(काष्ठा mt9m032 *sensor, s32 val)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	पूर्णांक digital_gain_val;	/* in 1/8th (0..127) */
-	पूर्णांक analog_mul;		/* 0 or 1 */
-	पूर्णांक analog_gain_val;	/* in 1/16th. (0..63) */
+static int mt9m032_set_gain(struct mt9m032 *sensor, s32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	int digital_gain_val;	/* in 1/8th (0..127) */
+	int analog_mul;		/* 0 or 1 */
+	int analog_gain_val;	/* in 1/16th. (0..63) */
 	u16 reg_val;
 
 	digital_gain_val = 51; /* from setup example */
 
-	अगर (val < 63) अणु
+	if (val < 63) {
 		analog_mul = 0;
 		analog_gain_val = val;
-	पूर्ण अन्यथा अणु
+	} else {
 		analog_mul = 1;
 		analog_gain_val = val / 2;
-	पूर्ण
+	}
 
 	/* a_gain = (1 + analog_mul) + (analog_gain_val + 1) / 16 */
 	/* overall_gain = a_gain * (1 + digital_gain_val / 8) */
@@ -617,113 +616,113 @@ __mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष�
 		| ((analog_mul & 1) << MT9M032_GAIN_AMUL_SHIFT)
 		| (analog_gain_val & MT9M032_GAIN_ANALOG_MASK);
 
-	वापस mt9m032_ग_लिखो(client, MT9M032_GAIN_ALL, reg_val);
-पूर्ण
+	return mt9m032_write(client, MT9M032_GAIN_ALL, reg_val);
+}
 
-अटल पूर्णांक mt9m032_try_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	अगर (ctrl->id == V4L2_CID_GAIN && ctrl->val >= 63) अणु
-		/* round because of multiplier used क्रम values >= 63 */
+static int mt9m032_try_ctrl(struct v4l2_ctrl *ctrl)
+{
+	if (ctrl->id == V4L2_CID_GAIN && ctrl->val >= 63) {
+		/* round because of multiplier used for values >= 63 */
 		ctrl->val &= ~1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9m032_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा mt9m032 *sensor =
-		container_of(ctrl->handler, काष्ठा mt9m032, ctrls);
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
-	पूर्णांक ret;
+static int mt9m032_set_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct mt9m032 *sensor =
+		container_of(ctrl->handler, struct mt9m032, ctrls);
+	struct i2c_client *client = v4l2_get_subdevdata(&sensor->subdev);
+	int ret;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_GAIN:
-		वापस mt9m032_set_gain(sensor, ctrl->val);
+	switch (ctrl->id) {
+	case V4L2_CID_GAIN:
+		return mt9m032_set_gain(sensor, ctrl->val);
 
-	हाल V4L2_CID_HFLIP:
-	/* हाल V4L2_CID_VFLIP: -- In the same cluster */
-		वापस update_पढ़ो_mode2(sensor, sensor->vflip->val,
+	case V4L2_CID_HFLIP:
+	/* case V4L2_CID_VFLIP: -- In the same cluster */
+		return update_read_mode2(sensor, sensor->vflip->val,
 					 sensor->hflip->val);
 
-	हाल V4L2_CID_EXPOSURE:
-		ret = mt9m032_ग_लिखो(client, MT9M032_SHUTTER_WIDTH_HIGH,
+	case V4L2_CID_EXPOSURE:
+		ret = mt9m032_write(client, MT9M032_SHUTTER_WIDTH_HIGH,
 				    (ctrl->val >> 16) & 0xffff);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		वापस mt9m032_ग_लिखो(client, MT9M032_SHUTTER_WIDTH_LOW,
+		return mt9m032_write(client, MT9M032_SHUTTER_WIDTH_LOW,
 				     ctrl->val & 0xffff);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops mt9m032_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops mt9m032_ctrl_ops = {
 	.s_ctrl = mt9m032_set_ctrl,
 	.try_ctrl = mt9m032_try_ctrl,
-पूर्ण;
+};
 
 /* -------------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops mt9m032_core_ops = अणु
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-	.g_रेजिस्टर = mt9m032_g_रेजिस्टर,
-	.s_रेजिस्टर = mt9m032_s_रेजिस्टर,
-#पूर्ण_अगर
-पूर्ण;
+static const struct v4l2_subdev_core_ops mt9m032_core_ops = {
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.g_register = mt9m032_g_register,
+	.s_register = mt9m032_s_register,
+#endif
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops mt9m032_video_ops = अणु
+static const struct v4l2_subdev_video_ops mt9m032_video_ops = {
 	.s_stream = mt9m032_s_stream,
-	.g_frame_पूर्णांकerval = mt9m032_get_frame_पूर्णांकerval,
-	.s_frame_पूर्णांकerval = mt9m032_set_frame_पूर्णांकerval,
-पूर्ण;
+	.g_frame_interval = mt9m032_get_frame_interval,
+	.s_frame_interval = mt9m032_set_frame_interval,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops mt9m032_pad_ops = अणु
-	.क्रमागत_mbus_code = mt9m032_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = mt9m032_क्रमागत_frame_size,
-	.get_fmt = mt9m032_get_pad_क्रमmat,
-	.set_fmt = mt9m032_set_pad_क्रमmat,
+static const struct v4l2_subdev_pad_ops mt9m032_pad_ops = {
+	.enum_mbus_code = mt9m032_enum_mbus_code,
+	.enum_frame_size = mt9m032_enum_frame_size,
+	.get_fmt = mt9m032_get_pad_format,
+	.set_fmt = mt9m032_set_pad_format,
 	.set_selection = mt9m032_set_pad_selection,
 	.get_selection = mt9m032_get_pad_selection,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops mt9m032_ops = अणु
+static const struct v4l2_subdev_ops mt9m032_ops = {
 	.core = &mt9m032_core_ops,
 	.video = &mt9m032_video_ops,
 	.pad = &mt9m032_pad_ops,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * Driver initialization and probing
  */
 
-अटल पूर्णांक mt9m032_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *devid)
-अणु
-	काष्ठा mt9m032_platक्रमm_data *pdata = client->dev.platक्रमm_data;
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा mt9m032 *sensor;
-	पूर्णांक chip_version;
-	पूर्णांक ret;
+static int mt9m032_probe(struct i2c_client *client,
+			 const struct i2c_device_id *devid)
+{
+	struct mt9m032_platform_data *pdata = client->dev.platform_data;
+	struct i2c_adapter *adapter = client->adapter;
+	struct mt9m032 *sensor;
+	int chip_version;
+	int ret;
 
-	अगर (pdata == शून्य) अणु
+	if (pdata == NULL) {
 		dev_err(&client->dev, "No platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WORD_DATA)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WORD_DATA)) {
 		dev_warn(&client->dev,
 			 "I2C-Adapter doesn't support I2C_FUNC_SMBUS_WORD\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!client->dev.platक्रमm_data)
-		वापस -ENODEV;
+	if (!client->dev.platform_data)
+		return -ENODEV;
 
-	sensor = devm_kzalloc(&client->dev, माप(*sensor), GFP_KERNEL);
-	अगर (sensor == शून्य)
-		वापस -ENOMEM;
+	sensor = devm_kzalloc(&client->dev, sizeof(*sensor), GFP_KERNEL);
+	if (sensor == NULL)
+		return -ENOMEM;
 
 	mutex_init(&sensor->lock);
 
@@ -732,30 +731,30 @@ __mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष�
 	v4l2_i2c_subdev_init(&sensor->subdev, client, &mt9m032_ops);
 	sensor->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
-	chip_version = mt9m032_पढ़ो(client, MT9M032_CHIP_VERSION);
-	अगर (chip_version != MT9M032_CHIP_VERSION_VALUE) अणु
+	chip_version = mt9m032_read(client, MT9M032_CHIP_VERSION);
+	if (chip_version != MT9M032_CHIP_VERSION_VALUE) {
 		dev_err(&client->dev, "MT9M032 not detected, wrong version "
 			"0x%04x\n", chip_version);
 		ret = -ENODEV;
-		जाओ error_sensor;
-	पूर्ण
+		goto error_sensor;
+	}
 
 	dev_info(&client->dev, "MT9M032 detected at address 0x%02x\n",
 		 client->addr);
 
-	sensor->frame_पूर्णांकerval.numerator = 1;
-	sensor->frame_पूर्णांकerval.denominator = 30;
+	sensor->frame_interval.numerator = 1;
+	sensor->frame_interval.denominator = 30;
 
 	sensor->crop.left = MT9M032_COLUMN_START_DEF;
 	sensor->crop.top = MT9M032_ROW_START_DEF;
 	sensor->crop.width = MT9M032_COLUMN_SIZE_DEF;
 	sensor->crop.height = MT9M032_ROW_SIZE_DEF;
 
-	sensor->क्रमmat.width = sensor->crop.width;
-	sensor->क्रमmat.height = sensor->crop.height;
-	sensor->क्रमmat.code = MEDIA_BUS_FMT_Y8_1X8;
-	sensor->क्रमmat.field = V4L2_FIELD_NONE;
-	sensor->क्रमmat.colorspace = V4L2_COLORSPACE_SRGB;
+	sensor->format.width = sensor->crop.width;
+	sensor->format.height = sensor->crop.height;
+	sensor->format.code = MEDIA_BUS_FMT_Y8_1X8;
+	sensor->format.field = V4L2_FIELD_NONE;
+	sensor->format.colorspace = V4L2_COLORSPACE_SRGB;
 
 	v4l2_ctrl_handler_init(&sensor->ctrls, 5);
 
@@ -774,14 +773,14 @@ __mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष�
 			  MT9M032_SHUTTER_WIDTH_MAX, 1,
 			  MT9M032_SHUTTER_WIDTH_DEF);
 	v4l2_ctrl_new_std(&sensor->ctrls, &mt9m032_ctrl_ops,
-			  V4L2_CID_PIXEL_RATE, pdata->pix_घड़ी,
-			  pdata->pix_घड़ी, 1, pdata->pix_घड़ी);
+			  V4L2_CID_PIXEL_RATE, pdata->pix_clock,
+			  pdata->pix_clock, 1, pdata->pix_clock);
 
-	अगर (sensor->ctrls.error) अणु
+	if (sensor->ctrls.error) {
 		ret = sensor->ctrls.error;
 		dev_err(&client->dev, "control initialization error %d\n", ret);
-		जाओ error_ctrl;
-	पूर्ण
+		goto error_ctrl;
+	}
 
 	v4l2_ctrl_cluster(2, &sensor->hflip);
 
@@ -789,99 +788,99 @@ __mt9m032_get_pad_क्रमmat(काष्ठा mt9m032 *sensor, काष�
 	sensor->subdev.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	sensor->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&sensor->subdev.entity, 1, &sensor->pad);
-	अगर (ret < 0)
-		जाओ error_ctrl;
+	if (ret < 0)
+		goto error_ctrl;
 
-	ret = mt9m032_ग_लिखो(client, MT9M032_RESET, 1);	/* reset on */
-	अगर (ret < 0)
-		जाओ error_entity;
-	ret = mt9m032_ग_लिखो(client, MT9M032_RESET, 0);	/* reset off */
-	अगर (ret < 0)
-		जाओ error_entity;
+	ret = mt9m032_write(client, MT9M032_RESET, 1);	/* reset on */
+	if (ret < 0)
+		goto error_entity;
+	ret = mt9m032_write(client, MT9M032_RESET, 0);	/* reset off */
+	if (ret < 0)
+		goto error_entity;
 
 	ret = mt9m032_setup_pll(sensor);
-	अगर (ret < 0)
-		जाओ error_entity;
+	if (ret < 0)
+		goto error_entity;
 	usleep_range(10000, 11000);
 
 	ret = v4l2_ctrl_handler_setup(&sensor->ctrls);
-	अगर (ret < 0)
-		जाओ error_entity;
+	if (ret < 0)
+		goto error_entity;
 
 	/* SIZE */
 	ret = mt9m032_update_geom_timing(sensor);
-	अगर (ret < 0)
-		जाओ error_entity;
+	if (ret < 0)
+		goto error_entity;
 
-	ret = mt9m032_ग_लिखो(client, 0x41, 0x0000);	/* reserved !!! */
-	अगर (ret < 0)
-		जाओ error_entity;
-	ret = mt9m032_ग_लिखो(client, 0x42, 0x0003);	/* reserved !!! */
-	अगर (ret < 0)
-		जाओ error_entity;
-	ret = mt9m032_ग_लिखो(client, 0x43, 0x0003);	/* reserved !!! */
-	अगर (ret < 0)
-		जाओ error_entity;
-	ret = mt9m032_ग_लिखो(client, 0x7f, 0x0000);	/* reserved !!! */
-	अगर (ret < 0)
-		जाओ error_entity;
-	अगर (sensor->pdata->invert_pixघड़ी) अणु
-		ret = mt9m032_ग_लिखो(client, MT9M032_PIX_CLK_CTRL,
+	ret = mt9m032_write(client, 0x41, 0x0000);	/* reserved !!! */
+	if (ret < 0)
+		goto error_entity;
+	ret = mt9m032_write(client, 0x42, 0x0003);	/* reserved !!! */
+	if (ret < 0)
+		goto error_entity;
+	ret = mt9m032_write(client, 0x43, 0x0003);	/* reserved !!! */
+	if (ret < 0)
+		goto error_entity;
+	ret = mt9m032_write(client, 0x7f, 0x0000);	/* reserved !!! */
+	if (ret < 0)
+		goto error_entity;
+	if (sensor->pdata->invert_pixclock) {
+		ret = mt9m032_write(client, MT9M032_PIX_CLK_CTRL,
 				    MT9M032_PIX_CLK_CTRL_INV_PIXCLK);
-		अगर (ret < 0)
-			जाओ error_entity;
-	पूर्ण
+		if (ret < 0)
+			goto error_entity;
+	}
 
-	ret = mt9m032_ग_लिखो(client, MT9M032_RESTART, 1); /* Restart on */
-	अगर (ret < 0)
-		जाओ error_entity;
+	ret = mt9m032_write(client, MT9M032_RESTART, 1); /* Restart on */
+	if (ret < 0)
+		goto error_entity;
 	msleep(100);
-	ret = mt9m032_ग_लिखो(client, MT9M032_RESTART, 0); /* Restart off */
-	अगर (ret < 0)
-		जाओ error_entity;
+	ret = mt9m032_write(client, MT9M032_RESTART, 0); /* Restart off */
+	if (ret < 0)
+		goto error_entity;
 	msleep(100);
-	ret = update_क्रमmatter2(sensor, false);
-	अगर (ret < 0)
-		जाओ error_entity;
+	ret = update_formatter2(sensor, false);
+	if (ret < 0)
+		goto error_entity;
 
-	वापस ret;
+	return ret;
 
 error_entity:
 	media_entity_cleanup(&sensor->subdev.entity);
 error_ctrl:
-	v4l2_ctrl_handler_मुक्त(&sensor->ctrls);
+	v4l2_ctrl_handler_free(&sensor->ctrls);
 error_sensor:
 	mutex_destroy(&sensor->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9m032_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
-	काष्ठा mt9m032 *sensor = to_mt9m032(subdev);
+static int mt9m032_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
+	struct mt9m032 *sensor = to_mt9m032(subdev);
 
-	v4l2_device_unरेजिस्टर_subdev(subdev);
-	v4l2_ctrl_handler_मुक्त(&sensor->ctrls);
+	v4l2_device_unregister_subdev(subdev);
+	v4l2_ctrl_handler_free(&sensor->ctrls);
 	media_entity_cleanup(&subdev->entity);
 	mutex_destroy(&sensor->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id mt9m032_id_table[] = अणु
-	अणु MT9M032_NAME, 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id mt9m032_id_table[] = {
+	{ MT9M032_NAME, 0 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, mt9m032_id_table);
 
-अटल काष्ठा i2c_driver mt9m032_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver mt9m032_i2c_driver = {
+	.driver = {
 		.name = MT9M032_NAME,
-	पूर्ण,
+	},
 	.probe = mt9m032_probe,
-	.हटाओ = mt9m032_हटाओ,
+	.remove = mt9m032_remove,
 	.id_table = mt9m032_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(mt9m032_i2c_driver);
 

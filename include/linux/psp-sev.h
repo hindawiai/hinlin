@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * AMD Secure Encrypted Virtualization (SEV) driver पूर्णांकerface
+ * AMD Secure Encrypted Virtualization (SEV) driver interface
  *
  * Copyright (C) 2016-2017 Advanced Micro Devices, Inc.
  *
@@ -10,37 +9,37 @@
  * SEV API spec is available at https://developer.amd.com/sev
  */
 
-#अगर_अघोषित __PSP_SEV_H__
-#घोषणा __PSP_SEV_H__
+#ifndef __PSP_SEV_H__
+#define __PSP_SEV_H__
 
-#समावेश <uapi/linux/psp-sev.h>
+#include <uapi/linux/psp-sev.h>
 
-#अगर_घोषित CONFIG_X86
-#समावेश <linux/mem_encrypt.h>
+#ifdef CONFIG_X86
+#include <linux/mem_encrypt.h>
 
-#घोषणा __psp_pa(x)	__sme_pa(x)
-#अन्यथा
-#घोषणा __psp_pa(x)	__pa(x)
-#पूर्ण_अगर
+#define __psp_pa(x)	__sme_pa(x)
+#else
+#define __psp_pa(x)	__pa(x)
+#endif
 
-#घोषणा SEV_FW_BLOB_MAX_SIZE	0x4000	/* 16KB */
+#define SEV_FW_BLOB_MAX_SIZE	0x4000	/* 16KB */
 
 /**
- * SEV platक्रमm state
+ * SEV platform state
  */
-क्रमागत sev_state अणु
+enum sev_state {
 	SEV_STATE_UNINIT		= 0x0,
 	SEV_STATE_INIT			= 0x1,
 	SEV_STATE_WORKING		= 0x2,
 
 	SEV_STATE_MAX
-पूर्ण;
+};
 
 /**
- * SEV platक्रमm and guest management commands
+ * SEV platform and guest management commands
  */
-क्रमागत sev_cmd अणु
-	/* platक्रमm commands */
+enum sev_cmd {
+	/* platform commands */
 	SEV_CMD_INIT			= 0x001,
 	SEV_CMD_SHUTDOWN		= 0x002,
 	SEV_CMD_FACTORY_RESET		= 0x003,
@@ -87,143 +86,143 @@
 	SEV_CMD_DBG_ENCRYPT		= 0x061,
 
 	SEV_CMD_MAX,
-पूर्ण;
+};
 
 /**
- * काष्ठा sev_data_init - INIT command parameters
+ * struct sev_data_init - INIT command parameters
  *
  * @flags: processing flags
- * @पंचांगr_address: प्रणाली physical address used क्रम SEV-ES
- * @पंचांगr_len: len of पंचांगr_address
+ * @tmr_address: system physical address used for SEV-ES
+ * @tmr_len: len of tmr_address
  */
-काष्ठा sev_data_init अणु
+struct sev_data_init {
 	u32 flags;			/* In */
 	u32 reserved;			/* In */
-	u64 पंचांगr_address;		/* In */
-	u32 पंचांगr_len;			/* In */
-पूर्ण __packed;
+	u64 tmr_address;		/* In */
+	u32 tmr_len;			/* In */
+} __packed;
 
-#घोषणा SEV_INIT_FLAGS_SEV_ES	0x01
+#define SEV_INIT_FLAGS_SEV_ES	0x01
 
 /**
- * काष्ठा sev_data_pek_csr - PEK_CSR command parameters
+ * struct sev_data_pek_csr - PEK_CSR command parameters
  *
- * @address: PEK certअगरicate chain
- * @len: len of certअगरicate
+ * @address: PEK certificate chain
+ * @len: len of certificate
  */
-काष्ठा sev_data_pek_csr अणु
+struct sev_data_pek_csr {
 	u64 address;				/* In */
 	u32 len;				/* In/Out */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_cert_import - PEK_CERT_IMPORT command parameters
+ * struct sev_data_cert_import - PEK_CERT_IMPORT command parameters
  *
- * @pek_address: PEK certअगरicate chain
- * @pek_len: len of PEK certअगरicate
- * @oca_address: OCA certअगरicate chain
- * @oca_len: len of OCA certअगरicate
+ * @pek_address: PEK certificate chain
+ * @pek_len: len of PEK certificate
+ * @oca_address: OCA certificate chain
+ * @oca_len: len of OCA certificate
  */
-काष्ठा sev_data_pek_cert_import अणु
+struct sev_data_pek_cert_import {
 	u64 pek_cert_address;			/* In */
 	u32 pek_cert_len;			/* In */
 	u32 reserved;				/* In */
 	u64 oca_cert_address;			/* In */
 	u32 oca_cert_len;			/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_करोwnload_firmware - DOWNLOAD_FIRMWARE command parameters
+ * struct sev_data_download_firmware - DOWNLOAD_FIRMWARE command parameters
  *
  * @address: physical address of firmware image
  * @len: len of the firmware image
  */
-काष्ठा sev_data_करोwnload_firmware अणु
+struct sev_data_download_firmware {
 	u64 address;				/* In */
 	u32 len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_get_id - GET_ID command parameters
+ * struct sev_data_get_id - GET_ID command parameters
  *
  * @address: physical address of region to place unique CPU ID(s)
  * @len: len of the region
  */
-काष्ठा sev_data_get_id अणु
+struct sev_data_get_id {
 	u64 address;				/* In */
 	u32 len;				/* In/Out */
-पूर्ण __packed;
+} __packed;
 /**
- * काष्ठा sev_data_pdh_cert_export - PDH_CERT_EXPORT command parameters
+ * struct sev_data_pdh_cert_export - PDH_CERT_EXPORT command parameters
  *
- * @pdh_address: PDH certअगरicate address
- * @pdh_len: len of PDH certअगरicate
- * @cert_chain_address: PDH certअगरicate chain
- * @cert_chain_len: len of PDH certअगरicate chain
+ * @pdh_address: PDH certificate address
+ * @pdh_len: len of PDH certificate
+ * @cert_chain_address: PDH certificate chain
+ * @cert_chain_len: len of PDH certificate chain
  */
-काष्ठा sev_data_pdh_cert_export अणु
+struct sev_data_pdh_cert_export {
 	u64 pdh_cert_address;			/* In */
 	u32 pdh_cert_len;			/* In/Out */
 	u32 reserved;				/* In */
 	u64 cert_chain_address;			/* In */
 	u32 cert_chain_len;			/* In/Out */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_decommission - DECOMMISSION command parameters
+ * struct sev_data_decommission - DECOMMISSION command parameters
  *
  * @handle: handle of the VM to decommission
  */
-काष्ठा sev_data_decommission अणु
+struct sev_data_decommission {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_activate - ACTIVATE command parameters
+ * struct sev_data_activate - ACTIVATE command parameters
  *
  * @handle: handle of the VM to activate
- * @asid: asid asचिन्हित to the VM
+ * @asid: asid assigned to the VM
  */
-काष्ठा sev_data_activate अणु
+struct sev_data_activate {
 	u32 handle;				/* In */
 	u32 asid;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_deactivate - DEACTIVATE command parameters
+ * struct sev_data_deactivate - DEACTIVATE command parameters
  *
  * @handle: handle of the VM to deactivate
  */
-काष्ठा sev_data_deactivate अणु
+struct sev_data_deactivate {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_guest_status - SEV GUEST_STATUS command parameters
+ * struct sev_data_guest_status - SEV GUEST_STATUS command parameters
  *
  * @handle: handle of the VM to retrieve status
- * @policy: policy inक्रमmation क्रम the VM
+ * @policy: policy information for the VM
  * @asid: current ASID of the VM
  * @state: current state of the VM
  */
-काष्ठा sev_data_guest_status अणु
+struct sev_data_guest_status {
 	u32 handle;				/* In */
 	u32 policy;				/* Out */
 	u32 asid;				/* Out */
 	u8 state;				/* Out */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_start - LAUNCH_START command parameters
+ * struct sev_data_launch_start - LAUNCH_START command parameters
  *
- * @handle: handle asचिन्हित to the VM
+ * @handle: handle assigned to the VM
  * @policy: guest launch policy
- * @dh_cert_address: physical address of DH certअगरicate blob
- * @dh_cert_len: len of DH certअगरicate blob
+ * @dh_cert_address: physical address of DH certificate blob
+ * @dh_cert_len: len of DH certificate blob
  * @session_address: physical address of session parameters
  * @session_len: len of session parameters
  */
-काष्ठा sev_data_launch_start अणु
+struct sev_data_launch_start {
 	u32 handle;				/* In/Out */
 	u32 policy;				/* In */
 	u64 dh_cert_address;			/* In */
@@ -231,62 +230,62 @@
 	u32 reserved;				/* In */
 	u64 session_address;			/* In */
 	u32 session_len;			/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_update_data - LAUNCH_UPDATE_DATA command parameter
+ * struct sev_data_launch_update_data - LAUNCH_UPDATE_DATA command parameter
  *
  * @handle: handle of the VM to update
  * @len: len of memory to be encrypted
  * @address: physical address of memory region to encrypt
  */
-काष्ठा sev_data_launch_update_data अणु
+struct sev_data_launch_update_data {
 	u32 handle;				/* In */
 	u32 reserved;
 	u64 address;				/* In */
 	u32 len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_update_vmsa - LAUNCH_UPDATE_VMSA command
+ * struct sev_data_launch_update_vmsa - LAUNCH_UPDATE_VMSA command
  *
  * @handle: handle of the VM
  * @address: physical address of memory region to encrypt
  * @len: len of memory region to encrypt
  */
-काष्ठा sev_data_launch_update_vmsa अणु
+struct sev_data_launch_update_vmsa {
 	u32 handle;				/* In */
 	u32 reserved;
 	u64 address;				/* In */
 	u32 len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_measure - LAUNCH_MEASURE command parameters
+ * struct sev_data_launch_measure - LAUNCH_MEASURE command parameters
  *
  * @handle: handle of the VM to process
  * @address: physical address containing the measurement blob
  * @len: len of measurement blob
  */
-काष्ठा sev_data_launch_measure अणु
+struct sev_data_launch_measure {
 	u32 handle;				/* In */
 	u32 reserved;
 	u64 address;				/* In */
 	u32 len;				/* In/Out */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_secret - LAUNCH_SECRET command parameters
+ * struct sev_data_launch_secret - LAUNCH_SECRET command parameters
  *
  * @handle: handle of the VM to process
  * @hdr_address: physical address containing the packet header
  * @hdr_len: len of packet header
- * @guest_address: प्रणाली physical address of guest memory region
+ * @guest_address: system physical address of guest memory region
  * @guest_len: len of guest_paddr
  * @trans_address: physical address of transport memory buffer
  * @trans_len: len of transport memory buffer
  */
-काष्ठा sev_data_launch_secret अणु
+struct sev_data_launch_secret {
 	u32 handle;				/* In */
 	u32 reserved1;
 	u64 hdr_address;			/* In */
@@ -297,32 +296,32 @@
 	u32 reserved3;
 	u64 trans_address;			/* In */
 	u32 trans_len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_launch_finish - LAUNCH_FINISH command parameters
+ * struct sev_data_launch_finish - LAUNCH_FINISH command parameters
  *
  * @handle: handle of the VM to process
  */
-काष्ठा sev_data_launch_finish अणु
+struct sev_data_launch_finish {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_send_start - SEND_START command parameters
+ * struct sev_data_send_start - SEND_START command parameters
  *
  * @handle: handle of the VM to process
- * @policy: policy inक्रमmation क्रम the VM
- * @pdh_cert_address: physical address containing PDH certअगरicate
- * @pdh_cert_len: len of PDH certअगरicate
- * @plat_certs_address: physical address containing platक्रमm certअगरicate
- * @plat_certs_len: len of platक्रमm certअगरicate
- * @amd_certs_address: physical address containing AMD certअगरicate
- * @amd_certs_len: len of AMD certअगरicate
+ * @policy: policy information for the VM
+ * @pdh_cert_address: physical address containing PDH certificate
+ * @pdh_cert_len: len of PDH certificate
+ * @plat_certs_address: physical address containing platform certificate
+ * @plat_certs_len: len of platform certificate
+ * @amd_certs_address: physical address containing AMD certificate
+ * @amd_certs_len: len of AMD certificate
  * @session_address: physical address containing Session data
  * @session_len: len of session data
  */
-काष्ठा sev_data_send_start अणु
+struct sev_data_send_start {
 	u32 handle;				/* In */
 	u32 policy;				/* Out */
 	u64 pdh_cert_address;			/* In */
@@ -336,10 +335,10 @@
 	u32 reserved3;
 	u64 session_address;			/* In */
 	u32 session_len;			/* In/Out */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_send_update - SEND_UPDATE_DATA command
+ * struct sev_data_send_update - SEND_UPDATE_DATA command
  *
  * @handle: handle of the VM to process
  * @hdr_address: physical address containing packet header
@@ -349,7 +348,7 @@
  * @trans_address: physical address of host memory region
  * @trans_len: len of host memory region
  */
-काष्ठा sev_data_send_update_data अणु
+struct sev_data_send_update_data {
 	u32 handle;				/* In */
 	u32 reserved1;
 	u64 hdr_address;			/* In */
@@ -360,10 +359,10 @@
 	u32 reserved3;
 	u64 trans_address;			/* In */
 	u32 trans_len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_send_update - SEND_UPDATE_VMSA command
+ * struct sev_data_send_update - SEND_UPDATE_VMSA command
  *
  * @handle: handle of the VM to process
  * @hdr_address: physical address containing packet header
@@ -373,7 +372,7 @@
  * @trans_address: physical address of host memory region
  * @trans_len: len of host memory region
  */
-काष्ठा sev_data_send_update_vmsa अणु
+struct sev_data_send_update_vmsa {
 	u32 handle;				/* In */
 	u64 hdr_address;			/* In */
 	u32 hdr_len;				/* In/Out */
@@ -383,36 +382,36 @@
 	u32 reserved3;
 	u64 trans_address;			/* In */
 	u32 trans_len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_send_finish - SEND_FINISH command parameters
+ * struct sev_data_send_finish - SEND_FINISH command parameters
  *
  * @handle: handle of the VM to process
  */
-काष्ठा sev_data_send_finish अणु
+struct sev_data_send_finish {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_send_cancel - SEND_CANCEL command parameters
+ * struct sev_data_send_cancel - SEND_CANCEL command parameters
  *
  * @handle: handle of the VM to process
  */
-काष्ठा sev_data_send_cancel अणु
+struct sev_data_send_cancel {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_receive_start - RECEIVE_START command parameters
+ * struct sev_data_receive_start - RECEIVE_START command parameters
  *
- * @handle: handle of the VM to perक्रमm receive operation
- * @pdh_cert_address: प्रणाली physical address containing PDH certअगरicate blob
- * @pdh_cert_len: len of PDH certअगरicate blob
- * @session_address: प्रणाली physical address containing session blob
+ * @handle: handle of the VM to perform receive operation
+ * @pdh_cert_address: system physical address containing PDH certificate blob
+ * @pdh_cert_len: len of PDH certificate blob
+ * @session_address: system physical address containing session blob
  * @session_len: len of session blob
  */
-काष्ठा sev_data_receive_start अणु
+struct sev_data_receive_start {
 	u32 handle;				/* In/Out */
 	u32 policy;				/* In */
 	u64 pdh_cert_address;			/* In */
@@ -420,20 +419,20 @@
 	u32 reserved1;
 	u64 session_address;			/* In */
 	u32 session_len;			/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_receive_update_data - RECEIVE_UPDATE_DATA command parameters
+ * struct sev_data_receive_update_data - RECEIVE_UPDATE_DATA command parameters
  *
  * @handle: handle of the VM to update
  * @hdr_address: physical address containing packet header blob
  * @hdr_len: len of packet header
- * @guest_address: प्रणाली physical address of guest memory region
+ * @guest_address: system physical address of guest memory region
  * @guest_len: len of guest memory region
- * @trans_address: प्रणाली physical address of transport buffer
+ * @trans_address: system physical address of transport buffer
  * @trans_len: len of transport buffer
  */
-काष्ठा sev_data_receive_update_data अणु
+struct sev_data_receive_update_data {
 	u32 handle;				/* In */
 	u32 reserved1;
 	u64 hdr_address;			/* In */
@@ -444,20 +443,20 @@
 	u32 reserved3;
 	u64 trans_address;			/* In */
 	u32 trans_len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_receive_update_vmsa - RECEIVE_UPDATE_VMSA command parameters
+ * struct sev_data_receive_update_vmsa - RECEIVE_UPDATE_VMSA command parameters
  *
  * @handle: handle of the VM to update
  * @hdr_address: physical address containing packet header blob
  * @hdr_len: len of packet header
- * @guest_address: प्रणाली physical address of guest memory region
+ * @guest_address: system physical address of guest memory region
  * @guest_len: len of guest memory region
- * @trans_address: प्रणाली physical address of transport buffer
+ * @trans_address: system physical address of transport buffer
  * @trans_len: len of transport buffer
  */
-काष्ठा sev_data_receive_update_vmsa अणु
+struct sev_data_receive_update_vmsa {
 	u32 handle;				/* In */
 	u32 reserved1;
 	u64 hdr_address;			/* In */
@@ -468,188 +467,188 @@
 	u32 reserved3;
 	u64 trans_address;			/* In */
 	u32 trans_len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_receive_finish - RECEIVE_FINISH command parameters
+ * struct sev_data_receive_finish - RECEIVE_FINISH command parameters
  *
  * @handle: handle of the VM to finish
  */
-काष्ठा sev_data_receive_finish अणु
+struct sev_data_receive_finish {
 	u32 handle;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_dbg - DBG_ENCRYPT/DBG_DECRYPT command parameters
+ * struct sev_data_dbg - DBG_ENCRYPT/DBG_DECRYPT command parameters
  *
- * @handle: handle of the VM to perक्रमm debug operation
+ * @handle: handle of the VM to perform debug operation
  * @src_addr: source address of data to operate on
  * @dst_addr: destination address of data to operate on
  * @len: len of data to operate on
  */
-काष्ठा sev_data_dbg अणु
+struct sev_data_dbg {
 	u32 handle;				/* In */
 	u32 reserved;
 	u64 src_addr;				/* In */
 	u64 dst_addr;				/* In */
 	u32 len;				/* In */
-पूर्ण __packed;
+} __packed;
 
 /**
- * काष्ठा sev_data_attestation_report - SEV_ATTESTATION_REPORT command parameters
+ * struct sev_data_attestation_report - SEV_ATTESTATION_REPORT command parameters
  *
  * @handle: handle of the VM
- * @mnonce: a अक्रमom nonce that will be included in the report.
+ * @mnonce: a random nonce that will be included in the report.
  * @address: physical address where the report will be copied.
  * @len: length of the physical buffer.
  */
-काष्ठा sev_data_attestation_report अणु
+struct sev_data_attestation_report {
 	u32 handle;				/* In */
 	u32 reserved;
 	u64 address;				/* In */
 	u8 mnonce[16];				/* In */
 	u32 len;				/* In/Out */
-पूर्ण __packed;
+} __packed;
 
-#अगर_घोषित CONFIG_CRYPTO_DEV_SP_PSP
+#ifdef CONFIG_CRYPTO_DEV_SP_PSP
 
 /**
- * sev_platक्रमm_init - perक्रमm SEV INIT command
+ * sev_platform_init - perform SEV INIT command
  *
- * @error: SEV command वापस code
+ * @error: SEV command return code
  *
  * Returns:
- * 0 अगर the SEV successfully processed the command
- * -%ENODEV    अगर the SEV device is not available
- * -%ENOTSUPP  अगर the SEV करोes not support SEV
- * -%ETIMEDOUT अगर the SEV command समयd out
- * -%EIO       अगर the SEV वापसed a non-zero वापस code
+ * 0 if the SEV successfully processed the command
+ * -%ENODEV    if the SEV device is not available
+ * -%ENOTSUPP  if the SEV does not support SEV
+ * -%ETIMEDOUT if the SEV command timed out
+ * -%EIO       if the SEV returned a non-zero return code
  */
-पूर्णांक sev_platक्रमm_init(पूर्णांक *error);
+int sev_platform_init(int *error);
 
 /**
- * sev_platक्रमm_status - perक्रमm SEV PLATFORM_STATUS command
+ * sev_platform_status - perform SEV PLATFORM_STATUS command
  *
- * @status: sev_user_data_status काष्ठाure to be processed
- * @error: SEV command वापस code
+ * @status: sev_user_data_status structure to be processed
+ * @error: SEV command return code
  *
  * Returns:
- * 0 अगर the SEV successfully processed the command
- * -%ENODEV    अगर the SEV device is not available
- * -%ENOTSUPP  अगर the SEV करोes not support SEV
- * -%ETIMEDOUT अगर the SEV command समयd out
- * -%EIO       अगर the SEV वापसed a non-zero वापस code
+ * 0 if the SEV successfully processed the command
+ * -%ENODEV    if the SEV device is not available
+ * -%ENOTSUPP  if the SEV does not support SEV
+ * -%ETIMEDOUT if the SEV command timed out
+ * -%EIO       if the SEV returned a non-zero return code
  */
-पूर्णांक sev_platक्रमm_status(काष्ठा sev_user_data_status *status, पूर्णांक *error);
+int sev_platform_status(struct sev_user_data_status *status, int *error);
 
 /**
- * sev_issue_cmd_बाह्यal_user - issue SEV command by other driver with a file
+ * sev_issue_cmd_external_user - issue SEV command by other driver with a file
  * handle.
  *
  * This function can be used by other drivers to issue a SEV command on
  * behalf of userspace. The caller must pass a valid SEV file descriptor
  * so that we know that it has access to SEV device.
  *
- * @filep - SEV device file poपूर्णांकer
+ * @filep - SEV device file pointer
  * @cmd - command to issue
  * @data - command buffer
- * @error: SEV command वापस code
+ * @error: SEV command return code
  *
  * Returns:
- * 0 अगर the SEV successfully processed the command
- * -%ENODEV    अगर the SEV device is not available
- * -%ENOTSUPP  अगर the SEV करोes not support SEV
- * -%ETIMEDOUT अगर the SEV command समयd out
- * -%EIO       अगर the SEV वापसed a non-zero वापस code
- * -%EINVAL    अगर the SEV file descriptor is not valid
+ * 0 if the SEV successfully processed the command
+ * -%ENODEV    if the SEV device is not available
+ * -%ENOTSUPP  if the SEV does not support SEV
+ * -%ETIMEDOUT if the SEV command timed out
+ * -%EIO       if the SEV returned a non-zero return code
+ * -%EINVAL    if the SEV file descriptor is not valid
  */
-पूर्णांक sev_issue_cmd_बाह्यal_user(काष्ठा file *filep, अचिन्हित पूर्णांक id,
-				व्योम *data, पूर्णांक *error);
+int sev_issue_cmd_external_user(struct file *filep, unsigned int id,
+				void *data, int *error);
 
 /**
- * sev_guest_deactivate - perक्रमm SEV DEACTIVATE command
+ * sev_guest_deactivate - perform SEV DEACTIVATE command
  *
- * @deactivate: sev_data_deactivate काष्ठाure to be processed
- * @sev_ret: sev command वापस code
+ * @deactivate: sev_data_deactivate structure to be processed
+ * @sev_ret: sev command return code
  *
  * Returns:
- * 0 अगर the sev successfully processed the command
- * -%ENODEV    अगर the sev device is not available
- * -%ENOTSUPP  अगर the sev करोes not support SEV
- * -%ETIMEDOUT अगर the sev command समयd out
- * -%EIO       अगर the sev वापसed a non-zero वापस code
+ * 0 if the sev successfully processed the command
+ * -%ENODEV    if the sev device is not available
+ * -%ENOTSUPP  if the sev does not support SEV
+ * -%ETIMEDOUT if the sev command timed out
+ * -%EIO       if the sev returned a non-zero return code
  */
-पूर्णांक sev_guest_deactivate(काष्ठा sev_data_deactivate *data, पूर्णांक *error);
+int sev_guest_deactivate(struct sev_data_deactivate *data, int *error);
 
 /**
- * sev_guest_activate - perक्रमm SEV ACTIVATE command
+ * sev_guest_activate - perform SEV ACTIVATE command
  *
- * @activate: sev_data_activate काष्ठाure to be processed
- * @sev_ret: sev command वापस code
+ * @activate: sev_data_activate structure to be processed
+ * @sev_ret: sev command return code
  *
  * Returns:
- * 0 अगर the sev successfully processed the command
- * -%ENODEV    अगर the sev device is not available
- * -%ENOTSUPP  अगर the sev करोes not support SEV
- * -%ETIMEDOUT अगर the sev command समयd out
- * -%EIO       अगर the sev वापसed a non-zero वापस code
+ * 0 if the sev successfully processed the command
+ * -%ENODEV    if the sev device is not available
+ * -%ENOTSUPP  if the sev does not support SEV
+ * -%ETIMEDOUT if the sev command timed out
+ * -%EIO       if the sev returned a non-zero return code
  */
-पूर्णांक sev_guest_activate(काष्ठा sev_data_activate *data, पूर्णांक *error);
+int sev_guest_activate(struct sev_data_activate *data, int *error);
 
 /**
- * sev_guest_df_flush - perक्रमm SEV DF_FLUSH command
+ * sev_guest_df_flush - perform SEV DF_FLUSH command
  *
- * @sev_ret: sev command वापस code
+ * @sev_ret: sev command return code
  *
  * Returns:
- * 0 अगर the sev successfully processed the command
- * -%ENODEV    अगर the sev device is not available
- * -%ENOTSUPP  अगर the sev करोes not support SEV
- * -%ETIMEDOUT अगर the sev command समयd out
- * -%EIO       अगर the sev वापसed a non-zero वापस code
+ * 0 if the sev successfully processed the command
+ * -%ENODEV    if the sev device is not available
+ * -%ENOTSUPP  if the sev does not support SEV
+ * -%ETIMEDOUT if the sev command timed out
+ * -%EIO       if the sev returned a non-zero return code
  */
-पूर्णांक sev_guest_df_flush(पूर्णांक *error);
+int sev_guest_df_flush(int *error);
 
 /**
- * sev_guest_decommission - perक्रमm SEV DECOMMISSION command
+ * sev_guest_decommission - perform SEV DECOMMISSION command
  *
- * @decommission: sev_data_decommission काष्ठाure to be processed
- * @sev_ret: sev command वापस code
+ * @decommission: sev_data_decommission structure to be processed
+ * @sev_ret: sev command return code
  *
  * Returns:
- * 0 अगर the sev successfully processed the command
- * -%ENODEV    अगर the sev device is not available
- * -%ENOTSUPP  अगर the sev करोes not support SEV
- * -%ETIMEDOUT अगर the sev command समयd out
- * -%EIO       अगर the sev वापसed a non-zero वापस code
+ * 0 if the sev successfully processed the command
+ * -%ENODEV    if the sev device is not available
+ * -%ENOTSUPP  if the sev does not support SEV
+ * -%ETIMEDOUT if the sev command timed out
+ * -%EIO       if the sev returned a non-zero return code
  */
-पूर्णांक sev_guest_decommission(काष्ठा sev_data_decommission *data, पूर्णांक *error);
+int sev_guest_decommission(struct sev_data_decommission *data, int *error);
 
-व्योम *psp_copy_user_blob(u64 uaddr, u32 len);
+void *psp_copy_user_blob(u64 uaddr, u32 len);
 
-#अन्यथा	/* !CONFIG_CRYPTO_DEV_SP_PSP */
+#else	/* !CONFIG_CRYPTO_DEV_SP_PSP */
 
-अटल अंतरभूत पूर्णांक
-sev_platक्रमm_status(काष्ठा sev_user_data_status *status, पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int
+sev_platform_status(struct sev_user_data_status *status, int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक sev_platक्रमm_init(पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int sev_platform_init(int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक
-sev_guest_deactivate(काष्ठा sev_data_deactivate *data, पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int
+sev_guest_deactivate(struct sev_data_deactivate *data, int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक
-sev_guest_decommission(काष्ठा sev_data_decommission *data, पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int
+sev_guest_decommission(struct sev_data_decommission *data, int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक
-sev_guest_activate(काष्ठा sev_data_activate *data, पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int
+sev_guest_activate(struct sev_data_activate *data, int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक sev_guest_df_flush(पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int sev_guest_df_flush(int *error) { return -ENODEV; }
 
-अटल अंतरभूत पूर्णांक
-sev_issue_cmd_बाह्यal_user(काष्ठा file *filep, अचिन्हित पूर्णांक id, व्योम *data, पूर्णांक *error) अणु वापस -ENODEV; पूर्ण
+static inline int
+sev_issue_cmd_external_user(struct file *filep, unsigned int id, void *data, int *error) { return -ENODEV; }
 
-अटल अंतरभूत व्योम *psp_copy_user_blob(u64 __user uaddr, u32 len) अणु वापस ERR_PTR(-EINVAL); पूर्ण
+static inline void *psp_copy_user_blob(u64 __user uaddr, u32 len) { return ERR_PTR(-EINVAL); }
 
-#पूर्ण_अगर	/* CONFIG_CRYPTO_DEV_SP_PSP */
+#endif	/* CONFIG_CRYPTO_DEV_SP_PSP */
 
-#पूर्ण_अगर	/* __PSP_SEV_H__ */
+#endif	/* __PSP_SEV_H__ */

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * linux/arch/arm/plat-omap/dmसमयr.c
+ * linux/arch/arm/plat-omap/dmtimer.c
  *
  * OMAP Dual-Mode Timers
  *
@@ -9,956 +8,956 @@
  * Tarun Kanti DebBarma <tarun.kanti@ti.com>
  * Thara Gopinath <thara@ti.com>
  *
- * dmसमयr adaptation to platक्रमm_driver.
+ * dmtimer adaptation to platform_driver.
  *
  * Copyright (C) 2005 Nokia Corporation
  * OMAP2 support by Juha Yrjola
- * API improvements and OMAP2 घड़ी framework support by Timo Teras
+ * API improvements and OMAP2 clock framework support by Timo Teras
  *
  * Copyright (C) 2009 Texas Instruments
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/dmसमयr-omap.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/cpu_pm.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/pm_runtime.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/dmtimer-omap.h>
 
-#समावेश <घड़ीsource/समयr-ti-dm.h>
+#include <clocksource/timer-ti-dm.h>
 
-अटल u32 omap_reserved_sysसमयrs;
-अटल LIST_HEAD(omap_समयr_list);
-अटल DEFINE_SPINLOCK(dm_समयr_lock);
+static u32 omap_reserved_systimers;
+static LIST_HEAD(omap_timer_list);
+static DEFINE_SPINLOCK(dm_timer_lock);
 
-क्रमागत अणु
+enum {
 	REQUEST_ANY = 0,
 	REQUEST_BY_ID,
 	REQUEST_BY_CAP,
 	REQUEST_BY_NODE,
-पूर्ण;
+};
 
 /**
- * omap_dm_समयr_पढ़ो_reg - पढ़ो समयr रेजिस्टरs in posted and non-posted mode
- * @समयr:      समयr poपूर्णांकer over which पढ़ो operation to perक्रमm
- * @reg:        lowest byte holds the रेजिस्टर offset
+ * omap_dm_timer_read_reg - read timer registers in posted and non-posted mode
+ * @timer:      timer pointer over which read operation to perform
+ * @reg:        lowest byte holds the register offset
  *
- * The posted mode bit is encoded in reg. Note that in posted mode ग_लिखो
- * pending bit must be checked. Otherwise a पढ़ो of a non completed ग_लिखो
+ * The posted mode bit is encoded in reg. Note that in posted mode write
+ * pending bit must be checked. Otherwise a read of a non completed write
  * will produce an error.
  */
-अटल अंतरभूत u32 omap_dm_समयr_पढ़ो_reg(काष्ठा omap_dm_समयr *समयr, u32 reg)
-अणु
+static inline u32 omap_dm_timer_read_reg(struct omap_dm_timer *timer, u32 reg)
+{
 	WARN_ON((reg & 0xff) < _OMAP_TIMER_WAKEUP_EN_OFFSET);
-	वापस __omap_dm_समयr_पढ़ो(समयr, reg, समयr->posted);
-पूर्ण
+	return __omap_dm_timer_read(timer, reg, timer->posted);
+}
 
 /**
- * omap_dm_समयr_ग_लिखो_reg - ग_लिखो समयr रेजिस्टरs in posted and non-posted mode
- * @समयr:      समयr poपूर्णांकer over which ग_लिखो operation is to perक्रमm
- * @reg:        lowest byte holds the रेजिस्टर offset
- * @value:      data to ग_लिखो पूर्णांकo the रेजिस्टर
+ * omap_dm_timer_write_reg - write timer registers in posted and non-posted mode
+ * @timer:      timer pointer over which write operation is to perform
+ * @reg:        lowest byte holds the register offset
+ * @value:      data to write into the register
  *
- * The posted mode bit is encoded in reg. Note that in posted mode the ग_लिखो
- * pending bit must be checked. Otherwise a ग_लिखो on a रेजिस्टर which has a
- * pending ग_लिखो will be lost.
+ * The posted mode bit is encoded in reg. Note that in posted mode the write
+ * pending bit must be checked. Otherwise a write on a register which has a
+ * pending write will be lost.
  */
-अटल व्योम omap_dm_समयr_ग_लिखो_reg(काष्ठा omap_dm_समयr *समयr, u32 reg,
+static void omap_dm_timer_write_reg(struct omap_dm_timer *timer, u32 reg,
 						u32 value)
-अणु
+{
 	WARN_ON((reg & 0xff) < _OMAP_TIMER_WAKEUP_EN_OFFSET);
-	__omap_dm_समयr_ग_लिखो(समयr, reg, value, समयr->posted);
-पूर्ण
+	__omap_dm_timer_write(timer, reg, value, timer->posted);
+}
 
-अटल व्योम omap_समयr_restore_context(काष्ठा omap_dm_समयr *समयr)
-अणु
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_WAKEUP_EN_REG,
-				समयr->context.twer);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_COUNTER_REG,
-				समयr->context.tcrr);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_LOAD_REG,
-				समयr->context.tldr);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_MATCH_REG,
-				समयr->context.पंचांगar);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_IF_CTRL_REG,
-				समयr->context.tsicr);
-	ग_लिखोl_relaxed(समयr->context.tier, समयr->irq_ena);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_CTRL_REG,
-				समयr->context.tclr);
-पूर्ण
+static void omap_timer_restore_context(struct omap_dm_timer *timer)
+{
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_WAKEUP_EN_REG,
+				timer->context.twer);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_COUNTER_REG,
+				timer->context.tcrr);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_LOAD_REG,
+				timer->context.tldr);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_MATCH_REG,
+				timer->context.tmar);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_IF_CTRL_REG,
+				timer->context.tsicr);
+	writel_relaxed(timer->context.tier, timer->irq_ena);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG,
+				timer->context.tclr);
+}
 
-अटल व्योम omap_समयr_save_context(काष्ठा omap_dm_समयr *समयr)
-अणु
-	समयr->context.tclr =
-			omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
-	समयr->context.twer =
-			omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_WAKEUP_EN_REG);
-	समयr->context.tldr =
-			omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_LOAD_REG);
-	समयr->context.पंचांगar =
-			omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_MATCH_REG);
-	समयr->context.tier = पढ़ोl_relaxed(समयr->irq_ena);
-	समयr->context.tsicr =
-			omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_IF_CTRL_REG);
-पूर्ण
+static void omap_timer_save_context(struct omap_dm_timer *timer)
+{
+	timer->context.tclr =
+			omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+	timer->context.twer =
+			omap_dm_timer_read_reg(timer, OMAP_TIMER_WAKEUP_EN_REG);
+	timer->context.tldr =
+			omap_dm_timer_read_reg(timer, OMAP_TIMER_LOAD_REG);
+	timer->context.tmar =
+			omap_dm_timer_read_reg(timer, OMAP_TIMER_MATCH_REG);
+	timer->context.tier = readl_relaxed(timer->irq_ena);
+	timer->context.tsicr =
+			omap_dm_timer_read_reg(timer, OMAP_TIMER_IF_CTRL_REG);
+}
 
-अटल पूर्णांक omap_समयr_context_notअगरier(काष्ठा notअगरier_block *nb,
-				       अचिन्हित दीर्घ cmd, व्योम *v)
-अणु
-	काष्ठा omap_dm_समयr *समयr;
+static int omap_timer_context_notifier(struct notifier_block *nb,
+				       unsigned long cmd, void *v)
+{
+	struct omap_dm_timer *timer;
 
-	समयr = container_of(nb, काष्ठा omap_dm_समयr, nb);
+	timer = container_of(nb, struct omap_dm_timer, nb);
 
-	चयन (cmd) अणु
-	हाल CPU_CLUSTER_PM_ENTER:
-		अगर ((समयr->capability & OMAP_TIMER_ALWON) ||
-		    !atomic_पढ़ो(&समयr->enabled))
-			अवरोध;
-		omap_समयr_save_context(समयr);
-		अवरोध;
-	हाल CPU_CLUSTER_PM_ENTER_FAILED:
-	हाल CPU_CLUSTER_PM_EXIT:
-		अगर ((समयr->capability & OMAP_TIMER_ALWON) ||
-		    !atomic_पढ़ो(&समयr->enabled))
-			अवरोध;
-		omap_समयr_restore_context(समयr);
-		अवरोध;
-	पूर्ण
+	switch (cmd) {
+	case CPU_CLUSTER_PM_ENTER:
+		if ((timer->capability & OMAP_TIMER_ALWON) ||
+		    !atomic_read(&timer->enabled))
+			break;
+		omap_timer_save_context(timer);
+		break;
+	case CPU_CLUSTER_PM_ENTER_FAILED:
+	case CPU_CLUSTER_PM_EXIT:
+		if ((timer->capability & OMAP_TIMER_ALWON) ||
+		    !atomic_read(&timer->enabled))
+			break;
+		omap_timer_restore_context(timer);
+		break;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल पूर्णांक omap_dm_समयr_reset(काष्ठा omap_dm_समयr *समयr)
-अणु
-	u32 l, समयout = 100000;
+static int omap_dm_timer_reset(struct omap_dm_timer *timer)
+{
+	u32 l, timeout = 100000;
 
-	अगर (समयr->revision != 1)
-		वापस -EINVAL;
+	if (timer->revision != 1)
+		return -EINVAL;
 
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_IF_CTRL_REG, 0x06);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_IF_CTRL_REG, 0x06);
 
-	करो अणु
-		l = __omap_dm_समयr_पढ़ो(समयr,
+	do {
+		l = __omap_dm_timer_read(timer,
 					 OMAP_TIMER_V1_SYS_STAT_OFFSET, 0);
-	पूर्ण जबतक (!l && समयout--);
+	} while (!l && timeout--);
 
-	अगर (!समयout) अणु
-		dev_err(&समयr->pdev->dev, "Timer failed to reset\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+	if (!timeout) {
+		dev_err(&timer->pdev->dev, "Timer failed to reset\n");
+		return -ETIMEDOUT;
+	}
 
-	/* Configure समयr क्रम smart-idle mode */
-	l = __omap_dm_समयr_पढ़ो(समयr, OMAP_TIMER_OCP_CFG_OFFSET, 0);
+	/* Configure timer for smart-idle mode */
+	l = __omap_dm_timer_read(timer, OMAP_TIMER_OCP_CFG_OFFSET, 0);
 	l |= 0x2 << 0x3;
-	__omap_dm_समयr_ग_लिखो(समयr, OMAP_TIMER_OCP_CFG_OFFSET, l, 0);
+	__omap_dm_timer_write(timer, OMAP_TIMER_OCP_CFG_OFFSET, l, 0);
 
-	समयr->posted = 0;
+	timer->posted = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_source(काष्ठा omap_dm_समयr *समयr, पूर्णांक source)
-अणु
-	पूर्णांक ret;
-	स्थिर अक्षर *parent_name;
-	काष्ठा clk *parent;
-	काष्ठा dmसमयr_platक्रमm_data *pdata;
+static int omap_dm_timer_set_source(struct omap_dm_timer *timer, int source)
+{
+	int ret;
+	const char *parent_name;
+	struct clk *parent;
+	struct dmtimer_platform_data *pdata;
 
-	अगर (unlikely(!समयr) || IS_ERR(समयr->fclk))
-		वापस -EINVAL;
+	if (unlikely(!timer) || IS_ERR(timer->fclk))
+		return -EINVAL;
 
-	चयन (source) अणु
-	हाल OMAP_TIMER_SRC_SYS_CLK:
+	switch (source) {
+	case OMAP_TIMER_SRC_SYS_CLK:
 		parent_name = "timer_sys_ck";
-		अवरोध;
-	हाल OMAP_TIMER_SRC_32_KHZ:
+		break;
+	case OMAP_TIMER_SRC_32_KHZ:
 		parent_name = "timer_32k_ck";
-		अवरोध;
-	हाल OMAP_TIMER_SRC_EXT_CLK:
+		break;
+	case OMAP_TIMER_SRC_EXT_CLK:
 		parent_name = "timer_ext_ck";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	pdata = समयr->pdev->dev.platक्रमm_data;
+	pdata = timer->pdev->dev.platform_data;
 
 	/*
-	 * FIXME: Used क्रम OMAP1 devices only because they करो not currently
-	 * use the घड़ी framework to set the parent घड़ी. To be हटाओd
-	 * once OMAP1 migrated to using घड़ी framework क्रम dmसमयrs
+	 * FIXME: Used for OMAP1 devices only because they do not currently
+	 * use the clock framework to set the parent clock. To be removed
+	 * once OMAP1 migrated to using clock framework for dmtimers
 	 */
-	अगर (pdata && pdata->set_समयr_src)
-		वापस pdata->set_समयr_src(समयr->pdev, source);
+	if (pdata && pdata->set_timer_src)
+		return pdata->set_timer_src(timer->pdev, source);
 
-#अगर defined(CONFIG_COMMON_CLK)
-	/* Check अगर the घड़ी has configurable parents */
-	अगर (clk_hw_get_num_parents(__clk_get_hw(समयr->fclk)) < 2)
-		वापस 0;
-#पूर्ण_अगर
+#if defined(CONFIG_COMMON_CLK)
+	/* Check if the clock has configurable parents */
+	if (clk_hw_get_num_parents(__clk_get_hw(timer->fclk)) < 2)
+		return 0;
+#endif
 
-	parent = clk_get(&समयr->pdev->dev, parent_name);
-	अगर (IS_ERR(parent)) अणु
+	parent = clk_get(&timer->pdev->dev, parent_name);
+	if (IS_ERR(parent)) {
 		pr_err("%s: %s not found\n", __func__, parent_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = clk_set_parent(समयr->fclk, parent);
-	अगर (ret < 0)
+	ret = clk_set_parent(timer->fclk, parent);
+	if (ret < 0)
 		pr_err("%s: failed to set %s as parent\n", __func__,
 			parent_name);
 
 	clk_put(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम omap_dm_समयr_enable(काष्ठा omap_dm_समयr *समयr)
-अणु
-	pm_runसमय_get_sync(&समयr->pdev->dev);
-पूर्ण
+static void omap_dm_timer_enable(struct omap_dm_timer *timer)
+{
+	pm_runtime_get_sync(&timer->pdev->dev);
+}
 
-अटल व्योम omap_dm_समयr_disable(काष्ठा omap_dm_समयr *समयr)
-अणु
-	pm_runसमय_put_sync(&समयr->pdev->dev);
-पूर्ण
+static void omap_dm_timer_disable(struct omap_dm_timer *timer)
+{
+	pm_runtime_put_sync(&timer->pdev->dev);
+}
 
-अटल पूर्णांक omap_dm_समयr_prepare(काष्ठा omap_dm_समयr *समयr)
-अणु
-	पूर्णांक rc;
+static int omap_dm_timer_prepare(struct omap_dm_timer *timer)
+{
+	int rc;
 
 	/*
-	 * FIXME: OMAP1 devices करो not use the घड़ी framework क्रम dmसमयrs so
-	 * करो not call clk_get() क्रम these devices.
+	 * FIXME: OMAP1 devices do not use the clock framework for dmtimers so
+	 * do not call clk_get() for these devices.
 	 */
-	अगर (!(समयr->capability & OMAP_TIMER_NEEDS_RESET)) अणु
-		समयr->fclk = clk_get(&समयr->pdev->dev, "fck");
-		अगर (WARN_ON_ONCE(IS_ERR(समयr->fclk))) अणु
-			dev_err(&समयr->pdev->dev, ": No fclk handle.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+	if (!(timer->capability & OMAP_TIMER_NEEDS_RESET)) {
+		timer->fclk = clk_get(&timer->pdev->dev, "fck");
+		if (WARN_ON_ONCE(IS_ERR(timer->fclk))) {
+			dev_err(&timer->pdev->dev, ": No fclk handle.\n");
+			return -EINVAL;
+		}
+	}
 
-	omap_dm_समयr_enable(समयr);
+	omap_dm_timer_enable(timer);
 
-	अगर (समयr->capability & OMAP_TIMER_NEEDS_RESET) अणु
-		rc = omap_dm_समयr_reset(समयr);
-		अगर (rc) अणु
-			omap_dm_समयr_disable(समयr);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+	if (timer->capability & OMAP_TIMER_NEEDS_RESET) {
+		rc = omap_dm_timer_reset(timer);
+		if (rc) {
+			omap_dm_timer_disable(timer);
+			return rc;
+		}
+	}
 
-	__omap_dm_समयr_enable_posted(समयr);
-	omap_dm_समयr_disable(समयr);
+	__omap_dm_timer_enable_posted(timer);
+	omap_dm_timer_disable(timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत u32 omap_dm_समयr_reserved_sysसमयr(पूर्णांक id)
-अणु
-	वापस (omap_reserved_sysसमयrs & (1 << (id - 1))) ? 1 : 0;
-पूर्ण
+static inline u32 omap_dm_timer_reserved_systimer(int id)
+{
+	return (omap_reserved_systimers & (1 << (id - 1))) ? 1 : 0;
+}
 
-पूर्णांक omap_dm_समयr_reserve_sysसमयr(पूर्णांक id)
-अणु
-	अगर (omap_dm_समयr_reserved_sysसमयr(id))
-		वापस -ENODEV;
+int omap_dm_timer_reserve_systimer(int id)
+{
+	if (omap_dm_timer_reserved_systimer(id))
+		return -ENODEV;
 
-	omap_reserved_sysसमयrs |= (1 << (id - 1));
+	omap_reserved_systimers |= (1 << (id - 1));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा omap_dm_समयr *_omap_dm_समयr_request(पूर्णांक req_type, व्योम *data)
-अणु
-	काष्ठा omap_dm_समयr *समयr = शून्य, *t;
-	काष्ठा device_node *np = शून्य;
-	अचिन्हित दीर्घ flags;
+static struct omap_dm_timer *_omap_dm_timer_request(int req_type, void *data)
+{
+	struct omap_dm_timer *timer = NULL, *t;
+	struct device_node *np = NULL;
+	unsigned long flags;
 	u32 cap = 0;
-	पूर्णांक id = 0;
+	int id = 0;
 
-	चयन (req_type) अणु
-	हाल REQUEST_BY_ID:
-		id = *(पूर्णांक *)data;
-		अवरोध;
-	हाल REQUEST_BY_CAP:
+	switch (req_type) {
+	case REQUEST_BY_ID:
+		id = *(int *)data;
+		break;
+	case REQUEST_BY_CAP:
 		cap = *(u32 *)data;
-		अवरोध;
-	हाल REQUEST_BY_NODE:
-		np = (काष्ठा device_node *)data;
-		अवरोध;
-	शेष:
+		break;
+	case REQUEST_BY_NODE:
+		np = (struct device_node *)data;
+		break;
+	default:
 		/* REQUEST_ANY */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	spin_lock_irqsave(&dm_समयr_lock, flags);
-	list_क्रम_each_entry(t, &omap_समयr_list, node) अणु
-		अगर (t->reserved)
-			जारी;
+	spin_lock_irqsave(&dm_timer_lock, flags);
+	list_for_each_entry(t, &omap_timer_list, node) {
+		if (t->reserved)
+			continue;
 
-		चयन (req_type) अणु
-		हाल REQUEST_BY_ID:
-			अगर (id == t->pdev->id) अणु
-				समयr = t;
-				समयr->reserved = 1;
-				जाओ found;
-			पूर्ण
-			अवरोध;
-		हाल REQUEST_BY_CAP:
-			अगर (cap == (t->capability & cap)) अणु
+		switch (req_type) {
+		case REQUEST_BY_ID:
+			if (id == t->pdev->id) {
+				timer = t;
+				timer->reserved = 1;
+				goto found;
+			}
+			break;
+		case REQUEST_BY_CAP:
+			if (cap == (t->capability & cap)) {
 				/*
-				 * If समयr is not शून्य, we have alपढ़ोy found
-				 * one समयr. But it was not an exact match
+				 * If timer is not NULL, we have already found
+				 * one timer. But it was not an exact match
 				 * because it had more capabilities than what
-				 * was required. Thereक्रमe, unreserve the last
-				 * समयr found and see अगर this one is a better
+				 * was required. Therefore, unreserve the last
+				 * timer found and see if this one is a better
 				 * match.
 				 */
-				अगर (समयr)
-					समयr->reserved = 0;
-				समयr = t;
-				समयr->reserved = 1;
+				if (timer)
+					timer->reserved = 0;
+				timer = t;
+				timer->reserved = 1;
 
-				/* Exit loop early अगर we find an exact match */
-				अगर (t->capability == cap)
-					जाओ found;
-			पूर्ण
-			अवरोध;
-		हाल REQUEST_BY_NODE:
-			अगर (np == t->pdev->dev.of_node) अणु
-				समयr = t;
-				समयr->reserved = 1;
-				जाओ found;
-			पूर्ण
-			अवरोध;
-		शेष:
+				/* Exit loop early if we find an exact match */
+				if (t->capability == cap)
+					goto found;
+			}
+			break;
+		case REQUEST_BY_NODE:
+			if (np == t->pdev->dev.of_node) {
+				timer = t;
+				timer->reserved = 1;
+				goto found;
+			}
+			break;
+		default:
 			/* REQUEST_ANY */
-			समयr = t;
-			समयr->reserved = 1;
-			जाओ found;
-		पूर्ण
-	पूर्ण
+			timer = t;
+			timer->reserved = 1;
+			goto found;
+		}
+	}
 found:
-	spin_unlock_irqrestore(&dm_समयr_lock, flags);
+	spin_unlock_irqrestore(&dm_timer_lock, flags);
 
-	अगर (समयr && omap_dm_समयr_prepare(समयr)) अणु
-		समयr->reserved = 0;
-		समयr = शून्य;
-	पूर्ण
+	if (timer && omap_dm_timer_prepare(timer)) {
+		timer->reserved = 0;
+		timer = NULL;
+	}
 
-	अगर (!समयr)
+	if (!timer)
 		pr_debug("%s: timer request failed!\n", __func__);
 
-	वापस समयr;
-पूर्ण
+	return timer;
+}
 
-अटल काष्ठा omap_dm_समयr *omap_dm_समयr_request(व्योम)
-अणु
-	वापस _omap_dm_समयr_request(REQUEST_ANY, शून्य);
-पूर्ण
+static struct omap_dm_timer *omap_dm_timer_request(void)
+{
+	return _omap_dm_timer_request(REQUEST_ANY, NULL);
+}
 
-अटल काष्ठा omap_dm_समयr *omap_dm_समयr_request_specअगरic(पूर्णांक id)
-अणु
-	/* Requesting समयr by ID is not supported when device tree is used */
-	अगर (of_have_populated_dt()) अणु
+static struct omap_dm_timer *omap_dm_timer_request_specific(int id)
+{
+	/* Requesting timer by ID is not supported when device tree is used */
+	if (of_have_populated_dt()) {
 		pr_warn("%s: Please use omap_dm_timer_request_by_node()\n",
 			__func__);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस _omap_dm_समयr_request(REQUEST_BY_ID, &id);
-पूर्ण
+	return _omap_dm_timer_request(REQUEST_BY_ID, &id);
+}
 
 /**
- * omap_dm_समयr_request_by_cap - Request a समयr by capability
+ * omap_dm_timer_request_by_cap - Request a timer by capability
  * @cap:	Bit mask of capabilities to match
  *
- * Find a समयr based upon capabilities bit mask. Callers of this function
- * should use the definitions found in the plat/dmसमयr.h file under the
- * comment "timer capabilities used in hwmod database". Returns poपूर्णांकer to
- * समयr handle on success and a शून्य poपूर्णांकer on failure.
+ * Find a timer based upon capabilities bit mask. Callers of this function
+ * should use the definitions found in the plat/dmtimer.h file under the
+ * comment "timer capabilities used in hwmod database". Returns pointer to
+ * timer handle on success and a NULL pointer on failure.
  */
-काष्ठा omap_dm_समयr *omap_dm_समयr_request_by_cap(u32 cap)
-अणु
-	वापस _omap_dm_समयr_request(REQUEST_BY_CAP, &cap);
-पूर्ण
+struct omap_dm_timer *omap_dm_timer_request_by_cap(u32 cap)
+{
+	return _omap_dm_timer_request(REQUEST_BY_CAP, &cap);
+}
 
 /**
- * omap_dm_समयr_request_by_node - Request a समयr by device-tree node
- * @np:		Poपूर्णांकer to device-tree समयr node
+ * omap_dm_timer_request_by_node - Request a timer by device-tree node
+ * @np:		Pointer to device-tree timer node
  *
- * Request a समयr based upon a device node poपूर्णांकer. Returns poपूर्णांकer to
- * समयr handle on success and a शून्य poपूर्णांकer on failure.
+ * Request a timer based upon a device node pointer. Returns pointer to
+ * timer handle on success and a NULL pointer on failure.
  */
-अटल काष्ठा omap_dm_समयr *omap_dm_समयr_request_by_node(काष्ठा device_node *np)
-अणु
-	अगर (!np)
-		वापस शून्य;
+static struct omap_dm_timer *omap_dm_timer_request_by_node(struct device_node *np)
+{
+	if (!np)
+		return NULL;
 
-	वापस _omap_dm_समयr_request(REQUEST_BY_NODE, np);
-पूर्ण
+	return _omap_dm_timer_request(REQUEST_BY_NODE, np);
+}
 
-अटल पूर्णांक omap_dm_समयr_मुक्त(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+static int omap_dm_timer_free(struct omap_dm_timer *timer)
+{
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	clk_put(समयr->fclk);
+	clk_put(timer->fclk);
 
-	WARN_ON(!समयr->reserved);
-	समयr->reserved = 0;
-	वापस 0;
-पूर्ण
+	WARN_ON(!timer->reserved);
+	timer->reserved = 0;
+	return 0;
+}
 
-पूर्णांक omap_dm_समयr_get_irq(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अगर (समयr)
-		वापस समयr->irq;
-	वापस -EINVAL;
-पूर्ण
+int omap_dm_timer_get_irq(struct omap_dm_timer *timer)
+{
+	if (timer)
+		return timer->irq;
+	return -EINVAL;
+}
 
-#अगर defined(CONFIG_ARCH_OMAP1)
-#समावेश <mach/hardware.h>
+#if defined(CONFIG_ARCH_OMAP1)
+#include <mach/hardware.h>
 
-अटल काष्ठा clk *omap_dm_समयr_get_fclk(काष्ठा omap_dm_समयr *समयr)
-अणु
-	वापस शून्य;
-पूर्ण
+static struct clk *omap_dm_timer_get_fclk(struct omap_dm_timer *timer)
+{
+	return NULL;
+}
 
 /**
- * omap_dm_समयr_modअगरy_idlect_mask - Check अगर any running समयrs use ARMXOR
- * @inpuपंचांगask: current value of idlect mask
+ * omap_dm_timer_modify_idlect_mask - Check if any running timers use ARMXOR
+ * @inputmask: current value of idlect mask
  */
-__u32 omap_dm_समयr_modअगरy_idlect_mask(__u32 inpuपंचांगask)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा omap_dm_समयr *समयr = शून्य;
-	अचिन्हित दीर्घ flags;
+__u32 omap_dm_timer_modify_idlect_mask(__u32 inputmask)
+{
+	int i = 0;
+	struct omap_dm_timer *timer = NULL;
+	unsigned long flags;
 
 	/* If ARMXOR cannot be idled this function call is unnecessary */
-	अगर (!(inpuपंचांगask & (1 << 1)))
-		वापस inpuपंचांगask;
+	if (!(inputmask & (1 << 1)))
+		return inputmask;
 
-	/* If any active समयr is using ARMXOR वापस modअगरied mask */
-	spin_lock_irqsave(&dm_समयr_lock, flags);
-	list_क्रम_each_entry(समयr, &omap_समयr_list, node) अणु
+	/* If any active timer is using ARMXOR return modified mask */
+	spin_lock_irqsave(&dm_timer_lock, flags);
+	list_for_each_entry(timer, &omap_timer_list, node) {
 		u32 l;
 
-		l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
-		अगर (l & OMAP_TIMER_CTRL_ST) अणु
-			अगर (((omap_पढ़ोl(MOD_CONF_CTRL_1) >> (i * 2)) & 0x03) == 0)
-				inpuपंचांगask &= ~(1 << 1);
-			अन्यथा
-				inpuपंचांगask &= ~(1 << 2);
-		पूर्ण
+		l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+		if (l & OMAP_TIMER_CTRL_ST) {
+			if (((omap_readl(MOD_CONF_CTRL_1) >> (i * 2)) & 0x03) == 0)
+				inputmask &= ~(1 << 1);
+			else
+				inputmask &= ~(1 << 2);
+		}
 		i++;
-	पूर्ण
-	spin_unlock_irqrestore(&dm_समयr_lock, flags);
+	}
+	spin_unlock_irqrestore(&dm_timer_lock, flags);
 
-	वापस inpuपंचांगask;
-पूर्ण
+	return inputmask;
+}
 
-#अन्यथा
+#else
 
-अटल काष्ठा clk *omap_dm_समयr_get_fclk(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अगर (समयr && !IS_ERR(समयr->fclk))
-		वापस समयr->fclk;
-	वापस शून्य;
-पूर्ण
+static struct clk *omap_dm_timer_get_fclk(struct omap_dm_timer *timer)
+{
+	if (timer && !IS_ERR(timer->fclk))
+		return timer->fclk;
+	return NULL;
+}
 
-__u32 omap_dm_समयr_modअगरy_idlect_mask(__u32 inpuपंचांगask)
-अणु
+__u32 omap_dm_timer_modify_idlect_mask(__u32 inputmask)
+{
 	BUG();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-पूर्णांक omap_dm_समयr_trigger(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अगर (unlikely(!समयr || !atomic_पढ़ो(&समयr->enabled))) अणु
+int omap_dm_timer_trigger(struct omap_dm_timer *timer)
+{
+	if (unlikely(!timer || !atomic_read(&timer->enabled))) {
 		pr_err("%s: timer not available or enabled.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_TRIGGER_REG, 0);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_TRIGGER_REG, 0);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_start(काष्ठा omap_dm_समयr *समयr)
-अणु
+static int omap_dm_timer_start(struct omap_dm_timer *timer)
+{
 	u32 l;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
+	omap_dm_timer_enable(timer);
 
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
-	अगर (!(l & OMAP_TIMER_CTRL_ST)) अणु
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+	if (!(l & OMAP_TIMER_CTRL_ST)) {
 		l |= OMAP_TIMER_CTRL_ST;
-		omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_CTRL_REG, l);
-	पूर्ण
+		omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG, l);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_stop(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अचिन्हित दीर्घ rate = 0;
+static int omap_dm_timer_stop(struct omap_dm_timer *timer)
+{
+	unsigned long rate = 0;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	अगर (!(समयr->capability & OMAP_TIMER_NEEDS_RESET))
-		rate = clk_get_rate(समयr->fclk);
+	if (!(timer->capability & OMAP_TIMER_NEEDS_RESET))
+		rate = clk_get_rate(timer->fclk);
 
-	__omap_dm_समयr_stop(समयr, समयr->posted, rate);
+	__omap_dm_timer_stop(timer, timer->posted, rate);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_load(काष्ठा omap_dm_समयr *समयr,
-				  अचिन्हित पूर्णांक load)
-अणु
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+static int omap_dm_timer_set_load(struct omap_dm_timer *timer,
+				  unsigned int load)
+{
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_LOAD_REG, load);
+	omap_dm_timer_enable(timer);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_LOAD_REG, load);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_match(काष्ठा omap_dm_समयr *समयr, पूर्णांक enable,
-				   अचिन्हित पूर्णांक match)
-अणु
+static int omap_dm_timer_set_match(struct omap_dm_timer *timer, int enable,
+				   unsigned int match)
+{
 	u32 l;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
-	अगर (enable)
+	omap_dm_timer_enable(timer);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+	if (enable)
 		l |= OMAP_TIMER_CTRL_CE;
-	अन्यथा
+	else
 		l &= ~OMAP_TIMER_CTRL_CE;
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_MATCH_REG, match);
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_CTRL_REG, l);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_MATCH_REG, match);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG, l);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_pwm(काष्ठा omap_dm_समयr *समयr, पूर्णांक def_on,
-				 पूर्णांक toggle, पूर्णांक trigger, पूर्णांक स्वतःreload)
-अणु
+static int omap_dm_timer_set_pwm(struct omap_dm_timer *timer, int def_on,
+				 int toggle, int trigger, int autoreload)
+{
 	u32 l;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
+	omap_dm_timer_enable(timer);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
 	l &= ~(OMAP_TIMER_CTRL_GPOCFG | OMAP_TIMER_CTRL_SCPWM |
 	       OMAP_TIMER_CTRL_PT | (0x03 << 10) | OMAP_TIMER_CTRL_AR);
-	अगर (def_on)
+	if (def_on)
 		l |= OMAP_TIMER_CTRL_SCPWM;
-	अगर (toggle)
+	if (toggle)
 		l |= OMAP_TIMER_CTRL_PT;
 	l |= trigger << 10;
-	अगर (स्वतःreload)
+	if (autoreload)
 		l |= OMAP_TIMER_CTRL_AR;
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_CTRL_REG, l);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG, l);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_get_pwm_status(काष्ठा omap_dm_समयr *समयr)
-अणु
+static int omap_dm_timer_get_pwm_status(struct omap_dm_timer *timer)
+{
 	u32 l;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
-	omap_dm_समयr_disable(समयr);
+	omap_dm_timer_enable(timer);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+	omap_dm_timer_disable(timer);
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_prescaler(काष्ठा omap_dm_समयr *समयr,
-					पूर्णांक prescaler)
-अणु
+static int omap_dm_timer_set_prescaler(struct omap_dm_timer *timer,
+					int prescaler)
+{
 	u32 l;
 
-	अगर (unlikely(!समयr) || prescaler < -1 || prescaler > 7)
-		वापस -EINVAL;
+	if (unlikely(!timer) || prescaler < -1 || prescaler > 7)
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG);
+	omap_dm_timer_enable(timer);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
 	l &= ~(OMAP_TIMER_CTRL_PRE | (0x07 << 2));
-	अगर (prescaler >= 0) अणु
+	if (prescaler >= 0) {
 		l |= OMAP_TIMER_CTRL_PRE;
 		l |= prescaler << 2;
-	पूर्ण
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_CTRL_REG, l);
+	}
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG, l);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल पूर्णांक omap_dm_समयr_set_पूर्णांक_enable(काष्ठा omap_dm_समयr *समयr,
-					अचिन्हित पूर्णांक value)
-अणु
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+static int omap_dm_timer_set_int_enable(struct omap_dm_timer *timer,
+					unsigned int value)
+{
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
-	__omap_dm_समयr_पूर्णांक_enable(समयr, value);
+	omap_dm_timer_enable(timer);
+	__omap_dm_timer_int_enable(timer, value);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
 /**
- * omap_dm_समयr_set_पूर्णांक_disable - disable समयr पूर्णांकerrupts
- * @समयr:	poपूर्णांकer to समयr handle
- * @mask:	bit mask of पूर्णांकerrupts to be disabled
+ * omap_dm_timer_set_int_disable - disable timer interrupts
+ * @timer:	pointer to timer handle
+ * @mask:	bit mask of interrupts to be disabled
  *
- * Disables the specअगरied समयr पूर्णांकerrupts क्रम a समयr.
+ * Disables the specified timer interrupts for a timer.
  */
-अटल पूर्णांक omap_dm_समयr_set_पूर्णांक_disable(काष्ठा omap_dm_समयr *समयr, u32 mask)
-अणु
+static int omap_dm_timer_set_int_disable(struct omap_dm_timer *timer, u32 mask)
+{
 	u32 l = mask;
 
-	अगर (unlikely(!समयr))
-		वापस -EINVAL;
+	if (unlikely(!timer))
+		return -EINVAL;
 
-	omap_dm_समयr_enable(समयr);
+	omap_dm_timer_enable(timer);
 
-	अगर (समयr->revision == 1)
-		l = पढ़ोl_relaxed(समयr->irq_ena) & ~mask;
+	if (timer->revision == 1)
+		l = readl_relaxed(timer->irq_ena) & ~mask;
 
-	ग_लिखोl_relaxed(l, समयr->irq_dis);
-	l = omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_WAKEUP_EN_REG) & ~mask;
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_WAKEUP_EN_REG, l);
+	writel_relaxed(l, timer->irq_dis);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_WAKEUP_EN_REG) & ~mask;
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_WAKEUP_EN_REG, l);
 
-	omap_dm_समयr_disable(समयr);
-	वापस 0;
-पूर्ण
+	omap_dm_timer_disable(timer);
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक omap_dm_समयr_पढ़ो_status(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अचिन्हित पूर्णांक l;
+static unsigned int omap_dm_timer_read_status(struct omap_dm_timer *timer)
+{
+	unsigned int l;
 
-	अगर (unlikely(!समयr || !atomic_पढ़ो(&समयr->enabled))) अणु
+	if (unlikely(!timer || !atomic_read(&timer->enabled))) {
 		pr_err("%s: timer not available or enabled.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	l = पढ़ोl_relaxed(समयr->irq_stat);
+	l = readl_relaxed(timer->irq_stat);
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
-अटल पूर्णांक omap_dm_समयr_ग_लिखो_status(काष्ठा omap_dm_समयr *समयr, अचिन्हित पूर्णांक value)
-अणु
-	अगर (unlikely(!समयr || !atomic_पढ़ो(&समयr->enabled)))
-		वापस -EINVAL;
+static int omap_dm_timer_write_status(struct omap_dm_timer *timer, unsigned int value)
+{
+	if (unlikely(!timer || !atomic_read(&timer->enabled)))
+		return -EINVAL;
 
-	__omap_dm_समयr_ग_लिखो_status(समयr, value);
+	__omap_dm_timer_write_status(timer, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक omap_dm_समयr_पढ़ो_counter(काष्ठा omap_dm_समयr *समयr)
-अणु
-	अगर (unlikely(!समयr || !atomic_पढ़ो(&समयr->enabled))) अणु
+static unsigned int omap_dm_timer_read_counter(struct omap_dm_timer *timer)
+{
+	if (unlikely(!timer || !atomic_read(&timer->enabled))) {
 		pr_err("%s: timer not iavailable or enabled.\n", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस __omap_dm_समयr_पढ़ो_counter(समयr, समयr->posted);
-पूर्ण
+	return __omap_dm_timer_read_counter(timer, timer->posted);
+}
 
-अटल पूर्णांक omap_dm_समयr_ग_लिखो_counter(काष्ठा omap_dm_समयr *समयr, अचिन्हित पूर्णांक value)
-अणु
-	अगर (unlikely(!समयr || !atomic_पढ़ो(&समयr->enabled))) अणु
+static int omap_dm_timer_write_counter(struct omap_dm_timer *timer, unsigned int value)
+{
+	if (unlikely(!timer || !atomic_read(&timer->enabled))) {
 		pr_err("%s: timer not available or enabled.\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	omap_dm_समयr_ग_लिखो_reg(समयr, OMAP_TIMER_COUNTER_REG, value);
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_COUNTER_REG, value);
 
 	/* Save the context */
-	समयr->context.tcrr = value;
-	वापस 0;
-पूर्ण
+	timer->context.tcrr = value;
+	return 0;
+}
 
-पूर्णांक omap_dm_समयrs_active(व्योम)
-अणु
-	काष्ठा omap_dm_समयr *समयr;
+int omap_dm_timers_active(void)
+{
+	struct omap_dm_timer *timer;
 
-	list_क्रम_each_entry(समयr, &omap_समयr_list, node) अणु
-		अगर (!समयr->reserved)
-			जारी;
+	list_for_each_entry(timer, &omap_timer_list, node) {
+		if (!timer->reserved)
+			continue;
 
-		अगर (omap_dm_समयr_पढ़ो_reg(समयr, OMAP_TIMER_CTRL_REG) &
-		    OMAP_TIMER_CTRL_ST) अणु
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG) &
+		    OMAP_TIMER_CTRL_ST) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused omap_dm_समयr_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा omap_dm_समयr *समयr = dev_get_drvdata(dev);
+static int __maybe_unused omap_dm_timer_runtime_suspend(struct device *dev)
+{
+	struct omap_dm_timer *timer = dev_get_drvdata(dev);
 
-	atomic_set(&समयr->enabled, 0);
+	atomic_set(&timer->enabled, 0);
 
-	अगर (समयr->capability & OMAP_TIMER_ALWON || !समयr->func_base)
-		वापस 0;
+	if (timer->capability & OMAP_TIMER_ALWON || !timer->func_base)
+		return 0;
 
-	omap_समयr_save_context(समयr);
+	omap_timer_save_context(timer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused omap_dm_समयr_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा omap_dm_समयr *समयr = dev_get_drvdata(dev);
+static int __maybe_unused omap_dm_timer_runtime_resume(struct device *dev)
+{
+	struct omap_dm_timer *timer = dev_get_drvdata(dev);
 
-	अगर (!(समयr->capability & OMAP_TIMER_ALWON) && समयr->func_base)
-		omap_समयr_restore_context(समयr);
+	if (!(timer->capability & OMAP_TIMER_ALWON) && timer->func_base)
+		omap_timer_restore_context(timer);
 
-	atomic_set(&समयr->enabled, 1);
+	atomic_set(&timer->enabled, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops omap_dm_समयr_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(omap_dm_समयr_runसमय_suspend,
-			   omap_dm_समयr_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops omap_dm_timer_pm_ops = {
+	SET_RUNTIME_PM_OPS(omap_dm_timer_runtime_suspend,
+			   omap_dm_timer_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id omap_समयr_match[];
+static const struct of_device_id omap_timer_match[];
 
 /**
- * omap_dm_समयr_probe - probe function called क्रम every रेजिस्टरed device
- * @pdev:	poपूर्णांकer to current समयr platक्रमm device
+ * omap_dm_timer_probe - probe function called for every registered device
+ * @pdev:	pointer to current timer platform device
  *
- * Called by driver framework at the end of device registration क्रम all
- * समयr devices.
+ * Called by driver framework at the end of device registration for all
+ * timer devices.
  */
-अटल पूर्णांक omap_dm_समयr_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा omap_dm_समयr *समयr;
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा dmसमयr_platक्रमm_data *pdata;
-	पूर्णांक ret;
+static int omap_dm_timer_probe(struct platform_device *pdev)
+{
+	unsigned long flags;
+	struct omap_dm_timer *timer;
+	struct device *dev = &pdev->dev;
+	const struct dmtimer_platform_data *pdata;
+	int ret;
 
 	pdata = of_device_get_match_data(dev);
-	अगर (!pdata)
+	if (!pdata)
 		pdata = dev_get_platdata(dev);
-	अन्यथा
-		dev->platक्रमm_data = (व्योम *)pdata;
+	else
+		dev->platform_data = (void *)pdata;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(dev, "%s: no platform data.\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	समयr = devm_kzalloc(dev, माप(*समयr), GFP_KERNEL);
-	अगर (!समयr)
-		वापस  -ENOMEM;
+	timer = devm_kzalloc(dev, sizeof(*timer), GFP_KERNEL);
+	if (!timer)
+		return  -ENOMEM;
 
-	समयr->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (समयr->irq < 0)
-		वापस समयr->irq;
+	timer->irq = platform_get_irq(pdev, 0);
+	if (timer->irq < 0)
+		return timer->irq;
 
-	समयr->fclk = ERR_PTR(-ENODEV);
-	समयr->io_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(समयr->io_base))
-		वापस PTR_ERR(समयr->io_base);
+	timer->fclk = ERR_PTR(-ENODEV);
+	timer->io_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(timer->io_base))
+		return PTR_ERR(timer->io_base);
 
-	platक्रमm_set_drvdata(pdev, समयr);
+	platform_set_drvdata(pdev, timer);
 
-	अगर (dev->of_node) अणु
-		अगर (of_find_property(dev->of_node, "ti,timer-alwon", शून्य))
-			समयr->capability |= OMAP_TIMER_ALWON;
-		अगर (of_find_property(dev->of_node, "ti,timer-dsp", शून्य))
-			समयr->capability |= OMAP_TIMER_HAS_DSP_IRQ;
-		अगर (of_find_property(dev->of_node, "ti,timer-pwm", शून्य))
-			समयr->capability |= OMAP_TIMER_HAS_PWM;
-		अगर (of_find_property(dev->of_node, "ti,timer-secure", शून्य))
-			समयr->capability |= OMAP_TIMER_SECURE;
-	पूर्ण अन्यथा अणु
-		समयr->id = pdev->id;
-		समयr->capability = pdata->समयr_capability;
-		समयr->reserved = omap_dm_समयr_reserved_sysसमयr(समयr->id);
-	पूर्ण
+	if (dev->of_node) {
+		if (of_find_property(dev->of_node, "ti,timer-alwon", NULL))
+			timer->capability |= OMAP_TIMER_ALWON;
+		if (of_find_property(dev->of_node, "ti,timer-dsp", NULL))
+			timer->capability |= OMAP_TIMER_HAS_DSP_IRQ;
+		if (of_find_property(dev->of_node, "ti,timer-pwm", NULL))
+			timer->capability |= OMAP_TIMER_HAS_PWM;
+		if (of_find_property(dev->of_node, "ti,timer-secure", NULL))
+			timer->capability |= OMAP_TIMER_SECURE;
+	} else {
+		timer->id = pdev->id;
+		timer->capability = pdata->timer_capability;
+		timer->reserved = omap_dm_timer_reserved_systimer(timer->id);
+	}
 
-	अगर (!(समयr->capability & OMAP_TIMER_ALWON)) अणु
-		समयr->nb.notअगरier_call = omap_समयr_context_notअगरier;
-		cpu_pm_रेजिस्टर_notअगरier(&समयr->nb);
-	पूर्ण
+	if (!(timer->capability & OMAP_TIMER_ALWON)) {
+		timer->nb.notifier_call = omap_timer_context_notifier;
+		cpu_pm_register_notifier(&timer->nb);
+	}
 
-	अगर (pdata)
-		समयr->errata = pdata->समयr_errata;
+	if (pdata)
+		timer->errata = pdata->timer_errata;
 
-	समयr->pdev = pdev;
+	timer->pdev = pdev;
 
-	pm_runसमय_enable(dev);
+	pm_runtime_enable(dev);
 
-	अगर (!समयr->reserved) अणु
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0) अणु
+	if (!timer->reserved) {
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0) {
 			dev_err(dev, "%s: pm_runtime_get_sync failed!\n",
 				__func__);
-			जाओ err_get_sync;
-		पूर्ण
-		__omap_dm_समयr_init_regs(समयr);
-		pm_runसमय_put(dev);
-	पूर्ण
+			goto err_get_sync;
+		}
+		__omap_dm_timer_init_regs(timer);
+		pm_runtime_put(dev);
+	}
 
-	/* add the समयr element to the list */
-	spin_lock_irqsave(&dm_समयr_lock, flags);
-	list_add_tail(&समयr->node, &omap_समयr_list);
-	spin_unlock_irqrestore(&dm_समयr_lock, flags);
+	/* add the timer element to the list */
+	spin_lock_irqsave(&dm_timer_lock, flags);
+	list_add_tail(&timer->node, &omap_timer_list);
+	spin_unlock_irqrestore(&dm_timer_lock, flags);
 
 	dev_dbg(dev, "Device Probed.\n");
 
-	वापस 0;
+	return 0;
 
 err_get_sync:
-	pm_runसमय_put_noidle(dev);
-	pm_runसमय_disable(dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put_noidle(dev);
+	pm_runtime_disable(dev);
+	return ret;
+}
 
 /**
- * omap_dm_समयr_हटाओ - cleanup a रेजिस्टरed समयr device
- * @pdev:	poपूर्णांकer to current समयr platक्रमm device
+ * omap_dm_timer_remove - cleanup a registered timer device
+ * @pdev:	pointer to current timer platform device
  *
- * Called by driver framework whenever a समयr device is unरेजिस्टरed.
- * In addition to मुक्तing platक्रमm resources it also deletes the समयr
+ * Called by driver framework whenever a timer device is unregistered.
+ * In addition to freeing platform resources it also deletes the timer
  * entry from the local list.
  */
-अटल पूर्णांक omap_dm_समयr_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_dm_समयr *समयr;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
+static int omap_dm_timer_remove(struct platform_device *pdev)
+{
+	struct omap_dm_timer *timer;
+	unsigned long flags;
+	int ret = -EINVAL;
 
-	spin_lock_irqsave(&dm_समयr_lock, flags);
-	list_क्रम_each_entry(समयr, &omap_समयr_list, node)
-		अगर (!म_भेद(dev_name(&समयr->pdev->dev),
-			    dev_name(&pdev->dev))) अणु
-			अगर (!(समयr->capability & OMAP_TIMER_ALWON))
-				cpu_pm_unरेजिस्टर_notअगरier(&समयr->nb);
-			list_del(&समयr->node);
+	spin_lock_irqsave(&dm_timer_lock, flags);
+	list_for_each_entry(timer, &omap_timer_list, node)
+		if (!strcmp(dev_name(&timer->pdev->dev),
+			    dev_name(&pdev->dev))) {
+			if (!(timer->capability & OMAP_TIMER_ALWON))
+				cpu_pm_unregister_notifier(&timer->nb);
+			list_del(&timer->node);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	spin_unlock_irqrestore(&dm_समयr_lock, flags);
+			break;
+		}
+	spin_unlock_irqrestore(&dm_timer_lock, flags);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा omap_dm_समयr_ops dmसमयr_ops = अणु
-	.request_by_node = omap_dm_समयr_request_by_node,
-	.request_specअगरic = omap_dm_समयr_request_specअगरic,
-	.request = omap_dm_समयr_request,
-	.set_source = omap_dm_समयr_set_source,
-	.get_irq = omap_dm_समयr_get_irq,
-	.set_पूर्णांक_enable = omap_dm_समयr_set_पूर्णांक_enable,
-	.set_पूर्णांक_disable = omap_dm_समयr_set_पूर्णांक_disable,
-	.मुक्त = omap_dm_समयr_मुक्त,
-	.enable = omap_dm_समयr_enable,
-	.disable = omap_dm_समयr_disable,
-	.get_fclk = omap_dm_समयr_get_fclk,
-	.start = omap_dm_समयr_start,
-	.stop = omap_dm_समयr_stop,
-	.set_load = omap_dm_समयr_set_load,
-	.set_match = omap_dm_समयr_set_match,
-	.set_pwm = omap_dm_समयr_set_pwm,
-	.get_pwm_status = omap_dm_समयr_get_pwm_status,
-	.set_prescaler = omap_dm_समयr_set_prescaler,
-	.पढ़ो_counter = omap_dm_समयr_पढ़ो_counter,
-	.ग_लिखो_counter = omap_dm_समयr_ग_लिखो_counter,
-	.पढ़ो_status = omap_dm_समयr_पढ़ो_status,
-	.ग_लिखो_status = omap_dm_समयr_ग_लिखो_status,
-पूर्ण;
+static const struct omap_dm_timer_ops dmtimer_ops = {
+	.request_by_node = omap_dm_timer_request_by_node,
+	.request_specific = omap_dm_timer_request_specific,
+	.request = omap_dm_timer_request,
+	.set_source = omap_dm_timer_set_source,
+	.get_irq = omap_dm_timer_get_irq,
+	.set_int_enable = omap_dm_timer_set_int_enable,
+	.set_int_disable = omap_dm_timer_set_int_disable,
+	.free = omap_dm_timer_free,
+	.enable = omap_dm_timer_enable,
+	.disable = omap_dm_timer_disable,
+	.get_fclk = omap_dm_timer_get_fclk,
+	.start = omap_dm_timer_start,
+	.stop = omap_dm_timer_stop,
+	.set_load = omap_dm_timer_set_load,
+	.set_match = omap_dm_timer_set_match,
+	.set_pwm = omap_dm_timer_set_pwm,
+	.get_pwm_status = omap_dm_timer_get_pwm_status,
+	.set_prescaler = omap_dm_timer_set_prescaler,
+	.read_counter = omap_dm_timer_read_counter,
+	.write_counter = omap_dm_timer_write_counter,
+	.read_status = omap_dm_timer_read_status,
+	.write_status = omap_dm_timer_write_status,
+};
 
-अटल स्थिर काष्ठा dmसमयr_platक्रमm_data omap3plus_pdata = अणु
-	.समयr_errata = OMAP_TIMER_ERRATA_I103_I767,
-	.समयr_ops = &dmसमयr_ops,
-पूर्ण;
+static const struct dmtimer_platform_data omap3plus_pdata = {
+	.timer_errata = OMAP_TIMER_ERRATA_I103_I767,
+	.timer_ops = &dmtimer_ops,
+};
 
-अटल स्थिर काष्ठा of_device_id omap_समयr_match[] = अणु
-	अणु
+static const struct of_device_id omap_timer_match[] = {
+	{
 		.compatible = "ti,omap2420-timer",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,omap3430-timer",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,omap4430-timer",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,omap5430-timer",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,am335x-timer",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,am335x-timer-1ms",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "ti,dm816-timer",
 		.data = &omap3plus_pdata,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, omap_समयr_match);
+	},
+	{},
+};
+MODULE_DEVICE_TABLE(of, omap_timer_match);
 
-अटल काष्ठा platक्रमm_driver omap_dm_समयr_driver = अणु
-	.probe  = omap_dm_समयr_probe,
-	.हटाओ = omap_dm_समयr_हटाओ,
-	.driver = अणु
+static struct platform_driver omap_dm_timer_driver = {
+	.probe  = omap_dm_timer_probe,
+	.remove = omap_dm_timer_remove,
+	.driver = {
 		.name   = "omap_timer",
-		.of_match_table = of_match_ptr(omap_समयr_match),
-		.pm = &omap_dm_समयr_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = of_match_ptr(omap_timer_match),
+		.pm = &omap_dm_timer_pm_ops,
+	},
+};
 
-module_platक्रमm_driver(omap_dm_समयr_driver);
+module_platform_driver(omap_dm_timer_driver);
 
 MODULE_DESCRIPTION("OMAP Dual-Mode Timer Driver");
 MODULE_LICENSE("GPL");

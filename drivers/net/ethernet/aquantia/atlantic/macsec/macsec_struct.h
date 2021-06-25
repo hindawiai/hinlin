@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Atlantic Network Driver
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित _MACSEC_STRUCT_H_
-#घोषणा _MACSEC_STRUCT_H_
+#ifndef _MACSEC_STRUCT_H_
+#define _MACSEC_STRUCT_H_
 
 /*! Represents the bitfields of a single row in the Egress CTL Filter
  *  table.
  */
-काष्ठा aq_mss_egress_ctlf_record अणु
+struct aq_mss_egress_ctlf_record {
 	/*! This is used to store the 48 bit value used to compare SA, DA or
 	 *  halfDA+half SA value.
 	 */
 	u32 sa_da[2];
-	/*! This is used to store the 16 bit ethertype value used क्रम
+	/*! This is used to store the 16 bit ethertype value used for
 	 *  comparison.
 	 */
 	u32 eth_type;
-	/*! The match mask is per-nibble. 0 means करोn't care, i.e. every value
+	/*! The match mask is per-nibble. 0 means don't care, i.e. every value
 	 *  will match successfully. The total data is 64 bit, i.e. 16 nibbles
 	 *  masks.
 	 */
@@ -34,29 +33,29 @@
 	 *  7: compare DA+ range.
 	 */
 	u32 match_type;
-	/*! 0: Bypass the reमुख्यing modules अगर matched.
-	 *  1: Forward to next module क्रम more classअगरications.
+	/*! 0: Bypass the remaining modules if matched.
+	 *  1: Forward to next module for more classifications.
 	 */
 	u32 action;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Egress Packet
- *  Classअगरier table.
+ *  Classifier table.
  */
-काष्ठा aq_mss_egress_class_record अणु
+struct aq_mss_egress_class_record {
 	/*! VLAN ID field. */
 	u32 vlan_id;
 	/*! VLAN UP field. */
 	u32 vlan_up;
 	/*! VLAN Present in the Packet. */
 	u32 vlan_valid;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 3. */
+	/*! The 8 bit value used to compare with extracted value for byte 3. */
 	u32 byte3;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 2. */
+	/*! The 8 bit value used to compare with extracted value for byte 2. */
 	u32 byte2;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 1. */
+	/*! The 8 bit value used to compare with extracted value for byte 1. */
 	u32 byte1;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 0. */
+	/*! The 8 bit value used to compare with extracted value for byte 0. */
 	u32 byte0;
 	/*! The 8 bit TCI field used to compare with extracted value. */
 	u32 tci;
@@ -66,11 +65,11 @@
 	 *  extracted value.
 	 */
 	u32 eth_type;
-	/*! This is to specअगरy the 40bit SNAP header अगर the SNAP header's mask
+	/*! This is to specify the 40bit SNAP header if the SNAP header's mask
 	 *  is enabled.
 	 */
 	u32 snap[2];
-	/*! This is to specअगरy the 24bit LLC header अगर the LLC header's mask is
+	/*! This is to specify the 24bit LLC header if the LLC header's mask is
 	 *  enabled.
 	 */
 	u32 llc;
@@ -83,53 +82,53 @@
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte3_location;
-	/*! 0: करोn't care
-	 *  1: enable comparison of extracted byte poपूर्णांकed by byte 3 location.
+	/*! 0: don't care
+	 *  1: enable comparison of extracted byte pointed by byte 3 location.
 	 */
 	u32 byte3_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte2_location;
-	/*! 0: करोn't care
-	 *  1: enable comparison of extracted byte poपूर्णांकed by byte 2 location.
+	/*! 0: don't care
+	 *  1: enable comparison of extracted byte pointed by byte 2 location.
 	 */
 	u32 byte2_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte1_location;
-	/*! 0: करोn't care
-	 *  1: enable comparison of extracted byte poपूर्णांकed by byte 1 location.
+	/*! 0: don't care
+	 *  1: enable comparison of extracted byte pointed by byte 1 location.
 	 */
 	u32 byte1_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte0_location;
-	/*! 0: करोn't care
-	 *  1: enable comparison of extracted byte poपूर्णांकed by byte 0 location.
+	/*! 0: don't care
+	 *  1: enable comparison of extracted byte pointed by byte 0 location.
 	 */
 	u32 byte0_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of extracted VLAN ID field.
 	 */
 	u32 vlan_id_mask;
-	/*! 0: करोn't care
+	/*! 0: don't care
 	 *  1: enable comparison of extracted VLAN UP field.
 	 */
 	u32 vlan_up_mask;
-	/*! 0: करोn't care
+	/*! 0: don't care
 	 *  1: enable comparison of extracted VLAN Valid field.
 	 */
 	u32 vlan_valid_mask;
@@ -141,7 +140,7 @@
 	 */
 	u32 tci_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of SCI
 	 *  Note: If this field is not 0, this means the input packet's
 	 *  SECTAG is explicitly tagged and MACSEC module will only update
@@ -150,19 +149,19 @@
 	 */
 	u32 sci_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of Ethertype.
 	 */
 	u32 eth_type_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care and no SNAP header exist.
+	 *  0: don't care and no SNAP header exist.
 	 *  1: compare the SNAP header.
 	 *  If this bit is set to 1, the extracted filed will assume the
 	 *  SNAP header exist as encapsulated in 802.3 (RFC 1042). I.E. the
 	 *  next 5 bytes after the the LLC header is SNAP header.
 	 */
 	u32 snap_mask;
-	/*! 0: करोn't care and no LLC header exist.
+	/*! 0: don't care and no LLC header exist.
 	 *  1: compare the LLC header.
 	 *  If this bit is set to 1, the extracted filed will assume the
 	 *  LLC header exist as encapsulated in 802.3 (RFC 1042). I.E. the
@@ -170,44 +169,44 @@
 	 */
 	u32 llc_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of MAC_SA.
 	 */
 	u32 sa_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of MAC_DA.
 	 */
 	u32 da_mask;
 	/*! Mask is per-byte. */
 	u32 pn_mask;
 	/*! Reserved. This bit should be always 0. */
-	u32 eight02करोt2;
-	/*! 1: For explicit sectag हाल use TCI_SC from table
+	u32 eight02dot2;
+	/*! 1: For explicit sectag case use TCI_SC from table
 	 *  0: use TCI_SC from explicit sectag.
 	 */
 	u32 tci_sc;
-	/*! 1: For explicit sectag हाल,use TCI_V,ES,SCB,E,C from table
+	/*! 1: For explicit sectag case,use TCI_V,ES,SCB,E,C from table
 	 *  0: use TCI_V,ES,SCB,E,C from explicit sectag.
 	 */
 	u32 tci_87543;
 	/*! 1: indicates that incoming packet has explicit sectag. */
 	u32 exp_sectag_en;
 	/*! If packet matches and tagged as controlled-packet, this SC/SA
-	 *  index is used क्रम later SC and SA table lookup.
+	 *  index is used for later SC and SA table lookup.
 	 */
 	u32 sc_idx;
-	/*! This field is used to specअगरy how many SA entries are
+	/*! This field is used to specify how many SA entries are
 	 *  associated with 1 SC entry.
 	 *  2'b00: 1 SC has 4 SA.
-	 *  SC index is equivalent to अणुSC_Index[4:2], 1'b0पूर्ण.
-	 *  SA index is equivalent to अणुSC_Index[4:2], SC entry's current AN[1:0]
+	 *  SC index is equivalent to {SC_Index[4:2], 1'b0}.
+	 *  SA index is equivalent to {SC_Index[4:2], SC entry's current AN[1:0]
 	 *  2'b10: 1 SC has 2 SA.
 	 *  SC index is equivalent to SC_Index[4:1]
-	 *  SA index is equivalent to अणुSC_Index[4:1], SC entry's current AN[0]पूर्ण
-	 *  2'b11: 1 SC has 1 SA. No SC entry exists क्रम the specअगरic SA.
+	 *  SA index is equivalent to {SC_Index[4:1], SC entry's current AN[0]}
+	 *  2'b11: 1 SC has 1 SA. No SC entry exists for the specific SA.
 	 *  SA index is equivalent to SC_Index[4:0]
-	 *  Note: अगर specअगरied as 2'b11, hardware AN roll over is not
+	 *  Note: if specified as 2'b11, hardware AN roll over is not
 	 *  supported.
 	 */
 	u32 sc_sa;
@@ -216,7 +215,7 @@
 	 *  If the above's action is drop, this bit has no meaning.
 	 */
 	u32 debug;
-	/*! 0: क्रमward to reमुख्यing modules
+	/*! 0: forward to remaining modules
 	 *  1: bypass the next encryption modules. This packet is considered
 	 *     un-control packet.
 	 *  2: drop
@@ -227,36 +226,36 @@
 	 *  1: valid entry.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Egress SC Lookup table. */
-काष्ठा aq_mss_egress_sc_record अणु
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 start_समय;
-	/*! This is to specअगरy when the SC was last used. Set by HW. */
-	u32 stop_समय;
-	/*! This is to specअगरy which of the SA entries are used by current HW.
+struct aq_mss_egress_sc_record {
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 start_time;
+	/*! This is to specify when the SC was last used. Set by HW. */
+	u32 stop_time;
+	/*! This is to specify which of the SA entries are used by current HW.
 	 *  Note: This value need to be set by SW after reset.  It will be
-	 *  स्वतःmatically updated by HW, अगर AN roll over is enabled.
+	 *  automatically updated by HW, if AN roll over is enabled.
 	 */
 	u32 curr_an;
 	/*! 0: Clear the SA Valid Bit after PN expiry.
 	 *  1: Do not Clear the SA Valid bit after PN expiry of the current SA.
-	 *  When the Enable AN roll over is set, S/W करोes not need to
-	 *  program the new SA's and the H/W will स्वतःmatically roll over
+	 *  When the Enable AN roll over is set, S/W does not need to
+	 *  program the new SA's and the H/W will automatically roll over
 	 *  between the SA's without session expiry.
 	 *  For normal operation, Enable AN Roll over will be set to '0'
-	 *  and in which हाल, the SW needs to program the new SA values
+	 *  and in which case, the SW needs to program the new SA values
 	 *  after the current PN expires.
 	 */
 	u32 an_roll;
-	/*! This is the TCI field used अगर packet is not explicitly tagged. */
+	/*! This is the TCI field used if packet is not explicitly tagged. */
 	u32 tci;
 	/*! This value indicates the offset where the decryption will start.
 	 *  [[Values of 0, 4, 8-50].
 	 */
 	u32 enc_off;
-	/*! 0: Do not protect frames, all the packets will be क्रमwarded
+	/*! 0: Do not protect frames, all the packets will be forwarded
 	 *     unchanged. MIB counter (OutPktsUntagged) will be updated.
 	 *  1: Protect.
 	 */
@@ -281,16 +280,16 @@
 	 *  1: Valid SC.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Egress SA Lookup table. */
-काष्ठा aq_mss_egress_sa_record अणु
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 start_समय;
-	/*! This is to specअगरy when the SC was last used. Set by HW. */
-	u32 stop_समय;
+struct aq_mss_egress_sa_record {
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 start_time;
+	/*! This is to specify when the SC was last used. Set by HW. */
+	u32 stop_time;
 	/*! This is set by SW and updated by HW to store the Next PN number
-	 *  used क्रम encryption.
+	 *  used for encryption.
 	 */
 	u32 next_pn;
 	/*! The Next_PN number is going to wrapped around from 0xFFFF_FFFF
@@ -305,29 +304,29 @@
 	 *  1: Valid SA.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Egress SA Key
  *  Lookup table.
  */
-काष्ठा aq_mss_egress_sakey_record अणु
-	/*! Key क्रम AES-GCM processing. */
+struct aq_mss_egress_sakey_record {
+	/*! Key for AES-GCM processing. */
 	u32 key[8];
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress Pre-MACSec
  *  CTL Filter table.
  */
-काष्ठा aq_mss_ingress_prectlf_record अणु
+struct aq_mss_ingress_prectlf_record {
 	/*! This is used to store the 48 bit value used to compare SA, DA
 	 *  or halfDA+half SA value.
 	 */
 	u32 sa_da[2];
-	/*! This is used to store the 16 bit ethertype value used क्रम
+	/*! This is used to store the 16 bit ethertype value used for
 	 *  comparison.
 	 */
 	u32 eth_type;
-	/*! The match mask is per-nibble. 0 means करोn't care, i.e. every
+	/*! The match mask is per-nibble. 0 means don't care, i.e. every
 	 *  value will match successfully. The total data is 64 bit, i.e.
 	 *  16 nibbles masks.
 	 */
@@ -342,19 +341,19 @@
 	 *  7: compare DA+ range.
 	 */
 	u32 match_type;
-	/*! 0: Bypass the reमुख्यing modules अगर matched.
-	 *  1: Forward to next module क्रम more classअगरications.
+	/*! 0: Bypass the remaining modules if matched.
+	 *  1: Forward to next module for more classifications.
 	 */
 	u32 action;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress Pre-MACSec
- *  Packet Classअगरier table.
+ *  Packet Classifier table.
  */
-काष्ठा aq_mss_ingress_preclass_record अणु
+struct aq_mss_ingress_preclass_record {
 	/*! The 64 bit SCI field used to compare with extracted value.
-	 *  Should have SCI value in हाल TCI[SCI_SEND] == 0. This will be
-	 *  used क्रम ICV calculation.
+	 *  Should have SCI value in case TCI[SCI_SEND] == 0. This will be
+	 *  used for ICV calculation.
 	 */
 	u32 sci[2];
 	/*! The 8 bit TCI field used to compare with extracted value. */
@@ -365,11 +364,11 @@
 	 *  extracted value.
 	 */
 	u32 eth_type;
-	/*! This is to specअगरy the 40bit SNAP header अगर the SNAP header's
+	/*! This is to specify the 40bit SNAP header if the SNAP header's
 	 *  mask is enabled.
 	 */
 	u32 snap[2];
-	/*! This is to specअगरy the 24bit LLC header अगर the LLC header's
+	/*! This is to specify the 24bit LLC header if the LLC header's
 	 *  mask is enabled.
 	 */
 	u32 llc;
@@ -386,40 +385,40 @@
 	/*! The value of this bit mask will affects how the SC index and SA
 	 *  index created.
 	 *  2'b00: 1 SC has 4 SA.
-	 *    SC index is equivalent to अणुSC_Index[4:2], 1'b0पूर्ण.
-	 *    SA index is equivalent to अणुSC_Index[4:2], SECTAG's AN[1:0]पूर्ण
+	 *    SC index is equivalent to {SC_Index[4:2], 1'b0}.
+	 *    SA index is equivalent to {SC_Index[4:2], SECTAG's AN[1:0]}
 	 *    Here AN bits are not compared.
 	 *  2'b10: 1 SC has 2 SA.
 	 *    SC index is equivalent to SC_Index[4:1]
-	 *    SA index is equivalent to अणुSC_Index[4:1], SECTAG's AN[0]पूर्ण
+	 *    SA index is equivalent to {SC_Index[4:1], SECTAG's AN[0]}
 	 *    Compare AN[1] field only
-	 *  2'b11: 1 SC has 1 SA. No SC entry exists क्रम the specअगरic SA.
+	 *  2'b11: 1 SC has 1 SA. No SC entry exists for the specific SA.
 	 *    SA index is equivalent to SC_Index[4:0]
 	 *    AN[1:0] bits are compared.
-	 *    NOTE: This design is to supports dअगरferent usage of AN. User
+	 *    NOTE: This design is to supports different usage of AN. User
 	 *    can either ping-pong buffer 2 SA by using only the AN[0] bit.
 	 *    Or use 4 SA per SC by use AN[1:0] bits. Or even treat each SA
-	 *    as independent. i.e. AN[1:0] is just another matching poपूर्णांकer
+	 *    as independent. i.e. AN[1:0] is just another matching pointer
 	 *    to select SA.
 	 */
 	u32 an_mask;
 	/*! This is bit mask to enable comparison the upper 6 bits TCI
-	 *  field, which करोes not include the AN field.
-	 *  0: करोn't compare
+	 *  field, which does not include the AN field.
+	 *  0: don't compare
 	 *  1: enable comparison of the bits.
 	 */
 	u32 tci_mask;
-	/*! 0: करोn't care
+	/*! 0: don't care
 	 *  1: enable comparison of SCI.
 	 */
 	u32 sci_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of Ethertype.
 	 */
 	u32 eth_type_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care and no SNAP header exist.
+	 *  0: don't care and no SNAP header exist.
 	 *  1: compare the SNAP header.
 	 *  If this bit is set to 1, the extracted filed will assume the
 	 *  SNAP header exist as encapsulated in 802.3 (RFC 1042). I.E. the
@@ -427,7 +426,7 @@
 	 */
 	u32 snap_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care and no LLC header exist.
+	 *  0: don't care and no LLC header exist.
 	 *  1: compare the LLC header.
 	 *  If this bit is set to 1, the extracted filed will assume the
 	 *  LLC header exist as encapsulated in 802.3 (RFC 1042). I.E. the
@@ -437,21 +436,21 @@
 	/*! Reserved. This bit should be always 0. */
 	u32 _802_2_encapsulate;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of MAC_SA.
 	 */
 	u32 sa_mask;
 	/*! Mask is per-byte.
-	 *  0: करोn't care
+	 *  0: don't care
 	 *  1: enable comparison of MAC_DA.
 	 */
 	u32 da_mask;
-	/*! 0: करोn't care
-	 *  1: enable checking अगर this is loopback packet or not.
+	/*! 0: don't care
+	 *  1: enable checking if this is loopback packet or not.
 	 */
 	u32 lpbk_mask;
 	/*! If packet matches and tagged as controlled-packet. This SC/SA
-	 *  index is used क्रम later SC and SA table lookup.
+	 *  index is used for later SC and SA table lookup.
 	 */
 	u32 sc_idx;
 	/*! 0: the packets will be sent to MAC FIFO
@@ -459,20 +458,20 @@
 	 *  If the above's action is drop. This bit has no meaning.
 	 */
 	u32 proc_dest;
-	/*! 0: Process: Forward to next two modules क्रम 802.1AE decryption.
-	 *  1: Process but keep SECTAG: Forward to next two modules क्रम
+	/*! 0: Process: Forward to next two modules for 802.1AE decryption.
+	 *  1: Process but keep SECTAG: Forward to next two modules for
 	 *     802.1AE decryption but keep the MACSEC header with added error
-	 *     code inक्रमmation. ICV will be stripped क्रम all control packets.
+	 *     code information. ICV will be stripped for all control packets.
 	 *  2: Bypass: Bypass the next two decryption modules but processed
-	 *     by post-classअगरication.
+	 *     by post-classification.
 	 *  3: Drop: drop this packet and update counts accordingly.
 	 */
 	u32 action;
-	/*! 0: This is a controlled-port packet अगर matched.
-	 *  1: This is an uncontrolled-port packet अगर matched.
+	/*! 0: This is a controlled-port packet if matched.
+	 *  1: This is an uncontrolled-port packet if matched.
 	 */
 	u32 ctrl_unctrl;
-	/*! Use the SCI value from the Table अगर 'SC' bit of the input
+	/*! Use the SCI value from the Table if 'SC' bit of the input
 	 *  packet is not present.
 	 */
 	u32 sci_from_table;
@@ -482,14 +481,14 @@
 	 *  1: valid entry.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress SC Lookup table. */
-काष्ठा aq_mss_ingress_sc_record अणु
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 stop_समय;
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 start_समय;
+struct aq_mss_ingress_sc_record {
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 stop_time;
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 start_time;
 	/*! 0: Strict
 	 *  1: Check
 	 *  2: Disabled.
@@ -499,23 +498,23 @@
 	 *  0: replay control disabled.
 	 */
 	u32 replay_protect;
-	/*! This is to specअगरy the winकरोw range क्रम anti-replay. Default is 0.
-	 *  0: is strict order enक्रमcement.
+	/*! This is to specify the window range for anti-replay. Default is 0.
+	 *  0: is strict order enforcement.
 	 */
-	u32 anti_replay_winकरोw;
+	u32 anti_replay_window;
 	/*! 0: when none of the SA related to SC has inUse set.
 	 *  1: when either of the SA related to the SC has inUse set.
 	 *  This bit is set by HW.
 	 */
 	u32 receiving;
-	/*! 0: when hardware processed the SC क्रम the first समय, it clears
+	/*! 0: when hardware processed the SC for the first time, it clears
 	 *     this bit
 	 *  1: This bit is set by SW, when it sets up the SC.
 	 */
 	u32 fresh;
-	/*! 0: The AN number will not स्वतःmatically roll over अगर Next_PN is
+	/*! 0: The AN number will not automatically roll over if Next_PN is
 	 *     saturated.
-	 *  1: The AN number will स्वतःmatically roll over अगर Next_PN is
+	 *  1: The AN number will automatically roll over if Next_PN is
 	 *     saturated.
 	 *  Rollover is valid only after expiry. Normal roll over between
 	 *  SA's should be normal process.
@@ -527,15 +526,15 @@
 	 *  1: Valid SC.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress SA Lookup table. */
-काष्ठा aq_mss_ingress_sa_record अणु
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 stop_समय;
-	/*! This is to specअगरy when the SC was first used. Set by HW. */
-	u32 start_समय;
-	/*! This is updated by HW to store the expected NextPN number क्रम
+struct aq_mss_ingress_sa_record {
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 stop_time;
+	/*! This is to specify when the SC was first used. Set by HW. */
+	u32 start_time;
+	/*! This is updated by HW to store the expected NextPN number for
 	 *  anti-replay.
 	 */
 	u32 next_pn;
@@ -547,8 +546,8 @@
 	 *  1: This SA is inUse.
 	 */
 	u32 in_use;
-	/*! 0: when hardware processed the SC क्रम the first समय, it clears
-	 *     this समयr
+	/*! 0: when hardware processed the SC for the first time, it clears
+	 *     this timer
 	 *  1: This bit is set by SW, when it sets up the SC.
 	 */
 	u32 fresh;
@@ -558,13 +557,13 @@
 	 *  1: Valid SA.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress SA Key
  *  Lookup table.
  */
-काष्ठा aq_mss_ingress_sakey_record अणु
-	/*! Key क्रम AES-GCM processing. */
+struct aq_mss_ingress_sakey_record {
+	/*! Key for AES-GCM processing. */
 	u32 key[8];
 	/*! AES key size
 	 *  00 - 128bits
@@ -573,19 +572,19 @@
 	 *  11 - reserved.
 	 */
 	u32 key_len;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress Post-
- *  MACSec Packet Classअगरier table.
+ *  MACSec Packet Classifier table.
  */
-काष्ठा aq_mss_ingress_postclass_record अणु
-	/*! The 8 bit value used to compare with extracted value क्रम byte 0. */
+struct aq_mss_ingress_postclass_record {
+	/*! The 8 bit value used to compare with extracted value for byte 0. */
 	u32 byte0;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 1. */
+	/*! The 8 bit value used to compare with extracted value for byte 1. */
 	u32 byte1;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 2. */
+	/*! The 8 bit value used to compare with extracted value for byte 2. */
 	u32 byte2;
-	/*! The 8 bit value used to compare with extracted value क्रम byte 3. */
+	/*! The 8 bit value used to compare with extracted value for byte 3. */
 	u32 byte3;
 	/*! Ethertype in the packet. */
 	u32 eth_type;
@@ -601,58 +600,58 @@
 	u32 sai;
 	/*! SAI hit, i.e. controlled packet. */
 	u32 sai_hit;
-	/*! Mask क्रम payload ethertype field. */
+	/*! Mask for payload ethertype field. */
 	u32 eth_type_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte3_location;
-	/*! Mask क्रम Byte Offset 3. */
+	/*! Mask for Byte Offset 3. */
 	u32 byte3_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte2_location;
-	/*! Mask क्रम Byte Offset 2. */
+	/*! Mask for Byte Offset 2. */
 	u32 byte2_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte1_location;
-	/*! Mask क्रम Byte Offset 1. */
+	/*! Mask for Byte Offset 1. */
 	u32 byte1_mask;
 	/*! 0~63: byte location used extracted by packets comparator, which
 	 *  can be anything from the first 64 bytes of the MAC packets.
 	 *  This byte location counted from MAC' DA address. i.e. set to 0
-	 *  will poपूर्णांक to byte 0 of DA address.
+	 *  will point to byte 0 of DA address.
 	 */
 	u32 byte0_location;
-	/*! Mask क्रम Byte Offset 0. */
+	/*! Mask for Byte Offset 0. */
 	u32 byte0_mask;
-	/*! Mask क्रम Ethertype valid field. Indicates 802.3 vs. Other. */
+	/*! Mask for Ethertype valid field. Indicates 802.3 vs. Other. */
 	u32 eth_type_valid_mask;
-	/*! Mask क्रम VLAN ID field. */
+	/*! Mask for VLAN ID field. */
 	u32 vlan_id_mask;
-	/*! Mask क्रम VLAN UP field. */
+	/*! Mask for VLAN UP field. */
 	u32 vlan_up_mask;
-	/*! Mask क्रम VLAN valid field. */
+	/*! Mask for VLAN valid field. */
 	u32 vlan_valid_mask;
-	/*! Mask क्रम SAI. */
+	/*! Mask for SAI. */
 	u32 sai_mask;
-	/*! Mask क्रम SAI_HIT. */
+	/*! Mask for SAI_HIT. */
 	u32 sai_hit_mask;
-	/*! Action अगर only first level matches and second level करोes not.
+	/*! Action if only first level matches and second level does not.
 	 *  0: pass
 	 *  1: drop (fail).
 	 */
 	u32 firstlevel_actions;
-	/*! Action अगर both first and second level matched.
+	/*! Action if both first and second level matched.
 	 *  0: pass
 	 *  1: drop (fail).
 	 */
@@ -663,21 +662,21 @@
 	 *  1: valid entry.
 	 */
 	u32 valid;
-पूर्ण;
+};
 
 /*! Represents the bitfields of a single row in the Ingress Post-
  *  MACSec CTL Filter table.
  */
-काष्ठा aq_mss_ingress_postctlf_record अणु
+struct aq_mss_ingress_postctlf_record {
 	/*! This is used to store the 48 bit value used to compare SA, DA
 	 *  or halfDA+half SA value.
 	 */
 	u32 sa_da[2];
-	/*! This is used to store the 16 bit ethertype value used क्रम
+	/*! This is used to store the 16 bit ethertype value used for
 	 *  comparison.
 	 */
 	u32 eth_type;
-	/*! The match mask is per-nibble. 0 means करोn't care, i.e. every
+	/*! The match mask is per-nibble. 0 means don't care, i.e. every
 	 *  value will match successfully. The total data is 64 bit, i.e.
 	 *  16 nibbles masks.
 	 */
@@ -692,85 +691,85 @@
 	 *  7: compare DA+ range.
 	 */
 	u32 match_type;
-	/*! 0: Bypass the reमुख्यing modules अगर matched.
-	 *  1: Forward to next module क्रम more classअगरications.
+	/*! 0: Bypass the remaining modules if matched.
+	 *  1: Forward to next module for more classifications.
 	 */
 	u32 action;
-पूर्ण;
+};
 
-/*! Represents the Egress MIB counters क्रम a single SC. Counters are
+/*! Represents the Egress MIB counters for a single SC. Counters are
  *  64 bits, lower 32 bits in field[0].
  */
-काष्ठा aq_mss_egress_sc_counters अणु
-	/*! The number of पूर्णांकegrity रक्षित but not encrypted packets
-	 *  क्रम this transmitting SC.
+struct aq_mss_egress_sc_counters {
+	/*! The number of integrity protected but not encrypted packets
+	 *  for this transmitting SC.
 	 */
-	u32 sc_रक्षित_pkts[2];
-	/*! The number of पूर्णांकegrity रक्षित and encrypted packets क्रम
+	u32 sc_protected_pkts[2];
+	/*! The number of integrity protected and encrypted packets for
 	 *  this transmitting SC.
 	 */
 	u32 sc_encrypted_pkts[2];
-	/*! The number of plain text octets that are पूर्णांकegrity रक्षित
+	/*! The number of plain text octets that are integrity protected
 	 *  but not encrypted on the transmitting SC.
 	 */
-	u32 sc_रक्षित_octets[2];
-	/*! The number of plain text octets that are पूर्णांकegrity रक्षित
+	u32 sc_protected_octets[2];
+	/*! The number of plain text octets that are integrity protected
 	 *  and encrypted on the transmitting SC.
 	 */
 	u32 sc_encrypted_octets[2];
-पूर्ण;
+};
 
-/*! Represents the Egress MIB counters क्रम a single SA. Counters are
+/*! Represents the Egress MIB counters for a single SA. Counters are
  *  64 bits, lower 32 bits in field[0].
  */
-काष्ठा aq_mss_egress_sa_counters अणु
-	/*! The number of dropped packets क्रम this transmitting SA. */
+struct aq_mss_egress_sa_counters {
+	/*! The number of dropped packets for this transmitting SA. */
 	u32 sa_hit_drop_redirect[2];
 	/*! TODO */
-	u32 sa_रक्षित2_pkts[2];
-	/*! The number of पूर्णांकegrity रक्षित but not encrypted packets
-	 *  क्रम this transmitting SA.
+	u32 sa_protected2_pkts[2];
+	/*! The number of integrity protected but not encrypted packets
+	 *  for this transmitting SA.
 	 */
-	u32 sa_रक्षित_pkts[2];
-	/*! The number of पूर्णांकegrity रक्षित and encrypted packets क्रम
+	u32 sa_protected_pkts[2];
+	/*! The number of integrity protected and encrypted packets for
 	 *  this transmitting SA.
 	 */
 	u32 sa_encrypted_pkts[2];
-पूर्ण;
+};
 
 /*! Represents the common Egress MIB counters; the counter not
  *  associated with a particular SC/SA. Counters are 64 bits, lower 32
  *  bits in field[0].
  */
-काष्ठा aq_mss_egress_common_counters अणु
-	/*! The number of transmitted packets classअगरied as MAC_CTL packets. */
+struct aq_mss_egress_common_counters {
+	/*! The number of transmitted packets classified as MAC_CTL packets. */
 	u32 ctl_pkt[2];
 	/*! The number of transmitted packets that did not match any rows
-	 *  in the Egress Packet Classअगरier table.
+	 *  in the Egress Packet Classifier table.
 	 */
 	u32 unknown_sa_pkts[2];
 	/*! The number of transmitted packets where the SC table entry has
-	 *  protect=0 (so packets are क्रमwarded unchanged).
+	 *  protect=0 (so packets are forwarded unchanged).
 	 */
 	u32 untagged_pkts[2];
 	/*! The number of transmitted packets discarded because the packet
-	 *  length is greater than the अगरMtu of the Common Port पूर्णांकerface.
+	 *  length is greater than the ifMtu of the Common Port interface.
 	 */
-	u32 too_दीर्घ[2];
-	/*! The number of transmitted packets क्रम which table memory was
+	u32 too_long[2];
+	/*! The number of transmitted packets for which table memory was
 	 *  affected by an ECC error during processing.
 	 */
 	u32 ecc_error_pkts[2];
-	/*! The number of transmitted packets क्रम where the matched row in
-	 *  the Egress Packet Classअगरier table has action=drop.
+	/*! The number of transmitted packets for where the matched row in
+	 *  the Egress Packet Classifier table has action=drop.
 	 */
 	u32 unctrl_hit_drop_redir[2];
-पूर्ण;
+};
 
-/*! Represents the Ingress MIB counters क्रम a single SA. Counters are
+/*! Represents the Ingress MIB counters for a single SA. Counters are
  *  64 bits, lower 32 bits in field[0].
  */
-काष्ठा aq_mss_ingress_sa_counters अणु
+struct aq_mss_ingress_sa_counters {
 	/*! For this SA, the number of received packets without a SecTAG. */
 	u32 untagged_hit_pkts[2];
 	/*! For this SA, the number of received packets that were dropped. */
@@ -816,37 +815,37 @@
 	 *    replay_protect=0 or
 	 *  - the matched row in the Ingress SC Lookup table has
 	 *    replay_protect=1 and the packet is not encrypted and the
-	 *    पूर्णांकegrity check has failed or
+	 *    integrity check has failed or
 	 *  - the matched row in the Ingress SC Lookup table has
-	 *    replay_protect=1 and the packet is encrypted and पूर्णांकegrity
+	 *    replay_protect=1 and the packet is encrypted and integrity
 	 *    check has failed.
 	 */
 	u32 unchecked_pkts[2];
-	/*! The number of octets of plaपूर्णांकext recovered from received
-	 *  packets that were पूर्णांकegrity रक्षित but not encrypted.
+	/*! The number of octets of plaintext recovered from received
+	 *  packets that were integrity protected but not encrypted.
 	 */
 	u32 validated_octets[2];
-	/*! The number of octets of plaपूर्णांकext recovered from received
-	 *  packets that were पूर्णांकegrity रक्षित and encrypted.
+	/*! The number of octets of plaintext recovered from received
+	 *  packets that were integrity protected and encrypted.
 	 */
 	u32 decrypted_octets[2];
-पूर्ण;
+};
 
 /*! Represents the common Ingress MIB counters; the counter not
  *  associated with a particular SA. Counters are 64 bits, lower 32
  *  bits in field[0].
  */
-काष्ठा aq_mss_ingress_common_counters अणु
-	/*! The number of received packets classअगरied as MAC_CTL packets. */
+struct aq_mss_ingress_common_counters {
+	/*! The number of received packets classified as MAC_CTL packets. */
 	u32 ctl_pkts[2];
 	/*! The number of received packets with the MAC security tag
 	 *  (SecTAG), not matching any rows in the Ingress Pre-MACSec
-	 *  Packet Classअगरier table.
+	 *  Packet Classifier table.
 	 */
 	u32 tagged_miss_pkts[2];
 	/*! The number of received packets without the MAC security tag
 	 *  (SecTAG), not matching any rows in the Ingress Pre-MACSec
-	 *  Packet Classअगरier table.
+	 *  Packet Classifier table.
 	 */
 	u32 untagged_miss_pkts[2];
 	/*! The number of received packets discarded without the MAC
@@ -864,7 +863,7 @@
 	 */
 	u32 bad_tag_pkts[2];
 	/*! The number of received packets discarded with unknown SCI
-	 *  inक्रमmation with the condition:
+	 *  information with the condition:
 	 *  the matched row in the Ingress SC Lookup table has
 	 *  validate_frames=Strict or the C bit in the SecTAG is set.
 	 */
@@ -875,34 +874,34 @@
 	 */
 	u32 unknown_sci_pkts[2];
 	/*! The number of received packets by the controlled port service
-	 *  that passed the Ingress Post-MACSec Packet Classअगरier table
+	 *  that passed the Ingress Post-MACSec Packet Classifier table
 	 *  check.
 	 */
 	u32 ctrl_prt_pass_pkts[2];
 	/*! The number of received packets by the uncontrolled port
-	 *  service that passed the Ingress Post-MACSec Packet Classअगरier
+	 *  service that passed the Ingress Post-MACSec Packet Classifier
 	 *  table check.
 	 */
 	u32 unctrl_prt_pass_pkts[2];
 	/*! The number of received packets by the controlled port service
-	 *  that failed the Ingress Post-MACSec Packet Classअगरier table
+	 *  that failed the Ingress Post-MACSec Packet Classifier table
 	 *  check.
 	 */
 	u32 ctrl_prt_fail_pkts[2];
 	/*! The number of received packets by the uncontrolled port
-	 *  service that failed the Ingress Post-MACSec Packet Classअगरier
+	 *  service that failed the Ingress Post-MACSec Packet Classifier
 	 *  table check.
 	 */
 	u32 unctrl_prt_fail_pkts[2];
 	/*! The number of received packets discarded because the packet
-	 *  length is greater than the अगरMtu of the Common Port पूर्णांकerface.
+	 *  length is greater than the ifMtu of the Common Port interface.
 	 */
-	u32 too_दीर्घ_pkts[2];
-	/*! The number of received packets classअगरied as MAC_CTL by the
+	u32 too_long_pkts[2];
+	/*! The number of received packets classified as MAC_CTL by the
 	 *  Ingress Post-MACSec CTL Filter table.
 	 */
 	u32 igpoc_ctl_pkts[2];
-	/*! The number of received packets क्रम which table memory was
+	/*! The number of received packets for which table memory was
 	 *  affected by an ECC error during processing.
 	 */
 	u32 ecc_error_pkts[2];
@@ -910,6 +909,6 @@
 	 *  service that were dropped.
 	 */
 	u32 unctrl_hit_drop_redir[2];
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

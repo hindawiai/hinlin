@@ -1,763 +1,762 @@
-<शैली गुरु>
 /* CPU control.
  * (C) 2001, 2002, 2003, 2004 Rusty Russell
  *
  * This code is licenced under the GPL.
  */
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/hotplug.h>
-#समावेश <linux/sched/isolation.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/smt.h>
-#समावेश <linux/unistd.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/oom.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/export.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/stop_machine.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/smpboot.h>
-#समावेश <linux/relay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/percpu-rwsem.h>
+#include <linux/sched/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/smp.h>
+#include <linux/init.h>
+#include <linux/notifier.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/hotplug.h>
+#include <linux/sched/isolation.h>
+#include <linux/sched/task.h>
+#include <linux/sched/smt.h>
+#include <linux/unistd.h>
+#include <linux/cpu.h>
+#include <linux/oom.h>
+#include <linux/rcupdate.h>
+#include <linux/export.h>
+#include <linux/bug.h>
+#include <linux/kthread.h>
+#include <linux/stop_machine.h>
+#include <linux/mutex.h>
+#include <linux/gfp.h>
+#include <linux/suspend.h>
+#include <linux/lockdep.h>
+#include <linux/tick.h>
+#include <linux/irq.h>
+#include <linux/nmi.h>
+#include <linux/smpboot.h>
+#include <linux/relay.h>
+#include <linux/slab.h>
+#include <linux/percpu-rwsem.h>
 
-#समावेश <trace/events/घातer.h>
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/cpuhp.h>
+#include <trace/events/power.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/cpuhp.h>
 
-#समावेश "smpboot.h"
+#include "smpboot.h"
 
 /**
  * cpuhp_cpu_state - Per cpu hotplug state storage
  * @state:	The current cpu state
  * @target:	The target state
- * @thपढ़ो:	Poपूर्णांकer to the hotplug thपढ़ो
- * @should_run:	Thपढ़ो should execute
- * @rollback:	Perक्रमm a rollback
+ * @thread:	Pointer to the hotplug thread
+ * @should_run:	Thread should execute
+ * @rollback:	Perform a rollback
  * @single:	Single callback invocation
- * @bringup:	Single callback bringup or tearकरोwn selector
- * @cb_state:	The state क्रम a single callback (install/uninstall)
+ * @bringup:	Single callback bringup or teardown selector
+ * @cb_state:	The state for a single callback (install/uninstall)
  * @result:	Result of the operation
- * @करोne_up:	Signal completion to the issuer of the task क्रम cpu-up
- * @करोne_करोwn:	Signal completion to the issuer of the task क्रम cpu-करोwn
+ * @done_up:	Signal completion to the issuer of the task for cpu-up
+ * @done_down:	Signal completion to the issuer of the task for cpu-down
  */
-काष्ठा cpuhp_cpu_state अणु
-	क्रमागत cpuhp_state	state;
-	क्रमागत cpuhp_state	target;
-	क्रमागत cpuhp_state	fail;
-#अगर_घोषित CONFIG_SMP
-	काष्ठा task_काष्ठा	*thपढ़ो;
+struct cpuhp_cpu_state {
+	enum cpuhp_state	state;
+	enum cpuhp_state	target;
+	enum cpuhp_state	fail;
+#ifdef CONFIG_SMP
+	struct task_struct	*thread;
 	bool			should_run;
 	bool			rollback;
 	bool			single;
 	bool			bringup;
-	पूर्णांक			cpu;
-	काष्ठा hlist_node	*node;
-	काष्ठा hlist_node	*last;
-	क्रमागत cpuhp_state	cb_state;
-	पूर्णांक			result;
-	काष्ठा completion	करोne_up;
-	काष्ठा completion	करोne_करोwn;
-#पूर्ण_अगर
-पूर्ण;
+	int			cpu;
+	struct hlist_node	*node;
+	struct hlist_node	*last;
+	enum cpuhp_state	cb_state;
+	int			result;
+	struct completion	done_up;
+	struct completion	done_down;
+#endif
+};
 
-अटल DEFINE_PER_CPU(काष्ठा cpuhp_cpu_state, cpuhp_state) = अणु
+static DEFINE_PER_CPU(struct cpuhp_cpu_state, cpuhp_state) = {
 	.fail = CPUHP_INVALID,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 cpumask_t cpus_booted_once_mask;
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_LOCKDEP) && defined(CONFIG_SMP)
-अटल काष्ठा lockdep_map cpuhp_state_up_map =
+#if defined(CONFIG_LOCKDEP) && defined(CONFIG_SMP)
+static struct lockdep_map cpuhp_state_up_map =
 	STATIC_LOCKDEP_MAP_INIT("cpuhp_state-up", &cpuhp_state_up_map);
-अटल काष्ठा lockdep_map cpuhp_state_करोwn_map =
-	STATIC_LOCKDEP_MAP_INIT("cpuhp_state-down", &cpuhp_state_करोwn_map);
+static struct lockdep_map cpuhp_state_down_map =
+	STATIC_LOCKDEP_MAP_INIT("cpuhp_state-down", &cpuhp_state_down_map);
 
 
-अटल अंतरभूत व्योम cpuhp_lock_acquire(bool bringup)
-अणु
-	lock_map_acquire(bringup ? &cpuhp_state_up_map : &cpuhp_state_करोwn_map);
-पूर्ण
+static inline void cpuhp_lock_acquire(bool bringup)
+{
+	lock_map_acquire(bringup ? &cpuhp_state_up_map : &cpuhp_state_down_map);
+}
 
-अटल अंतरभूत व्योम cpuhp_lock_release(bool bringup)
-अणु
-	lock_map_release(bringup ? &cpuhp_state_up_map : &cpuhp_state_करोwn_map);
-पूर्ण
-#अन्यथा
+static inline void cpuhp_lock_release(bool bringup)
+{
+	lock_map_release(bringup ? &cpuhp_state_up_map : &cpuhp_state_down_map);
+}
+#else
 
-अटल अंतरभूत व्योम cpuhp_lock_acquire(bool bringup) अणु पूर्ण
-अटल अंतरभूत व्योम cpuhp_lock_release(bool bringup) अणु पूर्ण
+static inline void cpuhp_lock_acquire(bool bringup) { }
+static inline void cpuhp_lock_release(bool bringup) { }
 
-#पूर्ण_अगर
+#endif
 
 /**
  * cpuhp_step - Hotplug state machine step
  * @name:	Name of the step
  * @startup:	Startup function of the step
- * @tearकरोwn:	Tearकरोwn function of the step
- * @cant_stop:	Bringup/tearकरोwn can't be stopped at this step
+ * @teardown:	Teardown function of the step
+ * @cant_stop:	Bringup/teardown can't be stopped at this step
  */
-काष्ठा cpuhp_step अणु
-	स्थिर अक्षर		*name;
-	जोड़ अणु
-		पूर्णांक		(*single)(अचिन्हित पूर्णांक cpu);
-		पूर्णांक		(*multi)(अचिन्हित पूर्णांक cpu,
-					 काष्ठा hlist_node *node);
-	पूर्ण startup;
-	जोड़ अणु
-		पूर्णांक		(*single)(अचिन्हित पूर्णांक cpu);
-		पूर्णांक		(*multi)(अचिन्हित पूर्णांक cpu,
-					 काष्ठा hlist_node *node);
-	पूर्ण tearकरोwn;
-	काष्ठा hlist_head	list;
+struct cpuhp_step {
+	const char		*name;
+	union {
+		int		(*single)(unsigned int cpu);
+		int		(*multi)(unsigned int cpu,
+					 struct hlist_node *node);
+	} startup;
+	union {
+		int		(*single)(unsigned int cpu);
+		int		(*multi)(unsigned int cpu,
+					 struct hlist_node *node);
+	} teardown;
+	struct hlist_head	list;
 	bool			cant_stop;
 	bool			multi_instance;
-पूर्ण;
+};
 
-अटल DEFINE_MUTEX(cpuhp_state_mutex);
-अटल काष्ठा cpuhp_step cpuhp_hp_states[];
+static DEFINE_MUTEX(cpuhp_state_mutex);
+static struct cpuhp_step cpuhp_hp_states[];
 
-अटल काष्ठा cpuhp_step *cpuhp_get_step(क्रमागत cpuhp_state state)
-अणु
-	वापस cpuhp_hp_states + state;
-पूर्ण
+static struct cpuhp_step *cpuhp_get_step(enum cpuhp_state state)
+{
+	return cpuhp_hp_states + state;
+}
 
-अटल bool cpuhp_step_empty(bool bringup, काष्ठा cpuhp_step *step)
-अणु
-	वापस bringup ? !step->startup.single : !step->tearकरोwn.single;
-पूर्ण
+static bool cpuhp_step_empty(bool bringup, struct cpuhp_step *step)
+{
+	return bringup ? !step->startup.single : !step->teardown.single;
+}
 
 /**
- * cpuhp_invoke_callback _ Invoke the callbacks क्रम a given state
- * @cpu:	The cpu क्रम which the callback should be invoked
- * @state:	The state to करो callbacks क्रम
- * @bringup:	True अगर the bringup callback should be invoked
- * @node:	For multi-instance, करो a single entry callback क्रम install/हटाओ
+ * cpuhp_invoke_callback _ Invoke the callbacks for a given state
+ * @cpu:	The cpu for which the callback should be invoked
+ * @state:	The state to do callbacks for
+ * @bringup:	True if the bringup callback should be invoked
+ * @node:	For multi-instance, do a single entry callback for install/remove
  * @lastp:	For multi-instance rollback, remember how far we got
  *
- * Called from cpu hotplug and from the state रेजिस्टर machinery.
+ * Called from cpu hotplug and from the state register machinery.
  */
-अटल पूर्णांक cpuhp_invoke_callback(अचिन्हित पूर्णांक cpu, क्रमागत cpuhp_state state,
-				 bool bringup, काष्ठा hlist_node *node,
-				 काष्ठा hlist_node **lastp)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	काष्ठा cpuhp_step *step = cpuhp_get_step(state);
-	पूर्णांक (*cbm)(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node);
-	पूर्णांक (*cb)(अचिन्हित पूर्णांक cpu);
-	पूर्णांक ret, cnt;
+static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
+				 bool bringup, struct hlist_node *node,
+				 struct hlist_node **lastp)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	struct cpuhp_step *step = cpuhp_get_step(state);
+	int (*cbm)(unsigned int cpu, struct hlist_node *node);
+	int (*cb)(unsigned int cpu);
+	int ret, cnt;
 
-	अगर (st->fail == state) अणु
+	if (st->fail == state) {
 		st->fail = CPUHP_INVALID;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (cpuhp_step_empty(bringup, step)) अणु
+	if (cpuhp_step_empty(bringup, step)) {
 		WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!step->multi_instance) अणु
+	if (!step->multi_instance) {
 		WARN_ON_ONCE(lastp && *lastp);
-		cb = bringup ? step->startup.single : step->tearकरोwn.single;
+		cb = bringup ? step->startup.single : step->teardown.single;
 
 		trace_cpuhp_enter(cpu, st->target, state, cb);
 		ret = cb(cpu);
-		trace_cpuhp_निकास(cpu, st->state, state, ret);
-		वापस ret;
-	पूर्ण
-	cbm = bringup ? step->startup.multi : step->tearकरोwn.multi;
+		trace_cpuhp_exit(cpu, st->state, state, ret);
+		return ret;
+	}
+	cbm = bringup ? step->startup.multi : step->teardown.multi;
 
-	/* Single invocation क्रम instance add/हटाओ */
-	अगर (node) अणु
+	/* Single invocation for instance add/remove */
+	if (node) {
 		WARN_ON_ONCE(lastp && *lastp);
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		trace_cpuhp_निकास(cpu, st->state, state, ret);
-		वापस ret;
-	पूर्ण
+		trace_cpuhp_exit(cpu, st->state, state, ret);
+		return ret;
+	}
 
 	/* State transition. Invoke on all instances */
 	cnt = 0;
-	hlist_क्रम_each(node, &step->list) अणु
-		अगर (lastp && node == *lastp)
-			अवरोध;
+	hlist_for_each(node, &step->list) {
+		if (lastp && node == *lastp)
+			break;
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		trace_cpuhp_निकास(cpu, st->state, state, ret);
-		अगर (ret) अणु
-			अगर (!lastp)
-				जाओ err;
+		trace_cpuhp_exit(cpu, st->state, state, ret);
+		if (ret) {
+			if (!lastp)
+				goto err;
 
 			*lastp = node;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		cnt++;
-	पूर्ण
-	अगर (lastp)
-		*lastp = शून्य;
-	वापस 0;
+	}
+	if (lastp)
+		*lastp = NULL;
+	return 0;
 err:
-	/* Rollback the instances अगर one failed */
-	cbm = !bringup ? step->startup.multi : step->tearकरोwn.multi;
-	अगर (!cbm)
-		वापस ret;
+	/* Rollback the instances if one failed */
+	cbm = !bringup ? step->startup.multi : step->teardown.multi;
+	if (!cbm)
+		return ret;
 
-	hlist_क्रम_each(node, &step->list) अणु
-		अगर (!cnt--)
-			अवरोध;
+	hlist_for_each(node, &step->list) {
+		if (!cnt--)
+			break;
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		trace_cpuhp_निकास(cpu, st->state, state, ret);
+		trace_cpuhp_exit(cpu, st->state, state, ret);
 		/*
 		 * Rollback must not fail,
 		 */
 		WARN_ON_ONCE(ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल bool cpuhp_is_ap_state(क्रमागत cpuhp_state state)
-अणु
+#ifdef CONFIG_SMP
+static bool cpuhp_is_ap_state(enum cpuhp_state state)
+{
 	/*
-	 * The extra check क्रम CPUHP_TEARDOWN_CPU is only क्रम करोcumentation
-	 * purposes as that state is handled explicitly in cpu_करोwn.
+	 * The extra check for CPUHP_TEARDOWN_CPU is only for documentation
+	 * purposes as that state is handled explicitly in cpu_down.
 	 */
-	वापस state > CPUHP_BRINGUP_CPU && state != CPUHP_TEARDOWN_CPU;
-पूर्ण
+	return state > CPUHP_BRINGUP_CPU && state != CPUHP_TEARDOWN_CPU;
+}
 
-अटल अंतरभूत व्योम रुको_क्रम_ap_thपढ़ो(काष्ठा cpuhp_cpu_state *st, bool bringup)
-अणु
-	काष्ठा completion *करोne = bringup ? &st->करोne_up : &st->करोne_करोwn;
-	रुको_क्रम_completion(करोne);
-पूर्ण
+static inline void wait_for_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
+{
+	struct completion *done = bringup ? &st->done_up : &st->done_down;
+	wait_for_completion(done);
+}
 
-अटल अंतरभूत व्योम complete_ap_thपढ़ो(काष्ठा cpuhp_cpu_state *st, bool bringup)
-अणु
-	काष्ठा completion *करोne = bringup ? &st->करोne_up : &st->करोne_करोwn;
-	complete(करोne);
-पूर्ण
+static inline void complete_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
+{
+	struct completion *done = bringup ? &st->done_up : &st->done_down;
+	complete(done);
+}
 
 /*
- * The क्रमmer STARTING/DYING states, ran with IRQs disabled and must not fail.
+ * The former STARTING/DYING states, ran with IRQs disabled and must not fail.
  */
-अटल bool cpuhp_is_atomic_state(क्रमागत cpuhp_state state)
-अणु
-	वापस CPUHP_AP_IDLE_DEAD <= state && state < CPUHP_AP_ONLINE;
-पूर्ण
+static bool cpuhp_is_atomic_state(enum cpuhp_state state)
+{
+	return CPUHP_AP_IDLE_DEAD <= state && state < CPUHP_AP_ONLINE;
+}
 
 /* Serializes the updates to cpu_online_mask, cpu_present_mask */
-अटल DEFINE_MUTEX(cpu_add_हटाओ_lock);
+static DEFINE_MUTEX(cpu_add_remove_lock);
 bool cpuhp_tasks_frozen;
 EXPORT_SYMBOL_GPL(cpuhp_tasks_frozen);
 
 /*
- * The following two APIs (cpu_maps_update_begin/करोne) must be used when
+ * The following two APIs (cpu_maps_update_begin/done) must be used when
  * attempting to serialize the updates to cpu_online_mask & cpu_present_mask.
  */
-व्योम cpu_maps_update_begin(व्योम)
-अणु
-	mutex_lock(&cpu_add_हटाओ_lock);
-पूर्ण
+void cpu_maps_update_begin(void)
+{
+	mutex_lock(&cpu_add_remove_lock);
+}
 
-व्योम cpu_maps_update_करोne(व्योम)
-अणु
-	mutex_unlock(&cpu_add_हटाओ_lock);
-पूर्ण
+void cpu_maps_update_done(void)
+{
+	mutex_unlock(&cpu_add_remove_lock);
+}
 
 /*
- * If set, cpu_up and cpu_करोwn will वापस -EBUSY and करो nothing.
- * Should always be manipulated under cpu_add_हटाओ_lock
+ * If set, cpu_up and cpu_down will return -EBUSY and do nothing.
+ * Should always be manipulated under cpu_add_remove_lock
  */
-अटल पूर्णांक cpu_hotplug_disabled;
+static int cpu_hotplug_disabled;
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
 DEFINE_STATIC_PERCPU_RWSEM(cpu_hotplug_lock);
 
-व्योम cpus_पढ़ो_lock(व्योम)
-अणु
-	percpu_करोwn_पढ़ो(&cpu_hotplug_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(cpus_पढ़ो_lock);
+void cpus_read_lock(void)
+{
+	percpu_down_read(&cpu_hotplug_lock);
+}
+EXPORT_SYMBOL_GPL(cpus_read_lock);
 
-पूर्णांक cpus_पढ़ो_trylock(व्योम)
-अणु
-	वापस percpu_करोwn_पढ़ो_trylock(&cpu_hotplug_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(cpus_पढ़ो_trylock);
+int cpus_read_trylock(void)
+{
+	return percpu_down_read_trylock(&cpu_hotplug_lock);
+}
+EXPORT_SYMBOL_GPL(cpus_read_trylock);
 
-व्योम cpus_पढ़ो_unlock(व्योम)
-अणु
-	percpu_up_पढ़ो(&cpu_hotplug_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(cpus_पढ़ो_unlock);
+void cpus_read_unlock(void)
+{
+	percpu_up_read(&cpu_hotplug_lock);
+}
+EXPORT_SYMBOL_GPL(cpus_read_unlock);
 
-व्योम cpus_ग_लिखो_lock(व्योम)
-अणु
-	percpu_करोwn_ग_लिखो(&cpu_hotplug_lock);
-पूर्ण
+void cpus_write_lock(void)
+{
+	percpu_down_write(&cpu_hotplug_lock);
+}
 
-व्योम cpus_ग_लिखो_unlock(व्योम)
-अणु
-	percpu_up_ग_लिखो(&cpu_hotplug_lock);
-पूर्ण
+void cpus_write_unlock(void)
+{
+	percpu_up_write(&cpu_hotplug_lock);
+}
 
-व्योम lockdep_निश्चित_cpus_held(व्योम)
-अणु
+void lockdep_assert_cpus_held(void)
+{
 	/*
-	 * We can't have hotplug operations beक्रमe userspace starts running,
+	 * We can't have hotplug operations before userspace starts running,
 	 * and some init codepaths will knowingly not take the hotplug lock.
 	 * This is all valid, so mute lockdep until it makes sense to report
 	 * unheld locks.
 	 */
-	अगर (प्रणाली_state < SYSTEM_RUNNING)
-		वापस;
+	if (system_state < SYSTEM_RUNNING)
+		return;
 
-	percpu_rwsem_निश्चित_held(&cpu_hotplug_lock);
-पूर्ण
+	percpu_rwsem_assert_held(&cpu_hotplug_lock);
+}
 
-#अगर_घोषित CONFIG_LOCKDEP
-पूर्णांक lockdep_is_cpus_held(व्योम)
-अणु
-	वापस percpu_rwsem_is_held(&cpu_hotplug_lock);
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_LOCKDEP
+int lockdep_is_cpus_held(void)
+{
+	return percpu_rwsem_is_held(&cpu_hotplug_lock);
+}
+#endif
 
-अटल व्योम lockdep_acquire_cpus_lock(व्योम)
-अणु
+static void lockdep_acquire_cpus_lock(void)
+{
 	rwsem_acquire(&cpu_hotplug_lock.dep_map, 0, 0, _THIS_IP_);
-पूर्ण
+}
 
-अटल व्योम lockdep_release_cpus_lock(व्योम)
-अणु
+static void lockdep_release_cpus_lock(void)
+{
 	rwsem_release(&cpu_hotplug_lock.dep_map, _THIS_IP_);
-पूर्ण
+}
 
 /*
- * Wait क्रम currently running CPU hotplug operations to complete (अगर any) and
+ * Wait for currently running CPU hotplug operations to complete (if any) and
  * disable future CPU hotplug (from sysfs). The 'cpu_add_remove_lock' protects
  * the 'cpu_hotplug_disabled' flag. The same lock is also acquired by the
- * hotplug path beक्रमe perक्रमming hotplug operations. So acquiring that lock
+ * hotplug path before performing hotplug operations. So acquiring that lock
  * guarantees mutual exclusion from any currently running hotplug operations.
  */
-व्योम cpu_hotplug_disable(व्योम)
-अणु
+void cpu_hotplug_disable(void)
+{
 	cpu_maps_update_begin();
 	cpu_hotplug_disabled++;
-	cpu_maps_update_करोne();
-पूर्ण
+	cpu_maps_update_done();
+}
 EXPORT_SYMBOL_GPL(cpu_hotplug_disable);
 
-अटल व्योम __cpu_hotplug_enable(व्योम)
-अणु
-	अगर (WARN_ONCE(!cpu_hotplug_disabled, "Unbalanced cpu hotplug enable\n"))
-		वापस;
+static void __cpu_hotplug_enable(void)
+{
+	if (WARN_ONCE(!cpu_hotplug_disabled, "Unbalanced cpu hotplug enable\n"))
+		return;
 	cpu_hotplug_disabled--;
-पूर्ण
+}
 
-व्योम cpu_hotplug_enable(व्योम)
-अणु
+void cpu_hotplug_enable(void)
+{
 	cpu_maps_update_begin();
 	__cpu_hotplug_enable();
-	cpu_maps_update_करोne();
-पूर्ण
+	cpu_maps_update_done();
+}
 EXPORT_SYMBOL_GPL(cpu_hotplug_enable);
 
-#अन्यथा
+#else
 
-अटल व्योम lockdep_acquire_cpus_lock(व्योम)
-अणु
-पूर्ण
+static void lockdep_acquire_cpus_lock(void)
+{
+}
 
-अटल व्योम lockdep_release_cpus_lock(व्योम)
-अणु
-पूर्ण
+static void lockdep_release_cpus_lock(void)
+{
+}
 
-#पूर्ण_अगर	/* CONFIG_HOTPLUG_CPU */
+#endif	/* CONFIG_HOTPLUG_CPU */
 
 /*
- * Architectures that need SMT-specअगरic errata handling during SMT hotplug
+ * Architectures that need SMT-specific errata handling during SMT hotplug
  * should override this.
  */
-व्योम __weak arch_smt_update(व्योम) अणु पूर्ण
+void __weak arch_smt_update(void) { }
 
-#अगर_घोषित CONFIG_HOTPLUG_SMT
-क्रमागत cpuhp_smt_control cpu_smt_control __पढ़ो_mostly = CPU_SMT_ENABLED;
+#ifdef CONFIG_HOTPLUG_SMT
+enum cpuhp_smt_control cpu_smt_control __read_mostly = CPU_SMT_ENABLED;
 
-व्योम __init cpu_smt_disable(bool क्रमce)
-अणु
-	अगर (!cpu_smt_possible())
-		वापस;
+void __init cpu_smt_disable(bool force)
+{
+	if (!cpu_smt_possible())
+		return;
 
-	अगर (क्रमce) अणु
+	if (force) {
 		pr_info("SMT: Force disabled\n");
 		cpu_smt_control = CPU_SMT_FORCE_DISABLED;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_info("SMT: disabled\n");
 		cpu_smt_control = CPU_SMT_DISABLED;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * The decision whether SMT is supported can only be करोne after the full
- * CPU identअगरication. Called from architecture code.
+ * The decision whether SMT is supported can only be done after the full
+ * CPU identification. Called from architecture code.
  */
-व्योम __init cpu_smt_check_topology(व्योम)
-अणु
-	अगर (!topology_smt_supported())
+void __init cpu_smt_check_topology(void)
+{
+	if (!topology_smt_supported())
 		cpu_smt_control = CPU_SMT_NOT_SUPPORTED;
-पूर्ण
+}
 
-अटल पूर्णांक __init smt_cmdline_disable(अक्षर *str)
-अणु
-	cpu_smt_disable(str && !म_भेद(str, "force"));
-	वापस 0;
-पूर्ण
+static int __init smt_cmdline_disable(char *str)
+{
+	cpu_smt_disable(str && !strcmp(str, "force"));
+	return 0;
+}
 early_param("nosmt", smt_cmdline_disable);
 
-अटल अंतरभूत bool cpu_smt_allowed(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (cpu_smt_control == CPU_SMT_ENABLED)
-		वापस true;
+static inline bool cpu_smt_allowed(unsigned int cpu)
+{
+	if (cpu_smt_control == CPU_SMT_ENABLED)
+		return true;
 
-	अगर (topology_is_primary_thपढ़ो(cpu))
-		वापस true;
+	if (topology_is_primary_thread(cpu))
+		return true;
 
 	/*
 	 * On x86 it's required to boot all logical CPUs at least once so
 	 * that the init code can get a chance to set CR4.MCE on each
 	 * CPU. Otherwise, a broadcasted MCE observing CR4.MCE=0b on any
-	 * core will shutकरोwn the machine.
+	 * core will shutdown the machine.
 	 */
-	वापस !cpumask_test_cpu(cpu, &cpus_booted_once_mask);
-पूर्ण
+	return !cpumask_test_cpu(cpu, &cpus_booted_once_mask);
+}
 
-/* Returns true अगर SMT is not supported of क्रमcefully (irreversibly) disabled */
-bool cpu_smt_possible(व्योम)
-अणु
-	वापस cpu_smt_control != CPU_SMT_FORCE_DISABLED &&
+/* Returns true if SMT is not supported of forcefully (irreversibly) disabled */
+bool cpu_smt_possible(void)
+{
+	return cpu_smt_control != CPU_SMT_FORCE_DISABLED &&
 		cpu_smt_control != CPU_SMT_NOT_SUPPORTED;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cpu_smt_possible);
-#अन्यथा
-अटल अंतरभूत bool cpu_smt_allowed(अचिन्हित पूर्णांक cpu) अणु वापस true; पूर्ण
-#पूर्ण_अगर
+#else
+static inline bool cpu_smt_allowed(unsigned int cpu) { return true; }
+#endif
 
-अटल अंतरभूत क्रमागत cpuhp_state
-cpuhp_set_state(काष्ठा cpuhp_cpu_state *st, क्रमागत cpuhp_state target)
-अणु
-	क्रमागत cpuhp_state prev_state = st->state;
+static inline enum cpuhp_state
+cpuhp_set_state(struct cpuhp_cpu_state *st, enum cpuhp_state target)
+{
+	enum cpuhp_state prev_state = st->state;
 	bool bringup = st->state < target;
 
 	st->rollback = false;
-	st->last = शून्य;
+	st->last = NULL;
 
 	st->target = target;
 	st->single = false;
 	st->bringup = bringup;
-	अगर (cpu_dying(st->cpu) != !bringup)
+	if (cpu_dying(st->cpu) != !bringup)
 		set_cpu_dying(st->cpu, !bringup);
 
-	वापस prev_state;
-पूर्ण
+	return prev_state;
+}
 
-अटल अंतरभूत व्योम
-cpuhp_reset_state(काष्ठा cpuhp_cpu_state *st, क्रमागत cpuhp_state prev_state)
-अणु
+static inline void
+cpuhp_reset_state(struct cpuhp_cpu_state *st, enum cpuhp_state prev_state)
+{
 	bool bringup = !st->bringup;
 
 	st->target = prev_state;
 
 	/*
-	 * Alपढ़ोy rolling back. No need invert the bringup value or to change
+	 * Already rolling back. No need invert the bringup value or to change
 	 * the current state.
 	 */
-	अगर (st->rollback)
-		वापस;
+	if (st->rollback)
+		return;
 
 	st->rollback = true;
 
 	/*
-	 * If we have st->last we need to unकरो partial multi_instance of this
-	 * state first. Otherwise start unकरो at the previous state.
+	 * If we have st->last we need to undo partial multi_instance of this
+	 * state first. Otherwise start undo at the previous state.
 	 */
-	अगर (!st->last) अणु
-		अगर (st->bringup)
+	if (!st->last) {
+		if (st->bringup)
 			st->state--;
-		अन्यथा
+		else
 			st->state++;
-	पूर्ण
+	}
 
 	st->bringup = bringup;
-	अगर (cpu_dying(st->cpu) != !bringup)
+	if (cpu_dying(st->cpu) != !bringup)
 		set_cpu_dying(st->cpu, !bringup);
-पूर्ण
+}
 
-/* Regular hotplug invocation of the AP hotplug thपढ़ो */
-अटल व्योम __cpuhp_kick_ap(काष्ठा cpuhp_cpu_state *st)
-अणु
-	अगर (!st->single && st->state == st->target)
-		वापस;
+/* Regular hotplug invocation of the AP hotplug thread */
+static void __cpuhp_kick_ap(struct cpuhp_cpu_state *st)
+{
+	if (!st->single && st->state == st->target)
+		return;
 
 	st->result = 0;
 	/*
-	 * Make sure the above stores are visible beक्रमe should_run becomes
-	 * true. Paired with the mb() above in cpuhp_thपढ़ो_fun()
+	 * Make sure the above stores are visible before should_run becomes
+	 * true. Paired with the mb() above in cpuhp_thread_fun()
 	 */
 	smp_mb();
 	st->should_run = true;
-	wake_up_process(st->thपढ़ो);
-	रुको_क्रम_ap_thपढ़ो(st, st->bringup);
-पूर्ण
+	wake_up_process(st->thread);
+	wait_for_ap_thread(st, st->bringup);
+}
 
-अटल पूर्णांक cpuhp_kick_ap(काष्ठा cpuhp_cpu_state *st, क्रमागत cpuhp_state target)
-अणु
-	क्रमागत cpuhp_state prev_state;
-	पूर्णांक ret;
+static int cpuhp_kick_ap(struct cpuhp_cpu_state *st, enum cpuhp_state target)
+{
+	enum cpuhp_state prev_state;
+	int ret;
 
 	prev_state = cpuhp_set_state(st, target);
 	__cpuhp_kick_ap(st);
-	अगर ((ret = st->result)) अणु
+	if ((ret = st->result)) {
 		cpuhp_reset_state(st, prev_state);
 		__cpuhp_kick_ap(st);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bringup_रुको_क्रम_ap(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+static int bringup_wait_for_ap(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
 
-	/* Wait क्रम the CPU to reach CPUHP_AP_ONLINE_IDLE */
-	रुको_क्रम_ap_thपढ़ो(st, true);
-	अगर (WARN_ON_ONCE((!cpu_online(cpu))))
-		वापस -ECANCELED;
+	/* Wait for the CPU to reach CPUHP_AP_ONLINE_IDLE */
+	wait_for_ap_thread(st, true);
+	if (WARN_ON_ONCE((!cpu_online(cpu))))
+		return -ECANCELED;
 
-	/* Unpark the hotplug thपढ़ो of the target cpu */
-	kthपढ़ो_unpark(st->thपढ़ो);
+	/* Unpark the hotplug thread of the target cpu */
+	kthread_unpark(st->thread);
 
 	/*
 	 * SMT soft disabling on X86 requires to bring the CPU out of the
 	 * BIOS 'wait for SIPI' state in order to set the CR4.MCE bit.  The
-	 * CPU marked itself as booted_once in notअगरy_cpu_starting() so the
-	 * cpu_smt_allowed() check will now वापस false अगर this is not the
+	 * CPU marked itself as booted_once in notify_cpu_starting() so the
+	 * cpu_smt_allowed() check will now return false if this is not the
 	 * primary sibling.
 	 */
-	अगर (!cpu_smt_allowed(cpu))
-		वापस -ECANCELED;
+	if (!cpu_smt_allowed(cpu))
+		return -ECANCELED;
 
-	अगर (st->target <= CPUHP_AP_ONLINE_IDLE)
-		वापस 0;
+	if (st->target <= CPUHP_AP_ONLINE_IDLE)
+		return 0;
 
-	वापस cpuhp_kick_ap(st, st->target);
-पूर्ण
+	return cpuhp_kick_ap(st, st->target);
+}
 
-अटल पूर्णांक bringup_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *idle = idle_thपढ़ो_get(cpu);
-	पूर्णांक ret;
+static int bringup_cpu(unsigned int cpu)
+{
+	struct task_struct *idle = idle_thread_get(cpu);
+	int ret;
 
 	/*
 	 * Some architectures have to walk the irq descriptors to
-	 * setup the vector space क्रम the cpu which comes online.
-	 * Prevent irq alloc/मुक्त across the bringup.
+	 * setup the vector space for the cpu which comes online.
+	 * Prevent irq alloc/free across the bringup.
 	 */
 	irq_lock_sparse();
 
-	/* Arch-specअगरic enabling code. */
+	/* Arch-specific enabling code. */
 	ret = __cpu_up(cpu, idle);
 	irq_unlock_sparse();
-	अगर (ret)
-		वापस ret;
-	वापस bringup_रुको_क्रम_ap(cpu);
-पूर्ण
+	if (ret)
+		return ret;
+	return bringup_wait_for_ap(cpu);
+}
 
-अटल पूर्णांक finish_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *idle = idle_thपढ़ो_get(cpu);
-	काष्ठा mm_काष्ठा *mm = idle->active_mm;
+static int finish_cpu(unsigned int cpu)
+{
+	struct task_struct *idle = idle_thread_get(cpu);
+	struct mm_struct *mm = idle->active_mm;
 
 	/*
-	 * idle_task_निकास() will have चयनed to &init_mm, now
-	 * clean up any reमुख्यing active_mm state.
+	 * idle_task_exit() will have switched to &init_mm, now
+	 * clean up any remaining active_mm state.
 	 */
-	अगर (mm != &init_mm)
+	if (mm != &init_mm)
 		idle->active_mm = &init_mm;
 	mmdrop(mm);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Hotplug state machine related functions
  */
 
 /*
- * Get the next state to run. Empty ones will be skipped. Returns true अगर a
+ * Get the next state to run. Empty ones will be skipped. Returns true if a
  * state must be run.
  *
- * st->state will be modअगरied ahead of समय, to match state_to_run, as अगर it
- * has alपढ़ोy ran.
+ * st->state will be modified ahead of time, to match state_to_run, as if it
+ * has already ran.
  */
-अटल bool cpuhp_next_state(bool bringup,
-			     क्रमागत cpuhp_state *state_to_run,
-			     काष्ठा cpuhp_cpu_state *st,
-			     क्रमागत cpuhp_state target)
-अणु
-	करो अणु
-		अगर (bringup) अणु
-			अगर (st->state >= target)
-				वापस false;
+static bool cpuhp_next_state(bool bringup,
+			     enum cpuhp_state *state_to_run,
+			     struct cpuhp_cpu_state *st,
+			     enum cpuhp_state target)
+{
+	do {
+		if (bringup) {
+			if (st->state >= target)
+				return false;
 
 			*state_to_run = ++st->state;
-		पूर्ण अन्यथा अणु
-			अगर (st->state <= target)
-				वापस false;
+		} else {
+			if (st->state <= target)
+				return false;
 
 			*state_to_run = st->state--;
-		पूर्ण
+		}
 
-		अगर (!cpuhp_step_empty(bringup, cpuhp_get_step(*state_to_run)))
-			अवरोध;
-	पूर्ण जबतक (true);
+		if (!cpuhp_step_empty(bringup, cpuhp_get_step(*state_to_run)))
+			break;
+	} while (true);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक cpuhp_invoke_callback_range(bool bringup,
-				       अचिन्हित पूर्णांक cpu,
-				       काष्ठा cpuhp_cpu_state *st,
-				       क्रमागत cpuhp_state target)
-अणु
-	क्रमागत cpuhp_state state;
-	पूर्णांक err = 0;
+static int cpuhp_invoke_callback_range(bool bringup,
+				       unsigned int cpu,
+				       struct cpuhp_cpu_state *st,
+				       enum cpuhp_state target)
+{
+	enum cpuhp_state state;
+	int err = 0;
 
-	जबतक (cpuhp_next_state(bringup, &state, st, target)) अणु
-		err = cpuhp_invoke_callback(cpu, state, bringup, शून्य, शून्य);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+	while (cpuhp_next_state(bringup, &state, st, target)) {
+		err = cpuhp_invoke_callback(cpu, state, bringup, NULL, NULL);
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत bool can_rollback_cpu(काष्ठा cpuhp_cpu_state *st)
-अणु
-	अगर (IS_ENABLED(CONFIG_HOTPLUG_CPU))
-		वापस true;
+static inline bool can_rollback_cpu(struct cpuhp_cpu_state *st)
+{
+	if (IS_ENABLED(CONFIG_HOTPLUG_CPU))
+		return true;
 	/*
-	 * When CPU hotplug is disabled, then taking the CPU करोwn is not
-	 * possible because takeकरोwn_cpu() and the architecture and
-	 * subप्रणाली specअगरic mechanisms are not available. So the CPU
+	 * When CPU hotplug is disabled, then taking the CPU down is not
+	 * possible because takedown_cpu() and the architecture and
+	 * subsystem specific mechanisms are not available. So the CPU
 	 * which would be completely unplugged again needs to stay around
 	 * in the current state.
 	 */
-	वापस st->state <= CPUHP_BRINGUP_CPU;
-पूर्ण
+	return st->state <= CPUHP_BRINGUP_CPU;
+}
 
-अटल पूर्णांक cpuhp_up_callbacks(अचिन्हित पूर्णांक cpu, काष्ठा cpuhp_cpu_state *st,
-			      क्रमागत cpuhp_state target)
-अणु
-	क्रमागत cpuhp_state prev_state = st->state;
-	पूर्णांक ret = 0;
+static int cpuhp_up_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
+			      enum cpuhp_state target)
+{
+	enum cpuhp_state prev_state = st->state;
+	int ret = 0;
 
 	ret = cpuhp_invoke_callback_range(true, cpu, st, target);
-	अगर (ret) अणु
+	if (ret) {
 		cpuhp_reset_state(st, prev_state);
-		अगर (can_rollback_cpu(st))
+		if (can_rollback_cpu(st))
 			WARN_ON(cpuhp_invoke_callback_range(false, cpu, st,
 							    prev_state));
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
- * The cpu hotplug thपढ़ोs manage the bringup and tearकरोwn of the cpus
+ * The cpu hotplug threads manage the bringup and teardown of the cpus
  */
-अटल व्योम cpuhp_create(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+static void cpuhp_create(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
 
-	init_completion(&st->करोne_up);
-	init_completion(&st->करोne_करोwn);
+	init_completion(&st->done_up);
+	init_completion(&st->done_down);
 	st->cpu = cpu;
-पूर्ण
+}
 
-अटल पूर्णांक cpuhp_should_run(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+static int cpuhp_should_run(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
 
-	वापस st->should_run;
-पूर्ण
+	return st->should_run;
+}
 
 /*
- * Execute tearकरोwn/startup callbacks on the plugged cpu. Also used to invoke
- * callbacks when a state माला_लो [un]installed at runसमय.
+ * Execute teardown/startup callbacks on the plugged cpu. Also used to invoke
+ * callbacks when a state gets [un]installed at runtime.
  *
- * Each invocation of this function by the smpboot thपढ़ो करोes a single AP
+ * Each invocation of this function by the smpboot thread does a single AP
  * state callback.
  *
  * It has 3 modes of operation:
  *  - single: runs st->cb_state
- *  - up:     runs ++st->state, जबतक st->state < st->target
- *  - करोwn:   runs st->state--, जबतक st->state > st->target
+ *  - up:     runs ++st->state, while st->state < st->target
+ *  - down:   runs st->state--, while st->state > st->target
  *
  * When complete or on error, should_run is cleared and the completion is fired.
  */
-अटल व्योम cpuhp_thपढ़ो_fun(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+static void cpuhp_thread_fun(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
 	bool bringup = st->bringup;
-	क्रमागत cpuhp_state state;
+	enum cpuhp_state state;
 
-	अगर (WARN_ON_ONCE(!st->should_run))
-		वापस;
+	if (WARN_ON_ONCE(!st->should_run))
+		return;
 
 	/*
-	 * ACQUIRE क्रम the cpuhp_should_run() load of ->should_run. Ensures
-	 * that अगर we see ->should_run we also see the rest of the state.
+	 * ACQUIRE for the cpuhp_should_run() load of ->should_run. Ensures
+	 * that if we see ->should_run we also see the rest of the state.
 	 */
 	smp_mb();
 
 	/*
 	 * The BP holds the hotplug lock, but we're now running on the AP,
-	 * ensure that anybody निश्चितing the lock is held, will actually find
+	 * ensure that anybody asserting the lock is held, will actually find
 	 * it so.
 	 */
 	lockdep_acquire_cpus_lock();
 	cpuhp_lock_acquire(bringup);
 
-	अगर (st->single) अणु
+	if (st->single) {
 		state = st->cb_state;
 		st->should_run = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		st->should_run = cpuhp_next_state(bringup, &state, st, st->target);
-		अगर (!st->should_run)
-			जाओ end;
-	पूर्ण
+		if (!st->should_run)
+			goto end;
+	}
 
 	WARN_ON_ONCE(!cpuhp_is_ap_state(state));
 
-	अगर (cpuhp_is_atomic_state(state)) अणु
+	if (cpuhp_is_atomic_state(state)) {
 		local_irq_disable();
 		st->result = cpuhp_invoke_callback(cpu, state, bringup, st->node, &st->last);
 		local_irq_enable();
@@ -766,38 +765,38 @@ cpuhp_reset_state(काष्ठा cpuhp_cpu_state *st, क्रमागत 
 		 * STARTING/DYING must not fail!
 		 */
 		WARN_ON_ONCE(st->result);
-	पूर्ण अन्यथा अणु
+	} else {
 		st->result = cpuhp_invoke_callback(cpu, state, bringup, st->node, &st->last);
-	पूर्ण
+	}
 
-	अगर (st->result) अणु
+	if (st->result) {
 		/*
 		 * If we fail on a rollback, we're up a creek without no
-		 * paddle, no way क्रमward, no way back. We loose, thanks क्रम
+		 * paddle, no way forward, no way back. We loose, thanks for
 		 * playing.
 		 */
 		WARN_ON_ONCE(st->rollback);
 		st->should_run = false;
-	पूर्ण
+	}
 
 end:
 	cpuhp_lock_release(bringup);
 	lockdep_release_cpus_lock();
 
-	अगर (!st->should_run)
-		complete_ap_thपढ़ो(st, bringup);
-पूर्ण
+	if (!st->should_run)
+		complete_ap_thread(st, bringup);
+}
 
 /* Invoke a single callback on a remote cpu */
-अटल पूर्णांक
-cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpuhp_state state, bool bringup,
-			 काष्ठा hlist_node *node)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	पूर्णांक ret;
+static int
+cpuhp_invoke_ap_callback(int cpu, enum cpuhp_state state, bool bringup,
+			 struct hlist_node *node)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	int ret;
 
-	अगर (!cpu_online(cpu))
-		वापस 0;
+	if (!cpu_online(cpu))
+		return 0;
 
 	cpuhp_lock_acquire(false);
 	cpuhp_lock_release(false);
@@ -806,14 +805,14 @@ cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpu
 	cpuhp_lock_release(true);
 
 	/*
-	 * If we are up and running, use the hotplug thपढ़ो. For early calls
-	 * we invoke the thपढ़ो function directly.
+	 * If we are up and running, use the hotplug thread. For early calls
+	 * we invoke the thread function directly.
 	 */
-	अगर (!st->thपढ़ो)
-		वापस cpuhp_invoke_callback(cpu, state, bringup, node, शून्य);
+	if (!st->thread)
+		return cpuhp_invoke_callback(cpu, state, bringup, node, NULL);
 
 	st->rollback = false;
-	st->last = शून्य;
+	st->last = NULL;
 
 	st->node = node;
 	st->bringup = bringup;
@@ -823,28 +822,28 @@ cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpu
 	__cpuhp_kick_ap(st);
 
 	/*
-	 * If we failed and did a partial, करो a rollback.
+	 * If we failed and did a partial, do a rollback.
 	 */
-	अगर ((ret = st->result) && st->last) अणु
+	if ((ret = st->result) && st->last) {
 		st->rollback = true;
 		st->bringup = !bringup;
 
 		__cpuhp_kick_ap(st);
-	पूर्ण
+	}
 
 	/*
 	 * Clean up the leftovers so the next hotplug operation wont use stale
 	 * data.
 	 */
-	st->node = st->last = शून्य;
-	वापस ret;
-पूर्ण
+	st->node = st->last = NULL;
+	return ret;
+}
 
-अटल पूर्णांक cpuhp_kick_ap_work(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	क्रमागत cpuhp_state prev_state = st->state;
-	पूर्णांक ret;
+static int cpuhp_kick_ap_work(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	enum cpuhp_state prev_state = st->state;
+	int ret;
 
 	cpuhp_lock_acquire(false);
 	cpuhp_lock_release(false);
@@ -854,92 +853,92 @@ cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpu
 
 	trace_cpuhp_enter(cpu, st->target, prev_state, cpuhp_kick_ap_work);
 	ret = cpuhp_kick_ap(st, st->target);
-	trace_cpuhp_निकास(cpu, st->state, prev_state, ret);
+	trace_cpuhp_exit(cpu, st->state, prev_state, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा smp_hotplug_thपढ़ो cpuhp_thपढ़ोs = अणु
-	.store			= &cpuhp_state.thपढ़ो,
+static struct smp_hotplug_thread cpuhp_threads = {
+	.store			= &cpuhp_state.thread,
 	.create			= &cpuhp_create,
-	.thपढ़ो_should_run	= cpuhp_should_run,
-	.thपढ़ो_fn		= cpuhp_thपढ़ो_fun,
-	.thपढ़ो_comm		= "cpuhp/%u",
+	.thread_should_run	= cpuhp_should_run,
+	.thread_fn		= cpuhp_thread_fun,
+	.thread_comm		= "cpuhp/%u",
 	.selfparking		= true,
-पूर्ण;
+};
 
-व्योम __init cpuhp_thपढ़ोs_init(व्योम)
-अणु
-	BUG_ON(smpboot_रेजिस्टर_percpu_thपढ़ो(&cpuhp_thपढ़ोs));
-	kthपढ़ो_unpark(this_cpu_पढ़ो(cpuhp_state.thपढ़ो));
-पूर्ण
+void __init cpuhp_threads_init(void)
+{
+	BUG_ON(smpboot_register_percpu_thread(&cpuhp_threads));
+	kthread_unpark(this_cpu_read(cpuhp_state.thread));
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-#अगर_अघोषित arch_clear_mm_cpumask_cpu
-#घोषणा arch_clear_mm_cpumask_cpu(cpu, mm) cpumask_clear_cpu(cpu, mm_cpumask(mm))
-#पूर्ण_अगर
+#ifdef CONFIG_HOTPLUG_CPU
+#ifndef arch_clear_mm_cpumask_cpu
+#define arch_clear_mm_cpumask_cpu(cpu, mm) cpumask_clear_cpu(cpu, mm_cpumask(mm))
+#endif
 
 /**
- * clear_tasks_mm_cpumask - Safely clear tasks' mm_cpumask क्रम a CPU
+ * clear_tasks_mm_cpumask - Safely clear tasks' mm_cpumask for a CPU
  * @cpu: a CPU id
  *
- * This function walks all processes, finds a valid mm काष्ठा क्रम each one and
+ * This function walks all processes, finds a valid mm struct for each one and
  * then clears a corresponding bit in mm's cpumask.  While this all sounds
- * trivial, there are various non-obvious corner हालs, which this function
+ * trivial, there are various non-obvious corner cases, which this function
  * tries to solve in a safe manner.
  *
  * Also note that the function uses a somewhat relaxed locking scheme, so it may
- * be called only क्रम an alपढ़ोy offlined CPU.
+ * be called only for an already offlined CPU.
  */
-व्योम clear_tasks_mm_cpumask(पूर्णांक cpu)
-अणु
-	काष्ठा task_काष्ठा *p;
+void clear_tasks_mm_cpumask(int cpu)
+{
+	struct task_struct *p;
 
 	/*
-	 * This function is called after the cpu is taken करोwn and marked
+	 * This function is called after the cpu is taken down and marked
 	 * offline, so its not like new tasks will ever get this cpu set in
 	 * their mm mask. -- Peter Zijlstra
-	 * Thus, we may use rcu_पढ़ो_lock() here, instead of grabbing
+	 * Thus, we may use rcu_read_lock() here, instead of grabbing
 	 * full-fledged tasklist_lock.
 	 */
 	WARN_ON(cpu_online(cpu));
-	rcu_पढ़ो_lock();
-	क्रम_each_process(p) अणु
-		काष्ठा task_काष्ठा *t;
+	rcu_read_lock();
+	for_each_process(p) {
+		struct task_struct *t;
 
 		/*
-		 * Main thपढ़ो might निकास, but other thपढ़ोs may still have
+		 * Main thread might exit, but other threads may still have
 		 * a valid mm. Find one.
 		 */
 		t = find_lock_task_mm(p);
-		अगर (!t)
-			जारी;
+		if (!t)
+			continue;
 		arch_clear_mm_cpumask_cpu(cpu, t->mm);
 		task_unlock(t);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
-/* Take this CPU करोwn. */
-अटल पूर्णांक take_cpu_करोwn(व्योम *_param)
-अणु
-	काष्ठा cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
-	क्रमागत cpuhp_state target = max((पूर्णांक)st->target, CPUHP_AP_OFFLINE);
-	पूर्णांक err, cpu = smp_processor_id();
-	पूर्णांक ret;
+/* Take this CPU down. */
+static int take_cpu_down(void *_param)
+{
+	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+	enum cpuhp_state target = max((int)st->target, CPUHP_AP_OFFLINE);
+	int err, cpu = smp_processor_id();
+	int ret;
 
-	/* Ensure this CPU करोesn't handle any more पूर्णांकerrupts. */
+	/* Ensure this CPU doesn't handle any more interrupts. */
 	err = __cpu_disable();
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/*
 	 * Must be called from CPUHP_TEARDOWN_CPU, which means, as we are going
-	 * करोwn, that the current state is CPUHP_TEARDOWN_CPU - 1.
+	 * down, that the current state is CPUHP_TEARDOWN_CPU - 1.
 	 */
 	WARN_ON(st->state != (CPUHP_TEARDOWN_CPU - 1));
 
-	/* Invoke the क्रमmer CPU_DYING callbacks */
+	/* Invoke the former CPU_DYING callbacks */
 	ret = cpuhp_invoke_callback_range(false, cpu, st, target);
 
 	/*
@@ -947,74 +946,74 @@ cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpu
 	 */
 	WARN_ON_ONCE(ret);
 
-	/* Give up समयkeeping duties */
-	tick_hanकरोver_करो_समयr();
-	/* Remove CPU from समयr broadcasting */
+	/* Give up timekeeping duties */
+	tick_handover_do_timer();
+	/* Remove CPU from timer broadcasting */
 	tick_offline_cpu(cpu);
-	/* Park the stopper thपढ़ो */
+	/* Park the stopper thread */
 	stop_machine_park(cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक takeकरोwn_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	पूर्णांक err;
+static int takedown_cpu(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	int err;
 
-	/* Park the smpboot thपढ़ोs */
-	kthपढ़ो_park(per_cpu_ptr(&cpuhp_state, cpu)->thपढ़ो);
+	/* Park the smpboot threads */
+	kthread_park(per_cpu_ptr(&cpuhp_state, cpu)->thread);
 
 	/*
-	 * Prevent irq alloc/मुक्त जबतक the dying cpu reorganizes the
-	 * पूर्णांकerrupt affinities.
+	 * Prevent irq alloc/free while the dying cpu reorganizes the
+	 * interrupt affinities.
 	 */
 	irq_lock_sparse();
 
 	/*
 	 * So now all preempt/rcu users must observe !cpu_active().
 	 */
-	err = stop_machine_cpuslocked(take_cpu_करोwn, शून्य, cpumask_of(cpu));
-	अगर (err) अणु
+	err = stop_machine_cpuslocked(take_cpu_down, NULL, cpumask_of(cpu));
+	if (err) {
 		/* CPU refused to die */
 		irq_unlock_sparse();
-		/* Unpark the hotplug thपढ़ो so we can rollback there */
-		kthपढ़ो_unpark(per_cpu_ptr(&cpuhp_state, cpu)->thपढ़ो);
-		वापस err;
-	पूर्ण
+		/* Unpark the hotplug thread so we can rollback there */
+		kthread_unpark(per_cpu_ptr(&cpuhp_state, cpu)->thread);
+		return err;
+	}
 	BUG_ON(cpu_online(cpu));
 
 	/*
-	 * The tearकरोwn callback क्रम CPUHP_AP_SCHED_STARTING will have हटाओd
+	 * The teardown callback for CPUHP_AP_SCHED_STARTING will have removed
 	 * all runnable tasks from the CPU, there's only the idle task left now
-	 * that the migration thपढ़ो is करोne करोing the stop_machine thing.
+	 * that the migration thread is done doing the stop_machine thing.
 	 *
-	 * Wait क्रम the stop thपढ़ो to go away.
+	 * Wait for the stop thread to go away.
 	 */
-	रुको_क्रम_ap_thपढ़ो(st, false);
+	wait_for_ap_thread(st, false);
 	BUG_ON(st->state != CPUHP_AP_IDLE_DEAD);
 
-	/* Interrupts are moved away from the dying cpu, reenable alloc/मुक्त */
+	/* Interrupts are moved away from the dying cpu, reenable alloc/free */
 	irq_unlock_sparse();
 
 	hotplug_cpu__broadcast_tick_pull(cpu);
-	/* This actually समाप्तs the CPU. */
+	/* This actually kills the CPU. */
 	__cpu_die(cpu);
 
 	tick_cleanup_dead_cpu(cpu);
 	rcutree_migrate_callbacks(cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cpuhp_complete_idle_dead(व्योम *arg)
-अणु
-	काष्ठा cpuhp_cpu_state *st = arg;
+static void cpuhp_complete_idle_dead(void *arg)
+{
+	struct cpuhp_cpu_state *st = arg;
 
-	complete_ap_thपढ़ो(st, false);
-पूर्ण
+	complete_ap_thread(st, false);
+}
 
-व्योम cpuhp_report_idle_dead(व्योम)
-अणु
-	काष्ठा cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+void cpuhp_report_idle_dead(void)
+{
+	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
 
 	BUG_ON(st->state != CPUHP_AP_OFFLINE);
 	rcu_report_dead(smp_processor_id());
@@ -1025,161 +1024,161 @@ cpuhp_invoke_ap_callback(पूर्णांक cpu, क्रमागत cpu
 	 */
 	smp_call_function_single(cpumask_first(cpu_online_mask),
 				 cpuhp_complete_idle_dead, st, 0);
-पूर्ण
+}
 
-अटल पूर्णांक cpuhp_करोwn_callbacks(अचिन्हित पूर्णांक cpu, काष्ठा cpuhp_cpu_state *st,
-				क्रमागत cpuhp_state target)
-अणु
-	क्रमागत cpuhp_state prev_state = st->state;
-	पूर्णांक ret = 0;
+static int cpuhp_down_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
+				enum cpuhp_state target)
+{
+	enum cpuhp_state prev_state = st->state;
+	int ret = 0;
 
 	ret = cpuhp_invoke_callback_range(false, cpu, st, target);
-	अगर (ret) अणु
+	if (ret) {
 
 		cpuhp_reset_state(st, prev_state);
 
-		अगर (st->state < prev_state)
+		if (st->state < prev_state)
 			WARN_ON(cpuhp_invoke_callback_range(true, cpu, st,
 							    prev_state));
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Requires cpu_add_हटाओ_lock to be held */
-अटल पूर्णांक __ref _cpu_करोwn(अचिन्हित पूर्णांक cpu, पूर्णांक tasks_frozen,
-			   क्रमागत cpuhp_state target)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	पूर्णांक prev_state, ret = 0;
+/* Requires cpu_add_remove_lock to be held */
+static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
+			   enum cpuhp_state target)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	int prev_state, ret = 0;
 
-	अगर (num_online_cpus() == 1)
-		वापस -EBUSY;
+	if (num_online_cpus() == 1)
+		return -EBUSY;
 
-	अगर (!cpu_present(cpu))
-		वापस -EINVAL;
+	if (!cpu_present(cpu))
+		return -EINVAL;
 
-	cpus_ग_लिखो_lock();
+	cpus_write_lock();
 
 	cpuhp_tasks_frozen = tasks_frozen;
 
 	prev_state = cpuhp_set_state(st, target);
 	/*
-	 * If the current CPU state is in the range of the AP hotplug thपढ़ो,
-	 * then we need to kick the thपढ़ो.
+	 * If the current CPU state is in the range of the AP hotplug thread,
+	 * then we need to kick the thread.
 	 */
-	अगर (st->state > CPUHP_TEARDOWN_CPU) अणु
-		st->target = max((पूर्णांक)target, CPUHP_TEARDOWN_CPU);
+	if (st->state > CPUHP_TEARDOWN_CPU) {
+		st->target = max((int)target, CPUHP_TEARDOWN_CPU);
 		ret = cpuhp_kick_ap_work(cpu);
 		/*
-		 * The AP side has करोne the error rollback alपढ़ोy. Just
-		 * वापस the error code..
+		 * The AP side has done the error rollback already. Just
+		 * return the error code..
 		 */
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		/*
 		 * We might have stopped still in the range of the AP hotplug
-		 * thपढ़ो. Nothing to करो anymore.
+		 * thread. Nothing to do anymore.
 		 */
-		अगर (st->state > CPUHP_TEARDOWN_CPU)
-			जाओ out;
+		if (st->state > CPUHP_TEARDOWN_CPU)
+			goto out;
 
 		st->target = target;
-	पूर्ण
+	}
 	/*
-	 * The AP brought itself करोwn to CPUHP_TEARDOWN_CPU. So we need
-	 * to करो the further cleanups.
+	 * The AP brought itself down to CPUHP_TEARDOWN_CPU. So we need
+	 * to do the further cleanups.
 	 */
-	ret = cpuhp_करोwn_callbacks(cpu, st, target);
-	अगर (ret && st->state < prev_state) अणु
-		अगर (st->state == CPUHP_TEARDOWN_CPU) अणु
+	ret = cpuhp_down_callbacks(cpu, st, target);
+	if (ret && st->state < prev_state) {
+		if (st->state == CPUHP_TEARDOWN_CPU) {
 			cpuhp_reset_state(st, prev_state);
 			__cpuhp_kick_ap(st);
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN(1, "DEAD callback error for CPU%d", cpu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	cpus_ग_लिखो_unlock();
+	cpus_write_unlock();
 	/*
-	 * Do post unplug cleanup. This is still रक्षित against
-	 * concurrent CPU hotplug via cpu_add_हटाओ_lock.
+	 * Do post unplug cleanup. This is still protected against
+	 * concurrent CPU hotplug via cpu_add_remove_lock.
 	 */
 	lockup_detector_cleanup();
 	arch_smt_update();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpu_करोwn_maps_locked(अचिन्हित पूर्णांक cpu, क्रमागत cpuhp_state target)
-अणु
-	अगर (cpu_hotplug_disabled)
-		वापस -EBUSY;
-	वापस _cpu_करोwn(cpu, 0, target);
-पूर्ण
+static int cpu_down_maps_locked(unsigned int cpu, enum cpuhp_state target)
+{
+	if (cpu_hotplug_disabled)
+		return -EBUSY;
+	return _cpu_down(cpu, 0, target);
+}
 
-अटल पूर्णांक cpu_करोwn(अचिन्हित पूर्णांक cpu, क्रमागत cpuhp_state target)
-अणु
-	पूर्णांक err;
+static int cpu_down(unsigned int cpu, enum cpuhp_state target)
+{
+	int err;
 
 	cpu_maps_update_begin();
-	err = cpu_करोwn_maps_locked(cpu, target);
-	cpu_maps_update_करोne();
-	वापस err;
-पूर्ण
+	err = cpu_down_maps_locked(cpu, target);
+	cpu_maps_update_done();
+	return err;
+}
 
 /**
- * cpu_device_करोwn - Bring करोwn a cpu device
- * @dev: Poपूर्णांकer to the cpu device to offline
+ * cpu_device_down - Bring down a cpu device
+ * @dev: Pointer to the cpu device to offline
  *
- * This function is meant to be used by device core cpu subप्रणाली only.
+ * This function is meant to be used by device core cpu subsystem only.
  *
- * Other subप्रणालीs should use हटाओ_cpu() instead.
+ * Other subsystems should use remove_cpu() instead.
  */
-पूर्णांक cpu_device_करोwn(काष्ठा device *dev)
-अणु
-	वापस cpu_करोwn(dev->id, CPUHP_OFFLINE);
-पूर्ण
+int cpu_device_down(struct device *dev)
+{
+	return cpu_down(dev->id, CPUHP_OFFLINE);
+}
 
-पूर्णांक हटाओ_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret;
+int remove_cpu(unsigned int cpu)
+{
+	int ret;
 
 	lock_device_hotplug();
 	ret = device_offline(get_cpu_device(cpu));
 	unlock_device_hotplug();
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(हटाओ_cpu);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(remove_cpu);
 
-व्योम smp_shutकरोwn_nonboot_cpus(अचिन्हित पूर्णांक primary_cpu)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	पूर्णांक error;
+void smp_shutdown_nonboot_cpus(unsigned int primary_cpu)
+{
+	unsigned int cpu;
+	int error;
 
 	cpu_maps_update_begin();
 
 	/*
 	 * Make certain the cpu I'm about to reboot on is online.
 	 *
-	 * This is अंतरभूत to what migrate_to_reboot_cpu() alपढ़ोy करो.
+	 * This is inline to what migrate_to_reboot_cpu() already do.
 	 */
-	अगर (!cpu_online(primary_cpu))
+	if (!cpu_online(primary_cpu))
 		primary_cpu = cpumask_first(cpu_online_mask);
 
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (cpu == primary_cpu)
-			जारी;
+	for_each_online_cpu(cpu) {
+		if (cpu == primary_cpu)
+			continue;
 
-		error = cpu_करोwn_maps_locked(cpu, CPUHP_OFFLINE);
-		अगर (error) अणु
+		error = cpu_down_maps_locked(cpu, CPUHP_OFFLINE);
+		if (error) {
 			pr_err("Failed to offline CPU%d - error=%d",
 				cpu, error);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
 	 * Ensure all but the reboot CPU are offline.
@@ -1187,31 +1186,31 @@ EXPORT_SYMBOL_GPL(हटाओ_cpu);
 	BUG_ON(num_online_cpus() > 1);
 
 	/*
-	 * Make sure the CPUs won't be enabled by someone अन्यथा after this
-	 * poपूर्णांक. Kexec will reboot to a new kernel लघुly resetting
-	 * everything aदीर्घ the way.
+	 * Make sure the CPUs won't be enabled by someone else after this
+	 * point. Kexec will reboot to a new kernel shortly resetting
+	 * everything along the way.
 	 */
 	cpu_hotplug_disabled++;
 
-	cpu_maps_update_करोne();
-पूर्ण
+	cpu_maps_update_done();
+}
 
-#अन्यथा
-#घोषणा takeकरोwn_cpu		शून्य
-#पूर्ण_अगर /*CONFIG_HOTPLUG_CPU*/
+#else
+#define takedown_cpu		NULL
+#endif /*CONFIG_HOTPLUG_CPU*/
 
 /**
- * notअगरy_cpu_starting(cpu) - Invoke the callbacks on the starting CPU
+ * notify_cpu_starting(cpu) - Invoke the callbacks on the starting CPU
  * @cpu: cpu that just started
  *
- * It must be called by the arch code on the new cpu, beक्रमe the new cpu
- * enables पूर्णांकerrupts and beक्रमe the "boot" cpu वापसs from __cpu_up().
+ * It must be called by the arch code on the new cpu, before the new cpu
+ * enables interrupts and before the "boot" cpu returns from __cpu_up().
  */
-व्योम notअगरy_cpu_starting(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	क्रमागत cpuhp_state target = min((पूर्णांक)st->target, CPUHP_AP_ONLINE);
-	पूर्णांक ret;
+void notify_cpu_starting(unsigned int cpu)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	enum cpuhp_state target = min((int)st->target, CPUHP_AP_ONLINE);
+	int ret;
 
 	rcu_cpu_starting(cpu);	/* Enables RCU usage on this CPU. */
 	cpumask_set_cpu(cpu, &cpus_booted_once_mask);
@@ -1221,148 +1220,148 @@ EXPORT_SYMBOL_GPL(हटाओ_cpu);
 	 * STARTING must not fail!
 	 */
 	WARN_ON_ONCE(ret);
-पूर्ण
+}
 
 /*
  * Called from the idle task. Wake up the controlling task which brings the
- * hotplug thपढ़ो of the upcoming CPU up and then delegates the rest of the
- * online bringup to the hotplug thपढ़ो.
+ * hotplug thread of the upcoming CPU up and then delegates the rest of the
+ * online bringup to the hotplug thread.
  */
-व्योम cpuhp_online_idle(क्रमागत cpuhp_state state)
-अणु
-	काष्ठा cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+void cpuhp_online_idle(enum cpuhp_state state)
+{
+	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
 
-	/* Happens क्रम the boot cpu */
-	अगर (state != CPUHP_AP_ONLINE_IDLE)
-		वापस;
+	/* Happens for the boot cpu */
+	if (state != CPUHP_AP_ONLINE_IDLE)
+		return;
 
 	/*
-	 * Unpart the stopper thपढ़ो beक्रमe we start the idle loop (and start
+	 * Unpart the stopper thread before we start the idle loop (and start
 	 * scheduling); this ensures the stopper task is always available.
 	 */
 	stop_machine_unpark(smp_processor_id());
 
 	st->state = CPUHP_AP_ONLINE_IDLE;
-	complete_ap_thपढ़ो(st, true);
-पूर्ण
+	complete_ap_thread(st, true);
+}
 
-/* Requires cpu_add_हटाओ_lock to be held */
-अटल पूर्णांक _cpu_up(अचिन्हित पूर्णांक cpu, पूर्णांक tasks_frozen, क्रमागत cpuhp_state target)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-	काष्ठा task_काष्ठा *idle;
-	पूर्णांक ret = 0;
+/* Requires cpu_add_remove_lock to be held */
+static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+	struct task_struct *idle;
+	int ret = 0;
 
-	cpus_ग_लिखो_lock();
+	cpus_write_lock();
 
-	अगर (!cpu_present(cpu)) अणु
+	if (!cpu_present(cpu)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * The caller of cpu_up() might have raced with another
-	 * caller. Nothing to करो.
+	 * caller. Nothing to do.
 	 */
-	अगर (st->state >= target)
-		जाओ out;
+	if (st->state >= target)
+		goto out;
 
-	अगर (st->state == CPUHP_OFFLINE) अणु
-		/* Let it fail beक्रमe we try to bring the cpu up */
-		idle = idle_thपढ़ो_get(cpu);
-		अगर (IS_ERR(idle)) अणु
+	if (st->state == CPUHP_OFFLINE) {
+		/* Let it fail before we try to bring the cpu up */
+		idle = idle_thread_get(cpu);
+		if (IS_ERR(idle)) {
 			ret = PTR_ERR(idle);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	cpuhp_tasks_frozen = tasks_frozen;
 
 	cpuhp_set_state(st, target);
 	/*
-	 * If the current CPU state is in the range of the AP hotplug thपढ़ो,
-	 * then we need to kick the thपढ़ो once more.
+	 * If the current CPU state is in the range of the AP hotplug thread,
+	 * then we need to kick the thread once more.
 	 */
-	अगर (st->state > CPUHP_BRINGUP_CPU) अणु
+	if (st->state > CPUHP_BRINGUP_CPU) {
 		ret = cpuhp_kick_ap_work(cpu);
 		/*
-		 * The AP side has करोne the error rollback alपढ़ोy. Just
-		 * वापस the error code..
+		 * The AP side has done the error rollback already. Just
+		 * return the error code..
 		 */
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/*
 	 * Try to reach the target state. We max out on the BP at
-	 * CPUHP_BRINGUP_CPU. After that the AP hotplug thपढ़ो is
-	 * responsible क्रम bringing it up to the target state.
+	 * CPUHP_BRINGUP_CPU. After that the AP hotplug thread is
+	 * responsible for bringing it up to the target state.
 	 */
-	target = min((पूर्णांक)target, CPUHP_BRINGUP_CPU);
+	target = min((int)target, CPUHP_BRINGUP_CPU);
 	ret = cpuhp_up_callbacks(cpu, st, target);
 out:
-	cpus_ग_लिखो_unlock();
+	cpus_write_unlock();
 	arch_smt_update();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpu_up(अचिन्हित पूर्णांक cpu, क्रमागत cpuhp_state target)
-अणु
-	पूर्णांक err = 0;
+static int cpu_up(unsigned int cpu, enum cpuhp_state target)
+{
+	int err = 0;
 
-	अगर (!cpu_possible(cpu)) अणु
+	if (!cpu_possible(cpu)) {
 		pr_err("can't online cpu %d because it is not configured as may-hotadd at boot time\n",
 		       cpu);
-#अगर defined(CONFIG_IA64)
+#if defined(CONFIG_IA64)
 		pr_err("please check additional_cpus= boot parameter\n");
-#पूर्ण_अगर
-		वापस -EINVAL;
-	पूर्ण
+#endif
+		return -EINVAL;
+	}
 
 	err = try_online_node(cpu_to_node(cpu));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	cpu_maps_update_begin();
 
-	अगर (cpu_hotplug_disabled) अणु
+	if (cpu_hotplug_disabled) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
-	अगर (!cpu_smt_allowed(cpu)) अणु
+		goto out;
+	}
+	if (!cpu_smt_allowed(cpu)) {
 		err = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = _cpu_up(cpu, 0, target);
 out:
-	cpu_maps_update_करोne();
-	वापस err;
-पूर्ण
+	cpu_maps_update_done();
+	return err;
+}
 
 /**
  * cpu_device_up - Bring up a cpu device
- * @dev: Poपूर्णांकer to the cpu device to online
+ * @dev: Pointer to the cpu device to online
  *
- * This function is meant to be used by device core cpu subप्रणाली only.
+ * This function is meant to be used by device core cpu subsystem only.
  *
- * Other subप्रणालीs should use add_cpu() instead.
+ * Other subsystems should use add_cpu() instead.
  */
-पूर्णांक cpu_device_up(काष्ठा device *dev)
-अणु
-	वापस cpu_up(dev->id, CPUHP_ONLINE);
-पूर्ण
+int cpu_device_up(struct device *dev)
+{
+	return cpu_up(dev->id, CPUHP_ONLINE);
+}
 
-पूर्णांक add_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret;
+int add_cpu(unsigned int cpu)
+{
+	int ret;
 
 	lock_device_hotplug();
 	ret = device_online(get_cpu_device(cpu));
 	unlock_device_hotplug();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(add_cpu);
 
 /**
@@ -1371,780 +1370,780 @@ EXPORT_SYMBOL_GPL(add_cpu);
  *
  * On some architectures like arm64, we can hibernate on any CPU, but on
  * wake up the CPU we hibernated on might be offline as a side effect of
- * using maxcpus= क्रम example.
+ * using maxcpus= for example.
  */
-पूर्णांक bringup_hibernate_cpu(अचिन्हित पूर्णांक sleep_cpu)
-अणु
-	पूर्णांक ret;
+int bringup_hibernate_cpu(unsigned int sleep_cpu)
+{
+	int ret;
 
-	अगर (!cpu_online(sleep_cpu)) अणु
+	if (!cpu_online(sleep_cpu)) {
 		pr_info("Hibernated on a CPU that is offline! Bringing CPU up.\n");
 		ret = cpu_up(sleep_cpu, CPUHP_ONLINE);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("Failed to bring hibernate-CPU up!\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return ret;
+		}
+	}
+	return 0;
+}
 
-व्योम bringup_nonboot_cpus(अचिन्हित पूर्णांक setup_max_cpus)
-अणु
-	अचिन्हित पूर्णांक cpu;
+void bringup_nonboot_cpus(unsigned int setup_max_cpus)
+{
+	unsigned int cpu;
 
-	क्रम_each_present_cpu(cpu) अणु
-		अगर (num_online_cpus() >= setup_max_cpus)
-			अवरोध;
-		अगर (!cpu_online(cpu))
+	for_each_present_cpu(cpu) {
+		if (num_online_cpus() >= setup_max_cpus)
+			break;
+		if (!cpu_online(cpu))
 			cpu_up(cpu, CPUHP_ONLINE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP_SMP
-अटल cpumask_var_t frozen_cpus;
+#ifdef CONFIG_PM_SLEEP_SMP
+static cpumask_var_t frozen_cpus;
 
-पूर्णांक मुक्तze_secondary_cpus(पूर्णांक primary)
-अणु
-	पूर्णांक cpu, error = 0;
+int freeze_secondary_cpus(int primary)
+{
+	int cpu, error = 0;
 
 	cpu_maps_update_begin();
-	अगर (primary == -1) अणु
+	if (primary == -1) {
 		primary = cpumask_first(cpu_online_mask);
-		अगर (!housekeeping_cpu(primary, HK_FLAG_TIMER))
+		if (!housekeeping_cpu(primary, HK_FLAG_TIMER))
 			primary = housekeeping_any_cpu(HK_FLAG_TIMER);
-	पूर्ण अन्यथा अणु
-		अगर (!cpu_online(primary))
+	} else {
+		if (!cpu_online(primary))
 			primary = cpumask_first(cpu_online_mask);
-	पूर्ण
+	}
 
 	/*
-	 * We take करोwn all of the non-boot CPUs in one shot to aव्योम races
-	 * with the userspace trying to use the CPU hotplug at the same समय
+	 * We take down all of the non-boot CPUs in one shot to avoid races
+	 * with the userspace trying to use the CPU hotplug at the same time
 	 */
 	cpumask_clear(frozen_cpus);
 
 	pr_info("Disabling non-boot CPUs ...\n");
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (cpu == primary)
-			जारी;
+	for_each_online_cpu(cpu) {
+		if (cpu == primary)
+			continue;
 
-		अगर (pm_wakeup_pending()) अणु
+		if (pm_wakeup_pending()) {
 			pr_info("Wakeup pending. Abort CPU freeze\n");
 			error = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		trace_suspend_resume(TPS("CPU_OFF"), cpu, true);
-		error = _cpu_करोwn(cpu, 1, CPUHP_OFFLINE);
+		error = _cpu_down(cpu, 1, CPUHP_OFFLINE);
 		trace_suspend_resume(TPS("CPU_OFF"), cpu, false);
-		अगर (!error)
+		if (!error)
 			cpumask_set_cpu(cpu, frozen_cpus);
-		अन्यथा अणु
+		else {
 			pr_err("Error taking CPU%d down: %d\n", cpu, error);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!error)
+	if (!error)
 		BUG_ON(num_online_cpus() > 1);
-	अन्यथा
+	else
 		pr_err("Non-boot CPUs are not disabled\n");
 
 	/*
-	 * Make sure the CPUs won't be enabled by someone अन्यथा. We need to करो
-	 * this even in हाल of failure as all मुक्तze_secondary_cpus() users are
-	 * supposed to करो thaw_secondary_cpus() on the failure path.
+	 * Make sure the CPUs won't be enabled by someone else. We need to do
+	 * this even in case of failure as all freeze_secondary_cpus() users are
+	 * supposed to do thaw_secondary_cpus() on the failure path.
 	 */
 	cpu_hotplug_disabled++;
 
-	cpu_maps_update_करोne();
-	वापस error;
-पूर्ण
+	cpu_maps_update_done();
+	return error;
+}
 
-व्योम __weak arch_thaw_secondary_cpus_begin(व्योम)
-अणु
-पूर्ण
+void __weak arch_thaw_secondary_cpus_begin(void)
+{
+}
 
-व्योम __weak arch_thaw_secondary_cpus_end(व्योम)
-अणु
-पूर्ण
+void __weak arch_thaw_secondary_cpus_end(void)
+{
+}
 
-व्योम thaw_secondary_cpus(व्योम)
-अणु
-	पूर्णांक cpu, error;
+void thaw_secondary_cpus(void)
+{
+	int cpu, error;
 
 	/* Allow everyone to use the CPU hotplug again */
 	cpu_maps_update_begin();
 	__cpu_hotplug_enable();
-	अगर (cpumask_empty(frozen_cpus))
-		जाओ out;
+	if (cpumask_empty(frozen_cpus))
+		goto out;
 
 	pr_info("Enabling non-boot CPUs ...\n");
 
 	arch_thaw_secondary_cpus_begin();
 
-	क्रम_each_cpu(cpu, frozen_cpus) अणु
+	for_each_cpu(cpu, frozen_cpus) {
 		trace_suspend_resume(TPS("CPU_ON"), cpu, true);
 		error = _cpu_up(cpu, 1, CPUHP_ONLINE);
 		trace_suspend_resume(TPS("CPU_ON"), cpu, false);
-		अगर (!error) अणु
+		if (!error) {
 			pr_info("CPU%d is up\n", cpu);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		pr_warn("Error taking CPU%d up: %d\n", cpu, error);
-	पूर्ण
+	}
 
 	arch_thaw_secondary_cpus_end();
 
 	cpumask_clear(frozen_cpus);
 out:
-	cpu_maps_update_करोne();
-पूर्ण
+	cpu_maps_update_done();
+}
 
-अटल पूर्णांक __init alloc_frozen_cpus(व्योम)
-अणु
-	अगर (!alloc_cpumask_var(&frozen_cpus, GFP_KERNEL|__GFP_ZERO))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int __init alloc_frozen_cpus(void)
+{
+	if (!alloc_cpumask_var(&frozen_cpus, GFP_KERNEL|__GFP_ZERO))
+		return -ENOMEM;
+	return 0;
+}
 core_initcall(alloc_frozen_cpus);
 
 /*
- * When callbacks क्रम CPU hotplug notअगरications are being executed, we must
- * ensure that the state of the प्रणाली with respect to the tasks being frozen
- * or not, as reported by the notअगरication, reमुख्यs unchanged *throughout the
+ * When callbacks for CPU hotplug notifications are being executed, we must
+ * ensure that the state of the system with respect to the tasks being frozen
+ * or not, as reported by the notification, remains unchanged *throughout the
  * duration* of the execution of the callbacks.
- * Hence we need to prevent the मुक्तzer from racing with regular CPU hotplug.
+ * Hence we need to prevent the freezer from racing with regular CPU hotplug.
  *
  * This synchronization is implemented by mutually excluding regular CPU
  * hotplug and Suspend/Hibernate call paths by hooking onto the Suspend/
- * Hibernate notअगरications.
+ * Hibernate notifications.
  */
-अटल पूर्णांक
-cpu_hotplug_pm_callback(काष्ठा notअगरier_block *nb,
-			अचिन्हित दीर्घ action, व्योम *ptr)
-अणु
-	चयन (action) अणु
+static int
+cpu_hotplug_pm_callback(struct notifier_block *nb,
+			unsigned long action, void *ptr)
+{
+	switch (action) {
 
-	हाल PM_SUSPEND_PREPARE:
-	हाल PM_HIBERNATION_PREPARE:
+	case PM_SUSPEND_PREPARE:
+	case PM_HIBERNATION_PREPARE:
 		cpu_hotplug_disable();
-		अवरोध;
+		break;
 
-	हाल PM_POST_SUSPEND:
-	हाल PM_POST_HIBERNATION:
+	case PM_POST_SUSPEND:
+	case PM_POST_HIBERNATION:
 		cpu_hotplug_enable();
-		अवरोध;
+		break;
 
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+	default:
+		return NOTIFY_DONE;
+	}
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
 
-अटल पूर्णांक __init cpu_hotplug_pm_sync_init(व्योम)
-अणु
+static int __init cpu_hotplug_pm_sync_init(void)
+{
 	/*
 	 * cpu_hotplug_pm_callback has higher priority than x86
 	 * bsp_pm_callback which depends on cpu_hotplug_pm_callback
-	 * to disable cpu hotplug to aव्योम cpu hotplug race.
+	 * to disable cpu hotplug to avoid cpu hotplug race.
 	 */
-	pm_notअगरier(cpu_hotplug_pm_callback, 0);
-	वापस 0;
-पूर्ण
+	pm_notifier(cpu_hotplug_pm_callback, 0);
+	return 0;
+}
 core_initcall(cpu_hotplug_pm_sync_init);
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP_SMP */
+#endif /* CONFIG_PM_SLEEP_SMP */
 
-पूर्णांक __boot_cpu_id;
+int __boot_cpu_id;
 
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
 /* Boot processor state steps */
-अटल काष्ठा cpuhp_step cpuhp_hp_states[] = अणु
-	[CPUHP_OFFLINE] = अणु
+static struct cpuhp_step cpuhp_hp_states[] = {
+	[CPUHP_OFFLINE] = {
 		.name			= "offline",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= शून्य,
-	पूर्ण,
-#अगर_घोषित CONFIG_SMP
-	[CPUHP_CREATE_THREADS]= अणु
+		.startup.single		= NULL,
+		.teardown.single	= NULL,
+	},
+#ifdef CONFIG_SMP
+	[CPUHP_CREATE_THREADS]= {
 		.name			= "threads:prepare",
-		.startup.single		= smpboot_create_thपढ़ोs,
-		.tearकरोwn.single	= शून्य,
+		.startup.single		= smpboot_create_threads,
+		.teardown.single	= NULL,
 		.cant_stop		= true,
-	पूर्ण,
-	[CPUHP_PERF_PREPARE] = अणु
+	},
+	[CPUHP_PERF_PREPARE] = {
 		.name			= "perf:prepare",
 		.startup.single		= perf_event_init_cpu,
-		.tearकरोwn.single	= perf_event_निकास_cpu,
-	पूर्ण,
-	[CPUHP_WORKQUEUE_PREP] = अणु
+		.teardown.single	= perf_event_exit_cpu,
+	},
+	[CPUHP_WORKQUEUE_PREP] = {
 		.name			= "workqueue:prepare",
 		.startup.single		= workqueue_prepare_cpu,
-		.tearकरोwn.single	= शून्य,
-	पूर्ण,
-	[CPUHP_HRTIMERS_PREPARE] = अणु
+		.teardown.single	= NULL,
+	},
+	[CPUHP_HRTIMERS_PREPARE] = {
 		.name			= "hrtimers:prepare",
-		.startup.single		= hrसमयrs_prepare_cpu,
-		.tearकरोwn.single	= hrसमयrs_dead_cpu,
-	पूर्ण,
-	[CPUHP_SMPCFD_PREPARE] = अणु
+		.startup.single		= hrtimers_prepare_cpu,
+		.teardown.single	= hrtimers_dead_cpu,
+	},
+	[CPUHP_SMPCFD_PREPARE] = {
 		.name			= "smpcfd:prepare",
 		.startup.single		= smpcfd_prepare_cpu,
-		.tearकरोwn.single	= smpcfd_dead_cpu,
-	पूर्ण,
-	[CPUHP_RELAY_PREPARE] = अणु
+		.teardown.single	= smpcfd_dead_cpu,
+	},
+	[CPUHP_RELAY_PREPARE] = {
 		.name			= "relay:prepare",
 		.startup.single		= relay_prepare_cpu,
-		.tearकरोwn.single	= शून्य,
-	पूर्ण,
-	[CPUHP_SLAB_PREPARE] = अणु
+		.teardown.single	= NULL,
+	},
+	[CPUHP_SLAB_PREPARE] = {
 		.name			= "slab:prepare",
 		.startup.single		= slab_prepare_cpu,
-		.tearकरोwn.single	= slab_dead_cpu,
-	पूर्ण,
-	[CPUHP_RCUTREE_PREP] = अणु
+		.teardown.single	= slab_dead_cpu,
+	},
+	[CPUHP_RCUTREE_PREP] = {
 		.name			= "RCU/tree:prepare",
 		.startup.single		= rcutree_prepare_cpu,
-		.tearकरोwn.single	= rcutree_dead_cpu,
-	पूर्ण,
+		.teardown.single	= rcutree_dead_cpu,
+	},
 	/*
-	 * On the tear-करोwn path, समयrs_dead_cpu() must be invoked
-	 * beक्रमe blk_mq_queue_reinit_notअगरy() from notअगरy_dead(),
+	 * On the tear-down path, timers_dead_cpu() must be invoked
+	 * before blk_mq_queue_reinit_notify() from notify_dead(),
 	 * otherwise a RCU stall occurs.
 	 */
-	[CPUHP_TIMERS_PREPARE] = अणु
+	[CPUHP_TIMERS_PREPARE] = {
 		.name			= "timers:prepare",
-		.startup.single		= समयrs_prepare_cpu,
-		.tearकरोwn.single	= समयrs_dead_cpu,
-	पूर्ण,
-	/* Kicks the plugged cpu पूर्णांकo lअगरe */
-	[CPUHP_BRINGUP_CPU] = अणु
+		.startup.single		= timers_prepare_cpu,
+		.teardown.single	= timers_dead_cpu,
+	},
+	/* Kicks the plugged cpu into life */
+	[CPUHP_BRINGUP_CPU] = {
 		.name			= "cpu:bringup",
 		.startup.single		= bringup_cpu,
-		.tearकरोwn.single	= finish_cpu,
+		.teardown.single	= finish_cpu,
 		.cant_stop		= true,
-	पूर्ण,
-	/* Final state beक्रमe CPU समाप्तs itself */
-	[CPUHP_AP_IDLE_DEAD] = अणु
+	},
+	/* Final state before CPU kills itself */
+	[CPUHP_AP_IDLE_DEAD] = {
 		.name			= "idle:dead",
-	पूर्ण,
+	},
 	/*
-	 * Last state beक्रमe CPU enters the idle loop to die. Transient state
-	 * क्रम synchronization.
+	 * Last state before CPU enters the idle loop to die. Transient state
+	 * for synchronization.
 	 */
-	[CPUHP_AP_OFFLINE] = अणु
+	[CPUHP_AP_OFFLINE] = {
 		.name			= "ap:offline",
 		.cant_stop		= true,
-	पूर्ण,
+	},
 	/* First state is scheduler control. Interrupts are disabled */
-	[CPUHP_AP_SCHED_STARTING] = अणु
+	[CPUHP_AP_SCHED_STARTING] = {
 		.name			= "sched:starting",
 		.startup.single		= sched_cpu_starting,
-		.tearकरोwn.single	= sched_cpu_dying,
-	पूर्ण,
-	[CPUHP_AP_RCUTREE_DYING] = अणु
+		.teardown.single	= sched_cpu_dying,
+	},
+	[CPUHP_AP_RCUTREE_DYING] = {
 		.name			= "RCU/tree:dying",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= rcutree_dying_cpu,
-	पूर्ण,
-	[CPUHP_AP_SMPCFD_DYING] = अणु
+		.startup.single		= NULL,
+		.teardown.single	= rcutree_dying_cpu,
+	},
+	[CPUHP_AP_SMPCFD_DYING] = {
 		.name			= "smpcfd:dying",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= smpcfd_dying_cpu,
-	पूर्ण,
+		.startup.single		= NULL,
+		.teardown.single	= smpcfd_dying_cpu,
+	},
 	/* Entry state on starting. Interrupts enabled from here on. Transient
-	 * state क्रम synchronsization */
-	[CPUHP_AP_ONLINE] = अणु
+	 * state for synchronsization */
+	[CPUHP_AP_ONLINE] = {
 		.name			= "ap:online",
-	पूर्ण,
+	},
 	/*
 	 * Handled on control processor until the plugged processor manages
 	 * this itself.
 	 */
-	[CPUHP_TEARDOWN_CPU] = अणु
+	[CPUHP_TEARDOWN_CPU] = {
 		.name			= "cpu:teardown",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= takeकरोwn_cpu,
+		.startup.single		= NULL,
+		.teardown.single	= takedown_cpu,
 		.cant_stop		= true,
-	पूर्ण,
+	},
 
-	[CPUHP_AP_SCHED_WAIT_EMPTY] = अणु
+	[CPUHP_AP_SCHED_WAIT_EMPTY] = {
 		.name			= "sched:waitempty",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= sched_cpu_रुको_empty,
-	पूर्ण,
+		.startup.single		= NULL,
+		.teardown.single	= sched_cpu_wait_empty,
+	},
 
-	/* Handle smpboot thपढ़ोs park/unpark */
-	[CPUHP_AP_SMPBOOT_THREADS] = अणु
+	/* Handle smpboot threads park/unpark */
+	[CPUHP_AP_SMPBOOT_THREADS] = {
 		.name			= "smpboot/threads:online",
-		.startup.single		= smpboot_unpark_thपढ़ोs,
-		.tearकरोwn.single	= smpboot_park_thपढ़ोs,
-	पूर्ण,
-	[CPUHP_AP_IRQ_AFFINITY_ONLINE] = अणु
+		.startup.single		= smpboot_unpark_threads,
+		.teardown.single	= smpboot_park_threads,
+	},
+	[CPUHP_AP_IRQ_AFFINITY_ONLINE] = {
 		.name			= "irq/affinity:online",
 		.startup.single		= irq_affinity_online_cpu,
-		.tearकरोwn.single	= शून्य,
-	पूर्ण,
-	[CPUHP_AP_PERF_ONLINE] = अणु
+		.teardown.single	= NULL,
+	},
+	[CPUHP_AP_PERF_ONLINE] = {
 		.name			= "perf:online",
 		.startup.single		= perf_event_init_cpu,
-		.tearकरोwn.single	= perf_event_निकास_cpu,
-	पूर्ण,
-	[CPUHP_AP_WATCHDOG_ONLINE] = अणु
+		.teardown.single	= perf_event_exit_cpu,
+	},
+	[CPUHP_AP_WATCHDOG_ONLINE] = {
 		.name			= "lockup_detector:online",
 		.startup.single		= lockup_detector_online_cpu,
-		.tearकरोwn.single	= lockup_detector_offline_cpu,
-	पूर्ण,
-	[CPUHP_AP_WORKQUEUE_ONLINE] = अणु
+		.teardown.single	= lockup_detector_offline_cpu,
+	},
+	[CPUHP_AP_WORKQUEUE_ONLINE] = {
 		.name			= "workqueue:online",
 		.startup.single		= workqueue_online_cpu,
-		.tearकरोwn.single	= workqueue_offline_cpu,
-	पूर्ण,
-	[CPUHP_AP_RCUTREE_ONLINE] = अणु
+		.teardown.single	= workqueue_offline_cpu,
+	},
+	[CPUHP_AP_RCUTREE_ONLINE] = {
 		.name			= "RCU/tree:online",
 		.startup.single		= rcutree_online_cpu,
-		.tearकरोwn.single	= rcutree_offline_cpu,
-	पूर्ण,
-#पूर्ण_अगर
+		.teardown.single	= rcutree_offline_cpu,
+	},
+#endif
 	/*
-	 * The dynamically रेजिस्टरed state space is here
+	 * The dynamically registered state space is here
 	 */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	/* Last state is scheduler control setting the cpu active */
-	[CPUHP_AP_ACTIVE] = अणु
+	[CPUHP_AP_ACTIVE] = {
 		.name			= "sched:active",
 		.startup.single		= sched_cpu_activate,
-		.tearकरोwn.single	= sched_cpu_deactivate,
-	पूर्ण,
-#पूर्ण_अगर
+		.teardown.single	= sched_cpu_deactivate,
+	},
+#endif
 
 	/* CPU is fully up and running. */
-	[CPUHP_ONLINE] = अणु
+	[CPUHP_ONLINE] = {
 		.name			= "online",
-		.startup.single		= शून्य,
-		.tearकरोwn.single	= शून्य,
-	पूर्ण,
-पूर्ण;
+		.startup.single		= NULL,
+		.teardown.single	= NULL,
+	},
+};
 
-/* Sanity check क्रम callbacks */
-अटल पूर्णांक cpuhp_cb_check(क्रमागत cpuhp_state state)
-अणु
-	अगर (state <= CPUHP_OFFLINE || state >= CPUHP_ONLINE)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+/* Sanity check for callbacks */
+static int cpuhp_cb_check(enum cpuhp_state state)
+{
+	if (state <= CPUHP_OFFLINE || state >= CPUHP_ONLINE)
+		return -EINVAL;
+	return 0;
+}
 
 /*
- * Returns a मुक्त क्रम dynamic slot assignment of the Online state. The states
- * are रक्षित by the cpuhp_slot_states mutex and an empty slot is identअगरied
- * by having no name asचिन्हित.
+ * Returns a free for dynamic slot assignment of the Online state. The states
+ * are protected by the cpuhp_slot_states mutex and an empty slot is identified
+ * by having no name assigned.
  */
-अटल पूर्णांक cpuhp_reserve_state(क्रमागत cpuhp_state state)
-अणु
-	क्रमागत cpuhp_state i, end;
-	काष्ठा cpuhp_step *step;
+static int cpuhp_reserve_state(enum cpuhp_state state)
+{
+	enum cpuhp_state i, end;
+	struct cpuhp_step *step;
 
-	चयन (state) अणु
-	हाल CPUHP_AP_ONLINE_DYN:
+	switch (state) {
+	case CPUHP_AP_ONLINE_DYN:
 		step = cpuhp_hp_states + CPUHP_AP_ONLINE_DYN;
 		end = CPUHP_AP_ONLINE_DYN_END;
-		अवरोध;
-	हाल CPUHP_BP_PREPARE_DYN:
+		break;
+	case CPUHP_BP_PREPARE_DYN:
 		step = cpuhp_hp_states + CPUHP_BP_PREPARE_DYN;
 		end = CPUHP_BP_PREPARE_DYN_END;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (i = state; i <= end; i++, step++) अणु
-		अगर (!step->name)
-			वापस i;
-	पूर्ण
+	for (i = state; i <= end; i++, step++) {
+		if (!step->name)
+			return i;
+	}
 	WARN(1, "No more dynamic states available for CPU hotplug\n");
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक cpuhp_store_callbacks(क्रमागत cpuhp_state state, स्थिर अक्षर *name,
-				 पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
-				 पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu),
+static int cpuhp_store_callbacks(enum cpuhp_state state, const char *name,
+				 int (*startup)(unsigned int cpu),
+				 int (*teardown)(unsigned int cpu),
 				 bool multi_instance)
-अणु
-	/* (Un)Install the callbacks क्रम further cpu hotplug operations */
-	काष्ठा cpuhp_step *sp;
-	पूर्णांक ret = 0;
+{
+	/* (Un)Install the callbacks for further cpu hotplug operations */
+	struct cpuhp_step *sp;
+	int ret = 0;
 
 	/*
-	 * If name is शून्य, then the state माला_लो हटाओd.
+	 * If name is NULL, then the state gets removed.
 	 *
 	 * CPUHP_AP_ONLINE_DYN and CPUHP_BP_PREPARE_DYN are handed out on
 	 * the first allocation from these dynamic ranges, so the removal
-	 * would trigger a new allocation and clear the wrong (alपढ़ोy
+	 * would trigger a new allocation and clear the wrong (already
 	 * empty) state, leaving the callbacks of the to be cleared state
 	 * dangling, which causes wreckage on the next hotplug operation.
 	 */
-	अगर (name && (state == CPUHP_AP_ONLINE_DYN ||
-		     state == CPUHP_BP_PREPARE_DYN)) अणु
+	if (name && (state == CPUHP_AP_ONLINE_DYN ||
+		     state == CPUHP_BP_PREPARE_DYN)) {
 		ret = cpuhp_reserve_state(state);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		state = ret;
-	पूर्ण
+	}
 	sp = cpuhp_get_step(state);
-	अगर (name && sp->name)
-		वापस -EBUSY;
+	if (name && sp->name)
+		return -EBUSY;
 
 	sp->startup.single = startup;
-	sp->tearकरोwn.single = tearकरोwn;
+	sp->teardown.single = teardown;
 	sp->name = name;
 	sp->multi_instance = multi_instance;
 	INIT_HLIST_HEAD(&sp->list);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम *cpuhp_get_tearकरोwn_cb(क्रमागत cpuhp_state state)
-अणु
-	वापस cpuhp_get_step(state)->tearकरोwn.single;
-पूर्ण
+static void *cpuhp_get_teardown_cb(enum cpuhp_state state)
+{
+	return cpuhp_get_step(state)->teardown.single;
+}
 
 /*
- * Call the startup/tearकरोwn function क्रम a step either on the AP or
+ * Call the startup/teardown function for a step either on the AP or
  * on the current CPU.
  */
-अटल पूर्णांक cpuhp_issue_call(पूर्णांक cpu, क्रमागत cpuhp_state state, bool bringup,
-			    काष्ठा hlist_node *node)
-अणु
-	काष्ठा cpuhp_step *sp = cpuhp_get_step(state);
-	पूर्णांक ret;
+static int cpuhp_issue_call(int cpu, enum cpuhp_state state, bool bringup,
+			    struct hlist_node *node)
+{
+	struct cpuhp_step *sp = cpuhp_get_step(state);
+	int ret;
 
 	/*
-	 * If there's nothing to करो, we करोne.
-	 * Relies on the जोड़ क्रम multi_instance.
+	 * If there's nothing to do, we done.
+	 * Relies on the union for multi_instance.
 	 */
-	अगर (cpuhp_step_empty(bringup, sp))
-		वापस 0;
+	if (cpuhp_step_empty(bringup, sp))
+		return 0;
 	/*
-	 * The non AP bound callbacks can fail on bringup. On tearकरोwn
-	 * e.g. module removal we crash क्रम now.
+	 * The non AP bound callbacks can fail on bringup. On teardown
+	 * e.g. module removal we crash for now.
 	 */
-#अगर_घोषित CONFIG_SMP
-	अगर (cpuhp_is_ap_state(state))
+#ifdef CONFIG_SMP
+	if (cpuhp_is_ap_state(state))
 		ret = cpuhp_invoke_ap_callback(cpu, state, bringup, node);
-	अन्यथा
-		ret = cpuhp_invoke_callback(cpu, state, bringup, node, शून्य);
-#अन्यथा
-	ret = cpuhp_invoke_callback(cpu, state, bringup, node, शून्य);
-#पूर्ण_अगर
+	else
+		ret = cpuhp_invoke_callback(cpu, state, bringup, node, NULL);
+#else
+	ret = cpuhp_invoke_callback(cpu, state, bringup, node, NULL);
+#endif
 	BUG_ON(ret && !bringup);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Called from __cpuhp_setup_state on a recoverable failure.
  *
- * Note: The tearकरोwn callbacks क्रम rollback are not allowed to fail!
+ * Note: The teardown callbacks for rollback are not allowed to fail!
  */
-अटल व्योम cpuhp_rollback_install(पूर्णांक failedcpu, क्रमागत cpuhp_state state,
-				   काष्ठा hlist_node *node)
-अणु
-	पूर्णांक cpu;
+static void cpuhp_rollback_install(int failedcpu, enum cpuhp_state state,
+				   struct hlist_node *node)
+{
+	int cpu;
 
-	/* Roll back the alपढ़ोy executed steps on the other cpus */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-		पूर्णांक cpustate = st->state;
+	/* Roll back the already executed steps on the other cpus */
+	for_each_present_cpu(cpu) {
+		struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+		int cpustate = st->state;
 
-		अगर (cpu >= failedcpu)
-			अवरोध;
+		if (cpu >= failedcpu)
+			break;
 
 		/* Did we invoke the startup call on that cpu ? */
-		अगर (cpustate >= state)
+		if (cpustate >= state)
 			cpuhp_issue_call(cpu, state, false, node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक __cpuhp_state_add_instance_cpuslocked(क्रमागत cpuhp_state state,
-					  काष्ठा hlist_node *node,
+int __cpuhp_state_add_instance_cpuslocked(enum cpuhp_state state,
+					  struct hlist_node *node,
 					  bool invoke)
-अणु
-	काष्ठा cpuhp_step *sp;
-	पूर्णांक cpu;
-	पूर्णांक ret;
+{
+	struct cpuhp_step *sp;
+	int cpu;
+	int ret;
 
-	lockdep_निश्चित_cpus_held();
+	lockdep_assert_cpus_held();
 
 	sp = cpuhp_get_step(state);
-	अगर (sp->multi_instance == false)
-		वापस -EINVAL;
+	if (sp->multi_instance == false)
+		return -EINVAL;
 
 	mutex_lock(&cpuhp_state_mutex);
 
-	अगर (!invoke || !sp->startup.multi)
-		जाओ add_node;
+	if (!invoke || !sp->startup.multi)
+		goto add_node;
 
 	/*
-	 * Try to call the startup callback क्रम each present cpu
+	 * Try to call the startup callback for each present cpu
 	 * depending on the hotplug state of the cpu.
 	 */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-		पूर्णांक cpustate = st->state;
+	for_each_present_cpu(cpu) {
+		struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+		int cpustate = st->state;
 
-		अगर (cpustate < state)
-			जारी;
+		if (cpustate < state)
+			continue;
 
 		ret = cpuhp_issue_call(cpu, state, true, node);
-		अगर (ret) अणु
-			अगर (sp->tearकरोwn.multi)
+		if (ret) {
+			if (sp->teardown.multi)
 				cpuhp_rollback_install(cpu, state, node);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 add_node:
 	ret = 0;
 	hlist_add_head(node, &sp->list);
 unlock:
 	mutex_unlock(&cpuhp_state_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक __cpuhp_state_add_instance(क्रमागत cpuhp_state state, काष्ठा hlist_node *node,
+int __cpuhp_state_add_instance(enum cpuhp_state state, struct hlist_node *node,
 			       bool invoke)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	ret = __cpuhp_state_add_instance_cpuslocked(state, node, invoke);
-	cpus_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	cpus_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(__cpuhp_state_add_instance);
 
 /**
- * __cpuhp_setup_state_cpuslocked - Setup the callbacks क्रम an hotplug machine state
+ * __cpuhp_setup_state_cpuslocked - Setup the callbacks for an hotplug machine state
  * @state:		The state to setup
- * @invoke:		If true, the startup function is invoked क्रम cpus where
+ * @invoke:		If true, the startup function is invoked for cpus where
  *			cpu state >= @state
  * @startup:		startup callback function
- * @tearकरोwn:		tearकरोwn callback function
- * @multi_instance:	State is set up क्रम multiple instances which get
+ * @teardown:		teardown callback function
+ * @multi_instance:	State is set up for multiple instances which get
  *			added afterwards.
  *
- * The caller needs to hold cpus पढ़ो locked जबतक calling this function.
+ * The caller needs to hold cpus read locked while calling this function.
  * Returns:
  *   On success:
- *      Positive state number अगर @state is CPUHP_AP_ONLINE_DYN
- *      0 क्रम all other states
+ *      Positive state number if @state is CPUHP_AP_ONLINE_DYN
+ *      0 for all other states
  *   On failure: proper (negative) error code
  */
-पूर्णांक __cpuhp_setup_state_cpuslocked(क्रमागत cpuhp_state state,
-				   स्थिर अक्षर *name, bool invoke,
-				   पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
-				   पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu),
+int __cpuhp_setup_state_cpuslocked(enum cpuhp_state state,
+				   const char *name, bool invoke,
+				   int (*startup)(unsigned int cpu),
+				   int (*teardown)(unsigned int cpu),
 				   bool multi_instance)
-अणु
-	पूर्णांक cpu, ret = 0;
+{
+	int cpu, ret = 0;
 	bool dynstate;
 
-	lockdep_निश्चित_cpus_held();
+	lockdep_assert_cpus_held();
 
-	अगर (cpuhp_cb_check(state) || !name)
-		वापस -EINVAL;
+	if (cpuhp_cb_check(state) || !name)
+		return -EINVAL;
 
 	mutex_lock(&cpuhp_state_mutex);
 
-	ret = cpuhp_store_callbacks(state, name, startup, tearकरोwn,
+	ret = cpuhp_store_callbacks(state, name, startup, teardown,
 				    multi_instance);
 
 	dynstate = state == CPUHP_AP_ONLINE_DYN;
-	अगर (ret > 0 && dynstate) अणु
+	if (ret > 0 && dynstate) {
 		state = ret;
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (ret || !invoke || !startup)
-		जाओ out;
+	if (ret || !invoke || !startup)
+		goto out;
 
 	/*
-	 * Try to call the startup callback क्रम each present cpu
+	 * Try to call the startup callback for each present cpu
 	 * depending on the hotplug state of the cpu.
 	 */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-		पूर्णांक cpustate = st->state;
+	for_each_present_cpu(cpu) {
+		struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+		int cpustate = st->state;
 
-		अगर (cpustate < state)
-			जारी;
+		if (cpustate < state)
+			continue;
 
-		ret = cpuhp_issue_call(cpu, state, true, शून्य);
-		अगर (ret) अणु
-			अगर (tearकरोwn)
-				cpuhp_rollback_install(cpu, state, शून्य);
-			cpuhp_store_callbacks(state, शून्य, शून्य, शून्य, false);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		ret = cpuhp_issue_call(cpu, state, true, NULL);
+		if (ret) {
+			if (teardown)
+				cpuhp_rollback_install(cpu, state, NULL);
+			cpuhp_store_callbacks(state, NULL, NULL, NULL, false);
+			goto out;
+		}
+	}
 out:
 	mutex_unlock(&cpuhp_state_mutex);
 	/*
-	 * If the requested state is CPUHP_AP_ONLINE_DYN, वापस the
-	 * dynamically allocated state in हाल of success.
+	 * If the requested state is CPUHP_AP_ONLINE_DYN, return the
+	 * dynamically allocated state in case of success.
 	 */
-	अगर (!ret && dynstate)
-		वापस state;
-	वापस ret;
-पूर्ण
+	if (!ret && dynstate)
+		return state;
+	return ret;
+}
 EXPORT_SYMBOL(__cpuhp_setup_state_cpuslocked);
 
-पूर्णांक __cpuhp_setup_state(क्रमागत cpuhp_state state,
-			स्थिर अक्षर *name, bool invoke,
-			पूर्णांक (*startup)(अचिन्हित पूर्णांक cpu),
-			पूर्णांक (*tearकरोwn)(अचिन्हित पूर्णांक cpu),
+int __cpuhp_setup_state(enum cpuhp_state state,
+			const char *name, bool invoke,
+			int (*startup)(unsigned int cpu),
+			int (*teardown)(unsigned int cpu),
 			bool multi_instance)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	ret = __cpuhp_setup_state_cpuslocked(state, name, invoke, startup,
-					     tearकरोwn, multi_instance);
-	cpus_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+					     teardown, multi_instance);
+	cpus_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL(__cpuhp_setup_state);
 
-पूर्णांक __cpuhp_state_हटाओ_instance(क्रमागत cpuhp_state state,
-				  काष्ठा hlist_node *node, bool invoke)
-अणु
-	काष्ठा cpuhp_step *sp = cpuhp_get_step(state);
-	पूर्णांक cpu;
+int __cpuhp_state_remove_instance(enum cpuhp_state state,
+				  struct hlist_node *node, bool invoke)
+{
+	struct cpuhp_step *sp = cpuhp_get_step(state);
+	int cpu;
 
 	BUG_ON(cpuhp_cb_check(state));
 
-	अगर (!sp->multi_instance)
-		वापस -EINVAL;
+	if (!sp->multi_instance)
+		return -EINVAL;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	mutex_lock(&cpuhp_state_mutex);
 
-	अगर (!invoke || !cpuhp_get_tearकरोwn_cb(state))
-		जाओ हटाओ;
+	if (!invoke || !cpuhp_get_teardown_cb(state))
+		goto remove;
 	/*
-	 * Call the tearकरोwn callback क्रम each present cpu depending
+	 * Call the teardown callback for each present cpu depending
 	 * on the hotplug state of the cpu. This function is not
 	 * allowed to fail currently!
 	 */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-		पूर्णांक cpustate = st->state;
+	for_each_present_cpu(cpu) {
+		struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+		int cpustate = st->state;
 
-		अगर (cpustate >= state)
+		if (cpustate >= state)
 			cpuhp_issue_call(cpu, state, false, node);
-	पूर्ण
+	}
 
-हटाओ:
+remove:
 	hlist_del(node);
 	mutex_unlock(&cpuhp_state_mutex);
-	cpus_पढ़ो_unlock();
+	cpus_read_unlock();
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(__cpuhp_state_हटाओ_instance);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(__cpuhp_state_remove_instance);
 
 /**
- * __cpuhp_हटाओ_state_cpuslocked - Remove the callbacks क्रम an hotplug machine state
- * @state:	The state to हटाओ
- * @invoke:	If true, the tearकरोwn function is invoked क्रम cpus where
+ * __cpuhp_remove_state_cpuslocked - Remove the callbacks for an hotplug machine state
+ * @state:	The state to remove
+ * @invoke:	If true, the teardown function is invoked for cpus where
  *		cpu state >= @state
  *
- * The caller needs to hold cpus पढ़ो locked जबतक calling this function.
- * The tearकरोwn callback is currently not allowed to fail. Think
+ * The caller needs to hold cpus read locked while calling this function.
+ * The teardown callback is currently not allowed to fail. Think
  * about module removal!
  */
-व्योम __cpuhp_हटाओ_state_cpuslocked(क्रमागत cpuhp_state state, bool invoke)
-अणु
-	काष्ठा cpuhp_step *sp = cpuhp_get_step(state);
-	पूर्णांक cpu;
+void __cpuhp_remove_state_cpuslocked(enum cpuhp_state state, bool invoke)
+{
+	struct cpuhp_step *sp = cpuhp_get_step(state);
+	int cpu;
 
 	BUG_ON(cpuhp_cb_check(state));
 
-	lockdep_निश्चित_cpus_held();
+	lockdep_assert_cpus_held();
 
 	mutex_lock(&cpuhp_state_mutex);
-	अगर (sp->multi_instance) अणु
+	if (sp->multi_instance) {
 		WARN(!hlist_empty(&sp->list),
 		     "Error: Removing state %d which has instances left.\n",
 		     state);
-		जाओ हटाओ;
-	पूर्ण
+		goto remove;
+	}
 
-	अगर (!invoke || !cpuhp_get_tearकरोwn_cb(state))
-		जाओ हटाओ;
+	if (!invoke || !cpuhp_get_teardown_cb(state))
+		goto remove;
 
 	/*
-	 * Call the tearकरोwn callback क्रम each present cpu depending
+	 * Call the teardown callback for each present cpu depending
 	 * on the hotplug state of the cpu. This function is not
 	 * allowed to fail currently!
 	 */
-	क्रम_each_present_cpu(cpu) अणु
-		काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
-		पूर्णांक cpustate = st->state;
+	for_each_present_cpu(cpu) {
+		struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+		int cpustate = st->state;
 
-		अगर (cpustate >= state)
-			cpuhp_issue_call(cpu, state, false, शून्य);
-	पूर्ण
-हटाओ:
-	cpuhp_store_callbacks(state, शून्य, शून्य, शून्य, false);
+		if (cpustate >= state)
+			cpuhp_issue_call(cpu, state, false, NULL);
+	}
+remove:
+	cpuhp_store_callbacks(state, NULL, NULL, NULL, false);
 	mutex_unlock(&cpuhp_state_mutex);
-पूर्ण
-EXPORT_SYMBOL(__cpuhp_हटाओ_state_cpuslocked);
+}
+EXPORT_SYMBOL(__cpuhp_remove_state_cpuslocked);
 
-व्योम __cpuhp_हटाओ_state(क्रमागत cpuhp_state state, bool invoke)
-अणु
-	cpus_पढ़ो_lock();
-	__cpuhp_हटाओ_state_cpuslocked(state, invoke);
-	cpus_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL(__cpuhp_हटाओ_state);
+void __cpuhp_remove_state(enum cpuhp_state state, bool invoke)
+{
+	cpus_read_lock();
+	__cpuhp_remove_state_cpuslocked(state, invoke);
+	cpus_read_unlock();
+}
+EXPORT_SYMBOL(__cpuhp_remove_state);
 
-#अगर_घोषित CONFIG_HOTPLUG_SMT
-अटल व्योम cpuhp_offline_cpu_device(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev = get_cpu_device(cpu);
+#ifdef CONFIG_HOTPLUG_SMT
+static void cpuhp_offline_cpu_device(unsigned int cpu)
+{
+	struct device *dev = get_cpu_device(cpu);
 
 	dev->offline = true;
 	/* Tell user space about the state change */
 	kobject_uevent(&dev->kobj, KOBJ_OFFLINE);
-पूर्ण
+}
 
-अटल व्योम cpuhp_online_cpu_device(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा device *dev = get_cpu_device(cpu);
+static void cpuhp_online_cpu_device(unsigned int cpu)
+{
+	struct device *dev = get_cpu_device(cpu);
 
 	dev->offline = false;
 	/* Tell user space about the state change */
 	kobject_uevent(&dev->kobj, KOBJ_ONLINE);
-पूर्ण
+}
 
-पूर्णांक cpuhp_smt_disable(क्रमागत cpuhp_smt_control ctrlval)
-अणु
-	पूर्णांक cpu, ret = 0;
+int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval)
+{
+	int cpu, ret = 0;
 
 	cpu_maps_update_begin();
-	क्रम_each_online_cpu(cpu) अणु
-		अगर (topology_is_primary_thपढ़ो(cpu))
-			जारी;
-		ret = cpu_करोwn_maps_locked(cpu, CPUHP_OFFLINE);
-		अगर (ret)
-			अवरोध;
+	for_each_online_cpu(cpu) {
+		if (topology_is_primary_thread(cpu))
+			continue;
+		ret = cpu_down_maps_locked(cpu, CPUHP_OFFLINE);
+		if (ret)
+			break;
 		/*
 		 * As this needs to hold the cpu maps lock it's impossible
 		 * to call device_offline() because that ends up calling
-		 * cpu_करोwn() which takes cpu maps lock. cpu maps lock
+		 * cpu_down() which takes cpu maps lock. cpu maps lock
 		 * needs to be held as this might race against in kernel
 		 * abusers of the hotplug machinery (thermal management).
 		 *
@@ -2155,119 +2154,119 @@ EXPORT_SYMBOL(__cpuhp_हटाओ_state);
 		 * serialized against the regular offline usage.
 		 */
 		cpuhp_offline_cpu_device(cpu);
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		cpu_smt_control = ctrlval;
-	cpu_maps_update_करोne();
-	वापस ret;
-पूर्ण
+	cpu_maps_update_done();
+	return ret;
+}
 
-पूर्णांक cpuhp_smt_enable(व्योम)
-अणु
-	पूर्णांक cpu, ret = 0;
+int cpuhp_smt_enable(void)
+{
+	int cpu, ret = 0;
 
 	cpu_maps_update_begin();
 	cpu_smt_control = CPU_SMT_ENABLED;
-	क्रम_each_present_cpu(cpu) अणु
+	for_each_present_cpu(cpu) {
 		/* Skip online CPUs and CPUs on offline nodes */
-		अगर (cpu_online(cpu) || !node_online(cpu_to_node(cpu)))
-			जारी;
+		if (cpu_online(cpu) || !node_online(cpu_to_node(cpu)))
+			continue;
 		ret = _cpu_up(cpu, 0, CPUHP_ONLINE);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		/* See comment in cpuhp_smt_disable() */
 		cpuhp_online_cpu_device(cpu);
-	पूर्ण
-	cpu_maps_update_करोne();
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	}
+	cpu_maps_update_done();
+	return ret;
+}
+#endif
 
-#अगर defined(CONFIG_SYSFS) && defined(CONFIG_HOTPLUG_CPU)
-अटल sमाप_प्रकार show_cpuhp_state(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
+#if defined(CONFIG_SYSFS) && defined(CONFIG_HOTPLUG_CPU)
+static ssize_t show_cpuhp_state(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
 
-	वापस प्र_लिखो(buf, "%d\n", st->state);
-पूर्ण
-अटल DEVICE_ATTR(state, 0444, show_cpuhp_state, शून्य);
+	return sprintf(buf, "%d\n", st->state);
+}
+static DEVICE_ATTR(state, 0444, show_cpuhp_state, NULL);
 
-अटल sमाप_प्रकार ग_लिखो_cpuhp_target(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
-	काष्ठा cpuhp_step *sp;
-	पूर्णांक target, ret;
+static ssize_t write_cpuhp_target(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
+	struct cpuhp_step *sp;
+	int target, ret;
 
-	ret = kstrtoपूर्णांक(buf, 10, &target);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 10, &target);
+	if (ret)
+		return ret;
 
-#अगर_घोषित CONFIG_CPU_HOTPLUG_STATE_CONTROL
-	अगर (target < CPUHP_OFFLINE || target > CPUHP_ONLINE)
-		वापस -EINVAL;
-#अन्यथा
-	अगर (target != CPUHP_OFFLINE && target != CPUHP_ONLINE)
-		वापस -EINVAL;
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_HOTPLUG_STATE_CONTROL
+	if (target < CPUHP_OFFLINE || target > CPUHP_ONLINE)
+		return -EINVAL;
+#else
+	if (target != CPUHP_OFFLINE && target != CPUHP_ONLINE)
+		return -EINVAL;
+#endif
 
 	ret = lock_device_hotplug_sysfs();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&cpuhp_state_mutex);
 	sp = cpuhp_get_step(target);
 	ret = !sp->name || sp->cant_stop ? -EINVAL : 0;
 	mutex_unlock(&cpuhp_state_mutex);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (st->state < target)
+	if (st->state < target)
 		ret = cpu_up(dev->id, target);
-	अन्यथा
-		ret = cpu_करोwn(dev->id, target);
+	else
+		ret = cpu_down(dev->id, target);
 out:
 	unlock_device_hotplug();
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल sमाप_प्रकार show_cpuhp_target(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
+static ssize_t show_cpuhp_target(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
 
-	वापस प्र_लिखो(buf, "%d\n", st->target);
-पूर्ण
-अटल DEVICE_ATTR(target, 0644, show_cpuhp_target, ग_लिखो_cpuhp_target);
+	return sprintf(buf, "%d\n", st->target);
+}
+static DEVICE_ATTR(target, 0644, show_cpuhp_target, write_cpuhp_target);
 
 
-अटल sमाप_प्रकार ग_लिखो_cpuhp_fail(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
-	काष्ठा cpuhp_step *sp;
-	पूर्णांक fail, ret;
+static ssize_t write_cpuhp_fail(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
+	struct cpuhp_step *sp;
+	int fail, ret;
 
-	ret = kstrtoपूर्णांक(buf, 10, &fail);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 10, &fail);
+	if (ret)
+		return ret;
 
-	अगर (fail == CPUHP_INVALID) अणु
+	if (fail == CPUHP_INVALID) {
 		st->fail = fail;
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
-	अगर (fail < CPUHP_OFFLINE || fail > CPUHP_ONLINE)
-		वापस -EINVAL;
+	if (fail < CPUHP_OFFLINE || fail > CPUHP_ONLINE)
+		return -EINVAL;
 
 	/*
 	 * Cannot fail STARTING/DYING callbacks.
 	 */
-	अगर (cpuhp_is_atomic_state(fail))
-		वापस -EINVAL;
+	if (cpuhp_is_atomic_state(fail))
+		return -EINVAL;
 
 	/*
 	 * DEAD callbacks cannot fail...
@@ -2275,363 +2274,363 @@ out:
 	 * triggering STARTING callbacks, a failure in this state would
 	 * hinder rollback.
 	 */
-	अगर (fail <= CPUHP_BRINGUP_CPU && st->state > CPUHP_BRINGUP_CPU)
-		वापस -EINVAL;
+	if (fail <= CPUHP_BRINGUP_CPU && st->state > CPUHP_BRINGUP_CPU)
+		return -EINVAL;
 
 	/*
-	 * Cannot fail anything that करोesn't have callbacks.
+	 * Cannot fail anything that doesn't have callbacks.
 	 */
 	mutex_lock(&cpuhp_state_mutex);
 	sp = cpuhp_get_step(fail);
-	अगर (!sp->startup.single && !sp->tearकरोwn.single)
+	if (!sp->startup.single && !sp->teardown.single)
 		ret = -EINVAL;
 	mutex_unlock(&cpuhp_state_mutex);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	st->fail = fail;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार show_cpuhp_fail(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
+static ssize_t show_cpuhp_fail(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, dev->id);
 
-	वापस प्र_लिखो(buf, "%d\n", st->fail);
-पूर्ण
+	return sprintf(buf, "%d\n", st->fail);
+}
 
-अटल DEVICE_ATTR(fail, 0644, show_cpuhp_fail, ग_लिखो_cpuhp_fail);
+static DEVICE_ATTR(fail, 0644, show_cpuhp_fail, write_cpuhp_fail);
 
-अटल काष्ठा attribute *cpuhp_cpu_attrs[] = अणु
+static struct attribute *cpuhp_cpu_attrs[] = {
 	&dev_attr_state.attr,
 	&dev_attr_target.attr,
 	&dev_attr_fail.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group cpuhp_cpu_attr_group = अणु
+static const struct attribute_group cpuhp_cpu_attr_group = {
 	.attrs = cpuhp_cpu_attrs,
 	.name = "hotplug",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार show_cpuhp_states(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	sमाप_प्रकार cur, res = 0;
-	पूर्णांक i;
+static ssize_t show_cpuhp_states(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	ssize_t cur, res = 0;
+	int i;
 
 	mutex_lock(&cpuhp_state_mutex);
-	क्रम (i = CPUHP_OFFLINE; i <= CPUHP_ONLINE; i++) अणु
-		काष्ठा cpuhp_step *sp = cpuhp_get_step(i);
+	for (i = CPUHP_OFFLINE; i <= CPUHP_ONLINE; i++) {
+		struct cpuhp_step *sp = cpuhp_get_step(i);
 
-		अगर (sp->name) अणु
-			cur = प्र_लिखो(buf, "%3d: %s\n", i, sp->name);
+		if (sp->name) {
+			cur = sprintf(buf, "%3d: %s\n", i, sp->name);
 			buf += cur;
 			res += cur;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&cpuhp_state_mutex);
-	वापस res;
-पूर्ण
-अटल DEVICE_ATTR(states, 0444, show_cpuhp_states, शून्य);
+	return res;
+}
+static DEVICE_ATTR(states, 0444, show_cpuhp_states, NULL);
 
-अटल काष्ठा attribute *cpuhp_cpu_root_attrs[] = अणु
+static struct attribute *cpuhp_cpu_root_attrs[] = {
 	&dev_attr_states.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group cpuhp_cpu_root_attr_group = अणु
+static const struct attribute_group cpuhp_cpu_root_attr_group = {
 	.attrs = cpuhp_cpu_root_attrs,
 	.name = "hotplug",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-#अगर_घोषित CONFIG_HOTPLUG_SMT
+#ifdef CONFIG_HOTPLUG_SMT
 
-अटल sमाप_प्रकार
-__store_smt_control(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ctrlval, ret;
+static ssize_t
+__store_smt_control(struct device *dev, struct device_attribute *attr,
+		    const char *buf, size_t count)
+{
+	int ctrlval, ret;
 
-	अगर (sysfs_streq(buf, "on"))
+	if (sysfs_streq(buf, "on"))
 		ctrlval = CPU_SMT_ENABLED;
-	अन्यथा अगर (sysfs_streq(buf, "off"))
+	else if (sysfs_streq(buf, "off"))
 		ctrlval = CPU_SMT_DISABLED;
-	अन्यथा अगर (sysfs_streq(buf, "forceoff"))
+	else if (sysfs_streq(buf, "forceoff"))
 		ctrlval = CPU_SMT_FORCE_DISABLED;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (cpu_smt_control == CPU_SMT_FORCE_DISABLED)
-		वापस -EPERM;
+	if (cpu_smt_control == CPU_SMT_FORCE_DISABLED)
+		return -EPERM;
 
-	अगर (cpu_smt_control == CPU_SMT_NOT_SUPPORTED)
-		वापस -ENODEV;
+	if (cpu_smt_control == CPU_SMT_NOT_SUPPORTED)
+		return -ENODEV;
 
 	ret = lock_device_hotplug_sysfs();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ctrlval != cpu_smt_control) अणु
-		चयन (ctrlval) अणु
-		हाल CPU_SMT_ENABLED:
+	if (ctrlval != cpu_smt_control) {
+		switch (ctrlval) {
+		case CPU_SMT_ENABLED:
 			ret = cpuhp_smt_enable();
-			अवरोध;
-		हाल CPU_SMT_DISABLED:
-		हाल CPU_SMT_FORCE_DISABLED:
+			break;
+		case CPU_SMT_DISABLED:
+		case CPU_SMT_FORCE_DISABLED:
 			ret = cpuhp_smt_disable(ctrlval);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	unlock_device_hotplug();
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-#अन्यथा /* !CONFIG_HOTPLUG_SMT */
-अटल sमाप_प्रकार
-__store_smt_control(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HOTPLUG_SMT */
+#else /* !CONFIG_HOTPLUG_SMT */
+static ssize_t
+__store_smt_control(struct device *dev, struct device_attribute *attr,
+		    const char *buf, size_t count)
+{
+	return -ENODEV;
+}
+#endif /* CONFIG_HOTPLUG_SMT */
 
-अटल स्थिर अक्षर *smt_states[] = अणु
+static const char *smt_states[] = {
 	[CPU_SMT_ENABLED]		= "on",
 	[CPU_SMT_DISABLED]		= "off",
 	[CPU_SMT_FORCE_DISABLED]	= "forceoff",
 	[CPU_SMT_NOT_SUPPORTED]		= "notsupported",
 	[CPU_SMT_NOT_IMPLEMENTED]	= "notimplemented",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार
-show_smt_control(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	स्थिर अक्षर *state = smt_states[cpu_smt_control];
+static ssize_t
+show_smt_control(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	const char *state = smt_states[cpu_smt_control];
 
-	वापस snम_लिखो(buf, PAGE_SIZE - 2, "%s\n", state);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE - 2, "%s\n", state);
+}
 
-अटल sमाप_प्रकार
-store_smt_control(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस __store_smt_control(dev, attr, buf, count);
-पूर्ण
-अटल DEVICE_ATTR(control, 0644, show_smt_control, store_smt_control);
+static ssize_t
+store_smt_control(struct device *dev, struct device_attribute *attr,
+		  const char *buf, size_t count)
+{
+	return __store_smt_control(dev, attr, buf, count);
+}
+static DEVICE_ATTR(control, 0644, show_smt_control, store_smt_control);
 
-अटल sमाप_प्रकार
-show_smt_active(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE - 2, "%d\n", sched_smt_active());
-पूर्ण
-अटल DEVICE_ATTR(active, 0444, show_smt_active, शून्य);
+static ssize_t
+show_smt_active(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE - 2, "%d\n", sched_smt_active());
+}
+static DEVICE_ATTR(active, 0444, show_smt_active, NULL);
 
-अटल काष्ठा attribute *cpuhp_smt_attrs[] = अणु
+static struct attribute *cpuhp_smt_attrs[] = {
 	&dev_attr_control.attr,
 	&dev_attr_active.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group cpuhp_smt_attr_group = अणु
+static const struct attribute_group cpuhp_smt_attr_group = {
 	.attrs = cpuhp_smt_attrs,
 	.name = "smt",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक __init cpu_smt_sysfs_init(व्योम)
-अणु
-	वापस sysfs_create_group(&cpu_subsys.dev_root->kobj,
+static int __init cpu_smt_sysfs_init(void)
+{
+	return sysfs_create_group(&cpu_subsys.dev_root->kobj,
 				  &cpuhp_smt_attr_group);
-पूर्ण
+}
 
-अटल पूर्णांक __init cpuhp_sysfs_init(व्योम)
-अणु
-	पूर्णांक cpu, ret;
+static int __init cpuhp_sysfs_init(void)
+{
+	int cpu, ret;
 
 	ret = cpu_smt_sysfs_init();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = sysfs_create_group(&cpu_subsys.dev_root->kobj,
 				 &cpuhp_cpu_root_attr_group);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा device *dev = get_cpu_device(cpu);
+	for_each_possible_cpu(cpu) {
+		struct device *dev = get_cpu_device(cpu);
 
-		अगर (!dev)
-			जारी;
+		if (!dev)
+			continue;
 		ret = sysfs_create_group(&dev->kobj, &cpuhp_cpu_attr_group);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 device_initcall(cpuhp_sysfs_init);
-#पूर्ण_अगर /* CONFIG_SYSFS && CONFIG_HOTPLUG_CPU */
+#endif /* CONFIG_SYSFS && CONFIG_HOTPLUG_CPU */
 
 /*
- * cpu_bit_biपंचांगap[] is a special, "compressed" data काष्ठाure that
+ * cpu_bit_bitmap[] is a special, "compressed" data structure that
  * represents all NR_CPUS bits binary values of 1<<nr.
  *
- * It is used by cpumask_of() to get a स्थिरant address to a CPU
+ * It is used by cpumask_of() to get a constant address to a CPU
  * mask value that has a single bit set only.
  */
 
-/* cpu_bit_biपंचांगap[0] is empty - so we can back पूर्णांकo it */
-#घोषणा MASK_DECLARE_1(x)	[x+1][0] = (1UL << (x))
-#घोषणा MASK_DECLARE_2(x)	MASK_DECLARE_1(x), MASK_DECLARE_1(x+1)
-#घोषणा MASK_DECLARE_4(x)	MASK_DECLARE_2(x), MASK_DECLARE_2(x+2)
-#घोषणा MASK_DECLARE_8(x)	MASK_DECLARE_4(x), MASK_DECLARE_4(x+4)
+/* cpu_bit_bitmap[0] is empty - so we can back into it */
+#define MASK_DECLARE_1(x)	[x+1][0] = (1UL << (x))
+#define MASK_DECLARE_2(x)	MASK_DECLARE_1(x), MASK_DECLARE_1(x+1)
+#define MASK_DECLARE_4(x)	MASK_DECLARE_2(x), MASK_DECLARE_2(x+2)
+#define MASK_DECLARE_8(x)	MASK_DECLARE_4(x), MASK_DECLARE_4(x+4)
 
-स्थिर अचिन्हित दीर्घ cpu_bit_biपंचांगap[BITS_PER_LONG+1][BITS_TO_LONGS(NR_CPUS)] = अणु
+const unsigned long cpu_bit_bitmap[BITS_PER_LONG+1][BITS_TO_LONGS(NR_CPUS)] = {
 
 	MASK_DECLARE_8(0),	MASK_DECLARE_8(8),
 	MASK_DECLARE_8(16),	MASK_DECLARE_8(24),
-#अगर BITS_PER_LONG > 32
+#if BITS_PER_LONG > 32
 	MASK_DECLARE_8(32),	MASK_DECLARE_8(40),
 	MASK_DECLARE_8(48),	MASK_DECLARE_8(56),
-#पूर्ण_अगर
-पूर्ण;
-EXPORT_SYMBOL_GPL(cpu_bit_biपंचांगap);
+#endif
+};
+EXPORT_SYMBOL_GPL(cpu_bit_bitmap);
 
-स्थिर DECLARE_BITMAP(cpu_all_bits, NR_CPUS) = CPU_BITS_ALL;
+const DECLARE_BITMAP(cpu_all_bits, NR_CPUS) = CPU_BITS_ALL;
 EXPORT_SYMBOL(cpu_all_bits);
 
-#अगर_घोषित CONFIG_INIT_ALL_POSSIBLE
-काष्ठा cpumask __cpu_possible_mask __पढ़ो_mostly
-	= अणुCPU_BITS_ALLपूर्ण;
-#अन्यथा
-काष्ठा cpumask __cpu_possible_mask __पढ़ो_mostly;
-#पूर्ण_अगर
+#ifdef CONFIG_INIT_ALL_POSSIBLE
+struct cpumask __cpu_possible_mask __read_mostly
+	= {CPU_BITS_ALL};
+#else
+struct cpumask __cpu_possible_mask __read_mostly;
+#endif
 EXPORT_SYMBOL(__cpu_possible_mask);
 
-काष्ठा cpumask __cpu_online_mask __पढ़ो_mostly;
+struct cpumask __cpu_online_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_online_mask);
 
-काष्ठा cpumask __cpu_present_mask __पढ़ो_mostly;
+struct cpumask __cpu_present_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_present_mask);
 
-काष्ठा cpumask __cpu_active_mask __पढ़ो_mostly;
+struct cpumask __cpu_active_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_active_mask);
 
-काष्ठा cpumask __cpu_dying_mask __पढ़ो_mostly;
+struct cpumask __cpu_dying_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_dying_mask);
 
-atomic_t __num_online_cpus __पढ़ो_mostly;
+atomic_t __num_online_cpus __read_mostly;
 EXPORT_SYMBOL(__num_online_cpus);
 
-व्योम init_cpu_present(स्थिर काष्ठा cpumask *src)
-अणु
+void init_cpu_present(const struct cpumask *src)
+{
 	cpumask_copy(&__cpu_present_mask, src);
-पूर्ण
+}
 
-व्योम init_cpu_possible(स्थिर काष्ठा cpumask *src)
-अणु
+void init_cpu_possible(const struct cpumask *src)
+{
 	cpumask_copy(&__cpu_possible_mask, src);
-पूर्ण
+}
 
-व्योम init_cpu_online(स्थिर काष्ठा cpumask *src)
-अणु
+void init_cpu_online(const struct cpumask *src)
+{
 	cpumask_copy(&__cpu_online_mask, src);
-पूर्ण
+}
 
-व्योम set_cpu_online(अचिन्हित पूर्णांक cpu, bool online)
-अणु
+void set_cpu_online(unsigned int cpu, bool online)
+{
 	/*
 	 * atomic_inc/dec() is required to handle the horrid abuse of this
 	 * function by the reboot and kexec code which invoke it from
-	 * IPI/NMI broadcasts when shutting करोwn CPUs. Invocation from
+	 * IPI/NMI broadcasts when shutting down CPUs. Invocation from
 	 * regular CPU hotplug is properly serialized.
 	 *
 	 * Note, that the fact that __num_online_cpus is of type atomic_t
-	 * करोes not protect पढ़ोers which are not serialized against
+	 * does not protect readers which are not serialized against
 	 * concurrent hotplug operations.
 	 */
-	अगर (online) अणु
-		अगर (!cpumask_test_and_set_cpu(cpu, &__cpu_online_mask))
+	if (online) {
+		if (!cpumask_test_and_set_cpu(cpu, &__cpu_online_mask))
 			atomic_inc(&__num_online_cpus);
-	पूर्ण अन्यथा अणु
-		अगर (cpumask_test_and_clear_cpu(cpu, &__cpu_online_mask))
+	} else {
+		if (cpumask_test_and_clear_cpu(cpu, &__cpu_online_mask))
 			atomic_dec(&__num_online_cpus);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Activate the first processor.
  */
-व्योम __init boot_cpu_init(व्योम)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+void __init boot_cpu_init(void)
+{
+	int cpu = smp_processor_id();
 
-	/* Mark the boot cpu "present", "online" etc क्रम SMP and UP हाल */
+	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
 	set_cpu_possible(cpu, true);
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	__boot_cpu_id = cpu;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * Must be called _AFTER_ setting up the per_cpu areas
  */
-व्योम __init boot_cpu_hotplug_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
+void __init boot_cpu_hotplug_init(void)
+{
+#ifdef CONFIG_SMP
 	cpumask_set_cpu(smp_processor_id(), &cpus_booted_once_mask);
-#पूर्ण_अगर
-	this_cpu_ग_लिखो(cpuhp_state.state, CPUHP_ONLINE);
-पूर्ण
+#endif
+	this_cpu_write(cpuhp_state.state, CPUHP_ONLINE);
+}
 
 /*
- * These are used क्रम a global "mitigations=" cmdline option क्रम toggling
+ * These are used for a global "mitigations=" cmdline option for toggling
  * optional CPU mitigations.
  */
-क्रमागत cpu_mitigations अणु
+enum cpu_mitigations {
 	CPU_MITIGATIONS_OFF,
 	CPU_MITIGATIONS_AUTO,
 	CPU_MITIGATIONS_AUTO_NOSMT,
-पूर्ण;
+};
 
-अटल क्रमागत cpu_mitigations cpu_mitigations __ro_after_init =
+static enum cpu_mitigations cpu_mitigations __ro_after_init =
 	CPU_MITIGATIONS_AUTO;
 
-अटल पूर्णांक __init mitigations_parse_cmdline(अक्षर *arg)
-अणु
-	अगर (!म_भेद(arg, "off"))
+static int __init mitigations_parse_cmdline(char *arg)
+{
+	if (!strcmp(arg, "off"))
 		cpu_mitigations = CPU_MITIGATIONS_OFF;
-	अन्यथा अगर (!म_भेद(arg, "auto"))
+	else if (!strcmp(arg, "auto"))
 		cpu_mitigations = CPU_MITIGATIONS_AUTO;
-	अन्यथा अगर (!म_भेद(arg, "auto,nosmt"))
+	else if (!strcmp(arg, "auto,nosmt"))
 		cpu_mitigations = CPU_MITIGATIONS_AUTO_NOSMT;
-	अन्यथा
+	else
 		pr_crit("Unsupported mitigations=%s, system may still be vulnerable\n",
 			arg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("mitigations", mitigations_parse_cmdline);
 
 /* mitigations=off */
-bool cpu_mitigations_off(व्योम)
-अणु
-	वापस cpu_mitigations == CPU_MITIGATIONS_OFF;
-पूर्ण
+bool cpu_mitigations_off(void)
+{
+	return cpu_mitigations == CPU_MITIGATIONS_OFF;
+}
 EXPORT_SYMBOL_GPL(cpu_mitigations_off);
 
-/* mitigations=स्वतः,nosmt */
-bool cpu_mitigations_स्वतः_nosmt(व्योम)
-अणु
-	वापस cpu_mitigations == CPU_MITIGATIONS_AUTO_NOSMT;
-पूर्ण
-EXPORT_SYMBOL_GPL(cpu_mitigations_स्वतः_nosmt);
+/* mitigations=auto,nosmt */
+bool cpu_mitigations_auto_nosmt(void)
+{
+	return cpu_mitigations == CPU_MITIGATIONS_AUTO_NOSMT;
+}
+EXPORT_SYMBOL_GPL(cpu_mitigations_auto_nosmt);

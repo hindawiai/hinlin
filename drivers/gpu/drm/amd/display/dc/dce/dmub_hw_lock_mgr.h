@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,17 +23,17 @@
  *
  */
 
-#अगर_अघोषित _DMUB_HW_LOCK_MGR_H_
-#घोषणा _DMUB_HW_LOCK_MGR_H_
+#ifndef _DMUB_HW_LOCK_MGR_H_
+#define _DMUB_HW_LOCK_MGR_H_
 
-#समावेश "dc_dmub_srv.h"
-#समावेश "core_types.h"
+#include "dc_dmub_srv.h"
+#include "core_types.h"
 
-व्योम dmub_hw_lock_mgr_cmd(काष्ठा dc_dmub_srv *dmub_srv,
+void dmub_hw_lock_mgr_cmd(struct dc_dmub_srv *dmub_srv,
 				bool lock,
-				जोड़ dmub_hw_lock_flags *hw_locks,
-				काष्ठा dmub_hw_lock_inst_flags *inst_flags);
+				union dmub_hw_lock_flags *hw_locks,
+				struct dmub_hw_lock_inst_flags *inst_flags);
 
-bool should_use_dmub_lock(काष्ठा dc_link *link);
+bool should_use_dmub_lock(struct dc_link *link);
 
-#पूर्ण_अगर /*_DMUB_HW_LOCK_MGR_H_ */
+#endif /*_DMUB_HW_LOCK_MGR_H_ */

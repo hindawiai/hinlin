@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,140 +31,140 @@
  *
  */
 
-#समावेश <linux/mlx5/device.h>
+#include <linux/mlx5/device.h>
 
-#समावेश "fpga/core.h"
-#समावेश "fpga/conn.h"
-#समावेश "fpga/sdk.h"
+#include "fpga/core.h"
+#include "fpga/conn.h"
+#include "fpga/sdk.h"
 
-काष्ठा mlx5_fpga_conn *
-mlx5_fpga_sbu_conn_create(काष्ठा mlx5_fpga_device *fdev,
-			  काष्ठा mlx5_fpga_conn_attr *attr)
-अणु
-	वापस mlx5_fpga_conn_create(fdev, attr, MLX5_FPGA_QPC_QP_TYPE_SANDBOX_QP);
-पूर्ण
+struct mlx5_fpga_conn *
+mlx5_fpga_sbu_conn_create(struct mlx5_fpga_device *fdev,
+			  struct mlx5_fpga_conn_attr *attr)
+{
+	return mlx5_fpga_conn_create(fdev, attr, MLX5_FPGA_QPC_QP_TYPE_SANDBOX_QP);
+}
 EXPORT_SYMBOL(mlx5_fpga_sbu_conn_create);
 
-व्योम mlx5_fpga_sbu_conn_destroy(काष्ठा mlx5_fpga_conn *conn)
-अणु
+void mlx5_fpga_sbu_conn_destroy(struct mlx5_fpga_conn *conn)
+{
 	mlx5_fpga_conn_destroy(conn);
-पूर्ण
+}
 EXPORT_SYMBOL(mlx5_fpga_sbu_conn_destroy);
 
-पूर्णांक mlx5_fpga_sbu_conn_sendmsg(काष्ठा mlx5_fpga_conn *conn,
-			       काष्ठा mlx5_fpga_dma_buf *buf)
-अणु
-	वापस mlx5_fpga_conn_send(conn, buf);
-पूर्ण
+int mlx5_fpga_sbu_conn_sendmsg(struct mlx5_fpga_conn *conn,
+			       struct mlx5_fpga_dma_buf *buf)
+{
+	return mlx5_fpga_conn_send(conn, buf);
+}
 EXPORT_SYMBOL(mlx5_fpga_sbu_conn_sendmsg);
 
-अटल पूर्णांक mlx5_fpga_mem_पढ़ो_i2c(काष्ठा mlx5_fpga_device *fdev, माप_प्रकार size,
+static int mlx5_fpga_mem_read_i2c(struct mlx5_fpga_device *fdev, size_t size,
 				  u64 addr, u8 *buf)
-अणु
-	माप_प्रकार max_size = MLX5_FPGA_ACCESS_REG_SIZE_MAX;
-	माप_प्रकार bytes_करोne = 0;
+{
+	size_t max_size = MLX5_FPGA_ACCESS_REG_SIZE_MAX;
+	size_t bytes_done = 0;
 	u8 actual_size;
-	पूर्णांक err;
+	int err;
 
-	अगर (!size)
-		वापस -EINVAL;
+	if (!size)
+		return -EINVAL;
 
-	अगर (!fdev->mdev)
-		वापस -ENOTCONN;
+	if (!fdev->mdev)
+		return -ENOTCONN;
 
-	जबतक (bytes_करोne < size) अणु
-		actual_size = min(max_size, (size - bytes_करोne));
+	while (bytes_done < size) {
+		actual_size = min(max_size, (size - bytes_done));
 
 		err = mlx5_fpga_access_reg(fdev->mdev, actual_size,
-					   addr + bytes_करोne,
-					   buf + bytes_करोne, false);
-		अगर (err) अणु
+					   addr + bytes_done,
+					   buf + bytes_done, false);
+		if (err) {
 			mlx5_fpga_err(fdev, "Failed to read over I2C: %d\n",
 				      err);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bytes_करोne += actual_size;
-	पूर्ण
+		bytes_done += actual_size;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx5_fpga_mem_ग_लिखो_i2c(काष्ठा mlx5_fpga_device *fdev, माप_प्रकार size,
+static int mlx5_fpga_mem_write_i2c(struct mlx5_fpga_device *fdev, size_t size,
 				   u64 addr, u8 *buf)
-अणु
-	माप_प्रकार max_size = MLX5_FPGA_ACCESS_REG_SIZE_MAX;
-	माप_प्रकार bytes_करोne = 0;
+{
+	size_t max_size = MLX5_FPGA_ACCESS_REG_SIZE_MAX;
+	size_t bytes_done = 0;
 	u8 actual_size;
-	पूर्णांक err;
+	int err;
 
-	अगर (!size)
-		वापस -EINVAL;
+	if (!size)
+		return -EINVAL;
 
-	अगर (!fdev->mdev)
-		वापस -ENOTCONN;
+	if (!fdev->mdev)
+		return -ENOTCONN;
 
-	जबतक (bytes_करोne < size) अणु
-		actual_size = min(max_size, (size - bytes_करोne));
+	while (bytes_done < size) {
+		actual_size = min(max_size, (size - bytes_done));
 
 		err = mlx5_fpga_access_reg(fdev->mdev, actual_size,
-					   addr + bytes_करोne,
-					   buf + bytes_करोne, true);
-		अगर (err) अणु
+					   addr + bytes_done,
+					   buf + bytes_done, true);
+		if (err) {
 			mlx5_fpga_err(fdev, "Failed to write FPGA crspace\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bytes_करोne += actual_size;
-	पूर्ण
+		bytes_done += actual_size;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx5_fpga_mem_पढ़ो(काष्ठा mlx5_fpga_device *fdev, माप_प्रकार size, u64 addr,
-		       व्योम *buf, क्रमागत mlx5_fpga_access_type access_type)
-अणु
-	पूर्णांक ret;
+int mlx5_fpga_mem_read(struct mlx5_fpga_device *fdev, size_t size, u64 addr,
+		       void *buf, enum mlx5_fpga_access_type access_type)
+{
+	int ret;
 
-	चयन (access_type) अणु
-	हाल MLX5_FPGA_ACCESS_TYPE_I2C:
-		ret = mlx5_fpga_mem_पढ़ो_i2c(fdev, size, addr, buf);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
+	switch (access_type) {
+	case MLX5_FPGA_ACCESS_TYPE_I2C:
+		ret = mlx5_fpga_mem_read_i2c(fdev, size, addr, buf);
+		if (ret)
+			return ret;
+		break;
+	default:
 		mlx5_fpga_warn(fdev, "Unexpected read access_type %u\n",
 			       access_type);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस size;
-पूर्ण
-EXPORT_SYMBOL(mlx5_fpga_mem_पढ़ो);
+	return size;
+}
+EXPORT_SYMBOL(mlx5_fpga_mem_read);
 
-पूर्णांक mlx5_fpga_mem_ग_लिखो(काष्ठा mlx5_fpga_device *fdev, माप_प्रकार size, u64 addr,
-			व्योम *buf, क्रमागत mlx5_fpga_access_type access_type)
-अणु
-	पूर्णांक ret;
+int mlx5_fpga_mem_write(struct mlx5_fpga_device *fdev, size_t size, u64 addr,
+			void *buf, enum mlx5_fpga_access_type access_type)
+{
+	int ret;
 
-	चयन (access_type) अणु
-	हाल MLX5_FPGA_ACCESS_TYPE_I2C:
-		ret = mlx5_fpga_mem_ग_लिखो_i2c(fdev, size, addr, buf);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
+	switch (access_type) {
+	case MLX5_FPGA_ACCESS_TYPE_I2C:
+		ret = mlx5_fpga_mem_write_i2c(fdev, size, addr, buf);
+		if (ret)
+			return ret;
+		break;
+	default:
 		mlx5_fpga_warn(fdev, "Unexpected write access_type %u\n",
 			       access_type);
-		वापस -EACCES;
-	पूर्ण
+		return -EACCES;
+	}
 
-	वापस size;
-पूर्ण
-EXPORT_SYMBOL(mlx5_fpga_mem_ग_लिखो);
+	return size;
+}
+EXPORT_SYMBOL(mlx5_fpga_mem_write);
 
-पूर्णांक mlx5_fpga_get_sbu_caps(काष्ठा mlx5_fpga_device *fdev, पूर्णांक size, व्योम *buf)
-अणु
-	वापस mlx5_fpga_sbu_caps(fdev->mdev, buf, size);
-पूर्ण
+int mlx5_fpga_get_sbu_caps(struct mlx5_fpga_device *fdev, int size, void *buf)
+{
+	return mlx5_fpga_sbu_caps(fdev->mdev, buf, size);
+}
 EXPORT_SYMBOL(mlx5_fpga_get_sbu_caps);

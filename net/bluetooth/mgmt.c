@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack क्रम Linux
+   BlueZ - Bluetooth protocol stack for Linux
 
    Copyright (C) 2010  Nokia Corporation
    Copyright (C) 2011-2012 Intel Corporation
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -13,7 +12,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -23,27 +22,27 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-/* Bluetooth HCI Management पूर्णांकerface */
+/* Bluetooth HCI Management interface */
 
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/hci_sock.h>
-#समावेश <net/bluetooth/l2cap.h>
-#समावेश <net/bluetooth/mgmt.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/hci_sock.h>
+#include <net/bluetooth/l2cap.h>
+#include <net/bluetooth/mgmt.h>
 
-#समावेश "hci_request.h"
-#समावेश "smp.h"
-#समावेश "mgmt_util.h"
-#समावेश "mgmt_config.h"
-#समावेश "msft.h"
+#include "hci_request.h"
+#include "smp.h"
+#include "mgmt_util.h"
+#include "mgmt_config.h"
+#include "msft.h"
 
-#घोषणा MGMT_VERSION	1
-#घोषणा MGMT_REVISION	20
+#define MGMT_VERSION	1
+#define MGMT_REVISION	20
 
-अटल स्थिर u16 mgmt_commands[] = अणु
+static const u16 mgmt_commands[] = {
 	MGMT_OP_READ_INDEX_LIST,
 	MGMT_OP_READ_INFO,
 	MGMT_OP_SET_POWERED,
@@ -128,9 +127,9 @@
 	MGMT_OP_ADD_EXT_ADV_PARAMS,
 	MGMT_OP_ADD_EXT_ADV_DATA,
 	MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI,
-पूर्ण;
+};
 
-अटल स्थिर u16 mgmt_events[] = अणु
+static const u16 mgmt_events[] = {
 	MGMT_EV_CONTROLLER_ERROR,
 	MGMT_EV_INDEX_ADDED,
 	MGMT_EV_INDEX_REMOVED,
@@ -173,9 +172,9 @@
 	MGMT_EV_ADV_MONITOR_REMOVED,
 	MGMT_EV_CONTROLLER_SUSPEND,
 	MGMT_EV_CONTROLLER_RESUME,
-पूर्ण;
+};
 
-अटल स्थिर u16 mgmt_untrusted_commands[] = अणु
+static const u16 mgmt_untrusted_commands[] = {
 	MGMT_OP_READ_INDEX_LIST,
 	MGMT_OP_READ_INFO,
 	MGMT_OP_READ_UNCONF_INDEX_LIST,
@@ -186,9 +185,9 @@
 	MGMT_OP_READ_EXP_FEATURES_INFO,
 	MGMT_OP_READ_DEF_SYSTEM_CONFIG,
 	MGMT_OP_READ_DEF_RUNTIME_CONFIG,
-पूर्ण;
+};
 
-अटल स्थिर u16 mgmt_untrusted_events[] = अणु
+static const u16 mgmt_untrusted_events[] = {
 	MGMT_EV_INDEX_ADDED,
 	MGMT_EV_INDEX_REMOVED,
 	MGMT_EV_NEW_SETTINGS,
@@ -201,15 +200,15 @@
 	MGMT_EV_EXT_INDEX_REMOVED,
 	MGMT_EV_EXT_INFO_CHANGED,
 	MGMT_EV_EXP_FEATURE_CHANGED,
-पूर्ण;
+};
 
-#घोषणा CACHE_TIMEOUT	msecs_to_jअगरfies(2 * 1000)
+#define CACHE_TIMEOUT	msecs_to_jiffies(2 * 1000)
 
-#घोषणा ZERO_KEY "\x00\x00\x00\x00\x00\x00\x00\x00" \
+#define ZERO_KEY "\x00\x00\x00\x00\x00\x00\x00\x00" \
 		 "\x00\x00\x00\x00\x00\x00\x00\x00"
 
 /* HCI to MGMT error code conversion table */
-अटल स्थिर u8 mgmt_status_table[] = अणु
+static const u8 mgmt_status_table[] = {
 	MGMT_STATUS_SUCCESS,
 	MGMT_STATUS_UNKNOWN_COMMAND,	/* Unknown Command */
 	MGMT_STATUS_NOT_CONNECTED,	/* No Connection */
@@ -241,7 +240,7 @@
 	MGMT_STATUS_REJECTED,		/* SCO Interval Rejected */
 	MGMT_STATUS_REJECTED,		/* Air Mode Rejected */
 	MGMT_STATUS_INVALID_PARAMS,	/* Invalid LMP Parameters */
-	MGMT_STATUS_FAILED,		/* Unspecअगरied Error */
+	MGMT_STATUS_FAILED,		/* Unspecified Error */
 	MGMT_STATUS_NOT_SUPPORTED,	/* Unsupported LMP Parameter Value */
 	MGMT_STATUS_FAILED,		/* Role Change Not Allowed */
 	MGMT_STATUS_TIMEOUT,		/* LMP Response Timeout */
@@ -255,7 +254,7 @@
 	MGMT_STATUS_FAILED,		/* Transaction Collision */
 	MGMT_STATUS_INVALID_PARAMS,	/* Unacceptable Parameter */
 	MGMT_STATUS_REJECTED,		/* QoS Rejected */
-	MGMT_STATUS_NOT_SUPPORTED,	/* Classअगरication Not Supported */
+	MGMT_STATUS_NOT_SUPPORTED,	/* Classification Not Supported */
 	MGMT_STATUS_REJECTED,		/* Insufficient Security */
 	MGMT_STATUS_INVALID_PARAMS,	/* Parameter Out Of Range */
 	MGMT_STATUS_BUSY,		/* Role Switch Pending */
@@ -271,297 +270,297 @@
 	MGMT_STATUS_AUTH_FAILED,	/* Terminated Due to MIC Failure */
 	MGMT_STATUS_CONNECT_FAILED,	/* Connection Establishment Failed */
 	MGMT_STATUS_CONNECT_FAILED,	/* MAC Connection Failed */
-पूर्ण;
+};
 
-अटल u8 mgmt_status(u8 hci_status)
-अणु
-	अगर (hci_status < ARRAY_SIZE(mgmt_status_table))
-		वापस mgmt_status_table[hci_status];
+static u8 mgmt_status(u8 hci_status)
+{
+	if (hci_status < ARRAY_SIZE(mgmt_status_table))
+		return mgmt_status_table[hci_status];
 
-	वापस MGMT_STATUS_FAILED;
-पूर्ण
+	return MGMT_STATUS_FAILED;
+}
 
-अटल पूर्णांक mgmt_index_event(u16 event, काष्ठा hci_dev *hdev, व्योम *data,
-			    u16 len, पूर्णांक flag)
-अणु
-	वापस mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
-			       flag, शून्य);
-पूर्ण
+static int mgmt_index_event(u16 event, struct hci_dev *hdev, void *data,
+			    u16 len, int flag)
+{
+	return mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
+			       flag, NULL);
+}
 
-अटल पूर्णांक mgmt_limited_event(u16 event, काष्ठा hci_dev *hdev, व्योम *data,
-			      u16 len, पूर्णांक flag, काष्ठा sock *skip_sk)
-अणु
-	वापस mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
+static int mgmt_limited_event(u16 event, struct hci_dev *hdev, void *data,
+			      u16 len, int flag, struct sock *skip_sk)
+{
+	return mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
 			       flag, skip_sk);
-पूर्ण
+}
 
-अटल पूर्णांक mgmt_event(u16 event, काष्ठा hci_dev *hdev, व्योम *data, u16 len,
-		      काष्ठा sock *skip_sk)
-अणु
-	वापस mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
+static int mgmt_event(u16 event, struct hci_dev *hdev, void *data, u16 len,
+		      struct sock *skip_sk)
+{
+	return mgmt_send_event(event, hdev, HCI_CHANNEL_CONTROL, data, len,
 			       HCI_SOCK_TRUSTED, skip_sk);
-पूर्ण
+}
 
-अटल u8 le_addr_type(u8 mgmt_addr_type)
-अणु
-	अगर (mgmt_addr_type == BDADDR_LE_PUBLIC)
-		वापस ADDR_LE_DEV_PUBLIC;
-	अन्यथा
-		वापस ADDR_LE_DEV_RANDOM;
-पूर्ण
+static u8 le_addr_type(u8 mgmt_addr_type)
+{
+	if (mgmt_addr_type == BDADDR_LE_PUBLIC)
+		return ADDR_LE_DEV_PUBLIC;
+	else
+		return ADDR_LE_DEV_RANDOM;
+}
 
-व्योम mgmt_fill_version_info(व्योम *ver)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_version *rp = ver;
+void mgmt_fill_version_info(void *ver)
+{
+	struct mgmt_rp_read_version *rp = ver;
 
 	rp->version = MGMT_VERSION;
 	rp->revision = cpu_to_le16(MGMT_REVISION);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_version(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int read_version(struct sock *sk, struct hci_dev *hdev, void *data,
 			u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_version rp;
+{
+	struct mgmt_rp_read_version rp;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	mgmt_fill_version_info(&rp);
 
-	वापस mgmt_cmd_complete(sk, MGMT_INDEX_NONE, MGMT_OP_READ_VERSION, 0,
-				 &rp, माप(rp));
-पूर्ण
+	return mgmt_cmd_complete(sk, MGMT_INDEX_NONE, MGMT_OP_READ_VERSION, 0,
+				 &rp, sizeof(rp));
+}
 
-अटल पूर्णांक पढ़ो_commands(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int read_commands(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_commands *rp;
+{
+	struct mgmt_rp_read_commands *rp;
 	u16 num_commands, num_events;
-	माप_प्रकार rp_size;
-	पूर्णांक i, err;
+	size_t rp_size;
+	int i, err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (hci_sock_test_flag(sk, HCI_SOCK_TRUSTED)) अणु
+	if (hci_sock_test_flag(sk, HCI_SOCK_TRUSTED)) {
 		num_commands = ARRAY_SIZE(mgmt_commands);
 		num_events = ARRAY_SIZE(mgmt_events);
-	पूर्ण अन्यथा अणु
+	} else {
 		num_commands = ARRAY_SIZE(mgmt_untrusted_commands);
 		num_events = ARRAY_SIZE(mgmt_untrusted_events);
-	पूर्ण
+	}
 
-	rp_size = माप(*rp) + ((num_commands + num_events) * माप(u16));
+	rp_size = sizeof(*rp) + ((num_commands + num_events) * sizeof(u16));
 
-	rp = kदो_स्मृति(rp_size, GFP_KERNEL);
-	अगर (!rp)
-		वापस -ENOMEM;
+	rp = kmalloc(rp_size, GFP_KERNEL);
+	if (!rp)
+		return -ENOMEM;
 
 	rp->num_commands = cpu_to_le16(num_commands);
 	rp->num_events = cpu_to_le16(num_events);
 
-	अगर (hci_sock_test_flag(sk, HCI_SOCK_TRUSTED)) अणु
+	if (hci_sock_test_flag(sk, HCI_SOCK_TRUSTED)) {
 		__le16 *opcode = rp->opcodes;
 
-		क्रम (i = 0; i < num_commands; i++, opcode++)
+		for (i = 0; i < num_commands; i++, opcode++)
 			put_unaligned_le16(mgmt_commands[i], opcode);
 
-		क्रम (i = 0; i < num_events; i++, opcode++)
+		for (i = 0; i < num_events; i++, opcode++)
 			put_unaligned_le16(mgmt_events[i], opcode);
-	पूर्ण अन्यथा अणु
+	} else {
 		__le16 *opcode = rp->opcodes;
 
-		क्रम (i = 0; i < num_commands; i++, opcode++)
+		for (i = 0; i < num_commands; i++, opcode++)
 			put_unaligned_le16(mgmt_untrusted_commands[i], opcode);
 
-		क्रम (i = 0; i < num_events; i++, opcode++)
+		for (i = 0; i < num_events; i++, opcode++)
 			put_unaligned_le16(mgmt_untrusted_events[i], opcode);
-	पूर्ण
+	}
 
 	err = mgmt_cmd_complete(sk, MGMT_INDEX_NONE, MGMT_OP_READ_COMMANDS, 0,
 				rp, rp_size);
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_index_list(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int read_index_list(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_index_list *rp;
-	काष्ठा hci_dev *d;
-	माप_प्रकार rp_len;
+{
+	struct mgmt_rp_read_index_list *rp;
+	struct hci_dev *d;
+	size_t rp_len;
 	u16 count;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	पढ़ो_lock(&hci_dev_list_lock);
+	read_lock(&hci_dev_list_lock);
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (d->dev_type == HCI_PRIMARY &&
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (d->dev_type == HCI_PRIMARY &&
 		    !hci_dev_test_flag(d, HCI_UNCONFIGURED))
 			count++;
-	पूर्ण
+	}
 
-	rp_len = माप(*rp) + (2 * count);
-	rp = kदो_स्मृति(rp_len, GFP_ATOMIC);
-	अगर (!rp) अणु
-		पढ़ो_unlock(&hci_dev_list_lock);
-		वापस -ENOMEM;
-	पूर्ण
+	rp_len = sizeof(*rp) + (2 * count);
+	rp = kmalloc(rp_len, GFP_ATOMIC);
+	if (!rp) {
+		read_unlock(&hci_dev_list_lock);
+		return -ENOMEM;
+	}
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (hci_dev_test_flag(d, HCI_SETUP) ||
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (hci_dev_test_flag(d, HCI_SETUP) ||
 		    hci_dev_test_flag(d, HCI_CONFIG) ||
 		    hci_dev_test_flag(d, HCI_USER_CHANNEL))
-			जारी;
+			continue;
 
 		/* Devices marked as raw-only are neither configured
 		 * nor unconfigured controllers.
 		 */
-		अगर (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
-			जारी;
+		if (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
+			continue;
 
-		अगर (d->dev_type == HCI_PRIMARY &&
-		    !hci_dev_test_flag(d, HCI_UNCONFIGURED)) अणु
+		if (d->dev_type == HCI_PRIMARY &&
+		    !hci_dev_test_flag(d, HCI_UNCONFIGURED)) {
 			rp->index[count++] = cpu_to_le16(d->id);
 			bt_dev_dbg(hdev, "Added hci%u", d->id);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rp->num_controllers = cpu_to_le16(count);
-	rp_len = माप(*rp) + (2 * count);
+	rp_len = sizeof(*rp) + (2 * count);
 
-	पढ़ो_unlock(&hci_dev_list_lock);
+	read_unlock(&hci_dev_list_lock);
 
 	err = mgmt_cmd_complete(sk, MGMT_INDEX_NONE, MGMT_OP_READ_INDEX_LIST,
 				0, rp, rp_len);
 
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_unconf_index_list(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				  व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_unconf_index_list *rp;
-	काष्ठा hci_dev *d;
-	माप_प्रकार rp_len;
+static int read_unconf_index_list(struct sock *sk, struct hci_dev *hdev,
+				  void *data, u16 data_len)
+{
+	struct mgmt_rp_read_unconf_index_list *rp;
+	struct hci_dev *d;
+	size_t rp_len;
 	u16 count;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	पढ़ो_lock(&hci_dev_list_lock);
+	read_lock(&hci_dev_list_lock);
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (d->dev_type == HCI_PRIMARY &&
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (d->dev_type == HCI_PRIMARY &&
 		    hci_dev_test_flag(d, HCI_UNCONFIGURED))
 			count++;
-	पूर्ण
+	}
 
-	rp_len = माप(*rp) + (2 * count);
-	rp = kदो_स्मृति(rp_len, GFP_ATOMIC);
-	अगर (!rp) अणु
-		पढ़ो_unlock(&hci_dev_list_lock);
-		वापस -ENOMEM;
-	पूर्ण
+	rp_len = sizeof(*rp) + (2 * count);
+	rp = kmalloc(rp_len, GFP_ATOMIC);
+	if (!rp) {
+		read_unlock(&hci_dev_list_lock);
+		return -ENOMEM;
+	}
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (hci_dev_test_flag(d, HCI_SETUP) ||
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (hci_dev_test_flag(d, HCI_SETUP) ||
 		    hci_dev_test_flag(d, HCI_CONFIG) ||
 		    hci_dev_test_flag(d, HCI_USER_CHANNEL))
-			जारी;
+			continue;
 
 		/* Devices marked as raw-only are neither configured
 		 * nor unconfigured controllers.
 		 */
-		अगर (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
-			जारी;
+		if (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
+			continue;
 
-		अगर (d->dev_type == HCI_PRIMARY &&
-		    hci_dev_test_flag(d, HCI_UNCONFIGURED)) अणु
+		if (d->dev_type == HCI_PRIMARY &&
+		    hci_dev_test_flag(d, HCI_UNCONFIGURED)) {
 			rp->index[count++] = cpu_to_le16(d->id);
 			bt_dev_dbg(hdev, "Added hci%u", d->id);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rp->num_controllers = cpu_to_le16(count);
-	rp_len = माप(*rp) + (2 * count);
+	rp_len = sizeof(*rp) + (2 * count);
 
-	पढ़ो_unlock(&hci_dev_list_lock);
+	read_unlock(&hci_dev_list_lock);
 
 	err = mgmt_cmd_complete(sk, MGMT_INDEX_NONE,
 				MGMT_OP_READ_UNCONF_INDEX_LIST, 0, rp, rp_len);
 
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_ext_index_list(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_ext_index_list *rp;
-	काष्ठा hci_dev *d;
+static int read_ext_index_list(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 data_len)
+{
+	struct mgmt_rp_read_ext_index_list *rp;
+	struct hci_dev *d;
 	u16 count;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	पढ़ो_lock(&hci_dev_list_lock);
+	read_lock(&hci_dev_list_lock);
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (d->dev_type == HCI_PRIMARY || d->dev_type == HCI_AMP)
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (d->dev_type == HCI_PRIMARY || d->dev_type == HCI_AMP)
 			count++;
-	पूर्ण
+	}
 
-	rp = kदो_स्मृति(काष्ठा_size(rp, entry, count), GFP_ATOMIC);
-	अगर (!rp) अणु
-		पढ़ो_unlock(&hci_dev_list_lock);
-		वापस -ENOMEM;
-	पूर्ण
+	rp = kmalloc(struct_size(rp, entry, count), GFP_ATOMIC);
+	if (!rp) {
+		read_unlock(&hci_dev_list_lock);
+		return -ENOMEM;
+	}
 
 	count = 0;
-	list_क्रम_each_entry(d, &hci_dev_list, list) अणु
-		अगर (hci_dev_test_flag(d, HCI_SETUP) ||
+	list_for_each_entry(d, &hci_dev_list, list) {
+		if (hci_dev_test_flag(d, HCI_SETUP) ||
 		    hci_dev_test_flag(d, HCI_CONFIG) ||
 		    hci_dev_test_flag(d, HCI_USER_CHANNEL))
-			जारी;
+			continue;
 
 		/* Devices marked as raw-only are neither configured
 		 * nor unconfigured controllers.
 		 */
-		अगर (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
-			जारी;
+		if (test_bit(HCI_QUIRK_RAW_DEVICE, &d->quirks))
+			continue;
 
-		अगर (d->dev_type == HCI_PRIMARY) अणु
-			अगर (hci_dev_test_flag(d, HCI_UNCONFIGURED))
+		if (d->dev_type == HCI_PRIMARY) {
+			if (hci_dev_test_flag(d, HCI_UNCONFIGURED))
 				rp->entry[count].type = 0x01;
-			अन्यथा
+			else
 				rp->entry[count].type = 0x00;
-		पूर्ण अन्यथा अगर (d->dev_type == HCI_AMP) अणु
+		} else if (d->dev_type == HCI_AMP) {
 			rp->entry[count].type = 0x02;
-		पूर्ण अन्यथा अणु
-			जारी;
-		पूर्ण
+		} else {
+			continue;
+		}
 
 		rp->entry[count].bus = d->bus;
 		rp->entry[count++].index = cpu_to_le16(d->id);
 		bt_dev_dbg(hdev, "Added hci%u", d->id);
-	पूर्ण
+	}
 
 	rp->num_controllers = cpu_to_le16(count);
 
-	पढ़ो_unlock(&hci_dev_list_lock);
+	read_unlock(&hci_dev_list_lock);
 
 	/* If this command is called at least once, then all the
-	 * शेष index and unconfigured index events are disabled
+	 * default index and unconfigured index events are disabled
 	 * and from now on only extended index events are used.
 	 */
 	hci_sock_set_flag(sk, HCI_MGMT_EXT_INDEX_EVENTS);
@@ -570,76 +569,76 @@
 
 	err = mgmt_cmd_complete(sk, MGMT_INDEX_NONE,
 				MGMT_OP_READ_EXT_INDEX_LIST, 0, rp,
-				काष्ठा_size(rp, entry, count));
+				struct_size(rp, entry, count));
 
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool is_configured(काष्ठा hci_dev *hdev)
-अणु
-	अगर (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) &&
+static bool is_configured(struct hci_dev *hdev)
+{
+	if (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) &&
 	    !hci_dev_test_flag(hdev, HCI_EXT_CONFIGURED))
-		वापस false;
+		return false;
 
-	अगर ((test_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks) ||
+	if ((test_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks) ||
 	     test_bit(HCI_QUIRK_USE_BDADDR_PROPERTY, &hdev->quirks)) &&
-	    !bacmp(&hdev->खुला_addr, BDADDR_ANY))
-		वापस false;
+	    !bacmp(&hdev->public_addr, BDADDR_ANY))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल __le32 get_missing_options(काष्ठा hci_dev *hdev)
-अणु
+static __le32 get_missing_options(struct hci_dev *hdev)
+{
 	u32 options = 0;
 
-	अगर (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) &&
+	if (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) &&
 	    !hci_dev_test_flag(hdev, HCI_EXT_CONFIGURED))
 		options |= MGMT_OPTION_EXTERNAL_CONFIG;
 
-	अगर ((test_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks) ||
+	if ((test_bit(HCI_QUIRK_INVALID_BDADDR, &hdev->quirks) ||
 	     test_bit(HCI_QUIRK_USE_BDADDR_PROPERTY, &hdev->quirks)) &&
-	    !bacmp(&hdev->खुला_addr, BDADDR_ANY))
+	    !bacmp(&hdev->public_addr, BDADDR_ANY))
 		options |= MGMT_OPTION_PUBLIC_ADDRESS;
 
-	वापस cpu_to_le32(options);
-पूर्ण
+	return cpu_to_le32(options);
+}
 
-अटल पूर्णांक new_options(काष्ठा hci_dev *hdev, काष्ठा sock *skip)
-अणु
+static int new_options(struct hci_dev *hdev, struct sock *skip)
+{
 	__le32 options = get_missing_options(hdev);
 
-	वापस mgmt_limited_event(MGMT_EV_NEW_CONFIG_OPTIONS, hdev, &options,
-				  माप(options), HCI_MGMT_OPTION_EVENTS, skip);
-पूर्ण
+	return mgmt_limited_event(MGMT_EV_NEW_CONFIG_OPTIONS, hdev, &options,
+				  sizeof(options), HCI_MGMT_OPTION_EVENTS, skip);
+}
 
-अटल पूर्णांक send_options_rsp(काष्ठा sock *sk, u16 opcode, काष्ठा hci_dev *hdev)
-अणु
+static int send_options_rsp(struct sock *sk, u16 opcode, struct hci_dev *hdev)
+{
 	__le32 options = get_missing_options(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, opcode, 0, &options,
-				 माप(options));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, opcode, 0, &options,
+				 sizeof(options));
+}
 
-अटल पूर्णांक पढ़ो_config_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			    व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_config_info rp;
+static int read_config_info(struct sock *sk, struct hci_dev *hdev,
+			    void *data, u16 data_len)
+{
+	struct mgmt_rp_read_config_info rp;
 	u32 options = 0;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	rp.manufacturer = cpu_to_le16(hdev->manufacturer);
 
-	अगर (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks))
+	if (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks))
 		options |= MGMT_OPTION_EXTERNAL_CONFIG;
 
-	अगर (hdev->set_bdaddr)
+	if (hdev->set_bdaddr)
 		options |= MGMT_OPTION_PUBLIC_ADDRESS;
 
 	rp.supported_options = cpu_to_le32(options);
@@ -647,133 +646,133 @@
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_CONFIG_INFO, 0,
-				 &rp, माप(rp));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_CONFIG_INFO, 0,
+				 &rp, sizeof(rp));
+}
 
-अटल u32 get_supported_phys(काष्ठा hci_dev *hdev)
-अणु
+static u32 get_supported_phys(struct hci_dev *hdev)
+{
 	u32 supported_phys = 0;
 
-	अगर (lmp_bredr_capable(hdev)) अणु
+	if (lmp_bredr_capable(hdev)) {
 		supported_phys |= MGMT_PHY_BR_1M_1SLOT;
 
-		अगर (hdev->features[0][0] & LMP_3SLOT)
+		if (hdev->features[0][0] & LMP_3SLOT)
 			supported_phys |= MGMT_PHY_BR_1M_3SLOT;
 
-		अगर (hdev->features[0][0] & LMP_5SLOT)
+		if (hdev->features[0][0] & LMP_5SLOT)
 			supported_phys |= MGMT_PHY_BR_1M_5SLOT;
 
-		अगर (lmp_edr_2m_capable(hdev)) अणु
+		if (lmp_edr_2m_capable(hdev)) {
 			supported_phys |= MGMT_PHY_EDR_2M_1SLOT;
 
-			अगर (lmp_edr_3slot_capable(hdev))
+			if (lmp_edr_3slot_capable(hdev))
 				supported_phys |= MGMT_PHY_EDR_2M_3SLOT;
 
-			अगर (lmp_edr_5slot_capable(hdev))
+			if (lmp_edr_5slot_capable(hdev))
 				supported_phys |= MGMT_PHY_EDR_2M_5SLOT;
 
-			अगर (lmp_edr_3m_capable(hdev)) अणु
+			if (lmp_edr_3m_capable(hdev)) {
 				supported_phys |= MGMT_PHY_EDR_3M_1SLOT;
 
-				अगर (lmp_edr_3slot_capable(hdev))
+				if (lmp_edr_3slot_capable(hdev))
 					supported_phys |= MGMT_PHY_EDR_3M_3SLOT;
 
-				अगर (lmp_edr_5slot_capable(hdev))
+				if (lmp_edr_5slot_capable(hdev))
 					supported_phys |= MGMT_PHY_EDR_3M_5SLOT;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (lmp_le_capable(hdev)) अणु
+	if (lmp_le_capable(hdev)) {
 		supported_phys |= MGMT_PHY_LE_1M_TX;
 		supported_phys |= MGMT_PHY_LE_1M_RX;
 
-		अगर (hdev->le_features[1] & HCI_LE_PHY_2M) अणु
+		if (hdev->le_features[1] & HCI_LE_PHY_2M) {
 			supported_phys |= MGMT_PHY_LE_2M_TX;
 			supported_phys |= MGMT_PHY_LE_2M_RX;
-		पूर्ण
+		}
 
-		अगर (hdev->le_features[1] & HCI_LE_PHY_CODED) अणु
+		if (hdev->le_features[1] & HCI_LE_PHY_CODED) {
 			supported_phys |= MGMT_PHY_LE_CODED_TX;
 			supported_phys |= MGMT_PHY_LE_CODED_RX;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस supported_phys;
-पूर्ण
+	return supported_phys;
+}
 
-अटल u32 get_selected_phys(काष्ठा hci_dev *hdev)
-अणु
+static u32 get_selected_phys(struct hci_dev *hdev)
+{
 	u32 selected_phys = 0;
 
-	अगर (lmp_bredr_capable(hdev)) अणु
+	if (lmp_bredr_capable(hdev)) {
 		selected_phys |= MGMT_PHY_BR_1M_1SLOT;
 
-		अगर (hdev->pkt_type & (HCI_DM3 | HCI_DH3))
+		if (hdev->pkt_type & (HCI_DM3 | HCI_DH3))
 			selected_phys |= MGMT_PHY_BR_1M_3SLOT;
 
-		अगर (hdev->pkt_type & (HCI_DM5 | HCI_DH5))
+		if (hdev->pkt_type & (HCI_DM5 | HCI_DH5))
 			selected_phys |= MGMT_PHY_BR_1M_5SLOT;
 
-		अगर (lmp_edr_2m_capable(hdev)) अणु
-			अगर (!(hdev->pkt_type & HCI_2DH1))
+		if (lmp_edr_2m_capable(hdev)) {
+			if (!(hdev->pkt_type & HCI_2DH1))
 				selected_phys |= MGMT_PHY_EDR_2M_1SLOT;
 
-			अगर (lmp_edr_3slot_capable(hdev) &&
+			if (lmp_edr_3slot_capable(hdev) &&
 			    !(hdev->pkt_type & HCI_2DH3))
 				selected_phys |= MGMT_PHY_EDR_2M_3SLOT;
 
-			अगर (lmp_edr_5slot_capable(hdev) &&
+			if (lmp_edr_5slot_capable(hdev) &&
 			    !(hdev->pkt_type & HCI_2DH5))
 				selected_phys |= MGMT_PHY_EDR_2M_5SLOT;
 
-			अगर (lmp_edr_3m_capable(hdev)) अणु
-				अगर (!(hdev->pkt_type & HCI_3DH1))
+			if (lmp_edr_3m_capable(hdev)) {
+				if (!(hdev->pkt_type & HCI_3DH1))
 					selected_phys |= MGMT_PHY_EDR_3M_1SLOT;
 
-				अगर (lmp_edr_3slot_capable(hdev) &&
+				if (lmp_edr_3slot_capable(hdev) &&
 				    !(hdev->pkt_type & HCI_3DH3))
 					selected_phys |= MGMT_PHY_EDR_3M_3SLOT;
 
-				अगर (lmp_edr_5slot_capable(hdev) &&
+				if (lmp_edr_5slot_capable(hdev) &&
 				    !(hdev->pkt_type & HCI_3DH5))
 					selected_phys |= MGMT_PHY_EDR_3M_5SLOT;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (lmp_le_capable(hdev)) अणु
-		अगर (hdev->le_tx_def_phys & HCI_LE_SET_PHY_1M)
+	if (lmp_le_capable(hdev)) {
+		if (hdev->le_tx_def_phys & HCI_LE_SET_PHY_1M)
 			selected_phys |= MGMT_PHY_LE_1M_TX;
 
-		अगर (hdev->le_rx_def_phys & HCI_LE_SET_PHY_1M)
+		if (hdev->le_rx_def_phys & HCI_LE_SET_PHY_1M)
 			selected_phys |= MGMT_PHY_LE_1M_RX;
 
-		अगर (hdev->le_tx_def_phys & HCI_LE_SET_PHY_2M)
+		if (hdev->le_tx_def_phys & HCI_LE_SET_PHY_2M)
 			selected_phys |= MGMT_PHY_LE_2M_TX;
 
-		अगर (hdev->le_rx_def_phys & HCI_LE_SET_PHY_2M)
+		if (hdev->le_rx_def_phys & HCI_LE_SET_PHY_2M)
 			selected_phys |= MGMT_PHY_LE_2M_RX;
 
-		अगर (hdev->le_tx_def_phys & HCI_LE_SET_PHY_CODED)
+		if (hdev->le_tx_def_phys & HCI_LE_SET_PHY_CODED)
 			selected_phys |= MGMT_PHY_LE_CODED_TX;
 
-		अगर (hdev->le_rx_def_phys & HCI_LE_SET_PHY_CODED)
+		if (hdev->le_rx_def_phys & HCI_LE_SET_PHY_CODED)
 			selected_phys |= MGMT_PHY_LE_CODED_RX;
-	पूर्ण
+	}
 
-	वापस selected_phys;
-पूर्ण
+	return selected_phys;
+}
 
-अटल u32 get_configurable_phys(काष्ठा hci_dev *hdev)
-अणु
-	वापस (get_supported_phys(hdev) & ~MGMT_PHY_BR_1M_1SLOT &
+static u32 get_configurable_phys(struct hci_dev *hdev)
+{
+	return (get_supported_phys(hdev) & ~MGMT_PHY_BR_1M_1SLOT &
 		~MGMT_PHY_LE_1M_TX & ~MGMT_PHY_LE_1M_RX);
-पूर्ण
+}
 
-अटल u32 get_supported_settings(काष्ठा hci_dev *hdev)
-अणु
+static u32 get_supported_settings(struct hci_dev *hdev)
+{
 	u32 settings = 0;
 
 	settings |= MGMT_SETTING_POWERED;
@@ -782,180 +781,180 @@
 	settings |= MGMT_SETTING_CONNECTABLE;
 	settings |= MGMT_SETTING_DISCOVERABLE;
 
-	अगर (lmp_bredr_capable(hdev)) अणु
-		अगर (hdev->hci_ver >= BLUETOOTH_VER_1_2)
+	if (lmp_bredr_capable(hdev)) {
+		if (hdev->hci_ver >= BLUETOOTH_VER_1_2)
 			settings |= MGMT_SETTING_FAST_CONNECTABLE;
 		settings |= MGMT_SETTING_BREDR;
 		settings |= MGMT_SETTING_LINK_SECURITY;
 
-		अगर (lmp_ssp_capable(hdev)) अणु
+		if (lmp_ssp_capable(hdev)) {
 			settings |= MGMT_SETTING_SSP;
-			अगर (IS_ENABLED(CONFIG_BT_HS))
+			if (IS_ENABLED(CONFIG_BT_HS))
 				settings |= MGMT_SETTING_HS;
-		पूर्ण
+		}
 
-		अगर (lmp_sc_capable(hdev))
+		if (lmp_sc_capable(hdev))
 			settings |= MGMT_SETTING_SECURE_CONN;
 
-		अगर (test_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED,
+		if (test_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED,
 			     &hdev->quirks))
 			settings |= MGMT_SETTING_WIDEBAND_SPEECH;
-	पूर्ण
+	}
 
-	अगर (lmp_le_capable(hdev)) अणु
+	if (lmp_le_capable(hdev)) {
 		settings |= MGMT_SETTING_LE;
 		settings |= MGMT_SETTING_SECURE_CONN;
 		settings |= MGMT_SETTING_PRIVACY;
 		settings |= MGMT_SETTING_STATIC_ADDRESS;
 
-		/* When the experimental feature क्रम LL Privacy support is
-		 * enabled, then advertising is no दीर्घer supported.
+		/* When the experimental feature for LL Privacy support is
+		 * enabled, then advertising is no longer supported.
 		 */
-		अगर (!hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+		if (!hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
 			settings |= MGMT_SETTING_ADVERTISING;
-	पूर्ण
+	}
 
-	अगर (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) ||
+	if (test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks) ||
 	    hdev->set_bdaddr)
 		settings |= MGMT_SETTING_CONFIGURATION;
 
 	settings |= MGMT_SETTING_PHY_CONFIGURATION;
 
-	वापस settings;
-पूर्ण
+	return settings;
+}
 
-अटल u32 get_current_settings(काष्ठा hci_dev *hdev)
-अणु
+static u32 get_current_settings(struct hci_dev *hdev)
+{
 	u32 settings = 0;
 
-	अगर (hdev_is_घातered(hdev))
+	if (hdev_is_powered(hdev))
 		settings |= MGMT_SETTING_POWERED;
 
-	अगर (hci_dev_test_flag(hdev, HCI_CONNECTABLE))
+	if (hci_dev_test_flag(hdev, HCI_CONNECTABLE))
 		settings |= MGMT_SETTING_CONNECTABLE;
 
-	अगर (hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE))
+	if (hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE))
 		settings |= MGMT_SETTING_FAST_CONNECTABLE;
 
-	अगर (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
+	if (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
 		settings |= MGMT_SETTING_DISCOVERABLE;
 
-	अगर (hci_dev_test_flag(hdev, HCI_BONDABLE))
+	if (hci_dev_test_flag(hdev, HCI_BONDABLE))
 		settings |= MGMT_SETTING_BONDABLE;
 
-	अगर (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
 		settings |= MGMT_SETTING_BREDR;
 
-	अगर (hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_LE_ENABLED))
 		settings |= MGMT_SETTING_LE;
 
-	अगर (hci_dev_test_flag(hdev, HCI_LINK_SECURITY))
+	if (hci_dev_test_flag(hdev, HCI_LINK_SECURITY))
 		settings |= MGMT_SETTING_LINK_SECURITY;
 
-	अगर (hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
 		settings |= MGMT_SETTING_SSP;
 
-	अगर (hci_dev_test_flag(hdev, HCI_HS_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_HS_ENABLED))
 		settings |= MGMT_SETTING_HS;
 
-	अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING))
+	if (hci_dev_test_flag(hdev, HCI_ADVERTISING))
 		settings |= MGMT_SETTING_ADVERTISING;
 
-	अगर (hci_dev_test_flag(hdev, HCI_SC_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_SC_ENABLED))
 		settings |= MGMT_SETTING_SECURE_CONN;
 
-	अगर (hci_dev_test_flag(hdev, HCI_KEEP_DEBUG_KEYS))
+	if (hci_dev_test_flag(hdev, HCI_KEEP_DEBUG_KEYS))
 		settings |= MGMT_SETTING_DEBUG_KEYS;
 
-	अगर (hci_dev_test_flag(hdev, HCI_PRIVACY))
+	if (hci_dev_test_flag(hdev, HCI_PRIVACY))
 		settings |= MGMT_SETTING_PRIVACY;
 
-	/* The current setting क्रम अटल address has two purposes. The
-	 * first is to indicate अगर the अटल address will be used and
-	 * the second is to indicate अगर it is actually set.
+	/* The current setting for static address has two purposes. The
+	 * first is to indicate if the static address will be used and
+	 * the second is to indicate if it is actually set.
 	 *
-	 * This means अगर the अटल address is not configured, this flag
-	 * will never be set. If the address is configured, then अगर the
-	 * address is actually used decides अगर the flag is set or not.
+	 * This means if the static address is not configured, this flag
+	 * will never be set. If the address is configured, then if the
+	 * address is actually used decides if the flag is set or not.
 	 *
 	 * For single mode LE only controllers and dual-mode controllers
-	 * with BR/EDR disabled, the existence of the अटल address will
+	 * with BR/EDR disabled, the existence of the static address will
 	 * be evaluated.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
+	if (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
 	    !hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) ||
-	    !bacmp(&hdev->bdaddr, BDADDR_ANY)) अणु
-		अगर (bacmp(&hdev->अटल_addr, BDADDR_ANY))
+	    !bacmp(&hdev->bdaddr, BDADDR_ANY)) {
+		if (bacmp(&hdev->static_addr, BDADDR_ANY))
 			settings |= MGMT_SETTING_STATIC_ADDRESS;
-	पूर्ण
+	}
 
-	अगर (hci_dev_test_flag(hdev, HCI_WIDEBAND_SPEECH_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_WIDEBAND_SPEECH_ENABLED))
 		settings |= MGMT_SETTING_WIDEBAND_SPEECH;
 
-	वापस settings;
-पूर्ण
+	return settings;
+}
 
-अटल काष्ठा mgmt_pending_cmd *pending_find(u16 opcode, काष्ठा hci_dev *hdev)
-अणु
-	वापस mgmt_pending_find(HCI_CHANNEL_CONTROL, opcode, hdev);
-पूर्ण
+static struct mgmt_pending_cmd *pending_find(u16 opcode, struct hci_dev *hdev)
+{
+	return mgmt_pending_find(HCI_CHANNEL_CONTROL, opcode, hdev);
+}
 
-अटल काष्ठा mgmt_pending_cmd *pending_find_data(u16 opcode,
-						  काष्ठा hci_dev *hdev,
-						  स्थिर व्योम *data)
-अणु
-	वापस mgmt_pending_find_data(HCI_CHANNEL_CONTROL, opcode, hdev, data);
-पूर्ण
+static struct mgmt_pending_cmd *pending_find_data(u16 opcode,
+						  struct hci_dev *hdev,
+						  const void *data)
+{
+	return mgmt_pending_find_data(HCI_CHANNEL_CONTROL, opcode, hdev, data);
+}
 
-u8 mgmt_get_adv_discov_flags(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+u8 mgmt_get_adv_discov_flags(struct hci_dev *hdev)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	/* If there's a pending mgmt command the flags will not yet have
-	 * their final values, so check क्रम this first.
+	 * their final values, so check for this first.
 	 */
 	cmd = pending_find(MGMT_OP_SET_DISCOVERABLE, hdev);
-	अगर (cmd) अणु
-		काष्ठा mgmt_mode *cp = cmd->param;
-		अगर (cp->val == 0x01)
-			वापस LE_AD_GENERAL;
-		अन्यथा अगर (cp->val == 0x02)
-			वापस LE_AD_LIMITED;
-	पूर्ण अन्यथा अणु
-		अगर (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
-			वापस LE_AD_LIMITED;
-		अन्यथा अगर (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
-			वापस LE_AD_GENERAL;
-	पूर्ण
+	if (cmd) {
+		struct mgmt_mode *cp = cmd->param;
+		if (cp->val == 0x01)
+			return LE_AD_GENERAL;
+		else if (cp->val == 0x02)
+			return LE_AD_LIMITED;
+	} else {
+		if (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
+			return LE_AD_LIMITED;
+		else if (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
+			return LE_AD_GENERAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool mgmt_get_connectable(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+bool mgmt_get_connectable(struct hci_dev *hdev)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	/* If there's a pending mgmt command the flag will not yet have
-	 * it's final value, so check क्रम this first.
+	 * it's final value, so check for this first.
 	 */
 	cmd = pending_find(MGMT_OP_SET_CONNECTABLE, hdev);
-	अगर (cmd) अणु
-		काष्ठा mgmt_mode *cp = cmd->param;
+	if (cmd) {
+		struct mgmt_mode *cp = cmd->param;
 
-		वापस cp->val;
-	पूर्ण
+		return cp->val;
+	}
 
-	वापस hci_dev_test_flag(hdev, HCI_CONNECTABLE);
-पूर्ण
+	return hci_dev_test_flag(hdev, HCI_CONNECTABLE);
+}
 
-अटल व्योम service_cache_off(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
+static void service_cache_off(struct work_struct *work)
+{
+	struct hci_dev *hdev = container_of(work, struct hci_dev,
 					    service_cache.work);
-	काष्ठा hci_request req;
+	struct hci_request req;
 
-	अगर (!hci_dev_test_and_clear_flag(hdev, HCI_SERVICE_CACHE))
-		वापस;
+	if (!hci_dev_test_and_clear_flag(hdev, HCI_SERVICE_CACHE))
+		return;
 
 	hci_req_init(&req, hdev);
 
@@ -966,60 +965,60 @@ bool mgmt_get_connectable(काष्ठा hci_dev *hdev)
 
 	hci_dev_unlock(hdev);
 
-	hci_req_run(&req, शून्य);
-पूर्ण
+	hci_req_run(&req, NULL);
+}
 
-अटल व्योम rpa_expired(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
+static void rpa_expired(struct work_struct *work)
+{
+	struct hci_dev *hdev = container_of(work, struct hci_dev,
 					    rpa_expired.work);
-	काष्ठा hci_request req;
+	struct hci_request req;
 
 	bt_dev_dbg(hdev, "");
 
 	hci_dev_set_flag(hdev, HCI_RPA_EXPIRED);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_ADVERTISING))
-		वापस;
+	if (!hci_dev_test_flag(hdev, HCI_ADVERTISING))
+		return;
 
-	/* The generation of a new RPA and programming it पूर्णांकo the
+	/* The generation of a new RPA and programming it into the
 	 * controller happens in the hci_req_enable_advertising()
 	 * function.
 	 */
 	hci_req_init(&req, hdev);
-	अगर (ext_adv_capable(hdev))
+	if (ext_adv_capable(hdev))
 		__hci_req_start_ext_adv(&req, hdev->cur_adv_instance);
-	अन्यथा
+	else
 		__hci_req_enable_advertising(&req);
-	hci_req_run(&req, शून्य);
-पूर्ण
+	hci_req_run(&req, NULL);
+}
 
-अटल व्योम mgmt_init_hdev(काष्ठा sock *sk, काष्ठा hci_dev *hdev)
-अणु
-	अगर (hci_dev_test_and_set_flag(hdev, HCI_MGMT))
-		वापस;
+static void mgmt_init_hdev(struct sock *sk, struct hci_dev *hdev)
+{
+	if (hci_dev_test_and_set_flag(hdev, HCI_MGMT))
+		return;
 
 	INIT_DELAYED_WORK(&hdev->service_cache, service_cache_off);
 	INIT_DELAYED_WORK(&hdev->rpa_expired, rpa_expired);
 
 	/* Non-mgmt controlled devices get this bit set
-	 * implicitly so that pairing works क्रम them, however
-	 * क्रम mgmt we require user-space to explicitly enable
+	 * implicitly so that pairing works for them, however
+	 * for mgmt we require user-space to explicitly enable
 	 * it
 	 */
 	hci_dev_clear_flag(hdev, HCI_BONDABLE);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_controller_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_info rp;
+static int read_controller_info(struct sock *sk, struct hci_dev *hdev,
+				void *data, u16 data_len)
+{
+	struct mgmt_rp_read_info rp;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 
 	bacpy(&rp.bdaddr, &hdev->bdaddr);
 
@@ -1029,51 +1028,51 @@ bool mgmt_get_connectable(काष्ठा hci_dev *hdev)
 	rp.supported_settings = cpu_to_le32(get_supported_settings(hdev));
 	rp.current_settings = cpu_to_le32(get_current_settings(hdev));
 
-	स_नकल(rp.dev_class, hdev->dev_class, 3);
+	memcpy(rp.dev_class, hdev->dev_class, 3);
 
-	स_नकल(rp.name, hdev->dev_name, माप(hdev->dev_name));
-	स_नकल(rp.लघु_name, hdev->लघु_name, माप(hdev->लघु_name));
+	memcpy(rp.name, hdev->dev_name, sizeof(hdev->dev_name));
+	memcpy(rp.short_name, hdev->short_name, sizeof(hdev->short_name));
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_INFO, 0, &rp,
-				 माप(rp));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_INFO, 0, &rp,
+				 sizeof(rp));
+}
 
-अटल u16 append_eir_data_to_buf(काष्ठा hci_dev *hdev, u8 *eir)
-अणु
+static u16 append_eir_data_to_buf(struct hci_dev *hdev, u8 *eir)
+{
 	u16 eir_len = 0;
-	माप_प्रकार name_len;
+	size_t name_len;
 
-	अगर (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
 		eir_len = eir_append_data(eir, eir_len, EIR_CLASS_OF_DEV,
 					  hdev->dev_class, 3);
 
-	अगर (hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+	if (hci_dev_test_flag(hdev, HCI_LE_ENABLED))
 		eir_len = eir_append_le16(eir, eir_len, EIR_APPEARANCE,
 					  hdev->appearance);
 
-	name_len = म_माप(hdev->dev_name);
+	name_len = strlen(hdev->dev_name);
 	eir_len = eir_append_data(eir, eir_len, EIR_NAME_COMPLETE,
 				  hdev->dev_name, name_len);
 
-	name_len = म_माप(hdev->लघु_name);
+	name_len = strlen(hdev->short_name);
 	eir_len = eir_append_data(eir, eir_len, EIR_NAME_SHORT,
-				  hdev->लघु_name, name_len);
+				  hdev->short_name, name_len);
 
-	वापस eir_len;
-पूर्ण
+	return eir_len;
+}
 
-अटल पूर्णांक पढ़ो_ext_controller_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				    व्योम *data, u16 data_len)
-अणु
-	अक्षर buf[512];
-	काष्ठा mgmt_rp_पढ़ो_ext_info *rp = (व्योम *)buf;
+static int read_ext_controller_info(struct sock *sk, struct hci_dev *hdev,
+				    void *data, u16 data_len)
+{
+	char buf[512];
+	struct mgmt_rp_read_ext_info *rp = (void *)buf;
 	u16 eir_len;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&buf, 0, माप(buf));
+	memset(&buf, 0, sizeof(buf));
 
 	hci_dev_lock(hdev);
 
@@ -1092,412 +1091,412 @@ bool mgmt_get_connectable(काष्ठा hci_dev *hdev)
 	hci_dev_unlock(hdev);
 
 	/* If this command is called at least once, then the events
-	 * क्रम class of device and local name changes are disabled
-	 * and only the new extended controller inक्रमmation event
+	 * for class of device and local name changes are disabled
+	 * and only the new extended controller information event
 	 * is used.
 	 */
 	hci_sock_set_flag(sk, HCI_MGMT_EXT_INFO_EVENTS);
 	hci_sock_clear_flag(sk, HCI_MGMT_DEV_CLASS_EVENTS);
 	hci_sock_clear_flag(sk, HCI_MGMT_LOCAL_NAME_EVENTS);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_EXT_INFO, 0, rp,
-				 माप(*rp) + eir_len);
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_EXT_INFO, 0, rp,
+				 sizeof(*rp) + eir_len);
+}
 
-अटल पूर्णांक ext_info_changed(काष्ठा hci_dev *hdev, काष्ठा sock *skip)
-अणु
-	अक्षर buf[512];
-	काष्ठा mgmt_ev_ext_info_changed *ev = (व्योम *)buf;
+static int ext_info_changed(struct hci_dev *hdev, struct sock *skip)
+{
+	char buf[512];
+	struct mgmt_ev_ext_info_changed *ev = (void *)buf;
 	u16 eir_len;
 
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 
 	eir_len = append_eir_data_to_buf(hdev, ev->eir);
 	ev->eir_len = cpu_to_le16(eir_len);
 
-	वापस mgmt_limited_event(MGMT_EV_EXT_INFO_CHANGED, hdev, ev,
-				  माप(*ev) + eir_len,
+	return mgmt_limited_event(MGMT_EV_EXT_INFO_CHANGED, hdev, ev,
+				  sizeof(*ev) + eir_len,
 				  HCI_MGMT_EXT_INFO_EVENTS, skip);
-पूर्ण
+}
 
-अटल पूर्णांक send_settings_rsp(काष्ठा sock *sk, u16 opcode, काष्ठा hci_dev *hdev)
-अणु
+static int send_settings_rsp(struct sock *sk, u16 opcode, struct hci_dev *hdev)
+{
 	__le32 settings = cpu_to_le32(get_current_settings(hdev));
 
-	वापस mgmt_cmd_complete(sk, hdev->id, opcode, 0, &settings,
-				 माप(settings));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, opcode, 0, &settings,
+				 sizeof(settings));
+}
 
-अटल व्योम clean_up_hci_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
+static void clean_up_hci_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
-	अगर (hci_conn_count(hdev) == 0) अणु
-		cancel_delayed_work(&hdev->घातer_off);
-		queue_work(hdev->req_workqueue, &hdev->घातer_off.work);
-	पूर्ण
-पूर्ण
+	if (hci_conn_count(hdev) == 0) {
+		cancel_delayed_work(&hdev->power_off);
+		queue_work(hdev->req_workqueue, &hdev->power_off.work);
+	}
+}
 
-व्योम mgmt_advertising_added(काष्ठा sock *sk, काष्ठा hci_dev *hdev, u8 instance)
-अणु
-	काष्ठा mgmt_ev_advertising_added ev;
+void mgmt_advertising_added(struct sock *sk, struct hci_dev *hdev, u8 instance)
+{
+	struct mgmt_ev_advertising_added ev;
 
 	ev.instance = instance;
 
-	mgmt_event(MGMT_EV_ADVERTISING_ADDED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_ADVERTISING_ADDED, hdev, &ev, sizeof(ev), sk);
+}
 
-व्योम mgmt_advertising_हटाओd(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
+void mgmt_advertising_removed(struct sock *sk, struct hci_dev *hdev,
 			      u8 instance)
-अणु
-	काष्ठा mgmt_ev_advertising_हटाओd ev;
+{
+	struct mgmt_ev_advertising_removed ev;
 
 	ev.instance = instance;
 
-	mgmt_event(MGMT_EV_ADVERTISING_REMOVED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_ADVERTISING_REMOVED, hdev, &ev, sizeof(ev), sk);
+}
 
-अटल व्योम cancel_adv_समयout(काष्ठा hci_dev *hdev)
-अणु
-	अगर (hdev->adv_instance_समयout) अणु
-		hdev->adv_instance_समयout = 0;
+static void cancel_adv_timeout(struct hci_dev *hdev)
+{
+	if (hdev->adv_instance_timeout) {
+		hdev->adv_instance_timeout = 0;
 		cancel_delayed_work(&hdev->adv_instance_expire);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक clean_up_hci_state(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_request req;
-	काष्ठा hci_conn *conn;
+static int clean_up_hci_state(struct hci_dev *hdev)
+{
+	struct hci_request req;
+	struct hci_conn *conn;
 	bool discov_stopped;
-	पूर्णांक err;
+	int err;
 
 	hci_req_init(&req, hdev);
 
-	अगर (test_bit(HCI_ISCAN, &hdev->flags) ||
-	    test_bit(HCI_PSCAN, &hdev->flags)) अणु
+	if (test_bit(HCI_ISCAN, &hdev->flags) ||
+	    test_bit(HCI_PSCAN, &hdev->flags)) {
 		u8 scan = 0x00;
 		hci_req_add(&req, HCI_OP_WRITE_SCAN_ENABLE, 1, &scan);
-	पूर्ण
+	}
 
-	hci_req_clear_adv_instance(hdev, शून्य, शून्य, 0x00, false);
+	hci_req_clear_adv_instance(hdev, NULL, NULL, 0x00, false);
 
-	अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
+	if (hci_dev_test_flag(hdev, HCI_LE_ADV))
 		__hci_req_disable_advertising(&req);
 
 	discov_stopped = hci_req_stop_discovery(&req);
 
-	list_क्रम_each_entry(conn, &hdev->conn_hash.list, list) अणु
+	list_for_each_entry(conn, &hdev->conn_hash.list, list) {
 		/* 0x15 == Terminated due to Power Off */
-		__hci_पात_conn(&req, conn, 0x15);
-	पूर्ण
+		__hci_abort_conn(&req, conn, 0x15);
+	}
 
 	err = hci_req_run(&req, clean_up_hci_complete);
-	अगर (!err && discov_stopped)
+	if (!err && discov_stopped)
 		hci_discovery_set_state(hdev, DISCOVERY_STOPPING);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_घातered(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_powered(struct sock *sk, struct hci_dev *hdev, void *data,
 		       u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_POWERED,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_POWERED,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_find(MGMT_OP_SET_POWERED, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_POWERED, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_POWERED,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (!!cp->val == hdev_is_घातered(hdev)) अणु
+	if (!!cp->val == hdev_is_powered(hdev)) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_POWERED, hdev);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_POWERED, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (cp->val) अणु
-		queue_work(hdev->req_workqueue, &hdev->घातer_on);
+	if (cp->val) {
+		queue_work(hdev->req_workqueue, &hdev->power_on);
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Disconnect connections, stop scans, etc */
 		err = clean_up_hci_state(hdev);
-		अगर (!err)
-			queue_delayed_work(hdev->req_workqueue, &hdev->घातer_off,
+		if (!err)
+			queue_delayed_work(hdev->req_workqueue, &hdev->power_off,
 					   HCI_POWER_OFF_TIMEOUT);
 
 		/* ENODATA means there were no HCI commands queued */
-		अगर (err == -ENODATA) अणु
-			cancel_delayed_work(&hdev->घातer_off);
-			queue_work(hdev->req_workqueue, &hdev->घातer_off.work);
+		if (err == -ENODATA) {
+			cancel_delayed_work(&hdev->power_off);
+			queue_work(hdev->req_workqueue, &hdev->power_off.work);
 			err = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक new_settings(काष्ठा hci_dev *hdev, काष्ठा sock *skip)
-अणु
+static int new_settings(struct hci_dev *hdev, struct sock *skip)
+{
 	__le32 ev = cpu_to_le32(get_current_settings(hdev));
 
-	वापस mgmt_limited_event(MGMT_EV_NEW_SETTINGS, hdev, &ev,
-				  माप(ev), HCI_MGMT_SETTING_EVENTS, skip);
-पूर्ण
+	return mgmt_limited_event(MGMT_EV_NEW_SETTINGS, hdev, &ev,
+				  sizeof(ev), HCI_MGMT_SETTING_EVENTS, skip);
+}
 
-पूर्णांक mgmt_new_settings(काष्ठा hci_dev *hdev)
-अणु
-	वापस new_settings(hdev, शून्य);
-पूर्ण
+int mgmt_new_settings(struct hci_dev *hdev)
+{
+	return new_settings(hdev, NULL);
+}
 
-काष्ठा cmd_lookup अणु
-	काष्ठा sock *sk;
-	काष्ठा hci_dev *hdev;
+struct cmd_lookup {
+	struct sock *sk;
+	struct hci_dev *hdev;
 	u8 mgmt_status;
-पूर्ण;
+};
 
-अटल व्योम settings_rsp(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
-	काष्ठा cmd_lookup *match = data;
+static void settings_rsp(struct mgmt_pending_cmd *cmd, void *data)
+{
+	struct cmd_lookup *match = data;
 
 	send_settings_rsp(cmd->sk, cmd->opcode, match->hdev);
 
 	list_del(&cmd->list);
 
-	अगर (match->sk == शून्य) अणु
+	if (match->sk == NULL) {
 		match->sk = cmd->sk;
 		sock_hold(match->sk);
-	पूर्ण
+	}
 
-	mgmt_pending_मुक्त(cmd);
-पूर्ण
+	mgmt_pending_free(cmd);
+}
 
-अटल व्योम cmd_status_rsp(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
+static void cmd_status_rsp(struct mgmt_pending_cmd *cmd, void *data)
+{
 	u8 *status = data;
 
 	mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode, *status);
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-अटल व्योम cmd_complete_rsp(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
-	अगर (cmd->cmd_complete) अणु
+static void cmd_complete_rsp(struct mgmt_pending_cmd *cmd, void *data)
+{
+	if (cmd->cmd_complete) {
 		u8 *status = data;
 
 		cmd->cmd_complete(cmd, *status);
-		mgmt_pending_हटाओ(cmd);
+		mgmt_pending_remove(cmd);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd_status_rsp(cmd, data);
-पूर्ण
+}
 
-अटल पूर्णांक generic_cmd_complete(काष्ठा mgmt_pending_cmd *cmd, u8 status)
-अणु
-	वापस mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
+static int generic_cmd_complete(struct mgmt_pending_cmd *cmd, u8 status)
+{
+	return mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
 				 cmd->param, cmd->param_len);
-पूर्ण
+}
 
-अटल पूर्णांक addr_cmd_complete(काष्ठा mgmt_pending_cmd *cmd, u8 status)
-अणु
-	वापस mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
-				 cmd->param, माप(काष्ठा mgmt_addr_info));
-पूर्ण
+static int addr_cmd_complete(struct mgmt_pending_cmd *cmd, u8 status)
+{
+	return mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
+				 cmd->param, sizeof(struct mgmt_addr_info));
+}
 
-अटल u8 mgmt_bredr_support(काष्ठा hci_dev *hdev)
-अणु
-	अगर (!lmp_bredr_capable(hdev))
-		वापस MGMT_STATUS_NOT_SUPPORTED;
-	अन्यथा अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		वापस MGMT_STATUS_REJECTED;
-	अन्यथा
-		वापस MGMT_STATUS_SUCCESS;
-पूर्ण
+static u8 mgmt_bredr_support(struct hci_dev *hdev)
+{
+	if (!lmp_bredr_capable(hdev))
+		return MGMT_STATUS_NOT_SUPPORTED;
+	else if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		return MGMT_STATUS_REJECTED;
+	else
+		return MGMT_STATUS_SUCCESS;
+}
 
-अटल u8 mgmt_le_support(काष्ठा hci_dev *hdev)
-अणु
-	अगर (!lmp_le_capable(hdev))
-		वापस MGMT_STATUS_NOT_SUPPORTED;
-	अन्यथा अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		वापस MGMT_STATUS_REJECTED;
-	अन्यथा
-		वापस MGMT_STATUS_SUCCESS;
-पूर्ण
+static u8 mgmt_le_support(struct hci_dev *hdev)
+{
+	if (!lmp_le_capable(hdev))
+		return MGMT_STATUS_NOT_SUPPORTED;
+	else if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+		return MGMT_STATUS_REJECTED;
+	else
+		return MGMT_STATUS_SUCCESS;
+}
 
-व्योम mgmt_set_discoverable_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_set_discoverable_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_DISCOVERABLE, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode, mgmt_err);
 		hci_dev_clear_flag(hdev, HCI_LIMITED_DISCOVERABLE);
-		जाओ हटाओ_cmd;
-	पूर्ण
+		goto remove_cmd;
+	}
 
-	अगर (hci_dev_test_flag(hdev, HCI_DISCOVERABLE) &&
-	    hdev->discov_समयout > 0) अणु
-		पूर्णांक to = msecs_to_jअगरfies(hdev->discov_समयout * 1000);
+	if (hci_dev_test_flag(hdev, HCI_DISCOVERABLE) &&
+	    hdev->discov_timeout > 0) {
+		int to = msecs_to_jiffies(hdev->discov_timeout * 1000);
 		queue_delayed_work(hdev->req_workqueue, &hdev->discov_off, to);
-	पूर्ण
+	}
 
 	send_settings_rsp(cmd->sk, MGMT_OP_SET_DISCOVERABLE, hdev);
 	new_settings(hdev, cmd->sk);
 
-हटाओ_cmd:
-	mgmt_pending_हटाओ(cmd);
+remove_cmd:
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_discoverable(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_discoverable(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 len)
-अणु
-	काष्ठा mgmt_cp_set_discoverable *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	u16 समयout;
-	पूर्णांक err;
+{
+	struct mgmt_cp_set_discoverable *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	u16 timeout;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
+	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
 	    !hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
+	if (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	समयout = __le16_to_cpu(cp->समयout);
+	timeout = __le16_to_cpu(cp->timeout);
 
-	/* Disabling discoverable requires that no समयout is set,
-	 * and enabling limited discoverable requires a समयout.
+	/* Disabling discoverable requires that no timeout is set,
+	 * and enabling limited discoverable requires a timeout.
 	 */
-	अगर ((cp->val == 0x00 && समयout > 0) ||
-	    (cp->val == 0x02 && समयout == 0))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
+	if ((cp->val == 0x00 && timeout > 0) ||
+	    (cp->val == 0x02 && timeout == 0))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev) && समयout > 0) अणु
+	if (!hdev_is_powered(hdev) && timeout > 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				      MGMT_STATUS_NOT_POWERED);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_DISCOVERABLE, hdev) ||
-	    pending_find(MGMT_OP_SET_CONNECTABLE, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_DISCOVERABLE, hdev) ||
+	    pending_find(MGMT_OP_SET_CONNECTABLE, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (!hci_dev_test_flag(hdev, HCI_CONNECTABLE)) अणु
+	if (!hci_dev_test_flag(hdev, HCI_CONNECTABLE)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				      MGMT_STATUS_REJECTED);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (hdev->advertising_छोड़ोd) अणु
+	if (hdev->advertising_paused) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DISCOVERABLE,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		bool changed = false;
 
-		/* Setting limited discoverable when घातered off is
-		 * not a valid operation since it requires a समयout
+		/* Setting limited discoverable when powered off is
+		 * not a valid operation since it requires a timeout
 		 * and so no need to check HCI_LIMITED_DISCOVERABLE.
 		 */
-		अगर (!!cp->val != hci_dev_test_flag(hdev, HCI_DISCOVERABLE)) अणु
+		if (!!cp->val != hci_dev_test_flag(hdev, HCI_DISCOVERABLE)) {
 			hci_dev_change_flag(hdev, HCI_DISCOVERABLE);
 			changed = true;
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_DISCOVERABLE, hdev);
-		अगर (err < 0)
-			जाओ failed;
+		if (err < 0)
+			goto failed;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	/* If the current mode is the same, then just update the समयout
-	 * value with the new value. And अगर only the समयout माला_लो updated,
-	 * then no need क्रम any HCI transactions.
+	/* If the current mode is the same, then just update the timeout
+	 * value with the new value. And if only the timeout gets updated,
+	 * then no need for any HCI transactions.
 	 */
-	अगर (!!cp->val == hci_dev_test_flag(hdev, HCI_DISCOVERABLE) &&
+	if (!!cp->val == hci_dev_test_flag(hdev, HCI_DISCOVERABLE) &&
 	    (cp->val == 0x02) == hci_dev_test_flag(hdev,
-						   HCI_LIMITED_DISCOVERABLE)) अणु
+						   HCI_LIMITED_DISCOVERABLE)) {
 		cancel_delayed_work(&hdev->discov_off);
-		hdev->discov_समयout = समयout;
+		hdev->discov_timeout = timeout;
 
-		अगर (cp->val && hdev->discov_समयout > 0) अणु
-			पूर्णांक to = msecs_to_jअगरfies(hdev->discov_समयout * 1000);
+		if (cp->val && hdev->discov_timeout > 0) {
+			int to = msecs_to_jiffies(hdev->discov_timeout * 1000);
 			queue_delayed_work(hdev->req_workqueue,
 					   &hdev->discov_off, to);
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_DISCOVERABLE, hdev);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_DISCOVERABLE, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	/* Cancel any potential discoverable समयout that might be
-	 * still active and store new समयout value. The arming of
-	 * the समयout happens in the complete handler.
+	/* Cancel any potential discoverable timeout that might be
+	 * still active and store new timeout value. The arming of
+	 * the timeout happens in the complete handler.
 	 */
 	cancel_delayed_work(&hdev->discov_off);
-	hdev->discov_समयout = समयout;
+	hdev->discov_timeout = timeout;
 
-	अगर (cp->val)
+	if (cp->val)
 		hci_dev_set_flag(hdev, HCI_DISCOVERABLE);
-	अन्यथा
+	else
 		hci_dev_clear_flag(hdev, HCI_DISCOVERABLE);
 
 	/* Limited discoverable mode */
-	अगर (cp->val == 0x02)
+	if (cp->val == 0x02)
 		hci_dev_set_flag(hdev, HCI_LIMITED_DISCOVERABLE);
-	अन्यथा
+	else
 		hci_dev_clear_flag(hdev, HCI_LIMITED_DISCOVERABLE);
 
 	queue_work(hdev->req_workqueue, &hdev->discoverable_update);
@@ -1505,152 +1504,152 @@ unlock:
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mgmt_set_connectable_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_set_connectable_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_CONNECTABLE, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode, mgmt_err);
-		जाओ हटाओ_cmd;
-	पूर्ण
+		goto remove_cmd;
+	}
 
 	send_settings_rsp(cmd->sk, MGMT_OP_SET_CONNECTABLE, hdev);
 	new_settings(hdev, cmd->sk);
 
-हटाओ_cmd:
-	mgmt_pending_हटाओ(cmd);
+remove_cmd:
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_connectable_update_settings(काष्ठा hci_dev *hdev,
-					   काष्ठा sock *sk, u8 val)
-अणु
+static int set_connectable_update_settings(struct hci_dev *hdev,
+					   struct sock *sk, u8 val)
+{
 	bool changed = false;
-	पूर्णांक err;
+	int err;
 
-	अगर (!!val != hci_dev_test_flag(hdev, HCI_CONNECTABLE))
+	if (!!val != hci_dev_test_flag(hdev, HCI_CONNECTABLE))
 		changed = true;
 
-	अगर (val) अणु
+	if (val) {
 		hci_dev_set_flag(hdev, HCI_CONNECTABLE);
-	पूर्ण अन्यथा अणु
+	} else {
 		hci_dev_clear_flag(hdev, HCI_CONNECTABLE);
 		hci_dev_clear_flag(hdev, HCI_DISCOVERABLE);
-	पूर्ण
+	}
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_CONNECTABLE, hdev);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (changed) अणु
+	if (changed) {
 		hci_req_update_scan(hdev);
 		hci_update_background_scan(hdev);
-		वापस new_settings(hdev, sk);
-	पूर्ण
+		return new_settings(hdev, sk);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_connectable(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_connectable(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
+	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
 	    !hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_CONNECTABLE,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_CONNECTABLE,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_CONNECTABLE,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_CONNECTABLE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = set_connectable_update_settings(hdev, sk, cp->val);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_DISCOVERABLE, hdev) ||
-	    pending_find(MGMT_OP_SET_CONNECTABLE, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_DISCOVERABLE, hdev) ||
+	    pending_find(MGMT_OP_SET_CONNECTABLE, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_CONNECTABLE,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_CONNECTABLE, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (cp->val) अणु
+	if (cp->val) {
 		hci_dev_set_flag(hdev, HCI_CONNECTABLE);
-	पूर्ण अन्यथा अणु
-		अगर (hdev->discov_समयout > 0)
+	} else {
+		if (hdev->discov_timeout > 0)
 			cancel_delayed_work(&hdev->discov_off);
 
 		hci_dev_clear_flag(hdev, HCI_LIMITED_DISCOVERABLE);
 		hci_dev_clear_flag(hdev, HCI_DISCOVERABLE);
 		hci_dev_clear_flag(hdev, HCI_CONNECTABLE);
-	पूर्ण
+	}
 
 	queue_work(hdev->req_workqueue, &hdev->connectable_update);
 	err = 0;
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_bondable(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_bondable(struct sock *sk, struct hci_dev *hdev, void *data,
 			u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
+{
+	struct mgmt_mode *cp = data;
 	bool changed;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BONDABLE,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BONDABLE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->val)
+	if (cp->val)
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_BONDABLE);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_BONDABLE);
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_BONDABLE, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (changed) अणु
+	if (changed) {
 		/* In limited privacy mode the change of bondable mode
 		 * may affect the local advertising address.
 		 */
-		अगर (hdev_is_घातered(hdev) &&
+		if (hdev_is_powered(hdev) &&
 		    hci_dev_test_flag(hdev, HCI_ADVERTISING) &&
 		    hci_dev_test_flag(hdev, HCI_DISCOVERABLE) &&
 		    hci_dev_test_flag(hdev, HCI_LIMITED_PRIVACY))
@@ -1658,472 +1657,472 @@ failed:
 				   &hdev->discoverable_update);
 
 		err = new_settings(hdev, sk);
-	पूर्ण
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_link_security(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_link_security(struct sock *sk, struct hci_dev *hdev, void *data,
 			     u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
 	u8 val, status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	status = mgmt_bredr_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LINK_SECURITY,
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LINK_SECURITY,
 				       status);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LINK_SECURITY,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LINK_SECURITY,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		bool changed = false;
 
-		अगर (!!cp->val != hci_dev_test_flag(hdev, HCI_LINK_SECURITY)) अणु
+		if (!!cp->val != hci_dev_test_flag(hdev, HCI_LINK_SECURITY)) {
 			hci_dev_change_flag(hdev, HCI_LINK_SECURITY);
 			changed = true;
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_LINK_SECURITY, hdev);
-		अगर (err < 0)
-			जाओ failed;
+		if (err < 0)
+			goto failed;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_LINK_SECURITY, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_LINK_SECURITY, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LINK_SECURITY,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	val = !!cp->val;
 
-	अगर (test_bit(HCI_AUTH, &hdev->flags) == val) अणु
+	if (test_bit(HCI_AUTH, &hdev->flags) == val) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_LINK_SECURITY, hdev);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_LINK_SECURITY, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	err = hci_send_cmd(hdev, HCI_OP_WRITE_AUTH_ENABLE, माप(val), &val);
-	अगर (err < 0) अणु
-		mgmt_pending_हटाओ(cmd);
-		जाओ failed;
-	पूर्ण
+	err = hci_send_cmd(hdev, HCI_OP_WRITE_AUTH_ENABLE, sizeof(val), &val);
+	if (err < 0) {
+		mgmt_pending_remove(cmd);
+		goto failed;
+	}
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_ssp(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
+static int set_ssp(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	status = mgmt_bredr_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP, status);
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP, status);
 
-	अगर (!lmp_ssp_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP,
+	if (!lmp_ssp_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		bool changed;
 
-		अगर (cp->val) अणु
+		if (cp->val) {
 			changed = !hci_dev_test_and_set_flag(hdev,
 							     HCI_SSP_ENABLED);
-		पूर्ण अन्यथा अणु
+		} else {
 			changed = hci_dev_test_and_clear_flag(hdev,
 							      HCI_SSP_ENABLED);
-			अगर (!changed)
+			if (!changed)
 				changed = hci_dev_test_and_clear_flag(hdev,
 								      HCI_HS_ENABLED);
-			अन्यथा
+			else
 				hci_dev_clear_flag(hdev, HCI_HS_ENABLED);
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_SSP, hdev);
-		अगर (err < 0)
-			जाओ failed;
+		if (err < 0)
+			goto failed;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_SSP, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_SSP, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SSP,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (!!cp->val == hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) अणु
+	if (!!cp->val == hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_SSP, hdev);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_SSP, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (!cp->val && hci_dev_test_flag(hdev, HCI_USE_DEBUG_KEYS))
+	if (!cp->val && hci_dev_test_flag(hdev, HCI_USE_DEBUG_KEYS))
 		hci_send_cmd(hdev, HCI_OP_WRITE_SSP_DEBUG_MODE,
-			     माप(cp->val), &cp->val);
+			     sizeof(cp->val), &cp->val);
 
 	err = hci_send_cmd(hdev, HCI_OP_WRITE_SSP_MODE, 1, &cp->val);
-	अगर (err < 0) अणु
-		mgmt_pending_हटाओ(cmd);
-		जाओ failed;
-	पूर्ण
+	if (err < 0) {
+		mgmt_pending_remove(cmd);
+		goto failed;
+	}
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_hs(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
+static int set_hs(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
 	bool changed;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!IS_ENABLED(CONFIG_BT_HS))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
+	if (!IS_ENABLED(CONFIG_BT_HS))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	status = mgmt_bredr_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS, status);
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS, status);
 
-	अगर (!lmp_ssp_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
+	if (!lmp_ssp_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
+	if (!hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_find(MGMT_OP_SET_SSP, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_SSP, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (cp->val) अणु
+	if (cp->val) {
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_HS_ENABLED);
-	पूर्ण अन्यथा अणु
-		अगर (hdev_is_घातered(hdev)) अणु
+	} else {
+		if (hdev_is_powered(hdev)) {
 			err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_HS,
 					      MGMT_STATUS_REJECTED);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_HS_ENABLED);
-	पूर्ण
+	}
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_HS, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (changed)
+	if (changed)
 		err = new_settings(hdev, sk);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम le_enable_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
+static void le_enable_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
+	struct cmd_lookup match = { NULL, hdev };
 
 	hci_dev_lock(hdev);
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 
-		mgmt_pending_क्रमeach(MGMT_OP_SET_LE, hdev, cmd_status_rsp,
+		mgmt_pending_foreach(MGMT_OP_SET_LE, hdev, cmd_status_rsp,
 				     &mgmt_err);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_LE, hdev, settings_rsp, &match);
+	mgmt_pending_foreach(MGMT_OP_SET_LE, hdev, settings_rsp, &match);
 
 	new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
 
-	/* Make sure the controller has a good शेष क्रम
+	/* Make sure the controller has a good default for
 	 * advertising data. Restrict the update to when LE
-	 * has actually been enabled. During घातer on, the
-	 * update in घातered_update_hci will take care of it.
+	 * has actually been enabled. During power on, the
+	 * update in powered_update_hci will take care of it.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_LE_ENABLED)) अणु
-		काष्ठा hci_request req;
+	if (hci_dev_test_flag(hdev, HCI_LE_ENABLED)) {
+		struct hci_request req;
 		hci_req_init(&req, hdev);
-		अगर (ext_adv_capable(hdev)) अणु
-			पूर्णांक err;
+		if (ext_adv_capable(hdev)) {
+			int err;
 
 			err = __hci_req_setup_ext_adv_instance(&req, 0x00);
-			अगर (!err)
+			if (!err)
 				__hci_req_update_scan_rsp_data(&req, 0x00);
-		पूर्ण अन्यथा अणु
+		} else {
 			__hci_req_update_adv_data(&req, 0x00);
 			__hci_req_update_scan_rsp_data(&req, 0x00);
-		पूर्ण
-		hci_req_run(&req, शून्य);
+		}
+		hci_req_run(&req, NULL);
 		hci_update_background_scan(hdev);
-	पूर्ण
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_le(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा hci_cp_ग_लिखो_le_host_supported hci_cp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int set_le(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	struct hci_cp_write_le_host_supported hci_cp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 	u8 val, enabled;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	/* Bluetooth single mode LE only controllers or dual-mode
-	 * controllers configured as LE only devices, करो not allow
-	 * चयनing LE off. These have either LE enabled explicitly
-	 * or BR/EDR has been previously चयनed off.
+	 * controllers configured as LE only devices, do not allow
+	 * switching LE off. These have either LE enabled explicitly
+	 * or BR/EDR has been previously switched off.
 	 *
-	 * When trying to enable an alपढ़ोy enabled LE, then gracefully
+	 * When trying to enable an already enabled LE, then gracefully
 	 * send a positive response. Trying to disable it however will
-	 * result पूर्णांकo rejection.
+	 * result into rejection.
 	 */
-	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) अणु
-		अगर (cp->val == 0x01)
-			वापस send_settings_rsp(sk, MGMT_OP_SET_LE, hdev);
+	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
+		if (cp->val == 0x01)
+			return send_settings_rsp(sk, MGMT_OP_SET_LE, hdev);
 
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
 				       MGMT_STATUS_REJECTED);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
 	val = !!cp->val;
 	enabled = lmp_host_le_capable(hdev);
 
-	अगर (!val)
-		hci_req_clear_adv_instance(hdev, शून्य, शून्य, 0x00, true);
+	if (!val)
+		hci_req_clear_adv_instance(hdev, NULL, NULL, 0x00, true);
 
-	अगर (!hdev_is_घातered(hdev) || val == enabled) अणु
+	if (!hdev_is_powered(hdev) || val == enabled) {
 		bool changed = false;
 
-		अगर (val != hci_dev_test_flag(hdev, HCI_LE_ENABLED)) अणु
+		if (val != hci_dev_test_flag(hdev, HCI_LE_ENABLED)) {
 			hci_dev_change_flag(hdev, HCI_LE_ENABLED);
 			changed = true;
-		पूर्ण
+		}
 
-		अगर (!val && hci_dev_test_flag(hdev, HCI_ADVERTISING)) अणु
+		if (!val && hci_dev_test_flag(hdev, HCI_ADVERTISING)) {
 			hci_dev_clear_flag(hdev, HCI_ADVERTISING);
 			changed = true;
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_LE, hdev);
-		अगर (err < 0)
-			जाओ unlock;
+		if (err < 0)
+			goto unlock;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_LE, hdev) ||
-	    pending_find(MGMT_OP_SET_ADVERTISING, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_LE, hdev) ||
+	    pending_find(MGMT_OP_SET_ADVERTISING, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_LE,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_LE, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	स_रखो(&hci_cp, 0, माप(hci_cp));
+	memset(&hci_cp, 0, sizeof(hci_cp));
 
-	अगर (val) अणु
+	if (val) {
 		hci_cp.le = val;
 		hci_cp.simul = 0x00;
-	पूर्ण अन्यथा अणु
-		अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
+	} else {
+		if (hci_dev_test_flag(hdev, HCI_LE_ADV))
 			__hci_req_disable_advertising(&req);
 
-		अगर (ext_adv_capable(hdev))
+		if (ext_adv_capable(hdev))
 			__hci_req_clear_ext_adv_sets(&req);
-	पूर्ण
+	}
 
-	hci_req_add(&req, HCI_OP_WRITE_LE_HOST_SUPPORTED, माप(hci_cp),
+	hci_req_add(&req, HCI_OP_WRITE_LE_HOST_SUPPORTED, sizeof(hci_cp),
 		    &hci_cp);
 
 	err = hci_req_run(&req, le_enable_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* This is a helper function to test क्रम pending mgmt commands that can
+/* This is a helper function to test for pending mgmt commands that can
  * cause CoD or EIR HCI commands. We can only allow one such pending
- * mgmt command at a समय since otherwise we cannot easily track what
- * the current values are, will be, and based on that calculate अगर a new
- * HCI command needs to be sent and अगर yes with what value.
+ * mgmt command at a time since otherwise we cannot easily track what
+ * the current values are, will be, and based on that calculate if a new
+ * HCI command needs to be sent and if yes with what value.
  */
-अटल bool pending_eir_or_class(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static bool pending_eir_or_class(struct hci_dev *hdev)
+{
+	struct mgmt_pending_cmd *cmd;
 
-	list_क्रम_each_entry(cmd, &hdev->mgmt_pending, list) अणु
-		चयन (cmd->opcode) अणु
-		हाल MGMT_OP_ADD_UUID:
-		हाल MGMT_OP_REMOVE_UUID:
-		हाल MGMT_OP_SET_DEV_CLASS:
-		हाल MGMT_OP_SET_POWERED:
-			वापस true;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(cmd, &hdev->mgmt_pending, list) {
+		switch (cmd->opcode) {
+		case MGMT_OP_ADD_UUID:
+		case MGMT_OP_REMOVE_UUID:
+		case MGMT_OP_SET_DEV_CLASS:
+		case MGMT_OP_SET_POWERED:
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल स्थिर u8 bluetooth_base_uuid[] = अणु
+static const u8 bluetooth_base_uuid[] = {
 			0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
 			0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल u8 get_uuid_size(स्थिर u8 *uuid)
-अणु
+static u8 get_uuid_size(const u8 *uuid)
+{
 	u32 val;
 
-	अगर (स_भेद(uuid, bluetooth_base_uuid, 12))
-		वापस 128;
+	if (memcmp(uuid, bluetooth_base_uuid, 12))
+		return 128;
 
 	val = get_unaligned_le32(&uuid[12]);
-	अगर (val > 0xffff)
-		वापस 32;
+	if (val > 0xffff)
+		return 32;
 
-	वापस 16;
-पूर्ण
+	return 16;
+}
 
-अटल व्योम mgmt_class_complete(काष्ठा hci_dev *hdev, u16 mgmt_op, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static void mgmt_class_complete(struct hci_dev *hdev, u16 mgmt_op, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(mgmt_op, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode,
 			  mgmt_status(status), hdev->dev_class, 3);
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल व्योम add_uuid_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
+static void add_uuid_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	mgmt_class_complete(hdev, MGMT_OP_ADD_UUID, status);
-पूर्ण
+}
 
-अटल पूर्णांक add_uuid(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_add_uuid *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	काष्ठा bt_uuid *uuid;
-	पूर्णांक err;
+static int add_uuid(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+{
+	struct mgmt_cp_add_uuid *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	struct bt_uuid *uuid;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_eir_or_class(hdev)) अणु
+	if (pending_eir_or_class(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_UUID,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	uuid = kदो_स्मृति(माप(*uuid), GFP_KERNEL);
-	अगर (!uuid) अणु
+	uuid = kmalloc(sizeof(*uuid), GFP_KERNEL);
+	if (!uuid) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	स_नकल(uuid->uuid, cp->uuid, 16);
-	uuid->svc_hपूर्णांक = cp->svc_hपूर्णांक;
+	memcpy(uuid->uuid, cp->uuid, 16);
+	uuid->svc_hint = cp->svc_hint;
 	uuid->size = get_uuid_size(cp->uuid);
 
 	list_add_tail(&uuid->list, &hdev->uuids);
@@ -2134,98 +2133,98 @@ unlock:
 	__hci_req_update_eir(&req);
 
 	err = hci_req_run(&req, add_uuid_complete);
-	अगर (err < 0) अणु
-		अगर (err != -ENODATA)
-			जाओ failed;
+	if (err < 0) {
+		if (err != -ENODATA)
+			goto failed;
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_UUID, 0,
 					hdev->dev_class, 3);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_ADD_UUID, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	err = 0;
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool enable_service_cache(काष्ठा hci_dev *hdev)
-अणु
-	अगर (!hdev_is_घातered(hdev))
-		वापस false;
+static bool enable_service_cache(struct hci_dev *hdev)
+{
+	if (!hdev_is_powered(hdev))
+		return false;
 
-	अगर (!hci_dev_test_and_set_flag(hdev, HCI_SERVICE_CACHE)) अणु
+	if (!hci_dev_test_and_set_flag(hdev, HCI_SERVICE_CACHE)) {
 		queue_delayed_work(hdev->workqueue, &hdev->service_cache,
 				   CACHE_TIMEOUT);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम हटाओ_uuid_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
+static void remove_uuid_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	mgmt_class_complete(hdev, MGMT_OP_REMOVE_UUID, status);
-पूर्ण
+}
 
-अटल पूर्णांक हटाओ_uuid(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int remove_uuid(struct sock *sk, struct hci_dev *hdev, void *data,
 		       u16 len)
-अणु
-	काष्ठा mgmt_cp_हटाओ_uuid *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा bt_uuid *match, *पंचांगp;
-	u8 bt_uuid_any[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-	काष्ठा hci_request req;
-	पूर्णांक err, found;
+{
+	struct mgmt_cp_remove_uuid *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct bt_uuid *match, *tmp;
+	u8 bt_uuid_any[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct hci_request req;
+	int err, found;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_eir_or_class(hdev)) अणु
+	if (pending_eir_or_class(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_UUID,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (स_भेद(cp->uuid, bt_uuid_any, 16) == 0) अणु
+	if (memcmp(cp->uuid, bt_uuid_any, 16) == 0) {
 		hci_uuids_clear(hdev);
 
-		अगर (enable_service_cache(hdev)) अणु
+		if (enable_service_cache(hdev)) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_UUID,
 						0, hdev->dev_class, 3);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		जाओ update_class;
-	पूर्ण
+		goto update_class;
+	}
 
 	found = 0;
 
-	list_क्रम_each_entry_safe(match, पंचांगp, &hdev->uuids, list) अणु
-		अगर (स_भेद(match->uuid, cp->uuid, 16) != 0)
-			जारी;
+	list_for_each_entry_safe(match, tmp, &hdev->uuids, list) {
+		if (memcmp(match->uuid, cp->uuid, 16) != 0)
+			continue;
 
 		list_del(&match->list);
-		kमुक्त(match);
+		kfree(match);
 		found++;
-	पूर्ण
+	}
 
-	अगर (found == 0) अणु
+	if (found == 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_UUID,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 update_class:
 	hci_req_init(&req, hdev);
@@ -2233,567 +2232,567 @@ update_class:
 	__hci_req_update_class(&req);
 	__hci_req_update_eir(&req);
 
-	err = hci_req_run(&req, हटाओ_uuid_complete);
-	अगर (err < 0) अणु
-		अगर (err != -ENODATA)
-			जाओ unlock;
+	err = hci_req_run(&req, remove_uuid_complete);
+	if (err < 0) {
+		if (err != -ENODATA)
+			goto unlock;
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_REMOVE_UUID, 0,
 					hdev->dev_class, 3);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_REMOVE_UUID, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = 0;
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम set_class_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
+static void set_class_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	mgmt_class_complete(hdev, MGMT_OP_SET_DEV_CLASS, status);
-पूर्ण
+}
 
-अटल पूर्णांक set_dev_class(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_dev_class(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 len)
-अणु
-	काष्ठा mgmt_cp_set_dev_class *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+{
+	struct mgmt_cp_set_dev_class *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_bredr_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEV_CLASS,
+	if (!lmp_bredr_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEV_CLASS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_eir_or_class(hdev)) अणु
+	if (pending_eir_or_class(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEV_CLASS,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर ((cp->minor & 0x03) != 0 || (cp->major & 0xe0) != 0) अणु
+	if ((cp->minor & 0x03) != 0 || (cp->major & 0xe0) != 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEV_CLASS,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hdev->major_class = cp->major;
 	hdev->minor_class = cp->minor;
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_DEV_CLASS, 0,
 					hdev->dev_class, 3);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	अगर (hci_dev_test_and_clear_flag(hdev, HCI_SERVICE_CACHE)) अणु
+	if (hci_dev_test_and_clear_flag(hdev, HCI_SERVICE_CACHE)) {
 		hci_dev_unlock(hdev);
 		cancel_delayed_work_sync(&hdev->service_cache);
 		hci_dev_lock(hdev);
 		__hci_req_update_eir(&req);
-	पूर्ण
+	}
 
 	__hci_req_update_class(&req);
 
 	err = hci_req_run(&req, set_class_complete);
-	अगर (err < 0) अणु
-		अगर (err != -ENODATA)
-			जाओ unlock;
+	if (err < 0) {
+		if (err != -ENODATA)
+			goto unlock;
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_DEV_CLASS, 0,
 					hdev->dev_class, 3);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_DEV_CLASS, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = 0;
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक load_link_keys(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int load_link_keys(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा mgmt_cp_load_link_keys *cp = data;
-	स्थिर u16 max_key_count = ((U16_MAX - माप(*cp)) /
-				   माप(काष्ठा mgmt_link_key_info));
+{
+	struct mgmt_cp_load_link_keys *cp = data;
+	const u16 max_key_count = ((U16_MAX - sizeof(*cp)) /
+				   sizeof(struct mgmt_link_key_info));
 	u16 key_count, expected_len;
 	bool changed;
-	पूर्णांक i;
+	int i;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_bredr_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
+	if (!lmp_bredr_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	key_count = __le16_to_cpu(cp->key_count);
-	अगर (key_count > max_key_count) अणु
+	if (key_count > max_key_count) {
 		bt_dev_err(hdev, "load_link_keys: too big key_count value %u",
 			   key_count);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	expected_len = काष्ठा_size(cp, keys, key_count);
-	अगर (expected_len != len) अणु
+	expected_len = struct_size(cp, keys, key_count);
+	if (expected_len != len) {
 		bt_dev_err(hdev, "load_link_keys: expected %u bytes, got %u bytes",
 			   expected_len, len);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	अगर (cp->debug_keys != 0x00 && cp->debug_keys != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
+	if (cp->debug_keys != 0x00 && cp->debug_keys != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	bt_dev_dbg(hdev, "debug_keys %u key_count %u", cp->debug_keys,
 		   key_count);
 
-	क्रम (i = 0; i < key_count; i++) अणु
-		काष्ठा mgmt_link_key_info *key = &cp->keys[i];
+	for (i = 0; i < key_count; i++) {
+		struct mgmt_link_key_info *key = &cp->keys[i];
 
-		अगर (key->addr.type != BDADDR_BREDR || key->type > 0x08)
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (key->addr.type != BDADDR_BREDR || key->type > 0x08)
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_LOAD_LINK_KEYS,
 					       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
 	hci_link_keys_clear(hdev);
 
-	अगर (cp->debug_keys)
+	if (cp->debug_keys)
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_KEEP_DEBUG_KEYS);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev,
 						      HCI_KEEP_DEBUG_KEYS);
 
-	अगर (changed)
-		new_settings(hdev, शून्य);
+	if (changed)
+		new_settings(hdev, NULL);
 
-	क्रम (i = 0; i < key_count; i++) अणु
-		काष्ठा mgmt_link_key_info *key = &cp->keys[i];
+	for (i = 0; i < key_count; i++) {
+		struct mgmt_link_key_info *key = &cp->keys[i];
 
-		अगर (hci_is_blocked_key(hdev,
+		if (hci_is_blocked_key(hdev,
 				       HCI_BLOCKED_KEY_TYPE_LINKKEY,
-				       key->val)) अणु
+				       key->val)) {
 			bt_dev_warn(hdev, "Skipping blocked link key for %pMR",
 				    &key->addr.bdaddr);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Always ignore debug keys and require a new pairing अगर
+		/* Always ignore debug keys and require a new pairing if
 		 * the user wants to use them.
 		 */
-		अगर (key->type == HCI_LK_DEBUG_COMBINATION)
-			जारी;
+		if (key->type == HCI_LK_DEBUG_COMBINATION)
+			continue;
 
-		hci_add_link_key(hdev, शून्य, &key->addr.bdaddr, key->val,
-				 key->type, key->pin_len, शून्य);
-	पूर्ण
+		hci_add_link_key(hdev, NULL, &key->addr.bdaddr, key->val,
+				 key->type, key->pin_len, NULL);
+	}
 
-	mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS, 0, शून्य, 0);
+	mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_LINK_KEYS, 0, NULL, 0);
 
 	hci_dev_unlock(hdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक device_unpaired(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
-			   u8 addr_type, काष्ठा sock *skip_sk)
-अणु
-	काष्ठा mgmt_ev_device_unpaired ev;
+static int device_unpaired(struct hci_dev *hdev, bdaddr_t *bdaddr,
+			   u8 addr_type, struct sock *skip_sk)
+{
+	struct mgmt_ev_device_unpaired ev;
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = addr_type;
 
-	वापस mgmt_event(MGMT_EV_DEVICE_UNPAIRED, hdev, &ev, माप(ev),
+	return mgmt_event(MGMT_EV_DEVICE_UNPAIRED, hdev, &ev, sizeof(ev),
 			  skip_sk);
-पूर्ण
+}
 
-अटल पूर्णांक unpair_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int unpair_device(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 len)
-अणु
-	काष्ठा mgmt_cp_unpair_device *cp = data;
-	काष्ठा mgmt_rp_unpair_device rp;
-	काष्ठा hci_conn_params *params;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
+{
+	struct mgmt_cp_unpair_device *cp = data;
+	struct mgmt_rp_unpair_device rp;
+	struct hci_conn_params *params;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
 	u8 addr_type;
-	पूर्णांक err;
+	int err;
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
-	अगर (cp->disconnect != 0x00 && cp->disconnect != 0x01)
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
+	if (cp->disconnect != 0x00 && cp->disconnect != 0x01)
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
 					MGMT_STATUS_NOT_POWERED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
 		/* If disconnection is requested, then look up the
 		 * connection. If the remote device is connected, it
 		 * will be later used to terminate the link.
 		 *
-		 * Setting it to शून्य explicitly will cause no
+		 * Setting it to NULL explicitly will cause no
 		 * termination of the link.
 		 */
-		अगर (cp->disconnect)
+		if (cp->disconnect)
 			conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK,
 						       &cp->addr.bdaddr);
-		अन्यथा
-			conn = शून्य;
+		else
+			conn = NULL;
 
-		err = hci_हटाओ_link_key(hdev, &cp->addr.bdaddr);
-		अगर (err < 0) अणु
+		err = hci_remove_link_key(hdev, &cp->addr.bdaddr);
+		if (err < 0) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_UNPAIR_DEVICE,
 						MGMT_STATUS_NOT_PAIRED, &rp,
-						माप(rp));
-			जाओ unlock;
-		पूर्ण
+						sizeof(rp));
+			goto unlock;
+		}
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* LE address type */
 	addr_type = le_addr_type(cp->addr.type);
 
-	/* Abort any ongoing SMP pairing. Removes ltk and irk अगर they exist. */
-	err = smp_cancel_and_हटाओ_pairing(hdev, &cp->addr.bdaddr, addr_type);
-	अगर (err < 0) अणु
+	/* Abort any ongoing SMP pairing. Removes ltk and irk if they exist. */
+	err = smp_cancel_and_remove_pairing(hdev, &cp->addr.bdaddr, addr_type);
+	if (err < 0) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE,
 					MGMT_STATUS_NOT_PAIRED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
 	conn = hci_conn_hash_lookup_le(hdev, &cp->addr.bdaddr, addr_type);
-	अगर (!conn) अणु
+	if (!conn) {
 		hci_conn_params_del(hdev, &cp->addr.bdaddr, addr_type);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 
 	/* Defer clearing up the connection parameters until closing to
-	 * give a chance of keeping them अगर a repairing happens.
+	 * give a chance of keeping them if a repairing happens.
 	 */
 	set_bit(HCI_CONN_PARAM_REMOVAL_PEND, &conn->flags);
 
-	/* Disable स्वतः-connection parameters अगर present */
+	/* Disable auto-connection parameters if present */
 	params = hci_conn_params_lookup(hdev, &cp->addr.bdaddr, addr_type);
-	अगर (params) अणु
-		अगर (params->explicit_connect)
-			params->स्वतः_connect = HCI_AUTO_CONN_EXPLICIT;
-		अन्यथा
-			params->स्वतः_connect = HCI_AUTO_CONN_DISABLED;
-	पूर्ण
+	if (params) {
+		if (params->explicit_connect)
+			params->auto_connect = HCI_AUTO_CONN_EXPLICIT;
+		else
+			params->auto_connect = HCI_AUTO_CONN_DISABLED;
+	}
 
 	/* If disconnection is not requested, then clear the connection
 	 * variable so that the link is not terminated.
 	 */
-	अगर (!cp->disconnect)
-		conn = शून्य;
+	if (!cp->disconnect)
+		conn = NULL;
 
-करोne:
+done:
 	/* If the connection variable is set, then termination of the
 	 * link is requested.
 	 */
-	अगर (!conn) अणु
+	if (!conn) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNPAIR_DEVICE, 0,
-					&rp, माप(rp));
+					&rp, sizeof(rp));
 		device_unpaired(hdev, &cp->addr.bdaddr, cp->addr.type, sk);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_UNPAIR_DEVICE, hdev, cp,
-			       माप(*cp));
-	अगर (!cmd) अणु
+			       sizeof(*cp));
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd->cmd_complete = addr_cmd_complete;
 
-	err = hci_पात_conn(conn, HCI_ERROR_REMOTE_USER_TERM);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_abort_conn(conn, HCI_ERROR_REMOTE_USER_TERM);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक disconnect(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int disconnect(struct sock *sk, struct hci_dev *hdev, void *data,
 		      u16 len)
-अणु
-	काष्ठा mgmt_cp_disconnect *cp = data;
-	काष्ठा mgmt_rp_disconnect rp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
-	पूर्णांक err;
+{
+	struct mgmt_cp_disconnect *cp = data;
+	struct mgmt_rp_disconnect rp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_DISCONNECT,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_DISCONNECT,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
 	hci_dev_lock(hdev);
 
-	अगर (!test_bit(HCI_UP, &hdev->flags)) अणु
+	if (!test_bit(HCI_UP, &hdev->flags)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_DISCONNECT,
 					MGMT_STATUS_NOT_POWERED, &rp,
-					माप(rp));
-		जाओ failed;
-	पूर्ण
+					sizeof(rp));
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_DISCONNECT, hdev)) अणु
+	if (pending_find(MGMT_OP_DISCONNECT, hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_DISCONNECT,
-					MGMT_STATUS_BUSY, &rp, माप(rp));
-		जाओ failed;
-	पूर्ण
+					MGMT_STATUS_BUSY, &rp, sizeof(rp));
+		goto failed;
+	}
 
-	अगर (cp->addr.type == BDADDR_BREDR)
+	if (cp->addr.type == BDADDR_BREDR)
 		conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK,
 					       &cp->addr.bdaddr);
-	अन्यथा
+	else
 		conn = hci_conn_hash_lookup_le(hdev, &cp->addr.bdaddr,
 					       le_addr_type(cp->addr.type));
 
-	अगर (!conn || conn->state == BT_OPEN || conn->state == BT_CLOSED) अणु
+	if (!conn || conn->state == BT_OPEN || conn->state == BT_CLOSED) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_DISCONNECT,
 					MGMT_STATUS_NOT_CONNECTED, &rp,
-					माप(rp));
-		जाओ failed;
-	पूर्ण
+					sizeof(rp));
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_DISCONNECT, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd->cmd_complete = generic_cmd_complete;
 
 	err = hci_disconnect(conn, HCI_ERROR_REMOTE_USER_TERM);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u8 link_to_bdaddr(u8 link_type, u8 addr_type)
-अणु
-	चयन (link_type) अणु
-	हाल LE_LINK:
-		चयन (addr_type) अणु
-		हाल ADDR_LE_DEV_PUBLIC:
-			वापस BDADDR_LE_PUBLIC;
+static u8 link_to_bdaddr(u8 link_type, u8 addr_type)
+{
+	switch (link_type) {
+	case LE_LINK:
+		switch (addr_type) {
+		case ADDR_LE_DEV_PUBLIC:
+			return BDADDR_LE_PUBLIC;
 
-		शेष:
-			/* Fallback to LE Ranकरोm address type */
-			वापस BDADDR_LE_RANDOM;
-		पूर्ण
+		default:
+			/* Fallback to LE Random address type */
+			return BDADDR_LE_RANDOM;
+		}
 
-	शेष:
+	default:
 		/* Fallback to BR/EDR type */
-		वापस BDADDR_BREDR;
-	पूर्ण
-पूर्ण
+		return BDADDR_BREDR;
+	}
+}
 
-अटल पूर्णांक get_connections(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int get_connections(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 data_len)
-अणु
-	काष्ठा mgmt_rp_get_connections *rp;
-	काष्ठा hci_conn *c;
-	पूर्णांक err;
+{
+	struct mgmt_rp_get_connections *rp;
+	struct hci_conn *c;
+	int err;
 	u16 i;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_CONNECTIONS,
 				      MGMT_STATUS_NOT_POWERED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	i = 0;
-	list_क्रम_each_entry(c, &hdev->conn_hash.list, list) अणु
-		अगर (test_bit(HCI_CONN_MGMT_CONNECTED, &c->flags))
+	list_for_each_entry(c, &hdev->conn_hash.list, list) {
+		if (test_bit(HCI_CONN_MGMT_CONNECTED, &c->flags))
 			i++;
-	पूर्ण
+	}
 
-	rp = kदो_स्मृति(काष्ठा_size(rp, addr, i), GFP_KERNEL);
-	अगर (!rp) अणु
+	rp = kmalloc(struct_size(rp, addr, i), GFP_KERNEL);
+	if (!rp) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	i = 0;
-	list_क्रम_each_entry(c, &hdev->conn_hash.list, list) अणु
-		अगर (!test_bit(HCI_CONN_MGMT_CONNECTED, &c->flags))
-			जारी;
+	list_for_each_entry(c, &hdev->conn_hash.list, list) {
+		if (!test_bit(HCI_CONN_MGMT_CONNECTED, &c->flags))
+			continue;
 		bacpy(&rp->addr[i].bdaddr, &c->dst);
 		rp->addr[i].type = link_to_bdaddr(c->type, c->dst_type);
-		अगर (c->type == SCO_LINK || c->type == ESCO_LINK)
-			जारी;
+		if (c->type == SCO_LINK || c->type == ESCO_LINK)
+			continue;
 		i++;
-	पूर्ण
+	}
 
 	rp->conn_count = cpu_to_le16(i);
 
-	/* Recalculate length in हाल of filtered SCO connections, etc */
+	/* Recalculate length in case of filtered SCO connections, etc */
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONNECTIONS, 0, rp,
-				काष्ठा_size(rp, addr, i));
+				struct_size(rp, addr, i));
 
-	kमुक्त(rp);
+	kfree(rp);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक send_pin_code_neg_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				   काष्ठा mgmt_cp_pin_code_neg_reply *cp)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+static int send_pin_code_neg_reply(struct sock *sk, struct hci_dev *hdev,
+				   struct mgmt_cp_pin_code_neg_reply *cp)
+{
+	struct mgmt_pending_cmd *cmd;
+	int err;
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_PIN_CODE_NEG_REPLY, hdev, cp,
-			       माप(*cp));
-	अगर (!cmd)
-		वापस -ENOMEM;
+			       sizeof(*cp));
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->cmd_complete = addr_cmd_complete;
 
 	err = hci_send_cmd(hdev, HCI_OP_PIN_CODE_NEG_REPLY,
-			   माप(cp->addr.bdaddr), &cp->addr.bdaddr);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+			   sizeof(cp->addr.bdaddr), &cp->addr.bdaddr);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pin_code_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int pin_code_reply(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा hci_conn *conn;
-	काष्ठा mgmt_cp_pin_code_reply *cp = data;
-	काष्ठा hci_cp_pin_code_reply reply;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+{
+	struct hci_conn *conn;
+	struct mgmt_cp_pin_code_reply *cp = data;
+	struct hci_cp_pin_code_reply reply;
+	struct mgmt_pending_cmd *cmd;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_PIN_CODE_REPLY,
 				      MGMT_STATUS_NOT_POWERED);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK, &cp->addr.bdaddr);
-	अगर (!conn) अणु
+	if (!conn) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_PIN_CODE_REPLY,
 				      MGMT_STATUS_NOT_CONNECTED);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (conn->pending_sec_level == BT_SECURITY_HIGH && cp->pin_len != 16) अणु
-		काष्ठा mgmt_cp_pin_code_neg_reply ncp;
+	if (conn->pending_sec_level == BT_SECURITY_HIGH && cp->pin_len != 16) {
+		struct mgmt_cp_pin_code_neg_reply ncp;
 
-		स_नकल(&ncp.addr, &cp->addr, माप(ncp.addr));
+		memcpy(&ncp.addr, &cp->addr, sizeof(ncp.addr));
 
 		bt_dev_err(hdev, "PIN code is not 16 bytes long");
 
 		err = send_pin_code_neg_reply(sk, hdev, &ncp);
-		अगर (err >= 0)
+		if (err >= 0)
 			err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_PIN_CODE_REPLY,
 					      MGMT_STATUS_INVALID_PARAMS);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_PIN_CODE_REPLY, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd->cmd_complete = addr_cmd_complete;
 
 	bacpy(&reply.bdaddr, &cp->addr.bdaddr);
 	reply.pin_len = cp->pin_len;
-	स_नकल(reply.pin_code, cp->pin_code, माप(reply.pin_code));
+	memcpy(reply.pin_code, cp->pin_code, sizeof(reply.pin_code));
 
-	err = hci_send_cmd(hdev, HCI_OP_PIN_CODE_REPLY, माप(reply), &reply);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_send_cmd(hdev, HCI_OP_PIN_CODE_REPLY, sizeof(reply), &reply);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_io_capability(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_io_capability(struct sock *sk, struct hci_dev *hdev, void *data,
 			     u16 len)
-अणु
-	काष्ठा mgmt_cp_set_io_capability *cp = data;
+{
+	struct mgmt_cp_set_io_capability *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (cp->io_capability > SMP_IO_KEYBOARD_DISPLAY)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_IO_CAPABILITY,
+	if (cp->io_capability > SMP_IO_KEYBOARD_DISPLAY)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_IO_CAPABILITY,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
@@ -2804,602 +2803,602 @@ failed:
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_IO_CAPABILITY, 0,
-				 शून्य, 0);
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_IO_CAPABILITY, 0,
+				 NULL, 0);
+}
 
-अटल काष्ठा mgmt_pending_cmd *find_pairing(काष्ठा hci_conn *conn)
-अणु
-	काष्ठा hci_dev *hdev = conn->hdev;
-	काष्ठा mgmt_pending_cmd *cmd;
+static struct mgmt_pending_cmd *find_pairing(struct hci_conn *conn)
+{
+	struct hci_dev *hdev = conn->hdev;
+	struct mgmt_pending_cmd *cmd;
 
-	list_क्रम_each_entry(cmd, &hdev->mgmt_pending, list) अणु
-		अगर (cmd->opcode != MGMT_OP_PAIR_DEVICE)
-			जारी;
+	list_for_each_entry(cmd, &hdev->mgmt_pending, list) {
+		if (cmd->opcode != MGMT_OP_PAIR_DEVICE)
+			continue;
 
-		अगर (cmd->user_data != conn)
-			जारी;
+		if (cmd->user_data != conn)
+			continue;
 
-		वापस cmd;
-	पूर्ण
+		return cmd;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक pairing_complete(काष्ठा mgmt_pending_cmd *cmd, u8 status)
-अणु
-	काष्ठा mgmt_rp_pair_device rp;
-	काष्ठा hci_conn *conn = cmd->user_data;
-	पूर्णांक err;
+static int pairing_complete(struct mgmt_pending_cmd *cmd, u8 status)
+{
+	struct mgmt_rp_pair_device rp;
+	struct hci_conn *conn = cmd->user_data;
+	int err;
 
 	bacpy(&rp.addr.bdaddr, &conn->dst);
 	rp.addr.type = link_to_bdaddr(conn->type, conn->dst_type);
 
 	err = mgmt_cmd_complete(cmd->sk, cmd->index, MGMT_OP_PAIR_DEVICE,
-				status, &rp, माप(rp));
+				status, &rp, sizeof(rp));
 
-	/* So we करोn't get further callbacks क्रम this connection */
-	conn->connect_cfm_cb = शून्य;
-	conn->security_cfm_cb = शून्य;
-	conn->disconn_cfm_cb = शून्य;
+	/* So we don't get further callbacks for this connection */
+	conn->connect_cfm_cb = NULL;
+	conn->security_cfm_cb = NULL;
+	conn->disconn_cfm_cb = NULL;
 
 	hci_conn_drop(conn);
 
-	/* The device is paired so there is no need to हटाओ
+	/* The device is paired so there is no need to remove
 	 * its connection parameters anymore.
 	 */
 	clear_bit(HCI_CONN_PARAM_REMOVAL_PEND, &conn->flags);
 
 	hci_conn_put(conn);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mgmt_smp_complete(काष्ठा hci_conn *conn, bool complete)
-अणु
+void mgmt_smp_complete(struct hci_conn *conn, bool complete)
+{
 	u8 status = complete ? MGMT_STATUS_SUCCESS : MGMT_STATUS_FAILED;
-	काष्ठा mgmt_pending_cmd *cmd;
+	struct mgmt_pending_cmd *cmd;
 
 	cmd = find_pairing(conn);
-	अगर (cmd) अणु
+	if (cmd) {
 		cmd->cmd_complete(cmd, status);
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
-पूर्ण
+		mgmt_pending_remove(cmd);
+	}
+}
 
-अटल व्योम pairing_complete_cb(काष्ठा hci_conn *conn, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static void pairing_complete_cb(struct hci_conn *conn, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	BT_DBG("status %u", status);
 
 	cmd = find_pairing(conn);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		BT_DBG("Unable to find a pending command");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-अटल व्योम le_pairing_complete_cb(काष्ठा hci_conn *conn, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static void le_pairing_complete_cb(struct hci_conn *conn, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	BT_DBG("status %u", status);
 
-	अगर (!status)
-		वापस;
+	if (!status)
+		return;
 
 	cmd = find_pairing(conn);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		BT_DBG("Unable to find a pending command");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-अटल पूर्णांक pair_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int pair_device(struct sock *sk, struct hci_dev *hdev, void *data,
 		       u16 len)
-अणु
-	काष्ठा mgmt_cp_pair_device *cp = data;
-	काष्ठा mgmt_rp_pair_device rp;
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_cp_pair_device *cp = data;
+	struct mgmt_rp_pair_device rp;
+	struct mgmt_pending_cmd *cmd;
 	u8 sec_level, auth_type;
-	काष्ठा hci_conn *conn;
-	पूर्णांक err;
+	struct hci_conn *conn;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
-	अगर (cp->io_cap > SMP_IO_KEYBOARD_DISPLAY)
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
+	if (cp->io_cap > SMP_IO_KEYBOARD_DISPLAY)
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
 					MGMT_STATUS_NOT_POWERED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (hci_bdaddr_is_paired(hdev, &cp->addr.bdaddr, cp->addr.type)) अणु
+	if (hci_bdaddr_is_paired(hdev, &cp->addr.bdaddr, cp->addr.type)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
 					MGMT_STATUS_ALREADY_PAIRED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
 	sec_level = BT_SECURITY_MEDIUM;
 	auth_type = HCI_AT_DEDICATED_BONDING;
 
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
 		conn = hci_connect_acl(hdev, &cp->addr.bdaddr, sec_level,
 				       auth_type, CONN_REASON_PAIR_DEVICE);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 addr_type = le_addr_type(cp->addr.type);
-		काष्ठा hci_conn_params *p;
+		struct hci_conn_params *p;
 
 		/* When pairing a new device, it is expected to remember
-		 * this device क्रम future connections. Adding the connection
-		 * parameter inक्रमmation ahead of समय allows tracking
+		 * this device for future connections. Adding the connection
+		 * parameter information ahead of time allows tracking
 		 * of the slave preferred values and will speed up any
 		 * further connection establishment.
 		 *
-		 * If connection parameters alपढ़ोy exist, then they
-		 * will be kept and this function करोes nothing.
+		 * If connection parameters already exist, then they
+		 * will be kept and this function does nothing.
 		 */
 		p = hci_conn_params_add(hdev, &cp->addr.bdaddr, addr_type);
 
-		अगर (p->स्वतः_connect == HCI_AUTO_CONN_EXPLICIT)
-			p->स्वतः_connect = HCI_AUTO_CONN_DISABLED;
+		if (p->auto_connect == HCI_AUTO_CONN_EXPLICIT)
+			p->auto_connect = HCI_AUTO_CONN_DISABLED;
 
 		conn = hci_connect_le_scan(hdev, &cp->addr.bdaddr, addr_type,
 					   sec_level, HCI_LE_CONN_TIMEOUT,
 					   CONN_REASON_PAIR_DEVICE);
-	पूर्ण
+	}
 
-	अगर (IS_ERR(conn)) अणु
-		पूर्णांक status;
+	if (IS_ERR(conn)) {
+		int status;
 
-		अगर (PTR_ERR(conn) == -EBUSY)
+		if (PTR_ERR(conn) == -EBUSY)
 			status = MGMT_STATUS_BUSY;
-		अन्यथा अगर (PTR_ERR(conn) == -EOPNOTSUPP)
+		else if (PTR_ERR(conn) == -EOPNOTSUPP)
 			status = MGMT_STATUS_NOT_SUPPORTED;
-		अन्यथा अगर (PTR_ERR(conn) == -ECONNREFUSED)
+		else if (PTR_ERR(conn) == -ECONNREFUSED)
 			status = MGMT_STATUS_REJECTED;
-		अन्यथा
+		else
 			status = MGMT_STATUS_CONNECT_FAILED;
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
-					status, &rp, माप(rp));
-		जाओ unlock;
-	पूर्ण
+					status, &rp, sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (conn->connect_cfm_cb) अणु
+	if (conn->connect_cfm_cb) {
 		hci_conn_drop(conn);
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_PAIR_DEVICE,
-					MGMT_STATUS_BUSY, &rp, माप(rp));
-		जाओ unlock;
-	पूर्ण
+					MGMT_STATUS_BUSY, &rp, sizeof(rp));
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_PAIR_DEVICE, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
 		hci_conn_drop(conn);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd->cmd_complete = pairing_complete;
 
 	/* For LE, just connecting isn't a proof that the pairing finished */
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
 		conn->connect_cfm_cb = pairing_complete_cb;
 		conn->security_cfm_cb = pairing_complete_cb;
 		conn->disconn_cfm_cb = pairing_complete_cb;
-	पूर्ण अन्यथा अणु
+	} else {
 		conn->connect_cfm_cb = le_pairing_complete_cb;
 		conn->security_cfm_cb = le_pairing_complete_cb;
 		conn->disconn_cfm_cb = le_pairing_complete_cb;
-	पूर्ण
+	}
 
 	conn->io_capability = cp->io_cap;
 	cmd->user_data = hci_conn_get(conn);
 
-	अगर ((conn->state == BT_CONNECTED || conn->state == BT_CONFIG) &&
-	    hci_conn_security(conn, sec_level, auth_type, true)) अणु
+	if ((conn->state == BT_CONNECTED || conn->state == BT_CONFIG) &&
+	    hci_conn_security(conn, sec_level, auth_type, true)) {
 		cmd->cmd_complete(cmd, 0);
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
+		mgmt_pending_remove(cmd);
+	}
 
 	err = 0;
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक cancel_pair_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int cancel_pair_device(struct sock *sk, struct hci_dev *hdev, void *data,
 			      u16 len)
-अणु
-	काष्ठा mgmt_addr_info *addr = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
-	पूर्णांक err;
+{
+	struct mgmt_addr_info *addr = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_CANCEL_PAIR_DEVICE,
 				      MGMT_STATUS_NOT_POWERED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = pending_find(MGMT_OP_PAIR_DEVICE, hdev);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_CANCEL_PAIR_DEVICE,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	conn = cmd->user_data;
 
-	अगर (bacmp(&addr->bdaddr, &conn->dst) != 0) अणु
+	if (bacmp(&addr->bdaddr, &conn->dst) != 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_CANCEL_PAIR_DEVICE,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd->cmd_complete(cmd, MGMT_STATUS_CANCELLED);
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_CANCEL_PAIR_DEVICE, 0,
-				addr, माप(*addr));
+				addr, sizeof(*addr));
 
-	/* Since user करोesn't want to proceed with the connection, पात any
-	 * ongoing pairing and then terminate the link अगर it was created
+	/* Since user doesn't want to proceed with the connection, abort any
+	 * ongoing pairing and then terminate the link if it was created
 	 * because of the pair device action.
 	 */
-	अगर (addr->type == BDADDR_BREDR)
-		hci_हटाओ_link_key(hdev, &addr->bdaddr);
-	अन्यथा
-		smp_cancel_and_हटाओ_pairing(hdev, &addr->bdaddr,
+	if (addr->type == BDADDR_BREDR)
+		hci_remove_link_key(hdev, &addr->bdaddr);
+	else
+		smp_cancel_and_remove_pairing(hdev, &addr->bdaddr,
 					      le_addr_type(addr->type));
 
-	अगर (conn->conn_reason == CONN_REASON_PAIR_DEVICE)
-		hci_पात_conn(conn, HCI_ERROR_REMOTE_USER_TERM);
+	if (conn->conn_reason == CONN_REASON_PAIR_DEVICE)
+		hci_abort_conn(conn, HCI_ERROR_REMOTE_USER_TERM);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक user_pairing_resp(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			     काष्ठा mgmt_addr_info *addr, u16 mgmt_op,
+static int user_pairing_resp(struct sock *sk, struct hci_dev *hdev,
+			     struct mgmt_addr_info *addr, u16 mgmt_op,
 			     u16 hci_op, __le32 passkey)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
-	पूर्णांक err;
+{
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
+	int err;
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, mgmt_op,
 					MGMT_STATUS_NOT_POWERED, addr,
-					माप(*addr));
-		जाओ करोne;
-	पूर्ण
+					sizeof(*addr));
+		goto done;
+	}
 
-	अगर (addr->type == BDADDR_BREDR)
+	if (addr->type == BDADDR_BREDR)
 		conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK, &addr->bdaddr);
-	अन्यथा
+	else
 		conn = hci_conn_hash_lookup_le(hdev, &addr->bdaddr,
 					       le_addr_type(addr->type));
 
-	अगर (!conn) अणु
+	if (!conn) {
 		err = mgmt_cmd_complete(sk, hdev->id, mgmt_op,
 					MGMT_STATUS_NOT_CONNECTED, addr,
-					माप(*addr));
-		जाओ करोne;
-	पूर्ण
+					sizeof(*addr));
+		goto done;
+	}
 
-	अगर (addr->type == BDADDR_LE_PUBLIC || addr->type == BDADDR_LE_RANDOM) अणु
+	if (addr->type == BDADDR_LE_PUBLIC || addr->type == BDADDR_LE_RANDOM) {
 		err = smp_user_confirm_reply(conn, mgmt_op, passkey);
-		अगर (!err)
+		if (!err)
 			err = mgmt_cmd_complete(sk, hdev->id, mgmt_op,
 						MGMT_STATUS_SUCCESS, addr,
-						माप(*addr));
-		अन्यथा
+						sizeof(*addr));
+		else
 			err = mgmt_cmd_complete(sk, hdev->id, mgmt_op,
 						MGMT_STATUS_FAILED, addr,
-						माप(*addr));
+						sizeof(*addr));
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	cmd = mgmt_pending_add(sk, mgmt_op, hdev, addr, माप(*addr));
-	अगर (!cmd) अणु
+	cmd = mgmt_pending_add(sk, mgmt_op, hdev, addr, sizeof(*addr));
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	cmd->cmd_complete = addr_cmd_complete;
 
 	/* Continue with pairing via HCI */
-	अगर (hci_op == HCI_OP_USER_PASSKEY_REPLY) अणु
-		काष्ठा hci_cp_user_passkey_reply cp;
+	if (hci_op == HCI_OP_USER_PASSKEY_REPLY) {
+		struct hci_cp_user_passkey_reply cp;
 
 		bacpy(&cp.bdaddr, &addr->bdaddr);
 		cp.passkey = passkey;
-		err = hci_send_cmd(hdev, hci_op, माप(cp), &cp);
-	पूर्ण अन्यथा
-		err = hci_send_cmd(hdev, hci_op, माप(addr->bdaddr),
+		err = hci_send_cmd(hdev, hci_op, sizeof(cp), &cp);
+	} else
+		err = hci_send_cmd(hdev, hci_op, sizeof(addr->bdaddr),
 				   &addr->bdaddr);
 
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pin_code_neg_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_pin_code_neg_reply *cp = data;
+static int pin_code_neg_reply(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 len)
+{
+	struct mgmt_cp_pin_code_neg_reply *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	वापस user_pairing_resp(sk, hdev, &cp->addr,
+	return user_pairing_resp(sk, hdev, &cp->addr,
 				MGMT_OP_PIN_CODE_NEG_REPLY,
 				HCI_OP_PIN_CODE_NEG_REPLY, 0);
-पूर्ण
+}
 
-अटल पूर्णांक user_confirm_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int user_confirm_reply(struct sock *sk, struct hci_dev *hdev, void *data,
 			      u16 len)
-अणु
-	काष्ठा mgmt_cp_user_confirm_reply *cp = data;
+{
+	struct mgmt_cp_user_confirm_reply *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (len != माप(*cp))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_USER_CONFIRM_REPLY,
+	if (len != sizeof(*cp))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_USER_CONFIRM_REPLY,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	वापस user_pairing_resp(sk, hdev, &cp->addr,
+	return user_pairing_resp(sk, hdev, &cp->addr,
 				 MGMT_OP_USER_CONFIRM_REPLY,
 				 HCI_OP_USER_CONFIRM_REPLY, 0);
-पूर्ण
+}
 
-अटल पूर्णांक user_confirm_neg_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				  व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_user_confirm_neg_reply *cp = data;
+static int user_confirm_neg_reply(struct sock *sk, struct hci_dev *hdev,
+				  void *data, u16 len)
+{
+	struct mgmt_cp_user_confirm_neg_reply *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	वापस user_pairing_resp(sk, hdev, &cp->addr,
+	return user_pairing_resp(sk, hdev, &cp->addr,
 				 MGMT_OP_USER_CONFIRM_NEG_REPLY,
 				 HCI_OP_USER_CONFIRM_NEG_REPLY, 0);
-पूर्ण
+}
 
-अटल पूर्णांक user_passkey_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int user_passkey_reply(struct sock *sk, struct hci_dev *hdev, void *data,
 			      u16 len)
-अणु
-	काष्ठा mgmt_cp_user_passkey_reply *cp = data;
+{
+	struct mgmt_cp_user_passkey_reply *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	वापस user_pairing_resp(sk, hdev, &cp->addr,
+	return user_pairing_resp(sk, hdev, &cp->addr,
 				 MGMT_OP_USER_PASSKEY_REPLY,
 				 HCI_OP_USER_PASSKEY_REPLY, cp->passkey);
-पूर्ण
+}
 
-अटल पूर्णांक user_passkey_neg_reply(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				  व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_user_passkey_neg_reply *cp = data;
+static int user_passkey_neg_reply(struct sock *sk, struct hci_dev *hdev,
+				  void *data, u16 len)
+{
+	struct mgmt_cp_user_passkey_neg_reply *cp = data;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	वापस user_pairing_resp(sk, hdev, &cp->addr,
+	return user_pairing_resp(sk, hdev, &cp->addr,
 				 MGMT_OP_USER_PASSKEY_NEG_REPLY,
 				 HCI_OP_USER_PASSKEY_NEG_REPLY, 0);
-पूर्ण
+}
 
-अटल व्योम adv_expire(काष्ठा hci_dev *hdev, u32 flags)
-अणु
-	काष्ठा adv_info *adv_instance;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static void adv_expire(struct hci_dev *hdev, u32 flags)
+{
+	struct adv_info *adv_instance;
+	struct hci_request req;
+	int err;
 
 	adv_instance = hci_find_adv_instance(hdev, hdev->cur_adv_instance);
-	अगर (!adv_instance)
-		वापस;
+	if (!adv_instance)
+		return;
 
-	/* stop अगर current instance करोesn't need to be changed */
-	अगर (!(adv_instance->flags & flags))
-		वापस;
+	/* stop if current instance doesn't need to be changed */
+	if (!(adv_instance->flags & flags))
+		return;
 
-	cancel_adv_समयout(hdev);
+	cancel_adv_timeout(hdev);
 
 	adv_instance = hci_get_next_instance(hdev, adv_instance->instance);
-	अगर (!adv_instance)
-		वापस;
+	if (!adv_instance)
+		return;
 
 	hci_req_init(&req, hdev);
 	err = __hci_req_schedule_adv_instance(&req, adv_instance->instance,
 					      true);
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 
-	hci_req_run(&req, शून्य);
-पूर्ण
+	hci_req_run(&req, NULL);
+}
 
-अटल व्योम set_name_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
-	काष्ठा mgmt_cp_set_local_name *cp;
-	काष्ठा mgmt_pending_cmd *cmd;
+static void set_name_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
+	struct mgmt_cp_set_local_name *cp;
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_LOCAL_NAME, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cp = cmd->param;
 
-	अगर (status) अणु
+	if (status) {
 		mgmt_cmd_status(cmd->sk, hdev->id, MGMT_OP_SET_LOCAL_NAME,
 			        mgmt_status(status));
-	पूर्ण अन्यथा अणु
+	} else {
 		mgmt_cmd_complete(cmd->sk, hdev->id, MGMT_OP_SET_LOCAL_NAME, 0,
-				  cp, माप(*cp));
+				  cp, sizeof(*cp));
 
-		अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
+		if (hci_dev_test_flag(hdev, HCI_LE_ADV))
 			adv_expire(hdev, MGMT_ADV_FLAG_LOCAL_NAME);
-	पूर्ण
+	}
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_local_name(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_local_name(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा mgmt_cp_set_local_name *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+{
+	struct mgmt_cp_set_local_name *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	/* If the old values are the same as the new ones just वापस a
+	/* If the old values are the same as the new ones just return a
 	 * direct command complete event.
 	 */
-	अगर (!स_भेद(hdev->dev_name, cp->name, माप(hdev->dev_name)) &&
-	    !स_भेद(hdev->लघु_name, cp->लघु_name,
-		    माप(hdev->लघु_name))) अणु
+	if (!memcmp(hdev->dev_name, cp->name, sizeof(hdev->dev_name)) &&
+	    !memcmp(hdev->short_name, cp->short_name,
+		    sizeof(hdev->short_name))) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_LOCAL_NAME, 0,
 					data, len);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	स_नकल(hdev->लघु_name, cp->लघु_name, माप(hdev->लघु_name));
+	memcpy(hdev->short_name, cp->short_name, sizeof(hdev->short_name));
 
-	अगर (!hdev_is_घातered(hdev)) अणु
-		स_नकल(hdev->dev_name, cp->name, माप(hdev->dev_name));
+	if (!hdev_is_powered(hdev)) {
+		memcpy(hdev->dev_name, cp->name, sizeof(hdev->dev_name));
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_LOCAL_NAME, 0,
 					data, len);
-		अगर (err < 0)
-			जाओ failed;
+		if (err < 0)
+			goto failed;
 
 		err = mgmt_limited_event(MGMT_EV_LOCAL_NAME_CHANGED, hdev, data,
 					 len, HCI_MGMT_LOCAL_NAME_EVENTS, sk);
 		ext_info_changed(hdev, sk);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_LOCAL_NAME, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	स_नकल(hdev->dev_name, cp->name, माप(hdev->dev_name));
+	memcpy(hdev->dev_name, cp->name, sizeof(hdev->dev_name));
 
 	hci_req_init(&req, hdev);
 
-	अगर (lmp_bredr_capable(hdev)) अणु
+	if (lmp_bredr_capable(hdev)) {
 		__hci_req_update_name(&req);
 		__hci_req_update_eir(&req);
-	पूर्ण
+	}
 
 	/* The name is stored in the scan response data and so
 	 * no need to udpate the advertising data here.
 	 */
-	अगर (lmp_le_capable(hdev) && hci_dev_test_flag(hdev, HCI_ADVERTISING))
+	if (lmp_le_capable(hdev) && hci_dev_test_flag(hdev, HCI_ADVERTISING))
 		__hci_req_update_scan_rsp_data(&req, hdev->cur_adv_instance);
 
 	err = hci_req_run(&req, set_name_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_appearance(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_appearance(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा mgmt_cp_set_appearance *cp = data;
+{
+	struct mgmt_cp_set_appearance *cp = data;
 	u16 appearance;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_APPEARANCE,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_APPEARANCE,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	appearance = le16_to_cpu(cp->appearance);
 
 	hci_dev_lock(hdev);
 
-	अगर (hdev->appearance != appearance) अणु
+	if (hdev->appearance != appearance) {
 		hdev->appearance = appearance;
 
-		अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
+		if (hci_dev_test_flag(hdev, HCI_LE_ADV))
 			adv_expire(hdev, MGMT_ADV_FLAG_APPEARANCE);
 
 		ext_info_changed(hdev, sk);
-	पूर्ण
+	}
 
-	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_APPEARANCE, 0, शून्य,
+	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_APPEARANCE, 0, NULL,
 				0);
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक get_phy_configuration(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				 व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_rp_get_phy_configuration rp;
+static int get_phy_configuration(struct sock *sk, struct hci_dev *hdev,
+				 void *data, u16 len)
+{
+	struct mgmt_rp_get_phy_configuration rp;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 
 	rp.supported_phys = cpu_to_le32(get_supported_phys(hdev));
 	rp.selected_phys = cpu_to_le32(get_selected_phys(hdev));
@@ -3407,64 +3406,64 @@ failed:
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_PHY_CONFIGURATION, 0,
-				 &rp, माप(rp));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_PHY_CONFIGURATION, 0,
+				 &rp, sizeof(rp));
+}
 
-पूर्णांक mgmt_phy_configuration_changed(काष्ठा hci_dev *hdev, काष्ठा sock *skip)
-अणु
-	काष्ठा mgmt_ev_phy_configuration_changed ev;
+int mgmt_phy_configuration_changed(struct hci_dev *hdev, struct sock *skip)
+{
+	struct mgmt_ev_phy_configuration_changed ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
 	ev.selected_phys = cpu_to_le32(get_selected_phys(hdev));
 
-	वापस mgmt_event(MGMT_EV_PHY_CONFIGURATION_CHANGED, hdev, &ev,
-			  माप(ev), skip);
-पूर्ण
+	return mgmt_event(MGMT_EV_PHY_CONFIGURATION_CHANGED, hdev, &ev,
+			  sizeof(ev), skip);
+}
 
-अटल व्योम set_शेष_phy_complete(काष्ठा hci_dev *hdev, u8 status,
-				     u16 opcode, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static void set_default_phy_complete(struct hci_dev *hdev, u8 status,
+				     u16 opcode, struct sk_buff *skb)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_PHY_CONFIGURATION, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		mgmt_cmd_status(cmd->sk, hdev->id,
 				MGMT_OP_SET_PHY_CONFIGURATION,
 				mgmt_status(status));
-	पूर्ण अन्यथा अणु
+	} else {
 		mgmt_cmd_complete(cmd->sk, hdev->id,
 				  MGMT_OP_SET_PHY_CONFIGURATION, 0,
-				  शून्य, 0);
+				  NULL, 0);
 
 		mgmt_phy_configuration_changed(hdev, cmd->sk);
-	पूर्ण
+	}
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_phy_configuration(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				 व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_set_phy_configuration *cp = data;
-	काष्ठा hci_cp_le_set_शेष_phy cp_phy;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
+static int set_phy_configuration(struct sock *sk, struct hci_dev *hdev,
+				 void *data, u16 len)
+{
+	struct mgmt_cp_set_phy_configuration *cp = data;
+	struct hci_cp_le_set_default_phy cp_phy;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
 	u32 selected_phys, configurable_phys, supported_phys, unconfigure_phys;
 	u16 pkt_type = (HCI_DH1 | HCI_DM1);
 	bool changed = false;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
@@ -3472,289 +3471,289 @@ unlock:
 	supported_phys = get_supported_phys(hdev);
 	selected_phys = __le32_to_cpu(cp->selected_phys);
 
-	अगर (selected_phys & ~supported_phys)
-		वापस mgmt_cmd_status(sk, hdev->id,
+	if (selected_phys & ~supported_phys)
+		return mgmt_cmd_status(sk, hdev->id,
 				       MGMT_OP_SET_PHY_CONFIGURATION,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	unconfigure_phys = supported_phys & ~configurable_phys;
 
-	अगर ((selected_phys & unconfigure_phys) != unconfigure_phys)
-		वापस mgmt_cmd_status(sk, hdev->id,
+	if ((selected_phys & unconfigure_phys) != unconfigure_phys)
+		return mgmt_cmd_status(sk, hdev->id,
 				       MGMT_OP_SET_PHY_CONFIGURATION,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (selected_phys == get_selected_phys(hdev))
-		वापस mgmt_cmd_complete(sk, hdev->id,
+	if (selected_phys == get_selected_phys(hdev))
+		return mgmt_cmd_complete(sk, hdev->id,
 					 MGMT_OP_SET_PHY_CONFIGURATION,
-					 0, शून्य, 0);
+					 0, NULL, 0);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id,
 				      MGMT_OP_SET_PHY_CONFIGURATION,
 				      MGMT_STATUS_REJECTED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_PHY_CONFIGURATION, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_PHY_CONFIGURATION, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id,
 				      MGMT_OP_SET_PHY_CONFIGURATION,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (selected_phys & MGMT_PHY_BR_1M_3SLOT)
+	if (selected_phys & MGMT_PHY_BR_1M_3SLOT)
 		pkt_type |= (HCI_DH3 | HCI_DM3);
-	अन्यथा
+	else
 		pkt_type &= ~(HCI_DH3 | HCI_DM3);
 
-	अगर (selected_phys & MGMT_PHY_BR_1M_5SLOT)
+	if (selected_phys & MGMT_PHY_BR_1M_5SLOT)
 		pkt_type |= (HCI_DH5 | HCI_DM5);
-	अन्यथा
+	else
 		pkt_type &= ~(HCI_DH5 | HCI_DM5);
 
-	अगर (selected_phys & MGMT_PHY_EDR_2M_1SLOT)
+	if (selected_phys & MGMT_PHY_EDR_2M_1SLOT)
 		pkt_type &= ~HCI_2DH1;
-	अन्यथा
+	else
 		pkt_type |= HCI_2DH1;
 
-	अगर (selected_phys & MGMT_PHY_EDR_2M_3SLOT)
+	if (selected_phys & MGMT_PHY_EDR_2M_3SLOT)
 		pkt_type &= ~HCI_2DH3;
-	अन्यथा
+	else
 		pkt_type |= HCI_2DH3;
 
-	अगर (selected_phys & MGMT_PHY_EDR_2M_5SLOT)
+	if (selected_phys & MGMT_PHY_EDR_2M_5SLOT)
 		pkt_type &= ~HCI_2DH5;
-	अन्यथा
+	else
 		pkt_type |= HCI_2DH5;
 
-	अगर (selected_phys & MGMT_PHY_EDR_3M_1SLOT)
+	if (selected_phys & MGMT_PHY_EDR_3M_1SLOT)
 		pkt_type &= ~HCI_3DH1;
-	अन्यथा
+	else
 		pkt_type |= HCI_3DH1;
 
-	अगर (selected_phys & MGMT_PHY_EDR_3M_3SLOT)
+	if (selected_phys & MGMT_PHY_EDR_3M_3SLOT)
 		pkt_type &= ~HCI_3DH3;
-	अन्यथा
+	else
 		pkt_type |= HCI_3DH3;
 
-	अगर (selected_phys & MGMT_PHY_EDR_3M_5SLOT)
+	if (selected_phys & MGMT_PHY_EDR_3M_5SLOT)
 		pkt_type &= ~HCI_3DH5;
-	अन्यथा
+	else
 		pkt_type |= HCI_3DH5;
 
-	अगर (pkt_type != hdev->pkt_type) अणु
+	if (pkt_type != hdev->pkt_type) {
 		hdev->pkt_type = pkt_type;
 		changed = true;
-	पूर्ण
+	}
 
-	अगर ((selected_phys & MGMT_PHY_LE_MASK) ==
-	    (get_selected_phys(hdev) & MGMT_PHY_LE_MASK)) अणु
-		अगर (changed)
+	if ((selected_phys & MGMT_PHY_LE_MASK) ==
+	    (get_selected_phys(hdev) & MGMT_PHY_LE_MASK)) {
+		if (changed)
 			mgmt_phy_configuration_changed(hdev, sk);
 
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_SET_PHY_CONFIGURATION,
-					0, शून्य, 0);
+					0, NULL, 0);
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_PHY_CONFIGURATION, hdev, data,
 			       len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	स_रखो(&cp_phy, 0, माप(cp_phy));
+	memset(&cp_phy, 0, sizeof(cp_phy));
 
-	अगर (!(selected_phys & MGMT_PHY_LE_TX_MASK))
+	if (!(selected_phys & MGMT_PHY_LE_TX_MASK))
 		cp_phy.all_phys |= 0x01;
 
-	अगर (!(selected_phys & MGMT_PHY_LE_RX_MASK))
+	if (!(selected_phys & MGMT_PHY_LE_RX_MASK))
 		cp_phy.all_phys |= 0x02;
 
-	अगर (selected_phys & MGMT_PHY_LE_1M_TX)
+	if (selected_phys & MGMT_PHY_LE_1M_TX)
 		cp_phy.tx_phys |= HCI_LE_SET_PHY_1M;
 
-	अगर (selected_phys & MGMT_PHY_LE_2M_TX)
+	if (selected_phys & MGMT_PHY_LE_2M_TX)
 		cp_phy.tx_phys |= HCI_LE_SET_PHY_2M;
 
-	अगर (selected_phys & MGMT_PHY_LE_CODED_TX)
+	if (selected_phys & MGMT_PHY_LE_CODED_TX)
 		cp_phy.tx_phys |= HCI_LE_SET_PHY_CODED;
 
-	अगर (selected_phys & MGMT_PHY_LE_1M_RX)
+	if (selected_phys & MGMT_PHY_LE_1M_RX)
 		cp_phy.rx_phys |= HCI_LE_SET_PHY_1M;
 
-	अगर (selected_phys & MGMT_PHY_LE_2M_RX)
+	if (selected_phys & MGMT_PHY_LE_2M_RX)
 		cp_phy.rx_phys |= HCI_LE_SET_PHY_2M;
 
-	अगर (selected_phys & MGMT_PHY_LE_CODED_RX)
+	if (selected_phys & MGMT_PHY_LE_CODED_RX)
 		cp_phy.rx_phys |= HCI_LE_SET_PHY_CODED;
 
-	hci_req_add(&req, HCI_OP_LE_SET_DEFAULT_PHY, माप(cp_phy), &cp_phy);
+	hci_req_add(&req, HCI_OP_LE_SET_DEFAULT_PHY, sizeof(cp_phy), &cp_phy);
 
-	err = hci_req_run_skb(&req, set_शेष_phy_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_req_run_skb(&req, set_default_phy_complete);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_blocked_keys(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_blocked_keys(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 len)
-अणु
-	पूर्णांक err = MGMT_STATUS_SUCCESS;
-	काष्ठा mgmt_cp_set_blocked_keys *keys = data;
-	स्थिर u16 max_key_count = ((U16_MAX - माप(*keys)) /
-				   माप(काष्ठा mgmt_blocked_key_info));
+{
+	int err = MGMT_STATUS_SUCCESS;
+	struct mgmt_cp_set_blocked_keys *keys = data;
+	const u16 max_key_count = ((U16_MAX - sizeof(*keys)) /
+				   sizeof(struct mgmt_blocked_key_info));
 	u16 key_count, expected_len;
-	पूर्णांक i;
+	int i;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	key_count = __le16_to_cpu(keys->key_count);
-	अगर (key_count > max_key_count) अणु
+	if (key_count > max_key_count) {
 		bt_dev_err(hdev, "too big key_count value %u", key_count);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	expected_len = काष्ठा_size(keys, keys, key_count);
-	अगर (expected_len != len) अणु
+	expected_len = struct_size(keys, keys, key_count);
+	if (expected_len != len) {
 		bt_dev_err(hdev, "expected %u bytes, got %u bytes",
 			   expected_len, len);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
 	hci_blocked_keys_clear(hdev);
 
-	क्रम (i = 0; i < keys->key_count; ++i) अणु
-		काष्ठा blocked_key *b = kzalloc(माप(*b), GFP_KERNEL);
+	for (i = 0; i < keys->key_count; ++i) {
+		struct blocked_key *b = kzalloc(sizeof(*b), GFP_KERNEL);
 
-		अगर (!b) अणु
+		if (!b) {
 			err = MGMT_STATUS_NO_RESOURCES;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		b->type = keys->keys[i].type;
-		स_नकल(b->val, keys->keys[i].val, माप(b->val));
+		memcpy(b->val, keys->keys[i].val, sizeof(b->val));
 		list_add_rcu(&b->list, &hdev->blocked_keys);
-	पूर्ण
+	}
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
-				err, शून्य, 0);
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_BLOCKED_KEYS,
+				err, NULL, 0);
+}
 
-अटल पूर्णांक set_wideband_speech(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	पूर्णांक err;
+static int set_wideband_speech(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	int err;
 	bool changed = false;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!test_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED, &hdev->quirks))
-		वापस mgmt_cmd_status(sk, hdev->id,
+	if (!test_bit(HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED, &hdev->quirks))
+		return mgmt_cmd_status(sk, hdev->id,
 				       MGMT_OP_SET_WIDEBAND_SPEECH,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id,
 				       MGMT_OP_SET_WIDEBAND_SPEECH,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_find(MGMT_OP_SET_WIDEBAND_SPEECH, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_WIDEBAND_SPEECH, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id,
 				      MGMT_OP_SET_WIDEBAND_SPEECH,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (hdev_is_घातered(hdev) &&
+	if (hdev_is_powered(hdev) &&
 	    !!cp->val != hci_dev_test_flag(hdev,
-					   HCI_WIDEBAND_SPEECH_ENABLED)) अणु
+					   HCI_WIDEBAND_SPEECH_ENABLED)) {
 		err = mgmt_cmd_status(sk, hdev->id,
 				      MGMT_OP_SET_WIDEBAND_SPEECH,
 				      MGMT_STATUS_REJECTED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (cp->val)
+	if (cp->val)
 		changed = !hci_dev_test_and_set_flag(hdev,
 						   HCI_WIDEBAND_SPEECH_ENABLED);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev,
 						   HCI_WIDEBAND_SPEECH_ENABLED);
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_WIDEBAND_SPEECH, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (changed)
+	if (changed)
 		err = new_settings(hdev, sk);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक पढ़ो_controller_cap(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 data_len)
-अणु
-	अक्षर buf[20];
-	काष्ठा mgmt_rp_पढ़ो_controller_cap *rp = (व्योम *)buf;
+static int read_controller_cap(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 data_len)
+{
+	char buf[20];
+	struct mgmt_rp_read_controller_cap *rp = (void *)buf;
 	u16 cap_len = 0;
 	u8 flags = 0;
-	u8 tx_घातer_range[2];
+	u8 tx_power_range[2];
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&buf, 0, माप(buf));
+	memset(&buf, 0, sizeof(buf));
 
 	hci_dev_lock(hdev);
 
 	/* When the Read Simple Pairing Options command is supported, then
-	 * the remote खुला key validation is supported.
+	 * the remote public key validation is supported.
 	 *
 	 * Alternatively, when Microsoft extensions are available, they can
-	 * indicate support क्रम खुला key validation as well.
+	 * indicate support for public key validation as well.
 	 */
-	अगर ((hdev->commands[41] & 0x08) || msft_curve_validity(hdev))
-		flags |= 0x01;	/* Remote खुला key validation (BR/EDR) */
+	if ((hdev->commands[41] & 0x08) || msft_curve_validity(hdev))
+		flags |= 0x01;	/* Remote public key validation (BR/EDR) */
 
-	flags |= 0x02;		/* Remote खुला key validation (LE) */
+	flags |= 0x02;		/* Remote public key validation (LE) */
 
 	/* When the Read Encryption Key Size command is supported, then the
-	 * encryption key size is enक्रमced.
+	 * encryption key size is enforced.
 	 */
-	अगर (hdev->commands[20] & 0x10)
-		flags |= 0x04;	/* Encryption key size enक्रमcement (BR/EDR) */
+	if (hdev->commands[20] & 0x10)
+		flags |= 0x04;	/* Encryption key size enforcement (BR/EDR) */
 
-	flags |= 0x08;		/* Encryption key size enक्रमcement (LE) */
+	flags |= 0x08;		/* Encryption key size enforcement (LE) */
 
 	cap_len = eir_append_data(rp->cap, cap_len, MGMT_CAP_SEC_FLAGS,
 				  &flags, 1);
 
 	/* When the Read Simple Pairing Options command is supported, then
-	 * also max encryption key size inक्रमmation is provided.
+	 * also max encryption key size information is provided.
 	 */
-	अगर (hdev->commands[41] & 0x08)
+	if (hdev->commands[41] & 0x08)
 		cap_len = eir_append_le16(rp->cap, cap_len,
 					  MGMT_CAP_MAX_ENC_KEY_SIZE,
 					  hdev->max_enc_key_size);
@@ -3763,193 +3762,193 @@ unlock:
 				  MGMT_CAP_SMP_MAX_ENC_KEY_SIZE,
 				  SMP_MAX_ENC_KEY_SIZE);
 
-	/* Append the min/max LE tx घातer parameters अगर we were able to fetch
+	/* Append the min/max LE tx power parameters if we were able to fetch
 	 * it from the controller
 	 */
-	अगर (hdev->commands[38] & 0x80) अणु
-		स_नकल(&tx_घातer_range[0], &hdev->min_le_tx_घातer, 1);
-		स_नकल(&tx_घातer_range[1], &hdev->max_le_tx_घातer, 1);
+	if (hdev->commands[38] & 0x80) {
+		memcpy(&tx_power_range[0], &hdev->min_le_tx_power, 1);
+		memcpy(&tx_power_range[1], &hdev->max_le_tx_power, 1);
 		cap_len = eir_append_data(rp->cap, cap_len, MGMT_CAP_LE_TX_PWR,
-					  tx_घातer_range, 2);
-	पूर्ण
+					  tx_power_range, 2);
+	}
 
 	rp->cap_len = cpu_to_le16(cap_len);
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_CONTROLLER_CAP, 0,
-				 rp, माप(*rp) + cap_len);
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_CONTROLLER_CAP, 0,
+				 rp, sizeof(*rp) + cap_len);
+}
 
-#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
+#ifdef CONFIG_BT_FEATURE_DEBUG
 /* d4992530-b9ec-469f-ab01-6c481c47da1c */
-अटल स्थिर u8 debug_uuid[16] = अणु
+static const u8 debug_uuid[16] = {
 	0x1c, 0xda, 0x47, 0x1c, 0x48, 0x6c, 0x01, 0xab,
 	0x9f, 0x46, 0xec, 0xb9, 0x30, 0x25, 0x99, 0xd4,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /* 671b10b5-42c0-4696-9227-eb28d1b049d6 */
-अटल स्थिर u8 simult_central_periph_uuid[16] = अणु
+static const u8 simult_central_periph_uuid[16] = {
 	0xd6, 0x49, 0xb0, 0xd1, 0x28, 0xeb, 0x27, 0x92,
 	0x96, 0x46, 0xc0, 0x42, 0xb5, 0x10, 0x1b, 0x67,
-पूर्ण;
+};
 
 /* 15c0a148-c273-11ea-b3de-0242ac130004 */
-अटल स्थिर u8 rpa_resolution_uuid[16] = अणु
+static const u8 rpa_resolution_uuid[16] = {
 	0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3,
 	0xea, 0x11, 0x73, 0xc2, 0x48, 0xa1, 0xc0, 0x15,
-पूर्ण;
+};
 
-अटल पूर्णांक पढ़ो_exp_features_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				  व्योम *data, u16 data_len)
-अणु
-	अक्षर buf[62];	/* Enough space क्रम 3 features */
-	काष्ठा mgmt_rp_पढ़ो_exp_features_info *rp = (व्योम *)buf;
+static int read_exp_features_info(struct sock *sk, struct hci_dev *hdev,
+				  void *data, u16 data_len)
+{
+	char buf[62];	/* Enough space for 3 features */
+	struct mgmt_rp_read_exp_features_info *rp = (void *)buf;
 	u16 idx = 0;
 	u32 flags;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&buf, 0, माप(buf));
+	memset(&buf, 0, sizeof(buf));
 
-#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
-	अगर (!hdev) अणु
+#ifdef CONFIG_BT_FEATURE_DEBUG
+	if (!hdev) {
 		flags = bt_dbg_get() ? BIT(0) : 0;
 
-		स_नकल(rp->features[idx].uuid, debug_uuid, 16);
+		memcpy(rp->features[idx].uuid, debug_uuid, 16);
 		rp->features[idx].flags = cpu_to_le32(flags);
 		idx++;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (hdev) अणु
-		अगर (test_bit(HCI_QUIRK_VALID_LE_STATES, &hdev->quirks) &&
+	if (hdev) {
+		if (test_bit(HCI_QUIRK_VALID_LE_STATES, &hdev->quirks) &&
 		    (hdev->le_states[4] & 0x08) &&	/* Central */
 		    (hdev->le_states[4] & 0x40) &&	/* Peripheral */
 		    (hdev->le_states[3] & 0x10))	/* Simultaneous */
 			flags = BIT(0);
-		अन्यथा
+		else
 			flags = 0;
 
-		स_नकल(rp->features[idx].uuid, simult_central_periph_uuid, 16);
+		memcpy(rp->features[idx].uuid, simult_central_periph_uuid, 16);
 		rp->features[idx].flags = cpu_to_le32(flags);
 		idx++;
-	पूर्ण
+	}
 
-	अगर (hdev && use_ll_privacy(hdev)) अणु
-		अगर (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+	if (hdev && use_ll_privacy(hdev)) {
+		if (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
 			flags = BIT(0) | BIT(1);
-		अन्यथा
+		else
 			flags = BIT(1);
 
-		स_नकल(rp->features[idx].uuid, rpa_resolution_uuid, 16);
+		memcpy(rp->features[idx].uuid, rpa_resolution_uuid, 16);
 		rp->features[idx].flags = cpu_to_le32(flags);
 		idx++;
-	पूर्ण
+	}
 
 	rp->feature_count = cpu_to_le16(idx);
 
-	/* After पढ़ोing the experimental features inक्रमmation, enable
+	/* After reading the experimental features information, enable
 	 * the events to update client on any future change.
 	 */
 	hci_sock_set_flag(sk, HCI_MGMT_EXP_FEATURE_EVENTS);
 
-	वापस mgmt_cmd_complete(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
+	return mgmt_cmd_complete(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
 				 MGMT_OP_READ_EXP_FEATURES_INFO,
-				 0, rp, माप(*rp) + (20 * idx));
-पूर्ण
+				 0, rp, sizeof(*rp) + (20 * idx));
+}
 
-अटल पूर्णांक exp_ll_privacy_feature_changed(bool enabled, काष्ठा hci_dev *hdev,
-					  काष्ठा sock *skip)
-अणु
-	काष्ठा mgmt_ev_exp_feature_changed ev;
+static int exp_ll_privacy_feature_changed(bool enabled, struct hci_dev *hdev,
+					  struct sock *skip)
+{
+	struct mgmt_ev_exp_feature_changed ev;
 
-	स_रखो(&ev, 0, माप(ev));
-	स_नकल(ev.uuid, rpa_resolution_uuid, 16);
+	memset(&ev, 0, sizeof(ev));
+	memcpy(ev.uuid, rpa_resolution_uuid, 16);
 	ev.flags = cpu_to_le32((enabled ? BIT(0) : 0) | BIT(1));
 
-	वापस mgmt_limited_event(MGMT_EV_EXP_FEATURE_CHANGED, hdev,
-				  &ev, माप(ev),
+	return mgmt_limited_event(MGMT_EV_EXP_FEATURE_CHANGED, hdev,
+				  &ev, sizeof(ev),
 				  HCI_MGMT_EXP_FEATURE_EVENTS, skip);
 
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
-अटल पूर्णांक exp_debug_feature_changed(bool enabled, काष्ठा sock *skip)
-अणु
-	काष्ठा mgmt_ev_exp_feature_changed ev;
+#ifdef CONFIG_BT_FEATURE_DEBUG
+static int exp_debug_feature_changed(bool enabled, struct sock *skip)
+{
+	struct mgmt_ev_exp_feature_changed ev;
 
-	स_रखो(&ev, 0, माप(ev));
-	स_नकल(ev.uuid, debug_uuid, 16);
+	memset(&ev, 0, sizeof(ev));
+	memcpy(ev.uuid, debug_uuid, 16);
 	ev.flags = cpu_to_le32(enabled ? BIT(0) : 0);
 
-	वापस mgmt_limited_event(MGMT_EV_EXP_FEATURE_CHANGED, शून्य,
-				  &ev, माप(ev),
+	return mgmt_limited_event(MGMT_EV_EXP_FEATURE_CHANGED, NULL,
+				  &ev, sizeof(ev),
 				  HCI_MGMT_EXP_FEATURE_EVENTS, skip);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक set_exp_feature(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			   व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_set_exp_feature *cp = data;
-	काष्ठा mgmt_rp_set_exp_feature rp;
+static int set_exp_feature(struct sock *sk, struct hci_dev *hdev,
+			   void *data, u16 data_len)
+{
+	struct mgmt_cp_set_exp_feature *cp = data;
+	struct mgmt_rp_set_exp_feature rp;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!स_भेद(cp->uuid, ZERO_KEY, 16)) अणु
-		स_रखो(rp.uuid, 0, 16);
+	if (!memcmp(cp->uuid, ZERO_KEY, 16)) {
+		memset(rp.uuid, 0, 16);
 		rp.flags = cpu_to_le32(0);
 
-#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
-		अगर (!hdev) अणु
+#ifdef CONFIG_BT_FEATURE_DEBUG
+		if (!hdev) {
 			bool changed = bt_dbg_get();
 
 			bt_dbg_set(false);
 
-			अगर (changed)
+			if (changed)
 				exp_debug_feature_changed(false, sk);
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
-		अगर (hdev && use_ll_privacy(hdev) && !hdev_is_घातered(hdev)) अणु
+		if (hdev && use_ll_privacy(hdev) && !hdev_is_powered(hdev)) {
 			bool changed = hci_dev_test_flag(hdev,
 							 HCI_ENABLE_LL_PRIVACY);
 
 			hci_dev_clear_flag(hdev, HCI_ENABLE_LL_PRIVACY);
 
-			अगर (changed)
+			if (changed)
 				exp_ll_privacy_feature_changed(false, hdev, sk);
-		पूर्ण
+		}
 
 		hci_sock_set_flag(sk, HCI_MGMT_EXP_FEATURE_EVENTS);
 
-		वापस mgmt_cmd_complete(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
+		return mgmt_cmd_complete(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
 					 MGMT_OP_SET_EXP_FEATURE, 0,
-					 &rp, माप(rp));
-	पूर्ण
+					 &rp, sizeof(rp));
+	}
 
-#अगर_घोषित CONFIG_BT_FEATURE_DEBUG
-	अगर (!स_भेद(cp->uuid, debug_uuid, 16)) अणु
+#ifdef CONFIG_BT_FEATURE_DEBUG
+	if (!memcmp(cp->uuid, debug_uuid, 16)) {
 		bool val, changed;
-		पूर्णांक err;
+		int err;
 
 		/* Command requires to use the non-controller index */
-		अगर (hdev)
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (hdev)
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_INDEX);
 
 		/* Parameters are limited to a single octet */
-		अगर (data_len != MGMT_SET_EXP_FEATURE_SIZE + 1)
-			वापस mgmt_cmd_status(sk, MGMT_INDEX_NONE,
+		if (data_len != MGMT_SET_EXP_FEATURE_SIZE + 1)
+			return mgmt_cmd_status(sk, MGMT_INDEX_NONE,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_PARAMS);
 
 		/* Only boolean on/off is supported */
-		अगर (cp->param[0] != 0x00 && cp->param[0] != 0x01)
-			वापस mgmt_cmd_status(sk, MGMT_INDEX_NONE,
+		if (cp->param[0] != 0x00 && cp->param[0] != 0x01)
+			return mgmt_cmd_status(sk, MGMT_INDEX_NONE,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_PARAMS);
 
@@ -3957,54 +3956,54 @@ unlock:
 		changed = val ? !bt_dbg_get() : bt_dbg_get();
 		bt_dbg_set(val);
 
-		स_नकल(rp.uuid, debug_uuid, 16);
+		memcpy(rp.uuid, debug_uuid, 16);
 		rp.flags = cpu_to_le32(val ? BIT(0) : 0);
 
 		hci_sock_set_flag(sk, HCI_MGMT_EXP_FEATURE_EVENTS);
 
 		err = mgmt_cmd_complete(sk, MGMT_INDEX_NONE,
 					MGMT_OP_SET_EXP_FEATURE, 0,
-					&rp, माप(rp));
+					&rp, sizeof(rp));
 
-		अगर (changed)
+		if (changed)
 			exp_debug_feature_changed(val, sk);
 
-		वापस err;
-	पूर्ण
-#पूर्ण_अगर
+		return err;
+	}
+#endif
 
-	अगर (!स_भेद(cp->uuid, rpa_resolution_uuid, 16)) अणु
+	if (!memcmp(cp->uuid, rpa_resolution_uuid, 16)) {
 		bool val, changed;
-		पूर्णांक err;
+		int err;
 		u32 flags;
 
 		/* Command requires to use the controller index */
-		अगर (!hdev)
-			वापस mgmt_cmd_status(sk, MGMT_INDEX_NONE,
+		if (!hdev)
+			return mgmt_cmd_status(sk, MGMT_INDEX_NONE,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_INDEX);
 
-		/* Changes can only be made when controller is घातered करोwn */
-		अगर (hdev_is_घातered(hdev))
-			वापस mgmt_cmd_status(sk, hdev->id,
+		/* Changes can only be made when controller is powered down */
+		if (hdev_is_powered(hdev))
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_REJECTED);
 
 		/* Parameters are limited to a single octet */
-		अगर (data_len != MGMT_SET_EXP_FEATURE_SIZE + 1)
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (data_len != MGMT_SET_EXP_FEATURE_SIZE + 1)
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_PARAMS);
 
 		/* Only boolean on/off is supported */
-		अगर (cp->param[0] != 0x00 && cp->param[0] != 0x01)
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (cp->param[0] != 0x00 && cp->param[0] != 0x01)
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_EXP_FEATURE,
 					       MGMT_STATUS_INVALID_PARAMS);
 
 		val = !!cp->param[0];
 
-		अगर (val) अणु
+		if (val) {
 			changed = !hci_dev_test_flag(hdev,
 						     HCI_ENABLE_LL_PRIVACY);
 			hci_dev_set_flag(hdev, HCI_ENABLE_LL_PRIVACY);
@@ -4012,44 +4011,44 @@ unlock:
 
 			/* Enable LL privacy + supported settings changed */
 			flags = BIT(0) | BIT(1);
-		पूर्ण अन्यथा अणु
+		} else {
 			changed = hci_dev_test_flag(hdev,
 						    HCI_ENABLE_LL_PRIVACY);
 			hci_dev_clear_flag(hdev, HCI_ENABLE_LL_PRIVACY);
 
 			/* Disable LL privacy + supported settings changed */
 			flags = BIT(1);
-		पूर्ण
+		}
 
-		स_नकल(rp.uuid, rpa_resolution_uuid, 16);
+		memcpy(rp.uuid, rpa_resolution_uuid, 16);
 		rp.flags = cpu_to_le32(flags);
 
 		hci_sock_set_flag(sk, HCI_MGMT_EXP_FEATURE_EVENTS);
 
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_SET_EXP_FEATURE, 0,
-					&rp, माप(rp));
+					&rp, sizeof(rp));
 
-		अगर (changed)
+		if (changed)
 			exp_ll_privacy_feature_changed(val, hdev, sk);
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस mgmt_cmd_status(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
+	return mgmt_cmd_status(sk, hdev ? hdev->id : MGMT_INDEX_NONE,
 			       MGMT_OP_SET_EXP_FEATURE,
 			       MGMT_STATUS_NOT_SUPPORTED);
-पूर्ण
+}
 
-#घोषणा SUPPORTED_DEVICE_FLAGS() ((1U << HCI_CONN_FLAG_MAX) - 1)
+#define SUPPORTED_DEVICE_FLAGS() ((1U << HCI_CONN_FLAG_MAX) - 1)
 
-अटल पूर्णांक get_device_flags(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int get_device_flags(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 data_len)
-अणु
-	काष्ठा mgmt_cp_get_device_flags *cp = data;
-	काष्ठा mgmt_rp_get_device_flags rp;
-	काष्ठा bdaddr_list_with_flags *br_params;
-	काष्ठा hci_conn_params *params;
+{
+	struct mgmt_cp_get_device_flags *cp = data;
+	struct mgmt_rp_get_device_flags rp;
+	struct bdaddr_list_with_flags *br_params;
+	struct hci_conn_params *params;
 	u32 supported_flags = SUPPORTED_DEVICE_FLAGS();
 	u32 current_flags = 0;
 	u8 status = MGMT_STATUS_INVALID_PARAMS;
@@ -4059,23 +4058,23 @@ unlock:
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
 		br_params = hci_bdaddr_list_lookup_with_flags(&hdev->whitelist,
 							      &cp->addr.bdaddr,
 							      cp->addr.type);
-		अगर (!br_params)
-			जाओ करोne;
+		if (!br_params)
+			goto done;
 
 		current_flags = br_params->current_flags;
-	पूर्ण अन्यथा अणु
+	} else {
 		params = hci_conn_params_lookup(hdev, &cp->addr.bdaddr,
 						le_addr_type(cp->addr.type));
 
-		अगर (!params)
-			जाओ करोne;
+		if (!params)
+			goto done;
 
 		current_flags = params->current_flags;
-	पूर्ण
+	}
 
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
@@ -4084,33 +4083,33 @@ unlock:
 
 	status = MGMT_STATUS_SUCCESS;
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_DEVICE_FLAGS, status,
-				&rp, माप(rp));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_DEVICE_FLAGS, status,
+				&rp, sizeof(rp));
+}
 
-अटल व्योम device_flags_changed(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
+static void device_flags_changed(struct sock *sk, struct hci_dev *hdev,
 				 bdaddr_t *bdaddr, u8 bdaddr_type,
 				 u32 supported_flags, u32 current_flags)
-अणु
-	काष्ठा mgmt_ev_device_flags_changed ev;
+{
+	struct mgmt_ev_device_flags_changed ev;
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = bdaddr_type;
 	ev.supported_flags = cpu_to_le32(supported_flags);
 	ev.current_flags = cpu_to_le32(current_flags);
 
-	mgmt_event(MGMT_EV_DEVICE_FLAGS_CHANGED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_DEVICE_FLAGS_CHANGED, hdev, &ev, sizeof(ev), sk);
+}
 
-अटल पूर्णांक set_device_flags(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_device_flags(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 len)
-अणु
-	काष्ठा mgmt_cp_set_device_flags *cp = data;
-	काष्ठा bdaddr_list_with_flags *br_params;
-	काष्ठा hci_conn_params *params;
+{
+	struct mgmt_cp_set_device_flags *cp = data;
+	struct bdaddr_list_with_flags *br_params;
+	struct hci_conn_params *params;
 	u8 status = MGMT_STATUS_INVALID_PARAMS;
 	u32 supported_flags = SUPPORTED_DEVICE_FLAGS();
 	u32 current_flags = __le32_to_cpu(cp->current_flags);
@@ -4119,87 +4118,87 @@ unlock:
 		   &cp->addr.bdaddr, cp->addr.type,
 		   __le32_to_cpu(current_flags));
 
-	अगर ((supported_flags | current_flags) != supported_flags) अणु
+	if ((supported_flags | current_flags) != supported_flags) {
 		bt_dev_warn(hdev, "Bad flag given (0x%x) vs supported (0x%0x)",
 			    current_flags, supported_flags);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
 		br_params = hci_bdaddr_list_lookup_with_flags(&hdev->whitelist,
 							      &cp->addr.bdaddr,
 							      cp->addr.type);
 
-		अगर (br_params) अणु
+		if (br_params) {
 			br_params->current_flags = current_flags;
 			status = MGMT_STATUS_SUCCESS;
-		पूर्ण अन्यथा अणु
+		} else {
 			bt_dev_warn(hdev, "No such BR/EDR device %pMR (0x%x)",
 				    &cp->addr.bdaddr, cp->addr.type);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		params = hci_conn_params_lookup(hdev, &cp->addr.bdaddr,
 						le_addr_type(cp->addr.type));
-		अगर (params) अणु
+		if (params) {
 			params->current_flags = current_flags;
 			status = MGMT_STATUS_SUCCESS;
-		पूर्ण अन्यथा अणु
+		} else {
 			bt_dev_warn(hdev, "No such LE device %pMR (0x%x)",
 				    &cp->addr.bdaddr,
 				    le_addr_type(cp->addr.type));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
 
-	अगर (status == MGMT_STATUS_SUCCESS)
+	if (status == MGMT_STATUS_SUCCESS)
 		device_flags_changed(sk, hdev, &cp->addr.bdaddr, cp->addr.type,
 				     supported_flags, current_flags);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_DEVICE_FLAGS, status,
-				 &cp->addr, माप(cp->addr));
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_DEVICE_FLAGS, status,
+				 &cp->addr, sizeof(cp->addr));
+}
 
-अटल व्योम mgmt_adv_monitor_added(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
+static void mgmt_adv_monitor_added(struct sock *sk, struct hci_dev *hdev,
 				   u16 handle)
-अणु
-	काष्ठा mgmt_ev_adv_monitor_added ev;
+{
+	struct mgmt_ev_adv_monitor_added ev;
 
 	ev.monitor_handle = cpu_to_le16(handle);
 
-	mgmt_event(MGMT_EV_ADV_MONITOR_ADDED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_ADV_MONITOR_ADDED, hdev, &ev, sizeof(ev), sk);
+}
 
-व्योम mgmt_adv_monitor_हटाओd(काष्ठा hci_dev *hdev, u16 handle)
-अणु
-	काष्ठा mgmt_ev_adv_monitor_हटाओd ev;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा sock *sk_skip = शून्य;
-	काष्ठा mgmt_cp_हटाओ_adv_monitor *cp;
+void mgmt_adv_monitor_removed(struct hci_dev *hdev, u16 handle)
+{
+	struct mgmt_ev_adv_monitor_removed ev;
+	struct mgmt_pending_cmd *cmd;
+	struct sock *sk_skip = NULL;
+	struct mgmt_cp_remove_adv_monitor *cp;
 
 	cmd = pending_find(MGMT_OP_REMOVE_ADV_MONITOR, hdev);
-	अगर (cmd) अणु
+	if (cmd) {
 		cp = cmd->param;
 
-		अगर (cp->monitor_handle)
+		if (cp->monitor_handle)
 			sk_skip = cmd->sk;
-	पूर्ण
+	}
 
 	ev.monitor_handle = cpu_to_le16(handle);
 
-	mgmt_event(MGMT_EV_ADV_MONITOR_REMOVED, hdev, &ev, माप(ev), sk_skip);
-पूर्ण
+	mgmt_event(MGMT_EV_ADV_MONITOR_REMOVED, hdev, &ev, sizeof(ev), sk_skip);
+}
 
-अटल पूर्णांक पढ़ो_adv_mon_features(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				 व्योम *data, u16 len)
-अणु
-	काष्ठा adv_monitor *monitor = शून्य;
-	काष्ठा mgmt_rp_पढ़ो_adv_monitor_features *rp = शून्य;
-	पूर्णांक handle, err;
-	माप_प्रकार rp_size = 0;
+static int read_adv_mon_features(struct sock *sk, struct hci_dev *hdev,
+				 void *data, u16 len)
+{
+	struct adv_monitor *monitor = NULL;
+	struct mgmt_rp_read_adv_monitor_features *rp = NULL;
+	int handle, err;
+	size_t rp_size = 0;
 	__u32 supported = 0;
 	__u32 enabled = 0;
 	__u16 num_handles = 0;
@@ -4209,18 +4208,18 @@ unlock:
 
 	hci_dev_lock(hdev);
 
-	अगर (msft_monitor_supported(hdev))
+	if (msft_monitor_supported(hdev))
 		supported |= MGMT_ADV_MONITOR_FEATURE_MASK_OR_PATTERNS;
 
-	idr_क्रम_each_entry(&hdev->adv_monitors_idr, monitor, handle)
+	idr_for_each_entry(&hdev->adv_monitors_idr, monitor, handle)
 		handles[num_handles++] = monitor->handle;
 
 	hci_dev_unlock(hdev);
 
-	rp_size = माप(*rp) + (num_handles * माप(u16));
-	rp = kदो_स्मृति(rp_size, GFP_KERNEL);
-	अगर (!rp)
-		वापस -ENOMEM;
+	rp_size = sizeof(*rp) + (num_handles * sizeof(u16));
+	rp = kmalloc(rp_size, GFP_KERNEL);
+	if (!rp)
+		return -ENOMEM;
 
 	/* All supported features are currently enabled */
 	enabled = supported;
@@ -4230,290 +4229,290 @@ unlock:
 	rp->max_num_handles = cpu_to_le16(HCI_MAX_ADV_MONITOR_NUM_HANDLES);
 	rp->max_num_patterns = HCI_MAX_ADV_MONITOR_NUM_PATTERNS;
 	rp->num_handles = cpu_to_le16(num_handles);
-	अगर (num_handles)
-		स_नकल(&rp->handles, &handles, (num_handles * माप(u16)));
+	if (num_handles)
+		memcpy(&rp->handles, &handles, (num_handles * sizeof(u16)));
 
 	err = mgmt_cmd_complete(sk, hdev->id,
 				MGMT_OP_READ_ADV_MONITOR_FEATURES,
 				MGMT_STATUS_SUCCESS, rp, rp_size);
 
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mgmt_add_adv_patterns_monitor_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_rp_add_adv_patterns_monitor rp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा adv_monitor *monitor;
-	पूर्णांक err = 0;
+int mgmt_add_adv_patterns_monitor_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_rp_add_adv_patterns_monitor rp;
+	struct mgmt_pending_cmd *cmd;
+	struct adv_monitor *monitor;
+	int err = 0;
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI, hdev);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		cmd = pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR, hdev);
-		अगर (!cmd)
-			जाओ करोne;
-	पूर्ण
+		if (!cmd)
+			goto done;
+	}
 
 	monitor = cmd->user_data;
 	rp.monitor_handle = cpu_to_le16(monitor->handle);
 
-	अगर (!status) अणु
+	if (!status) {
 		mgmt_adv_monitor_added(cmd->sk, hdev, monitor->handle);
 		hdev->adv_monitors_cnt++;
-		अगर (monitor->state == ADV_MONITOR_STATE_NOT_REGISTERED)
+		if (monitor->state == ADV_MONITOR_STATE_NOT_REGISTERED)
 			monitor->state = ADV_MONITOR_STATE_REGISTERED;
 		hci_update_background_scan(hdev);
-	पूर्ण
+	}
 
 	err = mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode,
-				mgmt_status(status), &rp, माप(rp));
-	mgmt_pending_हटाओ(cmd);
+				mgmt_status(status), &rp, sizeof(rp));
+	mgmt_pending_remove(cmd);
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
 	bt_dev_dbg(hdev, "add monitor %d complete, status %d",
 		   rp.monitor_handle, status);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __add_adv_patterns_monitor(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				      काष्ठा adv_monitor *m, u8 status,
-				      व्योम *data, u16 len, u16 op)
-अणु
-	काष्ठा mgmt_rp_add_adv_patterns_monitor rp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+static int __add_adv_patterns_monitor(struct sock *sk, struct hci_dev *hdev,
+				      struct adv_monitor *m, u8 status,
+				      void *data, u16 len, u16 op)
+{
+	struct mgmt_rp_add_adv_patterns_monitor rp;
+	struct mgmt_pending_cmd *cmd;
+	int err;
 	bool pending;
 
 	hci_dev_lock(hdev);
 
-	अगर (status)
-		जाओ unlock;
+	if (status)
+		goto unlock;
 
-	अगर (pending_find(MGMT_OP_SET_LE, hdev) ||
+	if (pending_find(MGMT_OP_SET_LE, hdev) ||
 	    pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR, hdev) ||
 	    pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI, hdev) ||
-	    pending_find(MGMT_OP_REMOVE_ADV_MONITOR, hdev)) अणु
+	    pending_find(MGMT_OP_REMOVE_ADV_MONITOR, hdev)) {
 		status = MGMT_STATUS_BUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, op, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		status = MGMT_STATUS_NO_RESOURCES;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd->user_data = m;
 	pending = hci_add_adv_monitor(hdev, m, &err);
-	अगर (err) अणु
-		अगर (err == -ENOSPC || err == -ENOMEM)
+	if (err) {
+		if (err == -ENOSPC || err == -ENOMEM)
 			status = MGMT_STATUS_NO_RESOURCES;
-		अन्यथा अगर (err == -EINVAL)
+		else if (err == -EINVAL)
 			status = MGMT_STATUS_INVALID_PARAMS;
-		अन्यथा
+		else
 			status = MGMT_STATUS_FAILED;
 
-		mgmt_pending_हटाओ(cmd);
-		जाओ unlock;
-	पूर्ण
+		mgmt_pending_remove(cmd);
+		goto unlock;
+	}
 
-	अगर (!pending) अणु
-		mgmt_pending_हटाओ(cmd);
+	if (!pending) {
+		mgmt_pending_remove(cmd);
 		rp.monitor_handle = cpu_to_le16(m->handle);
 		mgmt_adv_monitor_added(sk, hdev, m->handle);
 		m->state = ADV_MONITOR_STATE_REGISTERED;
 		hdev->adv_monitors_cnt++;
 
 		hci_dev_unlock(hdev);
-		वापस mgmt_cmd_complete(sk, hdev->id, op, MGMT_STATUS_SUCCESS,
-					 &rp, माप(rp));
-	पूर्ण
+		return mgmt_cmd_complete(sk, hdev->id, op, MGMT_STATUS_SUCCESS,
+					 &rp, sizeof(rp));
+	}
 
 	hci_dev_unlock(hdev);
 
-	वापस 0;
+	return 0;
 
 unlock:
-	hci_मुक्त_adv_monitor(hdev, m);
+	hci_free_adv_monitor(hdev, m);
 	hci_dev_unlock(hdev);
-	वापस mgmt_cmd_status(sk, hdev->id, op, status);
-पूर्ण
+	return mgmt_cmd_status(sk, hdev->id, op, status);
+}
 
-अटल व्योम parse_adv_monitor_rssi(काष्ठा adv_monitor *m,
-				   काष्ठा mgmt_adv_rssi_thresholds *rssi)
-अणु
-	अगर (rssi) अणु
+static void parse_adv_monitor_rssi(struct adv_monitor *m,
+				   struct mgmt_adv_rssi_thresholds *rssi)
+{
+	if (rssi) {
 		m->rssi.low_threshold = rssi->low_threshold;
-		m->rssi.low_threshold_समयout =
-		    __le16_to_cpu(rssi->low_threshold_समयout);
+		m->rssi.low_threshold_timeout =
+		    __le16_to_cpu(rssi->low_threshold_timeout);
 		m->rssi.high_threshold = rssi->high_threshold;
-		m->rssi.high_threshold_समयout =
-		    __le16_to_cpu(rssi->high_threshold_समयout);
+		m->rssi.high_threshold_timeout =
+		    __le16_to_cpu(rssi->high_threshold_timeout);
 		m->rssi.sampling_period = rssi->sampling_period;
-	पूर्ण अन्यथा अणु
-		/* Default values. These numbers are the least स्थिरricting
-		 * parameters क्रम MSFT API to work, so it behaves as अगर there
+	} else {
+		/* Default values. These numbers are the least constricting
+		 * parameters for MSFT API to work, so it behaves as if there
 		 * are no rssi parameter to consider. May need to be changed
-		 * अगर other API are to be supported.
+		 * if other API are to be supported.
 		 */
 		m->rssi.low_threshold = -127;
-		m->rssi.low_threshold_समयout = 60;
+		m->rssi.low_threshold_timeout = 60;
 		m->rssi.high_threshold = -127;
-		m->rssi.high_threshold_समयout = 0;
+		m->rssi.high_threshold_timeout = 0;
 		m->rssi.sampling_period = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 parse_adv_monitor_pattern(काष्ठा adv_monitor *m, u8 pattern_count,
-				    काष्ठा mgmt_adv_pattern *patterns)
-अणु
+static u8 parse_adv_monitor_pattern(struct adv_monitor *m, u8 pattern_count,
+				    struct mgmt_adv_pattern *patterns)
+{
 	u8 offset = 0, length = 0;
-	काष्ठा adv_pattern *p = शून्य;
-	पूर्णांक i;
+	struct adv_pattern *p = NULL;
+	int i;
 
-	क्रम (i = 0; i < pattern_count; i++) अणु
+	for (i = 0; i < pattern_count; i++) {
 		offset = patterns[i].offset;
 		length = patterns[i].length;
-		अगर (offset >= HCI_MAX_AD_LENGTH ||
+		if (offset >= HCI_MAX_AD_LENGTH ||
 		    length > HCI_MAX_AD_LENGTH ||
 		    (offset + length) > HCI_MAX_AD_LENGTH)
-			वापस MGMT_STATUS_INVALID_PARAMS;
+			return MGMT_STATUS_INVALID_PARAMS;
 
-		p = kदो_स्मृति(माप(*p), GFP_KERNEL);
-		अगर (!p)
-			वापस MGMT_STATUS_NO_RESOURCES;
+		p = kmalloc(sizeof(*p), GFP_KERNEL);
+		if (!p)
+			return MGMT_STATUS_NO_RESOURCES;
 
 		p->ad_type = patterns[i].ad_type;
 		p->offset = patterns[i].offset;
 		p->length = patterns[i].length;
-		स_नकल(p->value, patterns[i].value, p->length);
+		memcpy(p->value, patterns[i].value, p->length);
 
 		INIT_LIST_HEAD(&p->list);
 		list_add(&p->list, &m->patterns);
-	पूर्ण
+	}
 
-	वापस MGMT_STATUS_SUCCESS;
-पूर्ण
+	return MGMT_STATUS_SUCCESS;
+}
 
-अटल पूर्णांक add_adv_patterns_monitor(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				    व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_add_adv_patterns_monitor *cp = data;
-	काष्ठा adv_monitor *m = शून्य;
+static int add_adv_patterns_monitor(struct sock *sk, struct hci_dev *hdev,
+				    void *data, u16 len)
+{
+	struct mgmt_cp_add_adv_patterns_monitor *cp = data;
+	struct adv_monitor *m = NULL;
 	u8 status = MGMT_STATUS_SUCCESS;
-	माप_प्रकार expected_size = माप(*cp);
+	size_t expected_size = sizeof(*cp);
 
 	BT_DBG("request for %s", hdev->name);
 
-	अगर (len <= माप(*cp)) अणु
+	if (len <= sizeof(*cp)) {
 		status = MGMT_STATUS_INVALID_PARAMS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	expected_size += cp->pattern_count * माप(काष्ठा mgmt_adv_pattern);
-	अगर (len != expected_size) अणु
+	expected_size += cp->pattern_count * sizeof(struct mgmt_adv_pattern);
+	if (len != expected_size) {
 		status = MGMT_STATUS_INVALID_PARAMS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	m = kzalloc(माप(*m), GFP_KERNEL);
-	अगर (!m) अणु
+	m = kzalloc(sizeof(*m), GFP_KERNEL);
+	if (!m) {
 		status = MGMT_STATUS_NO_RESOURCES;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	INIT_LIST_HEAD(&m->patterns);
 
-	parse_adv_monitor_rssi(m, शून्य);
+	parse_adv_monitor_rssi(m, NULL);
 	status = parse_adv_monitor_pattern(m, cp->pattern_count, cp->patterns);
 
-करोne:
-	वापस __add_adv_patterns_monitor(sk, hdev, m, status, data, len,
+done:
+	return __add_adv_patterns_monitor(sk, hdev, m, status, data, len,
 					  MGMT_OP_ADD_ADV_PATTERNS_MONITOR);
-पूर्ण
+}
 
-अटल पूर्णांक add_adv_patterns_monitor_rssi(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-					 व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_add_adv_patterns_monitor_rssi *cp = data;
-	काष्ठा adv_monitor *m = शून्य;
+static int add_adv_patterns_monitor_rssi(struct sock *sk, struct hci_dev *hdev,
+					 void *data, u16 len)
+{
+	struct mgmt_cp_add_adv_patterns_monitor_rssi *cp = data;
+	struct adv_monitor *m = NULL;
 	u8 status = MGMT_STATUS_SUCCESS;
-	माप_प्रकार expected_size = माप(*cp);
+	size_t expected_size = sizeof(*cp);
 
 	BT_DBG("request for %s", hdev->name);
 
-	अगर (len <= माप(*cp)) अणु
+	if (len <= sizeof(*cp)) {
 		status = MGMT_STATUS_INVALID_PARAMS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	expected_size += cp->pattern_count * माप(काष्ठा mgmt_adv_pattern);
-	अगर (len != expected_size) अणु
+	expected_size += cp->pattern_count * sizeof(struct mgmt_adv_pattern);
+	if (len != expected_size) {
 		status = MGMT_STATUS_INVALID_PARAMS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	m = kzalloc(माप(*m), GFP_KERNEL);
-	अगर (!m) अणु
+	m = kzalloc(sizeof(*m), GFP_KERNEL);
+	if (!m) {
 		status = MGMT_STATUS_NO_RESOURCES;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	INIT_LIST_HEAD(&m->patterns);
 
 	parse_adv_monitor_rssi(m, &cp->rssi);
 	status = parse_adv_monitor_pattern(m, cp->pattern_count, cp->patterns);
 
-करोne:
-	वापस __add_adv_patterns_monitor(sk, hdev, m, status, data, len,
+done:
+	return __add_adv_patterns_monitor(sk, hdev, m, status, data, len,
 					 MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI);
-पूर्ण
+}
 
-पूर्णांक mgmt_हटाओ_adv_monitor_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_rp_हटाओ_adv_monitor rp;
-	काष्ठा mgmt_cp_हटाओ_adv_monitor *cp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err = 0;
+int mgmt_remove_adv_monitor_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_rp_remove_adv_monitor rp;
+	struct mgmt_cp_remove_adv_monitor *cp;
+	struct mgmt_pending_cmd *cmd;
+	int err = 0;
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_REMOVE_ADV_MONITOR, hdev);
-	अगर (!cmd)
-		जाओ करोne;
+	if (!cmd)
+		goto done;
 
 	cp = cmd->param;
 	rp.monitor_handle = cp->monitor_handle;
 
-	अगर (!status)
+	if (!status)
 		hci_update_background_scan(hdev);
 
 	err = mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode,
-				mgmt_status(status), &rp, माप(rp));
-	mgmt_pending_हटाओ(cmd);
+				mgmt_status(status), &rp, sizeof(rp));
+	mgmt_pending_remove(cmd);
 
-करोne:
+done:
 	hci_dev_unlock(hdev);
 	bt_dev_dbg(hdev, "remove monitor %d complete, status %d",
 		   rp.monitor_handle, status);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक हटाओ_adv_monitor(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_हटाओ_adv_monitor *cp = data;
-	काष्ठा mgmt_rp_हटाओ_adv_monitor rp;
-	काष्ठा mgmt_pending_cmd *cmd;
+static int remove_adv_monitor(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 len)
+{
+	struct mgmt_cp_remove_adv_monitor *cp = data;
+	struct mgmt_rp_remove_adv_monitor rp;
+	struct mgmt_pending_cmd *cmd;
 	u16 handle = __le16_to_cpu(cp->monitor_handle);
-	पूर्णांक err, status;
+	int err, status;
 	bool pending;
 
 	BT_DBG("request for %s", hdev->name);
@@ -4521,424 +4520,424 @@ unlock:
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_find(MGMT_OP_SET_LE, hdev) ||
+	if (pending_find(MGMT_OP_SET_LE, hdev) ||
 	    pending_find(MGMT_OP_REMOVE_ADV_MONITOR, hdev) ||
 	    pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR, hdev) ||
-	    pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI, hdev)) अणु
+	    pending_find(MGMT_OP_ADD_ADV_PATTERNS_MONITOR_RSSI, hdev)) {
 		status = MGMT_STATUS_BUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_REMOVE_ADV_MONITOR, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		status = MGMT_STATUS_NO_RESOURCES;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (handle)
-		pending = hci_हटाओ_single_adv_monitor(hdev, handle, &err);
-	अन्यथा
-		pending = hci_हटाओ_all_adv_monitor(hdev, &err);
+	if (handle)
+		pending = hci_remove_single_adv_monitor(hdev, handle, &err);
+	else
+		pending = hci_remove_all_adv_monitor(hdev, &err);
 
-	अगर (err) अणु
-		mgmt_pending_हटाओ(cmd);
+	if (err) {
+		mgmt_pending_remove(cmd);
 
-		अगर (err == -ENOENT)
+		if (err == -ENOENT)
 			status = MGMT_STATUS_INVALID_INDEX;
-		अन्यथा
+		else
 			status = MGMT_STATUS_FAILED;
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* monitor can be हटाओd without क्रमwarding request to controller */
-	अगर (!pending) अणु
-		mgmt_pending_हटाओ(cmd);
+	/* monitor can be removed without forwarding request to controller */
+	if (!pending) {
+		mgmt_pending_remove(cmd);
 		hci_dev_unlock(hdev);
 
-		वापस mgmt_cmd_complete(sk, hdev->id,
+		return mgmt_cmd_complete(sk, hdev->id,
 					 MGMT_OP_REMOVE_ADV_MONITOR,
 					 MGMT_STATUS_SUCCESS,
-					 &rp, माप(rp));
-	पूर्ण
+					 &rp, sizeof(rp));
+	}
 
 	hci_dev_unlock(hdev);
-	वापस 0;
+	return 0;
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_ADV_MONITOR,
+	return mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_ADV_MONITOR,
 			       status);
-पूर्ण
+}
 
-अटल व्योम पढ़ो_local_oob_data_complete(काष्ठा hci_dev *hdev, u8 status,
-				         u16 opcode, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_local_oob_data mgmt_rp;
-	माप_प्रकार rp_size = माप(mgmt_rp);
-	काष्ठा mgmt_pending_cmd *cmd;
+static void read_local_oob_data_complete(struct hci_dev *hdev, u8 status,
+				         u16 opcode, struct sk_buff *skb)
+{
+	struct mgmt_rp_read_local_oob_data mgmt_rp;
+	size_t rp_size = sizeof(mgmt_rp);
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status %u", status);
 
 	cmd = pending_find(MGMT_OP_READ_LOCAL_OOB_DATA, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
-	अगर (status || !skb) अणु
+	if (status || !skb) {
 		mgmt_cmd_status(cmd->sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_DATA,
 				status ? mgmt_status(status) : MGMT_STATUS_FAILED);
-		जाओ हटाओ;
-	पूर्ण
+		goto remove;
+	}
 
-	स_रखो(&mgmt_rp, 0, माप(mgmt_rp));
+	memset(&mgmt_rp, 0, sizeof(mgmt_rp));
 
-	अगर (opcode == HCI_OP_READ_LOCAL_OOB_DATA) अणु
-		काष्ठा hci_rp_पढ़ो_local_oob_data *rp = (व्योम *) skb->data;
+	if (opcode == HCI_OP_READ_LOCAL_OOB_DATA) {
+		struct hci_rp_read_local_oob_data *rp = (void *) skb->data;
 
-		अगर (skb->len < माप(*rp)) अणु
+		if (skb->len < sizeof(*rp)) {
 			mgmt_cmd_status(cmd->sk, hdev->id,
 					MGMT_OP_READ_LOCAL_OOB_DATA,
 					MGMT_STATUS_FAILED);
-			जाओ हटाओ;
-		पूर्ण
+			goto remove;
+		}
 
-		स_नकल(mgmt_rp.hash192, rp->hash, माप(rp->hash));
-		स_नकल(mgmt_rp.अक्रम192, rp->अक्रम, माप(rp->अक्रम));
+		memcpy(mgmt_rp.hash192, rp->hash, sizeof(rp->hash));
+		memcpy(mgmt_rp.rand192, rp->rand, sizeof(rp->rand));
 
-		rp_size -= माप(mgmt_rp.hash256) + माप(mgmt_rp.अक्रम256);
-	पूर्ण अन्यथा अणु
-		काष्ठा hci_rp_पढ़ो_local_oob_ext_data *rp = (व्योम *) skb->data;
+		rp_size -= sizeof(mgmt_rp.hash256) + sizeof(mgmt_rp.rand256);
+	} else {
+		struct hci_rp_read_local_oob_ext_data *rp = (void *) skb->data;
 
-		अगर (skb->len < माप(*rp)) अणु
+		if (skb->len < sizeof(*rp)) {
 			mgmt_cmd_status(cmd->sk, hdev->id,
 					MGMT_OP_READ_LOCAL_OOB_DATA,
 					MGMT_STATUS_FAILED);
-			जाओ हटाओ;
-		पूर्ण
+			goto remove;
+		}
 
-		स_नकल(mgmt_rp.hash192, rp->hash192, माप(rp->hash192));
-		स_नकल(mgmt_rp.अक्रम192, rp->अक्रम192, माप(rp->अक्रम192));
+		memcpy(mgmt_rp.hash192, rp->hash192, sizeof(rp->hash192));
+		memcpy(mgmt_rp.rand192, rp->rand192, sizeof(rp->rand192));
 
-		स_नकल(mgmt_rp.hash256, rp->hash256, माप(rp->hash256));
-		स_नकल(mgmt_rp.अक्रम256, rp->अक्रम256, माप(rp->अक्रम256));
-	पूर्ण
+		memcpy(mgmt_rp.hash256, rp->hash256, sizeof(rp->hash256));
+		memcpy(mgmt_rp.rand256, rp->rand256, sizeof(rp->rand256));
+	}
 
 	mgmt_cmd_complete(cmd->sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_DATA,
 			  MGMT_STATUS_SUCCESS, &mgmt_rp, rp_size);
 
-हटाओ:
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+remove:
+	mgmt_pending_remove(cmd);
+}
 
-अटल पूर्णांक पढ़ो_local_oob_data(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int read_local_oob_data(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 data_len)
+{
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_DATA,
 				      MGMT_STATUS_NOT_POWERED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!lmp_ssp_capable(hdev)) अणु
+	if (!lmp_ssp_capable(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_DATA,
 				      MGMT_STATUS_NOT_SUPPORTED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (pending_find(MGMT_OP_READ_LOCAL_OOB_DATA, hdev)) अणु
+	if (pending_find(MGMT_OP_READ_LOCAL_OOB_DATA, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_DATA,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	cmd = mgmt_pending_add(sk, MGMT_OP_READ_LOCAL_OOB_DATA, hdev, शून्य, 0);
-	अगर (!cmd) अणु
+	cmd = mgmt_pending_add(sk, MGMT_OP_READ_LOCAL_OOB_DATA, hdev, NULL, 0);
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	अगर (bredr_sc_enabled(hdev))
-		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_EXT_DATA, 0, शून्य);
-	अन्यथा
-		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_DATA, 0, शून्य);
+	if (bredr_sc_enabled(hdev))
+		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_EXT_DATA, 0, NULL);
+	else
+		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_DATA, 0, NULL);
 
-	err = hci_req_run_skb(&req, पढ़ो_local_oob_data_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_req_run_skb(&req, read_local_oob_data_complete);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक add_remote_oob_data(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_addr_info *addr = data;
-	पूर्णांक err;
+static int add_remote_oob_data(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 len)
+{
+	struct mgmt_addr_info *addr = data;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!bdaddr_type_is_valid(addr->type))
-		वापस mgmt_cmd_complete(sk, hdev->id,
+	if (!bdaddr_type_is_valid(addr->type))
+		return mgmt_cmd_complete(sk, hdev->id,
 					 MGMT_OP_ADD_REMOTE_OOB_DATA,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 addr, माप(*addr));
+					 addr, sizeof(*addr));
 
 	hci_dev_lock(hdev);
 
-	अगर (len == MGMT_ADD_REMOTE_OOB_DATA_SIZE) अणु
-		काष्ठा mgmt_cp_add_remote_oob_data *cp = data;
+	if (len == MGMT_ADD_REMOTE_OOB_DATA_SIZE) {
+		struct mgmt_cp_add_remote_oob_data *cp = data;
 		u8 status;
 
-		अगर (cp->addr.type != BDADDR_BREDR) अणु
+		if (cp->addr.type != BDADDR_BREDR) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_ADD_REMOTE_OOB_DATA,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
 		err = hci_add_remote_oob_data(hdev, &cp->addr.bdaddr,
 					      cp->addr.type, cp->hash,
-					      cp->अक्रम, शून्य, शून्य);
-		अगर (err < 0)
+					      cp->rand, NULL, NULL);
+		if (err < 0)
 			status = MGMT_STATUS_FAILED;
-		अन्यथा
+		else
 			status = MGMT_STATUS_SUCCESS;
 
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_ADD_REMOTE_OOB_DATA, status,
-					&cp->addr, माप(cp->addr));
-	पूर्ण अन्यथा अगर (len == MGMT_ADD_REMOTE_OOB_EXT_DATA_SIZE) अणु
-		काष्ठा mgmt_cp_add_remote_oob_ext_data *cp = data;
-		u8 *अक्रम192, *hash192, *अक्रम256, *hash256;
+					&cp->addr, sizeof(cp->addr));
+	} else if (len == MGMT_ADD_REMOTE_OOB_EXT_DATA_SIZE) {
+		struct mgmt_cp_add_remote_oob_ext_data *cp = data;
+		u8 *rand192, *hash192, *rand256, *hash256;
 		u8 status;
 
-		अगर (bdaddr_type_is_le(cp->addr.type)) अणु
-			/* Enक्रमce zero-valued 192-bit parameters as
-			 * दीर्घ as legacy SMP OOB isn't implemented.
+		if (bdaddr_type_is_le(cp->addr.type)) {
+			/* Enforce zero-valued 192-bit parameters as
+			 * long as legacy SMP OOB isn't implemented.
 			 */
-			अगर (स_भेद(cp->अक्रम192, ZERO_KEY, 16) ||
-			    स_भेद(cp->hash192, ZERO_KEY, 16)) अणु
+			if (memcmp(cp->rand192, ZERO_KEY, 16) ||
+			    memcmp(cp->hash192, ZERO_KEY, 16)) {
 				err = mgmt_cmd_complete(sk, hdev->id,
 							MGMT_OP_ADD_REMOTE_OOB_DATA,
 							MGMT_STATUS_INVALID_PARAMS,
-							addr, माप(*addr));
-				जाओ unlock;
-			पूर्ण
+							addr, sizeof(*addr));
+				goto unlock;
+			}
 
-			अक्रम192 = शून्य;
-			hash192 = शून्य;
-		पूर्ण अन्यथा अणु
-			/* In हाल one of the P-192 values is set to zero,
-			 * then just disable OOB data क्रम P-192.
+			rand192 = NULL;
+			hash192 = NULL;
+		} else {
+			/* In case one of the P-192 values is set to zero,
+			 * then just disable OOB data for P-192.
 			 */
-			अगर (!स_भेद(cp->अक्रम192, ZERO_KEY, 16) ||
-			    !स_भेद(cp->hash192, ZERO_KEY, 16)) अणु
-				अक्रम192 = शून्य;
-				hash192 = शून्य;
-			पूर्ण अन्यथा अणु
-				अक्रम192 = cp->अक्रम192;
+			if (!memcmp(cp->rand192, ZERO_KEY, 16) ||
+			    !memcmp(cp->hash192, ZERO_KEY, 16)) {
+				rand192 = NULL;
+				hash192 = NULL;
+			} else {
+				rand192 = cp->rand192;
 				hash192 = cp->hash192;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* In हाल one of the P-256 values is set to zero, then just
-		 * disable OOB data क्रम P-256.
+		/* In case one of the P-256 values is set to zero, then just
+		 * disable OOB data for P-256.
 		 */
-		अगर (!स_भेद(cp->अक्रम256, ZERO_KEY, 16) ||
-		    !स_भेद(cp->hash256, ZERO_KEY, 16)) अणु
-			अक्रम256 = शून्य;
-			hash256 = शून्य;
-		पूर्ण अन्यथा अणु
-			अक्रम256 = cp->अक्रम256;
+		if (!memcmp(cp->rand256, ZERO_KEY, 16) ||
+		    !memcmp(cp->hash256, ZERO_KEY, 16)) {
+			rand256 = NULL;
+			hash256 = NULL;
+		} else {
+			rand256 = cp->rand256;
 			hash256 = cp->hash256;
-		पूर्ण
+		}
 
 		err = hci_add_remote_oob_data(hdev, &cp->addr.bdaddr,
-					      cp->addr.type, hash192, अक्रम192,
-					      hash256, अक्रम256);
-		अगर (err < 0)
+					      cp->addr.type, hash192, rand192,
+					      hash256, rand256);
+		if (err < 0)
 			status = MGMT_STATUS_FAILED;
-		अन्यथा
+		else
 			status = MGMT_STATUS_SUCCESS;
 
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_ADD_REMOTE_OOB_DATA,
-					status, &cp->addr, माप(cp->addr));
-	पूर्ण अन्यथा अणु
+					status, &cp->addr, sizeof(cp->addr));
+	} else {
 		bt_dev_err(hdev, "add_remote_oob_data: invalid len of %u bytes",
 			   len);
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_REMOTE_OOB_DATA,
 				      MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक हटाओ_remote_oob_data(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				  व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_हटाओ_remote_oob_data *cp = data;
+static int remove_remote_oob_data(struct sock *sk, struct hci_dev *hdev,
+				  void *data, u16 len)
+{
+	struct mgmt_cp_remove_remote_oob_data *cp = data;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (cp->addr.type != BDADDR_BREDR)
-		वापस mgmt_cmd_complete(sk, hdev->id,
+	if (cp->addr.type != BDADDR_BREDR)
+		return mgmt_cmd_complete(sk, hdev->id,
 					 MGMT_OP_REMOVE_REMOTE_OOB_DATA,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &cp->addr, माप(cp->addr));
+					 &cp->addr, sizeof(cp->addr));
 
 	hci_dev_lock(hdev);
 
-	अगर (!bacmp(&cp->addr.bdaddr, BDADDR_ANY)) अणु
+	if (!bacmp(&cp->addr.bdaddr, BDADDR_ANY)) {
 		hci_remote_oob_data_clear(hdev);
 		status = MGMT_STATUS_SUCCESS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	err = hci_हटाओ_remote_oob_data(hdev, &cp->addr.bdaddr, cp->addr.type);
-	अगर (err < 0)
+	err = hci_remove_remote_oob_data(hdev, &cp->addr.bdaddr, cp->addr.type);
+	if (err < 0)
 		status = MGMT_STATUS_INVALID_PARAMS;
-	अन्यथा
+	else
 		status = MGMT_STATUS_SUCCESS;
 
-करोne:
+done:
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_REMOVE_REMOTE_OOB_DATA,
-				status, &cp->addr, माप(cp->addr));
+				status, &cp->addr, sizeof(cp->addr));
 
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mgmt_start_discovery_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_start_discovery_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status %d", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_START_DISCOVERY, hdev);
-	अगर (!cmd)
+	if (!cmd)
 		cmd = pending_find(MGMT_OP_START_SERVICE_DISCOVERY, hdev);
 
-	अगर (!cmd)
+	if (!cmd)
 		cmd = pending_find(MGMT_OP_START_LIMITED_DISCOVERY, hdev);
 
-	अगर (cmd) अणु
+	if (cmd) {
 		cmd->cmd_complete(cmd, mgmt_status(status));
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
+		mgmt_pending_remove(cmd);
+	}
 
 	hci_dev_unlock(hdev);
 
-	/* Handle suspend notअगरier */
-	अगर (test_and_clear_bit(SUSPEND_UNPAUSE_DISCOVERY,
-			       hdev->suspend_tasks)) अणु
+	/* Handle suspend notifier */
+	if (test_and_clear_bit(SUSPEND_UNPAUSE_DISCOVERY,
+			       hdev->suspend_tasks)) {
 		bt_dev_dbg(hdev, "Unpaused discovery");
-		wake_up(&hdev->suspend_रुको_q);
-	पूर्ण
-पूर्ण
+		wake_up(&hdev->suspend_wait_q);
+	}
+}
 
-अटल bool discovery_type_is_valid(काष्ठा hci_dev *hdev, uपूर्णांक8_t type,
-				    uपूर्णांक8_t *mgmt_status)
-अणु
-	चयन (type) अणु
-	हाल DISCOV_TYPE_LE:
+static bool discovery_type_is_valid(struct hci_dev *hdev, uint8_t type,
+				    uint8_t *mgmt_status)
+{
+	switch (type) {
+	case DISCOV_TYPE_LE:
 		*mgmt_status = mgmt_le_support(hdev);
-		अगर (*mgmt_status)
-			वापस false;
-		अवरोध;
-	हाल DISCOV_TYPE_INTERLEAVED:
+		if (*mgmt_status)
+			return false;
+		break;
+	case DISCOV_TYPE_INTERLEAVED:
 		*mgmt_status = mgmt_le_support(hdev);
-		अगर (*mgmt_status)
-			वापस false;
+		if (*mgmt_status)
+			return false;
 		fallthrough;
-	हाल DISCOV_TYPE_BREDR:
+	case DISCOV_TYPE_BREDR:
 		*mgmt_status = mgmt_bredr_support(hdev);
-		अगर (*mgmt_status)
-			वापस false;
-		अवरोध;
-	शेष:
+		if (*mgmt_status)
+			return false;
+		break;
+	default:
 		*mgmt_status = MGMT_STATUS_INVALID_PARAMS;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक start_discovery_पूर्णांकernal(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				    u16 op, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_start_discovery *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
+static int start_discovery_internal(struct sock *sk, struct hci_dev *hdev,
+				    u16 op, void *data, u16 len)
+{
+	struct mgmt_cp_start_discovery *cp = data;
+	struct mgmt_pending_cmd *cmd;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, op,
 					MGMT_STATUS_NOT_POWERED,
-					&cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					&cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
-	अगर (hdev->discovery.state != DISCOVERY_STOPPED ||
-	    hci_dev_test_flag(hdev, HCI_PERIODIC_INQ)) अणु
+	if (hdev->discovery.state != DISCOVERY_STOPPED ||
+	    hci_dev_test_flag(hdev, HCI_PERIODIC_INQ)) {
 		err = mgmt_cmd_complete(sk, hdev->id, op, MGMT_STATUS_BUSY,
-					&cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					&cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
-	अगर (!discovery_type_is_valid(hdev, cp->type, &status)) अणु
+	if (!discovery_type_is_valid(hdev, cp->type, &status)) {
 		err = mgmt_cmd_complete(sk, hdev->id, op, status,
-					&cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					&cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
-	/* Can't start discovery when it is छोड़ोd */
-	अगर (hdev->discovery_छोड़ोd) अणु
+	/* Can't start discovery when it is paused */
+	if (hdev->discovery_paused) {
 		err = mgmt_cmd_complete(sk, hdev->id, op, MGMT_STATUS_BUSY,
-					&cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					&cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
-	/* Clear the discovery filter first to मुक्त any previously
-	 * allocated memory क्रम the UUID list.
+	/* Clear the discovery filter first to free any previously
+	 * allocated memory for the UUID list.
 	 */
 	hci_discovery_filter_clear(hdev);
 
 	hdev->discovery.type = cp->type;
 	hdev->discovery.report_invalid_rssi = false;
-	अगर (op == MGMT_OP_START_LIMITED_DISCOVERY)
+	if (op == MGMT_OP_START_LIMITED_DISCOVERY)
 		hdev->discovery.limited = true;
-	अन्यथा
+	else
 		hdev->discovery.limited = false;
 
 	cmd = mgmt_pending_add(sk, op, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd->cmd_complete = generic_cmd_complete;
 
@@ -4948,110 +4947,110 @@ unlock:
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक start_discovery(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			   व्योम *data, u16 len)
-अणु
-	वापस start_discovery_पूर्णांकernal(sk, hdev, MGMT_OP_START_DISCOVERY,
+static int start_discovery(struct sock *sk, struct hci_dev *hdev,
+			   void *data, u16 len)
+{
+	return start_discovery_internal(sk, hdev, MGMT_OP_START_DISCOVERY,
 					data, len);
-पूर्ण
+}
 
-अटल पूर्णांक start_limited_discovery(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				   व्योम *data, u16 len)
-अणु
-	वापस start_discovery_पूर्णांकernal(sk, hdev,
+static int start_limited_discovery(struct sock *sk, struct hci_dev *hdev,
+				   void *data, u16 len)
+{
+	return start_discovery_internal(sk, hdev,
 					MGMT_OP_START_LIMITED_DISCOVERY,
 					data, len);
-पूर्ण
+}
 
-अटल पूर्णांक service_discovery_cmd_complete(काष्ठा mgmt_pending_cmd *cmd,
+static int service_discovery_cmd_complete(struct mgmt_pending_cmd *cmd,
 					  u8 status)
-अणु
-	वापस mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
+{
+	return mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status,
 				 cmd->param, 1);
-पूर्ण
+}
 
-अटल पूर्णांक start_service_discovery(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				   व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_start_service_discovery *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	स्थिर u16 max_uuid_count = ((U16_MAX - माप(*cp)) / 16);
+static int start_service_discovery(struct sock *sk, struct hci_dev *hdev,
+				   void *data, u16 len)
+{
+	struct mgmt_cp_start_service_discovery *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	const u16 max_uuid_count = ((U16_MAX - sizeof(*cp)) / 16);
 	u16 uuid_count, expected_len;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
 					MGMT_STATUS_NOT_POWERED,
-					&cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					&cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
-	अगर (hdev->discovery.state != DISCOVERY_STOPPED ||
-	    hci_dev_test_flag(hdev, HCI_PERIODIC_INQ)) अणु
+	if (hdev->discovery.state != DISCOVERY_STOPPED ||
+	    hci_dev_test_flag(hdev, HCI_PERIODIC_INQ)) {
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
 					MGMT_STATUS_BUSY, &cp->type,
-					माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->type));
+		goto failed;
+	}
 
-	अगर (hdev->discovery_छोड़ोd) अणु
+	if (hdev->discovery_paused) {
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
 					MGMT_STATUS_BUSY, &cp->type,
-					माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->type));
+		goto failed;
+	}
 
 	uuid_count = __le16_to_cpu(cp->uuid_count);
-	अगर (uuid_count > max_uuid_count) अणु
+	if (uuid_count > max_uuid_count) {
 		bt_dev_err(hdev, "service_discovery: too big uuid_count value %u",
 			   uuid_count);
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
 					MGMT_STATUS_INVALID_PARAMS, &cp->type,
-					माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->type));
+		goto failed;
+	}
 
-	expected_len = माप(*cp) + uuid_count * 16;
-	अगर (expected_len != len) अणु
+	expected_len = sizeof(*cp) + uuid_count * 16;
+	if (expected_len != len) {
 		bt_dev_err(hdev, "service_discovery: expected %u bytes, got %u bytes",
 			   expected_len, len);
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
 					MGMT_STATUS_INVALID_PARAMS, &cp->type,
-					माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->type));
+		goto failed;
+	}
 
-	अगर (!discovery_type_is_valid(hdev, cp->type, &status)) अणु
+	if (!discovery_type_is_valid(hdev, cp->type, &status)) {
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_START_SERVICE_DISCOVERY,
-					status, &cp->type, माप(cp->type));
-		जाओ failed;
-	पूर्ण
+					status, &cp->type, sizeof(cp->type));
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_START_SERVICE_DISCOVERY,
 			       hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd->cmd_complete = service_discovery_cmd_complete;
 
-	/* Clear the discovery filter first to मुक्त any previously
-	 * allocated memory क्रम the UUID list.
+	/* Clear the discovery filter first to free any previously
+	 * allocated memory for the UUID list.
 	 */
 	hci_discovery_filter_clear(hdev);
 
@@ -5060,18 +5059,18 @@ failed:
 	hdev->discovery.rssi = cp->rssi;
 	hdev->discovery.uuid_count = uuid_count;
 
-	अगर (uuid_count > 0) अणु
+	if (uuid_count > 0) {
 		hdev->discovery.uuids = kmemdup(cp->uuids, uuid_count * 16,
 						GFP_KERNEL);
-		अगर (!hdev->discovery.uuids) अणु
+		if (!hdev->discovery.uuids) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_START_SERVICE_DISCOVERY,
 						MGMT_STATUS_FAILED,
-						&cp->type, माप(cp->type));
-			mgmt_pending_हटाओ(cmd);
-			जाओ failed;
-		पूर्ण
-	पूर्ण
+						&cp->type, sizeof(cp->type));
+			mgmt_pending_remove(cmd);
+			goto failed;
+		}
+	}
 
 	hci_discovery_set_state(hdev, DISCOVERY_STARTING);
 	queue_work(hdev->req_workqueue, &hdev->discov_update);
@@ -5079,62 +5078,62 @@ failed:
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mgmt_stop_discovery_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_stop_discovery_complete(struct hci_dev *hdev, u8 status)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status %d", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_STOP_DISCOVERY, hdev);
-	अगर (cmd) अणु
+	if (cmd) {
 		cmd->cmd_complete(cmd, mgmt_status(status));
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
+		mgmt_pending_remove(cmd);
+	}
 
 	hci_dev_unlock(hdev);
 
-	/* Handle suspend notअगरier */
-	अगर (test_and_clear_bit(SUSPEND_PAUSE_DISCOVERY, hdev->suspend_tasks)) अणु
+	/* Handle suspend notifier */
+	if (test_and_clear_bit(SUSPEND_PAUSE_DISCOVERY, hdev->suspend_tasks)) {
 		bt_dev_dbg(hdev, "Paused discovery");
-		wake_up(&hdev->suspend_रुको_q);
-	पूर्ण
-पूर्ण
+		wake_up(&hdev->suspend_wait_q);
+	}
+}
 
-अटल पूर्णांक stop_discovery(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int stop_discovery(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा mgmt_cp_stop_discovery *mgmt_cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	पूर्णांक err;
+{
+	struct mgmt_cp_stop_discovery *mgmt_cp = data;
+	struct mgmt_pending_cmd *cmd;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hci_discovery_active(hdev)) अणु
+	if (!hci_discovery_active(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_STOP_DISCOVERY,
 					MGMT_STATUS_REJECTED, &mgmt_cp->type,
-					माप(mgmt_cp->type));
-		जाओ unlock;
-	पूर्ण
+					sizeof(mgmt_cp->type));
+		goto unlock;
+	}
 
-	अगर (hdev->discovery.type != mgmt_cp->type) अणु
+	if (hdev->discovery.type != mgmt_cp->type) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_STOP_DISCOVERY,
 					MGMT_STATUS_INVALID_PARAMS,
-					&mgmt_cp->type, माप(mgmt_cp->type));
-		जाओ unlock;
-	पूर्ण
+					&mgmt_cp->type, sizeof(mgmt_cp->type));
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_STOP_DISCOVERY, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd->cmd_complete = generic_cmd_complete;
 
@@ -5144,267 +5143,267 @@ failed:
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक confirm_name(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int confirm_name(struct sock *sk, struct hci_dev *hdev, void *data,
 			u16 len)
-अणु
-	काष्ठा mgmt_cp_confirm_name *cp = data;
-	काष्ठा inquiry_entry *e;
-	पूर्णांक err;
+{
+	struct mgmt_cp_confirm_name *cp = data;
+	struct inquiry_entry *e;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hci_discovery_active(hdev)) अणु
+	if (!hci_discovery_active(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_CONFIRM_NAME,
 					MGMT_STATUS_FAILED, &cp->addr,
-					माप(cp->addr));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->addr));
+		goto failed;
+	}
 
 	e = hci_inquiry_cache_lookup_unknown(hdev, &cp->addr.bdaddr);
-	अगर (!e) अणु
+	if (!e) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_CONFIRM_NAME,
 					MGMT_STATUS_INVALID_PARAMS, &cp->addr,
-					माप(cp->addr));
-		जाओ failed;
-	पूर्ण
+					sizeof(cp->addr));
+		goto failed;
+	}
 
-	अगर (cp->name_known) अणु
+	if (cp->name_known) {
 		e->name_state = NAME_KNOWN;
 		list_del(&e->list);
-	पूर्ण अन्यथा अणु
+	} else {
 		e->name_state = NAME_NEEDED;
 		hci_inquiry_cache_update_resolve(hdev, e);
-	पूर्ण
+	}
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_CONFIRM_NAME, 0,
-				&cp->addr, माप(cp->addr));
+				&cp->addr, sizeof(cp->addr));
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक block_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int block_device(struct sock *sk, struct hci_dev *hdev, void *data,
 			u16 len)
-अणु
-	काष्ठा mgmt_cp_block_device *cp = data;
+{
+	struct mgmt_cp_block_device *cp = data;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_BLOCK_DEVICE,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_BLOCK_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &cp->addr, माप(cp->addr));
+					 &cp->addr, sizeof(cp->addr));
 
 	hci_dev_lock(hdev);
 
 	err = hci_bdaddr_list_add(&hdev->blacklist, &cp->addr.bdaddr,
 				  cp->addr.type);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		status = MGMT_STATUS_FAILED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	mgmt_event(MGMT_EV_DEVICE_BLOCKED, hdev, &cp->addr, माप(cp->addr),
+	mgmt_event(MGMT_EV_DEVICE_BLOCKED, hdev, &cp->addr, sizeof(cp->addr),
 		   sk);
 	status = MGMT_STATUS_SUCCESS;
 
-करोne:
+done:
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_BLOCK_DEVICE, status,
-				&cp->addr, माप(cp->addr));
+				&cp->addr, sizeof(cp->addr));
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक unblock_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int unblock_device(struct sock *sk, struct hci_dev *hdev, void *data,
 			  u16 len)
-अणु
-	काष्ठा mgmt_cp_unblock_device *cp = data;
+{
+	struct mgmt_cp_unblock_device *cp = data;
 	u8 status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNBLOCK_DEVICE,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNBLOCK_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &cp->addr, माप(cp->addr));
+					 &cp->addr, sizeof(cp->addr));
 
 	hci_dev_lock(hdev);
 
 	err = hci_bdaddr_list_del(&hdev->blacklist, &cp->addr.bdaddr,
 				  cp->addr.type);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		status = MGMT_STATUS_INVALID_PARAMS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	mgmt_event(MGMT_EV_DEVICE_UNBLOCKED, hdev, &cp->addr, माप(cp->addr),
+	mgmt_event(MGMT_EV_DEVICE_UNBLOCKED, hdev, &cp->addr, sizeof(cp->addr),
 		   sk);
 	status = MGMT_STATUS_SUCCESS;
 
-करोne:
+done:
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_UNBLOCK_DEVICE, status,
-				&cp->addr, माप(cp->addr));
+				&cp->addr, sizeof(cp->addr));
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_device_id(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_device_id(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 len)
-अणु
-	काष्ठा mgmt_cp_set_device_id *cp = data;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+{
+	struct mgmt_cp_set_device_id *cp = data;
+	struct hci_request req;
+	int err;
 	__u16 source;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	source = __le16_to_cpu(cp->source);
 
-	अगर (source > 0x0002)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEVICE_ID,
+	if (source > 0x0002)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEVICE_ID,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
 	hdev->devid_source = source;
-	hdev->devid_venकरोr = __le16_to_cpu(cp->venकरोr);
+	hdev->devid_vendor = __le16_to_cpu(cp->vendor);
 	hdev->devid_product = __le16_to_cpu(cp->product);
 	hdev->devid_version = __le16_to_cpu(cp->version);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_DEVICE_ID, 0,
-				शून्य, 0);
+				NULL, 0);
 
 	hci_req_init(&req, hdev);
 	__hci_req_update_eir(&req);
-	hci_req_run(&req, शून्य);
+	hci_req_run(&req, NULL);
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम enable_advertising_instance(काष्ठा hci_dev *hdev, u8 status,
+static void enable_advertising_instance(struct hci_dev *hdev, u8 status,
 					u16 opcode)
-अणु
+{
 	bt_dev_dbg(hdev, "status %d", status);
-पूर्ण
+}
 
-अटल व्योम set_advertising_complete(काष्ठा hci_dev *hdev, u8 status,
+static void set_advertising_complete(struct hci_dev *hdev, u8 status,
 				     u16 opcode)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
-	काष्ठा hci_request req;
+{
+	struct cmd_lookup match = { NULL, hdev };
+	struct hci_request req;
 	u8 instance;
-	काष्ठा adv_info *adv_instance;
-	पूर्णांक err;
+	struct adv_info *adv_instance;
+	int err;
 
 	hci_dev_lock(hdev);
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 
-		mgmt_pending_क्रमeach(MGMT_OP_SET_ADVERTISING, hdev,
+		mgmt_pending_foreach(MGMT_OP_SET_ADVERTISING, hdev,
 				     cmd_status_rsp, &mgmt_err);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
+	if (hci_dev_test_flag(hdev, HCI_LE_ADV))
 		hci_dev_set_flag(hdev, HCI_ADVERTISING);
-	अन्यथा
+	else
 		hci_dev_clear_flag(hdev, HCI_ADVERTISING);
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_ADVERTISING, hdev, settings_rsp,
+	mgmt_pending_foreach(MGMT_OP_SET_ADVERTISING, hdev, settings_rsp,
 			     &match);
 
 	new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
 
-	/* Handle suspend notअगरier */
-	अगर (test_and_clear_bit(SUSPEND_PAUSE_ADVERTISING,
-			       hdev->suspend_tasks)) अणु
+	/* Handle suspend notifier */
+	if (test_and_clear_bit(SUSPEND_PAUSE_ADVERTISING,
+			       hdev->suspend_tasks)) {
 		bt_dev_dbg(hdev, "Paused advertising");
-		wake_up(&hdev->suspend_रुको_q);
-	पूर्ण अन्यथा अगर (test_and_clear_bit(SUSPEND_UNPAUSE_ADVERTISING,
-				      hdev->suspend_tasks)) अणु
+		wake_up(&hdev->suspend_wait_q);
+	} else if (test_and_clear_bit(SUSPEND_UNPAUSE_ADVERTISING,
+				      hdev->suspend_tasks)) {
 		bt_dev_dbg(hdev, "Unpaused advertising");
-		wake_up(&hdev->suspend_रुको_q);
-	पूर्ण
+		wake_up(&hdev->suspend_wait_q);
+	}
 
 	/* If "Set Advertising" was just disabled and instance advertising was
 	 * set up earlier, then re-enable multi-instance advertising.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
+	if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
 	    list_empty(&hdev->adv_instances))
-		जाओ unlock;
+		goto unlock;
 
 	instance = hdev->cur_adv_instance;
-	अगर (!instance) अणु
+	if (!instance) {
 		adv_instance = list_first_entry_or_null(&hdev->adv_instances,
-							काष्ठा adv_info, list);
-		अगर (!adv_instance)
-			जाओ unlock;
+							struct adv_info, list);
+		if (!adv_instance)
+			goto unlock;
 
 		instance = adv_instance->instance;
-	पूर्ण
+	}
 
 	hci_req_init(&req, hdev);
 
 	err = __hci_req_schedule_adv_instance(&req, instance, true);
 
-	अगर (!err)
+	if (!err)
 		err = hci_req_run(&req, enable_advertising_instance);
 
-	अगर (err)
+	if (err)
 		bt_dev_err(hdev, "failed to re-configure advertising");
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_advertising(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int set_advertising(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
 	u8 val, status;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	status = mgmt_le_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       status);
 
-	/* Enabling the experimental LL Privay support disables support क्रम
+	/* Enabling the experimental LL Privay support disables support for
 	 * advertising.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (hdev->advertising_छोड़ोd)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (hdev->advertising_paused)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       MGMT_STATUS_BUSY);
 
 	hci_dev_lock(hdev);
@@ -5412,417 +5411,417 @@ unlock:
 	val = !!cp->val;
 
 	/* The following conditions are ones which mean that we should
-	 * not करो any HCI communication but directly send a mgmt
-	 * response to user space (after toggling the flag अगर
+	 * not do any HCI communication but directly send a mgmt
+	 * response to user space (after toggling the flag if
 	 * necessary).
 	 */
-	अगर (!hdev_is_घातered(hdev) ||
+	if (!hdev_is_powered(hdev) ||
 	    (val == hci_dev_test_flag(hdev, HCI_ADVERTISING) &&
 	     (cp->val == 0x02) == hci_dev_test_flag(hdev, HCI_ADVERTISING_CONNECTABLE)) ||
 	    hci_conn_num(hdev, LE_LINK) > 0 ||
 	    (hci_dev_test_flag(hdev, HCI_LE_SCAN) &&
-	     hdev->le_scan_type == LE_SCAN_ACTIVE)) अणु
+	     hdev->le_scan_type == LE_SCAN_ACTIVE)) {
 		bool changed;
 
-		अगर (cp->val) अणु
+		if (cp->val) {
 			hdev->cur_adv_instance = 0x00;
 			changed = !hci_dev_test_and_set_flag(hdev, HCI_ADVERTISING);
-			अगर (cp->val == 0x02)
+			if (cp->val == 0x02)
 				hci_dev_set_flag(hdev, HCI_ADVERTISING_CONNECTABLE);
-			अन्यथा
+			else
 				hci_dev_clear_flag(hdev, HCI_ADVERTISING_CONNECTABLE);
-		पूर्ण अन्यथा अणु
+		} else {
 			changed = hci_dev_test_and_clear_flag(hdev, HCI_ADVERTISING);
 			hci_dev_clear_flag(hdev, HCI_ADVERTISING_CONNECTABLE);
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_ADVERTISING, hdev);
-		अगर (err < 0)
-			जाओ unlock;
+		if (err < 0)
+			goto unlock;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_ADVERTISING, hdev) ||
-	    pending_find(MGMT_OP_SET_LE, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_ADVERTISING, hdev) ||
+	    pending_find(MGMT_OP_SET_LE, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_ADVERTISING, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	अगर (cp->val == 0x02)
+	if (cp->val == 0x02)
 		hci_dev_set_flag(hdev, HCI_ADVERTISING_CONNECTABLE);
-	अन्यथा
+	else
 		hci_dev_clear_flag(hdev, HCI_ADVERTISING_CONNECTABLE);
 
-	cancel_adv_समयout(hdev);
+	cancel_adv_timeout(hdev);
 
-	अगर (val) अणु
-		/* Switch to instance "0" क्रम the Set Advertising setting.
+	if (val) {
+		/* Switch to instance "0" for the Set Advertising setting.
 		 * We cannot use update_[adv|scan_rsp]_data() here as the
 		 * HCI_ADVERTISING flag is not yet set.
 		 */
 		hdev->cur_adv_instance = 0x00;
 
-		अगर (ext_adv_capable(hdev)) अणु
+		if (ext_adv_capable(hdev)) {
 			__hci_req_start_ext_adv(&req, 0x00);
-		पूर्ण अन्यथा अणु
+		} else {
 			__hci_req_update_adv_data(&req, 0x00);
 			__hci_req_update_scan_rsp_data(&req, 0x00);
 			__hci_req_enable_advertising(&req);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		__hci_req_disable_advertising(&req);
-	पूर्ण
+	}
 
 	err = hci_req_run(&req, set_advertising_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_अटल_address(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_set_अटल_address *cp = data;
-	पूर्णांक err;
+static int set_static_address(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 len)
+{
+	struct mgmt_cp_set_static_address *cp = data;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_STATIC_ADDRESS,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_STATIC_ADDRESS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (hdev_is_घातered(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_STATIC_ADDRESS,
+	if (hdev_is_powered(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_STATIC_ADDRESS,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (bacmp(&cp->bdaddr, BDADDR_ANY)) अणु
-		अगर (!bacmp(&cp->bdaddr, BDADDR_NONE))
-			वापस mgmt_cmd_status(sk, hdev->id,
+	if (bacmp(&cp->bdaddr, BDADDR_ANY)) {
+		if (!bacmp(&cp->bdaddr, BDADDR_NONE))
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_STATIC_ADDRESS,
 					       MGMT_STATUS_INVALID_PARAMS);
 
-		/* Two most signअगरicant bits shall be set */
-		अगर ((cp->bdaddr.b[5] & 0xc0) != 0xc0)
-			वापस mgmt_cmd_status(sk, hdev->id,
+		/* Two most significant bits shall be set */
+		if ((cp->bdaddr.b[5] & 0xc0) != 0xc0)
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_SET_STATIC_ADDRESS,
 					       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
-	bacpy(&hdev->अटल_addr, &cp->bdaddr);
+	bacpy(&hdev->static_addr, &cp->bdaddr);
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_STATIC_ADDRESS, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
 	err = new_settings(hdev, sk);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_scan_params(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			   व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_set_scan_params *cp = data;
-	__u16 पूर्णांकerval, winकरोw;
-	पूर्णांक err;
+static int set_scan_params(struct sock *sk, struct hci_dev *hdev,
+			   void *data, u16 len)
+{
+	struct mgmt_cp_set_scan_params *cp = data;
+	__u16 interval, window;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	पूर्णांकerval = __le16_to_cpu(cp->पूर्णांकerval);
+	interval = __le16_to_cpu(cp->interval);
 
-	अगर (पूर्णांकerval < 0x0004 || पूर्णांकerval > 0x4000)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
+	if (interval < 0x0004 || interval > 0x4000)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	winकरोw = __le16_to_cpu(cp->winकरोw);
+	window = __le16_to_cpu(cp->window);
 
-	अगर (winकरोw < 0x0004 || winकरोw > 0x4000)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
+	if (window < 0x0004 || window > 0x4000)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (winकरोw > पूर्णांकerval)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
+	if (window > interval)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	hdev->le_scan_पूर्णांकerval = पूर्णांकerval;
-	hdev->le_scan_winकरोw = winकरोw;
+	hdev->le_scan_interval = interval;
+	hdev->le_scan_window = window;
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_SET_SCAN_PARAMS, 0,
-				शून्य, 0);
+				NULL, 0);
 
 	/* If background scan is running, restart it so new parameters are
 	 * loaded.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN) &&
-	    hdev->discovery.state == DISCOVERY_STOPPED) अणु
-		काष्ठा hci_request req;
+	if (hci_dev_test_flag(hdev, HCI_LE_SCAN) &&
+	    hdev->discovery.state == DISCOVERY_STOPPED) {
+		struct hci_request req;
 
 		hci_req_init(&req, hdev);
 
 		hci_req_add_le_scan_disable(&req, false);
 		hci_req_add_le_passive_scan(&req);
 
-		hci_req_run(&req, शून्य);
-	पूर्ण
+		hci_req_run(&req, NULL);
+	}
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम fast_connectable_complete(काष्ठा hci_dev *hdev, u8 status,
+static void fast_connectable_complete(struct hci_dev *hdev, u8 status,
 				      u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_FAST_CONNECTABLE, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		mgmt_cmd_status(cmd->sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
 			        mgmt_status(status));
-	पूर्ण अन्यथा अणु
-		काष्ठा mgmt_mode *cp = cmd->param;
+	} else {
+		struct mgmt_mode *cp = cmd->param;
 
-		अगर (cp->val)
+		if (cp->val)
 			hci_dev_set_flag(hdev, HCI_FAST_CONNECTABLE);
-		अन्यथा
+		else
 			hci_dev_clear_flag(hdev, HCI_FAST_CONNECTABLE);
 
 		send_settings_rsp(cmd->sk, MGMT_OP_SET_FAST_CONNECTABLE, hdev);
 		new_settings(hdev, cmd->sk);
-	पूर्ण
+	}
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_fast_connectable(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int set_fast_connectable(struct sock *sk, struct hci_dev *hdev,
+				void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) ||
+	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) ||
 	    hdev->hci_ver < BLUETOOTH_VER_1_2)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (pending_find(MGMT_OP_SET_FAST_CONNECTABLE, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_FAST_CONNECTABLE, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!!cp->val == hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE)) अणु
+	if (!!cp->val == hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE)) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_FAST_CONNECTABLE,
 					hdev);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		hci_dev_change_flag(hdev, HCI_FAST_CONNECTABLE);
 		err = send_settings_rsp(sk, MGMT_OP_SET_FAST_CONNECTABLE,
 					hdev);
 		new_settings(hdev, sk);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_FAST_CONNECTABLE, hdev,
 			       data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	__hci_req_ग_लिखो_fast_connectable(&req, cp->val);
+	__hci_req_write_fast_connectable(&req, cp->val);
 
 	err = hci_req_run(&req, fast_connectable_complete);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_FAST_CONNECTABLE,
 				      MGMT_STATUS_FAILED);
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
+		mgmt_pending_remove(cmd);
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम set_bredr_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+static void set_bredr_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
+	struct mgmt_pending_cmd *cmd;
 
 	bt_dev_dbg(hdev, "status 0x%02x", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_BREDR, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 
-		/* We need to restore the flag अगर related HCI commands
+		/* We need to restore the flag if related HCI commands
 		 * failed.
 		 */
 		hci_dev_clear_flag(hdev, HCI_BREDR_ENABLED);
 
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode, mgmt_err);
-	पूर्ण अन्यथा अणु
+	} else {
 		send_settings_rsp(cmd->sk, MGMT_OP_SET_BREDR, hdev);
 		new_settings(hdev, cmd->sk);
-	पूर्ण
+	}
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_bredr(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int set_bredr(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_bredr_capable(hdev) || !lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
+	if (!lmp_bredr_capable(hdev) || !lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
+	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
+	if (cp->val != 0x00 && cp->val != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->val == hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) अणु
+	if (cp->val == hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_BREDR, hdev);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!hdev_is_घातered(hdev)) अणु
-		अगर (!cp->val) अणु
+	if (!hdev_is_powered(hdev)) {
+		if (!cp->val) {
 			hci_dev_clear_flag(hdev, HCI_DISCOVERABLE);
 			hci_dev_clear_flag(hdev, HCI_SSP_ENABLED);
 			hci_dev_clear_flag(hdev, HCI_LINK_SECURITY);
 			hci_dev_clear_flag(hdev, HCI_FAST_CONNECTABLE);
 			hci_dev_clear_flag(hdev, HCI_HS_ENABLED);
-		पूर्ण
+		}
 
 		hci_dev_change_flag(hdev, HCI_BREDR_ENABLED);
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_BREDR, hdev);
-		अगर (err < 0)
-			जाओ unlock;
+		if (err < 0)
+			goto unlock;
 
 		err = new_settings(hdev, sk);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Reject disabling when घातered on */
-	अगर (!cp->val) अणु
+	/* Reject disabling when powered on */
+	if (!cp->val) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 				      MGMT_STATUS_REJECTED);
-		जाओ unlock;
-	पूर्ण अन्यथा अणु
+		goto unlock;
+	} else {
 		/* When configuring a dual-mode controller to operate
-		 * with LE only and using a अटल address, then चयनing
+		 * with LE only and using a static address, then switching
 		 * BR/EDR back on is not allowed.
 		 *
-		 * Dual-mode controllers shall operate with the खुला
-		 * address as its identity address क्रम BR/EDR and LE. So
+		 * Dual-mode controllers shall operate with the public
+		 * address as its identity address for BR/EDR and LE. So
 		 * reject the attempt to create an invalid configuration.
 		 *
 		 * The same restrictions applies when secure connections
 		 * has been enabled. For BR/EDR this is a controller feature
-		 * जबतक क्रम LE it is a host stack feature. This means that
-		 * चयनing BR/EDR back on when secure connections has been
+		 * while for LE it is a host stack feature. This means that
+		 * switching BR/EDR back on when secure connections has been
 		 * enabled is not a supported transaction.
 		 */
-		अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
-		    (bacmp(&hdev->अटल_addr, BDADDR_ANY) ||
-		     hci_dev_test_flag(hdev, HCI_SC_ENABLED))) अणु
+		if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
+		    (bacmp(&hdev->static_addr, BDADDR_ANY) ||
+		     hci_dev_test_flag(hdev, HCI_SC_ENABLED))) {
 			err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 					      MGMT_STATUS_REJECTED);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
-	अगर (pending_find(MGMT_OP_SET_BREDR, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_BREDR, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_BREDR,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_BREDR, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* We need to flip the bit alपढ़ोy here so that
+	/* We need to flip the bit already here so that
 	 * hci_req_update_adv_data generates the correct flags.
 	 */
 	hci_dev_set_flag(hdev, HCI_BREDR_ENABLED);
 
 	hci_req_init(&req, hdev);
 
-	__hci_req_ग_लिखो_fast_connectable(&req, false);
+	__hci_req_write_fast_connectable(&req, false);
 	__hci_req_update_scan(&req);
 
 	/* Since only the advertising data flags will change, there
@@ -5831,486 +5830,486 @@ unlock:
 	__hci_req_update_adv_data(&req, hdev->cur_adv_instance);
 
 	err = hci_req_run(&req, set_bredr_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम sc_enable_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा mgmt_mode *cp;
+static void sc_enable_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
+	struct mgmt_pending_cmd *cmd;
+	struct mgmt_mode *cp;
 
 	bt_dev_dbg(hdev, "status %u", status);
 
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_SET_SECURE_CONN, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
-	अगर (status) अणु
+	if (status) {
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode,
 			        mgmt_status(status));
-		जाओ हटाओ;
-	पूर्ण
+		goto remove;
+	}
 
 	cp = cmd->param;
 
-	चयन (cp->val) अणु
-	हाल 0x00:
+	switch (cp->val) {
+	case 0x00:
 		hci_dev_clear_flag(hdev, HCI_SC_ENABLED);
 		hci_dev_clear_flag(hdev, HCI_SC_ONLY);
-		अवरोध;
-	हाल 0x01:
+		break;
+	case 0x01:
 		hci_dev_set_flag(hdev, HCI_SC_ENABLED);
 		hci_dev_clear_flag(hdev, HCI_SC_ONLY);
-		अवरोध;
-	हाल 0x02:
+		break;
+	case 0x02:
 		hci_dev_set_flag(hdev, HCI_SC_ENABLED);
 		hci_dev_set_flag(hdev, HCI_SC_ONLY);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	send_settings_rsp(cmd->sk, MGMT_OP_SET_SECURE_CONN, hdev);
 	new_settings(hdev, cmd->sk);
 
-हटाओ:
-	mgmt_pending_हटाओ(cmd);
+remove:
+	mgmt_pending_remove(cmd);
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक set_secure_conn(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			   व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
+static int set_secure_conn(struct sock *sk, struct hci_dev *hdev,
+			   void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
 	u8 val;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_sc_capable(hdev) &&
+	if (!lmp_sc_capable(hdev) &&
 	    !hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
+	if (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
 	    lmp_sc_capable(hdev) &&
 	    !hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
+	if (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
 				  MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev) || !lmp_sc_capable(hdev) ||
-	    !hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) अणु
+	if (!hdev_is_powered(hdev) || !lmp_sc_capable(hdev) ||
+	    !hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
 		bool changed;
 
-		अगर (cp->val) अणु
+		if (cp->val) {
 			changed = !hci_dev_test_and_set_flag(hdev,
 							     HCI_SC_ENABLED);
-			अगर (cp->val == 0x02)
+			if (cp->val == 0x02)
 				hci_dev_set_flag(hdev, HCI_SC_ONLY);
-			अन्यथा
+			else
 				hci_dev_clear_flag(hdev, HCI_SC_ONLY);
-		पूर्ण अन्यथा अणु
+		} else {
 			changed = hci_dev_test_and_clear_flag(hdev,
 							      HCI_SC_ENABLED);
 			hci_dev_clear_flag(hdev, HCI_SC_ONLY);
-		पूर्ण
+		}
 
 		err = send_settings_rsp(sk, MGMT_OP_SET_SECURE_CONN, hdev);
-		अगर (err < 0)
-			जाओ failed;
+		if (err < 0)
+			goto failed;
 
-		अगर (changed)
+		if (changed)
 			err = new_settings(hdev, sk);
 
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
-	अगर (pending_find(MGMT_OP_SET_SECURE_CONN, hdev)) अणु
+	if (pending_find(MGMT_OP_SET_SECURE_CONN, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_SECURE_CONN,
 				      MGMT_STATUS_BUSY);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	val = !!cp->val;
 
-	अगर (val == hci_dev_test_flag(hdev, HCI_SC_ENABLED) &&
-	    (cp->val == 0x02) == hci_dev_test_flag(hdev, HCI_SC_ONLY)) अणु
+	if (val == hci_dev_test_flag(hdev, HCI_SC_ENABLED) &&
+	    (cp->val == 0x02) == hci_dev_test_flag(hdev, HCI_SC_ONLY)) {
 		err = send_settings_rsp(sk, MGMT_OP_SET_SECURE_CONN, hdev);
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_SET_SECURE_CONN, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	hci_req_init(&req, hdev);
 	hci_req_add(&req, HCI_OP_WRITE_SC_SUPPORT, 1, &val);
 	err = hci_req_run(&req, sc_enable_complete);
-	अगर (err < 0) अणु
-		mgmt_pending_हटाओ(cmd);
-		जाओ failed;
-	पूर्ण
+	if (err < 0) {
+		mgmt_pending_remove(cmd);
+		goto failed;
+	}
 
 failed:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_debug_keys(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			  व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_mode *cp = data;
+static int set_debug_keys(struct sock *sk, struct hci_dev *hdev,
+			  void *data, u16 len)
+{
+	struct mgmt_mode *cp = data;
 	bool changed, use_changed;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEBUG_KEYS,
+	if (cp->val != 0x00 && cp->val != 0x01 && cp->val != 0x02)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_DEBUG_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->val)
+	if (cp->val)
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_KEEP_DEBUG_KEYS);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev,
 						      HCI_KEEP_DEBUG_KEYS);
 
-	अगर (cp->val == 0x02)
+	if (cp->val == 0x02)
 		use_changed = !hci_dev_test_and_set_flag(hdev,
 							 HCI_USE_DEBUG_KEYS);
-	अन्यथा
+	else
 		use_changed = hci_dev_test_and_clear_flag(hdev,
 							  HCI_USE_DEBUG_KEYS);
 
-	अगर (hdev_is_घातered(hdev) && use_changed &&
-	    hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) अणु
+	if (hdev_is_powered(hdev) && use_changed &&
+	    hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) {
 		u8 mode = (cp->val == 0x02) ? 0x01 : 0x00;
 		hci_send_cmd(hdev, HCI_OP_WRITE_SSP_DEBUG_MODE,
-			     माप(mode), &mode);
-	पूर्ण
+			     sizeof(mode), &mode);
+	}
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_DEBUG_KEYS, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (changed)
+	if (changed)
 		err = new_settings(hdev, sk);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_privacy(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *cp_data,
+static int set_privacy(struct sock *sk, struct hci_dev *hdev, void *cp_data,
 		       u16 len)
-अणु
-	काष्ठा mgmt_cp_set_privacy *cp = cp_data;
+{
+	struct mgmt_cp_set_privacy *cp = cp_data;
 	bool changed;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->privacy != 0x00 && cp->privacy != 0x01 && cp->privacy != 0x02)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
+	if (cp->privacy != 0x00 && cp->privacy != 0x01 && cp->privacy != 0x02)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (hdev_is_घातered(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
+	if (hdev_is_powered(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PRIVACY,
 				       MGMT_STATUS_REJECTED);
 
 	hci_dev_lock(hdev);
 
 	/* If user space supports this command it is also expected to
-	 * handle IRKs. Thereक्रमe, set the HCI_RPA_RESOLVING flag.
+	 * handle IRKs. Therefore, set the HCI_RPA_RESOLVING flag.
 	 */
 	hci_dev_set_flag(hdev, HCI_RPA_RESOLVING);
 
-	अगर (cp->privacy) अणु
+	if (cp->privacy) {
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_PRIVACY);
-		स_नकल(hdev->irk, cp->irk, माप(hdev->irk));
+		memcpy(hdev->irk, cp->irk, sizeof(hdev->irk));
 		hci_dev_set_flag(hdev, HCI_RPA_EXPIRED);
 		hci_adv_instances_set_rpa_expired(hdev, true);
-		अगर (cp->privacy == 0x02)
+		if (cp->privacy == 0x02)
 			hci_dev_set_flag(hdev, HCI_LIMITED_PRIVACY);
-		अन्यथा
+		else
 			hci_dev_clear_flag(hdev, HCI_LIMITED_PRIVACY);
-	पूर्ण अन्यथा अणु
+	} else {
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_PRIVACY);
-		स_रखो(hdev->irk, 0, माप(hdev->irk));
+		memset(hdev->irk, 0, sizeof(hdev->irk));
 		hci_dev_clear_flag(hdev, HCI_RPA_EXPIRED);
 		hci_adv_instances_set_rpa_expired(hdev, false);
 		hci_dev_clear_flag(hdev, HCI_LIMITED_PRIVACY);
-	पूर्ण
+	}
 
 	err = send_settings_rsp(sk, MGMT_OP_SET_PRIVACY, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (changed)
+	if (changed)
 		err = new_settings(hdev, sk);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool irk_is_valid(काष्ठा mgmt_irk_info *irk)
-अणु
-	चयन (irk->addr.type) अणु
-	हाल BDADDR_LE_PUBLIC:
-		वापस true;
+static bool irk_is_valid(struct mgmt_irk_info *irk)
+{
+	switch (irk->addr.type) {
+	case BDADDR_LE_PUBLIC:
+		return true;
 
-	हाल BDADDR_LE_RANDOM:
-		/* Two most signअगरicant bits shall be set */
-		अगर ((irk->addr.bdaddr.b[5] & 0xc0) != 0xc0)
-			वापस false;
-		वापस true;
-	पूर्ण
+	case BDADDR_LE_RANDOM:
+		/* Two most significant bits shall be set */
+		if ((irk->addr.bdaddr.b[5] & 0xc0) != 0xc0)
+			return false;
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक load_irks(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *cp_data,
+static int load_irks(struct sock *sk, struct hci_dev *hdev, void *cp_data,
 		     u16 len)
-अणु
-	काष्ठा mgmt_cp_load_irks *cp = cp_data;
-	स्थिर u16 max_irk_count = ((U16_MAX - माप(*cp)) /
-				   माप(काष्ठा mgmt_irk_info));
+{
+	struct mgmt_cp_load_irks *cp = cp_data;
+	const u16 max_irk_count = ((U16_MAX - sizeof(*cp)) /
+				   sizeof(struct mgmt_irk_info));
 	u16 irk_count, expected_len;
-	पूर्णांक i, err;
+	int i, err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	irk_count = __le16_to_cpu(cp->irk_count);
-	अगर (irk_count > max_irk_count) अणु
+	if (irk_count > max_irk_count) {
 		bt_dev_err(hdev, "load_irks: too big irk_count value %u",
 			   irk_count);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	expected_len = काष्ठा_size(cp, irks, irk_count);
-	अगर (expected_len != len) अणु
+	expected_len = struct_size(cp, irks, irk_count);
+	if (expected_len != len) {
 		bt_dev_err(hdev, "load_irks: expected %u bytes, got %u bytes",
 			   expected_len, len);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_IRKS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	bt_dev_dbg(hdev, "irk_count %u", irk_count);
 
-	क्रम (i = 0; i < irk_count; i++) अणु
-		काष्ठा mgmt_irk_info *key = &cp->irks[i];
+	for (i = 0; i < irk_count; i++) {
+		struct mgmt_irk_info *key = &cp->irks[i];
 
-		अगर (!irk_is_valid(key))
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (!irk_is_valid(key))
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_LOAD_IRKS,
 					       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
 	hci_smp_irks_clear(hdev);
 
-	क्रम (i = 0; i < irk_count; i++) अणु
-		काष्ठा mgmt_irk_info *irk = &cp->irks[i];
+	for (i = 0; i < irk_count; i++) {
+		struct mgmt_irk_info *irk = &cp->irks[i];
 
-		अगर (hci_is_blocked_key(hdev,
+		if (hci_is_blocked_key(hdev,
 				       HCI_BLOCKED_KEY_TYPE_IRK,
-				       irk->val)) अणु
+				       irk->val)) {
 			bt_dev_warn(hdev, "Skipping blocked IRK for %pMR",
 				    &irk->addr.bdaddr);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		hci_add_irk(hdev, &irk->addr.bdaddr,
 			    le_addr_type(irk->addr.type), irk->val,
 			    BDADDR_ANY);
-	पूर्ण
+	}
 
 	hci_dev_set_flag(hdev, HCI_RPA_RESOLVING);
 
-	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_IRKS, 0, शून्य, 0);
+	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_IRKS, 0, NULL, 0);
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool ltk_is_valid(काष्ठा mgmt_ltk_info *key)
-अणु
-	अगर (key->master != 0x00 && key->master != 0x01)
-		वापस false;
+static bool ltk_is_valid(struct mgmt_ltk_info *key)
+{
+	if (key->master != 0x00 && key->master != 0x01)
+		return false;
 
-	चयन (key->addr.type) अणु
-	हाल BDADDR_LE_PUBLIC:
-		वापस true;
+	switch (key->addr.type) {
+	case BDADDR_LE_PUBLIC:
+		return true;
 
-	हाल BDADDR_LE_RANDOM:
-		/* Two most signअगरicant bits shall be set */
-		अगर ((key->addr.bdaddr.b[5] & 0xc0) != 0xc0)
-			वापस false;
-		वापस true;
-	पूर्ण
+	case BDADDR_LE_RANDOM:
+		/* Two most significant bits shall be set */
+		if ((key->addr.bdaddr.b[5] & 0xc0) != 0xc0)
+			return false;
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक load_दीर्घ_term_keys(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *cp_data, u16 len)
-अणु
-	काष्ठा mgmt_cp_load_दीर्घ_term_keys *cp = cp_data;
-	स्थिर u16 max_key_count = ((U16_MAX - माप(*cp)) /
-				   माप(काष्ठा mgmt_ltk_info));
+static int load_long_term_keys(struct sock *sk, struct hci_dev *hdev,
+			       void *cp_data, u16 len)
+{
+	struct mgmt_cp_load_long_term_keys *cp = cp_data;
+	const u16 max_key_count = ((U16_MAX - sizeof(*cp)) /
+				   sizeof(struct mgmt_ltk_info));
 	u16 key_count, expected_len;
-	पूर्णांक i, err;
+	int i, err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	key_count = __le16_to_cpu(cp->key_count);
-	अगर (key_count > max_key_count) अणु
+	if (key_count > max_key_count) {
 		bt_dev_err(hdev, "load_ltks: too big key_count value %u",
 			   key_count);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	expected_len = काष्ठा_size(cp, keys, key_count);
-	अगर (expected_len != len) अणु
+	expected_len = struct_size(cp, keys, key_count);
+	if (expected_len != len) {
 		bt_dev_err(hdev, "load_keys: expected %u bytes, got %u bytes",
 			   expected_len, len);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	bt_dev_dbg(hdev, "key_count %u", key_count);
 
-	क्रम (i = 0; i < key_count; i++) अणु
-		काष्ठा mgmt_ltk_info *key = &cp->keys[i];
+	for (i = 0; i < key_count; i++) {
+		struct mgmt_ltk_info *key = &cp->keys[i];
 
-		अगर (!ltk_is_valid(key))
-			वापस mgmt_cmd_status(sk, hdev->id,
+		if (!ltk_is_valid(key))
+			return mgmt_cmd_status(sk, hdev->id,
 					       MGMT_OP_LOAD_LONG_TERM_KEYS,
 					       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	hci_dev_lock(hdev);
 
 	hci_smp_ltks_clear(hdev);
 
-	क्रम (i = 0; i < key_count; i++) अणु
-		काष्ठा mgmt_ltk_info *key = &cp->keys[i];
+	for (i = 0; i < key_count; i++) {
+		struct mgmt_ltk_info *key = &cp->keys[i];
 		u8 type, authenticated;
 
-		अगर (hci_is_blocked_key(hdev,
+		if (hci_is_blocked_key(hdev,
 				       HCI_BLOCKED_KEY_TYPE_LTK,
-				       key->val)) अणु
+				       key->val)) {
 			bt_dev_warn(hdev, "Skipping blocked LTK for %pMR",
 				    &key->addr.bdaddr);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		चयन (key->type) अणु
-		हाल MGMT_LTK_UNAUTHENTICATED:
+		switch (key->type) {
+		case MGMT_LTK_UNAUTHENTICATED:
 			authenticated = 0x00;
 			type = key->master ? SMP_LTK : SMP_LTK_SLAVE;
-			अवरोध;
-		हाल MGMT_LTK_AUTHENTICATED:
+			break;
+		case MGMT_LTK_AUTHENTICATED:
 			authenticated = 0x01;
 			type = key->master ? SMP_LTK : SMP_LTK_SLAVE;
-			अवरोध;
-		हाल MGMT_LTK_P256_UNAUTH:
+			break;
+		case MGMT_LTK_P256_UNAUTH:
 			authenticated = 0x00;
 			type = SMP_LTK_P256;
-			अवरोध;
-		हाल MGMT_LTK_P256_AUTH:
+			break;
+		case MGMT_LTK_P256_AUTH:
 			authenticated = 0x01;
 			type = SMP_LTK_P256;
-			अवरोध;
-		हाल MGMT_LTK_P256_DEBUG:
+			break;
+		case MGMT_LTK_P256_DEBUG:
 			authenticated = 0x00;
 			type = SMP_LTK_P256_DEBUG;
 			fallthrough;
-		शेष:
-			जारी;
-		पूर्ण
+		default:
+			continue;
+		}
 
 		hci_add_ltk(hdev, &key->addr.bdaddr,
 			    le_addr_type(key->addr.type), type, authenticated,
-			    key->val, key->enc_size, key->eभाग, key->अक्रम);
-	पूर्ण
+			    key->val, key->enc_size, key->ediv, key->rand);
+	}
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_LONG_TERM_KEYS, 0,
-			   शून्य, 0);
+			   NULL, 0);
 
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक conn_info_cmd_complete(काष्ठा mgmt_pending_cmd *cmd, u8 status)
-अणु
-	काष्ठा hci_conn *conn = cmd->user_data;
-	काष्ठा mgmt_rp_get_conn_info rp;
-	पूर्णांक err;
+static int conn_info_cmd_complete(struct mgmt_pending_cmd *cmd, u8 status)
+{
+	struct hci_conn *conn = cmd->user_data;
+	struct mgmt_rp_get_conn_info rp;
+	int err;
 
-	स_नकल(&rp.addr, cmd->param, माप(rp.addr));
+	memcpy(&rp.addr, cmd->param, sizeof(rp.addr));
 
-	अगर (status == MGMT_STATUS_SUCCESS) अणु
+	if (status == MGMT_STATUS_SUCCESS) {
 		rp.rssi = conn->rssi;
-		rp.tx_घातer = conn->tx_घातer;
-		rp.max_tx_घातer = conn->max_tx_घातer;
-	पूर्ण अन्यथा अणु
+		rp.tx_power = conn->tx_power;
+		rp.max_tx_power = conn->max_tx_power;
+	} else {
 		rp.rssi = HCI_RSSI_INVALID;
-		rp.tx_घातer = HCI_TX_POWER_INVALID;
-		rp.max_tx_घातer = HCI_TX_POWER_INVALID;
-	पूर्ण
+		rp.tx_power = HCI_TX_POWER_INVALID;
+		rp.max_tx_power = HCI_TX_POWER_INVALID;
+	}
 
 	err = mgmt_cmd_complete(cmd->sk, cmd->index, MGMT_OP_GET_CONN_INFO,
-				status, &rp, माप(rp));
+				status, &rp, sizeof(rp));
 
 	hci_conn_drop(conn);
 	hci_conn_put(conn);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम conn_info_refresh_complete(काष्ठा hci_dev *hdev, u8 hci_status,
+static void conn_info_refresh_complete(struct hci_dev *hdev, u8 hci_status,
 				       u16 opcode)
-अणु
-	काष्ठा hci_cp_पढ़ो_rssi *cp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
+{
+	struct hci_cp_read_rssi *cp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
 	u16 handle;
 	u8 status;
 
@@ -6321,649 +6320,649 @@ unlock:
 	/* Commands sent in request are either Read RSSI or Read Transmit Power
 	 * Level so we check which one was last sent to retrieve connection
 	 * handle.  Both commands have handle as first parameter so it's safe to
-	 * cast data on the same command काष्ठा.
+	 * cast data on the same command struct.
 	 *
-	 * First command sent is always Read RSSI and we fail only अगर it fails.
-	 * In other हाल we simply override error to indicate success as we
-	 * alपढ़ोy remembered अगर TX घातer value is actually valid.
+	 * First command sent is always Read RSSI and we fail only if it fails.
+	 * In other case we simply override error to indicate success as we
+	 * already remembered if TX power value is actually valid.
 	 */
 	cp = hci_sent_cmd_data(hdev, HCI_OP_READ_RSSI);
-	अगर (!cp) अणु
+	if (!cp) {
 		cp = hci_sent_cmd_data(hdev, HCI_OP_READ_TX_POWER);
 		status = MGMT_STATUS_SUCCESS;
-	पूर्ण अन्यथा अणु
+	} else {
 		status = mgmt_status(hci_status);
-	पूर्ण
+	}
 
-	अगर (!cp) अणु
+	if (!cp) {
 		bt_dev_err(hdev, "invalid sent_cmd in conn_info response");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	handle = __le16_to_cpu(cp->handle);
 	conn = hci_conn_hash_lookup_handle(hdev, handle);
-	अगर (!conn) अणु
+	if (!conn) {
 		bt_dev_err(hdev, "unknown handle (%d) in conn_info response",
 			   handle);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	cmd = pending_find_data(MGMT_OP_GET_CONN_INFO, hdev, conn);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cmd->cmd_complete(cmd, status);
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक get_conn_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int get_conn_info(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 len)
-अणु
-	काष्ठा mgmt_cp_get_conn_info *cp = data;
-	काष्ठा mgmt_rp_get_conn_info rp;
-	काष्ठा hci_conn *conn;
-	अचिन्हित दीर्घ conn_info_age;
-	पूर्णांक err = 0;
+{
+	struct mgmt_cp_get_conn_info *cp = data;
+	struct mgmt_rp_get_conn_info rp;
+	struct hci_conn *conn;
+	unsigned long conn_info_age;
+	int err = 0;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
+	if (!bdaddr_type_is_valid(cp->addr.type))
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
 					MGMT_STATUS_NOT_POWERED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (cp->addr.type == BDADDR_BREDR)
+	if (cp->addr.type == BDADDR_BREDR)
 		conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK,
 					       &cp->addr.bdaddr);
-	अन्यथा
+	else
 		conn = hci_conn_hash_lookup_ba(hdev, LE_LINK, &cp->addr.bdaddr);
 
-	अगर (!conn || conn->state != BT_CONNECTED) अणु
+	if (!conn || conn->state != BT_CONNECTED) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
 					MGMT_STATUS_NOT_CONNECTED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (pending_find_data(MGMT_OP_GET_CONN_INFO, hdev, conn)) अणु
+	if (pending_find_data(MGMT_OP_GET_CONN_INFO, hdev, conn)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
-					MGMT_STATUS_BUSY, &rp, माप(rp));
-		जाओ unlock;
-	पूर्ण
+					MGMT_STATUS_BUSY, &rp, sizeof(rp));
+		goto unlock;
+	}
 
-	/* To aव्योम client trying to guess when to poll again क्रम inक्रमmation we
-	 * calculate conn info age as अक्रमom value between min/max set in hdev.
+	/* To avoid client trying to guess when to poll again for information we
+	 * calculate conn info age as random value between min/max set in hdev.
 	 */
 	conn_info_age = hdev->conn_info_min_age +
-			pअक्रमom_u32_max(hdev->conn_info_max_age -
+			prandom_u32_max(hdev->conn_info_max_age -
 					hdev->conn_info_min_age);
 
-	/* Query controller to refresh cached values अगर they are too old or were
-	 * never पढ़ो.
+	/* Query controller to refresh cached values if they are too old or were
+	 * never read.
 	 */
-	अगर (समय_after(jअगरfies, conn->conn_info_बारtamp +
-		       msecs_to_jअगरfies(conn_info_age)) ||
-	    !conn->conn_info_बारtamp) अणु
-		काष्ठा hci_request req;
-		काष्ठा hci_cp_पढ़ो_tx_घातer req_txp_cp;
-		काष्ठा hci_cp_पढ़ो_rssi req_rssi_cp;
-		काष्ठा mgmt_pending_cmd *cmd;
+	if (time_after(jiffies, conn->conn_info_timestamp +
+		       msecs_to_jiffies(conn_info_age)) ||
+	    !conn->conn_info_timestamp) {
+		struct hci_request req;
+		struct hci_cp_read_tx_power req_txp_cp;
+		struct hci_cp_read_rssi req_rssi_cp;
+		struct mgmt_pending_cmd *cmd;
 
 		hci_req_init(&req, hdev);
 		req_rssi_cp.handle = cpu_to_le16(conn->handle);
-		hci_req_add(&req, HCI_OP_READ_RSSI, माप(req_rssi_cp),
+		hci_req_add(&req, HCI_OP_READ_RSSI, sizeof(req_rssi_cp),
 			    &req_rssi_cp);
 
-		/* For LE links TX घातer करोes not change thus we करोn't need to
-		 * query क्रम it once value is known.
+		/* For LE links TX power does not change thus we don't need to
+		 * query for it once value is known.
 		 */
-		अगर (!bdaddr_type_is_le(cp->addr.type) ||
-		    conn->tx_घातer == HCI_TX_POWER_INVALID) अणु
+		if (!bdaddr_type_is_le(cp->addr.type) ||
+		    conn->tx_power == HCI_TX_POWER_INVALID) {
 			req_txp_cp.handle = cpu_to_le16(conn->handle);
 			req_txp_cp.type = 0x00;
 			hci_req_add(&req, HCI_OP_READ_TX_POWER,
-				    माप(req_txp_cp), &req_txp_cp);
-		पूर्ण
+				    sizeof(req_txp_cp), &req_txp_cp);
+		}
 
-		/* Max TX घातer needs to be पढ़ो only once per connection */
-		अगर (conn->max_tx_घातer == HCI_TX_POWER_INVALID) अणु
+		/* Max TX power needs to be read only once per connection */
+		if (conn->max_tx_power == HCI_TX_POWER_INVALID) {
 			req_txp_cp.handle = cpu_to_le16(conn->handle);
 			req_txp_cp.type = 0x01;
 			hci_req_add(&req, HCI_OP_READ_TX_POWER,
-				    माप(req_txp_cp), &req_txp_cp);
-		पूर्ण
+				    sizeof(req_txp_cp), &req_txp_cp);
+		}
 
 		err = hci_req_run(&req, conn_info_refresh_complete);
-		अगर (err < 0)
-			जाओ unlock;
+		if (err < 0)
+			goto unlock;
 
 		cmd = mgmt_pending_add(sk, MGMT_OP_GET_CONN_INFO, hdev,
 				       data, len);
-		अगर (!cmd) अणु
+		if (!cmd) {
 			err = -ENOMEM;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		hci_conn_hold(conn);
 		cmd->user_data = hci_conn_get(conn);
 		cmd->cmd_complete = conn_info_cmd_complete;
 
-		conn->conn_info_बारtamp = jअगरfies;
-	पूर्ण अन्यथा अणु
+		conn->conn_info_timestamp = jiffies;
+	} else {
 		/* Cache is valid, just reply with values cached in hci_conn */
 		rp.rssi = conn->rssi;
-		rp.tx_घातer = conn->tx_घातer;
-		rp.max_tx_घातer = conn->max_tx_घातer;
+		rp.tx_power = conn->tx_power;
+		rp.max_tx_power = conn->max_tx_power;
 
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CONN_INFO,
-					MGMT_STATUS_SUCCESS, &rp, माप(rp));
-	पूर्ण
+					MGMT_STATUS_SUCCESS, &rp, sizeof(rp));
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक घड़ी_info_cmd_complete(काष्ठा mgmt_pending_cmd *cmd, u8 status)
-अणु
-	काष्ठा hci_conn *conn = cmd->user_data;
-	काष्ठा mgmt_rp_get_घड़ी_info rp;
-	काष्ठा hci_dev *hdev;
-	पूर्णांक err;
+static int clock_info_cmd_complete(struct mgmt_pending_cmd *cmd, u8 status)
+{
+	struct hci_conn *conn = cmd->user_data;
+	struct mgmt_rp_get_clock_info rp;
+	struct hci_dev *hdev;
+	int err;
 
-	स_रखो(&rp, 0, माप(rp));
-	स_नकल(&rp.addr, cmd->param, माप(rp.addr));
+	memset(&rp, 0, sizeof(rp));
+	memcpy(&rp.addr, cmd->param, sizeof(rp.addr));
 
-	अगर (status)
-		जाओ complete;
+	if (status)
+		goto complete;
 
 	hdev = hci_dev_get(cmd->index);
-	अगर (hdev) अणु
-		rp.local_घड़ी = cpu_to_le32(hdev->घड़ी);
+	if (hdev) {
+		rp.local_clock = cpu_to_le32(hdev->clock);
 		hci_dev_put(hdev);
-	पूर्ण
+	}
 
-	अगर (conn) अणु
-		rp.piconet_घड़ी = cpu_to_le32(conn->घड़ी);
-		rp.accuracy = cpu_to_le16(conn->घड़ी_accuracy);
-	पूर्ण
+	if (conn) {
+		rp.piconet_clock = cpu_to_le32(conn->clock);
+		rp.accuracy = cpu_to_le16(conn->clock_accuracy);
+	}
 
 complete:
 	err = mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, status, &rp,
-				माप(rp));
+				sizeof(rp));
 
-	अगर (conn) अणु
+	if (conn) {
 		hci_conn_drop(conn);
 		hci_conn_put(conn);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम get_घड़ी_info_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
-अणु
-	काष्ठा hci_cp_पढ़ो_घड़ी *hci_cp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_conn *conn;
+static void get_clock_info_complete(struct hci_dev *hdev, u8 status, u16 opcode)
+{
+	struct hci_cp_read_clock *hci_cp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_conn *conn;
 
 	bt_dev_dbg(hdev, "status %u", status);
 
 	hci_dev_lock(hdev);
 
 	hci_cp = hci_sent_cmd_data(hdev, HCI_OP_READ_CLOCK);
-	अगर (!hci_cp)
-		जाओ unlock;
+	if (!hci_cp)
+		goto unlock;
 
-	अगर (hci_cp->which) अणु
+	if (hci_cp->which) {
 		u16 handle = __le16_to_cpu(hci_cp->handle);
 		conn = hci_conn_hash_lookup_handle(hdev, handle);
-	पूर्ण अन्यथा अणु
-		conn = शून्य;
-	पूर्ण
+	} else {
+		conn = NULL;
+	}
 
 	cmd = pending_find_data(MGMT_OP_GET_CLOCK_INFO, hdev, conn);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक get_घड़ी_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int get_clock_info(struct sock *sk, struct hci_dev *hdev, void *data,
 			 u16 len)
-अणु
-	काष्ठा mgmt_cp_get_घड़ी_info *cp = data;
-	काष्ठा mgmt_rp_get_घड़ी_info rp;
-	काष्ठा hci_cp_पढ़ो_घड़ी hci_cp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	काष्ठा hci_conn *conn;
-	पूर्णांक err;
+{
+	struct mgmt_cp_get_clock_info *cp = data;
+	struct mgmt_rp_get_clock_info rp;
+	struct hci_cp_read_clock hci_cp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	struct hci_conn *conn;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	स_रखो(&rp, 0, माप(rp));
+	memset(&rp, 0, sizeof(rp));
 	bacpy(&rp.addr.bdaddr, &cp->addr.bdaddr);
 	rp.addr.type = cp->addr.type;
 
-	अगर (cp->addr.type != BDADDR_BREDR)
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CLOCK_INFO,
+	if (cp->addr.type != BDADDR_BREDR)
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CLOCK_INFO,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &rp, माप(rp));
+					 &rp, sizeof(rp));
 
 	hci_dev_lock(hdev);
 
-	अगर (!hdev_is_घातered(hdev)) अणु
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_CLOCK_INFO,
 					MGMT_STATUS_NOT_POWERED, &rp,
-					माप(rp));
-		जाओ unlock;
-	पूर्ण
+					sizeof(rp));
+		goto unlock;
+	}
 
-	अगर (bacmp(&cp->addr.bdaddr, BDADDR_ANY)) अणु
+	if (bacmp(&cp->addr.bdaddr, BDADDR_ANY)) {
 		conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK,
 					       &cp->addr.bdaddr);
-		अगर (!conn || conn->state != BT_CONNECTED) अणु
+		if (!conn || conn->state != BT_CONNECTED) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_GET_CLOCK_INFO,
 						MGMT_STATUS_NOT_CONNECTED,
-						&rp, माप(rp));
-			जाओ unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		conn = शून्य;
-	पूर्ण
+						&rp, sizeof(rp));
+			goto unlock;
+		}
+	} else {
+		conn = NULL;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_GET_CLOCK_INFO, hdev, data, len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	cmd->cmd_complete = घड़ी_info_cmd_complete;
+	cmd->cmd_complete = clock_info_cmd_complete;
 
 	hci_req_init(&req, hdev);
 
-	स_रखो(&hci_cp, 0, माप(hci_cp));
-	hci_req_add(&req, HCI_OP_READ_CLOCK, माप(hci_cp), &hci_cp);
+	memset(&hci_cp, 0, sizeof(hci_cp));
+	hci_req_add(&req, HCI_OP_READ_CLOCK, sizeof(hci_cp), &hci_cp);
 
-	अगर (conn) अणु
+	if (conn) {
 		hci_conn_hold(conn);
 		cmd->user_data = hci_conn_get(conn);
 
 		hci_cp.handle = cpu_to_le16(conn->handle);
-		hci_cp.which = 0x01; /* Piconet घड़ी */
-		hci_req_add(&req, HCI_OP_READ_CLOCK, माप(hci_cp), &hci_cp);
-	पूर्ण
+		hci_cp.which = 0x01; /* Piconet clock */
+		hci_req_add(&req, HCI_OP_READ_CLOCK, sizeof(hci_cp), &hci_cp);
+	}
 
-	err = hci_req_run(&req, get_घड़ी_info_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_req_run(&req, get_clock_info_complete);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool is_connected(काष्ठा hci_dev *hdev, bdaddr_t *addr, u8 type)
-अणु
-	काष्ठा hci_conn *conn;
+static bool is_connected(struct hci_dev *hdev, bdaddr_t *addr, u8 type)
+{
+	struct hci_conn *conn;
 
 	conn = hci_conn_hash_lookup_ba(hdev, LE_LINK, addr);
-	अगर (!conn)
-		वापस false;
+	if (!conn)
+		return false;
 
-	अगर (conn->dst_type != type)
-		वापस false;
+	if (conn->dst_type != type)
+		return false;
 
-	अगर (conn->state != BT_CONNECTED)
-		वापस false;
+	if (conn->state != BT_CONNECTED)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* This function requires the caller holds hdev->lock */
-अटल पूर्णांक hci_conn_params_set(काष्ठा hci_dev *hdev, bdaddr_t *addr,
-			       u8 addr_type, u8 स्वतः_connect)
-अणु
-	काष्ठा hci_conn_params *params;
+static int hci_conn_params_set(struct hci_dev *hdev, bdaddr_t *addr,
+			       u8 addr_type, u8 auto_connect)
+{
+	struct hci_conn_params *params;
 
 	params = hci_conn_params_add(hdev, addr, addr_type);
-	अगर (!params)
-		वापस -EIO;
+	if (!params)
+		return -EIO;
 
-	अगर (params->स्वतः_connect == स्वतः_connect)
-		वापस 0;
+	if (params->auto_connect == auto_connect)
+		return 0;
 
 	list_del_init(&params->action);
 
-	चयन (स्वतः_connect) अणु
-	हाल HCI_AUTO_CONN_DISABLED:
-	हाल HCI_AUTO_CONN_LINK_LOSS:
-		/* If स्वतः connect is being disabled when we're trying to
+	switch (auto_connect) {
+	case HCI_AUTO_CONN_DISABLED:
+	case HCI_AUTO_CONN_LINK_LOSS:
+		/* If auto connect is being disabled when we're trying to
 		 * connect to device, keep connecting.
 		 */
-		अगर (params->explicit_connect)
+		if (params->explicit_connect)
 			list_add(&params->action, &hdev->pend_le_conns);
-		अवरोध;
-	हाल HCI_AUTO_CONN_REPORT:
-		अगर (params->explicit_connect)
+		break;
+	case HCI_AUTO_CONN_REPORT:
+		if (params->explicit_connect)
 			list_add(&params->action, &hdev->pend_le_conns);
-		अन्यथा
+		else
 			list_add(&params->action, &hdev->pend_le_reports);
-		अवरोध;
-	हाल HCI_AUTO_CONN_सूचीECT:
-	हाल HCI_AUTO_CONN_ALWAYS:
-		अगर (!is_connected(hdev, addr, addr_type))
+		break;
+	case HCI_AUTO_CONN_DIRECT:
+	case HCI_AUTO_CONN_ALWAYS:
+		if (!is_connected(hdev, addr, addr_type))
 			list_add(&params->action, &hdev->pend_le_conns);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	params->स्वतः_connect = स्वतः_connect;
+	params->auto_connect = auto_connect;
 
 	bt_dev_dbg(hdev, "addr %pMR (type %u) auto_connect %u",
-		   addr, addr_type, स्वतः_connect);
+		   addr, addr_type, auto_connect);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम device_added(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
+static void device_added(struct sock *sk, struct hci_dev *hdev,
 			 bdaddr_t *bdaddr, u8 type, u8 action)
-अणु
-	काष्ठा mgmt_ev_device_added ev;
+{
+	struct mgmt_ev_device_added ev;
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = type;
 	ev.action = action;
 
-	mgmt_event(MGMT_EV_DEVICE_ADDED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_DEVICE_ADDED, hdev, &ev, sizeof(ev), sk);
+}
 
-अटल पूर्णांक add_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-		      व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_add_device *cp = data;
-	u8 स्वतः_conn, addr_type;
-	काष्ठा hci_conn_params *params;
-	पूर्णांक err;
+static int add_device(struct sock *sk, struct hci_dev *hdev,
+		      void *data, u16 len)
+{
+	struct mgmt_cp_add_device *cp = data;
+	u8 auto_conn, addr_type;
+	struct hci_conn_params *params;
+	int err;
 	u32 current_flags = 0;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!bdaddr_type_is_valid(cp->addr.type) ||
+	if (!bdaddr_type_is_valid(cp->addr.type) ||
 	    !bacmp(&cp->addr.bdaddr, BDADDR_ANY))
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &cp->addr, माप(cp->addr));
+					 &cp->addr, sizeof(cp->addr));
 
-	अगर (cp->action != 0x00 && cp->action != 0x01 && cp->action != 0x02)
-		वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
+	if (cp->action != 0x00 && cp->action != 0x01 && cp->action != 0x02)
+		return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
 					 MGMT_STATUS_INVALID_PARAMS,
-					 &cp->addr, माप(cp->addr));
+					 &cp->addr, sizeof(cp->addr));
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->addr.type == BDADDR_BREDR) अणु
-		/* Only incoming connections action is supported क्रम now */
-		अगर (cp->action != 0x01) अणु
+	if (cp->addr.type == BDADDR_BREDR) {
+		/* Only incoming connections action is supported for now */
+		if (cp->action != 0x01) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_ADD_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
 		err = hci_bdaddr_list_add_with_flags(&hdev->whitelist,
 						     &cp->addr.bdaddr,
 						     cp->addr.type, 0);
-		अगर (err)
-			जाओ unlock;
+		if (err)
+			goto unlock;
 
 		hci_req_update_scan(hdev);
 
-		जाओ added;
-	पूर्ण
+		goto added;
+	}
 
 	addr_type = le_addr_type(cp->addr.type);
 
-	अगर (cp->action == 0x02)
-		स्वतः_conn = HCI_AUTO_CONN_ALWAYS;
-	अन्यथा अगर (cp->action == 0x01)
-		स्वतः_conn = HCI_AUTO_CONN_सूचीECT;
-	अन्यथा
-		स्वतः_conn = HCI_AUTO_CONN_REPORT;
+	if (cp->action == 0x02)
+		auto_conn = HCI_AUTO_CONN_ALWAYS;
+	else if (cp->action == 0x01)
+		auto_conn = HCI_AUTO_CONN_DIRECT;
+	else
+		auto_conn = HCI_AUTO_CONN_REPORT;
 
-	/* Kernel पूर्णांकernally uses conn_params with resolvable निजी
+	/* Kernel internally uses conn_params with resolvable private
 	 * address, but Add Device allows only identity addresses.
-	 * Make sure it is enक्रमced beक्रमe calling
+	 * Make sure it is enforced before calling
 	 * hci_conn_params_lookup.
 	 */
-	अगर (!hci_is_identity_address(&cp->addr.bdaddr, addr_type)) अणु
+	if (!hci_is_identity_address(&cp->addr.bdaddr, addr_type)) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
 					MGMT_STATUS_INVALID_PARAMS,
-					&cp->addr, माप(cp->addr));
-		जाओ unlock;
-	पूर्ण
+					&cp->addr, sizeof(cp->addr));
+		goto unlock;
+	}
 
-	/* If the connection parameters करोn't exist क्रम this device,
-	 * they will be created and configured with शेषs.
+	/* If the connection parameters don't exist for this device,
+	 * they will be created and configured with defaults.
 	 */
-	अगर (hci_conn_params_set(hdev, &cp->addr.bdaddr, addr_type,
-				स्वतः_conn) < 0) अणु
+	if (hci_conn_params_set(hdev, &cp->addr.bdaddr, addr_type,
+				auto_conn) < 0) {
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
 					MGMT_STATUS_FAILED, &cp->addr,
-					माप(cp->addr));
-		जाओ unlock;
-	पूर्ण अन्यथा अणु
+					sizeof(cp->addr));
+		goto unlock;
+	} else {
 		params = hci_conn_params_lookup(hdev, &cp->addr.bdaddr,
 						addr_type);
-		अगर (params)
+		if (params)
 			current_flags = params->current_flags;
-	पूर्ण
+	}
 
 	hci_update_background_scan(hdev);
 
 added:
 	device_added(sk, hdev, &cp->addr.bdaddr, cp->addr.type, cp->action);
-	device_flags_changed(शून्य, hdev, &cp->addr.bdaddr, cp->addr.type,
+	device_flags_changed(NULL, hdev, &cp->addr.bdaddr, cp->addr.type,
 			     SUPPORTED_DEVICE_FLAGS(), current_flags);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_DEVICE,
 				MGMT_STATUS_SUCCESS, &cp->addr,
-				माप(cp->addr));
+				sizeof(cp->addr));
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम device_हटाओd(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
+static void device_removed(struct sock *sk, struct hci_dev *hdev,
 			   bdaddr_t *bdaddr, u8 type)
-अणु
-	काष्ठा mgmt_ev_device_हटाओd ev;
+{
+	struct mgmt_ev_device_removed ev;
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = type;
 
-	mgmt_event(MGMT_EV_DEVICE_REMOVED, hdev, &ev, माप(ev), sk);
-पूर्ण
+	mgmt_event(MGMT_EV_DEVICE_REMOVED, hdev, &ev, sizeof(ev), sk);
+}
 
-अटल पूर्णांक हटाओ_device(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			 व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_हटाओ_device *cp = data;
-	पूर्णांक err;
+static int remove_device(struct sock *sk, struct hci_dev *hdev,
+			 void *data, u16 len)
+{
+	struct mgmt_cp_remove_device *cp = data;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	hci_dev_lock(hdev);
 
-	अगर (bacmp(&cp->addr.bdaddr, BDADDR_ANY)) अणु
-		काष्ठा hci_conn_params *params;
+	if (bacmp(&cp->addr.bdaddr, BDADDR_ANY)) {
+		struct hci_conn_params *params;
 		u8 addr_type;
 
-		अगर (!bdaddr_type_is_valid(cp->addr.type)) अणु
+		if (!bdaddr_type_is_valid(cp->addr.type)) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
-		अगर (cp->addr.type == BDADDR_BREDR) अणु
+		if (cp->addr.type == BDADDR_BREDR) {
 			err = hci_bdaddr_list_del(&hdev->whitelist,
 						  &cp->addr.bdaddr,
 						  cp->addr.type);
-			अगर (err) अणु
+			if (err) {
 				err = mgmt_cmd_complete(sk, hdev->id,
 							MGMT_OP_REMOVE_DEVICE,
 							MGMT_STATUS_INVALID_PARAMS,
 							&cp->addr,
-							माप(cp->addr));
-				जाओ unlock;
-			पूर्ण
+							sizeof(cp->addr));
+				goto unlock;
+			}
 
 			hci_req_update_scan(hdev);
 
-			device_हटाओd(sk, hdev, &cp->addr.bdaddr,
+			device_removed(sk, hdev, &cp->addr.bdaddr,
 				       cp->addr.type);
-			जाओ complete;
-		पूर्ण
+			goto complete;
+		}
 
 		addr_type = le_addr_type(cp->addr.type);
 
-		/* Kernel पूर्णांकernally uses conn_params with resolvable निजी
+		/* Kernel internally uses conn_params with resolvable private
 		 * address, but Remove Device allows only identity addresses.
-		 * Make sure it is enक्रमced beक्रमe calling
+		 * Make sure it is enforced before calling
 		 * hci_conn_params_lookup.
 		 */
-		अगर (!hci_is_identity_address(&cp->addr.bdaddr, addr_type)) अणु
+		if (!hci_is_identity_address(&cp->addr.bdaddr, addr_type)) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
 		params = hci_conn_params_lookup(hdev, &cp->addr.bdaddr,
 						addr_type);
-		अगर (!params) अणु
+		if (!params) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
-		अगर (params->स्वतः_connect == HCI_AUTO_CONN_DISABLED ||
-		    params->स्वतः_connect == HCI_AUTO_CONN_EXPLICIT) अणु
+		if (params->auto_connect == HCI_AUTO_CONN_DISABLED ||
+		    params->auto_connect == HCI_AUTO_CONN_EXPLICIT) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
 		list_del(&params->action);
 		list_del(&params->list);
-		kमुक्त(params);
+		kfree(params);
 		hci_update_background_scan(hdev);
 
-		device_हटाओd(sk, hdev, &cp->addr.bdaddr, cp->addr.type);
-	पूर्ण अन्यथा अणु
-		काष्ठा hci_conn_params *p, *पंचांगp;
-		काष्ठा bdaddr_list *b, *bपंचांगp;
+		device_removed(sk, hdev, &cp->addr.bdaddr, cp->addr.type);
+	} else {
+		struct hci_conn_params *p, *tmp;
+		struct bdaddr_list *b, *btmp;
 
-		अगर (cp->addr.type) अणु
+		if (cp->addr.type) {
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_REMOVE_DEVICE,
 						MGMT_STATUS_INVALID_PARAMS,
-						&cp->addr, माप(cp->addr));
-			जाओ unlock;
-		पूर्ण
+						&cp->addr, sizeof(cp->addr));
+			goto unlock;
+		}
 
-		list_क्रम_each_entry_safe(b, bपंचांगp, &hdev->whitelist, list) अणु
-			device_हटाओd(sk, hdev, &b->bdaddr, b->bdaddr_type);
+		list_for_each_entry_safe(b, btmp, &hdev->whitelist, list) {
+			device_removed(sk, hdev, &b->bdaddr, b->bdaddr_type);
 			list_del(&b->list);
-			kमुक्त(b);
-		पूर्ण
+			kfree(b);
+		}
 
 		hci_req_update_scan(hdev);
 
-		list_क्रम_each_entry_safe(p, पंचांगp, &hdev->le_conn_params, list) अणु
-			अगर (p->स्वतः_connect == HCI_AUTO_CONN_DISABLED)
-				जारी;
-			device_हटाओd(sk, hdev, &p->addr, p->addr_type);
-			अगर (p->explicit_connect) अणु
-				p->स्वतः_connect = HCI_AUTO_CONN_EXPLICIT;
-				जारी;
-			पूर्ण
+		list_for_each_entry_safe(p, tmp, &hdev->le_conn_params, list) {
+			if (p->auto_connect == HCI_AUTO_CONN_DISABLED)
+				continue;
+			device_removed(sk, hdev, &p->addr, p->addr_type);
+			if (p->explicit_connect) {
+				p->auto_connect = HCI_AUTO_CONN_EXPLICIT;
+				continue;
+			}
 			list_del(&p->action);
 			list_del(&p->list);
-			kमुक्त(p);
-		पूर्ण
+			kfree(p);
+		}
 
 		bt_dev_dbg(hdev, "All LE connection parameters were removed");
 
 		hci_update_background_scan(hdev);
-	पूर्ण
+	}
 
 complete:
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_REMOVE_DEVICE,
 				MGMT_STATUS_SUCCESS, &cp->addr,
-				माप(cp->addr));
+				sizeof(cp->addr));
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक load_conn_param(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int load_conn_param(struct sock *sk, struct hci_dev *hdev, void *data,
 			   u16 len)
-अणु
-	काष्ठा mgmt_cp_load_conn_param *cp = data;
-	स्थिर u16 max_param_count = ((U16_MAX - माप(*cp)) /
-				     माप(काष्ठा mgmt_conn_param));
+{
+	struct mgmt_cp_load_conn_param *cp = data;
+	const u16 max_param_count = ((U16_MAX - sizeof(*cp)) /
+				     sizeof(struct mgmt_conn_param));
 	u16 param_count, expected_len;
-	पूर्णांक i;
+	int i;
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	param_count = __le16_to_cpu(cp->param_count);
-	अगर (param_count > max_param_count) अणु
+	if (param_count > max_param_count) {
 		bt_dev_err(hdev, "load_conn_param: too big param_count value %u",
 			   param_count);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
-	expected_len = काष्ठा_size(cp, params, param_count);
-	अगर (expected_len != len) अणु
+	expected_len = struct_size(cp, params, param_count);
+	if (expected_len != len) {
 		bt_dev_err(hdev, "load_conn_param: expected %u bytes, got %u bytes",
 			   expected_len, len);
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM,
 				       MGMT_STATUS_INVALID_PARAMS);
-	पूर्ण
+	}
 
 	bt_dev_dbg(hdev, "param_count %u", param_count);
 
@@ -6971,254 +6970,254 @@ unlock:
 
 	hci_conn_params_clear_disabled(hdev);
 
-	क्रम (i = 0; i < param_count; i++) अणु
-		काष्ठा mgmt_conn_param *param = &cp->params[i];
-		काष्ठा hci_conn_params *hci_param;
-		u16 min, max, latency, समयout;
+	for (i = 0; i < param_count; i++) {
+		struct mgmt_conn_param *param = &cp->params[i];
+		struct hci_conn_params *hci_param;
+		u16 min, max, latency, timeout;
 		u8 addr_type;
 
 		bt_dev_dbg(hdev, "Adding %pMR (type %u)", &param->addr.bdaddr,
 			   param->addr.type);
 
-		अगर (param->addr.type == BDADDR_LE_PUBLIC) अणु
+		if (param->addr.type == BDADDR_LE_PUBLIC) {
 			addr_type = ADDR_LE_DEV_PUBLIC;
-		पूर्ण अन्यथा अगर (param->addr.type == BDADDR_LE_RANDOM) अणु
+		} else if (param->addr.type == BDADDR_LE_RANDOM) {
 			addr_type = ADDR_LE_DEV_RANDOM;
-		पूर्ण अन्यथा अणु
+		} else {
 			bt_dev_err(hdev, "ignoring invalid connection parameters");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		min = le16_to_cpu(param->min_पूर्णांकerval);
-		max = le16_to_cpu(param->max_पूर्णांकerval);
+		min = le16_to_cpu(param->min_interval);
+		max = le16_to_cpu(param->max_interval);
 		latency = le16_to_cpu(param->latency);
-		समयout = le16_to_cpu(param->समयout);
+		timeout = le16_to_cpu(param->timeout);
 
 		bt_dev_dbg(hdev, "min 0x%04x max 0x%04x latency 0x%04x timeout 0x%04x",
-			   min, max, latency, समयout);
+			   min, max, latency, timeout);
 
-		अगर (hci_check_conn_params(min, max, latency, समयout) < 0) अणु
+		if (hci_check_conn_params(min, max, latency, timeout) < 0) {
 			bt_dev_err(hdev, "ignoring invalid connection parameters");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		hci_param = hci_conn_params_add(hdev, &param->addr.bdaddr,
 						addr_type);
-		अगर (!hci_param) अणु
+		if (!hci_param) {
 			bt_dev_err(hdev, "failed to add connection parameters");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		hci_param->conn_min_पूर्णांकerval = min;
-		hci_param->conn_max_पूर्णांकerval = max;
+		hci_param->conn_min_interval = min;
+		hci_param->conn_max_interval = max;
 		hci_param->conn_latency = latency;
-		hci_param->supervision_समयout = समयout;
-	पूर्ण
+		hci_param->supervision_timeout = timeout;
+	}
 
 	hci_dev_unlock(hdev);
 
-	वापस mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM, 0,
-				 शून्य, 0);
-पूर्ण
+	return mgmt_cmd_complete(sk, hdev->id, MGMT_OP_LOAD_CONN_PARAM, 0,
+				 NULL, 0);
+}
 
-अटल पूर्णांक set_बाह्यal_config(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			       व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_set_बाह्यal_config *cp = data;
+static int set_external_config(struct sock *sk, struct hci_dev *hdev,
+			       void *data, u16 len)
+{
+	struct mgmt_cp_set_external_config *cp = data;
 	bool changed;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (hdev_is_घातered(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
+	if (hdev_is_powered(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->config != 0x00 && cp->config != 0x01)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
+	if (cp->config != 0x00 && cp->config != 0x01)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
 				         MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (!test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
+	if (!test_bit(HCI_QUIRK_EXTERNAL_CONFIG, &hdev->quirks))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_EXTERNAL_CONFIG,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->config)
+	if (cp->config)
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_EXT_CONFIGURED);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_EXT_CONFIGURED);
 
 	err = send_options_rsp(sk, MGMT_OP_SET_EXTERNAL_CONFIG, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (!changed)
-		जाओ unlock;
+	if (!changed)
+		goto unlock;
 
 	err = new_options(hdev, sk);
 
-	अगर (hci_dev_test_flag(hdev, HCI_UNCONFIGURED) == is_configured(hdev)) अणु
-		mgmt_index_हटाओd(hdev);
+	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED) == is_configured(hdev)) {
+		mgmt_index_removed(hdev);
 
-		अगर (hci_dev_test_and_change_flag(hdev, HCI_UNCONFIGURED)) अणु
+		if (hci_dev_test_and_change_flag(hdev, HCI_UNCONFIGURED)) {
 			hci_dev_set_flag(hdev, HCI_CONFIG);
 			hci_dev_set_flag(hdev, HCI_AUTO_OFF);
 
-			queue_work(hdev->req_workqueue, &hdev->घातer_on);
-		पूर्ण अन्यथा अणु
+			queue_work(hdev->req_workqueue, &hdev->power_on);
+		} else {
 			set_bit(HCI_RAW, &hdev->flags);
 			mgmt_index_added(hdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक set_खुला_address(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 len)
-अणु
-	काष्ठा mgmt_cp_set_खुला_address *cp = data;
+static int set_public_address(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 len)
+{
+	struct mgmt_cp_set_public_address *cp = data;
 	bool changed;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (hdev_is_घातered(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
+	if (hdev_is_powered(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (!bacmp(&cp->bdaddr, BDADDR_ANY))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
+	if (!bacmp(&cp->bdaddr, BDADDR_ANY))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (!hdev->set_bdaddr)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
+	if (!hdev->set_bdaddr)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_PUBLIC_ADDRESS,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	hci_dev_lock(hdev);
 
-	changed = !!bacmp(&hdev->खुला_addr, &cp->bdaddr);
-	bacpy(&hdev->खुला_addr, &cp->bdaddr);
+	changed = !!bacmp(&hdev->public_addr, &cp->bdaddr);
+	bacpy(&hdev->public_addr, &cp->bdaddr);
 
 	err = send_options_rsp(sk, MGMT_OP_SET_PUBLIC_ADDRESS, hdev);
-	अगर (err < 0)
-		जाओ unlock;
+	if (err < 0)
+		goto unlock;
 
-	अगर (!changed)
-		जाओ unlock;
+	if (!changed)
+		goto unlock;
 
-	अगर (hci_dev_test_flag(hdev, HCI_UNCONFIGURED))
+	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED))
 		err = new_options(hdev, sk);
 
-	अगर (is_configured(hdev)) अणु
-		mgmt_index_हटाओd(hdev);
+	if (is_configured(hdev)) {
+		mgmt_index_removed(hdev);
 
 		hci_dev_clear_flag(hdev, HCI_UNCONFIGURED);
 
 		hci_dev_set_flag(hdev, HCI_CONFIG);
 		hci_dev_set_flag(hdev, HCI_AUTO_OFF);
 
-		queue_work(hdev->req_workqueue, &hdev->घातer_on);
-	पूर्ण
+		queue_work(hdev->req_workqueue, &hdev->power_on);
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम पढ़ो_local_oob_ext_data_complete(काष्ठा hci_dev *hdev, u8 status,
-					     u16 opcode, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा mgmt_cp_पढ़ो_local_oob_ext_data *mgmt_cp;
-	काष्ठा mgmt_rp_पढ़ो_local_oob_ext_data *mgmt_rp;
+static void read_local_oob_ext_data_complete(struct hci_dev *hdev, u8 status,
+					     u16 opcode, struct sk_buff *skb)
+{
+	const struct mgmt_cp_read_local_oob_ext_data *mgmt_cp;
+	struct mgmt_rp_read_local_oob_ext_data *mgmt_rp;
 	u8 *h192, *r192, *h256, *r256;
-	काष्ठा mgmt_pending_cmd *cmd;
+	struct mgmt_pending_cmd *cmd;
 	u16 eir_len;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "status %u", status);
 
 	cmd = pending_find(MGMT_OP_READ_LOCAL_OOB_EXT_DATA, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	mgmt_cp = cmd->param;
 
-	अगर (status) अणु
+	if (status) {
 		status = mgmt_status(status);
 		eir_len = 0;
 
-		h192 = शून्य;
-		r192 = शून्य;
-		h256 = शून्य;
-		r256 = शून्य;
-	पूर्ण अन्यथा अगर (opcode == HCI_OP_READ_LOCAL_OOB_DATA) अणु
-		काष्ठा hci_rp_पढ़ो_local_oob_data *rp;
+		h192 = NULL;
+		r192 = NULL;
+		h256 = NULL;
+		r256 = NULL;
+	} else if (opcode == HCI_OP_READ_LOCAL_OOB_DATA) {
+		struct hci_rp_read_local_oob_data *rp;
 
-		अगर (skb->len != माप(*rp)) अणु
+		if (skb->len != sizeof(*rp)) {
 			status = MGMT_STATUS_FAILED;
 			eir_len = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = MGMT_STATUS_SUCCESS;
-			rp = (व्योम *)skb->data;
+			rp = (void *)skb->data;
 
 			eir_len = 5 + 18 + 18;
 			h192 = rp->hash;
-			r192 = rp->अक्रम;
-			h256 = शून्य;
-			r256 = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा hci_rp_पढ़ो_local_oob_ext_data *rp;
+			r192 = rp->rand;
+			h256 = NULL;
+			r256 = NULL;
+		}
+	} else {
+		struct hci_rp_read_local_oob_ext_data *rp;
 
-		अगर (skb->len != माप(*rp)) अणु
+		if (skb->len != sizeof(*rp)) {
 			status = MGMT_STATUS_FAILED;
 			eir_len = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = MGMT_STATUS_SUCCESS;
-			rp = (व्योम *)skb->data;
+			rp = (void *)skb->data;
 
-			अगर (hci_dev_test_flag(hdev, HCI_SC_ONLY)) अणु
+			if (hci_dev_test_flag(hdev, HCI_SC_ONLY)) {
 				eir_len = 5 + 18 + 18;
-				h192 = शून्य;
-				r192 = शून्य;
-			पूर्ण अन्यथा अणु
+				h192 = NULL;
+				r192 = NULL;
+			} else {
 				eir_len = 5 + 18 + 18 + 18 + 18;
 				h192 = rp->hash192;
-				r192 = rp->अक्रम192;
-			पूर्ण
+				r192 = rp->rand192;
+			}
 
 			h256 = rp->hash256;
-			r256 = rp->अक्रम256;
-		पूर्ण
-	पूर्ण
+			r256 = rp->rand256;
+		}
+	}
 
-	mgmt_rp = kदो_स्मृति(माप(*mgmt_rp) + eir_len, GFP_KERNEL);
-	अगर (!mgmt_rp)
-		जाओ करोne;
+	mgmt_rp = kmalloc(sizeof(*mgmt_rp) + eir_len, GFP_KERNEL);
+	if (!mgmt_rp)
+		goto done;
 
-	अगर (status)
-		जाओ send_rsp;
+	if (status)
+		goto send_rsp;
 
 	eir_len = eir_append_data(mgmt_rp->eir, 0, EIR_CLASS_OF_DEV,
 				  hdev->dev_class, 3);
 
-	अगर (h192 && r192) अणु
+	if (h192 && r192) {
 		eir_len = eir_append_data(mgmt_rp->eir, eir_len,
 					  EIR_SSP_HASH_C192, h192, 16);
 		eir_len = eir_append_data(mgmt_rp->eir, eir_len,
 					  EIR_SSP_RAND_R192, r192, 16);
-	पूर्ण
+	}
 
-	अगर (h256 && r256) अणु
+	if (h256 && r256) {
 		eir_len = eir_append_data(mgmt_rp->eir, eir_len,
 					  EIR_SSP_HASH_C256, h256, 16);
 		eir_len = eir_append_data(mgmt_rp->eir, eir_len,
 					  EIR_SSP_RAND_R256, r256, 16);
-	पूर्ण
+	}
 
 send_rsp:
 	mgmt_rp->type = mgmt_cp->type;
@@ -7226,178 +7225,178 @@ send_rsp:
 
 	err = mgmt_cmd_complete(cmd->sk, hdev->id,
 				MGMT_OP_READ_LOCAL_OOB_EXT_DATA, status,
-				mgmt_rp, माप(*mgmt_rp) + eir_len);
-	अगर (err < 0 || status)
-		जाओ करोne;
+				mgmt_rp, sizeof(*mgmt_rp) + eir_len);
+	if (err < 0 || status)
+		goto done;
 
 	hci_sock_set_flag(cmd->sk, HCI_MGMT_OOB_DATA_EVENTS);
 
 	err = mgmt_limited_event(MGMT_EV_LOCAL_OOB_DATA_UPDATED, hdev,
-				 mgmt_rp, माप(*mgmt_rp) + eir_len,
+				 mgmt_rp, sizeof(*mgmt_rp) + eir_len,
 				 HCI_MGMT_OOB_DATA_EVENTS, cmd->sk);
-करोne:
-	kमुक्त(mgmt_rp);
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+done:
+	kfree(mgmt_rp);
+	mgmt_pending_remove(cmd);
+}
 
-अटल पूर्णांक पढ़ो_local_ssp_oob_req(काष्ठा hci_dev *hdev, काष्ठा sock *sk,
-				  काष्ठा mgmt_cp_पढ़ो_local_oob_ext_data *cp)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int read_local_ssp_oob_req(struct hci_dev *hdev, struct sock *sk,
+				  struct mgmt_cp_read_local_oob_ext_data *cp)
+{
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_READ_LOCAL_OOB_EXT_DATA, hdev,
-			       cp, माप(*cp));
-	अगर (!cmd)
-		वापस -ENOMEM;
+			       cp, sizeof(*cp));
+	if (!cmd)
+		return -ENOMEM;
 
 	hci_req_init(&req, hdev);
 
-	अगर (bredr_sc_enabled(hdev))
-		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_EXT_DATA, 0, शून्य);
-	अन्यथा
-		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_DATA, 0, शून्य);
+	if (bredr_sc_enabled(hdev))
+		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_EXT_DATA, 0, NULL);
+	else
+		hci_req_add(&req, HCI_OP_READ_LOCAL_OOB_DATA, 0, NULL);
 
-	err = hci_req_run_skb(&req, पढ़ो_local_oob_ext_data_complete);
-	अगर (err < 0) अणु
-		mgmt_pending_हटाओ(cmd);
-		वापस err;
-	पूर्ण
+	err = hci_req_run_skb(&req, read_local_oob_ext_data_complete);
+	if (err < 0) {
+		mgmt_pending_remove(cmd);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_local_oob_ext_data(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-				   व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_पढ़ो_local_oob_ext_data *cp = data;
-	काष्ठा mgmt_rp_पढ़ो_local_oob_ext_data *rp;
-	माप_प्रकार rp_len;
+static int read_local_oob_ext_data(struct sock *sk, struct hci_dev *hdev,
+				   void *data, u16 data_len)
+{
+	struct mgmt_cp_read_local_oob_ext_data *cp = data;
+	struct mgmt_rp_read_local_oob_ext_data *rp;
+	size_t rp_len;
 	u16 eir_len;
-	u8 status, flags, role, addr[7], hash[16], अक्रम[16];
-	पूर्णांक err;
+	u8 status, flags, role, addr[7], hash[16], rand[16];
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (hdev_is_घातered(hdev)) अणु
-		चयन (cp->type) अणु
-		हाल BIT(BDADDR_BREDR):
+	if (hdev_is_powered(hdev)) {
+		switch (cp->type) {
+		case BIT(BDADDR_BREDR):
 			status = mgmt_bredr_support(hdev);
-			अगर (status)
+			if (status)
 				eir_len = 0;
-			अन्यथा
+			else
 				eir_len = 5;
-			अवरोध;
-		हाल (BIT(BDADDR_LE_PUBLIC) | BIT(BDADDR_LE_RANDOM)):
+			break;
+		case (BIT(BDADDR_LE_PUBLIC) | BIT(BDADDR_LE_RANDOM)):
 			status = mgmt_le_support(hdev);
-			अगर (status)
+			if (status)
 				eir_len = 0;
-			अन्यथा
+			else
 				eir_len = 9 + 3 + 18 + 18 + 3;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			status = MGMT_STATUS_INVALID_PARAMS;
 			eir_len = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		status = MGMT_STATUS_NOT_POWERED;
 		eir_len = 0;
-	पूर्ण
+	}
 
-	rp_len = माप(*rp) + eir_len;
-	rp = kदो_स्मृति(rp_len, GFP_ATOMIC);
-	अगर (!rp)
-		वापस -ENOMEM;
+	rp_len = sizeof(*rp) + eir_len;
+	rp = kmalloc(rp_len, GFP_ATOMIC);
+	if (!rp)
+		return -ENOMEM;
 
-	अगर (status)
-		जाओ complete;
+	if (status)
+		goto complete;
 
 	hci_dev_lock(hdev);
 
 	eir_len = 0;
-	चयन (cp->type) अणु
-	हाल BIT(BDADDR_BREDR):
-		अगर (hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) अणु
-			err = पढ़ो_local_ssp_oob_req(hdev, sk, cp);
+	switch (cp->type) {
+	case BIT(BDADDR_BREDR):
+		if (hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) {
+			err = read_local_ssp_oob_req(hdev, sk, cp);
 			hci_dev_unlock(hdev);
-			अगर (!err)
-				जाओ करोne;
+			if (!err)
+				goto done;
 
 			status = MGMT_STATUS_FAILED;
-			जाओ complete;
-		पूर्ण अन्यथा अणु
+			goto complete;
+		} else {
 			eir_len = eir_append_data(rp->eir, eir_len,
 						  EIR_CLASS_OF_DEV,
 						  hdev->dev_class, 3);
-		पूर्ण
-		अवरोध;
-	हाल (BIT(BDADDR_LE_PUBLIC) | BIT(BDADDR_LE_RANDOM)):
-		अगर (hci_dev_test_flag(hdev, HCI_SC_ENABLED) &&
-		    smp_generate_oob(hdev, hash, अक्रम) < 0) अणु
+		}
+		break;
+	case (BIT(BDADDR_LE_PUBLIC) | BIT(BDADDR_LE_RANDOM)):
+		if (hci_dev_test_flag(hdev, HCI_SC_ENABLED) &&
+		    smp_generate_oob(hdev, hash, rand) < 0) {
 			hci_dev_unlock(hdev);
 			status = MGMT_STATUS_FAILED;
-			जाओ complete;
-		पूर्ण
+			goto complete;
+		}
 
-		/* This should वापस the active RPA, but since the RPA
+		/* This should return the active RPA, but since the RPA
 		 * is only programmed on demand, it is really hard to fill
 		 * this in at the moment. For now disallow retrieving
 		 * local out-of-band data when privacy is in use.
 		 *
 		 * Returning the identity address will not help here since
-		 * pairing happens beक्रमe the identity resolving key is
+		 * pairing happens before the identity resolving key is
 		 * known and thus the connection establishment happens
 		 * based on the RPA and not the identity address.
 		 */
-		अगर (hci_dev_test_flag(hdev, HCI_PRIVACY)) अणु
+		if (hci_dev_test_flag(hdev, HCI_PRIVACY)) {
 			hci_dev_unlock(hdev);
 			status = MGMT_STATUS_REJECTED;
-			जाओ complete;
-		पूर्ण
+			goto complete;
+		}
 
-		अगर (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
+		if (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
 		   !bacmp(&hdev->bdaddr, BDADDR_ANY) ||
 		   (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
-		    bacmp(&hdev->अटल_addr, BDADDR_ANY))) अणु
-			स_नकल(addr, &hdev->अटल_addr, 6);
+		    bacmp(&hdev->static_addr, BDADDR_ANY))) {
+			memcpy(addr, &hdev->static_addr, 6);
 			addr[6] = 0x01;
-		पूर्ण अन्यथा अणु
-			स_नकल(addr, &hdev->bdaddr, 6);
+		} else {
+			memcpy(addr, &hdev->bdaddr, 6);
 			addr[6] = 0x00;
-		पूर्ण
+		}
 
 		eir_len = eir_append_data(rp->eir, eir_len, EIR_LE_BDADDR,
-					  addr, माप(addr));
+					  addr, sizeof(addr));
 
-		अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING))
+		if (hci_dev_test_flag(hdev, HCI_ADVERTISING))
 			role = 0x02;
-		अन्यथा
+		else
 			role = 0x01;
 
 		eir_len = eir_append_data(rp->eir, eir_len, EIR_LE_ROLE,
-					  &role, माप(role));
+					  &role, sizeof(role));
 
-		अगर (hci_dev_test_flag(hdev, HCI_SC_ENABLED)) अणु
+		if (hci_dev_test_flag(hdev, HCI_SC_ENABLED)) {
 			eir_len = eir_append_data(rp->eir, eir_len,
 						  EIR_LE_SC_CONFIRM,
-						  hash, माप(hash));
+						  hash, sizeof(hash));
 
 			eir_len = eir_append_data(rp->eir, eir_len,
 						  EIR_LE_SC_RANDOM,
-						  अक्रम, माप(अक्रम));
-		पूर्ण
+						  rand, sizeof(rand));
+		}
 
 		flags = mgmt_get_adv_discov_flags(hdev);
 
-		अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
 			flags |= LE_AD_NO_BREDR;
 
 		eir_len = eir_append_data(rp->eir, eir_len, EIR_FLAGS,
-					  &flags, माप(flags));
-		अवरोध;
-	पूर्ण
+					  &flags, sizeof(flags));
+		break;
+	}
 
 	hci_dev_unlock(hdev);
 
@@ -7410,22 +7409,22 @@ complete:
 	rp->eir_len = cpu_to_le16(eir_len);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_LOCAL_OOB_EXT_DATA,
-				status, rp, माप(*rp) + eir_len);
-	अगर (err < 0 || status)
-		जाओ करोne;
+				status, rp, sizeof(*rp) + eir_len);
+	if (err < 0 || status)
+		goto done;
 
 	err = mgmt_limited_event(MGMT_EV_LOCAL_OOB_DATA_UPDATED, hdev,
-				 rp, माप(*rp) + eir_len,
+				 rp, sizeof(*rp) + eir_len,
 				 HCI_MGMT_OOB_DATA_EVENTS, sk);
 
-करोne:
-	kमुक्त(rp);
+done:
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32 get_supported_adv_flags(काष्ठा hci_dev *hdev)
-अणु
+static u32 get_supported_adv_flags(struct hci_dev *hdev)
+{
 	u32 flags = 0;
 
 	flags |= MGMT_ADV_FLAG_CONNECTABLE;
@@ -7440,59 +7439,59 @@ complete:
 	flags |= MGMT_ADV_PARAM_TX_POWER;
 	flags |= MGMT_ADV_PARAM_SCAN_RSP;
 
-	/* In extended adv TX_POWER वापसed from Set Adv Param
+	/* In extended adv TX_POWER returned from Set Adv Param
 	 * will be always valid.
 	 */
-	अगर ((hdev->adv_tx_घातer != HCI_TX_POWER_INVALID) ||
+	if ((hdev->adv_tx_power != HCI_TX_POWER_INVALID) ||
 	    ext_adv_capable(hdev))
 		flags |= MGMT_ADV_FLAG_TX_POWER;
 
-	अगर (ext_adv_capable(hdev)) अणु
+	if (ext_adv_capable(hdev)) {
 		flags |= MGMT_ADV_FLAG_SEC_1M;
 		flags |= MGMT_ADV_FLAG_HW_OFFLOAD;
 		flags |= MGMT_ADV_FLAG_CAN_SET_TX_POWER;
 
-		अगर (hdev->le_features[1] & HCI_LE_PHY_2M)
+		if (hdev->le_features[1] & HCI_LE_PHY_2M)
 			flags |= MGMT_ADV_FLAG_SEC_2M;
 
-		अगर (hdev->le_features[1] & HCI_LE_PHY_CODED)
+		if (hdev->le_features[1] & HCI_LE_PHY_CODED)
 			flags |= MGMT_ADV_FLAG_SEC_CODED;
-	पूर्ण
+	}
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल पूर्णांक पढ़ो_adv_features(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			     व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_rp_पढ़ो_adv_features *rp;
-	माप_प्रकार rp_len;
-	पूर्णांक err;
-	काष्ठा adv_info *adv_instance;
+static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
+			     void *data, u16 data_len)
+{
+	struct mgmt_rp_read_adv_features *rp;
+	size_t rp_len;
+	int err;
+	struct adv_info *adv_instance;
 	u32 supported_flags;
 	u8 *instance;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_ADV_FEATURES,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_ADV_FEATURES,
 				       MGMT_STATUS_REJECTED);
 
-	/* Enabling the experimental LL Privay support disables support क्रम
+	/* Enabling the experimental LL Privay support disables support for
 	 * advertising.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_ADV_FEATURES,
+	if (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_READ_ADV_FEATURES,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	hci_dev_lock(hdev);
 
-	rp_len = माप(*rp) + hdev->adv_instance_cnt;
-	rp = kदो_स्मृति(rp_len, GFP_ATOMIC);
-	अगर (!rp) अणु
+	rp_len = sizeof(*rp) + hdev->adv_instance_cnt;
+	rp = kmalloc(rp_len, GFP_ATOMIC);
+	if (!rp) {
 		hci_dev_unlock(hdev);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	supported_flags = get_supported_adv_flags(hdev);
 
@@ -7503,148 +7502,148 @@ complete:
 	rp->num_instances = hdev->adv_instance_cnt;
 
 	instance = rp->instance;
-	list_क्रम_each_entry(adv_instance, &hdev->adv_instances, list) अणु
+	list_for_each_entry(adv_instance, &hdev->adv_instances, list) {
 		*instance = adv_instance->instance;
 		instance++;
-	पूर्ण
+	}
 
 	hci_dev_unlock(hdev);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_READ_ADV_FEATURES,
 				MGMT_STATUS_SUCCESS, rp, rp_len);
 
-	kमुक्त(rp);
+	kfree(rp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u8 calculate_name_len(काष्ठा hci_dev *hdev)
-अणु
+static u8 calculate_name_len(struct hci_dev *hdev)
+{
 	u8 buf[HCI_MAX_SHORT_NAME_LENGTH + 3];
 
-	वापस append_local_name(hdev, buf, 0);
-पूर्ण
+	return append_local_name(hdev, buf, 0);
+}
 
-अटल u8 tlv_data_max_len(काष्ठा hci_dev *hdev, u32 adv_flags,
+static u8 tlv_data_max_len(struct hci_dev *hdev, u32 adv_flags,
 			   bool is_adv_data)
-अणु
+{
 	u8 max_len = HCI_MAX_AD_LENGTH;
 
-	अगर (is_adv_data) अणु
-		अगर (adv_flags & (MGMT_ADV_FLAG_DISCOV |
+	if (is_adv_data) {
+		if (adv_flags & (MGMT_ADV_FLAG_DISCOV |
 				 MGMT_ADV_FLAG_LIMITED_DISCOV |
 				 MGMT_ADV_FLAG_MANAGED_FLAGS))
 			max_len -= 3;
 
-		अगर (adv_flags & MGMT_ADV_FLAG_TX_POWER)
+		if (adv_flags & MGMT_ADV_FLAG_TX_POWER)
 			max_len -= 3;
-	पूर्ण अन्यथा अणु
-		अगर (adv_flags & MGMT_ADV_FLAG_LOCAL_NAME)
+	} else {
+		if (adv_flags & MGMT_ADV_FLAG_LOCAL_NAME)
 			max_len -= calculate_name_len(hdev);
 
-		अगर (adv_flags & (MGMT_ADV_FLAG_APPEARANCE))
+		if (adv_flags & (MGMT_ADV_FLAG_APPEARANCE))
 			max_len -= 4;
-	पूर्ण
+	}
 
-	वापस max_len;
-पूर्ण
+	return max_len;
+}
 
-अटल bool flags_managed(u32 adv_flags)
-अणु
-	वापस adv_flags & (MGMT_ADV_FLAG_DISCOV |
+static bool flags_managed(u32 adv_flags)
+{
+	return adv_flags & (MGMT_ADV_FLAG_DISCOV |
 			    MGMT_ADV_FLAG_LIMITED_DISCOV |
 			    MGMT_ADV_FLAG_MANAGED_FLAGS);
-पूर्ण
+}
 
-अटल bool tx_घातer_managed(u32 adv_flags)
-अणु
-	वापस adv_flags & MGMT_ADV_FLAG_TX_POWER;
-पूर्ण
+static bool tx_power_managed(u32 adv_flags)
+{
+	return adv_flags & MGMT_ADV_FLAG_TX_POWER;
+}
 
-अटल bool name_managed(u32 adv_flags)
-अणु
-	वापस adv_flags & MGMT_ADV_FLAG_LOCAL_NAME;
-पूर्ण
+static bool name_managed(u32 adv_flags)
+{
+	return adv_flags & MGMT_ADV_FLAG_LOCAL_NAME;
+}
 
-अटल bool appearance_managed(u32 adv_flags)
-अणु
-	वापस adv_flags & MGMT_ADV_FLAG_APPEARANCE;
-पूर्ण
+static bool appearance_managed(u32 adv_flags)
+{
+	return adv_flags & MGMT_ADV_FLAG_APPEARANCE;
+}
 
-अटल bool tlv_data_is_valid(काष्ठा hci_dev *hdev, u32 adv_flags, u8 *data,
+static bool tlv_data_is_valid(struct hci_dev *hdev, u32 adv_flags, u8 *data,
 			      u8 len, bool is_adv_data)
-अणु
-	पूर्णांक i, cur_len;
+{
+	int i, cur_len;
 	u8 max_len;
 
 	max_len = tlv_data_max_len(hdev, adv_flags, is_adv_data);
 
-	अगर (len > max_len)
-		वापस false;
+	if (len > max_len)
+		return false;
 
-	/* Make sure that the data is correctly क्रमmatted. */
-	क्रम (i = 0, cur_len = 0; i < len; i += (cur_len + 1)) अणु
+	/* Make sure that the data is correctly formatted. */
+	for (i = 0, cur_len = 0; i < len; i += (cur_len + 1)) {
 		cur_len = data[i];
 
-		अगर (data[i + 1] == EIR_FLAGS &&
+		if (data[i + 1] == EIR_FLAGS &&
 		    (!is_adv_data || flags_managed(adv_flags)))
-			वापस false;
+			return false;
 
-		अगर (data[i + 1] == EIR_TX_POWER && tx_घातer_managed(adv_flags))
-			वापस false;
+		if (data[i + 1] == EIR_TX_POWER && tx_power_managed(adv_flags))
+			return false;
 
-		अगर (data[i + 1] == EIR_NAME_COMPLETE && name_managed(adv_flags))
-			वापस false;
+		if (data[i + 1] == EIR_NAME_COMPLETE && name_managed(adv_flags))
+			return false;
 
-		अगर (data[i + 1] == EIR_NAME_SHORT && name_managed(adv_flags))
-			वापस false;
+		if (data[i + 1] == EIR_NAME_SHORT && name_managed(adv_flags))
+			return false;
 
-		अगर (data[i + 1] == EIR_APPEARANCE &&
+		if (data[i + 1] == EIR_APPEARANCE &&
 		    appearance_managed(adv_flags))
-			वापस false;
+			return false;
 
 		/* If the current field length would exceed the total data
 		 * length, then it's invalid.
 		 */
-		अगर (i + cur_len >= len)
-			वापस false;
-	पूर्ण
+		if (i + cur_len >= len)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool requested_adv_flags_are_valid(काष्ठा hci_dev *hdev, u32 adv_flags)
-अणु
+static bool requested_adv_flags_are_valid(struct hci_dev *hdev, u32 adv_flags)
+{
 	u32 supported_flags, phy_flags;
 
-	/* The current implementation only supports a subset of the specअगरied
+	/* The current implementation only supports a subset of the specified
 	 * flags. Also need to check mutual exclusiveness of sec flags.
 	 */
 	supported_flags = get_supported_adv_flags(hdev);
 	phy_flags = adv_flags & MGMT_ADV_FLAG_SEC_MASK;
-	अगर (adv_flags & ~supported_flags ||
+	if (adv_flags & ~supported_flags ||
 	    ((phy_flags && (phy_flags ^ (phy_flags & -phy_flags)))))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool adv_busy(काष्ठा hci_dev *hdev)
-अणु
-	वापस (pending_find(MGMT_OP_ADD_ADVERTISING, hdev) ||
+static bool adv_busy(struct hci_dev *hdev)
+{
+	return (pending_find(MGMT_OP_ADD_ADVERTISING, hdev) ||
 		pending_find(MGMT_OP_REMOVE_ADVERTISING, hdev) ||
 		pending_find(MGMT_OP_SET_LE, hdev) ||
 		pending_find(MGMT_OP_ADD_EXT_ADV_PARAMS, hdev) ||
 		pending_find(MGMT_OP_ADD_EXT_ADV_DATA, hdev));
-पूर्ण
+}
 
-अटल व्योम add_advertising_complete(काष्ठा hci_dev *hdev, u8 status,
+static void add_advertising_complete(struct hci_dev *hdev, u8 status,
 				     u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा mgmt_cp_add_advertising *cp;
-	काष्ठा mgmt_rp_add_advertising rp;
-	काष्ठा adv_info *adv_instance, *n;
+{
+	struct mgmt_pending_cmd *cmd;
+	struct mgmt_cp_add_advertising *cp;
+	struct mgmt_rp_add_advertising rp;
+	struct adv_info *adv_instance, *n;
 	u8 instance;
 
 	bt_dev_dbg(hdev, "status %d", status);
@@ -7652,200 +7651,200 @@ complete:
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_ADD_ADVERTISING, hdev);
-	अगर (!cmd)
+	if (!cmd)
 		cmd = pending_find(MGMT_OP_ADD_EXT_ADV_DATA, hdev);
 
-	list_क्रम_each_entry_safe(adv_instance, n, &hdev->adv_instances, list) अणु
-		अगर (!adv_instance->pending)
-			जारी;
+	list_for_each_entry_safe(adv_instance, n, &hdev->adv_instances, list) {
+		if (!adv_instance->pending)
+			continue;
 
-		अगर (!status) अणु
+		if (!status) {
 			adv_instance->pending = false;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		instance = adv_instance->instance;
 
-		अगर (hdev->cur_adv_instance == instance)
-			cancel_adv_समयout(hdev);
+		if (hdev->cur_adv_instance == instance)
+			cancel_adv_timeout(hdev);
 
-		hci_हटाओ_adv_instance(hdev, instance);
-		mgmt_advertising_हटाओd(cmd ? cmd->sk : शून्य, hdev, instance);
-	पूर्ण
+		hci_remove_adv_instance(hdev, instance);
+		mgmt_advertising_removed(cmd ? cmd->sk : NULL, hdev, instance);
+	}
 
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cp = cmd->param;
 	rp.instance = cp->instance;
 
-	अगर (status)
+	if (status)
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode,
 				mgmt_status(status));
-	अन्यथा
+	else
 		mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode,
-				  mgmt_status(status), &rp, माप(rp));
+				  mgmt_status(status), &rp, sizeof(rp));
 
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक add_advertising(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			   व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_add_advertising *cp = data;
-	काष्ठा mgmt_rp_add_advertising rp;
+static int add_advertising(struct sock *sk, struct hci_dev *hdev,
+			   void *data, u16 data_len)
+{
+	struct mgmt_cp_add_advertising *cp = data;
+	struct mgmt_rp_add_advertising rp;
 	u32 flags;
 	u8 status;
-	u16 समयout, duration;
-	अचिन्हित पूर्णांक prev_instance_cnt = hdev->adv_instance_cnt;
+	u16 timeout, duration;
+	unsigned int prev_instance_cnt = hdev->adv_instance_cnt;
 	u8 schedule_instance = 0;
-	काष्ठा adv_info *next_instance;
-	पूर्णांक err;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
+	struct adv_info *next_instance;
+	int err;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
 	status = mgmt_le_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				       status);
 
-	/* Enabling the experimental LL Privay support disables support क्रम
+	/* Enabling the experimental LL Privay support disables support for
 	 * advertising.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
-	अगर (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
+	if (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	अगर (data_len != माप(*cp) + cp->adv_data_len + cp->scan_rsp_len)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
+	if (data_len != sizeof(*cp) + cp->adv_data_len + cp->scan_rsp_len)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	flags = __le32_to_cpu(cp->flags);
-	समयout = __le16_to_cpu(cp->समयout);
+	timeout = __le16_to_cpu(cp->timeout);
 	duration = __le16_to_cpu(cp->duration);
 
-	अगर (!requested_adv_flags_are_valid(hdev, flags))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
+	if (!requested_adv_flags_are_valid(hdev, flags))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	अगर (समयout && !hdev_is_घातered(hdev)) अणु
+	if (timeout && !hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				      MGMT_STATUS_REJECTED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (adv_busy(hdev)) अणु
+	if (adv_busy(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (!tlv_data_is_valid(hdev, flags, cp->data, cp->adv_data_len, true) ||
+	if (!tlv_data_is_valid(hdev, flags, cp->data, cp->adv_data_len, true) ||
 	    !tlv_data_is_valid(hdev, flags, cp->data + cp->adv_data_len,
-			       cp->scan_rsp_len, false)) अणु
+			       cp->scan_rsp_len, false)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	err = hci_add_adv_instance(hdev, cp->instance, flags,
 				   cp->adv_data_len, cp->data,
 				   cp->scan_rsp_len,
 				   cp->data + cp->adv_data_len,
-				   समयout, duration,
+				   timeout, duration,
 				   HCI_ADV_TX_POWER_NO_PREFERENCE,
-				   hdev->le_adv_min_पूर्णांकerval,
-				   hdev->le_adv_max_पूर्णांकerval);
-	अगर (err < 0) अणु
+				   hdev->le_adv_min_interval,
+				   hdev->le_adv_max_interval);
+	if (err < 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				      MGMT_STATUS_FAILED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Only trigger an advertising added event अगर a new instance was
+	/* Only trigger an advertising added event if a new instance was
 	 * actually added.
 	 */
-	अगर (hdev->adv_instance_cnt > prev_instance_cnt)
+	if (hdev->adv_instance_cnt > prev_instance_cnt)
 		mgmt_advertising_added(sk, hdev, cp->instance);
 
-	अगर (hdev->cur_adv_instance == cp->instance) अणु
+	if (hdev->cur_adv_instance == cp->instance) {
 		/* If the currently advertised instance is being changed then
 		 * cancel the current advertising and schedule the next
 		 * instance. If there is only one instance then the overridden
 		 * advertising data will be visible right away.
 		 */
-		cancel_adv_समयout(hdev);
+		cancel_adv_timeout(hdev);
 
 		next_instance = hci_get_next_instance(hdev, cp->instance);
-		अगर (next_instance)
+		if (next_instance)
 			schedule_instance = next_instance->instance;
-	पूर्ण अन्यथा अगर (!hdev->adv_instance_समयout) अणु
-		/* Immediately advertise the new instance अगर no other
+	} else if (!hdev->adv_instance_timeout) {
+		/* Immediately advertise the new instance if no other
 		 * instance is currently being advertised.
 		 */
 		schedule_instance = cp->instance;
-	पूर्ण
+	}
 
-	/* If the HCI_ADVERTISING flag is set or the device isn't घातered or
+	/* If the HCI_ADVERTISING flag is set or the device isn't powered or
 	 * there is no instance to be advertised then we have no HCI
-	 * communication to make. Simply वापस.
+	 * communication to make. Simply return.
 	 */
-	अगर (!hdev_is_घातered(hdev) ||
+	if (!hdev_is_powered(hdev) ||
 	    hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
-	    !schedule_instance) अणु
+	    !schedule_instance) {
 		rp.instance = cp->instance;
 		err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
-					MGMT_STATUS_SUCCESS, &rp, माप(rp));
-		जाओ unlock;
-	पूर्ण
+					MGMT_STATUS_SUCCESS, &rp, sizeof(rp));
+		goto unlock;
+	}
 
 	/* We're good to go, update advertising data, parameters, and start
 	 * advertising.
 	 */
 	cmd = mgmt_pending_add(sk, MGMT_OP_ADD_ADVERTISING, hdev, data,
 			       data_len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
 	err = __hci_req_schedule_adv_instance(&req, schedule_instance, true);
 
-	अगर (!err)
+	if (!err)
 		err = hci_req_run(&req, add_advertising_complete);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				      MGMT_STATUS_FAILED);
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
+		mgmt_pending_remove(cmd);
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम add_ext_adv_params_complete(काष्ठा hci_dev *hdev, u8 status,
+static void add_ext_adv_params_complete(struct hci_dev *hdev, u8 status,
 					u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा mgmt_cp_add_ext_adv_params *cp;
-	काष्ठा mgmt_rp_add_ext_adv_params rp;
-	काष्ठा adv_info *adv_instance;
+{
+	struct mgmt_pending_cmd *cmd;
+	struct mgmt_cp_add_ext_adv_params *cp;
+	struct mgmt_rp_add_ext_adv_params rp;
+	struct adv_info *adv_instance;
 	u32 flags;
 
 	BT_DBG("%s", hdev->name);
@@ -7853,188 +7852,188 @@ unlock:
 	hci_dev_lock(hdev);
 
 	cmd = pending_find(MGMT_OP_ADD_EXT_ADV_PARAMS, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cp = cmd->param;
 	adv_instance = hci_find_adv_instance(hdev, cp->instance);
-	अगर (!adv_instance)
-		जाओ unlock;
+	if (!adv_instance)
+		goto unlock;
 
 	rp.instance = cp->instance;
-	rp.tx_घातer = adv_instance->tx_घातer;
+	rp.tx_power = adv_instance->tx_power;
 
-	/* While we're at it, inक्रमm userspace of the available space क्रम this
+	/* While we're at it, inform userspace of the available space for this
 	 * advertisement, given the flags that will be used.
 	 */
 	flags = __le32_to_cpu(cp->flags);
 	rp.max_adv_data_len = tlv_data_max_len(hdev, flags, true);
 	rp.max_scan_rsp_len = tlv_data_max_len(hdev, flags, false);
 
-	अगर (status) अणु
+	if (status) {
 		/* If this advertisement was previously advertising and we
-		 * failed to update it, we संकेत that it has been हटाओd and
-		 * delete its काष्ठाure
+		 * failed to update it, we signal that it has been removed and
+		 * delete its structure
 		 */
-		अगर (!adv_instance->pending)
-			mgmt_advertising_हटाओd(cmd->sk, hdev, cp->instance);
+		if (!adv_instance->pending)
+			mgmt_advertising_removed(cmd->sk, hdev, cp->instance);
 
-		hci_हटाओ_adv_instance(hdev, cp->instance);
+		hci_remove_adv_instance(hdev, cp->instance);
 
 		mgmt_cmd_status(cmd->sk, cmd->index, cmd->opcode,
 				mgmt_status(status));
 
-	पूर्ण अन्यथा अणु
+	} else {
 		mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode,
-				  mgmt_status(status), &rp, माप(rp));
-	पूर्ण
+				  mgmt_status(status), &rp, sizeof(rp));
+	}
 
 unlock:
-	अगर (cmd)
-		mgmt_pending_हटाओ(cmd);
+	if (cmd)
+		mgmt_pending_remove(cmd);
 
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक add_ext_adv_params(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_add_ext_adv_params *cp = data;
-	काष्ठा mgmt_rp_add_ext_adv_params rp;
-	काष्ठा mgmt_pending_cmd *cmd = शून्य;
-	काष्ठा adv_info *adv_instance;
-	काष्ठा hci_request req;
-	u32 flags, min_पूर्णांकerval, max_पूर्णांकerval;
-	u16 समयout, duration;
+static int add_ext_adv_params(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 data_len)
+{
+	struct mgmt_cp_add_ext_adv_params *cp = data;
+	struct mgmt_rp_add_ext_adv_params rp;
+	struct mgmt_pending_cmd *cmd = NULL;
+	struct adv_info *adv_instance;
+	struct hci_request req;
+	u32 flags, min_interval, max_interval;
+	u16 timeout, duration;
 	u8 status;
-	s8 tx_घातer;
-	पूर्णांक err;
+	s8 tx_power;
+	int err;
 
 	BT_DBG("%s", hdev->name);
 
 	status = mgmt_le_support(hdev);
-	अगर (status)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
+	if (status)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				       status);
 
-	अगर (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
+	if (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
-	/* The purpose of अवरोधing add_advertising पूर्णांकo two separate MGMT calls
-	 * क्रम params and data is to allow more parameters to be added to this
-	 * काष्ठाure in the future. For this reason, we verअगरy that we have the
-	 * bare minimum काष्ठाure we know of when the पूर्णांकerface was defined. Any
-	 * extra parameters we करोn't know about will be ignored in this request.
+	/* The purpose of breaking add_advertising into two separate MGMT calls
+	 * for params and data is to allow more parameters to be added to this
+	 * structure in the future. For this reason, we verify that we have the
+	 * bare minimum structure we know of when the interface was defined. Any
+	 * extra parameters we don't know about will be ignored in this request.
 	 */
-	अगर (data_len < MGMT_ADD_EXT_ADV_PARAMS_MIN_SIZE)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
+	if (data_len < MGMT_ADD_EXT_ADV_PARAMS_MIN_SIZE)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_ADVERTISING,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	flags = __le32_to_cpu(cp->flags);
 
-	अगर (!requested_adv_flags_are_valid(hdev, flags))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
+	if (!requested_adv_flags_are_valid(hdev, flags))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	hci_dev_lock(hdev);
 
-	/* In new पूर्णांकerface, we require that we are घातered to रेजिस्टर */
-	अगर (!hdev_is_घातered(hdev)) अणु
+	/* In new interface, we require that we are powered to register */
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				      MGMT_STATUS_REJECTED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (adv_busy(hdev)) अणु
+	if (adv_busy(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Parse defined parameters from request, use शेषs otherwise */
-	समयout = (flags & MGMT_ADV_PARAM_TIMEOUT) ?
-		  __le16_to_cpu(cp->समयout) : 0;
+	/* Parse defined parameters from request, use defaults otherwise */
+	timeout = (flags & MGMT_ADV_PARAM_TIMEOUT) ?
+		  __le16_to_cpu(cp->timeout) : 0;
 
 	duration = (flags & MGMT_ADV_PARAM_DURATION) ?
 		   __le16_to_cpu(cp->duration) :
 		   hdev->def_multi_adv_rotation_duration;
 
-	min_पूर्णांकerval = (flags & MGMT_ADV_PARAM_INTERVALS) ?
-		       __le32_to_cpu(cp->min_पूर्णांकerval) :
-		       hdev->le_adv_min_पूर्णांकerval;
+	min_interval = (flags & MGMT_ADV_PARAM_INTERVALS) ?
+		       __le32_to_cpu(cp->min_interval) :
+		       hdev->le_adv_min_interval;
 
-	max_पूर्णांकerval = (flags & MGMT_ADV_PARAM_INTERVALS) ?
-		       __le32_to_cpu(cp->max_पूर्णांकerval) :
-		       hdev->le_adv_max_पूर्णांकerval;
+	max_interval = (flags & MGMT_ADV_PARAM_INTERVALS) ?
+		       __le32_to_cpu(cp->max_interval) :
+		       hdev->le_adv_max_interval;
 
-	tx_घातer = (flags & MGMT_ADV_PARAM_TX_POWER) ?
-		   cp->tx_घातer :
+	tx_power = (flags & MGMT_ADV_PARAM_TX_POWER) ?
+		   cp->tx_power :
 		   HCI_ADV_TX_POWER_NO_PREFERENCE;
 
 	/* Create advertising instance with no advertising or response data */
 	err = hci_add_adv_instance(hdev, cp->instance, flags,
-				   0, शून्य, 0, शून्य, समयout, duration,
-				   tx_घातer, min_पूर्णांकerval, max_पूर्णांकerval);
+				   0, NULL, 0, NULL, timeout, duration,
+				   tx_power, min_interval, max_interval);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_PARAMS,
 				      MGMT_STATUS_FAILED);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* Submit request क्रम advertising params अगर ext adv available */
-	अगर (ext_adv_capable(hdev)) अणु
+	/* Submit request for advertising params if ext adv available */
+	if (ext_adv_capable(hdev)) {
 		hci_req_init(&req, hdev);
 		adv_instance = hci_find_adv_instance(hdev, cp->instance);
 
-		/* Updating parameters of an active instance will वापस a
+		/* Updating parameters of an active instance will return a
 		 * Command Disallowed error, so we must first disable the
-		 * instance अगर it is active.
+		 * instance if it is active.
 		 */
-		अगर (!adv_instance->pending)
+		if (!adv_instance->pending)
 			__hci_req_disable_ext_adv_instance(&req, cp->instance);
 
 		__hci_req_setup_ext_adv_instance(&req, cp->instance);
 
 		err = hci_req_run(&req, add_ext_adv_params_complete);
 
-		अगर (!err)
+		if (!err)
 			cmd = mgmt_pending_add(sk, MGMT_OP_ADD_EXT_ADV_PARAMS,
 					       hdev, data, data_len);
-		अगर (!cmd) अणु
+		if (!cmd) {
 			err = -ENOMEM;
-			hci_हटाओ_adv_instance(hdev, cp->instance);
-			जाओ unlock;
-		पूर्ण
+			hci_remove_adv_instance(hdev, cp->instance);
+			goto unlock;
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		rp.instance = cp->instance;
-		rp.tx_घातer = HCI_ADV_TX_POWER_NO_PREFERENCE;
+		rp.tx_power = HCI_ADV_TX_POWER_NO_PREFERENCE;
 		rp.max_adv_data_len = tlv_data_max_len(hdev, flags, true);
 		rp.max_scan_rsp_len = tlv_data_max_len(hdev, flags, false);
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_ADD_EXT_ADV_PARAMS,
-					MGMT_STATUS_SUCCESS, &rp, माप(rp));
-	पूर्ण
+					MGMT_STATUS_SUCCESS, &rp, sizeof(rp));
+	}
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक add_ext_adv_data(काष्ठा sock *sk, काष्ठा hci_dev *hdev, व्योम *data,
+static int add_ext_adv_data(struct sock *sk, struct hci_dev *hdev, void *data,
 			    u16 data_len)
-अणु
-	काष्ठा mgmt_cp_add_ext_adv_data *cp = data;
-	काष्ठा mgmt_rp_add_ext_adv_data rp;
+{
+	struct mgmt_cp_add_ext_adv_data *cp = data;
+	struct mgmt_rp_add_ext_adv_data rp;
 	u8 schedule_instance = 0;
-	काष्ठा adv_info *next_instance;
-	काष्ठा adv_info *adv_instance;
-	पूर्णांक err = 0;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
+	struct adv_info *next_instance;
+	struct adv_info *adv_instance;
+	int err = 0;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
 
 	BT_DBG("%s", hdev->name);
 
@@ -8042,34 +8041,34 @@ unlock:
 
 	adv_instance = hci_find_adv_instance(hdev, cp->instance);
 
-	अगर (!adv_instance) अणु
+	if (!adv_instance) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_DATA,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	/* In new पूर्णांकerface, we require that we are घातered to रेजिस्टर */
-	अगर (!hdev_is_घातered(hdev)) अणु
+	/* In new interface, we require that we are powered to register */
+	if (!hdev_is_powered(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_DATA,
 				      MGMT_STATUS_REJECTED);
-		जाओ clear_new_instance;
-	पूर्ण
+		goto clear_new_instance;
+	}
 
-	अगर (adv_busy(hdev)) अणु
+	if (adv_busy(hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_DATA,
 				      MGMT_STATUS_BUSY);
-		जाओ clear_new_instance;
-	पूर्ण
+		goto clear_new_instance;
+	}
 
 	/* Validate new data */
-	अगर (!tlv_data_is_valid(hdev, adv_instance->flags, cp->data,
+	if (!tlv_data_is_valid(hdev, adv_instance->flags, cp->data,
 			       cp->adv_data_len, true) ||
 	    !tlv_data_is_valid(hdev, adv_instance->flags, cp->data +
-			       cp->adv_data_len, cp->scan_rsp_len, false)) अणु
+			       cp->adv_data_len, cp->scan_rsp_len, false)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_DATA,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ clear_new_instance;
-	पूर्ण
+		goto clear_new_instance;
+	}
 
 	/* Set the data in the advertising instance */
 	hci_set_adv_instance_data(hdev, cp->instance, cp->adv_data_len,
@@ -8082,236 +8081,236 @@ unlock:
 
 	hci_req_init(&req, hdev);
 
-	hci_req_add(&req, HCI_OP_READ_LOCAL_NAME, 0, शून्य);
+	hci_req_add(&req, HCI_OP_READ_LOCAL_NAME, 0, NULL);
 
-	अगर (ext_adv_capable(hdev)) अणु
+	if (ext_adv_capable(hdev)) {
 		__hci_req_update_adv_data(&req, cp->instance);
 		__hci_req_update_scan_rsp_data(&req, cp->instance);
 		__hci_req_enable_ext_advertising(&req, cp->instance);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* If using software rotation, determine next instance to use */
 
-		अगर (hdev->cur_adv_instance == cp->instance) अणु
+		if (hdev->cur_adv_instance == cp->instance) {
 			/* If the currently advertised instance is being changed
 			 * then cancel the current advertising and schedule the
 			 * next instance. If there is only one instance then the
 			 * overridden advertising data will be visible right
 			 * away
 			 */
-			cancel_adv_समयout(hdev);
+			cancel_adv_timeout(hdev);
 
 			next_instance = hci_get_next_instance(hdev,
 							      cp->instance);
-			अगर (next_instance)
+			if (next_instance)
 				schedule_instance = next_instance->instance;
-		पूर्ण अन्यथा अगर (!hdev->adv_instance_समयout) अणु
-			/* Immediately advertise the new instance अगर no other
+		} else if (!hdev->adv_instance_timeout) {
+			/* Immediately advertise the new instance if no other
 			 * instance is currently being advertised.
 			 */
 			schedule_instance = cp->instance;
-		पूर्ण
+		}
 
 		/* If the HCI_ADVERTISING flag is set or there is no instance to
 		 * be advertised then we have no HCI communication to make.
-		 * Simply वापस.
+		 * Simply return.
 		 */
-		अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
-		    !schedule_instance) अणु
-			अगर (adv_instance->pending) अणु
+		if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
+		    !schedule_instance) {
+			if (adv_instance->pending) {
 				mgmt_advertising_added(sk, hdev, cp->instance);
 				adv_instance->pending = false;
-			पूर्ण
+			}
 			rp.instance = cp->instance;
 			err = mgmt_cmd_complete(sk, hdev->id,
 						MGMT_OP_ADD_EXT_ADV_DATA,
 						MGMT_STATUS_SUCCESS, &rp,
-						माप(rp));
-			जाओ unlock;
-		पूर्ण
+						sizeof(rp));
+			goto unlock;
+		}
 
 		err = __hci_req_schedule_adv_instance(&req, schedule_instance,
 						      true);
-	पूर्ण
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_ADD_EXT_ADV_DATA, hdev, data,
 			       data_len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ clear_new_instance;
-	पूर्ण
+		goto clear_new_instance;
+	}
 
-	अगर (!err)
+	if (!err)
 		err = hci_req_run(&req, add_advertising_complete);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_ADD_EXT_ADV_DATA,
 				      MGMT_STATUS_FAILED);
-		mgmt_pending_हटाओ(cmd);
-		जाओ clear_new_instance;
-	पूर्ण
+		mgmt_pending_remove(cmd);
+		goto clear_new_instance;
+	}
 
 	/* We were successful in updating data, so trigger advertising_added
-	 * event अगर this is an instance that wasn't previously advertising. If
-	 * a failure occurs in the requests we initiated, we will हटाओ the
+	 * event if this is an instance that wasn't previously advertising. If
+	 * a failure occurs in the requests we initiated, we will remove the
 	 * instance again in add_advertising_complete
 	 */
-	अगर (adv_instance->pending)
+	if (adv_instance->pending)
 		mgmt_advertising_added(sk, hdev, cp->instance);
 
-	जाओ unlock;
+	goto unlock;
 
 clear_new_instance:
-	hci_हटाओ_adv_instance(hdev, cp->instance);
+	hci_remove_adv_instance(hdev, cp->instance);
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम हटाओ_advertising_complete(काष्ठा hci_dev *hdev, u8 status,
+static void remove_advertising_complete(struct hci_dev *hdev, u8 status,
 					u16 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा mgmt_cp_हटाओ_advertising *cp;
-	काष्ठा mgmt_rp_हटाओ_advertising rp;
+{
+	struct mgmt_pending_cmd *cmd;
+	struct mgmt_cp_remove_advertising *cp;
+	struct mgmt_rp_remove_advertising rp;
 
 	bt_dev_dbg(hdev, "status %d", status);
 
 	hci_dev_lock(hdev);
 
 	/* A failure status here only means that we failed to disable
-	 * advertising. Otherwise, the advertising instance has been हटाओd,
+	 * advertising. Otherwise, the advertising instance has been removed,
 	 * so report success.
 	 */
 	cmd = pending_find(MGMT_OP_REMOVE_ADVERTISING, hdev);
-	अगर (!cmd)
-		जाओ unlock;
+	if (!cmd)
+		goto unlock;
 
 	cp = cmd->param;
 	rp.instance = cp->instance;
 
 	mgmt_cmd_complete(cmd->sk, cmd->index, cmd->opcode, MGMT_STATUS_SUCCESS,
-			  &rp, माप(rp));
-	mgmt_pending_हटाओ(cmd);
+			  &rp, sizeof(rp));
+	mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-अटल पूर्णांक हटाओ_advertising(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			      व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_हटाओ_advertising *cp = data;
-	काष्ठा mgmt_rp_हटाओ_advertising rp;
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा hci_request req;
-	पूर्णांक err;
+static int remove_advertising(struct sock *sk, struct hci_dev *hdev,
+			      void *data, u16 data_len)
+{
+	struct mgmt_cp_remove_advertising *cp = data;
+	struct mgmt_rp_remove_advertising rp;
+	struct mgmt_pending_cmd *cmd;
+	struct hci_request req;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	/* Enabling the experimental LL Privay support disables support क्रम
+	/* Enabling the experimental LL Privay support disables support for
 	 * advertising.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
+	if (hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_SET_ADVERTISING,
 				       MGMT_STATUS_NOT_SUPPORTED);
 
 	hci_dev_lock(hdev);
 
-	अगर (cp->instance && !hci_find_adv_instance(hdev, cp->instance)) अणु
+	if (cp->instance && !hci_find_adv_instance(hdev, cp->instance)) {
 		err = mgmt_cmd_status(sk, hdev->id,
 				      MGMT_OP_REMOVE_ADVERTISING,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (pending_find(MGMT_OP_ADD_ADVERTISING, hdev) ||
+	if (pending_find(MGMT_OP_ADD_ADVERTISING, hdev) ||
 	    pending_find(MGMT_OP_REMOVE_ADVERTISING, hdev) ||
-	    pending_find(MGMT_OP_SET_LE, hdev)) अणु
+	    pending_find(MGMT_OP_SET_LE, hdev)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_ADVERTISING,
 				      MGMT_STATUS_BUSY);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (list_empty(&hdev->adv_instances)) अणु
+	if (list_empty(&hdev->adv_instances)) {
 		err = mgmt_cmd_status(sk, hdev->id, MGMT_OP_REMOVE_ADVERTISING,
 				      MGMT_STATUS_INVALID_PARAMS);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	hci_req_init(&req, hdev);
 
-	/* If we use extended advertising, instance is disabled and हटाओd */
-	अगर (ext_adv_capable(hdev)) अणु
+	/* If we use extended advertising, instance is disabled and removed */
+	if (ext_adv_capable(hdev)) {
 		__hci_req_disable_ext_adv_instance(&req, cp->instance);
-		__hci_req_हटाओ_ext_adv_instance(&req, cp->instance);
-	पूर्ण
+		__hci_req_remove_ext_adv_instance(&req, cp->instance);
+	}
 
 	hci_req_clear_adv_instance(hdev, sk, &req, cp->instance, true);
 
-	अगर (list_empty(&hdev->adv_instances))
+	if (list_empty(&hdev->adv_instances))
 		__hci_req_disable_advertising(&req);
 
 	/* If no HCI commands have been collected so far or the HCI_ADVERTISING
-	 * flag is set or the device isn't घातered then we have no HCI
-	 * communication to make. Simply वापस.
+	 * flag is set or the device isn't powered then we have no HCI
+	 * communication to make. Simply return.
 	 */
-	अगर (skb_queue_empty(&req.cmd_q) ||
-	    !hdev_is_घातered(hdev) ||
-	    hci_dev_test_flag(hdev, HCI_ADVERTISING)) अणु
+	if (skb_queue_empty(&req.cmd_q) ||
+	    !hdev_is_powered(hdev) ||
+	    hci_dev_test_flag(hdev, HCI_ADVERTISING)) {
 		hci_req_purge(&req);
 		rp.instance = cp->instance;
 		err = mgmt_cmd_complete(sk, hdev->id,
 					MGMT_OP_REMOVE_ADVERTISING,
-					MGMT_STATUS_SUCCESS, &rp, माप(rp));
-		जाओ unlock;
-	पूर्ण
+					MGMT_STATUS_SUCCESS, &rp, sizeof(rp));
+		goto unlock;
+	}
 
 	cmd = mgmt_pending_add(sk, MGMT_OP_REMOVE_ADVERTISING, hdev, data,
 			       data_len);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		err = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	err = hci_req_run(&req, हटाओ_advertising_complete);
-	अगर (err < 0)
-		mgmt_pending_हटाओ(cmd);
+	err = hci_req_run(&req, remove_advertising_complete);
+	if (err < 0)
+		mgmt_pending_remove(cmd);
 
 unlock:
 	hci_dev_unlock(hdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक get_adv_size_info(काष्ठा sock *sk, काष्ठा hci_dev *hdev,
-			     व्योम *data, u16 data_len)
-अणु
-	काष्ठा mgmt_cp_get_adv_size_info *cp = data;
-	काष्ठा mgmt_rp_get_adv_size_info rp;
+static int get_adv_size_info(struct sock *sk, struct hci_dev *hdev,
+			     void *data, u16 data_len)
+{
+	struct mgmt_cp_get_adv_size_info *cp = data;
+	struct mgmt_rp_get_adv_size_info rp;
 	u32 flags, supported_flags;
-	पूर्णांक err;
+	int err;
 
 	bt_dev_dbg(hdev, "sock %p", sk);
 
-	अगर (!lmp_le_capable(hdev))
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
+	if (!lmp_le_capable(hdev))
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
 				       MGMT_STATUS_REJECTED);
 
-	अगर (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
+	if (cp->instance < 1 || cp->instance > hdev->le_num_of_adv_sets)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	flags = __le32_to_cpu(cp->flags);
 
-	/* The current implementation only supports a subset of the specअगरied
+	/* The current implementation only supports a subset of the specified
 	 * flags.
 	 */
 	supported_flags = get_supported_adv_flags(hdev);
-	अगर (flags & ~supported_flags)
-		वापस mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
+	if (flags & ~supported_flags)
+		return mgmt_cmd_status(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
 				       MGMT_STATUS_INVALID_PARAMS);
 
 	rp.instance = cp->instance;
@@ -8320,458 +8319,458 @@ unlock:
 	rp.max_scan_rsp_len = tlv_data_max_len(hdev, flags, false);
 
 	err = mgmt_cmd_complete(sk, hdev->id, MGMT_OP_GET_ADV_SIZE_INFO,
-				MGMT_STATUS_SUCCESS, &rp, माप(rp));
+				MGMT_STATUS_SUCCESS, &rp, sizeof(rp));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा hci_mgmt_handler mgmt_handlers[] = अणु
-	अणु शून्य पूर्ण, /* 0x0000 (no command) */
-	अणु पढ़ो_version,            MGMT_READ_VERSION_SIZE,
+static const struct hci_mgmt_handler mgmt_handlers[] = {
+	{ NULL }, /* 0x0000 (no command) */
+	{ read_version,            MGMT_READ_VERSION_SIZE,
 						HCI_MGMT_NO_HDEV |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_commands,           MGMT_READ_COMMANDS_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_commands,           MGMT_READ_COMMANDS_SIZE,
 						HCI_MGMT_NO_HDEV |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_index_list,         MGMT_READ_INDEX_LIST_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_index_list,         MGMT_READ_INDEX_LIST_SIZE,
 						HCI_MGMT_NO_HDEV |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_controller_info,    MGMT_READ_INFO_SIZE,
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु set_घातered,             MGMT_SETTING_SIZE पूर्ण,
-	अणु set_discoverable,        MGMT_SET_DISCOVERABLE_SIZE पूर्ण,
-	अणु set_connectable,         MGMT_SETTING_SIZE पूर्ण,
-	अणु set_fast_connectable,    MGMT_SETTING_SIZE पूर्ण,
-	अणु set_bondable,            MGMT_SETTING_SIZE पूर्ण,
-	अणु set_link_security,       MGMT_SETTING_SIZE पूर्ण,
-	अणु set_ssp,                 MGMT_SETTING_SIZE पूर्ण,
-	अणु set_hs,                  MGMT_SETTING_SIZE पूर्ण,
-	अणु set_le,                  MGMT_SETTING_SIZE पूर्ण,
-	अणु set_dev_class,           MGMT_SET_DEV_CLASS_SIZE पूर्ण,
-	अणु set_local_name,          MGMT_SET_LOCAL_NAME_SIZE पूर्ण,
-	अणु add_uuid,                MGMT_ADD_UUID_SIZE पूर्ण,
-	अणु हटाओ_uuid,             MGMT_REMOVE_UUID_SIZE पूर्ण,
-	अणु load_link_keys,          MGMT_LOAD_LINK_KEYS_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु load_दीर्घ_term_keys,     MGMT_LOAD_LONG_TERM_KEYS_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु disconnect,              MGMT_DISCONNECT_SIZE पूर्ण,
-	अणु get_connections,         MGMT_GET_CONNECTIONS_SIZE पूर्ण,
-	अणु pin_code_reply,          MGMT_PIN_CODE_REPLY_SIZE पूर्ण,
-	अणु pin_code_neg_reply,      MGMT_PIN_CODE_NEG_REPLY_SIZE पूर्ण,
-	अणु set_io_capability,       MGMT_SET_IO_CAPABILITY_SIZE पूर्ण,
-	अणु pair_device,             MGMT_PAIR_DEVICE_SIZE पूर्ण,
-	अणु cancel_pair_device,      MGMT_CANCEL_PAIR_DEVICE_SIZE पूर्ण,
-	अणु unpair_device,           MGMT_UNPAIR_DEVICE_SIZE पूर्ण,
-	अणु user_confirm_reply,      MGMT_USER_CONFIRM_REPLY_SIZE पूर्ण,
-	अणु user_confirm_neg_reply,  MGMT_USER_CONFIRM_NEG_REPLY_SIZE पूर्ण,
-	अणु user_passkey_reply,      MGMT_USER_PASSKEY_REPLY_SIZE पूर्ण,
-	अणु user_passkey_neg_reply,  MGMT_USER_PASSKEY_NEG_REPLY_SIZE पूर्ण,
-	अणु पढ़ो_local_oob_data,     MGMT_READ_LOCAL_OOB_DATA_SIZE पूर्ण,
-	अणु add_remote_oob_data,     MGMT_ADD_REMOTE_OOB_DATA_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु हटाओ_remote_oob_data,  MGMT_REMOVE_REMOTE_OOB_DATA_SIZE पूर्ण,
-	अणु start_discovery,         MGMT_START_DISCOVERY_SIZE पूर्ण,
-	अणु stop_discovery,          MGMT_STOP_DISCOVERY_SIZE पूर्ण,
-	अणु confirm_name,            MGMT_CONFIRM_NAME_SIZE पूर्ण,
-	अणु block_device,            MGMT_BLOCK_DEVICE_SIZE पूर्ण,
-	अणु unblock_device,          MGMT_UNBLOCK_DEVICE_SIZE पूर्ण,
-	अणु set_device_id,           MGMT_SET_DEVICE_ID_SIZE पूर्ण,
-	अणु set_advertising,         MGMT_SETTING_SIZE पूर्ण,
-	अणु set_bredr,               MGMT_SETTING_SIZE पूर्ण,
-	अणु set_अटल_address,      MGMT_SET_STATIC_ADDRESS_SIZE पूर्ण,
-	अणु set_scan_params,         MGMT_SET_SCAN_PARAMS_SIZE पूर्ण,
-	अणु set_secure_conn,         MGMT_SETTING_SIZE पूर्ण,
-	अणु set_debug_keys,          MGMT_SETTING_SIZE पूर्ण,
-	अणु set_privacy,             MGMT_SET_PRIVACY_SIZE पूर्ण,
-	अणु load_irks,               MGMT_LOAD_IRKS_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु get_conn_info,           MGMT_GET_CONN_INFO_SIZE पूर्ण,
-	अणु get_घड़ी_info,          MGMT_GET_CLOCK_INFO_SIZE पूर्ण,
-	अणु add_device,              MGMT_ADD_DEVICE_SIZE पूर्ण,
-	अणु हटाओ_device,           MGMT_REMOVE_DEVICE_SIZE पूर्ण,
-	अणु load_conn_param,         MGMT_LOAD_CONN_PARAM_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु पढ़ो_unconf_index_list,  MGMT_READ_UNCONF_INDEX_LIST_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_controller_info,    MGMT_READ_INFO_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ set_powered,             MGMT_SETTING_SIZE },
+	{ set_discoverable,        MGMT_SET_DISCOVERABLE_SIZE },
+	{ set_connectable,         MGMT_SETTING_SIZE },
+	{ set_fast_connectable,    MGMT_SETTING_SIZE },
+	{ set_bondable,            MGMT_SETTING_SIZE },
+	{ set_link_security,       MGMT_SETTING_SIZE },
+	{ set_ssp,                 MGMT_SETTING_SIZE },
+	{ set_hs,                  MGMT_SETTING_SIZE },
+	{ set_le,                  MGMT_SETTING_SIZE },
+	{ set_dev_class,           MGMT_SET_DEV_CLASS_SIZE },
+	{ set_local_name,          MGMT_SET_LOCAL_NAME_SIZE },
+	{ add_uuid,                MGMT_ADD_UUID_SIZE },
+	{ remove_uuid,             MGMT_REMOVE_UUID_SIZE },
+	{ load_link_keys,          MGMT_LOAD_LINK_KEYS_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ load_long_term_keys,     MGMT_LOAD_LONG_TERM_KEYS_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ disconnect,              MGMT_DISCONNECT_SIZE },
+	{ get_connections,         MGMT_GET_CONNECTIONS_SIZE },
+	{ pin_code_reply,          MGMT_PIN_CODE_REPLY_SIZE },
+	{ pin_code_neg_reply,      MGMT_PIN_CODE_NEG_REPLY_SIZE },
+	{ set_io_capability,       MGMT_SET_IO_CAPABILITY_SIZE },
+	{ pair_device,             MGMT_PAIR_DEVICE_SIZE },
+	{ cancel_pair_device,      MGMT_CANCEL_PAIR_DEVICE_SIZE },
+	{ unpair_device,           MGMT_UNPAIR_DEVICE_SIZE },
+	{ user_confirm_reply,      MGMT_USER_CONFIRM_REPLY_SIZE },
+	{ user_confirm_neg_reply,  MGMT_USER_CONFIRM_NEG_REPLY_SIZE },
+	{ user_passkey_reply,      MGMT_USER_PASSKEY_REPLY_SIZE },
+	{ user_passkey_neg_reply,  MGMT_USER_PASSKEY_NEG_REPLY_SIZE },
+	{ read_local_oob_data,     MGMT_READ_LOCAL_OOB_DATA_SIZE },
+	{ add_remote_oob_data,     MGMT_ADD_REMOTE_OOB_DATA_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ remove_remote_oob_data,  MGMT_REMOVE_REMOTE_OOB_DATA_SIZE },
+	{ start_discovery,         MGMT_START_DISCOVERY_SIZE },
+	{ stop_discovery,          MGMT_STOP_DISCOVERY_SIZE },
+	{ confirm_name,            MGMT_CONFIRM_NAME_SIZE },
+	{ block_device,            MGMT_BLOCK_DEVICE_SIZE },
+	{ unblock_device,          MGMT_UNBLOCK_DEVICE_SIZE },
+	{ set_device_id,           MGMT_SET_DEVICE_ID_SIZE },
+	{ set_advertising,         MGMT_SETTING_SIZE },
+	{ set_bredr,               MGMT_SETTING_SIZE },
+	{ set_static_address,      MGMT_SET_STATIC_ADDRESS_SIZE },
+	{ set_scan_params,         MGMT_SET_SCAN_PARAMS_SIZE },
+	{ set_secure_conn,         MGMT_SETTING_SIZE },
+	{ set_debug_keys,          MGMT_SETTING_SIZE },
+	{ set_privacy,             MGMT_SET_PRIVACY_SIZE },
+	{ load_irks,               MGMT_LOAD_IRKS_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ get_conn_info,           MGMT_GET_CONN_INFO_SIZE },
+	{ get_clock_info,          MGMT_GET_CLOCK_INFO_SIZE },
+	{ add_device,              MGMT_ADD_DEVICE_SIZE },
+	{ remove_device,           MGMT_REMOVE_DEVICE_SIZE },
+	{ load_conn_param,         MGMT_LOAD_CONN_PARAM_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ read_unconf_index_list,  MGMT_READ_UNCONF_INDEX_LIST_SIZE,
 						HCI_MGMT_NO_HDEV |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_config_info,        MGMT_READ_CONFIG_INFO_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_config_info,        MGMT_READ_CONFIG_INFO_SIZE,
 						HCI_MGMT_UNCONFIGURED |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु set_बाह्यal_config,     MGMT_SET_EXTERNAL_CONFIG_SIZE,
-						HCI_MGMT_UNCONFIGURED पूर्ण,
-	अणु set_खुला_address,      MGMT_SET_PUBLIC_ADDRESS_SIZE,
-						HCI_MGMT_UNCONFIGURED पूर्ण,
-	अणु start_service_discovery, MGMT_START_SERVICE_DISCOVERY_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु पढ़ो_local_oob_ext_data, MGMT_READ_LOCAL_OOB_EXT_DATA_SIZE पूर्ण,
-	अणु पढ़ो_ext_index_list,     MGMT_READ_EXT_INDEX_LIST_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ set_external_config,     MGMT_SET_EXTERNAL_CONFIG_SIZE,
+						HCI_MGMT_UNCONFIGURED },
+	{ set_public_address,      MGMT_SET_PUBLIC_ADDRESS_SIZE,
+						HCI_MGMT_UNCONFIGURED },
+	{ start_service_discovery, MGMT_START_SERVICE_DISCOVERY_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ read_local_oob_ext_data, MGMT_READ_LOCAL_OOB_EXT_DATA_SIZE },
+	{ read_ext_index_list,     MGMT_READ_EXT_INDEX_LIST_SIZE,
 						HCI_MGMT_NO_HDEV |
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_adv_features,       MGMT_READ_ADV_FEATURES_SIZE पूर्ण,
-	अणु add_advertising,	   MGMT_ADD_ADVERTISING_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु हटाओ_advertising,	   MGMT_REMOVE_ADVERTISING_SIZE पूर्ण,
-	अणु get_adv_size_info,       MGMT_GET_ADV_SIZE_INFO_SIZE पूर्ण,
-	अणु start_limited_discovery, MGMT_START_DISCOVERY_SIZE पूर्ण,
-	अणु पढ़ो_ext_controller_info,MGMT_READ_EXT_INFO_SIZE,
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु set_appearance,	   MGMT_SET_APPEARANCE_SIZE पूर्ण,
-	अणु get_phy_configuration,   MGMT_GET_PHY_CONFIGURATION_SIZE पूर्ण,
-	अणु set_phy_configuration,   MGMT_SET_PHY_CONFIGURATION_SIZE पूर्ण,
-	अणु set_blocked_keys,	   MGMT_OP_SET_BLOCKED_KEYS_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु set_wideband_speech,	   MGMT_SETTING_SIZE पूर्ण,
-	अणु पढ़ो_controller_cap,     MGMT_READ_CONTROLLER_CAP_SIZE,
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु पढ़ो_exp_features_info,  MGMT_READ_EXP_FEATURES_INFO_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_adv_features,       MGMT_READ_ADV_FEATURES_SIZE },
+	{ add_advertising,	   MGMT_ADD_ADVERTISING_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ remove_advertising,	   MGMT_REMOVE_ADVERTISING_SIZE },
+	{ get_adv_size_info,       MGMT_GET_ADV_SIZE_INFO_SIZE },
+	{ start_limited_discovery, MGMT_START_DISCOVERY_SIZE },
+	{ read_ext_controller_info,MGMT_READ_EXT_INFO_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ set_appearance,	   MGMT_SET_APPEARANCE_SIZE },
+	{ get_phy_configuration,   MGMT_GET_PHY_CONFIGURATION_SIZE },
+	{ set_phy_configuration,   MGMT_SET_PHY_CONFIGURATION_SIZE },
+	{ set_blocked_keys,	   MGMT_OP_SET_BLOCKED_KEYS_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ set_wideband_speech,	   MGMT_SETTING_SIZE },
+	{ read_controller_cap,     MGMT_READ_CONTROLLER_CAP_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ read_exp_features_info,  MGMT_READ_EXP_FEATURES_INFO_SIZE,
 						HCI_MGMT_UNTRUSTED |
-						HCI_MGMT_HDEV_OPTIONAL पूर्ण,
-	अणु set_exp_feature,         MGMT_SET_EXP_FEATURE_SIZE,
+						HCI_MGMT_HDEV_OPTIONAL },
+	{ set_exp_feature,         MGMT_SET_EXP_FEATURE_SIZE,
 						HCI_MGMT_VAR_LEN |
-						HCI_MGMT_HDEV_OPTIONAL पूर्ण,
-	अणु पढ़ो_def_प्रणाली_config,  MGMT_READ_DEF_SYSTEM_CONFIG_SIZE,
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु set_def_प्रणाली_config,   MGMT_SET_DEF_SYSTEM_CONFIG_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु पढ़ो_def_runसमय_config, MGMT_READ_DEF_RUNTIME_CONFIG_SIZE,
-						HCI_MGMT_UNTRUSTED पूर्ण,
-	अणु set_def_runसमय_config,  MGMT_SET_DEF_RUNTIME_CONFIG_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु get_device_flags,        MGMT_GET_DEVICE_FLAGS_SIZE पूर्ण,
-	अणु set_device_flags,        MGMT_SET_DEVICE_FLAGS_SIZE पूर्ण,
-	अणु पढ़ो_adv_mon_features,   MGMT_READ_ADV_MONITOR_FEATURES_SIZE पूर्ण,
-	अणु add_adv_patterns_monitor,MGMT_ADD_ADV_PATTERNS_MONITOR_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु हटाओ_adv_monitor,      MGMT_REMOVE_ADV_MONITOR_SIZE पूर्ण,
-	अणु add_ext_adv_params,      MGMT_ADD_EXT_ADV_PARAMS_MIN_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु add_ext_adv_data,        MGMT_ADD_EXT_ADV_DATA_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-	अणु add_adv_patterns_monitor_rssi,
+						HCI_MGMT_HDEV_OPTIONAL },
+	{ read_def_system_config,  MGMT_READ_DEF_SYSTEM_CONFIG_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ set_def_system_config,   MGMT_SET_DEF_SYSTEM_CONFIG_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ read_def_runtime_config, MGMT_READ_DEF_RUNTIME_CONFIG_SIZE,
+						HCI_MGMT_UNTRUSTED },
+	{ set_def_runtime_config,  MGMT_SET_DEF_RUNTIME_CONFIG_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ get_device_flags,        MGMT_GET_DEVICE_FLAGS_SIZE },
+	{ set_device_flags,        MGMT_SET_DEVICE_FLAGS_SIZE },
+	{ read_adv_mon_features,   MGMT_READ_ADV_MONITOR_FEATURES_SIZE },
+	{ add_adv_patterns_monitor,MGMT_ADD_ADV_PATTERNS_MONITOR_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ remove_adv_monitor,      MGMT_REMOVE_ADV_MONITOR_SIZE },
+	{ add_ext_adv_params,      MGMT_ADD_EXT_ADV_PARAMS_MIN_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ add_ext_adv_data,        MGMT_ADD_EXT_ADV_DATA_SIZE,
+						HCI_MGMT_VAR_LEN },
+	{ add_adv_patterns_monitor_rssi,
 				   MGMT_ADD_ADV_PATTERNS_MONITOR_RSSI_SIZE,
-						HCI_MGMT_VAR_LEN पूर्ण,
-पूर्ण;
+						HCI_MGMT_VAR_LEN },
+};
 
-व्योम mgmt_index_added(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_ev_ext_index ev;
+void mgmt_index_added(struct hci_dev *hdev)
+{
+	struct mgmt_ev_ext_index ev;
 
-	अगर (test_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks))
-		वापस;
+	if (test_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks))
+		return;
 
-	चयन (hdev->dev_type) अणु
-	हाल HCI_PRIMARY:
-		अगर (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) अणु
+	switch (hdev->dev_type) {
+	case HCI_PRIMARY:
+		if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
 			mgmt_index_event(MGMT_EV_UNCONF_INDEX_ADDED, hdev,
-					 शून्य, 0, HCI_MGMT_UNCONF_INDEX_EVENTS);
+					 NULL, 0, HCI_MGMT_UNCONF_INDEX_EVENTS);
 			ev.type = 0x01;
-		पूर्ण अन्यथा अणु
-			mgmt_index_event(MGMT_EV_INDEX_ADDED, hdev, शून्य, 0,
+		} else {
+			mgmt_index_event(MGMT_EV_INDEX_ADDED, hdev, NULL, 0,
 					 HCI_MGMT_INDEX_EVENTS);
 			ev.type = 0x00;
-		पूर्ण
-		अवरोध;
-	हाल HCI_AMP:
+		}
+		break;
+	case HCI_AMP:
 		ev.type = 0x02;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	ev.bus = hdev->bus;
 
-	mgmt_index_event(MGMT_EV_EXT_INDEX_ADDED, hdev, &ev, माप(ev),
+	mgmt_index_event(MGMT_EV_EXT_INDEX_ADDED, hdev, &ev, sizeof(ev),
 			 HCI_MGMT_EXT_INDEX_EVENTS);
-पूर्ण
+}
 
-व्योम mgmt_index_हटाओd(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_ev_ext_index ev;
+void mgmt_index_removed(struct hci_dev *hdev)
+{
+	struct mgmt_ev_ext_index ev;
 	u8 status = MGMT_STATUS_INVALID_INDEX;
 
-	अगर (test_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks))
-		वापस;
+	if (test_bit(HCI_QUIRK_RAW_DEVICE, &hdev->quirks))
+		return;
 
-	चयन (hdev->dev_type) अणु
-	हाल HCI_PRIMARY:
-		mgmt_pending_क्रमeach(0, hdev, cmd_complete_rsp, &status);
+	switch (hdev->dev_type) {
+	case HCI_PRIMARY:
+		mgmt_pending_foreach(0, hdev, cmd_complete_rsp, &status);
 
-		अगर (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) अणु
+		if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
 			mgmt_index_event(MGMT_EV_UNCONF_INDEX_REMOVED, hdev,
-					 शून्य, 0, HCI_MGMT_UNCONF_INDEX_EVENTS);
+					 NULL, 0, HCI_MGMT_UNCONF_INDEX_EVENTS);
 			ev.type = 0x01;
-		पूर्ण अन्यथा अणु
-			mgmt_index_event(MGMT_EV_INDEX_REMOVED, hdev, शून्य, 0,
+		} else {
+			mgmt_index_event(MGMT_EV_INDEX_REMOVED, hdev, NULL, 0,
 					 HCI_MGMT_INDEX_EVENTS);
 			ev.type = 0x00;
-		पूर्ण
-		अवरोध;
-	हाल HCI_AMP:
+		}
+		break;
+	case HCI_AMP:
 		ev.type = 0x02;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	ev.bus = hdev->bus;
 
-	mgmt_index_event(MGMT_EV_EXT_INDEX_REMOVED, hdev, &ev, माप(ev),
+	mgmt_index_event(MGMT_EV_EXT_INDEX_REMOVED, hdev, &ev, sizeof(ev),
 			 HCI_MGMT_EXT_INDEX_EVENTS);
-पूर्ण
+}
 
 /* This function requires the caller holds hdev->lock */
-अटल व्योम restart_le_actions(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा hci_conn_params *p;
+static void restart_le_actions(struct hci_dev *hdev)
+{
+	struct hci_conn_params *p;
 
-	list_क्रम_each_entry(p, &hdev->le_conn_params, list) अणु
-		/* Needed क्रम AUTO_OFF हाल where might not "really"
-		 * have been घातered off.
+	list_for_each_entry(p, &hdev->le_conn_params, list) {
+		/* Needed for AUTO_OFF case where might not "really"
+		 * have been powered off.
 		 */
 		list_del_init(&p->action);
 
-		चयन (p->स्वतः_connect) अणु
-		हाल HCI_AUTO_CONN_सूचीECT:
-		हाल HCI_AUTO_CONN_ALWAYS:
+		switch (p->auto_connect) {
+		case HCI_AUTO_CONN_DIRECT:
+		case HCI_AUTO_CONN_ALWAYS:
 			list_add(&p->action, &hdev->pend_le_conns);
-			अवरोध;
-		हाल HCI_AUTO_CONN_REPORT:
+			break;
+		case HCI_AUTO_CONN_REPORT:
 			list_add(&p->action, &hdev->pend_le_reports);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
+}
 
-व्योम mgmt_घातer_on(काष्ठा hci_dev *hdev, पूर्णांक err)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
+void mgmt_power_on(struct hci_dev *hdev, int err)
+{
+	struct cmd_lookup match = { NULL, hdev };
 
 	bt_dev_dbg(hdev, "err %d", err);
 
 	hci_dev_lock(hdev);
 
-	अगर (!err) अणु
+	if (!err) {
 		restart_le_actions(hdev);
 		hci_update_background_scan(hdev);
-	पूर्ण
+	}
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_POWERED, hdev, settings_rsp, &match);
+	mgmt_pending_foreach(MGMT_OP_SET_POWERED, hdev, settings_rsp, &match);
 
 	new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
 
 	hci_dev_unlock(hdev);
-पूर्ण
+}
 
-व्योम __mgmt_घातer_off(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
-	u8 status, zero_cod[] = अणु 0, 0, 0 पूर्ण;
+void __mgmt_power_off(struct hci_dev *hdev)
+{
+	struct cmd_lookup match = { NULL, hdev };
+	u8 status, zero_cod[] = { 0, 0, 0 };
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_POWERED, hdev, settings_rsp, &match);
+	mgmt_pending_foreach(MGMT_OP_SET_POWERED, hdev, settings_rsp, &match);
 
-	/* If the घातer off is because of hdev unregistration let
+	/* If the power off is because of hdev unregistration let
 	 * use the appropriate INVALID_INDEX status. Otherwise use
 	 * NOT_POWERED. We cover both scenarios here since later in
-	 * mgmt_index_हटाओd() any hci_conn callbacks will have alपढ़ोy
+	 * mgmt_index_removed() any hci_conn callbacks will have already
 	 * been triggered, potentially causing misleading DISCONNECTED
 	 * status responses.
 	 */
-	अगर (hci_dev_test_flag(hdev, HCI_UNREGISTER))
+	if (hci_dev_test_flag(hdev, HCI_UNREGISTER))
 		status = MGMT_STATUS_INVALID_INDEX;
-	अन्यथा
+	else
 		status = MGMT_STATUS_NOT_POWERED;
 
-	mgmt_pending_क्रमeach(0, hdev, cmd_complete_rsp, &status);
+	mgmt_pending_foreach(0, hdev, cmd_complete_rsp, &status);
 
-	अगर (स_भेद(hdev->dev_class, zero_cod, माप(zero_cod)) != 0) अणु
+	if (memcmp(hdev->dev_class, zero_cod, sizeof(zero_cod)) != 0) {
 		mgmt_limited_event(MGMT_EV_CLASS_OF_DEV_CHANGED, hdev,
-				   zero_cod, माप(zero_cod),
-				   HCI_MGMT_DEV_CLASS_EVENTS, शून्य);
-		ext_info_changed(hdev, शून्य);
-	पूर्ण
+				   zero_cod, sizeof(zero_cod),
+				   HCI_MGMT_DEV_CLASS_EVENTS, NULL);
+		ext_info_changed(hdev, NULL);
+	}
 
 	new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
-पूर्ण
+}
 
-व्योम mgmt_set_घातered_failed(काष्ठा hci_dev *hdev, पूर्णांक err)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_set_powered_failed(struct hci_dev *hdev, int err)
+{
+	struct mgmt_pending_cmd *cmd;
 	u8 status;
 
 	cmd = pending_find(MGMT_OP_SET_POWERED, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
-	अगर (err == -ERFKILL)
+	if (err == -ERFKILL)
 		status = MGMT_STATUS_RFKILLED;
-	अन्यथा
+	else
 		status = MGMT_STATUS_FAILED;
 
 	mgmt_cmd_status(cmd->sk, hdev->id, MGMT_OP_SET_POWERED, status);
 
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-व्योम mgmt_new_link_key(काष्ठा hci_dev *hdev, काष्ठा link_key *key,
+void mgmt_new_link_key(struct hci_dev *hdev, struct link_key *key,
 		       bool persistent)
-अणु
-	काष्ठा mgmt_ev_new_link_key ev;
+{
+	struct mgmt_ev_new_link_key ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
-	ev.store_hपूर्णांक = persistent;
+	ev.store_hint = persistent;
 	bacpy(&ev.key.addr.bdaddr, &key->bdaddr);
 	ev.key.addr.type = BDADDR_BREDR;
 	ev.key.type = key->type;
-	स_नकल(ev.key.val, key->val, HCI_LINK_KEY_SIZE);
+	memcpy(ev.key.val, key->val, HCI_LINK_KEY_SIZE);
 	ev.key.pin_len = key->pin_len;
 
-	mgmt_event(MGMT_EV_NEW_LINK_KEY, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_NEW_LINK_KEY, hdev, &ev, sizeof(ev), NULL);
+}
 
-अटल u8 mgmt_ltk_type(काष्ठा smp_ltk *ltk)
-अणु
-	चयन (ltk->type) अणु
-	हाल SMP_LTK:
-	हाल SMP_LTK_SLAVE:
-		अगर (ltk->authenticated)
-			वापस MGMT_LTK_AUTHENTICATED;
-		वापस MGMT_LTK_UNAUTHENTICATED;
-	हाल SMP_LTK_P256:
-		अगर (ltk->authenticated)
-			वापस MGMT_LTK_P256_AUTH;
-		वापस MGMT_LTK_P256_UNAUTH;
-	हाल SMP_LTK_P256_DEBUG:
-		वापस MGMT_LTK_P256_DEBUG;
-	पूर्ण
+static u8 mgmt_ltk_type(struct smp_ltk *ltk)
+{
+	switch (ltk->type) {
+	case SMP_LTK:
+	case SMP_LTK_SLAVE:
+		if (ltk->authenticated)
+			return MGMT_LTK_AUTHENTICATED;
+		return MGMT_LTK_UNAUTHENTICATED;
+	case SMP_LTK_P256:
+		if (ltk->authenticated)
+			return MGMT_LTK_P256_AUTH;
+		return MGMT_LTK_P256_UNAUTH;
+	case SMP_LTK_P256_DEBUG:
+		return MGMT_LTK_P256_DEBUG;
+	}
 
-	वापस MGMT_LTK_UNAUTHENTICATED;
-पूर्ण
+	return MGMT_LTK_UNAUTHENTICATED;
+}
 
-व्योम mgmt_new_ltk(काष्ठा hci_dev *hdev, काष्ठा smp_ltk *key, bool persistent)
-अणु
-	काष्ठा mgmt_ev_new_दीर्घ_term_key ev;
+void mgmt_new_ltk(struct hci_dev *hdev, struct smp_ltk *key, bool persistent)
+{
+	struct mgmt_ev_new_long_term_key ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
-	/* Devices using resolvable or non-resolvable अक्रमom addresses
-	 * without providing an identity resolving key करोn't require
-	 * to store दीर्घ term keys. Their addresses will change the
-	 * next समय around.
+	/* Devices using resolvable or non-resolvable random addresses
+	 * without providing an identity resolving key don't require
+	 * to store long term keys. Their addresses will change the
+	 * next time around.
 	 *
 	 * Only when a remote device provides an identity address
-	 * make sure the दीर्घ term key is stored. If the remote
-	 * identity is known, the दीर्घ term keys are पूर्णांकernally
-	 * mapped to the identity address. So allow अटल अक्रमom
-	 * and खुला addresses here.
+	 * make sure the long term key is stored. If the remote
+	 * identity is known, the long term keys are internally
+	 * mapped to the identity address. So allow static random
+	 * and public addresses here.
 	 */
-	अगर (key->bdaddr_type == ADDR_LE_DEV_RANDOM &&
+	if (key->bdaddr_type == ADDR_LE_DEV_RANDOM &&
 	    (key->bdaddr.b[5] & 0xc0) != 0xc0)
-		ev.store_hपूर्णांक = 0x00;
-	अन्यथा
-		ev.store_hपूर्णांक = persistent;
+		ev.store_hint = 0x00;
+	else
+		ev.store_hint = persistent;
 
 	bacpy(&ev.key.addr.bdaddr, &key->bdaddr);
 	ev.key.addr.type = link_to_bdaddr(LE_LINK, key->bdaddr_type);
 	ev.key.type = mgmt_ltk_type(key);
 	ev.key.enc_size = key->enc_size;
-	ev.key.eभाग = key->eभाग;
-	ev.key.अक्रम = key->अक्रम;
+	ev.key.ediv = key->ediv;
+	ev.key.rand = key->rand;
 
-	अगर (key->type == SMP_LTK)
+	if (key->type == SMP_LTK)
 		ev.key.master = 1;
 
-	/* Make sure we copy only the signअगरicant bytes based on the
+	/* Make sure we copy only the significant bytes based on the
 	 * encryption key size, and set the rest of the value to zeroes.
 	 */
-	स_नकल(ev.key.val, key->val, key->enc_size);
-	स_रखो(ev.key.val + key->enc_size, 0,
-	       माप(ev.key.val) - key->enc_size);
+	memcpy(ev.key.val, key->val, key->enc_size);
+	memset(ev.key.val + key->enc_size, 0,
+	       sizeof(ev.key.val) - key->enc_size);
 
-	mgmt_event(MGMT_EV_NEW_LONG_TERM_KEY, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_NEW_LONG_TERM_KEY, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_new_irk(काष्ठा hci_dev *hdev, काष्ठा smp_irk *irk, bool persistent)
-अणु
-	काष्ठा mgmt_ev_new_irk ev;
+void mgmt_new_irk(struct hci_dev *hdev, struct smp_irk *irk, bool persistent)
+{
+	struct mgmt_ev_new_irk ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
-	ev.store_hपूर्णांक = persistent;
+	ev.store_hint = persistent;
 
 	bacpy(&ev.rpa, &irk->rpa);
 	bacpy(&ev.irk.addr.bdaddr, &irk->bdaddr);
 	ev.irk.addr.type = link_to_bdaddr(LE_LINK, irk->addr_type);
-	स_नकल(ev.irk.val, irk->val, माप(irk->val));
+	memcpy(ev.irk.val, irk->val, sizeof(irk->val));
 
-	mgmt_event(MGMT_EV_NEW_IRK, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_NEW_IRK, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_new_csrk(काष्ठा hci_dev *hdev, काष्ठा smp_csrk *csrk,
+void mgmt_new_csrk(struct hci_dev *hdev, struct smp_csrk *csrk,
 		   bool persistent)
-अणु
-	काष्ठा mgmt_ev_new_csrk ev;
+{
+	struct mgmt_ev_new_csrk ev;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 
-	/* Devices using resolvable or non-resolvable अक्रमom addresses
-	 * without providing an identity resolving key करोn't require
+	/* Devices using resolvable or non-resolvable random addresses
+	 * without providing an identity resolving key don't require
 	 * to store signature resolving keys. Their addresses will change
-	 * the next समय around.
+	 * the next time around.
 	 *
 	 * Only when a remote device provides an identity address
 	 * make sure the signature resolving key is stored. So allow
-	 * अटल अक्रमom and खुला addresses here.
+	 * static random and public addresses here.
 	 */
-	अगर (csrk->bdaddr_type == ADDR_LE_DEV_RANDOM &&
+	if (csrk->bdaddr_type == ADDR_LE_DEV_RANDOM &&
 	    (csrk->bdaddr.b[5] & 0xc0) != 0xc0)
-		ev.store_hपूर्णांक = 0x00;
-	अन्यथा
-		ev.store_hपूर्णांक = persistent;
+		ev.store_hint = 0x00;
+	else
+		ev.store_hint = persistent;
 
 	bacpy(&ev.key.addr.bdaddr, &csrk->bdaddr);
 	ev.key.addr.type = link_to_bdaddr(LE_LINK, csrk->bdaddr_type);
 	ev.key.type = csrk->type;
-	स_नकल(ev.key.val, csrk->val, माप(csrk->val));
+	memcpy(ev.key.val, csrk->val, sizeof(csrk->val));
 
-	mgmt_event(MGMT_EV_NEW_CSRK, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_NEW_CSRK, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_new_conn_param(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
-			 u8 bdaddr_type, u8 store_hपूर्णांक, u16 min_पूर्णांकerval,
-			 u16 max_पूर्णांकerval, u16 latency, u16 समयout)
-अणु
-	काष्ठा mgmt_ev_new_conn_param ev;
+void mgmt_new_conn_param(struct hci_dev *hdev, bdaddr_t *bdaddr,
+			 u8 bdaddr_type, u8 store_hint, u16 min_interval,
+			 u16 max_interval, u16 latency, u16 timeout)
+{
+	struct mgmt_ev_new_conn_param ev;
 
-	अगर (!hci_is_identity_address(bdaddr, bdaddr_type))
-		वापस;
+	if (!hci_is_identity_address(bdaddr, bdaddr_type))
+		return;
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = link_to_bdaddr(LE_LINK, bdaddr_type);
-	ev.store_hपूर्णांक = store_hपूर्णांक;
-	ev.min_पूर्णांकerval = cpu_to_le16(min_पूर्णांकerval);
-	ev.max_पूर्णांकerval = cpu_to_le16(max_पूर्णांकerval);
+	ev.store_hint = store_hint;
+	ev.min_interval = cpu_to_le16(min_interval);
+	ev.max_interval = cpu_to_le16(max_interval);
 	ev.latency = cpu_to_le16(latency);
-	ev.समयout = cpu_to_le16(समयout);
+	ev.timeout = cpu_to_le16(timeout);
 
-	mgmt_event(MGMT_EV_NEW_CONN_PARAM, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_NEW_CONN_PARAM, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_device_connected(काष्ठा hci_dev *hdev, काष्ठा hci_conn *conn,
+void mgmt_device_connected(struct hci_dev *hdev, struct hci_conn *conn,
 			   u32 flags, u8 *name, u8 name_len)
-अणु
-	अक्षर buf[512];
-	काष्ठा mgmt_ev_device_connected *ev = (व्योम *) buf;
+{
+	char buf[512];
+	struct mgmt_ev_device_connected *ev = (void *) buf;
 	u16 eir_len = 0;
 
 	bacpy(&ev->addr.bdaddr, &conn->dst);
@@ -8780,274 +8779,274 @@ unlock:
 	ev->flags = __cpu_to_le32(flags);
 
 	/* We must ensure that the EIR Data fields are ordered and
-	 * unique. Keep it simple क्रम now and aव्योम the problem by not
+	 * unique. Keep it simple for now and avoid the problem by not
 	 * adding any BR/EDR data to the LE adv.
 	 */
-	अगर (conn->le_adv_data_len > 0) अणु
-		स_नकल(&ev->eir[eir_len],
+	if (conn->le_adv_data_len > 0) {
+		memcpy(&ev->eir[eir_len],
 		       conn->le_adv_data, conn->le_adv_data_len);
 		eir_len = conn->le_adv_data_len;
-	पूर्ण अन्यथा अणु
-		अगर (name_len > 0)
+	} else {
+		if (name_len > 0)
 			eir_len = eir_append_data(ev->eir, 0, EIR_NAME_COMPLETE,
 						  name, name_len);
 
-		अगर (स_भेद(conn->dev_class, "\0\0\0", 3) != 0)
+		if (memcmp(conn->dev_class, "\0\0\0", 3) != 0)
 			eir_len = eir_append_data(ev->eir, eir_len,
 						  EIR_CLASS_OF_DEV,
 						  conn->dev_class, 3);
-	पूर्ण
+	}
 
 	ev->eir_len = cpu_to_le16(eir_len);
 
 	mgmt_event(MGMT_EV_DEVICE_CONNECTED, hdev, buf,
-		    माप(*ev) + eir_len, शून्य);
-पूर्ण
+		    sizeof(*ev) + eir_len, NULL);
+}
 
-अटल व्योम disconnect_rsp(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
-	काष्ठा sock **sk = data;
+static void disconnect_rsp(struct mgmt_pending_cmd *cmd, void *data)
+{
+	struct sock **sk = data;
 
 	cmd->cmd_complete(cmd, 0);
 
 	*sk = cmd->sk;
 	sock_hold(*sk);
 
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-अटल व्योम unpair_device_rsp(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
-	काष्ठा hci_dev *hdev = data;
-	काष्ठा mgmt_cp_unpair_device *cp = cmd->param;
+static void unpair_device_rsp(struct mgmt_pending_cmd *cmd, void *data)
+{
+	struct hci_dev *hdev = data;
+	struct mgmt_cp_unpair_device *cp = cmd->param;
 
 	device_unpaired(hdev, &cp->addr.bdaddr, cp->addr.type, cmd->sk);
 
 	cmd->cmd_complete(cmd, 0);
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-bool mgmt_घातering_करोwn(काष्ठा hci_dev *hdev)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
-	काष्ठा mgmt_mode *cp;
+bool mgmt_powering_down(struct hci_dev *hdev)
+{
+	struct mgmt_pending_cmd *cmd;
+	struct mgmt_mode *cp;
 
 	cmd = pending_find(MGMT_OP_SET_POWERED, hdev);
-	अगर (!cmd)
-		वापस false;
+	if (!cmd)
+		return false;
 
 	cp = cmd->param;
-	अगर (!cp->val)
-		वापस true;
+	if (!cp->val)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम mgmt_device_disconnected(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+void mgmt_device_disconnected(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			      u8 link_type, u8 addr_type, u8 reason,
 			      bool mgmt_connected)
-अणु
-	काष्ठा mgmt_ev_device_disconnected ev;
-	काष्ठा sock *sk = शून्य;
+{
+	struct mgmt_ev_device_disconnected ev;
+	struct sock *sk = NULL;
 
-	/* The connection is still in hci_conn_hash so test क्रम 1
-	 * instead of 0 to know अगर this is the last one.
+	/* The connection is still in hci_conn_hash so test for 1
+	 * instead of 0 to know if this is the last one.
 	 */
-	अगर (mgmt_घातering_करोwn(hdev) && hci_conn_count(hdev) == 1) अणु
-		cancel_delayed_work(&hdev->घातer_off);
-		queue_work(hdev->req_workqueue, &hdev->घातer_off.work);
-	पूर्ण
+	if (mgmt_powering_down(hdev) && hci_conn_count(hdev) == 1) {
+		cancel_delayed_work(&hdev->power_off);
+		queue_work(hdev->req_workqueue, &hdev->power_off.work);
+	}
 
-	अगर (!mgmt_connected)
-		वापस;
+	if (!mgmt_connected)
+		return;
 
-	अगर (link_type != ACL_LINK && link_type != LE_LINK)
-		वापस;
+	if (link_type != ACL_LINK && link_type != LE_LINK)
+		return;
 
-	mgmt_pending_क्रमeach(MGMT_OP_DISCONNECT, hdev, disconnect_rsp, &sk);
+	mgmt_pending_foreach(MGMT_OP_DISCONNECT, hdev, disconnect_rsp, &sk);
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = link_to_bdaddr(link_type, addr_type);
 	ev.reason = reason;
 
 	/* Report disconnects due to suspend */
-	अगर (hdev->suspended)
+	if (hdev->suspended)
 		ev.reason = MGMT_DEV_DISCONN_LOCAL_HOST_SUSPEND;
 
-	mgmt_event(MGMT_EV_DEVICE_DISCONNECTED, hdev, &ev, माप(ev), sk);
+	mgmt_event(MGMT_EV_DEVICE_DISCONNECTED, hdev, &ev, sizeof(ev), sk);
 
-	अगर (sk)
+	if (sk)
 		sock_put(sk);
 
-	mgmt_pending_क्रमeach(MGMT_OP_UNPAIR_DEVICE, hdev, unpair_device_rsp,
+	mgmt_pending_foreach(MGMT_OP_UNPAIR_DEVICE, hdev, unpair_device_rsp,
 			     hdev);
-पूर्ण
+}
 
-व्योम mgmt_disconnect_failed(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+void mgmt_disconnect_failed(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			    u8 link_type, u8 addr_type, u8 status)
-अणु
+{
 	u8 bdaddr_type = link_to_bdaddr(link_type, addr_type);
-	काष्ठा mgmt_cp_disconnect *cp;
-	काष्ठा mgmt_pending_cmd *cmd;
+	struct mgmt_cp_disconnect *cp;
+	struct mgmt_pending_cmd *cmd;
 
-	mgmt_pending_क्रमeach(MGMT_OP_UNPAIR_DEVICE, hdev, unpair_device_rsp,
+	mgmt_pending_foreach(MGMT_OP_UNPAIR_DEVICE, hdev, unpair_device_rsp,
 			     hdev);
 
 	cmd = pending_find(MGMT_OP_DISCONNECT, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	cp = cmd->param;
 
-	अगर (bacmp(bdaddr, &cp->addr.bdaddr))
-		वापस;
+	if (bacmp(bdaddr, &cp->addr.bdaddr))
+		return;
 
-	अगर (cp->addr.type != bdaddr_type)
-		वापस;
+	if (cp->addr.type != bdaddr_type)
+		return;
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-व्योम mgmt_connect_failed(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
+void mgmt_connect_failed(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
 			 u8 addr_type, u8 status)
-अणु
-	काष्ठा mgmt_ev_connect_failed ev;
+{
+	struct mgmt_ev_connect_failed ev;
 
-	/* The connection is still in hci_conn_hash so test क्रम 1
-	 * instead of 0 to know अगर this is the last one.
+	/* The connection is still in hci_conn_hash so test for 1
+	 * instead of 0 to know if this is the last one.
 	 */
-	अगर (mgmt_घातering_करोwn(hdev) && hci_conn_count(hdev) == 1) अणु
-		cancel_delayed_work(&hdev->घातer_off);
-		queue_work(hdev->req_workqueue, &hdev->घातer_off.work);
-	पूर्ण
+	if (mgmt_powering_down(hdev) && hci_conn_count(hdev) == 1) {
+		cancel_delayed_work(&hdev->power_off);
+		queue_work(hdev->req_workqueue, &hdev->power_off.work);
+	}
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = link_to_bdaddr(link_type, addr_type);
 	ev.status = mgmt_status(status);
 
-	mgmt_event(MGMT_EV_CONNECT_FAILED, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_CONNECT_FAILED, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_pin_code_request(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr, u8 secure)
-अणु
-	काष्ठा mgmt_ev_pin_code_request ev;
+void mgmt_pin_code_request(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 secure)
+{
+	struct mgmt_ev_pin_code_request ev;
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = BDADDR_BREDR;
 	ev.secure = secure;
 
-	mgmt_event(MGMT_EV_PIN_CODE_REQUEST, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_PIN_CODE_REQUEST, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_pin_code_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+void mgmt_pin_code_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 				  u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_pending_cmd *cmd;
 
 	cmd = pending_find(MGMT_OP_PIN_CODE_REPLY, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-व्योम mgmt_pin_code_neg_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+void mgmt_pin_code_neg_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 				      u8 status)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_pending_cmd *cmd;
 
 	cmd = pending_find(MGMT_OP_PIN_CODE_NEG_REPLY, hdev);
-	अगर (!cmd)
-		वापस;
+	if (!cmd)
+		return;
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
-पूर्ण
+	mgmt_pending_remove(cmd);
+}
 
-पूर्णांक mgmt_user_confirm_request(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_confirm_request(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			      u8 link_type, u8 addr_type, u32 value,
-			      u8 confirm_hपूर्णांक)
-अणु
-	काष्ठा mgmt_ev_user_confirm_request ev;
+			      u8 confirm_hint)
+{
+	struct mgmt_ev_user_confirm_request ev;
 
 	bt_dev_dbg(hdev, "bdaddr %pMR", bdaddr);
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = link_to_bdaddr(link_type, addr_type);
-	ev.confirm_hपूर्णांक = confirm_hपूर्णांक;
+	ev.confirm_hint = confirm_hint;
 	ev.value = cpu_to_le32(value);
 
-	वापस mgmt_event(MGMT_EV_USER_CONFIRM_REQUEST, hdev, &ev, माप(ev),
-			  शून्य);
-पूर्ण
+	return mgmt_event(MGMT_EV_USER_CONFIRM_REQUEST, hdev, &ev, sizeof(ev),
+			  NULL);
+}
 
-पूर्णांक mgmt_user_passkey_request(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_passkey_request(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			      u8 link_type, u8 addr_type)
-अणु
-	काष्ठा mgmt_ev_user_passkey_request ev;
+{
+	struct mgmt_ev_user_passkey_request ev;
 
 	bt_dev_dbg(hdev, "bdaddr %pMR", bdaddr);
 
 	bacpy(&ev.addr.bdaddr, bdaddr);
 	ev.addr.type = link_to_bdaddr(link_type, addr_type);
 
-	वापस mgmt_event(MGMT_EV_USER_PASSKEY_REQUEST, hdev, &ev, माप(ev),
-			  शून्य);
-पूर्ण
+	return mgmt_event(MGMT_EV_USER_PASSKEY_REQUEST, hdev, &ev, sizeof(ev),
+			  NULL);
+}
 
-अटल पूर्णांक user_pairing_resp_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+static int user_pairing_resp_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 				      u8 link_type, u8 addr_type, u8 status,
 				      u8 opcode)
-अणु
-	काष्ठा mgmt_pending_cmd *cmd;
+{
+	struct mgmt_pending_cmd *cmd;
 
 	cmd = pending_find(opcode, hdev);
-	अगर (!cmd)
-		वापस -ENOENT;
+	if (!cmd)
+		return -ENOENT;
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
-	mgmt_pending_हटाओ(cmd);
+	mgmt_pending_remove(cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mgmt_user_confirm_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_confirm_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 				     u8 link_type, u8 addr_type, u8 status)
-अणु
-	वापस user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
+{
+	return user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
 					  status, MGMT_OP_USER_CONFIRM_REPLY);
-पूर्ण
+}
 
-पूर्णांक mgmt_user_confirm_neg_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_confirm_neg_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 					 u8 link_type, u8 addr_type, u8 status)
-अणु
-	वापस user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
+{
+	return user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
 					  status,
 					  MGMT_OP_USER_CONFIRM_NEG_REPLY);
-पूर्ण
+}
 
-पूर्णांक mgmt_user_passkey_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_passkey_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 				     u8 link_type, u8 addr_type, u8 status)
-अणु
-	वापस user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
+{
+	return user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
 					  status, MGMT_OP_USER_PASSKEY_REPLY);
-पूर्ण
+}
 
-पूर्णांक mgmt_user_passkey_neg_reply_complete(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_passkey_neg_reply_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 					 u8 link_type, u8 addr_type, u8 status)
-अणु
-	वापस user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
+{
+	return user_pairing_resp_complete(hdev, bdaddr, link_type, addr_type,
 					  status,
 					  MGMT_OP_USER_PASSKEY_NEG_REPLY);
-पूर्ण
+}
 
-पूर्णांक mgmt_user_passkey_notअगरy(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr,
+int mgmt_user_passkey_notify(struct hci_dev *hdev, bdaddr_t *bdaddr,
 			     u8 link_type, u8 addr_type, u32 passkey,
 			     u8 entered)
-अणु
-	काष्ठा mgmt_ev_passkey_notअगरy ev;
+{
+	struct mgmt_ev_passkey_notify ev;
 
 	bt_dev_dbg(hdev, "bdaddr %pMR", bdaddr);
 
@@ -9056,13 +9055,13 @@ bool mgmt_घातering_करोwn(काष्ठा hci_dev *hdev)
 	ev.passkey = __cpu_to_le32(passkey);
 	ev.entered = entered;
 
-	वापस mgmt_event(MGMT_EV_PASSKEY_NOTIFY, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	return mgmt_event(MGMT_EV_PASSKEY_NOTIFY, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_auth_failed(काष्ठा hci_conn *conn, u8 hci_status)
-अणु
-	काष्ठा mgmt_ev_auth_failed ev;
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_auth_failed(struct hci_conn *conn, u8 hci_status)
+{
+	struct mgmt_ev_auth_failed ev;
+	struct mgmt_pending_cmd *cmd;
 	u8 status = mgmt_status(hci_status);
 
 	bacpy(&ev.addr.bdaddr, &conn->dst);
@@ -9071,352 +9070,352 @@ bool mgmt_घातering_करोwn(काष्ठा hci_dev *hdev)
 
 	cmd = find_pairing(conn);
 
-	mgmt_event(MGMT_EV_AUTH_FAILED, conn->hdev, &ev, माप(ev),
-		    cmd ? cmd->sk : शून्य);
+	mgmt_event(MGMT_EV_AUTH_FAILED, conn->hdev, &ev, sizeof(ev),
+		    cmd ? cmd->sk : NULL);
 
-	अगर (cmd) अणु
+	if (cmd) {
 		cmd->cmd_complete(cmd, status);
-		mgmt_pending_हटाओ(cmd);
-	पूर्ण
-पूर्ण
+		mgmt_pending_remove(cmd);
+	}
+}
 
-व्योम mgmt_auth_enable_complete(काष्ठा hci_dev *hdev, u8 status)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
+void mgmt_auth_enable_complete(struct hci_dev *hdev, u8 status)
+{
+	struct cmd_lookup match = { NULL, hdev };
 	bool changed;
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
-		mgmt_pending_क्रमeach(MGMT_OP_SET_LINK_SECURITY, hdev,
+		mgmt_pending_foreach(MGMT_OP_SET_LINK_SECURITY, hdev,
 				     cmd_status_rsp, &mgmt_err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (test_bit(HCI_AUTH, &hdev->flags))
+	if (test_bit(HCI_AUTH, &hdev->flags))
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_LINK_SECURITY);
-	अन्यथा
+	else
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_LINK_SECURITY);
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_LINK_SECURITY, hdev, settings_rsp,
+	mgmt_pending_foreach(MGMT_OP_SET_LINK_SECURITY, hdev, settings_rsp,
 			     &match);
 
-	अगर (changed)
+	if (changed)
 		new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
-पूर्ण
+}
 
-अटल व्योम clear_eir(काष्ठा hci_request *req)
-अणु
-	काष्ठा hci_dev *hdev = req->hdev;
-	काष्ठा hci_cp_ग_लिखो_eir cp;
+static void clear_eir(struct hci_request *req)
+{
+	struct hci_dev *hdev = req->hdev;
+	struct hci_cp_write_eir cp;
 
-	अगर (!lmp_ext_inq_capable(hdev))
-		वापस;
+	if (!lmp_ext_inq_capable(hdev))
+		return;
 
-	स_रखो(hdev->eir, 0, माप(hdev->eir));
+	memset(hdev->eir, 0, sizeof(hdev->eir));
 
-	स_रखो(&cp, 0, माप(cp));
+	memset(&cp, 0, sizeof(cp));
 
-	hci_req_add(req, HCI_OP_WRITE_EIR, माप(cp), &cp);
-पूर्ण
+	hci_req_add(req, HCI_OP_WRITE_EIR, sizeof(cp), &cp);
+}
 
-व्योम mgmt_ssp_enable_complete(काष्ठा hci_dev *hdev, u8 enable, u8 status)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev पूर्ण;
-	काष्ठा hci_request req;
+void mgmt_ssp_enable_complete(struct hci_dev *hdev, u8 enable, u8 status)
+{
+	struct cmd_lookup match = { NULL, hdev };
+	struct hci_request req;
 	bool changed = false;
 
-	अगर (status) अणु
+	if (status) {
 		u8 mgmt_err = mgmt_status(status);
 
-		अगर (enable && hci_dev_test_and_clear_flag(hdev,
-							  HCI_SSP_ENABLED)) अणु
+		if (enable && hci_dev_test_and_clear_flag(hdev,
+							  HCI_SSP_ENABLED)) {
 			hci_dev_clear_flag(hdev, HCI_HS_ENABLED);
-			new_settings(hdev, शून्य);
-		पूर्ण
+			new_settings(hdev, NULL);
+		}
 
-		mgmt_pending_क्रमeach(MGMT_OP_SET_SSP, hdev, cmd_status_rsp,
+		mgmt_pending_foreach(MGMT_OP_SET_SSP, hdev, cmd_status_rsp,
 				     &mgmt_err);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (enable) अणु
+	if (enable) {
 		changed = !hci_dev_test_and_set_flag(hdev, HCI_SSP_ENABLED);
-	पूर्ण अन्यथा अणु
+	} else {
 		changed = hci_dev_test_and_clear_flag(hdev, HCI_SSP_ENABLED);
-		अगर (!changed)
+		if (!changed)
 			changed = hci_dev_test_and_clear_flag(hdev,
 							      HCI_HS_ENABLED);
-		अन्यथा
+		else
 			hci_dev_clear_flag(hdev, HCI_HS_ENABLED);
-	पूर्ण
+	}
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_SSP, hdev, settings_rsp, &match);
+	mgmt_pending_foreach(MGMT_OP_SET_SSP, hdev, settings_rsp, &match);
 
-	अगर (changed)
+	if (changed)
 		new_settings(hdev, match.sk);
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
 
 	hci_req_init(&req, hdev);
 
-	अगर (hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) अणु
-		अगर (hci_dev_test_flag(hdev, HCI_USE_DEBUG_KEYS))
+	if (hci_dev_test_flag(hdev, HCI_SSP_ENABLED)) {
+		if (hci_dev_test_flag(hdev, HCI_USE_DEBUG_KEYS))
 			hci_req_add(&req, HCI_OP_WRITE_SSP_DEBUG_MODE,
-				    माप(enable), &enable);
+				    sizeof(enable), &enable);
 		__hci_req_update_eir(&req);
-	पूर्ण अन्यथा अणु
+	} else {
 		clear_eir(&req);
-	पूर्ण
+	}
 
-	hci_req_run(&req, शून्य);
-पूर्ण
+	hci_req_run(&req, NULL);
+}
 
-अटल व्योम sk_lookup(काष्ठा mgmt_pending_cmd *cmd, व्योम *data)
-अणु
-	काष्ठा cmd_lookup *match = data;
+static void sk_lookup(struct mgmt_pending_cmd *cmd, void *data)
+{
+	struct cmd_lookup *match = data;
 
-	अगर (match->sk == शून्य) अणु
+	if (match->sk == NULL) {
 		match->sk = cmd->sk;
 		sock_hold(match->sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम mgmt_set_class_of_dev_complete(काष्ठा hci_dev *hdev, u8 *dev_class,
+void mgmt_set_class_of_dev_complete(struct hci_dev *hdev, u8 *dev_class,
 				    u8 status)
-अणु
-	काष्ठा cmd_lookup match = अणु शून्य, hdev, mgmt_status(status) पूर्ण;
+{
+	struct cmd_lookup match = { NULL, hdev, mgmt_status(status) };
 
-	mgmt_pending_क्रमeach(MGMT_OP_SET_DEV_CLASS, hdev, sk_lookup, &match);
-	mgmt_pending_क्रमeach(MGMT_OP_ADD_UUID, hdev, sk_lookup, &match);
-	mgmt_pending_क्रमeach(MGMT_OP_REMOVE_UUID, hdev, sk_lookup, &match);
+	mgmt_pending_foreach(MGMT_OP_SET_DEV_CLASS, hdev, sk_lookup, &match);
+	mgmt_pending_foreach(MGMT_OP_ADD_UUID, hdev, sk_lookup, &match);
+	mgmt_pending_foreach(MGMT_OP_REMOVE_UUID, hdev, sk_lookup, &match);
 
-	अगर (!status) अणु
+	if (!status) {
 		mgmt_limited_event(MGMT_EV_CLASS_OF_DEV_CHANGED, hdev, dev_class,
-				   3, HCI_MGMT_DEV_CLASS_EVENTS, शून्य);
-		ext_info_changed(hdev, शून्य);
-	पूर्ण
+				   3, HCI_MGMT_DEV_CLASS_EVENTS, NULL);
+		ext_info_changed(hdev, NULL);
+	}
 
-	अगर (match.sk)
+	if (match.sk)
 		sock_put(match.sk);
-पूर्ण
+}
 
-व्योम mgmt_set_local_name_complete(काष्ठा hci_dev *hdev, u8 *name, u8 status)
-अणु
-	काष्ठा mgmt_cp_set_local_name ev;
-	काष्ठा mgmt_pending_cmd *cmd;
+void mgmt_set_local_name_complete(struct hci_dev *hdev, u8 *name, u8 status)
+{
+	struct mgmt_cp_set_local_name ev;
+	struct mgmt_pending_cmd *cmd;
 
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 
-	स_रखो(&ev, 0, माप(ev));
-	स_नकल(ev.name, name, HCI_MAX_NAME_LENGTH);
-	स_नकल(ev.लघु_name, hdev->लघु_name, HCI_MAX_SHORT_NAME_LENGTH);
+	memset(&ev, 0, sizeof(ev));
+	memcpy(ev.name, name, HCI_MAX_NAME_LENGTH);
+	memcpy(ev.short_name, hdev->short_name, HCI_MAX_SHORT_NAME_LENGTH);
 
 	cmd = pending_find(MGMT_OP_SET_LOCAL_NAME, hdev);
-	अगर (!cmd) अणु
-		स_नकल(hdev->dev_name, name, माप(hdev->dev_name));
+	if (!cmd) {
+		memcpy(hdev->dev_name, name, sizeof(hdev->dev_name));
 
-		/* If this is a HCI command related to घातering on the
-		 * HCI dev करोn't send any mgmt संकेतs.
+		/* If this is a HCI command related to powering on the
+		 * HCI dev don't send any mgmt signals.
 		 */
-		अगर (pending_find(MGMT_OP_SET_POWERED, hdev))
-			वापस;
-	पूर्ण
+		if (pending_find(MGMT_OP_SET_POWERED, hdev))
+			return;
+	}
 
-	mgmt_limited_event(MGMT_EV_LOCAL_NAME_CHANGED, hdev, &ev, माप(ev),
-			   HCI_MGMT_LOCAL_NAME_EVENTS, cmd ? cmd->sk : शून्य);
-	ext_info_changed(hdev, cmd ? cmd->sk : शून्य);
-पूर्ण
+	mgmt_limited_event(MGMT_EV_LOCAL_NAME_CHANGED, hdev, &ev, sizeof(ev),
+			   HCI_MGMT_LOCAL_NAME_EVENTS, cmd ? cmd->sk : NULL);
+	ext_info_changed(hdev, cmd ? cmd->sk : NULL);
+}
 
-अटल अंतरभूत bool has_uuid(u8 *uuid, u16 uuid_count, u8 (*uuids)[16])
-अणु
-	पूर्णांक i;
+static inline bool has_uuid(u8 *uuid, u16 uuid_count, u8 (*uuids)[16])
+{
+	int i;
 
-	क्रम (i = 0; i < uuid_count; i++) अणु
-		अगर (!स_भेद(uuid, uuids[i], 16))
-			वापस true;
-	पूर्ण
+	for (i = 0; i < uuid_count; i++) {
+		if (!memcmp(uuid, uuids[i], 16))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool eir_has_uuids(u8 *eir, u16 eir_len, u16 uuid_count, u8 (*uuids)[16])
-अणु
+static bool eir_has_uuids(u8 *eir, u16 eir_len, u16 uuid_count, u8 (*uuids)[16])
+{
 	u16 parsed = 0;
 
-	जबतक (parsed < eir_len) अणु
+	while (parsed < eir_len) {
 		u8 field_len = eir[0];
 		u8 uuid[16];
-		पूर्णांक i;
+		int i;
 
-		अगर (field_len == 0)
-			अवरोध;
+		if (field_len == 0)
+			break;
 
-		अगर (eir_len - parsed < field_len + 1)
-			अवरोध;
+		if (eir_len - parsed < field_len + 1)
+			break;
 
-		चयन (eir[1]) अणु
-		हाल EIR_UUID16_ALL:
-		हाल EIR_UUID16_SOME:
-			क्रम (i = 0; i + 3 <= field_len; i += 2) अणु
-				स_नकल(uuid, bluetooth_base_uuid, 16);
+		switch (eir[1]) {
+		case EIR_UUID16_ALL:
+		case EIR_UUID16_SOME:
+			for (i = 0; i + 3 <= field_len; i += 2) {
+				memcpy(uuid, bluetooth_base_uuid, 16);
 				uuid[13] = eir[i + 3];
 				uuid[12] = eir[i + 2];
-				अगर (has_uuid(uuid, uuid_count, uuids))
-					वापस true;
-			पूर्ण
-			अवरोध;
-		हाल EIR_UUID32_ALL:
-		हाल EIR_UUID32_SOME:
-			क्रम (i = 0; i + 5 <= field_len; i += 4) अणु
-				स_नकल(uuid, bluetooth_base_uuid, 16);
+				if (has_uuid(uuid, uuid_count, uuids))
+					return true;
+			}
+			break;
+		case EIR_UUID32_ALL:
+		case EIR_UUID32_SOME:
+			for (i = 0; i + 5 <= field_len; i += 4) {
+				memcpy(uuid, bluetooth_base_uuid, 16);
 				uuid[15] = eir[i + 5];
 				uuid[14] = eir[i + 4];
 				uuid[13] = eir[i + 3];
 				uuid[12] = eir[i + 2];
-				अगर (has_uuid(uuid, uuid_count, uuids))
-					वापस true;
-			पूर्ण
-			अवरोध;
-		हाल EIR_UUID128_ALL:
-		हाल EIR_UUID128_SOME:
-			क्रम (i = 0; i + 17 <= field_len; i += 16) अणु
-				स_नकल(uuid, eir + i + 2, 16);
-				अगर (has_uuid(uuid, uuid_count, uuids))
-					वापस true;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				if (has_uuid(uuid, uuid_count, uuids))
+					return true;
+			}
+			break;
+		case EIR_UUID128_ALL:
+		case EIR_UUID128_SOME:
+			for (i = 0; i + 17 <= field_len; i += 16) {
+				memcpy(uuid, eir + i + 2, 16);
+				if (has_uuid(uuid, uuid_count, uuids))
+					return true;
+			}
+			break;
+		}
 
 		parsed += field_len + 1;
 		eir += field_len + 1;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम restart_le_scan(काष्ठा hci_dev *hdev)
-अणु
-	/* If controller is not scanning we are करोne. */
-	अगर (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
-		वापस;
+static void restart_le_scan(struct hci_dev *hdev)
+{
+	/* If controller is not scanning we are done. */
+	if (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
+		return;
 
-	अगर (समय_after(jअगरfies + DISCOV_LE_RESTART_DELAY,
+	if (time_after(jiffies + DISCOV_LE_RESTART_DELAY,
 		       hdev->discovery.scan_start +
 		       hdev->discovery.scan_duration))
-		वापस;
+		return;
 
 	queue_delayed_work(hdev->req_workqueue, &hdev->le_scan_restart,
 			   DISCOV_LE_RESTART_DELAY);
-पूर्ण
+}
 
-अटल bool is_filter_match(काष्ठा hci_dev *hdev, s8 rssi, u8 *eir,
+static bool is_filter_match(struct hci_dev *hdev, s8 rssi, u8 *eir,
 			    u16 eir_len, u8 *scan_rsp, u8 scan_rsp_len)
-अणु
-	/* If a RSSI threshold has been specअगरied, and
+{
+	/* If a RSSI threshold has been specified, and
 	 * HCI_QUIRK_STRICT_DUPLICATE_FILTER is not set, then all results with
 	 * a RSSI smaller than the RSSI threshold will be dropped. If the quirk
-	 * is set, let it through क्रम further processing, as we might need to
+	 * is set, let it through for further processing, as we might need to
 	 * restart the scan.
 	 *
 	 * For BR/EDR devices (pre 1.2) providing no RSSI during inquiry,
 	 * the results are also dropped.
 	 */
-	अगर (hdev->discovery.rssi != HCI_RSSI_INVALID &&
+	if (hdev->discovery.rssi != HCI_RSSI_INVALID &&
 	    (rssi == HCI_RSSI_INVALID ||
 	    (rssi < hdev->discovery.rssi &&
 	     !test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks))))
-		वापस  false;
+		return  false;
 
-	अगर (hdev->discovery.uuid_count != 0) अणु
+	if (hdev->discovery.uuid_count != 0) {
 		/* If a list of UUIDs is provided in filter, results with no
 		 * matching UUID should be dropped.
 		 */
-		अगर (!eir_has_uuids(eir, eir_len, hdev->discovery.uuid_count,
+		if (!eir_has_uuids(eir, eir_len, hdev->discovery.uuid_count,
 				   hdev->discovery.uuids) &&
 		    !eir_has_uuids(scan_rsp, scan_rsp_len,
 				   hdev->discovery.uuid_count,
 				   hdev->discovery.uuids))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	/* If duplicate filtering करोes not report RSSI changes, then restart
+	/* If duplicate filtering does not report RSSI changes, then restart
 	 * scanning to ensure updated result with updated RSSI values.
 	 */
-	अगर (test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks)) अणु
+	if (test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks)) {
 		restart_le_scan(hdev);
 
 		/* Validate RSSI value against the RSSI threshold once more. */
-		अगर (hdev->discovery.rssi != HCI_RSSI_INVALID &&
+		if (hdev->discovery.rssi != HCI_RSSI_INVALID &&
 		    rssi < hdev->discovery.rssi)
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम mgmt_device_found(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
+void mgmt_device_found(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
 		       u8 addr_type, u8 *dev_class, s8 rssi, u32 flags,
 		       u8 *eir, u16 eir_len, u8 *scan_rsp, u8 scan_rsp_len)
-अणु
-	अक्षर buf[512];
-	काष्ठा mgmt_ev_device_found *ev = (व्योम *)buf;
-	माप_प्रकार ev_size;
+{
+	char buf[512];
+	struct mgmt_ev_device_found *ev = (void *)buf;
+	size_t ev_size;
 
-	/* Don't send events क्रम a non-kernel initiated discovery. With
-	 * LE one exception is अगर we have pend_le_reports > 0 in which
-	 * हाल we're करोing passive scanning and want these events.
+	/* Don't send events for a non-kernel initiated discovery. With
+	 * LE one exception is if we have pend_le_reports > 0 in which
+	 * case we're doing passive scanning and want these events.
 	 */
-	अगर (!hci_discovery_active(hdev)) अणु
-		अगर (link_type == ACL_LINK)
-			वापस;
-		अगर (link_type == LE_LINK &&
+	if (!hci_discovery_active(hdev)) {
+		if (link_type == ACL_LINK)
+			return;
+		if (link_type == LE_LINK &&
 		    list_empty(&hdev->pend_le_reports) &&
-		    !hci_is_adv_monitoring(hdev)) अणु
-			वापस;
-		पूर्ण
-	पूर्ण
+		    !hci_is_adv_monitoring(hdev)) {
+			return;
+		}
+	}
 
-	अगर (hdev->discovery.result_filtering) अणु
+	if (hdev->discovery.result_filtering) {
 		/* We are using service discovery */
-		अगर (!is_filter_match(hdev, rssi, eir, eir_len, scan_rsp,
+		if (!is_filter_match(hdev, rssi, eir, eir_len, scan_rsp,
 				     scan_rsp_len))
-			वापस;
-	पूर्ण
+			return;
+	}
 
-	अगर (hdev->discovery.limited) अणु
-		/* Check क्रम limited discoverable bit */
-		अगर (dev_class) अणु
-			अगर (!(dev_class[1] & 0x20))
-				वापस;
-		पूर्ण अन्यथा अणु
-			u8 *flags = eir_get_data(eir, eir_len, EIR_FLAGS, शून्य);
-			अगर (!flags || !(flags[0] & LE_AD_LIMITED))
-				वापस;
-		पूर्ण
-	पूर्ण
+	if (hdev->discovery.limited) {
+		/* Check for limited discoverable bit */
+		if (dev_class) {
+			if (!(dev_class[1] & 0x20))
+				return;
+		} else {
+			u8 *flags = eir_get_data(eir, eir_len, EIR_FLAGS, NULL);
+			if (!flags || !(flags[0] & LE_AD_LIMITED))
+				return;
+		}
+	}
 
 	/* Make sure that the buffer is big enough. The 5 extra bytes
-	 * are क्रम the potential CoD field.
+	 * are for the potential CoD field.
 	 */
-	अगर (माप(*ev) + eir_len + scan_rsp_len + 5 > माप(buf))
-		वापस;
+	if (sizeof(*ev) + eir_len + scan_rsp_len + 5 > sizeof(buf))
+		return;
 
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 
-	/* In हाल of device discovery with BR/EDR devices (pre 1.2), the
+	/* In case of device discovery with BR/EDR devices (pre 1.2), the
 	 * RSSI value was reported as 0 when not available. This behavior
-	 * is kept when using device discovery. This is required क्रम full
+	 * is kept when using device discovery. This is required for full
 	 * backwards compatibility with the API.
 	 *
 	 * However when using service discovery, the value 127 will be
-	 * वापसed when the RSSI is not available.
+	 * returned when the RSSI is not available.
 	 */
-	अगर (rssi == HCI_RSSI_INVALID && !hdev->discovery.report_invalid_rssi &&
+	if (rssi == HCI_RSSI_INVALID && !hdev->discovery.report_invalid_rssi &&
 	    link_type == ACL_LINK)
 		rssi = 0;
 
@@ -9425,35 +9424,35 @@ bool mgmt_घातering_करोwn(काष्ठा hci_dev *hdev)
 	ev->rssi = rssi;
 	ev->flags = cpu_to_le32(flags);
 
-	अगर (eir_len > 0)
-		/* Copy EIR or advertising data पूर्णांकo event */
-		स_नकल(ev->eir, eir, eir_len);
+	if (eir_len > 0)
+		/* Copy EIR or advertising data into event */
+		memcpy(ev->eir, eir, eir_len);
 
-	अगर (dev_class && !eir_get_data(ev->eir, eir_len, EIR_CLASS_OF_DEV,
-				       शून्य))
+	if (dev_class && !eir_get_data(ev->eir, eir_len, EIR_CLASS_OF_DEV,
+				       NULL))
 		eir_len = eir_append_data(ev->eir, eir_len, EIR_CLASS_OF_DEV,
 					  dev_class, 3);
 
-	अगर (scan_rsp_len > 0)
+	if (scan_rsp_len > 0)
 		/* Append scan response data to event */
-		स_नकल(ev->eir + eir_len, scan_rsp, scan_rsp_len);
+		memcpy(ev->eir + eir_len, scan_rsp, scan_rsp_len);
 
 	ev->eir_len = cpu_to_le16(eir_len + scan_rsp_len);
-	ev_size = माप(*ev) + eir_len + scan_rsp_len;
+	ev_size = sizeof(*ev) + eir_len + scan_rsp_len;
 
-	mgmt_event(MGMT_EV_DEVICE_FOUND, hdev, ev, ev_size, शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_DEVICE_FOUND, hdev, ev, ev_size, NULL);
+}
 
-व्योम mgmt_remote_name(काष्ठा hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
+void mgmt_remote_name(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 link_type,
 		      u8 addr_type, s8 rssi, u8 *name, u8 name_len)
-अणु
-	काष्ठा mgmt_ev_device_found *ev;
-	अक्षर buf[माप(*ev) + HCI_MAX_NAME_LENGTH + 2];
+{
+	struct mgmt_ev_device_found *ev;
+	char buf[sizeof(*ev) + HCI_MAX_NAME_LENGTH + 2];
 	u16 eir_len;
 
-	ev = (काष्ठा mgmt_ev_device_found *) buf;
+	ev = (struct mgmt_ev_device_found *) buf;
 
-	स_रखो(buf, 0, माप(buf));
+	memset(buf, 0, sizeof(buf));
 
 	bacpy(&ev->addr.bdaddr, bdaddr);
 	ev->addr.type = link_to_bdaddr(link_type, addr_type);
@@ -9464,59 +9463,59 @@ bool mgmt_घातering_करोwn(काष्ठा hci_dev *hdev)
 
 	ev->eir_len = cpu_to_le16(eir_len);
 
-	mgmt_event(MGMT_EV_DEVICE_FOUND, hdev, ev, माप(*ev) + eir_len, शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_DEVICE_FOUND, hdev, ev, sizeof(*ev) + eir_len, NULL);
+}
 
-व्योम mgmt_discovering(काष्ठा hci_dev *hdev, u8 discovering)
-अणु
-	काष्ठा mgmt_ev_discovering ev;
+void mgmt_discovering(struct hci_dev *hdev, u8 discovering)
+{
+	struct mgmt_ev_discovering ev;
 
 	bt_dev_dbg(hdev, "discovering %u", discovering);
 
-	स_रखो(&ev, 0, माप(ev));
+	memset(&ev, 0, sizeof(ev));
 	ev.type = hdev->discovery.type;
 	ev.discovering = discovering;
 
-	mgmt_event(MGMT_EV_DISCOVERING, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_DISCOVERING, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_suspending(काष्ठा hci_dev *hdev, u8 state)
-अणु
-	काष्ठा mgmt_ev_controller_suspend ev;
+void mgmt_suspending(struct hci_dev *hdev, u8 state)
+{
+	struct mgmt_ev_controller_suspend ev;
 
 	ev.suspend_state = state;
-	mgmt_event(MGMT_EV_CONTROLLER_SUSPEND, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_CONTROLLER_SUSPEND, hdev, &ev, sizeof(ev), NULL);
+}
 
-व्योम mgmt_resuming(काष्ठा hci_dev *hdev, u8 reason, bdaddr_t *bdaddr,
+void mgmt_resuming(struct hci_dev *hdev, u8 reason, bdaddr_t *bdaddr,
 		   u8 addr_type)
-अणु
-	काष्ठा mgmt_ev_controller_resume ev;
+{
+	struct mgmt_ev_controller_resume ev;
 
 	ev.wake_reason = reason;
-	अगर (bdaddr) अणु
+	if (bdaddr) {
 		bacpy(&ev.addr.bdaddr, bdaddr);
 		ev.addr.type = addr_type;
-	पूर्ण अन्यथा अणु
-		स_रखो(&ev.addr, 0, माप(ev.addr));
-	पूर्ण
+	} else {
+		memset(&ev.addr, 0, sizeof(ev.addr));
+	}
 
-	mgmt_event(MGMT_EV_CONTROLLER_RESUME, hdev, &ev, माप(ev), शून्य);
-पूर्ण
+	mgmt_event(MGMT_EV_CONTROLLER_RESUME, hdev, &ev, sizeof(ev), NULL);
+}
 
-अटल काष्ठा hci_mgmt_chan chan = अणु
+static struct hci_mgmt_chan chan = {
 	.channel	= HCI_CHANNEL_CONTROL,
 	.handler_count	= ARRAY_SIZE(mgmt_handlers),
 	.handlers	= mgmt_handlers,
 	.hdev_init	= mgmt_init_hdev,
-पूर्ण;
+};
 
-पूर्णांक mgmt_init(व्योम)
-अणु
-	वापस hci_mgmt_chan_रेजिस्टर(&chan);
-पूर्ण
+int mgmt_init(void)
+{
+	return hci_mgmt_chan_register(&chan);
+}
 
-व्योम mgmt_निकास(व्योम)
-अणु
-	hci_mgmt_chan_unरेजिस्टर(&chan);
-पूर्ण
+void mgmt_exit(void)
+{
+	hci_mgmt_chan_unregister(&chan);
+}

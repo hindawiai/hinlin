@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Linux ARCnet driver - COM90xx chipset (IO-mapped buffers)
  *
@@ -8,7 +7,7 @@
  * Derived from skeleton.c by Donald Becker.
  *
  * Special thanks to Contemporary Controls, Inc. (www.ccontrols.com)
- *  क्रम sponsoring the further development of this driver.
+ *  for sponsoring the further development of this driver.
  *
  * **********************
  *
@@ -18,7 +17,7 @@
  * Copyright 1993 United States Government as represented by the
  * Director, National Security Agency.  This software may only be used
  * and distributed according to the terms of the GNU General Public License as
- * modअगरied by SRC, incorporated herein by reference.
+ * modified by SRC, incorporated herein by reference.
  *
  * **********************
  *
@@ -27,38 +26,38 @@
  * **********************
  */
 
-#घोषणा pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/memblock.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
 
-#समावेश "arcdevice.h"
-#समावेश "com9026.h"
+#include "arcdevice.h"
+#include "com9026.h"
 
 /* Internal function declarations */
 
-अटल पूर्णांक com90io_found(काष्ठा net_device *dev);
-अटल व्योम com90io_command(काष्ठा net_device *dev, पूर्णांक command);
-अटल पूर्णांक com90io_status(काष्ठा net_device *dev);
-अटल व्योम com90io_seपंचांगask(काष्ठा net_device *dev, पूर्णांक mask);
-अटल पूर्णांक com90io_reset(काष्ठा net_device *dev, पूर्णांक really_reset);
-अटल व्योम com90io_copy_to_card(काष्ठा net_device *dev, पूर्णांक bufnum, पूर्णांक offset,
-				 व्योम *buf, पूर्णांक count);
-अटल व्योम com90io_copy_from_card(काष्ठा net_device *dev, पूर्णांक bufnum,
-				   पूर्णांक offset, व्योम *buf, पूर्णांक count);
+static int com90io_found(struct net_device *dev);
+static void com90io_command(struct net_device *dev, int command);
+static int com90io_status(struct net_device *dev);
+static void com90io_setmask(struct net_device *dev, int mask);
+static int com90io_reset(struct net_device *dev, int really_reset);
+static void com90io_copy_to_card(struct net_device *dev, int bufnum, int offset,
+				 void *buf, int count);
+static void com90io_copy_from_card(struct net_device *dev, int bufnum,
+				   int offset, void *buf, int count);
 
-/* Handy defines क्रम ARCnet specअगरic stuff */
+/* Handy defines for ARCnet specific stuff */
 
 /* The number of low I/O ports used by the card. */
-#घोषणा ARCNET_TOTAL_SIZE 16
+#define ARCNET_TOTAL_SIZE 16
 
 /****************************************************************************
  *                                                                          *
@@ -66,117 +65,117 @@
  *                                                                          *
  ****************************************************************************/
 
-#अघोषित ONE_AT_A_TIME_TX
-#अघोषित ONE_AT_A_TIME_RX
+#undef ONE_AT_A_TIME_TX
+#undef ONE_AT_A_TIME_RX
 
-अटल u_अक्षर get_buffer_byte(काष्ठा net_device *dev, अचिन्हित offset)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
+static u_char get_buffer_byte(struct net_device *dev, unsigned offset)
+{
+	int ioaddr = dev->base_addr;
 
 	arcnet_outb(offset >> 8, ioaddr, COM9026_REG_W_ADDR_HI);
 	arcnet_outb(offset & 0xff, ioaddr, COM9026_REG_W_ADDR_LO);
 
-	वापस arcnet_inb(ioaddr, COM9026_REG_RW_MEMDATA);
-पूर्ण
+	return arcnet_inb(ioaddr, COM9026_REG_RW_MEMDATA);
+}
 
-#अगर_घोषित ONE_AT_A_TIME_TX
-अटल व्योम put_buffer_byte(काष्ठा net_device *dev, अचिन्हित offset,
-			    u_अक्षर datum)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
+#ifdef ONE_AT_A_TIME_TX
+static void put_buffer_byte(struct net_device *dev, unsigned offset,
+			    u_char datum)
+{
+	int ioaddr = dev->base_addr;
 
 	arcnet_outb(offset >> 8, ioaddr, COM9026_REG_W_ADDR_HI);
 	arcnet_outb(offset & 0xff, ioaddr, COM9026_REG_W_ADDR_LO);
 
 	arcnet_outb(datum, ioaddr, COM9026_REG_RW_MEMDATA);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम get_whole_buffer(काष्ठा net_device *dev, अचिन्हित offset,
-			     अचिन्हित length, अक्षर *dest)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
+static void get_whole_buffer(struct net_device *dev, unsigned offset,
+			     unsigned length, char *dest)
+{
+	int ioaddr = dev->base_addr;
 
 	arcnet_outb((offset >> 8) | AUTOINCflag, ioaddr, COM9026_REG_W_ADDR_HI);
 	arcnet_outb(offset & 0xff, ioaddr, COM9026_REG_W_ADDR_LO);
 
-	जबतक (length--)
-#अगर_घोषित ONE_AT_A_TIME_RX
+	while (length--)
+#ifdef ONE_AT_A_TIME_RX
 		*(dest++) = get_buffer_byte(dev, offset++);
-#अन्यथा
+#else
 		*(dest++) = arcnet_inb(ioaddr, COM9026_REG_RW_MEMDATA);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल व्योम put_whole_buffer(काष्ठा net_device *dev, अचिन्हित offset,
-			     अचिन्हित length, अक्षर *dest)
-अणु
-	पूर्णांक ioaddr = dev->base_addr;
+static void put_whole_buffer(struct net_device *dev, unsigned offset,
+			     unsigned length, char *dest)
+{
+	int ioaddr = dev->base_addr;
 
 	arcnet_outb((offset >> 8) | AUTOINCflag, ioaddr, COM9026_REG_W_ADDR_HI);
 	arcnet_outb(offset & 0xff, ioaddr,COM9026_REG_W_ADDR_LO);
 
-	जबतक (length--)
-#अगर_घोषित ONE_AT_A_TIME_TX
+	while (length--)
+#ifdef ONE_AT_A_TIME_TX
 		put_buffer_byte(dev, offset++, *(dest++));
-#अन्यथा
+#else
 		arcnet_outb(*(dest++), ioaddr, COM9026_REG_RW_MEMDATA);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-/* We cannot probe क्रम an IO mapped card either, although we can check that
- * it's where we were told it was, and even स्वतःirq
+/* We cannot probe for an IO mapped card either, although we can check that
+ * it's where we were told it was, and even autoirq
  */
-अटल पूर्णांक __init com90io_probe(काष्ठा net_device *dev)
-अणु
-	पूर्णांक ioaddr = dev->base_addr, status;
-	अचिन्हित दीर्घ airqmask;
+static int __init com90io_probe(struct net_device *dev)
+{
+	int ioaddr = dev->base_addr, status;
+	unsigned long airqmask;
 
-	अगर (BUGLVL(D_NORMAL)) अणु
+	if (BUGLVL(D_NORMAL)) {
 		pr_info("%s\n", "COM90xx IO-mapped mode support (by David Woodhouse et el.)");
 		pr_info("E-mail me if you actually test this driver, please!\n");
-	पूर्ण
+	}
 
-	अगर (!ioaddr) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "No autoprobe for IO mapped cards; you must specify the base address!\n");
-		वापस -ENODEV;
-	पूर्ण
-	अगर (!request_region(ioaddr, ARCNET_TOTAL_SIZE, "com90io probe")) अणु
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "IO request_region %x-%x failed\n",
+	if (!ioaddr) {
+		arc_printk(D_NORMAL, dev, "No autoprobe for IO mapped cards; you must specify the base address!\n");
+		return -ENODEV;
+	}
+	if (!request_region(ioaddr, ARCNET_TOTAL_SIZE, "com90io probe")) {
+		arc_printk(D_INIT_REASONS, dev, "IO request_region %x-%x failed\n",
 			   ioaddr, ioaddr + ARCNET_TOTAL_SIZE - 1);
-		वापस -ENXIO;
-	पूर्ण
-	अगर (arcnet_inb(ioaddr, COM9026_REG_R_STATUS) == 0xFF) अणु
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "IO address %x empty\n",
+		return -ENXIO;
+	}
+	if (arcnet_inb(ioaddr, COM9026_REG_R_STATUS) == 0xFF) {
+		arc_printk(D_INIT_REASONS, dev, "IO address %x empty\n",
 			   ioaddr);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	arcnet_inb(ioaddr, COM9026_REG_R_RESET);
-	mdelay(RESETसमय);
+	mdelay(RESETtime);
 
 	status = arcnet_inb(ioaddr, COM9026_REG_R_STATUS);
 
-	अगर ((status & 0x9D) != (NORXflag | RECONflag | TXFREEflag | RESETflag)) अणु
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "Status invalid (%Xh)\n",
+	if ((status & 0x9D) != (NORXflag | RECONflag | TXFREEflag | RESETflag)) {
+		arc_printk(D_INIT_REASONS, dev, "Status invalid (%Xh)\n",
 			   status);
-		जाओ err_out;
-	पूर्ण
-	arc_prपूर्णांकk(D_INIT_REASONS, dev, "Status after reset: %X\n", status);
+		goto err_out;
+	}
+	arc_printk(D_INIT_REASONS, dev, "Status after reset: %X\n", status);
 
 	arcnet_outb(CFLAGScmd | RESETclear | CONFIGclear,
 		    ioaddr, COM9026_REG_W_COMMAND);
 
-	arc_prपूर्णांकk(D_INIT_REASONS, dev, "Status after reset acknowledged: %X\n",
+	arc_printk(D_INIT_REASONS, dev, "Status after reset acknowledged: %X\n",
 		   status);
 
 	status = arcnet_inb(ioaddr, COM9026_REG_R_STATUS);
 
-	अगर (status & RESETflag) अणु
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "Eternal reset (status=%Xh)\n",
+	if (status & RESETflag) {
+		arc_printk(D_INIT_REASONS, dev, "Eternal reset (status=%Xh)\n",
 			   status);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	arcnet_outb((0x16 | IOMAPflag) & ~ENABLE16flag,
 		    ioaddr, COM9026_REG_RW_CONFIG);
 
@@ -186,13 +185,13 @@
 	arcnet_outb(0, ioaddr,  COM9026_REG_W_ADDR_LO);
 
 	status = arcnet_inb(ioaddr, COM9026_REG_RW_MEMDATA);
-	अगर (status != 0xd1) अणु
-		arc_prपूर्णांकk(D_INIT_REASONS, dev, "Signature byte not found (%Xh instead).\n",
+	if (status != 0xd1) {
+		arc_printk(D_INIT_REASONS, dev, "Signature byte not found (%Xh instead).\n",
 			   status);
-		जाओ err_out;
-	पूर्ण
-	अगर (!dev->irq) अणु
-		/* अगर we करो this, we're sure to get an IRQ since the
+		goto err_out;
+	}
+	if (!dev->irq) {
+		/* if we do this, we're sure to get an IRQ since the
 		 * card has just reset and the NORXflag is on until
 		 * we tell it to start receiving.
 		 */
@@ -203,46 +202,46 @@
 		arcnet_outb(0, ioaddr, COM9026_REG_W_INTMASK);
 		dev->irq = probe_irq_off(airqmask);
 
-		अगर ((पूर्णांक)dev->irq <= 0) अणु
-			arc_prपूर्णांकk(D_INIT_REASONS, dev, "Autoprobe IRQ failed\n");
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+		if ((int)dev->irq <= 0) {
+			arc_printk(D_INIT_REASONS, dev, "Autoprobe IRQ failed\n");
+			goto err_out;
+		}
+	}
 	release_region(ioaddr, ARCNET_TOTAL_SIZE); /* end of probing */
-	वापस com90io_found(dev);
+	return com90io_found(dev);
 
 err_out:
 	release_region(ioaddr, ARCNET_TOTAL_SIZE);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-/* Set up the काष्ठा net_device associated with this card.  Called after
+/* Set up the struct net_device associated with this card.  Called after
  * probing succeeds.
  */
-अटल पूर्णांक __init com90io_found(काष्ठा net_device *dev)
-अणु
-	काष्ठा arcnet_local *lp;
-	पूर्णांक ioaddr = dev->base_addr;
-	पूर्णांक err;
+static int __init com90io_found(struct net_device *dev)
+{
+	struct arcnet_local *lp;
+	int ioaddr = dev->base_addr;
+	int err;
 
 	/* Reserve the irq */
-	अगर (request_irq(dev->irq, arcnet_पूर्णांकerrupt, 0,
-			"arcnet (COM90xx-IO)", dev)) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "Can't get IRQ %d!\n", dev->irq);
-		वापस -ENODEV;
-	पूर्ण
+	if (request_irq(dev->irq, arcnet_interrupt, 0,
+			"arcnet (COM90xx-IO)", dev)) {
+		arc_printk(D_NORMAL, dev, "Can't get IRQ %d!\n", dev->irq);
+		return -ENODEV;
+	}
 	/* Reserve the I/O region */
-	अगर (!request_region(dev->base_addr, ARCNET_TOTAL_SIZE,
-			    "arcnet (COM90xx-IO)")) अणु
-		मुक्त_irq(dev->irq, dev);
-		वापस -EBUSY;
-	पूर्ण
+	if (!request_region(dev->base_addr, ARCNET_TOTAL_SIZE,
+			    "arcnet (COM90xx-IO)")) {
+		free_irq(dev->irq, dev);
+		return -EBUSY;
+	}
 
 	lp = netdev_priv(dev);
 	lp->card_name = "COM90xx I/O";
 	lp->hw.command = com90io_command;
 	lp->hw.status = com90io_status;
-	lp->hw.पूर्णांकmask = com90io_seपंचांगask;
+	lp->hw.intmask = com90io_setmask;
 	lp->hw.reset = com90io_reset;
 	lp->hw.owner = THIS_MODULE;
 	lp->hw.copy_to_card = com90io_copy_to_card;
@@ -255,41 +254,41 @@ err_out:
 
 	dev->dev_addr[0] = get_buffer_byte(dev, 1);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		arcnet_outb(arcnet_inb(ioaddr, COM9026_REG_RW_CONFIG) & ~IOMAPflag,
 			    ioaddr, COM9026_REG_RW_CONFIG);
-		मुक्त_irq(dev->irq, dev);
+		free_irq(dev->irq, dev);
 		release_region(dev->base_addr, ARCNET_TOTAL_SIZE);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	arc_prपूर्णांकk(D_NORMAL, dev, "COM90IO: station %02Xh found at %03lXh, IRQ %d.\n",
+	arc_printk(D_NORMAL, dev, "COM90IO: station %02Xh found at %03lXh, IRQ %d.\n",
 		   dev->dev_addr[0], dev->base_addr, dev->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Do a hardware reset on the card, and set up necessary रेजिस्टरs.
+/* Do a hardware reset on the card, and set up necessary registers.
  *
  * This should be called as little as possible, because it disrupts the
- * token on the network (causes a RECON) and requires a signअगरicant delay.
+ * token on the network (causes a RECON) and requires a significant delay.
  *
- * However, it करोes make sure the card is in a defined state.
+ * However, it does make sure the card is in a defined state.
  */
-अटल पूर्णांक com90io_reset(काष्ठा net_device *dev, पूर्णांक really_reset)
-अणु
-	काष्ठा arcnet_local *lp = netdev_priv(dev);
-	लघु ioaddr = dev->base_addr;
+static int com90io_reset(struct net_device *dev, int really_reset)
+{
+	struct arcnet_local *lp = netdev_priv(dev);
+	short ioaddr = dev->base_addr;
 
-	arc_prपूर्णांकk(D_INIT, dev, "Resetting %s (status=%02Xh)\n",
+	arc_printk(D_INIT, dev, "Resetting %s (status=%02Xh)\n",
 		   dev->name, arcnet_inb(ioaddr, COM9026_REG_R_STATUS));
 
-	अगर (really_reset) अणु
+	if (really_reset) {
 		/* reset the card */
 		arcnet_inb(ioaddr, COM9026_REG_R_RESET);
-		mdelay(RESETसमय);
-	पूर्ण
+		mdelay(RESETtime);
+	}
 	/* Set the thing to IO-mapped, 8-bit  mode */
 	lp->config = (0x1C | IOMAPflag) & ~ENABLE16flag;
 	arcnet_outb(lp->config, ioaddr, COM9026_REG_RW_CONFIG);
@@ -298,130 +297,130 @@ err_out:
 					/* clear flags & end reset */
 	arcnet_outb(CFLAGScmd | CONFIGclear, ioaddr, COM9026_REG_W_COMMAND);
 
-	/* verअगरy that the ARCnet signature byte is present */
-	अगर (get_buffer_byte(dev, 0) != TESTvalue) अणु
-		arc_prपूर्णांकk(D_NORMAL, dev, "reset failed: TESTvalue not present.\n");
-		वापस 1;
-	पूर्ण
+	/* verify that the ARCnet signature byte is present */
+	if (get_buffer_byte(dev, 0) != TESTvalue) {
+		arc_printk(D_NORMAL, dev, "reset failed: TESTvalue not present.\n");
+		return 1;
+	}
 	/* enable extended (512-byte) packets */
 	arcnet_outb(CONFIGcmd | EXTconf, ioaddr, COM9026_REG_W_COMMAND);
-	/* करोne!  वापस success. */
-	वापस 0;
-पूर्ण
+	/* done!  return success. */
+	return 0;
+}
 
-अटल व्योम com90io_command(काष्ठा net_device *dev, पूर्णांक cmd)
-अणु
-	लघु ioaddr = dev->base_addr;
+static void com90io_command(struct net_device *dev, int cmd)
+{
+	short ioaddr = dev->base_addr;
 
 	arcnet_outb(cmd, ioaddr, COM9026_REG_W_COMMAND);
-पूर्ण
+}
 
-अटल पूर्णांक com90io_status(काष्ठा net_device *dev)
-अणु
-	लघु ioaddr = dev->base_addr;
+static int com90io_status(struct net_device *dev)
+{
+	short ioaddr = dev->base_addr;
 
-	वापस arcnet_inb(ioaddr, COM9026_REG_R_STATUS);
-पूर्ण
+	return arcnet_inb(ioaddr, COM9026_REG_R_STATUS);
+}
 
-अटल व्योम com90io_seपंचांगask(काष्ठा net_device *dev, पूर्णांक mask)
-अणु
-	लघु ioaddr = dev->base_addr;
+static void com90io_setmask(struct net_device *dev, int mask)
+{
+	short ioaddr = dev->base_addr;
 
 	arcnet_outb(mask, ioaddr, COM9026_REG_W_INTMASK);
-पूर्ण
+}
 
-अटल व्योम com90io_copy_to_card(काष्ठा net_device *dev, पूर्णांक bufnum,
-				 पूर्णांक offset, व्योम *buf, पूर्णांक count)
-अणु
+static void com90io_copy_to_card(struct net_device *dev, int bufnum,
+				 int offset, void *buf, int count)
+{
 	TIME(dev, "put_whole_buffer", count,
 	     put_whole_buffer(dev, bufnum * 512 + offset, count, buf));
-पूर्ण
+}
 
-अटल व्योम com90io_copy_from_card(काष्ठा net_device *dev, पूर्णांक bufnum,
-				   पूर्णांक offset, व्योम *buf, पूर्णांक count)
-अणु
+static void com90io_copy_from_card(struct net_device *dev, int bufnum,
+				   int offset, void *buf, int count)
+{
 	TIME(dev, "get_whole_buffer", count,
 	     get_whole_buffer(dev, bufnum * 512 + offset, count, buf));
-पूर्ण
+}
 
-अटल पूर्णांक io;			/* use the insmod io= irq= shmem= options */
-अटल पूर्णांक irq;
-अटल अक्षर device[9];		/* use eg. device=arc1 to change name */
+static int io;			/* use the insmod io= irq= shmem= options */
+static int irq;
+static char device[9];		/* use eg. device=arc1 to change name */
 
-module_param_hw(io, पूर्णांक, ioport, 0);
-module_param_hw(irq, पूर्णांक, irq, 0);
-module_param_string(device, device, माप(device), 0);
+module_param_hw(io, int, ioport, 0);
+module_param_hw(irq, int, irq, 0);
+module_param_string(device, device, sizeof(device), 0);
 MODULE_LICENSE("GPL");
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init com90io_setup(अक्षर *s)
-अणु
-	पूर्णांक पूर्णांकs[4];
+#ifndef MODULE
+static int __init com90io_setup(char *s)
+{
+	int ints[4];
 
-	s = get_options(s, 4, पूर्णांकs);
-	अगर (!पूर्णांकs[0])
-		वापस 0;
-	चयन (पूर्णांकs[0]) अणु
-	शेष:		/* ERROR */
+	s = get_options(s, 4, ints);
+	if (!ints[0])
+		return 0;
+	switch (ints[0]) {
+	default:		/* ERROR */
 		pr_err("Too many arguments\n");
 		fallthrough;
-	हाल 2:		/* IRQ */
-		irq = पूर्णांकs[2];
+	case 2:		/* IRQ */
+		irq = ints[2];
 		fallthrough;
-	हाल 1:		/* IO address */
-		io = पूर्णांकs[1];
-	पूर्ण
-	अगर (*s)
-		snम_लिखो(device, माप(device), "%s", s);
-	वापस 1;
-पूर्ण
+	case 1:		/* IO address */
+		io = ints[1];
+	}
+	if (*s)
+		snprintf(device, sizeof(device), "%s", s);
+	return 1;
+}
 __setup("com90io=", com90io_setup);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा net_device *my_dev;
+static struct net_device *my_dev;
 
-अटल पूर्णांक __init com90io_init(व्योम)
-अणु
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+static int __init com90io_init(void)
+{
+	struct net_device *dev;
+	int err;
 
 	dev = alloc_arcdev(device);
-	अगर (!dev)
-		वापस -ENOMEM;
+	if (!dev)
+		return -ENOMEM;
 
 	dev->base_addr = io;
 	dev->irq = irq;
-	अगर (dev->irq == 2)
+	if (dev->irq == 2)
 		dev->irq = 9;
 
 	err = com90io_probe(dev);
 
-	अगर (err) अणु
-		मुक्त_arcdev(dev);
-		वापस err;
-	पूर्ण
+	if (err) {
+		free_arcdev(dev);
+		return err;
+	}
 
 	my_dev = dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास com90io_निकास(व्योम)
-अणु
-	काष्ठा net_device *dev = my_dev;
-	पूर्णांक ioaddr = dev->base_addr;
+static void __exit com90io_exit(void)
+{
+	struct net_device *dev = my_dev;
+	int ioaddr = dev->base_addr;
 
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 
-	/* In हाल the old driver is loaded later,
+	/* In case the old driver is loaded later,
 	 * set the thing back to MMAP mode
 	 */
 	arcnet_outb(arcnet_inb(ioaddr, COM9026_REG_RW_CONFIG) & ~IOMAPflag,
 		    ioaddr, COM9026_REG_RW_CONFIG);
 
-	मुक्त_irq(dev->irq, dev);
+	free_irq(dev->irq, dev);
 	release_region(dev->base_addr, ARCNET_TOTAL_SIZE);
-	मुक्त_arcdev(dev);
-पूर्ण
+	free_arcdev(dev);
+}
 
 module_init(com90io_init)
-module_निकास(com90io_निकास)
+module_exit(com90io_exit)

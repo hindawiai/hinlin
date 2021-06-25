@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * TI OMAP4 ISS V4L2 Driver - ISP RESIZER module
  *
@@ -8,40 +7,40 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
 
-#समावेश "iss.h"
-#समावेश "iss_regs.h"
-#समावेश "iss_resizer.h"
+#include "iss.h"
+#include "iss_regs.h"
+#include "iss_resizer.h"
 
-अटल स्थिर अचिन्हित पूर्णांक resizer_fmts[] = अणु
+static const unsigned int resizer_fmts[] = {
 	MEDIA_BUS_FMT_UYVY8_1X16,
 	MEDIA_BUS_FMT_YUYV8_1X16,
-पूर्ण;
+};
 
 /*
- * resizer_prपूर्णांक_status - Prपूर्णांक current RESIZER Module रेजिस्टर values.
- * @resizer: Poपूर्णांकer to ISS ISP RESIZER device.
+ * resizer_print_status - Print current RESIZER Module register values.
+ * @resizer: Pointer to ISS ISP RESIZER device.
  *
- * Also prपूर्णांकs other debug inक्रमmation stored in the RESIZER module.
+ * Also prints other debug information stored in the RESIZER module.
  */
-#घोषणा RSZ_PRINT_REGISTER(iss, name)\
+#define RSZ_PRINT_REGISTER(iss, name)\
 	dev_dbg(iss->dev, "###RSZ " #name "=0x%08x\n", \
-		iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_##name))
+		iss_reg_read(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_##name))
 
-#घोषणा RZA_PRINT_REGISTER(iss, name)\
+#define RZA_PRINT_REGISTER(iss, name)\
 	dev_dbg(iss->dev, "###RZA " #name "=0x%08x\n", \
-		iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_##name))
+		iss_reg_read(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_##name))
 
-अटल व्योम resizer_prपूर्णांक_status(काष्ठा iss_resizer_device *resizer)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(resizer);
+static void resizer_print_status(struct iss_resizer_device *resizer)
+{
+	struct iss_device *iss = to_iss_device(resizer);
 
 	dev_dbg(iss->dev, "-------------RESIZER Register dump-------------\n");
 
@@ -102,16 +101,16 @@
 	RZA_PRINT_REGISTER(iss, SDR_C_PTR_E);
 
 	dev_dbg(iss->dev, "-----------------------------------------------\n");
-पूर्ण
+}
 
 /*
  * resizer_enable - Enable/Disable RESIZER.
  * @enable: enable flag
  *
  */
-अटल व्योम resizer_enable(काष्ठा iss_resizer_device *resizer, u8 enable)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(resizer);
+static void resizer_enable(struct iss_resizer_device *resizer, u8 enable)
+{
+	struct iss_device *iss = to_iss_device(resizer);
 
 	iss_reg_update(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_EN,
 		       RSZ_SRC_EN_SRC_EN, enable ? RSZ_SRC_EN_SRC_EN : 0);
@@ -119,7 +118,7 @@
 	/* TODO: Enable RSZB */
 	iss_reg_update(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_EN, RSZ_EN_EN,
 		       enable ? RSZ_EN_EN : 0);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * Format- and pipeline-related configuration helpers
@@ -127,65 +126,65 @@
 
 /*
  * resizer_set_outaddr - Set memory address to save output image
- * @resizer: Poपूर्णांकer to ISP RESIZER device.
+ * @resizer: Pointer to ISP RESIZER device.
  * @addr: 32-bit memory address aligned on 32 byte boundary.
  *
  * Sets the memory address where the output will be saved.
  */
-अटल व्योम resizer_set_outaddr(काष्ठा iss_resizer_device *resizer, u32 addr)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(resizer);
-	काष्ठा v4l2_mbus_framefmt *inक्रमmat, *outक्रमmat;
+static void resizer_set_outaddr(struct iss_resizer_device *resizer, u32 addr)
+{
+	struct iss_device *iss = to_iss_device(resizer);
+	struct v4l2_mbus_framefmt *informat, *outformat;
 
-	inक्रमmat = &resizer->क्रमmats[RESIZER_PAD_SINK];
-	outक्रमmat = &resizer->क्रमmats[RESIZER_PAD_SOURCE_MEM];
+	informat = &resizer->formats[RESIZER_PAD_SINK];
+	outformat = &resizer->formats[RESIZER_PAD_SOURCE_MEM];
 
 	/* Save address split in Base Address H & L */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_BAD_H,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_BAD_H,
 		      (addr >> 16) & 0xffff);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_BAD_L,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_BAD_L,
 		      addr & 0xffff);
 
 	/* SAD = BAD */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_SAD_H,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_SAD_H,
 		      (addr >> 16) & 0xffff);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_SAD_L,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_SAD_L,
 		      addr & 0xffff);
 
 	/* Program UV buffer address... Hardcoded to be contiguous! */
-	अगर ((inक्रमmat->code == MEDIA_BUS_FMT_UYVY8_1X16) &&
-	    (outक्रमmat->code == MEDIA_BUS_FMT_YUYV8_1_5X8)) अणु
+	if ((informat->code == MEDIA_BUS_FMT_UYVY8_1X16) &&
+	    (outformat->code == MEDIA_BUS_FMT_YUYV8_1_5X8)) {
 		u32 c_addr = addr + resizer->video_out.bpl_value
-			   * outक्रमmat->height;
+			   * outformat->height;
 
 		/* Ensure Y_BAD_L[6:0] = C_BAD_L[6:0]*/
-		अगर ((c_addr ^ addr) & 0x7f) अणु
+		if ((c_addr ^ addr) & 0x7f) {
 			c_addr &= ~0x7f;
 			c_addr += 0x80;
 			c_addr |= addr & 0x7f;
-		पूर्ण
+		}
 
 		/* Save address split in Base Address H & L */
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_BAD_H,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_BAD_H,
 			      (c_addr >> 16) & 0xffff);
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_BAD_L,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_BAD_L,
 			      c_addr & 0xffff);
 
 		/* SAD = BAD */
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_SAD_H,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_SAD_H,
 			      (c_addr >> 16) & 0xffff);
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_SAD_L,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_SAD_L,
 			      c_addr & 0xffff);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम resizer_configure(काष्ठा iss_resizer_device *resizer)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(resizer);
-	काष्ठा v4l2_mbus_framefmt *inक्रमmat, *outक्रमmat;
+static void resizer_configure(struct iss_resizer_device *resizer)
+{
+	struct iss_device *iss = to_iss_device(resizer);
+	struct v4l2_mbus_framefmt *informat, *outformat;
 
-	inक्रमmat = &resizer->क्रमmats[RESIZER_PAD_SINK];
-	outक्रमmat = &resizer->क्रमmats[RESIZER_PAD_SOURCE_MEM];
+	informat = &resizer->formats[RESIZER_PAD_SINK];
+	outformat = &resizer->formats[RESIZER_PAD_SOURCE_MEM];
 
 	/* Disable pass-through more. Despite its name, the BYPASS bit controls
 	 * pass-through mode, not bypass mode.
@@ -199,11 +198,11 @@
 		       resizer->input == RESIZER_INPUT_IPIPEIF ?
 		       RSZ_SRC_FMT0_SEL : 0);
 
-	/* RSZ ignores WEN संकेत from IPIPE/IPIPEIF */
+	/* RSZ ignores WEN signal from IPIPE/IPIPEIF */
 	iss_reg_clr(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_MODE,
 		    RSZ_SRC_MODE_WRT);
 
-	/* Set Resizer in मुक्त-running mode */
+	/* Set Resizer in free-running mode */
 	iss_reg_clr(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_MODE,
 		    RSZ_SRC_MODE_OST);
 
@@ -212,58 +211,58 @@
 		    RZA_MODE_ONE_SHOT);
 
 	/* Set size related things now */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_VPS, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_HPS, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_VSZ,
-		      inक्रमmat->height - 2);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_HSZ,
-		      inक्रमmat->width - 1);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_VPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_HPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_VSZ,
+		      informat->height - 2);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SRC_HSZ,
+		      informat->width - 1);
 
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_I_VPS, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_I_HPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_I_VPS, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_I_HPS, 0);
 
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_O_VSZ,
-		      outक्रमmat->height - 2);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_O_HSZ,
-		      outक्रमmat->width - 1);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_O_VSZ,
+		      outformat->height - 2);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_O_HSZ,
+		      outformat->width - 1);
 
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_V_DIF, 0x100);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_H_DIF, 0x100);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_V_DIF, 0x100);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_H_DIF, 0x100);
 
 	/* Buffer output settings */
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_PTR_S, 0);
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_PTR_E,
-		      outक्रमmat->height - 1);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_PTR_S, 0);
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_PTR_E,
+		      outformat->height - 1);
 
-	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_OFT,
+	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_Y_OFT,
 		      resizer->video_out.bpl_value);
 
 	/* UYVY -> NV12 conversion */
-	अगर ((inक्रमmat->code == MEDIA_BUS_FMT_UYVY8_1X16) &&
-	    (outक्रमmat->code == MEDIA_BUS_FMT_YUYV8_1_5X8)) अणु
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_420,
+	if ((informat->code == MEDIA_BUS_FMT_UYVY8_1X16) &&
+	    (outformat->code == MEDIA_BUS_FMT_YUYV8_1_5X8)) {
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_420,
 			      RSZ_420_CEN | RSZ_420_YEN);
 
 		/* UV Buffer output settings */
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_PTR_S,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_PTR_S,
 			      0);
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_PTR_E,
-			      outक्रमmat->height - 1);
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_PTR_E,
+			      outformat->height - 1);
 
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_OFT,
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_SDR_C_OFT,
 			      resizer->video_out.bpl_value);
-	पूर्ण अन्यथा अणु
-		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_420, 0);
-	पूर्ण
-पूर्ण
+	} else {
+		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_RESIZER, RZA_420, 0);
+	}
+}
 
 /* -----------------------------------------------------------------------------
  * Interrupt handling
  */
 
-अटल व्योम resizer_isr_buffer(काष्ठा iss_resizer_device *resizer)
-अणु
-	काष्ठा iss_buffer *buffer;
+static void resizer_isr_buffer(struct iss_resizer_device *resizer)
+{
+	struct iss_buffer *buffer;
 
 	/* The whole resizer needs to be stopped. Disabling RZA only produces
 	 * input FIFO overflows, most probably when the next frame is received.
@@ -271,73 +270,73 @@
 	resizer_enable(resizer, 0);
 
 	buffer = omap4iss_video_buffer_next(&resizer->video_out);
-	अगर (!buffer)
-		वापस;
+	if (!buffer)
+		return;
 
 	resizer_set_outaddr(resizer, buffer->iss_addr);
 
 	resizer_enable(resizer, 1);
-पूर्ण
+}
 
 /*
- * omap4iss_resizer_isr - Configure resizer during पूर्णांकerframe समय.
- * @resizer: Poपूर्णांकer to ISP RESIZER device.
+ * omap4iss_resizer_isr - Configure resizer during interframe time.
+ * @resizer: Pointer to ISP RESIZER device.
  * @events: RESIZER events
  */
-व्योम omap4iss_resizer_isr(काष्ठा iss_resizer_device *resizer, u32 events)
-अणु
-	काष्ठा iss_device *iss = to_iss_device(resizer);
-	काष्ठा iss_pipeline *pipe =
+void omap4iss_resizer_isr(struct iss_resizer_device *resizer, u32 events)
+{
+	struct iss_device *iss = to_iss_device(resizer);
+	struct iss_pipeline *pipe =
 			     to_iss_pipeline(&resizer->subdev.entity);
 
-	अगर (events & (ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR |
-		      ISP5_IRQ_RSZ_FIFO_OVF)) अणु
+	if (events & (ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR |
+		      ISP5_IRQ_RSZ_FIFO_OVF)) {
 		dev_dbg(iss->dev, "RSZ Err: FIFO_IN_BLK:%d, FIFO_OVF:%d\n",
 			events & ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR ? 1 : 0,
 			events & ISP5_IRQ_RSZ_FIFO_OVF ? 1 : 0);
 		omap4iss_pipeline_cancel_stream(pipe);
-	पूर्ण
+	}
 
-	अगर (omap4iss_module_sync_is_stopping(&resizer->रुको,
+	if (omap4iss_module_sync_is_stopping(&resizer->wait,
 					     &resizer->stopping))
-		वापस;
+		return;
 
-	अगर (events & ISP5_IRQ_RSZ_INT_DMA)
+	if (events & ISP5_IRQ_RSZ_INT_DMA)
 		resizer_isr_buffer(resizer);
-पूर्ण
+}
 
 /* -----------------------------------------------------------------------------
  * ISS video operations
  */
 
-अटल पूर्णांक resizer_video_queue(काष्ठा iss_video *video,
-			       काष्ठा iss_buffer *buffer)
-अणु
-	काष्ठा iss_resizer_device *resizer = container_of(video,
-				काष्ठा iss_resizer_device, video_out);
+static int resizer_video_queue(struct iss_video *video,
+			       struct iss_buffer *buffer)
+{
+	struct iss_resizer_device *resizer = container_of(video,
+				struct iss_resizer_device, video_out);
 
-	अगर (!(resizer->output & RESIZER_OUTPUT_MEMORY))
-		वापस -ENODEV;
+	if (!(resizer->output & RESIZER_OUTPUT_MEMORY))
+		return -ENODEV;
 
 	resizer_set_outaddr(resizer, buffer->iss_addr);
 
 	/*
-	 * If streaming was enabled beक्रमe there was a buffer queued
+	 * If streaming was enabled before there was a buffer queued
 	 * or underrun happened in the ISR, the hardware was not enabled
 	 * and DMA queue flag ISS_VIDEO_DMAQUEUE_UNDERRUN is still set.
 	 * Enable it now.
 	 */
-	अगर (video->dmaqueue_flags & ISS_VIDEO_DMAQUEUE_UNDERRUN) अणु
+	if (video->dmaqueue_flags & ISS_VIDEO_DMAQUEUE_UNDERRUN) {
 		resizer_enable(resizer, 1);
 		iss_video_dmaqueue_flags_clr(video);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा iss_video_operations resizer_video_ops = अणु
+static const struct iss_video_operations resizer_video_ops = {
 	.queue = resizer_video_queue,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev operations
@@ -348,16 +347,16 @@
  * @sd: ISP RESIZER V4L2 subdevice
  * @enable: Enable/disable stream
  */
-अटल पूर्णांक resizer_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा iss_device *iss = to_iss_device(resizer);
-	काष्ठा iss_video *video_out = &resizer->video_out;
-	पूर्णांक ret = 0;
+static int resizer_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct iss_device *iss = to_iss_device(resizer);
+	struct iss_video *video_out = &resizer->video_out;
+	int ret = 0;
 
-	अगर (resizer->state == ISS_PIPELINE_STREAM_STOPPED) अणु
-		अगर (enable == ISS_PIPELINE_STREAM_STOPPED)
-			वापस 0;
+	if (resizer->state == ISS_PIPELINE_STREAM_STOPPED) {
+		if (enable == ISS_PIPELINE_STREAM_STOPPED)
+			return 0;
 
 		omap4iss_isp_subclk_enable(iss, OMAP4_ISS_ISP_SUBCLK_RSZ);
 
@@ -369,13 +368,13 @@
 		/* FIXME: Enable RSZB also */
 		iss_reg_set(iss, OMAP4_ISS_MEM_ISP_RESIZER, RSZ_SYSCONFIG,
 			    RSZ_SYSCONFIG_RSZA_CLK_EN);
-	पूर्ण
+	}
 
-	चयन (enable) अणु
-	हाल ISS_PIPELINE_STREAM_CONTINUOUS:
+	switch (enable) {
+	case ISS_PIPELINE_STREAM_CONTINUOUS:
 
 		resizer_configure(resizer);
-		resizer_prपूर्णांक_status(resizer);
+		resizer_print_status(resizer);
 
 		/*
 		 * When outputting to memory with no buffer available, let the
@@ -383,19 +382,19 @@
 		 * ISS_VIDEO_DMAQUEUE_QUEUED will be set as soon as there is
 		 * a buffer available.
 		 */
-		अगर (resizer->output & RESIZER_OUTPUT_MEMORY &&
+		if (resizer->output & RESIZER_OUTPUT_MEMORY &&
 		    !(video_out->dmaqueue_flags & ISS_VIDEO_DMAQUEUE_QUEUED))
-			अवरोध;
+			break;
 
 		atomic_set(&resizer->stopping, 0);
 		resizer_enable(resizer, 1);
 		iss_video_dmaqueue_flags_clr(video_out);
-		अवरोध;
+		break;
 
-	हाल ISS_PIPELINE_STREAM_STOPPED:
-		अगर (resizer->state == ISS_PIPELINE_STREAM_STOPPED)
-			वापस 0;
-		अगर (omap4iss_module_sync_idle(&sd->entity, &resizer->रुको,
+	case ISS_PIPELINE_STREAM_STOPPED:
+		if (resizer->state == ISS_PIPELINE_STREAM_STOPPED)
+			return 0;
+		if (omap4iss_module_sync_idle(&sd->entity, &resizer->wait,
 					      &resizer->stopping))
 			ret = -ETIMEDOUT;
 
@@ -408,290 +407,290 @@
 			    RSZ_GCK_MMR_MMR);
 		omap4iss_isp_subclk_disable(iss, OMAP4_ISS_ISP_SUBCLK_RSZ);
 		iss_video_dmaqueue_flags_clr(video_out);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	resizer->state = enable;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__resizer_get_क्रमmat(काष्ठा iss_resizer_device *resizer,
-		     काष्ठा v4l2_subdev_pad_config *cfg, अचिन्हित पूर्णांक pad,
-		     क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&resizer->subdev, cfg, pad);
-	वापस &resizer->क्रमmats[pad];
-पूर्ण
+static struct v4l2_mbus_framefmt *
+__resizer_get_format(struct iss_resizer_device *resizer,
+		     struct v4l2_subdev_pad_config *cfg, unsigned int pad,
+		     enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&resizer->subdev, cfg, pad);
+	return &resizer->formats[pad];
+}
 
 /*
- * resizer_try_क्रमmat - Try video क्रमmat on a pad
+ * resizer_try_format - Try video format on a pad
  * @resizer: ISS RESIZER device
  * @cfg: V4L2 subdev pad config
  * @pad: Pad number
  * @fmt: Format
  */
-अटल व्योम
-resizer_try_क्रमmat(काष्ठा iss_resizer_device *resizer,
-		   काष्ठा v4l2_subdev_pad_config *cfg, अचिन्हित पूर्णांक pad,
-		   काष्ठा v4l2_mbus_framefmt *fmt,
-		   क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
+static void
+resizer_try_format(struct iss_resizer_device *resizer,
+		   struct v4l2_subdev_pad_config *cfg, unsigned int pad,
+		   struct v4l2_mbus_framefmt *fmt,
+		   enum v4l2_subdev_format_whence which)
+{
 	u32 pixelcode;
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	अचिन्हित पूर्णांक width = fmt->width;
-	अचिन्हित पूर्णांक height = fmt->height;
-	अचिन्हित पूर्णांक i;
+	struct v4l2_mbus_framefmt *format;
+	unsigned int width = fmt->width;
+	unsigned int height = fmt->height;
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल RESIZER_PAD_SINK:
-		क्रम (i = 0; i < ARRAY_SIZE(resizer_fmts); i++) अणु
-			अगर (fmt->code == resizer_fmts[i])
-				अवरोध;
-		पूर्ण
+	switch (pad) {
+	case RESIZER_PAD_SINK:
+		for (i = 0; i < ARRAY_SIZE(resizer_fmts); i++) {
+			if (fmt->code == resizer_fmts[i])
+				break;
+		}
 
-		/* If not found, use UYVY as शेष */
-		अगर (i >= ARRAY_SIZE(resizer_fmts))
+		/* If not found, use UYVY as default */
+		if (i >= ARRAY_SIZE(resizer_fmts))
 			fmt->code = MEDIA_BUS_FMT_UYVY8_1X16;
 
 		/* Clamp the input size. */
 		fmt->width = clamp_t(u32, width, 1, 8192);
 		fmt->height = clamp_t(u32, height, 1, 8192);
-		अवरोध;
+		break;
 
-	हाल RESIZER_PAD_SOURCE_MEM:
+	case RESIZER_PAD_SOURCE_MEM:
 		pixelcode = fmt->code;
-		क्रमmat = __resizer_get_क्रमmat(resizer, cfg, RESIZER_PAD_SINK,
+		format = __resizer_get_format(resizer, cfg, RESIZER_PAD_SINK,
 					      which);
-		स_नकल(fmt, क्रमmat, माप(*fmt));
+		memcpy(fmt, format, sizeof(*fmt));
 
-		अगर ((pixelcode == MEDIA_BUS_FMT_YUYV8_1_5X8) &&
+		if ((pixelcode == MEDIA_BUS_FMT_YUYV8_1_5X8) &&
 		    (fmt->code == MEDIA_BUS_FMT_UYVY8_1X16))
 			fmt->code = pixelcode;
 
-		/* The data क्रमmatter truncates the number of horizontal output
-		 * pixels to a multiple of 16. To aव्योम clipping data, allow
+		/* The data formatter truncates the number of horizontal output
+		 * pixels to a multiple of 16. To avoid clipping data, allow
 		 * callers to request an output size bigger than the input size
 		 * up to the nearest multiple of 16.
 		 */
 		fmt->width = clamp_t(u32, width, 32, (fmt->width + 15) & ~15);
 		fmt->width &= ~15;
 		fmt->height = clamp_t(u32, height, 32, fmt->height);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	fmt->colorspace = V4L2_COLORSPACE_JPEG;
 	fmt->field = V4L2_FIELD_NONE;
-पूर्ण
+}
 
 /*
- * resizer_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
- * @sd     : poपूर्णांकer to v4l2 subdev काष्ठाure
+ * resizer_enum_mbus_code - Handle pixel format enumeration
+ * @sd     : pointer to v4l2 subdev structure
  * @cfg: V4L2 subdev pad config
- * @code   : poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code   : pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक resizer_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int resizer_enum_mbus_code(struct v4l2_subdev *sd,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	चयन (code->pad) अणु
-	हाल RESIZER_PAD_SINK:
-		अगर (code->index >= ARRAY_SIZE(resizer_fmts))
-			वापस -EINVAL;
+	switch (code->pad) {
+	case RESIZER_PAD_SINK:
+		if (code->index >= ARRAY_SIZE(resizer_fmts))
+			return -EINVAL;
 
 		code->code = resizer_fmts[code->index];
-		अवरोध;
+		break;
 
-	हाल RESIZER_PAD_SOURCE_MEM:
-		क्रमmat = __resizer_get_क्रमmat(resizer, cfg, RESIZER_PAD_SINK,
+	case RESIZER_PAD_SOURCE_MEM:
+		format = __resizer_get_format(resizer, cfg, RESIZER_PAD_SINK,
 					      code->which);
 
-		अगर (code->index == 0) अणु
-			code->code = क्रमmat->code;
-			अवरोध;
-		पूर्ण
+		if (code->index == 0) {
+			code->code = format->code;
+			break;
+		}
 
-		चयन (क्रमmat->code) अणु
-		हाल MEDIA_BUS_FMT_UYVY8_1X16:
-			अगर (code->index == 1)
+		switch (format->code) {
+		case MEDIA_BUS_FMT_UYVY8_1X16:
+			if (code->index == 1)
 				code->code = MEDIA_BUS_FMT_YUYV8_1_5X8;
-			अन्यथा
-				वापस -EINVAL;
-			अवरोध;
-		शेष:
-			अगर (code->index != 0)
-				वापस -EINVAL;
-		पूर्ण
+			else
+				return -EINVAL;
+			break;
+		default:
+			if (code->index != 0)
+				return -EINVAL;
+		}
 
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक resizer_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int resizer_enum_frame_size(struct v4l2_subdev *sd,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	resizer_try_क्रमmat(resizer, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	resizer_try_format(resizer, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	resizer_try_क्रमmat(resizer, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	resizer_try_format(resizer, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * resizer_get_क्रमmat - Retrieve the video क्रमmat on a pad
+ * resizer_get_format - Retrieve the video format on a pad
  * @sd : ISP RESIZER V4L2 subdevice
  * @cfg: V4L2 subdev pad config
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक resizer_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int resizer_get_format(struct v4l2_subdev *sd,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_format *fmt)
+{
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __resizer_get_क्रमmat(resizer, cfg, fmt->pad, fmt->which);
-	अगर (!क्रमmat)
-		वापस -EINVAL;
+	format = __resizer_get_format(resizer, cfg, fmt->pad, fmt->which);
+	if (!format)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
-	वापस 0;
-पूर्ण
+	fmt->format = *format;
+	return 0;
+}
 
 /*
- * resizer_set_क्रमmat - Set the video क्रमmat on a pad
+ * resizer_set_format - Set the video format on a pad
  * @sd : ISP RESIZER V4L2 subdevice
  * @cfg: V4L2 subdev pad config
  * @fmt: Format
  *
- * Return 0 on success or -EINVAL अगर the pad is invalid or करोesn't correspond
- * to the क्रमmat type.
+ * Return 0 on success or -EINVAL if the pad is invalid or doesn't correspond
+ * to the format type.
  */
-अटल पूर्णांक resizer_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int resizer_set_format(struct v4l2_subdev *sd,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_format *fmt)
+{
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __resizer_get_क्रमmat(resizer, cfg, fmt->pad, fmt->which);
-	अगर (!क्रमmat)
-		वापस -EINVAL;
+	format = __resizer_get_format(resizer, cfg, fmt->pad, fmt->which);
+	if (!format)
+		return -EINVAL;
 
-	resizer_try_क्रमmat(resizer, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	resizer_try_format(resizer, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == RESIZER_PAD_SINK) अणु
-		क्रमmat = __resizer_get_क्रमmat(resizer, cfg,
+	/* Propagate the format from sink to source */
+	if (fmt->pad == RESIZER_PAD_SINK) {
+		format = __resizer_get_format(resizer, cfg,
 					      RESIZER_PAD_SOURCE_MEM,
 					      fmt->which);
-		*क्रमmat = fmt->क्रमmat;
-		resizer_try_क्रमmat(resizer, cfg, RESIZER_PAD_SOURCE_MEM, क्रमmat,
+		*format = fmt->format;
+		resizer_try_format(resizer, cfg, RESIZER_PAD_SOURCE_MEM, format,
 				   fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक resizer_link_validate(काष्ठा v4l2_subdev *sd,
-				 काष्ठा media_link *link,
-				 काष्ठा v4l2_subdev_क्रमmat *source_fmt,
-				 काष्ठा v4l2_subdev_क्रमmat *sink_fmt)
-अणु
-	/* Check अगर the two ends match */
-	अगर (source_fmt->क्रमmat.width != sink_fmt->क्रमmat.width ||
-	    source_fmt->क्रमmat.height != sink_fmt->क्रमmat.height)
-		वापस -EPIPE;
+static int resizer_link_validate(struct v4l2_subdev *sd,
+				 struct media_link *link,
+				 struct v4l2_subdev_format *source_fmt,
+				 struct v4l2_subdev_format *sink_fmt)
+{
+	/* Check if the two ends match */
+	if (source_fmt->format.width != sink_fmt->format.width ||
+	    source_fmt->format.height != sink_fmt->format.height)
+		return -EPIPE;
 
-	अगर (source_fmt->क्रमmat.code != sink_fmt->क्रमmat.code)
-		वापस -EPIPE;
+	if (source_fmt->format.code != sink_fmt->format.code)
+		return -EPIPE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * resizer_init_क्रमmats - Initialize क्रमmats on all pads
+ * resizer_init_formats - Initialize formats on all pads
  * @sd: ISP RESIZER V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values. If fh is not शून्य, try
- * क्रमmats are initialized on the file handle. Otherwise active क्रमmats are
+ * Initialize all pad formats with default values. If fh is not NULL, try
+ * formats are initialized on the file handle. Otherwise active formats are
  * initialized on the device.
  */
-अटल पूर्णांक resizer_init_क्रमmats(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat;
+static int resizer_init_formats(struct v4l2_subdev *sd,
+				struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format;
 
-	स_रखो(&क्रमmat, 0, माप(क्रमmat));
-	क्रमmat.pad = RESIZER_PAD_SINK;
-	क्रमmat.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
-	क्रमmat.क्रमmat.code = MEDIA_BUS_FMT_UYVY8_1X16;
-	क्रमmat.क्रमmat.width = 4096;
-	क्रमmat.क्रमmat.height = 4096;
-	resizer_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
+	memset(&format, 0, sizeof(format));
+	format.pad = RESIZER_PAD_SINK;
+	format.which = fh ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
+	format.format.code = MEDIA_BUS_FMT_UYVY8_1X16;
+	format.format.width = 4096;
+	format.format.height = 4096;
+	resizer_set_format(sd, fh ? fh->pad : NULL, &format);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* V4L2 subdev video operations */
-अटल स्थिर काष्ठा v4l2_subdev_video_ops resizer_v4l2_video_ops = अणु
+static const struct v4l2_subdev_video_ops resizer_v4l2_video_ops = {
 	.s_stream = resizer_set_stream,
-पूर्ण;
+};
 
 /* V4L2 subdev pad operations */
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops resizer_v4l2_pad_ops = अणु
-	.क्रमागत_mbus_code = resizer_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = resizer_क्रमागत_frame_size,
-	.get_fmt = resizer_get_क्रमmat,
-	.set_fmt = resizer_set_क्रमmat,
+static const struct v4l2_subdev_pad_ops resizer_v4l2_pad_ops = {
+	.enum_mbus_code = resizer_enum_mbus_code,
+	.enum_frame_size = resizer_enum_frame_size,
+	.get_fmt = resizer_get_format,
+	.set_fmt = resizer_set_format,
 	.link_validate = resizer_link_validate,
-पूर्ण;
+};
 
 /* V4L2 subdev operations */
-अटल स्थिर काष्ठा v4l2_subdev_ops resizer_v4l2_ops = अणु
+static const struct v4l2_subdev_ops resizer_v4l2_ops = {
 	.video = &resizer_v4l2_video_ops,
 	.pad = &resizer_v4l2_pad_ops,
-पूर्ण;
+};
 
-/* V4L2 subdev पूर्णांकernal operations */
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops resizer_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = resizer_init_क्रमmats,
-पूर्ण;
+/* V4L2 subdev internal operations */
+static const struct v4l2_subdev_internal_ops resizer_v4l2_internal_ops = {
+	.open = resizer_init_formats,
+};
 
 /* -----------------------------------------------------------------------------
  * Media entity operations
@@ -704,62 +703,62 @@ resizer_try_क्रमmat(काष्ठा iss_resizer_device *resizer,
  * @remote: Pad at the remote end of the link
  * @flags: Link flags
  *
- * वापस -EINVAL or zero on success
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक resizer_link_setup(काष्ठा media_entity *entity,
-			      स्थिर काष्ठा media_pad *local,
-			      स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	काष्ठा iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
-	काष्ठा iss_device *iss = to_iss_device(resizer);
-	अचिन्हित पूर्णांक index = local->index;
+static int resizer_link_setup(struct media_entity *entity,
+			      const struct media_pad *local,
+			      const struct media_pad *remote, u32 flags)
+{
+	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	struct iss_resizer_device *resizer = v4l2_get_subdevdata(sd);
+	struct iss_device *iss = to_iss_device(resizer);
+	unsigned int index = local->index;
 
 	/* FIXME: this is actually a hack! */
-	अगर (is_media_entity_v4l2_subdev(remote->entity))
+	if (is_media_entity_v4l2_subdev(remote->entity))
 		index |= 2 << 16;
 
-	चयन (index) अणु
-	हाल RESIZER_PAD_SINK | 2 << 16:
+	switch (index) {
+	case RESIZER_PAD_SINK | 2 << 16:
 		/* Read from IPIPE or IPIPEIF. */
-		अगर (!(flags & MEDIA_LNK_FL_ENABLED)) अणु
+		if (!(flags & MEDIA_LNK_FL_ENABLED)) {
 			resizer->input = RESIZER_INPUT_NONE;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (resizer->input != RESIZER_INPUT_NONE)
-			वापस -EBUSY;
+		if (resizer->input != RESIZER_INPUT_NONE)
+			return -EBUSY;
 
-		अगर (remote->entity == &iss->ipipeअगर.subdev.entity)
+		if (remote->entity == &iss->ipipeif.subdev.entity)
 			resizer->input = RESIZER_INPUT_IPIPEIF;
-		अन्यथा अगर (remote->entity == &iss->ipipe.subdev.entity)
+		else if (remote->entity == &iss->ipipe.subdev.entity)
 			resizer->input = RESIZER_INPUT_IPIPE;
 
-		अवरोध;
+		break;
 
-	हाल RESIZER_PAD_SOURCE_MEM:
+	case RESIZER_PAD_SOURCE_MEM:
 		/* Write to memory */
-		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
-			अगर (resizer->output & ~RESIZER_OUTPUT_MEMORY)
-				वापस -EBUSY;
+		if (flags & MEDIA_LNK_FL_ENABLED) {
+			if (resizer->output & ~RESIZER_OUTPUT_MEMORY)
+				return -EBUSY;
 			resizer->output |= RESIZER_OUTPUT_MEMORY;
-		पूर्ण अन्यथा अणु
+		} else {
 			resizer->output &= ~RESIZER_OUTPUT_MEMORY;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* media operations */
-अटल स्थिर काष्ठा media_entity_operations resizer_media_ops = अणु
+static const struct media_entity_operations resizer_media_ops = {
 	.link_setup = resizer_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
 /*
  * resizer_init_entities - Initialize V4L2 subdev and media entity
@@ -767,19 +766,19 @@ resizer_try_क्रमmat(काष्ठा iss_resizer_device *resizer,
  *
  * Return 0 on success and a negative error code on failure.
  */
-अटल पूर्णांक resizer_init_entities(काष्ठा iss_resizer_device *resizer)
-अणु
-	काष्ठा v4l2_subdev *sd = &resizer->subdev;
-	काष्ठा media_pad *pads = resizer->pads;
-	काष्ठा media_entity *me = &sd->entity;
-	पूर्णांक ret;
+static int resizer_init_entities(struct iss_resizer_device *resizer)
+{
+	struct v4l2_subdev *sd = &resizer->subdev;
+	struct media_pad *pads = resizer->pads;
+	struct media_entity *me = &sd->entity;
+	int ret;
 
 	resizer->input = RESIZER_INPUT_NONE;
 
 	v4l2_subdev_init(sd, &resizer_v4l2_ops);
-	sd->पूर्णांकernal_ops = &resizer_v4l2_पूर्णांकernal_ops;
-	strscpy(sd->name, "OMAP4 ISS ISP resizer", माप(sd->name));
-	sd->grp_id = BIT(16);	/* group ID क्रम iss subdevs */
+	sd->internal_ops = &resizer_v4l2_internal_ops;
+	strscpy(sd->name, "OMAP4 ISS ISP resizer", sizeof(sd->name));
+	sd->grp_id = BIT(16);	/* group ID for iss subdevs */
 	v4l2_set_subdevdata(sd, resizer);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
@@ -788,10 +787,10 @@ resizer_try_क्रमmat(काष्ठा iss_resizer_device *resizer,
 
 	me->ops = &resizer_media_ops;
 	ret = media_entity_pads_init(me, RESIZER_PADS_NUM, pads);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	resizer_init_क्रमmats(sd, शून्य);
+	resizer_init_formats(sd, NULL);
 
 	resizer->video_out.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	resizer->video_out.ops = &resizer_video_ops;
@@ -801,35 +800,35 @@ resizer_try_क्रमmat(काष्ठा iss_resizer_device *resizer,
 	resizer->video_out.bpl_zero_padding = 1;
 	resizer->video_out.bpl_max = 0x1ffe0;
 
-	वापस omap4iss_video_init(&resizer->video_out, "ISP resizer a");
-पूर्ण
+	return omap4iss_video_init(&resizer->video_out, "ISP resizer a");
+}
 
-व्योम omap4iss_resizer_unरेजिस्टर_entities(काष्ठा iss_resizer_device *resizer)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&resizer->subdev);
-	omap4iss_video_unरेजिस्टर(&resizer->video_out);
-पूर्ण
+void omap4iss_resizer_unregister_entities(struct iss_resizer_device *resizer)
+{
+	v4l2_device_unregister_subdev(&resizer->subdev);
+	omap4iss_video_unregister(&resizer->video_out);
+}
 
-पूर्णांक omap4iss_resizer_रेजिस्टर_entities(काष्ठा iss_resizer_device *resizer,
-				       काष्ठा v4l2_device *vdev)
-अणु
-	पूर्णांक ret;
+int omap4iss_resizer_register_entities(struct iss_resizer_device *resizer,
+				       struct v4l2_device *vdev)
+{
+	int ret;
 
 	/* Register the subdev and video node. */
-	ret = v4l2_device_रेजिस्टर_subdev(vdev, &resizer->subdev);
-	अगर (ret < 0)
-		जाओ error;
+	ret = v4l2_device_register_subdev(vdev, &resizer->subdev);
+	if (ret < 0)
+		goto error;
 
-	ret = omap4iss_video_रेजिस्टर(&resizer->video_out, vdev);
-	अगर (ret < 0)
-		जाओ error;
+	ret = omap4iss_video_register(&resizer->video_out, vdev);
+	if (ret < 0)
+		goto error;
 
-	वापस 0;
+	return 0;
 
 error:
-	omap4iss_resizer_unरेजिस्टर_entities(resizer);
-	वापस ret;
-पूर्ण
+	omap4iss_resizer_unregister_entities(resizer);
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
  * ISP RESIZER initialisation and cleanup
@@ -837,45 +836,45 @@ error:
 
 /*
  * omap4iss_resizer_init - RESIZER module initialization.
- * @iss: Device poपूर्णांकer specअगरic to the OMAP4 ISS.
+ * @iss: Device pointer specific to the OMAP4 ISS.
  *
- * TODO: Get the initialisation values from platक्रमm data.
+ * TODO: Get the initialisation values from platform data.
  *
  * Return 0 on success or a negative error code otherwise.
  */
-पूर्णांक omap4iss_resizer_init(काष्ठा iss_device *iss)
-अणु
-	काष्ठा iss_resizer_device *resizer = &iss->resizer;
+int omap4iss_resizer_init(struct iss_device *iss)
+{
+	struct iss_resizer_device *resizer = &iss->resizer;
 
 	resizer->state = ISS_PIPELINE_STREAM_STOPPED;
-	init_रुकोqueue_head(&resizer->रुको);
+	init_waitqueue_head(&resizer->wait);
 
-	वापस resizer_init_entities(resizer);
-पूर्ण
+	return resizer_init_entities(resizer);
+}
 
 /*
  * omap4iss_resizer_create_links() - RESIZER pads links creation
- * @iss: Poपूर्णांकer to ISS device
+ * @iss: Pointer to ISS device
  *
- * वापस negative error code or zero on success
+ * return negative error code or zero on success
  */
-पूर्णांक omap4iss_resizer_create_links(काष्ठा iss_device *iss)
-अणु
-	काष्ठा iss_resizer_device *resizer = &iss->resizer;
+int omap4iss_resizer_create_links(struct iss_device *iss)
+{
+	struct iss_resizer_device *resizer = &iss->resizer;
 
 	/* Connect the RESIZER subdev to the video node. */
-	वापस media_create_pad_link(&resizer->subdev.entity,
+	return media_create_pad_link(&resizer->subdev.entity,
 				     RESIZER_PAD_SOURCE_MEM,
 				     &resizer->video_out.video.entity, 0, 0);
-पूर्ण
+}
 
 /*
  * omap4iss_resizer_cleanup - RESIZER module cleanup.
- * @iss: Device poपूर्णांकer specअगरic to the OMAP4 ISS.
+ * @iss: Device pointer specific to the OMAP4 ISS.
  */
-व्योम omap4iss_resizer_cleanup(काष्ठा iss_device *iss)
-अणु
-	काष्ठा iss_resizer_device *resizer = &iss->resizer;
+void omap4iss_resizer_cleanup(struct iss_device *iss)
+{
+	struct iss_resizer_device *resizer = &iss->resizer;
 
 	media_entity_cleanup(&resizer->subdev.entity);
-पूर्ण
+}

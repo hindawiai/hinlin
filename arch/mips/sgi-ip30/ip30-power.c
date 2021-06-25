@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * ip30-घातer.c: Software घातerकरोwn and reset handling क्रम IP30 architecture.
+ * ip30-power.c: Software powerdown and reset handling for IP30 architecture.
  *
  * Copyright (C) 2004-2007 Stanislaw Skowronek <skylark@unaligned.org>
  *               2014 Joshua Kinard <kumba@gentoo.org>
  *               2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/rtc/ds1685.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pm.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/notifier.h>
+#include <linux/delay.h>
+#include <linux/rtc/ds1685.h>
+#include <linux/interrupt.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/sgi/heart.h>
+#include <asm/reboot.h>
+#include <asm/sgi/heart.h>
 
-अटल व्योम __noवापस ip30_machine_restart(अक्षर *cmd)
-अणु
+static void __noreturn ip30_machine_restart(char *cmd)
+{
 	/*
 	 * Execute HEART cold reset
 	 *   Yes, it's cold-HEARTed!
 	 */
-	heart_ग_लिखो((heart_पढ़ो(&heart_regs->mode) | HM_COLD_RST),
+	heart_write((heart_read(&heart_regs->mode) | HM_COLD_RST),
 		    &heart_regs->mode);
 	unreachable();
-पूर्ण
+}
 
-अटल पूर्णांक __init ip30_reboot_setup(व्योम)
-अणु
+static int __init ip30_reboot_setup(void)
+{
 	_machine_restart = ip30_machine_restart;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(ip30_reboot_setup);

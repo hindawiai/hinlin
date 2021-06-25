@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * 64-bit Periodic Interval Timer driver
  *
@@ -8,255 +7,255 @@
  * Author: Claudiu Beznea <claudiu.beznea@microchip.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/sched_clock.h>
+#include <linux/slab.h>
 
-#घोषणा MCHP_PIT64B_CR			0x00	/* Control Register */
-#घोषणा MCHP_PIT64B_CR_START		BIT(0)
-#घोषणा MCHP_PIT64B_CR_SWRST		BIT(8)
+#define MCHP_PIT64B_CR			0x00	/* Control Register */
+#define MCHP_PIT64B_CR_START		BIT(0)
+#define MCHP_PIT64B_CR_SWRST		BIT(8)
 
-#घोषणा MCHP_PIT64B_MR			0x04	/* Mode Register */
-#घोषणा MCHP_PIT64B_MR_CONT		BIT(0)
-#घोषणा MCHP_PIT64B_MR_ONE_SHOT		(0)
-#घोषणा MCHP_PIT64B_MR_SGCLK		BIT(3)
-#घोषणा MCHP_PIT64B_MR_PRES		GENMASK(11, 8)
+#define MCHP_PIT64B_MR			0x04	/* Mode Register */
+#define MCHP_PIT64B_MR_CONT		BIT(0)
+#define MCHP_PIT64B_MR_ONE_SHOT		(0)
+#define MCHP_PIT64B_MR_SGCLK		BIT(3)
+#define MCHP_PIT64B_MR_PRES		GENMASK(11, 8)
 
-#घोषणा MCHP_PIT64B_LSB_PR		0x08	/* LSB Period Register */
+#define MCHP_PIT64B_LSB_PR		0x08	/* LSB Period Register */
 
-#घोषणा MCHP_PIT64B_MSB_PR		0x0C	/* MSB Period Register */
+#define MCHP_PIT64B_MSB_PR		0x0C	/* MSB Period Register */
 
-#घोषणा MCHP_PIT64B_IER			0x10	/* Interrupt Enable Register */
-#घोषणा MCHP_PIT64B_IER_PERIOD		BIT(0)
+#define MCHP_PIT64B_IER			0x10	/* Interrupt Enable Register */
+#define MCHP_PIT64B_IER_PERIOD		BIT(0)
 
-#घोषणा MCHP_PIT64B_ISR			0x1C	/* Interrupt Status Register */
+#define MCHP_PIT64B_ISR			0x1C	/* Interrupt Status Register */
 
-#घोषणा MCHP_PIT64B_TLSBR		0x20	/* Timer LSB Register */
+#define MCHP_PIT64B_TLSBR		0x20	/* Timer LSB Register */
 
-#घोषणा MCHP_PIT64B_TMSBR		0x24	/* Timer MSB Register */
+#define MCHP_PIT64B_TMSBR		0x24	/* Timer MSB Register */
 
-#घोषणा MCHP_PIT64B_PRES_MAX		0x10
-#घोषणा MCHP_PIT64B_LSBMASK		GENMASK_ULL(31, 0)
-#घोषणा MCHP_PIT64B_PRES_TO_MODE(p)	(MCHP_PIT64B_MR_PRES & ((p) << 8))
-#घोषणा MCHP_PIT64B_MODE_TO_PRES(m)	((MCHP_PIT64B_MR_PRES & (m)) >> 8)
-#घोषणा MCHP_PIT64B_DEF_CS_FREQ		5000000UL	/* 5 MHz */
-#घोषणा MCHP_PIT64B_DEF_CE_FREQ		32768		/* 32 KHz */
+#define MCHP_PIT64B_PRES_MAX		0x10
+#define MCHP_PIT64B_LSBMASK		GENMASK_ULL(31, 0)
+#define MCHP_PIT64B_PRES_TO_MODE(p)	(MCHP_PIT64B_MR_PRES & ((p) << 8))
+#define MCHP_PIT64B_MODE_TO_PRES(m)	((MCHP_PIT64B_MR_PRES & (m)) >> 8)
+#define MCHP_PIT64B_DEF_CS_FREQ		5000000UL	/* 5 MHz */
+#define MCHP_PIT64B_DEF_CE_FREQ		32768		/* 32 KHz */
 
-#घोषणा MCHP_PIT64B_NAME		"pit64b"
+#define MCHP_PIT64B_NAME		"pit64b"
 
 /**
- * काष्ठा mchp_pit64b_समयr - PIT64B समयr data काष्ठाure
+ * struct mchp_pit64b_timer - PIT64B timer data structure
  * @base: base address of PIT64B hardware block
- * @pclk: PIT64B's peripheral घड़ी
- * @gclk: PIT64B's generic घड़ी
- * @mode: precomputed value क्रम mode रेजिस्टर
+ * @pclk: PIT64B's peripheral clock
+ * @gclk: PIT64B's generic clock
+ * @mode: precomputed value for mode register
  */
-काष्ठा mchp_pit64b_समयr अणु
-	व्योम __iomem	*base;
-	काष्ठा clk	*pclk;
-	काष्ठा clk	*gclk;
+struct mchp_pit64b_timer {
+	void __iomem	*base;
+	struct clk	*pclk;
+	struct clk	*gclk;
 	u32		mode;
-पूर्ण;
+};
 
 /**
- * mchp_pit64b_clkevt - PIT64B घड़ीevent data काष्ठाure
- * @समयr: PIT64B समयr
- * @clkevt: घड़ीevent
+ * mchp_pit64b_clkevt - PIT64B clockevent data structure
+ * @timer: PIT64B timer
+ * @clkevt: clockevent
  */
-काष्ठा mchp_pit64b_clkevt अणु
-	काष्ठा mchp_pit64b_समयr	समयr;
-	काष्ठा घड़ी_event_device	clkevt;
-पूर्ण;
+struct mchp_pit64b_clkevt {
+	struct mchp_pit64b_timer	timer;
+	struct clock_event_device	clkevt;
+};
 
-#घोषणा clkevt_to_mchp_pit64b_समयr(x) \
-	((काष्ठा mchp_pit64b_समयr *)container_of(x,\
-		काष्ठा mchp_pit64b_clkevt, clkevt))
+#define clkevt_to_mchp_pit64b_timer(x) \
+	((struct mchp_pit64b_timer *)container_of(x,\
+		struct mchp_pit64b_clkevt, clkevt))
 
 /**
- * mchp_pit64b_clksrc - PIT64B घड़ीsource data काष्ठाure
- * @समयr: PIT64B समयr
- * @clksrc: घड़ीsource
+ * mchp_pit64b_clksrc - PIT64B clocksource data structure
+ * @timer: PIT64B timer
+ * @clksrc: clocksource
  */
-काष्ठा mchp_pit64b_clksrc अणु
-	काष्ठा mchp_pit64b_समयr	समयr;
-	काष्ठा घड़ीsource		clksrc;
-पूर्ण;
+struct mchp_pit64b_clksrc {
+	struct mchp_pit64b_timer	timer;
+	struct clocksource		clksrc;
+};
 
-#घोषणा clksrc_to_mchp_pit64b_समयr(x) \
-	((काष्ठा mchp_pit64b_समयr *)container_of(x,\
-		काष्ठा mchp_pit64b_clksrc, clksrc))
+#define clksrc_to_mchp_pit64b_timer(x) \
+	((struct mchp_pit64b_timer *)container_of(x,\
+		struct mchp_pit64b_clksrc, clksrc))
 
-/* Base address क्रम घड़ीsource समयr. */
-अटल व्योम __iomem *mchp_pit64b_cs_base;
-/* Default cycles क्रम घड़ीevent समयr. */
-अटल u64 mchp_pit64b_ce_cycles;
+/* Base address for clocksource timer. */
+static void __iomem *mchp_pit64b_cs_base;
+/* Default cycles for clockevent timer. */
+static u64 mchp_pit64b_ce_cycles;
 
-अटल अंतरभूत u64 mchp_pit64b_cnt_पढ़ो(व्योम __iomem *base)
-अणु
-	अचिन्हित दीर्घ	flags;
+static inline u64 mchp_pit64b_cnt_read(void __iomem *base)
+{
+	unsigned long	flags;
 	u32		low, high;
 
 	raw_local_irq_save(flags);
 
 	/*
-	 * When using a 64 bit period TLSB must be पढ़ो first, followed by the
-	 * पढ़ो of TMSB. This sequence generates an atomic पढ़ो of the 64 bit
-	 * समयr value whatever the lapse of समय between the accesses.
+	 * When using a 64 bit period TLSB must be read first, followed by the
+	 * read of TMSB. This sequence generates an atomic read of the 64 bit
+	 * timer value whatever the lapse of time between the accesses.
 	 */
-	low = पढ़ोl_relaxed(base + MCHP_PIT64B_TLSBR);
-	high = पढ़ोl_relaxed(base + MCHP_PIT64B_TMSBR);
+	low = readl_relaxed(base + MCHP_PIT64B_TLSBR);
+	high = readl_relaxed(base + MCHP_PIT64B_TMSBR);
 
 	raw_local_irq_restore(flags);
 
-	वापस (((u64)high << 32) | low);
-पूर्ण
+	return (((u64)high << 32) | low);
+}
 
-अटल अंतरभूत व्योम mchp_pit64b_reset(काष्ठा mchp_pit64b_समयr *समयr,
+static inline void mchp_pit64b_reset(struct mchp_pit64b_timer *timer,
 				     u64 cycles, u32 mode, u32 irqs)
-अणु
+{
 	u32 low, high;
 
 	low = cycles & MCHP_PIT64B_LSBMASK;
 	high = cycles >> 32;
 
-	ग_लिखोl_relaxed(MCHP_PIT64B_CR_SWRST, समयr->base + MCHP_PIT64B_CR);
-	ग_लिखोl_relaxed(mode | समयr->mode, समयr->base + MCHP_PIT64B_MR);
-	ग_लिखोl_relaxed(high, समयr->base + MCHP_PIT64B_MSB_PR);
-	ग_लिखोl_relaxed(low, समयr->base + MCHP_PIT64B_LSB_PR);
-	ग_लिखोl_relaxed(irqs, समयr->base + MCHP_PIT64B_IER);
-	ग_लिखोl_relaxed(MCHP_PIT64B_CR_START, समयr->base + MCHP_PIT64B_CR);
-पूर्ण
+	writel_relaxed(MCHP_PIT64B_CR_SWRST, timer->base + MCHP_PIT64B_CR);
+	writel_relaxed(mode | timer->mode, timer->base + MCHP_PIT64B_MR);
+	writel_relaxed(high, timer->base + MCHP_PIT64B_MSB_PR);
+	writel_relaxed(low, timer->base + MCHP_PIT64B_LSB_PR);
+	writel_relaxed(irqs, timer->base + MCHP_PIT64B_IER);
+	writel_relaxed(MCHP_PIT64B_CR_START, timer->base + MCHP_PIT64B_CR);
+}
 
-अटल व्योम mchp_pit64b_suspend(काष्ठा mchp_pit64b_समयr *समयr)
-अणु
-	ग_लिखोl_relaxed(MCHP_PIT64B_CR_SWRST, समयr->base + MCHP_PIT64B_CR);
-	अगर (समयr->mode & MCHP_PIT64B_MR_SGCLK)
-		clk_disable_unprepare(समयr->gclk);
-	clk_disable_unprepare(समयr->pclk);
-पूर्ण
+static void mchp_pit64b_suspend(struct mchp_pit64b_timer *timer)
+{
+	writel_relaxed(MCHP_PIT64B_CR_SWRST, timer->base + MCHP_PIT64B_CR);
+	if (timer->mode & MCHP_PIT64B_MR_SGCLK)
+		clk_disable_unprepare(timer->gclk);
+	clk_disable_unprepare(timer->pclk);
+}
 
-अटल व्योम mchp_pit64b_resume(काष्ठा mchp_pit64b_समयr *समयr)
-अणु
-	clk_prepare_enable(समयr->pclk);
-	अगर (समयr->mode & MCHP_PIT64B_MR_SGCLK)
-		clk_prepare_enable(समयr->gclk);
-पूर्ण
+static void mchp_pit64b_resume(struct mchp_pit64b_timer *timer)
+{
+	clk_prepare_enable(timer->pclk);
+	if (timer->mode & MCHP_PIT64B_MR_SGCLK)
+		clk_prepare_enable(timer->gclk);
+}
 
-अटल व्योम mchp_pit64b_clksrc_suspend(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clksrc_to_mchp_pit64b_समयr(cs);
+static void mchp_pit64b_clksrc_suspend(struct clocksource *cs)
+{
+	struct mchp_pit64b_timer *timer = clksrc_to_mchp_pit64b_timer(cs);
 
-	mchp_pit64b_suspend(समयr);
-पूर्ण
+	mchp_pit64b_suspend(timer);
+}
 
-अटल व्योम mchp_pit64b_clksrc_resume(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clksrc_to_mchp_pit64b_समयr(cs);
+static void mchp_pit64b_clksrc_resume(struct clocksource *cs)
+{
+	struct mchp_pit64b_timer *timer = clksrc_to_mchp_pit64b_timer(cs);
 
-	mchp_pit64b_resume(समयr);
-	mchp_pit64b_reset(समयr, ULदीर्घ_उच्च, MCHP_PIT64B_MR_CONT, 0);
-पूर्ण
+	mchp_pit64b_resume(timer);
+	mchp_pit64b_reset(timer, ULLONG_MAX, MCHP_PIT64B_MR_CONT, 0);
+}
 
-अटल u64 mchp_pit64b_clksrc_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस mchp_pit64b_cnt_पढ़ो(mchp_pit64b_cs_base);
-पूर्ण
+static u64 mchp_pit64b_clksrc_read(struct clocksource *cs)
+{
+	return mchp_pit64b_cnt_read(mchp_pit64b_cs_base);
+}
 
-अटल u64 mchp_pit64b_sched_पढ़ो_clk(व्योम)
-अणु
-	वापस mchp_pit64b_cnt_पढ़ो(mchp_pit64b_cs_base);
-पूर्ण
+static u64 mchp_pit64b_sched_read_clk(void)
+{
+	return mchp_pit64b_cnt_read(mchp_pit64b_cs_base);
+}
 
-अटल पूर्णांक mchp_pit64b_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *cedev)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clkevt_to_mchp_pit64b_समयr(cedev);
+static int mchp_pit64b_clkevt_shutdown(struct clock_event_device *cedev)
+{
+	struct mchp_pit64b_timer *timer = clkevt_to_mchp_pit64b_timer(cedev);
 
-	ग_लिखोl_relaxed(MCHP_PIT64B_CR_SWRST, समयr->base + MCHP_PIT64B_CR);
+	writel_relaxed(MCHP_PIT64B_CR_SWRST, timer->base + MCHP_PIT64B_CR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_pit64b_clkevt_set_periodic(काष्ठा घड़ी_event_device *cedev)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clkevt_to_mchp_pit64b_समयr(cedev);
+static int mchp_pit64b_clkevt_set_periodic(struct clock_event_device *cedev)
+{
+	struct mchp_pit64b_timer *timer = clkevt_to_mchp_pit64b_timer(cedev);
 
-	mchp_pit64b_reset(समयr, mchp_pit64b_ce_cycles, MCHP_PIT64B_MR_CONT,
+	mchp_pit64b_reset(timer, mchp_pit64b_ce_cycles, MCHP_PIT64B_MR_CONT,
 			  MCHP_PIT64B_IER_PERIOD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_pit64b_clkevt_set_next_event(अचिन्हित दीर्घ evt,
-					     काष्ठा घड़ी_event_device *cedev)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clkevt_to_mchp_pit64b_समयr(cedev);
+static int mchp_pit64b_clkevt_set_next_event(unsigned long evt,
+					     struct clock_event_device *cedev)
+{
+	struct mchp_pit64b_timer *timer = clkevt_to_mchp_pit64b_timer(cedev);
 
-	mchp_pit64b_reset(समयr, evt, MCHP_PIT64B_MR_ONE_SHOT,
+	mchp_pit64b_reset(timer, evt, MCHP_PIT64B_MR_ONE_SHOT,
 			  MCHP_PIT64B_IER_PERIOD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mchp_pit64b_clkevt_suspend(काष्ठा घड़ी_event_device *cedev)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clkevt_to_mchp_pit64b_समयr(cedev);
+static void mchp_pit64b_clkevt_suspend(struct clock_event_device *cedev)
+{
+	struct mchp_pit64b_timer *timer = clkevt_to_mchp_pit64b_timer(cedev);
 
-	mchp_pit64b_suspend(समयr);
-पूर्ण
+	mchp_pit64b_suspend(timer);
+}
 
-अटल व्योम mchp_pit64b_clkevt_resume(काष्ठा घड़ी_event_device *cedev)
-अणु
-	काष्ठा mchp_pit64b_समयr *समयr = clkevt_to_mchp_pit64b_समयr(cedev);
+static void mchp_pit64b_clkevt_resume(struct clock_event_device *cedev)
+{
+	struct mchp_pit64b_timer *timer = clkevt_to_mchp_pit64b_timer(cedev);
 
-	mchp_pit64b_resume(समयr);
-पूर्ण
+	mchp_pit64b_resume(timer);
+}
 
-अटल irqवापस_t mchp_pit64b_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mchp_pit64b_clkevt *irq_data = dev_id;
+static irqreturn_t mchp_pit64b_interrupt(int irq, void *dev_id)
+{
+	struct mchp_pit64b_clkevt *irq_data = dev_id;
 
-	/* Need to clear the पूर्णांकerrupt. */
-	पढ़ोl_relaxed(irq_data->समयr.base + MCHP_PIT64B_ISR);
+	/* Need to clear the interrupt. */
+	readl_relaxed(irq_data->timer.base + MCHP_PIT64B_ISR);
 
 	irq_data->clkevt.event_handler(&irq_data->clkevt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम __init mchp_pit64b_pres_compute(u32 *pres, u32 clk_rate,
+static void __init mchp_pit64b_pres_compute(u32 *pres, u32 clk_rate,
 					    u32 max_rate)
-अणु
-	u32 पंचांगp;
+{
+	u32 tmp;
 
-	क्रम (*pres = 0; *pres < MCHP_PIT64B_PRES_MAX; (*pres)++) अणु
-		पंचांगp = clk_rate / (*pres + 1);
-		अगर (पंचांगp <= max_rate)
-			अवरोध;
-	पूर्ण
+	for (*pres = 0; *pres < MCHP_PIT64B_PRES_MAX; (*pres)++) {
+		tmp = clk_rate / (*pres + 1);
+		if (tmp <= max_rate)
+			break;
+	}
 
-	/* Use the biggest prescaler अगर we didn't match one. */
-	अगर (*pres == MCHP_PIT64B_PRES_MAX)
+	/* Use the biggest prescaler if we didn't match one. */
+	if (*pres == MCHP_PIT64B_PRES_MAX)
 		*pres = MCHP_PIT64B_PRES_MAX - 1;
-पूर्ण
+}
 
 /**
- * mchp_pit64b_init_mode - prepare PIT64B mode रेजिस्टर value to be used at
- *			   runसमय; this includes prescaler and SGCLK bit
+ * mchp_pit64b_init_mode - prepare PIT64B mode register value to be used at
+ *			   runtime; this includes prescaler and SGCLK bit
  *
- * PIT64B समयr may be fed by gclk or pclk. When gclk is used its rate has to
- * be at least 3 बार lower that pclk's rate. pclk rate is fixed, gclk rate
- * could be changed via घड़ी APIs. The chosen घड़ी (pclk or gclk) could be
- * भागided by the पूर्णांकernal PIT64B's भागider.
+ * PIT64B timer may be fed by gclk or pclk. When gclk is used its rate has to
+ * be at least 3 times lower that pclk's rate. pclk rate is fixed, gclk rate
+ * could be changed via clock APIs. The chosen clock (pclk or gclk) could be
+ * divided by the internal PIT64B's divider.
  *
  * This function, first tries to use GCLK by requesting the desired rate from
- * PMC and then using the पूर्णांकernal PIT64B prescaler, अगर any, to reach the
+ * PMC and then using the internal PIT64B prescaler, if any, to reach the
  * requested rate. If PCLK/GCLK < 3 (condition requested by PIT64B hardware)
- * then the function falls back on using PCLK as घड़ी source क्रम PIT64B समयr
- * choosing the highest prescaler in हाल it करोesn't locate one to match the
+ * then the function falls back on using PCLK as clock source for PIT64B timer
+ * choosing the highest prescaler in case it doesn't locate one to match the
  * requested frequency.
  *
  * Below is presented the PIT64B block in relation with PMC:
@@ -265,7 +264,7 @@
  *  PMC             +------------------------------------+
  * +----+           |   +-----+                          |
  * |    |-->gclk -->|-->|     |    +---------+  +-----+  |
- * |    |           |   | MUX |--->| Divider |->|समयr|  |
+ * |    |           |   | MUX |--->| Divider |->|timer|  |
  * |    |-->pclk -->|-->|     |    +---------+  +-----+  |
  * +----+           |   +-----+                          |
  *                  |      ^                             |
@@ -277,125 +276,125 @@
  *	- gclk rate could be requested from PMC
  *	- pclk rate is fixed (cannot be requested from PMC)
  */
-अटल पूर्णांक __init mchp_pit64b_init_mode(काष्ठा mchp_pit64b_समयr *समयr,
-					अचिन्हित दीर्घ max_rate)
-अणु
-	अचिन्हित दीर्घ pclk_rate, dअगरf = 0, best_dअगरf = अच_दीर्घ_उच्च;
-	दीर्घ gclk_round = 0;
+static int __init mchp_pit64b_init_mode(struct mchp_pit64b_timer *timer,
+					unsigned long max_rate)
+{
+	unsigned long pclk_rate, diff = 0, best_diff = ULONG_MAX;
+	long gclk_round = 0;
 	u32 pres, best_pres = 0;
 
-	pclk_rate = clk_get_rate(समयr->pclk);
-	अगर (!pclk_rate)
-		वापस -EINVAL;
+	pclk_rate = clk_get_rate(timer->pclk);
+	if (!pclk_rate)
+		return -EINVAL;
 
-	समयr->mode = 0;
+	timer->mode = 0;
 
 	/* Try using GCLK. */
-	gclk_round = clk_round_rate(समयr->gclk, max_rate);
-	अगर (gclk_round < 0)
-		जाओ pclk;
+	gclk_round = clk_round_rate(timer->gclk, max_rate);
+	if (gclk_round < 0)
+		goto pclk;
 
-	अगर (pclk_rate / gclk_round < 3)
-		जाओ pclk;
+	if (pclk_rate / gclk_round < 3)
+		goto pclk;
 
 	mchp_pit64b_pres_compute(&pres, gclk_round, max_rate);
-	best_dअगरf = असल(gclk_round / (pres + 1) - max_rate);
+	best_diff = abs(gclk_round / (pres + 1) - max_rate);
 	best_pres = pres;
 
-	अगर (!best_dअगरf) अणु
-		समयr->mode |= MCHP_PIT64B_MR_SGCLK;
-		clk_set_rate(समयr->gclk, gclk_round);
-		जाओ करोne;
-	पूर्ण
+	if (!best_diff) {
+		timer->mode |= MCHP_PIT64B_MR_SGCLK;
+		clk_set_rate(timer->gclk, gclk_round);
+		goto done;
+	}
 
 pclk:
-	/* Check अगर requested rate could be obtained using PCLK. */
+	/* Check if requested rate could be obtained using PCLK. */
 	mchp_pit64b_pres_compute(&pres, pclk_rate, max_rate);
-	dअगरf = असल(pclk_rate / (pres + 1) - max_rate);
+	diff = abs(pclk_rate / (pres + 1) - max_rate);
 
-	अगर (best_dअगरf > dअगरf) अणु
+	if (best_diff > diff) {
 		/* Use PCLK. */
 		best_pres = pres;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Use GCLK. */
-		समयr->mode |= MCHP_PIT64B_MR_SGCLK;
-		clk_set_rate(समयr->gclk, gclk_round);
-	पूर्ण
+		timer->mode |= MCHP_PIT64B_MR_SGCLK;
+		clk_set_rate(timer->gclk, gclk_round);
+	}
 
-करोne:
-	समयr->mode |= MCHP_PIT64B_PRES_TO_MODE(best_pres);
+done:
+	timer->mode |= MCHP_PIT64B_PRES_TO_MODE(best_pres);
 
 	pr_info("PIT64B: using clk=%s with prescaler %u, freq=%lu [Hz]\n",
-		समयr->mode & MCHP_PIT64B_MR_SGCLK ? "gclk" : "pclk", best_pres,
-		समयr->mode & MCHP_PIT64B_MR_SGCLK ?
+		timer->mode & MCHP_PIT64B_MR_SGCLK ? "gclk" : "pclk", best_pres,
+		timer->mode & MCHP_PIT64B_MR_SGCLK ?
 		gclk_round / (best_pres + 1) : pclk_rate / (best_pres + 1));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init mchp_pit64b_init_clksrc(काष्ठा mchp_pit64b_समयr *समयr,
+static int __init mchp_pit64b_init_clksrc(struct mchp_pit64b_timer *timer,
 					  u32 clk_rate)
-अणु
-	काष्ठा mchp_pit64b_clksrc *cs;
-	पूर्णांक ret;
+{
+	struct mchp_pit64b_clksrc *cs;
+	int ret;
 
-	cs = kzalloc(माप(*cs), GFP_KERNEL);
-	अगर (!cs)
-		वापस -ENOMEM;
+	cs = kzalloc(sizeof(*cs), GFP_KERNEL);
+	if (!cs)
+		return -ENOMEM;
 
-	mchp_pit64b_reset(समयr, ULदीर्घ_उच्च, MCHP_PIT64B_MR_CONT, 0);
+	mchp_pit64b_reset(timer, ULLONG_MAX, MCHP_PIT64B_MR_CONT, 0);
 
-	mchp_pit64b_cs_base = समयr->base;
+	mchp_pit64b_cs_base = timer->base;
 
-	cs->समयr.base = समयr->base;
-	cs->समयr.pclk = समयr->pclk;
-	cs->समयr.gclk = समयr->gclk;
-	cs->समयr.mode = समयr->mode;
+	cs->timer.base = timer->base;
+	cs->timer.pclk = timer->pclk;
+	cs->timer.gclk = timer->gclk;
+	cs->timer.mode = timer->mode;
 	cs->clksrc.name = MCHP_PIT64B_NAME;
 	cs->clksrc.mask = CLOCKSOURCE_MASK(64);
 	cs->clksrc.flags = CLOCK_SOURCE_IS_CONTINUOUS;
 	cs->clksrc.rating = 210;
-	cs->clksrc.पढ़ो = mchp_pit64b_clksrc_पढ़ो;
+	cs->clksrc.read = mchp_pit64b_clksrc_read;
 	cs->clksrc.suspend = mchp_pit64b_clksrc_suspend;
 	cs->clksrc.resume = mchp_pit64b_clksrc_resume;
 
-	ret = घड़ीsource_रेजिस्टर_hz(&cs->clksrc, clk_rate);
-	अगर (ret) अणु
+	ret = clocksource_register_hz(&cs->clksrc, clk_rate);
+	if (ret) {
 		pr_debug("clksrc: Failed to register PIT64B clocksource!\n");
 
-		/* Stop समयr. */
-		ग_लिखोl_relaxed(MCHP_PIT64B_CR_SWRST,
-			       समयr->base + MCHP_PIT64B_CR);
-		kमुक्त(cs);
+		/* Stop timer. */
+		writel_relaxed(MCHP_PIT64B_CR_SWRST,
+			       timer->base + MCHP_PIT64B_CR);
+		kfree(cs);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sched_घड़ी_रेजिस्टर(mchp_pit64b_sched_पढ़ो_clk, 64, clk_rate);
+	sched_clock_register(mchp_pit64b_sched_read_clk, 64, clk_rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init mchp_pit64b_init_clkevt(काष्ठा mchp_pit64b_समयr *समयr,
+static int __init mchp_pit64b_init_clkevt(struct mchp_pit64b_timer *timer,
 					  u32 clk_rate, u32 irq)
-अणु
-	काष्ठा mchp_pit64b_clkevt *ce;
-	पूर्णांक ret;
+{
+	struct mchp_pit64b_clkevt *ce;
+	int ret;
 
-	ce = kzalloc(माप(*ce), GFP_KERNEL);
-	अगर (!ce)
-		वापस -ENOMEM;
+	ce = kzalloc(sizeof(*ce), GFP_KERNEL);
+	if (!ce)
+		return -ENOMEM;
 
 	mchp_pit64b_ce_cycles = DIV_ROUND_CLOSEST(clk_rate, HZ);
 
-	ce->समयr.base = समयr->base;
-	ce->समयr.pclk = समयr->pclk;
-	ce->समयr.gclk = समयr->gclk;
-	ce->समयr.mode = समयr->mode;
+	ce->timer.base = timer->base;
+	ce->timer.pclk = timer->pclk;
+	ce->timer.gclk = timer->gclk;
+	ce->timer.mode = timer->mode;
 	ce->clkevt.name = MCHP_PIT64B_NAME;
 	ce->clkevt.features = CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_PERIODIC;
 	ce->clkevt.rating = 150;
-	ce->clkevt.set_state_shutकरोwn = mchp_pit64b_clkevt_shutकरोwn;
+	ce->clkevt.set_state_shutdown = mchp_pit64b_clkevt_shutdown;
 	ce->clkevt.set_state_periodic = mchp_pit64b_clkevt_set_periodic;
 	ce->clkevt.set_next_event = mchp_pit64b_clkevt_set_next_event;
 	ce->clkevt.suspend = mchp_pit64b_clkevt_suspend;
@@ -403,107 +402,107 @@ pclk:
 	ce->clkevt.cpumask = cpumask_of(0);
 	ce->clkevt.irq = irq;
 
-	ret = request_irq(irq, mchp_pit64b_पूर्णांकerrupt, IRQF_TIMER,
+	ret = request_irq(irq, mchp_pit64b_interrupt, IRQF_TIMER,
 			  "pit64b_tick", ce);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("clkevt: Failed to setup PIT64B IRQ\n");
-		kमुक्त(ce);
-		वापस ret;
-	पूर्ण
+		kfree(ce);
+		return ret;
+	}
 
-	घड़ीevents_config_and_रेजिस्टर(&ce->clkevt, clk_rate, 1, अच_दीर्घ_उच्च);
+	clockevents_config_and_register(&ce->clkevt, clk_rate, 1, ULONG_MAX);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init mchp_pit64b_dt_init_समयr(काष्ठा device_node *node,
+static int __init mchp_pit64b_dt_init_timer(struct device_node *node,
 					    bool clkevt)
-अणु
+{
 	u32 freq = clkevt ? MCHP_PIT64B_DEF_CE_FREQ : MCHP_PIT64B_DEF_CS_FREQ;
-	काष्ठा mchp_pit64b_समयr समयr;
-	अचिन्हित दीर्घ clk_rate;
+	struct mchp_pit64b_timer timer;
+	unsigned long clk_rate;
 	u32 irq = 0;
-	पूर्णांक ret;
+	int ret;
 
 	/* Parse DT node. */
-	समयr.pclk = of_clk_get_by_name(node, "pclk");
-	अगर (IS_ERR(समयr.pclk))
-		वापस PTR_ERR(समयr.pclk);
+	timer.pclk = of_clk_get_by_name(node, "pclk");
+	if (IS_ERR(timer.pclk))
+		return PTR_ERR(timer.pclk);
 
-	समयr.gclk = of_clk_get_by_name(node, "gclk");
-	अगर (IS_ERR(समयr.gclk))
-		वापस PTR_ERR(समयr.gclk);
+	timer.gclk = of_clk_get_by_name(node, "gclk");
+	if (IS_ERR(timer.gclk))
+		return PTR_ERR(timer.gclk);
 
-	समयr.base = of_iomap(node, 0);
-	अगर (!समयr.base)
-		वापस -ENXIO;
+	timer.base = of_iomap(node, 0);
+	if (!timer.base)
+		return -ENXIO;
 
-	अगर (clkevt) अणु
+	if (clkevt) {
 		irq = irq_of_parse_and_map(node, 0);
-		अगर (!irq) अणु
+		if (!irq) {
 			ret = -ENODEV;
-			जाओ io_unmap;
-		पूर्ण
-	पूर्ण
+			goto io_unmap;
+		}
+	}
 
-	/* Initialize mode (prescaler + SGCK bit). To be used at runसमय. */
-	ret = mchp_pit64b_init_mode(&समयr, freq);
-	अगर (ret)
-		जाओ irq_unmap;
+	/* Initialize mode (prescaler + SGCK bit). To be used at runtime. */
+	ret = mchp_pit64b_init_mode(&timer, freq);
+	if (ret)
+		goto irq_unmap;
 
-	ret = clk_prepare_enable(समयr.pclk);
-	अगर (ret)
-		जाओ irq_unmap;
+	ret = clk_prepare_enable(timer.pclk);
+	if (ret)
+		goto irq_unmap;
 
-	अगर (समयr.mode & MCHP_PIT64B_MR_SGCLK) अणु
-		ret = clk_prepare_enable(समयr.gclk);
-		अगर (ret)
-			जाओ pclk_unprepare;
+	if (timer.mode & MCHP_PIT64B_MR_SGCLK) {
+		ret = clk_prepare_enable(timer.gclk);
+		if (ret)
+			goto pclk_unprepare;
 
-		clk_rate = clk_get_rate(समयr.gclk);
-	पूर्ण अन्यथा अणु
-		clk_rate = clk_get_rate(समयr.pclk);
-	पूर्ण
-	clk_rate = clk_rate / (MCHP_PIT64B_MODE_TO_PRES(समयr.mode) + 1);
+		clk_rate = clk_get_rate(timer.gclk);
+	} else {
+		clk_rate = clk_get_rate(timer.pclk);
+	}
+	clk_rate = clk_rate / (MCHP_PIT64B_MODE_TO_PRES(timer.mode) + 1);
 
-	अगर (clkevt)
-		ret = mchp_pit64b_init_clkevt(&समयr, clk_rate, irq);
-	अन्यथा
-		ret = mchp_pit64b_init_clksrc(&समयr, clk_rate);
+	if (clkevt)
+		ret = mchp_pit64b_init_clkevt(&timer, clk_rate, irq);
+	else
+		ret = mchp_pit64b_init_clksrc(&timer, clk_rate);
 
-	अगर (ret)
-		जाओ gclk_unprepare;
+	if (ret)
+		goto gclk_unprepare;
 
-	वापस 0;
+	return 0;
 
 gclk_unprepare:
-	अगर (समयr.mode & MCHP_PIT64B_MR_SGCLK)
-		clk_disable_unprepare(समयr.gclk);
+	if (timer.mode & MCHP_PIT64B_MR_SGCLK)
+		clk_disable_unprepare(timer.gclk);
 pclk_unprepare:
-	clk_disable_unprepare(समयr.pclk);
+	clk_disable_unprepare(timer.pclk);
 irq_unmap:
 	irq_dispose_mapping(irq);
 io_unmap:
-	iounmap(समयr.base);
+	iounmap(timer.base);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init mchp_pit64b_dt_init(काष्ठा device_node *node)
-अणु
-	अटल पूर्णांक inits;
+static int __init mchp_pit64b_dt_init(struct device_node *node)
+{
+	static int inits;
 
-	चयन (inits++) अणु
-	हाल 0:
-		/* 1st request, रेजिस्टर घड़ीevent. */
-		वापस mchp_pit64b_dt_init_समयr(node, true);
-	हाल 1:
-		/* 2nd request, रेजिस्टर घड़ीsource. */
-		वापस mchp_pit64b_dt_init_समयr(node, false);
-	पूर्ण
+	switch (inits++) {
+	case 0:
+		/* 1st request, register clockevent. */
+		return mchp_pit64b_dt_init_timer(node, true);
+	case 1:
+		/* 2nd request, register clocksource. */
+		return mchp_pit64b_dt_init_timer(node, false);
+	}
 
-	/* The rest, करोn't care. */
-	वापस -EINVAL;
-पूर्ण
+	/* The rest, don't care. */
+	return -EINVAL;
+}
 
 TIMER_OF_DECLARE(mchp_pit64b, "microchip,sam9x60-pit64b", mchp_pit64b_dt_init);

@@ -1,231 +1,230 @@
-<शैली गुरु>
 /*
  *  Copyright (C) 1998-2000  Andre Hedrick <andre@linux-ide.org>
  *  Copyright (C) 1995-1998  Mark Lord
  *  Copyright (C) 2007-2009  Bartlomiej Zolnierkiewicz
  *
- *  May be copied or modअगरied under the terms of the GNU General Public License
+ *  May be copied or modified under the terms of the GNU General Public License
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/dma-mapping.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ide.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
 /**
  *	ide_setup_pci_baseregs	-	place a PCI IDE controller native
- *	@dev: PCI device of पूर्णांकerface to चयन native
- *	@name: Name of पूर्णांकerface
+ *	@dev: PCI device of interface to switch native
+ *	@name: Name of interface
  *
- *	We attempt to place the PCI पूर्णांकerface पूर्णांकo PCI native mode. If
+ *	We attempt to place the PCI interface into PCI native mode. If
  *	we succeed the BARs are ok and the controller is in PCI mode.
- *	Returns 0 on success or an त्रुटि_सं code.
+ *	Returns 0 on success or an errno code.
  *
- *	FIXME: अगर we program the पूर्णांकerface and then fail to set the BARS
- *	we करोn't चयन it back to legacy mode. Do we actually care ??
+ *	FIXME: if we program the interface and then fail to set the BARS
+ *	we don't switch it back to legacy mode. Do we actually care ??
  */
 
-अटल पूर्णांक ide_setup_pci_baseregs(काष्ठा pci_dev *dev, स्थिर अक्षर *name)
-अणु
-	u8 progअगर = 0;
+static int ide_setup_pci_baseregs(struct pci_dev *dev, const char *name)
+{
+	u8 progif = 0;
 
 	/*
-	 * Place both IDE पूर्णांकerfaces पूर्णांकo PCI "native" mode:
+	 * Place both IDE interfaces into PCI "native" mode:
 	 */
-	अगर (pci_पढ़ो_config_byte(dev, PCI_CLASS_PROG, &progअगर) ||
-			 (progअगर & 5) != 5) अणु
-		अगर ((progअगर & 0xa) != 0xa) अणु
-			prपूर्णांकk(KERN_INFO "%s %s: device not capable of full "
+	if (pci_read_config_byte(dev, PCI_CLASS_PROG, &progif) ||
+			 (progif & 5) != 5) {
+		if ((progif & 0xa) != 0xa) {
+			printk(KERN_INFO "%s %s: device not capable of full "
 				"native PCI mode\n", name, pci_name(dev));
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		prपूर्णांकk(KERN_INFO "%s %s: placing both ports into native PCI "
+			return -EOPNOTSUPP;
+		}
+		printk(KERN_INFO "%s %s: placing both ports into native PCI "
 			"mode\n", name, pci_name(dev));
-		(व्योम) pci_ग_लिखो_config_byte(dev, PCI_CLASS_PROG, progअगर|5);
-		अगर (pci_पढ़ो_config_byte(dev, PCI_CLASS_PROG, &progअगर) ||
-		    (progअगर & 5) != 5) अणु
-			prपूर्णांकk(KERN_ERR "%s %s: rewrite of PROGIF failed, "
+		(void) pci_write_config_byte(dev, PCI_CLASS_PROG, progif|5);
+		if (pci_read_config_byte(dev, PCI_CLASS_PROG, &progif) ||
+		    (progif & 5) != 5) {
+			printk(KERN_ERR "%s %s: rewrite of PROGIF failed, "
 				"wanted 0x%04x, got 0x%04x\n",
-				name, pci_name(dev), progअगर | 5, progअगर);
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				name, pci_name(dev), progif | 5, progif);
+			return -EOPNOTSUPP;
+		}
+	}
+	return 0;
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA_PCI
-अटल पूर्णांक ide_pci_clear_simplex(अचिन्हित दीर्घ dma_base, स्थिर अक्षर *name)
-अणु
+#ifdef CONFIG_BLK_DEV_IDEDMA_PCI
+static int ide_pci_clear_simplex(unsigned long dma_base, const char *name)
+{
 	u8 dma_stat = inb(dma_base + 2);
 
 	outb(dma_stat & 0x60, dma_base + 2);
 	dma_stat = inb(dma_base + 2);
 
-	वापस (dma_stat & 0x80) ? 1 : 0;
-पूर्ण
+	return (dma_stat & 0x80) ? 1 : 0;
+}
 
 /**
  *	ide_pci_dma_base	-	setup BMIBA
- *	@hwअगर: IDE पूर्णांकerface
+ *	@hwif: IDE interface
  *	@d: IDE port info
  *
  *	Fetch the DMA Bus-Master-I/O-Base-Address (BMIBA) from PCI space.
  */
 
-अचिन्हित दीर्घ ide_pci_dma_base(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
-	अचिन्हित दीर्घ dma_base = 0;
+unsigned long ide_pci_dma_base(ide_hwif_t *hwif, const struct ide_port_info *d)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
+	unsigned long dma_base = 0;
 
-	अगर (hwअगर->host_flags & IDE_HFLAG_MMIO)
-		वापस hwअगर->dma_base;
+	if (hwif->host_flags & IDE_HFLAG_MMIO)
+		return hwif->dma_base;
 
-	अगर (hwअगर->mate && hwअगर->mate->dma_base) अणु
-		dma_base = hwअगर->mate->dma_base - (hwअगर->channel ? 0 : 8);
-	पूर्ण अन्यथा अणु
+	if (hwif->mate && hwif->mate->dma_base) {
+		dma_base = hwif->mate->dma_base - (hwif->channel ? 0 : 8);
+	} else {
 		u8 baridx = (d->host_flags & IDE_HFLAG_CS5520) ? 2 : 4;
 
 		dma_base = pci_resource_start(dev, baridx);
 
-		अगर (dma_base == 0) अणु
-			prपूर्णांकk(KERN_ERR "%s %s: DMA base is invalid\n",
+		if (dma_base == 0) {
+			printk(KERN_ERR "%s %s: DMA base is invalid\n",
 				d->name, pci_name(dev));
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (hwअगर->channel)
+	if (hwif->channel)
 		dma_base += 8;
 
-	वापस dma_base;
-पूर्ण
+	return dma_base;
+}
 EXPORT_SYMBOL_GPL(ide_pci_dma_base);
 
-पूर्णांक ide_pci_check_simplex(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+int ide_pci_check_simplex(ide_hwif_t *hwif, const struct ide_port_info *d)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
 	u8 dma_stat;
 
-	अगर (d->host_flags & (IDE_HFLAG_MMIO | IDE_HFLAG_CS5520))
-		जाओ out;
+	if (d->host_flags & (IDE_HFLAG_MMIO | IDE_HFLAG_CS5520))
+		goto out;
 
-	अगर (d->host_flags & IDE_HFLAG_CLEAR_SIMPLEX) अणु
-		अगर (ide_pci_clear_simplex(hwअगर->dma_base, d->name))
-			prपूर्णांकk(KERN_INFO "%s %s: simplex device: DMA forced\n",
+	if (d->host_flags & IDE_HFLAG_CLEAR_SIMPLEX) {
+		if (ide_pci_clear_simplex(hwif->dma_base, d->name))
+			printk(KERN_INFO "%s %s: simplex device: DMA forced\n",
 				d->name, pci_name(dev));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If the device claims "simplex" DMA, this means that only one of
-	 * the two पूर्णांकerfaces can be trusted with DMA at any poपूर्णांक in समय
-	 * (so we should enable DMA only on one of the two पूर्णांकerfaces).
+	 * the two interfaces can be trusted with DMA at any point in time
+	 * (so we should enable DMA only on one of the two interfaces).
 	 *
-	 * FIXME: At this poपूर्णांक we haven't probed the drives so we can't make
+	 * FIXME: At this point we haven't probed the drives so we can't make
 	 * the appropriate decision.  Really we should defer this problem until
-	 * we tune the drive then try to grab DMA ownership अगर we want to be
+	 * we tune the drive then try to grab DMA ownership if we want to be
 	 * the DMA end.  This has to be become dynamic to handle hot-plug.
 	 */
-	dma_stat = hwअगर->dma_ops->dma_sff_पढ़ो_status(hwअगर);
-	अगर ((dma_stat & 0x80) && hwअगर->mate && hwअगर->mate->dma_base) अणु
-		prपूर्णांकk(KERN_INFO "%s %s: simplex device: DMA disabled\n",
+	dma_stat = hwif->dma_ops->dma_sff_read_status(hwif);
+	if ((dma_stat & 0x80) && hwif->mate && hwif->mate->dma_base) {
+		printk(KERN_INFO "%s %s: simplex device: DMA disabled\n",
 			d->name, pci_name(dev));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ide_pci_check_simplex);
 
 /*
- * Set up BM-DMA capability (PnP BIOS should have करोne this)
+ * Set up BM-DMA capability (PnP BIOS should have done this)
  */
-पूर्णांक ide_pci_set_master(काष्ठा pci_dev *dev, स्थिर अक्षर *name)
-अणु
+int ide_pci_set_master(struct pci_dev *dev, const char *name)
+{
 	u16 pcicmd;
 
-	pci_पढ़ो_config_word(dev, PCI_COMMAND, &pcicmd);
+	pci_read_config_word(dev, PCI_COMMAND, &pcicmd);
 
-	अगर ((pcicmd & PCI_COMMAND_MASTER) == 0) अणु
+	if ((pcicmd & PCI_COMMAND_MASTER) == 0) {
 		pci_set_master(dev);
 
-		अगर (pci_पढ़ो_config_word(dev, PCI_COMMAND, &pcicmd) ||
-		    (pcicmd & PCI_COMMAND_MASTER) == 0) अणु
-			prपूर्णांकk(KERN_ERR "%s %s: error updating PCICMD\n",
+		if (pci_read_config_word(dev, PCI_COMMAND, &pcicmd) ||
+		    (pcicmd & PCI_COMMAND_MASTER) == 0) {
+			printk(KERN_ERR "%s %s: error updating PCICMD\n",
 				name, pci_name(dev));
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ide_pci_set_master);
-#पूर्ण_अगर /* CONFIG_BLK_DEV_IDEDMA_PCI */
+#endif /* CONFIG_BLK_DEV_IDEDMA_PCI */
 
-व्योम ide_setup_pci_noise(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d)
-अणु
-	prपूर्णांकk(KERN_INFO "%s %s: IDE controller (0x%04x:0x%04x rev 0x%02x)\n",
+void ide_setup_pci_noise(struct pci_dev *dev, const struct ide_port_info *d)
+{
+	printk(KERN_INFO "%s %s: IDE controller (0x%04x:0x%04x rev 0x%02x)\n",
 		d->name, pci_name(dev),
-		dev->venकरोr, dev->device, dev->revision);
-पूर्ण
+		dev->vendor, dev->device, dev->revision);
+}
 EXPORT_SYMBOL_GPL(ide_setup_pci_noise);
 
 
 /**
- *	ide_pci_enable	-	करो PCI enables
+ *	ide_pci_enable	-	do PCI enables
  *	@dev: PCI device
  *	@bars: PCI BARs mask
  *	@d: IDE port info
  *
  *	Enable the IDE PCI device. We attempt to enable the device in full
- *	but अगर that fails then we only need IO space. The PCI code should
- *	have setup the proper resources क्रम us alपढ़ोy क्रम controllers in
+ *	but if that fails then we only need IO space. The PCI code should
+ *	have setup the proper resources for us already for controllers in
  *	legacy mode.
  *
  *	Returns zero on success or an error code
  */
 
-अटल पूर्णांक ide_pci_enable(काष्ठा pci_dev *dev, पूर्णांक bars,
-			  स्थिर काष्ठा ide_port_info *d)
-अणु
-	पूर्णांक ret;
+static int ide_pci_enable(struct pci_dev *dev, int bars,
+			  const struct ide_port_info *d)
+{
+	int ret;
 
-	अगर (pci_enable_device(dev)) अणु
+	if (pci_enable_device(dev)) {
 		ret = pci_enable_device_io(dev);
-		अगर (ret < 0) अणु
-			prपूर्णांकk(KERN_WARNING "%s %s: couldn't enable device\n",
+		if (ret < 0) {
+			printk(KERN_WARNING "%s %s: couldn't enable device\n",
 				d->name, pci_name(dev));
-			जाओ out;
-		पूर्ण
-		prपूर्णांकk(KERN_WARNING "%s %s: BIOS configuration fixed\n",
+			goto out;
+		}
+		printk(KERN_WARNING "%s %s: BIOS configuration fixed\n",
 			d->name, pci_name(dev));
-	पूर्ण
+	}
 
 	/*
-	 * assume all devices can करो 32-bit DMA क्रम now, we can add
-	 * a DMA mask field to the काष्ठा ide_port_info अगर we need it
+	 * assume all devices can do 32-bit DMA for now, we can add
+	 * a DMA mask field to the struct ide_port_info if we need it
 	 * (or let lower level driver set the DMA mask)
 	 */
 	ret = dma_set_mask(&dev->dev, DMA_BIT_MASK(32));
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s %s: can't set DMA mask\n",
+	if (ret < 0) {
+		printk(KERN_ERR "%s %s: can't set DMA mask\n",
 			d->name, pci_name(dev));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = pci_request_selected_regions(dev, bars, d->name);
-	अगर (ret < 0)
-		prपूर्णांकk(KERN_ERR "%s %s: can't reserve resources\n",
+	if (ret < 0)
+		printk(KERN_ERR "%s %s: can't reserve resources\n",
 			d->name, pci_name(dev));
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	ide_pci_configure	-	configure an unconfigured device
@@ -236,160 +235,160 @@ out:
  *	Returns zero on success or an error code.
  */
 
-अटल पूर्णांक ide_pci_configure(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d)
-अणु
+static int ide_pci_configure(struct pci_dev *dev, const struct ide_port_info *d)
+{
 	u16 pcicmd = 0;
 	/*
 	 * PnP BIOS was *supposed* to have setup this device, but we
-	 * can करो it ourselves, so दीर्घ as the BIOS has asचिन्हित an IRQ
-	 * (or possibly the device is using a "legacy header" क्रम IRQs).
+	 * can do it ourselves, so long as the BIOS has assigned an IRQ
+	 * (or possibly the device is using a "legacy header" for IRQs).
 	 * Maybe the user deliberately *disabled* the device,
-	 * but we'll eventually ignore it again अगर no drives respond.
+	 * but we'll eventually ignore it again if no drives respond.
 	 */
-	अगर (ide_setup_pci_baseregs(dev, d->name) ||
-	    pci_ग_लिखो_config_word(dev, PCI_COMMAND, pcicmd | PCI_COMMAND_IO)) अणु
-		prपूर्णांकk(KERN_INFO "%s %s: device disabled (BIOS)\n",
+	if (ide_setup_pci_baseregs(dev, d->name) ||
+	    pci_write_config_word(dev, PCI_COMMAND, pcicmd | PCI_COMMAND_IO)) {
+		printk(KERN_INFO "%s %s: device disabled (BIOS)\n",
 			d->name, pci_name(dev));
-		वापस -ENODEV;
-	पूर्ण
-	अगर (pci_पढ़ो_config_word(dev, PCI_COMMAND, &pcicmd)) अणु
-		prपूर्णांकk(KERN_ERR "%s %s: error accessing PCI regs\n",
+		return -ENODEV;
+	}
+	if (pci_read_config_word(dev, PCI_COMMAND, &pcicmd)) {
+		printk(KERN_ERR "%s %s: error accessing PCI regs\n",
 			d->name, pci_name(dev));
-		वापस -EIO;
-	पूर्ण
-	अगर (!(pcicmd & PCI_COMMAND_IO)) अणु
-		prपूर्णांकk(KERN_ERR "%s %s: unable to enable IDE controller\n",
+		return -EIO;
+	}
+	if (!(pcicmd & PCI_COMMAND_IO)) {
+		printk(KERN_ERR "%s %s: unable to enable IDE controller\n",
 			d->name, pci_name(dev));
-		वापस -ENXIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENXIO;
+	}
+	return 0;
+}
 
 /**
- *	ide_pci_check_iomem	-	check a रेजिस्टर is I/O
+ *	ide_pci_check_iomem	-	check a register is I/O
  *	@dev: PCI device
  *	@d: IDE port info
  *	@bar: BAR number
  *
- *	Checks अगर a BAR is configured and poपूर्णांकs to MMIO space. If so,
- *	वापस an error code. Otherwise वापस 0
+ *	Checks if a BAR is configured and points to MMIO space. If so,
+ *	return an error code. Otherwise return 0
  */
 
-अटल पूर्णांक ide_pci_check_iomem(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d,
-			       पूर्णांक bar)
-अणु
-	uदीर्घ flags = pci_resource_flags(dev, bar);
+static int ide_pci_check_iomem(struct pci_dev *dev, const struct ide_port_info *d,
+			       int bar)
+{
+	ulong flags = pci_resource_flags(dev, bar);
 
 	/* Unconfigured ? */
-	अगर (!flags || pci_resource_len(dev, bar) == 0)
-		वापस 0;
+	if (!flags || pci_resource_len(dev, bar) == 0)
+		return 0;
 
 	/* I/O space */
-	अगर (flags & IORESOURCE_IO)
-		वापस 0;
+	if (flags & IORESOURCE_IO)
+		return 0;
 
 	/* Bad */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- *	ide_hw_configure	-	configure a काष्ठा ide_hw instance
- *	@dev: PCI device holding पूर्णांकerface
+ *	ide_hw_configure	-	configure a struct ide_hw instance
+ *	@dev: PCI device holding interface
  *	@d: IDE port info
  *	@port: port number
- *	@hw: काष्ठा ide_hw instance corresponding to this port
+ *	@hw: struct ide_hw instance corresponding to this port
  *
- *	Perक्रमm the initial set up क्रम the hardware पूर्णांकerface काष्ठाure. This
- *	is करोne per पूर्णांकerface port rather than per PCI device. There may be
+ *	Perform the initial set up for the hardware interface structure. This
+ *	is done per interface port rather than per PCI device. There may be
  *	more than one port per device.
  *
  *	Returns zero on success or an error code.
  */
 
-अटल पूर्णांक ide_hw_configure(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d,
-			    अचिन्हित पूर्णांक port, काष्ठा ide_hw *hw)
-अणु
-	अचिन्हित दीर्घ ctl = 0, base = 0;
+static int ide_hw_configure(struct pci_dev *dev, const struct ide_port_info *d,
+			    unsigned int port, struct ide_hw *hw)
+{
+	unsigned long ctl = 0, base = 0;
 
-	अगर ((d->host_flags & IDE_HFLAG_ISA_PORTS) == 0) अणु
-		अगर (ide_pci_check_iomem(dev, d, 2 * port) ||
-		    ide_pci_check_iomem(dev, d, 2 * port + 1)) अणु
-			prपूर्णांकk(KERN_ERR "%s %s: I/O baseregs (BIOS) are "
+	if ((d->host_flags & IDE_HFLAG_ISA_PORTS) == 0) {
+		if (ide_pci_check_iomem(dev, d, 2 * port) ||
+		    ide_pci_check_iomem(dev, d, 2 * port + 1)) {
+			printk(KERN_ERR "%s %s: I/O baseregs (BIOS) are "
 				"reported as MEM for port %d!\n",
 				d->name, pci_name(dev), port);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ctl  = pci_resource_start(dev, 2*port+1);
 		base = pci_resource_start(dev, 2*port);
-	पूर्ण अन्यथा अणु
-		/* Use शेष values */
+	} else {
+		/* Use default values */
 		ctl = port ? 0x374 : 0x3f4;
 		base = port ? 0x170 : 0x1f0;
-	पूर्ण
+	}
 
-	अगर (!base || !ctl) अणु
-		prपूर्णांकk(KERN_ERR "%s %s: bad PCI BARs for port %d, skipping\n",
+	if (!base || !ctl) {
+		printk(KERN_ERR "%s %s: bad PCI BARs for port %d, skipping\n",
 			d->name, pci_name(dev), port);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(hw, 0, माप(*hw));
+	memset(hw, 0, sizeof(*hw));
 	hw->dev = &dev->dev;
 	ide_std_init_ports(hw, base, ctl | 2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_BLK_DEV_IDEDMA_PCI
+#ifdef CONFIG_BLK_DEV_IDEDMA_PCI
 /**
- *	ide_hwअगर_setup_dma	-	configure DMA पूर्णांकerface
- *	@hwअगर: IDE पूर्णांकerface
+ *	ide_hwif_setup_dma	-	configure DMA interface
+ *	@hwif: IDE interface
  *	@d: IDE port info
  *
- *	Set up the DMA base क्रम the पूर्णांकerface. Enable the master bits as
- *	necessary and attempt to bring the device DMA पूर्णांकo a पढ़ोy to use
+ *	Set up the DMA base for the interface. Enable the master bits as
+ *	necessary and attempt to bring the device DMA into a ready to use
  *	state
  */
 
-पूर्णांक ide_hwअगर_setup_dma(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
-अणु
-	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+int ide_hwif_setup_dma(ide_hwif_t *hwif, const struct ide_port_info *d)
+{
+	struct pci_dev *dev = to_pci_dev(hwif->dev);
 
-	अगर ((d->host_flags & IDE_HFLAG_NO_AUTODMA) == 0 ||
+	if ((d->host_flags & IDE_HFLAG_NO_AUTODMA) == 0 ||
 	    ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE &&
-	     (dev->class & 0x80))) अणु
-		अचिन्हित दीर्घ base = ide_pci_dma_base(hwअगर, d);
+	     (dev->class & 0x80))) {
+		unsigned long base = ide_pci_dma_base(hwif, d);
 
-		अगर (base == 0)
-			वापस -1;
+		if (base == 0)
+			return -1;
 
-		hwअगर->dma_base = base;
+		hwif->dma_base = base;
 
-		अगर (hwअगर->dma_ops == शून्य)
-			hwअगर->dma_ops = &sff_dma_ops;
+		if (hwif->dma_ops == NULL)
+			hwif->dma_ops = &sff_dma_ops;
 
-		अगर (ide_pci_check_simplex(hwअगर, d) < 0)
-			वापस -1;
+		if (ide_pci_check_simplex(hwif, d) < 0)
+			return -1;
 
-		अगर (ide_pci_set_master(dev, d->name) < 0)
-			वापस -1;
+		if (ide_pci_set_master(dev, d->name) < 0)
+			return -1;
 
-		अगर (hwअगर->host_flags & IDE_HFLAG_MMIO)
-			prपूर्णांकk(KERN_INFO "    %s: MMIO-DMA\n", hwअगर->name);
-		अन्यथा
-			prपूर्णांकk(KERN_INFO "    %s: BM-DMA at 0x%04lx-0x%04lx\n",
-					 hwअगर->name, base, base + 7);
+		if (hwif->host_flags & IDE_HFLAG_MMIO)
+			printk(KERN_INFO "    %s: MMIO-DMA\n", hwif->name);
+		else
+			printk(KERN_INFO "    %s: BM-DMA at 0x%04lx-0x%04lx\n",
+					 hwif->name, base, base + 7);
 
-		hwअगर->extra_base = base + (hwअगर->channel ? 8 : 16);
+		hwif->extra_base = base + (hwif->channel ? 8 : 16);
 
-		अगर (ide_allocate_dma_engine(hwअगर))
-			वापस -1;
-	पूर्ण
+		if (ide_allocate_dma_engine(hwif))
+			return -1;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_BLK_DEV_IDEDMA_PCI */
+	return 0;
+}
+#endif /* CONFIG_BLK_DEV_IDEDMA_PCI */
 
 /**
  *	ide_setup_pci_controller	-	set up IDE PCI
@@ -398,105 +397,105 @@ out:
  *	@d: IDE port info
  *	@noisy: verbose flag
  *
- *	Set up the PCI and controller side of the IDE पूर्णांकerface. This brings
+ *	Set up the PCI and controller side of the IDE interface. This brings
  *	up the PCI side of the device, checks that the device is enabled
- *	and enables it अगर need be
+ *	and enables it if need be
  */
 
-अटल पूर्णांक ide_setup_pci_controller(काष्ठा pci_dev *dev, पूर्णांक bars,
-				    स्थिर काष्ठा ide_port_info *d, पूर्णांक noisy)
-अणु
-	पूर्णांक ret;
+static int ide_setup_pci_controller(struct pci_dev *dev, int bars,
+				    const struct ide_port_info *d, int noisy)
+{
+	int ret;
 	u16 pcicmd;
 
-	अगर (noisy)
+	if (noisy)
 		ide_setup_pci_noise(dev, d);
 
 	ret = ide_pci_enable(dev, bars, d);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	ret = pci_पढ़ो_config_word(dev, PCI_COMMAND, &pcicmd);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s %s: error accessing PCI regs\n",
+	ret = pci_read_config_word(dev, PCI_COMMAND, &pcicmd);
+	if (ret < 0) {
+		printk(KERN_ERR "%s %s: error accessing PCI regs\n",
 			d->name, pci_name(dev));
-		जाओ out_मुक्त_bars;
-	पूर्ण
-	अगर (!(pcicmd & PCI_COMMAND_IO)) अणु	/* is device disabled? */
+		goto out_free_bars;
+	}
+	if (!(pcicmd & PCI_COMMAND_IO)) {	/* is device disabled? */
 		ret = ide_pci_configure(dev, d);
-		अगर (ret < 0)
-			जाओ out_मुक्त_bars;
-		prपूर्णांकk(KERN_INFO "%s %s: device enabled (Linux)\n",
+		if (ret < 0)
+			goto out_free_bars;
+		printk(KERN_INFO "%s %s: device enabled (Linux)\n",
 			d->name, pci_name(dev));
-	पूर्ण
+	}
 
-	जाओ out;
+	goto out;
 
-out_मुक्त_bars:
+out_free_bars:
 	pci_release_selected_regions(dev, bars);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	ide_pci_setup_ports	-	configure ports/devices on PCI IDE
  *	@dev: PCI device
  *	@d: IDE port info
- *	@hw: काष्ठा ide_hw instances corresponding to this PCI IDE device
- *	@hws: काष्ठा ide_hw poपूर्णांकers table to update
+ *	@hw: struct ide_hw instances corresponding to this PCI IDE device
+ *	@hws: struct ide_hw pointers table to update
  *
- *	Scan the पूर्णांकerfaces attached to this device and करो any
+ *	Scan the interfaces attached to this device and do any
  *	necessary per port setup. Attach the devices and ask the
- *	generic DMA layer to करो its work क्रम us.
+ *	generic DMA layer to do its work for us.
  *
- *	Normally called स्वतःmaticall from करो_ide_pci_setup_device,
+ *	Normally called automaticall from do_ide_pci_setup_device,
  *	but is also used directly as a helper function by some controllers
- *	where the chipset setup is not the शेष PCI IDE one.
+ *	where the chipset setup is not the default PCI IDE one.
  */
 
-व्योम ide_pci_setup_ports(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d,
-			 काष्ठा ide_hw *hw, काष्ठा ide_hw **hws)
-अणु
-	पूर्णांक channels = (d->host_flags & IDE_HFLAG_SINGLE) ? 1 : 2, port;
-	u8 पंचांगp;
+void ide_pci_setup_ports(struct pci_dev *dev, const struct ide_port_info *d,
+			 struct ide_hw *hw, struct ide_hw **hws)
+{
+	int channels = (d->host_flags & IDE_HFLAG_SINGLE) ? 1 : 2, port;
+	u8 tmp;
 
 	/*
 	 * Set up the IDE ports
 	 */
 
-	क्रम (port = 0; port < channels; ++port) अणु
-		स्थिर काष्ठा ide_pci_enablebit *e = &d->enablebits[port];
+	for (port = 0; port < channels; ++port) {
+		const struct ide_pci_enablebit *e = &d->enablebits[port];
 
-		अगर (e->reg && (pci_पढ़ो_config_byte(dev, e->reg, &पंचांगp) ||
-		    (पंचांगp & e->mask) != e->val)) अणु
-			prपूर्णांकk(KERN_INFO "%s %s: IDE port disabled\n",
+		if (e->reg && (pci_read_config_byte(dev, e->reg, &tmp) ||
+		    (tmp & e->mask) != e->val)) {
+			printk(KERN_INFO "%s %s: IDE port disabled\n",
 				d->name, pci_name(dev));
-			जारी;	/* port not enabled */
-		पूर्ण
+			continue;	/* port not enabled */
+		}
 
-		अगर (ide_hw_configure(dev, d, port, hw + port))
-			जारी;
+		if (ide_hw_configure(dev, d, port, hw + port))
+			continue;
 
 		*(hws + port) = hw + port;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ide_pci_setup_ports);
 
 /*
- * ide_setup_pci_device() looks at the primary/secondary पूर्णांकerfaces
- * on a PCI IDE device and, अगर they are enabled, prepares the IDE driver
- * क्रम use with them.  This generic code works क्रम most PCI chipsets.
+ * ide_setup_pci_device() looks at the primary/secondary interfaces
+ * on a PCI IDE device and, if they are enabled, prepares the IDE driver
+ * for use with them.  This generic code works for most PCI chipsets.
  *
  * One thing that is not standardized is the location of the
- * primary/secondary पूर्णांकerface "enable/disable" bits.  For chipsets that
- * we "know" about, this inक्रमmation is in the काष्ठा ide_port_info;
- * क्रम all other chipsets, we just assume both पूर्णांकerfaces are enabled.
+ * primary/secondary interface "enable/disable" bits.  For chipsets that
+ * we "know" about, this information is in the struct ide_port_info;
+ * for all other chipsets, we just assume both interfaces are enabled.
  */
-अटल पूर्णांक करो_ide_setup_pci_device(काष्ठा pci_dev *dev,
-				   स्थिर काष्ठा ide_port_info *d,
+static int do_ide_setup_pci_device(struct pci_dev *dev,
+				   const struct ide_port_info *d,
 				   u8 noisy)
-अणु
-	पूर्णांक pciirq, ret;
+{
+	int pciirq, ret;
 
 	/*
 	 * Can we trust the reported IRQ?
@@ -505,179 +504,179 @@ EXPORT_SYMBOL_GPL(ide_pci_setup_ports);
 
 	/*
 	 * This allows offboard ide-pci cards the enable a BIOS,
-	 * verअगरy पूर्णांकerrupt settings of split-mirror pci-config
-	 * space, place chipset पूर्णांकo init-mode, and/or preserve
-	 * an पूर्णांकerrupt अगर the card is not native ide support.
+	 * verify interrupt settings of split-mirror pci-config
+	 * space, place chipset into init-mode, and/or preserve
+	 * an interrupt if the card is not native ide support.
 	 */
 	ret = d->init_chipset ? d->init_chipset(dev) : 0;
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (ide_pci_is_in_compatibility_mode(dev)) अणु
-		अगर (noisy)
-			prपूर्णांकk(KERN_INFO "%s %s: not 100%% native mode: will "
+	if (ide_pci_is_in_compatibility_mode(dev)) {
+		if (noisy)
+			printk(KERN_INFO "%s %s: not 100%% native mode: will "
 				"probe irqs later\n", d->name, pci_name(dev));
 		pciirq = 0;
-	पूर्ण अन्यथा अगर (!pciirq && noisy) अणु
-		prपूर्णांकk(KERN_WARNING "%s %s: bad irq (%d): will probe later\n",
+	} else if (!pciirq && noisy) {
+		printk(KERN_WARNING "%s %s: bad irq (%d): will probe later\n",
 			d->name, pci_name(dev), pciirq);
-	पूर्ण अन्यथा अगर (noisy) अणु
-		prपूर्णांकk(KERN_INFO "%s %s: 100%% native mode on irq %d\n",
+	} else if (noisy) {
+		printk(KERN_INFO "%s %s: 100%% native mode on irq %d\n",
 			d->name, pci_name(dev), pciirq);
-	पूर्ण
+	}
 
 	ret = pciirq;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ide_pci_init_two(काष्ठा pci_dev *dev1, काष्ठा pci_dev *dev2,
-		     स्थिर काष्ठा ide_port_info *d, व्योम *priv)
-अणु
-	काष्ठा pci_dev *pdev[] = अणु dev1, dev2 पूर्ण;
-	काष्ठा ide_host *host;
-	पूर्णांक ret, i, n_ports = dev2 ? 4 : 2, bars;
-	काष्ठा ide_hw hw[4], *hws[] = अणु शून्य, शून्य, शून्य, शून्य पूर्ण;
+int ide_pci_init_two(struct pci_dev *dev1, struct pci_dev *dev2,
+		     const struct ide_port_info *d, void *priv)
+{
+	struct pci_dev *pdev[] = { dev1, dev2 };
+	struct ide_host *host;
+	int ret, i, n_ports = dev2 ? 4 : 2, bars;
+	struct ide_hw hw[4], *hws[] = { NULL, NULL, NULL, NULL };
 
-	अगर (d->host_flags & IDE_HFLAG_SINGLE)
+	if (d->host_flags & IDE_HFLAG_SINGLE)
 		bars = (1 << 2) - 1;
-	अन्यथा
+	else
 		bars = (1 << 4) - 1;
 
-	अगर ((d->host_flags & IDE_HFLAG_NO_DMA) == 0) अणु
-		अगर (d->host_flags & IDE_HFLAG_CS5520)
+	if ((d->host_flags & IDE_HFLAG_NO_DMA) == 0) {
+		if (d->host_flags & IDE_HFLAG_CS5520)
 			bars |= (1 << 2);
-		अन्यथा
+		else
 			bars |= (1 << 4);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < n_ports / 2; i++) अणु
+	for (i = 0; i < n_ports / 2; i++) {
 		ret = ide_setup_pci_controller(pdev[i], bars, d, !i);
-		अगर (ret < 0) अणु
-			अगर (i == 1)
+		if (ret < 0) {
+			if (i == 1)
 				pci_release_selected_regions(pdev[0], bars);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ide_pci_setup_ports(pdev[i], d, &hw[i*2], &hws[i*2]);
-	पूर्ण
+	}
 
 	host = ide_host_alloc(d, hws, n_ports);
-	अगर (host == शून्य) अणु
+	if (host == NULL) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त_bars;
-	पूर्ण
+		goto out_free_bars;
+	}
 
 	host->dev[0] = &dev1->dev;
-	अगर (dev2)
+	if (dev2)
 		host->dev[1] = &dev2->dev;
 
 	host->host_priv = priv;
 	host->irq_flags = IRQF_SHARED;
 
 	pci_set_drvdata(pdev[0], host);
-	अगर (dev2)
+	if (dev2)
 		pci_set_drvdata(pdev[1], host);
 
-	क्रम (i = 0; i < n_ports / 2; i++) अणु
-		ret = करो_ide_setup_pci_device(pdev[i], d, !i);
+	for (i = 0; i < n_ports / 2; i++) {
+		ret = do_ide_setup_pci_device(pdev[i], d, !i);
 
 		/*
-		 * FIXME: Mom, mom, they stole me the helper function to unकरो
-		 * करो_ide_setup_pci_device() on the first device!
+		 * FIXME: Mom, mom, they stole me the helper function to undo
+		 * do_ide_setup_pci_device() on the first device!
 		 */
-		अगर (ret < 0)
-			जाओ out_मुक्त_bars;
+		if (ret < 0)
+			goto out_free_bars;
 
 		/* fixup IRQ */
-		अगर (ide_pci_is_in_compatibility_mode(pdev[i])) अणु
+		if (ide_pci_is_in_compatibility_mode(pdev[i])) {
 			hw[i*2].irq = pci_get_legacy_ide_irq(pdev[i], 0);
 			hw[i*2 + 1].irq = pci_get_legacy_ide_irq(pdev[i], 1);
-		पूर्ण अन्यथा
+		} else
 			hw[i*2 + 1].irq = hw[i*2].irq = ret;
-	पूर्ण
+	}
 
-	ret = ide_host_रेजिस्टर(host, d, hws);
-	अगर (ret)
-		ide_host_मुक्त(host);
-	अन्यथा
-		जाओ out;
+	ret = ide_host_register(host, d, hws);
+	if (ret)
+		ide_host_free(host);
+	else
+		goto out;
 
-out_मुक्त_bars:
+out_free_bars:
 	i = n_ports / 2;
-	जबतक (i--)
+	while (i--)
 		pci_release_selected_regions(pdev[i], bars);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(ide_pci_init_two);
 
-पूर्णांक ide_pci_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा ide_port_info *d,
-		     व्योम *priv)
-अणु
-	वापस ide_pci_init_two(dev, शून्य, d, priv);
-पूर्ण
+int ide_pci_init_one(struct pci_dev *dev, const struct ide_port_info *d,
+		     void *priv)
+{
+	return ide_pci_init_two(dev, NULL, d, priv);
+}
 EXPORT_SYMBOL_GPL(ide_pci_init_one);
 
-व्योम ide_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा ide_host *host = pci_get_drvdata(dev);
-	काष्ठा pci_dev *dev2 = host->dev[1] ? to_pci_dev(host->dev[1]) : शून्य;
-	पूर्णांक bars;
+void ide_pci_remove(struct pci_dev *dev)
+{
+	struct ide_host *host = pci_get_drvdata(dev);
+	struct pci_dev *dev2 = host->dev[1] ? to_pci_dev(host->dev[1]) : NULL;
+	int bars;
 
-	अगर (host->host_flags & IDE_HFLAG_SINGLE)
+	if (host->host_flags & IDE_HFLAG_SINGLE)
 		bars = (1 << 2) - 1;
-	अन्यथा
+	else
 		bars = (1 << 4) - 1;
 
-	अगर ((host->host_flags & IDE_HFLAG_NO_DMA) == 0) अणु
-		अगर (host->host_flags & IDE_HFLAG_CS5520)
+	if ((host->host_flags & IDE_HFLAG_NO_DMA) == 0) {
+		if (host->host_flags & IDE_HFLAG_CS5520)
 			bars |= (1 << 2);
-		अन्यथा
+		else
 			bars |= (1 << 4);
-	पूर्ण
+	}
 
-	ide_host_हटाओ(host);
+	ide_host_remove(host);
 
-	अगर (dev2)
+	if (dev2)
 		pci_release_selected_regions(dev2, bars);
 	pci_release_selected_regions(dev, bars);
 
-	अगर (dev2)
+	if (dev2)
 		pci_disable_device(dev2);
 	pci_disable_device(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(ide_pci_हटाओ);
+}
+EXPORT_SYMBOL_GPL(ide_pci_remove);
 
-#अगर_घोषित CONFIG_PM
-पूर्णांक ide_pci_suspend(काष्ठा pci_dev *dev, pm_message_t state)
-अणु
+#ifdef CONFIG_PM
+int ide_pci_suspend(struct pci_dev *dev, pm_message_t state)
+{
 	pci_save_state(dev);
 	pci_disable_device(dev);
-	pci_set_घातer_state(dev, pci_choose_state(dev, state));
+	pci_set_power_state(dev, pci_choose_state(dev, state));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ide_pci_suspend);
 
-पूर्णांक ide_pci_resume(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा ide_host *host = pci_get_drvdata(dev);
-	पूर्णांक rc;
+int ide_pci_resume(struct pci_dev *dev)
+{
+	struct ide_host *host = pci_get_drvdata(dev);
+	int rc;
 
-	pci_set_घातer_state(dev, PCI_D0);
+	pci_set_power_state(dev, PCI_D0);
 
 	rc = pci_enable_device(dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	pci_restore_state(dev);
 	pci_set_master(dev);
 
-	अगर (host->init_chipset)
+	if (host->init_chipset)
 		host->init_chipset(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ide_pci_resume);
-#पूर्ण_अगर
+#endif

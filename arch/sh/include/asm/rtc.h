@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_RTC_H
-#घोषणा _ASM_RTC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_RTC_H
+#define _ASM_RTC_H
 
-व्योम समय_init(व्योम);
+void time_init(void);
 
-#घोषणा RTC_CAP_4_DIGIT_YEAR	(1 << 0)
+#define RTC_CAP_4_DIGIT_YEAR	(1 << 0)
 
-काष्ठा sh_rtc_platक्रमm_info अणु
-	अचिन्हित दीर्घ capabilities;
-पूर्ण;
+struct sh_rtc_platform_info {
+	unsigned long capabilities;
+};
 
-#समावेश <cpu/rtc.h>
+#include <cpu/rtc.h>
 
-#पूर्ण_अगर /* _ASM_RTC_H */
+#endif /* _ASM_RTC_H */

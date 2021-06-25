@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2020, Oracle and/or its affiliates.
  */
 
-#अगर_अघोषित _KUNIT_DEBUGFS_H
-#घोषणा _KUNIT_DEBUGFS_H
+#ifndef _KUNIT_DEBUGFS_H
+#define _KUNIT_DEBUGFS_H
 
-#समावेश <kunit/test.h>
+#include <kunit/test.h>
 
-#अगर_घोषित CONFIG_KUNIT_DEBUGFS
+#ifdef CONFIG_KUNIT_DEBUGFS
 
-व्योम kunit_debugfs_create_suite(काष्ठा kunit_suite *suite);
-व्योम kunit_debugfs_destroy_suite(काष्ठा kunit_suite *suite);
-व्योम kunit_debugfs_init(व्योम);
-व्योम kunit_debugfs_cleanup(व्योम);
+void kunit_debugfs_create_suite(struct kunit_suite *suite);
+void kunit_debugfs_destroy_suite(struct kunit_suite *suite);
+void kunit_debugfs_init(void);
+void kunit_debugfs_cleanup(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम kunit_debugfs_create_suite(काष्ठा kunit_suite *suite) अणु पूर्ण
+static inline void kunit_debugfs_create_suite(struct kunit_suite *suite) { }
 
-अटल अंतरभूत व्योम kunit_debugfs_destroy_suite(काष्ठा kunit_suite *suite) अणु पूर्ण
+static inline void kunit_debugfs_destroy_suite(struct kunit_suite *suite) { }
 
-अटल अंतरभूत व्योम kunit_debugfs_init(व्योम) अणु पूर्ण
+static inline void kunit_debugfs_init(void) { }
 
-अटल अंतरभूत व्योम kunit_debugfs_cleanup(व्योम) अणु पूर्ण
+static inline void kunit_debugfs_cleanup(void) { }
 
-#पूर्ण_अगर /* CONFIG_KUNIT_DEBUGFS */
+#endif /* CONFIG_KUNIT_DEBUGFS */
 
-#पूर्ण_अगर /* _KUNIT_DEBUGFS_H */
+#endif /* _KUNIT_DEBUGFS_H */

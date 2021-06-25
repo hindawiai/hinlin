@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2017, Nicholas Piggin, IBM Corporation
  */
 
-#घोषणा pr_fmt(fmt) "dt-cpu-ftrs: " fmt
+#define pr_fmt(fmt) "dt-cpu-ftrs: " fmt
 
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/libfdt.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/thपढ़ोs.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/jump_label.h>
+#include <linux/libfdt.h>
+#include <linux/memblock.h>
+#include <linux/printk.h>
+#include <linux/sched.h>
+#include <linux/string.h>
+#include <linux/threads.h>
 
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/dt_cpu_ftrs.h>
-#समावेश <यंत्र/mce.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/cputable.h>
+#include <asm/dt_cpu_ftrs.h>
+#include <asm/mce.h>
+#include <asm/mmu.h>
+#include <asm/prom.h>
+#include <asm/setup.h>
 
 
-/* Device-tree visible स्थिरants follow */
-#घोषणा ISA_V3_0B       3000
-#घोषणा ISA_V3_1        3100
+/* Device-tree visible constants follow */
+#define ISA_V3_0B       3000
+#define ISA_V3_1        3100
 
-#घोषणा USABLE_PR               (1U << 0)
-#घोषणा USABLE_OS               (1U << 1)
-#घोषणा USABLE_HV               (1U << 2)
+#define USABLE_PR               (1U << 0)
+#define USABLE_OS               (1U << 1)
+#define USABLE_HV               (1U << 2)
 
-#घोषणा HV_SUPPORT_HFSCR        (1U << 0)
-#घोषणा OS_SUPPORT_FSCR         (1U << 0)
+#define HV_SUPPORT_HFSCR        (1U << 0)
+#define OS_SUPPORT_FSCR         (1U << 0)
 
-/* For parsing, we define all bits set as "NONE" हाल */
-#घोषणा HV_SUPPORT_NONE		0xffffffffU
-#घोषणा OS_SUPPORT_NONE		0xffffffffU
+/* For parsing, we define all bits set as "NONE" case */
+#define HV_SUPPORT_NONE		0xffffffffU
+#define OS_SUPPORT_NONE		0xffffffffU
 
-काष्ठा dt_cpu_feature अणु
-	स्थिर अक्षर *name;
-	uपूर्णांक32_t isa;
-	uपूर्णांक32_t usable_privilege;
-	uपूर्णांक32_t hv_support;
-	uपूर्णांक32_t os_support;
-	uपूर्णांक32_t hfscr_bit_nr;
-	uपूर्णांक32_t fscr_bit_nr;
-	uपूर्णांक32_t hwcap_bit_nr;
+struct dt_cpu_feature {
+	const char *name;
+	uint32_t isa;
+	uint32_t usable_privilege;
+	uint32_t hv_support;
+	uint32_t os_support;
+	uint32_t hfscr_bit_nr;
+	uint32_t fscr_bit_nr;
+	uint32_t hwcap_bit_nr;
 	/* fdt parsing */
-	अचिन्हित दीर्घ node;
-	पूर्णांक enabled;
-	पूर्णांक disabled;
-पूर्ण;
+	unsigned long node;
+	int enabled;
+	int disabled;
+};
 
-#घोषणा MMU_FTRS_HASH_BASE (MMU_FTRS_POWER8)
+#define MMU_FTRS_HASH_BASE (MMU_FTRS_POWER8)
 
-#घोषणा COMMON_USER_BASE	(PPC_FEATURE_32 | PPC_FEATURE_64 | \
+#define COMMON_USER_BASE	(PPC_FEATURE_32 | PPC_FEATURE_64 | \
 				 PPC_FEATURE_ARCH_2_06 |\
 				 PPC_FEATURE_ICACHE_SNOOP)
-#घोषणा COMMON_USER2_BASE	(PPC_FEATURE2_ARCH_2_07 | \
+#define COMMON_USER2_BASE	(PPC_FEATURE2_ARCH_2_07 | \
 				 PPC_FEATURE2_ISEL)
 /*
  * Set up the base CPU
  */
 
-अटल पूर्णांक hv_mode;
+static int hv_mode;
 
-अटल काष्ठा अणु
+static struct {
 	u64	lpcr;
 	u64	hfscr;
 	u64	fscr;
 	u64	pcr;
-पूर्ण प्रणाली_रेजिस्टरs;
+} system_registers;
 
-अटल व्योम (*init_pmu_रेजिस्टरs)(व्योम);
+static void (*init_pmu_registers)(void);
 
-अटल व्योम __restore_cpu_cpufeatures(व्योम)
-अणु
-	mtspr(SPRN_LPCR, प्रणाली_रेजिस्टरs.lpcr);
-	अगर (hv_mode) अणु
+static void __restore_cpu_cpufeatures(void)
+{
+	mtspr(SPRN_LPCR, system_registers.lpcr);
+	if (hv_mode) {
 		mtspr(SPRN_LPID, 0);
-		mtspr(SPRN_HFSCR, प्रणाली_रेजिस्टरs.hfscr);
-		mtspr(SPRN_PCR, प्रणाली_रेजिस्टरs.pcr);
-	पूर्ण
-	mtspr(SPRN_FSCR, प्रणाली_रेजिस्टरs.fscr);
+		mtspr(SPRN_HFSCR, system_registers.hfscr);
+		mtspr(SPRN_PCR, system_registers.pcr);
+	}
+	mtspr(SPRN_FSCR, system_registers.fscr);
 
-	अगर (init_pmu_रेजिस्टरs)
-		init_pmu_रेजिस्टरs();
-पूर्ण
+	if (init_pmu_registers)
+		init_pmu_registers();
+}
 
-अटल अक्षर dt_cpu_name[64];
+static char dt_cpu_name[64];
 
-अटल काष्ठा cpu_spec __initdata base_cpu_spec = अणु
-	.cpu_name		= शून्य,
+static struct cpu_spec __initdata base_cpu_spec = {
+	.cpu_name		= NULL,
 	.cpu_features		= CPU_FTRS_DT_CPU_BASE,
 	.cpu_user_features	= COMMON_USER_BASE,
 	.cpu_user_features2	= COMMON_USER2_BASE,
@@ -102,15 +101,15 @@
 	.dcache_bsize		= 32, /* cache info init.             */
 	.num_pmcs		= 0,
 	.pmc_type		= PPC_PMC_DEFAULT,
-	.oprofile_cpu_type	= शून्य,
-	.cpu_setup		= शून्य,
+	.oprofile_cpu_type	= NULL,
+	.cpu_setup		= NULL,
 	.cpu_restore		= __restore_cpu_cpufeatures,
-	.machine_check_early	= शून्य,
-	.platक्रमm		= शून्य,
-पूर्ण;
+	.machine_check_early	= NULL,
+	.platform		= NULL,
+};
 
-अटल व्योम __init cpufeatures_setup_cpu(व्योम)
-अणु
+static void __init cpufeatures_setup_cpu(void)
+{
 	set_cur_cpu_spec(&base_cpu_spec);
 
 	cur_cpu_spec->pvr_mask = -1;
@@ -118,158 +117,158 @@
 
 	/* Initialize the base environment -- clear FSCR/HFSCR.  */
 	hv_mode = !!(mfmsr() & MSR_HV);
-	अगर (hv_mode) अणु
+	if (hv_mode) {
 		cur_cpu_spec->cpu_features |= CPU_FTR_HVMODE;
 		mtspr(SPRN_HFSCR, 0);
-	पूर्ण
+	}
 	mtspr(SPRN_FSCR, 0);
 	mtspr(SPRN_PCR, PCR_MASK);
 
 	/*
-	 * LPCR करोes not get cleared, to match behaviour with secondaries
+	 * LPCR does not get cleared, to match behaviour with secondaries
 	 * in __restore_cpu_cpufeatures. Once the idle code is fixed, this
 	 * could clear LPCR too.
 	 */
-पूर्ण
+}
 
-अटल पूर्णांक __init feat_try_enable_unknown(काष्ठा dt_cpu_feature *f)
-अणु
-	अगर (f->hv_support == HV_SUPPORT_NONE) अणु
-	पूर्ण अन्यथा अगर (f->hv_support & HV_SUPPORT_HFSCR) अणु
+static int __init feat_try_enable_unknown(struct dt_cpu_feature *f)
+{
+	if (f->hv_support == HV_SUPPORT_NONE) {
+	} else if (f->hv_support & HV_SUPPORT_HFSCR) {
 		u64 hfscr = mfspr(SPRN_HFSCR);
 		hfscr |= 1UL << f->hfscr_bit_nr;
 		mtspr(SPRN_HFSCR, hfscr);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Does not have a known recipe */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (f->os_support == OS_SUPPORT_NONE) अणु
-	पूर्ण अन्यथा अगर (f->os_support & OS_SUPPORT_FSCR) अणु
+	if (f->os_support == OS_SUPPORT_NONE) {
+	} else if (f->os_support & OS_SUPPORT_FSCR) {
 		u64 fscr = mfspr(SPRN_FSCR);
 		fscr |= 1UL << f->fscr_bit_nr;
 		mtspr(SPRN_FSCR, fscr);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Does not have a known recipe */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((f->usable_privilege & USABLE_PR) && (f->hwcap_bit_nr != -1)) अणु
-		uपूर्णांक32_t word = f->hwcap_bit_nr / 32;
-		uपूर्णांक32_t bit = f->hwcap_bit_nr % 32;
+	if ((f->usable_privilege & USABLE_PR) && (f->hwcap_bit_nr != -1)) {
+		uint32_t word = f->hwcap_bit_nr / 32;
+		uint32_t bit = f->hwcap_bit_nr % 32;
 
-		अगर (word == 0)
+		if (word == 0)
 			cur_cpu_spec->cpu_user_features |= 1U << bit;
-		अन्यथा अगर (word == 1)
+		else if (word == 1)
 			cur_cpu_spec->cpu_user_features2 |= 1U << bit;
-		अन्यथा
+		else
 			pr_err("%s could not advertise to user (no hwcap bits)\n", f->name);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable(काष्ठा dt_cpu_feature *f)
-अणु
-	अगर (f->hv_support != HV_SUPPORT_NONE) अणु
-		अगर (f->hfscr_bit_nr != -1) अणु
+static int __init feat_enable(struct dt_cpu_feature *f)
+{
+	if (f->hv_support != HV_SUPPORT_NONE) {
+		if (f->hfscr_bit_nr != -1) {
 			u64 hfscr = mfspr(SPRN_HFSCR);
 			hfscr |= 1UL << f->hfscr_bit_nr;
 			mtspr(SPRN_HFSCR, hfscr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (f->os_support != OS_SUPPORT_NONE) अणु
-		अगर (f->fscr_bit_nr != -1) अणु
+	if (f->os_support != OS_SUPPORT_NONE) {
+		if (f->fscr_bit_nr != -1) {
 			u64 fscr = mfspr(SPRN_FSCR);
 			fscr |= 1UL << f->fscr_bit_nr;
 			mtspr(SPRN_FSCR, fscr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((f->usable_privilege & USABLE_PR) && (f->hwcap_bit_nr != -1)) अणु
-		uपूर्णांक32_t word = f->hwcap_bit_nr / 32;
-		uपूर्णांक32_t bit = f->hwcap_bit_nr % 32;
+	if ((f->usable_privilege & USABLE_PR) && (f->hwcap_bit_nr != -1)) {
+		uint32_t word = f->hwcap_bit_nr / 32;
+		uint32_t bit = f->hwcap_bit_nr % 32;
 
-		अगर (word == 0)
+		if (word == 0)
 			cur_cpu_spec->cpu_user_features |= 1U << bit;
-		अन्यथा अगर (word == 1)
+		else if (word == 1)
 			cur_cpu_spec->cpu_user_features2 |= 1U << bit;
-		अन्यथा
+		else
 			pr_err("CPU feature: %s could not advertise to user (no hwcap bits)\n", f->name);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_disable(काष्ठा dt_cpu_feature *f)
-अणु
-	वापस 0;
-पूर्ण
+static int __init feat_disable(struct dt_cpu_feature *f)
+{
+	return 0;
+}
 
-अटल पूर्णांक __init feat_enable_hv(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_hv(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
-	अगर (!hv_mode) अणु
+	if (!hv_mode) {
 		pr_err("CPU feature hypervisor present in device tree but HV mode not enabled in the CPU. Ignoring.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mtspr(SPRN_LPID, 0);
 
 	lpcr = mfspr(SPRN_LPCR);
-	lpcr &=  ~LPCR_LPES0; /* HV बाह्यal पूर्णांकerrupts */
+	lpcr &=  ~LPCR_LPES0; /* HV external interrupts */
 	mtspr(SPRN_LPCR, lpcr);
 
 	cur_cpu_spec->cpu_features |= CPU_FTR_HVMODE;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_le(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_le(struct dt_cpu_feature *f)
+{
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_TRUE_LE;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_smt(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_smt(struct dt_cpu_feature *f)
+{
 	cur_cpu_spec->cpu_features |= CPU_FTR_SMT;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_SMT;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_idle_nap(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_idle_nap(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
-	/* Set PECE wakeup modes क्रम ISA 207 */
+	/* Set PECE wakeup modes for ISA 207 */
 	lpcr = mfspr(SPRN_LPCR);
 	lpcr |=  LPCR_PECE0;
 	lpcr |=  LPCR_PECE1;
 	lpcr |=  LPCR_PECE2;
 	mtspr(SPRN_LPCR, lpcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_idle_stop(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_idle_stop(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
-	/* Set PECE wakeup modes क्रम ISAv3.0B */
+	/* Set PECE wakeup modes for ISAv3.0B */
 	lpcr = mfspr(SPRN_LPCR);
 	lpcr |=  LPCR_PECE0;
 	lpcr |=  LPCR_PECE1;
 	lpcr |=  LPCR_PECE2;
 	mtspr(SPRN_LPCR, lpcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_mmu_hash(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_mmu_hash(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
 	lpcr = mfspr(SPRN_LPCR);
@@ -284,11 +283,11 @@
 	cur_cpu_spec->mmu_features |= MMU_FTRS_HASH_BASE;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_HAS_MMU;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_mmu_hash_v3(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_mmu_hash_v3(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
 	lpcr = mfspr(SPRN_LPCR);
@@ -298,32 +297,32 @@
 	cur_cpu_spec->mmu_features |= MMU_FTRS_HASH_BASE;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_HAS_MMU;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 
-अटल पूर्णांक __init feat_enable_mmu_radix(काष्ठा dt_cpu_feature *f)
-अणु
-#अगर_घोषित CONFIG_PPC_RADIX_MMU
+static int __init feat_enable_mmu_radix(struct dt_cpu_feature *f)
+{
+#ifdef CONFIG_PPC_RADIX_MMU
 	cur_cpu_spec->mmu_features |= MMU_FTR_TYPE_RADIX;
 	cur_cpu_spec->mmu_features |= MMU_FTRS_HASH_BASE;
 	cur_cpu_spec->mmu_features |= MMU_FTR_GTSE;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_HAS_MMU;
 
-	वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	return 1;
+#endif
+	return 0;
+}
 
-अटल पूर्णांक __init feat_enable_dscr(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_dscr(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
 	/*
 	 * Linux relies on FSCR[DSCR] being clear, so that we can take the
-	 * facility unavailable पूर्णांकerrupt and track the task's usage of DSCR.
+	 * facility unavailable interrupt and track the task's usage of DSCR.
 	 * See facility_unavailable_exception().
-	 * Clear the bit here so that feat_enable() करोesn't set it.
+	 * Clear the bit here so that feat_enable() doesn't set it.
 	 */
 	f->fscr_bit_nr = -1;
 
@@ -334,82 +333,82 @@
 	lpcr |=  (4UL << LPCR_DPFD_SH);
 	mtspr(SPRN_LPCR, lpcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम hfscr_pmu_enable(व्योम)
-अणु
+static void hfscr_pmu_enable(void)
+{
 	u64 hfscr = mfspr(SPRN_HFSCR);
 	hfscr |= PPC_BIT(60);
 	mtspr(SPRN_HFSCR, hfscr);
-पूर्ण
+}
 
-अटल व्योम init_pmu_घातer8(व्योम)
-अणु
-	अगर (hv_mode) अणु
+static void init_pmu_power8(void)
+{
+	if (hv_mode) {
 		mtspr(SPRN_MMCRC, 0);
 		mtspr(SPRN_MMCRH, 0);
-	पूर्ण
+	}
 
 	mtspr(SPRN_MMCRA, 0);
 	mtspr(SPRN_MMCR0, 0);
 	mtspr(SPRN_MMCR1, 0);
 	mtspr(SPRN_MMCR2, 0);
 	mtspr(SPRN_MMCRS, 0);
-पूर्ण
+}
 
-अटल पूर्णांक __init feat_enable_mce_घातer8(काष्ठा dt_cpu_feature *f)
-अणु
-	cur_cpu_spec->platक्रमm = "power8";
+static int __init feat_enable_mce_power8(struct dt_cpu_feature *f)
+{
+	cur_cpu_spec->platform = "power8";
 	cur_cpu_spec->machine_check_early = __machine_check_early_realmode_p8;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_pmu_घातer8(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_pmu_power8(struct dt_cpu_feature *f)
+{
 	hfscr_pmu_enable();
 
-	init_pmu_घातer8();
-	init_pmu_रेजिस्टरs = init_pmu_घातer8;
+	init_pmu_power8();
+	init_pmu_registers = init_pmu_power8;
 
 	cur_cpu_spec->cpu_features |= CPU_FTR_MMCRA;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_PSERIES_PERFMON_COMPAT;
-	अगर (pvr_version_is(PVR_POWER8E))
+	if (pvr_version_is(PVR_POWER8E))
 		cur_cpu_spec->cpu_features |= CPU_FTR_PMAO_BUG;
 
 	cur_cpu_spec->num_pmcs		= 6;
 	cur_cpu_spec->pmc_type		= PPC_PMC_IBM;
 	cur_cpu_spec->oprofile_cpu_type	= "ppc64/power8";
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम init_pmu_घातer9(व्योम)
-अणु
-	अगर (hv_mode)
+static void init_pmu_power9(void)
+{
+	if (hv_mode)
 		mtspr(SPRN_MMCRC, 0);
 
 	mtspr(SPRN_MMCRA, 0);
 	mtspr(SPRN_MMCR0, 0);
 	mtspr(SPRN_MMCR1, 0);
 	mtspr(SPRN_MMCR2, 0);
-पूर्ण
+}
 
-अटल पूर्णांक __init feat_enable_mce_घातer9(काष्ठा dt_cpu_feature *f)
-अणु
-	cur_cpu_spec->platक्रमm = "power9";
+static int __init feat_enable_mce_power9(struct dt_cpu_feature *f)
+{
+	cur_cpu_spec->platform = "power9";
 	cur_cpu_spec->machine_check_early = __machine_check_early_realmode_p9;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_pmu_घातer9(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_pmu_power9(struct dt_cpu_feature *f)
+{
 	hfscr_pmu_enable();
 
-	init_pmu_घातer9();
-	init_pmu_रेजिस्टरs = init_pmu_घातer9;
+	init_pmu_power9();
+	init_pmu_registers = init_pmu_power9;
 
 	cur_cpu_spec->cpu_features |= CPU_FTR_MMCRA;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_PSERIES_PERFMON_COMPAT;
@@ -418,24 +417,24 @@
 	cur_cpu_spec->pmc_type		= PPC_PMC_IBM;
 	cur_cpu_spec->oprofile_cpu_type	= "ppc64/power9";
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम init_pmu_घातer10(व्योम)
-अणु
-	init_pmu_घातer9();
+static void init_pmu_power10(void)
+{
+	init_pmu_power9();
 
 	mtspr(SPRN_MMCR3, 0);
 	mtspr(SPRN_MMCRA, MMCRA_BHRB_DISABLE);
 	mtspr(SPRN_MMCR0, MMCR0_PMCCEXT);
-पूर्ण
+}
 
-अटल पूर्णांक __init feat_enable_pmu_घातer10(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_pmu_power10(struct dt_cpu_feature *f)
+{
 	hfscr_pmu_enable();
 
-	init_pmu_घातer10();
-	init_pmu_रेजिस्टरs = init_pmu_घातer10;
+	init_pmu_power10();
+	init_pmu_registers = init_pmu_power10;
 
 	cur_cpu_spec->cpu_features |= CPU_FTR_MMCRA;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_PSERIES_PERFMON_COMPAT;
@@ -444,131 +443,131 @@
 	cur_cpu_spec->pmc_type          = PPC_PMC_IBM;
 	cur_cpu_spec->oprofile_cpu_type = "ppc64/power10";
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_mce_घातer10(काष्ठा dt_cpu_feature *f)
-अणु
-	cur_cpu_spec->platक्रमm = "power10";
+static int __init feat_enable_mce_power10(struct dt_cpu_feature *f)
+{
+	cur_cpu_spec->platform = "power10";
 	cur_cpu_spec->machine_check_early = __machine_check_early_realmode_p10;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_पंचांग(काष्ठा dt_cpu_feature *f)
-अणु
-#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+static int __init feat_enable_tm(struct dt_cpu_feature *f)
+{
+#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
 	feat_enable(f);
 	cur_cpu_spec->cpu_user_features2 |= PPC_FEATURE2_HTM_NOSC;
-	वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	return 1;
+#endif
+	return 0;
+}
 
-अटल पूर्णांक __init feat_enable_fp(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_fp(struct dt_cpu_feature *f)
+{
 	feat_enable(f);
 	cur_cpu_spec->cpu_features &= ~CPU_FTR_FPU_UNAVAILABLE;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_vector(काष्ठा dt_cpu_feature *f)
-अणु
-#अगर_घोषित CONFIG_ALTIVEC
+static int __init feat_enable_vector(struct dt_cpu_feature *f)
+{
+#ifdef CONFIG_ALTIVEC
 	feat_enable(f);
 	cur_cpu_spec->cpu_features |= CPU_FTR_ALTIVEC;
 	cur_cpu_spec->cpu_features |= CPU_FTR_VMX_COPY;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_HAS_ALTIVEC;
 
-	वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	return 1;
+#endif
+	return 0;
+}
 
-अटल पूर्णांक __init feat_enable_vsx(काष्ठा dt_cpu_feature *f)
-अणु
-#अगर_घोषित CONFIG_VSX
+static int __init feat_enable_vsx(struct dt_cpu_feature *f)
+{
+#ifdef CONFIG_VSX
 	feat_enable(f);
 	cur_cpu_spec->cpu_features |= CPU_FTR_VSX;
 	cur_cpu_spec->cpu_user_features |= PPC_FEATURE_HAS_VSX;
 
-	वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	return 1;
+#endif
+	return 0;
+}
 
-अटल पूर्णांक __init feat_enable_purr(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_purr(struct dt_cpu_feature *f)
+{
 	cur_cpu_spec->cpu_features |= CPU_FTR_PURR | CPU_FTR_SPURR;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_ebb(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_ebb(struct dt_cpu_feature *f)
+{
 	/*
 	 * PPC_FEATURE2_EBB is enabled in PMU init code because it has
 	 * historically been related to the PMU facility. This may have
-	 * to be decoupled अगर EBB becomes more generic. For now, follow
+	 * to be decoupled if EBB becomes more generic. For now, follow
 	 * existing convention.
 	 */
 	f->hwcap_bit_nr = -1;
 	feat_enable(f);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_dbell(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_dbell(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
-	/* P9 has an HFSCR क्रम privileged state */
+	/* P9 has an HFSCR for privileged state */
 	feat_enable(f);
 
 	cur_cpu_spec->cpu_features |= CPU_FTR_DBELL;
 
 	lpcr = mfspr(SPRN_LPCR);
-	lpcr |=  LPCR_PECEDH; /* hyp करोorbell wakeup */
+	lpcr |=  LPCR_PECEDH; /* hyp doorbell wakeup */
 	mtspr(SPRN_LPCR, lpcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_hvi(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_hvi(struct dt_cpu_feature *f)
+{
 	u64 lpcr;
 
 	/*
-	 * POWER9 XIVE पूर्णांकerrupts including in OPAL XICS compatibility
-	 * are always delivered as hypervisor भवization पूर्णांकerrupts (HVI)
+	 * POWER9 XIVE interrupts including in OPAL XICS compatibility
+	 * are always delivered as hypervisor virtualization interrupts (HVI)
 	 * rather than EE.
 	 *
-	 * However LPES0 is not set here, in the chance that an EE करोes get
+	 * However LPES0 is not set here, in the chance that an EE does get
 	 * delivered to the host somehow, the EE handler would not expect it
 	 * to be delivered in LPES0 mode (e.g., using SRR[01]). This could
-	 * happen अगर there is a bug in पूर्णांकerrupt controller code, or IC is
-	 * misconfigured in प्रणालीsim.
+	 * happen if there is a bug in interrupt controller code, or IC is
+	 * misconfigured in systemsim.
 	 */
 
 	lpcr = mfspr(SPRN_LPCR);
-	lpcr |= LPCR_HVICE;	/* enable hvi पूर्णांकerrupts */
-	lpcr |= LPCR_HEIC;	/* disable ee पूर्णांकerrupts when MSR_HV */
+	lpcr |= LPCR_HVICE;	/* enable hvi interrupts */
+	lpcr |= LPCR_HEIC;	/* disable ee interrupts when MSR_HV */
 	lpcr |= LPCR_PECE_HVEE; /* hvi can wake from stop */
 	mtspr(SPRN_LPCR, lpcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_large_ci(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_large_ci(struct dt_cpu_feature *f)
+{
 	cur_cpu_spec->mmu_features |= MMU_FTR_CI_LARGE_PAGE;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init feat_enable_mma(काष्ठा dt_cpu_feature *f)
-अणु
+static int __init feat_enable_mma(struct dt_cpu_feature *f)
+{
 	u64 pcr;
 
 	feat_enable(f);
@@ -576,302 +575,302 @@
 	pcr &= ~PCR_MMA_DIS;
 	mtspr(SPRN_PCR, pcr);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-काष्ठा dt_cpu_feature_match अणु
-	स्थिर अक्षर *name;
-	पूर्णांक (*enable)(काष्ठा dt_cpu_feature *f);
+struct dt_cpu_feature_match {
+	const char *name;
+	int (*enable)(struct dt_cpu_feature *f);
 	u64 cpu_ftr_bit_mask;
-पूर्ण;
+};
 
-अटल काष्ठा dt_cpu_feature_match __initdata
-		dt_cpu_feature_match_table[] = अणु
-	अणु"hypervisor", feat_enable_hv, 0पूर्ण,
-	अणु"big-endian", feat_enable, 0पूर्ण,
-	अणु"little-endian", feat_enable_le, CPU_FTR_REAL_LEपूर्ण,
-	अणु"smt", feat_enable_smt, 0पूर्ण,
-	अणु"interrupt-facilities", feat_enable, 0पूर्ण,
-	अणु"system-call-vectored", feat_enable, 0पूर्ण,
-	अणु"timer-facilities", feat_enable, 0पूर्ण,
-	अणु"timer-facilities-v3", feat_enable, 0पूर्ण,
-	अणु"debug-facilities", feat_enable, 0पूर्ण,
-	अणु"come-from-address-register", feat_enable, CPU_FTR_CFARपूर्ण,
-	अणु"branch-tracing", feat_enable, 0पूर्ण,
-	अणु"floating-point", feat_enable_fp, 0पूर्ण,
-	अणु"vector", feat_enable_vector, 0पूर्ण,
-	अणु"vector-scalar", feat_enable_vsx, 0पूर्ण,
-	अणु"vector-scalar-v3", feat_enable, 0पूर्ण,
-	अणु"decimal-floating-point", feat_enable, 0पूर्ण,
-	अणु"decimal-integer", feat_enable, 0पूर्ण,
-	अणु"quadword-load-store", feat_enable, 0पूर्ण,
-	अणु"vector-crypto", feat_enable, 0पूर्ण,
-	अणु"mmu-hash", feat_enable_mmu_hash, 0पूर्ण,
-	अणु"mmu-radix", feat_enable_mmu_radix, 0पूर्ण,
-	अणु"mmu-hash-v3", feat_enable_mmu_hash_v3, 0पूर्ण,
-	अणु"virtual-page-class-key-protection", feat_enable, 0पूर्ण,
-	अणु"transactional-memory", feat_enable_पंचांग, CPU_FTR_TMपूर्ण,
-	अणु"transactional-memory-v3", feat_enable_पंचांग, 0पूर्ण,
-	अणु"tm-suspend-hypervisor-assist", feat_enable, CPU_FTR_P9_TM_HV_ASSISTपूर्ण,
-	अणु"tm-suspend-xer-so-bug", feat_enable, CPU_FTR_P9_TM_XER_SO_BUGपूर्ण,
-	अणु"idle-nap", feat_enable_idle_nap, 0पूर्ण,
-	/* alignment-पूर्णांकerrupt-dsisr ignored */
-	अणु"idle-stop", feat_enable_idle_stop, 0पूर्ण,
-	अणु"machine-check-power8", feat_enable_mce_घातer8, 0पूर्ण,
-	अणु"performance-monitor-power8", feat_enable_pmu_घातer8, 0पूर्ण,
-	अणु"data-stream-control-register", feat_enable_dscr, CPU_FTR_DSCRपूर्ण,
-	अणु"event-based-branch", feat_enable_ebb, 0पूर्ण,
-	अणु"target-address-register", feat_enable, 0पूर्ण,
-	अणु"branch-history-rolling-buffer", feat_enable, 0पूर्ण,
-	अणु"control-register", feat_enable, CPU_FTR_CTRLपूर्ण,
-	अणु"processor-control-facility", feat_enable_dbell, CPU_FTR_DBELLपूर्ण,
-	अणु"processor-control-facility-v3", feat_enable_dbell, CPU_FTR_DBELLपूर्ण,
-	अणु"processor-utilization-of-resources-register", feat_enable_purr, 0पूर्ण,
-	अणु"no-execute", feat_enable, 0पूर्ण,
-	अणु"strong-access-ordering", feat_enable, CPU_FTR_SAOपूर्ण,
-	अणु"cache-inhibited-large-page", feat_enable_large_ci, 0पूर्ण,
-	अणु"coprocessor-icswx", feat_enable, 0पूर्ण,
-	अणु"hypervisor-virtualization-interrupt", feat_enable_hvi, 0पूर्ण,
-	अणु"program-priority-register", feat_enable, CPU_FTR_HAS_PPRपूर्ण,
-	अणु"wait", feat_enable, 0पूर्ण,
-	अणु"atomic-memory-operations", feat_enable, 0पूर्ण,
-	अणु"branch-v3", feat_enable, 0पूर्ण,
-	अणु"copy-paste", feat_enable, 0पूर्ण,
-	अणु"decimal-floating-point-v3", feat_enable, 0पूर्ण,
-	अणु"decimal-integer-v3", feat_enable, 0पूर्ण,
-	अणु"fixed-point-v3", feat_enable, 0पूर्ण,
-	अणु"floating-point-v3", feat_enable, 0पूर्ण,
-	अणु"group-start-register", feat_enable, 0पूर्ण,
-	अणु"pc-relative-addressing", feat_enable, 0पूर्ण,
-	अणु"machine-check-power9", feat_enable_mce_घातer9, 0पूर्ण,
-	अणु"machine-check-power10", feat_enable_mce_घातer10, 0पूर्ण,
-	अणु"performance-monitor-power9", feat_enable_pmu_घातer9, 0पूर्ण,
-	अणु"performance-monitor-power10", feat_enable_pmu_घातer10, 0पूर्ण,
-	अणु"event-based-branch-v3", feat_enable, 0पूर्ण,
-	अणु"random-number-generator", feat_enable, 0पूर्ण,
-	अणु"system-call-vectored", feat_disable, 0पूर्ण,
-	अणु"trace-interrupt-v3", feat_enable, 0पूर्ण,
-	अणु"vector-v3", feat_enable, 0पूर्ण,
-	अणु"vector-binary128", feat_enable, 0पूर्ण,
-	अणु"vector-binary16", feat_enable, 0पूर्ण,
-	अणु"wait-v3", feat_enable, 0पूर्ण,
-	अणु"prefix-instructions", feat_enable, 0पूर्ण,
-	अणु"matrix-multiply-assist", feat_enable_mma, 0पूर्ण,
-	अणु"debug-facilities-v31", feat_enable, CPU_FTR_DAWR1पूर्ण,
-पूर्ण;
+static struct dt_cpu_feature_match __initdata
+		dt_cpu_feature_match_table[] = {
+	{"hypervisor", feat_enable_hv, 0},
+	{"big-endian", feat_enable, 0},
+	{"little-endian", feat_enable_le, CPU_FTR_REAL_LE},
+	{"smt", feat_enable_smt, 0},
+	{"interrupt-facilities", feat_enable, 0},
+	{"system-call-vectored", feat_enable, 0},
+	{"timer-facilities", feat_enable, 0},
+	{"timer-facilities-v3", feat_enable, 0},
+	{"debug-facilities", feat_enable, 0},
+	{"come-from-address-register", feat_enable, CPU_FTR_CFAR},
+	{"branch-tracing", feat_enable, 0},
+	{"floating-point", feat_enable_fp, 0},
+	{"vector", feat_enable_vector, 0},
+	{"vector-scalar", feat_enable_vsx, 0},
+	{"vector-scalar-v3", feat_enable, 0},
+	{"decimal-floating-point", feat_enable, 0},
+	{"decimal-integer", feat_enable, 0},
+	{"quadword-load-store", feat_enable, 0},
+	{"vector-crypto", feat_enable, 0},
+	{"mmu-hash", feat_enable_mmu_hash, 0},
+	{"mmu-radix", feat_enable_mmu_radix, 0},
+	{"mmu-hash-v3", feat_enable_mmu_hash_v3, 0},
+	{"virtual-page-class-key-protection", feat_enable, 0},
+	{"transactional-memory", feat_enable_tm, CPU_FTR_TM},
+	{"transactional-memory-v3", feat_enable_tm, 0},
+	{"tm-suspend-hypervisor-assist", feat_enable, CPU_FTR_P9_TM_HV_ASSIST},
+	{"tm-suspend-xer-so-bug", feat_enable, CPU_FTR_P9_TM_XER_SO_BUG},
+	{"idle-nap", feat_enable_idle_nap, 0},
+	/* alignment-interrupt-dsisr ignored */
+	{"idle-stop", feat_enable_idle_stop, 0},
+	{"machine-check-power8", feat_enable_mce_power8, 0},
+	{"performance-monitor-power8", feat_enable_pmu_power8, 0},
+	{"data-stream-control-register", feat_enable_dscr, CPU_FTR_DSCR},
+	{"event-based-branch", feat_enable_ebb, 0},
+	{"target-address-register", feat_enable, 0},
+	{"branch-history-rolling-buffer", feat_enable, 0},
+	{"control-register", feat_enable, CPU_FTR_CTRL},
+	{"processor-control-facility", feat_enable_dbell, CPU_FTR_DBELL},
+	{"processor-control-facility-v3", feat_enable_dbell, CPU_FTR_DBELL},
+	{"processor-utilization-of-resources-register", feat_enable_purr, 0},
+	{"no-execute", feat_enable, 0},
+	{"strong-access-ordering", feat_enable, CPU_FTR_SAO},
+	{"cache-inhibited-large-page", feat_enable_large_ci, 0},
+	{"coprocessor-icswx", feat_enable, 0},
+	{"hypervisor-virtualization-interrupt", feat_enable_hvi, 0},
+	{"program-priority-register", feat_enable, CPU_FTR_HAS_PPR},
+	{"wait", feat_enable, 0},
+	{"atomic-memory-operations", feat_enable, 0},
+	{"branch-v3", feat_enable, 0},
+	{"copy-paste", feat_enable, 0},
+	{"decimal-floating-point-v3", feat_enable, 0},
+	{"decimal-integer-v3", feat_enable, 0},
+	{"fixed-point-v3", feat_enable, 0},
+	{"floating-point-v3", feat_enable, 0},
+	{"group-start-register", feat_enable, 0},
+	{"pc-relative-addressing", feat_enable, 0},
+	{"machine-check-power9", feat_enable_mce_power9, 0},
+	{"machine-check-power10", feat_enable_mce_power10, 0},
+	{"performance-monitor-power9", feat_enable_pmu_power9, 0},
+	{"performance-monitor-power10", feat_enable_pmu_power10, 0},
+	{"event-based-branch-v3", feat_enable, 0},
+	{"random-number-generator", feat_enable, 0},
+	{"system-call-vectored", feat_disable, 0},
+	{"trace-interrupt-v3", feat_enable, 0},
+	{"vector-v3", feat_enable, 0},
+	{"vector-binary128", feat_enable, 0},
+	{"vector-binary16", feat_enable, 0},
+	{"wait-v3", feat_enable, 0},
+	{"prefix-instructions", feat_enable, 0},
+	{"matrix-multiply-assist", feat_enable_mma, 0},
+	{"debug-facilities-v31", feat_enable, CPU_FTR_DAWR1},
+};
 
-अटल bool __initdata using_dt_cpu_ftrs;
-अटल bool __initdata enable_unknown = true;
+static bool __initdata using_dt_cpu_ftrs;
+static bool __initdata enable_unknown = true;
 
-अटल पूर्णांक __init dt_cpu_ftrs_parse(अक्षर *str)
-अणु
-	अगर (!str)
-		वापस 0;
+static int __init dt_cpu_ftrs_parse(char *str)
+{
+	if (!str)
+		return 0;
 
-	अगर (!म_भेद(str, "off"))
+	if (!strcmp(str, "off"))
 		using_dt_cpu_ftrs = false;
-	अन्यथा अगर (!म_भेद(str, "known"))
+	else if (!strcmp(str, "known"))
 		enable_unknown = false;
-	अन्यथा
-		वापस 1;
+	else
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("dt_cpu_ftrs", dt_cpu_ftrs_parse);
 
-अटल व्योम __init cpufeatures_setup_start(u32 isa)
-अणु
+static void __init cpufeatures_setup_start(u32 isa)
+{
 	pr_info("setup for ISA %d\n", isa);
 
-	अगर (isa >= ISA_V3_0B) अणु
+	if (isa >= ISA_V3_0B) {
 		cur_cpu_spec->cpu_features |= CPU_FTR_ARCH_300;
 		cur_cpu_spec->cpu_user_features2 |= PPC_FEATURE2_ARCH_3_00;
-	पूर्ण
+	}
 
-	अगर (isa >= ISA_V3_1) अणु
+	if (isa >= ISA_V3_1) {
 		cur_cpu_spec->cpu_features |= CPU_FTR_ARCH_31;
 		cur_cpu_spec->cpu_user_features2 |= PPC_FEATURE2_ARCH_3_1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool __init cpufeatures_process_feature(काष्ठा dt_cpu_feature *f)
-अणु
-	स्थिर काष्ठा dt_cpu_feature_match *m;
+static bool __init cpufeatures_process_feature(struct dt_cpu_feature *f)
+{
+	const struct dt_cpu_feature_match *m;
 	bool known = false;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dt_cpu_feature_match_table); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(dt_cpu_feature_match_table); i++) {
 		m = &dt_cpu_feature_match_table[i];
-		अगर (!म_भेद(f->name, m->name)) अणु
+		if (!strcmp(f->name, m->name)) {
 			known = true;
-			अगर (m->enable(f)) अणु
+			if (m->enable(f)) {
 				cur_cpu_spec->cpu_features |= m->cpu_ftr_bit_mask;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			pr_info("not enabling: %s (disabled or unsupported by kernel)\n",
 				f->name);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	अगर (!known && (!enable_unknown || !feat_try_enable_unknown(f))) अणु
+	if (!known && (!enable_unknown || !feat_try_enable_unknown(f))) {
 		pr_info("not enabling: %s (unknown and unsupported by kernel)\n",
 			f->name);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (known)
+	if (known)
 		pr_debug("enabling: %s\n", f->name);
-	अन्यथा
+	else
 		pr_debug("enabling: %s (unknown)\n", f->name);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Handle POWER9 broadcast tlbie invalidation issue using
  * cpu feature flag.
  */
-अटल __init व्योम update_tlbie_feature_flag(अचिन्हित दीर्घ pvr)
-अणु
-	अगर (PVR_VER(pvr) == PVR_POWER9) अणु
+static __init void update_tlbie_feature_flag(unsigned long pvr)
+{
+	if (PVR_VER(pvr) == PVR_POWER9) {
 		/*
-		 * Set the tlbie feature flag क्रम anything below
+		 * Set the tlbie feature flag for anything below
 		 * Nimbus DD 2.3 and Cumulus DD 1.3
 		 */
-		अगर ((pvr & 0xe000) == 0) अणु
+		if ((pvr & 0xe000) == 0) {
 			/* Nimbus */
-			अगर ((pvr & 0xfff) < 0x203)
+			if ((pvr & 0xfff) < 0x203)
 				cur_cpu_spec->cpu_features |= CPU_FTR_P9_TLBIE_STQ_BUG;
-		पूर्ण अन्यथा अगर ((pvr & 0xc000) == 0) अणु
+		} else if ((pvr & 0xc000) == 0) {
 			/* Cumulus */
-			अगर ((pvr & 0xfff) < 0x103)
+			if ((pvr & 0xfff) < 0x103)
 				cur_cpu_spec->cpu_features |= CPU_FTR_P9_TLBIE_STQ_BUG;
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ONCE(1, "Unknown PVR");
 			cur_cpu_spec->cpu_features |= CPU_FTR_P9_TLBIE_STQ_BUG;
-		पूर्ण
+		}
 
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_TLBIE_ERAT_BUG;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __init व्योम cpufeatures_cpu_quirks(व्योम)
-अणु
-	अचिन्हित दीर्घ version = mfspr(SPRN_PVR);
+static __init void cpufeatures_cpu_quirks(void)
+{
+	unsigned long version = mfspr(SPRN_PVR);
 
 	/*
 	 * Not all quirks can be derived from the cpufeatures device tree.
 	 */
-	अगर ((version & 0xffffefff) == 0x004e0200) अणु
+	if ((version & 0xffffefff) == 0x004e0200) {
 		/* DD2.0 has no feature flag */
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_RADIX_PREFETCH_BUG;
-	पूर्ण अन्यथा अगर ((version & 0xffffefff) == 0x004e0201) अणु
+	} else if ((version & 0xffffefff) == 0x004e0201) {
 		cur_cpu_spec->cpu_features |= CPU_FTR_POWER9_DD2_1;
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_RADIX_PREFETCH_BUG;
-	पूर्ण अन्यथा अगर ((version & 0xffffefff) == 0x004e0202) अणु
+	} else if ((version & 0xffffefff) == 0x004e0202) {
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_TM_HV_ASSIST;
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_TM_XER_SO_BUG;
 		cur_cpu_spec->cpu_features |= CPU_FTR_POWER9_DD2_1;
-	पूर्ण अन्यथा अगर ((version & 0xffff0000) == 0x004e0000) अणु
+	} else if ((version & 0xffff0000) == 0x004e0000) {
 		/* DD2.1 and up have DD2_1 */
 		cur_cpu_spec->cpu_features |= CPU_FTR_POWER9_DD2_1;
-	पूर्ण
+	}
 
-	अगर ((version & 0xffff0000) == 0x004e0000) अणु
+	if ((version & 0xffff0000) == 0x004e0000) {
 		cur_cpu_spec->cpu_features &= ~(CPU_FTR_DAWR);
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_TIDR;
-	पूर्ण
+	}
 
 	update_tlbie_feature_flag(version);
-पूर्ण
+}
 
-अटल व्योम __init cpufeatures_setup_finished(व्योम)
-अणु
+static void __init cpufeatures_setup_finished(void)
+{
 	cpufeatures_cpu_quirks();
 
-	अगर (hv_mode && !(cur_cpu_spec->cpu_features & CPU_FTR_HVMODE)) अणु
+	if (hv_mode && !(cur_cpu_spec->cpu_features & CPU_FTR_HVMODE)) {
 		pr_err("hypervisor not present in device tree but HV mode is enabled in the CPU. Enabling.\n");
 		cur_cpu_spec->cpu_features |= CPU_FTR_HVMODE;
-	पूर्ण
+	}
 
-	/* Make sure घातerpc_base_platक्रमm is non-शून्य */
-	घातerpc_base_platक्रमm = cur_cpu_spec->platक्रमm;
+	/* Make sure powerpc_base_platform is non-NULL */
+	powerpc_base_platform = cur_cpu_spec->platform;
 
-	प्रणाली_रेजिस्टरs.lpcr = mfspr(SPRN_LPCR);
-	प्रणाली_रेजिस्टरs.hfscr = mfspr(SPRN_HFSCR);
-	प्रणाली_रेजिस्टरs.fscr = mfspr(SPRN_FSCR);
-	प्रणाली_रेजिस्टरs.pcr = mfspr(SPRN_PCR);
+	system_registers.lpcr = mfspr(SPRN_LPCR);
+	system_registers.hfscr = mfspr(SPRN_HFSCR);
+	system_registers.fscr = mfspr(SPRN_FSCR);
+	system_registers.pcr = mfspr(SPRN_PCR);
 
 	pr_info("final cpu/mmu features = 0x%016lx 0x%08x\n",
 		cur_cpu_spec->cpu_features, cur_cpu_spec->mmu_features);
-पूर्ण
+}
 
-अटल पूर्णांक __init disabled_on_cmdline(व्योम)
-अणु
-	अचिन्हित दीर्घ root, chosen;
-	स्थिर अक्षर *p;
+static int __init disabled_on_cmdline(void)
+{
+	unsigned long root, chosen;
+	const char *p;
 
 	root = of_get_flat_dt_root();
 	chosen = of_get_flat_dt_subnode_by_name(root, "chosen");
-	अगर (chosen == -FDT_ERR_NOTFOUND)
-		वापस false;
+	if (chosen == -FDT_ERR_NOTFOUND)
+		return false;
 
-	p = of_get_flat_dt_prop(chosen, "bootargs", शून्य);
-	अगर (!p)
-		वापस false;
+	p = of_get_flat_dt_prop(chosen, "bootargs", NULL);
+	if (!p)
+		return false;
 
-	अगर (म_माला(p, "dt_cpu_ftrs=off"))
-		वापस true;
+	if (strstr(p, "dt_cpu_ftrs=off"))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक __init fdt_find_cpu_features(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
-					पूर्णांक depth, व्योम *data)
-अणु
-	अगर (of_flat_dt_is_compatible(node, "ibm,powerpc-cpu-features")
-	    && of_get_flat_dt_prop(node, "isa", शून्य))
-		वापस 1;
+static int __init fdt_find_cpu_features(unsigned long node, const char *uname,
+					int depth, void *data)
+{
+	if (of_flat_dt_is_compatible(node, "ibm,powerpc-cpu-features")
+	    && of_get_flat_dt_prop(node, "isa", NULL))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool __init dt_cpu_ftrs_in_use(व्योम)
-अणु
-	वापस using_dt_cpu_ftrs;
-पूर्ण
+bool __init dt_cpu_ftrs_in_use(void)
+{
+	return using_dt_cpu_ftrs;
+}
 
-bool __init dt_cpu_ftrs_init(व्योम *fdt)
-अणु
+bool __init dt_cpu_ftrs_init(void *fdt)
+{
 	using_dt_cpu_ftrs = false;
 
-	/* Setup and verअगरy the FDT, अगर it fails we just bail */
-	अगर (!early_init_dt_verअगरy(fdt))
-		वापस false;
+	/* Setup and verify the FDT, if it fails we just bail */
+	if (!early_init_dt_verify(fdt))
+		return false;
 
-	अगर (!of_scan_flat_dt(fdt_find_cpu_features, शून्य))
-		वापस false;
+	if (!of_scan_flat_dt(fdt_find_cpu_features, NULL))
+		return false;
 
-	अगर (disabled_on_cmdline())
-		वापस false;
+	if (disabled_on_cmdline())
+		return false;
 
 	cpufeatures_setup_cpu();
 
 	using_dt_cpu_ftrs = true;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक nr_dt_cpu_features;
-अटल काष्ठा dt_cpu_feature *dt_cpu_features;
+static int nr_dt_cpu_features;
+static struct dt_cpu_feature *dt_cpu_features;
 
-अटल पूर्णांक __init process_cpufeatures_node(अचिन्हित दीर्घ node,
-					  स्थिर अक्षर *uname, पूर्णांक i)
-अणु
-	स्थिर __be32 *prop;
-	काष्ठा dt_cpu_feature *f;
-	पूर्णांक len;
+static int __init process_cpufeatures_node(unsigned long node,
+					  const char *uname, int i)
+{
+	const __be32 *prop;
+	struct dt_cpu_feature *f;
+	int len;
 
 	f = &dt_cpu_features[i];
 
@@ -880,232 +879,232 @@ bool __init dt_cpu_ftrs_init(व्योम *fdt)
 	f->name = uname;
 
 	prop = of_get_flat_dt_prop(node, "isa", &len);
-	अगर (!prop) अणु
+	if (!prop) {
 		pr_warn("%s: missing isa property\n", uname);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	f->isa = be32_to_cpup(prop);
 
 	prop = of_get_flat_dt_prop(node, "usable-privilege", &len);
-	अगर (!prop) अणु
+	if (!prop) {
 		pr_warn("%s: missing usable-privilege property", uname);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	f->usable_privilege = be32_to_cpup(prop);
 
 	prop = of_get_flat_dt_prop(node, "hv-support", &len);
-	अगर (prop)
+	if (prop)
 		f->hv_support = be32_to_cpup(prop);
-	अन्यथा
+	else
 		f->hv_support = HV_SUPPORT_NONE;
 
 	prop = of_get_flat_dt_prop(node, "os-support", &len);
-	अगर (prop)
+	if (prop)
 		f->os_support = be32_to_cpup(prop);
-	अन्यथा
+	else
 		f->os_support = OS_SUPPORT_NONE;
 
 	prop = of_get_flat_dt_prop(node, "hfscr-bit-nr", &len);
-	अगर (prop)
+	if (prop)
 		f->hfscr_bit_nr = be32_to_cpup(prop);
-	अन्यथा
+	else
 		f->hfscr_bit_nr = -1;
 	prop = of_get_flat_dt_prop(node, "fscr-bit-nr", &len);
-	अगर (prop)
+	if (prop)
 		f->fscr_bit_nr = be32_to_cpup(prop);
-	अन्यथा
+	else
 		f->fscr_bit_nr = -1;
 	prop = of_get_flat_dt_prop(node, "hwcap-bit-nr", &len);
-	अगर (prop)
+	if (prop)
 		f->hwcap_bit_nr = be32_to_cpup(prop);
-	अन्यथा
+	else
 		f->hwcap_bit_nr = -1;
 
-	अगर (f->usable_privilege & USABLE_HV) अणु
-		अगर (!(mfmsr() & MSR_HV)) अणु
+	if (f->usable_privilege & USABLE_HV) {
+		if (!(mfmsr() & MSR_HV)) {
 			pr_warn("%s: HV feature passed to guest\n", uname);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (f->hv_support == HV_SUPPORT_NONE && f->hfscr_bit_nr != -1) अणु
+		if (f->hv_support == HV_SUPPORT_NONE && f->hfscr_bit_nr != -1) {
 			pr_warn("%s: unwanted hfscr_bit_nr\n", uname);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (f->hv_support == HV_SUPPORT_HFSCR) अणु
-			अगर (f->hfscr_bit_nr == -1) अणु
+		if (f->hv_support == HV_SUPPORT_HFSCR) {
+			if (f->hfscr_bit_nr == -1) {
 				pr_warn("%s: missing hfscr_bit_nr\n", uname);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (f->hv_support != HV_SUPPORT_NONE || f->hfscr_bit_nr != -1) अणु
+				return 0;
+			}
+		}
+	} else {
+		if (f->hv_support != HV_SUPPORT_NONE || f->hfscr_bit_nr != -1) {
 			pr_warn("%s: unwanted hv_support/hfscr_bit_nr\n", uname);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (f->usable_privilege & USABLE_OS) अणु
-		अगर (f->os_support == OS_SUPPORT_NONE && f->fscr_bit_nr != -1) अणु
+	if (f->usable_privilege & USABLE_OS) {
+		if (f->os_support == OS_SUPPORT_NONE && f->fscr_bit_nr != -1) {
 			pr_warn("%s: unwanted fscr_bit_nr\n", uname);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (f->os_support == OS_SUPPORT_FSCR) अणु
-			अगर (f->fscr_bit_nr == -1) अणु
+		if (f->os_support == OS_SUPPORT_FSCR) {
+			if (f->fscr_bit_nr == -1) {
 				pr_warn("%s: missing fscr_bit_nr\n", uname);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (f->os_support != OS_SUPPORT_NONE || f->fscr_bit_nr != -1) अणु
+				return 0;
+			}
+		}
+	} else {
+		if (f->os_support != OS_SUPPORT_NONE || f->fscr_bit_nr != -1) {
 			pr_warn("%s: unwanted os_support/fscr_bit_nr\n", uname);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (!(f->usable_privilege & USABLE_PR)) अणु
-		अगर (f->hwcap_bit_nr != -1) अणु
+	if (!(f->usable_privilege & USABLE_PR)) {
+		if (f->hwcap_bit_nr != -1) {
 			pr_warn("%s: unwanted hwcap_bit_nr\n", uname);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/* Do all the independent features in the first pass */
-	अगर (!of_get_flat_dt_prop(node, "dependencies", &len)) अणु
-		अगर (cpufeatures_process_feature(f))
+	if (!of_get_flat_dt_prop(node, "dependencies", &len)) {
+		if (cpufeatures_process_feature(f))
 			f->enabled = 1;
-		अन्यथा
+		else
 			f->disabled = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init cpufeatures_deps_enable(काष्ठा dt_cpu_feature *f)
-अणु
-	स्थिर __be32 *prop;
-	पूर्णांक len;
-	पूर्णांक nr_deps;
-	पूर्णांक i;
+static void __init cpufeatures_deps_enable(struct dt_cpu_feature *f)
+{
+	const __be32 *prop;
+	int len;
+	int nr_deps;
+	int i;
 
-	अगर (f->enabled || f->disabled)
-		वापस;
+	if (f->enabled || f->disabled)
+		return;
 
 	prop = of_get_flat_dt_prop(f->node, "dependencies", &len);
-	अगर (!prop) अणु
+	if (!prop) {
 		pr_warn("%s: missing dependencies property", f->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	nr_deps = len / माप(पूर्णांक);
+	nr_deps = len / sizeof(int);
 
-	क्रम (i = 0; i < nr_deps; i++) अणु
-		अचिन्हित दीर्घ phandle = be32_to_cpu(prop[i]);
-		पूर्णांक j;
+	for (i = 0; i < nr_deps; i++) {
+		unsigned long phandle = be32_to_cpu(prop[i]);
+		int j;
 
-		क्रम (j = 0; j < nr_dt_cpu_features; j++) अणु
-			काष्ठा dt_cpu_feature *d = &dt_cpu_features[j];
+		for (j = 0; j < nr_dt_cpu_features; j++) {
+			struct dt_cpu_feature *d = &dt_cpu_features[j];
 
-			अगर (of_get_flat_dt_phandle(d->node) == phandle) अणु
+			if (of_get_flat_dt_phandle(d->node) == phandle) {
 				cpufeatures_deps_enable(d);
-				अगर (d->disabled) अणु
+				if (d->disabled) {
 					f->disabled = 1;
-					वापस;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return;
+				}
+			}
+		}
+	}
 
-	अगर (cpufeatures_process_feature(f))
+	if (cpufeatures_process_feature(f))
 		f->enabled = 1;
-	अन्यथा
+	else
 		f->disabled = 1;
-पूर्ण
+}
 
-अटल पूर्णांक __init scan_cpufeatures_subnodes(अचिन्हित दीर्घ node,
-					  स्थिर अक्षर *uname,
-					  व्योम *data)
-अणु
-	पूर्णांक *count = data;
+static int __init scan_cpufeatures_subnodes(unsigned long node,
+					  const char *uname,
+					  void *data)
+{
+	int *count = data;
 
 	process_cpufeatures_node(node, uname, *count);
 
 	(*count)++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init count_cpufeatures_subnodes(अचिन्हित दीर्घ node,
-					  स्थिर अक्षर *uname,
-					  व्योम *data)
-अणु
-	पूर्णांक *count = data;
+static int __init count_cpufeatures_subnodes(unsigned long node,
+					  const char *uname,
+					  void *data)
+{
+	int *count = data;
 
 	(*count)++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init dt_cpu_ftrs_scan_callback(अचिन्हित दीर्घ node, स्थिर अक्षर
-					    *uname, पूर्णांक depth, व्योम *data)
-अणु
-	स्थिर __be32 *prop;
-	पूर्णांक count, i;
+static int __init dt_cpu_ftrs_scan_callback(unsigned long node, const char
+					    *uname, int depth, void *data)
+{
+	const __be32 *prop;
+	int count, i;
 	u32 isa;
 
 	/* We are scanning "ibm,powerpc-cpu-features" nodes only */
-	अगर (!of_flat_dt_is_compatible(node, "ibm,powerpc-cpu-features"))
-		वापस 0;
+	if (!of_flat_dt_is_compatible(node, "ibm,powerpc-cpu-features"))
+		return 0;
 
-	prop = of_get_flat_dt_prop(node, "isa", शून्य);
-	अगर (!prop)
-		/* We checked beक्रमe, "can't happen" */
-		वापस 0;
+	prop = of_get_flat_dt_prop(node, "isa", NULL);
+	if (!prop)
+		/* We checked before, "can't happen" */
+		return 0;
 
 	isa = be32_to_cpup(prop);
 
-	/* Count and allocate space क्रम cpu features */
+	/* Count and allocate space for cpu features */
 	of_scan_flat_dt_subnodes(node, count_cpufeatures_subnodes,
 						&nr_dt_cpu_features);
-	dt_cpu_features = memblock_alloc(माप(काष्ठा dt_cpu_feature) * nr_dt_cpu_features, PAGE_SIZE);
-	अगर (!dt_cpu_features)
+	dt_cpu_features = memblock_alloc(sizeof(struct dt_cpu_feature) * nr_dt_cpu_features, PAGE_SIZE);
+	if (!dt_cpu_features)
 		panic("%s: Failed to allocate %zu bytes align=0x%lx\n",
 		      __func__,
-		      माप(काष्ठा dt_cpu_feature) * nr_dt_cpu_features,
+		      sizeof(struct dt_cpu_feature) * nr_dt_cpu_features,
 		      PAGE_SIZE);
 
 	cpufeatures_setup_start(isa);
 
-	/* Scan nodes पूर्णांकo dt_cpu_features and enable those without deps  */
+	/* Scan nodes into dt_cpu_features and enable those without deps  */
 	count = 0;
 	of_scan_flat_dt_subnodes(node, scan_cpufeatures_subnodes, &count);
 
-	/* Recursive enable reमुख्यing features with dependencies */
-	क्रम (i = 0; i < nr_dt_cpu_features; i++) अणु
-		काष्ठा dt_cpu_feature *f = &dt_cpu_features[i];
+	/* Recursive enable remaining features with dependencies */
+	for (i = 0; i < nr_dt_cpu_features; i++) {
+		struct dt_cpu_feature *f = &dt_cpu_features[i];
 
 		cpufeatures_deps_enable(f);
-	पूर्ण
+	}
 
-	prop = of_get_flat_dt_prop(node, "display-name", शून्य);
-	अगर (prop && म_माप((अक्षर *)prop) != 0) अणु
-		strlcpy(dt_cpu_name, (अक्षर *)prop, माप(dt_cpu_name));
+	prop = of_get_flat_dt_prop(node, "display-name", NULL);
+	if (prop && strlen((char *)prop) != 0) {
+		strlcpy(dt_cpu_name, (char *)prop, sizeof(dt_cpu_name));
 		cur_cpu_spec->cpu_name = dt_cpu_name;
-	पूर्ण
+	}
 
 	cpufeatures_setup_finished();
 
-	memblock_मुक्त(__pa(dt_cpu_features),
-			माप(काष्ठा dt_cpu_feature)*nr_dt_cpu_features);
+	memblock_free(__pa(dt_cpu_features),
+			sizeof(struct dt_cpu_feature)*nr_dt_cpu_features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init dt_cpu_ftrs_scan(व्योम)
-अणु
-	अगर (!using_dt_cpu_ftrs)
-		वापस;
+void __init dt_cpu_ftrs_scan(void)
+{
+	if (!using_dt_cpu_ftrs)
+		return;
 
-	of_scan_flat_dt(dt_cpu_ftrs_scan_callback, शून्य);
-पूर्ण
+	of_scan_flat_dt(dt_cpu_ftrs_scan_callback, NULL);
+}

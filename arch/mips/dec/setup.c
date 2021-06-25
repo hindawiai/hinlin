@@ -1,73 +1,72 @@
-<शैली गुरु>
 /*
- * System-specअगरic setup, especially पूर्णांकerrupts.
+ * System-specific setup, especially interrupts.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1998 Harald Koerfgen
  * Copyright (C) 2000, 2001, 2002, 2003, 2005, 2020  Maciej W. Rozycki
  */
-#समावेश <linux/console.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqnr.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/param.h>
-#समावेश <linux/percpu-defs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pm.h>
+#include <linux/console.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/irq.h>
+#include <linux/irqnr.h>
+#include <linux/memblock.h>
+#include <linux/param.h>
+#include <linux/percpu-defs.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/pm.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र/cpu-type.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/irq_cpu.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/reboot.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/wbflush.h>
+#include <asm/addrspace.h>
+#include <asm/bootinfo.h>
+#include <asm/cpu.h>
+#include <asm/cpu-features.h>
+#include <asm/cpu-type.h>
+#include <asm/irq.h>
+#include <asm/irq_cpu.h>
+#include <asm/mipsregs.h>
+#include <asm/page.h>
+#include <asm/reboot.h>
+#include <asm/sections.h>
+#include <asm/time.h>
+#include <asm/traps.h>
+#include <asm/wbflush.h>
 
-#समावेश <यंत्र/dec/पूर्णांकerrupts.h>
-#समावेश <यंत्र/dec/ioasic.h>
-#समावेश <यंत्र/dec/ioasic_addrs.h>
-#समावेश <यंत्र/dec/ioasic_पूर्णांकs.h>
-#समावेश <यंत्र/dec/kn01.h>
-#समावेश <यंत्र/dec/kn02.h>
-#समावेश <यंत्र/dec/kn02ba.h>
-#समावेश <यंत्र/dec/kn02ca.h>
-#समावेश <यंत्र/dec/kn03.h>
-#समावेश <यंत्र/dec/kn230.h>
-#समावेश <यंत्र/dec/प्रणाली.h>
+#include <asm/dec/interrupts.h>
+#include <asm/dec/ioasic.h>
+#include <asm/dec/ioasic_addrs.h>
+#include <asm/dec/ioasic_ints.h>
+#include <asm/dec/kn01.h>
+#include <asm/dec/kn02.h>
+#include <asm/dec/kn02ba.h>
+#include <asm/dec/kn02ca.h>
+#include <asm/dec/kn03.h>
+#include <asm/dec/kn230.h>
+#include <asm/dec/system.h>
 
 
-बाह्य व्योम dec_machine_restart(अक्षर *command);
-बाह्य व्योम dec_machine_halt(व्योम);
-बाह्य व्योम dec_machine_घातer_off(व्योम);
-बाह्य irqवापस_t dec_पूर्णांकr_halt(पूर्णांक irq, व्योम *dev_id);
+extern void dec_machine_restart(char *command);
+extern void dec_machine_halt(void);
+extern void dec_machine_power_off(void);
+extern irqreturn_t dec_intr_halt(int irq, void *dev_id);
 
-अचिन्हित दीर्घ dec_kn_slot_base, dec_kn_slot_size;
+unsigned long dec_kn_slot_base, dec_kn_slot_size;
 
 EXPORT_SYMBOL(dec_kn_slot_base);
 EXPORT_SYMBOL(dec_kn_slot_size);
 
-पूर्णांक dec_tc_bus;
+int dec_tc_bus;
 
 DEFINE_SPINLOCK(ioasic_ssr_lock);
 EXPORT_SYMBOL(ioasic_ssr_lock);
 
-अस्थिर u32 *ioasic_base;
+volatile u32 *ioasic_base;
 
 EXPORT_SYMBOL(ioasic_base);
 
@@ -93,74 +92,74 @@ EXPORT_SYMBOL(ioasic_base);
  * * -- shared with SCSI
  */
 
-पूर्णांक dec_पूर्णांकerrupt[DEC_NR_INTS] = अणु
+int dec_interrupt[DEC_NR_INTS] = {
 	[0 ... DEC_NR_INTS - 1] = -1
-पूर्ण;
+};
 
-EXPORT_SYMBOL(dec_पूर्णांकerrupt);
+EXPORT_SYMBOL(dec_interrupt);
 
-पूर्णांक_ptr cpu_mask_nr_tbl[DEC_MAX_CPU_INTS][2] = अणु
-	अणु अणु .i = ~0 पूर्ण, अणु .p = dec_पूर्णांकr_unimplemented पूर्ण पूर्ण,
-पूर्ण;
-पूर्णांक_ptr asic_mask_nr_tbl[DEC_MAX_ASIC_INTS][2] = अणु
-	अणु अणु .i = ~0 पूर्ण, अणु .p = asic_पूर्णांकr_unimplemented पूर्ण पूर्ण,
-पूर्ण;
-पूर्णांक cpu_fpu_mask = DEC_CPU_IRQ_MASK(DEC_CPU_INR_FPU);
-पूर्णांक *fpu_kstat_irq;
+int_ptr cpu_mask_nr_tbl[DEC_MAX_CPU_INTS][2] = {
+	{ { .i = ~0 }, { .p = dec_intr_unimplemented } },
+};
+int_ptr asic_mask_nr_tbl[DEC_MAX_ASIC_INTS][2] = {
+	{ { .i = ~0 }, { .p = asic_intr_unimplemented } },
+};
+int cpu_fpu_mask = DEC_CPU_IRQ_MASK(DEC_CPU_INR_FPU);
+int *fpu_kstat_irq;
 
-अटल irq_handler_t busirq_handler;
-अटल अचिन्हित पूर्णांक busirq_flags = IRQF_NO_THREAD;
+static irq_handler_t busirq_handler;
+static unsigned int busirq_flags = IRQF_NO_THREAD;
 
 /*
- * Bus error (DBE/IBE exceptions and bus पूर्णांकerrupts) handling setup.
+ * Bus error (DBE/IBE exceptions and bus interrupts) handling setup.
  */
-अटल व्योम __init dec_be_init(व्योम)
-अणु
-	चयन (mips_machtype) अणु
-	हाल MACH_DS23100:	/* DS2100/DS3100 Pmin/Pmax */
+static void __init dec_be_init(void)
+{
+	switch (mips_machtype) {
+	case MACH_DS23100:	/* DS2100/DS3100 Pmin/Pmax */
 		board_be_handler = dec_kn01_be_handler;
-		busirq_handler = dec_kn01_be_पूर्णांकerrupt;
+		busirq_handler = dec_kn01_be_interrupt;
 		busirq_flags |= IRQF_SHARED;
 		dec_kn01_be_init();
-		अवरोध;
-	हाल MACH_DS5000_1XX:	/* DS5000/1xx 3min */
-	हाल MACH_DS5000_XX:	/* DS5000/xx Maxine */
+		break;
+	case MACH_DS5000_1XX:	/* DS5000/1xx 3min */
+	case MACH_DS5000_XX:	/* DS5000/xx Maxine */
 		board_be_handler = dec_kn02xa_be_handler;
-		busirq_handler = dec_kn02xa_be_पूर्णांकerrupt;
+		busirq_handler = dec_kn02xa_be_interrupt;
 		dec_kn02xa_be_init();
-		अवरोध;
-	हाल MACH_DS5000_200:	/* DS5000/200 3max */
-	हाल MACH_DS5000_2X0:	/* DS5000/240 3max+ */
-	हाल MACH_DS5900:	/* DS5900 bigmax */
+		break;
+	case MACH_DS5000_200:	/* DS5000/200 3max */
+	case MACH_DS5000_2X0:	/* DS5000/240 3max+ */
+	case MACH_DS5900:	/* DS5900 bigmax */
 		board_be_handler = dec_ecc_be_handler;
-		busirq_handler = dec_ecc_be_पूर्णांकerrupt;
+		busirq_handler = dec_ecc_be_interrupt;
 		dec_ecc_be_init();
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम __init plat_mem_setup(व्योम)
-अणु
+void __init plat_mem_setup(void)
+{
 	board_be_init = dec_be_init;
 
 	wbflush_setup();
 
 	_machine_restart = dec_machine_restart;
 	_machine_halt = dec_machine_halt;
-	pm_घातer_off = dec_machine_घातer_off;
+	pm_power_off = dec_machine_power_off;
 
 	ioport_resource.start = ~0UL;
 	ioport_resource.end = 0UL;
 
-	/* Stay away from the firmware working memory area क्रम now. */
+	/* Stay away from the firmware working memory area for now. */
 	memblock_reserve(PHYS_OFFSET, __pa_symbol(&_text) - PHYS_OFFSET);
-पूर्ण
+}
 
 /*
- * Machine-specअगरic initialisation क्रम KN01, aka DS2100 (aka Pmin)
+ * Machine-specific initialisation for KN01, aka DS2100 (aka Pmin)
  * or DS3100 (aka Pmax).
  */
-अटल पूर्णांक kn01_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn01_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= -1,
 	[DEC_IRQ_AB_RECV]	= -1,
 	[DEC_IRQ_AB_XMIT]	= -1,
@@ -202,42 +201,42 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= -1,
 	[DEC_IRQ_SCC1A_TXERR]	= -1,
 	[DEC_IRQ_SCC1A_TXDMA]	= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn01_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_BUS) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_RTC) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_DZ11) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_DZ11) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_SII) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_SII) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_LANCE) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_LANCE) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn01_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_BUS) },
+		{ .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_BUS) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_RTC) },
+		{ .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_RTC) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_DZ11) },
+		{ .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_DZ11) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_SII) },
+		{ .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_SII) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN01_CPU_INR_LANCE) },
+		{ .i = DEC_CPU_IRQ_NR(KN01_CPU_INR_LANCE) } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल व्योम __init dec_init_kn01(व्योम)
-अणु
+static void __init dec_init_kn01(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn01_पूर्णांकerrupt,
-		माप(kn01_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn01_interrupt,
+		sizeof(kn01_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn01_cpu_mask_nr_tbl,
-		माप(kn01_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn01_cpu_mask_nr_tbl,
+		sizeof(kn01_cpu_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 
-पूर्ण				/* dec_init_kn01 */
+}				/* dec_init_kn01 */
 
 
 /*
- * Machine-specअगरic initialisation क्रम KN230, aka DS5100, aka MIPSmate.
+ * Machine-specific initialisation for KN230, aka DS5100, aka MIPSmate.
  */
-अटल पूर्णांक kn230_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn230_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= -1,
 	[DEC_IRQ_AB_RECV]	= -1,
 	[DEC_IRQ_AB_XMIT]	= -1,
@@ -279,40 +278,40 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= -1,
 	[DEC_IRQ_SCC1A_TXERR]	= -1,
 	[DEC_IRQ_SCC1A_TXDMA]	= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn230_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_BUS) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_RTC) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_DZ11) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_DZ11) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_SII) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_SII) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn230_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_BUS) },
+		{ .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_BUS) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_RTC) },
+		{ .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_RTC) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_DZ11) },
+		{ .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_DZ11) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN230_CPU_INR_SII) },
+		{ .i = DEC_CPU_IRQ_NR(KN230_CPU_INR_SII) } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल व्योम __init dec_init_kn230(व्योम)
-अणु
+static void __init dec_init_kn230(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn230_पूर्णांकerrupt,
-		माप(kn230_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn230_interrupt,
+		sizeof(kn230_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn230_cpu_mask_nr_tbl,
-		माप(kn230_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn230_cpu_mask_nr_tbl,
+		sizeof(kn230_cpu_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 
-पूर्ण				/* dec_init_kn230 */
+}				/* dec_init_kn230 */
 
 
 /*
- * Machine-specअगरic initialisation क्रम KN02, aka DS5000/200, aka 3max.
+ * Machine-specific initialisation for KN02, aka DS5000/200, aka 3max.
  */
-अटल पूर्णांक kn02_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn02_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= DEC_CPU_IRQ_NR(KN02_CPU_INR_CASCADE),
 	[DEC_IRQ_AB_RECV]	= -1,
 	[DEC_IRQ_AB_XMIT]	= -1,
@@ -354,62 +353,62 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= -1,
 	[DEC_IRQ_SCC1A_TXERR]	= -1,
 	[DEC_IRQ_SCC1A_TXDMA]	= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn02_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_BUS) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02_CPU_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_RTC) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02_CPU_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_CASCADE) पूर्ण,
-		अणु .p = kn02_io_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_BUS) },
+		{ .i = DEC_CPU_IRQ_NR(KN02_CPU_INR_BUS) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_RTC) },
+		{ .i = DEC_CPU_IRQ_NR(KN02_CPU_INR_RTC) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02_CPU_INR_CASCADE) },
+		{ .p = kn02_io_int } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल पूर्णांक_ptr kn02_asic_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_DZ11) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_DZ11) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_ASC) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_ASC) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_LANCE) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_LANCE) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_TC2) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_TC2) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_TC1) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_TC1) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_MASK(KN02_CSR_INR_TC0) पूर्ण,
-		अणु .i = KN02_IRQ_NR(KN02_CSR_INR_TC0) पूर्ण पूर्ण,
-	अणु अणु .i = KN02_IRQ_ALL पूर्ण,
-		अणु .p = kn02_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02_asic_mask_nr_tbl[][2] __initdata = {
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_DZ11) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_DZ11) } },
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_ASC) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_ASC) } },
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_LANCE) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_LANCE) } },
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_TC2) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_TC2) } },
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_TC1) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_TC1) } },
+	{ { .i = KN02_IRQ_MASK(KN02_CSR_INR_TC0) },
+		{ .i = KN02_IRQ_NR(KN02_CSR_INR_TC0) } },
+	{ { .i = KN02_IRQ_ALL },
+		{ .p = kn02_all_int } },
+};
 
-अटल व्योम __init dec_init_kn02(व्योम)
-अणु
+static void __init dec_init_kn02(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn02_पूर्णांकerrupt,
-		माप(kn02_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn02_interrupt,
+		sizeof(kn02_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn02_cpu_mask_nr_tbl,
-		माप(kn02_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn02_cpu_mask_nr_tbl,
+		sizeof(kn02_cpu_mask_nr_tbl));
 
 	/* KN02 CSR IRQ priorities. */
-	स_नकल(&asic_mask_nr_tbl, &kn02_asic_mask_nr_tbl,
-		माप(kn02_asic_mask_nr_tbl));
+	memcpy(&asic_mask_nr_tbl, &kn02_asic_mask_nr_tbl,
+		sizeof(kn02_asic_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 	init_kn02_irqs(KN02_IRQ_BASE);
 
-पूर्ण				/* dec_init_kn02 */
+}				/* dec_init_kn02 */
 
 
 /*
- * Machine-specअगरic initialisation क्रम KN02-BA, aka DS5000/1xx
+ * Machine-specific initialisation for KN02-BA, aka DS5000/1xx
  * (xx = 20, 25, 33), aka 3min.  Also applies to KN04(-BA), aka
  * DS5000/150, aka 4min.
  */
-अटल पूर्णांक kn02ba_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn02ba_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= DEC_CPU_IRQ_NR(KN02BA_CPU_INR_CASCADE),
 	[DEC_IRQ_AB_RECV]	= -1,
 	[DEC_IRQ_AB_XMIT]	= -1,
@@ -451,66 +450,66 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= IO_IRQ_NR(IO_INR_SCC1A_RXDMA),
 	[DEC_IRQ_SCC1A_TXERR]	= IO_IRQ_NR(IO_INR_SCC1A_TXERR),
 	[DEC_IRQ_SCC1A_TXDMA]	= IO_IRQ_NR(IO_INR_SCC1A_TXDMA),
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn02ba_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_CASCADE) पूर्ण,
-		अणु .p = kn02xa_io_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC2) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC2) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC1) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC1) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC0) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC0) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02ba_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_CASCADE) },
+		{ .p = kn02xa_io_int } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC2) },
+		{ .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC2) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC1) },
+		{ .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC1) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02BA_CPU_INR_TC0) },
+		{ .i = DEC_CPU_IRQ_NR(KN02BA_CPU_INR_TC0) } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल पूर्णांक_ptr kn02ba_asic_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_BUS) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_RTC) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_DMA पूर्ण,
-		अणु .p = asic_dma_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_SCC0) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_SCC0) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_SCC1) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_SCC1) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_ASC) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_ASC) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02BA_IO_INR_LANCE) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02BA_IO_INR_LANCE) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_ALL पूर्ण,
-		अणु .p = asic_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02ba_asic_mask_nr_tbl[][2] __initdata = {
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_BUS) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_BUS) } },
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_RTC) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_RTC) } },
+	{ { .i = IO_IRQ_DMA },
+		{ .p = asic_dma_int } },
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_SCC0) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_SCC0) } },
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_SCC1) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_SCC1) } },
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_ASC) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_ASC) } },
+	{ { .i = IO_IRQ_MASK(KN02BA_IO_INR_LANCE) },
+		{ .i = IO_IRQ_NR(KN02BA_IO_INR_LANCE) } },
+	{ { .i = IO_IRQ_ALL },
+		{ .p = asic_all_int } },
+};
 
-अटल व्योम __init dec_init_kn02ba(व्योम)
-अणु
+static void __init dec_init_kn02ba(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn02ba_पूर्णांकerrupt,
-		माप(kn02ba_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn02ba_interrupt,
+		sizeof(kn02ba_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn02ba_cpu_mask_nr_tbl,
-		माप(kn02ba_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn02ba_cpu_mask_nr_tbl,
+		sizeof(kn02ba_cpu_mask_nr_tbl));
 
 	/* I/O ASIC IRQ priorities. */
-	स_नकल(&asic_mask_nr_tbl, &kn02ba_asic_mask_nr_tbl,
-		माप(kn02ba_asic_mask_nr_tbl));
+	memcpy(&asic_mask_nr_tbl, &kn02ba_asic_mask_nr_tbl,
+		sizeof(kn02ba_asic_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 	init_ioasic_irqs(IO_IRQ_BASE);
 
-पूर्ण				/* dec_init_kn02ba */
+}				/* dec_init_kn02ba */
 
 
 /*
- * Machine-specअगरic initialisation क्रम KN02-CA, aka DS5000/xx,
+ * Machine-specific initialisation for KN02-CA, aka DS5000/xx,
  * (xx = 20, 25, 33), aka MAXine.  Also applies to KN04(-CA), aka
  * DS5000/50, aka 4MAXine.
  */
-अटल पूर्णांक kn02ca_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn02ca_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= DEC_CPU_IRQ_NR(KN02CA_CPU_INR_CASCADE),
 	[DEC_IRQ_AB_RECV]	= IO_IRQ_NR(KN02CA_IO_INR_AB_RECV),
 	[DEC_IRQ_AB_XMIT]	= IO_IRQ_NR(KN02CA_IO_INR_AB_XMIT),
@@ -552,62 +551,62 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= -1,
 	[DEC_IRQ_SCC1A_TXERR]	= -1,
 	[DEC_IRQ_SCC1A_TXDMA]	= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn02ca_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_BUS) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02CA_CPU_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_RTC) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN02CA_CPU_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_CASCADE) पूर्ण,
-		अणु .p = kn02xa_io_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02ca_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_BUS) },
+		{ .i = DEC_CPU_IRQ_NR(KN02CA_CPU_INR_BUS) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_RTC) },
+		{ .i = DEC_CPU_IRQ_NR(KN02CA_CPU_INR_RTC) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN02CA_CPU_INR_CASCADE) },
+		{ .p = kn02xa_io_int } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल पूर्णांक_ptr kn02ca_asic_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = IO_IRQ_DMA पूर्ण,
-		अणु .p = asic_dma_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02CA_IO_INR_SCC0) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02CA_IO_INR_SCC0) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02CA_IO_INR_ASC) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02CA_IO_INR_ASC) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02CA_IO_INR_LANCE) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02CA_IO_INR_LANCE) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02CA_IO_INR_TC1) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02CA_IO_INR_TC1) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN02CA_IO_INR_TC0) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN02CA_IO_INR_TC0) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_ALL पूर्ण,
-		अणु .p = asic_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn02ca_asic_mask_nr_tbl[][2] __initdata = {
+	{ { .i = IO_IRQ_DMA },
+		{ .p = asic_dma_int } },
+	{ { .i = IO_IRQ_MASK(KN02CA_IO_INR_SCC0) },
+		{ .i = IO_IRQ_NR(KN02CA_IO_INR_SCC0) } },
+	{ { .i = IO_IRQ_MASK(KN02CA_IO_INR_ASC) },
+		{ .i = IO_IRQ_NR(KN02CA_IO_INR_ASC) } },
+	{ { .i = IO_IRQ_MASK(KN02CA_IO_INR_LANCE) },
+		{ .i = IO_IRQ_NR(KN02CA_IO_INR_LANCE) } },
+	{ { .i = IO_IRQ_MASK(KN02CA_IO_INR_TC1) },
+		{ .i = IO_IRQ_NR(KN02CA_IO_INR_TC1) } },
+	{ { .i = IO_IRQ_MASK(KN02CA_IO_INR_TC0) },
+		{ .i = IO_IRQ_NR(KN02CA_IO_INR_TC0) } },
+	{ { .i = IO_IRQ_ALL },
+		{ .p = asic_all_int } },
+};
 
-अटल व्योम __init dec_init_kn02ca(व्योम)
-अणु
+static void __init dec_init_kn02ca(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn02ca_पूर्णांकerrupt,
-		माप(kn02ca_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn02ca_interrupt,
+		sizeof(kn02ca_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn02ca_cpu_mask_nr_tbl,
-		माप(kn02ca_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn02ca_cpu_mask_nr_tbl,
+		sizeof(kn02ca_cpu_mask_nr_tbl));
 
 	/* I/O ASIC IRQ priorities. */
-	स_नकल(&asic_mask_nr_tbl, &kn02ca_asic_mask_nr_tbl,
-		माप(kn02ca_asic_mask_nr_tbl));
+	memcpy(&asic_mask_nr_tbl, &kn02ca_asic_mask_nr_tbl,
+		sizeof(kn02ca_asic_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 	init_ioasic_irqs(IO_IRQ_BASE);
 
-पूर्ण				/* dec_init_kn02ca */
+}				/* dec_init_kn02ca */
 
 
 /*
- * Machine-specअगरic initialisation क्रम KN03, aka DS5000/240,
+ * Machine-specific initialisation for KN03, aka DS5000/240,
  * aka 3max+ and DS5900, aka BIGmax.  Also applies to KN05, aka
  * DS5000/260, aka 4max+ and DS5900/260.
  */
-अटल पूर्णांक kn03_पूर्णांकerrupt[DEC_NR_INTS] __initdata = अणु
+static int kn03_interrupt[DEC_NR_INTS] __initdata = {
 	[DEC_IRQ_CASCADE]	= DEC_CPU_IRQ_NR(KN03_CPU_INR_CASCADE),
 	[DEC_IRQ_AB_RECV]	= -1,
 	[DEC_IRQ_AB_XMIT]	= -1,
@@ -649,136 +648,136 @@ EXPORT_SYMBOL(dec_पूर्णांकerrupt);
 	[DEC_IRQ_SCC1A_RXDMA]	= IO_IRQ_NR(IO_INR_SCC1A_RXDMA),
 	[DEC_IRQ_SCC1A_TXERR]	= IO_IRQ_NR(IO_INR_SCC1A_TXERR),
 	[DEC_IRQ_SCC1A_TXDMA]	= IO_IRQ_NR(IO_INR_SCC1A_TXDMA),
-पूर्ण;
+};
 
-अटल पूर्णांक_ptr kn03_cpu_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_BUS) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN03_CPU_INR_BUS) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_RTC) पूर्ण,
-		अणु .i = DEC_CPU_IRQ_NR(KN03_CPU_INR_RTC) पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_CASCADE) पूर्ण,
-		अणु .p = kn03_io_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = DEC_CPU_IRQ_ALL पूर्ण,
-		अणु .p = cpu_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn03_cpu_mask_nr_tbl[][2] __initdata = {
+	{ { .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_BUS) },
+		{ .i = DEC_CPU_IRQ_NR(KN03_CPU_INR_BUS) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_RTC) },
+		{ .i = DEC_CPU_IRQ_NR(KN03_CPU_INR_RTC) } },
+	{ { .i = DEC_CPU_IRQ_MASK(KN03_CPU_INR_CASCADE) },
+		{ .p = kn03_io_int } },
+	{ { .i = DEC_CPU_IRQ_ALL },
+		{ .p = cpu_all_int } },
+};
 
-अटल पूर्णांक_ptr kn03_asic_mask_nr_tbl[][2] __initdata = अणु
-	अणु अणु .i = IO_IRQ_DMA पूर्ण,
-		अणु .p = asic_dma_पूर्णांक पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_SCC0) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_SCC0) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_SCC1) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_SCC1) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_ASC) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_ASC) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_LANCE) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_LANCE) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_TC2) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_TC2) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_TC1) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_TC1) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_MASK(KN03_IO_INR_TC0) पूर्ण,
-		अणु .i = IO_IRQ_NR(KN03_IO_INR_TC0) पूर्ण पूर्ण,
-	अणु अणु .i = IO_IRQ_ALL पूर्ण,
-		अणु .p = asic_all_पूर्णांक पूर्ण पूर्ण,
-पूर्ण;
+static int_ptr kn03_asic_mask_nr_tbl[][2] __initdata = {
+	{ { .i = IO_IRQ_DMA },
+		{ .p = asic_dma_int } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_SCC0) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_SCC0) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_SCC1) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_SCC1) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_ASC) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_ASC) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_LANCE) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_LANCE) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_TC2) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_TC2) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_TC1) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_TC1) } },
+	{ { .i = IO_IRQ_MASK(KN03_IO_INR_TC0) },
+		{ .i = IO_IRQ_NR(KN03_IO_INR_TC0) } },
+	{ { .i = IO_IRQ_ALL },
+		{ .p = asic_all_int } },
+};
 
-अटल व्योम __init dec_init_kn03(व्योम)
-अणु
+static void __init dec_init_kn03(void)
+{
 	/* IRQ routing. */
-	स_नकल(&dec_पूर्णांकerrupt, &kn03_पूर्णांकerrupt,
-		माप(kn03_पूर्णांकerrupt));
+	memcpy(&dec_interrupt, &kn03_interrupt,
+		sizeof(kn03_interrupt));
 
 	/* CPU IRQ priorities. */
-	स_नकल(&cpu_mask_nr_tbl, &kn03_cpu_mask_nr_tbl,
-		माप(kn03_cpu_mask_nr_tbl));
+	memcpy(&cpu_mask_nr_tbl, &kn03_cpu_mask_nr_tbl,
+		sizeof(kn03_cpu_mask_nr_tbl));
 
 	/* I/O ASIC IRQ priorities. */
-	स_नकल(&asic_mask_nr_tbl, &kn03_asic_mask_nr_tbl,
-		माप(kn03_asic_mask_nr_tbl));
+	memcpy(&asic_mask_nr_tbl, &kn03_asic_mask_nr_tbl,
+		sizeof(kn03_asic_mask_nr_tbl));
 
 	mips_cpu_irq_init();
 	init_ioasic_irqs(IO_IRQ_BASE);
 
-पूर्ण				/* dec_init_kn03 */
+}				/* dec_init_kn03 */
 
 
-व्योम __init arch_init_irq(व्योम)
-अणु
-	चयन (mips_machtype) अणु
-	हाल MACH_DS23100:	/* DS2100/DS3100 Pmin/Pmax */
+void __init arch_init_irq(void)
+{
+	switch (mips_machtype) {
+	case MACH_DS23100:	/* DS2100/DS3100 Pmin/Pmax */
 		dec_init_kn01();
-		अवरोध;
-	हाल MACH_DS5100:	/* DS5100 MIPSmate */
+		break;
+	case MACH_DS5100:	/* DS5100 MIPSmate */
 		dec_init_kn230();
-		अवरोध;
-	हाल MACH_DS5000_200:	/* DS5000/200 3max */
+		break;
+	case MACH_DS5000_200:	/* DS5000/200 3max */
 		dec_init_kn02();
-		अवरोध;
-	हाल MACH_DS5000_1XX:	/* DS5000/1xx 3min */
+		break;
+	case MACH_DS5000_1XX:	/* DS5000/1xx 3min */
 		dec_init_kn02ba();
-		अवरोध;
-	हाल MACH_DS5000_2X0:	/* DS5000/240 3max+ */
-	हाल MACH_DS5900:	/* DS5900 bigmax */
+		break;
+	case MACH_DS5000_2X0:	/* DS5000/240 3max+ */
+	case MACH_DS5900:	/* DS5900 bigmax */
 		dec_init_kn03();
-		अवरोध;
-	हाल MACH_DS5000_XX:	/* Personal DS5000/xx */
+		break;
+	case MACH_DS5000_XX:	/* Personal DS5000/xx */
 		dec_init_kn02ca();
-		अवरोध;
-	हाल MACH_DS5800:	/* DS5800 Isis */
+		break;
+	case MACH_DS5800:	/* DS5800 Isis */
 		panic("Don't know how to set this up!");
-		अवरोध;
-	हाल MACH_DS5400:	/* DS5400 MIPSfair */
+		break;
+	case MACH_DS5400:	/* DS5400 MIPSfair */
 		panic("Don't know how to set this up!");
-		अवरोध;
-	हाल MACH_DS5500:	/* DS5500 MIPSfair-2 */
+		break;
+	case MACH_DS5500:	/* DS5500 MIPSfair-2 */
 		panic("Don't know how to set this up!");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Free the FPU पूर्णांकerrupt अगर the exception is present. */
-	अगर (!cpu_has_nofpuex) अणु
+	/* Free the FPU interrupt if the exception is present. */
+	if (!cpu_has_nofpuex) {
 		cpu_fpu_mask = 0;
-		dec_पूर्णांकerrupt[DEC_IRQ_FPU] = -1;
-	पूर्ण
-	/* Free the halt पूर्णांकerrupt unused on R4k प्रणालीs.  */
-	अगर (current_cpu_type() == CPU_R4000SC ||
+		dec_interrupt[DEC_IRQ_FPU] = -1;
+	}
+	/* Free the halt interrupt unused on R4k systems.  */
+	if (current_cpu_type() == CPU_R4000SC ||
 	    current_cpu_type() == CPU_R4400SC)
-		dec_पूर्णांकerrupt[DEC_IRQ_HALT] = -1;
+		dec_interrupt[DEC_IRQ_HALT] = -1;
 
-	/* Register board पूर्णांकerrupts: FPU and cascade. */
-	अगर (dec_पूर्णांकerrupt[DEC_IRQ_FPU] >= 0 && cpu_has_fpu) अणु
-		काष्ठा irq_desc *desc_fpu;
-		पूर्णांक irq_fpu;
+	/* Register board interrupts: FPU and cascade. */
+	if (dec_interrupt[DEC_IRQ_FPU] >= 0 && cpu_has_fpu) {
+		struct irq_desc *desc_fpu;
+		int irq_fpu;
 
-		irq_fpu = dec_पूर्णांकerrupt[DEC_IRQ_FPU];
-		अगर (request_irq(irq_fpu, no_action, IRQF_NO_THREAD, "fpu",
-				शून्य))
+		irq_fpu = dec_interrupt[DEC_IRQ_FPU];
+		if (request_irq(irq_fpu, no_action, IRQF_NO_THREAD, "fpu",
+				NULL))
 			pr_err("Failed to register fpu interrupt\n");
 		desc_fpu = irq_to_desc(irq_fpu);
 		fpu_kstat_irq = this_cpu_ptr(desc_fpu->kstat_irqs);
-	पूर्ण
-	अगर (dec_पूर्णांकerrupt[DEC_IRQ_CASCADE] >= 0) अणु
-		अगर (request_irq(dec_पूर्णांकerrupt[DEC_IRQ_CASCADE], no_action,
-				IRQF_NO_THREAD, "cascade", शून्य))
+	}
+	if (dec_interrupt[DEC_IRQ_CASCADE] >= 0) {
+		if (request_irq(dec_interrupt[DEC_IRQ_CASCADE], no_action,
+				IRQF_NO_THREAD, "cascade", NULL))
 			pr_err("Failed to register cascade interrupt\n");
-	पूर्ण
-	/* Register the bus error पूर्णांकerrupt. */
-	अगर (dec_पूर्णांकerrupt[DEC_IRQ_BUS] >= 0 && busirq_handler) अणु
-		अगर (request_irq(dec_पूर्णांकerrupt[DEC_IRQ_BUS], busirq_handler,
+	}
+	/* Register the bus error interrupt. */
+	if (dec_interrupt[DEC_IRQ_BUS] >= 0 && busirq_handler) {
+		if (request_irq(dec_interrupt[DEC_IRQ_BUS], busirq_handler,
 				busirq_flags, "bus error", busirq_handler))
 			pr_err("Failed to register bus error interrupt\n");
-	पूर्ण
-	/* Register the HALT पूर्णांकerrupt. */
-	अगर (dec_पूर्णांकerrupt[DEC_IRQ_HALT] >= 0) अणु
-		अगर (request_irq(dec_पूर्णांकerrupt[DEC_IRQ_HALT], dec_पूर्णांकr_halt,
-				IRQF_NO_THREAD, "halt", शून्य))
+	}
+	/* Register the HALT interrupt. */
+	if (dec_interrupt[DEC_IRQ_HALT] >= 0) {
+		if (request_irq(dec_interrupt[DEC_IRQ_HALT], dec_intr_halt,
+				IRQF_NO_THREAD, "halt", NULL))
 			pr_err("Failed to register halt interrupt\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-यंत्रlinkage अचिन्हित पूर्णांक dec_irq_dispatch(अचिन्हित पूर्णांक irq)
-अणु
-	करो_IRQ(irq);
-	वापस 0;
-पूर्ण
+asmlinkage unsigned int dec_irq_dispatch(unsigned int irq)
+{
+	do_IRQ(irq);
+	return 0;
+}

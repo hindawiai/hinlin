@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* orinoco_pci.c
  *
- * Driver क्रम Prism 2.5/3 devices that have a direct PCI पूर्णांकerface
+ * Driver for Prism 2.5/3 devices that have a direct PCI interface
  * (i.e. these are not PCMCIA cards in a PCMCIA-to-PCI bridge).
  * The card contains only one PCI region, which contains all the usual
- * hermes रेजिस्टरs, as well as the COR रेजिस्टर.
+ * hermes registers, as well as the COR register.
  *
- * Current मुख्यtainers are:
+ * Current maintainers are:
  *	Pavel Roskin <proski AT gnu.org>
  * and	David Gibson <hermes AT gibson.dropbear.id.au>
  *
@@ -17,7 +16,7 @@
  *	Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  * This file originally written by:
  *	Copyright (C) 2001 Jean Tourrilhes <jt AT hpl.hp.com>
- * And is now मुख्यtained by:
+ * And is now maintained by:
  *	(C) Copyright David Gibson, IBM Corp. 2002-2003.
  *
  * The contents of this file are subject to the Mozilla Public License
@@ -27,167 +26,167 @@
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
- * the License क्रम the specअगरic language governing rights and
+ * the License for the specific language governing rights and
  * limitations under the License.
  *
  * Alternatively, the contents of this file may be used under the
  * terms of the GNU General Public License version 2 (the "GPL"), in
- * which हाल the provisions of the GPL are applicable instead of the
+ * which case the provisions of the GPL are applicable instead of the
  * above.  If you wish to allow the use of your version of this file
  * only under the terms of the GPL and not to allow others to use your
  * version of this file under the MPL, indicate your decision by
  * deleting the provisions above and replace them with the notice and
- * other provisions required by the GPL.  If you करो not delete the
+ * other provisions required by the GPL.  If you do not delete the
  * provisions above, a recipient may use your version of this file
  * under either the MPL or the GPL.
  */
 
-#घोषणा DRIVER_NAME "orinoco_pci"
-#घोषणा PFX DRIVER_NAME ": "
+#define DRIVER_NAME "orinoco_pci"
+#define PFX DRIVER_NAME ": "
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
 
-#समावेश "orinoco.h"
-#समावेश "orinoco_pci.h"
+#include "orinoco.h"
+#include "orinoco_pci.h"
 
-/* Offset of the COR रेजिस्टर of the PCI card */
-#घोषणा HERMES_PCI_COR		(0x26)
+/* Offset of the COR register of the PCI card */
+#define HERMES_PCI_COR		(0x26)
 
-/* Biपंचांगask to reset the card */
-#घोषणा HERMES_PCI_COR_MASK	(0x0080)
+/* Bitmask to reset the card */
+#define HERMES_PCI_COR_MASK	(0x0080)
 
-/* Magic समयouts क्रम करोing the reset.
- * Those बार are straight from wlan-ng, and it is claimed that they
- * are necessary. Alan will समाप्त me. Take your समय and grab a coffee. */
-#घोषणा HERMES_PCI_COR_ONT	(250)		/* ms */
-#घोषणा HERMES_PCI_COR_OFFT	(500)		/* ms */
-#घोषणा HERMES_PCI_COR_BUSYT	(500)		/* ms */
+/* Magic timeouts for doing the reset.
+ * Those times are straight from wlan-ng, and it is claimed that they
+ * are necessary. Alan will kill me. Take your time and grab a coffee. */
+#define HERMES_PCI_COR_ONT	(250)		/* ms */
+#define HERMES_PCI_COR_OFFT	(500)		/* ms */
+#define HERMES_PCI_COR_BUSYT	(500)		/* ms */
 
 /*
  * Do a soft reset of the card using the Configuration Option Register
  * We need this to get going...
  * This is the part of the code that is strongly inspired from wlan-ng
  *
- * Note : This code is करोne with irq enabled. This mean that many
- * पूर्णांकerrupts will occur जबतक we are there. This is why we use the
- * jअगरfies to regulate समय instead of a straight mdelay(). Usually we
- * need only around 245 iteration of the loop to करो 250 ms delay.
+ * Note : This code is done with irq enabled. This mean that many
+ * interrupts will occur while we are there. This is why we use the
+ * jiffies to regulate time instead of a straight mdelay(). Usually we
+ * need only around 245 iteration of the loop to do 250 ms delay.
  *
  * Note bis : Don't try to access HERMES_CMD during the reset phase.
  * It just won't work !
  */
-अटल पूर्णांक orinoco_pci_cor_reset(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा hermes *hw = &priv->hw;
-	अचिन्हित दीर्घ समयout;
+static int orinoco_pci_cor_reset(struct orinoco_private *priv)
+{
+	struct hermes *hw = &priv->hw;
+	unsigned long timeout;
 	u16 reg;
 
 	/* Assert the reset until the card notices */
-	hermes_ग_लिखो_regn(hw, PCI_COR, HERMES_PCI_COR_MASK);
+	hermes_write_regn(hw, PCI_COR, HERMES_PCI_COR_MASK);
 	mdelay(HERMES_PCI_COR_ONT);
 
-	/* Give समय क्रम the card to recover from this hard efक्रमt */
-	hermes_ग_लिखो_regn(hw, PCI_COR, 0x0000);
+	/* Give time for the card to recover from this hard effort */
+	hermes_write_regn(hw, PCI_COR, 0x0000);
 	mdelay(HERMES_PCI_COR_OFFT);
 
-	/* The card is पढ़ोy when it's no दीर्घer busy */
-	समयout = jअगरfies + msecs_to_jअगरfies(HERMES_PCI_COR_BUSYT);
-	reg = hermes_पढ़ो_regn(hw, CMD);
-	जबतक (समय_beक्रमe(jअगरfies, समयout) && (reg & HERMES_CMD_BUSY)) अणु
+	/* The card is ready when it's no longer busy */
+	timeout = jiffies + msecs_to_jiffies(HERMES_PCI_COR_BUSYT);
+	reg = hermes_read_regn(hw, CMD);
+	while (time_before(jiffies, timeout) && (reg & HERMES_CMD_BUSY)) {
 		mdelay(1);
-		reg = hermes_पढ़ो_regn(hw, CMD);
-	पूर्ण
+		reg = hermes_read_regn(hw, CMD);
+	}
 
 	/* Still busy? */
-	अगर (reg & HERMES_CMD_BUSY) अणु
-		prपूर्णांकk(KERN_ERR PFX "Busy timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+	if (reg & HERMES_CMD_BUSY) {
+		printk(KERN_ERR PFX "Busy timeout\n");
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orinoco_pci_init_one(काष्ठा pci_dev *pdev,
-				स्थिर काष्ठा pci_device_id *ent)
-अणु
-	पूर्णांक err;
-	काष्ठा orinoco_निजी *priv;
-	काष्ठा orinoco_pci_card *card;
-	व्योम __iomem *hermes_io;
+static int orinoco_pci_init_one(struct pci_dev *pdev,
+				const struct pci_device_id *ent)
+{
+	int err;
+	struct orinoco_private *priv;
+	struct orinoco_pci_card *card;
+	void __iomem *hermes_io;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot enable PCI device\n");
-		वापस err;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR PFX "Cannot enable PCI device\n");
+		return err;
+	}
 
 	err = pci_request_regions(pdev, DRIVER_NAME);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot obtain PCI resources\n");
-		जाओ fail_resources;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR PFX "Cannot obtain PCI resources\n");
+		goto fail_resources;
+	}
 
 	hermes_io = pci_iomap(pdev, 0, 0);
-	अगर (!hermes_io) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot remap chipset registers\n");
+	if (!hermes_io) {
+		printk(KERN_ERR PFX "Cannot remap chipset registers\n");
 		err = -EIO;
-		जाओ fail_map_hermes;
-	पूर्ण
+		goto fail_map_hermes;
+	}
 
 	/* Allocate network device */
-	priv = alloc_orinocodev(माप(*card), &pdev->dev,
-				orinoco_pci_cor_reset, शून्य);
-	अगर (!priv) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot allocate network device\n");
+	priv = alloc_orinocodev(sizeof(*card), &pdev->dev,
+				orinoco_pci_cor_reset, NULL);
+	if (!priv) {
+		printk(KERN_ERR PFX "Cannot allocate network device\n");
 		err = -ENOMEM;
-		जाओ fail_alloc;
-	पूर्ण
+		goto fail_alloc;
+	}
 
 	card = priv->card;
 
-	hermes_काष्ठा_init(&priv->hw, hermes_io, HERMES_32BIT_REGSPACING);
+	hermes_struct_init(&priv->hw, hermes_io, HERMES_32BIT_REGSPACING);
 
-	err = request_irq(pdev->irq, orinoco_पूर्णांकerrupt, IRQF_SHARED,
+	err = request_irq(pdev->irq, orinoco_interrupt, IRQF_SHARED,
 			  DRIVER_NAME, priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot allocate IRQ %d\n", pdev->irq);
+	if (err) {
+		printk(KERN_ERR PFX "Cannot allocate IRQ %d\n", pdev->irq);
 		err = -EBUSY;
-		जाओ fail_irq;
-	पूर्ण
+		goto fail_irq;
+	}
 
 	err = orinoco_pci_cor_reset(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "Initial reset failed\n");
-		जाओ fail;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR PFX "Initial reset failed\n");
+		goto fail;
+	}
 
 	err = orinoco_init(priv);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "orinoco_init() failed\n");
-		जाओ fail;
-	पूर्ण
+	if (err) {
+		printk(KERN_ERR PFX "orinoco_init() failed\n");
+		goto fail;
+	}
 
-	err = orinoco_अगर_add(priv, 0, 0, शून्य);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "orinoco_if_add() failed\n");
-		जाओ fail_wiphy;
-	पूर्ण
+	err = orinoco_if_add(priv, 0, 0, NULL);
+	if (err) {
+		printk(KERN_ERR PFX "orinoco_if_add() failed\n");
+		goto fail_wiphy;
+	}
 
 	pci_set_drvdata(pdev, priv);
 
-	वापस 0;
+	return 0;
 
  fail_wiphy:
-	wiphy_unरेजिस्टर(priv_to_wiphy(priv));
+	wiphy_unregister(priv_to_wiphy(priv));
  fail:
-	मुक्त_irq(pdev->irq, priv);
+	free_irq(pdev->irq, priv);
 
  fail_irq:
-	मुक्त_orinocodev(priv);
+	free_orinocodev(priv);
 
  fail_alloc:
 	pci_iounmap(pdev, hermes_io);
@@ -198,43 +197,43 @@
  fail_resources:
 	pci_disable_device(pdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम orinoco_pci_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा orinoco_निजी *priv = pci_get_drvdata(pdev);
+static void orinoco_pci_remove_one(struct pci_dev *pdev)
+{
+	struct orinoco_private *priv = pci_get_drvdata(pdev);
 
-	orinoco_अगर_del(priv);
-	wiphy_unरेजिस्टर(priv_to_wiphy(priv));
-	मुक्त_irq(pdev->irq, priv);
-	मुक्त_orinocodev(priv);
+	orinoco_if_del(priv);
+	wiphy_unregister(priv_to_wiphy(priv));
+	free_irq(pdev->irq, priv);
+	free_orinocodev(priv);
 	pci_iounmap(pdev, priv->hw.iobase);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_device_id orinoco_pci_id_table[] = अणु
+static const struct pci_device_id orinoco_pci_id_table[] = {
 	/* Intersil Prism 3 */
-	अणु0x1260, 0x3872, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
+	{0x1260, 0x3872, PCI_ANY_ID, PCI_ANY_ID,},
 	/* Intersil Prism 2.5 */
-	अणु0x1260, 0x3873, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
+	{0x1260, 0x3873, PCI_ANY_ID, PCI_ANY_ID,},
 	/* Samsung MagicLAN SWL-2210P */
-	अणु0x167d, 0xa000, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
-	अणु0,पूर्ण,
-पूर्ण;
+	{0x167d, 0xa000, PCI_ANY_ID, PCI_ANY_ID,},
+	{0,},
+};
 
 MODULE_DEVICE_TABLE(pci, orinoco_pci_id_table);
 
-अटल काष्ठा pci_driver orinoco_pci_driver = अणु
+static struct pci_driver orinoco_pci_driver = {
 	.name		= DRIVER_NAME,
 	.id_table	= orinoco_pci_id_table,
 	.probe		= orinoco_pci_init_one,
-	.हटाओ		= orinoco_pci_हटाओ_one,
+	.remove		= orinoco_pci_remove_one,
 	.driver.pm	= &orinoco_pci_pm_ops,
-पूर्ण;
+};
 
-अटल अक्षर version[] __initdata = DRIVER_NAME " " DRIVER_VERSION
+static char version[] __initdata = DRIVER_NAME " " DRIVER_VERSION
 	" (Pavel Roskin <proski@gnu.org>,"
 	" David Gibson <hermes@gibson.dropbear.id.au> &"
 	" Jean Tourrilhes <jt@hpl.hp.com>)";
@@ -243,16 +242,16 @@ MODULE_AUTHOR("Pavel Roskin <proski@gnu.org> &"
 MODULE_DESCRIPTION("Driver for wireless LAN cards using direct PCI interface");
 MODULE_LICENSE("Dual MPL/GPL");
 
-अटल पूर्णांक __init orinoco_pci_init(व्योम)
-अणु
-	prपूर्णांकk(KERN_DEBUG "%s\n", version);
-	वापस pci_रेजिस्टर_driver(&orinoco_pci_driver);
-पूर्ण
+static int __init orinoco_pci_init(void)
+{
+	printk(KERN_DEBUG "%s\n", version);
+	return pci_register_driver(&orinoco_pci_driver);
+}
 
-अटल व्योम __निकास orinoco_pci_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&orinoco_pci_driver);
-पूर्ण
+static void __exit orinoco_pci_exit(void)
+{
+	pci_unregister_driver(&orinoco_pci_driver);
+}
 
 module_init(orinoco_pci_init);
-module_निकास(orinoco_pci_निकास);
+module_exit(orinoco_pci_exit);

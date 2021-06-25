@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * vsock_diag_test - vsock_diag.ko test suite
  *
@@ -8,483 +7,483 @@
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
-#समावेश <getopt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <linux/list.h>
-#समावेश <linux/net.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/sock_diag.h>
-#समावेश <linux/vm_sockets_diag.h>
-#समावेश <netinet/tcp.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <linux/list.h>
+#include <linux/net.h>
+#include <linux/netlink.h>
+#include <linux/sock_diag.h>
+#include <linux/vm_sockets_diag.h>
+#include <netinet/tcp.h>
 
-#समावेश "timeout.h"
-#समावेश "control.h"
-#समावेश "util.h"
+#include "timeout.h"
+#include "control.h"
+#include "util.h"
 
 /* Per-socket status */
-काष्ठा vsock_stat अणु
-	काष्ठा list_head list;
-	काष्ठा vsock_diag_msg msg;
-पूर्ण;
+struct vsock_stat {
+	struct list_head list;
+	struct vsock_diag_msg msg;
+};
 
-अटल स्थिर अक्षर *sock_type_str(पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल SOCK_DGRAM:
-		वापस "DGRAM";
-	हाल SOCK_STREAM:
-		वापस "STREAM";
-	शेष:
-		वापस "INVALID TYPE";
-	पूर्ण
-पूर्ण
+static const char *sock_type_str(int type)
+{
+	switch (type) {
+	case SOCK_DGRAM:
+		return "DGRAM";
+	case SOCK_STREAM:
+		return "STREAM";
+	default:
+		return "INVALID TYPE";
+	}
+}
 
-अटल स्थिर अक्षर *sock_state_str(पूर्णांक state)
-अणु
-	चयन (state) अणु
-	हाल TCP_CLOSE:
-		वापस "UNCONNECTED";
-	हाल TCP_SYN_SENT:
-		वापस "CONNECTING";
-	हाल TCP_ESTABLISHED:
-		वापस "CONNECTED";
-	हाल TCP_CLOSING:
-		वापस "DISCONNECTING";
-	हाल TCP_LISTEN:
-		वापस "LISTEN";
-	शेष:
-		वापस "INVALID STATE";
-	पूर्ण
-पूर्ण
+static const char *sock_state_str(int state)
+{
+	switch (state) {
+	case TCP_CLOSE:
+		return "UNCONNECTED";
+	case TCP_SYN_SENT:
+		return "CONNECTING";
+	case TCP_ESTABLISHED:
+		return "CONNECTED";
+	case TCP_CLOSING:
+		return "DISCONNECTING";
+	case TCP_LISTEN:
+		return "LISTEN";
+	default:
+		return "INVALID STATE";
+	}
+}
 
-अटल स्थिर अक्षर *sock_shutकरोwn_str(पूर्णांक shutकरोwn)
-अणु
-	चयन (shutकरोwn) अणु
-	हाल 1:
-		वापस "RCV_SHUTDOWN";
-	हाल 2:
-		वापस "SEND_SHUTDOWN";
-	हाल 3:
-		वापस "RCV_SHUTDOWN | SEND_SHUTDOWN";
-	शेष:
-		वापस "0";
-	पूर्ण
-पूर्ण
+static const char *sock_shutdown_str(int shutdown)
+{
+	switch (shutdown) {
+	case 1:
+		return "RCV_SHUTDOWN";
+	case 2:
+		return "SEND_SHUTDOWN";
+	case 3:
+		return "RCV_SHUTDOWN | SEND_SHUTDOWN";
+	default:
+		return "0";
+	}
+}
 
-अटल व्योम prपूर्णांक_vsock_addr(खाता *fp, अचिन्हित पूर्णांक cid, अचिन्हित पूर्णांक port)
-अणु
-	अगर (cid == VMADDR_CID_ANY)
-		ख_लिखो(fp, "*:");
-	अन्यथा
-		ख_लिखो(fp, "%u:", cid);
+static void print_vsock_addr(FILE *fp, unsigned int cid, unsigned int port)
+{
+	if (cid == VMADDR_CID_ANY)
+		fprintf(fp, "*:");
+	else
+		fprintf(fp, "%u:", cid);
 
-	अगर (port == VMADDR_PORT_ANY)
-		ख_लिखो(fp, "*");
-	अन्यथा
-		ख_लिखो(fp, "%u", port);
-पूर्ण
+	if (port == VMADDR_PORT_ANY)
+		fprintf(fp, "*");
+	else
+		fprintf(fp, "%u", port);
+}
 
-अटल व्योम prपूर्णांक_vsock_stat(खाता *fp, काष्ठा vsock_stat *st)
-अणु
-	prपूर्णांक_vsock_addr(fp, st->msg.vdiag_src_cid, st->msg.vdiag_src_port);
-	ख_लिखो(fp, " ");
-	prपूर्णांक_vsock_addr(fp, st->msg.vdiag_dst_cid, st->msg.vdiag_dst_port);
-	ख_लिखो(fp, " %s %s %s %u\n",
+static void print_vsock_stat(FILE *fp, struct vsock_stat *st)
+{
+	print_vsock_addr(fp, st->msg.vdiag_src_cid, st->msg.vdiag_src_port);
+	fprintf(fp, " ");
+	print_vsock_addr(fp, st->msg.vdiag_dst_cid, st->msg.vdiag_dst_port);
+	fprintf(fp, " %s %s %s %u\n",
 		sock_type_str(st->msg.vdiag_type),
 		sock_state_str(st->msg.vdiag_state),
-		sock_shutकरोwn_str(st->msg.vdiag_shutकरोwn),
+		sock_shutdown_str(st->msg.vdiag_shutdown),
 		st->msg.vdiag_ino);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_vsock_stats(खाता *fp, काष्ठा list_head *head)
-अणु
-	काष्ठा vsock_stat *st;
+static void print_vsock_stats(FILE *fp, struct list_head *head)
+{
+	struct vsock_stat *st;
 
-	list_क्रम_each_entry(st, head, list)
-		prपूर्णांक_vsock_stat(fp, st);
-पूर्ण
+	list_for_each_entry(st, head, list)
+		print_vsock_stat(fp, st);
+}
 
-अटल काष्ठा vsock_stat *find_vsock_stat(काष्ठा list_head *head, पूर्णांक fd)
-अणु
-	काष्ठा vsock_stat *st;
-	काष्ठा stat stat;
+static struct vsock_stat *find_vsock_stat(struct list_head *head, int fd)
+{
+	struct vsock_stat *st;
+	struct stat stat;
 
-	अगर (ख_स्थिति(fd, &stat) < 0) अणु
-		लिखो_त्रुटि("fstat");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (fstat(fd, &stat) < 0) {
+		perror("fstat");
+		exit(EXIT_FAILURE);
+	}
 
-	list_क्रम_each_entry(st, head, list)
-		अगर (st->msg.vdiag_ino == stat.st_ino)
-			वापस st;
+	list_for_each_entry(st, head, list)
+		if (st->msg.vdiag_ino == stat.st_ino)
+			return st;
 
-	ख_लिखो(मानक_त्रुटि, "cannot find fd %d\n", fd);
-	निकास(निकास_त्रुटि);
-पूर्ण
+	fprintf(stderr, "cannot find fd %d\n", fd);
+	exit(EXIT_FAILURE);
+}
 
-अटल व्योम check_no_sockets(काष्ठा list_head *head)
-अणु
-	अगर (!list_empty(head)) अणु
-		ख_लिखो(मानक_त्रुटि, "expected no sockets\n");
-		prपूर्णांक_vsock_stats(मानक_त्रुटि, head);
-		निकास(1);
-	पूर्ण
-पूर्ण
+static void check_no_sockets(struct list_head *head)
+{
+	if (!list_empty(head)) {
+		fprintf(stderr, "expected no sockets\n");
+		print_vsock_stats(stderr, head);
+		exit(1);
+	}
+}
 
-अटल व्योम check_num_sockets(काष्ठा list_head *head, पूर्णांक expected)
-अणु
-	काष्ठा list_head *node;
-	पूर्णांक n = 0;
+static void check_num_sockets(struct list_head *head, int expected)
+{
+	struct list_head *node;
+	int n = 0;
 
-	list_क्रम_each(node, head)
+	list_for_each(node, head)
 		n++;
 
-	अगर (n != expected) अणु
-		ख_लिखो(मानक_त्रुटि, "expected %d sockets, found %d\n",
+	if (n != expected) {
+		fprintf(stderr, "expected %d sockets, found %d\n",
 			expected, n);
-		prपूर्णांक_vsock_stats(मानक_त्रुटि, head);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		print_vsock_stats(stderr, head);
+		exit(EXIT_FAILURE);
+	}
+}
 
-अटल व्योम check_socket_state(काष्ठा vsock_stat *st, __u8 state)
-अणु
-	अगर (st->msg.vdiag_state != state) अणु
-		ख_लिखो(मानक_त्रुटि, "expected socket state %#x, got %#x\n",
+static void check_socket_state(struct vsock_stat *st, __u8 state)
+{
+	if (st->msg.vdiag_state != state) {
+		fprintf(stderr, "expected socket state %#x, got %#x\n",
 			state, st->msg.vdiag_state);
-		निकास(निकास_त्रुटि);
-	पूर्ण
-पूर्ण
+		exit(EXIT_FAILURE);
+	}
+}
 
-अटल व्योम send_req(पूर्णांक fd)
-अणु
-	काष्ठा sockaddr_nl nladdr = अणु
+static void send_req(int fd)
+{
+	struct sockaddr_nl nladdr = {
 		.nl_family = AF_NETLINK,
-	पूर्ण;
-	काष्ठा अणु
-		काष्ठा nlmsghdr nlh;
-		काष्ठा vsock_diag_req vreq;
-	पूर्ण req = अणु
-		.nlh = अणु
-			.nlmsg_len = माप(req),
+	};
+	struct {
+		struct nlmsghdr nlh;
+		struct vsock_diag_req vreq;
+	} req = {
+		.nlh = {
+			.nlmsg_len = sizeof(req),
 			.nlmsg_type = SOCK_DIAG_BY_FAMILY,
 			.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP,
-		पूर्ण,
-		.vreq = अणु
+		},
+		.vreq = {
 			.sdiag_family = AF_VSOCK,
 			.vdiag_states = ~(__u32)0,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा iovec iov = अणु
+		},
+	};
+	struct iovec iov = {
 		.iov_base = &req,
-		.iov_len = माप(req),
-	पूर्ण;
-	काष्ठा msghdr msg = अणु
+		.iov_len = sizeof(req),
+	};
+	struct msghdr msg = {
 		.msg_name = &nladdr,
-		.msg_namelen = माप(nladdr),
+		.msg_namelen = sizeof(nladdr),
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
-	पूर्ण;
+	};
 
-	क्रम (;;) अणु
-		अगर (sendmsg(fd, &msg, 0) < 0) अणु
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
+	for (;;) {
+		if (sendmsg(fd, &msg, 0) < 0) {
+			if (errno == EINTR)
+				continue;
 
-			लिखो_त्रुटि("sendmsg");
-			निकास(निकास_त्रुटि);
-		पूर्ण
+			perror("sendmsg");
+			exit(EXIT_FAILURE);
+		}
 
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल sमाप_प्रकार recv_resp(पूर्णांक fd, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा sockaddr_nl nladdr = अणु
+static ssize_t recv_resp(int fd, void *buf, size_t len)
+{
+	struct sockaddr_nl nladdr = {
 		.nl_family = AF_NETLINK,
-	पूर्ण;
-	काष्ठा iovec iov = अणु
+	};
+	struct iovec iov = {
 		.iov_base = buf,
 		.iov_len = len,
-	पूर्ण;
-	काष्ठा msghdr msg = अणु
+	};
+	struct msghdr msg = {
 		.msg_name = &nladdr,
-		.msg_namelen = माप(nladdr),
+		.msg_namelen = sizeof(nladdr),
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
-	पूर्ण;
-	sमाप_प्रकार ret;
+	};
+	ssize_t ret;
 
-	करो अणु
+	do {
 		ret = recvmsg(fd, &msg, 0);
-	पूर्ण जबतक (ret < 0 && त्रुटि_सं == EINTR);
+	} while (ret < 0 && errno == EINTR);
 
-	अगर (ret < 0) अणु
-		लिखो_त्रुटि("recvmsg");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (ret < 0) {
+		perror("recvmsg");
+		exit(EXIT_FAILURE);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम add_vsock_stat(काष्ठा list_head *sockets,
-			   स्थिर काष्ठा vsock_diag_msg *resp)
-अणु
-	काष्ठा vsock_stat *st;
+static void add_vsock_stat(struct list_head *sockets,
+			   const struct vsock_diag_msg *resp)
+{
+	struct vsock_stat *st;
 
-	st = दो_स्मृति(माप(*st));
-	अगर (!st) अणु
-		लिखो_त्रुटि("malloc");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	st = malloc(sizeof(*st));
+	if (!st) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
 
 	st->msg = *resp;
 	list_add_tail(&st->list, sockets);
-पूर्ण
+}
 
 /*
- * Read vsock stats पूर्णांकo a list.
+ * Read vsock stats into a list.
  */
-अटल व्योम पढ़ो_vsock_stat(काष्ठा list_head *sockets)
-अणु
-	दीर्घ buf[8192 / माप(दीर्घ)];
-	पूर्णांक fd;
+static void read_vsock_stat(struct list_head *sockets)
+{
+	long buf[8192 / sizeof(long)];
+	int fd;
 
 	fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_SOCK_DIAG);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि("socket");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (fd < 0) {
+		perror("socket");
+		exit(EXIT_FAILURE);
+	}
 
 	send_req(fd);
 
-	क्रम (;;) अणु
-		स्थिर काष्ठा nlmsghdr *h;
-		sमाप_प्रकार ret;
+	for (;;) {
+		const struct nlmsghdr *h;
+		ssize_t ret;
 
-		ret = recv_resp(fd, buf, माप(buf));
-		अगर (ret == 0)
-			जाओ करोne;
-		अगर (ret < माप(*h)) अणु
-			ख_लिखो(मानक_त्रुटि, "short read of %zd bytes\n", ret);
-			निकास(निकास_त्रुटि);
-		पूर्ण
+		ret = recv_resp(fd, buf, sizeof(buf));
+		if (ret == 0)
+			goto done;
+		if (ret < sizeof(*h)) {
+			fprintf(stderr, "short read of %zd bytes\n", ret);
+			exit(EXIT_FAILURE);
+		}
 
-		h = (काष्ठा nlmsghdr *)buf;
+		h = (struct nlmsghdr *)buf;
 
-		जबतक (NLMSG_OK(h, ret)) अणु
-			अगर (h->nlmsg_type == NLMSG_DONE)
-				जाओ करोne;
+		while (NLMSG_OK(h, ret)) {
+			if (h->nlmsg_type == NLMSG_DONE)
+				goto done;
 
-			अगर (h->nlmsg_type == NLMSG_ERROR) अणु
-				स्थिर काष्ठा nlmsgerr *err = NLMSG_DATA(h);
+			if (h->nlmsg_type == NLMSG_ERROR) {
+				const struct nlmsgerr *err = NLMSG_DATA(h);
 
-				अगर (h->nlmsg_len < NLMSG_LENGTH(माप(*err)))
-					ख_लिखो(मानक_त्रुटि, "NLMSG_ERROR\n");
-				अन्यथा अणु
-					त्रुटि_सं = -err->error;
-					लिखो_त्रुटि("NLMSG_ERROR");
-				पूर्ण
+				if (h->nlmsg_len < NLMSG_LENGTH(sizeof(*err)))
+					fprintf(stderr, "NLMSG_ERROR\n");
+				else {
+					errno = -err->error;
+					perror("NLMSG_ERROR");
+				}
 
-				निकास(निकास_त्रुटि);
-			पूर्ण
+				exit(EXIT_FAILURE);
+			}
 
-			अगर (h->nlmsg_type != SOCK_DIAG_BY_FAMILY) अणु
-				ख_लिखो(मानक_त्रुटि, "unexpected nlmsg_type %#x\n",
+			if (h->nlmsg_type != SOCK_DIAG_BY_FAMILY) {
+				fprintf(stderr, "unexpected nlmsg_type %#x\n",
 					h->nlmsg_type);
-				निकास(निकास_त्रुटि);
-			पूर्ण
-			अगर (h->nlmsg_len <
-			    NLMSG_LENGTH(माप(काष्ठा vsock_diag_msg))) अणु
-				ख_लिखो(मानक_त्रुटि, "short vsock_diag_msg\n");
-				निकास(निकास_त्रुटि);
-			पूर्ण
+				exit(EXIT_FAILURE);
+			}
+			if (h->nlmsg_len <
+			    NLMSG_LENGTH(sizeof(struct vsock_diag_msg))) {
+				fprintf(stderr, "short vsock_diag_msg\n");
+				exit(EXIT_FAILURE);
+			}
 
 			add_vsock_stat(sockets, NLMSG_DATA(h));
 
 			h = NLMSG_NEXT(h, ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	बंद(fd);
-पूर्ण
+done:
+	close(fd);
+}
 
-अटल व्योम मुक्त_sock_stat(काष्ठा list_head *sockets)
-अणु
-	काष्ठा vsock_stat *st;
-	काष्ठा vsock_stat *next;
+static void free_sock_stat(struct list_head *sockets)
+{
+	struct vsock_stat *st;
+	struct vsock_stat *next;
 
-	list_क्रम_each_entry_safe(st, next, sockets, list)
-		मुक्त(st);
-पूर्ण
+	list_for_each_entry_safe(st, next, sockets, list)
+		free(st);
+}
 
-अटल व्योम test_no_sockets(स्थिर काष्ठा test_opts *opts)
-अणु
+static void test_no_sockets(const struct test_opts *opts)
+{
 	LIST_HEAD(sockets);
 
-	पढ़ो_vsock_stat(&sockets);
+	read_vsock_stat(&sockets);
 
 	check_no_sockets(&sockets);
 
-	मुक्त_sock_stat(&sockets);
-पूर्ण
+	free_sock_stat(&sockets);
+}
 
-अटल व्योम test_listen_socket_server(स्थिर काष्ठा test_opts *opts)
-अणु
-	जोड़ अणु
-		काष्ठा sockaddr sa;
-		काष्ठा sockaddr_vm svm;
-	पूर्ण addr = अणु
-		.svm = अणु
+static void test_listen_socket_server(const struct test_opts *opts)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_vm svm;
+	} addr = {
+		.svm = {
 			.svm_family = AF_VSOCK,
 			.svm_port = 1234,
 			.svm_cid = VMADDR_CID_ANY,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 	LIST_HEAD(sockets);
-	काष्ठा vsock_stat *st;
-	पूर्णांक fd;
+	struct vsock_stat *st;
+	int fd;
 
 	fd = socket(AF_VSOCK, SOCK_STREAM, 0);
 
-	अगर (bind(fd, &addr.sa, माप(addr.svm)) < 0) अणु
-		लिखो_त्रुटि("bind");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (bind(fd, &addr.sa, sizeof(addr.svm)) < 0) {
+		perror("bind");
+		exit(EXIT_FAILURE);
+	}
 
-	अगर (listen(fd, 1) < 0) अणु
-		लिखो_त्रुटि("listen");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (listen(fd, 1) < 0) {
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
 
-	पढ़ो_vsock_stat(&sockets);
+	read_vsock_stat(&sockets);
 
 	check_num_sockets(&sockets, 1);
 	st = find_vsock_stat(&sockets, fd);
 	check_socket_state(st, TCP_LISTEN);
 
-	बंद(fd);
-	मुक्त_sock_stat(&sockets);
-पूर्ण
+	close(fd);
+	free_sock_stat(&sockets);
+}
 
-अटल व्योम test_connect_client(स्थिर काष्ठा test_opts *opts)
-अणु
-	पूर्णांक fd;
+static void test_connect_client(const struct test_opts *opts)
+{
+	int fd;
 	LIST_HEAD(sockets);
-	काष्ठा vsock_stat *st;
+	struct vsock_stat *st;
 
 	fd = vsock_stream_connect(opts->peer_cid, 1234);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि("connect");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	if (fd < 0) {
+		perror("connect");
+		exit(EXIT_FAILURE);
+	}
 
-	पढ़ो_vsock_stat(&sockets);
+	read_vsock_stat(&sockets);
 
 	check_num_sockets(&sockets, 1);
 	st = find_vsock_stat(&sockets, fd);
 	check_socket_state(st, TCP_ESTABLISHED);
 
 	control_expectln("DONE");
-	control_ग_लिखोln("DONE");
+	control_writeln("DONE");
 
-	बंद(fd);
-	मुक्त_sock_stat(&sockets);
-पूर्ण
+	close(fd);
+	free_sock_stat(&sockets);
+}
 
-अटल व्योम test_connect_server(स्थिर काष्ठा test_opts *opts)
-अणु
-	काष्ठा vsock_stat *st;
+static void test_connect_server(const struct test_opts *opts)
+{
+	struct vsock_stat *st;
 	LIST_HEAD(sockets);
-	पूर्णांक client_fd;
+	int client_fd;
 
-	client_fd = vsock_stream_accept(VMADDR_CID_ANY, 1234, शून्य);
-	अगर (client_fd < 0) अणु
-		लिखो_त्रुटि("accept");
-		निकास(निकास_त्रुटि);
-	पूर्ण
+	client_fd = vsock_stream_accept(VMADDR_CID_ANY, 1234, NULL);
+	if (client_fd < 0) {
+		perror("accept");
+		exit(EXIT_FAILURE);
+	}
 
-	पढ़ो_vsock_stat(&sockets);
+	read_vsock_stat(&sockets);
 
 	check_num_sockets(&sockets, 1);
 	st = find_vsock_stat(&sockets, client_fd);
 	check_socket_state(st, TCP_ESTABLISHED);
 
-	control_ग_लिखोln("DONE");
+	control_writeln("DONE");
 	control_expectln("DONE");
 
-	बंद(client_fd);
-	मुक्त_sock_stat(&sockets);
-पूर्ण
+	close(client_fd);
+	free_sock_stat(&sockets);
+}
 
-अटल काष्ठा test_हाल test_हालs[] = अणु
-	अणु
+static struct test_case test_cases[] = {
+	{
 		.name = "No sockets",
 		.run_server = test_no_sockets,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "Listen socket",
 		.run_server = test_listen_socket_server,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "Connect",
 		.run_client = test_connect_client,
 		.run_server = test_connect_server,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
-अटल स्थिर अक्षर optstring[] = "";
-अटल स्थिर काष्ठा option दीर्घopts[] = अणु
-	अणु
+static const char optstring[] = "";
+static const struct option longopts[] = {
+	{
 		.name = "control-host",
 		.has_arg = required_argument,
 		.val = 'H',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "control-port",
 		.has_arg = required_argument,
 		.val = 'P',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "mode",
 		.has_arg = required_argument,
 		.val = 'm',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "peer-cid",
 		.has_arg = required_argument,
 		.val = 'p',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "list",
 		.has_arg = no_argument,
 		.val = 'l',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "skip",
 		.has_arg = required_argument,
 		.val = 's',
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "help",
 		.has_arg = no_argument,
 		.val = '?',
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
-अटल व्योम usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: vsock_diag_test [--help] [--control-host=<host>] --control-port=<port> --mode=client|server --peer-cid=<cid> [--list] [--skip=<test_id>]\n"
+static void usage(void)
+{
+	fprintf(stderr, "Usage: vsock_diag_test [--help] [--control-host=<host>] --control-port=<port> --mode=client|server --peer-cid=<cid> [--list] [--skip=<test_id>]\n"
 		"\n"
 		"  Server: vsock_diag_test --control-port=1234 --mode=server --peer-cid=3\n"
 		"  Client: vsock_diag_test --control-host=192.168.0.1 --control-port=1234 --mode=client --peer-cid=2\n"
@@ -510,77 +509,77 @@
 		"  --skip <test_id>       Test ID to skip;\n"
 		"                         use multiple --skip options to skip more tests\n"
 		);
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर *control_host = शून्य;
-	स्थिर अक्षर *control_port = शून्य;
-	काष्ठा test_opts opts = अणु
+int main(int argc, char **argv)
+{
+	const char *control_host = NULL;
+	const char *control_port = NULL;
+	struct test_opts opts = {
 		.mode = TEST_MODE_UNSET,
 		.peer_cid = VMADDR_CID_ANY,
-	पूर्ण;
+	};
 
-	init_संकेतs();
+	init_signals();
 
-	क्रम (;;) अणु
-		पूर्णांक opt = getopt_दीर्घ(argc, argv, optstring, दीर्घopts, शून्य);
+	for (;;) {
+		int opt = getopt_long(argc, argv, optstring, longopts, NULL);
 
-		अगर (opt == -1)
-			अवरोध;
+		if (opt == -1)
+			break;
 
-		चयन (opt) अणु
-		हाल 'H':
+		switch (opt) {
+		case 'H':
 			control_host = optarg;
-			अवरोध;
-		हाल 'm':
-			अगर (म_भेद(optarg, "client") == 0)
+			break;
+		case 'm':
+			if (strcmp(optarg, "client") == 0)
 				opts.mode = TEST_MODE_CLIENT;
-			अन्यथा अगर (म_भेद(optarg, "server") == 0)
+			else if (strcmp(optarg, "server") == 0)
 				opts.mode = TEST_MODE_SERVER;
-			अन्यथा अणु
-				ख_लिखो(मानक_त्रुटि, "--mode must be \"client\" or \"server\"\n");
-				वापस निकास_त्रुटि;
-			पूर्ण
-			अवरोध;
-		हाल 'p':
+			else {
+				fprintf(stderr, "--mode must be \"client\" or \"server\"\n");
+				return EXIT_FAILURE;
+			}
+			break;
+		case 'p':
 			opts.peer_cid = parse_cid(optarg);
-			अवरोध;
-		हाल 'P':
+			break;
+		case 'P':
 			control_port = optarg;
-			अवरोध;
-		हाल 'l':
-			list_tests(test_हालs);
-			अवरोध;
-		हाल 's':
-			skip_test(test_हालs, ARRAY_SIZE(test_हालs) - 1,
+			break;
+		case 'l':
+			list_tests(test_cases);
+			break;
+		case 's':
+			skip_test(test_cases, ARRAY_SIZE(test_cases) - 1,
 				  optarg);
-			अवरोध;
-		हाल '?':
-		शेष:
+			break;
+		case '?':
+		default:
 			usage();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!control_port)
+	if (!control_port)
 		usage();
-	अगर (opts.mode == TEST_MODE_UNSET)
+	if (opts.mode == TEST_MODE_UNSET)
 		usage();
-	अगर (opts.peer_cid == VMADDR_CID_ANY)
+	if (opts.peer_cid == VMADDR_CID_ANY)
 		usage();
 
-	अगर (!control_host) अणु
-		अगर (opts.mode != TEST_MODE_SERVER)
+	if (!control_host) {
+		if (opts.mode != TEST_MODE_SERVER)
 			usage();
 		control_host = "0.0.0.0";
-	पूर्ण
+	}
 
 	control_init(control_host, control_port,
 		     opts.mode == TEST_MODE_SERVER);
 
-	run_tests(test_हालs, &opts);
+	run_tests(test_cases, &opts);
 
 	control_cleanup();
-	वापस निकास_सफल;
-पूर्ण
+	return EXIT_SUCCESS;
+}

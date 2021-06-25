@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,16 +23,16 @@
  *
  */
 
-#अगर_अघोषित _DMUB_DCN20_H_
-#घोषणा _DMUB_DCN20_H_
+#ifndef _DMUB_DCN20_H_
+#define _DMUB_DCN20_H_
 
-#समावेश "../inc/dmub_cmd.h"
+#include "../inc/dmub_cmd.h"
 
-काष्ठा dmub_srv;
+struct dmub_srv;
 
-/* DCN20 रेजिस्टर definitions. */
+/* DCN20 register definitions. */
 
-#घोषणा DMUB_COMMON_REGS() \
+#define DMUB_COMMON_REGS() \
 	DMUB_SR(DMCUB_CNTL) \
 	DMUB_SR(DMCUB_MEM_CNTL) \
 	DMUB_SR(DMCUB_SEC_CNTL) \
@@ -110,7 +109,7 @@
 	DMUB_SR(DCN_VM_FB_OFFSET) \
 	DMUB_SR(DMCUB_INTERRUPT_ACK)
 
-#घोषणा DMUB_COMMON_FIELDS() \
+#define DMUB_COMMON_FIELDS() \
 	DMUB_SF(DMCUB_CNTL, DMCUB_ENABLE) \
 	DMUB_SF(DMCUB_CNTL, DMCUB_SOFT_RESET) \
 	DMUB_SF(DMCUB_CNTL, DMCUB_TRACEPORT_EN) \
@@ -144,92 +143,92 @@
 	DMUB_SF(DCN_VM_FB_OFFSET, FB_OFFSET) \
 	DMUB_SF(DMCUB_INTERRUPT_ACK, DMCUB_OUTBOX0_READY_INT_ACK)
 
-काष्ठा dmub_srv_common_reg_offset अणु
-#घोषणा DMUB_SR(reg) uपूर्णांक32_t reg;
+struct dmub_srv_common_reg_offset {
+#define DMUB_SR(reg) uint32_t reg;
 	DMUB_COMMON_REGS()
-#अघोषित DMUB_SR
-पूर्ण;
+#undef DMUB_SR
+};
 
-काष्ठा dmub_srv_common_reg_shअगरt अणु
-#घोषणा DMUB_SF(reg, field) uपूर्णांक8_t reg##__##field;
+struct dmub_srv_common_reg_shift {
+#define DMUB_SF(reg, field) uint8_t reg##__##field;
 	DMUB_COMMON_FIELDS()
-#अघोषित DMUB_SF
-पूर्ण;
+#undef DMUB_SF
+};
 
-काष्ठा dmub_srv_common_reg_mask अणु
-#घोषणा DMUB_SF(reg, field) uपूर्णांक32_t reg##__##field;
+struct dmub_srv_common_reg_mask {
+#define DMUB_SF(reg, field) uint32_t reg##__##field;
 	DMUB_COMMON_FIELDS()
-#अघोषित DMUB_SF
-पूर्ण;
+#undef DMUB_SF
+};
 
-काष्ठा dmub_srv_common_regs अणु
-	स्थिर काष्ठा dmub_srv_common_reg_offset offset;
-	स्थिर काष्ठा dmub_srv_common_reg_mask mask;
-	स्थिर काष्ठा dmub_srv_common_reg_shअगरt shअगरt;
-पूर्ण;
+struct dmub_srv_common_regs {
+	const struct dmub_srv_common_reg_offset offset;
+	const struct dmub_srv_common_reg_mask mask;
+	const struct dmub_srv_common_reg_shift shift;
+};
 
-बाह्य स्थिर काष्ठा dmub_srv_common_regs dmub_srv_dcn20_regs;
+extern const struct dmub_srv_common_regs dmub_srv_dcn20_regs;
 
 /* Hardware functions. */
 
-व्योम dmub_dcn20_init(काष्ठा dmub_srv *dmub);
+void dmub_dcn20_init(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_reset(काष्ठा dmub_srv *dmub);
+void dmub_dcn20_reset(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_reset_release(काष्ठा dmub_srv *dmub);
+void dmub_dcn20_reset_release(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_backकरोor_load(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_winकरोw *cw0,
-			      स्थिर काष्ठा dmub_winकरोw *cw1);
+void dmub_dcn20_backdoor_load(struct dmub_srv *dmub,
+			      const struct dmub_window *cw0,
+			      const struct dmub_window *cw1);
 
-व्योम dmub_dcn20_setup_winकरोws(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_winकरोw *cw2,
-			      स्थिर काष्ठा dmub_winकरोw *cw3,
-			      स्थिर काष्ठा dmub_winकरोw *cw4,
-			      स्थिर काष्ठा dmub_winकरोw *cw5,
-			      स्थिर काष्ठा dmub_winकरोw *cw6);
+void dmub_dcn20_setup_windows(struct dmub_srv *dmub,
+			      const struct dmub_window *cw2,
+			      const struct dmub_window *cw3,
+			      const struct dmub_window *cw4,
+			      const struct dmub_window *cw5,
+			      const struct dmub_window *cw6);
 
-व्योम dmub_dcn20_setup_mailbox(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *inbox1);
+void dmub_dcn20_setup_mailbox(struct dmub_srv *dmub,
+			      const struct dmub_region *inbox1);
 
-uपूर्णांक32_t dmub_dcn20_get_inbox1_rptr(काष्ठा dmub_srv *dmub);
+uint32_t dmub_dcn20_get_inbox1_rptr(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_set_inbox1_wptr(काष्ठा dmub_srv *dmub, uपूर्णांक32_t wptr_offset);
+void dmub_dcn20_set_inbox1_wptr(struct dmub_srv *dmub, uint32_t wptr_offset);
 
-व्योम dmub_dcn20_setup_out_mailbox(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *outbox1);
+void dmub_dcn20_setup_out_mailbox(struct dmub_srv *dmub,
+			      const struct dmub_region *outbox1);
 
-uपूर्णांक32_t dmub_dcn20_get_outbox1_wptr(काष्ठा dmub_srv *dmub);
+uint32_t dmub_dcn20_get_outbox1_wptr(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_set_outbox1_rptr(काष्ठा dmub_srv *dmub, uपूर्णांक32_t rptr_offset);
+void dmub_dcn20_set_outbox1_rptr(struct dmub_srv *dmub, uint32_t rptr_offset);
 
-व्योम dmub_dcn20_setup_outbox0(काष्ठा dmub_srv *dmub,
-			      स्थिर काष्ठा dmub_region *outbox0);
+void dmub_dcn20_setup_outbox0(struct dmub_srv *dmub,
+			      const struct dmub_region *outbox0);
 
-uपूर्णांक32_t dmub_dcn20_get_outbox0_wptr(काष्ठा dmub_srv *dmub);
+uint32_t dmub_dcn20_get_outbox0_wptr(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_set_outbox0_rptr(काष्ठा dmub_srv *dmub, uपूर्णांक32_t rptr_offset);
+void dmub_dcn20_set_outbox0_rptr(struct dmub_srv *dmub, uint32_t rptr_offset);
 
-bool dmub_dcn20_is_hw_init(काष्ठा dmub_srv *dmub);
+bool dmub_dcn20_is_hw_init(struct dmub_srv *dmub);
 
-bool dmub_dcn20_is_supported(काष्ठा dmub_srv *dmub);
+bool dmub_dcn20_is_supported(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_set_gpपूर्णांक(काष्ठा dmub_srv *dmub,
-			  जोड़ dmub_gpपूर्णांक_data_रेजिस्टर reg);
+void dmub_dcn20_set_gpint(struct dmub_srv *dmub,
+			  union dmub_gpint_data_register reg);
 
-bool dmub_dcn20_is_gpपूर्णांक_acked(काष्ठा dmub_srv *dmub,
-			       जोड़ dmub_gpपूर्णांक_data_रेजिस्टर reg);
+bool dmub_dcn20_is_gpint_acked(struct dmub_srv *dmub,
+			       union dmub_gpint_data_register reg);
 
-uपूर्णांक32_t dmub_dcn20_get_gpपूर्णांक_response(काष्ठा dmub_srv *dmub);
+uint32_t dmub_dcn20_get_gpint_response(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_enable_dmub_boot_options(काष्ठा dmub_srv *dmub);
+void dmub_dcn20_enable_dmub_boot_options(struct dmub_srv *dmub);
 
-व्योम dmub_dcn20_skip_dmub_panel_घातer_sequence(काष्ठा dmub_srv *dmub, bool skip);
+void dmub_dcn20_skip_dmub_panel_power_sequence(struct dmub_srv *dmub, bool skip);
 
-जोड़ dmub_fw_boot_status dmub_dcn20_get_fw_boot_status(काष्ठा dmub_srv *dmub);
+union dmub_fw_boot_status dmub_dcn20_get_fw_boot_status(struct dmub_srv *dmub);
 
-bool dmub_dcn20_use_cached_inbox(काष्ठा dmub_srv *dmub);
+bool dmub_dcn20_use_cached_inbox(struct dmub_srv *dmub);
 
-bool dmub_dcn20_use_cached_trace_buffer(काष्ठा dmub_srv *dmub);
+bool dmub_dcn20_use_cached_trace_buffer(struct dmub_srv *dmub);
 
-#पूर्ण_अगर /* _DMUB_DCN20_H_ */
+#endif /* _DMUB_DCN20_H_ */

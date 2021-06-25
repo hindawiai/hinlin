@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
 
-#अगर_अघोषित _MTK_SCP_H
-#घोषणा _MTK_SCP_H
+#ifndef _MTK_SCP_H
+#define _MTK_SCP_H
 
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/platform_device.h>
 
-प्रकार व्योम (*scp_ipi_handler_t) (व्योम *data,
-				   अचिन्हित पूर्णांक len,
-				   व्योम *priv);
-काष्ठा mtk_scp;
+typedef void (*scp_ipi_handler_t) (void *data,
+				   unsigned int len,
+				   void *priv);
+struct mtk_scp;
 
 /**
- * क्रमागत ipi_id - the id of पूर्णांकer-processor पूर्णांकerrupt
+ * enum ipi_id - the id of inter-processor interrupt
  *
- * @SCP_IPI_INIT:	 The पूर्णांकerrupt from scp is to notfiy kernel
+ * @SCP_IPI_INIT:	 The interrupt from scp is to notfiy kernel
  *			 SCP initialization completed.
  *			 IPI_SCP_INIT is sent from SCP when firmware is
- *			 loaded. AP करोesn't need to send IPI_SCP_INIT
+ *			 loaded. AP doesn't need to send IPI_SCP_INIT
  *			 command to SCP.
  *			 For other IPI below, AP should send the request
- *			 to SCP to trigger the पूर्णांकerrupt.
+ *			 to SCP to trigger the interrupt.
  * @SCP_IPI_MAX:	 The maximum IPI number
  */
 
-क्रमागत scp_ipi_id अणु
+enum scp_ipi_id {
 	SCP_IPI_INIT = 0,
 	SCP_IPI_VDEC_H264,
 	SCP_IPI_VDEC_VP8,
@@ -44,24 +43,24 @@
 	SCP_IPI_CROS_HOST_CMD,
 	SCP_IPI_NS_SERVICE = 0xFF,
 	SCP_IPI_MAX = 0x100,
-पूर्ण;
+};
 
-काष्ठा mtk_scp *scp_get(काष्ठा platक्रमm_device *pdev);
-व्योम scp_put(काष्ठा mtk_scp *scp);
+struct mtk_scp *scp_get(struct platform_device *pdev);
+void scp_put(struct mtk_scp *scp);
 
-काष्ठा device *scp_get_device(काष्ठा mtk_scp *scp);
-काष्ठा rproc *scp_get_rproc(काष्ठा mtk_scp *scp);
+struct device *scp_get_device(struct mtk_scp *scp);
+struct rproc *scp_get_rproc(struct mtk_scp *scp);
 
-पूर्णांक scp_ipi_रेजिस्टर(काष्ठा mtk_scp *scp, u32 id, scp_ipi_handler_t handler,
-		     व्योम *priv);
-व्योम scp_ipi_unरेजिस्टर(काष्ठा mtk_scp *scp, u32 id);
+int scp_ipi_register(struct mtk_scp *scp, u32 id, scp_ipi_handler_t handler,
+		     void *priv);
+void scp_ipi_unregister(struct mtk_scp *scp, u32 id);
 
-पूर्णांक scp_ipi_send(काष्ठा mtk_scp *scp, u32 id, व्योम *buf, अचिन्हित पूर्णांक len,
-		 अचिन्हित पूर्णांक रुको);
+int scp_ipi_send(struct mtk_scp *scp, u32 id, void *buf, unsigned int len,
+		 unsigned int wait);
 
-अचिन्हित पूर्णांक scp_get_vdec_hw_capa(काष्ठा mtk_scp *scp);
-अचिन्हित पूर्णांक scp_get_venc_hw_capa(काष्ठा mtk_scp *scp);
+unsigned int scp_get_vdec_hw_capa(struct mtk_scp *scp);
+unsigned int scp_get_venc_hw_capa(struct mtk_scp *scp);
 
-व्योम *scp_mapping_dm_addr(काष्ठा mtk_scp *scp, u32 mem_addr);
+void *scp_mapping_dm_addr(struct mtk_scp *scp, u32 mem_addr);
 
-#पूर्ण_अगर /* _MTK_SCP_H */
+#endif /* _MTK_SCP_H */

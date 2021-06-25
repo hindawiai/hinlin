@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * IP tables module क्रम matching the value of the TTL
- * (C) 2000,2001 by Harald Welte <laक्रमge@netfilter.org>
+ * IP tables module for matching the value of the TTL
+ * (C) 2000,2001 by Harald Welte <laforge@netfilter.org>
  *
  * Hop Limit matching module
  * (C) 2001-2002 Maciej Soltysiak <solt@dns.toxicfilms.tv>
  */
 
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_ipv4/ipt_ttl.h>
-#समावेश <linux/netfilter_ipv6/ip6t_hl.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_ipv4/ipt_ttl.h>
+#include <linux/netfilter_ipv6/ip6t_hl.h>
 
 MODULE_AUTHOR("Maciej Soltysiak <solt@dns.toxicfilms.tv>");
 MODULE_DESCRIPTION("Xtables: Hoplimit/TTL field match");
@@ -23,72 +22,72 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_ttl");
 MODULE_ALIAS("ip6t_hl");
 
-अटल bool ttl_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा ipt_ttl_info *info = par->matchinfo;
-	स्थिर u8 ttl = ip_hdr(skb)->ttl;
+static bool ttl_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct ipt_ttl_info *info = par->matchinfo;
+	const u8 ttl = ip_hdr(skb)->ttl;
 
-	चयन (info->mode) अणु
-	हाल IPT_TTL_EQ:
-		वापस ttl == info->ttl;
-	हाल IPT_TTL_NE:
-		वापस ttl != info->ttl;
-	हाल IPT_TTL_LT:
-		वापस ttl < info->ttl;
-	हाल IPT_TTL_GT:
-		वापस ttl > info->ttl;
-	पूर्ण
+	switch (info->mode) {
+	case IPT_TTL_EQ:
+		return ttl == info->ttl;
+	case IPT_TTL_NE:
+		return ttl != info->ttl;
+	case IPT_TTL_LT:
+		return ttl < info->ttl;
+	case IPT_TTL_GT:
+		return ttl > info->ttl;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool hl_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा ip6t_hl_info *info = par->matchinfo;
-	स्थिर काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+static bool hl_mt6(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct ip6t_hl_info *info = par->matchinfo;
+	const struct ipv6hdr *ip6h = ipv6_hdr(skb);
 
-	चयन (info->mode) अणु
-	हाल IP6T_HL_EQ:
-		वापस ip6h->hop_limit == info->hop_limit;
-	हाल IP6T_HL_NE:
-		वापस ip6h->hop_limit != info->hop_limit;
-	हाल IP6T_HL_LT:
-		वापस ip6h->hop_limit < info->hop_limit;
-	हाल IP6T_HL_GT:
-		वापस ip6h->hop_limit > info->hop_limit;
-	पूर्ण
+	switch (info->mode) {
+	case IP6T_HL_EQ:
+		return ip6h->hop_limit == info->hop_limit;
+	case IP6T_HL_NE:
+		return ip6h->hop_limit != info->hop_limit;
+	case IP6T_HL_LT:
+		return ip6h->hop_limit < info->hop_limit;
+	case IP6T_HL_GT:
+		return ip6h->hop_limit > info->hop_limit;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा xt_match hl_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match hl_mt_reg[] __read_mostly = {
+	{
 		.name       = "ttl",
 		.revision   = 0,
 		.family     = NFPROTO_IPV4,
 		.match      = ttl_mt,
-		.matchsize  = माप(काष्ठा ipt_ttl_info),
+		.matchsize  = sizeof(struct ipt_ttl_info),
 		.me         = THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name       = "hl",
 		.revision   = 0,
 		.family     = NFPROTO_IPV6,
 		.match      = hl_mt6,
-		.matchsize  = माप(काष्ठा ip6t_hl_info),
+		.matchsize  = sizeof(struct ip6t_hl_info),
 		.me         = THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init hl_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_matches(hl_mt_reg, ARRAY_SIZE(hl_mt_reg));
-पूर्ण
+static int __init hl_mt_init(void)
+{
+	return xt_register_matches(hl_mt_reg, ARRAY_SIZE(hl_mt_reg));
+}
 
-अटल व्योम __निकास hl_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(hl_mt_reg, ARRAY_SIZE(hl_mt_reg));
-पूर्ण
+static void __exit hl_mt_exit(void)
+{
+	xt_unregister_matches(hl_mt_reg, ARRAY_SIZE(hl_mt_reg));
+}
 
 module_init(hl_mt_init);
-module_निकास(hl_mt_निकास);
+module_exit(hl_mt_exit);

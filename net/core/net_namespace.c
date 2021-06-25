@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+// SPDX-License-Identifier: GPL-2.0-only
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/workqueue.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/proc_ns.h>
-#समावेश <linux/file.h>
-#समावेश <linux/export.h>
-#समावेश <linux/user_namespace.h>
-#समावेश <linux/net_namespace.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/uidgid.h>
-#समावेश <linux/cookie.h>
+#include <linux/workqueue.h>
+#include <linux/rtnetlink.h>
+#include <linux/cache.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/idr.h>
+#include <linux/rculist.h>
+#include <linux/nsproxy.h>
+#include <linux/fs.h>
+#include <linux/proc_ns.h>
+#include <linux/file.h>
+#include <linux/export.h>
+#include <linux/user_namespace.h>
+#include <linux/net_namespace.h>
+#include <linux/sched/task.h>
+#include <linux/uidgid.h>
+#include <linux/cookie.h>
 
-#समावेश <net/sock.h>
-#समावेश <net/netlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
+#include <net/sock.h>
+#include <net/netlink.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
 /*
- *	Our network namespace स्थिरructor/deकाष्ठाor lists
+ *	Our network namespace constructor/destructor lists
  */
 
-अटल LIST_HEAD(pernet_list);
-अटल काष्ठा list_head *first_device = &pernet_list;
+static LIST_HEAD(pernet_list);
+static struct list_head *first_device = &pernet_list;
 
 LIST_HEAD(net_namespace_list);
 EXPORT_SYMBOL_GPL(net_namespace_list);
@@ -41,286 +40,286 @@ EXPORT_SYMBOL_GPL(net_namespace_list);
 DECLARE_RWSEM(net_rwsem);
 EXPORT_SYMBOL_GPL(net_rwsem);
 
-#अगर_घोषित CONFIG_KEYS
-अटल काष्ठा key_tag init_net_key_करोमुख्य = अणु .usage = REFCOUNT_INIT(1) पूर्ण;
-#पूर्ण_अगर
+#ifdef CONFIG_KEYS
+static struct key_tag init_net_key_domain = { .usage = REFCOUNT_INIT(1) };
+#endif
 
-काष्ठा net init_net = अणु
+struct net init_net = {
 	.ns.count	= REFCOUNT_INIT(1),
 	.dev_base_head	= LIST_HEAD_INIT(init_net.dev_base_head),
-#अगर_घोषित CONFIG_KEYS
-	.key_करोमुख्य	= &init_net_key_करोमुख्य,
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_KEYS
+	.key_domain	= &init_net_key_domain,
+#endif
+};
 EXPORT_SYMBOL(init_net);
 
-अटल bool init_net_initialized;
+static bool init_net_initialized;
 /*
  * pernet_ops_rwsem: protects: pernet_list, net_generic_ids,
- * init_net_initialized and first_device poपूर्णांकer.
- * This is पूर्णांकernal net namespace object. Please, करोn't use it
+ * init_net_initialized and first_device pointer.
+ * This is internal net namespace object. Please, don't use it
  * outside.
  */
 DECLARE_RWSEM(pernet_ops_rwsem);
 EXPORT_SYMBOL_GPL(pernet_ops_rwsem);
 
-#घोषणा MIN_PERNET_OPS_ID	\
-	((माप(काष्ठा net_generic) + माप(व्योम *) - 1) / माप(व्योम *))
+#define MIN_PERNET_OPS_ID	\
+	((sizeof(struct net_generic) + sizeof(void *) - 1) / sizeof(void *))
 
-#घोषणा INITIAL_NET_GEN_PTRS	13 /* +1 क्रम len +2 क्रम rcu_head */
+#define INITIAL_NET_GEN_PTRS	13 /* +1 for len +2 for rcu_head */
 
-अटल अचिन्हित पूर्णांक max_gen_ptrs = INITIAL_NET_GEN_PTRS;
+static unsigned int max_gen_ptrs = INITIAL_NET_GEN_PTRS;
 
 DEFINE_COOKIE(net_cookie);
 
-अटल काष्ठा net_generic *net_alloc_generic(व्योम)
-अणु
-	काष्ठा net_generic *ng;
-	अचिन्हित पूर्णांक generic_size = दुरत्व(काष्ठा net_generic, ptr[max_gen_ptrs]);
+static struct net_generic *net_alloc_generic(void)
+{
+	struct net_generic *ng;
+	unsigned int generic_size = offsetof(struct net_generic, ptr[max_gen_ptrs]);
 
 	ng = kzalloc(generic_size, GFP_KERNEL);
-	अगर (ng)
+	if (ng)
 		ng->s.len = max_gen_ptrs;
 
-	वापस ng;
-पूर्ण
+	return ng;
+}
 
-अटल पूर्णांक net_assign_generic(काष्ठा net *net, अचिन्हित पूर्णांक id, व्योम *data)
-अणु
-	काष्ठा net_generic *ng, *old_ng;
+static int net_assign_generic(struct net *net, unsigned int id, void *data)
+{
+	struct net_generic *ng, *old_ng;
 
 	BUG_ON(id < MIN_PERNET_OPS_ID);
 
-	old_ng = rcu_dereference_रक्षित(net->gen,
+	old_ng = rcu_dereference_protected(net->gen,
 					   lockdep_is_held(&pernet_ops_rwsem));
-	अगर (old_ng->s.len > id) अणु
+	if (old_ng->s.len > id) {
 		old_ng->ptr[id] = data;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ng = net_alloc_generic();
-	अगर (ng == शून्य)
-		वापस -ENOMEM;
+	if (ng == NULL)
+		return -ENOMEM;
 
 	/*
 	 * Some synchronisation notes:
 	 *
 	 * The net_generic explores the net->gen array inside rcu
-	 * पढ़ो section. Besides once set the net->gen->ptr[x]
-	 * poपूर्णांकer never changes (see rules in netns/generic.h).
+	 * read section. Besides once set the net->gen->ptr[x]
+	 * pointer never changes (see rules in netns/generic.h).
 	 *
 	 * That said, we simply duplicate this array and schedule
-	 * the old copy क्रम kमुक्त after a grace period.
+	 * the old copy for kfree after a grace period.
 	 */
 
-	स_नकल(&ng->ptr[MIN_PERNET_OPS_ID], &old_ng->ptr[MIN_PERNET_OPS_ID],
-	       (old_ng->s.len - MIN_PERNET_OPS_ID) * माप(व्योम *));
+	memcpy(&ng->ptr[MIN_PERNET_OPS_ID], &old_ng->ptr[MIN_PERNET_OPS_ID],
+	       (old_ng->s.len - MIN_PERNET_OPS_ID) * sizeof(void *));
 	ng->ptr[id] = data;
 
-	rcu_assign_poपूर्णांकer(net->gen, ng);
-	kमुक्त_rcu(old_ng, s.rcu);
-	वापस 0;
-पूर्ण
+	rcu_assign_pointer(net->gen, ng);
+	kfree_rcu(old_ng, s.rcu);
+	return 0;
+}
 
-अटल पूर्णांक ops_init(स्थिर काष्ठा pernet_operations *ops, काष्ठा net *net)
-अणु
-	पूर्णांक err = -ENOMEM;
-	व्योम *data = शून्य;
+static int ops_init(const struct pernet_operations *ops, struct net *net)
+{
+	int err = -ENOMEM;
+	void *data = NULL;
 
-	अगर (ops->id && ops->size) अणु
+	if (ops->id && ops->size) {
 		data = kzalloc(ops->size, GFP_KERNEL);
-		अगर (!data)
-			जाओ out;
+		if (!data)
+			goto out;
 
 		err = net_assign_generic(net, *ops->id, data);
-		अगर (err)
-			जाओ cleanup;
-	पूर्ण
+		if (err)
+			goto cleanup;
+	}
 	err = 0;
-	अगर (ops->init)
+	if (ops->init)
 		err = ops->init(net);
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
 cleanup:
-	kमुक्त(data);
+	kfree(data);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ops_मुक्त(स्थिर काष्ठा pernet_operations *ops, काष्ठा net *net)
-अणु
-	अगर (ops->id && ops->size) अणु
-		kमुक्त(net_generic(net, *ops->id));
-	पूर्ण
-पूर्ण
+static void ops_free(const struct pernet_operations *ops, struct net *net)
+{
+	if (ops->id && ops->size) {
+		kfree(net_generic(net, *ops->id));
+	}
+}
 
-अटल व्योम ops_pre_निकास_list(स्थिर काष्ठा pernet_operations *ops,
-			      काष्ठा list_head *net_निकास_list)
-अणु
-	काष्ठा net *net;
+static void ops_pre_exit_list(const struct pernet_operations *ops,
+			      struct list_head *net_exit_list)
+{
+	struct net *net;
 
-	अगर (ops->pre_निकास) अणु
-		list_क्रम_each_entry(net, net_निकास_list, निकास_list)
-			ops->pre_निकास(net);
-	पूर्ण
-पूर्ण
+	if (ops->pre_exit) {
+		list_for_each_entry(net, net_exit_list, exit_list)
+			ops->pre_exit(net);
+	}
+}
 
-अटल व्योम ops_निकास_list(स्थिर काष्ठा pernet_operations *ops,
-			  काष्ठा list_head *net_निकास_list)
-अणु
-	काष्ठा net *net;
-	अगर (ops->निकास) अणु
-		list_क्रम_each_entry(net, net_निकास_list, निकास_list)
-			ops->निकास(net);
-	पूर्ण
-	अगर (ops->निकास_batch)
-		ops->निकास_batch(net_निकास_list);
-पूर्ण
+static void ops_exit_list(const struct pernet_operations *ops,
+			  struct list_head *net_exit_list)
+{
+	struct net *net;
+	if (ops->exit) {
+		list_for_each_entry(net, net_exit_list, exit_list)
+			ops->exit(net);
+	}
+	if (ops->exit_batch)
+		ops->exit_batch(net_exit_list);
+}
 
-अटल व्योम ops_मुक्त_list(स्थिर काष्ठा pernet_operations *ops,
-			  काष्ठा list_head *net_निकास_list)
-अणु
-	काष्ठा net *net;
-	अगर (ops->size && ops->id) अणु
-		list_क्रम_each_entry(net, net_निकास_list, निकास_list)
-			ops_मुक्त(ops, net);
-	पूर्ण
-पूर्ण
+static void ops_free_list(const struct pernet_operations *ops,
+			  struct list_head *net_exit_list)
+{
+	struct net *net;
+	if (ops->size && ops->id) {
+		list_for_each_entry(net, net_exit_list, exit_list)
+			ops_free(ops, net);
+	}
+}
 
 /* should be called with nsid_lock held */
-अटल पूर्णांक alloc_netid(काष्ठा net *net, काष्ठा net *peer, पूर्णांक reqid)
-अणु
-	पूर्णांक min = 0, max = 0;
+static int alloc_netid(struct net *net, struct net *peer, int reqid)
+{
+	int min = 0, max = 0;
 
-	अगर (reqid >= 0) अणु
+	if (reqid >= 0) {
 		min = reqid;
 		max = reqid + 1;
-	पूर्ण
+	}
 
-	वापस idr_alloc(&net->netns_ids, peer, min, max, GFP_ATOMIC);
-पूर्ण
+	return idr_alloc(&net->netns_ids, peer, min, max, GFP_ATOMIC);
+}
 
-/* This function is used by idr_क्रम_each(). If net is equal to peer, the
- * function वापसs the id so that idr_क्रम_each() stops. Because we cannot
- * वापसs the id 0 (idr_क्रम_each() will not stop), we वापस the magic value
- * NET_ID_ZERO (-1) क्रम it.
+/* This function is used by idr_for_each(). If net is equal to peer, the
+ * function returns the id so that idr_for_each() stops. Because we cannot
+ * returns the id 0 (idr_for_each() will not stop), we return the magic value
+ * NET_ID_ZERO (-1) for it.
  */
-#घोषणा NET_ID_ZERO -1
-अटल पूर्णांक net_eq_idr(पूर्णांक id, व्योम *net, व्योम *peer)
-अणु
-	अगर (net_eq(net, peer))
-		वापस id ? : NET_ID_ZERO;
-	वापस 0;
-पूर्ण
+#define NET_ID_ZERO -1
+static int net_eq_idr(int id, void *net, void *peer)
+{
+	if (net_eq(net, peer))
+		return id ? : NET_ID_ZERO;
+	return 0;
+}
 
 /* Must be called from RCU-critical section or with nsid_lock held */
-अटल पूर्णांक __peernet2id(स्थिर काष्ठा net *net, काष्ठा net *peer)
-अणु
-	पूर्णांक id = idr_क्रम_each(&net->netns_ids, net_eq_idr, peer);
+static int __peernet2id(const struct net *net, struct net *peer)
+{
+	int id = idr_for_each(&net->netns_ids, net_eq_idr, peer);
 
-	/* Magic value क्रम id 0. */
-	अगर (id == NET_ID_ZERO)
-		वापस 0;
-	अगर (id > 0)
-		वापस id;
+	/* Magic value for id 0. */
+	if (id == NET_ID_ZERO)
+		return 0;
+	if (id > 0)
+		return id;
 
-	वापस NETNSA_NSID_NOT_ASSIGNED;
-पूर्ण
+	return NETNSA_NSID_NOT_ASSIGNED;
+}
 
-अटल व्योम rtnl_net_notअगरyid(काष्ठा net *net, पूर्णांक cmd, पूर्णांक id, u32 portid,
-			      काष्ठा nlmsghdr *nlh, gfp_t gfp);
-/* This function वापसs the id of a peer netns. If no id is asचिन्हित, one will
- * be allocated and वापसed.
+static void rtnl_net_notifyid(struct net *net, int cmd, int id, u32 portid,
+			      struct nlmsghdr *nlh, gfp_t gfp);
+/* This function returns the id of a peer netns. If no id is assigned, one will
+ * be allocated and returned.
  */
-पूर्णांक peernet2id_alloc(काष्ठा net *net, काष्ठा net *peer, gfp_t gfp)
-अणु
-	पूर्णांक id;
+int peernet2id_alloc(struct net *net, struct net *peer, gfp_t gfp)
+{
+	int id;
 
-	अगर (refcount_पढ़ो(&net->ns.count) == 0)
-		वापस NETNSA_NSID_NOT_ASSIGNED;
+	if (refcount_read(&net->ns.count) == 0)
+		return NETNSA_NSID_NOT_ASSIGNED;
 
 	spin_lock_bh(&net->nsid_lock);
 	id = __peernet2id(net, peer);
-	अगर (id >= 0) अणु
+	if (id >= 0) {
 		spin_unlock_bh(&net->nsid_lock);
-		वापस id;
-	पूर्ण
+		return id;
+	}
 
 	/* When peer is obtained from RCU lists, we may race with
 	 * its cleanup. Check whether it's alive, and this guarantees
 	 * we never hash a peer back to net->netns_ids, after it has
-	 * just been idr_हटाओ()'d from there in cleanup_net().
+	 * just been idr_remove()'d from there in cleanup_net().
 	 */
-	अगर (!maybe_get_net(peer)) अणु
+	if (!maybe_get_net(peer)) {
 		spin_unlock_bh(&net->nsid_lock);
-		वापस NETNSA_NSID_NOT_ASSIGNED;
-	पूर्ण
+		return NETNSA_NSID_NOT_ASSIGNED;
+	}
 
 	id = alloc_netid(net, peer, -1);
 	spin_unlock_bh(&net->nsid_lock);
 
 	put_net(peer);
-	अगर (id < 0)
-		वापस NETNSA_NSID_NOT_ASSIGNED;
+	if (id < 0)
+		return NETNSA_NSID_NOT_ASSIGNED;
 
-	rtnl_net_notअगरyid(net, RTM_NEWNSID, id, 0, शून्य, gfp);
+	rtnl_net_notifyid(net, RTM_NEWNSID, id, 0, NULL, gfp);
 
-	वापस id;
-पूर्ण
+	return id;
+}
 EXPORT_SYMBOL_GPL(peernet2id_alloc);
 
-/* This function वापसs, अगर asचिन्हित, the id of a peer netns. */
-पूर्णांक peernet2id(स्थिर काष्ठा net *net, काष्ठा net *peer)
-अणु
-	पूर्णांक id;
+/* This function returns, if assigned, the id of a peer netns. */
+int peernet2id(const struct net *net, struct net *peer)
+{
+	int id;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	id = __peernet2id(net, peer);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस id;
-पूर्ण
+	return id;
+}
 EXPORT_SYMBOL(peernet2id);
 
-/* This function वापसs true is the peer netns has an id asचिन्हित पूर्णांकo the
+/* This function returns true is the peer netns has an id assigned into the
  * current netns.
  */
-bool peernet_has_id(स्थिर काष्ठा net *net, काष्ठा net *peer)
-अणु
-	वापस peernet2id(net, peer) >= 0;
-पूर्ण
+bool peernet_has_id(const struct net *net, struct net *peer)
+{
+	return peernet2id(net, peer) >= 0;
+}
 
-काष्ठा net *get_net_ns_by_id(स्थिर काष्ठा net *net, पूर्णांक id)
-अणु
-	काष्ठा net *peer;
+struct net *get_net_ns_by_id(const struct net *net, int id)
+{
+	struct net *peer;
 
-	अगर (id < 0)
-		वापस शून्य;
+	if (id < 0)
+		return NULL;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	peer = idr_find(&net->netns_ids, id);
-	अगर (peer)
+	if (peer)
 		peer = maybe_get_net(peer);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस peer;
-पूर्ण
+	return peer;
+}
 
 /*
- * setup_net runs the initializers क्रम the network namespace object.
+ * setup_net runs the initializers for the network namespace object.
  */
-अटल __net_init पूर्णांक setup_net(काष्ठा net *net, काष्ठा user_namespace *user_ns)
-अणु
+static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
+{
 	/* Must be called with pernet_ops_rwsem held */
-	स्थिर काष्ठा pernet_operations *ops, *saved_ops;
-	पूर्णांक error = 0;
-	LIST_HEAD(net_निकास_list);
+	const struct pernet_operations *ops, *saved_ops;
+	int error = 0;
+	LIST_HEAD(net_exit_list);
 
 	refcount_set(&net->ns.count, 1);
 	refcount_set(&net->passive, 1);
-	get_अक्रमom_bytes(&net->hash_mix, माप(u32));
+	get_random_bytes(&net->hash_mix, sizeof(u32));
 	preempt_disable();
 	net->net_cookie = gen_cookie_next(&net_cookie);
 	preempt_enable();
@@ -330,316 +329,316 @@ bool peernet_has_id(स्थिर काष्ठा net *net, काष्ठ
 	spin_lock_init(&net->nsid_lock);
 	mutex_init(&net->ipv4.ra_mutex);
 
-	list_क्रम_each_entry(ops, &pernet_list, list) अणु
+	list_for_each_entry(ops, &pernet_list, list) {
 		error = ops_init(ops, net);
-		अगर (error < 0)
-			जाओ out_unकरो;
-	पूर्ण
-	करोwn_ग_लिखो(&net_rwsem);
+		if (error < 0)
+			goto out_undo;
+	}
+	down_write(&net_rwsem);
 	list_add_tail_rcu(&net->list, &net_namespace_list);
-	up_ग_लिखो(&net_rwsem);
+	up_write(&net_rwsem);
 out:
-	वापस error;
+	return error;
 
-out_unकरो:
-	/* Walk through the list backwards calling the निकास functions
-	 * क्रम the pernet modules whose init functions did not fail.
+out_undo:
+	/* Walk through the list backwards calling the exit functions
+	 * for the pernet modules whose init functions did not fail.
 	 */
-	list_add(&net->निकास_list, &net_निकास_list);
+	list_add(&net->exit_list, &net_exit_list);
 	saved_ops = ops;
-	list_क्रम_each_entry_जारी_reverse(ops, &pernet_list, list)
-		ops_pre_निकास_list(ops, &net_निकास_list);
+	list_for_each_entry_continue_reverse(ops, &pernet_list, list)
+		ops_pre_exit_list(ops, &net_exit_list);
 
 	synchronize_rcu();
 
 	ops = saved_ops;
-	list_क्रम_each_entry_जारी_reverse(ops, &pernet_list, list)
-		ops_निकास_list(ops, &net_निकास_list);
+	list_for_each_entry_continue_reverse(ops, &pernet_list, list)
+		ops_exit_list(ops, &net_exit_list);
 
 	ops = saved_ops;
-	list_क्रम_each_entry_जारी_reverse(ops, &pernet_list, list)
-		ops_मुक्त_list(ops, &net_निकास_list);
+	list_for_each_entry_continue_reverse(ops, &pernet_list, list)
+		ops_free_list(ops, &net_exit_list);
 
 	rcu_barrier();
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक __net_init net_शेषs_init_net(काष्ठा net *net)
-अणु
+static int __net_init net_defaults_init_net(struct net *net)
+{
 	net->core.sysctl_somaxconn = SOMAXCONN;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pernet_operations net_शेषs_ops = अणु
-	.init = net_शेषs_init_net,
-पूर्ण;
+static struct pernet_operations net_defaults_ops = {
+	.init = net_defaults_init_net,
+};
 
-अटल __init पूर्णांक net_शेषs_init(व्योम)
-अणु
-	अगर (रेजिस्टर_pernet_subsys(&net_शेषs_ops))
+static __init int net_defaults_init(void)
+{
+	if (register_pernet_subsys(&net_defaults_ops))
 		panic("Cannot initialize net default settings");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-core_initcall(net_शेषs_init);
+core_initcall(net_defaults_init);
 
-#अगर_घोषित CONFIG_NET_NS
-अटल काष्ठा ucounts *inc_net_namespaces(काष्ठा user_namespace *ns)
-अणु
-	वापस inc_ucount(ns, current_euid(), UCOUNT_NET_NAMESPACES);
-पूर्ण
+#ifdef CONFIG_NET_NS
+static struct ucounts *inc_net_namespaces(struct user_namespace *ns)
+{
+	return inc_ucount(ns, current_euid(), UCOUNT_NET_NAMESPACES);
+}
 
-अटल व्योम dec_net_namespaces(काष्ठा ucounts *ucounts)
-अणु
+static void dec_net_namespaces(struct ucounts *ucounts)
+{
 	dec_ucount(ucounts, UCOUNT_NET_NAMESPACES);
-पूर्ण
+}
 
-अटल काष्ठा kmem_cache *net_cachep __ro_after_init;
-अटल काष्ठा workqueue_काष्ठा *netns_wq;
+static struct kmem_cache *net_cachep __ro_after_init;
+static struct workqueue_struct *netns_wq;
 
-अटल काष्ठा net *net_alloc(व्योम)
-अणु
-	काष्ठा net *net = शून्य;
-	काष्ठा net_generic *ng;
+static struct net *net_alloc(void)
+{
+	struct net *net = NULL;
+	struct net_generic *ng;
 
 	ng = net_alloc_generic();
-	अगर (!ng)
-		जाओ out;
+	if (!ng)
+		goto out;
 
 	net = kmem_cache_zalloc(net_cachep, GFP_KERNEL);
-	अगर (!net)
-		जाओ out_मुक्त;
+	if (!net)
+		goto out_free;
 
-#अगर_घोषित CONFIG_KEYS
-	net->key_करोमुख्य = kzalloc(माप(काष्ठा key_tag), GFP_KERNEL);
-	अगर (!net->key_करोमुख्य)
-		जाओ out_मुक्त_2;
-	refcount_set(&net->key_करोमुख्य->usage, 1);
-#पूर्ण_अगर
+#ifdef CONFIG_KEYS
+	net->key_domain = kzalloc(sizeof(struct key_tag), GFP_KERNEL);
+	if (!net->key_domain)
+		goto out_free_2;
+	refcount_set(&net->key_domain->usage, 1);
+#endif
 
-	rcu_assign_poपूर्णांकer(net->gen, ng);
+	rcu_assign_pointer(net->gen, ng);
 out:
-	वापस net;
+	return net;
 
-#अगर_घोषित CONFIG_KEYS
-out_मुक्त_2:
-	kmem_cache_मुक्त(net_cachep, net);
-	net = शून्य;
-#पूर्ण_अगर
-out_मुक्त:
-	kमुक्त(ng);
-	जाओ out;
-पूर्ण
+#ifdef CONFIG_KEYS
+out_free_2:
+	kmem_cache_free(net_cachep, net);
+	net = NULL;
+#endif
+out_free:
+	kfree(ng);
+	goto out;
+}
 
-अटल व्योम net_मुक्त(काष्ठा net *net)
-अणु
-	kमुक्त(rcu_access_poपूर्णांकer(net->gen));
-	kmem_cache_मुक्त(net_cachep, net);
-पूर्ण
+static void net_free(struct net *net)
+{
+	kfree(rcu_access_pointer(net->gen));
+	kmem_cache_free(net_cachep, net);
+}
 
-व्योम net_drop_ns(व्योम *p)
-अणु
-	काष्ठा net *ns = p;
-	अगर (ns && refcount_dec_and_test(&ns->passive))
-		net_मुक्त(ns);
-पूर्ण
+void net_drop_ns(void *p)
+{
+	struct net *ns = p;
+	if (ns && refcount_dec_and_test(&ns->passive))
+		net_free(ns);
+}
 
-काष्ठा net *copy_net_ns(अचिन्हित दीर्घ flags,
-			काष्ठा user_namespace *user_ns, काष्ठा net *old_net)
-अणु
-	काष्ठा ucounts *ucounts;
-	काष्ठा net *net;
-	पूर्णांक rv;
+struct net *copy_net_ns(unsigned long flags,
+			struct user_namespace *user_ns, struct net *old_net)
+{
+	struct ucounts *ucounts;
+	struct net *net;
+	int rv;
 
-	अगर (!(flags & CLONE_NEWNET))
-		वापस get_net(old_net);
+	if (!(flags & CLONE_NEWNET))
+		return get_net(old_net);
 
 	ucounts = inc_net_namespaces(user_ns);
-	अगर (!ucounts)
-		वापस ERR_PTR(-ENOSPC);
+	if (!ucounts)
+		return ERR_PTR(-ENOSPC);
 
 	net = net_alloc();
-	अगर (!net) अणु
+	if (!net) {
 		rv = -ENOMEM;
-		जाओ dec_ucounts;
-	पूर्ण
+		goto dec_ucounts;
+	}
 	refcount_set(&net->passive, 1);
 	net->ucounts = ucounts;
 	get_user_ns(user_ns);
 
-	rv = करोwn_पढ़ो_समाप्तable(&pernet_ops_rwsem);
-	अगर (rv < 0)
-		जाओ put_userns;
+	rv = down_read_killable(&pernet_ops_rwsem);
+	if (rv < 0)
+		goto put_userns;
 
 	rv = setup_net(net, user_ns);
 
-	up_पढ़ो(&pernet_ops_rwsem);
+	up_read(&pernet_ops_rwsem);
 
-	अगर (rv < 0) अणु
+	if (rv < 0) {
 put_userns:
-		key_हटाओ_करोमुख्य(net->key_करोमुख्य);
+		key_remove_domain(net->key_domain);
 		put_user_ns(user_ns);
 		net_drop_ns(net);
 dec_ucounts:
 		dec_net_namespaces(ucounts);
-		वापस ERR_PTR(rv);
-	पूर्ण
-	वापस net;
-पूर्ण
+		return ERR_PTR(rv);
+	}
+	return net;
+}
 
 /**
- * net_ns_get_ownership - get sysfs ownership data क्रम @net
- * @net: network namespace in question (can be शून्य)
- * @uid: kernel user ID क्रम sysfs objects
- * @gid: kernel group ID क्रम sysfs objects
+ * net_ns_get_ownership - get sysfs ownership data for @net
+ * @net: network namespace in question (can be NULL)
+ * @uid: kernel user ID for sysfs objects
+ * @gid: kernel group ID for sysfs objects
  *
  * Returns the uid/gid pair of root in the user namespace associated with the
  * given network namespace.
  */
-व्योम net_ns_get_ownership(स्थिर काष्ठा net *net, kuid_t *uid, kgid_t *gid)
-अणु
-	अगर (net) अणु
+void net_ns_get_ownership(const struct net *net, kuid_t *uid, kgid_t *gid)
+{
+	if (net) {
 		kuid_t ns_root_uid = make_kuid(net->user_ns, 0);
 		kgid_t ns_root_gid = make_kgid(net->user_ns, 0);
 
-		अगर (uid_valid(ns_root_uid))
+		if (uid_valid(ns_root_uid))
 			*uid = ns_root_uid;
 
-		अगर (gid_valid(ns_root_gid))
+		if (gid_valid(ns_root_gid))
 			*gid = ns_root_gid;
-	पूर्ण अन्यथा अणु
+	} else {
 		*uid = GLOBAL_ROOT_UID;
 		*gid = GLOBAL_ROOT_GID;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(net_ns_get_ownership);
 
-अटल व्योम unhash_nsid(काष्ठा net *net, काष्ठा net *last)
-अणु
-	काष्ठा net *पंचांगp;
+static void unhash_nsid(struct net *net, struct net *last)
+{
+	struct net *tmp;
 	/* This function is only called from cleanup_net() work,
 	 * and this work is the only process, that may delete
 	 * a net from net_namespace_list. So, when the below
-	 * is executing, the list may only grow. Thus, we करो not
-	 * use क्रम_each_net_rcu() or net_rwsem.
+	 * is executing, the list may only grow. Thus, we do not
+	 * use for_each_net_rcu() or net_rwsem.
 	 */
-	क्रम_each_net(पंचांगp) अणु
-		पूर्णांक id;
+	for_each_net(tmp) {
+		int id;
 
-		spin_lock_bh(&पंचांगp->nsid_lock);
-		id = __peernet2id(पंचांगp, net);
-		अगर (id >= 0)
-			idr_हटाओ(&पंचांगp->netns_ids, id);
-		spin_unlock_bh(&पंचांगp->nsid_lock);
-		अगर (id >= 0)
-			rtnl_net_notअगरyid(पंचांगp, RTM_DELNSID, id, 0, शून्य,
+		spin_lock_bh(&tmp->nsid_lock);
+		id = __peernet2id(tmp, net);
+		if (id >= 0)
+			idr_remove(&tmp->netns_ids, id);
+		spin_unlock_bh(&tmp->nsid_lock);
+		if (id >= 0)
+			rtnl_net_notifyid(tmp, RTM_DELNSID, id, 0, NULL,
 					  GFP_KERNEL);
-		अगर (पंचांगp == last)
-			अवरोध;
-	पूर्ण
+		if (tmp == last)
+			break;
+	}
 	spin_lock_bh(&net->nsid_lock);
 	idr_destroy(&net->netns_ids);
 	spin_unlock_bh(&net->nsid_lock);
-पूर्ण
+}
 
-अटल LLIST_HEAD(cleanup_list);
+static LLIST_HEAD(cleanup_list);
 
-अटल व्योम cleanup_net(काष्ठा work_काष्ठा *work)
-अणु
-	स्थिर काष्ठा pernet_operations *ops;
-	काष्ठा net *net, *पंचांगp, *last;
-	काष्ठा llist_node *net_समाप्त_list;
-	LIST_HEAD(net_निकास_list);
+static void cleanup_net(struct work_struct *work)
+{
+	const struct pernet_operations *ops;
+	struct net *net, *tmp, *last;
+	struct llist_node *net_kill_list;
+	LIST_HEAD(net_exit_list);
 
 	/* Atomically snapshot the list of namespaces to cleanup */
-	net_समाप्त_list = llist_del_all(&cleanup_list);
+	net_kill_list = llist_del_all(&cleanup_list);
 
-	करोwn_पढ़ो(&pernet_ops_rwsem);
+	down_read(&pernet_ops_rwsem);
 
-	/* Don't let anyone अन्यथा find us. */
-	करोwn_ग_लिखो(&net_rwsem);
-	llist_क्रम_each_entry(net, net_समाप्त_list, cleanup_list)
+	/* Don't let anyone else find us. */
+	down_write(&net_rwsem);
+	llist_for_each_entry(net, net_kill_list, cleanup_list)
 		list_del_rcu(&net->list);
 	/* Cache last net. After we unlock rtnl, no one new net
-	 * added to net_namespace_list can assign nsid poपूर्णांकer
-	 * to a net from net_समाप्त_list (see peernet2id_alloc()).
+	 * added to net_namespace_list can assign nsid pointer
+	 * to a net from net_kill_list (see peernet2id_alloc()).
 	 * So, we skip them in unhash_nsid().
 	 *
-	 * Note, that unhash_nsid() करोes not delete nsid links
-	 * between net_समाप्त_list's nets, as they've alपढ़ोy
+	 * Note, that unhash_nsid() does not delete nsid links
+	 * between net_kill_list's nets, as they've already
 	 * deleted from net_namespace_list. But, this would be
 	 * useless anyway, as netns_ids are destroyed there.
 	 */
-	last = list_last_entry(&net_namespace_list, काष्ठा net, list);
-	up_ग_लिखो(&net_rwsem);
+	last = list_last_entry(&net_namespace_list, struct net, list);
+	up_write(&net_rwsem);
 
-	llist_क्रम_each_entry(net, net_समाप्त_list, cleanup_list) अणु
+	llist_for_each_entry(net, net_kill_list, cleanup_list) {
 		unhash_nsid(net, last);
-		list_add_tail(&net->निकास_list, &net_निकास_list);
-	पूर्ण
+		list_add_tail(&net->exit_list, &net_exit_list);
+	}
 
-	/* Run all of the network namespace pre_निकास methods */
-	list_क्रम_each_entry_reverse(ops, &pernet_list, list)
-		ops_pre_निकास_list(ops, &net_निकास_list);
+	/* Run all of the network namespace pre_exit methods */
+	list_for_each_entry_reverse(ops, &pernet_list, list)
+		ops_pre_exit_list(ops, &net_exit_list);
 
 	/*
-	 * Another CPU might be rcu-iterating the list, रुको क्रम it.
-	 * This needs to be beक्रमe calling the निकास() notअगरiers, so
+	 * Another CPU might be rcu-iterating the list, wait for it.
+	 * This needs to be before calling the exit() notifiers, so
 	 * the rcu_barrier() below isn't sufficient alone.
-	 * Also the pre_निकास() and निकास() methods need this barrier.
+	 * Also the pre_exit() and exit() methods need this barrier.
 	 */
 	synchronize_rcu();
 
-	/* Run all of the network namespace निकास methods */
-	list_क्रम_each_entry_reverse(ops, &pernet_list, list)
-		ops_निकास_list(ops, &net_निकास_list);
+	/* Run all of the network namespace exit methods */
+	list_for_each_entry_reverse(ops, &pernet_list, list)
+		ops_exit_list(ops, &net_exit_list);
 
 	/* Free the net generic variables */
-	list_क्रम_each_entry_reverse(ops, &pernet_list, list)
-		ops_मुक्त_list(ops, &net_निकास_list);
+	list_for_each_entry_reverse(ops, &pernet_list, list)
+		ops_free_list(ops, &net_exit_list);
 
-	up_पढ़ो(&pernet_ops_rwsem);
+	up_read(&pernet_ops_rwsem);
 
 	/* Ensure there are no outstanding rcu callbacks using this
 	 * network namespace.
 	 */
 	rcu_barrier();
 
-	/* Finally it is safe to मुक्त my network namespace काष्ठाure */
-	list_क्रम_each_entry_safe(net, पंचांगp, &net_निकास_list, निकास_list) अणु
-		list_del_init(&net->निकास_list);
+	/* Finally it is safe to free my network namespace structure */
+	list_for_each_entry_safe(net, tmp, &net_exit_list, exit_list) {
+		list_del_init(&net->exit_list);
 		dec_net_namespaces(net->ucounts);
-		key_हटाओ_करोमुख्य(net->key_करोमुख्य);
+		key_remove_domain(net->key_domain);
 		put_user_ns(net->user_ns);
 		net_drop_ns(net);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * net_ns_barrier - रुको until concurrent net_cleanup_work is करोne
+ * net_ns_barrier - wait until concurrent net_cleanup_work is done
  *
- * cleanup_net runs from work queue and will first हटाओ namespaces
- * from the global list, then run net निकास functions.
+ * cleanup_net runs from work queue and will first remove namespaces
+ * from the global list, then run net exit functions.
  *
- * Call this in module निकास path to make sure that all netns
- * ->निकास ops have been invoked beक्रमe the function is हटाओd.
+ * Call this in module exit path to make sure that all netns
+ * ->exit ops have been invoked before the function is removed.
  */
-व्योम net_ns_barrier(व्योम)
-अणु
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	up_ग_लिखो(&pernet_ops_rwsem);
-पूर्ण
+void net_ns_barrier(void)
+{
+	down_write(&pernet_ops_rwsem);
+	up_write(&pernet_ops_rwsem);
+}
 EXPORT_SYMBOL(net_ns_barrier);
 
-अटल DECLARE_WORK(net_cleanup_work, cleanup_net);
+static DECLARE_WORK(net_cleanup_work, cleanup_net);
 
-व्योम __put_net(काष्ठा net *net)
-अणु
+void __put_net(struct net *net)
+{
 	/* Cleanup the network namespace in process context */
-	अगर (llist_add(&net->cleanup_list, &cleanup_list))
+	if (llist_add(&net->cleanup_list, &cleanup_list))
 		queue_work(netns_wq, &net_cleanup_work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(__put_net);
 
 /**
@@ -648,734 +647,734 @@ EXPORT_SYMBOL_GPL(__put_net);
  *
  * Returns the net's common namespace.
  */
-काष्ठा ns_common *get_net_ns(काष्ठा ns_common *ns)
-अणु
-	वापस &get_net(container_of(ns, काष्ठा net, ns))->ns;
-पूर्ण
+struct ns_common *get_net_ns(struct ns_common *ns)
+{
+	return &get_net(container_of(ns, struct net, ns))->ns;
+}
 EXPORT_SYMBOL_GPL(get_net_ns);
 
-काष्ठा net *get_net_ns_by_fd(पूर्णांक fd)
-अणु
-	काष्ठा file *file;
-	काष्ठा ns_common *ns;
-	काष्ठा net *net;
+struct net *get_net_ns_by_fd(int fd)
+{
+	struct file *file;
+	struct ns_common *ns;
+	struct net *net;
 
 	file = proc_ns_fget(fd);
-	अगर (IS_ERR(file))
-		वापस ERR_CAST(file);
+	if (IS_ERR(file))
+		return ERR_CAST(file);
 
 	ns = get_proc_ns(file_inode(file));
-	अगर (ns->ops == &netns_operations)
-		net = get_net(container_of(ns, काष्ठा net, ns));
-	अन्यथा
+	if (ns->ops == &netns_operations)
+		net = get_net(container_of(ns, struct net, ns));
+	else
 		net = ERR_PTR(-EINVAL);
 
 	fput(file);
-	वापस net;
-पूर्ण
+	return net;
+}
 EXPORT_SYMBOL_GPL(get_net_ns_by_fd);
-#पूर्ण_अगर
+#endif
 
-काष्ठा net *get_net_ns_by_pid(pid_t pid)
-अणु
-	काष्ठा task_काष्ठा *tsk;
-	काष्ठा net *net;
+struct net *get_net_ns_by_pid(pid_t pid)
+{
+	struct task_struct *tsk;
+	struct net *net;
 
 	/* Lookup the network namespace */
 	net = ERR_PTR(-ESRCH);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tsk = find_task_by_vpid(pid);
-	अगर (tsk) अणु
-		काष्ठा nsproxy *nsproxy;
+	if (tsk) {
+		struct nsproxy *nsproxy;
 		task_lock(tsk);
 		nsproxy = tsk->nsproxy;
-		अगर (nsproxy)
+		if (nsproxy)
 			net = get_net(nsproxy->net_ns);
 		task_unlock(tsk);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस net;
-पूर्ण
+	}
+	rcu_read_unlock();
+	return net;
+}
 EXPORT_SYMBOL_GPL(get_net_ns_by_pid);
 
-अटल __net_init पूर्णांक net_ns_net_init(काष्ठा net *net)
-अणु
-#अगर_घोषित CONFIG_NET_NS
+static __net_init int net_ns_net_init(struct net *net)
+{
+#ifdef CONFIG_NET_NS
 	net->ns.ops = &netns_operations;
-#पूर्ण_अगर
-	वापस ns_alloc_inum(&net->ns);
-पूर्ण
+#endif
+	return ns_alloc_inum(&net->ns);
+}
 
-अटल __net_निकास व्योम net_ns_net_निकास(काष्ठा net *net)
-अणु
-	ns_मुक्त_inum(&net->ns);
-पूर्ण
+static __net_exit void net_ns_net_exit(struct net *net)
+{
+	ns_free_inum(&net->ns);
+}
 
-अटल काष्ठा pernet_operations __net_initdata net_ns_ops = अणु
+static struct pernet_operations __net_initdata net_ns_ops = {
 	.init = net_ns_net_init,
-	.निकास = net_ns_net_निकास,
-पूर्ण;
+	.exit = net_ns_net_exit,
+};
 
-अटल स्थिर काष्ठा nla_policy rtnl_net_policy[NETNSA_MAX + 1] = अणु
-	[NETNSA_NONE]		= अणु .type = NLA_UNSPEC पूर्ण,
-	[NETNSA_NSID]		= अणु .type = NLA_S32 पूर्ण,
-	[NETNSA_PID]		= अणु .type = NLA_U32 पूर्ण,
-	[NETNSA_FD]		= अणु .type = NLA_U32 पूर्ण,
-	[NETNSA_TARGET_NSID]	= अणु .type = NLA_S32 पूर्ण,
-पूर्ण;
+static const struct nla_policy rtnl_net_policy[NETNSA_MAX + 1] = {
+	[NETNSA_NONE]		= { .type = NLA_UNSPEC },
+	[NETNSA_NSID]		= { .type = NLA_S32 },
+	[NETNSA_PID]		= { .type = NLA_U32 },
+	[NETNSA_FD]		= { .type = NLA_U32 },
+	[NETNSA_TARGET_NSID]	= { .type = NLA_S32 },
+};
 
-अटल पूर्णांक rtnl_net_newid(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr *tb[NETNSA_MAX + 1];
-	काष्ठा nlattr *nla;
-	काष्ठा net *peer;
-	पूर्णांक nsid, err;
+static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
+			  struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nlattr *tb[NETNSA_MAX + 1];
+	struct nlattr *nla;
+	struct net *peer;
+	int nsid, err;
 
-	err = nlmsg_parse_deprecated(nlh, माप(काष्ठा rtgenmsg), tb,
+	err = nlmsg_parse_deprecated(nlh, sizeof(struct rtgenmsg), tb,
 				     NETNSA_MAX, rtnl_net_policy, extack);
-	अगर (err < 0)
-		वापस err;
-	अगर (!tb[NETNSA_NSID]) अणु
+	if (err < 0)
+		return err;
+	if (!tb[NETNSA_NSID]) {
 		NL_SET_ERR_MSG(extack, "nsid is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	nsid = nla_get_s32(tb[NETNSA_NSID]);
 
-	अगर (tb[NETNSA_PID]) अणु
+	if (tb[NETNSA_PID]) {
 		peer = get_net_ns_by_pid(nla_get_u32(tb[NETNSA_PID]));
 		nla = tb[NETNSA_PID];
-	पूर्ण अन्यथा अगर (tb[NETNSA_FD]) अणु
+	} else if (tb[NETNSA_FD]) {
 		peer = get_net_ns_by_fd(nla_get_u32(tb[NETNSA_FD]));
 		nla = tb[NETNSA_FD];
-	पूर्ण अन्यथा अणु
+	} else {
 		NL_SET_ERR_MSG(extack, "Peer netns reference is missing");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (IS_ERR(peer)) अणु
+		return -EINVAL;
+	}
+	if (IS_ERR(peer)) {
 		NL_SET_BAD_ATTR(extack, nla);
 		NL_SET_ERR_MSG(extack, "Peer netns reference is invalid");
-		वापस PTR_ERR(peer);
-	पूर्ण
+		return PTR_ERR(peer);
+	}
 
 	spin_lock_bh(&net->nsid_lock);
-	अगर (__peernet2id(net, peer) >= 0) अणु
+	if (__peernet2id(net, peer) >= 0) {
 		spin_unlock_bh(&net->nsid_lock);
 		err = -EEXIST;
 		NL_SET_BAD_ATTR(extack, nla);
 		NL_SET_ERR_MSG(extack,
 			       "Peer netns already has a nsid assigned");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = alloc_netid(net, peer, nsid);
 	spin_unlock_bh(&net->nsid_lock);
-	अगर (err >= 0) अणु
-		rtnl_net_notअगरyid(net, RTM_NEWNSID, err, NETLINK_CB(skb).portid,
+	if (err >= 0) {
+		rtnl_net_notifyid(net, RTM_NEWNSID, err, NETLINK_CB(skb).portid,
 				  nlh, GFP_KERNEL);
 		err = 0;
-	पूर्ण अन्यथा अगर (err == -ENOSPC && nsid >= 0) अणु
+	} else if (err == -ENOSPC && nsid >= 0) {
 		err = -EEXIST;
 		NL_SET_BAD_ATTR(extack, tb[NETNSA_NSID]);
 		NL_SET_ERR_MSG(extack, "The specified nsid is already used");
-	पूर्ण
+	}
 out:
 	put_net(peer);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rtnl_net_get_size(व्योम)
-अणु
-	वापस NLMSG_ALIGN(माप(काष्ठा rtgenmsg))
-	       + nla_total_size(माप(s32)) /* NETNSA_NSID */
-	       + nla_total_size(माप(s32)) /* NETNSA_CURRENT_NSID */
+static int rtnl_net_get_size(void)
+{
+	return NLMSG_ALIGN(sizeof(struct rtgenmsg))
+	       + nla_total_size(sizeof(s32)) /* NETNSA_NSID */
+	       + nla_total_size(sizeof(s32)) /* NETNSA_CURRENT_NSID */
 	       ;
-पूर्ण
+}
 
-काष्ठा net_fill_args अणु
+struct net_fill_args {
 	u32 portid;
 	u32 seq;
-	पूर्णांक flags;
-	पूर्णांक cmd;
-	पूर्णांक nsid;
+	int flags;
+	int cmd;
+	int nsid;
 	bool add_ref;
-	पूर्णांक ref_nsid;
-पूर्ण;
+	int ref_nsid;
+};
 
-अटल पूर्णांक rtnl_net_fill(काष्ठा sk_buff *skb, काष्ठा net_fill_args *args)
-अणु
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा rtgenmsg *rth;
+static int rtnl_net_fill(struct sk_buff *skb, struct net_fill_args *args)
+{
+	struct nlmsghdr *nlh;
+	struct rtgenmsg *rth;
 
-	nlh = nlmsg_put(skb, args->portid, args->seq, args->cmd, माप(*rth),
+	nlh = nlmsg_put(skb, args->portid, args->seq, args->cmd, sizeof(*rth),
 			args->flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	if (!nlh)
+		return -EMSGSIZE;
 
 	rth = nlmsg_data(nlh);
 	rth->rtgen_family = AF_UNSPEC;
 
-	अगर (nla_put_s32(skb, NETNSA_NSID, args->nsid))
-		जाओ nla_put_failure;
+	if (nla_put_s32(skb, NETNSA_NSID, args->nsid))
+		goto nla_put_failure;
 
-	अगर (args->add_ref &&
+	if (args->add_ref &&
 	    nla_put_s32(skb, NETNSA_CURRENT_NSID, args->ref_nsid))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक rtnl_net_valid_getid_req(काष्ठा sk_buff *skb,
-				    स्थिर काष्ठा nlmsghdr *nlh,
-				    काष्ठा nlattr **tb,
-				    काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक i, err;
+static int rtnl_net_valid_getid_req(struct sk_buff *skb,
+				    const struct nlmsghdr *nlh,
+				    struct nlattr **tb,
+				    struct netlink_ext_ack *extack)
+{
+	int i, err;
 
-	अगर (!netlink_strict_get_check(skb))
-		वापस nlmsg_parse_deprecated(nlh, माप(काष्ठा rtgenmsg),
+	if (!netlink_strict_get_check(skb))
+		return nlmsg_parse_deprecated(nlh, sizeof(struct rtgenmsg),
 					      tb, NETNSA_MAX, rtnl_net_policy,
 					      extack);
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा rtgenmsg), tb,
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct rtgenmsg), tb,
 					    NETNSA_MAX, rtnl_net_policy,
 					    extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i <= NETNSA_MAX; i++) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= NETNSA_MAX; i++) {
+		if (!tb[i])
+			continue;
 
-		चयन (i) अणु
-		हाल NETNSA_PID:
-		हाल NETNSA_FD:
-		हाल NETNSA_NSID:
-		हाल NETNSA_TARGET_NSID:
-			अवरोध;
-		शेष:
+		switch (i) {
+		case NETNSA_PID:
+		case NETNSA_FD:
+		case NETNSA_NSID:
+		case NETNSA_TARGET_NSID:
+			break;
+		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in peer netns getid request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtnl_net_getid(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr *tb[NETNSA_MAX + 1];
-	काष्ठा net_fill_args fillargs = अणु
+static int rtnl_net_getid(struct sk_buff *skb, struct nlmsghdr *nlh,
+			  struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nlattr *tb[NETNSA_MAX + 1];
+	struct net_fill_args fillargs = {
 		.portid = NETLINK_CB(skb).portid,
 		.seq = nlh->nlmsg_seq,
 		.cmd = RTM_NEWNSID,
-	पूर्ण;
-	काष्ठा net *peer, *target = net;
-	काष्ठा nlattr *nla;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err;
+	};
+	struct net *peer, *target = net;
+	struct nlattr *nla;
+	struct sk_buff *msg;
+	int err;
 
 	err = rtnl_net_valid_getid_req(skb, nlh, tb, extack);
-	अगर (err < 0)
-		वापस err;
-	अगर (tb[NETNSA_PID]) अणु
+	if (err < 0)
+		return err;
+	if (tb[NETNSA_PID]) {
 		peer = get_net_ns_by_pid(nla_get_u32(tb[NETNSA_PID]));
 		nla = tb[NETNSA_PID];
-	पूर्ण अन्यथा अगर (tb[NETNSA_FD]) अणु
+	} else if (tb[NETNSA_FD]) {
 		peer = get_net_ns_by_fd(nla_get_u32(tb[NETNSA_FD]));
 		nla = tb[NETNSA_FD];
-	पूर्ण अन्यथा अगर (tb[NETNSA_NSID]) अणु
+	} else if (tb[NETNSA_NSID]) {
 		peer = get_net_ns_by_id(net, nla_get_s32(tb[NETNSA_NSID]));
-		अगर (!peer)
+		if (!peer)
 			peer = ERR_PTR(-ENOENT);
 		nla = tb[NETNSA_NSID];
-	पूर्ण अन्यथा अणु
+	} else {
 		NL_SET_ERR_MSG(extack, "Peer netns reference is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (IS_ERR(peer)) अणु
+	if (IS_ERR(peer)) {
 		NL_SET_BAD_ATTR(extack, nla);
 		NL_SET_ERR_MSG(extack, "Peer netns reference is invalid");
-		वापस PTR_ERR(peer);
-	पूर्ण
+		return PTR_ERR(peer);
+	}
 
-	अगर (tb[NETNSA_TARGET_NSID]) अणु
-		पूर्णांक id = nla_get_s32(tb[NETNSA_TARGET_NSID]);
+	if (tb[NETNSA_TARGET_NSID]) {
+		int id = nla_get_s32(tb[NETNSA_TARGET_NSID]);
 
 		target = rtnl_get_net_ns_capable(NETLINK_CB(skb).sk, id);
-		अगर (IS_ERR(target)) अणु
+		if (IS_ERR(target)) {
 			NL_SET_BAD_ATTR(extack, tb[NETNSA_TARGET_NSID]);
 			NL_SET_ERR_MSG(extack,
 				       "Target netns reference is invalid");
 			err = PTR_ERR(target);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		fillargs.add_ref = true;
 		fillargs.ref_nsid = peernet2id(net, peer);
-	पूर्ण
+	}
 
 	msg = nlmsg_new(rtnl_net_get_size(), GFP_KERNEL);
-	अगर (!msg) अणु
+	if (!msg) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	fillargs.nsid = peernet2id(target, peer);
 	err = rtnl_net_fill(msg, &fillargs);
-	अगर (err < 0)
-		जाओ err_out;
+	if (err < 0)
+		goto err_out;
 
 	err = rtnl_unicast(msg, net, NETLINK_CB(skb).portid);
-	जाओ out;
+	goto out;
 
 err_out:
-	nlmsg_मुक्त(msg);
+	nlmsg_free(msg);
 out:
-	अगर (fillargs.add_ref)
+	if (fillargs.add_ref)
 		put_net(target);
 	put_net(peer);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा rtnl_net_dump_cb अणु
-	काष्ठा net *tgt_net;
-	काष्ठा net *ref_net;
-	काष्ठा sk_buff *skb;
-	काष्ठा net_fill_args fillargs;
-	पूर्णांक idx;
-	पूर्णांक s_idx;
-पूर्ण;
+struct rtnl_net_dump_cb {
+	struct net *tgt_net;
+	struct net *ref_net;
+	struct sk_buff *skb;
+	struct net_fill_args fillargs;
+	int idx;
+	int s_idx;
+};
 
 /* Runs in RCU-critical section. */
-अटल पूर्णांक rtnl_net_dumpid_one(पूर्णांक id, व्योम *peer, व्योम *data)
-अणु
-	काष्ठा rtnl_net_dump_cb *net_cb = (काष्ठा rtnl_net_dump_cb *)data;
-	पूर्णांक ret;
+static int rtnl_net_dumpid_one(int id, void *peer, void *data)
+{
+	struct rtnl_net_dump_cb *net_cb = (struct rtnl_net_dump_cb *)data;
+	int ret;
 
-	अगर (net_cb->idx < net_cb->s_idx)
-		जाओ cont;
+	if (net_cb->idx < net_cb->s_idx)
+		goto cont;
 
 	net_cb->fillargs.nsid = id;
-	अगर (net_cb->fillargs.add_ref)
+	if (net_cb->fillargs.add_ref)
 		net_cb->fillargs.ref_nsid = __peernet2id(net_cb->ref_net, peer);
 	ret = rtnl_net_fill(net_cb->skb, &net_cb->fillargs);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 cont:
 	net_cb->idx++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtnl_valid_dump_net_req(स्थिर काष्ठा nlmsghdr *nlh, काष्ठा sock *sk,
-				   काष्ठा rtnl_net_dump_cb *net_cb,
-				   काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा netlink_ext_ack *extack = cb->extack;
-	काष्ठा nlattr *tb[NETNSA_MAX + 1];
-	पूर्णांक err, i;
+static int rtnl_valid_dump_net_req(const struct nlmsghdr *nlh, struct sock *sk,
+				   struct rtnl_net_dump_cb *net_cb,
+				   struct netlink_callback *cb)
+{
+	struct netlink_ext_ack *extack = cb->extack;
+	struct nlattr *tb[NETNSA_MAX + 1];
+	int err, i;
 
-	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा rtgenmsg), tb,
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct rtgenmsg), tb,
 					    NETNSA_MAX, rtnl_net_policy,
 					    extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	क्रम (i = 0; i <= NETNSA_MAX; i++) अणु
-		अगर (!tb[i])
-			जारी;
+	for (i = 0; i <= NETNSA_MAX; i++) {
+		if (!tb[i])
+			continue;
 
-		अगर (i == NETNSA_TARGET_NSID) अणु
-			काष्ठा net *net;
+		if (i == NETNSA_TARGET_NSID) {
+			struct net *net;
 
 			net = rtnl_get_net_ns_capable(sk, nla_get_s32(tb[i]));
-			अगर (IS_ERR(net)) अणु
+			if (IS_ERR(net)) {
 				NL_SET_BAD_ATTR(extack, tb[i]);
 				NL_SET_ERR_MSG(extack,
 					       "Invalid target network namespace id");
-				वापस PTR_ERR(net);
-			पूर्ण
+				return PTR_ERR(net);
+			}
 			net_cb->fillargs.add_ref = true;
 			net_cb->ref_net = net_cb->tgt_net;
 			net_cb->tgt_net = net;
-		पूर्ण अन्यथा अणु
+		} else {
 			NL_SET_BAD_ATTR(extack, tb[i]);
 			NL_SET_ERR_MSG(extack,
 				       "Unsupported attribute in dump request");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rtnl_net_dumpid(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा rtnl_net_dump_cb net_cb = अणु
+static int rtnl_net_dumpid(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct rtnl_net_dump_cb net_cb = {
 		.tgt_net = sock_net(skb->sk),
 		.skb = skb,
-		.fillargs = अणु
+		.fillargs = {
 			.portid = NETLINK_CB(cb->skb).portid,
 			.seq = cb->nlh->nlmsg_seq,
 			.flags = NLM_F_MULTI,
 			.cmd = RTM_NEWNSID,
-		पूर्ण,
+		},
 		.idx = 0,
 		.s_idx = cb->args[0],
-	पूर्ण;
-	पूर्णांक err = 0;
+	};
+	int err = 0;
 
-	अगर (cb->strict_check) अणु
+	if (cb->strict_check) {
 		err = rtnl_valid_dump_net_req(cb->nlh, skb->sk, &net_cb, cb);
-		अगर (err < 0)
-			जाओ end;
-	पूर्ण
+		if (err < 0)
+			goto end;
+	}
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each(&net_cb.tgt_net->netns_ids, rtnl_net_dumpid_one, &net_cb);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	idr_for_each(&net_cb.tgt_net->netns_ids, rtnl_net_dumpid_one, &net_cb);
+	rcu_read_unlock();
 
 	cb->args[0] = net_cb.idx;
 end:
-	अगर (net_cb.fillargs.add_ref)
+	if (net_cb.fillargs.add_ref)
 		put_net(net_cb.tgt_net);
-	वापस err < 0 ? err : skb->len;
-पूर्ण
+	return err < 0 ? err : skb->len;
+}
 
-अटल व्योम rtnl_net_notअगरyid(काष्ठा net *net, पूर्णांक cmd, पूर्णांक id, u32 portid,
-			      काष्ठा nlmsghdr *nlh, gfp_t gfp)
-अणु
-	काष्ठा net_fill_args fillargs = अणु
+static void rtnl_net_notifyid(struct net *net, int cmd, int id, u32 portid,
+			      struct nlmsghdr *nlh, gfp_t gfp)
+{
+	struct net_fill_args fillargs = {
 		.portid = portid,
 		.seq = nlh ? nlh->nlmsg_seq : 0,
 		.cmd = cmd,
 		.nsid = id,
-	पूर्ण;
-	काष्ठा sk_buff *msg;
-	पूर्णांक err = -ENOMEM;
+	};
+	struct sk_buff *msg;
+	int err = -ENOMEM;
 
 	msg = nlmsg_new(rtnl_net_get_size(), gfp);
-	अगर (!msg)
-		जाओ out;
+	if (!msg)
+		goto out;
 
 	err = rtnl_net_fill(msg, &fillargs);
-	अगर (err < 0)
-		जाओ err_out;
+	if (err < 0)
+		goto err_out;
 
-	rtnl_notअगरy(msg, net, portid, RTNLGRP_NSID, nlh, gfp);
-	वापस;
+	rtnl_notify(msg, net, portid, RTNLGRP_NSID, nlh, gfp);
+	return;
 
 err_out:
-	nlmsg_मुक्त(msg);
+	nlmsg_free(msg);
 out:
 	rtnl_set_sk_err(net, RTNLGRP_NSID, err);
-पूर्ण
+}
 
-अटल पूर्णांक __init net_ns_init(व्योम)
-अणु
-	काष्ठा net_generic *ng;
+static int __init net_ns_init(void)
+{
+	struct net_generic *ng;
 
-#अगर_घोषित CONFIG_NET_NS
-	net_cachep = kmem_cache_create("net_namespace", माप(काष्ठा net),
+#ifdef CONFIG_NET_NS
+	net_cachep = kmem_cache_create("net_namespace", sizeof(struct net),
 					SMP_CACHE_BYTES,
-					SLAB_PANIC|SLAB_ACCOUNT, शून्य);
+					SLAB_PANIC|SLAB_ACCOUNT, NULL);
 
-	/* Create workqueue क्रम cleanup */
-	netns_wq = create_singlethपढ़ो_workqueue("netns");
-	अगर (!netns_wq)
+	/* Create workqueue for cleanup */
+	netns_wq = create_singlethread_workqueue("netns");
+	if (!netns_wq)
 		panic("Could not create netns workq");
-#पूर्ण_अगर
+#endif
 
 	ng = net_alloc_generic();
-	अगर (!ng)
+	if (!ng)
 		panic("Could not allocate generic netns");
 
-	rcu_assign_poपूर्णांकer(init_net.gen, ng);
+	rcu_assign_pointer(init_net.gen, ng);
 
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	अगर (setup_net(&init_net, &init_user_ns))
+	down_write(&pernet_ops_rwsem);
+	if (setup_net(&init_net, &init_user_ns))
 		panic("Could not setup the initial network namespace");
 
 	init_net_initialized = true;
-	up_ग_लिखो(&pernet_ops_rwsem);
+	up_write(&pernet_ops_rwsem);
 
-	अगर (रेजिस्टर_pernet_subsys(&net_ns_ops))
+	if (register_pernet_subsys(&net_ns_ops))
 		panic("Could not register network namespace subsystems");
 
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWNSID, rtnl_net_newid, शून्य,
+	rtnl_register(PF_UNSPEC, RTM_NEWNSID, rtnl_net_newid, NULL,
 		      RTNL_FLAG_DOIT_UNLOCKED);
-	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNSID, rtnl_net_getid, rtnl_net_dumpid,
+	rtnl_register(PF_UNSPEC, RTM_GETNSID, rtnl_net_getid, rtnl_net_dumpid,
 		      RTNL_FLAG_DOIT_UNLOCKED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 pure_initcall(net_ns_init);
 
-#अगर_घोषित CONFIG_NET_NS
-अटल पूर्णांक __रेजिस्टर_pernet_operations(काष्ठा list_head *list,
-					काष्ठा pernet_operations *ops)
-अणु
-	काष्ठा net *net;
-	पूर्णांक error;
-	LIST_HEAD(net_निकास_list);
+#ifdef CONFIG_NET_NS
+static int __register_pernet_operations(struct list_head *list,
+					struct pernet_operations *ops)
+{
+	struct net *net;
+	int error;
+	LIST_HEAD(net_exit_list);
 
 	list_add_tail(&ops->list, list);
-	अगर (ops->init || (ops->id && ops->size)) अणु
-		/* We held ग_लिखो locked pernet_ops_rwsem, and parallel
+	if (ops->init || (ops->id && ops->size)) {
+		/* We held write locked pernet_ops_rwsem, and parallel
 		 * setup_net() and cleanup_net() are not possible.
 		 */
-		क्रम_each_net(net) अणु
+		for_each_net(net) {
 			error = ops_init(ops, net);
-			अगर (error)
-				जाओ out_unकरो;
-			list_add_tail(&net->निकास_list, &net_निकास_list);
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			if (error)
+				goto out_undo;
+			list_add_tail(&net->exit_list, &net_exit_list);
+		}
+	}
+	return 0;
 
-out_unकरो:
+out_undo:
 	/* If I have an error cleanup all namespaces I initialized */
 	list_del(&ops->list);
-	ops_pre_निकास_list(ops, &net_निकास_list);
+	ops_pre_exit_list(ops, &net_exit_list);
 	synchronize_rcu();
-	ops_निकास_list(ops, &net_निकास_list);
-	ops_मुक्त_list(ops, &net_निकास_list);
-	वापस error;
-पूर्ण
+	ops_exit_list(ops, &net_exit_list);
+	ops_free_list(ops, &net_exit_list);
+	return error;
+}
 
-अटल व्योम __unरेजिस्टर_pernet_operations(काष्ठा pernet_operations *ops)
-अणु
-	काष्ठा net *net;
-	LIST_HEAD(net_निकास_list);
+static void __unregister_pernet_operations(struct pernet_operations *ops)
+{
+	struct net *net;
+	LIST_HEAD(net_exit_list);
 
 	list_del(&ops->list);
-	/* See comment in __रेजिस्टर_pernet_operations() */
-	क्रम_each_net(net)
-		list_add_tail(&net->निकास_list, &net_निकास_list);
-	ops_pre_निकास_list(ops, &net_निकास_list);
+	/* See comment in __register_pernet_operations() */
+	for_each_net(net)
+		list_add_tail(&net->exit_list, &net_exit_list);
+	ops_pre_exit_list(ops, &net_exit_list);
 	synchronize_rcu();
-	ops_निकास_list(ops, &net_निकास_list);
-	ops_मुक्त_list(ops, &net_निकास_list);
-पूर्ण
+	ops_exit_list(ops, &net_exit_list);
+	ops_free_list(ops, &net_exit_list);
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक __रेजिस्टर_pernet_operations(काष्ठा list_head *list,
-					काष्ठा pernet_operations *ops)
-अणु
-	अगर (!init_net_initialized) अणु
+static int __register_pernet_operations(struct list_head *list,
+					struct pernet_operations *ops)
+{
+	if (!init_net_initialized) {
 		list_add_tail(&ops->list, list);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस ops_init(ops, &init_net);
-पूर्ण
+	return ops_init(ops, &init_net);
+}
 
-अटल व्योम __unरेजिस्टर_pernet_operations(काष्ठा pernet_operations *ops)
-अणु
-	अगर (!init_net_initialized) अणु
+static void __unregister_pernet_operations(struct pernet_operations *ops)
+{
+	if (!init_net_initialized) {
 		list_del(&ops->list);
-	पूर्ण अन्यथा अणु
-		LIST_HEAD(net_निकास_list);
-		list_add(&init_net.निकास_list, &net_निकास_list);
-		ops_pre_निकास_list(ops, &net_निकास_list);
+	} else {
+		LIST_HEAD(net_exit_list);
+		list_add(&init_net.exit_list, &net_exit_list);
+		ops_pre_exit_list(ops, &net_exit_list);
 		synchronize_rcu();
-		ops_निकास_list(ops, &net_निकास_list);
-		ops_मुक्त_list(ops, &net_निकास_list);
-	पूर्ण
-पूर्ण
+		ops_exit_list(ops, &net_exit_list);
+		ops_free_list(ops, &net_exit_list);
+	}
+}
 
-#पूर्ण_अगर /* CONFIG_NET_NS */
+#endif /* CONFIG_NET_NS */
 
-अटल DEFINE_IDA(net_generic_ids);
+static DEFINE_IDA(net_generic_ids);
 
-अटल पूर्णांक रेजिस्टर_pernet_operations(काष्ठा list_head *list,
-				      काष्ठा pernet_operations *ops)
-अणु
-	पूर्णांक error;
+static int register_pernet_operations(struct list_head *list,
+				      struct pernet_operations *ops)
+{
+	int error;
 
-	अगर (ops->id) अणु
+	if (ops->id) {
 		error = ida_alloc_min(&net_generic_ids, MIN_PERNET_OPS_ID,
 				GFP_KERNEL);
-		अगर (error < 0)
-			वापस error;
+		if (error < 0)
+			return error;
 		*ops->id = error;
 		max_gen_ptrs = max(max_gen_ptrs, *ops->id + 1);
-	पूर्ण
-	error = __रेजिस्टर_pernet_operations(list, ops);
-	अगर (error) अणु
+	}
+	error = __register_pernet_operations(list, ops);
+	if (error) {
 		rcu_barrier();
-		अगर (ops->id)
-			ida_मुक्त(&net_generic_ids, *ops->id);
-	पूर्ण
+		if (ops->id)
+			ida_free(&net_generic_ids, *ops->id);
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम unरेजिस्टर_pernet_operations(काष्ठा pernet_operations *ops)
-अणु
-	__unरेजिस्टर_pernet_operations(ops);
+static void unregister_pernet_operations(struct pernet_operations *ops)
+{
+	__unregister_pernet_operations(ops);
 	rcu_barrier();
-	अगर (ops->id)
-		ida_मुक्त(&net_generic_ids, *ops->id);
-पूर्ण
+	if (ops->id)
+		ida_free(&net_generic_ids, *ops->id);
+}
 
 /**
- *      रेजिस्टर_pernet_subsys - रेजिस्टर a network namespace subप्रणाली
- *	@ops:  pernet operations काष्ठाure क्रम the subप्रणाली
+ *      register_pernet_subsys - register a network namespace subsystem
+ *	@ops:  pernet operations structure for the subsystem
  *
- *	Register a subप्रणाली which has init and निकास functions
+ *	Register a subsystem which has init and exit functions
  *	that are called when network namespaces are created and
  *	destroyed respectively.
  *
- *	When रेजिस्टरed all network namespace init functions are
- *	called क्रम every existing network namespace.  Allowing kernel
- *	modules to have a race मुक्त view of the set of network namespaces.
+ *	When registered all network namespace init functions are
+ *	called for every existing network namespace.  Allowing kernel
+ *	modules to have a race free view of the set of network namespaces.
  *
  *	When a new network namespace is created all of the init
- *	methods are called in the order in which they were रेजिस्टरed.
+ *	methods are called in the order in which they were registered.
  *
- *	When a network namespace is destroyed all of the निकास methods
+ *	When a network namespace is destroyed all of the exit methods
  *	are called in the reverse of the order with which they were
- *	रेजिस्टरed.
+ *	registered.
  */
-पूर्णांक रेजिस्टर_pernet_subsys(काष्ठा pernet_operations *ops)
-अणु
-	पूर्णांक error;
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	error =  रेजिस्टर_pernet_operations(first_device, ops);
-	up_ग_लिखो(&pernet_ops_rwsem);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_pernet_subsys);
+int register_pernet_subsys(struct pernet_operations *ops)
+{
+	int error;
+	down_write(&pernet_ops_rwsem);
+	error =  register_pernet_operations(first_device, ops);
+	up_write(&pernet_ops_rwsem);
+	return error;
+}
+EXPORT_SYMBOL_GPL(register_pernet_subsys);
 
 /**
- *      unरेजिस्टर_pernet_subsys - unरेजिस्टर a network namespace subप्रणाली
- *	@ops: pernet operations काष्ठाure to manipulate
+ *      unregister_pernet_subsys - unregister a network namespace subsystem
+ *	@ops: pernet operations structure to manipulate
  *
- *	Remove the pernet operations काष्ठाure from the list to be
+ *	Remove the pernet operations structure from the list to be
  *	used when network namespaces are created or destroyed.  In
- *	addition run the निकास method क्रम all existing network
+ *	addition run the exit method for all existing network
  *	namespaces.
  */
-व्योम unरेजिस्टर_pernet_subsys(काष्ठा pernet_operations *ops)
-अणु
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	unरेजिस्टर_pernet_operations(ops);
-	up_ग_लिखो(&pernet_ops_rwsem);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_pernet_subsys);
+void unregister_pernet_subsys(struct pernet_operations *ops)
+{
+	down_write(&pernet_ops_rwsem);
+	unregister_pernet_operations(ops);
+	up_write(&pernet_ops_rwsem);
+}
+EXPORT_SYMBOL_GPL(unregister_pernet_subsys);
 
 /**
- *      रेजिस्टर_pernet_device - रेजिस्टर a network namespace device
- *	@ops:  pernet operations काष्ठाure क्रम the subप्रणाली
+ *      register_pernet_device - register a network namespace device
+ *	@ops:  pernet operations structure for the subsystem
  *
- *	Register a device which has init and निकास functions
+ *	Register a device which has init and exit functions
  *	that are called when network namespaces are created and
  *	destroyed respectively.
  *
- *	When रेजिस्टरed all network namespace init functions are
- *	called क्रम every existing network namespace.  Allowing kernel
- *	modules to have a race मुक्त view of the set of network namespaces.
+ *	When registered all network namespace init functions are
+ *	called for every existing network namespace.  Allowing kernel
+ *	modules to have a race free view of the set of network namespaces.
  *
  *	When a new network namespace is created all of the init
- *	methods are called in the order in which they were रेजिस्टरed.
+ *	methods are called in the order in which they were registered.
  *
- *	When a network namespace is destroyed all of the निकास methods
+ *	When a network namespace is destroyed all of the exit methods
  *	are called in the reverse of the order with which they were
- *	रेजिस्टरed.
+ *	registered.
  */
-पूर्णांक रेजिस्टर_pernet_device(काष्ठा pernet_operations *ops)
-अणु
-	पूर्णांक error;
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	error = रेजिस्टर_pernet_operations(&pernet_list, ops);
-	अगर (!error && (first_device == &pernet_list))
+int register_pernet_device(struct pernet_operations *ops)
+{
+	int error;
+	down_write(&pernet_ops_rwsem);
+	error = register_pernet_operations(&pernet_list, ops);
+	if (!error && (first_device == &pernet_list))
 		first_device = &ops->list;
-	up_ग_लिखो(&pernet_ops_rwsem);
-	वापस error;
-पूर्ण
-EXPORT_SYMBOL_GPL(रेजिस्टर_pernet_device);
+	up_write(&pernet_ops_rwsem);
+	return error;
+}
+EXPORT_SYMBOL_GPL(register_pernet_device);
 
 /**
- *      unरेजिस्टर_pernet_device - unरेजिस्टर a network namespace netdevice
- *	@ops: pernet operations काष्ठाure to manipulate
+ *      unregister_pernet_device - unregister a network namespace netdevice
+ *	@ops: pernet operations structure to manipulate
  *
- *	Remove the pernet operations काष्ठाure from the list to be
+ *	Remove the pernet operations structure from the list to be
  *	used when network namespaces are created or destroyed.  In
- *	addition run the निकास method क्रम all existing network
+ *	addition run the exit method for all existing network
  *	namespaces.
  */
-व्योम unरेजिस्टर_pernet_device(काष्ठा pernet_operations *ops)
-अणु
-	करोwn_ग_लिखो(&pernet_ops_rwsem);
-	अगर (&ops->list == first_device)
+void unregister_pernet_device(struct pernet_operations *ops)
+{
+	down_write(&pernet_ops_rwsem);
+	if (&ops->list == first_device)
 		first_device = first_device->next;
-	unरेजिस्टर_pernet_operations(ops);
-	up_ग_लिखो(&pernet_ops_rwsem);
-पूर्ण
-EXPORT_SYMBOL_GPL(unरेजिस्टर_pernet_device);
+	unregister_pernet_operations(ops);
+	up_write(&pernet_ops_rwsem);
+}
+EXPORT_SYMBOL_GPL(unregister_pernet_device);
 
-#अगर_घोषित CONFIG_NET_NS
-अटल काष्ठा ns_common *netns_get(काष्ठा task_काष्ठा *task)
-अणु
-	काष्ठा net *net = शून्य;
-	काष्ठा nsproxy *nsproxy;
+#ifdef CONFIG_NET_NS
+static struct ns_common *netns_get(struct task_struct *task)
+{
+	struct net *net = NULL;
+	struct nsproxy *nsproxy;
 
 	task_lock(task);
 	nsproxy = task->nsproxy;
-	अगर (nsproxy)
+	if (nsproxy)
 		net = get_net(nsproxy->net_ns);
 	task_unlock(task);
 
-	वापस net ? &net->ns : शून्य;
-पूर्ण
+	return net ? &net->ns : NULL;
+}
 
-अटल अंतरभूत काष्ठा net *to_net_ns(काष्ठा ns_common *ns)
-अणु
-	वापस container_of(ns, काष्ठा net, ns);
-पूर्ण
+static inline struct net *to_net_ns(struct ns_common *ns)
+{
+	return container_of(ns, struct net, ns);
+}
 
-अटल व्योम netns_put(काष्ठा ns_common *ns)
-अणु
+static void netns_put(struct ns_common *ns)
+{
 	put_net(to_net_ns(ns));
-पूर्ण
+}
 
-अटल पूर्णांक netns_install(काष्ठा nsset *nsset, काष्ठा ns_common *ns)
-अणु
-	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
-	काष्ठा net *net = to_net_ns(ns);
+static int netns_install(struct nsset *nsset, struct ns_common *ns)
+{
+	struct nsproxy *nsproxy = nsset->nsproxy;
+	struct net *net = to_net_ns(ns);
 
-	अगर (!ns_capable(net->user_ns, CAP_SYS_ADMIN) ||
+	if (!ns_capable(net->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		वापस -EPERM;
+		return -EPERM;
 
 	put_net(nsproxy->net_ns);
 	nsproxy->net_ns = get_net(net);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा user_namespace *netns_owner(काष्ठा ns_common *ns)
-अणु
-	वापस to_net_ns(ns)->user_ns;
-पूर्ण
+static struct user_namespace *netns_owner(struct ns_common *ns)
+{
+	return to_net_ns(ns)->user_ns;
+}
 
-स्थिर काष्ठा proc_ns_operations netns_operations = अणु
+const struct proc_ns_operations netns_operations = {
 	.name		= "net",
 	.type		= CLONE_NEWNET,
 	.get		= netns_get,
 	.put		= netns_put,
 	.install	= netns_install,
 	.owner		= netns_owner,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2018, Intel Corporation. */
 
-#अगर_अघोषित _FAILOVER_H
-#घोषणा _FAILOVER_H
+#ifndef _FAILOVER_H
+#define _FAILOVER_H
 
-#समावेश <linux/netdevice.h>
+#include <linux/netdevice.h>
 
-काष्ठा failover_ops अणु
-	पूर्णांक (*slave_pre_रेजिस्टर)(काष्ठा net_device *slave_dev,
-				  काष्ठा net_device *failover_dev);
-	पूर्णांक (*slave_रेजिस्टर)(काष्ठा net_device *slave_dev,
-			      काष्ठा net_device *failover_dev);
-	पूर्णांक (*slave_pre_unरेजिस्टर)(काष्ठा net_device *slave_dev,
-				    काष्ठा net_device *failover_dev);
-	पूर्णांक (*slave_unरेजिस्टर)(काष्ठा net_device *slave_dev,
-				काष्ठा net_device *failover_dev);
-	पूर्णांक (*slave_link_change)(काष्ठा net_device *slave_dev,
-				 काष्ठा net_device *failover_dev);
-	पूर्णांक (*slave_name_change)(काष्ठा net_device *slave_dev,
-				 काष्ठा net_device *failover_dev);
-	rx_handler_result_t (*slave_handle_frame)(काष्ठा sk_buff **pskb);
-पूर्ण;
+struct failover_ops {
+	int (*slave_pre_register)(struct net_device *slave_dev,
+				  struct net_device *failover_dev);
+	int (*slave_register)(struct net_device *slave_dev,
+			      struct net_device *failover_dev);
+	int (*slave_pre_unregister)(struct net_device *slave_dev,
+				    struct net_device *failover_dev);
+	int (*slave_unregister)(struct net_device *slave_dev,
+				struct net_device *failover_dev);
+	int (*slave_link_change)(struct net_device *slave_dev,
+				 struct net_device *failover_dev);
+	int (*slave_name_change)(struct net_device *slave_dev,
+				 struct net_device *failover_dev);
+	rx_handler_result_t (*slave_handle_frame)(struct sk_buff **pskb);
+};
 
-काष्ठा failover अणु
-	काष्ठा list_head list;
-	काष्ठा net_device __rcu *failover_dev;
-	काष्ठा failover_ops __rcu *ops;
-पूर्ण;
+struct failover {
+	struct list_head list;
+	struct net_device __rcu *failover_dev;
+	struct failover_ops __rcu *ops;
+};
 
-काष्ठा failover *failover_रेजिस्टर(काष्ठा net_device *dev,
-				   काष्ठा failover_ops *ops);
-व्योम failover_unरेजिस्टर(काष्ठा failover *failover);
-पूर्णांक failover_slave_unरेजिस्टर(काष्ठा net_device *slave_dev);
+struct failover *failover_register(struct net_device *dev,
+				   struct failover_ops *ops);
+void failover_unregister(struct failover *failover);
+int failover_slave_unregister(struct net_device *slave_dev);
 
-#पूर्ण_अगर /* _FAILOVER_H */
+#endif /* _FAILOVER_H */

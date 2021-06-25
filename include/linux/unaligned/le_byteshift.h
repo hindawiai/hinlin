@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_UNALIGNED_LE_BYTESHIFT_H
-#घोषणा _LINUX_UNALIGNED_LE_BYTESHIFT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_UNALIGNED_LE_BYTESHIFT_H
+#define _LINUX_UNALIGNED_LE_BYTESHIFT_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-अटल अंतरभूत u16 __get_unaligned_le16(स्थिर u8 *p)
-अणु
-	वापस p[0] | p[1] << 8;
-पूर्ण
+static inline u16 __get_unaligned_le16(const u8 *p)
+{
+	return p[0] | p[1] << 8;
+}
 
-अटल अंतरभूत u32 __get_unaligned_le32(स्थिर u8 *p)
-अणु
-	वापस p[0] | p[1] << 8 | p[2] << 16 | p[3] << 24;
-पूर्ण
+static inline u32 __get_unaligned_le32(const u8 *p)
+{
+	return p[0] | p[1] << 8 | p[2] << 16 | p[3] << 24;
+}
 
-अटल अंतरभूत u64 __get_unaligned_le64(स्थिर u8 *p)
-अणु
-	वापस (u64)__get_unaligned_le32(p + 4) << 32 |
+static inline u64 __get_unaligned_le64(const u8 *p)
+{
+	return (u64)__get_unaligned_le32(p + 4) << 32 |
 	       __get_unaligned_le32(p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __put_unaligned_le16(u16 val, u8 *p)
-अणु
+static inline void __put_unaligned_le16(u16 val, u8 *p)
+{
 	*p++ = val;
 	*p++ = val >> 8;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __put_unaligned_le32(u32 val, u8 *p)
-अणु
+static inline void __put_unaligned_le32(u32 val, u8 *p)
+{
 	__put_unaligned_le16(val >> 16, p + 2);
 	__put_unaligned_le16(val, p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __put_unaligned_le64(u64 val, u8 *p)
-अणु
+static inline void __put_unaligned_le64(u64 val, u8 *p)
+{
 	__put_unaligned_le32(val >> 32, p + 4);
 	__put_unaligned_le32(val, p);
-पूर्ण
+}
 
-अटल अंतरभूत u16 get_unaligned_le16(स्थिर व्योम *p)
-अणु
-	वापस __get_unaligned_le16(p);
-पूर्ण
+static inline u16 get_unaligned_le16(const void *p)
+{
+	return __get_unaligned_le16(p);
+}
 
-अटल अंतरभूत u32 get_unaligned_le32(स्थिर व्योम *p)
-अणु
-	वापस __get_unaligned_le32(p);
-पूर्ण
+static inline u32 get_unaligned_le32(const void *p)
+{
+	return __get_unaligned_le32(p);
+}
 
-अटल अंतरभूत u64 get_unaligned_le64(स्थिर व्योम *p)
-अणु
-	वापस __get_unaligned_le64(p);
-पूर्ण
+static inline u64 get_unaligned_le64(const void *p)
+{
+	return __get_unaligned_le64(p);
+}
 
-अटल अंतरभूत व्योम put_unaligned_le16(u16 val, व्योम *p)
-अणु
+static inline void put_unaligned_le16(u16 val, void *p)
+{
 	__put_unaligned_le16(val, p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम put_unaligned_le32(u32 val, व्योम *p)
-अणु
+static inline void put_unaligned_le32(u32 val, void *p)
+{
 	__put_unaligned_le32(val, p);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम put_unaligned_le64(u64 val, व्योम *p)
-अणु
+static inline void put_unaligned_le64(u64 val, void *p)
+{
 	__put_unaligned_le64(val, p);
-पूर्ण
+}
 
-#पूर्ण_अगर /* _LINUX_UNALIGNED_LE_BYTESHIFT_H */
+#endif /* _LINUX_UNALIGNED_LE_BYTESHIFT_H */

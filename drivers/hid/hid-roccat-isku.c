@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Roccat Isku driver क्रम Linux
+ * Roccat Isku driver for Linux
  *
- * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
+ * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceforge.net>
  */
 
 /*
@@ -14,195 +13,195 @@
  * 5 profiles.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hid-roccat.h>
-#समावेश "hid-ids.h"
-#समावेश "hid-roccat-common.h"
-#समावेश "hid-roccat-isku.h"
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/hid.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/hid-roccat.h>
+#include "hid-ids.h"
+#include "hid-roccat-common.h"
+#include "hid-roccat-isku.h"
 
-अटल काष्ठा class *isku_class;
+static struct class *isku_class;
 
-अटल व्योम isku_profile_activated(काष्ठा isku_device *isku, uपूर्णांक new_profile)
-अणु
+static void isku_profile_activated(struct isku_device *isku, uint new_profile)
+{
 	isku->actual_profile = new_profile;
-पूर्ण
+}
 
-अटल पूर्णांक isku_receive(काष्ठा usb_device *usb_dev, uपूर्णांक command,
-		व्योम *buf, uपूर्णांक size)
-अणु
-	वापस roccat_common2_receive(usb_dev, command, buf, size);
-पूर्ण
+static int isku_receive(struct usb_device *usb_dev, uint command,
+		void *buf, uint size)
+{
+	return roccat_common2_receive(usb_dev, command, buf, size);
+}
 
-अटल पूर्णांक isku_get_actual_profile(काष्ठा usb_device *usb_dev)
-अणु
-	काष्ठा isku_actual_profile buf;
-	पूर्णांक retval;
+static int isku_get_actual_profile(struct usb_device *usb_dev)
+{
+	struct isku_actual_profile buf;
+	int retval;
 
-	retval = isku_receive(usb_dev, ISKU_COMMAND_ACTUAL_PROखाता,
-			&buf, माप(काष्ठा isku_actual_profile));
-	वापस retval ? retval : buf.actual_profile;
-पूर्ण
+	retval = isku_receive(usb_dev, ISKU_COMMAND_ACTUAL_PROFILE,
+			&buf, sizeof(struct isku_actual_profile));
+	return retval ? retval : buf.actual_profile;
+}
 
-अटल पूर्णांक isku_set_actual_profile(काष्ठा usb_device *usb_dev, पूर्णांक new_profile)
-अणु
-	काष्ठा isku_actual_profile buf;
+static int isku_set_actual_profile(struct usb_device *usb_dev, int new_profile)
+{
+	struct isku_actual_profile buf;
 
-	buf.command = ISKU_COMMAND_ACTUAL_PROखाता;
-	buf.size = माप(काष्ठा isku_actual_profile);
+	buf.command = ISKU_COMMAND_ACTUAL_PROFILE;
+	buf.size = sizeof(struct isku_actual_profile);
 	buf.actual_profile = new_profile;
-	वापस roccat_common2_send_with_status(usb_dev,
-			ISKU_COMMAND_ACTUAL_PROखाता, &buf,
-			माप(काष्ठा isku_actual_profile));
-पूर्ण
+	return roccat_common2_send_with_status(usb_dev,
+			ISKU_COMMAND_ACTUAL_PROFILE, &buf,
+			sizeof(struct isku_actual_profile));
+}
 
-अटल sमाप_प्रकार isku_sysfs_show_actual_profile(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा isku_device *isku =
+static ssize_t isku_sysfs_show_actual_profile(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct isku_device *isku =
 			hid_get_drvdata(dev_get_drvdata(dev->parent->parent));
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", isku->actual_profile);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", isku->actual_profile);
+}
 
-अटल sमाप_प्रकार isku_sysfs_set_actual_profile(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर स्थिर *buf, माप_प्रकार size)
-अणु
-	काष्ठा isku_device *isku;
-	काष्ठा usb_device *usb_dev;
-	अचिन्हित दीर्घ profile;
-	पूर्णांक retval;
-	काष्ठा isku_roccat_report roccat_report;
+static ssize_t isku_sysfs_set_actual_profile(struct device *dev,
+		struct device_attribute *attr, char const *buf, size_t size)
+{
+	struct isku_device *isku;
+	struct usb_device *usb_dev;
+	unsigned long profile;
+	int retval;
+	struct isku_roccat_report roccat_report;
 
 	dev = dev->parent->parent;
 	isku = hid_get_drvdata(dev_get_drvdata(dev));
-	usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
+	usb_dev = interface_to_usbdev(to_usb_interface(dev));
 
-	retval = kम_से_अदीर्घ(buf, 10, &profile);
-	अगर (retval)
-		वापस retval;
+	retval = kstrtoul(buf, 10, &profile);
+	if (retval)
+		return retval;
 
-	अगर (profile > 4)
-		वापस -EINVAL;
+	if (profile > 4)
+		return -EINVAL;
 
 	mutex_lock(&isku->isku_lock);
 
 	retval = isku_set_actual_profile(usb_dev, profile);
-	अगर (retval) अणु
+	if (retval) {
 		mutex_unlock(&isku->isku_lock);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	isku_profile_activated(isku, profile);
 
-	roccat_report.event = ISKU_REPORT_BUTTON_EVENT_PROखाता;
+	roccat_report.event = ISKU_REPORT_BUTTON_EVENT_PROFILE;
 	roccat_report.data1 = profile + 1;
 	roccat_report.data2 = 0;
 	roccat_report.profile = profile + 1;
-	roccat_report_event(isku->chrdev_minor, (uपूर्णांक8_t स्थिर *)&roccat_report);
+	roccat_report_event(isku->chrdev_minor, (uint8_t const *)&roccat_report);
 
 	mutex_unlock(&isku->isku_lock);
 
-	वापस size;
-पूर्ण
-अटल DEVICE_ATTR(actual_profile, 0660, isku_sysfs_show_actual_profile,
+	return size;
+}
+static DEVICE_ATTR(actual_profile, 0660, isku_sysfs_show_actual_profile,
 		   isku_sysfs_set_actual_profile);
 
-अटल काष्ठा attribute *isku_attrs[] = अणु
+static struct attribute *isku_attrs[] = {
 	&dev_attr_actual_profile.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार isku_sysfs_पढ़ो(काष्ठा file *fp, काष्ठा kobject *kobj,
-		अक्षर *buf, loff_t off, माप_प्रकार count,
-		माप_प्रकार real_size, uपूर्णांक command)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
-	काष्ठा isku_device *isku = hid_get_drvdata(dev_get_drvdata(dev));
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
-	पूर्णांक retval;
+static ssize_t isku_sysfs_read(struct file *fp, struct kobject *kobj,
+		char *buf, loff_t off, size_t count,
+		size_t real_size, uint command)
+{
+	struct device *dev = kobj_to_dev(kobj)->parent->parent;
+	struct isku_device *isku = hid_get_drvdata(dev_get_drvdata(dev));
+	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	int retval;
 
-	अगर (off >= real_size)
-		वापस 0;
+	if (off >= real_size)
+		return 0;
 
-	अगर (off != 0 || count > real_size)
-		वापस -EINVAL;
+	if (off != 0 || count > real_size)
+		return -EINVAL;
 
 	mutex_lock(&isku->isku_lock);
 	retval = isku_receive(usb_dev, command, buf, count);
 	mutex_unlock(&isku->isku_lock);
 
-	वापस retval ? retval : count;
-पूर्ण
+	return retval ? retval : count;
+}
 
-अटल sमाप_प्रकार isku_sysfs_ग_लिखो(काष्ठा file *fp, काष्ठा kobject *kobj,
-		व्योम स्थिर *buf, loff_t off, माप_प्रकार count,
-		माप_प्रकार real_size, uपूर्णांक command)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj)->parent->parent;
-	काष्ठा isku_device *isku = hid_get_drvdata(dev_get_drvdata(dev));
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(to_usb_पूर्णांकerface(dev));
-	पूर्णांक retval;
+static ssize_t isku_sysfs_write(struct file *fp, struct kobject *kobj,
+		void const *buf, loff_t off, size_t count,
+		size_t real_size, uint command)
+{
+	struct device *dev = kobj_to_dev(kobj)->parent->parent;
+	struct isku_device *isku = hid_get_drvdata(dev_get_drvdata(dev));
+	struct usb_device *usb_dev = interface_to_usbdev(to_usb_interface(dev));
+	int retval;
 
-	अगर (off != 0 || count > real_size)
-		वापस -EINVAL;
+	if (off != 0 || count > real_size)
+		return -EINVAL;
 
 	mutex_lock(&isku->isku_lock);
 	retval = roccat_common2_send_with_status(usb_dev, command,
-			(व्योम *)buf, count);
+			(void *)buf, count);
 	mutex_unlock(&isku->isku_lock);
 
-	वापस retval ? retval : count;
-पूर्ण
+	return retval ? retval : count;
+}
 
-#घोषणा ISKU_SYSFS_W(thingy, THINGY) \
-अटल sमाप_प्रकार isku_sysfs_ग_लिखो_ ## thingy(काष्ठा file *fp, काष्ठा kobject *kobj, \
-		काष्ठा bin_attribute *attr, अक्षर *buf, \
-		loff_t off, माप_प्रकार count) \
-अणु \
-	वापस isku_sysfs_ग_लिखो(fp, kobj, buf, off, count, \
+#define ISKU_SYSFS_W(thingy, THINGY) \
+static ssize_t isku_sysfs_write_ ## thingy(struct file *fp, struct kobject *kobj, \
+		struct bin_attribute *attr, char *buf, \
+		loff_t off, size_t count) \
+{ \
+	return isku_sysfs_write(fp, kobj, buf, off, count, \
 			ISKU_SIZE_ ## THINGY, ISKU_COMMAND_ ## THINGY); \
-पूर्ण
+}
 
-#घोषणा ISKU_SYSFS_R(thingy, THINGY) \
-अटल sमाप_प्रकार isku_sysfs_पढ़ो_ ## thingy(काष्ठा file *fp, काष्ठा kobject *kobj, \
-		काष्ठा bin_attribute *attr, अक्षर *buf, \
-		loff_t off, माप_प्रकार count) \
-अणु \
-	वापस isku_sysfs_पढ़ो(fp, kobj, buf, off, count, \
+#define ISKU_SYSFS_R(thingy, THINGY) \
+static ssize_t isku_sysfs_read_ ## thingy(struct file *fp, struct kobject *kobj, \
+		struct bin_attribute *attr, char *buf, \
+		loff_t off, size_t count) \
+{ \
+	return isku_sysfs_read(fp, kobj, buf, off, count, \
 			ISKU_SIZE_ ## THINGY, ISKU_COMMAND_ ## THINGY); \
-पूर्ण
+}
 
-#घोषणा ISKU_SYSFS_RW(thingy, THINGY) \
+#define ISKU_SYSFS_RW(thingy, THINGY) \
 ISKU_SYSFS_R(thingy, THINGY) \
 ISKU_SYSFS_W(thingy, THINGY)
 
-#घोषणा ISKU_BIN_ATTR_RW(thingy, THINGY) \
+#define ISKU_BIN_ATTR_RW(thingy, THINGY) \
 ISKU_SYSFS_RW(thingy, THINGY); \
-अटल काष्ठा bin_attribute bin_attr_##thingy = अणु \
-	.attr = अणु .name = #thingy, .mode = 0660 पूर्ण, \
+static struct bin_attribute bin_attr_##thingy = { \
+	.attr = { .name = #thingy, .mode = 0660 }, \
 	.size = ISKU_SIZE_ ## THINGY, \
-	.पढ़ो = isku_sysfs_पढ़ो_ ## thingy, \
-	.ग_लिखो = isku_sysfs_ग_लिखो_ ## thingy \
-पूर्ण
+	.read = isku_sysfs_read_ ## thingy, \
+	.write = isku_sysfs_write_ ## thingy \
+}
 
-#घोषणा ISKU_BIN_ATTR_R(thingy, THINGY) \
+#define ISKU_BIN_ATTR_R(thingy, THINGY) \
 ISKU_SYSFS_R(thingy, THINGY); \
-अटल काष्ठा bin_attribute bin_attr_##thingy = अणु \
-	.attr = अणु .name = #thingy, .mode = 0440 पूर्ण, \
+static struct bin_attribute bin_attr_##thingy = { \
+	.attr = { .name = #thingy, .mode = 0440 }, \
 	.size = ISKU_SIZE_ ## THINGY, \
-	.पढ़ो = isku_sysfs_पढ़ो_ ## thingy, \
-पूर्ण
+	.read = isku_sysfs_read_ ## thingy, \
+}
 
-#घोषणा ISKU_BIN_ATTR_W(thingy, THINGY) \
+#define ISKU_BIN_ATTR_W(thingy, THINGY) \
 ISKU_SYSFS_W(thingy, THINGY); \
-अटल काष्ठा bin_attribute bin_attr_##thingy = अणु \
-	.attr = अणु .name = #thingy, .mode = 0220 पूर्ण, \
+static struct bin_attribute bin_attr_##thingy = { \
+	.attr = { .name = #thingy, .mode = 0220 }, \
 	.size = ISKU_SIZE_ ## THINGY, \
-	.ग_लिखो = isku_sysfs_ग_लिखो_ ## thingy \
-पूर्ण
+	.write = isku_sysfs_write_ ## thingy \
+}
 
 ISKU_BIN_ATTR_RW(macro, MACRO);
 ISKU_BIN_ATTR_RW(keys_function, KEYS_FUNCTION);
@@ -220,7 +219,7 @@ ISKU_BIN_ATTR_W(control, CONTROL);
 ISKU_BIN_ATTR_W(reset, RESET);
 ISKU_BIN_ATTR_R(info, INFO);
 
-अटल काष्ठा bin_attribute *isku_bin_attributes[] = अणु
+static struct bin_attribute *isku_bin_attributes[] = {
 	&bin_attr_macro,
 	&bin_attr_keys_function,
 	&bin_attr_keys_easyzone,
@@ -236,222 +235,222 @@ ISKU_BIN_ATTR_R(info, INFO);
 	&bin_attr_control,
 	&bin_attr_reset,
 	&bin_attr_info,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group isku_group = अणु
+static const struct attribute_group isku_group = {
 	.attrs = isku_attrs,
 	.bin_attrs = isku_bin_attributes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *isku_groups[] = अणु
+static const struct attribute_group *isku_groups[] = {
 	&isku_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक isku_init_isku_device_काष्ठा(काष्ठा usb_device *usb_dev,
-		काष्ठा isku_device *isku)
-अणु
-	पूर्णांक retval;
+static int isku_init_isku_device_struct(struct usb_device *usb_dev,
+		struct isku_device *isku)
+{
+	int retval;
 
 	mutex_init(&isku->isku_lock);
 
 	retval = isku_get_actual_profile(usb_dev);
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 	isku_profile_activated(isku, retval);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक isku_init_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा isku_device *isku;
-	पूर्णांक retval;
+static int isku_init_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct isku_device *isku;
+	int retval;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
-			!= ISKU_USB_INTERFACE_PROTOCOL) अणु
-		hid_set_drvdata(hdev, शून्य);
-		वापस 0;
-	पूर्ण
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
+			!= ISKU_USB_INTERFACE_PROTOCOL) {
+		hid_set_drvdata(hdev, NULL);
+		return 0;
+	}
 
-	isku = kzalloc(माप(*isku), GFP_KERNEL);
-	अगर (!isku) अणु
+	isku = kzalloc(sizeof(*isku), GFP_KERNEL);
+	if (!isku) {
 		hid_err(hdev, "can't alloc device descriptor\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	hid_set_drvdata(hdev, isku);
 
-	retval = isku_init_isku_device_काष्ठा(usb_dev, isku);
-	अगर (retval) अणु
+	retval = isku_init_isku_device_struct(usb_dev, isku);
+	if (retval) {
 		hid_err(hdev, "couldn't init struct isku_device\n");
-		जाओ निकास_मुक्त;
-	पूर्ण
+		goto exit_free;
+	}
 
 	retval = roccat_connect(isku_class, hdev,
-			माप(काष्ठा isku_roccat_report));
-	अगर (retval < 0) अणु
+			sizeof(struct isku_roccat_report));
+	if (retval < 0) {
 		hid_err(hdev, "couldn't init char dev\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		isku->chrdev_minor = retval;
 		isku->roccat_claimed = 1;
-	पूर्ण
+	}
 
-	वापस 0;
-निकास_मुक्त:
-	kमुक्त(isku);
-	वापस retval;
-पूर्ण
+	return 0;
+exit_free:
+	kfree(isku);
+	return retval;
+}
 
-अटल व्योम isku_हटाओ_specials(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा isku_device *isku;
+static void isku_remove_specials(struct hid_device *hdev)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct isku_device *isku;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
 			!= ISKU_USB_INTERFACE_PROTOCOL)
-		वापस;
+		return;
 
 	isku = hid_get_drvdata(hdev);
-	अगर (isku->roccat_claimed)
+	if (isku->roccat_claimed)
 		roccat_disconnect(isku->chrdev_minor);
-	kमुक्त(isku);
-पूर्ण
+	kfree(isku);
+}
 
-अटल पूर्णांक isku_probe(काष्ठा hid_device *hdev,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक retval;
+static int isku_probe(struct hid_device *hdev,
+		const struct hid_device_id *id)
+{
+	int retval;
 
 	retval = hid_parse(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "parse failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	retval = isku_init_specials(hdev);
-	अगर (retval) अणु
+	if (retval) {
 		hid_err(hdev, "couldn't install keyboard\n");
-		जाओ निकास_stop;
-	पूर्ण
+		goto exit_stop;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_stop:
+exit_stop:
 	hid_hw_stop(hdev);
-निकास:
-	वापस retval;
-पूर्ण
+exit:
+	return retval;
+}
 
-अटल व्योम isku_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	isku_हटाओ_specials(hdev);
+static void isku_remove(struct hid_device *hdev)
+{
+	isku_remove_specials(hdev);
 	hid_hw_stop(hdev);
-पूर्ण
+}
 
-अटल व्योम isku_keep_values_up_to_date(काष्ठा isku_device *isku,
-		u8 स्थिर *data)
-अणु
-	काष्ठा isku_report_button स्थिर *button_report;
+static void isku_keep_values_up_to_date(struct isku_device *isku,
+		u8 const *data)
+{
+	struct isku_report_button const *button_report;
 
-	चयन (data[0]) अणु
-	हाल ISKU_REPORT_NUMBER_BUTTON:
-		button_report = (काष्ठा isku_report_button स्थिर *)data;
-		चयन (button_report->event) अणु
-		हाल ISKU_REPORT_BUTTON_EVENT_PROखाता:
+	switch (data[0]) {
+	case ISKU_REPORT_NUMBER_BUTTON:
+		button_report = (struct isku_report_button const *)data;
+		switch (button_report->event) {
+		case ISKU_REPORT_BUTTON_EVENT_PROFILE:
 			isku_profile_activated(isku, button_report->data1 - 1);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			break;
+		}
+		break;
+	}
+}
 
-अटल व्योम isku_report_to_chrdev(काष्ठा isku_device स्थिर *isku,
-		u8 स्थिर *data)
-अणु
-	काष्ठा isku_roccat_report roccat_report;
-	काष्ठा isku_report_button स्थिर *button_report;
+static void isku_report_to_chrdev(struct isku_device const *isku,
+		u8 const *data)
+{
+	struct isku_roccat_report roccat_report;
+	struct isku_report_button const *button_report;
 
-	अगर (data[0] != ISKU_REPORT_NUMBER_BUTTON)
-		वापस;
+	if (data[0] != ISKU_REPORT_NUMBER_BUTTON)
+		return;
 
-	button_report = (काष्ठा isku_report_button स्थिर *)data;
+	button_report = (struct isku_report_button const *)data;
 
 	roccat_report.event = button_report->event;
 	roccat_report.data1 = button_report->data1;
 	roccat_report.data2 = button_report->data2;
 	roccat_report.profile = isku->actual_profile + 1;
 	roccat_report_event(isku->chrdev_minor,
-			(uपूर्णांक8_t स्थिर *)&roccat_report);
-पूर्ण
+			(uint8_t const *)&roccat_report);
+}
 
-अटल पूर्णांक isku_raw_event(काष्ठा hid_device *hdev,
-		काष्ठा hid_report *report, u8 *data, पूर्णांक size)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
-	काष्ठा isku_device *isku = hid_get_drvdata(hdev);
+static int isku_raw_event(struct hid_device *hdev,
+		struct hid_report *report, u8 *data, int size)
+{
+	struct usb_interface *intf = to_usb_interface(hdev->dev.parent);
+	struct isku_device *isku = hid_get_drvdata(hdev);
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol
+	if (intf->cur_altsetting->desc.bInterfaceProtocol
 			!= ISKU_USB_INTERFACE_PROTOCOL)
-		वापस 0;
+		return 0;
 
-	अगर (isku == शून्य)
-		वापस 0;
+	if (isku == NULL)
+		return 0;
 
 	isku_keep_values_up_to_date(isku, data);
 
-	अगर (isku->roccat_claimed)
+	if (isku->roccat_claimed)
 		isku_report_to_chrdev(isku, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा hid_device_id isku_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_ISKU) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_ISKUFX) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id isku_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_ISKU) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_ROCCAT, USB_DEVICE_ID_ROCCAT_ISKUFX) },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(hid, isku_devices);
 
-अटल काष्ठा hid_driver isku_driver = अणु
+static struct hid_driver isku_driver = {
 		.name = "isku",
 		.id_table = isku_devices,
 		.probe = isku_probe,
-		.हटाओ = isku_हटाओ,
+		.remove = isku_remove,
 		.raw_event = isku_raw_event
-पूर्ण;
+};
 
-अटल पूर्णांक __init isku_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init isku_init(void)
+{
+	int retval;
 	isku_class = class_create(THIS_MODULE, "isku");
-	अगर (IS_ERR(isku_class))
-		वापस PTR_ERR(isku_class);
+	if (IS_ERR(isku_class))
+		return PTR_ERR(isku_class);
 	isku_class->dev_groups = isku_groups;
 
-	retval = hid_रेजिस्टर_driver(&isku_driver);
-	अगर (retval)
+	retval = hid_register_driver(&isku_driver);
+	if (retval)
 		class_destroy(isku_class);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम __निकास isku_निकास(व्योम)
-अणु
-	hid_unरेजिस्टर_driver(&isku_driver);
+static void __exit isku_exit(void)
+{
+	hid_unregister_driver(&isku_driver);
 	class_destroy(isku_class);
-पूर्ण
+}
 
 module_init(isku_init);
-module_निकास(isku_निकास);
+module_exit(isku_exit);
 
 MODULE_AUTHOR("Stefan Achatz");
 MODULE_DESCRIPTION("USB Roccat Isku/FX driver");

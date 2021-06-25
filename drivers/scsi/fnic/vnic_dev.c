@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is मुक्त software; you may redistribute it and/or modअगरy
+ * This program is free software; you may redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,188 +16,188 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/slab.h>
-#समावेश "vnic_resource.h"
-#समावेश "vnic_devcmd.h"
-#समावेश "vnic_dev.h"
-#समावेश "vnic_stats.h"
-#समावेश "vnic_wq.h"
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/if_ether.h>
+#include <linux/slab.h>
+#include "vnic_resource.h"
+#include "vnic_devcmd.h"
+#include "vnic_dev.h"
+#include "vnic_stats.h"
+#include "vnic_wq.h"
 
-काष्ठा devcmd2_controller अणु
-	काष्ठा vnic_wq_ctrl *wq_ctrl;
-	काष्ठा vnic_dev_ring results_ring;
-	काष्ठा vnic_wq wq;
-	काष्ठा vnic_devcmd2 *cmd_ring;
-	काष्ठा devcmd2_result *result;
+struct devcmd2_controller {
+	struct vnic_wq_ctrl *wq_ctrl;
+	struct vnic_dev_ring results_ring;
+	struct vnic_wq wq;
+	struct vnic_devcmd2 *cmd_ring;
+	struct devcmd2_result *result;
 	u16 next_result;
 	u16 result_size;
-	पूर्णांक color;
-पूर्ण;
+	int color;
+};
 
-क्रमागत vnic_proxy_type अणु
+enum vnic_proxy_type {
 	PROXY_NONE,
 	PROXY_BY_BDF,
 	PROXY_BY_INDEX,
-पूर्ण;
+};
 
-काष्ठा vnic_res अणु
-	व्योम __iomem *vaddr;
-	अचिन्हित पूर्णांक count;
-पूर्ण;
+struct vnic_res {
+	void __iomem *vaddr;
+	unsigned int count;
+};
 
-काष्ठा vnic_dev अणु
-	व्योम *priv;
-	काष्ठा pci_dev *pdev;
-	काष्ठा vnic_res res[RES_TYPE_MAX];
-	क्रमागत vnic_dev_पूर्णांकr_mode पूर्णांकr_mode;
-	काष्ठा vnic_devcmd __iomem *devcmd;
-	काष्ठा vnic_devcmd_notअगरy *notअगरy;
-	काष्ठा vnic_devcmd_notअगरy notअगरy_copy;
-	dma_addr_t notअगरy_pa;
+struct vnic_dev {
+	void *priv;
+	struct pci_dev *pdev;
+	struct vnic_res res[RES_TYPE_MAX];
+	enum vnic_dev_intr_mode intr_mode;
+	struct vnic_devcmd __iomem *devcmd;
+	struct vnic_devcmd_notify *notify;
+	struct vnic_devcmd_notify notify_copy;
+	dma_addr_t notify_pa;
 	u32 *linkstatus;
 	dma_addr_t linkstatus_pa;
-	काष्ठा vnic_stats *stats;
+	struct vnic_stats *stats;
 	dma_addr_t stats_pa;
-	काष्ठा vnic_devcmd_fw_info *fw_info;
+	struct vnic_devcmd_fw_info *fw_info;
 	dma_addr_t fw_info_pa;
-	क्रमागत vnic_proxy_type proxy;
+	enum vnic_proxy_type proxy;
 	u32 proxy_index;
 	u64 args[VNIC_DEVCMD_NARGS];
-	काष्ठा devcmd2_controller *devcmd2;
-	पूर्णांक (*devcmd_rtn)(काष्ठा vnic_dev *vdev, क्रमागत vnic_devcmd_cmd cmd,
-			पूर्णांक रुको);
-पूर्ण;
+	struct devcmd2_controller *devcmd2;
+	int (*devcmd_rtn)(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
+			int wait);
+};
 
-#घोषणा VNIC_MAX_RES_HDR_SIZE \
-	(माप(काष्ठा vnic_resource_header) + \
-	माप(काष्ठा vnic_resource) * RES_TYPE_MAX)
-#घोषणा VNIC_RES_STRIDE	128
+#define VNIC_MAX_RES_HDR_SIZE \
+	(sizeof(struct vnic_resource_header) + \
+	sizeof(struct vnic_resource) * RES_TYPE_MAX)
+#define VNIC_RES_STRIDE	128
 
-व्योम *vnic_dev_priv(काष्ठा vnic_dev *vdev)
-अणु
-	वापस vdev->priv;
-पूर्ण
+void *vnic_dev_priv(struct vnic_dev *vdev)
+{
+	return vdev->priv;
+}
 
-अटल पूर्णांक vnic_dev_discover_res(काष्ठा vnic_dev *vdev,
-	काष्ठा vnic_dev_bar *bar)
-अणु
-	काष्ठा vnic_resource_header __iomem *rh;
-	काष्ठा vnic_resource __iomem *r;
+static int vnic_dev_discover_res(struct vnic_dev *vdev,
+	struct vnic_dev_bar *bar)
+{
+	struct vnic_resource_header __iomem *rh;
+	struct vnic_resource __iomem *r;
 	u8 type;
 
-	अगर (bar->len < VNIC_MAX_RES_HDR_SIZE) अणु
-		prपूर्णांकk(KERN_ERR "vNIC BAR0 res hdr length error\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (bar->len < VNIC_MAX_RES_HDR_SIZE) {
+		printk(KERN_ERR "vNIC BAR0 res hdr length error\n");
+		return -EINVAL;
+	}
 
 	rh = bar->vaddr;
-	अगर (!rh) अणु
-		prपूर्णांकk(KERN_ERR "vNIC BAR0 res hdr not mem-mapped\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!rh) {
+		printk(KERN_ERR "vNIC BAR0 res hdr not mem-mapped\n");
+		return -EINVAL;
+	}
 
-	अगर (ioपढ़ो32(&rh->magic) != VNIC_RES_MAGIC ||
-	    ioपढ़ो32(&rh->version) != VNIC_RES_VERSION) अणु
-		prपूर्णांकk(KERN_ERR "vNIC BAR0 res magic/version error "
+	if (ioread32(&rh->magic) != VNIC_RES_MAGIC ||
+	    ioread32(&rh->version) != VNIC_RES_VERSION) {
+		printk(KERN_ERR "vNIC BAR0 res magic/version error "
 			"exp (%lx/%lx) curr (%x/%x)\n",
 			VNIC_RES_MAGIC, VNIC_RES_VERSION,
-			ioपढ़ो32(&rh->magic), ioपढ़ो32(&rh->version));
-		वापस -EINVAL;
-	पूर्ण
+			ioread32(&rh->magic), ioread32(&rh->version));
+		return -EINVAL;
+	}
 
-	r = (काष्ठा vnic_resource __iomem *)(rh + 1);
+	r = (struct vnic_resource __iomem *)(rh + 1);
 
-	जबतक ((type = ioपढ़ो8(&r->type)) != RES_TYPE_EOL) अणु
+	while ((type = ioread8(&r->type)) != RES_TYPE_EOL) {
 
-		u8 bar_num = ioपढ़ो8(&r->bar);
-		u32 bar_offset = ioपढ़ो32(&r->bar_offset);
-		u32 count = ioपढ़ो32(&r->count);
+		u8 bar_num = ioread8(&r->bar);
+		u32 bar_offset = ioread32(&r->bar_offset);
+		u32 count = ioread32(&r->count);
 		u32 len;
 
 		r++;
 
-		अगर (bar_num != 0)  /* only mapping in BAR0 resources */
-			जारी;
+		if (bar_num != 0)  /* only mapping in BAR0 resources */
+			continue;
 
-		चयन (type) अणु
-		हाल RES_TYPE_WQ:
-		हाल RES_TYPE_RQ:
-		हाल RES_TYPE_CQ:
-		हाल RES_TYPE_INTR_CTRL:
-			/* each count is stride bytes दीर्घ */
+		switch (type) {
+		case RES_TYPE_WQ:
+		case RES_TYPE_RQ:
+		case RES_TYPE_CQ:
+		case RES_TYPE_INTR_CTRL:
+			/* each count is stride bytes long */
 			len = count * VNIC_RES_STRIDE;
-			अगर (len + bar_offset > bar->len) अणु
-				prपूर्णांकk(KERN_ERR "vNIC BAR0 resource %d "
+			if (len + bar_offset > bar->len) {
+				printk(KERN_ERR "vNIC BAR0 resource %d "
 					"out-of-bounds, offset 0x%x + "
 					"size 0x%x > bar len 0x%lx\n",
 					type, bar_offset,
 					len,
 					bar->len);
-				वापस -EINVAL;
-			पूर्ण
-			अवरोध;
-		हाल RES_TYPE_INTR_PBA_LEGACY:
-		हाल RES_TYPE_DEVCMD2:
-		हाल RES_TYPE_DEVCMD:
+				return -EINVAL;
+			}
+			break;
+		case RES_TYPE_INTR_PBA_LEGACY:
+		case RES_TYPE_DEVCMD2:
+		case RES_TYPE_DEVCMD:
 			len = count;
-			अवरोध;
-		शेष:
-			जारी;
-		पूर्ण
+			break;
+		default:
+			continue;
+		}
 
 		vdev->res[type].count = count;
-		vdev->res[type].vaddr = (अक्षर __iomem *)bar->vaddr + bar_offset;
-	पूर्ण
+		vdev->res[type].vaddr = (char __iomem *)bar->vaddr + bar_offset;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक vnic_dev_get_res_count(काष्ठा vnic_dev *vdev,
-	क्रमागत vnic_res_type type)
-अणु
-	वापस vdev->res[type].count;
-पूर्ण
+unsigned int vnic_dev_get_res_count(struct vnic_dev *vdev,
+	enum vnic_res_type type)
+{
+	return vdev->res[type].count;
+}
 
-व्योम __iomem *vnic_dev_get_res(काष्ठा vnic_dev *vdev, क्रमागत vnic_res_type type,
-	अचिन्हित पूर्णांक index)
-अणु
-	अगर (!vdev->res[type].vaddr)
-		वापस शून्य;
+void __iomem *vnic_dev_get_res(struct vnic_dev *vdev, enum vnic_res_type type,
+	unsigned int index)
+{
+	if (!vdev->res[type].vaddr)
+		return NULL;
 
-	चयन (type) अणु
-	हाल RES_TYPE_WQ:
-	हाल RES_TYPE_RQ:
-	हाल RES_TYPE_CQ:
-	हाल RES_TYPE_INTR_CTRL:
-		वापस (अक्षर __iomem *)vdev->res[type].vaddr +
+	switch (type) {
+	case RES_TYPE_WQ:
+	case RES_TYPE_RQ:
+	case RES_TYPE_CQ:
+	case RES_TYPE_INTR_CTRL:
+		return (char __iomem *)vdev->res[type].vaddr +
 					index * VNIC_RES_STRIDE;
-	शेष:
-		वापस (अक्षर __iomem *)vdev->res[type].vaddr;
-	पूर्ण
-पूर्ण
+	default:
+		return (char __iomem *)vdev->res[type].vaddr;
+	}
+}
 
-अचिन्हित पूर्णांक vnic_dev_desc_ring_size(काष्ठा vnic_dev_ring *ring,
-				     अचिन्हित पूर्णांक desc_count,
-				     अचिन्हित पूर्णांक desc_size)
-अणु
+unsigned int vnic_dev_desc_ring_size(struct vnic_dev_ring *ring,
+				     unsigned int desc_count,
+				     unsigned int desc_size)
+{
 	/* The base address of the desc rings must be 512 byte aligned.
 	 * Descriptor count is aligned to groups of 32 descriptors.  A
 	 * count of 0 means the maximum 4096 descriptors.  Descriptor
 	 * size is aligned to 16 bytes.
 	 */
 
-	अचिन्हित पूर्णांक count_align = 32;
-	अचिन्हित पूर्णांक desc_align = 16;
+	unsigned int count_align = 32;
+	unsigned int desc_align = 16;
 
 	ring->base_align = 512;
 
-	अगर (desc_count == 0)
+	if (desc_count == 0)
 		desc_count = 4096;
 
 	ring->desc_count = ALIGN(desc_count, count_align);
@@ -208,29 +207,29 @@
 	ring->size = ring->desc_count * ring->desc_size;
 	ring->size_unaligned = ring->size + ring->base_align;
 
-	वापस ring->size_unaligned;
-पूर्ण
+	return ring->size_unaligned;
+}
 
-व्योम vnic_dev_clear_desc_ring(काष्ठा vnic_dev_ring *ring)
-अणु
-	स_रखो(ring->descs, 0, ring->size);
-पूर्ण
+void vnic_dev_clear_desc_ring(struct vnic_dev_ring *ring)
+{
+	memset(ring->descs, 0, ring->size);
+}
 
-पूर्णांक vnic_dev_alloc_desc_ring(काष्ठा vnic_dev *vdev, काष्ठा vnic_dev_ring *ring,
-	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size)
-अणु
+int vnic_dev_alloc_desc_ring(struct vnic_dev *vdev, struct vnic_dev_ring *ring,
+	unsigned int desc_count, unsigned int desc_size)
+{
 	vnic_dev_desc_ring_size(ring, desc_count, desc_size);
 
 	ring->descs_unaligned = dma_alloc_coherent(&vdev->pdev->dev,
 		ring->size_unaligned,
 		&ring->base_addr_unaligned, GFP_KERNEL);
 
-	अगर (!ring->descs_unaligned) अणु
-		prपूर्णांकk(KERN_ERR
+	if (!ring->descs_unaligned) {
+		printk(KERN_ERR
 		  "Failed to allocate ring (size=%d), aborting\n",
-			(पूर्णांक)ring->size);
-		वापस -ENOMEM;
-	पूर्ण
+			(int)ring->size);
+		return -ENOMEM;
+	}
 
 	ring->base_addr = ALIGN(ring->base_addr_unaligned,
 		ring->base_align);
@@ -241,218 +240,218 @@
 
 	ring->desc_avail = ring->desc_count - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vnic_dev_मुक्त_desc_ring(काष्ठा vnic_dev *vdev, काष्ठा vnic_dev_ring *ring)
-अणु
-	अगर (ring->descs) अणु
-		dma_मुक्त_coherent(&vdev->pdev->dev,
+void vnic_dev_free_desc_ring(struct vnic_dev *vdev, struct vnic_dev_ring *ring)
+{
+	if (ring->descs) {
+		dma_free_coherent(&vdev->pdev->dev,
 			ring->size_unaligned,
 			ring->descs_unaligned,
 			ring->base_addr_unaligned);
-		ring->descs = शून्य;
-	पूर्ण
-पूर्ण
+		ring->descs = NULL;
+	}
+}
 
-अटल पूर्णांक vnic_dev_cmd1(काष्ठा vnic_dev *vdev, क्रमागत vnic_devcmd_cmd cmd, पूर्णांक रुको)
-अणु
-	काष्ठा vnic_devcmd __iomem *devcmd = vdev->devcmd;
-	पूर्णांक delay;
+static int vnic_dev_cmd1(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd, int wait)
+{
+	struct vnic_devcmd __iomem *devcmd = vdev->devcmd;
+	int delay;
 	u32 status;
-	अटल स्थिर पूर्णांक dev_cmd_err[] = अणु
+	static const int dev_cmd_err[] = {
 		/* convert from fw's version of error.h to host's version */
 		0,	/* ERR_SUCCESS */
 		EINVAL,	/* ERR_EINVAL */
 		EFAULT,	/* ERR_EFAULT */
 		EPERM,	/* ERR_EPERM */
 		EBUSY,  /* ERR_EBUSY */
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 	u64 *a0 = &vdev->args[0];
 	u64 *a1 = &vdev->args[1];
 
-	status = ioपढ़ो32(&devcmd->status);
-	अगर (status & STAT_BUSY) अणु
-		prपूर्णांकk(KERN_ERR "Busy devcmd %d\n", _CMD_N(cmd));
-		वापस -EBUSY;
-	पूर्ण
+	status = ioread32(&devcmd->status);
+	if (status & STAT_BUSY) {
+		printk(KERN_ERR "Busy devcmd %d\n", _CMD_N(cmd));
+		return -EBUSY;
+	}
 
-	अगर (_CMD_सूची(cmd) & _CMD_सूची_WRITE) अणु
-		ग_लिखोq(*a0, &devcmd->args[0]);
-		ग_लिखोq(*a1, &devcmd->args[1]);
+	if (_CMD_DIR(cmd) & _CMD_DIR_WRITE) {
+		writeq(*a0, &devcmd->args[0]);
+		writeq(*a1, &devcmd->args[1]);
 		wmb();
-	पूर्ण
+	}
 
-	ioग_लिखो32(cmd, &devcmd->cmd);
+	iowrite32(cmd, &devcmd->cmd);
 
-	अगर ((_CMD_FLAGS(cmd) & _CMD_FLAGS_NOWAIT))
-			वापस 0;
+	if ((_CMD_FLAGS(cmd) & _CMD_FLAGS_NOWAIT))
+			return 0;
 
-	क्रम (delay = 0; delay < रुको; delay++) अणु
+	for (delay = 0; delay < wait; delay++) {
 
 		udelay(100);
 
-		status = ioपढ़ो32(&devcmd->status);
-		अगर (!(status & STAT_BUSY)) अणु
+		status = ioread32(&devcmd->status);
+		if (!(status & STAT_BUSY)) {
 
-			अगर (status & STAT_ERROR) अणु
-				err = dev_cmd_err[(पूर्णांक)पढ़ोq(&devcmd->args[0])];
-				prपूर्णांकk(KERN_ERR "Error %d devcmd %d\n",
+			if (status & STAT_ERROR) {
+				err = dev_cmd_err[(int)readq(&devcmd->args[0])];
+				printk(KERN_ERR "Error %d devcmd %d\n",
 					err, _CMD_N(cmd));
-				वापस -err;
-			पूर्ण
+				return -err;
+			}
 
-			अगर (_CMD_सूची(cmd) & _CMD_सूची_READ) अणु
+			if (_CMD_DIR(cmd) & _CMD_DIR_READ) {
 				rmb();
-				*a0 = पढ़ोq(&devcmd->args[0]);
-				*a1 = पढ़ोq(&devcmd->args[1]);
-			पूर्ण
+				*a0 = readq(&devcmd->args[0]);
+				*a1 = readq(&devcmd->args[1]);
+			}
 
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	prपूर्णांकk(KERN_ERR "Timedout devcmd %d\n", _CMD_N(cmd));
-	वापस -ETIMEDOUT;
-पूर्ण
+	printk(KERN_ERR "Timedout devcmd %d\n", _CMD_N(cmd));
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक vnic_dev_cmd2(काष्ठा vnic_dev *vdev, क्रमागत vnic_devcmd_cmd cmd,
-		पूर्णांक रुको)
-अणु
-	काष्ठा devcmd2_controller *dc2c = vdev->devcmd2;
-	काष्ठा devcmd2_result *result;
+static int vnic_dev_cmd2(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
+		int wait)
+{
+	struct devcmd2_controller *dc2c = vdev->devcmd2;
+	struct devcmd2_result *result;
 	u8 color;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक delay;
-	पूर्णांक err;
+	unsigned int i;
+	int delay;
+	int err;
 	u32 fetch_index;
 	u32 posted;
 	u32 new_posted;
 
-	posted = ioपढ़ो32(&dc2c->wq_ctrl->posted_index);
-	fetch_index = ioपढ़ो32(&dc2c->wq_ctrl->fetch_index);
+	posted = ioread32(&dc2c->wq_ctrl->posted_index);
+	fetch_index = ioread32(&dc2c->wq_ctrl->fetch_index);
 
-	अगर (posted == 0xFFFFFFFF || fetch_index == 0xFFFFFFFF) अणु
-		/* Hardware surprise removal: वापस error */
+	if (posted == 0xFFFFFFFF || fetch_index == 0xFFFFFFFF) {
+		/* Hardware surprise removal: return error */
 		pr_err("%s: devcmd2 invalid posted or fetch index on cmd %d\n",
 				pci_name(vdev->pdev), _CMD_N(cmd));
 		pr_err("%s: fetch index: %u, posted index: %u\n",
 				pci_name(vdev->pdev), fetch_index, posted);
 
-		वापस -ENODEV;
+		return -ENODEV;
 
-	पूर्ण
+	}
 
 	new_posted = (posted + 1) % DEVCMD2_RING_SIZE;
 
-	अगर (new_posted == fetch_index) अणु
+	if (new_posted == fetch_index) {
 		pr_err("%s: devcmd2 wq full while issuing cmd %d\n",
 				pci_name(vdev->pdev), _CMD_N(cmd));
 		pr_err("%s: fetch index: %u, posted index: %u\n",
 				pci_name(vdev->pdev), fetch_index, posted);
-		वापस -EBUSY;
+		return -EBUSY;
 
-	पूर्ण
+	}
 	dc2c->cmd_ring[posted].cmd = cmd;
 	dc2c->cmd_ring[posted].flags = 0;
 
-	अगर ((_CMD_FLAGS(cmd) & _CMD_FLAGS_NOWAIT))
+	if ((_CMD_FLAGS(cmd) & _CMD_FLAGS_NOWAIT))
 		dc2c->cmd_ring[posted].flags |= DEVCMD2_FNORESULT;
-	अगर (_CMD_सूची(cmd) & _CMD_सूची_WRITE) अणु
-		क्रम (i = 0; i < VNIC_DEVCMD_NARGS; i++)
+	if (_CMD_DIR(cmd) & _CMD_DIR_WRITE) {
+		for (i = 0; i < VNIC_DEVCMD_NARGS; i++)
 			dc2c->cmd_ring[posted].args[i] = vdev->args[i];
 
-	पूर्ण
+	}
 
-	/* Adding ग_लिखो memory barrier prevents compiler and/or CPU
-	 * reordering, thus aव्योमing descriptor posting beक्रमe
-	 * descriptor is initialized. Otherwise, hardware can पढ़ो
+	/* Adding write memory barrier prevents compiler and/or CPU
+	 * reordering, thus avoiding descriptor posting before
+	 * descriptor is initialized. Otherwise, hardware can read
 	 * stale descriptor fields.
 	 */
 	wmb();
-	ioग_लिखो32(new_posted, &dc2c->wq_ctrl->posted_index);
+	iowrite32(new_posted, &dc2c->wq_ctrl->posted_index);
 
-	अगर (dc2c->cmd_ring[posted].flags & DEVCMD2_FNORESULT)
-		वापस 0;
+	if (dc2c->cmd_ring[posted].flags & DEVCMD2_FNORESULT)
+		return 0;
 
 	result = dc2c->result + dc2c->next_result;
 	color = dc2c->color;
 
 	dc2c->next_result++;
-	अगर (dc2c->next_result == dc2c->result_size) अणु
+	if (dc2c->next_result == dc2c->result_size) {
 		dc2c->next_result = 0;
 		dc2c->color = dc2c->color ? 0 : 1;
-	पूर्ण
+	}
 
-	क्रम (delay = 0; delay < रुको; delay++) अणु
+	for (delay = 0; delay < wait; delay++) {
 		udelay(100);
-		अगर (result->color == color) अणु
-			अगर (result->error) अणु
-				err = -(पूर्णांक) result->error;
-				अगर (err != ERR_ECMDUNKNOWN ||
+		if (result->color == color) {
+			if (result->error) {
+				err = -(int) result->error;
+				if (err != ERR_ECMDUNKNOWN ||
 						cmd != CMD_CAPABILITY)
 					pr_err("%s:Error %d devcmd %d\n",
 						pci_name(vdev->pdev),
 						err, _CMD_N(cmd));
-				वापस err;
-			पूर्ण
-			अगर (_CMD_सूची(cmd) & _CMD_सूची_READ) अणु
-				rmb(); /*prevent reorder जबतक reding result*/
-				क्रम (i = 0; i < VNIC_DEVCMD_NARGS; i++)
+				return err;
+			}
+			if (_CMD_DIR(cmd) & _CMD_DIR_READ) {
+				rmb(); /*prevent reorder while reding result*/
+				for (i = 0; i < VNIC_DEVCMD_NARGS; i++)
 					vdev->args[i] = result->results[i];
-			पूर्ण
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			}
+			return 0;
+		}
+	}
 
 	pr_err("%s:Timed out devcmd %d\n", pci_name(vdev->pdev), _CMD_N(cmd));
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
 
-अटल पूर्णांक vnic_dev_init_devcmd1(काष्ठा vnic_dev *vdev)
-अणु
+static int vnic_dev_init_devcmd1(struct vnic_dev *vdev)
+{
 	vdev->devcmd = vnic_dev_get_res(vdev, RES_TYPE_DEVCMD, 0);
-	अगर (!vdev->devcmd)
-		वापस -ENODEV;
+	if (!vdev->devcmd)
+		return -ENODEV;
 
 	vdev->devcmd_rtn = &vnic_dev_cmd1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक vnic_dev_init_devcmd2(काष्ठा vnic_dev *vdev)
-अणु
-	पूर्णांक err;
-	अचिन्हित पूर्णांक fetch_index;
+static int vnic_dev_init_devcmd2(struct vnic_dev *vdev)
+{
+	int err;
+	unsigned int fetch_index;
 
-	अगर (vdev->devcmd2)
-		वापस 0;
+	if (vdev->devcmd2)
+		return 0;
 
-	vdev->devcmd2 = kzalloc(माप(*vdev->devcmd2), GFP_ATOMIC);
-	अगर (!vdev->devcmd2)
-		वापस -ENOMEM;
+	vdev->devcmd2 = kzalloc(sizeof(*vdev->devcmd2), GFP_ATOMIC);
+	if (!vdev->devcmd2)
+		return -ENOMEM;
 
 	vdev->devcmd2->color = 1;
 	vdev->devcmd2->result_size = DEVCMD2_RING_SIZE;
 	err = vnic_wq_devcmd2_alloc(vdev, &vdev->devcmd2->wq,
 				DEVCMD2_RING_SIZE, DEVCMD2_DESC_SIZE);
-	अगर (err)
-		जाओ err_मुक्त_devcmd2;
+	if (err)
+		goto err_free_devcmd2;
 
-	fetch_index = ioपढ़ो32(&vdev->devcmd2->wq.ctrl->fetch_index);
-	अगर (fetch_index == 0xFFFFFFFF) अणु /* check क्रम hardware gone  */
+	fetch_index = ioread32(&vdev->devcmd2->wq.ctrl->fetch_index);
+	if (fetch_index == 0xFFFFFFFF) { /* check for hardware gone  */
 		pr_err("error in devcmd2 init");
 		err = -ENODEV;
-		जाओ err_मुक्त_wq;
-	पूर्ण
+		goto err_free_wq;
+	}
 
 	/*
 	 * Don't change fetch_index ever and
 	 * set posted_index same as fetch_index
-	 * when setting up the WQ क्रम devcmd2.
+	 * when setting up the WQ for devcmd2.
 	 */
 	vnic_wq_init_start(&vdev->devcmd2->wq, 0, fetch_index,
 			fetch_index, 0, 0);
@@ -461,496 +460,496 @@
 
 	err = vnic_dev_alloc_desc_ring(vdev, &vdev->devcmd2->results_ring,
 			DEVCMD2_RING_SIZE, DEVCMD2_DESC_SIZE);
-	अगर (err)
-		जाओ err_disable_wq;
+	if (err)
+		goto err_disable_wq;
 
 	vdev->devcmd2->result =
-		(काष्ठा devcmd2_result *) vdev->devcmd2->results_ring.descs;
+		(struct devcmd2_result *) vdev->devcmd2->results_ring.descs;
 	vdev->devcmd2->cmd_ring =
-		(काष्ठा vnic_devcmd2 *) vdev->devcmd2->wq.ring.descs;
+		(struct vnic_devcmd2 *) vdev->devcmd2->wq.ring.descs;
 	vdev->devcmd2->wq_ctrl = vdev->devcmd2->wq.ctrl;
 	vdev->args[0] = (u64) vdev->devcmd2->results_ring.base_addr |
 				VNIC_PADDR_TARGET;
 	vdev->args[1] = DEVCMD2_RING_SIZE;
 
 	err = vnic_dev_cmd2(vdev, CMD_INITIALIZE_DEVCMD2, 1000);
-	अगर (err)
-		जाओ err_मुक्त_desc_ring;
+	if (err)
+		goto err_free_desc_ring;
 
 	vdev->devcmd_rtn = &vnic_dev_cmd2;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_desc_ring:
-	vnic_dev_मुक्त_desc_ring(vdev, &vdev->devcmd2->results_ring);
+err_free_desc_ring:
+	vnic_dev_free_desc_ring(vdev, &vdev->devcmd2->results_ring);
 err_disable_wq:
 	vnic_wq_disable(&vdev->devcmd2->wq);
-err_मुक्त_wq:
-	vnic_wq_मुक्त(&vdev->devcmd2->wq);
-err_मुक्त_devcmd2:
-	kमुक्त(vdev->devcmd2);
-	vdev->devcmd2 = शून्य;
+err_free_wq:
+	vnic_wq_free(&vdev->devcmd2->wq);
+err_free_devcmd2:
+	kfree(vdev->devcmd2);
+	vdev->devcmd2 = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल व्योम vnic_dev_deinit_devcmd2(काष्ठा vnic_dev *vdev)
-अणु
-	vnic_dev_मुक्त_desc_ring(vdev, &vdev->devcmd2->results_ring);
+static void vnic_dev_deinit_devcmd2(struct vnic_dev *vdev)
+{
+	vnic_dev_free_desc_ring(vdev, &vdev->devcmd2->results_ring);
 	vnic_wq_disable(&vdev->devcmd2->wq);
-	vnic_wq_मुक्त(&vdev->devcmd2->wq);
-	kमुक्त(vdev->devcmd2);
-	vdev->devcmd2 = शून्य;
+	vnic_wq_free(&vdev->devcmd2->wq);
+	kfree(vdev->devcmd2);
+	vdev->devcmd2 = NULL;
 	vdev->devcmd_rtn = &vnic_dev_cmd1;
-पूर्ण
+}
 
 
-अटल पूर्णांक vnic_dev_cmd_no_proxy(काष्ठा vnic_dev *vdev,
-	क्रमागत vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, पूर्णांक रुको)
-अणु
-	पूर्णांक err;
+static int vnic_dev_cmd_no_proxy(struct vnic_dev *vdev,
+	enum vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, int wait)
+{
+	int err;
 
 	vdev->args[0] = *a0;
 	vdev->args[1] = *a1;
 
-	err = (*vdev->devcmd_rtn)(vdev, cmd, रुको);
+	err = (*vdev->devcmd_rtn)(vdev, cmd, wait);
 
 	*a0 = vdev->args[0];
 	*a1 = vdev->args[1];
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-पूर्णांक vnic_dev_cmd(काष्ठा vnic_dev *vdev, क्रमागत vnic_devcmd_cmd cmd,
-	u64 *a0, u64 *a1, पूर्णांक रुको)
-अणु
-	स_रखो(vdev->args, 0, माप(vdev->args));
+int vnic_dev_cmd(struct vnic_dev *vdev, enum vnic_devcmd_cmd cmd,
+	u64 *a0, u64 *a1, int wait)
+{
+	memset(vdev->args, 0, sizeof(vdev->args));
 
-	चयन (vdev->proxy) अणु
-	हाल PROXY_NONE:
-	शेष:
-		वापस vnic_dev_cmd_no_proxy(vdev, cmd, a0, a1, रुको);
-	पूर्ण
-पूर्ण
+	switch (vdev->proxy) {
+	case PROXY_NONE:
+	default:
+		return vnic_dev_cmd_no_proxy(vdev, cmd, a0, a1, wait);
+	}
+}
 
 
-पूर्णांक vnic_dev_fw_info(काष्ठा vnic_dev *vdev,
-	काष्ठा vnic_devcmd_fw_info **fw_info)
-अणु
+int vnic_dev_fw_info(struct vnic_dev *vdev,
+	struct vnic_devcmd_fw_info **fw_info)
+{
 	u64 a0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err = 0;
+	int wait = 1000;
+	int err = 0;
 
-	अगर (!vdev->fw_info) अणु
+	if (!vdev->fw_info) {
 		vdev->fw_info = dma_alloc_coherent(&vdev->pdev->dev,
-			माप(काष्ठा vnic_devcmd_fw_info),
+			sizeof(struct vnic_devcmd_fw_info),
 			&vdev->fw_info_pa, GFP_KERNEL);
-		अगर (!vdev->fw_info)
-			वापस -ENOMEM;
+		if (!vdev->fw_info)
+			return -ENOMEM;
 
 		a0 = vdev->fw_info_pa;
 
 		/* only get fw_info once and cache it */
-		err = vnic_dev_cmd(vdev, CMD_MCPU_FW_INFO, &a0, &a1, रुको);
-	पूर्ण
+		err = vnic_dev_cmd(vdev, CMD_MCPU_FW_INFO, &a0, &a1, wait);
+	}
 
 	*fw_info = vdev->fw_info;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक vnic_dev_spec(काष्ठा vnic_dev *vdev, अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size,
-	व्योम *value)
-अणु
+int vnic_dev_spec(struct vnic_dev *vdev, unsigned int offset, unsigned int size,
+	void *value)
+{
 	u64 a0, a1;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
+	int wait = 1000;
+	int err;
 
 	a0 = offset;
 	a1 = size;
 
-	err = vnic_dev_cmd(vdev, CMD_DEV_SPEC, &a0, &a1, रुको);
+	err = vnic_dev_cmd(vdev, CMD_DEV_SPEC, &a0, &a1, wait);
 
-	चयन (size) अणु
-	हाल 1:
+	switch (size) {
+	case 1:
 		*(u8 *)value = (u8)a0;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		*(u16 *)value = (u16)a0;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		*(u32 *)value = (u32)a0;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		*(u64 *)value = a0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक vnic_dev_stats_clear(काष्ठा vnic_dev *vdev)
-अणु
+int vnic_dev_stats_clear(struct vnic_dev *vdev)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_STATS_CLEAR, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_STATS_CLEAR, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_stats_dump(काष्ठा vnic_dev *vdev, काष्ठा vnic_stats **stats)
-अणु
+int vnic_dev_stats_dump(struct vnic_dev *vdev, struct vnic_stats **stats)
+{
 	u64 a0, a1;
-	पूर्णांक रुको = 1000;
+	int wait = 1000;
 
-	अगर (!vdev->stats) अणु
+	if (!vdev->stats) {
 		vdev->stats = dma_alloc_coherent(&vdev->pdev->dev,
-			माप(काष्ठा vnic_stats), &vdev->stats_pa, GFP_KERNEL);
-		अगर (!vdev->stats)
-			वापस -ENOMEM;
-	पूर्ण
+			sizeof(struct vnic_stats), &vdev->stats_pa, GFP_KERNEL);
+		if (!vdev->stats)
+			return -ENOMEM;
+	}
 
 	*stats = vdev->stats;
 	a0 = vdev->stats_pa;
-	a1 = माप(काष्ठा vnic_stats);
+	a1 = sizeof(struct vnic_stats);
 
-	वापस vnic_dev_cmd(vdev, CMD_STATS_DUMP, &a0, &a1, रुको);
-पूर्ण
+	return vnic_dev_cmd(vdev, CMD_STATS_DUMP, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_बंद(काष्ठा vnic_dev *vdev)
-अणु
+int vnic_dev_close(struct vnic_dev *vdev)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_CLOSE, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_CLOSE, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_enable(काष्ठा vnic_dev *vdev)
-अणु
+int vnic_dev_enable(struct vnic_dev *vdev)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_ENABLE, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_ENABLE, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_disable(काष्ठा vnic_dev *vdev)
-अणु
+int vnic_dev_disable(struct vnic_dev *vdev)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_DISABLE, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_DISABLE, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_खोलो(काष्ठा vnic_dev *vdev, पूर्णांक arg)
-अणु
+int vnic_dev_open(struct vnic_dev *vdev, int arg)
+{
 	u64 a0 = (u32)arg, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_OPEN, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_OPEN, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_खोलो_करोne(काष्ठा vnic_dev *vdev, पूर्णांक *करोne)
-अणु
+int vnic_dev_open_done(struct vnic_dev *vdev, int *done)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
+	int wait = 1000;
+	int err;
 
-	*करोne = 0;
+	*done = 0;
 
-	err = vnic_dev_cmd(vdev, CMD_OPEN_STATUS, &a0, &a1, रुको);
-	अगर (err)
-		वापस err;
+	err = vnic_dev_cmd(vdev, CMD_OPEN_STATUS, &a0, &a1, wait);
+	if (err)
+		return err;
 
-	*करोne = (a0 == 0);
+	*done = (a0 == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vnic_dev_soft_reset(काष्ठा vnic_dev *vdev, पूर्णांक arg)
-अणु
+int vnic_dev_soft_reset(struct vnic_dev *vdev, int arg)
+{
 	u64 a0 = (u32)arg, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_SOFT_RESET, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_SOFT_RESET, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_soft_reset_करोne(काष्ठा vnic_dev *vdev, पूर्णांक *करोne)
-अणु
+int vnic_dev_soft_reset_done(struct vnic_dev *vdev, int *done)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
+	int wait = 1000;
+	int err;
 
-	*करोne = 0;
+	*done = 0;
 
-	err = vnic_dev_cmd(vdev, CMD_SOFT_RESET_STATUS, &a0, &a1, रुको);
-	अगर (err)
-		वापस err;
+	err = vnic_dev_cmd(vdev, CMD_SOFT_RESET_STATUS, &a0, &a1, wait);
+	if (err)
+		return err;
 
-	*करोne = (a0 == 0);
+	*done = (a0 == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vnic_dev_hang_notअगरy(काष्ठा vnic_dev *vdev)
-अणु
+int vnic_dev_hang_notify(struct vnic_dev *vdev)
+{
 	u64 a0 = 0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_HANG_NOTIFY, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_HANG_NOTIFY, &a0, &a1, wait);
+}
 
-पूर्णांक vnic_dev_mac_addr(काष्ठा vnic_dev *vdev, u8 *mac_addr)
-अणु
-	u64 a[2] = अणुपूर्ण;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err, i;
+int vnic_dev_mac_addr(struct vnic_dev *vdev, u8 *mac_addr)
+{
+	u64 a[2] = {};
+	int wait = 1000;
+	int err, i;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		mac_addr[i] = 0;
 
-	err = vnic_dev_cmd(vdev, CMD_MAC_ADDR, &a[0], &a[1], रुको);
-	अगर (err)
-		वापस err;
+	err = vnic_dev_cmd(vdev, CMD_MAC_ADDR, &a[0], &a[1], wait);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		mac_addr[i] = ((u8 *)&a)[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम vnic_dev_packet_filter(काष्ठा vnic_dev *vdev, पूर्णांक directed, पूर्णांक multicast,
-	पूर्णांक broadcast, पूर्णांक promisc, पूर्णांक allmulti)
-अणु
+void vnic_dev_packet_filter(struct vnic_dev *vdev, int directed, int multicast,
+	int broadcast, int promisc, int allmulti)
+{
 	u64 a0, a1 = 0;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
+	int wait = 1000;
+	int err;
 
-	a0 = (directed ? CMD_PFILTER_सूचीECTED : 0) |
+	a0 = (directed ? CMD_PFILTER_DIRECTED : 0) |
 	     (multicast ? CMD_PFILTER_MULTICAST : 0) |
 	     (broadcast ? CMD_PFILTER_BROADCAST : 0) |
 	     (promisc ? CMD_PFILTER_PROMISCUOUS : 0) |
 	     (allmulti ? CMD_PFILTER_ALL_MULTICAST : 0);
 
-	err = vnic_dev_cmd(vdev, CMD_PACKET_FILTER, &a0, &a1, रुको);
-	अगर (err)
-		prपूर्णांकk(KERN_ERR "Can't set packet filter\n");
-पूर्ण
+	err = vnic_dev_cmd(vdev, CMD_PACKET_FILTER, &a0, &a1, wait);
+	if (err)
+		printk(KERN_ERR "Can't set packet filter\n");
+}
 
-व्योम vnic_dev_add_addr(काष्ठा vnic_dev *vdev, u8 *addr)
-अणु
-	u64 a[2] = अणुपूर्ण;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
-	पूर्णांक i;
+void vnic_dev_add_addr(struct vnic_dev *vdev, u8 *addr)
+{
+	u64 a[2] = {};
+	int wait = 1000;
+	int err;
+	int i;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		((u8 *)&a)[i] = addr[i];
 
-	err = vnic_dev_cmd(vdev, CMD_ADDR_ADD, &a[0], &a[1], रुको);
-	अगर (err)
+	err = vnic_dev_cmd(vdev, CMD_ADDR_ADD, &a[0], &a[1], wait);
+	if (err)
 		pr_err("Can't add addr [%pM], %d\n", addr, err);
-पूर्ण
+}
 
-व्योम vnic_dev_del_addr(काष्ठा vnic_dev *vdev, u8 *addr)
-अणु
-	u64 a[2] = अणुपूर्ण;
-	पूर्णांक रुको = 1000;
-	पूर्णांक err;
-	पूर्णांक i;
+void vnic_dev_del_addr(struct vnic_dev *vdev, u8 *addr)
+{
+	u64 a[2] = {};
+	int wait = 1000;
+	int err;
+	int i;
 
-	क्रम (i = 0; i < ETH_ALEN; i++)
+	for (i = 0; i < ETH_ALEN; i++)
 		((u8 *)&a)[i] = addr[i];
 
-	err = vnic_dev_cmd(vdev, CMD_ADDR_DEL, &a[0], &a[1], रुको);
-	अगर (err)
+	err = vnic_dev_cmd(vdev, CMD_ADDR_DEL, &a[0], &a[1], wait);
+	if (err)
 		pr_err("Can't del addr [%pM], %d\n", addr, err);
-पूर्ण
+}
 
-पूर्णांक vnic_dev_notअगरy_set(काष्ठा vnic_dev *vdev, u16 पूर्णांकr)
-अणु
+int vnic_dev_notify_set(struct vnic_dev *vdev, u16 intr)
+{
 	u64 a0, a1;
-	पूर्णांक रुको = 1000;
+	int wait = 1000;
 
-	अगर (!vdev->notअगरy) अणु
-		vdev->notअगरy = dma_alloc_coherent(&vdev->pdev->dev,
-			माप(काष्ठा vnic_devcmd_notअगरy),
-			&vdev->notअगरy_pa, GFP_KERNEL);
-		अगर (!vdev->notअगरy)
-			वापस -ENOMEM;
-	पूर्ण
+	if (!vdev->notify) {
+		vdev->notify = dma_alloc_coherent(&vdev->pdev->dev,
+			sizeof(struct vnic_devcmd_notify),
+			&vdev->notify_pa, GFP_KERNEL);
+		if (!vdev->notify)
+			return -ENOMEM;
+	}
 
-	a0 = vdev->notअगरy_pa;
-	a1 = ((u64)पूर्णांकr << 32) & 0x0000ffff00000000ULL;
-	a1 += माप(काष्ठा vnic_devcmd_notअगरy);
+	a0 = vdev->notify_pa;
+	a1 = ((u64)intr << 32) & 0x0000ffff00000000ULL;
+	a1 += sizeof(struct vnic_devcmd_notify);
 
-	वापस vnic_dev_cmd(vdev, CMD_NOTIFY, &a0, &a1, रुको);
-पूर्ण
+	return vnic_dev_cmd(vdev, CMD_NOTIFY, &a0, &a1, wait);
+}
 
-व्योम vnic_dev_notअगरy_unset(काष्ठा vnic_dev *vdev)
-अणु
+void vnic_dev_notify_unset(struct vnic_dev *vdev)
+{
 	u64 a0, a1;
-	पूर्णांक रुको = 1000;
+	int wait = 1000;
 
-	a0 = 0;  /* paddr = 0 to unset notअगरy buffer */
-	a1 = 0x0000ffff00000000ULL; /* पूर्णांकr num = -1 to unreg क्रम पूर्णांकr */
-	a1 += माप(काष्ठा vnic_devcmd_notअगरy);
+	a0 = 0;  /* paddr = 0 to unset notify buffer */
+	a1 = 0x0000ffff00000000ULL; /* intr num = -1 to unreg for intr */
+	a1 += sizeof(struct vnic_devcmd_notify);
 
-	vnic_dev_cmd(vdev, CMD_NOTIFY, &a0, &a1, रुको);
-पूर्ण
+	vnic_dev_cmd(vdev, CMD_NOTIFY, &a0, &a1, wait);
+}
 
-अटल पूर्णांक vnic_dev_notअगरy_पढ़ोy(काष्ठा vnic_dev *vdev)
-अणु
+static int vnic_dev_notify_ready(struct vnic_dev *vdev)
+{
 	u32 *words;
-	अचिन्हित पूर्णांक nwords = माप(काष्ठा vnic_devcmd_notअगरy) / 4;
-	अचिन्हित पूर्णांक i;
+	unsigned int nwords = sizeof(struct vnic_devcmd_notify) / 4;
+	unsigned int i;
 	u32 csum;
 
-	अगर (!vdev->notअगरy)
-		वापस 0;
+	if (!vdev->notify)
+		return 0;
 
-	करो अणु
+	do {
 		csum = 0;
-		स_नकल(&vdev->notअगरy_copy, vdev->notअगरy,
-			माप(काष्ठा vnic_devcmd_notअगरy));
-		words = (u32 *)&vdev->notअगरy_copy;
-		क्रम (i = 1; i < nwords; i++)
+		memcpy(&vdev->notify_copy, vdev->notify,
+			sizeof(struct vnic_devcmd_notify));
+		words = (u32 *)&vdev->notify_copy;
+		for (i = 1; i < nwords; i++)
 			csum += words[i];
-	पूर्ण जबतक (csum != words[0]);
+	} while (csum != words[0]);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक vnic_dev_init(काष्ठा vnic_dev *vdev, पूर्णांक arg)
-अणु
+int vnic_dev_init(struct vnic_dev *vdev, int arg)
+{
 	u64 a0 = (u32)arg, a1 = 0;
-	पूर्णांक रुको = 1000;
-	वापस vnic_dev_cmd(vdev, CMD_INIT, &a0, &a1, रुको);
-पूर्ण
+	int wait = 1000;
+	return vnic_dev_cmd(vdev, CMD_INIT, &a0, &a1, wait);
+}
 
-u16 vnic_dev_set_शेष_vlan(काष्ठा vnic_dev *vdev, u16 new_शेष_vlan)
-अणु
-	u64 a0 = new_शेष_vlan, a1 = 0;
-	पूर्णांक रुको = 1000;
-	पूर्णांक old_vlan = 0;
+u16 vnic_dev_set_default_vlan(struct vnic_dev *vdev, u16 new_default_vlan)
+{
+	u64 a0 = new_default_vlan, a1 = 0;
+	int wait = 1000;
+	int old_vlan = 0;
 
-	old_vlan = vnic_dev_cmd(vdev, CMD_SET_DEFAULT_VLAN, &a0, &a1, रुको);
-	वापस (u16)old_vlan;
-पूर्ण
+	old_vlan = vnic_dev_cmd(vdev, CMD_SET_DEFAULT_VLAN, &a0, &a1, wait);
+	return (u16)old_vlan;
+}
 
-पूर्णांक vnic_dev_link_status(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (vdev->linkstatus)
-		वापस *vdev->linkstatus;
+int vnic_dev_link_status(struct vnic_dev *vdev)
+{
+	if (vdev->linkstatus)
+		return *vdev->linkstatus;
 
-	अगर (!vnic_dev_notअगरy_पढ़ोy(vdev))
-		वापस 0;
+	if (!vnic_dev_notify_ready(vdev))
+		return 0;
 
-	वापस vdev->notअगरy_copy.link_state;
-पूर्ण
+	return vdev->notify_copy.link_state;
+}
 
-u32 vnic_dev_port_speed(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (!vnic_dev_notअगरy_पढ़ोy(vdev))
-		वापस 0;
+u32 vnic_dev_port_speed(struct vnic_dev *vdev)
+{
+	if (!vnic_dev_notify_ready(vdev))
+		return 0;
 
-	वापस vdev->notअगरy_copy.port_speed;
-पूर्ण
+	return vdev->notify_copy.port_speed;
+}
 
-u32 vnic_dev_msg_lvl(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (!vnic_dev_notअगरy_पढ़ोy(vdev))
-		वापस 0;
+u32 vnic_dev_msg_lvl(struct vnic_dev *vdev)
+{
+	if (!vnic_dev_notify_ready(vdev))
+		return 0;
 
-	वापस vdev->notअगरy_copy.msglvl;
-पूर्ण
+	return vdev->notify_copy.msglvl;
+}
 
-u32 vnic_dev_mtu(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (!vnic_dev_notअगरy_पढ़ोy(vdev))
-		वापस 0;
+u32 vnic_dev_mtu(struct vnic_dev *vdev)
+{
+	if (!vnic_dev_notify_ready(vdev))
+		return 0;
 
-	वापस vdev->notअगरy_copy.mtu;
-पूर्ण
+	return vdev->notify_copy.mtu;
+}
 
-u32 vnic_dev_link_करोwn_cnt(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (!vnic_dev_notअगरy_पढ़ोy(vdev))
-		वापस 0;
+u32 vnic_dev_link_down_cnt(struct vnic_dev *vdev)
+{
+	if (!vnic_dev_notify_ready(vdev))
+		return 0;
 
-	वापस vdev->notअगरy_copy.link_करोwn_cnt;
-पूर्ण
+	return vdev->notify_copy.link_down_cnt;
+}
 
-व्योम vnic_dev_set_पूर्णांकr_mode(काष्ठा vnic_dev *vdev,
-	क्रमागत vnic_dev_पूर्णांकr_mode पूर्णांकr_mode)
-अणु
-	vdev->पूर्णांकr_mode = पूर्णांकr_mode;
-पूर्ण
+void vnic_dev_set_intr_mode(struct vnic_dev *vdev,
+	enum vnic_dev_intr_mode intr_mode)
+{
+	vdev->intr_mode = intr_mode;
+}
 
-क्रमागत vnic_dev_पूर्णांकr_mode vnic_dev_get_पूर्णांकr_mode(
-	काष्ठा vnic_dev *vdev)
-अणु
-	वापस vdev->पूर्णांकr_mode;
-पूर्ण
+enum vnic_dev_intr_mode vnic_dev_get_intr_mode(
+	struct vnic_dev *vdev)
+{
+	return vdev->intr_mode;
+}
 
-व्योम vnic_dev_unरेजिस्टर(काष्ठा vnic_dev *vdev)
-अणु
-	अगर (vdev) अणु
-		अगर (vdev->notअगरy)
-			dma_मुक्त_coherent(&vdev->pdev->dev,
-				माप(काष्ठा vnic_devcmd_notअगरy),
-				vdev->notअगरy,
-				vdev->notअगरy_pa);
-		अगर (vdev->linkstatus)
-			dma_मुक्त_coherent(&vdev->pdev->dev,
-				माप(u32),
+void vnic_dev_unregister(struct vnic_dev *vdev)
+{
+	if (vdev) {
+		if (vdev->notify)
+			dma_free_coherent(&vdev->pdev->dev,
+				sizeof(struct vnic_devcmd_notify),
+				vdev->notify,
+				vdev->notify_pa);
+		if (vdev->linkstatus)
+			dma_free_coherent(&vdev->pdev->dev,
+				sizeof(u32),
 				vdev->linkstatus,
 				vdev->linkstatus_pa);
-		अगर (vdev->stats)
-			dma_मुक्त_coherent(&vdev->pdev->dev,
-				माप(काष्ठा vnic_stats),
+		if (vdev->stats)
+			dma_free_coherent(&vdev->pdev->dev,
+				sizeof(struct vnic_stats),
 				vdev->stats, vdev->stats_pa);
-		अगर (vdev->fw_info)
-			dma_मुक्त_coherent(&vdev->pdev->dev,
-				माप(काष्ठा vnic_devcmd_fw_info),
+		if (vdev->fw_info)
+			dma_free_coherent(&vdev->pdev->dev,
+				sizeof(struct vnic_devcmd_fw_info),
 				vdev->fw_info, vdev->fw_info_pa);
-		अगर (vdev->devcmd2)
+		if (vdev->devcmd2)
 			vnic_dev_deinit_devcmd2(vdev);
-		kमुक्त(vdev);
-	पूर्ण
-पूर्ण
+		kfree(vdev);
+	}
+}
 
-काष्ठा vnic_dev *vnic_dev_रेजिस्टर(काष्ठा vnic_dev *vdev,
-	व्योम *priv, काष्ठा pci_dev *pdev, काष्ठा vnic_dev_bar *bar)
-अणु
-	अगर (!vdev) अणु
-		vdev = kzalloc(माप(काष्ठा vnic_dev), GFP_KERNEL);
-		अगर (!vdev)
-			वापस शून्य;
-	पूर्ण
+struct vnic_dev *vnic_dev_register(struct vnic_dev *vdev,
+	void *priv, struct pci_dev *pdev, struct vnic_dev_bar *bar)
+{
+	if (!vdev) {
+		vdev = kzalloc(sizeof(struct vnic_dev), GFP_KERNEL);
+		if (!vdev)
+			return NULL;
+	}
 
 	vdev->priv = priv;
 	vdev->pdev = pdev;
 
-	अगर (vnic_dev_discover_res(vdev, bar))
-		जाओ err_out;
+	if (vnic_dev_discover_res(vdev, bar))
+		goto err_out;
 
-	वापस vdev;
+	return vdev;
 
 err_out:
-	vnic_dev_unरेजिस्टर(vdev);
-	वापस शून्य;
-पूर्ण
+	vnic_dev_unregister(vdev);
+	return NULL;
+}
 
-पूर्णांक vnic_dev_cmd_init(काष्ठा vnic_dev *vdev)
-अणु
-	पूर्णांक err;
-	व्योम *p;
+int vnic_dev_cmd_init(struct vnic_dev *vdev)
+{
+	int err;
+	void *p;
 
 	p = vnic_dev_get_res(vdev, RES_TYPE_DEVCMD2, 0);
-	अगर (p) अणु
+	if (p) {
 		pr_err("fnic: DEVCMD2 resource found!\n");
 		err = vnic_dev_init_devcmd2(vdev);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("fnic: DEVCMD2 not found, fall back to Devcmd\n");
 		err = vnic_dev_init_devcmd1(vdev);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}

@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  winbond-cir.c - Driver क्रम the Consumer IR functionality of Winbond
+ *  winbond-cir.c - Driver for the Consumer IR functionality of Winbond
  *                  SuperI/O chips.
  *
  *  Currently supports the Winbond WPCD376i chip (PNP id WEC1022), but
  *  could probably support others (Winbond WEC102X, NatSemi, etc)
- *  with minor modअगरications.
+ *  with minor modifications.
  *
- *  Original Author: David Hथअrdeman <david@hardeman.nu>
+ *  Original Author: David Härdeman <david@hardeman.nu>
  *     Copyright (C) 2012 Sean Young <sean@mess.org>
- *     Copyright (C) 2009 - 2011 David Hथअrdeman <david@hardeman.nu>
+ *     Copyright (C) 2009 - 2011 David Härdeman <david@hardeman.nu>
  *
  *  Dedicated to my daughter Matilda, without whose loving attention this
- *  driver would have been finished in half the समय and with a fraction
+ *  driver would have been finished in half the time and with a fraction
  *  of the bugs.
  *
  *  Written using:
  *    o Winbond WPCD376I datasheet helpfully provided by Jesse Barnes at Intel
- *    o NatSemi PC87338/PC97338 datasheet (क्रम the serial port stuff)
+ *    o NatSemi PC87338/PC97338 datasheet (for the serial port stuff)
  *    o DSDT dumps
  *
  *  Supported features:
@@ -28,125 +27,125 @@
  *    o Carrier detection
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched.h>
-#समावेश <media/rc-core.h>
+#include <linux/module.h>
+#include <linux/pnp.h>
+#include <linux/interrupt.h>
+#include <linux/timer.h>
+#include <linux/leds.h>
+#include <linux/spinlock.h>
+#include <linux/pci_ids.h>
+#include <linux/io.h>
+#include <linux/bitrev.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/sched.h>
+#include <media/rc-core.h>
 
-#घोषणा DRVNAME "winbond-cir"
+#define DRVNAME "winbond-cir"
 
 /* CEIR Wake-Up Registers, relative to data->wbase                      */
-#घोषणा WBCIR_REG_WCEIR_CTL	0x03 /* CEIR Receiver Control		*/
-#घोषणा WBCIR_REG_WCEIR_STS	0x04 /* CEIR Receiver Status		*/
-#घोषणा WBCIR_REG_WCEIR_EV_EN	0x05 /* CEIR Receiver Event Enable	*/
-#घोषणा WBCIR_REG_WCEIR_CNTL	0x06 /* CEIR Receiver Counter Low	*/
-#घोषणा WBCIR_REG_WCEIR_CNTH	0x07 /* CEIR Receiver Counter High	*/
-#घोषणा WBCIR_REG_WCEIR_INDEX	0x08 /* CEIR Receiver Index		*/
-#घोषणा WBCIR_REG_WCEIR_DATA	0x09 /* CEIR Receiver Data		*/
-#घोषणा WBCIR_REG_WCEIR_CSL	0x0A /* CEIR Re. Compare Strlen		*/
-#घोषणा WBCIR_REG_WCEIR_CFG1	0x0B /* CEIR Re. Configuration 1	*/
-#घोषणा WBCIR_REG_WCEIR_CFG2	0x0C /* CEIR Re. Configuration 2	*/
+#define WBCIR_REG_WCEIR_CTL	0x03 /* CEIR Receiver Control		*/
+#define WBCIR_REG_WCEIR_STS	0x04 /* CEIR Receiver Status		*/
+#define WBCIR_REG_WCEIR_EV_EN	0x05 /* CEIR Receiver Event Enable	*/
+#define WBCIR_REG_WCEIR_CNTL	0x06 /* CEIR Receiver Counter Low	*/
+#define WBCIR_REG_WCEIR_CNTH	0x07 /* CEIR Receiver Counter High	*/
+#define WBCIR_REG_WCEIR_INDEX	0x08 /* CEIR Receiver Index		*/
+#define WBCIR_REG_WCEIR_DATA	0x09 /* CEIR Receiver Data		*/
+#define WBCIR_REG_WCEIR_CSL	0x0A /* CEIR Re. Compare Strlen		*/
+#define WBCIR_REG_WCEIR_CFG1	0x0B /* CEIR Re. Configuration 1	*/
+#define WBCIR_REG_WCEIR_CFG2	0x0C /* CEIR Re. Configuration 2	*/
 
 /* CEIR Enhanced Functionality Registers, relative to data->ebase       */
-#घोषणा WBCIR_REG_ECEIR_CTS	0x00 /* Enhanced IR Control Status	*/
-#घोषणा WBCIR_REG_ECEIR_CCTL	0x01 /* Infrared Counter Control	*/
-#घोषणा WBCIR_REG_ECEIR_CNT_LO	0x02 /* Infrared Counter LSB		*/
-#घोषणा WBCIR_REG_ECEIR_CNT_HI	0x03 /* Infrared Counter MSB		*/
-#घोषणा WBCIR_REG_ECEIR_IREM	0x04 /* Infrared Emitter Status		*/
+#define WBCIR_REG_ECEIR_CTS	0x00 /* Enhanced IR Control Status	*/
+#define WBCIR_REG_ECEIR_CCTL	0x01 /* Infrared Counter Control	*/
+#define WBCIR_REG_ECEIR_CNT_LO	0x02 /* Infrared Counter LSB		*/
+#define WBCIR_REG_ECEIR_CNT_HI	0x03 /* Infrared Counter MSB		*/
+#define WBCIR_REG_ECEIR_IREM	0x04 /* Infrared Emitter Status		*/
 
 /* SP3 Banked Registers, relative to data->sbase                        */
-#घोषणा WBCIR_REG_SP3_BSR	0x03 /* Bank Select, all banks		*/
+#define WBCIR_REG_SP3_BSR	0x03 /* Bank Select, all banks		*/
 				      /* Bank 0				*/
-#घोषणा WBCIR_REG_SP3_RXDATA	0x00 /* FIFO RX data (r)		*/
-#घोषणा WBCIR_REG_SP3_TXDATA	0x00 /* FIFO TX data (w)		*/
-#घोषणा WBCIR_REG_SP3_IER	0x01 /* Interrupt Enable		*/
-#घोषणा WBCIR_REG_SP3_EIR	0x02 /* Event Identअगरication (r)	*/
-#घोषणा WBCIR_REG_SP3_FCR	0x02 /* FIFO Control (w)		*/
-#घोषणा WBCIR_REG_SP3_MCR	0x04 /* Mode Control			*/
-#घोषणा WBCIR_REG_SP3_LSR	0x05 /* Link Status			*/
-#घोषणा WBCIR_REG_SP3_MSR	0x06 /* Modem Status			*/
-#घोषणा WBCIR_REG_SP3_ASCR	0x07 /* Aux Status and Control		*/
+#define WBCIR_REG_SP3_RXDATA	0x00 /* FIFO RX data (r)		*/
+#define WBCIR_REG_SP3_TXDATA	0x00 /* FIFO TX data (w)		*/
+#define WBCIR_REG_SP3_IER	0x01 /* Interrupt Enable		*/
+#define WBCIR_REG_SP3_EIR	0x02 /* Event Identification (r)	*/
+#define WBCIR_REG_SP3_FCR	0x02 /* FIFO Control (w)		*/
+#define WBCIR_REG_SP3_MCR	0x04 /* Mode Control			*/
+#define WBCIR_REG_SP3_LSR	0x05 /* Link Status			*/
+#define WBCIR_REG_SP3_MSR	0x06 /* Modem Status			*/
+#define WBCIR_REG_SP3_ASCR	0x07 /* Aux Status and Control		*/
 				      /* Bank 2				*/
-#घोषणा WBCIR_REG_SP3_BGDL	0x00 /* Baud Divisor LSB		*/
-#घोषणा WBCIR_REG_SP3_BGDH	0x01 /* Baud Divisor MSB		*/
-#घोषणा WBCIR_REG_SP3_EXCR1	0x02 /* Extended Control 1		*/
-#घोषणा WBCIR_REG_SP3_EXCR2	0x04 /* Extended Control 2		*/
-#घोषणा WBCIR_REG_SP3_TXFLV	0x06 /* TX FIFO Level			*/
-#घोषणा WBCIR_REG_SP3_RXFLV	0x07 /* RX FIFO Level			*/
+#define WBCIR_REG_SP3_BGDL	0x00 /* Baud Divisor LSB		*/
+#define WBCIR_REG_SP3_BGDH	0x01 /* Baud Divisor MSB		*/
+#define WBCIR_REG_SP3_EXCR1	0x02 /* Extended Control 1		*/
+#define WBCIR_REG_SP3_EXCR2	0x04 /* Extended Control 2		*/
+#define WBCIR_REG_SP3_TXFLV	0x06 /* TX FIFO Level			*/
+#define WBCIR_REG_SP3_RXFLV	0x07 /* RX FIFO Level			*/
 				      /* Bank 3				*/
-#घोषणा WBCIR_REG_SP3_MRID	0x00 /* Module Identअगरication		*/
-#घोषणा WBCIR_REG_SP3_SH_LCR	0x01 /* LCR Shaकरोw			*/
-#घोषणा WBCIR_REG_SP3_SH_FCR	0x02 /* FCR Shaकरोw			*/
+#define WBCIR_REG_SP3_MRID	0x00 /* Module Identification		*/
+#define WBCIR_REG_SP3_SH_LCR	0x01 /* LCR Shadow			*/
+#define WBCIR_REG_SP3_SH_FCR	0x02 /* FCR Shadow			*/
 				      /* Bank 4				*/
-#घोषणा WBCIR_REG_SP3_IRCR1	0x02 /* Infrared Control 1		*/
+#define WBCIR_REG_SP3_IRCR1	0x02 /* Infrared Control 1		*/
 				      /* Bank 5				*/
-#घोषणा WBCIR_REG_SP3_IRCR2	0x04 /* Infrared Control 2		*/
+#define WBCIR_REG_SP3_IRCR2	0x04 /* Infrared Control 2		*/
 				      /* Bank 6				*/
-#घोषणा WBCIR_REG_SP3_IRCR3	0x00 /* Infrared Control 3		*/
-#घोषणा WBCIR_REG_SP3_SIR_PW	0x02 /* SIR Pulse Width			*/
+#define WBCIR_REG_SP3_IRCR3	0x00 /* Infrared Control 3		*/
+#define WBCIR_REG_SP3_SIR_PW	0x02 /* SIR Pulse Width			*/
 				      /* Bank 7				*/
-#घोषणा WBCIR_REG_SP3_IRRXDC	0x00 /* IR RX Demod Control		*/
-#घोषणा WBCIR_REG_SP3_IRTXMC	0x01 /* IR TX Mod Control		*/
-#घोषणा WBCIR_REG_SP3_RCCFG	0x02 /* CEIR Config			*/
-#घोषणा WBCIR_REG_SP3_IRCFG1	0x04 /* Infrared Config 1		*/
-#घोषणा WBCIR_REG_SP3_IRCFG4	0x07 /* Infrared Config 4		*/
+#define WBCIR_REG_SP3_IRRXDC	0x00 /* IR RX Demod Control		*/
+#define WBCIR_REG_SP3_IRTXMC	0x01 /* IR TX Mod Control		*/
+#define WBCIR_REG_SP3_RCCFG	0x02 /* CEIR Config			*/
+#define WBCIR_REG_SP3_IRCFG1	0x04 /* Infrared Config 1		*/
+#define WBCIR_REG_SP3_IRCFG4	0x07 /* Infrared Config 4		*/
 
 /*
  * Magic values follow
  */
 
-/* No पूर्णांकerrupts क्रम WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
-#घोषणा WBCIR_IRQ_NONE		0x00
-/* RX data bit क्रम WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
-#घोषणा WBCIR_IRQ_RX		0x01
-/* TX data low bit क्रम WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
-#घोषणा WBCIR_IRQ_TX_LOW	0x02
-/* Over/Under-flow bit क्रम WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
-#घोषणा WBCIR_IRQ_ERR		0x04
-/* TX data empty bit क्रम WBCEIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
-#घोषणा WBCIR_IRQ_TX_EMPTY	0x20
-/* Led enable/disable bit क्रम WBCIR_REG_ECEIR_CTS */
-#घोषणा WBCIR_LED_ENABLE	0x80
-/* RX data available bit क्रम WBCIR_REG_SP3_LSR */
-#घोषणा WBCIR_RX_AVAIL		0x01
-/* RX data overrun error bit क्रम WBCIR_REG_SP3_LSR */
-#घोषणा WBCIR_RX_OVERRUN	0x02
-/* TX End-Of-Transmission bit क्रम WBCIR_REG_SP3_ASCR */
-#घोषणा WBCIR_TX_EOT		0x04
-/* RX disable bit क्रम WBCIR_REG_SP3_ASCR */
-#घोषणा WBCIR_RX_DISABLE	0x20
-/* TX data underrun error bit क्रम WBCIR_REG_SP3_ASCR */
-#घोषणा WBCIR_TX_UNDERRUN	0x40
-/* Extended mode enable bit क्रम WBCIR_REG_SP3_EXCR1 */
-#घोषणा WBCIR_EXT_ENABLE	0x01
-/* Select compare रेजिस्टर in WBCIR_REG_WCEIR_INDEX (bits 5 & 6) */
-#घोषणा WBCIR_REGSEL_COMPARE	0x10
-/* Select mask रेजिस्टर in WBCIR_REG_WCEIR_INDEX (bits 5 & 6) */
-#घोषणा WBCIR_REGSEL_MASK	0x20
-/* Starting address of selected रेजिस्टर in WBCIR_REG_WCEIR_INDEX */
-#घोषणा WBCIR_REG_ADDR0		0x00
+/* No interrupts for WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
+#define WBCIR_IRQ_NONE		0x00
+/* RX data bit for WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
+#define WBCIR_IRQ_RX		0x01
+/* TX data low bit for WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
+#define WBCIR_IRQ_TX_LOW	0x02
+/* Over/Under-flow bit for WBCIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
+#define WBCIR_IRQ_ERR		0x04
+/* TX data empty bit for WBCEIR_REG_SP3_IER and WBCIR_REG_SP3_EIR */
+#define WBCIR_IRQ_TX_EMPTY	0x20
+/* Led enable/disable bit for WBCIR_REG_ECEIR_CTS */
+#define WBCIR_LED_ENABLE	0x80
+/* RX data available bit for WBCIR_REG_SP3_LSR */
+#define WBCIR_RX_AVAIL		0x01
+/* RX data overrun error bit for WBCIR_REG_SP3_LSR */
+#define WBCIR_RX_OVERRUN	0x02
+/* TX End-Of-Transmission bit for WBCIR_REG_SP3_ASCR */
+#define WBCIR_TX_EOT		0x04
+/* RX disable bit for WBCIR_REG_SP3_ASCR */
+#define WBCIR_RX_DISABLE	0x20
+/* TX data underrun error bit for WBCIR_REG_SP3_ASCR */
+#define WBCIR_TX_UNDERRUN	0x40
+/* Extended mode enable bit for WBCIR_REG_SP3_EXCR1 */
+#define WBCIR_EXT_ENABLE	0x01
+/* Select compare register in WBCIR_REG_WCEIR_INDEX (bits 5 & 6) */
+#define WBCIR_REGSEL_COMPARE	0x10
+/* Select mask register in WBCIR_REG_WCEIR_INDEX (bits 5 & 6) */
+#define WBCIR_REGSEL_MASK	0x20
+/* Starting address of selected register in WBCIR_REG_WCEIR_INDEX */
+#define WBCIR_REG_ADDR0		0x00
 /* Enable carrier counter */
-#घोषणा WBCIR_CNTR_EN		0x01
+#define WBCIR_CNTR_EN		0x01
 /* Reset carrier counter */
-#घोषणा WBCIR_CNTR_R		0x02
+#define WBCIR_CNTR_R		0x02
 /* Invert TX */
-#घोषणा WBCIR_IRTX_INV		0x04
+#define WBCIR_IRTX_INV		0x04
 /* Receiver oversampling */
-#घोषणा WBCIR_RX_T_OV		0x40
+#define WBCIR_RX_T_OV		0x40
 
-/* Valid banks क्रम the SP3 UART */
-क्रमागत wbcir_bank अणु
+/* Valid banks for the SP3 UART */
+enum wbcir_bank {
 	WBCIR_BANK_0          = 0x00,
 	WBCIR_BANK_1          = 0x80,
 	WBCIR_BANK_2          = 0xE0,
@@ -155,68 +154,68 @@
 	WBCIR_BANK_5          = 0xEC,
 	WBCIR_BANK_6          = 0xF0,
 	WBCIR_BANK_7          = 0xF4,
-पूर्ण;
+};
 
-/* Supported घातer-on IR Protocols */
-क्रमागत wbcir_protocol अणु
+/* Supported power-on IR Protocols */
+enum wbcir_protocol {
 	IR_PROTOCOL_RC5          = 0x0,
 	IR_PROTOCOL_NEC          = 0x1,
 	IR_PROTOCOL_RC6          = 0x2,
-पूर्ण;
+};
 
-/* Possible states क्रम IR reception */
-क्रमागत wbcir_rxstate अणु
+/* Possible states for IR reception */
+enum wbcir_rxstate {
 	WBCIR_RXSTATE_INACTIVE = 0,
 	WBCIR_RXSTATE_ACTIVE,
 	WBCIR_RXSTATE_ERROR
-पूर्ण;
+};
 
-/* Possible states क्रम IR transmission */
-क्रमागत wbcir_txstate अणु
+/* Possible states for IR transmission */
+enum wbcir_txstate {
 	WBCIR_TXSTATE_INACTIVE = 0,
 	WBCIR_TXSTATE_ACTIVE,
 	WBCIR_TXSTATE_ERROR
-पूर्ण;
+};
 
 /* Misc */
-#घोषणा WBCIR_NAME	"Winbond CIR"
-#घोषणा WBCIR_ID_FAMILY          0xF1 /* Family ID क्रम the WPCD376I	*/
-#घोषणा	WBCIR_ID_CHIP            0x04 /* Chip ID क्रम the WPCD376I	*/
-#घोषणा WAKEUP_IOMEM_LEN         0x10 /* Wake-Up I/O Reg Len		*/
-#घोषणा EHFUNC_IOMEM_LEN         0x10 /* Enhanced Func I/O Reg Len	*/
-#घोषणा SP_IOMEM_LEN             0x08 /* Serial Port 3 (IR) Reg Len	*/
+#define WBCIR_NAME	"Winbond CIR"
+#define WBCIR_ID_FAMILY          0xF1 /* Family ID for the WPCD376I	*/
+#define	WBCIR_ID_CHIP            0x04 /* Chip ID for the WPCD376I	*/
+#define WAKEUP_IOMEM_LEN         0x10 /* Wake-Up I/O Reg Len		*/
+#define EHFUNC_IOMEM_LEN         0x10 /* Enhanced Func I/O Reg Len	*/
+#define SP_IOMEM_LEN             0x08 /* Serial Port 3 (IR) Reg Len	*/
 
 /* Per-device data */
-काष्ठा wbcir_data अणु
+struct wbcir_data {
 	spinlock_t spinlock;
-	काष्ठा rc_dev *dev;
-	काष्ठा led_classdev led;
+	struct rc_dev *dev;
+	struct led_classdev led;
 
-	अचिन्हित दीर्घ wbase;        /* Wake-Up Baseaddr		*/
-	अचिन्हित दीर्घ ebase;        /* Enhanced Func. Baseaddr	*/
-	अचिन्हित दीर्घ sbase;        /* Serial Port Baseaddr	*/
-	अचिन्हित पूर्णांक  irq;          /* Serial Port IRQ		*/
+	unsigned long wbase;        /* Wake-Up Baseaddr		*/
+	unsigned long ebase;        /* Enhanced Func. Baseaddr	*/
+	unsigned long sbase;        /* Serial Port Baseaddr	*/
+	unsigned int  irq;          /* Serial Port IRQ		*/
 	u8 irqmask;
 
 	/* RX state */
-	क्रमागत wbcir_rxstate rxstate;
-	पूर्णांक carrier_report_enabled;
+	enum wbcir_rxstate rxstate;
+	int carrier_report_enabled;
 	u32 pulse_duration;
 
 	/* TX state */
-	क्रमागत wbcir_txstate txstate;
+	enum wbcir_txstate txstate;
 	u32 txlen;
 	u32 txoff;
 	u32 *txbuf;
 	u8 txmask;
 	u32 txcarrier;
-पूर्ण;
+};
 
-अटल bool invert; /* शेष = 0 */
+static bool invert; /* default = 0 */
 module_param(invert, bool, 0444);
 MODULE_PARM_DESC(invert, "Invert the signal from the IR receiver");
 
-अटल bool txandrx; /* शेष = 0 */
+static bool txandrx; /* default = 0 */
 module_param(txandrx, bool, 0444);
 MODULE_PARM_DESC(txandrx, "Allow simultaneous TX and RX");
 
@@ -228,78 +227,78 @@ MODULE_PARM_DESC(txandrx, "Allow simultaneous TX and RX");
  *****************************************************************************/
 
 /* Caller needs to hold wbcir_lock */
-अटल व्योम
-wbcir_set_bits(अचिन्हित दीर्घ addr, u8 bits, u8 mask)
-अणु
+static void
+wbcir_set_bits(unsigned long addr, u8 bits, u8 mask)
+{
 	u8 val;
 
 	val = inb(addr);
 	val = ((val & ~mask) | (bits & mask));
 	outb(val, addr);
-पूर्ण
+}
 
-/* Selects the रेजिस्टर bank क्रम the serial port */
-अटल अंतरभूत व्योम
-wbcir_select_bank(काष्ठा wbcir_data *data, क्रमागत wbcir_bank bank)
-अणु
+/* Selects the register bank for the serial port */
+static inline void
+wbcir_select_bank(struct wbcir_data *data, enum wbcir_bank bank)
+{
 	outb(bank, data->sbase + WBCIR_REG_SP3_BSR);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-wbcir_set_irqmask(काष्ठा wbcir_data *data, u8 irqmask)
-अणु
-	अगर (data->irqmask == irqmask)
-		वापस;
+static inline void
+wbcir_set_irqmask(struct wbcir_data *data, u8 irqmask)
+{
+	if (data->irqmask == irqmask)
+		return;
 
 	wbcir_select_bank(data, WBCIR_BANK_0);
 	outb(irqmask, data->sbase + WBCIR_REG_SP3_IER);
 	data->irqmask = irqmask;
-पूर्ण
+}
 
-अटल क्रमागत led_brightness
-wbcir_led_brightness_get(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा wbcir_data *data = container_of(led_cdev,
-					       काष्ठा wbcir_data,
+static enum led_brightness
+wbcir_led_brightness_get(struct led_classdev *led_cdev)
+{
+	struct wbcir_data *data = container_of(led_cdev,
+					       struct wbcir_data,
 					       led);
 
-	अगर (inb(data->ebase + WBCIR_REG_ECEIR_CTS) & WBCIR_LED_ENABLE)
-		वापस LED_FULL;
-	अन्यथा
-		वापस LED_OFF;
-पूर्ण
+	if (inb(data->ebase + WBCIR_REG_ECEIR_CTS) & WBCIR_LED_ENABLE)
+		return LED_FULL;
+	else
+		return LED_OFF;
+}
 
-अटल व्योम
-wbcir_led_brightness_set(काष्ठा led_classdev *led_cdev,
-			 क्रमागत led_brightness brightness)
-अणु
-	काष्ठा wbcir_data *data = container_of(led_cdev,
-					       काष्ठा wbcir_data,
+static void
+wbcir_led_brightness_set(struct led_classdev *led_cdev,
+			 enum led_brightness brightness)
+{
+	struct wbcir_data *data = container_of(led_cdev,
+					       struct wbcir_data,
 					       led);
 
 	wbcir_set_bits(data->ebase + WBCIR_REG_ECEIR_CTS,
 		       brightness == LED_OFF ? 0x00 : WBCIR_LED_ENABLE,
 		       WBCIR_LED_ENABLE);
-पूर्ण
+}
 
-/* Manchester encodes bits to RC6 message cells (see wbcir_shutकरोwn) */
-अटल u8
+/* Manchester encodes bits to RC6 message cells (see wbcir_shutdown) */
+static u8
 wbcir_to_rc6cells(u8 val)
-अणु
+{
 	u8 coded = 0x00;
-	पूर्णांक i;
+	int i;
 
 	val &= 0x0F;
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (val & 0x01)
+	for (i = 0; i < 4; i++) {
+		if (val & 0x01)
 			coded |= 0x02 << (i * 2);
-		अन्यथा
+		else
 			coded |= 0x01 << (i * 2);
 		val >>= 1;
-	पूर्ण
+	}
 
-	वापस coded;
-पूर्ण
+	return coded;
+}
 
 /*****************************************************************************
  *
@@ -307,21 +306,21 @@ wbcir_to_rc6cells(u8 val)
  *
  *****************************************************************************/
 
-अटल व्योम
-wbcir_carrier_report(काष्ठा wbcir_data *data)
-अणु
-	अचिन्हित counter = inb(data->ebase + WBCIR_REG_ECEIR_CNT_LO) |
+static void
+wbcir_carrier_report(struct wbcir_data *data)
+{
+	unsigned counter = inb(data->ebase + WBCIR_REG_ECEIR_CNT_LO) |
 			inb(data->ebase + WBCIR_REG_ECEIR_CNT_HI) << 8;
 
-	अगर (counter > 0 && counter < 0xffff) अणु
-		काष्ठा ir_raw_event ev = अणु
+	if (counter > 0 && counter < 0xffff) {
+		struct ir_raw_event ev = {
 			.carrier_report = 1,
 			.carrier = DIV_ROUND_CLOSEST(counter * 1000000u,
 						data->pulse_duration)
-		पूर्ण;
+		};
 
 		ir_raw_event_store(data->dev, &ev);
-	पूर्ण
+	}
 
 	/* reset and restart the counter */
 	data->pulse_duration = 0;
@@ -329,132 +328,132 @@ wbcir_carrier_report(काष्ठा wbcir_data *data)
 						WBCIR_CNTR_EN | WBCIR_CNTR_R);
 	wbcir_set_bits(data->ebase + WBCIR_REG_ECEIR_CCTL, WBCIR_CNTR_EN,
 						WBCIR_CNTR_EN | WBCIR_CNTR_R);
-पूर्ण
+}
 
-अटल व्योम
-wbcir_idle_rx(काष्ठा rc_dev *dev, bool idle)
-अणु
-	काष्ठा wbcir_data *data = dev->priv;
+static void
+wbcir_idle_rx(struct rc_dev *dev, bool idle)
+{
+	struct wbcir_data *data = dev->priv;
 
-	अगर (!idle && data->rxstate == WBCIR_RXSTATE_INACTIVE)
+	if (!idle && data->rxstate == WBCIR_RXSTATE_INACTIVE)
 		data->rxstate = WBCIR_RXSTATE_ACTIVE;
 
-	अगर (idle && data->rxstate != WBCIR_RXSTATE_INACTIVE) अणु
+	if (idle && data->rxstate != WBCIR_RXSTATE_INACTIVE) {
 		data->rxstate = WBCIR_RXSTATE_INACTIVE;
 
-		अगर (data->carrier_report_enabled)
+		if (data->carrier_report_enabled)
 			wbcir_carrier_report(data);
 
 		/* Tell hardware to go idle by setting RXINACTIVE */
 		outb(WBCIR_RX_DISABLE, data->sbase + WBCIR_REG_SP3_ASCR);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-wbcir_irq_rx(काष्ठा wbcir_data *data, काष्ठा pnp_dev *device)
-अणु
+static void
+wbcir_irq_rx(struct wbcir_data *data, struct pnp_dev *device)
+{
 	u8 irdata;
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+	struct ir_raw_event rawir = {};
 
 	/* Since RXHDLEV is set, at least 8 bytes are in the FIFO */
-	जबतक (inb(data->sbase + WBCIR_REG_SP3_LSR) & WBCIR_RX_AVAIL) अणु
+	while (inb(data->sbase + WBCIR_REG_SP3_LSR) & WBCIR_RX_AVAIL) {
 		irdata = inb(data->sbase + WBCIR_REG_SP3_RXDATA);
-		अगर (data->rxstate == WBCIR_RXSTATE_ERROR)
-			जारी;
+		if (data->rxstate == WBCIR_RXSTATE_ERROR)
+			continue;
 
 		rawir.duration = ((irdata & 0x7F) + 1) *
 			(data->carrier_report_enabled ? 2 : 10);
 		rawir.pulse = irdata & 0x80 ? false : true;
 
-		अगर (rawir.pulse)
+		if (rawir.pulse)
 			data->pulse_duration += rawir.duration;
 
 		ir_raw_event_store_with_filter(data->dev, &rawir);
-	पूर्ण
+	}
 
 	ir_raw_event_handle(data->dev);
-पूर्ण
+}
 
-अटल व्योम
-wbcir_irq_tx(काष्ठा wbcir_data *data)
-अणु
-	अचिन्हित पूर्णांक space;
-	अचिन्हित पूर्णांक used;
+static void
+wbcir_irq_tx(struct wbcir_data *data)
+{
+	unsigned int space;
+	unsigned int used;
 	u8 bytes[16];
 	u8 byte;
 
-	अगर (!data->txbuf)
-		वापस;
+	if (!data->txbuf)
+		return;
 
-	चयन (data->txstate) अणु
-	हाल WBCIR_TXSTATE_INACTIVE:
+	switch (data->txstate) {
+	case WBCIR_TXSTATE_INACTIVE:
 		/* TX FIFO empty */
 		space = 16;
-		अवरोध;
-	हाल WBCIR_TXSTATE_ACTIVE:
+		break;
+	case WBCIR_TXSTATE_ACTIVE:
 		/* TX FIFO low (3 bytes or less) */
 		space = 13;
-		अवरोध;
-	हाल WBCIR_TXSTATE_ERROR:
+		break;
+	case WBCIR_TXSTATE_ERROR:
 		space = 0;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	/*
 	 * TX data is run-length coded in bytes: YXXXXXXX
 	 * Y = space (1) or pulse (0)
 	 * X = duration, encoded as (X + 1) * 10us (i.e 10 to 1280 us)
 	 */
-	क्रम (used = 0; used < space && data->txoff != data->txlen; used++) अणु
-		अगर (data->txbuf[data->txoff] == 0) अणु
+	for (used = 0; used < space && data->txoff != data->txlen; used++) {
+		if (data->txbuf[data->txoff] == 0) {
 			data->txoff++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		byte = min((u32)0x80, data->txbuf[data->txoff]);
 		data->txbuf[data->txoff] -= byte;
 		byte--;
 		byte |= (data->txoff % 2 ? 0x80 : 0x00); /* pulse/space */
 		bytes[used] = byte;
-	पूर्ण
+	}
 
-	जबतक (data->txoff != data->txlen && data->txbuf[data->txoff] == 0)
+	while (data->txoff != data->txlen && data->txbuf[data->txoff] == 0)
 		data->txoff++;
 
-	अगर (used == 0) अणु
+	if (used == 0) {
 		/* Finished */
-		अगर (data->txstate == WBCIR_TXSTATE_ERROR)
+		if (data->txstate == WBCIR_TXSTATE_ERROR)
 			/* Clear TX underrun bit */
 			outb(WBCIR_TX_UNDERRUN, data->sbase + WBCIR_REG_SP3_ASCR);
 		wbcir_set_irqmask(data, WBCIR_IRQ_RX | WBCIR_IRQ_ERR);
-		kमुक्त(data->txbuf);
-		data->txbuf = शून्य;
+		kfree(data->txbuf);
+		data->txbuf = NULL;
 		data->txstate = WBCIR_TXSTATE_INACTIVE;
-	पूर्ण अन्यथा अगर (data->txoff == data->txlen) अणु
-		/* At the end of transmission, tell the hw beक्रमe last byte */
+	} else if (data->txoff == data->txlen) {
+		/* At the end of transmission, tell the hw before last byte */
 		outsb(data->sbase + WBCIR_REG_SP3_TXDATA, bytes, used - 1);
 		outb(WBCIR_TX_EOT, data->sbase + WBCIR_REG_SP3_ASCR);
 		outb(bytes[used - 1], data->sbase + WBCIR_REG_SP3_TXDATA);
 		wbcir_set_irqmask(data, WBCIR_IRQ_RX | WBCIR_IRQ_ERR |
 				  WBCIR_IRQ_TX_EMPTY);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* More data to follow... */
 		outsb(data->sbase + WBCIR_REG_SP3_RXDATA, bytes, used);
-		अगर (data->txstate == WBCIR_TXSTATE_INACTIVE) अणु
+		if (data->txstate == WBCIR_TXSTATE_INACTIVE) {
 			wbcir_set_irqmask(data, WBCIR_IRQ_RX | WBCIR_IRQ_ERR |
 					  WBCIR_IRQ_TX_LOW);
 			data->txstate = WBCIR_TXSTATE_ACTIVE;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल irqवापस_t
-wbcir_irq_handler(पूर्णांक irqno, व्योम *cookie)
-अणु
-	काष्ठा pnp_dev *device = cookie;
-	काष्ठा wbcir_data *data = pnp_get_drvdata(device);
-	अचिन्हित दीर्घ flags;
+static irqreturn_t
+wbcir_irq_handler(int irqno, void *cookie)
+{
+	struct pnp_dev *device = cookie;
+	struct wbcir_data *data = pnp_get_drvdata(device);
+	unsigned long flags;
 	u8 status;
 
 	spin_lock_irqsave(&data->spinlock, flags);
@@ -462,32 +461,32 @@ wbcir_irq_handler(पूर्णांक irqno, व्योम *cookie)
 	status = inb(data->sbase + WBCIR_REG_SP3_EIR);
 	status &= data->irqmask;
 
-	अगर (!status) अणु
+	if (!status) {
 		spin_unlock_irqrestore(&data->spinlock, flags);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (status & WBCIR_IRQ_ERR) अणु
-		/* RX overflow? (पढ़ो clears bit) */
-		अगर (inb(data->sbase + WBCIR_REG_SP3_LSR) & WBCIR_RX_OVERRUN) अणु
+	if (status & WBCIR_IRQ_ERR) {
+		/* RX overflow? (read clears bit) */
+		if (inb(data->sbase + WBCIR_REG_SP3_LSR) & WBCIR_RX_OVERRUN) {
 			data->rxstate = WBCIR_RXSTATE_ERROR;
 			ir_raw_event_reset(data->dev);
-		पूर्ण
+		}
 
 		/* TX underflow? */
-		अगर (inb(data->sbase + WBCIR_REG_SP3_ASCR) & WBCIR_TX_UNDERRUN)
+		if (inb(data->sbase + WBCIR_REG_SP3_ASCR) & WBCIR_TX_UNDERRUN)
 			data->txstate = WBCIR_TXSTATE_ERROR;
-	पूर्ण
+	}
 
-	अगर (status & WBCIR_IRQ_RX)
+	if (status & WBCIR_IRQ_RX)
 		wbcir_irq_rx(data, device);
 
-	अगर (status & (WBCIR_IRQ_TX_LOW | WBCIR_IRQ_TX_EMPTY))
+	if (status & (WBCIR_IRQ_TX_LOW | WBCIR_IRQ_TX_EMPTY))
 		wbcir_irq_tx(data);
 
 	spin_unlock_irqrestore(&data->spinlock, flags);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*****************************************************************************
  *
@@ -495,34 +494,34 @@ wbcir_irq_handler(पूर्णांक irqno, व्योम *cookie)
  *
  *****************************************************************************/
 
-अटल पूर्णांक
-wbcir_set_carrier_report(काष्ठा rc_dev *dev, पूर्णांक enable)
-अणु
-	काष्ठा wbcir_data *data = dev->priv;
-	अचिन्हित दीर्घ flags;
+static int
+wbcir_set_carrier_report(struct rc_dev *dev, int enable)
+{
+	struct wbcir_data *data = dev->priv;
+	unsigned long flags;
 
 	spin_lock_irqsave(&data->spinlock, flags);
 
-	अगर (data->carrier_report_enabled == enable) अणु
+	if (data->carrier_report_enabled == enable) {
 		spin_unlock_irqrestore(&data->spinlock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	data->pulse_duration = 0;
 	wbcir_set_bits(data->ebase + WBCIR_REG_ECEIR_CCTL, WBCIR_CNTR_R,
 						WBCIR_CNTR_EN | WBCIR_CNTR_R);
 
-	अगर (enable && data->dev->idle)
+	if (enable && data->dev->idle)
 		wbcir_set_bits(data->ebase + WBCIR_REG_ECEIR_CCTL,
 				WBCIR_CNTR_EN, WBCIR_CNTR_EN | WBCIR_CNTR_R);
 
-	/* Set a higher sampling resolution अगर carrier reports are enabled */
+	/* Set a higher sampling resolution if carrier reports are enabled */
 	wbcir_select_bank(data, WBCIR_BANK_2);
 	data->dev->rx_resolution = enable ? 2 : 10;
 	outb(enable ? 0x03 : 0x0f, data->sbase + WBCIR_REG_SP3_BGDL);
 	outb(0x00, data->sbase + WBCIR_REG_SP3_BGDH);
 
-	/* Enable oversampling अगर carrier reports are enabled */
+	/* Enable oversampling if carrier reports are enabled */
 	wbcir_select_bank(data, WBCIR_BANK_7);
 	wbcir_set_bits(data->sbase + WBCIR_REG_SP3_RCCFG,
 				enable ? WBCIR_RX_T_OV : 0, WBCIR_RX_T_OV);
@@ -530,132 +529,132 @@ wbcir_set_carrier_report(काष्ठा rc_dev *dev, पूर्णां�
 	data->carrier_report_enabled = enable;
 	spin_unlock_irqrestore(&data->spinlock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-wbcir_txcarrier(काष्ठा rc_dev *dev, u32 carrier)
-अणु
-	काष्ठा wbcir_data *data = dev->priv;
-	अचिन्हित दीर्घ flags;
+static int
+wbcir_txcarrier(struct rc_dev *dev, u32 carrier)
+{
+	struct wbcir_data *data = dev->priv;
+	unsigned long flags;
 	u8 val;
 	u32 freq;
 
 	freq = DIV_ROUND_CLOSEST(carrier, 1000);
-	अगर (freq < 30 || freq > 60)
-		वापस -EINVAL;
+	if (freq < 30 || freq > 60)
+		return -EINVAL;
 
-	चयन (freq) अणु
-	हाल 58:
-	हाल 59:
-	हाल 60:
+	switch (freq) {
+	case 58:
+	case 59:
+	case 60:
 		val = freq - 58;
 		freq *= 1000;
-		अवरोध;
-	हाल 57:
+		break;
+	case 57:
 		val = freq - 27;
 		freq = 56900;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		val = freq - 27;
 		freq *= 1000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_lock_irqsave(&data->spinlock, flags);
-	अगर (data->txstate != WBCIR_TXSTATE_INACTIVE) अणु
+	if (data->txstate != WBCIR_TXSTATE_INACTIVE) {
 		spin_unlock_irqrestore(&data->spinlock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (data->txcarrier != freq) अणु
+	if (data->txcarrier != freq) {
 		wbcir_select_bank(data, WBCIR_BANK_7);
 		wbcir_set_bits(data->sbase + WBCIR_REG_SP3_IRTXMC, val, 0x1F);
 		data->txcarrier = freq;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&data->spinlock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-wbcir_txmask(काष्ठा rc_dev *dev, u32 mask)
-अणु
-	काष्ठा wbcir_data *data = dev->priv;
-	अचिन्हित दीर्घ flags;
+static int
+wbcir_txmask(struct rc_dev *dev, u32 mask)
+{
+	struct wbcir_data *data = dev->priv;
+	unsigned long flags;
 	u8 val;
 
-	/* वापस the number of transmitters */
-	अगर (mask > 15)
-		वापस 4;
+	/* return the number of transmitters */
+	if (mask > 15)
+		return 4;
 
-	/* Four outमाला_दो, only one output can be enabled at a समय */
-	चयन (mask) अणु
-	हाल 0x1:
+	/* Four outputs, only one output can be enabled at a time */
+	switch (mask) {
+	case 0x1:
 		val = 0x0;
-		अवरोध;
-	हाल 0x2:
+		break;
+	case 0x2:
 		val = 0x1;
-		अवरोध;
-	हाल 0x4:
+		break;
+	case 0x4:
 		val = 0x2;
-		अवरोध;
-	हाल 0x8:
+		break;
+	case 0x8:
 		val = 0x3;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&data->spinlock, flags);
-	अगर (data->txstate != WBCIR_TXSTATE_INACTIVE) अणु
+	if (data->txstate != WBCIR_TXSTATE_INACTIVE) {
 		spin_unlock_irqrestore(&data->spinlock, flags);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (data->txmask != mask) अणु
+	if (data->txmask != mask) {
 		wbcir_set_bits(data->ebase + WBCIR_REG_ECEIR_CTS, val, 0x0c);
 		data->txmask = mask;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&data->spinlock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-wbcir_tx(काष्ठा rc_dev *dev, अचिन्हित *b, अचिन्हित count)
-अणु
-	काष्ठा wbcir_data *data = dev->priv;
-	अचिन्हित *buf;
-	अचिन्हित i;
-	अचिन्हित दीर्घ flags;
+static int
+wbcir_tx(struct rc_dev *dev, unsigned *b, unsigned count)
+{
+	struct wbcir_data *data = dev->priv;
+	unsigned *buf;
+	unsigned i;
+	unsigned long flags;
 
-	buf = kदो_स्मृति_array(count, माप(*b), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc_array(count, sizeof(*b), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	/* Convert values to multiples of 10us */
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		buf[i] = DIV_ROUND_CLOSEST(b[i], 10);
 
-	/* Not sure अगर this is possible, but better safe than sorry */
+	/* Not sure if this is possible, but better safe than sorry */
 	spin_lock_irqsave(&data->spinlock, flags);
-	अगर (data->txstate != WBCIR_TXSTATE_INACTIVE) अणु
+	if (data->txstate != WBCIR_TXSTATE_INACTIVE) {
 		spin_unlock_irqrestore(&data->spinlock, flags);
-		kमुक्त(buf);
-		वापस -EBUSY;
-	पूर्ण
+		kfree(buf);
+		return -EBUSY;
+	}
 
-	/* Fill the TX fअगरo once, the irq handler will करो the rest */
+	/* Fill the TX fifo once, the irq handler will do the rest */
 	data->txbuf = buf;
 	data->txlen = count;
 	data->txoff = 0;
 	wbcir_irq_tx(data);
 
-	/* We're करोne */
+	/* We're done */
 	spin_unlock_irqrestore(&data->spinlock, flags);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*****************************************************************************
  *
@@ -663,48 +662,48 @@ wbcir_tx(काष्ठा rc_dev *dev, अचिन्हित *b, अचि�
  *
  *****************************************************************************/
 
-अटल व्योम
-wbcir_shutकरोwn(काष्ठा pnp_dev *device)
-अणु
-	काष्ठा device *dev = &device->dev;
-	काष्ठा wbcir_data *data = pnp_get_drvdata(device);
-	काष्ठा rc_dev *rc = data->dev;
-	bool करो_wake = true;
+static void
+wbcir_shutdown(struct pnp_dev *device)
+{
+	struct device *dev = &device->dev;
+	struct wbcir_data *data = pnp_get_drvdata(device);
+	struct rc_dev *rc = data->dev;
+	bool do_wake = true;
 	u8 match[11];
 	u8 mask[11];
 	u8 rc6_csl = 0;
 	u8 proto;
 	u32 wake_sc = rc->scancode_wakeup_filter.data;
 	u32 mask_sc = rc->scancode_wakeup_filter.mask;
-	पूर्णांक i;
+	int i;
 
-	स_रखो(match, 0, माप(match));
-	स_रखो(mask, 0, माप(mask));
+	memset(match, 0, sizeof(match));
+	memset(mask, 0, sizeof(mask));
 
-	अगर (!mask_sc || !device_may_wakeup(dev)) अणु
-		करो_wake = false;
-		जाओ finish;
-	पूर्ण
+	if (!mask_sc || !device_may_wakeup(dev)) {
+		do_wake = false;
+		goto finish;
+	}
 
-	चयन (rc->wakeup_protocol) अणु
-	हाल RC_PROTO_RC5:
+	switch (rc->wakeup_protocol) {
+	case RC_PROTO_RC5:
 		/* Mask = 13 bits, ex toggle */
 		mask[0]  = (mask_sc & 0x003f);
 		mask[0] |= (mask_sc & 0x0300) >> 2;
 		mask[1]  = (mask_sc & 0x1c00) >> 10;
-		अगर (mask_sc & 0x0040)		      /* 2nd start bit  */
+		if (mask_sc & 0x0040)		      /* 2nd start bit  */
 			match[1] |= 0x10;
 
 		match[0]  = (wake_sc & 0x003F);       /* 6 command bits */
 		match[0] |= (wake_sc & 0x0300) >> 2;  /* 2 address bits */
 		match[1]  = (wake_sc & 0x1c00) >> 10; /* 3 address bits */
-		अगर (!(wake_sc & 0x0040))	      /* 2nd start bit  */
+		if (!(wake_sc & 0x0040))	      /* 2nd start bit  */
 			match[1] |= 0x10;
 
 		proto = IR_PROTOCOL_RC5;
-		अवरोध;
+		break;
 
-	हाल RC_PROTO_NEC:
+	case RC_PROTO_NEC:
 		mask[1] = bitrev8(mask_sc);
 		mask[0] = mask[1];
 		mask[3] = bitrev8(mask_sc >> 8);
@@ -716,9 +715,9 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 		match[2] = ~match[3];
 
 		proto = IR_PROTOCOL_NEC;
-		अवरोध;
+		break;
 
-	हाल RC_PROTO_NECX:
+	case RC_PROTO_NECX:
 		mask[1] = bitrev8(mask_sc);
 		mask[0] = mask[1];
 		mask[2] = bitrev8(mask_sc >> 8);
@@ -730,9 +729,9 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 		match[3] = bitrev8(wake_sc >> 16);
 
 		proto = IR_PROTOCOL_NEC;
-		अवरोध;
+		break;
 
-	हाल RC_PROTO_NEC32:
+	case RC_PROTO_NEC32:
 		mask[0] = bitrev8(mask_sc);
 		mask[1] = bitrev8(mask_sc >> 8);
 		mask[2] = bitrev8(mask_sc >> 16);
@@ -744,9 +743,9 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 		match[3] = bitrev8(wake_sc >> 24);
 
 		proto = IR_PROTOCOL_NEC;
-		अवरोध;
+		break;
 
-	हाल RC_PROTO_RC6_0:
+	case RC_PROTO_RC6_0:
 		/* Command */
 		match[0] = wbcir_to_rc6cells(wake_sc >> 0);
 		mask[0]  = wbcir_to_rc6cells(mask_sc >> 0);
@@ -767,11 +766,11 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 
 		rc6_csl = 44;
 		proto = IR_PROTOCOL_RC6;
-		अवरोध;
+		break;
 
-	हाल RC_PROTO_RC6_6A_24:
-	हाल RC_PROTO_RC6_6A_32:
-	हाल RC_PROTO_RC6_MCE:
+	case RC_PROTO_RC6_6A_24:
+	case RC_PROTO_RC6_6A_32:
+	case RC_PROTO_RC6_MCE:
 		i = 0;
 
 		/* Command */
@@ -790,23 +789,23 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 		match[i]  = wbcir_to_rc6cells(wake_sc >> 16);
 		mask[i++] = wbcir_to_rc6cells(mask_sc >> 16);
 
-		अगर (rc->wakeup_protocol == RC_PROTO_RC6_6A_20) अणु
+		if (rc->wakeup_protocol == RC_PROTO_RC6_6A_20) {
 			rc6_csl = 52;
-		पूर्ण अन्यथा अणु
+		} else {
 			match[i]  = wbcir_to_rc6cells(wake_sc >> 20);
 			mask[i++] = wbcir_to_rc6cells(mask_sc >> 20);
 
-			अगर (rc->wakeup_protocol == RC_PROTO_RC6_6A_24) अणु
+			if (rc->wakeup_protocol == RC_PROTO_RC6_6A_24) {
 				rc6_csl = 60;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* Customer range bit and bits 15 - 8 */
 				match[i]  = wbcir_to_rc6cells(wake_sc >> 24);
 				mask[i++] = wbcir_to_rc6cells(mask_sc >> 24);
 				match[i]  = wbcir_to_rc6cells(wake_sc >> 28);
 				mask[i++] = wbcir_to_rc6cells(mask_sc >> 28);
 				rc6_csl = 76;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* Header */
 		match[i]  = 0x93; /* mode1 = mode0 = 1, submode = 0 */
@@ -814,14 +813,14 @@ wbcir_shutकरोwn(काष्ठा pnp_dev *device)
 		match[i]  = 0x0A; /* start bit = 1, mode2 = 1 */
 		mask[i++] = 0x0F;
 		proto = IR_PROTOCOL_RC6;
-		अवरोध;
-	शेष:
-		करो_wake = false;
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		do_wake = false;
+		break;
+	}
 
 finish:
-	अगर (करो_wake) अणु
+	if (do_wake) {
 		/* Set compare and compare mask */
 		wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_INDEX,
 			       WBCIR_REGSEL_COMPARE | WBCIR_REG_ADDR0,
@@ -845,49 +844,49 @@ finish:
 		wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_CTL,
 			       (proto << 4) | 0x01, 0x31);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Clear BUFF_EN, Clear END_EN, Clear MATCH_EN */
 		wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_EV_EN, 0x00, 0x07);
 
 		/* Clear CEIR_EN */
 		wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_CTL, 0x00, 0x01);
-	पूर्ण
+	}
 
 	/*
-	 * ACPI will set the HW disable bit क्रम SP3 which means that the
-	 * output संकेतs are left in an undefined state which may cause
-	 * spurious पूर्णांकerrupts which we need to ignore until the hardware
+	 * ACPI will set the HW disable bit for SP3 which means that the
+	 * output signals are left in an undefined state which may cause
+	 * spurious interrupts which we need to ignore until the hardware
 	 * is reinitialized.
 	 */
 	wbcir_set_irqmask(data, WBCIR_IRQ_NONE);
 	disable_irq(data->irq);
-पूर्ण
+}
 
 /*
- * Wakeup handling is करोne on shutकरोwn.
+ * Wakeup handling is done on shutdown.
  */
-अटल पूर्णांक
-wbcir_set_wakeup_filter(काष्ठा rc_dev *rc, काष्ठा rc_scancode_filter *filter)
-अणु
-	वापस 0;
-पूर्ण
+static int
+wbcir_set_wakeup_filter(struct rc_dev *rc, struct rc_scancode_filter *filter)
+{
+	return 0;
+}
 
-अटल पूर्णांक
-wbcir_suspend(काष्ठा pnp_dev *device, pm_message_t state)
-अणु
-	काष्ठा wbcir_data *data = pnp_get_drvdata(device);
+static int
+wbcir_suspend(struct pnp_dev *device, pm_message_t state)
+{
+	struct wbcir_data *data = pnp_get_drvdata(device);
 	led_classdev_suspend(&data->led);
-	wbcir_shutकरोwn(device);
-	वापस 0;
-पूर्ण
+	wbcir_shutdown(device);
+	return 0;
+}
 
-अटल व्योम
-wbcir_init_hw(काष्ठा wbcir_data *data)
-अणु
-	/* Disable पूर्णांकerrupts */
+static void
+wbcir_init_hw(struct wbcir_data *data)
+{
+	/* Disable interrupts */
 	wbcir_set_irqmask(data, WBCIR_IRQ_NONE);
 
-	/* Set RX_INV, Clear CEIR_EN (needed क्रम the led) */
+	/* Set RX_INV, Clear CEIR_EN (needed for the led) */
 	wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_CTL, invert ? 8 : 0, 0x09);
 
 	/* Clear status bits NEC_REP, BUFF, MSG_END, MATCH */
@@ -896,18 +895,18 @@ wbcir_init_hw(काष्ठा wbcir_data *data)
 	/* Clear BUFF_EN, Clear END_EN, Clear MATCH_EN */
 	wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_EV_EN, 0x00, 0x07);
 
-	/* Set RC5 cell समय to correspond to 36 kHz */
+	/* Set RC5 cell time to correspond to 36 kHz */
 	wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_CFG1, 0x4A, 0x7F);
 
 	/* Set IRTX_INV */
-	अगर (invert)
+	if (invert)
 		outb(WBCIR_IRTX_INV, data->ebase + WBCIR_REG_ECEIR_CCTL);
-	अन्यथा
+	else
 		outb(0x00, data->ebase + WBCIR_REG_ECEIR_CCTL);
 
 	/*
-	 * Clear IR LED, set SP3 घड़ी to 24Mhz, set TX mask to IRTX1,
-	 * set SP3_IRRX_SW to binary 01, helpfully not करोcumented
+	 * Clear IR LED, set SP3 clock to 24Mhz, set TX mask to IRTX1,
+	 * set SP3_IRRX_SW to binary 01, helpfully not documented
 	 */
 	outb(0x10, data->ebase + WBCIR_REG_ECEIR_CTS);
 	data->txmask = 0x1;
@@ -918,19 +917,19 @@ wbcir_init_hw(काष्ठा wbcir_data *data)
 
 	/*
 	 * Configure baud generator, IR data will be sampled at
-	 * a bitrate of: (24Mhz * prescaler) / (भागisor * 16).
+	 * a bitrate of: (24Mhz * prescaler) / (divisor * 16).
 	 *
-	 * The ECIR रेजिस्टरs include a flag to change the
-	 * 24Mhz घड़ी freq to 48Mhz.
+	 * The ECIR registers include a flag to change the
+	 * 24Mhz clock freq to 48Mhz.
 	 *
-	 * It's not करोcumented in the specs, but fअगरo levels
+	 * It's not documented in the specs, but fifo levels
 	 * other than 16 seems to be unsupported.
 	 */
 
-	/* prescaler 1.0, tx/rx fअगरo lvl 16 */
+	/* prescaler 1.0, tx/rx fifo lvl 16 */
 	outb(0x30, data->sbase + WBCIR_REG_SP3_EXCR2);
 
-	/* Set baud भागisor to sample every 10 us */
+	/* Set baud divisor to sample every 10 us */
 	outb(0x0f, data->sbase + WBCIR_REG_SP3_BGDL);
 	outb(0x00, data->sbase + WBCIR_REG_SP3_BGDH);
 
@@ -944,11 +943,11 @@ wbcir_init_hw(काष्ठा wbcir_data *data)
 	wbcir_select_bank(data, WBCIR_BANK_7);
 	outb(0x90, data->sbase + WBCIR_REG_SP3_RCCFG);
 
-	/* Disable समयr */
+	/* Disable timer */
 	wbcir_select_bank(data, WBCIR_BANK_4);
 	outb(0x00, data->sbase + WBCIR_REG_SP3_IRCR1);
 
-	/* Disable MSR पूर्णांकerrupt, clear AUX_IRX, mask RX during TX? */
+	/* Disable MSR interrupt, clear AUX_IRX, mask RX during TX? */
 	wbcir_select_bank(data, WBCIR_BANK_5);
 	outb(txandrx ? 0x03 : 0x02, data->sbase + WBCIR_REG_SP3_IRCR2);
 
@@ -965,9 +964,9 @@ wbcir_init_hw(काष्ठा wbcir_data *data)
 	data->txcarrier = 36000;
 
 	/* Set invert and pin direction */
-	अगर (invert)
+	if (invert)
 		outb(0x10, data->sbase + WBCIR_REG_SP3_IRCFG4);
-	अन्यथा
+	else
 		outb(0x00, data->sbase + WBCIR_REG_SP3_IRCFG4);
 
 	/* Set FIFO thresholds (RX = 8, TX = 3), reset RX/TX */
@@ -982,48 +981,48 @@ wbcir_init_hw(काष्ठा wbcir_data *data)
 	wbcir_idle_rx(data->dev, true);
 
 	/* Clear TX state */
-	अगर (data->txstate == WBCIR_TXSTATE_ACTIVE) अणु
-		kमुक्त(data->txbuf);
-		data->txbuf = शून्य;
+	if (data->txstate == WBCIR_TXSTATE_ACTIVE) {
+		kfree(data->txbuf);
+		data->txbuf = NULL;
 		data->txstate = WBCIR_TXSTATE_INACTIVE;
-	पूर्ण
+	}
 
-	/* Enable पूर्णांकerrupts */
+	/* Enable interrupts */
 	wbcir_set_irqmask(data, WBCIR_IRQ_RX | WBCIR_IRQ_ERR);
-पूर्ण
+}
 
-अटल पूर्णांक
-wbcir_resume(काष्ठा pnp_dev *device)
-अणु
-	काष्ठा wbcir_data *data = pnp_get_drvdata(device);
+static int
+wbcir_resume(struct pnp_dev *device)
+{
+	struct wbcir_data *data = pnp_get_drvdata(device);
 
 	wbcir_init_hw(data);
 	ir_raw_event_reset(data->dev);
 	enable_irq(data->irq);
 	led_classdev_resume(&data->led);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-wbcir_probe(काष्ठा pnp_dev *device, स्थिर काष्ठा pnp_device_id *dev_id)
-अणु
-	काष्ठा device *dev = &device->dev;
-	काष्ठा wbcir_data *data;
-	पूर्णांक err;
+static int
+wbcir_probe(struct pnp_dev *device, const struct pnp_device_id *dev_id)
+{
+	struct device *dev = &device->dev;
+	struct wbcir_data *data;
+	int err;
 
-	अगर (!(pnp_port_len(device, 0) == EHFUNC_IOMEM_LEN &&
+	if (!(pnp_port_len(device, 0) == EHFUNC_IOMEM_LEN &&
 	      pnp_port_len(device, 1) == WAKEUP_IOMEM_LEN &&
-	      pnp_port_len(device, 2) == SP_IOMEM_LEN)) अणु
+	      pnp_port_len(device, 2) == SP_IOMEM_LEN)) {
 		dev_err(dev, "Invalid resources\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	pnp_set_drvdata(device, data);
 
@@ -1033,35 +1032,35 @@ wbcir_probe(काष्ठा pnp_dev *device, स्थिर काष्ठ�
 	data->sbase = pnp_port_start(device, 2);
 	data->irq = pnp_irq(device, 0);
 
-	अगर (data->wbase == 0 || data->ebase == 0 ||
-	    data->sbase == 0 || data->irq == -1) अणु
+	if (data->wbase == 0 || data->ebase == 0 ||
+	    data->sbase == 0 || data->irq == -1) {
 		err = -ENODEV;
 		dev_err(dev, "Invalid resources\n");
-		जाओ निकास_मुक्त_data;
-	पूर्ण
+		goto exit_free_data;
+	}
 
 	dev_dbg(&device->dev, "Found device (w: 0x%lX, e: 0x%lX, s: 0x%lX, i: %u)\n",
 		data->wbase, data->ebase, data->sbase, data->irq);
 
 	data->led.name = "cir::activity";
-	data->led.शेष_trigger = "rc-feedback";
+	data->led.default_trigger = "rc-feedback";
 	data->led.brightness_set = wbcir_led_brightness_set;
 	data->led.brightness_get = wbcir_led_brightness_get;
-	err = led_classdev_रेजिस्टर(&device->dev, &data->led);
-	अगर (err)
-		जाओ निकास_मुक्त_data;
+	err = led_classdev_register(&device->dev, &data->led);
+	if (err)
+		goto exit_free_data;
 
 	data->dev = rc_allocate_device(RC_DRIVER_IR_RAW);
-	अगर (!data->dev) अणु
+	if (!data->dev) {
 		err = -ENOMEM;
-		जाओ निकास_unरेजिस्टर_led;
-	पूर्ण
+		goto exit_unregister_led;
+	}
 
 	data->dev->driver_name = DRVNAME;
 	data->dev->device_name = WBCIR_NAME;
 	data->dev->input_phys = "wbcir/cir0";
 	data->dev->input_id.bustype = BUS_HOST;
-	data->dev->input_id.venकरोr = PCI_VENDOR_ID_WINBOND;
+	data->dev->input_id.vendor = PCI_VENDOR_ID_WINBOND;
 	data->dev->input_id.product = WBCIR_ID_FAMILY;
 	data->dev->input_id.version = WBCIR_ID_CHIP;
 	data->dev->map_name = RC_MAP_RC6_MCE;
@@ -1072,9 +1071,9 @@ wbcir_probe(काष्ठा pnp_dev *device, स्थिर काष्ठ�
 	data->dev->tx_ir = wbcir_tx;
 	data->dev->priv = data;
 	data->dev->dev.parent = &device->dev;
-	data->dev->min_समयout = 1;
-	data->dev->समयout = IR_DEFAULT_TIMEOUT;
-	data->dev->max_समयout = 10 * IR_DEFAULT_TIMEOUT;
+	data->dev->min_timeout = 1;
+	data->dev->timeout = IR_DEFAULT_TIMEOUT;
+	data->dev->max_timeout = 10 * IR_DEFAULT_TIMEOUT;
 	data->dev->rx_resolution = 2;
 	data->dev->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
 	data->dev->allowed_wakeup_protocols = RC_PROTO_BIT_NEC |
@@ -1087,73 +1086,73 @@ wbcir_probe(काष्ठा pnp_dev *device, स्थिर काष्ठ�
 	data->dev->scancode_wakeup_filter.mask = 0xffff7fff;
 	data->dev->s_wakeup_filter = wbcir_set_wakeup_filter;
 
-	err = rc_रेजिस्टर_device(data->dev);
-	अगर (err)
-		जाओ निकास_मुक्त_rc;
+	err = rc_register_device(data->dev);
+	if (err)
+		goto exit_free_rc;
 
-	अगर (!request_region(data->wbase, WAKEUP_IOMEM_LEN, DRVNAME)) अणु
+	if (!request_region(data->wbase, WAKEUP_IOMEM_LEN, DRVNAME)) {
 		dev_err(dev, "Region 0x%lx-0x%lx already in use!\n",
 			data->wbase, data->wbase + WAKEUP_IOMEM_LEN - 1);
 		err = -EBUSY;
-		जाओ निकास_unरेजिस्टर_device;
-	पूर्ण
+		goto exit_unregister_device;
+	}
 
-	अगर (!request_region(data->ebase, EHFUNC_IOMEM_LEN, DRVNAME)) अणु
+	if (!request_region(data->ebase, EHFUNC_IOMEM_LEN, DRVNAME)) {
 		dev_err(dev, "Region 0x%lx-0x%lx already in use!\n",
 			data->ebase, data->ebase + EHFUNC_IOMEM_LEN - 1);
 		err = -EBUSY;
-		जाओ निकास_release_wbase;
-	पूर्ण
+		goto exit_release_wbase;
+	}
 
-	अगर (!request_region(data->sbase, SP_IOMEM_LEN, DRVNAME)) अणु
+	if (!request_region(data->sbase, SP_IOMEM_LEN, DRVNAME)) {
 		dev_err(dev, "Region 0x%lx-0x%lx already in use!\n",
 			data->sbase, data->sbase + SP_IOMEM_LEN - 1);
 		err = -EBUSY;
-		जाओ निकास_release_ebase;
-	पूर्ण
+		goto exit_release_ebase;
+	}
 
 	err = request_irq(data->irq, wbcir_irq_handler,
 			  0, DRVNAME, device);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to claim IRQ %u\n", data->irq);
 		err = -EBUSY;
-		जाओ निकास_release_sbase;
-	पूर्ण
+		goto exit_release_sbase;
+	}
 
 	device_init_wakeup(&device->dev, 1);
 
 	wbcir_init_hw(data);
 
-	वापस 0;
+	return 0;
 
-निकास_release_sbase:
+exit_release_sbase:
 	release_region(data->sbase, SP_IOMEM_LEN);
-निकास_release_ebase:
+exit_release_ebase:
 	release_region(data->ebase, EHFUNC_IOMEM_LEN);
-निकास_release_wbase:
+exit_release_wbase:
 	release_region(data->wbase, WAKEUP_IOMEM_LEN);
-निकास_unरेजिस्टर_device:
-	rc_unरेजिस्टर_device(data->dev);
-	data->dev = शून्य;
-निकास_मुक्त_rc:
-	rc_मुक्त_device(data->dev);
-निकास_unरेजिस्टर_led:
-	led_classdev_unरेजिस्टर(&data->led);
-निकास_मुक्त_data:
-	kमुक्त(data);
-	pnp_set_drvdata(device, शून्य);
-निकास:
-	वापस err;
-पूर्ण
+exit_unregister_device:
+	rc_unregister_device(data->dev);
+	data->dev = NULL;
+exit_free_rc:
+	rc_free_device(data->dev);
+exit_unregister_led:
+	led_classdev_unregister(&data->led);
+exit_free_data:
+	kfree(data);
+	pnp_set_drvdata(device, NULL);
+exit:
+	return err;
+}
 
-अटल व्योम
-wbcir_हटाओ(काष्ठा pnp_dev *device)
-अणु
-	काष्ठा wbcir_data *data = pnp_get_drvdata(device);
+static void
+wbcir_remove(struct pnp_dev *device)
+{
+	struct wbcir_data *data = pnp_get_drvdata(device);
 
-	/* Disable पूर्णांकerrupts */
+	/* Disable interrupts */
 	wbcir_set_irqmask(data, WBCIR_IRQ_NONE);
-	मुक्त_irq(data->irq, device);
+	free_irq(data->irq, device);
 
 	/* Clear status bits NEC_REP, BUFF, MSG_END, MATCH */
 	wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_STS, 0x17, 0x17);
@@ -1164,9 +1163,9 @@ wbcir_हटाओ(काष्ठा pnp_dev *device)
 	/* Clear BUFF_EN, END_EN, MATCH_EN */
 	wbcir_set_bits(data->wbase + WBCIR_REG_WCEIR_EV_EN, 0x00, 0x07);
 
-	rc_unरेजिस्टर_device(data->dev);
+	rc_unregister_device(data->dev);
 
-	led_classdev_unरेजिस्टर(&data->led);
+	led_classdev_unregister(&data->led);
 
 	/* This is ok since &data->led isn't actually used */
 	wbcir_led_brightness_set(&data->led, LED_OFF);
@@ -1175,48 +1174,48 @@ wbcir_हटाओ(काष्ठा pnp_dev *device)
 	release_region(data->ebase, EHFUNC_IOMEM_LEN);
 	release_region(data->sbase, SP_IOMEM_LEN);
 
-	kमुक्त(data);
+	kfree(data);
 
-	pnp_set_drvdata(device, शून्य);
-पूर्ण
+	pnp_set_drvdata(device, NULL);
+}
 
-अटल स्थिर काष्ठा pnp_device_id wbcir_ids[] = अणु
-	अणु "WEC1022", 0 पूर्ण,
-	अणु "", 0 पूर्ण
-पूर्ण;
+static const struct pnp_device_id wbcir_ids[] = {
+	{ "WEC1022", 0 },
+	{ "", 0 }
+};
 MODULE_DEVICE_TABLE(pnp, wbcir_ids);
 
-अटल काष्ठा pnp_driver wbcir_driver = अणु
+static struct pnp_driver wbcir_driver = {
 	.name     = DRVNAME,
 	.id_table = wbcir_ids,
 	.probe    = wbcir_probe,
-	.हटाओ   = wbcir_हटाओ,
+	.remove   = wbcir_remove,
 	.suspend  = wbcir_suspend,
 	.resume   = wbcir_resume,
-	.shutकरोwn = wbcir_shutकरोwn
-पूर्ण;
+	.shutdown = wbcir_shutdown
+};
 
-अटल पूर्णांक __init
-wbcir_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init
+wbcir_init(void)
+{
+	int ret;
 
-	ret = pnp_रेजिस्टर_driver(&wbcir_driver);
-	अगर (ret)
+	ret = pnp_register_driver(&wbcir_driver);
+	if (ret)
 		pr_err("Unable to register driver\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास
-wbcir_निकास(व्योम)
-अणु
-	pnp_unरेजिस्टर_driver(&wbcir_driver);
-पूर्ण
+static void __exit
+wbcir_exit(void)
+{
+	pnp_unregister_driver(&wbcir_driver);
+}
 
 module_init(wbcir_init);
-module_निकास(wbcir_निकास);
+module_exit(wbcir_exit);
 
-MODULE_AUTHOR("David Hथअrdeman <david@hardeman.nu>");
+MODULE_AUTHOR("David Härdeman <david@hardeman.nu>");
 MODULE_DESCRIPTION("Winbond SuperI/O Consumer IR Driver");
 MODULE_LICENSE("GPL");

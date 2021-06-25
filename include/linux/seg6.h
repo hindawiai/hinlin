@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SEG6_H
-#घोषणा _LINUX_SEG6_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SEG6_H
+#define _LINUX_SEG6_H
 
-#समावेश <uapi/linux/seg6.h>
+#include <uapi/linux/seg6.h>
 
-#पूर्ण_अगर
+#endif

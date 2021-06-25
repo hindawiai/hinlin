@@ -1,4 +1,3 @@
-<शैली गुरु>
 /* $Id: kcapi.c,v 1.1.2.8 2004/03/26 19:57:20 armin Exp $
  *
  * Kernel CAPI 2.0 Module
@@ -11,433 +10,433 @@
  *
  */
 
-#समावेश "kcapi.h"
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/capi.h>
-#समावेश <linux/kernelcapi.h>
-#समावेश <linux/init.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/isdn/capicmd.h>
-#समावेश <linux/isdn/capiutil.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/rcupdate.h>
+#include "kcapi.h"
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/proc_fs.h>
+#include <linux/sched/signal.h>
+#include <linux/seq_file.h>
+#include <linux/skbuff.h>
+#include <linux/workqueue.h>
+#include <linux/capi.h>
+#include <linux/kernelcapi.h>
+#include <linux/init.h>
+#include <linux/moduleparam.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/isdn/capicmd.h>
+#include <linux/isdn/capiutil.h>
+#include <linux/mutex.h>
+#include <linux/rcupdate.h>
 
-अटल पूर्णांक showcapimsgs = 0;
-अटल काष्ठा workqueue_काष्ठा *kcapi_wq;
+static int showcapimsgs = 0;
+static struct workqueue_struct *kcapi_wq;
 
-module_param(showcapimsgs, uपूर्णांक, 0);
+module_param(showcapimsgs, uint, 0);
 
 /* ------------------------------------------------------------- */
 
-काष्ठा capictr_event अणु
-	काष्ठा work_काष्ठा work;
-	अचिन्हित पूर्णांक type;
+struct capictr_event {
+	struct work_struct work;
+	unsigned int type;
 	u32 controller;
-पूर्ण;
+};
 
 /* ------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा capi_version driver_version = अणु2, 0, 1, 1 << 4पूर्ण;
-अटल अक्षर driver_serial[CAPI_SERIAL_LEN] = "0004711";
-अटल अक्षर capi_manufakturer[64] = "AVM Berlin";
+static const struct capi_version driver_version = {2, 0, 1, 1 << 4};
+static char driver_serial[CAPI_SERIAL_LEN] = "0004711";
+static char capi_manufakturer[64] = "AVM Berlin";
 
-#घोषणा NCCI2CTRL(ncci)    (((ncci) >> 24) & 0x7f)
+#define NCCI2CTRL(ncci)    (((ncci) >> 24) & 0x7f)
 
-काष्ठा capi_ctr *capi_controller[CAPI_MAXCONTR];
+struct capi_ctr *capi_controller[CAPI_MAXCONTR];
 DEFINE_MUTEX(capi_controller_lock);
 
-काष्ठा capi20_appl *capi_applications[CAPI_MAXAPPL];
+struct capi20_appl *capi_applications[CAPI_MAXAPPL];
 
-अटल पूर्णांक ncontrollers;
+static int ncontrollers;
 
 /* -------- controller ref counting -------------------------------------- */
 
-अटल अंतरभूत काष्ठा capi_ctr *
-capi_ctr_get(काष्ठा capi_ctr *ctr)
-अणु
-	अगर (!try_module_get(ctr->owner))
-		वापस शून्य;
-	वापस ctr;
-पूर्ण
+static inline struct capi_ctr *
+capi_ctr_get(struct capi_ctr *ctr)
+{
+	if (!try_module_get(ctr->owner))
+		return NULL;
+	return ctr;
+}
 
-अटल अंतरभूत व्योम
-capi_ctr_put(काष्ठा capi_ctr *ctr)
-अणु
+static inline void
+capi_ctr_put(struct capi_ctr *ctr)
+{
 	module_put(ctr->owner);
-पूर्ण
+}
 
 /* ------------------------------------------------------------- */
 
-अटल अंतरभूत काष्ठा capi_ctr *get_capi_ctr_by_nr(u16 contr)
-अणु
-	अगर (contr < 1 || contr - 1 >= CAPI_MAXCONTR)
-		वापस शून्य;
+static inline struct capi_ctr *get_capi_ctr_by_nr(u16 contr)
+{
+	if (contr < 1 || contr - 1 >= CAPI_MAXCONTR)
+		return NULL;
 
-	वापस capi_controller[contr - 1];
-पूर्ण
+	return capi_controller[contr - 1];
+}
 
-अटल अंतरभूत काष्ठा capi20_appl *__get_capi_appl_by_nr(u16 applid)
-अणु
-	lockdep_निश्चित_held(&capi_controller_lock);
+static inline struct capi20_appl *__get_capi_appl_by_nr(u16 applid)
+{
+	lockdep_assert_held(&capi_controller_lock);
 
-	अगर (applid < 1 || applid - 1 >= CAPI_MAXAPPL)
-		वापस शून्य;
+	if (applid < 1 || applid - 1 >= CAPI_MAXAPPL)
+		return NULL;
 
-	वापस capi_applications[applid - 1];
-पूर्ण
+	return capi_applications[applid - 1];
+}
 
-अटल अंतरभूत काष्ठा capi20_appl *get_capi_appl_by_nr(u16 applid)
-अणु
-	अगर (applid < 1 || applid - 1 >= CAPI_MAXAPPL)
-		वापस शून्य;
+static inline struct capi20_appl *get_capi_appl_by_nr(u16 applid)
+{
+	if (applid < 1 || applid - 1 >= CAPI_MAXAPPL)
+		return NULL;
 
-	वापस rcu_dereference(capi_applications[applid - 1]);
-पूर्ण
+	return rcu_dereference(capi_applications[applid - 1]);
+}
 
 /* -------- util functions ------------------------------------ */
 
-अटल अंतरभूत पूर्णांक capi_cmd_valid(u8 cmd)
-अणु
-	चयन (cmd) अणु
-	हाल CAPI_ALERT:
-	हाल CAPI_CONNECT:
-	हाल CAPI_CONNECT_ACTIVE:
-	हाल CAPI_CONNECT_B3_ACTIVE:
-	हाल CAPI_CONNECT_B3:
-	हाल CAPI_CONNECT_B3_T90_ACTIVE:
-	हाल CAPI_DATA_B3:
-	हाल CAPI_DISCONNECT_B3:
-	हाल CAPI_DISCONNECT:
-	हाल CAPI_FACILITY:
-	हाल CAPI_INFO:
-	हाल CAPI_LISTEN:
-	हाल CAPI_MANUFACTURER:
-	हाल CAPI_RESET_B3:
-	हाल CAPI_SELECT_B_PROTOCOL:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int capi_cmd_valid(u8 cmd)
+{
+	switch (cmd) {
+	case CAPI_ALERT:
+	case CAPI_CONNECT:
+	case CAPI_CONNECT_ACTIVE:
+	case CAPI_CONNECT_B3_ACTIVE:
+	case CAPI_CONNECT_B3:
+	case CAPI_CONNECT_B3_T90_ACTIVE:
+	case CAPI_DATA_B3:
+	case CAPI_DISCONNECT_B3:
+	case CAPI_DISCONNECT:
+	case CAPI_FACILITY:
+	case CAPI_INFO:
+	case CAPI_LISTEN:
+	case CAPI_MANUFACTURER:
+	case CAPI_RESET_B3:
+	case CAPI_SELECT_B_PROTOCOL:
+		return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक capi_subcmd_valid(u8 subcmd)
-अणु
-	चयन (subcmd) अणु
-	हाल CAPI_REQ:
-	हाल CAPI_CONF:
-	हाल CAPI_IND:
-	हाल CAPI_RESP:
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static inline int capi_subcmd_valid(u8 subcmd)
+{
+	switch (subcmd) {
+	case CAPI_REQ:
+	case CAPI_CONF:
+	case CAPI_IND:
+	case CAPI_RESP:
+		return 1;
+	}
+	return 0;
+}
 
 /* ------------------------------------------------------------ */
 
-अटल व्योम
-रेजिस्टर_appl(काष्ठा capi_ctr *ctr, u16 applid, capi_रेजिस्टर_params *rparam)
-अणु
+static void
+register_appl(struct capi_ctr *ctr, u16 applid, capi_register_params *rparam)
+{
 	ctr = capi_ctr_get(ctr);
 
-	अगर (ctr)
-		ctr->रेजिस्टर_appl(ctr, applid, rparam);
-	अन्यथा
-		prपूर्णांकk(KERN_WARNING "%s: cannot get controller resources\n",
+	if (ctr)
+		ctr->register_appl(ctr, applid, rparam);
+	else
+		printk(KERN_WARNING "%s: cannot get controller resources\n",
 		       __func__);
-पूर्ण
+}
 
 
-अटल व्योम release_appl(काष्ठा capi_ctr *ctr, u16 applid)
-अणु
+static void release_appl(struct capi_ctr *ctr, u16 applid)
+{
 	DBG("applid %#x", applid);
 
 	ctr->release_appl(ctr, applid);
 	capi_ctr_put(ctr);
-पूर्ण
+}
 
-अटल व्योम notअगरy_up(u32 contr)
-अणु
-	काष्ठा capi20_appl *ap;
-	काष्ठा capi_ctr *ctr;
+static void notify_up(u32 contr)
+{
+	struct capi20_appl *ap;
+	struct capi_ctr *ctr;
 	u16 applid;
 
 	mutex_lock(&capi_controller_lock);
 
-	अगर (showcapimsgs & 1)
-		prपूर्णांकk(KERN_DEBUG "kcapi: notify up contr %d\n", contr);
+	if (showcapimsgs & 1)
+		printk(KERN_DEBUG "kcapi: notify up contr %d\n", contr);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr) अणु
-		अगर (ctr->state == CAPI_CTR_RUNNING)
-			जाओ unlock_out;
+	if (ctr) {
+		if (ctr->state == CAPI_CTR_RUNNING)
+			goto unlock_out;
 
 		ctr->state = CAPI_CTR_RUNNING;
 
-		क्रम (applid = 1; applid <= CAPI_MAXAPPL; applid++) अणु
+		for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
 			ap = __get_capi_appl_by_nr(applid);
-			अगर (ap)
-				रेजिस्टर_appl(ctr, applid, &ap->rparam);
-		पूर्ण
-	पूर्ण अन्यथा
-		prपूर्णांकk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
+			if (ap)
+				register_appl(ctr, applid, &ap->rparam);
+		}
+	} else
+		printk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
 
 unlock_out:
 	mutex_unlock(&capi_controller_lock);
-पूर्ण
+}
 
-अटल व्योम ctr_करोwn(काष्ठा capi_ctr *ctr, पूर्णांक new_state)
-अणु
-	काष्ठा capi20_appl *ap;
+static void ctr_down(struct capi_ctr *ctr, int new_state)
+{
+	struct capi20_appl *ap;
 	u16 applid;
 
-	अगर (ctr->state == CAPI_CTR_DETECTED || ctr->state == CAPI_CTR_DETACHED)
-		वापस;
+	if (ctr->state == CAPI_CTR_DETECTED || ctr->state == CAPI_CTR_DETACHED)
+		return;
 
 	ctr->state = new_state;
 
-	स_रखो(ctr->manu, 0, माप(ctr->manu));
-	स_रखो(&ctr->version, 0, माप(ctr->version));
-	स_रखो(&ctr->profile, 0, माप(ctr->profile));
-	स_रखो(ctr->serial, 0, माप(ctr->serial));
+	memset(ctr->manu, 0, sizeof(ctr->manu));
+	memset(&ctr->version, 0, sizeof(ctr->version));
+	memset(&ctr->profile, 0, sizeof(ctr->profile));
+	memset(ctr->serial, 0, sizeof(ctr->serial));
 
-	क्रम (applid = 1; applid <= CAPI_MAXAPPL; applid++) अणु
+	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
 		ap = __get_capi_appl_by_nr(applid);
-		अगर (ap)
+		if (ap)
 			capi_ctr_put(ctr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम notअगरy_करोwn(u32 contr)
-अणु
-	काष्ठा capi_ctr *ctr;
+static void notify_down(u32 contr)
+{
+	struct capi_ctr *ctr;
 
 	mutex_lock(&capi_controller_lock);
 
-	अगर (showcapimsgs & 1)
-		prपूर्णांकk(KERN_DEBUG "kcapi: notify down contr %d\n", contr);
+	if (showcapimsgs & 1)
+		printk(KERN_DEBUG "kcapi: notify down contr %d\n", contr);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr)
-		ctr_करोwn(ctr, CAPI_CTR_DETECTED);
-	अन्यथा
-		prपूर्णांकk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
+	if (ctr)
+		ctr_down(ctr, CAPI_CTR_DETECTED);
+	else
+		printk(KERN_WARNING "%s: invalid contr %d\n", __func__, contr);
 
 	mutex_unlock(&capi_controller_lock);
-पूर्ण
+}
 
-अटल व्योम करो_notअगरy_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा capictr_event *event =
-		container_of(work, काष्ठा capictr_event, work);
+static void do_notify_work(struct work_struct *work)
+{
+	struct capictr_event *event =
+		container_of(work, struct capictr_event, work);
 
-	चयन (event->type) अणु
-	हाल CAPICTR_UP:
-		notअगरy_up(event->controller);
-		अवरोध;
-	हाल CAPICTR_DOWN:
-		notअगरy_करोwn(event->controller);
-		अवरोध;
-	पूर्ण
+	switch (event->type) {
+	case CAPICTR_UP:
+		notify_up(event->controller);
+		break;
+	case CAPICTR_DOWN:
+		notify_down(event->controller);
+		break;
+	}
 
-	kमुक्त(event);
-पूर्ण
+	kfree(event);
+}
 
-अटल पूर्णांक notअगरy_push(अचिन्हित पूर्णांक event_type, u32 controller)
-अणु
-	काष्ठा capictr_event *event = kदो_स्मृति(माप(*event), GFP_ATOMIC);
+static int notify_push(unsigned int event_type, u32 controller)
+{
+	struct capictr_event *event = kmalloc(sizeof(*event), GFP_ATOMIC);
 
-	अगर (!event)
-		वापस -ENOMEM;
+	if (!event)
+		return -ENOMEM;
 
-	INIT_WORK(&event->work, करो_notअगरy_work);
+	INIT_WORK(&event->work, do_notify_work);
 	event->type = event_type;
 	event->controller = controller;
 
 	queue_work(kcapi_wq, &event->work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -------- Receiver ------------------------------------------ */
 
-अटल व्योम recv_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा capi20_appl *ap =
-		container_of(work, काष्ठा capi20_appl, recv_work);
+static void recv_handler(struct work_struct *work)
+{
+	struct sk_buff *skb;
+	struct capi20_appl *ap =
+		container_of(work, struct capi20_appl, recv_work);
 
-	अगर ((!ap) || (ap->release_in_progress))
-		वापस;
+	if ((!ap) || (ap->release_in_progress))
+		return;
 
 	mutex_lock(&ap->recv_mtx);
-	जबतक ((skb = skb_dequeue(&ap->recv_queue))) अणु
-		अगर (CAPIMSG_CMD(skb->data) == CAPI_DATA_B3_IND)
+	while ((skb = skb_dequeue(&ap->recv_queue))) {
+		if (CAPIMSG_CMD(skb->data) == CAPI_DATA_B3_IND)
 			ap->nrecvdatapkt++;
-		अन्यथा
+		else
 			ap->nrecvctlpkt++;
 
 		ap->recv_message(ap, skb);
-	पूर्ण
+	}
 	mutex_unlock(&ap->recv_mtx);
-पूर्ण
+}
 
 /**
  * capi_ctr_handle_message() - handle incoming CAPI message
- * @ctr:	controller descriptor काष्ठाure.
+ * @ctr:	controller descriptor structure.
  * @appl:	application ID.
  * @skb:	message.
  *
  * Called by hardware driver to pass a CAPI message to the application.
  */
 
-व्योम capi_ctr_handle_message(काष्ठा capi_ctr *ctr, u16 appl,
-			     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा capi20_appl *ap;
-	पूर्णांक showctl = 0;
+void capi_ctr_handle_message(struct capi_ctr *ctr, u16 appl,
+			     struct sk_buff *skb)
+{
+	struct capi20_appl *ap;
+	int showctl = 0;
 	u8 cmd, subcmd;
 	_cdebbuf *cdb;
 
-	अगर (ctr->state != CAPI_CTR_RUNNING) अणु
+	if (ctr->state != CAPI_CTR_RUNNING) {
 		cdb = capi_message2str(skb->data);
-		अगर (cdb) अणु
-			prपूर्णांकk(KERN_INFO "kcapi: controller [%03d] not active, got: %s",
+		if (cdb) {
+			printk(KERN_INFO "kcapi: controller [%03d] not active, got: %s",
 			       ctr->cnr, cdb->buf);
-			cdebbuf_मुक्त(cdb);
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_INFO "kcapi: controller [%03d] not active, cannot trace\n",
+			cdebbuf_free(cdb);
+		} else
+			printk(KERN_INFO "kcapi: controller [%03d] not active, cannot trace\n",
 			       ctr->cnr);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	cmd = CAPIMSG_COMMAND(skb->data);
 	subcmd = CAPIMSG_SUBCOMMAND(skb->data);
-	अगर (cmd == CAPI_DATA_B3 && subcmd == CAPI_IND) अणु
+	if (cmd == CAPI_DATA_B3 && subcmd == CAPI_IND) {
 		ctr->nrecvdatapkt++;
-		अगर (ctr->traceflag > 2)
+		if (ctr->traceflag > 2)
 			showctl |= 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		ctr->nrecvctlpkt++;
-		अगर (ctr->traceflag)
+		if (ctr->traceflag)
 			showctl |= 2;
-	पूर्ण
+	}
 	showctl |= (ctr->traceflag & 1);
-	अगर (showctl & 2) अणु
-		अगर (showctl & 1) अणु
-			prपूर्णांकk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u\n",
+	if (showctl & 2) {
+		if (showctl & 1) {
+			printk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u\n",
 			       ctr->cnr, CAPIMSG_APPID(skb->data),
 			       capi_cmd2str(cmd, subcmd),
 			       CAPIMSG_LEN(skb->data));
-		पूर्ण अन्यथा अणु
+		} else {
 			cdb = capi_message2str(skb->data);
-			अगर (cdb) अणु
-				prपूर्णांकk(KERN_DEBUG "kcapi: got [%03d] %s\n",
+			if (cdb) {
+				printk(KERN_DEBUG "kcapi: got [%03d] %s\n",
 				       ctr->cnr, cdb->buf);
-				cdebbuf_मुक्त(cdb);
-			पूर्ण अन्यथा
-				prपूर्णांकk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u, cannot trace\n",
+				cdebbuf_free(cdb);
+			} else
+				printk(KERN_DEBUG "kcapi: got [%03d] id#%d %s len=%u, cannot trace\n",
 				       ctr->cnr, CAPIMSG_APPID(skb->data),
 				       capi_cmd2str(cmd, subcmd),
 				       CAPIMSG_LEN(skb->data));
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ap = get_capi_appl_by_nr(CAPIMSG_APPID(skb->data));
-	अगर (!ap) अणु
-		rcu_पढ़ो_unlock();
+	if (!ap) {
+		rcu_read_unlock();
 		cdb = capi_message2str(skb->data);
-		अगर (cdb) अणु
-			prपूर्णांकk(KERN_ERR "kcapi: handle_message: applid %d state released (%s)\n",
+		if (cdb) {
+			printk(KERN_ERR "kcapi: handle_message: applid %d state released (%s)\n",
 			       CAPIMSG_APPID(skb->data), cdb->buf);
-			cdebbuf_मुक्त(cdb);
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_ERR "kcapi: handle_message: applid %d state released (%s) cannot trace\n",
+			cdebbuf_free(cdb);
+		} else
+			printk(KERN_ERR "kcapi: handle_message: applid %d state released (%s) cannot trace\n",
 			       CAPIMSG_APPID(skb->data),
 			       capi_cmd2str(cmd, subcmd));
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	skb_queue_tail(&ap->recv_queue, skb);
 	queue_work(kcapi_wq, &ap->recv_work);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस;
+	return;
 
 error:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
 EXPORT_SYMBOL(capi_ctr_handle_message);
 
 /**
- * capi_ctr_पढ़ोy() - संकेत CAPI controller पढ़ोy
- * @ctr:	controller descriptor काष्ठाure.
+ * capi_ctr_ready() - signal CAPI controller ready
+ * @ctr:	controller descriptor structure.
  *
- * Called by hardware driver to संकेत that the controller is up and running.
+ * Called by hardware driver to signal that the controller is up and running.
  */
 
-व्योम capi_ctr_पढ़ोy(काष्ठा capi_ctr *ctr)
-अणु
-	prपूर्णांकk(KERN_NOTICE "kcapi: controller [%03d] \"%s\" ready.\n",
+void capi_ctr_ready(struct capi_ctr *ctr)
+{
+	printk(KERN_NOTICE "kcapi: controller [%03d] \"%s\" ready.\n",
 	       ctr->cnr, ctr->name);
 
-	notअगरy_push(CAPICTR_UP, ctr->cnr);
-पूर्ण
+	notify_push(CAPICTR_UP, ctr->cnr);
+}
 
-EXPORT_SYMBOL(capi_ctr_पढ़ोy);
+EXPORT_SYMBOL(capi_ctr_ready);
 
 /**
- * capi_ctr_करोwn() - संकेत CAPI controller not पढ़ोy
- * @ctr:	controller descriptor काष्ठाure.
+ * capi_ctr_down() - signal CAPI controller not ready
+ * @ctr:	controller descriptor structure.
  *
- * Called by hardware driver to संकेत that the controller is करोwn and
- * unavailable क्रम use.
+ * Called by hardware driver to signal that the controller is down and
+ * unavailable for use.
  */
 
-व्योम capi_ctr_करोwn(काष्ठा capi_ctr *ctr)
-अणु
-	prपूर्णांकk(KERN_NOTICE "kcapi: controller [%03d] down.\n", ctr->cnr);
+void capi_ctr_down(struct capi_ctr *ctr)
+{
+	printk(KERN_NOTICE "kcapi: controller [%03d] down.\n", ctr->cnr);
 
-	notअगरy_push(CAPICTR_DOWN, ctr->cnr);
-पूर्ण
+	notify_push(CAPICTR_DOWN, ctr->cnr);
+}
 
-EXPORT_SYMBOL(capi_ctr_करोwn);
+EXPORT_SYMBOL(capi_ctr_down);
 
 /* ------------------------------------------------------------- */
 
 /**
- * attach_capi_ctr() - रेजिस्टर CAPI controller
- * @ctr:	controller descriptor काष्ठाure.
+ * attach_capi_ctr() - register CAPI controller
+ * @ctr:	controller descriptor structure.
  *
- * Called by hardware driver to रेजिस्टर a controller with the CAPI subप्रणाली.
+ * Called by hardware driver to register a controller with the CAPI subsystem.
  * Return value: 0 on success, error code < 0 on error
  */
 
-पूर्णांक attach_capi_ctr(काष्ठा capi_ctr *ctr)
-अणु
-	पूर्णांक i;
+int attach_capi_ctr(struct capi_ctr *ctr)
+{
+	int i;
 
 	mutex_lock(&capi_controller_lock);
 
-	क्रम (i = 0; i < CAPI_MAXCONTR; i++) अणु
-		अगर (!capi_controller[i])
-			अवरोध;
-	पूर्ण
-	अगर (i == CAPI_MAXCONTR) अणु
+	for (i = 0; i < CAPI_MAXCONTR; i++) {
+		if (!capi_controller[i])
+			break;
+	}
+	if (i == CAPI_MAXCONTR) {
 		mutex_unlock(&capi_controller_lock);
-		prपूर्णांकk(KERN_ERR "kcapi: out of controller slots\n");
-		वापस -EBUSY;
-	पूर्ण
+		printk(KERN_ERR "kcapi: out of controller slots\n");
+		return -EBUSY;
+	}
 	capi_controller[i] = ctr;
 
 	ctr->nrecvctlpkt = 0;
@@ -449,56 +448,56 @@ EXPORT_SYMBOL(capi_ctr_करोwn);
 	ctr->blocked = 0;
 	ctr->traceflag = showcapimsgs;
 
-	प्र_लिखो(ctr->procfn, "capi/controllers/%d", ctr->cnr);
-	ctr->procent = proc_create_single_data(ctr->procfn, 0, शून्य,
+	sprintf(ctr->procfn, "capi/controllers/%d", ctr->cnr);
+	ctr->procent = proc_create_single_data(ctr->procfn, 0, NULL,
 			ctr->proc_show, ctr);
 
 	ncontrollers++;
 
 	mutex_unlock(&capi_controller_lock);
 
-	prपूर्णांकk(KERN_NOTICE "kcapi: controller [%03d]: %s attached\n",
+	printk(KERN_NOTICE "kcapi: controller [%03d]: %s attached\n",
 	       ctr->cnr, ctr->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(attach_capi_ctr);
 
 /**
- * detach_capi_ctr() - unरेजिस्टर CAPI controller
- * @ctr:	controller descriptor काष्ठाure.
+ * detach_capi_ctr() - unregister CAPI controller
+ * @ctr:	controller descriptor structure.
  *
- * Called by hardware driver to हटाओ the registration of a controller
- * with the CAPI subप्रणाली.
+ * Called by hardware driver to remove the registration of a controller
+ * with the CAPI subsystem.
  * Return value: 0 on success, error code < 0 on error
  */
 
-पूर्णांक detach_capi_ctr(काष्ठा capi_ctr *ctr)
-अणु
-	पूर्णांक err = 0;
+int detach_capi_ctr(struct capi_ctr *ctr)
+{
+	int err = 0;
 
 	mutex_lock(&capi_controller_lock);
 
-	ctr_करोwn(ctr, CAPI_CTR_DETACHED);
+	ctr_down(ctr, CAPI_CTR_DETACHED);
 
-	अगर (capi_controller[ctr->cnr - 1] != ctr) अणु
+	if (capi_controller[ctr->cnr - 1] != ctr) {
 		err = -EINVAL;
-		जाओ unlock_out;
-	पूर्ण
-	capi_controller[ctr->cnr - 1] = शून्य;
+		goto unlock_out;
+	}
+	capi_controller[ctr->cnr - 1] = NULL;
 	ncontrollers--;
 
-	अगर (ctr->procent)
-		हटाओ_proc_entry(ctr->procfn, शून्य);
+	if (ctr->procent)
+		remove_proc_entry(ctr->procfn, NULL);
 
-	prपूर्णांकk(KERN_NOTICE "kcapi: controller [%03d]: %s unregistered\n",
+	printk(KERN_NOTICE "kcapi: controller [%03d]: %s unregistered\n",
 	       ctr->cnr, ctr->name);
 
 unlock_out:
 	mutex_unlock(&capi_controller_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 EXPORT_SYMBOL(detach_capi_ctr);
 
@@ -509,50 +508,50 @@ EXPORT_SYMBOL(detach_capi_ctr);
 /**
  * capi20_isinstalled() - CAPI 2.0 operation CAPI_INSTALLED
  *
- * Return value: CAPI result code (CAPI_NOERROR अगर at least one ISDN controller
- *	is पढ़ोy क्रम use, CAPI_REGNOTINSTALLED otherwise)
+ * Return value: CAPI result code (CAPI_NOERROR if at least one ISDN controller
+ *	is ready for use, CAPI_REGNOTINSTALLED otherwise)
  */
 
-u16 capi20_isinstalled(व्योम)
-अणु
+u16 capi20_isinstalled(void)
+{
 	u16 ret = CAPI_REGNOTINSTALLED;
-	पूर्णांक i;
+	int i;
 
 	mutex_lock(&capi_controller_lock);
 
-	क्रम (i = 0; i < CAPI_MAXCONTR; i++)
-		अगर (capi_controller[i] &&
-		    capi_controller[i]->state == CAPI_CTR_RUNNING) अणु
+	for (i = 0; i < CAPI_MAXCONTR; i++)
+		if (capi_controller[i] &&
+		    capi_controller[i]->state == CAPI_CTR_RUNNING) {
 			ret = CAPI_NOERROR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 	mutex_unlock(&capi_controller_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * capi20_रेजिस्टर() - CAPI 2.0 operation CAPI_REGISTER
- * @ap:		CAPI application descriptor काष्ठाure.
+ * capi20_register() - CAPI 2.0 operation CAPI_REGISTER
+ * @ap:		CAPI application descriptor structure.
  *
  * Register an application's presence with CAPI.
- * A unique application ID is asचिन्हित and stored in @ap->applid.
- * After this function वापसs successfully, the message receive
- * callback function @ap->recv_message() may be called at any समय
- * until capi20_release() has been called क्रम the same @ap.
+ * A unique application ID is assigned and stored in @ap->applid.
+ * After this function returns successfully, the message receive
+ * callback function @ap->recv_message() may be called at any time
+ * until capi20_release() has been called for the same @ap.
  * Return value: CAPI result code
  */
 
-u16 capi20_रेजिस्टर(काष्ठा capi20_appl *ap)
-अणु
-	पूर्णांक i;
+u16 capi20_register(struct capi20_appl *ap)
+{
+	int i;
 	u16 applid;
 
 	DBG("");
 
-	अगर (ap->rparam.datablklen < 128)
-		वापस CAPI_LOGBLKSIZETOSMALL;
+	if (ap->rparam.datablklen < 128)
+		return CAPI_LOGBLKSIZETOSMALL;
 
 	ap->nrecvctlpkt = 0;
 	ap->nrecvdatapkt = 0;
@@ -565,362 +564,362 @@ u16 capi20_रेजिस्टर(काष्ठा capi20_appl *ap)
 
 	mutex_lock(&capi_controller_lock);
 
-	क्रम (applid = 1; applid <= CAPI_MAXAPPL; applid++) अणु
-		अगर (capi_applications[applid - 1] == शून्य)
-			अवरोध;
-	पूर्ण
-	अगर (applid > CAPI_MAXAPPL) अणु
+	for (applid = 1; applid <= CAPI_MAXAPPL; applid++) {
+		if (capi_applications[applid - 1] == NULL)
+			break;
+	}
+	if (applid > CAPI_MAXAPPL) {
 		mutex_unlock(&capi_controller_lock);
-		वापस CAPI_TOOMANYAPPLS;
-	पूर्ण
+		return CAPI_TOOMANYAPPLS;
+	}
 
 	ap->applid = applid;
 	capi_applications[applid - 1] = ap;
 
-	क्रम (i = 0; i < CAPI_MAXCONTR; i++) अणु
-		अगर (!capi_controller[i] ||
+	for (i = 0; i < CAPI_MAXCONTR; i++) {
+		if (!capi_controller[i] ||
 		    capi_controller[i]->state != CAPI_CTR_RUNNING)
-			जारी;
-		रेजिस्टर_appl(capi_controller[i], applid, &ap->rparam);
-	पूर्ण
+			continue;
+		register_appl(capi_controller[i], applid, &ap->rparam);
+	}
 
 	mutex_unlock(&capi_controller_lock);
 
-	अगर (showcapimsgs & 1) अणु
-		prपूर्णांकk(KERN_DEBUG "kcapi: appl %d up\n", applid);
-	पूर्ण
+	if (showcapimsgs & 1) {
+		printk(KERN_DEBUG "kcapi: appl %d up\n", applid);
+	}
 
-	वापस CAPI_NOERROR;
-पूर्ण
+	return CAPI_NOERROR;
+}
 
 /**
  * capi20_release() - CAPI 2.0 operation CAPI_RELEASE
- * @ap:		CAPI application descriptor काष्ठाure.
+ * @ap:		CAPI application descriptor structure.
  *
  * Terminate an application's registration with CAPI.
- * After this function वापसs successfully, the message receive
- * callback function @ap->recv_message() will no दीर्घer be called.
+ * After this function returns successfully, the message receive
+ * callback function @ap->recv_message() will no longer be called.
  * Return value: CAPI result code
  */
 
-u16 capi20_release(काष्ठा capi20_appl *ap)
-अणु
-	पूर्णांक i;
+u16 capi20_release(struct capi20_appl *ap)
+{
+	int i;
 
 	DBG("applid %#x", ap->applid);
 
 	mutex_lock(&capi_controller_lock);
 
 	ap->release_in_progress = 1;
-	capi_applications[ap->applid - 1] = शून्य;
+	capi_applications[ap->applid - 1] = NULL;
 
 	synchronize_rcu();
 
-	क्रम (i = 0; i < CAPI_MAXCONTR; i++) अणु
-		अगर (!capi_controller[i] ||
+	for (i = 0; i < CAPI_MAXCONTR; i++) {
+		if (!capi_controller[i] ||
 		    capi_controller[i]->state != CAPI_CTR_RUNNING)
-			जारी;
+			continue;
 		release_appl(capi_controller[i], ap->applid);
-	पूर्ण
+	}
 
 	mutex_unlock(&capi_controller_lock);
 
 	flush_workqueue(kcapi_wq);
 	skb_queue_purge(&ap->recv_queue);
 
-	अगर (showcapimsgs & 1) अणु
-		prपूर्णांकk(KERN_DEBUG "kcapi: appl %d down\n", ap->applid);
-	पूर्ण
+	if (showcapimsgs & 1) {
+		printk(KERN_DEBUG "kcapi: appl %d down\n", ap->applid);
+	}
 
-	वापस CAPI_NOERROR;
-पूर्ण
+	return CAPI_NOERROR;
+}
 
 /**
  * capi20_put_message() - CAPI 2.0 operation CAPI_PUT_MESSAGE
- * @ap:		CAPI application descriptor काष्ठाure.
+ * @ap:		CAPI application descriptor structure.
  * @skb:	CAPI message.
  *
  * Transfer a single message to CAPI.
  * Return value: CAPI result code
  */
 
-u16 capi20_put_message(काष्ठा capi20_appl *ap, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा capi_ctr *ctr;
-	पूर्णांक showctl = 0;
+u16 capi20_put_message(struct capi20_appl *ap, struct sk_buff *skb)
+{
+	struct capi_ctr *ctr;
+	int showctl = 0;
 	u8 cmd, subcmd;
 
 	DBG("applid %#x", ap->applid);
 
-	अगर (ncontrollers == 0)
-		वापस CAPI_REGNOTINSTALLED;
-	अगर ((ap->applid == 0) || ap->release_in_progress)
-		वापस CAPI_ILLAPPNR;
-	अगर (skb->len < 12
+	if (ncontrollers == 0)
+		return CAPI_REGNOTINSTALLED;
+	if ((ap->applid == 0) || ap->release_in_progress)
+		return CAPI_ILLAPPNR;
+	if (skb->len < 12
 	    || !capi_cmd_valid(CAPIMSG_COMMAND(skb->data))
 	    || !capi_subcmd_valid(CAPIMSG_SUBCOMMAND(skb->data)))
-		वापस CAPI_ILLCMDORSUBCMDORMSGTOSMALL;
+		return CAPI_ILLCMDORSUBCMDORMSGTOSMALL;
 
 	/*
-	 * The controller reference is रक्षित by the existence of the
+	 * The controller reference is protected by the existence of the
 	 * application passed to us. We assume that the caller properly
 	 * synchronizes this service with capi20_release.
 	 */
 	ctr = get_capi_ctr_by_nr(CAPIMSG_CONTROLLER(skb->data));
-	अगर (!ctr || ctr->state != CAPI_CTR_RUNNING)
-		वापस CAPI_REGNOTINSTALLED;
-	अगर (ctr->blocked)
-		वापस CAPI_SENDQUEUEFULL;
+	if (!ctr || ctr->state != CAPI_CTR_RUNNING)
+		return CAPI_REGNOTINSTALLED;
+	if (ctr->blocked)
+		return CAPI_SENDQUEUEFULL;
 
 	cmd = CAPIMSG_COMMAND(skb->data);
 	subcmd = CAPIMSG_SUBCOMMAND(skb->data);
 
-	अगर (cmd == CAPI_DATA_B3 && subcmd == CAPI_REQ) अणु
+	if (cmd == CAPI_DATA_B3 && subcmd == CAPI_REQ) {
 		ctr->nsentdatapkt++;
 		ap->nsentdatapkt++;
-		अगर (ctr->traceflag > 2)
+		if (ctr->traceflag > 2)
 			showctl |= 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		ctr->nsentctlpkt++;
 		ap->nsentctlpkt++;
-		अगर (ctr->traceflag)
+		if (ctr->traceflag)
 			showctl |= 2;
-	पूर्ण
+	}
 	showctl |= (ctr->traceflag & 1);
-	अगर (showctl & 2) अणु
-		अगर (showctl & 1) अणु
-			prपूर्णांकk(KERN_DEBUG "kcapi: put [%03d] id#%d %s len=%u\n",
+	if (showctl & 2) {
+		if (showctl & 1) {
+			printk(KERN_DEBUG "kcapi: put [%03d] id#%d %s len=%u\n",
 			       CAPIMSG_CONTROLLER(skb->data),
 			       CAPIMSG_APPID(skb->data),
 			       capi_cmd2str(cmd, subcmd),
 			       CAPIMSG_LEN(skb->data));
-		पूर्ण अन्यथा अणु
+		} else {
 			_cdebbuf *cdb = capi_message2str(skb->data);
-			अगर (cdb) अणु
-				prपूर्णांकk(KERN_DEBUG "kcapi: put [%03d] %s\n",
+			if (cdb) {
+				printk(KERN_DEBUG "kcapi: put [%03d] %s\n",
 				       CAPIMSG_CONTROLLER(skb->data),
 				       cdb->buf);
-				cdebbuf_मुक्त(cdb);
-			पूर्ण अन्यथा
-				prपूर्णांकk(KERN_DEBUG "kcapi: put [%03d] id#%d %s len=%u cannot trace\n",
+				cdebbuf_free(cdb);
+			} else
+				printk(KERN_DEBUG "kcapi: put [%03d] id#%d %s len=%u cannot trace\n",
 				       CAPIMSG_CONTROLLER(skb->data),
 				       CAPIMSG_APPID(skb->data),
 				       capi_cmd2str(cmd, subcmd),
 				       CAPIMSG_LEN(skb->data));
-		पूर्ण
-	पूर्ण
-	वापस ctr->send_message(ctr, skb);
-पूर्ण
+		}
+	}
+	return ctr->send_message(ctr, skb);
+}
 
 /**
  * capi20_get_manufacturer() - CAPI 2.0 operation CAPI_GET_MANUFACTURER
  * @contr:	controller number.
  * @buf:	result buffer (64 bytes).
  *
- * Retrieve inक्रमmation about the manufacturer of the specअगरied ISDN controller
- * or (क्रम @contr == 0) the driver itself.
+ * Retrieve information about the manufacturer of the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
  * Return value: CAPI result code
  */
 
 u16 capi20_get_manufacturer(u32 contr, u8 buf[CAPI_MANUFACTURER_LEN])
-अणु
-	काष्ठा capi_ctr *ctr;
+{
+	struct capi_ctr *ctr;
 	u16 ret;
 
-	अगर (contr == 0) अणु
-		म_नकलन(buf, capi_manufakturer, CAPI_MANUFACTURER_LEN);
-		वापस CAPI_NOERROR;
-	पूर्ण
+	if (contr == 0) {
+		strncpy(buf, capi_manufakturer, CAPI_MANUFACTURER_LEN);
+		return CAPI_NOERROR;
+	}
 
 	mutex_lock(&capi_controller_lock);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr && ctr->state == CAPI_CTR_RUNNING) अणु
-		म_नकलन(buf, ctr->manu, CAPI_MANUFACTURER_LEN);
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		strncpy(buf, ctr->manu, CAPI_MANUFACTURER_LEN);
 		ret = CAPI_NOERROR;
-	पूर्ण अन्यथा
+	} else
 		ret = CAPI_REGNOTINSTALLED;
 
 	mutex_unlock(&capi_controller_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * capi20_get_version() - CAPI 2.0 operation CAPI_GET_VERSION
  * @contr:	controller number.
- * @verp:	result काष्ठाure.
+ * @verp:	result structure.
  *
- * Retrieve version inक्रमmation क्रम the specअगरied ISDN controller
- * or (क्रम @contr == 0) the driver itself.
+ * Retrieve version information for the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
  * Return value: CAPI result code
  */
 
-u16 capi20_get_version(u32 contr, काष्ठा capi_version *verp)
-अणु
-	काष्ठा capi_ctr *ctr;
+u16 capi20_get_version(u32 contr, struct capi_version *verp)
+{
+	struct capi_ctr *ctr;
 	u16 ret;
 
-	अगर (contr == 0) अणु
+	if (contr == 0) {
 		*verp = driver_version;
-		वापस CAPI_NOERROR;
-	पूर्ण
+		return CAPI_NOERROR;
+	}
 
 	mutex_lock(&capi_controller_lock);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr && ctr->state == CAPI_CTR_RUNNING) अणु
-		स_नकल(verp, &ctr->version, माप(capi_version));
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		memcpy(verp, &ctr->version, sizeof(capi_version));
 		ret = CAPI_NOERROR;
-	पूर्ण अन्यथा
+	} else
 		ret = CAPI_REGNOTINSTALLED;
 
 	mutex_unlock(&capi_controller_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * capi20_get_serial() - CAPI 2.0 operation CAPI_GET_SERIAL_NUMBER
  * @contr:	controller number.
  * @serial:	result buffer (8 bytes).
  *
- * Retrieve the serial number of the specअगरied ISDN controller
- * or (क्रम @contr == 0) the driver itself.
+ * Retrieve the serial number of the specified ISDN controller
+ * or (for @contr == 0) the driver itself.
  * Return value: CAPI result code
  */
 
 u16 capi20_get_serial(u32 contr, u8 serial[CAPI_SERIAL_LEN])
-अणु
-	काष्ठा capi_ctr *ctr;
+{
+	struct capi_ctr *ctr;
 	u16 ret;
 
-	अगर (contr == 0) अणु
+	if (contr == 0) {
 		strlcpy(serial, driver_serial, CAPI_SERIAL_LEN);
-		वापस CAPI_NOERROR;
-	पूर्ण
+		return CAPI_NOERROR;
+	}
 
 	mutex_lock(&capi_controller_lock);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr && ctr->state == CAPI_CTR_RUNNING) अणु
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
 		strlcpy(serial, ctr->serial, CAPI_SERIAL_LEN);
 		ret = CAPI_NOERROR;
-	पूर्ण अन्यथा
+	} else
 		ret = CAPI_REGNOTINSTALLED;
 
 	mutex_unlock(&capi_controller_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * capi20_get_profile() - CAPI 2.0 operation CAPI_GET_PROखाता
+ * capi20_get_profile() - CAPI 2.0 operation CAPI_GET_PROFILE
  * @contr:	controller number.
- * @profp:	result काष्ठाure.
+ * @profp:	result structure.
  *
- * Retrieve capability inक्रमmation क्रम the specअगरied ISDN controller
- * or (क्रम @contr == 0) the number of installed controllers.
+ * Retrieve capability information for the specified ISDN controller
+ * or (for @contr == 0) the number of installed controllers.
  * Return value: CAPI result code
  */
 
-u16 capi20_get_profile(u32 contr, काष्ठा capi_profile *profp)
-अणु
-	काष्ठा capi_ctr *ctr;
+u16 capi20_get_profile(u32 contr, struct capi_profile *profp)
+{
+	struct capi_ctr *ctr;
 	u16 ret;
 
-	अगर (contr == 0) अणु
+	if (contr == 0) {
 		profp->ncontroller = ncontrollers;
-		वापस CAPI_NOERROR;
-	पूर्ण
+		return CAPI_NOERROR;
+	}
 
 	mutex_lock(&capi_controller_lock);
 
 	ctr = get_capi_ctr_by_nr(contr);
-	अगर (ctr && ctr->state == CAPI_CTR_RUNNING) अणु
-		स_नकल(profp, &ctr->profile, माप(काष्ठा capi_profile));
+	if (ctr && ctr->state == CAPI_CTR_RUNNING) {
+		memcpy(profp, &ctr->profile, sizeof(struct capi_profile));
 		ret = CAPI_NOERROR;
-	पूर्ण अन्यथा
+	} else
 		ret = CAPI_REGNOTINSTALLED;
 
 	mutex_unlock(&capi_controller_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * capi20_manufacturer() - CAPI 2.0 operation CAPI_MANUFACTURER
  * @cmd:	command.
  * @data:	parameter.
  *
- * Perक्रमm manufacturer specअगरic command.
+ * Perform manufacturer specific command.
  * Return value: CAPI result code
  */
 
-पूर्णांक capi20_manufacturer(अचिन्हित दीर्घ cmd, व्योम __user *data)
-अणु
-	काष्ठा capi_ctr *ctr;
-	पूर्णांक retval;
+int capi20_manufacturer(unsigned long cmd, void __user *data)
+{
+	struct capi_ctr *ctr;
+	int retval;
 
-	चयन (cmd) अणु
-	हाल KCAPI_CMD_TRACE:
-	अणु
+	switch (cmd) {
+	case KCAPI_CMD_TRACE:
+	{
 		kcapi_flagdef fdef;
 
-		अगर (copy_from_user(&fdef, data, माप(kcapi_flagdef)))
-			वापस -EFAULT;
+		if (copy_from_user(&fdef, data, sizeof(kcapi_flagdef)))
+			return -EFAULT;
 
 		mutex_lock(&capi_controller_lock);
 
 		ctr = get_capi_ctr_by_nr(fdef.contr);
-		अगर (ctr) अणु
+		if (ctr) {
 			ctr->traceflag = fdef.flag;
-			prपूर्णांकk(KERN_INFO "kcapi: contr [%03d] set trace=%d\n",
+			printk(KERN_INFO "kcapi: contr [%03d] set trace=%d\n",
 			       ctr->cnr, ctr->traceflag);
 			retval = 0;
-		पूर्ण अन्यथा
+		} else
 			retval = -ESRCH;
 
 		mutex_unlock(&capi_controller_lock);
 
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "kcapi: manufacturer command %lu unknown.\n",
+	default:
+		printk(KERN_ERR "kcapi: manufacturer command %lu unknown.\n",
 		       cmd);
-		अवरोध;
+		break;
 
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
 /* ------------------------------------------------------------- */
 /* -------- Init & Cleanup ------------------------------------- */
 /* ------------------------------------------------------------- */
 
 /*
- * init / निकास functions
+ * init / exit functions
  */
 
-पूर्णांक __init kcapi_init(व्योम)
-अणु
-	पूर्णांक err;
+int __init kcapi_init(void)
+{
+	int err;
 
 	kcapi_wq = alloc_workqueue("kcapi", 0, 0);
-	अगर (!kcapi_wq)
-		वापस -ENOMEM;
+	if (!kcapi_wq)
+		return -ENOMEM;
 
 	err = cdebug_init();
-	अगर (err) अणु
+	if (err) {
 		destroy_workqueue(kcapi_wq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	kcapi_proc_init();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम kcapi_निकास(व्योम)
-अणु
-	kcapi_proc_निकास();
+void kcapi_exit(void)
+{
+	kcapi_proc_exit();
 
-	cdebug_निकास();
+	cdebug_exit();
 	destroy_workqueue(kcapi_wq);
-पूर्ण
+}

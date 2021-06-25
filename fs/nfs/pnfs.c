@@ -1,531 +1,530 @@
-<शैली गुरु>
 /*
  *  pNFS functions to call and manage layout drivers.
  *
- *  Copyright (c) 2002 [year of first खुलाation]
+ *  Copyright (c) 2002 [year of first publication]
  *  The Regents of the University of Michigan
  *  All Rights Reserved
  *
- *  Dean Hildebअक्रम <dhildebz@umich.edu>
+ *  Dean Hildebrand <dhildebz@umich.edu>
  *
  *  Permission is granted to use, copy, create derivative works, and
- *  redistribute this software and such derivative works क्रम any purpose,
- *  so दीर्घ as the name of the University of Michigan is not used in
- *  any advertising or खुलाity pertaining to the use or distribution
- *  of this software without specअगरic, written prior authorization. If
- *  the above copyright notice or any other identअगरication of the
+ *  redistribute this software and such derivative works for any purpose,
+ *  so long as the name of the University of Michigan is not used in
+ *  any advertising or publicity pertaining to the use or distribution
+ *  of this software without specific, written prior authorization. If
+ *  the above copyright notice or any other identification of the
  *  University of Michigan is included in any copy of any portion of
  *  this software, then the disclaimer below must also be included.
  *
  *  This software is provided as is, without representation or warranty
  *  of any kind either express or implied, including without limitation
- *  the implied warranties of merchantability, fitness क्रम a particular
+ *  the implied warranties of merchantability, fitness for a particular
  *  purpose, or noninfringement.  The Regents of the University of
- *  Michigan shall not be liable क्रम any damages, including special,
+ *  Michigan shall not be liable for any damages, including special,
  *  indirect, incidental, or consequential damages, with respect to any
  *  claim arising out of or in connection with the use of the software,
- *  even अगर it has been or is hereafter advised of the possibility of
+ *  even if it has been or is hereafter advised of the possibility of
  *  such damages.
  */
 
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_page.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sort.h>
-#समावेश "internal.h"
-#समावेश "pnfs.h"
-#समावेश "iostat.h"
-#समावेश "nfs4trace.h"
-#समावेश "delegation.h"
-#समावेश "nfs42.h"
-#समावेश "nfs4_fs.h"
+#include <linux/nfs_fs.h>
+#include <linux/nfs_page.h>
+#include <linux/module.h>
+#include <linux/sort.h>
+#include "internal.h"
+#include "pnfs.h"
+#include "iostat.h"
+#include "nfs4trace.h"
+#include "delegation.h"
+#include "nfs42.h"
+#include "nfs4_fs.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS
-#घोषणा PNFS_LAYOUTGET_RETRY_TIMEOUT (120*HZ)
+#define NFSDBG_FACILITY		NFSDBG_PNFS
+#define PNFS_LAYOUTGET_RETRY_TIMEOUT (120*HZ)
 
 /* Locking:
  *
  * pnfs_spinlock:
  *      protects pnfs_modules_tbl.
  */
-अटल DEFINE_SPINLOCK(pnfs_spinlock);
+static DEFINE_SPINLOCK(pnfs_spinlock);
 
 /*
  * pnfs_modules_tbl holds all pnfs modules
  */
-अटल LIST_HEAD(pnfs_modules_tbl);
+static LIST_HEAD(pnfs_modules_tbl);
 
-अटल व्योम pnfs_layoutवापस_beक्रमe_put_layout_hdr(काष्ठा pnfs_layout_hdr *lo);
-अटल व्योम pnfs_मुक्त_वापसed_lsegs(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा list_head *मुक्त_me,
-		स्थिर काष्ठा pnfs_layout_range *range,
+static void pnfs_layoutreturn_before_put_layout_hdr(struct pnfs_layout_hdr *lo);
+static void pnfs_free_returned_lsegs(struct pnfs_layout_hdr *lo,
+		struct list_head *free_me,
+		const struct pnfs_layout_range *range,
 		u32 seq);
-अटल bool pnfs_lseg_dec_and_हटाओ_zero(काष्ठा pnfs_layout_segment *lseg,
-		                काष्ठा list_head *पंचांगp_list);
+static bool pnfs_lseg_dec_and_remove_zero(struct pnfs_layout_segment *lseg,
+		                struct list_head *tmp_list);
 
-/* Return the रेजिस्टरed pnfs layout driver module matching given id */
-अटल काष्ठा pnfs_layoutdriver_type *
+/* Return the registered pnfs layout driver module matching given id */
+static struct pnfs_layoutdriver_type *
 find_pnfs_driver_locked(u32 id)
-अणु
-	काष्ठा pnfs_layoutdriver_type *local;
+{
+	struct pnfs_layoutdriver_type *local;
 
-	list_क्रम_each_entry(local, &pnfs_modules_tbl, pnfs_tblid)
-		अगर (local->id == id)
-			जाओ out;
-	local = शून्य;
+	list_for_each_entry(local, &pnfs_modules_tbl, pnfs_tblid)
+		if (local->id == id)
+			goto out;
+	local = NULL;
 out:
-	dprपूर्णांकk("%s: Searching for id %u, found %p\n", __func__, id, local);
-	वापस local;
-पूर्ण
+	dprintk("%s: Searching for id %u, found %p\n", __func__, id, local);
+	return local;
+}
 
-अटल काष्ठा pnfs_layoutdriver_type *
+static struct pnfs_layoutdriver_type *
 find_pnfs_driver(u32 id)
-अणु
-	काष्ठा pnfs_layoutdriver_type *local;
+{
+	struct pnfs_layoutdriver_type *local;
 
 	spin_lock(&pnfs_spinlock);
 	local = find_pnfs_driver_locked(id);
-	अगर (local != शून्य && !try_module_get(local->owner)) अणु
-		dprपूर्णांकk("%s: Could not grab reference on module\n", __func__);
-		local = शून्य;
-	पूर्ण
+	if (local != NULL && !try_module_get(local->owner)) {
+		dprintk("%s: Could not grab reference on module\n", __func__);
+		local = NULL;
+	}
 	spin_unlock(&pnfs_spinlock);
-	वापस local;
-पूर्ण
+	return local;
+}
 
-व्योम
-unset_pnfs_layoutdriver(काष्ठा nfs_server *nfss)
-अणु
-	अगर (nfss->pnfs_curr_ld) अणु
-		अगर (nfss->pnfs_curr_ld->clear_layoutdriver)
+void
+unset_pnfs_layoutdriver(struct nfs_server *nfss)
+{
+	if (nfss->pnfs_curr_ld) {
+		if (nfss->pnfs_curr_ld->clear_layoutdriver)
 			nfss->pnfs_curr_ld->clear_layoutdriver(nfss);
-		/* Decrement the MDS count. Purge the deviceid cache अगर zero */
-		अगर (atomic_dec_and_test(&nfss->nfs_client->cl_mds_count))
+		/* Decrement the MDS count. Purge the deviceid cache if zero */
+		if (atomic_dec_and_test(&nfss->nfs_client->cl_mds_count))
 			nfs4_deviceid_purge_client(nfss->nfs_client);
 		module_put(nfss->pnfs_curr_ld->owner);
-	पूर्ण
-	nfss->pnfs_curr_ld = शून्य;
-पूर्ण
+	}
+	nfss->pnfs_curr_ld = NULL;
+}
 
 /*
  * When the server sends a list of layout types, we choose one in the order
  * given in the list below.
  *
  * FIXME: should this list be configurable in some fashion? module param?
- * 	  mount option? something अन्यथा?
+ * 	  mount option? something else?
  */
-अटल स्थिर u32 ld_prefs[] = अणु
+static const u32 ld_prefs[] = {
 	LAYOUT_SCSI,
 	LAYOUT_BLOCK_VOLUME,
 	LAYOUT_OSD2_OBJECTS,
-	LAYOUT_FLEX_खाताS,
-	LAYOUT_NFSV4_1_खाताS,
+	LAYOUT_FLEX_FILES,
+	LAYOUT_NFSV4_1_FILES,
 	0
-पूर्ण;
+};
 
-अटल पूर्णांक
-ld_cmp(स्थिर व्योम *e1, स्थिर व्योम *e2)
-अणु
+static int
+ld_cmp(const void *e1, const void *e2)
+{
 	u32 ld1 = *((u32 *)e1);
 	u32 ld2 = *((u32 *)e2);
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; ld_prefs[i] != 0; i++) अणु
-		अगर (ld1 == ld_prefs[i])
-			वापस -1;
+	for (i = 0; ld_prefs[i] != 0; i++) {
+		if (ld1 == ld_prefs[i])
+			return -1;
 
-		अगर (ld2 == ld_prefs[i])
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ld2 == ld_prefs[i])
+			return 1;
+	}
+	return 0;
+}
 
 /*
- * Try to set the server's pnfs module to the pnfs layout type specअगरied by id.
- * Currently only one pNFS layout driver per fileप्रणाली is supported.
+ * Try to set the server's pnfs module to the pnfs layout type specified by id.
+ * Currently only one pNFS layout driver per filesystem is supported.
  *
  * @ids array of layout types supported by MDS.
  */
-व्योम
-set_pnfs_layoutdriver(काष्ठा nfs_server *server, स्थिर काष्ठा nfs_fh *mntfh,
-		      काष्ठा nfs_fsinfo *fsinfo)
-अणु
-	काष्ठा pnfs_layoutdriver_type *ld_type = शून्य;
+void
+set_pnfs_layoutdriver(struct nfs_server *server, const struct nfs_fh *mntfh,
+		      struct nfs_fsinfo *fsinfo)
+{
+	struct pnfs_layoutdriver_type *ld_type = NULL;
 	u32 id;
-	पूर्णांक i;
+	int i;
 
-	अगर (fsinfo->nlayouttypes == 0)
-		जाओ out_no_driver;
-	अगर (!(server->nfs_client->cl_exchange_flags &
-		 (EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_USE_PNFS_MDS))) अणु
-		prपूर्णांकk(KERN_ERR "NFS: %s: cl_exchange_flags 0x%x\n",
+	if (fsinfo->nlayouttypes == 0)
+		goto out_no_driver;
+	if (!(server->nfs_client->cl_exchange_flags &
+		 (EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_USE_PNFS_MDS))) {
+		printk(KERN_ERR "NFS: %s: cl_exchange_flags 0x%x\n",
 			__func__, server->nfs_client->cl_exchange_flags);
-		जाओ out_no_driver;
-	पूर्ण
+		goto out_no_driver;
+	}
 
 	sort(fsinfo->layouttype, fsinfo->nlayouttypes,
-		माप(*fsinfo->layouttype), ld_cmp, शून्य);
+		sizeof(*fsinfo->layouttype), ld_cmp, NULL);
 
-	क्रम (i = 0; i < fsinfo->nlayouttypes; i++) अणु
+	for (i = 0; i < fsinfo->nlayouttypes; i++) {
 		id = fsinfo->layouttype[i];
 		ld_type = find_pnfs_driver(id);
-		अगर (!ld_type) अणु
+		if (!ld_type) {
 			request_module("%s-%u", LAYOUT_NFSV4_1_MODULE_PREFIX,
 					id);
 			ld_type = find_pnfs_driver(id);
-		पूर्ण
-		अगर (ld_type)
-			अवरोध;
-	पूर्ण
+		}
+		if (ld_type)
+			break;
+	}
 
-	अगर (!ld_type) अणु
-		dprपूर्णांकk("%s: No pNFS module found!\n", __func__);
-		जाओ out_no_driver;
-	पूर्ण
+	if (!ld_type) {
+		dprintk("%s: No pNFS module found!\n", __func__);
+		goto out_no_driver;
+	}
 
 	server->pnfs_curr_ld = ld_type;
-	अगर (ld_type->set_layoutdriver
-	    && ld_type->set_layoutdriver(server, mntfh)) अणु
-		prपूर्णांकk(KERN_ERR "NFS: %s: Error initializing pNFS layout "
+	if (ld_type->set_layoutdriver
+	    && ld_type->set_layoutdriver(server, mntfh)) {
+		printk(KERN_ERR "NFS: %s: Error initializing pNFS layout "
 			"driver %u.\n", __func__, id);
 		module_put(ld_type->owner);
-		जाओ out_no_driver;
-	पूर्ण
+		goto out_no_driver;
+	}
 	/* Bump the MDS count */
 	atomic_inc(&server->nfs_client->cl_mds_count);
 
-	dprपूर्णांकk("%s: pNFS module for %u set\n", __func__, id);
-	वापस;
+	dprintk("%s: pNFS module for %u set\n", __func__, id);
+	return;
 
 out_no_driver:
-	dprपूर्णांकk("%s: Using NFSv4 I/O\n", __func__);
-	server->pnfs_curr_ld = शून्य;
-पूर्ण
+	dprintk("%s: Using NFSv4 I/O\n", __func__);
+	server->pnfs_curr_ld = NULL;
+}
 
-पूर्णांक
-pnfs_रेजिस्टर_layoutdriver(काष्ठा pnfs_layoutdriver_type *ld_type)
-अणु
-	पूर्णांक status = -EINVAL;
-	काष्ठा pnfs_layoutdriver_type *पंचांगp;
+int
+pnfs_register_layoutdriver(struct pnfs_layoutdriver_type *ld_type)
+{
+	int status = -EINVAL;
+	struct pnfs_layoutdriver_type *tmp;
 
-	अगर (ld_type->id == 0) अणु
-		prपूर्णांकk(KERN_ERR "NFS: %s id 0 is reserved\n", __func__);
-		वापस status;
-	पूर्ण
-	अगर (!ld_type->alloc_lseg || !ld_type->मुक्त_lseg) अणु
-		prपूर्णांकk(KERN_ERR "NFS: %s Layout driver must provide "
+	if (ld_type->id == 0) {
+		printk(KERN_ERR "NFS: %s id 0 is reserved\n", __func__);
+		return status;
+	}
+	if (!ld_type->alloc_lseg || !ld_type->free_lseg) {
+		printk(KERN_ERR "NFS: %s Layout driver must provide "
 		       "alloc_lseg and free_lseg.\n", __func__);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	spin_lock(&pnfs_spinlock);
-	पंचांगp = find_pnfs_driver_locked(ld_type->id);
-	अगर (!पंचांगp) अणु
+	tmp = find_pnfs_driver_locked(ld_type->id);
+	if (!tmp) {
 		list_add(&ld_type->pnfs_tblid, &pnfs_modules_tbl);
 		status = 0;
-		dprपूर्णांकk("%s Registering id:%u name:%s\n", __func__, ld_type->id,
+		dprintk("%s Registering id:%u name:%s\n", __func__, ld_type->id,
 			ld_type->name);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "NFS: %s Module with id %d already loaded!\n",
+	} else {
+		printk(KERN_ERR "NFS: %s Module with id %d already loaded!\n",
 			__func__, ld_type->id);
-	पूर्ण
+	}
 	spin_unlock(&pnfs_spinlock);
 
-	वापस status;
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_रेजिस्टर_layoutdriver);
+	return status;
+}
+EXPORT_SYMBOL_GPL(pnfs_register_layoutdriver);
 
-व्योम
-pnfs_unरेजिस्टर_layoutdriver(काष्ठा pnfs_layoutdriver_type *ld_type)
-अणु
-	dprपूर्णांकk("%s Deregistering id:%u\n", __func__, ld_type->id);
+void
+pnfs_unregister_layoutdriver(struct pnfs_layoutdriver_type *ld_type)
+{
+	dprintk("%s Deregistering id:%u\n", __func__, ld_type->id);
 	spin_lock(&pnfs_spinlock);
 	list_del(&ld_type->pnfs_tblid);
 	spin_unlock(&pnfs_spinlock);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_unरेजिस्टर_layoutdriver);
+}
+EXPORT_SYMBOL_GPL(pnfs_unregister_layoutdriver);
 
 /*
  * pNFS client layout cache
  */
 
-/* Need to hold i_lock अगर caller करोes not alपढ़ोy hold reference */
-व्योम
-pnfs_get_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
+/* Need to hold i_lock if caller does not already hold reference */
+void
+pnfs_get_layout_hdr(struct pnfs_layout_hdr *lo)
+{
 	refcount_inc(&lo->plh_refcount);
-पूर्ण
+}
 
-अटल काष्ठा pnfs_layout_hdr *
-pnfs_alloc_layout_hdr(काष्ठा inode *ino, gfp_t gfp_flags)
-अणु
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
-	वापस ld->alloc_layout_hdr(ino, gfp_flags);
-पूर्ण
+static struct pnfs_layout_hdr *
+pnfs_alloc_layout_hdr(struct inode *ino, gfp_t gfp_flags)
+{
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
+	return ld->alloc_layout_hdr(ino, gfp_flags);
+}
 
-अटल व्योम
-pnfs_मुक्त_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(lo->plh_inode);
-	काष्ठा pnfs_layoutdriver_type *ld = server->pnfs_curr_ld;
+static void
+pnfs_free_layout_hdr(struct pnfs_layout_hdr *lo)
+{
+	struct nfs_server *server = NFS_SERVER(lo->plh_inode);
+	struct pnfs_layoutdriver_type *ld = server->pnfs_curr_ld;
 
-	अगर (test_and_clear_bit(NFS_LAYOUT_HASHED, &lo->plh_flags)) अणु
-		काष्ठा nfs_client *clp = server->nfs_client;
+	if (test_and_clear_bit(NFS_LAYOUT_HASHED, &lo->plh_flags)) {
+		struct nfs_client *clp = server->nfs_client;
 
 		spin_lock(&clp->cl_lock);
 		list_del_rcu(&lo->plh_layouts);
 		spin_unlock(&clp->cl_lock);
-	पूर्ण
+	}
 	put_cred(lo->plh_lc_cred);
-	वापस ld->मुक्त_layout_hdr(lo);
-पूर्ण
+	return ld->free_layout_hdr(lo);
+}
 
-अटल व्योम
-pnfs_detach_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(lo->plh_inode);
-	dprपूर्णांकk("%s: freeing layout cache %p\n", __func__, lo);
-	nfsi->layout = शून्य;
+static void
+pnfs_detach_layout_hdr(struct pnfs_layout_hdr *lo)
+{
+	struct nfs_inode *nfsi = NFS_I(lo->plh_inode);
+	dprintk("%s: freeing layout cache %p\n", __func__, lo);
+	nfsi->layout = NULL;
 	/* Reset MDS Threshold I/O counters */
-	nfsi->ग_लिखो_io = 0;
-	nfsi->पढ़ो_io = 0;
-पूर्ण
+	nfsi->write_io = 0;
+	nfsi->read_io = 0;
+}
 
-व्योम
-pnfs_put_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा inode *inode;
-	अचिन्हित दीर्घ i_state;
+void
+pnfs_put_layout_hdr(struct pnfs_layout_hdr *lo)
+{
+	struct inode *inode;
+	unsigned long i_state;
 
-	अगर (!lo)
-		वापस;
+	if (!lo)
+		return;
 	inode = lo->plh_inode;
-	pnfs_layoutवापस_beक्रमe_put_layout_hdr(lo);
+	pnfs_layoutreturn_before_put_layout_hdr(lo);
 
-	अगर (refcount_dec_and_lock(&lo->plh_refcount, &inode->i_lock)) अणु
-		अगर (!list_empty(&lo->plh_segs))
+	if (refcount_dec_and_lock(&lo->plh_refcount, &inode->i_lock)) {
+		if (!list_empty(&lo->plh_segs))
 			WARN_ONCE(1, "NFS: BUG unfreed layout segments.\n");
 		pnfs_detach_layout_hdr(lo);
 		i_state = inode->i_state;
 		spin_unlock(&inode->i_lock);
-		pnfs_मुक्त_layout_hdr(lo);
-		/* Notअगरy pnfs_destroy_layout_final() that we're करोne */
-		अगर (i_state & (I_FREEING | I_CLEAR))
+		pnfs_free_layout_hdr(lo);
+		/* Notify pnfs_destroy_layout_final() that we're done */
+		if (i_state & (I_FREEING | I_CLEAR))
 			wake_up_var(lo);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा inode *
-pnfs_grab_inode_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा inode *inode = igrab(lo->plh_inode);
-	अगर (inode)
-		वापस inode;
+static struct inode *
+pnfs_grab_inode_layout_hdr(struct pnfs_layout_hdr *lo)
+{
+	struct inode *inode = igrab(lo->plh_inode);
+	if (inode)
+		return inode;
 	set_bit(NFS_LAYOUT_INODE_FREEING, &lo->plh_flags);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * Compare 2 layout stateid sequence ids, to see which is newer,
- * taking पूर्णांकo account wraparound issues.
+ * taking into account wraparound issues.
  */
-अटल bool pnfs_seqid_is_newer(u32 s1, u32 s2)
-अणु
-	वापस (s32)(s1 - s2) > 0;
-पूर्ण
+static bool pnfs_seqid_is_newer(u32 s1, u32 s2)
+{
+	return (s32)(s1 - s2) > 0;
+}
 
-अटल व्योम pnfs_barrier_update(काष्ठा pnfs_layout_hdr *lo, u32 newseq)
-अणु
-	अगर (pnfs_seqid_is_newer(newseq, lo->plh_barrier))
+static void pnfs_barrier_update(struct pnfs_layout_hdr *lo, u32 newseq)
+{
+	if (pnfs_seqid_is_newer(newseq, lo->plh_barrier))
 		lo->plh_barrier = newseq;
-पूर्ण
+}
 
-अटल व्योम
-pnfs_set_plh_वापस_info(काष्ठा pnfs_layout_hdr *lo, क्रमागत pnfs_iomode iomode,
+static void
+pnfs_set_plh_return_info(struct pnfs_layout_hdr *lo, enum pnfs_iomode iomode,
 			 u32 seq)
-अणु
-	अगर (lo->plh_वापस_iomode != 0 && lo->plh_वापस_iomode != iomode)
+{
+	if (lo->plh_return_iomode != 0 && lo->plh_return_iomode != iomode)
 		iomode = IOMODE_ANY;
-	lo->plh_वापस_iomode = iomode;
+	lo->plh_return_iomode = iomode;
 	set_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags);
-	अगर (seq != 0) अणु
-		WARN_ON_ONCE(lo->plh_वापस_seq != 0 && lo->plh_वापस_seq != seq);
-		lo->plh_वापस_seq = seq;
+	if (seq != 0) {
+		WARN_ON_ONCE(lo->plh_return_seq != 0 && lo->plh_return_seq != seq);
+		lo->plh_return_seq = seq;
 		pnfs_barrier_update(lo, seq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-pnfs_clear_layoutवापस_info(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा pnfs_layout_segment *lseg;
-	lo->plh_वापस_iomode = 0;
-	lo->plh_वापस_seq = 0;
+static void
+pnfs_clear_layoutreturn_info(struct pnfs_layout_hdr *lo)
+{
+	struct pnfs_layout_segment *lseg;
+	lo->plh_return_iomode = 0;
+	lo->plh_return_seq = 0;
 	clear_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags);
-	list_क्रम_each_entry(lseg, &lo->plh_segs, pls_list) अणु
-		अगर (!test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
-			जारी;
-		pnfs_set_plh_वापस_info(lo, lseg->pls_range.iomode, 0);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(lseg, &lo->plh_segs, pls_list) {
+		if (!test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
+			continue;
+		pnfs_set_plh_return_info(lo, lseg->pls_range.iomode, 0);
+	}
+}
 
-अटल व्योम pnfs_clear_layoutवापस_रुकोbit(काष्ठा pnfs_layout_hdr *lo)
-अणु
+static void pnfs_clear_layoutreturn_waitbit(struct pnfs_layout_hdr *lo)
+{
 	clear_bit_unlock(NFS_LAYOUT_RETURN, &lo->plh_flags);
 	clear_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags);
 	smp_mb__after_atomic();
 	wake_up_bit(&lo->plh_flags, NFS_LAYOUT_RETURN);
-	rpc_wake_up(&NFS_SERVER(lo->plh_inode)->roc_rpcरुकोq);
-पूर्ण
+	rpc_wake_up(&NFS_SERVER(lo->plh_inode)->roc_rpcwaitq);
+}
 
-अटल व्योम
-pnfs_clear_lseg_state(काष्ठा pnfs_layout_segment *lseg,
-		काष्ठा list_head *मुक्त_me)
-अणु
+static void
+pnfs_clear_lseg_state(struct pnfs_layout_segment *lseg,
+		struct list_head *free_me)
+{
 	clear_bit(NFS_LSEG_ROC, &lseg->pls_flags);
 	clear_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags);
-	अगर (test_and_clear_bit(NFS_LSEG_VALID, &lseg->pls_flags))
-		pnfs_lseg_dec_and_हटाओ_zero(lseg, मुक्त_me);
-	अगर (test_and_clear_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags))
-		pnfs_lseg_dec_and_हटाओ_zero(lseg, मुक्त_me);
-पूर्ण
+	if (test_and_clear_bit(NFS_LSEG_VALID, &lseg->pls_flags))
+		pnfs_lseg_dec_and_remove_zero(lseg, free_me);
+	if (test_and_clear_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags))
+		pnfs_lseg_dec_and_remove_zero(lseg, free_me);
+}
 
 /*
  * Update the seqid of a layout stateid after receiving
  * NFS4ERR_OLD_STATEID
  */
 bool nfs4_layout_refresh_old_stateid(nfs4_stateid *dst,
-		काष्ठा pnfs_layout_range *dst_range,
-		काष्ठा inode *inode)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा pnfs_layout_range range = अणु
+		struct pnfs_layout_range *dst_range,
+		struct inode *inode)
+{
+	struct pnfs_layout_hdr *lo;
+	struct pnfs_layout_range range = {
 		.iomode = IOMODE_ANY,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
+	};
 	bool ret = false;
 	LIST_HEAD(head);
-	पूर्णांक err;
+	int err;
 
 	spin_lock(&inode->i_lock);
 	lo = NFS_I(inode)->layout;
-	अगर (lo &&  pnfs_layout_is_valid(lo) &&
-	    nfs4_stateid_match_other(dst, &lo->plh_stateid)) अणु
+	if (lo &&  pnfs_layout_is_valid(lo) &&
+	    nfs4_stateid_match_other(dst, &lo->plh_stateid)) {
 		/* Is our call using the most recent seqid? If so, bump it */
-		अगर (!nfs4_stateid_is_newer(&lo->plh_stateid, dst)) अणु
+		if (!nfs4_stateid_is_newer(&lo->plh_stateid, dst)) {
 			nfs4_stateid_seqid_inc(dst);
 			ret = true;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/* Try to update the seqid to the most recent */
-		err = pnfs_mark_matching_lsegs_वापस(lo, &head, &range, 0);
-		अगर (err != -EBUSY) अणु
+		err = pnfs_mark_matching_lsegs_return(lo, &head, &range, 0);
+		if (err != -EBUSY) {
 			dst->seqid = lo->plh_stateid.seqid;
 			*dst_range = range;
 			ret = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	spin_unlock(&inode->i_lock);
-	pnfs_मुक्त_lseg_list(&head);
-	वापस ret;
-पूर्ण
+	pnfs_free_lseg_list(&head);
+	return ret;
+}
 
 /*
  * Mark a pnfs_layout_hdr and all associated layout segments as invalid
  *
- * In order to जारी using the pnfs_layout_hdr, a full recovery
+ * In order to continue using the pnfs_layout_hdr, a full recovery
  * is required.
  * Note that caller must hold inode->i_lock.
  */
-पूर्णांक
-pnfs_mark_layout_stateid_invalid(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा list_head *lseg_list)
-अणु
-	काष्ठा pnfs_layout_range range = अणु
+int
+pnfs_mark_layout_stateid_invalid(struct pnfs_layout_hdr *lo,
+		struct list_head *lseg_list)
+{
+	struct pnfs_layout_range range = {
 		.iomode = IOMODE_ANY,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
-	काष्ठा pnfs_layout_segment *lseg, *next;
+	};
+	struct pnfs_layout_segment *lseg, *next;
 
 	set_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags);
-	list_क्रम_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
+	list_for_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
 		pnfs_clear_lseg_state(lseg, lseg_list);
-	pnfs_clear_layoutवापस_info(lo);
-	pnfs_मुक्त_वापसed_lsegs(lo, lseg_list, &range, 0);
-	अगर (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags) &&
+	pnfs_clear_layoutreturn_info(lo);
+	pnfs_free_returned_lsegs(lo, lseg_list, &range, 0);
+	if (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags) &&
 	    !test_and_set_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags))
-		pnfs_clear_layoutवापस_रुकोbit(lo);
-	वापस !list_empty(&lo->plh_segs);
-पूर्ण
+		pnfs_clear_layoutreturn_waitbit(lo);
+	return !list_empty(&lo->plh_segs);
+}
 
-अटल पूर्णांक
+static int
 pnfs_iomode_to_fail_bit(u32 iomode)
-अणु
-	वापस iomode == IOMODE_RW ?
+{
+	return iomode == IOMODE_RW ?
 		NFS_LAYOUT_RW_FAILED : NFS_LAYOUT_RO_FAILED;
-पूर्ण
+}
 
-अटल व्योम
-pnfs_layout_set_fail_bit(काष्ठा pnfs_layout_hdr *lo, पूर्णांक fail_bit)
-अणु
-	lo->plh_retry_बारtamp = jअगरfies;
-	अगर (!test_and_set_bit(fail_bit, &lo->plh_flags))
+static void
+pnfs_layout_set_fail_bit(struct pnfs_layout_hdr *lo, int fail_bit)
+{
+	lo->plh_retry_timestamp = jiffies;
+	if (!test_and_set_bit(fail_bit, &lo->plh_flags))
 		refcount_inc(&lo->plh_refcount);
-पूर्ण
+}
 
-अटल व्योम
-pnfs_layout_clear_fail_bit(काष्ठा pnfs_layout_hdr *lo, पूर्णांक fail_bit)
-अणु
-	अगर (test_and_clear_bit(fail_bit, &lo->plh_flags))
+static void
+pnfs_layout_clear_fail_bit(struct pnfs_layout_hdr *lo, int fail_bit)
+{
+	if (test_and_clear_bit(fail_bit, &lo->plh_flags))
 		refcount_dec(&lo->plh_refcount);
-पूर्ण
+}
 
-अटल व्योम
-pnfs_layout_io_set_failed(काष्ठा pnfs_layout_hdr *lo, u32 iomode)
-अणु
-	काष्ठा inode *inode = lo->plh_inode;
-	काष्ठा pnfs_layout_range range = अणु
+static void
+pnfs_layout_io_set_failed(struct pnfs_layout_hdr *lo, u32 iomode)
+{
+	struct inode *inode = lo->plh_inode;
+	struct pnfs_layout_range range = {
 		.iomode = iomode,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
+	};
 	LIST_HEAD(head);
 
 	spin_lock(&inode->i_lock);
 	pnfs_layout_set_fail_bit(lo, pnfs_iomode_to_fail_bit(iomode));
 	pnfs_mark_matching_lsegs_invalid(lo, &head, &range, 0);
 	spin_unlock(&inode->i_lock);
-	pnfs_मुक्त_lseg_list(&head);
-	dprपूर्णांकk("%s Setting layout IOMODE_%s fail bit\n", __func__,
+	pnfs_free_lseg_list(&head);
+	dprintk("%s Setting layout IOMODE_%s fail bit\n", __func__,
 			iomode == IOMODE_RW ?  "RW" : "READ");
-पूर्ण
+}
 
-अटल bool
-pnfs_layout_io_test_failed(काष्ठा pnfs_layout_hdr *lo, u32 iomode)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक fail_bit = pnfs_iomode_to_fail_bit(iomode);
+static bool
+pnfs_layout_io_test_failed(struct pnfs_layout_hdr *lo, u32 iomode)
+{
+	unsigned long start, end;
+	int fail_bit = pnfs_iomode_to_fail_bit(iomode);
 
-	अगर (test_bit(fail_bit, &lo->plh_flags) == 0)
-		वापस false;
-	end = jअगरfies;
+	if (test_bit(fail_bit, &lo->plh_flags) == 0)
+		return false;
+	end = jiffies;
 	start = end - PNFS_LAYOUTGET_RETRY_TIMEOUT;
-	अगर (!समय_in_range(lo->plh_retry_बारtamp, start, end)) अणु
-		/* It is समय to retry the failed layoutमाला_लो */
+	if (!time_in_range(lo->plh_retry_timestamp, start, end)) {
+		/* It is time to retry the failed layoutgets */
 		pnfs_layout_clear_fail_bit(lo, fail_bit);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-अटल व्योम
-pnfs_init_lseg(काष्ठा pnfs_layout_hdr *lo, काष्ठा pnfs_layout_segment *lseg,
-		स्थिर काष्ठा pnfs_layout_range *range,
-		स्थिर nfs4_stateid *stateid)
-अणु
+static void
+pnfs_init_lseg(struct pnfs_layout_hdr *lo, struct pnfs_layout_segment *lseg,
+		const struct pnfs_layout_range *range,
+		const nfs4_stateid *stateid)
+{
 	INIT_LIST_HEAD(&lseg->pls_list);
 	INIT_LIST_HEAD(&lseg->pls_lc_list);
 	INIT_LIST_HEAD(&lseg->pls_commits);
@@ -534,78 +533,78 @@ pnfs_init_lseg(काष्ठा pnfs_layout_hdr *lo, काष्ठा pnfs_l
 	lseg->pls_layout = lo;
 	lseg->pls_range = *range;
 	lseg->pls_seq = be32_to_cpu(stateid->seqid);
-पूर्ण
+}
 
-अटल व्योम pnfs_मुक्त_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-	अगर (lseg != शून्य) अणु
-		काष्ठा inode *inode = lseg->pls_layout->plh_inode;
-		NFS_SERVER(inode)->pnfs_curr_ld->मुक्त_lseg(lseg);
-	पूर्ण
-पूर्ण
+static void pnfs_free_lseg(struct pnfs_layout_segment *lseg)
+{
+	if (lseg != NULL) {
+		struct inode *inode = lseg->pls_layout->plh_inode;
+		NFS_SERVER(inode)->pnfs_curr_ld->free_lseg(lseg);
+	}
+}
 
-अटल व्योम
-pnfs_layout_हटाओ_lseg(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा pnfs_layout_segment *lseg)
-अणु
+static void
+pnfs_layout_remove_lseg(struct pnfs_layout_hdr *lo,
+		struct pnfs_layout_segment *lseg)
+{
 	WARN_ON(test_bit(NFS_LSEG_VALID, &lseg->pls_flags));
 	list_del_init(&lseg->pls_list);
 	/* Matched by pnfs_get_layout_hdr in pnfs_layout_insert_lseg */
 	refcount_dec(&lo->plh_refcount);
-	अगर (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
-		वापस;
-	अगर (list_empty(&lo->plh_segs) &&
+	if (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
+		return;
+	if (list_empty(&lo->plh_segs) &&
 	    !test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags) &&
-	    !test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) अणु
-		अगर (atomic_पढ़ो(&lo->plh_outstanding) == 0)
+	    !test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) {
+		if (atomic_read(&lo->plh_outstanding) == 0)
 			set_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags);
 		clear_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool
-pnfs_cache_lseg_क्रम_layoutवापस(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा pnfs_layout_segment *lseg)
-अणु
-	अगर (test_and_clear_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags) &&
-	    pnfs_layout_is_valid(lo)) अणु
-		pnfs_set_plh_वापस_info(lo, lseg->pls_range.iomode, 0);
-		list_move_tail(&lseg->pls_list, &lo->plh_वापस_segs);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool
+pnfs_cache_lseg_for_layoutreturn(struct pnfs_layout_hdr *lo,
+		struct pnfs_layout_segment *lseg)
+{
+	if (test_and_clear_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags) &&
+	    pnfs_layout_is_valid(lo)) {
+		pnfs_set_plh_return_info(lo, lseg->pls_range.iomode, 0);
+		list_move_tail(&lseg->pls_list, &lo->plh_return_segs);
+		return true;
+	}
+	return false;
+}
 
-व्योम
-pnfs_put_lseg(काष्ठा pnfs_layout_segment *lseg)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा inode *inode;
+void
+pnfs_put_lseg(struct pnfs_layout_segment *lseg)
+{
+	struct pnfs_layout_hdr *lo;
+	struct inode *inode;
 
-	अगर (!lseg)
-		वापस;
+	if (!lseg)
+		return;
 
-	dprपूर्णांकk("%s: lseg %p ref %d valid %d\n", __func__, lseg,
-		refcount_पढ़ो(&lseg->pls_refcount),
+	dprintk("%s: lseg %p ref %d valid %d\n", __func__, lseg,
+		refcount_read(&lseg->pls_refcount),
 		test_bit(NFS_LSEG_VALID, &lseg->pls_flags));
 
 	lo = lseg->pls_layout;
 	inode = lo->plh_inode;
 
-	अगर (refcount_dec_and_lock(&lseg->pls_refcount, &inode->i_lock)) अणु
-		अगर (test_bit(NFS_LSEG_VALID, &lseg->pls_flags)) अणु
+	if (refcount_dec_and_lock(&lseg->pls_refcount, &inode->i_lock)) {
+		if (test_bit(NFS_LSEG_VALID, &lseg->pls_flags)) {
 			spin_unlock(&inode->i_lock);
-			वापस;
-		पूर्ण
+			return;
+		}
 		pnfs_get_layout_hdr(lo);
-		pnfs_layout_हटाओ_lseg(lo, lseg);
-		अगर (pnfs_cache_lseg_क्रम_layoutवापस(lo, lseg))
-			lseg = शून्य;
+		pnfs_layout_remove_lseg(lo, lseg);
+		if (pnfs_cache_lseg_for_layoutreturn(lo, lseg))
+			lseg = NULL;
 		spin_unlock(&inode->i_lock);
-		pnfs_मुक्त_lseg(lseg);
+		pnfs_free_lseg(lseg);
 		pnfs_put_layout_hdr(lo);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(pnfs_put_lseg);
 
 /*
@@ -615,256 +614,256 @@ EXPORT_SYMBOL_GPL(pnfs_put_lseg);
  *           start2           end2
  *           [----------------)
  */
-अटल bool
-pnfs_lseg_range_contained(स्थिर काष्ठा pnfs_layout_range *l1,
-		 स्थिर काष्ठा pnfs_layout_range *l2)
-अणु
+static bool
+pnfs_lseg_range_contained(const struct pnfs_layout_range *l1,
+		 const struct pnfs_layout_range *l2)
+{
 	u64 start1 = l1->offset;
 	u64 end1 = pnfs_end_offset(start1, l1->length);
 	u64 start2 = l2->offset;
 	u64 end2 = pnfs_end_offset(start2, l2->length);
 
-	वापस (start1 <= start2) && (end1 >= end2);
-पूर्ण
+	return (start1 <= start2) && (end1 >= end2);
+}
 
-अटल bool pnfs_lseg_dec_and_हटाओ_zero(काष्ठा pnfs_layout_segment *lseg,
-		काष्ठा list_head *पंचांगp_list)
-अणु
-	अगर (!refcount_dec_and_test(&lseg->pls_refcount))
-		वापस false;
-	pnfs_layout_हटाओ_lseg(lseg->pls_layout, lseg);
-	list_add(&lseg->pls_list, पंचांगp_list);
-	वापस true;
-पूर्ण
+static bool pnfs_lseg_dec_and_remove_zero(struct pnfs_layout_segment *lseg,
+		struct list_head *tmp_list)
+{
+	if (!refcount_dec_and_test(&lseg->pls_refcount))
+		return false;
+	pnfs_layout_remove_lseg(lseg->pls_layout, lseg);
+	list_add(&lseg->pls_list, tmp_list);
+	return true;
+}
 
-/* Returns 1 अगर lseg is हटाओd from list, 0 otherwise */
-अटल पूर्णांक mark_lseg_invalid(काष्ठा pnfs_layout_segment *lseg,
-			     काष्ठा list_head *पंचांगp_list)
-अणु
-	पूर्णांक rv = 0;
+/* Returns 1 if lseg is removed from list, 0 otherwise */
+static int mark_lseg_invalid(struct pnfs_layout_segment *lseg,
+			     struct list_head *tmp_list)
+{
+	int rv = 0;
 
-	अगर (test_and_clear_bit(NFS_LSEG_VALID, &lseg->pls_flags)) अणु
+	if (test_and_clear_bit(NFS_LSEG_VALID, &lseg->pls_flags)) {
 		/* Remove the reference keeping the lseg in the
-		 * list.  It will now be हटाओd when all
+		 * list.  It will now be removed when all
 		 * outstanding io is finished.
 		 */
-		dprपूर्णांकk("%s: lseg %p ref %d\n", __func__, lseg,
-			refcount_पढ़ो(&lseg->pls_refcount));
-		अगर (pnfs_lseg_dec_and_हटाओ_zero(lseg, पंचांगp_list))
+		dprintk("%s: lseg %p ref %d\n", __func__, lseg,
+			refcount_read(&lseg->pls_refcount));
+		if (pnfs_lseg_dec_and_remove_zero(lseg, tmp_list))
 			rv = 1;
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल bool
-pnfs_should_मुक्त_range(स्थिर काष्ठा pnfs_layout_range *lseg_range,
-		 स्थिर काष्ठा pnfs_layout_range *recall_range)
-अणु
-	वापस (recall_range->iomode == IOMODE_ANY ||
+static bool
+pnfs_should_free_range(const struct pnfs_layout_range *lseg_range,
+		 const struct pnfs_layout_range *recall_range)
+{
+	return (recall_range->iomode == IOMODE_ANY ||
 		lseg_range->iomode == recall_range->iomode) &&
-	       pnfs_lseg_range_पूर्णांकersecting(lseg_range, recall_range);
-पूर्ण
+	       pnfs_lseg_range_intersecting(lseg_range, recall_range);
+}
 
-अटल bool
-pnfs_match_lseg_recall(स्थिर काष्ठा pnfs_layout_segment *lseg,
-		स्थिर काष्ठा pnfs_layout_range *recall_range,
+static bool
+pnfs_match_lseg_recall(const struct pnfs_layout_segment *lseg,
+		const struct pnfs_layout_range *recall_range,
 		u32 seq)
-अणु
-	अगर (seq != 0 && pnfs_seqid_is_newer(lseg->pls_seq, seq))
-		वापस false;
-	अगर (recall_range == शून्य)
-		वापस true;
-	वापस pnfs_should_मुक्त_range(&lseg->pls_range, recall_range);
-पूर्ण
+{
+	if (seq != 0 && pnfs_seqid_is_newer(lseg->pls_seq, seq))
+		return false;
+	if (recall_range == NULL)
+		return true;
+	return pnfs_should_free_range(&lseg->pls_range, recall_range);
+}
 
 /**
- * pnfs_mark_matching_lsegs_invalid - tear करोwn lsegs or mark them क्रम later
+ * pnfs_mark_matching_lsegs_invalid - tear down lsegs or mark them for later
  * @lo: layout header containing the lsegs
- * @पंचांगp_list: list head where करोomed lsegs should go
- * @recall_range: optional recall range argument to match (may be शून्य)
+ * @tmp_list: list head where doomed lsegs should go
+ * @recall_range: optional recall range argument to match (may be NULL)
  * @seq: only invalidate lsegs obtained prior to this sequence (may be 0)
  *
- * Walk the list of lsegs in the layout header, and tear करोwn any that should
- * be destroyed. If "recall_range" is specअगरied then the segment must match
+ * Walk the list of lsegs in the layout header, and tear down any that should
+ * be destroyed. If "recall_range" is specified then the segment must match
  * that range. If "seq" is non-zero, then only match segments that were handed
- * out at or beक्रमe that sequence.
+ * out at or before that sequence.
  *
- * Returns number of matching invalid lsegs reमुख्यing in list after scanning
+ * Returns number of matching invalid lsegs remaining in list after scanning
  * it and purging them.
  */
-पूर्णांक
-pnfs_mark_matching_lsegs_invalid(काष्ठा pnfs_layout_hdr *lo,
-			    काष्ठा list_head *पंचांगp_list,
-			    स्थिर काष्ठा pnfs_layout_range *recall_range,
+int
+pnfs_mark_matching_lsegs_invalid(struct pnfs_layout_hdr *lo,
+			    struct list_head *tmp_list,
+			    const struct pnfs_layout_range *recall_range,
 			    u32 seq)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *next;
-	पूर्णांक reमुख्यing = 0;
+{
+	struct pnfs_layout_segment *lseg, *next;
+	int remaining = 0;
 
-	dprपूर्णांकk("%s:Begin lo %p\n", __func__, lo);
+	dprintk("%s:Begin lo %p\n", __func__, lo);
 
-	अगर (list_empty(&lo->plh_segs))
-		वापस 0;
-	list_क्रम_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
-		अगर (pnfs_match_lseg_recall(lseg, recall_range, seq)) अणु
-			dprपूर्णांकk("%s: freeing lseg %p iomode %d seq %u "
+	if (list_empty(&lo->plh_segs))
+		return 0;
+	list_for_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
+		if (pnfs_match_lseg_recall(lseg, recall_range, seq)) {
+			dprintk("%s: freeing lseg %p iomode %d seq %u "
 				"offset %llu length %llu\n", __func__,
 				lseg, lseg->pls_range.iomode, lseg->pls_seq,
 				lseg->pls_range.offset, lseg->pls_range.length);
-			अगर (!mark_lseg_invalid(lseg, पंचांगp_list))
-				reमुख्यing++;
-		पूर्ण
-	dprपूर्णांकk("%s:Return %i\n", __func__, reमुख्यing);
-	वापस reमुख्यing;
-पूर्ण
+			if (!mark_lseg_invalid(lseg, tmp_list))
+				remaining++;
+		}
+	dprintk("%s:Return %i\n", __func__, remaining);
+	return remaining;
+}
 
-अटल व्योम
-pnfs_मुक्त_वापसed_lsegs(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा list_head *मुक्त_me,
-		स्थिर काष्ठा pnfs_layout_range *range,
+static void
+pnfs_free_returned_lsegs(struct pnfs_layout_hdr *lo,
+		struct list_head *free_me,
+		const struct pnfs_layout_range *range,
 		u32 seq)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *next;
+{
+	struct pnfs_layout_segment *lseg, *next;
 
-	list_क्रम_each_entry_safe(lseg, next, &lo->plh_वापस_segs, pls_list) अणु
-		अगर (pnfs_match_lseg_recall(lseg, range, seq))
-			list_move_tail(&lseg->pls_list, मुक्त_me);
-	पूर्ण
-पूर्ण
+	list_for_each_entry_safe(lseg, next, &lo->plh_return_segs, pls_list) {
+		if (pnfs_match_lseg_recall(lseg, range, seq))
+			list_move_tail(&lseg->pls_list, free_me);
+	}
+}
 
-/* note मुक्त_me must contain lsegs from a single layout_hdr */
-व्योम
-pnfs_मुक्त_lseg_list(काष्ठा list_head *मुक्त_me)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *पंचांगp;
+/* note free_me must contain lsegs from a single layout_hdr */
+void
+pnfs_free_lseg_list(struct list_head *free_me)
+{
+	struct pnfs_layout_segment *lseg, *tmp;
 
-	अगर (list_empty(मुक्त_me))
-		वापस;
+	if (list_empty(free_me))
+		return;
 
-	list_क्रम_each_entry_safe(lseg, पंचांगp, मुक्त_me, pls_list) अणु
+	list_for_each_entry_safe(lseg, tmp, free_me, pls_list) {
 		list_del(&lseg->pls_list);
-		pnfs_मुक्त_lseg(lseg);
-	पूर्ण
-पूर्ण
+		pnfs_free_lseg(lseg);
+	}
+}
 
-अटल काष्ठा pnfs_layout_hdr *__pnfs_destroy_layout(काष्ठा nfs_inode *nfsi)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	LIST_HEAD(पंचांगp_list);
+static struct pnfs_layout_hdr *__pnfs_destroy_layout(struct nfs_inode *nfsi)
+{
+	struct pnfs_layout_hdr *lo;
+	LIST_HEAD(tmp_list);
 
 	spin_lock(&nfsi->vfs_inode.i_lock);
 	lo = nfsi->layout;
-	अगर (lo) अणु
+	if (lo) {
 		pnfs_get_layout_hdr(lo);
-		pnfs_mark_layout_stateid_invalid(lo, &पंचांगp_list);
+		pnfs_mark_layout_stateid_invalid(lo, &tmp_list);
 		pnfs_layout_clear_fail_bit(lo, NFS_LAYOUT_RO_FAILED);
 		pnfs_layout_clear_fail_bit(lo, NFS_LAYOUT_RW_FAILED);
 		spin_unlock(&nfsi->vfs_inode.i_lock);
-		pnfs_मुक्त_lseg_list(&पंचांगp_list);
+		pnfs_free_lseg_list(&tmp_list);
 		nfs_commit_inode(&nfsi->vfs_inode, 0);
 		pnfs_put_layout_hdr(lo);
-	पूर्ण अन्यथा
+	} else
 		spin_unlock(&nfsi->vfs_inode.i_lock);
-	वापस lo;
-पूर्ण
+	return lo;
+}
 
-व्योम pnfs_destroy_layout(काष्ठा nfs_inode *nfsi)
-अणु
+void pnfs_destroy_layout(struct nfs_inode *nfsi)
+{
 	__pnfs_destroy_layout(nfsi);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pnfs_destroy_layout);
 
-अटल bool pnfs_layout_हटाओd(काष्ठा nfs_inode *nfsi,
-				काष्ठा pnfs_layout_hdr *lo)
-अणु
+static bool pnfs_layout_removed(struct nfs_inode *nfsi,
+				struct pnfs_layout_hdr *lo)
+{
 	bool ret;
 
 	spin_lock(&nfsi->vfs_inode.i_lock);
 	ret = nfsi->layout != lo;
 	spin_unlock(&nfsi->vfs_inode.i_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम pnfs_destroy_layout_final(काष्ठा nfs_inode *nfsi)
-अणु
-	काष्ठा pnfs_layout_hdr *lo = __pnfs_destroy_layout(nfsi);
+void pnfs_destroy_layout_final(struct nfs_inode *nfsi)
+{
+	struct pnfs_layout_hdr *lo = __pnfs_destroy_layout(nfsi);
 
-	अगर (lo)
-		रुको_var_event(lo, pnfs_layout_हटाओd(nfsi, lo));
-पूर्ण
+	if (lo)
+		wait_var_event(lo, pnfs_layout_removed(nfsi, lo));
+}
 
-अटल bool
-pnfs_layout_add_bulk_destroy_list(काष्ठा inode *inode,
-		काष्ठा list_head *layout_list)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
+static bool
+pnfs_layout_add_bulk_destroy_list(struct inode *inode,
+		struct list_head *layout_list)
+{
+	struct pnfs_layout_hdr *lo;
 	bool ret = false;
 
 	spin_lock(&inode->i_lock);
 	lo = NFS_I(inode)->layout;
-	अगर (lo != शून्य && list_empty(&lo->plh_bulk_destroy)) अणु
+	if (lo != NULL && list_empty(&lo->plh_bulk_destroy)) {
 		pnfs_get_layout_hdr(lo);
 		list_add(&lo->plh_bulk_destroy, layout_list);
 		ret = true;
-	पूर्ण
+	}
 	spin_unlock(&inode->i_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Caller must hold rcu_पढ़ो_lock and clp->cl_lock */
-अटल पूर्णांक
-pnfs_layout_bulk_destroy_byserver_locked(काष्ठा nfs_client *clp,
-		काष्ठा nfs_server *server,
-		काष्ठा list_head *layout_list)
+/* Caller must hold rcu_read_lock and clp->cl_lock */
+static int
+pnfs_layout_bulk_destroy_byserver_locked(struct nfs_client *clp,
+		struct nfs_server *server,
+		struct list_head *layout_list)
 	__must_hold(&clp->cl_lock)
 	__must_hold(RCU)
-अणु
-	काष्ठा pnfs_layout_hdr *lo, *next;
-	काष्ठा inode *inode;
+{
+	struct pnfs_layout_hdr *lo, *next;
+	struct inode *inode;
 
-	list_क्रम_each_entry_safe(lo, next, &server->layouts, plh_layouts) अणु
-		अगर (test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags) ||
+	list_for_each_entry_safe(lo, next, &server->layouts, plh_layouts) {
+		if (test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags) ||
 		    test_bit(NFS_LAYOUT_INODE_FREEING, &lo->plh_flags) ||
 		    !list_empty(&lo->plh_bulk_destroy))
-			जारी;
+			continue;
 		/* If the sb is being destroyed, just bail */
-		अगर (!nfs_sb_active(server->super))
-			अवरोध;
+		if (!nfs_sb_active(server->super))
+			break;
 		inode = pnfs_grab_inode_layout_hdr(lo);
-		अगर (inode != शून्य) अणु
-			अगर (test_and_clear_bit(NFS_LAYOUT_HASHED, &lo->plh_flags))
+		if (inode != NULL) {
+			if (test_and_clear_bit(NFS_LAYOUT_HASHED, &lo->plh_flags))
 				list_del_rcu(&lo->plh_layouts);
-			अगर (pnfs_layout_add_bulk_destroy_list(inode,
+			if (pnfs_layout_add_bulk_destroy_list(inode,
 						layout_list))
-				जारी;
-			rcu_पढ़ो_unlock();
+				continue;
+			rcu_read_unlock();
 			spin_unlock(&clp->cl_lock);
 			iput(inode);
-		पूर्ण अन्यथा अणु
-			rcu_पढ़ो_unlock();
+		} else {
+			rcu_read_unlock();
 			spin_unlock(&clp->cl_lock);
-		पूर्ण
+		}
 		nfs_sb_deactive(server->super);
 		spin_lock(&clp->cl_lock);
-		rcu_पढ़ो_lock();
-		वापस -EAGAIN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		rcu_read_lock();
+		return -EAGAIN;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-pnfs_layout_मुक्त_bulk_destroy_list(काष्ठा list_head *layout_list,
+static int
+pnfs_layout_free_bulk_destroy_list(struct list_head *layout_list,
 		bool is_bulk_recall)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा inode *inode;
+{
+	struct pnfs_layout_hdr *lo;
+	struct inode *inode;
 	LIST_HEAD(lseg_list);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	जबतक (!list_empty(layout_list)) अणु
-		lo = list_entry(layout_list->next, काष्ठा pnfs_layout_hdr,
+	while (!list_empty(layout_list)) {
+		lo = list_entry(layout_list->next, struct pnfs_layout_hdr,
 				plh_bulk_destroy);
-		dprपूर्णांकk("%s freeing layout for inode %lu\n", __func__,
+		dprintk("%s freeing layout for inode %lu\n", __func__,
 			lo->plh_inode->i_ino);
 		inode = lo->plh_inode;
 
@@ -872,228 +871,228 @@ pnfs_layout_मुक्त_bulk_destroy_list(काष्ठा list_head *layo
 
 		spin_lock(&inode->i_lock);
 		list_del_init(&lo->plh_bulk_destroy);
-		अगर (pnfs_mark_layout_stateid_invalid(lo, &lseg_list)) अणु
-			अगर (is_bulk_recall)
+		if (pnfs_mark_layout_stateid_invalid(lo, &lseg_list)) {
+			if (is_bulk_recall)
 				set_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags);
 			ret = -EAGAIN;
-		पूर्ण
+		}
 		spin_unlock(&inode->i_lock);
-		pnfs_मुक्त_lseg_list(&lseg_list);
+		pnfs_free_lseg_list(&lseg_list);
 		/* Free all lsegs that are attached to commit buckets */
 		nfs_commit_inode(inode, 0);
 		pnfs_put_layout_hdr(lo);
 		nfs_iput_and_deactive(inode);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-पूर्णांक
-pnfs_destroy_layouts_byfsid(काष्ठा nfs_client *clp,
-		काष्ठा nfs_fsid *fsid,
+int
+pnfs_destroy_layouts_byfsid(struct nfs_client *clp,
+		struct nfs_fsid *fsid,
 		bool is_recall)
-अणु
-	काष्ठा nfs_server *server;
+{
+	struct nfs_server *server;
 	LIST_HEAD(layout_list);
 
 	spin_lock(&clp->cl_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 restart:
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link) अणु
-		अगर (स_भेद(&server->fsid, fsid, माप(*fsid)) != 0)
-			जारी;
-		अगर (pnfs_layout_bulk_destroy_byserver_locked(clp,
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link) {
+		if (memcmp(&server->fsid, fsid, sizeof(*fsid)) != 0)
+			continue;
+		if (pnfs_layout_bulk_destroy_byserver_locked(clp,
 				server,
 				&layout_list) != 0)
-			जाओ restart;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			goto restart;
+	}
+	rcu_read_unlock();
 	spin_unlock(&clp->cl_lock);
 
-	अगर (list_empty(&layout_list))
-		वापस 0;
-	वापस pnfs_layout_मुक्त_bulk_destroy_list(&layout_list, is_recall);
-पूर्ण
+	if (list_empty(&layout_list))
+		return 0;
+	return pnfs_layout_free_bulk_destroy_list(&layout_list, is_recall);
+}
 
-पूर्णांक
-pnfs_destroy_layouts_byclid(काष्ठा nfs_client *clp,
+int
+pnfs_destroy_layouts_byclid(struct nfs_client *clp,
 		bool is_recall)
-अणु
-	काष्ठा nfs_server *server;
+{
+	struct nfs_server *server;
 	LIST_HEAD(layout_list);
 
 	spin_lock(&clp->cl_lock);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 restart:
-	list_क्रम_each_entry_rcu(server, &clp->cl_superblocks, client_link) अणु
-		अगर (pnfs_layout_bulk_destroy_byserver_locked(clp,
+	list_for_each_entry_rcu(server, &clp->cl_superblocks, client_link) {
+		if (pnfs_layout_bulk_destroy_byserver_locked(clp,
 					server,
 					&layout_list) != 0)
-			जाओ restart;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			goto restart;
+	}
+	rcu_read_unlock();
 	spin_unlock(&clp->cl_lock);
 
-	अगर (list_empty(&layout_list))
-		वापस 0;
-	वापस pnfs_layout_मुक्त_bulk_destroy_list(&layout_list, is_recall);
-पूर्ण
+	if (list_empty(&layout_list))
+		return 0;
+	return pnfs_layout_free_bulk_destroy_list(&layout_list, is_recall);
+}
 
 /*
- * Called by the state manager to हटाओ all layouts established under an
+ * Called by the state manager to remove all layouts established under an
  * expired lease.
  */
-व्योम
-pnfs_destroy_all_layouts(काष्ठा nfs_client *clp)
-अणु
+void
+pnfs_destroy_all_layouts(struct nfs_client *clp)
+{
 	nfs4_deviceid_mark_client_invalid(clp);
 	nfs4_deviceid_purge_client(clp);
 
 	pnfs_destroy_layouts_byclid(clp, false);
-पूर्ण
+}
 
-अटल व्योम
-pnfs_set_layout_cred(काष्ठा pnfs_layout_hdr *lo, स्थिर काष्ठा cred *cred)
-अणु
-	स्थिर काष्ठा cred *old;
+static void
+pnfs_set_layout_cred(struct pnfs_layout_hdr *lo, const struct cred *cred)
+{
+	const struct cred *old;
 
-	अगर (cred && cred_fscmp(lo->plh_lc_cred, cred) != 0) अणु
+	if (cred && cred_fscmp(lo->plh_lc_cred, cred) != 0) {
 		old = xchg(&lo->plh_lc_cred, get_cred(cred));
 		put_cred(old);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* update lo->plh_stateid with new अगर is more recent */
-व्योम
-pnfs_set_layout_stateid(काष्ठा pnfs_layout_hdr *lo, स्थिर nfs4_stateid *new,
-			स्थिर काष्ठा cred *cred, bool update_barrier)
-अणु
+/* update lo->plh_stateid with new if is more recent */
+void
+pnfs_set_layout_stateid(struct pnfs_layout_hdr *lo, const nfs4_stateid *new,
+			const struct cred *cred, bool update_barrier)
+{
 	u32 oldseq, newseq, new_barrier = 0;
 
 	oldseq = be32_to_cpu(lo->plh_stateid.seqid);
 	newseq = be32_to_cpu(new->seqid);
 
-	अगर (!pnfs_layout_is_valid(lo)) अणु
+	if (!pnfs_layout_is_valid(lo)) {
 		pnfs_set_layout_cred(lo, cred);
 		nfs4_stateid_copy(&lo->plh_stateid, new);
 		lo->plh_barrier = newseq;
-		pnfs_clear_layoutवापस_info(lo);
+		pnfs_clear_layoutreturn_info(lo);
 		clear_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags);
-		वापस;
-	पूर्ण
-	अगर (pnfs_seqid_is_newer(newseq, oldseq)) अणु
+		return;
+	}
+	if (pnfs_seqid_is_newer(newseq, oldseq)) {
 		nfs4_stateid_copy(&lo->plh_stateid, new);
 		/*
 		 * Because of wraparound, we want to keep the barrier
 		 * "close" to the current seqids.
 		 */
-		new_barrier = newseq - atomic_पढ़ो(&lo->plh_outstanding);
-	पूर्ण
-	अगर (update_barrier)
+		new_barrier = newseq - atomic_read(&lo->plh_outstanding);
+	}
+	if (update_barrier)
 		new_barrier = be32_to_cpu(new->seqid);
-	अन्यथा अगर (new_barrier == 0)
-		वापस;
+	else if (new_barrier == 0)
+		return;
 	pnfs_barrier_update(lo, new_barrier);
-पूर्ण
+}
 
-अटल bool
-pnfs_layout_stateid_blocked(स्थिर काष्ठा pnfs_layout_hdr *lo,
-		स्थिर nfs4_stateid *stateid)
-अणु
+static bool
+pnfs_layout_stateid_blocked(const struct pnfs_layout_hdr *lo,
+		const nfs4_stateid *stateid)
+{
 	u32 seqid = be32_to_cpu(stateid->seqid);
 
-	वापस !pnfs_seqid_is_newer(seqid, lo->plh_barrier) && lo->plh_barrier;
-पूर्ण
+	return !pnfs_seqid_is_newer(seqid, lo->plh_barrier) && lo->plh_barrier;
+}
 
-/* lget is set to 1 अगर called from inside send_layoutget call chain */
-अटल bool
-pnfs_layoutमाला_लो_blocked(स्थिर काष्ठा pnfs_layout_hdr *lo)
-अणु
-	वापस lo->plh_block_lमाला_लो ||
+/* lget is set to 1 if called from inside send_layoutget call chain */
+static bool
+pnfs_layoutgets_blocked(const struct pnfs_layout_hdr *lo)
+{
+	return lo->plh_block_lgets ||
 		test_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags);
-पूर्ण
+}
 
-अटल काष्ठा nfs_server *
-pnfs_find_server(काष्ठा inode *inode, काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा nfs_server *server;
+static struct nfs_server *
+pnfs_find_server(struct inode *inode, struct nfs_open_context *ctx)
+{
+	struct nfs_server *server;
 
-	अगर (inode) अणु
+	if (inode) {
 		server = NFS_SERVER(inode);
-	पूर्ण अन्यथा अणु
-		काष्ठा dentry *parent_dir = dget_parent(ctx->dentry);
+	} else {
+		struct dentry *parent_dir = dget_parent(ctx->dentry);
 		server = NFS_SERVER(parent_dir->d_inode);
 		dput(parent_dir);
-	पूर्ण
-	वापस server;
-पूर्ण
+	}
+	return server;
+}
 
-अटल व्योम nfs4_मुक्त_pages(काष्ठा page **pages, माप_प्रकार size)
-अणु
-	पूर्णांक i;
+static void nfs4_free_pages(struct page **pages, size_t size)
+{
+	int i;
 
-	अगर (!pages)
-		वापस;
+	if (!pages)
+		return;
 
-	क्रम (i = 0; i < size; i++) अणु
-		अगर (!pages[i])
-			अवरोध;
-		__मुक्त_page(pages[i]);
-	पूर्ण
-	kमुक्त(pages);
-पूर्ण
+	for (i = 0; i < size; i++) {
+		if (!pages[i])
+			break;
+		__free_page(pages[i]);
+	}
+	kfree(pages);
+}
 
-अटल काष्ठा page **nfs4_alloc_pages(माप_प्रकार size, gfp_t gfp_flags)
-अणु
-	काष्ठा page **pages;
-	पूर्णांक i;
+static struct page **nfs4_alloc_pages(size_t size, gfp_t gfp_flags)
+{
+	struct page **pages;
+	int i;
 
-	pages = kदो_स्मृति_array(size, माप(काष्ठा page *), gfp_flags);
-	अगर (!pages) अणु
-		dprपूर्णांकk("%s: can't alloc array of %zu pages\n", __func__, size);
-		वापस शून्य;
-	पूर्ण
+	pages = kmalloc_array(size, sizeof(struct page *), gfp_flags);
+	if (!pages) {
+		dprintk("%s: can't alloc array of %zu pages\n", __func__, size);
+		return NULL;
+	}
 
-	क्रम (i = 0; i < size; i++) अणु
+	for (i = 0; i < size; i++) {
 		pages[i] = alloc_page(gfp_flags);
-		अगर (!pages[i]) अणु
-			dprपूर्णांकk("%s: failed to allocate page\n", __func__);
-			nfs4_मुक्त_pages(pages, i);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		if (!pages[i]) {
+			dprintk("%s: failed to allocate page\n", __func__);
+			nfs4_free_pages(pages, i);
+			return NULL;
+		}
+	}
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल काष्ठा nfs4_layoutget *
-pnfs_alloc_init_layoutget_args(काष्ठा inode *ino,
-	   काष्ठा nfs_खोलो_context *ctx,
-	   स्थिर nfs4_stateid *stateid,
-	   स्थिर काष्ठा pnfs_layout_range *range,
+static struct nfs4_layoutget *
+pnfs_alloc_init_layoutget_args(struct inode *ino,
+	   struct nfs_open_context *ctx,
+	   const nfs4_stateid *stateid,
+	   const struct pnfs_layout_range *range,
 	   gfp_t gfp_flags)
-अणु
-	काष्ठा nfs_server *server = pnfs_find_server(ino, ctx);
-	माप_प्रकार max_reply_sz = server->pnfs_curr_ld->max_layoutget_response;
-	माप_प्रकार max_pages = max_response_pages(server);
-	काष्ठा nfs4_layoutget *lgp;
+{
+	struct nfs_server *server = pnfs_find_server(ino, ctx);
+	size_t max_reply_sz = server->pnfs_curr_ld->max_layoutget_response;
+	size_t max_pages = max_response_pages(server);
+	struct nfs4_layoutget *lgp;
 
-	dprपूर्णांकk("--> %s\n", __func__);
+	dprintk("--> %s\n", __func__);
 
-	lgp = kzalloc(माप(*lgp), gfp_flags);
-	अगर (lgp == शून्य)
-		वापस शून्य;
+	lgp = kzalloc(sizeof(*lgp), gfp_flags);
+	if (lgp == NULL)
+		return NULL;
 
-	अगर (max_reply_sz) अणु
-		माप_प्रकार npages = (max_reply_sz + PAGE_SIZE - 1) >> PAGE_SHIFT;
-		अगर (npages < max_pages)
+	if (max_reply_sz) {
+		size_t npages = (max_reply_sz + PAGE_SIZE - 1) >> PAGE_SHIFT;
+		if (npages < max_pages)
 			max_pages = npages;
-	पूर्ण
+	}
 
 	lgp->args.layout.pages = nfs4_alloc_pages(max_pages, gfp_flags);
-	अगर (!lgp->args.layout.pages) अणु
-		kमुक्त(lgp);
-		वापस शून्य;
-	पूर्ण
+	if (!lgp->args.layout.pages) {
+		kfree(lgp);
+		return NULL;
+	}
 	lgp->args.layout.pglen = max_pages * PAGE_SIZE;
 	lgp->res.layoutp = &lgp->args.layout;
 
@@ -1101,116 +1100,116 @@ pnfs_alloc_init_layoutget_args(काष्ठा inode *ino,
 	lgp->res.status = -NFS4ERR_DELAY;
 
 	lgp->args.minlength = PAGE_SIZE;
-	अगर (lgp->args.minlength > range->length)
+	if (lgp->args.minlength > range->length)
 		lgp->args.minlength = range->length;
-	अगर (ino) अणु
-		loff_t i_size = i_size_पढ़ो(ino);
+	if (ino) {
+		loff_t i_size = i_size_read(ino);
 
-		अगर (range->iomode == IOMODE_READ) अणु
-			अगर (range->offset >= i_size)
+		if (range->iomode == IOMODE_READ) {
+			if (range->offset >= i_size)
 				lgp->args.minlength = 0;
-			अन्यथा अगर (i_size - range->offset < lgp->args.minlength)
+			else if (i_size - range->offset < lgp->args.minlength)
 				lgp->args.minlength = i_size - range->offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	lgp->args.maxcount = PNFS_LAYOUT_MAXSIZE;
 	pnfs_copy_range(&lgp->args.range, range);
 	lgp->args.type = server->pnfs_curr_ld->id;
 	lgp->args.inode = ino;
-	lgp->args.ctx = get_nfs_खोलो_context(ctx);
+	lgp->args.ctx = get_nfs_open_context(ctx);
 	nfs4_stateid_copy(&lgp->args.stateid, stateid);
 	lgp->gfp_flags = gfp_flags;
 	lgp->cred = ctx->cred;
-	वापस lgp;
-पूर्ण
+	return lgp;
+}
 
-व्योम pnfs_layoutget_मुक्त(काष्ठा nfs4_layoutget *lgp)
-अणु
-	माप_प्रकार max_pages = lgp->args.layout.pglen / PAGE_SIZE;
+void pnfs_layoutget_free(struct nfs4_layoutget *lgp)
+{
+	size_t max_pages = lgp->args.layout.pglen / PAGE_SIZE;
 
-	nfs4_मुक्त_pages(lgp->args.layout.pages, max_pages);
-	अगर (lgp->args.inode)
+	nfs4_free_pages(lgp->args.layout.pages, max_pages);
+	if (lgp->args.inode)
 		pnfs_put_layout_hdr(NFS_I(lgp->args.inode)->layout);
-	put_nfs_खोलो_context(lgp->args.ctx);
-	kमुक्त(lgp);
-पूर्ण
+	put_nfs_open_context(lgp->args.ctx);
+	kfree(lgp);
+}
 
-अटल व्योम pnfs_clear_layoutcommit(काष्ठा inode *inode,
-		काष्ठा list_head *head)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा pnfs_layout_segment *lseg, *पंचांगp;
+static void pnfs_clear_layoutcommit(struct inode *inode,
+		struct list_head *head)
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct pnfs_layout_segment *lseg, *tmp;
 
-	अगर (!test_and_clear_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags))
-		वापस;
-	list_क्रम_each_entry_safe(lseg, पंचांगp, &nfsi->layout->plh_segs, pls_list) अणु
-		अगर (!test_and_clear_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags))
-			जारी;
-		pnfs_lseg_dec_and_हटाओ_zero(lseg, head);
-	पूर्ण
-पूर्ण
+	if (!test_and_clear_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags))
+		return;
+	list_for_each_entry_safe(lseg, tmp, &nfsi->layout->plh_segs, pls_list) {
+		if (!test_and_clear_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags))
+			continue;
+		pnfs_lseg_dec_and_remove_zero(lseg, head);
+	}
+}
 
-व्योम pnfs_layoutवापस_मुक्त_lsegs(काष्ठा pnfs_layout_hdr *lo,
-		स्थिर nfs4_stateid *arg_stateid,
-		स्थिर काष्ठा pnfs_layout_range *range,
-		स्थिर nfs4_stateid *stateid)
-अणु
-	काष्ठा inode *inode = lo->plh_inode;
-	LIST_HEAD(मुक्तme);
+void pnfs_layoutreturn_free_lsegs(struct pnfs_layout_hdr *lo,
+		const nfs4_stateid *arg_stateid,
+		const struct pnfs_layout_range *range,
+		const nfs4_stateid *stateid)
+{
+	struct inode *inode = lo->plh_inode;
+	LIST_HEAD(freeme);
 
 	spin_lock(&inode->i_lock);
-	अगर (!pnfs_layout_is_valid(lo) ||
+	if (!pnfs_layout_is_valid(lo) ||
 	    !nfs4_stateid_match_other(&lo->plh_stateid, arg_stateid))
-		जाओ out_unlock;
-	अगर (stateid) अणु
+		goto out_unlock;
+	if (stateid) {
 		u32 seq = be32_to_cpu(arg_stateid->seqid);
 
-		pnfs_mark_matching_lsegs_invalid(lo, &मुक्तme, range, seq);
-		pnfs_मुक्त_वापसed_lsegs(lo, &मुक्तme, range, seq);
-		pnfs_set_layout_stateid(lo, stateid, शून्य, true);
-	पूर्ण अन्यथा
-		pnfs_mark_layout_stateid_invalid(lo, &मुक्तme);
+		pnfs_mark_matching_lsegs_invalid(lo, &freeme, range, seq);
+		pnfs_free_returned_lsegs(lo, &freeme, range, seq);
+		pnfs_set_layout_stateid(lo, stateid, NULL, true);
+	} else
+		pnfs_mark_layout_stateid_invalid(lo, &freeme);
 out_unlock:
-	pnfs_clear_layoutवापस_रुकोbit(lo);
+	pnfs_clear_layoutreturn_waitbit(lo);
 	spin_unlock(&inode->i_lock);
-	pnfs_मुक्त_lseg_list(&मुक्तme);
+	pnfs_free_lseg_list(&freeme);
 
-पूर्ण
+}
 
-अटल bool
-pnfs_prepare_layoutवापस(काष्ठा pnfs_layout_hdr *lo,
+static bool
+pnfs_prepare_layoutreturn(struct pnfs_layout_hdr *lo,
 		nfs4_stateid *stateid,
-		स्थिर काष्ठा cred **cred,
-		क्रमागत pnfs_iomode *iomode)
-अणु
+		const struct cred **cred,
+		enum pnfs_iomode *iomode)
+{
 	/* Serialise LAYOUTGET/LAYOUTRETURN */
-	अगर (atomic_पढ़ो(&lo->plh_outstanding) != 0)
-		वापस false;
-	अगर (test_and_set_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags))
-		वापस false;
+	if (atomic_read(&lo->plh_outstanding) != 0)
+		return false;
+	if (test_and_set_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags))
+		return false;
 	set_bit(NFS_LAYOUT_RETURN, &lo->plh_flags);
 	pnfs_get_layout_hdr(lo);
 	nfs4_stateid_copy(stateid, &lo->plh_stateid);
 	*cred = get_cred(lo->plh_lc_cred);
-	अगर (test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags)) अणु
-		अगर (lo->plh_वापस_seq != 0)
-			stateid->seqid = cpu_to_be32(lo->plh_वापस_seq);
-		अगर (iomode != शून्य)
-			*iomode = lo->plh_वापस_iomode;
-		pnfs_clear_layoutवापस_info(lo);
-	पूर्ण अन्यथा अगर (iomode != शून्य)
+	if (test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags)) {
+		if (lo->plh_return_seq != 0)
+			stateid->seqid = cpu_to_be32(lo->plh_return_seq);
+		if (iomode != NULL)
+			*iomode = lo->plh_return_iomode;
+		pnfs_clear_layoutreturn_info(lo);
+	} else if (iomode != NULL)
 		*iomode = IOMODE_ANY;
 	pnfs_barrier_update(lo, be32_to_cpu(stateid->seqid));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम
-pnfs_init_layoutवापस_args(काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा pnfs_layout_hdr *lo,
-		स्थिर nfs4_stateid *stateid,
-		क्रमागत pnfs_iomode iomode)
-अणु
-	काष्ठा inode *inode = lo->plh_inode;
+static void
+pnfs_init_layoutreturn_args(struct nfs4_layoutreturn_args *args,
+		struct pnfs_layout_hdr *lo,
+		const nfs4_stateid *stateid,
+		enum pnfs_iomode iomode)
+{
+	struct inode *inode = lo->plh_inode;
 
 	args->layout_type = NFS_SERVER(inode)->pnfs_curr_ld->id;
 	args->inode = inode;
@@ -1219,319 +1218,319 @@ pnfs_init_layoutवापस_args(काष्ठा nfs4_layoutवापस_arg
 	args->range.length = NFS4_MAX_UINT64;
 	args->layout = lo;
 	nfs4_stateid_copy(&args->stateid, stateid);
-पूर्ण
+}
 
-अटल पूर्णांक
-pnfs_send_layoutवापस(काष्ठा pnfs_layout_hdr *lo,
-		       स्थिर nfs4_stateid *stateid,
-		       स्थिर काष्ठा cred **pcred,
-		       क्रमागत pnfs_iomode iomode,
+static int
+pnfs_send_layoutreturn(struct pnfs_layout_hdr *lo,
+		       const nfs4_stateid *stateid,
+		       const struct cred **pcred,
+		       enum pnfs_iomode iomode,
 		       bool sync)
-अणु
-	काष्ठा inode *ino = lo->plh_inode;
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
-	काष्ठा nfs4_layoutवापस *lrp;
-	स्थिर काष्ठा cred *cred = *pcred;
-	पूर्णांक status = 0;
+{
+	struct inode *ino = lo->plh_inode;
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
+	struct nfs4_layoutreturn *lrp;
+	const struct cred *cred = *pcred;
+	int status = 0;
 
-	*pcred = शून्य;
-	lrp = kzalloc(माप(*lrp), GFP_NOFS);
-	अगर (unlikely(lrp == शून्य)) अणु
+	*pcred = NULL;
+	lrp = kzalloc(sizeof(*lrp), GFP_NOFS);
+	if (unlikely(lrp == NULL)) {
 		status = -ENOMEM;
 		spin_lock(&ino->i_lock);
-		pnfs_clear_layoutवापस_रुकोbit(lo);
+		pnfs_clear_layoutreturn_waitbit(lo);
 		spin_unlock(&ino->i_lock);
 		put_cred(cred);
 		pnfs_put_layout_hdr(lo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	pnfs_init_layoutवापस_args(&lrp->args, lo, stateid, iomode);
-	lrp->args.ld_निजी = &lrp->ld_निजी;
+	pnfs_init_layoutreturn_args(&lrp->args, lo, stateid, iomode);
+	lrp->args.ld_private = &lrp->ld_private;
 	lrp->clp = NFS_SERVER(ino)->nfs_client;
 	lrp->cred = cred;
-	अगर (ld->prepare_layoutवापस)
-		ld->prepare_layoutवापस(&lrp->args);
+	if (ld->prepare_layoutreturn)
+		ld->prepare_layoutreturn(&lrp->args);
 
-	status = nfs4_proc_layoutवापस(lrp, sync);
+	status = nfs4_proc_layoutreturn(lrp, sync);
 out:
-	dprपूर्णांकk("<-- %s status: %d\n", __func__, status);
-	वापस status;
-पूर्ण
+	dprintk("<-- %s status: %d\n", __func__, status);
+	return status;
+}
 
-अटल bool
-pnfs_layout_segments_वापसable(काष्ठा pnfs_layout_hdr *lo,
-				क्रमागत pnfs_iomode iomode,
+static bool
+pnfs_layout_segments_returnable(struct pnfs_layout_hdr *lo,
+				enum pnfs_iomode iomode,
 				u32 seq)
-अणु
-	काष्ठा pnfs_layout_range recall_range = अणु
+{
+	struct pnfs_layout_range recall_range = {
 		.length = NFS4_MAX_UINT64,
 		.iomode = iomode,
-	पूर्ण;
-	वापस pnfs_mark_matching_lsegs_वापस(lo, &lo->plh_वापस_segs,
+	};
+	return pnfs_mark_matching_lsegs_return(lo, &lo->plh_return_segs,
 					       &recall_range, seq) != -EBUSY;
-पूर्ण
+}
 
-/* Return true अगर layoutवापस is needed */
-अटल bool
-pnfs_layout_need_वापस(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	अगर (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
-		वापस false;
-	वापस pnfs_layout_segments_वापसable(lo, lo->plh_वापस_iomode,
-					       lo->plh_वापस_seq);
-पूर्ण
+/* Return true if layoutreturn is needed */
+static bool
+pnfs_layout_need_return(struct pnfs_layout_hdr *lo)
+{
+	if (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
+		return false;
+	return pnfs_layout_segments_returnable(lo, lo->plh_return_iomode,
+					       lo->plh_return_seq);
+}
 
-अटल व्योम pnfs_layoutवापस_beक्रमe_put_layout_hdr(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	काष्ठा inode *inode= lo->plh_inode;
+static void pnfs_layoutreturn_before_put_layout_hdr(struct pnfs_layout_hdr *lo)
+{
+	struct inode *inode= lo->plh_inode;
 
-	अगर (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
-		वापस;
+	if (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
+		return;
 	spin_lock(&inode->i_lock);
-	अगर (pnfs_layout_need_वापस(lo)) अणु
-		स्थिर काष्ठा cred *cred;
+	if (pnfs_layout_need_return(lo)) {
+		const struct cred *cred;
 		nfs4_stateid stateid;
-		क्रमागत pnfs_iomode iomode;
+		enum pnfs_iomode iomode;
 		bool send;
 
-		send = pnfs_prepare_layoutवापस(lo, &stateid, &cred, &iomode);
+		send = pnfs_prepare_layoutreturn(lo, &stateid, &cred, &iomode);
 		spin_unlock(&inode->i_lock);
-		अगर (send) अणु
-			/* Send an async layoutवापस so we करोnt deadlock */
-			pnfs_send_layoutवापस(lo, &stateid, &cred, iomode, false);
-		पूर्ण
-	पूर्ण अन्यथा
+		if (send) {
+			/* Send an async layoutreturn so we dont deadlock */
+			pnfs_send_layoutreturn(lo, &stateid, &cred, iomode, false);
+		}
+	} else
 		spin_unlock(&inode->i_lock);
-पूर्ण
+}
 
 /*
- * Initiates a LAYOUTRETURN(खाता), and हटाओs the pnfs_layout_hdr
+ * Initiates a LAYOUTRETURN(FILE), and removes the pnfs_layout_hdr
  * when the layout segment list is empty.
  *
  * Note that a pnfs_layout_hdr can exist with an empty layout segment
  * list when LAYOUTGET has failed, or when LAYOUTGET succeeded, but the
  * deviceid is marked invalid.
  */
-पूर्णांक
-_pnfs_वापस_layout(काष्ठा inode *ino)
-अणु
-	काष्ठा pnfs_layout_hdr *lo = शून्य;
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-	काष्ठा pnfs_layout_range range = अणु
+int
+_pnfs_return_layout(struct inode *ino)
+{
+	struct pnfs_layout_hdr *lo = NULL;
+	struct nfs_inode *nfsi = NFS_I(ino);
+	struct pnfs_layout_range range = {
 		.iomode		= IOMODE_ANY,
 		.offset		= 0,
 		.length		= NFS4_MAX_UINT64,
-	पूर्ण;
-	LIST_HEAD(पंचांगp_list);
-	स्थिर काष्ठा cred *cred;
+	};
+	LIST_HEAD(tmp_list);
+	const struct cred *cred;
 	nfs4_stateid stateid;
-	पूर्णांक status = 0;
+	int status = 0;
 	bool send, valid_layout;
 
-	dprपूर्णांकk("NFS: %s for inode %lu\n", __func__, ino->i_ino);
+	dprintk("NFS: %s for inode %lu\n", __func__, ino->i_ino);
 
 	spin_lock(&ino->i_lock);
 	lo = nfsi->layout;
-	अगर (!lo) अणु
+	if (!lo) {
 		spin_unlock(&ino->i_lock);
-		dprपूर्णांकk("NFS: %s no layout to return\n", __func__);
-		जाओ out;
-	पूर्ण
-	/* Reference matched in nfs4_layoutवापस_release */
+		dprintk("NFS: %s no layout to return\n", __func__);
+		goto out;
+	}
+	/* Reference matched in nfs4_layoutreturn_release */
 	pnfs_get_layout_hdr(lo);
-	/* Is there an outstanding layoutवापस ? */
-	अगर (test_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags)) अणु
+	/* Is there an outstanding layoutreturn ? */
+	if (test_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags)) {
 		spin_unlock(&ino->i_lock);
-		अगर (रुको_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN,
+		if (wait_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN,
 					TASK_UNINTERRUPTIBLE))
-			जाओ out_put_layout_hdr;
+			goto out_put_layout_hdr;
 		spin_lock(&ino->i_lock);
-	पूर्ण
+	}
 	valid_layout = pnfs_layout_is_valid(lo);
-	pnfs_clear_layoutcommit(ino, &पंचांगp_list);
-	pnfs_mark_matching_lsegs_वापस(lo, &पंचांगp_list, &range, 0);
+	pnfs_clear_layoutcommit(ino, &tmp_list);
+	pnfs_mark_matching_lsegs_return(lo, &tmp_list, &range, 0);
 
-	अगर (NFS_SERVER(ino)->pnfs_curr_ld->वापस_range)
-		NFS_SERVER(ino)->pnfs_curr_ld->वापस_range(lo, &range);
+	if (NFS_SERVER(ino)->pnfs_curr_ld->return_range)
+		NFS_SERVER(ino)->pnfs_curr_ld->return_range(lo, &range);
 
-	/* Don't send a LAYOUTRETURN अगर list was initially empty */
-	अगर (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags) ||
-			!valid_layout) अणु
+	/* Don't send a LAYOUTRETURN if list was initially empty */
+	if (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags) ||
+			!valid_layout) {
 		spin_unlock(&ino->i_lock);
-		dprपूर्णांकk("NFS: %s no layout segments to return\n", __func__);
-		जाओ out_रुको_layoutवापस;
-	पूर्ण
+		dprintk("NFS: %s no layout segments to return\n", __func__);
+		goto out_wait_layoutreturn;
+	}
 
-	send = pnfs_prepare_layoutवापस(lo, &stateid, &cred, शून्य);
+	send = pnfs_prepare_layoutreturn(lo, &stateid, &cred, NULL);
 	spin_unlock(&ino->i_lock);
-	अगर (send)
-		status = pnfs_send_layoutवापस(lo, &stateid, &cred, IOMODE_ANY, true);
-out_रुको_layoutवापस:
-	रुको_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN, TASK_UNINTERRUPTIBLE);
+	if (send)
+		status = pnfs_send_layoutreturn(lo, &stateid, &cred, IOMODE_ANY, true);
+out_wait_layoutreturn:
+	wait_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN, TASK_UNINTERRUPTIBLE);
 out_put_layout_hdr:
-	pnfs_मुक्त_lseg_list(&पंचांगp_list);
+	pnfs_free_lseg_list(&tmp_list);
 	pnfs_put_layout_hdr(lo);
 out:
-	dprपूर्णांकk("<-- %s status: %d\n", __func__, status);
-	वापस status;
-पूर्ण
+	dprintk("<-- %s status: %d\n", __func__, status);
+	return status;
+}
 
-पूर्णांक
-pnfs_commit_and_वापस_layout(काष्ठा inode *inode)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	पूर्णांक ret;
+int
+pnfs_commit_and_return_layout(struct inode *inode)
+{
+	struct pnfs_layout_hdr *lo;
+	int ret;
 
 	spin_lock(&inode->i_lock);
 	lo = NFS_I(inode)->layout;
-	अगर (lo == शून्य) अणु
+	if (lo == NULL) {
 		spin_unlock(&inode->i_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	pnfs_get_layout_hdr(lo);
-	/* Block new layoutमाला_लो and पढ़ो/ग_लिखो to ds */
-	lo->plh_block_lमाला_लो++;
+	/* Block new layoutgets and read/write to ds */
+	lo->plh_block_lgets++;
 	spin_unlock(&inode->i_lock);
-	filemap_fdataरुको(inode->i_mapping);
+	filemap_fdatawait(inode->i_mapping);
 	ret = pnfs_layoutcommit_inode(inode, true);
-	अगर (ret == 0)
-		ret = _pnfs_वापस_layout(inode);
+	if (ret == 0)
+		ret = _pnfs_return_layout(inode);
 	spin_lock(&inode->i_lock);
-	lo->plh_block_lमाला_लो--;
+	lo->plh_block_lgets--;
 	spin_unlock(&inode->i_lock);
 	pnfs_put_layout_hdr(lo);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool pnfs_roc(काष्ठा inode *ino,
-		काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-	काष्ठा nfs_खोलो_context *ctx;
-	काष्ठा nfs4_state *state;
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा pnfs_layout_segment *lseg, *next;
-	स्थिर काष्ठा cred *lc_cred;
+bool pnfs_roc(struct inode *ino,
+		struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		const struct cred *cred)
+{
+	struct nfs_inode *nfsi = NFS_I(ino);
+	struct nfs_open_context *ctx;
+	struct nfs4_state *state;
+	struct pnfs_layout_hdr *lo;
+	struct pnfs_layout_segment *lseg, *next;
+	const struct cred *lc_cred;
 	nfs4_stateid stateid;
-	क्रमागत pnfs_iomode iomode = 0;
-	bool layoutवापस = false, roc = false;
-	bool skip_पढ़ो = false;
+	enum pnfs_iomode iomode = 0;
+	bool layoutreturn = false, roc = false;
+	bool skip_read = false;
 
-	अगर (!nfs_have_layout(ino))
-		वापस false;
+	if (!nfs_have_layout(ino))
+		return false;
 retry:
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	spin_lock(&ino->i_lock);
 	lo = nfsi->layout;
-	अगर (!lo || !pnfs_layout_is_valid(lo) ||
-	    test_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags)) अणु
-		lo = शून्य;
-		जाओ out_noroc;
-	पूर्ण
+	if (!lo || !pnfs_layout_is_valid(lo) ||
+	    test_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags)) {
+		lo = NULL;
+		goto out_noroc;
+	}
 	pnfs_get_layout_hdr(lo);
-	अगर (test_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags)) अणु
+	if (test_bit(NFS_LAYOUT_RETURN_LOCK, &lo->plh_flags)) {
 		spin_unlock(&ino->i_lock);
-		rcu_पढ़ो_unlock();
-		रुको_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN,
+		rcu_read_unlock();
+		wait_on_bit(&lo->plh_flags, NFS_LAYOUT_RETURN,
 				TASK_UNINTERRUPTIBLE);
 		pnfs_put_layout_hdr(lo);
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	/* no roc अगर we hold a delegation */
-	अगर (nfs4_check_delegation(ino, FMODE_READ)) अणु
-		अगर (nfs4_check_delegation(ino, FMODE_WRITE))
-			जाओ out_noroc;
-		skip_पढ़ो = true;
-	पूर्ण
+	/* no roc if we hold a delegation */
+	if (nfs4_check_delegation(ino, FMODE_READ)) {
+		if (nfs4_check_delegation(ino, FMODE_WRITE))
+			goto out_noroc;
+		skip_read = true;
+	}
 
-	list_क्रम_each_entry_rcu(ctx, &nfsi->खोलो_files, list) अणु
+	list_for_each_entry_rcu(ctx, &nfsi->open_files, list) {
 		state = ctx->state;
-		अगर (state == शून्य)
-			जारी;
-		/* Don't वापस layout अगर there is खोलो file state */
-		अगर (state->state & FMODE_WRITE)
-			जाओ out_noroc;
-		अगर (state->state & FMODE_READ)
-			skip_पढ़ो = true;
-	पूर्ण
+		if (state == NULL)
+			continue;
+		/* Don't return layout if there is open file state */
+		if (state->state & FMODE_WRITE)
+			goto out_noroc;
+		if (state->state & FMODE_READ)
+			skip_read = true;
+	}
 
 
-	list_क्रम_each_entry_safe(lseg, next, &lo->plh_segs, pls_list) अणु
-		अगर (skip_पढ़ो && lseg->pls_range.iomode == IOMODE_READ)
-			जारी;
-		/* If we are sending layoutवापस, invalidate all valid lsegs */
-		अगर (!test_and_clear_bit(NFS_LSEG_ROC, &lseg->pls_flags))
-			जारी;
+	list_for_each_entry_safe(lseg, next, &lo->plh_segs, pls_list) {
+		if (skip_read && lseg->pls_range.iomode == IOMODE_READ)
+			continue;
+		/* If we are sending layoutreturn, invalidate all valid lsegs */
+		if (!test_and_clear_bit(NFS_LSEG_ROC, &lseg->pls_flags))
+			continue;
 		/*
-		 * Note: mark lseg क्रम वापस so pnfs_layout_हटाओ_lseg
-		 * करोesn't invalidate the layout क्रम us.
+		 * Note: mark lseg for return so pnfs_layout_remove_lseg
+		 * doesn't invalidate the layout for us.
 		 */
 		set_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags);
-		अगर (!mark_lseg_invalid(lseg, &lo->plh_वापस_segs))
-			जारी;
-		pnfs_set_plh_वापस_info(lo, lseg->pls_range.iomode, 0);
-	पूर्ण
+		if (!mark_lseg_invalid(lseg, &lo->plh_return_segs))
+			continue;
+		pnfs_set_plh_return_info(lo, lseg->pls_range.iomode, 0);
+	}
 
-	अगर (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
-		जाओ out_noroc;
+	if (!test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
+		goto out_noroc;
 
 	/* ROC in two conditions:
 	 * 1. there are ROC lsegs
-	 * 2. we करोn't send layoutवापस
+	 * 2. we don't send layoutreturn
 	 */
 	/* lo ref dropped in pnfs_roc_release() */
-	layoutवापस = pnfs_prepare_layoutवापस(lo, &stateid, &lc_cred, &iomode);
-	/* If the creds करोn't match, we can't compound the layoutवापस */
-	अगर (!layoutवापस || cred_fscmp(cred, lc_cred) != 0)
-		जाओ out_noroc;
+	layoutreturn = pnfs_prepare_layoutreturn(lo, &stateid, &lc_cred, &iomode);
+	/* If the creds don't match, we can't compound the layoutreturn */
+	if (!layoutreturn || cred_fscmp(cred, lc_cred) != 0)
+		goto out_noroc;
 
-	roc = layoutवापस;
-	pnfs_init_layoutवापस_args(args, lo, &stateid, iomode);
+	roc = layoutreturn;
+	pnfs_init_layoutreturn_args(args, lo, &stateid, iomode);
 	res->lrs_present = 0;
-	layoutवापस = false;
+	layoutreturn = false;
 	put_cred(lc_cred);
 
 out_noroc:
 	spin_unlock(&ino->i_lock);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	pnfs_layoutcommit_inode(ino, true);
-	अगर (roc) अणु
-		काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
-		अगर (ld->prepare_layoutवापस)
-			ld->prepare_layoutवापस(args);
+	if (roc) {
+		struct pnfs_layoutdriver_type *ld = NFS_SERVER(ino)->pnfs_curr_ld;
+		if (ld->prepare_layoutreturn)
+			ld->prepare_layoutreturn(args);
 		pnfs_put_layout_hdr(lo);
-		वापस true;
-	पूर्ण
-	अगर (layoutवापस)
-		pnfs_send_layoutवापस(lo, &stateid, &lc_cred, iomode, true);
+		return true;
+	}
+	if (layoutreturn)
+		pnfs_send_layoutreturn(lo, &stateid, &lc_cred, iomode, true);
 	pnfs_put_layout_hdr(lo);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-पूर्णांक pnfs_roc_करोne(काष्ठा rpc_task *task, काष्ठा nfs4_layoutवापस_args **argpp,
-		  काष्ठा nfs4_layoutवापस_res **respp, पूर्णांक *ret)
-अणु
-	काष्ठा nfs4_layoutवापस_args *arg = *argpp;
-	पूर्णांक retval = -EAGAIN;
+int pnfs_roc_done(struct rpc_task *task, struct nfs4_layoutreturn_args **argpp,
+		  struct nfs4_layoutreturn_res **respp, int *ret)
+{
+	struct nfs4_layoutreturn_args *arg = *argpp;
+	int retval = -EAGAIN;
 
-	अगर (!arg)
-		वापस 0;
-	/* Handle Layoutवापस errors */
-	चयन (*ret) अणु
-	हाल 0:
+	if (!arg)
+		return 0;
+	/* Handle Layoutreturn errors */
+	switch (*ret) {
+	case 0:
 		retval = 0;
-		अवरोध;
-	हाल -NFS4ERR_NOMATCHING_LAYOUT:
+		break;
+	case -NFS4ERR_NOMATCHING_LAYOUT:
 		/* Was there an RPC level error? If not, retry */
-		अगर (task->tk_rpc_status == 0)
-			अवरोध;
+		if (task->tk_rpc_status == 0)
+			break;
 		/* If the call was not sent, let caller handle it */
-		अगर (!RPC_WAS_SENT(task))
-			वापस 0;
+		if (!RPC_WAS_SENT(task))
+			return 0;
 		/*
 		 * Otherwise, assume the call succeeded and
 		 * that we need to release the layout
@@ -1539,221 +1538,221 @@ out_noroc:
 		*ret = 0;
 		(*respp)->lrs_present = 0;
 		retval = 0;
-		अवरोध;
-	हाल -NFS4ERR_DELAY:
+		break;
+	case -NFS4ERR_DELAY:
 		/* Let the caller handle the retry */
 		*ret = -NFS4ERR_NOMATCHING_LAYOUT;
-		वापस 0;
-	हाल -NFS4ERR_OLD_STATEID:
-		अगर (!nfs4_layout_refresh_old_stateid(&arg->stateid,
+		return 0;
+	case -NFS4ERR_OLD_STATEID:
+		if (!nfs4_layout_refresh_old_stateid(&arg->stateid,
 						     &arg->range, arg->inode))
-			अवरोध;
+			break;
 		*ret = -NFS4ERR_NOMATCHING_LAYOUT;
-		वापस -EAGAIN;
-	पूर्ण
-	*argpp = शून्य;
-	*respp = शून्य;
-	वापस retval;
-पूर्ण
+		return -EAGAIN;
+	}
+	*argpp = NULL;
+	*respp = NULL;
+	return retval;
+}
 
-व्योम pnfs_roc_release(काष्ठा nfs4_layoutवापस_args *args,
-		काष्ठा nfs4_layoutवापस_res *res,
-		पूर्णांक ret)
-अणु
-	काष्ठा pnfs_layout_hdr *lo = args->layout;
-	काष्ठा inode *inode = args->inode;
-	स्थिर nfs4_stateid *res_stateid = शून्य;
-	काष्ठा nfs4_xdr_opaque_data *ld_निजी = args->ld_निजी;
+void pnfs_roc_release(struct nfs4_layoutreturn_args *args,
+		struct nfs4_layoutreturn_res *res,
+		int ret)
+{
+	struct pnfs_layout_hdr *lo = args->layout;
+	struct inode *inode = args->inode;
+	const nfs4_stateid *res_stateid = NULL;
+	struct nfs4_xdr_opaque_data *ld_private = args->ld_private;
 
-	चयन (ret) अणु
-	हाल -NFS4ERR_NOMATCHING_LAYOUT:
+	switch (ret) {
+	case -NFS4ERR_NOMATCHING_LAYOUT:
 		spin_lock(&inode->i_lock);
-		अगर (pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match_other(&args->stateid, &lo->plh_stateid))
-			pnfs_set_plh_वापस_info(lo, args->range.iomode, 0);
-		pnfs_clear_layoutवापस_रुकोbit(lo);
+			pnfs_set_plh_return_info(lo, args->range.iomode, 0);
+		pnfs_clear_layoutreturn_waitbit(lo);
 		spin_unlock(&inode->i_lock);
-		अवरोध;
-	हाल 0:
-		अगर (res->lrs_present)
+		break;
+	case 0:
+		if (res->lrs_present)
 			res_stateid = &res->stateid;
 		fallthrough;
-	शेष:
-		pnfs_layoutवापस_मुक्त_lsegs(lo, &args->stateid, &args->range,
+	default:
+		pnfs_layoutreturn_free_lsegs(lo, &args->stateid, &args->range,
 					     res_stateid);
-	पूर्ण
-	trace_nfs4_layoutवापस_on_बंद(args->inode, &args->stateid, ret);
-	अगर (ld_निजी && ld_निजी->ops && ld_निजी->ops->मुक्त)
-		ld_निजी->ops->मुक्त(ld_निजी);
+	}
+	trace_nfs4_layoutreturn_on_close(args->inode, &args->stateid, ret);
+	if (ld_private && ld_private->ops && ld_private->ops->free)
+		ld_private->ops->free(ld_private);
 	pnfs_put_layout_hdr(lo);
-पूर्ण
+}
 
-bool pnfs_रुको_on_layoutवापस(काष्ठा inode *ino, काष्ठा rpc_task *task)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-        काष्ठा pnfs_layout_hdr *lo;
+bool pnfs_wait_on_layoutreturn(struct inode *ino, struct rpc_task *task)
+{
+	struct nfs_inode *nfsi = NFS_I(ino);
+        struct pnfs_layout_hdr *lo;
         bool sleep = false;
 
 	/* we might not have grabbed lo reference. so need to check under
 	 * i_lock */
         spin_lock(&ino->i_lock);
         lo = nfsi->layout;
-        अगर (lo && test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) अणु
-                rpc_sleep_on(&NFS_SERVER(ino)->roc_rpcरुकोq, task, शून्य);
+        if (lo && test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) {
+                rpc_sleep_on(&NFS_SERVER(ino)->roc_rpcwaitq, task, NULL);
                 sleep = true;
-	पूर्ण
+	}
         spin_unlock(&ino->i_lock);
-        वापस sleep;
-पूर्ण
+        return sleep;
+}
 
 /*
- * Compare two layout segments क्रम sorting पूर्णांकo layout cache.
- * We want to preferentially वापस RW over RO layouts, so ensure those
+ * Compare two layout segments for sorting into layout cache.
+ * We want to preferentially return RW over RO layouts, so ensure those
  * are seen first.
  */
-अटल s64
-pnfs_lseg_range_cmp(स्थिर काष्ठा pnfs_layout_range *l1,
-	   स्थिर काष्ठा pnfs_layout_range *l2)
-अणु
+static s64
+pnfs_lseg_range_cmp(const struct pnfs_layout_range *l1,
+	   const struct pnfs_layout_range *l2)
+{
 	s64 d;
 
 	/* high offset > low offset */
 	d = l1->offset - l2->offset;
-	अगर (d)
-		वापस d;
+	if (d)
+		return d;
 
-	/* लघु length > दीर्घ length */
+	/* short length > long length */
 	d = l2->length - l1->length;
-	अगर (d)
-		वापस d;
+	if (d)
+		return d;
 
-	/* पढ़ो > पढ़ो/ग_लिखो */
-	वापस (पूर्णांक)(l1->iomode == IOMODE_READ) - (पूर्णांक)(l2->iomode == IOMODE_READ);
-पूर्ण
+	/* read > read/write */
+	return (int)(l1->iomode == IOMODE_READ) - (int)(l2->iomode == IOMODE_READ);
+}
 
-अटल bool
-pnfs_lseg_range_is_after(स्थिर काष्ठा pnfs_layout_range *l1,
-		स्थिर काष्ठा pnfs_layout_range *l2)
-अणु
-	वापस pnfs_lseg_range_cmp(l1, l2) > 0;
-पूर्ण
+static bool
+pnfs_lseg_range_is_after(const struct pnfs_layout_range *l1,
+		const struct pnfs_layout_range *l2)
+{
+	return pnfs_lseg_range_cmp(l1, l2) > 0;
+}
 
-अटल bool
-pnfs_lseg_no_merge(काष्ठा pnfs_layout_segment *lseg,
-		काष्ठा pnfs_layout_segment *old)
-अणु
-	वापस false;
-पूर्ण
+static bool
+pnfs_lseg_no_merge(struct pnfs_layout_segment *lseg,
+		struct pnfs_layout_segment *old)
+{
+	return false;
+}
 
-व्योम
-pnfs_generic_layout_insert_lseg(काष्ठा pnfs_layout_hdr *lo,
-		   काष्ठा pnfs_layout_segment *lseg,
-		   bool (*is_after)(स्थिर काष्ठा pnfs_layout_range *,
-			   स्थिर काष्ठा pnfs_layout_range *),
-		   bool (*करो_merge)(काष्ठा pnfs_layout_segment *,
-			   काष्ठा pnfs_layout_segment *),
-		   काष्ठा list_head *मुक्त_me)
-अणु
-	काष्ठा pnfs_layout_segment *lp, *पंचांगp;
+void
+pnfs_generic_layout_insert_lseg(struct pnfs_layout_hdr *lo,
+		   struct pnfs_layout_segment *lseg,
+		   bool (*is_after)(const struct pnfs_layout_range *,
+			   const struct pnfs_layout_range *),
+		   bool (*do_merge)(struct pnfs_layout_segment *,
+			   struct pnfs_layout_segment *),
+		   struct list_head *free_me)
+{
+	struct pnfs_layout_segment *lp, *tmp;
 
-	dprपूर्णांकk("%s:Begin\n", __func__);
+	dprintk("%s:Begin\n", __func__);
 
-	list_क्रम_each_entry_safe(lp, पंचांगp, &lo->plh_segs, pls_list) अणु
-		अगर (test_bit(NFS_LSEG_VALID, &lp->pls_flags) == 0)
-			जारी;
-		अगर (करो_merge(lseg, lp)) अणु
-			mark_lseg_invalid(lp, मुक्त_me);
-			जारी;
-		पूर्ण
-		अगर (is_after(&lseg->pls_range, &lp->pls_range))
-			जारी;
+	list_for_each_entry_safe(lp, tmp, &lo->plh_segs, pls_list) {
+		if (test_bit(NFS_LSEG_VALID, &lp->pls_flags) == 0)
+			continue;
+		if (do_merge(lseg, lp)) {
+			mark_lseg_invalid(lp, free_me);
+			continue;
+		}
+		if (is_after(&lseg->pls_range, &lp->pls_range))
+			continue;
 		list_add_tail(&lseg->pls_list, &lp->pls_list);
-		dprपूर्णांकk("%s: inserted lseg %p "
+		dprintk("%s: inserted lseg %p "
 			"iomode %d offset %llu length %llu before "
 			"lp %p iomode %d offset %llu length %llu\n",
 			__func__, lseg, lseg->pls_range.iomode,
 			lseg->pls_range.offset, lseg->pls_range.length,
 			lp, lp->pls_range.iomode, lp->pls_range.offset,
 			lp->pls_range.length);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	list_add_tail(&lseg->pls_list, &lo->plh_segs);
-	dprपूर्णांकk("%s: inserted lseg %p "
+	dprintk("%s: inserted lseg %p "
 		"iomode %d offset %llu length %llu at tail\n",
 		__func__, lseg, lseg->pls_range.iomode,
 		lseg->pls_range.offset, lseg->pls_range.length);
 out:
 	pnfs_get_layout_hdr(lo);
 
-	dprपूर्णांकk("%s:Return\n", __func__);
-पूर्ण
+	dprintk("%s:Return\n", __func__);
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_layout_insert_lseg);
 
-अटल व्योम
-pnfs_layout_insert_lseg(काष्ठा pnfs_layout_hdr *lo,
-		   काष्ठा pnfs_layout_segment *lseg,
-		   काष्ठा list_head *मुक्त_me)
-अणु
-	काष्ठा inode *inode = lo->plh_inode;
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
+static void
+pnfs_layout_insert_lseg(struct pnfs_layout_hdr *lo,
+		   struct pnfs_layout_segment *lseg,
+		   struct list_head *free_me)
+{
+	struct inode *inode = lo->plh_inode;
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
 
-	अगर (ld->add_lseg != शून्य)
-		ld->add_lseg(lo, lseg, मुक्त_me);
-	अन्यथा
+	if (ld->add_lseg != NULL)
+		ld->add_lseg(lo, lseg, free_me);
+	else
 		pnfs_generic_layout_insert_lseg(lo, lseg,
 				pnfs_lseg_range_is_after,
 				pnfs_lseg_no_merge,
-				मुक्त_me);
-पूर्ण
+				free_me);
+}
 
-अटल काष्ठा pnfs_layout_hdr *
-alloc_init_layout_hdr(काष्ठा inode *ino,
-		      काष्ठा nfs_खोलो_context *ctx,
+static struct pnfs_layout_hdr *
+alloc_init_layout_hdr(struct inode *ino,
+		      struct nfs_open_context *ctx,
 		      gfp_t gfp_flags)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
+{
+	struct pnfs_layout_hdr *lo;
 
 	lo = pnfs_alloc_layout_hdr(ino, gfp_flags);
-	अगर (!lo)
-		वापस शून्य;
+	if (!lo)
+		return NULL;
 	refcount_set(&lo->plh_refcount, 1);
 	INIT_LIST_HEAD(&lo->plh_layouts);
 	INIT_LIST_HEAD(&lo->plh_segs);
-	INIT_LIST_HEAD(&lo->plh_वापस_segs);
+	INIT_LIST_HEAD(&lo->plh_return_segs);
 	INIT_LIST_HEAD(&lo->plh_bulk_destroy);
 	lo->plh_inode = ino;
 	lo->plh_lc_cred = get_cred(ctx->cred);
 	lo->plh_flags |= 1 << NFS_LAYOUT_INVALID_STID;
-	वापस lo;
-पूर्ण
+	return lo;
+}
 
-अटल काष्ठा pnfs_layout_hdr *
-pnfs_find_alloc_layout(काष्ठा inode *ino,
-		       काष्ठा nfs_खोलो_context *ctx,
+static struct pnfs_layout_hdr *
+pnfs_find_alloc_layout(struct inode *ino,
+		       struct nfs_open_context *ctx,
 		       gfp_t gfp_flags)
 	__releases(&ino->i_lock)
 	__acquires(&ino->i_lock)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-	काष्ठा pnfs_layout_hdr *new = शून्य;
+{
+	struct nfs_inode *nfsi = NFS_I(ino);
+	struct pnfs_layout_hdr *new = NULL;
 
-	dprपूर्णांकk("%s Begin ino=%p layout=%p\n", __func__, ino, nfsi->layout);
+	dprintk("%s Begin ino=%p layout=%p\n", __func__, ino, nfsi->layout);
 
-	अगर (nfsi->layout != शून्य)
-		जाओ out_existing;
+	if (nfsi->layout != NULL)
+		goto out_existing;
 	spin_unlock(&ino->i_lock);
 	new = alloc_init_layout_hdr(ino, ctx, gfp_flags);
 	spin_lock(&ino->i_lock);
 
-	अगर (likely(nfsi->layout == शून्य)) अणु	/* Won the race? */
+	if (likely(nfsi->layout == NULL)) {	/* Won the race? */
 		nfsi->layout = new;
-		वापस new;
-	पूर्ण अन्यथा अगर (new != शून्य)
-		pnfs_मुक्त_layout_hdr(new);
+		return new;
+	} else if (new != NULL)
+		pnfs_free_layout_hdr(new);
 out_existing:
 	pnfs_get_layout_hdr(nfsi->layout);
-	वापस nfsi->layout;
-पूर्ण
+	return nfsi->layout;
+}
 
 /*
  * iomode matching rules:
@@ -1768,323 +1767,323 @@ out_existing:
  * READ		RW	true   false
  * READ		RW	false  true
  */
-अटल bool
-pnfs_lseg_range_match(स्थिर काष्ठा pnfs_layout_range *ls_range,
-		 स्थिर काष्ठा pnfs_layout_range *range,
+static bool
+pnfs_lseg_range_match(const struct pnfs_layout_range *ls_range,
+		 const struct pnfs_layout_range *range,
 		 bool strict_iomode)
-अणु
-	काष्ठा pnfs_layout_range range1;
+{
+	struct pnfs_layout_range range1;
 
-	अगर ((range->iomode == IOMODE_RW &&
+	if ((range->iomode == IOMODE_RW &&
 	     ls_range->iomode != IOMODE_RW) ||
 	    (range->iomode != ls_range->iomode &&
 	     strict_iomode) ||
-	    !pnfs_lseg_range_पूर्णांकersecting(ls_range, range))
-		वापस false;
+	    !pnfs_lseg_range_intersecting(ls_range, range))
+		return false;
 
 	/* range1 covers only the first byte in the range */
 	range1 = *range;
 	range1.length = 1;
-	वापस pnfs_lseg_range_contained(ls_range, &range1);
-पूर्ण
+	return pnfs_lseg_range_contained(ls_range, &range1);
+}
 
 /*
  * lookup range in layout
  */
-अटल काष्ठा pnfs_layout_segment *
-pnfs_find_lseg(काष्ठा pnfs_layout_hdr *lo,
-		काष्ठा pnfs_layout_range *range,
+static struct pnfs_layout_segment *
+pnfs_find_lseg(struct pnfs_layout_hdr *lo,
+		struct pnfs_layout_range *range,
 		bool strict_iomode)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *ret = शून्य;
+{
+	struct pnfs_layout_segment *lseg, *ret = NULL;
 
-	dprपूर्णांकk("%s:Begin\n", __func__);
+	dprintk("%s:Begin\n", __func__);
 
-	list_क्रम_each_entry(lseg, &lo->plh_segs, pls_list) अणु
-		अगर (test_bit(NFS_LSEG_VALID, &lseg->pls_flags) &&
+	list_for_each_entry(lseg, &lo->plh_segs, pls_list) {
+		if (test_bit(NFS_LSEG_VALID, &lseg->pls_flags) &&
 		    pnfs_lseg_range_match(&lseg->pls_range, range,
-					  strict_iomode)) अणु
+					  strict_iomode)) {
 			ret = pnfs_get_lseg(lseg);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	dprपूर्णांकk("%s:Return lseg %p ref %d\n",
-		__func__, ret, ret ? refcount_पढ़ो(&ret->pls_refcount) : 0);
-	वापस ret;
-पूर्ण
+	dprintk("%s:Return lseg %p ref %d\n",
+		__func__, ret, ret ? refcount_read(&ret->pls_refcount) : 0);
+	return ret;
+}
 
 /*
- * Use mdsthreshold hपूर्णांकs set at each OPEN to determine अगर I/O should go
+ * Use mdsthreshold hints set at each OPEN to determine if I/O should go
  * to the MDS or over pNFS
  *
- * The nfs_inode पढ़ो_io and ग_लिखो_io fields are cumulative counters reset
+ * The nfs_inode read_io and write_io fields are cumulative counters reset
  * when there are no layout segments. Note that in pnfs_update_layout iomode
- * is set to IOMODE_READ क्रम a READ request, and set to IOMODE_RW क्रम a
+ * is set to IOMODE_READ for a READ request, and set to IOMODE_RW for a
  * WRITE request.
  *
- * A वापस of true means use MDS I/O.
+ * A return of true means use MDS I/O.
  *
  * From rfc 5661:
  * If a file's size is smaller than the file size threshold, data accesses
  * SHOULD be sent to the metadata server.  If an I/O request has a length that
  * is below the I/O size threshold, the I/O SHOULD be sent to the metadata
  * server.  If both file size and I/O size are provided, the client SHOULD
- * reach or exceed  both thresholds beक्रमe sending its पढ़ो or ग_लिखो
+ * reach or exceed  both thresholds before sending its read or write
  * requests to the data server.
  */
-अटल bool pnfs_within_mdsthreshold(काष्ठा nfs_खोलो_context *ctx,
-				     काष्ठा inode *ino, पूर्णांक iomode)
-अणु
-	काष्ठा nfs4_threshold *t = ctx->mdsthreshold;
-	काष्ठा nfs_inode *nfsi = NFS_I(ino);
-	loff_t fsize = i_size_पढ़ो(ino);
+static bool pnfs_within_mdsthreshold(struct nfs_open_context *ctx,
+				     struct inode *ino, int iomode)
+{
+	struct nfs4_threshold *t = ctx->mdsthreshold;
+	struct nfs_inode *nfsi = NFS_I(ino);
+	loff_t fsize = i_size_read(ino);
 	bool size = false, size_set = false, io = false, io_set = false, ret = false;
 
-	अगर (t == शून्य)
-		वापस ret;
+	if (t == NULL)
+		return ret;
 
-	dprपूर्णांकk("%s bm=0x%x rd_sz=%llu wr_sz=%llu rd_io=%llu wr_io=%llu\n",
+	dprintk("%s bm=0x%x rd_sz=%llu wr_sz=%llu rd_io=%llu wr_io=%llu\n",
 		__func__, t->bm, t->rd_sz, t->wr_sz, t->rd_io_sz, t->wr_io_sz);
 
-	चयन (iomode) अणु
-	हाल IOMODE_READ:
-		अगर (t->bm & THRESHOLD_RD) अणु
-			dprपूर्णांकk("%s fsize %llu\n", __func__, fsize);
+	switch (iomode) {
+	case IOMODE_READ:
+		if (t->bm & THRESHOLD_RD) {
+			dprintk("%s fsize %llu\n", __func__, fsize);
 			size_set = true;
-			अगर (fsize < t->rd_sz)
+			if (fsize < t->rd_sz)
 				size = true;
-		पूर्ण
-		अगर (t->bm & THRESHOLD_RD_IO) अणु
-			dprपूर्णांकk("%s nfsi->read_io %llu\n", __func__,
-				nfsi->पढ़ो_io);
+		}
+		if (t->bm & THRESHOLD_RD_IO) {
+			dprintk("%s nfsi->read_io %llu\n", __func__,
+				nfsi->read_io);
 			io_set = true;
-			अगर (nfsi->पढ़ो_io < t->rd_io_sz)
+			if (nfsi->read_io < t->rd_io_sz)
 				io = true;
-		पूर्ण
-		अवरोध;
-	हाल IOMODE_RW:
-		अगर (t->bm & THRESHOLD_WR) अणु
-			dprपूर्णांकk("%s fsize %llu\n", __func__, fsize);
+		}
+		break;
+	case IOMODE_RW:
+		if (t->bm & THRESHOLD_WR) {
+			dprintk("%s fsize %llu\n", __func__, fsize);
 			size_set = true;
-			अगर (fsize < t->wr_sz)
+			if (fsize < t->wr_sz)
 				size = true;
-		पूर्ण
-		अगर (t->bm & THRESHOLD_WR_IO) अणु
-			dprपूर्णांकk("%s nfsi->write_io %llu\n", __func__,
-				nfsi->ग_लिखो_io);
+		}
+		if (t->bm & THRESHOLD_WR_IO) {
+			dprintk("%s nfsi->write_io %llu\n", __func__,
+				nfsi->write_io);
 			io_set = true;
-			अगर (nfsi->ग_लिखो_io < t->wr_io_sz)
+			if (nfsi->write_io < t->wr_io_sz)
 				io = true;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (size_set && io_set) अणु
-		अगर (size && io)
+		}
+		break;
+	}
+	if (size_set && io_set) {
+		if (size && io)
 			ret = true;
-	पूर्ण अन्यथा अगर (size || io)
+	} else if (size || io)
 		ret = true;
 
-	dprपूर्णांकk("<-- %s size %d io %d ret %d\n", __func__, size, io, ret);
-	वापस ret;
-पूर्ण
+	dprintk("<-- %s size %d io %d ret %d\n", __func__, size, io, ret);
+	return ret;
+}
 
-अटल पूर्णांक pnfs_prepare_to_retry_layoutget(काष्ठा pnfs_layout_hdr *lo)
-अणु
+static int pnfs_prepare_to_retry_layoutget(struct pnfs_layout_hdr *lo)
+{
 	/*
-	 * send layoutcommit as it can hold up layoutवापस due to lseg
+	 * send layoutcommit as it can hold up layoutreturn due to lseg
 	 * reference
 	 */
 	pnfs_layoutcommit_inode(lo->plh_inode, false);
-	वापस रुको_on_bit_action(&lo->plh_flags, NFS_LAYOUT_RETURN,
-				   nfs_रुको_bit_समाप्तable,
+	return wait_on_bit_action(&lo->plh_flags, NFS_LAYOUT_RETURN,
+				   nfs_wait_bit_killable,
 				   TASK_KILLABLE);
-पूर्ण
+}
 
-अटल व्योम nfs_layoutget_begin(काष्ठा pnfs_layout_hdr *lo)
-अणु
+static void nfs_layoutget_begin(struct pnfs_layout_hdr *lo)
+{
 	atomic_inc(&lo->plh_outstanding);
-पूर्ण
+}
 
-अटल व्योम nfs_layoutget_end(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	अगर (atomic_dec_and_test(&lo->plh_outstanding))
+static void nfs_layoutget_end(struct pnfs_layout_hdr *lo)
+{
+	if (atomic_dec_and_test(&lo->plh_outstanding))
 		wake_up_var(&lo->plh_outstanding);
-पूर्ण
+}
 
-अटल bool pnfs_is_first_layoutget(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	वापस test_bit(NFS_LAYOUT_FIRST_LAYOUTGET, &lo->plh_flags);
-पूर्ण
+static bool pnfs_is_first_layoutget(struct pnfs_layout_hdr *lo)
+{
+	return test_bit(NFS_LAYOUT_FIRST_LAYOUTGET, &lo->plh_flags);
+}
 
-अटल व्योम pnfs_clear_first_layoutget(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	अचिन्हित दीर्घ *bitlock = &lo->plh_flags;
+static void pnfs_clear_first_layoutget(struct pnfs_layout_hdr *lo)
+{
+	unsigned long *bitlock = &lo->plh_flags;
 
 	clear_bit_unlock(NFS_LAYOUT_FIRST_LAYOUTGET, bitlock);
 	smp_mb__after_atomic();
 	wake_up_bit(bitlock, NFS_LAYOUT_FIRST_LAYOUTGET);
-पूर्ण
+}
 
-अटल व्योम _add_to_server_list(काष्ठा pnfs_layout_hdr *lo,
-				काष्ठा nfs_server *server)
-अणु
-	अगर (!test_and_set_bit(NFS_LAYOUT_HASHED, &lo->plh_flags)) अणु
-		काष्ठा nfs_client *clp = server->nfs_client;
+static void _add_to_server_list(struct pnfs_layout_hdr *lo,
+				struct nfs_server *server)
+{
+	if (!test_and_set_bit(NFS_LAYOUT_HASHED, &lo->plh_flags)) {
+		struct nfs_client *clp = server->nfs_client;
 
-		/* The lo must be on the clp list अगर there is any
-		 * chance of a CB_LAYOUTRECALL(खाता) coming in.
+		/* The lo must be on the clp list if there is any
+		 * chance of a CB_LAYOUTRECALL(FILE) coming in.
 		 */
 		spin_lock(&clp->cl_lock);
 		list_add_tail_rcu(&lo->plh_layouts, &server->layouts);
 		spin_unlock(&clp->cl_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Layout segment is retreived from the server अगर not cached.
- * The appropriate layout segment is referenced and वापसed to the caller.
+ * Layout segment is retreived from the server if not cached.
+ * The appropriate layout segment is referenced and returned to the caller.
  */
-काष्ठा pnfs_layout_segment *
-pnfs_update_layout(काष्ठा inode *ino,
-		   काष्ठा nfs_खोलो_context *ctx,
+struct pnfs_layout_segment *
+pnfs_update_layout(struct inode *ino,
+		   struct nfs_open_context *ctx,
 		   loff_t pos,
 		   u64 count,
-		   क्रमागत pnfs_iomode iomode,
+		   enum pnfs_iomode iomode,
 		   bool strict_iomode,
 		   gfp_t gfp_flags)
-अणु
-	काष्ठा pnfs_layout_range arg = अणु
+{
+	struct pnfs_layout_range arg = {
 		.iomode = iomode,
 		.offset = pos,
 		.length = count,
-	पूर्ण;
-	अचिन्हित pg_offset;
-	काष्ठा nfs_server *server = NFS_SERVER(ino);
-	काष्ठा nfs_client *clp = server->nfs_client;
-	काष्ठा pnfs_layout_hdr *lo = शून्य;
-	काष्ठा pnfs_layout_segment *lseg = शून्य;
-	काष्ठा nfs4_layoutget *lgp;
+	};
+	unsigned pg_offset;
+	struct nfs_server *server = NFS_SERVER(ino);
+	struct nfs_client *clp = server->nfs_client;
+	struct pnfs_layout_hdr *lo = NULL;
+	struct pnfs_layout_segment *lseg = NULL;
+	struct nfs4_layoutget *lgp;
 	nfs4_stateid stateid;
-	दीर्घ समयout = 0;
-	अचिन्हित दीर्घ giveup = jअगरfies + (clp->cl_lease_समय << 1);
+	long timeout = 0;
+	unsigned long giveup = jiffies + (clp->cl_lease_time << 1);
 	bool first;
 
-	अगर (!pnfs_enabled_sb(NFS_SERVER(ino))) अणु
+	if (!pnfs_enabled_sb(NFS_SERVER(ino))) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_NO_PNFS);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pnfs_within_mdsthreshold(ctx, ino, iomode)) अणु
+	if (pnfs_within_mdsthreshold(ctx, ino, iomode)) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_MDSTHRESH);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 lookup_again:
 	lseg = ERR_PTR(nfs4_client_recover_expired_lease(clp));
-	अगर (IS_ERR(lseg))
-		जाओ out;
+	if (IS_ERR(lseg))
+		goto out;
 	first = false;
 	spin_lock(&ino->i_lock);
 	lo = pnfs_find_alloc_layout(ino, ctx, gfp_flags);
-	अगर (lo == शून्य) अणु
+	if (lo == NULL) {
 		spin_unlock(&ino->i_lock);
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_NOMEM);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Do we even need to bother with this? */
-	अगर (test_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags)) अणु
+	if (test_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags)) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_BULK_RECALL);
-		dprपूर्णांकk("%s matches recall, use MDS\n", __func__);
-		जाओ out_unlock;
-	पूर्ण
+		dprintk("%s matches recall, use MDS\n", __func__);
+		goto out_unlock;
+	}
 
-	/* अगर LAYOUTGET alपढ़ोy failed once we करोn't try again */
-	अगर (pnfs_layout_io_test_failed(lo, iomode)) अणु
+	/* if LAYOUTGET already failed once we don't try again */
+	if (pnfs_layout_io_test_failed(lo, iomode)) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_IO_TEST_FAIL);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
 	 * If the layout segment list is empty, but there are outstanding
 	 * layoutget calls, then they might be subject to a layoutrecall.
 	 */
-	अगर (list_empty(&lo->plh_segs) &&
-	    atomic_पढ़ो(&lo->plh_outstanding) != 0) अणु
+	if (list_empty(&lo->plh_segs) &&
+	    atomic_read(&lo->plh_outstanding) != 0) {
 		spin_unlock(&ino->i_lock);
-		lseg = ERR_PTR(रुको_var_event_समाप्तable(&lo->plh_outstanding,
-					!atomic_पढ़ो(&lo->plh_outstanding)));
-		अगर (IS_ERR(lseg))
-			जाओ out_put_layout_hdr;
+		lseg = ERR_PTR(wait_var_event_killable(&lo->plh_outstanding,
+					!atomic_read(&lo->plh_outstanding)));
+		if (IS_ERR(lseg))
+			goto out_put_layout_hdr;
 		pnfs_put_layout_hdr(lo);
-		जाओ lookup_again;
-	पूर्ण
+		goto lookup_again;
+	}
 
 	/*
-	 * Because we मुक्त lsegs when sending LAYOUTRETURN, we need to रुको
-	 * क्रम LAYOUTRETURN.
+	 * Because we free lsegs when sending LAYOUTRETURN, we need to wait
+	 * for LAYOUTRETURN.
 	 */
-	अगर (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) अणु
+	if (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags)) {
 		spin_unlock(&ino->i_lock);
-		dprपूर्णांकk("%s wait for layoutreturn\n", __func__);
+		dprintk("%s wait for layoutreturn\n", __func__);
 		lseg = ERR_PTR(pnfs_prepare_to_retry_layoutget(lo));
-		अगर (!IS_ERR(lseg)) अणु
+		if (!IS_ERR(lseg)) {
 			pnfs_put_layout_hdr(lo);
-			dprपूर्णांकk("%s retrying\n", __func__);
+			dprintk("%s retrying\n", __func__);
 			trace_pnfs_update_layout(ino, pos, count, iomode, lo,
 						 lseg,
 						 PNFS_UPDATE_LAYOUT_RETRY);
-			जाओ lookup_again;
-		पूर्ण
+			goto lookup_again;
+		}
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 					 PNFS_UPDATE_LAYOUT_RETURN);
-		जाओ out_put_layout_hdr;
-	पूर्ण
+		goto out_put_layout_hdr;
+	}
 
 	lseg = pnfs_find_lseg(lo, &arg, strict_iomode);
-	अगर (lseg) अणु
+	if (lseg) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				PNFS_UPDATE_LAYOUT_FOUND_CACHED);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
-	 * Choose a stateid क्रम the LAYOUTGET. If we करोn't have a layout
-	 * stateid, or it has been invalidated, then we must use the खोलो
+	 * Choose a stateid for the LAYOUTGET. If we don't have a layout
+	 * stateid, or it has been invalidated, then we must use the open
 	 * stateid.
 	 */
-	अगर (test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags)) अणु
-		पूर्णांक status;
+	if (test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags)) {
+		int status;
 
 		/*
-		 * The first layoutget क्रम the file. Need to serialize per
+		 * The first layoutget for the file. Need to serialize per
 		 * RFC 5661 Errata 3208.
 		 */
-		अगर (test_and_set_bit(NFS_LAYOUT_FIRST_LAYOUTGET,
-				     &lo->plh_flags)) अणु
+		if (test_and_set_bit(NFS_LAYOUT_FIRST_LAYOUTGET,
+				     &lo->plh_flags)) {
 			spin_unlock(&ino->i_lock);
-			lseg = ERR_PTR(रुको_on_bit(&lo->plh_flags,
+			lseg = ERR_PTR(wait_on_bit(&lo->plh_flags,
 						NFS_LAYOUT_FIRST_LAYOUTGET,
 						TASK_KILLABLE));
-			अगर (IS_ERR(lseg))
-				जाओ out_put_layout_hdr;
+			if (IS_ERR(lseg))
+				goto out_put_layout_hdr;
 			pnfs_put_layout_hdr(lo);
-			dprपूर्णांकk("%s retrying\n", __func__);
-			जाओ lookup_again;
-		पूर्ण
+			dprintk("%s retrying\n", __func__);
+			goto lookup_again;
+		}
 
 		spin_unlock(&ino->i_lock);
 		first = true;
 		status = nfs4_select_rw_stateid(ctx->state,
 					iomode == IOMODE_RW ? FMODE_WRITE : FMODE_READ,
-					शून्य, &stateid, शून्य);
-		अगर (status != 0) अणु
+					NULL, &stateid, NULL);
+		if (status != 0) {
 			lseg = ERR_PTR(status);
 			trace_pnfs_update_layout(ino, pos, count,
 					iomode, lo, lseg,
@@ -2092,1105 +2091,1105 @@ lookup_again:
 			nfs4_schedule_stateid_recovery(server, ctx->state);
 			pnfs_clear_first_layoutget(lo);
 			pnfs_put_layout_hdr(lo);
-			जाओ lookup_again;
-		पूर्ण
+			goto lookup_again;
+		}
 		spin_lock(&ino->i_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		nfs4_stateid_copy(&stateid, &lo->plh_stateid);
-	पूर्ण
+	}
 
-	अगर (pnfs_layoutमाला_लो_blocked(lo)) अणु
+	if (pnfs_layoutgets_blocked(lo)) {
 		trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				PNFS_UPDATE_LAYOUT_BLOCKED);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	nfs_layoutget_begin(lo);
 	spin_unlock(&ino->i_lock);
 
 	_add_to_server_list(lo, server);
 
 	pg_offset = arg.offset & ~PAGE_MASK;
-	अगर (pg_offset) अणु
+	if (pg_offset) {
 		arg.offset -= pg_offset;
 		arg.length += pg_offset;
-	पूर्ण
-	अगर (arg.length != NFS4_MAX_UINT64)
+	}
+	if (arg.length != NFS4_MAX_UINT64)
 		arg.length = PAGE_ALIGN(arg.length);
 
 	lgp = pnfs_alloc_init_layoutget_args(ino, ctx, &stateid, &arg, gfp_flags);
-	अगर (!lgp) अणु
-		trace_pnfs_update_layout(ino, pos, count, iomode, lo, शून्य,
+	if (!lgp) {
+		trace_pnfs_update_layout(ino, pos, count, iomode, lo, NULL,
 					 PNFS_UPDATE_LAYOUT_NOMEM);
 		nfs_layoutget_end(lo);
-		जाओ out_put_layout_hdr;
-	पूर्ण
+		goto out_put_layout_hdr;
+	}
 
-	lseg = nfs4_proc_layoutget(lgp, &समयout);
+	lseg = nfs4_proc_layoutget(lgp, &timeout);
 	trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_SEND_LAYOUTGET);
 	nfs_layoutget_end(lo);
-	अगर (IS_ERR(lseg)) अणु
-		चयन(PTR_ERR(lseg)) अणु
-		हाल -EBUSY:
-			अगर (समय_after(jअगरfies, giveup))
-				lseg = शून्य;
-			अवरोध;
-		हाल -ERECALLCONFLICT:
-		हाल -EAGAIN:
-			अवरोध;
-		शेष:
-			अगर (!nfs_error_is_fatal(PTR_ERR(lseg))) अणु
+	if (IS_ERR(lseg)) {
+		switch(PTR_ERR(lseg)) {
+		case -EBUSY:
+			if (time_after(jiffies, giveup))
+				lseg = NULL;
+			break;
+		case -ERECALLCONFLICT:
+		case -EAGAIN:
+			break;
+		default:
+			if (!nfs_error_is_fatal(PTR_ERR(lseg))) {
 				pnfs_layout_clear_fail_bit(lo, pnfs_iomode_to_fail_bit(iomode));
-				lseg = शून्य;
-			पूर्ण
-			जाओ out_put_layout_hdr;
-		पूर्ण
-		अगर (lseg) अणु
-			अगर (first)
+				lseg = NULL;
+			}
+			goto out_put_layout_hdr;
+		}
+		if (lseg) {
+			if (first)
 				pnfs_clear_first_layoutget(lo);
 			trace_pnfs_update_layout(ino, pos, count,
 				iomode, lo, lseg, PNFS_UPDATE_LAYOUT_RETRY);
 			pnfs_put_layout_hdr(lo);
-			जाओ lookup_again;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto lookup_again;
+		}
+	} else {
 		pnfs_layout_clear_fail_bit(lo, pnfs_iomode_to_fail_bit(iomode));
-	पूर्ण
+	}
 
 out_put_layout_hdr:
-	अगर (first)
+	if (first)
 		pnfs_clear_first_layoutget(lo);
 	trace_pnfs_update_layout(ino, pos, count, iomode, lo, lseg,
 				 PNFS_UPDATE_LAYOUT_EXIT);
 	pnfs_put_layout_hdr(lo);
 out:
-	dprपूर्णांकk("%s: inode %s/%llu pNFS layout segment %s for "
+	dprintk("%s: inode %s/%llu pNFS layout segment %s for "
 			"(%s, offset: %llu, length: %llu)\n",
 			__func__, ino->i_sb->s_id,
-			(अचिन्हित दीर्घ दीर्घ)NFS_खाताID(ino),
-			IS_ERR_OR_शून्य(lseg) ? "not found" : "found",
+			(unsigned long long)NFS_FILEID(ino),
+			IS_ERR_OR_NULL(lseg) ? "not found" : "found",
 			iomode==IOMODE_RW ?  "read/write" : "read-only",
-			(अचिन्हित दीर्घ दीर्घ)pos,
-			(अचिन्हित दीर्घ दीर्घ)count);
-	वापस lseg;
+			(unsigned long long)pos,
+			(unsigned long long)count);
+	return lseg;
 out_unlock:
 	spin_unlock(&ino->i_lock);
-	जाओ out_put_layout_hdr;
-पूर्ण
+	goto out_put_layout_hdr;
+}
 EXPORT_SYMBOL_GPL(pnfs_update_layout);
 
-अटल bool
-pnfs_sanity_check_layout_range(काष्ठा pnfs_layout_range *range)
-अणु
-	चयन (range->iomode) अणु
-	हाल IOMODE_READ:
-	हाल IOMODE_RW:
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-	अगर (range->offset == NFS4_MAX_UINT64)
-		वापस false;
-	अगर (range->length == 0)
-		वापस false;
-	अगर (range->length != NFS4_MAX_UINT64 &&
+static bool
+pnfs_sanity_check_layout_range(struct pnfs_layout_range *range)
+{
+	switch (range->iomode) {
+	case IOMODE_READ:
+	case IOMODE_RW:
+		break;
+	default:
+		return false;
+	}
+	if (range->offset == NFS4_MAX_UINT64)
+		return false;
+	if (range->length == 0)
+		return false;
+	if (range->length != NFS4_MAX_UINT64 &&
 	    range->length > NFS4_MAX_UINT64 - range->offset)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-अटल काष्ठा pnfs_layout_hdr *
-_pnfs_grab_empty_layout(काष्ठा inode *ino, काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
+static struct pnfs_layout_hdr *
+_pnfs_grab_empty_layout(struct inode *ino, struct nfs_open_context *ctx)
+{
+	struct pnfs_layout_hdr *lo;
 
 	spin_lock(&ino->i_lock);
 	lo = pnfs_find_alloc_layout(ino, ctx, GFP_KERNEL);
-	अगर (!lo)
-		जाओ out_unlock;
-	अगर (!test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags))
-		जाओ out_unlock;
-	अगर (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags))
-		जाओ out_unlock;
-	अगर (pnfs_layoutमाला_लो_blocked(lo))
-		जाओ out_unlock;
-	अगर (test_and_set_bit(NFS_LAYOUT_FIRST_LAYOUTGET, &lo->plh_flags))
-		जाओ out_unlock;
+	if (!lo)
+		goto out_unlock;
+	if (!test_bit(NFS_LAYOUT_INVALID_STID, &lo->plh_flags))
+		goto out_unlock;
+	if (test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags))
+		goto out_unlock;
+	if (pnfs_layoutgets_blocked(lo))
+		goto out_unlock;
+	if (test_and_set_bit(NFS_LAYOUT_FIRST_LAYOUTGET, &lo->plh_flags))
+		goto out_unlock;
 	nfs_layoutget_begin(lo);
 	spin_unlock(&ino->i_lock);
 	_add_to_server_list(lo, NFS_SERVER(ino));
-	वापस lo;
+	return lo;
 
 out_unlock:
 	spin_unlock(&ino->i_lock);
 	pnfs_put_layout_hdr(lo);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम _lgखोलो_prepare_attached(काष्ठा nfs4_खोलोdata *data,
-				     काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा inode *ino = data->dentry->d_inode;
-	काष्ठा pnfs_layout_range rng = अणु
-		.iomode = (data->o_arg.भ_शेषe & FMODE_WRITE) ?
+static void _lgopen_prepare_attached(struct nfs4_opendata *data,
+				     struct nfs_open_context *ctx)
+{
+	struct inode *ino = data->dentry->d_inode;
+	struct pnfs_layout_range rng = {
+		.iomode = (data->o_arg.fmode & FMODE_WRITE) ?
 			  IOMODE_RW: IOMODE_READ,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
-	काष्ठा nfs4_layoutget *lgp;
-	काष्ठा pnfs_layout_hdr *lo;
+	};
+	struct nfs4_layoutget *lgp;
+	struct pnfs_layout_hdr *lo;
 
-	/* Heuristic: करोn't send layoutget अगर we have cached data */
-	अगर (rng.iomode == IOMODE_READ &&
-	   (i_size_पढ़ो(ino) == 0 || ino->i_mapping->nrpages != 0))
-		वापस;
+	/* Heuristic: don't send layoutget if we have cached data */
+	if (rng.iomode == IOMODE_READ &&
+	   (i_size_read(ino) == 0 || ino->i_mapping->nrpages != 0))
+		return;
 
 	lo = _pnfs_grab_empty_layout(ino, ctx);
-	अगर (!lo)
-		वापस;
+	if (!lo)
+		return;
 	lgp = pnfs_alloc_init_layoutget_args(ino, ctx, &current_stateid,
 					     &rng, GFP_KERNEL);
-	अगर (!lgp) अणु
+	if (!lgp) {
 		pnfs_clear_first_layoutget(lo);
 		nfs_layoutget_end(lo);
 		pnfs_put_layout_hdr(lo);
-		वापस;
-	पूर्ण
+		return;
+	}
 	data->lgp = lgp;
 	data->o_arg.lg_args = &lgp->args;
 	data->o_res.lg_res = &lgp->res;
-पूर्ण
+}
 
-अटल व्योम _lgखोलो_prepare_भग्नing(काष्ठा nfs4_खोलोdata *data,
-				     काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा pnfs_layout_range rng = अणु
-		.iomode = (data->o_arg.भ_शेषe & FMODE_WRITE) ?
+static void _lgopen_prepare_floating(struct nfs4_opendata *data,
+				     struct nfs_open_context *ctx)
+{
+	struct pnfs_layout_range rng = {
+		.iomode = (data->o_arg.fmode & FMODE_WRITE) ?
 			  IOMODE_RW: IOMODE_READ,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
-	काष्ठा nfs4_layoutget *lgp;
+	};
+	struct nfs4_layoutget *lgp;
 
-	lgp = pnfs_alloc_init_layoutget_args(शून्य, ctx, &current_stateid,
+	lgp = pnfs_alloc_init_layoutget_args(NULL, ctx, &current_stateid,
 					     &rng, GFP_KERNEL);
-	अगर (!lgp)
-		वापस;
+	if (!lgp)
+		return;
 	data->lgp = lgp;
 	data->o_arg.lg_args = &lgp->args;
 	data->o_res.lg_res = &lgp->res;
-पूर्ण
+}
 
-व्योम pnfs_lgखोलो_prepare(काष्ठा nfs4_खोलोdata *data,
-			 काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(data->dir->d_inode);
+void pnfs_lgopen_prepare(struct nfs4_opendata *data,
+			 struct nfs_open_context *ctx)
+{
+	struct nfs_server *server = NFS_SERVER(data->dir->d_inode);
 
-	अगर (!(pnfs_enabled_sb(server) &&
+	if (!(pnfs_enabled_sb(server) &&
 	      server->pnfs_curr_ld->flags & PNFS_LAYOUTGET_ON_OPEN))
-		वापस;
+		return;
 	/* Could check on max_ops, but currently hardcoded high enough */
-	अगर (!nfs_server_capable(data->dir->d_inode, NFS_CAP_LGOPEN))
-		वापस;
-	अगर (data->state)
-		_lgखोलो_prepare_attached(data, ctx);
-	अन्यथा
-		_lgखोलो_prepare_भग्नing(data, ctx);
-पूर्ण
+	if (!nfs_server_capable(data->dir->d_inode, NFS_CAP_LGOPEN))
+		return;
+	if (data->state)
+		_lgopen_prepare_attached(data, ctx);
+	else
+		_lgopen_prepare_floating(data, ctx);
+}
 
-व्योम pnfs_parse_lgखोलो(काष्ठा inode *ino, काष्ठा nfs4_layoutget *lgp,
-		       काष्ठा nfs_खोलो_context *ctx)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा pnfs_layout_segment *lseg;
-	काष्ठा nfs_server *srv = NFS_SERVER(ino);
+void pnfs_parse_lgopen(struct inode *ino, struct nfs4_layoutget *lgp,
+		       struct nfs_open_context *ctx)
+{
+	struct pnfs_layout_hdr *lo;
+	struct pnfs_layout_segment *lseg;
+	struct nfs_server *srv = NFS_SERVER(ino);
 	u32 iomode;
 
-	अगर (!lgp)
-		वापस;
-	dprपूर्णांकk("%s: entered with status %i\n", __func__, lgp->res.status);
-	अगर (lgp->res.status) अणु
-		चयन (lgp->res.status) अणु
-		शेष:
-			अवरोध;
+	if (!lgp)
+		return;
+	dprintk("%s: entered with status %i\n", __func__, lgp->res.status);
+	if (lgp->res.status) {
+		switch (lgp->res.status) {
+		default:
+			break;
 		/*
-		 * Halt lgखोलो attempts अगर the server करोesn't recognise
+		 * Halt lgopen attempts if the server doesn't recognise
 		 * the "current stateid" value, the layout type, or the
 		 * layoutget operation as being valid.
-		 * Also अगर it complains about too many ops in the compound
+		 * Also if it complains about too many ops in the compound
 		 * or of the request/reply being too big.
 		 */
-		हाल -NFS4ERR_BAD_STATEID:
-		हाल -NFS4ERR_NOTSUPP:
-		हाल -NFS4ERR_REP_TOO_BIG:
-		हाल -NFS4ERR_REP_TOO_BIG_TO_CACHE:
-		हाल -NFS4ERR_REQ_TOO_BIG:
-		हाल -NFS4ERR_TOO_MANY_OPS:
-		हाल -NFS4ERR_UNKNOWN_LAYOUTTYPE:
+		case -NFS4ERR_BAD_STATEID:
+		case -NFS4ERR_NOTSUPP:
+		case -NFS4ERR_REP_TOO_BIG:
+		case -NFS4ERR_REP_TOO_BIG_TO_CACHE:
+		case -NFS4ERR_REQ_TOO_BIG:
+		case -NFS4ERR_TOO_MANY_OPS:
+		case -NFS4ERR_UNKNOWN_LAYOUTTYPE:
 			srv->caps &= ~NFS_CAP_LGOPEN;
-		पूर्ण
-		वापस;
-	पूर्ण
-	अगर (!lgp->args.inode) अणु
+		}
+		return;
+	}
+	if (!lgp->args.inode) {
 		lo = _pnfs_grab_empty_layout(ino, ctx);
-		अगर (!lo)
-			वापस;
+		if (!lo)
+			return;
 		lgp->args.inode = ino;
-	पूर्ण अन्यथा
+	} else
 		lo = NFS_I(lgp->args.inode)->layout;
 
 	lseg = pnfs_layout_process(lgp);
-	अगर (!IS_ERR(lseg)) अणु
+	if (!IS_ERR(lseg)) {
 		iomode = lgp->args.range.iomode;
 		pnfs_layout_clear_fail_bit(lo, pnfs_iomode_to_fail_bit(iomode));
 		pnfs_put_lseg(lseg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम nfs4_lgखोलो_release(काष्ठा nfs4_layoutget *lgp)
-अणु
-	अगर (lgp != शून्य) अणु
-		काष्ठा inode *inode = lgp->args.inode;
-		अगर (inode) अणु
-			काष्ठा pnfs_layout_hdr *lo = NFS_I(inode)->layout;
+void nfs4_lgopen_release(struct nfs4_layoutget *lgp)
+{
+	if (lgp != NULL) {
+		struct inode *inode = lgp->args.inode;
+		if (inode) {
+			struct pnfs_layout_hdr *lo = NFS_I(inode)->layout;
 			pnfs_clear_first_layoutget(lo);
 			nfs_layoutget_end(lo);
-		पूर्ण
-		pnfs_layoutget_मुक्त(lgp);
-	पूर्ण
-पूर्ण
+		}
+		pnfs_layoutget_free(lgp);
+	}
+}
 
-काष्ठा pnfs_layout_segment *
-pnfs_layout_process(काष्ठा nfs4_layoutget *lgp)
-अणु
-	काष्ठा pnfs_layout_hdr *lo = NFS_I(lgp->args.inode)->layout;
-	काष्ठा nfs4_layoutget_res *res = &lgp->res;
-	काष्ठा pnfs_layout_segment *lseg;
-	काष्ठा inode *ino = lo->plh_inode;
-	LIST_HEAD(मुक्त_me);
+struct pnfs_layout_segment *
+pnfs_layout_process(struct nfs4_layoutget *lgp)
+{
+	struct pnfs_layout_hdr *lo = NFS_I(lgp->args.inode)->layout;
+	struct nfs4_layoutget_res *res = &lgp->res;
+	struct pnfs_layout_segment *lseg;
+	struct inode *ino = lo->plh_inode;
+	LIST_HEAD(free_me);
 
-	अगर (!pnfs_sanity_check_layout_range(&res->range))
-		वापस ERR_PTR(-EINVAL);
+	if (!pnfs_sanity_check_layout_range(&res->range))
+		return ERR_PTR(-EINVAL);
 
-	/* Inject layout blob पूर्णांकo I/O device driver */
+	/* Inject layout blob into I/O device driver */
 	lseg = NFS_SERVER(ino)->pnfs_curr_ld->alloc_lseg(lo, res, lgp->gfp_flags);
-	अगर (IS_ERR_OR_शून्य(lseg)) अणु
-		अगर (!lseg)
+	if (IS_ERR_OR_NULL(lseg)) {
+		if (!lseg)
 			lseg = ERR_PTR(-ENOMEM);
 
-		dprपूर्णांकk("%s: Could not allocate layout: error %ld\n",
+		dprintk("%s: Could not allocate layout: error %ld\n",
 		       __func__, PTR_ERR(lseg));
-		वापस lseg;
-	पूर्ण
+		return lseg;
+	}
 
 	pnfs_init_lseg(lo, lseg, &res->range, &res->stateid);
 
 	spin_lock(&ino->i_lock);
-	अगर (pnfs_layoutमाला_लो_blocked(lo)) अणु
-		dprपूर्णांकk("%s forget reply due to state\n", __func__);
-		जाओ out_क्रमget;
-	पूर्ण
+	if (pnfs_layoutgets_blocked(lo)) {
+		dprintk("%s forget reply due to state\n", __func__);
+		goto out_forget;
+	}
 
-	अगर (nfs4_stateid_match_other(&lo->plh_stateid, &res->stateid)) अणु
+	if (nfs4_stateid_match_other(&lo->plh_stateid, &res->stateid)) {
 		/* existing state ID, make sure the sequence number matches. */
-		अगर (pnfs_layout_stateid_blocked(lo, &res->stateid)) अणु
-			अगर (!pnfs_layout_is_valid(lo) &&
+		if (pnfs_layout_stateid_blocked(lo, &res->stateid)) {
+			if (!pnfs_layout_is_valid(lo) &&
 			    pnfs_is_first_layoutget(lo))
 				lo->plh_barrier = 0;
-			dprपूर्णांकk("%s forget reply due to sequence\n", __func__);
-			जाओ out_क्रमget;
-		पूर्ण
+			dprintk("%s forget reply due to sequence\n", __func__);
+			goto out_forget;
+		}
 		pnfs_set_layout_stateid(lo, &res->stateid, lgp->cred, false);
-	पूर्ण अन्यथा अगर (pnfs_layout_is_valid(lo)) अणु
+	} else if (pnfs_layout_is_valid(lo)) {
 		/*
-		 * We got an entirely new state ID.  Mark all segments क्रम the
+		 * We got an entirely new state ID.  Mark all segments for the
 		 * inode invalid, and retry the layoutget
 		 */
-		काष्ठा pnfs_layout_range range = अणु
+		struct pnfs_layout_range range = {
 			.iomode = IOMODE_ANY,
 			.length = NFS4_MAX_UINT64,
-		पूर्ण;
-		pnfs_mark_matching_lsegs_वापस(lo, &मुक्त_me, &range, 0);
-		जाओ out_क्रमget;
-	पूर्ण अन्यथा अणु
+		};
+		pnfs_mark_matching_lsegs_return(lo, &free_me, &range, 0);
+		goto out_forget;
+	} else {
 		/* We have a completely new layout */
-		अगर (!pnfs_is_first_layoutget(lo))
-			जाओ out_क्रमget;
+		if (!pnfs_is_first_layoutget(lo))
+			goto out_forget;
 		pnfs_set_layout_stateid(lo, &res->stateid, lgp->cred, true);
-	पूर्ण
+	}
 
 	pnfs_get_lseg(lseg);
-	pnfs_layout_insert_lseg(lo, lseg, &मुक्त_me);
+	pnfs_layout_insert_lseg(lo, lseg, &free_me);
 
 
-	अगर (res->वापस_on_बंद)
+	if (res->return_on_close)
 		set_bit(NFS_LSEG_ROC, &lseg->pls_flags);
 
 	spin_unlock(&ino->i_lock);
-	pnfs_मुक्त_lseg_list(&मुक्त_me);
-	वापस lseg;
+	pnfs_free_lseg_list(&free_me);
+	return lseg;
 
-out_क्रमget:
+out_forget:
 	spin_unlock(&ino->i_lock);
 	lseg->pls_layout = lo;
-	NFS_SERVER(ino)->pnfs_curr_ld->मुक्त_lseg(lseg);
-	वापस ERR_PTR(-EAGAIN);
-पूर्ण
+	NFS_SERVER(ino)->pnfs_curr_ld->free_lseg(lseg);
+	return ERR_PTR(-EAGAIN);
+}
 
 /**
- * pnfs_mark_matching_lsegs_वापस - Free or वापस matching layout segments
- * @lo: poपूर्णांकer to layout header
- * @पंचांगp_list: list header to be used with pnfs_मुक्त_lseg_list()
- * @वापस_range: describe layout segment ranges to be वापसed
+ * pnfs_mark_matching_lsegs_return - Free or return matching layout segments
+ * @lo: pointer to layout header
+ * @tmp_list: list header to be used with pnfs_free_lseg_list()
+ * @return_range: describe layout segment ranges to be returned
  * @seq: stateid seqid to match
  *
- * This function is मुख्यly पूर्णांकended क्रम use by layoutrecall. It attempts
- * to मुक्त the layout segment immediately, or अन्यथा to mark it क्रम वापस
+ * This function is mainly intended for use by layoutrecall. It attempts
+ * to free the layout segment immediately, or else to mark it for return
  * as soon as its reference count drops to zero.
  *
  * Returns
- * - 0: a layoutवापस needs to be scheduled.
+ * - 0: a layoutreturn needs to be scheduled.
  * - EBUSY: there are layout segment that are still in use.
- * - ENOENT: there are no layout segments that need to be वापसed.
+ * - ENOENT: there are no layout segments that need to be returned.
  */
-पूर्णांक
-pnfs_mark_matching_lsegs_वापस(काष्ठा pnfs_layout_hdr *lo,
-				काष्ठा list_head *पंचांगp_list,
-				स्थिर काष्ठा pnfs_layout_range *वापस_range,
+int
+pnfs_mark_matching_lsegs_return(struct pnfs_layout_hdr *lo,
+				struct list_head *tmp_list,
+				const struct pnfs_layout_range *return_range,
 				u32 seq)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *next;
-	पूर्णांक reमुख्यing = 0;
+{
+	struct pnfs_layout_segment *lseg, *next;
+	int remaining = 0;
 
-	dprपूर्णांकk("%s:Begin lo %p\n", __func__, lo);
+	dprintk("%s:Begin lo %p\n", __func__, lo);
 
-	निश्चित_spin_locked(&lo->plh_inode->i_lock);
+	assert_spin_locked(&lo->plh_inode->i_lock);
 
-	अगर (test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
-		पंचांगp_list = &lo->plh_वापस_segs;
+	if (test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
+		tmp_list = &lo->plh_return_segs;
 
-	list_क्रम_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
-		अगर (pnfs_match_lseg_recall(lseg, वापस_range, seq)) अणु
-			dprपूर्णांकk("%s: marking lseg %p iomode %d "
+	list_for_each_entry_safe(lseg, next, &lo->plh_segs, pls_list)
+		if (pnfs_match_lseg_recall(lseg, return_range, seq)) {
+			dprintk("%s: marking lseg %p iomode %d "
 				"offset %llu length %llu\n", __func__,
 				lseg, lseg->pls_range.iomode,
 				lseg->pls_range.offset,
 				lseg->pls_range.length);
-			अगर (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
-				पंचांगp_list = &lo->plh_वापस_segs;
-			अगर (mark_lseg_invalid(lseg, पंचांगp_list))
-				जारी;
-			reमुख्यing++;
+			if (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
+				tmp_list = &lo->plh_return_segs;
+			if (mark_lseg_invalid(lseg, tmp_list))
+				continue;
+			remaining++;
 			set_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags);
-		पूर्ण
+		}
 
-	अगर (reमुख्यing) अणु
-		pnfs_set_plh_वापस_info(lo, वापस_range->iomode, seq);
-		वापस -EBUSY;
-	पूर्ण
+	if (remaining) {
+		pnfs_set_plh_return_info(lo, return_range->iomode, seq);
+		return -EBUSY;
+	}
 
-	अगर (!list_empty(&lo->plh_वापस_segs)) अणु
-		pnfs_set_plh_वापस_info(lo, वापस_range->iomode, seq);
-		वापस 0;
-	पूर्ण
+	if (!list_empty(&lo->plh_return_segs)) {
+		pnfs_set_plh_return_info(lo, return_range->iomode, seq);
+		return 0;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल व्योम
-pnfs_mark_layout_क्रम_वापस(काष्ठा inode *inode,
-			    स्थिर काष्ठा pnfs_layout_range *range)
-अणु
-	काष्ठा pnfs_layout_hdr *lo;
-	bool वापस_now = false;
+static void
+pnfs_mark_layout_for_return(struct inode *inode,
+			    const struct pnfs_layout_range *range)
+{
+	struct pnfs_layout_hdr *lo;
+	bool return_now = false;
 
 	spin_lock(&inode->i_lock);
 	lo = NFS_I(inode)->layout;
-	अगर (!pnfs_layout_is_valid(lo)) अणु
+	if (!pnfs_layout_is_valid(lo)) {
 		spin_unlock(&inode->i_lock);
-		वापस;
-	पूर्ण
-	pnfs_set_plh_वापस_info(lo, range->iomode, 0);
+		return;
+	}
+	pnfs_set_plh_return_info(lo, range->iomode, 0);
 	/*
 	 * mark all matching lsegs so that we are sure to have no live
-	 * segments at hand when sending layoutवापस. See pnfs_put_lseg()
-	 * क्रम how it works.
+	 * segments at hand when sending layoutreturn. See pnfs_put_lseg()
+	 * for how it works.
 	 */
-	अगर (pnfs_mark_matching_lsegs_वापस(lo, &lo->plh_वापस_segs, range, 0) != -EBUSY) अणु
-		स्थिर काष्ठा cred *cred;
+	if (pnfs_mark_matching_lsegs_return(lo, &lo->plh_return_segs, range, 0) != -EBUSY) {
+		const struct cred *cred;
 		nfs4_stateid stateid;
-		क्रमागत pnfs_iomode iomode;
+		enum pnfs_iomode iomode;
 
-		वापस_now = pnfs_prepare_layoutवापस(lo, &stateid, &cred, &iomode);
+		return_now = pnfs_prepare_layoutreturn(lo, &stateid, &cred, &iomode);
 		spin_unlock(&inode->i_lock);
-		अगर (वापस_now)
-			pnfs_send_layoutवापस(lo, &stateid, &cred, iomode, false);
-	पूर्ण अन्यथा अणु
+		if (return_now)
+			pnfs_send_layoutreturn(lo, &stateid, &cred, iomode, false);
+	} else {
 		spin_unlock(&inode->i_lock);
 		nfs_commit_inode(inode, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम pnfs_error_mark_layout_क्रम_वापस(काष्ठा inode *inode,
-				       काष्ठा pnfs_layout_segment *lseg)
-अणु
-	काष्ठा pnfs_layout_range range = अणु
+void pnfs_error_mark_layout_for_return(struct inode *inode,
+				       struct pnfs_layout_segment *lseg)
+{
+	struct pnfs_layout_range range = {
 		.iomode = lseg->pls_range.iomode,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
+	};
 
-	pnfs_mark_layout_क्रम_वापस(inode, &range);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_error_mark_layout_क्रम_वापस);
+	pnfs_mark_layout_for_return(inode, &range);
+}
+EXPORT_SYMBOL_GPL(pnfs_error_mark_layout_for_return);
 
-अटल bool
-pnfs_layout_can_be_वापसed(काष्ठा pnfs_layout_hdr *lo)
-अणु
-	वापस pnfs_layout_is_valid(lo) &&
+static bool
+pnfs_layout_can_be_returned(struct pnfs_layout_hdr *lo)
+{
+	return pnfs_layout_is_valid(lo) &&
 		!test_bit(NFS_LAYOUT_INODE_FREEING, &lo->plh_flags) &&
 		!test_bit(NFS_LAYOUT_RETURN, &lo->plh_flags);
-पूर्ण
+}
 
-अटल काष्ठा pnfs_layout_segment *
-pnfs_find_first_lseg(काष्ठा pnfs_layout_hdr *lo,
-		     स्थिर काष्ठा pnfs_layout_range *range,
-		     क्रमागत pnfs_iomode iomode)
-अणु
-	काष्ठा pnfs_layout_segment *lseg;
+static struct pnfs_layout_segment *
+pnfs_find_first_lseg(struct pnfs_layout_hdr *lo,
+		     const struct pnfs_layout_range *range,
+		     enum pnfs_iomode iomode)
+{
+	struct pnfs_layout_segment *lseg;
 
-	list_क्रम_each_entry(lseg, &lo->plh_segs, pls_list) अणु
-		अगर (!test_bit(NFS_LSEG_VALID, &lseg->pls_flags))
-			जारी;
-		अगर (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
-			जारी;
-		अगर (lseg->pls_range.iomode != iomode && iomode != IOMODE_ANY)
-			जारी;
-		अगर (pnfs_lseg_range_पूर्णांकersecting(&lseg->pls_range, range))
-			वापस lseg;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(lseg, &lo->plh_segs, pls_list) {
+		if (!test_bit(NFS_LSEG_VALID, &lseg->pls_flags))
+			continue;
+		if (test_bit(NFS_LSEG_LAYOUTRETURN, &lseg->pls_flags))
+			continue;
+		if (lseg->pls_range.iomode != iomode && iomode != IOMODE_ANY)
+			continue;
+		if (pnfs_lseg_range_intersecting(&lseg->pls_range, range))
+			return lseg;
+	}
+	return NULL;
+}
 
-/* Find खोलो file states whose mode matches that of the range */
-अटल bool
-pnfs_should_वापस_unused_layout(काष्ठा pnfs_layout_hdr *lo,
-				 स्थिर काष्ठा pnfs_layout_range *range)
-अणु
-	काष्ठा list_head *head;
-	काष्ठा nfs_खोलो_context *ctx;
-	भ_शेषe_t mode = 0;
+/* Find open file states whose mode matches that of the range */
+static bool
+pnfs_should_return_unused_layout(struct pnfs_layout_hdr *lo,
+				 const struct pnfs_layout_range *range)
+{
+	struct list_head *head;
+	struct nfs_open_context *ctx;
+	fmode_t mode = 0;
 
-	अगर (!pnfs_layout_can_be_वापसed(lo) ||
+	if (!pnfs_layout_can_be_returned(lo) ||
 	    !pnfs_find_first_lseg(lo, range, range->iomode))
-		वापस false;
+		return false;
 
-	head = &NFS_I(lo->plh_inode)->खोलो_files;
-	list_क्रम_each_entry_rcu(ctx, head, list) अणु
-		अगर (ctx->state)
+	head = &NFS_I(lo->plh_inode)->open_files;
+	list_for_each_entry_rcu(ctx, head, list) {
+		if (ctx->state)
 			mode |= ctx->state->state & (FMODE_READ|FMODE_WRITE);
-	पूर्ण
+	}
 
-	चयन (range->iomode) अणु
-	शेष:
-		अवरोध;
-	हाल IOMODE_READ:
+	switch (range->iomode) {
+	default:
+		break;
+	case IOMODE_READ:
 		mode &= ~FMODE_WRITE;
-		अवरोध;
-	हाल IOMODE_RW:
-		अगर (pnfs_find_first_lseg(lo, range, IOMODE_READ))
+		break;
+	case IOMODE_RW:
+		if (pnfs_find_first_lseg(lo, range, IOMODE_READ))
 			mode &= ~FMODE_READ;
-	पूर्ण
-	वापस mode == 0;
-पूर्ण
+	}
+	return mode == 0;
+}
 
-अटल पूर्णांक
-pnfs_layout_वापस_unused_byserver(काष्ठा nfs_server *server, व्योम *data)
-अणु
-	स्थिर काष्ठा pnfs_layout_range *range = data;
-	काष्ठा pnfs_layout_hdr *lo;
-	काष्ठा inode *inode;
+static int
+pnfs_layout_return_unused_byserver(struct nfs_server *server, void *data)
+{
+	const struct pnfs_layout_range *range = data;
+	struct pnfs_layout_hdr *lo;
+	struct inode *inode;
 restart:
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(lo, &server->layouts, plh_layouts) अणु
-		अगर (!pnfs_layout_can_be_वापसed(lo) ||
+	rcu_read_lock();
+	list_for_each_entry_rcu(lo, &server->layouts, plh_layouts) {
+		if (!pnfs_layout_can_be_returned(lo) ||
 		    test_bit(NFS_LAYOUT_RETURN_REQUESTED, &lo->plh_flags))
-			जारी;
+			continue;
 		inode = lo->plh_inode;
 		spin_lock(&inode->i_lock);
-		अगर (!pnfs_should_वापस_unused_layout(lo, range)) अणु
+		if (!pnfs_should_return_unused_layout(lo, range)) {
 			spin_unlock(&inode->i_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		spin_unlock(&inode->i_lock);
 		inode = pnfs_grab_inode_layout_hdr(lo);
-		अगर (!inode)
-			जारी;
-		rcu_पढ़ो_unlock();
-		pnfs_mark_layout_क्रम_वापस(inode, range);
+		if (!inode)
+			continue;
+		rcu_read_unlock();
+		pnfs_mark_layout_for_return(inode, range);
 		iput(inode);
 		cond_resched();
-		जाओ restart;
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस 0;
-पूर्ण
+		goto restart;
+	}
+	rcu_read_unlock();
+	return 0;
+}
 
-व्योम
-pnfs_layout_वापस_unused_byclid(काष्ठा nfs_client *clp,
-				 क्रमागत pnfs_iomode iomode)
-अणु
-	काष्ठा pnfs_layout_range range = अणु
+void
+pnfs_layout_return_unused_byclid(struct nfs_client *clp,
+				 enum pnfs_iomode iomode)
+{
+	struct pnfs_layout_range range = {
 		.iomode = iomode,
 		.offset = 0,
 		.length = NFS4_MAX_UINT64,
-	पूर्ण;
+	};
 
-	nfs_client_क्रम_each_server(clp, pnfs_layout_वापस_unused_byserver,
+	nfs_client_for_each_server(clp, pnfs_layout_return_unused_byserver,
 			&range);
-पूर्ण
+}
 
-व्योम
-pnfs_generic_pg_check_layout(काष्ठा nfs_pageio_descriptor *pgio)
-अणु
-	अगर (pgio->pg_lseg == शून्य ||
+void
+pnfs_generic_pg_check_layout(struct nfs_pageio_descriptor *pgio)
+{
+	if (pgio->pg_lseg == NULL ||
 	    test_bit(NFS_LSEG_VALID, &pgio->pg_lseg->pls_flags))
-		वापस;
+		return;
 	pnfs_put_lseg(pgio->pg_lseg);
-	pgio->pg_lseg = शून्य;
-पूर्ण
+	pgio->pg_lseg = NULL;
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_pg_check_layout);
 
 /*
- * Check क्रम any पूर्णांकersection between the request and the pgio->pg_lseg,
- * and अगर none, put this pgio->pg_lseg away.
+ * Check for any intersection between the request and the pgio->pg_lseg,
+ * and if none, put this pgio->pg_lseg away.
  */
-व्योम
-pnfs_generic_pg_check_range(काष्ठा nfs_pageio_descriptor *pgio, काष्ठा nfs_page *req)
-अणु
-	अगर (pgio->pg_lseg && !pnfs_lseg_request_पूर्णांकersecting(pgio->pg_lseg, req)) अणु
+void
+pnfs_generic_pg_check_range(struct nfs_pageio_descriptor *pgio, struct nfs_page *req)
+{
+	if (pgio->pg_lseg && !pnfs_lseg_request_intersecting(pgio->pg_lseg, req)) {
 		pnfs_put_lseg(pgio->pg_lseg);
-		pgio->pg_lseg = शून्य;
-	पूर्ण
-पूर्ण
+		pgio->pg_lseg = NULL;
+	}
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_pg_check_range);
 
-व्योम
-pnfs_generic_pg_init_पढ़ो(काष्ठा nfs_pageio_descriptor *pgio, काष्ठा nfs_page *req)
-अणु
+void
+pnfs_generic_pg_init_read(struct nfs_pageio_descriptor *pgio, struct nfs_page *req)
+{
 	u64 rd_size;
 
 	pnfs_generic_pg_check_layout(pgio);
 	pnfs_generic_pg_check_range(pgio, req);
-	अगर (pgio->pg_lseg == शून्य) अणु
-		अगर (pgio->pg_dreq == शून्य)
-			rd_size = i_size_पढ़ो(pgio->pg_inode) - req_offset(req);
-		अन्यथा
+	if (pgio->pg_lseg == NULL) {
+		if (pgio->pg_dreq == NULL)
+			rd_size = i_size_read(pgio->pg_inode) - req_offset(req);
+		else
 			rd_size = nfs_dreq_bytes_left(pgio->pg_dreq);
 
 		pgio->pg_lseg = pnfs_update_layout(pgio->pg_inode,
-						   nfs_req_खोलोctx(req),
+						   nfs_req_openctx(req),
 						   req_offset(req),
 						   rd_size,
 						   IOMODE_READ,
 						   false,
 						   GFP_KERNEL);
-		अगर (IS_ERR(pgio->pg_lseg)) अणु
+		if (IS_ERR(pgio->pg_lseg)) {
 			pgio->pg_error = PTR_ERR(pgio->pg_lseg);
-			pgio->pg_lseg = शून्य;
-			वापस;
-		पूर्ण
-	पूर्ण
-	/* If no lseg, fall back to पढ़ो through mds */
-	अगर (pgio->pg_lseg == शून्य)
-		nfs_pageio_reset_पढ़ो_mds(pgio);
+			pgio->pg_lseg = NULL;
+			return;
+		}
+	}
+	/* If no lseg, fall back to read through mds */
+	if (pgio->pg_lseg == NULL)
+		nfs_pageio_reset_read_mds(pgio);
 
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_generic_pg_init_पढ़ो);
+}
+EXPORT_SYMBOL_GPL(pnfs_generic_pg_init_read);
 
-व्योम
-pnfs_generic_pg_init_ग_लिखो(काष्ठा nfs_pageio_descriptor *pgio,
-			   काष्ठा nfs_page *req, u64 wb_size)
-अणु
+void
+pnfs_generic_pg_init_write(struct nfs_pageio_descriptor *pgio,
+			   struct nfs_page *req, u64 wb_size)
+{
 	pnfs_generic_pg_check_layout(pgio);
 	pnfs_generic_pg_check_range(pgio, req);
-	अगर (pgio->pg_lseg == शून्य) अणु
+	if (pgio->pg_lseg == NULL) {
 		pgio->pg_lseg = pnfs_update_layout(pgio->pg_inode,
-						   nfs_req_खोलोctx(req),
+						   nfs_req_openctx(req),
 						   req_offset(req),
 						   wb_size,
 						   IOMODE_RW,
 						   false,
 						   GFP_KERNEL);
-		अगर (IS_ERR(pgio->pg_lseg)) अणु
+		if (IS_ERR(pgio->pg_lseg)) {
 			pgio->pg_error = PTR_ERR(pgio->pg_lseg);
-			pgio->pg_lseg = शून्य;
-			वापस;
-		पूर्ण
-	पूर्ण
-	/* If no lseg, fall back to ग_लिखो through mds */
-	अगर (pgio->pg_lseg == शून्य)
-		nfs_pageio_reset_ग_लिखो_mds(pgio);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_generic_pg_init_ग_लिखो);
+			pgio->pg_lseg = NULL;
+			return;
+		}
+	}
+	/* If no lseg, fall back to write through mds */
+	if (pgio->pg_lseg == NULL)
+		nfs_pageio_reset_write_mds(pgio);
+}
+EXPORT_SYMBOL_GPL(pnfs_generic_pg_init_write);
 
-व्योम
-pnfs_generic_pg_cleanup(काष्ठा nfs_pageio_descriptor *desc)
-अणु
-	अगर (desc->pg_lseg) अणु
+void
+pnfs_generic_pg_cleanup(struct nfs_pageio_descriptor *desc)
+{
+	if (desc->pg_lseg) {
 		pnfs_put_lseg(desc->pg_lseg);
-		desc->pg_lseg = शून्य;
-	पूर्ण
-पूर्ण
+		desc->pg_lseg = NULL;
+	}
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_pg_cleanup);
 
 /*
- * Return 0 अगर @req cannot be coalesced पूर्णांकo @pgio, otherwise वापस the number
+ * Return 0 if @req cannot be coalesced into @pgio, otherwise return the number
  * of bytes (maximum @req->wb_bytes) that can be coalesced.
  */
-माप_प्रकार
-pnfs_generic_pg_test(काष्ठा nfs_pageio_descriptor *pgio,
-		     काष्ठा nfs_page *prev, काष्ठा nfs_page *req)
-अणु
-	अचिन्हित पूर्णांक size;
+size_t
+pnfs_generic_pg_test(struct nfs_pageio_descriptor *pgio,
+		     struct nfs_page *prev, struct nfs_page *req)
+{
+	unsigned int size;
 	u64 seg_end, req_start, seg_left;
 
 	size = nfs_generic_pg_test(pgio, prev, req);
-	अगर (!size)
-		वापस 0;
+	if (!size)
+		return 0;
 
 	/*
 	 * 'size' contains the number of bytes left in the current page (up
-	 * to the original size asked क्रम in @req->wb_bytes).
+	 * to the original size asked for in @req->wb_bytes).
 	 *
 	 * Calculate how many bytes are left in the layout segment
-	 * and अगर there are less bytes than 'size', वापस that instead.
+	 * and if there are less bytes than 'size', return that instead.
 	 *
 	 * Please also note that 'end_offset' is actually the offset of the
 	 * first byte that lies outside the pnfs_layout_range. FIXME?
 	 *
 	 */
-	अगर (pgio->pg_lseg) अणु
+	if (pgio->pg_lseg) {
 		seg_end = pnfs_end_offset(pgio->pg_lseg->pls_range.offset,
 				     pgio->pg_lseg->pls_range.length);
 		req_start = req_offset(req);
 
 		/* start of request is past the last byte of this segment */
-		अगर (req_start >= seg_end)
-			वापस 0;
+		if (req_start >= seg_end)
+			return 0;
 
-		/* adjust 'size' अगरf there are fewer bytes left in the
-		 * segment than what nfs_generic_pg_test वापसed */
+		/* adjust 'size' iff there are fewer bytes left in the
+		 * segment than what nfs_generic_pg_test returned */
 		seg_left = seg_end - req_start;
-		अगर (seg_left < size)
-			size = (अचिन्हित पूर्णांक)seg_left;
-	पूर्ण
+		if (seg_left < size)
+			size = (unsigned int)seg_left;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_pg_test);
 
-पूर्णांक pnfs_ग_लिखो_करोne_resend_to_mds(काष्ठा nfs_pgio_header *hdr)
-अणु
-	काष्ठा nfs_pageio_descriptor pgio;
+int pnfs_write_done_resend_to_mds(struct nfs_pgio_header *hdr)
+{
+	struct nfs_pageio_descriptor pgio;
 
 	/* Resend all requests through the MDS */
-	nfs_pageio_init_ग_लिखो(&pgio, hdr->inode, FLUSH_STABLE, true,
+	nfs_pageio_init_write(&pgio, hdr->inode, FLUSH_STABLE, true,
 			      hdr->completion_ops);
 	set_bit(NFS_CONTEXT_RESEND_WRITES, &hdr->args.context->flags);
-	वापस nfs_pageio_resend(&pgio, hdr);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_ग_लिखो_करोne_resend_to_mds);
+	return nfs_pageio_resend(&pgio, hdr);
+}
+EXPORT_SYMBOL_GPL(pnfs_write_done_resend_to_mds);
 
-अटल व्योम pnfs_ld_handle_ग_लिखो_error(काष्ठा nfs_pgio_header *hdr)
-अणु
+static void pnfs_ld_handle_write_error(struct nfs_pgio_header *hdr)
+{
 
-	dprपूर्णांकk("pnfs write error = %d\n", hdr->pnfs_error);
-	अगर (NFS_SERVER(hdr->inode)->pnfs_curr_ld->flags &
-	    PNFS_LAYOUTRET_ON_ERROR) अणु
-		pnfs_वापस_layout(hdr->inode);
-	पूर्ण
-	अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags))
-		hdr->task.tk_status = pnfs_ग_लिखो_करोne_resend_to_mds(hdr);
-पूर्ण
+	dprintk("pnfs write error = %d\n", hdr->pnfs_error);
+	if (NFS_SERVER(hdr->inode)->pnfs_curr_ld->flags &
+	    PNFS_LAYOUTRET_ON_ERROR) {
+		pnfs_return_layout(hdr->inode);
+	}
+	if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags))
+		hdr->task.tk_status = pnfs_write_done_resend_to_mds(hdr);
+}
 
 /*
  * Called by non rpc-based layout drivers
  */
-व्योम pnfs_ld_ग_लिखो_करोne(काष्ठा nfs_pgio_header *hdr)
-अणु
-	अगर (likely(!hdr->pnfs_error)) अणु
+void pnfs_ld_write_done(struct nfs_pgio_header *hdr)
+{
+	if (likely(!hdr->pnfs_error)) {
 		pnfs_set_layoutcommit(hdr->inode, hdr->lseg,
 				hdr->mds_offset + hdr->res.count);
-		hdr->mds_ops->rpc_call_करोne(&hdr->task, hdr);
-	पूर्ण
-	trace_nfs4_pnfs_ग_लिखो(hdr, hdr->pnfs_error);
-	अगर (unlikely(hdr->pnfs_error))
-		pnfs_ld_handle_ग_लिखो_error(hdr);
+		hdr->mds_ops->rpc_call_done(&hdr->task, hdr);
+	}
+	trace_nfs4_pnfs_write(hdr, hdr->pnfs_error);
+	if (unlikely(hdr->pnfs_error))
+		pnfs_ld_handle_write_error(hdr);
 	hdr->mds_ops->rpc_release(hdr);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_ld_ग_लिखो_करोne);
+}
+EXPORT_SYMBOL_GPL(pnfs_ld_write_done);
 
-अटल व्योम
-pnfs_ग_लिखो_through_mds(काष्ठा nfs_pageio_descriptor *desc,
-		काष्ठा nfs_pgio_header *hdr)
-अणु
-	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+static void
+pnfs_write_through_mds(struct nfs_pageio_descriptor *desc,
+		struct nfs_pgio_header *hdr)
+{
+	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
-	अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) अणु
+	if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) {
 		list_splice_tail_init(&hdr->pages, &mirror->pg_list);
-		nfs_pageio_reset_ग_लिखो_mds(desc);
+		nfs_pageio_reset_write_mds(desc);
 		mirror->pg_recoalesce = 1;
-	पूर्ण
+	}
 	hdr->completion_ops->completion(hdr);
-पूर्ण
+}
 
-अटल क्रमागत pnfs_try_status
-pnfs_try_to_ग_लिखो_data(काष्ठा nfs_pgio_header *hdr,
-			स्थिर काष्ठा rpc_call_ops *call_ops,
-			काष्ठा pnfs_layout_segment *lseg,
-			पूर्णांक how)
-अणु
-	काष्ठा inode *inode = hdr->inode;
-	क्रमागत pnfs_try_status trypnfs;
-	काष्ठा nfs_server *nfss = NFS_SERVER(inode);
+static enum pnfs_try_status
+pnfs_try_to_write_data(struct nfs_pgio_header *hdr,
+			const struct rpc_call_ops *call_ops,
+			struct pnfs_layout_segment *lseg,
+			int how)
+{
+	struct inode *inode = hdr->inode;
+	enum pnfs_try_status trypnfs;
+	struct nfs_server *nfss = NFS_SERVER(inode);
 
 	hdr->mds_ops = call_ops;
 
-	dprपूर्णांकk("%s: Writing ino:%lu %u@%llu (how %d)\n", __func__,
+	dprintk("%s: Writing ino:%lu %u@%llu (how %d)\n", __func__,
 		inode->i_ino, hdr->args.count, hdr->args.offset, how);
-	trypnfs = nfss->pnfs_curr_ld->ग_लिखो_pagelist(hdr, how);
-	अगर (trypnfs != PNFS_NOT_ATTEMPTED)
+	trypnfs = nfss->pnfs_curr_ld->write_pagelist(hdr, how);
+	if (trypnfs != PNFS_NOT_ATTEMPTED)
 		nfs_inc_stats(inode, NFSIOS_PNFS_WRITE);
-	dprपूर्णांकk("%s End (trypnfs:%d)\n", __func__, trypnfs);
-	वापस trypnfs;
-पूर्ण
+	dprintk("%s End (trypnfs:%d)\n", __func__, trypnfs);
+	return trypnfs;
+}
 
-अटल व्योम
-pnfs_करो_ग_लिखो(काष्ठा nfs_pageio_descriptor *desc,
-	      काष्ठा nfs_pgio_header *hdr, पूर्णांक how)
-अणु
-	स्थिर काष्ठा rpc_call_ops *call_ops = desc->pg_rpc_callops;
-	काष्ठा pnfs_layout_segment *lseg = desc->pg_lseg;
-	क्रमागत pnfs_try_status trypnfs;
+static void
+pnfs_do_write(struct nfs_pageio_descriptor *desc,
+	      struct nfs_pgio_header *hdr, int how)
+{
+	const struct rpc_call_ops *call_ops = desc->pg_rpc_callops;
+	struct pnfs_layout_segment *lseg = desc->pg_lseg;
+	enum pnfs_try_status trypnfs;
 
-	trypnfs = pnfs_try_to_ग_लिखो_data(hdr, call_ops, lseg, how);
-	चयन (trypnfs) अणु
-	हाल PNFS_NOT_ATTEMPTED:
-		pnfs_ग_लिखो_through_mds(desc, hdr);
-		अवरोध;
-	हाल PNFS_ATTEMPTED:
-		अवरोध;
-	हाल PNFS_TRY_AGAIN:
-		/* cleanup hdr and prepare to reकरो pnfs */
-		अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) अणु
-			काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+	trypnfs = pnfs_try_to_write_data(hdr, call_ops, lseg, how);
+	switch (trypnfs) {
+	case PNFS_NOT_ATTEMPTED:
+		pnfs_write_through_mds(desc, hdr);
+		break;
+	case PNFS_ATTEMPTED:
+		break;
+	case PNFS_TRY_AGAIN:
+		/* cleanup hdr and prepare to redo pnfs */
+		if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) {
+			struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 			list_splice_init(&hdr->pages, &mirror->pg_list);
 			mirror->pg_recoalesce = 1;
-		पूर्ण
+		}
 		hdr->mds_ops->rpc_release(hdr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pnfs_ग_लिखोhdr_मुक्त(काष्ठा nfs_pgio_header *hdr)
-अणु
+static void pnfs_writehdr_free(struct nfs_pgio_header *hdr)
+{
 	pnfs_put_lseg(hdr->lseg);
-	nfs_pgio_header_मुक्त(hdr);
-पूर्ण
+	nfs_pgio_header_free(hdr);
+}
 
-पूर्णांक
-pnfs_generic_pg_ग_लिखोpages(काष्ठा nfs_pageio_descriptor *desc)
-अणु
-	काष्ठा nfs_pgio_header *hdr;
-	पूर्णांक ret;
+int
+pnfs_generic_pg_writepages(struct nfs_pageio_descriptor *desc)
+{
+	struct nfs_pgio_header *hdr;
+	int ret;
 
 	hdr = nfs_pgio_header_alloc(desc->pg_rw_ops);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		desc->pg_error = -ENOMEM;
-		वापस desc->pg_error;
-	पूर्ण
-	nfs_pgheader_init(desc, hdr, pnfs_ग_लिखोhdr_मुक्त);
+		return desc->pg_error;
+	}
+	nfs_pgheader_init(desc, hdr, pnfs_writehdr_free);
 
 	hdr->lseg = pnfs_get_lseg(desc->pg_lseg);
 	ret = nfs_generic_pgio(desc, hdr);
-	अगर (!ret)
-		pnfs_करो_ग_लिखो(desc, hdr, desc->pg_ioflags);
+	if (!ret)
+		pnfs_do_write(desc, hdr, desc->pg_ioflags);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_generic_pg_ग_लिखोpages);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pnfs_generic_pg_writepages);
 
-पूर्णांक pnfs_पढ़ो_करोne_resend_to_mds(काष्ठा nfs_pgio_header *hdr)
-अणु
-	काष्ठा nfs_pageio_descriptor pgio;
+int pnfs_read_done_resend_to_mds(struct nfs_pgio_header *hdr)
+{
+	struct nfs_pageio_descriptor pgio;
 
 	/* Resend all requests through the MDS */
-	nfs_pageio_init_पढ़ो(&pgio, hdr->inode, true, hdr->completion_ops);
-	वापस nfs_pageio_resend(&pgio, hdr);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_पढ़ो_करोne_resend_to_mds);
+	nfs_pageio_init_read(&pgio, hdr->inode, true, hdr->completion_ops);
+	return nfs_pageio_resend(&pgio, hdr);
+}
+EXPORT_SYMBOL_GPL(pnfs_read_done_resend_to_mds);
 
-अटल व्योम pnfs_ld_handle_पढ़ो_error(काष्ठा nfs_pgio_header *hdr)
-अणु
-	dprपूर्णांकk("pnfs read error = %d\n", hdr->pnfs_error);
-	अगर (NFS_SERVER(hdr->inode)->pnfs_curr_ld->flags &
-	    PNFS_LAYOUTRET_ON_ERROR) अणु
-		pnfs_वापस_layout(hdr->inode);
-	पूर्ण
-	अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags))
-		hdr->task.tk_status = pnfs_पढ़ो_करोne_resend_to_mds(hdr);
-पूर्ण
+static void pnfs_ld_handle_read_error(struct nfs_pgio_header *hdr)
+{
+	dprintk("pnfs read error = %d\n", hdr->pnfs_error);
+	if (NFS_SERVER(hdr->inode)->pnfs_curr_ld->flags &
+	    PNFS_LAYOUTRET_ON_ERROR) {
+		pnfs_return_layout(hdr->inode);
+	}
+	if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags))
+		hdr->task.tk_status = pnfs_read_done_resend_to_mds(hdr);
+}
 
 /*
  * Called by non rpc-based layout drivers
  */
-व्योम pnfs_ld_पढ़ो_करोne(काष्ठा nfs_pgio_header *hdr)
-अणु
-	अगर (likely(!hdr->pnfs_error))
-		hdr->mds_ops->rpc_call_करोne(&hdr->task, hdr);
-	trace_nfs4_pnfs_पढ़ो(hdr, hdr->pnfs_error);
-	अगर (unlikely(hdr->pnfs_error))
-		pnfs_ld_handle_पढ़ो_error(hdr);
+void pnfs_ld_read_done(struct nfs_pgio_header *hdr)
+{
+	if (likely(!hdr->pnfs_error))
+		hdr->mds_ops->rpc_call_done(&hdr->task, hdr);
+	trace_nfs4_pnfs_read(hdr, hdr->pnfs_error);
+	if (unlikely(hdr->pnfs_error))
+		pnfs_ld_handle_read_error(hdr);
 	hdr->mds_ops->rpc_release(hdr);
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_ld_पढ़ो_करोne);
+}
+EXPORT_SYMBOL_GPL(pnfs_ld_read_done);
 
-अटल व्योम
-pnfs_पढ़ो_through_mds(काष्ठा nfs_pageio_descriptor *desc,
-		काष्ठा nfs_pgio_header *hdr)
-अणु
-	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+static void
+pnfs_read_through_mds(struct nfs_pageio_descriptor *desc,
+		struct nfs_pgio_header *hdr)
+{
+	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
-	अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) अणु
+	if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) {
 		list_splice_tail_init(&hdr->pages, &mirror->pg_list);
-		nfs_pageio_reset_पढ़ो_mds(desc);
+		nfs_pageio_reset_read_mds(desc);
 		mirror->pg_recoalesce = 1;
-	पूर्ण
+	}
 	hdr->completion_ops->completion(hdr);
-पूर्ण
+}
 
 /*
- * Call the appropriate parallel I/O subप्रणाली पढ़ो function.
+ * Call the appropriate parallel I/O subsystem read function.
  */
-अटल क्रमागत pnfs_try_status
-pnfs_try_to_पढ़ो_data(काष्ठा nfs_pgio_header *hdr,
-		       स्थिर काष्ठा rpc_call_ops *call_ops,
-		       काष्ठा pnfs_layout_segment *lseg)
-अणु
-	काष्ठा inode *inode = hdr->inode;
-	काष्ठा nfs_server *nfss = NFS_SERVER(inode);
-	क्रमागत pnfs_try_status trypnfs;
+static enum pnfs_try_status
+pnfs_try_to_read_data(struct nfs_pgio_header *hdr,
+		       const struct rpc_call_ops *call_ops,
+		       struct pnfs_layout_segment *lseg)
+{
+	struct inode *inode = hdr->inode;
+	struct nfs_server *nfss = NFS_SERVER(inode);
+	enum pnfs_try_status trypnfs;
 
 	hdr->mds_ops = call_ops;
 
-	dprपूर्णांकk("%s: Reading ino:%lu %u@%llu\n",
+	dprintk("%s: Reading ino:%lu %u@%llu\n",
 		__func__, inode->i_ino, hdr->args.count, hdr->args.offset);
 
-	trypnfs = nfss->pnfs_curr_ld->पढ़ो_pagelist(hdr);
-	अगर (trypnfs != PNFS_NOT_ATTEMPTED)
+	trypnfs = nfss->pnfs_curr_ld->read_pagelist(hdr);
+	if (trypnfs != PNFS_NOT_ATTEMPTED)
 		nfs_inc_stats(inode, NFSIOS_PNFS_READ);
-	dprपूर्णांकk("%s End (trypnfs:%d)\n", __func__, trypnfs);
-	वापस trypnfs;
-पूर्ण
+	dprintk("%s End (trypnfs:%d)\n", __func__, trypnfs);
+	return trypnfs;
+}
 
 /* Resend all requests through pnfs. */
-व्योम pnfs_पढ़ो_resend_pnfs(काष्ठा nfs_pgio_header *hdr,
-			   अचिन्हित पूर्णांक mirror_idx)
-अणु
-	काष्ठा nfs_pageio_descriptor pgio;
+void pnfs_read_resend_pnfs(struct nfs_pgio_header *hdr,
+			   unsigned int mirror_idx)
+{
+	struct nfs_pageio_descriptor pgio;
 
-	अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) अणु
-		/* Prevent deadlocks with layoutवापस! */
+	if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) {
+		/* Prevent deadlocks with layoutreturn! */
 		pnfs_put_lseg(hdr->lseg);
-		hdr->lseg = शून्य;
+		hdr->lseg = NULL;
 
-		nfs_pageio_init_पढ़ो(&pgio, hdr->inode, false,
+		nfs_pageio_init_read(&pgio, hdr->inode, false,
 					hdr->completion_ops);
 		pgio.pg_mirror_idx = mirror_idx;
 		hdr->task.tk_status = nfs_pageio_resend(&pgio, hdr);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_पढ़ो_resend_pnfs);
+	}
+}
+EXPORT_SYMBOL_GPL(pnfs_read_resend_pnfs);
 
-अटल व्योम
-pnfs_करो_पढ़ो(काष्ठा nfs_pageio_descriptor *desc, काष्ठा nfs_pgio_header *hdr)
-अणु
-	स्थिर काष्ठा rpc_call_ops *call_ops = desc->pg_rpc_callops;
-	काष्ठा pnfs_layout_segment *lseg = desc->pg_lseg;
-	क्रमागत pnfs_try_status trypnfs;
+static void
+pnfs_do_read(struct nfs_pageio_descriptor *desc, struct nfs_pgio_header *hdr)
+{
+	const struct rpc_call_ops *call_ops = desc->pg_rpc_callops;
+	struct pnfs_layout_segment *lseg = desc->pg_lseg;
+	enum pnfs_try_status trypnfs;
 
-	trypnfs = pnfs_try_to_पढ़ो_data(hdr, call_ops, lseg);
-	चयन (trypnfs) अणु
-	हाल PNFS_NOT_ATTEMPTED:
-		pnfs_पढ़ो_through_mds(desc, hdr);
-		अवरोध;
-	हाल PNFS_ATTEMPTED:
-		अवरोध;
-	हाल PNFS_TRY_AGAIN:
-		/* cleanup hdr and prepare to reकरो pnfs */
-		अगर (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) अणु
-			काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+	trypnfs = pnfs_try_to_read_data(hdr, call_ops, lseg);
+	switch (trypnfs) {
+	case PNFS_NOT_ATTEMPTED:
+		pnfs_read_through_mds(desc, hdr);
+		break;
+	case PNFS_ATTEMPTED:
+		break;
+	case PNFS_TRY_AGAIN:
+		/* cleanup hdr and prepare to redo pnfs */
+		if (!test_and_set_bit(NFS_IOHDR_REDO, &hdr->flags)) {
+			struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 			list_splice_init(&hdr->pages, &mirror->pg_list);
 			mirror->pg_recoalesce = 1;
-		पूर्ण
+		}
 		hdr->mds_ops->rpc_release(hdr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pnfs_पढ़ोhdr_मुक्त(काष्ठा nfs_pgio_header *hdr)
-अणु
+static void pnfs_readhdr_free(struct nfs_pgio_header *hdr)
+{
 	pnfs_put_lseg(hdr->lseg);
-	nfs_pgio_header_मुक्त(hdr);
-पूर्ण
+	nfs_pgio_header_free(hdr);
+}
 
-पूर्णांक
-pnfs_generic_pg_पढ़ोpages(काष्ठा nfs_pageio_descriptor *desc)
-अणु
-	काष्ठा nfs_pgio_header *hdr;
-	पूर्णांक ret;
+int
+pnfs_generic_pg_readpages(struct nfs_pageio_descriptor *desc)
+{
+	struct nfs_pgio_header *hdr;
+	int ret;
 
 	hdr = nfs_pgio_header_alloc(desc->pg_rw_ops);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		desc->pg_error = -ENOMEM;
-		वापस desc->pg_error;
-	पूर्ण
-	nfs_pgheader_init(desc, hdr, pnfs_पढ़ोhdr_मुक्त);
+		return desc->pg_error;
+	}
+	nfs_pgheader_init(desc, hdr, pnfs_readhdr_free);
 	hdr->lseg = pnfs_get_lseg(desc->pg_lseg);
 	ret = nfs_generic_pgio(desc, hdr);
-	अगर (!ret)
-		pnfs_करो_पढ़ो(desc, hdr);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pnfs_generic_pg_पढ़ोpages);
+	if (!ret)
+		pnfs_do_read(desc, hdr);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pnfs_generic_pg_readpages);
 
-अटल व्योम pnfs_clear_layoutcommitting(काष्ठा inode *inode)
-अणु
-	अचिन्हित दीर्घ *bitlock = &NFS_I(inode)->flags;
+static void pnfs_clear_layoutcommitting(struct inode *inode)
+{
+	unsigned long *bitlock = &NFS_I(inode)->flags;
 
 	clear_bit_unlock(NFS_INO_LAYOUTCOMMITTING, bitlock);
 	smp_mb__after_atomic();
 	wake_up_bit(bitlock, NFS_INO_LAYOUTCOMMITTING);
-पूर्ण
+}
 
 /*
  * There can be multiple RW segments.
  */
-अटल व्योम pnfs_list_ग_लिखो_lseg(काष्ठा inode *inode, काष्ठा list_head *listp)
-अणु
-	काष्ठा pnfs_layout_segment *lseg;
+static void pnfs_list_write_lseg(struct inode *inode, struct list_head *listp)
+{
+	struct pnfs_layout_segment *lseg;
 
-	list_क्रम_each_entry(lseg, &NFS_I(inode)->layout->plh_segs, pls_list) अणु
-		अगर (lseg->pls_range.iomode == IOMODE_RW &&
+	list_for_each_entry(lseg, &NFS_I(inode)->layout->plh_segs, pls_list) {
+		if (lseg->pls_range.iomode == IOMODE_RW &&
 		    test_and_clear_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags))
 			list_add(&lseg->pls_lc_list, listp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pnfs_list_ग_लिखो_lseg_करोne(काष्ठा inode *inode, काष्ठा list_head *listp)
-अणु
-	काष्ठा pnfs_layout_segment *lseg, *पंचांगp;
+static void pnfs_list_write_lseg_done(struct inode *inode, struct list_head *listp)
+{
+	struct pnfs_layout_segment *lseg, *tmp;
 
 	/* Matched by references in pnfs_set_layoutcommit */
-	list_क्रम_each_entry_safe(lseg, पंचांगp, listp, pls_lc_list) अणु
+	list_for_each_entry_safe(lseg, tmp, listp, pls_lc_list) {
 		list_del_init(&lseg->pls_lc_list);
 		pnfs_put_lseg(lseg);
-	पूर्ण
+	}
 
 	pnfs_clear_layoutcommitting(inode);
-पूर्ण
+}
 
-व्योम pnfs_set_lo_fail(काष्ठा pnfs_layout_segment *lseg)
-अणु
+void pnfs_set_lo_fail(struct pnfs_layout_segment *lseg)
+{
 	pnfs_layout_io_set_failed(lseg->pls_layout, lseg->pls_range.iomode);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pnfs_set_lo_fail);
 
-व्योम
-pnfs_set_layoutcommit(काष्ठा inode *inode, काष्ठा pnfs_layout_segment *lseg,
+void
+pnfs_set_layoutcommit(struct inode *inode, struct pnfs_layout_segment *lseg,
 		loff_t end_pos)
-अणु
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
+{
+	struct nfs_inode *nfsi = NFS_I(inode);
 	bool mark_as_dirty = false;
 
 	spin_lock(&inode->i_lock);
-	अगर (!test_and_set_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags)) अणु
+	if (!test_and_set_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags)) {
 		nfsi->layout->plh_lwb = end_pos;
 		mark_as_dirty = true;
-		dprपूर्णांकk("%s: Set layoutcommit for inode %lu ",
+		dprintk("%s: Set layoutcommit for inode %lu ",
 			__func__, inode->i_ino);
-	पूर्ण अन्यथा अगर (end_pos > nfsi->layout->plh_lwb)
+	} else if (end_pos > nfsi->layout->plh_lwb)
 		nfsi->layout->plh_lwb = end_pos;
-	अगर (!test_and_set_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags)) अणु
+	if (!test_and_set_bit(NFS_LSEG_LAYOUTCOMMIT, &lseg->pls_flags)) {
 		/* references matched in nfs4_layoutcommit_release */
 		pnfs_get_lseg(lseg);
-	पूर्ण
+	}
 	spin_unlock(&inode->i_lock);
-	dprपूर्णांकk("%s: lseg %p end_pos %llu\n",
+	dprintk("%s: lseg %p end_pos %llu\n",
 		__func__, lseg, nfsi->layout->plh_lwb);
 
-	/* अगर pnfs_layoutcommit_inode() runs between inode locks, the next one
+	/* if pnfs_layoutcommit_inode() runs between inode locks, the next one
 	 * will be a noop because NFS_INO_LAYOUTCOMMIT will not be set */
-	अगर (mark_as_dirty)
+	if (mark_as_dirty)
 		mark_inode_dirty_sync(inode);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pnfs_set_layoutcommit);
 
-व्योम pnfs_cleanup_layoutcommit(काष्ठा nfs4_layoutcommit_data *data)
-अणु
-	काष्ठा nfs_server *nfss = NFS_SERVER(data->args.inode);
+void pnfs_cleanup_layoutcommit(struct nfs4_layoutcommit_data *data)
+{
+	struct nfs_server *nfss = NFS_SERVER(data->args.inode);
 
-	अगर (nfss->pnfs_curr_ld->cleanup_layoutcommit)
+	if (nfss->pnfs_curr_ld->cleanup_layoutcommit)
 		nfss->pnfs_curr_ld->cleanup_layoutcommit(data);
-	pnfs_list_ग_लिखो_lseg_करोne(data->args.inode, &data->lseg_list);
-पूर्ण
+	pnfs_list_write_lseg_done(data->args.inode, &data->lseg_list);
+}
 
 /*
- * For the LAYOUT4_NFSV4_1_खाताS layout type, NFS_DATA_SYNC WRITEs and
+ * For the LAYOUT4_NFSV4_1_FILES layout type, NFS_DATA_SYNC WRITEs and
  * NFS_UNSTABLE WRITEs with a COMMIT to data servers must store enough
- * data to disk to allow the server to recover the data अगर it crashes.
+ * data to disk to allow the server to recover the data if it crashes.
  * LAYOUTCOMMIT is only needed when the NFL4_UFLG_COMMIT_THRU_MDS flag
  * is off, and a COMMIT is sent to a data server, or
- * अगर WRITEs to a data server वापस NFS_DATA_SYNC.
+ * if WRITEs to a data server return NFS_DATA_SYNC.
  */
-पूर्णांक
-pnfs_layoutcommit_inode(काष्ठा inode *inode, bool sync)
-अणु
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
-	काष्ठा nfs4_layoutcommit_data *data;
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
+int
+pnfs_layoutcommit_inode(struct inode *inode, bool sync)
+{
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
+	struct nfs4_layoutcommit_data *data;
+	struct nfs_inode *nfsi = NFS_I(inode);
 	loff_t end_pos;
-	पूर्णांक status;
+	int status;
 
-	अगर (!pnfs_layoutcommit_outstanding(inode))
-		वापस 0;
+	if (!pnfs_layoutcommit_outstanding(inode))
+		return 0;
 
-	dprपूर्णांकk("--> %s inode %lu\n", __func__, inode->i_ino);
+	dprintk("--> %s inode %lu\n", __func__, inode->i_ino);
 
 	status = -EAGAIN;
-	अगर (test_and_set_bit(NFS_INO_LAYOUTCOMMITTING, &nfsi->flags)) अणु
-		अगर (!sync)
-			जाओ out;
-		status = रुको_on_bit_lock_action(&nfsi->flags,
+	if (test_and_set_bit(NFS_INO_LAYOUTCOMMITTING, &nfsi->flags)) {
+		if (!sync)
+			goto out;
+		status = wait_on_bit_lock_action(&nfsi->flags,
 				NFS_INO_LAYOUTCOMMITTING,
-				nfs_रुको_bit_समाप्तable,
+				nfs_wait_bit_killable,
 				TASK_KILLABLE);
-		अगर (status)
-			जाओ out;
-	पूर्ण
+		if (status)
+			goto out;
+	}
 
 	status = -ENOMEM;
-	/* Note kzalloc ensures data->res.seq_res.sr_slot == शून्य */
-	data = kzalloc(माप(*data), GFP_NOFS);
-	अगर (!data)
-		जाओ clear_layoutcommitting;
+	/* Note kzalloc ensures data->res.seq_res.sr_slot == NULL */
+	data = kzalloc(sizeof(*data), GFP_NOFS);
+	if (!data)
+		goto clear_layoutcommitting;
 
 	status = 0;
 	spin_lock(&inode->i_lock);
-	अगर (!test_and_clear_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags))
-		जाओ out_unlock;
+	if (!test_and_clear_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags))
+		goto out_unlock;
 
 	INIT_LIST_HEAD(&data->lseg_list);
-	pnfs_list_ग_लिखो_lseg(inode, &data->lseg_list);
+	pnfs_list_write_lseg(inode, &data->lseg_list);
 
 	end_pos = nfsi->layout->plh_lwb;
 
@@ -3200,121 +3199,121 @@ pnfs_layoutcommit_inode(काष्ठा inode *inode, bool sync)
 
 	data->args.inode = inode;
 	nfs_fattr_init(&data->fattr);
-	data->args.biपंचांगask = NFS_SERVER(inode)->cache_consistency_biपंचांगask;
+	data->args.bitmask = NFS_SERVER(inode)->cache_consistency_bitmask;
 	data->res.fattr = &data->fattr;
-	अगर (end_pos != 0)
+	if (end_pos != 0)
 		data->args.lastbytewritten = end_pos - 1;
-	अन्यथा
+	else
 		data->args.lastbytewritten = U64_MAX;
 	data->res.server = NFS_SERVER(inode);
 
-	अगर (ld->prepare_layoutcommit) अणु
+	if (ld->prepare_layoutcommit) {
 		status = ld->prepare_layoutcommit(&data->args);
-		अगर (status) अणु
+		if (status) {
 			put_cred(data->cred);
 			spin_lock(&inode->i_lock);
 			set_bit(NFS_INO_LAYOUTCOMMIT, &nfsi->flags);
-			अगर (end_pos > nfsi->layout->plh_lwb)
+			if (end_pos > nfsi->layout->plh_lwb)
 				nfsi->layout->plh_lwb = end_pos;
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण
+			goto out_unlock;
+		}
+	}
 
 
 	status = nfs4_proc_layoutcommit(data, sync);
 out:
-	अगर (status)
+	if (status)
 		mark_inode_dirty_sync(inode);
-	dprपूर्णांकk("<-- %s status %d\n", __func__, status);
-	वापस status;
+	dprintk("<-- %s status %d\n", __func__, status);
+	return status;
 out_unlock:
 	spin_unlock(&inode->i_lock);
-	kमुक्त(data);
+	kfree(data);
 clear_layoutcommitting:
 	pnfs_clear_layoutcommitting(inode);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 EXPORT_SYMBOL_GPL(pnfs_layoutcommit_inode);
 
-पूर्णांक
-pnfs_generic_sync(काष्ठा inode *inode, bool datasync)
-अणु
-	वापस pnfs_layoutcommit_inode(inode, true);
-पूर्ण
+int
+pnfs_generic_sync(struct inode *inode, bool datasync)
+{
+	return pnfs_layoutcommit_inode(inode, true);
+}
 EXPORT_SYMBOL_GPL(pnfs_generic_sync);
 
-काष्ठा nfs4_threshold *pnfs_mdsthreshold_alloc(व्योम)
-अणु
-	काष्ठा nfs4_threshold *thp;
+struct nfs4_threshold *pnfs_mdsthreshold_alloc(void)
+{
+	struct nfs4_threshold *thp;
 
-	thp = kzalloc(माप(*thp), GFP_NOFS);
-	अगर (!thp) अणु
-		dprपूर्णांकk("%s mdsthreshold allocation failed\n", __func__);
-		वापस शून्य;
-	पूर्ण
-	वापस thp;
-पूर्ण
+	thp = kzalloc(sizeof(*thp), GFP_NOFS);
+	if (!thp) {
+		dprintk("%s mdsthreshold allocation failed\n", __func__);
+		return NULL;
+	}
+	return thp;
+}
 
-#अगर IS_ENABLED(CONFIG_NFS_V4_2)
-पूर्णांक
-pnfs_report_layoutstat(काष्ठा inode *inode, gfp_t gfp_flags)
-अणु
-	काष्ठा pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	काष्ठा nfs_inode *nfsi = NFS_I(inode);
-	काष्ठा nfs42_layoutstat_data *data;
-	काष्ठा pnfs_layout_hdr *hdr;
-	पूर्णांक status = 0;
+#if IS_ENABLED(CONFIG_NFS_V4_2)
+int
+pnfs_report_layoutstat(struct inode *inode, gfp_t gfp_flags)
+{
+	struct pnfs_layoutdriver_type *ld = NFS_SERVER(inode)->pnfs_curr_ld;
+	struct nfs_server *server = NFS_SERVER(inode);
+	struct nfs_inode *nfsi = NFS_I(inode);
+	struct nfs42_layoutstat_data *data;
+	struct pnfs_layout_hdr *hdr;
+	int status = 0;
 
-	अगर (!pnfs_enabled_sb(server) || !ld->prepare_layoutstats)
-		जाओ out;
+	if (!pnfs_enabled_sb(server) || !ld->prepare_layoutstats)
+		goto out;
 
-	अगर (!nfs_server_capable(inode, NFS_CAP_LAYOUTSTATS))
-		जाओ out;
+	if (!nfs_server_capable(inode, NFS_CAP_LAYOUTSTATS))
+		goto out;
 
-	अगर (test_and_set_bit(NFS_INO_LAYOUTSTATS, &nfsi->flags))
-		जाओ out;
+	if (test_and_set_bit(NFS_INO_LAYOUTSTATS, &nfsi->flags))
+		goto out;
 
 	spin_lock(&inode->i_lock);
-	अगर (!NFS_I(inode)->layout) अणु
+	if (!NFS_I(inode)->layout) {
 		spin_unlock(&inode->i_lock);
-		जाओ out_clear_layoutstats;
-	पूर्ण
+		goto out_clear_layoutstats;
+	}
 	hdr = NFS_I(inode)->layout;
 	pnfs_get_layout_hdr(hdr);
 	spin_unlock(&inode->i_lock);
 
-	data = kzalloc(माप(*data), gfp_flags);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(*data), gfp_flags);
+	if (!data) {
 		status = -ENOMEM;
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	data->args.fh = NFS_FH(inode);
 	data->args.inode = inode;
 	status = ld->prepare_layoutstats(&data->args);
-	अगर (status)
-		जाओ out_मुक्त;
+	if (status)
+		goto out_free;
 
 	status = nfs42_proc_layoutstats_generic(NFS_SERVER(inode), data);
 
 out:
-	dprपूर्णांकk("%s returns %d\n", __func__, status);
-	वापस status;
+	dprintk("%s returns %d\n", __func__, status);
+	return status;
 
-out_मुक्त:
-	kमुक्त(data);
+out_free:
+	kfree(data);
 out_put:
 	pnfs_put_layout_hdr(hdr);
 out_clear_layoutstats:
-	smp_mb__beक्रमe_atomic();
+	smp_mb__before_atomic();
 	clear_bit(NFS_INO_LAYOUTSTATS, &nfsi->flags);
 	smp_mb__after_atomic();
-	जाओ out;
-पूर्ण
+	goto out;
+}
 EXPORT_SYMBOL_GPL(pnfs_report_layoutstat);
-#पूर्ण_अगर
+#endif
 
-अचिन्हित पूर्णांक layoutstats_समयr;
-module_param(layoutstats_समयr, uपूर्णांक, 0644);
-EXPORT_SYMBOL_GPL(layoutstats_समयr);
+unsigned int layoutstats_timer;
+module_param(layoutstats_timer, uint, 0644);
+EXPORT_SYMBOL_GPL(layoutstats_timer);

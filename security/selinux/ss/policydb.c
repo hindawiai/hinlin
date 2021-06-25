@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Implementation of the policy database.
  *
@@ -9,7 +8,7 @@
 /*
  * Updated: Trusted Computer Solutions, Inc. <dgoeddel@trustedcs.com>
  *
- *	Support क्रम enhanced MLS infraकाष्ठाure.
+ *	Support for enhanced MLS infrastructure.
  *
  * Updated: Frank Mayer <mayerf@tresys.com> and Karl MacMillan <kmacmillan@tresys.com>
  *
@@ -17,7 +16,7 @@
  *
  * Updated: Hewlett-Packard <paul@paul-moore.com>
  *
- *      Added support क्रम the policy capability biपंचांगap
+ *      Added support for the policy capability bitmap
  *
  * Update: Mellanox Techonologies
  *
@@ -29,23 +28,23 @@
  * Copyright (C) 2003 - 2004 Tresys Technology, LLC
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/audit.h>
-#समावेश "security.h"
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/audit.h>
+#include "security.h"
 
-#समावेश "policydb.h"
-#समावेश "conditional.h"
-#समावेश "mls.h"
-#समावेश "services.h"
+#include "policydb.h"
+#include "conditional.h"
+#include "mls.h"
+#include "services.h"
 
-#घोषणा _DEBUG_HASHES
+#define _DEBUG_HASHES
 
-#अगर_घोषित DEBUG_HASHES
-अटल स्थिर अक्षर *symtab_name[SYM_NUM] = अणु
+#ifdef DEBUG_HASHES
+static const char *symtab_name[SYM_NUM] = {
 	"common prefixes",
 	"classes",
 	"roles",
@@ -54,271 +53,271 @@
 	"bools",
 	"levels",
 	"categories",
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-काष्ठा policydb_compat_info अणु
-	पूर्णांक version;
-	पूर्णांक sym_num;
-	पूर्णांक ocon_num;
-पूर्ण;
+struct policydb_compat_info {
+	int version;
+	int sym_num;
+	int ocon_num;
+};
 
-/* These need to be updated अगर SYM_NUM or OCON_NUM changes */
-अटल काष्ठा policydb_compat_info policydb_compat[] = अणु
-	अणु
+/* These need to be updated if SYM_NUM or OCON_NUM changes */
+static struct policydb_compat_info policydb_compat[] = {
+	{
 		.version	= POLICYDB_VERSION_BASE,
 		.sym_num	= SYM_NUM - 3,
 		.ocon_num	= OCON_NUM - 3,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_BOOL,
 		.sym_num	= SYM_NUM - 2,
 		.ocon_num	= OCON_NUM - 3,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_IPV6,
 		.sym_num	= SYM_NUM - 2,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_NLCLASS,
 		.sym_num	= SYM_NUM - 2,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_MLS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_AVTAB,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_RANGETRANS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_POLCAP,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_PERMISSIVE,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_BOUNDARY,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
-		.version	= POLICYDB_VERSION_खाताNAME_TRANS,
+	},
+	{
+		.version	= POLICYDB_VERSION_FILENAME_TRANS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_ROLETRANS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_NEW_OBJECT_DEFAULTS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_DEFAULT_TYPE,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_CONSTRAINT_NAMES,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_XPERMS_IOCTL,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM - 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_INFINIBAND,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_GLBLUB,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM,
-	पूर्ण,
-	अणु
+	},
+	{
 		.version	= POLICYDB_VERSION_COMP_FTRANS,
 		.sym_num	= SYM_NUM,
 		.ocon_num	= OCON_NUM,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा policydb_compat_info *policydb_lookup_compat(पूर्णांक version)
-अणु
-	पूर्णांक i;
-	काष्ठा policydb_compat_info *info = शून्य;
+static struct policydb_compat_info *policydb_lookup_compat(int version)
+{
+	int i;
+	struct policydb_compat_info *info = NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(policydb_compat); i++) अणु
-		अगर (policydb_compat[i].version == version) अणु
+	for (i = 0; i < ARRAY_SIZE(policydb_compat); i++) {
+		if (policydb_compat[i].version == version) {
 			info = &policydb_compat[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस info;
-पूर्ण
+			break;
+		}
+	}
+	return info;
+}
 
 /*
  * The following *_destroy functions are used to
- * मुक्त any memory allocated क्रम each kind of
+ * free any memory allocated for each kind of
  * symbol data in the policy database.
  */
 
-अटल पूर्णांक perm_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	kमुक्त(key);
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+static int perm_destroy(void *key, void *datum, void *p)
+{
+	kfree(key);
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक common_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा common_datum *comdatum;
+static int common_destroy(void *key, void *datum, void *p)
+{
+	struct common_datum *comdatum;
 
-	kमुक्त(key);
-	अगर (datum) अणु
+	kfree(key);
+	if (datum) {
 		comdatum = datum;
-		hashtab_map(&comdatum->permissions.table, perm_destroy, शून्य);
+		hashtab_map(&comdatum->permissions.table, perm_destroy, NULL);
 		hashtab_destroy(&comdatum->permissions.table);
-	पूर्ण
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+	}
+	kfree(datum);
+	return 0;
+}
 
-अटल व्योम स्थिरraपूर्णांक_expr_destroy(काष्ठा स्थिरraपूर्णांक_expr *expr)
-अणु
-	अगर (expr) अणु
-		ebiपंचांगap_destroy(&expr->names);
-		अगर (expr->type_names) अणु
-			ebiपंचांगap_destroy(&expr->type_names->types);
-			ebiपंचांगap_destroy(&expr->type_names->negset);
-			kमुक्त(expr->type_names);
-		पूर्ण
-		kमुक्त(expr);
-	पूर्ण
-पूर्ण
+static void constraint_expr_destroy(struct constraint_expr *expr)
+{
+	if (expr) {
+		ebitmap_destroy(&expr->names);
+		if (expr->type_names) {
+			ebitmap_destroy(&expr->type_names->types);
+			ebitmap_destroy(&expr->type_names->negset);
+			kfree(expr->type_names);
+		}
+		kfree(expr);
+	}
+}
 
-अटल पूर्णांक cls_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा class_datum *cladatum;
-	काष्ठा स्थिरraपूर्णांक_node *स्थिरraपूर्णांक, *ctemp;
-	काष्ठा स्थिरraपूर्णांक_expr *e, *eपंचांगp;
+static int cls_destroy(void *key, void *datum, void *p)
+{
+	struct class_datum *cladatum;
+	struct constraint_node *constraint, *ctemp;
+	struct constraint_expr *e, *etmp;
 
-	kमुक्त(key);
-	अगर (datum) अणु
+	kfree(key);
+	if (datum) {
 		cladatum = datum;
-		hashtab_map(&cladatum->permissions.table, perm_destroy, शून्य);
+		hashtab_map(&cladatum->permissions.table, perm_destroy, NULL);
 		hashtab_destroy(&cladatum->permissions.table);
-		स्थिरraपूर्णांक = cladatum->स्थिरraपूर्णांकs;
-		जबतक (स्थिरraपूर्णांक) अणु
-			e = स्थिरraपूर्णांक->expr;
-			जबतक (e) अणु
-				eपंचांगp = e;
+		constraint = cladatum->constraints;
+		while (constraint) {
+			e = constraint->expr;
+			while (e) {
+				etmp = e;
 				e = e->next;
-				स्थिरraपूर्णांक_expr_destroy(eपंचांगp);
-			पूर्ण
-			ctemp = स्थिरraपूर्णांक;
-			स्थिरraपूर्णांक = स्थिरraपूर्णांक->next;
-			kमुक्त(ctemp);
-		पूर्ण
+				constraint_expr_destroy(etmp);
+			}
+			ctemp = constraint;
+			constraint = constraint->next;
+			kfree(ctemp);
+		}
 
-		स्थिरraपूर्णांक = cladatum->validatetrans;
-		जबतक (स्थिरraपूर्णांक) अणु
-			e = स्थिरraपूर्णांक->expr;
-			जबतक (e) अणु
-				eपंचांगp = e;
+		constraint = cladatum->validatetrans;
+		while (constraint) {
+			e = constraint->expr;
+			while (e) {
+				etmp = e;
 				e = e->next;
-				स्थिरraपूर्णांक_expr_destroy(eपंचांगp);
-			पूर्ण
-			ctemp = स्थिरraपूर्णांक;
-			स्थिरraपूर्णांक = स्थिरraपूर्णांक->next;
-			kमुक्त(ctemp);
-		पूर्ण
-		kमुक्त(cladatum->comkey);
-	पूर्ण
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+				constraint_expr_destroy(etmp);
+			}
+			ctemp = constraint;
+			constraint = constraint->next;
+			kfree(ctemp);
+		}
+		kfree(cladatum->comkey);
+	}
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक role_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा role_datum *role;
+static int role_destroy(void *key, void *datum, void *p)
+{
+	struct role_datum *role;
 
-	kमुक्त(key);
-	अगर (datum) अणु
+	kfree(key);
+	if (datum) {
 		role = datum;
-		ebiपंचांगap_destroy(&role->करोminates);
-		ebiपंचांगap_destroy(&role->types);
-	पूर्ण
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+		ebitmap_destroy(&role->dominates);
+		ebitmap_destroy(&role->types);
+	}
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक type_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	kमुक्त(key);
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+static int type_destroy(void *key, void *datum, void *p)
+{
+	kfree(key);
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक user_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा user_datum *usrdatum;
+static int user_destroy(void *key, void *datum, void *p)
+{
+	struct user_datum *usrdatum;
 
-	kमुक्त(key);
-	अगर (datum) अणु
+	kfree(key);
+	if (datum) {
 		usrdatum = datum;
-		ebiपंचांगap_destroy(&usrdatum->roles);
-		ebiपंचांगap_destroy(&usrdatum->range.level[0].cat);
-		ebiपंचांगap_destroy(&usrdatum->range.level[1].cat);
-		ebiपंचांगap_destroy(&usrdatum->dfltlevel.cat);
-	पूर्ण
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+		ebitmap_destroy(&usrdatum->roles);
+		ebitmap_destroy(&usrdatum->range.level[0].cat);
+		ebitmap_destroy(&usrdatum->range.level[1].cat);
+		ebitmap_destroy(&usrdatum->dfltlevel.cat);
+	}
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक sens_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा level_datum *levdatum;
+static int sens_destroy(void *key, void *datum, void *p)
+{
+	struct level_datum *levdatum;
 
-	kमुक्त(key);
-	अगर (datum) अणु
+	kfree(key);
+	if (datum) {
 		levdatum = datum;
-		अगर (levdatum->level)
-			ebiपंचांगap_destroy(&levdatum->level->cat);
-		kमुक्त(levdatum->level);
-	पूर्ण
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+		if (levdatum->level)
+			ebitmap_destroy(&levdatum->level->cat);
+		kfree(levdatum->level);
+	}
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक cat_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	kमुक्त(key);
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+static int cat_destroy(void *key, void *datum, void *p)
+{
+	kfree(key);
+	kfree(datum);
+	return 0;
+}
 
-अटल पूर्णांक (*destroy_f[SYM_NUM]) (व्योम *key, व्योम *datum, व्योम *datap) =
-अणु
+static int (*destroy_f[SYM_NUM]) (void *key, void *datum, void *datap) =
+{
 	common_destroy,
 	cls_destroy,
 	role_destroy,
@@ -327,354 +326,354 @@
 	cond_destroy_bool,
 	sens_destroy,
 	cat_destroy,
-पूर्ण;
+};
 
-अटल पूर्णांक filenametr_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा filename_trans_key *ft = key;
-	काष्ठा filename_trans_datum *next, *d = datum;
+static int filenametr_destroy(void *key, void *datum, void *p)
+{
+	struct filename_trans_key *ft = key;
+	struct filename_trans_datum *next, *d = datum;
 
-	kमुक्त(ft->name);
-	kमुक्त(key);
-	करो अणु
-		ebiपंचांगap_destroy(&d->stypes);
+	kfree(ft->name);
+	kfree(key);
+	do {
+		ebitmap_destroy(&d->stypes);
 		next = d->next;
-		kमुक्त(d);
+		kfree(d);
 		d = next;
-	पूर्ण जबतक (unlikely(d));
+	} while (unlikely(d));
 	cond_resched();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक range_tr_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	काष्ठा mls_range *rt = datum;
+static int range_tr_destroy(void *key, void *datum, void *p)
+{
+	struct mls_range *rt = datum;
 
-	kमुक्त(key);
-	ebiपंचांगap_destroy(&rt->level[0].cat);
-	ebiपंचांगap_destroy(&rt->level[1].cat);
-	kमुक्त(datum);
+	kfree(key);
+	ebitmap_destroy(&rt->level[0].cat);
+	ebitmap_destroy(&rt->level[1].cat);
+	kfree(datum);
 	cond_resched();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक role_tr_destroy(व्योम *key, व्योम *datum, व्योम *p)
-अणु
-	kमुक्त(key);
-	kमुक्त(datum);
-	वापस 0;
-पूर्ण
+static int role_tr_destroy(void *key, void *datum, void *p)
+{
+	kfree(key);
+	kfree(datum);
+	return 0;
+}
 
-अटल व्योम ocontext_destroy(काष्ठा ocontext *c, पूर्णांक i)
-अणु
-	अगर (!c)
-		वापस;
+static void ocontext_destroy(struct ocontext *c, int i)
+{
+	if (!c)
+		return;
 
 	context_destroy(&c->context[0]);
 	context_destroy(&c->context[1]);
-	अगर (i == OCON_ISID || i == OCON_FS ||
+	if (i == OCON_ISID || i == OCON_FS ||
 	    i == OCON_NETIF || i == OCON_FSUSE)
-		kमुक्त(c->u.name);
-	kमुक्त(c);
-पूर्ण
+		kfree(c->u.name);
+	kfree(c);
+}
 
 /*
  * Initialize the role table.
  */
-अटल पूर्णांक roles_init(काष्ठा policydb *p)
-अणु
-	अक्षर *key = शून्य;
-	पूर्णांक rc;
-	काष्ठा role_datum *role;
+static int roles_init(struct policydb *p)
+{
+	char *key = NULL;
+	int rc;
+	struct role_datum *role;
 
-	role = kzalloc(माप(*role), GFP_KERNEL);
-	अगर (!role)
-		वापस -ENOMEM;
+	role = kzalloc(sizeof(*role), GFP_KERNEL);
+	if (!role)
+		return -ENOMEM;
 
 	rc = -EINVAL;
 	role->value = ++p->p_roles.nprim;
-	अगर (role->value != OBJECT_R_VAL)
-		जाओ out;
+	if (role->value != OBJECT_R_VAL)
+		goto out;
 
 	rc = -ENOMEM;
 	key = kstrdup(OBJECT_R, GFP_KERNEL);
-	अगर (!key)
-		जाओ out;
+	if (!key)
+		goto out;
 
 	rc = symtab_insert(&p->p_roles, key, role);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	वापस 0;
+	return 0;
 out:
-	kमुक्त(key);
-	kमुक्त(role);
-	वापस rc;
-पूर्ण
+	kfree(key);
+	kfree(role);
+	return rc;
+}
 
-अटल u32 filenametr_hash(स्थिर व्योम *k)
-अणु
-	स्थिर काष्ठा filename_trans_key *ft = k;
-	अचिन्हित दीर्घ hash;
-	अचिन्हित पूर्णांक byte_num;
-	अचिन्हित अक्षर focus;
+static u32 filenametr_hash(const void *k)
+{
+	const struct filename_trans_key *ft = k;
+	unsigned long hash;
+	unsigned int byte_num;
+	unsigned char focus;
 
 	hash = ft->ttype ^ ft->tclass;
 
 	byte_num = 0;
-	जबतक ((focus = ft->name[byte_num++]))
+	while ((focus = ft->name[byte_num++]))
 		hash = partial_name_hash(focus, hash);
-	वापस hash;
-पूर्ण
+	return hash;
+}
 
-अटल पूर्णांक filenametr_cmp(स्थिर व्योम *k1, स्थिर व्योम *k2)
-अणु
-	स्थिर काष्ठा filename_trans_key *ft1 = k1;
-	स्थिर काष्ठा filename_trans_key *ft2 = k2;
-	पूर्णांक v;
+static int filenametr_cmp(const void *k1, const void *k2)
+{
+	const struct filename_trans_key *ft1 = k1;
+	const struct filename_trans_key *ft2 = k2;
+	int v;
 
 	v = ft1->ttype - ft2->ttype;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
 	v = ft1->tclass - ft2->tclass;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
-	वापस म_भेद(ft1->name, ft2->name);
+	return strcmp(ft1->name, ft2->name);
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hashtab_key_params filenametr_key_params = अणु
+static const struct hashtab_key_params filenametr_key_params = {
 	.hash = filenametr_hash,
 	.cmp = filenametr_cmp,
-पूर्ण;
+};
 
-काष्ठा filename_trans_datum *policydb_filenametr_search(
-	काष्ठा policydb *p, काष्ठा filename_trans_key *key)
-अणु
-	वापस hashtab_search(&p->filename_trans, key, filenametr_key_params);
-पूर्ण
+struct filename_trans_datum *policydb_filenametr_search(
+	struct policydb *p, struct filename_trans_key *key)
+{
+	return hashtab_search(&p->filename_trans, key, filenametr_key_params);
+}
 
-अटल u32 rangetr_hash(स्थिर व्योम *k)
-अणु
-	स्थिर काष्ठा range_trans *key = k;
+static u32 rangetr_hash(const void *k)
+{
+	const struct range_trans *key = k;
 
-	वापस key->source_type + (key->target_type << 3) +
+	return key->source_type + (key->target_type << 3) +
 		(key->target_class << 5);
-पूर्ण
+}
 
-अटल पूर्णांक rangetr_cmp(स्थिर व्योम *k1, स्थिर व्योम *k2)
-अणु
-	स्थिर काष्ठा range_trans *key1 = k1, *key2 = k2;
-	पूर्णांक v;
+static int rangetr_cmp(const void *k1, const void *k2)
+{
+	const struct range_trans *key1 = k1, *key2 = k2;
+	int v;
 
 	v = key1->source_type - key2->source_type;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
 	v = key1->target_type - key2->target_type;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
 	v = key1->target_class - key2->target_class;
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल स्थिर काष्ठा hashtab_key_params rangetr_key_params = अणु
+static const struct hashtab_key_params rangetr_key_params = {
 	.hash = rangetr_hash,
 	.cmp = rangetr_cmp,
-पूर्ण;
+};
 
-काष्ठा mls_range *policydb_rangetr_search(काष्ठा policydb *p,
-					  काष्ठा range_trans *key)
-अणु
-	वापस hashtab_search(&p->range_tr, key, rangetr_key_params);
-पूर्ण
+struct mls_range *policydb_rangetr_search(struct policydb *p,
+					  struct range_trans *key)
+{
+	return hashtab_search(&p->range_tr, key, rangetr_key_params);
+}
 
-अटल u32 role_trans_hash(स्थिर व्योम *k)
-अणु
-	स्थिर काष्ठा role_trans_key *key = k;
+static u32 role_trans_hash(const void *k)
+{
+	const struct role_trans_key *key = k;
 
-	वापस key->role + (key->type << 3) + (key->tclass << 5);
-पूर्ण
+	return key->role + (key->type << 3) + (key->tclass << 5);
+}
 
-अटल पूर्णांक role_trans_cmp(स्थिर व्योम *k1, स्थिर व्योम *k2)
-अणु
-	स्थिर काष्ठा role_trans_key *key1 = k1, *key2 = k2;
-	पूर्णांक v;
+static int role_trans_cmp(const void *k1, const void *k2)
+{
+	const struct role_trans_key *key1 = k1, *key2 = k2;
+	int v;
 
 	v = key1->role - key2->role;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
 	v = key1->type - key2->type;
-	अगर (v)
-		वापस v;
+	if (v)
+		return v;
 
-	वापस key1->tclass - key2->tclass;
-पूर्ण
+	return key1->tclass - key2->tclass;
+}
 
-अटल स्थिर काष्ठा hashtab_key_params roletr_key_params = अणु
+static const struct hashtab_key_params roletr_key_params = {
 	.hash = role_trans_hash,
 	.cmp = role_trans_cmp,
-पूर्ण;
+};
 
-काष्ठा role_trans_datum *policydb_roletr_search(काष्ठा policydb *p,
-						काष्ठा role_trans_key *key)
-अणु
-	वापस hashtab_search(&p->role_tr, key, roletr_key_params);
-पूर्ण
+struct role_trans_datum *policydb_roletr_search(struct policydb *p,
+						struct role_trans_key *key)
+{
+	return hashtab_search(&p->role_tr, key, roletr_key_params);
+}
 
 /*
- * Initialize a policy database काष्ठाure.
+ * Initialize a policy database structure.
  */
-अटल व्योम policydb_init(काष्ठा policydb *p)
-अणु
-	स_रखो(p, 0, माप(*p));
+static void policydb_init(struct policydb *p)
+{
+	memset(p, 0, sizeof(*p));
 
 	avtab_init(&p->te_avtab);
 	cond_policydb_init(p);
 
-	ebiपंचांगap_init(&p->filename_trans_ttypes);
-	ebiपंचांगap_init(&p->policycaps);
-	ebiपंचांगap_init(&p->permissive_map);
-पूर्ण
+	ebitmap_init(&p->filename_trans_ttypes);
+	ebitmap_init(&p->policycaps);
+	ebitmap_init(&p->permissive_map);
+}
 
 /*
  * The following *_index functions are used to
- * define the val_to_name and val_to_काष्ठा arrays
- * in a policy database काष्ठाure.  The val_to_name
+ * define the val_to_name and val_to_struct arrays
+ * in a policy database structure.  The val_to_name
  * arrays are used when converting security context
- * काष्ठाures पूर्णांकo string representations.  The
- * val_to_काष्ठा arrays are used when the attributes
+ * structures into string representations.  The
+ * val_to_struct arrays are used when the attributes
  * of a class, role, or user are needed.
  */
 
-अटल पूर्णांक common_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा common_datum *comdatum;
+static int common_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct common_datum *comdatum;
 
 	comdatum = datum;
 	p = datap;
-	अगर (!comdatum->value || comdatum->value > p->p_commons.nprim)
-		वापस -EINVAL;
+	if (!comdatum->value || comdatum->value > p->p_commons.nprim)
+		return -EINVAL;
 
 	p->sym_val_to_name[SYM_COMMONS][comdatum->value - 1] = key;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक class_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा class_datum *cladatum;
+static int class_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct class_datum *cladatum;
 
 	cladatum = datum;
 	p = datap;
-	अगर (!cladatum->value || cladatum->value > p->p_classes.nprim)
-		वापस -EINVAL;
+	if (!cladatum->value || cladatum->value > p->p_classes.nprim)
+		return -EINVAL;
 
 	p->sym_val_to_name[SYM_CLASSES][cladatum->value - 1] = key;
-	p->class_val_to_काष्ठा[cladatum->value - 1] = cladatum;
-	वापस 0;
-पूर्ण
+	p->class_val_to_struct[cladatum->value - 1] = cladatum;
+	return 0;
+}
 
-अटल पूर्णांक role_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा role_datum *role;
+static int role_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct role_datum *role;
 
 	role = datum;
 	p = datap;
-	अगर (!role->value
+	if (!role->value
 	    || role->value > p->p_roles.nprim
 	    || role->bounds > p->p_roles.nprim)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	p->sym_val_to_name[SYM_ROLES][role->value - 1] = key;
-	p->role_val_to_काष्ठा[role->value - 1] = role;
-	वापस 0;
-पूर्ण
+	p->role_val_to_struct[role->value - 1] = role;
+	return 0;
+}
 
-अटल पूर्णांक type_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा type_datum *typdatum;
+static int type_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct type_datum *typdatum;
 
 	typdatum = datum;
 	p = datap;
 
-	अगर (typdatum->primary) अणु
-		अगर (!typdatum->value
+	if (typdatum->primary) {
+		if (!typdatum->value
 		    || typdatum->value > p->p_types.nprim
 		    || typdatum->bounds > p->p_types.nprim)
-			वापस -EINVAL;
+			return -EINVAL;
 		p->sym_val_to_name[SYM_TYPES][typdatum->value - 1] = key;
-		p->type_val_to_काष्ठा[typdatum->value - 1] = typdatum;
-	पूर्ण
+		p->type_val_to_struct[typdatum->value - 1] = typdatum;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक user_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा user_datum *usrdatum;
+static int user_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct user_datum *usrdatum;
 
 	usrdatum = datum;
 	p = datap;
-	अगर (!usrdatum->value
+	if (!usrdatum->value
 	    || usrdatum->value > p->p_users.nprim
 	    || usrdatum->bounds > p->p_users.nprim)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	p->sym_val_to_name[SYM_USERS][usrdatum->value - 1] = key;
-	p->user_val_to_काष्ठा[usrdatum->value - 1] = usrdatum;
-	वापस 0;
-पूर्ण
+	p->user_val_to_struct[usrdatum->value - 1] = usrdatum;
+	return 0;
+}
 
-अटल पूर्णांक sens_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा level_datum *levdatum;
+static int sens_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct level_datum *levdatum;
 
 	levdatum = datum;
 	p = datap;
 
-	अगर (!levdatum->isalias) अणु
-		अगर (!levdatum->level->sens ||
+	if (!levdatum->isalias) {
+		if (!levdatum->level->sens ||
 		    levdatum->level->sens > p->p_levels.nprim)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		p->sym_val_to_name[SYM_LEVELS][levdatum->level->sens - 1] = key;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cat_index(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा policydb *p;
-	काष्ठा cat_datum *catdatum;
+static int cat_index(void *key, void *datum, void *datap)
+{
+	struct policydb *p;
+	struct cat_datum *catdatum;
 
 	catdatum = datum;
 	p = datap;
 
-	अगर (!catdatum->isalias) अणु
-		अगर (!catdatum->value || catdatum->value > p->p_cats.nprim)
-			वापस -EINVAL;
+	if (!catdatum->isalias) {
+		if (!catdatum->value || catdatum->value > p->p_cats.nprim)
+			return -EINVAL;
 
 		p->sym_val_to_name[SYM_CATS][catdatum->value - 1] = key;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक (*index_f[SYM_NUM]) (व्योम *key, व्योम *datum, व्योम *datap) =
-अणु
+static int (*index_f[SYM_NUM]) (void *key, void *datum, void *datap) =
+{
 	common_index,
 	class_index,
 	role_index,
@@ -683,48 +682,48 @@ out:
 	cond_index_bool,
 	sens_index,
 	cat_index,
-पूर्ण;
+};
 
-#अगर_घोषित DEBUG_HASHES
-अटल व्योम hash_eval(काष्ठा hashtab *h, स्थिर अक्षर *hash_name)
-अणु
-	काष्ठा hashtab_info info;
+#ifdef DEBUG_HASHES
+static void hash_eval(struct hashtab *h, const char *hash_name)
+{
+	struct hashtab_info info;
 
 	hashtab_stat(h, &info);
 	pr_debug("SELinux: %s:  %d entries and %d/%d buckets used, longest chain length %d\n",
 		 hash_name, h->nel, info.slots_used, h->size,
 		 info.max_chain_len);
-पूर्ण
+}
 
-अटल व्योम symtab_hash_eval(काष्ठा symtab *s)
-अणु
-	पूर्णांक i;
+static void symtab_hash_eval(struct symtab *s)
+{
+	int i;
 
-	क्रम (i = 0; i < SYM_NUM; i++)
+	for (i = 0; i < SYM_NUM; i++)
 		hash_eval(&s[i].table, symtab_name[i]);
-पूर्ण
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम hash_eval(काष्ठा hashtab *h, अक्षर *hash_name)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static inline void hash_eval(struct hashtab *h, char *hash_name)
+{
+}
+#endif
 
 /*
- * Define the other val_to_name and val_to_काष्ठा arrays
- * in a policy database काष्ठाure.
+ * Define the other val_to_name and val_to_struct arrays
+ * in a policy database structure.
  *
  * Caller must clean up on failure.
  */
-अटल पूर्णांक policydb_index(काष्ठा policydb *p)
-अणु
-	पूर्णांक i, rc;
+static int policydb_index(struct policydb *p)
+{
+	int i, rc;
 
-	अगर (p->mls_enabled)
+	if (p->mls_enabled)
 		pr_debug("SELinux:  %d users, %d roles, %d types, %d bools, %d sens, %d cats\n",
 			 p->p_users.nprim, p->p_roles.nprim, p->p_types.nprim,
 			 p->p_bools.nprim, p->p_levels.nprim, p->p_cats.nprim);
-	अन्यथा
+	else
 		pr_debug("SELinux:  %d users, %d roles, %d types, %d bools\n",
 			 p->p_users.nprim, p->p_roles.nprim, p->p_types.nprim,
 			 p->p_bools.nprim);
@@ -732,584 +731,584 @@ out:
 	pr_debug("SELinux:  %d classes, %d rules\n",
 		 p->p_classes.nprim, p->te_avtab.nel);
 
-#अगर_घोषित DEBUG_HASHES
+#ifdef DEBUG_HASHES
 	avtab_hash_eval(&p->te_avtab, "rules");
 	symtab_hash_eval(p->symtab);
-#पूर्ण_अगर
+#endif
 
-	p->class_val_to_काष्ठा = kसुस्मृति(p->p_classes.nprim,
-					 माप(*p->class_val_to_काष्ठा),
+	p->class_val_to_struct = kcalloc(p->p_classes.nprim,
+					 sizeof(*p->class_val_to_struct),
 					 GFP_KERNEL);
-	अगर (!p->class_val_to_काष्ठा)
-		वापस -ENOMEM;
+	if (!p->class_val_to_struct)
+		return -ENOMEM;
 
-	p->role_val_to_काष्ठा = kसुस्मृति(p->p_roles.nprim,
-					माप(*p->role_val_to_काष्ठा),
+	p->role_val_to_struct = kcalloc(p->p_roles.nprim,
+					sizeof(*p->role_val_to_struct),
 					GFP_KERNEL);
-	अगर (!p->role_val_to_काष्ठा)
-		वापस -ENOMEM;
+	if (!p->role_val_to_struct)
+		return -ENOMEM;
 
-	p->user_val_to_काष्ठा = kसुस्मृति(p->p_users.nprim,
-					माप(*p->user_val_to_काष्ठा),
+	p->user_val_to_struct = kcalloc(p->p_users.nprim,
+					sizeof(*p->user_val_to_struct),
 					GFP_KERNEL);
-	अगर (!p->user_val_to_काष्ठा)
-		वापस -ENOMEM;
+	if (!p->user_val_to_struct)
+		return -ENOMEM;
 
-	p->type_val_to_काष्ठा = kvसुस्मृति(p->p_types.nprim,
-					 माप(*p->type_val_to_काष्ठा),
+	p->type_val_to_struct = kvcalloc(p->p_types.nprim,
+					 sizeof(*p->type_val_to_struct),
 					 GFP_KERNEL);
-	अगर (!p->type_val_to_काष्ठा)
-		वापस -ENOMEM;
+	if (!p->type_val_to_struct)
+		return -ENOMEM;
 
 	rc = cond_init_bool_indexes(p);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	क्रम (i = 0; i < SYM_NUM; i++) अणु
-		p->sym_val_to_name[i] = kvसुस्मृति(p->symtab[i].nprim,
-						 माप(अक्षर *),
+	for (i = 0; i < SYM_NUM; i++) {
+		p->sym_val_to_name[i] = kvcalloc(p->symtab[i].nprim,
+						 sizeof(char *),
 						 GFP_KERNEL);
-		अगर (!p->sym_val_to_name[i])
-			वापस -ENOMEM;
+		if (!p->sym_val_to_name[i])
+			return -ENOMEM;
 
 		rc = hashtab_map(&p->symtab[i].table, index_f[i], p);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		if (rc)
+			goto out;
+	}
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Free any memory allocated by a policy database काष्ठाure.
+ * Free any memory allocated by a policy database structure.
  */
-व्योम policydb_destroy(काष्ठा policydb *p)
-अणु
-	काष्ठा ocontext *c, *cपंचांगp;
-	काष्ठा genfs *g, *gपंचांगp;
-	पूर्णांक i;
-	काष्ठा role_allow *ra, *lra = शून्य;
+void policydb_destroy(struct policydb *p)
+{
+	struct ocontext *c, *ctmp;
+	struct genfs *g, *gtmp;
+	int i;
+	struct role_allow *ra, *lra = NULL;
 
-	क्रम (i = 0; i < SYM_NUM; i++) अणु
+	for (i = 0; i < SYM_NUM; i++) {
 		cond_resched();
-		hashtab_map(&p->symtab[i].table, destroy_f[i], शून्य);
+		hashtab_map(&p->symtab[i].table, destroy_f[i], NULL);
 		hashtab_destroy(&p->symtab[i].table);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < SYM_NUM; i++)
-		kvमुक्त(p->sym_val_to_name[i]);
+	for (i = 0; i < SYM_NUM; i++)
+		kvfree(p->sym_val_to_name[i]);
 
-	kमुक्त(p->class_val_to_काष्ठा);
-	kमुक्त(p->role_val_to_काष्ठा);
-	kमुक्त(p->user_val_to_काष्ठा);
-	kvमुक्त(p->type_val_to_काष्ठा);
+	kfree(p->class_val_to_struct);
+	kfree(p->role_val_to_struct);
+	kfree(p->user_val_to_struct);
+	kvfree(p->type_val_to_struct);
 
 	avtab_destroy(&p->te_avtab);
 
-	क्रम (i = 0; i < OCON_NUM; i++) अणु
+	for (i = 0; i < OCON_NUM; i++) {
 		cond_resched();
 		c = p->ocontexts[i];
-		जबतक (c) अणु
-			cपंचांगp = c;
+		while (c) {
+			ctmp = c;
 			c = c->next;
-			ocontext_destroy(cपंचांगp, i);
-		पूर्ण
-		p->ocontexts[i] = शून्य;
-	पूर्ण
+			ocontext_destroy(ctmp, i);
+		}
+		p->ocontexts[i] = NULL;
+	}
 
 	g = p->genfs;
-	जबतक (g) अणु
+	while (g) {
 		cond_resched();
-		kमुक्त(g->fstype);
+		kfree(g->fstype);
 		c = g->head;
-		जबतक (c) अणु
-			cपंचांगp = c;
+		while (c) {
+			ctmp = c;
 			c = c->next;
-			ocontext_destroy(cपंचांगp, OCON_FSUSE);
-		पूर्ण
-		gपंचांगp = g;
+			ocontext_destroy(ctmp, OCON_FSUSE);
+		}
+		gtmp = g;
 		g = g->next;
-		kमुक्त(gपंचांगp);
-	पूर्ण
-	p->genfs = शून्य;
+		kfree(gtmp);
+	}
+	p->genfs = NULL;
 
 	cond_policydb_destroy(p);
 
-	hashtab_map(&p->role_tr, role_tr_destroy, शून्य);
+	hashtab_map(&p->role_tr, role_tr_destroy, NULL);
 	hashtab_destroy(&p->role_tr);
 
-	क्रम (ra = p->role_allow; ra; ra = ra->next) अणु
+	for (ra = p->role_allow; ra; ra = ra->next) {
 		cond_resched();
-		kमुक्त(lra);
+		kfree(lra);
 		lra = ra;
-	पूर्ण
-	kमुक्त(lra);
+	}
+	kfree(lra);
 
-	hashtab_map(&p->filename_trans, filenametr_destroy, शून्य);
+	hashtab_map(&p->filename_trans, filenametr_destroy, NULL);
 	hashtab_destroy(&p->filename_trans);
 
-	hashtab_map(&p->range_tr, range_tr_destroy, शून्य);
+	hashtab_map(&p->range_tr, range_tr_destroy, NULL);
 	hashtab_destroy(&p->range_tr);
 
-	अगर (p->type_attr_map_array) अणु
-		क्रम (i = 0; i < p->p_types.nprim; i++)
-			ebiपंचांगap_destroy(&p->type_attr_map_array[i]);
-		kvमुक्त(p->type_attr_map_array);
-	पूर्ण
+	if (p->type_attr_map_array) {
+		for (i = 0; i < p->p_types.nprim; i++)
+			ebitmap_destroy(&p->type_attr_map_array[i]);
+		kvfree(p->type_attr_map_array);
+	}
 
-	ebiपंचांगap_destroy(&p->filename_trans_ttypes);
-	ebiपंचांगap_destroy(&p->policycaps);
-	ebiपंचांगap_destroy(&p->permissive_map);
-पूर्ण
+	ebitmap_destroy(&p->filename_trans_ttypes);
+	ebitmap_destroy(&p->policycaps);
+	ebitmap_destroy(&p->permissive_map);
+}
 
 /*
- * Load the initial SIDs specअगरied in a policy database
- * काष्ठाure पूर्णांकo a SID table.
+ * Load the initial SIDs specified in a policy database
+ * structure into a SID table.
  */
-पूर्णांक policydb_load_isids(काष्ठा policydb *p, काष्ठा sidtab *s)
-अणु
-	काष्ठा ocontext *head, *c;
-	पूर्णांक rc;
+int policydb_load_isids(struct policydb *p, struct sidtab *s)
+{
+	struct ocontext *head, *c;
+	int rc;
 
 	rc = sidtab_init(s);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("SELinux:  out of memory on SID table init\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	head = p->ocontexts[OCON_ISID];
-	क्रम (c = head; c; c = c->next) अणु
+	for (c = head; c; c = c->next) {
 		u32 sid = c->sid[0];
-		स्थिर अक्षर *name = security_get_initial_sid_context(sid);
+		const char *name = security_get_initial_sid_context(sid);
 
-		अगर (sid == SECSID_शून्य) अणु
+		if (sid == SECSID_NULL) {
 			pr_err("SELinux:  SID 0 was assigned a context.\n");
 			sidtab_destroy(s);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Ignore initial SIDs unused by this kernel. */
-		अगर (!name)
-			जारी;
+		if (!name)
+			continue;
 
 		rc = sidtab_set_initial(s, sid, &c->context[0]);
-		अगर (rc) अणु
+		if (rc) {
 			pr_err("SELinux:  unable to load initial SID %s.\n",
 			       name);
 			sidtab_destroy(s);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक policydb_class_isvalid(काष्ठा policydb *p, अचिन्हित पूर्णांक class)
-अणु
-	अगर (!class || class > p->p_classes.nprim)
-		वापस 0;
-	वापस 1;
-पूर्ण
+int policydb_class_isvalid(struct policydb *p, unsigned int class)
+{
+	if (!class || class > p->p_classes.nprim)
+		return 0;
+	return 1;
+}
 
-पूर्णांक policydb_role_isvalid(काष्ठा policydb *p, अचिन्हित पूर्णांक role)
-अणु
-	अगर (!role || role > p->p_roles.nprim)
-		वापस 0;
-	वापस 1;
-पूर्ण
+int policydb_role_isvalid(struct policydb *p, unsigned int role)
+{
+	if (!role || role > p->p_roles.nprim)
+		return 0;
+	return 1;
+}
 
-पूर्णांक policydb_type_isvalid(काष्ठा policydb *p, अचिन्हित पूर्णांक type)
-अणु
-	अगर (!type || type > p->p_types.nprim)
-		वापस 0;
-	वापस 1;
-पूर्ण
+int policydb_type_isvalid(struct policydb *p, unsigned int type)
+{
+	if (!type || type > p->p_types.nprim)
+		return 0;
+	return 1;
+}
 
 /*
- * Return 1 अगर the fields in the security context
- * काष्ठाure `c' are valid.  Return 0 otherwise.
+ * Return 1 if the fields in the security context
+ * structure `c' are valid.  Return 0 otherwise.
  */
-पूर्णांक policydb_context_isvalid(काष्ठा policydb *p, काष्ठा context *c)
-अणु
-	काष्ठा role_datum *role;
-	काष्ठा user_datum *usrdatum;
+int policydb_context_isvalid(struct policydb *p, struct context *c)
+{
+	struct role_datum *role;
+	struct user_datum *usrdatum;
 
-	अगर (!c->role || c->role > p->p_roles.nprim)
-		वापस 0;
+	if (!c->role || c->role > p->p_roles.nprim)
+		return 0;
 
-	अगर (!c->user || c->user > p->p_users.nprim)
-		वापस 0;
+	if (!c->user || c->user > p->p_users.nprim)
+		return 0;
 
-	अगर (!c->type || c->type > p->p_types.nprim)
-		वापस 0;
+	if (!c->type || c->type > p->p_types.nprim)
+		return 0;
 
-	अगर (c->role != OBJECT_R_VAL) अणु
+	if (c->role != OBJECT_R_VAL) {
 		/*
-		 * Role must be authorized क्रम the type.
+		 * Role must be authorized for the type.
 		 */
-		role = p->role_val_to_काष्ठा[c->role - 1];
-		अगर (!role || !ebiपंचांगap_get_bit(&role->types, c->type - 1))
+		role = p->role_val_to_struct[c->role - 1];
+		if (!role || !ebitmap_get_bit(&role->types, c->type - 1))
 			/* role may not be associated with type */
-			वापस 0;
+			return 0;
 
 		/*
-		 * User must be authorized क्रम the role.
+		 * User must be authorized for the role.
 		 */
-		usrdatum = p->user_val_to_काष्ठा[c->user - 1];
-		अगर (!usrdatum)
-			वापस 0;
+		usrdatum = p->user_val_to_struct[c->user - 1];
+		if (!usrdatum)
+			return 0;
 
-		अगर (!ebiपंचांगap_get_bit(&usrdatum->roles, c->role - 1))
+		if (!ebitmap_get_bit(&usrdatum->roles, c->role - 1))
 			/* user may not be associated with role */
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	अगर (!mls_context_isvalid(p, c))
-		वापस 0;
+	if (!mls_context_isvalid(p, c))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Read a MLS range काष्ठाure from a policydb binary
+ * Read a MLS range structure from a policydb binary
  * representation file.
  */
-अटल पूर्णांक mls_पढ़ो_range_helper(काष्ठा mls_range *r, व्योम *fp)
-अणु
+static int mls_read_range_helper(struct mls_range *r, void *fp)
+{
 	__le32 buf[2];
 	u32 items;
-	पूर्णांक rc;
+	int rc;
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		जाओ out;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		goto out;
 
 	rc = -EINVAL;
 	items = le32_to_cpu(buf[0]);
-	अगर (items > ARRAY_SIZE(buf)) अणु
+	if (items > ARRAY_SIZE(buf)) {
 		pr_err("SELinux: mls:  range overflow\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rc = next_entry(buf, fp, माप(u32) * items);
-	अगर (rc) अणु
+	rc = next_entry(buf, fp, sizeof(u32) * items);
+	if (rc) {
 		pr_err("SELinux: mls:  truncated range\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r->level[0].sens = le32_to_cpu(buf[0]);
-	अगर (items > 1)
+	if (items > 1)
 		r->level[1].sens = le32_to_cpu(buf[1]);
-	अन्यथा
+	else
 		r->level[1].sens = r->level[0].sens;
 
-	rc = ebiपंचांगap_पढ़ो(&r->level[0].cat, fp);
-	अगर (rc) अणु
+	rc = ebitmap_read(&r->level[0].cat, fp);
+	if (rc) {
 		pr_err("SELinux: mls:  error reading low categories\n");
-		जाओ out;
-	पूर्ण
-	अगर (items > 1) अणु
-		rc = ebiपंचांगap_पढ़ो(&r->level[1].cat, fp);
-		अगर (rc) अणु
+		goto out;
+	}
+	if (items > 1) {
+		rc = ebitmap_read(&r->level[1].cat, fp);
+		if (rc) {
 			pr_err("SELinux: mls:  error reading high categories\n");
-			जाओ bad_high;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		rc = ebiपंचांगap_cpy(&r->level[1].cat, &r->level[0].cat);
-		अगर (rc) अणु
+			goto bad_high;
+		}
+	} else {
+		rc = ebitmap_cpy(&r->level[1].cat, &r->level[0].cat);
+		if (rc) {
 			pr_err("SELinux: mls:  out of memory\n");
-			जाओ bad_high;
-		पूर्ण
-	पूर्ण
+			goto bad_high;
+		}
+	}
 
-	वापस 0;
+	return 0;
 bad_high:
-	ebiपंचांगap_destroy(&r->level[0].cat);
+	ebitmap_destroy(&r->level[0].cat);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Read and validate a security context काष्ठाure
+ * Read and validate a security context structure
  * from a policydb binary representation file.
  */
-अटल पूर्णांक context_पढ़ो_and_validate(काष्ठा context *c,
-				     काष्ठा policydb *p,
-				     व्योम *fp)
-अणु
+static int context_read_and_validate(struct context *c,
+				     struct policydb *p,
+				     void *fp)
+{
 	__le32 buf[3];
-	पूर्णांक rc;
+	int rc;
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc) अणु
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc) {
 		pr_err("SELinux: context truncated\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	c->user = le32_to_cpu(buf[0]);
 	c->role = le32_to_cpu(buf[1]);
 	c->type = le32_to_cpu(buf[2]);
-	अगर (p->policyvers >= POLICYDB_VERSION_MLS) अणु
-		rc = mls_पढ़ो_range_helper(&c->range, fp);
-		अगर (rc) अणु
+	if (p->policyvers >= POLICYDB_VERSION_MLS) {
+		rc = mls_read_range_helper(&c->range, fp);
+		if (rc) {
 			pr_err("SELinux: error reading MLS range of context\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	rc = -EINVAL;
-	अगर (!policydb_context_isvalid(p, c)) अणु
+	if (!policydb_context_isvalid(p, c)) {
 		pr_err("SELinux:  invalid security context\n");
 		context_destroy(c);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * The following *_पढ़ो functions are used to
- * पढ़ो the symbol data from a policy database
+ * The following *_read functions are used to
+ * read the symbol data from a policy database
  * binary representation file.
  */
 
-अटल पूर्णांक str_पढ़ो(अक्षर **strp, gfp_t flags, व्योम *fp, u32 len)
-अणु
-	पूर्णांक rc;
-	अक्षर *str;
+static int str_read(char **strp, gfp_t flags, void *fp, u32 len)
+{
+	int rc;
+	char *str;
 
-	अगर ((len == 0) || (len == (u32)-1))
-		वापस -EINVAL;
+	if ((len == 0) || (len == (u32)-1))
+		return -EINVAL;
 
-	str = kदो_स्मृति(len + 1, flags | __GFP_NOWARN);
-	अगर (!str)
-		वापस -ENOMEM;
+	str = kmalloc(len + 1, flags | __GFP_NOWARN);
+	if (!str)
+		return -ENOMEM;
 
 	rc = next_entry(str, fp, len);
-	अगर (rc) अणु
-		kमुक्त(str);
-		वापस rc;
-	पूर्ण
+	if (rc) {
+		kfree(str);
+		return rc;
+	}
 
 	str[len] = '\0';
 	*strp = str;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perm_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा perm_datum *perdatum;
-	पूर्णांक rc;
+static int perm_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct perm_datum *perdatum;
+	int rc;
 	__le32 buf[2];
 	u32 len;
 
-	perdatum = kzalloc(माप(*perdatum), GFP_KERNEL);
-	अगर (!perdatum)
-		वापस -ENOMEM;
+	perdatum = kzalloc(sizeof(*perdatum), GFP_KERNEL);
+	if (!perdatum)
+		return -ENOMEM;
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	perdatum->value = le32_to_cpu(buf[1]);
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
 	rc = symtab_insert(s, key, perdatum);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 
-	वापस 0;
+	return 0;
 bad:
-	perm_destroy(key, perdatum, शून्य);
-	वापस rc;
-पूर्ण
+	perm_destroy(key, perdatum, NULL);
+	return rc;
+}
 
-अटल पूर्णांक common_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा common_datum *comdatum;
+static int common_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct common_datum *comdatum;
 	__le32 buf[4];
 	u32 len, nel;
-	पूर्णांक i, rc;
+	int i, rc;
 
-	comdatum = kzalloc(माप(*comdatum), GFP_KERNEL);
-	अगर (!comdatum)
-		वापस -ENOMEM;
+	comdatum = kzalloc(sizeof(*comdatum), GFP_KERNEL);
+	if (!comdatum)
+		return -ENOMEM;
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	comdatum->value = le32_to_cpu(buf[1]);
 	nel = le32_to_cpu(buf[3]);
 
 	rc = symtab_init(&comdatum->permissions, nel);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 	comdatum->permissions.nprim = le32_to_cpu(buf[2]);
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
-	क्रम (i = 0; i < nel; i++) अणु
-		rc = perm_पढ़ो(p, &comdatum->permissions, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+	for (i = 0; i < nel; i++) {
+		rc = perm_read(p, &comdatum->permissions, fp);
+		if (rc)
+			goto bad;
+	}
 
 	rc = symtab_insert(s, key, comdatum);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	common_destroy(key, comdatum, शून्य);
-	वापस rc;
-पूर्ण
+	common_destroy(key, comdatum, NULL);
+	return rc;
+}
 
-अटल व्योम type_set_init(काष्ठा type_set *t)
-अणु
-	ebiपंचांगap_init(&t->types);
-	ebiपंचांगap_init(&t->negset);
-पूर्ण
+static void type_set_init(struct type_set *t)
+{
+	ebitmap_init(&t->types);
+	ebitmap_init(&t->negset);
+}
 
-अटल पूर्णांक type_set_पढ़ो(काष्ठा type_set *t, व्योम *fp)
-अणु
+static int type_set_read(struct type_set *t, void *fp)
+{
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
-	अगर (ebiपंचांगap_पढ़ो(&t->types, fp))
-		वापस -EINVAL;
-	अगर (ebiपंचांगap_पढ़ो(&t->negset, fp))
-		वापस -EINVAL;
+	if (ebitmap_read(&t->types, fp))
+		return -EINVAL;
+	if (ebitmap_read(&t->negset, fp))
+		return -EINVAL;
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc < 0)
-		वापस -EINVAL;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc < 0)
+		return -EINVAL;
 	t->flags = le32_to_cpu(buf[0]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक पढ़ो_cons_helper(काष्ठा policydb *p,
-				काष्ठा स्थिरraपूर्णांक_node **nodep,
-				पूर्णांक ncons, पूर्णांक allowxtarget, व्योम *fp)
-अणु
-	काष्ठा स्थिरraपूर्णांक_node *c, *lc;
-	काष्ठा स्थिरraपूर्णांक_expr *e, *le;
+static int read_cons_helper(struct policydb *p,
+				struct constraint_node **nodep,
+				int ncons, int allowxtarget, void *fp)
+{
+	struct constraint_node *c, *lc;
+	struct constraint_expr *e, *le;
 	__le32 buf[3];
 	u32 nexpr;
-	पूर्णांक rc, i, j, depth;
+	int rc, i, j, depth;
 
-	lc = शून्य;
-	क्रम (i = 0; i < ncons; i++) अणु
-		c = kzalloc(माप(*c), GFP_KERNEL);
-		अगर (!c)
-			वापस -ENOMEM;
+	lc = NULL;
+	for (i = 0; i < ncons; i++) {
+		c = kzalloc(sizeof(*c), GFP_KERNEL);
+		if (!c)
+			return -ENOMEM;
 
-		अगर (lc)
+		if (lc)
 			lc->next = c;
-		अन्यथा
+		else
 			*nodep = c;
 
-		rc = next_entry(buf, fp, (माप(u32) * 2));
-		अगर (rc)
-			वापस rc;
+		rc = next_entry(buf, fp, (sizeof(u32) * 2));
+		if (rc)
+			return rc;
 		c->permissions = le32_to_cpu(buf[0]);
 		nexpr = le32_to_cpu(buf[1]);
-		le = शून्य;
+		le = NULL;
 		depth = -1;
-		क्रम (j = 0; j < nexpr; j++) अणु
-			e = kzalloc(माप(*e), GFP_KERNEL);
-			अगर (!e)
-				वापस -ENOMEM;
+		for (j = 0; j < nexpr; j++) {
+			e = kzalloc(sizeof(*e), GFP_KERNEL);
+			if (!e)
+				return -ENOMEM;
 
-			अगर (le)
+			if (le)
 				le->next = e;
-			अन्यथा
+			else
 				c->expr = e;
 
-			rc = next_entry(buf, fp, (माप(u32) * 3));
-			अगर (rc)
-				वापस rc;
+			rc = next_entry(buf, fp, (sizeof(u32) * 3));
+			if (rc)
+				return rc;
 			e->expr_type = le32_to_cpu(buf[0]);
 			e->attr = le32_to_cpu(buf[1]);
 			e->op = le32_to_cpu(buf[2]);
 
-			चयन (e->expr_type) अणु
-			हाल CEXPR_NOT:
-				अगर (depth < 0)
-					वापस -EINVAL;
-				अवरोध;
-			हाल CEXPR_AND:
-			हाल CEXPR_OR:
-				अगर (depth < 1)
-					वापस -EINVAL;
+			switch (e->expr_type) {
+			case CEXPR_NOT:
+				if (depth < 0)
+					return -EINVAL;
+				break;
+			case CEXPR_AND:
+			case CEXPR_OR:
+				if (depth < 1)
+					return -EINVAL;
 				depth--;
-				अवरोध;
-			हाल CEXPR_ATTR:
-				अगर (depth == (CEXPR_MAXDEPTH - 1))
-					वापस -EINVAL;
+				break;
+			case CEXPR_ATTR:
+				if (depth == (CEXPR_MAXDEPTH - 1))
+					return -EINVAL;
 				depth++;
-				अवरोध;
-			हाल CEXPR_NAMES:
-				अगर (!allowxtarget && (e->attr & CEXPR_XTARGET))
-					वापस -EINVAL;
-				अगर (depth == (CEXPR_MAXDEPTH - 1))
-					वापस -EINVAL;
+				break;
+			case CEXPR_NAMES:
+				if (!allowxtarget && (e->attr & CEXPR_XTARGET))
+					return -EINVAL;
+				if (depth == (CEXPR_MAXDEPTH - 1))
+					return -EINVAL;
 				depth++;
-				rc = ebiपंचांगap_पढ़ो(&e->names, fp);
-				अगर (rc)
-					वापस rc;
-				अगर (p->policyvers >=
-				    POLICYDB_VERSION_CONSTRAINT_NAMES) अणु
-					e->type_names = kzalloc(माप
+				rc = ebitmap_read(&e->names, fp);
+				if (rc)
+					return rc;
+				if (p->policyvers >=
+				    POLICYDB_VERSION_CONSTRAINT_NAMES) {
+					e->type_names = kzalloc(sizeof
 						(*e->type_names), GFP_KERNEL);
-					अगर (!e->type_names)
-						वापस -ENOMEM;
+					if (!e->type_names)
+						return -ENOMEM;
 					type_set_init(e->type_names);
-					rc = type_set_पढ़ो(e->type_names, fp);
-					अगर (rc)
-						वापस rc;
-				पूर्ण
-				अवरोध;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
+					rc = type_set_read(e->type_names, fp);
+					if (rc)
+						return rc;
+				}
+				break;
+			default:
+				return -EINVAL;
+			}
 			le = e;
-		पूर्ण
-		अगर (depth != 0)
-			वापस -EINVAL;
+		}
+		if (depth != 0)
+			return -EINVAL;
 		lc = c;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक class_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा class_datum *cladatum;
+static int class_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct class_datum *cladatum;
 	__le32 buf[6];
 	u32 len, len2, ncons, nel;
-	पूर्णांक i, rc;
+	int i, rc;
 
-	cladatum = kzalloc(माप(*cladatum), GFP_KERNEL);
-	अगर (!cladatum)
-		वापस -ENOMEM;
+	cladatum = kzalloc(sizeof(*cladatum), GFP_KERNEL);
+	if (!cladatum)
+		return -ENOMEM;
 
-	rc = next_entry(buf, fp, माप(u32)*6);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(u32)*6);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	len2 = le32_to_cpu(buf[1]);
@@ -1317,367 +1316,367 @@ bad:
 	nel = le32_to_cpu(buf[4]);
 
 	rc = symtab_init(&cladatum->permissions, nel);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 	cladatum->permissions.nprim = le32_to_cpu(buf[3]);
 
 	ncons = le32_to_cpu(buf[5]);
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
-	अगर (len2) अणु
-		rc = str_पढ़ो(&cladatum->comkey, GFP_KERNEL, fp, len2);
-		अगर (rc)
-			जाओ bad;
+	if (len2) {
+		rc = str_read(&cladatum->comkey, GFP_KERNEL, fp, len2);
+		if (rc)
+			goto bad;
 
 		rc = -EINVAL;
 		cladatum->comdatum = symtab_search(&p->p_commons,
 						   cladatum->comkey);
-		अगर (!cladatum->comdatum) अणु
+		if (!cladatum->comdatum) {
 			pr_err("SELinux:  unknown common %s\n",
 			       cladatum->comkey);
-			जाओ bad;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < nel; i++) अणु
-		rc = perm_पढ़ो(p, &cladatum->permissions, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+			goto bad;
+		}
+	}
+	for (i = 0; i < nel; i++) {
+		rc = perm_read(p, &cladatum->permissions, fp);
+		if (rc)
+			goto bad;
+	}
 
-	rc = पढ़ो_cons_helper(p, &cladatum->स्थिरraपूर्णांकs, ncons, 0, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = read_cons_helper(p, &cladatum->constraints, ncons, 0, fp);
+	if (rc)
+		goto bad;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_VALIDATETRANS) अणु
+	if (p->policyvers >= POLICYDB_VERSION_VALIDATETRANS) {
 		/* grab the validatetrans rules */
-		rc = next_entry(buf, fp, माप(u32));
-		अगर (rc)
-			जाओ bad;
+		rc = next_entry(buf, fp, sizeof(u32));
+		if (rc)
+			goto bad;
 		ncons = le32_to_cpu(buf[0]);
-		rc = पढ़ो_cons_helper(p, &cladatum->validatetrans,
+		rc = read_cons_helper(p, &cladatum->validatetrans,
 				ncons, 1, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+		if (rc)
+			goto bad;
+	}
 
-	अगर (p->policyvers >= POLICYDB_VERSION_NEW_OBJECT_DEFAULTS) अणु
-		rc = next_entry(buf, fp, माप(u32) * 3);
-		अगर (rc)
-			जाओ bad;
+	if (p->policyvers >= POLICYDB_VERSION_NEW_OBJECT_DEFAULTS) {
+		rc = next_entry(buf, fp, sizeof(u32) * 3);
+		if (rc)
+			goto bad;
 
-		cladatum->शेष_user = le32_to_cpu(buf[0]);
-		cladatum->शेष_role = le32_to_cpu(buf[1]);
-		cladatum->शेष_range = le32_to_cpu(buf[2]);
-	पूर्ण
+		cladatum->default_user = le32_to_cpu(buf[0]);
+		cladatum->default_role = le32_to_cpu(buf[1]);
+		cladatum->default_range = le32_to_cpu(buf[2]);
+	}
 
-	अगर (p->policyvers >= POLICYDB_VERSION_DEFAULT_TYPE) अणु
-		rc = next_entry(buf, fp, माप(u32) * 1);
-		अगर (rc)
-			जाओ bad;
-		cladatum->शेष_type = le32_to_cpu(buf[0]);
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_DEFAULT_TYPE) {
+		rc = next_entry(buf, fp, sizeof(u32) * 1);
+		if (rc)
+			goto bad;
+		cladatum->default_type = le32_to_cpu(buf[0]);
+	}
 
 	rc = symtab_insert(s, key, cladatum);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 
-	वापस 0;
+	return 0;
 bad:
-	cls_destroy(key, cladatum, शून्य);
-	वापस rc;
-पूर्ण
+	cls_destroy(key, cladatum, NULL);
+	return rc;
+}
 
-अटल पूर्णांक role_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा role_datum *role;
-	पूर्णांक rc, to_पढ़ो = 2;
+static int role_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct role_datum *role;
+	int rc, to_read = 2;
 	__le32 buf[3];
 	u32 len;
 
-	role = kzalloc(माप(*role), GFP_KERNEL);
-	अगर (!role)
-		वापस -ENOMEM;
+	role = kzalloc(sizeof(*role), GFP_KERNEL);
+	if (!role)
+		return -ENOMEM;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
-		to_पढ़ो = 3;
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+		to_read = 3;
 
-	rc = next_entry(buf, fp, माप(buf[0]) * to_पढ़ो);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(buf[0]) * to_read);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	role->value = le32_to_cpu(buf[1]);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
 		role->bounds = le32_to_cpu(buf[2]);
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
-	rc = ebiपंचांगap_पढ़ो(&role->करोminates, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = ebitmap_read(&role->dominates, fp);
+	if (rc)
+		goto bad;
 
-	rc = ebiपंचांगap_पढ़ो(&role->types, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = ebitmap_read(&role->types, fp);
+	if (rc)
+		goto bad;
 
-	अगर (म_भेद(key, OBJECT_R) == 0) अणु
+	if (strcmp(key, OBJECT_R) == 0) {
 		rc = -EINVAL;
-		अगर (role->value != OBJECT_R_VAL) अणु
+		if (role->value != OBJECT_R_VAL) {
 			pr_err("SELinux: Role %s has wrong value %d\n",
 			       OBJECT_R, role->value);
-			जाओ bad;
-		पूर्ण
+			goto bad;
+		}
 		rc = 0;
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	rc = symtab_insert(s, key, role);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	role_destroy(key, role, शून्य);
-	वापस rc;
-पूर्ण
+	role_destroy(key, role, NULL);
+	return rc;
+}
 
-अटल पूर्णांक type_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा type_datum *typdatum;
-	पूर्णांक rc, to_पढ़ो = 3;
+static int type_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct type_datum *typdatum;
+	int rc, to_read = 3;
 	__le32 buf[4];
 	u32 len;
 
-	typdatum = kzalloc(माप(*typdatum), GFP_KERNEL);
-	अगर (!typdatum)
-		वापस -ENOMEM;
+	typdatum = kzalloc(sizeof(*typdatum), GFP_KERNEL);
+	if (!typdatum)
+		return -ENOMEM;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
-		to_पढ़ो = 4;
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+		to_read = 4;
 
-	rc = next_entry(buf, fp, माप(buf[0]) * to_पढ़ो);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(buf[0]) * to_read);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	typdatum->value = le32_to_cpu(buf[1]);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY) अणु
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY) {
 		u32 prop = le32_to_cpu(buf[2]);
 
-		अगर (prop & TYPEDATUM_PROPERTY_PRIMARY)
+		if (prop & TYPEDATUM_PROPERTY_PRIMARY)
 			typdatum->primary = 1;
-		अगर (prop & TYPEDATUM_PROPERTY_ATTRIBUTE)
+		if (prop & TYPEDATUM_PROPERTY_ATTRIBUTE)
 			typdatum->attribute = 1;
 
 		typdatum->bounds = le32_to_cpu(buf[3]);
-	पूर्ण अन्यथा अणु
+	} else {
 		typdatum->primary = le32_to_cpu(buf[2]);
-	पूर्ण
+	}
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
 	rc = symtab_insert(s, key, typdatum);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	type_destroy(key, typdatum, शून्य);
-	वापस rc;
-पूर्ण
+	type_destroy(key, typdatum, NULL);
+	return rc;
+}
 
 
 /*
- * Read a MLS level काष्ठाure from a policydb binary
+ * Read a MLS level structure from a policydb binary
  * representation file.
  */
-अटल पूर्णांक mls_पढ़ो_level(काष्ठा mls_level *lp, व्योम *fp)
-अणु
+static int mls_read_level(struct mls_level *lp, void *fp)
+{
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
-	स_रखो(lp, 0, माप(*lp));
+	memset(lp, 0, sizeof(*lp));
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc) अणु
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc) {
 		pr_err("SELinux: mls: truncated level\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	lp->sens = le32_to_cpu(buf[0]);
 
-	rc = ebiपंचांगap_पढ़ो(&lp->cat, fp);
-	अगर (rc) अणु
+	rc = ebitmap_read(&lp->cat, fp);
+	if (rc) {
 		pr_err("SELinux: mls:  error reading level categories\n");
-		वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return rc;
+	}
+	return 0;
+}
 
-अटल पूर्णांक user_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा user_datum *usrdatum;
-	पूर्णांक rc, to_पढ़ो = 2;
+static int user_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct user_datum *usrdatum;
+	int rc, to_read = 2;
 	__le32 buf[3];
 	u32 len;
 
-	usrdatum = kzalloc(माप(*usrdatum), GFP_KERNEL);
-	अगर (!usrdatum)
-		वापस -ENOMEM;
+	usrdatum = kzalloc(sizeof(*usrdatum), GFP_KERNEL);
+	if (!usrdatum)
+		return -ENOMEM;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
-		to_पढ़ो = 3;
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+		to_read = 3;
 
-	rc = next_entry(buf, fp, माप(buf[0]) * to_पढ़ो);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(buf[0]) * to_read);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	usrdatum->value = le32_to_cpu(buf[1]);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
 		usrdatum->bounds = le32_to_cpu(buf[2]);
 
-	rc = str_पढ़ो(&key, GFP_KERNEL, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_KERNEL, fp, len);
+	if (rc)
+		goto bad;
 
-	rc = ebiपंचांगap_पढ़ो(&usrdatum->roles, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = ebitmap_read(&usrdatum->roles, fp);
+	if (rc)
+		goto bad;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_MLS) अणु
-		rc = mls_पढ़ो_range_helper(&usrdatum->range, fp);
-		अगर (rc)
-			जाओ bad;
-		rc = mls_पढ़ो_level(&usrdatum->dfltlevel, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_MLS) {
+		rc = mls_read_range_helper(&usrdatum->range, fp);
+		if (rc)
+			goto bad;
+		rc = mls_read_level(&usrdatum->dfltlevel, fp);
+		if (rc)
+			goto bad;
+	}
 
 	rc = symtab_insert(s, key, usrdatum);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	user_destroy(key, usrdatum, शून्य);
-	वापस rc;
-पूर्ण
+	user_destroy(key, usrdatum, NULL);
+	return rc;
+}
 
-अटल पूर्णांक sens_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा level_datum *levdatum;
-	पूर्णांक rc;
+static int sens_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct level_datum *levdatum;
+	int rc;
 	__le32 buf[2];
 	u32 len;
 
-	levdatum = kzalloc(माप(*levdatum), GFP_ATOMIC);
-	अगर (!levdatum)
-		वापस -ENOMEM;
+	levdatum = kzalloc(sizeof(*levdatum), GFP_ATOMIC);
+	if (!levdatum)
+		return -ENOMEM;
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	levdatum->isalias = le32_to_cpu(buf[1]);
 
-	rc = str_पढ़ो(&key, GFP_ATOMIC, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_ATOMIC, fp, len);
+	if (rc)
+		goto bad;
 
 	rc = -ENOMEM;
-	levdatum->level = kदो_स्मृति(माप(*levdatum->level), GFP_ATOMIC);
-	अगर (!levdatum->level)
-		जाओ bad;
+	levdatum->level = kmalloc(sizeof(*levdatum->level), GFP_ATOMIC);
+	if (!levdatum->level)
+		goto bad;
 
-	rc = mls_पढ़ो_level(levdatum->level, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = mls_read_level(levdatum->level, fp);
+	if (rc)
+		goto bad;
 
 	rc = symtab_insert(s, key, levdatum);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	sens_destroy(key, levdatum, शून्य);
-	वापस rc;
-पूर्ण
+	sens_destroy(key, levdatum, NULL);
+	return rc;
+}
 
-अटल पूर्णांक cat_पढ़ो(काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp)
-अणु
-	अक्षर *key = शून्य;
-	काष्ठा cat_datum *catdatum;
-	पूर्णांक rc;
+static int cat_read(struct policydb *p, struct symtab *s, void *fp)
+{
+	char *key = NULL;
+	struct cat_datum *catdatum;
+	int rc;
 	__le32 buf[3];
 	u32 len;
 
-	catdatum = kzalloc(माप(*catdatum), GFP_ATOMIC);
-	अगर (!catdatum)
-		वापस -ENOMEM;
+	catdatum = kzalloc(sizeof(*catdatum), GFP_ATOMIC);
+	if (!catdatum)
+		return -ENOMEM;
 
-	rc = next_entry(buf, fp, माप buf);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof buf);
+	if (rc)
+		goto bad;
 
 	len = le32_to_cpu(buf[0]);
 	catdatum->value = le32_to_cpu(buf[1]);
 	catdatum->isalias = le32_to_cpu(buf[2]);
 
-	rc = str_पढ़ो(&key, GFP_ATOMIC, fp, len);
-	अगर (rc)
-		जाओ bad;
+	rc = str_read(&key, GFP_ATOMIC, fp, len);
+	if (rc)
+		goto bad;
 
 	rc = symtab_insert(s, key, catdatum);
-	अगर (rc)
-		जाओ bad;
-	वापस 0;
+	if (rc)
+		goto bad;
+	return 0;
 bad:
-	cat_destroy(key, catdatum, शून्य);
-	वापस rc;
-पूर्ण
+	cat_destroy(key, catdatum, NULL);
+	return rc;
+}
 
-अटल पूर्णांक (*पढ़ो_f[SYM_NUM]) (काष्ठा policydb *p, काष्ठा symtab *s, व्योम *fp) =
-अणु
-	common_पढ़ो,
-	class_पढ़ो,
-	role_पढ़ो,
-	type_पढ़ो,
-	user_पढ़ो,
-	cond_पढ़ो_bool,
-	sens_पढ़ो,
-	cat_पढ़ो,
-पूर्ण;
+static int (*read_f[SYM_NUM]) (struct policydb *p, struct symtab *s, void *fp) =
+{
+	common_read,
+	class_read,
+	role_read,
+	type_read,
+	user_read,
+	cond_read_bool,
+	sens_read,
+	cat_read,
+};
 
-अटल पूर्णांक user_bounds_sanity_check(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा user_datum *upper, *user;
-	काष्ठा policydb *p = datap;
-	पूर्णांक depth = 0;
+static int user_bounds_sanity_check(void *key, void *datum, void *datap)
+{
+	struct user_datum *upper, *user;
+	struct policydb *p = datap;
+	int depth = 0;
 
 	upper = user = datum;
-	जबतक (upper->bounds) अणु
-		काष्ठा ebiपंचांगap_node *node;
-		अचिन्हित दीर्घ bit;
+	while (upper->bounds) {
+		struct ebitmap_node *node;
+		unsigned long bit;
 
-		अगर (++depth == POLICYDB_BOUNDS_MAXDEPTH) अणु
+		if (++depth == POLICYDB_BOUNDS_MAXDEPTH) {
 			pr_err("SELinux: user %s: "
 			       "too deep or looped boundary",
-			       (अक्षर *) key);
-			वापस -EINVAL;
-		पूर्ण
+			       (char *) key);
+			return -EINVAL;
+		}
 
-		upper = p->user_val_to_काष्ठा[upper->bounds - 1];
-		ebiपंचांगap_क्रम_each_positive_bit(&user->roles, node, bit) अणु
-			अगर (ebiपंचांगap_get_bit(&upper->roles, bit))
-				जारी;
+		upper = p->user_val_to_struct[upper->bounds - 1];
+		ebitmap_for_each_positive_bit(&user->roles, node, bit) {
+			if (ebitmap_get_bit(&upper->roles, bit))
+				continue;
 
 			pr_err("SELinux: boundary violated policy: "
 			       "user=%s role=%s bounds=%s\n",
@@ -1685,35 +1684,35 @@ bad:
 			       sym_name(p, SYM_ROLES, bit),
 			       sym_name(p, SYM_USERS, upper->value - 1));
 
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक role_bounds_sanity_check(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा role_datum *upper, *role;
-	काष्ठा policydb *p = datap;
-	पूर्णांक depth = 0;
+static int role_bounds_sanity_check(void *key, void *datum, void *datap)
+{
+	struct role_datum *upper, *role;
+	struct policydb *p = datap;
+	int depth = 0;
 
 	upper = role = datum;
-	जबतक (upper->bounds) अणु
-		काष्ठा ebiपंचांगap_node *node;
-		अचिन्हित दीर्घ bit;
+	while (upper->bounds) {
+		struct ebitmap_node *node;
+		unsigned long bit;
 
-		अगर (++depth == POLICYDB_BOUNDS_MAXDEPTH) अणु
+		if (++depth == POLICYDB_BOUNDS_MAXDEPTH) {
 			pr_err("SELinux: role %s: "
 			       "too deep or looped bounds\n",
-			       (अक्षर *) key);
-			वापस -EINVAL;
-		पूर्ण
+			       (char *) key);
+			return -EINVAL;
+		}
 
-		upper = p->role_val_to_काष्ठा[upper->bounds - 1];
-		ebiपंचांगap_क्रम_each_positive_bit(&role->types, node, bit) अणु
-			अगर (ebiपंचांगap_get_bit(&upper->types, bit))
-				जारी;
+		upper = p->role_val_to_struct[upper->bounds - 1];
+		ebitmap_for_each_positive_bit(&role->types, node, bit) {
+			if (ebitmap_get_bit(&upper->types, bit))
+				continue;
 
 			pr_err("SELinux: boundary violated policy: "
 			       "role=%s type=%s bounds=%s\n",
@@ -1721,197 +1720,197 @@ bad:
 			       sym_name(p, SYM_TYPES, bit),
 			       sym_name(p, SYM_ROLES, upper->value - 1));
 
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक type_bounds_sanity_check(व्योम *key, व्योम *datum, व्योम *datap)
-अणु
-	काष्ठा type_datum *upper;
-	काष्ठा policydb *p = datap;
-	पूर्णांक depth = 0;
+static int type_bounds_sanity_check(void *key, void *datum, void *datap)
+{
+	struct type_datum *upper;
+	struct policydb *p = datap;
+	int depth = 0;
 
 	upper = datum;
-	जबतक (upper->bounds) अणु
-		अगर (++depth == POLICYDB_BOUNDS_MAXDEPTH) अणु
+	while (upper->bounds) {
+		if (++depth == POLICYDB_BOUNDS_MAXDEPTH) {
 			pr_err("SELinux: type %s: "
 			       "too deep or looped boundary\n",
-			       (अक्षर *) key);
-			वापस -EINVAL;
-		पूर्ण
+			       (char *) key);
+			return -EINVAL;
+		}
 
-		upper = p->type_val_to_काष्ठा[upper->bounds - 1];
+		upper = p->type_val_to_struct[upper->bounds - 1];
 		BUG_ON(!upper);
 
-		अगर (upper->attribute) अणु
+		if (upper->attribute) {
 			pr_err("SELinux: type %s: "
 			       "bounded by attribute %s",
-			       (अक्षर *) key,
+			       (char *) key,
 			       sym_name(p, SYM_TYPES, upper->value - 1));
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक policydb_bounds_sanity_check(काष्ठा policydb *p)
-अणु
-	पूर्णांक rc;
+static int policydb_bounds_sanity_check(struct policydb *p)
+{
+	int rc;
 
-	अगर (p->policyvers < POLICYDB_VERSION_BOUNDARY)
-		वापस 0;
+	if (p->policyvers < POLICYDB_VERSION_BOUNDARY)
+		return 0;
 
 	rc = hashtab_map(&p->p_users.table, user_bounds_sanity_check, p);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = hashtab_map(&p->p_roles.table, role_bounds_sanity_check, p);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = hashtab_map(&p->p_types.table, type_bounds_sanity_check, p);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u16 string_to_security_class(काष्ठा policydb *p, स्थिर अक्षर *name)
-अणु
-	काष्ठा class_datum *cladatum;
+u16 string_to_security_class(struct policydb *p, const char *name)
+{
+	struct class_datum *cladatum;
 
 	cladatum = symtab_search(&p->p_classes, name);
-	अगर (!cladatum)
-		वापस 0;
+	if (!cladatum)
+		return 0;
 
-	वापस cladatum->value;
-पूर्ण
+	return cladatum->value;
+}
 
-u32 string_to_av_perm(काष्ठा policydb *p, u16 tclass, स्थिर अक्षर *name)
-अणु
-	काष्ठा class_datum *cladatum;
-	काष्ठा perm_datum *perdatum = शून्य;
-	काष्ठा common_datum *comdatum;
+u32 string_to_av_perm(struct policydb *p, u16 tclass, const char *name)
+{
+	struct class_datum *cladatum;
+	struct perm_datum *perdatum = NULL;
+	struct common_datum *comdatum;
 
-	अगर (!tclass || tclass > p->p_classes.nprim)
-		वापस 0;
+	if (!tclass || tclass > p->p_classes.nprim)
+		return 0;
 
-	cladatum = p->class_val_to_काष्ठा[tclass-1];
+	cladatum = p->class_val_to_struct[tclass-1];
 	comdatum = cladatum->comdatum;
-	अगर (comdatum)
+	if (comdatum)
 		perdatum = symtab_search(&comdatum->permissions, name);
-	अगर (!perdatum)
+	if (!perdatum)
 		perdatum = symtab_search(&cladatum->permissions, name);
-	अगर (!perdatum)
-		वापस 0;
+	if (!perdatum)
+		return 0;
 
-	वापस 1U << (perdatum->value-1);
-पूर्ण
+	return 1U << (perdatum->value-1);
+}
 
-अटल पूर्णांक range_पढ़ो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा range_trans *rt = शून्य;
-	काष्ठा mls_range *r = शून्य;
-	पूर्णांक i, rc;
+static int range_read(struct policydb *p, void *fp)
+{
+	struct range_trans *rt = NULL;
+	struct mls_range *r = NULL;
+	int i, rc;
 	__le32 buf[2];
 	u32 nel;
 
-	अगर (p->policyvers < POLICYDB_VERSION_MLS)
-		वापस 0;
+	if (p->policyvers < POLICYDB_VERSION_MLS)
+		return 0;
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		वापस rc;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		return rc;
 
 	nel = le32_to_cpu(buf[0]);
 
 	rc = hashtab_init(&p->range_tr, nel);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < nel; i++) अणु
+	for (i = 0; i < nel; i++) {
 		rc = -ENOMEM;
-		rt = kzalloc(माप(*rt), GFP_KERNEL);
-		अगर (!rt)
-			जाओ out;
+		rt = kzalloc(sizeof(*rt), GFP_KERNEL);
+		if (!rt)
+			goto out;
 
-		rc = next_entry(buf, fp, (माप(u32) * 2));
-		अगर (rc)
-			जाओ out;
+		rc = next_entry(buf, fp, (sizeof(u32) * 2));
+		if (rc)
+			goto out;
 
 		rt->source_type = le32_to_cpu(buf[0]);
 		rt->target_type = le32_to_cpu(buf[1]);
-		अगर (p->policyvers >= POLICYDB_VERSION_RANGETRANS) अणु
-			rc = next_entry(buf, fp, माप(u32));
-			अगर (rc)
-				जाओ out;
+		if (p->policyvers >= POLICYDB_VERSION_RANGETRANS) {
+			rc = next_entry(buf, fp, sizeof(u32));
+			if (rc)
+				goto out;
 			rt->target_class = le32_to_cpu(buf[0]);
-		पूर्ण अन्यथा
+		} else
 			rt->target_class = p->process_class;
 
 		rc = -EINVAL;
-		अगर (!policydb_type_isvalid(p, rt->source_type) ||
+		if (!policydb_type_isvalid(p, rt->source_type) ||
 		    !policydb_type_isvalid(p, rt->target_type) ||
 		    !policydb_class_isvalid(p, rt->target_class))
-			जाओ out;
+			goto out;
 
 		rc = -ENOMEM;
-		r = kzalloc(माप(*r), GFP_KERNEL);
-		अगर (!r)
-			जाओ out;
+		r = kzalloc(sizeof(*r), GFP_KERNEL);
+		if (!r)
+			goto out;
 
-		rc = mls_पढ़ो_range_helper(r, fp);
-		अगर (rc)
-			जाओ out;
+		rc = mls_read_range_helper(r, fp);
+		if (rc)
+			goto out;
 
 		rc = -EINVAL;
-		अगर (!mls_range_isvalid(p, r)) अणु
+		if (!mls_range_isvalid(p, r)) {
 			pr_warn("SELinux:  rangetrans:  invalid range\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		rc = hashtab_insert(&p->range_tr, rt, r, rangetr_key_params);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
-		rt = शून्य;
-		r = शून्य;
-	पूर्ण
+		rt = NULL;
+		r = NULL;
+	}
 	hash_eval(&p->range_tr, "rangetr");
 	rc = 0;
 out:
-	kमुक्त(rt);
-	kमुक्त(r);
-	वापस rc;
-पूर्ण
+	kfree(rt);
+	kfree(r);
+	return rc;
+}
 
-अटल पूर्णांक filename_trans_पढ़ो_helper_compat(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा filename_trans_key key, *ft = शून्य;
-	काष्ठा filename_trans_datum *last, *datum = शून्य;
-	अक्षर *name = शून्य;
+static int filename_trans_read_helper_compat(struct policydb *p, void *fp)
+{
+	struct filename_trans_key key, *ft = NULL;
+	struct filename_trans_datum *last, *datum = NULL;
+	char *name = NULL;
 	u32 len, stype, otype;
 	__le32 buf[4];
-	पूर्णांक rc;
+	int rc;
 
 	/* length of the path component string */
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		वापस rc;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		return rc;
 	len = le32_to_cpu(buf[0]);
 
 	/* path component string */
-	rc = str_पढ़ो(&name, GFP_KERNEL, fp, len);
-	अगर (rc)
-		वापस rc;
+	rc = str_read(&name, GFP_KERNEL, fp, len);
+	if (rc)
+		return rc;
 
-	rc = next_entry(buf, fp, माप(u32) * 4);
-	अगर (rc)
-		जाओ out;
+	rc = next_entry(buf, fp, sizeof(u32) * 4);
+	if (rc)
+		goto out;
 
 	stype = le32_to_cpu(buf[0]);
 	key.ttype = le32_to_cpu(buf[1]);
@@ -1920,121 +1919,121 @@ out:
 
 	otype = le32_to_cpu(buf[3]);
 
-	last = शून्य;
+	last = NULL;
 	datum = policydb_filenametr_search(p, &key);
-	जबतक (datum) अणु
-		अगर (unlikely(ebiपंचांगap_get_bit(&datum->stypes, stype - 1))) अणु
+	while (datum) {
+		if (unlikely(ebitmap_get_bit(&datum->stypes, stype - 1))) {
 			/* conflicting/duplicate rules are ignored */
-			datum = शून्य;
-			जाओ out;
-		पूर्ण
-		अगर (likely(datum->otype == otype))
-			अवरोध;
+			datum = NULL;
+			goto out;
+		}
+		if (likely(datum->otype == otype))
+			break;
 		last = datum;
 		datum = datum->next;
-	पूर्ण
-	अगर (!datum) अणु
+	}
+	if (!datum) {
 		rc = -ENOMEM;
-		datum = kदो_स्मृति(माप(*datum), GFP_KERNEL);
-		अगर (!datum)
-			जाओ out;
+		datum = kmalloc(sizeof(*datum), GFP_KERNEL);
+		if (!datum)
+			goto out;
 
-		ebiपंचांगap_init(&datum->stypes);
+		ebitmap_init(&datum->stypes);
 		datum->otype = otype;
-		datum->next = शून्य;
+		datum->next = NULL;
 
-		अगर (unlikely(last)) अणु
+		if (unlikely(last)) {
 			last->next = datum;
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = -ENOMEM;
-			ft = kmemdup(&key, माप(key), GFP_KERNEL);
-			अगर (!ft)
-				जाओ out;
+			ft = kmemdup(&key, sizeof(key), GFP_KERNEL);
+			if (!ft)
+				goto out;
 
 			rc = hashtab_insert(&p->filename_trans, ft, datum,
 					    filenametr_key_params);
-			अगर (rc)
-				जाओ out;
-			name = शून्य;
+			if (rc)
+				goto out;
+			name = NULL;
 
-			rc = ebiपंचांगap_set_bit(&p->filename_trans_ttypes,
+			rc = ebitmap_set_bit(&p->filename_trans_ttypes,
 					     key.ttype, 1);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण
-	kमुक्त(name);
-	वापस ebiपंचांगap_set_bit(&datum->stypes, stype - 1, 1);
+			if (rc)
+				return rc;
+		}
+	}
+	kfree(name);
+	return ebitmap_set_bit(&datum->stypes, stype - 1, 1);
 
 out:
-	kमुक्त(ft);
-	kमुक्त(name);
-	kमुक्त(datum);
-	वापस rc;
-पूर्ण
+	kfree(ft);
+	kfree(name);
+	kfree(datum);
+	return rc;
+}
 
-अटल पूर्णांक filename_trans_पढ़ो_helper(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा filename_trans_key *ft = शून्य;
-	काष्ठा filename_trans_datum **dst, *datum, *first = शून्य;
-	अक्षर *name = शून्य;
+static int filename_trans_read_helper(struct policydb *p, void *fp)
+{
+	struct filename_trans_key *ft = NULL;
+	struct filename_trans_datum **dst, *datum, *first = NULL;
+	char *name = NULL;
 	u32 len, ttype, tclass, ndatum, i;
 	__le32 buf[3];
-	पूर्णांक rc;
+	int rc;
 
 	/* length of the path component string */
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		वापस rc;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		return rc;
 	len = le32_to_cpu(buf[0]);
 
 	/* path component string */
-	rc = str_पढ़ो(&name, GFP_KERNEL, fp, len);
-	अगर (rc)
-		वापस rc;
+	rc = str_read(&name, GFP_KERNEL, fp, len);
+	if (rc)
+		return rc;
 
-	rc = next_entry(buf, fp, माप(u32) * 3);
-	अगर (rc)
-		जाओ out;
+	rc = next_entry(buf, fp, sizeof(u32) * 3);
+	if (rc)
+		goto out;
 
 	ttype = le32_to_cpu(buf[0]);
 	tclass = le32_to_cpu(buf[1]);
 
 	ndatum = le32_to_cpu(buf[2]);
-	अगर (ndatum == 0) अणु
+	if (ndatum == 0) {
 		pr_err("SELinux:  Filename transition key with no datum\n");
 		rc = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dst = &first;
-	क्रम (i = 0; i < ndatum; i++) अणु
+	for (i = 0; i < ndatum; i++) {
 		rc = -ENOMEM;
-		datum = kदो_स्मृति(माप(*datum), GFP_KERNEL);
-		अगर (!datum)
-			जाओ out;
+		datum = kmalloc(sizeof(*datum), GFP_KERNEL);
+		if (!datum)
+			goto out;
 
 		*dst = datum;
 
-		/* ebiपंचांगap_पढ़ो() will at least init the biपंचांगap */
-		rc = ebiपंचांगap_पढ़ो(&datum->stypes, fp);
-		अगर (rc)
-			जाओ out;
+		/* ebitmap_read() will at least init the bitmap */
+		rc = ebitmap_read(&datum->stypes, fp);
+		if (rc)
+			goto out;
 
-		rc = next_entry(buf, fp, माप(u32));
-		अगर (rc)
-			जाओ out;
+		rc = next_entry(buf, fp, sizeof(u32));
+		if (rc)
+			goto out;
 
 		datum->otype = le32_to_cpu(buf[0]);
-		datum->next = शून्य;
+		datum->next = NULL;
 
 		dst = &datum->next;
-	पूर्ण
+	}
 
 	rc = -ENOMEM;
-	ft = kदो_स्मृति(माप(*ft), GFP_KERNEL);
-	अगर (!ft)
-		जाओ out;
+	ft = kmalloc(sizeof(*ft), GFP_KERNEL);
+	if (!ft)
+		goto out;
 
 	ft->ttype = ttype;
 	ft->tclass = tclass;
@@ -2042,1026 +2041,1026 @@ out:
 
 	rc = hashtab_insert(&p->filename_trans, ft, first,
 			    filenametr_key_params);
-	अगर (rc == -EEXIST)
+	if (rc == -EEXIST)
 		pr_err("SELinux:  Duplicate filename transition key\n");
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	वापस ebiपंचांगap_set_bit(&p->filename_trans_ttypes, ttype, 1);
+	return ebitmap_set_bit(&p->filename_trans_ttypes, ttype, 1);
 
 out:
-	kमुक्त(ft);
-	kमुक्त(name);
-	जबतक (first) अणु
+	kfree(ft);
+	kfree(name);
+	while (first) {
 		datum = first;
 		first = first->next;
 
-		ebiपंचांगap_destroy(&datum->stypes);
-		kमुक्त(datum);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		ebitmap_destroy(&datum->stypes);
+		kfree(datum);
+	}
+	return rc;
+}
 
-अटल पूर्णांक filename_trans_पढ़ो(काष्ठा policydb *p, व्योम *fp)
-अणु
+static int filename_trans_read(struct policydb *p, void *fp)
+{
 	u32 nel;
 	__le32 buf[1];
-	पूर्णांक rc, i;
+	int rc, i;
 
-	अगर (p->policyvers < POLICYDB_VERSION_खाताNAME_TRANS)
-		वापस 0;
+	if (p->policyvers < POLICYDB_VERSION_FILENAME_TRANS)
+		return 0;
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		वापस rc;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		return rc;
 	nel = le32_to_cpu(buf[0]);
 
-	अगर (p->policyvers < POLICYDB_VERSION_COMP_FTRANS) अणु
+	if (p->policyvers < POLICYDB_VERSION_COMP_FTRANS) {
 		p->compat_filename_trans_count = nel;
 
 		rc = hashtab_init(&p->filename_trans, (1 << 11));
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
-		क्रम (i = 0; i < nel; i++) अणु
-			rc = filename_trans_पढ़ो_helper_compat(p, fp);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		for (i = 0; i < nel; i++) {
+			rc = filename_trans_read_helper_compat(p, fp);
+			if (rc)
+				return rc;
+		}
+	} else {
 		rc = hashtab_init(&p->filename_trans, nel);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 
-		क्रम (i = 0; i < nel; i++) अणु
-			rc = filename_trans_पढ़ो_helper(p, fp);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण
+		for (i = 0; i < nel; i++) {
+			rc = filename_trans_read_helper(p, fp);
+			if (rc)
+				return rc;
+		}
+	}
 	hash_eval(&p->filename_trans, "filenametr");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक genfs_पढ़ो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	पूर्णांक i, j, rc;
+static int genfs_read(struct policydb *p, void *fp)
+{
+	int i, j, rc;
 	u32 nel, nel2, len, len2;
 	__le32 buf[1];
-	काष्ठा ocontext *l, *c;
-	काष्ठा ocontext *newc = शून्य;
-	काष्ठा genfs *genfs_p, *genfs;
-	काष्ठा genfs *newgenfs = शून्य;
+	struct ocontext *l, *c;
+	struct ocontext *newc = NULL;
+	struct genfs *genfs_p, *genfs;
+	struct genfs *newgenfs = NULL;
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		वापस rc;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		return rc;
 	nel = le32_to_cpu(buf[0]);
 
-	क्रम (i = 0; i < nel; i++) अणु
-		rc = next_entry(buf, fp, माप(u32));
-		अगर (rc)
-			जाओ out;
+	for (i = 0; i < nel; i++) {
+		rc = next_entry(buf, fp, sizeof(u32));
+		if (rc)
+			goto out;
 		len = le32_to_cpu(buf[0]);
 
 		rc = -ENOMEM;
-		newgenfs = kzalloc(माप(*newgenfs), GFP_KERNEL);
-		अगर (!newgenfs)
-			जाओ out;
+		newgenfs = kzalloc(sizeof(*newgenfs), GFP_KERNEL);
+		if (!newgenfs)
+			goto out;
 
-		rc = str_पढ़ो(&newgenfs->fstype, GFP_KERNEL, fp, len);
-		अगर (rc)
-			जाओ out;
+		rc = str_read(&newgenfs->fstype, GFP_KERNEL, fp, len);
+		if (rc)
+			goto out;
 
-		क्रम (genfs_p = शून्य, genfs = p->genfs; genfs;
-		     genfs_p = genfs, genfs = genfs->next) अणु
+		for (genfs_p = NULL, genfs = p->genfs; genfs;
+		     genfs_p = genfs, genfs = genfs->next) {
 			rc = -EINVAL;
-			अगर (म_भेद(newgenfs->fstype, genfs->fstype) == 0) अणु
+			if (strcmp(newgenfs->fstype, genfs->fstype) == 0) {
 				pr_err("SELinux:  dup genfs fstype %s\n",
 				       newgenfs->fstype);
-				जाओ out;
-			पूर्ण
-			अगर (म_भेद(newgenfs->fstype, genfs->fstype) < 0)
-				अवरोध;
-		पूर्ण
+				goto out;
+			}
+			if (strcmp(newgenfs->fstype, genfs->fstype) < 0)
+				break;
+		}
 		newgenfs->next = genfs;
-		अगर (genfs_p)
+		if (genfs_p)
 			genfs_p->next = newgenfs;
-		अन्यथा
+		else
 			p->genfs = newgenfs;
 		genfs = newgenfs;
-		newgenfs = शून्य;
+		newgenfs = NULL;
 
-		rc = next_entry(buf, fp, माप(u32));
-		अगर (rc)
-			जाओ out;
+		rc = next_entry(buf, fp, sizeof(u32));
+		if (rc)
+			goto out;
 
 		nel2 = le32_to_cpu(buf[0]);
-		क्रम (j = 0; j < nel2; j++) अणु
-			rc = next_entry(buf, fp, माप(u32));
-			अगर (rc)
-				जाओ out;
+		for (j = 0; j < nel2; j++) {
+			rc = next_entry(buf, fp, sizeof(u32));
+			if (rc)
+				goto out;
 			len = le32_to_cpu(buf[0]);
 
 			rc = -ENOMEM;
-			newc = kzalloc(माप(*newc), GFP_KERNEL);
-			अगर (!newc)
-				जाओ out;
+			newc = kzalloc(sizeof(*newc), GFP_KERNEL);
+			if (!newc)
+				goto out;
 
-			rc = str_पढ़ो(&newc->u.name, GFP_KERNEL, fp, len);
-			अगर (rc)
-				जाओ out;
+			rc = str_read(&newc->u.name, GFP_KERNEL, fp, len);
+			if (rc)
+				goto out;
 
-			rc = next_entry(buf, fp, माप(u32));
-			अगर (rc)
-				जाओ out;
+			rc = next_entry(buf, fp, sizeof(u32));
+			if (rc)
+				goto out;
 
 			newc->v.sclass = le32_to_cpu(buf[0]);
-			rc = context_पढ़ो_and_validate(&newc->context[0], p, fp);
-			अगर (rc)
-				जाओ out;
+			rc = context_read_and_validate(&newc->context[0], p, fp);
+			if (rc)
+				goto out;
 
-			क्रम (l = शून्य, c = genfs->head; c;
-			     l = c, c = c->next) अणु
+			for (l = NULL, c = genfs->head; c;
+			     l = c, c = c->next) {
 				rc = -EINVAL;
-				अगर (!म_भेद(newc->u.name, c->u.name) &&
+				if (!strcmp(newc->u.name, c->u.name) &&
 				    (!c->v.sclass || !newc->v.sclass ||
-				     newc->v.sclass == c->v.sclass)) अणु
+				     newc->v.sclass == c->v.sclass)) {
 					pr_err("SELinux:  dup genfs entry (%s,%s)\n",
 					       genfs->fstype, c->u.name);
-					जाओ out;
-				पूर्ण
-				len = म_माप(newc->u.name);
-				len2 = म_माप(c->u.name);
-				अगर (len > len2)
-					अवरोध;
-			पूर्ण
+					goto out;
+				}
+				len = strlen(newc->u.name);
+				len2 = strlen(c->u.name);
+				if (len > len2)
+					break;
+			}
 
 			newc->next = c;
-			अगर (l)
+			if (l)
 				l->next = newc;
-			अन्यथा
+			else
 				genfs->head = newc;
-			newc = शून्य;
-		पूर्ण
-	पूर्ण
+			newc = NULL;
+		}
+	}
 	rc = 0;
 out:
-	अगर (newgenfs) अणु
-		kमुक्त(newgenfs->fstype);
-		kमुक्त(newgenfs);
-	पूर्ण
+	if (newgenfs) {
+		kfree(newgenfs->fstype);
+		kfree(newgenfs);
+	}
 	ocontext_destroy(newc, OCON_FSUSE);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ocontext_पढ़ो(काष्ठा policydb *p, काष्ठा policydb_compat_info *info,
-			 व्योम *fp)
-अणु
-	पूर्णांक i, j, rc;
+static int ocontext_read(struct policydb *p, struct policydb_compat_info *info,
+			 void *fp)
+{
+	int i, j, rc;
 	u32 nel, len;
 	__be64 prefixbuf[1];
 	__le32 buf[3];
-	काष्ठा ocontext *l, *c;
+	struct ocontext *l, *c;
 	u32 nodebuf[8];
 
-	क्रम (i = 0; i < info->ocon_num; i++) अणु
-		rc = next_entry(buf, fp, माप(u32));
-		अगर (rc)
-			जाओ out;
+	for (i = 0; i < info->ocon_num; i++) {
+		rc = next_entry(buf, fp, sizeof(u32));
+		if (rc)
+			goto out;
 		nel = le32_to_cpu(buf[0]);
 
-		l = शून्य;
-		क्रम (j = 0; j < nel; j++) अणु
+		l = NULL;
+		for (j = 0; j < nel; j++) {
 			rc = -ENOMEM;
-			c = kzalloc(माप(*c), GFP_KERNEL);
-			अगर (!c)
-				जाओ out;
-			अगर (l)
+			c = kzalloc(sizeof(*c), GFP_KERNEL);
+			if (!c)
+				goto out;
+			if (l)
 				l->next = c;
-			अन्यथा
+			else
 				p->ocontexts[i] = c;
 			l = c;
 
-			चयन (i) अणु
-			हाल OCON_ISID:
-				rc = next_entry(buf, fp, माप(u32));
-				अगर (rc)
-					जाओ out;
+			switch (i) {
+			case OCON_ISID:
+				rc = next_entry(buf, fp, sizeof(u32));
+				if (rc)
+					goto out;
 
 				c->sid[0] = le32_to_cpu(buf[0]);
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			हाल OCON_FS:
-			हाल OCON_NETIF:
-				rc = next_entry(buf, fp, माप(u32));
-				अगर (rc)
-					जाओ out;
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				break;
+			case OCON_FS:
+			case OCON_NETIF:
+				rc = next_entry(buf, fp, sizeof(u32));
+				if (rc)
+					goto out;
 				len = le32_to_cpu(buf[0]);
 
-				rc = str_पढ़ो(&c->u.name, GFP_KERNEL, fp, len);
-				अगर (rc)
-					जाओ out;
+				rc = str_read(&c->u.name, GFP_KERNEL, fp, len);
+				if (rc)
+					goto out;
 
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				rc = context_पढ़ो_and_validate(&c->context[1], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			हाल OCON_PORT:
-				rc = next_entry(buf, fp, माप(u32)*3);
-				अगर (rc)
-					जाओ out;
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				rc = context_read_and_validate(&c->context[1], p, fp);
+				if (rc)
+					goto out;
+				break;
+			case OCON_PORT:
+				rc = next_entry(buf, fp, sizeof(u32)*3);
+				if (rc)
+					goto out;
 				c->u.port.protocol = le32_to_cpu(buf[0]);
 				c->u.port.low_port = le32_to_cpu(buf[1]);
 				c->u.port.high_port = le32_to_cpu(buf[2]);
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			हाल OCON_NODE:
-				rc = next_entry(nodebuf, fp, माप(u32) * 2);
-				अगर (rc)
-					जाओ out;
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				break;
+			case OCON_NODE:
+				rc = next_entry(nodebuf, fp, sizeof(u32) * 2);
+				if (rc)
+					goto out;
 				c->u.node.addr = nodebuf[0]; /* network order */
 				c->u.node.mask = nodebuf[1]; /* network order */
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			हाल OCON_FSUSE:
-				rc = next_entry(buf, fp, माप(u32)*2);
-				अगर (rc)
-					जाओ out;
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				break;
+			case OCON_FSUSE:
+				rc = next_entry(buf, fp, sizeof(u32)*2);
+				if (rc)
+					goto out;
 
 				rc = -EINVAL;
 				c->v.behavior = le32_to_cpu(buf[0]);
-				/* Determined at runसमय, not in policy DB. */
-				अगर (c->v.behavior == SECURITY_FS_USE_MNTPOINT)
-					जाओ out;
-				अगर (c->v.behavior > SECURITY_FS_USE_MAX)
-					जाओ out;
+				/* Determined at runtime, not in policy DB. */
+				if (c->v.behavior == SECURITY_FS_USE_MNTPOINT)
+					goto out;
+				if (c->v.behavior > SECURITY_FS_USE_MAX)
+					goto out;
 
 				len = le32_to_cpu(buf[1]);
-				rc = str_पढ़ो(&c->u.name, GFP_KERNEL, fp, len);
-				अगर (rc)
-					जाओ out;
+				rc = str_read(&c->u.name, GFP_KERNEL, fp, len);
+				if (rc)
+					goto out;
 
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			हाल OCON_NODE6: अणु
-				पूर्णांक k;
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				break;
+			case OCON_NODE6: {
+				int k;
 
-				rc = next_entry(nodebuf, fp, माप(u32) * 8);
-				अगर (rc)
-					जाओ out;
-				क्रम (k = 0; k < 4; k++)
+				rc = next_entry(nodebuf, fp, sizeof(u32) * 8);
+				if (rc)
+					goto out;
+				for (k = 0; k < 4; k++)
 					c->u.node6.addr[k] = nodebuf[k];
-				क्रम (k = 0; k < 4; k++)
+				for (k = 0; k < 4; k++)
 					c->u.node6.mask[k] = nodebuf[k+4];
-				rc = context_पढ़ो_and_validate(&c->context[0], p, fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			पूर्ण
-			हाल OCON_IBPKEY: अणु
+				rc = context_read_and_validate(&c->context[0], p, fp);
+				if (rc)
+					goto out;
+				break;
+			}
+			case OCON_IBPKEY: {
 				u32 pkey_lo, pkey_hi;
 
-				rc = next_entry(prefixbuf, fp, माप(u64));
-				अगर (rc)
-					जाओ out;
+				rc = next_entry(prefixbuf, fp, sizeof(u64));
+				if (rc)
+					goto out;
 
 				/* we need to have subnet_prefix in CPU order */
 				c->u.ibpkey.subnet_prefix = be64_to_cpu(prefixbuf[0]);
 
-				rc = next_entry(buf, fp, माप(u32) * 2);
-				अगर (rc)
-					जाओ out;
+				rc = next_entry(buf, fp, sizeof(u32) * 2);
+				if (rc)
+					goto out;
 
 				pkey_lo = le32_to_cpu(buf[0]);
 				pkey_hi = le32_to_cpu(buf[1]);
 
-				अगर (pkey_lo > U16_MAX || pkey_hi > U16_MAX) अणु
+				if (pkey_lo > U16_MAX || pkey_hi > U16_MAX) {
 					rc = -EINVAL;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
 				c->u.ibpkey.low_pkey  = pkey_lo;
 				c->u.ibpkey.high_pkey = pkey_hi;
 
-				rc = context_पढ़ो_and_validate(&c->context[0],
+				rc = context_read_and_validate(&c->context[0],
 							       p,
 							       fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			पूर्ण
-			हाल OCON_IBENDPORT: अणु
+				if (rc)
+					goto out;
+				break;
+			}
+			case OCON_IBENDPORT: {
 				u32 port;
 
-				rc = next_entry(buf, fp, माप(u32) * 2);
-				अगर (rc)
-					जाओ out;
+				rc = next_entry(buf, fp, sizeof(u32) * 2);
+				if (rc)
+					goto out;
 				len = le32_to_cpu(buf[0]);
 
-				rc = str_पढ़ो(&c->u.ibendport.dev_name, GFP_KERNEL, fp, len);
-				अगर (rc)
-					जाओ out;
+				rc = str_read(&c->u.ibendport.dev_name, GFP_KERNEL, fp, len);
+				if (rc)
+					goto out;
 
 				port = le32_to_cpu(buf[1]);
-				अगर (port > U8_MAX || port == 0) अणु
+				if (port > U8_MAX || port == 0) {
 					rc = -EINVAL;
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
 				c->u.ibendport.port = port;
 
-				rc = context_पढ़ो_and_validate(&c->context[0],
+				rc = context_read_and_validate(&c->context[0],
 							       p,
 							       fp);
-				अगर (rc)
-					जाओ out;
-				अवरोध;
-			पूर्ण /* end हाल */
-			पूर्ण /* end चयन */
-		पूर्ण
-	पूर्ण
+				if (rc)
+					goto out;
+				break;
+			} /* end case */
+			} /* end switch */
+		}
+	}
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Read the configuration data from a policy database binary
- * representation file पूर्णांकo a policy database काष्ठाure.
+ * representation file into a policy database structure.
  */
-पूर्णांक policydb_पढ़ो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा role_allow *ra, *lra;
-	काष्ठा role_trans_key *rtk = शून्य;
-	काष्ठा role_trans_datum *rtd = शून्य;
-	पूर्णांक i, j, rc;
+int policydb_read(struct policydb *p, void *fp)
+{
+	struct role_allow *ra, *lra;
+	struct role_trans_key *rtk = NULL;
+	struct role_trans_datum *rtd = NULL;
+	int i, j, rc;
 	__le32 buf[4];
 	u32 len, nprim, nel, perm;
 
-	अक्षर *policydb_str;
-	काष्ठा policydb_compat_info *info;
+	char *policydb_str;
+	struct policydb_compat_info *info;
 
 	policydb_init(p);
 
 	/* Read the magic number and string length. */
-	rc = next_entry(buf, fp, माप(u32) * 2);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(u32) * 2);
+	if (rc)
+		goto bad;
 
 	rc = -EINVAL;
-	अगर (le32_to_cpu(buf[0]) != POLICYDB_MAGIC) अणु
+	if (le32_to_cpu(buf[0]) != POLICYDB_MAGIC) {
 		pr_err("SELinux:  policydb magic number 0x%x does "
 		       "not match expected magic number 0x%x\n",
 		       le32_to_cpu(buf[0]), POLICYDB_MAGIC);
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	rc = -EINVAL;
 	len = le32_to_cpu(buf[1]);
-	अगर (len != म_माप(POLICYDB_STRING)) अणु
+	if (len != strlen(POLICYDB_STRING)) {
 		pr_err("SELinux:  policydb string length %d does not "
 		       "match expected length %zu\n",
-		       len, म_माप(POLICYDB_STRING));
-		जाओ bad;
-	पूर्ण
+		       len, strlen(POLICYDB_STRING));
+		goto bad;
+	}
 
 	rc = -ENOMEM;
-	policydb_str = kदो_स्मृति(len + 1, GFP_KERNEL);
-	अगर (!policydb_str) अणु
+	policydb_str = kmalloc(len + 1, GFP_KERNEL);
+	if (!policydb_str) {
 		pr_err("SELinux:  unable to allocate memory for policydb "
 		       "string of length %d\n", len);
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	rc = next_entry(policydb_str, fp, len);
-	अगर (rc) अणु
+	if (rc) {
 		pr_err("SELinux:  truncated policydb string identifier\n");
-		kमुक्त(policydb_str);
-		जाओ bad;
-	पूर्ण
+		kfree(policydb_str);
+		goto bad;
+	}
 
 	rc = -EINVAL;
 	policydb_str[len] = '\0';
-	अगर (म_भेद(policydb_str, POLICYDB_STRING)) अणु
+	if (strcmp(policydb_str, POLICYDB_STRING)) {
 		pr_err("SELinux:  policydb string %s does not match "
 		       "my string %s\n", policydb_str, POLICYDB_STRING);
-		kमुक्त(policydb_str);
-		जाओ bad;
-	पूर्ण
+		kfree(policydb_str);
+		goto bad;
+	}
 	/* Done with policydb_str. */
-	kमुक्त(policydb_str);
-	policydb_str = शून्य;
+	kfree(policydb_str);
+	policydb_str = NULL;
 
 	/* Read the version and table sizes. */
-	rc = next_entry(buf, fp, माप(u32)*4);
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(u32)*4);
+	if (rc)
+		goto bad;
 
 	rc = -EINVAL;
 	p->policyvers = le32_to_cpu(buf[0]);
-	अगर (p->policyvers < POLICYDB_VERSION_MIN ||
-	    p->policyvers > POLICYDB_VERSION_MAX) अणु
+	if (p->policyvers < POLICYDB_VERSION_MIN ||
+	    p->policyvers > POLICYDB_VERSION_MAX) {
 		pr_err("SELinux:  policydb version %d does not match "
 		       "my version range %d-%d\n",
 		       le32_to_cpu(buf[0]), POLICYDB_VERSION_MIN, POLICYDB_VERSION_MAX);
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	अगर ((le32_to_cpu(buf[1]) & POLICYDB_CONFIG_MLS)) अणु
+	if ((le32_to_cpu(buf[1]) & POLICYDB_CONFIG_MLS)) {
 		p->mls_enabled = 1;
 
 		rc = -EINVAL;
-		अगर (p->policyvers < POLICYDB_VERSION_MLS) अणु
+		if (p->policyvers < POLICYDB_VERSION_MLS) {
 			pr_err("SELinux: security policydb version %d "
 				"(MLS) not backwards compatible\n",
 				p->policyvers);
-			जाओ bad;
-		पूर्ण
-	पूर्ण
+			goto bad;
+		}
+	}
 	p->reject_unknown = !!(le32_to_cpu(buf[1]) & REJECT_UNKNOWN);
 	p->allow_unknown = !!(le32_to_cpu(buf[1]) & ALLOW_UNKNOWN);
 
-	अगर (p->policyvers >= POLICYDB_VERSION_POLCAP) अणु
-		rc = ebiपंचांगap_पढ़ो(&p->policycaps, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_POLCAP) {
+		rc = ebitmap_read(&p->policycaps, fp);
+		if (rc)
+			goto bad;
+	}
 
-	अगर (p->policyvers >= POLICYDB_VERSION_PERMISSIVE) अणु
-		rc = ebiपंचांगap_पढ़ो(&p->permissive_map, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_PERMISSIVE) {
+		rc = ebitmap_read(&p->permissive_map, fp);
+		if (rc)
+			goto bad;
+	}
 
 	rc = -EINVAL;
 	info = policydb_lookup_compat(p->policyvers);
-	अगर (!info) अणु
+	if (!info) {
 		pr_err("SELinux:  unable to find policy compat info "
 		       "for version %d\n", p->policyvers);
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
 	rc = -EINVAL;
-	अगर (le32_to_cpu(buf[2]) != info->sym_num ||
-		le32_to_cpu(buf[3]) != info->ocon_num) अणु
+	if (le32_to_cpu(buf[2]) != info->sym_num ||
+		le32_to_cpu(buf[3]) != info->ocon_num) {
 		pr_err("SELinux:  policydb table sizes (%d,%d) do "
 		       "not match mine (%d,%d)\n", le32_to_cpu(buf[2]),
 			le32_to_cpu(buf[3]),
 		       info->sym_num, info->ocon_num);
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	क्रम (i = 0; i < info->sym_num; i++) अणु
-		rc = next_entry(buf, fp, माप(u32)*2);
-		अगर (rc)
-			जाओ bad;
+	for (i = 0; i < info->sym_num; i++) {
+		rc = next_entry(buf, fp, sizeof(u32)*2);
+		if (rc)
+			goto bad;
 		nprim = le32_to_cpu(buf[0]);
 		nel = le32_to_cpu(buf[1]);
 
 		rc = symtab_init(&p->symtab[i], nel);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
-		अगर (i == SYM_ROLES) अणु
+		if (i == SYM_ROLES) {
 			rc = roles_init(p);
-			अगर (rc)
-				जाओ out;
-		पूर्ण
+			if (rc)
+				goto out;
+		}
 
-		क्रम (j = 0; j < nel; j++) अणु
-			rc = पढ़ो_f[i](p, &p->symtab[i], fp);
-			अगर (rc)
-				जाओ bad;
-		पूर्ण
+		for (j = 0; j < nel; j++) {
+			rc = read_f[i](p, &p->symtab[i], fp);
+			if (rc)
+				goto bad;
+		}
 
 		p->symtab[i].nprim = nprim;
-	पूर्ण
+	}
 
 	rc = -EINVAL;
 	p->process_class = string_to_security_class(p, "process");
-	अगर (!p->process_class) अणु
+	if (!p->process_class) {
 		pr_err("SELinux: process class is required, not defined in policy\n");
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 
-	rc = avtab_पढ़ो(&p->te_avtab, fp, p);
-	अगर (rc)
-		जाओ bad;
+	rc = avtab_read(&p->te_avtab, fp, p);
+	if (rc)
+		goto bad;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_BOOL) अणु
-		rc = cond_पढ़ो_list(p, fp);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_BOOL) {
+		rc = cond_read_list(p, fp);
+		if (rc)
+			goto bad;
+	}
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		goto bad;
 	nel = le32_to_cpu(buf[0]);
 
 	rc = hashtab_init(&p->role_tr, nel);
-	अगर (rc)
-		जाओ bad;
-	क्रम (i = 0; i < nel; i++) अणु
+	if (rc)
+		goto bad;
+	for (i = 0; i < nel; i++) {
 		rc = -ENOMEM;
-		rtk = kदो_स्मृति(माप(*rtk), GFP_KERNEL);
-		अगर (!rtk)
-			जाओ bad;
+		rtk = kmalloc(sizeof(*rtk), GFP_KERNEL);
+		if (!rtk)
+			goto bad;
 
 		rc = -ENOMEM;
-		rtd = kदो_स्मृति(माप(*rtd), GFP_KERNEL);
-		अगर (!rtd)
-			जाओ bad;
+		rtd = kmalloc(sizeof(*rtd), GFP_KERNEL);
+		if (!rtd)
+			goto bad;
 
-		rc = next_entry(buf, fp, माप(u32)*3);
-		अगर (rc)
-			जाओ bad;
+		rc = next_entry(buf, fp, sizeof(u32)*3);
+		if (rc)
+			goto bad;
 
 		rc = -EINVAL;
 		rtk->role = le32_to_cpu(buf[0]);
 		rtk->type = le32_to_cpu(buf[1]);
 		rtd->new_role = le32_to_cpu(buf[2]);
-		अगर (p->policyvers >= POLICYDB_VERSION_ROLETRANS) अणु
-			rc = next_entry(buf, fp, माप(u32));
-			अगर (rc)
-				जाओ bad;
+		if (p->policyvers >= POLICYDB_VERSION_ROLETRANS) {
+			rc = next_entry(buf, fp, sizeof(u32));
+			if (rc)
+				goto bad;
 			rtk->tclass = le32_to_cpu(buf[0]);
-		पूर्ण अन्यथा
+		} else
 			rtk->tclass = p->process_class;
 
 		rc = -EINVAL;
-		अगर (!policydb_role_isvalid(p, rtk->role) ||
+		if (!policydb_role_isvalid(p, rtk->role) ||
 		    !policydb_type_isvalid(p, rtk->type) ||
 		    !policydb_class_isvalid(p, rtk->tclass) ||
 		    !policydb_role_isvalid(p, rtd->new_role))
-			जाओ bad;
+			goto bad;
 
 		rc = hashtab_insert(&p->role_tr, rtk, rtd, roletr_key_params);
-		अगर (rc)
-			जाओ bad;
+		if (rc)
+			goto bad;
 
-		rtk = शून्य;
-		rtd = शून्य;
-	पूर्ण
+		rtk = NULL;
+		rtd = NULL;
+	}
 
-	rc = next_entry(buf, fp, माप(u32));
-	अगर (rc)
-		जाओ bad;
+	rc = next_entry(buf, fp, sizeof(u32));
+	if (rc)
+		goto bad;
 	nel = le32_to_cpu(buf[0]);
-	lra = शून्य;
-	क्रम (i = 0; i < nel; i++) अणु
+	lra = NULL;
+	for (i = 0; i < nel; i++) {
 		rc = -ENOMEM;
-		ra = kzalloc(माप(*ra), GFP_KERNEL);
-		अगर (!ra)
-			जाओ bad;
-		अगर (lra)
+		ra = kzalloc(sizeof(*ra), GFP_KERNEL);
+		if (!ra)
+			goto bad;
+		if (lra)
 			lra->next = ra;
-		अन्यथा
+		else
 			p->role_allow = ra;
-		rc = next_entry(buf, fp, माप(u32)*2);
-		अगर (rc)
-			जाओ bad;
+		rc = next_entry(buf, fp, sizeof(u32)*2);
+		if (rc)
+			goto bad;
 
 		rc = -EINVAL;
 		ra->role = le32_to_cpu(buf[0]);
 		ra->new_role = le32_to_cpu(buf[1]);
-		अगर (!policydb_role_isvalid(p, ra->role) ||
+		if (!policydb_role_isvalid(p, ra->role) ||
 		    !policydb_role_isvalid(p, ra->new_role))
-			जाओ bad;
+			goto bad;
 		lra = ra;
-	पूर्ण
+	}
 
-	rc = filename_trans_पढ़ो(p, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = filename_trans_read(p, fp);
+	if (rc)
+		goto bad;
 
 	rc = policydb_index(p);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 
 	rc = -EINVAL;
 	perm = string_to_av_perm(p, p->process_class, "transition");
-	अगर (!perm) अणु
+	if (!perm) {
 		pr_err("SELinux: process transition permission is required, not defined in policy\n");
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 	p->process_trans_perms = perm;
 	perm = string_to_av_perm(p, p->process_class, "dyntransition");
-	अगर (!perm) अणु
+	if (!perm) {
 		pr_err("SELinux: process dyntransition permission is required, not defined in policy\n");
-		जाओ bad;
-	पूर्ण
+		goto bad;
+	}
 	p->process_trans_perms |= perm;
 
-	rc = ocontext_पढ़ो(p, info, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = ocontext_read(p, info, fp);
+	if (rc)
+		goto bad;
 
-	rc = genfs_पढ़ो(p, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = genfs_read(p, fp);
+	if (rc)
+		goto bad;
 
-	rc = range_पढ़ो(p, fp);
-	अगर (rc)
-		जाओ bad;
+	rc = range_read(p, fp);
+	if (rc)
+		goto bad;
 
 	rc = -ENOMEM;
-	p->type_attr_map_array = kvसुस्मृति(p->p_types.nprim,
-					  माप(*p->type_attr_map_array),
+	p->type_attr_map_array = kvcalloc(p->p_types.nprim,
+					  sizeof(*p->type_attr_map_array),
 					  GFP_KERNEL);
-	अगर (!p->type_attr_map_array)
-		जाओ bad;
+	if (!p->type_attr_map_array)
+		goto bad;
 
-	/* just in हाल ebiपंचांगap_init() becomes more than just a स_रखो(0): */
-	क्रम (i = 0; i < p->p_types.nprim; i++)
-		ebiपंचांगap_init(&p->type_attr_map_array[i]);
+	/* just in case ebitmap_init() becomes more than just a memset(0): */
+	for (i = 0; i < p->p_types.nprim; i++)
+		ebitmap_init(&p->type_attr_map_array[i]);
 
-	क्रम (i = 0; i < p->p_types.nprim; i++) अणु
-		काष्ठा ebiपंचांगap *e = &p->type_attr_map_array[i];
+	for (i = 0; i < p->p_types.nprim; i++) {
+		struct ebitmap *e = &p->type_attr_map_array[i];
 
-		अगर (p->policyvers >= POLICYDB_VERSION_AVTAB) अणु
-			rc = ebiपंचांगap_पढ़ो(e, fp);
-			अगर (rc)
-				जाओ bad;
-		पूर्ण
-		/* add the type itself as the degenerate हाल */
-		rc = ebiपंचांगap_set_bit(e, i, 1);
-		अगर (rc)
-			जाओ bad;
-	पूर्ण
+		if (p->policyvers >= POLICYDB_VERSION_AVTAB) {
+			rc = ebitmap_read(e, fp);
+			if (rc)
+				goto bad;
+		}
+		/* add the type itself as the degenerate case */
+		rc = ebitmap_set_bit(e, i, 1);
+		if (rc)
+			goto bad;
+	}
 
 	rc = policydb_bounds_sanity_check(p);
-	अगर (rc)
-		जाओ bad;
+	if (rc)
+		goto bad;
 
 	rc = 0;
 out:
-	वापस rc;
+	return rc;
 bad:
-	kमुक्त(rtk);
-	kमुक्त(rtd);
+	kfree(rtk);
+	kfree(rtd);
 	policydb_destroy(p);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /*
- * Write a MLS level काष्ठाure to a policydb binary
+ * Write a MLS level structure to a policydb binary
  * representation file.
  */
-अटल पूर्णांक mls_ग_लिखो_level(काष्ठा mls_level *l, व्योम *fp)
-अणु
+static int mls_write_level(struct mls_level *l, void *fp)
+{
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
 	buf[0] = cpu_to_le32(l->sens);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
 
-	rc = ebiपंचांगap_ग_लिखो(&l->cat, fp);
-	अगर (rc)
-		वापस rc;
+	rc = ebitmap_write(&l->cat, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Write a MLS range काष्ठाure to a policydb binary
+ * Write a MLS range structure to a policydb binary
  * representation file.
  */
-अटल पूर्णांक mls_ग_लिखो_range_helper(काष्ठा mls_range *r, व्योम *fp)
-अणु
+static int mls_write_range_helper(struct mls_range *r, void *fp)
+{
 	__le32 buf[3];
-	माप_प्रकार items;
-	पूर्णांक rc, eq;
+	size_t items;
+	int rc, eq;
 
 	eq = mls_level_eq(&r->level[1], &r->level[0]);
 
-	अगर (eq)
+	if (eq)
 		items = 2;
-	अन्यथा
+	else
 		items = 3;
 	buf[0] = cpu_to_le32(items-1);
 	buf[1] = cpu_to_le32(r->level[0].sens);
-	अगर (!eq)
+	if (!eq)
 		buf[2] = cpu_to_le32(r->level[1].sens);
 
 	BUG_ON(items > ARRAY_SIZE(buf));
 
-	rc = put_entry(buf, माप(u32), items, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), items, fp);
+	if (rc)
+		return rc;
 
-	rc = ebiपंचांगap_ग_लिखो(&r->level[0].cat, fp);
-	अगर (rc)
-		वापस rc;
-	अगर (!eq) अणु
-		rc = ebiपंचांगap_ग_लिखो(&r->level[1].cat, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	rc = ebitmap_write(&r->level[0].cat, fp);
+	if (rc)
+		return rc;
+	if (!eq) {
+		rc = ebitmap_write(&r->level[1].cat, fp);
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sens_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा level_datum *levdatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
+static int sens_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct level_datum *levdatum = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
 	__le32 buf[2];
-	माप_प्रकार len;
-	पूर्णांक rc;
+	size_t len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	buf[0] = cpu_to_le32(len);
 	buf[1] = cpu_to_le32(levdatum->isalias);
-	rc = put_entry(buf, माप(u32), 2, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 2, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = mls_ग_लिखो_level(levdatum->level, fp);
-	अगर (rc)
-		वापस rc;
+	rc = mls_write_level(levdatum->level, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cat_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा cat_datum *catdatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
+static int cat_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct cat_datum *catdatum = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
 	__le32 buf[3];
-	माप_प्रकार len;
-	पूर्णांक rc;
+	size_t len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	buf[0] = cpu_to_le32(len);
 	buf[1] = cpu_to_le32(catdatum->value);
 	buf[2] = cpu_to_le32(catdatum->isalias);
-	rc = put_entry(buf, माप(u32), 3, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 3, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक role_trans_ग_लिखो_one(व्योम *key, व्योम *datum, व्योम *ptr)
-अणु
-	काष्ठा role_trans_key *rtk = key;
-	काष्ठा role_trans_datum *rtd = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
-	काष्ठा policydb *p = pd->p;
+static int role_trans_write_one(void *key, void *datum, void *ptr)
+{
+	struct role_trans_key *rtk = key;
+	struct role_trans_datum *rtd = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
+	struct policydb *p = pd->p;
 	__le32 buf[3];
-	पूर्णांक rc;
+	int rc;
 
 	buf[0] = cpu_to_le32(rtk->role);
 	buf[1] = cpu_to_le32(rtk->type);
 	buf[2] = cpu_to_le32(rtd->new_role);
-	rc = put_entry(buf, माप(u32), 3, fp);
-	अगर (rc)
-		वापस rc;
-	अगर (p->policyvers >= POLICYDB_VERSION_ROLETRANS) अणु
+	rc = put_entry(buf, sizeof(u32), 3, fp);
+	if (rc)
+		return rc;
+	if (p->policyvers >= POLICYDB_VERSION_ROLETRANS) {
 		buf[0] = cpu_to_le32(rtk->tclass);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
+	}
+	return 0;
+}
 
-अटल पूर्णांक role_trans_ग_लिखो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा policy_data pd = अणु .p = p, .fp = fp पूर्ण;
+static int role_trans_write(struct policydb *p, void *fp)
+{
+	struct policy_data pd = { .p = p, .fp = fp };
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
 	buf[0] = cpu_to_le32(p->role_tr.nel);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
 
-	वापस hashtab_map(&p->role_tr, role_trans_ग_लिखो_one, &pd);
-पूर्ण
+	return hashtab_map(&p->role_tr, role_trans_write_one, &pd);
+}
 
-अटल पूर्णांक role_allow_ग_लिखो(काष्ठा role_allow *r, व्योम *fp)
-अणु
-	काष्ठा role_allow *ra;
+static int role_allow_write(struct role_allow *r, void *fp)
+{
+	struct role_allow *ra;
 	__le32 buf[2];
-	माप_प्रकार nel;
-	पूर्णांक rc;
+	size_t nel;
+	int rc;
 
 	nel = 0;
-	क्रम (ra = r; ra; ra = ra->next)
+	for (ra = r; ra; ra = ra->next)
 		nel++;
 	buf[0] = cpu_to_le32(nel);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
-	क्रम (ra = r; ra; ra = ra->next) अणु
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
+	for (ra = r; ra; ra = ra->next) {
 		buf[0] = cpu_to_le32(ra->role);
 		buf[1] = cpu_to_le32(ra->new_role);
-		rc = put_entry(buf, माप(u32), 2, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		rc = put_entry(buf, sizeof(u32), 2, fp);
+		if (rc)
+			return rc;
+	}
+	return 0;
+}
 
 /*
- * Write a security context काष्ठाure
+ * Write a security context structure
  * to a policydb binary representation file.
  */
-अटल पूर्णांक context_ग_लिखो(काष्ठा policydb *p, काष्ठा context *c,
-			 व्योम *fp)
-अणु
-	पूर्णांक rc;
+static int context_write(struct policydb *p, struct context *c,
+			 void *fp)
+{
+	int rc;
 	__le32 buf[3];
 
 	buf[0] = cpu_to_le32(c->user);
 	buf[1] = cpu_to_le32(c->role);
 	buf[2] = cpu_to_le32(c->type);
 
-	rc = put_entry(buf, माप(u32), 3, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 3, fp);
+	if (rc)
+		return rc;
 
-	rc = mls_ग_लिखो_range_helper(&c->range, fp);
-	अगर (rc)
-		वापस rc;
+	rc = mls_write_range_helper(&c->range, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The following *_ग_लिखो functions are used to
- * ग_लिखो the symbol data to a policy database
+ * The following *_write functions are used to
+ * write the symbol data to a policy database
  * binary representation file.
  */
 
-अटल पूर्णांक perm_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *fp)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा perm_datum *perdatum = datum;
+static int perm_write(void *vkey, void *datum, void *fp)
+{
+	char *key = vkey;
+	struct perm_datum *perdatum = datum;
 	__le32 buf[2];
-	माप_प्रकार len;
-	पूर्णांक rc;
+	size_t len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	buf[0] = cpu_to_le32(len);
 	buf[1] = cpu_to_le32(perdatum->value);
-	rc = put_entry(buf, माप(u32), 2, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 2, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक common_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा common_datum *comdatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
+static int common_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct common_datum *comdatum = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
 	__le32 buf[4];
-	माप_प्रकार len;
-	पूर्णांक rc;
+	size_t len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	buf[0] = cpu_to_le32(len);
 	buf[1] = cpu_to_le32(comdatum->value);
 	buf[2] = cpu_to_le32(comdatum->permissions.nprim);
 	buf[3] = cpu_to_le32(comdatum->permissions.table.nel);
-	rc = put_entry(buf, माप(u32), 4, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 4, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = hashtab_map(&comdatum->permissions.table, perm_ग_लिखो, fp);
-	अगर (rc)
-		वापस rc;
+	rc = hashtab_map(&comdatum->permissions.table, perm_write, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक type_set_ग_लिखो(काष्ठा type_set *t, व्योम *fp)
-अणु
-	पूर्णांक rc;
+static int type_set_write(struct type_set *t, void *fp)
+{
+	int rc;
 	__le32 buf[1];
 
-	अगर (ebiपंचांगap_ग_लिखो(&t->types, fp))
-		वापस -EINVAL;
-	अगर (ebiपंचांगap_ग_लिखो(&t->negset, fp))
-		वापस -EINVAL;
+	if (ebitmap_write(&t->types, fp))
+		return -EINVAL;
+	if (ebitmap_write(&t->negset, fp))
+		return -EINVAL;
 
 	buf[0] = cpu_to_le32(t->flags);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस -EINVAL;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ग_लिखो_cons_helper(काष्ठा policydb *p, काष्ठा स्थिरraपूर्णांक_node *node,
-			     व्योम *fp)
-अणु
-	काष्ठा स्थिरraपूर्णांक_node *c;
-	काष्ठा स्थिरraपूर्णांक_expr *e;
+static int write_cons_helper(struct policydb *p, struct constraint_node *node,
+			     void *fp)
+{
+	struct constraint_node *c;
+	struct constraint_expr *e;
 	__le32 buf[3];
 	u32 nel;
-	पूर्णांक rc;
+	int rc;
 
-	क्रम (c = node; c; c = c->next) अणु
+	for (c = node; c; c = c->next) {
 		nel = 0;
-		क्रम (e = c->expr; e; e = e->next)
+		for (e = c->expr; e; e = e->next)
 			nel++;
 		buf[0] = cpu_to_le32(c->permissions);
 		buf[1] = cpu_to_le32(nel);
-		rc = put_entry(buf, माप(u32), 2, fp);
-		अगर (rc)
-			वापस rc;
-		क्रम (e = c->expr; e; e = e->next) अणु
+		rc = put_entry(buf, sizeof(u32), 2, fp);
+		if (rc)
+			return rc;
+		for (e = c->expr; e; e = e->next) {
 			buf[0] = cpu_to_le32(e->expr_type);
 			buf[1] = cpu_to_le32(e->attr);
 			buf[2] = cpu_to_le32(e->op);
-			rc = put_entry(buf, माप(u32), 3, fp);
-			अगर (rc)
-				वापस rc;
+			rc = put_entry(buf, sizeof(u32), 3, fp);
+			if (rc)
+				return rc;
 
-			चयन (e->expr_type) अणु
-			हाल CEXPR_NAMES:
-				rc = ebiपंचांगap_ग_लिखो(&e->names, fp);
-				अगर (rc)
-					वापस rc;
-				अगर (p->policyvers >=
-					POLICYDB_VERSION_CONSTRAINT_NAMES) अणु
-					rc = type_set_ग_लिखो(e->type_names, fp);
-					अगर (rc)
-						वापस rc;
-				पूर्ण
-				अवरोध;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			switch (e->expr_type) {
+			case CEXPR_NAMES:
+				rc = ebitmap_write(&e->names, fp);
+				if (rc)
+					return rc;
+				if (p->policyvers >=
+					POLICYDB_VERSION_CONSTRAINT_NAMES) {
+					rc = type_set_write(e->type_names, fp);
+					if (rc)
+						return rc;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक class_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा class_datum *cladatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
-	काष्ठा policydb *p = pd->p;
-	काष्ठा स्थिरraपूर्णांक_node *c;
+static int class_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct class_datum *cladatum = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
+	struct policydb *p = pd->p;
+	struct constraint_node *c;
 	__le32 buf[6];
 	u32 ncons;
-	माप_प्रकार len, len2;
-	पूर्णांक rc;
+	size_t len, len2;
+	int rc;
 
-	len = म_माप(key);
-	अगर (cladatum->comkey)
-		len2 = म_माप(cladatum->comkey);
-	अन्यथा
+	len = strlen(key);
+	if (cladatum->comkey)
+		len2 = strlen(cladatum->comkey);
+	else
 		len2 = 0;
 
 	ncons = 0;
-	क्रम (c = cladatum->स्थिरraपूर्णांकs; c; c = c->next)
+	for (c = cladatum->constraints; c; c = c->next)
 		ncons++;
 
 	buf[0] = cpu_to_le32(len);
@@ -3070,620 +3069,620 @@ bad:
 	buf[3] = cpu_to_le32(cladatum->permissions.nprim);
 	buf[4] = cpu_to_le32(cladatum->permissions.table.nel);
 	buf[5] = cpu_to_le32(ncons);
-	rc = put_entry(buf, माप(u32), 6, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 6, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (cladatum->comkey) अणु
+	if (cladatum->comkey) {
 		rc = put_entry(cladatum->comkey, 1, len2, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	rc = hashtab_map(&cladatum->permissions.table, perm_ग_लिखो, fp);
-	अगर (rc)
-		वापस rc;
+	rc = hashtab_map(&cladatum->permissions.table, perm_write, fp);
+	if (rc)
+		return rc;
 
-	rc = ग_लिखो_cons_helper(p, cladatum->स्थिरraपूर्णांकs, fp);
-	अगर (rc)
-		वापस rc;
+	rc = write_cons_helper(p, cladatum->constraints, fp);
+	if (rc)
+		return rc;
 
-	/* ग_लिखो out the validatetrans rule */
+	/* write out the validatetrans rule */
 	ncons = 0;
-	क्रम (c = cladatum->validatetrans; c; c = c->next)
+	for (c = cladatum->validatetrans; c; c = c->next)
 		ncons++;
 
 	buf[0] = cpu_to_le32(ncons);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
 
-	rc = ग_लिखो_cons_helper(p, cladatum->validatetrans, fp);
-	अगर (rc)
-		वापस rc;
+	rc = write_cons_helper(p, cladatum->validatetrans, fp);
+	if (rc)
+		return rc;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_NEW_OBJECT_DEFAULTS) अणु
-		buf[0] = cpu_to_le32(cladatum->शेष_user);
-		buf[1] = cpu_to_le32(cladatum->शेष_role);
-		buf[2] = cpu_to_le32(cladatum->शेष_range);
+	if (p->policyvers >= POLICYDB_VERSION_NEW_OBJECT_DEFAULTS) {
+		buf[0] = cpu_to_le32(cladatum->default_user);
+		buf[1] = cpu_to_le32(cladatum->default_role);
+		buf[2] = cpu_to_le32(cladatum->default_range);
 
-		rc = put_entry(buf, माप(uपूर्णांक32_t), 3, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		rc = put_entry(buf, sizeof(uint32_t), 3, fp);
+		if (rc)
+			return rc;
+	}
 
-	अगर (p->policyvers >= POLICYDB_VERSION_DEFAULT_TYPE) अणु
-		buf[0] = cpu_to_le32(cladatum->शेष_type);
-		rc = put_entry(buf, माप(uपूर्णांक32_t), 1, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_DEFAULT_TYPE) {
+		buf[0] = cpu_to_le32(cladatum->default_type);
+		rc = put_entry(buf, sizeof(uint32_t), 1, fp);
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक role_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा role_datum *role = datum;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
-	काष्ठा policydb *p = pd->p;
+static int role_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct role_datum *role = datum;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
+	struct policydb *p = pd->p;
 	__le32 buf[3];
-	माप_प्रकार items, len;
-	पूर्णांक rc;
+	size_t items, len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	items = 0;
 	buf[items++] = cpu_to_le32(len);
 	buf[items++] = cpu_to_le32(role->value);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
 		buf[items++] = cpu_to_le32(role->bounds);
 
 	BUG_ON(items > ARRAY_SIZE(buf));
 
-	rc = put_entry(buf, माप(u32), items, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), items, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = ebiपंचांगap_ग_लिखो(&role->करोminates, fp);
-	अगर (rc)
-		वापस rc;
+	rc = ebitmap_write(&role->dominates, fp);
+	if (rc)
+		return rc;
 
-	rc = ebiपंचांगap_ग_लिखो(&role->types, fp);
-	अगर (rc)
-		वापस rc;
+	rc = ebitmap_write(&role->types, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक type_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा type_datum *typdatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	काष्ठा policydb *p = pd->p;
-	व्योम *fp = pd->fp;
+static int type_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct type_datum *typdatum = datum;
+	struct policy_data *pd = ptr;
+	struct policydb *p = pd->p;
+	void *fp = pd->fp;
 	__le32 buf[4];
-	पूर्णांक rc;
-	माप_प्रकार items, len;
+	int rc;
+	size_t items, len;
 
-	len = म_माप(key);
+	len = strlen(key);
 	items = 0;
 	buf[items++] = cpu_to_le32(len);
 	buf[items++] = cpu_to_le32(typdatum->value);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY) अणु
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY) {
 		u32 properties = 0;
 
-		अगर (typdatum->primary)
+		if (typdatum->primary)
 			properties |= TYPEDATUM_PROPERTY_PRIMARY;
 
-		अगर (typdatum->attribute)
+		if (typdatum->attribute)
 			properties |= TYPEDATUM_PROPERTY_ATTRIBUTE;
 
 		buf[items++] = cpu_to_le32(properties);
 		buf[items++] = cpu_to_le32(typdatum->bounds);
-	पूर्ण अन्यथा अणु
+	} else {
 		buf[items++] = cpu_to_le32(typdatum->primary);
-	पूर्ण
+	}
 	BUG_ON(items > ARRAY_SIZE(buf));
-	rc = put_entry(buf, माप(u32), items, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), items, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक user_ग_लिखो(व्योम *vkey, व्योम *datum, व्योम *ptr)
-अणु
-	अक्षर *key = vkey;
-	काष्ठा user_datum *usrdatum = datum;
-	काष्ठा policy_data *pd = ptr;
-	काष्ठा policydb *p = pd->p;
-	व्योम *fp = pd->fp;
+static int user_write(void *vkey, void *datum, void *ptr)
+{
+	char *key = vkey;
+	struct user_datum *usrdatum = datum;
+	struct policy_data *pd = ptr;
+	struct policydb *p = pd->p;
+	void *fp = pd->fp;
 	__le32 buf[3];
-	माप_प्रकार items, len;
-	पूर्णांक rc;
+	size_t items, len;
+	int rc;
 
-	len = म_माप(key);
+	len = strlen(key);
 	items = 0;
 	buf[items++] = cpu_to_le32(len);
 	buf[items++] = cpu_to_le32(usrdatum->value);
-	अगर (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
+	if (p->policyvers >= POLICYDB_VERSION_BOUNDARY)
 		buf[items++] = cpu_to_le32(usrdatum->bounds);
 	BUG_ON(items > ARRAY_SIZE(buf));
-	rc = put_entry(buf, माप(u32), items, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), items, fp);
+	if (rc)
+		return rc;
 
 	rc = put_entry(key, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = ebiपंचांगap_ग_लिखो(&usrdatum->roles, fp);
-	अगर (rc)
-		वापस rc;
+	rc = ebitmap_write(&usrdatum->roles, fp);
+	if (rc)
+		return rc;
 
-	rc = mls_ग_लिखो_range_helper(&usrdatum->range, fp);
-	अगर (rc)
-		वापस rc;
+	rc = mls_write_range_helper(&usrdatum->range, fp);
+	if (rc)
+		return rc;
 
-	rc = mls_ग_लिखो_level(&usrdatum->dfltlevel, fp);
-	अगर (rc)
-		वापस rc;
+	rc = mls_write_level(&usrdatum->dfltlevel, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक (*ग_लिखो_f[SYM_NUM]) (व्योम *key, व्योम *datum,
-				व्योम *datap) =
-अणु
-	common_ग_लिखो,
-	class_ग_लिखो,
-	role_ग_लिखो,
-	type_ग_लिखो,
-	user_ग_लिखो,
-	cond_ग_लिखो_bool,
-	sens_ग_लिखो,
-	cat_ग_लिखो,
-पूर्ण;
+static int (*write_f[SYM_NUM]) (void *key, void *datum,
+				void *datap) =
+{
+	common_write,
+	class_write,
+	role_write,
+	type_write,
+	user_write,
+	cond_write_bool,
+	sens_write,
+	cat_write,
+};
 
-अटल पूर्णांक ocontext_ग_लिखो(काष्ठा policydb *p, काष्ठा policydb_compat_info *info,
-			  व्योम *fp)
-अणु
-	अचिन्हित पूर्णांक i, j, rc;
-	माप_प्रकार nel, len;
+static int ocontext_write(struct policydb *p, struct policydb_compat_info *info,
+			  void *fp)
+{
+	unsigned int i, j, rc;
+	size_t nel, len;
 	__be64 prefixbuf[1];
 	__le32 buf[3];
 	u32 nodebuf[8];
-	काष्ठा ocontext *c;
-	क्रम (i = 0; i < info->ocon_num; i++) अणु
+	struct ocontext *c;
+	for (i = 0; i < info->ocon_num; i++) {
 		nel = 0;
-		क्रम (c = p->ocontexts[i]; c; c = c->next)
+		for (c = p->ocontexts[i]; c; c = c->next)
 			nel++;
 		buf[0] = cpu_to_le32(nel);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
-		क्रम (c = p->ocontexts[i]; c; c = c->next) अणु
-			चयन (i) अणु
-			हाल OCON_ISID:
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
+		for (c = p->ocontexts[i]; c; c = c->next) {
+			switch (i) {
+			case OCON_ISID:
 				buf[0] = cpu_to_le32(c->sid[0]);
-				rc = put_entry(buf, माप(u32), 1, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_FS:
-			हाल OCON_NETIF:
-				len = म_माप(c->u.name);
+				rc = put_entry(buf, sizeof(u32), 1, fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_FS:
+			case OCON_NETIF:
+				len = strlen(c->u.name);
 				buf[0] = cpu_to_le32(len);
-				rc = put_entry(buf, माप(u32), 1, fp);
-				अगर (rc)
-					वापस rc;
+				rc = put_entry(buf, sizeof(u32), 1, fp);
+				if (rc)
+					return rc;
 				rc = put_entry(c->u.name, 1, len, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[1], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_PORT:
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[1], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_PORT:
 				buf[0] = cpu_to_le32(c->u.port.protocol);
 				buf[1] = cpu_to_le32(c->u.port.low_port);
 				buf[2] = cpu_to_le32(c->u.port.high_port);
-				rc = put_entry(buf, माप(u32), 3, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_NODE:
+				rc = put_entry(buf, sizeof(u32), 3, fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_NODE:
 				nodebuf[0] = c->u.node.addr; /* network order */
 				nodebuf[1] = c->u.node.mask; /* network order */
-				rc = put_entry(nodebuf, माप(u32), 2, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_FSUSE:
+				rc = put_entry(nodebuf, sizeof(u32), 2, fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_FSUSE:
 				buf[0] = cpu_to_le32(c->v.behavior);
-				len = म_माप(c->u.name);
+				len = strlen(c->u.name);
 				buf[1] = cpu_to_le32(len);
-				rc = put_entry(buf, माप(u32), 2, fp);
-				अगर (rc)
-					वापस rc;
+				rc = put_entry(buf, sizeof(u32), 2, fp);
+				if (rc)
+					return rc;
 				rc = put_entry(c->u.name, 1, len, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_NODE6:
-				क्रम (j = 0; j < 4; j++)
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_NODE6:
+				for (j = 0; j < 4; j++)
 					nodebuf[j] = c->u.node6.addr[j]; /* network order */
-				क्रम (j = 0; j < 4; j++)
+				for (j = 0; j < 4; j++)
 					nodebuf[j + 4] = c->u.node6.mask[j]; /* network order */
-				rc = put_entry(nodebuf, माप(u32), 8, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_IBPKEY:
+				rc = put_entry(nodebuf, sizeof(u32), 8, fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_IBPKEY:
 				/* subnet_prefix is in CPU order */
 				prefixbuf[0] = cpu_to_be64(c->u.ibpkey.subnet_prefix);
 
-				rc = put_entry(prefixbuf, माप(u64), 1, fp);
-				अगर (rc)
-					वापस rc;
+				rc = put_entry(prefixbuf, sizeof(u64), 1, fp);
+				if (rc)
+					return rc;
 
 				buf[0] = cpu_to_le32(c->u.ibpkey.low_pkey);
 				buf[1] = cpu_to_le32(c->u.ibpkey.high_pkey);
 
-				rc = put_entry(buf, माप(u32), 2, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			हाल OCON_IBENDPORT:
-				len = म_माप(c->u.ibendport.dev_name);
+				rc = put_entry(buf, sizeof(u32), 2, fp);
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			case OCON_IBENDPORT:
+				len = strlen(c->u.ibendport.dev_name);
 				buf[0] = cpu_to_le32(len);
 				buf[1] = cpu_to_le32(c->u.ibendport.port);
-				rc = put_entry(buf, माप(u32), 2, fp);
-				अगर (rc)
-					वापस rc;
+				rc = put_entry(buf, sizeof(u32), 2, fp);
+				if (rc)
+					return rc;
 				rc = put_entry(c->u.ibendport.dev_name, 1, len, fp);
-				अगर (rc)
-					वापस rc;
-				rc = context_ग_लिखो(p, &c->context[0], fp);
-				अगर (rc)
-					वापस rc;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				if (rc)
+					return rc;
+				rc = context_write(p, &c->context[0], fp);
+				if (rc)
+					return rc;
+				break;
+			}
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक genfs_ग_लिखो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	काष्ठा genfs *genfs;
-	काष्ठा ocontext *c;
-	माप_प्रकार len;
+static int genfs_write(struct policydb *p, void *fp)
+{
+	struct genfs *genfs;
+	struct ocontext *c;
+	size_t len;
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
 	len = 0;
-	क्रम (genfs = p->genfs; genfs; genfs = genfs->next)
+	for (genfs = p->genfs; genfs; genfs = genfs->next)
 		len++;
 	buf[0] = cpu_to_le32(len);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
-	क्रम (genfs = p->genfs; genfs; genfs = genfs->next) अणु
-		len = म_माप(genfs->fstype);
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
+	for (genfs = p->genfs; genfs; genfs = genfs->next) {
+		len = strlen(genfs->fstype);
 		buf[0] = cpu_to_le32(len);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
 		rc = put_entry(genfs->fstype, 1, len, fp);
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		len = 0;
-		क्रम (c = genfs->head; c; c = c->next)
+		for (c = genfs->head; c; c = c->next)
 			len++;
 		buf[0] = cpu_to_le32(len);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
-		क्रम (c = genfs->head; c; c = c->next) अणु
-			len = म_माप(c->u.name);
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
+		for (c = genfs->head; c; c = c->next) {
+			len = strlen(c->u.name);
 			buf[0] = cpu_to_le32(len);
-			rc = put_entry(buf, माप(u32), 1, fp);
-			अगर (rc)
-				वापस rc;
+			rc = put_entry(buf, sizeof(u32), 1, fp);
+			if (rc)
+				return rc;
 			rc = put_entry(c->u.name, 1, len, fp);
-			अगर (rc)
-				वापस rc;
+			if (rc)
+				return rc;
 			buf[0] = cpu_to_le32(c->v.sclass);
-			rc = put_entry(buf, माप(u32), 1, fp);
-			अगर (rc)
-				वापस rc;
-			rc = context_ग_लिखो(p, &c->context[0], fp);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			rc = put_entry(buf, sizeof(u32), 1, fp);
+			if (rc)
+				return rc;
+			rc = context_write(p, &c->context[0], fp);
+			if (rc)
+				return rc;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक range_ग_लिखो_helper(व्योम *key, व्योम *data, व्योम *ptr)
-अणु
+static int range_write_helper(void *key, void *data, void *ptr)
+{
 	__le32 buf[2];
-	काष्ठा range_trans *rt = key;
-	काष्ठा mls_range *r = data;
-	काष्ठा policy_data *pd = ptr;
-	व्योम *fp = pd->fp;
-	काष्ठा policydb *p = pd->p;
-	पूर्णांक rc;
+	struct range_trans *rt = key;
+	struct mls_range *r = data;
+	struct policy_data *pd = ptr;
+	void *fp = pd->fp;
+	struct policydb *p = pd->p;
+	int rc;
 
 	buf[0] = cpu_to_le32(rt->source_type);
 	buf[1] = cpu_to_le32(rt->target_type);
-	rc = put_entry(buf, माप(u32), 2, fp);
-	अगर (rc)
-		वापस rc;
-	अगर (p->policyvers >= POLICYDB_VERSION_RANGETRANS) अणु
+	rc = put_entry(buf, sizeof(u32), 2, fp);
+	if (rc)
+		return rc;
+	if (p->policyvers >= POLICYDB_VERSION_RANGETRANS) {
 		buf[0] = cpu_to_le32(rt->target_class);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	rc = mls_ग_लिखो_range_helper(r, fp);
-	अगर (rc)
-		वापस rc;
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
+	}
+	rc = mls_write_range_helper(r, fp);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक range_ग_लिखो(काष्ठा policydb *p, व्योम *fp)
-अणु
+static int range_write(struct policydb *p, void *fp)
+{
 	__le32 buf[1];
-	पूर्णांक rc;
-	काष्ठा policy_data pd;
+	int rc;
+	struct policy_data pd;
 
 	pd.p = p;
 	pd.fp = fp;
 
 	buf[0] = cpu_to_le32(p->range_tr.nel);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
 
-	/* actually ग_लिखो all of the entries */
-	rc = hashtab_map(&p->range_tr, range_ग_लिखो_helper, &pd);
-	अगर (rc)
-		वापस rc;
+	/* actually write all of the entries */
+	rc = hashtab_map(&p->range_tr, range_write_helper, &pd);
+	if (rc)
+		return rc;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक filename_ग_लिखो_helper_compat(व्योम *key, व्योम *data, व्योम *ptr)
-अणु
-	काष्ठा filename_trans_key *ft = key;
-	काष्ठा filename_trans_datum *datum = data;
-	काष्ठा ebiपंचांगap_node *node;
-	व्योम *fp = ptr;
+static int filename_write_helper_compat(void *key, void *data, void *ptr)
+{
+	struct filename_trans_key *ft = key;
+	struct filename_trans_datum *datum = data;
+	struct ebitmap_node *node;
+	void *fp = ptr;
 	__le32 buf[4];
-	पूर्णांक rc;
-	u32 bit, len = म_माप(ft->name);
+	int rc;
+	u32 bit, len = strlen(ft->name);
 
-	करो अणु
-		ebiपंचांगap_क्रम_each_positive_bit(&datum->stypes, node, bit) अणु
+	do {
+		ebitmap_for_each_positive_bit(&datum->stypes, node, bit) {
 			buf[0] = cpu_to_le32(len);
-			rc = put_entry(buf, माप(u32), 1, fp);
-			अगर (rc)
-				वापस rc;
+			rc = put_entry(buf, sizeof(u32), 1, fp);
+			if (rc)
+				return rc;
 
-			rc = put_entry(ft->name, माप(अक्षर), len, fp);
-			अगर (rc)
-				वापस rc;
+			rc = put_entry(ft->name, sizeof(char), len, fp);
+			if (rc)
+				return rc;
 
 			buf[0] = cpu_to_le32(bit + 1);
 			buf[1] = cpu_to_le32(ft->ttype);
 			buf[2] = cpu_to_le32(ft->tclass);
 			buf[3] = cpu_to_le32(datum->otype);
 
-			rc = put_entry(buf, माप(u32), 4, fp);
-			अगर (rc)
-				वापस rc;
-		पूर्ण
+			rc = put_entry(buf, sizeof(u32), 4, fp);
+			if (rc)
+				return rc;
+		}
 
 		datum = datum->next;
-	पूर्ण जबतक (unlikely(datum));
+	} while (unlikely(datum));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक filename_ग_लिखो_helper(व्योम *key, व्योम *data, व्योम *ptr)
-अणु
-	काष्ठा filename_trans_key *ft = key;
-	काष्ठा filename_trans_datum *datum;
-	व्योम *fp = ptr;
+static int filename_write_helper(void *key, void *data, void *ptr)
+{
+	struct filename_trans_key *ft = key;
+	struct filename_trans_datum *datum;
+	void *fp = ptr;
 	__le32 buf[3];
-	पूर्णांक rc;
-	u32 ndatum, len = म_माप(ft->name);
+	int rc;
+	u32 ndatum, len = strlen(ft->name);
 
 	buf[0] = cpu_to_le32(len);
-	rc = put_entry(buf, माप(u32), 1, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 1, fp);
+	if (rc)
+		return rc;
 
-	rc = put_entry(ft->name, माप(अक्षर), len, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(ft->name, sizeof(char), len, fp);
+	if (rc)
+		return rc;
 
 	ndatum = 0;
 	datum = data;
-	करो अणु
+	do {
 		ndatum++;
 		datum = datum->next;
-	पूर्ण जबतक (unlikely(datum));
+	} while (unlikely(datum));
 
 	buf[0] = cpu_to_le32(ft->ttype);
 	buf[1] = cpu_to_le32(ft->tclass);
 	buf[2] = cpu_to_le32(ndatum);
-	rc = put_entry(buf, माप(u32), 3, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 3, fp);
+	if (rc)
+		return rc;
 
 	datum = data;
-	करो अणु
-		rc = ebiपंचांगap_ग_लिखो(&datum->stypes, fp);
-		अगर (rc)
-			वापस rc;
+	do {
+		rc = ebitmap_write(&datum->stypes, fp);
+		if (rc)
+			return rc;
 
 		buf[0] = cpu_to_le32(datum->otype);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
 
 		datum = datum->next;
-	पूर्ण जबतक (unlikely(datum));
+	} while (unlikely(datum));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक filename_trans_ग_लिखो(काष्ठा policydb *p, व्योम *fp)
-अणु
+static int filename_trans_write(struct policydb *p, void *fp)
+{
 	__le32 buf[1];
-	पूर्णांक rc;
+	int rc;
 
-	अगर (p->policyvers < POLICYDB_VERSION_खाताNAME_TRANS)
-		वापस 0;
+	if (p->policyvers < POLICYDB_VERSION_FILENAME_TRANS)
+		return 0;
 
-	अगर (p->policyvers < POLICYDB_VERSION_COMP_FTRANS) अणु
+	if (p->policyvers < POLICYDB_VERSION_COMP_FTRANS) {
 		buf[0] = cpu_to_le32(p->compat_filename_trans_count);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
 
 		rc = hashtab_map(&p->filename_trans,
-				 filename_ग_लिखो_helper_compat, fp);
-	पूर्ण अन्यथा अणु
+				 filename_write_helper_compat, fp);
+	} else {
 		buf[0] = cpu_to_le32(p->filename_trans.nel);
-		rc = put_entry(buf, माप(u32), 1, fp);
-		अगर (rc)
-			वापस rc;
+		rc = put_entry(buf, sizeof(u32), 1, fp);
+		if (rc)
+			return rc;
 
-		rc = hashtab_map(&p->filename_trans, filename_ग_लिखो_helper, fp);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		rc = hashtab_map(&p->filename_trans, filename_write_helper, fp);
+	}
+	return rc;
+}
 
 /*
  * Write the configuration data in a policy database
- * काष्ठाure to a policy database binary representation
+ * structure to a policy database binary representation
  * file.
  */
-पूर्णांक policydb_ग_लिखो(काष्ठा policydb *p, व्योम *fp)
-अणु
-	अचिन्हित पूर्णांक i, num_syms;
-	पूर्णांक rc;
+int policydb_write(struct policydb *p, void *fp)
+{
+	unsigned int i, num_syms;
+	int rc;
 	__le32 buf[4];
 	u32 config;
-	माप_प्रकार len;
-	काष्ठा policydb_compat_info *info;
+	size_t len;
+	struct policydb_compat_info *info;
 
 	/*
-	 * refuse to ग_लिखो policy older than compressed avtab
-	 * to simplअगरy the ग_लिखोr.  There are other tests dropped
-	 * since we assume this throughout the ग_लिखोr code.  Be
-	 * careful अगर you ever try to हटाओ this restriction
+	 * refuse to write policy older than compressed avtab
+	 * to simplify the writer.  There are other tests dropped
+	 * since we assume this throughout the writer code.  Be
+	 * careful if you ever try to remove this restriction
 	 */
-	अगर (p->policyvers < POLICYDB_VERSION_AVTAB) अणु
+	if (p->policyvers < POLICYDB_VERSION_AVTAB) {
 		pr_err("SELinux: refusing to write policy version %d."
 		       "  Because it is less than version %d\n", p->policyvers,
 		       POLICYDB_VERSION_AVTAB);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	config = 0;
-	अगर (p->mls_enabled)
+	if (p->mls_enabled)
 		config |= POLICYDB_CONFIG_MLS;
 
-	अगर (p->reject_unknown)
+	if (p->reject_unknown)
 		config |= REJECT_UNKNOWN;
-	अगर (p->allow_unknown)
+	if (p->allow_unknown)
 		config |= ALLOW_UNKNOWN;
 
-	/* Write the magic number and string identअगरiers. */
+	/* Write the magic number and string identifiers. */
 	buf[0] = cpu_to_le32(POLICYDB_MAGIC);
-	len = म_माप(POLICYDB_STRING);
+	len = strlen(POLICYDB_STRING);
 	buf[1] = cpu_to_le32(len);
-	rc = put_entry(buf, माप(u32), 2, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 2, fp);
+	if (rc)
+		return rc;
 	rc = put_entry(POLICYDB_STRING, 1, len, fp);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/* Write the version, config, and table sizes. */
 	info = policydb_lookup_compat(p->policyvers);
-	अगर (!info) अणु
+	if (!info) {
 		pr_err("SELinux: compatibility lookup failed for policy "
 		    "version %d", p->policyvers);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf[0] = cpu_to_le32(p->policyvers);
 	buf[1] = cpu_to_le32(config);
 	buf[2] = cpu_to_le32(info->sym_num);
 	buf[3] = cpu_to_le32(info->ocon_num);
 
-	rc = put_entry(buf, माप(u32), 4, fp);
-	अगर (rc)
-		वापस rc;
+	rc = put_entry(buf, sizeof(u32), 4, fp);
+	if (rc)
+		return rc;
 
-	अगर (p->policyvers >= POLICYDB_VERSION_POLCAP) अणु
-		rc = ebiपंचांगap_ग_लिखो(&p->policycaps, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_POLCAP) {
+		rc = ebitmap_write(&p->policycaps, fp);
+		if (rc)
+			return rc;
+	}
 
-	अगर (p->policyvers >= POLICYDB_VERSION_PERMISSIVE) अणु
-		rc = ebiपंचांगap_ग_लिखो(&p->permissive_map, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (p->policyvers >= POLICYDB_VERSION_PERMISSIVE) {
+		rc = ebitmap_write(&p->permissive_map, fp);
+		if (rc)
+			return rc;
+	}
 
 	num_syms = info->sym_num;
-	क्रम (i = 0; i < num_syms; i++) अणु
-		काष्ठा policy_data pd;
+	for (i = 0; i < num_syms; i++) {
+		struct policy_data pd;
 
 		pd.fp = fp;
 		pd.p = p;
@@ -3691,53 +3690,53 @@ bad:
 		buf[0] = cpu_to_le32(p->symtab[i].nprim);
 		buf[1] = cpu_to_le32(p->symtab[i].table.nel);
 
-		rc = put_entry(buf, माप(u32), 2, fp);
-		अगर (rc)
-			वापस rc;
-		rc = hashtab_map(&p->symtab[i].table, ग_लिखो_f[i], &pd);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		rc = put_entry(buf, sizeof(u32), 2, fp);
+		if (rc)
+			return rc;
+		rc = hashtab_map(&p->symtab[i].table, write_f[i], &pd);
+		if (rc)
+			return rc;
+	}
 
-	rc = avtab_ग_लिखो(p, &p->te_avtab, fp);
-	अगर (rc)
-		वापस rc;
+	rc = avtab_write(p, &p->te_avtab, fp);
+	if (rc)
+		return rc;
 
-	rc = cond_ग_लिखो_list(p, fp);
-	अगर (rc)
-		वापस rc;
+	rc = cond_write_list(p, fp);
+	if (rc)
+		return rc;
 
-	rc = role_trans_ग_लिखो(p, fp);
-	अगर (rc)
-		वापस rc;
+	rc = role_trans_write(p, fp);
+	if (rc)
+		return rc;
 
-	rc = role_allow_ग_लिखो(p->role_allow, fp);
-	अगर (rc)
-		वापस rc;
+	rc = role_allow_write(p->role_allow, fp);
+	if (rc)
+		return rc;
 
-	rc = filename_trans_ग_लिखो(p, fp);
-	अगर (rc)
-		वापस rc;
+	rc = filename_trans_write(p, fp);
+	if (rc)
+		return rc;
 
-	rc = ocontext_ग_लिखो(p, info, fp);
-	अगर (rc)
-		वापस rc;
+	rc = ocontext_write(p, info, fp);
+	if (rc)
+		return rc;
 
-	rc = genfs_ग_लिखो(p, fp);
-	अगर (rc)
-		वापस rc;
+	rc = genfs_write(p, fp);
+	if (rc)
+		return rc;
 
-	rc = range_ग_लिखो(p, fp);
-	अगर (rc)
-		वापस rc;
+	rc = range_write(p, fp);
+	if (rc)
+		return rc;
 
-	क्रम (i = 0; i < p->p_types.nprim; i++) अणु
-		काष्ठा ebiपंचांगap *e = &p->type_attr_map_array[i];
+	for (i = 0; i < p->p_types.nprim; i++) {
+		struct ebitmap *e = &p->type_attr_map_array[i];
 
-		rc = ebiपंचांगap_ग_लिखो(e, fp);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		rc = ebitmap_write(e, fp);
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

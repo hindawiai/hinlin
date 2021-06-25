@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../boot/video-mode.c"
+#include "../../boot/video-mode.c"

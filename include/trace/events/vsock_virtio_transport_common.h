@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM vsock
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM vsock
 
-#अगर !defined(_TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H) || \
+#if !defined(_TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H) || \
     defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H
+#define _TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
 TRACE_DEFINE_ENUM(VIRTIO_VSOCK_TYPE_STREAM);
 
-#घोषणा show_type(val) \
-	__prपूर्णांक_symbolic(val, अणु VIRTIO_VSOCK_TYPE_STREAM, "STREAM" पूर्ण)
+#define show_type(val) \
+	__print_symbolic(val, { VIRTIO_VSOCK_TYPE_STREAM, "STREAM" })
 
 TRACE_DEFINE_ENUM(VIRTIO_VSOCK_OP_INVALID);
 TRACE_DEFINE_ENUM(VIRTIO_VSOCK_OP_REQUEST);
@@ -23,16 +22,16 @@ TRACE_DEFINE_ENUM(VIRTIO_VSOCK_OP_RW);
 TRACE_DEFINE_ENUM(VIRTIO_VSOCK_OP_CREDIT_UPDATE);
 TRACE_DEFINE_ENUM(VIRTIO_VSOCK_OP_CREDIT_REQUEST);
 
-#घोषणा show_op(val) \
-	__prपूर्णांक_symbolic(val, \
-			 अणु VIRTIO_VSOCK_OP_INVALID, "INVALID" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_REQUEST, "REQUEST" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_RESPONSE, "RESPONSE" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_RST, "RST" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_SHUTDOWN, "SHUTDOWN" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_RW, "RW" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_CREDIT_UPDATE, "CREDIT_UPDATE" पूर्ण, \
-			 अणु VIRTIO_VSOCK_OP_CREDIT_REQUEST, "CREDIT_REQUEST" पूर्ण)
+#define show_op(val) \
+	__print_symbolic(val, \
+			 { VIRTIO_VSOCK_OP_INVALID, "INVALID" }, \
+			 { VIRTIO_VSOCK_OP_REQUEST, "REQUEST" }, \
+			 { VIRTIO_VSOCK_OP_RESPONSE, "RESPONSE" }, \
+			 { VIRTIO_VSOCK_OP_RST, "RST" }, \
+			 { VIRTIO_VSOCK_OP_SHUTDOWN, "SHUTDOWN" }, \
+			 { VIRTIO_VSOCK_OP_RW, "RW" }, \
+			 { VIRTIO_VSOCK_OP_CREDIT_UPDATE, "CREDIT_UPDATE" }, \
+			 { VIRTIO_VSOCK_OP_CREDIT_REQUEST, "CREDIT_REQUEST" })
 
 TRACE_EVENT(virtio_transport_alloc_pkt,
 	TP_PROTO(
@@ -71,7 +70,7 @@ TRACE_EVENT(virtio_transport_alloc_pkt,
 		__entry->op = op;
 		__entry->flags = flags;
 	),
-	TP_prपूर्णांकk("%u:%u -> %u:%u len=%u type=%s op=%s flags=%#x",
+	TP_printk("%u:%u -> %u:%u len=%u type=%s op=%s flags=%#x",
 		  __entry->src_cid, __entry->src_port,
 		  __entry->dst_cid, __entry->dst_port,
 		  __entry->len,
@@ -125,7 +124,7 @@ TRACE_EVENT(virtio_transport_recv_pkt,
 		__entry->buf_alloc = buf_alloc;
 		__entry->fwd_cnt = fwd_cnt;
 	),
-	TP_prपूर्णांकk("%u:%u -> %u:%u len=%u type=%s op=%s flags=%#x "
+	TP_printk("%u:%u -> %u:%u len=%u type=%s op=%s flags=%#x "
 		  "buf_alloc=%u fwd_cnt=%u",
 		  __entry->src_cid, __entry->src_port,
 		  __entry->dst_cid, __entry->dst_port,
@@ -137,10 +136,10 @@ TRACE_EVENT(virtio_transport_recv_pkt,
 		  __entry->fwd_cnt)
 );
 
-#पूर्ण_अगर /* _TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H */
+#endif /* _TRACE_VSOCK_VIRTIO_TRANSPORT_COMMON_H */
 
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता vsock_virtio_transport_common
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE vsock_virtio_transport_common
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

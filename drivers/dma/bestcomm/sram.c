@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
- * Simple memory allocator क्रम on-board SRAM
+ * Simple memory allocator for on-board SRAM
  *
  *
- * Maपूर्णांकainer : Sylvain Munaut <tnt@246tNt.com>
+ * Maintainer : Sylvain Munaut <tnt@246tNt.com>
  *
  * Copyright (C) 2005 Sylvain Munaut <tnt@246tNt.com>
  *
@@ -12,169 +11,169 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/ioport.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mmu.h>
+#include <asm/io.h>
+#include <asm/mmu.h>
 
-#समावेश <linux/fsl/bestcomm/sram.h>
+#include <linux/fsl/bestcomm/sram.h>
 
 
 /* Struct keeping our 'state' */
-काष्ठा bcom_sram *bcom_sram = शून्य;
-EXPORT_SYMBOL_GPL(bcom_sram);	/* needed क्रम अंतरभूत functions */
+struct bcom_sram *bcom_sram = NULL;
+EXPORT_SYMBOL_GPL(bcom_sram);	/* needed for inline functions */
 
 
 /* ======================================================================== */
 /* Public API                                                               */
 /* ======================================================================== */
-/* DO NOT USE in पूर्णांकerrupts, अगर needed in irq handler, we should use the
+/* DO NOT USE in interrupts, if needed in irq handler, we should use the
    _irqsave version of the spin_locks */
 
-पूर्णांक bcom_sram_init(काष्ठा device_node *sram_node, अक्षर *owner)
-अणु
-	पूर्णांक rv;
-	स्थिर u32 *regaddr_p;
+int bcom_sram_init(struct device_node *sram_node, char *owner)
+{
+	int rv;
+	const u32 *regaddr_p;
 	u64 regaddr64, size64;
-	अचिन्हित पूर्णांक psize;
+	unsigned int psize;
 
-	/* Create our state काष्ठा */
-	अगर (bcom_sram) अणु
-		prपूर्णांकk(KERN_ERR "%s: bcom_sram_init: "
+	/* Create our state struct */
+	if (bcom_sram) {
+		printk(KERN_ERR "%s: bcom_sram_init: "
 			"Already initialized !\n", owner);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	bcom_sram = kदो_स्मृति(माप(काष्ठा bcom_sram), GFP_KERNEL);
-	अगर (!bcom_sram) अणु
-		prपूर्णांकk(KERN_ERR "%s: bcom_sram_init: "
+	bcom_sram = kmalloc(sizeof(struct bcom_sram), GFP_KERNEL);
+	if (!bcom_sram) {
+		printk(KERN_ERR "%s: bcom_sram_init: "
 			"Couldn't allocate internal state !\n", owner);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Get address and size of the sram */
-	regaddr_p = of_get_address(sram_node, 0, &size64, शून्य);
-	अगर (!regaddr_p) अणु
-		prपूर्णांकk(KERN_ERR "%s: bcom_sram_init: "
+	regaddr_p = of_get_address(sram_node, 0, &size64, NULL);
+	if (!regaddr_p) {
+		printk(KERN_ERR "%s: bcom_sram_init: "
 			"Invalid device node !\n", owner);
 		rv = -EINVAL;
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
 	regaddr64 = of_translate_address(sram_node, regaddr_p);
 
 	bcom_sram->base_phys = (phys_addr_t) regaddr64;
-	bcom_sram->size = (अचिन्हित पूर्णांक) size64;
+	bcom_sram->size = (unsigned int) size64;
 
 	/* Request region */
-	अगर (!request_mem_region(bcom_sram->base_phys, bcom_sram->size, owner)) अणु
-		prपूर्णांकk(KERN_ERR "%s: bcom_sram_init: "
+	if (!request_mem_region(bcom_sram->base_phys, bcom_sram->size, owner)) {
+		printk(KERN_ERR "%s: bcom_sram_init: "
 			"Couldn't request region !\n", owner);
 		rv = -EBUSY;
-		जाओ error_मुक्त;
-	पूर्ण
+		goto error_free;
+	}
 
 	/* Map SRAM */
 		/* sram is not really __iomem */
-	bcom_sram->base_virt = (व्योम*) ioremap(bcom_sram->base_phys, bcom_sram->size);
+	bcom_sram->base_virt = (void*) ioremap(bcom_sram->base_phys, bcom_sram->size);
 
-	अगर (!bcom_sram->base_virt) अणु
-		prपूर्णांकk(KERN_ERR "%s: bcom_sram_init: "
+	if (!bcom_sram->base_virt) {
+		printk(KERN_ERR "%s: bcom_sram_init: "
 			"Map error SRAM zone 0x%08lx (0x%0x)!\n",
-			owner, (दीर्घ)bcom_sram->base_phys, bcom_sram->size );
+			owner, (long)bcom_sram->base_phys, bcom_sram->size );
 		rv = -ENOMEM;
-		जाओ error_release;
-	पूर्ण
+		goto error_release;
+	}
 
-	/* Create an rheap (शेषs to 32 bits word alignment) */
+	/* Create an rheap (defaults to 32 bits word alignment) */
 	bcom_sram->rh = rh_create(4);
 
-	/* Attach the मुक्त zones */
-#अगर 0
-	/* Currently disabled ... क्रम future use only */
+	/* Attach the free zones */
+#if 0
+	/* Currently disabled ... for future use only */
 	reg_addr_p = of_get_property(sram_node, "available", &psize);
-#अन्यथा
-	regaddr_p = शून्य;
+#else
+	regaddr_p = NULL;
 	psize = 0;
-#पूर्ण_अगर
+#endif
 
-	अगर (!regaddr_p || !psize) अणु
+	if (!regaddr_p || !psize) {
 		/* Attach the whole zone */
 		rh_attach_region(bcom_sram->rh, 0, bcom_sram->size);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Attach each zone independently */
-		जबतक (psize >= 2 * माप(u32)) अणु
+		while (psize >= 2 * sizeof(u32)) {
 			phys_addr_t zbase = of_translate_address(sram_node, regaddr_p);
 			rh_attach_region(bcom_sram->rh, zbase - bcom_sram->base_phys, regaddr_p[1]);
 			regaddr_p += 2;
-			psize -= 2 * माप(u32);
-		पूर्ण
-	पूर्ण
+			psize -= 2 * sizeof(u32);
+		}
+	}
 
 	/* Init our spinlock */
 	spin_lock_init(&bcom_sram->lock);
 
-	वापस 0;
+	return 0;
 
 error_release:
 	release_mem_region(bcom_sram->base_phys, bcom_sram->size);
-error_मुक्त:
-	kमुक्त(bcom_sram);
-	bcom_sram = शून्य;
+error_free:
+	kfree(bcom_sram);
+	bcom_sram = NULL;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 EXPORT_SYMBOL_GPL(bcom_sram_init);
 
-व्योम bcom_sram_cleanup(व्योम)
-अणु
+void bcom_sram_cleanup(void)
+{
 	/* Free resources */
-	अगर (bcom_sram) अणु
+	if (bcom_sram) {
 		rh_destroy(bcom_sram->rh);
-		iounmap((व्योम __iomem *)bcom_sram->base_virt);
+		iounmap((void __iomem *)bcom_sram->base_virt);
 		release_mem_region(bcom_sram->base_phys, bcom_sram->size);
-		kमुक्त(bcom_sram);
-		bcom_sram = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(bcom_sram);
+		bcom_sram = NULL;
+	}
+}
 EXPORT_SYMBOL_GPL(bcom_sram_cleanup);
 
-व्योम* bcom_sram_alloc(पूर्णांक size, पूर्णांक align, phys_addr_t *phys)
-अणु
-	अचिन्हित दीर्घ offset;
+void* bcom_sram_alloc(int size, int align, phys_addr_t *phys)
+{
+	unsigned long offset;
 
 	spin_lock(&bcom_sram->lock);
-	offset = rh_alloc_align(bcom_sram->rh, size, align, शून्य);
+	offset = rh_alloc_align(bcom_sram->rh, size, align, NULL);
 	spin_unlock(&bcom_sram->lock);
 
-	अगर (IS_ERR_VALUE(offset))
-		वापस शून्य;
+	if (IS_ERR_VALUE(offset))
+		return NULL;
 
 	*phys = bcom_sram->base_phys + offset;
-	वापस bcom_sram->base_virt + offset;
-पूर्ण
+	return bcom_sram->base_virt + offset;
+}
 EXPORT_SYMBOL_GPL(bcom_sram_alloc);
 
-व्योम bcom_sram_मुक्त(व्योम *ptr)
-अणु
-	अचिन्हित दीर्घ offset;
+void bcom_sram_free(void *ptr)
+{
+	unsigned long offset;
 
-	अगर (!ptr)
-		वापस;
+	if (!ptr)
+		return;
 
 	offset = ptr - bcom_sram->base_virt;
 
 	spin_lock(&bcom_sram->lock);
-	rh_मुक्त(bcom_sram->rh, offset);
+	rh_free(bcom_sram->rh, offset);
 	spin_unlock(&bcom_sram->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(bcom_sram_मुक्त);
+}
+EXPORT_SYMBOL_GPL(bcom_sram_free);
 

@@ -1,104 +1,103 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _IA_CSS_ISP_PARAM_H_
-#घोषणा _IA_CSS_ISP_PARAM_H_
+#ifndef _IA_CSS_ISP_PARAM_H_
+#define _IA_CSS_ISP_PARAM_H_
 
-#समावेश <ia_css_err.h>
-#समावेश "ia_css_isp_param_types.h"
+#include <ia_css_err.h>
+#include "ia_css_isp_param_types.h"
 
-/* Set functions क्रम parameter memory descriptors */
-व्योम
+/* Set functions for parameter memory descriptors */
+void
 ia_css_isp_param_set_mem_init(
-    काष्ठा ia_css_isp_param_host_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem,
-    अक्षर *address, माप_प्रकार size);
+    struct ia_css_isp_param_host_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem,
+    char *address, size_t size);
 
-व्योम
+void
 ia_css_isp_param_set_css_mem_init(
-    काष्ठा ia_css_isp_param_css_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem,
-    ia_css_ptr address, माप_प्रकार size);
+    struct ia_css_isp_param_css_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem,
+    ia_css_ptr address, size_t size);
 
-व्योम
+void
 ia_css_isp_param_set_isp_mem_init(
-    काष्ठा ia_css_isp_param_isp_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem,
-    u32 address, माप_प्रकार size);
+    struct ia_css_isp_param_isp_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem,
+    u32 address, size_t size);
 
-/* Get functions क्रम parameter memory descriptors */
-स्थिर काष्ठा ia_css_host_data *
+/* Get functions for parameter memory descriptors */
+const struct ia_css_host_data *
 ia_css_isp_param_get_mem_init(
-    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem);
+    const struct ia_css_isp_param_host_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem);
 
-स्थिर काष्ठा ia_css_data *
+const struct ia_css_data *
 ia_css_isp_param_get_css_mem_init(
-    स्थिर काष्ठा ia_css_isp_param_css_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem);
+    const struct ia_css_isp_param_css_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem);
 
-स्थिर काष्ठा ia_css_isp_data *
+const struct ia_css_isp_data *
 ia_css_isp_param_get_isp_mem_init(
-    स्थिर काष्ठा ia_css_isp_param_isp_segments *mem_init,
-    क्रमागत ia_css_param_class pclass,
-    क्रमागत ia_css_isp_memories mem);
+    const struct ia_css_isp_param_isp_segments *mem_init,
+    enum ia_css_param_class pclass,
+    enum ia_css_isp_memories mem);
 
-/* Initialize the memory पूर्णांकerface sizes and addresses */
-व्योम
-ia_css_init_memory_पूर्णांकerface(
-    काष्ठा ia_css_isp_param_css_segments *isp_mem_अगर,
-    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_params,
-    स्थिर काष्ठा ia_css_isp_param_css_segments *css_params);
+/* Initialize the memory interface sizes and addresses */
+void
+ia_css_init_memory_interface(
+    struct ia_css_isp_param_css_segments *isp_mem_if,
+    const struct ia_css_isp_param_host_segments *mem_params,
+    const struct ia_css_isp_param_css_segments *css_params);
 
 /* Allocate memory parameters */
-पूर्णांक
+int
 ia_css_isp_param_allocate_isp_parameters(
-    काष्ठा ia_css_isp_param_host_segments *mem_params,
-    काष्ठा ia_css_isp_param_css_segments *css_params,
-    स्थिर काष्ठा ia_css_isp_param_isp_segments *mem_initializers);
+    struct ia_css_isp_param_host_segments *mem_params,
+    struct ia_css_isp_param_css_segments *css_params,
+    const struct ia_css_isp_param_isp_segments *mem_initializers);
 
 /* Destroy memory parameters */
-व्योम
+void
 ia_css_isp_param_destroy_isp_parameters(
-    काष्ठा ia_css_isp_param_host_segments *mem_params,
-    काष्ठा ia_css_isp_param_css_segments *css_params);
+    struct ia_css_isp_param_host_segments *mem_params,
+    struct ia_css_isp_param_css_segments *css_params);
 
 /* Load fw parameters */
-व्योम
+void
 ia_css_isp_param_load_fw_params(
-    स्थिर अक्षर *fw,
-    जोड़ ia_css_all_memory_offsets *mem_offsets,
-    स्थिर काष्ठा ia_css_isp_param_memory_offsets *memory_offsets,
+    const char *fw,
+    union ia_css_all_memory_offsets *mem_offsets,
+    const struct ia_css_isp_param_memory_offsets *memory_offsets,
     bool init);
 
 /* Copy host parameter images to ddr */
-पूर्णांक
-ia_css_isp_param_copy_isp_mem_अगर_to_ddr(
-    काष्ठा ia_css_isp_param_css_segments *ddr,
-    स्थिर काष्ठा ia_css_isp_param_host_segments *host,
-    क्रमागत ia_css_param_class pclass);
+int
+ia_css_isp_param_copy_isp_mem_if_to_ddr(
+    struct ia_css_isp_param_css_segments *ddr,
+    const struct ia_css_isp_param_host_segments *host,
+    enum ia_css_param_class pclass);
 
 /* Enable a pipeline by setting the control field in the isp dmem parameters */
-व्योम
+void
 ia_css_isp_param_enable_pipeline(
-    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_params);
+    const struct ia_css_isp_param_host_segments *mem_params);
 
-#पूर्ण_अगर /* _IA_CSS_ISP_PARAM_H_ */
+#endif /* _IA_CSS_ISP_PARAM_H_ */

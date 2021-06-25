@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_GENERIC_PARPORT_H
-#घोषणा __ASM_GENERIC_PARPORT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_GENERIC_PARPORT_H
+#define __ASM_GENERIC_PARPORT_H
 
 /*
  * An ISA bus may have i8255 parallel ports at well-known
@@ -12,14 +11,14 @@
  * to devices on the PCI bus.
  */
 
-अटल पूर्णांक parport_pc_find_isa_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma);
-अटल पूर्णांक parport_pc_find_nonpci_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
-अणु
-#अगर_घोषित CONFIG_ISA
-	वापस parport_pc_find_isa_ports(स्वतःirq, स्वतःdma);
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+static int parport_pc_find_isa_ports(int autoirq, int autodma);
+static int parport_pc_find_nonpci_ports(int autoirq, int autodma)
+{
+#ifdef CONFIG_ISA
+	return parport_pc_find_isa_ports(autoirq, autodma);
+#else
+	return 0;
+#endif
+}
 
-#पूर्ण_अगर /* __ASM_GENERIC_PARPORT_H */
+#endif /* __ASM_GENERIC_PARPORT_H */

@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Structures क्रम hypfs पूर्णांकerface
+ * Structures for hypfs interface
  *
  * Copyright IBM Corp. 2013
  *
  * Author: Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#अगर_अघोषित _ASM_HYPFS_H
-#घोषणा _ASM_HYPFS_H
+#ifndef _ASM_HYPFS_H
+#define _ASM_HYPFS_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * IOCTL क्रम binary पूर्णांकerface /sys/kernel/debug/diag_304
+ * IOCTL for binary interface /sys/kernel/debug/diag_304
  */
-काष्ठा hypfs_diag304 अणु
+struct hypfs_diag304 {
 	__u32	args[2];
 	__u64	data;
 	__u64	rc;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-#घोषणा HYPFS_IOCTL_MAGIC 0x10
+#define HYPFS_IOCTL_MAGIC 0x10
 
-#घोषणा HYPFS_DIAG304 \
-	_IOWR(HYPFS_IOCTL_MAGIC, 0x20, काष्ठा hypfs_diag304)
+#define HYPFS_DIAG304 \
+	_IOWR(HYPFS_IOCTL_MAGIC, 0x20, struct hypfs_diag304)
 
 /*
- * Structures क्रम binary पूर्णांकerface /sys/kernel/debug/diag_0c
+ * Structures for binary interface /sys/kernel/debug/diag_0c
  */
-काष्ठा hypfs_diag0c_hdr अणु
+struct hypfs_diag0c_hdr {
 	__u64	len;		/* Length of diag0c buffer without header */
 	__u16	version;	/* Version of header */
-	अक्षर	reserved1[6];	/* Reserved */
-	अक्षर	tod_ext[16];	/* TOD घड़ी क्रम diag0c */
+	char	reserved1[6];	/* Reserved */
+	char	tod_ext[16];	/* TOD clock for diag0c */
 	__u64	count;		/* Number of entries (CPUs) in diag0c array */
-	अक्षर	reserved2[24];	/* Reserved */
-पूर्ण;
+	char	reserved2[24];	/* Reserved */
+};
 
-काष्ठा hypfs_diag0c_entry अणु
-	अक्षर	date[8];	/* MM/DD/YY in EBCDIC */
-	अक्षर	समय[8];	/* HH:MM:SS in EBCDIC */
-	__u64	virtcpu;	/* Virtual समय consumed by the virt CPU (us) */
-	__u64	totalproc;	/* Total of भव and simulation समय (us) */
+struct hypfs_diag0c_entry {
+	char	date[8];	/* MM/DD/YY in EBCDIC */
+	char	time[8];	/* HH:MM:SS in EBCDIC */
+	__u64	virtcpu;	/* Virtual time consumed by the virt CPU (us) */
+	__u64	totalproc;	/* Total of virtual and simulation time (us) */
 	__u32	cpu;		/* Linux logical CPU number */
 	__u32	reserved;	/* Align to 8 byte */
-पूर्ण;
+};
 
-काष्ठा hypfs_diag0c_data अणु
-	काष्ठा hypfs_diag0c_hdr		hdr;		/* 64 byte header */
-	काष्ठा hypfs_diag0c_entry	entry[];	/* diag0c entry array */
-पूर्ण;
+struct hypfs_diag0c_data {
+	struct hypfs_diag0c_hdr		hdr;		/* 64 byte header */
+	struct hypfs_diag0c_entry	entry[];	/* diag0c entry array */
+};
 
-#पूर्ण_अगर
+#endif

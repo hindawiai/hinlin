@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#समावेश "mt7601u.h"
+#include "mt7601u.h"
 
-पूर्णांक mt7601u_रुको_asic_पढ़ोy(काष्ठा mt7601u_dev *dev)
-अणु
-	पूर्णांक i = 100;
+int mt7601u_wait_asic_ready(struct mt7601u_dev *dev)
+{
+	int i = 100;
 	u32 val;
 
-	करो अणु
-		अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-			वापस -EIO;
+	do {
+		if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+			return -EIO;
 
 		val = mt7601u_rr(dev, MT_MAC_CSR0);
-		अगर (val && ~val)
-			वापस 0;
+		if (val && ~val)
+			return 0;
 
 		udelay(10);
-	पूर्ण जबतक (i--);
+	} while (i--);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-bool mt76_poll(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
-	       पूर्णांक समयout)
-अणु
+bool mt76_poll(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
+	       int timeout)
+{
 	u32 cur;
 
-	समयout /= 10;
-	करो अणु
-		अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-			वापस false;
+	timeout /= 10;
+	do {
+		if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+			return false;
 
 		cur = mt7601u_rr(dev, offset) & mask;
-		अगर (cur == val)
-			वापस true;
+		if (cur == val)
+			return true;
 
 		udelay(10);
-	पूर्ण जबतक (समयout-- > 0);
+	} while (timeout-- > 0);
 
 	dev_err(dev->dev, "Error: Time out with reg %08x\n", offset);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool mt76_poll_msec(काष्ठा mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
-		    पूर्णांक समयout)
-अणु
+bool mt76_poll_msec(struct mt7601u_dev *dev, u32 offset, u32 mask, u32 val,
+		    int timeout)
+{
 	u32 cur;
 
-	समयout /= 10;
-	करो अणु
-		अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-			वापस false;
+	timeout /= 10;
+	do {
+		if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+			return false;
 
 		cur = mt7601u_rr(dev, offset) & mask;
-		अगर (cur == val)
-			वापस true;
+		if (cur == val)
+			return true;
 
 		msleep(10);
-	पूर्ण जबतक (समयout-- > 0);
+	} while (timeout-- > 0);
 
 	dev_err(dev->dev, "Error: Time out with reg %08x\n", offset);
 
-	वापस false;
-पूर्ण
+	return false;
+}

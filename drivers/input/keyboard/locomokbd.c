@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * LoCoMo keyboard driver क्रम Linux-based ARM PDAs:
+ * LoCoMo keyboard driver for Linux-based ARM PDAs:
  * 	- SHARP Zaurus Collie (SL-5500)
  * 	- SHARP Zaurus Poodle (SL-5600)
  *
@@ -9,30 +8,30 @@
  * Based on from xtkbd.c
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
 
-#समावेश <यंत्र/hardware/locomo.h>
-#समावेश <यंत्र/irq.h>
+#include <asm/hardware/locomo.h>
+#include <asm/irq.h>
 
 MODULE_AUTHOR("John Lenz <lenz@cs.wisc.edu>");
 MODULE_DESCRIPTION("LoCoMo keyboard driver");
 MODULE_LICENSE("GPL");
 
-#घोषणा LOCOMOKBD_NUMKEYS	128
+#define LOCOMOKBD_NUMKEYS	128
 
-#घोषणा KEY_ACTIVITY		KEY_F16
-#घोषणा KEY_CONTACT		KEY_F18
-#घोषणा KEY_CENTER		KEY_F15
+#define KEY_ACTIVITY		KEY_F16
+#define KEY_CONTACT		KEY_F18
+#define KEY_CENTER		KEY_F15
 
-अटल स्थिर अचिन्हित अक्षर
-locomokbd_keycode[LOCOMOKBD_NUMKEYS] = अणु
+static const unsigned char
+locomokbd_keycode[LOCOMOKBD_NUMKEYS] = {
 	0, KEY_ESC, KEY_ACTIVITY, 0, 0, 0, 0, 0, 0, 0,				/* 0 - 9 */
 	0, 0, 0, 0, 0, 0, 0, KEY_MENU, KEY_HOME, KEY_CONTACT,			/* 10 - 19 */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,						/* 20 - 29 */
@@ -46,299 +45,299 @@ locomokbd_keycode[LOCOMOKBD_NUMKEYS] = अणु
 	0, 0, KEY_DOT, 0, KEY_COMMA, KEY_N, KEY_B, KEY_C, KEY_Z, KEY_A,		/* 100 - 109 */
 	KEY_LEFTSHIFT, KEY_TAB, KEY_LEFTCTRL, 0, 0, 0, 0, 0, 0, 0,		/* 110 - 119 */
 	KEY_M, KEY_SPACE, KEY_V, KEY_APOSTROPHE, KEY_SLASH, 0, 0, 0		/* 120 - 128 */
-पूर्ण;
+};
 
-#घोषणा KB_ROWS			16
-#घोषणा KB_COLS			8
-#घोषणा KB_ROWMASK(r)		(1 << (r))
-#घोषणा SCANCODE(c,r)		( ((c)<<4) + (r) + 1 )
+#define KB_ROWS			16
+#define KB_COLS			8
+#define KB_ROWMASK(r)		(1 << (r))
+#define SCANCODE(c,r)		( ((c)<<4) + (r) + 1 )
 
-#घोषणा KB_DELAY		8
-#घोषणा SCAN_INTERVAL		(HZ/10)
+#define KB_DELAY		8
+#define SCAN_INTERVAL		(HZ/10)
 
-काष्ठा locomokbd अणु
-	अचिन्हित अक्षर keycode[LOCOMOKBD_NUMKEYS];
-	काष्ठा input_dev *input;
-	अक्षर phys[32];
+struct locomokbd {
+	unsigned char keycode[LOCOMOKBD_NUMKEYS];
+	struct input_dev *input;
+	char phys[32];
 
-	अचिन्हित दीर्घ base;
+	unsigned long base;
 	spinlock_t lock;
 
-	काष्ठा समयr_list समयr;
-	अचिन्हित दीर्घ suspend_jअगरfies;
-	अचिन्हित पूर्णांक count_cancel;
-पूर्ण;
+	struct timer_list timer;
+	unsigned long suspend_jiffies;
+	unsigned int count_cancel;
+};
 
-/* helper functions क्रम पढ़ोing the keyboard matrix */
-अटल अंतरभूत व्योम locomokbd_अक्षरge_all(अचिन्हित दीर्घ membase)
-अणु
-	locomo_ग_लिखोl(0x00FF, membase + LOCOMO_KSC);
-पूर्ण
+/* helper functions for reading the keyboard matrix */
+static inline void locomokbd_charge_all(unsigned long membase)
+{
+	locomo_writel(0x00FF, membase + LOCOMO_KSC);
+}
 
-अटल अंतरभूत व्योम locomokbd_activate_all(अचिन्हित दीर्घ membase)
-अणु
-	अचिन्हित दीर्घ r;
+static inline void locomokbd_activate_all(unsigned long membase)
+{
+	unsigned long r;
 
-	locomo_ग_लिखोl(0, membase + LOCOMO_KSC);
-	r = locomo_पढ़ोl(membase + LOCOMO_KIC);
+	locomo_writel(0, membase + LOCOMO_KSC);
+	r = locomo_readl(membase + LOCOMO_KIC);
 	r &= 0xFEFF;
-	locomo_ग_लिखोl(r, membase + LOCOMO_KIC);
-पूर्ण
+	locomo_writel(r, membase + LOCOMO_KIC);
+}
 
-अटल अंतरभूत व्योम locomokbd_activate_col(अचिन्हित दीर्घ membase, पूर्णांक col)
-अणु
-	अचिन्हित लघु nset;
-	अचिन्हित लघु nbset;
+static inline void locomokbd_activate_col(unsigned long membase, int col)
+{
+	unsigned short nset;
+	unsigned short nbset;
 
 	nset = 0xFF & ~(1 << col);
 	nbset = (nset << 8) + nset;
-	locomo_ग_लिखोl(nbset, membase + LOCOMO_KSC);
-पूर्ण
+	locomo_writel(nbset, membase + LOCOMO_KSC);
+}
 
-अटल अंतरभूत व्योम locomokbd_reset_col(अचिन्हित दीर्घ membase, पूर्णांक col)
-अणु
-	अचिन्हित लघु nbset;
+static inline void locomokbd_reset_col(unsigned long membase, int col)
+{
+	unsigned short nbset;
 
 	nbset = ((0xFF & ~(1 << col)) << 8) + 0xFF;
-	locomo_ग_लिखोl(nbset, membase + LOCOMO_KSC);
-पूर्ण
+	locomo_writel(nbset, membase + LOCOMO_KSC);
+}
 
 /*
- * The LoCoMo keyboard only generates पूर्णांकerrupts when a key is pressed.
- * So when a key is pressed, we enable a समयr.  This समयr scans the
+ * The LoCoMo keyboard only generates interrupts when a key is pressed.
+ * So when a key is pressed, we enable a timer.  This timer scans the
  * keyboard, and this is how we detect when the key is released.
  */
 
 /* Scan the hardware keyboard and push any changes up through the input layer */
-अटल व्योम locomokbd_scankeyboard(काष्ठा locomokbd *locomokbd)
-अणु
-	अचिन्हित पूर्णांक row, col, rowd;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक num_pressed;
-	अचिन्हित दीर्घ membase = locomokbd->base;
+static void locomokbd_scankeyboard(struct locomokbd *locomokbd)
+{
+	unsigned int row, col, rowd;
+	unsigned long flags;
+	unsigned int num_pressed;
+	unsigned long membase = locomokbd->base;
 
 	spin_lock_irqsave(&locomokbd->lock, flags);
 
-	locomokbd_अक्षरge_all(membase);
+	locomokbd_charge_all(membase);
 
 	num_pressed = 0;
-	क्रम (col = 0; col < KB_COLS; col++) अणु
+	for (col = 0; col < KB_COLS; col++) {
 
 		locomokbd_activate_col(membase, col);
 		udelay(KB_DELAY);
 
-		rowd = ~locomo_पढ़ोl(membase + LOCOMO_KIB);
-		क्रम (row = 0; row < KB_ROWS; row++) अणु
-			अचिन्हित पूर्णांक scancode, pressed, key;
+		rowd = ~locomo_readl(membase + LOCOMO_KIB);
+		for (row = 0; row < KB_ROWS; row++) {
+			unsigned int scancode, pressed, key;
 
 			scancode = SCANCODE(col, row);
 			pressed = rowd & KB_ROWMASK(row);
 			key = locomokbd->keycode[scancode];
 
 			input_report_key(locomokbd->input, key, pressed);
-			अगर (likely(!pressed))
-				जारी;
+			if (likely(!pressed))
+				continue;
 
 			num_pressed++;
 
 			/* The "Cancel/ESC" key is labeled "On/Off" on
 			 * Collie and Poodle and should suspend the device
-			 * अगर it was pressed क्रम more than a second. */
-			अगर (unlikely(key == KEY_ESC)) अणु
-				अगर (!समय_after(jअगरfies,
-					locomokbd->suspend_jअगरfies + HZ))
-					जारी;
-				अगर (locomokbd->count_cancel++
+			 * if it was pressed for more than a second. */
+			if (unlikely(key == KEY_ESC)) {
+				if (!time_after(jiffies,
+					locomokbd->suspend_jiffies + HZ))
+					continue;
+				if (locomokbd->count_cancel++
 					!= (HZ/SCAN_INTERVAL + 1))
-					जारी;
+					continue;
 				input_event(locomokbd->input, EV_PWR,
 					KEY_SUSPEND, 1);
-				locomokbd->suspend_jअगरfies = jअगरfies;
-			पूर्ण अन्यथा
+				locomokbd->suspend_jiffies = jiffies;
+			} else
 				locomokbd->count_cancel = 0;
-		पूर्ण
+		}
 		locomokbd_reset_col(membase, col);
-	पूर्ण
+	}
 	locomokbd_activate_all(membase);
 
 	input_sync(locomokbd->input);
 
-	/* अगर any keys are pressed, enable the समयr */
-	अगर (num_pressed)
-		mod_समयr(&locomokbd->समयr, jअगरfies + SCAN_INTERVAL);
-	अन्यथा
+	/* if any keys are pressed, enable the timer */
+	if (num_pressed)
+		mod_timer(&locomokbd->timer, jiffies + SCAN_INTERVAL);
+	else
 		locomokbd->count_cancel = 0;
 
 	spin_unlock_irqrestore(&locomokbd->lock, flags);
-पूर्ण
+}
 
 /*
- * LoCoMo keyboard पूर्णांकerrupt handler.
+ * LoCoMo keyboard interrupt handler.
  */
-अटल irqवापस_t locomokbd_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा locomokbd *locomokbd = dev_id;
+static irqreturn_t locomokbd_interrupt(int irq, void *dev_id)
+{
+	struct locomokbd *locomokbd = dev_id;
 	u16 r;
 
-	r = locomo_पढ़ोl(locomokbd->base + LOCOMO_KIC);
-	अगर ((r & 0x0001) == 0)
-		वापस IRQ_HANDLED;
+	r = locomo_readl(locomokbd->base + LOCOMO_KIC);
+	if ((r & 0x0001) == 0)
+		return IRQ_HANDLED;
 
-	locomo_ग_लिखोl(r & ~0x0100, locomokbd->base + LOCOMO_KIC); /* Ack */
+	locomo_writel(r & ~0x0100, locomokbd->base + LOCOMO_KIC); /* Ack */
 
-	/** रुको chattering delay **/
+	/** wait chattering delay **/
 	udelay(100);
 
 	locomokbd_scankeyboard(locomokbd);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * LoCoMo समयr checking क्रम released keys
+ * LoCoMo timer checking for released keys
  */
-अटल व्योम locomokbd_समयr_callback(काष्ठा समयr_list *t)
-अणु
-	काष्ठा locomokbd *locomokbd = from_समयr(locomokbd, t, समयr);
+static void locomokbd_timer_callback(struct timer_list *t)
+{
+	struct locomokbd *locomokbd = from_timer(locomokbd, t, timer);
 
 	locomokbd_scankeyboard(locomokbd);
-पूर्ण
+}
 
-अटल पूर्णांक locomokbd_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा locomokbd *locomokbd = input_get_drvdata(dev);
+static int locomokbd_open(struct input_dev *dev)
+{
+	struct locomokbd *locomokbd = input_get_drvdata(dev);
 	u16 r;
 	
-	r = locomo_पढ़ोl(locomokbd->base + LOCOMO_KIC) | 0x0010;
-	locomo_ग_लिखोl(r, locomokbd->base + LOCOMO_KIC);
-	वापस 0;
-पूर्ण
+	r = locomo_readl(locomokbd->base + LOCOMO_KIC) | 0x0010;
+	locomo_writel(r, locomokbd->base + LOCOMO_KIC);
+	return 0;
+}
 
-अटल व्योम locomokbd_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा locomokbd *locomokbd = input_get_drvdata(dev);
+static void locomokbd_close(struct input_dev *dev)
+{
+	struct locomokbd *locomokbd = input_get_drvdata(dev);
 	u16 r;
 	
-	r = locomo_पढ़ोl(locomokbd->base + LOCOMO_KIC) & ~0x0010;
-	locomo_ग_लिखोl(r, locomokbd->base + LOCOMO_KIC);
-पूर्ण
+	r = locomo_readl(locomokbd->base + LOCOMO_KIC) & ~0x0010;
+	locomo_writel(r, locomokbd->base + LOCOMO_KIC);
+}
 
-अटल पूर्णांक locomokbd_probe(काष्ठा locomo_dev *dev)
-अणु
-	काष्ठा locomokbd *locomokbd;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक i, err;
+static int locomokbd_probe(struct locomo_dev *dev)
+{
+	struct locomokbd *locomokbd;
+	struct input_dev *input_dev;
+	int i, err;
 
-	locomokbd = kzalloc(माप(काष्ठा locomokbd), GFP_KERNEL);
+	locomokbd = kzalloc(sizeof(struct locomokbd), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!locomokbd || !input_dev) अणु
+	if (!locomokbd || !input_dev) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	/* try and claim memory region */
-	अगर (!request_mem_region((अचिन्हित दीर्घ) dev->mapbase,
+	if (!request_mem_region((unsigned long) dev->mapbase,
 				dev->length,
-				LOCOMO_DRIVER_NAME(dev))) अणु
+				LOCOMO_DRIVER_NAME(dev))) {
 		err = -EBUSY;
-		prपूर्णांकk(KERN_ERR "locomokbd: Can't acquire access to io memory for keyboard\n");
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		printk(KERN_ERR "locomokbd: Can't acquire access to io memory for keyboard\n");
+		goto err_free_mem;
+	}
 
 	locomo_set_drvdata(dev, locomokbd);
 
-	locomokbd->base = (अचिन्हित दीर्घ) dev->mapbase;
+	locomokbd->base = (unsigned long) dev->mapbase;
 
 	spin_lock_init(&locomokbd->lock);
 
-	समयr_setup(&locomokbd->समयr, locomokbd_समयr_callback, 0);
+	timer_setup(&locomokbd->timer, locomokbd_timer_callback, 0);
 
-	locomokbd->suspend_jअगरfies = jअगरfies;
+	locomokbd->suspend_jiffies = jiffies;
 
 	locomokbd->input = input_dev;
-	म_नकल(locomokbd->phys, "locomokbd/input0");
+	strcpy(locomokbd->phys, "locomokbd/input0");
 
 	input_dev->name = "LoCoMo keyboard";
 	input_dev->phys = locomokbd->phys;
 	input_dev->id.bustype = BUS_HOST;
-	input_dev->id.venकरोr = 0x0001;
+	input_dev->id.vendor = 0x0001;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
-	input_dev->खोलो = locomokbd_खोलो;
-	input_dev->बंद = locomokbd_बंद;
+	input_dev->open = locomokbd_open;
+	input_dev->close = locomokbd_close;
 	input_dev->dev.parent = &dev->dev;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP) |
 				BIT_MASK(EV_PWR);
 	input_dev->keycode = locomokbd->keycode;
-	input_dev->keycodesize = माप(locomokbd_keycode[0]);
+	input_dev->keycodesize = sizeof(locomokbd_keycode[0]);
 	input_dev->keycodemax = ARRAY_SIZE(locomokbd_keycode);
 
 	input_set_drvdata(input_dev, locomokbd);
 
-	स_नकल(locomokbd->keycode, locomokbd_keycode, माप(locomokbd->keycode));
-	क्रम (i = 0; i < LOCOMOKBD_NUMKEYS; i++)
+	memcpy(locomokbd->keycode, locomokbd_keycode, sizeof(locomokbd->keycode));
+	for (i = 0; i < LOCOMOKBD_NUMKEYS; i++)
 		set_bit(locomokbd->keycode[i], input_dev->keybit);
 	clear_bit(0, input_dev->keybit);
 
-	/* attempt to get the पूर्णांकerrupt */
-	err = request_irq(dev->irq[0], locomokbd_पूर्णांकerrupt, 0, "locomokbd", locomokbd);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "locomokbd: Can't get irq for keyboard\n");
-		जाओ err_release_region;
-	पूर्ण
+	/* attempt to get the interrupt */
+	err = request_irq(dev->irq[0], locomokbd_interrupt, 0, "locomokbd", locomokbd);
+	if (err) {
+		printk(KERN_ERR "locomokbd: Can't get irq for keyboard\n");
+		goto err_release_region;
+	}
 
-	err = input_रेजिस्टर_device(locomokbd->input);
-	अगर (err)
-		जाओ err_मुक्त_irq;
+	err = input_register_device(locomokbd->input);
+	if (err)
+		goto err_free_irq;
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_irq:
-	मुक्त_irq(dev->irq[0], locomokbd);
+ err_free_irq:
+	free_irq(dev->irq[0], locomokbd);
  err_release_region:
-	release_mem_region((अचिन्हित दीर्घ) dev->mapbase, dev->length);
-	locomo_set_drvdata(dev, शून्य);
- err_मुक्त_mem:
-	input_मुक्त_device(input_dev);
-	kमुक्त(locomokbd);
+	release_mem_region((unsigned long) dev->mapbase, dev->length);
+	locomo_set_drvdata(dev, NULL);
+ err_free_mem:
+	input_free_device(input_dev);
+	kfree(locomokbd);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम locomokbd_हटाओ(काष्ठा locomo_dev *dev)
-अणु
-	काष्ठा locomokbd *locomokbd = locomo_get_drvdata(dev);
+static void locomokbd_remove(struct locomo_dev *dev)
+{
+	struct locomokbd *locomokbd = locomo_get_drvdata(dev);
 
-	मुक्त_irq(dev->irq[0], locomokbd);
+	free_irq(dev->irq[0], locomokbd);
 
-	del_समयr_sync(&locomokbd->समयr);
+	del_timer_sync(&locomokbd->timer);
 
-	input_unरेजिस्टर_device(locomokbd->input);
-	locomo_set_drvdata(dev, शून्य);
+	input_unregister_device(locomokbd->input);
+	locomo_set_drvdata(dev, NULL);
 
-	release_mem_region((अचिन्हित दीर्घ) dev->mapbase, dev->length);
+	release_mem_region((unsigned long) dev->mapbase, dev->length);
 
-	kमुक्त(locomokbd);
-पूर्ण
+	kfree(locomokbd);
+}
 
-अटल काष्ठा locomo_driver keyboard_driver = अणु
-	.drv = अणु
+static struct locomo_driver keyboard_driver = {
+	.drv = {
 		.name = "locomokbd"
-	पूर्ण,
+	},
 	.devid	= LOCOMO_DEVID_KEYBOARD,
 	.probe	= locomokbd_probe,
-	.हटाओ	= locomokbd_हटाओ,
-पूर्ण;
+	.remove	= locomokbd_remove,
+};
 
-अटल पूर्णांक __init locomokbd_init(व्योम)
-अणु
-	वापस locomo_driver_रेजिस्टर(&keyboard_driver);
-पूर्ण
+static int __init locomokbd_init(void)
+{
+	return locomo_driver_register(&keyboard_driver);
+}
 
-अटल व्योम __निकास locomokbd_निकास(व्योम)
-अणु
-	locomo_driver_unरेजिस्टर(&keyboard_driver);
-पूर्ण
+static void __exit locomokbd_exit(void)
+{
+	locomo_driver_unregister(&keyboard_driver);
+}
 
 module_init(locomokbd_init);
-module_निकास(locomokbd_निकास);
+module_exit(locomokbd_exit);

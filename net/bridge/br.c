@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Generic parts
  *	Linux ethernet bridge
@@ -8,400 +7,400 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/init.h>
-#समावेश <linux/llc.h>
-#समावेश <net/llc.h>
-#समावेश <net/stp.h>
-#समावेश <net/चयनdev.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/init.h>
+#include <linux/llc.h>
+#include <net/llc.h>
+#include <net/stp.h>
+#include <net/switchdev.h>
 
-#समावेश "br_private.h"
+#include "br_private.h"
 
 /*
  * Handle changes in state of network devices enslaved to a bridge.
  *
- * Note: करोn't care about up/करोwn अगर bridge itself is करोwn, because
+ * Note: don't care about up/down if bridge itself is down, because
  *     port state is checked when bridge is brought up.
  */
-अटल पूर्णांक br_device_event(काष्ठा notअगरier_block *unused, अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा netlink_ext_ack *extack = netdev_notअगरier_info_to_extack(ptr);
-	काष्ठा netdev_notअगरier_pre_changeaddr_info *prechaddr_info;
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा net_bridge_port *p;
-	काष्ठा net_bridge *br;
-	bool notअगरied = false;
+static int br_device_event(struct notifier_block *unused, unsigned long event, void *ptr)
+{
+	struct netlink_ext_ack *extack = netdev_notifier_info_to_extack(ptr);
+	struct netdev_notifier_pre_changeaddr_info *prechaddr_info;
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct net_bridge_port *p;
+	struct net_bridge *br;
+	bool notified = false;
 	bool changed_addr;
-	पूर्णांक err;
+	int err;
 
-	अगर (dev->priv_flags & IFF_EBRIDGE) अणु
+	if (dev->priv_flags & IFF_EBRIDGE) {
 		err = br_vlan_bridge_event(dev, event, ptr);
-		अगर (err)
-			वापस notअगरier_from_त्रुटि_सं(err);
+		if (err)
+			return notifier_from_errno(err);
 
-		अगर (event == NETDEV_REGISTER) अणु
-			/* रेजिस्टर of bridge completed, add sysfs entries */
+		if (event == NETDEV_REGISTER) {
+			/* register of bridge completed, add sysfs entries */
 			err = br_sysfs_addbr(dev);
-			अगर (err)
-				वापस notअगरier_from_त्रुटि_सं(err);
+			if (err)
+				return notifier_from_errno(err);
 
-			वापस NOTIFY_DONE;
-		पूर्ण
-	पूर्ण
+			return NOTIFY_DONE;
+		}
+	}
 
 	/* not a port of a bridge */
 	p = br_port_get_rtnl(dev);
-	अगर (!p)
-		वापस NOTIFY_DONE;
+	if (!p)
+		return NOTIFY_DONE;
 
 	br = p->br;
 
-	चयन (event) अणु
-	हाल NETDEV_CHANGEMTU:
-		br_mtu_स्वतः_adjust(br);
-		अवरोध;
+	switch (event) {
+	case NETDEV_CHANGEMTU:
+		br_mtu_auto_adjust(br);
+		break;
 
-	हाल NETDEV_PRE_CHANGEADDR:
-		अगर (br->dev->addr_assign_type == NET_ADDR_SET)
-			अवरोध;
+	case NETDEV_PRE_CHANGEADDR:
+		if (br->dev->addr_assign_type == NET_ADDR_SET)
+			break;
 		prechaddr_info = ptr;
-		err = dev_pre_changeaddr_notअगरy(br->dev,
+		err = dev_pre_changeaddr_notify(br->dev,
 						prechaddr_info->dev_addr,
 						extack);
-		अगर (err)
-			वापस notअगरier_from_त्रुटि_सं(err);
-		अवरोध;
+		if (err)
+			return notifier_from_errno(err);
+		break;
 
-	हाल NETDEV_CHANGEADDR:
+	case NETDEV_CHANGEADDR:
 		spin_lock_bh(&br->lock);
 		br_fdb_changeaddr(p, dev->dev_addr);
 		changed_addr = br_stp_recalculate_bridge_id(br);
 		spin_unlock_bh(&br->lock);
 
-		अगर (changed_addr)
-			call_netdevice_notअगरiers(NETDEV_CHANGEADDR, br->dev);
+		if (changed_addr)
+			call_netdevice_notifiers(NETDEV_CHANGEADDR, br->dev);
 
-		अवरोध;
+		break;
 
-	हाल NETDEV_CHANGE:
-		br_port_carrier_check(p, &notअगरied);
-		अवरोध;
+	case NETDEV_CHANGE:
+		br_port_carrier_check(p, &notified);
+		break;
 
-	हाल NETDEV_FEAT_CHANGE:
+	case NETDEV_FEAT_CHANGE:
 		netdev_update_features(br->dev);
-		अवरोध;
+		break;
 
-	हाल NETDEV_DOWN:
+	case NETDEV_DOWN:
 		spin_lock_bh(&br->lock);
-		अगर (br->dev->flags & IFF_UP) अणु
+		if (br->dev->flags & IFF_UP) {
 			br_stp_disable_port(p);
-			notअगरied = true;
-		पूर्ण
+			notified = true;
+		}
 		spin_unlock_bh(&br->lock);
-		अवरोध;
+		break;
 
-	हाल NETDEV_UP:
-		अगर (netअगर_running(br->dev) && netअगर_oper_up(dev)) अणु
+	case NETDEV_UP:
+		if (netif_running(br->dev) && netif_oper_up(dev)) {
 			spin_lock_bh(&br->lock);
 			br_stp_enable_port(p);
-			notअगरied = true;
+			notified = true;
 			spin_unlock_bh(&br->lock);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल NETDEV_UNREGISTER:
-		br_del_अगर(br, dev);
-		अवरोध;
+	case NETDEV_UNREGISTER:
+		br_del_if(br, dev);
+		break;
 
-	हाल NETDEV_CHANGENAME:
-		err = br_sysfs_नामअगर(p);
-		अगर (err)
-			वापस notअगरier_from_त्रुटि_सं(err);
-		अवरोध;
+	case NETDEV_CHANGENAME:
+		err = br_sysfs_renameif(p);
+		if (err)
+			return notifier_from_errno(err);
+		break;
 
-	हाल NETDEV_PRE_TYPE_CHANGE:
+	case NETDEV_PRE_TYPE_CHANGE:
 		/* Forbid underlying device to change its type. */
-		वापस NOTIFY_BAD;
+		return NOTIFY_BAD;
 
-	हाल NETDEV_RESEND_IGMP:
+	case NETDEV_RESEND_IGMP:
 		/* Propagate to master device */
-		call_netdevice_notअगरiers(event, br->dev);
-		अवरोध;
-	पूर्ण
+		call_netdevice_notifiers(event, br->dev);
+		break;
+	}
 
-	अगर (event != NETDEV_UNREGISTER)
+	if (event != NETDEV_UNREGISTER)
 		br_vlan_port_event(p, event);
 
 	/* Events that may cause spanning tree to refresh */
-	अगर (!notअगरied && (event == NETDEV_CHANGEADDR || event == NETDEV_UP ||
+	if (!notified && (event == NETDEV_CHANGEADDR || event == NETDEV_UP ||
 			  event == NETDEV_CHANGE || event == NETDEV_DOWN))
-		br_अगरinfo_notअगरy(RTM_NEWLINK, शून्य, p);
+		br_ifinfo_notify(RTM_NEWLINK, NULL, p);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block br_device_notअगरier = अणु
-	.notअगरier_call = br_device_event
-पूर्ण;
+static struct notifier_block br_device_notifier = {
+	.notifier_call = br_device_event
+};
 
 /* called with RTNL or RCU */
-अटल पूर्णांक br_चयनdev_event(काष्ठा notअगरier_block *unused,
-			      अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = चयनdev_notअगरier_info_to_dev(ptr);
-	काष्ठा net_bridge_port *p;
-	काष्ठा net_bridge *br;
-	काष्ठा चयनdev_notअगरier_fdb_info *fdb_info;
-	पूर्णांक err = NOTIFY_DONE;
+static int br_switchdev_event(struct notifier_block *unused,
+			      unsigned long event, void *ptr)
+{
+	struct net_device *dev = switchdev_notifier_info_to_dev(ptr);
+	struct net_bridge_port *p;
+	struct net_bridge *br;
+	struct switchdev_notifier_fdb_info *fdb_info;
+	int err = NOTIFY_DONE;
 
 	p = br_port_get_rtnl_rcu(dev);
-	अगर (!p)
-		जाओ out;
+	if (!p)
+		goto out;
 
 	br = p->br;
 
-	चयन (event) अणु
-	हाल SWITCHDEV_FDB_ADD_TO_BRIDGE:
+	switch (event) {
+	case SWITCHDEV_FDB_ADD_TO_BRIDGE:
 		fdb_info = ptr;
-		err = br_fdb_बाह्यal_learn_add(br, p, fdb_info->addr,
+		err = br_fdb_external_learn_add(br, p, fdb_info->addr,
 						fdb_info->vid, false);
-		अगर (err) अणु
-			err = notअगरier_from_त्रुटि_सं(err);
-			अवरोध;
-		पूर्ण
+		if (err) {
+			err = notifier_from_errno(err);
+			break;
+		}
 		br_fdb_offloaded_set(br, p, fdb_info->addr,
 				     fdb_info->vid, true);
-		अवरोध;
-	हाल SWITCHDEV_FDB_DEL_TO_BRIDGE:
+		break;
+	case SWITCHDEV_FDB_DEL_TO_BRIDGE:
 		fdb_info = ptr;
-		err = br_fdb_बाह्यal_learn_del(br, p, fdb_info->addr,
+		err = br_fdb_external_learn_del(br, p, fdb_info->addr,
 						fdb_info->vid, false);
-		अगर (err)
-			err = notअगरier_from_त्रुटि_सं(err);
-		अवरोध;
-	हाल SWITCHDEV_FDB_OFFLOADED:
+		if (err)
+			err = notifier_from_errno(err);
+		break;
+	case SWITCHDEV_FDB_OFFLOADED:
 		fdb_info = ptr;
 		br_fdb_offloaded_set(br, p, fdb_info->addr,
 				     fdb_info->vid, fdb_info->offloaded);
-		अवरोध;
-	हाल SWITCHDEV_FDB_FLUSH_TO_BRIDGE:
+		break;
+	case SWITCHDEV_FDB_FLUSH_TO_BRIDGE:
 		fdb_info = ptr;
-		/* Don't delete अटल entries */
+		/* Don't delete static entries */
 		br_fdb_delete_by_port(br, p, fdb_info->vid, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा notअगरier_block br_चयनdev_notअगरier = अणु
-	.notअगरier_call = br_चयनdev_event,
-पूर्ण;
+static struct notifier_block br_switchdev_notifier = {
+	.notifier_call = br_switchdev_event,
+};
 
 /* br_boolopt_toggle - change user-controlled boolean option
  *
  * @br: bridge device
  * @opt: id of the option to change
  * @on: new option value
- * @extack: extack क्रम error messages
+ * @extack: extack for error messages
  *
  * Changes the value of the respective boolean option to @on taking care of
- * any पूर्णांकernal option value mapping and configuration.
+ * any internal option value mapping and configuration.
  */
-पूर्णांक br_boolopt_toggle(काष्ठा net_bridge *br, क्रमागत br_boolopt_id opt, bool on,
-		      काष्ठा netlink_ext_ack *extack)
-अणु
-	चयन (opt) अणु
-	हाल BR_BOOLOPT_NO_LL_LEARN:
+int br_boolopt_toggle(struct net_bridge *br, enum br_boolopt_id opt, bool on,
+		      struct netlink_ext_ack *extack)
+{
+	switch (opt) {
+	case BR_BOOLOPT_NO_LL_LEARN:
 		br_opt_toggle(br, BROPT_NO_LL_LEARN, on);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* shouldn't be called with unsupported options */
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक br_boolopt_get(स्थिर काष्ठा net_bridge *br, क्रमागत br_boolopt_id opt)
-अणु
-	चयन (opt) अणु
-	हाल BR_BOOLOPT_NO_LL_LEARN:
-		वापस br_opt_get(br, BROPT_NO_LL_LEARN);
-	शेष:
+int br_boolopt_get(const struct net_bridge *br, enum br_boolopt_id opt)
+{
+	switch (opt) {
+	case BR_BOOLOPT_NO_LL_LEARN:
+		return br_opt_get(br, BROPT_NO_LL_LEARN);
+	default:
 		/* shouldn't be called with unsupported options */
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक br_boolopt_multi_toggle(काष्ठा net_bridge *br,
-			    काष्ठा br_boolopt_multi *bm,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	अचिन्हित दीर्घ biपंचांगap = bm->opपंचांगask;
-	पूर्णांक err = 0;
-	पूर्णांक opt_id;
+int br_boolopt_multi_toggle(struct net_bridge *br,
+			    struct br_boolopt_multi *bm,
+			    struct netlink_ext_ack *extack)
+{
+	unsigned long bitmap = bm->optmask;
+	int err = 0;
+	int opt_id;
 
-	क्रम_each_set_bit(opt_id, &biपंचांगap, BR_BOOLOPT_MAX) अणु
+	for_each_set_bit(opt_id, &bitmap, BR_BOOLOPT_MAX) {
 		bool on = !!(bm->optval & BIT(opt_id));
 
 		err = br_boolopt_toggle(br, opt_id, on, extack);
-		अगर (err) अणु
+		if (err) {
 			br_debug(br, "boolopt multi-toggle error: option: %d current: %d new: %d error: %d\n",
 				 opt_id, br_boolopt_get(br, opt_id), on, err);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम br_boolopt_multi_get(स्थिर काष्ठा net_bridge *br,
-			  काष्ठा br_boolopt_multi *bm)
-अणु
+void br_boolopt_multi_get(const struct net_bridge *br,
+			  struct br_boolopt_multi *bm)
+{
 	u32 optval = 0;
-	पूर्णांक opt_id;
+	int opt_id;
 
-	क्रम (opt_id = 0; opt_id < BR_BOOLOPT_MAX; opt_id++)
+	for (opt_id = 0; opt_id < BR_BOOLOPT_MAX; opt_id++)
 		optval |= (br_boolopt_get(br, opt_id) << opt_id);
 
 	bm->optval = optval;
-	bm->opपंचांगask = GENMASK((BR_BOOLOPT_MAX - 1), 0);
-पूर्ण
+	bm->optmask = GENMASK((BR_BOOLOPT_MAX - 1), 0);
+}
 
-/* निजी bridge options, controlled by the kernel */
-व्योम br_opt_toggle(काष्ठा net_bridge *br, क्रमागत net_bridge_opts opt, bool on)
-अणु
+/* private bridge options, controlled by the kernel */
+void br_opt_toggle(struct net_bridge *br, enum net_bridge_opts opt, bool on)
+{
 	bool cur = !!br_opt_get(br, opt);
 
 	br_debug(br, "toggle option: %d state: %d -> %d\n",
 		 opt, cur, on);
 
-	अगर (cur == on)
-		वापस;
+	if (cur == on)
+		return;
 
-	अगर (on)
+	if (on)
 		set_bit(opt, &br->options);
-	अन्यथा
+	else
 		clear_bit(opt, &br->options);
-पूर्ण
+}
 
-अटल व्योम __net_निकास br_net_निकास(काष्ठा net *net)
-अणु
-	काष्ठा net_device *dev;
+static void __net_exit br_net_exit(struct net *net)
+{
+	struct net_device *dev;
 	LIST_HEAD(list);
 
 	rtnl_lock();
-	क्रम_each_netdev(net, dev)
-		अगर (dev->priv_flags & IFF_EBRIDGE)
+	for_each_netdev(net, dev)
+		if (dev->priv_flags & IFF_EBRIDGE)
 			br_dev_delete(dev, &list);
 
-	unरेजिस्टर_netdevice_many(&list);
+	unregister_netdevice_many(&list);
 	rtnl_unlock();
 
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations br_net_ops = अणु
-	.निकास	= br_net_निकास,
-पूर्ण;
+static struct pernet_operations br_net_ops = {
+	.exit	= br_net_exit,
+};
 
-अटल स्थिर काष्ठा stp_proto br_stp_proto = अणु
+static const struct stp_proto br_stp_proto = {
 	.rcv	= br_stp_rcv,
-पूर्ण;
+};
 
-अटल पूर्णांक __init br_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init br_init(void)
+{
+	int err;
 
-	BUILD_BUG_ON(माप(काष्ठा br_input_skb_cb) > माप_field(काष्ठा sk_buff, cb));
+	BUILD_BUG_ON(sizeof(struct br_input_skb_cb) > sizeof_field(struct sk_buff, cb));
 
-	err = stp_proto_रेजिस्टर(&br_stp_proto);
-	अगर (err < 0) अणु
+	err = stp_proto_register(&br_stp_proto);
+	if (err < 0) {
 		pr_err("bridge: can't register sap for STP\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = br_fdb_init();
-	अगर (err)
-		जाओ err_out;
+	if (err)
+		goto err_out;
 
-	err = रेजिस्टर_pernet_subsys(&br_net_ops);
-	अगर (err)
-		जाओ err_out1;
+	err = register_pernet_subsys(&br_net_ops);
+	if (err)
+		goto err_out1;
 
 	err = br_nf_core_init();
-	अगर (err)
-		जाओ err_out2;
+	if (err)
+		goto err_out2;
 
-	err = रेजिस्टर_netdevice_notअगरier(&br_device_notअगरier);
-	अगर (err)
-		जाओ err_out3;
+	err = register_netdevice_notifier(&br_device_notifier);
+	if (err)
+		goto err_out3;
 
-	err = रेजिस्टर_चयनdev_notअगरier(&br_चयनdev_notअगरier);
-	अगर (err)
-		जाओ err_out4;
+	err = register_switchdev_notifier(&br_switchdev_notifier);
+	if (err)
+		goto err_out4;
 
 	err = br_netlink_init();
-	अगर (err)
-		जाओ err_out5;
+	if (err)
+		goto err_out5;
 
 	brioctl_set(br_ioctl_deviceless_stub);
 
-#अगर IS_ENABLED(CONFIG_ATM_LANE)
+#if IS_ENABLED(CONFIG_ATM_LANE)
 	br_fdb_test_addr_hook = br_fdb_test_addr;
-#पूर्ण_अगर
+#endif
 
-#अगर IS_MODULE(CONFIG_BRIDGE_NETFILTER)
+#if IS_MODULE(CONFIG_BRIDGE_NETFILTER)
 	pr_info("bridge: filtering via arp/ip/ip6tables is no longer available "
 		"by default. Update your scripts to load br_netfilter if you "
 		"need this.\n");
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
+	return 0;
 
 err_out5:
-	unरेजिस्टर_चयनdev_notअगरier(&br_चयनdev_notअगरier);
+	unregister_switchdev_notifier(&br_switchdev_notifier);
 err_out4:
-	unरेजिस्टर_netdevice_notअगरier(&br_device_notअगरier);
+	unregister_netdevice_notifier(&br_device_notifier);
 err_out3:
 	br_nf_core_fini();
 err_out2:
-	unरेजिस्टर_pernet_subsys(&br_net_ops);
+	unregister_pernet_subsys(&br_net_ops);
 err_out1:
 	br_fdb_fini();
 err_out:
-	stp_proto_unरेजिस्टर(&br_stp_proto);
-	वापस err;
-पूर्ण
+	stp_proto_unregister(&br_stp_proto);
+	return err;
+}
 
-अटल व्योम __निकास br_deinit(व्योम)
-अणु
-	stp_proto_unरेजिस्टर(&br_stp_proto);
+static void __exit br_deinit(void)
+{
+	stp_proto_unregister(&br_stp_proto);
 	br_netlink_fini();
-	unरेजिस्टर_चयनdev_notअगरier(&br_चयनdev_notअगरier);
-	unरेजिस्टर_netdevice_notअगरier(&br_device_notअगरier);
-	brioctl_set(शून्य);
-	unरेजिस्टर_pernet_subsys(&br_net_ops);
+	unregister_switchdev_notifier(&br_switchdev_notifier);
+	unregister_netdevice_notifier(&br_device_notifier);
+	brioctl_set(NULL);
+	unregister_pernet_subsys(&br_net_ops);
 
-	rcu_barrier(); /* Wait क्रम completion of call_rcu()'s */
+	rcu_barrier(); /* Wait for completion of call_rcu()'s */
 
 	br_nf_core_fini();
-#अगर IS_ENABLED(CONFIG_ATM_LANE)
-	br_fdb_test_addr_hook = शून्य;
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ATM_LANE)
+	br_fdb_test_addr_hook = NULL;
+#endif
 	br_fdb_fini();
-पूर्ण
+}
 
 module_init(br_init)
-module_निकास(br_deinit)
+module_exit(br_deinit)
 MODULE_LICENSE("GPL");
 MODULE_VERSION(BR_VERSION);
 MODULE_ALIAS_RTNL_LINK("bridge");

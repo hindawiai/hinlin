@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *	arch/alpha/lib/srm_prपूर्णांकk.c
+ *	arch/alpha/lib/srm_printk.c
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/console.h>
+#include <linux/kernel.h>
+#include <asm/console.h>
 
-दीर्घ
-srm_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	अटल अक्षर buf[1024];
-	बहु_सूची args;
-	दीर्घ len, num_lf;
-	अक्षर *src, *dst;
+long
+srm_printk(const char *fmt, ...)
+{
+	static char buf[1024];
+	va_list args;
+	long len, num_lf;
+	char *src, *dst;
 
-	बहु_शुरू(args, fmt);
-	len = भम_लिखो(buf, fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	len = vsprintf(buf, fmt, args);
+	va_end(args);
 
 	/* count number of linefeeds in string: */
 
 	num_lf = 0;
-	क्रम (src = buf; *src; ++src) अणु
-		अगर (*src == '\n') अणु
+	for (src = buf; *src; ++src) {
+		if (*src == '\n') {
 			++num_lf;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (num_lf) अणु
-		/* expand each linefeed पूर्णांकo carriage-वापस/linefeed: */
-		क्रम (dst = src + num_lf; src >= buf; ) अणु
-			अगर (*src == '\n') अणु
+	if (num_lf) {
+		/* expand each linefeed into carriage-return/linefeed: */
+		for (dst = src + num_lf; src >= buf; ) {
+			if (*src == '\n') {
 				*dst-- = '\r';
-			पूर्ण
+			}
 			*dst-- = *src--;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	srm_माला_दो(buf, num_lf+len);	
-        वापस len;
-पूर्ण
+	srm_puts(buf, num_lf+len);	
+        return len;
+}

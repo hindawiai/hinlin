@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
 /*
- * Merge two शून्य-terminated poपूर्णांकer arrays पूर्णांकo a newly allocated
- * array, which is also शून्य-terminated. Nomenclature is inspired by
- * स_रखो_p() and memcat() found अन्यथाwhere in the kernel source tree.
+ * Merge two NULL-terminated pointer arrays into a newly allocated
+ * array, which is also NULL-terminated. Nomenclature is inspired by
+ * memset_p() and memcat() found elsewhere in the kernel source tree.
  */
-व्योम **__memcat_p(व्योम **a, व्योम **b)
-अणु
-	व्योम **p = a, **new;
-	पूर्णांक nr;
+void **__memcat_p(void **a, void **b)
+{
+	void **p = a, **new;
+	int nr;
 
 	/* count the elements in both arrays */
-	क्रम (nr = 0, p = a; *p; nr++, p++)
+	for (nr = 0, p = a; *p; nr++, p++)
 		;
-	क्रम (p = b; *p; nr++, p++)
+	for (p = b; *p; nr++, p++)
 		;
-	/* one क्रम the शून्य-terminator */
+	/* one for the NULL-terminator */
 	nr++;
 
-	new = kदो_स्मृति_array(nr, माप(व्योम *), GFP_KERNEL);
-	अगर (!new)
-		वापस शून्य;
+	new = kmalloc_array(nr, sizeof(void *), GFP_KERNEL);
+	if (!new)
+		return NULL;
 
-	/* nr -> last index; p poपूर्णांकs to शून्य in b[] */
-	क्रम (nr--; nr >= 0; nr--, p = p == b ? &a[nr] : p - 1)
+	/* nr -> last index; p points to NULL in b[] */
+	for (nr--; nr >= 0; nr--, p = p == b ? &a[nr] : p - 1)
 		new[nr] = *p;
 
-	वापस new;
-पूर्ण
+	return new;
+}
 EXPORT_SYMBOL_GPL(__memcat_p);
 

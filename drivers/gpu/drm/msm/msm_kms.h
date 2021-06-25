@@ -1,219 +1,218 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#अगर_अघोषित __MSM_KMS_H__
-#घोषणा __MSM_KMS_H__
+#ifndef __MSM_KMS_H__
+#define __MSM_KMS_H__
 
-#समावेश <linux/clk.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/clk.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश "msm_drv.h"
+#include "msm_drv.h"
 
-#घोषणा MAX_PLANE	4
+#define MAX_PLANE	4
 
-/* As there are dअगरferent display controller blocks depending on the
+/* As there are different display controller blocks depending on the
  * snapdragon version, the kms support is split out and the appropriate
- * implementation is loaded at runसमय.  The kms module is responsible
- * क्रम स्थिरructing the appropriate planes/crtcs/encoders/connectors.
+ * implementation is loaded at runtime.  The kms module is responsible
+ * for constructing the appropriate planes/crtcs/encoders/connectors.
  */
-काष्ठा msm_kms_funcs अणु
+struct msm_kms_funcs {
 	/* hw initialization: */
-	पूर्णांक (*hw_init)(काष्ठा msm_kms *kms);
+	int (*hw_init)(struct msm_kms *kms);
 	/* irq handling: */
-	व्योम (*irq_preinstall)(काष्ठा msm_kms *kms);
-	पूर्णांक (*irq_postinstall)(काष्ठा msm_kms *kms);
-	व्योम (*irq_uninstall)(काष्ठा msm_kms *kms);
-	irqवापस_t (*irq)(काष्ठा msm_kms *kms);
-	पूर्णांक (*enable_vblank)(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc);
-	व्योम (*disable_vblank)(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc);
+	void (*irq_preinstall)(struct msm_kms *kms);
+	int (*irq_postinstall)(struct msm_kms *kms);
+	void (*irq_uninstall)(struct msm_kms *kms);
+	irqreturn_t (*irq)(struct msm_kms *kms);
+	int (*enable_vblank)(struct msm_kms *kms, struct drm_crtc *crtc);
+	void (*disable_vblank)(struct msm_kms *kms, struct drm_crtc *crtc);
 
 	/*
 	 * Atomic commit handling:
 	 *
-	 * Note that in the हाल of async commits, the funcs which take
+	 * Note that in the case of async commits, the funcs which take
 	 * a crtc_mask (ie. ->flush_commit(), and ->complete_commit())
 	 * might not be evenly balanced with ->prepare_commit(), however
 	 * each crtc that effected by a ->prepare_commit() (potentially
-	 * multiple बार) will eventually (at end of vsync period) be
+	 * multiple times) will eventually (at end of vsync period) be
 	 * flushed and completed.
 	 *
 	 * This has some implications about tracking of cleanup state,
-	 * क्रम example SMP blocks to release after commit completes.  Ie.
+	 * for example SMP blocks to release after commit completes.  Ie.
 	 * cleanup state should be also duplicated in the various
 	 * duplicate_state() methods, as the current cleanup state at
-	 * ->complete_commit() समय may have accumulated cleanup work
+	 * ->complete_commit() time may have accumulated cleanup work
 	 * from multiple commits.
 	 */
 
 	/**
-	 * Enable/disable घातer/clks needed क्रम hw access करोne in other
+	 * Enable/disable power/clks needed for hw access done in other
 	 * commit related methods.
 	 *
 	 * If mdp4 is migrated to runpm, we could probably drop these
 	 * and use runpm directly.
 	 */
-	व्योम (*enable_commit)(काष्ठा msm_kms *kms);
-	व्योम (*disable_commit)(काष्ठा msm_kms *kms);
+	void (*enable_commit)(struct msm_kms *kms);
+	void (*disable_commit)(struct msm_kms *kms);
 
 	/**
 	 * If the kms backend supports async commit, it should implement
-	 * this method to वापस the समय of the next vsync.  This is
-	 * used to determine a समय slightly beक्रमe vsync, क्रम the async
-	 * commit समयr to run and complete an async commit.
+	 * this method to return the time of the next vsync.  This is
+	 * used to determine a time slightly before vsync, for the async
+	 * commit timer to run and complete an async commit.
 	 */
-	kसमय_प्रकार (*vsync_समय)(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc);
+	ktime_t (*vsync_time)(struct msm_kms *kms, struct drm_crtc *crtc);
 
 	/**
-	 * Prepare क्रम atomic commit.  This is called after any previous
+	 * Prepare for atomic commit.  This is called after any previous
 	 * (async or otherwise) commit has completed.
 	 */
-	व्योम (*prepare_commit)(काष्ठा msm_kms *kms, काष्ठा drm_atomic_state *state);
+	void (*prepare_commit)(struct msm_kms *kms, struct drm_atomic_state *state);
 
 	/**
 	 * Flush an atomic commit.  This is called after the hardware
-	 * updates have alपढ़ोy been pushed करोwn to effected planes/
+	 * updates have already been pushed down to effected planes/
 	 * crtcs/encoders/connectors.
 	 */
-	व्योम (*flush_commit)(काष्ठा msm_kms *kms, अचिन्हित crtc_mask);
+	void (*flush_commit)(struct msm_kms *kms, unsigned crtc_mask);
 
 	/**
-	 * Wait क्रम any in-progress flush to complete on the specअगरied
-	 * crtcs.  This should not block अगर there is no in-progress
-	 * commit (ie. करोn't just रुको क्रम a vblank), as it will also
-	 * be called beक्रमe ->prepare_commit() to ensure any potential
+	 * Wait for any in-progress flush to complete on the specified
+	 * crtcs.  This should not block if there is no in-progress
+	 * commit (ie. don't just wait for a vblank), as it will also
+	 * be called before ->prepare_commit() to ensure any potential
 	 * "async" commit has completed.
 	 */
-	व्योम (*रुको_flush)(काष्ठा msm_kms *kms, अचिन्हित crtc_mask);
+	void (*wait_flush)(struct msm_kms *kms, unsigned crtc_mask);
 
 	/**
 	 * Clean up after commit is completed.  This is called after
-	 * ->रुको_flush(), to give the backend a chance to करो any
+	 * ->wait_flush(), to give the backend a chance to do any
 	 * post-commit cleanup.
 	 */
-	व्योम (*complete_commit)(काष्ठा msm_kms *kms, अचिन्हित crtc_mask);
+	void (*complete_commit)(struct msm_kms *kms, unsigned crtc_mask);
 
 	/*
 	 * Format handling:
 	 */
 
-	/* get msm_क्रमmat w/ optional क्रमmat modअगरiers from drm_mode_fb_cmd2 */
-	स्थिर काष्ठा msm_क्रमmat *(*get_क्रमmat)(काष्ठा msm_kms *kms,
-					स्थिर uपूर्णांक32_t क्रमmat,
-					स्थिर uपूर्णांक64_t modअगरiers);
-	/* करो क्रमmat checking on क्रमmat modअगरied through fb_cmd2 modअगरiers */
-	पूर्णांक (*check_modअगरied_क्रमmat)(स्थिर काष्ठा msm_kms *kms,
-			स्थिर काष्ठा msm_क्रमmat *msm_fmt,
-			स्थिर काष्ठा drm_mode_fb_cmd2 *cmd,
-			काष्ठा drm_gem_object **bos);
+	/* get msm_format w/ optional format modifiers from drm_mode_fb_cmd2 */
+	const struct msm_format *(*get_format)(struct msm_kms *kms,
+					const uint32_t format,
+					const uint64_t modifiers);
+	/* do format checking on format modified through fb_cmd2 modifiers */
+	int (*check_modified_format)(const struct msm_kms *kms,
+			const struct msm_format *msm_fmt,
+			const struct drm_mode_fb_cmd2 *cmd,
+			struct drm_gem_object **bos);
 
 	/* misc: */
-	दीर्घ (*round_pixclk)(काष्ठा msm_kms *kms, अचिन्हित दीर्घ rate,
-			काष्ठा drm_encoder *encoder);
-	पूर्णांक (*set_split_display)(काष्ठा msm_kms *kms,
-			काष्ठा drm_encoder *encoder,
-			काष्ठा drm_encoder *slave_encoder,
+	long (*round_pixclk)(struct msm_kms *kms, unsigned long rate,
+			struct drm_encoder *encoder);
+	int (*set_split_display)(struct msm_kms *kms,
+			struct drm_encoder *encoder,
+			struct drm_encoder *slave_encoder,
 			bool is_cmd_mode);
-	व्योम (*set_encoder_mode)(काष्ठा msm_kms *kms,
-				 काष्ठा drm_encoder *encoder,
+	void (*set_encoder_mode)(struct msm_kms *kms,
+				 struct drm_encoder *encoder,
 				 bool cmd_mode);
 	/* cleanup: */
-	व्योम (*destroy)(काष्ठा msm_kms *kms);
-#अगर_घोषित CONFIG_DEBUG_FS
+	void (*destroy)(struct msm_kms *kms);
+#ifdef CONFIG_DEBUG_FS
 	/* debugfs: */
-	पूर्णांक (*debugfs_init)(काष्ठा msm_kms *kms, काष्ठा drm_minor *minor);
-#पूर्ण_अगर
-पूर्ण;
+	int (*debugfs_init)(struct msm_kms *kms, struct drm_minor *minor);
+#endif
+};
 
-काष्ठा msm_kms;
+struct msm_kms;
 
 /*
- * A per-crtc समयr क्रम pending async atomic flushes.  Scheduled to expire
- * लघुly beक्रमe vblank to flush pending async updates.
+ * A per-crtc timer for pending async atomic flushes.  Scheduled to expire
+ * shortly before vblank to flush pending async updates.
  */
-काष्ठा msm_pending_समयr अणु
-	काष्ठा hrसमयr समयr;
-	काष्ठा kthपढ़ो_work work;
-	काष्ठा kthपढ़ो_worker *worker;
-	काष्ठा msm_kms *kms;
-	अचिन्हित crtc_idx;
-पूर्ण;
+struct msm_pending_timer {
+	struct hrtimer timer;
+	struct kthread_work work;
+	struct kthread_worker *worker;
+	struct msm_kms *kms;
+	unsigned crtc_idx;
+};
 
-काष्ठा msm_kms अणु
-	स्थिर काष्ठा msm_kms_funcs *funcs;
-	काष्ठा drm_device *dev;
+struct msm_kms {
+	const struct msm_kms_funcs *funcs;
+	struct drm_device *dev;
 
 	/* irq number to be passed on to drm_irq_install */
-	पूर्णांक irq;
+	int irq;
 
-	/* mapper-id used to request GEM buffer mapped क्रम scanout: */
-	काष्ठा msm_gem_address_space *aspace;
+	/* mapper-id used to request GEM buffer mapped for scanout: */
+	struct msm_gem_address_space *aspace;
 
 	/*
 	 * For async commit, where ->flush_commit() and later happens
-	 * from the crtc's pending_समयr बंद to end of the frame:
+	 * from the crtc's pending_timer close to end of the frame:
 	 */
-	काष्ठा mutex commit_lock[MAX_CRTCS];
-	अचिन्हित pending_crtc_mask;
-	काष्ठा msm_pending_समयr pending_समयrs[MAX_CRTCS];
-पूर्ण;
+	struct mutex commit_lock[MAX_CRTCS];
+	unsigned pending_crtc_mask;
+	struct msm_pending_timer pending_timers[MAX_CRTCS];
+};
 
-अटल अंतरभूत पूर्णांक msm_kms_init(काष्ठा msm_kms *kms,
-		स्थिर काष्ठा msm_kms_funcs *funcs)
-अणु
-	अचिन्हित i, ret;
+static inline int msm_kms_init(struct msm_kms *kms,
+		const struct msm_kms_funcs *funcs)
+{
+	unsigned i, ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(kms->commit_lock); i++)
+	for (i = 0; i < ARRAY_SIZE(kms->commit_lock); i++)
 		mutex_init(&kms->commit_lock[i]);
 
 	kms->funcs = funcs;
 
-	क्रम (i = 0; i < ARRAY_SIZE(kms->pending_समयrs); i++) अणु
-		ret = msm_atomic_init_pending_समयr(&kms->pending_समयrs[i], kms, i);
-		अगर (ret) अणु
-			वापस ret;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(kms->pending_timers); i++) {
+		ret = msm_atomic_init_pending_timer(&kms->pending_timers[i], kms, i);
+		if (ret) {
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम msm_kms_destroy(काष्ठा msm_kms *kms)
-अणु
-	अचिन्हित i;
+static inline void msm_kms_destroy(struct msm_kms *kms)
+{
+	unsigned i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(kms->pending_समयrs); i++)
-		msm_atomic_destroy_pending_समयr(&kms->pending_समयrs[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(kms->pending_timers); i++)
+		msm_atomic_destroy_pending_timer(&kms->pending_timers[i]);
+}
 
-काष्ठा msm_kms *mdp4_kms_init(काष्ठा drm_device *dev);
-काष्ठा msm_kms *mdp5_kms_init(काष्ठा drm_device *dev);
-काष्ठा msm_kms *dpu_kms_init(काष्ठा drm_device *dev);
+struct msm_kms *mdp4_kms_init(struct drm_device *dev);
+struct msm_kms *mdp5_kms_init(struct drm_device *dev);
+struct msm_kms *dpu_kms_init(struct drm_device *dev);
 
-काष्ठा msm_mdss_funcs अणु
-	पूर्णांक (*enable)(काष्ठा msm_mdss *mdss);
-	पूर्णांक (*disable)(काष्ठा msm_mdss *mdss);
-	व्योम (*destroy)(काष्ठा drm_device *dev);
-पूर्ण;
+struct msm_mdss_funcs {
+	int (*enable)(struct msm_mdss *mdss);
+	int (*disable)(struct msm_mdss *mdss);
+	void (*destroy)(struct drm_device *dev);
+};
 
-काष्ठा msm_mdss अणु
-	काष्ठा drm_device *dev;
-	स्थिर काष्ठा msm_mdss_funcs *funcs;
-पूर्ण;
+struct msm_mdss {
+	struct drm_device *dev;
+	const struct msm_mdss_funcs *funcs;
+};
 
-पूर्णांक mdp5_mdss_init(काष्ठा drm_device *dev);
-पूर्णांक dpu_mdss_init(काष्ठा drm_device *dev);
+int mdp5_mdss_init(struct drm_device *dev);
+int dpu_mdss_init(struct drm_device *dev);
 
-#घोषणा क्रम_each_crtc_mask(dev, crtc, crtc_mask) \
-	drm_क्रम_each_crtc(crtc, dev) \
-		क्रम_each_अगर (drm_crtc_mask(crtc) & (crtc_mask))
+#define for_each_crtc_mask(dev, crtc, crtc_mask) \
+	drm_for_each_crtc(crtc, dev) \
+		for_each_if (drm_crtc_mask(crtc) & (crtc_mask))
 
-#घोषणा क्रम_each_crtc_mask_reverse(dev, crtc, crtc_mask) \
-	drm_क्रम_each_crtc_reverse(crtc, dev) \
-		क्रम_each_अगर (drm_crtc_mask(crtc) & (crtc_mask))
+#define for_each_crtc_mask_reverse(dev, crtc, crtc_mask) \
+	drm_for_each_crtc_reverse(crtc, dev) \
+		for_each_if (drm_crtc_mask(crtc) & (crtc_mask))
 
-#पूर्ण_अगर /* __MSM_KMS_H__ */
+#endif /* __MSM_KMS_H__ */

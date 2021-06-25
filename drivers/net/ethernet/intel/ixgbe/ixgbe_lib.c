@@ -1,342 +1,341 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#समावेश "ixgbe.h"
-#समावेश "ixgbe_sriov.h"
+#include "ixgbe.h"
+#include "ixgbe_sriov.h"
 
-#अगर_घोषित CONFIG_IXGBE_DCB
+#ifdef CONFIG_IXGBE_DCB
 /**
- * ixgbe_cache_ring_dcb_sriov - Descriptor ring to रेजिस्टर mapping क्रम SR-IOV
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_cache_ring_dcb_sriov - Descriptor ring to register mapping for SR-IOV
+ * @adapter: board private structure to initialize
  *
- * Cache the descriptor ring offsets क्रम SR-IOV to the asचिन्हित rings.  It
- * will also try to cache the proper offsets अगर RSS/FCoE are enabled aदीर्घ
+ * Cache the descriptor ring offsets for SR-IOV to the assigned rings.  It
+ * will also try to cache the proper offsets if RSS/FCoE are enabled along
  * with VMDq.
  *
  **/
-अटल bool ixgbe_cache_ring_dcb_sriov(काष्ठा ixgbe_adapter *adapter)
-अणु
-#अगर_घोषित IXGBE_FCOE
-	काष्ठा ixgbe_ring_feature *fcoe = &adapter->ring_feature[RING_F_FCOE];
-#पूर्ण_अगर /* IXGBE_FCOE */
-	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	पूर्णांक i;
+static bool ixgbe_cache_ring_dcb_sriov(struct ixgbe_adapter *adapter)
+{
+#ifdef IXGBE_FCOE
+	struct ixgbe_ring_feature *fcoe = &adapter->ring_feature[RING_F_FCOE];
+#endif /* IXGBE_FCOE */
+	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	int i;
 	u16 reg_idx, pool;
 	u8 tcs = adapter->hw_tcs;
 
-	/* verअगरy we have DCB queueing enabled beक्रमe proceeding */
-	अगर (tcs <= 1)
-		वापस false;
+	/* verify we have DCB queueing enabled before proceeding */
+	if (tcs <= 1)
+		return false;
 
-	/* verअगरy we have VMDq enabled beक्रमe proceeding */
-	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		वापस false;
+	/* verify we have VMDq enabled before proceeding */
+	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		return false;
 
-	/* start at VMDq रेजिस्टर offset क्रम SR-IOV enabled setups */
+	/* start at VMDq register offset for SR-IOV enabled setups */
 	reg_idx = vmdq->offset * __ALIGN_MASK(1, ~vmdq->mask);
-	क्रम (i = 0, pool = 0; i < adapter->num_rx_queues; i++, reg_idx++) अणु
+	for (i = 0, pool = 0; i < adapter->num_rx_queues; i++, reg_idx++) {
 		/* If we are greater than indices move to next pool */
-		अगर ((reg_idx & ~vmdq->mask) >= tcs) अणु
+		if ((reg_idx & ~vmdq->mask) >= tcs) {
 			pool++;
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask);
-		पूर्ण
+		}
 		adapter->rx_ring[i]->reg_idx = reg_idx;
-		adapter->rx_ring[i]->netdev = pool ? शून्य : adapter->netdev;
-	पूर्ण
+		adapter->rx_ring[i]->netdev = pool ? NULL : adapter->netdev;
+	}
 
 	reg_idx = vmdq->offset * __ALIGN_MASK(1, ~vmdq->mask);
-	क्रम (i = 0; i < adapter->num_tx_queues; i++, reg_idx++) अणु
+	for (i = 0; i < adapter->num_tx_queues; i++, reg_idx++) {
 		/* If we are greater than indices move to next pool */
-		अगर ((reg_idx & ~vmdq->mask) >= tcs)
+		if ((reg_idx & ~vmdq->mask) >= tcs)
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask);
 		adapter->tx_ring[i]->reg_idx = reg_idx;
-	पूर्ण
+	}
 
-#अगर_घोषित IXGBE_FCOE
-	/* nothing to करो अगर FCoE is disabled */
-	अगर (!(adapter->flags & IXGBE_FLAG_FCOE_ENABLED))
-		वापस true;
+#ifdef IXGBE_FCOE
+	/* nothing to do if FCoE is disabled */
+	if (!(adapter->flags & IXGBE_FLAG_FCOE_ENABLED))
+		return true;
 
-	/* The work is alपढ़ोy करोne अगर the FCoE ring is shared */
-	अगर (fcoe->offset < tcs)
-		वापस true;
+	/* The work is already done if the FCoE ring is shared */
+	if (fcoe->offset < tcs)
+		return true;
 
 	/* The FCoE rings exist separately, we need to move their reg_idx */
-	अगर (fcoe->indices) अणु
+	if (fcoe->indices) {
 		u16 queues_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
 		u8 fcoe_tc = ixgbe_fcoe_get_tc(adapter);
 
 		reg_idx = (vmdq->offset + vmdq->indices) * queues_per_pool;
-		क्रम (i = fcoe->offset; i < adapter->num_rx_queues; i++) अणु
+		for (i = fcoe->offset; i < adapter->num_rx_queues; i++) {
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask) + fcoe_tc;
 			adapter->rx_ring[i]->reg_idx = reg_idx;
 			adapter->rx_ring[i]->netdev = adapter->netdev;
 			reg_idx++;
-		पूर्ण
+		}
 
 		reg_idx = (vmdq->offset + vmdq->indices) * queues_per_pool;
-		क्रम (i = fcoe->offset; i < adapter->num_tx_queues; i++) अणु
+		for (i = fcoe->offset; i < adapter->num_tx_queues; i++) {
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask) + fcoe_tc;
 			adapter->tx_ring[i]->reg_idx = reg_idx;
 			reg_idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#पूर्ण_अगर /* IXGBE_FCOE */
-	वापस true;
-पूर्ण
+#endif /* IXGBE_FCOE */
+	return true;
+}
 
-/* ixgbe_get_first_reg_idx - Return first रेजिस्टर index associated with ring */
-अटल व्योम ixgbe_get_first_reg_idx(काष्ठा ixgbe_adapter *adapter, u8 tc,
-				    अचिन्हित पूर्णांक *tx, अचिन्हित पूर्णांक *rx)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
+/* ixgbe_get_first_reg_idx - Return first register index associated with ring */
+static void ixgbe_get_first_reg_idx(struct ixgbe_adapter *adapter, u8 tc,
+				    unsigned int *tx, unsigned int *rx)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
 	u8 num_tcs = adapter->hw_tcs;
 
 	*tx = 0;
 	*rx = 0;
 
-	चयन (hw->mac.type) अणु
-	हाल ixgbe_mac_82598EB:
+	switch (hw->mac.type) {
+	case ixgbe_mac_82598EB:
 		/* TxQs/TC: 4	RxQs/TC: 8 */
 		*tx = tc << 2; /* 0, 4,  8, 12, 16, 20, 24, 28 */
 		*rx = tc << 3; /* 0, 8, 16, 24, 32, 40, 48, 56 */
-		अवरोध;
-	हाल ixgbe_mac_82599EB:
-	हाल ixgbe_mac_X540:
-	हाल ixgbe_mac_X550:
-	हाल ixgbe_mac_X550EM_x:
-	हाल ixgbe_mac_x550em_a:
-		अगर (num_tcs > 4) अणु
+		break;
+	case ixgbe_mac_82599EB:
+	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_x550em_a:
+		if (num_tcs > 4) {
 			/*
 			 * TCs    : TC0/1 TC2/3 TC4-7
 			 * TxQs/TC:    32    16     8
 			 * RxQs/TC:    16    16    16
 			 */
 			*rx = tc << 4;
-			अगर (tc < 3)
+			if (tc < 3)
 				*tx = tc << 5;		/*   0,  32,  64 */
-			अन्यथा अगर (tc < 5)
+			else if (tc < 5)
 				*tx = (tc + 2) << 4;	/*  80,  96 */
-			अन्यथा
+			else
 				*tx = (tc + 8) << 3;	/* 104, 112, 120 */
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * TCs    : TC0 TC1 TC2/3
 			 * TxQs/TC:  64  32    16
 			 * RxQs/TC:  32  32    32
 			 */
 			*rx = tc << 5;
-			अगर (tc < 2)
+			if (tc < 2)
 				*tx = tc << 6;		/*  0,  64 */
-			अन्यथा
+			else
 				*tx = (tc + 4) << 4;	/* 96, 112 */
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	default:
+		break;
+	}
+}
 
 /**
- * ixgbe_cache_ring_dcb - Descriptor ring to रेजिस्टर mapping क्रम DCB
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_cache_ring_dcb - Descriptor ring to register mapping for DCB
+ * @adapter: board private structure to initialize
  *
- * Cache the descriptor ring offsets क्रम DCB to the asचिन्हित rings.
+ * Cache the descriptor ring offsets for DCB to the assigned rings.
  *
  **/
-अटल bool ixgbe_cache_ring_dcb(काष्ठा ixgbe_adapter *adapter)
-अणु
+static bool ixgbe_cache_ring_dcb(struct ixgbe_adapter *adapter)
+{
 	u8 num_tcs = adapter->hw_tcs;
-	अचिन्हित पूर्णांक tx_idx, rx_idx;
-	पूर्णांक tc, offset, rss_i, i;
+	unsigned int tx_idx, rx_idx;
+	int tc, offset, rss_i, i;
 
-	/* verअगरy we have DCB queueing enabled beक्रमe proceeding */
-	अगर (num_tcs <= 1)
-		वापस false;
+	/* verify we have DCB queueing enabled before proceeding */
+	if (num_tcs <= 1)
+		return false;
 
 	rss_i = adapter->ring_feature[RING_F_RSS].indices;
 
-	क्रम (tc = 0, offset = 0; tc < num_tcs; tc++, offset += rss_i) अणु
+	for (tc = 0, offset = 0; tc < num_tcs; tc++, offset += rss_i) {
 		ixgbe_get_first_reg_idx(adapter, tc, &tx_idx, &rx_idx);
-		क्रम (i = 0; i < rss_i; i++, tx_idx++, rx_idx++) अणु
+		for (i = 0; i < rss_i; i++, tx_idx++, rx_idx++) {
 			adapter->tx_ring[offset + i]->reg_idx = tx_idx;
 			adapter->rx_ring[offset + i]->reg_idx = rx_idx;
 			adapter->rx_ring[offset + i]->netdev = adapter->netdev;
 			adapter->tx_ring[offset + i]->dcb_tc = tc;
 			adapter->rx_ring[offset + i]->dcb_tc = tc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर
+#endif
 /**
- * ixgbe_cache_ring_sriov - Descriptor ring to रेजिस्टर mapping क्रम sriov
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_cache_ring_sriov - Descriptor ring to register mapping for sriov
+ * @adapter: board private structure to initialize
  *
- * SR-IOV करोesn't use any descriptor rings but changes the शेष अगर
+ * SR-IOV doesn't use any descriptor rings but changes the default if
  * no other mapping is used.
  *
  */
-अटल bool ixgbe_cache_ring_sriov(काष्ठा ixgbe_adapter *adapter)
-अणु
-#अगर_घोषित IXGBE_FCOE
-	काष्ठा ixgbe_ring_feature *fcoe = &adapter->ring_feature[RING_F_FCOE];
-#पूर्ण_अगर /* IXGBE_FCOE */
-	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	काष्ठा ixgbe_ring_feature *rss = &adapter->ring_feature[RING_F_RSS];
+static bool ixgbe_cache_ring_sriov(struct ixgbe_adapter *adapter)
+{
+#ifdef IXGBE_FCOE
+	struct ixgbe_ring_feature *fcoe = &adapter->ring_feature[RING_F_FCOE];
+#endif /* IXGBE_FCOE */
+	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	struct ixgbe_ring_feature *rss = &adapter->ring_feature[RING_F_RSS];
 	u16 reg_idx, pool;
-	पूर्णांक i;
+	int i;
 
-	/* only proceed अगर VMDq is enabled */
-	अगर (!(adapter->flags & IXGBE_FLAG_VMDQ_ENABLED))
-		वापस false;
+	/* only proceed if VMDq is enabled */
+	if (!(adapter->flags & IXGBE_FLAG_VMDQ_ENABLED))
+		return false;
 
-	/* start at VMDq रेजिस्टर offset क्रम SR-IOV enabled setups */
+	/* start at VMDq register offset for SR-IOV enabled setups */
 	pool = 0;
 	reg_idx = vmdq->offset * __ALIGN_MASK(1, ~vmdq->mask);
-	क्रम (i = 0; i < adapter->num_rx_queues; i++, reg_idx++) अणु
-#अगर_घोषित IXGBE_FCOE
+	for (i = 0; i < adapter->num_rx_queues; i++, reg_idx++) {
+#ifdef IXGBE_FCOE
 		/* Allow first FCoE queue to be mapped as RSS */
-		अगर (fcoe->offset && (i > fcoe->offset))
-			अवरोध;
-#पूर्ण_अगर
+		if (fcoe->offset && (i > fcoe->offset))
+			break;
+#endif
 		/* If we are greater than indices move to next pool */
-		अगर ((reg_idx & ~vmdq->mask) >= rss->indices) अणु
+		if ((reg_idx & ~vmdq->mask) >= rss->indices) {
 			pool++;
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask);
-		पूर्ण
+		}
 		adapter->rx_ring[i]->reg_idx = reg_idx;
-		adapter->rx_ring[i]->netdev = pool ? शून्य : adapter->netdev;
-	पूर्ण
+		adapter->rx_ring[i]->netdev = pool ? NULL : adapter->netdev;
+	}
 
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	/* FCoE uses a linear block of queues so just assigning 1:1 */
-	क्रम (; i < adapter->num_rx_queues; i++, reg_idx++) अणु
+	for (; i < adapter->num_rx_queues; i++, reg_idx++) {
 		adapter->rx_ring[i]->reg_idx = reg_idx;
 		adapter->rx_ring[i]->netdev = adapter->netdev;
-	पूर्ण
+	}
 
-#पूर्ण_अगर
+#endif
 	reg_idx = vmdq->offset * __ALIGN_MASK(1, ~vmdq->mask);
-	क्रम (i = 0; i < adapter->num_tx_queues; i++, reg_idx++) अणु
-#अगर_घोषित IXGBE_FCOE
+	for (i = 0; i < adapter->num_tx_queues; i++, reg_idx++) {
+#ifdef IXGBE_FCOE
 		/* Allow first FCoE queue to be mapped as RSS */
-		अगर (fcoe->offset && (i > fcoe->offset))
-			अवरोध;
-#पूर्ण_अगर
+		if (fcoe->offset && (i > fcoe->offset))
+			break;
+#endif
 		/* If we are greater than indices move to next pool */
-		अगर ((reg_idx & rss->mask) >= rss->indices)
+		if ((reg_idx & rss->mask) >= rss->indices)
 			reg_idx = __ALIGN_MASK(reg_idx, ~vmdq->mask);
 		adapter->tx_ring[i]->reg_idx = reg_idx;
-	पूर्ण
+	}
 
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	/* FCoE uses a linear block of queues so just assigning 1:1 */
-	क्रम (; i < adapter->num_tx_queues; i++, reg_idx++)
+	for (; i < adapter->num_tx_queues; i++, reg_idx++)
 		adapter->tx_ring[i]->reg_idx = reg_idx;
 
-#पूर्ण_अगर
+#endif
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * ixgbe_cache_ring_rss - Descriptor ring to रेजिस्टर mapping क्रम RSS
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_cache_ring_rss - Descriptor ring to register mapping for RSS
+ * @adapter: board private structure to initialize
  *
- * Cache the descriptor ring offsets क्रम RSS to the asचिन्हित rings.
+ * Cache the descriptor ring offsets for RSS to the assigned rings.
  *
  **/
-अटल bool ixgbe_cache_ring_rss(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक i, reg_idx;
+static bool ixgbe_cache_ring_rss(struct ixgbe_adapter *adapter)
+{
+	int i, reg_idx;
 
-	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+	for (i = 0; i < adapter->num_rx_queues; i++) {
 		adapter->rx_ring[i]->reg_idx = i;
 		adapter->rx_ring[i]->netdev = adapter->netdev;
-	पूर्ण
-	क्रम (i = 0, reg_idx = 0; i < adapter->num_tx_queues; i++, reg_idx++)
+	}
+	for (i = 0, reg_idx = 0; i < adapter->num_tx_queues; i++, reg_idx++)
 		adapter->tx_ring[i]->reg_idx = reg_idx;
-	क्रम (i = 0; i < adapter->num_xdp_queues; i++, reg_idx++)
+	for (i = 0; i < adapter->num_xdp_queues; i++, reg_idx++)
 		adapter->xdp_ring[i]->reg_idx = reg_idx;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * ixgbe_cache_ring_रेजिस्टर - Descriptor ring to रेजिस्टर mapping
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_cache_ring_register - Descriptor ring to register mapping
+ * @adapter: board private structure to initialize
  *
- * Once we know the feature-set enabled क्रम the device, we'll cache
- * the रेजिस्टर offset the descriptor ring is asचिन्हित to.
+ * Once we know the feature-set enabled for the device, we'll cache
+ * the register offset the descriptor ring is assigned to.
  *
  * Note, the order the various feature calls is important.  It must start with
- * the "most" features enabled at the same समय, then trickle करोwn to the
+ * the "most" features enabled at the same time, then trickle down to the
  * least amount of features turned on at once.
  **/
-अटल व्योम ixgbe_cache_ring_रेजिस्टर(काष्ठा ixgbe_adapter *adapter)
-अणु
-	/* start with शेष हाल */
+static void ixgbe_cache_ring_register(struct ixgbe_adapter *adapter)
+{
+	/* start with default case */
 	adapter->rx_ring[0]->reg_idx = 0;
 	adapter->tx_ring[0]->reg_idx = 0;
 
-#अगर_घोषित CONFIG_IXGBE_DCB
-	अगर (ixgbe_cache_ring_dcb_sriov(adapter))
-		वापस;
+#ifdef CONFIG_IXGBE_DCB
+	if (ixgbe_cache_ring_dcb_sriov(adapter))
+		return;
 
-	अगर (ixgbe_cache_ring_dcb(adapter))
-		वापस;
+	if (ixgbe_cache_ring_dcb(adapter))
+		return;
 
-#पूर्ण_अगर
-	अगर (ixgbe_cache_ring_sriov(adapter))
-		वापस;
+#endif
+	if (ixgbe_cache_ring_sriov(adapter))
+		return;
 
 	ixgbe_cache_ring_rss(adapter);
-पूर्ण
+}
 
-अटल पूर्णांक ixgbe_xdp_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
-	वापस adapter->xdp_prog ? nr_cpu_ids : 0;
-पूर्ण
+static int ixgbe_xdp_queues(struct ixgbe_adapter *adapter)
+{
+	return adapter->xdp_prog ? nr_cpu_ids : 0;
+}
 
-#घोषणा IXGBE_RSS_64Q_MASK	0x3F
-#घोषणा IXGBE_RSS_16Q_MASK	0xF
-#घोषणा IXGBE_RSS_8Q_MASK	0x7
-#घोषणा IXGBE_RSS_4Q_MASK	0x3
-#घोषणा IXGBE_RSS_2Q_MASK	0x1
-#घोषणा IXGBE_RSS_DISABLED_MASK	0x0
+#define IXGBE_RSS_64Q_MASK	0x3F
+#define IXGBE_RSS_16Q_MASK	0xF
+#define IXGBE_RSS_8Q_MASK	0x7
+#define IXGBE_RSS_4Q_MASK	0x3
+#define IXGBE_RSS_2Q_MASK	0x1
+#define IXGBE_RSS_DISABLED_MASK	0x0
 
-#अगर_घोषित CONFIG_IXGBE_DCB
+#ifdef CONFIG_IXGBE_DCB
 /**
- * ixgbe_set_dcb_sriov_queues: Allocate queues क्रम SR-IOV devices w/ DCB
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_set_dcb_sriov_queues: Allocate queues for SR-IOV devices w/ DCB
+ * @adapter: board private structure to initialize
  *
  * When SR-IOV (Single Root IO Virtualiztion) is enabled, allocate queues
  * and VM pools where appropriate.  Also assign queues based on DCB
  * priorities and map accordingly..
  *
  **/
-अटल bool ixgbe_set_dcb_sriov_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक i;
+static bool ixgbe_set_dcb_sriov_queues(struct ixgbe_adapter *adapter)
+{
+	int i;
 	u16 vmdq_i = adapter->ring_feature[RING_F_VMDQ].limit;
 	u16 vmdq_m = 0;
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	u16 fcoe_i = 0;
-#पूर्ण_अगर
+#endif
 	u8 tcs = adapter->hw_tcs;
 
-	/* verअगरy we have DCB queueing enabled beक्रमe proceeding */
-	अगर (tcs <= 1)
-		वापस false;
+	/* verify we have DCB queueing enabled before proceeding */
+	if (tcs <= 1)
+		return false;
 
-	/* verअगरy we have VMDq enabled beक्रमe proceeding */
-	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		वापस false;
+	/* verify we have VMDq enabled before proceeding */
+	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		return false;
 
 	/* limit VMDq instances on the PF by number of Tx queues */
 	vmdq_i = min_t(u16, vmdq_i, MAX_TX_QUEUES / tcs);
@@ -345,36 +344,36 @@
 	vmdq_i += adapter->ring_feature[RING_F_VMDQ].offset;
 
 	/* 16 pools w/ 8 TC per pool */
-	अगर (tcs > 4) अणु
+	if (tcs > 4) {
 		vmdq_i = min_t(u16, vmdq_i, 16);
 		vmdq_m = IXGBE_82599_VMDQ_8Q_MASK;
 	/* 32 pools w/ 4 TC per pool */
-	पूर्ण अन्यथा अणु
+	} else {
 		vmdq_i = min_t(u16, vmdq_i, 32);
 		vmdq_m = IXGBE_82599_VMDQ_4Q_MASK;
-	पूर्ण
+	}
 
-#अगर_घोषित IXGBE_FCOE
-	/* queues in the reमुख्यing pools are available क्रम FCoE */
+#ifdef IXGBE_FCOE
+	/* queues in the remaining pools are available for FCoE */
 	fcoe_i = (128 / __ALIGN_MASK(1, ~vmdq_m)) - vmdq_i;
 
-#पूर्ण_अगर
-	/* हटाओ the starting offset from the pool count */
+#endif
+	/* remove the starting offset from the pool count */
 	vmdq_i -= adapter->ring_feature[RING_F_VMDQ].offset;
 
-	/* save features क्रम later use */
+	/* save features for later use */
 	adapter->ring_feature[RING_F_VMDQ].indices = vmdq_i;
 	adapter->ring_feature[RING_F_VMDQ].mask = vmdq_m;
 
 	/*
-	 * We करो not support DCB, VMDq, and RSS all simultaneously
+	 * We do not support DCB, VMDq, and RSS all simultaneously
 	 * so we will disable RSS since it is the lowest priority
 	 */
 	adapter->ring_feature[RING_F_RSS].indices = 1;
 	adapter->ring_feature[RING_F_RSS].mask = IXGBE_RSS_DISABLED_MASK;
 
 	/* disable ATR as it is not supported when VMDq is enabled */
-	adapter->flags &= ~IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+	adapter->flags &= ~IXGBE_FLAG_FDIR_HASH_CAPABLE;
 
 	adapter->num_rx_pools = vmdq_i;
 	adapter->num_rx_queues_per_pool = tcs;
@@ -383,130 +382,130 @@
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_queues = vmdq_i * tcs;
 
-#अगर_घोषित IXGBE_FCOE
-	अगर (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) अणु
-		काष्ठा ixgbe_ring_feature *fcoe;
+#ifdef IXGBE_FCOE
+	if (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) {
+		struct ixgbe_ring_feature *fcoe;
 
 		fcoe = &adapter->ring_feature[RING_F_FCOE];
 
 		/* limit ourselves based on feature limits */
 		fcoe_i = min_t(u16, fcoe_i, fcoe->limit);
 
-		अगर (fcoe_i) अणु
-			/* alloc queues क्रम FCoE separately */
+		if (fcoe_i) {
+			/* alloc queues for FCoE separately */
 			fcoe->indices = fcoe_i;
 			fcoe->offset = vmdq_i * tcs;
 
 			/* add queues to adapter */
 			adapter->num_tx_queues += fcoe_i;
 			adapter->num_rx_queues += fcoe_i;
-		पूर्ण अन्यथा अगर (tcs > 1) अणु
-			/* use queue beदीर्घing to FcoE TC */
+		} else if (tcs > 1) {
+			/* use queue belonging to FcoE TC */
 			fcoe->indices = 1;
 			fcoe->offset = ixgbe_fcoe_get_tc(adapter);
-		पूर्ण अन्यथा अणु
+		} else {
 			adapter->flags &= ~IXGBE_FLAG_FCOE_ENABLED;
 
 			fcoe->indices = 0;
 			fcoe->offset = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#पूर्ण_अगर /* IXGBE_FCOE */
+#endif /* IXGBE_FCOE */
 	/* configure TC to queue mapping */
-	क्रम (i = 0; i < tcs; i++)
+	for (i = 0; i < tcs; i++)
 		netdev_set_tc_queue(adapter->netdev, i, 1, i);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool ixgbe_set_dcb_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा net_device *dev = adapter->netdev;
-	काष्ठा ixgbe_ring_feature *f;
-	पूर्णांक rss_i, rss_m, i;
-	पूर्णांक tcs;
+static bool ixgbe_set_dcb_queues(struct ixgbe_adapter *adapter)
+{
+	struct net_device *dev = adapter->netdev;
+	struct ixgbe_ring_feature *f;
+	int rss_i, rss_m, i;
+	int tcs;
 
 	/* Map queue offset and counts onto allocated tx queues */
 	tcs = adapter->hw_tcs;
 
-	/* verअगरy we have DCB queueing enabled beक्रमe proceeding */
-	अगर (tcs <= 1)
-		वापस false;
+	/* verify we have DCB queueing enabled before proceeding */
+	if (tcs <= 1)
+		return false;
 
-	/* determine the upper limit क्रम our current DCB mode */
+	/* determine the upper limit for our current DCB mode */
 	rss_i = dev->num_tx_queues / tcs;
-	अगर (adapter->hw.mac.type == ixgbe_mac_82598EB) अणु
+	if (adapter->hw.mac.type == ixgbe_mac_82598EB) {
 		/* 8 TC w/ 4 queues per TC */
 		rss_i = min_t(u16, rss_i, 4);
 		rss_m = IXGBE_RSS_4Q_MASK;
-	पूर्ण अन्यथा अगर (tcs > 4) अणु
+	} else if (tcs > 4) {
 		/* 8 TC w/ 8 queues per TC */
 		rss_i = min_t(u16, rss_i, 8);
 		rss_m = IXGBE_RSS_8Q_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 4 TC w/ 16 queues per TC */
 		rss_i = min_t(u16, rss_i, 16);
 		rss_m = IXGBE_RSS_16Q_MASK;
-	पूर्ण
+	}
 
 	/* set RSS mask and indices */
 	f = &adapter->ring_feature[RING_F_RSS];
-	rss_i = min_t(पूर्णांक, rss_i, f->limit);
+	rss_i = min_t(int, rss_i, f->limit);
 	f->indices = rss_i;
 	f->mask = rss_m;
 
 	/* disable ATR as it is not supported when multiple TCs are enabled */
-	adapter->flags &= ~IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+	adapter->flags &= ~IXGBE_FLAG_FDIR_HASH_CAPABLE;
 
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	/* FCoE enabled queues require special configuration indexed
-	 * by feature specअगरic indices and offset. Here we map FCoE
+	 * by feature specific indices and offset. Here we map FCoE
 	 * indices onto the DCB queue pairs allowing FCoE to own
 	 * configuration later.
 	 */
-	अगर (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) अणु
+	if (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) {
 		u8 tc = ixgbe_fcoe_get_tc(adapter);
 
 		f = &adapter->ring_feature[RING_F_FCOE];
 		f->indices = min_t(u16, rss_i, f->limit);
 		f->offset = rss_i * tc;
-	पूर्ण
+	}
 
-#पूर्ण_अगर /* IXGBE_FCOE */
-	क्रम (i = 0; i < tcs; i++)
+#endif /* IXGBE_FCOE */
+	for (i = 0; i < tcs; i++)
 		netdev_set_tc_queue(dev, i, rss_i, rss_i * i);
 
 	adapter->num_tx_queues = rss_i * tcs;
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_queues = rss_i * tcs;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-#पूर्ण_अगर
+#endif
 /**
- * ixgbe_set_sriov_queues - Allocate queues क्रम SR-IOV devices
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_set_sriov_queues - Allocate queues for SR-IOV devices
+ * @adapter: board private structure to initialize
  *
  * When SR-IOV (Single Root IO Virtualiztion) is enabled, allocate queues
  * and VM pools where appropriate.  If RSS is available, then also try and
  * enable RSS and map accordingly.
  *
  **/
-अटल bool ixgbe_set_sriov_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
+static bool ixgbe_set_sriov_queues(struct ixgbe_adapter *adapter)
+{
 	u16 vmdq_i = adapter->ring_feature[RING_F_VMDQ].limit;
 	u16 vmdq_m = 0;
 	u16 rss_i = adapter->ring_feature[RING_F_RSS].limit;
 	u16 rss_m = IXGBE_RSS_DISABLED_MASK;
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	u16 fcoe_i = 0;
-#पूर्ण_अगर
+#endif
 
-	/* only proceed अगर SR-IOV is enabled */
-	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		वापस false;
+	/* only proceed if SR-IOV is enabled */
+	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		return false;
 
 	/* limit l2fwd RSS based on total Tx queue limit */
 	rss_i = min_t(u16, rss_i, MAX_TX_QUEUES / vmdq_i);
@@ -514,35 +513,35 @@
 	/* Add starting offset to total pool count */
 	vmdq_i += adapter->ring_feature[RING_F_VMDQ].offset;
 
-	/* द्विगुन check we are limited to maximum pools */
+	/* double check we are limited to maximum pools */
 	vmdq_i = min_t(u16, IXGBE_MAX_VMDQ_INDICES, vmdq_i);
 
 	/* 64 pool mode with 2 queues per pool */
-	अगर (vmdq_i > 32) अणु
+	if (vmdq_i > 32) {
 		vmdq_m = IXGBE_82599_VMDQ_2Q_MASK;
 		rss_m = IXGBE_RSS_2Q_MASK;
 		rss_i = min_t(u16, rss_i, 2);
 	/* 32 pool mode with up to 4 queues per pool */
-	पूर्ण अन्यथा अणु
+	} else {
 		vmdq_m = IXGBE_82599_VMDQ_4Q_MASK;
 		rss_m = IXGBE_RSS_4Q_MASK;
 		/* We can support 4, 2, or 1 queues */
 		rss_i = (rss_i > 3) ? 4 : (rss_i > 1) ? 2 : 1;
-	पूर्ण
+	}
 
-#अगर_घोषित IXGBE_FCOE
-	/* queues in the reमुख्यing pools are available क्रम FCoE */
+#ifdef IXGBE_FCOE
+	/* queues in the remaining pools are available for FCoE */
 	fcoe_i = 128 - (vmdq_i * __ALIGN_MASK(1, ~vmdq_m));
 
-#पूर्ण_अगर
-	/* हटाओ the starting offset from the pool count */
+#endif
+	/* remove the starting offset from the pool count */
 	vmdq_i -= adapter->ring_feature[RING_F_VMDQ].offset;
 
-	/* save features क्रम later use */
+	/* save features for later use */
 	adapter->ring_feature[RING_F_VMDQ].indices = vmdq_i;
 	adapter->ring_feature[RING_F_VMDQ].mask = vmdq_m;
 
-	/* limit RSS based on user input and save क्रम later use */
+	/* limit RSS based on user input and save for later use */
 	adapter->ring_feature[RING_F_RSS].indices = rss_i;
 	adapter->ring_feature[RING_F_RSS].mask = rss_m;
 
@@ -554,115 +553,115 @@
 	adapter->num_xdp_queues = 0;
 
 	/* disable ATR as it is not supported when VMDq is enabled */
-	adapter->flags &= ~IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+	adapter->flags &= ~IXGBE_FLAG_FDIR_HASH_CAPABLE;
 
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	/*
 	 * FCoE can use rings from adjacent buffers to allow RSS
-	 * like behavior.  To account क्रम this we need to add the
+	 * like behavior.  To account for this we need to add the
 	 * FCoE indices to the total ring count.
 	 */
-	अगर (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) अणु
-		काष्ठा ixgbe_ring_feature *fcoe;
+	if (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) {
+		struct ixgbe_ring_feature *fcoe;
 
 		fcoe = &adapter->ring_feature[RING_F_FCOE];
 
 		/* limit ourselves based on feature limits */
 		fcoe_i = min_t(u16, fcoe_i, fcoe->limit);
 
-		अगर (vmdq_i > 1 && fcoe_i) अणु
-			/* alloc queues क्रम FCoE separately */
+		if (vmdq_i > 1 && fcoe_i) {
+			/* alloc queues for FCoE separately */
 			fcoe->indices = fcoe_i;
 			fcoe->offset = vmdq_i * rss_i;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* merge FCoE queues with RSS queues */
 			fcoe_i = min_t(u16, fcoe_i + rss_i, num_online_cpus());
 
-			/* limit indices to rss_i अगर MSI-X is disabled */
-			अगर (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
+			/* limit indices to rss_i if MSI-X is disabled */
+			if (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
 				fcoe_i = rss_i;
 
-			/* attempt to reserve some queues क्रम just FCoE */
+			/* attempt to reserve some queues for just FCoE */
 			fcoe->indices = min_t(u16, fcoe_i, fcoe->limit);
 			fcoe->offset = fcoe_i - fcoe->indices;
 
 			fcoe_i -= rss_i;
-		पूर्ण
+		}
 
 		/* add queues to adapter */
 		adapter->num_tx_queues += fcoe_i;
 		adapter->num_rx_queues += fcoe_i;
-	पूर्ण
+	}
 
-#पूर्ण_अगर
+#endif
 	/* To support macvlan offload we have to use num_tc to
 	 * restrict the queues that can be used by the device.
-	 * By करोing this we can aव्योम reporting a false number of
+	 * By doing this we can avoid reporting a false number of
 	 * queues.
 	 */
-	अगर (vmdq_i > 1)
+	if (vmdq_i > 1)
 		netdev_set_num_tc(adapter->netdev, 1);
 
-	/* populate TC0 क्रम use by pool 0 */
+	/* populate TC0 for use by pool 0 */
 	netdev_set_tc_queue(adapter->netdev, 0,
 			    adapter->num_rx_queues_per_pool, 0);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * ixgbe_set_rss_queues - Allocate queues क्रम RSS
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_set_rss_queues - Allocate queues for RSS
+ * @adapter: board private structure to initialize
  *
  * This is our "base" multiqueue mode.  RSS (Receive Side Scaling) will try
- * to allocate one Rx queue per CPU, and अगर available, one Tx queue per CPU.
+ * to allocate one Rx queue per CPU, and if available, one Tx queue per CPU.
  *
  **/
-अटल bool ixgbe_set_rss_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	काष्ठा ixgbe_ring_feature *f;
+static bool ixgbe_set_rss_queues(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_ring_feature *f;
 	u16 rss_i;
 
-	/* set mask क्रम 16 queue limit of RSS */
+	/* set mask for 16 queue limit of RSS */
 	f = &adapter->ring_feature[RING_F_RSS];
 	rss_i = f->limit;
 
 	f->indices = rss_i;
 
-	अगर (hw->mac.type < ixgbe_mac_X550)
+	if (hw->mac.type < ixgbe_mac_X550)
 		f->mask = IXGBE_RSS_16Q_MASK;
-	अन्यथा
+	else
 		f->mask = IXGBE_RSS_64Q_MASK;
 
-	/* disable ATR by शेष, it will be configured below */
-	adapter->flags &= ~IXGBE_FLAG_Fसूची_HASH_CAPABLE;
+	/* disable ATR by default, it will be configured below */
+	adapter->flags &= ~IXGBE_FLAG_FDIR_HASH_CAPABLE;
 
 	/*
 	 * Use Flow Director in addition to RSS to ensure the best
-	 * distribution of flows across cores, even when an Fसूची flow
+	 * distribution of flows across cores, even when an FDIR flow
 	 * isn't matched.
 	 */
-	अगर (rss_i > 1 && adapter->atr_sample_rate) अणु
-		f = &adapter->ring_feature[RING_F_Fसूची];
+	if (rss_i > 1 && adapter->atr_sample_rate) {
+		f = &adapter->ring_feature[RING_F_FDIR];
 
 		rss_i = f->indices = f->limit;
 
-		अगर (!(adapter->flags & IXGBE_FLAG_Fसूची_PERFECT_CAPABLE))
-			adapter->flags |= IXGBE_FLAG_Fसूची_HASH_CAPABLE;
-	पूर्ण
+		if (!(adapter->flags & IXGBE_FLAG_FDIR_PERFECT_CAPABLE))
+			adapter->flags |= IXGBE_FLAG_FDIR_HASH_CAPABLE;
+	}
 
-#अगर_घोषित IXGBE_FCOE
+#ifdef IXGBE_FCOE
 	/*
 	 * FCoE can exist on the same rings as standard network traffic
-	 * however it is preferred to aव्योम that अगर possible.  In order
-	 * to get the best perक्रमmance we allocate as many FCoE queues
+	 * however it is preferred to avoid that if possible.  In order
+	 * to get the best performance we allocate as many FCoE queues
 	 * as we can and we place them at the end of the ring array to
-	 * aव्योम sharing queues with standard RSS on प्रणालीs with 24 or
+	 * avoid sharing queues with standard RSS on systems with 24 or
 	 * more CPUs.
 	 */
-	अगर (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) अणु
-		काष्ठा net_device *dev = adapter->netdev;
+	if (adapter->flags & IXGBE_FLAG_FCOE_ENABLED) {
+		struct net_device *dev = adapter->netdev;
 		u16 fcoe_i;
 
 		f = &adapter->ring_feature[RING_F_FCOE];
@@ -671,154 +670,154 @@
 		fcoe_i = min_t(u16, f->limit + rss_i, num_online_cpus());
 		fcoe_i = min_t(u16, fcoe_i, dev->num_tx_queues);
 
-		/* limit indices to rss_i अगर MSI-X is disabled */
-		अगर (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
+		/* limit indices to rss_i if MSI-X is disabled */
+		if (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
 			fcoe_i = rss_i;
 
-		/* attempt to reserve some queues क्रम just FCoE */
+		/* attempt to reserve some queues for just FCoE */
 		f->indices = min_t(u16, fcoe_i, f->limit);
 		f->offset = fcoe_i - f->indices;
 		rss_i = max_t(u16, fcoe_i, rss_i);
-	पूर्ण
+	}
 
-#पूर्ण_अगर /* IXGBE_FCOE */
+#endif /* IXGBE_FCOE */
 	adapter->num_rx_queues = rss_i;
 	adapter->num_tx_queues = rss_i;
 	adapter->num_xdp_queues = ixgbe_xdp_queues(adapter);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * ixgbe_set_num_queues - Allocate queues क्रम device, feature dependent
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_set_num_queues - Allocate queues for device, feature dependent
+ * @adapter: board private structure to initialize
  *
  * This is the top level queue allocation routine.  The order here is very
  * important, starting with the "most" number of features turned on at once,
  * and ending with the smallest set of features.  This way large combinations
- * can be allocated अगर they're turned on, and smaller combinations are the
+ * can be allocated if they're turned on, and smaller combinations are the
  * fallthrough conditions.
  *
  **/
-अटल व्योम ixgbe_set_num_queues(काष्ठा ixgbe_adapter *adapter)
-अणु
-	/* Start with base हाल */
+static void ixgbe_set_num_queues(struct ixgbe_adapter *adapter)
+{
+	/* Start with base case */
 	adapter->num_rx_queues = 1;
 	adapter->num_tx_queues = 1;
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_pools = 1;
 	adapter->num_rx_queues_per_pool = 1;
 
-#अगर_घोषित CONFIG_IXGBE_DCB
-	अगर (ixgbe_set_dcb_sriov_queues(adapter))
-		वापस;
+#ifdef CONFIG_IXGBE_DCB
+	if (ixgbe_set_dcb_sriov_queues(adapter))
+		return;
 
-	अगर (ixgbe_set_dcb_queues(adapter))
-		वापस;
+	if (ixgbe_set_dcb_queues(adapter))
+		return;
 
-#पूर्ण_अगर
-	अगर (ixgbe_set_sriov_queues(adapter))
-		वापस;
+#endif
+	if (ixgbe_set_sriov_queues(adapter))
+		return;
 
 	ixgbe_set_rss_queues(adapter);
-पूर्ण
+}
 
 /**
  * ixgbe_acquire_msix_vectors - acquire MSI-X vectors
- * @adapter: board निजी काष्ठाure
+ * @adapter: board private structure
  *
- * Attempts to acquire a suitable range of MSI-X vector पूर्णांकerrupts. Will
- * वापस a negative error code अगर unable to acquire MSI-X vectors क्रम any
+ * Attempts to acquire a suitable range of MSI-X vector interrupts. Will
+ * return a negative error code if unable to acquire MSI-X vectors for any
  * reason.
  */
-अटल पूर्णांक ixgbe_acquire_msix_vectors(काष्ठा ixgbe_adapter *adapter)
-अणु
-	काष्ठा ixgbe_hw *hw = &adapter->hw;
-	पूर्णांक i, vectors, vector_threshold;
+static int ixgbe_acquire_msix_vectors(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i, vectors, vector_threshold;
 
-	/* We start by asking क्रम one vector per queue pair with XDP queues
+	/* We start by asking for one vector per queue pair with XDP queues
 	 * being stacked with TX queues.
 	 */
 	vectors = max(adapter->num_rx_queues, adapter->num_tx_queues);
 	vectors = max(vectors, adapter->num_xdp_queues);
 
-	/* It is easy to be greedy क्रम MSI-X vectors. However, it really
-	 * करोesn't do much good if we have a lot more vectors than CPUs. We'll
-	 * be somewhat conservative and only ask क्रम (roughly) the same number
+	/* It is easy to be greedy for MSI-X vectors. However, it really
+	 * doesn't do much good if we have a lot more vectors than CPUs. We'll
+	 * be somewhat conservative and only ask for (roughly) the same number
 	 * of vectors as there are CPUs.
 	 */
-	vectors = min_t(पूर्णांक, vectors, num_online_cpus());
+	vectors = min_t(int, vectors, num_online_cpus());
 
-	/* Some vectors are necessary क्रम non-queue पूर्णांकerrupts */
+	/* Some vectors are necessary for non-queue interrupts */
 	vectors += NON_Q_VECTORS;
 
 	/* Hardware can only support a maximum of hw.mac->max_msix_vectors.
 	 * With features such as RSS and VMDq, we can easily surpass the
 	 * number of Rx and Tx descriptor queues supported by our device.
-	 * Thus, we cap the maximum in the rare हालs where the CPU count also
+	 * Thus, we cap the maximum in the rare cases where the CPU count also
 	 * exceeds our vector limit
 	 */
-	vectors = min_t(पूर्णांक, vectors, hw->mac.max_msix_vectors);
+	vectors = min_t(int, vectors, hw->mac.max_msix_vectors);
 
-	/* We want a minimum of two MSI-X vectors क्रम (1) a TxQ[0] + RxQ[0]
+	/* We want a minimum of two MSI-X vectors for (1) a TxQ[0] + RxQ[0]
 	 * handler, and (2) an Other (Link Status Change, etc.) handler.
 	 */
 	vector_threshold = MIN_MSIX_COUNT;
 
-	adapter->msix_entries = kसुस्मृति(vectors,
-					माप(काष्ठा msix_entry),
+	adapter->msix_entries = kcalloc(vectors,
+					sizeof(struct msix_entry),
 					GFP_KERNEL);
-	अगर (!adapter->msix_entries)
-		वापस -ENOMEM;
+	if (!adapter->msix_entries)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < vectors; i++)
+	for (i = 0; i < vectors; i++)
 		adapter->msix_entries[i].entry = i;
 
 	vectors = pci_enable_msix_range(adapter->pdev, adapter->msix_entries,
 					vector_threshold, vectors);
 
-	अगर (vectors < 0) अणु
+	if (vectors < 0) {
 		/* A negative count of allocated vectors indicates an error in
-		 * acquiring within the specअगरied range of MSI-X vectors
+		 * acquiring within the specified range of MSI-X vectors
 		 */
 		e_dev_warn("Failed to allocate MSI-X interrupts. Err: %d\n",
 			   vectors);
 
 		adapter->flags &= ~IXGBE_FLAG_MSIX_ENABLED;
-		kमुक्त(adapter->msix_entries);
-		adapter->msix_entries = शून्य;
+		kfree(adapter->msix_entries);
+		adapter->msix_entries = NULL;
 
-		वापस vectors;
-	पूर्ण
+		return vectors;
+	}
 
 	/* we successfully allocated some number of vectors within our
 	 * requested range.
 	 */
 	adapter->flags |= IXGBE_FLAG_MSIX_ENABLED;
 
-	/* Adjust क्रम only the vectors we'll use, which is minimum
+	/* Adjust for only the vectors we'll use, which is minimum
 	 * of max_q_vectors, or the number of vectors we were allocated.
 	 */
 	vectors -= NON_Q_VECTORS;
-	adapter->num_q_vectors = min_t(पूर्णांक, vectors, adapter->max_q_vectors);
+	adapter->num_q_vectors = min_t(int, vectors, adapter->max_q_vectors);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ixgbe_add_ring(काष्ठा ixgbe_ring *ring,
-			   काष्ठा ixgbe_ring_container *head)
-अणु
+static void ixgbe_add_ring(struct ixgbe_ring *ring,
+			   struct ixgbe_ring_container *head)
+{
 	ring->next = head->ring;
 	head->ring = ring;
 	head->count++;
-	head->next_update = jअगरfies + 1;
-पूर्ण
+	head->next_update = jiffies + 1;
+}
 
 /**
- * ixgbe_alloc_q_vector - Allocate memory क्रम a single पूर्णांकerrupt vector
- * @adapter: board निजी काष्ठाure to initialize
- * @v_count: q_vectors allocated on adapter, used क्रम ring पूर्णांकerleaving
- * @v_idx: index of vector in adapter काष्ठा
+ * ixgbe_alloc_q_vector - Allocate memory for a single interrupt vector
+ * @adapter: board private structure to initialize
+ * @v_count: q_vectors allocated on adapter, used for ring interleaving
+ * @v_idx: index of vector in adapter struct
  * @txr_count: total number of Tx rings to allocate
  * @txr_idx: index of first Tx ring to allocate
  * @xdp_count: total number of XDP rings to allocate
@@ -826,53 +825,53 @@
  * @rxr_count: total number of Rx rings to allocate
  * @rxr_idx: index of first Rx ring to allocate
  *
- * We allocate one q_vector.  If allocation fails we वापस -ENOMEM.
+ * We allocate one q_vector.  If allocation fails we return -ENOMEM.
  **/
-अटल पूर्णांक ixgbe_alloc_q_vector(काष्ठा ixgbe_adapter *adapter,
-				पूर्णांक v_count, पूर्णांक v_idx,
-				पूर्णांक txr_count, पूर्णांक txr_idx,
-				पूर्णांक xdp_count, पूर्णांक xdp_idx,
-				पूर्णांक rxr_count, पूर्णांक rxr_idx)
-अणु
-	पूर्णांक node = dev_to_node(&adapter->pdev->dev);
-	काष्ठा ixgbe_q_vector *q_vector;
-	काष्ठा ixgbe_ring *ring;
-	पूर्णांक cpu = -1;
-	पूर्णांक ring_count;
+static int ixgbe_alloc_q_vector(struct ixgbe_adapter *adapter,
+				int v_count, int v_idx,
+				int txr_count, int txr_idx,
+				int xdp_count, int xdp_idx,
+				int rxr_count, int rxr_idx)
+{
+	int node = dev_to_node(&adapter->pdev->dev);
+	struct ixgbe_q_vector *q_vector;
+	struct ixgbe_ring *ring;
+	int cpu = -1;
+	int ring_count;
 	u8 tcs = adapter->hw_tcs;
 
 	ring_count = txr_count + rxr_count + xdp_count;
 
-	/* customize cpu क्रम Flow Director mapping */
-	अगर ((tcs <= 1) && !(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)) अणु
+	/* customize cpu for Flow Director mapping */
+	if ((tcs <= 1) && !(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED)) {
 		u16 rss_i = adapter->ring_feature[RING_F_RSS].indices;
-		अगर (rss_i > 1 && adapter->atr_sample_rate) अणु
-			cpu = cpumask_local_spपढ़ो(v_idx, node);
+		if (rss_i > 1 && adapter->atr_sample_rate) {
+			cpu = cpumask_local_spread(v_idx, node);
 			node = cpu_to_node(cpu);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* allocate q_vector and rings */
-	q_vector = kzalloc_node(काष्ठा_size(q_vector, ring, ring_count),
+	q_vector = kzalloc_node(struct_size(q_vector, ring, ring_count),
 				GFP_KERNEL, node);
-	अगर (!q_vector)
-		q_vector = kzalloc(काष्ठा_size(q_vector, ring, ring_count),
+	if (!q_vector)
+		q_vector = kzalloc(struct_size(q_vector, ring, ring_count),
 				   GFP_KERNEL);
-	अगर (!q_vector)
-		वापस -ENOMEM;
+	if (!q_vector)
+		return -ENOMEM;
 
 	/* setup affinity mask and node */
-	अगर (cpu != -1)
+	if (cpu != -1)
 		cpumask_set_cpu(cpu, &q_vector->affinity_mask);
 	q_vector->numa_node = node;
 
-#अगर_घोषित CONFIG_IXGBE_DCA
-	/* initialize CPU क्रम DCA */
+#ifdef CONFIG_IXGBE_DCA
+	/* initialize CPU for DCA */
 	q_vector->cpu = -1;
 
-#पूर्ण_अगर
+#endif
 	/* initialize NAPI */
-	netअगर_napi_add(adapter->netdev, &q_vector->napi,
+	netif_napi_add(adapter->netdev, &q_vector->napi,
 		       ixgbe_poll, 64);
 
 	/* tie q_vector and adapter together */
@@ -883,31 +882,31 @@
 	/* initialize work limits */
 	q_vector->tx.work_limit = adapter->tx_work_limit;
 
-	/* Initialize setting क्रम adaptive ITR */
+	/* Initialize setting for adaptive ITR */
 	q_vector->tx.itr = IXGBE_ITR_ADAPTIVE_MAX_USECS |
 			   IXGBE_ITR_ADAPTIVE_LATENCY;
 	q_vector->rx.itr = IXGBE_ITR_ADAPTIVE_MAX_USECS |
 			   IXGBE_ITR_ADAPTIVE_LATENCY;
 
-	/* पूर्णांकialize ITR */
-	अगर (txr_count && !rxr_count) अणु
+	/* intialize ITR */
+	if (txr_count && !rxr_count) {
 		/* tx only vector */
-		अगर (adapter->tx_itr_setting == 1)
+		if (adapter->tx_itr_setting == 1)
 			q_vector->itr = IXGBE_12K_ITR;
-		अन्यथा
+		else
 			q_vector->itr = adapter->tx_itr_setting;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* rx or rx/tx vector */
-		अगर (adapter->rx_itr_setting == 1)
+		if (adapter->rx_itr_setting == 1)
 			q_vector->itr = IXGBE_20K_ITR;
-		अन्यथा
+		else
 			q_vector->itr = adapter->rx_itr_setting;
-	पूर्ण
+	}
 
-	/* initialize poपूर्णांकer to rings */
+	/* initialize pointer to rings */
 	ring = q_vector->ring;
 
-	जबतक (txr_count) अणु
+	while (txr_count) {
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -918,7 +917,7 @@
 		/* update q_vector Tx values */
 		ixgbe_add_ring(ring, &q_vector->tx);
 
-		/* apply Tx specअगरic ring traits */
+		/* apply Tx specific ring traits */
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = txr_idx;
 
@@ -929,11 +928,11 @@
 		txr_count--;
 		txr_idx += v_count;
 
-		/* push poपूर्णांकer to next ring */
+		/* push pointer to next ring */
 		ring++;
-	पूर्ण
+	}
 
-	जबतक (xdp_count) अणु
+	while (xdp_count) {
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -944,7 +943,7 @@
 		/* update q_vector Tx values */
 		ixgbe_add_ring(ring, &q_vector->tx);
 
-		/* apply Tx specअगरic ring traits */
+		/* apply Tx specific ring traits */
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = xdp_idx;
 		set_ring_xdp(ring);
@@ -956,11 +955,11 @@
 		xdp_count--;
 		xdp_idx++;
 
-		/* push poपूर्णांकer to next ring */
+		/* push pointer to next ring */
 		ring++;
-	पूर्ण
+	}
 
-	जबतक (rxr_count) अणु
+	while (rxr_count) {
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -975,20 +974,20 @@
 		 * 82599 errata, UDP frames with a 0 checksum
 		 * can be marked as checksum errors.
 		 */
-		अगर (adapter->hw.mac.type == ixgbe_mac_82599EB)
+		if (adapter->hw.mac.type == ixgbe_mac_82599EB)
 			set_bit(__IXGBE_RX_CSUM_UDP_ZERO_ERR, &ring->state);
 
-#अगर_घोषित IXGBE_FCOE
-		अगर (adapter->netdev->features & NETIF_F_FCOE_MTU) अणु
-			काष्ठा ixgbe_ring_feature *f;
+#ifdef IXGBE_FCOE
+		if (adapter->netdev->features & NETIF_F_FCOE_MTU) {
+			struct ixgbe_ring_feature *f;
 			f = &adapter->ring_feature[RING_F_FCOE];
-			अगर ((rxr_idx >= f->offset) &&
+			if ((rxr_idx >= f->offset) &&
 			    (rxr_idx < f->offset + f->indices))
 				set_bit(__IXGBE_RX_FCOE, &ring->state);
-		पूर्ण
+		}
 
-#पूर्ण_अगर /* IXGBE_FCOE */
-		/* apply Rx specअगरic ring traits */
+#endif /* IXGBE_FCOE */
+		/* apply Rx specific ring traits */
 		ring->count = adapter->rx_ring_count;
 		ring->queue_index = rxr_idx;
 
@@ -999,120 +998,120 @@
 		rxr_count--;
 		rxr_idx += v_count;
 
-		/* push poपूर्णांकer to next ring */
+		/* push pointer to next ring */
 		ring++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ixgbe_मुक्त_q_vector - Free memory allocated क्रम specअगरic पूर्णांकerrupt vector
- * @adapter: board निजी काष्ठाure to initialize
- * @v_idx: Index of vector to be मुक्तd
+ * ixgbe_free_q_vector - Free memory allocated for specific interrupt vector
+ * @adapter: board private structure to initialize
+ * @v_idx: Index of vector to be freed
  *
- * This function मुक्तs the memory allocated to the q_vector.  In addition अगर
- * NAPI is enabled it will delete any references to the NAPI काष्ठा prior
- * to मुक्तing the q_vector.
+ * This function frees the memory allocated to the q_vector.  In addition if
+ * NAPI is enabled it will delete any references to the NAPI struct prior
+ * to freeing the q_vector.
  **/
-अटल व्योम ixgbe_मुक्त_q_vector(काष्ठा ixgbe_adapter *adapter, पूर्णांक v_idx)
-अणु
-	काष्ठा ixgbe_q_vector *q_vector = adapter->q_vector[v_idx];
-	काष्ठा ixgbe_ring *ring;
+static void ixgbe_free_q_vector(struct ixgbe_adapter *adapter, int v_idx)
+{
+	struct ixgbe_q_vector *q_vector = adapter->q_vector[v_idx];
+	struct ixgbe_ring *ring;
 
-	ixgbe_क्रम_each_ring(ring, q_vector->tx) अणु
-		अगर (ring_is_xdp(ring))
-			WRITE_ONCE(adapter->xdp_ring[ring->queue_index], शून्य);
-		अन्यथा
-			WRITE_ONCE(adapter->tx_ring[ring->queue_index], शून्य);
-	पूर्ण
+	ixgbe_for_each_ring(ring, q_vector->tx) {
+		if (ring_is_xdp(ring))
+			WRITE_ONCE(adapter->xdp_ring[ring->queue_index], NULL);
+		else
+			WRITE_ONCE(adapter->tx_ring[ring->queue_index], NULL);
+	}
 
-	ixgbe_क्रम_each_ring(ring, q_vector->rx)
-		WRITE_ONCE(adapter->rx_ring[ring->queue_index], शून्य);
+	ixgbe_for_each_ring(ring, q_vector->rx)
+		WRITE_ONCE(adapter->rx_ring[ring->queue_index], NULL);
 
-	adapter->q_vector[v_idx] = शून्य;
-	__netअगर_napi_del(&q_vector->napi);
+	adapter->q_vector[v_idx] = NULL;
+	__netif_napi_del(&q_vector->napi);
 
 	/*
-	 * after a call to __netअगर_napi_del() napi may still be used and
+	 * after a call to __netif_napi_del() napi may still be used and
 	 * ixgbe_get_stats64() might access the rings on this vector,
-	 * we must रुको a grace period beक्रमe मुक्तing it.
+	 * we must wait a grace period before freeing it.
 	 */
-	kमुक्त_rcu(q_vector, rcu);
-पूर्ण
+	kfree_rcu(q_vector, rcu);
+}
 
 /**
- * ixgbe_alloc_q_vectors - Allocate memory क्रम पूर्णांकerrupt vectors
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_alloc_q_vectors - Allocate memory for interrupt vectors
+ * @adapter: board private structure to initialize
  *
- * We allocate one q_vector per queue पूर्णांकerrupt.  If allocation fails we
- * वापस -ENOMEM.
+ * We allocate one q_vector per queue interrupt.  If allocation fails we
+ * return -ENOMEM.
  **/
-अटल पूर्णांक ixgbe_alloc_q_vectors(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक q_vectors = adapter->num_q_vectors;
-	पूर्णांक rxr_reमुख्यing = adapter->num_rx_queues;
-	पूर्णांक txr_reमुख्यing = adapter->num_tx_queues;
-	पूर्णांक xdp_reमुख्यing = adapter->num_xdp_queues;
-	पूर्णांक rxr_idx = 0, txr_idx = 0, xdp_idx = 0, v_idx = 0;
-	पूर्णांक err, i;
+static int ixgbe_alloc_q_vectors(struct ixgbe_adapter *adapter)
+{
+	int q_vectors = adapter->num_q_vectors;
+	int rxr_remaining = adapter->num_rx_queues;
+	int txr_remaining = adapter->num_tx_queues;
+	int xdp_remaining = adapter->num_xdp_queues;
+	int rxr_idx = 0, txr_idx = 0, xdp_idx = 0, v_idx = 0;
+	int err, i;
 
-	/* only one q_vector अगर MSI-X is disabled. */
-	अगर (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
+	/* only one q_vector if MSI-X is disabled. */
+	if (!(adapter->flags & IXGBE_FLAG_MSIX_ENABLED))
 		q_vectors = 1;
 
-	अगर (q_vectors >= (rxr_reमुख्यing + txr_reमुख्यing + xdp_reमुख्यing)) अणु
-		क्रम (; rxr_reमुख्यing; v_idx++) अणु
+	if (q_vectors >= (rxr_remaining + txr_remaining + xdp_remaining)) {
+		for (; rxr_remaining; v_idx++) {
 			err = ixgbe_alloc_q_vector(adapter, q_vectors, v_idx,
 						   0, 0, 0, 0, 1, rxr_idx);
 
-			अगर (err)
-				जाओ err_out;
+			if (err)
+				goto err_out;
 
 			/* update counts and index */
-			rxr_reमुख्यing--;
+			rxr_remaining--;
 			rxr_idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (; v_idx < q_vectors; v_idx++) अणु
-		पूर्णांक rqpv = DIV_ROUND_UP(rxr_reमुख्यing, q_vectors - v_idx);
-		पूर्णांक tqpv = DIV_ROUND_UP(txr_reमुख्यing, q_vectors - v_idx);
-		पूर्णांक xqpv = DIV_ROUND_UP(xdp_reमुख्यing, q_vectors - v_idx);
+	for (; v_idx < q_vectors; v_idx++) {
+		int rqpv = DIV_ROUND_UP(rxr_remaining, q_vectors - v_idx);
+		int tqpv = DIV_ROUND_UP(txr_remaining, q_vectors - v_idx);
+		int xqpv = DIV_ROUND_UP(xdp_remaining, q_vectors - v_idx);
 
 		err = ixgbe_alloc_q_vector(adapter, q_vectors, v_idx,
 					   tqpv, txr_idx,
 					   xqpv, xdp_idx,
 					   rqpv, rxr_idx);
 
-		अगर (err)
-			जाओ err_out;
+		if (err)
+			goto err_out;
 
 		/* update counts and index */
-		rxr_reमुख्यing -= rqpv;
-		txr_reमुख्यing -= tqpv;
-		xdp_reमुख्यing -= xqpv;
+		rxr_remaining -= rqpv;
+		txr_remaining -= tqpv;
+		xdp_remaining -= xqpv;
 		rxr_idx++;
 		txr_idx++;
 		xdp_idx += xqpv;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
-		अगर (adapter->rx_ring[i])
+	for (i = 0; i < adapter->num_rx_queues; i++) {
+		if (adapter->rx_ring[i])
 			adapter->rx_ring[i]->ring_idx = i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
-		अगर (adapter->tx_ring[i])
+	for (i = 0; i < adapter->num_tx_queues; i++) {
+		if (adapter->tx_ring[i])
 			adapter->tx_ring[i]->ring_idx = i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
-		अगर (adapter->xdp_ring[i])
+	for (i = 0; i < adapter->num_xdp_queues; i++) {
+		if (adapter->xdp_ring[i])
 			adapter->xdp_ring[i]->ring_idx = i;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
 	adapter->num_tx_queues = 0;
@@ -1120,78 +1119,78 @@ err_out:
 	adapter->num_rx_queues = 0;
 	adapter->num_q_vectors = 0;
 
-	जबतक (v_idx--)
-		ixgbe_मुक्त_q_vector(adapter, v_idx);
+	while (v_idx--)
+		ixgbe_free_q_vector(adapter, v_idx);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
- * ixgbe_मुक्त_q_vectors - Free memory allocated क्रम पूर्णांकerrupt vectors
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_free_q_vectors - Free memory allocated for interrupt vectors
+ * @adapter: board private structure to initialize
  *
- * This function मुक्तs the memory allocated to the q_vectors.  In addition अगर
- * NAPI is enabled it will delete any references to the NAPI काष्ठा prior
- * to मुक्तing the q_vector.
+ * This function frees the memory allocated to the q_vectors.  In addition if
+ * NAPI is enabled it will delete any references to the NAPI struct prior
+ * to freeing the q_vector.
  **/
-अटल व्योम ixgbe_मुक्त_q_vectors(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक v_idx = adapter->num_q_vectors;
+static void ixgbe_free_q_vectors(struct ixgbe_adapter *adapter)
+{
+	int v_idx = adapter->num_q_vectors;
 
 	adapter->num_tx_queues = 0;
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_queues = 0;
 	adapter->num_q_vectors = 0;
 
-	जबतक (v_idx--)
-		ixgbe_मुक्त_q_vector(adapter, v_idx);
-पूर्ण
+	while (v_idx--)
+		ixgbe_free_q_vector(adapter, v_idx);
+}
 
-अटल व्योम ixgbe_reset_पूर्णांकerrupt_capability(काष्ठा ixgbe_adapter *adapter)
-अणु
-	अगर (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) अणु
+static void ixgbe_reset_interrupt_capability(struct ixgbe_adapter *adapter)
+{
+	if (adapter->flags & IXGBE_FLAG_MSIX_ENABLED) {
 		adapter->flags &= ~IXGBE_FLAG_MSIX_ENABLED;
 		pci_disable_msix(adapter->pdev);
-		kमुक्त(adapter->msix_entries);
-		adapter->msix_entries = शून्य;
-	पूर्ण अन्यथा अगर (adapter->flags & IXGBE_FLAG_MSI_ENABLED) अणु
+		kfree(adapter->msix_entries);
+		adapter->msix_entries = NULL;
+	} else if (adapter->flags & IXGBE_FLAG_MSI_ENABLED) {
 		adapter->flags &= ~IXGBE_FLAG_MSI_ENABLED;
 		pci_disable_msi(adapter->pdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * ixgbe_set_पूर्णांकerrupt_capability - set MSI-X or MSI अगर supported
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_set_interrupt_capability - set MSI-X or MSI if supported
+ * @adapter: board private structure to initialize
  *
- * Attempt to configure the पूर्णांकerrupts using the best available
+ * Attempt to configure the interrupts using the best available
  * capabilities of the hardware and the kernel.
  **/
-अटल व्योम ixgbe_set_पूर्णांकerrupt_capability(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक err;
+static void ixgbe_set_interrupt_capability(struct ixgbe_adapter *adapter)
+{
+	int err;
 
-	/* We will try to get MSI-X पूर्णांकerrupts first */
-	अगर (!ixgbe_acquire_msix_vectors(adapter))
-		वापस;
+	/* We will try to get MSI-X interrupts first */
+	if (!ixgbe_acquire_msix_vectors(adapter))
+		return;
 
-	/* At this poपूर्णांक, we करो not have MSI-X capabilities. We need to
+	/* At this point, we do not have MSI-X capabilities. We need to
 	 * reconfigure or disable various features which require MSI-X
 	 * capability.
 	 */
 
 	/* Disable DCB unless we only have a single traffic class */
-	अगर (adapter->hw_tcs > 1) अणु
+	if (adapter->hw_tcs > 1) {
 		e_dev_warn("Number of DCB TCs exceeds number of available queues. Disabling DCB support.\n");
 		netdev_reset_tc(adapter->netdev);
 
-		अगर (adapter->hw.mac.type == ixgbe_mac_82598EB)
+		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
 			adapter->hw.fc.requested_mode = adapter->last_lfc_mode;
 
 		adapter->flags &= ~IXGBE_FLAG_DCB_ENABLED;
 		adapter->temp_dcb_cfg.pfc_mode_enable = false;
 		adapter->dcb_cfg.pfc_mode_enable = false;
-	पूर्ण
+	}
 
 	adapter->hw_tcs = 0;
 	adapter->dcb_cfg.num_tcs.pg_tcs = 1;
@@ -1212,40 +1211,40 @@ err_out:
 	adapter->num_q_vectors = 1;
 
 	err = pci_enable_msi(adapter->pdev);
-	अगर (err)
+	if (err)
 		e_dev_warn("Failed to allocate MSI interrupt, falling back to legacy. Error: %d\n",
 			   err);
-	अन्यथा
+	else
 		adapter->flags |= IXGBE_FLAG_MSI_ENABLED;
-पूर्ण
+}
 
 /**
- * ixgbe_init_पूर्णांकerrupt_scheme - Determine proper पूर्णांकerrupt scheme
- * @adapter: board निजी काष्ठाure to initialize
+ * ixgbe_init_interrupt_scheme - Determine proper interrupt scheme
+ * @adapter: board private structure to initialize
  *
- * We determine which पूर्णांकerrupt scheme to use based on...
+ * We determine which interrupt scheme to use based on...
  * - Kernel support (MSI, MSI-X)
  *   - which can be user-defined (via MODULE_PARAM)
  * - Hardware queue count (num_*_queues)
  *   - defined by miscellaneous hardware support/features (RSS, etc.)
  **/
-पूर्णांक ixgbe_init_पूर्णांकerrupt_scheme(काष्ठा ixgbe_adapter *adapter)
-अणु
-	पूर्णांक err;
+int ixgbe_init_interrupt_scheme(struct ixgbe_adapter *adapter)
+{
+	int err;
 
 	/* Number of supported queues */
 	ixgbe_set_num_queues(adapter);
 
-	/* Set पूर्णांकerrupt mode */
-	ixgbe_set_पूर्णांकerrupt_capability(adapter);
+	/* Set interrupt mode */
+	ixgbe_set_interrupt_capability(adapter);
 
 	err = ixgbe_alloc_q_vectors(adapter);
-	अगर (err) अणु
+	if (err) {
 		e_dev_err("Unable to allocate memory for queue vectors\n");
-		जाओ err_alloc_q_vectors;
-	पूर्ण
+		goto err_alloc_q_vectors;
+	}
 
-	ixgbe_cache_ring_रेजिस्टर(adapter);
+	ixgbe_cache_ring_register(adapter);
 
 	e_dev_info("Multiqueue %s: Rx Queue count = %u, Tx Queue count = %u XDP Queue count = %u\n",
 		   (adapter->num_rx_queues > 1) ? "Enabled" : "Disabled",
@@ -1254,34 +1253,34 @@ err_out:
 
 	set_bit(__IXGBE_DOWN, &adapter->state);
 
-	वापस 0;
+	return 0;
 
 err_alloc_q_vectors:
-	ixgbe_reset_पूर्णांकerrupt_capability(adapter);
-	वापस err;
-पूर्ण
+	ixgbe_reset_interrupt_capability(adapter);
+	return err;
+}
 
 /**
- * ixgbe_clear_पूर्णांकerrupt_scheme - Clear the current पूर्णांकerrupt scheme settings
- * @adapter: board निजी काष्ठाure to clear पूर्णांकerrupt scheme on
+ * ixgbe_clear_interrupt_scheme - Clear the current interrupt scheme settings
+ * @adapter: board private structure to clear interrupt scheme on
  *
- * We go through and clear पूर्णांकerrupt specअगरic resources and reset the काष्ठाure
+ * We go through and clear interrupt specific resources and reset the structure
  * to pre-load conditions
  **/
-व्योम ixgbe_clear_पूर्णांकerrupt_scheme(काष्ठा ixgbe_adapter *adapter)
-अणु
+void ixgbe_clear_interrupt_scheme(struct ixgbe_adapter *adapter)
+{
 	adapter->num_tx_queues = 0;
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_queues = 0;
 
-	ixgbe_मुक्त_q_vectors(adapter);
-	ixgbe_reset_पूर्णांकerrupt_capability(adapter);
-पूर्ण
+	ixgbe_free_q_vectors(adapter);
+	ixgbe_reset_interrupt_capability(adapter);
+}
 
-व्योम ixgbe_tx_ctxtdesc(काष्ठा ixgbe_ring *tx_ring, u32 vlan_macip_lens,
+void ixgbe_tx_ctxtdesc(struct ixgbe_ring *tx_ring, u32 vlan_macip_lens,
 		       u32 fceof_saidx, u32 type_tucmd, u32 mss_l4len_idx)
-अणु
-	काष्ठा ixgbe_adv_tx_context_desc *context_desc;
+{
+	struct ixgbe_adv_tx_context_desc *context_desc;
 	u16 i = tx_ring->next_to_use;
 
 	context_desc = IXGBE_TX_CTXTDESC(tx_ring, i);
@@ -1289,12 +1288,12 @@ err_alloc_q_vectors:
 	i++;
 	tx_ring->next_to_use = (i < tx_ring->count) ? i : 0;
 
-	/* set bits to identअगरy this as an advanced context descriptor */
+	/* set bits to identify this as an advanced context descriptor */
 	type_tucmd |= IXGBE_TXD_CMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
 	context_desc->vlan_macip_lens	= cpu_to_le32(vlan_macip_lens);
 	context_desc->fceof_saidx	= cpu_to_le32(fceof_saidx);
 	context_desc->type_tucmd_mlhl	= cpu_to_le32(type_tucmd);
 	context_desc->mss_l4len_idx	= cpu_to_le32(mss_l4len_idx);
-पूर्ण
+}
 

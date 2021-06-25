@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
- * Internal Header क्रम the Direct Rendering Manager
+ * Internal Header for the Direct Rendering Manager
  *
  * Copyright 2018 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,61 +23,61 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित _DRM_UTIL_H_
-#घोषणा _DRM_UTIL_H_
+#ifndef _DRM_UTIL_H_
+#define _DRM_UTIL_H_
 
 /**
  * DOC: drm utils
  *
- * Macros and अंतरभूत functions that करोes not naturally beदीर्घ in other places
+ * Macros and inline functions that does not naturally belong in other places
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kgdb.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/smp.h>
+#include <linux/interrupt.h>
+#include <linux/kgdb.h>
+#include <linux/preempt.h>
+#include <linux/smp.h>
 
 /*
- * Use EXPORT_SYMBOL_FOR_TESTS_ONLY() क्रम functions that shall
- * only be visible क्रम drmselftests.
+ * Use EXPORT_SYMBOL_FOR_TESTS_ONLY() for functions that shall
+ * only be visible for drmselftests.
  */
-#अगर defined(CONFIG_DRM_EXPORT_FOR_TESTS)
-#घोषणा EXPORT_SYMBOL_FOR_TESTS_ONLY(x) EXPORT_SYMBOL(x)
-#अन्यथा
-#घोषणा EXPORT_SYMBOL_FOR_TESTS_ONLY(x)
-#पूर्ण_अगर
+#if defined(CONFIG_DRM_EXPORT_FOR_TESTS)
+#define EXPORT_SYMBOL_FOR_TESTS_ONLY(x) EXPORT_SYMBOL(x)
+#else
+#define EXPORT_SYMBOL_FOR_TESTS_ONLY(x)
+#endif
 
 /**
- * क्रम_each_अगर - helper क्रम handling conditionals in various क्रम_each macros
+ * for_each_if - helper for handling conditionals in various for_each macros
  * @condition: The condition to check
  *
  * Typical use::
  *
- *	#घोषणा क्रम_each_foo_bar(x, y) \'
- *		list_क्रम_each_entry(x, y->list, head) \'
- *			क्रम_each_अगर(x->something == SOMETHING)
+ *	#define for_each_foo_bar(x, y) \'
+ *		list_for_each_entry(x, y->list, head) \'
+ *			for_each_if(x->something == SOMETHING)
  *
- * The क्रम_each_अगर() macro makes the use of क्रम_each_foo_bar() less error
+ * The for_each_if() macro makes the use of for_each_foo_bar() less error
  * prone.
  */
-#घोषणा क्रम_each_अगर(condition) अगर (!(condition)) अणुपूर्ण अन्यथा
+#define for_each_if(condition) if (!(condition)) {} else
 
 /**
- * drm_can_sleep - वापसs true अगर currently okay to sleep
+ * drm_can_sleep - returns true if currently okay to sleep
  *
  * This function shall not be used in new code.
- * The check क्रम running in atomic context may not work - see linux/preempt.h.
+ * The check for running in atomic context may not work - see linux/preempt.h.
  *
- * FIXME: All users of drm_can_sleep should be हटाओd (see toकरो.rst)
+ * FIXME: All users of drm_can_sleep should be removed (see todo.rst)
  *
  * Returns:
- * False अगर kgdb is active, we are in atomic context or irqs are disabled.
+ * False if kgdb is active, we are in atomic context or irqs are disabled.
  */
-अटल अंतरभूत bool drm_can_sleep(व्योम)
-अणु
-	अगर (in_atomic() || in_dbg_master() || irqs_disabled())
-		वापस false;
-	वापस true;
-पूर्ण
+static inline bool drm_can_sleep(void)
+{
+	if (in_atomic() || in_dbg_master() || irqs_disabled())
+		return false;
+	return true;
+}
 
-#पूर्ण_अगर
+#endif

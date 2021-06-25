@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdev_features.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_net.h>
+#include <linux/etherdevice.h>
+#include <linux/jiffies.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/netdev_features.h>
+#include <linux/of.h>
+#include <linux/of_net.h>
 
-#समावेश "prestera.h"
-#समावेश "prestera_hw.h"
-#समावेश "prestera_rxtx.h"
-#समावेश "prestera_devlink.h"
-#समावेश "prestera_ethtool.h"
-#समावेश "prestera_switchdev.h"
+#include "prestera.h"
+#include "prestera_hw.h"
+#include "prestera_rxtx.h"
+#include "prestera_devlink.h"
+#include "prestera_ethtool.h"
+#include "prestera_switchdev.h"
 
-#घोषणा PRESTERA_MTU_DEFAULT	1536
+#define PRESTERA_MTU_DEFAULT	1536
 
-#घोषणा PRESTERA_STATS_DELAY_MS	1000
+#define PRESTERA_STATS_DELAY_MS	1000
 
-#घोषणा PRESTERA_MAC_ADDR_NUM_MAX	255
+#define PRESTERA_MAC_ADDR_NUM_MAX	255
 
-अटल काष्ठा workqueue_काष्ठा *prestera_wq;
+static struct workqueue_struct *prestera_wq;
 
-पूर्णांक prestera_port_pvid_set(काष्ठा prestera_port *port, u16 vid)
-अणु
-	क्रमागत prestera_accept_frm_type frm_type;
-	पूर्णांक err;
+int prestera_port_pvid_set(struct prestera_port *port, u16 vid)
+{
+	enum prestera_accept_frm_type frm_type;
+	int err;
 
 	frm_type = PRESTERA_ACCEPT_FRAME_TYPE_TAGGED;
 
-	अगर (vid) अणु
+	if (vid) {
 		err = prestera_hw_vlan_port_vid_set(port, vid);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		frm_type = PRESTERA_ACCEPT_FRAME_TYPE_ALL;
-	पूर्ण
+	}
 
 	err = prestera_hw_port_accept_frm_type(port, frm_type);
-	अगर (err && frm_type == PRESTERA_ACCEPT_FRAME_TYPE_ALL)
+	if (err && frm_type == PRESTERA_ACCEPT_FRAME_TYPE_ALL)
 		prestera_hw_vlan_port_vid_set(port, port->pvid);
 
 	port->pvid = vid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा prestera_port *prestera_port_find_by_hwid(काष्ठा prestera_चयन *sw,
+struct prestera_port *prestera_port_find_by_hwid(struct prestera_switch *sw,
 						 u32 dev_id, u32 hw_id)
-अणु
-	काष्ठा prestera_port *port = शून्य;
+{
+	struct prestera_port *port = NULL;
 
-	पढ़ो_lock(&sw->port_list_lock);
-	list_क्रम_each_entry(port, &sw->port_list, list) अणु
-		अगर (port->dev_id == dev_id && port->hw_id == hw_id)
-			अवरोध;
-	पूर्ण
-	पढ़ो_unlock(&sw->port_list_lock);
+	read_lock(&sw->port_list_lock);
+	list_for_each_entry(port, &sw->port_list, list) {
+		if (port->dev_id == dev_id && port->hw_id == hw_id)
+			break;
+	}
+	read_unlock(&sw->port_list_lock);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
-काष्ठा prestera_port *prestera_find_port(काष्ठा prestera_चयन *sw, u32 id)
-अणु
-	काष्ठा prestera_port *port = शून्य;
+struct prestera_port *prestera_find_port(struct prestera_switch *sw, u32 id)
+{
+	struct prestera_port *port = NULL;
 
-	पढ़ो_lock(&sw->port_list_lock);
-	list_क्रम_each_entry(port, &sw->port_list, list) अणु
-		अगर (port->id == id)
-			अवरोध;
-	पूर्ण
-	पढ़ो_unlock(&sw->port_list_lock);
+	read_lock(&sw->port_list_lock);
+	list_for_each_entry(port, &sw->port_list, list) {
+		if (port->id == id)
+			break;
+	}
+	read_unlock(&sw->port_list_lock);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
-अटल पूर्णांक prestera_port_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
-	पूर्णांक err;
+static int prestera_port_open(struct net_device *dev)
+{
+	struct prestera_port *port = netdev_priv(dev);
+	int err;
 
 	err = prestera_hw_port_state_set(port, true);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prestera_port_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
+static int prestera_port_close(struct net_device *dev)
+{
+	struct prestera_port *port = netdev_priv(dev);
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	वापस prestera_hw_port_state_set(port, false);
-पूर्ण
+	return prestera_hw_port_state_set(port, false);
+}
 
-अटल netdev_tx_t prestera_port_xmit(काष्ठा sk_buff *skb,
-				      काष्ठा net_device *dev)
-अणु
-	वापस prestera_rxtx_xmit(netdev_priv(dev), skb);
-पूर्ण
+static netdev_tx_t prestera_port_xmit(struct sk_buff *skb,
+				      struct net_device *dev)
+{
+	return prestera_rxtx_xmit(netdev_priv(dev), skb);
+}
 
-अटल पूर्णांक prestera_is_valid_mac_addr(काष्ठा prestera_port *port, u8 *addr)
-अणु
-	अगर (!is_valid_ether_addr(addr))
-		वापस -EADDRNOTAVAIL;
+static int prestera_is_valid_mac_addr(struct prestera_port *port, u8 *addr)
+{
+	if (!is_valid_ether_addr(addr))
+		return -EADDRNOTAVAIL;
 
 	/* firmware requires that port's MAC address contains first 5 bytes
 	 * of the base MAC address
 	 */
-	अगर (स_भेद(port->sw->base_mac, addr, ETH_ALEN - 1))
-		वापस -EINVAL;
+	if (memcmp(port->sw->base_mac, addr, ETH_ALEN - 1))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prestera_port_set_mac_address(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
-	काष्ठा sockaddr *addr = p;
-	पूर्णांक err;
+static int prestera_port_set_mac_address(struct net_device *dev, void *p)
+{
+	struct prestera_port *port = netdev_priv(dev);
+	struct sockaddr *addr = p;
+	int err;
 
 	err = prestera_is_valid_mac_addr(port, addr->sa_data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = prestera_hw_port_mac_set(port, addr->sa_data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ether_addr_copy(dev->dev_addr, addr->sa_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prestera_port_change_mtu(काष्ठा net_device *dev, पूर्णांक mtu)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
-	पूर्णांक err;
+static int prestera_port_change_mtu(struct net_device *dev, int mtu)
+{
+	struct prestera_port *port = netdev_priv(dev);
+	int err;
 
 	err = prestera_hw_port_mtu_set(port, mtu);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	dev->mtu = mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prestera_port_get_stats64(काष्ठा net_device *dev,
-				      काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा prestera_port *port = netdev_priv(dev);
-	काष्ठा prestera_port_stats *port_stats = &port->cached_hw_stats.stats;
+static void prestera_port_get_stats64(struct net_device *dev,
+				      struct rtnl_link_stats64 *stats)
+{
+	struct prestera_port *port = netdev_priv(dev);
+	struct prestera_port_stats *port_stats = &port->cached_hw_stats.stats;
 
 	stats->rx_packets = port_stats->broadcast_frames_received +
 				port_stats->multicast_frames_received +
@@ -181,102 +180,102 @@
 	stats->collisions = port_stats->excessive_collision;
 
 	stats->rx_crc_errors = port_stats->bad_crc;
-पूर्ण
+}
 
-अटल व्योम prestera_port_get_hw_stats(काष्ठा prestera_port *port)
-अणु
+static void prestera_port_get_hw_stats(struct prestera_port *port)
+{
 	prestera_hw_port_stats_get(port, &port->cached_hw_stats.stats);
-पूर्ण
+}
 
-अटल व्योम prestera_port_stats_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा prestera_port *port =
-		container_of(work, काष्ठा prestera_port,
+static void prestera_port_stats_update(struct work_struct *work)
+{
+	struct prestera_port *port =
+		container_of(work, struct prestera_port,
 			     cached_hw_stats.caching_dw.work);
 
 	prestera_port_get_hw_stats(port);
 
 	queue_delayed_work(prestera_wq, &port->cached_hw_stats.caching_dw,
-			   msecs_to_jअगरfies(PRESTERA_STATS_DELAY_MS));
-पूर्ण
+			   msecs_to_jiffies(PRESTERA_STATS_DELAY_MS));
+}
 
-अटल स्थिर काष्ठा net_device_ops prestera_netdev_ops = अणु
-	.nकरो_खोलो = prestera_port_खोलो,
-	.nकरो_stop = prestera_port_बंद,
-	.nकरो_start_xmit = prestera_port_xmit,
-	.nकरो_change_mtu = prestera_port_change_mtu,
-	.nकरो_get_stats64 = prestera_port_get_stats64,
-	.nकरो_set_mac_address = prestera_port_set_mac_address,
-	.nकरो_get_devlink_port = prestera_devlink_get_port,
-पूर्ण;
+static const struct net_device_ops prestera_netdev_ops = {
+	.ndo_open = prestera_port_open,
+	.ndo_stop = prestera_port_close,
+	.ndo_start_xmit = prestera_port_xmit,
+	.ndo_change_mtu = prestera_port_change_mtu,
+	.ndo_get_stats64 = prestera_port_get_stats64,
+	.ndo_set_mac_address = prestera_port_set_mac_address,
+	.ndo_get_devlink_port = prestera_devlink_get_port,
+};
 
-पूर्णांक prestera_port_स्वतःneg_set(काष्ठा prestera_port *port, bool enable,
+int prestera_port_autoneg_set(struct prestera_port *port, bool enable,
 			      u64 adver_link_modes, u8 adver_fec)
-अणु
+{
 	bool refresh = false;
 	u64 link_modes;
-	पूर्णांक err;
+	int err;
 	u8 fec;
 
-	अगर (port->caps.type != PRESTERA_PORT_TYPE_TP)
-		वापस enable ? -EINVAL : 0;
+	if (port->caps.type != PRESTERA_PORT_TYPE_TP)
+		return enable ? -EINVAL : 0;
 
-	अगर (!enable)
-		जाओ set_स्वतःneg;
+	if (!enable)
+		goto set_autoneg;
 
 	link_modes = port->caps.supp_link_modes & adver_link_modes;
 	fec = port->caps.supp_fec & adver_fec;
 
-	अगर (!link_modes && !fec)
-		वापस -EOPNOTSUPP;
+	if (!link_modes && !fec)
+		return -EOPNOTSUPP;
 
-	अगर (link_modes && port->adver_link_modes != link_modes) अणु
+	if (link_modes && port->adver_link_modes != link_modes) {
 		port->adver_link_modes = link_modes;
 		refresh = true;
-	पूर्ण
+	}
 
-	अगर (fec && port->adver_fec != fec) अणु
+	if (fec && port->adver_fec != fec) {
 		port->adver_fec = fec;
 		refresh = true;
-	पूर्ण
+	}
 
-set_स्वतःneg:
-	अगर (port->स्वतःneg == enable && !refresh)
-		वापस 0;
+set_autoneg:
+	if (port->autoneg == enable && !refresh)
+		return 0;
 
-	err = prestera_hw_port_स्वतःneg_set(port, enable, port->adver_link_modes,
+	err = prestera_hw_port_autoneg_set(port, enable, port->adver_link_modes,
 					   port->adver_fec);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	port->स्वतःneg = enable;
+	port->autoneg = enable;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम prestera_port_list_add(काष्ठा prestera_port *port)
-अणु
-	ग_लिखो_lock(&port->sw->port_list_lock);
+static void prestera_port_list_add(struct prestera_port *port)
+{
+	write_lock(&port->sw->port_list_lock);
 	list_add(&port->list, &port->sw->port_list);
-	ग_लिखो_unlock(&port->sw->port_list_lock);
-पूर्ण
+	write_unlock(&port->sw->port_list_lock);
+}
 
-अटल व्योम prestera_port_list_del(काष्ठा prestera_port *port)
-अणु
-	ग_लिखो_lock(&port->sw->port_list_lock);
+static void prestera_port_list_del(struct prestera_port *port)
+{
+	write_lock(&port->sw->port_list_lock);
 	list_del(&port->list);
-	ग_लिखो_unlock(&port->sw->port_list_lock);
-पूर्ण
+	write_unlock(&port->sw->port_list_lock);
+}
 
-अटल पूर्णांक prestera_port_create(काष्ठा prestera_चयन *sw, u32 id)
-अणु
-	काष्ठा prestera_port *port;
-	काष्ठा net_device *dev;
-	पूर्णांक err;
+static int prestera_port_create(struct prestera_switch *sw, u32 id)
+{
+	struct prestera_port *port;
+	struct net_device *dev;
+	int err;
 
-	dev = alloc_etherdev(माप(*port));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = alloc_etherdev(sizeof(*port));
+	if (!dev)
+		return -ENOMEM;
 
 	port = netdev_priv(dev);
 
@@ -288,376 +287,376 @@ set_स्वतःneg:
 
 	err = prestera_hw_port_info_get(port, &port->dev_id, &port->hw_id,
 					&port->fp_id);
-	अगर (err) अणु
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to get port(%u) info\n", id);
-		जाओ err_port_info_get;
-	पूर्ण
+		goto err_port_info_get;
+	}
 
-	err = prestera_devlink_port_रेजिस्टर(port);
-	अगर (err)
-		जाओ err_dl_port_रेजिस्टर;
+	err = prestera_devlink_port_register(port);
+	if (err)
+		goto err_dl_port_register;
 
 	dev->features |= NETIF_F_NETNS_LOCAL;
 	dev->netdev_ops = &prestera_netdev_ops;
 	dev->ethtool_ops = &prestera_ethtool_ops;
 
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
-	dev->mtu = min_t(अचिन्हित पूर्णांक, sw->mtu_max, PRESTERA_MTU_DEFAULT);
+	dev->mtu = min_t(unsigned int, sw->mtu_max, PRESTERA_MTU_DEFAULT);
 	dev->min_mtu = sw->mtu_min;
 	dev->max_mtu = sw->mtu_max;
 
 	err = prestera_hw_port_mtu_set(port, dev->mtu);
-	अगर (err) अणु
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to set port(%u) mtu(%d)\n",
 			id, dev->mtu);
-		जाओ err_port_init;
-	पूर्ण
+		goto err_port_init;
+	}
 
-	अगर (port->fp_id >= PRESTERA_MAC_ADDR_NUM_MAX) अणु
+	if (port->fp_id >= PRESTERA_MAC_ADDR_NUM_MAX) {
 		err = -EINVAL;
-		जाओ err_port_init;
-	पूर्ण
+		goto err_port_init;
+	}
 
 	/* firmware requires that port's MAC address consist of the first
 	 * 5 bytes of the base MAC address
 	 */
-	स_नकल(dev->dev_addr, sw->base_mac, dev->addr_len - 1);
+	memcpy(dev->dev_addr, sw->base_mac, dev->addr_len - 1);
 	dev->dev_addr[dev->addr_len - 1] = port->fp_id;
 
 	err = prestera_hw_port_mac_set(port, dev->dev_addr);
-	अगर (err) अणु
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to set port(%u) mac addr\n", id);
-		जाओ err_port_init;
-	पूर्ण
+		goto err_port_init;
+	}
 
 	err = prestera_hw_port_cap_get(port, &port->caps);
-	अगर (err) अणु
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to get port(%u) caps\n", id);
-		जाओ err_port_init;
-	पूर्ण
+		goto err_port_init;
+	}
 
 	port->adver_fec = BIT(PRESTERA_PORT_FEC_OFF);
-	prestera_port_स्वतःneg_set(port, true, port->caps.supp_link_modes,
+	prestera_port_autoneg_set(port, true, port->caps.supp_link_modes,
 				  port->caps.supp_fec);
 
 	err = prestera_hw_port_state_set(port, false);
-	अगर (err) अणु
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to set port(%u) down\n", id);
-		जाओ err_port_init;
-	पूर्ण
+		goto err_port_init;
+	}
 
 	err = prestera_rxtx_port_init(port);
-	अगर (err)
-		जाओ err_port_init;
+	if (err)
+		goto err_port_init;
 
 	INIT_DELAYED_WORK(&port->cached_hw_stats.caching_dw,
 			  &prestera_port_stats_update);
 
 	prestera_port_list_add(port);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err)
-		जाओ err_रेजिस्टर_netdev;
+	err = register_netdev(dev);
+	if (err)
+		goto err_register_netdev;
 
 	prestera_devlink_port_set(port);
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर_netdev:
+err_register_netdev:
 	prestera_port_list_del(port);
 err_port_init:
-	prestera_devlink_port_unरेजिस्टर(port);
-err_dl_port_रेजिस्टर:
+	prestera_devlink_port_unregister(port);
+err_dl_port_register:
 err_port_info_get:
-	मुक्त_netdev(dev);
-	वापस err;
-पूर्ण
+	free_netdev(dev);
+	return err;
+}
 
-अटल व्योम prestera_port_destroy(काष्ठा prestera_port *port)
-अणु
-	काष्ठा net_device *dev = port->dev;
+static void prestera_port_destroy(struct prestera_port *port)
+{
+	struct net_device *dev = port->dev;
 
 	cancel_delayed_work_sync(&port->cached_hw_stats.caching_dw);
 	prestera_devlink_port_clear(port);
-	unरेजिस्टर_netdev(dev);
+	unregister_netdev(dev);
 	prestera_port_list_del(port);
-	prestera_devlink_port_unरेजिस्टर(port);
-	मुक्त_netdev(dev);
-पूर्ण
+	prestera_devlink_port_unregister(port);
+	free_netdev(dev);
+}
 
-अटल व्योम prestera_destroy_ports(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा prestera_port *port, *पंचांगp;
+static void prestera_destroy_ports(struct prestera_switch *sw)
+{
+	struct prestera_port *port, *tmp;
 
-	list_क्रम_each_entry_safe(port, पंचांगp, &sw->port_list, list)
+	list_for_each_entry_safe(port, tmp, &sw->port_list, list)
 		prestera_port_destroy(port);
-पूर्ण
+}
 
-अटल पूर्णांक prestera_create_ports(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा prestera_port *port, *पंचांगp;
+static int prestera_create_ports(struct prestera_switch *sw)
+{
+	struct prestera_port *port, *tmp;
 	u32 port_idx;
-	पूर्णांक err;
+	int err;
 
-	क्रम (port_idx = 0; port_idx < sw->port_count; port_idx++) अणु
+	for (port_idx = 0; port_idx < sw->port_count; port_idx++) {
 		err = prestera_port_create(sw, port_idx);
-		अगर (err)
-			जाओ err_port_create;
-	पूर्ण
+		if (err)
+			goto err_port_create;
+	}
 
-	वापस 0;
+	return 0;
 
 err_port_create:
-	list_क्रम_each_entry_safe(port, पंचांगp, &sw->port_list, list)
+	list_for_each_entry_safe(port, tmp, &sw->port_list, list)
 		prestera_port_destroy(port);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम prestera_port_handle_event(काष्ठा prestera_चयन *sw,
-				       काष्ठा prestera_event *evt, व्योम *arg)
-अणु
-	काष्ठा delayed_work *caching_dw;
-	काष्ठा prestera_port *port;
+static void prestera_port_handle_event(struct prestera_switch *sw,
+				       struct prestera_event *evt, void *arg)
+{
+	struct delayed_work *caching_dw;
+	struct prestera_port *port;
 
 	port = prestera_find_port(sw, evt->port_evt.port_id);
-	अगर (!port || !port->dev)
-		वापस;
+	if (!port || !port->dev)
+		return;
 
 	caching_dw = &port->cached_hw_stats.caching_dw;
 
-	अगर (evt->id == PRESTERA_PORT_EVENT_STATE_CHANGED) अणु
-		अगर (evt->port_evt.data.oper_state) अणु
-			netअगर_carrier_on(port->dev);
-			अगर (!delayed_work_pending(caching_dw))
+	if (evt->id == PRESTERA_PORT_EVENT_STATE_CHANGED) {
+		if (evt->port_evt.data.oper_state) {
+			netif_carrier_on(port->dev);
+			if (!delayed_work_pending(caching_dw))
 				queue_delayed_work(prestera_wq, caching_dw, 0);
-		पूर्ण अन्यथा अगर (netअगर_running(port->dev) &&
-			   netअगर_carrier_ok(port->dev)) अणु
-			netअगर_carrier_off(port->dev);
-			अगर (delayed_work_pending(caching_dw))
+		} else if (netif_running(port->dev) &&
+			   netif_carrier_ok(port->dev)) {
+			netif_carrier_off(port->dev);
+			if (delayed_work_pending(caching_dw))
 				cancel_delayed_work(caching_dw);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक prestera_event_handlers_रेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	वापस prestera_hw_event_handler_रेजिस्टर(sw, PRESTERA_EVENT_TYPE_PORT,
+static int prestera_event_handlers_register(struct prestera_switch *sw)
+{
+	return prestera_hw_event_handler_register(sw, PRESTERA_EVENT_TYPE_PORT,
 						  prestera_port_handle_event,
-						  शून्य);
-पूर्ण
+						  NULL);
+}
 
-अटल व्योम prestera_event_handlers_unरेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	prestera_hw_event_handler_unरेजिस्टर(sw, PRESTERA_EVENT_TYPE_PORT,
+static void prestera_event_handlers_unregister(struct prestera_switch *sw)
+{
+	prestera_hw_event_handler_unregister(sw, PRESTERA_EVENT_TYPE_PORT,
 					     prestera_port_handle_event);
-पूर्ण
+}
 
-अटल पूर्णांक prestera_चयन_set_base_mac_addr(काष्ठा prestera_चयन *sw)
-अणु
-	काष्ठा device_node *base_mac_np;
-	काष्ठा device_node *np;
-	पूर्णांक ret;
+static int prestera_switch_set_base_mac_addr(struct prestera_switch *sw)
+{
+	struct device_node *base_mac_np;
+	struct device_node *np;
+	int ret;
 
-	np = of_find_compatible_node(शून्य, शून्य, "marvell,prestera");
+	np = of_find_compatible_node(NULL, NULL, "marvell,prestera");
 	base_mac_np = of_parse_phandle(np, "base-mac-provider", 0);
 
 	ret = of_get_mac_address(base_mac_np, sw->base_mac);
-	अगर (ret) अणु
-		eth_अक्रमom_addr(sw->base_mac);
+	if (ret) {
+		eth_random_addr(sw->base_mac);
 		dev_info(prestera_dev(sw), "using random base mac address\n");
-	पूर्ण
+	}
 	of_node_put(base_mac_np);
 
-	वापस prestera_hw_चयन_mac_set(sw, sw->base_mac);
-पूर्ण
+	return prestera_hw_switch_mac_set(sw, sw->base_mac);
+}
 
-bool prestera_netdev_check(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस dev->netdev_ops == &prestera_netdev_ops;
-पूर्ण
+bool prestera_netdev_check(const struct net_device *dev)
+{
+	return dev->netdev_ops == &prestera_netdev_ops;
+}
 
-अटल पूर्णांक prestera_lower_dev_walk(काष्ठा net_device *dev,
-				   काष्ठा netdev_nested_priv *priv)
-अणु
-	काष्ठा prestera_port **pport = (काष्ठा prestera_port **)priv->data;
+static int prestera_lower_dev_walk(struct net_device *dev,
+				   struct netdev_nested_priv *priv)
+{
+	struct prestera_port **pport = (struct prestera_port **)priv->data;
 
-	अगर (prestera_netdev_check(dev)) अणु
+	if (prestera_netdev_check(dev)) {
 		*pport = netdev_priv(dev);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा prestera_port *prestera_port_dev_lower_find(काष्ठा net_device *dev)
-अणु
-	काष्ठा prestera_port *port = शून्य;
-	काष्ठा netdev_nested_priv priv = अणु
-		.data = (व्योम *)&port,
-	पूर्ण;
+struct prestera_port *prestera_port_dev_lower_find(struct net_device *dev)
+{
+	struct prestera_port *port = NULL;
+	struct netdev_nested_priv priv = {
+		.data = (void *)&port,
+	};
 
-	अगर (prestera_netdev_check(dev))
-		वापस netdev_priv(dev);
+	if (prestera_netdev_check(dev))
+		return netdev_priv(dev);
 
 	netdev_walk_all_lower_dev(dev, prestera_lower_dev_walk, &priv);
 
-	वापस port;
-पूर्ण
+	return port;
+}
 
-अटल पूर्णांक prestera_netdev_port_event(काष्ठा net_device *dev,
-				      अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	चयन (event) अणु
-	हाल NETDEV_PRECHANGEUPPER:
-	हाल NETDEV_CHANGEUPPER:
-		वापस prestera_bridge_port_event(dev, event, ptr);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int prestera_netdev_port_event(struct net_device *dev,
+				      unsigned long event, void *ptr)
+{
+	switch (event) {
+	case NETDEV_PRECHANGEUPPER:
+	case NETDEV_CHANGEUPPER:
+		return prestera_bridge_port_event(dev, event, ptr);
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक prestera_netdev_event_handler(काष्ठा notअगरier_block *nb,
-					 अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	पूर्णांक err = 0;
+static int prestera_netdev_event_handler(struct notifier_block *nb,
+					 unsigned long event, void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	int err = 0;
 
-	अगर (prestera_netdev_check(dev))
+	if (prestera_netdev_check(dev))
 		err = prestera_netdev_port_event(dev, event, ptr);
 
-	वापस notअगरier_from_त्रुटि_सं(err);
-पूर्ण
+	return notifier_from_errno(err);
+}
 
-अटल पूर्णांक prestera_netdev_event_handler_रेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	sw->netdev_nb.notअगरier_call = prestera_netdev_event_handler;
+static int prestera_netdev_event_handler_register(struct prestera_switch *sw)
+{
+	sw->netdev_nb.notifier_call = prestera_netdev_event_handler;
 
-	वापस रेजिस्टर_netdevice_notअगरier(&sw->netdev_nb);
-पूर्ण
+	return register_netdevice_notifier(&sw->netdev_nb);
+}
 
-अटल व्योम prestera_netdev_event_handler_unरेजिस्टर(काष्ठा prestera_चयन *sw)
-अणु
-	unरेजिस्टर_netdevice_notअगरier(&sw->netdev_nb);
-पूर्ण
+static void prestera_netdev_event_handler_unregister(struct prestera_switch *sw)
+{
+	unregister_netdevice_notifier(&sw->netdev_nb);
+}
 
-अटल पूर्णांक prestera_चयन_init(काष्ठा prestera_चयन *sw)
-अणु
-	पूर्णांक err;
+static int prestera_switch_init(struct prestera_switch *sw)
+{
+	int err;
 
-	err = prestera_hw_चयन_init(sw);
-	अगर (err) अणु
+	err = prestera_hw_switch_init(sw);
+	if (err) {
 		dev_err(prestera_dev(sw), "Failed to init Switch device\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	rwlock_init(&sw->port_list_lock);
 	INIT_LIST_HEAD(&sw->port_list);
 
-	err = prestera_चयन_set_base_mac_addr(sw);
-	अगर (err)
-		वापस err;
+	err = prestera_switch_set_base_mac_addr(sw);
+	if (err)
+		return err;
 
-	err = prestera_netdev_event_handler_रेजिस्टर(sw);
-	अगर (err)
-		वापस err;
+	err = prestera_netdev_event_handler_register(sw);
+	if (err)
+		return err;
 
-	err = prestera_चयनdev_init(sw);
-	अगर (err)
-		जाओ err_swdev_रेजिस्टर;
+	err = prestera_switchdev_init(sw);
+	if (err)
+		goto err_swdev_register;
 
-	err = prestera_rxtx_चयन_init(sw);
-	अगर (err)
-		जाओ err_rxtx_रेजिस्टर;
+	err = prestera_rxtx_switch_init(sw);
+	if (err)
+		goto err_rxtx_register;
 
-	err = prestera_event_handlers_रेजिस्टर(sw);
-	अगर (err)
-		जाओ err_handlers_रेजिस्टर;
+	err = prestera_event_handlers_register(sw);
+	if (err)
+		goto err_handlers_register;
 
-	err = prestera_devlink_रेजिस्टर(sw);
-	अगर (err)
-		जाओ err_dl_रेजिस्टर;
+	err = prestera_devlink_register(sw);
+	if (err)
+		goto err_dl_register;
 
 	err = prestera_create_ports(sw);
-	अगर (err)
-		जाओ err_ports_create;
+	if (err)
+		goto err_ports_create;
 
-	वापस 0;
+	return 0;
 
 err_ports_create:
-	prestera_devlink_unरेजिस्टर(sw);
-err_dl_रेजिस्टर:
-	prestera_event_handlers_unरेजिस्टर(sw);
-err_handlers_रेजिस्टर:
-	prestera_rxtx_चयन_fini(sw);
-err_rxtx_रेजिस्टर:
-	prestera_चयनdev_fini(sw);
-err_swdev_रेजिस्टर:
-	prestera_netdev_event_handler_unरेजिस्टर(sw);
-	prestera_hw_चयन_fini(sw);
+	prestera_devlink_unregister(sw);
+err_dl_register:
+	prestera_event_handlers_unregister(sw);
+err_handlers_register:
+	prestera_rxtx_switch_fini(sw);
+err_rxtx_register:
+	prestera_switchdev_fini(sw);
+err_swdev_register:
+	prestera_netdev_event_handler_unregister(sw);
+	prestera_hw_switch_fini(sw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम prestera_चयन_fini(काष्ठा prestera_चयन *sw)
-अणु
+static void prestera_switch_fini(struct prestera_switch *sw)
+{
 	prestera_destroy_ports(sw);
-	prestera_devlink_unरेजिस्टर(sw);
-	prestera_event_handlers_unरेजिस्टर(sw);
-	prestera_rxtx_चयन_fini(sw);
-	prestera_चयनdev_fini(sw);
-	prestera_netdev_event_handler_unरेजिस्टर(sw);
-	prestera_hw_चयन_fini(sw);
-पूर्ण
+	prestera_devlink_unregister(sw);
+	prestera_event_handlers_unregister(sw);
+	prestera_rxtx_switch_fini(sw);
+	prestera_switchdev_fini(sw);
+	prestera_netdev_event_handler_unregister(sw);
+	prestera_hw_switch_fini(sw);
+}
 
-पूर्णांक prestera_device_रेजिस्टर(काष्ठा prestera_device *dev)
-अणु
-	काष्ठा prestera_चयन *sw;
-	पूर्णांक err;
+int prestera_device_register(struct prestera_device *dev)
+{
+	struct prestera_switch *sw;
+	int err;
 
 	sw = prestera_devlink_alloc();
-	अगर (!sw)
-		वापस -ENOMEM;
+	if (!sw)
+		return -ENOMEM;
 
 	dev->priv = sw;
 	sw->dev = dev;
 
-	err = prestera_चयन_init(sw);
-	अगर (err) अणु
-		prestera_devlink_मुक्त(sw);
-		वापस err;
-	पूर्ण
+	err = prestera_switch_init(sw);
+	if (err) {
+		prestera_devlink_free(sw);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(prestera_device_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(prestera_device_register);
 
-व्योम prestera_device_unरेजिस्टर(काष्ठा prestera_device *dev)
-अणु
-	काष्ठा prestera_चयन *sw = dev->priv;
+void prestera_device_unregister(struct prestera_device *dev)
+{
+	struct prestera_switch *sw = dev->priv;
 
-	prestera_चयन_fini(sw);
-	prestera_devlink_मुक्त(sw);
-पूर्ण
-EXPORT_SYMBOL(prestera_device_unरेजिस्टर);
+	prestera_switch_fini(sw);
+	prestera_devlink_free(sw);
+}
+EXPORT_SYMBOL(prestera_device_unregister);
 
-अटल पूर्णांक __init prestera_module_init(व्योम)
-अणु
+static int __init prestera_module_init(void)
+{
 	prestera_wq = alloc_workqueue("prestera", 0, 0);
-	अगर (!prestera_wq)
-		वापस -ENOMEM;
+	if (!prestera_wq)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास prestera_module_निकास(व्योम)
-अणु
+static void __exit prestera_module_exit(void)
+{
 	destroy_workqueue(prestera_wq);
-पूर्ण
+}
 
 module_init(prestera_module_init);
-module_निकास(prestera_module_निकास);
+module_exit(prestera_module_exit);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Marvell Prestera switch driver");

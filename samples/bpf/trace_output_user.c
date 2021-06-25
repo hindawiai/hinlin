@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <मानकपन.स>
-#समावेश <fcntl.h>
-#समावेश <poll.h>
-#समावेश <समय.स>
-#समावेश <संकेत.स>
-#समावेश <bpf/libbpf.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <stdio.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <time.h>
+#include <signal.h>
+#include <bpf/libbpf.h>
 
-अटल __u64 समय_get_ns(व्योम)
-अणु
-	काष्ठा बारpec ts;
+static __u64 time_get_ns(void)
+{
+	struct timespec ts;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
-	वापस ts.tv_sec * 1000000000ull + ts.tv_nsec;
-पूर्ण
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000ull + ts.tv_nsec;
+}
 
-अटल __u64 start_समय;
-अटल __u64 cnt;
+static __u64 start_time;
+static __u64 cnt;
 
-#घोषणा MAX_CNT 100000ll
+#define MAX_CNT 100000ll
 
-अटल व्योम prपूर्णांक_bpf_output(व्योम *ctx, पूर्णांक cpu, व्योम *data, __u32 size)
-अणु
-	काष्ठा अणु
+static void print_bpf_output(void *ctx, int cpu, void *data, __u32 size)
+{
+	struct {
 		__u64 pid;
 		__u64 cookie;
-	पूर्ण *e = data;
+	} *e = data;
 
-	अगर (e->cookie != 0x12345678) अणु
-		म_लिखो("BUG pid %llx cookie %llx sized %d\n",
+	if (e->cookie != 0x12345678) {
+		printf("BUG pid %llx cookie %llx sized %d\n",
 		       e->pid, e->cookie, size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cnt++;
 
-	अगर (cnt == MAX_CNT) अणु
-		म_लिखो("recv %lld events per sec\n",
-		       MAX_CNT * 1000000000ll / (समय_get_ns() - start_समय));
-		वापस;
-	पूर्ण
-पूर्ण
+	if (cnt == MAX_CNT) {
+		printf("recv %lld events per sec\n",
+		       MAX_CNT * 1000000000ll / (time_get_ns() - start_time));
+		return;
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा perf_buffer_opts pb_opts = अणुपूर्ण;
-	काष्ठा bpf_link *link = शून्य;
-	काष्ठा bpf_program *prog;
-	काष्ठा perf_buffer *pb;
-	काष्ठा bpf_object *obj;
-	पूर्णांक map_fd, ret = 0;
-	अक्षर filename[256];
-	खाता *f;
+int main(int argc, char **argv)
+{
+	struct perf_buffer_opts pb_opts = {};
+	struct bpf_link *link = NULL;
+	struct bpf_program *prog;
+	struct perf_buffer *pb;
+	struct bpf_object *obj;
+	int map_fd, ret = 0;
+	char filename[256];
+	FILE *f;
 
-	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__खोलो_file(filename, शून्य);
-	अगर (libbpf_get_error(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
-		वापस 0;
-	पूर्ण
+	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__open_file(filename, NULL);
+	if (libbpf_get_error(obj)) {
+		fprintf(stderr, "ERROR: opening BPF object file failed\n");
+		return 0;
+	}
 
 	/* load BPF program */
-	अगर (bpf_object__load(obj)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (bpf_object__load(obj)) {
+		fprintf(stderr, "ERROR: loading BPF object file failed\n");
+		goto cleanup;
+	}
 
 	map_fd = bpf_object__find_map_fd_by_name(obj, "my_map");
-	अगर (map_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: finding a map in obj file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (map_fd < 0) {
+		fprintf(stderr, "ERROR: finding a map in obj file failed\n");
+		goto cleanup;
+	}
 
 	prog = bpf_object__find_program_by_name(obj, "bpf_prog1");
-	अगर (libbpf_get_error(prog)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: finding a prog in obj file failed\n");
-		जाओ cleanup;
-	पूर्ण
+	if (libbpf_get_error(prog)) {
+		fprintf(stderr, "ERROR: finding a prog in obj file failed\n");
+		goto cleanup;
+	}
 
 	link = bpf_program__attach(prog);
-	अगर (libbpf_get_error(link)) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
-		link = शून्य;
-		जाओ cleanup;
-	पूर्ण
+	if (libbpf_get_error(link)) {
+		fprintf(stderr, "ERROR: bpf_program__attach failed\n");
+		link = NULL;
+		goto cleanup;
+	}
 
-	pb_opts.sample_cb = prपूर्णांक_bpf_output;
+	pb_opts.sample_cb = print_bpf_output;
 	pb = perf_buffer__new(map_fd, 8, &pb_opts);
 	ret = libbpf_get_error(pb);
-	अगर (ret) अणु
-		म_लिखो("failed to setup perf_buffer: %d\n", ret);
-		वापस 1;
-	पूर्ण
+	if (ret) {
+		printf("failed to setup perf_buffer: %d\n", ret);
+		return 1;
+	}
 
-	f = pखोलो("taskset 1 dd if=/dev/zero of=/dev/null", "r");
-	(व्योम) f;
+	f = popen("taskset 1 dd if=/dev/zero of=/dev/null", "r");
+	(void) f;
 
-	start_समय = समय_get_ns();
-	जबतक ((ret = perf_buffer__poll(pb, 1000)) >= 0 && cnt < MAX_CNT) अणु
-	पूर्ण
-	समाप्त(0, संक_विघ्न);
+	start_time = time_get_ns();
+	while ((ret = perf_buffer__poll(pb, 1000)) >= 0 && cnt < MAX_CNT) {
+	}
+	kill(0, SIGINT);
 
 cleanup:
 	bpf_link__destroy(link);
-	bpf_object__बंद(obj);
-	वापस ret;
-पूर्ण
+	bpf_object__close(obj);
+	return ret;
+}

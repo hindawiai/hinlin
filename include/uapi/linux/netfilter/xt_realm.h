@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_REALM_H
-#घोषणा _XT_REALM_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_REALM_H
+#define _XT_REALM_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा xt_realm_info अणु
+struct xt_realm_info {
 	__u32 id;
 	__u32 mask;
 	__u8 invert;
-पूर्ण;
+};
 
-#पूर्ण_अगर /* _XT_REALM_H */
+#endif /* _XT_REALM_H */

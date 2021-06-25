@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#समावेश "odm_precomp.h"
+#include "odm_precomp.h"
 
-#समावेश <phy.h>
+#include <phy.h>
 
 /* AGC_TAB_1T.TXT */
 
-अटल u32 array_agc_tab_1t_8188e[] = अणु
+static u32 array_agc_tab_1t_8188e[] = {
 		0xC78, 0xFB000001,
 		0xC78, 0xFB010001,
 		0xC78, 0xFB020001,
@@ -141,29 +140,29 @@
 		0xC78, 0x407D0001,
 		0xC78, 0x407E0001,
 		0xC78, 0x407F0001,
-पूर्ण;
+};
 
-अटल bool set_baseband_agc_config(काष्ठा adapter *adapt)
-अणु
+static bool set_baseband_agc_config(struct adapter *adapt)
+{
 	u32 i;
-	स्थिर u32 arraylen = ARRAY_SIZE(array_agc_tab_1t_8188e);
+	const u32 arraylen = ARRAY_SIZE(array_agc_tab_1t_8188e);
 	u32 *array = array_agc_tab_1t_8188e;
 
-	क्रम (i = 0; i < arraylen; i += 2) अणु
+	for (i = 0; i < arraylen; i += 2) {
 		u32 v1 = array[i];
 		u32 v2 = array[i + 1];
 
-		अगर (v1 < 0xCDCDCDCD) अणु
+		if (v1 < 0xCDCDCDCD) {
 			phy_set_bb_reg(adapt, v1, bMaskDWord, v2);
 			udelay(1);
-		पूर्ण
-	पूर्ण
-	वापस true;
-पूर्ण
+		}
+	}
+	return true;
+}
 
 /*  PHY_REG_1T.TXT  */
 
-अटल u32 array_phy_reg_1t_8188e[] = अणु
+static u32 array_phy_reg_1t_8188e[] = {
 		0x800, 0x80040000,
 		0x804, 0x00000003,
 		0x808, 0x0000FC00,
@@ -355,48 +354,48 @@
 		0xF14, 0x00000003,
 		0xF4C, 0x00000000,
 		0xF00, 0x00000300,
-पूर्ण;
+};
 
-अटल व्योम rtl_bb_delay(काष्ठा adapter *adapt, u32 addr, u32 data)
-अणु
-	अगर (addr == 0xfe) अणु
+static void rtl_bb_delay(struct adapter *adapt, u32 addr, u32 data)
+{
+	if (addr == 0xfe) {
 		msleep(50);
-	पूर्ण अन्यथा अगर (addr == 0xfd) अणु
+	} else if (addr == 0xfd) {
 		mdelay(5);
-	पूर्ण अन्यथा अगर (addr == 0xfc) अणु
+	} else if (addr == 0xfc) {
 		mdelay(1);
-	पूर्ण अन्यथा अगर (addr == 0xfb) अणु
+	} else if (addr == 0xfb) {
 		udelay(50);
-	पूर्ण अन्यथा अगर (addr == 0xfa) अणु
+	} else if (addr == 0xfa) {
 		udelay(5);
-	पूर्ण अन्यथा अगर (addr == 0xf9) अणु
+	} else if (addr == 0xf9) {
 		udelay(1);
-	पूर्ण अन्यथा अणु
+	} else {
 		phy_set_bb_reg(adapt, addr, bMaskDWord, data);
-		/*  Add 1us delay between BB/RF रेजिस्टर setting. */
+		/*  Add 1us delay between BB/RF register setting. */
 		udelay(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool set_baseband_phy_config(काष्ठा adapter *adapt)
-अणु
+static bool set_baseband_phy_config(struct adapter *adapt)
+{
 	u32 i;
-	स्थिर u32 arraylen = ARRAY_SIZE(array_phy_reg_1t_8188e);
+	const u32 arraylen = ARRAY_SIZE(array_phy_reg_1t_8188e);
 	u32 *array = array_phy_reg_1t_8188e;
 
-	क्रम (i = 0; i < arraylen; i += 2) अणु
+	for (i = 0; i < arraylen; i += 2) {
 		u32 v1 = array[i];
 		u32 v2 = array[i + 1];
 
-		अगर (v1 < 0xCDCDCDCD)
+		if (v1 < 0xCDCDCDCD)
 			rtl_bb_delay(adapt, v1, v2);
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
 /*  PHY_REG_PG.TXT  */
 
-अटल u32 array_phy_reg_pg_8188e[] = अणु
+static u32 array_phy_reg_pg_8188e[] = {
 		0xE00, 0xFFFFFFFF, 0x06070809,
 		0xE04, 0xFFFFFFFF, 0x02020405,
 		0xE08, 0x0000FF00, 0x00000006,
@@ -486,113 +485,113 @@
 		0xE18, 0xFFFFFFFF, 0x00000000,
 		0xE1C, 0xFFFFFFFF, 0x00000000,
 
-पूर्ण;
+};
 
-अटल व्योम store_pwrindex_offset(काष्ठा adapter *adapter,
-				  u32 regaddr, u32 biपंचांगask, u32 data)
-अणु
-	काष्ठा hal_data_8188e *hal_data = adapter->HalData;
-	u32 * स्थिर घातer_level_offset =
+static void store_pwrindex_offset(struct adapter *adapter,
+				  u32 regaddr, u32 bitmask, u32 data)
+{
+	struct hal_data_8188e *hal_data = adapter->HalData;
+	u32 * const power_level_offset =
 		hal_data->MCSTxPowerLevelOriginalOffset[hal_data->pwrGroupCnt];
 
-	अगर (regaddr == rTxAGC_A_Rate18_06)
-		घातer_level_offset[0] = data;
-	अगर (regaddr == rTxAGC_A_Rate54_24)
-		घातer_level_offset[1] = data;
-	अगर (regaddr == rTxAGC_A_CCK1_Mcs32)
-		घातer_level_offset[6] = data;
-	अगर (regaddr == rTxAGC_B_CCK11_A_CCK2_11 && biपंचांगask == 0xffffff00)
-		घातer_level_offset[7] = data;
-	अगर (regaddr == rTxAGC_A_Mcs03_Mcs00)
-		घातer_level_offset[2] = data;
-	अगर (regaddr == rTxAGC_A_Mcs07_Mcs04)
-		घातer_level_offset[3] = data;
-	अगर (regaddr == rTxAGC_A_Mcs11_Mcs08)
-		घातer_level_offset[4] = data;
-	अगर (regaddr == rTxAGC_A_Mcs15_Mcs12) अणु
-		घातer_level_offset[5] = data;
+	if (regaddr == rTxAGC_A_Rate18_06)
+		power_level_offset[0] = data;
+	if (regaddr == rTxAGC_A_Rate54_24)
+		power_level_offset[1] = data;
+	if (regaddr == rTxAGC_A_CCK1_Mcs32)
+		power_level_offset[6] = data;
+	if (regaddr == rTxAGC_B_CCK11_A_CCK2_11 && bitmask == 0xffffff00)
+		power_level_offset[7] = data;
+	if (regaddr == rTxAGC_A_Mcs03_Mcs00)
+		power_level_offset[2] = data;
+	if (regaddr == rTxAGC_A_Mcs07_Mcs04)
+		power_level_offset[3] = data;
+	if (regaddr == rTxAGC_A_Mcs11_Mcs08)
+		power_level_offset[4] = data;
+	if (regaddr == rTxAGC_A_Mcs15_Mcs12) {
+		power_level_offset[5] = data;
 		hal_data->pwrGroupCnt++;
-	पूर्ण
-	अगर (regaddr == rTxAGC_B_Rate18_06)
-		घातer_level_offset[8] = data;
-	अगर (regaddr == rTxAGC_B_Rate54_24)
-		घातer_level_offset[9] = data;
-	अगर (regaddr == rTxAGC_B_CCK1_55_Mcs32)
-		घातer_level_offset[14] = data;
-	अगर (regaddr == rTxAGC_B_CCK11_A_CCK2_11 && biपंचांगask == 0x000000ff)
-		घातer_level_offset[15] = data;
-	अगर (regaddr == rTxAGC_B_Mcs03_Mcs00)
-		घातer_level_offset[10] = data;
-	अगर (regaddr == rTxAGC_B_Mcs07_Mcs04)
-		घातer_level_offset[11] = data;
-	अगर (regaddr == rTxAGC_B_Mcs11_Mcs08)
-		घातer_level_offset[12] = data;
-	अगर (regaddr == rTxAGC_B_Mcs15_Mcs12)
-		घातer_level_offset[13] = data;
-पूर्ण
+	}
+	if (regaddr == rTxAGC_B_Rate18_06)
+		power_level_offset[8] = data;
+	if (regaddr == rTxAGC_B_Rate54_24)
+		power_level_offset[9] = data;
+	if (regaddr == rTxAGC_B_CCK1_55_Mcs32)
+		power_level_offset[14] = data;
+	if (regaddr == rTxAGC_B_CCK11_A_CCK2_11 && bitmask == 0x000000ff)
+		power_level_offset[15] = data;
+	if (regaddr == rTxAGC_B_Mcs03_Mcs00)
+		power_level_offset[10] = data;
+	if (regaddr == rTxAGC_B_Mcs07_Mcs04)
+		power_level_offset[11] = data;
+	if (regaddr == rTxAGC_B_Mcs11_Mcs08)
+		power_level_offset[12] = data;
+	if (regaddr == rTxAGC_B_Mcs15_Mcs12)
+		power_level_offset[13] = data;
+}
 
-अटल व्योम rtl_addr_delay(काष्ठा adapter *adapt,
+static void rtl_addr_delay(struct adapter *adapt,
 			   u32 addr, u32 bit_mask, u32 data)
-अणु
-	चयन (addr) अणु
-	हाल 0xfe:
+{
+	switch (addr) {
+	case 0xfe:
 		msleep(50);
-		अवरोध;
-	हाल 0xfd:
+		break;
+	case 0xfd:
 		mdelay(5);
-		अवरोध;
-	हाल 0xfc:
+		break;
+	case 0xfc:
 		mdelay(1);
-		अवरोध;
-	हाल 0xfb:
+		break;
+	case 0xfb:
 		udelay(50);
-		अवरोध;
-	हाल 0xfa:
+		break;
+	case 0xfa:
 		udelay(5);
-		अवरोध;
-	हाल 0xf9:
+		break;
+	case 0xf9:
 		udelay(1);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		store_pwrindex_offset(adapt, addr, bit_mask, data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool config_bb_with_pgheader(काष्ठा adapter *adapt)
-अणु
+static bool config_bb_with_pgheader(struct adapter *adapt)
+{
 	u32 i;
-	स्थिर u32 arraylen = ARRAY_SIZE(array_phy_reg_pg_8188e);
+	const u32 arraylen = ARRAY_SIZE(array_phy_reg_pg_8188e);
 	u32 *array = array_phy_reg_pg_8188e;
 
-	क्रम (i = 0; i < arraylen; i += 3) अणु
+	for (i = 0; i < arraylen; i += 3) {
 		u32 v1 = array[i];
 		u32 v2 = array[i + 1];
 		u32 v3 = array[i + 2];
 
-		अगर (v1 < 0xCDCDCDCD)
+		if (v1 < 0xCDCDCDCD)
 			rtl_addr_delay(adapt, v1, v2, v3);
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
-अटल व्योम rtl88e_phy_init_bb_rf_रेजिस्टर_definition(काष्ठा adapter *adapter)
-अणु
-	काष्ठा bb_reg_def               *reg[4];
+static void rtl88e_phy_init_bb_rf_register_definition(struct adapter *adapter)
+{
+	struct bb_reg_def               *reg[4];
 
 	reg[RF_PATH_A] = &adapter->HalData->PHYRegDef[RF_PATH_A];
 	reg[RF_PATH_B] = &adapter->HalData->PHYRegDef[RF_PATH_B];
 
-	reg[RF_PATH_A]->rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW;
-	reg[RF_PATH_B]->rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW;
+	reg[RF_PATH_A]->rfintfs = rFPGA0_XAB_RFInterfaceSW;
+	reg[RF_PATH_B]->rfintfs = rFPGA0_XAB_RFInterfaceSW;
 
-	reg[RF_PATH_A]->rfपूर्णांकfi = rFPGA0_XAB_RFInterfaceRB;
-	reg[RF_PATH_B]->rfपूर्णांकfi = rFPGA0_XAB_RFInterfaceRB;
+	reg[RF_PATH_A]->rfintfi = rFPGA0_XAB_RFInterfaceRB;
+	reg[RF_PATH_B]->rfintfi = rFPGA0_XAB_RFInterfaceRB;
 
-	reg[RF_PATH_A]->rfपूर्णांकfo = rFPGA0_XA_RFInterfaceOE;
-	reg[RF_PATH_B]->rfपूर्णांकfo = rFPGA0_XB_RFInterfaceOE;
+	reg[RF_PATH_A]->rfintfo = rFPGA0_XA_RFInterfaceOE;
+	reg[RF_PATH_B]->rfintfo = rFPGA0_XB_RFInterfaceOE;
 
-	reg[RF_PATH_A]->rfपूर्णांकfe = rFPGA0_XA_RFInterfaceOE;
-	reg[RF_PATH_B]->rfपूर्णांकfe = rFPGA0_XB_RFInterfaceOE;
+	reg[RF_PATH_A]->rfintfe = rFPGA0_XA_RFInterfaceOE;
+	reg[RF_PATH_B]->rfintfe = rFPGA0_XB_RFInterfaceOE;
 
 	reg[RF_PATH_A]->rf3wireOffset = rFPGA0_XA_LSSIParameter;
 	reg[RF_PATH_B]->rf3wireOffset = rFPGA0_XB_LSSIParameter;
@@ -635,48 +634,48 @@
 
 	reg[RF_PATH_A]->rfLSSIReadBackPi = TransceiverA_HSPI_Readback;
 	reg[RF_PATH_B]->rfLSSIReadBackPi = TransceiverB_HSPI_Readback;
-पूर्ण
+}
 
-अटल bool config_parafile(काष्ठा adapter *adapt)
-अणु
-	काष्ठा eeprom_priv *eeprom = GET_EEPROM_EFUSE_PRIV(adapt);
+static bool config_parafile(struct adapter *adapt)
+{
+	struct eeprom_priv *eeprom = GET_EEPROM_EFUSE_PRIV(adapt);
 
 	set_baseband_phy_config(adapt);
 
-	/* If EEPROM or EFUSE स्वतःload OK, We must config by PHY_REG_PG.txt */
-	अगर (!eeprom->bस्वतःload_fail_flag) अणु
+	/* If EEPROM or EFUSE autoload OK, We must config by PHY_REG_PG.txt */
+	if (!eeprom->bautoload_fail_flag) {
 		adapt->HalData->pwrGroupCnt = 0;
 		config_bb_with_pgheader(adapt);
-	पूर्ण
+	}
 	set_baseband_agc_config(adapt);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool rtl88eu_phy_bb_config(काष्ठा adapter *adapt)
-अणु
+bool rtl88eu_phy_bb_config(struct adapter *adapt)
+{
 	bool rtstatus;
 	u32 regval;
 	u8 crystal_cap;
 
-	rtl88e_phy_init_bb_rf_रेजिस्टर_definition(adapt);
+	rtl88e_phy_init_bb_rf_register_definition(adapt);
 
 	/*  Enable BB and RF */
-	regval = usb_पढ़ो16(adapt, REG_SYS_FUNC_EN);
-	usb_ग_लिखो16(adapt, REG_SYS_FUNC_EN,
+	regval = usb_read16(adapt, REG_SYS_FUNC_EN);
+	usb_write16(adapt, REG_SYS_FUNC_EN,
 		    (u16)(regval | BIT(13) | BIT(0) | BIT(1)));
 
-	usb_ग_लिखो8(adapt, REG_RF_CTRL, RF_EN | RF_RSTB | RF_SDMRSTB);
+	usb_write8(adapt, REG_RF_CTRL, RF_EN | RF_RSTB | RF_SDMRSTB);
 
-	usb_ग_लिखो8(adapt, REG_SYS_FUNC_EN, FEN_USBA |
+	usb_write8(adapt, REG_SYS_FUNC_EN, FEN_USBA |
 		   FEN_USBD | FEN_BB_GLB_RSTn | FEN_BBRSTB);
 
 	/*  Config BB and AGC */
 	rtstatus = config_parafile(adapt);
 
-	/*  ग_लिखो 0x24[16:11] = 0x24[22:17] = crystal_cap */
+	/*  write 0x24[16:11] = 0x24[22:17] = crystal_cap */
 	crystal_cap = adapt->HalData->CrystalCap & 0x3F;
 	phy_set_bb_reg(adapt, REG_AFE_XTAL_CTRL, 0x7ff800,
 		       (crystal_cap | (crystal_cap << 6)));
 
-	वापस rtstatus;
-पूर्ण
+	return rtstatus;
+}

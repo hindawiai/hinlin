@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * aपंचांगel platक्रमm data
+ * atmel platform data
  */
 
-#अगर_अघोषित __ATMEL_H__
-#घोषणा __ATMEL_H__
+#ifndef __ATMEL_H__
+#define __ATMEL_H__
 
-/* FIXME: this needs a better location, but माला_लो stuff building again */
-#अगर_घोषित CONFIG_ATMEL_PM
-बाह्य पूर्णांक at91_suspend_entering_slow_घड़ी(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक at91_suspend_entering_slow_घड़ी(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+/* FIXME: this needs a better location, but gets stuff building again */
+#ifdef CONFIG_ATMEL_PM
+extern int at91_suspend_entering_slow_clock(void);
+#else
+static inline int at91_suspend_entering_slow_clock(void)
+{
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* __ATMEL_H__ */
+#endif /* __ATMEL_H__ */

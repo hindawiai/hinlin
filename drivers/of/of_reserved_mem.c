@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Device tree based initialization code क्रम reserved memory.
+ * Device tree based initialization code for reserved memory.
  *
  * Copyright (c) 2013, 2015 The Linux Foundation. All Rights Reserved.
  * Copyright (c) 2013,2014 Samsung Electronics Co., Ltd.
@@ -10,54 +9,54 @@
  * Author: Josh Cartwright <joshc@codeaurora.org>
  */
 
-#घोषणा pr_fmt(fmt)	"OF: reserved mem: " fmt
+#define pr_fmt(fmt)	"OF: reserved mem: " fmt
 
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/of_reserved_स्मृति.स>
-#समावेश <linux/sort.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/memblock.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
+#include <linux/mm.h>
+#include <linux/sizes.h>
+#include <linux/of_reserved_mem.h>
+#include <linux/sort.h>
+#include <linux/slab.h>
+#include <linux/memblock.h>
 
-#घोषणा MAX_RESERVED_REGIONS	64
-अटल काष्ठा reserved_mem reserved_mem[MAX_RESERVED_REGIONS];
-अटल पूर्णांक reserved_mem_count;
+#define MAX_RESERVED_REGIONS	64
+static struct reserved_mem reserved_mem[MAX_RESERVED_REGIONS];
+static int reserved_mem_count;
 
-अटल पूर्णांक __init early_init_dt_alloc_reserved_memory_arch(phys_addr_t size,
+static int __init early_init_dt_alloc_reserved_memory_arch(phys_addr_t size,
 	phys_addr_t align, phys_addr_t start, phys_addr_t end, bool nomap,
 	phys_addr_t *res_base)
-अणु
+{
 	phys_addr_t base;
 
 	end = !end ? MEMBLOCK_ALLOC_ANYWHERE : end;
 	align = !align ? SMP_CACHE_BYTES : align;
 	base = memblock_find_in_range(start, end, size, align);
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
 	*res_base = base;
-	अगर (nomap)
-		वापस memblock_हटाओ(base, size);
+	if (nomap)
+		return memblock_remove(base, size);
 
-	वापस memblock_reserve(base, size);
-पूर्ण
+	return memblock_reserve(base, size);
+}
 
 /*
- * fdt_reserved_mem_save_node() - save fdt node क्रम second pass initialization
+ * fdt_reserved_mem_save_node() - save fdt node for second pass initialization
  */
-व्योम __init fdt_reserved_mem_save_node(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+void __init fdt_reserved_mem_save_node(unsigned long node, const char *uname,
 				      phys_addr_t base, phys_addr_t size)
-अणु
-	काष्ठा reserved_mem *rmem = &reserved_mem[reserved_mem_count];
+{
+	struct reserved_mem *rmem = &reserved_mem[reserved_mem_count];
 
-	अगर (reserved_mem_count == ARRAY_SIZE(reserved_mem)) अणु
+	if (reserved_mem_count == ARRAY_SIZE(reserved_mem)) {
 		pr_err("not enough space for all defined regions.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rmem->fdt_node = node;
 	rmem->name = uname;
@@ -65,171 +64,171 @@
 	rmem->size = size;
 
 	reserved_mem_count++;
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * __reserved_mem_alloc_size() - allocate reserved memory described by
  *	'size', 'alignment'  and 'alloc-ranges' properties.
  */
-अटल पूर्णांक __init __reserved_mem_alloc_size(अचिन्हित दीर्घ node,
-	स्थिर अक्षर *uname, phys_addr_t *res_base, phys_addr_t *res_size)
-अणु
-	पूर्णांक t_len = (dt_root_addr_cells + dt_root_size_cells) * माप(__be32);
+static int __init __reserved_mem_alloc_size(unsigned long node,
+	const char *uname, phys_addr_t *res_base, phys_addr_t *res_size)
+{
+	int t_len = (dt_root_addr_cells + dt_root_size_cells) * sizeof(__be32);
 	phys_addr_t start = 0, end = 0;
 	phys_addr_t base = 0, align = 0, size;
-	पूर्णांक len;
-	स्थिर __be32 *prop;
+	int len;
+	const __be32 *prop;
 	bool nomap;
-	पूर्णांक ret;
+	int ret;
 
 	prop = of_get_flat_dt_prop(node, "size", &len);
-	अगर (!prop)
-		वापस -EINVAL;
+	if (!prop)
+		return -EINVAL;
 
-	अगर (len != dt_root_size_cells * माप(__be32)) अणु
+	if (len != dt_root_size_cells * sizeof(__be32)) {
 		pr_err("invalid size property in '%s' node.\n", uname);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	size = dt_mem_next_cell(dt_root_size_cells, &prop);
 
 	prop = of_get_flat_dt_prop(node, "alignment", &len);
-	अगर (prop) अणु
-		अगर (len != dt_root_addr_cells * माप(__be32)) अणु
+	if (prop) {
+		if (len != dt_root_addr_cells * sizeof(__be32)) {
 			pr_err("invalid alignment property in '%s' node.\n",
 				uname);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		align = dt_mem_next_cell(dt_root_addr_cells, &prop);
-	पूर्ण
+	}
 
-	nomap = of_get_flat_dt_prop(node, "no-map", शून्य) != शून्य;
+	nomap = of_get_flat_dt_prop(node, "no-map", NULL) != NULL;
 
 	/* Need adjust the alignment to satisfy the CMA requirement */
-	अगर (IS_ENABLED(CONFIG_CMA)
+	if (IS_ENABLED(CONFIG_CMA)
 	    && of_flat_dt_is_compatible(node, "shared-dma-pool")
-	    && of_get_flat_dt_prop(node, "reusable", शून्य)
-	    && !nomap) अणु
-		अचिन्हित दीर्घ order =
-			max_t(अचिन्हित दीर्घ, MAX_ORDER - 1, pageblock_order);
+	    && of_get_flat_dt_prop(node, "reusable", NULL)
+	    && !nomap) {
+		unsigned long order =
+			max_t(unsigned long, MAX_ORDER - 1, pageblock_order);
 
 		align = max(align, (phys_addr_t)PAGE_SIZE << order);
-	पूर्ण
+	}
 
 	prop = of_get_flat_dt_prop(node, "alloc-ranges", &len);
-	अगर (prop) अणु
+	if (prop) {
 
-		अगर (len % t_len != 0) अणु
+		if (len % t_len != 0) {
 			pr_err("invalid alloc-ranges property in '%s', skipping node.\n",
 			       uname);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		base = 0;
 
-		जबतक (len > 0) अणु
+		while (len > 0) {
 			start = dt_mem_next_cell(dt_root_addr_cells, &prop);
 			end = start + dt_mem_next_cell(dt_root_size_cells,
 						       &prop);
 
 			ret = early_init_dt_alloc_reserved_memory_arch(size,
 					align, start, end, nomap, &base);
-			अगर (ret == 0) अणु
+			if (ret == 0) {
 				pr_debug("allocated memory for '%s' node: base %pa, size %ld MiB\n",
 					uname, &base,
-					(अचिन्हित दीर्घ)size / SZ_1M);
-				अवरोध;
-			पूर्ण
+					(unsigned long)size / SZ_1M);
+				break;
+			}
 			len -= t_len;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = early_init_dt_alloc_reserved_memory_arch(size, align,
 							0, 0, nomap, &base);
-		अगर (ret == 0)
+		if (ret == 0)
 			pr_debug("allocated memory for '%s' node: base %pa, size %ld MiB\n",
-				uname, &base, (अचिन्हित दीर्घ)size / SZ_1M);
-	पूर्ण
+				uname, &base, (unsigned long)size / SZ_1M);
+	}
 
-	अगर (base == 0) अणु
+	if (base == 0) {
 		pr_info("failed to allocate memory for node '%s'\n", uname);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	*res_base = base;
 	*res_size = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id __rmem_of_table_sentinel
+static const struct of_device_id __rmem_of_table_sentinel
 	__used __section("__reservedmem_of_table_end");
 
 /*
- * __reserved_mem_init_node() - call region specअगरic reserved memory init code
+ * __reserved_mem_init_node() - call region specific reserved memory init code
  */
-अटल पूर्णांक __init __reserved_mem_init_node(काष्ठा reserved_mem *rmem)
-अणु
-	बाह्य स्थिर काष्ठा of_device_id __reservedmem_of_table[];
-	स्थिर काष्ठा of_device_id *i;
-	पूर्णांक ret = -ENOENT;
+static int __init __reserved_mem_init_node(struct reserved_mem *rmem)
+{
+	extern const struct of_device_id __reservedmem_of_table[];
+	const struct of_device_id *i;
+	int ret = -ENOENT;
 
-	क्रम (i = __reservedmem_of_table; i < &__rmem_of_table_sentinel; i++) अणु
+	for (i = __reservedmem_of_table; i < &__rmem_of_table_sentinel; i++) {
 		reservedmem_of_init_fn initfn = i->data;
-		स्थिर अक्षर *compat = i->compatible;
+		const char *compat = i->compatible;
 
-		अगर (!of_flat_dt_is_compatible(rmem->fdt_node, compat))
-			जारी;
+		if (!of_flat_dt_is_compatible(rmem->fdt_node, compat))
+			continue;
 
 		ret = initfn(rmem);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			pr_info("initialized node %s, compatible id %s\n",
 				rmem->name, compat);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक __init __rmem_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा reserved_mem *ra = a, *rb = b;
+static int __init __rmem_cmp(const void *a, const void *b)
+{
+	const struct reserved_mem *ra = a, *rb = b;
 
-	अगर (ra->base < rb->base)
-		वापस -1;
+	if (ra->base < rb->base)
+		return -1;
 
-	अगर (ra->base > rb->base)
-		वापस 1;
+	if (ra->base > rb->base)
+		return 1;
 
 	/*
-	 * Put the dynamic allocations (address == 0, size == 0) beक्रमe अटल
+	 * Put the dynamic allocations (address == 0, size == 0) before static
 	 * allocations at address 0x0 so that overlap detection works
 	 * correctly.
 	 */
-	अगर (ra->size < rb->size)
-		वापस -1;
-	अगर (ra->size > rb->size)
-		वापस 1;
+	if (ra->size < rb->size)
+		return -1;
+	if (ra->size > rb->size)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init __rmem_check_क्रम_overlap(व्योम)
-अणु
-	पूर्णांक i;
+static void __init __rmem_check_for_overlap(void)
+{
+	int i;
 
-	अगर (reserved_mem_count < 2)
-		वापस;
+	if (reserved_mem_count < 2)
+		return;
 
-	sort(reserved_mem, reserved_mem_count, माप(reserved_mem[0]),
-	     __rmem_cmp, शून्य);
-	क्रम (i = 0; i < reserved_mem_count - 1; i++) अणु
-		काष्ठा reserved_mem *this, *next;
+	sort(reserved_mem, reserved_mem_count, sizeof(reserved_mem[0]),
+	     __rmem_cmp, NULL);
+	for (i = 0; i < reserved_mem_count - 1; i++) {
+		struct reserved_mem *this, *next;
 
 		this = &reserved_mem[i];
 		next = &reserved_mem[i + 1];
 
-		अगर (this->base + this->size > next->base) अणु
+		if (this->base + this->size > next->base) {
 			phys_addr_t this_end, next_end;
 
 			this_end = this->base + this->size;
@@ -237,205 +236,205 @@
 			pr_err("OVERLAP DETECTED!\n%s (%pa--%pa) overlaps with %s (%pa--%pa)\n",
 			       this->name, &this->base, &this_end,
 			       next->name, &next->base, &next_end);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * fdt_init_reserved_mem() - allocate and init all saved reserved memory regions
  */
-व्योम __init fdt_init_reserved_mem(व्योम)
-अणु
-	पूर्णांक i;
+void __init fdt_init_reserved_mem(void)
+{
+	int i;
 
-	/* check क्रम overlapping reserved regions */
-	__rmem_check_क्रम_overlap();
+	/* check for overlapping reserved regions */
+	__rmem_check_for_overlap();
 
-	क्रम (i = 0; i < reserved_mem_count; i++) अणु
-		काष्ठा reserved_mem *rmem = &reserved_mem[i];
-		अचिन्हित दीर्घ node = rmem->fdt_node;
-		पूर्णांक len;
-		स्थिर __be32 *prop;
-		पूर्णांक err = 0;
+	for (i = 0; i < reserved_mem_count; i++) {
+		struct reserved_mem *rmem = &reserved_mem[i];
+		unsigned long node = rmem->fdt_node;
+		int len;
+		const __be32 *prop;
+		int err = 0;
 		bool nomap;
 
-		nomap = of_get_flat_dt_prop(node, "no-map", शून्य) != शून्य;
+		nomap = of_get_flat_dt_prop(node, "no-map", NULL) != NULL;
 		prop = of_get_flat_dt_prop(node, "phandle", &len);
-		अगर (!prop)
+		if (!prop)
 			prop = of_get_flat_dt_prop(node, "linux,phandle", &len);
-		अगर (prop)
-			rmem->phandle = of_पढ़ो_number(prop, len/4);
+		if (prop)
+			rmem->phandle = of_read_number(prop, len/4);
 
-		अगर (rmem->size == 0)
+		if (rmem->size == 0)
 			err = __reserved_mem_alloc_size(node, rmem->name,
 						 &rmem->base, &rmem->size);
-		अगर (err == 0) अणु
+		if (err == 0) {
 			err = __reserved_mem_init_node(rmem);
-			अगर (err != 0 && err != -ENOENT) अणु
+			if (err != 0 && err != -ENOENT) {
 				pr_info("node %s compatible matching fail\n",
 					rmem->name);
-				memblock_मुक्त(rmem->base, rmem->size);
-				अगर (nomap)
+				memblock_free(rmem->base, rmem->size);
+				if (nomap)
 					memblock_add(rmem->base, rmem->size);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल अंतरभूत काष्ठा reserved_mem *__find_rmem(काष्ठा device_node *node)
-अणु
-	अचिन्हित पूर्णांक i;
+static inline struct reserved_mem *__find_rmem(struct device_node *node)
+{
+	unsigned int i;
 
-	अगर (!node->phandle)
-		वापस शून्य;
+	if (!node->phandle)
+		return NULL;
 
-	क्रम (i = 0; i < reserved_mem_count; i++)
-		अगर (reserved_mem[i].phandle == node->phandle)
-			वापस &reserved_mem[i];
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < reserved_mem_count; i++)
+		if (reserved_mem[i].phandle == node->phandle)
+			return &reserved_mem[i];
+	return NULL;
+}
 
-काष्ठा rmem_asचिन्हित_device अणु
-	काष्ठा device *dev;
-	काष्ठा reserved_mem *rmem;
-	काष्ठा list_head list;
-पूर्ण;
+struct rmem_assigned_device {
+	struct device *dev;
+	struct reserved_mem *rmem;
+	struct list_head list;
+};
 
-अटल LIST_HEAD(of_rmem_asचिन्हित_device_list);
-अटल DEFINE_MUTEX(of_rmem_asचिन्हित_device_mutex);
+static LIST_HEAD(of_rmem_assigned_device_list);
+static DEFINE_MUTEX(of_rmem_assigned_device_mutex);
 
 /**
  * of_reserved_mem_device_init_by_idx() - assign reserved memory region to
  *					  given device
- * @dev:	Poपूर्णांकer to the device to configure
- * @np:		Poपूर्णांकer to the device_node with 'reserved-memory' property
+ * @dev:	Pointer to the device to configure
+ * @np:		Pointer to the device_node with 'reserved-memory' property
  * @idx:	Index of selected region
  *
  * This function assigns respective DMA-mapping operations based on reserved
- * memory region specअगरied by 'memory-region' property in @np node to the @dev
+ * memory region specified by 'memory-region' property in @np node to the @dev
  * device. When driver needs to use more than one reserved memory region, it
- * should allocate child devices and initialize regions by name क्रम each of
+ * should allocate child devices and initialize regions by name for each of
  * child device.
  *
  * Returns error code or zero on success.
  */
-पूर्णांक of_reserved_mem_device_init_by_idx(काष्ठा device *dev,
-				       काष्ठा device_node *np, पूर्णांक idx)
-अणु
-	काष्ठा rmem_asचिन्हित_device *rd;
-	काष्ठा device_node *target;
-	काष्ठा reserved_mem *rmem;
-	पूर्णांक ret;
+int of_reserved_mem_device_init_by_idx(struct device *dev,
+				       struct device_node *np, int idx)
+{
+	struct rmem_assigned_device *rd;
+	struct device_node *target;
+	struct reserved_mem *rmem;
+	int ret;
 
-	अगर (!np || !dev)
-		वापस -EINVAL;
+	if (!np || !dev)
+		return -EINVAL;
 
 	target = of_parse_phandle(np, "memory-region", idx);
-	अगर (!target)
-		वापस -ENODEV;
+	if (!target)
+		return -ENODEV;
 
-	अगर (!of_device_is_available(target)) अणु
+	if (!of_device_is_available(target)) {
 		of_node_put(target);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rmem = __find_rmem(target);
 	of_node_put(target);
 
-	अगर (!rmem || !rmem->ops || !rmem->ops->device_init)
-		वापस -EINVAL;
+	if (!rmem || !rmem->ops || !rmem->ops->device_init)
+		return -EINVAL;
 
-	rd = kदो_स्मृति(माप(काष्ठा rmem_asचिन्हित_device), GFP_KERNEL);
-	अगर (!rd)
-		वापस -ENOMEM;
+	rd = kmalloc(sizeof(struct rmem_assigned_device), GFP_KERNEL);
+	if (!rd)
+		return -ENOMEM;
 
 	ret = rmem->ops->device_init(rmem, dev);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		rd->dev = dev;
 		rd->rmem = rmem;
 
-		mutex_lock(&of_rmem_asचिन्हित_device_mutex);
-		list_add(&rd->list, &of_rmem_asचिन्हित_device_list);
-		mutex_unlock(&of_rmem_asचिन्हित_device_mutex);
+		mutex_lock(&of_rmem_assigned_device_mutex);
+		list_add(&rd->list, &of_rmem_assigned_device_list);
+		mutex_unlock(&of_rmem_assigned_device_mutex);
 
 		dev_info(dev, "assigned reserved memory node %s\n", rmem->name);
-	पूर्ण अन्यथा अणु
-		kमुक्त(rd);
-	पूर्ण
+	} else {
+		kfree(rd);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_reserved_mem_device_init_by_idx);
 
 /**
  * of_reserved_mem_device_init_by_name() - assign named reserved memory region
  *					   to given device
- * @dev: poपूर्णांकer to the device to configure
- * @np: poपूर्णांकer to the device node with 'memory-region' property
+ * @dev: pointer to the device to configure
+ * @np: pointer to the device node with 'memory-region' property
  * @name: name of the selected memory region
  *
  * Returns: 0 on success or a negative error-code on failure.
  */
-पूर्णांक of_reserved_mem_device_init_by_name(काष्ठा device *dev,
-					काष्ठा device_node *np,
-					स्थिर अक्षर *name)
-अणु
-	पूर्णांक idx = of_property_match_string(np, "memory-region-names", name);
+int of_reserved_mem_device_init_by_name(struct device *dev,
+					struct device_node *np,
+					const char *name)
+{
+	int idx = of_property_match_string(np, "memory-region-names", name);
 
-	वापस of_reserved_mem_device_init_by_idx(dev, np, idx);
-पूर्ण
+	return of_reserved_mem_device_init_by_idx(dev, np, idx);
+}
 EXPORT_SYMBOL_GPL(of_reserved_mem_device_init_by_name);
 
 /**
- * of_reserved_mem_device_release() - release reserved memory device काष्ठाures
- * @dev:	Poपूर्णांकer to the device to deconfigure
+ * of_reserved_mem_device_release() - release reserved memory device structures
+ * @dev:	Pointer to the device to deconfigure
  *
- * This function releases काष्ठाures allocated क्रम memory region handling क्रम
+ * This function releases structures allocated for memory region handling for
  * the given device.
  */
-व्योम of_reserved_mem_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा rmem_asचिन्हित_device *rd, *पंचांगp;
+void of_reserved_mem_device_release(struct device *dev)
+{
+	struct rmem_assigned_device *rd, *tmp;
 	LIST_HEAD(release_list);
 
-	mutex_lock(&of_rmem_asचिन्हित_device_mutex);
-	list_क्रम_each_entry_safe(rd, पंचांगp, &of_rmem_asचिन्हित_device_list, list) अणु
-		अगर (rd->dev == dev)
+	mutex_lock(&of_rmem_assigned_device_mutex);
+	list_for_each_entry_safe(rd, tmp, &of_rmem_assigned_device_list, list) {
+		if (rd->dev == dev)
 			list_move_tail(&rd->list, &release_list);
-	पूर्ण
-	mutex_unlock(&of_rmem_asचिन्हित_device_mutex);
+	}
+	mutex_unlock(&of_rmem_assigned_device_mutex);
 
-	list_क्रम_each_entry_safe(rd, पंचांगp, &release_list, list) अणु
-		अगर (rd->rmem && rd->rmem->ops && rd->rmem->ops->device_release)
+	list_for_each_entry_safe(rd, tmp, &release_list, list) {
+		if (rd->rmem && rd->rmem->ops && rd->rmem->ops->device_release)
 			rd->rmem->ops->device_release(rd->rmem, dev);
 
-		kमुक्त(rd);
-	पूर्ण
-पूर्ण
+		kfree(rd);
+	}
+}
 EXPORT_SYMBOL_GPL(of_reserved_mem_device_release);
 
 /**
  * of_reserved_mem_lookup() - acquire reserved_mem from a device node
- * @np:		node poपूर्णांकer of the desired reserved-memory region
+ * @np:		node pointer of the desired reserved-memory region
  *
  * This function allows drivers to acquire a reference to the reserved_mem
- * काष्ठा based on a device node handle.
+ * struct based on a device node handle.
  *
- * Returns a reserved_mem reference, or शून्य on error.
+ * Returns a reserved_mem reference, or NULL on error.
  */
-काष्ठा reserved_mem *of_reserved_mem_lookup(काष्ठा device_node *np)
-अणु
-	स्थिर अक्षर *name;
-	पूर्णांक i;
+struct reserved_mem *of_reserved_mem_lookup(struct device_node *np)
+{
+	const char *name;
+	int i;
 
-	अगर (!np->full_name)
-		वापस शून्य;
+	if (!np->full_name)
+		return NULL;
 
 	name = kbasename(np->full_name);
-	क्रम (i = 0; i < reserved_mem_count; i++)
-		अगर (!म_भेद(reserved_mem[i].name, name))
-			वापस &reserved_mem[i];
+	for (i = 0; i < reserved_mem_count; i++)
+		if (!strcmp(reserved_mem[i].name, name))
+			return &reserved_mem[i];
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(of_reserved_mem_lookup);

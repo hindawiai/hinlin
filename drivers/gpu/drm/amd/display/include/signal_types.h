@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,16 +23,16 @@
  *
  */
 
-#अगर_अघोषित __DC_SIGNAL_TYPES_H__
-#घोषणा __DC_SIGNAL_TYPES_H__
+#ifndef __DC_SIGNAL_TYPES_H__
+#define __DC_SIGNAL_TYPES_H__
 
-/* Minimum pixel घड़ी, in KHz. For TMDS संकेत is 25.00 MHz */
-#घोषणा TMDS_MIN_PIXEL_CLOCK 25000
-/* Maximum pixel घड़ी, in KHz. For TMDS संकेत is 165.00 MHz */
-#घोषणा TMDS_MAX_PIXEL_CLOCK 165000
+/* Minimum pixel clock, in KHz. For TMDS signal is 25.00 MHz */
+#define TMDS_MIN_PIXEL_CLOCK 25000
+/* Maximum pixel clock, in KHz. For TMDS signal is 165.00 MHz */
+#define TMDS_MAX_PIXEL_CLOCK 165000
 
-क्रमागत संकेत_type अणु
-	SIGNAL_TYPE_NONE		= 0L,		/* no संकेत */
+enum signal_type {
+	SIGNAL_TYPE_NONE		= 0L,		/* no signal */
 	SIGNAL_TYPE_DVI_SINGLE_LINK	= (1 << 0),
 	SIGNAL_TYPE_DVI_DUAL_LINK	= (1 << 1),
 	SIGNAL_TYPE_HDMI_TYPE_A		= (1 << 2),
@@ -43,74 +42,74 @@
 	SIGNAL_TYPE_DISPLAY_PORT_MST	= (1 << 6),
 	SIGNAL_TYPE_EDP			= (1 << 7),
 	SIGNAL_TYPE_VIRTUAL		= (1 << 9),	/* Virtual Display */
-पूर्ण;
+};
 
-/* help functions क्रम संकेत types manipulation */
-अटल अंतरभूत bool dc_is_hdmi_पंचांगds_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_HDMI_TYPE_A);
-पूर्ण
+/* help functions for signal types manipulation */
+static inline bool dc_is_hdmi_tmds_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_HDMI_TYPE_A);
+}
 
-अटल अंतरभूत bool dc_is_hdmi_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_HDMI_TYPE_A);
-पूर्ण
+static inline bool dc_is_hdmi_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_HDMI_TYPE_A);
+}
 
-अटल अंतरभूत bool dc_is_dp_sst_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_DISPLAY_PORT ||
-		संकेत == SIGNAL_TYPE_EDP);
-पूर्ण
+static inline bool dc_is_dp_sst_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_DISPLAY_PORT ||
+		signal == SIGNAL_TYPE_EDP);
+}
 
-अटल अंतरभूत bool dc_is_dp_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_DISPLAY_PORT ||
-		संकेत == SIGNAL_TYPE_EDP ||
-		संकेत == SIGNAL_TYPE_DISPLAY_PORT_MST);
-पूर्ण
+static inline bool dc_is_dp_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_DISPLAY_PORT ||
+		signal == SIGNAL_TYPE_EDP ||
+		signal == SIGNAL_TYPE_DISPLAY_PORT_MST);
+}
 
-अटल अंतरभूत bool dc_is_embedded_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_EDP || संकेत == SIGNAL_TYPE_LVDS);
-पूर्ण
+static inline bool dc_is_embedded_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_EDP || signal == SIGNAL_TYPE_LVDS);
+}
 
-अटल अंतरभूत bool dc_is_lvds_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_LVDS);
-पूर्ण
+static inline bool dc_is_lvds_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_LVDS);
+}
 
-अटल अंतरभूत bool dc_is_dvi_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	चयन (संकेत) अणु
-	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
-	हाल SIGNAL_TYPE_DVI_DUAL_LINK:
-		वापस true;
-	अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static inline bool dc_is_dvi_signal(enum signal_type signal)
+{
+	switch (signal) {
+	case SIGNAL_TYPE_DVI_SINGLE_LINK:
+	case SIGNAL_TYPE_DVI_DUAL_LINK:
+		return true;
+	break;
+	default:
+		return false;
+	}
+}
 
-अटल अंतरभूत bool dc_is_dvi_single_link_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_DVI_SINGLE_LINK);
-पूर्ण
+static inline bool dc_is_dvi_single_link_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_DVI_SINGLE_LINK);
+}
 
-अटल अंतरभूत bool dc_is_dual_link_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_DVI_DUAL_LINK);
-पूर्ण
+static inline bool dc_is_dual_link_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_DVI_DUAL_LINK);
+}
 
-अटल अंतरभूत bool dc_is_audio_capable_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_DISPLAY_PORT ||
-		संकेत == SIGNAL_TYPE_DISPLAY_PORT_MST ||
-		dc_is_hdmi_संकेत(संकेत));
-पूर्ण
+static inline bool dc_is_audio_capable_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_DISPLAY_PORT ||
+		signal == SIGNAL_TYPE_DISPLAY_PORT_MST ||
+		dc_is_hdmi_signal(signal));
+}
 
-अटल अंतरभूत bool dc_is_भव_संकेत(क्रमागत संकेत_type संकेत)
-अणु
-	वापस (संकेत == SIGNAL_TYPE_VIRTUAL);
-पूर्ण
+static inline bool dc_is_virtual_signal(enum signal_type signal)
+{
+	return (signal == SIGNAL_TYPE_VIRTUAL);
+}
 
-#पूर्ण_अगर
+#endif

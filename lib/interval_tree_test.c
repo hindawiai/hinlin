@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/पूर्णांकerval_tree.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/समयx.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/interval_tree.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <asm/timex.h>
 
-#घोषणा __param(type, name, init, msg)		\
-	अटल type name = init;		\
+#define __param(type, name, init, msg)		\
+	static type name = init;		\
 	module_param(name, type, 0444);		\
 	MODULE_PARM_DESC(name, msg);
 
-__param(पूर्णांक, nnodes, 100, "Number of nodes in the interval tree");
-__param(पूर्णांक, perf_loops, 1000, "Number of iterations modifying the tree");
+__param(int, nnodes, 100, "Number of nodes in the interval tree");
+__param(int, perf_loops, 1000, "Number of iterations modifying the tree");
 
-__param(पूर्णांक, nsearches, 100, "Number of searches to the interval tree");
-__param(पूर्णांक, search_loops, 1000, "Number of iterations searching the tree");
+__param(int, nsearches, 100, "Number of searches to the interval tree");
+__param(int, search_loops, 1000, "Number of iterations searching the tree");
 __param(bool, search_all, false, "Searches will iterate all nodes in the tree");
 
-__param(uपूर्णांक, max_endpoपूर्णांक, ~0, "Largest value for the interval's endpoint");
+__param(uint, max_endpoint, ~0, "Largest value for the interval's endpoint");
 
-अटल काष्ठा rb_root_cached root = RB_ROOT_CACHED;
-अटल काष्ठा पूर्णांकerval_tree_node *nodes = शून्य;
-अटल u32 *queries = शून्य;
+static struct rb_root_cached root = RB_ROOT_CACHED;
+static struct interval_tree_node *nodes = NULL;
+static u32 *queries = NULL;
 
-अटल काष्ठा rnd_state rnd;
+static struct rnd_state rnd;
 
-अटल अंतरभूत अचिन्हित दीर्घ
-search(काष्ठा rb_root_cached *root, अचिन्हित दीर्घ start, अचिन्हित दीर्घ last)
-अणु
-	काष्ठा पूर्णांकerval_tree_node *node;
-	अचिन्हित दीर्घ results = 0;
+static inline unsigned long
+search(struct rb_root_cached *root, unsigned long start, unsigned long last)
+{
+	struct interval_tree_node *node;
+	unsigned long results = 0;
 
-	क्रम (node = पूर्णांकerval_tree_iter_first(root, start, last); node;
-	     node = पूर्णांकerval_tree_iter_next(node, start, last))
+	for (node = interval_tree_iter_first(root, start, last); node;
+	     node = interval_tree_iter_next(node, start, last))
 		results++;
-	वापस results;
-पूर्ण
+	return results;
+}
 
-अटल व्योम init(व्योम)
-अणु
-	पूर्णांक i;
+static void init(void)
+{
+	int i;
 
-	क्रम (i = 0; i < nnodes; i++) अणु
-		u32 b = (pअक्रमom_u32_state(&rnd) >> 4) % max_endpoपूर्णांक;
-		u32 a = (pअक्रमom_u32_state(&rnd) >> 4) % b;
+	for (i = 0; i < nnodes; i++) {
+		u32 b = (prandom_u32_state(&rnd) >> 4) % max_endpoint;
+		u32 a = (prandom_u32_state(&rnd) >> 4) % b;
 
 		nodes[i].start = a;
 		nodes[i].last = b;
-	पूर्ण
+	}
 
 	/*
 	 * Limit the search scope to what the user defined.
 	 * Otherwise we are merely measuring empty walks,
-	 * which is poपूर्णांकless.
+	 * which is pointless.
 	 */
-	क्रम (i = 0; i < nsearches; i++)
-		queries[i] = (pअक्रमom_u32_state(&rnd) >> 4) % max_endpoपूर्णांक;
-पूर्ण
+	for (i = 0; i < nsearches; i++)
+		queries[i] = (prandom_u32_state(&rnd) >> 4) % max_endpoint;
+}
 
-अटल पूर्णांक पूर्णांकerval_tree_test_init(व्योम)
-अणु
-	पूर्णांक i, j;
-	अचिन्हित दीर्घ results;
-	cycles_t समय1, समय2, समय;
+static int interval_tree_test_init(void)
+{
+	int i, j;
+	unsigned long results;
+	cycles_t time1, time2, time;
 
-	nodes = kदो_स्मृति_array(nnodes, माप(काष्ठा पूर्णांकerval_tree_node),
+	nodes = kmalloc_array(nnodes, sizeof(struct interval_tree_node),
 			      GFP_KERNEL);
-	अगर (!nodes)
-		वापस -ENOMEM;
+	if (!nodes)
+		return -ENOMEM;
 
-	queries = kदो_स्मृति_array(nsearches, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!queries) अणु
-		kमुक्त(nodes);
-		वापस -ENOMEM;
-	पूर्ण
+	queries = kmalloc_array(nsearches, sizeof(int), GFP_KERNEL);
+	if (!queries) {
+		kfree(nodes);
+		return -ENOMEM;
+	}
 
-	prपूर्णांकk(KERN_ALERT "interval tree insert/remove");
+	printk(KERN_ALERT "interval tree insert/remove");
 
-	pअक्रमom_seed_state(&rnd, 3141592653589793238ULL);
+	prandom_seed_state(&rnd, 3141592653589793238ULL);
 	init();
 
-	समय1 = get_cycles();
+	time1 = get_cycles();
 
-	क्रम (i = 0; i < perf_loops; i++) अणु
-		क्रम (j = 0; j < nnodes; j++)
-			पूर्णांकerval_tree_insert(nodes + j, &root);
-		क्रम (j = 0; j < nnodes; j++)
-			पूर्णांकerval_tree_हटाओ(nodes + j, &root);
-	पूर्ण
+	for (i = 0; i < perf_loops; i++) {
+		for (j = 0; j < nnodes; j++)
+			interval_tree_insert(nodes + j, &root);
+		for (j = 0; j < nnodes; j++)
+			interval_tree_remove(nodes + j, &root);
+	}
 
-	समय2 = get_cycles();
-	समय = समय2 - समय1;
+	time2 = get_cycles();
+	time = time2 - time1;
 
-	समय = भाग_u64(समय, perf_loops);
-	prपूर्णांकk(" -> %llu cycles\n", (अचिन्हित दीर्घ दीर्घ)समय);
+	time = div_u64(time, perf_loops);
+	printk(" -> %llu cycles\n", (unsigned long long)time);
 
-	prपूर्णांकk(KERN_ALERT "interval tree search");
+	printk(KERN_ALERT "interval tree search");
 
-	क्रम (j = 0; j < nnodes; j++)
-		पूर्णांकerval_tree_insert(nodes + j, &root);
+	for (j = 0; j < nnodes; j++)
+		interval_tree_insert(nodes + j, &root);
 
-	समय1 = get_cycles();
+	time1 = get_cycles();
 
 	results = 0;
-	क्रम (i = 0; i < search_loops; i++)
-		क्रम (j = 0; j < nsearches; j++) अणु
-			अचिन्हित दीर्घ start = search_all ? 0 : queries[j];
-			अचिन्हित दीर्घ last = search_all ? max_endpoपूर्णांक : queries[j];
+	for (i = 0; i < search_loops; i++)
+		for (j = 0; j < nsearches; j++) {
+			unsigned long start = search_all ? 0 : queries[j];
+			unsigned long last = search_all ? max_endpoint : queries[j];
 
 			results += search(&root, start, last);
-		पूर्ण
+		}
 
-	समय2 = get_cycles();
-	समय = समय2 - समय1;
+	time2 = get_cycles();
+	time = time2 - time1;
 
-	समय = भाग_u64(समय, search_loops);
-	results = भाग_u64(results, search_loops);
-	prपूर्णांकk(" -> %llu cycles (%lu results)\n",
-	       (अचिन्हित दीर्घ दीर्घ)समय, results);
+	time = div_u64(time, search_loops);
+	results = div_u64(results, search_loops);
+	printk(" -> %llu cycles (%lu results)\n",
+	       (unsigned long long)time, results);
 
-	kमुक्त(queries);
-	kमुक्त(nodes);
+	kfree(queries);
+	kfree(nodes);
 
-	वापस -EAGAIN; /* Fail will directly unload the module */
-पूर्ण
+	return -EAGAIN; /* Fail will directly unload the module */
+}
 
-अटल व्योम पूर्णांकerval_tree_test_निकास(व्योम)
-अणु
-	prपूर्णांकk(KERN_ALERT "test exit\n");
-पूर्ण
+static void interval_tree_test_exit(void)
+{
+	printk(KERN_ALERT "test exit\n");
+}
 
-module_init(पूर्णांकerval_tree_test_init)
-module_निकास(पूर्णांकerval_tree_test_निकास)
+module_init(interval_tree_test_init)
+module_exit(interval_tree_test_exit)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michel Lespinasse");

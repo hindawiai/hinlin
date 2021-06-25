@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ptrace.h>
-#समावेश <linux/version.h>
-#समावेश <uapi/linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ptrace.h>
+#include <linux/version.h>
+#include <uapi/linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-#घोषणा SAMPLE_SIZE 64ul
+#define SAMPLE_SIZE 64ul
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uपूर्णांक(key_size, माप(पूर्णांक));
-	__uपूर्णांक(value_size, माप(u32));
-पूर्ण my_map SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uint(key_size, sizeof(int));
+	__uint(value_size, sizeof(u32));
+} my_map SEC(".maps");
 
 SEC("xdp_sample")
-पूर्णांक xdp_sample_prog(काष्ठा xdp_md *ctx)
-अणु
-	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
-	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+int xdp_sample_prog(struct xdp_md *ctx)
+{
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data = (void *)(long)ctx->data;
 
-	/* Metadata will be in the perf event beक्रमe the packet data. */
-	काष्ठा S अणु
+	/* Metadata will be in the perf event before the packet data. */
+	struct S {
 		u16 cookie;
 		u16 pkt_len;
-	पूर्ण __packed metadata;
+	} __packed metadata;
 
-	अगर (data < data_end) अणु
+	if (data < data_end) {
 		/* The XDP perf_event_output handler will use the upper 32 bits
 		 * of the flags argument as a number of bytes to include of the
 		 * packet payload in the event data. If the size is too big, the
-		 * call to bpf_perf_event_output will fail and वापस -EFAULT.
+		 * call to bpf_perf_event_output will fail and return -EFAULT.
 		 *
 		 * See bpf_xdp_event_output in net/core/filter.c.
 		 *
@@ -38,7 +37,7 @@ SEC("xdp_sample")
 		 */
 		u64 flags = BPF_F_CURRENT_CPU;
 		u16 sample_size;
-		पूर्णांक ret;
+		int ret;
 
 		metadata.cookie = 0xdead;
 		metadata.pkt_len = (u16)(data_end - data);
@@ -46,13 +45,13 @@ SEC("xdp_sample")
 		flags |= (u64)sample_size << 32;
 
 		ret = bpf_perf_event_output(ctx, &my_map, flags,
-					    &metadata, माप(metadata));
-		अगर (ret)
-			bpf_prपूर्णांकk("perf_event_output failed: %d\n", ret);
-	पूर्ण
+					    &metadata, sizeof(metadata));
+		if (ret)
+			bpf_printk("perf_event_output failed: %d\n", ret);
+	}
 
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;

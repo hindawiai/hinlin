@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * drivers.c
  *
  * Copyright (c) 1999 The Puffin Group
- * Copyright (c) 2001 Matthew Wilcox क्रम Hewlett Packard
+ * Copyright (c) 2001 Matthew Wilcox for Hewlett Packard
  * Copyright (c) 2001 Helge Deller <deller@gmx.de>
  * Copyright (c) 2001,2002 Ryan Bradetich 
  * Copyright (c) 2004-2005 Thibaut VARENE <varenet@parisc-linux.org>
  * 
- * The file handles रेजिस्टरing devices and drivers, then matching them.
- * It's the बंदst we get to a dating agency.
+ * The file handles registering devices and drivers, then matching them.
+ * It's the closest we get to a dating agency.
  *
- * If you're thinking about modअगरying this file, here are some gotchas to
+ * If you're thinking about modifying this file, here are some gotchas to
  * bear in mind:
  *  - 715/Mirage device paths have a dummy device between Lasi and its children
  *  - The EISA adapter may show up as a sibling or child of Wax
@@ -20,179 +19,179 @@
  *    it shows up as a child of Dino.  If firmware disables it, the buswalk
  *    finds it and it shows up as a child of Cujo
  *  - Dino has both parisc and pci devices as children
- *  - parisc devices are discovered in a अक्रमom order, including children
- *    beक्रमe parents in some हालs.
+ *  - parisc devices are discovered in a random order, including children
+ *    before parents in some cases.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/export.h>
-#समावेश <linux/dma-map-ops.h>
-#समावेश <यंत्र/hardware.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/pdc.h>
-#समावेश <यंत्र/parisc-device.h>
-#समावेश <यंत्र/ropes.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
+#include <linux/export.h>
+#include <linux/dma-map-ops.h>
+#include <asm/hardware.h>
+#include <asm/io.h>
+#include <asm/pdc.h>
+#include <asm/parisc-device.h>
+#include <asm/ropes.h>
 
-/* See comments in include/यंत्र-parisc/pci.h */
-स्थिर काष्ठा dma_map_ops *hppa_dma_ops __ro_after_init;
+/* See comments in include/asm-parisc/pci.h */
+const struct dma_map_ops *hppa_dma_ops __ro_after_init;
 EXPORT_SYMBOL(hppa_dma_ops);
 
-अटल काष्ठा device root = अणु
+static struct device root = {
 	.init_name = "parisc",
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक check_dev(काष्ठा device *dev)
-अणु
-	अगर (dev->bus == &parisc_bus_type) अणु
-		काष्ठा parisc_device *pdev;
+static inline int check_dev(struct device *dev)
+{
+	if (dev->bus == &parisc_bus_type) {
+		struct parisc_device *pdev;
 		pdev = to_parisc_device(dev);
-		वापस pdev->id.hw_type != HPHW_FAULTY;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return pdev->id.hw_type != HPHW_FAULTY;
+	}
+	return 1;
+}
 
-अटल काष्ठा device *
-parse_tree_node(काष्ठा device *parent, पूर्णांक index, काष्ठा hardware_path *modpath);
+static struct device *
+parse_tree_node(struct device *parent, int index, struct hardware_path *modpath);
 
-काष्ठा recurse_काष्ठा अणु
-	व्योम * obj;
-	पूर्णांक (*fn)(काष्ठा device *, व्योम *);
-पूर्ण;
+struct recurse_struct {
+	void * obj;
+	int (*fn)(struct device *, void *);
+};
 
-अटल पूर्णांक descend_children(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा recurse_काष्ठा * recurse_data = (काष्ठा recurse_काष्ठा *)data;
+static int descend_children(struct device * dev, void * data)
+{
+	struct recurse_struct * recurse_data = (struct recurse_struct *)data;
 
-	अगर (recurse_data->fn(dev, recurse_data->obj))
-		वापस 1;
-	अन्यथा
-		वापस device_क्रम_each_child(dev, recurse_data, descend_children);
-पूर्ण
+	if (recurse_data->fn(dev, recurse_data->obj))
+		return 1;
+	else
+		return device_for_each_child(dev, recurse_data, descend_children);
+}
 
 /**
- *	क्रम_each_padev - Iterate over all devices in the tree
- *	@fn:	Function to call क्रम each device.
+ *	for_each_padev - Iterate over all devices in the tree
+ *	@fn:	Function to call for each device.
  *	@data:	Data to pass to the called function.
  *
- *	This perक्रमms a depth-first traversal of the tree, calling the
- *	function passed क्रम each node.  It calls the function क्रम parents
- *	beक्रमe children.
+ *	This performs a depth-first traversal of the tree, calling the
+ *	function passed for each node.  It calls the function for parents
+ *	before children.
  */
 
-अटल पूर्णांक क्रम_each_padev(पूर्णांक (*fn)(काष्ठा device *, व्योम *), व्योम * data)
-अणु
-	काष्ठा recurse_काष्ठा recurse_data = अणु
+static int for_each_padev(int (*fn)(struct device *, void *), void * data)
+{
+	struct recurse_struct recurse_data = {
 		.obj	= data,
 		.fn	= fn,
-	पूर्ण;
-	वापस device_क्रम_each_child(&root, &recurse_data, descend_children);
-पूर्ण
+	};
+	return device_for_each_child(&root, &recurse_data, descend_children);
+}
 
 /**
  * match_device - Report whether this driver can handle this device
  * @driver: the PA-RISC driver to try
  * @dev: the PA-RISC device to try
  */
-अटल पूर्णांक match_device(काष्ठा parisc_driver *driver, काष्ठा parisc_device *dev)
-अणु
-	स्थिर काष्ठा parisc_device_id *ids;
+static int match_device(struct parisc_driver *driver, struct parisc_device *dev)
+{
+	const struct parisc_device_id *ids;
 
-	क्रम (ids = driver->id_table; ids->sversion; ids++) अणु
-		अगर ((ids->sversion != SVERSION_ANY_ID) &&
+	for (ids = driver->id_table; ids->sversion; ids++) {
+		if ((ids->sversion != SVERSION_ANY_ID) &&
 		    (ids->sversion != dev->id.sversion))
-			जारी;
+			continue;
 
-		अगर ((ids->hw_type != HWTYPE_ANY_ID) &&
+		if ((ids->hw_type != HWTYPE_ANY_ID) &&
 		    (ids->hw_type != dev->id.hw_type))
-			जारी;
+			continue;
 
-		अगर ((ids->hversion != HVERSION_ANY_ID) &&
+		if ((ids->hversion != HVERSION_ANY_ID) &&
 		    (ids->hversion != dev->id.hversion))
-			जारी;
+			continue;
 
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक parisc_driver_probe(काष्ठा device *dev)
-अणु
-	पूर्णांक rc;
-	काष्ठा parisc_device *pa_dev = to_parisc_device(dev);
-	काष्ठा parisc_driver *pa_drv = to_parisc_driver(dev->driver);
+static int parisc_driver_probe(struct device *dev)
+{
+	int rc;
+	struct parisc_device *pa_dev = to_parisc_device(dev);
+	struct parisc_driver *pa_drv = to_parisc_driver(dev->driver);
 
 	rc = pa_drv->probe(pa_dev);
 
-	अगर (!rc)
+	if (!rc)
 		pa_dev->driver = pa_drv;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक __निकास parisc_driver_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा parisc_device *pa_dev = to_parisc_device(dev);
-	काष्ठा parisc_driver *pa_drv = to_parisc_driver(dev->driver);
-	अगर (pa_drv->हटाओ)
-		pa_drv->हटाओ(pa_dev);
+static int __exit parisc_driver_remove(struct device *dev)
+{
+	struct parisc_device *pa_dev = to_parisc_device(dev);
+	struct parisc_driver *pa_drv = to_parisc_driver(dev->driver);
+	if (pa_drv->remove)
+		pa_drv->remove(pa_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 	
 
 /**
- * रेजिस्टर_parisc_driver - Register this driver अगर it can handle a device
+ * register_parisc_driver - Register this driver if it can handle a device
  * @driver: the PA-RISC driver to try
  */
-पूर्णांक रेजिस्टर_parisc_driver(काष्ठा parisc_driver *driver)
-अणु
+int register_parisc_driver(struct parisc_driver *driver)
+{
 	/* FIXME: we need this because apparently the sti
-	 * driver can be रेजिस्टरed twice */
-	अगर (driver->drv.name) अणु
+	 * driver can be registered twice */
+	if (driver->drv.name) {
 		pr_warn("BUG: skipping previously registered driver %s\n",
 			driver->name);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (!driver->probe) अणु
+	if (!driver->probe) {
 		pr_warn("BUG: driver %s has no probe routine\n", driver->name);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	driver->drv.bus = &parisc_bus_type;
 
-	/* We install our own probe and हटाओ routines */
-	WARN_ON(driver->drv.probe != शून्य);
-	WARN_ON(driver->drv.हटाओ != शून्य);
+	/* We install our own probe and remove routines */
+	WARN_ON(driver->drv.probe != NULL);
+	WARN_ON(driver->drv.remove != NULL);
 
 	driver->drv.name = driver->name;
 
-	वापस driver_रेजिस्टर(&driver->drv);
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_parisc_driver);
+	return driver_register(&driver->drv);
+}
+EXPORT_SYMBOL(register_parisc_driver);
 
 
-काष्ठा match_count अणु
-	काष्ठा parisc_driver * driver;
-	पूर्णांक count;
-पूर्ण;
+struct match_count {
+	struct parisc_driver * driver;
+	int count;
+};
 
-अटल पूर्णांक match_and_count(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा match_count * m = data;
-	काष्ठा parisc_device * pdev = to_parisc_device(dev);
+static int match_and_count(struct device * dev, void * data)
+{
+	struct match_count * m = data;
+	struct parisc_device * pdev = to_parisc_device(dev);
 
-	अगर (check_dev(dev)) अणु
-		अगर (match_device(m->driver, pdev))
+	if (check_dev(dev)) {
+		if (match_device(m->driver, pdev))
 			m->count++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  * count_parisc_driver - count # of devices this driver would match
@@ -201,227 +200,227 @@ EXPORT_SYMBOL(रेजिस्टर_parisc_driver);
  * Use by IOMMU support to "guess" the right size IOPdir.
  * Formula is something like memsize/(num_iommu * entry_size).
  */
-पूर्णांक __init count_parisc_driver(काष्ठा parisc_driver *driver)
-अणु
-	काष्ठा match_count m = अणु
+int __init count_parisc_driver(struct parisc_driver *driver)
+{
+	struct match_count m = {
 		.driver	= driver,
 		.count	= 0,
-	पूर्ण;
+	};
 
-	क्रम_each_padev(match_and_count, &m);
+	for_each_padev(match_and_count, &m);
 
-	वापस m.count;
-पूर्ण
+	return m.count;
+}
 
 
 
 /**
- * unरेजिस्टर_parisc_driver - Unरेजिस्टर this driver from the list of drivers
- * @driver: the PA-RISC driver to unरेजिस्टर
+ * unregister_parisc_driver - Unregister this driver from the list of drivers
+ * @driver: the PA-RISC driver to unregister
  */
-पूर्णांक unरेजिस्टर_parisc_driver(काष्ठा parisc_driver *driver)
-अणु
-	driver_unरेजिस्टर(&driver->drv);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_parisc_driver);
+int unregister_parisc_driver(struct parisc_driver *driver)
+{
+	driver_unregister(&driver->drv);
+	return 0;
+}
+EXPORT_SYMBOL(unregister_parisc_driver);
 
-काष्ठा find_data अणु
-	अचिन्हित दीर्घ hpa;
-	काष्ठा parisc_device * dev;
-पूर्ण;
+struct find_data {
+	unsigned long hpa;
+	struct parisc_device * dev;
+};
 
-अटल पूर्णांक find_device(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा parisc_device * pdev = to_parisc_device(dev);
-	काष्ठा find_data * d = (काष्ठा find_data*)data;
+static int find_device(struct device * dev, void * data)
+{
+	struct parisc_device * pdev = to_parisc_device(dev);
+	struct find_data * d = (struct find_data*)data;
 
-	अगर (check_dev(dev)) अणु
-		अगर (pdev->hpa.start == d->hpa) अणु
+	if (check_dev(dev)) {
+		if (pdev->hpa.start == d->hpa) {
 			d->dev = pdev;
-			वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+		}
+	}
+	return 0;
+}
 
-अटल काष्ठा parisc_device *find_device_by_addr(अचिन्हित दीर्घ hpa)
-अणु
-	काष्ठा find_data d = अणु
+static struct parisc_device *find_device_by_addr(unsigned long hpa)
+{
+	struct find_data d = {
 		.hpa	= hpa,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	ret = क्रम_each_padev(find_device, &d);
-	वापस ret ? d.dev : शून्य;
-पूर्ण
+	ret = for_each_padev(find_device, &d);
+	return ret ? d.dev : NULL;
+}
 
-अटल पूर्णांक __init is_IKE_device(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा parisc_device *pdev = to_parisc_device(dev);
+static int __init is_IKE_device(struct device *dev, void *data)
+{
+	struct parisc_device *pdev = to_parisc_device(dev);
 
-	अगर (!check_dev(dev))
-		वापस 0;
-	अगर (pdev->id.hw_type != HPHW_BCPORT)
-		वापस 0;
-	अगर (IS_IKE(pdev) ||
+	if (!check_dev(dev))
+		return 0;
+	if (pdev->id.hw_type != HPHW_BCPORT)
+		return 0;
+	if (IS_IKE(pdev) ||
 		(pdev->id.hversion == REO_MERCED_PORT) ||
-		(pdev->id.hversion == REOG_MERCED_PORT)) अणु
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		(pdev->id.hversion == REOG_MERCED_PORT)) {
+			return 1;
+	}
+	return 0;
+}
 
-पूर्णांक __init machine_has_merced_bus(व्योम)
-अणु
-	पूर्णांक ret;
+int __init machine_has_merced_bus(void)
+{
+	int ret;
 
-	ret = क्रम_each_padev(is_IKE_device, शून्य);
-	वापस ret ? 1 : 0;
-पूर्ण
+	ret = for_each_padev(is_IKE_device, NULL);
+	return ret ? 1 : 0;
+}
 
 /**
- * find_pa_parent_type - Find a parent of a specअगरic type
+ * find_pa_parent_type - Find a parent of a specific type
  * @dev: The device to start searching from
- * @type: The device type to search क्रम.
+ * @type: The device type to search for.
  *
- * Walks up the device tree looking क्रम a device of the specअगरied type.
- * If it finds it, it वापसs it.  If not, it वापसs शून्य.
+ * Walks up the device tree looking for a device of the specified type.
+ * If it finds it, it returns it.  If not, it returns NULL.
  */
-स्थिर काष्ठा parisc_device *
-find_pa_parent_type(स्थिर काष्ठा parisc_device *padev, पूर्णांक type)
-अणु
-	स्थिर काष्ठा device *dev = &padev->dev;
-	जबतक (dev != &root) अणु
-		काष्ठा parisc_device *candidate = to_parisc_device(dev);
-		अगर (candidate->id.hw_type == type)
-			वापस candidate;
+const struct parisc_device *
+find_pa_parent_type(const struct parisc_device *padev, int type)
+{
+	const struct device *dev = &padev->dev;
+	while (dev != &root) {
+		struct parisc_device *candidate = to_parisc_device(dev);
+		if (candidate->id.hw_type == type)
+			return candidate;
 		dev = dev->parent;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * get_node_path fills in @path with the firmware path to the device.
- * Note that अगर @node is a parisc device, we करोn't fill in the 'mod' field.
+ * Note that if @node is a parisc device, we don't fill in the 'mod' field.
  * This is because both callers pass the parent and fill in the mod
- * themselves.  If @node is a PCI device, we करो fill it in, even though this
+ * themselves.  If @node is a PCI device, we do fill it in, even though this
  * is inconsistent.
  */
-अटल व्योम get_node_path(काष्ठा device *dev, काष्ठा hardware_path *path)
-अणु
-	पूर्णांक i = 5;
-	स_रखो(&path->bc, -1, 6);
+static void get_node_path(struct device *dev, struct hardware_path *path)
+{
+	int i = 5;
+	memset(&path->bc, -1, 6);
 
-	अगर (dev_is_pci(dev)) अणु
-		अचिन्हित पूर्णांक devfn = to_pci_dev(dev)->devfn;
+	if (dev_is_pci(dev)) {
+		unsigned int devfn = to_pci_dev(dev)->devfn;
 		path->mod = PCI_FUNC(devfn);
 		path->bc[i--] = PCI_SLOT(devfn);
 		dev = dev->parent;
-	पूर्ण
+	}
 
-	जबतक (dev != &root) अणु
-		अगर (dev_is_pci(dev)) अणु
-			अचिन्हित पूर्णांक devfn = to_pci_dev(dev)->devfn;
+	while (dev != &root) {
+		if (dev_is_pci(dev)) {
+			unsigned int devfn = to_pci_dev(dev)->devfn;
 			path->bc[i--] = PCI_SLOT(devfn) | (PCI_FUNC(devfn)<< 5);
-		पूर्ण अन्यथा अगर (dev->bus == &parisc_bus_type) अणु
+		} else if (dev->bus == &parisc_bus_type) {
 			path->bc[i--] = to_parisc_device(dev)->hw_path;
-		पूर्ण
+		}
 		dev = dev->parent;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अक्षर *prपूर्णांक_hwpath(काष्ठा hardware_path *path, अक्षर *output)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < 6; i++) अणु
-		अगर (path->bc[i] == -1)
-			जारी;
-		output += प्र_लिखो(output, "%u/", (अचिन्हित अक्षर) path->bc[i]);
-	पूर्ण
-	output += प्र_लिखो(output, "%u", (अचिन्हित अक्षर) path->mod);
-	वापस output;
-पूर्ण
+static char *print_hwpath(struct hardware_path *path, char *output)
+{
+	int i;
+	for (i = 0; i < 6; i++) {
+		if (path->bc[i] == -1)
+			continue;
+		output += sprintf(output, "%u/", (unsigned char) path->bc[i]);
+	}
+	output += sprintf(output, "%u", (unsigned char) path->mod);
+	return output;
+}
 
 /**
- * prपूर्णांक_pa_hwpath - Returns hardware path क्रम PA devices
- * dev: The device to वापस the path क्रम
- * output: Poपूर्णांकer to a previously-allocated array to place the path in.
+ * print_pa_hwpath - Returns hardware path for PA devices
+ * dev: The device to return the path for
+ * output: Pointer to a previously-allocated array to place the path in.
  *
- * This function fills in the output array with a human-पढ़ोable path
+ * This function fills in the output array with a human-readable path
  * to a PA device.  This string is compatible with that used by PDC, and
- * may be prपूर्णांकed on the outside of the box.
+ * may be printed on the outside of the box.
  */
-अक्षर *prपूर्णांक_pa_hwpath(काष्ठा parisc_device *dev, अक्षर *output)
-अणु
-	काष्ठा hardware_path path;
+char *print_pa_hwpath(struct parisc_device *dev, char *output)
+{
+	struct hardware_path path;
 
 	get_node_path(dev->dev.parent, &path);
 	path.mod = dev->hw_path;
-	वापस prपूर्णांक_hwpath(&path, output);
-पूर्ण
-EXPORT_SYMBOL(prपूर्णांक_pa_hwpath);
+	return print_hwpath(&path, output);
+}
+EXPORT_SYMBOL(print_pa_hwpath);
 
-#अगर defined(CONFIG_PCI) || defined(CONFIG_ISA)
+#if defined(CONFIG_PCI) || defined(CONFIG_ISA)
 /**
- * get_pci_node_path - Determines the hardware path क्रम a PCI device
- * @pdev: The device to वापस the path क्रम
- * @path: Poपूर्णांकer to a previously-allocated array to place the path in.
+ * get_pci_node_path - Determines the hardware path for a PCI device
+ * @pdev: The device to return the path for
+ * @path: Pointer to a previously-allocated array to place the path in.
  *
- * This function fills in the hardware_path काष्ठाure with the route to
- * the specअगरied PCI device.  This काष्ठाure is suitable क्रम passing to
+ * This function fills in the hardware_path structure with the route to
+ * the specified PCI device.  This structure is suitable for passing to
  * PDC calls.
  */
-व्योम get_pci_node_path(काष्ठा pci_dev *pdev, काष्ठा hardware_path *path)
-अणु
+void get_pci_node_path(struct pci_dev *pdev, struct hardware_path *path)
+{
 	get_node_path(&pdev->dev, path);
-पूर्ण
+}
 EXPORT_SYMBOL(get_pci_node_path);
 
 /**
- * prपूर्णांक_pci_hwpath - Returns hardware path क्रम PCI devices
- * dev: The device to वापस the path क्रम
- * output: Poपूर्णांकer to a previously-allocated array to place the path in.
+ * print_pci_hwpath - Returns hardware path for PCI devices
+ * dev: The device to return the path for
+ * output: Pointer to a previously-allocated array to place the path in.
  *
- * This function fills in the output array with a human-पढ़ोable path
+ * This function fills in the output array with a human-readable path
  * to a PCI device.  This string is compatible with that used by PDC, and
- * may be prपूर्णांकed on the outside of the box.
+ * may be printed on the outside of the box.
  */
-अक्षर *prपूर्णांक_pci_hwpath(काष्ठा pci_dev *dev, अक्षर *output)
-अणु
-	काष्ठा hardware_path path;
+char *print_pci_hwpath(struct pci_dev *dev, char *output)
+{
+	struct hardware_path path;
 
 	get_pci_node_path(dev, &path);
-	वापस prपूर्णांक_hwpath(&path, output);
-पूर्ण
-EXPORT_SYMBOL(prपूर्णांक_pci_hwpath);
+	return print_hwpath(&path, output);
+}
+EXPORT_SYMBOL(print_pci_hwpath);
 
-#पूर्ण_अगर /* defined(CONFIG_PCI) || defined(CONFIG_ISA) */
+#endif /* defined(CONFIG_PCI) || defined(CONFIG_ISA) */
 
-अटल व्योम setup_bus_id(काष्ठा parisc_device *padev)
-अणु
-	काष्ठा hardware_path path;
-	अक्षर name[28];
-	अक्षर *output = name;
-	पूर्णांक i;
+static void setup_bus_id(struct parisc_device *padev)
+{
+	struct hardware_path path;
+	char name[28];
+	char *output = name;
+	int i;
 
 	get_node_path(padev->dev.parent, &path);
 
-	क्रम (i = 0; i < 6; i++) अणु
-		अगर (path.bc[i] == -1)
-			जारी;
-		output += प्र_लिखो(output, "%u:", (अचिन्हित अक्षर) path.bc[i]);
-	पूर्ण
-	प्र_लिखो(output, "%u", (अचिन्हित अक्षर) padev->hw_path);
+	for (i = 0; i < 6; i++) {
+		if (path.bc[i] == -1)
+			continue;
+		output += sprintf(output, "%u:", (unsigned char) path.bc[i]);
+	}
+	sprintf(output, "%u", (unsigned char) padev->hw_path);
 	dev_set_name(&padev->dev, name);
-पूर्ण
+}
 
-काष्ठा parisc_device * __init create_tree_node(अक्षर id, काष्ठा device *parent)
-अणु
-	काष्ठा parisc_device *dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस शून्य;
+struct parisc_device * __init create_tree_node(char id, struct device *parent)
+{
+	struct parisc_device *dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return NULL;
 
 	dev->hw_path = id;
 	dev->id.hw_type = HPHW_FAULTY;
@@ -432,90 +431,90 @@ EXPORT_SYMBOL(prपूर्णांक_pci_hwpath);
 	dev->dev.bus = &parisc_bus_type;
 	dev->dma_mask = 0xffffffffUL;	/* PARISC devices are 32-bit */
 
-	/* make the generic dma mask a poपूर्णांकer to the parisc one */
+	/* make the generic dma mask a pointer to the parisc one */
 	dev->dev.dma_mask = &dev->dma_mask;
 	dev->dev.coherent_dma_mask = dev->dma_mask;
-	अगर (device_रेजिस्टर(&dev->dev)) अणु
-		kमुक्त(dev);
-		वापस शून्य;
-	पूर्ण
+	if (device_register(&dev->dev)) {
+		kfree(dev);
+		return NULL;
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-काष्ठा match_id_data अणु
-	अक्षर id;
-	काष्ठा parisc_device * dev;
-पूर्ण;
+struct match_id_data {
+	char id;
+	struct parisc_device * dev;
+};
 
-अटल पूर्णांक match_by_id(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा parisc_device * pdev = to_parisc_device(dev);
-	काष्ठा match_id_data * d = data;
+static int match_by_id(struct device * dev, void * data)
+{
+	struct parisc_device * pdev = to_parisc_device(dev);
+	struct match_id_data * d = data;
 
-	अगर (pdev->hw_path == d->id) अणु
+	if (pdev->hw_path == d->id) {
 		d->dev = pdev;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
 /**
- * alloc_tree_node - वापसs a device entry in the iotree
+ * alloc_tree_node - returns a device entry in the iotree
  * @parent: the parent node in the tree
- * @id: the element of the module path क्रम this entry
+ * @id: the element of the module path for this entry
  *
- * Checks all the children of @parent क्रम a matching @id.  If none
- * found, it allocates a new device and वापसs it.
+ * Checks all the children of @parent for a matching @id.  If none
+ * found, it allocates a new device and returns it.
  */
-अटल काष्ठा parisc_device * __init alloc_tree_node(
-			काष्ठा device *parent, अक्षर id)
-अणु
-	काष्ठा match_id_data d = अणु
+static struct parisc_device * __init alloc_tree_node(
+			struct device *parent, char id)
+{
+	struct match_id_data d = {
 		.id = id,
-	पूर्ण;
-	अगर (device_क्रम_each_child(parent, &d, match_by_id))
-		वापस d.dev;
-	अन्यथा
-		वापस create_tree_node(id, parent);
-पूर्ण
+	};
+	if (device_for_each_child(parent, &d, match_by_id))
+		return d.dev;
+	else
+		return create_tree_node(id, parent);
+}
 
-अटल काष्ठा parisc_device *create_parisc_device(काष्ठा hardware_path *modpath)
-अणु
-	पूर्णांक i;
-	काष्ठा device *parent = &root;
-	क्रम (i = 0; i < 6; i++) अणु
-		अगर (modpath->bc[i] == -1)
-			जारी;
+static struct parisc_device *create_parisc_device(struct hardware_path *modpath)
+{
+	int i;
+	struct device *parent = &root;
+	for (i = 0; i < 6; i++) {
+		if (modpath->bc[i] == -1)
+			continue;
 		parent = &alloc_tree_node(parent, modpath->bc[i])->dev;
-	पूर्ण
-	वापस alloc_tree_node(parent, modpath->mod);
-पूर्ण
+	}
+	return alloc_tree_node(parent, modpath->mod);
+}
 
-काष्ठा parisc_device * __init
-alloc_pa_dev(अचिन्हित दीर्घ hpa, काष्ठा hardware_path *mod_path)
-अणु
-	पूर्णांक status;
-	अचिन्हित दीर्घ bytecnt;
+struct parisc_device * __init
+alloc_pa_dev(unsigned long hpa, struct hardware_path *mod_path)
+{
+	int status;
+	unsigned long bytecnt;
 	u8 iodc_data[32];
-	काष्ठा parisc_device *dev;
-	स्थिर अक्षर *name;
+	struct parisc_device *dev;
+	const char *name;
 
-	/* Check to make sure this device has not alपढ़ोy been added - Ryan */
-	अगर (find_device_by_addr(hpa) != शून्य)
-		वापस शून्य;
+	/* Check to make sure this device has not already been added - Ryan */
+	if (find_device_by_addr(hpa) != NULL)
+		return NULL;
 
-	status = pdc_iodc_पढ़ो(&bytecnt, hpa, 0, &iodc_data, 32);
-	अगर (status != PDC_OK)
-		वापस शून्य;
+	status = pdc_iodc_read(&bytecnt, hpa, 0, &iodc_data, 32);
+	if (status != PDC_OK)
+		return NULL;
 
 	dev = create_parisc_device(mod_path);
-	अगर (dev->id.hw_type != HPHW_FAULTY) अणु
+	if (dev->id.hw_type != HPHW_FAULTY) {
 		pr_err("Two devices have hardware path [%s].  IODC data for second device: %7phN\n"
 		       "Rearranging GSC cards sometimes helps\n",
 			parisc_pathname(dev), iodc_data);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	dev->id.hw_type = iodc_data[3] & 0x1f;
 	dev->id.hversion = (iodc_data[0] << 4) | ((iodc_data[1] & 0xf0) >> 4);
@@ -525,77 +524,77 @@ alloc_pa_dev(अचिन्हित दीर्घ hpa, काष्ठा ha
 	dev->hpa.name = parisc_pathname(dev);
 	dev->hpa.start = hpa;
 	/* This is awkward.  The STI spec says that gfx devices may occupy
-	 * 32MB or 64MB.  Unक्रमtunately, we करोn't know how to tell whether
-	 * it's the क्रमmer or the latter.  Assumptions either way can hurt us.
+	 * 32MB or 64MB.  Unfortunately, we don't know how to tell whether
+	 * it's the former or the latter.  Assumptions either way can hurt us.
 	 */
-	अगर (hpa == 0xf4000000 || hpa == 0xf8000000) अणु
+	if (hpa == 0xf4000000 || hpa == 0xf8000000) {
 		dev->hpa.end = hpa + 0x03ffffff;
-	पूर्ण अन्यथा अगर (hpa == 0xf6000000 || hpa == 0xfa000000) अणु
+	} else if (hpa == 0xf6000000 || hpa == 0xfa000000) {
 		dev->hpa.end = hpa + 0x01ffffff;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->hpa.end = hpa + 0xfff;
-	पूर्ण
+	}
 	dev->hpa.flags = IORESOURCE_MEM;
 	name = parisc_hardware_description(&dev->id);
-	अगर (name) अणु
-		strlcpy(dev->name, name, माप(dev->name));
-	पूर्ण
+	if (name) {
+		strlcpy(dev->name, name, sizeof(dev->name));
+	}
 
 	/* Silently fail things like mouse ports which are subsumed within
 	 * the keyboard controller
 	 */
-	अगर ((hpa & 0xfff) == 0 && insert_resource(&iomem_resource, &dev->hpa))
+	if ((hpa & 0xfff) == 0 && insert_resource(&iomem_resource, &dev->hpa))
 		pr_warn("Unable to claim HPA %lx for device %s\n", hpa, name);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल पूर्णांक parisc_generic_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	वापस match_device(to_parisc_driver(drv), to_parisc_device(dev));
-पूर्ण
+static int parisc_generic_match(struct device *dev, struct device_driver *drv)
+{
+	return match_device(to_parisc_driver(drv), to_parisc_device(dev));
+}
 
-अटल sमाप_प्रकार make_modalias(काष्ठा device *dev, अक्षर *buf)
-अणु
-	स्थिर काष्ठा parisc_device *padev = to_parisc_device(dev);
-	स्थिर काष्ठा parisc_device_id *id = &padev->id;
+static ssize_t make_modalias(struct device *dev, char *buf)
+{
+	const struct parisc_device *padev = to_parisc_device(dev);
+	const struct parisc_device_id *id = &padev->id;
 
-	वापस प्र_लिखो(buf, "parisc:t%02Xhv%04Xrev%02Xsv%08X\n",
+	return sprintf(buf, "parisc:t%02Xhv%04Xrev%02Xsv%08X\n",
 		(u8)id->hw_type, (u16)id->hversion, (u8)id->hversion_rev,
 		(u32)id->sversion);
-पूर्ण
+}
 
-अटल पूर्णांक parisc_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	स्थिर काष्ठा parisc_device *padev;
-	अक्षर modalias[40];
+static int parisc_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	const struct parisc_device *padev;
+	char modalias[40];
 
-	अगर (!dev)
-		वापस -ENODEV;
+	if (!dev)
+		return -ENODEV;
 
 	padev = to_parisc_device(dev);
-	अगर (!padev)
-		वापस -ENODEV;
+	if (!padev)
+		return -ENODEV;
 
-	अगर (add_uevent_var(env, "PARISC_NAME=%s", padev->name))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "PARISC_NAME=%s", padev->name))
+		return -ENOMEM;
 
 	make_modalias(dev, modalias);
-	अगर (add_uevent_var(env, "MODALIAS=%s", modalias))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "MODALIAS=%s", modalias))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा pa_dev_attr(name, field, क्रमmat_string)				\
-अटल sमाप_प्रकार name##_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)		\
-अणु									\
-	काष्ठा parisc_device *padev = to_parisc_device(dev);		\
-	वापस प्र_लिखो(buf, क्रमmat_string, padev->field);		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name);
+#define pa_dev_attr(name, field, format_string)				\
+static ssize_t name##_show(struct device *dev, struct device_attribute *attr, char *buf)		\
+{									\
+	struct parisc_device *padev = to_parisc_device(dev);		\
+	return sprintf(buf, format_string, padev->field);		\
+}									\
+static DEVICE_ATTR_RO(name);
 
-#घोषणा pa_dev_attr_id(field, क्रमmat) pa_dev_attr(field, id.field, क्रमmat)
+#define pa_dev_attr_id(field, format) pa_dev_attr(field, id.field, format)
 
 pa_dev_attr(irq, irq, "%u\n");
 pa_dev_attr_id(hw_type, "0x%02x\n");
@@ -603,49 +602,49 @@ pa_dev_attr(rev, id.hversion_rev, "0x%x\n");
 pa_dev_attr_id(hversion, "0x%03x\n");
 pa_dev_attr_id(sversion, "0x%05x\n");
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस make_modalias(dev, buf);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return make_modalias(dev, buf);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल काष्ठा attribute *parisc_device_attrs[] = अणु
+static struct attribute *parisc_device_attrs[] = {
 	&dev_attr_irq.attr,
 	&dev_attr_hw_type.attr,
 	&dev_attr_rev.attr,
 	&dev_attr_hversion.attr,
 	&dev_attr_sversion.attr,
 	&dev_attr_modalias.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(parisc_device);
 
-काष्ठा bus_type parisc_bus_type = अणु
+struct bus_type parisc_bus_type = {
 	.name = "parisc",
 	.match = parisc_generic_match,
 	.uevent = parisc_uevent,
 	.dev_groups = parisc_device_groups,
 	.probe = parisc_driver_probe,
-	.हटाओ = __निकास_p(parisc_driver_हटाओ),
-पूर्ण;
+	.remove = __exit_p(parisc_driver_remove),
+};
 
 /**
- * रेजिस्टर_parisc_device - Locate a driver to manage this device.
+ * register_parisc_device - Locate a driver to manage this device.
  * @dev: The parisc device.
  *
- * Search the driver list क्रम a driver that is willing to manage
+ * Search the driver list for a driver that is willing to manage
  * this device.
  */
-पूर्णांक __init रेजिस्टर_parisc_device(काष्ठा parisc_device *dev)
-अणु
-	अगर (!dev)
-		वापस 0;
+int __init register_parisc_device(struct parisc_device *dev)
+{
+	if (!dev)
+		return 0;
 
-	अगर (dev->driver)
-		वापस 1;
+	if (dev->driver)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * match_pci_device - Matches a pci device against a given hardware path
@@ -653,28 +652,28 @@ ATTRIBUTE_GROUPS(parisc_device);
  * @dev: the generic device (known to be contained by a pci_dev).
  * @index: the current BC index
  * @modpath: the hardware path.
- * @वापस: true अगर the device matches the hardware path.
+ * @return: true if the device matches the hardware path.
  */
-अटल पूर्णांक match_pci_device(काष्ठा device *dev, पूर्णांक index,
-		काष्ठा hardware_path *modpath)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	पूर्णांक id;
+static int match_pci_device(struct device *dev, int index,
+		struct hardware_path *modpath)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	int id;
 
-	अगर (index == 5) अणु
+	if (index == 5) {
 		/* we are at the end of the path, and on the actual device */
-		अचिन्हित पूर्णांक devfn = pdev->devfn;
-		वापस ((modpath->bc[5] == PCI_SLOT(devfn)) &&
+		unsigned int devfn = pdev->devfn;
+		return ((modpath->bc[5] == PCI_SLOT(devfn)) &&
 					(modpath->mod == PCI_FUNC(devfn)));
-	पूर्ण
+	}
 
-	/* index might be out of bounds क्रम bc[] */
-	अगर (index >= 6)
-		वापस 0;
+	/* index might be out of bounds for bc[] */
+	if (index >= 6)
+		return 0;
 
 	id = PCI_SLOT(pdev->devfn) | (PCI_FUNC(pdev->devfn) << 5);
-	वापस (modpath->bc[index] == id);
-पूर्ण
+	return (modpath->bc[index] == id);
+}
 
 /**
  * match_parisc_device - Matches a parisc device against a given hardware
@@ -682,244 +681,244 @@ ATTRIBUTE_GROUPS(parisc_device);
  * @dev: the generic device (known to be contained by a parisc_device).
  * @index: the current BC index
  * @modpath: the hardware path.
- * @वापस: true अगर the device matches the hardware path.
+ * @return: true if the device matches the hardware path.
  */
-अटल पूर्णांक match_parisc_device(काष्ठा device *dev, पूर्णांक index,
-		काष्ठा hardware_path *modpath)
-अणु
-	काष्ठा parisc_device *curr = to_parisc_device(dev);
-	अक्षर id = (index == 6) ? modpath->mod : modpath->bc[index];
+static int match_parisc_device(struct device *dev, int index,
+		struct hardware_path *modpath)
+{
+	struct parisc_device *curr = to_parisc_device(dev);
+	char id = (index == 6) ? modpath->mod : modpath->bc[index];
 
-	वापस (curr->hw_path == id);
-पूर्ण
+	return (curr->hw_path == id);
+}
 
-काष्ठा parse_tree_data अणु
-	पूर्णांक index;
-	काष्ठा hardware_path * modpath;
-	काष्ठा device * dev;
-पूर्ण;
+struct parse_tree_data {
+	int index;
+	struct hardware_path * modpath;
+	struct device * dev;
+};
 
-अटल पूर्णांक check_parent(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा parse_tree_data * d = data;
+static int check_parent(struct device * dev, void * data)
+{
+	struct parse_tree_data * d = data;
 
-	अगर (check_dev(dev)) अणु
-		अगर (dev->bus == &parisc_bus_type) अणु
-			अगर (match_parisc_device(dev, d->index, d->modpath))
+	if (check_dev(dev)) {
+		if (dev->bus == &parisc_bus_type) {
+			if (match_parisc_device(dev, d->index, d->modpath))
 				d->dev = dev;
-		पूर्ण अन्यथा अगर (dev_is_pci(dev)) अणु
-			अगर (match_pci_device(dev, d->index, d->modpath))
+		} else if (dev_is_pci(dev)) {
+			if (match_pci_device(dev, d->index, d->modpath))
 				d->dev = dev;
-		पूर्ण अन्यथा अगर (dev->bus == शून्य) अणु
+		} else if (dev->bus == NULL) {
 			/* we are on a bus bridge */
-			काष्ठा device *new = parse_tree_node(dev, d->index, d->modpath);
-			अगर (new)
+			struct device *new = parse_tree_node(dev, d->index, d->modpath);
+			if (new)
 				d->dev = new;
-		पूर्ण
-	पूर्ण
-	वापस d->dev != शून्य;
-पूर्ण
+		}
+	}
+	return d->dev != NULL;
+}
 
 /**
- * parse_tree_node - वापसs a device entry in the iotree
+ * parse_tree_node - returns a device entry in the iotree
  * @parent: the parent node in the tree
  * @index: the current BC index
- * @modpath: the hardware_path काष्ठा to match a device against
- * @वापस: The corresponding device अगर found, शून्य otherwise.
+ * @modpath: the hardware_path struct to match a device against
+ * @return: The corresponding device if found, NULL otherwise.
  *
- * Checks all the children of @parent क्रम a matching @id.  If none
- * found, it वापसs शून्य.
+ * Checks all the children of @parent for a matching @id.  If none
+ * found, it returns NULL.
  */
-अटल काष्ठा device *
-parse_tree_node(काष्ठा device *parent, पूर्णांक index, काष्ठा hardware_path *modpath)
-अणु
-	काष्ठा parse_tree_data d = अणु
+static struct device *
+parse_tree_node(struct device *parent, int index, struct hardware_path *modpath)
+{
+	struct parse_tree_data d = {
 		.index          = index,
 		.modpath        = modpath,
-	पूर्ण;
+	};
 
-	काष्ठा recurse_काष्ठा recurse_data = अणु
+	struct recurse_struct recurse_data = {
 		.obj	= &d,
 		.fn	= check_parent,
-	पूर्ण;
+	};
 
-	अगर (device_क्रम_each_child(parent, &recurse_data, descend_children))
+	if (device_for_each_child(parent, &recurse_data, descend_children))
 		/* nothing */;
 
-	वापस d.dev;
-पूर्ण
+	return d.dev;
+}
 
 /**
  * hwpath_to_device - Finds the generic device corresponding to a given hardware path.
  * @modpath: the hardware path.
- * @वापस: The target device, शून्य अगर not found.
+ * @return: The target device, NULL if not found.
  */
-काष्ठा device *hwpath_to_device(काष्ठा hardware_path *modpath)
-अणु
-	पूर्णांक i;
-	काष्ठा device *parent = &root;
-	क्रम (i = 0; i < 6; i++) अणु
-		अगर (modpath->bc[i] == -1)
-			जारी;
+struct device *hwpath_to_device(struct hardware_path *modpath)
+{
+	int i;
+	struct device *parent = &root;
+	for (i = 0; i < 6; i++) {
+		if (modpath->bc[i] == -1)
+			continue;
 		parent = parse_tree_node(parent, i, modpath);
-		अगर (!parent)
-			वापस शून्य;
-	पूर्ण
-	अगर (dev_is_pci(parent)) /* pci devices alपढ़ोy parse MOD */
-		वापस parent;
-	अन्यथा
-		वापस parse_tree_node(parent, 6, modpath);
-पूर्ण
+		if (!parent)
+			return NULL;
+	}
+	if (dev_is_pci(parent)) /* pci devices already parse MOD */
+		return parent;
+	else
+		return parse_tree_node(parent, 6, modpath);
+}
 EXPORT_SYMBOL(hwpath_to_device);
 
 /**
  * device_to_hwpath - Populates the hwpath corresponding to the given device.
  * @param dev the target device
- * @param path poपूर्णांकer to a previously allocated hwpath काष्ठा to be filled in
+ * @param path pointer to a previously allocated hwpath struct to be filled in
  */
-व्योम device_to_hwpath(काष्ठा device *dev, काष्ठा hardware_path *path)
-अणु
-	काष्ठा parisc_device *padev;
-	अगर (dev->bus == &parisc_bus_type) अणु
+void device_to_hwpath(struct device *dev, struct hardware_path *path)
+{
+	struct parisc_device *padev;
+	if (dev->bus == &parisc_bus_type) {
 		padev = to_parisc_device(dev);
 		get_node_path(dev->parent, path);
 		path->mod = padev->hw_path;
-	पूर्ण अन्यथा अगर (dev_is_pci(dev)) अणु
+	} else if (dev_is_pci(dev)) {
 		get_node_path(dev, path);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(device_to_hwpath);
 
-#घोषणा BC_PORT_MASK 0x8
-#घोषणा BC_LOWER_PORT 0x8
+#define BC_PORT_MASK 0x8
+#define BC_LOWER_PORT 0x8
 
-#घोषणा BUS_CONVERTER(dev) \
+#define BUS_CONVERTER(dev) \
         ((dev->id.hw_type == HPHW_IOA) || (dev->id.hw_type == HPHW_BCPORT))
 
-#घोषणा IS_LOWER_PORT(dev) \
-        ((gsc_पढ़ोl(dev->hpa.start + दुरत्व(काष्ठा bc_module, io_status)) \
+#define IS_LOWER_PORT(dev) \
+        ((gsc_readl(dev->hpa.start + offsetof(struct bc_module, io_status)) \
                 & BC_PORT_MASK) == BC_LOWER_PORT)
 
-#घोषणा MAX_NATIVE_DEVICES 64
-#घोषणा NATIVE_DEVICE_OFFSET 0x1000
+#define MAX_NATIVE_DEVICES 64
+#define NATIVE_DEVICE_OFFSET 0x1000
 
-#घोषणा FLEX_MASK 	F_EXTEND(0xfffc0000)
-#घोषणा IO_IO_LOW	दुरत्व(काष्ठा bc_module, io_io_low)
-#घोषणा IO_IO_HIGH	दुरत्व(काष्ठा bc_module, io_io_high)
-#घोषणा READ_IO_IO_LOW(dev)  (अचिन्हित दीर्घ)(चिन्हित पूर्णांक)gsc_पढ़ोl(dev->hpa.start + IO_IO_LOW)
-#घोषणा READ_IO_IO_HIGH(dev) (अचिन्हित दीर्घ)(चिन्हित पूर्णांक)gsc_पढ़ोl(dev->hpa.start + IO_IO_HIGH)
+#define FLEX_MASK 	F_EXTEND(0xfffc0000)
+#define IO_IO_LOW	offsetof(struct bc_module, io_io_low)
+#define IO_IO_HIGH	offsetof(struct bc_module, io_io_high)
+#define READ_IO_IO_LOW(dev)  (unsigned long)(signed int)gsc_readl(dev->hpa.start + IO_IO_LOW)
+#define READ_IO_IO_HIGH(dev) (unsigned long)(signed int)gsc_readl(dev->hpa.start + IO_IO_HIGH)
 
-अटल व्योम walk_native_bus(अचिन्हित दीर्घ io_io_low, अचिन्हित दीर्घ io_io_high,
-                            काष्ठा device *parent);
+static void walk_native_bus(unsigned long io_io_low, unsigned long io_io_high,
+                            struct device *parent);
 
-अटल व्योम __init walk_lower_bus(काष्ठा parisc_device *dev)
-अणु
-	अचिन्हित दीर्घ io_io_low, io_io_high;
+static void __init walk_lower_bus(struct parisc_device *dev)
+{
+	unsigned long io_io_low, io_io_high;
 
-	अगर (!BUS_CONVERTER(dev) || IS_LOWER_PORT(dev))
-		वापस;
+	if (!BUS_CONVERTER(dev) || IS_LOWER_PORT(dev))
+		return;
 
-	अगर (dev->id.hw_type == HPHW_IOA) अणु
-		io_io_low = (अचिन्हित दीर्घ)(चिन्हित पूर्णांक)(READ_IO_IO_LOW(dev) << 16);
+	if (dev->id.hw_type == HPHW_IOA) {
+		io_io_low = (unsigned long)(signed int)(READ_IO_IO_LOW(dev) << 16);
 		io_io_high = io_io_low + MAX_NATIVE_DEVICES * NATIVE_DEVICE_OFFSET;
-	पूर्ण अन्यथा अणु
+	} else {
 		io_io_low = (READ_IO_IO_LOW(dev) + ~FLEX_MASK) & FLEX_MASK;
 		io_io_high = (READ_IO_IO_HIGH(dev)+ ~FLEX_MASK) & FLEX_MASK;
-	पूर्ण
+	}
 
 	walk_native_bus(io_io_low, io_io_high, &dev->dev);
-पूर्ण
+}
 
 /**
- * walk_native_bus -- Probe a bus क्रम devices
+ * walk_native_bus -- Probe a bus for devices
  * @io_io_low: Base address of this bus.
  * @io_io_high: Last address of this bus.
  * @parent: The parent bus device.
  * 
  * A native bus (eg Runway or GSC) may have up to 64 devices on it,
- * spaced at पूर्णांकervals of 0x1000 bytes.  PDC may not inक्रमm us of these
- * devices, so we have to probe क्रम them.  Unक्रमtunately, we may find
+ * spaced at intervals of 0x1000 bytes.  PDC may not inform us of these
+ * devices, so we have to probe for them.  Unfortunately, we may find
  * devices which are not physically connected (such as extra serial &
  * keyboard ports).  This problem is not yet solved.
  */
-अटल व्योम __init walk_native_bus(अचिन्हित दीर्घ io_io_low,
-	अचिन्हित दीर्घ io_io_high, काष्ठा device *parent)
-अणु
-	पूर्णांक i, devices_found = 0;
-	अचिन्हित दीर्घ hpa = io_io_low;
-	काष्ठा hardware_path path;
+static void __init walk_native_bus(unsigned long io_io_low,
+	unsigned long io_io_high, struct device *parent)
+{
+	int i, devices_found = 0;
+	unsigned long hpa = io_io_low;
+	struct hardware_path path;
 
 	get_node_path(parent, &path);
-	करो अणु
-		क्रम(i = 0; i < MAX_NATIVE_DEVICES; i++, hpa += NATIVE_DEVICE_OFFSET) अणु
-			काष्ठा parisc_device *dev;
+	do {
+		for(i = 0; i < MAX_NATIVE_DEVICES; i++, hpa += NATIVE_DEVICE_OFFSET) {
+			struct parisc_device *dev;
 
-			/* Was the device alपढ़ोy added by Firmware? */
+			/* Was the device already added by Firmware? */
 			dev = find_device_by_addr(hpa);
-			अगर (!dev) अणु
+			if (!dev) {
 				path.mod = i;
 				dev = alloc_pa_dev(hpa, &path);
-				अगर (!dev)
-					जारी;
+				if (!dev)
+					continue;
 
-				रेजिस्टर_parisc_device(dev);
+				register_parisc_device(dev);
 				devices_found++;
-			पूर्ण
+			}
 			walk_lower_bus(dev);
-		पूर्ण
-	पूर्ण जबतक(!devices_found && hpa < io_io_high);
-पूर्ण
+		}
+	} while(!devices_found && hpa < io_io_high);
+}
 
-#घोषणा CENTRAL_BUS_ADDR F_EXTEND(0xfff80000)
+#define CENTRAL_BUS_ADDR F_EXTEND(0xfff80000)
 
 /**
  * walk_central_bus - Find devices attached to the central bus
  *
- * PDC करोesn't tell us about all devices in the प्रणाली.  This routine
+ * PDC doesn't tell us about all devices in the system.  This routine
  * finds devices connected to the central bus.
  */
-व्योम __init walk_central_bus(व्योम)
-अणु
+void __init walk_central_bus(void)
+{
 	walk_native_bus(CENTRAL_BUS_ADDR,
 			CENTRAL_BUS_ADDR + (MAX_NATIVE_DEVICES * NATIVE_DEVICE_OFFSET),
 			&root);
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_parisc_device(काष्ठा parisc_device *dev)
-अणु
-	अक्षर hw_path[64];
-	अटल पूर्णांक count;
+static void print_parisc_device(struct parisc_device *dev)
+{
+	char hw_path[64];
+	static int count;
 
-	prपूर्णांक_pa_hwpath(dev, hw_path);
+	print_pa_hwpath(dev, hw_path);
 	pr_info("%d. %s at %pap [%s] { %d, 0x%x, 0x%.3x, 0x%.5x }",
 		++count, dev->name, &(dev->hpa.start), hw_path, dev->id.hw_type,
 		dev->id.hversion_rev, dev->id.hversion, dev->id.sversion);
 
-	अगर (dev->num_addrs) अणु
-		पूर्णांक k;
+	if (dev->num_addrs) {
+		int k;
 		pr_cont(", additional addresses: ");
-		क्रम (k = 0; k < dev->num_addrs; k++)
+		for (k = 0; k < dev->num_addrs; k++)
 			pr_cont("0x%lx ", dev->addr[k]);
-	पूर्ण
+	}
 	pr_cont("\n");
-पूर्ण
+}
 
 /**
- * init_parisc_bus - Some preparation to be करोne beक्रमe inventory
+ * init_parisc_bus - Some preparation to be done before inventory
  */
-व्योम __init init_parisc_bus(व्योम)
-अणु
-	अगर (bus_रेजिस्टर(&parisc_bus_type))
+void __init init_parisc_bus(void)
+{
+	if (bus_register(&parisc_bus_type))
 		panic("Could not register PA-RISC bus type\n");
-	अगर (device_रेजिस्टर(&root))
+	if (device_register(&root))
 		panic("Could not register PA-RISC root device\n");
 	get_device(&root);
-पूर्ण
+}
 
-अटल __init व्योम qemu_header(व्योम)
-अणु
-	पूर्णांक num;
-	अचिन्हित दीर्घ *p;
+static __init void qemu_header(void)
+{
+	int num;
+	unsigned long *p;
 
 	pr_info("--- cut here ---\n");
 	pr_info("/* AUTO-GENERATED HEADER FILE FOR SEABIOS FIRMWARE */\n");
@@ -931,9 +930,9 @@ EXPORT_SYMBOL(device_to_hwpath);
 
 	pr_info("#define PARISC_PDC_MODEL 0x%lx, 0x%lx, 0x%lx, "
 		"0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx\n\n",
-	#घोषणा p ((अचिन्हित दीर्घ *)&boot_cpu_data.pdc.model)
+	#define p ((unsigned long *)&boot_cpu_data.pdc.model)
 		p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
-	#अघोषित p
+	#undef p
 
 	pr_info("#define PARISC_PDC_VERSION 0x%04lx\n\n",
 			boot_cpu_data.pdc.versions);
@@ -945,28 +944,28 @@ EXPORT_SYMBOL(device_to_hwpath);
 			boot_cpu_data.pdc.capabilities);
 
 	pr_info("#define PARISC_PDC_ENTRY_ORG 0x%04lx\n\n",
-#अगर_घोषित CONFIG_64BIT
-		(अचिन्हित दीर्घ)(PAGE0->mem_pdc_hi) << 32 |
-#पूर्ण_अगर
-		(अचिन्हित दीर्घ)PAGE0->mem_pdc);
+#ifdef CONFIG_64BIT
+		(unsigned long)(PAGE0->mem_pdc_hi) << 32 |
+#endif
+		(unsigned long)PAGE0->mem_pdc);
 
 	pr_info("#define PARISC_PDC_CACHE_INFO");
-	p = (अचिन्हित दीर्घ *) &cache_info;
-	क्रम (num = 0; num < माप(cache_info); num += माप(अचिन्हित दीर्घ)) अणु
-		अगर (((num % 5) == 0)) अणु
+	p = (unsigned long *) &cache_info;
+	for (num = 0; num < sizeof(cache_info); num += sizeof(unsigned long)) {
+		if (((num % 5) == 0)) {
 			pr_cont(" \\\n");
 			pr_info("\t");
-		पूर्ण
+		}
 		pr_cont("%s0x%04lx",
 			num?", ":"", *p++);
-	पूर्ण
+	}
 	pr_cont("\n\n");
-पूर्ण
+}
 
-अटल __init पूर्णांक qemu_prपूर्णांक_hpa(काष्ठा device *lin_dev, व्योम *data)
-अणु
-	काष्ठा parisc_device *dev = to_parisc_device(lin_dev);
-	अचिन्हित दीर्घ hpa = dev->hpa.start;
+static __init int qemu_print_hpa(struct device *lin_dev, void *data)
+{
+	struct parisc_device *dev = to_parisc_device(lin_dev);
+	unsigned long hpa = dev->hpa.start;
 
 	pr_cont("\t{\t.hpa = 0x%08lx,\\\n", hpa);
 	pr_cont("\t\t.iodc = &iodc_data_hpa_%08lx,\\\n", hpa);
@@ -974,37 +973,37 @@ EXPORT_SYMBOL(device_to_hwpath);
 	pr_cont("\t\t.mod_path = &mod_path_hpa_%08lx,\\\n", hpa);
 	pr_cont("\t\t.num_addr = HPA_%08lx_num_addr,\\\n", hpa);
 	pr_cont("\t\t.add_addr = { HPA_%08lx_add_addr } },\\\n", hpa);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल __init व्योम qemu_footer(व्योम)
-अणु
+static __init void qemu_footer(void)
+{
 	pr_info("\n\n#define PARISC_DEVICE_LIST \\\n");
-	क्रम_each_padev(qemu_prपूर्णांक_hpa, शून्य);
+	for_each_padev(qemu_print_hpa, NULL);
 	pr_cont("\t{ 0, }\n");
 	pr_info("--- cut here ---\n");
-पूर्ण
+}
 
-/* prपूर्णांक iodc data of the various hpa modules क्रम qemu inclusion */
-अटल __init पूर्णांक qemu_prपूर्णांक_iodc_data(काष्ठा device *lin_dev, व्योम *data)
-अणु
-	काष्ठा parisc_device *dev = to_parisc_device(lin_dev);
-	अचिन्हित दीर्घ count;
-	अचिन्हित दीर्घ hpa = dev->hpa.start;
-	पूर्णांक status;
-	काष्ठा pdc_iodc iodc_data;
+/* print iodc data of the various hpa modules for qemu inclusion */
+static __init int qemu_print_iodc_data(struct device *lin_dev, void *data)
+{
+	struct parisc_device *dev = to_parisc_device(lin_dev);
+	unsigned long count;
+	unsigned long hpa = dev->hpa.start;
+	int status;
+	struct pdc_iodc iodc_data;
 
-	पूर्णांक mod_index;
-	काष्ठा pdc_प्रणाली_map_mod_info pdc_mod_info;
-	काष्ठा pdc_module_path mod_path;
+	int mod_index;
+	struct pdc_system_map_mod_info pdc_mod_info;
+	struct pdc_module_path mod_path;
 
-	status = pdc_iodc_पढ़ो(&count, hpa, 0,
-		&iodc_data, माप(iodc_data));
-	अगर (status != PDC_OK) अणु
+	status = pdc_iodc_read(&count, hpa, 0,
+		&iodc_data, sizeof(iodc_data));
+	if (status != PDC_OK) {
 		pr_info("No IODC data for hpa 0x%08lx\n", hpa);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_info("\n");
 
@@ -1012,32 +1011,32 @@ EXPORT_SYMBOL(device_to_hwpath);
 		hpa, parisc_hardware_description(&dev->id));
 
 	mod_index = 0;
-	करो अणु
-		status = pdc_प्रणाली_map_find_mods(&pdc_mod_info,
+	do {
+		status = pdc_system_map_find_mods(&pdc_mod_info,
 				&mod_path, mod_index++);
-	पूर्ण जबतक (status == PDC_OK && pdc_mod_info.mod_addr != hpa);
+	} while (status == PDC_OK && pdc_mod_info.mod_addr != hpa);
 
 	pr_info("static struct pdc_system_map_mod_info"
 		" mod_info_hpa_%08lx = {\n", hpa);
-	#घोषणा DO(member) \
+	#define DO(member) \
 		pr_cont("\t." #member " = 0x%x,\n", \
-			(अचिन्हित पूर्णांक)pdc_mod_info.member)
+			(unsigned int)pdc_mod_info.member)
 	DO(mod_addr);
 	DO(mod_pgs);
 	DO(add_addrs);
 	pr_cont("};\n");
-	#अघोषित DO
+	#undef DO
 	pr_info("static struct pdc_module_path "
 		"mod_path_hpa_%08lx = {\n", hpa);
 	pr_cont("\t.path = { ");
 	pr_cont(".flags = 0x%x, ", mod_path.path.flags);
 	pr_cont(".bc = { 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x }, ",
-		(अचिन्हित अक्षर)mod_path.path.bc[0],
-		(अचिन्हित अक्षर)mod_path.path.bc[1],
-		(अचिन्हित अक्षर)mod_path.path.bc[2],
-		(अचिन्हित अक्षर)mod_path.path.bc[3],
-		(अचिन्हित अक्षर)mod_path.path.bc[4],
-		(अचिन्हित अक्षर)mod_path.path.bc[5]);
+		(unsigned char)mod_path.path.bc[0],
+		(unsigned char)mod_path.path.bc[1],
+		(unsigned char)mod_path.path.bc[2],
+		(unsigned char)mod_path.path.bc[3],
+		(unsigned char)mod_path.path.bc[4],
+		(unsigned char)mod_path.path.bc[5]);
 	pr_cont(".mod = 0x%x ", mod_path.path.mod);
 	pr_cont(" },\n");
 	pr_cont("\t.layers = { 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x }\n",
@@ -1046,9 +1045,9 @@ EXPORT_SYMBOL(device_to_hwpath);
 	pr_cont("};\n");
 
 	pr_info("static struct pdc_iodc iodc_data_hpa_%08lx = {\n", hpa);
-	#घोषणा DO(member) \
+	#define DO(member) \
 		pr_cont("\t." #member " = 0x%04lx,\n", \
-			(अचिन्हित दीर्घ)iodc_data.member)
+			(unsigned long)iodc_data.member)
 	DO(hversion_model);
 	DO(hversion);
 	DO(spa);
@@ -1061,7 +1060,7 @@ EXPORT_SYMBOL(device_to_hwpath);
 	DO(features);
 	DO(checksum);
 	DO(length);
-	#अघोषित DO
+	#undef DO
 	pr_cont("\t/* pad: 0x%04x, 0x%04x */\n",
 		iodc_data.pad[0], iodc_data.pad[1]);
 	pr_cont("};\n");
@@ -1069,38 +1068,38 @@ EXPORT_SYMBOL(device_to_hwpath);
 	pr_info("#define HPA_%08lx_num_addr %d\n", hpa, dev->num_addrs);
 	pr_info("#define HPA_%08lx_add_addr ", hpa);
 	count = 0;
-	अगर (dev->num_addrs == 0)
+	if (dev->num_addrs == 0)
 		pr_cont("0");
-	जबतक (count < dev->num_addrs) अणु
+	while (count < dev->num_addrs) {
 		pr_cont("0x%08lx, ", dev->addr[count]);
 		count++;
-	पूर्ण
+	}
 	pr_cont("\n\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
-अटल पूर्णांक prपूर्णांक_one_device(काष्ठा device * dev, व्योम * data)
-अणु
-	काष्ठा parisc_device * pdev = to_parisc_device(dev);
+static int print_one_device(struct device * dev, void * data)
+{
+	struct parisc_device * pdev = to_parisc_device(dev);
 
-	अगर (check_dev(dev))
-		prपूर्णांक_parisc_device(pdev);
-	वापस 0;
-पूर्ण
+	if (check_dev(dev))
+		print_parisc_device(pdev);
+	return 0;
+}
 
 /**
- * prपूर्णांक_parisc_devices - Prपूर्णांक out a list of devices found in this प्रणाली
+ * print_parisc_devices - Print out a list of devices found in this system
  */
-व्योम __init prपूर्णांक_parisc_devices(व्योम)
-अणु
-	क्रम_each_padev(prपूर्णांक_one_device, शून्य);
-	#घोषणा PARISC_QEMU_MACHINE_HEADER 0
-	अगर (PARISC_QEMU_MACHINE_HEADER) अणु
+void __init print_parisc_devices(void)
+{
+	for_each_padev(print_one_device, NULL);
+	#define PARISC_QEMU_MACHINE_HEADER 0
+	if (PARISC_QEMU_MACHINE_HEADER) {
 		qemu_header();
-		क्रम_each_padev(qemu_prपूर्णांक_iodc_data, शून्य);
+		for_each_padev(qemu_print_iodc_data, NULL);
 		qemu_footer();
-	पूर्ण
-पूर्ण
+	}
+}

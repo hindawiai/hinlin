@@ -1,189 +1,188 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright IBM Corp 2019
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/export.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sysfs.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/kernel.h>
+#include <linux/sysfs.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-/* OCC status रेजिस्टर */
-#घोषणा OCC_STAT_MASTER			BIT(7)
-#घोषणा OCC_STAT_ACTIVE			BIT(0)
+/* OCC status register */
+#define OCC_STAT_MASTER			BIT(7)
+#define OCC_STAT_ACTIVE			BIT(0)
 
-/* OCC extended status रेजिस्टर */
-#घोषणा OCC_EXT_STAT_DVFS_OT		BIT(7)
-#घोषणा OCC_EXT_STAT_DVFS_POWER		BIT(6)
-#घोषणा OCC_EXT_STAT_MEM_THROTTLE	BIT(5)
-#घोषणा OCC_EXT_STAT_QUICK_DROP		BIT(4)
+/* OCC extended status register */
+#define OCC_EXT_STAT_DVFS_OT		BIT(7)
+#define OCC_EXT_STAT_DVFS_POWER		BIT(6)
+#define OCC_EXT_STAT_MEM_THROTTLE	BIT(5)
+#define OCC_EXT_STAT_QUICK_DROP		BIT(4)
 
-अटल sमाप_प्रकार occ_sysfs_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक rc;
-	पूर्णांक val = 0;
-	काष्ठा occ *occ = dev_get_drvdata(dev);
-	काष्ठा occ_poll_response_header *header;
-	काष्ठा sensor_device_attribute *sattr = to_sensor_dev_attr(attr);
+static ssize_t occ_sysfs_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	int rc;
+	int val = 0;
+	struct occ *occ = dev_get_drvdata(dev);
+	struct occ_poll_response_header *header;
+	struct sensor_device_attribute *sattr = to_sensor_dev_attr(attr);
 
 	rc = occ_update_response(occ);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	header = (काष्ठा occ_poll_response_header *)occ->resp.data;
+	header = (struct occ_poll_response_header *)occ->resp.data;
 
-	चयन (sattr->index) अणु
-	हाल 0:
+	switch (sattr->index) {
+	case 0:
 		val = !!(header->status & OCC_STAT_MASTER);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		val = !!(header->status & OCC_STAT_ACTIVE);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		val = !!(header->ext_status & OCC_EXT_STAT_DVFS_OT);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		val = !!(header->ext_status & OCC_EXT_STAT_DVFS_POWER);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		val = !!(header->ext_status & OCC_EXT_STAT_MEM_THROTTLE);
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		val = !!(header->ext_status & OCC_EXT_STAT_QUICK_DROP);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		val = header->occ_state;
-		अवरोध;
-	हाल 7:
-		अगर (header->status & OCC_STAT_MASTER)
+		break;
+	case 7:
+		if (header->status & OCC_STAT_MASTER)
 			val = hweight8(header->occs_present);
-		अन्यथा
+		else
 			val = 1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार occ_error_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा occ *occ = dev_get_drvdata(dev);
+static ssize_t occ_error_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct occ *occ = dev_get_drvdata(dev);
 
 	occ_update_response(occ);
 
-	वापस sysfs_emit(buf, "%d\n", occ->error);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", occ->error);
+}
 
-अटल SENSOR_DEVICE_ATTR(occ_master, 0444, occ_sysfs_show, शून्य, 0);
-अटल SENSOR_DEVICE_ATTR(occ_active, 0444, occ_sysfs_show, शून्य, 1);
-अटल SENSOR_DEVICE_ATTR(occ_dvfs_overtemp, 0444, occ_sysfs_show, शून्य, 2);
-अटल SENSOR_DEVICE_ATTR(occ_dvfs_घातer, 0444, occ_sysfs_show, शून्य, 3);
-अटल SENSOR_DEVICE_ATTR(occ_mem_throttle, 0444, occ_sysfs_show, शून्य, 4);
-अटल SENSOR_DEVICE_ATTR(occ_quick_pwr_drop, 0444, occ_sysfs_show, शून्य, 5);
-अटल SENSOR_DEVICE_ATTR(occ_state, 0444, occ_sysfs_show, शून्य, 6);
-अटल SENSOR_DEVICE_ATTR(occs_present, 0444, occ_sysfs_show, शून्य, 7);
-अटल DEVICE_ATTR_RO(occ_error);
+static SENSOR_DEVICE_ATTR(occ_master, 0444, occ_sysfs_show, NULL, 0);
+static SENSOR_DEVICE_ATTR(occ_active, 0444, occ_sysfs_show, NULL, 1);
+static SENSOR_DEVICE_ATTR(occ_dvfs_overtemp, 0444, occ_sysfs_show, NULL, 2);
+static SENSOR_DEVICE_ATTR(occ_dvfs_power, 0444, occ_sysfs_show, NULL, 3);
+static SENSOR_DEVICE_ATTR(occ_mem_throttle, 0444, occ_sysfs_show, NULL, 4);
+static SENSOR_DEVICE_ATTR(occ_quick_pwr_drop, 0444, occ_sysfs_show, NULL, 5);
+static SENSOR_DEVICE_ATTR(occ_state, 0444, occ_sysfs_show, NULL, 6);
+static SENSOR_DEVICE_ATTR(occs_present, 0444, occ_sysfs_show, NULL, 7);
+static DEVICE_ATTR_RO(occ_error);
 
-अटल काष्ठा attribute *occ_attributes[] = अणु
+static struct attribute *occ_attributes[] = {
 	&sensor_dev_attr_occ_master.dev_attr.attr,
 	&sensor_dev_attr_occ_active.dev_attr.attr,
 	&sensor_dev_attr_occ_dvfs_overtemp.dev_attr.attr,
-	&sensor_dev_attr_occ_dvfs_घातer.dev_attr.attr,
+	&sensor_dev_attr_occ_dvfs_power.dev_attr.attr,
 	&sensor_dev_attr_occ_mem_throttle.dev_attr.attr,
 	&sensor_dev_attr_occ_quick_pwr_drop.dev_attr.attr,
 	&sensor_dev_attr_occ_state.dev_attr.attr,
 	&sensor_dev_attr_occs_present.dev_attr.attr,
 	&dev_attr_occ_error.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group occ_sysfs = अणु
+static const struct attribute_group occ_sysfs = {
 	.attrs = occ_attributes,
-पूर्ण;
+};
 
-व्योम occ_sysfs_poll_करोne(काष्ठा occ *occ)
-अणु
-	स्थिर अक्षर *name;
-	काष्ठा occ_poll_response_header *header =
-		(काष्ठा occ_poll_response_header *)occ->resp.data;
+void occ_sysfs_poll_done(struct occ *occ)
+{
+	const char *name;
+	struct occ_poll_response_header *header =
+		(struct occ_poll_response_header *)occ->resp.data;
 
 	/*
 	 * On the first poll response, we haven't yet created the sysfs
-	 * attributes, so करोn't make any notअगरy calls.
+	 * attributes, so don't make any notify calls.
 	 */
-	अगर (!occ->hwmon)
-		जाओ करोne;
+	if (!occ->hwmon)
+		goto done;
 
-	अगर ((header->status & OCC_STAT_MASTER) !=
-	    (occ->prev_stat & OCC_STAT_MASTER)) अणु
+	if ((header->status & OCC_STAT_MASTER) !=
+	    (occ->prev_stat & OCC_STAT_MASTER)) {
 		name = sensor_dev_attr_occ_master.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->status & OCC_STAT_ACTIVE) !=
-	    (occ->prev_stat & OCC_STAT_ACTIVE)) अणु
+	if ((header->status & OCC_STAT_ACTIVE) !=
+	    (occ->prev_stat & OCC_STAT_ACTIVE)) {
 		name = sensor_dev_attr_occ_active.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->ext_status & OCC_EXT_STAT_DVFS_OT) !=
-	    (occ->prev_ext_stat & OCC_EXT_STAT_DVFS_OT)) अणु
+	if ((header->ext_status & OCC_EXT_STAT_DVFS_OT) !=
+	    (occ->prev_ext_stat & OCC_EXT_STAT_DVFS_OT)) {
 		name = sensor_dev_attr_occ_dvfs_overtemp.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->ext_status & OCC_EXT_STAT_DVFS_POWER) !=
-	    (occ->prev_ext_stat & OCC_EXT_STAT_DVFS_POWER)) अणु
-		name = sensor_dev_attr_occ_dvfs_घातer.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+	if ((header->ext_status & OCC_EXT_STAT_DVFS_POWER) !=
+	    (occ->prev_ext_stat & OCC_EXT_STAT_DVFS_POWER)) {
+		name = sensor_dev_attr_occ_dvfs_power.dev_attr.attr.name;
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->ext_status & OCC_EXT_STAT_MEM_THROTTLE) !=
-	    (occ->prev_ext_stat & OCC_EXT_STAT_MEM_THROTTLE)) अणु
+	if ((header->ext_status & OCC_EXT_STAT_MEM_THROTTLE) !=
+	    (occ->prev_ext_stat & OCC_EXT_STAT_MEM_THROTTLE)) {
 		name = sensor_dev_attr_occ_mem_throttle.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->ext_status & OCC_EXT_STAT_QUICK_DROP) !=
-	    (occ->prev_ext_stat & OCC_EXT_STAT_QUICK_DROP)) अणु
+	if ((header->ext_status & OCC_EXT_STAT_QUICK_DROP) !=
+	    (occ->prev_ext_stat & OCC_EXT_STAT_QUICK_DROP)) {
 		name = sensor_dev_attr_occ_quick_pwr_drop.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर ((header->status & OCC_STAT_MASTER) &&
-	    header->occs_present != occ->prev_occs_present) अणु
+	if ((header->status & OCC_STAT_MASTER) &&
+	    header->occs_present != occ->prev_occs_present) {
 		name = sensor_dev_attr_occs_present.dev_attr.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	अगर (occ->error && occ->error != occ->prev_error) अणु
+	if (occ->error && occ->error != occ->prev_error) {
 		name = dev_attr_occ_error.attr.name;
-		sysfs_notअगरy(&occ->bus_dev->kobj, शून्य, name);
-	पूर्ण
+		sysfs_notify(&occ->bus_dev->kobj, NULL, name);
+	}
 
-	/* no notअगरications क्रम OCC state; करोesn't indicate error condition */
+	/* no notifications for OCC state; doesn't indicate error condition */
 
-करोne:
+done:
 	occ->prev_error = occ->error;
 	occ->prev_stat = header->status;
 	occ->prev_ext_stat = header->ext_status;
 	occ->prev_occs_present = header->occs_present;
-पूर्ण
+}
 
-पूर्णांक occ_setup_sysfs(काष्ठा occ *occ)
-अणु
-	वापस sysfs_create_group(&occ->bus_dev->kobj, &occ_sysfs);
-पूर्ण
+int occ_setup_sysfs(struct occ *occ)
+{
+	return sysfs_create_group(&occ->bus_dev->kobj, &occ_sysfs);
+}
 
-व्योम occ_shutकरोwn(काष्ठा occ *occ)
-अणु
-	sysfs_हटाओ_group(&occ->bus_dev->kobj, &occ_sysfs);
-पूर्ण
-EXPORT_SYMBOL_GPL(occ_shutकरोwn);
+void occ_shutdown(struct occ *occ)
+{
+	sysfs_remove_group(&occ->bus_dev->kobj, &occ_sysfs);
+}
+EXPORT_SYMBOL_GPL(occ_shutdown);

@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2010 Freescale Semiconductor, Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/पन.स>
-#समावेश "pm.h"
+#include <linux/kernel.h>
+#include <linux/suspend.h>
+#include <linux/io.h>
+#include "pm.h"
 
-अटल पूर्णांक mxs_suspend_enter(suspend_state_t state)
-अणु
-	चयन (state) अणु
-	हाल PM_SUSPEND_MEM:
-		cpu_करो_idle();
-		अवरोध;
+static int mxs_suspend_enter(suspend_state_t state)
+{
+	switch (state) {
+	case PM_SUSPEND_MEM:
+		cpu_do_idle();
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops mxs_suspend_ops = अणु
+static const struct platform_suspend_ops mxs_suspend_ops = {
 	.enter = mxs_suspend_enter,
 	.valid = suspend_valid_only_mem,
-पूर्ण;
+};
 
-व्योम __init mxs_pm_init(व्योम)
-अणु
+void __init mxs_pm_init(void)
+{
 	suspend_set_ops(&mxs_suspend_ops);
-पूर्ण
+}

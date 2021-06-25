@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  linux/arch/arm/kernel/isa.c
  *
  *  Copyright (C) 1999 Phil Blundell
  *
  *  ISA shared memory and I/O port support, and is required to support
- *  iopl, inb, outb and मित्रs in userspace via glibc emulation.
+ *  iopl, inb, outb and friends in userspace via glibc emulation.
  */
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/types.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
+#include <linux/stddef.h>
+#include <linux/types.h>
+#include <linux/fs.h>
+#include <linux/sysctl.h>
+#include <linux/init.h>
+#include <linux/io.h>
 
-अटल अचिन्हित पूर्णांक isa_membase, isa_portbase, isa_portshअगरt;
+static unsigned int isa_membase, isa_portbase, isa_portshift;
 
-अटल काष्ठा ctl_table ctl_isa_vars[4] = अणु
-	अणु
+static struct ctl_table ctl_isa_vars[4] = {
+	{
 		.procname	= "membase",
 		.data		= &isa_membase, 
-		.maxlen		= माप(isa_membase),
+		.maxlen		= sizeof(isa_membase),
 		.mode		= 0444,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण, अणु
+		.proc_handler	= proc_dointvec,
+	}, {
 		.procname	= "portbase",
 		.data		= &isa_portbase, 
-		.maxlen		= माप(isa_portbase),
+		.maxlen		= sizeof(isa_portbase),
 		.mode		= 0444,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण, अणु
+		.proc_handler	= proc_dointvec,
+	}, {
 		.procname	= "portshift",
-		.data		= &isa_portshअगरt, 
-		.maxlen		= माप(isa_portshअगरt),
+		.data		= &isa_portshift, 
+		.maxlen		= sizeof(isa_portshift),
 		.mode		= 0444,
-		.proc_handler	= proc_करोपूर्णांकvec,
-	पूर्ण, अणुपूर्ण
-पूर्ण;
+		.proc_handler	= proc_dointvec,
+	}, {}
+};
 
-अटल काष्ठा ctl_table_header *isa_sysctl_header;
+static struct ctl_table_header *isa_sysctl_header;
 
-अटल काष्ठा ctl_table ctl_isa[2] = अणु
-	अणु
+static struct ctl_table ctl_isa[2] = {
+	{
 		.procname	= "isa",
 		.mode		= 0555,
 		.child		= ctl_isa_vars,
-	पूर्ण, अणुपूर्ण
-पूर्ण;
+	}, {}
+};
 
-अटल काष्ठा ctl_table ctl_bus[2] = अणु
-	अणु
+static struct ctl_table ctl_bus[2] = {
+	{
 		.procname	= "bus",
 		.mode		= 0555,
 		.child		= ctl_isa,
-	पूर्ण, अणुपूर्ण
-पूर्ण;
+	}, {}
+};
 
-व्योम __init
-रेजिस्टर_isa_ports(अचिन्हित पूर्णांक membase, अचिन्हित पूर्णांक portbase, अचिन्हित पूर्णांक portshअगरt)
-अणु
+void __init
+register_isa_ports(unsigned int membase, unsigned int portbase, unsigned int portshift)
+{
 	isa_membase = membase;
 	isa_portbase = portbase;
-	isa_portshअगरt = portshअगरt;
-	isa_sysctl_header = रेजिस्टर_sysctl_table(ctl_bus);
-पूर्ण
+	isa_portshift = portshift;
+	isa_sysctl_header = register_sysctl_table(ctl_bus);
+}

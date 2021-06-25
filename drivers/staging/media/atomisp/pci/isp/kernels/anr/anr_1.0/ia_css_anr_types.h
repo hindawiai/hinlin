@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_ANR_TYPES_H
-#घोषणा __IA_CSS_ANR_TYPES_H
+#ifndef __IA_CSS_ANR_TYPES_H
+#define __IA_CSS_ANR_TYPES_H
 
 /* @file
-* CSS-API header file क्रम Advanced Noise Reduction kernel v1
+* CSS-API header file for Advanced Noise Reduction kernel v1
 */
 
-/* Application specअगरic DMA settings  */
-#घोषणा ANR_BPP                 10
-#घोषणा ANR_ELEMENT_BITS        ((CEIL_DIV(ANR_BPP, 8)) * 8)
+/* Application specific DMA settings  */
+#define ANR_BPP                 10
+#define ANR_ELEMENT_BITS        ((CEIL_DIV(ANR_BPP, 8)) * 8)
 
 /* Advanced Noise Reduction configuration.
  *  This is also known as Low-Light.
  */
-काष्ठा ia_css_anr_config अणु
+struct ia_css_anr_config {
 	s32 threshold; /** Threshold */
 	s32 thresholds[4 * 4 * 4];
 	s32 factors[3];
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __IA_CSS_ANR_TYPES_H */
+#endif /* __IA_CSS_ANR_TYPES_H */

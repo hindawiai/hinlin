@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MACH_MMP_CLK_RESET_H
-#घोषणा __MACH_MMP_CLK_RESET_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MACH_MMP_CLK_RESET_H
+#define __MACH_MMP_CLK_RESET_H
 
-#समावेश <linux/reset-controller.h>
+#include <linux/reset-controller.h>
 
-#घोषणा MMP_RESET_INVERT	1
+#define MMP_RESET_INVERT	1
 
-काष्ठा mmp_clk_reset_cell अणु
-	अचिन्हित पूर्णांक clk_id;
-	व्योम __iomem *reg;
+struct mmp_clk_reset_cell {
+	unsigned int clk_id;
+	void __iomem *reg;
 	u32 bits;
-	अचिन्हित पूर्णांक flags;
+	unsigned int flags;
 	spinlock_t *lock;
-पूर्ण;
+};
 
-काष्ठा mmp_clk_reset_unit अणु
-	काष्ठा reset_controller_dev rcdev;
-	काष्ठा mmp_clk_reset_cell *cells;
-पूर्ण;
+struct mmp_clk_reset_unit {
+	struct reset_controller_dev rcdev;
+	struct mmp_clk_reset_cell *cells;
+};
 
-#अगर_घोषित CONFIG_RESET_CONTROLLER
-व्योम mmp_clk_reset_रेजिस्टर(काष्ठा device_node *np,
-			काष्ठा mmp_clk_reset_cell *cells, पूर्णांक nr_resets);
-#अन्यथा
-अटल अंतरभूत व्योम mmp_clk_reset_रेजिस्टर(काष्ठा device_node *np,
-			काष्ठा mmp_clk_reset_cell *cells, पूर्णांक nr_resets)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_RESET_CONTROLLER
+void mmp_clk_reset_register(struct device_node *np,
+			struct mmp_clk_reset_cell *cells, int nr_resets);
+#else
+static inline void mmp_clk_reset_register(struct device_node *np,
+			struct mmp_clk_reset_cell *cells, int nr_resets)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

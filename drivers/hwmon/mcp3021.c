@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * mcp3021.c - driver क्रम Microchip MCP3021 and MCP3221
+ * mcp3021.c - driver for Microchip MCP3021 and MCP3221
  *
  * Copyright (C) 2008-2009, 2012 Freescale Semiconductor, Inc.
- * Author: Mingkai Hu <Mingkai.hu@मुक्तscale.com>
+ * Author: Mingkai Hu <Mingkai.hu@freescale.com>
  * Reworked by Sven Schuchmann <schuchmann@schleissheimer.de>
  * DT support added by Clemens Gruber <clemens.gruber@pqgruber.com>
  *
  * This driver export the value of analog input voltage to sysfs, the
- * voltage unit is mV. Through the sysfs पूर्णांकerface, lm-sensors tool
+ * voltage unit is mV. Through the sysfs interface, lm-sensors tool
  * can also display the input voltage.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/err.h>
-#समावेश <linux/device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/hwmon.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/err.h>
+#include <linux/device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 /* Vdd / reference voltage in millivolt */
-#घोषणा MCP3021_VDD_REF_MAX	5500
-#घोषणा MCP3021_VDD_REF_MIN	2700
-#घोषणा MCP3021_VDD_REF_DEFAULT	3300
+#define MCP3021_VDD_REF_MAX	5500
+#define MCP3021_VDD_REF_MIN	2700
+#define MCP3021_VDD_REF_DEFAULT	3300
 
-/* output क्रमmat */
-#घोषणा MCP3021_SAR_SHIFT	2
-#घोषणा MCP3021_SAR_MASK	0x3ff
-#घोषणा MCP3021_OUTPUT_RES	10	/* 10-bit resolution */
+/* output format */
+#define MCP3021_SAR_SHIFT	2
+#define MCP3021_SAR_MASK	0x3ff
+#define MCP3021_OUTPUT_RES	10	/* 10-bit resolution */
 
-#घोषणा MCP3221_SAR_SHIFT	0
-#घोषणा MCP3221_SAR_MASK	0xfff
-#घोषणा MCP3221_OUTPUT_RES	12	/* 12-bit resolution */
+#define MCP3221_SAR_SHIFT	0
+#define MCP3221_SAR_MASK	0xfff
+#define MCP3221_OUTPUT_RES	12	/* 12-bit resolution */
 
-क्रमागत chips अणु
+enum chips {
 	mcp3021,
 	mcp3221
-पूर्ण;
+};
 
 /*
- * Client data (each client माला_लो its own)
+ * Client data (each client gets its own)
  */
-काष्ठा mcp3021_data अणु
-	काष्ठा device *hwmon_dev;
+struct mcp3021_data {
+	struct device *hwmon_dev;
 	u32 vdd;        /* supply and reference voltage in millivolt */
-	u16 sar_shअगरt;
+	u16 sar_shift;
 	u16 sar_mask;
 	u8 output_res;
-पूर्ण;
+};
 
-अटल पूर्णांक mcp3021_पढ़ो16(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mcp3021_data *data = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int mcp3021_read16(struct i2c_client *client)
+{
+	struct mcp3021_data *data = i2c_get_clientdata(client);
+	int ret;
 	u16 reg;
 	__be16 buf;
 
-	ret = i2c_master_recv(client, (अक्षर *)&buf, 2);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != 2)
-		वापस -EIO;
+	ret = i2c_master_recv(client, (char *)&buf, 2);
+	if (ret < 0)
+		return ret;
+	if (ret != 2)
+		return -EIO;
 
 	/* The output code of the MCP3021 is transmitted with MSB first. */
 	reg = be16_to_cpu(buf);
@@ -73,136 +72,136 @@
 	 * The ten-bit output code is composed of the lower 4-bit of the
 	 * first byte and the upper 6-bit of the second byte.
 	 */
-	reg = (reg >> data->sar_shअगरt) & data->sar_mask;
+	reg = (reg >> data->sar_shift) & data->sar_mask;
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल अंतरभूत u16 volts_from_reg(काष्ठा mcp3021_data *data, u16 val)
-अणु
-	वापस DIV_ROUND_CLOSEST(data->vdd * val, 1 << data->output_res);
-पूर्ण
+static inline u16 volts_from_reg(struct mcp3021_data *data, u16 val)
+{
+	return DIV_ROUND_CLOSEST(data->vdd * val, 1 << data->output_res);
+}
 
-अटल sमाप_प्रकार in0_input_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा mcp3021_data *data = i2c_get_clientdata(client);
-	पूर्णांक reg, in_input;
+static ssize_t in0_input_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mcp3021_data *data = i2c_get_clientdata(client);
+	int reg, in_input;
 
-	reg = mcp3021_पढ़ो16(client);
-	अगर (reg < 0)
-		वापस reg;
+	reg = mcp3021_read16(client);
+	if (reg < 0)
+		return reg;
 
 	in_input = volts_from_reg(data, reg);
 
-	वापस प्र_लिखो(buf, "%d\n", in_input);
-पूर्ण
+	return sprintf(buf, "%d\n", in_input);
+}
 
-अटल DEVICE_ATTR_RO(in0_input);
+static DEVICE_ATTR_RO(in0_input);
 
-अटल स्थिर काष्ठा i2c_device_id mcp3021_id[];
+static const struct i2c_device_id mcp3021_id[];
 
-अटल पूर्णांक mcp3021_probe(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक err;
-	काष्ठा mcp3021_data *data = शून्य;
-	काष्ठा device_node *np = client->dev.of_node;
+static int mcp3021_probe(struct i2c_client *client)
+{
+	int err;
+	struct mcp3021_data *data = NULL;
+	struct device_node *np = client->dev.of_node;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		वापस -ENODEV;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		return -ENODEV;
 
-	data = devm_kzalloc(&client->dev, माप(काष्ठा mcp3021_data),
+	data = devm_kzalloc(&client->dev, sizeof(struct mcp3021_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 
-	अगर (np) अणु
-		अगर (!of_property_पढ़ो_u32(np, "reference-voltage-microvolt",
+	if (np) {
+		if (!of_property_read_u32(np, "reference-voltage-microvolt",
 					  &data->vdd))
 			data->vdd /= 1000;
-		अन्यथा
+		else
 			data->vdd = MCP3021_VDD_REF_DEFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 *pdata = dev_get_platdata(&client->dev);
 
-		अगर (pdata)
+		if (pdata)
 			data->vdd = *pdata;
-		अन्यथा
+		else
 			data->vdd = MCP3021_VDD_REF_DEFAULT;
-	पूर्ण
+	}
 
-	चयन (i2c_match_id(mcp3021_id, client)->driver_data) अणु
-	हाल mcp3021:
-		data->sar_shअगरt = MCP3021_SAR_SHIFT;
+	switch (i2c_match_id(mcp3021_id, client)->driver_data) {
+	case mcp3021:
+		data->sar_shift = MCP3021_SAR_SHIFT;
 		data->sar_mask = MCP3021_SAR_MASK;
 		data->output_res = MCP3021_OUTPUT_RES;
-		अवरोध;
+		break;
 
-	हाल mcp3221:
-		data->sar_shअगरt = MCP3221_SAR_SHIFT;
+	case mcp3221:
+		data->sar_shift = MCP3221_SAR_SHIFT;
 		data->sar_mask = MCP3221_SAR_MASK;
 		data->output_res = MCP3221_OUTPUT_RES;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (data->vdd > MCP3021_VDD_REF_MAX || data->vdd < MCP3021_VDD_REF_MIN)
-		वापस -EINVAL;
+	if (data->vdd > MCP3021_VDD_REF_MAX || data->vdd < MCP3021_VDD_REF_MIN)
+		return -EINVAL;
 
 	err = sysfs_create_file(&client->dev.kobj, &dev_attr_in0_input.attr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&client->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&client->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		err = PTR_ERR(data->hwmon_dev);
-		जाओ निकास_हटाओ;
-	पूर्ण
+		goto exit_remove;
+	}
 
-	वापस 0;
+	return 0;
 
-निकास_हटाओ:
-	sysfs_हटाओ_file(&client->dev.kobj, &dev_attr_in0_input.attr);
-	वापस err;
-पूर्ण
+exit_remove:
+	sysfs_remove_file(&client->dev.kobj, &dev_attr_in0_input.attr);
+	return err;
+}
 
-अटल पूर्णांक mcp3021_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mcp3021_data *data = i2c_get_clientdata(client);
+static int mcp3021_remove(struct i2c_client *client)
+{
+	struct mcp3021_data *data = i2c_get_clientdata(client);
 
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
-	sysfs_हटाओ_file(&client->dev.kobj, &dev_attr_in0_input.attr);
+	hwmon_device_unregister(data->hwmon_dev);
+	sysfs_remove_file(&client->dev.kobj, &dev_attr_in0_input.attr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id mcp3021_id[] = अणु
-	अणु "mcp3021", mcp3021 पूर्ण,
-	अणु "mcp3221", mcp3221 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id mcp3021_id[] = {
+	{ "mcp3021", mcp3021 },
+	{ "mcp3221", mcp3221 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, mcp3021_id);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id of_mcp3021_match[] = अणु
-	अणु .compatible = "microchip,mcp3021", .data = (व्योम *)mcp3021 पूर्ण,
-	अणु .compatible = "microchip,mcp3221", .data = (व्योम *)mcp3221 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id of_mcp3021_match[] = {
+	{ .compatible = "microchip,mcp3021", .data = (void *)mcp3021 },
+	{ .compatible = "microchip,mcp3221", .data = (void *)mcp3221 },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, of_mcp3021_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver mcp3021_driver = अणु
-	.driver = अणु
+static struct i2c_driver mcp3021_driver = {
+	.driver = {
 		.name = "mcp3021",
 		.of_match_table = of_match_ptr(of_mcp3021_match),
-	पूर्ण,
+	},
 	.probe_new = mcp3021_probe,
-	.हटाओ = mcp3021_हटाओ,
+	.remove = mcp3021_remove,
 	.id_table = mcp3021_id,
-पूर्ण;
+};
 
 module_i2c_driver(mcp3021_driver);
 

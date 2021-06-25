@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* SANE connection tracking helper
  * (SANE = Scanner Access Now Easy)
- * For करोcumentation about the SANE network protocol see
- * http://www.sane-project.org/hपंचांगl/करोc015.hपंचांगl
+ * For documentation about the SANE network protocol see
+ * http://www.sane-project.org/html/doc015.html
  */
 
 /* Copyright (C) 2007 Red Hat, Inc.
@@ -15,208 +14,208 @@
  *  (C) 2003 Yasuyuki Kozakai @USAGI <yasuyuki.kozakai@toshiba.co.jp>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/in.h>
-#समावेश <linux/tcp.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_helper.h>
-#समावेश <net/netfilter/nf_conntrack_expect.h>
-#समावेश <linux/netfilter/nf_conntrack_sane.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/netfilter.h>
+#include <linux/slab.h>
+#include <linux/in.h>
+#include <linux/tcp.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_helper.h>
+#include <net/netfilter/nf_conntrack_expect.h>
+#include <linux/netfilter/nf_conntrack_sane.h>
 
-#घोषणा HELPER_NAME "sane"
+#define HELPER_NAME "sane"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michal Schmidt <mschmidt@redhat.com>");
 MODULE_DESCRIPTION("SANE connection tracking helper");
 MODULE_ALIAS_NFCT_HELPER(HELPER_NAME);
 
-अटल अक्षर *sane_buffer;
+static char *sane_buffer;
 
-अटल DEFINE_SPINLOCK(nf_sane_lock);
+static DEFINE_SPINLOCK(nf_sane_lock);
 
-#घोषणा MAX_PORTS 8
-अटल u_पूर्णांक16_t ports[MAX_PORTS];
-अटल अचिन्हित पूर्णांक ports_c;
-module_param_array(ports, uलघु, &ports_c, 0400);
+#define MAX_PORTS 8
+static u_int16_t ports[MAX_PORTS];
+static unsigned int ports_c;
+module_param_array(ports, ushort, &ports_c, 0400);
 
-काष्ठा sane_request अणु
+struct sane_request {
 	__be32 RPC_code;
-#घोषणा SANE_NET_START      7   /* RPC code */
+#define SANE_NET_START      7   /* RPC code */
 
 	__be32 handle;
-पूर्ण;
+};
 
-काष्ठा sane_reply_net_start अणु
+struct sane_reply_net_start {
 	__be32 status;
-#घोषणा SANE_STATUS_SUCCESS 0
+#define SANE_STATUS_SUCCESS 0
 
 	__be16 zero;
 	__be16 port;
-	/* other fields aren't पूर्णांकeresting क्रम conntrack */
-पूर्ण;
+	/* other fields aren't interesting for conntrack */
+};
 
-अटल पूर्णांक help(काष्ठा sk_buff *skb,
-		अचिन्हित पूर्णांक protoff,
-		काष्ठा nf_conn *ct,
-		क्रमागत ip_conntrack_info ctinfo)
-अणु
-	अचिन्हित पूर्णांक dataoff, datalen;
-	स्थिर काष्ठा tcphdr *th;
-	काष्ठा tcphdr _tcph;
-	व्योम *sb_ptr;
-	पूर्णांक ret = NF_ACCEPT;
-	पूर्णांक dir = CTINFO2सूची(ctinfo);
-	काष्ठा nf_ct_sane_master *ct_sane_info = nfct_help_data(ct);
-	काष्ठा nf_conntrack_expect *exp;
-	काष्ठा nf_conntrack_tuple *tuple;
-	काष्ठा sane_request *req;
-	काष्ठा sane_reply_net_start *reply;
+static int help(struct sk_buff *skb,
+		unsigned int protoff,
+		struct nf_conn *ct,
+		enum ip_conntrack_info ctinfo)
+{
+	unsigned int dataoff, datalen;
+	const struct tcphdr *th;
+	struct tcphdr _tcph;
+	void *sb_ptr;
+	int ret = NF_ACCEPT;
+	int dir = CTINFO2DIR(ctinfo);
+	struct nf_ct_sane_master *ct_sane_info = nfct_help_data(ct);
+	struct nf_conntrack_expect *exp;
+	struct nf_conntrack_tuple *tuple;
+	struct sane_request *req;
+	struct sane_reply_net_start *reply;
 
 	/* Until there's been traffic both ways, don't look in packets. */
-	अगर (ctinfo != IP_CT_ESTABLISHED &&
+	if (ctinfo != IP_CT_ESTABLISHED &&
 	    ctinfo != IP_CT_ESTABLISHED_REPLY)
-		वापस NF_ACCEPT;
+		return NF_ACCEPT;
 
 	/* Not a full tcp header? */
-	th = skb_header_poपूर्णांकer(skb, protoff, माप(_tcph), &_tcph);
-	अगर (th == शून्य)
-		वापस NF_ACCEPT;
+	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
+	if (th == NULL)
+		return NF_ACCEPT;
 
 	/* No data? */
-	dataoff = protoff + th->करोff * 4;
-	अगर (dataoff >= skb->len)
-		वापस NF_ACCEPT;
+	dataoff = protoff + th->doff * 4;
+	if (dataoff >= skb->len)
+		return NF_ACCEPT;
 
 	datalen = skb->len - dataoff;
 
 	spin_lock_bh(&nf_sane_lock);
-	sb_ptr = skb_header_poपूर्णांकer(skb, dataoff, datalen, sane_buffer);
-	अगर (!sb_ptr) अणु
+	sb_ptr = skb_header_pointer(skb, dataoff, datalen, sane_buffer);
+	if (!sb_ptr) {
 		spin_unlock_bh(&nf_sane_lock);
-		वापस NF_ACCEPT;
-	पूर्ण
+		return NF_ACCEPT;
+	}
 
-	अगर (dir == IP_CT_सूची_ORIGINAL) अणु
-		अगर (datalen != माप(काष्ठा sane_request))
-			जाओ out;
+	if (dir == IP_CT_DIR_ORIGINAL) {
+		if (datalen != sizeof(struct sane_request))
+			goto out;
 
 		req = sb_ptr;
-		अगर (req->RPC_code != htonl(SANE_NET_START)) अणु
-			/* Not an पूर्णांकeresting command */
+		if (req->RPC_code != htonl(SANE_NET_START)) {
+			/* Not an interesting command */
 			ct_sane_info->state = SANE_STATE_NORMAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* We're पूर्णांकerested in the next reply */
+		/* We're interested in the next reply */
 		ct_sane_info->state = SANE_STATE_START_REQUESTED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Is it a reply to an unपूर्णांकeresting command? */
-	अगर (ct_sane_info->state != SANE_STATE_START_REQUESTED)
-		जाओ out;
+	/* Is it a reply to an uninteresting command? */
+	if (ct_sane_info->state != SANE_STATE_START_REQUESTED)
+		goto out;
 
 	/* It's a reply to SANE_NET_START. */
 	ct_sane_info->state = SANE_STATE_NORMAL;
 
-	अगर (datalen < माप(काष्ठा sane_reply_net_start)) अणु
+	if (datalen < sizeof(struct sane_reply_net_start)) {
 		pr_debug("NET_START reply too short\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	reply = sb_ptr;
-	अगर (reply->status != htonl(SANE_STATUS_SUCCESS)) अणु
+	if (reply->status != htonl(SANE_STATUS_SUCCESS)) {
 		/* saned refused the command */
 		pr_debug("unsuccessful SANE_STATUS = %u\n",
 			 ntohl(reply->status));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Invalid saned reply? Ignore it. */
-	अगर (reply->zero != 0)
-		जाओ out;
+	if (reply->zero != 0)
+		goto out;
 
 	exp = nf_ct_expect_alloc(ct);
-	अगर (exp == शून्य) अणु
+	if (exp == NULL) {
 		nf_ct_helper_log(skb, ct, "cannot alloc expectation");
 		ret = NF_DROP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	tuple = &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple;
+	tuple = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
 			  &tuple->src.u3, &tuple->dst.u3,
-			  IPPROTO_TCP, शून्य, &reply->port);
+			  IPPROTO_TCP, NULL, &reply->port);
 
 	pr_debug("expect: ");
 	nf_ct_dump_tuple(&exp->tuple);
 
 	/* Can't expect this?  Best to drop packet now. */
-	अगर (nf_ct_expect_related(exp, 0) != 0) अणु
+	if (nf_ct_expect_related(exp, 0) != 0) {
 		nf_ct_helper_log(skb, ct, "cannot add expectation");
 		ret = NF_DROP;
-	पूर्ण
+	}
 
 	nf_ct_expect_put(exp);
 
 out:
 	spin_unlock_bh(&nf_sane_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा nf_conntrack_helper sane[MAX_PORTS * 2] __पढ़ो_mostly;
+static struct nf_conntrack_helper sane[MAX_PORTS * 2] __read_mostly;
 
-अटल स्थिर काष्ठा nf_conntrack_expect_policy sane_exp_policy = अणु
+static const struct nf_conntrack_expect_policy sane_exp_policy = {
 	.max_expected	= 1,
-	.समयout	= 5 * 60,
-पूर्ण;
+	.timeout	= 5 * 60,
+};
 
-अटल व्योम __निकास nf_conntrack_sane_fini(व्योम)
-अणु
-	nf_conntrack_helpers_unरेजिस्टर(sane, ports_c * 2);
-	kमुक्त(sane_buffer);
-पूर्ण
+static void __exit nf_conntrack_sane_fini(void)
+{
+	nf_conntrack_helpers_unregister(sane, ports_c * 2);
+	kfree(sane_buffer);
+}
 
-अटल पूर्णांक __init nf_conntrack_sane_init(व्योम)
-अणु
-	पूर्णांक i, ret = 0;
+static int __init nf_conntrack_sane_init(void)
+{
+	int i, ret = 0;
 
-	NF_CT_HELPER_BUILD_BUG_ON(माप(काष्ठा nf_ct_sane_master));
+	NF_CT_HELPER_BUILD_BUG_ON(sizeof(struct nf_ct_sane_master));
 
-	sane_buffer = kदो_स्मृति(65536, GFP_KERNEL);
-	अगर (!sane_buffer)
-		वापस -ENOMEM;
+	sane_buffer = kmalloc(65536, GFP_KERNEL);
+	if (!sane_buffer)
+		return -ENOMEM;
 
-	अगर (ports_c == 0)
+	if (ports_c == 0)
 		ports[ports_c++] = SANE_PORT;
 
 	/* FIXME should be configurable whether IPv4 and IPv6 connections
 		 are tracked or not - YK */
-	क्रम (i = 0; i < ports_c; i++) अणु
+	for (i = 0; i < ports_c; i++) {
 		nf_ct_helper_init(&sane[2 * i], AF_INET, IPPROTO_TCP,
 				  HELPER_NAME, SANE_PORT, ports[i], ports[i],
-				  &sane_exp_policy, 0, help, शून्य,
+				  &sane_exp_policy, 0, help, NULL,
 				  THIS_MODULE);
 		nf_ct_helper_init(&sane[2 * i + 1], AF_INET6, IPPROTO_TCP,
 				  HELPER_NAME, SANE_PORT, ports[i], ports[i],
-				  &sane_exp_policy, 0, help, शून्य,
+				  &sane_exp_policy, 0, help, NULL,
 				  THIS_MODULE);
-	पूर्ण
+	}
 
-	ret = nf_conntrack_helpers_रेजिस्टर(sane, ports_c * 2);
-	अगर (ret < 0) अणु
+	ret = nf_conntrack_helpers_register(sane, ports_c * 2);
+	if (ret < 0) {
 		pr_err("failed to register helpers\n");
-		kमुक्त(sane_buffer);
-		वापस ret;
-	पूर्ण
+		kfree(sane_buffer);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 module_init(nf_conntrack_sane_init);
-module_निकास(nf_conntrack_sane_fini);
+module_exit(nf_conntrack_sane_fini);

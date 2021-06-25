@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Intel Corporation. */
 
-#समावेश "igc.h"
-#समावेश "igc_xdp.h"
+#include "igc.h"
+#include "igc_xdp.h"
 
-पूर्णांक igc_xdp_set_prog(काष्ठा igc_adapter *adapter, काष्ठा bpf_prog *prog,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_device *dev = adapter->netdev;
-	bool अगर_running = netअगर_running(dev);
-	काष्ठा bpf_prog *old_prog;
+int igc_xdp_set_prog(struct igc_adapter *adapter, struct bpf_prog *prog,
+		     struct netlink_ext_ack *extack)
+{
+	struct net_device *dev = adapter->netdev;
+	bool if_running = netif_running(dev);
+	struct bpf_prog *old_prog;
 
-	अगर (dev->mtu > ETH_DATA_LEN) अणु
-		/* For now, the driver करोesn't support XDP functionality with
-		 * jumbo frames so we वापस error.
+	if (dev->mtu > ETH_DATA_LEN) {
+		/* For now, the driver doesn't support XDP functionality with
+		 * jumbo frames so we return error.
 		 */
 		NL_SET_ERR_MSG_MOD(extack, "Jumbo frames not supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (अगर_running)
-		igc_बंद(dev);
+	if (if_running)
+		igc_close(dev);
 
 	old_prog = xchg(&adapter->xdp_prog, prog);
-	अगर (old_prog)
+	if (old_prog)
 		bpf_prog_put(old_prog);
 
-	अगर (अगर_running)
-		igc_खोलो(dev);
+	if (if_running)
+		igc_open(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक igc_xdp_रेजिस्टर_rxq_info(काष्ठा igc_ring *ring)
-अणु
-	काष्ठा net_device *dev = ring->netdev;
-	पूर्णांक err;
+int igc_xdp_register_rxq_info(struct igc_ring *ring)
+{
+	struct net_device *dev = ring->netdev;
+	int err;
 
 	err = xdp_rxq_info_reg(&ring->xdp_rxq, dev, ring->queue_index, 0);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(dev, "Failed to register xdp rxq info\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = xdp_rxq_info_reg_mem_model(&ring->xdp_rxq, MEM_TYPE_PAGE_SHARED,
-					 शून्य);
-	अगर (err) अणु
+					 NULL);
+	if (err) {
 		netdev_err(dev, "Failed to register xdp rxq mem model\n");
 		xdp_rxq_info_unreg(&ring->xdp_rxq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम igc_xdp_unरेजिस्टर_rxq_info(काष्ठा igc_ring *ring)
-अणु
+void igc_xdp_unregister_rxq_info(struct igc_ring *ring)
+{
 	xdp_rxq_info_unreg(&ring->xdp_rxq);
-पूर्ण
+}

@@ -1,345 +1,344 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  acpi_bus.c - ACPI Bus Driver ($Revision: 80 $)
  *
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: " fmt
+#define pr_fmt(fmt) "ACPI: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/device.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/delay.h>
-#अगर_घोषित CONFIG_X86
-#समावेश <यंत्र/mpspec.h>
-#समावेश <linux/dmi.h>
-#पूर्ण_अगर
-#समावेश <linux/acpi_iort.h>
-#समावेश <linux/pci.h>
-#समावेश <acpi/apei.h>
-#समावेश <linux/suspend.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/sched.h>
+#include <linux/pm.h>
+#include <linux/device.h>
+#include <linux/proc_fs.h>
+#include <linux/acpi.h>
+#include <linux/slab.h>
+#include <linux/regulator/machine.h>
+#include <linux/workqueue.h>
+#include <linux/reboot.h>
+#include <linux/delay.h>
+#ifdef CONFIG_X86
+#include <asm/mpspec.h>
+#include <linux/dmi.h>
+#endif
+#include <linux/acpi_iort.h>
+#include <linux/pci.h>
+#include <acpi/apei.h>
+#include <linux/suspend.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-काष्ठा acpi_device *acpi_root;
-काष्ठा proc_dir_entry *acpi_root_dir;
+struct acpi_device *acpi_root;
+struct proc_dir_entry *acpi_root_dir;
 EXPORT_SYMBOL(acpi_root_dir);
 
-#अगर_घोषित CONFIG_X86
-#अगर_घोषित CONFIG_ACPI_CUSTOM_DSDT
-अटल अंतरभूत पूर्णांक set_copy_dsdt(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक set_copy_dsdt(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
+#ifdef CONFIG_X86
+#ifdef CONFIG_ACPI_CUSTOM_DSDT
+static inline int set_copy_dsdt(const struct dmi_system_id *id)
+{
+	return 0;
+}
+#else
+static int set_copy_dsdt(const struct dmi_system_id *id)
+{
 	pr_notice("%s detected - force copy of DSDT to local memory\n", id->ident);
 	acpi_gbl_copy_dsdt_locally = 1;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id dsdt_dmi_table[] __initस्थिर = अणु
+static const struct dmi_system_id dsdt_dmi_table[] __initconst = {
 	/*
 	 * Invoke DSDT corruption work-around on all Toshiba Satellite.
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=14679
 	 */
-	अणु
+	{
 	 .callback = set_copy_dsdt,
 	 .ident = "TOSHIBA Satellite",
-	 .matches = अणु
+	 .matches = {
 		DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "Satellite"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-#पूर्ण_अगर
+		},
+	},
+	{}
+};
+#endif
 
 /* --------------------------------------------------------------------------
                                 Device Management
    -------------------------------------------------------------------------- */
 
 acpi_status acpi_bus_get_status_handle(acpi_handle handle,
-				       अचिन्हित दीर्घ दीर्घ *sta)
-अणु
+				       unsigned long long *sta)
+{
 	acpi_status status;
 
-	status = acpi_evaluate_पूर्णांकeger(handle, "_STA", शून्य, sta);
-	अगर (ACPI_SUCCESS(status))
-		वापस AE_OK;
+	status = acpi_evaluate_integer(handle, "_STA", NULL, sta);
+	if (ACPI_SUCCESS(status))
+		return AE_OK;
 
-	अगर (status == AE_NOT_FOUND) अणु
+	if (status == AE_NOT_FOUND) {
 		*sta = ACPI_STA_DEVICE_PRESENT | ACPI_STA_DEVICE_ENABLED |
 		       ACPI_STA_DEVICE_UI      | ACPI_STA_DEVICE_FUNCTIONING;
-		वापस AE_OK;
-	पूर्ण
-	वापस status;
-पूर्ण
+		return AE_OK;
+	}
+	return status;
+}
 EXPORT_SYMBOL_GPL(acpi_bus_get_status_handle);
 
-पूर्णांक acpi_bus_get_status(काष्ठा acpi_device *device)
-अणु
+int acpi_bus_get_status(struct acpi_device *device)
+{
 	acpi_status status;
-	अचिन्हित दीर्घ दीर्घ sta;
+	unsigned long long sta;
 
-	अगर (acpi_device_always_present(device)) अणु
+	if (acpi_device_always_present(device)) {
 		acpi_set_device_status(device, ACPI_STA_DEFAULT);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Battery devices must have their deps met beक्रमe calling _STA */
-	अगर (acpi_device_is_battery(device) && device->dep_unmet) अणु
+	/* Battery devices must have their deps met before calling _STA */
+	if (acpi_device_is_battery(device) && device->dep_unmet) {
 		acpi_set_device_status(device, 0);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	status = acpi_bus_get_status_handle(device->handle, &sta);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
 	acpi_set_device_status(device, sta);
 
-	अगर (device->status.functional && !device->status.present) अणु
+	if (device->status.functional && !device->status.present) {
 		pr_debug("Device [%s] status [%08x]: functional but not present\n",
 			 device->pnp.bus_id, (u32)sta);
-	पूर्ण
+	}
 
 	pr_debug("Device [%s] status [%08x]\n", device->pnp.bus_id, (u32)sta);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(acpi_bus_get_status);
 
-व्योम acpi_bus_निजी_data_handler(acpi_handle handle,
-				   व्योम *context)
-अणु
-	वापस;
-पूर्ण
-EXPORT_SYMBOL(acpi_bus_निजी_data_handler);
+void acpi_bus_private_data_handler(acpi_handle handle,
+				   void *context)
+{
+	return;
+}
+EXPORT_SYMBOL(acpi_bus_private_data_handler);
 
-पूर्णांक acpi_bus_attach_निजी_data(acpi_handle handle, व्योम *data)
-अणु
+int acpi_bus_attach_private_data(acpi_handle handle, void *data)
+{
 	acpi_status status;
 
 	status = acpi_attach_data(handle,
-			acpi_bus_निजी_data_handler, data);
-	अगर (ACPI_FAILURE(status)) अणु
+			acpi_bus_private_data_handler, data);
+	if (ACPI_FAILURE(status)) {
 		acpi_handle_debug(handle, "Error attaching device data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_bus_attach_निजी_data);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(acpi_bus_attach_private_data);
 
-पूर्णांक acpi_bus_get_निजी_data(acpi_handle handle, व्योम **data)
-अणु
+int acpi_bus_get_private_data(acpi_handle handle, void **data)
+{
 	acpi_status status;
 
-	अगर (!data)
-		वापस -EINVAL;
+	if (!data)
+		return -EINVAL;
 
-	status = acpi_get_data(handle, acpi_bus_निजी_data_handler, data);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_get_data(handle, acpi_bus_private_data_handler, data);
+	if (ACPI_FAILURE(status)) {
 		acpi_handle_debug(handle, "No context for object\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_bus_get_निजी_data);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(acpi_bus_get_private_data);
 
-व्योम acpi_bus_detach_निजी_data(acpi_handle handle)
-अणु
-	acpi_detach_data(handle, acpi_bus_निजी_data_handler);
-पूर्ण
-EXPORT_SYMBOL_GPL(acpi_bus_detach_निजी_data);
+void acpi_bus_detach_private_data(acpi_handle handle)
+{
+	acpi_detach_data(handle, acpi_bus_private_data_handler);
+}
+EXPORT_SYMBOL_GPL(acpi_bus_detach_private_data);
 
-अटल व्योम acpi_prपूर्णांक_osc_error(acpi_handle handle,
-				 काष्ठा acpi_osc_context *context, अक्षर *error)
-अणु
-	पूर्णांक i;
+static void acpi_print_osc_error(acpi_handle handle,
+				 struct acpi_osc_context *context, char *error)
+{
+	int i;
 
 	acpi_handle_debug(handle, "(%s): %s\n", context->uuid_str, error);
 
 	pr_debug("_OSC request data:");
-	क्रम (i = 0; i < context->cap.length; i += माप(u32))
-		pr_debug(" %x", *((u32 *)(context->cap.poपूर्णांकer + i)));
+	for (i = 0; i < context->cap.length; i += sizeof(u32))
+		pr_debug(" %x", *((u32 *)(context->cap.pointer + i)));
 
 	pr_debug("\n");
-पूर्ण
+}
 
-acpi_status acpi_run_osc(acpi_handle handle, काष्ठा acpi_osc_context *context)
-अणु
+acpi_status acpi_run_osc(acpi_handle handle, struct acpi_osc_context *context)
+{
 	acpi_status status;
-	काष्ठा acpi_object_list input;
-	जोड़ acpi_object in_params[4];
-	जोड़ acpi_object *out_obj;
+	struct acpi_object_list input;
+	union acpi_object in_params[4];
+	union acpi_object *out_obj;
 	guid_t guid;
 	u32 errors;
-	काष्ठा acpi_buffer output = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	struct acpi_buffer output = {ACPI_ALLOCATE_BUFFER, NULL};
 
-	अगर (!context)
-		वापस AE_ERROR;
-	अगर (guid_parse(context->uuid_str, &guid))
-		वापस AE_ERROR;
+	if (!context)
+		return AE_ERROR;
+	if (guid_parse(context->uuid_str, &guid))
+		return AE_ERROR;
 	context->ret.length = ACPI_ALLOCATE_BUFFER;
-	context->ret.poपूर्णांकer = शून्य;
+	context->ret.pointer = NULL;
 
 	/* Setting up input parameters */
 	input.count = 4;
-	input.poपूर्णांकer = in_params;
+	input.pointer = in_params;
 	in_params[0].type 		= ACPI_TYPE_BUFFER;
 	in_params[0].buffer.length 	= 16;
-	in_params[0].buffer.poपूर्णांकer	= (u8 *)&guid;
+	in_params[0].buffer.pointer	= (u8 *)&guid;
 	in_params[1].type 		= ACPI_TYPE_INTEGER;
-	in_params[1].पूर्णांकeger.value 	= context->rev;
+	in_params[1].integer.value 	= context->rev;
 	in_params[2].type 		= ACPI_TYPE_INTEGER;
-	in_params[2].पूर्णांकeger.value	= context->cap.length/माप(u32);
+	in_params[2].integer.value	= context->cap.length/sizeof(u32);
 	in_params[3].type		= ACPI_TYPE_BUFFER;
 	in_params[3].buffer.length 	= context->cap.length;
-	in_params[3].buffer.poपूर्णांकer 	= context->cap.poपूर्णांकer;
+	in_params[3].buffer.pointer 	= context->cap.pointer;
 
 	status = acpi_evaluate_object(handle, "_OSC", &input, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	अगर (!output.length)
-		वापस AE_शून्य_OBJECT;
+	if (!output.length)
+		return AE_NULL_OBJECT;
 
-	out_obj = output.poपूर्णांकer;
-	अगर (out_obj->type != ACPI_TYPE_BUFFER
-		|| out_obj->buffer.length != context->cap.length) अणु
-		acpi_prपूर्णांक_osc_error(handle, context,
+	out_obj = output.pointer;
+	if (out_obj->type != ACPI_TYPE_BUFFER
+		|| out_obj->buffer.length != context->cap.length) {
+		acpi_print_osc_error(handle, context,
 			"_OSC evaluation returned wrong type");
 		status = AE_TYPE;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 	/* Need to ignore the bit0 in result code */
-	errors = *((u32 *)out_obj->buffer.poपूर्णांकer) & ~(1 << 0);
-	अगर (errors) अणु
-		अगर (errors & OSC_REQUEST_ERROR)
-			acpi_prपूर्णांक_osc_error(handle, context,
+	errors = *((u32 *)out_obj->buffer.pointer) & ~(1 << 0);
+	if (errors) {
+		if (errors & OSC_REQUEST_ERROR)
+			acpi_print_osc_error(handle, context,
 				"_OSC request failed");
-		अगर (errors & OSC_INVALID_UUID_ERROR)
-			acpi_prपूर्णांक_osc_error(handle, context,
+		if (errors & OSC_INVALID_UUID_ERROR)
+			acpi_print_osc_error(handle, context,
 				"_OSC invalid UUID");
-		अगर (errors & OSC_INVALID_REVISION_ERROR)
-			acpi_prपूर्णांक_osc_error(handle, context,
+		if (errors & OSC_INVALID_REVISION_ERROR)
+			acpi_print_osc_error(handle, context,
 				"_OSC invalid revision");
-		अगर (errors & OSC_CAPABILITIES_MASK_ERROR) अणु
-			अगर (((u32 *)context->cap.poपूर्णांकer)[OSC_QUERY_DWORD]
+		if (errors & OSC_CAPABILITIES_MASK_ERROR) {
+			if (((u32 *)context->cap.pointer)[OSC_QUERY_DWORD]
 			    & OSC_QUERY_ENABLE)
-				जाओ out_success;
+				goto out_success;
 			status = AE_SUPPORT;
-			जाओ out_kमुक्त;
-		पूर्ण
+			goto out_kfree;
+		}
 		status = AE_ERROR;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 out_success:
 	context->ret.length = out_obj->buffer.length;
-	context->ret.poपूर्णांकer = kmemdup(out_obj->buffer.poपूर्णांकer,
+	context->ret.pointer = kmemdup(out_obj->buffer.pointer,
 				       context->ret.length, GFP_KERNEL);
-	अगर (!context->ret.poपूर्णांकer) अणु
+	if (!context->ret.pointer) {
 		status =  AE_NO_MEMORY;
-		जाओ out_kमुक्त;
-	पूर्ण
+		goto out_kfree;
+	}
 	status =  AE_OK;
 
-out_kमुक्त:
-	kमुक्त(output.poपूर्णांकer);
-	अगर (status != AE_OK)
-		context->ret.poपूर्णांकer = शून्य;
-	वापस status;
-पूर्ण
+out_kfree:
+	kfree(output.pointer);
+	if (status != AE_OK)
+		context->ret.pointer = NULL;
+	return status;
+}
 EXPORT_SYMBOL(acpi_run_osc);
 
 bool osc_sb_apei_support_acked;
 
 /*
  * ACPI 6.0 Section 8.4.4.2 Idle State Coordination
- * OSPM supports platक्रमm coordinated low घातer idle(LPI) states
+ * OSPM supports platform coordinated low power idle(LPI) states
  */
 bool osc_pc_lpi_support_confirmed;
 EXPORT_SYMBOL_GPL(osc_pc_lpi_support_confirmed);
 
 /*
- * ACPI 6.4 Operating System Capabilities क्रम USB.
+ * ACPI 6.4 Operating System Capabilities for USB.
  */
 bool osc_sb_native_usb4_support_confirmed;
 EXPORT_SYMBOL_GPL(osc_sb_native_usb4_support_confirmed);
 
-अटल u8 sb_uuid_str[] = "0811B06E-4A27-44F9-8D60-3CBBC22E7B48";
-अटल व्योम acpi_bus_osc_negotiate_platक्रमm_control(व्योम)
-अणु
+static u8 sb_uuid_str[] = "0811B06E-4A27-44F9-8D60-3CBBC22E7B48";
+static void acpi_bus_osc_negotiate_platform_control(void)
+{
 	u32 capbuf[2], *capbuf_ret;
-	काष्ठा acpi_osc_context context = अणु
+	struct acpi_osc_context context = {
 		.uuid_str = sb_uuid_str,
 		.rev = 1,
 		.cap.length = 8,
-		.cap.poपूर्णांकer = capbuf,
-	पूर्ण;
+		.cap.pointer = capbuf,
+	};
 	acpi_handle handle;
 
 	capbuf[OSC_QUERY_DWORD] = OSC_QUERY_ENABLE;
 	capbuf[OSC_SUPPORT_DWORD] = OSC_SB_PR3_SUPPORT; /* _PR3 is in use */
-	अगर (IS_ENABLED(CONFIG_ACPI_PROCESSOR_AGGREGATOR))
+	if (IS_ENABLED(CONFIG_ACPI_PROCESSOR_AGGREGATOR))
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_PAD_SUPPORT;
-	अगर (IS_ENABLED(CONFIG_ACPI_PROCESSOR))
+	if (IS_ENABLED(CONFIG_ACPI_PROCESSOR))
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_PPC_OST_SUPPORT;
 
 	capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_HOTPLUG_OST_SUPPORT;
 	capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_PCLPI_SUPPORT;
 
-#अगर_घोषित CONFIG_ARM64
+#ifdef CONFIG_ARM64
 	capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_GENERIC_INITIATOR_SUPPORT;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_X86
+#endif
+#ifdef CONFIG_X86
 	capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_GENERIC_INITIATOR_SUPPORT;
-	अगर (boot_cpu_has(X86_FEATURE_HWP)) अणु
+	if (boot_cpu_has(X86_FEATURE_HWP)) {
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_CPC_SUPPORT;
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_CPCV2_SUPPORT;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (IS_ENABLED(CONFIG_SCHED_MC_PRIO))
+	if (IS_ENABLED(CONFIG_SCHED_MC_PRIO))
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_CPC_DIVERSE_HIGH_SUPPORT;
 
-	अगर (IS_ENABLED(CONFIG_USB4))
+	if (IS_ENABLED(CONFIG_USB4))
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_NATIVE_USB4_SUPPORT;
 
-	अगर (!ghes_disable)
+	if (!ghes_disable)
 		capbuf[OSC_SUPPORT_DWORD] |= OSC_SB_APEI_SUPPORT;
-	अगर (ACPI_FAILURE(acpi_get_handle(शून्य, "\\_SB", &handle)))
-		वापस;
+	if (ACPI_FAILURE(acpi_get_handle(NULL, "\\_SB", &handle)))
+		return;
 
-	अगर (ACPI_FAILURE(acpi_run_osc(handle, &context)))
-		वापस;
+	if (ACPI_FAILURE(acpi_run_osc(handle, &context)))
+		return;
 
-	kमुक्त(context.ret.poपूर्णांकer);
+	kfree(context.ret.pointer);
 
 	/* Now run _OSC again with query flag clear */
 	capbuf[OSC_QUERY_DWORD] = 0;
 
-	अगर (ACPI_FAILURE(acpi_run_osc(handle, &context)))
-		वापस;
+	if (ACPI_FAILURE(acpi_run_osc(handle, &context)))
+		return;
 
-	capbuf_ret = context.ret.poपूर्णांकer;
+	capbuf_ret = context.ret.pointer;
 	osc_sb_apei_support_acked =
 		capbuf_ret[OSC_SUPPORT_DWORD] & OSC_SB_APEI_SUPPORT;
 	osc_pc_lpi_support_confirmed =
@@ -347,8 +346,8 @@ EXPORT_SYMBOL_GPL(osc_sb_native_usb4_support_confirmed);
 	osc_sb_native_usb4_support_confirmed =
 		capbuf_ret[OSC_SUPPORT_DWORD] & OSC_SB_NATIVE_USB4_SUPPORT;
 
-	kमुक्त(context.ret.poपूर्णांकer);
-पूर्ण
+	kfree(context.ret.pointer);
+}
 
 /*
  * Native control of USB4 capabilities. If any of the tunneling bits is
@@ -358,34 +357,34 @@ EXPORT_SYMBOL_GPL(osc_sb_native_usb4_support_confirmed);
 u32 osc_sb_native_usb4_control;
 EXPORT_SYMBOL_GPL(osc_sb_native_usb4_control);
 
-अटल व्योम acpi_bus_decode_usb_osc(स्थिर अक्षर *msg, u32 bits)
-अणु
-	prपूर्णांकk(KERN_INFO PREFIX "%s USB3%c DisplayPort%c PCIe%c XDomain%c\n", msg,
+static void acpi_bus_decode_usb_osc(const char *msg, u32 bits)
+{
+	printk(KERN_INFO PREFIX "%s USB3%c DisplayPort%c PCIe%c XDomain%c\n", msg,
 	       (bits & OSC_USB_USB3_TUNNELING) ? '+' : '-',
 	       (bits & OSC_USB_DP_TUNNELING) ? '+' : '-',
 	       (bits & OSC_USB_PCIE_TUNNELING) ? '+' : '-',
 	       (bits & OSC_USB_XDOMAIN) ? '+' : '-');
-पूर्ण
+}
 
-अटल u8 sb_usb_uuid_str[] = "23A0D13A-26AB-486C-9C5F-0FFA525A575A";
-अटल व्योम acpi_bus_osc_negotiate_usb_control(व्योम)
-अणु
+static u8 sb_usb_uuid_str[] = "23A0D13A-26AB-486C-9C5F-0FFA525A575A";
+static void acpi_bus_osc_negotiate_usb_control(void)
+{
 	u32 capbuf[3];
-	काष्ठा acpi_osc_context context = अणु
+	struct acpi_osc_context context = {
 		.uuid_str = sb_usb_uuid_str,
 		.rev = 1,
-		.cap.length = माप(capbuf),
-		.cap.poपूर्णांकer = capbuf,
-	पूर्ण;
+		.cap.length = sizeof(capbuf),
+		.cap.pointer = capbuf,
+	};
 	acpi_handle handle;
 	acpi_status status;
 	u32 control;
 
-	अगर (!osc_sb_native_usb4_support_confirmed)
-		वापस;
+	if (!osc_sb_native_usb4_support_confirmed)
+		return;
 
-	अगर (ACPI_FAILURE(acpi_get_handle(शून्य, "\\_SB", &handle)))
-		वापस;
+	if (ACPI_FAILURE(acpi_get_handle(NULL, "\\_SB", &handle)))
+		return;
 
 	control = OSC_USB_USB3_TUNNELING | OSC_USB_DP_TUNNELING |
 		  OSC_USB_PCIE_TUNNELING | OSC_USB_XDOMAIN;
@@ -395,216 +394,216 @@ EXPORT_SYMBOL_GPL(osc_sb_native_usb4_control);
 	capbuf[OSC_CONTROL_DWORD] = control;
 
 	status = acpi_run_osc(handle, &context);
-	अगर (ACPI_FAILURE(status))
-		वापस;
+	if (ACPI_FAILURE(status))
+		return;
 
-	अगर (context.ret.length != माप(capbuf)) अणु
-		prपूर्णांकk(KERN_INFO PREFIX "USB4 _OSC: returned invalid length buffer\n");
-		जाओ out_मुक्त;
-	पूर्ण
+	if (context.ret.length != sizeof(capbuf)) {
+		printk(KERN_INFO PREFIX "USB4 _OSC: returned invalid length buffer\n");
+		goto out_free;
+	}
 
 	osc_sb_native_usb4_control =
-		control & ((u32 *)context.ret.poपूर्णांकer)[OSC_CONTROL_DWORD];
+		control & ((u32 *)context.ret.pointer)[OSC_CONTROL_DWORD];
 
 	acpi_bus_decode_usb_osc("USB4 _OSC: OS supports", control);
 	acpi_bus_decode_usb_osc("USB4 _OSC: OS controls",
 				osc_sb_native_usb4_control);
 
-out_मुक्त:
-	kमुक्त(context.ret.poपूर्णांकer);
-पूर्ण
+out_free:
+	kfree(context.ret.pointer);
+}
 
 /* --------------------------------------------------------------------------
-                             Notअगरication Handling
+                             Notification Handling
    -------------------------------------------------------------------------- */
 
 /**
- * acpi_bus_notअगरy
+ * acpi_bus_notify
  * ---------------
- * Callback क्रम all 'system-level' device notअगरications (values 0x00-0x7F).
+ * Callback for all 'system-level' device notifications (values 0x00-0x7F).
  */
-अटल व्योम acpi_bus_notअगरy(acpi_handle handle, u32 type, व्योम *data)
-अणु
-	काष्ठा acpi_device *adev;
-	काष्ठा acpi_driver *driver;
+static void acpi_bus_notify(acpi_handle handle, u32 type, void *data)
+{
+	struct acpi_device *adev;
+	struct acpi_driver *driver;
 	u32 ost_code = ACPI_OST_SC_NON_SPECIFIC_FAILURE;
 	bool hotplug_event = false;
 
-	चयन (type) अणु
-	हाल ACPI_NOTIFY_BUS_CHECK:
+	switch (type) {
+	case ACPI_NOTIFY_BUS_CHECK:
 		acpi_handle_debug(handle, "ACPI_NOTIFY_BUS_CHECK event\n");
 		hotplug_event = true;
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_DEVICE_CHECK:
+	case ACPI_NOTIFY_DEVICE_CHECK:
 		acpi_handle_debug(handle, "ACPI_NOTIFY_DEVICE_CHECK event\n");
 		hotplug_event = true;
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_DEVICE_WAKE:
+	case ACPI_NOTIFY_DEVICE_WAKE:
 		acpi_handle_debug(handle, "ACPI_NOTIFY_DEVICE_WAKE event\n");
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_EJECT_REQUEST:
+	case ACPI_NOTIFY_EJECT_REQUEST:
 		acpi_handle_debug(handle, "ACPI_NOTIFY_EJECT_REQUEST event\n");
 		hotplug_event = true;
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_DEVICE_CHECK_LIGHT:
+	case ACPI_NOTIFY_DEVICE_CHECK_LIGHT:
 		acpi_handle_debug(handle, "ACPI_NOTIFY_DEVICE_CHECK_LIGHT event\n");
-		/* TBD: Exactly what करोes 'light' mean? */
-		अवरोध;
+		/* TBD: Exactly what does 'light' mean? */
+		break;
 
-	हाल ACPI_NOTIFY_FREQUENCY_MISMATCH:
+	case ACPI_NOTIFY_FREQUENCY_MISMATCH:
 		acpi_handle_err(handle, "Device cannot be configured due "
 				"to a frequency mismatch\n");
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_BUS_MODE_MISMATCH:
+	case ACPI_NOTIFY_BUS_MODE_MISMATCH:
 		acpi_handle_err(handle, "Device cannot be configured due "
 				"to a bus mode mismatch\n");
-		अवरोध;
+		break;
 
-	हाल ACPI_NOTIFY_POWER_FAULT:
+	case ACPI_NOTIFY_POWER_FAULT:
 		acpi_handle_err(handle, "Device has suffered a power fault\n");
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		acpi_handle_debug(handle, "Unknown event type 0x%x\n", type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	adev = acpi_bus_get_acpi_device(handle);
-	अगर (!adev)
-		जाओ err;
+	if (!adev)
+		goto err;
 
 	driver = adev->driver;
-	अगर (driver && driver->ops.notअगरy &&
+	if (driver && driver->ops.notify &&
 	    (driver->flags & ACPI_DRIVER_ALL_NOTIFY_EVENTS))
-		driver->ops.notअगरy(adev, type);
+		driver->ops.notify(adev, type);
 
-	अगर (!hotplug_event) अणु
+	if (!hotplug_event) {
 		acpi_bus_put_acpi_device(adev);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ACPI_SUCCESS(acpi_hotplug_schedule(adev, type)))
-		वापस;
+	if (ACPI_SUCCESS(acpi_hotplug_schedule(adev, type)))
+		return;
 
 	acpi_bus_put_acpi_device(adev);
 
  err:
-	acpi_evaluate_ost(handle, type, ost_code, शून्य);
-पूर्ण
+	acpi_evaluate_ost(handle, type, ost_code, NULL);
+}
 
-अटल व्योम acpi_device_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	काष्ठा acpi_device *device = data;
+static void acpi_device_notify(acpi_handle handle, u32 event, void *data)
+{
+	struct acpi_device *device = data;
 
-	device->driver->ops.notअगरy(device, event);
-पूर्ण
+	device->driver->ops.notify(device, event);
+}
 
-अटल व्योम acpi_device_notअगरy_fixed(व्योम *data)
-अणु
-	काष्ठा acpi_device *device = data;
+static void acpi_device_notify_fixed(void *data)
+{
+	struct acpi_device *device = data;
 
 	/* Fixed hardware devices have no handles */
-	acpi_device_notअगरy(शून्य, ACPI_FIXED_HARDWARE_EVENT, device);
-पूर्ण
+	acpi_device_notify(NULL, ACPI_FIXED_HARDWARE_EVENT, device);
+}
 
-अटल u32 acpi_device_fixed_event(व्योम *data)
-अणु
-	acpi_os_execute(OSL_NOTIFY_HANDLER, acpi_device_notअगरy_fixed, data);
-	वापस ACPI_INTERRUPT_HANDLED;
-पूर्ण
+static u32 acpi_device_fixed_event(void *data)
+{
+	acpi_os_execute(OSL_NOTIFY_HANDLER, acpi_device_notify_fixed, data);
+	return ACPI_INTERRUPT_HANDLED;
+}
 
-अटल पूर्णांक acpi_device_install_notअगरy_handler(काष्ठा acpi_device *device)
-अणु
+static int acpi_device_install_notify_handler(struct acpi_device *device)
+{
 	acpi_status status;
 
-	अगर (device->device_type == ACPI_BUS_TYPE_POWER_BUTTON)
+	if (device->device_type == ACPI_BUS_TYPE_POWER_BUTTON)
 		status =
 		    acpi_install_fixed_event_handler(ACPI_EVENT_POWER_BUTTON,
 						     acpi_device_fixed_event,
 						     device);
-	अन्यथा अगर (device->device_type == ACPI_BUS_TYPE_SLEEP_BUTTON)
+	else if (device->device_type == ACPI_BUS_TYPE_SLEEP_BUTTON)
 		status =
 		    acpi_install_fixed_event_handler(ACPI_EVENT_SLEEP_BUTTON,
 						     acpi_device_fixed_event,
 						     device);
-	अन्यथा
-		status = acpi_install_notअगरy_handler(device->handle,
+	else
+		status = acpi_install_notify_handler(device->handle,
 						     ACPI_DEVICE_NOTIFY,
-						     acpi_device_notअगरy,
+						     acpi_device_notify,
 						     device);
 
-	अगर (ACPI_FAILURE(status))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (ACPI_FAILURE(status))
+		return -EINVAL;
+	return 0;
+}
 
-अटल व्योम acpi_device_हटाओ_notअगरy_handler(काष्ठा acpi_device *device)
-अणु
-	अगर (device->device_type == ACPI_BUS_TYPE_POWER_BUTTON)
-		acpi_हटाओ_fixed_event_handler(ACPI_EVENT_POWER_BUTTON,
+static void acpi_device_remove_notify_handler(struct acpi_device *device)
+{
+	if (device->device_type == ACPI_BUS_TYPE_POWER_BUTTON)
+		acpi_remove_fixed_event_handler(ACPI_EVENT_POWER_BUTTON,
 						acpi_device_fixed_event);
-	अन्यथा अगर (device->device_type == ACPI_BUS_TYPE_SLEEP_BUTTON)
-		acpi_हटाओ_fixed_event_handler(ACPI_EVENT_SLEEP_BUTTON,
+	else if (device->device_type == ACPI_BUS_TYPE_SLEEP_BUTTON)
+		acpi_remove_fixed_event_handler(ACPI_EVENT_SLEEP_BUTTON,
 						acpi_device_fixed_event);
-	अन्यथा
-		acpi_हटाओ_notअगरy_handler(device->handle, ACPI_DEVICE_NOTIFY,
-					   acpi_device_notअगरy);
-पूर्ण
+	else
+		acpi_remove_notify_handler(device->handle, ACPI_DEVICE_NOTIFY,
+					   acpi_device_notify);
+}
 
-/* Handle events targeting \_SB device (at present only graceful shutकरोwn) */
+/* Handle events targeting \_SB device (at present only graceful shutdown) */
 
-#घोषणा ACPI_SB_NOTIFY_SHUTDOWN_REQUEST 0x81
-#घोषणा ACPI_SB_INDICATE_INTERVAL	10000
+#define ACPI_SB_NOTIFY_SHUTDOWN_REQUEST 0x81
+#define ACPI_SB_INDICATE_INTERVAL	10000
 
-अटल व्योम sb_notअगरy_work(काष्ठा work_काष्ठा *dummy)
-अणु
+static void sb_notify_work(struct work_struct *dummy)
+{
 	acpi_handle sb_handle;
 
-	orderly_घातeroff(true);
+	orderly_poweroff(true);
 
 	/*
-	 * After initiating graceful shutकरोwn, the ACPI spec requires OSPM
+	 * After initiating graceful shutdown, the ACPI spec requires OSPM
 	 * to evaluate _OST method once every 10seconds to indicate that
-	 * the shutकरोwn is in progress
+	 * the shutdown is in progress
 	 */
-	acpi_get_handle(शून्य, "\\_SB", &sb_handle);
-	जबतक (1) अणु
+	acpi_get_handle(NULL, "\\_SB", &sb_handle);
+	while (1) {
 		pr_info("Graceful shutdown in progress.\n");
 		acpi_evaluate_ost(sb_handle, ACPI_OST_EC_OSPM_SHUTDOWN,
-				ACPI_OST_SC_OS_SHUTDOWN_IN_PROGRESS, शून्य);
+				ACPI_OST_SC_OS_SHUTDOWN_IN_PROGRESS, NULL);
 		msleep(ACPI_SB_INDICATE_INTERVAL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम acpi_sb_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	अटल DECLARE_WORK(acpi_sb_work, sb_notअगरy_work);
+static void acpi_sb_notify(acpi_handle handle, u32 event, void *data)
+{
+	static DECLARE_WORK(acpi_sb_work, sb_notify_work);
 
-	अगर (event == ACPI_SB_NOTIFY_SHUTDOWN_REQUEST) अणु
-		अगर (!work_busy(&acpi_sb_work))
+	if (event == ACPI_SB_NOTIFY_SHUTDOWN_REQUEST) {
+		if (!work_busy(&acpi_sb_work))
 			schedule_work(&acpi_sb_work);
-	पूर्ण अन्यथा
+	} else
 		pr_warn("event %x is not supported by \\_SB device\n", event);
-पूर्ण
+}
 
-अटल पूर्णांक __init acpi_setup_sb_notअगरy_handler(व्योम)
-अणु
+static int __init acpi_setup_sb_notify_handler(void)
+{
 	acpi_handle sb_handle;
 
-	अगर (ACPI_FAILURE(acpi_get_handle(शून्य, "\\_SB", &sb_handle)))
-		वापस -ENXIO;
+	if (ACPI_FAILURE(acpi_get_handle(NULL, "\\_SB", &sb_handle)))
+		return -ENXIO;
 
-	अगर (ACPI_FAILURE(acpi_install_notअगरy_handler(sb_handle, ACPI_DEVICE_NOTIFY,
-						acpi_sb_notअगरy, शून्य)))
-		वापस -EINVAL;
+	if (ACPI_FAILURE(acpi_install_notify_handler(sb_handle, ACPI_DEVICE_NOTIFY,
+						acpi_sb_notify, NULL)))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* --------------------------------------------------------------------------
                              Device Matching
@@ -616,306 +615,306 @@ out_मुक्त:
  *
  * Return: First physical node of ACPI device @adev
  */
-काष्ठा device *acpi_get_first_physical_node(काष्ठा acpi_device *adev)
-अणु
-	काष्ठा mutex *physical_node_lock = &adev->physical_node_lock;
-	काष्ठा device *phys_dev;
+struct device *acpi_get_first_physical_node(struct acpi_device *adev)
+{
+	struct mutex *physical_node_lock = &adev->physical_node_lock;
+	struct device *phys_dev;
 
 	mutex_lock(physical_node_lock);
-	अगर (list_empty(&adev->physical_node_list)) अणु
-		phys_dev = शून्य;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा acpi_device_physical_node *node;
+	if (list_empty(&adev->physical_node_list)) {
+		phys_dev = NULL;
+	} else {
+		const struct acpi_device_physical_node *node;
 
 		node = list_first_entry(&adev->physical_node_list,
-					काष्ठा acpi_device_physical_node, node);
+					struct acpi_device_physical_node, node);
 
 		phys_dev = node->dev;
-	पूर्ण
+	}
 	mutex_unlock(physical_node_lock);
-	वापस phys_dev;
-पूर्ण
+	return phys_dev;
+}
 EXPORT_SYMBOL_GPL(acpi_get_first_physical_node);
 
-अटल काष्ठा acpi_device *acpi_primary_dev_companion(काष्ठा acpi_device *adev,
-						      स्थिर काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा device *phys_dev = acpi_get_first_physical_node(adev);
+static struct acpi_device *acpi_primary_dev_companion(struct acpi_device *adev,
+						      const struct device *dev)
+{
+	const struct device *phys_dev = acpi_get_first_physical_node(adev);
 
-	वापस phys_dev && phys_dev == dev ? adev : शून्य;
-पूर्ण
+	return phys_dev && phys_dev == dev ? adev : NULL;
+}
 
 /**
  * acpi_device_is_first_physical_node - Is given dev first physical node
  * @adev: ACPI companion device
  * @dev: Physical device to check
  *
- * Function checks अगर given @dev is the first physical devices attached to
- * the ACPI companion device. This distinction is needed in some हालs
+ * Function checks if given @dev is the first physical devices attached to
+ * the ACPI companion device. This distinction is needed in some cases
  * where the same companion device is shared between many physical devices.
  *
- * Note that the caller have to provide valid @adev poपूर्णांकer.
+ * Note that the caller have to provide valid @adev pointer.
  */
-bool acpi_device_is_first_physical_node(काष्ठा acpi_device *adev,
-					स्थिर काष्ठा device *dev)
-अणु
-	वापस !!acpi_primary_dev_companion(adev, dev);
-पूर्ण
+bool acpi_device_is_first_physical_node(struct acpi_device *adev,
+					const struct device *dev)
+{
+	return !!acpi_primary_dev_companion(adev, dev);
+}
 
 /*
  * acpi_companion_match() - Can we match via ACPI companion device
  * @dev: Device in question
  *
- * Check अगर the given device has an ACPI companion and अगर that companion has
- * a valid list of PNP IDs, and अगर the device is the first (primary) physical
- * device associated with it.  Return the companion poपूर्णांकer अगर that's the हाल
- * or शून्य otherwise.
+ * Check if the given device has an ACPI companion and if that companion has
+ * a valid list of PNP IDs, and if the device is the first (primary) physical
+ * device associated with it.  Return the companion pointer if that's the case
+ * or NULL otherwise.
  *
  * If multiple physical devices are attached to a single ACPI companion, we need
- * to be careful.  The usage scenario क्रम this kind of relationship is that all
+ * to be careful.  The usage scenario for this kind of relationship is that all
  * of the physical devices in question use resources provided by the ACPI
- * companion.  A typical हाल is an MFD device where all the sub-devices share
- * the parent's ACPI companion.  In such हालs we can only allow the primary
+ * companion.  A typical case is an MFD device where all the sub-devices share
+ * the parent's ACPI companion.  In such cases we can only allow the primary
  * (first) physical device to be matched with the help of the companion's PNP
  * IDs.
  *
  * Additional physical devices sharing the ACPI companion can still use
  * resources available from it but they will be matched normally using functions
- * provided by their bus types (and analogously क्रम their modalias).
+ * provided by their bus types (and analogously for their modalias).
  */
-काष्ठा acpi_device *acpi_companion_match(स्थिर काष्ठा device *dev)
-अणु
-	काष्ठा acpi_device *adev;
+struct acpi_device *acpi_companion_match(const struct device *dev)
+{
+	struct acpi_device *adev;
 
 	adev = ACPI_COMPANION(dev);
-	अगर (!adev)
-		वापस शून्य;
+	if (!adev)
+		return NULL;
 
-	अगर (list_empty(&adev->pnp.ids))
-		वापस शून्य;
+	if (list_empty(&adev->pnp.ids))
+		return NULL;
 
-	वापस acpi_primary_dev_companion(adev, dev);
-पूर्ण
+	return acpi_primary_dev_companion(adev, dev);
+}
 
 /**
  * acpi_of_match_device - Match device object using the "compatible" property.
  * @adev: ACPI device object to match.
  * @of_match_table: List of device IDs to match against.
- * @of_id: OF ID अगर matched
+ * @of_id: OF ID if matched
  *
  * If @dev has an ACPI companion which has ACPI_DT_NAMESPACE_HID in its list of
- * identअगरiers and a _DSD object with the "compatible" property, use that
- * property to match against the given list of identअगरiers.
+ * identifiers and a _DSD object with the "compatible" property, use that
+ * property to match against the given list of identifiers.
  */
-अटल bool acpi_of_match_device(काष्ठा acpi_device *adev,
-				 स्थिर काष्ठा of_device_id *of_match_table,
-				 स्थिर काष्ठा of_device_id **of_id)
-अणु
-	स्थिर जोड़ acpi_object *of_compatible, *obj;
-	पूर्णांक i, nval;
+static bool acpi_of_match_device(struct acpi_device *adev,
+				 const struct of_device_id *of_match_table,
+				 const struct of_device_id **of_id)
+{
+	const union acpi_object *of_compatible, *obj;
+	int i, nval;
 
-	अगर (!adev)
-		वापस false;
+	if (!adev)
+		return false;
 
 	of_compatible = adev->data.of_compatible;
-	अगर (!of_match_table || !of_compatible)
-		वापस false;
+	if (!of_match_table || !of_compatible)
+		return false;
 
-	अगर (of_compatible->type == ACPI_TYPE_PACKAGE) अणु
+	if (of_compatible->type == ACPI_TYPE_PACKAGE) {
 		nval = of_compatible->package.count;
 		obj = of_compatible->package.elements;
-	पूर्ण अन्यथा अणु /* Must be ACPI_TYPE_STRING. */
+	} else { /* Must be ACPI_TYPE_STRING. */
 		nval = 1;
 		obj = of_compatible;
-	पूर्ण
-	/* Now we can look क्रम the driver DT compatible strings */
-	क्रम (i = 0; i < nval; i++, obj++) अणु
-		स्थिर काष्ठा of_device_id *id;
+	}
+	/* Now we can look for the driver DT compatible strings */
+	for (i = 0; i < nval; i++, obj++) {
+		const struct of_device_id *id;
 
-		क्रम (id = of_match_table; id->compatible[0]; id++)
-			अगर (!strहालcmp(obj->string.poपूर्णांकer, id->compatible)) अणु
-				अगर (of_id)
+		for (id = of_match_table; id->compatible[0]; id++)
+			if (!strcasecmp(obj->string.pointer, id->compatible)) {
+				if (of_id)
 					*of_id = id;
-				वापस true;
-			पूर्ण
-	पूर्ण
+				return true;
+			}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool acpi_of_modalias(काष्ठा acpi_device *adev,
-			     अक्षर *modalias, माप_प्रकार len)
-अणु
-	स्थिर जोड़ acpi_object *of_compatible;
-	स्थिर जोड़ acpi_object *obj;
-	स्थिर अक्षर *str, *chr;
+static bool acpi_of_modalias(struct acpi_device *adev,
+			     char *modalias, size_t len)
+{
+	const union acpi_object *of_compatible;
+	const union acpi_object *obj;
+	const char *str, *chr;
 
 	of_compatible = adev->data.of_compatible;
-	अगर (!of_compatible)
-		वापस false;
+	if (!of_compatible)
+		return false;
 
-	अगर (of_compatible->type == ACPI_TYPE_PACKAGE)
+	if (of_compatible->type == ACPI_TYPE_PACKAGE)
 		obj = of_compatible->package.elements;
-	अन्यथा /* Must be ACPI_TYPE_STRING. */
+	else /* Must be ACPI_TYPE_STRING. */
 		obj = of_compatible;
 
-	str = obj->string.poपूर्णांकer;
-	chr = म_अक्षर(str, ',');
+	str = obj->string.pointer;
+	chr = strchr(str, ',');
 	strlcpy(modalias, chr ? chr + 1 : str, len);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
  * acpi_set_modalias - Set modalias using "compatible" property or supplied ID
  * @adev:	ACPI device object to match
- * @शेष_id:	ID string to use as शेष अगर no compatible string found
- * @modalias:   Poपूर्णांकer to buffer that modalias value will be copied पूर्णांकo
+ * @default_id:	ID string to use as default if no compatible string found
+ * @modalias:   Pointer to buffer that modalias value will be copied into
  * @len:	Length of modalias buffer
  *
- * This is a counterpart of of_modalias_node() क्रम काष्ठा acpi_device objects.
- * If there is a compatible string क्रम @adev, it will be copied to @modalias
- * with the venकरोr prefix stripped; otherwise, @शेष_id will be used.
+ * This is a counterpart of of_modalias_node() for struct acpi_device objects.
+ * If there is a compatible string for @adev, it will be copied to @modalias
+ * with the vendor prefix stripped; otherwise, @default_id will be used.
  */
-व्योम acpi_set_modalias(काष्ठा acpi_device *adev, स्थिर अक्षर *शेष_id,
-		       अक्षर *modalias, माप_प्रकार len)
-अणु
-	अगर (!acpi_of_modalias(adev, modalias, len))
-		strlcpy(modalias, शेष_id, len);
-पूर्ण
+void acpi_set_modalias(struct acpi_device *adev, const char *default_id,
+		       char *modalias, size_t len)
+{
+	if (!acpi_of_modalias(adev, modalias, len))
+		strlcpy(modalias, default_id, len);
+}
 EXPORT_SYMBOL_GPL(acpi_set_modalias);
 
-अटल bool __acpi_match_device_cls(स्थिर काष्ठा acpi_device_id *id,
-				    काष्ठा acpi_hardware_id *hwid)
-अणु
-	पूर्णांक i, msk, byte_shअगरt;
-	अक्षर buf[3];
+static bool __acpi_match_device_cls(const struct acpi_device_id *id,
+				    struct acpi_hardware_id *hwid)
+{
+	int i, msk, byte_shift;
+	char buf[3];
 
-	अगर (!id->cls)
-		वापस false;
+	if (!id->cls)
+		return false;
 
-	/* Apply class-code biपंचांगask, beक्रमe checking each class-code byte */
-	क्रम (i = 1; i <= 3; i++) अणु
-		byte_shअगरt = 8 * (3 - i);
-		msk = (id->cls_msk >> byte_shअगरt) & 0xFF;
-		अगर (!msk)
-			जारी;
+	/* Apply class-code bitmask, before checking each class-code byte */
+	for (i = 1; i <= 3; i++) {
+		byte_shift = 8 * (3 - i);
+		msk = (id->cls_msk >> byte_shift) & 0xFF;
+		if (!msk)
+			continue;
 
-		प्र_लिखो(buf, "%02x", (id->cls >> byte_shअगरt) & msk);
-		अगर (म_भेदन(buf, &hwid->id[(i - 1) * 2], 2))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		sprintf(buf, "%02x", (id->cls >> byte_shift) & msk);
+		if (strncmp(buf, &hwid->id[(i - 1) * 2], 2))
+			return false;
+	}
+	return true;
+}
 
-अटल bool __acpi_match_device(काष्ठा acpi_device *device,
-				स्थिर काष्ठा acpi_device_id *acpi_ids,
-				स्थिर काष्ठा of_device_id *of_ids,
-				स्थिर काष्ठा acpi_device_id **acpi_id,
-				स्थिर काष्ठा of_device_id **of_id)
-अणु
-	स्थिर काष्ठा acpi_device_id *id;
-	काष्ठा acpi_hardware_id *hwid;
+static bool __acpi_match_device(struct acpi_device *device,
+				const struct acpi_device_id *acpi_ids,
+				const struct of_device_id *of_ids,
+				const struct acpi_device_id **acpi_id,
+				const struct of_device_id **of_id)
+{
+	const struct acpi_device_id *id;
+	struct acpi_hardware_id *hwid;
 
 	/*
 	 * If the device is not present, it is unnecessary to load device
-	 * driver क्रम it.
+	 * driver for it.
 	 */
-	अगर (!device || !device->status.present)
-		वापस false;
+	if (!device || !device->status.present)
+		return false;
 
-	list_क्रम_each_entry(hwid, &device->pnp.ids, list) अणु
+	list_for_each_entry(hwid, &device->pnp.ids, list) {
 		/* First, check the ACPI/PNP IDs provided by the caller. */
-		अगर (acpi_ids) अणु
-			क्रम (id = acpi_ids; id->id[0] || id->cls; id++) अणु
-				अगर (id->id[0] && !म_भेद((अक्षर *)id->id, hwid->id))
-					जाओ out_acpi_match;
-				अगर (id->cls && __acpi_match_device_cls(id, hwid))
-					जाओ out_acpi_match;
-			पूर्ण
-		पूर्ण
+		if (acpi_ids) {
+			for (id = acpi_ids; id->id[0] || id->cls; id++) {
+				if (id->id[0] && !strcmp((char *)id->id, hwid->id))
+					goto out_acpi_match;
+				if (id->cls && __acpi_match_device_cls(id, hwid))
+					goto out_acpi_match;
+			}
+		}
 
 		/*
 		 * Next, check ACPI_DT_NAMESPACE_HID and try to match the
-		 * "compatible" property अगर found.
+		 * "compatible" property if found.
 		 */
-		अगर (!म_भेद(ACPI_DT_NAMESPACE_HID, hwid->id))
-			वापस acpi_of_match_device(device, of_ids, of_id);
-	पूर्ण
-	वापस false;
+		if (!strcmp(ACPI_DT_NAMESPACE_HID, hwid->id))
+			return acpi_of_match_device(device, of_ids, of_id);
+	}
+	return false;
 
 out_acpi_match:
-	अगर (acpi_id)
+	if (acpi_id)
 		*acpi_id = id;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * acpi_match_device - Match a काष्ठा device against a given list of ACPI IDs
- * @ids: Array of काष्ठा acpi_device_id object to match against.
- * @dev: The device काष्ठाure to match.
+ * acpi_match_device - Match a struct device against a given list of ACPI IDs
+ * @ids: Array of struct acpi_device_id object to match against.
+ * @dev: The device structure to match.
  *
- * Check अगर @dev has a valid ACPI handle and अगर there is a काष्ठा acpi_device
- * object क्रम that handle and use that object to match against a given list of
+ * Check if @dev has a valid ACPI handle and if there is a struct acpi_device
+ * object for that handle and use that object to match against a given list of
  * device IDs.
  *
- * Return a poपूर्णांकer to the first matching ID on success or %शून्य on failure.
+ * Return a pointer to the first matching ID on success or %NULL on failure.
  */
-स्थिर काष्ठा acpi_device_id *acpi_match_device(स्थिर काष्ठा acpi_device_id *ids,
-					       स्थिर काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा acpi_device_id *id = शून्य;
+const struct acpi_device_id *acpi_match_device(const struct acpi_device_id *ids,
+					       const struct device *dev)
+{
+	const struct acpi_device_id *id = NULL;
 
-	__acpi_match_device(acpi_companion_match(dev), ids, शून्य, &id, शून्य);
-	वापस id;
-पूर्ण
+	__acpi_match_device(acpi_companion_match(dev), ids, NULL, &id, NULL);
+	return id;
+}
 EXPORT_SYMBOL_GPL(acpi_match_device);
 
-अटल स्थिर व्योम *acpi_of_device_get_match_data(स्थिर काष्ठा device *dev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
-	स्थिर काष्ठा of_device_id *match = शून्य;
+static const void *acpi_of_device_get_match_data(const struct device *dev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(dev);
+	const struct of_device_id *match = NULL;
 
-	अगर (!acpi_of_match_device(adev, dev->driver->of_match_table, &match))
-		वापस शून्य;
+	if (!acpi_of_match_device(adev, dev->driver->of_match_table, &match))
+		return NULL;
 
-	वापस match->data;
-पूर्ण
+	return match->data;
+}
 
-स्थिर व्योम *acpi_device_get_match_data(स्थिर काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा acpi_device_id *match;
+const void *acpi_device_get_match_data(const struct device *dev)
+{
+	const struct acpi_device_id *match;
 
-	अगर (!dev->driver->acpi_match_table)
-		वापस acpi_of_device_get_match_data(dev);
+	if (!dev->driver->acpi_match_table)
+		return acpi_of_device_get_match_data(dev);
 
 	match = acpi_match_device(dev->driver->acpi_match_table, dev);
-	अगर (!match)
-		वापस शून्य;
+	if (!match)
+		return NULL;
 
-	वापस (स्थिर व्योम *)match->driver_data;
-पूर्ण
+	return (const void *)match->driver_data;
+}
 EXPORT_SYMBOL_GPL(acpi_device_get_match_data);
 
-पूर्णांक acpi_match_device_ids(काष्ठा acpi_device *device,
-			  स्थिर काष्ठा acpi_device_id *ids)
-अणु
-	वापस __acpi_match_device(device, ids, शून्य, शून्य, शून्य) ? 0 : -ENOENT;
-पूर्ण
+int acpi_match_device_ids(struct acpi_device *device,
+			  const struct acpi_device_id *ids)
+{
+	return __acpi_match_device(device, ids, NULL, NULL, NULL) ? 0 : -ENOENT;
+}
 EXPORT_SYMBOL(acpi_match_device_ids);
 
-bool acpi_driver_match_device(काष्ठा device *dev,
-			      स्थिर काष्ठा device_driver *drv)
-अणु
-	अगर (!drv->acpi_match_table)
-		वापस acpi_of_match_device(ACPI_COMPANION(dev),
+bool acpi_driver_match_device(struct device *dev,
+			      const struct device_driver *drv)
+{
+	if (!drv->acpi_match_table)
+		return acpi_of_match_device(ACPI_COMPANION(dev),
 					    drv->of_match_table,
-					    शून्य);
+					    NULL);
 
-	वापस __acpi_match_device(acpi_companion_match(dev),
+	return __acpi_match_device(acpi_companion_match(dev),
 				   drv->acpi_match_table, drv->of_match_table,
-				   शून्य, शून्य);
-पूर्ण
+				   NULL, NULL);
+}
 EXPORT_SYMBOL_GPL(acpi_driver_match_device);
 
 /* --------------------------------------------------------------------------
@@ -923,336 +922,336 @@ EXPORT_SYMBOL_GPL(acpi_driver_match_device);
    -------------------------------------------------------------------------- */
 
 /**
- * acpi_bus_रेजिस्टर_driver - रेजिस्टर a driver with the ACPI bus
- * @driver: driver being रेजिस्टरed
+ * acpi_bus_register_driver - register a driver with the ACPI bus
+ * @driver: driver being registered
  *
- * Registers a driver with the ACPI bus.  Searches the namespace क्रम all
- * devices that match the driver's criteria and binds.  Returns zero क्रम
- * success or a negative error status क्रम failure.
+ * Registers a driver with the ACPI bus.  Searches the namespace for all
+ * devices that match the driver's criteria and binds.  Returns zero for
+ * success or a negative error status for failure.
  */
-पूर्णांक acpi_bus_रेजिस्टर_driver(काष्ठा acpi_driver *driver)
-अणु
-	पूर्णांक ret;
+int acpi_bus_register_driver(struct acpi_driver *driver)
+{
+	int ret;
 
-	अगर (acpi_disabled)
-		वापस -ENODEV;
+	if (acpi_disabled)
+		return -ENODEV;
 	driver->drv.name = driver->name;
 	driver->drv.bus = &acpi_bus_type;
 	driver->drv.owner = driver->owner;
 
-	ret = driver_रेजिस्टर(&driver->drv);
-	वापस ret;
-पूर्ण
+	ret = driver_register(&driver->drv);
+	return ret;
+}
 
-EXPORT_SYMBOL(acpi_bus_रेजिस्टर_driver);
+EXPORT_SYMBOL(acpi_bus_register_driver);
 
 /**
- * acpi_bus_unरेजिस्टर_driver - unरेजिस्टरs a driver with the ACPI bus
- * @driver: driver to unरेजिस्टर
+ * acpi_bus_unregister_driver - unregisters a driver with the ACPI bus
+ * @driver: driver to unregister
  *
- * Unरेजिस्टरs a driver with the ACPI bus.  Searches the namespace क्रम all
+ * Unregisters a driver with the ACPI bus.  Searches the namespace for all
  * devices that match the driver's criteria and unbinds.
  */
-व्योम acpi_bus_unरेजिस्टर_driver(काष्ठा acpi_driver *driver)
-अणु
-	driver_unरेजिस्टर(&driver->drv);
-पूर्ण
+void acpi_bus_unregister_driver(struct acpi_driver *driver)
+{
+	driver_unregister(&driver->drv);
+}
 
-EXPORT_SYMBOL(acpi_bus_unरेजिस्टर_driver);
+EXPORT_SYMBOL(acpi_bus_unregister_driver);
 
 /* --------------------------------------------------------------------------
                               ACPI Bus operations
    -------------------------------------------------------------------------- */
 
-अटल पूर्णांक acpi_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
-	काष्ठा acpi_driver *acpi_drv = to_acpi_driver(drv);
+static int acpi_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct acpi_device *acpi_dev = to_acpi_device(dev);
+	struct acpi_driver *acpi_drv = to_acpi_driver(drv);
 
-	वापस acpi_dev->flags.match_driver
+	return acpi_dev->flags.match_driver
 		&& !acpi_match_device_ids(acpi_dev, acpi_drv->ids);
-पूर्ण
+}
 
-अटल पूर्णांक acpi_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	वापस __acpi_device_uevent_modalias(to_acpi_device(dev), env);
-पूर्ण
+static int acpi_device_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	return __acpi_device_uevent_modalias(to_acpi_device(dev), env);
+}
 
-अटल पूर्णांक acpi_device_probe(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
-	काष्ठा acpi_driver *acpi_drv = to_acpi_driver(dev->driver);
-	पूर्णांक ret;
+static int acpi_device_probe(struct device *dev)
+{
+	struct acpi_device *acpi_dev = to_acpi_device(dev);
+	struct acpi_driver *acpi_drv = to_acpi_driver(dev->driver);
+	int ret;
 
-	अगर (acpi_dev->handler && !acpi_is_pnp_device(acpi_dev))
-		वापस -EINVAL;
+	if (acpi_dev->handler && !acpi_is_pnp_device(acpi_dev))
+		return -EINVAL;
 
-	अगर (!acpi_drv->ops.add)
-		वापस -ENOSYS;
+	if (!acpi_drv->ops.add)
+		return -ENOSYS;
 
 	ret = acpi_drv->ops.add(acpi_dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	acpi_dev->driver = acpi_drv;
 
 	pr_debug("Driver [%s] successfully bound to device [%s]\n",
 		 acpi_drv->name, acpi_dev->pnp.bus_id);
 
-	अगर (acpi_drv->ops.notअगरy) अणु
-		ret = acpi_device_install_notअगरy_handler(acpi_dev);
-		अगर (ret) अणु
-			अगर (acpi_drv->ops.हटाओ)
-				acpi_drv->ops.हटाओ(acpi_dev);
+	if (acpi_drv->ops.notify) {
+		ret = acpi_device_install_notify_handler(acpi_dev);
+		if (ret) {
+			if (acpi_drv->ops.remove)
+				acpi_drv->ops.remove(acpi_dev);
 
-			acpi_dev->driver = शून्य;
-			acpi_dev->driver_data = शून्य;
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			acpi_dev->driver = NULL;
+			acpi_dev->driver_data = NULL;
+			return ret;
+		}
+	}
 
 	pr_debug("Found driver [%s] for device [%s]\n", acpi_drv->name,
 		 acpi_dev->pnp.bus_id);
 
 	get_device(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_device_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
-	काष्ठा acpi_driver *acpi_drv = acpi_dev->driver;
+static int acpi_device_remove(struct device *dev)
+{
+	struct acpi_device *acpi_dev = to_acpi_device(dev);
+	struct acpi_driver *acpi_drv = acpi_dev->driver;
 
-	अगर (acpi_drv) अणु
-		अगर (acpi_drv->ops.notअगरy)
-			acpi_device_हटाओ_notअगरy_handler(acpi_dev);
-		अगर (acpi_drv->ops.हटाओ)
-			acpi_drv->ops.हटाओ(acpi_dev);
-	पूर्ण
-	acpi_dev->driver = शून्य;
-	acpi_dev->driver_data = शून्य;
+	if (acpi_drv) {
+		if (acpi_drv->ops.notify)
+			acpi_device_remove_notify_handler(acpi_dev);
+		if (acpi_drv->ops.remove)
+			acpi_drv->ops.remove(acpi_dev);
+	}
+	acpi_dev->driver = NULL;
+	acpi_dev->driver_data = NULL;
 
 	put_device(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bus_type acpi_bus_type = अणु
+struct bus_type acpi_bus_type = {
 	.name		= "acpi",
 	.match		= acpi_bus_match,
 	.probe		= acpi_device_probe,
-	.हटाओ		= acpi_device_हटाओ,
+	.remove		= acpi_device_remove,
 	.uevent		= acpi_device_uevent,
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------------
                              Initialization/Cleanup
    -------------------------------------------------------------------------- */
 
-अटल पूर्णांक __init acpi_bus_init_irq(व्योम)
-अणु
+static int __init acpi_bus_init_irq(void)
+{
 	acpi_status status;
-	अक्षर *message = शून्य;
+	char *message = NULL;
 
 
 	/*
-	 * Let the प्रणाली know what पूर्णांकerrupt model we are using by
-	 * evaluating the \_PIC object, अगर exists.
+	 * Let the system know what interrupt model we are using by
+	 * evaluating the \_PIC object, if exists.
 	 */
 
-	चयन (acpi_irq_model) अणु
-	हाल ACPI_IRQ_MODEL_PIC:
+	switch (acpi_irq_model) {
+	case ACPI_IRQ_MODEL_PIC:
 		message = "PIC";
-		अवरोध;
-	हाल ACPI_IRQ_MODEL_IOAPIC:
+		break;
+	case ACPI_IRQ_MODEL_IOAPIC:
 		message = "IOAPIC";
-		अवरोध;
-	हाल ACPI_IRQ_MODEL_IOSAPIC:
+		break;
+	case ACPI_IRQ_MODEL_IOSAPIC:
 		message = "IOSAPIC";
-		अवरोध;
-	हाल ACPI_IRQ_MODEL_GIC:
+		break;
+	case ACPI_IRQ_MODEL_GIC:
 		message = "GIC";
-		अवरोध;
-	हाल ACPI_IRQ_MODEL_PLATFORM:
+		break;
+	case ACPI_IRQ_MODEL_PLATFORM:
 		message = "platform specific model";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_info("Unknown interrupt routing model\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pr_info("Using %s for interrupt routing\n", message);
 
-	status = acpi_execute_simple_method(शून्य, "\\_PIC", acpi_irq_model);
-	अगर (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) अणु
-		pr_info("_PIC evaluation failed: %s\n", acpi_क्रमmat_exception(status));
-		वापस -ENODEV;
-	पूर्ण
+	status = acpi_execute_simple_method(NULL, "\\_PIC", acpi_irq_model);
+	if (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) {
+		pr_info("_PIC evaluation failed: %s\n", acpi_format_exception(status));
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * acpi_early_init - Initialize ACPICA and populate the ACPI namespace.
  *
  * The ACPI tables are accessible after this, but the handling of events has not
  * been initialized and the global lock is not available yet, so AML should not
- * be executed at this poपूर्णांक.
+ * be executed at this point.
  *
- * Doing this beक्रमe चयनing the EFI runसमय services to भव mode allows
- * the EfiBootServices memory to be मुक्तd slightly earlier on boot.
+ * Doing this before switching the EFI runtime services to virtual mode allows
+ * the EfiBootServices memory to be freed slightly earlier on boot.
  */
-व्योम __init acpi_early_init(व्योम)
-अणु
+void __init acpi_early_init(void)
+{
 	acpi_status status;
 
-	अगर (acpi_disabled)
-		वापस;
+	if (acpi_disabled)
+		return;
 
 	pr_info("Core revision %08x\n", ACPI_CA_VERSION);
 
 	/* enable workarounds, unless strict ACPI spec. compliance */
-	अगर (!acpi_strict)
-		acpi_gbl_enable_पूर्णांकerpreter_slack = TRUE;
+	if (!acpi_strict)
+		acpi_gbl_enable_interpreter_slack = TRUE;
 
 	acpi_permanent_mmap = true;
 
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 	/*
-	 * If the machine falls पूर्णांकo the DMI check table,
+	 * If the machine falls into the DMI check table,
 	 * DSDT will be copied to memory.
-	 * Note that calling dmi_check_प्रणाली() here on other architectures
+	 * Note that calling dmi_check_system() here on other architectures
 	 * would not be OK because only x86 initializes dmi early enough.
-	 * Thankfully only x86 प्रणालीs need such quirks क्रम now.
+	 * Thankfully only x86 systems need such quirks for now.
 	 */
-	dmi_check_प्रणाली(dsdt_dmi_table);
-#पूर्ण_अगर
+	dmi_check_system(dsdt_dmi_table);
+#endif
 
-	status = acpi_पुनः_स्मृतिate_root_table();
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_reallocate_root_table();
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to reallocate ACPI tables\n");
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 
-	status = acpi_initialize_subप्रणाली();
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_initialize_subsystem();
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to initialize the ACPI Interpreter\n");
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 
-#अगर_घोषित CONFIG_X86
-	अगर (!acpi_ioapic) अणु
+#ifdef CONFIG_X86
+	if (!acpi_ioapic) {
 		/* compatible (0) means level (3) */
-		अगर (!(acpi_sci_flags & ACPI_MADT_TRIGGER_MASK)) अणु
+		if (!(acpi_sci_flags & ACPI_MADT_TRIGGER_MASK)) {
 			acpi_sci_flags &= ~ACPI_MADT_TRIGGER_MASK;
 			acpi_sci_flags |= ACPI_MADT_TRIGGER_LEVEL;
-		पूर्ण
+		}
 		/* Set PIC-mode SCI trigger type */
-		acpi_pic_sci_set_trigger(acpi_gbl_FADT.sci_पूर्णांकerrupt,
+		acpi_pic_sci_set_trigger(acpi_gbl_FADT.sci_interrupt,
 					 (acpi_sci_flags & ACPI_MADT_TRIGGER_MASK) >> 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * now that acpi_gbl_FADT is initialized,
 		 * update it with result from INT_SRC_OVR parsing
 		 */
-		acpi_gbl_FADT.sci_पूर्णांकerrupt = acpi_sci_override_gsi;
-	पूर्ण
-#पूर्ण_अगर
-	वापस;
+		acpi_gbl_FADT.sci_interrupt = acpi_sci_override_gsi;
+	}
+#endif
+	return;
 
  error0:
 	disable_acpi();
-पूर्ण
+}
 
 /**
- * acpi_subप्रणाली_init - Finalize the early initialization of ACPI.
+ * acpi_subsystem_init - Finalize the early initialization of ACPI.
  *
- * Switch over the platक्रमm to the ACPI mode (अगर possible).
+ * Switch over the platform to the ACPI mode (if possible).
  *
- * Doing this too early is generally unsafe, but at the same समय it needs to be
- * करोne beक्रमe all things that really depend on ACPI.  The right spot appears to
- * be beक्रमe finalizing the EFI initialization.
+ * Doing this too early is generally unsafe, but at the same time it needs to be
+ * done before all things that really depend on ACPI.  The right spot appears to
+ * be before finalizing the EFI initialization.
  */
-व्योम __init acpi_subप्रणाली_init(व्योम)
-अणु
+void __init acpi_subsystem_init(void)
+{
 	acpi_status status;
 
-	अगर (acpi_disabled)
-		वापस;
+	if (acpi_disabled)
+		return;
 
-	status = acpi_enable_subप्रणाली(~ACPI_NO_ACPI_ENABLE);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_enable_subsystem(~ACPI_NO_ACPI_ENABLE);
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to enable ACPI\n");
 		disable_acpi();
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * If the प्रणाली is using ACPI then we can be reasonably
+		 * If the system is using ACPI then we can be reasonably
 		 * confident that any regulators are managed by the firmware
 		 * so tell the regulator core it has everything it needs to
 		 * know.
 		 */
-		regulator_has_full_स्थिरraपूर्णांकs();
-	पूर्ण
-पूर्ण
+		regulator_has_full_constraints();
+	}
+}
 
-अटल acpi_status acpi_bus_table_handler(u32 event, व्योम *table, व्योम *context)
-अणु
+static acpi_status acpi_bus_table_handler(u32 event, void *table, void *context)
+{
 	acpi_scan_table_handler(event, table, context);
 
-	वापस acpi_sysfs_table_handler(event, table, context);
-पूर्ण
+	return acpi_sysfs_table_handler(event, table, context);
+}
 
-अटल पूर्णांक __init acpi_bus_init(व्योम)
-अणु
-	पूर्णांक result;
+static int __init acpi_bus_init(void)
+{
+	int result;
 	acpi_status status;
 
 	acpi_os_initialize1();
 
 	status = acpi_load_tables();
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to load the System Description Tables\n");
-		जाओ error1;
-	पूर्ण
+		goto error1;
+	}
 
 	/*
-	 * ACPI 2.0 requires the EC driver to be loaded and work beक्रमe the EC
+	 * ACPI 2.0 requires the EC driver to be loaded and work before the EC
 	 * device is found in the namespace.
 	 *
-	 * This is accomplished by looking क्रम the ECDT table and getting the EC
+	 * This is accomplished by looking for the ECDT table and getting the EC
 	 * parameters out of that.
 	 *
-	 * Do that beक्रमe calling acpi_initialize_objects() which may trigger EC
+	 * Do that before calling acpi_initialize_objects() which may trigger EC
 	 * address space accesses.
 	 */
 	acpi_ec_ecdt_probe();
 
-	status = acpi_enable_subप्रणाली(ACPI_NO_ACPI_ENABLE);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_enable_subsystem(ACPI_NO_ACPI_ENABLE);
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to start the ACPI Interpreter\n");
-		जाओ error1;
-	पूर्ण
+		goto error1;
+	}
 
 	status = acpi_initialize_objects(ACPI_FULL_INITIALIZATION);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to initialize ACPI objects\n");
-		जाओ error1;
-	पूर्ण
+		goto error1;
+	}
 
-	/* Set capability bits क्रम _OSC under processor scope */
+	/* Set capability bits for _OSC under processor scope */
 	acpi_early_processor_osc();
 
 	/*
 	 * _OSC method may exist in module level code,
 	 * so it must be run after ACPI_FULL_INITIALIZATION
 	 */
-	acpi_bus_osc_negotiate_platक्रमm_control();
+	acpi_bus_osc_negotiate_platform_control();
 	acpi_bus_osc_negotiate_usb_control();
 
 	/*
 	 * _PDC control method may load dynamic SSDT tables,
-	 * and we need to install the table handler beक्रमe that.
+	 * and we need to install the table handler before that.
 	 */
-	status = acpi_install_table_handler(acpi_bus_table_handler, शून्य);
+	status = acpi_install_table_handler(acpi_bus_table_handler, NULL);
 
 	acpi_sysfs_init();
 
@@ -1266,65 +1265,65 @@ EXPORT_SYMBOL(acpi_bus_unरेजिस्टर_driver);
 
 	pr_info("Interpreter enabled\n");
 
-	/* Initialize sleep काष्ठाures */
+	/* Initialize sleep structures */
 	acpi_sleep_init();
 
 	/*
-	 * Get the प्रणाली पूर्णांकerrupt model and evaluate \_PIC.
+	 * Get the system interrupt model and evaluate \_PIC.
 	 */
 	result = acpi_bus_init_irq();
-	अगर (result)
-		जाओ error1;
+	if (result)
+		goto error1;
 
 	/*
-	 * Register the क्रम all standard device notअगरications.
+	 * Register the for all standard device notifications.
 	 */
 	status =
-	    acpi_install_notअगरy_handler(ACPI_ROOT_OBJECT, ACPI_SYSTEM_NOTIFY,
-					&acpi_bus_notअगरy, शून्य);
-	अगर (ACPI_FAILURE(status)) अणु
+	    acpi_install_notify_handler(ACPI_ROOT_OBJECT, ACPI_SYSTEM_NOTIFY,
+					&acpi_bus_notify, NULL);
+	if (ACPI_FAILURE(status)) {
 		pr_err("Unable to register for system notifications\n");
-		जाओ error1;
-	पूर्ण
+		goto error1;
+	}
 
 	/*
 	 * Create the top ACPI proc directory
 	 */
-	acpi_root_dir = proc_सूची_गढ़ो(ACPI_BUS_खाता_ROOT, शून्य);
+	acpi_root_dir = proc_mkdir(ACPI_BUS_FILE_ROOT, NULL);
 
-	result = bus_रेजिस्टर(&acpi_bus_type);
-	अगर (!result)
-		वापस 0;
+	result = bus_register(&acpi_bus_type);
+	if (!result)
+		return 0;
 
-	/* Mimic काष्ठाured exception handling */
+	/* Mimic structured exception handling */
       error1:
 	acpi_terminate();
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-काष्ठा kobject *acpi_kobj;
+struct kobject *acpi_kobj;
 EXPORT_SYMBOL_GPL(acpi_kobj);
 
-अटल पूर्णांक __init acpi_init(व्योम)
-अणु
-	पूर्णांक result;
+static int __init acpi_init(void)
+{
+	int result;
 
-	अगर (acpi_disabled) अणु
+	if (acpi_disabled) {
 		pr_info("Interpreter disabled.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	acpi_kobj = kobject_create_and_add("acpi", firmware_kobj);
-	अगर (!acpi_kobj) अणु
+	if (!acpi_kobj) {
 		pr_debug("%s: kset create error\n", __func__);
-		acpi_kobj = शून्य;
-	पूर्ण
+		acpi_kobj = NULL;
+	}
 
 	result = acpi_bus_init();
-	अगर (result) अणु
+	if (result) {
 		disable_acpi();
-		वापस result;
-	पूर्ण
+		return result;
+	}
 
 	pci_mmcfg_late_init();
 	acpi_iort_init();
@@ -1334,8 +1333,8 @@ EXPORT_SYMBOL_GPL(acpi_kobj);
 	acpi_sleep_proc_init();
 	acpi_wakeup_device_init();
 	acpi_debugger_init();
-	acpi_setup_sb_notअगरy_handler();
-	वापस 0;
-पूर्ण
+	acpi_setup_sb_notify_handler();
+	return 0;
+}
 
 subsys_initcall(acpi_init);

@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <linux/stddef.h>
+#include <linux/bpf.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-अटल __always_अंतरभूत पूर्णांक bind_prog(काष्ठा bpf_sock_addr *ctx, पूर्णांक family)
-अणु
-	काष्ठा bpf_sock *sk;
+static __always_inline int bind_prog(struct bpf_sock_addr *ctx, int family)
+{
+	struct bpf_sock *sk;
 
 	sk = ctx->sk;
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
-	अगर (sk->family != family)
-		वापस 0;
+	if (sk->family != family)
+		return 0;
 
-	अगर (ctx->type != SOCK_STREAM)
-		वापस 0;
+	if (ctx->type != SOCK_STREAM)
+		return 0;
 
 	/* Return 1 OR'ed with the first bit set to indicate
 	 * that CAP_NET_BIND_SERVICE should be bypassed.
 	 */
-	अगर (ctx->user_port == bpf_htons(111))
-		वापस (1 | 2);
+	if (ctx->user_port == bpf_htons(111))
+		return (1 | 2);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 SEC("cgroup/bind4")
-पूर्णांक bind_v4_prog(काष्ठा bpf_sock_addr *ctx)
-अणु
-	वापस bind_prog(ctx, AF_INET);
-पूर्ण
+int bind_v4_prog(struct bpf_sock_addr *ctx)
+{
+	return bind_prog(ctx, AF_INET);
+}
 
 SEC("cgroup/bind6")
-पूर्णांक bind_v6_prog(काष्ठा bpf_sock_addr *ctx)
-अणु
-	वापस bind_prog(ctx, AF_INET6);
-पूर्ण
+int bind_v6_prog(struct bpf_sock_addr *ctx)
+{
+	return bind_prog(ctx, AF_INET6);
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

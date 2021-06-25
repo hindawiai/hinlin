@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-EXPORT_SYMBOL(स_नकल);
+EXPORT_SYMBOL(memcpy);

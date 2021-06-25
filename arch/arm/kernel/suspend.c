@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ftrace.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/pgtable.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ftrace.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/mm_types.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/bugs.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/idmap.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/suspend.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/bugs.h>
+#include <asm/cacheflush.h>
+#include <asm/idmap.h>
+#include <asm/memory.h>
+#include <asm/smp_plat.h>
+#include <asm/suspend.h>
+#include <asm/tlbflush.h>
 
-बाह्य पूर्णांक __cpu_suspend(अचिन्हित दीर्घ, पूर्णांक (*)(अचिन्हित दीर्घ), u32 cpuid);
-बाह्य व्योम cpu_resume_mmu(व्योम);
+extern int __cpu_suspend(unsigned long, int (*)(unsigned long), u32 cpuid);
+extern void cpu_resume_mmu(void);
 
-#अगर_घोषित CONFIG_MMU
-पूर्णांक cpu_suspend(अचिन्हित दीर्घ arg, पूर्णांक (*fn)(अचिन्हित दीर्घ))
-अणु
-	काष्ठा mm_काष्ठा *mm = current->active_mm;
+#ifdef CONFIG_MMU
+int cpu_suspend(unsigned long arg, int (*fn)(unsigned long))
+{
+	struct mm_struct *mm = current->active_mm;
 	u32 __mpidr = cpu_logical_map(smp_processor_id());
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!idmap_pgd)
-		वापस -EINVAL;
+	if (!idmap_pgd)
+		return -EINVAL;
 
 	/*
-	 * Function graph tracer state माला_लो incosistent when the kernel
-	 * calls functions that never वापस (aka suspend finishers) hence
+	 * Function graph tracer state gets incosistent when the kernel
+	 * calls functions that never return (aka suspend finishers) hence
 	 * disable graph tracing during their execution.
 	 */
-	छोड़ो_graph_tracing();
+	pause_graph_tracing();
 
 	/*
-	 * Provide a temporary page table with an identity mapping क्रम
-	 * the MMU-enable code, required क्रम resuming.  On successful
-	 * resume (indicated by a zero वापस code), we need to चयन
+	 * Provide a temporary page table with an identity mapping for
+	 * the MMU-enable code, required for resuming.  On successful
+	 * resume (indicated by a zero return code), we need to switch
 	 * back to the correct page tables.
 	 */
 	ret = __cpu_suspend(arg, fn, __mpidr);
 
-	unछोड़ो_graph_tracing();
+	unpause_graph_tracing();
 
-	अगर (ret == 0) अणु
-		cpu_चयन_mm(mm->pgd, mm);
+	if (ret == 0) {
+		cpu_switch_mm(mm->pgd, mm);
 		local_flush_bp_all();
 		local_flush_tlb_all();
 		check_other_bugs();
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-पूर्णांक cpu_suspend(अचिन्हित दीर्घ arg, पूर्णांक (*fn)(अचिन्हित दीर्घ))
-अणु
+	return ret;
+}
+#else
+int cpu_suspend(unsigned long arg, int (*fn)(unsigned long))
+{
 	u32 __mpidr = cpu_logical_map(smp_processor_id());
-	पूर्णांक ret;
+	int ret;
 
-	छोड़ो_graph_tracing();
+	pause_graph_tracing();
 	ret = __cpu_suspend(arg, fn, __mpidr);
-	unछोड़ो_graph_tracing();
+	unpause_graph_tracing();
 
-	वापस ret;
-पूर्ण
-#घोषणा	idmap_pgd	शून्य
-#पूर्ण_अगर
+	return ret;
+}
+#define	idmap_pgd	NULL
+#endif
 
 /*
- * This is called by __cpu_suspend() to save the state, and करो whatever
+ * This is called by __cpu_suspend() to save the state, and do whatever
  * flushing is required to ensure that when the CPU goes to sleep we have
  * the necessary data available when the caches are not searched.
  */
-व्योम __cpu_suspend_save(u32 *ptr, u32 ptrsz, u32 sp, u32 *save_ptr)
-अणु
+void __cpu_suspend_save(u32 *ptr, u32 ptrsz, u32 sp, u32 *save_ptr)
+{
 	u32 *ctx = ptr;
 
 	*save_ptr = virt_to_phys(ptr);
@@ -82,42 +81,42 @@
 	/* This must correspond to the LDM in cpu_resume() assembly */
 	*ptr++ = virt_to_phys(idmap_pgd);
 	*ptr++ = sp;
-	*ptr++ = virt_to_phys(cpu_करो_resume);
+	*ptr++ = virt_to_phys(cpu_do_resume);
 
-	cpu_करो_suspend(ptr);
+	cpu_do_suspend(ptr);
 
 	flush_cache_louis();
 
 	/*
-	 * flush_cache_louis करोes not guarantee that
-	 * save_ptr and ptr are cleaned to मुख्य memory,
-	 * just up to the Level of Unअगरication Inner Shareable.
-	 * Since the context poपूर्णांकer and context itself
+	 * flush_cache_louis does not guarantee that
+	 * save_ptr and ptr are cleaned to main memory,
+	 * just up to the Level of Unification Inner Shareable.
+	 * Since the context pointer and context itself
 	 * are to be retrieved with the MMU off that
 	 * data must be cleaned from all cache levels
-	 * to मुख्य memory using "area" cache primitives.
+	 * to main memory using "area" cache primitives.
 	*/
 	__cpuc_flush_dcache_area(ctx, ptrsz);
-	__cpuc_flush_dcache_area(save_ptr, माप(*save_ptr));
+	__cpuc_flush_dcache_area(save_ptr, sizeof(*save_ptr));
 
 	outer_clean_range(*save_ptr, *save_ptr + ptrsz);
 	outer_clean_range(virt_to_phys(save_ptr),
-			  virt_to_phys(save_ptr) + माप(*save_ptr));
-पूर्ण
+			  virt_to_phys(save_ptr) + sizeof(*save_ptr));
+}
 
-बाह्य काष्ठा sleep_save_sp sleep_save_sp;
+extern struct sleep_save_sp sleep_save_sp;
 
-अटल पूर्णांक cpu_suspend_alloc_sp(व्योम)
-अणु
-	व्योम *ctx_ptr;
+static int cpu_suspend_alloc_sp(void)
+{
+	void *ctx_ptr;
 	/* ctx_ptr is an array of physical addresses */
-	ctx_ptr = kसुस्मृति(mpidr_hash_size(), माप(u32), GFP_KERNEL);
+	ctx_ptr = kcalloc(mpidr_hash_size(), sizeof(u32), GFP_KERNEL);
 
-	अगर (WARN_ON(!ctx_ptr))
-		वापस -ENOMEM;
+	if (WARN_ON(!ctx_ptr))
+		return -ENOMEM;
 	sleep_save_sp.save_ptr_stash = ctx_ptr;
 	sleep_save_sp.save_ptr_stash_phys = virt_to_phys(ctx_ptr);
 	sync_cache_w(&sleep_save_sp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(cpu_suspend_alloc_sp);

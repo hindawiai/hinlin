@@ -1,3 +1,2 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <xen/arm/page-coherent.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <xen/arm/page-coherent.h>

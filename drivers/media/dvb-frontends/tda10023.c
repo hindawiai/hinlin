@@ -1,224 +1,223 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
     TDA10023  - DVB-C decoder
     (as used in Philips CU1216-3 NIM and the Reelbox DVB-C tuner card)
 
-    Copyright (C) 2005 Georg Acher, BayCom GmbH (acher at baycom करोt de)
-    Copyright (c) 2006 Harपंचांगut Birr (e9hack at gmail करोt com)
+    Copyright (C) 2005 Georg Acher, BayCom GmbH (acher at baycom dot de)
+    Copyright (c) 2006 Hartmut Birr (e9hack at gmail dot com)
 
     Remotely based on tda10021.c
     Copyright (C) 1999 Convergence Integrated Media GmbH <ralph@convergence.de>
-    Copyright (C) 2004 Markus Schulz <msc@antzप्रणाली.de>
-		   Support क्रम TDA10021
+    Copyright (C) 2004 Markus Schulz <msc@antzsystem.de>
+		   Support for TDA10021
 
 */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/भाग64.h>
+#include <asm/div64.h>
 
-#समावेश <media/dvb_frontend.h>
-#समावेश "tda1002x.h"
+#include <media/dvb_frontend.h>
+#include "tda1002x.h"
 
-#घोषणा REG0_INIT_VAL 0x23
+#define REG0_INIT_VAL 0x23
 
-काष्ठा tda10023_state अणु
-	काष्ठा i2c_adapter* i2c;
+struct tda10023_state {
+	struct i2c_adapter* i2c;
 	/* configuration settings */
-	स्थिर काष्ठा tda10023_config *config;
-	काष्ठा dvb_frontend frontend;
+	const struct tda10023_config *config;
+	struct dvb_frontend frontend;
 
 	u8 pwm;
 	u8 reg0;
 
-	/* घड़ी settings */
+	/* clock settings */
 	u32 xtal;
 	u8 pll_m;
 	u8 pll_p;
 	u8 pll_n;
 	u32 sysclk;
-पूर्ण;
+};
 
-#घोषणा dprपूर्णांकk(x...)
+#define dprintk(x...)
 
-अटल पूर्णांक verbose;
+static int verbose;
 
-अटल u8 tda10023_पढ़ोreg (काष्ठा tda10023_state* state, u8 reg)
-अणु
-	u8 b0 [] = अणु reg पूर्ण;
-	u8 b1 [] = अणु 0 पूर्ण;
-	काष्ठा i2c_msg msg [] = अणु अणु .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 पूर्ण,
-				  अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 पूर्ण पूर्ण;
-	पूर्णांक ret;
+static u8 tda10023_readreg (struct tda10023_state* state, u8 reg)
+{
+	u8 b0 [] = { reg };
+	u8 b1 [] = { 0 };
+	struct i2c_msg msg [] = { { .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 },
+				  { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 } };
+	int ret;
 
 	ret = i2c_transfer (state->i2c, msg, 2);
-	अगर (ret != 2) अणु
-		पूर्णांक num = state->frontend.dvb ? state->frontend.dvb->num : -1;
-		prपूर्णांकk(KERN_ERR "DVB: TDA10023(%d): %s: readreg error (reg == 0x%02x, ret == %i)\n",
+	if (ret != 2) {
+		int num = state->frontend.dvb ? state->frontend.dvb->num : -1;
+		printk(KERN_ERR "DVB: TDA10023(%d): %s: readreg error (reg == 0x%02x, ret == %i)\n",
 			num, __func__, reg, ret);
-	पूर्ण
-	वापस b1[0];
-पूर्ण
+	}
+	return b1[0];
+}
 
-अटल पूर्णांक tda10023_ग_लिखोreg (काष्ठा tda10023_state* state, u8 reg, u8 data)
-अणु
-	u8 buf[] = अणु reg, data पूर्ण;
-	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 पूर्ण;
-	पूर्णांक ret;
+static int tda10023_writereg (struct tda10023_state* state, u8 reg, u8 data)
+{
+	u8 buf[] = { reg, data };
+	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 };
+	int ret;
 
 	ret = i2c_transfer (state->i2c, &msg, 1);
-	अगर (ret != 1) अणु
-		पूर्णांक num = state->frontend.dvb ? state->frontend.dvb->num : -1;
-		prपूर्णांकk(KERN_ERR "DVB: TDA10023(%d): %s, writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
+	if (ret != 1) {
+		int num = state->frontend.dvb ? state->frontend.dvb->num : -1;
+		printk(KERN_ERR "DVB: TDA10023(%d): %s, writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
 			num, __func__, reg, data, ret);
-	पूर्ण
-	वापस (ret != 1) ? -EREMOTEIO : 0;
-पूर्ण
+	}
+	return (ret != 1) ? -EREMOTEIO : 0;
+}
 
 
-अटल पूर्णांक tda10023_ग_लिखोbit (काष्ठा tda10023_state* state, u8 reg, u8 mask,u8 data)
-अणु
-	अगर (mask==0xff)
-		वापस tda10023_ग_लिखोreg(state, reg, data);
-	अन्यथा अणु
+static int tda10023_writebit (struct tda10023_state* state, u8 reg, u8 mask,u8 data)
+{
+	if (mask==0xff)
+		return tda10023_writereg(state, reg, data);
+	else {
 		u8 val;
-		val=tda10023_पढ़ोreg(state,reg);
+		val=tda10023_readreg(state,reg);
 		val&=~mask;
 		val|=(data&mask);
-		वापस tda10023_ग_लिखोreg(state, reg, val);
-	पूर्ण
-पूर्ण
+		return tda10023_writereg(state, reg, val);
+	}
+}
 
-अटल व्योम tda10023_ग_लिखोtab(काष्ठा tda10023_state* state, u8* tab)
-अणु
+static void tda10023_writetab(struct tda10023_state* state, u8* tab)
+{
 	u8 r,m,v;
-	जबतक (1) अणु
+	while (1) {
 		r=*tab++;
 		m=*tab++;
 		v=*tab++;
-		अगर (r==0xff) अणु
-			अगर (m==0xff)
-				अवरोध;
-			अन्यथा
+		if (r==0xff) {
+			if (m==0xff)
+				break;
+			else
 				msleep(m);
-		पूर्ण
-		अन्यथा
-			tda10023_ग_लिखोbit(state,r,m,v);
-	पूर्ण
-पूर्ण
+		}
+		else
+			tda10023_writebit(state,r,m,v);
+	}
+}
 
 //get access to tuner
-अटल पूर्णांक lock_tuner(काष्ठा tda10023_state* state)
-अणु
-	u8 buf[2] = अणु 0x0f, 0xc0 पूर्ण;
-	काष्ठा i2c_msg msg = अणु.addr=state->config->demod_address, .flags=0, .buf=buf, .len=2पूर्ण;
+static int lock_tuner(struct tda10023_state* state)
+{
+	u8 buf[2] = { 0x0f, 0xc0 };
+	struct i2c_msg msg = {.addr=state->config->demod_address, .flags=0, .buf=buf, .len=2};
 
-	अगर(i2c_transfer(state->i2c, &msg, 1) != 1)
-	अणु
-		prपूर्णांकk("tda10023: lock tuner fails\n");
-		वापस -EREMOTEIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if(i2c_transfer(state->i2c, &msg, 1) != 1)
+	{
+		printk("tda10023: lock tuner fails\n");
+		return -EREMOTEIO;
+	}
+	return 0;
+}
 
 //release access from tuner
-अटल पूर्णांक unlock_tuner(काष्ठा tda10023_state* state)
-अणु
-	u8 buf[2] = अणु 0x0f, 0x40 पूर्ण;
-	काष्ठा i2c_msg msg_post=अणु.addr=state->config->demod_address, .flags=0, .buf=buf, .len=2पूर्ण;
+static int unlock_tuner(struct tda10023_state* state)
+{
+	u8 buf[2] = { 0x0f, 0x40 };
+	struct i2c_msg msg_post={.addr=state->config->demod_address, .flags=0, .buf=buf, .len=2};
 
-	अगर(i2c_transfer(state->i2c, &msg_post, 1) != 1)
-	अणु
-		prपूर्णांकk("tda10023: unlock tuner fails\n");
-		वापस -EREMOTEIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if(i2c_transfer(state->i2c, &msg_post, 1) != 1)
+	{
+		printk("tda10023: unlock tuner fails\n");
+		return -EREMOTEIO;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tda10023_setup_reg0 (काष्ठा tda10023_state* state, u8 reg0)
-अणु
+static int tda10023_setup_reg0 (struct tda10023_state* state, u8 reg0)
+{
 	reg0 |= state->reg0 & 0x63;
 
-	tda10023_ग_लिखोreg (state, 0x00, reg0 & 0xfe);
-	tda10023_ग_लिखोreg (state, 0x00, reg0 | 0x01);
+	tda10023_writereg (state, 0x00, reg0 & 0xfe);
+	tda10023_writereg (state, 0x00, reg0 | 0x01);
 
 	state->reg0 = reg0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_set_symbolrate (काष्ठा tda10023_state* state, u32 sr)
-अणु
+static int tda10023_set_symbolrate (struct tda10023_state* state, u32 sr)
+{
 	s32 BDR;
 	s32 BDRI;
 	s16 SFIL=0;
 	u16 NDEC = 0;
 
-	/* aव्योम भग्नing poपूर्णांक operations multiplying syscloc and भागider
+	/* avoid floating point operations multiplying syscloc and divider
 	   by 10 */
 	u32 sysclk_x_10 = state->sysclk * 10;
 
-	अगर (sr < (u32)(sysclk_x_10/984)) अणु
+	if (sr < (u32)(sysclk_x_10/984)) {
 		NDEC=3;
 		SFIL=1;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/640)) अणु
+	} else if (sr < (u32)(sysclk_x_10/640)) {
 		NDEC=3;
 		SFIL=0;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/492)) अणु
+	} else if (sr < (u32)(sysclk_x_10/492)) {
 		NDEC=2;
 		SFIL=1;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/320)) अणु
+	} else if (sr < (u32)(sysclk_x_10/320)) {
 		NDEC=2;
 		SFIL=0;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/246)) अणु
+	} else if (sr < (u32)(sysclk_x_10/246)) {
 		NDEC=1;
 		SFIL=1;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/160)) अणु
+	} else if (sr < (u32)(sysclk_x_10/160)) {
 		NDEC=1;
 		SFIL=0;
-	पूर्ण अन्यथा अगर (sr < (u32)(sysclk_x_10/123)) अणु
+	} else if (sr < (u32)(sysclk_x_10/123)) {
 		NDEC=0;
 		SFIL=1;
-	पूर्ण
+	}
 
 	BDRI = (state->sysclk)*16;
 	BDRI>>=NDEC;
 	BDRI +=sr/2;
 	BDRI /=sr;
 
-	अगर (BDRI>255)
+	if (BDRI>255)
 		BDRI=255;
 
-	अणु
+	{
 		u64 BDRX;
 
 		BDRX=1<<(24+NDEC);
 		BDRX*=sr;
-		करो_भाग(BDRX, state->sysclk);	/* BDRX/=SYSCLK; */
+		do_div(BDRX, state->sysclk);	/* BDRX/=SYSCLK; */
 
 		BDR=(s32)BDRX;
-	पूर्ण
-	dprपूर्णांकk("Symbolrate %i, BDR %i BDRI %i, NDEC %i\n",
+	}
+	dprintk("Symbolrate %i, BDR %i BDRI %i, NDEC %i\n",
 		sr, BDR, BDRI, NDEC);
-	tda10023_ग_लिखोbit (state, 0x03, 0xc0, NDEC<<6);
-	tda10023_ग_लिखोreg (state, 0x0a, BDR&255);
-	tda10023_ग_लिखोreg (state, 0x0b, (BDR>>8)&255);
-	tda10023_ग_लिखोreg (state, 0x0c, (BDR>>16)&31);
-	tda10023_ग_लिखोreg (state, 0x0d, BDRI);
-	tda10023_ग_लिखोreg (state, 0x3d, (SFIL<<7));
-	वापस 0;
-पूर्ण
+	tda10023_writebit (state, 0x03, 0xc0, NDEC<<6);
+	tda10023_writereg (state, 0x0a, BDR&255);
+	tda10023_writereg (state, 0x0b, (BDR>>8)&255);
+	tda10023_writereg (state, 0x0c, (BDR>>16)&31);
+	tda10023_writereg (state, 0x0d, BDRI);
+	tda10023_writereg (state, 0x3d, (SFIL<<7));
+	return 0;
+}
 
-अटल पूर्णांक tda10023_init (काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	u8 tda10023_inittab[] = अणु
+static int tda10023_init (struct dvb_frontend *fe)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
+	u8 tda10023_inittab[] = {
 /*        reg  mask val */
 /* 000 */ 0x2a, 0xff, 0x02,  /* PLL3, Bypass, Power Down */
 /* 003 */ 0xff, 0x64, 0x00,  /* Sleep 100ms */
@@ -268,200 +267,200 @@
 /* 117 */ 0x00, 0x03, 0x03,  /* GPR, CLBS soft reset */
 /* 120 */ 0xff, 0x64, 0x00,  /* Sleep 100ms */
 /* 123 */ 0xff, 0xff, 0xff
-पूर्ण;
-	dprपूर्णांकk("DVB: TDA10023(%d): init chip\n", fe->dvb->num);
+};
+	dprintk("DVB: TDA10023(%d): init chip\n", fe->dvb->num);
 
-	/* override शेष values अगर set in config */
-	अगर (state->config->deltaf) अणु
+	/* override default values if set in config */
+	if (state->config->deltaf) {
 		tda10023_inittab[80] = (state->config->deltaf & 0xff);
 		tda10023_inittab[83] = (state->config->deltaf >> 8);
-	पूर्ण
+	}
 
-	अगर (state->config->output_mode)
+	if (state->config->output_mode)
 		tda10023_inittab[95] = state->config->output_mode;
 
-	tda10023_ग_लिखोtab(state, tda10023_inittab);
+	tda10023_writetab(state, tda10023_inittab);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा qam_params अणु
+struct qam_params {
 	u8 qam, lockthr, mseth, aref, agcrefnyq, eragnyq_thd;
-पूर्ण;
+};
 
-अटल पूर्णांक tda10023_set_parameters(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
-	u32 delsys  = c->delivery_प्रणाली;
-	अचिन्हित qam = c->modulation;
+static int tda10023_set_parameters(struct dvb_frontend *fe)
+{
+	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	u32 delsys  = c->delivery_system;
+	unsigned qam = c->modulation;
 	bool is_annex_c;
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	अटल स्थिर काष्ठा qam_params qam_params[] = अणु
+	struct tda10023_state* state = fe->demodulator_priv;
+	static const struct qam_params qam_params[] = {
 		/* Modulation  QAM    LOCKTHR   MSETH   AREF AGCREFNYQ ERAGCNYQ_THD */
-		[QPSK]    = अणु (5<<2),  0x78,    0x8c,   0x96,   0x78,   0x4c  पूर्ण,
-		[QAM_16]  = अणु (0<<2),  0x87,    0xa2,   0x91,   0x8c,   0x57  पूर्ण,
-		[QAM_32]  = अणु (1<<2),  0x64,    0x74,   0x96,   0x8c,   0x57  पूर्ण,
-		[QAM_64]  = अणु (2<<2),  0x46,    0x43,   0x6a,   0x6a,   0x44  पूर्ण,
-		[QAM_128] = अणु (3<<2),  0x36,    0x34,   0x7e,   0x78,   0x4c  पूर्ण,
-		[QAM_256] = अणु (4<<2),  0x26,    0x23,   0x6c,   0x5c,   0x3c  पूर्ण,
-	पूर्ण;
+		[QPSK]    = { (5<<2),  0x78,    0x8c,   0x96,   0x78,   0x4c  },
+		[QAM_16]  = { (0<<2),  0x87,    0xa2,   0x91,   0x8c,   0x57  },
+		[QAM_32]  = { (1<<2),  0x64,    0x74,   0x96,   0x8c,   0x57  },
+		[QAM_64]  = { (2<<2),  0x46,    0x43,   0x6a,   0x6a,   0x44  },
+		[QAM_128] = { (3<<2),  0x36,    0x34,   0x7e,   0x78,   0x4c  },
+		[QAM_256] = { (4<<2),  0x26,    0x23,   0x6c,   0x5c,   0x3c  },
+	};
 
-	चयन (delsys) अणु
-	हाल SYS_DVBC_ANNEX_A:
+	switch (delsys) {
+	case SYS_DVBC_ANNEX_A:
 		is_annex_c = false;
-		अवरोध;
-	हाल SYS_DVBC_ANNEX_C:
+		break;
+	case SYS_DVBC_ANNEX_C:
 		is_annex_c = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/*
 	 * gcc optimizes the code below the same way as it would code:
 	 *		 "if (qam > 5) return -EINVAL;"
 	 * Yet, the code is clearer, as it shows what QAM standards are
-	 * supported by the driver, and aव्योमs the usage of magic numbers on
+	 * supported by the driver, and avoids the usage of magic numbers on
 	 * it.
 	 */
-	चयन (qam) अणु
-	हाल QPSK:
-	हाल QAM_16:
-	हाल QAM_32:
-	हाल QAM_64:
-	हाल QAM_128:
-	हाल QAM_256:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (qam) {
+	case QPSK:
+	case QAM_16:
+	case QAM_32:
+	case QAM_64:
+	case QAM_128:
+	case QAM_256:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (fe->ops.tuner_ops.set_params) अणु
+	if (fe->ops.tuner_ops.set_params) {
 		fe->ops.tuner_ops.set_params(fe);
-		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	पूर्ण
+		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	}
 
 	tda10023_set_symbolrate(state, c->symbol_rate);
-	tda10023_ग_लिखोreg(state, 0x05, qam_params[qam].lockthr);
-	tda10023_ग_लिखोreg(state, 0x08, qam_params[qam].mseth);
-	tda10023_ग_लिखोreg(state, 0x09, qam_params[qam].aref);
-	tda10023_ग_लिखोreg(state, 0xb4, qam_params[qam].agcrefnyq);
-	tda10023_ग_लिखोreg(state, 0xb6, qam_params[qam].eragnyq_thd);
-#अगर 0
-	tda10023_ग_लिखोreg(state, 0x04, (c->inversion ? 0x12 : 0x32));
-	tda10023_ग_लिखोbit(state, 0x04, 0x60, (c->inversion ? 0 : 0x20));
-#पूर्ण_अगर
-	tda10023_ग_लिखोbit(state, 0x04, 0x40, 0x40);
+	tda10023_writereg(state, 0x05, qam_params[qam].lockthr);
+	tda10023_writereg(state, 0x08, qam_params[qam].mseth);
+	tda10023_writereg(state, 0x09, qam_params[qam].aref);
+	tda10023_writereg(state, 0xb4, qam_params[qam].agcrefnyq);
+	tda10023_writereg(state, 0xb6, qam_params[qam].eragnyq_thd);
+#if 0
+	tda10023_writereg(state, 0x04, (c->inversion ? 0x12 : 0x32));
+	tda10023_writebit(state, 0x04, 0x60, (c->inversion ? 0 : 0x20));
+#endif
+	tda10023_writebit(state, 0x04, 0x40, 0x40);
 
-	अगर (is_annex_c)
-		tda10023_ग_लिखोbit(state, 0x3d, 0xfc, 0x03);
-	अन्यथा
-		tda10023_ग_लिखोbit(state, 0x3d, 0xfc, 0x02);
+	if (is_annex_c)
+		tda10023_writebit(state, 0x3d, 0xfc, 0x03);
+	else
+		tda10023_writebit(state, 0x3d, 0xfc, 0x02);
 
 	tda10023_setup_reg0(state, qam_params[qam].qam);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_पढ़ो_status(काष्ठा dvb_frontend *fe,
-				क्रमागत fe_status *status)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	पूर्णांक sync;
+static int tda10023_read_status(struct dvb_frontend *fe,
+				enum fe_status *status)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
+	int sync;
 
 	*status = 0;
 
 	//0x11[1] == CARLOCK -> Carrier locked
 	//0x11[2] == FSYNC -> Frame synchronisation
 	//0x11[3] == FEL -> Front End locked
-	//0x11[6] == NODVB -> DVB Mode Inक्रमmation
-	sync = tda10023_पढ़ोreg (state, 0x11);
+	//0x11[6] == NODVB -> DVB Mode Information
+	sync = tda10023_readreg (state, 0x11);
 
-	अगर (sync & 2)
+	if (sync & 2)
 		*status |= FE_HAS_SIGNAL|FE_HAS_CARRIER;
 
-	अगर (sync & 4)
+	if (sync & 4)
 		*status |= FE_HAS_SYNC|FE_HAS_VITERBI;
 
-	अगर (sync & 8)
+	if (sync & 8)
 		*status |= FE_HAS_LOCK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
+static int tda10023_read_ber(struct dvb_frontend* fe, u32* ber)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
 	u8 a,b,c;
-	a=tda10023_पढ़ोreg(state, 0x14);
-	b=tda10023_पढ़ोreg(state, 0x15);
-	c=tda10023_पढ़ोreg(state, 0x16)&0xf;
-	tda10023_ग_लिखोbit (state, 0x10, 0xc0, 0x00);
+	a=tda10023_readreg(state, 0x14);
+	b=tda10023_readreg(state, 0x15);
+	c=tda10023_readreg(state, 0x16)&0xf;
+	tda10023_writebit (state, 0x10, 0xc0, 0x00);
 
 	*ber = a | (b<<8)| (c<<16);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	u8 अगरgain=tda10023_पढ़ोreg(state, 0x2f);
+static int tda10023_read_signal_strength(struct dvb_frontend* fe, u16* strength)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
+	u8 ifgain=tda10023_readreg(state, 0x2f);
 
-	u16 gain = ((255-tda10023_पढ़ोreg(state, 0x17))) + (255-अगरgain)/16;
+	u16 gain = ((255-tda10023_readreg(state, 0x17))) + (255-ifgain)/16;
 	// Max raw value is about 0xb0 -> Normalize to >0xf0 after 0x90
-	अगर (gain>0x90)
+	if (gain>0x90)
 		gain=gain+2*(gain-0x90);
-	अगर (gain>255)
+	if (gain>255)
 		gain=255;
 
 	*strength = (gain<<8)|gain;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
+static int tda10023_read_snr(struct dvb_frontend* fe, u16* snr)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
 
-	u8 quality = ~tda10023_पढ़ोreg(state, 0x18);
+	u8 quality = ~tda10023_readreg(state, 0x18);
 	*snr = (quality << 8) | quality;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
+static int tda10023_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
 	u8 a,b,c,d;
-	a= tda10023_पढ़ोreg (state, 0x74);
-	b= tda10023_पढ़ोreg (state, 0x75);
-	c= tda10023_पढ़ोreg (state, 0x76);
-	d= tda10023_पढ़ोreg (state, 0x77);
+	a= tda10023_readreg (state, 0x74);
+	b= tda10023_readreg (state, 0x75);
+	c= tda10023_readreg (state, 0x76);
+	d= tda10023_readreg (state, 0x77);
 	*ucblocks = a | (b<<8)|(c<<16)|(d<<24);
 
-	tda10023_ग_लिखोbit (state, 0x10, 0x20,0x00);
-	tda10023_ग_लिखोbit (state, 0x10, 0x20,0x20);
-	tda10023_ग_लिखोbit (state, 0x13, 0x01, 0x00);
+	tda10023_writebit (state, 0x10, 0x20,0x00);
+	tda10023_writebit (state, 0x10, 0x20,0x20);
+	tda10023_writebit (state, 0x13, 0x01, 0x00);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_get_frontend(काष्ठा dvb_frontend *fe,
-				 काष्ठा dtv_frontend_properties *p)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	पूर्णांक sync,inv;
+static int tda10023_get_frontend(struct dvb_frontend *fe,
+				 struct dtv_frontend_properties *p)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
+	int sync,inv;
 	s8 afc = 0;
 
-	sync = tda10023_पढ़ोreg(state, 0x11);
-	afc = tda10023_पढ़ोreg(state, 0x19);
-	inv = tda10023_पढ़ोreg(state, 0x04);
+	sync = tda10023_readreg(state, 0x11);
+	afc = tda10023_readreg(state, 0x19);
+	inv = tda10023_readreg(state, 0x04);
 
-	अगर (verbose) अणु
+	if (verbose) {
 		/* AFC only valid when carrier has been recovered */
-		prपूर्णांकk(sync & 2 ? "DVB: TDA10023(%d): AFC (%d) %dHz\n" :
+		printk(sync & 2 ? "DVB: TDA10023(%d): AFC (%d) %dHz\n" :
 				  "DVB: TDA10023(%d): [AFC (%d) %dHz]\n",
 			state->frontend.dvb->num, afc,
 		       -((s32)p->symbol_rate * afc) >> 10);
-	पूर्ण
+	}
 
 	p->inversion = (inv&0x20?0:1);
 	p->modulation = ((state->reg0 >> 2) & 7) + QAM_16;
@@ -469,77 +468,77 @@
 	p->fec_inner = FEC_NONE;
 	p->frequency = ((p->frequency + 31250) / 62500) * 62500;
 
-	अगर (sync & 2)
+	if (sync & 2)
 		p->frequency -= ((s32)p->symbol_rate * afc) >> 10;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_sleep(काष्ठा dvb_frontend* fe)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
+static int tda10023_sleep(struct dvb_frontend* fe)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
 
-	tda10023_ग_लिखोreg (state, 0x1b, 0x02);  /* pकरोwn ADC */
-	tda10023_ग_लिखोreg (state, 0x00, 0x80);  /* standby */
+	tda10023_writereg (state, 0x1b, 0x02);  /* pdown ADC */
+	tda10023_writereg (state, 0x00, 0x80);  /* standby */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tda10023_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
+static int tda10023_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
 
-	अगर (enable) अणु
+	if (enable) {
 		lock_tuner(state);
-	पूर्ण अन्यथा अणु
+	} else {
 		unlock_tuner(state);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम tda10023_release(काष्ठा dvb_frontend* fe)
-अणु
-	काष्ठा tda10023_state* state = fe->demodulator_priv;
-	kमुक्त(state);
-पूर्ण
+static void tda10023_release(struct dvb_frontend* fe)
+{
+	struct tda10023_state* state = fe->demodulator_priv;
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops tda10023_ops;
+static const struct dvb_frontend_ops tda10023_ops;
 
-काष्ठा dvb_frontend *tda10023_attach(स्थिर काष्ठा tda10023_config *config,
-				     काष्ठा i2c_adapter *i2c,
+struct dvb_frontend *tda10023_attach(const struct tda10023_config *config,
+				     struct i2c_adapter *i2c,
 				     u8 pwm)
-अणु
-	काष्ठा tda10023_state* state = शून्य;
+{
+	struct tda10023_state* state = NULL;
 
-	/* allocate memory क्रम the पूर्णांकernal state */
-	state = kzalloc(माप(काष्ठा tda10023_state), GFP_KERNEL);
-	अगर (state == शून्य) जाओ error;
+	/* allocate memory for the internal state */
+	state = kzalloc(sizeof(struct tda10023_state), GFP_KERNEL);
+	if (state == NULL) goto error;
 
 	/* setup the state */
 	state->config = config;
 	state->i2c = i2c;
 
-	/* wakeup अगर in standby */
-	tda10023_ग_लिखोreg (state, 0x00, 0x33);
-	/* check अगर the demod is there */
-	अगर ((tda10023_पढ़ोreg(state, 0x1a) & 0xf0) != 0x70) जाओ error;
+	/* wakeup if in standby */
+	tda10023_writereg (state, 0x00, 0x33);
+	/* check if the demod is there */
+	if ((tda10023_readreg(state, 0x1a) & 0xf0) != 0x70) goto error;
 
 	/* create dvb_frontend */
-	स_नकल(&state->frontend.ops, &tda10023_ops, माप(काष्ठा dvb_frontend_ops));
+	memcpy(&state->frontend.ops, &tda10023_ops, sizeof(struct dvb_frontend_ops));
 	state->pwm = pwm;
 	state->reg0 = REG0_INIT_VAL;
-	अगर (state->config->xtal) अणु
+	if (state->config->xtal) {
 		state->xtal  = state->config->xtal;
 		state->pll_m = state->config->pll_m;
 		state->pll_p = state->config->pll_p;
 		state->pll_n = state->config->pll_n;
-	पूर्ण अन्यथा अणु
-		/* set शेष values अगर not defined in config */
+	} else {
+		/* set default values if not defined in config */
 		state->xtal  = 28920000;
 		state->pll_m = 8;
 		state->pll_p = 4;
 		state->pll_n = 1;
-	पूर्ण
+	}
 
 	/* calc sysclk */
 	state->sysclk = (state->xtal * state->pll_m / \
@@ -548,21 +547,21 @@
 	state->frontend.ops.info.symbol_rate_min = (state->sysclk/2)/64;
 	state->frontend.ops.info.symbol_rate_max = (state->sysclk/2)/4;
 
-	dprपूर्णांकk("DVB: TDA10023 %s: xtal:%d pll_m:%d pll_p:%d pll_n:%d\n",
+	dprintk("DVB: TDA10023 %s: xtal:%d pll_m:%d pll_p:%d pll_n:%d\n",
 		__func__, state->xtal, state->pll_m, state->pll_p,
 		state->pll_n);
 
 	state->frontend.demodulator_priv = state;
-	वापस &state->frontend;
+	return &state->frontend;
 
 error:
-	kमुक्त(state);
-	वापस शून्य;
-पूर्ण
+	kfree(state);
+	return NULL;
+}
 
-अटल स्थिर काष्ठा dvb_frontend_ops tda10023_ops = अणु
-	.delsys = अणु SYS_DVBC_ANNEX_A, SYS_DVBC_ANNEX_C पूर्ण,
-	.info = अणु
+static const struct dvb_frontend_ops tda10023_ops = {
+	.delsys = { SYS_DVBC_ANNEX_A, SYS_DVBC_ANNEX_C },
+	.info = {
 		.name = "Philips TDA10023 DVB-C",
 		.frequency_min_hz =  47 * MHz,
 		.frequency_max_hz = 862 * MHz,
@@ -573,7 +572,7 @@ error:
 			FE_CAN_QAM_16 | FE_CAN_QAM_32 | FE_CAN_QAM_64 |
 			FE_CAN_QAM_128 | FE_CAN_QAM_256 |
 			FE_CAN_FEC_AUTO
-	पूर्ण,
+	},
 
 	.release = tda10023_release,
 
@@ -583,12 +582,12 @@ error:
 
 	.set_frontend = tda10023_set_parameters,
 	.get_frontend = tda10023_get_frontend,
-	.पढ़ो_status = tda10023_पढ़ो_status,
-	.पढ़ो_ber = tda10023_पढ़ो_ber,
-	.पढ़ो_संकेत_strength = tda10023_पढ़ो_संकेत_strength,
-	.पढ़ो_snr = tda10023_पढ़ो_snr,
-	.पढ़ो_ucblocks = tda10023_पढ़ो_ucblocks,
-पूर्ण;
+	.read_status = tda10023_read_status,
+	.read_ber = tda10023_read_ber,
+	.read_signal_strength = tda10023_read_signal_strength,
+	.read_snr = tda10023_read_snr,
+	.read_ucblocks = tda10023_read_ucblocks,
+};
 
 
 MODULE_DESCRIPTION("Philips TDA10023 DVB-C demodulator driver");

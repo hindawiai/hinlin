@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Atheros CARL9170 driver
  *
@@ -6,7 +5,7 @@
  *
  * Copyright 2010, Christian Lamparter <chunkeey@googlemail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -14,122 +13,122 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; see the file COPYING.  If not, see
+ * along with this program; see the file COPYING.  If not, see
  * http://www.gnu.org/licenses/.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *    Copyright (c) 2007-2008 Atheros Communications, Inc.
  *
- *    Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
  *    copyright notice and this permission notice appear in all copies.
  *
  *    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  *    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  *    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *    ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  *    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#अगर_अघोषित __DEBUG_H
-#घोषणा __DEBUG_H
+#ifndef __DEBUG_H
+#define __DEBUG_H
 
-#समावेश "eeprom.h"
-#समावेश "wlan.h"
-#समावेश "hw.h"
-#समावेश "fwdesc.h"
-#समावेश "fwcmd.h"
-#समावेश "../regd.h"
+#include "eeprom.h"
+#include "wlan.h"
+#include "hw.h"
+#include "fwdesc.h"
+#include "fwcmd.h"
+#include "../regd.h"
 
-काष्ठा hw_stat_reg_entry अणु
+struct hw_stat_reg_entry {
 	u32 reg;
-	अक्षर nreg[32];
-पूर्ण;
+	char nreg[32];
+};
 
-#घोषणा	STAT_MAC_REG(reg)	\
-	अणु (AR9170_MAC_REG_##reg), #reg पूर्ण
+#define	STAT_MAC_REG(reg)	\
+	{ (AR9170_MAC_REG_##reg), #reg }
 
-#घोषणा	STAT_PTA_REG(reg)	\
-	अणु (AR9170_PTA_REG_##reg), #reg पूर्ण
+#define	STAT_PTA_REG(reg)	\
+	{ (AR9170_PTA_REG_##reg), #reg }
 
-#घोषणा	STAT_USB_REG(reg)	\
-	अणु (AR9170_USB_REG_##reg), #reg पूर्ण
+#define	STAT_USB_REG(reg)	\
+	{ (AR9170_USB_REG_##reg), #reg }
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_rx_tally_regs[] = अणु
+static const struct hw_stat_reg_entry hw_rx_tally_regs[] = {
 	STAT_MAC_REG(RX_CRC32),		STAT_MAC_REG(RX_CRC16),
 	STAT_MAC_REG(RX_TIMEOUT_COUNT),	STAT_MAC_REG(RX_ERR_DECRYPTION_UNI),
 	STAT_MAC_REG(RX_ERR_DECRYPTION_MUL), STAT_MAC_REG(RX_MPDU),
 	STAT_MAC_REG(RX_DROPPED_MPDU),	STAT_MAC_REG(RX_DEL_MPDU),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_phy_errors_regs[] = अणु
+static const struct hw_stat_reg_entry hw_phy_errors_regs[] = {
 	STAT_MAC_REG(RX_PHY_MISC_ERROR), STAT_MAC_REG(RX_PHY_XR_ERROR),
 	STAT_MAC_REG(RX_PHY_OFDM_ERROR), STAT_MAC_REG(RX_PHY_CCK_ERROR),
 	STAT_MAC_REG(RX_PHY_HT_ERROR), STAT_MAC_REG(RX_PHY_TOTAL),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_tx_tally_regs[] = अणु
+static const struct hw_stat_reg_entry hw_tx_tally_regs[] = {
 	STAT_MAC_REG(TX_TOTAL),		STAT_MAC_REG(TX_UNDERRUN),
 	STAT_MAC_REG(TX_RETRY),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_wlan_queue_regs[] = अणु
+static const struct hw_stat_reg_entry hw_wlan_queue_regs[] = {
 	STAT_MAC_REG(DMA_STATUS),	STAT_MAC_REG(DMA_TRIGGER),
 	STAT_MAC_REG(DMA_TXQ0_ADDR),	STAT_MAC_REG(DMA_TXQ0_CURR_ADDR),
 	STAT_MAC_REG(DMA_TXQ1_ADDR),	STAT_MAC_REG(DMA_TXQ1_CURR_ADDR),
 	STAT_MAC_REG(DMA_TXQ2_ADDR),	STAT_MAC_REG(DMA_TXQ2_CURR_ADDR),
 	STAT_MAC_REG(DMA_TXQ3_ADDR),	STAT_MAC_REG(DMA_TXQ3_CURR_ADDR),
 	STAT_MAC_REG(DMA_RXQ_ADDR),	STAT_MAC_REG(DMA_RXQ_CURR_ADDR),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_ampdu_info_regs[] = अणु
+static const struct hw_stat_reg_entry hw_ampdu_info_regs[] = {
 	STAT_MAC_REG(AMPDU_DENSITY),	STAT_MAC_REG(AMPDU_FACTOR),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hw_stat_reg_entry hw_pta_queue_regs[] = अणु
+static const struct hw_stat_reg_entry hw_pta_queue_regs[] = {
 	STAT_PTA_REG(DN_CURR_ADDRH),	STAT_PTA_REG(DN_CURR_ADDRL),
 	STAT_PTA_REG(UP_CURR_ADDRH),	STAT_PTA_REG(UP_CURR_ADDRL),
 	STAT_PTA_REG(DMA_STATUS),	STAT_PTA_REG(DMA_MODE_CTRL),
-पूर्ण;
+};
 
-#घोषणा	DEFINE_TALLY(name)					\
+#define	DEFINE_TALLY(name)					\
 	u32 name##_sum[ARRAY_SIZE(name##_regs)],		\
 	    name##_counter[ARRAY_SIZE(name##_regs)]		\
 
-#घोषणा	DEFINE_STAT(name)					\
+#define	DEFINE_STAT(name)					\
 	u32 name##_counter[ARRAY_SIZE(name##_regs)]		\
 
-काष्ठा ath_stats अणु
+struct ath_stats {
 	DEFINE_TALLY(hw_tx_tally);
 	DEFINE_TALLY(hw_rx_tally);
 	DEFINE_TALLY(hw_phy_errors);
 	DEFINE_STAT(hw_wlan_queue);
 	DEFINE_STAT(hw_pta_queue);
 	DEFINE_STAT(hw_ampdu_info);
-पूर्ण;
+};
 
-काष्ठा carl9170_debug_mem_rbe अणु
+struct carl9170_debug_mem_rbe {
 	u32 reg;
 	u32 value;
-पूर्ण;
+};
 
-#घोषणा	CARL9170_DEBUG_RING_SIZE			64
+#define	CARL9170_DEBUG_RING_SIZE			64
 
-काष्ठा carl9170_debug अणु
-	काष्ठा ath_stats stats;
-	काष्ठा carl9170_debug_mem_rbe ring[CARL9170_DEBUG_RING_SIZE];
-	काष्ठा mutex ring_lock;
-	अचिन्हित पूर्णांक ring_head, ring_tail;
-	काष्ठा delayed_work update_tally;
-पूर्ण;
+struct carl9170_debug {
+	struct ath_stats stats;
+	struct carl9170_debug_mem_rbe ring[CARL9170_DEBUG_RING_SIZE];
+	struct mutex ring_lock;
+	unsigned int ring_head, ring_tail;
+	struct delayed_work update_tally;
+};
 
-काष्ठा ar9170;
+struct ar9170;
 
-व्योम carl9170_debugfs_रेजिस्टर(काष्ठा ar9170 *ar);
-व्योम carl9170_debugfs_unरेजिस्टर(काष्ठा ar9170 *ar);
-#पूर्ण_अगर /* __DEBUG_H */
+void carl9170_debugfs_register(struct ar9170 *ar);
+void carl9170_debugfs_unregister(struct ar9170 *ar);
+#endif /* __DEBUG_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * (C) 2001 Clemson University and The University of Chicago
  * Copyright 2018 Omnibond Systems, L.L.C.
@@ -11,17 +10,17 @@
  *  Linux VFS file operations.
  */
 
-#समावेश "protocol.h"
-#समावेश "orangefs-kernel.h"
-#समावेश "orangefs-bufmap.h"
-#समावेश <linux/fs.h>
-#समावेश <linux/pagemap.h>
+#include "protocol.h"
+#include "orangefs-kernel.h"
+#include "orangefs-bufmap.h"
+#include <linux/fs.h>
+#include <linux/pagemap.h>
 
-अटल पूर्णांक flush_racache(काष्ठा inode *inode)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	काष्ठा orangefs_kernel_op_s *new_op;
-	पूर्णांक ret;
+static int flush_racache(struct inode *inode)
+{
+	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	struct orangefs_kernel_op_s *new_op;
+	int ret;
 
 	gossip_debug(GOSSIP_UTILS_DEBUG,
 	    "%s: %pU: Handle is %pU | fs_id %d\n", __func__,
@@ -29,57 +28,57 @@
 	    orangefs_inode->refn.fs_id);
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_RA_FLUSH);
-	अगर (!new_op)
-		वापस -ENOMEM;
+	if (!new_op)
+		return -ENOMEM;
 	new_op->upcall.req.ra_cache_flush.refn = orangefs_inode->refn;
 
 	ret = service_operation(new_op, "orangefs_flush_racache",
-	    get_पूर्णांकerruptible_flag(inode));
+	    get_interruptible_flag(inode));
 
 	gossip_debug(GOSSIP_UTILS_DEBUG, "%s: got return value of %d\n",
 	    __func__, ret);
 
 	op_release(new_op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Post and रुको क्रम the I/O upcall to finish
+ * Post and wait for the I/O upcall to finish
  */
-sमाप_प्रकार रुको_क्रम_direct_io(क्रमागत ORANGEFS_io_type type, काष्ठा inode *inode,
-	loff_t *offset, काष्ठा iov_iter *iter, माप_प्रकार total_size,
-	loff_t पढ़ोahead_size, काष्ठा orangefs_ग_लिखो_range *wr,
-	पूर्णांक *index_वापस, काष्ठा file *file)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	काष्ठा orangefs_khandle *handle = &orangefs_inode->refn.khandle;
-	काष्ठा orangefs_kernel_op_s *new_op = शून्य;
-	पूर्णांक buffer_index;
-	sमाप_प्रकार ret;
-	माप_प्रकार copy_amount;
-	पूर्णांक खोलो_क्रम_पढ़ो;
-	पूर्णांक खोलो_क्रम_ग_लिखो;
+ssize_t wait_for_direct_io(enum ORANGEFS_io_type type, struct inode *inode,
+	loff_t *offset, struct iov_iter *iter, size_t total_size,
+	loff_t readahead_size, struct orangefs_write_range *wr,
+	int *index_return, struct file *file)
+{
+	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	struct orangefs_khandle *handle = &orangefs_inode->refn.khandle;
+	struct orangefs_kernel_op_s *new_op = NULL;
+	int buffer_index;
+	ssize_t ret;
+	size_t copy_amount;
+	int open_for_read;
+	int open_for_write;
 
-	new_op = op_alloc(ORANGEFS_VFS_OP_खाता_IO);
-	अगर (!new_op)
-		वापस -ENOMEM;
+	new_op = op_alloc(ORANGEFS_VFS_OP_FILE_IO);
+	if (!new_op)
+		return -ENOMEM;
 
 	/* synchronous I/O */
-	new_op->upcall.req.io.पढ़ोahead_size = पढ़ोahead_size;
+	new_op->upcall.req.io.readahead_size = readahead_size;
 	new_op->upcall.req.io.io_type = type;
 	new_op->upcall.req.io.refn = orangefs_inode->refn;
 
 populate_shared_memory:
 	/* get a shared buffer index */
 	buffer_index = orangefs_bufmap_get();
-	अगर (buffer_index < 0) अणु
+	if (buffer_index < 0) {
 		ret = buffer_index;
-		gossip_debug(GOSSIP_खाता_DEBUG,
+		gossip_debug(GOSSIP_FILE_DEBUG,
 			     "%s: orangefs_bufmap_get failure (%zd)\n",
 			     __func__, ret);
-		जाओ out;
-	पूर्ण
-	gossip_debug(GOSSIP_खाता_DEBUG,
+		goto out;
+	}
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "%s(%pU): GET op %p -> buffer_index %d\n",
 		     __func__,
 		     handle,
@@ -90,63 +89,63 @@ populate_shared_memory:
 	new_op->upcall.req.io.buf_index = buffer_index;
 	new_op->upcall.req.io.count = total_size;
 	new_op->upcall.req.io.offset = *offset;
-	अगर (type == ORANGEFS_IO_WRITE && wr) अणु
+	if (type == ORANGEFS_IO_WRITE && wr) {
 		new_op->upcall.uid = from_kuid(&init_user_ns, wr->uid);
 		new_op->upcall.gid = from_kgid(&init_user_ns, wr->gid);
-	पूर्ण
+	}
 	/*
-	 * Orangefs has no खोलो, and orangefs checks file permissions
+	 * Orangefs has no open, and orangefs checks file permissions
 	 * on each file access. Posix requires that file permissions
-	 * be checked on खोलो and nowhere अन्यथा. Orangefs-through-the-kernel
+	 * be checked on open and nowhere else. Orangefs-through-the-kernel
 	 * needs to seem posix compliant.
 	 *
-	 * The VFS खोलोs files, even अगर the fileप्रणाली provides no
-	 * method. We can see अगर a file was successfully खोलोed क्रम
-	 * पढ़ो and or क्रम ग_लिखो by looking at file->f_mode.
+	 * The VFS opens files, even if the filesystem provides no
+	 * method. We can see if a file was successfully opened for
+	 * read and or for write by looking at file->f_mode.
 	 *
-	 * When ग_लिखोs are flowing from the page cache, file is no
-	 * दीर्घer available. We can trust the VFS to have checked
-	 * file->f_mode beक्रमe writing to the page cache.
+	 * When writes are flowing from the page cache, file is no
+	 * longer available. We can trust the VFS to have checked
+	 * file->f_mode before writing to the page cache.
 	 *
-	 * The mode of a file might change between when it is खोलोed
+	 * The mode of a file might change between when it is opened
 	 * and IO commences, or it might be created with an arbitrary mode.
 	 *
 	 * We'll make sure we don't hit EACCES during the IO stage by
-	 * using UID 0. Some of the समय we have access without changing
+	 * using UID 0. Some of the time we have access without changing
 	 * to UID 0 - how to check?
 	 */
-	अगर (file) अणु
-		खोलो_क्रम_ग_लिखो = file->f_mode & FMODE_WRITE;
-		खोलो_क्रम_पढ़ो = file->f_mode & FMODE_READ;
-	पूर्ण अन्यथा अणु
-		खोलो_क्रम_ग_लिखो = 1;
-		खोलो_क्रम_पढ़ो = 0; /* not relevant? */
-	पूर्ण
-	अगर ((type == ORANGEFS_IO_WRITE) && खोलो_क्रम_ग_लिखो)
+	if (file) {
+		open_for_write = file->f_mode & FMODE_WRITE;
+		open_for_read = file->f_mode & FMODE_READ;
+	} else {
+		open_for_write = 1;
+		open_for_read = 0; /* not relevant? */
+	}
+	if ((type == ORANGEFS_IO_WRITE) && open_for_write)
 		new_op->upcall.uid = 0;
-	अगर ((type == ORANGEFS_IO_READ) && खोलो_क्रम_पढ़ो)
+	if ((type == ORANGEFS_IO_READ) && open_for_read)
 		new_op->upcall.uid = 0;
 
-	gossip_debug(GOSSIP_खाता_DEBUG,
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "%s(%pU): offset: %llu total_size: %zd\n",
 		     __func__,
 		     handle,
 		     llu(*offset),
 		     total_size);
 	/*
-	 * Stage 1: copy the buffers पूर्णांकo client-core's address space
+	 * Stage 1: copy the buffers into client-core's address space
 	 */
-	अगर (type == ORANGEFS_IO_WRITE && total_size) अणु
+	if (type == ORANGEFS_IO_WRITE && total_size) {
 		ret = orangefs_bufmap_copy_from_iovec(iter, buffer_index,
 		    total_size);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			gossip_err("%s: Failed to copy-in buffers. Please make sure that the pvfs2-client is running. %ld\n",
-			    __func__, (दीर्घ)ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			    __func__, (long)ret);
+			goto out;
+		}
+	}
 
-	gossip_debug(GOSSIP_खाता_DEBUG,
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "%s(%pU): Calling post_io_request with tag (%llu)\n",
 		     __func__,
 		     handle,
@@ -157,412 +156,412 @@ populate_shared_memory:
 				type == ORANGEFS_IO_WRITE ?
 					"file_write" :
 					"file_read",
-				get_पूर्णांकerruptible_flag(inode));
+				get_interruptible_flag(inode));
 
 	/*
-	 * If service_operation() वापसs -EAGAIN #and# the operation was
+	 * If service_operation() returns -EAGAIN #and# the operation was
 	 * purged from orangefs_request_list or htable_ops_in_progress, then
 	 * we know that the client was restarted, causing the shared memory
-	 * area to be wiped clean.  To restart a  ग_लिखो operation in this
-	 * हाल, we must re-copy the data from the user's iovec to a NEW
-	 * shared memory location. To restart a पढ़ो operation, we must get
+	 * area to be wiped clean.  To restart a  write operation in this
+	 * case, we must re-copy the data from the user's iovec to a NEW
+	 * shared memory location. To restart a read operation, we must get
 	 * a new shared memory location.
 	 */
-	अगर (ret == -EAGAIN && op_state_purged(new_op)) अणु
+	if (ret == -EAGAIN && op_state_purged(new_op)) {
 		orangefs_bufmap_put(buffer_index);
-		अगर (type == ORANGEFS_IO_WRITE)
+		if (type == ORANGEFS_IO_WRITE)
 			iov_iter_revert(iter, total_size);
-		gossip_debug(GOSSIP_खाता_DEBUG,
+		gossip_debug(GOSSIP_FILE_DEBUG,
 			     "%s:going to repopulate_shared_memory.\n",
 			     __func__);
-		जाओ populate_shared_memory;
-	पूर्ण
+		goto populate_shared_memory;
+	}
 
-	अगर (ret < 0) अणु
-		अगर (ret == -EINTR) अणु
+	if (ret < 0) {
+		if (ret == -EINTR) {
 			/*
-			 * We can't वापस EINTR अगर any data was written,
+			 * We can't return EINTR if any data was written,
 			 * it's not POSIX. It is minimally acceptable
-			 * to give a partial ग_लिखो, the way NFS करोes.
+			 * to give a partial write, the way NFS does.
 			 *
-			 * It would be optimal to वापस all or nothing,
-			 * but अगर a userspace ग_लिखो is bigger than
-			 * an IO buffer, and the पूर्णांकerrupt occurs
-			 * between buffer ग_लिखोs, that would not be
+			 * It would be optimal to return all or nothing,
+			 * but if a userspace write is bigger than
+			 * an IO buffer, and the interrupt occurs
+			 * between buffer writes, that would not be
 			 * possible.
 			 */
-			चयन (new_op->op_state - OP_VFS_STATE_GIVEN_UP) अणु
+			switch (new_op->op_state - OP_VFS_STATE_GIVEN_UP) {
 			/*
-			 * If the op was रुकोing when the पूर्णांकerrupt
+			 * If the op was waiting when the interrupt
 			 * occurred, then the client-core did not
-			 * trigger the ग_लिखो.
+			 * trigger the write.
 			 */
-			हाल OP_VFS_STATE_WAITING:
-				अगर (*offset == 0)
+			case OP_VFS_STATE_WAITING:
+				if (*offset == 0)
 					ret = -EINTR;
-				अन्यथा
+				else
 					ret = 0;
-				अवरोध;
+				break;
 			/*
-			 * If the op was in progress when the पूर्णांकerrupt
+			 * If the op was in progress when the interrupt
 			 * occurred, then the client-core was able to
-			 * trigger the ग_लिखो.
+			 * trigger the write.
 			 */
-			हाल OP_VFS_STATE_INPROGR:
-				अगर (type == ORANGEFS_IO_READ)
+			case OP_VFS_STATE_INPROGR:
+				if (type == ORANGEFS_IO_READ)
 					ret = -EINTR;
-				अन्यथा
+				else
 					ret = total_size;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				gossip_err("%s: unexpected op state :%d:.\n",
 					   __func__,
 					   new_op->op_state);
 				ret = 0;
-				अवरोध;
-			पूर्ण
-			gossip_debug(GOSSIP_खाता_DEBUG,
+				break;
+			}
+			gossip_debug(GOSSIP_FILE_DEBUG,
 				     "%s: got EINTR, state:%d: %p\n",
 				     __func__,
 				     new_op->op_state,
 				     new_op);
-		पूर्ण अन्यथा अणु
+		} else {
 			gossip_err("%s: error in %s handle %pU, returning %zd\n",
 				__func__,
 				type == ORANGEFS_IO_READ ?
 					"read from" : "write to",
 				handle, ret);
-		पूर्ण
-		अगर (orangefs_cancel_op_in_progress(new_op))
-			वापस ret;
+		}
+		if (orangefs_cancel_op_in_progress(new_op))
+			return ret;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Stage 3: Post copy buffers from client-core's address space
 	 */
-	अगर (type == ORANGEFS_IO_READ && new_op->करोwncall.resp.io.amt_complete) अणु
+	if (type == ORANGEFS_IO_READ && new_op->downcall.resp.io.amt_complete) {
 		/*
 		 * NOTE: the iovector can either contain addresses which
 		 *       can futher be kernel-space or user-space addresses.
-		 *       or it can poपूर्णांकers to काष्ठा page's
+		 *       or it can pointers to struct page's
 		 */
 
-		copy_amount = new_op->करोwncall.resp.io.amt_complete;
+		copy_amount = new_op->downcall.resp.io.amt_complete;
 
 		ret = orangefs_bufmap_copy_to_iovec(iter, buffer_index,
 			copy_amount);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			gossip_err("%s: Failed to copy-out buffers. Please make sure that the pvfs2-client is running (%ld)\n",
-			    __func__, (दीर्घ)ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	gossip_debug(GOSSIP_खाता_DEBUG,
+			    __func__, (long)ret);
+			goto out;
+		}
+	}
+	gossip_debug(GOSSIP_FILE_DEBUG,
 	    "%s(%pU): Amount %s, returned by the sys-io call:%d\n",
 	    __func__,
 	    handle,
 	    type == ORANGEFS_IO_READ ?  "read" : "written",
-	    (पूर्णांक)new_op->करोwncall.resp.io.amt_complete);
+	    (int)new_op->downcall.resp.io.amt_complete);
 
-	ret = new_op->करोwncall.resp.io.amt_complete;
+	ret = new_op->downcall.resp.io.amt_complete;
 
 out:
-	अगर (buffer_index >= 0) अणु
+	if (buffer_index >= 0) {
 		orangefs_bufmap_put(buffer_index);
-		gossip_debug(GOSSIP_खाता_DEBUG,
+		gossip_debug(GOSSIP_FILE_DEBUG,
 			"%s(%pU): PUT buffer_index %d\n",
 			__func__, handle, buffer_index);
 		buffer_index = -1;
-	पूर्ण
+	}
 	op_release(new_op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक orangefs_revalidate_mapping(काष्ठा inode *inode)
-अणु
-	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	काष्ठा address_space *mapping = inode->i_mapping;
-	अचिन्हित दीर्घ *bitlock = &orangefs_inode->bitlock;
-	पूर्णांक ret;
+int orangefs_revalidate_mapping(struct inode *inode)
+{
+	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	struct address_space *mapping = inode->i_mapping;
+	unsigned long *bitlock = &orangefs_inode->bitlock;
+	int ret;
 
-	जबतक (1) अणु
-		ret = रुको_on_bit(bitlock, 1, TASK_KILLABLE);
-		अगर (ret)
-			वापस ret;
+	while (1) {
+		ret = wait_on_bit(bitlock, 1, TASK_KILLABLE);
+		if (ret)
+			return ret;
 		spin_lock(&inode->i_lock);
-		अगर (test_bit(1, bitlock)) अणु
+		if (test_bit(1, bitlock)) {
 			spin_unlock(&inode->i_lock);
-			जारी;
-		पूर्ण
-		अगर (!समय_beक्रमe(jअगरfies, orangefs_inode->mapping_समय))
-			अवरोध;
+			continue;
+		}
+		if (!time_before(jiffies, orangefs_inode->mapping_time))
+			break;
 		spin_unlock(&inode->i_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	set_bit(1, bitlock);
 	smp_wmb();
 	spin_unlock(&inode->i_lock);
 
 	unmap_mapping_range(mapping, 0, 0, 0);
-	ret = filemap_ग_लिखो_and_रुको(mapping);
-	अगर (!ret)
+	ret = filemap_write_and_wait(mapping);
+	if (!ret)
 		ret = invalidate_inode_pages2(mapping);
 
-	orangefs_inode->mapping_समय = jअगरfies +
-	    orangefs_cache_समयout_msecs*HZ/1000;
+	orangefs_inode->mapping_time = jiffies +
+	    orangefs_cache_timeout_msecs*HZ/1000;
 
 	clear_bit(1, bitlock);
 	smp_mb__after_atomic();
 	wake_up_bit(bitlock, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार orangefs_file_पढ़ो_iter(काष्ठा kiocb *iocb,
-    काष्ठा iov_iter *iter)
-अणु
-	पूर्णांक ret;
-	orangefs_stats.पढ़ोs++;
+static ssize_t orangefs_file_read_iter(struct kiocb *iocb,
+    struct iov_iter *iter)
+{
+	int ret;
+	orangefs_stats.reads++;
 
-	करोwn_पढ़ो(&file_inode(iocb->ki_filp)->i_rwsem);
+	down_read(&file_inode(iocb->ki_filp)->i_rwsem);
 	ret = orangefs_revalidate_mapping(file_inode(iocb->ki_filp));
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = generic_file_पढ़ो_iter(iocb, iter);
+	ret = generic_file_read_iter(iocb, iter);
 out:
-	up_पढ़ो(&file_inode(iocb->ki_filp)->i_rwsem);
-	वापस ret;
-पूर्ण
+	up_read(&file_inode(iocb->ki_filp)->i_rwsem);
+	return ret;
+}
 
-अटल sमाप_प्रकार orangefs_file_ग_लिखो_iter(काष्ठा kiocb *iocb,
-    काष्ठा iov_iter *iter)
-अणु
-	पूर्णांक ret;
-	orangefs_stats.ग_लिखोs++;
+static ssize_t orangefs_file_write_iter(struct kiocb *iocb,
+    struct iov_iter *iter)
+{
+	int ret;
+	orangefs_stats.writes++;
 
-	अगर (iocb->ki_pos > i_size_पढ़ो(file_inode(iocb->ki_filp))) अणु
+	if (iocb->ki_pos > i_size_read(file_inode(iocb->ki_filp))) {
 		ret = orangefs_revalidate_mapping(file_inode(iocb->ki_filp));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = generic_file_ग_लिखो_iter(iocb, iter);
-	वापस ret;
-पूर्ण
+	ret = generic_file_write_iter(iocb, iter);
+	return ret;
+}
 
-अटल vm_fault_t orangefs_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा file *file = vmf->vma->vm_file;
-	पूर्णांक ret;
+static vm_fault_t orangefs_fault(struct vm_fault *vmf)
+{
+	struct file *file = vmf->vma->vm_file;
+	int ret;
 	ret = orangefs_inode_getattr(file->f_mapping->host,
 	    ORANGEFS_GETATTR_SIZE);
-	अगर (ret == -ESTALE)
+	if (ret == -ESTALE)
 		ret = -EIO;
-	अगर (ret) अणु
+	if (ret) {
 		gossip_err("%s: orangefs_inode_getattr failed, "
 		    "ret:%d:.\n", __func__, ret);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
-	वापस filemap_fault(vmf);
-पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
+	return filemap_fault(vmf);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा orangefs_file_vm_ops = अणु
+static const struct vm_operations_struct orangefs_file_vm_ops = {
 	.fault = orangefs_fault,
 	.map_pages = filemap_map_pages,
-	.page_mkग_लिखो = orangefs_page_mkग_लिखो,
-पूर्ण;
+	.page_mkwrite = orangefs_page_mkwrite,
+};
 
 /*
  * Memory map a region of a file.
  */
-अटल पूर्णांक orangefs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक ret;
+static int orangefs_file_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	int ret;
 
 	ret = orangefs_revalidate_mapping(file_inode(file));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	gossip_debug(GOSSIP_खाता_DEBUG,
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "orangefs_file_mmap: called on %pD\n", file);
 
-	/* set the sequential पढ़ोahead hपूर्णांक */
+	/* set the sequential readahead hint */
 	vma->vm_flags |= VM_SEQ_READ;
 	vma->vm_flags &= ~VM_RAND_READ;
 
 	file_accessed(file);
 	vma->vm_ops = &orangefs_file_vm_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा mapping_nrpages(idata) ((idata)->nrpages)
+#define mapping_nrpages(idata) ((idata)->nrpages)
 
 /*
- * Called to notअगरy the module that there are no more references to
- * this file (i.e. no processes have it खोलो).
+ * Called to notify the module that there are no more references to
+ * this file (i.e. no processes have it open).
  *
- * \नote Not called when each file is बंदd.
+ * \note Not called when each file is closed.
  */
-अटल पूर्णांक orangefs_file_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	gossip_debug(GOSSIP_खाता_DEBUG,
+static int orangefs_file_release(struct inode *inode, struct file *file)
+{
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "orangefs_file_release: called on %pD\n",
 		     file);
 
 	/*
-	 * हटाओ all associated inode pages from the page cache and
-	 * पढ़ोahead cache (अगर any); this क्रमces an expensive refresh of
-	 * data क्रम the next caller of mmap (or 'get_block' accesses)
+	 * remove all associated inode pages from the page cache and
+	 * readahead cache (if any); this forces an expensive refresh of
+	 * data for the next caller of mmap (or 'get_block' accesses)
 	 */
-	अगर (file_inode(file) &&
+	if (file_inode(file) &&
 	    file_inode(file)->i_mapping &&
-	    mapping_nrpages(&file_inode(file)->i_data)) अणु
-		अगर (orangefs_features & ORANGEFS_FEATURE_READAHEAD) अणु
+	    mapping_nrpages(&file_inode(file)->i_data)) {
+		if (orangefs_features & ORANGEFS_FEATURE_READAHEAD) {
 			gossip_debug(GOSSIP_INODE_DEBUG,
 			    "calling flush_racache on %pU\n",
 			    get_khandle_from_ino(inode));
 			flush_racache(inode);
 			gossip_debug(GOSSIP_INODE_DEBUG,
 			    "flush_racache finished\n");
-		पूर्ण
+		}
 
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
- * Push all data क्रम a specअगरic file onto permanent storage.
+ * Push all data for a specific file onto permanent storage.
  */
-अटल पूर्णांक orangefs_fsync(काष्ठा file *file,
+static int orangefs_fsync(struct file *file,
 		       loff_t start,
 		       loff_t end,
-		       पूर्णांक datasync)
-अणु
-	पूर्णांक ret;
-	काष्ठा orangefs_inode_s *orangefs_inode =
+		       int datasync)
+{
+	int ret;
+	struct orangefs_inode_s *orangefs_inode =
 		ORANGEFS_I(file_inode(file));
-	काष्ठा orangefs_kernel_op_s *new_op = शून्य;
+	struct orangefs_kernel_op_s *new_op = NULL;
 
-	ret = filemap_ग_लिखो_and_रुको_range(file_inode(file)->i_mapping,
+	ret = filemap_write_and_wait_range(file_inode(file)->i_mapping,
 	    start, end);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_FSYNC);
-	अगर (!new_op)
-		वापस -ENOMEM;
+	if (!new_op)
+		return -ENOMEM;
 	new_op->upcall.req.fsync.refn = orangefs_inode->refn;
 
 	ret = service_operation(new_op,
 			"orangefs_fsync",
-			get_पूर्णांकerruptible_flag(file_inode(file)));
+			get_interruptible_flag(file_inode(file)));
 
-	gossip_debug(GOSSIP_खाता_DEBUG,
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "orangefs_fsync got return value of %d\n",
 		     ret);
 
 	op_release(new_op);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Change the file poपूर्णांकer position क्रम an instance of an खोलो file.
+ * Change the file pointer position for an instance of an open file.
  *
- * \नote If .llseek is overriden, we must acquire lock as described in
- *       Documentation/fileप्रणालीs/locking.rst.
+ * \note If .llseek is overriden, we must acquire lock as described in
+ *       Documentation/filesystems/locking.rst.
  *
  * Future upgrade could support SEEK_DATA and SEEK_HOLE but would
  * require much changes to the FS
  */
-अटल loff_t orangefs_file_llseek(काष्ठा file *file, loff_t offset, पूर्णांक origin)
-अणु
-	पूर्णांक ret = -EINVAL;
-	काष्ठा inode *inode = file_inode(file);
+static loff_t orangefs_file_llseek(struct file *file, loff_t offset, int origin)
+{
+	int ret = -EINVAL;
+	struct inode *inode = file_inode(file);
 
-	अगर (origin == अंत_से) अणु
+	if (origin == SEEK_END) {
 		/*
 		 * revalidate the inode's file size.
-		 * NOTE: We are only पूर्णांकerested in file size here,
+		 * NOTE: We are only interested in file size here,
 		 * so we set mask accordingly.
 		 */
 		ret = orangefs_inode_getattr(file->f_mapping->host,
 		    ORANGEFS_GETATTR_SIZE);
-		अगर (ret == -ESTALE)
+		if (ret == -ESTALE)
 			ret = -EIO;
-		अगर (ret) अणु
-			gossip_debug(GOSSIP_खाता_DEBUG,
+		if (ret) {
+			gossip_debug(GOSSIP_FILE_DEBUG,
 				     "%s:%s:%d calling make bad inode\n",
-				     __खाता__,
+				     __FILE__,
 				     __func__,
 				     __LINE__);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	gossip_debug(GOSSIP_खाता_DEBUG,
+	gossip_debug(GOSSIP_FILE_DEBUG,
 		     "orangefs_file_llseek: offset is %ld | origin is %d"
 		     " | inode size is %lu\n",
-		     (दीर्घ)offset,
+		     (long)offset,
 		     origin,
-		     (अचिन्हित दीर्घ)i_size_पढ़ो(inode));
+		     (unsigned long)i_size_read(inode));
 
-	वापस generic_file_llseek(file, offset, origin);
-पूर्ण
+	return generic_file_llseek(file, offset, origin);
+}
 
 /*
  * Support local locks (locks that only this kernel knows about)
- * अगर Orangefs was mounted -o local_lock.
+ * if Orangefs was mounted -o local_lock.
  */
-अटल पूर्णांक orangefs_lock(काष्ठा file *filp, पूर्णांक cmd, काष्ठा file_lock *fl)
-अणु
-	पूर्णांक rc = -EINVAL;
+static int orangefs_lock(struct file *filp, int cmd, struct file_lock *fl)
+{
+	int rc = -EINVAL;
 
-	अगर (ORANGEFS_SB(file_inode(filp)->i_sb)->flags & ORANGEFS_OPT_LOCAL_LOCK) अणु
-		अगर (cmd == F_GETLK) अणु
+	if (ORANGEFS_SB(file_inode(filp)->i_sb)->flags & ORANGEFS_OPT_LOCAL_LOCK) {
+		if (cmd == F_GETLK) {
 			rc = 0;
 			posix_test_lock(filp, fl);
-		पूर्ण अन्यथा अणु
-			rc = posix_lock_file(filp, fl, शून्य);
-		पूर्ण
-	पूर्ण
+		} else {
+			rc = posix_lock_file(filp, fl, NULL);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक orangefs_flush(काष्ठा file *file, fl_owner_t id)
-अणु
+static int orangefs_flush(struct file *file, fl_owner_t id)
+{
 	/*
-	 * This is vfs_fsync_range(file, 0, Lदीर्घ_उच्च, 0) without the
+	 * This is vfs_fsync_range(file, 0, LLONG_MAX, 0) without the
 	 * service_operation in orangefs_fsync.
 	 *
-	 * Do not send fsync to OrangeFS server on a बंद.  Do send fsync
+	 * Do not send fsync to OrangeFS server on a close.  Do send fsync
 	 * on an explicit fsync call.  This duplicates historical OrangeFS
 	 * behavior.
 	 */
-	पूर्णांक r;
+	int r;
 
-	r = filemap_ग_लिखो_and_रुको_range(file->f_mapping, 0, Lदीर्घ_उच्च);
-	अगर (r > 0)
-		वापस 0;
-	अन्यथा
-		वापस r;
-पूर्ण
+	r = filemap_write_and_wait_range(file->f_mapping, 0, LLONG_MAX);
+	if (r > 0)
+		return 0;
+	else
+		return r;
+}
 
 /** ORANGEFS implementation of VFS file operations */
-स्थिर काष्ठा file_operations orangefs_file_operations = अणु
+const struct file_operations orangefs_file_operations = {
 	.llseek		= orangefs_file_llseek,
-	.पढ़ो_iter	= orangefs_file_पढ़ो_iter,
-	.ग_लिखो_iter	= orangefs_file_ग_लिखो_iter,
+	.read_iter	= orangefs_file_read_iter,
+	.write_iter	= orangefs_file_write_iter,
 	.lock		= orangefs_lock,
 	.mmap		= orangefs_file_mmap,
-	.खोलो		= generic_file_खोलो,
-	.splice_पढ़ो    = generic_file_splice_पढ़ो,
-	.splice_ग_लिखो   = iter_file_splice_ग_लिखो,
+	.open		= generic_file_open,
+	.splice_read    = generic_file_splice_read,
+	.splice_write   = iter_file_splice_write,
 	.flush		= orangefs_flush,
 	.release	= orangefs_file_release,
 	.fsync		= orangefs_fsync,
-पूर्ण;
+};

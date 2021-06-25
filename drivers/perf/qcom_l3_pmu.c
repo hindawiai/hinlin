@@ -1,756 +1,755 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम the L3 cache PMUs in Qualcomm Technologies chips.
+ * Driver for the L3 cache PMUs in Qualcomm Technologies chips.
  *
  * The driver supports a distributed cache architecture where the overall
- * cache क्रम a socket is comprised of multiple slices each with its own PMU.
- * Access to each inभागidual PMU is provided even though all CPUs share all
- * the slices. User space needs to aggregate to inभागidual counts to provide
+ * cache for a socket is comprised of multiple slices each with its own PMU.
+ * Access to each individual PMU is provided even though all CPUs share all
+ * the slices. User space needs to aggregate to individual counts to provide
  * a global picture.
  *
- * See Documentation/admin-guide/perf/qcom_l3_pmu.rst क्रम more details.
+ * See Documentation/admin-guide/perf/qcom_l3_pmu.rst for more details.
  *
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/acpi.h>
+#include <linux/bitops.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/perf_event.h>
+#include <linux/platform_device.h>
 
 /*
- * General स्थिरants
+ * General constants
  */
 
 /* Number of counters on each PMU */
-#घोषणा L3_NUM_COUNTERS  8
-/* Mask क्रम the event type field within perf_event_attr.config and EVTYPE reg */
-#घोषणा L3_EVTYPE_MASK   0xFF
+#define L3_NUM_COUNTERS  8
+/* Mask for the event type field within perf_event_attr.config and EVTYPE reg */
+#define L3_EVTYPE_MASK   0xFF
 /*
  * Bit position of the 'long counter' flag within perf_event_attr.config.
  * Reserve some space between the event type and this flag to allow expansion
  * in the event type field.
  */
-#घोषणा L3_EVENT_LC_BIT  32
+#define L3_EVENT_LC_BIT  32
 
 /*
  * Register offsets
  */
 
-/* Perfmon रेजिस्टरs */
-#घोषणा L3_HML3_PM_CR       0x000
-#घोषणा L3_HML3_PM_EVCNTR(__cntr) (0x420 + ((__cntr) & 0x7) * 8)
-#घोषणा L3_HML3_PM_CNTCTL(__cntr) (0x120 + ((__cntr) & 0x7) * 8)
-#घोषणा L3_HML3_PM_EVTYPE(__cntr) (0x220 + ((__cntr) & 0x7) * 8)
-#घोषणा L3_HML3_PM_FILTRA   0x300
-#घोषणा L3_HML3_PM_FILTRB   0x308
-#घोषणा L3_HML3_PM_FILTRC   0x310
-#घोषणा L3_HML3_PM_FILTRAM  0x304
-#घोषणा L3_HML3_PM_FILTRBM  0x30C
-#घोषणा L3_HML3_PM_FILTRCM  0x314
+/* Perfmon registers */
+#define L3_HML3_PM_CR       0x000
+#define L3_HML3_PM_EVCNTR(__cntr) (0x420 + ((__cntr) & 0x7) * 8)
+#define L3_HML3_PM_CNTCTL(__cntr) (0x120 + ((__cntr) & 0x7) * 8)
+#define L3_HML3_PM_EVTYPE(__cntr) (0x220 + ((__cntr) & 0x7) * 8)
+#define L3_HML3_PM_FILTRA   0x300
+#define L3_HML3_PM_FILTRB   0x308
+#define L3_HML3_PM_FILTRC   0x310
+#define L3_HML3_PM_FILTRAM  0x304
+#define L3_HML3_PM_FILTRBM  0x30C
+#define L3_HML3_PM_FILTRCM  0x314
 
-/* Basic counter रेजिस्टरs */
-#घोषणा L3_M_BC_CR         0x500
-#घोषणा L3_M_BC_SATROLL_CR 0x504
-#घोषणा L3_M_BC_CNTENSET   0x508
-#घोषणा L3_M_BC_CNTENCLR   0x50C
-#घोषणा L3_M_BC_INTENSET   0x510
-#घोषणा L3_M_BC_INTENCLR   0x514
-#घोषणा L3_M_BC_GANG       0x718
-#घोषणा L3_M_BC_OVSR       0x740
-#घोषणा L3_M_BC_IRQCTL     0x96C
+/* Basic counter registers */
+#define L3_M_BC_CR         0x500
+#define L3_M_BC_SATROLL_CR 0x504
+#define L3_M_BC_CNTENSET   0x508
+#define L3_M_BC_CNTENCLR   0x50C
+#define L3_M_BC_INTENSET   0x510
+#define L3_M_BC_INTENCLR   0x514
+#define L3_M_BC_GANG       0x718
+#define L3_M_BC_OVSR       0x740
+#define L3_M_BC_IRQCTL     0x96C
 
 /*
  * Bit field definitions
  */
 
 /* L3_HML3_PM_CR */
-#घोषणा PM_CR_RESET           (0)
+#define PM_CR_RESET           (0)
 
 /* L3_HML3_PM_XCNTCTL/L3_HML3_PM_CNTCTLx */
-#घोषणा PMCNT_RESET           (0)
+#define PMCNT_RESET           (0)
 
 /* L3_HML3_PM_EVTYPEx */
-#घोषणा EVSEL(__val)          ((__val) & L3_EVTYPE_MASK)
+#define EVSEL(__val)          ((__val) & L3_EVTYPE_MASK)
 
-/* Reset value क्रम all the filter रेजिस्टरs */
-#घोषणा PM_FLTR_RESET         (0)
+/* Reset value for all the filter registers */
+#define PM_FLTR_RESET         (0)
 
 /* L3_M_BC_CR */
-#घोषणा BC_RESET              (1UL << 1)
-#घोषणा BC_ENABLE             (1UL << 0)
+#define BC_RESET              (1UL << 1)
+#define BC_ENABLE             (1UL << 0)
 
 /* L3_M_BC_SATROLL_CR */
-#घोषणा BC_SATROLL_CR_RESET   (0)
+#define BC_SATROLL_CR_RESET   (0)
 
 /* L3_M_BC_CNTENSET */
-#घोषणा PMCNTENSET(__cntr)    (1UL << ((__cntr) & 0x7))
+#define PMCNTENSET(__cntr)    (1UL << ((__cntr) & 0x7))
 
 /* L3_M_BC_CNTENCLR */
-#घोषणा PMCNTENCLR(__cntr)    (1UL << ((__cntr) & 0x7))
-#घोषणा BC_CNTENCLR_RESET     (0xFF)
+#define PMCNTENCLR(__cntr)    (1UL << ((__cntr) & 0x7))
+#define BC_CNTENCLR_RESET     (0xFF)
 
 /* L3_M_BC_INTENSET */
-#घोषणा PMINTENSET(__cntr)    (1UL << ((__cntr) & 0x7))
+#define PMINTENSET(__cntr)    (1UL << ((__cntr) & 0x7))
 
 /* L3_M_BC_INTENCLR */
-#घोषणा PMINTENCLR(__cntr)    (1UL << ((__cntr) & 0x7))
-#घोषणा BC_INTENCLR_RESET     (0xFF)
+#define PMINTENCLR(__cntr)    (1UL << ((__cntr) & 0x7))
+#define BC_INTENCLR_RESET     (0xFF)
 
 /* L3_M_BC_GANG */
-#घोषणा GANG_EN(__cntr)       (1UL << ((__cntr) & 0x7))
-#घोषणा BC_GANG_RESET         (0)
+#define GANG_EN(__cntr)       (1UL << ((__cntr) & 0x7))
+#define BC_GANG_RESET         (0)
 
 /* L3_M_BC_OVSR */
-#घोषणा PMOVSRCLR(__cntr)     (1UL << ((__cntr) & 0x7))
-#घोषणा PMOVSRCLR_RESET       (0xFF)
+#define PMOVSRCLR(__cntr)     (1UL << ((__cntr) & 0x7))
+#define PMOVSRCLR_RESET       (0xFF)
 
 /* L3_M_BC_IRQCTL */
-#घोषणा PMIRQONMSBEN(__cntr)  (1UL << ((__cntr) & 0x7))
-#घोषणा BC_IRQCTL_RESET       (0x0)
+#define PMIRQONMSBEN(__cntr)  (1UL << ((__cntr) & 0x7))
+#define BC_IRQCTL_RESET       (0x0)
 
 /*
  * Events
  */
 
-#घोषणा L3_EVENT_CYCLES		0x01
-#घोषणा L3_EVENT_READ_HIT		0x20
-#घोषणा L3_EVENT_READ_MISS		0x21
-#घोषणा L3_EVENT_READ_HIT_D		0x22
-#घोषणा L3_EVENT_READ_MISS_D		0x23
-#घोषणा L3_EVENT_WRITE_HIT		0x24
-#घोषणा L3_EVENT_WRITE_MISS		0x25
+#define L3_EVENT_CYCLES		0x01
+#define L3_EVENT_READ_HIT		0x20
+#define L3_EVENT_READ_MISS		0x21
+#define L3_EVENT_READ_HIT_D		0x22
+#define L3_EVENT_READ_MISS_D		0x23
+#define L3_EVENT_WRITE_HIT		0x24
+#define L3_EVENT_WRITE_MISS		0x25
 
 /*
  * Decoding of settings from perf_event_attr
  *
- * The config क्रमmat क्रम perf events is:
+ * The config format for perf events is:
  * - config: bits 0-7: event type
  *           bit  32:  HW counter size requested, 0: 32 bits, 1: 64 bits
  */
 
-अटल अंतरभूत u32 get_event_type(काष्ठा perf_event *event)
-अणु
-	वापस (event->attr.config) & L3_EVTYPE_MASK;
-पूर्ण
+static inline u32 get_event_type(struct perf_event *event)
+{
+	return (event->attr.config) & L3_EVTYPE_MASK;
+}
 
-अटल अंतरभूत bool event_uses_दीर्घ_counter(काष्ठा perf_event *event)
-अणु
-	वापस !!(event->attr.config & BIT_ULL(L3_EVENT_LC_BIT));
-पूर्ण
+static inline bool event_uses_long_counter(struct perf_event *event)
+{
+	return !!(event->attr.config & BIT_ULL(L3_EVENT_LC_BIT));
+}
 
-अटल अंतरभूत पूर्णांक event_num_counters(काष्ठा perf_event *event)
-अणु
-	वापस event_uses_दीर्घ_counter(event) ? 2 : 1;
-पूर्ण
+static inline int event_num_counters(struct perf_event *event)
+{
+	return event_uses_long_counter(event) ? 2 : 1;
+}
 
 /*
  * Main PMU, inherits from the core perf PMU type
  */
-काष्ठा l3cache_pmu अणु
-	काष्ठा pmu		pmu;
-	काष्ठा hlist_node	node;
-	व्योम __iomem		*regs;
-	काष्ठा perf_event	*events[L3_NUM_COUNTERS];
-	अचिन्हित दीर्घ		used_mask[BITS_TO_LONGS(L3_NUM_COUNTERS)];
+struct l3cache_pmu {
+	struct pmu		pmu;
+	struct hlist_node	node;
+	void __iomem		*regs;
+	struct perf_event	*events[L3_NUM_COUNTERS];
+	unsigned long		used_mask[BITS_TO_LONGS(L3_NUM_COUNTERS)];
 	cpumask_t		cpumask;
-पूर्ण;
+};
 
-#घोषणा to_l3cache_pmu(p) (container_of(p, काष्ठा l3cache_pmu, pmu))
+#define to_l3cache_pmu(p) (container_of(p, struct l3cache_pmu, pmu))
 
 /*
  * Type used to group hardware counter operations
  *
  * Used to implement two types of hardware counters, standard (32bits) and
- * दीर्घ (64bits). The hardware supports counter chaining which we use to
- * implement दीर्घ counters. This support is exposed via the 'lc' flag field
+ * long (64bits). The hardware supports counter chaining which we use to
+ * implement long counters. This support is exposed via the 'lc' flag field
  * in perf_event_attr.config.
  */
-काष्ठा l3cache_event_ops अणु
+struct l3cache_event_ops {
 	/* Called to start event monitoring */
-	व्योम (*start)(काष्ठा perf_event *event);
+	void (*start)(struct perf_event *event);
 	/* Called to stop event monitoring */
-	व्योम (*stop)(काष्ठा perf_event *event, पूर्णांक flags);
+	void (*stop)(struct perf_event *event, int flags);
 	/* Called to update the perf_event */
-	व्योम (*update)(काष्ठा perf_event *event);
-पूर्ण;
+	void (*update)(struct perf_event *event);
+};
 
 /*
- * Implementation of दीर्घ counter operations
+ * Implementation of long counter operations
  *
  * 64bit counters are implemented by chaining two of the 32bit physical
  * counters. The PMU only supports chaining of adjacent even/odd pairs
- * and क्रम simplicity the driver always configures the odd counter to
+ * and for simplicity the driver always configures the odd counter to
  * count the overflows of the lower-numbered even counter. Note that since
- * the resulting hardware counter is 64bits no IRQs are required to मुख्यtain
+ * the resulting hardware counter is 64bits no IRQs are required to maintain
  * the software counter which is also 64bits.
  */
 
-अटल व्योम qcom_l3_cache__64bit_counter_start(काष्ठा perf_event *event)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
+static void qcom_l3_cache__64bit_counter_start(struct perf_event *event)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
 	u32 evsel = get_event_type(event);
 	u32 gang;
 
 	/* Set the odd counter to count the overflows of the even counter */
-	gang = पढ़ोl_relaxed(l3pmu->regs + L3_M_BC_GANG);
+	gang = readl_relaxed(l3pmu->regs + L3_M_BC_GANG);
 	gang |= GANG_EN(idx + 1);
-	ग_लिखोl_relaxed(gang, l3pmu->regs + L3_M_BC_GANG);
+	writel_relaxed(gang, l3pmu->regs + L3_M_BC_GANG);
 
 	/* Initialize the hardware counters and reset prev_count*/
 	local64_set(&event->hw.prev_count, 0);
-	ग_लिखोl_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1));
-	ग_लिखोl_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
+	writel_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1));
+	writel_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
 
 	/*
 	 * Set the event types, the upper half must use zero and the lower
 	 * half the actual event type
 	 */
-	ग_लिखोl_relaxed(EVSEL(0), l3pmu->regs + L3_HML3_PM_EVTYPE(idx + 1));
-	ग_लिखोl_relaxed(EVSEL(evsel), l3pmu->regs + L3_HML3_PM_EVTYPE(idx));
+	writel_relaxed(EVSEL(0), l3pmu->regs + L3_HML3_PM_EVTYPE(idx + 1));
+	writel_relaxed(EVSEL(evsel), l3pmu->regs + L3_HML3_PM_EVTYPE(idx));
 
 	/* Finally, enable the counters */
-	ग_लिखोl_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx + 1));
-	ग_लिखोl_relaxed(PMCNTENSET(idx + 1), l3pmu->regs + L3_M_BC_CNTENSET);
-	ग_लिखोl_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx));
-	ग_लिखोl_relaxed(PMCNTENSET(idx), l3pmu->regs + L3_M_BC_CNTENSET);
-पूर्ण
+	writel_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx + 1));
+	writel_relaxed(PMCNTENSET(idx + 1), l3pmu->regs + L3_M_BC_CNTENSET);
+	writel_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx));
+	writel_relaxed(PMCNTENSET(idx), l3pmu->regs + L3_M_BC_CNTENSET);
+}
 
-अटल व्योम qcom_l3_cache__64bit_counter_stop(काष्ठा perf_event *event,
-					      पूर्णांक flags)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
-	u32 gang = पढ़ोl_relaxed(l3pmu->regs + L3_M_BC_GANG);
+static void qcom_l3_cache__64bit_counter_stop(struct perf_event *event,
+					      int flags)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
+	u32 gang = readl_relaxed(l3pmu->regs + L3_M_BC_GANG);
 
 	/* Disable the counters */
-	ग_लिखोl_relaxed(PMCNTENCLR(idx), l3pmu->regs + L3_M_BC_CNTENCLR);
-	ग_लिखोl_relaxed(PMCNTENCLR(idx + 1), l3pmu->regs + L3_M_BC_CNTENCLR);
+	writel_relaxed(PMCNTENCLR(idx), l3pmu->regs + L3_M_BC_CNTENCLR);
+	writel_relaxed(PMCNTENCLR(idx + 1), l3pmu->regs + L3_M_BC_CNTENCLR);
 
 	/* Disable chaining */
-	ग_लिखोl_relaxed(gang & ~GANG_EN(idx + 1), l3pmu->regs + L3_M_BC_GANG);
-पूर्ण
+	writel_relaxed(gang & ~GANG_EN(idx + 1), l3pmu->regs + L3_M_BC_GANG);
+}
 
-अटल व्योम qcom_l3_cache__64bit_counter_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
+static void qcom_l3_cache__64bit_counter_update(struct perf_event *event)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
 	u32 hi, lo;
 	u64 prev, new;
 
-	करो अणु
-		prev = local64_पढ़ो(&event->hw.prev_count);
-		करो अणु
-			hi = पढ़ोl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1));
-			lo = पढ़ोl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
-		पूर्ण जबतक (hi != पढ़ोl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1)));
+	do {
+		prev = local64_read(&event->hw.prev_count);
+		do {
+			hi = readl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1));
+			lo = readl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
+		} while (hi != readl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx + 1)));
 		new = ((u64)hi << 32) | lo;
-	पूर्ण जबतक (local64_cmpxchg(&event->hw.prev_count, prev, new) != prev);
+	} while (local64_cmpxchg(&event->hw.prev_count, prev, new) != prev);
 
 	local64_add(new - prev, &event->count);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा l3cache_event_ops event_ops_दीर्घ = अणु
+static const struct l3cache_event_ops event_ops_long = {
 	.start = qcom_l3_cache__64bit_counter_start,
 	.stop = qcom_l3_cache__64bit_counter_stop,
 	.update = qcom_l3_cache__64bit_counter_update,
-पूर्ण;
+};
 
 /*
  * Implementation of standard counter operations
  *
  * 32bit counters use a single physical counter and a hardware feature that
- * निश्चितs the overflow IRQ on the toggling of the most signअगरicant bit in
- * the counter. This feature allows the counters to be left मुक्त-running
+ * asserts the overflow IRQ on the toggling of the most significant bit in
+ * the counter. This feature allows the counters to be left free-running
  * without needing the usual reprogramming required to properly handle races
  * during concurrent calls to update.
  */
 
-अटल व्योम qcom_l3_cache__32bit_counter_start(काष्ठा perf_event *event)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
+static void qcom_l3_cache__32bit_counter_start(struct perf_event *event)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
 	u32 evsel = get_event_type(event);
-	u32 irqctl = पढ़ोl_relaxed(l3pmu->regs + L3_M_BC_IRQCTL);
+	u32 irqctl = readl_relaxed(l3pmu->regs + L3_M_BC_IRQCTL);
 
-	/* Set the counter to निश्चित the overflow IRQ on MSB toggling */
-	ग_लिखोl_relaxed(irqctl | PMIRQONMSBEN(idx), l3pmu->regs + L3_M_BC_IRQCTL);
+	/* Set the counter to assert the overflow IRQ on MSB toggling */
+	writel_relaxed(irqctl | PMIRQONMSBEN(idx), l3pmu->regs + L3_M_BC_IRQCTL);
 
 	/* Initialize the hardware counter and reset prev_count*/
 	local64_set(&event->hw.prev_count, 0);
-	ग_लिखोl_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
+	writel_relaxed(0, l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
 
 	/* Set the event type */
-	ग_लिखोl_relaxed(EVSEL(evsel), l3pmu->regs + L3_HML3_PM_EVTYPE(idx));
+	writel_relaxed(EVSEL(evsel), l3pmu->regs + L3_HML3_PM_EVTYPE(idx));
 
-	/* Enable पूर्णांकerrupt generation by this counter */
-	ग_लिखोl_relaxed(PMINTENSET(idx), l3pmu->regs + L3_M_BC_INTENSET);
+	/* Enable interrupt generation by this counter */
+	writel_relaxed(PMINTENSET(idx), l3pmu->regs + L3_M_BC_INTENSET);
 
 	/* Finally, enable the counter */
-	ग_लिखोl_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx));
-	ग_लिखोl_relaxed(PMCNTENSET(idx), l3pmu->regs + L3_M_BC_CNTENSET);
-पूर्ण
+	writel_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(idx));
+	writel_relaxed(PMCNTENSET(idx), l3pmu->regs + L3_M_BC_CNTENSET);
+}
 
-अटल व्योम qcom_l3_cache__32bit_counter_stop(काष्ठा perf_event *event,
-					      पूर्णांक flags)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
-	u32 irqctl = पढ़ोl_relaxed(l3pmu->regs + L3_M_BC_IRQCTL);
+static void qcom_l3_cache__32bit_counter_stop(struct perf_event *event,
+					      int flags)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
+	u32 irqctl = readl_relaxed(l3pmu->regs + L3_M_BC_IRQCTL);
 
 	/* Disable the counter */
-	ग_लिखोl_relaxed(PMCNTENCLR(idx), l3pmu->regs + L3_M_BC_CNTENCLR);
+	writel_relaxed(PMCNTENCLR(idx), l3pmu->regs + L3_M_BC_CNTENCLR);
 
-	/* Disable पूर्णांकerrupt generation by this counter */
-	ग_लिखोl_relaxed(PMINTENCLR(idx), l3pmu->regs + L3_M_BC_INTENCLR);
+	/* Disable interrupt generation by this counter */
+	writel_relaxed(PMINTENCLR(idx), l3pmu->regs + L3_M_BC_INTENCLR);
 
-	/* Set the counter to not निश्चित the overflow IRQ on MSB toggling */
-	ग_लिखोl_relaxed(irqctl & ~PMIRQONMSBEN(idx), l3pmu->regs + L3_M_BC_IRQCTL);
-पूर्ण
+	/* Set the counter to not assert the overflow IRQ on MSB toggling */
+	writel_relaxed(irqctl & ~PMIRQONMSBEN(idx), l3pmu->regs + L3_M_BC_IRQCTL);
+}
 
-अटल व्योम qcom_l3_cache__32bit_counter_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	पूर्णांक idx = event->hw.idx;
+static void qcom_l3_cache__32bit_counter_update(struct perf_event *event)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	int idx = event->hw.idx;
 	u32 prev, new;
 
-	करो अणु
-		prev = local64_पढ़ो(&event->hw.prev_count);
-		new = पढ़ोl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
-	पूर्ण जबतक (local64_cmpxchg(&event->hw.prev_count, prev, new) != prev);
+	do {
+		prev = local64_read(&event->hw.prev_count);
+		new = readl_relaxed(l3pmu->regs + L3_HML3_PM_EVCNTR(idx));
+	} while (local64_cmpxchg(&event->hw.prev_count, prev, new) != prev);
 
 	local64_add(new - prev, &event->count);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा l3cache_event_ops event_ops_std = अणु
+static const struct l3cache_event_ops event_ops_std = {
 	.start = qcom_l3_cache__32bit_counter_start,
 	.stop = qcom_l3_cache__32bit_counter_stop,
 	.update = qcom_l3_cache__32bit_counter_update,
-पूर्ण;
+};
 
-/* Retrieve the appropriate operations क्रम the given event */
-अटल
-स्थिर काष्ठा l3cache_event_ops *l3cache_event_get_ops(काष्ठा perf_event *event)
-अणु
-	अगर (event_uses_दीर्घ_counter(event))
-		वापस &event_ops_दीर्घ;
-	अन्यथा
-		वापस &event_ops_std;
-पूर्ण
+/* Retrieve the appropriate operations for the given event */
+static
+const struct l3cache_event_ops *l3cache_event_get_ops(struct perf_event *event)
+{
+	if (event_uses_long_counter(event))
+		return &event_ops_long;
+	else
+		return &event_ops_std;
+}
 
 /*
  * Top level PMU functions.
  */
 
-अटल अंतरभूत व्योम qcom_l3_cache__init(काष्ठा l3cache_pmu *l3pmu)
-अणु
-	पूर्णांक i;
+static inline void qcom_l3_cache__init(struct l3cache_pmu *l3pmu)
+{
+	int i;
 
-	ग_लिखोl_relaxed(BC_RESET, l3pmu->regs + L3_M_BC_CR);
-
-	/*
-	 * Use ग_लिखोl क्रम the first programming command to ensure the basic
-	 * counter unit is stopped beक्रमe proceeding
-	 */
-	ग_लिखोl(BC_SATROLL_CR_RESET, l3pmu->regs + L3_M_BC_SATROLL_CR);
-
-	ग_लिखोl_relaxed(BC_CNTENCLR_RESET, l3pmu->regs + L3_M_BC_CNTENCLR);
-	ग_लिखोl_relaxed(BC_INTENCLR_RESET, l3pmu->regs + L3_M_BC_INTENCLR);
-	ग_लिखोl_relaxed(PMOVSRCLR_RESET, l3pmu->regs + L3_M_BC_OVSR);
-	ग_लिखोl_relaxed(BC_GANG_RESET, l3pmu->regs + L3_M_BC_GANG);
-	ग_लिखोl_relaxed(BC_IRQCTL_RESET, l3pmu->regs + L3_M_BC_IRQCTL);
-	ग_लिखोl_relaxed(PM_CR_RESET, l3pmu->regs + L3_HML3_PM_CR);
-
-	क्रम (i = 0; i < L3_NUM_COUNTERS; ++i) अणु
-		ग_लिखोl_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(i));
-		ग_लिखोl_relaxed(EVSEL(0), l3pmu->regs + L3_HML3_PM_EVTYPE(i));
-	पूर्ण
-
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRA);
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRAM);
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRB);
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRBM);
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRC);
-	ग_लिखोl_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRCM);
+	writel_relaxed(BC_RESET, l3pmu->regs + L3_M_BC_CR);
 
 	/*
-	 * Use ग_लिखोl here to ensure all programming commands are करोne
-	 *  beक्रमe proceeding
+	 * Use writel for the first programming command to ensure the basic
+	 * counter unit is stopped before proceeding
 	 */
-	ग_लिखोl(BC_ENABLE, l3pmu->regs + L3_M_BC_CR);
-पूर्ण
+	writel(BC_SATROLL_CR_RESET, l3pmu->regs + L3_M_BC_SATROLL_CR);
 
-अटल irqवापस_t qcom_l3_cache__handle_irq(पूर्णांक irq_num, व्योम *data)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = data;
-	/* Read the overflow status रेजिस्टर */
-	दीर्घ status = पढ़ोl_relaxed(l3pmu->regs + L3_M_BC_OVSR);
-	पूर्णांक idx;
+	writel_relaxed(BC_CNTENCLR_RESET, l3pmu->regs + L3_M_BC_CNTENCLR);
+	writel_relaxed(BC_INTENCLR_RESET, l3pmu->regs + L3_M_BC_INTENCLR);
+	writel_relaxed(PMOVSRCLR_RESET, l3pmu->regs + L3_M_BC_OVSR);
+	writel_relaxed(BC_GANG_RESET, l3pmu->regs + L3_M_BC_GANG);
+	writel_relaxed(BC_IRQCTL_RESET, l3pmu->regs + L3_M_BC_IRQCTL);
+	writel_relaxed(PM_CR_RESET, l3pmu->regs + L3_HML3_PM_CR);
 
-	अगर (status == 0)
-		वापस IRQ_NONE;
+	for (i = 0; i < L3_NUM_COUNTERS; ++i) {
+		writel_relaxed(PMCNT_RESET, l3pmu->regs + L3_HML3_PM_CNTCTL(i));
+		writel_relaxed(EVSEL(0), l3pmu->regs + L3_HML3_PM_EVTYPE(i));
+	}
 
-	/* Clear the bits we पढ़ो on the overflow status रेजिस्टर */
-	ग_लिखोl_relaxed(status, l3pmu->regs + L3_M_BC_OVSR);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRA);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRAM);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRB);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRBM);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRC);
+	writel_relaxed(PM_FLTR_RESET, l3pmu->regs + L3_HML3_PM_FILTRCM);
 
-	क्रम_each_set_bit(idx, &status, L3_NUM_COUNTERS) अणु
-		काष्ठा perf_event *event;
-		स्थिर काष्ठा l3cache_event_ops *ops;
+	/*
+	 * Use writel here to ensure all programming commands are done
+	 *  before proceeding
+	 */
+	writel(BC_ENABLE, l3pmu->regs + L3_M_BC_CR);
+}
+
+static irqreturn_t qcom_l3_cache__handle_irq(int irq_num, void *data)
+{
+	struct l3cache_pmu *l3pmu = data;
+	/* Read the overflow status register */
+	long status = readl_relaxed(l3pmu->regs + L3_M_BC_OVSR);
+	int idx;
+
+	if (status == 0)
+		return IRQ_NONE;
+
+	/* Clear the bits we read on the overflow status register */
+	writel_relaxed(status, l3pmu->regs + L3_M_BC_OVSR);
+
+	for_each_set_bit(idx, &status, L3_NUM_COUNTERS) {
+		struct perf_event *event;
+		const struct l3cache_event_ops *ops;
 
 		event = l3pmu->events[idx];
-		अगर (!event)
-			जारी;
+		if (!event)
+			continue;
 
 		/*
-		 * Since the IRQ is not enabled क्रम events using दीर्घ counters
+		 * Since the IRQ is not enabled for events using long counters
 		 * we should never see one of those here, however, be consistent
 		 * and use the ops indirections like in the other operations.
 		 */
 
 		ops = l3cache_event_get_ops(event);
 		ops->update(event);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * Implementation of असलtract pmu functionality required by
+ * Implementation of abstract pmu functionality required by
  * the core perf events code.
  */
 
-अटल व्योम qcom_l3_cache__pmu_enable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(pmu);
+static void qcom_l3_cache__pmu_enable(struct pmu *pmu)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(pmu);
 
-	/* Ensure the other programming commands are observed beक्रमe enabling */
+	/* Ensure the other programming commands are observed before enabling */
 	wmb();
 
-	ग_लिखोl_relaxed(BC_ENABLE, l3pmu->regs + L3_M_BC_CR);
-पूर्ण
+	writel_relaxed(BC_ENABLE, l3pmu->regs + L3_M_BC_CR);
+}
 
-अटल व्योम qcom_l3_cache__pmu_disable(काष्ठा pmu *pmu)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(pmu);
+static void qcom_l3_cache__pmu_disable(struct pmu *pmu)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(pmu);
 
-	ग_लिखोl_relaxed(0, l3pmu->regs + L3_M_BC_CR);
+	writel_relaxed(0, l3pmu->regs + L3_M_BC_CR);
 
-	/* Ensure the basic counter unit is stopped beक्रमe proceeding */
+	/* Ensure the basic counter unit is stopped before proceeding */
 	wmb();
-पूर्ण
+}
 
 /*
  * We must NOT create groups containing events from multiple hardware PMUs,
- * although mixing dअगरferent software and hardware PMUs is allowed.
+ * although mixing different software and hardware PMUs is allowed.
  */
-अटल bool qcom_l3_cache__validate_event_group(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event *leader = event->group_leader;
-	काष्ठा perf_event *sibling;
-	पूर्णांक counters = 0;
+static bool qcom_l3_cache__validate_event_group(struct perf_event *event)
+{
+	struct perf_event *leader = event->group_leader;
+	struct perf_event *sibling;
+	int counters = 0;
 
-	अगर (leader->pmu != event->pmu && !is_software_event(leader))
-		वापस false;
+	if (leader->pmu != event->pmu && !is_software_event(leader))
+		return false;
 
 	counters = event_num_counters(event);
 	counters += event_num_counters(leader);
 
-	क्रम_each_sibling_event(sibling, leader) अणु
-		अगर (is_software_event(sibling))
-			जारी;
-		अगर (sibling->pmu != event->pmu)
-			वापस false;
+	for_each_sibling_event(sibling, leader) {
+		if (is_software_event(sibling))
+			continue;
+		if (sibling->pmu != event->pmu)
+			return false;
 		counters += event_num_counters(sibling);
-	पूर्ण
+	}
 
 	/*
 	 * If the group requires more counters than the HW has, it
 	 * cannot ever be scheduled.
 	 */
-	वापस counters <= L3_NUM_COUNTERS;
-पूर्ण
+	return counters <= L3_NUM_COUNTERS;
+}
 
-अटल पूर्णांक qcom_l3_cache__event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static int qcom_l3_cache__event_init(struct perf_event *event)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
 
 	/*
-	 * Is the event क्रम this PMU?
+	 * Is the event for this PMU?
 	 */
-	अगर (event->attr.type != event->pmu->type)
-		वापस -ENOENT;
+	if (event->attr.type != event->pmu->type)
+		return -ENOENT;
 
 	/*
 	 * Sampling not supported since these events are not core-attributable.
 	 */
-	अगर (hwc->sample_period)
-		वापस -EINVAL;
+	if (hwc->sample_period)
+		return -EINVAL;
 
 	/*
 	 * Task mode not available, we run the counters as socket counters,
-	 * not attributable to any CPU and thereक्रमe cannot attribute per-task.
+	 * not attributable to any CPU and therefore cannot attribute per-task.
 	 */
-	अगर (event->cpu < 0)
-		वापस -EINVAL;
+	if (event->cpu < 0)
+		return -EINVAL;
 
 	/* Validate the group */
-	अगर (!qcom_l3_cache__validate_event_group(event))
-		वापस -EINVAL;
+	if (!qcom_l3_cache__validate_event_group(event))
+		return -EINVAL;
 
 	hwc->idx = -1;
 
 	/*
 	 * Many perf core operations (eg. events rotation) operate on a
-	 * single CPU context. This is obvious क्रम CPU PMUs, where one
+	 * single CPU context. This is obvious for CPU PMUs, where one
 	 * expects the same sets of events being observed on all CPUs,
-	 * but can lead to issues क्रम off-core PMUs, like this one, where
-	 * each event could be theoretically asचिन्हित to a dअगरferent CPU.
-	 * To mitigate this, we enक्रमce CPU assignment to one designated
+	 * but can lead to issues for off-core PMUs, like this one, where
+	 * each event could be theoretically assigned to a different CPU.
+	 * To mitigate this, we enforce CPU assignment to one designated
 	 * processor (the one described in the "cpumask" attribute exported
-	 * by the PMU device). perf user space tools honor this and aव्योम
-	 * खोलोing more than one copy of the events.
+	 * by the PMU device). perf user space tools honor this and avoid
+	 * opening more than one copy of the events.
 	 */
 	event->cpu = cpumask_first(&l3pmu->cpumask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_l3_cache__event_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	स्थिर काष्ठा l3cache_event_ops *ops = l3cache_event_get_ops(event);
+static void qcom_l3_cache__event_start(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	const struct l3cache_event_ops *ops = l3cache_event_get_ops(event);
 
 	hwc->state = 0;
 	ops->start(event);
-पूर्ण
+}
 
-अटल व्योम qcom_l3_cache__event_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	स्थिर काष्ठा l3cache_event_ops *ops = l3cache_event_get_ops(event);
+static void qcom_l3_cache__event_stop(struct perf_event *event, int flags)
+{
+	struct hw_perf_event *hwc = &event->hw;
+	const struct l3cache_event_ops *ops = l3cache_event_get_ops(event);
 
-	अगर (hwc->state & PERF_HES_STOPPED)
-		वापस;
+	if (hwc->state & PERF_HES_STOPPED)
+		return;
 
 	ops->stop(event, flags);
-	अगर (flags & PERF_EF_UPDATE)
+	if (flags & PERF_EF_UPDATE)
 		ops->update(event);
 	hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-पूर्ण
+}
 
-अटल पूर्णांक qcom_l3_cache__event_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक order = event_uses_दीर्घ_counter(event) ? 1 : 0;
-	पूर्णांक idx;
+static int qcom_l3_cache__event_add(struct perf_event *event, int flags)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
+	int order = event_uses_long_counter(event) ? 1 : 0;
+	int idx;
 
 	/*
 	 * Try to allocate a counter.
 	 */
-	idx = biपंचांगap_find_मुक्त_region(l3pmu->used_mask, L3_NUM_COUNTERS, order);
-	अगर (idx < 0)
+	idx = bitmap_find_free_region(l3pmu->used_mask, L3_NUM_COUNTERS, order);
+	if (idx < 0)
 		/* The counters are all in use. */
-		वापस -EAGAIN;
+		return -EAGAIN;
 
 	hwc->idx = idx;
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
 	l3pmu->events[idx] = event;
 
-	अगर (flags & PERF_EF_START)
+	if (flags & PERF_EF_START)
 		qcom_l3_cache__event_start(event, 0);
 
 	/* Propagate changes to the userspace mapping. */
 	perf_event_update_userpage(event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qcom_l3_cache__event_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	पूर्णांक order = event_uses_दीर्घ_counter(event) ? 1 : 0;
+static void qcom_l3_cache__event_del(struct perf_event *event, int flags)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
+	int order = event_uses_long_counter(event) ? 1 : 0;
 
 	/* Stop and clean up */
 	qcom_l3_cache__event_stop(event,  flags | PERF_EF_UPDATE);
-	l3pmu->events[hwc->idx] = शून्य;
-	biपंचांगap_release_region(l3pmu->used_mask, hwc->idx, order);
+	l3pmu->events[hwc->idx] = NULL;
+	bitmap_release_region(l3pmu->used_mask, hwc->idx, order);
 
 	/* Propagate changes to the userspace mapping. */
 	perf_event_update_userpage(event);
-पूर्ण
+}
 
-अटल व्योम qcom_l3_cache__event_पढ़ो(काष्ठा perf_event *event)
-अणु
-	स्थिर काष्ठा l3cache_event_ops *ops = l3cache_event_get_ops(event);
+static void qcom_l3_cache__event_read(struct perf_event *event)
+{
+	const struct l3cache_event_ops *ops = l3cache_event_get_ops(event);
 
 	ops->update(event);
-पूर्ण
+}
 
 /*
  * Add sysfs attributes
  *
  * We export:
- * - क्रमmats, used by perf user space and other tools to configure events
+ * - formats, used by perf user space and other tools to configure events
  * - events, used by perf user space and other tools to create events
  *   symbolically, e.g.:
- *     perf stat -a -e l3cache_0_0/event=पढ़ो-miss/ ls
+ *     perf stat -a -e l3cache_0_0/event=read-miss/ ls
  *     perf stat -a -e l3cache_0_0/event=0x21/ ls
  * - cpumask, used by perf user space and other tools to know on which CPUs
- *   to खोलो the events
+ *   to open the events
  */
 
-/* क्रमmats */
+/* formats */
 
-अटल sमाप_प्रकार l3cache_pmu_क्रमmat_show(काष्ठा device *dev,
-				       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *eattr;
+static ssize_t l3cache_pmu_format_show(struct device *dev,
+				       struct device_attribute *attr, char *buf)
+{
+	struct dev_ext_attribute *eattr;
 
-	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
-	वापस sysfs_emit(buf, "%s\n", (अक्षर *) eattr->var);
-पूर्ण
+	eattr = container_of(attr, struct dev_ext_attribute, attr);
+	return sysfs_emit(buf, "%s\n", (char *) eattr->var);
+}
 
-#घोषणा L3CACHE_PMU_FORMAT_ATTR(_name, _config)				      \
-	(&((काष्ठा dev_ext_attribute[]) अणु				      \
-		अणु .attr = __ATTR(_name, 0444, l3cache_pmu_क्रमmat_show, शून्य), \
-		  .var = (व्योम *) _config, पूर्ण				      \
-	पूर्ण)[0].attr.attr)
+#define L3CACHE_PMU_FORMAT_ATTR(_name, _config)				      \
+	(&((struct dev_ext_attribute[]) {				      \
+		{ .attr = __ATTR(_name, 0444, l3cache_pmu_format_show, NULL), \
+		  .var = (void *) _config, }				      \
+	})[0].attr.attr)
 
-अटल काष्ठा attribute *qcom_l3_cache_pmu_क्रमmats[] = अणु
+static struct attribute *qcom_l3_cache_pmu_formats[] = {
 	L3CACHE_PMU_FORMAT_ATTR(event, "config:0-7"),
-	L3CACHE_PMU_FORMAT_ATTR(lc, "config:" __stringअगरy(L3_EVENT_LC_BIT)),
-	शून्य,
-पूर्ण;
+	L3CACHE_PMU_FORMAT_ATTR(lc, "config:" __stringify(L3_EVENT_LC_BIT)),
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group qcom_l3_cache_pmu_क्रमmat_group = अणु
+static const struct attribute_group qcom_l3_cache_pmu_format_group = {
 	.name = "format",
-	.attrs = qcom_l3_cache_pmu_क्रमmats,
-पूर्ण;
+	.attrs = qcom_l3_cache_pmu_formats,
+};
 
 /* events */
 
-अटल sमाप_प्रकार l3cache_pmu_event_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *page)
-अणु
-	काष्ठा perf_pmu_events_attr *pmu_attr;
+static ssize_t l3cache_pmu_event_show(struct device *dev,
+				     struct device_attribute *attr, char *page)
+{
+	struct perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr);
-	वापस sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
-पूर्ण
+	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr);
+	return sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
+}
 
-#घोषणा L3CACHE_EVENT_ATTR(_name, _id)					     \
-	(&((काष्ठा perf_pmu_events_attr[]) अणु				     \
-		अणु .attr = __ATTR(_name, 0444, l3cache_pmu_event_show, शून्य), \
-		  .id = _id, पूर्ण						     \
-	पूर्ण)[0].attr.attr)
+#define L3CACHE_EVENT_ATTR(_name, _id)					     \
+	(&((struct perf_pmu_events_attr[]) {				     \
+		{ .attr = __ATTR(_name, 0444, l3cache_pmu_event_show, NULL), \
+		  .id = _id, }						     \
+	})[0].attr.attr)
 
-अटल काष्ठा attribute *qcom_l3_cache_pmu_events[] = अणु
+static struct attribute *qcom_l3_cache_pmu_events[] = {
 	L3CACHE_EVENT_ATTR(cycles, L3_EVENT_CYCLES),
-	L3CACHE_EVENT_ATTR(पढ़ो-hit, L3_EVENT_READ_HIT),
-	L3CACHE_EVENT_ATTR(पढ़ो-miss, L3_EVENT_READ_MISS),
-	L3CACHE_EVENT_ATTR(पढ़ो-hit-d-side, L3_EVENT_READ_HIT_D),
-	L3CACHE_EVENT_ATTR(पढ़ो-miss-d-side, L3_EVENT_READ_MISS_D),
-	L3CACHE_EVENT_ATTR(ग_लिखो-hit, L3_EVENT_WRITE_HIT),
-	L3CACHE_EVENT_ATTR(ग_लिखो-miss, L3_EVENT_WRITE_MISS),
-	शून्य
-पूर्ण;
+	L3CACHE_EVENT_ATTR(read-hit, L3_EVENT_READ_HIT),
+	L3CACHE_EVENT_ATTR(read-miss, L3_EVENT_READ_MISS),
+	L3CACHE_EVENT_ATTR(read-hit-d-side, L3_EVENT_READ_HIT_D),
+	L3CACHE_EVENT_ATTR(read-miss-d-side, L3_EVENT_READ_MISS_D),
+	L3CACHE_EVENT_ATTR(write-hit, L3_EVENT_WRITE_HIT),
+	L3CACHE_EVENT_ATTR(write-miss, L3_EVENT_WRITE_MISS),
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group qcom_l3_cache_pmu_events_group = अणु
+static const struct attribute_group qcom_l3_cache_pmu_events_group = {
 	.name = "events",
 	.attrs = qcom_l3_cache_pmu_events,
-पूर्ण;
+};
 
 /* cpumask */
 
-अटल sमाप_प्रकार qcom_l3_cache_pmu_cpumask_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = to_l3cache_pmu(dev_get_drvdata(dev));
+static ssize_t qcom_l3_cache_pmu_cpumask_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct l3cache_pmu *l3pmu = to_l3cache_pmu(dev_get_drvdata(dev));
 
-	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &l3pmu->cpumask);
-पूर्ण
+	return cpumap_print_to_pagebuf(true, buf, &l3pmu->cpumask);
+}
 
-अटल DEVICE_ATTR(cpumask, 0444, qcom_l3_cache_pmu_cpumask_show, शून्य);
+static DEVICE_ATTR(cpumask, 0444, qcom_l3_cache_pmu_cpumask_show, NULL);
 
-अटल काष्ठा attribute *qcom_l3_cache_pmu_cpumask_attrs[] = अणु
+static struct attribute *qcom_l3_cache_pmu_cpumask_attrs[] = {
 	&dev_attr_cpumask.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group qcom_l3_cache_pmu_cpumask_attr_group = अणु
+static const struct attribute_group qcom_l3_cache_pmu_cpumask_attr_group = {
 	.attrs = qcom_l3_cache_pmu_cpumask_attrs,
-पूर्ण;
+};
 
 /*
  * Per PMU device attribute groups
  */
-अटल स्थिर काष्ठा attribute_group *qcom_l3_cache_pmu_attr_grps[] = अणु
-	&qcom_l3_cache_pmu_क्रमmat_group,
+static const struct attribute_group *qcom_l3_cache_pmu_attr_grps[] = {
+	&qcom_l3_cache_pmu_format_group,
 	&qcom_l3_cache_pmu_events_group,
 	&qcom_l3_cache_pmu_cpumask_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
  * Probing functions and data.
  */
 
-अटल पूर्णांक qcom_l3_cache_pmu_online_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = hlist_entry_safe(node, काष्ठा l3cache_pmu, node);
+static int qcom_l3_cache_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct l3cache_pmu *l3pmu = hlist_entry_safe(node, struct l3cache_pmu, node);
 
 	/* If there is not a CPU/PMU association pick this CPU */
-	अगर (cpumask_empty(&l3pmu->cpumask))
+	if (cpumask_empty(&l3pmu->cpumask))
 		cpumask_set_cpu(cpu, &l3pmu->cpumask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_l3_cache_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा l3cache_pmu *l3pmu = hlist_entry_safe(node, काष्ठा l3cache_pmu, node);
-	अचिन्हित पूर्णांक target;
+static int qcom_l3_cache_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct l3cache_pmu *l3pmu = hlist_entry_safe(node, struct l3cache_pmu, node);
+	unsigned int target;
 
-	अगर (!cpumask_test_and_clear_cpu(cpu, &l3pmu->cpumask))
-		वापस 0;
+	if (!cpumask_test_and_clear_cpu(cpu, &l3pmu->cpumask))
+		return 0;
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	अगर (target >= nr_cpu_ids)
-		वापस 0;
+	if (target >= nr_cpu_ids)
+		return 0;
 	perf_pmu_migrate_context(&l3pmu->pmu, cpu, target);
 	cpumask_set_cpu(target, &l3pmu->cpumask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qcom_l3_cache_pmu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा l3cache_pmu *l3pmu;
-	काष्ठा acpi_device *acpi_dev;
-	काष्ठा resource *memrc;
-	पूर्णांक ret;
-	अक्षर *name;
+static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
+{
+	struct l3cache_pmu *l3pmu;
+	struct acpi_device *acpi_dev;
+	struct resource *memrc;
+	int ret;
+	char *name;
 
-	/* Initialize the PMU data काष्ठाures */
+	/* Initialize the PMU data structures */
 
 	acpi_dev = ACPI_COMPANION(&pdev->dev);
-	अगर (!acpi_dev)
-		वापस -ENODEV;
+	if (!acpi_dev)
+		return -ENODEV;
 
-	l3pmu = devm_kzalloc(&pdev->dev, माप(*l3pmu), GFP_KERNEL);
-	name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "l3cache_%s_%s",
+	l3pmu = devm_kzalloc(&pdev->dev, sizeof(*l3pmu), GFP_KERNEL);
+	name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "l3cache_%s_%s",
 		      acpi_dev->parent->pnp.unique_id, acpi_dev->pnp.unique_id);
-	अगर (!l3pmu || !name)
-		वापस -ENOMEM;
+	if (!l3pmu || !name)
+		return -ENOMEM;
 
-	l3pmu->pmu = (काष्ठा pmu) अणु
+	l3pmu->pmu = (struct pmu) {
 		.task_ctx_nr	= perf_invalid_context,
 
 		.pmu_enable	= qcom_l3_cache__pmu_enable,
@@ -760,78 +759,78 @@
 		.del		= qcom_l3_cache__event_del,
 		.start		= qcom_l3_cache__event_start,
 		.stop		= qcom_l3_cache__event_stop,
-		.पढ़ो		= qcom_l3_cache__event_पढ़ो,
+		.read		= qcom_l3_cache__event_read,
 
 		.attr_groups	= qcom_l3_cache_pmu_attr_grps,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	पूर्ण;
+	};
 
-	memrc = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	memrc = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	l3pmu->regs = devm_ioremap_resource(&pdev->dev, memrc);
-	अगर (IS_ERR(l3pmu->regs)) अणु
+	if (IS_ERR(l3pmu->regs)) {
 		dev_err(&pdev->dev, "Can't map PMU @%pa\n", &memrc->start);
-		वापस PTR_ERR(l3pmu->regs);
-	पूर्ण
+		return PTR_ERR(l3pmu->regs);
+	}
 
 	qcom_l3_cache__init(l3pmu);
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret <= 0)
-		वापस ret;
+	ret = platform_get_irq(pdev, 0);
+	if (ret <= 0)
+		return ret;
 
 	ret = devm_request_irq(&pdev->dev, ret, qcom_l3_cache__handle_irq, 0,
 			       name, l3pmu);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Request for IRQ failed for slice @%pa\n",
 			&memrc->start);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Add this instance to the list used by the offline callback */
 	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_QCOM_L3_ONLINE, &l3pmu->node);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Error %d registering hotplug", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = perf_pmu_रेजिस्टर(&l3pmu->pmu, name, -1);
-	अगर (ret < 0) अणु
+	ret = perf_pmu_register(&l3pmu->pmu, name, -1);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register L3 cache PMU (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(&pdev->dev, "Registered %s, type: %d\n", name, l3pmu->pmu.type);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id qcom_l3_cache_pmu_acpi_match[] = अणु
-	अणु "QCOM8081", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id qcom_l3_cache_pmu_acpi_match[] = {
+	{ "QCOM8081", },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, qcom_l3_cache_pmu_acpi_match);
 
-अटल काष्ठा platक्रमm_driver qcom_l3_cache_pmu_driver = अणु
-	.driver = अणु
+static struct platform_driver qcom_l3_cache_pmu_driver = {
+	.driver = {
 		.name = "qcom-l3cache-pmu",
 		.acpi_match_table = ACPI_PTR(qcom_l3_cache_pmu_acpi_match),
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = qcom_l3_cache_pmu_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init रेजिस्टर_qcom_l3_cache_pmu_driver(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init register_qcom_l3_cache_pmu_driver(void)
+{
+	int ret;
 
-	/* Install a hook to update the पढ़ोer CPU in हाल it goes offline */
+	/* Install a hook to update the reader CPU in case it goes offline */
 	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_QCOM_L3_ONLINE,
 				      "perf/qcom/l3cache:online",
 				      qcom_l3_cache_pmu_online_cpu,
 				      qcom_l3_cache_pmu_offline_cpu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस platक्रमm_driver_रेजिस्टर(&qcom_l3_cache_pmu_driver);
-पूर्ण
-device_initcall(रेजिस्टर_qcom_l3_cache_pmu_driver);
+	return platform_driver_register(&qcom_l3_cache_pmu_driver);
+}
+device_initcall(register_qcom_l3_cache_pmu_driver);

@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Definitions क्रम MIBs
+ * Definitions for MIBs
  *
  * Author: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
  */
 
-#अगर_अघोषित _LINUX_SNMP_H
-#घोषणा _LINUX_SNMP_H
+#ifndef _LINUX_SNMP_H
+#define _LINUX_SNMP_H
 
 /* ipstats mib definitions */
 /*
@@ -15,10 +14,10 @@
  * RFC 2011 (updates 1213):  SNMPv2-MIB-IP
  * RFC 2863:  Interfaces Group MIB
  * RFC 2465:  IPv6 MIB: General Group
- * draft-ietf-ipv6-rfc2011-update-10.txt: MIB क्रम IP: IP Statistics Tables
+ * draft-ietf-ipv6-rfc2011-update-10.txt: MIB for IP: IP Statistics Tables
  */
-क्रमागत
-अणु
+enum
+{
 	IPSTATS_MIB_NUM = 0,
 /* frequently written fields in fast path, kept in same cache line */
 	IPSTATS_MIB_INPKTS,			/* InReceives */
@@ -37,10 +36,10 @@
 	IPSTATS_MIB_INDISCARDS,			/* InDiscards */
 	IPSTATS_MIB_OUTDISCARDS,		/* OutDiscards */
 	IPSTATS_MIB_OUTNOROUTES,		/* OutNoRoutes */
-	IPSTATS_MIB_REASMTIMEOUT,		/* Reयंत्रTimeout */
-	IPSTATS_MIB_REASMREQDS,			/* Reयंत्रReqds */
-	IPSTATS_MIB_REASMOKS,			/* Reयंत्रOKs */
-	IPSTATS_MIB_REASMFAILS,			/* Reयंत्रFails */
+	IPSTATS_MIB_REASMTIMEOUT,		/* ReasmTimeout */
+	IPSTATS_MIB_REASMREQDS,			/* ReasmReqds */
+	IPSTATS_MIB_REASMOKS,			/* ReasmOKs */
+	IPSTATS_MIB_REASMFAILS,			/* ReasmFails */
 	IPSTATS_MIB_FRAGOKS,			/* FragOKs */
 	IPSTATS_MIB_FRAGFAILS,			/* FragFails */
 	IPSTATS_MIB_FRAGCREATES,		/* FragCreates */
@@ -57,17 +56,17 @@
 	IPSTATS_MIB_ECT1PKTS,			/* InECT1Pkts */
 	IPSTATS_MIB_ECT0PKTS,			/* InECT0Pkts */
 	IPSTATS_MIB_CEPKTS,			/* InCEPkts */
-	IPSTATS_MIB_REASM_OVERLAPS,		/* Reयंत्रOverlaps */
+	IPSTATS_MIB_REASM_OVERLAPS,		/* ReasmOverlaps */
 	__IPSTATS_MIB_MAX
-पूर्ण;
+};
 
 /* icmp mib definitions */
 /*
  * RFC 1213:  MIB-II ICMP Group
- * RFC 2011 (updates 1213):  SNMPv2 MIB क्रम IP: ICMP group
+ * RFC 2011 (updates 1213):  SNMPv2 MIB for IP: ICMP group
  */
-क्रमागत
-अणु
+enum
+{
 	ICMP_MIB_NUM = 0,
 	ICMP_MIB_INMSGS,			/* InMsgs */
 	ICMP_MIB_INERRORS,			/* InErrors */
@@ -75,7 +74,7 @@
 	ICMP_MIB_INTIMEEXCDS,			/* InTimeExcds */
 	ICMP_MIB_INPARMPROBS,			/* InParmProbs */
 	ICMP_MIB_INSRCQUENCHS,			/* InSrcQuenchs */
-	ICMP_MIB_INREसूचीECTS,			/* InRedirects */
+	ICMP_MIB_INREDIRECTS,			/* InRedirects */
 	ICMP_MIB_INECHOS,			/* InEchos */
 	ICMP_MIB_INECHOREPS,			/* InEchoReps */
 	ICMP_MIB_INTIMESTAMPS,			/* InTimestamps */
@@ -88,7 +87,7 @@
 	ICMP_MIB_OUTTIMEEXCDS,			/* OutTimeExcds */
 	ICMP_MIB_OUTPARMPROBS,			/* OutParmProbs */
 	ICMP_MIB_OUTSRCQUENCHS,			/* OutSrcQuenchs */
-	ICMP_MIB_OUTREसूचीECTS,			/* OutRedirects */
+	ICMP_MIB_OUTREDIRECTS,			/* OutRedirects */
 	ICMP_MIB_OUTECHOS,			/* OutEchos */
 	ICMP_MIB_OUTECHOREPS,			/* OutEchoReps */
 	ICMP_MIB_OUTTIMESTAMPS,			/* OutTimestamps */
@@ -97,16 +96,16 @@
 	ICMP_MIB_OUTADDRMASKREPS,		/* OutAddrMaskReps */
 	ICMP_MIB_CSUMERRORS,			/* InCsumErrors */
 	__ICMP_MIB_MAX
-पूर्ण;
+};
 
-#घोषणा __ICMPMSG_MIB_MAX 512	/* Out+In क्रम all 8-bit ICMP types */
+#define __ICMPMSG_MIB_MAX 512	/* Out+In for all 8-bit ICMP types */
 
 /* icmp6 mib definitions */
 /*
  * RFC 2466:  ICMPv6-MIB
  */
-क्रमागत
-अणु
+enum
+{
 	ICMP6_MIB_NUM = 0,
 	ICMP6_MIB_INMSGS,			/* InMsgs */
 	ICMP6_MIB_INERRORS,			/* InErrors */
@@ -114,17 +113,17 @@
 	ICMP6_MIB_OUTERRORS,			/* OutErrors */
 	ICMP6_MIB_CSUMERRORS,			/* InCsumErrors */
 	__ICMP6_MIB_MAX
-पूर्ण;
+};
 
-#घोषणा __ICMP6MSG_MIB_MAX 512 /* Out+In क्रम all 8-bit ICMPv6 types */
+#define __ICMP6MSG_MIB_MAX 512 /* Out+In for all 8-bit ICMPv6 types */
 
 /* tcp mib definitions */
 /*
  * RFC 1213:  MIB-II TCP group
  * RFC 2012 (updates 1213):  SNMPv2-MIB-TCP
  */
-क्रमागत
-अणु
+enum
+{
 	TCP_MIB_NUM = 0,
 	TCP_MIB_RTOALGORITHM,			/* RtoAlgorithm */
 	TCP_MIB_RTOMIN,				/* RtoMin */
@@ -142,15 +141,15 @@
 	TCP_MIB_OUTRSTS,			/* OutRsts */
 	TCP_MIB_CSUMERRORS,			/* InCsumErrors */
 	__TCP_MIB_MAX
-पूर्ण;
+};
 
 /* udp mib definitions */
 /*
  * RFC 1213:  MIB-II UDP group
  * RFC 2013 (updates 1213):  SNMPv2-MIB-UDP
  */
-क्रमागत
-अणु
+enum
+{
 	UDP_MIB_NUM = 0,
 	UDP_MIB_INDATAGRAMS,			/* InDatagrams */
 	UDP_MIB_NOPORTS,			/* NoPorts */
@@ -162,11 +161,11 @@
 	UDP_MIB_IGNOREDMULTI,			/* IgnoredMulti */
 	UDP_MIB_MEMERRORS,			/* MemErrors */
 	__UDP_MIB_MAX
-पूर्ण;
+};
 
 /* linux mib definitions */
-क्रमागत
-अणु
+enum
+{
 	LINUX_MIB_NUM = 0,
 	LINUX_MIB_SYNCOOKIESSENT,		/* SyncookiesSent */
 	LINUX_MIB_SYNCOOKIESRECV,		/* SyncookiesRecv */
@@ -175,7 +174,7 @@
 	LINUX_MIB_PRUNECALLED,			/* PruneCalled */
 	LINUX_MIB_RCVPRUNED,			/* RcvPruned */
 	LINUX_MIB_OFOPRUNED,			/* OfoPruned */
-	LINUX_MIB_OUTOFWINDOWICMPS,		/* OutOfWinकरोwIcmps */
+	LINUX_MIB_OUTOFWINDOWICMPS,		/* OutOfWindowIcmps */
 	LINUX_MIB_LOCKDROPPEDICMPS,		/* LockDroppedIcmps */
 	LINUX_MIB_ARPFILTER,			/* ArpFilter */
 	LINUX_MIB_TIMEWAITED,			/* TimeWaited */
@@ -197,10 +196,10 @@
 	LINUX_MIB_TCPSACKREORDER,		/* TCPSACKReorder */
 	LINUX_MIB_TCPRENOREORDER,		/* TCPRenoReorder */
 	LINUX_MIB_TCPTSREORDER,			/* TCPTSReorder */
-	LINUX_MIB_TCPFULLUNDO,			/* TCPFullUnकरो */
-	LINUX_MIB_TCPPARTIALUNDO,		/* TCPPartialUnकरो */
-	LINUX_MIB_TCPDSACKUNDO,			/* TCPDSACKUnकरो */
-	LINUX_MIB_TCPLOSSUNDO,			/* TCPLossUnकरो */
+	LINUX_MIB_TCPFULLUNDO,			/* TCPFullUndo */
+	LINUX_MIB_TCPPARTIALUNDO,		/* TCPPartialUndo */
+	LINUX_MIB_TCPDSACKUNDO,			/* TCPDSACKUndo */
+	LINUX_MIB_TCPLOSSUNDO,			/* TCPLossUndo */
 	LINUX_MIB_TCPLOSTRETRANSMIT,		/* TCPLostRetransmit */
 	LINUX_MIB_TCPRENOFAILURES,		/* TCPRenoFailures */
 	LINUX_MIB_TCPSACKFAILURES,		/* TCPSackFailures */
@@ -227,7 +226,7 @@
 	LINUX_MIB_TCPMEMORYPRESSURESCHRONO,	/* TCPMemoryPressuresChrono */
 	LINUX_MIB_TCPSACKDISCARD,		/* TCPSACKDiscard */
 	LINUX_MIB_TCPDSACKIGNOREDOLD,		/* TCPSACKIgnoredOld */
-	LINUX_MIB_TCPDSACKIGNOREDNOUNDO,	/* TCPSACKIgnoredNoUnकरो */
+	LINUX_MIB_TCPDSACKIGNOREDNOUNDO,	/* TCPSACKIgnoredNoUndo */
 	LINUX_MIB_TCPSPURIOUSRTOS,		/* TCPSpuriousRTOs */
 	LINUX_MIB_TCPMD5NOTFOUND,		/* TCPMD5NotFound */
 	LINUX_MIB_TCPMD5UNEXPECTED,		/* TCPMD5Unexpected */
@@ -261,9 +260,9 @@
 	LINUX_MIB_TCPSPURIOUS_RTX_HOSTQUEUES, /* TCPSpuriousRtxHostQueues */
 	LINUX_MIB_BUSYPOLLRXPACKETS,		/* BusyPollRxPackets */
 	LINUX_MIB_TCPAUTOCORKING,		/* TCPAutoCorking */
-	LINUX_MIB_TCPFROMZEROWINDOWADV,		/* TCPFromZeroWinकरोwAdv */
-	LINUX_MIB_TCPTOZEROWINDOWADV,		/* TCPToZeroWinकरोwAdv */
-	LINUX_MIB_TCPWANTZEROWINDOWADV,		/* TCPWantZeroWinकरोwAdv */
+	LINUX_MIB_TCPFROMZEROWINDOWADV,		/* TCPFromZeroWindowAdv */
+	LINUX_MIB_TCPTOZEROWINDOWADV,		/* TCPToZeroWindowAdv */
+	LINUX_MIB_TCPWANTZEROWINDOWADV,		/* TCPWantZeroWindowAdv */
 	LINUX_MIB_TCPSYNRETRANS,		/* TCPSynRetrans */
 	LINUX_MIB_TCPORIGDATASENT,		/* TCPOrigDataSent */
 	LINUX_MIB_TCPHYSTARTTRAINDETECT,	/* TCPHystartTrainDetect */
@@ -283,7 +282,7 @@
 	LINUX_MIB_TCPDELIVERED,			/* TCPDelivered */
 	LINUX_MIB_TCPDELIVEREDCE,		/* TCPDeliveredCE */
 	LINUX_MIB_TCPACKCOMPRESSED,		/* TCPAckCompressed */
-	LINUX_MIB_TCPZEROWINDOWDROP,		/* TCPZeroWinकरोwDrop */
+	LINUX_MIB_TCPZEROWINDOWDROP,		/* TCPZeroWindowDrop */
 	LINUX_MIB_TCPRCVQDROP,			/* TCPRcvQDrop */
 	LINUX_MIB_TCPWQUEUETOOBIG,		/* TCPWqueueTooBig */
 	LINUX_MIB_TCPFASTOPENPASSIVEALTKEY,	/* TCPFastOpenPassiveAltKey */
@@ -292,11 +291,11 @@
 	LINUX_MIB_TCPDSACKRECVSEGS,		/* TCPDSACKRecvSegs */
 	LINUX_MIB_TCPDSACKIGNOREDDUBIOUS,	/* TCPDSACKIgnoredDubious */
 	__LINUX_MIB_MAX
-पूर्ण;
+};
 
 /* linux Xfrm mib definitions */
-क्रमागत
-अणु
+enum
+{
 	LINUX_MIB_XFRMNUM = 0,
 	LINUX_MIB_XFRMINERROR,			/* XfrmInError */
 	LINUX_MIB_XFRMINBUFFERERROR,		/* XfrmInBufferError */
@@ -327,11 +326,11 @@
 	LINUX_MIB_XFRMOUTSTATEINVALID,		/* XfrmOutStateInvalid */
 	LINUX_MIB_XFRMACQUIREERROR,		/* XfrmAcquireError */
 	__LINUX_MIB_XFRMMAX
-पूर्ण;
+};
 
 /* linux TLS mib definitions */
-क्रमागत
-अणु
+enum
+{
 	LINUX_MIB_TLSNUM = 0,
 	LINUX_MIB_TLSCURRTXSW,			/* TlsCurrTxSw */
 	LINUX_MIB_TLSCURRRXSW,			/* TlsCurrRxSw */
@@ -344,6 +343,6 @@
 	LINUX_MIB_TLSDECRYPTERROR,		/* TlsDecryptError */
 	LINUX_MIB_TLSRXDEVICERESYNC,		/* TlsRxDeviceResync */
 	__LINUX_MIB_TLSMAX
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* _LINUX_SNMP_H */
+#endif	/* _LINUX_SNMP_H */

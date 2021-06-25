@@ -1,372 +1,371 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  qt2160.c - Aपंचांगel AT42QT2160 Touch Sense Controller
+ *  qt2160.c - Atmel AT42QT2160 Touch Sense Controller
  *
  *  Copyright (C) 2009 Raphael Derosso Pereira <raphaelpereira@gmail.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/jiffies.h>
+#include <linux/i2c.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
 
-#घोषणा QT2160_VALID_CHIPID  0x11
+#define QT2160_VALID_CHIPID  0x11
 
-#घोषणा QT2160_CMD_CHIPID     0
-#घोषणा QT2160_CMD_CODEVER    1
-#घोषणा QT2160_CMD_GSTAT      2
-#घोषणा QT2160_CMD_KEYS3      3
-#घोषणा QT2160_CMD_KEYS4      4
-#घोषणा QT2160_CMD_SLIDE      5
-#घोषणा QT2160_CMD_GPIOS      6
-#घोषणा QT2160_CMD_SUBVER     7
-#घोषणा QT2160_CMD_CALIBRATE  10
-#घोषणा QT2160_CMD_DRIVE_X    70
-#घोषणा QT2160_CMD_PWMEN_X    74
-#घोषणा QT2160_CMD_PWM_DUTY   76
+#define QT2160_CMD_CHIPID     0
+#define QT2160_CMD_CODEVER    1
+#define QT2160_CMD_GSTAT      2
+#define QT2160_CMD_KEYS3      3
+#define QT2160_CMD_KEYS4      4
+#define QT2160_CMD_SLIDE      5
+#define QT2160_CMD_GPIOS      6
+#define QT2160_CMD_SUBVER     7
+#define QT2160_CMD_CALIBRATE  10
+#define QT2160_CMD_DRIVE_X    70
+#define QT2160_CMD_PWMEN_X    74
+#define QT2160_CMD_PWM_DUTY   76
 
-#घोषणा QT2160_NUM_LEDS_X	8
+#define QT2160_NUM_LEDS_X	8
 
-#घोषणा QT2160_CYCLE_INTERVAL	(2*HZ)
+#define QT2160_CYCLE_INTERVAL	(2*HZ)
 
-अटल अचिन्हित अक्षर qt2160_key2code[] = अणु
+static unsigned char qt2160_key2code[] = {
 	KEY_0, KEY_1, KEY_2, KEY_3,
 	KEY_4, KEY_5, KEY_6, KEY_7,
 	KEY_8, KEY_9, KEY_A, KEY_B,
 	KEY_C, KEY_D, KEY_E, KEY_F,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_LEDS_CLASS
-काष्ठा qt2160_led अणु
-	काष्ठा qt2160_data *qt2160;
-	काष्ठा led_classdev cdev;
-	अक्षर name[32];
-	पूर्णांक id;
-	क्रमागत led_brightness brightness;
-पूर्ण;
-#पूर्ण_अगर
+#ifdef CONFIG_LEDS_CLASS
+struct qt2160_led {
+	struct qt2160_data *qt2160;
+	struct led_classdev cdev;
+	char name[32];
+	int id;
+	enum led_brightness brightness;
+};
+#endif
 
-काष्ठा qt2160_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input;
-	काष्ठा delayed_work dwork;
-	अचिन्हित लघु keycodes[ARRAY_SIZE(qt2160_key2code)];
+struct qt2160_data {
+	struct i2c_client *client;
+	struct input_dev *input;
+	struct delayed_work dwork;
+	unsigned short keycodes[ARRAY_SIZE(qt2160_key2code)];
 	u16 key_matrix;
-#अगर_घोषित CONFIG_LEDS_CLASS
-	काष्ठा qt2160_led leds[QT2160_NUM_LEDS_X];
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_LEDS_CLASS
+	struct qt2160_led leds[QT2160_NUM_LEDS_X];
+#endif
+};
 
-अटल पूर्णांक qt2160_पढ़ो(काष्ठा i2c_client *client, u8 reg);
-अटल पूर्णांक qt2160_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 data);
+static int qt2160_read(struct i2c_client *client, u8 reg);
+static int qt2160_write(struct i2c_client *client, u8 reg, u8 data);
 
-#अगर_घोषित CONFIG_LEDS_CLASS
+#ifdef CONFIG_LEDS_CLASS
 
-अटल पूर्णांक qt2160_led_set(काष्ठा led_classdev *cdev,
-			  क्रमागत led_brightness value)
-अणु
-	काष्ठा qt2160_led *led = container_of(cdev, काष्ठा qt2160_led, cdev);
-	काष्ठा qt2160_data *qt2160 = led->qt2160;
-	काष्ठा i2c_client *client = qt2160->client;
+static int qt2160_led_set(struct led_classdev *cdev,
+			  enum led_brightness value)
+{
+	struct qt2160_led *led = container_of(cdev, struct qt2160_led, cdev);
+	struct qt2160_data *qt2160 = led->qt2160;
+	struct i2c_client *client = qt2160->client;
 	u32 drive, pwmen;
 
-	अगर (value != led->brightness) अणु
-		drive = qt2160_पढ़ो(client, QT2160_CMD_DRIVE_X);
-		pwmen = qt2160_पढ़ो(client, QT2160_CMD_PWMEN_X);
-		अगर (value != LED_OFF) अणु
+	if (value != led->brightness) {
+		drive = qt2160_read(client, QT2160_CMD_DRIVE_X);
+		pwmen = qt2160_read(client, QT2160_CMD_PWMEN_X);
+		if (value != LED_OFF) {
 			drive |= BIT(led->id);
 			pwmen |= BIT(led->id);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			drive &= ~BIT(led->id);
 			pwmen &= ~BIT(led->id);
-		पूर्ण
-		qt2160_ग_लिखो(client, QT2160_CMD_DRIVE_X, drive);
-		qt2160_ग_लिखो(client, QT2160_CMD_PWMEN_X, pwmen);
+		}
+		qt2160_write(client, QT2160_CMD_DRIVE_X, drive);
+		qt2160_write(client, QT2160_CMD_PWMEN_X, pwmen);
 
 		/*
-		 * Changing this रेजिस्टर will change the brightness
+		 * Changing this register will change the brightness
 		 * of every LED in the qt2160. It's a HW limitation.
 		 */
-		अगर (value != LED_OFF)
-			qt2160_ग_लिखो(client, QT2160_CMD_PWM_DUTY, value);
+		if (value != LED_OFF)
+			qt2160_write(client, QT2160_CMD_PWM_DUTY, value);
 
 		led->brightness = value;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_LEDS_CLASS */
+#endif /* CONFIG_LEDS_CLASS */
 
-अटल पूर्णांक qt2160_पढ़ो_block(काष्ठा i2c_client *client,
-			     u8 inireg, u8 *buffer, अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक error, idx = 0;
+static int qt2160_read_block(struct i2c_client *client,
+			     u8 inireg, u8 *buffer, unsigned int count)
+{
+	int error, idx = 0;
 
 	/*
-	 * Can't use SMBus block data पढ़ो. Check क्रम I2C functionality to speed
-	 * things up whenever possible. Otherwise we will be क्रमced to पढ़ो
+	 * Can't use SMBus block data read. Check for I2C functionality to speed
+	 * things up whenever possible. Otherwise we will be forced to read
 	 * sequentially.
 	 */
-	अगर (i2c_check_functionality(client->adapter, I2C_FUNC_I2C))	अणु
+	if (i2c_check_functionality(client->adapter, I2C_FUNC_I2C))	{
 
-		error = i2c_smbus_ग_लिखो_byte(client, inireg + idx);
-		अगर (error) अणु
+		error = i2c_smbus_write_byte(client, inireg + idx);
+		if (error) {
 			dev_err(&client->dev,
 				"couldn't send request. Returned %d\n", error);
-			वापस error;
-		पूर्ण
+			return error;
+		}
 
 		error = i2c_master_recv(client, buffer, count);
-		अगर (error != count) अणु
+		if (error != count) {
 			dev_err(&client->dev,
 				"couldn't read registers. Returned %d bytes\n", error);
-			वापस error;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return error;
+		}
+	} else {
 
-		जबतक (count--) अणु
-			पूर्णांक data;
+		while (count--) {
+			int data;
 
-			error = i2c_smbus_ग_लिखो_byte(client, inireg + idx);
-			अगर (error) अणु
+			error = i2c_smbus_write_byte(client, inireg + idx);
+			if (error) {
 				dev_err(&client->dev,
 					"couldn't send request. Returned %d\n", error);
-				वापस error;
-			पूर्ण
+				return error;
+			}
 
-			data = i2c_smbus_पढ़ो_byte(client);
-			अगर (data < 0) अणु
+			data = i2c_smbus_read_byte(client);
+			if (data < 0) {
 				dev_err(&client->dev,
 					"couldn't read register. Returned %d\n", data);
-				वापस data;
-			पूर्ण
+				return data;
+			}
 
 			buffer[idx++] = data;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qt2160_get_key_matrix(काष्ठा qt2160_data *qt2160)
-अणु
-	काष्ठा i2c_client *client = qt2160->client;
-	काष्ठा input_dev *input = qt2160->input;
+static int qt2160_get_key_matrix(struct qt2160_data *qt2160)
+{
+	struct i2c_client *client = qt2160->client;
+	struct input_dev *input = qt2160->input;
 	u8 regs[6];
 	u16 old_matrix, new_matrix;
-	पूर्णांक ret, i, mask;
+	int ret, i, mask;
 
 	dev_dbg(&client->dev, "requesting keys...\n");
 
 	/*
-	 * Read all रेजिस्टरs from General Status Register
-	 * to GPIOs रेजिस्टर
+	 * Read all registers from General Status Register
+	 * to GPIOs register
 	 */
-	ret = qt2160_पढ़ो_block(client, QT2160_CMD_GSTAT, regs, 6);
-	अगर (ret) अणु
+	ret = qt2160_read_block(client, QT2160_CMD_GSTAT, regs, 6);
+	if (ret) {
 		dev_err(&client->dev,
 			"could not perform chip read.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	old_matrix = qt2160->key_matrix;
 	qt2160->key_matrix = new_matrix = (regs[2] << 8) | regs[1];
 
 	mask = 0x01;
-	क्रम (i = 0; i < 16; ++i, mask <<= 1) अणु
-		पूर्णांक keyval = new_matrix & mask;
+	for (i = 0; i < 16; ++i, mask <<= 1) {
+		int keyval = new_matrix & mask;
 
-		अगर ((old_matrix & mask) != keyval) अणु
+		if ((old_matrix & mask) != keyval) {
 			input_report_key(input, qt2160->keycodes[i], keyval);
 			dev_dbg(&client->dev, "key %d %s\n",
 				i, keyval ? "pressed" : "released");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	input_sync(input);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t qt2160_irq(पूर्णांक irq, व्योम *_qt2160)
-अणु
-	काष्ठा qt2160_data *qt2160 = _qt2160;
+static irqreturn_t qt2160_irq(int irq, void *_qt2160)
+{
+	struct qt2160_data *qt2160 = _qt2160;
 
-	mod_delayed_work(प्रणाली_wq, &qt2160->dwork, 0);
+	mod_delayed_work(system_wq, &qt2160->dwork, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम qt2160_schedule_पढ़ो(काष्ठा qt2160_data *qt2160)
-अणु
+static void qt2160_schedule_read(struct qt2160_data *qt2160)
+{
 	schedule_delayed_work(&qt2160->dwork, QT2160_CYCLE_INTERVAL);
-पूर्ण
+}
 
-अटल व्योम qt2160_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qt2160_data *qt2160 =
-		container_of(work, काष्ठा qt2160_data, dwork.work);
+static void qt2160_worker(struct work_struct *work)
+{
+	struct qt2160_data *qt2160 =
+		container_of(work, struct qt2160_data, dwork.work);
 
 	dev_dbg(&qt2160->client->dev, "worker\n");
 
 	qt2160_get_key_matrix(qt2160);
 
-	/* Aव्योम device lock up by checking every so often */
-	qt2160_schedule_पढ़ो(qt2160);
-पूर्ण
+	/* Avoid device lock up by checking every so often */
+	qt2160_schedule_read(qt2160);
+}
 
-अटल पूर्णांक qt2160_पढ़ो(काष्ठा i2c_client *client, u8 reg)
-अणु
-	पूर्णांक ret;
+static int qt2160_read(struct i2c_client *client, u8 reg)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte(client, reg);
-	अगर (ret) अणु
+	ret = i2c_smbus_write_byte(client, reg);
+	if (ret) {
 		dev_err(&client->dev,
 			"couldn't send request. Returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = i2c_smbus_पढ़ो_byte(client);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte(client);
+	if (ret < 0) {
 		dev_err(&client->dev,
 			"couldn't read register. Returned %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक qt2160_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 data)
-अणु
-	पूर्णांक ret;
+static int qt2160_write(struct i2c_client *client, u8 reg, u8 data)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, data);
-	अगर (ret < 0)
+	ret = i2c_smbus_write_byte_data(client, reg, data);
+	if (ret < 0)
 		dev_err(&client->dev,
 			"couldn't write data. Returned %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_LEDS_CLASS
+#ifdef CONFIG_LEDS_CLASS
 
-अटल पूर्णांक qt2160_रेजिस्टर_leds(काष्ठा qt2160_data *qt2160)
-अणु
-	काष्ठा i2c_client *client = qt2160->client;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int qt2160_register_leds(struct qt2160_data *qt2160)
+{
+	struct i2c_client *client = qt2160->client;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < QT2160_NUM_LEDS_X; i++) अणु
-		काष्ठा qt2160_led *led = &qt2160->leds[i];
+	for (i = 0; i < QT2160_NUM_LEDS_X; i++) {
+		struct qt2160_led *led = &qt2160->leds[i];
 
-		snम_लिखो(led->name, माप(led->name), "qt2160:x%d", i);
+		snprintf(led->name, sizeof(led->name), "qt2160:x%d", i);
 		led->cdev.name = led->name;
 		led->cdev.brightness_set_blocking = qt2160_led_set;
 		led->cdev.brightness = LED_OFF;
 		led->id = i;
 		led->qt2160 = qt2160;
 
-		ret = led_classdev_रेजिस्टर(&client->dev, &led->cdev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = led_classdev_register(&client->dev, &led->cdev);
+		if (ret < 0)
+			return ret;
+	}
 
 	/* Tur off LEDs */
-	qt2160_ग_लिखो(client, QT2160_CMD_DRIVE_X, 0);
-	qt2160_ग_लिखो(client, QT2160_CMD_PWMEN_X, 0);
-	qt2160_ग_लिखो(client, QT2160_CMD_PWM_DUTY, 0);
+	qt2160_write(client, QT2160_CMD_DRIVE_X, 0);
+	qt2160_write(client, QT2160_CMD_PWMEN_X, 0);
+	qt2160_write(client, QT2160_CMD_PWM_DUTY, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qt2160_unरेजिस्टर_leds(काष्ठा qt2160_data *qt2160)
-अणु
-	पूर्णांक i;
+static void qt2160_unregister_leds(struct qt2160_data *qt2160)
+{
+	int i;
 
-	क्रम (i = 0; i < QT2160_NUM_LEDS_X; i++)
-		led_classdev_unरेजिस्टर(&qt2160->leds[i].cdev);
-पूर्ण
+	for (i = 0; i < QT2160_NUM_LEDS_X; i++)
+		led_classdev_unregister(&qt2160->leds[i].cdev);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक qt2160_रेजिस्टर_leds(काष्ठा qt2160_data *qt2160)
-अणु
-	वापस 0;
-पूर्ण
+static inline int qt2160_register_leds(struct qt2160_data *qt2160)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम qt2160_unरेजिस्टर_leds(काष्ठा qt2160_data *qt2160)
-अणु
-पूर्ण
+static inline void qt2160_unregister_leds(struct qt2160_data *qt2160)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल bool qt2160_identअगरy(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक id, ver, rev;
+static bool qt2160_identify(struct i2c_client *client)
+{
+	int id, ver, rev;
 
-	/* Read Chid ID to check अगर chip is valid */
-	id = qt2160_पढ़ो(client, QT2160_CMD_CHIPID);
-	अगर (id != QT2160_VALID_CHIPID) अणु
+	/* Read Chid ID to check if chip is valid */
+	id = qt2160_read(client, QT2160_CMD_CHIPID);
+	if (id != QT2160_VALID_CHIPID) {
 		dev_err(&client->dev, "ID %d not supported\n", id);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* Read chip firmware version */
-	ver = qt2160_पढ़ो(client, QT2160_CMD_CODEVER);
-	अगर (ver < 0) अणु
+	ver = qt2160_read(client, QT2160_CMD_CODEVER);
+	if (ver < 0) {
 		dev_err(&client->dev, "could not get firmware version\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/* Read chip firmware revision */
-	rev = qt2160_पढ़ो(client, QT2160_CMD_SUBVER);
-	अगर (rev < 0) अणु
+	rev = qt2160_read(client, QT2160_CMD_SUBVER);
+	if (rev < 0) {
 		dev_err(&client->dev, "could not get firmware revision\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dev_info(&client->dev, "AT42QT2160 firmware version %d.%d.%d\n",
 			ver >> 4, ver & 0xf, rev);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक qt2160_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा qt2160_data *qt2160;
-	काष्ठा input_dev *input;
-	पूर्णांक i;
-	पूर्णांक error;
+static int qt2160_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct qt2160_data *qt2160;
+	struct input_dev *input;
+	int i;
+	int error;
 
 	/* Check functionality */
 	error = i2c_check_functionality(client->adapter,
 			I2C_FUNC_SMBUS_BYTE);
-	अगर (!error) अणु
+	if (!error) {
 		dev_err(&client->dev, "%s adapter not supported\n",
 				dev_driver_string(&client->adapter->dev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!qt2160_identअगरy(client))
-		वापस -ENODEV;
+	if (!qt2160_identify(client))
+		return -ENODEV;
 
-	/* Chip is valid and active. Allocate काष्ठाure */
-	qt2160 = kzalloc(माप(काष्ठा qt2160_data), GFP_KERNEL);
+	/* Chip is valid and active. Allocate structure */
+	qt2160 = kzalloc(sizeof(struct qt2160_data), GFP_KERNEL);
 	input = input_allocate_device();
-	अगर (!qt2160 || !input) अणु
+	if (!qt2160 || !input) {
 		dev_err(&client->dev, "insufficient memory\n");
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	qt2160->client = client;
 	qt2160->input = input;
@@ -376,97 +375,97 @@
 	input->id.bustype = BUS_I2C;
 
 	input->keycode = qt2160->keycodes;
-	input->keycodesize = माप(qt2160->keycodes[0]);
+	input->keycodesize = sizeof(qt2160->keycodes[0]);
 	input->keycodemax = ARRAY_SIZE(qt2160_key2code);
 
 	__set_bit(EV_KEY, input->evbit);
 	__clear_bit(EV_REP, input->evbit);
-	क्रम (i = 0; i < ARRAY_SIZE(qt2160_key2code); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(qt2160_key2code); i++) {
 		qt2160->keycodes[i] = qt2160_key2code[i];
 		__set_bit(qt2160_key2code[i], input->keybit);
-	पूर्ण
+	}
 	__clear_bit(KEY_RESERVED, input->keybit);
 
 	/* Calibrate device */
-	error = qt2160_ग_लिखो(client, QT2160_CMD_CALIBRATE, 1);
-	अगर (error) अणु
+	error = qt2160_write(client, QT2160_CMD_CALIBRATE, 1);
+	if (error) {
 		dev_err(&client->dev, "failed to calibrate device\n");
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	अगर (client->irq) अणु
+	if (client->irq) {
 		error = request_irq(client->irq, qt2160_irq,
 				    IRQF_TRIGGER_FALLING, "qt2160", qt2160);
-		अगर (error) अणु
+		if (error) {
 			dev_err(&client->dev,
 				"failed to allocate irq %d\n", client->irq);
-			जाओ err_मुक्त_mem;
-		पूर्ण
-	पूर्ण
+			goto err_free_mem;
+		}
+	}
 
-	error = qt2160_रेजिस्टर_leds(qt2160);
-	अगर (error) अणु
+	error = qt2160_register_leds(qt2160);
+	if (error) {
 		dev_err(&client->dev, "Failed to register leds\n");
-		जाओ err_मुक्त_irq;
-	पूर्ण
+		goto err_free_irq;
+	}
 
-	error = input_रेजिस्टर_device(qt2160->input);
-	अगर (error) अणु
+	error = input_register_device(qt2160->input);
+	if (error) {
 		dev_err(&client->dev,
 			"Failed to register input device\n");
-		जाओ err_unरेजिस्टर_leds;
-	पूर्ण
+		goto err_unregister_leds;
+	}
 
 	i2c_set_clientdata(client, qt2160);
-	qt2160_schedule_पढ़ो(qt2160);
+	qt2160_schedule_read(qt2160);
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_leds:
-	qt2160_unरेजिस्टर_leds(qt2160);
-err_मुक्त_irq:
-	अगर (client->irq)
-		मुक्त_irq(client->irq, qt2160);
-err_मुक्त_mem:
-	input_मुक्त_device(input);
-	kमुक्त(qt2160);
-	वापस error;
-पूर्ण
+err_unregister_leds:
+	qt2160_unregister_leds(qt2160);
+err_free_irq:
+	if (client->irq)
+		free_irq(client->irq, qt2160);
+err_free_mem:
+	input_free_device(input);
+	kfree(qt2160);
+	return error;
+}
 
-अटल पूर्णांक qt2160_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा qt2160_data *qt2160 = i2c_get_clientdata(client);
+static int qt2160_remove(struct i2c_client *client)
+{
+	struct qt2160_data *qt2160 = i2c_get_clientdata(client);
 
-	qt2160_unरेजिस्टर_leds(qt2160);
+	qt2160_unregister_leds(qt2160);
 
 	/* Release IRQ so no queue will be scheduled */
-	अगर (client->irq)
-		मुक्त_irq(client->irq, qt2160);
+	if (client->irq)
+		free_irq(client->irq, qt2160);
 
 	cancel_delayed_work_sync(&qt2160->dwork);
 
-	input_unरेजिस्टर_device(qt2160->input);
-	kमुक्त(qt2160);
+	input_unregister_device(qt2160->input);
+	kfree(qt2160);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id qt2160_idtable[] = अणु
-	अणु "qt2160", 0, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id qt2160_idtable[] = {
+	{ "qt2160", 0, },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(i2c, qt2160_idtable);
 
-अटल काष्ठा i2c_driver qt2160_driver = अणु
-	.driver = अणु
+static struct i2c_driver qt2160_driver = {
+	.driver = {
 		.name	= "qt2160",
-	पूर्ण,
+	},
 
 	.id_table	= qt2160_idtable,
 	.probe		= qt2160_probe,
-	.हटाओ		= qt2160_हटाओ,
-पूर्ण;
+	.remove		= qt2160_remove,
+};
 
 module_i2c_driver(qt2160_driver);
 

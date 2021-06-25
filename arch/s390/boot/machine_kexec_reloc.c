@@ -1,3 +1,2 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "../kernel/machine_kexec_reloc.c"
+// SPDX-License-Identifier: GPL-2.0
+#include "../kernel/machine_kexec_reloc.c"

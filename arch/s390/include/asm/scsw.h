@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- *  Helper functions क्रम scsw access.
+ *  Helper functions for scsw access.
  *
  *    Copyright IBM Corp. 2008, 2012
  *    Author(s): Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#अगर_अघोषित _ASM_S390_SCSW_H_
-#घोषणा _ASM_S390_SCSW_H_
+#ifndef _ASM_S390_SCSW_H_
+#define _ASM_S390_SCSW_H_
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/css_अक्षरs.h>
-#समावेश <यंत्र/cपन.स>
+#include <linux/types.h>
+#include <asm/css_chars.h>
+#include <asm/cio.h>
 
 /**
- * काष्ठा cmd_scsw - command-mode subchannel status word
+ * struct cmd_scsw - command-mode subchannel status word
  * @key: subchannel key
  * @sctl: suspend control
- * @eswf: esw क्रमmat
+ * @eswf: esw format
  * @cc: deferred condition code
- * @fmt: क्रमmat
+ * @fmt: format
  * @pfch: prefetch
- * @isic: initial-status पूर्णांकerruption control
+ * @isic: initial-status interruption control
  * @alcc: address-limit checking control
- * @ssi: suppress-suspended पूर्णांकerruption
+ * @ssi: suppress-suspended interruption
  * @zcc: zero condition code
  * @ectl: extended control
  * @pno: path not operational
@@ -37,7 +36,7 @@
  * @cstat: subchannel status
  * @count: residual count
  */
-काष्ठा cmd_scsw अणु
+struct cmd_scsw {
 	__u32 key  : 4;
 	__u32 sctl : 1;
 	__u32 eswf : 1;
@@ -58,16 +57,16 @@
 	__u32 dstat : 8;
 	__u32 cstat : 8;
 	__u32 count : 16;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा पंचांग_scsw - transport-mode subchannel status word
+ * struct tm_scsw - transport-mode subchannel status word
  * @key: subchannel key
- * @eswf: esw क्रमmat
+ * @eswf: esw format
  * @cc: deferred condition code
- * @fmt: क्रमmat
- * @x: IRB-क्रमmat control
- * @q: पूर्णांकerrogate-complete
+ * @fmt: format
+ * @x: IRB-format control
+ * @q: interrogate-complete
  * @ectl: extended control
  * @pno: path not operational
  * @fctl: function control
@@ -79,7 +78,7 @@
  * @fcxs: FCX status
  * @schxs: subchannel-extended status
  */
-काष्ठा पंचांग_scsw अणु
+struct tm_scsw {
 	u32 key:4;
 	u32 :1;
 	u32 eswf:1;
@@ -98,14 +97,14 @@
 	u32 dstat:8;
 	u32 cstat:8;
 	u32 fcxs:8;
-	u32 अगरob:1;
+	u32 ifob:1;
 	u32 sesq:7;
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
 /**
- * काष्ठा eadm_scsw - subchannel status word क्रम eadm subchannels
+ * struct eadm_scsw - subchannel status word for eadm subchannels
  * @key: subchannel key
- * @eswf: esw क्रमmat
+ * @eswf: esw format
  * @cc: deferred condition code
  * @ectl: extended control
  * @fctl: function control
@@ -115,7 +114,7 @@
  * @dstat: device status
  * @cstat: subchannel status
  */
-काष्ठा eadm_scsw अणु
+struct eadm_scsw {
 	u32 key:4;
 	u32:1;
 	u32 eswf:1;
@@ -130,864 +129,864 @@
 	u32 dstat:8;
 	u32 cstat:8;
 	u32:16;
-पूर्ण __packed;
+} __packed;
 
 /**
- * जोड़ scsw - subchannel status word
+ * union scsw - subchannel status word
  * @cmd: command-mode SCSW
- * @पंचांग: transport-mode SCSW
+ * @tm: transport-mode SCSW
  * @eadm: eadm SCSW
  */
-जोड़ scsw अणु
-	काष्ठा cmd_scsw cmd;
-	काष्ठा पंचांग_scsw पंचांग;
-	काष्ठा eadm_scsw eadm;
-पूर्ण __packed;
+union scsw {
+	struct cmd_scsw cmd;
+	struct tm_scsw tm;
+	struct eadm_scsw eadm;
+} __packed;
 
-#घोषणा SCSW_FCTL_CLEAR_FUNC	 0x1
-#घोषणा SCSW_FCTL_HALT_FUNC	 0x2
-#घोषणा SCSW_FCTL_START_FUNC	 0x4
+#define SCSW_FCTL_CLEAR_FUNC	 0x1
+#define SCSW_FCTL_HALT_FUNC	 0x2
+#define SCSW_FCTL_START_FUNC	 0x4
 
-#घोषणा SCSW_ACTL_SUSPENDED	 0x1
-#घोषणा SCSW_ACTL_DEVACT	 0x2
-#घोषणा SCSW_ACTL_SCHACT	 0x4
-#घोषणा SCSW_ACTL_CLEAR_PEND	 0x8
-#घोषणा SCSW_ACTL_HALT_PEND	 0x10
-#घोषणा SCSW_ACTL_START_PEND	 0x20
-#घोषणा SCSW_ACTL_RESUME_PEND	 0x40
+#define SCSW_ACTL_SUSPENDED	 0x1
+#define SCSW_ACTL_DEVACT	 0x2
+#define SCSW_ACTL_SCHACT	 0x4
+#define SCSW_ACTL_CLEAR_PEND	 0x8
+#define SCSW_ACTL_HALT_PEND	 0x10
+#define SCSW_ACTL_START_PEND	 0x20
+#define SCSW_ACTL_RESUME_PEND	 0x40
 
-#घोषणा SCSW_STCTL_STATUS_PEND	 0x1
-#घोषणा SCSW_STCTL_SEC_STATUS	 0x2
-#घोषणा SCSW_STCTL_PRIM_STATUS	 0x4
-#घोषणा SCSW_STCTL_INTER_STATUS	 0x8
-#घोषणा SCSW_STCTL_ALERT_STATUS	 0x10
+#define SCSW_STCTL_STATUS_PEND	 0x1
+#define SCSW_STCTL_SEC_STATUS	 0x2
+#define SCSW_STCTL_PRIM_STATUS	 0x4
+#define SCSW_STCTL_INTER_STATUS	 0x8
+#define SCSW_STCTL_ALERT_STATUS	 0x10
 
-#घोषणा DEV_STAT_ATTENTION	 0x80
-#घोषणा DEV_STAT_STAT_MOD	 0x40
-#घोषणा DEV_STAT_CU_END		 0x20
-#घोषणा DEV_STAT_BUSY		 0x10
-#घोषणा DEV_STAT_CHN_END	 0x08
-#घोषणा DEV_STAT_DEV_END	 0x04
-#घोषणा DEV_STAT_UNIT_CHECK	 0x02
-#घोषणा DEV_STAT_UNIT_EXCEP	 0x01
+#define DEV_STAT_ATTENTION	 0x80
+#define DEV_STAT_STAT_MOD	 0x40
+#define DEV_STAT_CU_END		 0x20
+#define DEV_STAT_BUSY		 0x10
+#define DEV_STAT_CHN_END	 0x08
+#define DEV_STAT_DEV_END	 0x04
+#define DEV_STAT_UNIT_CHECK	 0x02
+#define DEV_STAT_UNIT_EXCEP	 0x01
 
-#घोषणा SCHN_STAT_PCI		 0x80
-#घोषणा SCHN_STAT_INCORR_LEN	 0x40
-#घोषणा SCHN_STAT_PROG_CHECK	 0x20
-#घोषणा SCHN_STAT_PROT_CHECK	 0x10
-#घोषणा SCHN_STAT_CHN_DATA_CHK	 0x08
-#घोषणा SCHN_STAT_CHN_CTRL_CHK	 0x04
-#घोषणा SCHN_STAT_INTF_CTRL_CHK	 0x02
-#घोषणा SCHN_STAT_CHAIN_CHECK	 0x01
+#define SCHN_STAT_PCI		 0x80
+#define SCHN_STAT_INCORR_LEN	 0x40
+#define SCHN_STAT_PROG_CHECK	 0x20
+#define SCHN_STAT_PROT_CHECK	 0x10
+#define SCHN_STAT_CHN_DATA_CHK	 0x08
+#define SCHN_STAT_CHN_CTRL_CHK	 0x04
+#define SCHN_STAT_INTF_CTRL_CHK	 0x02
+#define SCHN_STAT_CHAIN_CHECK	 0x01
 
-#घोषणा SCSW_SESQ_DEV_NOFCX	 3
-#घोषणा SCSW_SESQ_PATH_NOFCX	 4
-
-/*
- * architectured values क्रम first sense byte
- */
-#घोषणा SNS0_CMD_REJECT		0x80
-#घोषणा SNS_CMD_REJECT		SNS0_CMD_REJEC
-#घोषणा SNS0_INTERVENTION_REQ	0x40
-#घोषणा SNS0_BUS_OUT_CHECK	0x20
-#घोषणा SNS0_EQUIPMENT_CHECK	0x10
-#घोषणा SNS0_DATA_CHECK		0x08
-#घोषणा SNS0_OVERRUN		0x04
-#घोषणा SNS0_INCOMPL_DOMAIN	0x01
+#define SCSW_SESQ_DEV_NOFCX	 3
+#define SCSW_SESQ_PATH_NOFCX	 4
 
 /*
- * architectured values क्रम second sense byte
+ * architectured values for first sense byte
  */
-#घोषणा SNS1_PERM_ERR		0x80
-#घोषणा SNS1_INV_TRACK_FORMAT	0x40
-#घोषणा SNS1_EOC		0x20
-#घोषणा SNS1_MESSAGE_TO_OPER	0x10
-#घोषणा SNS1_NO_REC_FOUND	0x08
-#घोषणा SNS1_खाता_PROTECTED	0x04
-#घोषणा SNS1_WRITE_INHIBITED	0x02
-#घोषणा SNS1_INPRECISE_END	0x01
+#define SNS0_CMD_REJECT		0x80
+#define SNS_CMD_REJECT		SNS0_CMD_REJEC
+#define SNS0_INTERVENTION_REQ	0x40
+#define SNS0_BUS_OUT_CHECK	0x20
+#define SNS0_EQUIPMENT_CHECK	0x10
+#define SNS0_DATA_CHECK		0x08
+#define SNS0_OVERRUN		0x04
+#define SNS0_INCOMPL_DOMAIN	0x01
 
 /*
- * architectured values क्रम third sense byte
+ * architectured values for second sense byte
  */
-#घोषणा SNS2_REQ_INH_WRITE	0x80
-#घोषणा SNS2_CORRECTABLE	0x40
-#घोषणा SNS2_FIRST_LOG_ERR	0x20
-#घोषणा SNS2_ENV_DATA_PRESENT	0x10
-#घोषणा SNS2_INPRECISE_END	0x04
+#define SNS1_PERM_ERR		0x80
+#define SNS1_INV_TRACK_FORMAT	0x40
+#define SNS1_EOC		0x20
+#define SNS1_MESSAGE_TO_OPER	0x10
+#define SNS1_NO_REC_FOUND	0x08
+#define SNS1_FILE_PROTECTED	0x04
+#define SNS1_WRITE_INHIBITED	0x02
+#define SNS1_INPRECISE_END	0x01
+
+/*
+ * architectured values for third sense byte
+ */
+#define SNS2_REQ_INH_WRITE	0x80
+#define SNS2_CORRECTABLE	0x40
+#define SNS2_FIRST_LOG_ERR	0x20
+#define SNS2_ENV_DATA_PRESENT	0x10
+#define SNS2_INPRECISE_END	0x04
 
 /**
- * scsw_is_पंचांग - check क्रम transport mode scsw
- * @scsw: poपूर्णांकer to scsw
+ * scsw_is_tm - check for transport mode scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the specअगरied scsw is a transport mode scsw, zero
+ * Return non-zero if the specified scsw is a transport mode scsw, zero
  * otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_is_पंचांग(जोड़ scsw *scsw)
-अणु
-	वापस css_general_अक्षरacteristics.fcx && (scsw->पंचांग.x == 1);
-पूर्ण
+static inline int scsw_is_tm(union scsw *scsw)
+{
+	return css_general_characteristics.fcx && (scsw->tm.x == 1);
+}
 
 /**
- * scsw_key - वापस scsw key field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_key - return scsw key field
+ * @scsw: pointer to scsw
  *
- * Return the value of the key field of the specअगरied scsw, regardless of
+ * Return the value of the key field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_key(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.key;
-	अन्यथा
-		वापस scsw->cmd.key;
-पूर्ण
+static inline u32 scsw_key(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.key;
+	else
+		return scsw->cmd.key;
+}
 
 /**
- * scsw_eswf - वापस scsw eswf field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_eswf - return scsw eswf field
+ * @scsw: pointer to scsw
  *
- * Return the value of the eswf field of the specअगरied scsw, regardless of
+ * Return the value of the eswf field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_eswf(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.eswf;
-	अन्यथा
-		वापस scsw->cmd.eswf;
-पूर्ण
+static inline u32 scsw_eswf(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.eswf;
+	else
+		return scsw->cmd.eswf;
+}
 
 /**
- * scsw_cc - वापस scsw cc field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_cc - return scsw cc field
+ * @scsw: pointer to scsw
  *
- * Return the value of the cc field of the specअगरied scsw, regardless of
+ * Return the value of the cc field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_cc(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.cc;
-	अन्यथा
-		वापस scsw->cmd.cc;
-पूर्ण
+static inline u32 scsw_cc(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.cc;
+	else
+		return scsw->cmd.cc;
+}
 
 /**
- * scsw_ectl - वापस scsw ectl field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_ectl - return scsw ectl field
+ * @scsw: pointer to scsw
  *
- * Return the value of the ectl field of the specअगरied scsw, regardless of
+ * Return the value of the ectl field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_ectl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.ectl;
-	अन्यथा
-		वापस scsw->cmd.ectl;
-पूर्ण
+static inline u32 scsw_ectl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.ectl;
+	else
+		return scsw->cmd.ectl;
+}
 
 /**
- * scsw_pno - वापस scsw pno field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_pno - return scsw pno field
+ * @scsw: pointer to scsw
  *
- * Return the value of the pno field of the specअगरied scsw, regardless of
+ * Return the value of the pno field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_pno(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.pno;
-	अन्यथा
-		वापस scsw->cmd.pno;
-पूर्ण
+static inline u32 scsw_pno(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.pno;
+	else
+		return scsw->cmd.pno;
+}
 
 /**
- * scsw_fctl - वापस scsw fctl field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_fctl - return scsw fctl field
+ * @scsw: pointer to scsw
  *
- * Return the value of the fctl field of the specअगरied scsw, regardless of
+ * Return the value of the fctl field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_fctl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.fctl;
-	अन्यथा
-		वापस scsw->cmd.fctl;
-पूर्ण
+static inline u32 scsw_fctl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.fctl;
+	else
+		return scsw->cmd.fctl;
+}
 
 /**
- * scsw_actl - वापस scsw actl field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_actl - return scsw actl field
+ * @scsw: pointer to scsw
  *
- * Return the value of the actl field of the specअगरied scsw, regardless of
+ * Return the value of the actl field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_actl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.actl;
-	अन्यथा
-		वापस scsw->cmd.actl;
-पूर्ण
+static inline u32 scsw_actl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.actl;
+	else
+		return scsw->cmd.actl;
+}
 
 /**
- * scsw_stctl - वापस scsw stctl field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_stctl - return scsw stctl field
+ * @scsw: pointer to scsw
  *
- * Return the value of the stctl field of the specअगरied scsw, regardless of
+ * Return the value of the stctl field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_stctl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.stctl;
-	अन्यथा
-		वापस scsw->cmd.stctl;
-पूर्ण
+static inline u32 scsw_stctl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.stctl;
+	else
+		return scsw->cmd.stctl;
+}
 
 /**
- * scsw_dstat - वापस scsw dstat field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_dstat - return scsw dstat field
+ * @scsw: pointer to scsw
  *
- * Return the value of the dstat field of the specअगरied scsw, regardless of
+ * Return the value of the dstat field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_dstat(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.dstat;
-	अन्यथा
-		वापस scsw->cmd.dstat;
-पूर्ण
+static inline u32 scsw_dstat(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.dstat;
+	else
+		return scsw->cmd.dstat;
+}
 
 /**
- * scsw_cstat - वापस scsw cstat field
- * @scsw: poपूर्णांकer to scsw
+ * scsw_cstat - return scsw cstat field
+ * @scsw: pointer to scsw
  *
- * Return the value of the cstat field of the specअगरied scsw, regardless of
+ * Return the value of the cstat field of the specified scsw, regardless of
  * whether it is a transport mode or command mode scsw.
  */
-अटल अंतरभूत u32 scsw_cstat(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw->पंचांग.cstat;
-	अन्यथा
-		वापस scsw->cmd.cstat;
-पूर्ण
+static inline u32 scsw_cstat(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw->tm.cstat;
+	else
+		return scsw->cmd.cstat;
+}
 
 /**
  * scsw_cmd_is_valid_key - check key field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the key field of the specअगरied command mode scsw is
+ * Return non-zero if the key field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_key(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_key(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_sctl - check sctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the sctl field of the specअगरied command mode scsw is
+ * Return non-zero if the sctl field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_sctl(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_sctl(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_eswf - check eswf field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the eswf field of the specअगरied command mode scsw is
+ * Return non-zero if the eswf field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_eswf(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND);
-पूर्ण
+static inline int scsw_cmd_is_valid_eswf(union scsw *scsw)
+{
+	return (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND);
+}
 
 /**
  * scsw_cmd_is_valid_cc - check cc field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cc field of the specअगरied command mode scsw is
+ * Return non-zero if the cc field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_cc(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC) &&
+static inline int scsw_cmd_is_valid_cc(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC) &&
 	       (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND);
-पूर्ण
+}
 
 /**
  * scsw_cmd_is_valid_fmt - check fmt field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fmt field of the specअगरied command mode scsw is
+ * Return non-zero if the fmt field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_fmt(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_fmt(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_pfch - check pfch field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the pfch field of the specअगरied command mode scsw is
+ * Return non-zero if the pfch field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_pfch(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_pfch(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_isic - check isic field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the isic field of the specअगरied command mode scsw is
+ * Return non-zero if the isic field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_isic(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_isic(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_alcc - check alcc field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the alcc field of the specअगरied command mode scsw is
+ * Return non-zero if the alcc field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_alcc(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_alcc(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_ssi - check ssi field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the ssi field of the specअगरied command mode scsw is
+ * Return non-zero if the ssi field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_ssi(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_cmd_is_valid_ssi(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
  * scsw_cmd_is_valid_zcc - check zcc field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the zcc field of the specअगरied command mode scsw is
+ * Return non-zero if the zcc field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_zcc(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl & SCSW_FCTL_START_FUNC) &&
+static inline int scsw_cmd_is_valid_zcc(union scsw *scsw)
+{
+	return (scsw->cmd.fctl & SCSW_FCTL_START_FUNC) &&
 	       (scsw->cmd.stctl & SCSW_STCTL_INTER_STATUS);
-पूर्ण
+}
 
 /**
  * scsw_cmd_is_valid_ectl - check ectl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the ectl field of the specअगरied command mode scsw is
+ * Return non-zero if the ectl field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_ectl(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
+static inline int scsw_cmd_is_valid_ectl(union scsw *scsw)
+{
+	return (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
 	       !(scsw->cmd.stctl & SCSW_STCTL_INTER_STATUS) &&
 	       (scsw->cmd.stctl & SCSW_STCTL_ALERT_STATUS);
-पूर्ण
+}
 
 /**
  * scsw_cmd_is_valid_pno - check pno field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the pno field of the specअगरied command mode scsw is
+ * Return non-zero if the pno field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_pno(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.fctl != 0) &&
+static inline int scsw_cmd_is_valid_pno(union scsw *scsw)
+{
+	return (scsw->cmd.fctl != 0) &&
 	       (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
 	       (!(scsw->cmd.stctl & SCSW_STCTL_INTER_STATUS) ||
 		  (scsw->cmd.actl & SCSW_ACTL_SUSPENDED));
-पूर्ण
+}
 
 /**
  * scsw_cmd_is_valid_fctl - check fctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fctl field of the specअगरied command mode scsw is
+ * Return non-zero if the fctl field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_fctl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_cmd_is_valid_fctl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
  * scsw_cmd_is_valid_actl - check actl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the actl field of the specअगरied command mode scsw is
+ * Return non-zero if the actl field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_actl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_cmd_is_valid_actl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
  * scsw_cmd_is_valid_stctl - check stctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the stctl field of the specअगरied command mode scsw is
+ * Return non-zero if the stctl field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_stctl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_cmd_is_valid_stctl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
  * scsw_cmd_is_valid_dstat - check dstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the dstat field of the specअगरied command mode scsw is
+ * Return non-zero if the dstat field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_dstat(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
+static inline int scsw_cmd_is_valid_dstat(union scsw *scsw)
+{
+	return (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
 	       (scsw->cmd.cc != 3);
-पूर्ण
+}
 
 /**
  * scsw_cmd_is_valid_cstat - check cstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cstat field of the specअगरied command mode scsw is
+ * Return non-zero if the cstat field of the specified command mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_valid_cstat(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
+static inline int scsw_cmd_is_valid_cstat(union scsw *scsw)
+{
+	return (scsw->cmd.stctl & SCSW_STCTL_STATUS_PEND) &&
 	       (scsw->cmd.cc != 3);
-पूर्ण
+}
 
 /**
- * scsw_पंचांग_is_valid_key - check key field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_key - check key field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the key field of the specअगरied transport mode scsw is
+ * Return non-zero if the key field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_key(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.fctl & SCSW_FCTL_START_FUNC);
-पूर्ण
+static inline int scsw_tm_is_valid_key(union scsw *scsw)
+{
+	return (scsw->tm.fctl & SCSW_FCTL_START_FUNC);
+}
 
 /**
- * scsw_पंचांग_is_valid_eswf - check eswf field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_eswf - check eswf field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the eswf field of the specअगरied transport mode scsw is
+ * Return non-zero if the eswf field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_eswf(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND);
-पूर्ण
+static inline int scsw_tm_is_valid_eswf(union scsw *scsw)
+{
+	return (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND);
+}
 
 /**
- * scsw_पंचांग_is_valid_cc - check cc field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_cc - check cc field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cc field of the specअगरied transport mode scsw is
+ * Return non-zero if the cc field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_cc(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.fctl & SCSW_FCTL_START_FUNC) &&
-	       (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND);
-पूर्ण
+static inline int scsw_tm_is_valid_cc(union scsw *scsw)
+{
+	return (scsw->tm.fctl & SCSW_FCTL_START_FUNC) &&
+	       (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND);
+}
 
 /**
- * scsw_पंचांग_is_valid_fmt - check fmt field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_fmt - check fmt field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fmt field of the specअगरied transport mode scsw is
+ * Return non-zero if the fmt field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_fmt(जोड़ scsw *scsw)
-अणु
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_fmt(union scsw *scsw)
+{
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_x - check x field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_x - check x field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the x field of the specअगरied transport mode scsw is
+ * Return non-zero if the x field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_x(जोड़ scsw *scsw)
-अणु
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_x(union scsw *scsw)
+{
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_q - check q field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_q - check q field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the q field of the specअगरied transport mode scsw is
+ * Return non-zero if the q field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_q(जोड़ scsw *scsw)
-अणु
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_q(union scsw *scsw)
+{
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_ectl - check ectl field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_ectl - check ectl field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the ectl field of the specअगरied transport mode scsw is
+ * Return non-zero if the ectl field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_ectl(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND) &&
-	       !(scsw->पंचांग.stctl & SCSW_STCTL_INTER_STATUS) &&
-	       (scsw->पंचांग.stctl & SCSW_STCTL_ALERT_STATUS);
-पूर्ण
+static inline int scsw_tm_is_valid_ectl(union scsw *scsw)
+{
+	return (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND) &&
+	       !(scsw->tm.stctl & SCSW_STCTL_INTER_STATUS) &&
+	       (scsw->tm.stctl & SCSW_STCTL_ALERT_STATUS);
+}
 
 /**
- * scsw_पंचांग_is_valid_pno - check pno field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_pno - check pno field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the pno field of the specअगरied transport mode scsw is
+ * Return non-zero if the pno field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_pno(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.fctl != 0) &&
-	       (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND) &&
-	       (!(scsw->पंचांग.stctl & SCSW_STCTL_INTER_STATUS) ||
-		 ((scsw->पंचांग.stctl & SCSW_STCTL_INTER_STATUS) &&
-		  (scsw->पंचांग.actl & SCSW_ACTL_SUSPENDED)));
-पूर्ण
+static inline int scsw_tm_is_valid_pno(union scsw *scsw)
+{
+	return (scsw->tm.fctl != 0) &&
+	       (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND) &&
+	       (!(scsw->tm.stctl & SCSW_STCTL_INTER_STATUS) ||
+		 ((scsw->tm.stctl & SCSW_STCTL_INTER_STATUS) &&
+		  (scsw->tm.actl & SCSW_ACTL_SUSPENDED)));
+}
 
 /**
- * scsw_पंचांग_is_valid_fctl - check fctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_fctl - check fctl field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fctl field of the specअगरied transport mode scsw is
+ * Return non-zero if the fctl field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_fctl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_fctl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_actl - check actl field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_actl - check actl field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the actl field of the specअगरied transport mode scsw is
+ * Return non-zero if the actl field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_actl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_actl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_stctl - check stctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_stctl - check stctl field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the stctl field of the specअगरied transport mode scsw is
+ * Return non-zero if the stctl field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_stctl(जोड़ scsw *scsw)
-अणु
-	/* Only valid अगर pmcw.dnv == 1*/
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_stctl(union scsw *scsw)
+{
+	/* Only valid if pmcw.dnv == 1*/
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_dstat - check dstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_dstat - check dstat field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the dstat field of the specअगरied transport mode scsw is
+ * Return non-zero if the dstat field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_dstat(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND) &&
-	       (scsw->पंचांग.cc != 3);
-पूर्ण
+static inline int scsw_tm_is_valid_dstat(union scsw *scsw)
+{
+	return (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND) &&
+	       (scsw->tm.cc != 3);
+}
 
 /**
- * scsw_पंचांग_is_valid_cstat - check cstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_cstat - check cstat field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cstat field of the specअगरied transport mode scsw is
+ * Return non-zero if the cstat field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_cstat(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.stctl & SCSW_STCTL_STATUS_PEND) &&
-	       (scsw->पंचांग.cc != 3);
-पूर्ण
+static inline int scsw_tm_is_valid_cstat(union scsw *scsw)
+{
+	return (scsw->tm.stctl & SCSW_STCTL_STATUS_PEND) &&
+	       (scsw->tm.cc != 3);
+}
 
 /**
- * scsw_पंचांग_is_valid_fcxs - check fcxs field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_fcxs - check fcxs field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fcxs field of the specअगरied transport mode scsw is
+ * Return non-zero if the fcxs field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_fcxs(जोड़ scsw *scsw)
-अणु
-	वापस 1;
-पूर्ण
+static inline int scsw_tm_is_valid_fcxs(union scsw *scsw)
+{
+	return 1;
+}
 
 /**
- * scsw_पंचांग_is_valid_schxs - check schxs field validity
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_valid_schxs - check schxs field validity
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the schxs field of the specअगरied transport mode scsw is
+ * Return non-zero if the schxs field of the specified transport mode scsw is
  * valid, zero otherwise.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_valid_schxs(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.cstat & (SCHN_STAT_PROG_CHECK |
+static inline int scsw_tm_is_valid_schxs(union scsw *scsw)
+{
+	return (scsw->tm.cstat & (SCHN_STAT_PROG_CHECK |
 				  SCHN_STAT_INTF_CTRL_CHK |
 				  SCHN_STAT_PROT_CHECK |
 				  SCHN_STAT_CHN_DATA_CHK));
-पूर्ण
+}
 
 /**
  * scsw_is_valid_actl - check actl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the actl field of the specअगरied scsw is valid,
+ * Return non-zero if the actl field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_actl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_actl(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_actl(scsw);
-पूर्ण
+static inline int scsw_is_valid_actl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_actl(scsw);
+	else
+		return scsw_cmd_is_valid_actl(scsw);
+}
 
 /**
  * scsw_is_valid_cc - check cc field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cc field of the specअगरied scsw is valid,
+ * Return non-zero if the cc field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_cc(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_cc(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_cc(scsw);
-पूर्ण
+static inline int scsw_is_valid_cc(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_cc(scsw);
+	else
+		return scsw_cmd_is_valid_cc(scsw);
+}
 
 /**
  * scsw_is_valid_cstat - check cstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the cstat field of the specअगरied scsw is valid,
+ * Return non-zero if the cstat field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_cstat(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_cstat(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_cstat(scsw);
-पूर्ण
+static inline int scsw_is_valid_cstat(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_cstat(scsw);
+	else
+		return scsw_cmd_is_valid_cstat(scsw);
+}
 
 /**
  * scsw_is_valid_dstat - check dstat field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the dstat field of the specअगरied scsw is valid,
+ * Return non-zero if the dstat field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_dstat(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_dstat(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_dstat(scsw);
-पूर्ण
+static inline int scsw_is_valid_dstat(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_dstat(scsw);
+	else
+		return scsw_cmd_is_valid_dstat(scsw);
+}
 
 /**
  * scsw_is_valid_ectl - check ectl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the ectl field of the specअगरied scsw is valid,
+ * Return non-zero if the ectl field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_ectl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_ectl(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_ectl(scsw);
-पूर्ण
+static inline int scsw_is_valid_ectl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_ectl(scsw);
+	else
+		return scsw_cmd_is_valid_ectl(scsw);
+}
 
 /**
  * scsw_is_valid_eswf - check eswf field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the eswf field of the specअगरied scsw is valid,
+ * Return non-zero if the eswf field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_eswf(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_eswf(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_eswf(scsw);
-पूर्ण
+static inline int scsw_is_valid_eswf(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_eswf(scsw);
+	else
+		return scsw_cmd_is_valid_eswf(scsw);
+}
 
 /**
  * scsw_is_valid_fctl - check fctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the fctl field of the specअगरied scsw is valid,
+ * Return non-zero if the fctl field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_fctl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_fctl(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_fctl(scsw);
-पूर्ण
+static inline int scsw_is_valid_fctl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_fctl(scsw);
+	else
+		return scsw_cmd_is_valid_fctl(scsw);
+}
 
 /**
  * scsw_is_valid_key - check key field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the key field of the specअगरied scsw is valid,
+ * Return non-zero if the key field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_key(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_key(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_key(scsw);
-पूर्ण
+static inline int scsw_is_valid_key(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_key(scsw);
+	else
+		return scsw_cmd_is_valid_key(scsw);
+}
 
 /**
  * scsw_is_valid_pno - check pno field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the pno field of the specअगरied scsw is valid,
+ * Return non-zero if the pno field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_pno(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_pno(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_pno(scsw);
-पूर्ण
+static inline int scsw_is_valid_pno(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_pno(scsw);
+	else
+		return scsw_cmd_is_valid_pno(scsw);
+}
 
 /**
  * scsw_is_valid_stctl - check stctl field validity
- * @scsw: poपूर्णांकer to scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the stctl field of the specअगरied scsw is valid,
+ * Return non-zero if the stctl field of the specified scsw is valid,
  * regardless of whether it is a transport mode or command mode scsw.
- * Return zero अगर the field करोes not contain a valid value.
+ * Return zero if the field does not contain a valid value.
  */
-अटल अंतरभूत पूर्णांक scsw_is_valid_stctl(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_valid_stctl(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_valid_stctl(scsw);
-पूर्ण
+static inline int scsw_is_valid_stctl(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_valid_stctl(scsw);
+	else
+		return scsw_cmd_is_valid_stctl(scsw);
+}
 
 /**
- * scsw_cmd_is_solicited - check क्रम solicited scsw
- * @scsw: poपूर्णांकer to scsw
+ * scsw_cmd_is_solicited - check for solicited scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the command mode scsw indicates that the associated
- * status condition is solicited, zero अगर it is unsolicited.
+ * Return non-zero if the command mode scsw indicates that the associated
+ * status condition is solicited, zero if it is unsolicited.
  */
-अटल अंतरभूत पूर्णांक scsw_cmd_is_solicited(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->cmd.cc != 0) || (scsw->cmd.stctl !=
+static inline int scsw_cmd_is_solicited(union scsw *scsw)
+{
+	return (scsw->cmd.cc != 0) || (scsw->cmd.stctl !=
 		(SCSW_STCTL_STATUS_PEND | SCSW_STCTL_ALERT_STATUS));
-पूर्ण
+}
 
 /**
- * scsw_पंचांग_is_solicited - check क्रम solicited scsw
- * @scsw: poपूर्णांकer to scsw
+ * scsw_tm_is_solicited - check for solicited scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the transport mode scsw indicates that the associated
- * status condition is solicited, zero अगर it is unsolicited.
+ * Return non-zero if the transport mode scsw indicates that the associated
+ * status condition is solicited, zero if it is unsolicited.
  */
-अटल अंतरभूत पूर्णांक scsw_पंचांग_is_solicited(जोड़ scsw *scsw)
-अणु
-	वापस (scsw->पंचांग.cc != 0) || (scsw->पंचांग.stctl !=
+static inline int scsw_tm_is_solicited(union scsw *scsw)
+{
+	return (scsw->tm.cc != 0) || (scsw->tm.stctl !=
 		(SCSW_STCTL_STATUS_PEND | SCSW_STCTL_ALERT_STATUS));
-पूर्ण
+}
 
 /**
- * scsw_is_solicited - check क्रम solicited scsw
- * @scsw: poपूर्णांकer to scsw
+ * scsw_is_solicited - check for solicited scsw
+ * @scsw: pointer to scsw
  *
- * Return non-zero अगर the transport or command mode scsw indicates that the
- * associated status condition is solicited, zero अगर it is unsolicited.
+ * Return non-zero if the transport or command mode scsw indicates that the
+ * associated status condition is solicited, zero if it is unsolicited.
  */
-अटल अंतरभूत पूर्णांक scsw_is_solicited(जोड़ scsw *scsw)
-अणु
-	अगर (scsw_is_पंचांग(scsw))
-		वापस scsw_पंचांग_is_solicited(scsw);
-	अन्यथा
-		वापस scsw_cmd_is_solicited(scsw);
-पूर्ण
+static inline int scsw_is_solicited(union scsw *scsw)
+{
+	if (scsw_is_tm(scsw))
+		return scsw_tm_is_solicited(scsw);
+	else
+		return scsw_cmd_is_solicited(scsw);
+}
 
-#पूर्ण_अगर /* _ASM_S390_SCSW_H_ */
+#endif /* _ASM_S390_SCSW_H_ */

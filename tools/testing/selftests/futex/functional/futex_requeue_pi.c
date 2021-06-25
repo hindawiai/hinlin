@@ -1,410 +1,409 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /******************************************************************************
  *
- *   Copyright तऊ International Business Machines  Corp., 2006-2008
+ *   Copyright © International Business Machines  Corp., 2006-2008
  *
  * DESCRIPTION
- *      This test excercises the futex syscall op codes needed क्रम requeuing
+ *      This test excercises the futex syscall op codes needed for requeuing
  *      priority inheritance aware POSIX condition variables and mutexes.
  *
  * AUTHORS
  *      Sripathi Kodi <sripathik@in.ibm.com>
- *      Darren Hart <dvhart@linux.पूर्णांकel.com>
+ *      Darren Hart <dvhart@linux.intel.com>
  *
  * HISTORY
  *      2008-Jan-13: Initial version by Sripathi Kodi <sripathik@in.ibm.com>
- *      2009-Nov-6: futex test adaptation by Darren Hart <dvhart@linux.पूर्णांकel.com>
+ *      2009-Nov-6: futex test adaptation by Darren Hart <dvhart@linux.intel.com>
  *
  *****************************************************************************/
 
-#समावेश <त्रुटिसं.स>
-#समावेश <सीमा.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <माला.स>
-#समावेश "atomic.h"
-#समावेश "futextest.h"
-#समावेश "logging.h"
+#include <errno.h>
+#include <limits.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include "atomic.h"
+#include "futextest.h"
+#include "logging.h"
 
-#घोषणा TEST_NAME "futex-requeue-pi"
-#घोषणा MAX_WAKE_ITERS 1000
-#घोषणा THREAD_MAX 10
-#घोषणा SIGNAL_PERIOD_US 100
+#define TEST_NAME "futex-requeue-pi"
+#define MAX_WAKE_ITERS 1000
+#define THREAD_MAX 10
+#define SIGNAL_PERIOD_US 100
 
-atomic_t रुकोers_blocked = ATOMIC_INITIALIZER;
-atomic_t रुकोers_woken = ATOMIC_INITIALIZER;
+atomic_t waiters_blocked = ATOMIC_INITIALIZER;
+atomic_t waiters_woken = ATOMIC_INITIALIZER;
 
 futex_t f1 = FUTEX_INITIALIZER;
 futex_t f2 = FUTEX_INITIALIZER;
 futex_t wake_complete = FUTEX_INITIALIZER;
 
-/* Test option शेषs */
-अटल दीर्घ समयout_ns;
-अटल पूर्णांक broadcast;
-अटल पूर्णांक owner;
-अटल पूर्णांक locked;
+/* Test option defaults */
+static long timeout_ns;
+static int broadcast;
+static int owner;
+static int locked;
 
-काष्ठा thपढ़ो_arg अणु
-	दीर्घ id;
-	काष्ठा बारpec *समयout;
-	पूर्णांक lock;
-	पूर्णांक ret;
-पूर्ण;
-#घोषणा THREAD_ARG_INITIALIZER अणु 0, शून्य, 0, 0 पूर्ण
+struct thread_arg {
+	long id;
+	struct timespec *timeout;
+	int lock;
+	int ret;
+};
+#define THREAD_ARG_INITIALIZER { 0, NULL, 0, 0 }
 
-व्योम usage(अक्षर *prog)
-अणु
-	म_लिखो("Usage: %s\n", prog);
-	म_लिखो("  -b	Broadcast wakeup (all waiters)\n");
-	म_लिखो("  -c	Use color\n");
-	म_लिखो("  -h	Display this help message\n");
-	म_लिखो("  -l	Lock the pi futex across requeue\n");
-	म_लिखो("  -o	Use a third party pi futex owner during requeue (cancels -l)\n");
-	म_लिखो("  -t N	Timeout in nanoseconds (default: 0)\n");
-	म_लिखो("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
+void usage(char *prog)
+{
+	printf("Usage: %s\n", prog);
+	printf("  -b	Broadcast wakeup (all waiters)\n");
+	printf("  -c	Use color\n");
+	printf("  -h	Display this help message\n");
+	printf("  -l	Lock the pi futex across requeue\n");
+	printf("  -o	Use a third party pi futex owner during requeue (cancels -l)\n");
+	printf("  -t N	Timeout in nanoseconds (default: 0)\n");
+	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
 	       VQUIET, VCRITICAL, VINFO);
-पूर्ण
+}
 
-पूर्णांक create_rt_thपढ़ो(pthपढ़ो_t *pth, व्योम*(*func)(व्योम *), व्योम *arg,
-		     पूर्णांक policy, पूर्णांक prio)
-अणु
-	पूर्णांक ret;
-	काष्ठा sched_param schedp;
-	pthपढ़ो_attr_t attr;
+int create_rt_thread(pthread_t *pth, void*(*func)(void *), void *arg,
+		     int policy, int prio)
+{
+	int ret;
+	struct sched_param schedp;
+	pthread_attr_t attr;
 
-	pthपढ़ो_attr_init(&attr);
-	स_रखो(&schedp, 0, माप(schedp));
+	pthread_attr_init(&attr);
+	memset(&schedp, 0, sizeof(schedp));
 
-	ret = pthपढ़ो_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-	अगर (ret) अणु
+	ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	if (ret) {
 		error("pthread_attr_setinheritsched\n", ret);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	ret = pthपढ़ो_attr_setschedpolicy(&attr, policy);
-	अगर (ret) अणु
+	ret = pthread_attr_setschedpolicy(&attr, policy);
+	if (ret) {
 		error("pthread_attr_setschedpolicy\n", ret);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	schedp.sched_priority = prio;
-	ret = pthपढ़ो_attr_setschedparam(&attr, &schedp);
-	अगर (ret) अणु
+	ret = pthread_attr_setschedparam(&attr, &schedp);
+	if (ret) {
 		error("pthread_attr_setschedparam\n", ret);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	ret = pthपढ़ो_create(pth, &attr, func, arg);
-	अगर (ret) अणु
+	ret = pthread_create(pth, &attr, func, arg);
+	if (ret) {
 		error("pthread_create\n", ret);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
 
-व्योम *रुकोerfn(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_arg *args = (काष्ठा thपढ़ो_arg *)arg;
+void *waiterfn(void *arg)
+{
+	struct thread_arg *args = (struct thread_arg *)arg;
 	futex_t old_val;
 
 	info("Waiter %ld: running\n", args->id);
-	/* Each thपढ़ो sleeps क्रम a dअगरferent amount of समय
-	 * This is to aव्योम races, because we करोn't lock the
-	 * बाह्यal mutex here */
-	usleep(1000 * (दीर्घ)args->id);
+	/* Each thread sleeps for a different amount of time
+	 * This is to avoid races, because we don't lock the
+	 * external mutex here */
+	usleep(1000 * (long)args->id);
 
 	old_val = f1;
-	atomic_inc(&रुकोers_blocked);
+	atomic_inc(&waiters_blocked);
 	info("Calling futex_wait_requeue_pi: %p (%u) -> %p\n",
 	     &f1, f1, &f2);
-	args->ret = futex_रुको_requeue_pi(&f1, old_val, &f2, args->समयout,
+	args->ret = futex_wait_requeue_pi(&f1, old_val, &f2, args->timeout,
 					  FUTEX_PRIVATE_FLAG);
 
 	info("waiter %ld woke with %d %s\n", args->id, args->ret,
-	     args->ret < 0 ? म_त्रुटि(त्रुटि_सं) : "");
-	atomic_inc(&रुकोers_woken);
-	अगर (args->ret < 0) अणु
-		अगर (args->समयout && त्रुटि_सं == ETIMEDOUT)
+	     args->ret < 0 ? strerror(errno) : "");
+	atomic_inc(&waiters_woken);
+	if (args->ret < 0) {
+		if (args->timeout && errno == ETIMEDOUT)
 			args->ret = 0;
-		अन्यथा अणु
+		else {
 			args->ret = RET_ERROR;
-			error("futex_wait_requeue_pi\n", त्रुटि_सं);
-		पूर्ण
-		futex_lock_pi(&f2, शून्य, 0, FUTEX_PRIVATE_FLAG);
-	पूर्ण
+			error("futex_wait_requeue_pi\n", errno);
+		}
+		futex_lock_pi(&f2, NULL, 0, FUTEX_PRIVATE_FLAG);
+	}
 	futex_unlock_pi(&f2, FUTEX_PRIVATE_FLAG);
 
 	info("Waiter %ld: exiting with %d\n", args->id, args->ret);
-	pthपढ़ो_निकास((व्योम *)&args->ret);
-पूर्ण
+	pthread_exit((void *)&args->ret);
+}
 
-व्योम *broadcast_wakerfn(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_arg *args = (काष्ठा thपढ़ो_arg *)arg;
-	पूर्णांक nr_requeue = पूर्णांक_उच्च;
-	पूर्णांक task_count = 0;
+void *broadcast_wakerfn(void *arg)
+{
+	struct thread_arg *args = (struct thread_arg *)arg;
+	int nr_requeue = INT_MAX;
+	int task_count = 0;
 	futex_t old_val;
-	पूर्णांक nr_wake = 1;
-	पूर्णांक i = 0;
+	int nr_wake = 1;
+	int i = 0;
 
 	info("Waker: waiting for waiters to block\n");
-	जबतक (रुकोers_blocked.val < THREAD_MAX)
+	while (waiters_blocked.val < THREAD_MAX)
 		usleep(1000);
 	usleep(1000);
 
 	info("Waker: Calling broadcast\n");
-	अगर (args->lock) अणु
+	if (args->lock) {
 		info("Calling FUTEX_LOCK_PI on mutex=%x @ %p\n", f2, &f2);
-		futex_lock_pi(&f2, शून्य, 0, FUTEX_PRIVATE_FLAG);
-	पूर्ण
- जारी_requeue:
+		futex_lock_pi(&f2, NULL, 0, FUTEX_PRIVATE_FLAG);
+	}
+ continue_requeue:
 	old_val = f1;
 	args->ret = futex_cmp_requeue_pi(&f1, old_val, &f2, nr_wake, nr_requeue,
 				   FUTEX_PRIVATE_FLAG);
-	अगर (args->ret < 0) अणु
+	if (args->ret < 0) {
 		args->ret = RET_ERROR;
-		error("FUTEX_CMP_REQUEUE_PI failed\n", त्रुटि_सं);
-	पूर्ण अन्यथा अगर (++i < MAX_WAKE_ITERS) अणु
+		error("FUTEX_CMP_REQUEUE_PI failed\n", errno);
+	} else if (++i < MAX_WAKE_ITERS) {
 		task_count += args->ret;
-		अगर (task_count < THREAD_MAX - रुकोers_woken.val)
-			जाओ जारी_requeue;
-	पूर्ण अन्यथा अणु
+		if (task_count < THREAD_MAX - waiters_woken.val)
+			goto continue_requeue;
+	} else {
 		error("max broadcast iterations (%d) reached with %d/%d tasks woken or requeued\n",
 		       0, MAX_WAKE_ITERS, task_count, THREAD_MAX);
 		args->ret = RET_ERROR;
-	पूर्ण
+	}
 
 	futex_wake(&wake_complete, 1, FUTEX_PRIVATE_FLAG);
 
-	अगर (args->lock)
+	if (args->lock)
 		futex_unlock_pi(&f2, FUTEX_PRIVATE_FLAG);
 
-	अगर (args->ret > 0)
+	if (args->ret > 0)
 		args->ret = task_count;
 
 	info("Waker: exiting with %d\n", args->ret);
-	pthपढ़ो_निकास((व्योम *)&args->ret);
-पूर्ण
+	pthread_exit((void *)&args->ret);
+}
 
-व्योम *संकेत_wakerfn(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_arg *args = (काष्ठा thपढ़ो_arg *)arg;
-	अचिन्हित पूर्णांक old_val;
-	पूर्णांक nr_requeue = 0;
-	पूर्णांक task_count = 0;
-	पूर्णांक nr_wake = 1;
-	पूर्णांक i = 0;
+void *signal_wakerfn(void *arg)
+{
+	struct thread_arg *args = (struct thread_arg *)arg;
+	unsigned int old_val;
+	int nr_requeue = 0;
+	int task_count = 0;
+	int nr_wake = 1;
+	int i = 0;
 
 	info("Waker: waiting for waiters to block\n");
-	जबतक (रुकोers_blocked.val < THREAD_MAX)
+	while (waiters_blocked.val < THREAD_MAX)
 		usleep(1000);
 	usleep(1000);
 
-	जबतक (task_count < THREAD_MAX && रुकोers_woken.val < THREAD_MAX) अणु
+	while (task_count < THREAD_MAX && waiters_woken.val < THREAD_MAX) {
 		info("task_count: %d, waiters_woken: %d\n",
-		     task_count, रुकोers_woken.val);
-		अगर (args->lock) अणु
+		     task_count, waiters_woken.val);
+		if (args->lock) {
 			info("Calling FUTEX_LOCK_PI on mutex=%x @ %p\n",
 			     f2, &f2);
-			futex_lock_pi(&f2, शून्य, 0, FUTEX_PRIVATE_FLAG);
-		पूर्ण
+			futex_lock_pi(&f2, NULL, 0, FUTEX_PRIVATE_FLAG);
+		}
 		info("Waker: Calling signal\n");
-		/* cond_संकेत */
+		/* cond_signal */
 		old_val = f1;
 		args->ret = futex_cmp_requeue_pi(&f1, old_val, &f2,
 						 nr_wake, nr_requeue,
 						 FUTEX_PRIVATE_FLAG);
-		अगर (args->ret < 0)
-			args->ret = -त्रुटि_सं;
+		if (args->ret < 0)
+			args->ret = -errno;
 		info("futex: %x\n", f2);
-		अगर (args->lock) अणु
+		if (args->lock) {
 			info("Calling FUTEX_UNLOCK_PI on mutex=%x @ %p\n",
 			     f2, &f2);
 			futex_unlock_pi(&f2, FUTEX_PRIVATE_FLAG);
-		पूर्ण
+		}
 		info("futex: %x\n", f2);
-		अगर (args->ret < 0) अणु
-			error("FUTEX_CMP_REQUEUE_PI failed\n", त्रुटि_सं);
+		if (args->ret < 0) {
+			error("FUTEX_CMP_REQUEUE_PI failed\n", errno);
 			args->ret = RET_ERROR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		task_count += args->ret;
 		usleep(SIGNAL_PERIOD_US);
 		i++;
-		/* we have to loop at least THREAD_MAX बार */
-		अगर (i > MAX_WAKE_ITERS + THREAD_MAX) अणु
+		/* we have to loop at least THREAD_MAX times */
+		if (i > MAX_WAKE_ITERS + THREAD_MAX) {
 			error("max signaling iterations (%d) reached, giving up on pending waiters.\n",
 			      0, MAX_WAKE_ITERS + THREAD_MAX);
 			args->ret = RET_ERROR;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	futex_wake(&wake_complete, 1, FUTEX_PRIVATE_FLAG);
 
-	अगर (args->ret >= 0)
+	if (args->ret >= 0)
 		args->ret = task_count;
 
 	info("Waker: exiting with %d\n", args->ret);
-	info("Waker: waiters_woken: %d\n", रुकोers_woken.val);
-	pthपढ़ो_निकास((व्योम *)&args->ret);
-पूर्ण
+	info("Waker: waiters_woken: %d\n", waiters_woken.val);
+	pthread_exit((void *)&args->ret);
+}
 
-व्योम *third_party_blocker(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_arg *args = (काष्ठा thपढ़ो_arg *)arg;
-	पूर्णांक ret2 = 0;
+void *third_party_blocker(void *arg)
+{
+	struct thread_arg *args = (struct thread_arg *)arg;
+	int ret2 = 0;
 
-	args->ret = futex_lock_pi(&f2, शून्य, 0, FUTEX_PRIVATE_FLAG);
-	अगर (args->ret)
-		जाओ out;
-	args->ret = futex_रुको(&wake_complete, wake_complete, शून्य,
+	args->ret = futex_lock_pi(&f2, NULL, 0, FUTEX_PRIVATE_FLAG);
+	if (args->ret)
+		goto out;
+	args->ret = futex_wait(&wake_complete, wake_complete, NULL,
 			       FUTEX_PRIVATE_FLAG);
 	ret2 = futex_unlock_pi(&f2, FUTEX_PRIVATE_FLAG);
 
  out:
-	अगर (args->ret || ret2) अणु
+	if (args->ret || ret2) {
 		error("third_party_blocker() futex error", 0);
 		args->ret = RET_ERROR;
-	पूर्ण
+	}
 
-	pthपढ़ो_निकास((व्योम *)&args->ret);
-पूर्ण
+	pthread_exit((void *)&args->ret);
+}
 
-पूर्णांक unit_test(पूर्णांक broadcast, दीर्घ lock, पूर्णांक third_party_owner, दीर्घ समयout_ns)
-अणु
-	व्योम *(*wakerfn)(व्योम *) = संकेत_wakerfn;
-	काष्ठा thपढ़ो_arg blocker_arg = THREAD_ARG_INITIALIZER;
-	काष्ठा thपढ़ो_arg waker_arg = THREAD_ARG_INITIALIZER;
-	pthपढ़ो_t रुकोer[THREAD_MAX], waker, blocker;
-	काष्ठा बारpec ts, *tsp = शून्य;
-	काष्ठा thपढ़ो_arg args[THREAD_MAX];
-	पूर्णांक *रुकोer_ret;
-	पूर्णांक i, ret = RET_PASS;
+int unit_test(int broadcast, long lock, int third_party_owner, long timeout_ns)
+{
+	void *(*wakerfn)(void *) = signal_wakerfn;
+	struct thread_arg blocker_arg = THREAD_ARG_INITIALIZER;
+	struct thread_arg waker_arg = THREAD_ARG_INITIALIZER;
+	pthread_t waiter[THREAD_MAX], waker, blocker;
+	struct timespec ts, *tsp = NULL;
+	struct thread_arg args[THREAD_MAX];
+	int *waiter_ret;
+	int i, ret = RET_PASS;
 
-	अगर (समयout_ns) अणु
-		समय_प्रकार secs;
+	if (timeout_ns) {
+		time_t secs;
 
-		info("timeout_ns = %ld\n", समयout_ns);
-		ret = घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
-		secs = (ts.tv_nsec + समयout_ns) / 1000000000;
-		ts.tv_nsec = ((पूर्णांक64_t)ts.tv_nsec + समयout_ns) % 1000000000;
+		info("timeout_ns = %ld\n", timeout_ns);
+		ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+		secs = (ts.tv_nsec + timeout_ns) / 1000000000;
+		ts.tv_nsec = ((int64_t)ts.tv_nsec + timeout_ns) % 1000000000;
 		ts.tv_sec += secs;
 		info("ts.tv_sec  = %ld\n", ts.tv_sec);
 		info("ts.tv_nsec = %ld\n", ts.tv_nsec);
 		tsp = &ts;
-	पूर्ण
+	}
 
-	अगर (broadcast)
+	if (broadcast)
 		wakerfn = broadcast_wakerfn;
 
-	अगर (third_party_owner) अणु
-		अगर (create_rt_thपढ़ो(&blocker, third_party_blocker,
-				     (व्योम *)&blocker_arg, SCHED_FIFO, 1)) अणु
+	if (third_party_owner) {
+		if (create_rt_thread(&blocker, third_party_blocker,
+				     (void *)&blocker_arg, SCHED_FIFO, 1)) {
 			error("Creating third party blocker thread failed\n",
-			      त्रुटि_सं);
+			      errno);
 			ret = RET_ERROR;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	atomic_set(&रुकोers_woken, 0);
-	क्रम (i = 0; i < THREAD_MAX; i++) अणु
+	atomic_set(&waiters_woken, 0);
+	for (i = 0; i < THREAD_MAX; i++) {
 		args[i].id = i;
-		args[i].समयout = tsp;
+		args[i].timeout = tsp;
 		info("Starting thread %d\n", i);
-		अगर (create_rt_thपढ़ो(&रुकोer[i], रुकोerfn, (व्योम *)&args[i],
-				     SCHED_FIFO, 1)) अणु
-			error("Creating waiting thread failed\n", त्रुटि_सं);
+		if (create_rt_thread(&waiter[i], waiterfn, (void *)&args[i],
+				     SCHED_FIFO, 1)) {
+			error("Creating waiting thread failed\n", errno);
 			ret = RET_ERROR;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	waker_arg.lock = lock;
-	अगर (create_rt_thपढ़ो(&waker, wakerfn, (व्योम *)&waker_arg,
-			     SCHED_FIFO, 1)) अणु
-		error("Creating waker thread failed\n", त्रुटि_सं);
+	if (create_rt_thread(&waker, wakerfn, (void *)&waker_arg,
+			     SCHED_FIFO, 1)) {
+		error("Creating waker thread failed\n", errno);
 		ret = RET_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Wait क्रम thपढ़ोs to finish */
-	/* Store the first error or failure encountered in रुकोer_ret */
-	रुकोer_ret = &args[0].ret;
-	क्रम (i = 0; i < THREAD_MAX; i++)
-		pthपढ़ो_join(रुकोer[i],
-			     *रुकोer_ret ? शून्य : (व्योम **)&रुकोer_ret);
+	/* Wait for threads to finish */
+	/* Store the first error or failure encountered in waiter_ret */
+	waiter_ret = &args[0].ret;
+	for (i = 0; i < THREAD_MAX; i++)
+		pthread_join(waiter[i],
+			     *waiter_ret ? NULL : (void **)&waiter_ret);
 
-	अगर (third_party_owner)
-		pthपढ़ो_join(blocker, शून्य);
-	pthपढ़ो_join(waker, शून्य);
+	if (third_party_owner)
+		pthread_join(blocker, NULL);
+	pthread_join(waker, NULL);
 
 out:
-	अगर (!ret) अणु
-		अगर (*रुकोer_ret)
-			ret = *रुकोer_ret;
-		अन्यथा अगर (waker_arg.ret < 0)
+	if (!ret) {
+		if (*waiter_ret)
+			ret = *waiter_ret;
+		else if (waker_arg.ret < 0)
 			ret = waker_arg.ret;
-		अन्यथा अगर (blocker_arg.ret)
+		else if (blocker_arg.ret)
 			ret = blocker_arg.ret;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक c, ret;
+int main(int argc, char *argv[])
+{
+	int c, ret;
 
-	जबतक ((c = getopt(argc, argv, "bchlot:v:")) != -1) अणु
-		चयन (c) अणु
-		हाल 'b':
+	while ((c = getopt(argc, argv, "bchlot:v:")) != -1) {
+		switch (c) {
+		case 'b':
 			broadcast = 1;
-			अवरोध;
-		हाल 'c':
+			break;
+		case 'c':
 			log_color(1);
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			usage(basename(argv[0]));
-			निकास(0);
-		हाल 'l':
+			exit(0);
+		case 'l':
 			locked = 1;
-			अवरोध;
-		हाल 'o':
+			break;
+		case 'o':
 			owner = 1;
 			locked = 0;
-			अवरोध;
-		हाल 't':
-			समयout_ns = म_से_प(optarg);
-			अवरोध;
-		हाल 'v':
-			log_verbosity(म_से_प(optarg));
-			अवरोध;
-		शेष:
+			break;
+		case 't':
+			timeout_ns = atoi(optarg);
+			break;
+		case 'v':
+			log_verbosity(atoi(optarg));
+			break;
+		default:
 			usage(basename(argv[0]));
-			निकास(1);
-		पूर्ण
-	पूर्ण
+			exit(1);
+		}
+	}
 
-	ksft_prपूर्णांक_header();
+	ksft_print_header();
 	ksft_set_plan(1);
-	ksft_prपूर्णांक_msg("%s: Test requeue functionality\n", basename(argv[0]));
-	ksft_prपूर्णांक_msg(
+	ksft_print_msg("%s: Test requeue functionality\n", basename(argv[0]));
+	ksft_print_msg(
 		"\tArguments: broadcast=%d locked=%d owner=%d timeout=%ldns\n",
-		broadcast, locked, owner, समयout_ns);
+		broadcast, locked, owner, timeout_ns);
 
 	/*
 	 * FIXME: unit_test is obsolete now that we parse options and the
-	 * various style of runs are करोne by run.sh - simplअगरy the code and move
-	 * unit_test पूर्णांकo मुख्य()
+	 * various style of runs are done by run.sh - simplify the code and move
+	 * unit_test into main()
 	 */
-	ret = unit_test(broadcast, locked, owner, समयout_ns);
+	ret = unit_test(broadcast, locked, owner, timeout_ns);
 
-	prपूर्णांक_result(TEST_NAME, ret);
-	वापस ret;
-पूर्ण
+	print_result(TEST_NAME, ret);
+	return ret;
+}

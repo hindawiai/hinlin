@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-#घोषणा IFINDEX_LO	1
+#define IFINDEX_LO	1
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_CPUMAP);
-	__uपूर्णांक(key_size, माप(__u32));
-	__uपूर्णांक(value_size, माप(काष्ठा bpf_cpumap_val));
-	__uपूर्णांक(max_entries, 4);
-पूर्ण cpu_map SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_CPUMAP);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(struct bpf_cpumap_val));
+	__uint(max_entries, 4);
+} cpu_map SEC(".maps");
 
 SEC("xdp_redir")
-पूर्णांक xdp_redir_prog(काष्ठा xdp_md *ctx)
-अणु
-	वापस bpf_redirect_map(&cpu_map, 1, 0);
-पूर्ण
+int xdp_redir_prog(struct xdp_md *ctx)
+{
+	return bpf_redirect_map(&cpu_map, 1, 0);
+}
 
 SEC("xdp_dummy")
-पूर्णांक xdp_dummy_prog(काष्ठा xdp_md *ctx)
-अणु
-	वापस XDP_PASS;
-पूर्ण
+int xdp_dummy_prog(struct xdp_md *ctx)
+{
+	return XDP_PASS;
+}
 
 SEC("xdp_cpumap/dummy_cm")
-पूर्णांक xdp_dummy_cm(काष्ठा xdp_md *ctx)
-अणु
-	अगर (ctx->ingress_अगरindex == IFINDEX_LO)
-		वापस XDP_DROP;
+int xdp_dummy_cm(struct xdp_md *ctx)
+{
+	if (ctx->ingress_ifindex == IFINDEX_LO)
+		return XDP_DROP;
 
-	वापस XDP_PASS;
-पूर्ण
+	return XDP_PASS;
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

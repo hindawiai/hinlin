@@ -1,99 +1,98 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित TEGRA_HUB_H
-#घोषणा TEGRA_HUB_H 1
+#ifndef TEGRA_HUB_H
+#define TEGRA_HUB_H 1
 
-#समावेश <drm/drm_plane.h>
+#include <drm/drm_plane.h>
 
-#समावेश "plane.h"
+#include "plane.h"
 
-काष्ठा tegra_dc;
+struct tegra_dc;
 
-काष्ठा tegra_winकरोwgroup अणु
-	अचिन्हित पूर्णांक usecount;
-	काष्ठा mutex lock;
+struct tegra_windowgroup {
+	unsigned int usecount;
+	struct mutex lock;
 
-	अचिन्हित पूर्णांक index;
-	काष्ठा host1x_client *parent;
-	काष्ठा reset_control *rst;
-पूर्ण;
+	unsigned int index;
+	struct host1x_client *parent;
+	struct reset_control *rst;
+};
 
-काष्ठा tegra_shared_plane अणु
-	काष्ठा tegra_plane base;
-	काष्ठा tegra_winकरोwgroup *wgrp;
-पूर्ण;
+struct tegra_shared_plane {
+	struct tegra_plane base;
+	struct tegra_windowgroup *wgrp;
+};
 
-अटल अंतरभूत काष्ठा tegra_shared_plane *
-to_tegra_shared_plane(काष्ठा drm_plane *plane)
-अणु
-	वापस container_of(plane, काष्ठा tegra_shared_plane, base.base);
-पूर्ण
+static inline struct tegra_shared_plane *
+to_tegra_shared_plane(struct drm_plane *plane)
+{
+	return container_of(plane, struct tegra_shared_plane, base.base);
+}
 
-काष्ठा tegra_display_hub_soc अणु
-	अचिन्हित पूर्णांक num_wgrps;
+struct tegra_display_hub_soc {
+	unsigned int num_wgrps;
 	bool supports_dsc;
-पूर्ण;
+};
 
-काष्ठा tegra_display_hub अणु
-	काष्ठा drm_निजी_obj base;
-	काष्ठा host1x_client client;
-	काष्ठा clk *clk_disp;
-	काष्ठा clk *clk_dsc;
-	काष्ठा clk *clk_hub;
-	काष्ठा reset_control *rst;
+struct tegra_display_hub {
+	struct drm_private_obj base;
+	struct host1x_client client;
+	struct clk *clk_disp;
+	struct clk *clk_dsc;
+	struct clk *clk_hub;
+	struct reset_control *rst;
 
-	अचिन्हित पूर्णांक num_heads;
-	काष्ठा clk **clk_heads;
+	unsigned int num_heads;
+	struct clk **clk_heads;
 
-	स्थिर काष्ठा tegra_display_hub_soc *soc;
-	काष्ठा tegra_winकरोwgroup *wgrps;
-पूर्ण;
+	const struct tegra_display_hub_soc *soc;
+	struct tegra_windowgroup *wgrps;
+};
 
-अटल अंतरभूत काष्ठा tegra_display_hub *
-to_tegra_display_hub(काष्ठा host1x_client *client)
-अणु
-	वापस container_of(client, काष्ठा tegra_display_hub, client);
-पूर्ण
+static inline struct tegra_display_hub *
+to_tegra_display_hub(struct host1x_client *client)
+{
+	return container_of(client, struct tegra_display_hub, client);
+}
 
-काष्ठा tegra_display_hub_state अणु
-	काष्ठा drm_निजी_state base;
+struct tegra_display_hub_state {
+	struct drm_private_state base;
 
-	काष्ठा tegra_dc *dc;
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk *clk;
-पूर्ण;
+	struct tegra_dc *dc;
+	unsigned long rate;
+	struct clk *clk;
+};
 
-अटल अंतरभूत काष्ठा tegra_display_hub_state *
-to_tegra_display_hub_state(काष्ठा drm_निजी_state *priv)
-अणु
-	वापस container_of(priv, काष्ठा tegra_display_hub_state, base);
-पूर्ण
+static inline struct tegra_display_hub_state *
+to_tegra_display_hub_state(struct drm_private_state *priv)
+{
+	return container_of(priv, struct tegra_display_hub_state, base);
+}
 
-काष्ठा tegra_dc;
-काष्ठा tegra_plane;
+struct tegra_dc;
+struct tegra_plane;
 
-पूर्णांक tegra_display_hub_prepare(काष्ठा tegra_display_hub *hub);
-व्योम tegra_display_hub_cleanup(काष्ठा tegra_display_hub *hub);
+int tegra_display_hub_prepare(struct tegra_display_hub *hub);
+void tegra_display_hub_cleanup(struct tegra_display_hub *hub);
 
-काष्ठा drm_plane *tegra_shared_plane_create(काष्ठा drm_device *drm,
-					    काष्ठा tegra_dc *dc,
-					    अचिन्हित पूर्णांक wgrp,
-					    अचिन्हित पूर्णांक index);
+struct drm_plane *tegra_shared_plane_create(struct drm_device *drm,
+					    struct tegra_dc *dc,
+					    unsigned int wgrp,
+					    unsigned int index);
 
-पूर्णांक tegra_display_hub_atomic_check(काष्ठा drm_device *drm,
-				   काष्ठा drm_atomic_state *state);
-व्योम tegra_display_hub_atomic_commit(काष्ठा drm_device *drm,
-				     काष्ठा drm_atomic_state *state);
+int tegra_display_hub_atomic_check(struct drm_device *drm,
+				   struct drm_atomic_state *state);
+void tegra_display_hub_atomic_commit(struct drm_device *drm,
+				     struct drm_atomic_state *state);
 
-#घोषणा DC_CMD_IHUB_COMMON_MISC_CTL 0x068
-#घोषणा  LATENCY_EVENT (1 << 3)
+#define DC_CMD_IHUB_COMMON_MISC_CTL 0x068
+#define  LATENCY_EVENT (1 << 3)
 
-#घोषणा DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER 0x451
-#घोषणा  CURS_SLOTS(x) (((x) & 0xff) << 8)
-#घोषणा  WGRP_SLOTS(x) (((x) & 0xff) << 0)
+#define DC_DISP_IHUB_COMMON_DISPLAY_FETCH_METER 0x451
+#define  CURS_SLOTS(x) (((x) & 0xff) << 8)
+#define  WGRP_SLOTS(x) (((x) & 0xff) << 0)
 
-#पूर्ण_अगर /* TEGRA_HUB_H */
+#endif /* TEGRA_HUB_H */

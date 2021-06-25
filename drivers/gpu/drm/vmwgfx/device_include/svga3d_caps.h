@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 2007-2015 VMware, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person
- * obtaining a copy of this software and associated करोcumentation
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to करो so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -28,29 +27,29 @@
 /*
  * svga3d_caps.h --
  *
- *       Definitions क्रम SVGA3D hardware capabilities.  Capabilities
- *       are used to query क्रम optional rendering features during
+ *       Definitions for SVGA3D hardware capabilities.  Capabilities
+ *       are used to query for optional rendering features during
  *       driver initialization. The capability data is stored as very
  *       basic key/value dictionary within the "FIFO register" memory
  *       area at the beginning of BAR2.
  *
- *       Note that these definitions are only क्रम 3D capabilities.
+ *       Note that these definitions are only for 3D capabilities.
  *       The SVGA device also has "device capabilities" and "FIFO
- *       capabilities", which are non-3D-specअगरic and are stored as
+ *       capabilities", which are non-3D-specific and are stored as
  *       bitfields rather than key/value pairs.
  */
 
-#अगर_अघोषित _SVGA3D_CAPS_H_
-#घोषणा _SVGA3D_CAPS_H_
+#ifndef _SVGA3D_CAPS_H_
+#define _SVGA3D_CAPS_H_
 
-#घोषणा INCLUDE_ALLOW_MODULE
-#घोषणा INCLUDE_ALLOW_USERLEVEL
+#define INCLUDE_ALLOW_MODULE
+#define INCLUDE_ALLOW_USERLEVEL
 
-#समावेश "includeCheck.h"
+#include "includeCheck.h"
 
-#समावेश "svga_reg.h"
+#include "svga_reg.h"
 
-#घोषणा SVGA_FIFO_3D_CAPS_SIZE   (SVGA_FIFO_3D_CAPS_LAST - \
+#define SVGA_FIFO_3D_CAPS_SIZE   (SVGA_FIFO_3D_CAPS_LAST - \
                                   SVGA_FIFO_3D_CAPS + 1)
 
 
@@ -63,50 +62,50 @@
  *    types.
  */
 
-प्रकार क्रमागत अणु
+typedef enum {
    SVGA3DCAPS_RECORD_UNKNOWN        = 0,
    SVGA3DCAPS_RECORD_DEVCAPS_MIN    = 0x100,
    SVGA3DCAPS_RECORD_DEVCAPS        = 0x100,
    SVGA3DCAPS_RECORD_DEVCAPS_MAX    = 0x1ff,
-पूर्ण SVGA3dCapsRecordType;
+} SVGA3dCapsRecordType;
 
 
 /*
  * SVGA3dCapsRecordHeader
  *
  *    Header field leading each caps block record. Contains the offset (in
- *    रेजिस्टर words, NOT bytes) to the next caps block record (or the end
+ *    register words, NOT bytes) to the next caps block record (or the end
  *    of caps block records which will be a zero word) and the record type
  *    as defined above.
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGA3dCapsRecordHeader अणु
-   uपूर्णांक32 length;
+typedef
+#include "vmware_pack_begin.h"
+struct SVGA3dCapsRecordHeader {
+   uint32 length;
    SVGA3dCapsRecordType type;
-पूर्ण
-#समावेश "vmware_pack_end.h"
+}
+#include "vmware_pack_end.h"
 SVGA3dCapsRecordHeader;
 
 
 /*
  * SVGA3dCapsRecord
  *
- *    Caps block record; "data" is a placeholder क्रम the actual data काष्ठाure
+ *    Caps block record; "data" is a placeholder for the actual data structure
  *    contained within the record;
  */
 
-प्रकार
-#समावेश "vmware_pack_begin.h"
-काष्ठा SVGA3dCapsRecord अणु
+typedef
+#include "vmware_pack_begin.h"
+struct SVGA3dCapsRecord {
    SVGA3dCapsRecordHeader header;
-   uपूर्णांक32 data[1];
-पूर्ण
-#समावेश "vmware_pack_end.h"
+   uint32 data[1];
+}
+#include "vmware_pack_end.h"
 SVGA3dCapsRecord;
 
 
-प्रकार uपूर्णांक32 SVGA3dCapPair[2];
+typedef uint32 SVGA3dCapPair[2];
 
-#पूर्ण_अगर
+#endif

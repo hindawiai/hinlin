@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Keystone NetCP Core driver
  *
@@ -12,31 +11,31 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of_net.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/soc/ti/knav_qmss.h>
-#समावेश <linux/soc/ti/knav_dma.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of_net.h>
+#include <linux/of_address.h>
+#include <linux/if_vlan.h>
+#include <linux/pm_runtime.h>
+#include <linux/platform_device.h>
+#include <linux/soc/ti/knav_qmss.h>
+#include <linux/soc/ti/knav_dma.h>
 
-#समावेश "netcp.h"
+#include "netcp.h"
 
-#घोषणा NETCP_SOP_OFFSET	(NET_IP_ALIGN + NET_SKB_PAD)
-#घोषणा NETCP_NAPI_WEIGHT	64
-#घोषणा NETCP_TX_TIMEOUT	(5 * HZ)
-#घोषणा NETCP_PACKET_SIZE	(ETH_FRAME_LEN + ETH_FCS_LEN)
-#घोषणा NETCP_MIN_PACKET_SIZE	ETH_ZLEN
-#घोषणा NETCP_MAX_MCAST_ADDR	16
+#define NETCP_SOP_OFFSET	(NET_IP_ALIGN + NET_SKB_PAD)
+#define NETCP_NAPI_WEIGHT	64
+#define NETCP_TX_TIMEOUT	(5 * HZ)
+#define NETCP_PACKET_SIZE	(ETH_FRAME_LEN + ETH_FCS_LEN)
+#define NETCP_MIN_PACKET_SIZE	ETH_ZLEN
+#define NETCP_MAX_MCAST_ADDR	16
 
-#घोषणा NETCP_EFUSE_REG_INDEX	0
+#define NETCP_EFUSE_REG_INDEX	0
 
-#घोषणा NETCP_MOD_PROBE_SKIPPED	1
-#घोषणा NETCP_MOD_PROBE_FAILED	2
+#define NETCP_MOD_PROBE_SKIPPED	1
+#define NETCP_MOD_PROBE_FAILED	2
 
-#घोषणा NETCP_DEBUG (NETIF_MSG_HW	| NETIF_MSG_WOL		|	\
+#define NETCP_DEBUG (NETIF_MSG_HW	| NETIF_MSG_WOL		|	\
 		    NETIF_MSG_DRV	| NETIF_MSG_LINK	|	\
 		    NETIF_MSG_IFUP	| NETIF_MSG_INTR	|	\
 		    NETIF_MSG_PROBE	| NETIF_MSG_TIMER	|	\
@@ -45,168 +44,168 @@
 		    NETIF_MSG_PKTDATA	| NETIF_MSG_TX_QUEUED	|	\
 		    NETIF_MSG_RX_STATUS)
 
-#घोषणा NETCP_EFUSE_ADDR_SWAP	2
+#define NETCP_EFUSE_ADDR_SWAP	2
 
-#घोषणा knav_queue_get_id(q)	knav_queue_device_control(q, \
-				KNAV_QUEUE_GET_ID, (अचिन्हित दीर्घ)शून्य)
+#define knav_queue_get_id(q)	knav_queue_device_control(q, \
+				KNAV_QUEUE_GET_ID, (unsigned long)NULL)
 
-#घोषणा knav_queue_enable_notअगरy(q) knav_queue_device_control(q,	\
+#define knav_queue_enable_notify(q) knav_queue_device_control(q,	\
 					KNAV_QUEUE_ENABLE_NOTIFY,	\
-					(अचिन्हित दीर्घ)शून्य)
+					(unsigned long)NULL)
 
-#घोषणा knav_queue_disable_notअगरy(q) knav_queue_device_control(q,	\
+#define knav_queue_disable_notify(q) knav_queue_device_control(q,	\
 					KNAV_QUEUE_DISABLE_NOTIFY,	\
-					(अचिन्हित दीर्घ)शून्य)
+					(unsigned long)NULL)
 
-#घोषणा knav_queue_get_count(q)	knav_queue_device_control(q, \
-				KNAV_QUEUE_GET_COUNT, (अचिन्हित दीर्घ)शून्य)
+#define knav_queue_get_count(q)	knav_queue_device_control(q, \
+				KNAV_QUEUE_GET_COUNT, (unsigned long)NULL)
 
-#घोषणा क्रम_each_netcp_module(module)			\
-	list_क्रम_each_entry(module, &netcp_modules, module_list)
+#define for_each_netcp_module(module)			\
+	list_for_each_entry(module, &netcp_modules, module_list)
 
-#घोषणा क्रम_each_netcp_device_module(netcp_device, inst_modpriv) \
-	list_क्रम_each_entry(inst_modpriv, \
+#define for_each_netcp_device_module(netcp_device, inst_modpriv) \
+	list_for_each_entry(inst_modpriv, \
 		&((netcp_device)->modpriv_head), inst_list)
 
-#घोषणा क्रम_each_module(netcp, पूर्णांकf_modpriv)			\
-	list_क्रम_each_entry(पूर्णांकf_modpriv, &netcp->module_head, पूर्णांकf_list)
+#define for_each_module(netcp, intf_modpriv)			\
+	list_for_each_entry(intf_modpriv, &netcp->module_head, intf_list)
 
-/* Module management काष्ठाures */
-काष्ठा netcp_device अणु
-	काष्ठा list_head	device_list;
-	काष्ठा list_head	पूर्णांकerface_head;
-	काष्ठा list_head	modpriv_head;
-	काष्ठा device		*device;
-पूर्ण;
+/* Module management structures */
+struct netcp_device {
+	struct list_head	device_list;
+	struct list_head	interface_head;
+	struct list_head	modpriv_head;
+	struct device		*device;
+};
 
-काष्ठा netcp_inst_modpriv अणु
-	काष्ठा netcp_device	*netcp_device;
-	काष्ठा netcp_module	*netcp_module;
-	काष्ठा list_head	inst_list;
-	व्योम			*module_priv;
-पूर्ण;
+struct netcp_inst_modpriv {
+	struct netcp_device	*netcp_device;
+	struct netcp_module	*netcp_module;
+	struct list_head	inst_list;
+	void			*module_priv;
+};
 
-काष्ठा netcp_पूर्णांकf_modpriv अणु
-	काष्ठा netcp_पूर्णांकf	*netcp_priv;
-	काष्ठा netcp_module	*netcp_module;
-	काष्ठा list_head	पूर्णांकf_list;
-	व्योम			*module_priv;
-पूर्ण;
+struct netcp_intf_modpriv {
+	struct netcp_intf	*netcp_priv;
+	struct netcp_module	*netcp_module;
+	struct list_head	intf_list;
+	void			*module_priv;
+};
 
-काष्ठा netcp_tx_cb अणु
-	व्योम	*ts_context;
-	व्योम	(*txtstamp)(व्योम *context, काष्ठा sk_buff *skb);
-पूर्ण;
+struct netcp_tx_cb {
+	void	*ts_context;
+	void	(*txtstamp)(void *context, struct sk_buff *skb);
+};
 
-अटल LIST_HEAD(netcp_devices);
-अटल LIST_HEAD(netcp_modules);
-अटल DEFINE_MUTEX(netcp_modules_lock);
+static LIST_HEAD(netcp_devices);
+static LIST_HEAD(netcp_modules);
+static DEFINE_MUTEX(netcp_modules_lock);
 
-अटल पूर्णांक netcp_debug_level = -1;
-module_param(netcp_debug_level, पूर्णांक, 0);
+static int netcp_debug_level = -1;
+module_param(netcp_debug_level, int, 0);
 MODULE_PARM_DESC(netcp_debug_level, "Netcp debug level (NETIF_MSG bits) (0=none,...,16=all)");
 
 /* Helper functions - Get/Set */
-अटल व्योम get_pkt_info(dma_addr_t *buff, u32 *buff_len, dma_addr_t *ndesc,
-			 काष्ठा knav_dma_desc *desc)
-अणु
+static void get_pkt_info(dma_addr_t *buff, u32 *buff_len, dma_addr_t *ndesc,
+			 struct knav_dma_desc *desc)
+{
 	*buff_len = le32_to_cpu(desc->buff_len);
 	*buff = le32_to_cpu(desc->buff);
 	*ndesc = le32_to_cpu(desc->next_desc);
-पूर्ण
+}
 
-अटल व्योम get_desc_info(u32 *desc_info, u32 *pkt_info,
-			  काष्ठा knav_dma_desc *desc)
-अणु
+static void get_desc_info(u32 *desc_info, u32 *pkt_info,
+			  struct knav_dma_desc *desc)
+{
 	*desc_info = le32_to_cpu(desc->desc_info);
 	*pkt_info = le32_to_cpu(desc->packet_info);
-पूर्ण
+}
 
-अटल u32 get_sw_data(पूर्णांक index, काष्ठा knav_dma_desc *desc)
-अणु
+static u32 get_sw_data(int index, struct knav_dma_desc *desc)
+{
 	/* No Endian conversion needed as this data is untouched by hw */
-	वापस desc->sw_data[index];
-पूर्ण
+	return desc->sw_data[index];
+}
 
 /* use these macros to get sw data */
-#घोषणा GET_SW_DATA0(desc) get_sw_data(0, desc)
-#घोषणा GET_SW_DATA1(desc) get_sw_data(1, desc)
-#घोषणा GET_SW_DATA2(desc) get_sw_data(2, desc)
-#घोषणा GET_SW_DATA3(desc) get_sw_data(3, desc)
+#define GET_SW_DATA0(desc) get_sw_data(0, desc)
+#define GET_SW_DATA1(desc) get_sw_data(1, desc)
+#define GET_SW_DATA2(desc) get_sw_data(2, desc)
+#define GET_SW_DATA3(desc) get_sw_data(3, desc)
 
-अटल व्योम get_org_pkt_info(dma_addr_t *buff, u32 *buff_len,
-			     काष्ठा knav_dma_desc *desc)
-अणु
+static void get_org_pkt_info(dma_addr_t *buff, u32 *buff_len,
+			     struct knav_dma_desc *desc)
+{
 	*buff = le32_to_cpu(desc->orig_buff);
 	*buff_len = le32_to_cpu(desc->orig_len);
-पूर्ण
+}
 
-अटल व्योम get_words(dma_addr_t *words, पूर्णांक num_words, __le32 *desc)
-अणु
-	पूर्णांक i;
+static void get_words(dma_addr_t *words, int num_words, __le32 *desc)
+{
+	int i;
 
-	क्रम (i = 0; i < num_words; i++)
+	for (i = 0; i < num_words; i++)
 		words[i] = le32_to_cpu(desc[i]);
-पूर्ण
+}
 
-अटल व्योम set_pkt_info(dma_addr_t buff, u32 buff_len, u32 ndesc,
-			 काष्ठा knav_dma_desc *desc)
-अणु
+static void set_pkt_info(dma_addr_t buff, u32 buff_len, u32 ndesc,
+			 struct knav_dma_desc *desc)
+{
 	desc->buff_len = cpu_to_le32(buff_len);
 	desc->buff = cpu_to_le32(buff);
 	desc->next_desc = cpu_to_le32(ndesc);
-पूर्ण
+}
 
-अटल व्योम set_desc_info(u32 desc_info, u32 pkt_info,
-			  काष्ठा knav_dma_desc *desc)
-अणु
+static void set_desc_info(u32 desc_info, u32 pkt_info,
+			  struct knav_dma_desc *desc)
+{
 	desc->desc_info = cpu_to_le32(desc_info);
 	desc->packet_info = cpu_to_le32(pkt_info);
-पूर्ण
+}
 
-अटल व्योम set_sw_data(पूर्णांक index, u32 data, काष्ठा knav_dma_desc *desc)
-अणु
+static void set_sw_data(int index, u32 data, struct knav_dma_desc *desc)
+{
 	/* No Endian conversion needed as this data is untouched by hw */
 	desc->sw_data[index] = data;
-पूर्ण
+}
 
 /* use these macros to set sw data */
-#घोषणा SET_SW_DATA0(data, desc) set_sw_data(0, data, desc)
-#घोषणा SET_SW_DATA1(data, desc) set_sw_data(1, data, desc)
-#घोषणा SET_SW_DATA2(data, desc) set_sw_data(2, data, desc)
-#घोषणा SET_SW_DATA3(data, desc) set_sw_data(3, data, desc)
+#define SET_SW_DATA0(data, desc) set_sw_data(0, data, desc)
+#define SET_SW_DATA1(data, desc) set_sw_data(1, data, desc)
+#define SET_SW_DATA2(data, desc) set_sw_data(2, data, desc)
+#define SET_SW_DATA3(data, desc) set_sw_data(3, data, desc)
 
-अटल व्योम set_org_pkt_info(dma_addr_t buff, u32 buff_len,
-			     काष्ठा knav_dma_desc *desc)
-अणु
+static void set_org_pkt_info(dma_addr_t buff, u32 buff_len,
+			     struct knav_dma_desc *desc)
+{
 	desc->orig_buff = cpu_to_le32(buff);
 	desc->orig_len = cpu_to_le32(buff_len);
-पूर्ण
+}
 
-अटल व्योम set_words(u32 *words, पूर्णांक num_words, __le32 *desc)
-अणु
-	पूर्णांक i;
+static void set_words(u32 *words, int num_words, __le32 *desc)
+{
+	int i;
 
-	क्रम (i = 0; i < num_words; i++)
+	for (i = 0; i < num_words; i++)
 		desc[i] = cpu_to_le32(words[i]);
-पूर्ण
+}
 
 /* Read the e-fuse value as 32 bit values to be endian independent */
-अटल पूर्णांक emac_arch_get_mac_addr(अक्षर *x, व्योम __iomem *efuse_mac, u32 swap)
-अणु
-	अचिन्हित पूर्णांक addr0, addr1;
+static int emac_arch_get_mac_addr(char *x, void __iomem *efuse_mac, u32 swap)
+{
+	unsigned int addr0, addr1;
 
-	addr1 = पढ़ोl(efuse_mac + 4);
-	addr0 = पढ़ोl(efuse_mac);
+	addr1 = readl(efuse_mac + 4);
+	addr0 = readl(efuse_mac);
 
-	चयन (swap) अणु
-	हाल NETCP_EFUSE_ADDR_SWAP:
+	switch (swap) {
+	case NETCP_EFUSE_ADDR_SWAP:
 		addr0 = addr1;
-		addr1 = पढ़ोl(efuse_mac);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		addr1 = readl(efuse_mac);
+		break;
+	default:
+		break;
+	}
 
 	x[0] = (addr1 & 0x0000ff00) >> 8;
 	x[1] = addr1 & 0x000000ff;
@@ -215,63 +214,63 @@ MODULE_PARM_DESC(netcp_debug_level, "Netcp debug level (NETIF_MSG bits) (0=none,
 	x[4] = (addr0 & 0x0000ff00) >> 8;
 	x[5] = addr0 & 0x000000ff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Module management routines */
-अटल पूर्णांक netcp_रेजिस्टर_पूर्णांकerface(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	पूर्णांक ret;
+static int netcp_register_interface(struct netcp_intf *netcp)
+{
+	int ret;
 
-	ret = रेजिस्टर_netdev(netcp->ndev);
-	अगर (!ret)
-		netcp->netdev_रेजिस्टरed = true;
-	वापस ret;
-पूर्ण
+	ret = register_netdev(netcp->ndev);
+	if (!ret)
+		netcp->netdev_registered = true;
+	return ret;
+}
 
-अटल पूर्णांक netcp_module_probe(काष्ठा netcp_device *netcp_device,
-			      काष्ठा netcp_module *module)
-अणु
-	काष्ठा device *dev = netcp_device->device;
-	काष्ठा device_node *devices, *पूर्णांकerface, *node = dev->of_node;
-	काष्ठा device_node *child;
-	काष्ठा netcp_inst_modpriv *inst_modpriv;
-	काष्ठा netcp_पूर्णांकf *netcp_पूर्णांकf;
-	काष्ठा netcp_module *पंचांगp;
-	bool primary_module_रेजिस्टरed = false;
-	पूर्णांक ret;
+static int netcp_module_probe(struct netcp_device *netcp_device,
+			      struct netcp_module *module)
+{
+	struct device *dev = netcp_device->device;
+	struct device_node *devices, *interface, *node = dev->of_node;
+	struct device_node *child;
+	struct netcp_inst_modpriv *inst_modpriv;
+	struct netcp_intf *netcp_intf;
+	struct netcp_module *tmp;
+	bool primary_module_registered = false;
+	int ret;
 
-	/* Find this module in the sub-tree क्रम this device */
+	/* Find this module in the sub-tree for this device */
 	devices = of_get_child_by_name(node, "netcp-devices");
-	अगर (!devices) अणु
+	if (!devices) {
 		dev_err(dev, "could not find netcp-devices node\n");
-		वापस NETCP_MOD_PROBE_SKIPPED;
-	पूर्ण
+		return NETCP_MOD_PROBE_SKIPPED;
+	}
 
-	क्रम_each_available_child_of_node(devices, child) अणु
-		स्थिर अक्षर *name;
-		अक्षर node_name[32];
+	for_each_available_child_of_node(devices, child) {
+		const char *name;
+		char node_name[32];
 
-		अगर (of_property_पढ़ो_string(child, "label", &name) < 0) अणु
-			snम_लिखो(node_name, माप(node_name), "%pOFn", child);
+		if (of_property_read_string(child, "label", &name) < 0) {
+			snprintf(node_name, sizeof(node_name), "%pOFn", child);
 			name = node_name;
-		पूर्ण
-		अगर (!strहालcmp(module->name, name))
-			अवरोध;
-	पूर्ण
+		}
+		if (!strcasecmp(module->name, name))
+			break;
+	}
 
 	of_node_put(devices);
-	/* If module not used क्रम this device, skip it */
-	अगर (!child) अणु
+	/* If module not used for this device, skip it */
+	if (!child) {
 		dev_warn(dev, "module(%s) not used for device\n", module->name);
-		वापस NETCP_MOD_PROBE_SKIPPED;
-	पूर्ण
+		return NETCP_MOD_PROBE_SKIPPED;
+	}
 
-	inst_modpriv = devm_kzalloc(dev, माप(*inst_modpriv), GFP_KERNEL);
-	अगर (!inst_modpriv) अणु
+	inst_modpriv = devm_kzalloc(dev, sizeof(*inst_modpriv), GFP_KERNEL);
+	if (!inst_modpriv) {
 		of_node_put(child);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	inst_modpriv->netcp_device = netcp_device;
 	inst_modpriv->netcp_module = module;
@@ -280,438 +279,438 @@ MODULE_PARM_DESC(netcp_debug_level, "Netcp debug level (NETIF_MSG bits) (0=none,
 	ret = module->probe(netcp_device, dev, child,
 			    &inst_modpriv->module_priv);
 	of_node_put(child);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Probe of module(%s) failed with %d\n",
 			module->name, ret);
 		list_del(&inst_modpriv->inst_list);
-		devm_kमुक्त(dev, inst_modpriv);
-		वापस NETCP_MOD_PROBE_FAILED;
-	पूर्ण
+		devm_kfree(dev, inst_modpriv);
+		return NETCP_MOD_PROBE_FAILED;
+	}
 
-	/* Attach modules only अगर the primary module is probed */
-	क्रम_each_netcp_module(पंचांगp) अणु
-		अगर (पंचांगp->primary)
-			primary_module_रेजिस्टरed = true;
-	पूर्ण
+	/* Attach modules only if the primary module is probed */
+	for_each_netcp_module(tmp) {
+		if (tmp->primary)
+			primary_module_registered = true;
+	}
 
-	अगर (!primary_module_रेजिस्टरed)
-		वापस 0;
+	if (!primary_module_registered)
+		return 0;
 
-	/* Attach module to पूर्णांकerfaces */
-	list_क्रम_each_entry(netcp_पूर्णांकf, &netcp_device->पूर्णांकerface_head,
-			    पूर्णांकerface_list) अणु
-		काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
+	/* Attach module to interfaces */
+	list_for_each_entry(netcp_intf, &netcp_device->interface_head,
+			    interface_list) {
+		struct netcp_intf_modpriv *intf_modpriv;
 
-		पूर्णांकf_modpriv = devm_kzalloc(dev, माप(*पूर्णांकf_modpriv),
+		intf_modpriv = devm_kzalloc(dev, sizeof(*intf_modpriv),
 					    GFP_KERNEL);
-		अगर (!पूर्णांकf_modpriv)
-			वापस -ENOMEM;
+		if (!intf_modpriv)
+			return -ENOMEM;
 
-		पूर्णांकerface = of_parse_phandle(netcp_पूर्णांकf->node_पूर्णांकerface,
+		interface = of_parse_phandle(netcp_intf->node_interface,
 					     module->name, 0);
 
-		अगर (!पूर्णांकerface) अणु
-			devm_kमुक्त(dev, पूर्णांकf_modpriv);
-			जारी;
-		पूर्ण
+		if (!interface) {
+			devm_kfree(dev, intf_modpriv);
+			continue;
+		}
 
-		पूर्णांकf_modpriv->netcp_priv = netcp_पूर्णांकf;
-		पूर्णांकf_modpriv->netcp_module = module;
-		list_add_tail(&पूर्णांकf_modpriv->पूर्णांकf_list,
-			      &netcp_पूर्णांकf->module_head);
+		intf_modpriv->netcp_priv = netcp_intf;
+		intf_modpriv->netcp_module = module;
+		list_add_tail(&intf_modpriv->intf_list,
+			      &netcp_intf->module_head);
 
 		ret = module->attach(inst_modpriv->module_priv,
-				     netcp_पूर्णांकf->ndev, पूर्णांकerface,
-				     &पूर्णांकf_modpriv->module_priv);
-		of_node_put(पूर्णांकerface);
-		अगर (ret) अणु
+				     netcp_intf->ndev, interface,
+				     &intf_modpriv->module_priv);
+		of_node_put(interface);
+		if (ret) {
 			dev_dbg(dev, "Attach of module %s declined with %d\n",
 				module->name, ret);
-			list_del(&पूर्णांकf_modpriv->पूर्णांकf_list);
-			devm_kमुक्त(dev, पूर्णांकf_modpriv);
-			जारी;
-		पूर्ण
-	पूर्ण
+			list_del(&intf_modpriv->intf_list);
+			devm_kfree(dev, intf_modpriv);
+			continue;
+		}
+	}
 
-	/* Now रेजिस्टर the पूर्णांकerface with netdev */
-	list_क्रम_each_entry(netcp_पूर्णांकf,
-			    &netcp_device->पूर्णांकerface_head,
-			    पूर्णांकerface_list) अणु
-		/* If पूर्णांकerface not रेजिस्टरed then रेजिस्टर now */
-		अगर (!netcp_पूर्णांकf->netdev_रेजिस्टरed) अणु
-			ret = netcp_रेजिस्टर_पूर्णांकerface(netcp_पूर्णांकf);
-			अगर (ret)
-				वापस -ENODEV;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+	/* Now register the interface with netdev */
+	list_for_each_entry(netcp_intf,
+			    &netcp_device->interface_head,
+			    interface_list) {
+		/* If interface not registered then register now */
+		if (!netcp_intf->netdev_registered) {
+			ret = netcp_register_interface(netcp_intf);
+			if (ret)
+				return -ENODEV;
+		}
+	}
+	return 0;
+}
 
-पूर्णांक netcp_रेजिस्टर_module(काष्ठा netcp_module *module)
-अणु
-	काष्ठा netcp_device *netcp_device;
-	काष्ठा netcp_module *पंचांगp;
-	पूर्णांक ret;
+int netcp_register_module(struct netcp_module *module)
+{
+	struct netcp_device *netcp_device;
+	struct netcp_module *tmp;
+	int ret;
 
-	अगर (!module->name) अणु
+	if (!module->name) {
 		WARN(1, "error registering netcp module: no name\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!module->probe) अणु
+	if (!module->probe) {
 		WARN(1, "error registering netcp module: no probe\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mutex_lock(&netcp_modules_lock);
 
-	क्रम_each_netcp_module(पंचांगp) अणु
-		अगर (!strहालcmp(पंचांगp->name, module->name)) अणु
+	for_each_netcp_module(tmp) {
+		if (!strcasecmp(tmp->name, module->name)) {
 			mutex_unlock(&netcp_modules_lock);
-			वापस -EEXIST;
-		पूर्ण
-	पूर्ण
+			return -EEXIST;
+		}
+	}
 	list_add_tail(&module->module_list, &netcp_modules);
 
-	list_क्रम_each_entry(netcp_device, &netcp_devices, device_list) अणु
+	list_for_each_entry(netcp_device, &netcp_devices, device_list) {
 		ret = netcp_module_probe(netcp_device, module);
-		अगर (ret < 0)
-			जाओ fail;
-	पूर्ण
+		if (ret < 0)
+			goto fail;
+	}
 	mutex_unlock(&netcp_modules_lock);
-	वापस 0;
+	return 0;
 
 fail:
 	mutex_unlock(&netcp_modules_lock);
-	netcp_unरेजिस्टर_module(module);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_रेजिस्टर_module);
+	netcp_unregister_module(module);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(netcp_register_module);
 
-अटल व्योम netcp_release_module(काष्ठा netcp_device *netcp_device,
-				 काष्ठा netcp_module *module)
-अणु
-	काष्ठा netcp_inst_modpriv *inst_modpriv, *inst_पंचांगp;
-	काष्ठा netcp_पूर्णांकf *netcp_पूर्णांकf, *netcp_पंचांगp;
-	काष्ठा device *dev = netcp_device->device;
+static void netcp_release_module(struct netcp_device *netcp_device,
+				 struct netcp_module *module)
+{
+	struct netcp_inst_modpriv *inst_modpriv, *inst_tmp;
+	struct netcp_intf *netcp_intf, *netcp_tmp;
+	struct device *dev = netcp_device->device;
 
-	/* Release the module from each पूर्णांकerface */
-	list_क्रम_each_entry_safe(netcp_पूर्णांकf, netcp_पंचांगp,
-				 &netcp_device->पूर्णांकerface_head,
-				 पूर्णांकerface_list) अणु
-		काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv, *पूर्णांकf_पंचांगp;
+	/* Release the module from each interface */
+	list_for_each_entry_safe(netcp_intf, netcp_tmp,
+				 &netcp_device->interface_head,
+				 interface_list) {
+		struct netcp_intf_modpriv *intf_modpriv, *intf_tmp;
 
-		list_क्रम_each_entry_safe(पूर्णांकf_modpriv, पूर्णांकf_पंचांगp,
-					 &netcp_पूर्णांकf->module_head,
-					 पूर्णांकf_list) अणु
-			अगर (पूर्णांकf_modpriv->netcp_module == module) अणु
-				module->release(पूर्णांकf_modpriv->module_priv);
-				list_del(&पूर्णांकf_modpriv->पूर्णांकf_list);
-				devm_kमुक्त(dev, पूर्णांकf_modpriv);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		list_for_each_entry_safe(intf_modpriv, intf_tmp,
+					 &netcp_intf->module_head,
+					 intf_list) {
+			if (intf_modpriv->netcp_module == module) {
+				module->release(intf_modpriv->module_priv);
+				list_del(&intf_modpriv->intf_list);
+				devm_kfree(dev, intf_modpriv);
+				break;
+			}
+		}
+	}
 
 	/* Remove the module from each instance */
-	list_क्रम_each_entry_safe(inst_modpriv, inst_पंचांगp,
-				 &netcp_device->modpriv_head, inst_list) अणु
-		अगर (inst_modpriv->netcp_module == module) अणु
-			module->हटाओ(netcp_device,
+	list_for_each_entry_safe(inst_modpriv, inst_tmp,
+				 &netcp_device->modpriv_head, inst_list) {
+		if (inst_modpriv->netcp_module == module) {
+			module->remove(netcp_device,
 				       inst_modpriv->module_priv);
 			list_del(&inst_modpriv->inst_list);
-			devm_kमुक्त(dev, inst_modpriv);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			devm_kfree(dev, inst_modpriv);
+			break;
+		}
+	}
+}
 
-व्योम netcp_unरेजिस्टर_module(काष्ठा netcp_module *module)
-अणु
-	काष्ठा netcp_device *netcp_device;
-	काष्ठा netcp_module *module_पंचांगp;
+void netcp_unregister_module(struct netcp_module *module)
+{
+	struct netcp_device *netcp_device;
+	struct netcp_module *module_tmp;
 
 	mutex_lock(&netcp_modules_lock);
 
-	list_क्रम_each_entry(netcp_device, &netcp_devices, device_list) अणु
+	list_for_each_entry(netcp_device, &netcp_devices, device_list) {
 		netcp_release_module(netcp_device, module);
-	पूर्ण
+	}
 
 	/* Remove the module from the module list */
-	क्रम_each_netcp_module(module_पंचांगp) अणु
-		अगर (module == module_पंचांगp) अणु
+	for_each_netcp_module(module_tmp) {
+		if (module == module_tmp) {
 			list_del(&module->module_list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	mutex_unlock(&netcp_modules_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_module);
+}
+EXPORT_SYMBOL_GPL(netcp_unregister_module);
 
-व्योम *netcp_module_get_पूर्णांकf_data(काष्ठा netcp_module *module,
-				 काष्ठा netcp_पूर्णांकf *पूर्णांकf)
-अणु
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
+void *netcp_module_get_intf_data(struct netcp_module *module,
+				 struct netcp_intf *intf)
+{
+	struct netcp_intf_modpriv *intf_modpriv;
 
-	list_क्रम_each_entry(पूर्णांकf_modpriv, &पूर्णांकf->module_head, पूर्णांकf_list)
-		अगर (पूर्णांकf_modpriv->netcp_module == module)
-			वापस पूर्णांकf_modpriv->module_priv;
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_module_get_पूर्णांकf_data);
+	list_for_each_entry(intf_modpriv, &intf->module_head, intf_list)
+		if (intf_modpriv->netcp_module == module)
+			return intf_modpriv->module_priv;
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(netcp_module_get_intf_data);
 
 /* Module TX and RX Hook management */
-काष्ठा netcp_hook_list अणु
-	काष्ठा list_head	 list;
+struct netcp_hook_list {
+	struct list_head	 list;
 	netcp_hook_rtn		*hook_rtn;
-	व्योम			*hook_data;
-	पूर्णांक			 order;
-पूर्ण;
+	void			*hook_data;
+	int			 order;
+};
 
-पूर्णांक netcp_रेजिस्टर_txhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			  netcp_hook_rtn *hook_rtn, व्योम *hook_data)
-अणु
-	काष्ठा netcp_hook_list *entry;
-	काष्ठा netcp_hook_list *next;
-	अचिन्हित दीर्घ flags;
+int netcp_register_txhook(struct netcp_intf *netcp_priv, int order,
+			  netcp_hook_rtn *hook_rtn, void *hook_data)
+{
+	struct netcp_hook_list *entry;
+	struct netcp_hook_list *next;
+	unsigned long flags;
 
-	entry = devm_kzalloc(netcp_priv->dev, माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
-
-	entry->hook_rtn  = hook_rtn;
-	entry->hook_data = hook_data;
-	entry->order     = order;
-
-	spin_lock_irqsave(&netcp_priv->lock, flags);
-	list_क्रम_each_entry(next, &netcp_priv->txhook_list_head, list) अणु
-		अगर (next->order > order)
-			अवरोध;
-	पूर्ण
-	__list_add(&entry->list, next->list.prev, &next->list);
-	spin_unlock_irqrestore(&netcp_priv->lock, flags);
-
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_रेजिस्टर_txhook);
-
-पूर्णांक netcp_unरेजिस्टर_txhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			    netcp_hook_rtn *hook_rtn, व्योम *hook_data)
-अणु
-	काष्ठा netcp_hook_list *next, *n;
-	अचिन्हित दीर्घ flags;
-
-	spin_lock_irqsave(&netcp_priv->lock, flags);
-	list_क्रम_each_entry_safe(next, n, &netcp_priv->txhook_list_head, list) अणु
-		अगर ((next->order     == order) &&
-		    (next->hook_rtn  == hook_rtn) &&
-		    (next->hook_data == hook_data)) अणु
-			list_del(&next->list);
-			spin_unlock_irqrestore(&netcp_priv->lock, flags);
-			devm_kमुक्त(netcp_priv->dev, next);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&netcp_priv->lock, flags);
-	वापस -ENOENT;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_txhook);
-
-पूर्णांक netcp_रेजिस्टर_rxhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			  netcp_hook_rtn *hook_rtn, व्योम *hook_data)
-अणु
-	काष्ठा netcp_hook_list *entry;
-	काष्ठा netcp_hook_list *next;
-	अचिन्हित दीर्घ flags;
-
-	entry = devm_kzalloc(netcp_priv->dev, माप(*entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = devm_kzalloc(netcp_priv->dev, sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
 
 	entry->hook_rtn  = hook_rtn;
 	entry->hook_data = hook_data;
 	entry->order     = order;
 
 	spin_lock_irqsave(&netcp_priv->lock, flags);
-	list_क्रम_each_entry(next, &netcp_priv->rxhook_list_head, list) अणु
-		अगर (next->order > order)
-			अवरोध;
-	पूर्ण
+	list_for_each_entry(next, &netcp_priv->txhook_list_head, list) {
+		if (next->order > order)
+			break;
+	}
 	__list_add(&entry->list, next->list.prev, &next->list);
 	spin_unlock_irqrestore(&netcp_priv->lock, flags);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_रेजिस्टर_rxhook);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(netcp_register_txhook);
 
-पूर्णांक netcp_unरेजिस्टर_rxhook(काष्ठा netcp_पूर्णांकf *netcp_priv, पूर्णांक order,
-			    netcp_hook_rtn *hook_rtn, व्योम *hook_data)
-अणु
-	काष्ठा netcp_hook_list *next, *n;
-	अचिन्हित दीर्घ flags;
+int netcp_unregister_txhook(struct netcp_intf *netcp_priv, int order,
+			    netcp_hook_rtn *hook_rtn, void *hook_data)
+{
+	struct netcp_hook_list *next, *n;
+	unsigned long flags;
 
 	spin_lock_irqsave(&netcp_priv->lock, flags);
-	list_क्रम_each_entry_safe(next, n, &netcp_priv->rxhook_list_head, list) अणु
-		अगर ((next->order     == order) &&
+	list_for_each_entry_safe(next, n, &netcp_priv->txhook_list_head, list) {
+		if ((next->order     == order) &&
 		    (next->hook_rtn  == hook_rtn) &&
-		    (next->hook_data == hook_data)) अणु
+		    (next->hook_data == hook_data)) {
 			list_del(&next->list);
 			spin_unlock_irqrestore(&netcp_priv->lock, flags);
-			devm_kमुक्त(netcp_priv->dev, next);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			devm_kfree(netcp_priv->dev, next);
+			return 0;
+		}
+	}
+	spin_unlock_irqrestore(&netcp_priv->lock, flags);
+	return -ENOENT;
+}
+EXPORT_SYMBOL_GPL(netcp_unregister_txhook);
+
+int netcp_register_rxhook(struct netcp_intf *netcp_priv, int order,
+			  netcp_hook_rtn *hook_rtn, void *hook_data)
+{
+	struct netcp_hook_list *entry;
+	struct netcp_hook_list *next;
+	unsigned long flags;
+
+	entry = devm_kzalloc(netcp_priv->dev, sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
+
+	entry->hook_rtn  = hook_rtn;
+	entry->hook_data = hook_data;
+	entry->order     = order;
+
+	spin_lock_irqsave(&netcp_priv->lock, flags);
+	list_for_each_entry(next, &netcp_priv->rxhook_list_head, list) {
+		if (next->order > order)
+			break;
+	}
+	__list_add(&entry->list, next->list.prev, &next->list);
 	spin_unlock_irqrestore(&netcp_priv->lock, flags);
 
-	वापस -ENOENT;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_rxhook);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(netcp_register_rxhook);
 
-अटल व्योम netcp_frag_मुक्त(bool is_frag, व्योम *ptr)
-अणु
-	अगर (is_frag)
-		skb_मुक्त_frag(ptr);
-	अन्यथा
-		kमुक्त(ptr);
-पूर्ण
+int netcp_unregister_rxhook(struct netcp_intf *netcp_priv, int order,
+			    netcp_hook_rtn *hook_rtn, void *hook_data)
+{
+	struct netcp_hook_list *next, *n;
+	unsigned long flags;
 
-अटल व्योम netcp_मुक्त_rx_desc_chain(काष्ठा netcp_पूर्णांकf *netcp,
-				     काष्ठा knav_dma_desc *desc)
-अणु
-	काष्ठा knav_dma_desc *ndesc;
+	spin_lock_irqsave(&netcp_priv->lock, flags);
+	list_for_each_entry_safe(next, n, &netcp_priv->rxhook_list_head, list) {
+		if ((next->order     == order) &&
+		    (next->hook_rtn  == hook_rtn) &&
+		    (next->hook_data == hook_data)) {
+			list_del(&next->list);
+			spin_unlock_irqrestore(&netcp_priv->lock, flags);
+			devm_kfree(netcp_priv->dev, next);
+			return 0;
+		}
+	}
+	spin_unlock_irqrestore(&netcp_priv->lock, flags);
+
+	return -ENOENT;
+}
+EXPORT_SYMBOL_GPL(netcp_unregister_rxhook);
+
+static void netcp_frag_free(bool is_frag, void *ptr)
+{
+	if (is_frag)
+		skb_free_frag(ptr);
+	else
+		kfree(ptr);
+}
+
+static void netcp_free_rx_desc_chain(struct netcp_intf *netcp,
+				     struct knav_dma_desc *desc)
+{
+	struct knav_dma_desc *ndesc;
 	dma_addr_t dma_desc, dma_buf;
-	अचिन्हित पूर्णांक buf_len, dma_sz = माप(*ndesc);
-	व्योम *buf_ptr;
-	u32 पंचांगp;
+	unsigned int buf_len, dma_sz = sizeof(*ndesc);
+	void *buf_ptr;
+	u32 tmp;
 
 	get_words(&dma_desc, 1, &desc->next_desc);
 
-	जबतक (dma_desc) अणु
+	while (dma_desc) {
 		ndesc = knav_pool_desc_unmap(netcp->rx_pool, dma_desc, dma_sz);
-		अगर (unlikely(!ndesc)) अणु
+		if (unlikely(!ndesc)) {
 			dev_err(netcp->ndev_dev, "failed to unmap Rx desc\n");
-			अवरोध;
-		पूर्ण
-		get_pkt_info(&dma_buf, &पंचांगp, &dma_desc, ndesc);
-		/* warning!!!! We are retrieving the भव ptr in the sw_data
+			break;
+		}
+		get_pkt_info(&dma_buf, &tmp, &dma_desc, ndesc);
+		/* warning!!!! We are retrieving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
-		buf_ptr = (व्योम *)GET_SW_DATA0(ndesc);
-		buf_len = (पूर्णांक)GET_SW_DATA1(desc);
+		buf_ptr = (void *)GET_SW_DATA0(ndesc);
+		buf_len = (int)GET_SW_DATA1(desc);
 		dma_unmap_page(netcp->dev, dma_buf, PAGE_SIZE, DMA_FROM_DEVICE);
-		__मुक्त_page(buf_ptr);
+		__free_page(buf_ptr);
 		knav_pool_desc_put(netcp->rx_pool, desc);
-	पूर्ण
-	/* warning!!!! We are retrieving the भव ptr in the sw_data
+	}
+	/* warning!!!! We are retrieving the virtual ptr in the sw_data
 	 * field as a 32bit value. Will not work on 64bit machines
 	 */
-	buf_ptr = (व्योम *)GET_SW_DATA0(desc);
-	buf_len = (पूर्णांक)GET_SW_DATA1(desc);
+	buf_ptr = (void *)GET_SW_DATA0(desc);
+	buf_len = (int)GET_SW_DATA1(desc);
 
-	अगर (buf_ptr)
-		netcp_frag_मुक्त(buf_len <= PAGE_SIZE, buf_ptr);
+	if (buf_ptr)
+		netcp_frag_free(buf_len <= PAGE_SIZE, buf_ptr);
 	knav_pool_desc_put(netcp->rx_pool, desc);
-पूर्ण
+}
 
-अटल व्योम netcp_empty_rx_queue(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा netcp_stats *rx_stats = &netcp->stats;
-	काष्ठा knav_dma_desc *desc;
-	अचिन्हित पूर्णांक dma_sz;
+static void netcp_empty_rx_queue(struct netcp_intf *netcp)
+{
+	struct netcp_stats *rx_stats = &netcp->stats;
+	struct knav_dma_desc *desc;
+	unsigned int dma_sz;
 	dma_addr_t dma;
 
-	क्रम (; ;) अणु
+	for (; ;) {
 		dma = knav_queue_pop(netcp->rx_queue, &dma_sz);
-		अगर (!dma)
-			अवरोध;
+		if (!dma)
+			break;
 
 		desc = knav_pool_desc_unmap(netcp->rx_pool, dma, dma_sz);
-		अगर (unlikely(!desc)) अणु
+		if (unlikely(!desc)) {
 			dev_err(netcp->ndev_dev, "%s: failed to unmap Rx desc\n",
 				__func__);
 			rx_stats->rx_errors++;
-			जारी;
-		पूर्ण
-		netcp_मुक्त_rx_desc_chain(netcp, desc);
+			continue;
+		}
+		netcp_free_rx_desc_chain(netcp, desc);
 		rx_stats->rx_dropped++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक netcp_process_one_rx_packet(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा netcp_stats *rx_stats = &netcp->stats;
-	अचिन्हित पूर्णांक dma_sz, buf_len, org_buf_len;
-	काष्ठा knav_dma_desc *desc, *ndesc;
-	अचिन्हित पूर्णांक pkt_sz = 0, accum_sz;
-	काष्ठा netcp_hook_list *rx_hook;
+static int netcp_process_one_rx_packet(struct netcp_intf *netcp)
+{
+	struct netcp_stats *rx_stats = &netcp->stats;
+	unsigned int dma_sz, buf_len, org_buf_len;
+	struct knav_dma_desc *desc, *ndesc;
+	unsigned int pkt_sz = 0, accum_sz;
+	struct netcp_hook_list *rx_hook;
 	dma_addr_t dma_desc, dma_buff;
-	काष्ठा netcp_packet p_info;
-	काष्ठा sk_buff *skb;
-	व्योम *org_buf_ptr;
-	u32 पंचांगp;
+	struct netcp_packet p_info;
+	struct sk_buff *skb;
+	void *org_buf_ptr;
+	u32 tmp;
 
 	dma_desc = knav_queue_pop(netcp->rx_queue, &dma_sz);
-	अगर (!dma_desc)
-		वापस -1;
+	if (!dma_desc)
+		return -1;
 
 	desc = knav_pool_desc_unmap(netcp->rx_pool, dma_desc, dma_sz);
-	अगर (unlikely(!desc)) अणु
+	if (unlikely(!desc)) {
 		dev_err(netcp->ndev_dev, "failed to unmap Rx desc\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	get_pkt_info(&dma_buff, &buf_len, &dma_desc, desc);
-	/* warning!!!! We are retrieving the भव ptr in the sw_data
+	/* warning!!!! We are retrieving the virtual ptr in the sw_data
 	 * field as a 32bit value. Will not work on 64bit machines
 	 */
-	org_buf_ptr = (व्योम *)GET_SW_DATA0(desc);
-	org_buf_len = (पूर्णांक)GET_SW_DATA1(desc);
+	org_buf_ptr = (void *)GET_SW_DATA0(desc);
+	org_buf_len = (int)GET_SW_DATA1(desc);
 
-	अगर (unlikely(!org_buf_ptr)) अणु
+	if (unlikely(!org_buf_ptr)) {
 		dev_err(netcp->ndev_dev, "NULL bufptr in desc\n");
-		जाओ मुक्त_desc;
-	पूर्ण
+		goto free_desc;
+	}
 
 	pkt_sz &= KNAV_DMA_DESC_PKT_LEN_MASK;
 	accum_sz = buf_len;
 	dma_unmap_single(netcp->dev, dma_buff, buf_len, DMA_FROM_DEVICE);
 
-	/* Build a new sk_buff क्रम the primary buffer */
+	/* Build a new sk_buff for the primary buffer */
 	skb = build_skb(org_buf_ptr, org_buf_len);
-	अगर (unlikely(!skb)) अणु
+	if (unlikely(!skb)) {
 		dev_err(netcp->ndev_dev, "build_skb() failed\n");
-		जाओ मुक्त_desc;
-	पूर्ण
+		goto free_desc;
+	}
 
 	/* update data, tail and len */
 	skb_reserve(skb, NETCP_SOP_OFFSET);
 	__skb_put(skb, buf_len);
 
 	/* Fill in the page fragment list */
-	जबतक (dma_desc) अणु
-		काष्ठा page *page;
+	while (dma_desc) {
+		struct page *page;
 
 		ndesc = knav_pool_desc_unmap(netcp->rx_pool, dma_desc, dma_sz);
-		अगर (unlikely(!ndesc)) अणु
+		if (unlikely(!ndesc)) {
 			dev_err(netcp->ndev_dev, "failed to unmap Rx desc\n");
-			जाओ मुक्त_desc;
-		पूर्ण
+			goto free_desc;
+		}
 
 		get_pkt_info(&dma_buff, &buf_len, &dma_desc, ndesc);
-		/* warning!!!! We are retrieving the भव ptr in the sw_data
+		/* warning!!!! We are retrieving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
-		page = (काष्ठा page *)GET_SW_DATA0(ndesc);
+		page = (struct page *)GET_SW_DATA0(ndesc);
 
-		अगर (likely(dma_buff && buf_len && page)) अणु
+		if (likely(dma_buff && buf_len && page)) {
 			dma_unmap_page(netcp->dev, dma_buff, PAGE_SIZE,
 				       DMA_FROM_DEVICE);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(netcp->ndev_dev, "Bad Rx desc dma_buff(%pad), len(%d), page(%p)\n",
 				&dma_buff, buf_len, page);
-			जाओ मुक्त_desc;
-		पूर्ण
+			goto free_desc;
+		}
 
 		skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, page,
 				offset_in_page(dma_buff), buf_len, PAGE_SIZE);
@@ -719,44 +718,44 @@ EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_rxhook);
 
 		/* Free the descriptor */
 		knav_pool_desc_put(netcp->rx_pool, ndesc);
-	पूर्ण
+	}
 
-	/* check क्रम packet len and warn */
-	अगर (unlikely(pkt_sz != accum_sz))
+	/* check for packet len and warn */
+	if (unlikely(pkt_sz != accum_sz))
 		dev_dbg(netcp->ndev_dev, "mismatch in packet size(%d) & sum of fragments(%d)\n",
 			pkt_sz, accum_sz);
 
-	/* Newer version of the Ethernet चयन can trim the Ethernet FCS
-	 * from the packet and is indicated in hw_cap. So trim it only क्रम
+	/* Newer version of the Ethernet switch can trim the Ethernet FCS
+	 * from the packet and is indicated in hw_cap. So trim it only for
 	 * older h/w
 	 */
-	अगर (!(netcp->hw_cap & ETH_SW_CAN_REMOVE_ETH_FCS))
+	if (!(netcp->hw_cap & ETH_SW_CAN_REMOVE_ETH_FCS))
 		__pskb_trim(skb, skb->len - ETH_FCS_LEN);
 
 	/* Call each of the RX hooks */
 	p_info.skb = skb;
 	skb->dev = netcp->ndev;
 	p_info.rxtstamp_complete = false;
-	get_desc_info(&पंचांगp, &p_info.eflags, desc);
+	get_desc_info(&tmp, &p_info.eflags, desc);
 	p_info.epib = desc->epib;
-	p_info.psdata = (u32 __क्रमce *)desc->psdata;
+	p_info.psdata = (u32 __force *)desc->psdata;
 	p_info.eflags = ((p_info.eflags >> KNAV_DMA_DESC_EFLAGS_SHIFT) &
 			 KNAV_DMA_DESC_EFLAGS_MASK);
-	list_क्रम_each_entry(rx_hook, &netcp->rxhook_list_head, list) अणु
-		पूर्णांक ret;
+	list_for_each_entry(rx_hook, &netcp->rxhook_list_head, list) {
+		int ret;
 
 		ret = rx_hook->hook_rtn(rx_hook->order, rx_hook->hook_data,
 					&p_info);
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			dev_err(netcp->ndev_dev, "RX hook %d failed: %d\n",
 				rx_hook->order, ret);
 			/* Free the primary descriptor */
 			rx_stats->rx_dropped++;
 			knav_pool_desc_put(netcp->rx_pool, desc);
-			dev_kमुक्त_skb(skb);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			dev_kfree_skb(skb);
+			return 0;
+		}
+	}
 	/* Free the primary descriptor */
 	knav_pool_desc_put(netcp->rx_pool, desc);
 
@@ -767,145 +766,145 @@ EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_rxhook);
 
 	/* push skb up the stack */
 	skb->protocol = eth_type_trans(skb, netcp->ndev);
-	netअगर_receive_skb(skb);
-	वापस 0;
+	netif_receive_skb(skb);
+	return 0;
 
-मुक्त_desc:
-	netcp_मुक्त_rx_desc_chain(netcp, desc);
+free_desc:
+	netcp_free_rx_desc_chain(netcp, desc);
 	rx_stats->rx_errors++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netcp_process_rx_packets(काष्ठा netcp_पूर्णांकf *netcp,
-				    अचिन्हित पूर्णांक budget)
-अणु
-	पूर्णांक i;
+static int netcp_process_rx_packets(struct netcp_intf *netcp,
+				    unsigned int budget)
+{
+	int i;
 
-	क्रम (i = 0; (i < budget) && !netcp_process_one_rx_packet(netcp); i++)
+	for (i = 0; (i < budget) && !netcp_process_one_rx_packet(netcp); i++)
 		;
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /* Release descriptors and attached buffers from Rx FDQ */
-अटल व्योम netcp_मुक्त_rx_buf(काष्ठा netcp_पूर्णांकf *netcp, पूर्णांक fdq)
-अणु
-	काष्ठा knav_dma_desc *desc;
-	अचिन्हित पूर्णांक buf_len, dma_sz;
+static void netcp_free_rx_buf(struct netcp_intf *netcp, int fdq)
+{
+	struct knav_dma_desc *desc;
+	unsigned int buf_len, dma_sz;
 	dma_addr_t dma;
-	व्योम *buf_ptr;
+	void *buf_ptr;
 
 	/* Allocate descriptor */
-	जबतक ((dma = knav_queue_pop(netcp->rx_fdq[fdq], &dma_sz))) अणु
+	while ((dma = knav_queue_pop(netcp->rx_fdq[fdq], &dma_sz))) {
 		desc = knav_pool_desc_unmap(netcp->rx_pool, dma, dma_sz);
-		अगर (unlikely(!desc)) अणु
+		if (unlikely(!desc)) {
 			dev_err(netcp->ndev_dev, "failed to unmap Rx desc\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		get_org_pkt_info(&dma, &buf_len, desc);
-		/* warning!!!! We are retrieving the भव ptr in the sw_data
+		/* warning!!!! We are retrieving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
-		buf_ptr = (व्योम *)GET_SW_DATA0(desc);
+		buf_ptr = (void *)GET_SW_DATA0(desc);
 
-		अगर (unlikely(!dma)) अणु
+		if (unlikely(!dma)) {
 			dev_err(netcp->ndev_dev, "NULL orig_buff in desc\n");
 			knav_pool_desc_put(netcp->rx_pool, desc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (unlikely(!buf_ptr)) अणु
+		if (unlikely(!buf_ptr)) {
 			dev_err(netcp->ndev_dev, "NULL bufptr in desc\n");
 			knav_pool_desc_put(netcp->rx_pool, desc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (fdq == 0) अणु
+		if (fdq == 0) {
 			dma_unmap_single(netcp->dev, dma, buf_len,
 					 DMA_FROM_DEVICE);
-			netcp_frag_मुक्त((buf_len <= PAGE_SIZE), buf_ptr);
-		पूर्ण अन्यथा अणु
+			netcp_frag_free((buf_len <= PAGE_SIZE), buf_ptr);
+		} else {
 			dma_unmap_page(netcp->dev, dma, buf_len,
 				       DMA_FROM_DEVICE);
-			__मुक्त_page(buf_ptr);
-		पूर्ण
+			__free_page(buf_ptr);
+		}
 
 		knav_pool_desc_put(netcp->rx_pool, desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम netcp_rxpool_मुक्त(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	पूर्णांक i;
+static void netcp_rxpool_free(struct netcp_intf *netcp)
+{
+	int i;
 
-	क्रम (i = 0; i < KNAV_DMA_FDQ_PER_CHAN &&
-	     !IS_ERR_OR_शून्य(netcp->rx_fdq[i]); i++)
-		netcp_मुक्त_rx_buf(netcp, i);
+	for (i = 0; i < KNAV_DMA_FDQ_PER_CHAN &&
+	     !IS_ERR_OR_NULL(netcp->rx_fdq[i]); i++)
+		netcp_free_rx_buf(netcp, i);
 
-	अगर (knav_pool_count(netcp->rx_pool) != netcp->rx_pool_size)
+	if (knav_pool_count(netcp->rx_pool) != netcp->rx_pool_size)
 		dev_err(netcp->ndev_dev, "Lost Rx (%d) descriptors\n",
 			netcp->rx_pool_size - knav_pool_count(netcp->rx_pool));
 
 	knav_pool_destroy(netcp->rx_pool);
-	netcp->rx_pool = शून्य;
-पूर्ण
+	netcp->rx_pool = NULL;
+}
 
-अटल पूर्णांक netcp_allocate_rx_buf(काष्ठा netcp_पूर्णांकf *netcp, पूर्णांक fdq)
-अणु
-	काष्ठा knav_dma_desc *hwdesc;
-	अचिन्हित पूर्णांक buf_len, dma_sz;
+static int netcp_allocate_rx_buf(struct netcp_intf *netcp, int fdq)
+{
+	struct knav_dma_desc *hwdesc;
+	unsigned int buf_len, dma_sz;
 	u32 desc_info, pkt_info;
-	काष्ठा page *page;
+	struct page *page;
 	dma_addr_t dma;
-	व्योम *bufptr;
+	void *bufptr;
 	u32 sw_data[2];
 
 	/* Allocate descriptor */
 	hwdesc = knav_pool_desc_get(netcp->rx_pool);
-	अगर (IS_ERR_OR_शून्य(hwdesc)) अणु
+	if (IS_ERR_OR_NULL(hwdesc)) {
 		dev_dbg(netcp->ndev_dev, "out of rx pool desc\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (likely(fdq == 0)) अणु
-		अचिन्हित पूर्णांक primary_buf_len;
+	if (likely(fdq == 0)) {
+		unsigned int primary_buf_len;
 		/* Allocate a primary receive queue entry */
 		buf_len = NETCP_PACKET_SIZE + NETCP_SOP_OFFSET;
 		primary_buf_len = SKB_DATA_ALIGN(buf_len) +
-				SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
+				SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 
 		bufptr = netdev_alloc_frag(primary_buf_len);
 		sw_data[1] = primary_buf_len;
 
-		अगर (unlikely(!bufptr)) अणु
+		if (unlikely(!bufptr)) {
 			dev_warn_ratelimited(netcp->ndev_dev,
 					     "Primary RX buffer alloc failed\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		dma = dma_map_single(netcp->dev, bufptr, buf_len,
 				     DMA_TO_DEVICE);
-		अगर (unlikely(dma_mapping_error(netcp->dev, dma)))
-			जाओ fail;
+		if (unlikely(dma_mapping_error(netcp->dev, dma)))
+			goto fail;
 
-		/* warning!!!! We are saving the भव ptr in the sw_data
+		/* warning!!!! We are saving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
 		sw_data[0] = (u32)bufptr;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Allocate a secondary receive queue entry */
 		page = alloc_page(GFP_ATOMIC | GFP_DMA);
-		अगर (unlikely(!page)) अणु
+		if (unlikely(!page)) {
 			dev_warn_ratelimited(netcp->ndev_dev, "Secondary page alloc failed\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		buf_len = PAGE_SIZE;
 		dma = dma_map_page(netcp->dev, page, 0, buf_len, DMA_TO_DEVICE);
-		/* warning!!!! We are saving the भव ptr in the sw_data
+		/* warning!!!! We are saving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
 		sw_data[0] = (u32)page;
 		sw_data[1] = 0;
-	पूर्ण
+	}
 
 	desc_info =  KNAV_DMA_DESC_PS_INFO_IN_DESC;
 	desc_info |= buf_len & KNAV_DMA_DESC_PKT_LEN_MASK;
@@ -919,204 +918,204 @@ EXPORT_SYMBOL_GPL(netcp_unरेजिस्टर_rxhook);
 	set_desc_info(desc_info, pkt_info, hwdesc);
 
 	/* Push to FDQs */
-	knav_pool_desc_map(netcp->rx_pool, hwdesc, माप(*hwdesc), &dma,
+	knav_pool_desc_map(netcp->rx_pool, hwdesc, sizeof(*hwdesc), &dma,
 			   &dma_sz);
-	knav_queue_push(netcp->rx_fdq[fdq], dma, माप(*hwdesc), 0);
-	वापस 0;
+	knav_queue_push(netcp->rx_fdq[fdq], dma, sizeof(*hwdesc), 0);
+	return 0;
 
 fail:
 	knav_pool_desc_put(netcp->rx_pool, hwdesc);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /* Refill Rx FDQ with descriptors & attached buffers */
-अटल व्योम netcp_rxpool_refill(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	u32 fdq_deficit[KNAV_DMA_FDQ_PER_CHAN] = अणु0पूर्ण;
-	पूर्णांक i, ret = 0;
+static void netcp_rxpool_refill(struct netcp_intf *netcp)
+{
+	u32 fdq_deficit[KNAV_DMA_FDQ_PER_CHAN] = {0};
+	int i, ret = 0;
 
 	/* Calculate the FDQ deficit and refill */
-	क्रम (i = 0; i < KNAV_DMA_FDQ_PER_CHAN && netcp->rx_fdq[i]; i++) अणु
+	for (i = 0; i < KNAV_DMA_FDQ_PER_CHAN && netcp->rx_fdq[i]; i++) {
 		fdq_deficit[i] = netcp->rx_queue_depths[i] -
 				 knav_queue_get_count(netcp->rx_fdq[i]);
 
-		जबतक (fdq_deficit[i]-- && !ret)
+		while (fdq_deficit[i]-- && !ret)
 			ret = netcp_allocate_rx_buf(netcp, i);
-	पूर्ण /* end क्रम fdqs */
-पूर्ण
+	} /* end for fdqs */
+}
 
 /* NAPI poll */
-अटल पूर्णांक netcp_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = container_of(napi, काष्ठा netcp_पूर्णांकf,
+static int netcp_rx_poll(struct napi_struct *napi, int budget)
+{
+	struct netcp_intf *netcp = container_of(napi, struct netcp_intf,
 						rx_napi);
-	अचिन्हित पूर्णांक packets;
+	unsigned int packets;
 
 	packets = netcp_process_rx_packets(netcp, budget);
 
 	netcp_rxpool_refill(netcp);
-	अगर (packets < budget) अणु
-		napi_complete_करोne(&netcp->rx_napi, packets);
-		knav_queue_enable_notअगरy(netcp->rx_queue);
-	पूर्ण
+	if (packets < budget) {
+		napi_complete_done(&netcp->rx_napi, packets);
+		knav_queue_enable_notify(netcp->rx_queue);
+	}
 
-	वापस packets;
-पूर्ण
+	return packets;
+}
 
-अटल व्योम netcp_rx_notअगरy(व्योम *arg)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = arg;
+static void netcp_rx_notify(void *arg)
+{
+	struct netcp_intf *netcp = arg;
 
-	knav_queue_disable_notअगरy(netcp->rx_queue);
+	knav_queue_disable_notify(netcp->rx_queue);
 	napi_schedule(&netcp->rx_napi);
-पूर्ण
+}
 
-अटल व्योम netcp_मुक्त_tx_desc_chain(काष्ठा netcp_पूर्णांकf *netcp,
-				     काष्ठा knav_dma_desc *desc,
-				     अचिन्हित पूर्णांक desc_sz)
-अणु
-	काष्ठा knav_dma_desc *ndesc = desc;
+static void netcp_free_tx_desc_chain(struct netcp_intf *netcp,
+				     struct knav_dma_desc *desc,
+				     unsigned int desc_sz)
+{
+	struct knav_dma_desc *ndesc = desc;
 	dma_addr_t dma_desc, dma_buf;
-	अचिन्हित पूर्णांक buf_len;
+	unsigned int buf_len;
 
-	जबतक (ndesc) अणु
+	while (ndesc) {
 		get_pkt_info(&dma_buf, &buf_len, &dma_desc, ndesc);
 
-		अगर (dma_buf && buf_len)
+		if (dma_buf && buf_len)
 			dma_unmap_single(netcp->dev, dma_buf, buf_len,
 					 DMA_TO_DEVICE);
-		अन्यथा
+		else
 			dev_warn(netcp->ndev_dev, "bad Tx desc buf(%pad), len(%d)\n",
 				 &dma_buf, buf_len);
 
 		knav_pool_desc_put(netcp->tx_pool, ndesc);
-		ndesc = शून्य;
-		अगर (dma_desc) अणु
+		ndesc = NULL;
+		if (dma_desc) {
 			ndesc = knav_pool_desc_unmap(netcp->tx_pool, dma_desc,
 						     desc_sz);
-			अगर (!ndesc)
+			if (!ndesc)
 				dev_err(netcp->ndev_dev, "failed to unmap Tx desc\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक netcp_process_tx_compl_packets(काष्ठा netcp_पूर्णांकf *netcp,
-					  अचिन्हित पूर्णांक budget)
-अणु
-	काष्ठा netcp_stats *tx_stats = &netcp->stats;
-	काष्ठा knav_dma_desc *desc;
-	काष्ठा netcp_tx_cb *tx_cb;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक dma_sz;
+static int netcp_process_tx_compl_packets(struct netcp_intf *netcp,
+					  unsigned int budget)
+{
+	struct netcp_stats *tx_stats = &netcp->stats;
+	struct knav_dma_desc *desc;
+	struct netcp_tx_cb *tx_cb;
+	struct sk_buff *skb;
+	unsigned int dma_sz;
 	dma_addr_t dma;
-	पूर्णांक pkts = 0;
+	int pkts = 0;
 
-	जबतक (budget--) अणु
+	while (budget--) {
 		dma = knav_queue_pop(netcp->tx_compl_q, &dma_sz);
-		अगर (!dma)
-			अवरोध;
+		if (!dma)
+			break;
 		desc = knav_pool_desc_unmap(netcp->tx_pool, dma, dma_sz);
-		अगर (unlikely(!desc)) अणु
+		if (unlikely(!desc)) {
 			dev_err(netcp->ndev_dev, "failed to unmap Tx desc\n");
 			tx_stats->tx_errors++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* warning!!!! We are retrieving the भव ptr in the sw_data
+		/* warning!!!! We are retrieving the virtual ptr in the sw_data
 		 * field as a 32bit value. Will not work on 64bit machines
 		 */
-		skb = (काष्ठा sk_buff *)GET_SW_DATA0(desc);
-		netcp_मुक्त_tx_desc_chain(netcp, desc, dma_sz);
-		अगर (!skb) अणु
+		skb = (struct sk_buff *)GET_SW_DATA0(desc);
+		netcp_free_tx_desc_chain(netcp, desc, dma_sz);
+		if (!skb) {
 			dev_err(netcp->ndev_dev, "No skb in Tx desc\n");
 			tx_stats->tx_errors++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		tx_cb = (काष्ठा netcp_tx_cb *)skb->cb;
-		अगर (tx_cb->txtstamp)
+		tx_cb = (struct netcp_tx_cb *)skb->cb;
+		if (tx_cb->txtstamp)
 			tx_cb->txtstamp(tx_cb->ts_context, skb);
 
-		अगर (netअगर_subqueue_stopped(netcp->ndev, skb) &&
-		    netअगर_running(netcp->ndev) &&
+		if (netif_subqueue_stopped(netcp->ndev, skb) &&
+		    netif_running(netcp->ndev) &&
 		    (knav_pool_count(netcp->tx_pool) >
-		    netcp->tx_resume_threshold)) अणु
+		    netcp->tx_resume_threshold)) {
 			u16 subqueue = skb_get_queue_mapping(skb);
 
-			netअगर_wake_subqueue(netcp->ndev, subqueue);
-		पूर्ण
+			netif_wake_subqueue(netcp->ndev, subqueue);
+		}
 
 		u64_stats_update_begin(&tx_stats->syncp_tx);
 		tx_stats->tx_packets++;
 		tx_stats->tx_bytes += skb->len;
 		u64_stats_update_end(&tx_stats->syncp_tx);
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		pkts++;
-	पूर्ण
-	वापस pkts;
-पूर्ण
+	}
+	return pkts;
+}
 
-अटल पूर्णांक netcp_tx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	पूर्णांक packets;
-	काष्ठा netcp_पूर्णांकf *netcp = container_of(napi, काष्ठा netcp_पूर्णांकf,
+static int netcp_tx_poll(struct napi_struct *napi, int budget)
+{
+	int packets;
+	struct netcp_intf *netcp = container_of(napi, struct netcp_intf,
 						tx_napi);
 
 	packets = netcp_process_tx_compl_packets(netcp, budget);
-	अगर (packets < budget) अणु
+	if (packets < budget) {
 		napi_complete(&netcp->tx_napi);
-		knav_queue_enable_notअगरy(netcp->tx_compl_q);
-	पूर्ण
+		knav_queue_enable_notify(netcp->tx_compl_q);
+	}
 
-	वापस packets;
-पूर्ण
+	return packets;
+}
 
-अटल व्योम netcp_tx_notअगरy(व्योम *arg)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = arg;
+static void netcp_tx_notify(void *arg)
+{
+	struct netcp_intf *netcp = arg;
 
-	knav_queue_disable_notअगरy(netcp->tx_compl_q);
+	knav_queue_disable_notify(netcp->tx_compl_q);
 	napi_schedule(&netcp->tx_napi);
-पूर्ण
+}
 
-अटल काष्ठा knav_dma_desc*
-netcp_tx_map_skb(काष्ठा sk_buff *skb, काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा knav_dma_desc *desc, *ndesc, *pdesc;
-	अचिन्हित पूर्णांक pkt_len = skb_headlen(skb);
-	काष्ठा device *dev = netcp->dev;
+static struct knav_dma_desc*
+netcp_tx_map_skb(struct sk_buff *skb, struct netcp_intf *netcp)
+{
+	struct knav_dma_desc *desc, *ndesc, *pdesc;
+	unsigned int pkt_len = skb_headlen(skb);
+	struct device *dev = netcp->dev;
 	dma_addr_t dma_addr;
-	अचिन्हित पूर्णांक dma_sz;
-	पूर्णांक i;
+	unsigned int dma_sz;
+	int i;
 
 	/* Map the linear buffer */
 	dma_addr = dma_map_single(dev, skb->data, pkt_len, DMA_TO_DEVICE);
-	अगर (unlikely(dma_mapping_error(dev, dma_addr))) अणु
+	if (unlikely(dma_mapping_error(dev, dma_addr))) {
 		dev_err(netcp->ndev_dev, "Failed to map skb buffer\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	desc = knav_pool_desc_get(netcp->tx_pool);
-	अगर (IS_ERR_OR_शून्य(desc)) अणु
+	if (IS_ERR_OR_NULL(desc)) {
 		dev_err(netcp->ndev_dev, "out of TX desc\n");
 		dma_unmap_single(dev, dma_addr, pkt_len, DMA_TO_DEVICE);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	set_pkt_info(dma_addr, pkt_len, 0, desc);
-	अगर (skb_is_nonlinear(skb)) अणु
+	if (skb_is_nonlinear(skb)) {
 		prefetchw(skb_shinfo(skb));
-	पूर्ण अन्यथा अणु
+	} else {
 		desc->next_desc = 0;
-		जाओ upd_pkt_len;
-	पूर्ण
+		goto upd_pkt_len;
+	}
 
 	pdesc = desc;
 
-	/* Handle the हाल where skb is fragmented in pages */
-	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+	/* Handle the case where skb is fragmented in pages */
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
-		काष्ठा page *page = skb_frag_page(frag);
+		struct page *page = skb_frag_page(frag);
 		u32 page_offset = skb_frag_off(frag);
 		u32 buf_len = skb_frag_size(frag);
 		dma_addr_t desc_dma;
@@ -1124,400 +1123,400 @@ netcp_tx_map_skb(काष्ठा sk_buff *skb, काष्ठा netcp_प�
 
 		dma_addr = dma_map_page(dev, page, page_offset, buf_len,
 					DMA_TO_DEVICE);
-		अगर (unlikely(!dma_addr)) अणु
+		if (unlikely(!dma_addr)) {
 			dev_err(netcp->ndev_dev, "Failed to map skb page\n");
-			जाओ मुक्त_descs;
-		पूर्ण
+			goto free_descs;
+		}
 
 		ndesc = knav_pool_desc_get(netcp->tx_pool);
-		अगर (IS_ERR_OR_शून्य(ndesc)) अणु
+		if (IS_ERR_OR_NULL(ndesc)) {
 			dev_err(netcp->ndev_dev, "out of TX desc for frags\n");
 			dma_unmap_page(dev, dma_addr, buf_len, DMA_TO_DEVICE);
-			जाओ मुक्त_descs;
-		पूर्ण
+			goto free_descs;
+		}
 
 		desc_dma = knav_pool_desc_virt_to_dma(netcp->tx_pool, ndesc);
 		set_pkt_info(dma_addr, buf_len, 0, ndesc);
 		desc_dma_32 = (u32)desc_dma;
 		set_words(&desc_dma_32, 1, &pdesc->next_desc);
 		pkt_len += buf_len;
-		अगर (pdesc != desc)
+		if (pdesc != desc)
 			knav_pool_desc_map(netcp->tx_pool, pdesc,
-					   माप(*pdesc), &desc_dma, &dma_sz);
+					   sizeof(*pdesc), &desc_dma, &dma_sz);
 		pdesc = ndesc;
-	पूर्ण
-	अगर (pdesc != desc)
-		knav_pool_desc_map(netcp->tx_pool, pdesc, माप(*pdesc),
+	}
+	if (pdesc != desc)
+		knav_pool_desc_map(netcp->tx_pool, pdesc, sizeof(*pdesc),
 				   &dma_addr, &dma_sz);
 
-	/* frag list based linkage is not supported क्रम now. */
-	अगर (skb_shinfo(skb)->frag_list) अणु
+	/* frag list based linkage is not supported for now. */
+	if (skb_shinfo(skb)->frag_list) {
 		dev_err_ratelimited(netcp->ndev_dev, "NETIF_F_FRAGLIST not supported\n");
-		जाओ मुक्त_descs;
-	पूर्ण
+		goto free_descs;
+	}
 
 upd_pkt_len:
 	WARN_ON(pkt_len != skb->len);
 
 	pkt_len &= KNAV_DMA_DESC_PKT_LEN_MASK;
 	set_words(&pkt_len, 1, &desc->desc_info);
-	वापस desc;
+	return desc;
 
-मुक्त_descs:
-	netcp_मुक्त_tx_desc_chain(netcp, desc, माप(*desc));
-	वापस शून्य;
-पूर्ण
+free_descs:
+	netcp_free_tx_desc_chain(netcp, desc, sizeof(*desc));
+	return NULL;
+}
 
-अटल पूर्णांक netcp_tx_submit_skb(काष्ठा netcp_पूर्णांकf *netcp,
-			       काष्ठा sk_buff *skb,
-			       काष्ठा knav_dma_desc *desc)
-अणु
-	काष्ठा netcp_tx_pipe *tx_pipe = शून्य;
-	काष्ठा netcp_hook_list *tx_hook;
-	काष्ठा netcp_packet p_info;
-	काष्ठा netcp_tx_cb *tx_cb;
-	अचिन्हित पूर्णांक dma_sz;
+static int netcp_tx_submit_skb(struct netcp_intf *netcp,
+			       struct sk_buff *skb,
+			       struct knav_dma_desc *desc)
+{
+	struct netcp_tx_pipe *tx_pipe = NULL;
+	struct netcp_hook_list *tx_hook;
+	struct netcp_packet p_info;
+	struct netcp_tx_cb *tx_cb;
+	unsigned int dma_sz;
 	dma_addr_t dma;
-	u32 पंचांगp = 0;
-	पूर्णांक ret = 0;
+	u32 tmp = 0;
+	int ret = 0;
 
 	p_info.netcp = netcp;
 	p_info.skb = skb;
-	p_info.tx_pipe = शून्य;
+	p_info.tx_pipe = NULL;
 	p_info.psdata_len = 0;
-	p_info.ts_context = शून्य;
-	p_info.txtstamp = शून्य;
+	p_info.ts_context = NULL;
+	p_info.txtstamp = NULL;
 	p_info.epib = desc->epib;
-	p_info.psdata = (u32 __क्रमce *)desc->psdata;
-	स_रखो(p_info.epib, 0, KNAV_DMA_NUM_EPIB_WORDS * माप(__le32));
+	p_info.psdata = (u32 __force *)desc->psdata;
+	memset(p_info.epib, 0, KNAV_DMA_NUM_EPIB_WORDS * sizeof(__le32));
 
-	/* Find out where to inject the packet क्रम transmission */
-	list_क्रम_each_entry(tx_hook, &netcp->txhook_list_head, list) अणु
+	/* Find out where to inject the packet for transmission */
+	list_for_each_entry(tx_hook, &netcp->txhook_list_head, list) {
 		ret = tx_hook->hook_rtn(tx_hook->order, tx_hook->hook_data,
 					&p_info);
-		अगर (unlikely(ret != 0)) अणु
+		if (unlikely(ret != 0)) {
 			dev_err(netcp->ndev_dev, "TX hook %d rejected the packet with reason(%d)\n",
 				tx_hook->order, ret);
 			ret = (ret < 0) ? ret : NETDEV_TX_OK;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Make sure some TX hook claimed the packet */
 	tx_pipe = p_info.tx_pipe;
-	अगर (!tx_pipe) अणु
+	if (!tx_pipe) {
 		dev_err(netcp->ndev_dev, "No TX hook claimed the packet!\n");
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	tx_cb = (काष्ठा netcp_tx_cb *)skb->cb;
+	tx_cb = (struct netcp_tx_cb *)skb->cb;
 	tx_cb->ts_context = p_info.ts_context;
 	tx_cb->txtstamp = p_info.txtstamp;
 
 	/* update descriptor */
-	अगर (p_info.psdata_len) अणु
-		/* psdata poपूर्णांकs to both native-endian and device-endian data */
-		__le32 *psdata = (व्योम __क्रमce *)p_info.psdata;
+	if (p_info.psdata_len) {
+		/* psdata points to both native-endian and device-endian data */
+		__le32 *psdata = (void __force *)p_info.psdata;
 
 		set_words((u32 *)psdata +
 			  (KNAV_DMA_NUM_PS_WORDS - p_info.psdata_len),
 			  p_info.psdata_len, psdata);
-		पंचांगp |= (p_info.psdata_len & KNAV_DMA_DESC_PSLEN_MASK) <<
+		tmp |= (p_info.psdata_len & KNAV_DMA_DESC_PSLEN_MASK) <<
 			KNAV_DMA_DESC_PSLEN_SHIFT;
-	पूर्ण
+	}
 
-	पंचांगp |= KNAV_DMA_DESC_HAS_EPIB |
+	tmp |= KNAV_DMA_DESC_HAS_EPIB |
 		((netcp->tx_compl_qid & KNAV_DMA_DESC_RETQ_MASK) <<
 		KNAV_DMA_DESC_RETQ_SHIFT);
 
-	अगर (!(tx_pipe->flags & SWITCH_TO_PORT_IN_TAGINFO)) अणु
-		पंचांगp |= ((tx_pipe->चयन_to_port & KNAV_DMA_DESC_PSFLAG_MASK) <<
+	if (!(tx_pipe->flags & SWITCH_TO_PORT_IN_TAGINFO)) {
+		tmp |= ((tx_pipe->switch_to_port & KNAV_DMA_DESC_PSFLAG_MASK) <<
 			KNAV_DMA_DESC_PSFLAG_SHIFT);
-	पूर्ण
+	}
 
-	set_words(&पंचांगp, 1, &desc->packet_info);
-	/* warning!!!! We are saving the भव ptr in the sw_data
+	set_words(&tmp, 1, &desc->packet_info);
+	/* warning!!!! We are saving the virtual ptr in the sw_data
 	 * field as a 32bit value. Will not work on 64bit machines
 	 */
 	SET_SW_DATA0((u32)skb, desc);
 
-	अगर (tx_pipe->flags & SWITCH_TO_PORT_IN_TAGINFO) अणु
-		पंचांगp = tx_pipe->चयन_to_port;
-		set_words(&पंचांगp, 1, &desc->tag_info);
-	पूर्ण
+	if (tx_pipe->flags & SWITCH_TO_PORT_IN_TAGINFO) {
+		tmp = tx_pipe->switch_to_port;
+		set_words(&tmp, 1, &desc->tag_info);
+	}
 
 	/* submit packet descriptor */
-	ret = knav_pool_desc_map(netcp->tx_pool, desc, माप(*desc), &dma,
+	ret = knav_pool_desc_map(netcp->tx_pool, desc, sizeof(*desc), &dma,
 				 &dma_sz);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		dev_err(netcp->ndev_dev, "%s() failed to map desc\n", __func__);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	skb_tx_बारtamp(skb);
+		goto out;
+	}
+	skb_tx_timestamp(skb);
 	knav_queue_push(tx_pipe->dma_queue, dma, dma_sz, 0);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Submit the packet */
-अटल पूर्णांक netcp_nकरो_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_stats *tx_stats = &netcp->stats;
-	पूर्णांक subqueue = skb_get_queue_mapping(skb);
-	काष्ठा knav_dma_desc *desc;
-	पूर्णांक desc_count, ret = 0;
+static int netcp_ndo_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_stats *tx_stats = &netcp->stats;
+	int subqueue = skb_get_queue_mapping(skb);
+	struct knav_dma_desc *desc;
+	int desc_count, ret = 0;
 
-	अगर (unlikely(skb->len <= 0)) अणु
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+	if (unlikely(skb->len <= 0)) {
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
 
-	अगर (unlikely(skb->len < NETCP_MIN_PACKET_SIZE)) अणु
+	if (unlikely(skb->len < NETCP_MIN_PACKET_SIZE)) {
 		ret = skb_padto(skb, NETCP_MIN_PACKET_SIZE);
-		अगर (ret < 0) अणु
-			/* If we get here, the skb has alपढ़ोy been dropped */
+		if (ret < 0) {
+			/* If we get here, the skb has already been dropped */
 			dev_warn(netcp->ndev_dev, "padding failed (%d), packet dropped\n",
 				 ret);
 			tx_stats->tx_dropped++;
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		skb->len = NETCP_MIN_PACKET_SIZE;
-	पूर्ण
+	}
 
 	desc = netcp_tx_map_skb(skb, netcp);
-	अगर (unlikely(!desc)) अणु
-		netअगर_stop_subqueue(ndev, subqueue);
+	if (unlikely(!desc)) {
+		netif_stop_subqueue(ndev, subqueue);
 		ret = -ENOBUFS;
-		जाओ drop;
-	पूर्ण
+		goto drop;
+	}
 
 	ret = netcp_tx_submit_skb(netcp, skb, desc);
-	अगर (ret)
-		जाओ drop;
+	if (ret)
+		goto drop;
 
-	/* Check Tx pool count & stop subqueue अगर needed */
+	/* Check Tx pool count & stop subqueue if needed */
 	desc_count = knav_pool_count(netcp->tx_pool);
-	अगर (desc_count < netcp->tx_छोड़ो_threshold) अणु
+	if (desc_count < netcp->tx_pause_threshold) {
 		dev_dbg(netcp->ndev_dev, "pausing tx, count(%d)\n", desc_count);
-		netअगर_stop_subqueue(ndev, subqueue);
-	पूर्ण
-	वापस NETDEV_TX_OK;
+		netif_stop_subqueue(ndev, subqueue);
+	}
+	return NETDEV_TX_OK;
 
 drop:
 	tx_stats->tx_dropped++;
-	अगर (desc)
-		netcp_मुक्त_tx_desc_chain(netcp, desc, माप(*desc));
-	dev_kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	if (desc)
+		netcp_free_tx_desc_chain(netcp, desc, sizeof(*desc));
+	dev_kfree_skb(skb);
+	return ret;
+}
 
-पूर्णांक netcp_txpipe_बंद(काष्ठा netcp_tx_pipe *tx_pipe)
-अणु
-	अगर (tx_pipe->dma_channel) अणु
-		knav_dma_बंद_channel(tx_pipe->dma_channel);
-		tx_pipe->dma_channel = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_txpipe_बंद);
+int netcp_txpipe_close(struct netcp_tx_pipe *tx_pipe)
+{
+	if (tx_pipe->dma_channel) {
+		knav_dma_close_channel(tx_pipe->dma_channel);
+		tx_pipe->dma_channel = NULL;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(netcp_txpipe_close);
 
-पूर्णांक netcp_txpipe_खोलो(काष्ठा netcp_tx_pipe *tx_pipe)
-अणु
-	काष्ठा device *dev = tx_pipe->netcp_device->device;
-	काष्ठा knav_dma_cfg config;
-	पूर्णांक ret = 0;
+int netcp_txpipe_open(struct netcp_tx_pipe *tx_pipe)
+{
+	struct device *dev = tx_pipe->netcp_device->device;
+	struct knav_dma_cfg config;
+	int ret = 0;
 	u8 name[16];
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.direction = DMA_MEM_TO_DEV;
 	config.u.tx.filt_einfo = false;
 	config.u.tx.filt_pswords = false;
 	config.u.tx.priority = DMA_PRIO_MED_L;
 
-	tx_pipe->dma_channel = knav_dma_खोलो_channel(dev,
+	tx_pipe->dma_channel = knav_dma_open_channel(dev,
 				tx_pipe->dma_chan_name, &config);
-	अगर (IS_ERR(tx_pipe->dma_channel)) अणु
+	if (IS_ERR(tx_pipe->dma_channel)) {
 		dev_err(dev, "failed opening tx chan(%s)\n",
 			tx_pipe->dma_chan_name);
 		ret = PTR_ERR(tx_pipe->dma_channel);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	snम_लिखो(name, माप(name), "tx-pipe-%s", dev_name(dev));
-	tx_pipe->dma_queue = knav_queue_खोलो(name, tx_pipe->dma_queue_id,
+	snprintf(name, sizeof(name), "tx-pipe-%s", dev_name(dev));
+	tx_pipe->dma_queue = knav_queue_open(name, tx_pipe->dma_queue_id,
 					     KNAV_QUEUE_SHARED);
-	अगर (IS_ERR(tx_pipe->dma_queue)) अणु
+	if (IS_ERR(tx_pipe->dma_queue)) {
 		dev_err(dev, "Could not open DMA queue for channel \"%s\": %pe\n",
 			name, tx_pipe->dma_queue);
 		ret = PTR_ERR(tx_pipe->dma_queue);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	dev_dbg(dev, "opened tx pipe %s\n", name);
-	वापस 0;
+	return 0;
 
 err:
-	अगर (!IS_ERR_OR_शून्य(tx_pipe->dma_channel))
-		knav_dma_बंद_channel(tx_pipe->dma_channel);
-	tx_pipe->dma_channel = शून्य;
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(netcp_txpipe_खोलो);
+	if (!IS_ERR_OR_NULL(tx_pipe->dma_channel))
+		knav_dma_close_channel(tx_pipe->dma_channel);
+	tx_pipe->dma_channel = NULL;
+	return ret;
+}
+EXPORT_SYMBOL_GPL(netcp_txpipe_open);
 
-पूर्णांक netcp_txpipe_init(काष्ठा netcp_tx_pipe *tx_pipe,
-		      काष्ठा netcp_device *netcp_device,
-		      स्थिर अक्षर *dma_chan_name, अचिन्हित पूर्णांक dma_queue_id)
-अणु
-	स_रखो(tx_pipe, 0, माप(*tx_pipe));
+int netcp_txpipe_init(struct netcp_tx_pipe *tx_pipe,
+		      struct netcp_device *netcp_device,
+		      const char *dma_chan_name, unsigned int dma_queue_id)
+{
+	memset(tx_pipe, 0, sizeof(*tx_pipe));
 	tx_pipe->netcp_device = netcp_device;
 	tx_pipe->dma_chan_name = dma_chan_name;
 	tx_pipe->dma_queue_id = dma_queue_id;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(netcp_txpipe_init);
 
-अटल काष्ठा netcp_addr *netcp_addr_find(काष्ठा netcp_पूर्णांकf *netcp,
-					  स्थिर u8 *addr,
-					  क्रमागत netcp_addr_type type)
-अणु
-	काष्ठा netcp_addr *naddr;
+static struct netcp_addr *netcp_addr_find(struct netcp_intf *netcp,
+					  const u8 *addr,
+					  enum netcp_addr_type type)
+{
+	struct netcp_addr *naddr;
 
-	list_क्रम_each_entry(naddr, &netcp->addr_list, node) अणु
-		अगर (naddr->type != type)
-			जारी;
-		अगर (addr && स_भेद(addr, naddr->addr, ETH_ALEN))
-			जारी;
-		वापस naddr;
-	पूर्ण
+	list_for_each_entry(naddr, &netcp->addr_list, node) {
+		if (naddr->type != type)
+			continue;
+		if (addr && memcmp(addr, naddr->addr, ETH_ALEN))
+			continue;
+		return naddr;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा netcp_addr *netcp_addr_add(काष्ठा netcp_पूर्णांकf *netcp,
-					 स्थिर u8 *addr,
-					 क्रमागत netcp_addr_type type)
-अणु
-	काष्ठा netcp_addr *naddr;
+static struct netcp_addr *netcp_addr_add(struct netcp_intf *netcp,
+					 const u8 *addr,
+					 enum netcp_addr_type type)
+{
+	struct netcp_addr *naddr;
 
-	naddr = devm_kदो_स्मृति(netcp->dev, माप(*naddr), GFP_ATOMIC);
-	अगर (!naddr)
-		वापस शून्य;
+	naddr = devm_kmalloc(netcp->dev, sizeof(*naddr), GFP_ATOMIC);
+	if (!naddr)
+		return NULL;
 
 	naddr->type = type;
 	naddr->flags = 0;
 	naddr->netcp = netcp;
-	अगर (addr)
+	if (addr)
 		ether_addr_copy(naddr->addr, addr);
-	अन्यथा
+	else
 		eth_zero_addr(naddr->addr);
 	list_add_tail(&naddr->node, &netcp->addr_list);
 
-	वापस naddr;
-पूर्ण
+	return naddr;
+}
 
-अटल व्योम netcp_addr_del(काष्ठा netcp_पूर्णांकf *netcp, काष्ठा netcp_addr *naddr)
-अणु
+static void netcp_addr_del(struct netcp_intf *netcp, struct netcp_addr *naddr)
+{
 	list_del(&naddr->node);
-	devm_kमुक्त(netcp->dev, naddr);
-पूर्ण
+	devm_kfree(netcp->dev, naddr);
+}
 
-अटल व्योम netcp_addr_clear_mark(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा netcp_addr *naddr;
+static void netcp_addr_clear_mark(struct netcp_intf *netcp)
+{
+	struct netcp_addr *naddr;
 
-	list_क्रम_each_entry(naddr, &netcp->addr_list, node)
+	list_for_each_entry(naddr, &netcp->addr_list, node)
 		naddr->flags = 0;
-पूर्ण
+}
 
-अटल व्योम netcp_addr_add_mark(काष्ठा netcp_पूर्णांकf *netcp, स्थिर u8 *addr,
-				क्रमागत netcp_addr_type type)
-अणु
-	काष्ठा netcp_addr *naddr;
+static void netcp_addr_add_mark(struct netcp_intf *netcp, const u8 *addr,
+				enum netcp_addr_type type)
+{
+	struct netcp_addr *naddr;
 
 	naddr = netcp_addr_find(netcp, addr, type);
-	अगर (naddr) अणु
+	if (naddr) {
 		naddr->flags |= ADDR_VALID;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	naddr = netcp_addr_add(netcp, addr, type);
-	अगर (!WARN_ON(!naddr))
+	if (!WARN_ON(!naddr))
 		naddr->flags |= ADDR_NEW;
-पूर्ण
+}
 
-अटल व्योम netcp_addr_sweep_del(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा netcp_addr *naddr, *पंचांगp;
-	काष्ठा netcp_पूर्णांकf_modpriv *priv;
-	काष्ठा netcp_module *module;
-	पूर्णांक error;
+static void netcp_addr_sweep_del(struct netcp_intf *netcp)
+{
+	struct netcp_addr *naddr, *tmp;
+	struct netcp_intf_modpriv *priv;
+	struct netcp_module *module;
+	int error;
 
-	list_क्रम_each_entry_safe(naddr, पंचांगp, &netcp->addr_list, node) अणु
-		अगर (naddr->flags & (ADDR_VALID | ADDR_NEW))
-			जारी;
+	list_for_each_entry_safe(naddr, tmp, &netcp->addr_list, node) {
+		if (naddr->flags & (ADDR_VALID | ADDR_NEW))
+			continue;
 		dev_dbg(netcp->ndev_dev, "deleting address %pM, type %x\n",
 			naddr->addr, naddr->type);
-		क्रम_each_module(netcp, priv) अणु
+		for_each_module(netcp, priv) {
 			module = priv->netcp_module;
-			अगर (!module->del_addr)
-				जारी;
+			if (!module->del_addr)
+				continue;
 			error = module->del_addr(priv->module_priv,
 						 naddr);
 			WARN_ON(error);
-		पूर्ण
+		}
 		netcp_addr_del(netcp, naddr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम netcp_addr_sweep_add(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	काष्ठा netcp_addr *naddr, *पंचांगp;
-	काष्ठा netcp_पूर्णांकf_modpriv *priv;
-	काष्ठा netcp_module *module;
-	पूर्णांक error;
+static void netcp_addr_sweep_add(struct netcp_intf *netcp)
+{
+	struct netcp_addr *naddr, *tmp;
+	struct netcp_intf_modpriv *priv;
+	struct netcp_module *module;
+	int error;
 
-	list_क्रम_each_entry_safe(naddr, पंचांगp, &netcp->addr_list, node) अणु
-		अगर (!(naddr->flags & ADDR_NEW))
-			जारी;
+	list_for_each_entry_safe(naddr, tmp, &netcp->addr_list, node) {
+		if (!(naddr->flags & ADDR_NEW))
+			continue;
 		dev_dbg(netcp->ndev_dev, "adding address %pM, type %x\n",
 			naddr->addr, naddr->type);
 
-		क्रम_each_module(netcp, priv) अणु
+		for_each_module(netcp, priv) {
 			module = priv->netcp_module;
-			अगर (!module->add_addr)
-				जारी;
+			if (!module->add_addr)
+				continue;
 			error = module->add_addr(priv->module_priv, naddr);
 			WARN_ON(error);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक netcp_set_promiscuous(काष्ठा netcp_पूर्णांकf *netcp, bool promisc)
-अणु
-	काष्ठा netcp_पूर्णांकf_modpriv *priv;
-	काष्ठा netcp_module *module;
-	पूर्णांक error;
+static int netcp_set_promiscuous(struct netcp_intf *netcp, bool promisc)
+{
+	struct netcp_intf_modpriv *priv;
+	struct netcp_module *module;
+	int error;
 
-	क्रम_each_module(netcp, priv) अणु
+	for_each_module(netcp, priv) {
 		module = priv->netcp_module;
-		अगर (!module->set_rx_mode)
-			जारी;
+		if (!module->set_rx_mode)
+			continue;
 
 		error = module->set_rx_mode(priv->module_priv, promisc);
-		अगर (error)
-			वापस error;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (error)
+			return error;
+	}
+	return 0;
+}
 
-अटल व्योम netcp_set_rx_mode(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netdev_hw_addr *ndev_addr;
+static void netcp_set_rx_mode(struct net_device *ndev)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netdev_hw_addr *ndev_addr;
 	bool promisc;
 
 	promisc = (ndev->flags & IFF_PROMISC ||
@@ -1530,138 +1529,138 @@ EXPORT_SYMBOL_GPL(netcp_txpipe_init);
 
 	/* next add new entries, mark existing ones */
 	netcp_addr_add_mark(netcp, ndev->broadcast, ADDR_BCAST);
-	क्रम_each_dev_addr(ndev, ndev_addr)
+	for_each_dev_addr(ndev, ndev_addr)
 		netcp_addr_add_mark(netcp, ndev_addr->addr, ADDR_DEV);
-	netdev_क्रम_each_uc_addr(ndev_addr, ndev)
+	netdev_for_each_uc_addr(ndev_addr, ndev)
 		netcp_addr_add_mark(netcp, ndev_addr->addr, ADDR_UCAST);
-	netdev_क्रम_each_mc_addr(ndev_addr, ndev)
+	netdev_for_each_mc_addr(ndev_addr, ndev)
 		netcp_addr_add_mark(netcp, ndev_addr->addr, ADDR_MCAST);
 
-	अगर (promisc)
-		netcp_addr_add_mark(netcp, शून्य, ADDR_ANY);
+	if (promisc)
+		netcp_addr_add_mark(netcp, NULL, ADDR_ANY);
 
-	/* finally sweep and callout पूर्णांकo modules */
+	/* finally sweep and callout into modules */
 	netcp_addr_sweep_del(netcp);
 	netcp_addr_sweep_add(netcp);
 	netcp_set_promiscuous(netcp, promisc);
 	spin_unlock(&netcp->lock);
-पूर्ण
+}
 
-अटल व्योम netcp_मुक्त_navigator_resources(काष्ठा netcp_पूर्णांकf *netcp)
-अणु
-	पूर्णांक i;
+static void netcp_free_navigator_resources(struct netcp_intf *netcp)
+{
+	int i;
 
-	अगर (netcp->rx_channel) अणु
-		knav_dma_बंद_channel(netcp->rx_channel);
-		netcp->rx_channel = शून्य;
-	पूर्ण
+	if (netcp->rx_channel) {
+		knav_dma_close_channel(netcp->rx_channel);
+		netcp->rx_channel = NULL;
+	}
 
-	अगर (!IS_ERR_OR_शून्य(netcp->rx_pool))
-		netcp_rxpool_मुक्त(netcp);
+	if (!IS_ERR_OR_NULL(netcp->rx_pool))
+		netcp_rxpool_free(netcp);
 
-	अगर (!IS_ERR_OR_शून्य(netcp->rx_queue)) अणु
-		knav_queue_बंद(netcp->rx_queue);
-		netcp->rx_queue = शून्य;
-	पूर्ण
+	if (!IS_ERR_OR_NULL(netcp->rx_queue)) {
+		knav_queue_close(netcp->rx_queue);
+		netcp->rx_queue = NULL;
+	}
 
-	क्रम (i = 0; i < KNAV_DMA_FDQ_PER_CHAN &&
-	     !IS_ERR_OR_शून्य(netcp->rx_fdq[i]) ; ++i) अणु
-		knav_queue_बंद(netcp->rx_fdq[i]);
-		netcp->rx_fdq[i] = शून्य;
-	पूर्ण
+	for (i = 0; i < KNAV_DMA_FDQ_PER_CHAN &&
+	     !IS_ERR_OR_NULL(netcp->rx_fdq[i]) ; ++i) {
+		knav_queue_close(netcp->rx_fdq[i]);
+		netcp->rx_fdq[i] = NULL;
+	}
 
-	अगर (!IS_ERR_OR_शून्य(netcp->tx_compl_q)) अणु
-		knav_queue_बंद(netcp->tx_compl_q);
-		netcp->tx_compl_q = शून्य;
-	पूर्ण
+	if (!IS_ERR_OR_NULL(netcp->tx_compl_q)) {
+		knav_queue_close(netcp->tx_compl_q);
+		netcp->tx_compl_q = NULL;
+	}
 
-	अगर (!IS_ERR_OR_शून्य(netcp->tx_pool)) अणु
+	if (!IS_ERR_OR_NULL(netcp->tx_pool)) {
 		knav_pool_destroy(netcp->tx_pool);
-		netcp->tx_pool = शून्य;
-	पूर्ण
-पूर्ण
+		netcp->tx_pool = NULL;
+	}
+}
 
-अटल पूर्णांक netcp_setup_navigator_resources(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा knav_queue_notअगरy_config notअगरy_cfg;
-	काष्ठा knav_dma_cfg config;
+static int netcp_setup_navigator_resources(struct net_device *ndev)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct knav_queue_notify_config notify_cfg;
+	struct knav_dma_cfg config;
 	u32 last_fdq = 0;
 	u8 name[16];
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
 	/* Create Rx/Tx descriptor pools */
-	snम_लिखो(name, माप(name), "rx-pool-%s", ndev->name);
+	snprintf(name, sizeof(name), "rx-pool-%s", ndev->name);
 	netcp->rx_pool = knav_pool_create(name, netcp->rx_pool_size,
 						netcp->rx_pool_region_id);
-	अगर (IS_ERR_OR_शून्य(netcp->rx_pool)) अणु
+	if (IS_ERR_OR_NULL(netcp->rx_pool)) {
 		dev_err(netcp->ndev_dev, "Couldn't create rx pool\n");
 		ret = PTR_ERR(netcp->rx_pool);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	snम_लिखो(name, माप(name), "tx-pool-%s", ndev->name);
+	snprintf(name, sizeof(name), "tx-pool-%s", ndev->name);
 	netcp->tx_pool = knav_pool_create(name, netcp->tx_pool_size,
 						netcp->tx_pool_region_id);
-	अगर (IS_ERR_OR_शून्य(netcp->tx_pool)) अणु
+	if (IS_ERR_OR_NULL(netcp->tx_pool)) {
 		dev_err(netcp->ndev_dev, "Couldn't create tx pool\n");
 		ret = PTR_ERR(netcp->tx_pool);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* खोलो Tx completion queue */
-	snम_लिखो(name, माप(name), "tx-compl-%s", ndev->name);
-	netcp->tx_compl_q = knav_queue_खोलो(name, netcp->tx_compl_qid, 0);
-	अगर (IS_ERR(netcp->tx_compl_q)) अणु
+	/* open Tx completion queue */
+	snprintf(name, sizeof(name), "tx-compl-%s", ndev->name);
+	netcp->tx_compl_q = knav_queue_open(name, netcp->tx_compl_qid, 0);
+	if (IS_ERR(netcp->tx_compl_q)) {
 		ret = PTR_ERR(netcp->tx_compl_q);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	netcp->tx_compl_qid = knav_queue_get_id(netcp->tx_compl_q);
 
-	/* Set notअगरication क्रम Tx completion */
-	notअगरy_cfg.fn = netcp_tx_notअगरy;
-	notअगरy_cfg.fn_arg = netcp;
+	/* Set notification for Tx completion */
+	notify_cfg.fn = netcp_tx_notify;
+	notify_cfg.fn_arg = netcp;
 	ret = knav_queue_device_control(netcp->tx_compl_q,
 					KNAV_QUEUE_SET_NOTIFIER,
-					(अचिन्हित दीर्घ)&notअगरy_cfg);
-	अगर (ret)
-		जाओ fail;
+					(unsigned long)&notify_cfg);
+	if (ret)
+		goto fail;
 
-	knav_queue_disable_notअगरy(netcp->tx_compl_q);
+	knav_queue_disable_notify(netcp->tx_compl_q);
 
-	/* खोलो Rx completion queue */
-	snम_लिखो(name, माप(name), "rx-compl-%s", ndev->name);
-	netcp->rx_queue = knav_queue_खोलो(name, netcp->rx_queue_id, 0);
-	अगर (IS_ERR(netcp->rx_queue)) अणु
+	/* open Rx completion queue */
+	snprintf(name, sizeof(name), "rx-compl-%s", ndev->name);
+	netcp->rx_queue = knav_queue_open(name, netcp->rx_queue_id, 0);
+	if (IS_ERR(netcp->rx_queue)) {
 		ret = PTR_ERR(netcp->rx_queue);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	netcp->rx_queue_id = knav_queue_get_id(netcp->rx_queue);
 
-	/* Set notअगरication क्रम Rx completion */
-	notअगरy_cfg.fn = netcp_rx_notअगरy;
-	notअगरy_cfg.fn_arg = netcp;
+	/* Set notification for Rx completion */
+	notify_cfg.fn = netcp_rx_notify;
+	notify_cfg.fn_arg = netcp;
 	ret = knav_queue_device_control(netcp->rx_queue,
 					KNAV_QUEUE_SET_NOTIFIER,
-					(अचिन्हित दीर्घ)&notअगरy_cfg);
-	अगर (ret)
-		जाओ fail;
+					(unsigned long)&notify_cfg);
+	if (ret)
+		goto fail;
 
-	knav_queue_disable_notअगरy(netcp->rx_queue);
+	knav_queue_disable_notify(netcp->rx_queue);
 
-	/* खोलो Rx FDQs */
-	क्रम (i = 0; i < KNAV_DMA_FDQ_PER_CHAN && netcp->rx_queue_depths[i];
-	     ++i) अणु
-		snम_लिखो(name, माप(name), "rx-fdq-%s-%d", ndev->name, i);
-		netcp->rx_fdq[i] = knav_queue_खोलो(name, KNAV_QUEUE_GP, 0);
-		अगर (IS_ERR(netcp->rx_fdq[i])) अणु
+	/* open Rx FDQs */
+	for (i = 0; i < KNAV_DMA_FDQ_PER_CHAN && netcp->rx_queue_depths[i];
+	     ++i) {
+		snprintf(name, sizeof(name), "rx-fdq-%s-%d", ndev->name, i);
+		netcp->rx_fdq[i] = knav_queue_open(name, KNAV_QUEUE_GP, 0);
+		if (IS_ERR(netcp->rx_fdq[i])) {
 			ret = PTR_ERR(netcp->rx_fdq[i]);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	स_रखो(&config, 0, माप(config));
+	memset(&config, 0, sizeof(config));
 	config.direction		= DMA_DEV_TO_MEM;
 	config.u.rx.einfo_present	= true;
 	config.u.rx.psinfo_present	= true;
@@ -1672,101 +1671,101 @@ EXPORT_SYMBOL_GPL(netcp_txpipe_init);
 	config.u.rx.dst_q		= netcp->rx_queue_id;
 	config.u.rx.thresh		= DMA_THRESH_NONE;
 
-	क्रम (i = 0; i < KNAV_DMA_FDQ_PER_CHAN; ++i) अणु
-		अगर (netcp->rx_fdq[i])
+	for (i = 0; i < KNAV_DMA_FDQ_PER_CHAN; ++i) {
+		if (netcp->rx_fdq[i])
 			last_fdq = knav_queue_get_id(netcp->rx_fdq[i]);
 		config.u.rx.fdq[i] = last_fdq;
-	पूर्ण
+	}
 
-	netcp->rx_channel = knav_dma_खोलो_channel(netcp->netcp_device->device,
+	netcp->rx_channel = knav_dma_open_channel(netcp->netcp_device->device,
 					netcp->dma_chan_name, &config);
-	अगर (IS_ERR(netcp->rx_channel)) अणु
+	if (IS_ERR(netcp->rx_channel)) {
 		dev_err(netcp->ndev_dev, "failed opening rx chan(%s\n",
 			netcp->dma_chan_name);
 		ret = PTR_ERR(netcp->rx_channel);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dev_dbg(netcp->ndev_dev, "opened RX channel: %p\n", netcp->rx_channel);
-	वापस 0;
+	return 0;
 
 fail:
-	netcp_मुक्त_navigator_resources(netcp);
-	वापस ret;
-पूर्ण
+	netcp_free_navigator_resources(netcp);
+	return ret;
+}
 
 /* Open the device */
-अटल पूर्णांक netcp_nकरो_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
-	काष्ठा netcp_module *module;
-	पूर्णांक ret;
+static int netcp_ndo_open(struct net_device *ndev)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_intf_modpriv *intf_modpriv;
+	struct netcp_module *module;
+	int ret;
 
-	netअगर_carrier_off(ndev);
+	netif_carrier_off(ndev);
 	ret = netcp_setup_navigator_resources(ndev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(netcp->ndev_dev, "Failed to setup navigator resources\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर (module->खोलो) अणु
-			ret = module->खोलो(पूर्णांकf_modpriv->module_priv, ndev);
-			अगर (ret != 0) अणु
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if (module->open) {
+			ret = module->open(intf_modpriv->module_priv, ndev);
+			if (ret != 0) {
 				dev_err(netcp->ndev_dev, "module open failed\n");
-				जाओ fail_खोलो;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto fail_open;
+			}
+		}
+	}
 
 	napi_enable(&netcp->rx_napi);
 	napi_enable(&netcp->tx_napi);
-	knav_queue_enable_notअगरy(netcp->tx_compl_q);
-	knav_queue_enable_notअगरy(netcp->rx_queue);
+	knav_queue_enable_notify(netcp->tx_compl_q);
+	knav_queue_enable_notify(netcp->rx_queue);
 	netcp_rxpool_refill(netcp);
-	netअगर_tx_wake_all_queues(ndev);
+	netif_tx_wake_all_queues(ndev);
 	dev_dbg(netcp->ndev_dev, "netcp device %s opened\n", ndev->name);
-	वापस 0;
+	return 0;
 
-fail_खोलो:
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर (module->बंद)
-			module->बंद(पूर्णांकf_modpriv->module_priv, ndev);
-	पूर्ण
+fail_open:
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if (module->close)
+			module->close(intf_modpriv->module_priv, ndev);
+	}
 
 fail:
-	netcp_मुक्त_navigator_resources(netcp);
-	वापस ret;
-पूर्ण
+	netcp_free_navigator_resources(netcp);
+	return ret;
+}
 
 /* Close the device */
-अटल पूर्णांक netcp_nकरो_stop(काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
-	काष्ठा netcp_module *module;
-	पूर्णांक err = 0;
+static int netcp_ndo_stop(struct net_device *ndev)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_intf_modpriv *intf_modpriv;
+	struct netcp_module *module;
+	int err = 0;
 
-	netअगर_tx_stop_all_queues(ndev);
-	netअगर_carrier_off(ndev);
+	netif_tx_stop_all_queues(ndev);
+	netif_carrier_off(ndev);
 	netcp_addr_clear_mark(netcp);
 	netcp_addr_sweep_del(netcp);
-	knav_queue_disable_notअगरy(netcp->rx_queue);
-	knav_queue_disable_notअगरy(netcp->tx_compl_q);
+	knav_queue_disable_notify(netcp->rx_queue);
+	knav_queue_disable_notify(netcp->tx_compl_q);
 	napi_disable(&netcp->rx_napi);
 	napi_disable(&netcp->tx_napi);
 
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर (module->बंद) अणु
-			err = module->बंद(पूर्णांकf_modpriv->module_priv, ndev);
-			अगर (err != 0)
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if (module->close) {
+			err = module->close(intf_modpriv->module_priv, ndev);
+			if (err != 0)
 				dev_err(netcp->ndev_dev, "Close failed\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Recycle Rx descriptors from completion queue */
 	netcp_empty_rx_queue(netcp);
@@ -1774,160 +1773,160 @@ fail:
 	/* Recycle Tx descriptors from completion queue */
 	netcp_process_tx_compl_packets(netcp, netcp->tx_pool_size);
 
-	अगर (knav_pool_count(netcp->tx_pool) != netcp->tx_pool_size)
+	if (knav_pool_count(netcp->tx_pool) != netcp->tx_pool_size)
 		dev_err(netcp->ndev_dev, "Lost (%d) Tx descs\n",
 			netcp->tx_pool_size - knav_pool_count(netcp->tx_pool));
 
-	netcp_मुक्त_navigator_resources(netcp);
+	netcp_free_navigator_resources(netcp);
 	dev_dbg(netcp->ndev_dev, "netcp device %s stopped\n", ndev->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक netcp_nकरो_ioctl(काष्ठा net_device *ndev,
-			   काष्ठा अगरreq *req, पूर्णांक cmd)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
-	काष्ठा netcp_module *module;
-	पूर्णांक ret = -1, err = -EOPNOTSUPP;
+static int netcp_ndo_ioctl(struct net_device *ndev,
+			   struct ifreq *req, int cmd)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_intf_modpriv *intf_modpriv;
+	struct netcp_module *module;
+	int ret = -1, err = -EOPNOTSUPP;
 
-	अगर (!netअगर_running(ndev))
-		वापस -EINVAL;
+	if (!netif_running(ndev))
+		return -EINVAL;
 
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर (!module->ioctl)
-			जारी;
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if (!module->ioctl)
+			continue;
 
-		err = module->ioctl(पूर्णांकf_modpriv->module_priv, req, cmd);
-		अगर ((err < 0) && (err != -EOPNOTSUPP)) अणु
+		err = module->ioctl(intf_modpriv->module_priv, req, cmd);
+		if ((err < 0) && (err != -EOPNOTSUPP)) {
 			ret = err;
-			जाओ out;
-		पूर्ण
-		अगर (err == 0)
+			goto out;
+		}
+		if (err == 0)
 			ret = err;
-	पूर्ण
+	}
 
 out:
-	वापस (ret == 0) ? 0 : err;
-पूर्ण
+	return (ret == 0) ? 0 : err;
+}
 
-अटल व्योम netcp_nकरो_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	अचिन्हित पूर्णांक descs = knav_pool_count(netcp->tx_pool);
+static void netcp_ndo_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	unsigned int descs = knav_pool_count(netcp->tx_pool);
 
 	dev_err(netcp->ndev_dev, "transmit timed out tx descs(%d)\n", descs);
 	netcp_process_tx_compl_packets(netcp, netcp->tx_pool_size);
-	netअगर_trans_update(ndev);
-	netअगर_tx_wake_all_queues(ndev);
-पूर्ण
+	netif_trans_update(ndev);
+	netif_tx_wake_all_queues(ndev);
+}
 
-अटल पूर्णांक netcp_rx_add_vid(काष्ठा net_device *ndev, __be16 proto, u16 vid)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
-	काष्ठा netcp_module *module;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = 0;
+static int netcp_rx_add_vid(struct net_device *ndev, __be16 proto, u16 vid)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_intf_modpriv *intf_modpriv;
+	struct netcp_module *module;
+	unsigned long flags;
+	int err = 0;
 
 	dev_dbg(netcp->ndev_dev, "adding rx vlan id: %d\n", vid);
 
 	spin_lock_irqsave(&netcp->lock, flags);
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर ((module->add_vid) && (vid != 0)) अणु
-			err = module->add_vid(पूर्णांकf_modpriv->module_priv, vid);
-			अगर (err != 0) अणु
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if ((module->add_vid) && (vid != 0)) {
+			err = module->add_vid(intf_modpriv->module_priv, vid);
+			if (err != 0) {
 				dev_err(netcp->ndev_dev, "Could not add vlan id = %d\n",
 					vid);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	spin_unlock_irqrestore(&netcp->lock, flags);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक netcp_rx_समाप्त_vid(काष्ठा net_device *ndev, __be16 proto, u16 vid)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv;
-	काष्ठा netcp_module *module;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = 0;
+static int netcp_rx_kill_vid(struct net_device *ndev, __be16 proto, u16 vid)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_intf_modpriv *intf_modpriv;
+	struct netcp_module *module;
+	unsigned long flags;
+	int err = 0;
 
 	dev_dbg(netcp->ndev_dev, "removing rx vlan id: %d\n", vid);
 
 	spin_lock_irqsave(&netcp->lock, flags);
-	क्रम_each_module(netcp, पूर्णांकf_modpriv) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
-		अगर (module->del_vid) अणु
-			err = module->del_vid(पूर्णांकf_modpriv->module_priv, vid);
-			अगर (err != 0) अणु
+	for_each_module(netcp, intf_modpriv) {
+		module = intf_modpriv->netcp_module;
+		if (module->del_vid) {
+			err = module->del_vid(intf_modpriv->module_priv, vid);
+			if (err != 0) {
 				dev_err(netcp->ndev_dev, "Could not delete vlan id = %d\n",
 					vid);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	spin_unlock_irqrestore(&netcp->lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक netcp_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
-			  व्योम *type_data)
-अणु
-	काष्ठा tc_mqprio_qopt *mqprio = type_data;
+static int netcp_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			  void *type_data)
+{
+	struct tc_mqprio_qopt *mqprio = type_data;
 	u8 num_tc;
-	पूर्णांक i;
+	int i;
 
 	/* setup tc must be called under rtnl lock */
 	ASSERT_RTNL();
 
-	अगर (type != TC_SETUP_QDISC_MQPRIO)
-		वापस -EOPNOTSUPP;
+	if (type != TC_SETUP_QDISC_MQPRIO)
+		return -EOPNOTSUPP;
 
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
 	num_tc = mqprio->num_tc;
 
 	/* Sanity-check the number of traffic classes requested */
-	अगर ((dev->real_num_tx_queues <= 1) ||
+	if ((dev->real_num_tx_queues <= 1) ||
 	    (dev->real_num_tx_queues < num_tc))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Configure traffic class to queue mappings */
-	अगर (num_tc) अणु
+	if (num_tc) {
 		netdev_set_num_tc(dev, num_tc);
-		क्रम (i = 0; i < num_tc; i++)
+		for (i = 0; i < num_tc; i++)
 			netdev_set_tc_queue(dev, i, 1, i);
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_reset_tc(dev);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-netcp_get_stats(काष्ठा net_device *ndev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_stats *p = &netcp->stats;
+static void
+netcp_get_stats(struct net_device *ndev, struct rtnl_link_stats64 *stats)
+{
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_stats *p = &netcp->stats;
 	u64 rxpackets, rxbytes, txpackets, txbytes;
-	अचिन्हित पूर्णांक start;
+	unsigned int start;
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin_irq(&p->syncp_rx);
 		rxpackets       = p->rx_packets;
 		rxbytes         = p->rx_bytes;
-	पूर्ण जबतक (u64_stats_fetch_retry_irq(&p->syncp_rx, start));
+	} while (u64_stats_fetch_retry_irq(&p->syncp_rx, start));
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin_irq(&p->syncp_tx);
 		txpackets       = p->tx_packets;
 		txbytes         = p->tx_bytes;
-	पूर्ण जबतक (u64_stats_fetch_retry_irq(&p->syncp_tx, start));
+	} while (u64_stats_fetch_retry_irq(&p->syncp_tx, start));
 
 	stats->rx_packets = rxpackets;
 	stats->rx_bytes = rxbytes;
@@ -1938,44 +1937,44 @@ netcp_get_stats(काष्ठा net_device *ndev, काष्ठा rtnl_lin
 	stats->rx_errors = p->rx_errors;
 	stats->rx_dropped = p->rx_dropped;
 	stats->tx_dropped = p->tx_dropped;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_device_ops netcp_netdev_ops = अणु
-	.nकरो_खोलो		= netcp_nकरो_खोलो,
-	.nकरो_stop		= netcp_nकरो_stop,
-	.nकरो_start_xmit		= netcp_nकरो_start_xmit,
-	.nकरो_set_rx_mode	= netcp_set_rx_mode,
-	.nकरो_करो_ioctl           = netcp_nकरो_ioctl,
-	.nकरो_get_stats64        = netcp_get_stats,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_vlan_rx_add_vid	= netcp_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= netcp_rx_समाप्त_vid,
-	.nकरो_tx_समयout		= netcp_nकरो_tx_समयout,
-	.nकरो_select_queue	= dev_pick_tx_zero,
-	.nकरो_setup_tc		= netcp_setup_tc,
-पूर्ण;
+static const struct net_device_ops netcp_netdev_ops = {
+	.ndo_open		= netcp_ndo_open,
+	.ndo_stop		= netcp_ndo_stop,
+	.ndo_start_xmit		= netcp_ndo_start_xmit,
+	.ndo_set_rx_mode	= netcp_set_rx_mode,
+	.ndo_do_ioctl           = netcp_ndo_ioctl,
+	.ndo_get_stats64        = netcp_get_stats,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_vlan_rx_add_vid	= netcp_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= netcp_rx_kill_vid,
+	.ndo_tx_timeout		= netcp_ndo_tx_timeout,
+	.ndo_select_queue	= dev_pick_tx_zero,
+	.ndo_setup_tc		= netcp_setup_tc,
+};
 
-अटल पूर्णांक netcp_create_पूर्णांकerface(काष्ठा netcp_device *netcp_device,
-				  काष्ठा device_node *node_पूर्णांकerface)
-अणु
-	काष्ठा device *dev = netcp_device->device;
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा netcp_पूर्णांकf *netcp;
-	काष्ठा net_device *ndev;
-	resource_माप_प्रकार size;
-	काष्ठा resource res;
-	व्योम __iomem *efuse = शून्य;
+static int netcp_create_interface(struct netcp_device *netcp_device,
+				  struct device_node *node_interface)
+{
+	struct device *dev = netcp_device->device;
+	struct device_node *node = dev->of_node;
+	struct netcp_intf *netcp;
+	struct net_device *ndev;
+	resource_size_t size;
+	struct resource res;
+	void __iomem *efuse = NULL;
 	u32 efuse_mac = 0;
 	u8 efuse_mac_addr[6];
 	u32 temp[2];
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	ndev = alloc_etherdev_mqs(माप(*netcp), 1, 1);
-	अगर (!ndev) अणु
+	ndev = alloc_etherdev_mqs(sizeof(*netcp), 1, 1);
+	if (!ndev) {
 		dev_err(dev, "Error allocating netdev\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ndev->features |= NETIF_F_SG;
 	ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
@@ -1998,284 +1997,284 @@ netcp_get_stats(काष्ठा net_device *ndev, काष्ठा rtnl_lin
 	netcp->dev = netcp_device->device;
 	netcp->ndev = ndev;
 	netcp->ndev_dev  = &ndev->dev;
-	netcp->msg_enable = netअगर_msg_init(netcp_debug_level, NETCP_DEBUG);
-	netcp->tx_छोड़ो_threshold = MAX_SKB_FRAGS;
-	netcp->tx_resume_threshold = netcp->tx_छोड़ो_threshold;
-	netcp->node_पूर्णांकerface = node_पूर्णांकerface;
+	netcp->msg_enable = netif_msg_init(netcp_debug_level, NETCP_DEBUG);
+	netcp->tx_pause_threshold = MAX_SKB_FRAGS;
+	netcp->tx_resume_threshold = netcp->tx_pause_threshold;
+	netcp->node_interface = node_interface;
 
-	ret = of_property_पढ़ो_u32(node_पूर्णांकerface, "efuse-mac", &efuse_mac);
-	अगर (efuse_mac) अणु
-		अगर (of_address_to_resource(node, NETCP_EFUSE_REG_INDEX, &res)) अणु
+	ret = of_property_read_u32(node_interface, "efuse-mac", &efuse_mac);
+	if (efuse_mac) {
+		if (of_address_to_resource(node, NETCP_EFUSE_REG_INDEX, &res)) {
 			dev_err(dev, "could not find efuse-mac reg resource\n");
 			ret = -ENODEV;
-			जाओ quit;
-		पूर्ण
+			goto quit;
+		}
 		size = resource_size(&res);
 
-		अगर (!devm_request_mem_region(dev, res.start, size,
-					     dev_name(dev))) अणु
+		if (!devm_request_mem_region(dev, res.start, size,
+					     dev_name(dev))) {
 			dev_err(dev, "could not reserve resource\n");
 			ret = -ENOMEM;
-			जाओ quit;
-		पूर्ण
+			goto quit;
+		}
 
 		efuse = devm_ioremap(dev, res.start, size);
-		अगर (!efuse) अणु
+		if (!efuse) {
 			dev_err(dev, "could not map resource\n");
 			devm_release_mem_region(dev, res.start, size);
 			ret = -ENOMEM;
-			जाओ quit;
-		पूर्ण
+			goto quit;
+		}
 
 		emac_arch_get_mac_addr(efuse_mac_addr, efuse, efuse_mac);
-		अगर (is_valid_ether_addr(efuse_mac_addr))
+		if (is_valid_ether_addr(efuse_mac_addr))
 			ether_addr_copy(ndev->dev_addr, efuse_mac_addr);
-		अन्यथा
-			eth_अक्रमom_addr(ndev->dev_addr);
+		else
+			eth_random_addr(ndev->dev_addr);
 
 		devm_iounmap(dev, efuse);
 		devm_release_mem_region(dev, res.start, size);
-	पूर्ण अन्यथा अणु
-		ret = of_get_mac_address(node_पूर्णांकerface, ndev->dev_addr);
-		अगर (ret)
-			eth_अक्रमom_addr(ndev->dev_addr);
-	पूर्ण
+	} else {
+		ret = of_get_mac_address(node_interface, ndev->dev_addr);
+		if (ret)
+			eth_random_addr(ndev->dev_addr);
+	}
 
-	ret = of_property_पढ़ो_string(node_पूर्णांकerface, "rx-channel",
+	ret = of_property_read_string(node_interface, "rx-channel",
 				      &netcp->dma_chan_name);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "missing \"rx-channel\" parameter\n");
 		ret = -ENODEV;
-		जाओ quit;
-	पूर्ण
+		goto quit;
+	}
 
-	ret = of_property_पढ़ो_u32(node_पूर्णांकerface, "rx-queue",
+	ret = of_property_read_u32(node_interface, "rx-queue",
 				   &netcp->rx_queue_id);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(dev, "missing \"rx-queue\" parameter\n");
 		netcp->rx_queue_id = KNAV_QUEUE_QPEND;
-	पूर्ण
+	}
 
-	ret = of_property_पढ़ो_u32_array(node_पूर्णांकerface, "rx-queue-depth",
+	ret = of_property_read_u32_array(node_interface, "rx-queue-depth",
 					 netcp->rx_queue_depths,
 					 KNAV_DMA_FDQ_PER_CHAN);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "missing \"rx-queue-depth\" parameter\n");
 		netcp->rx_queue_depths[0] = 128;
-	पूर्ण
+	}
 
-	ret = of_property_पढ़ो_u32_array(node_पूर्णांकerface, "rx-pool", temp, 2);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32_array(node_interface, "rx-pool", temp, 2);
+	if (ret < 0) {
 		dev_err(dev, "missing \"rx-pool\" parameter\n");
 		ret = -ENODEV;
-		जाओ quit;
-	पूर्ण
+		goto quit;
+	}
 	netcp->rx_pool_size = temp[0];
 	netcp->rx_pool_region_id = temp[1];
 
-	ret = of_property_पढ़ो_u32_array(node_पूर्णांकerface, "tx-pool", temp, 2);
-	अगर (ret < 0) अणु
+	ret = of_property_read_u32_array(node_interface, "tx-pool", temp, 2);
+	if (ret < 0) {
 		dev_err(dev, "missing \"tx-pool\" parameter\n");
 		ret = -ENODEV;
-		जाओ quit;
-	पूर्ण
+		goto quit;
+	}
 	netcp->tx_pool_size = temp[0];
 	netcp->tx_pool_region_id = temp[1];
 
-	अगर (netcp->tx_pool_size < MAX_SKB_FRAGS) अणु
+	if (netcp->tx_pool_size < MAX_SKB_FRAGS) {
 		dev_err(dev, "tx-pool size too small, must be atleast(%ld)\n",
 			MAX_SKB_FRAGS);
 		ret = -ENODEV;
-		जाओ quit;
-	पूर्ण
+		goto quit;
+	}
 
-	ret = of_property_पढ़ो_u32(node_पूर्णांकerface, "tx-completion-queue",
+	ret = of_property_read_u32(node_interface, "tx-completion-queue",
 				   &netcp->tx_compl_qid);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(dev, "missing \"tx-completion-queue\" parameter\n");
 		netcp->tx_compl_qid = KNAV_QUEUE_QPEND;
-	पूर्ण
+	}
 
-	/* NAPI रेजिस्टर */
-	netअगर_napi_add(ndev, &netcp->rx_napi, netcp_rx_poll, NETCP_NAPI_WEIGHT);
-	netअगर_tx_napi_add(ndev, &netcp->tx_napi, netcp_tx_poll, NETCP_NAPI_WEIGHT);
+	/* NAPI register */
+	netif_napi_add(ndev, &netcp->rx_napi, netcp_rx_poll, NETCP_NAPI_WEIGHT);
+	netif_tx_napi_add(ndev, &netcp->tx_napi, netcp_tx_poll, NETCP_NAPI_WEIGHT);
 
 	/* Register the network device */
 	ndev->dev_id		= 0;
-	ndev->watchकरोg_समयo	= NETCP_TX_TIMEOUT;
+	ndev->watchdog_timeo	= NETCP_TX_TIMEOUT;
 	ndev->netdev_ops	= &netcp_netdev_ops;
 	SET_NETDEV_DEV(ndev, dev);
 
-	list_add_tail(&netcp->पूर्णांकerface_list, &netcp_device->पूर्णांकerface_head);
-	वापस 0;
+	list_add_tail(&netcp->interface_list, &netcp_device->interface_head);
+	return 0;
 
 quit:
-	मुक्त_netdev(ndev);
-	वापस ret;
-पूर्ण
+	free_netdev(ndev);
+	return ret;
+}
 
-अटल व्योम netcp_delete_पूर्णांकerface(काष्ठा netcp_device *netcp_device,
-				   काष्ठा net_device *ndev)
-अणु
-	काष्ठा netcp_पूर्णांकf_modpriv *पूर्णांकf_modpriv, *पंचांगp;
-	काष्ठा netcp_पूर्णांकf *netcp = netdev_priv(ndev);
-	काष्ठा netcp_module *module;
+static void netcp_delete_interface(struct netcp_device *netcp_device,
+				   struct net_device *ndev)
+{
+	struct netcp_intf_modpriv *intf_modpriv, *tmp;
+	struct netcp_intf *netcp = netdev_priv(ndev);
+	struct netcp_module *module;
 
 	dev_dbg(netcp_device->device, "Removing interface \"%s\"\n",
 		ndev->name);
 
-	/* Notअगरy each of the modules that the पूर्णांकerface is going away */
-	list_क्रम_each_entry_safe(पूर्णांकf_modpriv, पंचांगp, &netcp->module_head,
-				 पूर्णांकf_list) अणु
-		module = पूर्णांकf_modpriv->netcp_module;
+	/* Notify each of the modules that the interface is going away */
+	list_for_each_entry_safe(intf_modpriv, tmp, &netcp->module_head,
+				 intf_list) {
+		module = intf_modpriv->netcp_module;
 		dev_dbg(netcp_device->device, "Releasing module \"%s\"\n",
 			module->name);
-		अगर (module->release)
-			module->release(पूर्णांकf_modpriv->module_priv);
-		list_del(&पूर्णांकf_modpriv->पूर्णांकf_list);
-	पूर्ण
+		if (module->release)
+			module->release(intf_modpriv->module_priv);
+		list_del(&intf_modpriv->intf_list);
+	}
 	WARN(!list_empty(&netcp->module_head), "%s interface module list is not empty!\n",
 	     ndev->name);
 
-	list_del(&netcp->पूर्णांकerface_list);
+	list_del(&netcp->interface_list);
 
-	of_node_put(netcp->node_पूर्णांकerface);
-	unरेजिस्टर_netdev(ndev);
-	मुक्त_netdev(ndev);
-पूर्ण
+	of_node_put(netcp->node_interface);
+	unregister_netdev(ndev);
+	free_netdev(ndev);
+}
 
-अटल पूर्णांक netcp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा netcp_पूर्णांकf *netcp_पूर्णांकf, *netcp_पंचांगp;
-	काष्ठा device_node *child, *पूर्णांकerfaces;
-	काष्ठा netcp_device *netcp_device;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा netcp_module *module;
-	पूर्णांक ret;
+static int netcp_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct netcp_intf *netcp_intf, *netcp_tmp;
+	struct device_node *child, *interfaces;
+	struct netcp_device *netcp_device;
+	struct device *dev = &pdev->dev;
+	struct netcp_module *module;
+	int ret;
 
-	अगर (!knav_dma_device_पढ़ोy() ||
-	    !knav_qmss_device_पढ़ोy())
-		वापस -EPROBE_DEFER;
+	if (!knav_dma_device_ready() ||
+	    !knav_qmss_device_ready())
+		return -EPROBE_DEFER;
 
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(dev, "could not find device info\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Allocate a new NETCP device instance */
-	netcp_device = devm_kzalloc(dev, माप(*netcp_device), GFP_KERNEL);
-	अगर (!netcp_device)
-		वापस -ENOMEM;
+	netcp_device = devm_kzalloc(dev, sizeof(*netcp_device), GFP_KERNEL);
+	if (!netcp_device)
+		return -ENOMEM;
 
-	pm_runसमय_enable(&pdev->dev);
-	ret = pm_runसमय_get_sync(&pdev->dev);
-	अगर (ret < 0) अणु
+	pm_runtime_enable(&pdev->dev);
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0) {
 		dev_err(dev, "Failed to enable NETCP power-domain\n");
-		pm_runसमय_disable(&pdev->dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_disable(&pdev->dev);
+		return ret;
+	}
 
 	/* Initialize the NETCP device instance */
-	INIT_LIST_HEAD(&netcp_device->पूर्णांकerface_head);
+	INIT_LIST_HEAD(&netcp_device->interface_head);
 	INIT_LIST_HEAD(&netcp_device->modpriv_head);
 	netcp_device->device = dev;
-	platक्रमm_set_drvdata(pdev, netcp_device);
+	platform_set_drvdata(pdev, netcp_device);
 
-	/* create पूर्णांकerfaces */
-	पूर्णांकerfaces = of_get_child_by_name(node, "netcp-interfaces");
-	अगर (!पूर्णांकerfaces) अणु
+	/* create interfaces */
+	interfaces = of_get_child_by_name(node, "netcp-interfaces");
+	if (!interfaces) {
 		dev_err(dev, "could not find netcp-interfaces node\n");
 		ret = -ENODEV;
-		जाओ probe_quit;
-	पूर्ण
+		goto probe_quit;
+	}
 
-	क्रम_each_available_child_of_node(पूर्णांकerfaces, child) अणु
-		ret = netcp_create_पूर्णांकerface(netcp_device, child);
-		अगर (ret) अणु
+	for_each_available_child_of_node(interfaces, child) {
+		ret = netcp_create_interface(netcp_device, child);
+		if (ret) {
 			dev_err(dev, "could not create interface(%pOFn)\n",
 				child);
-			जाओ probe_quit_पूर्णांकerface;
-		पूर्ण
-	पूर्ण
+			goto probe_quit_interface;
+		}
+	}
 
-	of_node_put(पूर्णांकerfaces);
+	of_node_put(interfaces);
 
 	/* Add the device instance to the list */
 	list_add_tail(&netcp_device->device_list, &netcp_devices);
 
-	/* Probe & attach any modules alपढ़ोy रेजिस्टरed */
+	/* Probe & attach any modules already registered */
 	mutex_lock(&netcp_modules_lock);
-	क्रम_each_netcp_module(module) अणु
+	for_each_netcp_module(module) {
 		ret = netcp_module_probe(netcp_device, module);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(dev, "module(%s) probe failed\n", module->name);
-	पूर्ण
+	}
 	mutex_unlock(&netcp_modules_lock);
-	वापस 0;
+	return 0;
 
-probe_quit_पूर्णांकerface:
-	list_क्रम_each_entry_safe(netcp_पूर्णांकf, netcp_पंचांगp,
-				 &netcp_device->पूर्णांकerface_head,
-				 पूर्णांकerface_list) अणु
-		netcp_delete_पूर्णांकerface(netcp_device, netcp_पूर्णांकf->ndev);
-	पूर्ण
+probe_quit_interface:
+	list_for_each_entry_safe(netcp_intf, netcp_tmp,
+				 &netcp_device->interface_head,
+				 interface_list) {
+		netcp_delete_interface(netcp_device, netcp_intf->ndev);
+	}
 
-	of_node_put(पूर्णांकerfaces);
+	of_node_put(interfaces);
 
 probe_quit:
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	platक्रमm_set_drvdata(pdev, शून्य);
-	वापस ret;
-पूर्ण
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	platform_set_drvdata(pdev, NULL);
+	return ret;
+}
 
-अटल पूर्णांक netcp_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा netcp_device *netcp_device = platक्रमm_get_drvdata(pdev);
-	काष्ठा netcp_पूर्णांकf *netcp_पूर्णांकf, *netcp_पंचांगp;
-	काष्ठा netcp_inst_modpriv *inst_modpriv, *पंचांगp;
-	काष्ठा netcp_module *module;
+static int netcp_remove(struct platform_device *pdev)
+{
+	struct netcp_device *netcp_device = platform_get_drvdata(pdev);
+	struct netcp_intf *netcp_intf, *netcp_tmp;
+	struct netcp_inst_modpriv *inst_modpriv, *tmp;
+	struct netcp_module *module;
 
-	list_क्रम_each_entry_safe(inst_modpriv, पंचांगp, &netcp_device->modpriv_head,
-				 inst_list) अणु
+	list_for_each_entry_safe(inst_modpriv, tmp, &netcp_device->modpriv_head,
+				 inst_list) {
 		module = inst_modpriv->netcp_module;
 		dev_dbg(&pdev->dev, "Removing module \"%s\"\n", module->name);
-		module->हटाओ(netcp_device, inst_modpriv->module_priv);
+		module->remove(netcp_device, inst_modpriv->module_priv);
 		list_del(&inst_modpriv->inst_list);
-	पूर्ण
+	}
 
-	/* now that all modules are हटाओd, clean up the पूर्णांकerfaces */
-	list_क्रम_each_entry_safe(netcp_पूर्णांकf, netcp_पंचांगp,
-				 &netcp_device->पूर्णांकerface_head,
-				 पूर्णांकerface_list) अणु
-		netcp_delete_पूर्णांकerface(netcp_device, netcp_पूर्णांकf->ndev);
-	पूर्ण
+	/* now that all modules are removed, clean up the interfaces */
+	list_for_each_entry_safe(netcp_intf, netcp_tmp,
+				 &netcp_device->interface_head,
+				 interface_list) {
+		netcp_delete_interface(netcp_device, netcp_intf->ndev);
+	}
 
-	WARN(!list_empty(&netcp_device->पूर्णांकerface_head),
+	WARN(!list_empty(&netcp_device->interface_head),
 	     "%s interface list not empty!\n", pdev->name);
 
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	platक्रमm_set_drvdata(pdev, शून्य);
-	वापस 0;
-पूर्ण
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	platform_set_drvdata(pdev, NULL);
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_match[] = अणु
-	अणु .compatible = "ti,netcp-1.0", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_match[] = {
+	{ .compatible = "ti,netcp-1.0", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_match);
 
-अटल काष्ठा platक्रमm_driver netcp_driver = अणु
-	.driver = अणु
+static struct platform_driver netcp_driver = {
+	.driver = {
 		.name		= "netcp-1.0",
 		.of_match_table	= of_match,
-	पूर्ण,
+	},
 	.probe = netcp_probe,
-	.हटाओ = netcp_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(netcp_driver);
+	.remove = netcp_remove,
+};
+module_platform_driver(netcp_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("TI NETCP driver for Keystone SOCs");

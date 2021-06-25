@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /*
  *
@@ -13,125 +12,125 @@
  *	- Multituner support and i2c address binding
  */
 
-#समावेश "cx88.h"
+#include "cx88.h"
 
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
 
-#समावेश <media/v4l2-common.h>
+#include <media/v4l2-common.h>
 
-अटल अचिन्हित पूर्णांक i2c_debug;
-module_param(i2c_debug, पूर्णांक, 0644);
+static unsigned int i2c_debug;
+module_param(i2c_debug, int, 0644);
 MODULE_PARM_DESC(i2c_debug, "enable debug messages [i2c]");
 
-अटल अचिन्हित पूर्णांक i2c_scan;
-module_param(i2c_scan, पूर्णांक, 0444);
+static unsigned int i2c_scan;
+module_param(i2c_scan, int, 0444);
 MODULE_PARM_DESC(i2c_scan, "scan i2c bus at insmod time");
 
-अटल अचिन्हित पूर्णांक i2c_udelay = 5;
-module_param(i2c_udelay, पूर्णांक, 0644);
+static unsigned int i2c_udelay = 5;
+module_param(i2c_udelay, int, 0644);
 MODULE_PARM_DESC(i2c_udelay,
 		 "i2c delay at insmod time, in usecs (should be 5 or higher). Lower value means higher bus speed.");
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...) करो अणु				\
-	अगर (i2c_debug >= level)						\
-		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: i2c:" fmt),		\
+#define dprintk(level, fmt, arg...) do {				\
+	if (i2c_debug >= level)						\
+		printk(KERN_DEBUG pr_fmt("%s: i2c:" fmt),		\
 			__func__, ##arg);				\
-पूर्ण जबतक (0)
+} while (0)
 
 /* ----------------------------------------------------------------------- */
 
-अटल व्योम cx8800_bit_setscl(व्योम *data, पूर्णांक state)
-अणु
-	काष्ठा cx88_core *core = data;
+static void cx8800_bit_setscl(void *data, int state)
+{
+	struct cx88_core *core = data;
 
-	अगर (state)
+	if (state)
 		core->i2c_state |= 0x02;
-	अन्यथा
+	else
 		core->i2c_state &= ~0x02;
-	cx_ग_लिखो(MO_I2C, core->i2c_state);
-	cx_पढ़ो(MO_I2C);
-पूर्ण
+	cx_write(MO_I2C, core->i2c_state);
+	cx_read(MO_I2C);
+}
 
-अटल व्योम cx8800_bit_setsda(व्योम *data, पूर्णांक state)
-अणु
-	काष्ठा cx88_core *core = data;
+static void cx8800_bit_setsda(void *data, int state)
+{
+	struct cx88_core *core = data;
 
-	अगर (state)
+	if (state)
 		core->i2c_state |= 0x01;
-	अन्यथा
+	else
 		core->i2c_state &= ~0x01;
-	cx_ग_लिखो(MO_I2C, core->i2c_state);
-	cx_पढ़ो(MO_I2C);
-पूर्ण
+	cx_write(MO_I2C, core->i2c_state);
+	cx_read(MO_I2C);
+}
 
-अटल पूर्णांक cx8800_bit_माला_लोcl(व्योम *data)
-अणु
-	काष्ठा cx88_core *core = data;
+static int cx8800_bit_getscl(void *data)
+{
+	struct cx88_core *core = data;
 	u32 state;
 
-	state = cx_पढ़ो(MO_I2C);
-	वापस state & 0x02 ? 1 : 0;
-पूर्ण
+	state = cx_read(MO_I2C);
+	return state & 0x02 ? 1 : 0;
+}
 
-अटल पूर्णांक cx8800_bit_माला_लोda(व्योम *data)
-अणु
-	काष्ठा cx88_core *core = data;
+static int cx8800_bit_getsda(void *data)
+{
+	struct cx88_core *core = data;
 	u32 state;
 
-	state = cx_पढ़ो(MO_I2C);
-	वापस state & 0x01;
-पूर्ण
+	state = cx_read(MO_I2C);
+	return state & 0x01;
+}
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा i2c_algo_bit_data cx8800_i2c_algo_ढाँचा = अणु
+static const struct i2c_algo_bit_data cx8800_i2c_algo_template = {
 	.setsda  = cx8800_bit_setsda,
 	.setscl  = cx8800_bit_setscl,
-	.माला_लोda  = cx8800_bit_माला_लोda,
-	.माला_लोcl  = cx8800_bit_माला_लोcl,
+	.getsda  = cx8800_bit_getsda,
+	.getscl  = cx8800_bit_getscl,
 	.udelay  = 16,
-	.समयout = 200,
-पूर्ण;
+	.timeout = 200,
+};
 
 /* ----------------------------------------------------------------------- */
 
-अटल स्थिर अक्षर * स्थिर i2c_devs[128] = अणु
+static const char * const i2c_devs[128] = {
 	[0x1c >> 1] = "lgdt330x",
 	[0x86 >> 1] = "tda9887/cx22702",
 	[0xa0 >> 1] = "eeprom",
 	[0xc0 >> 1] = "tuner (analog)",
 	[0xc2 >> 1] = "tuner (analog/dvb)",
 	[0xc8 >> 1] = "xc5000",
-पूर्ण;
+};
 
-अटल व्योम करो_i2c_scan(स्थिर अक्षर *name, काष्ठा i2c_client *c)
-अणु
-	अचिन्हित अक्षर buf;
-	पूर्णांक i, rc;
+static void do_i2c_scan(const char *name, struct i2c_client *c)
+{
+	unsigned char buf;
+	int i, rc;
 
-	क्रम (i = 0; i < ARRAY_SIZE(i2c_devs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(i2c_devs); i++) {
 		c->addr = i;
 		rc = i2c_master_recv(c, &buf, 0);
-		अगर (rc < 0)
-			जारी;
+		if (rc < 0)
+			continue;
 		pr_info("i2c scan: found device @ 0x%x  [%s]\n",
 			i << 1, i2c_devs[i] ? i2c_devs[i] : "???");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* init + रेजिस्टर i2c adapter */
-पूर्णांक cx88_i2c_init(काष्ठा cx88_core *core, काष्ठा pci_dev *pci)
-अणु
+/* init + register i2c adapter */
+int cx88_i2c_init(struct cx88_core *core, struct pci_dev *pci)
+{
 	/* Prevents usage of invalid delay values */
-	अगर (i2c_udelay < 5)
+	if (i2c_udelay < 5)
 		i2c_udelay = 5;
 
-	core->i2c_algo = cx8800_i2c_algo_ढाँचा;
+	core->i2c_algo = cx8800_i2c_algo_template;
 
 	core->i2c_adap.dev.parent = &pci->dev;
-	strscpy(core->i2c_adap.name, core->name, माप(core->i2c_adap.name));
+	strscpy(core->i2c_adap.name, core->name, sizeof(core->i2c_adap.name));
 	core->i2c_adap.owner = THIS_MODULE;
 	core->i2c_algo.udelay = i2c_udelay;
 	core->i2c_algo.data = core;
@@ -144,31 +143,31 @@ MODULE_PARM_DESC(i2c_udelay,
 	cx8800_bit_setsda(core, 1);
 
 	core->i2c_rc = i2c_bit_add_bus(&core->i2c_adap);
-	अगर (core->i2c_rc == 0) अणु
-		अटल u8 tuner_data[] = अणु
-			0x0b, 0xdc, 0x86, 0x52 पूर्ण;
-		अटल काष्ठा i2c_msg tuner_msg = अणु
+	if (core->i2c_rc == 0) {
+		static u8 tuner_data[] = {
+			0x0b, 0xdc, 0x86, 0x52 };
+		static struct i2c_msg tuner_msg = {
 			.flags = 0,
 			.addr = 0xc2 >> 1,
 			.buf = tuner_data,
 			.len = 4
-		पूर्ण;
+		};
 
-		dprपूर्णांकk(1, "i2c register ok\n");
-		चयन (core->boardnr) अणु
-		हाल CX88_BOARD_HAUPPAUGE_HVR1300:
-		हाल CX88_BOARD_HAUPPAUGE_HVR3000:
-		हाल CX88_BOARD_HAUPPAUGE_HVR4000:
+		dprintk(1, "i2c register ok\n");
+		switch (core->boardnr) {
+		case CX88_BOARD_HAUPPAUGE_HVR1300:
+		case CX88_BOARD_HAUPPAUGE_HVR3000:
+		case CX88_BOARD_HAUPPAUGE_HVR4000:
 			pr_info("i2c init: enabling analog demod on HVR1300/3000/4000 tuner\n");
 			i2c_transfer(core->i2c_client.adapter, &tuner_msg, 1);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अगर (i2c_scan)
-			करो_i2c_scan(core->name, &core->i2c_client);
-	पूर्ण अन्यथा
+			break;
+		default:
+			break;
+		}
+		if (i2c_scan)
+			do_i2c_scan(core->name, &core->i2c_client);
+	} else
 		pr_err("i2c register FAILED\n");
 
-	वापस core->i2c_rc;
-पूर्ण
+	return core->i2c_rc;
+}

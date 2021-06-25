@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MAXIM MAX77620 GPIO driver
  *
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mfd/max77620.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/gpio/driver.h>
+#include <linux/interrupt.h>
+#include <linux/mfd/max77620.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#घोषणा GPIO_REG_ADDR(offset) (MAX77620_REG_GPIO0 + offset)
+#define GPIO_REG_ADDR(offset) (MAX77620_REG_GPIO0 + offset)
 
-काष्ठा max77620_gpio अणु
-	काष्ठा gpio_chip	gpio_chip;
-	काष्ठा regmap		*rmap;
-	काष्ठा device		*dev;
-	काष्ठा mutex		buslock; /* irq_bus_lock */
-	अचिन्हित पूर्णांक		irq_type[MAX77620_GPIO_NR];
+struct max77620_gpio {
+	struct gpio_chip	gpio_chip;
+	struct regmap		*rmap;
+	struct device		*dev;
+	struct mutex		buslock; /* irq_bus_lock */
+	unsigned int		irq_type[MAX77620_GPIO_NR];
 	bool			irq_enabled[MAX77620_GPIO_NR];
-पूर्ण;
+};
 
-अटल irqवापस_t max77620_gpio_irqhandler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा max77620_gpio *gpio = data;
-	अचिन्हित पूर्णांक value, offset;
-	अचिन्हित दीर्घ pending;
-	पूर्णांक err;
+static irqreturn_t max77620_gpio_irqhandler(int irq, void *data)
+{
+	struct max77620_gpio *gpio = data;
+	unsigned int value, offset;
+	unsigned long pending;
+	int err;
 
-	err = regmap_पढ़ो(gpio->rmap, MAX77620_REG_IRQ_LVL2_GPIO, &value);
-	अगर (err < 0) अणु
+	err = regmap_read(gpio->rmap, MAX77620_REG_IRQ_LVL2_GPIO, &value);
+	if (err < 0) {
 		dev_err(gpio->dev, "REG_IRQ_LVL2_GPIO read failed: %d\n", err);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	pending = value;
 
-	क्रम_each_set_bit(offset, &pending, MAX77620_GPIO_NR) अणु
-		अचिन्हित पूर्णांक virq;
+	for_each_set_bit(offset, &pending, MAX77620_GPIO_NR) {
+		unsigned int virq;
 
-		virq = irq_find_mapping(gpio->gpio_chip.irq.करोमुख्य, offset);
+		virq = irq_find_mapping(gpio->gpio_chip.irq.domain, offset);
 		handle_nested_irq(virq);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम max77620_gpio_irq_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(chip);
+static void max77620_gpio_irq_mask(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct max77620_gpio *gpio = gpiochip_get_data(chip);
 
 	gpio->irq_enabled[data->hwirq] = false;
-पूर्ण
+}
 
-अटल व्योम max77620_gpio_irq_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(chip);
+static void max77620_gpio_irq_unmask(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct max77620_gpio *gpio = gpiochip_get_data(chip);
 
 	gpio->irq_enabled[data->hwirq] = true;
-पूर्ण
+}
 
-अटल पूर्णांक max77620_gpio_set_irq_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक irq_type;
+static int max77620_gpio_set_irq_type(struct irq_data *data, unsigned int type)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct max77620_gpio *gpio = gpiochip_get_data(chip);
+	unsigned int irq_type;
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_RISING:
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
 		irq_type = MAX77620_CNFG_GPIO_INT_RISING;
-		अवरोध;
+		break;
 
-	हाल IRQ_TYPE_EDGE_FALLING:
+	case IRQ_TYPE_EDGE_FALLING:
 		irq_type = MAX77620_CNFG_GPIO_INT_FALLING;
-		अवरोध;
+		break;
 
-	हाल IRQ_TYPE_EDGE_BOTH:
+	case IRQ_TYPE_EDGE_BOTH:
 		irq_type = MAX77620_CNFG_GPIO_INT_RISING |
 			   MAX77620_CNFG_GPIO_INT_FALLING;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	gpio->irq_type[data->hwirq] = irq_type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम max77620_gpio_bus_lock(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(chip);
+static void max77620_gpio_bus_lock(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct max77620_gpio *gpio = gpiochip_get_data(chip);
 
 	mutex_lock(&gpio->buslock);
-पूर्ण
+}
 
-अटल व्योम max77620_gpio_bus_sync_unlock(काष्ठा irq_data *data)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक value, offset = data->hwirq;
-	पूर्णांक err;
+static void max77620_gpio_bus_sync_unlock(struct irq_data *data)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	struct max77620_gpio *gpio = gpiochip_get_data(chip);
+	unsigned int value, offset = data->hwirq;
+	int err;
 
 	value = gpio->irq_enabled[offset] ? gpio->irq_type[offset] : 0;
 
 	err = regmap_update_bits(gpio->rmap, GPIO_REG_ADDR(offset),
 				 MAX77620_CNFG_GPIO_INT_MASK, value);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(chip->parent, "failed to update interrupt mask: %d\n",
 			err);
 
 	mutex_unlock(&gpio->buslock);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip max77620_gpio_irqchip = अणु
+static struct irq_chip max77620_gpio_irqchip = {
 	.name		= "max77620-gpio",
 	.irq_mask	= max77620_gpio_irq_mask,
 	.irq_unmask	= max77620_gpio_irq_unmask,
@@ -128,180 +127,180 @@
 	.irq_bus_lock	= max77620_gpio_bus_lock,
 	.irq_bus_sync_unlock = max77620_gpio_bus_sync_unlock,
 	.flags		= IRQCHIP_MASK_ON_SUSPEND,
-पूर्ण;
+};
 
-अटल पूर्णांक max77620_gpio_dir_input(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा max77620_gpio *mgpio = gpiochip_get_data(gc);
-	पूर्णांक ret;
+static int max77620_gpio_dir_input(struct gpio_chip *gc, unsigned int offset)
+{
+	struct max77620_gpio *mgpio = gpiochip_get_data(gc);
+	int ret;
 
 	ret = regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
-				 MAX77620_CNFG_GPIO_सूची_MASK,
-				 MAX77620_CNFG_GPIO_सूची_INPUT);
-	अगर (ret < 0)
+				 MAX77620_CNFG_GPIO_DIR_MASK,
+				 MAX77620_CNFG_GPIO_DIR_INPUT);
+	if (ret < 0)
 		dev_err(mgpio->dev, "CNFG_GPIOx dir update failed: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max77620_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा max77620_gpio *mgpio = gpiochip_get_data(gc);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int max77620_gpio_get(struct gpio_chip *gc, unsigned int offset)
+{
+	struct max77620_gpio *mgpio = gpiochip_get_data(gc);
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(mgpio->rmap, GPIO_REG_ADDR(offset), &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(mgpio->rmap, GPIO_REG_ADDR(offset), &val);
+	if (ret < 0) {
 		dev_err(mgpio->dev, "CNFG_GPIOx read failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर  (val & MAX77620_CNFG_GPIO_सूची_MASK)
-		वापस !!(val & MAX77620_CNFG_GPIO_INPUT_VAL_MASK);
-	अन्यथा
-		वापस !!(val & MAX77620_CNFG_GPIO_OUTPUT_VAL_MASK);
-पूर्ण
+	if  (val & MAX77620_CNFG_GPIO_DIR_MASK)
+		return !!(val & MAX77620_CNFG_GPIO_INPUT_VAL_MASK);
+	else
+		return !!(val & MAX77620_CNFG_GPIO_OUTPUT_VAL_MASK);
+}
 
-अटल पूर्णांक max77620_gpio_dir_output(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
-				    पूर्णांक value)
-अणु
-	काष्ठा max77620_gpio *mgpio = gpiochip_get_data(gc);
+static int max77620_gpio_dir_output(struct gpio_chip *gc, unsigned int offset,
+				    int value)
+{
+	struct max77620_gpio *mgpio = gpiochip_get_data(gc);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = (value) ? MAX77620_CNFG_GPIO_OUTPUT_VAL_HIGH :
 				MAX77620_CNFG_GPIO_OUTPUT_VAL_LOW;
 
 	ret = regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
 				 MAX77620_CNFG_GPIO_OUTPUT_VAL_MASK, val);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(mgpio->dev, "CNFG_GPIOx val update failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
-				 MAX77620_CNFG_GPIO_सूची_MASK,
-				 MAX77620_CNFG_GPIO_सूची_OUTPUT);
-	अगर (ret < 0)
+				 MAX77620_CNFG_GPIO_DIR_MASK,
+				 MAX77620_CNFG_GPIO_DIR_OUTPUT);
+	if (ret < 0)
 		dev_err(mgpio->dev, "CNFG_GPIOx dir update failed: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक max77620_gpio_set_debounce(काष्ठा max77620_gpio *mgpio,
-				      अचिन्हित पूर्णांक offset,
-				      अचिन्हित पूर्णांक debounce)
-अणु
+static int max77620_gpio_set_debounce(struct max77620_gpio *mgpio,
+				      unsigned int offset,
+				      unsigned int debounce)
+{
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (debounce) अणु
-	हाल 0:
+	switch (debounce) {
+	case 0:
 		val = MAX77620_CNFG_GPIO_DBNC_None;
-		अवरोध;
-	हाल 1 ... 8000:
+		break;
+	case 1 ... 8000:
 		val = MAX77620_CNFG_GPIO_DBNC_8ms;
-		अवरोध;
-	हाल 8001 ... 16000:
+		break;
+	case 8001 ... 16000:
 		val = MAX77620_CNFG_GPIO_DBNC_16ms;
-		अवरोध;
-	हाल 16001 ... 32000:
+		break;
+	case 16001 ... 32000:
 		val = MAX77620_CNFG_GPIO_DBNC_32ms;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(mgpio->dev, "Illegal value %u\n", debounce);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
 				 MAX77620_CNFG_GPIO_DBNC_MASK, val);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(mgpio->dev, "CNFG_GPIOx_DBNC update failed: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम max77620_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
-			      पूर्णांक value)
-अणु
-	काष्ठा max77620_gpio *mgpio = gpiochip_get_data(gc);
+static void max77620_gpio_set(struct gpio_chip *gc, unsigned int offset,
+			      int value)
+{
+	struct max77620_gpio *mgpio = gpiochip_get_data(gc);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = (value) ? MAX77620_CNFG_GPIO_OUTPUT_VAL_HIGH :
 				MAX77620_CNFG_GPIO_OUTPUT_VAL_LOW;
 
 	ret = regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
 				 MAX77620_CNFG_GPIO_OUTPUT_VAL_MASK, val);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(mgpio->dev, "CNFG_GPIO_OUT update failed: %d\n", ret);
-पूर्ण
+}
 
-अटल पूर्णांक max77620_gpio_set_config(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
-				    अचिन्हित दीर्घ config)
-अणु
-	काष्ठा max77620_gpio *mgpio = gpiochip_get_data(gc);
+static int max77620_gpio_set_config(struct gpio_chip *gc, unsigned int offset,
+				    unsigned long config)
+{
+	struct max77620_gpio *mgpio = gpiochip_get_data(gc);
 
-	चयन (pinconf_to_config_param(config)) अणु
-	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		वापस regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
+	switch (pinconf_to_config_param(config)) {
+	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		return regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
 					  MAX77620_CNFG_GPIO_DRV_MASK,
 					  MAX77620_CNFG_GPIO_DRV_OPENDRAIN);
-	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
-		वापस regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
+	case PIN_CONFIG_DRIVE_PUSH_PULL:
+		return regmap_update_bits(mgpio->rmap, GPIO_REG_ADDR(offset),
 					  MAX77620_CNFG_GPIO_DRV_MASK,
 					  MAX77620_CNFG_GPIO_DRV_PUSHPULL);
-	हाल PIN_CONFIG_INPUT_DEBOUNCE:
-		वापस max77620_gpio_set_debounce(mgpio, offset,
+	case PIN_CONFIG_INPUT_DEBOUNCE:
+		return max77620_gpio_set_debounce(mgpio, offset,
 			pinconf_to_config_argument(config));
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक max77620_gpio_irq_init_hw(काष्ठा gpio_chip *gc)
-अणु
-	काष्ठा max77620_gpio *gpio = gpiochip_get_data(gc);
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+static int max77620_gpio_irq_init_hw(struct gpio_chip *gc)
+{
+	struct max77620_gpio *gpio = gpiochip_get_data(gc);
+	unsigned int i;
+	int err;
 
 	/*
-	 * GPIO पूर्णांकerrupts may be left ON after bootloader, hence let's
+	 * GPIO interrupts may be left ON after bootloader, hence let's
 	 * pre-initialize hardware to the expected state by disabling all
-	 * the पूर्णांकerrupts.
+	 * the interrupts.
 	 */
-	क्रम (i = 0; i < MAX77620_GPIO_NR; i++) अणु
+	for (i = 0; i < MAX77620_GPIO_NR; i++) {
 		err = regmap_update_bits(gpio->rmap, GPIO_REG_ADDR(i),
 					 MAX77620_CNFG_GPIO_INT_MASK, 0);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(gpio->dev,
 				"failed to disable interrupt: %d\n", err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max77620_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा max77620_chip *chip =  dev_get_drvdata(pdev->dev.parent);
-	काष्ठा max77620_gpio *mgpio;
-	काष्ठा gpio_irq_chip *girq;
-	अचिन्हित पूर्णांक gpio_irq;
-	पूर्णांक ret;
+static int max77620_gpio_probe(struct platform_device *pdev)
+{
+	struct max77620_chip *chip =  dev_get_drvdata(pdev->dev.parent);
+	struct max77620_gpio *mgpio;
+	struct gpio_irq_chip *girq;
+	unsigned int gpio_irq;
+	int ret;
 
-	ret = platक्रमm_get_irq(pdev, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = platform_get_irq(pdev, 0);
+	if (ret < 0)
+		return ret;
 
 	gpio_irq = ret;
 
-	mgpio = devm_kzalloc(&pdev->dev, माप(*mgpio), GFP_KERNEL);
-	अगर (!mgpio)
-		वापस -ENOMEM;
+	mgpio = devm_kzalloc(&pdev->dev, sizeof(*mgpio), GFP_KERNEL);
+	if (!mgpio)
+		return -ENOMEM;
 
 	mutex_init(&mgpio->buslock);
 	mgpio->rmap = chip->rmap;
@@ -321,47 +320,47 @@
 	girq = &mgpio->gpio_chip.irq;
 	girq->chip = &max77620_gpio_irqchip;
 	/* This will let us handle the parent IRQ in the driver */
-	girq->parent_handler = शून्य;
+	girq->parent_handler = NULL;
 	girq->num_parents = 0;
-	girq->parents = शून्य;
-	girq->शेष_type = IRQ_TYPE_NONE;
+	girq->parents = NULL;
+	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
 	girq->init_hw = max77620_gpio_irq_init_hw;
-	girq->thपढ़ोed = true;
+	girq->threaded = true;
 
-	platक्रमm_set_drvdata(pdev, mgpio);
+	platform_set_drvdata(pdev, mgpio);
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &mgpio->gpio_chip, mgpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "gpio_init: Failed to add max77620_gpio\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, gpio_irq, शून्य,
+	ret = devm_request_threaded_irq(&pdev->dev, gpio_irq, NULL,
 					max77620_gpio_irqhandler, IRQF_ONESHOT,
 					"max77620-gpio", mgpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to request IRQ: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id max77620_gpio_devtype[] = अणु
-	अणु .name = "max77620-gpio", पूर्ण,
-	अणु .name = "max20024-gpio", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, max77620_gpio_devtype);
+static const struct platform_device_id max77620_gpio_devtype[] = {
+	{ .name = "max77620-gpio", },
+	{ .name = "max20024-gpio", },
+	{},
+};
+MODULE_DEVICE_TABLE(platform, max77620_gpio_devtype);
 
-अटल काष्ठा platक्रमm_driver max77620_gpio_driver = अणु
+static struct platform_driver max77620_gpio_driver = {
 	.driver.name	= "max77620-gpio",
 	.probe		= max77620_gpio_probe,
 	.id_table	= max77620_gpio_devtype,
-पूर्ण;
+};
 
-module_platक्रमm_driver(max77620_gpio_driver);
+module_platform_driver(max77620_gpio_driver);
 
 MODULE_DESCRIPTION("GPIO interface for MAX77620 and MAX20024 PMIC");
 MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");

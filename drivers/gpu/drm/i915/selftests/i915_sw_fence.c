@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,725 +22,725 @@
  *
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/prime_numbers.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/prime_numbers.h>
 
-#समावेश "../i915_selftest.h"
+#include "../i915_selftest.h"
 
-अटल पूर्णांक __i915_sw_fence_call
-fence_notअगरy(काष्ठा i915_sw_fence *fence, क्रमागत i915_sw_fence_notअगरy state)
-अणु
-	चयन (state) अणु
-	हाल FENCE_COMPLETE:
-		अवरोध;
+static int __i915_sw_fence_call
+fence_notify(struct i915_sw_fence *fence, enum i915_sw_fence_notify state)
+{
+	switch (state) {
+	case FENCE_COMPLETE:
+		break;
 
-	हाल FENCE_FREE:
-		/* Leave the fence क्रम the caller to मुक्त it after testing */
-		अवरोध;
-	पूर्ण
+	case FENCE_FREE:
+		/* Leave the fence for the caller to free it after testing */
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा i915_sw_fence *alloc_fence(व्योम)
-अणु
-	काष्ठा i915_sw_fence *fence;
+static struct i915_sw_fence *alloc_fence(void)
+{
+	struct i915_sw_fence *fence;
 
-	fence = kदो_स्मृति(माप(*fence), GFP_KERNEL);
-	अगर (!fence)
-		वापस शून्य;
+	fence = kmalloc(sizeof(*fence), GFP_KERNEL);
+	if (!fence)
+		return NULL;
 
-	i915_sw_fence_init(fence, fence_notअगरy);
-	वापस fence;
-पूर्ण
+	i915_sw_fence_init(fence, fence_notify);
+	return fence;
+}
 
-अटल व्योम मुक्त_fence(काष्ठा i915_sw_fence *fence)
-अणु
+static void free_fence(struct i915_sw_fence *fence)
+{
 	i915_sw_fence_fini(fence);
-	kमुक्त(fence);
-पूर्ण
+	kfree(fence);
+}
 
-अटल पूर्णांक __test_self(काष्ठा i915_sw_fence *fence)
-अणु
-	अगर (i915_sw_fence_करोne(fence))
-		वापस -EINVAL;
+static int __test_self(struct i915_sw_fence *fence)
+{
+	if (i915_sw_fence_done(fence))
+		return -EINVAL;
 
 	i915_sw_fence_commit(fence);
-	अगर (!i915_sw_fence_करोne(fence))
-		वापस -EINVAL;
+	if (!i915_sw_fence_done(fence))
+		return -EINVAL;
 
-	i915_sw_fence_रुको(fence);
-	अगर (!i915_sw_fence_करोne(fence))
-		वापस -EINVAL;
+	i915_sw_fence_wait(fence);
+	if (!i915_sw_fence_done(fence))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_self(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *fence;
-	पूर्णांक ret;
+static int test_self(void *arg)
+{
+	struct i915_sw_fence *fence;
+	int ret;
 
-	/* Test i915_sw_fence संकेतing and completion testing */
+	/* Test i915_sw_fence signaling and completion testing */
 	fence = alloc_fence();
-	अगर (!fence)
-		वापस -ENOMEM;
+	if (!fence)
+		return -ENOMEM;
 
 	ret = __test_self(fence);
 
-	मुक्त_fence(fence);
-	वापस ret;
-पूर्ण
+	free_fence(fence);
+	return ret;
+}
 
-अटल पूर्णांक test_dag(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *A, *B, *C;
-	पूर्णांक ret = -EINVAL;
+static int test_dag(void *arg)
+{
+	struct i915_sw_fence *A, *B, *C;
+	int ret = -EINVAL;
 
 	/* Test detection of cycles within the i915_sw_fence graphs */
-	अगर (!IS_ENABLED(CONFIG_DRM_I915_SW_FENCE_CHECK_DAG))
-		वापस 0;
+	if (!IS_ENABLED(CONFIG_DRM_I915_SW_FENCE_CHECK_DAG))
+		return 0;
 
 	A = alloc_fence();
-	अगर (!A)
-		वापस -ENOMEM;
+	if (!A)
+		return -ENOMEM;
 
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(A, A, GFP_KERNEL) != -EINVAL) अणु
+	if (i915_sw_fence_await_sw_fence_gfp(A, A, GFP_KERNEL) != -EINVAL) {
 		pr_err("recursive cycle not detected (AA)\n");
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
 	B = alloc_fence();
-	अगर (!B) अणु
+	if (!B) {
 		ret = -ENOMEM;
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
-	i915_sw_fence_aरुको_sw_fence_gfp(A, B, GFP_KERNEL);
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(B, A, GFP_KERNEL) != -EINVAL) अणु
+	i915_sw_fence_await_sw_fence_gfp(A, B, GFP_KERNEL);
+	if (i915_sw_fence_await_sw_fence_gfp(B, A, GFP_KERNEL) != -EINVAL) {
 		pr_err("single depth cycle not detected (BAB)\n");
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
 	C = alloc_fence();
-	अगर (!C) अणु
+	if (!C) {
 		ret = -ENOMEM;
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(B, C, GFP_KERNEL) == -EINVAL) अणु
+	if (i915_sw_fence_await_sw_fence_gfp(B, C, GFP_KERNEL) == -EINVAL) {
 		pr_err("invalid cycle detected\n");
-		जाओ err_C;
-	पूर्ण
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(C, B, GFP_KERNEL) != -EINVAL) अणु
+		goto err_C;
+	}
+	if (i915_sw_fence_await_sw_fence_gfp(C, B, GFP_KERNEL) != -EINVAL) {
 		pr_err("single depth cycle not detected (CBC)\n");
-		जाओ err_C;
-	पूर्ण
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(C, A, GFP_KERNEL) != -EINVAL) अणु
+		goto err_C;
+	}
+	if (i915_sw_fence_await_sw_fence_gfp(C, A, GFP_KERNEL) != -EINVAL) {
 		pr_err("cycle not detected (BA, CB, AC)\n");
-		जाओ err_C;
-	पूर्ण
-	अगर (i915_sw_fence_aरुको_sw_fence_gfp(A, C, GFP_KERNEL) == -EINVAL) अणु
+		goto err_C;
+	}
+	if (i915_sw_fence_await_sw_fence_gfp(A, C, GFP_KERNEL) == -EINVAL) {
 		pr_err("invalid cycle detected\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	i915_sw_fence_commit(A);
 	i915_sw_fence_commit(B);
 	i915_sw_fence_commit(C);
 
 	ret = 0;
-	अगर (!i915_sw_fence_करोne(C)) अणु
+	if (!i915_sw_fence_done(C)) {
 		pr_err("fence C not done\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (!i915_sw_fence_करोne(B)) अणु
+	}
+	if (!i915_sw_fence_done(B)) {
 		pr_err("fence B not done\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (!i915_sw_fence_करोne(A)) अणु
+	}
+	if (!i915_sw_fence_done(A)) {
 		pr_err("fence A not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 err_C:
-	मुक्त_fence(C);
+	free_fence(C);
 err_B:
-	मुक्त_fence(B);
+	free_fence(B);
 err_A:
-	मुक्त_fence(A);
-	वापस ret;
-पूर्ण
+	free_fence(A);
+	return ret;
+}
 
-अटल पूर्णांक test_AB(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *A, *B;
-	पूर्णांक ret;
+static int test_AB(void *arg)
+{
+	struct i915_sw_fence *A, *B;
+	int ret;
 
-	/* Test i915_sw_fence (A) रुकोing on an event source (B) */
+	/* Test i915_sw_fence (A) waiting on an event source (B) */
 	A = alloc_fence();
-	अगर (!A)
-		वापस -ENOMEM;
+	if (!A)
+		return -ENOMEM;
 	B = alloc_fence();
-	अगर (!B) अणु
+	if (!B) {
 		ret = -ENOMEM;
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(A, B, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_B;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(A, B, GFP_KERNEL);
+	if (ret < 0)
+		goto err_B;
+	if (ret == 0) {
 		pr_err("Incorrectly reported fence A was complete before await\n");
 		ret = -EINVAL;
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
 	ret = -EINVAL;
 	i915_sw_fence_commit(A);
-	अगर (i915_sw_fence_करोne(A))
-		जाओ err_B;
+	if (i915_sw_fence_done(A))
+		goto err_B;
 
 	i915_sw_fence_commit(B);
-	अगर (!i915_sw_fence_करोne(B)) अणु
+	if (!i915_sw_fence_done(B)) {
 		pr_err("Fence B is not done\n");
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
-	अगर (!i915_sw_fence_करोne(A)) अणु
+	if (!i915_sw_fence_done(A)) {
 		pr_err("Fence A is not done\n");
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
 	ret = 0;
 err_B:
-	मुक्त_fence(B);
+	free_fence(B);
 err_A:
-	मुक्त_fence(A);
-	वापस ret;
-पूर्ण
+	free_fence(A);
+	return ret;
+}
 
-अटल पूर्णांक test_ABC(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *A, *B, *C;
-	पूर्णांक ret;
+static int test_ABC(void *arg)
+{
+	struct i915_sw_fence *A, *B, *C;
+	int ret;
 
-	/* Test a chain of fences, A रुकोs on B who रुकोs on C */
+	/* Test a chain of fences, A waits on B who waits on C */
 	A = alloc_fence();
-	अगर (!A)
-		वापस -ENOMEM;
+	if (!A)
+		return -ENOMEM;
 
 	B = alloc_fence();
-	अगर (!B) अणु
+	if (!B) {
 		ret = -ENOMEM;
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
 	C = alloc_fence();
-	अगर (!C) अणु
+	if (!C) {
 		ret = -ENOMEM;
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(A, B, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(A, B, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		pr_err("Incorrectly reported fence B was complete before await\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(B, C, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(B, C, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		pr_err("Incorrectly reported fence C was complete before await\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	ret = -EINVAL;
 	i915_sw_fence_commit(A);
-	अगर (i915_sw_fence_करोne(A)) अणु
+	if (i915_sw_fence_done(A)) {
 		pr_err("Fence A completed early\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	i915_sw_fence_commit(B);
-	अगर (i915_sw_fence_करोne(B)) अणु
+	if (i915_sw_fence_done(B)) {
 		pr_err("Fence B completed early\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
-	अगर (i915_sw_fence_करोne(A)) अणु
+	if (i915_sw_fence_done(A)) {
 		pr_err("Fence A completed early (after signaling B)\n");
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	i915_sw_fence_commit(C);
 
 	ret = 0;
-	अगर (!i915_sw_fence_करोne(C)) अणु
+	if (!i915_sw_fence_done(C)) {
 		pr_err("Fence C not done\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (!i915_sw_fence_करोne(B)) अणु
+	}
+	if (!i915_sw_fence_done(B)) {
 		pr_err("Fence B not done\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (!i915_sw_fence_करोne(A)) अणु
+	}
+	if (!i915_sw_fence_done(A)) {
 		pr_err("Fence A not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 err_C:
-	मुक्त_fence(C);
+	free_fence(C);
 err_B:
-	मुक्त_fence(B);
+	free_fence(B);
 err_A:
-	मुक्त_fence(A);
-	वापस ret;
-पूर्ण
+	free_fence(A);
+	return ret;
+}
 
-अटल पूर्णांक test_AB_C(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *A, *B, *C;
-	पूर्णांक ret = -EINVAL;
+static int test_AB_C(void *arg)
+{
+	struct i915_sw_fence *A, *B, *C;
+	int ret = -EINVAL;
 
-	/* Test multiple fences (AB) रुकोing on a single event (C) */
+	/* Test multiple fences (AB) waiting on a single event (C) */
 	A = alloc_fence();
-	अगर (!A)
-		वापस -ENOMEM;
+	if (!A)
+		return -ENOMEM;
 
 	B = alloc_fence();
-	अगर (!B) अणु
+	if (!B) {
 		ret = -ENOMEM;
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
 	C = alloc_fence();
-	अगर (!C) अणु
+	if (!C) {
 		ret = -ENOMEM;
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(A, C, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(A, C, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		ret = -EINVAL;
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(B, C, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(B, C, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		ret = -EINVAL;
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	i915_sw_fence_commit(A);
 	i915_sw_fence_commit(B);
 
 	ret = 0;
-	अगर (i915_sw_fence_करोne(A)) अणु
+	if (i915_sw_fence_done(A)) {
 		pr_err("Fence A completed early\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (i915_sw_fence_करोne(B)) अणु
+	if (i915_sw_fence_done(B)) {
 		pr_err("Fence B completed early\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	i915_sw_fence_commit(C);
-	अगर (!i915_sw_fence_करोne(C)) अणु
+	if (!i915_sw_fence_done(C)) {
 		pr_err("Fence C not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!i915_sw_fence_करोne(B)) अणु
+	if (!i915_sw_fence_done(B)) {
 		pr_err("Fence B not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!i915_sw_fence_करोne(A)) अणु
+	if (!i915_sw_fence_done(A)) {
 		pr_err("Fence A not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 err_C:
-	मुक्त_fence(C);
+	free_fence(C);
 err_B:
-	मुक्त_fence(B);
+	free_fence(B);
 err_A:
-	मुक्त_fence(A);
-	वापस ret;
-पूर्ण
+	free_fence(A);
+	return ret;
+}
 
-अटल पूर्णांक test_C_AB(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *A, *B, *C;
-	पूर्णांक ret;
+static int test_C_AB(void *arg)
+{
+	struct i915_sw_fence *A, *B, *C;
+	int ret;
 
-	/* Test multiple event sources (A,B) क्रम a single fence (C) */
+	/* Test multiple event sources (A,B) for a single fence (C) */
 	A = alloc_fence();
-	अगर (!A)
-		वापस -ENOMEM;
+	if (!A)
+		return -ENOMEM;
 
 	B = alloc_fence();
-	अगर (!B) अणु
+	if (!B) {
 		ret = -ENOMEM;
-		जाओ err_A;
-	पूर्ण
+		goto err_A;
+	}
 
 	C = alloc_fence();
-	अगर (!C) अणु
+	if (!C) {
 		ret = -ENOMEM;
-		जाओ err_B;
-	पूर्ण
+		goto err_B;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(C, A, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(C, A, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		ret = -EINVAL;
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
-	ret = i915_sw_fence_aरुको_sw_fence_gfp(C, B, GFP_KERNEL);
-	अगर (ret < 0)
-		जाओ err_C;
-	अगर (ret == 0) अणु
+	ret = i915_sw_fence_await_sw_fence_gfp(C, B, GFP_KERNEL);
+	if (ret < 0)
+		goto err_C;
+	if (ret == 0) {
 		ret = -EINVAL;
-		जाओ err_C;
-	पूर्ण
+		goto err_C;
+	}
 
 	ret = 0;
 	i915_sw_fence_commit(C);
-	अगर (i915_sw_fence_करोne(C))
+	if (i915_sw_fence_done(C))
 		ret = -EINVAL;
 
 	i915_sw_fence_commit(A);
 	i915_sw_fence_commit(B);
 
-	अगर (!i915_sw_fence_करोne(A)) अणु
+	if (!i915_sw_fence_done(A)) {
 		pr_err("Fence A not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!i915_sw_fence_करोne(B)) अणु
+	if (!i915_sw_fence_done(B)) {
 		pr_err("Fence B not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!i915_sw_fence_करोne(C)) अणु
+	if (!i915_sw_fence_done(C)) {
 		pr_err("Fence C not done\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 err_C:
-	मुक्त_fence(C);
+	free_fence(C);
 err_B:
-	मुक्त_fence(B);
+	free_fence(B);
 err_A:
-	मुक्त_fence(A);
-	वापस ret;
-पूर्ण
+	free_fence(A);
+	return ret;
+}
 
-अटल पूर्णांक test_chain(व्योम *arg)
-अणु
-	पूर्णांक nfences = 4096;
-	काष्ठा i915_sw_fence **fences;
-	पूर्णांक ret, i;
+static int test_chain(void *arg)
+{
+	int nfences = 4096;
+	struct i915_sw_fence **fences;
+	int ret, i;
 
-	/* Test a दीर्घ chain of fences */
-	fences = kदो_स्मृति_array(nfences, माप(*fences), GFP_KERNEL);
-	अगर (!fences)
-		वापस -ENOMEM;
+	/* Test a long chain of fences */
+	fences = kmalloc_array(nfences, sizeof(*fences), GFP_KERNEL);
+	if (!fences)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < nfences; i++) अणु
+	for (i = 0; i < nfences; i++) {
 		fences[i] = alloc_fence();
-		अगर (!fences[i]) अणु
+		if (!fences[i]) {
 			nfences = i;
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (i > 0) अणु
-			ret = i915_sw_fence_aरुको_sw_fence_gfp(fences[i],
+		if (i > 0) {
+			ret = i915_sw_fence_await_sw_fence_gfp(fences[i],
 							       fences[i - 1],
 							       GFP_KERNEL);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				nfences = i + 1;
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 
 			i915_sw_fence_commit(fences[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = 0;
-	क्रम (i = nfences; --i; ) अणु
-		अगर (i915_sw_fence_करोne(fences[i])) अणु
-			अगर (ret == 0)
+	for (i = nfences; --i; ) {
+		if (i915_sw_fence_done(fences[i])) {
+			if (ret == 0)
 				pr_err("Fence[%d] completed early\n", i);
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	i915_sw_fence_commit(fences[0]);
-	क्रम (i = 0; ret == 0 && i < nfences; i++) अणु
-		अगर (!i915_sw_fence_करोne(fences[i])) अणु
+	for (i = 0; ret == 0 && i < nfences; i++) {
+		if (!i915_sw_fence_done(fences[i])) {
 			pr_err("Fence[%d] is not done\n", i);
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 err:
-	क्रम (i = 0; i < nfences; i++)
-		मुक्त_fence(fences[i]);
-	kमुक्त(fences);
-	वापस ret;
-पूर्ण
+	for (i = 0; i < nfences; i++)
+		free_fence(fences[i]);
+	kfree(fences);
+	return ret;
+}
 
-काष्ठा task_ipc अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा completion started;
-	काष्ठा i915_sw_fence *in, *out;
-	पूर्णांक value;
-पूर्ण;
+struct task_ipc {
+	struct work_struct work;
+	struct completion started;
+	struct i915_sw_fence *in, *out;
+	int value;
+};
 
-अटल व्योम task_ipc(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा task_ipc *ipc = container_of(work, typeof(*ipc), work);
+static void task_ipc(struct work_struct *work)
+{
+	struct task_ipc *ipc = container_of(work, typeof(*ipc), work);
 
 	complete(&ipc->started);
 
-	i915_sw_fence_रुको(ipc->in);
+	i915_sw_fence_wait(ipc->in);
 	smp_store_mb(ipc->value, 1);
 	i915_sw_fence_commit(ipc->out);
-पूर्ण
+}
 
-अटल पूर्णांक test_ipc(व्योम *arg)
-अणु
-	काष्ठा task_ipc ipc;
-	पूर्णांक ret = 0;
+static int test_ipc(void *arg)
+{
+	struct task_ipc ipc;
+	int ret = 0;
 
-	/* Test use of i915_sw_fence as an पूर्णांकerprocess संकेतing mechanism */
+	/* Test use of i915_sw_fence as an interprocess signaling mechanism */
 	ipc.in = alloc_fence();
-	अगर (!ipc.in)
-		वापस -ENOMEM;
+	if (!ipc.in)
+		return -ENOMEM;
 	ipc.out = alloc_fence();
-	अगर (!ipc.out) अणु
+	if (!ipc.out) {
 		ret = -ENOMEM;
-		जाओ err_in;
-	पूर्ण
+		goto err_in;
+	}
 
-	/* use a completion to aव्योम chicken-and-egg testing */
+	/* use a completion to avoid chicken-and-egg testing */
 	init_completion(&ipc.started);
 
 	ipc.value = 0;
 	INIT_WORK_ONSTACK(&ipc.work, task_ipc);
 	schedule_work(&ipc.work);
 
-	रुको_क्रम_completion(&ipc.started);
+	wait_for_completion(&ipc.started);
 
 	usleep_range(1000, 2000);
-	अगर (READ_ONCE(ipc.value)) अणु
+	if (READ_ONCE(ipc.value)) {
 		pr_err("worker updated value before i915_sw_fence was signaled\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	i915_sw_fence_commit(ipc.in);
-	i915_sw_fence_रुको(ipc.out);
+	i915_sw_fence_wait(ipc.out);
 
-	अगर (!READ_ONCE(ipc.value)) अणु
+	if (!READ_ONCE(ipc.value)) {
 		pr_err("worker signaled i915_sw_fence before value was posted\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 	flush_work(&ipc.work);
 	destroy_work_on_stack(&ipc.work);
-	मुक्त_fence(ipc.out);
+	free_fence(ipc.out);
 err_in:
-	मुक्त_fence(ipc.in);
-	वापस ret;
-पूर्ण
+	free_fence(ipc.in);
+	return ret;
+}
 
-अटल पूर्णांक test_समयr(व्योम *arg)
-अणु
-	अचिन्हित दीर्घ target, delay;
-	काष्ठा समयd_fence tf;
+static int test_timer(void *arg)
+{
+	unsigned long target, delay;
+	struct timed_fence tf;
 
 	preempt_disable();
-	समयd_fence_init(&tf, target = jअगरfies);
-	अगर (!i915_sw_fence_करोne(&tf.fence)) अणु
+	timed_fence_init(&tf, target = jiffies);
+	if (!i915_sw_fence_done(&tf.fence)) {
 		pr_err("Fence with immediate expiration not signaled\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	preempt_enable();
-	समयd_fence_fini(&tf);
+	timed_fence_fini(&tf);
 
-	क्रम_each_prime_number(delay, i915_selftest.समयout_jअगरfies/2) अणु
+	for_each_prime_number(delay, i915_selftest.timeout_jiffies/2) {
 		preempt_disable();
-		समयd_fence_init(&tf, target = jअगरfies + delay);
-		अगर (i915_sw_fence_करोne(&tf.fence)) अणु
+		timed_fence_init(&tf, target = jiffies + delay);
+		if (i915_sw_fence_done(&tf.fence)) {
 			pr_err("Fence with future expiration (%lu jiffies) already signaled\n", delay);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		preempt_enable();
 
-		i915_sw_fence_रुको(&tf.fence);
+		i915_sw_fence_wait(&tf.fence);
 
 		preempt_disable();
-		अगर (!i915_sw_fence_करोne(&tf.fence)) अणु
+		if (!i915_sw_fence_done(&tf.fence)) {
 			pr_err("Fence not signaled after wait\n");
-			जाओ err;
-		पूर्ण
-		अगर (समय_beक्रमe(jअगरfies, target)) अणु
+			goto err;
+		}
+		if (time_before(jiffies, target)) {
 			pr_err("Fence signaled too early, target=%lu, now=%lu\n",
-			       target, jअगरfies);
-			जाओ err;
-		पूर्ण
+			       target, jiffies);
+			goto err;
+		}
 		preempt_enable();
-		समयd_fence_fini(&tf);
-	पूर्ण
+		timed_fence_fini(&tf);
+	}
 
-	वापस 0;
+	return 0;
 
 err:
 	preempt_enable();
-	समयd_fence_fini(&tf);
-	वापस -EINVAL;
-पूर्ण
+	timed_fence_fini(&tf);
+	return -EINVAL;
+}
 
-अटल स्थिर अक्षर *mock_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "mock";
-पूर्ण
+static const char *mock_name(struct dma_fence *fence)
+{
+	return "mock";
+}
 
-अटल स्थिर काष्ठा dma_fence_ops mock_fence_ops = अणु
+static const struct dma_fence_ops mock_fence_ops = {
 	.get_driver_name = mock_name,
-	.get_समयline_name = mock_name,
-पूर्ण;
+	.get_timeline_name = mock_name,
+};
 
-अटल DEFINE_SPINLOCK(mock_fence_lock);
+static DEFINE_SPINLOCK(mock_fence_lock);
 
-अटल काष्ठा dma_fence *alloc_dma_fence(व्योम)
-अणु
-	काष्ठा dma_fence *dma;
+static struct dma_fence *alloc_dma_fence(void)
+{
+	struct dma_fence *dma;
 
-	dma = kदो_स्मृति(माप(*dma), GFP_KERNEL);
-	अगर (dma)
+	dma = kmalloc(sizeof(*dma), GFP_KERNEL);
+	if (dma)
 		dma_fence_init(dma, &mock_fence_ops, &mock_fence_lock, 0, 0);
 
-	वापस dma;
-पूर्ण
+	return dma;
+}
 
-अटल काष्ठा i915_sw_fence *
-wrap_dma_fence(काष्ठा dma_fence *dma, अचिन्हित दीर्घ delay)
-अणु
-	काष्ठा i915_sw_fence *fence;
-	पूर्णांक err;
+static struct i915_sw_fence *
+wrap_dma_fence(struct dma_fence *dma, unsigned long delay)
+{
+	struct i915_sw_fence *fence;
+	int err;
 
 	fence = alloc_fence();
-	अगर (!fence)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fence)
+		return ERR_PTR(-ENOMEM);
 
-	err = i915_sw_fence_aरुको_dma_fence(fence, dma, delay, GFP_NOWAIT);
+	err = i915_sw_fence_await_dma_fence(fence, dma, delay, GFP_NOWAIT);
 	i915_sw_fence_commit(fence);
-	अगर (err < 0) अणु
-		मुक्त_fence(fence);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err < 0) {
+		free_fence(fence);
+		return ERR_PTR(err);
+	}
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-अटल पूर्णांक test_dma_fence(व्योम *arg)
-अणु
-	काष्ठा i915_sw_fence *समयout = शून्य, *not = शून्य;
-	अचिन्हित दीर्घ delay = i915_selftest.समयout_jअगरfies;
-	अचिन्हित दीर्घ end, sleep;
-	काष्ठा dma_fence *dma;
-	पूर्णांक err;
+static int test_dma_fence(void *arg)
+{
+	struct i915_sw_fence *timeout = NULL, *not = NULL;
+	unsigned long delay = i915_selftest.timeout_jiffies;
+	unsigned long end, sleep;
+	struct dma_fence *dma;
+	int err;
 
 	dma = alloc_dma_fence();
-	अगर (!dma)
-		वापस -ENOMEM;
+	if (!dma)
+		return -ENOMEM;
 
-	समयout = wrap_dma_fence(dma, delay);
-	अगर (IS_ERR(समयout)) अणु
-		err = PTR_ERR(समयout);
-		जाओ err;
-	पूर्ण
+	timeout = wrap_dma_fence(dma, delay);
+	if (IS_ERR(timeout)) {
+		err = PTR_ERR(timeout);
+		goto err;
+	}
 
 	not = wrap_dma_fence(dma, 0);
-	अगर (IS_ERR(not)) अणु
+	if (IS_ERR(not)) {
 		err = PTR_ERR(not);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = -EINVAL;
-	अगर (i915_sw_fence_करोne(समयout) || i915_sw_fence_करोne(not)) अणु
+	if (i915_sw_fence_done(timeout) || i915_sw_fence_done(not)) {
 		pr_err("Fences immediately signaled\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* We round the समयout क्रम the fence up to the next second */
-	end = round_jअगरfies_up(jअगरfies + delay);
+	/* We round the timeout for the fence up to the next second */
+	end = round_jiffies_up(jiffies + delay);
 
-	sleep = jअगरfies_to_usecs(delay) / 3;
+	sleep = jiffies_to_usecs(delay) / 3;
 	usleep_range(sleep, 2 * sleep);
-	अगर (समय_after(jअगरfies, end)) अणु
+	if (time_after(jiffies, end)) {
 		pr_debug("Slept too long, delay=%lu, (target=%lu, now=%lu) skipping\n",
-			 delay, end, jअगरfies);
-		जाओ skip;
-	पूर्ण
+			 delay, end, jiffies);
+		goto skip;
+	}
 
-	अगर (i915_sw_fence_करोne(समयout) || i915_sw_fence_करोne(not)) अणु
+	if (i915_sw_fence_done(timeout) || i915_sw_fence_done(not)) {
 		pr_err("Fences signaled too early\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (!रुको_event_समयout(समयout->रुको,
-				i915_sw_fence_करोne(समयout),
-				2 * (end - jअगरfies) + 1)) अणु
+	if (!wait_event_timeout(timeout->wait,
+				i915_sw_fence_done(timeout),
+				2 * (end - jiffies) + 1)) {
 		pr_err("Timeout fence unsignaled!\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (i915_sw_fence_करोne(not)) अणु
+	if (i915_sw_fence_done(not)) {
 		pr_err("No timeout fence signaled!\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 skip:
-	dma_fence_संकेत(dma);
+	dma_fence_signal(dma);
 
-	अगर (!i915_sw_fence_करोne(समयout) || !i915_sw_fence_करोne(not)) अणु
+	if (!i915_sw_fence_done(timeout) || !i915_sw_fence_done(not)) {
 		pr_err("Fences unsignaled\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	मुक्त_fence(not);
-	मुक्त_fence(समयout);
+	free_fence(not);
+	free_fence(timeout);
 	dma_fence_put(dma);
 
-	वापस 0;
+	return 0;
 
 err:
-	dma_fence_संकेत(dma);
-	अगर (!IS_ERR_OR_शून्य(समयout))
-		मुक्त_fence(समयout);
-	अगर (!IS_ERR_OR_शून्य(not))
-		मुक्त_fence(not);
+	dma_fence_signal(dma);
+	if (!IS_ERR_OR_NULL(timeout))
+		free_fence(timeout);
+	if (!IS_ERR_OR_NULL(not))
+		free_fence(not);
 	dma_fence_put(dma);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक i915_sw_fence_mock_selftests(व्योम)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int i915_sw_fence_mock_selftests(void)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(test_self),
 		SUBTEST(test_dag),
 		SUBTEST(test_AB),
@@ -750,9 +749,9 @@ err:
 		SUBTEST(test_C_AB),
 		SUBTEST(test_chain),
 		SUBTEST(test_ipc),
-		SUBTEST(test_समयr),
+		SUBTEST(test_timer),
 		SUBTEST(test_dma_fence),
-	पूर्ण;
+	};
 
-	वापस i915_subtests(tests, शून्य);
-पूर्ण
+	return i915_subtests(tests, NULL);
+}

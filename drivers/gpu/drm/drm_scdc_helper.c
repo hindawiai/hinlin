@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2015 NVIDIA Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sub license,
+ * the rights to use, copy, modify, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
@@ -22,229 +21,229 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
 
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_scdc_helper.h>
+#include <drm/drm_print.h>
+#include <drm/drm_scdc_helper.h>
 
 /**
  * DOC: scdc helpers
  *
- * Status and Control Data Channel (SCDC) is a mechanism पूर्णांकroduced by the
- * HDMI 2.0 specअगरication. It is a poपूर्णांक-to-poपूर्णांक protocol that allows the
- * HDMI source and HDMI sink to exchange data. The same I2C पूर्णांकerface that
- * is used to access EDID serves as the transport mechanism क्रम SCDC.
+ * Status and Control Data Channel (SCDC) is a mechanism introduced by the
+ * HDMI 2.0 specification. It is a point-to-point protocol that allows the
+ * HDMI source and HDMI sink to exchange data. The same I2C interface that
+ * is used to access EDID serves as the transport mechanism for SCDC.
  */
 
-#घोषणा SCDC_I2C_SLAVE_ADDRESS 0x54
+#define SCDC_I2C_SLAVE_ADDRESS 0x54
 
 /**
- * drm_scdc_पढ़ो - पढ़ो a block of data from SCDC
+ * drm_scdc_read - read a block of data from SCDC
  * @adapter: I2C controller
- * @offset: start offset of block to पढ़ो
- * @buffer: वापस location क्रम the block to पढ़ो
- * @size: size of the block to पढ़ो
+ * @offset: start offset of block to read
+ * @buffer: return location for the block to read
+ * @size: size of the block to read
  *
  * Reads a block of data from SCDC, starting at a given offset.
  *
  * Returns:
  * 0 on success, negative error code on failure.
  */
-sमाप_प्रकार drm_scdc_पढ़ो(काष्ठा i2c_adapter *adapter, u8 offset, व्योम *buffer,
-		      माप_प्रकार size)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_msg msgs[2] = अणु
-		अणु
+ssize_t drm_scdc_read(struct i2c_adapter *adapter, u8 offset, void *buffer,
+		      size_t size)
+{
+	int ret;
+	struct i2c_msg msgs[2] = {
+		{
 			.addr = SCDC_I2C_SLAVE_ADDRESS,
 			.flags = 0,
 			.len = 1,
 			.buf = &offset,
-		पूर्ण, अणु
+		}, {
 			.addr = SCDC_I2C_SLAVE_ADDRESS,
 			.flags = I2C_M_RD,
 			.len = size,
 			.buf = buffer,
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
 	ret = i2c_transfer(adapter, msgs, ARRAY_SIZE(msgs));
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != ARRAY_SIZE(msgs))
-		वापस -EPROTO;
+	if (ret < 0)
+		return ret;
+	if (ret != ARRAY_SIZE(msgs))
+		return -EPROTO;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_scdc_पढ़ो);
+	return 0;
+}
+EXPORT_SYMBOL(drm_scdc_read);
 
 /**
- * drm_scdc_ग_लिखो - ग_लिखो a block of data to SCDC
+ * drm_scdc_write - write a block of data to SCDC
  * @adapter: I2C controller
- * @offset: start offset of block to ग_लिखो
- * @buffer: block of data to ग_लिखो
- * @size: size of the block to ग_लिखो
+ * @offset: start offset of block to write
+ * @buffer: block of data to write
+ * @size: size of the block to write
  *
  * Writes a block of data to SCDC, starting at a given offset.
  *
  * Returns:
  * 0 on success, negative error code on failure.
  */
-sमाप_प्रकार drm_scdc_ग_लिखो(काष्ठा i2c_adapter *adapter, u8 offset,
-		       स्थिर व्योम *buffer, माप_प्रकार size)
-अणु
-	काष्ठा i2c_msg msg = अणु
+ssize_t drm_scdc_write(struct i2c_adapter *adapter, u8 offset,
+		       const void *buffer, size_t size)
+{
+	struct i2c_msg msg = {
 		.addr = SCDC_I2C_SLAVE_ADDRESS,
 		.flags = 0,
 		.len = 1 + size,
-		.buf = शून्य,
-	पूर्ण;
-	व्योम *data;
-	पूर्णांक err;
+		.buf = NULL,
+	};
+	void *data;
+	int err;
 
-	data = kदो_स्मृति(1 + size, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(1 + size, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	msg.buf = data;
 
-	स_नकल(data, &offset, माप(offset));
-	स_नकल(data + 1, buffer, size);
+	memcpy(data, &offset, sizeof(offset));
+	memcpy(data + 1, buffer, size);
 
 	err = i2c_transfer(adapter, &msg, 1);
 
-	kमुक्त(data);
+	kfree(data);
 
-	अगर (err < 0)
-		वापस err;
-	अगर (err != 1)
-		वापस -EPROTO;
+	if (err < 0)
+		return err;
+	if (err != 1)
+		return -EPROTO;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_scdc_ग_लिखो);
+	return 0;
+}
+EXPORT_SYMBOL(drm_scdc_write);
 
 /**
  * drm_scdc_get_scrambling_status - what is status of scrambling?
- * @adapter: I2C adapter क्रम DDC channel
+ * @adapter: I2C adapter for DDC channel
  *
  * Reads the scrambler status over SCDC, and checks the
  * scrambling status.
  *
  * Returns:
- * True अगर the scrambling is enabled, false otherwise.
+ * True if the scrambling is enabled, false otherwise.
  */
-bool drm_scdc_get_scrambling_status(काष्ठा i2c_adapter *adapter)
-अणु
+bool drm_scdc_get_scrambling_status(struct i2c_adapter *adapter)
+{
 	u8 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = drm_scdc_पढ़ोb(adapter, SCDC_SCRAMBLER_STATUS, &status);
-	अगर (ret < 0) अणु
+	ret = drm_scdc_readb(adapter, SCDC_SCRAMBLER_STATUS, &status);
+	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed to read scrambling status: %d\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस status & SCDC_SCRAMBLING_STATUS;
-पूर्ण
+	return status & SCDC_SCRAMBLING_STATUS;
+}
 EXPORT_SYMBOL(drm_scdc_get_scrambling_status);
 
 /**
  * drm_scdc_set_scrambling - enable scrambling
- * @adapter: I2C adapter क्रम DDC channel
- * @enable: bool to indicate अगर scrambling is to be enabled/disabled
+ * @adapter: I2C adapter for DDC channel
+ * @enable: bool to indicate if scrambling is to be enabled/disabled
  *
- * Writes the TMDS config रेजिस्टर over SCDC channel, and:
+ * Writes the TMDS config register over SCDC channel, and:
  * enables scrambling when enable = 1
  * disables scrambling when enable = 0
  *
  * Returns:
- * True अगर scrambling is set/reset successfully, false otherwise.
+ * True if scrambling is set/reset successfully, false otherwise.
  */
-bool drm_scdc_set_scrambling(काष्ठा i2c_adapter *adapter, bool enable)
-अणु
+bool drm_scdc_set_scrambling(struct i2c_adapter *adapter, bool enable)
+{
 	u8 config;
-	पूर्णांक ret;
+	int ret;
 
-	ret = drm_scdc_पढ़ोb(adapter, SCDC_TMDS_CONFIG, &config);
-	अगर (ret < 0) अणु
+	ret = drm_scdc_readb(adapter, SCDC_TMDS_CONFIG, &config);
+	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed to read TMDS config: %d\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (enable)
+	if (enable)
 		config |= SCDC_SCRAMBLING_ENABLE;
-	अन्यथा
+	else
 		config &= ~SCDC_SCRAMBLING_ENABLE;
 
-	ret = drm_scdc_ग_लिखोb(adapter, SCDC_TMDS_CONFIG, config);
-	अगर (ret < 0) अणु
+	ret = drm_scdc_writeb(adapter, SCDC_TMDS_CONFIG, config);
+	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed to enable scrambling: %d\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(drm_scdc_set_scrambling);
 
 /**
- * drm_scdc_set_high_पंचांगds_घड़ी_ratio - set TMDS घड़ी ratio
- * @adapter: I2C adapter क्रम DDC channel
- * @set: ret or reset the high घड़ी ratio
+ * drm_scdc_set_high_tmds_clock_ratio - set TMDS clock ratio
+ * @adapter: I2C adapter for DDC channel
+ * @set: ret or reset the high clock ratio
  *
  *
- *	TMDS घड़ी ratio calculations go like this:
- *		TMDS अक्षरacter = 10 bit TMDS encoded value
+ *	TMDS clock ratio calculations go like this:
+ *		TMDS character = 10 bit TMDS encoded value
  *
- *		TMDS अक्षरacter rate = The rate at which TMDS अक्षरacters are
+ *		TMDS character rate = The rate at which TMDS characters are
  *		transmitted (Mcsc)
  *
- *		TMDS bit rate = 10x TMDS अक्षरacter rate
+ *		TMDS bit rate = 10x TMDS character rate
  *
  *	As per the spec:
- *		TMDS घड़ी rate क्रम pixel घड़ी < 340 MHz = 1x the अक्षरacter
- *		rate = 1/10 pixel घड़ी rate
+ *		TMDS clock rate for pixel clock < 340 MHz = 1x the character
+ *		rate = 1/10 pixel clock rate
  *
- *		TMDS घड़ी rate क्रम pixel घड़ी > 340 MHz = 0.25x the अक्षरacter
- *		rate = 1/40 pixel घड़ी rate
+ *		TMDS clock rate for pixel clock > 340 MHz = 0.25x the character
+ *		rate = 1/40 pixel clock rate
  *
- *	Writes to the TMDS config रेजिस्टर over SCDC channel, and:
- *		sets TMDS घड़ी ratio to 1/40 when set = 1
+ *	Writes to the TMDS config register over SCDC channel, and:
+ *		sets TMDS clock ratio to 1/40 when set = 1
  *
- *		sets TMDS घड़ी ratio to 1/10 when set = 0
+ *		sets TMDS clock ratio to 1/10 when set = 0
  *
  * Returns:
- * True अगर ग_लिखो is successful, false otherwise.
+ * True if write is successful, false otherwise.
  */
-bool drm_scdc_set_high_पंचांगds_घड़ी_ratio(काष्ठा i2c_adapter *adapter, bool set)
-अणु
+bool drm_scdc_set_high_tmds_clock_ratio(struct i2c_adapter *adapter, bool set)
+{
 	u8 config;
-	पूर्णांक ret;
+	int ret;
 
-	ret = drm_scdc_पढ़ोb(adapter, SCDC_TMDS_CONFIG, &config);
-	अगर (ret < 0) अणु
+	ret = drm_scdc_readb(adapter, SCDC_TMDS_CONFIG, &config);
+	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed to read TMDS config: %d\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (set)
+	if (set)
 		config |= SCDC_TMDS_BIT_CLOCK_RATIO_BY_40;
-	अन्यथा
+	else
 		config &= ~SCDC_TMDS_BIT_CLOCK_RATIO_BY_40;
 
-	ret = drm_scdc_ग_लिखोb(adapter, SCDC_TMDS_CONFIG, config);
-	अगर (ret < 0) अणु
+	ret = drm_scdc_writeb(adapter, SCDC_TMDS_CONFIG, config);
+	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed to set TMDS clock ratio: %d\n", ret);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	/*
-	 * The spec says that a source should रुको minimum 1ms and maximum
-	 * 100ms after writing the TMDS config क्रम घड़ी ratio. Lets allow a
-	 * रुको of upto 2ms here.
+	 * The spec says that a source should wait minimum 1ms and maximum
+	 * 100ms after writing the TMDS config for clock ratio. Lets allow a
+	 * wait of upto 2ms here.
 	 */
 	usleep_range(1000, 2000);
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(drm_scdc_set_high_पंचांगds_घड़ी_ratio);
+	return true;
+}
+EXPORT_SYMBOL(drm_scdc_set_high_tmds_clock_ratio);

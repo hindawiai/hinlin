@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __6LOWPAN_NHC_H
-#घोषणा __6LOWPAN_NHC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __6LOWPAN_NHC_H
+#define __6LOWPAN_NHC_H
 
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/rbtree.h>
+#include <linux/module.h>
 
-#समावेश <net/6lowpan.h>
-#समावेश <net/ipv6.h>
+#include <net/6lowpan.h>
+#include <net/ipv6.h>
 
 /**
- * LOWPAN_NHC - helper macro to generate nh id fields and lowpan_nhc काष्ठा
+ * LOWPAN_NHC - helper macro to generate nh id fields and lowpan_nhc struct
  *
- * @__nhc: variable name of the lowpan_nhc काष्ठा.
- * @_name: स्थिर अक्षर * of common header compression name.
- * @_nexthdr: ipv6 nexthdr field क्रम the header compression.
- * @_nexthdrlen: ipv6 nexthdr len क्रम the reserved space.
+ * @__nhc: variable name of the lowpan_nhc struct.
+ * @_name: const char * of common header compression name.
+ * @_nexthdr: ipv6 nexthdr field for the header compression.
+ * @_nexthdrlen: ipv6 nexthdr len for the reserved space.
  * @_idsetup: callback to setup id and mask values.
- * @_idlen: len क्रम the next header id and mask, should be always the same.
- * @_uncompress: callback क्रम uncompression call.
- * @_compress: callback क्रम compression call.
+ * @_idlen: len for the next header id and mask, should be always the same.
+ * @_uncompress: callback for uncompression call.
+ * @_compress: callback for compression call.
  */
-#घोषणा LOWPAN_NHC(__nhc, _name, _nexthdr,	\
+#define LOWPAN_NHC(__nhc, _name, _nexthdr,	\
 		   _hdrlen, _idsetup, _idlen,	\
 		   _uncompress, _compress)	\
-अटल u8 __nhc##_val[_idlen];			\
-अटल u8 __nhc##_mask[_idlen];			\
-अटल काष्ठा lowpan_nhc __nhc = अणु		\
+static u8 __nhc##_val[_idlen];			\
+static u8 __nhc##_mask[_idlen];			\
+static struct lowpan_nhc __nhc = {		\
 	.name		= _name,		\
 	.nexthdr	= _nexthdr,		\
 	.nexthdrlen	= _hdrlen,		\
@@ -37,108 +36,108 @@
 	.idsetup	= _idsetup,		\
 	.uncompress	= _uncompress,		\
 	.compress	= _compress,		\
-पूर्ण
+}
 
-#घोषणा module_lowpan_nhc(__nhc)		\
-अटल पूर्णांक __init __nhc##_init(व्योम)		\
-अणु						\
-	वापस lowpan_nhc_add(&(__nhc));	\
-पूर्ण						\
+#define module_lowpan_nhc(__nhc)		\
+static int __init __nhc##_init(void)		\
+{						\
+	return lowpan_nhc_add(&(__nhc));	\
+}						\
 module_init(__nhc##_init);			\
-अटल व्योम __निकास __nhc##_निकास(व्योम)		\
-अणु						\
+static void __exit __nhc##_exit(void)		\
+{						\
 	lowpan_nhc_del(&(__nhc));		\
-पूर्ण						\
-module_निकास(__nhc##_निकास);
+}						\
+module_exit(__nhc##_exit);
 
 /**
- * काष्ठा lowpan_nhc - hold 6lowpan next hdr compression अगरnक्रमmation
+ * struct lowpan_nhc - hold 6lowpan next hdr compression ifnformation
  *
- * @node: holder क्रम the rbtree.
- * @name: name of the specअगरic next header compression
+ * @node: holder for the rbtree.
+ * @name: name of the specific next header compression
  * @nexthdr: next header value of the protocol which should be compressed.
- * @nexthdrlen: ipv6 nexthdr len क्रम the reserved space.
- * @id: array क्रम nhc id. Note this need to be in network byteorder.
- * @mask: array क्रम nhc id mask. Note this need to be in network byteorder.
+ * @nexthdrlen: ipv6 nexthdr len for the reserved space.
+ * @id: array for nhc id. Note this need to be in network byteorder.
+ * @mask: array for nhc id mask. Note this need to be in network byteorder.
  * @len: the length of the next header id and mask.
  * @setup: callback to setup fill the next header id value and mask.
- * @compress: callback to करो the header compression.
- * @uncompress: callback to करो the header uncompression.
+ * @compress: callback to do the header compression.
+ * @uncompress: callback to do the header uncompression.
  */
-काष्ठा lowpan_nhc अणु
-	काष्ठा rb_node	node;
-	स्थिर अक्षर	*name;
-	स्थिर u8	nexthdr;
-	स्थिर माप_प्रकार	nexthdrlen;
+struct lowpan_nhc {
+	struct rb_node	node;
+	const char	*name;
+	const u8	nexthdr;
+	const size_t	nexthdrlen;
 	u8		*id;
 	u8		*idmask;
-	स्थिर माप_प्रकार	idlen;
+	const size_t	idlen;
 
-	व्योम		(*idsetup)(काष्ठा lowpan_nhc *nhc);
-	पूर्णांक		(*uncompress)(काष्ठा sk_buff *skb, माप_प्रकार needed);
-	पूर्णांक		(*compress)(काष्ठा sk_buff *skb, u8 **hc_ptr);
-पूर्ण;
+	void		(*idsetup)(struct lowpan_nhc *nhc);
+	int		(*uncompress)(struct sk_buff *skb, size_t needed);
+	int		(*compress)(struct sk_buff *skb, u8 **hc_ptr);
+};
 
 /**
- * lowpan_nhc_by_nexthdr - वापस the 6lowpan nhc by ipv6 nexthdr.
+ * lowpan_nhc_by_nexthdr - return the 6lowpan nhc by ipv6 nexthdr.
  *
  * @nexthdr: ipv6 nexthdr value.
  */
-काष्ठा lowpan_nhc *lowpan_nhc_by_nexthdr(u8 nexthdr);
+struct lowpan_nhc *lowpan_nhc_by_nexthdr(u8 nexthdr);
 
 /**
- * lowpan_nhc_check_compression - checks अगर we support compression क्रमmat. If
- *	we support the nhc by nexthdr field, the function will वापस 0. If we
- *	करोn't support the nhc by nexthdr this function will वापस -ENOENT.
+ * lowpan_nhc_check_compression - checks if we support compression format. If
+ *	we support the nhc by nexthdr field, the function will return 0. If we
+ *	don't support the nhc by nexthdr this function will return -ENOENT.
  *
- * @skb: skb of 6LoWPAN header to पढ़ो nhc and replace header.
+ * @skb: skb of 6LoWPAN header to read nhc and replace header.
  * @hdr: ipv6hdr to check the nexthdr value
- * @hc_ptr: poपूर्णांकer क्रम 6LoWPAN header which should increment at the end of
+ * @hc_ptr: pointer for 6LoWPAN header which should increment at the end of
  *	    replaced header.
  */
-पूर्णांक lowpan_nhc_check_compression(काष्ठा sk_buff *skb,
-				 स्थिर काष्ठा ipv6hdr *hdr, u8 **hc_ptr);
+int lowpan_nhc_check_compression(struct sk_buff *skb,
+				 const struct ipv6hdr *hdr, u8 **hc_ptr);
 
 /**
- * lowpan_nhc_करो_compression - calling compress callback क्रम nhc
+ * lowpan_nhc_do_compression - calling compress callback for nhc
  *
- * @skb: skb of 6LoWPAN header to पढ़ो nhc and replace header.
+ * @skb: skb of 6LoWPAN header to read nhc and replace header.
  * @hdr: ipv6hdr to set the nexthdr value
- * @hc_ptr: poपूर्णांकer क्रम 6LoWPAN header which should increment at the end of
+ * @hc_ptr: pointer for 6LoWPAN header which should increment at the end of
  *	    replaced header.
  */
-पूर्णांक lowpan_nhc_करो_compression(काष्ठा sk_buff *skb, स्थिर काष्ठा ipv6hdr *hdr,
+int lowpan_nhc_do_compression(struct sk_buff *skb, const struct ipv6hdr *hdr,
 			      u8 **hc_ptr);
 
 /**
- * lowpan_nhc_करो_uncompression - calling uncompress callback क्रम nhc
+ * lowpan_nhc_do_uncompression - calling uncompress callback for nhc
  *
  * @nhc: 6LoWPAN nhc context, get by lowpan_nhc_by_ functions.
- * @skb: skb of 6LoWPAN header, skb->data should be poपूर्णांकed to nhc id value.
- * @dev: netdevice क्रम prपूर्णांक logging inक्रमmation.
- * @hdr: ipv6hdr क्रम setting nexthdr value.
+ * @skb: skb of 6LoWPAN header, skb->data should be pointed to nhc id value.
+ * @dev: netdevice for print logging information.
+ * @hdr: ipv6hdr for setting nexthdr value.
  */
-पूर्णांक lowpan_nhc_करो_uncompression(काष्ठा sk_buff *skb,
-				स्थिर काष्ठा net_device *dev,
-				काष्ठा ipv6hdr *hdr);
+int lowpan_nhc_do_uncompression(struct sk_buff *skb,
+				const struct net_device *dev,
+				struct ipv6hdr *hdr);
 
 /**
- * lowpan_nhc_add - रेजिस्टर a next header compression to framework
+ * lowpan_nhc_add - register a next header compression to framework
  *
  * @nhc: nhc which should be add.
  */
-पूर्णांक lowpan_nhc_add(काष्ठा lowpan_nhc *nhc);
+int lowpan_nhc_add(struct lowpan_nhc *nhc);
 
 /**
  * lowpan_nhc_del - delete a next header compression from framework
  *
  * @nhc: nhc which should be delete.
  */
-व्योम lowpan_nhc_del(काष्ठा lowpan_nhc *nhc);
+void lowpan_nhc_del(struct lowpan_nhc *nhc);
 
 /**
- * lowpan_nhc_init - adding all शेष nhcs
+ * lowpan_nhc_init - adding all default nhcs
  */
-व्योम lowpan_nhc_init(व्योम);
+void lowpan_nhc_init(void);
 
-#पूर्ण_अगर /* __6LOWPAN_NHC_H */
+#endif /* __6LOWPAN_NHC_H */

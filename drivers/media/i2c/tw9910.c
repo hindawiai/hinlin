@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * tw9910 Video Driver
  *
@@ -16,752 +15,752 @@
  * Copyright (C) 2008, Guennadi Liakhovetski <kernel@pengutronix.de>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/v4l2-mediabus.h>
-#समावेश <linux/videodev2.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/v4l2-mediabus.h>
+#include <linux/videodev2.h>
 
-#समावेश <media/i2c/tw9910.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/i2c/tw9910.h>
+#include <media/v4l2-subdev.h>
 
-#घोषणा GET_ID(val)  ((val & 0xF8) >> 3)
-#घोषणा GET_REV(val) (val & 0x07)
+#define GET_ID(val)  ((val & 0xF8) >> 3)
+#define GET_REV(val) (val & 0x07)
 
 /*
- * रेजिस्टर offset
+ * register offset
  */
-#घोषणा ID		0x00 /* Product ID Code Register */
-#घोषणा STATUS1		0x01 /* Chip Status Register I */
-#घोषणा INFORM		0x02 /* Input Format */
-#घोषणा OPFORM		0x03 /* Output Format Control Register */
-#घोषणा DLYCTR		0x04 /* Hysteresis and HSYNC Delay Control */
-#घोषणा OUTCTR1		0x05 /* Output Control I */
-#घोषणा ACNTL1		0x06 /* Analog Control Register 1 */
-#घोषणा CROP_HI		0x07 /* Cropping Register, High */
-#घोषणा VDELAY_LO	0x08 /* Vertical Delay Register, Low */
-#घोषणा VACTIVE_LO	0x09 /* Vertical Active Register, Low */
-#घोषणा HDELAY_LO	0x0A /* Horizontal Delay Register, Low */
-#घोषणा HACTIVE_LO	0x0B /* Horizontal Active Register, Low */
-#घोषणा CNTRL1		0x0C /* Control Register I */
-#घोषणा VSCALE_LO	0x0D /* Vertical Scaling Register, Low */
-#घोषणा SCALE_HI	0x0E /* Scaling Register, High */
-#घोषणा HSCALE_LO	0x0F /* Horizontal Scaling Register, Low */
-#घोषणा BRIGHT		0x10 /* BRIGHTNESS Control Register */
-#घोषणा CONTRAST	0x11 /* CONTRAST Control Register */
-#घोषणा SHARPNESS	0x12 /* SHARPNESS Control Register I */
-#घोषणा SAT_U		0x13 /* Chroma (U) Gain Register */
-#घोषणा SAT_V		0x14 /* Chroma (V) Gain Register */
-#घोषणा HUE		0x15 /* Hue Control Register */
-#घोषणा CORING1		0x17
-#घोषणा CORING2		0x18 /* Coring and IF compensation */
-#घोषणा VBICNTL		0x19 /* VBI Control Register */
-#घोषणा ACNTL2		0x1A /* Analog Control 2 */
-#घोषणा OUTCTR2		0x1B /* Output Control 2 */
-#घोषणा SDT		0x1C /* Standard Selection */
-#घोषणा SDTR		0x1D /* Standard Recognition */
-#घोषणा TEST		0x1F /* Test Control Register */
-#घोषणा CLMPG		0x20 /* Clamping Gain */
-#घोषणा IAGC		0x21 /* Inभागidual AGC Gain */
-#घोषणा AGCGAIN		0x22 /* AGC Gain */
-#घोषणा PEAKWT		0x23 /* White Peak Threshold */
-#घोषणा CLMPL		0x24 /* Clamp level */
-#घोषणा SYNCT		0x25 /* Sync Amplitude */
-#घोषणा MISSCNT		0x26 /* Sync Miss Count Register */
-#घोषणा PCLAMP		0x27 /* Clamp Position Register */
-#घोषणा VCNTL1		0x28 /* Vertical Control I */
-#घोषणा VCNTL2		0x29 /* Vertical Control II */
-#घोषणा CKILL		0x2A /* Color Killer Level Control */
-#घोषणा COMB		0x2B /* Comb Filter Control */
-#घोषणा LDLY		0x2C /* Luma Delay and H Filter Control */
-#घोषणा MISC1		0x2D /* Miscellaneous Control I */
-#घोषणा LOOP		0x2E /* LOOP Control Register */
-#घोषणा MISC2		0x2F /* Miscellaneous Control II */
-#घोषणा MVSN		0x30 /* Macrovision Detection */
-#घोषणा STATUS2		0x31 /* Chip STATUS II */
-#घोषणा HFREF		0x32 /* H monitor */
-#घोषणा CLMD		0x33 /* CLAMP MODE */
-#घोषणा IDCNTL		0x34 /* ID Detection Control */
-#घोषणा CLCNTL1		0x35 /* Clamp Control I */
-#घोषणा ANAPLLCTL	0x4C
-#घोषणा VBIMIN		0x4D
-#घोषणा HSLOWCTL	0x4E
-#घोषणा WSS3		0x4F
-#घोषणा FILLDATA	0x50
-#घोषणा SDID		0x51
-#घोषणा DID		0x52
-#घोषणा WSS1		0x53
-#घोषणा WSS2		0x54
-#घोषणा VVBI		0x55
-#घोषणा LCTL6		0x56
-#घोषणा LCTL7		0x57
-#घोषणा LCTL8		0x58
-#घोषणा LCTL9		0x59
-#घोषणा LCTL10		0x5A
-#घोषणा LCTL11		0x5B
-#घोषणा LCTL12		0x5C
-#घोषणा LCTL13		0x5D
-#घोषणा LCTL14		0x5E
-#घोषणा LCTL15		0x5F
-#घोषणा LCTL16		0x60
-#घोषणा LCTL17		0x61
-#घोषणा LCTL18		0x62
-#घोषणा LCTL19		0x63
-#घोषणा LCTL20		0x64
-#घोषणा LCTL21		0x65
-#घोषणा LCTL22		0x66
-#घोषणा LCTL23		0x67
-#घोषणा LCTL24		0x68
-#घोषणा LCTL25		0x69
-#घोषणा LCTL26		0x6A
-#घोषणा HSBEGIN		0x6B
-#घोषणा HSEND		0x6C
-#घोषणा OVSDLY		0x6D
-#घोषणा OVSEND		0x6E
-#घोषणा VBIDELAY	0x6F
+#define ID		0x00 /* Product ID Code Register */
+#define STATUS1		0x01 /* Chip Status Register I */
+#define INFORM		0x02 /* Input Format */
+#define OPFORM		0x03 /* Output Format Control Register */
+#define DLYCTR		0x04 /* Hysteresis and HSYNC Delay Control */
+#define OUTCTR1		0x05 /* Output Control I */
+#define ACNTL1		0x06 /* Analog Control Register 1 */
+#define CROP_HI		0x07 /* Cropping Register, High */
+#define VDELAY_LO	0x08 /* Vertical Delay Register, Low */
+#define VACTIVE_LO	0x09 /* Vertical Active Register, Low */
+#define HDELAY_LO	0x0A /* Horizontal Delay Register, Low */
+#define HACTIVE_LO	0x0B /* Horizontal Active Register, Low */
+#define CNTRL1		0x0C /* Control Register I */
+#define VSCALE_LO	0x0D /* Vertical Scaling Register, Low */
+#define SCALE_HI	0x0E /* Scaling Register, High */
+#define HSCALE_LO	0x0F /* Horizontal Scaling Register, Low */
+#define BRIGHT		0x10 /* BRIGHTNESS Control Register */
+#define CONTRAST	0x11 /* CONTRAST Control Register */
+#define SHARPNESS	0x12 /* SHARPNESS Control Register I */
+#define SAT_U		0x13 /* Chroma (U) Gain Register */
+#define SAT_V		0x14 /* Chroma (V) Gain Register */
+#define HUE		0x15 /* Hue Control Register */
+#define CORING1		0x17
+#define CORING2		0x18 /* Coring and IF compensation */
+#define VBICNTL		0x19 /* VBI Control Register */
+#define ACNTL2		0x1A /* Analog Control 2 */
+#define OUTCTR2		0x1B /* Output Control 2 */
+#define SDT		0x1C /* Standard Selection */
+#define SDTR		0x1D /* Standard Recognition */
+#define TEST		0x1F /* Test Control Register */
+#define CLMPG		0x20 /* Clamping Gain */
+#define IAGC		0x21 /* Individual AGC Gain */
+#define AGCGAIN		0x22 /* AGC Gain */
+#define PEAKWT		0x23 /* White Peak Threshold */
+#define CLMPL		0x24 /* Clamp level */
+#define SYNCT		0x25 /* Sync Amplitude */
+#define MISSCNT		0x26 /* Sync Miss Count Register */
+#define PCLAMP		0x27 /* Clamp Position Register */
+#define VCNTL1		0x28 /* Vertical Control I */
+#define VCNTL2		0x29 /* Vertical Control II */
+#define CKILL		0x2A /* Color Killer Level Control */
+#define COMB		0x2B /* Comb Filter Control */
+#define LDLY		0x2C /* Luma Delay and H Filter Control */
+#define MISC1		0x2D /* Miscellaneous Control I */
+#define LOOP		0x2E /* LOOP Control Register */
+#define MISC2		0x2F /* Miscellaneous Control II */
+#define MVSN		0x30 /* Macrovision Detection */
+#define STATUS2		0x31 /* Chip STATUS II */
+#define HFREF		0x32 /* H monitor */
+#define CLMD		0x33 /* CLAMP MODE */
+#define IDCNTL		0x34 /* ID Detection Control */
+#define CLCNTL1		0x35 /* Clamp Control I */
+#define ANAPLLCTL	0x4C
+#define VBIMIN		0x4D
+#define HSLOWCTL	0x4E
+#define WSS3		0x4F
+#define FILLDATA	0x50
+#define SDID		0x51
+#define DID		0x52
+#define WSS1		0x53
+#define WSS2		0x54
+#define VVBI		0x55
+#define LCTL6		0x56
+#define LCTL7		0x57
+#define LCTL8		0x58
+#define LCTL9		0x59
+#define LCTL10		0x5A
+#define LCTL11		0x5B
+#define LCTL12		0x5C
+#define LCTL13		0x5D
+#define LCTL14		0x5E
+#define LCTL15		0x5F
+#define LCTL16		0x60
+#define LCTL17		0x61
+#define LCTL18		0x62
+#define LCTL19		0x63
+#define LCTL20		0x64
+#define LCTL21		0x65
+#define LCTL22		0x66
+#define LCTL23		0x67
+#define LCTL24		0x68
+#define LCTL25		0x69
+#define LCTL26		0x6A
+#define HSBEGIN		0x6B
+#define HSEND		0x6C
+#define OVSDLY		0x6D
+#define OVSEND		0x6E
+#define VBIDELAY	0x6F
 
 /*
- * रेजिस्टर detail
+ * register detail
  */
 
 /* INFORM */
-#घोषणा FC27_ON     0x40 /* 1 : Input crystal घड़ी frequency is 27MHz */
-#घोषणा FC27_FF     0x00 /* 0 : Square pixel mode. */
-			 /*     Must use 24.54MHz क्रम 60Hz field rate */
-			 /*     source or 29.5MHz क्रम 50Hz field rate */
-#घोषणा IFSEL_S     0x10 /* 01 : S-video decoding */
-#घोषणा IFSEL_C     0x00 /* 00 : Composite video decoding */
+#define FC27_ON     0x40 /* 1 : Input crystal clock frequency is 27MHz */
+#define FC27_FF     0x00 /* 0 : Square pixel mode. */
+			 /*     Must use 24.54MHz for 60Hz field rate */
+			 /*     source or 29.5MHz for 50Hz field rate */
+#define IFSEL_S     0x10 /* 01 : S-video decoding */
+#define IFSEL_C     0x00 /* 00 : Composite video decoding */
 			 /* Y input video selection */
-#घोषणा YSEL_M0     0x00 /*  00 : Mux0 selected */
-#घोषणा YSEL_M1     0x04 /*  01 : Mux1 selected */
-#घोषणा YSEL_M2     0x08 /*  10 : Mux2 selected */
-#घोषणा YSEL_M3     0x10 /*  11 : Mux3 selected */
+#define YSEL_M0     0x00 /*  00 : Mux0 selected */
+#define YSEL_M1     0x04 /*  01 : Mux1 selected */
+#define YSEL_M2     0x08 /*  10 : Mux2 selected */
+#define YSEL_M3     0x10 /*  11 : Mux3 selected */
 
 /* OPFORM */
-#घोषणा MODE        0x80 /* 0 : CCIR601 compatible YCrCb 4:2:2 क्रमmat */
-			 /* 1 : ITU-R-656 compatible data sequence क्रमmat */
-#घोषणा LEN         0x40 /* 0 : 8-bit YCrCb 4:2:2 output क्रमmat */
-			 /* 1 : 16-bit YCrCb 4:2:2 output क्रमmat.*/
-#घोषणा LLCMODE     0x20 /* 1 : LLC output mode. */
-			 /* 0 : मुक्त-run output mode */
-#घोषणा AINC        0x10 /* Serial पूर्णांकerface स्वतः-indexing control */
-			 /* 0 : स्वतः-increment */
-			 /* 1 : non-स्वतः */
-#घोषणा VSCTL       0x08 /* 1 : Vertical out ctrl by DVALID */
+#define MODE        0x80 /* 0 : CCIR601 compatible YCrCb 4:2:2 format */
+			 /* 1 : ITU-R-656 compatible data sequence format */
+#define LEN         0x40 /* 0 : 8-bit YCrCb 4:2:2 output format */
+			 /* 1 : 16-bit YCrCb 4:2:2 output format.*/
+#define LLCMODE     0x20 /* 1 : LLC output mode. */
+			 /* 0 : free-run output mode */
+#define AINC        0x10 /* Serial interface auto-indexing control */
+			 /* 0 : auto-increment */
+			 /* 1 : non-auto */
+#define VSCTL       0x08 /* 1 : Vertical out ctrl by DVALID */
 			 /* 0 : Vertical out ctrl by HACTIVE and DVALID */
-#घोषणा OEN_TRI_SEL_MASK	0x07
-#घोषणा OEN_TRI_SEL_ALL_ON	0x00 /* Enable output क्रम Rev0/Rev1 */
-#घोषणा OEN_TRI_SEL_ALL_OFF_r0	0x06 /* All tri-stated क्रम Rev0 */
-#घोषणा OEN_TRI_SEL_ALL_OFF_r1	0x07 /* All tri-stated क्रम Rev1 */
+#define OEN_TRI_SEL_MASK	0x07
+#define OEN_TRI_SEL_ALL_ON	0x00 /* Enable output for Rev0/Rev1 */
+#define OEN_TRI_SEL_ALL_OFF_r0	0x06 /* All tri-stated for Rev0 */
+#define OEN_TRI_SEL_ALL_OFF_r1	0x07 /* All tri-stated for Rev1 */
 
 /* OUTCTR1 */
-#घोषणा VSP_LO      0x00 /* 0 : VS pin output polarity is active low */
-#घोषणा VSP_HI      0x80 /* 1 : VS pin output polarity is active high. */
+#define VSP_LO      0x00 /* 0 : VS pin output polarity is active low */
+#define VSP_HI      0x80 /* 1 : VS pin output polarity is active high. */
 			 /* VS pin output control */
-#घोषणा VSSL_VSYNC  0x00 /*   0 : VSYNC  */
-#घोषणा VSSL_VACT   0x10 /*   1 : VACT   */
-#घोषणा VSSL_FIELD  0x20 /*   2 : FIELD  */
-#घोषणा VSSL_VVALID 0x30 /*   3 : VVALID */
-#घोषणा VSSL_ZERO   0x70 /*   7 : 0      */
-#घोषणा HSP_LOW     0x00 /* 0 : HS pin output polarity is active low */
-#घोषणा HSP_HI      0x08 /* 1 : HS pin output polarity is active high.*/
+#define VSSL_VSYNC  0x00 /*   0 : VSYNC  */
+#define VSSL_VACT   0x10 /*   1 : VACT   */
+#define VSSL_FIELD  0x20 /*   2 : FIELD  */
+#define VSSL_VVALID 0x30 /*   3 : VVALID */
+#define VSSL_ZERO   0x70 /*   7 : 0      */
+#define HSP_LOW     0x00 /* 0 : HS pin output polarity is active low */
+#define HSP_HI      0x08 /* 1 : HS pin output polarity is active high.*/
 			 /* HS pin output control */
-#घोषणा HSSL_HACT   0x00 /*   0 : HACT   */
-#घोषणा HSSL_HSYNC  0x01 /*   1 : HSYNC  */
-#घोषणा HSSL_DVALID 0x02 /*   2 : DVALID */
-#घोषणा HSSL_HLOCK  0x03 /*   3 : HLOCK  */
-#घोषणा HSSL_ASYNCW 0x04 /*   4 : ASYNCW */
-#घोषणा HSSL_ZERO   0x07 /*   7 : 0      */
+#define HSSL_HACT   0x00 /*   0 : HACT   */
+#define HSSL_HSYNC  0x01 /*   1 : HSYNC  */
+#define HSSL_DVALID 0x02 /*   2 : DVALID */
+#define HSSL_HLOCK  0x03 /*   3 : HLOCK  */
+#define HSSL_ASYNCW 0x04 /*   4 : ASYNCW */
+#define HSSL_ZERO   0x07 /*   7 : 0      */
 
 /* ACNTL1 */
-#घोषणा SRESET      0x80 /* resets the device to its शेष state
-			  * but all रेजिस्टर content reमुख्य unchanged.
+#define SRESET      0x80 /* resets the device to its default state
+			  * but all register content remain unchanged.
 			  * This bit is self-resetting.
 			  */
-#घोषणा ACNTL1_PDN_MASK	0x0e
-#घोषणा CLK_PDN		0x08 /* प्रणाली घड़ी घातer करोwn */
-#घोषणा Y_PDN		0x04 /* Luma ADC घातer करोwn */
-#घोषणा C_PDN		0x02 /* Chroma ADC घातer करोwn */
+#define ACNTL1_PDN_MASK	0x0e
+#define CLK_PDN		0x08 /* system clock power down */
+#define Y_PDN		0x04 /* Luma ADC power down */
+#define C_PDN		0x02 /* Chroma ADC power down */
 
 /* ACNTL2 */
-#घोषणा ACNTL2_PDN_MASK	0x40
-#घोषणा PLL_PDN		0x40 /* PLL घातer करोwn */
+#define ACNTL2_PDN_MASK	0x40
+#define PLL_PDN		0x40 /* PLL power down */
 
 /* VBICNTL */
 
-/* RTSEL : control the real समय संकेत output from the MPOUT pin */
-#घोषणा RTSEL_MASK  0x07
-#घोषणा RTSEL_VLOSS 0x00 /* 0000 = Video loss */
-#घोषणा RTSEL_HLOCK 0x01 /* 0001 = H-lock */
-#घोषणा RTSEL_SLOCK 0x02 /* 0010 = S-lock */
-#घोषणा RTSEL_VLOCK 0x03 /* 0011 = V-lock */
-#घोषणा RTSEL_MONO  0x04 /* 0100 = MONO */
-#घोषणा RTSEL_DET50 0x05 /* 0101 = DET50 */
-#घोषणा RTSEL_FIELD 0x06 /* 0110 = FIELD */
-#घोषणा RTSEL_RTCO  0x07 /* 0111 = RTCO ( Real Time Control ) */
+/* RTSEL : control the real time signal output from the MPOUT pin */
+#define RTSEL_MASK  0x07
+#define RTSEL_VLOSS 0x00 /* 0000 = Video loss */
+#define RTSEL_HLOCK 0x01 /* 0001 = H-lock */
+#define RTSEL_SLOCK 0x02 /* 0010 = S-lock */
+#define RTSEL_VLOCK 0x03 /* 0011 = V-lock */
+#define RTSEL_MONO  0x04 /* 0100 = MONO */
+#define RTSEL_DET50 0x05 /* 0101 = DET50 */
+#define RTSEL_FIELD 0x06 /* 0110 = FIELD */
+#define RTSEL_RTCO  0x07 /* 0111 = RTCO ( Real Time Control ) */
 
-/* HSYNC start and end are स्थिरant क्रम now */
-#घोषणा HSYNC_START	0x0260
-#घोषणा HSYNC_END	0x0300
+/* HSYNC start and end are constant for now */
+#define HSYNC_START	0x0260
+#define HSYNC_END	0x0300
 
 /*
- * काष्ठाure
+ * structure
  */
 
-काष्ठा regval_list अणु
-	अचिन्हित अक्षर reg_num;
-	अचिन्हित अक्षर value;
-पूर्ण;
+struct regval_list {
+	unsigned char reg_num;
+	unsigned char value;
+};
 
-काष्ठा tw9910_scale_ctrl अणु
-	अक्षर           *name;
-	अचिन्हित लघु  width;
-	अचिन्हित लघु  height;
+struct tw9910_scale_ctrl {
+	char           *name;
+	unsigned short  width;
+	unsigned short  height;
 	u16             hscale;
 	u16             vscale;
-पूर्ण;
+};
 
-काष्ठा tw9910_priv अणु
-	काष्ठा v4l2_subdev		subdev;
-	काष्ठा clk			*clk;
-	काष्ठा tw9910_video_info	*info;
-	काष्ठा gpio_desc		*pdn_gpio;
-	काष्ठा gpio_desc		*rstb_gpio;
-	स्थिर काष्ठा tw9910_scale_ctrl	*scale;
+struct tw9910_priv {
+	struct v4l2_subdev		subdev;
+	struct clk			*clk;
+	struct tw9910_video_info	*info;
+	struct gpio_desc		*pdn_gpio;
+	struct gpio_desc		*rstb_gpio;
+	const struct tw9910_scale_ctrl	*scale;
 	v4l2_std_id			norm;
 	u32				revision;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tw9910_scale_ctrl tw9910_ntsc_scales[] = अणु
-	अणु
+static const struct tw9910_scale_ctrl tw9910_ntsc_scales[] = {
+	{
 		.name   = "NTSC SQ",
 		.width  = 640,
 		.height = 480,
 		.hscale = 0x0100,
 		.vscale = 0x0100,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "NTSC CCIR601",
 		.width  = 720,
 		.height = 480,
 		.hscale = 0x0100,
 		.vscale = 0x0100,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "NTSC SQ (CIF)",
 		.width  = 320,
 		.height = 240,
 		.hscale = 0x0200,
 		.vscale = 0x0200,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "NTSC CCIR601 (CIF)",
 		.width  = 360,
 		.height = 240,
 		.hscale = 0x0200,
 		.vscale = 0x0200,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "NTSC SQ (QCIF)",
 		.width  = 160,
 		.height = 120,
 		.hscale = 0x0400,
 		.vscale = 0x0400,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "NTSC CCIR601 (QCIF)",
 		.width  = 180,
 		.height = 120,
 		.hscale = 0x0400,
 		.vscale = 0x0400,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा tw9910_scale_ctrl tw9910_pal_scales[] = अणु
-	अणु
+static const struct tw9910_scale_ctrl tw9910_pal_scales[] = {
+	{
 		.name   = "PAL SQ",
 		.width  = 768,
 		.height = 576,
 		.hscale = 0x0100,
 		.vscale = 0x0100,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "PAL CCIR601",
 		.width  = 720,
 		.height = 576,
 		.hscale = 0x0100,
 		.vscale = 0x0100,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "PAL SQ (CIF)",
 		.width  = 384,
 		.height = 288,
 		.hscale = 0x0200,
 		.vscale = 0x0200,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "PAL CCIR601 (CIF)",
 		.width  = 360,
 		.height = 288,
 		.hscale = 0x0200,
 		.vscale = 0x0200,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "PAL SQ (QCIF)",
 		.width  = 192,
 		.height = 144,
 		.hscale = 0x0400,
 		.vscale = 0x0400,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name   = "PAL CCIR601 (QCIF)",
 		.width  = 180,
 		.height = 144,
 		.hscale = 0x0400,
 		.vscale = 0x0400,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /*
  * general function
  */
-अटल काष्ठा tw9910_priv *to_tw9910(स्थिर काष्ठा i2c_client *client)
-अणु
-	वापस container_of(i2c_get_clientdata(client), काष्ठा tw9910_priv,
+static struct tw9910_priv *to_tw9910(const struct i2c_client *client)
+{
+	return container_of(i2c_get_clientdata(client), struct tw9910_priv,
 			    subdev);
-पूर्ण
+}
 
-अटल पूर्णांक tw9910_mask_set(काष्ठा i2c_client *client, u8 command,
+static int tw9910_mask_set(struct i2c_client *client, u8 command,
 			   u8 mask, u8 set)
-अणु
-	s32 val = i2c_smbus_पढ़ो_byte_data(client, command);
+{
+	s32 val = i2c_smbus_read_byte_data(client, command);
 
-	अगर (val < 0)
-		वापस val;
+	if (val < 0)
+		return val;
 
 	val &= ~mask;
 	val |= set & mask;
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, command, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, command, val);
+}
 
-अटल पूर्णांक tw9910_set_scale(काष्ठा i2c_client *client,
-			    स्थिर काष्ठा tw9910_scale_ctrl *scale)
-अणु
-	पूर्णांक ret;
+static int tw9910_set_scale(struct i2c_client *client,
+			    const struct tw9910_scale_ctrl *scale)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, SCALE_HI,
+	ret = i2c_smbus_write_byte_data(client, SCALE_HI,
 					(scale->vscale & 0x0F00) >> 4 |
 					(scale->hscale & 0x0F00) >> 8);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, HSCALE_LO,
+	ret = i2c_smbus_write_byte_data(client, HSCALE_LO,
 					scale->hscale & 0x00FF);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, VSCALE_LO,
+	ret = i2c_smbus_write_byte_data(client, VSCALE_LO,
 					scale->vscale & 0x00FF);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tw9910_set_hsync(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
-	पूर्णांक ret;
+static int tw9910_set_hsync(struct i2c_client *client)
+{
+	struct tw9910_priv *priv = to_tw9910(client);
+	int ret;
 
 	/* bit 10 - 3 */
-	ret = i2c_smbus_ग_लिखो_byte_data(client, HSBEGIN,
+	ret = i2c_smbus_write_byte_data(client, HSBEGIN,
 					(HSYNC_START & 0x07F8) >> 3);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* bit 10 - 3 */
-	ret = i2c_smbus_ग_लिखो_byte_data(client, HSEND,
+	ret = i2c_smbus_write_byte_data(client, HSEND,
 					(HSYNC_END & 0x07F8) >> 3);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* So far only revisions 0 and 1 have been seen. */
 	/* bit 2 - 0 */
-	अगर (priv->revision == 1)
+	if (priv->revision == 1)
 		ret = tw9910_mask_set(client, HSLOWCTL, 0x77,
 				      (HSYNC_START & 0x0007) << 4 |
 				      (HSYNC_END   & 0x0007));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tw9910_reset(काष्ठा i2c_client *client)
-अणु
+static void tw9910_reset(struct i2c_client *client)
+{
 	tw9910_mask_set(client, ACNTL1, SRESET, SRESET);
 	usleep_range(1000, 5000);
-पूर्ण
+}
 
-अटल पूर्णांक tw9910_घातer(काष्ठा i2c_client *client, पूर्णांक enable)
-अणु
-	पूर्णांक ret;
+static int tw9910_power(struct i2c_client *client, int enable)
+{
+	int ret;
 	u8 acntl1;
 	u8 acntl2;
 
-	अगर (enable) अणु
+	if (enable) {
 		acntl1 = 0;
 		acntl2 = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		acntl1 = CLK_PDN | Y_PDN | C_PDN;
 		acntl2 = PLL_PDN;
-	पूर्ण
+	}
 
 	ret = tw9910_mask_set(client, ACNTL1, ACNTL1_PDN_MASK, acntl1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस tw9910_mask_set(client, ACNTL2, ACNTL2_PDN_MASK, acntl2);
-पूर्ण
+	return tw9910_mask_set(client, ACNTL2, ACNTL2_PDN_MASK, acntl2);
+}
 
-अटल स्थिर काष्ठा tw9910_scale_ctrl *tw9910_select_norm(v4l2_std_id norm,
+static const struct tw9910_scale_ctrl *tw9910_select_norm(v4l2_std_id norm,
 							  u32 width, u32 height)
-अणु
-	स्थिर काष्ठा tw9910_scale_ctrl *scale;
-	स्थिर काष्ठा tw9910_scale_ctrl *ret = शून्य;
-	__u32 dअगरf = 0xffffffff, पंचांगp;
-	पूर्णांक size, i;
+{
+	const struct tw9910_scale_ctrl *scale;
+	const struct tw9910_scale_ctrl *ret = NULL;
+	__u32 diff = 0xffffffff, tmp;
+	int size, i;
 
-	अगर (norm & V4L2_STD_NTSC) अणु
+	if (norm & V4L2_STD_NTSC) {
 		scale = tw9910_ntsc_scales;
 		size = ARRAY_SIZE(tw9910_ntsc_scales);
-	पूर्ण अन्यथा अगर (norm & V4L2_STD_PAL) अणु
+	} else if (norm & V4L2_STD_PAL) {
 		scale = tw9910_pal_scales;
 		size = ARRAY_SIZE(tw9910_pal_scales);
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+	} else {
+		return NULL;
+	}
 
-	क्रम (i = 0; i < size; i++) अणु
-		पंचांगp = असल(width - scale[i].width) +
-		      असल(height - scale[i].height);
-		अगर (पंचांगp < dअगरf) अणु
-			dअगरf = पंचांगp;
+	for (i = 0; i < size; i++) {
+		tmp = abs(width - scale[i].width) +
+		      abs(height - scale[i].height);
+		if (tmp < diff) {
+			diff = tmp;
 			ret = scale + i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * subdevice operations
  */
-अटल पूर्णांक tw9910_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_s_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
 	u8 val;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!enable) अणु
-		चयन (priv->revision) अणु
-		हाल 0:
+	if (!enable) {
+		switch (priv->revision) {
+		case 0:
 			val = OEN_TRI_SEL_ALL_OFF_r0;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			val = OEN_TRI_SEL_ALL_OFF_r1;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(&client->dev, "un-supported revision\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		val = OEN_TRI_SEL_ALL_ON;
 
-		अगर (!priv->scale) अणु
+		if (!priv->scale) {
 			dev_err(&client->dev, "norm select error\n");
-			वापस -EPERM;
-		पूर्ण
+			return -EPERM;
+		}
 
 		dev_dbg(&client->dev, "%s %dx%d\n",
 			priv->scale->name,
 			priv->scale->width,
 			priv->scale->height);
-	पूर्ण
+	}
 
 	ret = tw9910_mask_set(client, OPFORM, OEN_TRI_SEL_MASK, val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस tw9910_घातer(client, enable);
-पूर्ण
+	return tw9910_power(client, enable);
+}
 
-अटल पूर्णांक tw9910_g_std(काष्ठा v4l2_subdev *sd, v4l2_std_id *norm)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_g_std(struct v4l2_subdev *sd, v4l2_std_id *norm)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
 
 	*norm = priv->norm;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
-	स्थिर अचिन्हित पूर्णांक hact = 720;
-	स्थिर अचिन्हित पूर्णांक hdelay = 15;
-	अचिन्हित पूर्णांक vact;
-	अचिन्हित पूर्णांक vdelay;
-	पूर्णांक ret;
+static int tw9910_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
+	const unsigned int hact = 720;
+	const unsigned int hdelay = 15;
+	unsigned int vact;
+	unsigned int vdelay;
+	int ret;
 
-	अगर (!(norm & (V4L2_STD_NTSC | V4L2_STD_PAL)))
-		वापस -EINVAL;
+	if (!(norm & (V4L2_STD_NTSC | V4L2_STD_PAL)))
+		return -EINVAL;
 
 	priv->norm = norm;
-	अगर (norm & V4L2_STD_525_60) अणु
+	if (norm & V4L2_STD_525_60) {
 		vact = 240;
 		vdelay = 18;
 		ret = tw9910_mask_set(client, VVBI, 0x10, 0x10);
-	पूर्ण अन्यथा अणु
+	} else {
 		vact = 288;
 		vdelay = 24;
 		ret = tw9910_mask_set(client, VVBI, 0x10, 0x00);
-	पूर्ण
-	अगर (!ret)
-		ret = i2c_smbus_ग_लिखो_byte_data(client, CROP_HI,
+	}
+	if (!ret)
+		ret = i2c_smbus_write_byte_data(client, CROP_HI,
 						((vdelay >> 2) & 0xc0)	|
 						((vact >> 4) & 0x30)	|
 						((hdelay >> 6) & 0x0c)	|
 						((hact >> 8) & 0x03));
-	अगर (!ret)
-		ret = i2c_smbus_ग_लिखो_byte_data(client, VDELAY_LO,
+	if (!ret)
+		ret = i2c_smbus_write_byte_data(client, VDELAY_LO,
 						vdelay & 0xff);
-	अगर (!ret)
-		ret = i2c_smbus_ग_लिखो_byte_data(client, VACTIVE_LO,
+	if (!ret)
+		ret = i2c_smbus_write_byte_data(client, VACTIVE_LO,
 						vact & 0xff);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-अटल पूर्णांक tw9910_g_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			     काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int tw9910_g_register(struct v4l2_subdev *sd,
+			     struct v4l2_dbg_register *reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
 
-	अगर (reg->reg > 0xff)
-		वापस -EINVAL;
+	if (reg->reg > 0xff)
+		return -EINVAL;
 
 	reg->size = 1;
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg->reg);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, reg->reg);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * ret      = पूर्णांक
+	 * ret      = int
 	 * reg->val = __u64
 	 */
 	reg->val = (__u64)ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_s_रेजिस्टर(काष्ठा v4l2_subdev *sd,
-			     स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+static int tw9910_s_register(struct v4l2_subdev *sd,
+			     const struct v4l2_dbg_register *reg)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
 
-	अगर (reg->reg > 0xff ||
+	if (reg->reg > 0xff ||
 	    reg->val > 0xff)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg->reg, reg->val);
-पूर्ण
-#पूर्ण_अगर
+	return i2c_smbus_write_byte_data(client, reg->reg, reg->val);
+}
+#endif
 
-अटल व्योम tw9910_set_gpio_value(काष्ठा gpio_desc *desc, पूर्णांक value)
-अणु
-	अगर (desc) अणु
+static void tw9910_set_gpio_value(struct gpio_desc *desc, int value)
+{
+	if (desc) {
 		gpiod_set_value(desc, value);
 		usleep_range(500, 1000);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tw9910_घातer_on(काष्ठा tw9910_priv *priv)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&priv->subdev);
-	पूर्णांक ret;
+static int tw9910_power_on(struct tw9910_priv *priv)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&priv->subdev);
+	int ret;
 
-	अगर (priv->clk) अणु
+	if (priv->clk) {
 		ret = clk_prepare_enable(priv->clk);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	tw9910_set_gpio_value(priv->pdn_gpio, 0);
 
 	/*
-	 * FIXME: The reset संकेत is connected to a shared GPIO on some
-	 * platक्रमms (namely the SuperH Migo-R). Until a framework becomes
+	 * FIXME: The reset signal is connected to a shared GPIO on some
+	 * platforms (namely the SuperH Migo-R). Until a framework becomes
 	 * available to handle this cleanly, request the GPIO temporarily
-	 * to aव्योम conflicts.
+	 * to avoid conflicts.
 	 */
 	priv->rstb_gpio = gpiod_get_optional(&client->dev, "rstb",
 					     GPIOD_OUT_LOW);
-	अगर (IS_ERR(priv->rstb_gpio)) अणु
+	if (IS_ERR(priv->rstb_gpio)) {
 		dev_info(&client->dev, "Unable to get GPIO \"rstb\"");
 		clk_disable_unprepare(priv->clk);
 		tw9910_set_gpio_value(priv->pdn_gpio, 1);
-		वापस PTR_ERR(priv->rstb_gpio);
-	पूर्ण
+		return PTR_ERR(priv->rstb_gpio);
+	}
 
-	अगर (priv->rstb_gpio) अणु
+	if (priv->rstb_gpio) {
 		tw9910_set_gpio_value(priv->rstb_gpio, 1);
 		tw9910_set_gpio_value(priv->rstb_gpio, 0);
 
 		gpiod_put(priv->rstb_gpio);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_घातer_off(काष्ठा tw9910_priv *priv)
-अणु
+static int tw9910_power_off(struct tw9910_priv *priv)
+{
 	clk_disable_unprepare(priv->clk);
 	tw9910_set_gpio_value(priv->pdn_gpio, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_s_power(struct v4l2_subdev *sd, int on)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
 
-	वापस on ? tw9910_घातer_on(priv) : tw9910_घातer_off(priv);
-पूर्ण
+	return on ? tw9910_power_on(priv) : tw9910_power_off(priv);
+}
 
-अटल पूर्णांक tw9910_set_frame(काष्ठा v4l2_subdev *sd, u32 *width, u32 *height)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
-	पूर्णांक ret = -EINVAL;
+static int tw9910_set_frame(struct v4l2_subdev *sd, u32 *width, u32 *height)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
+	int ret = -EINVAL;
 	u8 val;
 
 	/* Select suitable norm. */
 	priv->scale = tw9910_select_norm(priv->norm, *width, *height);
-	अगर (!priv->scale)
-		जाओ tw9910_set_fmt_error;
+	if (!priv->scale)
+		goto tw9910_set_fmt_error;
 
 	/* Reset hardware. */
 	tw9910_reset(client);
 
 	/* Set bus width. */
 	val = 0x00;
-	अगर (priv->info->buswidth == 16)
+	if (priv->info->buswidth == 16)
 		val = LEN;
 
 	ret = tw9910_mask_set(client, OPFORM, LEN, val);
-	अगर (ret < 0)
-		जाओ tw9910_set_fmt_error;
+	if (ret < 0)
+		goto tw9910_set_fmt_error;
 
 	/* Select MPOUT behavior. */
-	चयन (priv->info->mpout) अणु
-	हाल TW9910_MPO_VLOSS:
-		val = RTSEL_VLOSS; अवरोध;
-	हाल TW9910_MPO_HLOCK:
-		val = RTSEL_HLOCK; अवरोध;
-	हाल TW9910_MPO_SLOCK:
-		val = RTSEL_SLOCK; अवरोध;
-	हाल TW9910_MPO_VLOCK:
-		val = RTSEL_VLOCK; अवरोध;
-	हाल TW9910_MPO_MONO:
-		val = RTSEL_MONO;  अवरोध;
-	हाल TW9910_MPO_DET50:
-		val = RTSEL_DET50; अवरोध;
-	हाल TW9910_MPO_FIELD:
-		val = RTSEL_FIELD; अवरोध;
-	हाल TW9910_MPO_RTCO:
-		val = RTSEL_RTCO;  अवरोध;
-	शेष:
+	switch (priv->info->mpout) {
+	case TW9910_MPO_VLOSS:
+		val = RTSEL_VLOSS; break;
+	case TW9910_MPO_HLOCK:
+		val = RTSEL_HLOCK; break;
+	case TW9910_MPO_SLOCK:
+		val = RTSEL_SLOCK; break;
+	case TW9910_MPO_VLOCK:
+		val = RTSEL_VLOCK; break;
+	case TW9910_MPO_MONO:
+		val = RTSEL_MONO;  break;
+	case TW9910_MPO_DET50:
+		val = RTSEL_DET50; break;
+	case TW9910_MPO_FIELD:
+		val = RTSEL_FIELD; break;
+	case TW9910_MPO_RTCO:
+		val = RTSEL_RTCO;  break;
+	default:
 		val = 0;
-	पूर्ण
+	}
 
 	ret = tw9910_mask_set(client, VBICNTL, RTSEL_MASK, val);
-	अगर (ret < 0)
-		जाओ tw9910_set_fmt_error;
+	if (ret < 0)
+		goto tw9910_set_fmt_error;
 
 	/* Set scale. */
 	ret = tw9910_set_scale(client, priv->scale);
-	अगर (ret < 0)
-		जाओ tw9910_set_fmt_error;
+	if (ret < 0)
+		goto tw9910_set_fmt_error;
 
 	/* Set hsync. */
 	ret = tw9910_set_hsync(client);
-	अगर (ret < 0)
-		जाओ tw9910_set_fmt_error;
+	if (ret < 0)
+		goto tw9910_set_fmt_error;
 
 	*width = priv->scale->width;
 	*height = priv->scale->height;
 
-	वापस ret;
+	return ret;
 
 tw9910_set_fmt_error:
 
 	tw9910_reset(client);
-	priv->scale = शून्य;
+	priv->scale = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tw9910_get_selection(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_get_selection(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_selection *sel)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
 
-	अगर (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस -EINVAL;
+	if (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE)
+		return -EINVAL;
 	/* Only CROP, CROP_DEFAULT and CROP_BOUNDS are supported. */
-	अगर (sel->target > V4L2_SEL_TGT_CROP_BOUNDS)
-		वापस -EINVAL;
+	if (sel->target > V4L2_SEL_TGT_CROP_BOUNDS)
+		return -EINVAL;
 
 	sel->r.left	= 0;
 	sel->r.top	= 0;
-	अगर (priv->norm & V4L2_STD_NTSC) अणु
+	if (priv->norm & V4L2_STD_NTSC) {
 		sel->r.width	= 640;
 		sel->r.height	= 480;
-	पूर्ण अन्यथा अणु
+	} else {
 		sel->r.width	= 768;
 		sel->r.height	= 576;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_get_fmt(काष्ठा v4l2_subdev *sd,
-			  काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_get_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	अगर (!priv->scale) अणु
+	if (!priv->scale) {
 		priv->scale = tw9910_select_norm(priv->norm, 640, 480);
-		अगर (!priv->scale)
-			वापस -EINVAL;
-	पूर्ण
+		if (!priv->scale)
+			return -EINVAL;
+	}
 
 	mf->width	= priv->scale->width;
 	mf->height	= priv->scale->height;
@@ -769,102 +768,102 @@ tw9910_set_fmt_error:
 	mf->colorspace	= V4L2_COLORSPACE_SMPTE170M;
 	mf->field	= V4L2_FIELD_INTERLACED_BT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_s_fmt(काष्ठा v4l2_subdev *sd,
-			काष्ठा v4l2_mbus_framefmt *mf)
-अणु
+static int tw9910_s_fmt(struct v4l2_subdev *sd,
+			struct v4l2_mbus_framefmt *mf)
+{
 	u32 width = mf->width, height = mf->height;
-	पूर्णांक ret;
+	int ret;
 
 	WARN_ON(mf->field != V4L2_FIELD_ANY &&
 		mf->field != V4L2_FIELD_INTERLACED_BT);
 
-	/* Check color क्रमmat. */
-	अगर (mf->code != MEDIA_BUS_FMT_UYVY8_2X8)
-		वापस -EINVAL;
+	/* Check color format. */
+	if (mf->code != MEDIA_BUS_FMT_UYVY8_2X8)
+		return -EINVAL;
 
 	mf->colorspace = V4L2_COLORSPACE_SMPTE170M;
 
 	ret = tw9910_set_frame(sd, &width, &height);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mf->width	= width;
 	mf->height	= height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_set_fmt(काष्ठा v4l2_subdev *sd,
-			  काष्ठा v4l2_subdev_pad_config *cfg,
-			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat->क्रमmat;
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
-	स्थिर काष्ठा tw9910_scale_ctrl *scale;
+static int tw9910_set_fmt(struct v4l2_subdev *sd,
+			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_format *format)
+{
+	struct v4l2_mbus_framefmt *mf = &format->format;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct tw9910_priv *priv = to_tw9910(client);
+	const struct tw9910_scale_ctrl *scale;
 
-	अगर (क्रमmat->pad)
-		वापस -EINVAL;
+	if (format->pad)
+		return -EINVAL;
 
-	अगर (mf->field == V4L2_FIELD_ANY) अणु
+	if (mf->field == V4L2_FIELD_ANY) {
 		mf->field = V4L2_FIELD_INTERLACED_BT;
-	पूर्ण अन्यथा अगर (mf->field != V4L2_FIELD_INTERLACED_BT) अणु
+	} else if (mf->field != V4L2_FIELD_INTERLACED_BT) {
 		dev_err(&client->dev, "Field type %d invalid\n", mf->field);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	mf->code = MEDIA_BUS_FMT_UYVY8_2X8;
 	mf->colorspace = V4L2_COLORSPACE_SMPTE170M;
 
 	/* Select suitable norm. */
 	scale = tw9910_select_norm(priv->norm, mf->width, mf->height);
-	अगर (!scale)
-		वापस -EINVAL;
+	if (!scale)
+		return -EINVAL;
 
 	mf->width	= scale->width;
 	mf->height	= scale->height;
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		वापस tw9910_s_fmt(sd, mf);
+	if (format->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		return tw9910_s_fmt(sd, mf);
 
 	cfg->try_fmt = *mf;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_video_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_video_probe(struct i2c_client *client)
+{
+	struct tw9910_priv *priv = to_tw9910(client);
 	s32 id;
-	पूर्णांक ret;
+	int ret;
 
 	/* TW9910 only use 8 or 16 bit bus width. */
-	अगर (priv->info->buswidth != 16 && priv->info->buswidth != 8) अणु
+	if (priv->info->buswidth != 16 && priv->info->buswidth != 8) {
 		dev_err(&client->dev, "bus width error\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = tw9910_s_घातer(&priv->subdev, 1);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tw9910_s_power(&priv->subdev, 1);
+	if (ret < 0)
+		return ret;
 
 	/*
 	 * Check and show Product ID.
 	 * So far only revisions 0 and 1 have been seen.
 	 */
-	id = i2c_smbus_पढ़ो_byte_data(client, ID);
+	id = i2c_smbus_read_byte_data(client, ID);
 	priv->revision = GET_REV(id);
 	id = GET_ID(id);
 
-	अगर (id != 0x0b || priv->revision > 0x01) अणु
+	if (id != 0x0b || priv->revision > 0x01) {
 		dev_err(&client->dev, "Product ID error %x:%x\n",
 			id, priv->revision);
 		ret = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	dev_info(&client->dev, "tw9910 Product ID %0x:%0x\n",
 		 id, priv->revision);
@@ -872,154 +871,154 @@ tw9910_set_fmt_error:
 	priv->norm = V4L2_STD_NTSC;
 	priv->scale = &tw9910_ntsc_scales[0];
 
-करोne:
-	tw9910_s_घातer(&priv->subdev, 0);
+done:
+	tw9910_s_power(&priv->subdev, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops tw9910_subdev_core_ops = अणु
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-	.g_रेजिस्टर	= tw9910_g_रेजिस्टर,
-	.s_रेजिस्टर	= tw9910_s_रेजिस्टर,
-#पूर्ण_अगर
-	.s_घातer	= tw9910_s_घातer,
-पूर्ण;
+static const struct v4l2_subdev_core_ops tw9910_subdev_core_ops = {
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.g_register	= tw9910_g_register,
+	.s_register	= tw9910_s_register,
+#endif
+	.s_power	= tw9910_s_power,
+};
 
-अटल पूर्णांक tw9910_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	अगर (code->pad || code->index)
-		वापस -EINVAL;
+static int tw9910_enum_mbus_code(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_mbus_code_enum *code)
+{
+	if (code->pad || code->index)
+		return -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tw9910_g_tvnorms(काष्ठा v4l2_subdev *sd, v4l2_std_id *norm)
-अणु
+static int tw9910_g_tvnorms(struct v4l2_subdev *sd, v4l2_std_id *norm)
+{
 	*norm = V4L2_STD_NTSC | V4L2_STD_PAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops tw9910_subdev_video_ops = अणु
+static const struct v4l2_subdev_video_ops tw9910_subdev_video_ops = {
 	.s_std		= tw9910_s_std,
 	.g_std		= tw9910_g_std,
 	.s_stream	= tw9910_s_stream,
 	.g_tvnorms	= tw9910_g_tvnorms,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops tw9910_subdev_pad_ops = अणु
-	.क्रमागत_mbus_code = tw9910_क्रमागत_mbus_code,
+static const struct v4l2_subdev_pad_ops tw9910_subdev_pad_ops = {
+	.enum_mbus_code = tw9910_enum_mbus_code,
 	.get_selection	= tw9910_get_selection,
 	.get_fmt	= tw9910_get_fmt,
 	.set_fmt	= tw9910_set_fmt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops tw9910_subdev_ops = अणु
+static const struct v4l2_subdev_ops tw9910_subdev_ops = {
 	.core	= &tw9910_subdev_core_ops,
 	.video	= &tw9910_subdev_video_ops,
 	.pad	= &tw9910_subdev_pad_ops,
-पूर्ण;
+};
 
 /*
  * i2c_driver function
  */
 
-अटल पूर्णांक tw9910_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *did)
+static int tw9910_probe(struct i2c_client *client,
+			const struct i2c_device_id *did)
 
-अणु
-	काष्ठा tw9910_priv		*priv;
-	काष्ठा tw9910_video_info	*info;
-	काष्ठा i2c_adapter		*adapter = client->adapter;
-	पूर्णांक ret;
+{
+	struct tw9910_priv		*priv;
+	struct tw9910_video_info	*info;
+	struct i2c_adapter		*adapter = client->adapter;
+	int ret;
 
-	अगर (!client->dev.platक्रमm_data) अणु
+	if (!client->dev.platform_data) {
 		dev_err(&client->dev, "TW9910: missing platform data!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	info = client->dev.platक्रमm_data;
+	info = client->dev.platform_data;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev,
 			"I2C-Adapter doesn't support I2C_FUNC_SMBUS_BYTE_DATA\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	priv = devm_kzalloc(&client->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->info = info;
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &tw9910_subdev_ops);
 
 	priv->clk = clk_get(&client->dev, "xti");
-	अगर (PTR_ERR(priv->clk) == -ENOENT) अणु
-		priv->clk = शून्य;
-	पूर्ण अन्यथा अगर (IS_ERR(priv->clk)) अणु
+	if (PTR_ERR(priv->clk) == -ENOENT) {
+		priv->clk = NULL;
+	} else if (IS_ERR(priv->clk)) {
 		dev_err(&client->dev, "Unable to get xti clock\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
 	priv->pdn_gpio = gpiod_get_optional(&client->dev, "pdn",
 					    GPIOD_OUT_HIGH);
-	अगर (IS_ERR(priv->pdn_gpio)) अणु
+	if (IS_ERR(priv->pdn_gpio)) {
 		dev_info(&client->dev, "Unable to get GPIO \"pdn\"");
 		ret = PTR_ERR(priv->pdn_gpio);
-		जाओ error_clk_put;
-	पूर्ण
+		goto error_clk_put;
+	}
 
 	ret = tw9910_video_probe(client);
-	अगर (ret < 0)
-		जाओ error_gpio_put;
+	if (ret < 0)
+		goto error_gpio_put;
 
-	ret = v4l2_async_रेजिस्टर_subdev(&priv->subdev);
-	अगर (ret)
-		जाओ error_gpio_put;
+	ret = v4l2_async_register_subdev(&priv->subdev);
+	if (ret)
+		goto error_gpio_put;
 
-	वापस ret;
+	return ret;
 
 error_gpio_put:
-	अगर (priv->pdn_gpio)
+	if (priv->pdn_gpio)
 		gpiod_put(priv->pdn_gpio);
 error_clk_put:
 	clk_put(priv->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tw9910_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tw9910_priv *priv = to_tw9910(client);
+static int tw9910_remove(struct i2c_client *client)
+{
+	struct tw9910_priv *priv = to_tw9910(client);
 
-	अगर (priv->pdn_gpio)
+	if (priv->pdn_gpio)
 		gpiod_put(priv->pdn_gpio);
 	clk_put(priv->clk);
-	v4l2_async_unरेजिस्टर_subdev(&priv->subdev);
+	v4l2_async_unregister_subdev(&priv->subdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id tw9910_id[] = अणु
-	अणु "tw9910", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tw9910_id[] = {
+	{ "tw9910", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tw9910_id);
 
-अटल काष्ठा i2c_driver tw9910_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver tw9910_i2c_driver = {
+	.driver = {
 		.name = "tw9910",
-	पूर्ण,
+	},
 	.probe    = tw9910_probe,
-	.हटाओ   = tw9910_हटाओ,
+	.remove   = tw9910_remove,
 	.id_table = tw9910_id,
-पूर्ण;
+};
 
 module_i2c_driver(tw9910_i2c_driver);
 

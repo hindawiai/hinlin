@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * User API definitions क्रम paraभव devices on s390
+ * User API definitions for paravirtual devices on s390
  *
  * Copyright IBM Corp. 2008
  *

@@ -1,1181 +1,1180 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  compress_core.c - compress offload core
  *
  *  Copyright (C) 2011 Intel Corporation
- *  Authors:	Vinod Koul <vinod.koul@linux.पूर्णांकel.com>
- *		Pierre-Louis Bossart <pierre-louis.bossart@linux.पूर्णांकel.com>
+ *  Authors:	Vinod Koul <vinod.koul@linux.intel.com>
+ *		Pierre-Louis Bossart <pierre-louis.bossart@linux.intel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#घोषणा FORMAT(fmt) "%s: %d: " fmt, __func__, __LINE__
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " FORMAT(fmt)
+#define FORMAT(fmt) "%s: %d: " fmt, __func__, __LINE__
+#define pr_fmt(fmt) KBUILD_MODNAME ": " FORMAT(fmt)
 
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/list.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uपन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/compat.h>
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/info.h>
-#समावेश <sound/compress_params.h>
-#समावेश <sound/compress_offload.h>
-#समावेश <sound/compress_driver.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/list.h>
+#include <linux/math64.h>
+#include <linux/mm.h>
+#include <linux/mutex.h>
+#include <linux/poll.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/uio.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/compat.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/info.h>
+#include <sound/compress_params.h>
+#include <sound/compress_offload.h>
+#include <sound/compress_driver.h>
 
-/* काष्ठा snd_compr_codec_caps overflows the ioctl bit size क्रम some
+/* struct snd_compr_codec_caps overflows the ioctl bit size for some
  * architectures, so we need to disable the relevant ioctls.
  */
-#अगर _IOC_SIZEBITS < 14
-#घोषणा COMPR_CODEC_CAPS_OVERFLOW
-#पूर्ण_अगर
+#if _IOC_SIZEBITS < 14
+#define COMPR_CODEC_CAPS_OVERFLOW
+#endif
 
 /* TODO:
- * - add substream support क्रम multiple devices in हाल of
+ * - add substream support for multiple devices in case of
  *	SND_DYNAMIC_MINORS is not used
  * - Multiple node representation
- *	driver should be able to रेजिस्टर multiple nodes
+ *	driver should be able to register multiple nodes
  */
 
-अटल DEFINE_MUTEX(device_mutex);
+static DEFINE_MUTEX(device_mutex);
 
-काष्ठा snd_compr_file अणु
-	अचिन्हित दीर्घ caps;
-	काष्ठा snd_compr_stream stream;
-पूर्ण;
+struct snd_compr_file {
+	unsigned long caps;
+	struct snd_compr_stream stream;
+};
 
-अटल व्योम error_delayed_work(काष्ठा work_काष्ठा *work);
+static void error_delayed_work(struct work_struct *work);
 
 /*
  * a note on stream states used:
  * we use following states in the compressed core
- * SNDRV_PCM_STATE_OPEN: When stream has been खोलोed.
- * SNDRV_PCM_STATE_SETUP: When stream has been initialized. This is करोne by
+ * SNDRV_PCM_STATE_OPEN: When stream has been opened.
+ * SNDRV_PCM_STATE_SETUP: When stream has been initialized. This is done by
  *	calling SNDRV_COMPRESS_SET_PARAMS. Running streams will come to this
  *	state at stop by calling SNDRV_COMPRESS_STOP, or at end of drain.
- * SNDRV_PCM_STATE_PREPARED: When a stream has been written to (क्रम
- *	playback only). User after setting up stream ग_लिखोs the data buffer
- *	beक्रमe starting the stream.
+ * SNDRV_PCM_STATE_PREPARED: When a stream has been written to (for
+ *	playback only). User after setting up stream writes the data buffer
+ *	before starting the stream.
  * SNDRV_PCM_STATE_RUNNING: When stream has been started and is
  *	decoding/encoding and rendering/capturing data.
- * SNDRV_PCM_STATE_DRAINING: When stream is draining current data. This is करोne
+ * SNDRV_PCM_STATE_DRAINING: When stream is draining current data. This is done
  *	by calling SNDRV_COMPRESS_DRAIN.
- * SNDRV_PCM_STATE_PAUSED: When stream is छोड़ोd. This is करोne by calling
+ * SNDRV_PCM_STATE_PAUSED: When stream is paused. This is done by calling
  *	SNDRV_COMPRESS_PAUSE. It can be stopped or resumed by calling
  *	SNDRV_COMPRESS_STOP or SNDRV_COMPRESS_RESUME respectively.
  */
-अटल पूर्णांक snd_compr_खोलो(काष्ठा inode *inode, काष्ठा file *f)
-अणु
-	काष्ठा snd_compr *compr;
-	काष्ठा snd_compr_file *data;
-	काष्ठा snd_compr_runसमय *runसमय;
-	क्रमागत snd_compr_direction dirn;
-	पूर्णांक maj = imajor(inode);
-	पूर्णांक ret;
+static int snd_compr_open(struct inode *inode, struct file *f)
+{
+	struct snd_compr *compr;
+	struct snd_compr_file *data;
+	struct snd_compr_runtime *runtime;
+	enum snd_compr_direction dirn;
+	int maj = imajor(inode);
+	int ret;
 
-	अगर ((f->f_flags & O_ACCMODE) == O_WRONLY)
+	if ((f->f_flags & O_ACCMODE) == O_WRONLY)
 		dirn = SND_COMPRESS_PLAYBACK;
-	अन्यथा अगर ((f->f_flags & O_ACCMODE) == O_RDONLY)
+	else if ((f->f_flags & O_ACCMODE) == O_RDONLY)
 		dirn = SND_COMPRESS_CAPTURE;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (maj == snd_major)
+	if (maj == snd_major)
 		compr = snd_lookup_minor_data(iminor(inode),
 					SNDRV_DEVICE_TYPE_COMPRESS);
-	अन्यथा
-		वापस -EBADFD;
+	else
+		return -EBADFD;
 
-	अगर (compr == शून्य) अणु
+	if (compr == NULL) {
 		pr_err("no device data!!!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (dirn != compr->direction) अणु
+	if (dirn != compr->direction) {
 		pr_err("this device doesn't support this direction\n");
 		snd_card_unref(compr->card);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data) अणु
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data) {
 		snd_card_unref(compr->card);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	INIT_DELAYED_WORK(&data->stream.error_work, error_delayed_work);
 
 	data->stream.ops = compr->ops;
 	data->stream.direction = dirn;
-	data->stream.निजी_data = compr->निजी_data;
+	data->stream.private_data = compr->private_data;
 	data->stream.device = compr;
-	runसमय = kzalloc(माप(*runसमय), GFP_KERNEL);
-	अगर (!runसमय) अणु
-		kमुक्त(data);
+	runtime = kzalloc(sizeof(*runtime), GFP_KERNEL);
+	if (!runtime) {
+		kfree(data);
 		snd_card_unref(compr->card);
-		वापस -ENOMEM;
-	पूर्ण
-	runसमय->state = SNDRV_PCM_STATE_OPEN;
-	init_रुकोqueue_head(&runसमय->sleep);
-	data->stream.runसमय = runसमय;
-	f->निजी_data = (व्योम *)data;
+		return -ENOMEM;
+	}
+	runtime->state = SNDRV_PCM_STATE_OPEN;
+	init_waitqueue_head(&runtime->sleep);
+	data->stream.runtime = runtime;
+	f->private_data = (void *)data;
 	mutex_lock(&compr->lock);
-	ret = compr->ops->खोलो(&data->stream);
+	ret = compr->ops->open(&data->stream);
 	mutex_unlock(&compr->lock);
-	अगर (ret) अणु
-		kमुक्त(runसमय);
-		kमुक्त(data);
-	पूर्ण
+	if (ret) {
+		kfree(runtime);
+		kfree(data);
+	}
 	snd_card_unref(compr->card);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक snd_compr_मुक्त(काष्ठा inode *inode, काष्ठा file *f)
-अणु
-	काष्ठा snd_compr_file *data = f->निजी_data;
-	काष्ठा snd_compr_runसमय *runसमय = data->stream.runसमय;
+static int snd_compr_free(struct inode *inode, struct file *f)
+{
+	struct snd_compr_file *data = f->private_data;
+	struct snd_compr_runtime *runtime = data->stream.runtime;
 
 	cancel_delayed_work_sync(&data->stream.error_work);
 
-	चयन (runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_RUNNING:
-	हाल SNDRV_PCM_STATE_DRAINING:
-	हाल SNDRV_PCM_STATE_PAUSED:
+	switch (runtime->state) {
+	case SNDRV_PCM_STATE_RUNNING:
+	case SNDRV_PCM_STATE_DRAINING:
+	case SNDRV_PCM_STATE_PAUSED:
 		data->stream.ops->trigger(&data->stream, SNDRV_PCM_TRIGGER_STOP);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	data->stream.ops->मुक्त(&data->stream);
-	अगर (!data->stream.runसमय->dma_buffer_p)
-		kमुक्त(data->stream.runसमय->buffer);
-	kमुक्त(data->stream.runसमय);
-	kमुक्त(data);
-	वापस 0;
-पूर्ण
+	data->stream.ops->free(&data->stream);
+	if (!data->stream.runtime->dma_buffer_p)
+		kfree(data->stream.runtime->buffer);
+	kfree(data->stream.runtime);
+	kfree(data);
+	return 0;
+}
 
-अटल पूर्णांक snd_compr_update_tstamp(काष्ठा snd_compr_stream *stream,
-		काष्ठा snd_compr_tstamp *tstamp)
-अणु
-	अगर (!stream->ops->poपूर्णांकer)
-		वापस -ENOTSUPP;
-	stream->ops->poपूर्णांकer(stream, tstamp);
+static int snd_compr_update_tstamp(struct snd_compr_stream *stream,
+		struct snd_compr_tstamp *tstamp)
+{
+	if (!stream->ops->pointer)
+		return -ENOTSUPP;
+	stream->ops->pointer(stream, tstamp);
 	pr_debug("dsp consumed till %d total %d bytes\n",
 		tstamp->byte_offset, tstamp->copied_total);
-	अगर (stream->direction == SND_COMPRESS_PLAYBACK)
-		stream->runसमय->total_bytes_transferred = tstamp->copied_total;
-	अन्यथा
-		stream->runसमय->total_bytes_available = tstamp->copied_total;
-	वापस 0;
-पूर्ण
+	if (stream->direction == SND_COMPRESS_PLAYBACK)
+		stream->runtime->total_bytes_transferred = tstamp->copied_total;
+	else
+		stream->runtime->total_bytes_available = tstamp->copied_total;
+	return 0;
+}
 
-अटल माप_प्रकार snd_compr_calc_avail(काष्ठा snd_compr_stream *stream,
-		काष्ठा snd_compr_avail *avail)
-अणु
-	स_रखो(avail, 0, माप(*avail));
+static size_t snd_compr_calc_avail(struct snd_compr_stream *stream,
+		struct snd_compr_avail *avail)
+{
+	memset(avail, 0, sizeof(*avail));
 	snd_compr_update_tstamp(stream, &avail->tstamp);
-	/* Still need to वापस avail even अगर tstamp can't be filled in */
+	/* Still need to return avail even if tstamp can't be filled in */
 
-	अगर (stream->runसमय->total_bytes_available == 0 &&
-			stream->runसमय->state == SNDRV_PCM_STATE_SETUP &&
-			stream->direction == SND_COMPRESS_PLAYBACK) अणु
+	if (stream->runtime->total_bytes_available == 0 &&
+			stream->runtime->state == SNDRV_PCM_STATE_SETUP &&
+			stream->direction == SND_COMPRESS_PLAYBACK) {
 		pr_debug("detected init and someone forgot to do a write\n");
-		वापस stream->runसमय->buffer_size;
-	पूर्ण
+		return stream->runtime->buffer_size;
+	}
 	pr_debug("app wrote %lld, DSP consumed %lld\n",
-			stream->runसमय->total_bytes_available,
-			stream->runसमय->total_bytes_transferred);
-	अगर (stream->runसमय->total_bytes_available ==
-				stream->runसमय->total_bytes_transferred) अणु
-		अगर (stream->direction == SND_COMPRESS_PLAYBACK) अणु
+			stream->runtime->total_bytes_available,
+			stream->runtime->total_bytes_transferred);
+	if (stream->runtime->total_bytes_available ==
+				stream->runtime->total_bytes_transferred) {
+		if (stream->direction == SND_COMPRESS_PLAYBACK) {
 			pr_debug("both pointers are same, returning full avail\n");
-			वापस stream->runसमय->buffer_size;
-		पूर्ण अन्यथा अणु
+			return stream->runtime->buffer_size;
+		} else {
 			pr_debug("both pointers are same, returning no avail\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	avail->avail = stream->runसमय->total_bytes_available -
-			stream->runसमय->total_bytes_transferred;
-	अगर (stream->direction == SND_COMPRESS_PLAYBACK)
-		avail->avail = stream->runसमय->buffer_size - avail->avail;
+	avail->avail = stream->runtime->total_bytes_available -
+			stream->runtime->total_bytes_transferred;
+	if (stream->direction == SND_COMPRESS_PLAYBACK)
+		avail->avail = stream->runtime->buffer_size - avail->avail;
 
 	pr_debug("ret avail as %lld\n", avail->avail);
-	वापस avail->avail;
-पूर्ण
+	return avail->avail;
+}
 
-अटल अंतरभूत माप_प्रकार snd_compr_get_avail(काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_compr_avail avail;
+static inline size_t snd_compr_get_avail(struct snd_compr_stream *stream)
+{
+	struct snd_compr_avail avail;
 
-	वापस snd_compr_calc_avail(stream, &avail);
-पूर्ण
+	return snd_compr_calc_avail(stream, &avail);
+}
 
-अटल पूर्णांक
-snd_compr_ioctl_avail(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_avail ioctl_avail;
-	माप_प्रकार avail;
+static int
+snd_compr_ioctl_avail(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_compr_avail ioctl_avail;
+	size_t avail;
 
 	avail = snd_compr_calc_avail(stream, &ioctl_avail);
 	ioctl_avail.avail = avail;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-		वापस -EBADFD;
-	हाल SNDRV_PCM_STATE_XRUN:
-		वापस -EPIPE;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+		return -EBADFD;
+	case SNDRV_PCM_STATE_XRUN:
+		return -EPIPE;
+	default:
+		break;
+	}
 
-	अगर (copy_to_user((__u64 __user *)arg,
-				&ioctl_avail, माप(ioctl_avail)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user((__u64 __user *)arg,
+				&ioctl_avail, sizeof(ioctl_avail)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_compr_ग_लिखो_data(काष्ठा snd_compr_stream *stream,
-	       स्थिर अक्षर __user *buf, माप_प्रकार count)
-अणु
-	व्योम *dstn;
-	माप_प्रकार copy;
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
+static int snd_compr_write_data(struct snd_compr_stream *stream,
+	       const char __user *buf, size_t count)
+{
+	void *dstn;
+	size_t copy;
+	struct snd_compr_runtime *runtime = stream->runtime;
 	/* 64-bit Modulus */
-	u64 app_poपूर्णांकer = भाग64_u64(runसमय->total_bytes_available,
-				    runसमय->buffer_size);
-	app_poपूर्णांकer = runसमय->total_bytes_available -
-		      (app_poपूर्णांकer * runसमय->buffer_size);
+	u64 app_pointer = div64_u64(runtime->total_bytes_available,
+				    runtime->buffer_size);
+	app_pointer = runtime->total_bytes_available -
+		      (app_pointer * runtime->buffer_size);
 
-	dstn = runसमय->buffer + app_poपूर्णांकer;
+	dstn = runtime->buffer + app_pointer;
 	pr_debug("copying %ld at %lld\n",
-			(अचिन्हित दीर्घ)count, app_poपूर्णांकer);
-	अगर (count < runसमय->buffer_size - app_poपूर्णांकer) अणु
-		अगर (copy_from_user(dstn, buf, count))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		copy = runसमय->buffer_size - app_poपूर्णांकer;
-		अगर (copy_from_user(dstn, buf, copy))
-			वापस -EFAULT;
-		अगर (copy_from_user(runसमय->buffer, buf + copy, count - copy))
-			वापस -EFAULT;
-	पूर्ण
-	/* अगर DSP cares, let it know data has been written */
-	अगर (stream->ops->ack)
+			(unsigned long)count, app_pointer);
+	if (count < runtime->buffer_size - app_pointer) {
+		if (copy_from_user(dstn, buf, count))
+			return -EFAULT;
+	} else {
+		copy = runtime->buffer_size - app_pointer;
+		if (copy_from_user(dstn, buf, copy))
+			return -EFAULT;
+		if (copy_from_user(runtime->buffer, buf + copy, count - copy))
+			return -EFAULT;
+	}
+	/* if DSP cares, let it know data has been written */
+	if (stream->ops->ack)
 		stream->ops->ack(stream, count);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार snd_compr_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
-		माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा snd_compr_file *data = f->निजी_data;
-	काष्ठा snd_compr_stream *stream;
-	माप_प्रकार avail;
-	पूर्णांक retval;
+static ssize_t snd_compr_write(struct file *f, const char __user *buf,
+		size_t count, loff_t *offset)
+{
+	struct snd_compr_file *data = f->private_data;
+	struct snd_compr_stream *stream;
+	size_t avail;
+	int retval;
 
-	अगर (snd_BUG_ON(!data))
-		वापस -EFAULT;
+	if (snd_BUG_ON(!data))
+		return -EFAULT;
 
 	stream = &data->stream;
 	mutex_lock(&stream->device->lock);
-	/* ग_लिखो is allowed when stream is running or has been steup */
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_SETUP:
-	हाल SNDRV_PCM_STATE_PREPARED:
-	हाल SNDRV_PCM_STATE_RUNNING:
-		अवरोध;
-	शेष:
+	/* write is allowed when stream is running or has been steup */
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_SETUP:
+	case SNDRV_PCM_STATE_PREPARED:
+	case SNDRV_PCM_STATE_RUNNING:
+		break;
+	default:
 		mutex_unlock(&stream->device->lock);
-		वापस -EBADFD;
-	पूर्ण
+		return -EBADFD;
+	}
 
 	avail = snd_compr_get_avail(stream);
-	pr_debug("avail returned %ld\n", (अचिन्हित दीर्घ)avail);
-	/* calculate how much we can ग_लिखो to buffer */
-	अगर (avail > count)
+	pr_debug("avail returned %ld\n", (unsigned long)avail);
+	/* calculate how much we can write to buffer */
+	if (avail > count)
 		avail = count;
 
-	अगर (stream->ops->copy) अणु
-		अक्षर __user* cbuf = (अक्षर __user*)buf;
+	if (stream->ops->copy) {
+		char __user* cbuf = (char __user*)buf;
 		retval = stream->ops->copy(stream, cbuf, avail);
-	पूर्ण अन्यथा अणु
-		retval = snd_compr_ग_लिखो_data(stream, buf, avail);
-	पूर्ण
-	अगर (retval > 0)
-		stream->runसमय->total_bytes_available += retval;
+	} else {
+		retval = snd_compr_write_data(stream, buf, avail);
+	}
+	if (retval > 0)
+		stream->runtime->total_bytes_available += retval;
 
-	/* जबतक initiating the stream, ग_लिखो should be called beक्रमe START
+	/* while initiating the stream, write should be called before START
 	 * call, so in setup move state */
-	अगर (stream->runसमय->state == SNDRV_PCM_STATE_SETUP) अणु
-		stream->runसमय->state = SNDRV_PCM_STATE_PREPARED;
+	if (stream->runtime->state == SNDRV_PCM_STATE_SETUP) {
+		stream->runtime->state = SNDRV_PCM_STATE_PREPARED;
 		pr_debug("stream prepared, Houston we are good to go\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&stream->device->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 
-अटल sमाप_प्रकार snd_compr_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
-		माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा snd_compr_file *data = f->निजी_data;
-	काष्ठा snd_compr_stream *stream;
-	माप_प्रकार avail;
-	पूर्णांक retval;
+static ssize_t snd_compr_read(struct file *f, char __user *buf,
+		size_t count, loff_t *offset)
+{
+	struct snd_compr_file *data = f->private_data;
+	struct snd_compr_stream *stream;
+	size_t avail;
+	int retval;
 
-	अगर (snd_BUG_ON(!data))
-		वापस -EFAULT;
+	if (snd_BUG_ON(!data))
+		return -EFAULT;
 
 	stream = &data->stream;
 	mutex_lock(&stream->device->lock);
 
-	/* पढ़ो is allowed when stream is running, छोड़ोd, draining and setup
-	 * (yes setup is state which we transition to after stop, so अगर user
-	 * wants to पढ़ो data after stop we allow that)
+	/* read is allowed when stream is running, paused, draining and setup
+	 * (yes setup is state which we transition to after stop, so if user
+	 * wants to read data after stop we allow that)
 	 */
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_PREPARED:
-	हाल SNDRV_PCM_STATE_SUSPENDED:
-	हाल SNDRV_PCM_STATE_DISCONNECTED:
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_PREPARED:
+	case SNDRV_PCM_STATE_SUSPENDED:
+	case SNDRV_PCM_STATE_DISCONNECTED:
 		retval = -EBADFD;
-		जाओ out;
-	हाल SNDRV_PCM_STATE_XRUN:
+		goto out;
+	case SNDRV_PCM_STATE_XRUN:
 		retval = -EPIPE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	avail = snd_compr_get_avail(stream);
-	pr_debug("avail returned %ld\n", (अचिन्हित दीर्घ)avail);
-	/* calculate how much we can पढ़ो from buffer */
-	अगर (avail > count)
+	pr_debug("avail returned %ld\n", (unsigned long)avail);
+	/* calculate how much we can read from buffer */
+	if (avail > count)
 		avail = count;
 
-	अगर (stream->ops->copy) अणु
+	if (stream->ops->copy) {
 		retval = stream->ops->copy(stream, buf, avail);
-	पूर्ण अन्यथा अणु
+	} else {
 		retval = -ENXIO;
-		जाओ out;
-	पूर्ण
-	अगर (retval > 0)
-		stream->runसमय->total_bytes_transferred += retval;
+		goto out;
+	}
+	if (retval > 0)
+		stream->runtime->total_bytes_transferred += retval;
 
 out:
 	mutex_unlock(&stream->device->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक snd_compr_mmap(काष्ठा file *f, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस -ENXIO;
-पूर्ण
+static int snd_compr_mmap(struct file *f, struct vm_area_struct *vma)
+{
+	return -ENXIO;
+}
 
-अटल __poll_t snd_compr_get_poll(काष्ठा snd_compr_stream *stream)
-अणु
-	अगर (stream->direction == SND_COMPRESS_PLAYBACK)
-		वापस EPOLLOUT | EPOLLWRNORM;
-	अन्यथा
-		वापस EPOLLIN | EPOLLRDNORM;
-पूर्ण
+static __poll_t snd_compr_get_poll(struct snd_compr_stream *stream)
+{
+	if (stream->direction == SND_COMPRESS_PLAYBACK)
+		return EPOLLOUT | EPOLLWRNORM;
+	else
+		return EPOLLIN | EPOLLRDNORM;
+}
 
-अटल __poll_t snd_compr_poll(काष्ठा file *f, poll_table *रुको)
-अणु
-	काष्ठा snd_compr_file *data = f->निजी_data;
-	काष्ठा snd_compr_stream *stream;
-	माप_प्रकार avail;
+static __poll_t snd_compr_poll(struct file *f, poll_table *wait)
+{
+	struct snd_compr_file *data = f->private_data;
+	struct snd_compr_stream *stream;
+	size_t avail;
 	__poll_t retval = 0;
 
-	अगर (snd_BUG_ON(!data))
-		वापस EPOLLERR;
+	if (snd_BUG_ON(!data))
+		return EPOLLERR;
 
 	stream = &data->stream;
 
 	mutex_lock(&stream->device->lock);
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_XRUN:
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_XRUN:
 		retval = snd_compr_get_poll(stream) | EPOLLERR;
-		जाओ out;
-	शेष:
-		अवरोध;
-	पूर्ण
+		goto out;
+	default:
+		break;
+	}
 
-	poll_रुको(f, &stream->runसमय->sleep, रुको);
+	poll_wait(f, &stream->runtime->sleep, wait);
 
 	avail = snd_compr_get_avail(stream);
-	pr_debug("avail is %ld\n", (अचिन्हित दीर्घ)avail);
-	/* check अगर we have at least one fragment to fill */
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_DRAINING:
+	pr_debug("avail is %ld\n", (unsigned long)avail);
+	/* check if we have at least one fragment to fill */
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_DRAINING:
 		/* stream has been woken up after drain is complete
-		 * draining करोne so set stream state to stopped
+		 * draining done so set stream state to stopped
 		 */
 		retval = snd_compr_get_poll(stream);
-		stream->runसमय->state = SNDRV_PCM_STATE_SETUP;
-		अवरोध;
-	हाल SNDRV_PCM_STATE_RUNNING:
-	हाल SNDRV_PCM_STATE_PREPARED:
-	हाल SNDRV_PCM_STATE_PAUSED:
-		अगर (avail >= stream->runसमय->fragment_size)
+		stream->runtime->state = SNDRV_PCM_STATE_SETUP;
+		break;
+	case SNDRV_PCM_STATE_RUNNING:
+	case SNDRV_PCM_STATE_PREPARED:
+	case SNDRV_PCM_STATE_PAUSED:
+		if (avail >= stream->runtime->fragment_size)
 			retval = snd_compr_get_poll(stream);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		retval = snd_compr_get_poll(stream) | EPOLLERR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
 	mutex_unlock(&stream->device->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक
-snd_compr_get_caps(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक retval;
-	काष्ठा snd_compr_caps caps;
+static int
+snd_compr_get_caps(struct snd_compr_stream *stream, unsigned long arg)
+{
+	int retval;
+	struct snd_compr_caps caps;
 
-	अगर (!stream->ops->get_caps)
-		वापस -ENXIO;
+	if (!stream->ops->get_caps)
+		return -ENXIO;
 
-	स_रखो(&caps, 0, माप(caps));
+	memset(&caps, 0, sizeof(caps));
 	retval = stream->ops->get_caps(stream, &caps);
-	अगर (retval)
-		जाओ out;
-	अगर (copy_to_user((व्योम __user *)arg, &caps, माप(caps)))
+	if (retval)
+		goto out;
+	if (copy_to_user((void __user *)arg, &caps, sizeof(caps)))
 		retval = -EFAULT;
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अगर_अघोषित COMPR_CODEC_CAPS_OVERFLOW
-अटल पूर्णांक
-snd_compr_get_codec_caps(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक retval;
-	काष्ठा snd_compr_codec_caps *caps;
+#ifndef COMPR_CODEC_CAPS_OVERFLOW
+static int
+snd_compr_get_codec_caps(struct snd_compr_stream *stream, unsigned long arg)
+{
+	int retval;
+	struct snd_compr_codec_caps *caps;
 
-	अगर (!stream->ops->get_codec_caps)
-		वापस -ENXIO;
+	if (!stream->ops->get_codec_caps)
+		return -ENXIO;
 
-	caps = kzalloc(माप(*caps), GFP_KERNEL);
-	अगर (!caps)
-		वापस -ENOMEM;
+	caps = kzalloc(sizeof(*caps), GFP_KERNEL);
+	if (!caps)
+		return -ENOMEM;
 
 	retval = stream->ops->get_codec_caps(stream, caps);
-	अगर (retval)
-		जाओ out;
-	अगर (copy_to_user((व्योम __user *)arg, caps, माप(*caps)))
+	if (retval)
+		goto out;
+	if (copy_to_user((void __user *)arg, caps, sizeof(*caps)))
 		retval = -EFAULT;
 
 out:
-	kमुक्त(caps);
-	वापस retval;
-पूर्ण
-#पूर्ण_अगर /* !COMPR_CODEC_CAPS_OVERFLOW */
+	kfree(caps);
+	return retval;
+}
+#endif /* !COMPR_CODEC_CAPS_OVERFLOW */
 
-पूर्णांक snd_compr_दो_स्मृति_pages(काष्ठा snd_compr_stream *stream, माप_प्रकार size)
-अणु
-	काष्ठा snd_dma_buffer *dmab;
-	पूर्णांक ret;
+int snd_compr_malloc_pages(struct snd_compr_stream *stream, size_t size)
+{
+	struct snd_dma_buffer *dmab;
+	int ret;
 
-	अगर (snd_BUG_ON(!(stream) || !(stream)->runसमय))
-		वापस -EINVAL;
-	dmab = kzalloc(माप(*dmab), GFP_KERNEL);
-	अगर (!dmab)
-		वापस -ENOMEM;
+	if (snd_BUG_ON(!(stream) || !(stream)->runtime))
+		return -EINVAL;
+	dmab = kzalloc(sizeof(*dmab), GFP_KERNEL);
+	if (!dmab)
+		return -ENOMEM;
 	dmab->dev = stream->dma_buffer.dev;
 	ret = snd_dma_alloc_pages(dmab->dev.type, dmab->dev.dev, size, dmab);
-	अगर (ret < 0) अणु
-		kमुक्त(dmab);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(dmab);
+		return ret;
+	}
 
-	snd_compr_set_runसमय_buffer(stream, dmab);
-	stream->runसमय->dma_bytes = size;
-	वापस 1;
-पूर्ण
-EXPORT_SYMBOL(snd_compr_दो_स्मृति_pages);
+	snd_compr_set_runtime_buffer(stream, dmab);
+	stream->runtime->dma_bytes = size;
+	return 1;
+}
+EXPORT_SYMBOL(snd_compr_malloc_pages);
 
-पूर्णांक snd_compr_मुक्त_pages(काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय;
+int snd_compr_free_pages(struct snd_compr_stream *stream)
+{
+	struct snd_compr_runtime *runtime;
 
-	अगर (snd_BUG_ON(!(stream) || !(stream)->runसमय))
-		वापस -EINVAL;
-	runसमय = stream->runसमय;
-	अगर (runसमय->dma_area == शून्य)
-		वापस 0;
-	अगर (runसमय->dma_buffer_p != &stream->dma_buffer) अणु
+	if (snd_BUG_ON(!(stream) || !(stream)->runtime))
+		return -EINVAL;
+	runtime = stream->runtime;
+	if (runtime->dma_area == NULL)
+		return 0;
+	if (runtime->dma_buffer_p != &stream->dma_buffer) {
 		/* It's a newly allocated buffer. Release it now. */
-		snd_dma_मुक्त_pages(runसमय->dma_buffer_p);
-		kमुक्त(runसमय->dma_buffer_p);
-	पूर्ण
+		snd_dma_free_pages(runtime->dma_buffer_p);
+		kfree(runtime->dma_buffer_p);
+	}
 
-	snd_compr_set_runसमय_buffer(stream, शून्य);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_compr_मुक्त_pages);
+	snd_compr_set_runtime_buffer(stream, NULL);
+	return 0;
+}
+EXPORT_SYMBOL(snd_compr_free_pages);
 
-/* revisit this with snd_pcm_pपुनः_स्मृतिate_xxx */
-अटल पूर्णांक snd_compr_allocate_buffer(काष्ठा snd_compr_stream *stream,
-		काष्ठा snd_compr_params *params)
-अणु
-	अचिन्हित पूर्णांक buffer_size;
-	व्योम *buffer = शून्य;
+/* revisit this with snd_pcm_preallocate_xxx */
+static int snd_compr_allocate_buffer(struct snd_compr_stream *stream,
+		struct snd_compr_params *params)
+{
+	unsigned int buffer_size;
+	void *buffer = NULL;
 
 	buffer_size = params->buffer.fragment_size * params->buffer.fragments;
-	अगर (stream->ops->copy) अणु
-		buffer = शून्य;
-		/* अगर copy is defined the driver will be required to copy
+	if (stream->ops->copy) {
+		buffer = NULL;
+		/* if copy is defined the driver will be required to copy
 		 * the data from core
 		 */
-	पूर्ण अन्यथा अणु
-		अगर (stream->runसमय->dma_buffer_p) अणु
+	} else {
+		if (stream->runtime->dma_buffer_p) {
 
-			अगर (buffer_size > stream->runसमय->dma_buffer_p->bytes)
+			if (buffer_size > stream->runtime->dma_buffer_p->bytes)
 				dev_err(&stream->device->dev,
 						"Not enough DMA buffer");
-			अन्यथा
-				buffer = stream->runसमय->dma_buffer_p->area;
+			else
+				buffer = stream->runtime->dma_buffer_p->area;
 
-		पूर्ण अन्यथा अणु
-			buffer = kदो_स्मृति(buffer_size, GFP_KERNEL);
-		पूर्ण
+		} else {
+			buffer = kmalloc(buffer_size, GFP_KERNEL);
+		}
 
-		अगर (!buffer)
-			वापस -ENOMEM;
-	पूर्ण
-	stream->runसमय->fragment_size = params->buffer.fragment_size;
-	stream->runसमय->fragments = params->buffer.fragments;
-	stream->runसमय->buffer = buffer;
-	stream->runसमय->buffer_size = buffer_size;
-	वापस 0;
-पूर्ण
+		if (!buffer)
+			return -ENOMEM;
+	}
+	stream->runtime->fragment_size = params->buffer.fragment_size;
+	stream->runtime->fragments = params->buffer.fragments;
+	stream->runtime->buffer = buffer;
+	stream->runtime->buffer_size = buffer_size;
+	return 0;
+}
 
-अटल पूर्णांक snd_compress_check_input(काष्ठा snd_compr_params *params)
-अणु
+static int snd_compress_check_input(struct snd_compr_params *params)
+{
 	/* first let's check the buffer parameter's */
-	अगर (params->buffer.fragment_size == 0 ||
+	if (params->buffer.fragment_size == 0 ||
 	    params->buffer.fragments > U32_MAX / params->buffer.fragment_size ||
 	    params->buffer.fragments == 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* now codec parameters */
-	अगर (params->codec.id == 0 || params->codec.id > SND_AUDIOCODEC_MAX)
-		वापस -EINVAL;
+	if (params->codec.id == 0 || params->codec.id > SND_AUDIOCODEC_MAX)
+		return -EINVAL;
 
-	अगर (params->codec.ch_in == 0 || params->codec.ch_out == 0)
-		वापस -EINVAL;
+	if (params->codec.ch_in == 0 || params->codec.ch_out == 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snd_compr_set_params(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_params *params;
-	पूर्णांक retval;
+static int
+snd_compr_set_params(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_compr_params *params;
+	int retval;
 
-	अगर (stream->runसमय->state == SNDRV_PCM_STATE_OPEN) अणु
+	if (stream->runtime->state == SNDRV_PCM_STATE_OPEN) {
 		/*
 		 * we should allow parameter change only when stream has been
-		 * खोलोed not in other हालs
+		 * opened not in other cases
 		 */
-		params = memdup_user((व्योम __user *)arg, माप(*params));
-		अगर (IS_ERR(params))
-			वापस PTR_ERR(params);
+		params = memdup_user((void __user *)arg, sizeof(*params));
+		if (IS_ERR(params))
+			return PTR_ERR(params);
 
 		retval = snd_compress_check_input(params);
-		अगर (retval)
-			जाओ out;
+		if (retval)
+			goto out;
 
 		retval = snd_compr_allocate_buffer(stream, params);
-		अगर (retval) अणु
+		if (retval) {
 			retval = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		retval = stream->ops->set_params(stream, params);
-		अगर (retval)
-			जाओ out;
+		if (retval)
+			goto out;
 
 		stream->metadata_set = false;
 		stream->next_track = false;
 
-		stream->runसमय->state = SNDRV_PCM_STATE_SETUP;
-	पूर्ण अन्यथा अणु
-		वापस -EPERM;
-	पूर्ण
+		stream->runtime->state = SNDRV_PCM_STATE_SETUP;
+	} else {
+		return -EPERM;
+	}
 out:
-	kमुक्त(params);
-	वापस retval;
-पूर्ण
+	kfree(params);
+	return retval;
+}
 
-अटल पूर्णांक
-snd_compr_get_params(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_codec *params;
-	पूर्णांक retval;
+static int
+snd_compr_get_params(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_codec *params;
+	int retval;
 
-	अगर (!stream->ops->get_params)
-		वापस -EBADFD;
+	if (!stream->ops->get_params)
+		return -EBADFD;
 
-	params = kzalloc(माप(*params), GFP_KERNEL);
-	अगर (!params)
-		वापस -ENOMEM;
+	params = kzalloc(sizeof(*params), GFP_KERNEL);
+	if (!params)
+		return -ENOMEM;
 	retval = stream->ops->get_params(stream, params);
-	अगर (retval)
-		जाओ out;
-	अगर (copy_to_user((अक्षर __user *)arg, params, माप(*params)))
+	if (retval)
+		goto out;
+	if (copy_to_user((char __user *)arg, params, sizeof(*params)))
 		retval = -EFAULT;
 
 out:
-	kमुक्त(params);
-	वापस retval;
-पूर्ण
+	kfree(params);
+	return retval;
+}
 
-अटल पूर्णांक
-snd_compr_get_metadata(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_metadata metadata;
-	पूर्णांक retval;
+static int
+snd_compr_get_metadata(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_compr_metadata metadata;
+	int retval;
 
-	अगर (!stream->ops->get_metadata)
-		वापस -ENXIO;
+	if (!stream->ops->get_metadata)
+		return -ENXIO;
 
-	अगर (copy_from_user(&metadata, (व्योम __user *)arg, माप(metadata)))
-		वापस -EFAULT;
+	if (copy_from_user(&metadata, (void __user *)arg, sizeof(metadata)))
+		return -EFAULT;
 
 	retval = stream->ops->get_metadata(stream, &metadata);
-	अगर (retval != 0)
-		वापस retval;
+	if (retval != 0)
+		return retval;
 
-	अगर (copy_to_user((व्योम __user *)arg, &metadata, माप(metadata)))
-		वापस -EFAULT;
+	if (copy_to_user((void __user *)arg, &metadata, sizeof(metadata)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-snd_compr_set_metadata(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_metadata metadata;
-	पूर्णांक retval;
+static int
+snd_compr_set_metadata(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_compr_metadata metadata;
+	int retval;
 
-	अगर (!stream->ops->set_metadata)
-		वापस -ENXIO;
+	if (!stream->ops->set_metadata)
+		return -ENXIO;
 	/*
 	* we should allow parameter change only when stream has been
-	* खोलोed not in other हालs
+	* opened not in other cases
 	*/
-	अगर (copy_from_user(&metadata, (व्योम __user *)arg, माप(metadata)))
-		वापस -EFAULT;
+	if (copy_from_user(&metadata, (void __user *)arg, sizeof(metadata)))
+		return -EFAULT;
 
 	retval = stream->ops->set_metadata(stream, &metadata);
 	stream->metadata_set = true;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल अंतरभूत पूर्णांक
-snd_compr_tstamp(काष्ठा snd_compr_stream *stream, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_tstamp tstamp = अणु0पूर्ण;
-	पूर्णांक ret;
+static inline int
+snd_compr_tstamp(struct snd_compr_stream *stream, unsigned long arg)
+{
+	struct snd_compr_tstamp tstamp = {0};
+	int ret;
 
 	ret = snd_compr_update_tstamp(stream, &tstamp);
-	अगर (ret == 0)
-		ret = copy_to_user((काष्ठा snd_compr_tstamp __user *)arg,
-			&tstamp, माप(tstamp)) ? -EFAULT : 0;
-	वापस ret;
-पूर्ण
+	if (ret == 0)
+		ret = copy_to_user((struct snd_compr_tstamp __user *)arg,
+			&tstamp, sizeof(tstamp)) ? -EFAULT : 0;
+	return ret;
+}
 
-अटल पूर्णांक snd_compr_छोड़ो(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_pause(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_RUNNING:
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_RUNNING:
 		retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_PUSH);
-		अगर (!retval)
-			stream->runसमय->state = SNDRV_PCM_STATE_PAUSED;
-		अवरोध;
-	हाल SNDRV_PCM_STATE_DRAINING:
-		अगर (!stream->device->use_छोड़ो_in_draining)
-			वापस -EPERM;
+		if (!retval)
+			stream->runtime->state = SNDRV_PCM_STATE_PAUSED;
+		break;
+	case SNDRV_PCM_STATE_DRAINING:
+		if (!stream->device->use_pause_in_draining)
+			return -EPERM;
 		retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_PUSH);
-		अगर (!retval)
-			stream->छोड़ो_in_draining = true;
-		अवरोध;
-	शेष:
-		वापस -EPERM;
-	पूर्ण
-	वापस retval;
-पूर्ण
+		if (!retval)
+			stream->pause_in_draining = true;
+		break;
+	default:
+		return -EPERM;
+	}
+	return retval;
+}
 
-अटल पूर्णांक snd_compr_resume(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_resume(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_PAUSED:
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_PAUSED:
 		retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_RELEASE);
-		अगर (!retval)
-			stream->runसमय->state = SNDRV_PCM_STATE_RUNNING;
-		अवरोध;
-	हाल SNDRV_PCM_STATE_DRAINING:
-		अगर (!stream->छोड़ो_in_draining)
-			वापस -EPERM;
+		if (!retval)
+			stream->runtime->state = SNDRV_PCM_STATE_RUNNING;
+		break;
+	case SNDRV_PCM_STATE_DRAINING:
+		if (!stream->pause_in_draining)
+			return -EPERM;
 		retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_RELEASE);
-		अगर (!retval)
-			stream->छोड़ो_in_draining = false;
-		अवरोध;
-	शेष:
-		वापस -EPERM;
-	पूर्ण
-	वापस retval;
-पूर्ण
+		if (!retval)
+			stream->pause_in_draining = false;
+		break;
+	default:
+		return -EPERM;
+	}
+	return retval;
+}
 
-अटल पूर्णांक snd_compr_start(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_start(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_SETUP:
-		अगर (stream->direction != SND_COMPRESS_CAPTURE)
-			वापस -EPERM;
-		अवरोध;
-	हाल SNDRV_PCM_STATE_PREPARED:
-		अवरोध;
-	शेष:
-		वापस -EPERM;
-	पूर्ण
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_SETUP:
+		if (stream->direction != SND_COMPRESS_CAPTURE)
+			return -EPERM;
+		break;
+	case SNDRV_PCM_STATE_PREPARED:
+		break;
+	default:
+		return -EPERM;
+	}
 
 	retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_START);
-	अगर (!retval)
-		stream->runसमय->state = SNDRV_PCM_STATE_RUNNING;
-	वापस retval;
-पूर्ण
+	if (!retval)
+		stream->runtime->state = SNDRV_PCM_STATE_RUNNING;
+	return retval;
+}
 
-अटल पूर्णांक snd_compr_stop(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_stop(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_SETUP:
-	हाल SNDRV_PCM_STATE_PREPARED:
-		वापस -EPERM;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_SETUP:
+	case SNDRV_PCM_STATE_PREPARED:
+		return -EPERM;
+	default:
+		break;
+	}
 
 	retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_STOP);
-	अगर (!retval) अणु
-		/* clear flags and stop any drain रुको */
+	if (!retval) {
+		/* clear flags and stop any drain wait */
 		stream->partial_drain = false;
 		stream->metadata_set = false;
-		stream->छोड़ो_in_draining = false;
-		snd_compr_drain_notअगरy(stream);
-		stream->runसमय->total_bytes_available = 0;
-		stream->runसमय->total_bytes_transferred = 0;
-	पूर्ण
-	वापस retval;
-पूर्ण
+		stream->pause_in_draining = false;
+		snd_compr_drain_notify(stream);
+		stream->runtime->total_bytes_available = 0;
+		stream->runtime->total_bytes_transferred = 0;
+	}
+	return retval;
+}
 
-अटल व्योम error_delayed_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा snd_compr_stream *stream;
+static void error_delayed_work(struct work_struct *work)
+{
+	struct snd_compr_stream *stream;
 
-	stream = container_of(work, काष्ठा snd_compr_stream, error_work.work);
+	stream = container_of(work, struct snd_compr_stream, error_work.work);
 
 	mutex_lock(&stream->device->lock);
 
 	stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_STOP);
-	wake_up(&stream->runसमय->sleep);
+	wake_up(&stream->runtime->sleep);
 
 	mutex_unlock(&stream->device->lock);
-पूर्ण
+}
 
 /*
  * snd_compr_stop_error: Report a fatal error on a stream
- * @stream: poपूर्णांकer to stream
+ * @stream: pointer to stream
  * @state: state to transition the stream to
  *
  * Stop the stream and set its state.
  *
  * Should be called with compressed device lock held.
  */
-पूर्णांक snd_compr_stop_error(काष्ठा snd_compr_stream *stream,
+int snd_compr_stop_error(struct snd_compr_stream *stream,
 			 snd_pcm_state_t state)
-अणु
-	अगर (stream->runसमय->state == state)
-		वापस 0;
+{
+	if (stream->runtime->state == state)
+		return 0;
 
-	stream->runसमय->state = state;
+	stream->runtime->state = state;
 
 	pr_debug("Changing state to: %d\n", state);
 
-	queue_delayed_work(प्रणाली_घातer_efficient_wq, &stream->error_work, 0);
+	queue_delayed_work(system_power_efficient_wq, &stream->error_work, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_compr_stop_error);
 
-अटल पूर्णांक snd_compress_रुको_क्रम_drain(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक ret;
+static int snd_compress_wait_for_drain(struct snd_compr_stream *stream)
+{
+	int ret;
 
 	/*
-	 * We are called with lock held. So drop the lock जबतक we रुको क्रम
-	 * drain complete notअगरication from the driver
+	 * We are called with lock held. So drop the lock while we wait for
+	 * drain complete notification from the driver
 	 *
-	 * It is expected that driver will notअगरy the drain completion and then
-	 * stream will be moved to SETUP state, even अगर draining resulted in an
+	 * It is expected that driver will notify the drain completion and then
+	 * stream will be moved to SETUP state, even if draining resulted in an
 	 * error. We can trigger next track after this.
 	 */
-	stream->runसमय->state = SNDRV_PCM_STATE_DRAINING;
+	stream->runtime->state = SNDRV_PCM_STATE_DRAINING;
 	mutex_unlock(&stream->device->lock);
 
-	/* we रुको क्रम drain to complete here, drain can वापस when
-	 * पूर्णांकerruption occurred, रुको वापसed error or success.
-	 * For the first two हालs we करोn't करो anything dअगरferent here and
-	 * वापस after waking up
+	/* we wait for drain to complete here, drain can return when
+	 * interruption occurred, wait returned error or success.
+	 * For the first two cases we don't do anything different here and
+	 * return after waking up
 	 */
 
-	ret = रुको_event_पूर्णांकerruptible(stream->runसमय->sleep,
-			(stream->runसमय->state != SNDRV_PCM_STATE_DRAINING));
-	अगर (ret == -ERESTARTSYS)
+	ret = wait_event_interruptible(stream->runtime->sleep,
+			(stream->runtime->state != SNDRV_PCM_STATE_DRAINING));
+	if (ret == -ERESTARTSYS)
 		pr_debug("wait aborted by a signal\n");
-	अन्यथा अगर (ret)
+	else if (ret)
 		pr_debug("wait for drain failed with %d\n", ret);
 
 
-	wake_up(&stream->runसमय->sleep);
+	wake_up(&stream->runtime->sleep);
 	mutex_lock(&stream->device->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक snd_compr_drain(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_drain(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_SETUP:
-	हाल SNDRV_PCM_STATE_PREPARED:
-	हाल SNDRV_PCM_STATE_PAUSED:
-		वापस -EPERM;
-	हाल SNDRV_PCM_STATE_XRUN:
-		वापस -EPIPE;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_SETUP:
+	case SNDRV_PCM_STATE_PREPARED:
+	case SNDRV_PCM_STATE_PAUSED:
+		return -EPERM;
+	case SNDRV_PCM_STATE_XRUN:
+		return -EPIPE;
+	default:
+		break;
+	}
 
 	retval = stream->ops->trigger(stream, SND_COMPR_TRIGGER_DRAIN);
-	अगर (retval) अणु
+	if (retval) {
 		pr_debug("SND_COMPR_TRIGGER_DRAIN failed %d\n", retval);
-		wake_up(&stream->runसमय->sleep);
-		वापस retval;
-	पूर्ण
+		wake_up(&stream->runtime->sleep);
+		return retval;
+	}
 
-	वापस snd_compress_रुको_क्रम_drain(stream);
-पूर्ण
+	return snd_compress_wait_for_drain(stream);
+}
 
-अटल पूर्णांक snd_compr_next_track(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_next_track(struct snd_compr_stream *stream)
+{
+	int retval;
 
 	/* only a running stream can transition to next track */
-	अगर (stream->runसमय->state != SNDRV_PCM_STATE_RUNNING)
-		वापस -EPERM;
+	if (stream->runtime->state != SNDRV_PCM_STATE_RUNNING)
+		return -EPERM;
 
-	/* next track करोesn't have any meaning क्रम capture streams */
-	अगर (stream->direction == SND_COMPRESS_CAPTURE)
-		वापस -EPERM;
+	/* next track doesn't have any meaning for capture streams */
+	if (stream->direction == SND_COMPRESS_CAPTURE)
+		return -EPERM;
 
-	/* you can संकेत next track अगर this is पूर्णांकended to be a gapless stream
+	/* you can signal next track if this is intended to be a gapless stream
 	 * and current track metadata is set
 	 */
-	अगर (stream->metadata_set == false)
-		वापस -EPERM;
+	if (stream->metadata_set == false)
+		return -EPERM;
 
 	retval = stream->ops->trigger(stream, SND_COMPR_TRIGGER_NEXT_TRACK);
-	अगर (retval != 0)
-		वापस retval;
+	if (retval != 0)
+		return retval;
 	stream->metadata_set = false;
 	stream->next_track = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_compr_partial_drain(काष्ठा snd_compr_stream *stream)
-अणु
-	पूर्णांक retval;
+static int snd_compr_partial_drain(struct snd_compr_stream *stream)
+{
+	int retval;
 
-	चयन (stream->runसमय->state) अणु
-	हाल SNDRV_PCM_STATE_OPEN:
-	हाल SNDRV_PCM_STATE_SETUP:
-	हाल SNDRV_PCM_STATE_PREPARED:
-	हाल SNDRV_PCM_STATE_PAUSED:
-		वापस -EPERM;
-	हाल SNDRV_PCM_STATE_XRUN:
-		वापस -EPIPE;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (stream->runtime->state) {
+	case SNDRV_PCM_STATE_OPEN:
+	case SNDRV_PCM_STATE_SETUP:
+	case SNDRV_PCM_STATE_PREPARED:
+	case SNDRV_PCM_STATE_PAUSED:
+		return -EPERM;
+	case SNDRV_PCM_STATE_XRUN:
+		return -EPIPE;
+	default:
+		break;
+	}
 
-	/* partial drain करोesn't have any meaning क्रम capture streams */
-	अगर (stream->direction == SND_COMPRESS_CAPTURE)
-		वापस -EPERM;
+	/* partial drain doesn't have any meaning for capture streams */
+	if (stream->direction == SND_COMPRESS_CAPTURE)
+		return -EPERM;
 
-	/* stream can be drained only when next track has been संकेतled */
-	अगर (stream->next_track == false)
-		वापस -EPERM;
+	/* stream can be drained only when next track has been signalled */
+	if (stream->next_track == false)
+		return -EPERM;
 
 	stream->partial_drain = true;
 	retval = stream->ops->trigger(stream, SND_COMPR_TRIGGER_PARTIAL_DRAIN);
-	अगर (retval) अणु
+	if (retval) {
 		pr_debug("Partial drain returned failure\n");
-		wake_up(&stream->runसमय->sleep);
-		वापस retval;
-	पूर्ण
+		wake_up(&stream->runtime->sleep);
+		return retval;
+	}
 
 	stream->next_track = false;
-	वापस snd_compress_रुको_क्रम_drain(stream);
-पूर्ण
+	return snd_compress_wait_for_drain(stream);
+}
 
-अटल दीर्घ snd_compr_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_compr_file *data = f->निजी_data;
-	काष्ठा snd_compr_stream *stream;
-	पूर्णांक retval = -ENOTTY;
+static long snd_compr_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
+	struct snd_compr_file *data = f->private_data;
+	struct snd_compr_stream *stream;
+	int retval = -ENOTTY;
 
-	अगर (snd_BUG_ON(!data))
-		वापस -EFAULT;
+	if (snd_BUG_ON(!data))
+		return -EFAULT;
 
 	stream = &data->stream;
 
 	mutex_lock(&stream->device->lock);
-	चयन (_IOC_NR(cmd)) अणु
-	हाल _IOC_NR(SNDRV_COMPRESS_IOCTL_VERSION):
+	switch (_IOC_NR(cmd)) {
+	case _IOC_NR(SNDRV_COMPRESS_IOCTL_VERSION):
 		retval = put_user(SNDRV_COMPRESS_VERSION,
-				(पूर्णांक __user *)arg) ? -EFAULT : 0;
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_GET_CAPS):
+				(int __user *)arg) ? -EFAULT : 0;
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_GET_CAPS):
 		retval = snd_compr_get_caps(stream, arg);
-		अवरोध;
-#अगर_अघोषित COMPR_CODEC_CAPS_OVERFLOW
-	हाल _IOC_NR(SNDRV_COMPRESS_GET_CODEC_CAPS):
+		break;
+#ifndef COMPR_CODEC_CAPS_OVERFLOW
+	case _IOC_NR(SNDRV_COMPRESS_GET_CODEC_CAPS):
 		retval = snd_compr_get_codec_caps(stream, arg);
-		अवरोध;
-#पूर्ण_अगर
-	हाल _IOC_NR(SNDRV_COMPRESS_SET_PARAMS):
+		break;
+#endif
+	case _IOC_NR(SNDRV_COMPRESS_SET_PARAMS):
 		retval = snd_compr_set_params(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_GET_PARAMS):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_GET_PARAMS):
 		retval = snd_compr_get_params(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_SET_METADATA):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_SET_METADATA):
 		retval = snd_compr_set_metadata(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_GET_METADATA):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_GET_METADATA):
 		retval = snd_compr_get_metadata(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_TSTAMP):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_TSTAMP):
 		retval = snd_compr_tstamp(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_AVAIL):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_AVAIL):
 		retval = snd_compr_ioctl_avail(stream, arg);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_PAUSE):
-		retval = snd_compr_छोड़ो(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_RESUME):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_PAUSE):
+		retval = snd_compr_pause(stream);
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_RESUME):
 		retval = snd_compr_resume(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_START):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_START):
 		retval = snd_compr_start(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_STOP):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_STOP):
 		retval = snd_compr_stop(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_DRAIN):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_DRAIN):
 		retval = snd_compr_drain(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_PARTIAL_DRAIN):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_PARTIAL_DRAIN):
 		retval = snd_compr_partial_drain(stream);
-		अवरोध;
-	हाल _IOC_NR(SNDRV_COMPRESS_NEXT_TRACK):
+		break;
+	case _IOC_NR(SNDRV_COMPRESS_NEXT_TRACK):
 		retval = snd_compr_next_track(stream);
-		अवरोध;
+		break;
 
-	पूर्ण
+	}
 	mutex_unlock(&stream->device->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-/* support of 32bit userspace on 64bit platक्रमms */
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ snd_compr_ioctl_compat(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-						अचिन्हित दीर्घ arg)
-अणु
-	वापस snd_compr_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
-#पूर्ण_अगर
+/* support of 32bit userspace on 64bit platforms */
+#ifdef CONFIG_COMPAT
+static long snd_compr_ioctl_compat(struct file *file, unsigned int cmd,
+						unsigned long arg)
+{
+	return snd_compr_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations snd_compr_file_ops = अणु
+static const struct file_operations snd_compr_file_ops = {
 		.owner =	THIS_MODULE,
-		.खोलो =		snd_compr_खोलो,
-		.release =	snd_compr_मुक्त,
-		.ग_लिखो =	snd_compr_ग_लिखो,
-		.पढ़ो =		snd_compr_पढ़ो,
+		.open =		snd_compr_open,
+		.release =	snd_compr_free,
+		.write =	snd_compr_write,
+		.read =		snd_compr_read,
 		.unlocked_ioctl = snd_compr_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 		.compat_ioctl = snd_compr_ioctl_compat,
-#पूर्ण_अगर
+#endif
 		.mmap =		snd_compr_mmap,
 		.poll =		snd_compr_poll,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_compress_dev_रेजिस्टर(काष्ठा snd_device *device)
-अणु
-	पूर्णांक ret;
-	काष्ठा snd_compr *compr;
+static int snd_compress_dev_register(struct snd_device *device)
+{
+	int ret;
+	struct snd_compr *compr;
 
-	अगर (snd_BUG_ON(!device || !device->device_data))
-		वापस -EBADFD;
+	if (snd_BUG_ON(!device || !device->device_data))
+		return -EBADFD;
 	compr = device->device_data;
 
 	pr_debug("reg device %s, direction %d\n", compr->name,
 			compr->direction);
-	/* रेजिस्टर compressed device */
-	ret = snd_रेजिस्टर_device(SNDRV_DEVICE_TYPE_COMPRESS,
+	/* register compressed device */
+	ret = snd_register_device(SNDRV_DEVICE_TYPE_COMPRESS,
 				  compr->card, compr->device,
 				  &snd_compr_file_ops, compr, &compr->dev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("snd_register_device failed %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस ret;
+		return ret;
+	}
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक snd_compress_dev_disconnect(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_compr *compr;
+static int snd_compress_dev_disconnect(struct snd_device *device)
+{
+	struct snd_compr *compr;
 
 	compr = device->device_data;
-	snd_unरेजिस्टर_device(&compr->dev);
-	वापस 0;
-पूर्ण
+	snd_unregister_device(&compr->dev);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_SND_VERBOSE_PROCFS
-अटल व्योम snd_compress_proc_info_पढ़ो(काष्ठा snd_info_entry *entry,
-					काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_compr *compr = (काष्ठा snd_compr *)entry->निजी_data;
+#ifdef CONFIG_SND_VERBOSE_PROCFS
+static void snd_compress_proc_info_read(struct snd_info_entry *entry,
+					struct snd_info_buffer *buffer)
+{
+	struct snd_compr *compr = (struct snd_compr *)entry->private_data;
 
-	snd_iम_लिखो(buffer, "card: %d\n", compr->card->number);
-	snd_iम_लिखो(buffer, "device: %d\n", compr->device);
-	snd_iम_लिखो(buffer, "stream: %s\n",
+	snd_iprintf(buffer, "card: %d\n", compr->card->number);
+	snd_iprintf(buffer, "device: %d\n", compr->device);
+	snd_iprintf(buffer, "stream: %s\n",
 			compr->direction == SND_COMPRESS_PLAYBACK
 				? "PLAYBACK" : "CAPTURE");
-	snd_iम_लिखो(buffer, "id: %s\n", compr->id);
-पूर्ण
+	snd_iprintf(buffer, "id: %s\n", compr->id);
+}
 
-अटल पूर्णांक snd_compress_proc_init(काष्ठा snd_compr *compr)
-अणु
-	काष्ठा snd_info_entry *entry;
-	अक्षर name[16];
+static int snd_compress_proc_init(struct snd_compr *compr)
+{
+	struct snd_info_entry *entry;
+	char name[16];
 
-	प्र_लिखो(name, "compr%i", compr->device);
+	sprintf(name, "compr%i", compr->device);
 	entry = snd_info_create_card_entry(compr->card, name,
 					   compr->card->proc_root);
-	अगर (!entry)
-		वापस -ENOMEM;
-	entry->mode = S_IFसूची | 0555;
+	if (!entry)
+		return -ENOMEM;
+	entry->mode = S_IFDIR | 0555;
 	compr->proc_root = entry;
 
 	entry = snd_info_create_card_entry(compr->card, "info",
 					   compr->proc_root);
-	अगर (entry)
+	if (entry)
 		snd_info_set_text_ops(entry, compr,
-				      snd_compress_proc_info_पढ़ो);
+				      snd_compress_proc_info_read);
 	compr->proc_info_entry = entry;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_compress_proc_करोne(काष्ठा snd_compr *compr)
-अणु
-	snd_info_मुक्त_entry(compr->proc_info_entry);
-	compr->proc_info_entry = शून्य;
-	snd_info_मुक्त_entry(compr->proc_root);
-	compr->proc_root = शून्य;
-पूर्ण
+static void snd_compress_proc_done(struct snd_compr *compr)
+{
+	snd_info_free_entry(compr->proc_info_entry);
+	compr->proc_info_entry = NULL;
+	snd_info_free_entry(compr->proc_root);
+	compr->proc_root = NULL;
+}
 
-अटल अंतरभूत व्योम snd_compress_set_id(काष्ठा snd_compr *compr, स्थिर अक्षर *id)
-अणु
-	strscpy(compr->id, id, माप(compr->id));
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक snd_compress_proc_init(काष्ठा snd_compr *compr)
-अणु
-	वापस 0;
-पूर्ण
+static inline void snd_compress_set_id(struct snd_compr *compr, const char *id)
+{
+	strscpy(compr->id, id, sizeof(compr->id));
+}
+#else
+static inline int snd_compress_proc_init(struct snd_compr *compr)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम snd_compress_proc_करोne(काष्ठा snd_compr *compr)
-अणु
-पूर्ण
+static inline void snd_compress_proc_done(struct snd_compr *compr)
+{
+}
 
-अटल अंतरभूत व्योम snd_compress_set_id(काष्ठा snd_compr *compr, स्थिर अक्षर *id)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void snd_compress_set_id(struct snd_compr *compr, const char *id)
+{
+}
+#endif
 
-अटल पूर्णांक snd_compress_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_compr *compr;
+static int snd_compress_dev_free(struct snd_device *device)
+{
+	struct snd_compr *compr;
 
 	compr = device->device_data;
-	snd_compress_proc_करोne(compr);
+	snd_compress_proc_done(compr);
 	put_device(&compr->dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * snd_compress_new: create new compress device
- * @card: sound card poपूर्णांकer
+ * @card: sound card pointer
  * @device: device number
- * @dirn: device direction, should be of type क्रमागत snd_compr_direction
- * @compr: compress device poपूर्णांकer
+ * @dirn: device direction, should be of type enum snd_compr_direction
+ * @compr: compress device pointer
  */
-पूर्णांक snd_compress_new(काष्ठा snd_card *card, पूर्णांक device,
-			पूर्णांक dirn, स्थिर अक्षर *id, काष्ठा snd_compr *compr)
-अणु
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त = snd_compress_dev_मुक्त,
-		.dev_रेजिस्टर = snd_compress_dev_रेजिस्टर,
+int snd_compress_new(struct snd_card *card, int device,
+			int dirn, const char *id, struct snd_compr *compr)
+{
+	static const struct snd_device_ops ops = {
+		.dev_free = snd_compress_dev_free,
+		.dev_register = snd_compress_dev_register,
 		.dev_disconnect = snd_compress_dev_disconnect,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	compr->card = card;
 	compr->device = device;
@@ -1187,78 +1186,78 @@ EXPORT_SYMBOL_GPL(snd_compr_stop_error);
 	dev_set_name(&compr->dev, "comprC%iD%i", card->number, device);
 
 	ret = snd_device_new(card, SNDRV_DEV_COMPRESS, compr, &ops);
-	अगर (ret == 0)
+	if (ret == 0)
 		snd_compress_proc_init(compr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(snd_compress_new);
 
-अटल पूर्णांक snd_compress_add_device(काष्ठा snd_compr *device)
-अणु
-	पूर्णांक ret;
+static int snd_compress_add_device(struct snd_compr *device)
+{
+	int ret;
 
-	अगर (!device->card)
-		वापस -EINVAL;
+	if (!device->card)
+		return -EINVAL;
 
-	/* रेजिस्टर the card */
-	ret = snd_card_रेजिस्टर(device->card);
-	अगर (ret)
-		जाओ out;
-	वापस 0;
+	/* register the card */
+	ret = snd_card_register(device->card);
+	if (ret)
+		goto out;
+	return 0;
 
 out:
 	pr_err("failed with %d\n", ret);
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक snd_compress_हटाओ_device(काष्ठा snd_compr *device)
-अणु
-	वापस snd_card_मुक्त(device->card);
-पूर्ण
+static int snd_compress_remove_device(struct snd_compr *device)
+{
+	return snd_card_free(device->card);
+}
 
 /**
- * snd_compress_रेजिस्टर - रेजिस्टर compressed device
+ * snd_compress_register - register compressed device
  *
- * @device: compressed device to रेजिस्टर
+ * @device: compressed device to register
  */
-पूर्णांक snd_compress_रेजिस्टर(काष्ठा snd_compr *device)
-अणु
-	पूर्णांक retval;
+int snd_compress_register(struct snd_compr *device)
+{
+	int retval;
 
-	अगर (device->name == शून्य || device->ops == शून्य)
-		वापस -EINVAL;
+	if (device->name == NULL || device->ops == NULL)
+		return -EINVAL;
 
 	pr_debug("Registering compressed device %s\n", device->name);
-	अगर (snd_BUG_ON(!device->ops->खोलो))
-		वापस -EINVAL;
-	अगर (snd_BUG_ON(!device->ops->मुक्त))
-		वापस -EINVAL;
-	अगर (snd_BUG_ON(!device->ops->set_params))
-		वापस -EINVAL;
-	अगर (snd_BUG_ON(!device->ops->trigger))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!device->ops->open))
+		return -EINVAL;
+	if (snd_BUG_ON(!device->ops->free))
+		return -EINVAL;
+	if (snd_BUG_ON(!device->ops->set_params))
+		return -EINVAL;
+	if (snd_BUG_ON(!device->ops->trigger))
+		return -EINVAL;
 
 	mutex_init(&device->lock);
 
-	/* रेजिस्टर a compressed card */
+	/* register a compressed card */
 	mutex_lock(&device_mutex);
 	retval = snd_compress_add_device(device);
 	mutex_unlock(&device_mutex);
-	वापस retval;
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_compress_रेजिस्टर);
+	return retval;
+}
+EXPORT_SYMBOL_GPL(snd_compress_register);
 
-पूर्णांक snd_compress_deरेजिस्टर(काष्ठा snd_compr *device)
-अणु
+int snd_compress_deregister(struct snd_compr *device)
+{
 	pr_debug("Removing compressed device %s\n", device->name);
 	mutex_lock(&device_mutex);
-	snd_compress_हटाओ_device(device);
+	snd_compress_remove_device(device);
 	mutex_unlock(&device_mutex);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_compress_deरेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(snd_compress_deregister);
 
 MODULE_DESCRIPTION("ALSA Compressed offload framework");
 MODULE_AUTHOR("Vinod Koul <vinod.koul@linux.intel.com>");

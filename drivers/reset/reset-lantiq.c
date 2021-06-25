@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2010 John Crispin <blogic@phrozen.org>
@@ -8,177 +7,177 @@
  *  Copyright (C) 2017 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
 
-#घोषणा LANTIQ_RCU_RESET_TIMEOUT	10000
+#define LANTIQ_RCU_RESET_TIMEOUT	10000
 
-काष्ठा lantiq_rcu_reset_priv अणु
-	काष्ठा reset_controller_dev rcdev;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
+struct lantiq_rcu_reset_priv {
+	struct reset_controller_dev rcdev;
+	struct device *dev;
+	struct regmap *regmap;
 	u32 reset_offset;
 	u32 status_offset;
-पूर्ण;
+};
 
-अटल काष्ठा lantiq_rcu_reset_priv *to_lantiq_rcu_reset_priv(
-	काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा lantiq_rcu_reset_priv, rcdev);
-पूर्ण
+static struct lantiq_rcu_reset_priv *to_lantiq_rcu_reset_priv(
+	struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct lantiq_rcu_reset_priv, rcdev);
+}
 
-अटल पूर्णांक lantiq_rcu_reset_status(काष्ठा reset_controller_dev *rcdev,
-				   अचिन्हित दीर्घ id)
-अणु
-	काष्ठा lantiq_rcu_reset_priv *priv = to_lantiq_rcu_reset_priv(rcdev);
-	अचिन्हित पूर्णांक status = (id >> 8) & 0x1f;
+static int lantiq_rcu_reset_status(struct reset_controller_dev *rcdev,
+				   unsigned long id)
+{
+	struct lantiq_rcu_reset_priv *priv = to_lantiq_rcu_reset_priv(rcdev);
+	unsigned int status = (id >> 8) & 0x1f;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(priv->regmap, priv->status_offset, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(priv->regmap, priv->status_offset, &val);
+	if (ret)
+		return ret;
 
-	वापस !!(val & BIT(status));
-पूर्ण
+	return !!(val & BIT(status));
+}
 
-अटल पूर्णांक lantiq_rcu_reset_status_समयout(काष्ठा reset_controller_dev *rcdev,
-					   अचिन्हित दीर्घ id, bool निश्चित)
-अणु
-	पूर्णांक ret;
-	पूर्णांक retry = LANTIQ_RCU_RESET_TIMEOUT;
+static int lantiq_rcu_reset_status_timeout(struct reset_controller_dev *rcdev,
+					   unsigned long id, bool assert)
+{
+	int ret;
+	int retry = LANTIQ_RCU_RESET_TIMEOUT;
 
-	करो अणु
+	do {
 		ret = lantiq_rcu_reset_status(rcdev, id);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (ret == निश्चित)
-			वापस 0;
+		if (ret < 0)
+			return ret;
+		if (ret == assert)
+			return 0;
 		usleep_range(20, 40);
-	पूर्ण जबतक (--retry);
+	} while (--retry);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक lantiq_rcu_reset_update(काष्ठा reset_controller_dev *rcdev,
-				   अचिन्हित दीर्घ id, bool निश्चित)
-अणु
-	काष्ठा lantiq_rcu_reset_priv *priv = to_lantiq_rcu_reset_priv(rcdev);
-	अचिन्हित पूर्णांक set = id & 0x1f;
-	u32 val = निश्चित ? BIT(set) : 0;
-	पूर्णांक ret;
+static int lantiq_rcu_reset_update(struct reset_controller_dev *rcdev,
+				   unsigned long id, bool assert)
+{
+	struct lantiq_rcu_reset_priv *priv = to_lantiq_rcu_reset_priv(rcdev);
+	unsigned int set = id & 0x1f;
+	u32 val = assert ? BIT(set) : 0;
+	int ret;
 
 	ret = regmap_update_bits(priv->regmap, priv->reset_offset, BIT(set),
 				 val);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(priv->dev, "Failed to set reset bit %u\n", set);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 
-	ret = lantiq_rcu_reset_status_समयout(rcdev, id, निश्चित);
-	अगर (ret)
+	ret = lantiq_rcu_reset_status_timeout(rcdev, id, assert);
+	if (ret)
 		dev_err(priv->dev, "Failed to %s bit %u\n",
-			निश्चित ? "assert" : "deassert", set);
+			assert ? "assert" : "deassert", set);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lantiq_rcu_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			     अचिन्हित दीर्घ id)
-अणु
-	वापस lantiq_rcu_reset_update(rcdev, id, true);
-पूर्ण
+static int lantiq_rcu_reset_assert(struct reset_controller_dev *rcdev,
+			     unsigned long id)
+{
+	return lantiq_rcu_reset_update(rcdev, id, true);
+}
 
-अटल पूर्णांक lantiq_rcu_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	वापस lantiq_rcu_reset_update(rcdev, id, false);
-पूर्ण
+static int lantiq_rcu_reset_deassert(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	return lantiq_rcu_reset_update(rcdev, id, false);
+}
 
-अटल पूर्णांक lantiq_rcu_reset_reset(काष्ठा reset_controller_dev *rcdev,
-			    अचिन्हित दीर्घ id)
-अणु
-	पूर्णांक ret;
+static int lantiq_rcu_reset_reset(struct reset_controller_dev *rcdev,
+			    unsigned long id)
+{
+	int ret;
 
-	ret = lantiq_rcu_reset_निश्चित(rcdev, id);
-	अगर (ret)
-		वापस ret;
+	ret = lantiq_rcu_reset_assert(rcdev, id);
+	if (ret)
+		return ret;
 
-	वापस lantiq_rcu_reset_deनिश्चित(rcdev, id);
-पूर्ण
+	return lantiq_rcu_reset_deassert(rcdev, id);
+}
 
-अटल स्थिर काष्ठा reset_control_ops lantiq_rcu_reset_ops = अणु
-	.निश्चित = lantiq_rcu_reset_निश्चित,
-	.deनिश्चित = lantiq_rcu_reset_deनिश्चित,
+static const struct reset_control_ops lantiq_rcu_reset_ops = {
+	.assert = lantiq_rcu_reset_assert,
+	.deassert = lantiq_rcu_reset_deassert,
 	.status = lantiq_rcu_reset_status,
 	.reset	= lantiq_rcu_reset_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक lantiq_rcu_reset_of_parse(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा lantiq_rcu_reset_priv *priv)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर __be32 *offset;
+static int lantiq_rcu_reset_of_parse(struct platform_device *pdev,
+			       struct lantiq_rcu_reset_priv *priv)
+{
+	struct device *dev = &pdev->dev;
+	const __be32 *offset;
 
 	priv->regmap = syscon_node_to_regmap(dev->of_node->parent);
-	अगर (IS_ERR(priv->regmap)) अणु
+	if (IS_ERR(priv->regmap)) {
 		dev_err(&pdev->dev, "Failed to lookup RCU regmap\n");
-		वापस PTR_ERR(priv->regmap);
-	पूर्ण
+		return PTR_ERR(priv->regmap);
+	}
 
-	offset = of_get_address(dev->of_node, 0, शून्य, शून्य);
-	अगर (!offset) अणु
+	offset = of_get_address(dev->of_node, 0, NULL, NULL);
+	if (!offset) {
 		dev_err(&pdev->dev, "Failed to get RCU reset offset\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	priv->reset_offset = __be32_to_cpu(*offset);
 
-	offset = of_get_address(dev->of_node, 1, शून्य, शून्य);
-	अगर (!offset) अणु
+	offset = of_get_address(dev->of_node, 1, NULL, NULL);
+	if (!offset) {
 		dev_err(&pdev->dev, "Failed to get RCU status offset\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	priv->status_offset = __be32_to_cpu(*offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lantiq_rcu_reset_xlate(काष्ठा reset_controller_dev *rcdev,
-				  स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	अचिन्हित पूर्णांक status, set;
+static int lantiq_rcu_reset_xlate(struct reset_controller_dev *rcdev,
+				  const struct of_phandle_args *reset_spec)
+{
+	unsigned int status, set;
 
 	set = reset_spec->args[0];
 	status = reset_spec->args[1];
 
-	अगर (set >= rcdev->nr_resets || status >= rcdev->nr_resets)
-		वापस -EINVAL;
+	if (set >= rcdev->nr_resets || status >= rcdev->nr_resets)
+		return -EINVAL;
 
-	वापस (status << 8) | set;
-पूर्ण
+	return (status << 8) | set;
+}
 
-अटल पूर्णांक lantiq_rcu_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lantiq_rcu_reset_priv *priv;
-	पूर्णांक err;
+static int lantiq_rcu_reset_probe(struct platform_device *pdev)
+{
+	struct lantiq_rcu_reset_priv *priv;
+	int err;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	err = lantiq_rcu_reset_of_parse(pdev, priv);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	priv->rcdev.ops = &lantiq_rcu_reset_ops;
 	priv->rcdev.owner = THIS_MODULE;
@@ -187,24 +186,24 @@
 	priv->rcdev.of_xlate = lantiq_rcu_reset_xlate;
 	priv->rcdev.of_reset_n_cells = 2;
 
-	वापस reset_controller_रेजिस्टर(&priv->rcdev);
-पूर्ण
+	return reset_controller_register(&priv->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id lantiq_rcu_reset_dt_ids[] = अणु
-	अणु .compatible = "lantiq,danube-reset", पूर्ण,
-	अणु .compatible = "lantiq,xrx200-reset", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id lantiq_rcu_reset_dt_ids[] = {
+	{ .compatible = "lantiq,danube-reset", },
+	{ .compatible = "lantiq,xrx200-reset", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, lantiq_rcu_reset_dt_ids);
 
-अटल काष्ठा platक्रमm_driver lantiq_rcu_reset_driver = अणु
+static struct platform_driver lantiq_rcu_reset_driver = {
 	.probe	= lantiq_rcu_reset_probe,
-	.driver = अणु
+	.driver = {
 		.name		= "lantiq-reset",
 		.of_match_table	= lantiq_rcu_reset_dt_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(lantiq_rcu_reset_driver);
+	},
+};
+module_platform_driver(lantiq_rcu_reset_driver);
 
 MODULE_AUTHOR("Martin Blumenstingl <martin.blumenstingl@googlemail.com>");
 MODULE_DESCRIPTION("Lantiq XWAY RCU Reset Controller Driver");

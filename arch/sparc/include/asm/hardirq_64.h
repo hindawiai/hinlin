@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* hardirq.h: 64-bit Sparc hard IRQ support.
  *
  * Copyright (C) 1997, 1998, 2005 David S. Miller (davem@davemloft.net)
  */
 
-#अगर_अघोषित __SPARC64_HARसूचीQ_H
-#घोषणा __SPARC64_HARसूचीQ_H
+#ifndef __SPARC64_HARDIRQ_H
+#define __SPARC64_HARDIRQ_H
 
-#समावेश <यंत्र/cpudata.h>
+#include <asm/cpudata.h>
 
-#घोषणा __ARCH_IRQ_STAT
+#define __ARCH_IRQ_STAT
 
-#घोषणा local_softirq_pending_ref \
+#define local_softirq_pending_ref \
 	__cpu_data.__softirq_pending
 
-व्योम ack_bad_irq(अचिन्हित पूर्णांक irq);
+void ack_bad_irq(unsigned int irq);
 
-#पूर्ण_अगर /* !(__SPARC64_HARसूचीQ_H) */
+#endif /* !(__SPARC64_HARDIRQ_H) */

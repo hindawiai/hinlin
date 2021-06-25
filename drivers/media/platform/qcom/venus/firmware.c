@@ -1,332 +1,331 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2017 Linaro Ltd.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/qcom_scm.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/soc/qcom/mdt_loader.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/kernel.h>
+#include <linux/iommu.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
+#include <linux/qcom_scm.h>
+#include <linux/sizes.h>
+#include <linux/soc/qcom/mdt_loader.h>
 
-#समावेश "core.h"
-#समावेश "firmware.h"
-#समावेश "hfi_venus_io.h"
+#include "core.h"
+#include "firmware.h"
+#include "hfi_venus_io.h"
 
-#घोषणा VENUS_PAS_ID			9
-#घोषणा VENUS_FW_MEM_SIZE		(6 * SZ_1M)
-#घोषणा VENUS_FW_START_ADDR		0x0
+#define VENUS_PAS_ID			9
+#define VENUS_FW_MEM_SIZE		(6 * SZ_1M)
+#define VENUS_FW_START_ADDR		0x0
 
-अटल व्योम venus_reset_cpu(काष्ठा venus_core *core)
-अणु
+static void venus_reset_cpu(struct venus_core *core)
+{
 	u32 fw_size = core->fw.mapped_mem_size;
-	व्योम __iomem *wrapper_base = core->wrapper_base;
+	void __iomem *wrapper_base = core->wrapper_base;
 
-	ग_लिखोl(0, wrapper_base + WRAPPER_FW_START_ADDR);
-	ग_लिखोl(fw_size, wrapper_base + WRAPPER_FW_END_ADDR);
-	ग_लिखोl(0, wrapper_base + WRAPPER_CPA_START_ADDR);
-	ग_लिखोl(fw_size, wrapper_base + WRAPPER_CPA_END_ADDR);
-	ग_लिखोl(fw_size, wrapper_base + WRAPPER_NONPIX_START_ADDR);
-	ग_लिखोl(fw_size, wrapper_base + WRAPPER_NONPIX_END_ADDR);
-	ग_लिखोl(0x0, wrapper_base + WRAPPER_CPU_CGC_DIS);
-	ग_लिखोl(0x0, wrapper_base + WRAPPER_CPU_CLOCK_CONFIG);
+	writel(0, wrapper_base + WRAPPER_FW_START_ADDR);
+	writel(fw_size, wrapper_base + WRAPPER_FW_END_ADDR);
+	writel(0, wrapper_base + WRAPPER_CPA_START_ADDR);
+	writel(fw_size, wrapper_base + WRAPPER_CPA_END_ADDR);
+	writel(fw_size, wrapper_base + WRAPPER_NONPIX_START_ADDR);
+	writel(fw_size, wrapper_base + WRAPPER_NONPIX_END_ADDR);
+	writel(0x0, wrapper_base + WRAPPER_CPU_CGC_DIS);
+	writel(0x0, wrapper_base + WRAPPER_CPU_CLOCK_CONFIG);
 
 	/* Bring ARM9 out of reset */
-	ग_लिखोl(0, wrapper_base + WRAPPER_A9SS_SW_RESET);
-पूर्ण
+	writel(0, wrapper_base + WRAPPER_A9SS_SW_RESET);
+}
 
-पूर्णांक venus_set_hw_state(काष्ठा venus_core *core, bool resume)
-अणु
-	पूर्णांक ret;
+int venus_set_hw_state(struct venus_core *core, bool resume)
+{
+	int ret;
 
-	अगर (core->use_tz) अणु
+	if (core->use_tz) {
 		ret = qcom_scm_set_remote_state(resume, 0);
-		अगर (resume && ret == -EINVAL)
+		if (resume && ret == -EINVAL)
 			ret = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (resume) अणु
+	if (resume) {
 		venus_reset_cpu(core);
-	पूर्ण अन्यथा अणु
-		अगर (!IS_V6(core))
-			ग_लिखोl(1, core->wrapper_base + WRAPPER_A9SS_SW_RESET);
-	पूर्ण
+	} else {
+		if (!IS_V6(core))
+			writel(1, core->wrapper_base + WRAPPER_A9SS_SW_RESET);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venus_load_fw(काष्ठा venus_core *core, स्थिर अक्षर *fwname,
-			 phys_addr_t *mem_phys, माप_प्रकार *mem_size)
-अणु
-	स्थिर काष्ठा firmware *mdt;
-	काष्ठा device_node *node;
-	काष्ठा device *dev;
-	काष्ठा resource r;
-	sमाप_प्रकार fw_size;
-	व्योम *mem_va;
-	पूर्णांक ret;
+static int venus_load_fw(struct venus_core *core, const char *fwname,
+			 phys_addr_t *mem_phys, size_t *mem_size)
+{
+	const struct firmware *mdt;
+	struct device_node *node;
+	struct device *dev;
+	struct resource r;
+	ssize_t fw_size;
+	void *mem_va;
+	int ret;
 
 	*mem_phys = 0;
 	*mem_size = 0;
 
 	dev = core->dev;
 	node = of_parse_phandle(dev->of_node, "memory-region", 0);
-	अगर (!node) अणु
+	if (!node) {
 		dev_err(dev, "no memory-region specified\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = of_address_to_resource(node, 0, &r);
-	अगर (ret)
-		जाओ err_put_node;
+	if (ret)
+		goto err_put_node;
 
 	ret = request_firmware(&mdt, fwname, dev);
-	अगर (ret < 0)
-		जाओ err_put_node;
+	if (ret < 0)
+		goto err_put_node;
 
 	fw_size = qcom_mdt_get_size(mdt);
-	अगर (fw_size < 0) अणु
+	if (fw_size < 0) {
 		ret = fw_size;
-		जाओ err_release_fw;
-	पूर्ण
+		goto err_release_fw;
+	}
 
 	*mem_phys = r.start;
 	*mem_size = resource_size(&r);
 
-	अगर (*mem_size < fw_size || fw_size > VENUS_FW_MEM_SIZE) अणु
+	if (*mem_size < fw_size || fw_size > VENUS_FW_MEM_SIZE) {
 		ret = -EINVAL;
-		जाओ err_release_fw;
-	पूर्ण
+		goto err_release_fw;
+	}
 
 	mem_va = memremap(r.start, *mem_size, MEMREMAP_WC);
-	अगर (!mem_va) अणु
+	if (!mem_va) {
 		dev_err(dev, "unable to map memory region: %pR\n", &r);
 		ret = -ENOMEM;
-		जाओ err_release_fw;
-	पूर्ण
+		goto err_release_fw;
+	}
 
-	अगर (core->use_tz)
+	if (core->use_tz)
 		ret = qcom_mdt_load(dev, mdt, fwname, VENUS_PAS_ID,
-				    mem_va, *mem_phys, *mem_size, शून्य);
-	अन्यथा
+				    mem_va, *mem_phys, *mem_size, NULL);
+	else
 		ret = qcom_mdt_load_no_init(dev, mdt, fwname, VENUS_PAS_ID,
-					    mem_va, *mem_phys, *mem_size, शून्य);
+					    mem_va, *mem_phys, *mem_size, NULL);
 
 	memunmap(mem_va);
 err_release_fw:
 	release_firmware(mdt);
 err_put_node:
 	of_node_put(node);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक venus_boot_no_tz(काष्ठा venus_core *core, phys_addr_t mem_phys,
-			    माप_प्रकार mem_size)
-अणु
-	काष्ठा iommu_करोमुख्य *iommu;
-	काष्ठा device *dev;
-	पूर्णांक ret;
+static int venus_boot_no_tz(struct venus_core *core, phys_addr_t mem_phys,
+			    size_t mem_size)
+{
+	struct iommu_domain *iommu;
+	struct device *dev;
+	int ret;
 
 	dev = core->fw.dev;
-	अगर (!dev)
-		वापस -EPROBE_DEFER;
+	if (!dev)
+		return -EPROBE_DEFER;
 
-	iommu = core->fw.iommu_करोमुख्य;
+	iommu = core->fw.iommu_domain;
 	core->fw.mapped_mem_size = mem_size;
 
 	ret = iommu_map(iommu, VENUS_FW_START_ADDR, mem_phys, mem_size,
 			IOMMU_READ | IOMMU_WRITE | IOMMU_PRIV);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "could not map video firmware region\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	venus_reset_cpu(core);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक venus_shutकरोwn_no_tz(काष्ठा venus_core *core)
-अणु
-	स्थिर माप_प्रकार mapped = core->fw.mapped_mem_size;
-	काष्ठा iommu_करोमुख्य *iommu;
-	माप_प्रकार unmapped;
+static int venus_shutdown_no_tz(struct venus_core *core)
+{
+	const size_t mapped = core->fw.mapped_mem_size;
+	struct iommu_domain *iommu;
+	size_t unmapped;
 	u32 reg;
-	काष्ठा device *dev = core->fw.dev;
-	व्योम __iomem *wrapper_base = core->wrapper_base;
+	struct device *dev = core->fw.dev;
+	void __iomem *wrapper_base = core->wrapper_base;
 
 	/* Assert the reset to ARM9 */
-	reg = पढ़ोl_relaxed(wrapper_base + WRAPPER_A9SS_SW_RESET);
+	reg = readl_relaxed(wrapper_base + WRAPPER_A9SS_SW_RESET);
 	reg |= WRAPPER_A9SS_SW_RESET_BIT;
-	ग_लिखोl_relaxed(reg, wrapper_base + WRAPPER_A9SS_SW_RESET);
+	writel_relaxed(reg, wrapper_base + WRAPPER_A9SS_SW_RESET);
 
-	/* Make sure reset is निश्चितed beक्रमe the mapping is हटाओd */
+	/* Make sure reset is asserted before the mapping is removed */
 	mb();
 
-	iommu = core->fw.iommu_करोमुख्य;
+	iommu = core->fw.iommu_domain;
 
-	अगर (core->fw.mapped_mem_size && iommu) अणु
+	if (core->fw.mapped_mem_size && iommu) {
 		unmapped = iommu_unmap(iommu, VENUS_FW_START_ADDR, mapped);
 
-		अगर (unmapped != mapped)
+		if (unmapped != mapped)
 			dev_err(dev, "failed to unmap firmware\n");
-		अन्यथा
+		else
 			core->fw.mapped_mem_size = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक venus_boot(काष्ठा venus_core *core)
-अणु
-	काष्ठा device *dev = core->dev;
-	स्थिर काष्ठा venus_resources *res = core->res;
-	स्थिर अक्षर *fwpath = शून्य;
+int venus_boot(struct venus_core *core)
+{
+	struct device *dev = core->dev;
+	const struct venus_resources *res = core->res;
+	const char *fwpath = NULL;
 	phys_addr_t mem_phys;
-	माप_प्रकार mem_size;
-	पूर्णांक ret;
+	size_t mem_size;
+	int ret;
 
-	अगर (!IS_ENABLED(CONFIG_QCOM_MDT_LOADER) ||
+	if (!IS_ENABLED(CONFIG_QCOM_MDT_LOADER) ||
 	    (core->use_tz && !qcom_scm_is_available()))
-		वापस -EPROBE_DEFER;
+		return -EPROBE_DEFER;
 
-	ret = of_property_पढ़ो_string_index(dev->of_node, "firmware-name", 0,
+	ret = of_property_read_string_index(dev->of_node, "firmware-name", 0,
 					    &fwpath);
-	अगर (ret)
+	if (ret)
 		fwpath = core->res->fwname;
 
 	ret = venus_load_fw(core, fwpath, &mem_phys, &mem_size);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "fail to load video firmware\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	core->fw.mem_size = mem_size;
 	core->fw.mem_phys = mem_phys;
 
-	अगर (core->use_tz)
+	if (core->use_tz)
 		ret = qcom_scm_pas_auth_and_reset(VENUS_PAS_ID);
-	अन्यथा
+	else
 		ret = venus_boot_no_tz(core, mem_phys, mem_size);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (core->use_tz && res->cp_size) अणु
+	if (core->use_tz && res->cp_size) {
 		ret = qcom_scm_mem_protect_video_var(res->cp_start,
 						     res->cp_size,
 						     res->cp_nonpixel_start,
 						     res->cp_nonpixel_size);
-		अगर (ret) अणु
-			qcom_scm_pas_shutकरोwn(VENUS_PAS_ID);
+		if (ret) {
+			qcom_scm_pas_shutdown(VENUS_PAS_ID);
 			dev_err(dev, "set virtual address ranges fail (%d)\n",
 				ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक venus_shutकरोwn(काष्ठा venus_core *core)
-अणु
-	पूर्णांक ret;
+int venus_shutdown(struct venus_core *core)
+{
+	int ret;
 
-	अगर (core->use_tz)
-		ret = qcom_scm_pas_shutकरोwn(VENUS_PAS_ID);
-	अन्यथा
-		ret = venus_shutकरोwn_no_tz(core);
+	if (core->use_tz)
+		ret = qcom_scm_pas_shutdown(VENUS_PAS_ID);
+	else
+		ret = venus_shutdown_no_tz(core);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक venus_firmware_init(काष्ठा venus_core *core)
-अणु
-	काष्ठा platक्रमm_device_info info;
-	काष्ठा iommu_करोमुख्य *iommu_करोm;
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा device_node *np;
-	पूर्णांक ret;
+int venus_firmware_init(struct venus_core *core)
+{
+	struct platform_device_info info;
+	struct iommu_domain *iommu_dom;
+	struct platform_device *pdev;
+	struct device_node *np;
+	int ret;
 
 	np = of_get_child_by_name(core->dev->of_node, "video-firmware");
-	अगर (!np) अणु
+	if (!np) {
 		core->use_tz = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.fwnode = &np->fwnode;
 	info.parent = core->dev;
 	info.name = np->name;
 	info.dma_mask = DMA_BIT_MASK(32);
 
-	pdev = platक्रमm_device_रेजिस्टर_full(&info);
-	अगर (IS_ERR(pdev)) अणु
+	pdev = platform_device_register_full(&info);
+	if (IS_ERR(pdev)) {
 		of_node_put(np);
-		वापस PTR_ERR(pdev);
-	पूर्ण
+		return PTR_ERR(pdev);
+	}
 
 	pdev->dev.of_node = np;
 
 	ret = of_dma_configure(&pdev->dev, np, true);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(core->dev, "dma configure fail\n");
-		जाओ err_unरेजिस्टर;
-	पूर्ण
+		goto err_unregister;
+	}
 
 	core->fw.dev = &pdev->dev;
 
-	iommu_करोm = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
-	अगर (!iommu_करोm) अणु
+	iommu_dom = iommu_domain_alloc(&platform_bus_type);
+	if (!iommu_dom) {
 		dev_err(core->fw.dev, "Failed to allocate iommu domain\n");
 		ret = -ENOMEM;
-		जाओ err_unरेजिस्टर;
-	पूर्ण
+		goto err_unregister;
+	}
 
-	ret = iommu_attach_device(iommu_करोm, core->fw.dev);
-	अगर (ret) अणु
+	ret = iommu_attach_device(iommu_dom, core->fw.dev);
+	if (ret) {
 		dev_err(core->fw.dev, "could not attach device\n");
-		जाओ err_iommu_मुक्त;
-	पूर्ण
+		goto err_iommu_free;
+	}
 
-	core->fw.iommu_करोमुख्य = iommu_करोm;
+	core->fw.iommu_domain = iommu_dom;
 
 	of_node_put(np);
 
-	वापस 0;
+	return 0;
 
-err_iommu_मुक्त:
-	iommu_करोमुख्य_मुक्त(iommu_करोm);
-err_unरेजिस्टर:
-	platक्रमm_device_unरेजिस्टर(pdev);
+err_iommu_free:
+	iommu_domain_free(iommu_dom);
+err_unregister:
+	platform_device_unregister(pdev);
 	of_node_put(np);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम venus_firmware_deinit(काष्ठा venus_core *core)
-अणु
-	काष्ठा iommu_करोमुख्य *iommu;
+void venus_firmware_deinit(struct venus_core *core)
+{
+	struct iommu_domain *iommu;
 
-	अगर (!core->fw.dev)
-		वापस;
+	if (!core->fw.dev)
+		return;
 
-	iommu = core->fw.iommu_करोमुख्य;
+	iommu = core->fw.iommu_domain;
 
 	iommu_detach_device(iommu, core->fw.dev);
 
-	अगर (core->fw.iommu_करोमुख्य) अणु
-		iommu_करोमुख्य_मुक्त(iommu);
-		core->fw.iommu_करोमुख्य = शून्य;
-	पूर्ण
+	if (core->fw.iommu_domain) {
+		iommu_domain_free(iommu);
+		core->fw.iommu_domain = NULL;
+	}
 
-	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(core->fw.dev));
-पूर्ण
+	platform_device_unregister(to_platform_device(core->fw.dev));
+}

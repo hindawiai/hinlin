@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-#अगर_अघोषित _ASM_POWERPC_VDSO_PROCESSOR_H
-#घोषणा _ASM_POWERPC_VDSO_PROCESSOR_H
+/* SPDX-License-Identifier: GPL-2.0-only */
+#ifndef _ASM_POWERPC_VDSO_PROCESSOR_H
+#define _ASM_POWERPC_VDSO_PROCESSOR_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-/* Macros क्रम adjusting thपढ़ो priority (hardware multi-thपढ़ोing) */
-#घोषणा HMT_very_low()		यंत्र अस्थिर("or 31, 31, 31	# very low priority")
-#घोषणा HMT_low()		यंत्र अस्थिर("or 1, 1, 1	# low priority")
-#घोषणा HMT_medium_low()	यंत्र अस्थिर("or 6, 6, 6	# medium low priority")
-#घोषणा HMT_medium()		यंत्र अस्थिर("or 2, 2, 2	# medium priority")
-#घोषणा HMT_medium_high()	यंत्र अस्थिर("or 5, 5, 5	# medium high priority")
-#घोषणा HMT_high()		यंत्र अस्थिर("or 3, 3, 3	# high priority")
+/* Macros for adjusting thread priority (hardware multi-threading) */
+#define HMT_very_low()		asm volatile("or 31, 31, 31	# very low priority")
+#define HMT_low()		asm volatile("or 1, 1, 1	# low priority")
+#define HMT_medium_low()	asm volatile("or 6, 6, 6	# medium low priority")
+#define HMT_medium()		asm volatile("or 2, 2, 2	# medium priority")
+#define HMT_medium_high()	asm volatile("or 5, 5, 5	# medium high priority")
+#define HMT_high()		asm volatile("or 3, 3, 3	# high priority")
 
-#अगर_घोषित CONFIG_PPC64
-#घोषणा cpu_relax()	करो अणु HMT_low(); HMT_medium(); barrier(); पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा cpu_relax()	barrier()
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#define cpu_relax()	do { HMT_low(); HMT_medium(); barrier(); } while (0)
+#else
+#define cpu_relax()	barrier()
+#endif
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* _ASM_POWERPC_VDSO_PROCESSOR_H */
+#endif /* _ASM_POWERPC_VDSO_PROCESSOR_H */

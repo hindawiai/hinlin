@@ -1,193 +1,192 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_PAGE_REF_H
-#घोषणा _LINUX_PAGE_REF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_PAGE_REF_H
+#define _LINUX_PAGE_REF_H
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/tracepoपूर्णांक-defs.h>
+#include <linux/atomic.h>
+#include <linux/mm_types.h>
+#include <linux/page-flags.h>
+#include <linux/tracepoint-defs.h>
 
 DECLARE_TRACEPOINT(page_ref_set);
 DECLARE_TRACEPOINT(page_ref_mod);
 DECLARE_TRACEPOINT(page_ref_mod_and_test);
-DECLARE_TRACEPOINT(page_ref_mod_and_वापस);
+DECLARE_TRACEPOINT(page_ref_mod_and_return);
 DECLARE_TRACEPOINT(page_ref_mod_unless);
-DECLARE_TRACEPOINT(page_ref_मुक्तze);
-DECLARE_TRACEPOINT(page_ref_unमुक्तze);
+DECLARE_TRACEPOINT(page_ref_freeze);
+DECLARE_TRACEPOINT(page_ref_unfreeze);
 
-#अगर_घोषित CONFIG_DEBUG_PAGE_REF
+#ifdef CONFIG_DEBUG_PAGE_REF
 
 /*
- * Ideally we would want to use the trace_<tracepoपूर्णांक>_enabled() helper
+ * Ideally we would want to use the trace_<tracepoint>_enabled() helper
  * functions. But due to include header file issues, that is not
- * feasible. Instead we have to खोलो code the अटल key functions.
+ * feasible. Instead we have to open code the static key functions.
  *
- * See trace_##name##_enabled(व्योम) in include/linux/tracepoपूर्णांक.h
+ * See trace_##name##_enabled(void) in include/linux/tracepoint.h
  */
-#घोषणा page_ref_tracepoपूर्णांक_active(t) tracepoपूर्णांक_enabled(t)
+#define page_ref_tracepoint_active(t) tracepoint_enabled(t)
 
-बाह्य व्योम __page_ref_set(काष्ठा page *page, पूर्णांक v);
-बाह्य व्योम __page_ref_mod(काष्ठा page *page, पूर्णांक v);
-बाह्य व्योम __page_ref_mod_and_test(काष्ठा page *page, पूर्णांक v, पूर्णांक ret);
-बाह्य व्योम __page_ref_mod_and_वापस(काष्ठा page *page, पूर्णांक v, पूर्णांक ret);
-बाह्य व्योम __page_ref_mod_unless(काष्ठा page *page, पूर्णांक v, पूर्णांक u);
-बाह्य व्योम __page_ref_मुक्तze(काष्ठा page *page, पूर्णांक v, पूर्णांक ret);
-बाह्य व्योम __page_ref_unमुक्तze(काष्ठा page *page, पूर्णांक v);
+extern void __page_ref_set(struct page *page, int v);
+extern void __page_ref_mod(struct page *page, int v);
+extern void __page_ref_mod_and_test(struct page *page, int v, int ret);
+extern void __page_ref_mod_and_return(struct page *page, int v, int ret);
+extern void __page_ref_mod_unless(struct page *page, int v, int u);
+extern void __page_ref_freeze(struct page *page, int v, int ret);
+extern void __page_ref_unfreeze(struct page *page, int v);
 
-#अन्यथा
+#else
 
-#घोषणा page_ref_tracepoपूर्णांक_active(t) false
+#define page_ref_tracepoint_active(t) false
 
-अटल अंतरभूत व्योम __page_ref_set(काष्ठा page *page, पूर्णांक v)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_mod(काष्ठा page *page, पूर्णांक v)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_mod_and_test(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_mod_and_वापस(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_mod_unless(काष्ठा page *page, पूर्णांक v, पूर्णांक u)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_मुक्तze(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम __page_ref_unमुक्तze(काष्ठा page *page, पूर्णांक v)
-अणु
-पूर्ण
+static inline void __page_ref_set(struct page *page, int v)
+{
+}
+static inline void __page_ref_mod(struct page *page, int v)
+{
+}
+static inline void __page_ref_mod_and_test(struct page *page, int v, int ret)
+{
+}
+static inline void __page_ref_mod_and_return(struct page *page, int v, int ret)
+{
+}
+static inline void __page_ref_mod_unless(struct page *page, int v, int u)
+{
+}
+static inline void __page_ref_freeze(struct page *page, int v, int ret)
+{
+}
+static inline void __page_ref_unfreeze(struct page *page, int v)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत पूर्णांक page_ref_count(काष्ठा page *page)
-अणु
-	वापस atomic_पढ़ो(&page->_refcount);
-पूर्ण
+static inline int page_ref_count(struct page *page)
+{
+	return atomic_read(&page->_refcount);
+}
 
-अटल अंतरभूत पूर्णांक page_count(काष्ठा page *page)
-अणु
-	वापस atomic_पढ़ो(&compound_head(page)->_refcount);
-पूर्ण
+static inline int page_count(struct page *page)
+{
+	return atomic_read(&compound_head(page)->_refcount);
+}
 
-अटल अंतरभूत व्योम set_page_count(काष्ठा page *page, पूर्णांक v)
-अणु
+static inline void set_page_count(struct page *page, int v)
+{
 	atomic_set(&page->_refcount, v);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_set))
+	if (page_ref_tracepoint_active(page_ref_set))
 		__page_ref_set(page, v);
-पूर्ण
+}
 
 /*
- * Setup the page count beक्रमe being मुक्तd पूर्णांकo the page allocator क्रम
- * the first समय (boot or memory hotplug)
+ * Setup the page count before being freed into the page allocator for
+ * the first time (boot or memory hotplug)
  */
-अटल अंतरभूत व्योम init_page_count(काष्ठा page *page)
-अणु
+static inline void init_page_count(struct page *page)
+{
 	set_page_count(page, 1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम page_ref_add(काष्ठा page *page, पूर्णांक nr)
-अणु
+static inline void page_ref_add(struct page *page, int nr)
+{
 	atomic_add(nr, &page->_refcount);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod))
+	if (page_ref_tracepoint_active(page_ref_mod))
 		__page_ref_mod(page, nr);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम page_ref_sub(काष्ठा page *page, पूर्णांक nr)
-अणु
+static inline void page_ref_sub(struct page *page, int nr)
+{
 	atomic_sub(nr, &page->_refcount);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod))
+	if (page_ref_tracepoint_active(page_ref_mod))
 		__page_ref_mod(page, -nr);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक page_ref_sub_वापस(काष्ठा page *page, पूर्णांक nr)
-अणु
-	पूर्णांक ret = atomic_sub_वापस(nr, &page->_refcount);
+static inline int page_ref_sub_return(struct page *page, int nr)
+{
+	int ret = atomic_sub_return(nr, &page->_refcount);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_and_वापस))
-		__page_ref_mod_and_वापस(page, -nr, ret);
-	वापस ret;
-पूर्ण
+	if (page_ref_tracepoint_active(page_ref_mod_and_return))
+		__page_ref_mod_and_return(page, -nr, ret);
+	return ret;
+}
 
-अटल अंतरभूत व्योम page_ref_inc(काष्ठा page *page)
-अणु
+static inline void page_ref_inc(struct page *page)
+{
 	atomic_inc(&page->_refcount);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod))
+	if (page_ref_tracepoint_active(page_ref_mod))
 		__page_ref_mod(page, 1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम page_ref_dec(काष्ठा page *page)
-अणु
+static inline void page_ref_dec(struct page *page)
+{
 	atomic_dec(&page->_refcount);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod))
+	if (page_ref_tracepoint_active(page_ref_mod))
 		__page_ref_mod(page, -1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक page_ref_sub_and_test(काष्ठा page *page, पूर्णांक nr)
-अणु
-	पूर्णांक ret = atomic_sub_and_test(nr, &page->_refcount);
+static inline int page_ref_sub_and_test(struct page *page, int nr)
+{
+	int ret = atomic_sub_and_test(nr, &page->_refcount);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_and_test))
+	if (page_ref_tracepoint_active(page_ref_mod_and_test))
 		__page_ref_mod_and_test(page, -nr, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक page_ref_inc_वापस(काष्ठा page *page)
-अणु
-	पूर्णांक ret = atomic_inc_वापस(&page->_refcount);
+static inline int page_ref_inc_return(struct page *page)
+{
+	int ret = atomic_inc_return(&page->_refcount);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_and_वापस))
-		__page_ref_mod_and_वापस(page, 1, ret);
-	वापस ret;
-पूर्ण
+	if (page_ref_tracepoint_active(page_ref_mod_and_return))
+		__page_ref_mod_and_return(page, 1, ret);
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक page_ref_dec_and_test(काष्ठा page *page)
-अणु
-	पूर्णांक ret = atomic_dec_and_test(&page->_refcount);
+static inline int page_ref_dec_and_test(struct page *page)
+{
+	int ret = atomic_dec_and_test(&page->_refcount);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_and_test))
+	if (page_ref_tracepoint_active(page_ref_mod_and_test))
 		__page_ref_mod_and_test(page, -1, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक page_ref_dec_वापस(काष्ठा page *page)
-अणु
-	पूर्णांक ret = atomic_dec_वापस(&page->_refcount);
+static inline int page_ref_dec_return(struct page *page)
+{
+	int ret = atomic_dec_return(&page->_refcount);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_and_वापस))
-		__page_ref_mod_and_वापस(page, -1, ret);
-	वापस ret;
-पूर्ण
+	if (page_ref_tracepoint_active(page_ref_mod_and_return))
+		__page_ref_mod_and_return(page, -1, ret);
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक page_ref_add_unless(काष्ठा page *page, पूर्णांक nr, पूर्णांक u)
-अणु
-	पूर्णांक ret = atomic_add_unless(&page->_refcount, nr, u);
+static inline int page_ref_add_unless(struct page *page, int nr, int u)
+{
+	int ret = atomic_add_unless(&page->_refcount, nr, u);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_mod_unless))
+	if (page_ref_tracepoint_active(page_ref_mod_unless))
 		__page_ref_mod_unless(page, nr, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक page_ref_मुक्तze(काष्ठा page *page, पूर्णांक count)
-अणु
-	पूर्णांक ret = likely(atomic_cmpxchg(&page->_refcount, count, 0) == count);
+static inline int page_ref_freeze(struct page *page, int count)
+{
+	int ret = likely(atomic_cmpxchg(&page->_refcount, count, 0) == count);
 
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_मुक्तze))
-		__page_ref_मुक्तze(page, count, ret);
-	वापस ret;
-पूर्ण
+	if (page_ref_tracepoint_active(page_ref_freeze))
+		__page_ref_freeze(page, count, ret);
+	return ret;
+}
 
-अटल अंतरभूत व्योम page_ref_unमुक्तze(काष्ठा page *page, पूर्णांक count)
-अणु
+static inline void page_ref_unfreeze(struct page *page, int count)
+{
 	VM_BUG_ON_PAGE(page_count(page) != 0, page);
 	VM_BUG_ON(count == 0);
 
 	atomic_set_release(&page->_refcount, count);
-	अगर (page_ref_tracepoपूर्णांक_active(page_ref_unमुक्तze))
-		__page_ref_unमुक्तze(page, count);
-पूर्ण
+	if (page_ref_tracepoint_active(page_ref_unfreeze))
+		__page_ref_unfreeze(page, count);
+}
 
-#पूर्ण_अगर
+#endif

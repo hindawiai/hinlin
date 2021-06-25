@@ -1,206 +1,205 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file contains the handling of TX in wlan driver.
  */
-#समावेश <linux/hardirq.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/export.h>
-#समावेश <net/cfg80211.h>
+#include <linux/hardirq.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/sched.h>
+#include <linux/export.h>
+#include <net/cfg80211.h>
 
-#समावेश "host.h"
-#समावेश "radiotap.h"
-#समावेश "decl.h"
-#समावेश "defs.h"
-#समावेश "dev.h"
-#समावेश "mesh.h"
+#include "host.h"
+#include "radiotap.h"
+#include "decl.h"
+#include "defs.h"
+#include "dev.h"
+#include "mesh.h"
 
 /**
  * convert_radiotap_rate_to_mv - converts Tx/Rx rates from IEEE80211_RADIOTAP_RATE
- * units (500 Kb/s) पूर्णांकo Marvell WLAN क्रमmat (see Table 8 in Section 3.2.1)
+ * units (500 Kb/s) into Marvell WLAN format (see Table 8 in Section 3.2.1)
  *
  * @rate:	Input rate
- * वापसs:	Output Rate (0 अगर invalid)
+ * returns:	Output Rate (0 if invalid)
  */
-अटल u32 convert_radiotap_rate_to_mv(u8 rate)
-अणु
-	चयन (rate) अणु
-	हाल 2:		/*   1 Mbps */
-		वापस 0 | (1 << 4);
-	हाल 4:		/*   2 Mbps */
-		वापस 1 | (1 << 4);
-	हाल 11:		/* 5.5 Mbps */
-		वापस 2 | (1 << 4);
-	हाल 22:		/*  11 Mbps */
-		वापस 3 | (1 << 4);
-	हाल 12:		/*   6 Mbps */
-		वापस 4 | (1 << 4);
-	हाल 18:		/*   9 Mbps */
-		वापस 5 | (1 << 4);
-	हाल 24:		/*  12 Mbps */
-		वापस 6 | (1 << 4);
-	हाल 36:		/*  18 Mbps */
-		वापस 7 | (1 << 4);
-	हाल 48:		/*  24 Mbps */
-		वापस 8 | (1 << 4);
-	हाल 72:		/*  36 Mbps */
-		वापस 9 | (1 << 4);
-	हाल 96:		/*  48 Mbps */
-		वापस 10 | (1 << 4);
-	हाल 108:		/*  54 Mbps */
-		वापस 11 | (1 << 4);
-	पूर्ण
-	वापस 0;
-पूर्ण
+static u32 convert_radiotap_rate_to_mv(u8 rate)
+{
+	switch (rate) {
+	case 2:		/*   1 Mbps */
+		return 0 | (1 << 4);
+	case 4:		/*   2 Mbps */
+		return 1 | (1 << 4);
+	case 11:		/* 5.5 Mbps */
+		return 2 | (1 << 4);
+	case 22:		/*  11 Mbps */
+		return 3 | (1 << 4);
+	case 12:		/*   6 Mbps */
+		return 4 | (1 << 4);
+	case 18:		/*   9 Mbps */
+		return 5 | (1 << 4);
+	case 24:		/*  12 Mbps */
+		return 6 | (1 << 4);
+	case 36:		/*  18 Mbps */
+		return 7 | (1 << 4);
+	case 48:		/*  24 Mbps */
+		return 8 | (1 << 4);
+	case 72:		/*  36 Mbps */
+		return 9 | (1 << 4);
+	case 96:		/*  48 Mbps */
+		return 10 | (1 << 4);
+	case 108:		/*  54 Mbps */
+		return 11 | (1 << 4);
+	}
+	return 0;
+}
 
 /**
  * lbs_hard_start_xmit - checks the conditions and sends packet to IF
- * layer अगर everything is ok
+ * layer if everything is ok
  *
- * @skb:	A poपूर्णांकer to skb which includes TX packet
- * @dev:	A poपूर्णांकer to the &काष्ठा net_device
- * वापसs:	0 or -1
+ * @skb:	A pointer to skb which includes TX packet
+ * @dev:	A pointer to the &struct net_device
+ * returns:	0 or -1
  */
-netdev_tx_t lbs_hard_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा lbs_निजी *priv = dev->ml_priv;
-	काष्ठा txpd *txpd;
-	अक्षर *p802x_hdr;
-	uपूर्णांक16_t pkt_len;
+netdev_tx_t lbs_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	unsigned long flags;
+	struct lbs_private *priv = dev->ml_priv;
+	struct txpd *txpd;
+	char *p802x_hdr;
+	uint16_t pkt_len;
 	netdev_tx_t ret = NETDEV_TX_OK;
 
-	/* We need to protect against the queues being restarted beक्रमe
+	/* We need to protect against the queues being restarted before
 	   we get round to stopping them */
 	spin_lock_irqsave(&priv->driver_lock, flags);
 
-	अगर (priv->surpriseहटाओd)
-		जाओ मुक्त;
+	if (priv->surpriseremoved)
+		goto free;
 
-	अगर (!skb->len || (skb->len > MRVDRV_ETH_TX_PACKET_BUFFER_SIZE)) अणु
+	if (!skb->len || (skb->len > MRVDRV_ETH_TX_PACKET_BUFFER_SIZE)) {
 		lbs_deb_tx("tx err: skb length %d 0 or > %zd\n",
 		       skb->len, MRVDRV_ETH_TX_PACKET_BUFFER_SIZE);
 		/* We'll never manage to send this one; drop it and return 'OK' */
 
 		dev->stats.tx_dropped++;
 		dev->stats.tx_errors++;
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 
-	netअगर_stop_queue(priv->dev);
-	अगर (priv->mesh_dev)
-		netअगर_stop_queue(priv->mesh_dev);
+	netif_stop_queue(priv->dev);
+	if (priv->mesh_dev)
+		netif_stop_queue(priv->mesh_dev);
 
-	अगर (priv->tx_pending_len) अणु
-		/* This can happen अगर packets come in on the mesh and eth
+	if (priv->tx_pending_len) {
+		/* This can happen if packets come in on the mesh and eth
 		   device simultaneously -- there's no mutual exclusion on
 		   hard_start_xmit() calls between devices. */
 		lbs_deb_tx("Packet on %s while busy\n", dev->name);
 		ret = NETDEV_TX_BUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	priv->tx_pending_len = -1;
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
 
-	lbs_deb_hex(LBS_DEB_TX, "TX Data", skb->data, min_t(अचिन्हित पूर्णांक, skb->len, 100));
+	lbs_deb_hex(LBS_DEB_TX, "TX Data", skb->data, min_t(unsigned int, skb->len, 100));
 
-	txpd = (व्योम *)priv->tx_pending_buf;
-	स_रखो(txpd, 0, माप(काष्ठा txpd));
+	txpd = (void *)priv->tx_pending_buf;
+	memset(txpd, 0, sizeof(struct txpd));
 
 	p802x_hdr = skb->data;
 	pkt_len = skb->len;
 
-	अगर (priv->wdev->अगरtype == NL80211_IFTYPE_MONITOR) अणु
-		काष्ठा tx_radiotap_hdr *rtap_hdr = (व्योम *)skb->data;
+	if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR) {
+		struct tx_radiotap_hdr *rtap_hdr = (void *)skb->data;
 
 		/* set txpd fields from the radiotap header */
 		txpd->tx_control = cpu_to_le32(convert_radiotap_rate_to_mv(rtap_hdr->rate));
 
 		/* skip the radiotap header */
-		p802x_hdr += माप(*rtap_hdr);
-		pkt_len -= माप(*rtap_hdr);
+		p802x_hdr += sizeof(*rtap_hdr);
+		pkt_len -= sizeof(*rtap_hdr);
 
 		/* copy destination address from 802.11 header */
-		स_नकल(txpd->tx_dest_addr_high, p802x_hdr + 4, ETH_ALEN);
-	पूर्ण अन्यथा अणु
+		memcpy(txpd->tx_dest_addr_high, p802x_hdr + 4, ETH_ALEN);
+	} else {
 		/* copy destination address from 802.3 header */
-		स_नकल(txpd->tx_dest_addr_high, p802x_hdr, ETH_ALEN);
-	पूर्ण
+		memcpy(txpd->tx_dest_addr_high, p802x_hdr, ETH_ALEN);
+	}
 
 	txpd->tx_packet_length = cpu_to_le16(pkt_len);
-	txpd->tx_packet_location = cpu_to_le32(माप(काष्ठा txpd));
+	txpd->tx_packet_location = cpu_to_le32(sizeof(struct txpd));
 
 	lbs_mesh_set_txpd(priv, dev, txpd);
 
-	lbs_deb_hex(LBS_DEB_TX, "txpd", (u8 *) &txpd, माप(काष्ठा txpd));
+	lbs_deb_hex(LBS_DEB_TX, "txpd", (u8 *) &txpd, sizeof(struct txpd));
 
 	lbs_deb_hex(LBS_DEB_TX, "Tx Data", (u8 *) p802x_hdr, le16_to_cpu(txpd->tx_packet_length));
 
-	स_नकल(&txpd[1], p802x_hdr, le16_to_cpu(txpd->tx_packet_length));
+	memcpy(&txpd[1], p802x_hdr, le16_to_cpu(txpd->tx_packet_length));
 
 	spin_lock_irqsave(&priv->driver_lock, flags);
-	priv->tx_pending_len = pkt_len + माप(काष्ठा txpd);
+	priv->tx_pending_len = pkt_len + sizeof(struct txpd);
 
 	lbs_deb_tx("%s lined up packet\n", __func__);
 
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 
-	अगर (priv->wdev->अगरtype == NL80211_IFTYPE_MONITOR) अणु
+	if (priv->wdev->iftype == NL80211_IFTYPE_MONITOR) {
 		/* Keep the skb to echo it back once Tx feedback is
 		   received from FW */
 		skb_orphan(skb);
 
-		/* Keep the skb around क्रम when we get feedback */
+		/* Keep the skb around for when we get feedback */
 		priv->currenttxskb = skb;
-	पूर्ण अन्यथा अणु
- मुक्त:
-		dev_kमुक्त_skb_any(skb);
-	पूर्ण
+	} else {
+ free:
+		dev_kfree_skb_any(skb);
+	}
 
  unlock:
 	spin_unlock_irqrestore(&priv->driver_lock, flags);
-	wake_up(&priv->रुकोq);
+	wake_up(&priv->waitq);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * lbs_send_tx_feedback - sends to the host the last transmitted packet,
- * filling the radiotap headers with transmission inक्रमmation.
+ * filling the radiotap headers with transmission information.
  *
- * @priv:	A poपूर्णांकer to &काष्ठा lbs_निजी काष्ठाure
+ * @priv:	A pointer to &struct lbs_private structure
  * @try_count:	A 32-bit value containing transmission retry status.
  *
- * वापसs:	व्योम
+ * returns:	void
  */
-व्योम lbs_send_tx_feedback(काष्ठा lbs_निजी *priv, u32 try_count)
-अणु
-	काष्ठा tx_radiotap_hdr *radiotap_hdr;
+void lbs_send_tx_feedback(struct lbs_private *priv, u32 try_count)
+{
+	struct tx_radiotap_hdr *radiotap_hdr;
 
-	अगर (priv->wdev->अगरtype != NL80211_IFTYPE_MONITOR ||
-	    priv->currenttxskb == शून्य)
-		वापस;
+	if (priv->wdev->iftype != NL80211_IFTYPE_MONITOR ||
+	    priv->currenttxskb == NULL)
+		return;
 
-	radiotap_hdr = (काष्ठा tx_radiotap_hdr *)priv->currenttxskb->data;
+	radiotap_hdr = (struct tx_radiotap_hdr *)priv->currenttxskb->data;
 
 	radiotap_hdr->data_retries = try_count ?
 		(1 + priv->txretrycount - try_count) : 0;
 
 	priv->currenttxskb->protocol = eth_type_trans(priv->currenttxskb,
 						      priv->dev);
-	netअगर_rx(priv->currenttxskb);
+	netif_rx(priv->currenttxskb);
 
-	priv->currenttxskb = शून्य;
+	priv->currenttxskb = NULL;
 
-	अगर (priv->connect_status == LBS_CONNECTED)
-		netअगर_wake_queue(priv->dev);
+	if (priv->connect_status == LBS_CONNECTED)
+		netif_wake_queue(priv->dev);
 
-	अगर (priv->mesh_dev && netअगर_running(priv->mesh_dev))
-		netअगर_wake_queue(priv->mesh_dev);
-पूर्ण
+	if (priv->mesh_dev && netif_running(priv->mesh_dev))
+		netif_wake_queue(priv->mesh_dev);
+}
 EXPORT_SYMBOL_GPL(lbs_send_tx_feedback);

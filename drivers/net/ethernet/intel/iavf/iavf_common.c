@@ -1,271 +1,270 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#समावेश "iavf_type.h"
-#समावेश "iavf_adminq.h"
-#समावेश "iavf_prototype.h"
-#समावेश <linux/avf/virtchnl.h>
+#include "iavf_type.h"
+#include "iavf_adminq.h"
+#include "iavf_prototype.h"
+#include <linux/avf/virtchnl.h>
 
 /**
  * iavf_set_mac_type - Sets MAC type
- * @hw: poपूर्णांकer to the HW काष्ठाure
+ * @hw: pointer to the HW structure
  *
  * This function sets the mac type of the adapter based on the
- * venकरोr ID and device ID stored in the hw काष्ठाure.
+ * vendor ID and device ID stored in the hw structure.
  **/
-क्रमागत iavf_status iavf_set_mac_type(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status status = 0;
+enum iavf_status iavf_set_mac_type(struct iavf_hw *hw)
+{
+	enum iavf_status status = 0;
 
-	अगर (hw->venकरोr_id == PCI_VENDOR_ID_INTEL) अणु
-		चयन (hw->device_id) अणु
-		हाल IAVF_DEV_ID_X722_VF:
+	if (hw->vendor_id == PCI_VENDOR_ID_INTEL) {
+		switch (hw->device_id) {
+		case IAVF_DEV_ID_X722_VF:
 			hw->mac.type = IAVF_MAC_X722_VF;
-			अवरोध;
-		हाल IAVF_DEV_ID_VF:
-		हाल IAVF_DEV_ID_VF_HV:
-		हाल IAVF_DEV_ID_ADAPTIVE_VF:
+			break;
+		case IAVF_DEV_ID_VF:
+		case IAVF_DEV_ID_VF_HV:
+		case IAVF_DEV_ID_ADAPTIVE_VF:
 			hw->mac.type = IAVF_MAC_VF;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			hw->mac.type = IAVF_MAC_GENERIC;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		status = IAVF_ERR_DEVICE_NOT_SUPPORTED;
-	पूर्ण
+	}
 
 	hw_dbg(hw, "found mac: %d, returns: %d\n", hw->mac.type, status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * iavf_aq_str - convert AQ err code to a string
- * @hw: poपूर्णांकer to the HW काष्ठाure
+ * @hw: pointer to the HW structure
  * @aq_err: the AQ error code to convert
  **/
-स्थिर अक्षर *iavf_aq_str(काष्ठा iavf_hw *hw, क्रमागत iavf_admin_queue_err aq_err)
-अणु
-	चयन (aq_err) अणु
-	हाल IAVF_AQ_RC_OK:
-		वापस "OK";
-	हाल IAVF_AQ_RC_EPERM:
-		वापस "IAVF_AQ_RC_EPERM";
-	हाल IAVF_AQ_RC_ENOENT:
-		वापस "IAVF_AQ_RC_ENOENT";
-	हाल IAVF_AQ_RC_ESRCH:
-		वापस "IAVF_AQ_RC_ESRCH";
-	हाल IAVF_AQ_RC_EINTR:
-		वापस "IAVF_AQ_RC_EINTR";
-	हाल IAVF_AQ_RC_EIO:
-		वापस "IAVF_AQ_RC_EIO";
-	हाल IAVF_AQ_RC_ENXIO:
-		वापस "IAVF_AQ_RC_ENXIO";
-	हाल IAVF_AQ_RC_E2BIG:
-		वापस "IAVF_AQ_RC_E2BIG";
-	हाल IAVF_AQ_RC_EAGAIN:
-		वापस "IAVF_AQ_RC_EAGAIN";
-	हाल IAVF_AQ_RC_ENOMEM:
-		वापस "IAVF_AQ_RC_ENOMEM";
-	हाल IAVF_AQ_RC_EACCES:
-		वापस "IAVF_AQ_RC_EACCES";
-	हाल IAVF_AQ_RC_EFAULT:
-		वापस "IAVF_AQ_RC_EFAULT";
-	हाल IAVF_AQ_RC_EBUSY:
-		वापस "IAVF_AQ_RC_EBUSY";
-	हाल IAVF_AQ_RC_EEXIST:
-		वापस "IAVF_AQ_RC_EEXIST";
-	हाल IAVF_AQ_RC_EINVAL:
-		वापस "IAVF_AQ_RC_EINVAL";
-	हाल IAVF_AQ_RC_ENOTTY:
-		वापस "IAVF_AQ_RC_ENOTTY";
-	हाल IAVF_AQ_RC_ENOSPC:
-		वापस "IAVF_AQ_RC_ENOSPC";
-	हाल IAVF_AQ_RC_ENOSYS:
-		वापस "IAVF_AQ_RC_ENOSYS";
-	हाल IAVF_AQ_RC_दुस्फल:
-		वापस "IAVF_AQ_RC_ERANGE";
-	हाल IAVF_AQ_RC_EFLUSHED:
-		वापस "IAVF_AQ_RC_EFLUSHED";
-	हाल IAVF_AQ_RC_BAD_ADDR:
-		वापस "IAVF_AQ_RC_BAD_ADDR";
-	हाल IAVF_AQ_RC_EMODE:
-		वापस "IAVF_AQ_RC_EMODE";
-	हाल IAVF_AQ_RC_EFBIG:
-		वापस "IAVF_AQ_RC_EFBIG";
-	पूर्ण
+const char *iavf_aq_str(struct iavf_hw *hw, enum iavf_admin_queue_err aq_err)
+{
+	switch (aq_err) {
+	case IAVF_AQ_RC_OK:
+		return "OK";
+	case IAVF_AQ_RC_EPERM:
+		return "IAVF_AQ_RC_EPERM";
+	case IAVF_AQ_RC_ENOENT:
+		return "IAVF_AQ_RC_ENOENT";
+	case IAVF_AQ_RC_ESRCH:
+		return "IAVF_AQ_RC_ESRCH";
+	case IAVF_AQ_RC_EINTR:
+		return "IAVF_AQ_RC_EINTR";
+	case IAVF_AQ_RC_EIO:
+		return "IAVF_AQ_RC_EIO";
+	case IAVF_AQ_RC_ENXIO:
+		return "IAVF_AQ_RC_ENXIO";
+	case IAVF_AQ_RC_E2BIG:
+		return "IAVF_AQ_RC_E2BIG";
+	case IAVF_AQ_RC_EAGAIN:
+		return "IAVF_AQ_RC_EAGAIN";
+	case IAVF_AQ_RC_ENOMEM:
+		return "IAVF_AQ_RC_ENOMEM";
+	case IAVF_AQ_RC_EACCES:
+		return "IAVF_AQ_RC_EACCES";
+	case IAVF_AQ_RC_EFAULT:
+		return "IAVF_AQ_RC_EFAULT";
+	case IAVF_AQ_RC_EBUSY:
+		return "IAVF_AQ_RC_EBUSY";
+	case IAVF_AQ_RC_EEXIST:
+		return "IAVF_AQ_RC_EEXIST";
+	case IAVF_AQ_RC_EINVAL:
+		return "IAVF_AQ_RC_EINVAL";
+	case IAVF_AQ_RC_ENOTTY:
+		return "IAVF_AQ_RC_ENOTTY";
+	case IAVF_AQ_RC_ENOSPC:
+		return "IAVF_AQ_RC_ENOSPC";
+	case IAVF_AQ_RC_ENOSYS:
+		return "IAVF_AQ_RC_ENOSYS";
+	case IAVF_AQ_RC_ERANGE:
+		return "IAVF_AQ_RC_ERANGE";
+	case IAVF_AQ_RC_EFLUSHED:
+		return "IAVF_AQ_RC_EFLUSHED";
+	case IAVF_AQ_RC_BAD_ADDR:
+		return "IAVF_AQ_RC_BAD_ADDR";
+	case IAVF_AQ_RC_EMODE:
+		return "IAVF_AQ_RC_EMODE";
+	case IAVF_AQ_RC_EFBIG:
+		return "IAVF_AQ_RC_EFBIG";
+	}
 
-	snम_लिखो(hw->err_str, माप(hw->err_str), "%d", aq_err);
-	वापस hw->err_str;
-पूर्ण
+	snprintf(hw->err_str, sizeof(hw->err_str), "%d", aq_err);
+	return hw->err_str;
+}
 
 /**
  * iavf_stat_str - convert status err code to a string
- * @hw: poपूर्णांकer to the HW काष्ठाure
+ * @hw: pointer to the HW structure
  * @stat_err: the status error code to convert
  **/
-स्थिर अक्षर *iavf_stat_str(काष्ठा iavf_hw *hw, क्रमागत iavf_status stat_err)
-अणु
-	चयन (stat_err) अणु
-	हाल 0:
-		वापस "OK";
-	हाल IAVF_ERR_NVM:
-		वापस "IAVF_ERR_NVM";
-	हाल IAVF_ERR_NVM_CHECKSUM:
-		वापस "IAVF_ERR_NVM_CHECKSUM";
-	हाल IAVF_ERR_PHY:
-		वापस "IAVF_ERR_PHY";
-	हाल IAVF_ERR_CONFIG:
-		वापस "IAVF_ERR_CONFIG";
-	हाल IAVF_ERR_PARAM:
-		वापस "IAVF_ERR_PARAM";
-	हाल IAVF_ERR_MAC_TYPE:
-		वापस "IAVF_ERR_MAC_TYPE";
-	हाल IAVF_ERR_UNKNOWN_PHY:
-		वापस "IAVF_ERR_UNKNOWN_PHY";
-	हाल IAVF_ERR_LINK_SETUP:
-		वापस "IAVF_ERR_LINK_SETUP";
-	हाल IAVF_ERR_ADAPTER_STOPPED:
-		वापस "IAVF_ERR_ADAPTER_STOPPED";
-	हाल IAVF_ERR_INVALID_MAC_ADDR:
-		वापस "IAVF_ERR_INVALID_MAC_ADDR";
-	हाल IAVF_ERR_DEVICE_NOT_SUPPORTED:
-		वापस "IAVF_ERR_DEVICE_NOT_SUPPORTED";
-	हाल IAVF_ERR_MASTER_REQUESTS_PENDING:
-		वापस "IAVF_ERR_MASTER_REQUESTS_PENDING";
-	हाल IAVF_ERR_INVALID_LINK_SETTINGS:
-		वापस "IAVF_ERR_INVALID_LINK_SETTINGS";
-	हाल IAVF_ERR_AUTONEG_NOT_COMPLETE:
-		वापस "IAVF_ERR_AUTONEG_NOT_COMPLETE";
-	हाल IAVF_ERR_RESET_FAILED:
-		वापस "IAVF_ERR_RESET_FAILED";
-	हाल IAVF_ERR_SWFW_SYNC:
-		वापस "IAVF_ERR_SWFW_SYNC";
-	हाल IAVF_ERR_NO_AVAILABLE_VSI:
-		वापस "IAVF_ERR_NO_AVAILABLE_VSI";
-	हाल IAVF_ERR_NO_MEMORY:
-		वापस "IAVF_ERR_NO_MEMORY";
-	हाल IAVF_ERR_BAD_PTR:
-		वापस "IAVF_ERR_BAD_PTR";
-	हाल IAVF_ERR_RING_FULL:
-		वापस "IAVF_ERR_RING_FULL";
-	हाल IAVF_ERR_INVALID_PD_ID:
-		वापस "IAVF_ERR_INVALID_PD_ID";
-	हाल IAVF_ERR_INVALID_QP_ID:
-		वापस "IAVF_ERR_INVALID_QP_ID";
-	हाल IAVF_ERR_INVALID_CQ_ID:
-		वापस "IAVF_ERR_INVALID_CQ_ID";
-	हाल IAVF_ERR_INVALID_CEQ_ID:
-		वापस "IAVF_ERR_INVALID_CEQ_ID";
-	हाल IAVF_ERR_INVALID_AEQ_ID:
-		वापस "IAVF_ERR_INVALID_AEQ_ID";
-	हाल IAVF_ERR_INVALID_SIZE:
-		वापस "IAVF_ERR_INVALID_SIZE";
-	हाल IAVF_ERR_INVALID_ARP_INDEX:
-		वापस "IAVF_ERR_INVALID_ARP_INDEX";
-	हाल IAVF_ERR_INVALID_FPM_FUNC_ID:
-		वापस "IAVF_ERR_INVALID_FPM_FUNC_ID";
-	हाल IAVF_ERR_QP_INVALID_MSG_SIZE:
-		वापस "IAVF_ERR_QP_INVALID_MSG_SIZE";
-	हाल IAVF_ERR_QP_TOOMANY_WRS_POSTED:
-		वापस "IAVF_ERR_QP_TOOMANY_WRS_POSTED";
-	हाल IAVF_ERR_INVALID_FRAG_COUNT:
-		वापस "IAVF_ERR_INVALID_FRAG_COUNT";
-	हाल IAVF_ERR_QUEUE_EMPTY:
-		वापस "IAVF_ERR_QUEUE_EMPTY";
-	हाल IAVF_ERR_INVALID_ALIGNMENT:
-		वापस "IAVF_ERR_INVALID_ALIGNMENT";
-	हाल IAVF_ERR_FLUSHED_QUEUE:
-		वापस "IAVF_ERR_FLUSHED_QUEUE";
-	हाल IAVF_ERR_INVALID_PUSH_PAGE_INDEX:
-		वापस "IAVF_ERR_INVALID_PUSH_PAGE_INDEX";
-	हाल IAVF_ERR_INVALID_IMM_DATA_SIZE:
-		वापस "IAVF_ERR_INVALID_IMM_DATA_SIZE";
-	हाल IAVF_ERR_TIMEOUT:
-		वापस "IAVF_ERR_TIMEOUT";
-	हाल IAVF_ERR_OPCODE_MISMATCH:
-		वापस "IAVF_ERR_OPCODE_MISMATCH";
-	हाल IAVF_ERR_CQP_COMPL_ERROR:
-		वापस "IAVF_ERR_CQP_COMPL_ERROR";
-	हाल IAVF_ERR_INVALID_VF_ID:
-		वापस "IAVF_ERR_INVALID_VF_ID";
-	हाल IAVF_ERR_INVALID_HMCFN_ID:
-		वापस "IAVF_ERR_INVALID_HMCFN_ID";
-	हाल IAVF_ERR_BACKING_PAGE_ERROR:
-		वापस "IAVF_ERR_BACKING_PAGE_ERROR";
-	हाल IAVF_ERR_NO_PBLCHUNKS_AVAILABLE:
-		वापस "IAVF_ERR_NO_PBLCHUNKS_AVAILABLE";
-	हाल IAVF_ERR_INVALID_PBLE_INDEX:
-		वापस "IAVF_ERR_INVALID_PBLE_INDEX";
-	हाल IAVF_ERR_INVALID_SD_INDEX:
-		वापस "IAVF_ERR_INVALID_SD_INDEX";
-	हाल IAVF_ERR_INVALID_PAGE_DESC_INDEX:
-		वापस "IAVF_ERR_INVALID_PAGE_DESC_INDEX";
-	हाल IAVF_ERR_INVALID_SD_TYPE:
-		वापस "IAVF_ERR_INVALID_SD_TYPE";
-	हाल IAVF_ERR_MEMCPY_FAILED:
-		वापस "IAVF_ERR_MEMCPY_FAILED";
-	हाल IAVF_ERR_INVALID_HMC_OBJ_INDEX:
-		वापस "IAVF_ERR_INVALID_HMC_OBJ_INDEX";
-	हाल IAVF_ERR_INVALID_HMC_OBJ_COUNT:
-		वापस "IAVF_ERR_INVALID_HMC_OBJ_COUNT";
-	हाल IAVF_ERR_INVALID_SRQ_ARM_LIMIT:
-		वापस "IAVF_ERR_INVALID_SRQ_ARM_LIMIT";
-	हाल IAVF_ERR_SRQ_ENABLED:
-		वापस "IAVF_ERR_SRQ_ENABLED";
-	हाल IAVF_ERR_ADMIN_QUEUE_ERROR:
-		वापस "IAVF_ERR_ADMIN_QUEUE_ERROR";
-	हाल IAVF_ERR_ADMIN_QUEUE_TIMEOUT:
-		वापस "IAVF_ERR_ADMIN_QUEUE_TIMEOUT";
-	हाल IAVF_ERR_BUF_TOO_SHORT:
-		वापस "IAVF_ERR_BUF_TOO_SHORT";
-	हाल IAVF_ERR_ADMIN_QUEUE_FULL:
-		वापस "IAVF_ERR_ADMIN_QUEUE_FULL";
-	हाल IAVF_ERR_ADMIN_QUEUE_NO_WORK:
-		वापस "IAVF_ERR_ADMIN_QUEUE_NO_WORK";
-	हाल IAVF_ERR_BAD_IWARP_CQE:
-		वापस "IAVF_ERR_BAD_IWARP_CQE";
-	हाल IAVF_ERR_NVM_BLANK_MODE:
-		वापस "IAVF_ERR_NVM_BLANK_MODE";
-	हाल IAVF_ERR_NOT_IMPLEMENTED:
-		वापस "IAVF_ERR_NOT_IMPLEMENTED";
-	हाल IAVF_ERR_PE_DOORBELL_NOT_ENABLED:
-		वापस "IAVF_ERR_PE_DOORBELL_NOT_ENABLED";
-	हाल IAVF_ERR_DIAG_TEST_FAILED:
-		वापस "IAVF_ERR_DIAG_TEST_FAILED";
-	हाल IAVF_ERR_NOT_READY:
-		वापस "IAVF_ERR_NOT_READY";
-	हाल IAVF_NOT_SUPPORTED:
-		वापस "IAVF_NOT_SUPPORTED";
-	हाल IAVF_ERR_FIRMWARE_API_VERSION:
-		वापस "IAVF_ERR_FIRMWARE_API_VERSION";
-	हाल IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR:
-		वापस "IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR";
-	पूर्ण
+const char *iavf_stat_str(struct iavf_hw *hw, enum iavf_status stat_err)
+{
+	switch (stat_err) {
+	case 0:
+		return "OK";
+	case IAVF_ERR_NVM:
+		return "IAVF_ERR_NVM";
+	case IAVF_ERR_NVM_CHECKSUM:
+		return "IAVF_ERR_NVM_CHECKSUM";
+	case IAVF_ERR_PHY:
+		return "IAVF_ERR_PHY";
+	case IAVF_ERR_CONFIG:
+		return "IAVF_ERR_CONFIG";
+	case IAVF_ERR_PARAM:
+		return "IAVF_ERR_PARAM";
+	case IAVF_ERR_MAC_TYPE:
+		return "IAVF_ERR_MAC_TYPE";
+	case IAVF_ERR_UNKNOWN_PHY:
+		return "IAVF_ERR_UNKNOWN_PHY";
+	case IAVF_ERR_LINK_SETUP:
+		return "IAVF_ERR_LINK_SETUP";
+	case IAVF_ERR_ADAPTER_STOPPED:
+		return "IAVF_ERR_ADAPTER_STOPPED";
+	case IAVF_ERR_INVALID_MAC_ADDR:
+		return "IAVF_ERR_INVALID_MAC_ADDR";
+	case IAVF_ERR_DEVICE_NOT_SUPPORTED:
+		return "IAVF_ERR_DEVICE_NOT_SUPPORTED";
+	case IAVF_ERR_MASTER_REQUESTS_PENDING:
+		return "IAVF_ERR_MASTER_REQUESTS_PENDING";
+	case IAVF_ERR_INVALID_LINK_SETTINGS:
+		return "IAVF_ERR_INVALID_LINK_SETTINGS";
+	case IAVF_ERR_AUTONEG_NOT_COMPLETE:
+		return "IAVF_ERR_AUTONEG_NOT_COMPLETE";
+	case IAVF_ERR_RESET_FAILED:
+		return "IAVF_ERR_RESET_FAILED";
+	case IAVF_ERR_SWFW_SYNC:
+		return "IAVF_ERR_SWFW_SYNC";
+	case IAVF_ERR_NO_AVAILABLE_VSI:
+		return "IAVF_ERR_NO_AVAILABLE_VSI";
+	case IAVF_ERR_NO_MEMORY:
+		return "IAVF_ERR_NO_MEMORY";
+	case IAVF_ERR_BAD_PTR:
+		return "IAVF_ERR_BAD_PTR";
+	case IAVF_ERR_RING_FULL:
+		return "IAVF_ERR_RING_FULL";
+	case IAVF_ERR_INVALID_PD_ID:
+		return "IAVF_ERR_INVALID_PD_ID";
+	case IAVF_ERR_INVALID_QP_ID:
+		return "IAVF_ERR_INVALID_QP_ID";
+	case IAVF_ERR_INVALID_CQ_ID:
+		return "IAVF_ERR_INVALID_CQ_ID";
+	case IAVF_ERR_INVALID_CEQ_ID:
+		return "IAVF_ERR_INVALID_CEQ_ID";
+	case IAVF_ERR_INVALID_AEQ_ID:
+		return "IAVF_ERR_INVALID_AEQ_ID";
+	case IAVF_ERR_INVALID_SIZE:
+		return "IAVF_ERR_INVALID_SIZE";
+	case IAVF_ERR_INVALID_ARP_INDEX:
+		return "IAVF_ERR_INVALID_ARP_INDEX";
+	case IAVF_ERR_INVALID_FPM_FUNC_ID:
+		return "IAVF_ERR_INVALID_FPM_FUNC_ID";
+	case IAVF_ERR_QP_INVALID_MSG_SIZE:
+		return "IAVF_ERR_QP_INVALID_MSG_SIZE";
+	case IAVF_ERR_QP_TOOMANY_WRS_POSTED:
+		return "IAVF_ERR_QP_TOOMANY_WRS_POSTED";
+	case IAVF_ERR_INVALID_FRAG_COUNT:
+		return "IAVF_ERR_INVALID_FRAG_COUNT";
+	case IAVF_ERR_QUEUE_EMPTY:
+		return "IAVF_ERR_QUEUE_EMPTY";
+	case IAVF_ERR_INVALID_ALIGNMENT:
+		return "IAVF_ERR_INVALID_ALIGNMENT";
+	case IAVF_ERR_FLUSHED_QUEUE:
+		return "IAVF_ERR_FLUSHED_QUEUE";
+	case IAVF_ERR_INVALID_PUSH_PAGE_INDEX:
+		return "IAVF_ERR_INVALID_PUSH_PAGE_INDEX";
+	case IAVF_ERR_INVALID_IMM_DATA_SIZE:
+		return "IAVF_ERR_INVALID_IMM_DATA_SIZE";
+	case IAVF_ERR_TIMEOUT:
+		return "IAVF_ERR_TIMEOUT";
+	case IAVF_ERR_OPCODE_MISMATCH:
+		return "IAVF_ERR_OPCODE_MISMATCH";
+	case IAVF_ERR_CQP_COMPL_ERROR:
+		return "IAVF_ERR_CQP_COMPL_ERROR";
+	case IAVF_ERR_INVALID_VF_ID:
+		return "IAVF_ERR_INVALID_VF_ID";
+	case IAVF_ERR_INVALID_HMCFN_ID:
+		return "IAVF_ERR_INVALID_HMCFN_ID";
+	case IAVF_ERR_BACKING_PAGE_ERROR:
+		return "IAVF_ERR_BACKING_PAGE_ERROR";
+	case IAVF_ERR_NO_PBLCHUNKS_AVAILABLE:
+		return "IAVF_ERR_NO_PBLCHUNKS_AVAILABLE";
+	case IAVF_ERR_INVALID_PBLE_INDEX:
+		return "IAVF_ERR_INVALID_PBLE_INDEX";
+	case IAVF_ERR_INVALID_SD_INDEX:
+		return "IAVF_ERR_INVALID_SD_INDEX";
+	case IAVF_ERR_INVALID_PAGE_DESC_INDEX:
+		return "IAVF_ERR_INVALID_PAGE_DESC_INDEX";
+	case IAVF_ERR_INVALID_SD_TYPE:
+		return "IAVF_ERR_INVALID_SD_TYPE";
+	case IAVF_ERR_MEMCPY_FAILED:
+		return "IAVF_ERR_MEMCPY_FAILED";
+	case IAVF_ERR_INVALID_HMC_OBJ_INDEX:
+		return "IAVF_ERR_INVALID_HMC_OBJ_INDEX";
+	case IAVF_ERR_INVALID_HMC_OBJ_COUNT:
+		return "IAVF_ERR_INVALID_HMC_OBJ_COUNT";
+	case IAVF_ERR_INVALID_SRQ_ARM_LIMIT:
+		return "IAVF_ERR_INVALID_SRQ_ARM_LIMIT";
+	case IAVF_ERR_SRQ_ENABLED:
+		return "IAVF_ERR_SRQ_ENABLED";
+	case IAVF_ERR_ADMIN_QUEUE_ERROR:
+		return "IAVF_ERR_ADMIN_QUEUE_ERROR";
+	case IAVF_ERR_ADMIN_QUEUE_TIMEOUT:
+		return "IAVF_ERR_ADMIN_QUEUE_TIMEOUT";
+	case IAVF_ERR_BUF_TOO_SHORT:
+		return "IAVF_ERR_BUF_TOO_SHORT";
+	case IAVF_ERR_ADMIN_QUEUE_FULL:
+		return "IAVF_ERR_ADMIN_QUEUE_FULL";
+	case IAVF_ERR_ADMIN_QUEUE_NO_WORK:
+		return "IAVF_ERR_ADMIN_QUEUE_NO_WORK";
+	case IAVF_ERR_BAD_IWARP_CQE:
+		return "IAVF_ERR_BAD_IWARP_CQE";
+	case IAVF_ERR_NVM_BLANK_MODE:
+		return "IAVF_ERR_NVM_BLANK_MODE";
+	case IAVF_ERR_NOT_IMPLEMENTED:
+		return "IAVF_ERR_NOT_IMPLEMENTED";
+	case IAVF_ERR_PE_DOORBELL_NOT_ENABLED:
+		return "IAVF_ERR_PE_DOORBELL_NOT_ENABLED";
+	case IAVF_ERR_DIAG_TEST_FAILED:
+		return "IAVF_ERR_DIAG_TEST_FAILED";
+	case IAVF_ERR_NOT_READY:
+		return "IAVF_ERR_NOT_READY";
+	case IAVF_NOT_SUPPORTED:
+		return "IAVF_NOT_SUPPORTED";
+	case IAVF_ERR_FIRMWARE_API_VERSION:
+		return "IAVF_ERR_FIRMWARE_API_VERSION";
+	case IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR:
+		return "IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR";
+	}
 
-	snम_लिखो(hw->err_str, माप(hw->err_str), "%d", stat_err);
-	वापस hw->err_str;
-पूर्ण
+	snprintf(hw->err_str, sizeof(hw->err_str), "%d", stat_err);
+	return hw->err_str;
+}
 
 /**
  * iavf_debug_aq
  * @hw: debug mask related to admin queue
  * @mask: debug mask
- * @desc: poपूर्णांकer to admin queue descriptor
- * @buffer: poपूर्णांकer to command buffer
+ * @desc: pointer to admin queue descriptor
+ * @buffer: pointer to command buffer
  * @buf_len: max length of buffer
  *
  * Dumps debug log about adminq command with descriptor contents.
  **/
-व्योम iavf_debug_aq(काष्ठा iavf_hw *hw, क्रमागत iavf_debug_mask mask, व्योम *desc,
-		   व्योम *buffer, u16 buf_len)
-अणु
-	काष्ठा iavf_aq_desc *aq_desc = (काष्ठा iavf_aq_desc *)desc;
+void iavf_debug_aq(struct iavf_hw *hw, enum iavf_debug_mask mask, void *desc,
+		   void *buffer, u16 buf_len)
+{
+	struct iavf_aq_desc *aq_desc = (struct iavf_aq_desc *)desc;
 	u8 *buf = (u8 *)buffer;
 
-	अगर ((!(mask & hw->debug_mask)) || !desc)
-		वापस;
+	if ((!(mask & hw->debug_mask)) || !desc)
+		return;
 
 	iavf_debug(hw, mask,
 		   "AQ CMD: opcode 0x%04X, flags 0x%04X, datalen 0x%04X, retval 0x%04X\n",
@@ -277,99 +276,99 @@
 		   le32_to_cpu(aq_desc->cookie_high),
 		   le32_to_cpu(aq_desc->cookie_low));
 	iavf_debug(hw, mask, "\tparam (0,1)  0x%08X 0x%08X\n",
-		   le32_to_cpu(aq_desc->params.पूर्णांकernal.param0),
-		   le32_to_cpu(aq_desc->params.पूर्णांकernal.param1));
+		   le32_to_cpu(aq_desc->params.internal.param0),
+		   le32_to_cpu(aq_desc->params.internal.param1));
 	iavf_debug(hw, mask, "\taddr (h,l)   0x%08X 0x%08X\n",
-		   le32_to_cpu(aq_desc->params.बाह्यal.addr_high),
-		   le32_to_cpu(aq_desc->params.बाह्यal.addr_low));
+		   le32_to_cpu(aq_desc->params.external.addr_high),
+		   le32_to_cpu(aq_desc->params.external.addr_low));
 
-	अगर (buffer && aq_desc->datalen) अणु
+	if (buffer && aq_desc->datalen) {
 		u16 len = le16_to_cpu(aq_desc->datalen);
 
 		iavf_debug(hw, mask, "AQ CMD Buffer:\n");
-		अगर (buf_len < len)
+		if (buf_len < len)
 			len = buf_len;
-		/* ग_लिखो the full 16-byte chunks */
-		अगर (hw->debug_mask & mask) अणु
-			अक्षर prefix[27];
+		/* write the full 16-byte chunks */
+		if (hw->debug_mask & mask) {
+			char prefix[27];
 
-			snम_लिखो(prefix, माप(prefix),
+			snprintf(prefix, sizeof(prefix),
 				 "iavf %02x:%02x.%x: \t0x",
 				 hw->bus.bus_id,
 				 hw->bus.device,
 				 hw->bus.func);
 
-			prपूर्णांक_hex_dump(KERN_INFO, prefix, DUMP_PREFIX_OFFSET,
+			print_hex_dump(KERN_INFO, prefix, DUMP_PREFIX_OFFSET,
 				       16, 1, buf, len, false);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * iavf_check_asq_alive
- * @hw: poपूर्णांकer to the hw काष्ठा
+ * @hw: pointer to the hw struct
  *
- * Returns true अगर Queue is enabled अन्यथा false.
+ * Returns true if Queue is enabled else false.
  **/
-bool iavf_check_asq_alive(काष्ठा iavf_hw *hw)
-अणु
-	अगर (hw->aq.asq.len)
-		वापस !!(rd32(hw, hw->aq.asq.len) &
+bool iavf_check_asq_alive(struct iavf_hw *hw)
+{
+	if (hw->aq.asq.len)
+		return !!(rd32(hw, hw->aq.asq.len) &
 			  IAVF_VF_ATQLEN1_ATQENABLE_MASK);
-	अन्यथा
-		वापस false;
-पूर्ण
+	else
+		return false;
+}
 
 /**
- * iavf_aq_queue_shutकरोwn
- * @hw: poपूर्णांकer to the hw काष्ठा
+ * iavf_aq_queue_shutdown
+ * @hw: pointer to the hw struct
  * @unloading: is the driver unloading itself
  *
- * Tell the Firmware that we're shutting करोwn the AdminQ and whether
+ * Tell the Firmware that we're shutting down the AdminQ and whether
  * or not the driver is unloading as well.
  **/
-क्रमागत iavf_status iavf_aq_queue_shutकरोwn(काष्ठा iavf_hw *hw, bool unloading)
-अणु
-	काष्ठा iavf_aq_desc desc;
-	काष्ठा iavf_aqc_queue_shutकरोwn *cmd =
-		(काष्ठा iavf_aqc_queue_shutकरोwn *)&desc.params.raw;
-	क्रमागत iavf_status status;
+enum iavf_status iavf_aq_queue_shutdown(struct iavf_hw *hw, bool unloading)
+{
+	struct iavf_aq_desc desc;
+	struct iavf_aqc_queue_shutdown *cmd =
+		(struct iavf_aqc_queue_shutdown *)&desc.params.raw;
+	enum iavf_status status;
 
-	iavf_fill_शेष_direct_cmd_desc(&desc, iavf_aqc_opc_queue_shutकरोwn);
+	iavf_fill_default_direct_cmd_desc(&desc, iavf_aqc_opc_queue_shutdown);
 
-	अगर (unloading)
+	if (unloading)
 		cmd->driver_unloading = cpu_to_le32(IAVF_AQ_DRIVER_UNLOADING);
-	status = iavf_asq_send_command(hw, &desc, शून्य, 0, शून्य);
+	status = iavf_asq_send_command(hw, &desc, NULL, 0, NULL);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * iavf_aq_get_set_rss_lut
- * @hw: poपूर्णांकer to the hardware काष्ठाure
+ * @hw: pointer to the hardware structure
  * @vsi_id: vsi fw index
- * @pf_lut: क्रम PF table set true, क्रम VSI table set false
- * @lut: poपूर्णांकer to the lut buffer provided by the caller
+ * @pf_lut: for PF table set true, for VSI table set false
+ * @lut: pointer to the lut buffer provided by the caller
  * @lut_size: size of the lut buffer
  * @set: set true to set the table, false to get the table
  *
  * Internal function to get or set RSS look up table
  **/
-अटल क्रमागत iavf_status iavf_aq_get_set_rss_lut(काष्ठा iavf_hw *hw,
+static enum iavf_status iavf_aq_get_set_rss_lut(struct iavf_hw *hw,
 						u16 vsi_id, bool pf_lut,
 						u8 *lut, u16 lut_size,
 						bool set)
-अणु
-	क्रमागत iavf_status status;
-	काष्ठा iavf_aq_desc desc;
-	काष्ठा iavf_aqc_get_set_rss_lut *cmd_resp =
-		   (काष्ठा iavf_aqc_get_set_rss_lut *)&desc.params.raw;
+{
+	enum iavf_status status;
+	struct iavf_aq_desc desc;
+	struct iavf_aqc_get_set_rss_lut *cmd_resp =
+		   (struct iavf_aqc_get_set_rss_lut *)&desc.params.raw;
 
-	अगर (set)
-		iavf_fill_शेष_direct_cmd_desc(&desc,
+	if (set)
+		iavf_fill_default_direct_cmd_desc(&desc,
 						  iavf_aqc_opc_set_rss_lut);
-	अन्यथा
-		iavf_fill_शेष_direct_cmd_desc(&desc,
+	else
+		iavf_fill_default_direct_cmd_desc(&desc,
 						  iavf_aqc_opc_get_rss_lut);
 
 	/* Indirect command */
@@ -382,80 +381,80 @@ bool iavf_check_asq_alive(काष्ठा iavf_hw *hw)
 					  IAVF_AQC_SET_RSS_LUT_VSI_ID_MASK));
 	cmd_resp->vsi_id |= cpu_to_le16((u16)IAVF_AQC_SET_RSS_LUT_VSI_VALID);
 
-	अगर (pf_lut)
+	if (pf_lut)
 		cmd_resp->flags |= cpu_to_le16((u16)
 					((IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_PF <<
 					IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_SHIFT) &
 					IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_MASK));
-	अन्यथा
+	else
 		cmd_resp->flags |= cpu_to_le16((u16)
 					((IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_VSI <<
 					IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_SHIFT) &
 					IAVF_AQC_SET_RSS_LUT_TABLE_TYPE_MASK));
 
-	status = iavf_asq_send_command(hw, &desc, lut, lut_size, शून्य);
+	status = iavf_asq_send_command(hw, &desc, lut, lut_size, NULL);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * iavf_aq_get_rss_lut
- * @hw: poपूर्णांकer to the hardware काष्ठाure
+ * @hw: pointer to the hardware structure
  * @vsi_id: vsi fw index
- * @pf_lut: क्रम PF table set true, क्रम VSI table set false
- * @lut: poपूर्णांकer to the lut buffer provided by the caller
+ * @pf_lut: for PF table set true, for VSI table set false
+ * @lut: pointer to the lut buffer provided by the caller
  * @lut_size: size of the lut buffer
  *
  * get the RSS lookup table, PF or VSI type
  **/
-क्रमागत iavf_status iavf_aq_get_rss_lut(काष्ठा iavf_hw *hw, u16 vsi_id,
+enum iavf_status iavf_aq_get_rss_lut(struct iavf_hw *hw, u16 vsi_id,
 				     bool pf_lut, u8 *lut, u16 lut_size)
-अणु
-	वापस iavf_aq_get_set_rss_lut(hw, vsi_id, pf_lut, lut, lut_size,
+{
+	return iavf_aq_get_set_rss_lut(hw, vsi_id, pf_lut, lut, lut_size,
 				       false);
-पूर्ण
+}
 
 /**
  * iavf_aq_set_rss_lut
- * @hw: poपूर्णांकer to the hardware काष्ठाure
+ * @hw: pointer to the hardware structure
  * @vsi_id: vsi fw index
- * @pf_lut: क्रम PF table set true, क्रम VSI table set false
- * @lut: poपूर्णांकer to the lut buffer provided by the caller
+ * @pf_lut: for PF table set true, for VSI table set false
+ * @lut: pointer to the lut buffer provided by the caller
  * @lut_size: size of the lut buffer
  *
  * set the RSS lookup table, PF or VSI type
  **/
-क्रमागत iavf_status iavf_aq_set_rss_lut(काष्ठा iavf_hw *hw, u16 vsi_id,
+enum iavf_status iavf_aq_set_rss_lut(struct iavf_hw *hw, u16 vsi_id,
 				     bool pf_lut, u8 *lut, u16 lut_size)
-अणु
-	वापस iavf_aq_get_set_rss_lut(hw, vsi_id, pf_lut, lut, lut_size, true);
-पूर्ण
+{
+	return iavf_aq_get_set_rss_lut(hw, vsi_id, pf_lut, lut, lut_size, true);
+}
 
 /**
  * iavf_aq_get_set_rss_key
- * @hw: poपूर्णांकer to the hw काष्ठा
+ * @hw: pointer to the hw struct
  * @vsi_id: vsi fw index
- * @key: poपूर्णांकer to key info काष्ठा
+ * @key: pointer to key info struct
  * @set: set true to set the key, false to get the key
  *
  * get the RSS key per VSI
  **/
-अटल क्रमागत
-iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
-				    काष्ठा iavf_aqc_get_set_rss_key_data *key,
+static enum
+iavf_status iavf_aq_get_set_rss_key(struct iavf_hw *hw, u16 vsi_id,
+				    struct iavf_aqc_get_set_rss_key_data *key,
 				    bool set)
-अणु
-	क्रमागत iavf_status status;
-	काष्ठा iavf_aq_desc desc;
-	काष्ठा iavf_aqc_get_set_rss_key *cmd_resp =
-			(काष्ठा iavf_aqc_get_set_rss_key *)&desc.params.raw;
-	u16 key_size = माप(काष्ठा iavf_aqc_get_set_rss_key_data);
+{
+	enum iavf_status status;
+	struct iavf_aq_desc desc;
+	struct iavf_aqc_get_set_rss_key *cmd_resp =
+			(struct iavf_aqc_get_set_rss_key *)&desc.params.raw;
+	u16 key_size = sizeof(struct iavf_aqc_get_set_rss_key_data);
 
-	अगर (set)
-		iavf_fill_शेष_direct_cmd_desc(&desc,
+	if (set)
+		iavf_fill_default_direct_cmd_desc(&desc,
 						  iavf_aqc_opc_set_rss_key);
-	अन्यथा
-		iavf_fill_शेष_direct_cmd_desc(&desc,
+	else
+		iavf_fill_default_direct_cmd_desc(&desc,
 						  iavf_aqc_opc_get_rss_key);
 
 	/* Indirect command */
@@ -468,47 +467,47 @@ iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
 					  IAVF_AQC_SET_RSS_KEY_VSI_ID_MASK));
 	cmd_resp->vsi_id |= cpu_to_le16((u16)IAVF_AQC_SET_RSS_KEY_VSI_VALID);
 
-	status = iavf_asq_send_command(hw, &desc, key, key_size, शून्य);
+	status = iavf_asq_send_command(hw, &desc, key, key_size, NULL);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * iavf_aq_get_rss_key
- * @hw: poपूर्णांकer to the hw काष्ठा
+ * @hw: pointer to the hw struct
  * @vsi_id: vsi fw index
- * @key: poपूर्णांकer to key info काष्ठा
+ * @key: pointer to key info struct
  *
  **/
-क्रमागत iavf_status iavf_aq_get_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
-				     काष्ठा iavf_aqc_get_set_rss_key_data *key)
-अणु
-	वापस iavf_aq_get_set_rss_key(hw, vsi_id, key, false);
-पूर्ण
+enum iavf_status iavf_aq_get_rss_key(struct iavf_hw *hw, u16 vsi_id,
+				     struct iavf_aqc_get_set_rss_key_data *key)
+{
+	return iavf_aq_get_set_rss_key(hw, vsi_id, key, false);
+}
 
 /**
  * iavf_aq_set_rss_key
- * @hw: poपूर्णांकer to the hw काष्ठा
+ * @hw: pointer to the hw struct
  * @vsi_id: vsi fw index
- * @key: poपूर्णांकer to key info काष्ठा
+ * @key: pointer to key info struct
  *
  * set the RSS key per VSI
  **/
-क्रमागत iavf_status iavf_aq_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
-				     काष्ठा iavf_aqc_get_set_rss_key_data *key)
-अणु
-	वापस iavf_aq_get_set_rss_key(hw, vsi_id, key, true);
-पूर्ण
+enum iavf_status iavf_aq_set_rss_key(struct iavf_hw *hw, u16 vsi_id,
+				     struct iavf_aqc_get_set_rss_key_data *key)
+{
+	return iavf_aq_get_set_rss_key(hw, vsi_id, key, true);
+}
 
 /* The iavf_ptype_lookup table is used to convert from the 8-bit ptype in the
  * hardware to a bit-field that can be used by SW to more easily determine the
  * packet type.
  *
- * Macros are used to लघुen the table lines and make this table human
- * पढ़ोable.
+ * Macros are used to shorten the table lines and make this table human
+ * readable.
  *
  * We store the PTYPE in the top byte of the bit field - this is just so that
- * we can check that the table करोesn't have a row missing, as the index पूर्णांकo
+ * we can check that the table doesn't have a row missing, as the index into
  * the table should be the PTYPE.
  *
  * Typical work flow:
@@ -519,13 +518,13 @@ iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
  * ELSE IF iavf_ptype_lookup[ptype].outer_ip == IAVF_RX_PTYPE_OUTER_IP
  *      Use the rest of the fields to look at the tunnels, inner protocols, etc
  * ELSE
- *      Use the क्रमागत iavf_rx_l2_ptype to decode the packet type
+ *      Use the enum iavf_rx_l2_ptype to decode the packet type
  * ENDIF
  */
 
-/* macro to make the table lines लघु */
-#घोषणा IAVF_PTT(PTYPE, OUTER_IP, OUTER_IP_VER, OUTER_FRAG, T, TE, TEF, I, PL)\
-	अणु	PTYPE, \
+/* macro to make the table lines short */
+#define IAVF_PTT(PTYPE, OUTER_IP, OUTER_IP_VER, OUTER_FRAG, T, TE, TEF, I, PL)\
+	{	PTYPE, \
 		1, \
 		IAVF_RX_PTYPE_OUTER_##OUTER_IP, \
 		IAVF_RX_PTYPE_OUTER_##OUTER_IP_VER, \
@@ -534,18 +533,18 @@ iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
 		IAVF_RX_PTYPE_TUNNEL_END_##TE, \
 		IAVF_RX_PTYPE_##TEF, \
 		IAVF_RX_PTYPE_INNER_PROT_##I, \
-		IAVF_RX_PTYPE_PAYLOAD_LAYER_##PL पूर्ण
+		IAVF_RX_PTYPE_PAYLOAD_LAYER_##PL }
 
-#घोषणा IAVF_PTT_UNUSED_ENTRY(PTYPE) \
-		अणु PTYPE, 0, 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण
+#define IAVF_PTT_UNUSED_ENTRY(PTYPE) \
+		{ PTYPE, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
-/* लघुer macros makes the table fit but are terse */
-#घोषणा IAVF_RX_PTYPE_NOF		IAVF_RX_PTYPE_NOT_FRAG
-#घोषणा IAVF_RX_PTYPE_FRG		IAVF_RX_PTYPE_FRAG
-#घोषणा IAVF_RX_PTYPE_INNER_PROT_TS	IAVF_RX_PTYPE_INNER_PROT_TIMESYNC
+/* shorter macros makes the table fit but are terse */
+#define IAVF_RX_PTYPE_NOF		IAVF_RX_PTYPE_NOT_FRAG
+#define IAVF_RX_PTYPE_FRG		IAVF_RX_PTYPE_FRAG
+#define IAVF_RX_PTYPE_INNER_PROT_TS	IAVF_RX_PTYPE_INNER_PROT_TIMESYNC
 
-/* Lookup table mapping the HW PTYPE to the bit field क्रम decoding */
-काष्ठा iavf_rx_ptype_decoded iavf_ptype_lookup[] = अणु
+/* Lookup table mapping the HW PTYPE to the bit field for decoding */
+struct iavf_rx_ptype_decoded iavf_ptype_lookup[] = {
 	/* L2 Packet types */
 	IAVF_PTT_UNUSED_ENTRY(0),
 	IAVF_PTT(1,  L2, NONE, NOF, NONE, NONE, NOF, NONE, PAY2),
@@ -863,64 +862,64 @@ iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
 	IAVF_PTT_UNUSED_ENTRY(253),
 	IAVF_PTT_UNUSED_ENTRY(254),
 	IAVF_PTT_UNUSED_ENTRY(255)
-पूर्ण;
+};
 
 /**
  * iavf_aq_send_msg_to_pf
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @v_opcode: opcodes क्रम VF-PF communication
- * @v_retval: वापस error code
- * @msg: poपूर्णांकer to the msg buffer
+ * @hw: pointer to the hardware structure
+ * @v_opcode: opcodes for VF-PF communication
+ * @v_retval: return error code
+ * @msg: pointer to the msg buffer
  * @msglen: msg length
- * @cmd_details: poपूर्णांकer to command details
+ * @cmd_details: pointer to command details
  *
- * Send message to PF driver using admin queue. By शेष, this message
- * is sent asynchronously, i.e. iavf_asq_send_command() करोes not रुको क्रम
- * completion beक्रमe वापसing.
+ * Send message to PF driver using admin queue. By default, this message
+ * is sent asynchronously, i.e. iavf_asq_send_command() does not wait for
+ * completion before returning.
  **/
-क्रमागत iavf_status iavf_aq_send_msg_to_pf(काष्ठा iavf_hw *hw,
-					क्रमागत virtchnl_ops v_opcode,
-					क्रमागत iavf_status v_retval,
+enum iavf_status iavf_aq_send_msg_to_pf(struct iavf_hw *hw,
+					enum virtchnl_ops v_opcode,
+					enum iavf_status v_retval,
 					u8 *msg, u16 msglen,
-					काष्ठा iavf_asq_cmd_details *cmd_details)
-अणु
-	काष्ठा iavf_asq_cmd_details details;
-	काष्ठा iavf_aq_desc desc;
-	क्रमागत iavf_status status;
+					struct iavf_asq_cmd_details *cmd_details)
+{
+	struct iavf_asq_cmd_details details;
+	struct iavf_aq_desc desc;
+	enum iavf_status status;
 
-	iavf_fill_शेष_direct_cmd_desc(&desc, iavf_aqc_opc_send_msg_to_pf);
+	iavf_fill_default_direct_cmd_desc(&desc, iavf_aqc_opc_send_msg_to_pf);
 	desc.flags |= cpu_to_le16((u16)IAVF_AQ_FLAG_SI);
 	desc.cookie_high = cpu_to_le32(v_opcode);
 	desc.cookie_low = cpu_to_le32(v_retval);
-	अगर (msglen) अणु
+	if (msglen) {
 		desc.flags |= cpu_to_le16((u16)(IAVF_AQ_FLAG_BUF
 						| IAVF_AQ_FLAG_RD));
-		अगर (msglen > IAVF_AQ_LARGE_BUF)
+		if (msglen > IAVF_AQ_LARGE_BUF)
 			desc.flags |= cpu_to_le16((u16)IAVF_AQ_FLAG_LB);
 		desc.datalen = cpu_to_le16(msglen);
-	पूर्ण
-	अगर (!cmd_details) अणु
-		स_रखो(&details, 0, माप(details));
+	}
+	if (!cmd_details) {
+		memset(&details, 0, sizeof(details));
 		details.async = true;
 		cmd_details = &details;
-	पूर्ण
+	}
 	status = iavf_asq_send_command(hw, &desc, msg, msglen, cmd_details);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
  * iavf_vf_parse_hw_config
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @msg: poपूर्णांकer to the भव channel VF resource काष्ठाure
+ * @hw: pointer to the hardware structure
+ * @msg: pointer to the virtual channel VF resource structure
  *
- * Given a VF resource message from the PF, populate the hw काष्ठा
- * with appropriate inक्रमmation.
+ * Given a VF resource message from the PF, populate the hw struct
+ * with appropriate information.
  **/
-व्योम iavf_vf_parse_hw_config(काष्ठा iavf_hw *hw,
-			     काष्ठा virtchnl_vf_resource *msg)
-अणु
-	काष्ठा virtchnl_vsi_resource *vsi_res;
-	पूर्णांक i;
+void iavf_vf_parse_hw_config(struct iavf_hw *hw,
+			     struct virtchnl_vf_resource *msg)
+{
+	struct virtchnl_vsi_resource *vsi_res;
+	int i;
 
 	vsi_res = &msg->vsi_res[0];
 
@@ -931,27 +930,27 @@ iavf_status iavf_aq_get_set_rss_key(काष्ठा iavf_hw *hw, u16 vsi_id,
 	hw->dev_caps.dcb = msg->vf_cap_flags &
 			   VIRTCHNL_VF_OFFLOAD_L2;
 	hw->dev_caps.fcoe = 0;
-	क्रम (i = 0; i < msg->num_vsis; i++) अणु
-		अगर (vsi_res->vsi_type == VIRTCHNL_VSI_SRIOV) अणु
+	for (i = 0; i < msg->num_vsis; i++) {
+		if (vsi_res->vsi_type == VIRTCHNL_VSI_SRIOV) {
 			ether_addr_copy(hw->mac.perm_addr,
-					vsi_res->शेष_mac_addr);
+					vsi_res->default_mac_addr);
 			ether_addr_copy(hw->mac.addr,
-					vsi_res->शेष_mac_addr);
-		पूर्ण
+					vsi_res->default_mac_addr);
+		}
 		vsi_res++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * iavf_vf_reset
- * @hw: poपूर्णांकer to the hardware काष्ठाure
+ * @hw: pointer to the hardware structure
  *
- * Send a VF_RESET message to the PF. Does not रुको क्रम response from PF
- * as none will be क्रमthcoming. Immediately after calling this function,
- * the admin queue should be shut करोwn and (optionally) reinitialized.
+ * Send a VF_RESET message to the PF. Does not wait for response from PF
+ * as none will be forthcoming. Immediately after calling this function,
+ * the admin queue should be shut down and (optionally) reinitialized.
  **/
-क्रमागत iavf_status iavf_vf_reset(काष्ठा iavf_hw *hw)
-अणु
-	वापस iavf_aq_send_msg_to_pf(hw, VIRTCHNL_OP_RESET_VF,
-				      0, शून्य, 0, शून्य);
-पूर्ण
+enum iavf_status iavf_vf_reset(struct iavf_hw *hw)
+{
+	return iavf_aq_send_msg_to_pf(hw, VIRTCHNL_OP_RESET_VF,
+				      0, NULL, 0, NULL);
+}

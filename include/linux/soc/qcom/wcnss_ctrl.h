@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __WCNSS_CTRL_H__
-#घोषणा __WCNSS_CTRL_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __WCNSS_CTRL_H__
+#define __WCNSS_CTRL_H__
 
-#समावेश <linux/rpmsg.h>
+#include <linux/rpmsg.h>
 
-#अगर IS_ENABLED(CONFIG_QCOM_WCNSS_CTRL)
+#if IS_ENABLED(CONFIG_QCOM_WCNSS_CTRL)
 
-काष्ठा rpmsg_endpoपूर्णांक *qcom_wcnss_खोलो_channel(व्योम *wcnss, स्थिर अक्षर *name,
-					       rpmsg_rx_cb_t cb, व्योम *priv);
+struct rpmsg_endpoint *qcom_wcnss_open_channel(void *wcnss, const char *name,
+					       rpmsg_rx_cb_t cb, void *priv);
 
-#अन्यथा
+#else
 
-अटल काष्ठा rpmsg_endpoपूर्णांक *qcom_wcnss_खोलो_channel(व्योम *wcnss,
-						      स्थिर अक्षर *name,
+static struct rpmsg_endpoint *qcom_wcnss_open_channel(void *wcnss,
+						      const char *name,
 						      rpmsg_rx_cb_t cb,
-						      व्योम *priv)
-अणु
+						      void *priv)
+{
 	WARN_ON(1);
-	वापस ERR_PTR(-ENXIO);
-पूर्ण
+	return ERR_PTR(-ENXIO);
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

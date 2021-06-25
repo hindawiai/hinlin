@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * LCD-OLinuXino support क्रम panel driver
+ * LCD-OLinuXino support for panel driver
  *
  * Copyright (C) 2018 Olimex Ltd.
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
  */
 
-#समावेश <linux/crc32.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/crc32.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <video/videomode.h>
-#समावेश <video/display_timing.h>
+#include <video/videomode.h>
+#include <video/display_timing.h>
 
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_panel.h>
+#include <drm/drm_device.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 
-#घोषणा LCD_OLINUXINO_HEADER_MAGIC	0x4F4CB727
-#घोषणा LCD_OLINUXINO_DATA_LEN		256
+#define LCD_OLINUXINO_HEADER_MAGIC	0x4F4CB727
+#define LCD_OLINUXINO_DATA_LEN		256
 
-काष्ठा lcd_olinuxino_mode अणु
-	u32 pixelघड़ी;
+struct lcd_olinuxino_mode {
+	u32 pixelclock;
 	u32 hactive;
 	u32 hfp;
 	u32 hbp;
@@ -37,128 +36,128 @@
 	u32 vpw;
 	u32 refresh;
 	u32 flags;
-पूर्ण;
+};
 
-काष्ठा lcd_olinuxino_info अणु
-	अक्षर name[32];
+struct lcd_olinuxino_info {
+	char name[32];
 	u32 width_mm;
 	u32 height_mm;
 	u32 bpc;
-	u32 bus_क्रमmat;
+	u32 bus_format;
 	u32 bus_flag;
-पूर्ण __attribute__((__packed__));
+} __attribute__((__packed__));
 
-काष्ठा lcd_olinuxino_eeprom अणु
+struct lcd_olinuxino_eeprom {
 	u32 header;
 	u32 id;
-	अक्षर revision[4];
+	char revision[4];
 	u32 serial;
-	काष्ठा lcd_olinuxino_info info;
+	struct lcd_olinuxino_info info;
 	u32 num_modes;
 	u8 reserved[180];
 	u32 checksum;
-पूर्ण __attribute__((__packed__));
+} __attribute__((__packed__));
 
-काष्ठा lcd_olinuxino अणु
-	काष्ठा drm_panel panel;
-	काष्ठा device *dev;
-	काष्ठा i2c_client *client;
-	काष्ठा mutex mutex;
+struct lcd_olinuxino {
+	struct drm_panel panel;
+	struct device *dev;
+	struct i2c_client *client;
+	struct mutex mutex;
 
 	bool prepared;
 	bool enabled;
 
-	काष्ठा regulator *supply;
-	काष्ठा gpio_desc *enable_gpio;
+	struct regulator *supply;
+	struct gpio_desc *enable_gpio;
 
-	काष्ठा lcd_olinuxino_eeprom eeprom;
-पूर्ण;
+	struct lcd_olinuxino_eeprom eeprom;
+};
 
-अटल अंतरभूत काष्ठा lcd_olinuxino *to_lcd_olinuxino(काष्ठा drm_panel *panel)
-अणु
-	वापस container_of(panel, काष्ठा lcd_olinuxino, panel);
-पूर्ण
+static inline struct lcd_olinuxino *to_lcd_olinuxino(struct drm_panel *panel)
+{
+	return container_of(panel, struct lcd_olinuxino, panel);
+}
 
-अटल पूर्णांक lcd_olinuxino_disable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
+static int lcd_olinuxino_disable(struct drm_panel *panel)
+{
+	struct lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
 
-	अगर (!lcd->enabled)
-		वापस 0;
+	if (!lcd->enabled)
+		return 0;
 
 	lcd->enabled = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_olinuxino_unprepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
+static int lcd_olinuxino_unprepare(struct drm_panel *panel)
+{
+	struct lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
 
-	अगर (!lcd->prepared)
-		वापस 0;
+	if (!lcd->prepared)
+		return 0;
 
 	gpiod_set_value_cansleep(lcd->enable_gpio, 0);
 	regulator_disable(lcd->supply);
 
 	lcd->prepared = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_olinuxino_prepare(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
-	पूर्णांक ret;
+static int lcd_olinuxino_prepare(struct drm_panel *panel)
+{
+	struct lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
+	int ret;
 
-	अगर (lcd->prepared)
-		वापस 0;
+	if (lcd->prepared)
+		return 0;
 
 	ret = regulator_enable(lcd->supply);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	gpiod_set_value_cansleep(lcd->enable_gpio, 1);
 	lcd->prepared = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_olinuxino_enable(काष्ठा drm_panel *panel)
-अणु
-	काष्ठा lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
+static int lcd_olinuxino_enable(struct drm_panel *panel)
+{
+	struct lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
 
-	अगर (lcd->enabled)
-		वापस 0;
+	if (lcd->enabled)
+		return 0;
 
 	lcd->enabled = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_olinuxino_get_modes(काष्ठा drm_panel *panel,
-				   काष्ठा drm_connector *connector)
-अणु
-	काष्ठा lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
-	काष्ठा lcd_olinuxino_info *lcd_info = &lcd->eeprom.info;
-	काष्ठा lcd_olinuxino_mode *lcd_mode;
-	काष्ठा drm_display_mode *mode;
+static int lcd_olinuxino_get_modes(struct drm_panel *panel,
+				   struct drm_connector *connector)
+{
+	struct lcd_olinuxino *lcd = to_lcd_olinuxino(panel);
+	struct lcd_olinuxino_info *lcd_info = &lcd->eeprom.info;
+	struct lcd_olinuxino_mode *lcd_mode;
+	struct drm_display_mode *mode;
 	u32 i, num = 0;
 
-	क्रम (i = 0; i < lcd->eeprom.num_modes; i++) अणु
-		lcd_mode = (काष्ठा lcd_olinuxino_mode *)
-			   &lcd->eeprom.reserved[i * माप(*lcd_mode)];
+	for (i = 0; i < lcd->eeprom.num_modes; i++) {
+		lcd_mode = (struct lcd_olinuxino_mode *)
+			   &lcd->eeprom.reserved[i * sizeof(*lcd_mode)];
 
 		mode = drm_mode_create(connector->dev);
-		अगर (!mode) अणु
+		if (!mode) {
 			dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
 				lcd_mode->hactive,
 				lcd_mode->vactive,
 				lcd_mode->refresh);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		mode->घड़ी = lcd_mode->pixelघड़ी;
+		mode->clock = lcd_mode->pixelclock;
 		mode->hdisplay = lcd_mode->hactive;
 		mode->hsync_start = lcd_mode->hactive + lcd_mode->hfp;
 		mode->hsync_end = lcd_mode->hactive + lcd_mode->hfp +
@@ -173,7 +172,7 @@
 			       lcd_mode->vpw + lcd_mode->vbp;
 
 		/* Always make the first mode preferred */
-		अगर (i == 0)
+		if (i == 0)
 			mode->type |= DRM_MODE_TYPE_PREFERRED;
 		mode->type |= DRM_MODE_TYPE_DRIVER;
 
@@ -181,43 +180,43 @@
 		drm_mode_probed_add(connector, mode);
 
 		num++;
-	पूर्ण
+	}
 
 	connector->display_info.width_mm = lcd_info->width_mm;
 	connector->display_info.height_mm = lcd_info->height_mm;
 	connector->display_info.bpc = lcd_info->bpc;
 
-	अगर (lcd_info->bus_क्रमmat)
-		drm_display_info_set_bus_क्रमmats(&connector->display_info,
-						 &lcd_info->bus_क्रमmat, 1);
+	if (lcd_info->bus_format)
+		drm_display_info_set_bus_formats(&connector->display_info,
+						 &lcd_info->bus_format, 1);
 	connector->display_info.bus_flags = lcd_info->bus_flag;
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल स्थिर काष्ठा drm_panel_funcs lcd_olinuxino_funcs = अणु
+static const struct drm_panel_funcs lcd_olinuxino_funcs = {
 	.disable = lcd_olinuxino_disable,
 	.unprepare = lcd_olinuxino_unprepare,
 	.prepare = lcd_olinuxino_prepare,
 	.enable = lcd_olinuxino_enable,
 	.get_modes = lcd_olinuxino_get_modes,
-पूर्ण;
+};
 
-अटल पूर्णांक lcd_olinuxino_probe(काष्ठा i2c_client *client,
-			       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा lcd_olinuxino *lcd;
+static int lcd_olinuxino_probe(struct i2c_client *client,
+			       const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct lcd_olinuxino *lcd;
 	u32 checksum, i;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
 				     I2C_FUNC_SMBUS_READ_I2C_BLOCK))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	lcd = devm_kzalloc(dev, माप(*lcd), GFP_KERNEL);
-	अगर (!lcd)
-		वापस -ENOMEM;
+	lcd = devm_kzalloc(dev, sizeof(*lcd), GFP_KERNEL);
+	if (!lcd)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, lcd);
 	lcd->dev = dev;
@@ -225,32 +224,32 @@
 
 	mutex_init(&lcd->mutex);
 
-	/* Copy data पूर्णांकo buffer */
-	क्रम (i = 0; i < LCD_OLINUXINO_DATA_LEN; i += I2C_SMBUS_BLOCK_MAX) अणु
+	/* Copy data into buffer */
+	for (i = 0; i < LCD_OLINUXINO_DATA_LEN; i += I2C_SMBUS_BLOCK_MAX) {
 		mutex_lock(&lcd->mutex);
-		ret = i2c_smbus_पढ़ो_i2c_block_data(client,
+		ret = i2c_smbus_read_i2c_block_data(client,
 						    i,
 						    I2C_SMBUS_BLOCK_MAX,
 						    (u8 *)&lcd->eeprom + i);
 		mutex_unlock(&lcd->mutex);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "error reading from device at %02x\n", i);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Check configuration checksum */
 	checksum = ~crc32(~0, (u8 *)&lcd->eeprom, 252);
-	अगर (checksum != lcd->eeprom.checksum) अणु
+	if (checksum != lcd->eeprom.checksum) {
 		dev_err(dev, "configuration checksum does not match!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check magic header */
-	अगर (lcd->eeprom.header != LCD_OLINUXINO_HEADER_MAGIC) अणु
+	if (lcd->eeprom.header != LCD_OLINUXINO_HEADER_MAGIC) {
 		dev_err(dev, "magic header does not match\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_info(dev, "Detected %s, Rev. %s, Serial: %08x\n",
 		 lcd->eeprom.info.name,
@@ -259,62 +258,62 @@
 
 	/*
 	 * The eeprom can hold up to 4 modes.
-	 * If the stored value is bigger, overग_लिखो it.
+	 * If the stored value is bigger, overwrite it.
 	 */
-	अगर (lcd->eeprom.num_modes > 4) अणु
+	if (lcd->eeprom.num_modes > 4) {
 		dev_warn(dev, "invalid number of modes, falling back to 4\n");
 		lcd->eeprom.num_modes = 4;
-	पूर्ण
+	}
 
 	lcd->enabled = false;
 	lcd->prepared = false;
 
 	lcd->supply = devm_regulator_get(dev, "power");
-	अगर (IS_ERR(lcd->supply))
-		वापस PTR_ERR(lcd->supply);
+	if (IS_ERR(lcd->supply))
+		return PTR_ERR(lcd->supply);
 
 	lcd->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	अगर (IS_ERR(lcd->enable_gpio))
-		वापस PTR_ERR(lcd->enable_gpio);
+	if (IS_ERR(lcd->enable_gpio))
+		return PTR_ERR(lcd->enable_gpio);
 
 	drm_panel_init(&lcd->panel, dev, &lcd_olinuxino_funcs,
 		       DRM_MODE_CONNECTOR_DPI);
 
 	ret = drm_panel_of_backlight(&lcd->panel);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_panel_add(&lcd->panel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcd_olinuxino_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा lcd_olinuxino *panel = i2c_get_clientdata(client);
+static int lcd_olinuxino_remove(struct i2c_client *client)
+{
+	struct lcd_olinuxino *panel = i2c_get_clientdata(client);
 
-	drm_panel_हटाओ(&panel->panel);
+	drm_panel_remove(&panel->panel);
 
 	drm_panel_disable(&panel->panel);
 	drm_panel_unprepare(&panel->panel);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id lcd_olinuxino_of_ids[] = अणु
-	अणु .compatible = "olimex,lcd-olinuxino" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id lcd_olinuxino_of_ids[] = {
+	{ .compatible = "olimex,lcd-olinuxino" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, lcd_olinuxino_of_ids);
 
-अटल काष्ठा i2c_driver lcd_olinuxino_driver = अणु
-	.driver = अणु
+static struct i2c_driver lcd_olinuxino_driver = {
+	.driver = {
 		.name = "lcd_olinuxino",
 		.of_match_table = lcd_olinuxino_of_ids,
-	पूर्ण,
+	},
 	.probe = lcd_olinuxino_probe,
-	.हटाओ = lcd_olinuxino_हटाओ,
-पूर्ण;
+	.remove = lcd_olinuxino_remove,
+};
 
 module_i2c_driver(lcd_olinuxino_driver);
 

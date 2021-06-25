@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Poly1305 authenticator algorithm, RFC7539
  *
  * Copyright (C) 2015 Martin Willi
  *
- * Based on खुला करोमुख्य code by Andrew Moon and Daniel J. Bernstein.
+ * Based on public domain code by Andrew Moon and Daniel J. Bernstein.
  */
 
-#समावेश <crypto/पूर्णांकernal/poly1305.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <crypto/internal/poly1305.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
-व्योम poly1305_init_generic(काष्ठा poly1305_desc_ctx *desc,
-			   स्थिर u8 key[POLY1305_KEY_SIZE])
-अणु
+void poly1305_init_generic(struct poly1305_desc_ctx *desc,
+			   const u8 key[POLY1305_KEY_SIZE])
+{
 	poly1305_core_setkey(&desc->core_r, key);
 	desc->s[0] = get_unaligned_le32(key + 16);
 	desc->s[1] = get_unaligned_le32(key + 20);
@@ -25,54 +24,54 @@
 	desc->buflen = 0;
 	desc->sset = true;
 	desc->rset = 2;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(poly1305_init_generic);
 
-व्योम poly1305_update_generic(काष्ठा poly1305_desc_ctx *desc, स्थिर u8 *src,
-			     अचिन्हित पूर्णांक nbytes)
-अणु
-	अचिन्हित पूर्णांक bytes;
+void poly1305_update_generic(struct poly1305_desc_ctx *desc, const u8 *src,
+			     unsigned int nbytes)
+{
+	unsigned int bytes;
 
-	अगर (unlikely(desc->buflen)) अणु
+	if (unlikely(desc->buflen)) {
 		bytes = min(nbytes, POLY1305_BLOCK_SIZE - desc->buflen);
-		स_नकल(desc->buf + desc->buflen, src, bytes);
+		memcpy(desc->buf + desc->buflen, src, bytes);
 		src += bytes;
 		nbytes -= bytes;
 		desc->buflen += bytes;
 
-		अगर (desc->buflen == POLY1305_BLOCK_SIZE) अणु
+		if (desc->buflen == POLY1305_BLOCK_SIZE) {
 			poly1305_core_blocks(&desc->h, &desc->core_r, desc->buf,
 					     1, 1);
 			desc->buflen = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (likely(nbytes >= POLY1305_BLOCK_SIZE)) अणु
+	if (likely(nbytes >= POLY1305_BLOCK_SIZE)) {
 		poly1305_core_blocks(&desc->h, &desc->core_r, src,
 				     nbytes / POLY1305_BLOCK_SIZE, 1);
 		src += nbytes - (nbytes % POLY1305_BLOCK_SIZE);
 		nbytes %= POLY1305_BLOCK_SIZE;
-	पूर्ण
+	}
 
-	अगर (unlikely(nbytes)) अणु
+	if (unlikely(nbytes)) {
 		desc->buflen = nbytes;
-		स_नकल(desc->buf, src, nbytes);
-	पूर्ण
-पूर्ण
+		memcpy(desc->buf, src, nbytes);
+	}
+}
 EXPORT_SYMBOL_GPL(poly1305_update_generic);
 
-व्योम poly1305_final_generic(काष्ठा poly1305_desc_ctx *desc, u8 *dst)
-अणु
-	अगर (unlikely(desc->buflen)) अणु
+void poly1305_final_generic(struct poly1305_desc_ctx *desc, u8 *dst)
+{
+	if (unlikely(desc->buflen)) {
 		desc->buf[desc->buflen++] = 1;
-		स_रखो(desc->buf + desc->buflen, 0,
+		memset(desc->buf + desc->buflen, 0,
 		       POLY1305_BLOCK_SIZE - desc->buflen);
 		poly1305_core_blocks(&desc->h, &desc->core_r, desc->buf, 1, 0);
-	पूर्ण
+	}
 
 	poly1305_core_emit(&desc->h, desc->s, dst);
-	*desc = (काष्ठा poly1305_desc_ctx)अणुपूर्ण;
-पूर्ण
+	*desc = (struct poly1305_desc_ctx){};
+}
 EXPORT_SYMBOL_GPL(poly1305_final_generic);
 
 MODULE_LICENSE("GPL");

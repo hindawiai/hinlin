@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/mach-sa1100/include/mach/jornada720.h
  *
- * SSP/MCU communication definitions क्रम HP Jornada 710/720/728
+ * SSP/MCU communication definitions for HP Jornada 710/720/728
  *
  * Copyright 2007,2008 Kristoffer Ericson <Kristoffer.Ericson@gmail.com>
  *  Copyright 2000 John Ankcorn <jca@lcs.mit.edu>
  */
 
  /* HP Jornada 7xx microprocessor commands */
-#घोषणा GETBATTERYDATA		0xc0
-#घोषणा GETSCANKEYCODE		0x90
-#घोषणा GETTOUCHSAMPLES		0xa0
-#घोषणा GETCONTRAST		0xD0
-#घोषणा SETCONTRAST		0xD1
-#घोषणा GETBRIGHTNESS		0xD2
-#घोषणा SETBRIGHTNESS		0xD3
-#घोषणा CONTRASTOFF		0xD8
-#घोषणा BRIGHTNESSOFF		0xD9
-#घोषणा PWMOFF			0xDF
-#घोषणा TXDUMMY			0x11
-#घोषणा ERRORCODE		0x00
+#define GETBATTERYDATA		0xc0
+#define GETSCANKEYCODE		0x90
+#define GETTOUCHSAMPLES		0xa0
+#define GETCONTRAST		0xD0
+#define SETCONTRAST		0xD1
+#define GETBRIGHTNESS		0xD2
+#define SETBRIGHTNESS		0xD3
+#define CONTRASTOFF		0xD8
+#define BRIGHTNESSOFF		0xD9
+#define PWMOFF			0xDF
+#define TXDUMMY			0x11
+#define ERRORCODE		0x00
 
-बाह्य व्योम jornada_ssp_start(व्योम);
-बाह्य व्योम jornada_ssp_end(व्योम);
-बाह्य पूर्णांक jornada_ssp_inout(u8 byte);
-बाह्य पूर्णांक jornada_ssp_byte(u8 byte);
+extern void jornada_ssp_start(void);
+extern void jornada_ssp_end(void);
+extern int jornada_ssp_inout(u8 byte);
+extern int jornada_ssp_byte(u8 byte);

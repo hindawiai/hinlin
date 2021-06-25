@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* iTCO Venकरोr Specअगरic Support hooks */
-#अगर_घोषित CONFIG_ITCO_VENDOR_SUPPORT
-बाह्य पूर्णांक iTCO_venकरोrsupport;
-बाह्य व्योम iTCO_venकरोr_pre_start(काष्ठा resource *, अचिन्हित पूर्णांक);
-बाह्य व्योम iTCO_venकरोr_pre_stop(काष्ठा resource *);
-बाह्य पूर्णांक iTCO_venकरोr_check_noreboot_on(व्योम);
-#अन्यथा
-#घोषणा iTCO_venकरोrsupport				0
-#घोषणा iTCO_venकरोr_pre_start(acpibase, heartbeat)	अणुपूर्ण
-#घोषणा iTCO_venकरोr_pre_stop(acpibase)			अणुपूर्ण
-#घोषणा iTCO_venकरोr_check_noreboot_on()			1
-				/* 1=check noreboot; 0=करोn't check */
-#पूर्ण_अगर
+/* SPDX-License-Identifier: GPL-2.0 */
+/* iTCO Vendor Specific Support hooks */
+#ifdef CONFIG_ITCO_VENDOR_SUPPORT
+extern int iTCO_vendorsupport;
+extern void iTCO_vendor_pre_start(struct resource *, unsigned int);
+extern void iTCO_vendor_pre_stop(struct resource *);
+extern int iTCO_vendor_check_noreboot_on(void);
+#else
+#define iTCO_vendorsupport				0
+#define iTCO_vendor_pre_start(acpibase, heartbeat)	{}
+#define iTCO_vendor_pre_stop(acpibase)			{}
+#define iTCO_vendor_check_noreboot_on()			1
+				/* 1=check noreboot; 0=don't check */
+#endif

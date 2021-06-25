@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * identअगरy.c: machine identअगरication code.
+ * identify.c: machine identification code.
  *
  * Copyright (C) 1998 Harald Koerfgen and Paul M. Antoine
  * Copyright (C) 2002, 2003, 2004, 2005  Maciej W. Rozycki
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mc146818rtc.h>
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/mc146818rtc.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-#समावेश <यंत्र/bootinfo.h>
+#include <asm/bootinfo.h>
 
-#समावेश <यंत्र/dec/ioasic.h>
-#समावेश <यंत्र/dec/ioasic_addrs.h>
-#समावेश <यंत्र/dec/kn01.h>
-#समावेश <यंत्र/dec/kn02.h>
-#समावेश <यंत्र/dec/kn02ba.h>
-#समावेश <यंत्र/dec/kn02ca.h>
-#समावेश <यंत्र/dec/kn03.h>
-#समावेश <यंत्र/dec/kn230.h>
-#समावेश <यंत्र/dec/prom.h>
-#समावेश <यंत्र/dec/प्रणाली.h>
+#include <asm/dec/ioasic.h>
+#include <asm/dec/ioasic_addrs.h>
+#include <asm/dec/kn01.h>
+#include <asm/dec/kn02.h>
+#include <asm/dec/kn02ba.h>
+#include <asm/dec/kn02ca.h>
+#include <asm/dec/kn03.h>
+#include <asm/dec/kn230.h>
+#include <asm/dec/prom.h>
+#include <asm/dec/system.h>
 
-#समावेश "dectypes.h"
+#include "dectypes.h"
 
-अटल स्थिर अक्षर *dec_प्रणाली_strings[] = अणु
+static const char *dec_system_strings[] = {
 	[MACH_DSUNKNOWN]	"unknown DECstation",
 	[MACH_DS23100]		"DECstation 2100/3100",
 	[MACH_DS5100]		"DECsystem 5100",
@@ -40,95 +39,95 @@
 	[MACH_DS5500]		"DECsystem 5500",
 	[MACH_DS5800]		"DECsystem 5800",
 	[MACH_DS5900]		"DECsystem 5900",
-पूर्ण;
+};
 
-स्थिर अक्षर *get_प्रणाली_type(व्योम)
-अणु
-#घोषणा STR_BUF_LEN	64
-	अटल अक्षर प्रणाली[STR_BUF_LEN];
-	अटल पूर्णांक called = 0;
+const char *get_system_type(void)
+{
+#define STR_BUF_LEN	64
+	static char system[STR_BUF_LEN];
+	static int called = 0;
 
-	अगर (called == 0) अणु
+	if (called == 0) {
 		called = 1;
-		snम_लिखो(प्रणाली, STR_BUF_LEN, "Digital %s",
-			 dec_प्रणाली_strings[mips_machtype]);
-	पूर्ण
+		snprintf(system, STR_BUF_LEN, "Digital %s",
+			 dec_system_strings[mips_machtype]);
+	}
 
-	वापस प्रणाली;
-पूर्ण
+	return system;
+}
 
 
 /*
- * Setup essential प्रणाली-specअगरic memory addresses.  We need them
- * early.  Semantically the functions beदीर्घ to prom/init.c, but they
- * are compact enough we want them अंतरभूतd. --macro
+ * Setup essential system-specific memory addresses.  We need them
+ * early.  Semantically the functions belong to prom/init.c, but they
+ * are compact enough we want them inlined. --macro
  */
-अस्थिर u8 *dec_rtc_base;
+volatile u8 *dec_rtc_base;
 
 EXPORT_SYMBOL(dec_rtc_base);
 
-अटल अंतरभूत व्योम prom_init_kn01(व्योम)
-अणु
+static inline void prom_init_kn01(void)
+{
 	dec_kn_slot_base = KN01_SLOT_BASE;
 	dec_kn_slot_size = KN01_SLOT_SIZE;
 
-	dec_rtc_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + KN01_RTC);
-पूर्ण
+	dec_rtc_base = (void *)CKSEG1ADDR(dec_kn_slot_base + KN01_RTC);
+}
 
-अटल अंतरभूत व्योम prom_init_kn230(व्योम)
-अणु
+static inline void prom_init_kn230(void)
+{
 	dec_kn_slot_base = KN01_SLOT_BASE;
 	dec_kn_slot_size = KN01_SLOT_SIZE;
 
-	dec_rtc_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + KN01_RTC);
-पूर्ण
+	dec_rtc_base = (void *)CKSEG1ADDR(dec_kn_slot_base + KN01_RTC);
+}
 
-अटल अंतरभूत व्योम prom_init_kn02(व्योम)
-अणु
+static inline void prom_init_kn02(void)
+{
 	dec_kn_slot_base = KN02_SLOT_BASE;
 	dec_kn_slot_size = KN02_SLOT_SIZE;
 	dec_tc_bus = 1;
 
-	dec_rtc_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + KN02_RTC);
-पूर्ण
+	dec_rtc_base = (void *)CKSEG1ADDR(dec_kn_slot_base + KN02_RTC);
+}
 
-अटल अंतरभूत व्योम prom_init_kn02xa(व्योम)
-अणु
+static inline void prom_init_kn02xa(void)
+{
 	dec_kn_slot_base = KN02XA_SLOT_BASE;
 	dec_kn_slot_size = IOASIC_SLOT_SIZE;
 	dec_tc_bus = 1;
 
-	ioasic_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_IOCTL);
-	dec_rtc_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_TOY);
-पूर्ण
+	ioasic_base = (void *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_IOCTL);
+	dec_rtc_base = (void *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_TOY);
+}
 
-अटल अंतरभूत व्योम prom_init_kn03(व्योम)
-अणु
+static inline void prom_init_kn03(void)
+{
 	dec_kn_slot_base = KN03_SLOT_BASE;
 	dec_kn_slot_size = IOASIC_SLOT_SIZE;
 	dec_tc_bus = 1;
 
-	ioasic_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_IOCTL);
-	dec_rtc_base = (व्योम *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_TOY);
-पूर्ण
+	ioasic_base = (void *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_IOCTL);
+	dec_rtc_base = (void *)CKSEG1ADDR(dec_kn_slot_base + IOASIC_TOY);
+}
 
 
-व्योम __init prom_identअगरy_arch(u32 magic)
-अणु
-	अचिन्हित अक्षर dec_cpunum, dec_firmrev, dec_etc, dec_systype;
+void __init prom_identify_arch(u32 magic)
+{
+	unsigned char dec_cpunum, dec_firmrev, dec_etc, dec_systype;
 	u32 dec_sysid;
 
-	अगर (!prom_is_rex(magic)) अणु
-		dec_sysid = simple_म_से_अदीर्घ(prom_दो_पर्या("systype"),
-					   (अक्षर **)0, 0);
-	पूर्ण अन्यथा अणु
-		dec_sysid = rex_माला_लोysid();
-		अगर (dec_sysid == 0) अणु
-			prपूर्णांकk("Zero sysid returned from PROM! "
+	if (!prom_is_rex(magic)) {
+		dec_sysid = simple_strtoul(prom_getenv("systype"),
+					   (char **)0, 0);
+	} else {
+		dec_sysid = rex_getsysid();
+		if (dec_sysid == 0) {
+			printk("Zero sysid returned from PROM! "
 			       "Assuming a PMAX-like machine.\n");
 			dec_sysid = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	dec_cpunum = (dec_sysid & 0xff000000) >> 24;
 	dec_systype = (dec_sysid & 0xff0000) >> 16;
@@ -137,52 +136,52 @@ EXPORT_SYMBOL(dec_rtc_base);
 
 	/*
 	 * FIXME: This may not be an exhaustive list of DECStations/Servers!
-	 * Put all model-specअगरic initialisation calls here.
+	 * Put all model-specific initialisation calls here.
 	 */
-	चयन (dec_systype) अणु
-	हाल DS2100_3100:
+	switch (dec_systype) {
+	case DS2100_3100:
 		mips_machtype = MACH_DS23100;
 		prom_init_kn01();
-		अवरोध;
-	हाल DS5100:		/* DS5100 MIPSMATE */
+		break;
+	case DS5100:		/* DS5100 MIPSMATE */
 		mips_machtype = MACH_DS5100;
 		prom_init_kn230();
-		अवरोध;
-	हाल DS5000_200:	/* DS5000 3max */
+		break;
+	case DS5000_200:	/* DS5000 3max */
 		mips_machtype = MACH_DS5000_200;
 		prom_init_kn02();
-		अवरोध;
-	हाल DS5000_1XX:	/* DS5000/100 3min */
+		break;
+	case DS5000_1XX:	/* DS5000/100 3min */
 		mips_machtype = MACH_DS5000_1XX;
 		prom_init_kn02xa();
-		अवरोध;
-	हाल DS5000_2X0:	/* DS5000/240 3max+ or DS5900 bigmax */
+		break;
+	case DS5000_2X0:	/* DS5000/240 3max+ or DS5900 bigmax */
 		mips_machtype = MACH_DS5000_2X0;
 		prom_init_kn03();
-		अगर (!(ioasic_पढ़ो(IO_REG_SIR) & KN03_IO_INR_3MAXP))
+		if (!(ioasic_read(IO_REG_SIR) & KN03_IO_INR_3MAXP))
 			mips_machtype = MACH_DS5900;
-		अवरोध;
-	हाल DS5000_XX:		/* Personal DS5000/xx maxine */
+		break;
+	case DS5000_XX:		/* Personal DS5000/xx maxine */
 		mips_machtype = MACH_DS5000_XX;
 		prom_init_kn02xa();
-		अवरोध;
-	हाल DS5800:		/* DS5800 Isis */
+		break;
+	case DS5800:		/* DS5800 Isis */
 		mips_machtype = MACH_DS5800;
-		अवरोध;
-	हाल DS5400:		/* DS5400 MIPSfair */
+		break;
+	case DS5400:		/* DS5400 MIPSfair */
 		mips_machtype = MACH_DS5400;
-		अवरोध;
-	हाल DS5500:		/* DS5500 MIPSfair-2 */
+		break;
+	case DS5500:		/* DS5500 MIPSfair-2 */
 		mips_machtype = MACH_DS5500;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mips_machtype = MACH_DSUNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (mips_machtype == MACH_DSUNKNOWN)
-		prपूर्णांकk("This is an %s, id is %x\n",
-		       dec_प्रणाली_strings[mips_machtype], dec_systype);
-	अन्यथा
-		prपूर्णांकk("This is a %s\n", dec_प्रणाली_strings[mips_machtype]);
-पूर्ण
+	if (mips_machtype == MACH_DSUNKNOWN)
+		printk("This is an %s, id is %x\n",
+		       dec_system_strings[mips_machtype], dec_systype);
+	else
+		printk("This is a %s\n", dec_system_strings[mips_machtype]);
+}

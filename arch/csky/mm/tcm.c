@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/genभाग.स>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/fixmap.h>
+#include <linux/highmem.h>
+#include <linux/genalloc.h>
+#include <asm/tlbflush.h>
+#include <asm/fixmap.h>
 
-#अगर (CONFIG_ITCM_RAM_BASE == 0xffffffff)
-#त्रुटि "You should define ITCM_RAM_BASE"
-#पूर्ण_अगर
+#if (CONFIG_ITCM_RAM_BASE == 0xffffffff)
+#error "You should define ITCM_RAM_BASE"
+#endif
 
-#अगर_घोषित CONFIG_HAVE_DTCM
-#अगर (CONFIG_DTCM_RAM_BASE == 0xffffffff)
-#त्रुटि "You should define DTCM_RAM_BASE"
-#पूर्ण_अगर
+#ifdef CONFIG_HAVE_DTCM
+#if (CONFIG_DTCM_RAM_BASE == 0xffffffff)
+#error "You should define DTCM_RAM_BASE"
+#endif
 
-#अगर (CONFIG_DTCM_RAM_BASE == CONFIG_ITCM_RAM_BASE)
-#त्रुटि "You should define correct DTCM_RAM_BASE"
-#पूर्ण_अगर
-#पूर्ण_अगर
+#if (CONFIG_DTCM_RAM_BASE == CONFIG_ITCM_RAM_BASE)
+#error "You should define correct DTCM_RAM_BASE"
+#endif
+#endif
 
-बाह्य अक्षर __tcm_start, __tcm_end, __dtcm_start;
+extern char __tcm_start, __tcm_end, __dtcm_start;
 
-अटल काष्ठा gen_pool *tcm_pool;
+static struct gen_pool *tcm_pool;
 
-अटल व्योम __init tcm_mapping_init(व्योम)
-अणु
+static void __init tcm_mapping_init(void)
+{
 	pte_t *tcm_pte;
-	अचिन्हित दीर्घ vaddr, paddr;
-	पूर्णांक i;
+	unsigned long vaddr, paddr;
+	int i;
 
 	paddr = CONFIG_ITCM_RAM_BASE;
 
-	अगर (pfn_valid(PFN_DOWN(CONFIG_ITCM_RAM_BASE)))
-		जाओ panic;
+	if (pfn_valid(PFN_DOWN(CONFIG_ITCM_RAM_BASE)))
+		goto panic;
 
-#अगर_अघोषित CONFIG_HAVE_DTCM
-	क्रम (i = 0; i < TCM_NR_PAGES; i++) अणु
-#अन्यथा
-	क्रम (i = 0; i < CONFIG_ITCM_NR_PAGES; i++) अणु
-#पूर्ण_अगर
+#ifndef CONFIG_HAVE_DTCM
+	for (i = 0; i < TCM_NR_PAGES; i++) {
+#else
+	for (i = 0; i < CONFIG_ITCM_NR_PAGES; i++) {
+#endif
 		vaddr = __fix_to_virt(FIX_TCM - i);
 
 		tcm_pte =
@@ -50,15 +49,15 @@
 		flush_tlb_one(vaddr);
 
 		paddr = paddr + PAGE_SIZE;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_HAVE_DTCM
-	अगर (pfn_valid(PFN_DOWN(CONFIG_DTCM_RAM_BASE)))
-		जाओ panic;
+#ifdef CONFIG_HAVE_DTCM
+	if (pfn_valid(PFN_DOWN(CONFIG_DTCM_RAM_BASE)))
+		goto panic;
 
 	paddr = CONFIG_DTCM_RAM_BASE;
 
-	क्रम (i = 0; i < CONFIG_DTCM_NR_PAGES; i++) अणु
+	for (i = 0; i < CONFIG_DTCM_NR_PAGES; i++) {
 		vaddr = __fix_to_virt(FIX_TCM - CONFIG_ITCM_NR_PAGES - i);
 
 		tcm_pte =
@@ -69,29 +68,29 @@
 		flush_tlb_one(vaddr);
 
 		paddr = paddr + PAGE_SIZE;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_अघोषित CONFIG_HAVE_DTCM
-	स_नकल((व्योम *)__fix_to_virt(FIX_TCM),
+#ifndef CONFIG_HAVE_DTCM
+	memcpy((void *)__fix_to_virt(FIX_TCM),
 				&__tcm_start, &__tcm_end - &__tcm_start);
 
 	pr_info("%s: mapping tcm va:0x%08lx to pa:0x%08x\n",
 			__func__, __fix_to_virt(FIX_TCM), CONFIG_ITCM_RAM_BASE);
 
 	pr_info("%s: __tcm_start va:0x%08lx size:%d\n",
-			__func__, (अचिन्हित दीर्घ)&__tcm_start, &__tcm_end - &__tcm_start);
-#अन्यथा
-	स_नकल((व्योम *)__fix_to_virt(FIX_TCM),
+			__func__, (unsigned long)&__tcm_start, &__tcm_end - &__tcm_start);
+#else
+	memcpy((void *)__fix_to_virt(FIX_TCM),
 				&__tcm_start, &__dtcm_start - &__tcm_start);
 
 	pr_info("%s: mapping itcm va:0x%08lx to pa:0x%08x\n",
 			__func__, __fix_to_virt(FIX_TCM), CONFIG_ITCM_RAM_BASE);
 
 	pr_info("%s: __itcm_start va:0x%08lx size:%d\n",
-			__func__, (अचिन्हित दीर्घ)&__tcm_start, &__dtcm_start - &__tcm_start);
+			__func__, (unsigned long)&__tcm_start, &__dtcm_start - &__tcm_start);
 
-	स_नकल((व्योम *)__fix_to_virt(FIX_TCM - CONFIG_ITCM_NR_PAGES),
+	memcpy((void *)__fix_to_virt(FIX_TCM - CONFIG_ITCM_NR_PAGES),
 				&__dtcm_start, &__tcm_end - &__dtcm_start);
 
 	pr_info("%s: mapping dtcm va:0x%08lx to pa:0x%08x\n",
@@ -99,72 +98,72 @@
 						CONFIG_DTCM_RAM_BASE);
 
 	pr_info("%s: __dtcm_start va:0x%08lx size:%d\n",
-			__func__, (अचिन्हित दीर्घ)&__dtcm_start, &__tcm_end - &__dtcm_start);
+			__func__, (unsigned long)&__dtcm_start, &__tcm_end - &__dtcm_start);
 
-#पूर्ण_अगर
-	वापस;
+#endif
+	return;
 panic:
 	panic("TCM init error");
-पूर्ण
+}
 
-व्योम *tcm_alloc(माप_प्रकार len)
-अणु
-	अचिन्हित दीर्घ vaddr;
+void *tcm_alloc(size_t len)
+{
+	unsigned long vaddr;
 
-	अगर (!tcm_pool)
-		वापस शून्य;
+	if (!tcm_pool)
+		return NULL;
 
 	vaddr = gen_pool_alloc(tcm_pool, len);
-	अगर (!vaddr)
-		वापस शून्य;
+	if (!vaddr)
+		return NULL;
 
-	वापस (व्योम *) vaddr;
-पूर्ण
+	return (void *) vaddr;
+}
 EXPORT_SYMBOL(tcm_alloc);
 
-व्योम tcm_मुक्त(व्योम *addr, माप_प्रकार len)
-अणु
-	gen_pool_मुक्त(tcm_pool, (अचिन्हित दीर्घ) addr, len);
-पूर्ण
-EXPORT_SYMBOL(tcm_मुक्त);
+void tcm_free(void *addr, size_t len)
+{
+	gen_pool_free(tcm_pool, (unsigned long) addr, len);
+}
+EXPORT_SYMBOL(tcm_free);
 
-अटल पूर्णांक __init tcm_setup_pool(व्योम)
-अणु
-#अगर_अघोषित CONFIG_HAVE_DTCM
+static int __init tcm_setup_pool(void)
+{
+#ifndef CONFIG_HAVE_DTCM
 	u32 pool_size = (u32) (TCM_NR_PAGES * PAGE_SIZE)
 				- (u32) (&__tcm_end - &__tcm_start);
 
 	u32 tcm_pool_start = __fix_to_virt(FIX_TCM)
 				+ (u32) (&__tcm_end - &__tcm_start);
-#अन्यथा
+#else
 	u32 pool_size = (u32) (CONFIG_DTCM_NR_PAGES * PAGE_SIZE)
 				- (u32) (&__tcm_end - &__dtcm_start);
 
 	u32 tcm_pool_start = __fix_to_virt(FIX_TCM - CONFIG_ITCM_NR_PAGES)
 				+ (u32) (&__tcm_end - &__dtcm_start);
-#पूर्ण_अगर
-	पूर्णांक ret;
+#endif
+	int ret;
 
 	tcm_pool = gen_pool_create(2, -1);
 
 	ret = gen_pool_add(tcm_pool, tcm_pool_start, pool_size, -1);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: gen_pool add failed!\n", __func__);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pr_info("%s: Added %d bytes @ 0x%08x to memory pool\n",
 		__func__, pool_size, tcm_pool_start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init tcm_init(व्योम)
-अणु
+static int __init tcm_init(void)
+{
 	tcm_mapping_init();
 
 	tcm_setup_pool();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(tcm_init);

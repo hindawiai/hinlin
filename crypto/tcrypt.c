@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Quick & dirty crypto testing module.
  *
  * This will only exist until we have a better testing mechanism
- * (e.g. a अक्षर device).
+ * (e.g. a char device).
  *
- * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
  * Copyright (c) 2002 Jean-Francois Dive <jef@linuxbe.org>
  * Copyright (c) 2007 Nokia Siemens Networks
  *
  * Updated RFC4106 AES-GCM testing.
- *    Authors: Aidan O'Mahony (aidan.o.mahony@पूर्णांकel.com)
- *             Adrian Hoban <adrian.hoban@पूर्णांकel.com>
- *             Gabriele Paoloni <gabriele.paoloni@पूर्णांकel.com>
- *             Tadeusz Struk (tadeusz.struk@पूर्णांकel.com)
+ *    Authors: Aidan O'Mahony (aidan.o.mahony@intel.com)
+ *             Adrian Hoban <adrian.hoban@intel.com>
+ *             Gabriele Paoloni <gabriele.paoloni@intel.com>
+ *             Tadeusz Struk (tadeusz.struk@intel.com)
  *             Copyright (c) 2010, Intel Corporation.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <crypto/aead.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <linux/err.h>
-#समावेश <linux/fips.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समयx.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश "tcrypt.h"
+#include <crypto/aead.h>
+#include <crypto/hash.h>
+#include <crypto/skcipher.h>
+#include <linux/err.h>
+#include <linux/fips.h>
+#include <linux/init.h>
+#include <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/scatterlist.h>
+#include <linux/string.h>
+#include <linux/moduleparam.h>
+#include <linux/jiffies.h>
+#include <linux/timex.h>
+#include <linux/interrupt.h>
+#include "tcrypt.h"
 
 /*
- * Need slab memory क्रम testing (size in number of pages).
+ * Need slab memory for testing (size in number of pages).
  */
-#घोषणा TVMEMSIZE	4
+#define TVMEMSIZE	4
 
 /*
 * Used by test_cipher_speed()
 */
-#घोषणा ENCRYPT 1
-#घोषणा DECRYPT 0
+#define ENCRYPT 1
+#define DECRYPT 0
 
-#घोषणा MAX_DIGEST_SIZE		64
+#define MAX_DIGEST_SIZE		64
 
 /*
- * वापस a string with the driver name
+ * return a string with the driver name
  */
-#घोषणा get_driver_name(tfm_type, tfm) crypto_tfm_alg_driver_name(tfm_type ## _tfm(tfm))
+#define get_driver_name(tfm_type, tfm) crypto_tfm_alg_driver_name(tfm_type ## _tfm(tfm))
 
 /*
  * Used by test_cipher_speed()
  */
-अटल अचिन्हित पूर्णांक sec;
+static unsigned int sec;
 
-अटल अक्षर *alg = शून्य;
-अटल u32 type;
-अटल u32 mask;
-अटल पूर्णांक mode;
-अटल u32 num_mb = 8;
-अटल अचिन्हित पूर्णांक klen;
-अटल अक्षर *tvmem[TVMEMSIZE];
+static char *alg = NULL;
+static u32 type;
+static u32 mask;
+static int mode;
+static u32 num_mb = 8;
+static unsigned int klen;
+static char *tvmem[TVMEMSIZE];
 
-अटल स्थिर अक्षर *check[] = अणु
+static const char *check[] = {
 	"des", "md5", "des3_ede", "rot13", "sha1", "sha224", "sha256", "sm3",
 	"blowfish", "twofish", "serpent", "sha384", "sha512", "md4", "aes",
 	"cast6", "arc4", "michael_mic", "deflate", "crc32c", "tea", "xtea",
@@ -75,312 +74,312 @@
 	"camellia", "seed", "rmd160",
 	"lzo", "lzo-rle", "cts", "sha3-224", "sha3-256", "sha3-384",
 	"sha3-512", "streebog256", "streebog512",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर पूर्णांक block_sizes[] = अणु 16, 64, 256, 1024, 1420, 4096, 0 पूर्ण;
-अटल स्थिर पूर्णांक aead_sizes[] = अणु 16, 64, 256, 512, 1024, 1420, 4096, 8192, 0 पूर्ण;
+static const int block_sizes[] = { 16, 64, 256, 1024, 1420, 4096, 0 };
+static const int aead_sizes[] = { 16, 64, 256, 512, 1024, 1420, 4096, 8192, 0 };
 
-#घोषणा Xबफ_मानE 8
-#घोषणा MAX_IVLEN 32
+#define XBUFSIZE 8
+#define MAX_IVLEN 32
 
-अटल पूर्णांक tesपंचांगgr_alloc_buf(अक्षर *buf[Xबफ_मानE])
-अणु
-	पूर्णांक i;
+static int testmgr_alloc_buf(char *buf[XBUFSIZE])
+{
+	int i;
 
-	क्रम (i = 0; i < Xबफ_मानE; i++) अणु
-		buf[i] = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
-		अगर (!buf[i])
-			जाओ err_मुक्त_buf;
-	पूर्ण
+	for (i = 0; i < XBUFSIZE; i++) {
+		buf[i] = (void *)__get_free_page(GFP_KERNEL);
+		if (!buf[i])
+			goto err_free_buf;
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_buf:
-	जबतक (i-- > 0)
-		मुक्त_page((अचिन्हित दीर्घ)buf[i]);
+err_free_buf:
+	while (i-- > 0)
+		free_page((unsigned long)buf[i]);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम tesपंचांगgr_मुक्त_buf(अक्षर *buf[Xबफ_मानE])
-अणु
-	पूर्णांक i;
+static void testmgr_free_buf(char *buf[XBUFSIZE])
+{
+	int i;
 
-	क्रम (i = 0; i < Xबफ_मानE; i++)
-		मुक्त_page((अचिन्हित दीर्घ)buf[i]);
-पूर्ण
+	for (i = 0; i < XBUFSIZE; i++)
+		free_page((unsigned long)buf[i]);
+}
 
-अटल व्योम sg_init_aead(काष्ठा scatterlist *sg, अक्षर *xbuf[Xबफ_मानE],
-			 अचिन्हित पूर्णांक buflen, स्थिर व्योम *assoc,
-			 अचिन्हित पूर्णांक aad_size)
-अणु
-	पूर्णांक np = (buflen + PAGE_SIZE - 1)/PAGE_SIZE;
-	पूर्णांक k, rem;
+static void sg_init_aead(struct scatterlist *sg, char *xbuf[XBUFSIZE],
+			 unsigned int buflen, const void *assoc,
+			 unsigned int aad_size)
+{
+	int np = (buflen + PAGE_SIZE - 1)/PAGE_SIZE;
+	int k, rem;
 
-	अगर (np > Xबफ_मानE) अणु
+	if (np > XBUFSIZE) {
 		rem = PAGE_SIZE;
-		np = Xबफ_मानE;
-	पूर्ण अन्यथा अणु
+		np = XBUFSIZE;
+	} else {
 		rem = buflen % PAGE_SIZE;
-	पूर्ण
+	}
 
 	sg_init_table(sg, np + 1);
 
 	sg_set_buf(&sg[0], assoc, aad_size);
 
-	अगर (rem)
+	if (rem)
 		np--;
-	क्रम (k = 0; k < np; k++)
+	for (k = 0; k < np; k++)
 		sg_set_buf(&sg[k + 1], xbuf[k], PAGE_SIZE);
 
-	अगर (rem)
+	if (rem)
 		sg_set_buf(&sg[k + 1], xbuf[k], rem);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक करो_one_aead_op(काष्ठा aead_request *req, पूर्णांक ret)
-अणु
-	काष्ठा crypto_रुको *रुको = req->base.data;
+static inline int do_one_aead_op(struct aead_request *req, int ret)
+{
+	struct crypto_wait *wait = req->base.data;
 
-	वापस crypto_रुको_req(ret, रुको);
-पूर्ण
+	return crypto_wait_req(ret, wait);
+}
 
-काष्ठा test_mb_aead_data अणु
-	काष्ठा scatterlist sg[Xबफ_मानE];
-	काष्ठा scatterlist sgout[Xबफ_मानE];
-	काष्ठा aead_request *req;
-	काष्ठा crypto_रुको रुको;
-	अक्षर *xbuf[Xबफ_मानE];
-	अक्षर *xoutbuf[Xबफ_मानE];
-	अक्षर *axbuf[Xबफ_मानE];
-पूर्ण;
+struct test_mb_aead_data {
+	struct scatterlist sg[XBUFSIZE];
+	struct scatterlist sgout[XBUFSIZE];
+	struct aead_request *req;
+	struct crypto_wait wait;
+	char *xbuf[XBUFSIZE];
+	char *xoutbuf[XBUFSIZE];
+	char *axbuf[XBUFSIZE];
+};
 
-अटल पूर्णांक करो_mult_aead_op(काष्ठा test_mb_aead_data *data, पूर्णांक enc,
-				u32 num_mb, पूर्णांक *rc)
-अणु
-	पूर्णांक i, err = 0;
+static int do_mult_aead_op(struct test_mb_aead_data *data, int enc,
+				u32 num_mb, int *rc)
+{
+	int i, err = 0;
 
 	/* Fire up a bunch of concurrent requests */
-	क्रम (i = 0; i < num_mb; i++) अणु
-		अगर (enc == ENCRYPT)
+	for (i = 0; i < num_mb; i++) {
+		if (enc == ENCRYPT)
 			rc[i] = crypto_aead_encrypt(data[i].req);
-		अन्यथा
+		else
 			rc[i] = crypto_aead_decrypt(data[i].req);
-	पूर्ण
+	}
 
-	/* Wait क्रम all requests to finish */
-	क्रम (i = 0; i < num_mb; i++) अणु
-		rc[i] = crypto_रुको_req(rc[i], &data[i].रुको);
+	/* Wait for all requests to finish */
+	for (i = 0; i < num_mb; i++) {
+		rc[i] = crypto_wait_req(rc[i], &data[i].wait);
 
-		अगर (rc[i]) अणु
+		if (rc[i]) {
 			pr_info("concurrent request %d error %d\n", i, rc[i]);
 			err = rc[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_mb_aead_jअगरfies(काष्ठा test_mb_aead_data *data, पूर्णांक enc,
-				पूर्णांक blen, पूर्णांक secs, u32 num_mb)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret = 0;
-	पूर्णांक *rc;
+static int test_mb_aead_jiffies(struct test_mb_aead_data *data, int enc,
+				int blen, int secs, u32 num_mb)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret = 0;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		ret = करो_mult_aead_op(data, enc, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		ret = do_mult_aead_op(data, enc, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	pr_cont("%d operations in %d seconds (%llu bytes)\n",
 		bcount * num_mb, secs, (u64)bcount * blen * num_mb);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल पूर्णांक test_mb_aead_cycles(काष्ठा test_mb_aead_data *data, पूर्णांक enc,
-			       पूर्णांक blen, u32 num_mb)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	पूर्णांक *rc;
+static int test_mb_aead_cycles(struct test_mb_aead_data *data, int enc,
+			       int blen, u32 num_mb)
+{
+	unsigned long cycles = 0;
+	int ret = 0;
+	int i;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		ret = करो_mult_aead_op(data, enc, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		ret = do_mult_aead_op(data, enc, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
-		ret = करो_mult_aead_op(data, enc, num_mb, rc);
+		ret = do_mult_aead_op(data, enc, num_mb, rc);
 		end = get_cycles();
 
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 	pr_cont("1 operation in %lu cycles (%d bytes)\n",
 		(cycles + 4) / (8 * num_mb), blen);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल व्योम test_mb_aead_speed(स्थिर अक्षर *algo, पूर्णांक enc, पूर्णांक secs,
-			       काष्ठा aead_speed_ढाँचा *ढाँचा,
-			       अचिन्हित पूर्णांक tcount, u8 authsize,
-			       अचिन्हित पूर्णांक aad_size, u8 *keysize, u32 num_mb)
-अणु
-	काष्ठा test_mb_aead_data *data;
-	काष्ठा crypto_aead *tfm;
-	अचिन्हित पूर्णांक i, j, iv_len;
-	स्थिर पूर्णांक *b_size;
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *e;
-	व्योम *assoc;
-	अक्षर *iv;
-	पूर्णांक ret;
+static void test_mb_aead_speed(const char *algo, int enc, int secs,
+			       struct aead_speed_template *template,
+			       unsigned int tcount, u8 authsize,
+			       unsigned int aad_size, u8 *keysize, u32 num_mb)
+{
+	struct test_mb_aead_data *data;
+	struct crypto_aead *tfm;
+	unsigned int i, j, iv_len;
+	const int *b_size;
+	const char *key;
+	const char *e;
+	void *assoc;
+	char *iv;
+	int ret;
 
 
-	अगर (aad_size >= PAGE_SIZE) अणु
+	if (aad_size >= PAGE_SIZE) {
 		pr_err("associate data length (%u) too big\n", aad_size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	iv = kzalloc(MAX_IVLEN, GFP_KERNEL);
-	अगर (!iv)
-		वापस;
+	if (!iv)
+		return;
 
-	अगर (enc == ENCRYPT)
+	if (enc == ENCRYPT)
 		e = "encryption";
-	अन्यथा
+	else
 		e = "decryption";
 
-	data = kसुस्मृति(num_mb, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		जाओ out_मुक्त_iv;
+	data = kcalloc(num_mb, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		goto out_free_iv;
 
 	tfm = crypto_alloc_aead(algo, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("failed to load transform for %s: %ld\n",
 			algo, PTR_ERR(tfm));
-		जाओ out_मुक्त_data;
-	पूर्ण
+		goto out_free_data;
+	}
 
 	ret = crypto_aead_setauthsize(tfm, authsize);
 
-	क्रम (i = 0; i < num_mb; ++i)
-		अगर (tesपंचांगgr_alloc_buf(data[i].xbuf)) अणु
-			जबतक (i--)
-				tesपंचांगgr_मुक्त_buf(data[i].xbuf);
-			जाओ out_मुक्त_tfm;
-		पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		if (testmgr_alloc_buf(data[i].xbuf)) {
+			while (i--)
+				testmgr_free_buf(data[i].xbuf);
+			goto out_free_tfm;
+		}
 
-	क्रम (i = 0; i < num_mb; ++i)
-		अगर (tesपंचांगgr_alloc_buf(data[i].axbuf)) अणु
-			जबतक (i--)
-				tesपंचांगgr_मुक्त_buf(data[i].axbuf);
-			जाओ out_मुक्त_xbuf;
-		पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		if (testmgr_alloc_buf(data[i].axbuf)) {
+			while (i--)
+				testmgr_free_buf(data[i].axbuf);
+			goto out_free_xbuf;
+		}
 
-	क्रम (i = 0; i < num_mb; ++i)
-		अगर (tesपंचांगgr_alloc_buf(data[i].xoutbuf)) अणु
-			जबतक (i--)
-				tesपंचांगgr_मुक्त_buf(data[i].xoutbuf);
-			जाओ out_मुक्त_axbuf;
-		पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		if (testmgr_alloc_buf(data[i].xoutbuf)) {
+			while (i--)
+				testmgr_free_buf(data[i].xoutbuf);
+			goto out_free_axbuf;
+		}
 
-	क्रम (i = 0; i < num_mb; ++i) अणु
+	for (i = 0; i < num_mb; ++i) {
 		data[i].req = aead_request_alloc(tfm, GFP_KERNEL);
-		अगर (!data[i].req) अणु
+		if (!data[i].req) {
 			pr_err("alg: skcipher: Failed to allocate request for %s\n",
 			       algo);
-			जबतक (i--)
-				aead_request_मुक्त(data[i].req);
-			जाओ out_मुक्त_xoutbuf;
-		पूर्ण
-	पूर्ण
+			while (i--)
+				aead_request_free(data[i].req);
+			goto out_free_xoutbuf;
+		}
+	}
 
-	क्रम (i = 0; i < num_mb; ++i) अणु
-		crypto_init_रुको(&data[i].रुको);
+	for (i = 0; i < num_mb; ++i) {
+		crypto_init_wait(&data[i].wait);
 		aead_request_set_callback(data[i].req,
 					  CRYPTO_TFM_REQ_MAY_BACKLOG,
-					  crypto_req_करोne, &data[i].रुको);
-	पूर्ण
+					  crypto_req_done, &data[i].wait);
+	}
 
 	pr_info("\ntesting speed of multibuffer %s (%s) %s\n", algo,
 		get_driver_name(crypto_aead, tfm), e);
 
 	i = 0;
-	करो अणु
+	do {
 		b_size = aead_sizes;
-		करो अणु
-			पूर्णांक bs = round_up(*b_size, crypto_aead_blocksize(tfm));
+		do {
+			int bs = round_up(*b_size, crypto_aead_blocksize(tfm));
 
-			अगर (bs + authsize > Xबफ_मानE * PAGE_SIZE) अणु
+			if (bs + authsize > XBUFSIZE * PAGE_SIZE) {
 				pr_err("template (%u) too big for buffer (%lu)\n",
 				       authsize + bs,
-				       Xबफ_मानE * PAGE_SIZE);
-				जाओ out;
-			पूर्ण
+				       XBUFSIZE * PAGE_SIZE);
+				goto out;
+			}
 
 			pr_info("test %u (%d bit key, %d byte blocks): ", i,
 				*keysize * 8, bs);
 
 			/* Set up tfm global state, i.e. the key */
 
-			स_रखो(tvmem[0], 0xff, PAGE_SIZE);
+			memset(tvmem[0], 0xff, PAGE_SIZE);
 			key = tvmem[0];
-			क्रम (j = 0; j < tcount; j++) अणु
-				अगर (ढाँचा[j].klen == *keysize) अणु
-					key = ढाँचा[j].key;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+			for (j = 0; j < tcount; j++) {
+				if (template[j].klen == *keysize) {
+					key = template[j].key;
+					break;
+				}
+			}
 
 			crypto_aead_clear_flags(tfm, ~0);
 
 			ret = crypto_aead_setkey(tfm, key, *keysize);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("setkey() failed flags=%x\n",
 				       crypto_aead_get_flags(tfm));
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			iv_len = crypto_aead_ivsize(tfm);
-			अगर (iv_len)
-				स_रखो(iv, 0xff, iv_len);
+			if (iv_len)
+				memset(iv, 0xff, iv_len);
 
 			/* Now setup per request stuff, i.e. buffers */
 
-			क्रम (j = 0; j < num_mb; ++j) अणु
-				काष्ठा test_mb_aead_data *cur = &data[j];
+			for (j = 0; j < num_mb; ++j) {
+				struct test_mb_aead_data *cur = &data[j];
 
 				assoc = cur->axbuf[0];
-				स_रखो(assoc, 0xff, aad_size);
+				memset(assoc, 0xff, aad_size);
 
 				sg_init_aead(cur->sg, cur->xbuf,
 					     bs + (enc ? 0 : authsize),
@@ -392,245 +391,245 @@ out:
 
 				aead_request_set_ad(cur->req, aad_size);
 
-				अगर (!enc) अणु
+				if (!enc) {
 
 					aead_request_set_crypt(cur->req,
 							       cur->sgout,
 							       cur->sg,
 							       bs, iv);
 					ret = crypto_aead_encrypt(cur->req);
-					ret = करो_one_aead_op(cur->req, ret);
+					ret = do_one_aead_op(cur->req, ret);
 
-					अगर (ret) अणु
+					if (ret) {
 						pr_err("calculating auth failed (%d)\n",
 						       ret);
-						अवरोध;
-					पूर्ण
-				पूर्ण
+						break;
+					}
+				}
 
 				aead_request_set_crypt(cur->req, cur->sg,
 						       cur->sgout, bs +
 						       (enc ? 0 : authsize),
 						       iv);
 
-			पूर्ण
+			}
 
-			अगर (secs) अणु
-				ret = test_mb_aead_jअगरfies(data, enc, bs,
+			if (secs) {
+				ret = test_mb_aead_jiffies(data, enc, bs,
 							   secs, num_mb);
 				cond_resched();
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = test_mb_aead_cycles(data, enc, bs,
 							  num_mb);
-			पूर्ण
+			}
 
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("%s() failed return code=%d\n", e, ret);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			b_size++;
 			i++;
-		पूर्ण जबतक (*b_size);
+		} while (*b_size);
 		keysize++;
-	पूर्ण जबतक (*keysize);
+	} while (*keysize);
 
 out:
-	क्रम (i = 0; i < num_mb; ++i)
-		aead_request_मुक्त(data[i].req);
-out_मुक्त_xoutbuf:
-	क्रम (i = 0; i < num_mb; ++i)
-		tesपंचांगgr_मुक्त_buf(data[i].xoutbuf);
-out_मुक्त_axbuf:
-	क्रम (i = 0; i < num_mb; ++i)
-		tesपंचांगgr_मुक्त_buf(data[i].axbuf);
-out_मुक्त_xbuf:
-	क्रम (i = 0; i < num_mb; ++i)
-		tesपंचांगgr_मुक्त_buf(data[i].xbuf);
-out_मुक्त_tfm:
-	crypto_मुक्त_aead(tfm);
-out_मुक्त_data:
-	kमुक्त(data);
-out_मुक्त_iv:
-	kमुक्त(iv);
-पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		aead_request_free(data[i].req);
+out_free_xoutbuf:
+	for (i = 0; i < num_mb; ++i)
+		testmgr_free_buf(data[i].xoutbuf);
+out_free_axbuf:
+	for (i = 0; i < num_mb; ++i)
+		testmgr_free_buf(data[i].axbuf);
+out_free_xbuf:
+	for (i = 0; i < num_mb; ++i)
+		testmgr_free_buf(data[i].xbuf);
+out_free_tfm:
+	crypto_free_aead(tfm);
+out_free_data:
+	kfree(data);
+out_free_iv:
+	kfree(iv);
+}
 
-अटल पूर्णांक test_aead_jअगरfies(काष्ठा aead_request *req, पूर्णांक enc,
-				पूर्णांक blen, पूर्णांक secs)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret;
+static int test_aead_jiffies(struct aead_request *req, int enc,
+				int blen, int secs)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		अगर (enc)
-			ret = करो_one_aead_op(req, crypto_aead_encrypt(req));
-		अन्यथा
-			ret = करो_one_aead_op(req, crypto_aead_decrypt(req));
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		if (enc)
+			ret = do_one_aead_op(req, crypto_aead_encrypt(req));
+		else
+			ret = do_one_aead_op(req, crypto_aead_decrypt(req));
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	pr_cont("%d operations in %d seconds (%llu bytes)\n",
 	        bcount, secs, (u64)bcount * blen);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_aead_cycles(काष्ठा aead_request *req, पूर्णांक enc, पूर्णांक blen)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int test_aead_cycles(struct aead_request *req, int enc, int blen)
+{
+	unsigned long cycles = 0;
+	int ret = 0;
+	int i;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (enc)
-			ret = करो_one_aead_op(req, crypto_aead_encrypt(req));
-		अन्यथा
-			ret = करो_one_aead_op(req, crypto_aead_decrypt(req));
+	for (i = 0; i < 4; i++) {
+		if (enc)
+			ret = do_one_aead_op(req, crypto_aead_encrypt(req));
+		else
+			ret = do_one_aead_op(req, crypto_aead_decrypt(req));
 
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
-		अगर (enc)
-			ret = करो_one_aead_op(req, crypto_aead_encrypt(req));
-		अन्यथा
-			ret = करो_one_aead_op(req, crypto_aead_decrypt(req));
+		if (enc)
+			ret = do_one_aead_op(req, crypto_aead_encrypt(req));
+		else
+			ret = do_one_aead_op(req, crypto_aead_decrypt(req));
 		end = get_cycles();
 
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 out:
-	अगर (ret == 0)
-		prपूर्णांकk("1 operation in %lu cycles (%d bytes)\n",
+	if (ret == 0)
+		printk("1 operation in %lu cycles (%d bytes)\n",
 		       (cycles + 4) / 8, blen);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम test_aead_speed(स्थिर अक्षर *algo, पूर्णांक enc, अचिन्हित पूर्णांक secs,
-			    काष्ठा aead_speed_ढाँचा *ढाँचा,
-			    अचिन्हित पूर्णांक tcount, u8 authsize,
-			    अचिन्हित पूर्णांक aad_size, u8 *keysize)
-अणु
-	अचिन्हित पूर्णांक i, j;
-	काष्ठा crypto_aead *tfm;
-	पूर्णांक ret = -ENOMEM;
-	स्थिर अक्षर *key;
-	काष्ठा aead_request *req;
-	काष्ठा scatterlist *sg;
-	काष्ठा scatterlist *sgout;
-	स्थिर अक्षर *e;
-	व्योम *assoc;
-	अक्षर *iv;
-	अक्षर *xbuf[Xबफ_मानE];
-	अक्षर *xoutbuf[Xबफ_मानE];
-	अक्षर *axbuf[Xबफ_मानE];
-	स्थिर पूर्णांक *b_size;
-	अचिन्हित पूर्णांक iv_len;
-	काष्ठा crypto_रुको रुको;
+static void test_aead_speed(const char *algo, int enc, unsigned int secs,
+			    struct aead_speed_template *template,
+			    unsigned int tcount, u8 authsize,
+			    unsigned int aad_size, u8 *keysize)
+{
+	unsigned int i, j;
+	struct crypto_aead *tfm;
+	int ret = -ENOMEM;
+	const char *key;
+	struct aead_request *req;
+	struct scatterlist *sg;
+	struct scatterlist *sgout;
+	const char *e;
+	void *assoc;
+	char *iv;
+	char *xbuf[XBUFSIZE];
+	char *xoutbuf[XBUFSIZE];
+	char *axbuf[XBUFSIZE];
+	const int *b_size;
+	unsigned int iv_len;
+	struct crypto_wait wait;
 
 	iv = kzalloc(MAX_IVLEN, GFP_KERNEL);
-	अगर (!iv)
-		वापस;
+	if (!iv)
+		return;
 
-	अगर (aad_size >= PAGE_SIZE) अणु
+	if (aad_size >= PAGE_SIZE) {
 		pr_err("associate data length (%u) too big\n", aad_size);
-		जाओ out_noxbuf;
-	पूर्ण
+		goto out_noxbuf;
+	}
 
-	अगर (enc == ENCRYPT)
+	if (enc == ENCRYPT)
 		e = "encryption";
-	अन्यथा
+	else
 		e = "decryption";
 
-	अगर (tesपंचांगgr_alloc_buf(xbuf))
-		जाओ out_noxbuf;
-	अगर (tesपंचांगgr_alloc_buf(axbuf))
-		जाओ out_noaxbuf;
-	अगर (tesपंचांगgr_alloc_buf(xoutbuf))
-		जाओ out_nooutbuf;
+	if (testmgr_alloc_buf(xbuf))
+		goto out_noxbuf;
+	if (testmgr_alloc_buf(axbuf))
+		goto out_noaxbuf;
+	if (testmgr_alloc_buf(xoutbuf))
+		goto out_nooutbuf;
 
-	sg = kदो_स्मृति(माप(*sg) * 9 * 2, GFP_KERNEL);
-	अगर (!sg)
-		जाओ out_nosg;
+	sg = kmalloc(sizeof(*sg) * 9 * 2, GFP_KERNEL);
+	if (!sg)
+		goto out_nosg;
 	sgout = &sg[9];
 
 	tfm = crypto_alloc_aead(algo, 0, 0);
 
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("alg: aead: Failed to load transform for %s: %ld\n", algo,
 		       PTR_ERR(tfm));
-		जाओ out_notfm;
-	पूर्ण
+		goto out_notfm;
+	}
 
-	crypto_init_रुको(&रुको);
-	prपूर्णांकk(KERN_INFO "\ntesting speed of %s (%s) %s\n", algo,
+	crypto_init_wait(&wait);
+	printk(KERN_INFO "\ntesting speed of %s (%s) %s\n", algo,
 			get_driver_name(crypto_aead, tfm), e);
 
 	req = aead_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		pr_err("alg: aead: Failed to allocate request for %s\n",
 		       algo);
-		जाओ out_noreq;
-	पूर्ण
+		goto out_noreq;
+	}
 
 	aead_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				  crypto_req_करोne, &रुको);
+				  crypto_req_done, &wait);
 
 	i = 0;
-	करो अणु
+	do {
 		b_size = aead_sizes;
-		करो अणु
+		do {
 			u32 bs = round_up(*b_size, crypto_aead_blocksize(tfm));
 
 			assoc = axbuf[0];
-			स_रखो(assoc, 0xff, aad_size);
+			memset(assoc, 0xff, aad_size);
 
-			अगर ((*keysize + bs) > TVMEMSIZE * PAGE_SIZE) अणु
+			if ((*keysize + bs) > TVMEMSIZE * PAGE_SIZE) {
 				pr_err("template (%u) too big for tvmem (%lu)\n",
 				       *keysize + bs,
 					TVMEMSIZE * PAGE_SIZE);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			key = tvmem[0];
-			क्रम (j = 0; j < tcount; j++) अणु
-				अगर (ढाँचा[j].klen == *keysize) अणु
-					key = ढाँचा[j].key;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+			for (j = 0; j < tcount; j++) {
+				if (template[j].klen == *keysize) {
+					key = template[j].key;
+					break;
+				}
+			}
 			ret = crypto_aead_setkey(tfm, key, *keysize);
 			ret = crypto_aead_setauthsize(tfm, authsize);
 
 			iv_len = crypto_aead_ivsize(tfm);
-			अगर (iv_len)
-				स_रखो(iv, 0xff, iv_len);
+			if (iv_len)
+				memset(iv, 0xff, iv_len);
 
 			crypto_aead_clear_flags(tfm, ~0);
-			prपूर्णांकk(KERN_INFO "test %u (%d bit key, %d byte blocks): ",
+			printk(KERN_INFO "test %u (%d bit key, %d byte blocks): ",
 					i, *keysize * 8, bs);
 
 
-			स_रखो(tvmem[0], 0xff, PAGE_SIZE);
+			memset(tvmem[0], 0xff, PAGE_SIZE);
 
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("setkey() failed flags=%x\n",
 						crypto_aead_get_flags(tfm));
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			sg_init_aead(sg, xbuf, bs + (enc ? 0 : authsize),
 				     assoc, aad_size);
@@ -641,239 +640,239 @@ out:
 
 			aead_request_set_ad(req, aad_size);
 
-			अगर (!enc) अणु
+			if (!enc) {
 
 				/*
 				 * For decryption we need a proper auth so
-				 * we करो the encryption path once with buffers
+				 * we do the encryption path once with buffers
 				 * reversed (input <-> output) to calculate it
 				 */
 				aead_request_set_crypt(req, sgout, sg,
 						       bs, iv);
-				ret = करो_one_aead_op(req,
+				ret = do_one_aead_op(req,
 						     crypto_aead_encrypt(req));
 
-				अगर (ret) अणु
+				if (ret) {
 					pr_err("calculating auth failed (%d)\n",
 					       ret);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			aead_request_set_crypt(req, sg, sgout,
 					       bs + (enc ? 0 : authsize),
 					       iv);
 
-			अगर (secs) अणु
-				ret = test_aead_jअगरfies(req, enc, bs,
+			if (secs) {
+				ret = test_aead_jiffies(req, enc, bs,
 							secs);
 				cond_resched();
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = test_aead_cycles(req, enc, bs);
-			पूर्ण
+			}
 
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("%s() failed return code=%d\n", e, ret);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			b_size++;
 			i++;
-		पूर्ण जबतक (*b_size);
+		} while (*b_size);
 		keysize++;
-	पूर्ण जबतक (*keysize);
+	} while (*keysize);
 
 out:
-	aead_request_मुक्त(req);
+	aead_request_free(req);
 out_noreq:
-	crypto_मुक्त_aead(tfm);
+	crypto_free_aead(tfm);
 out_notfm:
-	kमुक्त(sg);
+	kfree(sg);
 out_nosg:
-	tesपंचांगgr_मुक्त_buf(xoutbuf);
+	testmgr_free_buf(xoutbuf);
 out_nooutbuf:
-	tesपंचांगgr_मुक्त_buf(axbuf);
+	testmgr_free_buf(axbuf);
 out_noaxbuf:
-	tesपंचांगgr_मुक्त_buf(xbuf);
+	testmgr_free_buf(xbuf);
 out_noxbuf:
-	kमुक्त(iv);
-पूर्ण
+	kfree(iv);
+}
 
-अटल व्योम test_hash_sg_init(काष्ठा scatterlist *sg)
-अणु
-	पूर्णांक i;
+static void test_hash_sg_init(struct scatterlist *sg)
+{
+	int i;
 
 	sg_init_table(sg, TVMEMSIZE);
-	क्रम (i = 0; i < TVMEMSIZE; i++) अणु
+	for (i = 0; i < TVMEMSIZE; i++) {
 		sg_set_buf(sg + i, tvmem[i], PAGE_SIZE);
-		स_रखो(tvmem[i], 0xff, PAGE_SIZE);
-	पूर्ण
-पूर्ण
+		memset(tvmem[i], 0xff, PAGE_SIZE);
+	}
+}
 
-अटल अंतरभूत पूर्णांक करो_one_ahash_op(काष्ठा ahash_request *req, पूर्णांक ret)
-अणु
-	काष्ठा crypto_रुको *रुको = req->base.data;
+static inline int do_one_ahash_op(struct ahash_request *req, int ret)
+{
+	struct crypto_wait *wait = req->base.data;
 
-	वापस crypto_रुको_req(ret, रुको);
-पूर्ण
+	return crypto_wait_req(ret, wait);
+}
 
-काष्ठा test_mb_ahash_data अणु
-	काष्ठा scatterlist sg[Xबफ_मानE];
-	अक्षर result[64];
-	काष्ठा ahash_request *req;
-	काष्ठा crypto_रुको रुको;
-	अक्षर *xbuf[Xबफ_मानE];
-पूर्ण;
+struct test_mb_ahash_data {
+	struct scatterlist sg[XBUFSIZE];
+	char result[64];
+	struct ahash_request *req;
+	struct crypto_wait wait;
+	char *xbuf[XBUFSIZE];
+};
 
-अटल अंतरभूत पूर्णांक करो_mult_ahash_op(काष्ठा test_mb_ahash_data *data, u32 num_mb,
-				   पूर्णांक *rc)
-अणु
-	पूर्णांक i, err = 0;
+static inline int do_mult_ahash_op(struct test_mb_ahash_data *data, u32 num_mb,
+				   int *rc)
+{
+	int i, err = 0;
 
 	/* Fire up a bunch of concurrent requests */
-	क्रम (i = 0; i < num_mb; i++)
+	for (i = 0; i < num_mb; i++)
 		rc[i] = crypto_ahash_digest(data[i].req);
 
-	/* Wait क्रम all requests to finish */
-	क्रम (i = 0; i < num_mb; i++) अणु
-		rc[i] = crypto_रुको_req(rc[i], &data[i].रुको);
+	/* Wait for all requests to finish */
+	for (i = 0; i < num_mb; i++) {
+		rc[i] = crypto_wait_req(rc[i], &data[i].wait);
 
-		अगर (rc[i]) अणु
+		if (rc[i]) {
 			pr_info("concurrent request %d error %d\n", i, rc[i]);
 			err = rc[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_mb_ahash_jअगरfies(काष्ठा test_mb_ahash_data *data, पूर्णांक blen,
-				 पूर्णांक secs, u32 num_mb)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret = 0;
-	पूर्णांक *rc;
+static int test_mb_ahash_jiffies(struct test_mb_ahash_data *data, int blen,
+				 int secs, u32 num_mb)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret = 0;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		ret = करो_mult_ahash_op(data, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		ret = do_mult_ahash_op(data, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	pr_cont("%d operations in %d seconds (%llu bytes)\n",
 		bcount * num_mb, secs, (u64)bcount * blen * num_mb);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल पूर्णांक test_mb_ahash_cycles(काष्ठा test_mb_ahash_data *data, पूर्णांक blen,
+static int test_mb_ahash_cycles(struct test_mb_ahash_data *data, int blen,
 				u32 num_mb)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	पूर्णांक *rc;
+{
+	unsigned long cycles = 0;
+	int ret = 0;
+	int i;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		ret = करो_mult_ahash_op(data, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		ret = do_mult_ahash_op(data, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
-		ret = करो_mult_ahash_op(data, num_mb, rc);
+		ret = do_mult_ahash_op(data, num_mb, rc);
 		end = get_cycles();
 
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 	pr_cont("1 operation in %lu cycles (%d bytes)\n",
 		(cycles + 4) / (8 * num_mb), blen);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल व्योम test_mb_ahash_speed(स्थिर अक्षर *algo, अचिन्हित पूर्णांक secs,
-				काष्ठा hash_speed *speed, u32 num_mb)
-अणु
-	काष्ठा test_mb_ahash_data *data;
-	काष्ठा crypto_ahash *tfm;
-	अचिन्हित पूर्णांक i, j, k;
-	पूर्णांक ret;
+static void test_mb_ahash_speed(const char *algo, unsigned int secs,
+				struct hash_speed *speed, u32 num_mb)
+{
+	struct test_mb_ahash_data *data;
+	struct crypto_ahash *tfm;
+	unsigned int i, j, k;
+	int ret;
 
-	data = kसुस्मृति(num_mb, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	data = kcalloc(num_mb, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return;
 
 	tfm = crypto_alloc_ahash(algo, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("failed to load transform for %s: %ld\n",
 			algo, PTR_ERR(tfm));
-		जाओ मुक्त_data;
-	पूर्ण
+		goto free_data;
+	}
 
-	क्रम (i = 0; i < num_mb; ++i) अणु
-		अगर (tesपंचांगgr_alloc_buf(data[i].xbuf))
-			जाओ out;
+	for (i = 0; i < num_mb; ++i) {
+		if (testmgr_alloc_buf(data[i].xbuf))
+			goto out;
 
-		crypto_init_रुको(&data[i].रुको);
+		crypto_init_wait(&data[i].wait);
 
 		data[i].req = ahash_request_alloc(tfm, GFP_KERNEL);
-		अगर (!data[i].req) अणु
+		if (!data[i].req) {
 			pr_err("alg: hash: Failed to allocate request for %s\n",
 			       algo);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ahash_request_set_callback(data[i].req, 0, crypto_req_करोne,
-					   &data[i].रुको);
+		ahash_request_set_callback(data[i].req, 0, crypto_req_done,
+					   &data[i].wait);
 
-		sg_init_table(data[i].sg, Xबफ_मानE);
-		क्रम (j = 0; j < Xबफ_मानE; j++) अणु
+		sg_init_table(data[i].sg, XBUFSIZE);
+		for (j = 0; j < XBUFSIZE; j++) {
 			sg_set_buf(data[i].sg + j, data[i].xbuf[j], PAGE_SIZE);
-			स_रखो(data[i].xbuf[j], 0xff, PAGE_SIZE);
-		पूर्ण
-	पूर्ण
+			memset(data[i].xbuf[j], 0xff, PAGE_SIZE);
+		}
+	}
 
 	pr_info("\ntesting speed of multibuffer %s (%s)\n", algo,
 		get_driver_name(crypto_ahash, tfm));
 
-	क्रम (i = 0; speed[i].blen != 0; i++) अणु
+	for (i = 0; speed[i].blen != 0; i++) {
 		/* For some reason this only tests digests. */
-		अगर (speed[i].blen != speed[i].plen)
-			जारी;
+		if (speed[i].blen != speed[i].plen)
+			continue;
 
-		अगर (speed[i].blen > Xबफ_मानE * PAGE_SIZE) अणु
+		if (speed[i].blen > XBUFSIZE * PAGE_SIZE) {
 			pr_err("template (%u) too big for tvmem (%lu)\n",
-			       speed[i].blen, Xबफ_मानE * PAGE_SIZE);
-			जाओ out;
-		पूर्ण
+			       speed[i].blen, XBUFSIZE * PAGE_SIZE);
+			goto out;
+		}
 
-		अगर (klen)
+		if (klen)
 			crypto_ahash_setkey(tfm, tvmem[0], klen);
 
-		क्रम (k = 0; k < num_mb; k++)
+		for (k = 0; k < num_mb; k++)
 			ahash_request_set_crypt(data[k].req, data[k].sg,
 						data[k].result, speed[i].blen);
 
@@ -882,230 +881,230 @@ out:
 			i, speed[i].blen, speed[i].plen,
 			speed[i].blen / speed[i].plen);
 
-		अगर (secs) अणु
-			ret = test_mb_ahash_jअगरfies(data, speed[i].blen, secs,
+		if (secs) {
+			ret = test_mb_ahash_jiffies(data, speed[i].blen, secs,
 						    num_mb);
 			cond_resched();
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = test_mb_ahash_cycles(data, speed[i].blen, num_mb);
-		पूर्ण
+		}
 
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("At least one hashing failed ret=%d\n", ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out:
-	क्रम (k = 0; k < num_mb; ++k)
-		ahash_request_मुक्त(data[k].req);
+	for (k = 0; k < num_mb; ++k)
+		ahash_request_free(data[k].req);
 
-	क्रम (k = 0; k < num_mb; ++k)
-		tesपंचांगgr_मुक्त_buf(data[k].xbuf);
+	for (k = 0; k < num_mb; ++k)
+		testmgr_free_buf(data[k].xbuf);
 
-	crypto_मुक्त_ahash(tfm);
+	crypto_free_ahash(tfm);
 
-मुक्त_data:
-	kमुक्त(data);
-पूर्ण
+free_data:
+	kfree(data);
+}
 
-अटल पूर्णांक test_ahash_jअगरfies_digest(काष्ठा ahash_request *req, पूर्णांक blen,
-				     अक्षर *out, पूर्णांक secs)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret;
+static int test_ahash_jiffies_digest(struct ahash_request *req, int blen,
+				     char *out, int secs)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		ret = करो_one_ahash_op(req, crypto_ahash_digest(req));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		ret = do_one_ahash_op(req, crypto_ahash_digest(req));
+		if (ret)
+			return ret;
+	}
 
-	prपूर्णांकk("%6u opers/sec, %9lu bytes/sec\n",
-	       bcount / secs, ((दीर्घ)bcount * blen) / secs);
+	printk("%6u opers/sec, %9lu bytes/sec\n",
+	       bcount / secs, ((long)bcount * blen) / secs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_ahash_jअगरfies(काष्ठा ahash_request *req, पूर्णांक blen,
-			      पूर्णांक plen, अक्षर *out, पूर्णांक secs)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount, pcount;
-	पूर्णांक ret;
+static int test_ahash_jiffies(struct ahash_request *req, int blen,
+			      int plen, char *out, int secs)
+{
+	unsigned long start, end;
+	int bcount, pcount;
+	int ret;
 
-	अगर (plen == blen)
-		वापस test_ahash_jअगरfies_digest(req, blen, out, secs);
+	if (plen == blen)
+		return test_ahash_jiffies_digest(req, blen, out, secs);
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		ret = करो_one_ahash_op(req, crypto_ahash_init(req));
-		अगर (ret)
-			वापस ret;
-		क्रम (pcount = 0; pcount < blen; pcount += plen) अणु
-			ret = करो_one_ahash_op(req, crypto_ahash_update(req));
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-		/* we assume there is enough space in 'out' क्रम the result */
-		ret = करो_one_ahash_op(req, crypto_ahash_final(req));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		ret = do_one_ahash_op(req, crypto_ahash_init(req));
+		if (ret)
+			return ret;
+		for (pcount = 0; pcount < blen; pcount += plen) {
+			ret = do_one_ahash_op(req, crypto_ahash_update(req));
+			if (ret)
+				return ret;
+		}
+		/* we assume there is enough space in 'out' for the result */
+		ret = do_one_ahash_op(req, crypto_ahash_final(req));
+		if (ret)
+			return ret;
+	}
 
 	pr_cont("%6u opers/sec, %9lu bytes/sec\n",
-		bcount / secs, ((दीर्घ)bcount * blen) / secs);
+		bcount / secs, ((long)bcount * blen) / secs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_ahash_cycles_digest(काष्ठा ahash_request *req, पूर्णांक blen,
-				    अक्षर *out)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret, i;
+static int test_ahash_cycles_digest(struct ahash_request *req, int blen,
+				    char *out)
+{
+	unsigned long cycles = 0;
+	int ret, i;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		ret = करो_one_ahash_op(req, crypto_ahash_digest(req));
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		ret = do_one_ahash_op(req, crypto_ahash_digest(req));
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
 
-		ret = करो_one_ahash_op(req, crypto_ahash_digest(req));
-		अगर (ret)
-			जाओ out;
+		ret = do_one_ahash_op(req, crypto_ahash_digest(req));
+		if (ret)
+			goto out;
 
 		end = get_cycles();
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 out:
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pr_cont("%6lu cycles/operation, %4lu cycles/byte\n",
 		cycles / 8, cycles / (8 * blen));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_ahash_cycles(काष्ठा ahash_request *req, पूर्णांक blen,
-			     पूर्णांक plen, अक्षर *out)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक i, pcount, ret;
+static int test_ahash_cycles(struct ahash_request *req, int blen,
+			     int plen, char *out)
+{
+	unsigned long cycles = 0;
+	int i, pcount, ret;
 
-	अगर (plen == blen)
-		वापस test_ahash_cycles_digest(req, blen, out);
+	if (plen == blen)
+		return test_ahash_cycles_digest(req, blen, out);
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		ret = करो_one_ahash_op(req, crypto_ahash_init(req));
-		अगर (ret)
-			जाओ out;
-		क्रम (pcount = 0; pcount < blen; pcount += plen) अणु
-			ret = करो_one_ahash_op(req, crypto_ahash_update(req));
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-		ret = करो_one_ahash_op(req, crypto_ahash_final(req));
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		ret = do_one_ahash_op(req, crypto_ahash_init(req));
+		if (ret)
+			goto out;
+		for (pcount = 0; pcount < blen; pcount += plen) {
+			ret = do_one_ahash_op(req, crypto_ahash_update(req));
+			if (ret)
+				goto out;
+		}
+		ret = do_one_ahash_op(req, crypto_ahash_final(req));
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
 
-		ret = करो_one_ahash_op(req, crypto_ahash_init(req));
-		अगर (ret)
-			जाओ out;
-		क्रम (pcount = 0; pcount < blen; pcount += plen) अणु
-			ret = करो_one_ahash_op(req, crypto_ahash_update(req));
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-		ret = करो_one_ahash_op(req, crypto_ahash_final(req));
-		अगर (ret)
-			जाओ out;
+		ret = do_one_ahash_op(req, crypto_ahash_init(req));
+		if (ret)
+			goto out;
+		for (pcount = 0; pcount < blen; pcount += plen) {
+			ret = do_one_ahash_op(req, crypto_ahash_update(req));
+			if (ret)
+				goto out;
+		}
+		ret = do_one_ahash_op(req, crypto_ahash_final(req));
+		if (ret)
+			goto out;
 
 		end = get_cycles();
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 out:
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pr_cont("%6lu cycles/operation, %4lu cycles/byte\n",
 		cycles / 8, cycles / (8 * blen));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम test_ahash_speed_common(स्थिर अक्षर *algo, अचिन्हित पूर्णांक secs,
-				    काष्ठा hash_speed *speed, अचिन्हित mask)
-अणु
-	काष्ठा scatterlist sg[TVMEMSIZE];
-	काष्ठा crypto_रुको रुको;
-	काष्ठा ahash_request *req;
-	काष्ठा crypto_ahash *tfm;
-	अक्षर *output;
-	पूर्णांक i, ret;
+static void test_ahash_speed_common(const char *algo, unsigned int secs,
+				    struct hash_speed *speed, unsigned mask)
+{
+	struct scatterlist sg[TVMEMSIZE];
+	struct crypto_wait wait;
+	struct ahash_request *req;
+	struct crypto_ahash *tfm;
+	char *output;
+	int i, ret;
 
 	tfm = crypto_alloc_ahash(algo, 0, mask);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("failed to load transform for %s: %ld\n",
 		       algo, PTR_ERR(tfm));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prपूर्णांकk(KERN_INFO "\ntesting speed of async %s (%s)\n", algo,
+	printk(KERN_INFO "\ntesting speed of async %s (%s)\n", algo,
 			get_driver_name(crypto_ahash, tfm));
 
-	अगर (crypto_ahash_digestsize(tfm) > MAX_DIGEST_SIZE) अणु
+	if (crypto_ahash_digestsize(tfm) > MAX_DIGEST_SIZE) {
 		pr_err("digestsize(%u) > %d\n", crypto_ahash_digestsize(tfm),
 		       MAX_DIGEST_SIZE);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	test_hash_sg_init(sg);
 	req = ahash_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		pr_err("ahash request allocation failure\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	crypto_init_रुको(&रुको);
+	crypto_init_wait(&wait);
 	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				   crypto_req_करोne, &रुको);
+				   crypto_req_done, &wait);
 
-	output = kदो_स्मृति(MAX_DIGEST_SIZE, GFP_KERNEL);
-	अगर (!output)
-		जाओ out_nomem;
+	output = kmalloc(MAX_DIGEST_SIZE, GFP_KERNEL);
+	if (!output)
+		goto out_nomem;
 
-	क्रम (i = 0; speed[i].blen != 0; i++) अणु
-		अगर (speed[i].blen > TVMEMSIZE * PAGE_SIZE) अणु
+	for (i = 0; speed[i].blen != 0; i++) {
+		if (speed[i].blen > TVMEMSIZE * PAGE_SIZE) {
 			pr_err("template (%u) too big for tvmem (%lu)\n",
 			       speed[i].blen, TVMEMSIZE * PAGE_SIZE);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (klen)
+		if (klen)
 			crypto_ahash_setkey(tfm, tvmem[0], klen);
 
 		pr_info("test%3u "
@@ -1114,627 +1113,627 @@ out:
 
 		ahash_request_set_crypt(req, sg, output, speed[i].plen);
 
-		अगर (secs) अणु
-			ret = test_ahash_jअगरfies(req, speed[i].blen,
+		if (secs) {
+			ret = test_ahash_jiffies(req, speed[i].blen,
 						 speed[i].plen, output, secs);
 			cond_resched();
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = test_ahash_cycles(req, speed[i].blen,
 						speed[i].plen, output);
-		पूर्ण
+		}
 
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("hashing failed ret=%d\n", ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	kमुक्त(output);
+	kfree(output);
 
 out_nomem:
-	ahash_request_मुक्त(req);
+	ahash_request_free(req);
 
 out:
-	crypto_मुक्त_ahash(tfm);
-पूर्ण
+	crypto_free_ahash(tfm);
+}
 
-अटल व्योम test_ahash_speed(स्थिर अक्षर *algo, अचिन्हित पूर्णांक secs,
-			     काष्ठा hash_speed *speed)
-अणु
-	वापस test_ahash_speed_common(algo, secs, speed, 0);
-पूर्ण
+static void test_ahash_speed(const char *algo, unsigned int secs,
+			     struct hash_speed *speed)
+{
+	return test_ahash_speed_common(algo, secs, speed, 0);
+}
 
-अटल व्योम test_hash_speed(स्थिर अक्षर *algo, अचिन्हित पूर्णांक secs,
-			    काष्ठा hash_speed *speed)
-अणु
-	वापस test_ahash_speed_common(algo, secs, speed, CRYPTO_ALG_ASYNC);
-पूर्ण
+static void test_hash_speed(const char *algo, unsigned int secs,
+			    struct hash_speed *speed)
+{
+	return test_ahash_speed_common(algo, secs, speed, CRYPTO_ALG_ASYNC);
+}
 
-काष्ठा test_mb_skcipher_data अणु
-	काष्ठा scatterlist sg[Xबफ_मानE];
-	काष्ठा skcipher_request *req;
-	काष्ठा crypto_रुको रुको;
-	अक्षर *xbuf[Xबफ_मानE];
-पूर्ण;
+struct test_mb_skcipher_data {
+	struct scatterlist sg[XBUFSIZE];
+	struct skcipher_request *req;
+	struct crypto_wait wait;
+	char *xbuf[XBUFSIZE];
+};
 
-अटल पूर्णांक करो_mult_acipher_op(काष्ठा test_mb_skcipher_data *data, पूर्णांक enc,
-				u32 num_mb, पूर्णांक *rc)
-अणु
-	पूर्णांक i, err = 0;
+static int do_mult_acipher_op(struct test_mb_skcipher_data *data, int enc,
+				u32 num_mb, int *rc)
+{
+	int i, err = 0;
 
 	/* Fire up a bunch of concurrent requests */
-	क्रम (i = 0; i < num_mb; i++) अणु
-		अगर (enc == ENCRYPT)
+	for (i = 0; i < num_mb; i++) {
+		if (enc == ENCRYPT)
 			rc[i] = crypto_skcipher_encrypt(data[i].req);
-		अन्यथा
+		else
 			rc[i] = crypto_skcipher_decrypt(data[i].req);
-	पूर्ण
+	}
 
-	/* Wait क्रम all requests to finish */
-	क्रम (i = 0; i < num_mb; i++) अणु
-		rc[i] = crypto_रुको_req(rc[i], &data[i].रुको);
+	/* Wait for all requests to finish */
+	for (i = 0; i < num_mb; i++) {
+		rc[i] = crypto_wait_req(rc[i], &data[i].wait);
 
-		अगर (rc[i]) अणु
+		if (rc[i]) {
 			pr_info("concurrent request %d error %d\n", i, rc[i]);
 			err = rc[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_mb_acipher_jअगरfies(काष्ठा test_mb_skcipher_data *data, पूर्णांक enc,
-				पूर्णांक blen, पूर्णांक secs, u32 num_mb)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret = 0;
-	पूर्णांक *rc;
+static int test_mb_acipher_jiffies(struct test_mb_skcipher_data *data, int enc,
+				int blen, int secs, u32 num_mb)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret = 0;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		ret = करो_mult_acipher_op(data, enc, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		ret = do_mult_acipher_op(data, enc, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	pr_cont("%d operations in %d seconds (%llu bytes)\n",
 		bcount * num_mb, secs, (u64)bcount * blen * num_mb);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल पूर्णांक test_mb_acipher_cycles(काष्ठा test_mb_skcipher_data *data, पूर्णांक enc,
-			       पूर्णांक blen, u32 num_mb)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
-	पूर्णांक *rc;
+static int test_mb_acipher_cycles(struct test_mb_skcipher_data *data, int enc,
+			       int blen, u32 num_mb)
+{
+	unsigned long cycles = 0;
+	int ret = 0;
+	int i;
+	int *rc;
 
-	rc = kसुस्मृति(num_mb, माप(*rc), GFP_KERNEL);
-	अगर (!rc)
-		वापस -ENOMEM;
+	rc = kcalloc(num_mb, sizeof(*rc), GFP_KERNEL);
+	if (!rc)
+		return -ENOMEM;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		ret = करो_mult_acipher_op(data, enc, num_mb, rc);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	for (i = 0; i < 4; i++) {
+		ret = do_mult_acipher_op(data, enc, num_mb, rc);
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
-		ret = करो_mult_acipher_op(data, enc, num_mb, rc);
+		ret = do_mult_acipher_op(data, enc, num_mb, rc);
 		end = get_cycles();
 
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 	pr_cont("1 operation in %lu cycles (%d bytes)\n",
 		(cycles + 4) / (8 * num_mb), blen);
 
 out:
-	kमुक्त(rc);
-	वापस ret;
-पूर्ण
+	kfree(rc);
+	return ret;
+}
 
-अटल व्योम test_mb_skcipher_speed(स्थिर अक्षर *algo, पूर्णांक enc, पूर्णांक secs,
-				   काष्ठा cipher_speed_ढाँचा *ढाँचा,
-				   अचिन्हित पूर्णांक tcount, u8 *keysize, u32 num_mb)
-अणु
-	काष्ठा test_mb_skcipher_data *data;
-	काष्ठा crypto_skcipher *tfm;
-	अचिन्हित पूर्णांक i, j, iv_len;
-	स्थिर पूर्णांक *b_size;
-	स्थिर अक्षर *key;
-	स्थिर अक्षर *e;
-	अक्षर iv[128];
-	पूर्णांक ret;
+static void test_mb_skcipher_speed(const char *algo, int enc, int secs,
+				   struct cipher_speed_template *template,
+				   unsigned int tcount, u8 *keysize, u32 num_mb)
+{
+	struct test_mb_skcipher_data *data;
+	struct crypto_skcipher *tfm;
+	unsigned int i, j, iv_len;
+	const int *b_size;
+	const char *key;
+	const char *e;
+	char iv[128];
+	int ret;
 
-	अगर (enc == ENCRYPT)
+	if (enc == ENCRYPT)
 		e = "encryption";
-	अन्यथा
+	else
 		e = "decryption";
 
-	data = kसुस्मृति(num_mb, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	data = kcalloc(num_mb, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return;
 
 	tfm = crypto_alloc_skcipher(algo, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("failed to load transform for %s: %ld\n",
 			algo, PTR_ERR(tfm));
-		जाओ out_मुक्त_data;
-	पूर्ण
+		goto out_free_data;
+	}
 
-	क्रम (i = 0; i < num_mb; ++i)
-		अगर (tesपंचांगgr_alloc_buf(data[i].xbuf)) अणु
-			जबतक (i--)
-				tesपंचांगgr_मुक्त_buf(data[i].xbuf);
-			जाओ out_मुक्त_tfm;
-		पूर्ण
-
-
-	क्रम (i = 0; i < num_mb; ++i)
-		अगर (tesपंचांगgr_alloc_buf(data[i].xbuf)) अणु
-			जबतक (i--)
-				tesपंचांगgr_मुक्त_buf(data[i].xbuf);
-			जाओ out_मुक्त_tfm;
-		पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		if (testmgr_alloc_buf(data[i].xbuf)) {
+			while (i--)
+				testmgr_free_buf(data[i].xbuf);
+			goto out_free_tfm;
+		}
 
 
-	क्रम (i = 0; i < num_mb; ++i) अणु
+	for (i = 0; i < num_mb; ++i)
+		if (testmgr_alloc_buf(data[i].xbuf)) {
+			while (i--)
+				testmgr_free_buf(data[i].xbuf);
+			goto out_free_tfm;
+		}
+
+
+	for (i = 0; i < num_mb; ++i) {
 		data[i].req = skcipher_request_alloc(tfm, GFP_KERNEL);
-		अगर (!data[i].req) अणु
+		if (!data[i].req) {
 			pr_err("alg: skcipher: Failed to allocate request for %s\n",
 			       algo);
-			जबतक (i--)
-				skcipher_request_मुक्त(data[i].req);
-			जाओ out_मुक्त_xbuf;
-		पूर्ण
-	पूर्ण
+			while (i--)
+				skcipher_request_free(data[i].req);
+			goto out_free_xbuf;
+		}
+	}
 
-	क्रम (i = 0; i < num_mb; ++i) अणु
+	for (i = 0; i < num_mb; ++i) {
 		skcipher_request_set_callback(data[i].req,
 					      CRYPTO_TFM_REQ_MAY_BACKLOG,
-					      crypto_req_करोne, &data[i].रुको);
-		crypto_init_रुको(&data[i].रुको);
-	पूर्ण
+					      crypto_req_done, &data[i].wait);
+		crypto_init_wait(&data[i].wait);
+	}
 
 	pr_info("\ntesting speed of multibuffer %s (%s) %s\n", algo,
 		get_driver_name(crypto_skcipher, tfm), e);
 
 	i = 0;
-	करो अणु
+	do {
 		b_size = block_sizes;
-		करो अणु
+		do {
 			u32 bs = round_up(*b_size, crypto_skcipher_blocksize(tfm));
 
-			अगर (bs > Xबफ_मानE * PAGE_SIZE) अणु
+			if (bs > XBUFSIZE * PAGE_SIZE) {
 				pr_err("template (%u) too big for buffer (%lu)\n",
-				       *b_size, Xबफ_मानE * PAGE_SIZE);
-				जाओ out;
-			पूर्ण
+				       *b_size, XBUFSIZE * PAGE_SIZE);
+				goto out;
+			}
 
 			pr_info("test %u (%d bit key, %d byte blocks): ", i,
 				*keysize * 8, bs);
 
 			/* Set up tfm global state, i.e. the key */
 
-			स_रखो(tvmem[0], 0xff, PAGE_SIZE);
+			memset(tvmem[0], 0xff, PAGE_SIZE);
 			key = tvmem[0];
-			क्रम (j = 0; j < tcount; j++) अणु
-				अगर (ढाँचा[j].klen == *keysize) अणु
-					key = ढाँचा[j].key;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+			for (j = 0; j < tcount; j++) {
+				if (template[j].klen == *keysize) {
+					key = template[j].key;
+					break;
+				}
+			}
 
 			crypto_skcipher_clear_flags(tfm, ~0);
 
 			ret = crypto_skcipher_setkey(tfm, key, *keysize);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("setkey() failed flags=%x\n",
 				       crypto_skcipher_get_flags(tfm));
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			iv_len = crypto_skcipher_ivsize(tfm);
-			अगर (iv_len)
-				स_रखो(&iv, 0xff, iv_len);
+			if (iv_len)
+				memset(&iv, 0xff, iv_len);
 
 			/* Now setup per request stuff, i.e. buffers */
 
-			क्रम (j = 0; j < num_mb; ++j) अणु
-				काष्ठा test_mb_skcipher_data *cur = &data[j];
-				अचिन्हित पूर्णांक k = bs;
-				अचिन्हित पूर्णांक pages = DIV_ROUND_UP(k, PAGE_SIZE);
-				अचिन्हित पूर्णांक p = 0;
+			for (j = 0; j < num_mb; ++j) {
+				struct test_mb_skcipher_data *cur = &data[j];
+				unsigned int k = bs;
+				unsigned int pages = DIV_ROUND_UP(k, PAGE_SIZE);
+				unsigned int p = 0;
 
 				sg_init_table(cur->sg, pages);
 
-				जबतक (k > PAGE_SIZE) अणु
+				while (k > PAGE_SIZE) {
 					sg_set_buf(cur->sg + p, cur->xbuf[p],
 						   PAGE_SIZE);
-					स_रखो(cur->xbuf[p], 0xff, PAGE_SIZE);
+					memset(cur->xbuf[p], 0xff, PAGE_SIZE);
 					p++;
 					k -= PAGE_SIZE;
-				पूर्ण
+				}
 
 				sg_set_buf(cur->sg + p, cur->xbuf[p], k);
-				स_रखो(cur->xbuf[p], 0xff, k);
+				memset(cur->xbuf[p], 0xff, k);
 
 				skcipher_request_set_crypt(cur->req, cur->sg,
 							   cur->sg, *b_size,
 							   iv);
-			पूर्ण
+			}
 
-			अगर (secs) अणु
-				ret = test_mb_acipher_jअगरfies(data, enc,
+			if (secs) {
+				ret = test_mb_acipher_jiffies(data, enc,
 							      bs, secs,
 							      num_mb);
 				cond_resched();
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = test_mb_acipher_cycles(data, enc,
 							     bs, num_mb);
-			पूर्ण
+			}
 
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("%s() failed flags=%x\n", e,
 				       crypto_skcipher_get_flags(tfm));
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			b_size++;
 			i++;
-		पूर्ण जबतक (*b_size);
+		} while (*b_size);
 		keysize++;
-	पूर्ण जबतक (*keysize);
+	} while (*keysize);
 
 out:
-	क्रम (i = 0; i < num_mb; ++i)
-		skcipher_request_मुक्त(data[i].req);
-out_मुक्त_xbuf:
-	क्रम (i = 0; i < num_mb; ++i)
-		tesपंचांगgr_मुक्त_buf(data[i].xbuf);
-out_मुक्त_tfm:
-	crypto_मुक्त_skcipher(tfm);
-out_मुक्त_data:
-	kमुक्त(data);
-पूर्ण
+	for (i = 0; i < num_mb; ++i)
+		skcipher_request_free(data[i].req);
+out_free_xbuf:
+	for (i = 0; i < num_mb; ++i)
+		testmgr_free_buf(data[i].xbuf);
+out_free_tfm:
+	crypto_free_skcipher(tfm);
+out_free_data:
+	kfree(data);
+}
 
-अटल अंतरभूत पूर्णांक करो_one_acipher_op(काष्ठा skcipher_request *req, पूर्णांक ret)
-अणु
-	काष्ठा crypto_रुको *रुको = req->base.data;
+static inline int do_one_acipher_op(struct skcipher_request *req, int ret)
+{
+	struct crypto_wait *wait = req->base.data;
 
-	वापस crypto_रुको_req(ret, रुको);
-पूर्ण
+	return crypto_wait_req(ret, wait);
+}
 
-अटल पूर्णांक test_acipher_jअगरfies(काष्ठा skcipher_request *req, पूर्णांक enc,
-				पूर्णांक blen, पूर्णांक secs)
-अणु
-	अचिन्हित दीर्घ start, end;
-	पूर्णांक bcount;
-	पूर्णांक ret;
+static int test_acipher_jiffies(struct skcipher_request *req, int enc,
+				int blen, int secs)
+{
+	unsigned long start, end;
+	int bcount;
+	int ret;
 
-	क्रम (start = jअगरfies, end = start + secs * HZ, bcount = 0;
-	     समय_beक्रमe(jअगरfies, end); bcount++) अणु
-		अगर (enc)
-			ret = करो_one_acipher_op(req,
+	for (start = jiffies, end = start + secs * HZ, bcount = 0;
+	     time_before(jiffies, end); bcount++) {
+		if (enc)
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_encrypt(req));
-		अन्यथा
-			ret = करो_one_acipher_op(req,
+		else
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_decrypt(req));
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	pr_cont("%d operations in %d seconds (%llu bytes)\n",
 		bcount, secs, (u64)bcount * blen);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_acipher_cycles(काष्ठा skcipher_request *req, पूर्णांक enc,
-			       पूर्णांक blen)
-अणु
-	अचिन्हित दीर्घ cycles = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int test_acipher_cycles(struct skcipher_request *req, int enc,
+			       int blen)
+{
+	unsigned long cycles = 0;
+	int ret = 0;
+	int i;
 
 	/* Warm-up run. */
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (enc)
-			ret = करो_one_acipher_op(req,
+	for (i = 0; i < 4; i++) {
+		if (enc)
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_encrypt(req));
-		अन्यथा
-			ret = करो_one_acipher_op(req,
+		else
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_decrypt(req));
 
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/* The real thing. */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		cycles_t start, end;
 
 		start = get_cycles();
-		अगर (enc)
-			ret = करो_one_acipher_op(req,
+		if (enc)
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_encrypt(req));
-		अन्यथा
-			ret = करो_one_acipher_op(req,
+		else
+			ret = do_one_acipher_op(req,
 						crypto_skcipher_decrypt(req));
 		end = get_cycles();
 
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		cycles += end - start;
-	पूर्ण
+	}
 
 out:
-	अगर (ret == 0)
+	if (ret == 0)
 		pr_cont("1 operation in %lu cycles (%d bytes)\n",
 			(cycles + 4) / 8, blen);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम test_skcipher_speed(स्थिर अक्षर *algo, पूर्णांक enc, अचिन्हित पूर्णांक secs,
-				काष्ठा cipher_speed_ढाँचा *ढाँचा,
-				अचिन्हित पूर्णांक tcount, u8 *keysize, bool async)
-अणु
-	अचिन्हित पूर्णांक ret, i, j, k, iv_len;
-	काष्ठा crypto_रुको रुको;
-	स्थिर अक्षर *key;
-	अक्षर iv[128];
-	काष्ठा skcipher_request *req;
-	काष्ठा crypto_skcipher *tfm;
-	स्थिर पूर्णांक *b_size;
-	स्थिर अक्षर *e;
+static void test_skcipher_speed(const char *algo, int enc, unsigned int secs,
+				struct cipher_speed_template *template,
+				unsigned int tcount, u8 *keysize, bool async)
+{
+	unsigned int ret, i, j, k, iv_len;
+	struct crypto_wait wait;
+	const char *key;
+	char iv[128];
+	struct skcipher_request *req;
+	struct crypto_skcipher *tfm;
+	const int *b_size;
+	const char *e;
 
-	अगर (enc == ENCRYPT)
+	if (enc == ENCRYPT)
 		e = "encryption";
-	अन्यथा
+	else
 		e = "decryption";
 
-	crypto_init_रुको(&रुको);
+	crypto_init_wait(&wait);
 
 	tfm = crypto_alloc_skcipher(algo, 0, async ? 0 : CRYPTO_ALG_ASYNC);
 
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		pr_err("failed to load transform for %s: %ld\n", algo,
 		       PTR_ERR(tfm));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_info("\ntesting speed of %s %s (%s) %s\n", async ? "async" : "sync",
 		algo, get_driver_name(crypto_skcipher, tfm), e);
 
 	req = skcipher_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		pr_err("tcrypt: skcipher: Failed to allocate request for %s\n",
 		       algo);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				      crypto_req_करोne, &रुको);
+				      crypto_req_done, &wait);
 
 	i = 0;
-	करो अणु
+	do {
 		b_size = block_sizes;
 
-		करो अणु
+		do {
 			u32 bs = round_up(*b_size, crypto_skcipher_blocksize(tfm));
-			काष्ठा scatterlist sg[TVMEMSIZE];
+			struct scatterlist sg[TVMEMSIZE];
 
-			अगर ((*keysize + bs) > TVMEMSIZE * PAGE_SIZE) अणु
+			if ((*keysize + bs) > TVMEMSIZE * PAGE_SIZE) {
 				pr_err("template (%u) too big for "
 				       "tvmem (%lu)\n", *keysize + bs,
 				       TVMEMSIZE * PAGE_SIZE);
-				जाओ out_मुक्त_req;
-			पूर्ण
+				goto out_free_req;
+			}
 
 			pr_info("test %u (%d bit key, %d byte blocks): ", i,
 				*keysize * 8, bs);
 
-			स_रखो(tvmem[0], 0xff, PAGE_SIZE);
+			memset(tvmem[0], 0xff, PAGE_SIZE);
 
 			/* set key, plain text and IV */
 			key = tvmem[0];
-			क्रम (j = 0; j < tcount; j++) अणु
-				अगर (ढाँचा[j].klen == *keysize) अणु
-					key = ढाँचा[j].key;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+			for (j = 0; j < tcount; j++) {
+				if (template[j].klen == *keysize) {
+					key = template[j].key;
+					break;
+				}
+			}
 
 			crypto_skcipher_clear_flags(tfm, ~0);
 
 			ret = crypto_skcipher_setkey(tfm, key, *keysize);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("setkey() failed flags=%x\n",
 					crypto_skcipher_get_flags(tfm));
-				जाओ out_मुक्त_req;
-			पूर्ण
+				goto out_free_req;
+			}
 
 			k = *keysize + bs;
 			sg_init_table(sg, DIV_ROUND_UP(k, PAGE_SIZE));
 
-			अगर (k > PAGE_SIZE) अणु
+			if (k > PAGE_SIZE) {
 				sg_set_buf(sg, tvmem[0] + *keysize,
 				   PAGE_SIZE - *keysize);
 				k -= PAGE_SIZE;
 				j = 1;
-				जबतक (k > PAGE_SIZE) अणु
+				while (k > PAGE_SIZE) {
 					sg_set_buf(sg + j, tvmem[j], PAGE_SIZE);
-					स_रखो(tvmem[j], 0xff, PAGE_SIZE);
+					memset(tvmem[j], 0xff, PAGE_SIZE);
 					j++;
 					k -= PAGE_SIZE;
-				पूर्ण
+				}
 				sg_set_buf(sg + j, tvmem[j], k);
-				स_रखो(tvmem[j], 0xff, k);
-			पूर्ण अन्यथा अणु
+				memset(tvmem[j], 0xff, k);
+			} else {
 				sg_set_buf(sg, tvmem[0] + *keysize, bs);
-			पूर्ण
+			}
 
 			iv_len = crypto_skcipher_ivsize(tfm);
-			अगर (iv_len)
-				स_रखो(&iv, 0xff, iv_len);
+			if (iv_len)
+				memset(&iv, 0xff, iv_len);
 
 			skcipher_request_set_crypt(req, sg, sg, bs, iv);
 
-			अगर (secs) अणु
-				ret = test_acipher_jअगरfies(req, enc,
+			if (secs) {
+				ret = test_acipher_jiffies(req, enc,
 							   bs, secs);
 				cond_resched();
-			पूर्ण अन्यथा अणु
+			} else {
 				ret = test_acipher_cycles(req, enc,
 							  bs);
-			पूर्ण
+			}
 
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("%s() failed flags=%x\n", e,
 				       crypto_skcipher_get_flags(tfm));
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			b_size++;
 			i++;
-		पूर्ण जबतक (*b_size);
+		} while (*b_size);
 		keysize++;
-	पूर्ण जबतक (*keysize);
+	} while (*keysize);
 
-out_मुक्त_req:
-	skcipher_request_मुक्त(req);
+out_free_req:
+	skcipher_request_free(req);
 out:
-	crypto_मुक्त_skcipher(tfm);
-पूर्ण
+	crypto_free_skcipher(tfm);
+}
 
-अटल व्योम test_acipher_speed(स्थिर अक्षर *algo, पूर्णांक enc, अचिन्हित पूर्णांक secs,
-			       काष्ठा cipher_speed_ढाँचा *ढाँचा,
-			       अचिन्हित पूर्णांक tcount, u8 *keysize)
-अणु
-	वापस test_skcipher_speed(algo, enc, secs, ढाँचा, tcount, keysize,
+static void test_acipher_speed(const char *algo, int enc, unsigned int secs,
+			       struct cipher_speed_template *template,
+			       unsigned int tcount, u8 *keysize)
+{
+	return test_skcipher_speed(algo, enc, secs, template, tcount, keysize,
 				   true);
-पूर्ण
+}
 
-अटल व्योम test_cipher_speed(स्थिर अक्षर *algo, पूर्णांक enc, अचिन्हित पूर्णांक secs,
-			      काष्ठा cipher_speed_ढाँचा *ढाँचा,
-			      अचिन्हित पूर्णांक tcount, u8 *keysize)
-अणु
-	वापस test_skcipher_speed(algo, enc, secs, ढाँचा, tcount, keysize,
+static void test_cipher_speed(const char *algo, int enc, unsigned int secs,
+			      struct cipher_speed_template *template,
+			      unsigned int tcount, u8 *keysize)
+{
+	return test_skcipher_speed(algo, enc, secs, template, tcount, keysize,
 				   false);
-पूर्ण
+}
 
-अटल व्योम test_available(व्योम)
-अणु
-	स्थिर अक्षर **name = check;
+static void test_available(void)
+{
+	const char **name = check;
 
-	जबतक (*name) अणु
-		prपूर्णांकk("alg %s ", *name);
-		prपूर्णांकk(crypto_has_alg(*name, 0, 0) ?
+	while (*name) {
+		printk("alg %s ", *name);
+		printk(crypto_has_alg(*name, 0, 0) ?
 		       "found\n" : "not found\n");
 		name++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक tcrypt_test(स्थिर अक्षर *alg)
-अणु
-	पूर्णांक ret;
+static inline int tcrypt_test(const char *alg)
+{
+	int ret;
 
 	pr_debug("testing %s\n", alg);
 
 	ret = alg_test(alg, alg, 0, 0);
-	/* non-fips algs वापस -EINVAL in fips mode */
-	अगर (fips_enabled && ret == -EINVAL)
+	/* non-fips algs return -EINVAL in fips mode */
+	if (fips_enabled && ret == -EINVAL)
 		ret = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_test(स्थिर अक्षर *alg, u32 type, u32 mask, पूर्णांक m, u32 num_mb)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+static int do_test(const char *alg, u32 type, u32 mask, int m, u32 num_mb)
+{
+	int i;
+	int ret = 0;
 
-	चयन (m) अणु
-	हाल 0:
-		अगर (alg) अणु
-			अगर (!crypto_has_alg(alg, type,
+	switch (m) {
+	case 0:
+		if (alg) {
+			if (!crypto_has_alg(alg, type,
 					    mask ?: CRYPTO_ALG_TYPE_MASK))
 				ret = -ENOENT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		क्रम (i = 1; i < 200; i++)
-			ret += करो_test(शून्य, 0, 0, i, num_mb);
-		अवरोध;
+		for (i = 1; i < 200; i++)
+			ret += do_test(NULL, 0, 0, i, num_mb);
+		break;
 
-	हाल 1:
+	case 1:
 		ret += tcrypt_test("md5");
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		ret += tcrypt_test("sha1");
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		ret += tcrypt_test("ecb(des)");
 		ret += tcrypt_test("cbc(des)");
 		ret += tcrypt_test("ctr(des)");
-		अवरोध;
+		break;
 
-	हाल 4:
+	case 4:
 		ret += tcrypt_test("ecb(des3_ede)");
 		ret += tcrypt_test("cbc(des3_ede)");
 		ret += tcrypt_test("ctr(des3_ede)");
-		अवरोध;
+		break;
 
-	हाल 5:
+	case 5:
 		ret += tcrypt_test("md4");
-		अवरोध;
+		break;
 
-	हाल 6:
+	case 6:
 		ret += tcrypt_test("sha256");
-		अवरोध;
+		break;
 
-	हाल 7:
+	case 7:
 		ret += tcrypt_test("ecb(blowfish)");
 		ret += tcrypt_test("cbc(blowfish)");
 		ret += tcrypt_test("ctr(blowfish)");
-		अवरोध;
+		break;
 
-	हाल 8:
+	case 8:
 		ret += tcrypt_test("ecb(twofish)");
 		ret += tcrypt_test("cbc(twofish)");
 		ret += tcrypt_test("ctr(twofish)");
 		ret += tcrypt_test("lrw(twofish)");
 		ret += tcrypt_test("xts(twofish)");
-		अवरोध;
+		break;
 
-	हाल 9:
+	case 9:
 		ret += tcrypt_test("ecb(serpent)");
 		ret += tcrypt_test("cbc(serpent)");
 		ret += tcrypt_test("ctr(serpent)");
 		ret += tcrypt_test("lrw(serpent)");
 		ret += tcrypt_test("xts(serpent)");
-		अवरोध;
+		break;
 
-	हाल 10:
+	case 10:
 		ret += tcrypt_test("ecb(aes)");
 		ret += tcrypt_test("cbc(aes)");
 		ret += tcrypt_test("lrw(aes)");
@@ -1743,1261 +1742,1261 @@ out:
 		ret += tcrypt_test("rfc3686(ctr(aes))");
 		ret += tcrypt_test("ofb(aes)");
 		ret += tcrypt_test("cfb(aes)");
-		अवरोध;
+		break;
 
-	हाल 11:
+	case 11:
 		ret += tcrypt_test("sha384");
-		अवरोध;
+		break;
 
-	हाल 12:
+	case 12:
 		ret += tcrypt_test("sha512");
-		अवरोध;
+		break;
 
-	हाल 13:
+	case 13:
 		ret += tcrypt_test("deflate");
-		अवरोध;
+		break;
 
-	हाल 14:
+	case 14:
 		ret += tcrypt_test("ecb(cast5)");
 		ret += tcrypt_test("cbc(cast5)");
 		ret += tcrypt_test("ctr(cast5)");
-		अवरोध;
+		break;
 
-	हाल 15:
+	case 15:
 		ret += tcrypt_test("ecb(cast6)");
 		ret += tcrypt_test("cbc(cast6)");
 		ret += tcrypt_test("ctr(cast6)");
 		ret += tcrypt_test("lrw(cast6)");
 		ret += tcrypt_test("xts(cast6)");
-		अवरोध;
+		break;
 
-	हाल 16:
+	case 16:
 		ret += tcrypt_test("ecb(arc4)");
-		अवरोध;
+		break;
 
-	हाल 17:
+	case 17:
 		ret += tcrypt_test("michael_mic");
-		अवरोध;
+		break;
 
-	हाल 18:
+	case 18:
 		ret += tcrypt_test("crc32c");
-		अवरोध;
+		break;
 
-	हाल 19:
+	case 19:
 		ret += tcrypt_test("ecb(tea)");
-		अवरोध;
+		break;
 
-	हाल 20:
+	case 20:
 		ret += tcrypt_test("ecb(xtea)");
-		अवरोध;
+		break;
 
-	हाल 21:
+	case 21:
 		ret += tcrypt_test("ecb(khazad)");
-		अवरोध;
+		break;
 
-	हाल 22:
+	case 22:
 		ret += tcrypt_test("wp512");
-		अवरोध;
+		break;
 
-	हाल 23:
+	case 23:
 		ret += tcrypt_test("wp384");
-		अवरोध;
+		break;
 
-	हाल 24:
+	case 24:
 		ret += tcrypt_test("wp256");
-		अवरोध;
+		break;
 
-	हाल 26:
+	case 26:
 		ret += tcrypt_test("ecb(anubis)");
 		ret += tcrypt_test("cbc(anubis)");
-		अवरोध;
+		break;
 
-	हाल 30:
+	case 30:
 		ret += tcrypt_test("ecb(xeta)");
-		अवरोध;
+		break;
 
-	हाल 31:
+	case 31:
 		ret += tcrypt_test("pcbc(fcrypt)");
-		अवरोध;
+		break;
 
-	हाल 32:
+	case 32:
 		ret += tcrypt_test("ecb(camellia)");
 		ret += tcrypt_test("cbc(camellia)");
 		ret += tcrypt_test("ctr(camellia)");
 		ret += tcrypt_test("lrw(camellia)");
 		ret += tcrypt_test("xts(camellia)");
-		अवरोध;
+		break;
 
-	हाल 33:
+	case 33:
 		ret += tcrypt_test("sha224");
-		अवरोध;
+		break;
 
-	हाल 35:
+	case 35:
 		ret += tcrypt_test("gcm(aes)");
-		अवरोध;
+		break;
 
-	हाल 36:
+	case 36:
 		ret += tcrypt_test("lzo");
-		अवरोध;
+		break;
 
-	हाल 37:
+	case 37:
 		ret += tcrypt_test("ccm(aes)");
-		अवरोध;
+		break;
 
-	हाल 38:
+	case 38:
 		ret += tcrypt_test("cts(cbc(aes))");
-		अवरोध;
+		break;
 
-        हाल 40:
+        case 40:
 		ret += tcrypt_test("rmd160");
-		अवरोध;
+		break;
 
-	हाल 43:
+	case 43:
 		ret += tcrypt_test("ecb(seed)");
-		अवरोध;
+		break;
 
-	हाल 45:
+	case 45:
 		ret += tcrypt_test("rfc4309(ccm(aes))");
-		अवरोध;
+		break;
 
-	हाल 46:
+	case 46:
 		ret += tcrypt_test("ghash");
-		अवरोध;
+		break;
 
-	हाल 47:
+	case 47:
 		ret += tcrypt_test("crct10dif");
-		अवरोध;
+		break;
 
-	हाल 48:
+	case 48:
 		ret += tcrypt_test("sha3-224");
-		अवरोध;
+		break;
 
-	हाल 49:
+	case 49:
 		ret += tcrypt_test("sha3-256");
-		अवरोध;
+		break;
 
-	हाल 50:
+	case 50:
 		ret += tcrypt_test("sha3-384");
-		अवरोध;
+		break;
 
-	हाल 51:
+	case 51:
 		ret += tcrypt_test("sha3-512");
-		अवरोध;
+		break;
 
-	हाल 52:
+	case 52:
 		ret += tcrypt_test("sm3");
-		अवरोध;
+		break;
 
-	हाल 53:
+	case 53:
 		ret += tcrypt_test("streebog256");
-		अवरोध;
+		break;
 
-	हाल 54:
+	case 54:
 		ret += tcrypt_test("streebog512");
-		अवरोध;
+		break;
 
-	हाल 100:
+	case 100:
 		ret += tcrypt_test("hmac(md5)");
-		अवरोध;
+		break;
 
-	हाल 101:
+	case 101:
 		ret += tcrypt_test("hmac(sha1)");
-		अवरोध;
+		break;
 
-	हाल 102:
+	case 102:
 		ret += tcrypt_test("hmac(sha256)");
-		अवरोध;
+		break;
 
-	हाल 103:
+	case 103:
 		ret += tcrypt_test("hmac(sha384)");
-		अवरोध;
+		break;
 
-	हाल 104:
+	case 104:
 		ret += tcrypt_test("hmac(sha512)");
-		अवरोध;
+		break;
 
-	हाल 105:
+	case 105:
 		ret += tcrypt_test("hmac(sha224)");
-		अवरोध;
+		break;
 
-	हाल 106:
+	case 106:
 		ret += tcrypt_test("xcbc(aes)");
-		अवरोध;
+		break;
 
-	हाल 108:
+	case 108:
 		ret += tcrypt_test("hmac(rmd160)");
-		अवरोध;
+		break;
 
-	हाल 109:
+	case 109:
 		ret += tcrypt_test("vmac64(aes)");
-		अवरोध;
+		break;
 
-	हाल 111:
+	case 111:
 		ret += tcrypt_test("hmac(sha3-224)");
-		अवरोध;
+		break;
 
-	हाल 112:
+	case 112:
 		ret += tcrypt_test("hmac(sha3-256)");
-		अवरोध;
+		break;
 
-	हाल 113:
+	case 113:
 		ret += tcrypt_test("hmac(sha3-384)");
-		अवरोध;
+		break;
 
-	हाल 114:
+	case 114:
 		ret += tcrypt_test("hmac(sha3-512)");
-		अवरोध;
+		break;
 
-	हाल 115:
+	case 115:
 		ret += tcrypt_test("hmac(streebog256)");
-		अवरोध;
+		break;
 
-	हाल 116:
+	case 116:
 		ret += tcrypt_test("hmac(streebog512)");
-		अवरोध;
+		break;
 
-	हाल 150:
+	case 150:
 		ret += tcrypt_test("ansi_cprng");
-		अवरोध;
+		break;
 
-	हाल 151:
+	case 151:
 		ret += tcrypt_test("rfc4106(gcm(aes))");
-		अवरोध;
+		break;
 
-	हाल 152:
+	case 152:
 		ret += tcrypt_test("rfc4543(gcm(aes))");
-		अवरोध;
+		break;
 
-	हाल 153:
+	case 153:
 		ret += tcrypt_test("cmac(aes)");
-		अवरोध;
+		break;
 
-	हाल 154:
+	case 154:
 		ret += tcrypt_test("cmac(des3_ede)");
-		अवरोध;
+		break;
 
-	हाल 155:
+	case 155:
 		ret += tcrypt_test("authenc(hmac(sha1),cbc(aes))");
-		अवरोध;
+		break;
 
-	हाल 156:
+	case 156:
 		ret += tcrypt_test("authenc(hmac(md5),ecb(cipher_null))");
-		अवरोध;
+		break;
 
-	हाल 157:
+	case 157:
 		ret += tcrypt_test("authenc(hmac(sha1),ecb(cipher_null))");
-		अवरोध;
-	हाल 181:
+		break;
+	case 181:
 		ret += tcrypt_test("authenc(hmac(sha1),cbc(des))");
-		अवरोध;
-	हाल 182:
+		break;
+	case 182:
 		ret += tcrypt_test("authenc(hmac(sha1),cbc(des3_ede))");
-		अवरोध;
-	हाल 183:
+		break;
+	case 183:
 		ret += tcrypt_test("authenc(hmac(sha224),cbc(des))");
-		अवरोध;
-	हाल 184:
+		break;
+	case 184:
 		ret += tcrypt_test("authenc(hmac(sha224),cbc(des3_ede))");
-		अवरोध;
-	हाल 185:
+		break;
+	case 185:
 		ret += tcrypt_test("authenc(hmac(sha256),cbc(des))");
-		अवरोध;
-	हाल 186:
+		break;
+	case 186:
 		ret += tcrypt_test("authenc(hmac(sha256),cbc(des3_ede))");
-		अवरोध;
-	हाल 187:
+		break;
+	case 187:
 		ret += tcrypt_test("authenc(hmac(sha384),cbc(des))");
-		अवरोध;
-	हाल 188:
+		break;
+	case 188:
 		ret += tcrypt_test("authenc(hmac(sha384),cbc(des3_ede))");
-		अवरोध;
-	हाल 189:
+		break;
+	case 189:
 		ret += tcrypt_test("authenc(hmac(sha512),cbc(des))");
-		अवरोध;
-	हाल 190:
+		break;
+	case 190:
 		ret += tcrypt_test("authenc(hmac(sha512),cbc(des3_ede))");
-		अवरोध;
-	हाल 191:
+		break;
+	case 191:
 		ret += tcrypt_test("ecb(sm4)");
 		ret += tcrypt_test("cbc(sm4)");
 		ret += tcrypt_test("ctr(sm4)");
-		अवरोध;
-	हाल 200:
-		test_cipher_speed("ecb(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ecb(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("lrw(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("lrw(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("xts(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_64);
-		test_cipher_speed("xts(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_64);
-		test_cipher_speed("cts(cbc(aes))", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cts(cbc(aes))", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cfb(aes)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cfb(aes)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		अवरोध;
+		break;
+	case 200:
+		test_cipher_speed("ecb(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ecb(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("lrw(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("lrw(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("xts(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_64);
+		test_cipher_speed("xts(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_32_64);
+		test_cipher_speed("cts(cbc(aes))", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cts(cbc(aes))", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cfb(aes)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cfb(aes)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		break;
 
-	हाल 201:
+	case 201:
 		test_cipher_speed("ecb(des3_ede)", ENCRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
 		test_cipher_speed("ecb(des3_ede)", DECRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
 		test_cipher_speed("cbc(des3_ede)", ENCRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
 		test_cipher_speed("cbc(des3_ede)", DECRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
 		test_cipher_speed("ctr(des3_ede)", ENCRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
 		test_cipher_speed("ctr(des3_ede)", DECRYPT, sec,
-				des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				speed_ढाँचा_24);
-		अवरोध;
+				des3_speed_template, DES3_SPEED_VECTORS,
+				speed_template_24);
+		break;
 
-	हाल 202:
-		test_cipher_speed("ecb(twofish)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ecb(twofish)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(twofish)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(twofish)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(twofish)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(twofish)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("lrw(twofish)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("lrw(twofish)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("xts(twofish)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_48_64);
-		test_cipher_speed("xts(twofish)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_48_64);
-		अवरोध;
+	case 202:
+		test_cipher_speed("ecb(twofish)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ecb(twofish)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(twofish)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(twofish)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(twofish)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(twofish)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("lrw(twofish)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("lrw(twofish)", DECRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("xts(twofish)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_48_64);
+		test_cipher_speed("xts(twofish)", DECRYPT, sec, NULL, 0,
+				speed_template_32_48_64);
+		break;
 
-	हाल 203:
-		test_cipher_speed("ecb(blowfish)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		test_cipher_speed("ecb(blowfish)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		test_cipher_speed("cbc(blowfish)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		test_cipher_speed("cbc(blowfish)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		test_cipher_speed("ctr(blowfish)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		test_cipher_speed("ctr(blowfish)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_32);
-		अवरोध;
+	case 203:
+		test_cipher_speed("ecb(blowfish)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		test_cipher_speed("ecb(blowfish)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		test_cipher_speed("cbc(blowfish)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		test_cipher_speed("cbc(blowfish)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		test_cipher_speed("ctr(blowfish)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		test_cipher_speed("ctr(blowfish)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_32);
+		break;
 
-	हाल 204:
-		test_cipher_speed("ecb(des)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8);
-		test_cipher_speed("ecb(des)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8);
-		test_cipher_speed("cbc(des)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8);
-		test_cipher_speed("cbc(des)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8);
-		अवरोध;
+	case 204:
+		test_cipher_speed("ecb(des)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8);
+		test_cipher_speed("ecb(des)", DECRYPT, sec, NULL, 0,
+				  speed_template_8);
+		test_cipher_speed("cbc(des)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8);
+		test_cipher_speed("cbc(des)", DECRYPT, sec, NULL, 0,
+				  speed_template_8);
+		break;
 
-	हाल 205:
-		test_cipher_speed("ecb(camellia)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ecb(camellia)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(camellia)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("cbc(camellia)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(camellia)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("ctr(camellia)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16_24_32);
-		test_cipher_speed("lrw(camellia)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("lrw(camellia)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_40_48);
-		test_cipher_speed("xts(camellia)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_48_64);
-		test_cipher_speed("xts(camellia)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_32_48_64);
-		अवरोध;
+	case 205:
+		test_cipher_speed("ecb(camellia)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ecb(camellia)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(camellia)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("cbc(camellia)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(camellia)", ENCRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("ctr(camellia)", DECRYPT, sec, NULL, 0,
+				speed_template_16_24_32);
+		test_cipher_speed("lrw(camellia)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("lrw(camellia)", DECRYPT, sec, NULL, 0,
+				speed_template_32_40_48);
+		test_cipher_speed("xts(camellia)", ENCRYPT, sec, NULL, 0,
+				speed_template_32_48_64);
+		test_cipher_speed("xts(camellia)", DECRYPT, sec, NULL, 0,
+				speed_template_32_48_64);
+		break;
 
-	हाल 207:
-		test_cipher_speed("ecb(serpent)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ecb(serpent)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("cbc(serpent)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("cbc(serpent)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ctr(serpent)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ctr(serpent)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("lrw(serpent)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_48);
-		test_cipher_speed("lrw(serpent)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_48);
-		test_cipher_speed("xts(serpent)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_64);
-		test_cipher_speed("xts(serpent)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_64);
-		अवरोध;
+	case 207:
+		test_cipher_speed("ecb(serpent)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ecb(serpent)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("cbc(serpent)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("cbc(serpent)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ctr(serpent)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ctr(serpent)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("lrw(serpent)", ENCRYPT, sec, NULL, 0,
+				  speed_template_32_48);
+		test_cipher_speed("lrw(serpent)", DECRYPT, sec, NULL, 0,
+				  speed_template_32_48);
+		test_cipher_speed("xts(serpent)", ENCRYPT, sec, NULL, 0,
+				  speed_template_32_64);
+		test_cipher_speed("xts(serpent)", DECRYPT, sec, NULL, 0,
+				  speed_template_32_64);
+		break;
 
-	हाल 208:
-		test_cipher_speed("ecb(arc4)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8);
-		अवरोध;
+	case 208:
+		test_cipher_speed("ecb(arc4)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8);
+		break;
 
-	हाल 209:
-		test_cipher_speed("ecb(cast5)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		test_cipher_speed("ecb(cast5)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		test_cipher_speed("cbc(cast5)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		test_cipher_speed("cbc(cast5)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		test_cipher_speed("ctr(cast5)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		test_cipher_speed("ctr(cast5)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_8_16);
-		अवरोध;
+	case 209:
+		test_cipher_speed("ecb(cast5)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		test_cipher_speed("ecb(cast5)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		test_cipher_speed("cbc(cast5)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		test_cipher_speed("cbc(cast5)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		test_cipher_speed("ctr(cast5)", ENCRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		test_cipher_speed("ctr(cast5)", DECRYPT, sec, NULL, 0,
+				  speed_template_8_16);
+		break;
 
-	हाल 210:
-		test_cipher_speed("ecb(cast6)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ecb(cast6)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("cbc(cast6)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("cbc(cast6)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ctr(cast6)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("ctr(cast6)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_32);
-		test_cipher_speed("lrw(cast6)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_48);
-		test_cipher_speed("lrw(cast6)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_48);
-		test_cipher_speed("xts(cast6)", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_64);
-		test_cipher_speed("xts(cast6)", DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32_64);
-		अवरोध;
+	case 210:
+		test_cipher_speed("ecb(cast6)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ecb(cast6)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("cbc(cast6)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("cbc(cast6)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ctr(cast6)", ENCRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("ctr(cast6)", DECRYPT, sec, NULL, 0,
+				  speed_template_16_32);
+		test_cipher_speed("lrw(cast6)", ENCRYPT, sec, NULL, 0,
+				  speed_template_32_48);
+		test_cipher_speed("lrw(cast6)", DECRYPT, sec, NULL, 0,
+				  speed_template_32_48);
+		test_cipher_speed("xts(cast6)", ENCRYPT, sec, NULL, 0,
+				  speed_template_32_64);
+		test_cipher_speed("xts(cast6)", DECRYPT, sec, NULL, 0,
+				  speed_template_32_64);
+		break;
 
-	हाल 211:
+	case 211:
 		test_aead_speed("rfc4106(gcm(aes))", ENCRYPT, sec,
-				शून्य, 0, 16, 16, aead_speed_ढाँचा_20);
+				NULL, 0, 16, 16, aead_speed_template_20);
 		test_aead_speed("gcm(aes)", ENCRYPT, sec,
-				शून्य, 0, 16, 8, speed_ढाँचा_16_24_32);
+				NULL, 0, 16, 8, speed_template_16_24_32);
 		test_aead_speed("rfc4106(gcm(aes))", DECRYPT, sec,
-				शून्य, 0, 16, 16, aead_speed_ढाँचा_20);
+				NULL, 0, 16, 16, aead_speed_template_20);
 		test_aead_speed("gcm(aes)", DECRYPT, sec,
-				शून्य, 0, 16, 8, speed_ढाँचा_16_24_32);
-		अवरोध;
+				NULL, 0, 16, 8, speed_template_16_24_32);
+		break;
 
-	हाल 212:
+	case 212:
 		test_aead_speed("rfc4309(ccm(aes))", ENCRYPT, sec,
-				शून्य, 0, 16, 16, aead_speed_ढाँचा_19);
+				NULL, 0, 16, 16, aead_speed_template_19);
 		test_aead_speed("rfc4309(ccm(aes))", DECRYPT, sec,
-				शून्य, 0, 16, 16, aead_speed_ढाँचा_19);
-		अवरोध;
+				NULL, 0, 16, 16, aead_speed_template_19);
+		break;
 
-	हाल 213:
+	case 213:
 		test_aead_speed("rfc7539esp(chacha20,poly1305)", ENCRYPT, sec,
-				शून्य, 0, 16, 8, aead_speed_ढाँचा_36);
+				NULL, 0, 16, 8, aead_speed_template_36);
 		test_aead_speed("rfc7539esp(chacha20,poly1305)", DECRYPT, sec,
-				शून्य, 0, 16, 8, aead_speed_ढाँचा_36);
-		अवरोध;
+				NULL, 0, 16, 8, aead_speed_template_36);
+		break;
 
-	हाल 214:
-		test_cipher_speed("chacha20", ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_32);
-		अवरोध;
+	case 214:
+		test_cipher_speed("chacha20", ENCRYPT, sec, NULL, 0,
+				  speed_template_32);
+		break;
 
-	हाल 215:
-		test_mb_aead_speed("rfc4106(gcm(aes))", ENCRYPT, sec, शून्य,
-				   0, 16, 16, aead_speed_ढाँचा_20, num_mb);
-		test_mb_aead_speed("gcm(aes)", ENCRYPT, sec, शून्य, 0, 16, 8,
-				   speed_ढाँचा_16_24_32, num_mb);
-		test_mb_aead_speed("rfc4106(gcm(aes))", DECRYPT, sec, शून्य,
-				   0, 16, 16, aead_speed_ढाँचा_20, num_mb);
-		test_mb_aead_speed("gcm(aes)", DECRYPT, sec, शून्य, 0, 16, 8,
-				   speed_ढाँचा_16_24_32, num_mb);
-		अवरोध;
+	case 215:
+		test_mb_aead_speed("rfc4106(gcm(aes))", ENCRYPT, sec, NULL,
+				   0, 16, 16, aead_speed_template_20, num_mb);
+		test_mb_aead_speed("gcm(aes)", ENCRYPT, sec, NULL, 0, 16, 8,
+				   speed_template_16_24_32, num_mb);
+		test_mb_aead_speed("rfc4106(gcm(aes))", DECRYPT, sec, NULL,
+				   0, 16, 16, aead_speed_template_20, num_mb);
+		test_mb_aead_speed("gcm(aes)", DECRYPT, sec, NULL, 0, 16, 8,
+				   speed_template_16_24_32, num_mb);
+		break;
 
-	हाल 216:
-		test_mb_aead_speed("rfc4309(ccm(aes))", ENCRYPT, sec, शून्य, 0,
-				   16, 16, aead_speed_ढाँचा_19, num_mb);
-		test_mb_aead_speed("rfc4309(ccm(aes))", DECRYPT, sec, शून्य, 0,
-				   16, 16, aead_speed_ढाँचा_19, num_mb);
-		अवरोध;
+	case 216:
+		test_mb_aead_speed("rfc4309(ccm(aes))", ENCRYPT, sec, NULL, 0,
+				   16, 16, aead_speed_template_19, num_mb);
+		test_mb_aead_speed("rfc4309(ccm(aes))", DECRYPT, sec, NULL, 0,
+				   16, 16, aead_speed_template_19, num_mb);
+		break;
 
-	हाल 217:
+	case 217:
 		test_mb_aead_speed("rfc7539esp(chacha20,poly1305)", ENCRYPT,
-				   sec, शून्य, 0, 16, 8, aead_speed_ढाँचा_36,
+				   sec, NULL, 0, 16, 8, aead_speed_template_36,
 				   num_mb);
 		test_mb_aead_speed("rfc7539esp(chacha20,poly1305)", DECRYPT,
-				   sec, शून्य, 0, 16, 8, aead_speed_ढाँचा_36,
+				   sec, NULL, 0, 16, 8, aead_speed_template_36,
 				   num_mb);
-		अवरोध;
+		break;
 
-	हाल 218:
-		test_cipher_speed("ecb(sm4)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		test_cipher_speed("ecb(sm4)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		test_cipher_speed("cbc(sm4)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		test_cipher_speed("cbc(sm4)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		test_cipher_speed("ctr(sm4)", ENCRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		test_cipher_speed("ctr(sm4)", DECRYPT, sec, शून्य, 0,
-				speed_ढाँचा_16);
-		अवरोध;
+	case 218:
+		test_cipher_speed("ecb(sm4)", ENCRYPT, sec, NULL, 0,
+				speed_template_16);
+		test_cipher_speed("ecb(sm4)", DECRYPT, sec, NULL, 0,
+				speed_template_16);
+		test_cipher_speed("cbc(sm4)", ENCRYPT, sec, NULL, 0,
+				speed_template_16);
+		test_cipher_speed("cbc(sm4)", DECRYPT, sec, NULL, 0,
+				speed_template_16);
+		test_cipher_speed("ctr(sm4)", ENCRYPT, sec, NULL, 0,
+				speed_template_16);
+		test_cipher_speed("ctr(sm4)", DECRYPT, sec, NULL, 0,
+				speed_template_16);
+		break;
 
-	हाल 219:
-		test_cipher_speed("adiantum(xchacha12,aes)", ENCRYPT, sec, शून्य,
-				  0, speed_ढाँचा_32);
-		test_cipher_speed("adiantum(xchacha12,aes)", DECRYPT, sec, शून्य,
-				  0, speed_ढाँचा_32);
-		test_cipher_speed("adiantum(xchacha20,aes)", ENCRYPT, sec, शून्य,
-				  0, speed_ढाँचा_32);
-		test_cipher_speed("adiantum(xchacha20,aes)", DECRYPT, sec, शून्य,
-				  0, speed_ढाँचा_32);
-		अवरोध;
+	case 219:
+		test_cipher_speed("adiantum(xchacha12,aes)", ENCRYPT, sec, NULL,
+				  0, speed_template_32);
+		test_cipher_speed("adiantum(xchacha12,aes)", DECRYPT, sec, NULL,
+				  0, speed_template_32);
+		test_cipher_speed("adiantum(xchacha20,aes)", ENCRYPT, sec, NULL,
+				  0, speed_template_32);
+		test_cipher_speed("adiantum(xchacha20,aes)", DECRYPT, sec, NULL,
+				  0, speed_template_32);
+		break;
 
-	हाल 220:
+	case 220:
 		test_acipher_speed("essiv(cbc(aes),sha256)",
-				  ENCRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_24_32);
+				  ENCRYPT, sec, NULL, 0,
+				  speed_template_16_24_32);
 		test_acipher_speed("essiv(cbc(aes),sha256)",
-				  DECRYPT, sec, शून्य, 0,
-				  speed_ढाँचा_16_24_32);
-		अवरोध;
+				  DECRYPT, sec, NULL, 0,
+				  speed_template_16_24_32);
+		break;
 
-	हाल 221:
+	case 221:
 		test_aead_speed("aegis128", ENCRYPT, sec,
-				शून्य, 0, 16, 8, speed_ढाँचा_16);
+				NULL, 0, 16, 8, speed_template_16);
 		test_aead_speed("aegis128", DECRYPT, sec,
-				शून्य, 0, 16, 8, speed_ढाँचा_16);
-		अवरोध;
+				NULL, 0, 16, 8, speed_template_16);
+		break;
 
-	हाल 300:
-		अगर (alg) अणु
-			test_hash_speed(alg, sec, generic_hash_speed_ढाँचा);
-			अवरोध;
-		पूर्ण
+	case 300:
+		if (alg) {
+			test_hash_speed(alg, sec, generic_hash_speed_template);
+			break;
+		}
 		fallthrough;
-	हाल 301:
-		test_hash_speed("md4", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 301:
+		test_hash_speed("md4", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 302:
-		test_hash_speed("md5", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 302:
+		test_hash_speed("md5", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 303:
-		test_hash_speed("sha1", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 303:
+		test_hash_speed("sha1", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 304:
-		test_hash_speed("sha256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 304:
+		test_hash_speed("sha256", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 305:
-		test_hash_speed("sha384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 305:
+		test_hash_speed("sha384", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 306:
-		test_hash_speed("sha512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 306:
+		test_hash_speed("sha512", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 307:
-		test_hash_speed("wp256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 307:
+		test_hash_speed("wp256", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 308:
-		test_hash_speed("wp384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 308:
+		test_hash_speed("wp384", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 309:
-		test_hash_speed("wp512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 309:
+		test_hash_speed("wp512", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 313:
-		test_hash_speed("sha224", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 313:
+		test_hash_speed("sha224", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 315:
-		test_hash_speed("rmd160", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 315:
+		test_hash_speed("rmd160", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 318:
+	case 318:
 		klen = 16;
-		test_hash_speed("ghash", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+		test_hash_speed("ghash", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 319:
-		test_hash_speed("crc32c", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 319:
+		test_hash_speed("crc32c", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 320:
-		test_hash_speed("crct10dif", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 320:
+		test_hash_speed("crct10dif", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 321:
-		test_hash_speed("poly1305", sec, poly1305_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 321:
+		test_hash_speed("poly1305", sec, poly1305_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 322:
-		test_hash_speed("sha3-224", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 322:
+		test_hash_speed("sha3-224", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 323:
-		test_hash_speed("sha3-256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 323:
+		test_hash_speed("sha3-256", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 324:
-		test_hash_speed("sha3-384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 324:
+		test_hash_speed("sha3-384", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 325:
-		test_hash_speed("sha3-512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 325:
+		test_hash_speed("sha3-512", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 326:
-		test_hash_speed("sm3", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+	case 326:
+		test_hash_speed("sm3", sec, generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 327:
+	case 327:
 		test_hash_speed("streebog256", sec,
-				generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+				generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 328:
+	case 328:
 		test_hash_speed("streebog512", sec,
-				generic_hash_speed_ढाँचा);
-		अगर (mode > 300 && mode < 400) अवरोध;
+				generic_hash_speed_template);
+		if (mode > 300 && mode < 400) break;
 		fallthrough;
-	हाल 399:
-		अवरोध;
+	case 399:
+		break;
 
-	हाल 400:
-		अगर (alg) अणु
-			test_ahash_speed(alg, sec, generic_hash_speed_ढाँचा);
-			अवरोध;
-		पूर्ण
+	case 400:
+		if (alg) {
+			test_ahash_speed(alg, sec, generic_hash_speed_template);
+			break;
+		}
 		fallthrough;
-	हाल 401:
-		test_ahash_speed("md4", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 401:
+		test_ahash_speed("md4", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 402:
-		test_ahash_speed("md5", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 402:
+		test_ahash_speed("md5", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 403:
-		test_ahash_speed("sha1", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 403:
+		test_ahash_speed("sha1", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 404:
-		test_ahash_speed("sha256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 404:
+		test_ahash_speed("sha256", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 405:
-		test_ahash_speed("sha384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 405:
+		test_ahash_speed("sha384", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 406:
-		test_ahash_speed("sha512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 406:
+		test_ahash_speed("sha512", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 407:
-		test_ahash_speed("wp256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 407:
+		test_ahash_speed("wp256", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 408:
-		test_ahash_speed("wp384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 408:
+		test_ahash_speed("wp384", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 409:
-		test_ahash_speed("wp512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 409:
+		test_ahash_speed("wp512", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 413:
-		test_ahash_speed("sha224", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 413:
+		test_ahash_speed("sha224", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 415:
-		test_ahash_speed("rmd160", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 415:
+		test_ahash_speed("rmd160", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 418:
-		test_ahash_speed("sha3-224", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 418:
+		test_ahash_speed("sha3-224", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 419:
-		test_ahash_speed("sha3-256", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 419:
+		test_ahash_speed("sha3-256", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 420:
-		test_ahash_speed("sha3-384", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 420:
+		test_ahash_speed("sha3-384", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 421:
-		test_ahash_speed("sha3-512", sec, generic_hash_speed_ढाँचा);
-		अगर (mode > 400 && mode < 500) अवरोध;
+	case 421:
+		test_ahash_speed("sha3-512", sec, generic_hash_speed_template);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 422:
-		test_mb_ahash_speed("sha1", sec, generic_hash_speed_ढाँचा,
+	case 422:
+		test_mb_ahash_speed("sha1", sec, generic_hash_speed_template,
 				    num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 423:
-		test_mb_ahash_speed("sha256", sec, generic_hash_speed_ढाँचा,
+	case 423:
+		test_mb_ahash_speed("sha256", sec, generic_hash_speed_template,
 				    num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 424:
-		test_mb_ahash_speed("sha512", sec, generic_hash_speed_ढाँचा,
+	case 424:
+		test_mb_ahash_speed("sha512", sec, generic_hash_speed_template,
 				    num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 425:
-		test_mb_ahash_speed("sm3", sec, generic_hash_speed_ढाँचा,
+	case 425:
+		test_mb_ahash_speed("sm3", sec, generic_hash_speed_template,
 				    num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 426:
+	case 426:
 		test_mb_ahash_speed("streebog256", sec,
-				    generic_hash_speed_ढाँचा, num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+				    generic_hash_speed_template, num_mb);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 427:
+	case 427:
 		test_mb_ahash_speed("streebog512", sec,
-				    generic_hash_speed_ढाँचा, num_mb);
-		अगर (mode > 400 && mode < 500) अवरोध;
+				    generic_hash_speed_template, num_mb);
+		if (mode > 400 && mode < 500) break;
 		fallthrough;
-	हाल 499:
-		अवरोध;
+	case 499:
+		break;
 
-	हाल 500:
-		test_acipher_speed("ecb(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ecb(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cbc(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cbc(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("lrw(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_40_48);
-		test_acipher_speed("lrw(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_40_48);
-		test_acipher_speed("xts(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		test_acipher_speed("xts(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		test_acipher_speed("cts(cbc(aes))", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cts(cbc(aes))", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ctr(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ctr(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cfb(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cfb(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ofb(aes)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ofb(aes)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("rfc3686(ctr(aes))", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_20_28_36);
-		test_acipher_speed("rfc3686(ctr(aes))", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_20_28_36);
-		अवरोध;
+	case 500:
+		test_acipher_speed("ecb(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ecb(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cbc(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cbc(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("lrw(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_40_48);
+		test_acipher_speed("lrw(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_40_48);
+		test_acipher_speed("xts(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		test_acipher_speed("xts(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		test_acipher_speed("cts(cbc(aes))", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cts(cbc(aes))", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ctr(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ctr(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cfb(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cfb(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ofb(aes)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ofb(aes)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("rfc3686(ctr(aes))", ENCRYPT, sec, NULL, 0,
+				   speed_template_20_28_36);
+		test_acipher_speed("rfc3686(ctr(aes))", DECRYPT, sec, NULL, 0,
+				   speed_template_20_28_36);
+		break;
 
-	हाल 501:
+	case 501:
 		test_acipher_speed("ecb(des3_ede)", ENCRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("ecb(des3_ede)", DECRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("cbc(des3_ede)", ENCRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("cbc(des3_ede)", DECRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("cfb(des3_ede)", ENCRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("cfb(des3_ede)", DECRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("ofb(des3_ede)", ENCRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
 		test_acipher_speed("ofb(des3_ede)", DECRYPT, sec,
-				   des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				   speed_ढाँचा_24);
-		अवरोध;
+				   des3_speed_template, DES3_SPEED_VECTORS,
+				   speed_template_24);
+		break;
 
-	हाल 502:
-		test_acipher_speed("ecb(des)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("ecb(des)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("cbc(des)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("cbc(des)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("cfb(des)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("cfb(des)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("ofb(des)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		test_acipher_speed("ofb(des)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		अवरोध;
+	case 502:
+		test_acipher_speed("ecb(des)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("ecb(des)", DECRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("cbc(des)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("cbc(des)", DECRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("cfb(des)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("cfb(des)", DECRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("ofb(des)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8);
+		test_acipher_speed("ofb(des)", DECRYPT, sec, NULL, 0,
+				   speed_template_8);
+		break;
 
-	हाल 503:
-		test_acipher_speed("ecb(serpent)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ecb(serpent)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(serpent)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(serpent)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(serpent)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(serpent)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("lrw(serpent)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("lrw(serpent)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("xts(serpent)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		test_acipher_speed("xts(serpent)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		अवरोध;
+	case 503:
+		test_acipher_speed("ecb(serpent)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ecb(serpent)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(serpent)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(serpent)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(serpent)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(serpent)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("lrw(serpent)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("lrw(serpent)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("xts(serpent)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		test_acipher_speed("xts(serpent)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		break;
 
-	हाल 504:
-		test_acipher_speed("ecb(twofish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ecb(twofish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cbc(twofish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("cbc(twofish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ctr(twofish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("ctr(twofish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_24_32);
-		test_acipher_speed("lrw(twofish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_40_48);
-		test_acipher_speed("lrw(twofish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_40_48);
-		test_acipher_speed("xts(twofish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48_64);
-		test_acipher_speed("xts(twofish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48_64);
-		अवरोध;
+	case 504:
+		test_acipher_speed("ecb(twofish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ecb(twofish)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cbc(twofish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("cbc(twofish)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ctr(twofish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("ctr(twofish)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_24_32);
+		test_acipher_speed("lrw(twofish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_40_48);
+		test_acipher_speed("lrw(twofish)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_40_48);
+		test_acipher_speed("xts(twofish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_48_64);
+		test_acipher_speed("xts(twofish)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_48_64);
+		break;
 
-	हाल 505:
-		test_acipher_speed("ecb(arc4)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8);
-		अवरोध;
+	case 505:
+		test_acipher_speed("ecb(arc4)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8);
+		break;
 
-	हाल 506:
-		test_acipher_speed("ecb(cast5)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		test_acipher_speed("ecb(cast5)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		test_acipher_speed("cbc(cast5)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		test_acipher_speed("cbc(cast5)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		test_acipher_speed("ctr(cast5)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		test_acipher_speed("ctr(cast5)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_16);
-		अवरोध;
+	case 506:
+		test_acipher_speed("ecb(cast5)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		test_acipher_speed("ecb(cast5)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		test_acipher_speed("cbc(cast5)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		test_acipher_speed("cbc(cast5)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		test_acipher_speed("ctr(cast5)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		test_acipher_speed("ctr(cast5)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_16);
+		break;
 
-	हाल 507:
-		test_acipher_speed("ecb(cast6)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ecb(cast6)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(cast6)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(cast6)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(cast6)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(cast6)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("lrw(cast6)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("lrw(cast6)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("xts(cast6)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		test_acipher_speed("xts(cast6)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		अवरोध;
+	case 507:
+		test_acipher_speed("ecb(cast6)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ecb(cast6)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(cast6)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(cast6)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(cast6)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(cast6)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("lrw(cast6)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("lrw(cast6)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("xts(cast6)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		test_acipher_speed("xts(cast6)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		break;
 
-	हाल 508:
-		test_acipher_speed("ecb(camellia)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ecb(camellia)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(camellia)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("cbc(camellia)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(camellia)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("ctr(camellia)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_16_32);
-		test_acipher_speed("lrw(camellia)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("lrw(camellia)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_48);
-		test_acipher_speed("xts(camellia)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		test_acipher_speed("xts(camellia)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_32_64);
-		अवरोध;
+	case 508:
+		test_acipher_speed("ecb(camellia)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ecb(camellia)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(camellia)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("cbc(camellia)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(camellia)", ENCRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("ctr(camellia)", DECRYPT, sec, NULL, 0,
+				   speed_template_16_32);
+		test_acipher_speed("lrw(camellia)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("lrw(camellia)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_48);
+		test_acipher_speed("xts(camellia)", ENCRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		test_acipher_speed("xts(camellia)", DECRYPT, sec, NULL, 0,
+				   speed_template_32_64);
+		break;
 
-	हाल 509:
-		test_acipher_speed("ecb(blowfish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		test_acipher_speed("ecb(blowfish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		test_acipher_speed("cbc(blowfish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		test_acipher_speed("cbc(blowfish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		test_acipher_speed("ctr(blowfish)", ENCRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		test_acipher_speed("ctr(blowfish)", DECRYPT, sec, शून्य, 0,
-				   speed_ढाँचा_8_32);
-		अवरोध;
+	case 509:
+		test_acipher_speed("ecb(blowfish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		test_acipher_speed("ecb(blowfish)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		test_acipher_speed("cbc(blowfish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		test_acipher_speed("cbc(blowfish)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		test_acipher_speed("ctr(blowfish)", ENCRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		test_acipher_speed("ctr(blowfish)", DECRYPT, sec, NULL, 0,
+				   speed_template_8_32);
+		break;
 
-	हाल 600:
-		test_mb_skcipher_speed("ecb(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ecb(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cbc(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cbc(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("lrw(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_40_48, num_mb);
-		test_mb_skcipher_speed("lrw(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_40_48, num_mb);
-		test_mb_skcipher_speed("xts(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		test_mb_skcipher_speed("xts(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		test_mb_skcipher_speed("cts(cbc(aes))", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cts(cbc(aes))", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ctr(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ctr(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cfb(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cfb(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ofb(aes)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ofb(aes)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("rfc3686(ctr(aes))", ENCRYPT, sec, शून्य,
-				       0, speed_ढाँचा_20_28_36, num_mb);
-		test_mb_skcipher_speed("rfc3686(ctr(aes))", DECRYPT, sec, शून्य,
-				       0, speed_ढाँचा_20_28_36, num_mb);
-		अवरोध;
+	case 600:
+		test_mb_skcipher_speed("ecb(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ecb(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cbc(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cbc(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("lrw(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_40_48, num_mb);
+		test_mb_skcipher_speed("lrw(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_40_48, num_mb);
+		test_mb_skcipher_speed("xts(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		test_mb_skcipher_speed("xts(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		test_mb_skcipher_speed("cts(cbc(aes))", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cts(cbc(aes))", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ctr(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ctr(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cfb(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cfb(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ofb(aes)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ofb(aes)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("rfc3686(ctr(aes))", ENCRYPT, sec, NULL,
+				       0, speed_template_20_28_36, num_mb);
+		test_mb_skcipher_speed("rfc3686(ctr(aes))", DECRYPT, sec, NULL,
+				       0, speed_template_20_28_36, num_mb);
+		break;
 
-	हाल 601:
+	case 601:
 		test_mb_skcipher_speed("ecb(des3_ede)", ENCRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("ecb(des3_ede)", DECRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("cbc(des3_ede)", ENCRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("cbc(des3_ede)", DECRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("cfb(des3_ede)", ENCRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("cfb(des3_ede)", DECRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("ofb(des3_ede)", ENCRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
 		test_mb_skcipher_speed("ofb(des3_ede)", DECRYPT, sec,
-				       des3_speed_ढाँचा, DES3_SPEED_VECTORS,
-				       speed_ढाँचा_24, num_mb);
-		अवरोध;
+				       des3_speed_template, DES3_SPEED_VECTORS,
+				       speed_template_24, num_mb);
+		break;
 
-	हाल 602:
-		test_mb_skcipher_speed("ecb(des)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("ecb(des)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("cbc(des)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("cbc(des)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("cfb(des)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("cfb(des)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("ofb(des)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		test_mb_skcipher_speed("ofb(des)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		अवरोध;
+	case 602:
+		test_mb_skcipher_speed("ecb(des)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("ecb(des)", DECRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("cbc(des)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("cbc(des)", DECRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("cfb(des)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("cfb(des)", DECRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("ofb(des)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		test_mb_skcipher_speed("ofb(des)", DECRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		break;
 
-	हाल 603:
-		test_mb_skcipher_speed("ecb(serpent)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ecb(serpent)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(serpent)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(serpent)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(serpent)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(serpent)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("lrw(serpent)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("lrw(serpent)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("xts(serpent)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		test_mb_skcipher_speed("xts(serpent)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		अवरोध;
+	case 603:
+		test_mb_skcipher_speed("ecb(serpent)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ecb(serpent)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(serpent)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(serpent)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(serpent)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(serpent)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("lrw(serpent)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("lrw(serpent)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("xts(serpent)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		test_mb_skcipher_speed("xts(serpent)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		break;
 
-	हाल 604:
-		test_mb_skcipher_speed("ecb(twofish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ecb(twofish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cbc(twofish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("cbc(twofish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ctr(twofish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("ctr(twofish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_24_32, num_mb);
-		test_mb_skcipher_speed("lrw(twofish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_40_48, num_mb);
-		test_mb_skcipher_speed("lrw(twofish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_40_48, num_mb);
-		test_mb_skcipher_speed("xts(twofish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48_64, num_mb);
-		test_mb_skcipher_speed("xts(twofish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48_64, num_mb);
-		अवरोध;
+	case 604:
+		test_mb_skcipher_speed("ecb(twofish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ecb(twofish)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cbc(twofish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("cbc(twofish)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ctr(twofish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("ctr(twofish)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_24_32, num_mb);
+		test_mb_skcipher_speed("lrw(twofish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_40_48, num_mb);
+		test_mb_skcipher_speed("lrw(twofish)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_40_48, num_mb);
+		test_mb_skcipher_speed("xts(twofish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_48_64, num_mb);
+		test_mb_skcipher_speed("xts(twofish)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_48_64, num_mb);
+		break;
 
-	हाल 605:
-		test_mb_skcipher_speed("ecb(arc4)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8, num_mb);
-		अवरोध;
+	case 605:
+		test_mb_skcipher_speed("ecb(arc4)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8, num_mb);
+		break;
 
-	हाल 606:
-		test_mb_skcipher_speed("ecb(cast5)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		test_mb_skcipher_speed("ecb(cast5)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		test_mb_skcipher_speed("cbc(cast5)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		test_mb_skcipher_speed("cbc(cast5)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		test_mb_skcipher_speed("ctr(cast5)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		test_mb_skcipher_speed("ctr(cast5)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_16, num_mb);
-		अवरोध;
+	case 606:
+		test_mb_skcipher_speed("ecb(cast5)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		test_mb_skcipher_speed("ecb(cast5)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		test_mb_skcipher_speed("cbc(cast5)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		test_mb_skcipher_speed("cbc(cast5)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		test_mb_skcipher_speed("ctr(cast5)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		test_mb_skcipher_speed("ctr(cast5)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_16, num_mb);
+		break;
 
-	हाल 607:
-		test_mb_skcipher_speed("ecb(cast6)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ecb(cast6)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(cast6)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(cast6)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(cast6)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(cast6)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("lrw(cast6)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("lrw(cast6)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("xts(cast6)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		test_mb_skcipher_speed("xts(cast6)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		अवरोध;
+	case 607:
+		test_mb_skcipher_speed("ecb(cast6)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ecb(cast6)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(cast6)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(cast6)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(cast6)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(cast6)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("lrw(cast6)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("lrw(cast6)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("xts(cast6)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		test_mb_skcipher_speed("xts(cast6)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		break;
 
-	हाल 608:
-		test_mb_skcipher_speed("ecb(camellia)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ecb(camellia)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(camellia)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("cbc(camellia)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(camellia)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("ctr(camellia)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_16_32, num_mb);
-		test_mb_skcipher_speed("lrw(camellia)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("lrw(camellia)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_48, num_mb);
-		test_mb_skcipher_speed("xts(camellia)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		test_mb_skcipher_speed("xts(camellia)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_32_64, num_mb);
-		अवरोध;
+	case 608:
+		test_mb_skcipher_speed("ecb(camellia)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ecb(camellia)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(camellia)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("cbc(camellia)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(camellia)", ENCRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("ctr(camellia)", DECRYPT, sec, NULL, 0,
+				       speed_template_16_32, num_mb);
+		test_mb_skcipher_speed("lrw(camellia)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("lrw(camellia)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_48, num_mb);
+		test_mb_skcipher_speed("xts(camellia)", ENCRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		test_mb_skcipher_speed("xts(camellia)", DECRYPT, sec, NULL, 0,
+				       speed_template_32_64, num_mb);
+		break;
 
-	हाल 609:
-		test_mb_skcipher_speed("ecb(blowfish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		test_mb_skcipher_speed("ecb(blowfish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		test_mb_skcipher_speed("cbc(blowfish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		test_mb_skcipher_speed("cbc(blowfish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		test_mb_skcipher_speed("ctr(blowfish)", ENCRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		test_mb_skcipher_speed("ctr(blowfish)", DECRYPT, sec, शून्य, 0,
-				       speed_ढाँचा_8_32, num_mb);
-		अवरोध;
+	case 609:
+		test_mb_skcipher_speed("ecb(blowfish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		test_mb_skcipher_speed("ecb(blowfish)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		test_mb_skcipher_speed("cbc(blowfish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		test_mb_skcipher_speed("cbc(blowfish)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		test_mb_skcipher_speed("ctr(blowfish)", ENCRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		test_mb_skcipher_speed("ctr(blowfish)", DECRYPT, sec, NULL, 0,
+				       speed_template_8_32, num_mb);
+		break;
 
-	हाल 1000:
+	case 1000:
 		test_available();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __init tcrypt_mod_init(व्योम)
-अणु
-	पूर्णांक err = -ENOMEM;
-	पूर्णांक i;
+static int __init tcrypt_mod_init(void)
+{
+	int err = -ENOMEM;
+	int i;
 
-	क्रम (i = 0; i < TVMEMSIZE; i++) अणु
-		tvmem[i] = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
-		अगर (!tvmem[i])
-			जाओ err_मुक्त_tv;
-	पूर्ण
+	for (i = 0; i < TVMEMSIZE; i++) {
+		tvmem[i] = (void *)__get_free_page(GFP_KERNEL);
+		if (!tvmem[i])
+			goto err_free_tv;
+	}
 
-	err = करो_test(alg, type, mask, mode, num_mb);
+	err = do_test(alg, type, mask, mode, num_mb);
 
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "tcrypt: one or more tests failed!\n");
-		जाओ err_मुक्त_tv;
-	पूर्ण अन्यथा अणु
+	if (err) {
+		printk(KERN_ERR "tcrypt: one or more tests failed!\n");
+		goto err_free_tv;
+	} else {
 		pr_debug("all tests passed\n");
-	पूर्ण
+	}
 
-	/* We पूर्णांकentionaly वापस -EAGAIN to prevent keeping the module,
-	 * unless we're running in fips mode. It करोes all its work from
-	 * init() and करोesn't offer any runसमय functionality, but in
-	 * the fips हाल, checking क्रम a successful load is helpful.
-	 * => we करोn't need it in the memory, करो we?
+	/* We intentionaly return -EAGAIN to prevent keeping the module,
+	 * unless we're running in fips mode. It does all its work from
+	 * init() and doesn't offer any runtime functionality, but in
+	 * the fips case, checking for a successful load is helpful.
+	 * => we don't need it in the memory, do we?
 	 *                                        -- mludvig
 	 */
-	अगर (!fips_enabled)
+	if (!fips_enabled)
 		err = -EAGAIN;
 
-err_मुक्त_tv:
-	क्रम (i = 0; i < TVMEMSIZE && tvmem[i]; i++)
-		मुक्त_page((अचिन्हित दीर्घ)tvmem[i]);
+err_free_tv:
+	for (i = 0; i < TVMEMSIZE && tvmem[i]; i++)
+		free_page((unsigned long)tvmem[i]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * If an init function is provided, an निकास function must also be provided
+ * If an init function is provided, an exit function must also be provided
  * to allow module unload.
  */
-अटल व्योम __निकास tcrypt_mod_fini(व्योम) अणु पूर्ण
+static void __exit tcrypt_mod_fini(void) { }
 
 late_initcall(tcrypt_mod_init);
-module_निकास(tcrypt_mod_fini);
+module_exit(tcrypt_mod_fini);
 
-module_param(alg, अक्षरp, 0);
-module_param(type, uपूर्णांक, 0);
-module_param(mask, uपूर्णांक, 0);
-module_param(mode, पूर्णांक, 0);
-module_param(sec, uपूर्णांक, 0);
+module_param(alg, charp, 0);
+module_param(type, uint, 0);
+module_param(mask, uint, 0);
+module_param(mode, int, 0);
+module_param(sec, uint, 0);
 MODULE_PARM_DESC(sec, "Length in seconds of speed tests "
 		      "(defaults to zero which uses CPU cycles instead)");
-module_param(num_mb, uपूर्णांक, 0000);
+module_param(num_mb, uint, 0000);
 MODULE_PARM_DESC(num_mb, "Number of concurrent requests to be used in mb speed tests (defaults to 8)");
-module_param(klen, uपूर्णांक, 0);
+module_param(klen, uint, 0);
 MODULE_PARM_DESC(klen, "Key length (defaults to 0)");
 
 MODULE_LICENSE("GPL");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,12 +22,12 @@
  * Authors: AMD
  *
  */
-#अगर_अघोषित __DCE_HWSEQ_H__
-#घोषणा __DCE_HWSEQ_H__
+#ifndef __DCE_HWSEQ_H__
+#define __DCE_HWSEQ_H__
 
-#समावेश "dc_types.h"
+#include "dc_types.h"
 
-#घोषणा HWSEQ_DCEF_REG_LIST_DCE8() \
+#define HWSEQ_DCEF_REG_LIST_DCE8() \
 	.DCFE_CLOCK_CONTROL[0] = mmCRTC0_CRTC_DCFE_CLOCK_CONTROL, \
 	.DCFE_CLOCK_CONTROL[1] = mmCRTC1_CRTC_DCFE_CLOCK_CONTROL, \
 	.DCFE_CLOCK_CONTROL[2] = mmCRTC2_CRTC_DCFE_CLOCK_CONTROL, \
@@ -36,7 +35,7 @@
 	.DCFE_CLOCK_CONTROL[4] = mmCRTC4_CRTC_DCFE_CLOCK_CONTROL, \
 	.DCFE_CLOCK_CONTROL[5] = mmCRTC5_CRTC_DCFE_CLOCK_CONTROL
 
-#घोषणा HWSEQ_DCEF_REG_LIST() \
+#define HWSEQ_DCEF_REG_LIST() \
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 0), \
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 1), \
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 2), \
@@ -45,7 +44,7 @@
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 5), \
 	SR(DC_MEM_GLOBAL_PWR_REQ_CNTL)
 
-#घोषणा HWSEQ_BLND_REG_LIST() \
+#define HWSEQ_BLND_REG_LIST() \
 	SRII(BLND_V_UPDATE_LOCK, BLND, 0), \
 	SRII(BLND_V_UPDATE_LOCK, BLND, 1), \
 	SRII(BLND_V_UPDATE_LOCK, BLND, 2), \
@@ -59,11 +58,11 @@
 	SRII(BLND_CONTROL, BLND, 4), \
 	SRII(BLND_CONTROL, BLND, 5)
 
-#घोषणा HSWEQ_DCN_PIXEL_RATE_REG_LIST(blk, inst) \
+#define HSWEQ_DCN_PIXEL_RATE_REG_LIST(blk, inst) \
 	SRII(PIXEL_RATE_CNTL, blk, inst), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, inst)
 
-#घोषणा HWSEQ_PIXEL_RATE_REG_LIST(blk) \
+#define HWSEQ_PIXEL_RATE_REG_LIST(blk) \
 	SRII(PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PIXEL_RATE_CNTL, blk, 1), \
 	SRII(PIXEL_RATE_CNTL, blk, 2), \
@@ -71,7 +70,7 @@
 	SRII(PIXEL_RATE_CNTL, blk, 4), \
 	SRII(PIXEL_RATE_CNTL, blk, 5)
 
-#घोषणा HWSEQ_PHYPLL_REG_LIST(blk) \
+#define HWSEQ_PHYPLL_REG_LIST(blk) \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 1), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 2), \
@@ -79,7 +78,7 @@
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 4), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 5)
 
-#घोषणा HWSEQ_PIXEL_RATE_REG_LIST_3(blk) \
+#define HWSEQ_PIXEL_RATE_REG_LIST_3(blk) \
 	SRII(PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PIXEL_RATE_CNTL, blk, 1),\
 	SRII(PIXEL_RATE_CNTL, blk, 2),\
@@ -87,7 +86,7 @@
 	SRII(PIXEL_RATE_CNTL, blk, 4), \
 	SRII(PIXEL_RATE_CNTL, blk, 5)
 
-#घोषणा HWSEQ_PHYPLL_REG_LIST_3(blk) \
+#define HWSEQ_PHYPLL_REG_LIST_3(blk) \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 1),\
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 2),\
@@ -95,7 +94,7 @@
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 4), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 5)
 
-#घोषणा HWSEQ_DCE11_REG_LIST_BASE() \
+#define HWSEQ_DCE11_REG_LIST_BASE() \
 	SR(DC_MEM_GLOBAL_PWR_REQ_CNTL), \
 	SR(DCFEV_CLOCK_CONTROL), \
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 0), \
@@ -109,30 +108,30 @@
 	SR(BLNDV_CONTROL),\
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा HWSEQ_DCE6_REG_LIST() \
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define HWSEQ_DCE6_REG_LIST() \
 	HWSEQ_DCEF_REG_LIST_DCE8(), \
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC)
-#पूर्ण_अगर
+#endif
 
-#घोषणा HWSEQ_DCE8_REG_LIST() \
+#define HWSEQ_DCE8_REG_LIST() \
 	HWSEQ_DCEF_REG_LIST_DCE8(), \
 	HWSEQ_BLND_REG_LIST(), \
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC)
 
-#घोषणा HWSEQ_DCE10_REG_LIST() \
+#define HWSEQ_DCE10_REG_LIST() \
 	HWSEQ_DCEF_REG_LIST(), \
 	HWSEQ_BLND_REG_LIST(), \
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC)
 
-#घोषणा HWSEQ_ST_REG_LIST() \
+#define HWSEQ_ST_REG_LIST() \
 	HWSEQ_DCE11_REG_LIST_BASE(), \
 	.DCFE_CLOCK_CONTROL[2] = mmDCFEV_CLOCK_CONTROL, \
 	.CRTC_H_BLANK_START_END[2] = mmCRTCV_H_BLANK_START_END, \
 	.BLND_V_UPDATE_LOCK[2] = mmBLNDV_V_UPDATE_LOCK, \
 	.BLND_CONTROL[2] = mmBLNDV_CONTROL
 
-#घोषणा HWSEQ_CZ_REG_LIST() \
+#define HWSEQ_CZ_REG_LIST() \
 	HWSEQ_DCE11_REG_LIST_BASE(), \
 	SRII(DCFE_CLOCK_CONTROL, DCFE, 2), \
 	SRII(CRTC_H_BLANK_START_END, CRTC, 2), \
@@ -143,7 +142,7 @@
 	.BLND_V_UPDATE_LOCK[3] = mmBLNDV_V_UPDATE_LOCK, \
 	.BLND_CONTROL[3] = mmBLNDV_CONTROL
 
-#घोषणा HWSEQ_DCE120_REG_LIST() \
+#define HWSEQ_DCE120_REG_LIST() \
 	HWSEQ_DCE10_REG_LIST(), \
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC), \
 	HWSEQ_PHYPLL_REG_LIST(CRTC), \
@@ -152,16 +151,16 @@
 	SR(DCHUB_AGP_BOT),\
 	SR(DCHUB_AGP_TOP)
 
-#घोषणा HWSEQ_VG20_REG_LIST() \
+#define HWSEQ_VG20_REG_LIST() \
 	HWSEQ_DCE120_REG_LIST(),\
 	MMHUB_SR(MC_VM_XGMI_LFB_CNTL)
 
-#घोषणा HWSEQ_DCE112_REG_LIST() \
+#define HWSEQ_DCE112_REG_LIST() \
 	HWSEQ_DCE10_REG_LIST(), \
 	HWSEQ_PIXEL_RATE_REG_LIST(CRTC), \
 	HWSEQ_PHYPLL_REG_LIST(CRTC)
 
-#घोषणा HWSEQ_DCN_REG_LIST()\
+#define HWSEQ_DCN_REG_LIST()\
 	SR(REFCLK_CNTL), \
 	SR(DCHUBBUB_GLOBAL_TIMER_CNTL), \
 	SR(DIO_MEM_PWR_CTRL), \
@@ -172,8 +171,8 @@
 	SR(DC_MEM_GLOBAL_PWR_REQ_CNTL)
 
 
-#घोषणा MMHUB_DCN_REG_LIST()\
-	/* toकरो:  get these from GVM instead of पढ़ोing रेजिस्टरs ourselves */\
+#define MMHUB_DCN_REG_LIST()\
+	/* todo:  get these from GVM instead of reading registers ourselves */\
 	MMHUB_SR(VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32),\
 	MMHUB_SR(VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32),\
 	MMHUB_SR(VM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32),\
@@ -188,7 +187,7 @@
 	MMHUB_SR(MC_VM_SYSTEM_APERTURE_HIGH_ADDR)
 
 
-#घोषणा HWSEQ_DCN1_REG_LIST()\
+#define HWSEQ_DCN1_REG_LIST()\
 	HWSEQ_DCN_REG_LIST(), \
 	MMHUB_DCN_REG_LIST(), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 0), \
@@ -223,7 +222,7 @@
 	SR(VGA_TEST_CONTROL), \
 	SR(DC_IP_REQUEST_CNTL)
 
-#घोषणा HWSEQ_DCN2_REG_LIST()\
+#define HWSEQ_DCN2_REG_LIST()\
 	HWSEQ_DCN_REG_LIST(), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 0), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 1), \
@@ -254,8 +253,8 @@
 	SR(DOMAIN7_PG_CONFIG), \
 	SR(DOMAIN8_PG_CONFIG), \
 	SR(DOMAIN9_PG_CONFIG), \
-/*	SR(DOMAIN10_PG_CONFIG), Navi1x HUBP5 not घातergate-able*/\
-/*	SR(DOMAIN11_PG_CONFIG), Navi1x DPP5 is not घातergate-able */\
+/*	SR(DOMAIN10_PG_CONFIG), Navi1x HUBP5 not powergate-able*/\
+/*	SR(DOMAIN11_PG_CONFIG), Navi1x DPP5 is not powergate-able */\
 	SR(DOMAIN16_PG_CONFIG), \
 	SR(DOMAIN17_PG_CONFIG), \
 	SR(DOMAIN18_PG_CONFIG), \
@@ -288,7 +287,7 @@
 	SR(D6VGA_CONTROL), \
 	SR(DC_IP_REQUEST_CNTL)
 
-#घोषणा HWSEQ_DCN21_REG_LIST()\
+#define HWSEQ_DCN21_REG_LIST()\
 	HWSEQ_DCN_REG_LIST(), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 0), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 1), \
@@ -338,7 +337,7 @@
 	SR(D6VGA_CONTROL), \
 	SR(DC_IP_REQUEST_CNTL)
 
-#घोषणा HWSEQ_DCN30_REG_LIST()\
+#define HWSEQ_DCN30_REG_LIST()\
 	HWSEQ_DCN2_REG_LIST(),\
 	HWSEQ_DCN_REG_LIST(), \
 	HWSEQ_PIXEL_RATE_REG_LIST_3(OTG), \
@@ -359,7 +358,7 @@
 	SR(AZALIA_AUDIO_DTO), \
 	SR(AZALIA_CONTROLLER_CLOCK_GATING)
 
-#घोषणा HWSEQ_DCN301_REG_LIST()\
+#define HWSEQ_DCN301_REG_LIST()\
 	SR(REFCLK_CNTL), \
 	SR(DCHUBBUB_GLOBAL_TIMER_CNTL), \
 	SR(DIO_MEM_PWR_CTRL), \
@@ -421,7 +420,7 @@
 	SR(AZALIA_AUDIO_DTO), \
 	SR(AZALIA_CONTROLLER_CLOCK_GATING)
 
-#घोषणा HWSEQ_DCN302_REG_LIST()\
+#define HWSEQ_DCN302_REG_LIST()\
 	HWSEQ_DCN_REG_LIST(), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 0), \
 	HSWEQ_DCN_PIXEL_RATE_REG_LIST(OTG, 1), \
@@ -481,138 +480,138 @@
 	SR(AZALIA_AUDIO_DTO), \
 	SR(AZALIA_CONTROLLER_CLOCK_GATING)
 
-#घोषणा HWSEQ_PIXEL_RATE_REG_LIST_302(blk) \
+#define HWSEQ_PIXEL_RATE_REG_LIST_302(blk) \
 	SRII(PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PIXEL_RATE_CNTL, blk, 1),\
 	SRII(PIXEL_RATE_CNTL, blk, 2),\
 	SRII(PIXEL_RATE_CNTL, blk, 3), \
 	SRII(PIXEL_RATE_CNTL, blk, 4)
 
-#घोषणा HWSEQ_PHYPLL_REG_LIST_302(blk) \
+#define HWSEQ_PHYPLL_REG_LIST_302(blk) \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 0), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 1),\
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 2),\
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 3), \
 	SRII(PHYPLL_PIXEL_RATE_CNTL, blk, 4)
 
-काष्ठा dce_hwseq_रेजिस्टरs अणु
-	uपूर्णांक32_t DCFE_CLOCK_CONTROL[6];
-	uपूर्णांक32_t DCFEV_CLOCK_CONTROL;
-	uपूर्णांक32_t DC_MEM_GLOBAL_PWR_REQ_CNTL;
-	uपूर्णांक32_t BLND_V_UPDATE_LOCK[6];
-	uपूर्णांक32_t BLND_CONTROL[6];
-	uपूर्णांक32_t BLNDV_CONTROL;
-	uपूर्णांक32_t CRTC_H_BLANK_START_END[6];
-	uपूर्णांक32_t PIXEL_RATE_CNTL[6];
-	uपूर्णांक32_t PHYPLL_PIXEL_RATE_CNTL[6];
+struct dce_hwseq_registers {
+	uint32_t DCFE_CLOCK_CONTROL[6];
+	uint32_t DCFEV_CLOCK_CONTROL;
+	uint32_t DC_MEM_GLOBAL_PWR_REQ_CNTL;
+	uint32_t BLND_V_UPDATE_LOCK[6];
+	uint32_t BLND_CONTROL[6];
+	uint32_t BLNDV_CONTROL;
+	uint32_t CRTC_H_BLANK_START_END[6];
+	uint32_t PIXEL_RATE_CNTL[6];
+	uint32_t PHYPLL_PIXEL_RATE_CNTL[6];
 	/*DCHUB*/
-	uपूर्णांक32_t DCHUB_FB_LOCATION;
-	uपूर्णांक32_t DCHUB_AGP_BASE;
-	uपूर्णांक32_t DCHUB_AGP_BOT;
-	uपूर्णांक32_t DCHUB_AGP_TOP;
+	uint32_t DCHUB_FB_LOCATION;
+	uint32_t DCHUB_AGP_BASE;
+	uint32_t DCHUB_AGP_BOT;
+	uint32_t DCHUB_AGP_TOP;
 
-	uपूर्णांक32_t REFCLK_CNTL;
+	uint32_t REFCLK_CNTL;
 
-	uपूर्णांक32_t DCHUBBUB_GLOBAL_TIMER_CNTL;
-	uपूर्णांक32_t DCHUBBUB_SDPIF_FB_BASE;
-	uपूर्णांक32_t DCHUBBUB_SDPIF_FB_OFFSET;
-	uपूर्णांक32_t DCHUBBUB_SDPIF_AGP_BASE;
-	uपूर्णांक32_t DCHUBBUB_SDPIF_AGP_BOT;
-	uपूर्णांक32_t DCHUBBUB_SDPIF_AGP_TOP;
-	uपूर्णांक32_t DC_IP_REQUEST_CNTL;
-	uपूर्णांक32_t DOMAIN0_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN1_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN2_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN3_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN4_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN5_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN6_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN7_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN8_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN9_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN10_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN11_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN16_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN17_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN18_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN19_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN20_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN21_PG_CONFIG;
-	uपूर्णांक32_t DOMAIN0_PG_STATUS;
-	uपूर्णांक32_t DOMAIN1_PG_STATUS;
-	uपूर्णांक32_t DOMAIN2_PG_STATUS;
-	uपूर्णांक32_t DOMAIN3_PG_STATUS;
-	uपूर्णांक32_t DOMAIN4_PG_STATUS;
-	uपूर्णांक32_t DOMAIN5_PG_STATUS;
-	uपूर्णांक32_t DOMAIN6_PG_STATUS;
-	uपूर्णांक32_t DOMAIN7_PG_STATUS;
-	uपूर्णांक32_t DOMAIN8_PG_STATUS;
-	uपूर्णांक32_t DOMAIN9_PG_STATUS;
-	uपूर्णांक32_t DOMAIN10_PG_STATUS;
-	uपूर्णांक32_t DOMAIN11_PG_STATUS;
-	uपूर्णांक32_t DOMAIN16_PG_STATUS;
-	uपूर्णांक32_t DOMAIN17_PG_STATUS;
-	uपूर्णांक32_t DOMAIN18_PG_STATUS;
-	uपूर्णांक32_t DOMAIN19_PG_STATUS;
-	uपूर्णांक32_t DOMAIN20_PG_STATUS;
-	uपूर्णांक32_t DOMAIN21_PG_STATUS;
-	uपूर्णांक32_t DIO_MEM_PWR_CTRL;
-	uपूर्णांक32_t DCCG_GATE_DISABLE_CNTL;
-	uपूर्णांक32_t DCCG_GATE_DISABLE_CNTL2;
-	uपूर्णांक32_t DCFCLK_CNTL;
-	uपूर्णांक32_t MICROSECOND_TIME_BASE_DIV;
-	uपूर्णांक32_t MILLISECOND_TIME_BASE_DIV;
-	uपूर्णांक32_t DISPCLK_FREQ_CHANGE_CNTL;
-	uपूर्णांक32_t RBBMIF_TIMEOUT_DIS;
-	uपूर्णांक32_t RBBMIF_TIMEOUT_DIS_2;
-	uपूर्णांक32_t DCHUBBUB_CRC_CTRL;
-	uपूर्णांक32_t DPP_TOP0_DPP_CRC_CTRL;
-	uपूर्णांक32_t DPP_TOP0_DPP_CRC_VAL_R_G;
-	uपूर्णांक32_t DPP_TOP0_DPP_CRC_VAL_B_A;
-	uपूर्णांक32_t MPC_CRC_CTRL;
-	uपूर्णांक32_t MPC_CRC_RESULT_GB;
-	uपूर्णांक32_t MPC_CRC_RESULT_C;
-	uपूर्णांक32_t MPC_CRC_RESULT_AR;
-	uपूर्णांक32_t D1VGA_CONTROL;
-	uपूर्णांक32_t D2VGA_CONTROL;
-	uपूर्णांक32_t D3VGA_CONTROL;
-	uपूर्णांक32_t D4VGA_CONTROL;
-	uपूर्णांक32_t D5VGA_CONTROL;
-	uपूर्णांक32_t D6VGA_CONTROL;
-	uपूर्णांक32_t VGA_TEST_CONTROL;
-	/* MMHUB रेजिस्टरs. पढ़ो only. temporary hack */
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32;
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32;
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32;
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32;
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_END_ADDR_HI32;
-	uपूर्णांक32_t VM_CONTEXT0_PAGE_TABLE_END_ADDR_LO32;
-	uपूर्णांक32_t VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_HI32;
-	uपूर्णांक32_t VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_LO32;
-	uपूर्णांक32_t MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB;
-	uपूर्णांक32_t MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB;
-	uपूर्णांक32_t MC_VM_SYSTEM_APERTURE_LOW_ADDR;
-	uपूर्णांक32_t MC_VM_SYSTEM_APERTURE_HIGH_ADDR;
-	uपूर्णांक32_t MC_VM_XGMI_LFB_CNTL;
-	uपूर्णांक32_t AZALIA_AUDIO_DTO;
-	uपूर्णांक32_t AZALIA_CONTROLLER_CLOCK_GATING;
-	uपूर्णांक32_t HPO_TOP_CLOCK_CONTROL;
-	uपूर्णांक32_t ODM_MEM_PWR_CTRL3;
-	uपूर्णांक32_t DMU_MEM_PWR_CNTL;
-पूर्ण;
+	uint32_t DCHUBBUB_GLOBAL_TIMER_CNTL;
+	uint32_t DCHUBBUB_SDPIF_FB_BASE;
+	uint32_t DCHUBBUB_SDPIF_FB_OFFSET;
+	uint32_t DCHUBBUB_SDPIF_AGP_BASE;
+	uint32_t DCHUBBUB_SDPIF_AGP_BOT;
+	uint32_t DCHUBBUB_SDPIF_AGP_TOP;
+	uint32_t DC_IP_REQUEST_CNTL;
+	uint32_t DOMAIN0_PG_CONFIG;
+	uint32_t DOMAIN1_PG_CONFIG;
+	uint32_t DOMAIN2_PG_CONFIG;
+	uint32_t DOMAIN3_PG_CONFIG;
+	uint32_t DOMAIN4_PG_CONFIG;
+	uint32_t DOMAIN5_PG_CONFIG;
+	uint32_t DOMAIN6_PG_CONFIG;
+	uint32_t DOMAIN7_PG_CONFIG;
+	uint32_t DOMAIN8_PG_CONFIG;
+	uint32_t DOMAIN9_PG_CONFIG;
+	uint32_t DOMAIN10_PG_CONFIG;
+	uint32_t DOMAIN11_PG_CONFIG;
+	uint32_t DOMAIN16_PG_CONFIG;
+	uint32_t DOMAIN17_PG_CONFIG;
+	uint32_t DOMAIN18_PG_CONFIG;
+	uint32_t DOMAIN19_PG_CONFIG;
+	uint32_t DOMAIN20_PG_CONFIG;
+	uint32_t DOMAIN21_PG_CONFIG;
+	uint32_t DOMAIN0_PG_STATUS;
+	uint32_t DOMAIN1_PG_STATUS;
+	uint32_t DOMAIN2_PG_STATUS;
+	uint32_t DOMAIN3_PG_STATUS;
+	uint32_t DOMAIN4_PG_STATUS;
+	uint32_t DOMAIN5_PG_STATUS;
+	uint32_t DOMAIN6_PG_STATUS;
+	uint32_t DOMAIN7_PG_STATUS;
+	uint32_t DOMAIN8_PG_STATUS;
+	uint32_t DOMAIN9_PG_STATUS;
+	uint32_t DOMAIN10_PG_STATUS;
+	uint32_t DOMAIN11_PG_STATUS;
+	uint32_t DOMAIN16_PG_STATUS;
+	uint32_t DOMAIN17_PG_STATUS;
+	uint32_t DOMAIN18_PG_STATUS;
+	uint32_t DOMAIN19_PG_STATUS;
+	uint32_t DOMAIN20_PG_STATUS;
+	uint32_t DOMAIN21_PG_STATUS;
+	uint32_t DIO_MEM_PWR_CTRL;
+	uint32_t DCCG_GATE_DISABLE_CNTL;
+	uint32_t DCCG_GATE_DISABLE_CNTL2;
+	uint32_t DCFCLK_CNTL;
+	uint32_t MICROSECOND_TIME_BASE_DIV;
+	uint32_t MILLISECOND_TIME_BASE_DIV;
+	uint32_t DISPCLK_FREQ_CHANGE_CNTL;
+	uint32_t RBBMIF_TIMEOUT_DIS;
+	uint32_t RBBMIF_TIMEOUT_DIS_2;
+	uint32_t DCHUBBUB_CRC_CTRL;
+	uint32_t DPP_TOP0_DPP_CRC_CTRL;
+	uint32_t DPP_TOP0_DPP_CRC_VAL_R_G;
+	uint32_t DPP_TOP0_DPP_CRC_VAL_B_A;
+	uint32_t MPC_CRC_CTRL;
+	uint32_t MPC_CRC_RESULT_GB;
+	uint32_t MPC_CRC_RESULT_C;
+	uint32_t MPC_CRC_RESULT_AR;
+	uint32_t D1VGA_CONTROL;
+	uint32_t D2VGA_CONTROL;
+	uint32_t D3VGA_CONTROL;
+	uint32_t D4VGA_CONTROL;
+	uint32_t D5VGA_CONTROL;
+	uint32_t D6VGA_CONTROL;
+	uint32_t VGA_TEST_CONTROL;
+	/* MMHUB registers. read only. temporary hack */
+	uint32_t VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32;
+	uint32_t VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32;
+	uint32_t VM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32;
+	uint32_t VM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32;
+	uint32_t VM_CONTEXT0_PAGE_TABLE_END_ADDR_HI32;
+	uint32_t VM_CONTEXT0_PAGE_TABLE_END_ADDR_LO32;
+	uint32_t VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_HI32;
+	uint32_t VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_LO32;
+	uint32_t MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB;
+	uint32_t MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB;
+	uint32_t MC_VM_SYSTEM_APERTURE_LOW_ADDR;
+	uint32_t MC_VM_SYSTEM_APERTURE_HIGH_ADDR;
+	uint32_t MC_VM_XGMI_LFB_CNTL;
+	uint32_t AZALIA_AUDIO_DTO;
+	uint32_t AZALIA_CONTROLLER_CLOCK_GATING;
+	uint32_t HPO_TOP_CLOCK_CONTROL;
+	uint32_t ODM_MEM_PWR_CTRL3;
+	uint32_t DMU_MEM_PWR_CNTL;
+};
  /* set field name */
-#घोषणा HWS_SF(blk_name, reg_name, field_name, post_fix)\
+#define HWS_SF(blk_name, reg_name, field_name, post_fix)\
 	.field_name = blk_name ## reg_name ## __ ## field_name ## post_fix
 
-#घोषणा HWS_SF1(blk_name, reg_name, field_name, post_fix)\
+#define HWS_SF1(blk_name, reg_name, field_name, post_fix)\
 	.field_name = blk_name ## reg_name ## __ ## blk_name ## field_name ## post_fix
 
 
-#घोषणा HWSEQ_DCEF_MASK_SH_LIST(mask_sh, blk)\
+#define HWSEQ_DCEF_MASK_SH_LIST(mask_sh, blk)\
 	HWS_SF(blk, CLOCK_CONTROL, DCFE_CLOCK_ENABLE, mask_sh),\
 	SF(DC_MEM_GLOBAL_PWR_REQ_CNTL, DC_MEM_GLOBAL_PWR_REQ_DIS, mask_sh)
 
-#घोषणा HWSEQ_BLND_MASK_SH_LIST(mask_sh, blk)\
+#define HWSEQ_BLND_MASK_SH_LIST(mask_sh, blk)\
 	HWS_SF(blk, V_UPDATE_LOCK, BLND_DCP_GRPH_V_UPDATE_LOCK, mask_sh),\
 	HWS_SF(blk, V_UPDATE_LOCK, BLND_SCL_V_UPDATE_LOCK, mask_sh),\
 	HWS_SF(blk, V_UPDATE_LOCK, BLND_DCP_GRPH_SURF_V_UPDATE_LOCK, mask_sh),\
@@ -623,21 +622,21 @@
 	HWS_SF(blk, CONTROL, BLND_MODE, mask_sh),\
 	HWS_SF(blk, CONTROL, BLND_MULTIPLIED_MODE, mask_sh)
 
-#घोषणा HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, blk)\
+#define HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, blk)\
 	HWS_SF1(blk, PIXEL_RATE_CNTL, PIXEL_RATE_SOURCE, mask_sh),\
 	HWS_SF(blk, PIXEL_RATE_CNTL, DP_DTO0_ENABLE, mask_sh)
 
-#घोषणा HWSEQ_PHYPLL_MASK_SH_LIST(mask_sh, blk)\
+#define HWSEQ_PHYPLL_MASK_SH_LIST(mask_sh, blk)\
 	HWS_SF1(blk, PHYPLL_PIXEL_RATE_CNTL, PHYPLL_PIXEL_RATE_SOURCE, mask_sh),\
 	HWS_SF1(blk, PHYPLL_PIXEL_RATE_CNTL, PIXEL_RATE_PLL_SOURCE, mask_sh)
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-#घोषणा HWSEQ_DCE6_MASK_SH_LIST(mask_sh)\
+#if defined(CONFIG_DRM_AMD_DC_SI)
+#define HWSEQ_DCE6_MASK_SH_LIST(mask_sh)\
 	.DCFE_CLOCK_ENABLE = CRTC_DCFE_CLOCK_CONTROL__CRTC_DCFE_CLOCK_ENABLE ## mask_sh, \
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, CRTC0_)
-#पूर्ण_अगर
+#endif
 
-#घोषणा HWSEQ_DCE8_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCE8_MASK_SH_LIST(mask_sh)\
 	.DCFE_CLOCK_ENABLE = CRTC_DCFE_CLOCK_CONTROL__CRTC_DCFE_CLOCK_ENABLE ## mask_sh, \
 	HWS_SF(BLND_, V_UPDATE_LOCK, BLND_DCP_GRPH_V_UPDATE_LOCK, mask_sh),\
 	HWS_SF(BLND_, V_UPDATE_LOCK, BLND_SCL_V_UPDATE_LOCK, mask_sh),\
@@ -645,47 +644,47 @@
 	HWS_SF(BLND_, CONTROL, BLND_MODE, mask_sh),\
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, CRTC0_)
 
-#घोषणा HWSEQ_DCE10_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCE10_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCEF_MASK_SH_LIST(mask_sh, DCFE_),\
 	HWSEQ_BLND_MASK_SH_LIST(mask_sh, BLND_),\
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, CRTC0_)
 
-#घोषणा HWSEQ_DCE11_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCE11_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCE10_MASK_SH_LIST(mask_sh),\
 	SF(DCFEV_CLOCK_CONTROL, DCFEV_CLOCK_ENABLE, mask_sh),\
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, CRTC0_)
 
-#घोषणा HWSEQ_DCE112_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCE112_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCE10_MASK_SH_LIST(mask_sh),\
 	HWSEQ_PHYPLL_MASK_SH_LIST(mask_sh, CRTC0_)
 
-#घोषणा HWSEQ_GFX9_DCHUB_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_GFX9_DCHUB_MASK_SH_LIST(mask_sh)\
 	SF(DCHUB_FB_LOCATION, FB_TOP, mask_sh),\
 	SF(DCHUB_FB_LOCATION, FB_BASE, mask_sh),\
 	SF(DCHUB_AGP_BASE, AGP_BASE, mask_sh),\
 	SF(DCHUB_AGP_BOT, AGP_BOT, mask_sh),\
 	SF(DCHUB_AGP_TOP, AGP_TOP, mask_sh)
 
-#घोषणा HWSEQ_DCE12_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCE12_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCEF_MASK_SH_LIST(mask_sh, DCFE0_DCFE_),\
 	HWSEQ_BLND_MASK_SH_LIST(mask_sh, BLND0_BLND_),\
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, CRTC0_),\
 	HWSEQ_PHYPLL_MASK_SH_LIST(mask_sh, CRTC0_),\
 	HWSEQ_GFX9_DCHUB_MASK_SH_LIST(mask_sh)
 
-#घोषणा HWSEQ_VG20_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_VG20_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCE12_MASK_SH_LIST(mask_sh),\
 	HWS_SF(, MC_VM_XGMI_LFB_CNTL, PF_LFB_REGION, mask_sh),\
 	HWS_SF(, MC_VM_XGMI_LFB_CNTL, PF_MAX_REGION, mask_sh)
 
-#घोषणा HWSEQ_DCN_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN_MASK_SH_LIST(mask_sh)\
 	HWSEQ_PIXEL_RATE_MASK_SH_LIST(mask_sh, OTG0_),\
 	HWS_SF1(OTG0_, PHYPLL_PIXEL_RATE_CNTL, PHYPLL_PIXEL_RATE_SOURCE, mask_sh), \
 	HWS_SF(, DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_ENABLE, mask_sh), \
 	HWS_SF(, DCFCLK_CNTL, DCFCLK_GATE_DIS, mask_sh), \
 	HWS_SF(, DC_MEM_GLOBAL_PWR_REQ_CNTL, DC_MEM_GLOBAL_PWR_REQ_DIS, mask_sh)
 
-#घोषणा HWSEQ_DCN1_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN1_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN_MASK_SH_LIST(mask_sh), \
 	HWS_SF1(OTG0_, PHYPLL_PIXEL_RATE_CNTL, PIXEL_RATE_PLL_SOURCE, mask_sh), \
 	HWS_SF(, DCHUBBUB_SDPIF_FB_BASE, SDPIF_FB_BASE, mask_sh), \
@@ -693,9 +692,9 @@
 	HWS_SF(, DCHUBBUB_SDPIF_AGP_BASE, SDPIF_AGP_BASE, mask_sh), \
 	HWS_SF(, DCHUBBUB_SDPIF_AGP_BOT, SDPIF_AGP_BOT, mask_sh), \
 	HWS_SF(, DCHUBBUB_SDPIF_AGP_TOP, SDPIF_AGP_TOP, mask_sh), \
-	/* toकरो:  get these from GVM instead of पढ़ोing रेजिस्टरs ourselves */\
-	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32, PAGE_सूचीECTORY_ENTRY_HI32, mask_sh),\
-	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32, PAGE_सूचीECTORY_ENTRY_LO32, mask_sh),\
+	/* todo:  get these from GVM instead of reading registers ourselves */\
+	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32, PAGE_DIRECTORY_ENTRY_HI32, mask_sh),\
+	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32, PAGE_DIRECTORY_ENTRY_LO32, mask_sh),\
 	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32, LOGICAL_PAGE_NUMBER_HI4, mask_sh),\
 	HWS_SF(, VM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32, LOGICAL_PAGE_NUMBER_LO32, mask_sh),\
 	HWS_SF(, VM_L2_PROTECTION_FAULT_DEFAULT_ADDR_HI32, PHYSICAL_PAGE_ADDR_HI4, mask_sh),\
@@ -735,7 +734,7 @@
 	HWS_SF(, VGA_TEST_CONTROL, VGA_TEST_ENABLE, mask_sh),\
 	HWS_SF(, VGA_TEST_CONTROL, VGA_TEST_RENDER_START, mask_sh)
 
-#घोषणा HWSEQ_DCN2_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN2_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN_MASK_SH_LIST(mask_sh), \
 	HWS_SF(, DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_REFDIV, mask_sh), \
 	HWS_SF(, DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, mask_sh), \
@@ -794,11 +793,11 @@
 	HWS_SF(, DOMAIN21_PG_STATUS, DOMAIN21_PGFSM_PWR_STATUS, mask_sh), \
 	HWS_SF(, DC_IP_REQUEST_CNTL, IP_REQUEST_EN, mask_sh)
 
-#घोषणा HWSEQ_DCN21_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN21_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN_MASK_SH_LIST(mask_sh), \
 	HWS_SF(, DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_REFDIV, mask_sh), \
-	HWS_SF(, MMVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32, PAGE_सूचीECTORY_ENTRY_HI32, mask_sh),\
-	HWS_SF(, MMVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32, PAGE_सूचीECTORY_ENTRY_LO32, mask_sh),\
+	HWS_SF(, MMVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32, PAGE_DIRECTORY_ENTRY_HI32, mask_sh),\
+	HWS_SF(, MMVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32, PAGE_DIRECTORY_ENTRY_LO32, mask_sh),\
 	HWS_SF(, DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, mask_sh), \
 	HWS_SF(, DOMAIN0_PG_CONFIG, DOMAIN0_POWER_GATE, mask_sh), \
 	HWS_SF(, DOMAIN1_PG_CONFIG, DOMAIN1_POWER_FORCEON, mask_sh), \
@@ -834,14 +833,14 @@
 	HWS_SF(, DOMAIN18_PG_STATUS, DOMAIN18_PGFSM_PWR_STATUS, mask_sh), \
 	HWS_SF(, DC_IP_REQUEST_CNTL, IP_REQUEST_EN, mask_sh)
 
-#घोषणा HWSEQ_DCN30_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN30_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN2_MASK_SH_LIST(mask_sh), \
 	HWS_SF(, AZALIA_AUDIO_DTO, AZALIA_AUDIO_DTO_MODULE, mask_sh), \
 	HWS_SF(, ODM_MEM_PWR_CTRL3, ODM_MEM_UNASSIGNED_PWR_MODE, mask_sh), \
 	HWS_SF(, ODM_MEM_PWR_CTRL3, ODM_MEM_VBLANK_PWR_MODE, mask_sh), \
 	HWS_SF(, DMU_MEM_PWR_CNTL, DMCU_ERAM_MEM_PWR_FORCE, mask_sh)
 
-#घोषणा HWSEQ_DCN301_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN301_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN_MASK_SH_LIST(mask_sh), \
 	HWS_SF(, DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_REFDIV, mask_sh), \
 	HWS_SF(, DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, mask_sh), \
@@ -884,7 +883,7 @@
 	HWS_SF(, PANEL_PWRSEQ0_STATE, PANEL_PWRSEQ_TARGET_STATE_R, mask_sh),\
 	HWS_SF(, AZALIA_AUDIO_DTO, AZALIA_AUDIO_DTO_MODULE, mask_sh)
 
-#घोषणा HWSEQ_DCN302_MASK_SH_LIST(mask_sh)\
+#define HWSEQ_DCN302_MASK_SH_LIST(mask_sh)\
 	HWSEQ_DCN_MASK_SH_LIST(mask_sh), \
 	HWS_SF(, DCHUBBUB_GLOBAL_TIMER_CNTL, DCHUBBUB_GLOBAL_TIMER_REFDIV, mask_sh), \
 	HWS_SF(, DOMAIN0_PG_CONFIG, DOMAIN0_POWER_FORCEON, mask_sh), \
@@ -935,7 +934,7 @@
 	HWS_SF(, DC_IP_REQUEST_CNTL, IP_REQUEST_EN, mask_sh), \
 	HWS_SF(, AZALIA_AUDIO_DTO, AZALIA_AUDIO_DTO_MODULE, mask_sh)
 
-#घोषणा HWSEQ_REG_FIELD_LIST(type) \
+#define HWSEQ_REG_FIELD_LIST(type) \
 	type DCFE_CLOCK_ENABLE; \
 	type DCFEV_CLOCK_ENABLE; \
 	type DC_MEM_GLOBAL_PWR_REQ_DIS; \
@@ -952,9 +951,9 @@
 	type PIXEL_RATE_SOURCE; \
 	type PHYPLL_PIXEL_RATE_SOURCE; \
 	type PIXEL_RATE_PLL_SOURCE; \
-	/* toकरो:  get these from GVM instead of पढ़ोing रेजिस्टरs ourselves */\
-	type PAGE_सूचीECTORY_ENTRY_HI32;\
-	type PAGE_सूचीECTORY_ENTRY_LO32;\
+	/* todo:  get these from GVM instead of reading registers ourselves */\
+	type PAGE_DIRECTORY_ENTRY_HI32;\
+	type PAGE_DIRECTORY_ENTRY_LO32;\
 	type LOGICAL_PAGE_NUMBER_HI4;\
 	type LOGICAL_PAGE_NUMBER_LO32;\
 	type PHYSICAL_PAGE_ADDR_HI4;\
@@ -967,7 +966,7 @@
 	type ENABLE_L1_TLB;\
 	type SYSTEM_ACCESS_MODE;
 
-#घोषणा HWSEQ_DCN_REG_FIELD_LIST(type) \
+#define HWSEQ_DCN_REG_FIELD_LIST(type) \
 	type HUBP_VTG_SEL; \
 	type HUBP_CLOCK_ENABLE; \
 	type DPP_CLOCK_ENABLE; \
@@ -1052,62 +1051,62 @@
 	type ODM_MEM_VBLANK_PWR_MODE; \
 	type DMCU_ERAM_MEM_PWR_FORCE;
 
-#घोषणा HWSEQ_DCN3_REG_FIELD_LIST(type) \
+#define HWSEQ_DCN3_REG_FIELD_LIST(type) \
 	type HPO_HDMISTREAMCLK_GATE_DIS;
 
-#घोषणा HWSEQ_DCN301_REG_FIELD_LIST(type) \
+#define HWSEQ_DCN301_REG_FIELD_LIST(type) \
 	type PANEL_BLON;\
 	type PANEL_DIGON;\
 	type PANEL_DIGON_OVRD;\
 	type PANEL_PWRSEQ_TARGET_STATE_R;
 
-काष्ठा dce_hwseq_shअगरt अणु
-	HWSEQ_REG_FIELD_LIST(uपूर्णांक8_t)
-	HWSEQ_DCN_REG_FIELD_LIST(uपूर्णांक8_t)
-	HWSEQ_DCN3_REG_FIELD_LIST(uपूर्णांक8_t)
-	HWSEQ_DCN301_REG_FIELD_LIST(uपूर्णांक8_t)
-पूर्ण;
+struct dce_hwseq_shift {
+	HWSEQ_REG_FIELD_LIST(uint8_t)
+	HWSEQ_DCN_REG_FIELD_LIST(uint8_t)
+	HWSEQ_DCN3_REG_FIELD_LIST(uint8_t)
+	HWSEQ_DCN301_REG_FIELD_LIST(uint8_t)
+};
 
-काष्ठा dce_hwseq_mask अणु
-	HWSEQ_REG_FIELD_LIST(uपूर्णांक32_t)
-	HWSEQ_DCN_REG_FIELD_LIST(uपूर्णांक32_t)
-	HWSEQ_DCN3_REG_FIELD_LIST(uपूर्णांक32_t)
-	HWSEQ_DCN301_REG_FIELD_LIST(uपूर्णांक32_t)
-पूर्ण;
+struct dce_hwseq_mask {
+	HWSEQ_REG_FIELD_LIST(uint32_t)
+	HWSEQ_DCN_REG_FIELD_LIST(uint32_t)
+	HWSEQ_DCN3_REG_FIELD_LIST(uint32_t)
+	HWSEQ_DCN301_REG_FIELD_LIST(uint32_t)
+};
 
 
-क्रमागत blnd_mode अणु
+enum blnd_mode {
 	BLND_MODE_CURRENT_PIPE = 0,/* Data from current pipe only */
 	BLND_MODE_OTHER_PIPE, /* Data from other pipe only */
 	BLND_MODE_BLENDING,/* Alpha blending - blend 'current' and 'other' */
-पूर्ण;
+};
 
-काष्ठा dce_hwseq;
-काष्ठा pipe_ctx;
-काष्ठा घड़ी_source;
+struct dce_hwseq;
+struct pipe_ctx;
+struct clock_source;
 
-व्योम dce_enable_fe_घड़ी(काष्ठा dce_hwseq *hwss,
-		अचिन्हित पूर्णांक inst, bool enable);
+void dce_enable_fe_clock(struct dce_hwseq *hwss,
+		unsigned int inst, bool enable);
 
-व्योम dce_pipe_control_lock(काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe,
+void dce_pipe_control_lock(struct dc *dc,
+		struct pipe_ctx *pipe,
 		bool lock);
 
-व्योम dce_set_blender_mode(काष्ठा dce_hwseq *hws,
-	अचिन्हित पूर्णांक blnd_inst, क्रमागत blnd_mode mode);
+void dce_set_blender_mode(struct dce_hwseq *hws,
+	unsigned int blnd_inst, enum blnd_mode mode);
 
-#अगर defined(CONFIG_DRM_AMD_DC_SI)
-व्योम dce60_pipe_control_lock(काष्ठा dc *dc,
-		काष्ठा pipe_ctx *pipe,
+#if defined(CONFIG_DRM_AMD_DC_SI)
+void dce60_pipe_control_lock(struct dc *dc,
+		struct pipe_ctx *pipe,
 		bool lock);
-#पूर्ण_अगर
+#endif
 
-व्योम dce_घड़ी_gating_घातer_up(काष्ठा dce_hwseq *hws,
+void dce_clock_gating_power_up(struct dce_hwseq *hws,
 		bool enable);
 
-व्योम dce_crtc_चयन_to_clk_src(काष्ठा dce_hwseq *hws,
-		काष्ठा घड़ी_source *clk_src,
-		अचिन्हित पूर्णांक tg_inst);
+void dce_crtc_switch_to_clk_src(struct dce_hwseq *hws,
+		struct clock_source *clk_src,
+		unsigned int tg_inst);
 
-bool dce_use_lut(क्रमागत surface_pixel_क्रमmat क्रमmat);
-#पूर्ण_अगर   /*__DCE_HWSEQ_H__*/
+bool dce_use_lut(enum surface_pixel_format format);
+#endif   /*__DCE_HWSEQ_H__*/

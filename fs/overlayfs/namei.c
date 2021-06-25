@@ -1,638 +1,637 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Novell Inc.
  * Copyright (C) 2016 Red Hat, Inc.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/cred.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/namei.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/exportfs.h>
-#समावेश "overlayfs.h"
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/ctype.h>
+#include <linux/namei.h>
+#include <linux/xattr.h>
+#include <linux/ratelimit.h>
+#include <linux/mount.h>
+#include <linux/exportfs.h>
+#include "overlayfs.h"
 
-काष्ठा ovl_lookup_data अणु
-	काष्ठा super_block *sb;
-	काष्ठा qstr name;
+struct ovl_lookup_data {
+	struct super_block *sb;
+	struct qstr name;
 	bool is_dir;
 	bool opaque;
 	bool stop;
 	bool last;
-	अक्षर *redirect;
+	char *redirect;
 	bool metacopy;
-पूर्ण;
+};
 
-अटल पूर्णांक ovl_check_redirect(काष्ठा dentry *dentry, काष्ठा ovl_lookup_data *d,
-			      माप_प्रकार prelen, स्थिर अक्षर *post)
-अणु
-	पूर्णांक res;
-	अक्षर *buf;
-	काष्ठा ovl_fs *ofs = OVL_FS(d->sb);
+static int ovl_check_redirect(struct dentry *dentry, struct ovl_lookup_data *d,
+			      size_t prelen, const char *post)
+{
+	int res;
+	char *buf;
+	struct ovl_fs *ofs = OVL_FS(d->sb);
 
-	buf = ovl_get_redirect_xattr(ofs, dentry, prelen + म_माप(post));
-	अगर (IS_ERR_OR_शून्य(buf))
-		वापस PTR_ERR(buf);
+	buf = ovl_get_redirect_xattr(ofs, dentry, prelen + strlen(post));
+	if (IS_ERR_OR_NULL(buf))
+		return PTR_ERR(buf);
 
-	अगर (buf[0] == '/') अणु
+	if (buf[0] == '/') {
 		/*
-		 * One of the ancestor path elements in an असलolute path
+		 * One of the ancestor path elements in an absolute path
 		 * lookup in ovl_lookup_layer() could have been opaque and
 		 * that will stop further lookup in lower layers (d->stop=true)
-		 * But we have found an असलolute redirect in decendant path
-		 * element and that should क्रमce जारी lookup in lower
+		 * But we have found an absolute redirect in decendant path
+		 * element and that should force continue lookup in lower
 		 * layers (reset d->stop).
 		 */
 		d->stop = false;
-	पूर्ण अन्यथा अणु
-		res = म_माप(buf) + 1;
-		स_हटाओ(buf + prelen, buf, res);
-		स_नकल(buf, d->name.name, prelen);
-	पूर्ण
+	} else {
+		res = strlen(buf) + 1;
+		memmove(buf + prelen, buf, res);
+		memcpy(buf, d->name.name, prelen);
+	}
 
-	म_जोड़ो(buf, post);
-	kमुक्त(d->redirect);
+	strcat(buf, post);
+	kfree(d->redirect);
 	d->redirect = buf;
 	d->name.name = d->redirect;
-	d->name.len = म_माप(d->redirect);
+	d->name.len = strlen(d->redirect);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ovl_acceptable(व्योम *ctx, काष्ठा dentry *dentry)
-अणु
+static int ovl_acceptable(void *ctx, struct dentry *dentry)
+{
 	/*
 	 * A non-dir origin may be disconnected, which is fine, because
-	 * we only need it क्रम its unique inode number.
+	 * we only need it for its unique inode number.
 	 */
-	अगर (!d_is_dir(dentry))
-		वापस 1;
+	if (!d_is_dir(dentry))
+		return 1;
 
 	/* Don't decode a deleted empty directory */
-	अगर (d_unhashed(dentry))
-		वापस 0;
+	if (d_unhashed(dentry))
+		return 0;
 
-	/* Check अगर directory beदीर्घs to the layer we are decoding from */
-	वापस is_subdir(dentry, ((काष्ठा vfsmount *)ctx)->mnt_root);
-पूर्ण
+	/* Check if directory belongs to the layer we are decoding from */
+	return is_subdir(dentry, ((struct vfsmount *)ctx)->mnt_root);
+}
 
 /*
  * Check validity of an overlay file handle buffer.
  *
- * Return 0 क्रम a valid file handle.
- * Return -ENODATA क्रम "origin unknown".
- * Return <0 क्रम an invalid file handle.
+ * Return 0 for a valid file handle.
+ * Return -ENODATA for "origin unknown".
+ * Return <0 for an invalid file handle.
  */
-पूर्णांक ovl_check_fb_len(काष्ठा ovl_fb *fb, पूर्णांक fb_len)
-अणु
-	अगर (fb_len < माप(काष्ठा ovl_fb) || fb_len < fb->len)
-		वापस -EINVAL;
+int ovl_check_fb_len(struct ovl_fb *fb, int fb_len)
+{
+	if (fb_len < sizeof(struct ovl_fb) || fb_len < fb->len)
+		return -EINVAL;
 
-	अगर (fb->magic != OVL_FH_MAGIC)
-		वापस -EINVAL;
+	if (fb->magic != OVL_FH_MAGIC)
+		return -EINVAL;
 
 	/* Treat larger version and unknown flags as "origin unknown" */
-	अगर (fb->version > OVL_FH_VERSION || fb->flags & ~OVL_FH_FLAG_ALL)
-		वापस -ENODATA;
+	if (fb->version > OVL_FH_VERSION || fb->flags & ~OVL_FH_FLAG_ALL)
+		return -ENODATA;
 
 	/* Treat endianness mismatch as "origin unknown" */
-	अगर (!(fb->flags & OVL_FH_FLAG_ANY_ENDIAN) &&
+	if (!(fb->flags & OVL_FH_FLAG_ANY_ENDIAN) &&
 	    (fb->flags & OVL_FH_FLAG_BIG_ENDIAN) != OVL_FH_FLAG_CPU_ENDIAN)
-		वापस -ENODATA;
+		return -ENODATA;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा ovl_fh *ovl_get_fh(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-				 क्रमागत ovl_xattr ox)
-अणु
-	पूर्णांक res, err;
-	काष्ठा ovl_fh *fh = शून्य;
+static struct ovl_fh *ovl_get_fh(struct ovl_fs *ofs, struct dentry *dentry,
+				 enum ovl_xattr ox)
+{
+	int res, err;
+	struct ovl_fh *fh = NULL;
 
-	res = ovl_करो_getxattr(ofs, dentry, ox, शून्य, 0);
-	अगर (res < 0) अणु
-		अगर (res == -ENODATA || res == -EOPNOTSUPP)
-			वापस शून्य;
-		जाओ fail;
-	पूर्ण
+	res = ovl_do_getxattr(ofs, dentry, ox, NULL, 0);
+	if (res < 0) {
+		if (res == -ENODATA || res == -EOPNOTSUPP)
+			return NULL;
+		goto fail;
+	}
 	/* Zero size value means "copied up but origin unknown" */
-	अगर (res == 0)
-		वापस शून्य;
+	if (res == 0)
+		return NULL;
 
 	fh = kzalloc(res + OVL_FH_WIRE_OFFSET, GFP_KERNEL);
-	अगर (!fh)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fh)
+		return ERR_PTR(-ENOMEM);
 
-	res = ovl_करो_getxattr(ofs, dentry, ox, fh->buf, res);
-	अगर (res < 0)
-		जाओ fail;
+	res = ovl_do_getxattr(ofs, dentry, ox, fh->buf, res);
+	if (res < 0)
+		goto fail;
 
 	err = ovl_check_fb_len(&fh->fb, res);
-	अगर (err < 0) अणु
-		अगर (err == -ENODATA)
-			जाओ out;
-		जाओ invalid;
-	पूर्ण
+	if (err < 0) {
+		if (err == -ENODATA)
+			goto out;
+		goto invalid;
+	}
 
-	वापस fh;
+	return fh;
 
 out:
-	kमुक्त(fh);
-	वापस शून्य;
+	kfree(fh);
+	return NULL;
 
 fail:
 	pr_warn_ratelimited("failed to get origin (%i)\n", res);
-	जाओ out;
+	goto out;
 invalid:
 	pr_warn_ratelimited("invalid origin (%*phN)\n", res, fh);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-काष्ठा dentry *ovl_decode_real_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh,
-				  काष्ठा vfsmount *mnt, bool connected)
-अणु
-	काष्ठा dentry *real;
-	पूर्णांक bytes;
+struct dentry *ovl_decode_real_fh(struct ovl_fs *ofs, struct ovl_fh *fh,
+				  struct vfsmount *mnt, bool connected)
+{
+	struct dentry *real;
+	int bytes;
 
-	अगर (!capable(CAP_DAC_READ_SEARCH))
-		वापस शून्य;
+	if (!capable(CAP_DAC_READ_SEARCH))
+		return NULL;
 
 	/*
 	 * Make sure that the stored uuid matches the uuid of the lower
 	 * layer where file handle will be decoded.
-	 * In हाल of uuid=off option just make sure that stored uuid is null.
+	 * In case of uuid=off option just make sure that stored uuid is null.
 	 */
-	अगर (ofs->config.uuid ? !uuid_equal(&fh->fb.uuid, &mnt->mnt_sb->s_uuid) :
+	if (ofs->config.uuid ? !uuid_equal(&fh->fb.uuid, &mnt->mnt_sb->s_uuid) :
 			      !uuid_is_null(&fh->fb.uuid))
-		वापस शून्य;
+		return NULL;
 
-	bytes = (fh->fb.len - दुरत्व(काष्ठा ovl_fb, fid));
-	real = exportfs_decode_fh(mnt, (काष्ठा fid *)fh->fb.fid,
-				  bytes >> 2, (पूर्णांक)fh->fb.type,
-				  connected ? ovl_acceptable : शून्य, mnt);
-	अगर (IS_ERR(real)) अणु
+	bytes = (fh->fb.len - offsetof(struct ovl_fb, fid));
+	real = exportfs_decode_fh(mnt, (struct fid *)fh->fb.fid,
+				  bytes >> 2, (int)fh->fb.type,
+				  connected ? ovl_acceptable : NULL, mnt);
+	if (IS_ERR(real)) {
 		/*
 		 * Treat stale file handle to lower file as "origin unknown".
 		 * upper file handle could become stale when upper file is
-		 * unlinked and this inक्रमmation is needed to handle stale
+		 * unlinked and this information is needed to handle stale
 		 * index entries correctly.
 		 */
-		अगर (real == ERR_PTR(-ESTALE) &&
+		if (real == ERR_PTR(-ESTALE) &&
 		    !(fh->fb.flags & OVL_FH_FLAG_PATH_UPPER))
-			real = शून्य;
-		वापस real;
-	पूर्ण
+			real = NULL;
+		return real;
+	}
 
-	अगर (ovl_dentry_weird(real)) अणु
+	if (ovl_dentry_weird(real)) {
 		dput(real);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस real;
-पूर्ण
+	return real;
+}
 
-अटल bool ovl_is_opaquedir(काष्ठा super_block *sb, काष्ठा dentry *dentry)
-अणु
-	वापस ovl_check_dir_xattr(sb, dentry, OVL_XATTR_OPAQUE);
-पूर्ण
+static bool ovl_is_opaquedir(struct super_block *sb, struct dentry *dentry)
+{
+	return ovl_check_dir_xattr(sb, dentry, OVL_XATTR_OPAQUE);
+}
 
-अटल काष्ठा dentry *ovl_lookup_positive_unlocked(स्थिर अक्षर *name,
-						   काष्ठा dentry *base, पूर्णांक len,
+static struct dentry *ovl_lookup_positive_unlocked(const char *name,
+						   struct dentry *base, int len,
 						   bool drop_negative)
-अणु
-	काष्ठा dentry *ret = lookup_one_len_unlocked(name, base, len);
+{
+	struct dentry *ret = lookup_one_len_unlocked(name, base, len);
 
-	अगर (!IS_ERR(ret) && d_flags_negative(smp_load_acquire(&ret->d_flags))) अणु
-		अगर (drop_negative && ret->d_lockref.count == 1) अणु
+	if (!IS_ERR(ret) && d_flags_negative(smp_load_acquire(&ret->d_flags))) {
+		if (drop_negative && ret->d_lockref.count == 1) {
 			spin_lock(&ret->d_lock);
 			/* Recheck condition under lock */
-			अगर (d_is_negative(ret) && ret->d_lockref.count == 1)
+			if (d_is_negative(ret) && ret->d_lockref.count == 1)
 				__d_drop(ret);
 			spin_unlock(&ret->d_lock);
-		पूर्ण
+		}
 		dput(ret);
 		ret = ERR_PTR(-ENOENT);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक ovl_lookup_single(काष्ठा dentry *base, काष्ठा ovl_lookup_data *d,
-			     स्थिर अक्षर *name, अचिन्हित पूर्णांक namelen,
-			     माप_प्रकार prelen, स्थिर अक्षर *post,
-			     काष्ठा dentry **ret, bool drop_negative)
-अणु
-	काष्ठा dentry *this;
-	पूर्णांक err;
+static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
+			     const char *name, unsigned int namelen,
+			     size_t prelen, const char *post,
+			     struct dentry **ret, bool drop_negative)
+{
+	struct dentry *this;
+	int err;
 	bool last_element = !post[0];
 
 	this = ovl_lookup_positive_unlocked(name, base, namelen, drop_negative);
-	अगर (IS_ERR(this)) अणु
+	if (IS_ERR(this)) {
 		err = PTR_ERR(this);
-		this = शून्य;
-		अगर (err == -ENOENT || err == -ENAMETOOLONG)
-			जाओ out;
-		जाओ out_err;
-	पूर्ण
+		this = NULL;
+		if (err == -ENOENT || err == -ENAMETOOLONG)
+			goto out;
+		goto out_err;
+	}
 
-	अगर (ovl_dentry_weird(this)) अणु
-		/* Don't support traversing स्वतःmounts and other weirdness */
+	if (ovl_dentry_weird(this)) {
+		/* Don't support traversing automounts and other weirdness */
 		err = -EREMOTE;
-		जाओ out_err;
-	पूर्ण
-	अगर (ovl_is_whiteout(this)) अणु
+		goto out_err;
+	}
+	if (ovl_is_whiteout(this)) {
 		d->stop = d->opaque = true;
-		जाओ put_and_out;
-	पूर्ण
+		goto put_and_out;
+	}
 	/*
-	 * This dentry should be a regular file अगर previous layer lookup
+	 * This dentry should be a regular file if previous layer lookup
 	 * found a metacopy dentry.
 	 */
-	अगर (last_element && d->metacopy && !d_is_reg(this)) अणु
+	if (last_element && d->metacopy && !d_is_reg(this)) {
 		d->stop = true;
-		जाओ put_and_out;
-	पूर्ण
-	अगर (!d_can_lookup(this)) अणु
-		अगर (d->is_dir || !last_element) अणु
+		goto put_and_out;
+	}
+	if (!d_can_lookup(this)) {
+		if (d->is_dir || !last_element) {
 			d->stop = true;
-			जाओ put_and_out;
-		पूर्ण
+			goto put_and_out;
+		}
 		err = ovl_check_metacopy_xattr(OVL_FS(d->sb), this);
-		अगर (err < 0)
-			जाओ out_err;
+		if (err < 0)
+			goto out_err;
 
 		d->metacopy = err;
 		d->stop = !d->metacopy;
-		अगर (!d->metacopy || d->last)
-			जाओ out;
-	पूर्ण अन्यथा अणु
-		अगर (ovl_lookup_trap_inode(d->sb, this)) अणु
+		if (!d->metacopy || d->last)
+			goto out;
+	} else {
+		if (ovl_lookup_trap_inode(d->sb, this)) {
 			/* Caught in a trap of overlapping layers */
 			err = -ELOOP;
-			जाओ out_err;
-		पूर्ण
+			goto out_err;
+		}
 
-		अगर (last_element)
+		if (last_element)
 			d->is_dir = true;
-		अगर (d->last)
-			जाओ out;
+		if (d->last)
+			goto out;
 
-		अगर (ovl_is_opaquedir(d->sb, this)) अणु
+		if (ovl_is_opaquedir(d->sb, this)) {
 			d->stop = true;
-			अगर (last_element)
+			if (last_element)
 				d->opaque = true;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	err = ovl_check_redirect(this, d, prelen, post);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 out:
 	*ret = this;
-	वापस 0;
+	return 0;
 
 put_and_out:
 	dput(this);
-	this = शून्य;
-	जाओ out;
+	this = NULL;
+	goto out;
 
 out_err:
 	dput(this);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ovl_lookup_layer(काष्ठा dentry *base, काष्ठा ovl_lookup_data *d,
-			    काष्ठा dentry **ret, bool drop_negative)
-अणु
-	/* Counting करोwn from the end, since the prefix can change */
-	माप_प्रकार rem = d->name.len - 1;
-	काष्ठा dentry *dentry = शून्य;
-	पूर्णांक err;
+static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
+			    struct dentry **ret, bool drop_negative)
+{
+	/* Counting down from the end, since the prefix can change */
+	size_t rem = d->name.len - 1;
+	struct dentry *dentry = NULL;
+	int err;
 
-	अगर (d->name.name[0] != '/')
-		वापस ovl_lookup_single(base, d, d->name.name, d->name.len,
+	if (d->name.name[0] != '/')
+		return ovl_lookup_single(base, d, d->name.name, d->name.len,
 					 0, "", ret, drop_negative);
 
-	जबतक (!IS_ERR_OR_शून्य(base) && d_can_lookup(base)) अणु
-		स्थिर अक्षर *s = d->name.name + d->name.len - rem;
-		स्थिर अक्षर *next = म_अक्षरnul(s, '/');
-		माप_प्रकार thislen = next - s;
+	while (!IS_ERR_OR_NULL(base) && d_can_lookup(base)) {
+		const char *s = d->name.name + d->name.len - rem;
+		const char *next = strchrnul(s, '/');
+		size_t thislen = next - s;
 		bool end = !next[0];
 
-		/* Verअगरy we did not go off the rails */
-		अगर (WARN_ON(s[-1] != '/'))
-			वापस -EIO;
+		/* Verify we did not go off the rails */
+		if (WARN_ON(s[-1] != '/'))
+			return -EIO;
 
 		err = ovl_lookup_single(base, d, s, thislen,
 					d->name.len - rem, next, &base,
 					drop_negative);
 		dput(dentry);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		dentry = base;
-		अगर (end)
-			अवरोध;
+		if (end)
+			break;
 
 		rem -= thislen + 1;
 
-		अगर (WARN_ON(rem >= d->name.len))
-			वापस -EIO;
-	पूर्ण
+		if (WARN_ON(rem >= d->name.len))
+			return -EIO;
+	}
 	*ret = dentry;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक ovl_check_origin_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh, bool connected,
-			काष्ठा dentry *upperdentry, काष्ठा ovl_path **stackp)
-अणु
-	काष्ठा dentry *origin = शून्य;
-	पूर्णांक i;
+int ovl_check_origin_fh(struct ovl_fs *ofs, struct ovl_fh *fh, bool connected,
+			struct dentry *upperdentry, struct ovl_path **stackp)
+{
+	struct dentry *origin = NULL;
+	int i;
 
-	क्रम (i = 1; i < ofs->numlayer; i++) अणु
+	for (i = 1; i < ofs->numlayer; i++) {
 		/*
 		 * If lower fs uuid is not unique among lower fs we cannot match
 		 * fh->uuid to layer.
 		 */
-		अगर (ofs->layers[i].fsid &&
+		if (ofs->layers[i].fsid &&
 		    ofs->layers[i].fs->bad_uuid)
-			जारी;
+			continue;
 
 		origin = ovl_decode_real_fh(ofs, fh, ofs->layers[i].mnt,
 					    connected);
-		अगर (origin)
-			अवरोध;
-	पूर्ण
+		if (origin)
+			break;
+	}
 
-	अगर (!origin)
-		वापस -ESTALE;
-	अन्यथा अगर (IS_ERR(origin))
-		वापस PTR_ERR(origin);
+	if (!origin)
+		return -ESTALE;
+	else if (IS_ERR(origin))
+		return PTR_ERR(origin);
 
-	अगर (upperdentry && !ovl_is_whiteout(upperdentry) &&
+	if (upperdentry && !ovl_is_whiteout(upperdentry) &&
 	    inode_wrong_type(d_inode(upperdentry), d_inode(origin)->i_mode))
-		जाओ invalid;
+		goto invalid;
 
-	अगर (!*stackp)
-		*stackp = kदो_स्मृति(माप(काष्ठा ovl_path), GFP_KERNEL);
-	अगर (!*stackp) अणु
+	if (!*stackp)
+		*stackp = kmalloc(sizeof(struct ovl_path), GFP_KERNEL);
+	if (!*stackp) {
 		dput(origin);
-		वापस -ENOMEM;
-	पूर्ण
-	**stackp = (काष्ठा ovl_path)अणु
+		return -ENOMEM;
+	}
+	**stackp = (struct ovl_path){
 		.dentry = origin,
 		.layer = &ofs->layers[i]
-	पूर्ण;
+	};
 
-	वापस 0;
+	return 0;
 
 invalid:
 	pr_warn_ratelimited("invalid origin (%pd2, ftype=%x, origin ftype=%x).\n",
 			    upperdentry, d_inode(upperdentry)->i_mode & S_IFMT,
 			    d_inode(origin)->i_mode & S_IFMT);
 	dput(origin);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक ovl_check_origin(काष्ठा ovl_fs *ofs, काष्ठा dentry *upperdentry,
-			    काष्ठा ovl_path **stackp)
-अणु
-	काष्ठा ovl_fh *fh = ovl_get_fh(ofs, upperdentry, OVL_XATTR_ORIGIN);
-	पूर्णांक err;
+static int ovl_check_origin(struct ovl_fs *ofs, struct dentry *upperdentry,
+			    struct ovl_path **stackp)
+{
+	struct ovl_fh *fh = ovl_get_fh(ofs, upperdentry, OVL_XATTR_ORIGIN);
+	int err;
 
-	अगर (IS_ERR_OR_शून्य(fh))
-		वापस PTR_ERR(fh);
+	if (IS_ERR_OR_NULL(fh))
+		return PTR_ERR(fh);
 
 	err = ovl_check_origin_fh(ofs, fh, false, upperdentry, stackp);
-	kमुक्त(fh);
+	kfree(fh);
 
-	अगर (err) अणु
-		अगर (err == -ESTALE)
-			वापस 0;
-		वापस err;
-	पूर्ण
+	if (err) {
+		if (err == -ESTALE)
+			return 0;
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Verअगरy that @fh matches the file handle stored in xattr @name.
+ * Verify that @fh matches the file handle stored in xattr @name.
  * Return 0 on match, -ESTALE on mismatch, < 0 on error.
  */
-अटल पूर्णांक ovl_verअगरy_fh(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-			 क्रमागत ovl_xattr ox, स्थिर काष्ठा ovl_fh *fh)
-अणु
-	काष्ठा ovl_fh *ofh = ovl_get_fh(ofs, dentry, ox);
-	पूर्णांक err = 0;
+static int ovl_verify_fh(struct ovl_fs *ofs, struct dentry *dentry,
+			 enum ovl_xattr ox, const struct ovl_fh *fh)
+{
+	struct ovl_fh *ofh = ovl_get_fh(ofs, dentry, ox);
+	int err = 0;
 
-	अगर (!ofh)
-		वापस -ENODATA;
+	if (!ofh)
+		return -ENODATA;
 
-	अगर (IS_ERR(ofh))
-		वापस PTR_ERR(ofh);
+	if (IS_ERR(ofh))
+		return PTR_ERR(ofh);
 
-	अगर (fh->fb.len != ofh->fb.len || स_भेद(&fh->fb, &ofh->fb, fh->fb.len))
+	if (fh->fb.len != ofh->fb.len || memcmp(&fh->fb, &ofh->fb, fh->fb.len))
 		err = -ESTALE;
 
-	kमुक्त(ofh);
-	वापस err;
-पूर्ण
+	kfree(ofh);
+	return err;
+}
 
 /*
- * Verअगरy that @real dentry matches the file handle stored in xattr @name.
+ * Verify that @real dentry matches the file handle stored in xattr @name.
  *
  * If @set is true and there is no stored file handle, encode @real and store
  * file handle in xattr @name.
  *
  * Return 0 on match, -ESTALE on mismatch, -ENODATA on no xattr, < 0 on error.
  */
-पूर्णांक ovl_verअगरy_set_fh(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-		      क्रमागत ovl_xattr ox, काष्ठा dentry *real, bool is_upper,
+int ovl_verify_set_fh(struct ovl_fs *ofs, struct dentry *dentry,
+		      enum ovl_xattr ox, struct dentry *real, bool is_upper,
 		      bool set)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा ovl_fh *fh;
-	पूर्णांक err;
+{
+	struct inode *inode;
+	struct ovl_fh *fh;
+	int err;
 
 	fh = ovl_encode_real_fh(ofs, real, is_upper);
 	err = PTR_ERR(fh);
-	अगर (IS_ERR(fh)) अणु
-		fh = शून्य;
-		जाओ fail;
-	पूर्ण
+	if (IS_ERR(fh)) {
+		fh = NULL;
+		goto fail;
+	}
 
-	err = ovl_verअगरy_fh(ofs, dentry, ox, fh);
-	अगर (set && err == -ENODATA)
-		err = ovl_करो_setxattr(ofs, dentry, ox, fh->buf, fh->fb.len);
-	अगर (err)
-		जाओ fail;
+	err = ovl_verify_fh(ofs, dentry, ox, fh);
+	if (set && err == -ENODATA)
+		err = ovl_do_setxattr(ofs, dentry, ox, fh->buf, fh->fb.len);
+	if (err)
+		goto fail;
 
 out:
-	kमुक्त(fh);
-	वापस err;
+	kfree(fh);
+	return err;
 
 fail:
 	inode = d_inode(real);
 	pr_warn_ratelimited("failed to verify %s (%pd2, ino=%lu, err=%i)\n",
 			    is_upper ? "upper" : "origin", real,
 			    inode ? inode->i_ino : 0, err);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /* Get upper dentry from index */
-काष्ठा dentry *ovl_index_upper(काष्ठा ovl_fs *ofs, काष्ठा dentry *index)
-अणु
-	काष्ठा ovl_fh *fh;
-	काष्ठा dentry *upper;
+struct dentry *ovl_index_upper(struct ovl_fs *ofs, struct dentry *index)
+{
+	struct ovl_fh *fh;
+	struct dentry *upper;
 
-	अगर (!d_is_dir(index))
-		वापस dget(index);
+	if (!d_is_dir(index))
+		return dget(index);
 
 	fh = ovl_get_fh(ofs, index, OVL_XATTR_UPPER);
-	अगर (IS_ERR_OR_शून्य(fh))
-		वापस ERR_CAST(fh);
+	if (IS_ERR_OR_NULL(fh))
+		return ERR_CAST(fh);
 
 	upper = ovl_decode_real_fh(ofs, fh, ovl_upper_mnt(ofs), true);
-	kमुक्त(fh);
+	kfree(fh);
 
-	अगर (IS_ERR_OR_शून्य(upper))
-		वापस upper ?: ERR_PTR(-ESTALE);
+	if (IS_ERR_OR_NULL(upper))
+		return upper ?: ERR_PTR(-ESTALE);
 
-	अगर (!d_is_dir(upper)) अणु
+	if (!d_is_dir(upper)) {
 		pr_warn_ratelimited("invalid index upper (%pd2, upper=%pd2).\n",
 				    index, upper);
 		dput(upper);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
+		return ERR_PTR(-EIO);
+	}
 
-	वापस upper;
-पूर्ण
+	return upper;
+}
 
 /*
- * Verअगरy that an index entry name matches the origin file handle stored in
+ * Verify that an index entry name matches the origin file handle stored in
  * OVL_XATTR_ORIGIN and that origin file handle can be decoded to lower path.
  * Return 0 on match, -ESTALE on mismatch or stale origin, < 0 on error.
  */
-पूर्णांक ovl_verअगरy_index(काष्ठा ovl_fs *ofs, काष्ठा dentry *index)
-अणु
-	काष्ठा ovl_fh *fh = शून्य;
-	माप_प्रकार len;
-	काष्ठा ovl_path origin = अणु पूर्ण;
-	काष्ठा ovl_path *stack = &origin;
-	काष्ठा dentry *upper = शून्य;
-	पूर्णांक err;
+int ovl_verify_index(struct ovl_fs *ofs, struct dentry *index)
+{
+	struct ovl_fh *fh = NULL;
+	size_t len;
+	struct ovl_path origin = { };
+	struct ovl_path *stack = &origin;
+	struct dentry *upper = NULL;
+	int err;
 
-	अगर (!d_inode(index))
-		वापस 0;
+	if (!d_inode(index))
+		return 0;
 
 	err = -EINVAL;
-	अगर (index->d_name.len < माप(काष्ठा ovl_fb)*2)
-		जाओ fail;
+	if (index->d_name.len < sizeof(struct ovl_fb)*2)
+		goto fail;
 
 	err = -ENOMEM;
 	len = index->d_name.len / 2;
 	fh = kzalloc(len + OVL_FH_WIRE_OFFSET, GFP_KERNEL);
-	अगर (!fh)
-		जाओ fail;
+	if (!fh)
+		goto fail;
 
 	err = -EINVAL;
-	अगर (hex2bin(fh->buf, index->d_name.name, len))
-		जाओ fail;
+	if (hex2bin(fh->buf, index->d_name.name, len))
+		goto fail;
 
 	err = ovl_check_fb_len(&fh->fb, len);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
 	/*
 	 * Whiteout index entries are used as an indication that an exported
 	 * overlay file handle should be treated as stale (i.e. after unlink
 	 * of the overlay inode). These entries contain no origin xattr.
 	 */
-	अगर (ovl_is_whiteout(index))
-		जाओ out;
+	if (ovl_is_whiteout(index))
+		goto out;
 
 	/*
-	 * Verअगरying directory index entries are not stale is expensive, so
-	 * only verअगरy stale dir index अगर NFS export is enabled.
+	 * Verifying directory index entries are not stale is expensive, so
+	 * only verify stale dir index if NFS export is enabled.
 	 */
-	अगर (d_is_dir(index) && !ofs->config.nfs_export)
-		जाओ out;
+	if (d_is_dir(index) && !ofs->config.nfs_export)
+		goto out;
 
 	/*
-	 * Directory index entries should have 'upper' xattr poपूर्णांकing to the
+	 * Directory index entries should have 'upper' xattr pointing to the
 	 * real upper dir. Non-dir index entries are hardlinks to the upper
-	 * real inode. For non-dir index, we can पढ़ो the copy up origin xattr
-	 * directly from the index dentry, but क्रम dir index we first need to
+	 * real inode. For non-dir index, we can read the copy up origin xattr
+	 * directly from the index dentry, but for dir index we first need to
 	 * decode the upper directory.
 	 */
 	upper = ovl_index_upper(ofs, index);
-	अगर (IS_ERR_OR_शून्य(upper)) अणु
+	if (IS_ERR_OR_NULL(upper)) {
 		err = PTR_ERR(upper);
 		/*
 		 * Directory index entries with no 'upper' xattr need to be
-		 * हटाओd. When dir index entry has a stale 'upper' xattr,
-		 * we assume that upper dir was हटाओd and we treat the dir
+		 * removed. When dir index entry has a stale 'upper' xattr,
+		 * we assume that upper dir was removed and we treat the dir
 		 * index as orphan entry that needs to be whited out.
 		 */
-		अगर (err == -ESTALE)
-			जाओ orphan;
-		अन्यथा अगर (!err)
+		if (err == -ESTALE)
+			goto orphan;
+		else if (!err)
 			err = -ESTALE;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	err = ovl_verअगरy_fh(ofs, upper, OVL_XATTR_ORIGIN, fh);
+	err = ovl_verify_fh(ofs, upper, OVL_XATTR_ORIGIN, fh);
 	dput(upper);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	/* Check अगर non-dir index is orphan and करोn't warn beक्रमe cleaning it */
-	अगर (!d_is_dir(index) && d_inode(index)->i_nlink == 1) अणु
+	/* Check if non-dir index is orphan and don't warn before cleaning it */
+	if (!d_is_dir(index) && d_inode(index)->i_nlink == 1) {
 		err = ovl_check_origin_fh(ofs, fh, false, index, &stack);
-		अगर (err)
-			जाओ fail;
+		if (err)
+			goto fail;
 
-		अगर (ovl_get_nlink(ofs, origin.dentry, index, 0) == 0)
-			जाओ orphan;
-	पूर्ण
+		if (ovl_get_nlink(ofs, origin.dentry, index, 0) == 0)
+			goto orphan;
+	}
 
 out:
 	dput(origin.dentry);
-	kमुक्त(fh);
-	वापस err;
+	kfree(fh);
+	return err;
 
 fail:
 	pr_warn_ratelimited("failed to verify index (%pd2, ftype=%x, err=%i)\n",
 			    index, d_inode(index)->i_mode & S_IFMT, err);
-	जाओ out;
+	goto out;
 
 orphan:
 	pr_warn_ratelimited("orphan index entry (%pd2, ftype=%x, nlink=%u)\n",
 			    index, d_inode(index)->i_mode & S_IFMT,
 			    d_inode(index)->i_nlink);
 	err = -ENOENT;
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक ovl_get_index_name_fh(काष्ठा ovl_fh *fh, काष्ठा qstr *name)
-अणु
-	अक्षर *n, *s;
+static int ovl_get_index_name_fh(struct ovl_fh *fh, struct qstr *name)
+{
+	char *n, *s;
 
-	n = kसुस्मृति(fh->fb.len, 2, GFP_KERNEL);
-	अगर (!n)
-		वापस -ENOMEM;
+	n = kcalloc(fh->fb.len, 2, GFP_KERNEL);
+	if (!n)
+		return -ENOMEM;
 
 	s  = bin2hex(n, fh->buf, fh->fb.len);
-	*name = (काष्ठा qstr) QSTR_INIT(n, s - n);
+	*name = (struct qstr) QSTR_INIT(n, s - n);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /*
- * Lookup in indexdir क्रम the index entry of a lower real inode or a copy up
+ * Lookup in indexdir for the index entry of a lower real inode or a copy up
  * origin inode. The index entry name is the hex representation of the lower
  * inode file handle.
  *
@@ -640,367 +639,367 @@ orphan:
  * copied up yet, or aliases have been copied up in older kernels and are
  * not indexed.
  *
- * If the index dentry क्रम a copy up origin inode is positive, but poपूर्णांकs
- * to an inode dअगरferent than the upper inode, then either the upper inode
+ * If the index dentry for a copy up origin inode is positive, but points
+ * to an inode different than the upper inode, then either the upper inode
  * has been copied up and not indexed or it was indexed, but since then
- * index dir was cleared. Either way, that index cannot be used to indentअगरy
+ * index dir was cleared. Either way, that index cannot be used to indentify
  * the overlay inode.
  */
-पूर्णांक ovl_get_index_name(काष्ठा ovl_fs *ofs, काष्ठा dentry *origin,
-		       काष्ठा qstr *name)
-अणु
-	काष्ठा ovl_fh *fh;
-	पूर्णांक err;
+int ovl_get_index_name(struct ovl_fs *ofs, struct dentry *origin,
+		       struct qstr *name)
+{
+	struct ovl_fh *fh;
+	int err;
 
 	fh = ovl_encode_real_fh(ofs, origin, false);
-	अगर (IS_ERR(fh))
-		वापस PTR_ERR(fh);
+	if (IS_ERR(fh))
+		return PTR_ERR(fh);
 
 	err = ovl_get_index_name_fh(fh, name);
 
-	kमुक्त(fh);
-	वापस err;
-पूर्ण
+	kfree(fh);
+	return err;
+}
 
-/* Lookup index by file handle क्रम NFS export */
-काष्ठा dentry *ovl_get_index_fh(काष्ठा ovl_fs *ofs, काष्ठा ovl_fh *fh)
-अणु
-	काष्ठा dentry *index;
-	काष्ठा qstr name;
-	पूर्णांक err;
+/* Lookup index by file handle for NFS export */
+struct dentry *ovl_get_index_fh(struct ovl_fs *ofs, struct ovl_fh *fh)
+{
+	struct dentry *index;
+	struct qstr name;
+	int err;
 
 	err = ovl_get_index_name_fh(fh, &name);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
 	index = lookup_positive_unlocked(name.name, ofs->indexdir, name.len);
-	kमुक्त(name.name);
-	अगर (IS_ERR(index)) अणु
-		अगर (PTR_ERR(index) == -ENOENT)
-			index = शून्य;
-		वापस index;
-	पूर्ण
+	kfree(name.name);
+	if (IS_ERR(index)) {
+		if (PTR_ERR(index) == -ENOENT)
+			index = NULL;
+		return index;
+	}
 
-	अगर (ovl_is_whiteout(index))
+	if (ovl_is_whiteout(index))
 		err = -ESTALE;
-	अन्यथा अगर (ovl_dentry_weird(index))
+	else if (ovl_dentry_weird(index))
 		err = -EIO;
-	अन्यथा
-		वापस index;
+	else
+		return index;
 
 	dput(index);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-काष्ठा dentry *ovl_lookup_index(काष्ठा ovl_fs *ofs, काष्ठा dentry *upper,
-				काष्ठा dentry *origin, bool verअगरy)
-अणु
-	काष्ठा dentry *index;
-	काष्ठा inode *inode;
-	काष्ठा qstr name;
+struct dentry *ovl_lookup_index(struct ovl_fs *ofs, struct dentry *upper,
+				struct dentry *origin, bool verify)
+{
+	struct dentry *index;
+	struct inode *inode;
+	struct qstr name;
 	bool is_dir = d_is_dir(origin);
-	पूर्णांक err;
+	int err;
 
 	err = ovl_get_index_name(ofs, origin, &name);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
 	index = lookup_positive_unlocked(name.name, ofs->indexdir, name.len);
-	अगर (IS_ERR(index)) अणु
+	if (IS_ERR(index)) {
 		err = PTR_ERR(index);
-		अगर (err == -ENOENT) अणु
-			index = शून्य;
-			जाओ out;
-		पूर्ण
+		if (err == -ENOENT) {
+			index = NULL;
+			goto out;
+		}
 		pr_warn_ratelimited("failed inode index lookup (ino=%lu, key=%.*s, err=%i);\n"
 				    "overlayfs: mount with '-o index=off' to disable inodes index.\n",
 				    d_inode(origin)->i_ino, name.len, name.name,
 				    err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	inode = d_inode(index);
-	अगर (ovl_is_whiteout(index) && !verअगरy) अणु
+	if (ovl_is_whiteout(index) && !verify) {
 		/*
-		 * When index lookup is called with !verअगरy क्रम decoding an
+		 * When index lookup is called with !verify for decoding an
 		 * overlay file handle, a whiteout index implies that decode
-		 * should treat file handle as stale and no need to prपूर्णांक a
+		 * should treat file handle as stale and no need to print a
 		 * warning about it.
 		 */
 		dput(index);
 		index = ERR_PTR(-ESTALE);
-		जाओ out;
-	पूर्ण अन्यथा अगर (ovl_dentry_weird(index) || ovl_is_whiteout(index) ||
-		   inode_wrong_type(inode, d_inode(origin)->i_mode)) अणु
+		goto out;
+	} else if (ovl_dentry_weird(index) || ovl_is_whiteout(index) ||
+		   inode_wrong_type(inode, d_inode(origin)->i_mode)) {
 		/*
 		 * Index should always be of the same file type as origin
-		 * except क्रम the हाल of a whiteout index. A whiteout
-		 * index should only exist अगर all lower aliases have been
+		 * except for the case of a whiteout index. A whiteout
+		 * index should only exist if all lower aliases have been
 		 * unlinked, which means that finding a lower origin on lookup
 		 * whose index is a whiteout should be treated as an error.
 		 */
 		pr_warn_ratelimited("bad index found (index=%pd2, ftype=%x, origin ftype=%x).\n",
 				    index, d_inode(index)->i_mode & S_IFMT,
 				    d_inode(origin)->i_mode & S_IFMT);
-		जाओ fail;
-	पूर्ण अन्यथा अगर (is_dir && verअगरy) अणु
-		अगर (!upper) अणु
+		goto fail;
+	} else if (is_dir && verify) {
+		if (!upper) {
 			pr_warn_ratelimited("suspected uncovered redirected dir found (origin=%pd2, index=%pd2).\n",
 					    origin, index);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		/* Verअगरy that dir index 'upper' xattr poपूर्णांकs to upper dir */
-		err = ovl_verअगरy_upper(ofs, index, upper, false);
-		अगर (err) अणु
-			अगर (err == -ESTALE) अणु
+		/* Verify that dir index 'upper' xattr points to upper dir */
+		err = ovl_verify_upper(ofs, index, upper, false);
+		if (err) {
+			if (err == -ESTALE) {
 				pr_warn_ratelimited("suspected multiply redirected dir found (upper=%pd2, origin=%pd2, index=%pd2).\n",
 						    upper, origin, index);
-			पूर्ण
-			जाओ fail;
-		पूर्ण
-	पूर्ण अन्यथा अगर (upper && d_inode(upper) != inode) अणु
-		जाओ out_dput;
-	पूर्ण
+			}
+			goto fail;
+		}
+	} else if (upper && d_inode(upper) != inode) {
+		goto out_dput;
+	}
 out:
-	kमुक्त(name.name);
-	वापस index;
+	kfree(name.name);
+	return index;
 
 out_dput:
 	dput(index);
-	index = शून्य;
-	जाओ out;
+	index = NULL;
+	goto out;
 
 fail:
 	dput(index);
 	index = ERR_PTR(-EIO);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /*
  * Returns next layer in stack starting from top.
- * Returns -1 अगर this is the last layer.
+ * Returns -1 if this is the last layer.
  */
-पूर्णांक ovl_path_next(पूर्णांक idx, काष्ठा dentry *dentry, काष्ठा path *path)
-अणु
-	काष्ठा ovl_entry *oe = dentry->d_fsdata;
+int ovl_path_next(int idx, struct dentry *dentry, struct path *path)
+{
+	struct ovl_entry *oe = dentry->d_fsdata;
 
 	BUG_ON(idx < 0);
-	अगर (idx == 0) अणु
+	if (idx == 0) {
 		ovl_path_upper(dentry, path);
-		अगर (path->dentry)
-			वापस oe->numlower ? 1 : -1;
+		if (path->dentry)
+			return oe->numlower ? 1 : -1;
 		idx++;
-	पूर्ण
+	}
 	BUG_ON(idx > oe->numlower);
 	path->dentry = oe->lowerstack[idx - 1].dentry;
 	path->mnt = oe->lowerstack[idx - 1].layer->mnt;
 
-	वापस (idx < oe->numlower) ? idx + 1 : -1;
-पूर्ण
+	return (idx < oe->numlower) ? idx + 1 : -1;
+}
 
 /* Fix missing 'origin' xattr */
-अटल पूर्णांक ovl_fix_origin(काष्ठा ovl_fs *ofs, काष्ठा dentry *dentry,
-			  काष्ठा dentry *lower, काष्ठा dentry *upper)
-अणु
-	पूर्णांक err;
+static int ovl_fix_origin(struct ovl_fs *ofs, struct dentry *dentry,
+			  struct dentry *lower, struct dentry *upper)
+{
+	int err;
 
-	अगर (ovl_check_origin_xattr(ofs, upper))
-		वापस 0;
+	if (ovl_check_origin_xattr(ofs, upper))
+		return 0;
 
-	err = ovl_want_ग_लिखो(dentry);
-	अगर (err)
-		वापस err;
+	err = ovl_want_write(dentry);
+	if (err)
+		return err;
 
 	err = ovl_set_origin(ofs, dentry, lower, upper);
-	अगर (!err)
+	if (!err)
 		err = ovl_set_impure(dentry->d_parent, upper->d_parent);
 
-	ovl_drop_ग_लिखो(dentry);
-	वापस err;
-पूर्ण
+	ovl_drop_write(dentry);
+	return err;
+}
 
-काष्ठा dentry *ovl_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-			  अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा ovl_entry *oe;
-	स्थिर काष्ठा cred *old_cred;
-	काष्ठा ovl_fs *ofs = dentry->d_sb->s_fs_info;
-	काष्ठा ovl_entry *poe = dentry->d_parent->d_fsdata;
-	काष्ठा ovl_entry *roe = dentry->d_sb->s_root->d_fsdata;
-	काष्ठा ovl_path *stack = शून्य, *origin_path = शून्य;
-	काष्ठा dentry *upperdir, *upperdentry = शून्य;
-	काष्ठा dentry *origin = शून्य;
-	काष्ठा dentry *index = शून्य;
-	अचिन्हित पूर्णांक ctr = 0;
-	काष्ठा inode *inode = शून्य;
+struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
+			  unsigned int flags)
+{
+	struct ovl_entry *oe;
+	const struct cred *old_cred;
+	struct ovl_fs *ofs = dentry->d_sb->s_fs_info;
+	struct ovl_entry *poe = dentry->d_parent->d_fsdata;
+	struct ovl_entry *roe = dentry->d_sb->s_root->d_fsdata;
+	struct ovl_path *stack = NULL, *origin_path = NULL;
+	struct dentry *upperdir, *upperdentry = NULL;
+	struct dentry *origin = NULL;
+	struct dentry *index = NULL;
+	unsigned int ctr = 0;
+	struct inode *inode = NULL;
 	bool upperopaque = false;
-	अक्षर *upperredirect = शून्य;
-	काष्ठा dentry *this;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+	char *upperredirect = NULL;
+	struct dentry *this;
+	unsigned int i;
+	int err;
 	bool uppermetacopy = false;
-	काष्ठा ovl_lookup_data d = अणु
+	struct ovl_lookup_data d = {
 		.sb = dentry->d_sb,
 		.name = dentry->d_name,
 		.is_dir = false,
 		.opaque = false,
 		.stop = false,
 		.last = ofs->config.redirect_follow ? false : !poe->numlower,
-		.redirect = शून्य,
+		.redirect = NULL,
 		.metacopy = false,
-	पूर्ण;
+	};
 
-	अगर (dentry->d_name.len > ofs->namelen)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (dentry->d_name.len > ofs->namelen)
+		return ERR_PTR(-ENAMETOOLONG);
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	upperdir = ovl_dentry_upper(dentry->d_parent);
-	अगर (upperdir) अणु
+	if (upperdir) {
 		err = ovl_lookup_layer(upperdir, &d, &upperdentry, true);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		अगर (upperdentry && upperdentry->d_flags & DCACHE_OP_REAL) अणु
+		if (upperdentry && upperdentry->d_flags & DCACHE_OP_REAL) {
 			dput(upperdentry);
 			err = -EREMOTE;
-			जाओ out;
-		पूर्ण
-		अगर (upperdentry && !d.is_dir) अणु
+			goto out;
+		}
+		if (upperdentry && !d.is_dir) {
 			/*
 			 * Lookup copy up origin by decoding origin file handle.
 			 * We may get a disconnected dentry, which is fine,
 			 * because we only need to hold the origin inode in
 			 * cache and use its inode number.  We may even get a
 			 * connected dentry, that is not under any of the lower
-			 * layers root.  That is also fine क्रम using it's inode
-			 * number - it's the same as अगर we held a reference
+			 * layers root.  That is also fine for using it's inode
+			 * number - it's the same as if we held a reference
 			 * to a dentry in lower layer that was moved under us.
 			 */
 			err = ovl_check_origin(ofs, upperdentry, &origin_path);
-			अगर (err)
-				जाओ out_put_upper;
+			if (err)
+				goto out_put_upper;
 
-			अगर (d.metacopy)
+			if (d.metacopy)
 				uppermetacopy = true;
-		पूर्ण
+		}
 
-		अगर (d.redirect) अणु
+		if (d.redirect) {
 			err = -ENOMEM;
 			upperredirect = kstrdup(d.redirect, GFP_KERNEL);
-			अगर (!upperredirect)
-				जाओ out_put_upper;
-			अगर (d.redirect[0] == '/')
+			if (!upperredirect)
+				goto out_put_upper;
+			if (d.redirect[0] == '/')
 				poe = roe;
-		पूर्ण
+		}
 		upperopaque = d.opaque;
-	पूर्ण
+	}
 
-	अगर (!d.stop && poe->numlower) अणु
+	if (!d.stop && poe->numlower) {
 		err = -ENOMEM;
-		stack = kसुस्मृति(ofs->numlayer - 1, माप(काष्ठा ovl_path),
+		stack = kcalloc(ofs->numlayer - 1, sizeof(struct ovl_path),
 				GFP_KERNEL);
-		अगर (!stack)
-			जाओ out_put_upper;
-	पूर्ण
+		if (!stack)
+			goto out_put_upper;
+	}
 
-	क्रम (i = 0; !d.stop && i < poe->numlower; i++) अणु
-		काष्ठा ovl_path lower = poe->lowerstack[i];
+	for (i = 0; !d.stop && i < poe->numlower; i++) {
+		struct ovl_path lower = poe->lowerstack[i];
 
-		अगर (!ofs->config.redirect_follow)
+		if (!ofs->config.redirect_follow)
 			d.last = i == poe->numlower - 1;
-		अन्यथा
+		else
 			d.last = lower.layer->idx == roe->numlower;
 
 		err = ovl_lookup_layer(lower.dentry, &d, &this, false);
-		अगर (err)
-			जाओ out_put;
+		if (err)
+			goto out_put;
 
-		अगर (!this)
-			जारी;
+		if (!this)
+			continue;
 
-		अगर ((uppermetacopy || d.metacopy) && !ofs->config.metacopy) अणु
+		if ((uppermetacopy || d.metacopy) && !ofs->config.metacopy) {
 			dput(this);
 			err = -EPERM;
 			pr_warn_ratelimited("refusing to follow metacopy origin for (%pd2)\n", dentry);
-			जाओ out_put;
-		पूर्ण
+			goto out_put;
+		}
 
 		/*
 		 * If no origin fh is stored in upper of a merge dir, store fh
 		 * of lower dir and set upper parent "impure".
 		 */
-		अगर (upperdentry && !ctr && !ofs->noxattr && d.is_dir) अणु
+		if (upperdentry && !ctr && !ofs->noxattr && d.is_dir) {
 			err = ovl_fix_origin(ofs, dentry, this, upperdentry);
-			अगर (err) अणु
+			if (err) {
 				dput(this);
-				जाओ out_put;
-			पूर्ण
-		पूर्ण
+				goto out_put;
+			}
+		}
 
 		/*
-		 * When "verify_lower" feature is enabled, करो not merge with a
-		 * lower dir that करोes not match a stored origin xattr. In any
-		 * हाल, only verअगरied origin is used क्रम index lookup.
+		 * When "verify_lower" feature is enabled, do not merge with a
+		 * lower dir that does not match a stored origin xattr. In any
+		 * case, only verified origin is used for index lookup.
 		 *
-		 * For non-dir dentry, अगर index=on, then ensure origin
+		 * For non-dir dentry, if index=on, then ensure origin
 		 * matches the dentry found using path based lookup,
 		 * otherwise error out.
 		 */
-		अगर (upperdentry && !ctr &&
-		    ((d.is_dir && ovl_verअगरy_lower(dentry->d_sb)) ||
-		     (!d.is_dir && ofs->config.index && origin_path))) अणु
-			err = ovl_verअगरy_origin(ofs, upperdentry, this, false);
-			अगर (err) अणु
+		if (upperdentry && !ctr &&
+		    ((d.is_dir && ovl_verify_lower(dentry->d_sb)) ||
+		     (!d.is_dir && ofs->config.index && origin_path))) {
+			err = ovl_verify_origin(ofs, upperdentry, this, false);
+			if (err) {
 				dput(this);
-				अगर (d.is_dir)
-					अवरोध;
-				जाओ out_put;
-			पूर्ण
+				if (d.is_dir)
+					break;
+				goto out_put;
+			}
 			origin = this;
-		पूर्ण
+		}
 
-		अगर (d.metacopy && ctr) अणु
+		if (d.metacopy && ctr) {
 			/*
-			 * Do not store पूर्णांकermediate metacopy dentries in
+			 * Do not store intermediate metacopy dentries in
 			 * lower chain, except top most lower metacopy dentry.
-			 * Continue the loop so that अगर there is an असलolute
+			 * Continue the loop so that if there is an absolute
 			 * redirect on this dentry, poe can be reset to roe.
 			 */
 			dput(this);
-			this = शून्य;
-		पूर्ण अन्यथा अणु
+			this = NULL;
+		} else {
 			stack[ctr].dentry = this;
 			stack[ctr].layer = lower.layer;
 			ctr++;
-		पूर्ण
+		}
 
 		/*
 		 * Following redirects can have security consequences: it's like
-		 * a symlink पूर्णांकo the lower layer without the permission checks.
-		 * This is only a problem अगर the upper layer is untrusted (e.g
-		 * comes from an USB drive).  This can allow a non-पढ़ोable file
-		 * or directory to become पढ़ोable.
+		 * a symlink into the lower layer without the permission checks.
+		 * This is only a problem if the upper layer is untrusted (e.g
+		 * comes from an USB drive).  This can allow a non-readable file
+		 * or directory to become readable.
 		 *
 		 * Only following redirects when redirects are enabled disables
 		 * this attack vector when not necessary.
 		 */
 		err = -EPERM;
-		अगर (d.redirect && !ofs->config.redirect_follow) अणु
+		if (d.redirect && !ofs->config.redirect_follow) {
 			pr_warn_ratelimited("refusing to follow redirect for (%pd2)\n",
 					    dentry);
-			जाओ out_put;
-		पूर्ण
+			goto out_put;
+		}
 
-		अगर (d.stop)
-			अवरोध;
+		if (d.stop)
+			break;
 
-		अगर (d.redirect && d.redirect[0] == '/' && poe != roe) अणु
+		if (d.redirect && d.redirect[0] == '/' && poe != roe) {
 			poe = roe;
 			/* Find the current layer on the root dentry */
 			i = lower.layer->idx - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * For regular non-metacopy upper dentries, there is no lower
@@ -1010,183 +1009,183 @@ fail:
 	 * For metacopy dentry, path based lookup will find lower dentries.
 	 * Just make sure a corresponding data dentry has been found.
 	 */
-	अगर (d.metacopy || (uppermetacopy && !ctr)) अणु
+	if (d.metacopy || (uppermetacopy && !ctr)) {
 		pr_warn_ratelimited("metacopy with no lower data found - abort lookup (%pd2)\n",
 				    dentry);
 		err = -EIO;
-		जाओ out_put;
-	पूर्ण अन्यथा अगर (!d.is_dir && upperdentry && !ctr && origin_path) अणु
-		अगर (WARN_ON(stack != शून्य)) अणु
+		goto out_put;
+	} else if (!d.is_dir && upperdentry && !ctr && origin_path) {
+		if (WARN_ON(stack != NULL)) {
 			err = -EIO;
-			जाओ out_put;
-		पूर्ण
+			goto out_put;
+		}
 		stack = origin_path;
 		ctr = 1;
 		origin = origin_path->dentry;
-		origin_path = शून्य;
-	पूर्ण
+		origin_path = NULL;
+	}
 
 	/*
-	 * Always lookup index अगर there is no-upperdentry.
+	 * Always lookup index if there is no-upperdentry.
 	 *
-	 * For the हाल of upperdentry, we have set origin by now अगर it
-	 * needed to be set. There are basically three हालs.
+	 * For the case of upperdentry, we have set origin by now if it
+	 * needed to be set. There are basically three cases.
 	 *
-	 * For directories, lookup index by lower inode and verअगरy it matches
-	 * upper inode. We only trust dir index अगर we verअगरied that lower dir
+	 * For directories, lookup index by lower inode and verify it matches
+	 * upper inode. We only trust dir index if we verified that lower dir
 	 * matches origin, otherwise dir index entries may be inconsistent
 	 * and we ignore them.
 	 *
-	 * For regular upper, we alपढ़ोy set origin अगर upper had ORIGIN
-	 * xattr. There is no verअगरication though as there is no path
-	 * based dentry lookup in lower in this हाल.
+	 * For regular upper, we already set origin if upper had ORIGIN
+	 * xattr. There is no verification though as there is no path
+	 * based dentry lookup in lower in this case.
 	 *
-	 * For metacopy upper, we set a verअगरied origin alपढ़ोy अगर index
-	 * is enabled and अगर upper had an ORIGIN xattr.
+	 * For metacopy upper, we set a verified origin already if index
+	 * is enabled and if upper had an ORIGIN xattr.
 	 *
 	 */
-	अगर (!upperdentry && ctr)
+	if (!upperdentry && ctr)
 		origin = stack[0].dentry;
 
-	अगर (origin && ovl_indexdir(dentry->d_sb) &&
-	    (!d.is_dir || ovl_index_all(dentry->d_sb))) अणु
+	if (origin && ovl_indexdir(dentry->d_sb) &&
+	    (!d.is_dir || ovl_index_all(dentry->d_sb))) {
 		index = ovl_lookup_index(ofs, upperdentry, origin, true);
-		अगर (IS_ERR(index)) अणु
+		if (IS_ERR(index)) {
 			err = PTR_ERR(index);
-			index = शून्य;
-			जाओ out_put;
-		पूर्ण
-	पूर्ण
+			index = NULL;
+			goto out_put;
+		}
+	}
 
 	oe = ovl_alloc_entry(ctr);
 	err = -ENOMEM;
-	अगर (!oe)
-		जाओ out_put;
+	if (!oe)
+		goto out_put;
 
-	स_नकल(oe->lowerstack, stack, माप(काष्ठा ovl_path) * ctr);
+	memcpy(oe->lowerstack, stack, sizeof(struct ovl_path) * ctr);
 	dentry->d_fsdata = oe;
 
-	अगर (upperopaque)
+	if (upperopaque)
 		ovl_dentry_set_opaque(dentry);
 
-	अगर (upperdentry)
+	if (upperdentry)
 		ovl_dentry_set_upper_alias(dentry);
-	अन्यथा अगर (index) अणु
+	else if (index) {
 		upperdentry = dget(index);
 		upperredirect = ovl_get_redirect_xattr(ofs, upperdentry, 0);
-		अगर (IS_ERR(upperredirect)) अणु
+		if (IS_ERR(upperredirect)) {
 			err = PTR_ERR(upperredirect);
-			upperredirect = शून्य;
-			जाओ out_मुक्त_oe;
-		पूर्ण
+			upperredirect = NULL;
+			goto out_free_oe;
+		}
 		err = ovl_check_metacopy_xattr(ofs, upperdentry);
-		अगर (err < 0)
-			जाओ out_मुक्त_oe;
+		if (err < 0)
+			goto out_free_oe;
 		uppermetacopy = err;
-	पूर्ण
+	}
 
-	अगर (upperdentry || ctr) अणु
-		काष्ठा ovl_inode_params oip = अणु
+	if (upperdentry || ctr) {
+		struct ovl_inode_params oip = {
 			.upperdentry = upperdentry,
 			.lowerpath = stack,
 			.index = index,
 			.numlower = ctr,
 			.redirect = upperredirect,
 			.lowerdata = (ctr > 1 && !d.is_dir) ?
-				      stack[ctr - 1].dentry : शून्य,
-		पूर्ण;
+				      stack[ctr - 1].dentry : NULL,
+		};
 
 		inode = ovl_get_inode(dentry->d_sb, &oip);
 		err = PTR_ERR(inode);
-		अगर (IS_ERR(inode))
-			जाओ out_मुक्त_oe;
-		अगर (upperdentry && !uppermetacopy)
+		if (IS_ERR(inode))
+			goto out_free_oe;
+		if (upperdentry && !uppermetacopy)
 			ovl_set_flag(OVL_UPPERDATA, inode);
-	पूर्ण
+	}
 
 	ovl_dentry_update_reval(dentry, upperdentry,
 			DCACHE_OP_REVALIDATE | DCACHE_OP_WEAK_REVALIDATE);
 
 	revert_creds(old_cred);
-	अगर (origin_path) अणु
+	if (origin_path) {
 		dput(origin_path->dentry);
-		kमुक्त(origin_path);
-	पूर्ण
+		kfree(origin_path);
+	}
 	dput(index);
-	kमुक्त(stack);
-	kमुक्त(d.redirect);
-	वापस d_splice_alias(inode, dentry);
+	kfree(stack);
+	kfree(d.redirect);
+	return d_splice_alias(inode, dentry);
 
-out_मुक्त_oe:
-	dentry->d_fsdata = शून्य;
-	kमुक्त(oe);
+out_free_oe:
+	dentry->d_fsdata = NULL;
+	kfree(oe);
 out_put:
 	dput(index);
-	क्रम (i = 0; i < ctr; i++)
+	for (i = 0; i < ctr; i++)
 		dput(stack[i].dentry);
-	kमुक्त(stack);
+	kfree(stack);
 out_put_upper:
-	अगर (origin_path) अणु
+	if (origin_path) {
 		dput(origin_path->dentry);
-		kमुक्त(origin_path);
-	पूर्ण
+		kfree(origin_path);
+	}
 	dput(upperdentry);
-	kमुक्त(upperredirect);
+	kfree(upperredirect);
 out:
-	kमुक्त(d.redirect);
+	kfree(d.redirect);
 	revert_creds(old_cred);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-bool ovl_lower_positive(काष्ठा dentry *dentry)
-अणु
-	काष्ठा ovl_entry *poe = dentry->d_parent->d_fsdata;
-	स्थिर काष्ठा qstr *name = &dentry->d_name;
-	स्थिर काष्ठा cred *old_cred;
-	अचिन्हित पूर्णांक i;
+bool ovl_lower_positive(struct dentry *dentry)
+{
+	struct ovl_entry *poe = dentry->d_parent->d_fsdata;
+	const struct qstr *name = &dentry->d_name;
+	const struct cred *old_cred;
+	unsigned int i;
 	bool positive = false;
-	bool करोne = false;
+	bool done = false;
 
 	/*
-	 * If dentry is negative, then lower is positive अगरf this is a
+	 * If dentry is negative, then lower is positive iff this is a
 	 * whiteout.
 	 */
-	अगर (!dentry->d_inode)
-		वापस ovl_dentry_is_opaque(dentry);
+	if (!dentry->d_inode)
+		return ovl_dentry_is_opaque(dentry);
 
 	/* Negative upper -> positive lower */
-	अगर (!ovl_dentry_upper(dentry))
-		वापस true;
+	if (!ovl_dentry_upper(dentry))
+		return true;
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	/* Positive upper -> have to look up lower to see whether it exists */
-	क्रम (i = 0; !करोne && !positive && i < poe->numlower; i++) अणु
-		काष्ठा dentry *this;
-		काष्ठा dentry *lowerdir = poe->lowerstack[i].dentry;
+	for (i = 0; !done && !positive && i < poe->numlower; i++) {
+		struct dentry *this;
+		struct dentry *lowerdir = poe->lowerstack[i].dentry;
 
 		this = lookup_positive_unlocked(name->name, lowerdir,
 					       name->len);
-		अगर (IS_ERR(this)) अणु
-			चयन (PTR_ERR(this)) अणु
-			हाल -ENOENT:
-			हाल -ENAMETOOLONG:
-				अवरोध;
+		if (IS_ERR(this)) {
+			switch (PTR_ERR(this)) {
+			case -ENOENT:
+			case -ENAMETOOLONG:
+				break;
 
-			शेष:
+			default:
 				/*
 				 * Assume something is there, we just couldn't
 				 * access it.
 				 */
 				positive = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				break;
+			}
+		} else {
 			positive = !ovl_is_whiteout(this);
-			करोne = true;
+			done = true;
 			dput(this);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	revert_creds(old_cred);
 
-	वापस positive;
-पूर्ण
+	return positive;
+}

@@ -1,204 +1,203 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_WLAN_UTIL_C_
+#define _RTW_WLAN_UTIL_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <hal_com_h2c.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <hal_com_h2c.h>
 
-अटल अचिन्हित अक्षर ARTHEROS_OUI1[] = अणु0x00, 0x03, 0x7fपूर्ण;
-अटल अचिन्हित अक्षर ARTHEROS_OUI2[] = अणु0x00, 0x13, 0x74पूर्ण;
+static unsigned char ARTHEROS_OUI1[] = {0x00, 0x03, 0x7f};
+static unsigned char ARTHEROS_OUI2[] = {0x00, 0x13, 0x74};
 
-अटल अचिन्हित अक्षर BROADCOM_OUI1[] = अणु0x00, 0x10, 0x18पूर्ण;
-अटल अचिन्हित अक्षर BROADCOM_OUI2[] = अणु0x00, 0x0a, 0xf7पूर्ण;
-अटल अचिन्हित अक्षर BROADCOM_OUI3[] = अणु0x00, 0x05, 0xb5पूर्ण;
+static unsigned char BROADCOM_OUI1[] = {0x00, 0x10, 0x18};
+static unsigned char BROADCOM_OUI2[] = {0x00, 0x0a, 0xf7};
+static unsigned char BROADCOM_OUI3[] = {0x00, 0x05, 0xb5};
 
-अटल अचिन्हित अक्षर CISCO_OUI[] = अणु0x00, 0x40, 0x96पूर्ण;
-अटल अचिन्हित अक्षर MARVELL_OUI[] = अणु0x00, 0x50, 0x43पूर्ण;
-अटल अचिन्हित अक्षर RALINK_OUI[] = अणु0x00, 0x0c, 0x43पूर्ण;
-अटल अचिन्हित अक्षर REALTEK_OUI[] = अणु0x00, 0xe0, 0x4cपूर्ण;
-अटल अचिन्हित अक्षर AIRGOCAP_OUI[] = अणु0x00, 0x0a, 0xf5पूर्ण;
-अटल अचिन्हित अक्षर RSN_TKIP_CIPHER[4] = अणु0x00, 0x0f, 0xac, 0x02पूर्ण;
-अटल अचिन्हित अक्षर WPA_TKIP_CIPHER[4] = अणु0x00, 0x50, 0xf2, 0x02पूर्ण;
+static unsigned char CISCO_OUI[] = {0x00, 0x40, 0x96};
+static unsigned char MARVELL_OUI[] = {0x00, 0x50, 0x43};
+static unsigned char RALINK_OUI[] = {0x00, 0x0c, 0x43};
+static unsigned char REALTEK_OUI[] = {0x00, 0xe0, 0x4c};
+static unsigned char AIRGOCAP_OUI[] = {0x00, 0x0a, 0xf5};
+static unsigned char RSN_TKIP_CIPHER[4] = {0x00, 0x0f, 0xac, 0x02};
+static unsigned char WPA_TKIP_CIPHER[4] = {0x00, 0x50, 0xf2, 0x02};
 
-#घोषणा R2T_PHY_DELAY	(0)
+#define R2T_PHY_DELAY	(0)
 
 /* define WAIT_FOR_BCN_TO_MIN	(3000) */
-#घोषणा WAIT_FOR_BCN_TO_MIN	(6000)
-#घोषणा WAIT_FOR_BCN_TO_MAX	(20000)
+#define WAIT_FOR_BCN_TO_MIN	(6000)
+#define WAIT_FOR_BCN_TO_MAX	(20000)
 
-#घोषणा DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS 1000
-#घोषणा DISCONNECT_BY_CHK_BCN_FAIL_THRESHOLD 3
+#define DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS 1000
+#define DISCONNECT_BY_CHK_BCN_FAIL_THRESHOLD 3
 
-अटल u8 rtw_basic_rate_cck[4] = अणु
+static u8 rtw_basic_rate_cck[4] = {
 	IEEE80211_CCK_RATE_1MB | IEEE80211_BASIC_RATE_MASK,
 	IEEE80211_CCK_RATE_2MB | IEEE80211_BASIC_RATE_MASK,
 	IEEE80211_CCK_RATE_5MB | IEEE80211_BASIC_RATE_MASK,
 	IEEE80211_CCK_RATE_11MB | IEEE80211_BASIC_RATE_MASK
-पूर्ण;
+};
 
-अटल u8 rtw_basic_rate_ofdm[3] = अणु
+static u8 rtw_basic_rate_ofdm[3] = {
 	IEEE80211_OFDM_RATE_6MB | IEEE80211_BASIC_RATE_MASK,
 	IEEE80211_OFDM_RATE_12MB | IEEE80211_BASIC_RATE_MASK,
 	IEEE80211_OFDM_RATE_24MB | IEEE80211_BASIC_RATE_MASK
-पूर्ण;
+};
 
-u8 networktype_to_raid_ex(काष्ठा adapter *adapter, काष्ठा sta_info *psta)
-अणु
+u8 networktype_to_raid_ex(struct adapter *adapter, struct sta_info *psta)
+{
 	u8 raid, cur_rf_type, rf_type = RF_1T1R;
 
 	rtw_hal_get_hwreg(adapter, HW_VAR_RF_TYPE, (u8 *)(&cur_rf_type));
 
-	अगर (cur_rf_type == RF_1T1R) अणु
+	if (cur_rf_type == RF_1T1R) {
 		rf_type = RF_1T1R;
-	पूर्ण अन्यथा अगर (IsSupportedVHT(psta->wireless_mode)) अणु
-		अगर (psta->ra_mask & 0xffc00000)
+	} else if (IsSupportedVHT(psta->wireless_mode)) {
+		if (psta->ra_mask & 0xffc00000)
 			rf_type = RF_2T2R;
-	पूर्ण अन्यथा अगर (IsSupportedHT(psta->wireless_mode)) अणु
-		अगर (psta->ra_mask & 0xfff00000)
+	} else if (IsSupportedHT(psta->wireless_mode)) {
+		if (psta->ra_mask & 0xfff00000)
 			rf_type = RF_2T2R;
-	पूर्ण
+	}
 
-	चयन (psta->wireless_mode) अणु
-	हाल WIRELESS_11B:
+	switch (psta->wireless_mode) {
+	case WIRELESS_11B:
 		raid = RATEID_IDX_B;
-		अवरोध;
-	हाल WIRELESS_11A:
-	हाल WIRELESS_11G:
+		break;
+	case WIRELESS_11A:
+	case WIRELESS_11G:
 		raid = RATEID_IDX_G;
-		अवरोध;
-	हाल WIRELESS_11BG:
+		break;
+	case WIRELESS_11BG:
 		raid = RATEID_IDX_BG;
-		अवरोध;
-	हाल WIRELESS_11_24N:
-	हाल WIRELESS_11_5N:
-	हाल WIRELESS_11A_5N:
-	हाल WIRELESS_11G_24N:
-		अगर (rf_type == RF_2T2R)
+		break;
+	case WIRELESS_11_24N:
+	case WIRELESS_11_5N:
+	case WIRELESS_11A_5N:
+	case WIRELESS_11G_24N:
+		if (rf_type == RF_2T2R)
 			raid = RATEID_IDX_GN_N2SS;
-		अन्यथा
+		else
 			raid = RATEID_IDX_GN_N1SS;
-		अवरोध;
-	हाल WIRELESS_11B_24N:
-	हाल WIRELESS_11BG_24N:
-		अगर (psta->bw_mode == CHANNEL_WIDTH_20) अणु
-			अगर (rf_type == RF_2T2R)
+		break;
+	case WIRELESS_11B_24N:
+	case WIRELESS_11BG_24N:
+		if (psta->bw_mode == CHANNEL_WIDTH_20) {
+			if (rf_type == RF_2T2R)
 				raid = RATEID_IDX_BGN_20M_2SS_BN;
-			अन्यथा
+			else
 				raid = RATEID_IDX_BGN_20M_1SS_BN;
-		पूर्ण अन्यथा अणु
-			अगर (rf_type == RF_2T2R)
+		} else {
+			if (rf_type == RF_2T2R)
 				raid = RATEID_IDX_BGN_40M_2SS;
-			अन्यथा
+			else
 				raid = RATEID_IDX_BGN_40M_1SS;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		raid = RATEID_IDX_BGN_40M_2SS;
-		अवरोध;
-	पूर्ण
-	वापस raid;
-पूर्ण
+		break;
+	}
+	return raid;
+}
 
-अचिन्हित अक्षर ratetbl_val_2wअगरirate(अचिन्हित अक्षर rate);
-अचिन्हित अक्षर ratetbl_val_2wअगरirate(अचिन्हित अक्षर rate)
-अणु
-	चयन (rate & 0x7f) अणु
-	हाल 0:
-		वापस IEEE80211_CCK_RATE_1MB;
-	हाल 1:
-		वापस IEEE80211_CCK_RATE_2MB;
-	हाल 2:
-		वापस IEEE80211_CCK_RATE_5MB;
-	हाल 3:
-		वापस IEEE80211_CCK_RATE_11MB;
-	हाल 4:
-		वापस IEEE80211_OFDM_RATE_6MB;
-	हाल 5:
-		वापस IEEE80211_OFDM_RATE_9MB;
-	हाल 6:
-		वापस IEEE80211_OFDM_RATE_12MB;
-	हाल 7:
-		वापस IEEE80211_OFDM_RATE_18MB;
-	हाल 8:
-		वापस IEEE80211_OFDM_RATE_24MB;
-	हाल 9:
-		वापस IEEE80211_OFDM_RATE_36MB;
-	हाल 10:
-		वापस IEEE80211_OFDM_RATE_48MB;
-	हाल 11:
-		वापस IEEE80211_OFDM_RATE_54MB;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+unsigned char ratetbl_val_2wifirate(unsigned char rate);
+unsigned char ratetbl_val_2wifirate(unsigned char rate)
+{
+	switch (rate & 0x7f) {
+	case 0:
+		return IEEE80211_CCK_RATE_1MB;
+	case 1:
+		return IEEE80211_CCK_RATE_2MB;
+	case 2:
+		return IEEE80211_CCK_RATE_5MB;
+	case 3:
+		return IEEE80211_CCK_RATE_11MB;
+	case 4:
+		return IEEE80211_OFDM_RATE_6MB;
+	case 5:
+		return IEEE80211_OFDM_RATE_9MB;
+	case 6:
+		return IEEE80211_OFDM_RATE_12MB;
+	case 7:
+		return IEEE80211_OFDM_RATE_18MB;
+	case 8:
+		return IEEE80211_OFDM_RATE_24MB;
+	case 9:
+		return IEEE80211_OFDM_RATE_36MB;
+	case 10:
+		return IEEE80211_OFDM_RATE_48MB;
+	case 11:
+		return IEEE80211_OFDM_RATE_54MB;
+	default:
+		return 0;
+	}
+}
 
-पूर्णांक is_basicrate(काष्ठा adapter *padapter, अचिन्हित अक्षर rate);
-पूर्णांक is_basicrate(काष्ठा adapter *padapter, अचिन्हित अक्षर rate)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर val;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+int is_basicrate(struct adapter *padapter, unsigned char rate);
+int is_basicrate(struct adapter *padapter, unsigned char rate)
+{
+	int i;
+	unsigned char val;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 
-	क्रम (i = 0; i < NumRates; i++) अणु
+	for (i = 0; i < NumRates; i++) {
 		val = pmlmeext->basicrate[i];
 
-		अगर ((val != 0xff) && (val != 0xfe))
-			अगर (rate == ratetbl_val_2wअगरirate(val))
-				वापस true;
-	पूर्ण
+		if ((val != 0xff) && (val != 0xfe))
+			if (rate == ratetbl_val_2wifirate(val))
+				return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अचिन्हित पूर्णांक ratetbl2rateset(काष्ठा adapter *padapter, अचिन्हित अक्षर *rateset);
-अचिन्हित पूर्णांक ratetbl2rateset(काष्ठा adapter *padapter, अचिन्हित अक्षर *rateset)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर rate;
-	अचिन्हित पूर्णांक	len = 0;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+unsigned int ratetbl2rateset(struct adapter *padapter, unsigned char *rateset);
+unsigned int ratetbl2rateset(struct adapter *padapter, unsigned char *rateset)
+{
+	int i;
+	unsigned char rate;
+	unsigned int	len = 0;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 
-	क्रम (i = 0; i < NumRates; i++) अणु
+	for (i = 0; i < NumRates; i++) {
 		rate = pmlmeext->datarate[i];
 
-		चयन (rate) अणु
-		हाल 0xff:
-			वापस len;
+		switch (rate) {
+		case 0xff:
+			return len;
 
-		हाल 0xfe:
-			जारी;
+		case 0xfe:
+			continue;
 
-		शेष:
-			rate = ratetbl_val_2wअगरirate(rate);
+		default:
+			rate = ratetbl_val_2wifirate(rate);
 
-			अगर (is_basicrate(padapter, rate) == true)
+			if (is_basicrate(padapter, rate) == true)
 				rate |= IEEE80211_BASIC_RATE_MASK;
 
 			rateset[len] = rate;
 			len++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस len;
-पूर्ण
+			break;
+		}
+	}
+	return len;
+}
 
-व्योम get_rate_set(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbssrate, पूर्णांक *bssrate_len)
-अणु
-	अचिन्हित अक्षर supportedrates[NumRates];
+void get_rate_set(struct adapter *padapter, unsigned char *pbssrate, int *bssrate_len)
+{
+	unsigned char supportedrates[NumRates];
 
-	स_रखो(supportedrates, 0, NumRates);
+	memset(supportedrates, 0, NumRates);
 	*bssrate_len = ratetbl2rateset(padapter, supportedrates);
-	स_नकल(pbssrate, supportedrates, *bssrate_len);
-पूर्ण
+	memcpy(pbssrate, supportedrates, *bssrate_len);
+}
 
-व्योम set_mcs_rate_by_mask(u8 *mcs_set, u32 mask)
-अणु
+void set_mcs_rate_by_mask(u8 *mcs_set, u32 mask)
+{
 	u8 mcs_rate_1r = (u8)(mask&0xff);
 	u8 mcs_rate_2r = (u8)((mask>>8)&0xff);
 	u8 mcs_rate_3r = (u8)((mask>>16)&0xff);
@@ -208,165 +207,165 @@ u8 networktype_to_raid_ex(काष्ठा adapter *adapter, काष्ठ�
 	mcs_set[1] &= mcs_rate_2r;
 	mcs_set[2] &= mcs_rate_3r;
 	mcs_set[3] &= mcs_rate_4r;
-पूर्ण
+}
 
-व्योम UpdateBrateTbl(काष्ठा adapter *Adapter, u8 *mBratesOS)
-अणु
+void UpdateBrateTbl(struct adapter *Adapter, u8 *mBratesOS)
+{
 	u8 i;
 	u8 rate;
 
 	/*  1M, 2M, 5.5M, 11M, 6M, 12M, 24M are mandatory. */
-	क्रम (i = 0; i < NDIS_802_11_LENGTH_RATES_EX; i++) अणु
+	for (i = 0; i < NDIS_802_11_LENGTH_RATES_EX; i++) {
 		rate = mBratesOS[i] & 0x7f;
-		चयन (rate) अणु
-		हाल IEEE80211_CCK_RATE_1MB:
-		हाल IEEE80211_CCK_RATE_2MB:
-		हाल IEEE80211_CCK_RATE_5MB:
-		हाल IEEE80211_CCK_RATE_11MB:
-		हाल IEEE80211_OFDM_RATE_6MB:
-		हाल IEEE80211_OFDM_RATE_12MB:
-		हाल IEEE80211_OFDM_RATE_24MB:
+		switch (rate) {
+		case IEEE80211_CCK_RATE_1MB:
+		case IEEE80211_CCK_RATE_2MB:
+		case IEEE80211_CCK_RATE_5MB:
+		case IEEE80211_CCK_RATE_11MB:
+		case IEEE80211_OFDM_RATE_6MB:
+		case IEEE80211_OFDM_RATE_12MB:
+		case IEEE80211_OFDM_RATE_24MB:
 			mBratesOS[i] |= IEEE80211_BASIC_RATE_MASK;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम UpdateBrateTblForSoftAP(u8 *bssrateset, u32 bssratelen)
-अणु
+void UpdateBrateTblForSoftAP(u8 *bssrateset, u32 bssratelen)
+{
 	u8 i;
 	u8 rate;
 
-	क्रम (i = 0; i < bssratelen; i++) अणु
+	for (i = 0; i < bssratelen; i++) {
 		rate = bssrateset[i] & 0x7f;
-		चयन (rate) अणु
-		हाल IEEE80211_CCK_RATE_1MB:
-		हाल IEEE80211_CCK_RATE_2MB:
-		हाल IEEE80211_CCK_RATE_5MB:
-		हाल IEEE80211_CCK_RATE_11MB:
+		switch (rate) {
+		case IEEE80211_CCK_RATE_1MB:
+		case IEEE80211_CCK_RATE_2MB:
+		case IEEE80211_CCK_RATE_5MB:
+		case IEEE80211_CCK_RATE_11MB:
 			bssrateset[i] |= IEEE80211_BASIC_RATE_MASK;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम Save_DM_Func_Flag(काष्ठा adapter *padapter)
-अणु
+void Save_DM_Func_Flag(struct adapter *padapter)
+{
 	u8 bSaveFlag = true;
 
 	rtw_hal_set_hwreg(padapter, HW_VAR_DM_FUNC_OP, (u8 *)(&bSaveFlag));
-पूर्ण
+}
 
-व्योम Restore_DM_Func_Flag(काष्ठा adapter *padapter)
-अणु
+void Restore_DM_Func_Flag(struct adapter *padapter)
+{
 	u8 bSaveFlag = false;
 
 	rtw_hal_set_hwreg(padapter, HW_VAR_DM_FUNC_OP, (u8 *)(&bSaveFlag));
-पूर्ण
+}
 
-व्योम Switch_DM_Func(काष्ठा adapter *padapter, u32 mode, u8 enable)
-अणु
-	अगर (enable == true)
+void Switch_DM_Func(struct adapter *padapter, u32 mode, u8 enable)
+{
+	if (enable == true)
 		rtw_hal_set_hwreg(padapter, HW_VAR_DM_FUNC_SET, (u8 *)(&mode));
-	अन्यथा
+	else
 		rtw_hal_set_hwreg(padapter, HW_VAR_DM_FUNC_CLR, (u8 *)(&mode));
-पूर्ण
+}
 
-व्योम Set_MSR(काष्ठा adapter *padapter, u8 type)
-अणु
+void Set_MSR(struct adapter *padapter, u8 type)
+{
 	rtw_hal_set_hwreg(padapter, HW_VAR_MEDIA_STATUS, (u8 *)(&type));
-पूर्ण
+}
 
-अंतरभूत u8 rtw_get_oper_ch(काष्ठा adapter *adapter)
-अणु
-	वापस adapter_to_dvobj(adapter)->oper_channel;
-पूर्ण
+inline u8 rtw_get_oper_ch(struct adapter *adapter)
+{
+	return adapter_to_dvobj(adapter)->oper_channel;
+}
 
-अंतरभूत व्योम rtw_set_oper_ch(काष्ठा adapter *adapter, u8 ch)
-अणु
-#अगर_घोषित DBG_CH_SWITCH
-	स्थिर पूर्णांक len = 128;
-	अक्षर msg[128] = अणु0पूर्ण;
-	पूर्णांक cnt = 0;
-	पूर्णांक i = 0;
-#पूर्ण_अगर  /* DBG_CH_SWITCH */
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+inline void rtw_set_oper_ch(struct adapter *adapter, u8 ch)
+{
+#ifdef DBG_CH_SWITCH
+	const int len = 128;
+	char msg[128] = {0};
+	int cnt = 0;
+	int i = 0;
+#endif  /* DBG_CH_SWITCH */
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
 
-	अगर (dvobj->oper_channel != ch) अणु
-		dvobj->on_oper_ch_समय = jअगरfies;
+	if (dvobj->oper_channel != ch) {
+		dvobj->on_oper_ch_time = jiffies;
 
-#अगर_घोषित DBG_CH_SWITCH
-		cnt += scnम_लिखो(msg+cnt, len-cnt, "switch to ch %3u", ch);
+#ifdef DBG_CH_SWITCH
+		cnt += scnprintf(msg+cnt, len-cnt, "switch to ch %3u", ch);
 
-		क्रम (i = 0; i < dvobj->अगरace_nums; i++) अणु
-			काष्ठा adapter *अगरace = dvobj->padapters[i];
+		for (i = 0; i < dvobj->iface_nums; i++) {
+			struct adapter *iface = dvobj->padapters[i];
 
-			cnt += scnम_लिखो(msg+cnt, len-cnt, " [%s:", ADPT_ARG(अगरace));
-			अगर (अगरace->mlmeextpriv.cur_channel == ch)
-				cnt += scnम_लिखो(msg+cnt, len-cnt, "C");
-			अन्यथा
-				cnt += scnम_लिखो(msg+cnt, len-cnt, "_");
-			अगर (अगरace->wdinfo.listen_channel == ch && !rtw_p2p_chk_state(&अगरace->wdinfo, P2P_STATE_NONE))
-				cnt += scnम_लिखो(msg+cnt, len-cnt, "L");
-			अन्यथा
-				cnt += scnम_लिखो(msg+cnt, len-cnt, "_");
-			cnt += scnम_लिखो(msg+cnt, len-cnt, "]");
-		पूर्ण
+			cnt += scnprintf(msg+cnt, len-cnt, " [%s:", ADPT_ARG(iface));
+			if (iface->mlmeextpriv.cur_channel == ch)
+				cnt += scnprintf(msg+cnt, len-cnt, "C");
+			else
+				cnt += scnprintf(msg+cnt, len-cnt, "_");
+			if (iface->wdinfo.listen_channel == ch && !rtw_p2p_chk_state(&iface->wdinfo, P2P_STATE_NONE))
+				cnt += scnprintf(msg+cnt, len-cnt, "L");
+			else
+				cnt += scnprintf(msg+cnt, len-cnt, "_");
+			cnt += scnprintf(msg+cnt, len-cnt, "]");
+		}
 
-#पूर्ण_अगर /* DBG_CH_SWITCH */
-	पूर्ण
+#endif /* DBG_CH_SWITCH */
+	}
 
 	dvobj->oper_channel = ch;
-पूर्ण
+}
 
-अंतरभूत u8 rtw_get_oper_bw(काष्ठा adapter *adapter)
-अणु
-	वापस adapter_to_dvobj(adapter)->oper_bwmode;
-पूर्ण
+inline u8 rtw_get_oper_bw(struct adapter *adapter)
+{
+	return adapter_to_dvobj(adapter)->oper_bwmode;
+}
 
-अंतरभूत व्योम rtw_set_oper_bw(काष्ठा adapter *adapter, u8 bw)
-अणु
+inline void rtw_set_oper_bw(struct adapter *adapter, u8 bw)
+{
 	adapter_to_dvobj(adapter)->oper_bwmode = bw;
-पूर्ण
+}
 
-अंतरभूत u8 rtw_get_oper_choffset(काष्ठा adapter *adapter)
-अणु
-	वापस adapter_to_dvobj(adapter)->oper_ch_offset;
-पूर्ण
+inline u8 rtw_get_oper_choffset(struct adapter *adapter)
+{
+	return adapter_to_dvobj(adapter)->oper_ch_offset;
+}
 
-अंतरभूत व्योम rtw_set_oper_choffset(काष्ठा adapter *adapter, u8 offset)
-अणु
+inline void rtw_set_oper_choffset(struct adapter *adapter, u8 offset)
+{
 	adapter_to_dvobj(adapter)->oper_ch_offset = offset;
-पूर्ण
+}
 
 u8 rtw_get_center_ch(u8 channel, u8 chnl_bw, u8 chnl_offset)
-अणु
+{
 	u8 center_ch = channel;
 
-	अगर (chnl_bw == CHANNEL_WIDTH_80) अणु
+	if (chnl_bw == CHANNEL_WIDTH_80) {
 		center_ch = 7;
-	पूर्ण अन्यथा अगर (chnl_bw == CHANNEL_WIDTH_40) अणु
-		अगर (chnl_offset == HAL_PRIME_CHNL_OFFSET_LOWER)
+	} else if (chnl_bw == CHANNEL_WIDTH_40) {
+		if (chnl_offset == HAL_PRIME_CHNL_OFFSET_LOWER)
 			center_ch = channel + 2;
-		अन्यथा
+		else
 			center_ch = channel - 2;
-	पूर्ण
+	}
 
-	वापस center_ch;
-पूर्ण
+	return center_ch;
+}
 
-अंतरभूत अचिन्हित दीर्घ rtw_get_on_cur_ch_समय(काष्ठा adapter *adapter)
-अणु
-	अगर (adapter->mlmeextpriv.cur_channel == adapter_to_dvobj(adapter)->oper_channel)
-		वापस adapter_to_dvobj(adapter)->on_oper_ch_समय;
-	अन्यथा
-		वापस 0;
-पूर्ण
+inline unsigned long rtw_get_on_cur_ch_time(struct adapter *adapter)
+{
+	if (adapter->mlmeextpriv.cur_channel == adapter_to_dvobj(adapter)->oper_channel)
+		return adapter_to_dvobj(adapter)->on_oper_ch_time;
+	else
+		return 0;
+}
 
-व्योम SelectChannel(काष्ठा adapter *padapter, अचिन्हित अक्षर channel)
-अणु
-	अगर (mutex_lock_पूर्णांकerruptible(&(adapter_to_dvobj(padapter)->setch_mutex)))
-		वापस;
+void SelectChannel(struct adapter *padapter, unsigned char channel)
+{
+	if (mutex_lock_interruptible(&(adapter_to_dvobj(padapter)->setch_mutex)))
+		return;
 
 	/* saved channel info */
 	rtw_set_oper_ch(padapter, channel);
@@ -374,26 +373,26 @@ u8 rtw_get_center_ch(u8 channel, u8 chnl_bw, u8 chnl_offset)
 	rtw_hal_set_chan(padapter, channel);
 
 	mutex_unlock(&(adapter_to_dvobj(padapter)->setch_mutex));
-पूर्ण
+}
 
-व्योम set_channel_bwmode(काष्ठा adapter *padapter, अचिन्हित अक्षर channel, अचिन्हित अक्षर channel_offset, अचिन्हित लघु bwmode)
-अणु
+void set_channel_bwmode(struct adapter *padapter, unsigned char channel, unsigned char channel_offset, unsigned short bwmode)
+{
 	u8 center_ch, chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
 
 	center_ch = rtw_get_center_ch(channel, bwmode, channel_offset);
 
-	अगर (bwmode == CHANNEL_WIDTH_80) अणु
-		अगर (center_ch > channel)
+	if (bwmode == CHANNEL_WIDTH_80) {
+		if (center_ch > channel)
 			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_LOWER;
-		अन्यथा अगर (center_ch < channel)
+		else if (center_ch < channel)
 			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_UPPER;
-		अन्यथा
+		else
 			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
-	पूर्ण
+	}
 
 	/* set Channel */
-	अगर (mutex_lock_पूर्णांकerruptible(&(adapter_to_dvobj(padapter)->setch_mutex)))
-		वापस;
+	if (mutex_lock_interruptible(&(adapter_to_dvobj(padapter)->setch_mutex)))
+		return;
 
 	/* saved channel/bw info */
 	rtw_set_oper_ch(padapter, channel);
@@ -403,415 +402,415 @@ u8 rtw_get_center_ch(u8 channel, u8 chnl_bw, u8 chnl_offset)
 	rtw_hal_set_chnl_bw(padapter, center_ch, bwmode, channel_offset, chnl_offset80); /*  set center channel */
 
 	mutex_unlock(&(adapter_to_dvobj(padapter)->setch_mutex));
-पूर्ण
+}
 
-अंतरभूत u8 *get_my_bssid(काष्ठा wlan_bssid_ex *pnetwork)
-अणु
-	वापस pnetwork->MacAddress;
-पूर्ण
+inline u8 *get_my_bssid(struct wlan_bssid_ex *pnetwork)
+{
+	return pnetwork->MacAddress;
+}
 
-u16 get_beacon_पूर्णांकerval(काष्ठा wlan_bssid_ex *bss)
-अणु
+u16 get_beacon_interval(struct wlan_bssid_ex *bss)
+{
 	__le16 val;
 
-	स_नकल((अचिन्हित अक्षर *)&val, rtw_get_beacon_पूर्णांकerval_from_ie(bss->IEs), 2);
+	memcpy((unsigned char *)&val, rtw_get_beacon_interval_from_ie(bss->IEs), 2);
 
-	वापस le16_to_cpu(val);
-पूर्ण
+	return le16_to_cpu(val);
+}
 
-पूर्णांक is_client_associated_to_ap(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext;
-	काष्ठा mlme_ext_info *pmlmeinfo;
+int is_client_associated_to_ap(struct adapter *padapter)
+{
+	struct mlme_ext_priv *pmlmeext;
+	struct mlme_ext_info *pmlmeinfo;
 
-	अगर (!padapter)
-		वापस _FAIL;
+	if (!padapter)
+		return _FAIL;
 
 	pmlmeext = &padapter->mlmeextpriv;
 	pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर ((pmlmeinfo->state & WIFI_FW_ASSOC_SUCCESS) && ((pmlmeinfo->state&0x03) == WIFI_FW_STATION_STATE))
-		वापस true;
-	अन्यथा
-		वापस _FAIL;
-पूर्ण
+	if ((pmlmeinfo->state & WIFI_FW_ASSOC_SUCCESS) && ((pmlmeinfo->state&0x03) == WIFI_FW_STATION_STATE))
+		return true;
+	else
+		return _FAIL;
+}
 
-पूर्णांक is_client_associated_to_ibss(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int is_client_associated_to_ibss(struct adapter *padapter)
+{
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर ((pmlmeinfo->state & WIFI_FW_ASSOC_SUCCESS) && ((pmlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE))
-		वापस true;
-	अन्यथा
-		वापस _FAIL;
-पूर्ण
+	if ((pmlmeinfo->state & WIFI_FW_ASSOC_SUCCESS) && ((pmlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE))
+		return true;
+	else
+		return _FAIL;
+}
 
-पूर्णांक is_IBSS_empty(काष्ठा adapter *padapter)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int is_IBSS_empty(struct adapter *padapter)
+{
+	unsigned int i;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	क्रम (i = IBSS_START_MAC_ID; i < NUM_STA; i++) अणु
-		अगर (pmlmeinfo->FW_sta_info[i].status == 1)
-			वापस _FAIL;
-	पूर्ण
+	for (i = IBSS_START_MAC_ID; i < NUM_STA; i++) {
+		if (pmlmeinfo->FW_sta_info[i].status == 1)
+			return _FAIL;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अचिन्हित पूर्णांक decide_रुको_क्रम_beacon_समयout(अचिन्हित पूर्णांक bcn_पूर्णांकerval)
-अणु
-	अगर ((bcn_पूर्णांकerval << 2) < WAIT_FOR_BCN_TO_MIN)
-		वापस WAIT_FOR_BCN_TO_MIN;
-	अन्यथा अगर ((bcn_पूर्णांकerval << 2) > WAIT_FOR_BCN_TO_MAX)
-		वापस WAIT_FOR_BCN_TO_MAX;
-	अन्यथा
-		वापस bcn_पूर्णांकerval << 2;
-पूर्ण
+unsigned int decide_wait_for_beacon_timeout(unsigned int bcn_interval)
+{
+	if ((bcn_interval << 2) < WAIT_FOR_BCN_TO_MIN)
+		return WAIT_FOR_BCN_TO_MIN;
+	else if ((bcn_interval << 2) > WAIT_FOR_BCN_TO_MAX)
+		return WAIT_FOR_BCN_TO_MAX;
+	else
+		return bcn_interval << 2;
+}
 
-व्योम invalidate_cam_all(काष्ठा adapter *padapter)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(padapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+void invalidate_cam_all(struct adapter *padapter)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 
-	rtw_hal_set_hwreg(padapter, HW_VAR_CAM_INVALID_ALL, शून्य);
+	rtw_hal_set_hwreg(padapter, HW_VAR_CAM_INVALID_ALL, NULL);
 
 	spin_lock_bh(&cam_ctl->lock);
-	cam_ctl->biपंचांगap = 0;
-	स_रखो(dvobj->cam_cache, 0, माप(काष्ठा cam_entry_cache)*TOTAL_CAM_ENTRY);
+	cam_ctl->bitmap = 0;
+	memset(dvobj->cam_cache, 0, sizeof(struct cam_entry_cache)*TOTAL_CAM_ENTRY);
 	spin_unlock_bh(&cam_ctl->lock);
-पूर्ण
+}
 
-अटल u32 _ReadCAM(काष्ठा adapter *padapter, u32 addr)
-अणु
+static u32 _ReadCAM(struct adapter *padapter, u32 addr)
+{
 	u32 count = 0, cmd;
 
 	cmd = CAM_POLLINIG | addr;
-	rtw_ग_लिखो32(padapter, RWCAM, cmd);
+	rtw_write32(padapter, RWCAM, cmd);
 
-	करो अणु
-		अगर (0 == (rtw_पढ़ो32(padapter, REG_CAMCMD) & CAM_POLLINIG))
-			अवरोध;
-	पूर्ण जबतक (count++ < 100);
+	do {
+		if (0 == (rtw_read32(padapter, REG_CAMCMD) & CAM_POLLINIG))
+			break;
+	} while (count++ < 100);
 
-	वापस rtw_पढ़ो32(padapter, REG_CAMREAD);
-पूर्ण
+	return rtw_read32(padapter, REG_CAMREAD);
+}
 
-व्योम पढ़ो_cam(काष्ठा adapter *padapter, u8 entry, u8 *get_key)
-अणु
+void read_cam(struct adapter *padapter, u8 entry, u8 *get_key)
+{
 	u32 j, addr, cmd;
 
 	addr = entry << 3;
 
-	क्रम (j = 0; j < 6; j++) अणु
+	for (j = 0; j < 6; j++) {
 		cmd = _ReadCAM(padapter, addr+j);
-		अगर (j > 1) /* get key from cam */
-			स_नकल(get_key+(j-2)*4, &cmd, 4);
-	पूर्ण
-पूर्ण
+		if (j > 1) /* get key from cam */
+			memcpy(get_key+(j-2)*4, &cmd, 4);
+	}
+}
 
-व्योम _ग_लिखो_cam(काष्ठा adapter *padapter, u8 entry, u16 ctrl, u8 *mac, u8 *key)
-अणु
-	अचिन्हित पूर्णांक i, val, addr;
-	पूर्णांक j;
+void _write_cam(struct adapter *padapter, u8 entry, u16 ctrl, u8 *mac, u8 *key)
+{
+	unsigned int i, val, addr;
+	int j;
 	u32 cam_val[2];
 
 	addr = entry << 3;
 
-	क्रम (j = 5; j >= 0; j--) अणु
-		चयन (j) अणु
-		हाल 0:
+	for (j = 5; j >= 0; j--) {
+		switch (j) {
+		case 0:
 			val = (ctrl | (mac[0] << 16) | (mac[1] << 24));
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			val = (mac[2] | (mac[3] << 8) | (mac[4] << 16) | (mac[5] << 24));
-			अवरोध;
-		शेष:
+			break;
+		default:
 			i = (j - 2) << 2;
 			val = (key[i] | (key[i+1] << 8) | (key[i+2] << 16) | (key[i+3] << 24));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		cam_val[0] = val;
-		cam_val[1] = addr + (अचिन्हित पूर्णांक)j;
+		cam_val[1] = addr + (unsigned int)j;
 
 		rtw_hal_set_hwreg(padapter, HW_VAR_CAM_WRITE, (u8 *)cam_val);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम _clear_cam_entry(काष्ठा adapter *padapter, u8 entry)
-अणु
-	अचिन्हित अक्षर null_sta[] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
-	अचिन्हित अक्षर null_key[] = अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+void _clear_cam_entry(struct adapter *padapter, u8 entry)
+{
+	unsigned char null_sta[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char null_key[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-	_ग_लिखो_cam(padapter, entry, 0, null_sta, null_key);
-पूर्ण
+	_write_cam(padapter, entry, 0, null_sta, null_key);
+}
 
-अंतरभूत व्योम ग_लिखो_cam(काष्ठा adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key)
-अणु
-	_ग_लिखो_cam(adapter, id, ctrl, mac, key);
-	ग_लिखो_cam_cache(adapter, id, ctrl, mac, key);
-पूर्ण
+inline void write_cam(struct adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key)
+{
+	_write_cam(adapter, id, ctrl, mac, key);
+	write_cam_cache(adapter, id, ctrl, mac, key);
+}
 
-अंतरभूत व्योम clear_cam_entry(काष्ठा adapter *adapter, u8 id)
-अणु
+inline void clear_cam_entry(struct adapter *adapter, u8 id)
+{
 	_clear_cam_entry(adapter, id);
 	clear_cam_cache(adapter, id);
-पूर्ण
+}
 
-व्योम ग_लिखो_cam_cache(काष्ठा adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+void write_cam_cache(struct adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 
 	spin_lock_bh(&cam_ctl->lock);
 
 	dvobj->cam_cache[id].ctrl = ctrl;
-	स_नकल(dvobj->cam_cache[id].mac, mac, ETH_ALEN);
-	स_नकल(dvobj->cam_cache[id].key, key, 16);
+	memcpy(dvobj->cam_cache[id].mac, mac, ETH_ALEN);
+	memcpy(dvobj->cam_cache[id].key, key, 16);
 
 	spin_unlock_bh(&cam_ctl->lock);
-पूर्ण
+}
 
-व्योम clear_cam_cache(काष्ठा adapter *adapter, u8 id)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+void clear_cam_cache(struct adapter *adapter, u8 id)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 
 	spin_lock_bh(&cam_ctl->lock);
 
-	स_रखो(&(dvobj->cam_cache[id]), 0, माप(काष्ठा cam_entry_cache));
+	memset(&(dvobj->cam_cache[id]), 0, sizeof(struct cam_entry_cache));
 
 	spin_unlock_bh(&cam_ctl->lock);
-पूर्ण
+}
 
-अटल bool _rtw_camid_is_gk(काष्ठा adapter *adapter, u8 cam_id)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+static bool _rtw_camid_is_gk(struct adapter *adapter, u8 cam_id)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 	bool ret = false;
 
-	अगर (cam_id >= TOTAL_CAM_ENTRY)
-		जाओ निकास;
+	if (cam_id >= TOTAL_CAM_ENTRY)
+		goto exit;
 
-	अगर (!(cam_ctl->biपंचांगap & BIT(cam_id)))
-		जाओ निकास;
+	if (!(cam_ctl->bitmap & BIT(cam_id)))
+		goto exit;
 
 	ret = (dvobj->cam_cache[cam_id].ctrl&BIT6)?true:false;
 
-निकास:
-	वापस ret;
-पूर्ण
+exit:
+	return ret;
+}
 
-अटल s16 _rtw_camid_search(काष्ठा adapter *adapter, u8 *addr, s16 kid)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	पूर्णांक i;
+static s16 _rtw_camid_search(struct adapter *adapter, u8 *addr, s16 kid)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	int i;
 	s16 cam_id = -1;
 
-	क्रम (i = 0; i < TOTAL_CAM_ENTRY; i++) अणु
-		अगर (addr && स_भेद(dvobj->cam_cache[i].mac, addr, ETH_ALEN))
-			जारी;
-		अगर (kid >= 0 && kid != (dvobj->cam_cache[i].ctrl&0x03))
-			जारी;
+	for (i = 0; i < TOTAL_CAM_ENTRY; i++) {
+		if (addr && memcmp(dvobj->cam_cache[i].mac, addr, ETH_ALEN))
+			continue;
+		if (kid >= 0 && kid != (dvobj->cam_cache[i].ctrl&0x03))
+			continue;
 
 		cam_id = i;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस cam_id;
-पूर्ण
+	return cam_id;
+}
 
-s16 rtw_camid_search(काष्ठा adapter *adapter, u8 *addr, s16 kid)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+s16 rtw_camid_search(struct adapter *adapter, u8 *addr, s16 kid)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 	s16 cam_id = -1;
 
 	spin_lock_bh(&cam_ctl->lock);
 	cam_id = _rtw_camid_search(adapter, addr, kid);
 	spin_unlock_bh(&cam_ctl->lock);
 
-	वापस cam_id;
-पूर्ण
+	return cam_id;
+}
 
-s16 rtw_camid_alloc(काष्ठा adapter *adapter, काष्ठा sta_info *sta, u8 kid)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+s16 rtw_camid_alloc(struct adapter *adapter, struct sta_info *sta, u8 kid)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 	s16 cam_id = -1;
-	काष्ठा mlme_ext_info *mlmeinfo;
+	struct mlme_ext_info *mlmeinfo;
 
 	spin_lock_bh(&cam_ctl->lock);
 
 	mlmeinfo = &adapter->mlmeextpriv.mlmext_info;
 
-	अगर ((((mlmeinfo->state&0x03) == WIFI_FW_AP_STATE) || ((mlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE))
-		&& !sta) अणु
-		/* AP/Ad-hoc mode group key: अटल alloction to शेष key by key ID */
-		अगर (kid > 3) अणु
+	if ((((mlmeinfo->state&0x03) == WIFI_FW_AP_STATE) || ((mlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE))
+		&& !sta) {
+		/* AP/Ad-hoc mode group key: static alloction to default key by key ID */
+		if (kid > 3) {
 			netdev_dbg(adapter->pnetdev,
 				   FUNC_ADPT_FMT " group key with invalid key id:%u\n",
 				   FUNC_ADPT_ARG(adapter), kid);
 			rtw_warn_on(1);
-			जाओ biपंचांगap_handle;
-		पूर्ण
+			goto bitmap_handle;
+		}
 
 		cam_id = kid;
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
-		u8 *addr = sta?sta->hwaddr:शून्य;
+	} else {
+		int i;
+		u8 *addr = sta?sta->hwaddr:NULL;
 
-		अगर (!sta) अणु
-			अगर (!(mlmeinfo->state & WIFI_FW_ASSOC_SUCCESS)) अणु
-				/* bypass STA mode group key setting beक्रमe connected(ex:WEP) because bssid is not पढ़ोy */
-				जाओ biपंचांगap_handle;
-			पूर्ण
+		if (!sta) {
+			if (!(mlmeinfo->state & WIFI_FW_ASSOC_SUCCESS)) {
+				/* bypass STA mode group key setting before connected(ex:WEP) because bssid is not ready */
+				goto bitmap_handle;
+			}
 
 			addr = get_bssid(&adapter->mlmepriv);
-		पूर्ण
+		}
 
 		i = _rtw_camid_search(adapter, addr, kid);
-		अगर (i >= 0) अणु
+		if (i >= 0) {
 			/* Fix issue that pairwise and group key have same key id. Pairwise key first, group key can overwirte group only(ex: rekey) */
-			अगर (sta || _rtw_camid_is_gk(adapter, i))
+			if (sta || _rtw_camid_is_gk(adapter, i))
 				cam_id = i;
-			अन्यथा
+			else
 				netdev_dbg(adapter->pnetdev,
 					   FUNC_ADPT_FMT " group key id:%u the same key id as pairwise key\n",
 					   FUNC_ADPT_ARG(adapter), kid);
-			जाओ biपंचांगap_handle;
-		पूर्ण
+			goto bitmap_handle;
+		}
 
-		क्रम (i = 4; i < TOTAL_CAM_ENTRY; i++)
-			अगर (!(cam_ctl->biपंचांगap & BIT(i)))
-				अवरोध;
+		for (i = 4; i < TOTAL_CAM_ENTRY; i++)
+			if (!(cam_ctl->bitmap & BIT(i)))
+				break;
 
-		अगर (i == TOTAL_CAM_ENTRY) अणु
-			अगर (sta)
+		if (i == TOTAL_CAM_ENTRY) {
+			if (sta)
 				netdev_dbg(adapter->pnetdev,
 					   FUNC_ADPT_FMT " pairwise key with %pM id:%u no room\n",
 					   FUNC_ADPT_ARG(adapter),
 					   MAC_ARG(sta->hwaddr), kid);
-			अन्यथा
+			else
 				netdev_dbg(adapter->pnetdev,
 					   FUNC_ADPT_FMT " group key id:%u no room\n",
 					   FUNC_ADPT_ARG(adapter), kid);
 			rtw_warn_on(1);
-			जाओ biपंचांगap_handle;
-		पूर्ण
+			goto bitmap_handle;
+		}
 
 		cam_id = i;
-	पूर्ण
+	}
 
-biपंचांगap_handle:
-	अगर (cam_id >= 0 && cam_id < 32)
-		cam_ctl->biपंचांगap |= BIT(cam_id);
+bitmap_handle:
+	if (cam_id >= 0 && cam_id < 32)
+		cam_ctl->bitmap |= BIT(cam_id);
 
 	spin_unlock_bh(&cam_ctl->lock);
 
-	वापस cam_id;
-पूर्ण
+	return cam_id;
+}
 
-व्योम rtw_camid_मुक्त(काष्ठा adapter *adapter, u8 cam_id)
-अणु
-	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	काष्ठा cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
+void rtw_camid_free(struct adapter *adapter, u8 cam_id)
+{
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 
 	spin_lock_bh(&cam_ctl->lock);
 
-	अगर (cam_id < TOTAL_CAM_ENTRY)
-		cam_ctl->biपंचांगap &= ~(BIT(cam_id));
+	if (cam_id < TOTAL_CAM_ENTRY)
+		cam_ctl->bitmap &= ~(BIT(cam_id));
 
 	spin_unlock_bh(&cam_ctl->lock);
-पूर्ण
+}
 
-पूर्णांक allocate_fw_sta_entry(काष्ठा adapter *padapter)
-अणु
-	अचिन्हित पूर्णांक mac_id;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int allocate_fw_sta_entry(struct adapter *padapter)
+{
+	unsigned int mac_id;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	क्रम (mac_id = IBSS_START_MAC_ID; mac_id < NUM_STA; mac_id++) अणु
-		अगर (pmlmeinfo->FW_sta_info[mac_id].status == 0) अणु
+	for (mac_id = IBSS_START_MAC_ID; mac_id < NUM_STA; mac_id++) {
+		if (pmlmeinfo->FW_sta_info[mac_id].status == 0) {
 			pmlmeinfo->FW_sta_info[mac_id].status = 1;
 			pmlmeinfo->FW_sta_info[mac_id].retry = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस mac_id;
-पूर्ण
+	return mac_id;
+}
 
-व्योम flush_all_cam_entry(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void flush_all_cam_entry(struct adapter *padapter)
+{
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	invalidate_cam_all(padapter);
-	/* clear शेष key related key search setting */
+	/* clear default key related key search setting */
 	rtw_hal_set_hwreg(padapter, HW_VAR_SEC_DK_CFG, (u8 *)false);
 
-	स_रखो((u8 *)(pmlmeinfo->FW_sta_info), 0, माप(pmlmeinfo->FW_sta_info));
-पूर्ण
+	memset((u8 *)(pmlmeinfo->FW_sta_info), 0, sizeof(pmlmeinfo->FW_sta_info));
+}
 
-पूर्णांक WMM_param_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE)
-अणु
-	/* काष्ठा registry_priv *pregpriv = &padapter->registrypriv; */
-	काष्ठा mlme_priv *pmlmepriv = &(padapter->mlmepriv);
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int WMM_param_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE)
+{
+	/* struct registry_priv *pregpriv = &padapter->registrypriv; */
+	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर (pmlmepriv->qospriv.qos_option == 0) अणु
+	if (pmlmepriv->qospriv.qos_option == 0) {
 		pmlmeinfo->WMM_enable = 0;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (!स_भेद(&(pmlmeinfo->WMM_param), (pIE->data + 6), माप(काष्ठा WMM_para_element)))
-		वापस false;
-	अन्यथा
-		स_नकल(&(pmlmeinfo->WMM_param), (pIE->data + 6), माप(काष्ठा WMM_para_element));
+	if (!memcmp(&(pmlmeinfo->WMM_param), (pIE->data + 6), sizeof(struct WMM_para_element)))
+		return false;
+	else
+		memcpy(&(pmlmeinfo->WMM_param), (pIE->data + 6), sizeof(struct WMM_para_element));
 
 	pmlmeinfo->WMM_enable = 1;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम WMMOnAssocRsp(काष्ठा adapter *padapter)
-अणु
-	u8 ACI, ACM, AIFS, ECWMin, ECWMax, aSअगरsTime;
+void WMMOnAssocRsp(struct adapter *padapter)
+{
+	u8 ACI, ACM, AIFS, ECWMin, ECWMax, aSifsTime;
 	u8 acm_mask;
 	u16 TXOP;
 	u32 acParm, i;
 	u32 edca[4], inx[4];
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा registry_priv *pregpriv = &padapter->registrypriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct registry_priv *pregpriv = &padapter->registrypriv;
 
 	acm_mask = 0;
 
-	अगर (pmlmeext->cur_wireless_mode & WIRELESS_11_24N)
-		aSअगरsTime = 16;
-	अन्यथा
-		aSअगरsTime = 10;
+	if (pmlmeext->cur_wireless_mode & WIRELESS_11_24N)
+		aSifsTime = 16;
+	else
+		aSifsTime = 10;
 
-	अगर (pmlmeinfo->WMM_enable == 0) अणु
+	if (pmlmeinfo->WMM_enable == 0) {
 		padapter->mlmepriv.acm_mask = 0;
 
-		AIFS = aSअगरsTime + (2 * pmlmeinfo->slotTime);
+		AIFS = aSifsTime + (2 * pmlmeinfo->slotTime);
 
-		अगर (pmlmeext->cur_wireless_mode & (WIRELESS_11G | WIRELESS_11A)) अणु
+		if (pmlmeext->cur_wireless_mode & (WIRELESS_11G | WIRELESS_11A)) {
 			ECWMin = 4;
 			ECWMax = 10;
-		पूर्ण अन्यथा अगर (pmlmeext->cur_wireless_mode & WIRELESS_11B) अणु
+		} else if (pmlmeext->cur_wireless_mode & WIRELESS_11B) {
 			ECWMin = 5;
 			ECWMax = 10;
-		पूर्ण अन्यथा अणु
+		} else {
 			ECWMin = 4;
 			ECWMax = 10;
-		पूर्ण
+		}
 
 		TXOP = 0;
 		acParm = AIFS | (ECWMin << 8) | (ECWMax << 12) | (TXOP << 16);
@@ -824,15 +823,15 @@ biपंचांगap_handle:
 		TXOP = 0x2f;
 		acParm = AIFS | (ECWMin << 8) | (ECWMax << 12) | (TXOP << 16);
 		rtw_hal_set_hwreg(padapter, HW_VAR_AC_PARAM_VO, (u8 *)(&acParm));
-	पूर्ण अन्यथा अणु
+	} else {
 		edca[0] = edca[1] = edca[2] = edca[3] = 0;
 
-		क्रम (i = 0; i < 4; i++) अणु
+		for (i = 0; i < 4; i++) {
 			ACI = (pmlmeinfo->WMM_param.ac_param[i].ACI_AIFSN >> 5) & 0x03;
 			ACM = (pmlmeinfo->WMM_param.ac_param[i].ACI_AIFSN >> 4) & 0x01;
 
-			/* AIFS = AIFSN * slot समय + SIFS - r2t phy delay */
-			AIFS = (pmlmeinfo->WMM_param.ac_param[i].ACI_AIFSN & 0x0f) * pmlmeinfo->slotTime + aSअगरsTime;
+			/* AIFS = AIFSN * slot time + SIFS - r2t phy delay */
+			AIFS = (pmlmeinfo->WMM_param.ac_param[i].ACI_AIFSN & 0x0f) * pmlmeinfo->slotTime + aSifsTime;
 
 			ECWMin = (pmlmeinfo->WMM_param.ac_param[i].CW & 0x0f);
 			ECWMax = (pmlmeinfo->WMM_param.ac_param[i].CW & 0xf0) >> 4;
@@ -840,132 +839,132 @@ biपंचांगap_handle:
 
 			acParm = AIFS | (ECWMin << 8) | (ECWMax << 12) | (TXOP << 16);
 
-			चयन (ACI) अणु
-			हाल 0x0:
+			switch (ACI) {
+			case 0x0:
 				rtw_hal_set_hwreg(padapter, HW_VAR_AC_PARAM_BE, (u8 *)(&acParm));
 				acm_mask |= (ACM ? BIT(1):0);
 				edca[XMIT_BE_QUEUE] = acParm;
-				अवरोध;
+				break;
 
-			हाल 0x1:
+			case 0x1:
 				rtw_hal_set_hwreg(padapter, HW_VAR_AC_PARAM_BK, (u8 *)(&acParm));
 				/* acm_mask |= (ACM? BIT(0):0); */
 				edca[XMIT_BK_QUEUE] = acParm;
-				अवरोध;
+				break;
 
-			हाल 0x2:
+			case 0x2:
 				rtw_hal_set_hwreg(padapter, HW_VAR_AC_PARAM_VI, (u8 *)(&acParm));
 				acm_mask |= (ACM ? BIT(2):0);
 				edca[XMIT_VI_QUEUE] = acParm;
-				अवरोध;
+				break;
 
-			हाल 0x3:
+			case 0x3:
 				rtw_hal_set_hwreg(padapter, HW_VAR_AC_PARAM_VO, (u8 *)(&acParm));
 				acm_mask |= (ACM ? BIT(3):0);
 				edca[XMIT_VO_QUEUE] = acParm;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (padapter->registrypriv.acm_method == 1)
+		if (padapter->registrypriv.acm_method == 1)
 			rtw_hal_set_hwreg(padapter, HW_VAR_ACM_CTRL, (u8 *)(&acm_mask));
-		अन्यथा
+		else
 			padapter->mlmepriv.acm_mask = acm_mask;
 
 		inx[0] = 0; inx[1] = 1; inx[2] = 2; inx[3] = 3;
 
-		अगर (pregpriv->wअगरi_spec == 1) अणु
-			u32 j, पंचांगp, change_inx = false;
+		if (pregpriv->wifi_spec == 1) {
+			u32 j, tmp, change_inx = false;
 
 			/* entry indx: 0->vo, 1->vi, 2->be, 3->bk. */
-			क्रम (i = 0; i < 4; i++) अणु
-				क्रम (j = i+1; j < 4; j++) अणु
+			for (i = 0; i < 4; i++) {
+				for (j = i+1; j < 4; j++) {
 					/* compare CW and AIFS */
-					अगर ((edca[j] & 0xFFFF) < (edca[i] & 0xFFFF)) अणु
+					if ((edca[j] & 0xFFFF) < (edca[i] & 0xFFFF)) {
 						change_inx = true;
-					पूर्ण अन्यथा अगर ((edca[j] & 0xFFFF) == (edca[i] & 0xFFFF)) अणु
+					} else if ((edca[j] & 0xFFFF) == (edca[i] & 0xFFFF)) {
 						/* compare TXOP */
-						अगर ((edca[j] >> 16) > (edca[i] >> 16))
+						if ((edca[j] >> 16) > (edca[i] >> 16))
 							change_inx = true;
-					पूर्ण
+					}
 
-					अगर (change_inx) अणु
-						पंचांगp = edca[i];
+					if (change_inx) {
+						tmp = edca[i];
 						edca[i] = edca[j];
-						edca[j] = पंचांगp;
+						edca[j] = tmp;
 
-						पंचांगp = inx[i];
+						tmp = inx[i];
 						inx[i] = inx[j];
-						inx[j] = पंचांगp;
+						inx[j] = tmp;
 
 						change_inx = false;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					}
+				}
+			}
+		}
 
-		क्रम (i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++)
 			pxmitpriv->wmm_para_seq[i] = inx[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bwmode_update_check(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE)
-अणु
-	अचिन्हित अक्षर  new_bwmode;
-	अचिन्हित अक्षर  new_ch_offset;
-	काष्ठा HT_info_element	 *pHT_info;
-	काष्ठा mlme_priv *pmlmepriv = &(padapter->mlmepriv);
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
-	काष्ठा ht_priv *phtpriv = &pmlmepriv->htpriv;
+static void bwmode_update_check(struct adapter *padapter, struct ndis_80211_var_ie *pIE)
+{
+	unsigned char  new_bwmode;
+	unsigned char  new_ch_offset;
+	struct HT_info_element	 *pHT_info;
+	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
+	struct ht_priv *phtpriv = &pmlmepriv->htpriv;
 	u8 cbw40_enable = 0;
 
-	अगर (!pIE)
-		वापस;
+	if (!pIE)
+		return;
 
-	अगर (phtpriv->ht_option == false)
-		वापस;
+	if (phtpriv->ht_option == false)
+		return;
 
-	अगर (pmlmeext->cur_bwmode >= CHANNEL_WIDTH_80)
-		वापस;
+	if (pmlmeext->cur_bwmode >= CHANNEL_WIDTH_80)
+		return;
 
-	अगर (pIE->Length > माप(काष्ठा HT_info_element))
-		वापस;
+	if (pIE->Length > sizeof(struct HT_info_element))
+		return;
 
-	pHT_info = (काष्ठा HT_info_element *)pIE->data;
+	pHT_info = (struct HT_info_element *)pIE->data;
 
-	अगर (pmlmeext->cur_channel > 14) अणु
-		अगर ((pregistrypriv->bw_mode & 0xf0) > 0)
+	if (pmlmeext->cur_channel > 14) {
+		if ((pregistrypriv->bw_mode & 0xf0) > 0)
 			cbw40_enable = 1;
-	पूर्ण अन्यथा अणु
-		अगर ((pregistrypriv->bw_mode & 0x0f) > 0)
+	} else {
+		if ((pregistrypriv->bw_mode & 0x0f) > 0)
 			cbw40_enable = 1;
-	पूर्ण
+	}
 
-	अगर ((pHT_info->infos[0] & BIT(2)) && cbw40_enable) अणु
+	if ((pHT_info->infos[0] & BIT(2)) && cbw40_enable) {
 		new_bwmode = CHANNEL_WIDTH_40;
 
-		चयन (pHT_info->infos[0] & 0x3) अणु
-		हाल 1:
+		switch (pHT_info->infos[0] & 0x3) {
+		case 1:
 			new_ch_offset = HAL_PRIME_CHNL_OFFSET_LOWER;
-			अवरोध;
+			break;
 
-		हाल 3:
+		case 3:
 			new_ch_offset = HAL_PRIME_CHNL_OFFSET_UPPER;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			new_bwmode = CHANNEL_WIDTH_20;
 			new_ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		new_bwmode = CHANNEL_WIDTH_20;
 		new_ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
-	पूर्ण
+	}
 
-	अगर ((new_bwmode != pmlmeext->cur_bwmode) || (new_ch_offset != pmlmeext->cur_ch_offset)) अणु
+	if ((new_bwmode != pmlmeext->cur_bwmode) || (new_ch_offset != pmlmeext->cur_ch_offset)) {
 		pmlmeinfo->bwmode_updated = true;
 
 		pmlmeext->cur_bwmode = new_bwmode;
@@ -973,151 +972,151 @@ biपंचांगap_handle:
 
 		/* update HT info also */
 		HT_info_handler(padapter, pIE);
-	पूर्ण अन्यथा अणु
+	} else {
 		pmlmeinfo->bwmode_updated = false;
-	पूर्ण
+	}
 
-	अगर (true == pmlmeinfo->bwmode_updated) अणु
-		काष्ठा sta_info *psta;
-		काष्ठा wlan_bssid_ex	*cur_network = &(pmlmeinfo->network);
-		काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	if (true == pmlmeinfo->bwmode_updated) {
+		struct sta_info *psta;
+		struct wlan_bssid_ex	*cur_network = &(pmlmeinfo->network);
+		struct sta_priv *pstapriv = &padapter->stapriv;
 
 		/* set_channel_bwmode(padapter, pmlmeext->cur_channel, pmlmeext->cur_ch_offset, pmlmeext->cur_bwmode); */
 
 		/* update ap's stainfo */
 		psta = rtw_get_stainfo(pstapriv, cur_network->MacAddress);
-		अगर (psta) अणु
-			काष्ठा ht_priv *phtpriv_sta = &psta->htpriv;
+		if (psta) {
+			struct ht_priv *phtpriv_sta = &psta->htpriv;
 
-			अगर (phtpriv_sta->ht_option) अणु
+			if (phtpriv_sta->ht_option) {
 				/*  bwmode */
 				psta->bw_mode = pmlmeext->cur_bwmode;
 				phtpriv_sta->ch_offset = pmlmeext->cur_ch_offset;
-			पूर्ण अन्यथा अणु
+			} else {
 				psta->bw_mode = CHANNEL_WIDTH_20;
 				phtpriv_sta->ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
-			पूर्ण
+			}
 
 			rtw_dm_ra_mask_wk_cmd(padapter, (u8 *)psta);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम HT_caps_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE)
-अणु
-	अचिन्हित पूर्णांक	i;
+void HT_caps_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE)
+{
+	unsigned int	i;
 	u8 rf_type;
 	u8 max_AMPDU_len, min_MPDU_spacing;
 	u8 cur_ldpc_cap = 0, cur_stbc_cap = 0;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv *phtpriv = &pmlmepriv->htpriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv *phtpriv = &pmlmepriv->htpriv;
 
-	अगर (!pIE)
-		वापस;
+	if (!pIE)
+		return;
 
-	अगर (phtpriv->ht_option == false)
-		वापस;
+	if (phtpriv->ht_option == false)
+		return;
 
 	pmlmeinfo->HT_caps_enable = 1;
 
-	क्रम (i = 0; i < (pIE->Length); i++) अणु
-		अगर (i != 2) अणु
+	for (i = 0; i < (pIE->Length); i++) {
+		if (i != 2) {
 			/* Commented by Albert 2010/07/12 */
 			/* Got the endian issue here. */
 			pmlmeinfo->HT_caps.u.HT_cap[i] &= (pIE->data[i]);
-		पूर्ण अन्यथा अणु
-			/* modअगरy from  fw by Thomas 2010/11/17 */
-			अगर ((pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x3) > (pIE->data[i] & 0x3))
+		} else {
+			/* modify from  fw by Thomas 2010/11/17 */
+			if ((pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x3) > (pIE->data[i] & 0x3))
 				max_AMPDU_len = (pIE->data[i] & 0x3);
-			अन्यथा
+			else
 				max_AMPDU_len = (pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x3);
 
-			अगर ((pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x1c) > (pIE->data[i] & 0x1c))
+			if ((pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x1c) > (pIE->data[i] & 0x1c))
 				min_MPDU_spacing = (pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para & 0x1c);
-			अन्यथा
+			else
 				min_MPDU_spacing = (pIE->data[i] & 0x1c);
 
 			pmlmeinfo->HT_caps.u.HT_cap_element.AMPDU_para = max_AMPDU_len | min_MPDU_spacing;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	rtw_hal_get_hwreg(padapter, HW_VAR_RF_TYPE, (u8 *)(&rf_type));
 
 	/* update the MCS set */
-	क्रम (i = 0; i < 16; i++)
-		pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate[i] &= pmlmeext->शेष_supported_mcs_set[i];
+	for (i = 0; i < 16; i++)
+		pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate[i] &= pmlmeext->default_supported_mcs_set[i];
 
 	/* update the MCS rates */
-	चयन (rf_type) अणु
-	हाल RF_1T1R:
-	हाल RF_1T2R:
+	switch (rf_type) {
+	case RF_1T1R:
+	case RF_1T2R:
 		set_mcs_rate_by_mask(pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate, MCS_RATE_1R);
-		अवरोध;
-	हाल RF_2T2R:
-	शेष:
+		break;
+	case RF_2T2R:
+	default:
 		set_mcs_rate_by_mask(pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate, MCS_RATE_2R);
-	पूर्ण
+	}
 
-	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE)) अणु
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
 		/*  Config STBC setting */
-		अगर (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX) &&
+		if (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX) &&
 		    GET_HT_CAPABILITY_ELE_TX_STBC(pIE->data))
 			SET_FLAG(cur_stbc_cap, STBC_HT_ENABLE_TX);
 
 		phtpriv->stbc_cap = cur_stbc_cap;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*  Config LDPC Coding Capability */
-		अगर (TEST_FLAG(phtpriv->ldpc_cap, LDPC_HT_ENABLE_TX) &&
+		if (TEST_FLAG(phtpriv->ldpc_cap, LDPC_HT_ENABLE_TX) &&
 		    GET_HT_CAPABILITY_ELE_LDPC_CAP(pIE->data))
 			SET_FLAG(cur_ldpc_cap, (LDPC_HT_ENABLE_TX | LDPC_HT_CAP_TX));
 
 		phtpriv->ldpc_cap = cur_ldpc_cap;
 
 		/*  Config STBC setting */
-		अगर (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX) &&
+		if (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX) &&
 		    GET_HT_CAPABILITY_ELE_RX_STBC(pIE->data))
 			SET_FLAG(cur_stbc_cap, (STBC_HT_ENABLE_TX | STBC_HT_CAP_TX));
 
 		phtpriv->stbc_cap = cur_stbc_cap;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम HT_info_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv *phtpriv = &pmlmepriv->htpriv;
+void HT_info_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE)
+{
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv *phtpriv = &pmlmepriv->htpriv;
 
-	अगर (!pIE)
-		वापस;
+	if (!pIE)
+		return;
 
-	अगर (phtpriv->ht_option == false)
-		वापस;
+	if (phtpriv->ht_option == false)
+		return;
 
-	अगर (pIE->Length > माप(काष्ठा HT_info_element))
-		वापस;
+	if (pIE->Length > sizeof(struct HT_info_element))
+		return;
 
 	pmlmeinfo->HT_info_enable = 1;
-	स_नकल(&(pmlmeinfo->HT_info), pIE->data, pIE->Length);
-पूर्ण
+	memcpy(&(pmlmeinfo->HT_info), pIE->data, pIE->Length);
+}
 
-व्योम HTOnAssocRsp(काष्ठा adapter *padapter)
-अणु
-	अचिन्हित अक्षर max_AMPDU_len;
-	अचिन्हित अक्षर min_MPDU_spacing;
-	/* काष्ठा registry_priv  *pregpriv = &padapter->registrypriv; */
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void HTOnAssocRsp(struct adapter *padapter)
+{
+	unsigned char max_AMPDU_len;
+	unsigned char min_MPDU_spacing;
+	/* struct registry_priv  *pregpriv = &padapter->registrypriv; */
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर ((pmlmeinfo->HT_info_enable) && (pmlmeinfo->HT_caps_enable)) अणु
+	if ((pmlmeinfo->HT_info_enable) && (pmlmeinfo->HT_caps_enable)) {
 		pmlmeinfo->HT_enable = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		pmlmeinfo->HT_enable = 0;
 		/* set_channel_bwmode(padapter, pmlmeext->cur_channel, pmlmeext->cur_ch_offset, pmlmeext->cur_bwmode); */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* handle A-MPDU parameter field */
 	/*
@@ -1131,602 +1130,602 @@ biपंचांगap_handle:
 	rtw_hal_set_hwreg(padapter, HW_VAR_AMPDU_MIN_SPACE, (u8 *)(&min_MPDU_spacing));
 
 	rtw_hal_set_hwreg(padapter, HW_VAR_AMPDU_FACTOR, (u8 *)(&max_AMPDU_len));
-पूर्ण
+}
 
-व्योम ERP_IE_handler(काष्ठा adapter *padapter, काष्ठा ndis_80211_var_ie *pIE)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void ERP_IE_handler(struct adapter *padapter, struct ndis_80211_var_ie *pIE)
+{
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर (pIE->Length > 1)
-		वापस;
+	if (pIE->Length > 1)
+		return;
 
 	pmlmeinfo->ERP_enable = 1;
-	स_नकल(&(pmlmeinfo->ERP_IE), pIE->data, pIE->Length);
-पूर्ण
+	memcpy(&(pmlmeinfo->ERP_IE), pIE->data, pIE->Length);
+}
 
-व्योम VCS_update(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
-	काष्ठा registry_priv  *pregpriv = &padapter->registrypriv;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void VCS_update(struct adapter *padapter, struct sta_info *psta)
+{
+	struct registry_priv  *pregpriv = &padapter->registrypriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	चयन (pregpriv->vrtl_carrier_sense) अणु/* 0:off 1:on 2:स्वतः */
-	हाल 0: /* off */
+	switch (pregpriv->vrtl_carrier_sense) {/* 0:off 1:on 2:auto */
+	case 0: /* off */
 		psta->rtsen = 0;
 		psta->cts2self = 0;
-		अवरोध;
+		break;
 
-	हाल 1: /* on */
-		अगर (pregpriv->vcs_type == 1) अणु /* 1:RTS/CTS 2:CTS to self */
+	case 1: /* on */
+		if (pregpriv->vcs_type == 1) { /* 1:RTS/CTS 2:CTS to self */
 			psta->rtsen = 1;
 			psta->cts2self = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			psta->rtsen = 0;
 			psta->cts2self = 1;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 2: /* स्वतः */
-	शेष:
-		अगर ((pmlmeinfo->ERP_enable) && (pmlmeinfo->ERP_IE & BIT(1))) अणु
-			अगर (pregpriv->vcs_type == 1) अणु
+	case 2: /* auto */
+	default:
+		if ((pmlmeinfo->ERP_enable) && (pmlmeinfo->ERP_IE & BIT(1))) {
+			if (pregpriv->vcs_type == 1) {
 				psta->rtsen = 1;
 				psta->cts2self = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				psta->rtsen = 0;
 				psta->cts2self = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			psta->rtsen = 0;
 			psta->cts2self = 0;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-व्योम update_ldpc_stbc_cap(काष्ठा sta_info *psta)
-अणु
-	अगर (psta->htpriv.ht_option) अणु
-		अगर (TEST_FLAG(psta->htpriv.ldpc_cap, LDPC_HT_ENABLE_TX))
+void update_ldpc_stbc_cap(struct sta_info *psta)
+{
+	if (psta->htpriv.ht_option) {
+		if (TEST_FLAG(psta->htpriv.ldpc_cap, LDPC_HT_ENABLE_TX))
 			psta->ldpc = 1;
 
-		अगर (TEST_FLAG(psta->htpriv.stbc_cap, STBC_HT_ENABLE_TX))
+		if (TEST_FLAG(psta->htpriv.stbc_cap, STBC_HT_ENABLE_TX))
 			psta->stbc = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		psta->ldpc = 0;
 		psta->stbc = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक rtw_check_bcn_info(काष्ठा adapter *Adapter, u8 *pframe, u32 packet_len)
-अणु
-	अचिन्हित पूर्णांक len;
-	अचिन्हित अक्षर *p;
-	अचिन्हित लघु	val16, subtype;
-	काष्ठा wlan_network *cur_network = &(Adapter->mlmepriv.cur_network);
+int rtw_check_bcn_info(struct adapter *Adapter, u8 *pframe, u32 packet_len)
+{
+	unsigned int len;
+	unsigned char *p;
+	unsigned short	val16, subtype;
+	struct wlan_network *cur_network = &(Adapter->mlmepriv.cur_network);
 	/* u8 wpa_ie[255], rsn_ie[255]; */
 	u16 wpa_len = 0, rsn_len = 0;
 	u8 encryp_protocol = 0;
-	काष्ठा wlan_bssid_ex *bssid;
-	पूर्णांक group_cipher = 0, pairwise_cipher = 0, is_8021x = 0;
-	अचिन्हित अक्षर *pbuf;
+	struct wlan_bssid_ex *bssid;
+	int group_cipher = 0, pairwise_cipher = 0, is_8021x = 0;
+	unsigned char *pbuf;
 	u32 wpa_ielen = 0;
 	u8 *pbssid = GetAddr3Ptr(pframe);
-	काष्ठा HT_info_element *pht_info = शून्य;
-	काष्ठा ieee80211_ht_cap *pht_cap = शून्य;
+	struct HT_info_element *pht_info = NULL;
+	struct ieee80211_ht_cap *pht_cap = NULL;
 	u32 bcn_channel;
-	अचिन्हित लघु	ht_cap_info;
-	अचिन्हित अक्षर ht_info_infos_0;
-	काष्ठा mlme_priv *pmlmepriv = &Adapter->mlmepriv;
-	पूर्णांक ssid_len;
+	unsigned short	ht_cap_info;
+	unsigned char ht_info_infos_0;
+	struct mlme_priv *pmlmepriv = &Adapter->mlmepriv;
+	int ssid_len;
 
-	अगर (is_client_associated_to_ap(Adapter) == false)
-		वापस true;
+	if (is_client_associated_to_ap(Adapter) == false)
+		return true;
 
-	len = packet_len - माप(काष्ठा ieee80211_hdr_3addr);
+	len = packet_len - sizeof(struct ieee80211_hdr_3addr);
 
-	अगर (len > MAX_IE_SZ)
-		वापस _FAIL;
+	if (len > MAX_IE_SZ)
+		return _FAIL;
 
-	अगर (स_भेद(cur_network->network.MacAddress, pbssid, 6))
-		वापस true;
+	if (memcmp(cur_network->network.MacAddress, pbssid, 6))
+		return true;
 
-	bssid = rtw_zदो_स्मृति(माप(काष्ठा wlan_bssid_ex));
-	अगर (!bssid)
-		वापस true;
+	bssid = rtw_zmalloc(sizeof(struct wlan_bssid_ex));
+	if (!bssid)
+		return true;
 
-	अगर ((pmlmepriv->समयBcnInfoChkStart != 0) && (jअगरfies_to_msecs(jअगरfies - pmlmepriv->समयBcnInfoChkStart) > DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS)) अणु
-		pmlmepriv->समयBcnInfoChkStart = 0;
+	if ((pmlmepriv->timeBcnInfoChkStart != 0) && (jiffies_to_msecs(jiffies - pmlmepriv->timeBcnInfoChkStart) > DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS)) {
+		pmlmepriv->timeBcnInfoChkStart = 0;
 		pmlmepriv->NumOfBcnInfoChkFail = 0;
-	पूर्ण
+	}
 
 	subtype = GetFrameSubType(pframe) >> 4;
 
-	अगर (subtype == WIFI_BEACON)
+	if (subtype == WIFI_BEACON)
 		bssid->Reserved[0] = 1;
 
-	bssid->Length = माप(काष्ठा wlan_bssid_ex) - MAX_IE_SZ + len;
+	bssid->Length = sizeof(struct wlan_bssid_ex) - MAX_IE_SZ + len;
 
-	/* below is to copy the inक्रमmation element */
+	/* below is to copy the information element */
 	bssid->IELength = len;
-	स_नकल(bssid->IEs, (pframe + माप(काष्ठा ieee80211_hdr_3addr)), bssid->IELength);
+	memcpy(bssid->IEs, (pframe + sizeof(struct ieee80211_hdr_3addr)), bssid->IELength);
 
 	/* check bw and channel offset */
 	/* parsing HT_CAP_IE */
 	p = rtw_get_ie(bssid->IEs + _FIXED_IE_LENGTH_, WLAN_EID_HT_CAPABILITY, &len, bssid->IELength - _FIXED_IE_LENGTH_);
-	अगर (p && len > 0) अणु
-			pht_cap = (काष्ठा ieee80211_ht_cap *)(p + 2);
+	if (p && len > 0) {
+			pht_cap = (struct ieee80211_ht_cap *)(p + 2);
 			ht_cap_info = le16_to_cpu(pht_cap->cap_info);
-	पूर्ण अन्यथा अणु
+	} else {
 			ht_cap_info = 0;
-	पूर्ण
+	}
 	/* parsing HT_INFO_IE */
 	p = rtw_get_ie(bssid->IEs + _FIXED_IE_LENGTH_, WLAN_EID_HT_OPERATION, &len, bssid->IELength - _FIXED_IE_LENGTH_);
-	अगर (p && len > 0) अणु
-			pht_info = (काष्ठा HT_info_element *)(p + 2);
+	if (p && len > 0) {
+			pht_info = (struct HT_info_element *)(p + 2);
 			ht_info_infos_0 = pht_info->infos[0];
-	पूर्ण अन्यथा अणु
+	} else {
 			ht_info_infos_0 = 0;
-	पूर्ण
-	अगर (ht_cap_info != cur_network->BcnInfo.ht_cap_info ||
-		((ht_info_infos_0&0x03) != (cur_network->BcnInfo.ht_info_infos_0&0x03))) अणु
-			अणु
+	}
+	if (ht_cap_info != cur_network->BcnInfo.ht_cap_info ||
+		((ht_info_infos_0&0x03) != (cur_network->BcnInfo.ht_info_infos_0&0x03))) {
+			{
 				/* bcn_info_update */
 				cur_network->BcnInfo.ht_cap_info = ht_cap_info;
 				cur_network->BcnInfo.ht_info_infos_0 = ht_info_infos_0;
-				/* to करो : need to check that whether modअगरy related रेजिस्टर of BB or not */
-			पूर्ण
-			/* जाओ _mismatch; */
-	पूर्ण
+				/* to do : need to check that whether modify related register of BB or not */
+			}
+			/* goto _mismatch; */
+	}
 
-	/* Checking क्रम channel */
+	/* Checking for channel */
 	p = rtw_get_ie(bssid->IEs + _FIXED_IE_LENGTH_, WLAN_EID_DS_PARAMS, &len, bssid->IELength - _FIXED_IE_LENGTH_);
-	अगर (p) अणु
+	if (p) {
 			bcn_channel = *(p + 2);
-	पूर्ण अन्यथा अणु/* In 5G, some ap करो not have DSSET IE checking HT info क्रम channel */
+	} else {/* In 5G, some ap do not have DSSET IE checking HT info for channel */
 		rtw_get_ie(bssid->IEs + _FIXED_IE_LENGTH_, WLAN_EID_HT_OPERATION,
 			   &len, bssid->IELength - _FIXED_IE_LENGTH_);
-		अगर (pht_info)
+		if (pht_info)
 			bcn_channel = pht_info->primary_channel;
-		अन्यथा /* we करोn't find channel IE, so don't check it */
+		else /* we don't find channel IE, so don't check it */
 			bcn_channel = Adapter->mlmeextpriv.cur_channel;
-	पूर्ण
+	}
 
-	अगर (bcn_channel != Adapter->mlmeextpriv.cur_channel)
-			जाओ _mismatch;
+	if (bcn_channel != Adapter->mlmeextpriv.cur_channel)
+			goto _mismatch;
 
 	/* checking SSID */
 	ssid_len = 0;
 	p = rtw_get_ie(bssid->IEs + _FIXED_IE_LENGTH_, WLAN_EID_SSID, &len, bssid->IELength - _FIXED_IE_LENGTH_);
-	अगर (p) अणु
+	if (p) {
 		ssid_len = *(p + 1);
-		अगर (ssid_len > NDIS_802_11_LENGTH_SSID)
+		if (ssid_len > NDIS_802_11_LENGTH_SSID)
 			ssid_len = 0;
-	पूर्ण
-	स_नकल(bssid->Ssid.Ssid, (p + 2), ssid_len);
+	}
+	memcpy(bssid->Ssid.Ssid, (p + 2), ssid_len);
 	bssid->Ssid.SsidLength = ssid_len;
 
-	अगर (स_भेद(bssid->Ssid.Ssid, cur_network->network.Ssid.Ssid, 32) ||
+	if (memcmp(bssid->Ssid.Ssid, cur_network->network.Ssid.Ssid, 32) ||
 			bssid->Ssid.SsidLength != cur_network->network.Ssid.SsidLength)
-		अगर (bssid->Ssid.Ssid[0] != '\0' &&
+		if (bssid->Ssid.Ssid[0] != '\0' &&
 		    bssid->Ssid.SsidLength != 0) /* not hidden ssid */
-			जाओ _mismatch;
+			goto _mismatch;
 
 	/* check encryption info */
-	val16 = rtw_get_capability((काष्ठा wlan_bssid_ex *)bssid);
+	val16 = rtw_get_capability((struct wlan_bssid_ex *)bssid);
 
-	अगर (val16 & BIT(4))
+	if (val16 & BIT(4))
 		bssid->Privacy = 1;
-	अन्यथा
+	else
 		bssid->Privacy = 0;
 
-	अगर (cur_network->network.Privacy != bssid->Privacy)
-		जाओ _mismatch;
+	if (cur_network->network.Privacy != bssid->Privacy)
+		goto _mismatch;
 
-	rtw_get_sec_ie(bssid->IEs, bssid->IELength, शून्य, &rsn_len, शून्य, &wpa_len);
+	rtw_get_sec_ie(bssid->IEs, bssid->IELength, NULL, &rsn_len, NULL, &wpa_len);
 
-	अगर (rsn_len > 0)
+	if (rsn_len > 0)
 		encryp_protocol = ENCRYP_PROTOCOL_WPA2;
-	अन्यथा अगर (wpa_len > 0)
+	else if (wpa_len > 0)
 		encryp_protocol = ENCRYP_PROTOCOL_WPA;
-	अन्यथा
-		अगर (bssid->Privacy)
+	else
+		if (bssid->Privacy)
 			encryp_protocol = ENCRYP_PROTOCOL_WEP;
 
-	अगर (cur_network->BcnInfo.encryp_protocol != encryp_protocol)
-		जाओ _mismatch;
+	if (cur_network->BcnInfo.encryp_protocol != encryp_protocol)
+		goto _mismatch;
 
-	अगर (encryp_protocol == ENCRYP_PROTOCOL_WPA || encryp_protocol == ENCRYP_PROTOCOL_WPA2) अणु
+	if (encryp_protocol == ENCRYP_PROTOCOL_WPA || encryp_protocol == ENCRYP_PROTOCOL_WPA2) {
 		pbuf = rtw_get_wpa_ie(&bssid->IEs[12], &wpa_ielen, bssid->IELength-12);
-		अगर (pbuf && (wpa_ielen > 0)) अणु
+		if (pbuf && (wpa_ielen > 0)) {
 			rtw_parse_wpa_ie(pbuf, wpa_ielen + 2, &group_cipher,
 					 &pairwise_cipher, &is_8021x);
-		पूर्ण अन्यथा अणु
+		} else {
 			pbuf = rtw_get_wpa2_ie(&bssid->IEs[12], &wpa_ielen, bssid->IELength-12);
 
-			अगर (pbuf && (wpa_ielen > 0))
+			if (pbuf && (wpa_ielen > 0))
 				rtw_parse_wpa2_ie(pbuf, wpa_ielen + 2, &group_cipher,
 						  &pairwise_cipher, &is_8021x);
-		पूर्ण
+		}
 
-		अगर (pairwise_cipher != cur_network->BcnInfo.pairwise_cipher ||
+		if (pairwise_cipher != cur_network->BcnInfo.pairwise_cipher ||
 		    group_cipher != cur_network->BcnInfo.group_cipher)
-			जाओ _mismatch;
+			goto _mismatch;
 
-		अगर (is_8021x != cur_network->BcnInfo.is_8021x)
-			जाओ _mismatch;
-	पूर्ण
+		if (is_8021x != cur_network->BcnInfo.is_8021x)
+			goto _mismatch;
+	}
 
-	kमुक्त(bssid);
-	वापस _SUCCESS;
+	kfree(bssid);
+	return _SUCCESS;
 
 _mismatch:
-	kमुक्त(bssid);
+	kfree(bssid);
 
-	अगर (pmlmepriv->NumOfBcnInfoChkFail == 0)
-		pmlmepriv->समयBcnInfoChkStart = jअगरfies;
+	if (pmlmepriv->NumOfBcnInfoChkFail == 0)
+		pmlmepriv->timeBcnInfoChkStart = jiffies;
 
 	pmlmepriv->NumOfBcnInfoChkFail++;
 
-	अगर ((pmlmepriv->समयBcnInfoChkStart != 0) && (jअगरfies_to_msecs(jअगरfies - pmlmepriv->समयBcnInfoChkStart) <= DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS)
-		&& (pmlmepriv->NumOfBcnInfoChkFail >= DISCONNECT_BY_CHK_BCN_FAIL_THRESHOLD)) अणु
-		pmlmepriv->समयBcnInfoChkStart = 0;
+	if ((pmlmepriv->timeBcnInfoChkStart != 0) && (jiffies_to_msecs(jiffies - pmlmepriv->timeBcnInfoChkStart) <= DISCONNECT_BY_CHK_BCN_FAIL_OBSERV_PERIOD_IN_MS)
+		&& (pmlmepriv->NumOfBcnInfoChkFail >= DISCONNECT_BY_CHK_BCN_FAIL_THRESHOLD)) {
+		pmlmepriv->timeBcnInfoChkStart = 0;
 		pmlmepriv->NumOfBcnInfoChkFail = 0;
-		वापस _FAIL;
-	पूर्ण
+		return _FAIL;
+	}
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-व्योम update_beacon_info(काष्ठा adapter *padapter, u8 *pframe, uपूर्णांक pkt_len, काष्ठा sta_info *psta)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित पूर्णांक len;
-	काष्ठा ndis_80211_var_ie *pIE;
+void update_beacon_info(struct adapter *padapter, u8 *pframe, uint pkt_len, struct sta_info *psta)
+{
+	unsigned int i;
+	unsigned int len;
+	struct ndis_80211_var_ie *pIE;
 
 	len = pkt_len - (_BEACON_IE_OFFSET_ + WLAN_HDR_A3_LEN);
 
-	क्रम (i = 0; i < len;) अणु
-		pIE = (काष्ठा ndis_80211_var_ie *)(pframe + (_BEACON_IE_OFFSET_ + WLAN_HDR_A3_LEN) + i);
+	for (i = 0; i < len;) {
+		pIE = (struct ndis_80211_var_ie *)(pframe + (_BEACON_IE_OFFSET_ + WLAN_HDR_A3_LEN) + i);
 
-		चयन (pIE->ElementID) अणु
-		हाल WLAN_EID_VENDOR_SPECIFIC:
-			/* to update WMM parameter set जबतक receiving beacon */
-			अगर (!स_भेद(pIE->data, WMM_PARA_OUI, 6) && pIE->Length == WLAN_WMM_LEN)	/* WMM */
-				अगर (WMM_param_handler(padapter, pIE))
+		switch (pIE->ElementID) {
+		case WLAN_EID_VENDOR_SPECIFIC:
+			/* to update WMM parameter set while receiving beacon */
+			if (!memcmp(pIE->data, WMM_PARA_OUI, 6) && pIE->Length == WLAN_WMM_LEN)	/* WMM */
+				if (WMM_param_handler(padapter, pIE))
 					report_wmm_edca_update(padapter);
 
-			अवरोध;
+			break;
 
-		हाल WLAN_EID_HT_OPERATION:	/* HT info */
+		case WLAN_EID_HT_OPERATION:	/* HT info */
 			/* HT_info_handler(padapter, pIE); */
 			bwmode_update_check(padapter, pIE);
-			अवरोध;
+			break;
 
-		हाल WLAN_EID_ERP_INFO:
+		case WLAN_EID_ERP_INFO:
 			ERP_IE_handler(padapter, pIE);
 			VCS_update(padapter, psta);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
 		i += (pIE->Length + 2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अचिन्हित पूर्णांक is_ap_in_tkip(काष्ठा adapter *padapter)
-अणु
+unsigned int is_ap_in_tkip(struct adapter *padapter)
+{
 	u32 i;
-	काष्ठा ndis_80211_var_ie *pIE;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा wlan_bssid_ex		*cur_network = &(pmlmeinfo->network);
+	struct ndis_80211_var_ie *pIE;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct wlan_bssid_ex		*cur_network = &(pmlmeinfo->network);
 
-	अगर (rtw_get_capability((काष्ठा wlan_bssid_ex *)cur_network) & WLAN_CAPABILITY_PRIVACY) अणु
-		क्रम (i = माप(काष्ठा ndis_802_11_fix_ie); i < pmlmeinfo->network.IELength;) अणु
-			pIE = (काष्ठा ndis_80211_var_ie *)(pmlmeinfo->network.IEs + i);
+	if (rtw_get_capability((struct wlan_bssid_ex *)cur_network) & WLAN_CAPABILITY_PRIVACY) {
+		for (i = sizeof(struct ndis_802_11_fix_ie); i < pmlmeinfo->network.IELength;) {
+			pIE = (struct ndis_80211_var_ie *)(pmlmeinfo->network.IEs + i);
 
-			चयन (pIE->ElementID) अणु
-			हाल WLAN_EID_VENDOR_SPECIFIC:
-				अगर ((!स_भेद(pIE->data, RTW_WPA_OUI, 4)) && (!स_भेद((pIE->data + 12), WPA_TKIP_CIPHER, 4)))
-					वापस true;
+			switch (pIE->ElementID) {
+			case WLAN_EID_VENDOR_SPECIFIC:
+				if ((!memcmp(pIE->data, RTW_WPA_OUI, 4)) && (!memcmp((pIE->data + 12), WPA_TKIP_CIPHER, 4)))
+					return true;
 
-				अवरोध;
+				break;
 
-			हाल WLAN_EID_RSN:
-				अगर (!स_भेद((pIE->data + 8), RSN_TKIP_CIPHER, 4))
-					वापस true;
-				अवरोध;
+			case WLAN_EID_RSN:
+				if (!memcmp((pIE->data + 8), RSN_TKIP_CIPHER, 4))
+					return true;
+				break;
 
-			शेष:
-				अवरोध;
-			पूर्ण
+			default:
+				break;
+			}
 
 			i += (pIE->Length + 2);
-		पूर्ण
+		}
 
-		वापस false;
-	पूर्ण अन्यथा अणु
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	} else {
+		return false;
+	}
+}
 
-पूर्णांक support_लघु_GI(काष्ठा adapter *padapter, काष्ठा HT_caps_element *pHT_caps, u8 bwmode)
-अणु
-	अचिन्हित अक्षर bit_offset;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int support_short_GI(struct adapter *padapter, struct HT_caps_element *pHT_caps, u8 bwmode)
+{
+	unsigned char bit_offset;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर (!(pmlmeinfo->HT_enable))
-		वापस _FAIL;
+	if (!(pmlmeinfo->HT_enable))
+		return _FAIL;
 
 	bit_offset = (bwmode & CHANNEL_WIDTH_40) ? 6 : 5;
 
-	अगर (le16_to_cpu(pHT_caps->u.HT_cap_element.HT_caps_info) & (0x1 << bit_offset))
-		वापस _SUCCESS;
-	अन्यथा
-		वापस _FAIL;
-पूर्ण
+	if (le16_to_cpu(pHT_caps->u.HT_cap_element.HT_caps_info) & (0x1 << bit_offset))
+		return _SUCCESS;
+	else
+		return _FAIL;
+}
 
-अचिन्हित अक्षर get_highest_rate_idx(u32 mask)
-अणु
-	पूर्णांक i;
-	अचिन्हित अक्षर rate_idx = 0;
+unsigned char get_highest_rate_idx(u32 mask)
+{
+	int i;
+	unsigned char rate_idx = 0;
 
-	क्रम (i = 31; i >= 0; i--) अणु
-		अगर (mask & BIT(i)) अणु
+	for (i = 31; i >= 0; i--) {
+		if (mask & BIT(i)) {
 			rate_idx = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस rate_idx;
-पूर्ण
+	return rate_idx;
+}
 
-व्योम Update_RA_Entry(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
+void Update_RA_Entry(struct adapter *padapter, struct sta_info *psta)
+{
 	rtw_hal_update_ra_mask(psta, 0);
-पूर्ण
+}
 
-व्योम set_sta_rate(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
+void set_sta_rate(struct adapter *padapter, struct sta_info *psta)
+{
 	/* rate adaptive */
 	Update_RA_Entry(padapter, psta);
-पूर्ण
+}
 
-अचिन्हित अक्षर check_assoc_AP(u8 *pframe, uपूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक	i;
-	काष्ठा ndis_80211_var_ie *pIE;
+unsigned char check_assoc_AP(u8 *pframe, uint len)
+{
+	unsigned int	i;
+	struct ndis_80211_var_ie *pIE;
 
-	क्रम (i = माप(काष्ठा ndis_802_11_fix_ie); i < len;) अणु
-		pIE = (काष्ठा ndis_80211_var_ie *)(pframe + i);
+	for (i = sizeof(struct ndis_802_11_fix_ie); i < len;) {
+		pIE = (struct ndis_80211_var_ie *)(pframe + i);
 
-		चयन (pIE->ElementID) अणु
-		हाल WLAN_EID_VENDOR_SPECIFIC:
-			अगर ((!स_भेद(pIE->data, ARTHEROS_OUI1, 3)) || (!स_भेद(pIE->data, ARTHEROS_OUI2, 3))) अणु
-				वापस HT_IOT_PEER_ATHEROS;
-			पूर्ण अन्यथा अगर ((!स_भेद(pIE->data, BROADCOM_OUI1, 3)) ||
-				   (!स_भेद(pIE->data, BROADCOM_OUI2, 3)) ||
-				   (!स_भेद(pIE->data, BROADCOM_OUI3, 3))) अणु
-				वापस HT_IOT_PEER_BROADCOM;
-			पूर्ण अन्यथा अगर (!स_भेद(pIE->data, MARVELL_OUI, 3)) अणु
-				वापस HT_IOT_PEER_MARVELL;
-			पूर्ण अन्यथा अगर (!स_भेद(pIE->data, RALINK_OUI, 3)) अणु
-				वापस HT_IOT_PEER_RALINK;
-			पूर्ण अन्यथा अगर (!स_भेद(pIE->data, CISCO_OUI, 3)) अणु
-				वापस HT_IOT_PEER_CISCO;
-			पूर्ण अन्यथा अगर (!स_भेद(pIE->data, REALTEK_OUI, 3)) अणु
+		switch (pIE->ElementID) {
+		case WLAN_EID_VENDOR_SPECIFIC:
+			if ((!memcmp(pIE->data, ARTHEROS_OUI1, 3)) || (!memcmp(pIE->data, ARTHEROS_OUI2, 3))) {
+				return HT_IOT_PEER_ATHEROS;
+			} else if ((!memcmp(pIE->data, BROADCOM_OUI1, 3)) ||
+				   (!memcmp(pIE->data, BROADCOM_OUI2, 3)) ||
+				   (!memcmp(pIE->data, BROADCOM_OUI3, 3))) {
+				return HT_IOT_PEER_BROADCOM;
+			} else if (!memcmp(pIE->data, MARVELL_OUI, 3)) {
+				return HT_IOT_PEER_MARVELL;
+			} else if (!memcmp(pIE->data, RALINK_OUI, 3)) {
+				return HT_IOT_PEER_RALINK;
+			} else if (!memcmp(pIE->data, CISCO_OUI, 3)) {
+				return HT_IOT_PEER_CISCO;
+			} else if (!memcmp(pIE->data, REALTEK_OUI, 3)) {
 				u32 Vender = HT_IOT_PEER_REALTEK;
 
-				अगर (pIE->Length >= 5) अणु
-					अगर (pIE->data[4] == 1)
-						/* अगर (pIE->data[5] & RT_HT_CAP_USE_LONG_PREAMBLE) */
+				if (pIE->Length >= 5) {
+					if (pIE->data[4] == 1)
+						/* if (pIE->data[5] & RT_HT_CAP_USE_LONG_PREAMBLE) */
 						/* bssDesc->BssHT.RT2RT_HT_Mode |= RT_HT_CAP_USE_LONG_PREAMBLE; */
-						अगर (pIE->data[5] & RT_HT_CAP_USE_92SE)
+						if (pIE->data[5] & RT_HT_CAP_USE_92SE)
 							/* bssDesc->BssHT.RT2RT_HT_Mode |= RT_HT_CAP_USE_92SE; */
 							Vender = HT_IOT_PEER_REALTEK_92SE;
 
-					अगर (pIE->data[5] & RT_HT_CAP_USE_SOFTAP)
+					if (pIE->data[5] & RT_HT_CAP_USE_SOFTAP)
 						Vender = HT_IOT_PEER_REALTEK_SOFTAP;
 
-					अगर (pIE->data[4] == 2) अणु
-						अगर (pIE->data[6] & RT_HT_CAP_USE_JAGUAR_BCUT)
+					if (pIE->data[4] == 2) {
+						if (pIE->data[6] & RT_HT_CAP_USE_JAGUAR_BCUT)
 							Vender = HT_IOT_PEER_REALTEK_JAGUAR_BCUTAP;
 
-						अगर (pIE->data[6] & RT_HT_CAP_USE_JAGUAR_CCUT)
+						if (pIE->data[6] & RT_HT_CAP_USE_JAGUAR_CCUT)
 							Vender = HT_IOT_PEER_REALTEK_JAGUAR_CCUTAP;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-				वापस Vender;
-			पूर्ण अन्यथा अगर (!स_भेद(pIE->data, AIRGOCAP_OUI, 3)) अणु
-				वापस HT_IOT_PEER_AIRGO;
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
+				return Vender;
+			} else if (!memcmp(pIE->data, AIRGOCAP_OUI, 3)) {
+				return HT_IOT_PEER_AIRGO;
+			} else {
+				break;
+			}
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
 		i += (pIE->Length + 2);
-	पूर्ण
+	}
 
-	वापस HT_IOT_PEER_UNKNOWN;
-पूर्ण
+	return HT_IOT_PEER_UNKNOWN;
+}
 
-व्योम update_IOT_info(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void update_IOT_info(struct adapter *padapter)
+{
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	चयन (pmlmeinfo->assoc_AP_venकरोr) अणु
-	हाल HT_IOT_PEER_MARVELL:
+	switch (pmlmeinfo->assoc_AP_vendor) {
+	case HT_IOT_PEER_MARVELL:
 		pmlmeinfo->turboMode_cts2self = 1;
 		pmlmeinfo->turboMode_rtsen = 0;
-		अवरोध;
+		break;
 
-	हाल HT_IOT_PEER_RALINK:
+	case HT_IOT_PEER_RALINK:
 		pmlmeinfo->turboMode_cts2self = 0;
 		pmlmeinfo->turboMode_rtsen = 1;
-		/* disable high घातer */
+		/* disable high power */
 		Switch_DM_Func(padapter, (~DYNAMIC_BB_DYNAMIC_TXPWR), false);
-		अवरोध;
-	हाल HT_IOT_PEER_REALTEK:
-		/* rtw_ग_लिखो16(padapter, 0x4cc, 0xffff); */
-		/* rtw_ग_लिखो16(padapter, 0x546, 0x01c0); */
-		/* disable high घातer */
+		break;
+	case HT_IOT_PEER_REALTEK:
+		/* rtw_write16(padapter, 0x4cc, 0xffff); */
+		/* rtw_write16(padapter, 0x546, 0x01c0); */
+		/* disable high power */
 		Switch_DM_Func(padapter, (~DYNAMIC_BB_DYNAMIC_TXPWR), false);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pmlmeinfo->turboMode_cts2self = 0;
 		pmlmeinfo->turboMode_rtsen = 1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम update_capinfo(काष्ठा adapter *Adapter, u16 updateCap)
-अणु
-	काष्ठा mlme_ext_priv *pmlmeext = &Adapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void update_capinfo(struct adapter *Adapter, u16 updateCap)
+{
+	struct mlme_ext_priv *pmlmeext = &Adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 	bool		ShortPreamble;
 
 	/*  Check preamble mode, 2005.01.06, by rcnjko. */
-	/*  Mark to update preamble value क्रमever, 2008.03.18 by lanhsin */
-	/* अगर (pMgntInfo->RegPreambleMode == PREAMBLE_AUTO) */
-	अणु
-		अगर (updateCap & cShortPreamble) अणु
+	/*  Mark to update preamble value forever, 2008.03.18 by lanhsin */
+	/* if (pMgntInfo->RegPreambleMode == PREAMBLE_AUTO) */
+	{
+		if (updateCap & cShortPreamble) {
 			/*  Short Preamble */
-			अगर (pmlmeinfo->preamble_mode != PREAMBLE_SHORT) अणु /*  PREAMBLE_LONG or PREAMBLE_AUTO */
+			if (pmlmeinfo->preamble_mode != PREAMBLE_SHORT) { /*  PREAMBLE_LONG or PREAMBLE_AUTO */
 				ShortPreamble = true;
 				pmlmeinfo->preamble_mode = PREAMBLE_SHORT;
 				rtw_hal_set_hwreg(Adapter, HW_VAR_ACK_PREAMBLE, (u8 *)&ShortPreamble);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/*  Long Preamble */
-			अगर (pmlmeinfo->preamble_mode != PREAMBLE_LONG) अणु /*  PREAMBLE_SHORT or PREAMBLE_AUTO */
+			if (pmlmeinfo->preamble_mode != PREAMBLE_LONG) { /*  PREAMBLE_SHORT or PREAMBLE_AUTO */
 				ShortPreamble = false;
 				pmlmeinfo->preamble_mode = PREAMBLE_LONG;
 				rtw_hal_set_hwreg(Adapter, HW_VAR_ACK_PREAMBLE, (u8 *)&ShortPreamble);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (updateCap & cIBSS) अणु
+	if (updateCap & cIBSS) {
 		/* Filen: See 802.11-2007 p.91 */
 		pmlmeinfo->slotTime = NON_SHORT_SLOT_TIME;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Filen: See 802.11-2007 p.90 */
-		अगर (pmlmeext->cur_wireless_mode & (WIRELESS_11_24N | WIRELESS_11A | WIRELESS_11_5N | WIRELESS_11AC)) अणु
+		if (pmlmeext->cur_wireless_mode & (WIRELESS_11_24N | WIRELESS_11A | WIRELESS_11_5N | WIRELESS_11AC)) {
 			pmlmeinfo->slotTime = SHORT_SLOT_TIME;
-		पूर्ण अन्यथा अगर (pmlmeext->cur_wireless_mode & (WIRELESS_11G)) अणु
-			अगर ((updateCap & cShortSlotTime) /* && (!(pMgntInfo->pHTInfo->RT2RT_HT_Mode & RT_HT_CAP_USE_LONG_PREAMBLE)) */)
+		} else if (pmlmeext->cur_wireless_mode & (WIRELESS_11G)) {
+			if ((updateCap & cShortSlotTime) /* && (!(pMgntInfo->pHTInfo->RT2RT_HT_Mode & RT_HT_CAP_USE_LONG_PREAMBLE)) */)
 				/*  Short Slot Time */
 				pmlmeinfo->slotTime = SHORT_SLOT_TIME;
-			अन्यथा
+			else
 				/*  Long Slot Time */
 				pmlmeinfo->slotTime = NON_SHORT_SLOT_TIME;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* B Mode */
 			pmlmeinfo->slotTime = NON_SHORT_SLOT_TIME;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	rtw_hal_set_hwreg(Adapter, HW_VAR_SLOT_TIME, &pmlmeinfo->slotTime);
-पूर्ण
+}
 
-व्योम update_wireless_mode(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक network_type = 0;
+void update_wireless_mode(struct adapter *padapter)
+{
+	int network_type = 0;
 	u32 SIFS_Timer;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	काष्ठा wlan_bssid_ex *cur_network = &(pmlmeinfo->network);
-	अचिन्हित अक्षर *rate = cur_network->SupportedRates;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct wlan_bssid_ex *cur_network = &(pmlmeinfo->network);
+	unsigned char *rate = cur_network->SupportedRates;
 
-	अगर ((pmlmeinfo->HT_info_enable) && (pmlmeinfo->HT_caps_enable))
+	if ((pmlmeinfo->HT_info_enable) && (pmlmeinfo->HT_caps_enable))
 		pmlmeinfo->HT_enable = 1;
 
-	अगर (pmlmeinfo->VHT_enable)
+	if (pmlmeinfo->VHT_enable)
 		network_type = WIRELESS_11AC;
-	अन्यथा अगर (pmlmeinfo->HT_enable)
+	else if (pmlmeinfo->HT_enable)
 		network_type = WIRELESS_11_24N;
 
-	अगर (rtw_is_cckratesonly_included(rate))
+	if (rtw_is_cckratesonly_included(rate))
 		network_type |= WIRELESS_11B;
-	अन्यथा अगर (rtw_is_cckrates_included(rate))
+	else if (rtw_is_cckrates_included(rate))
 		network_type |= WIRELESS_11BG;
-	अन्यथा
+	else
 		network_type |= WIRELESS_11G;
 
 	pmlmeext->cur_wireless_mode = network_type & padapter->registrypriv.wireless_mode;
 
-	SIFS_Timer = 0x0a0a0808; /* 0x0808 -> क्रम CCK, 0x0a0a -> क्रम OFDM */
-													/* change this value अगर having IOT issues. */
+	SIFS_Timer = 0x0a0a0808; /* 0x0808 -> for CCK, 0x0a0a -> for OFDM */
+													/* change this value if having IOT issues. */
 
 	padapter->HalFunc.SetHwRegHandler(padapter, HW_VAR_RESP_SIFS,  (u8 *)&SIFS_Timer);
 
 	padapter->HalFunc.SetHwRegHandler(padapter, HW_VAR_WIRELESS_MODE,  (u8 *)&(pmlmeext->cur_wireless_mode));
 
-	अगर (pmlmeext->cur_wireless_mode & WIRELESS_11B)
+	if (pmlmeext->cur_wireless_mode & WIRELESS_11B)
 		update_mgnt_tx_rate(padapter, IEEE80211_CCK_RATE_1MB);
-	अन्यथा
+	else
 		update_mgnt_tx_rate(padapter, IEEE80211_OFDM_RATE_6MB);
-पूर्ण
+}
 
-व्योम update_sta_basic_rate(काष्ठा sta_info *psta, u8 wireless_mode)
-अणु
-	अगर (IsSupportedTxCCK(wireless_mode)) अणु
+void update_sta_basic_rate(struct sta_info *psta, u8 wireless_mode)
+{
+	if (IsSupportedTxCCK(wireless_mode)) {
 		/*  Only B, B/G, and B/G/N AP could use CCK rate */
-		स_नकल(psta->bssrateset, rtw_basic_rate_cck, 4);
+		memcpy(psta->bssrateset, rtw_basic_rate_cck, 4);
 		psta->bssratelen = 4;
-	पूर्ण अन्यथा अणु
-		स_नकल(psta->bssrateset, rtw_basic_rate_ofdm, 3);
+	} else {
+		memcpy(psta->bssrateset, rtw_basic_rate_ofdm, 3);
 		psta->bssratelen = 3;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक update_sta_support_rate(काष्ठा adapter *padapter, u8 *pvar_ie, uपूर्णांक var_ie_len, पूर्णांक cam_idx)
-अणु
-	अचिन्हित पूर्णांक	ie_len;
-	काष्ठा ndis_80211_var_ie *pIE;
-	पूर्णांक	supportRateNum = 0;
-	काष्ठा mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+int update_sta_support_rate(struct adapter *padapter, u8 *pvar_ie, uint var_ie_len, int cam_idx)
+{
+	unsigned int	ie_len;
+	struct ndis_80211_var_ie *pIE;
+	int	supportRateNum = 0;
+	struct mlme_ext_priv *pmlmeext = &(padapter->mlmeextpriv);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	pIE = (काष्ठा ndis_80211_var_ie *)rtw_get_ie(pvar_ie, WLAN_EID_SUPP_RATES, &ie_len, var_ie_len);
-	अगर (!pIE)
-		वापस _FAIL;
-	अगर (ie_len > माप(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates))
-		वापस _FAIL;
+	pIE = (struct ndis_80211_var_ie *)rtw_get_ie(pvar_ie, WLAN_EID_SUPP_RATES, &ie_len, var_ie_len);
+	if (!pIE)
+		return _FAIL;
+	if (ie_len > sizeof(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates))
+		return _FAIL;
 
-	स_नकल(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates, pIE->data, ie_len);
+	memcpy(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates, pIE->data, ie_len);
 	supportRateNum = ie_len;
 
-	pIE = (काष्ठा ndis_80211_var_ie *)rtw_get_ie(pvar_ie, WLAN_EID_EXT_SUPP_RATES, &ie_len, var_ie_len);
-	अगर (pIE && (ie_len <= माप(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates) - supportRateNum))
-		स_नकल((pmlmeinfo->FW_sta_info[cam_idx].SupportedRates + supportRateNum), pIE->data, ie_len);
+	pIE = (struct ndis_80211_var_ie *)rtw_get_ie(pvar_ie, WLAN_EID_EXT_SUPP_RATES, &ie_len, var_ie_len);
+	if (pIE && (ie_len <= sizeof(pmlmeinfo->FW_sta_info[cam_idx].SupportedRates) - supportRateNum))
+		memcpy((pmlmeinfo->FW_sta_info[cam_idx].SupportedRates + supportRateNum), pIE->data, ie_len);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-व्योम process_addba_req(काष्ठा adapter *padapter, u8 *paddba_req, u8 *addr)
-अणु
-	काष्ठा sta_info *psta;
+void process_addba_req(struct adapter *padapter, u8 *paddba_req, u8 *addr)
+{
+	struct sta_info *psta;
 	u16 tid, start_seq, param;
-	काष्ठा recv_reorder_ctrl *preorder_ctrl;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा ADDBA_request *preq = (काष्ठा ADDBA_request *)paddba_req;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct recv_reorder_ctrl *preorder_ctrl;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct ADDBA_request *preq = (struct ADDBA_request *)paddba_req;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	psta = rtw_get_stainfo(pstapriv, addr);
 
-	अगर (psta) अणु
+	if (psta) {
 		start_seq = le16_to_cpu(preq->BA_starting_seqctrl) >> 4;
 
 		param = le16_to_cpu(preq->BA_para_set);
@@ -1737,15 +1736,15 @@ _mismatch:
 		preorder_ctrl->indicate_seq = 0xffff;
 
 		preorder_ctrl->enable = pmlmeinfo->accept_addba_req;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम update_TSF(काष्ठा mlme_ext_priv *pmlmeext, u8 *pframe, uपूर्णांक len)
-अणु
+void update_TSF(struct mlme_ext_priv *pmlmeext, u8 *pframe, uint len)
+{
 	u8 *pIE;
 	__le32 *pbuf;
 
-	pIE = pframe + माप(काष्ठा ieee80211_hdr_3addr);
+	pIE = pframe + sizeof(struct ieee80211_hdr_3addr);
 	pbuf = (__le32 *)pIE;
 
 	pmlmeext->TSFValue = le32_to_cpu(*(pbuf+1));
@@ -1753,53 +1752,53 @@ _mismatch:
 	pmlmeext->TSFValue = pmlmeext->TSFValue << 32;
 
 	pmlmeext->TSFValue |= le32_to_cpu(*pbuf);
-पूर्ण
+}
 
-व्योम correct_TSF(काष्ठा adapter *padapter, काष्ठा mlme_ext_priv *pmlmeext)
-अणु
-	rtw_hal_set_hwreg(padapter, HW_VAR_CORRECT_TSF, शून्य);
-पूर्ण
+void correct_TSF(struct adapter *padapter, struct mlme_ext_priv *pmlmeext)
+{
+	rtw_hal_set_hwreg(padapter, HW_VAR_CORRECT_TSF, NULL);
+}
 
-व्योम adaptive_early_32k(काष्ठा mlme_ext_priv *pmlmeext, u8 *pframe, uपूर्णांक len)
-अणु
-	पूर्णांक i;
+void adaptive_early_32k(struct mlme_ext_priv *pmlmeext, u8 *pframe, uint len)
+{
+	int i;
 	u8 *pIE;
 	__le32 *pbuf;
 	u64 tsf = 0;
 	u32 delay_ms;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	pmlmeext->bcn_cnt++;
 
-	pIE = pframe + माप(काष्ठा ieee80211_hdr_3addr);
+	pIE = pframe + sizeof(struct ieee80211_hdr_3addr);
 	pbuf = (__le32 *)pIE;
 
 	tsf = le32_to_cpu(*(pbuf+1));
 	tsf = tsf << 32;
 	tsf |= le32_to_cpu(*pbuf);
 
-	/* delay = (बारtamp mod 1024*100)/1000 (unit: ms) */
-	/* delay_ms = करो_भाग(tsf, (pmlmeinfo->bcn_पूर्णांकerval*1024))/1000; */
-	delay_ms = करो_भाग(tsf, (pmlmeinfo->bcn_पूर्णांकerval*1024));
+	/* delay = (timestamp mod 1024*100)/1000 (unit: ms) */
+	/* delay_ms = do_div(tsf, (pmlmeinfo->bcn_interval*1024))/1000; */
+	delay_ms = do_div(tsf, (pmlmeinfo->bcn_interval*1024));
 	delay_ms = delay_ms/1000;
 
-	अगर (delay_ms >= 8)
+	if (delay_ms >= 8)
 		pmlmeext->bcn_delay_cnt[8]++;
 		/* pmlmeext->bcn_delay_ratio[8] = (pmlmeext->bcn_delay_cnt[8] * 100) /pmlmeext->bcn_cnt; */
-	अन्यथा
+	else
 		pmlmeext->bcn_delay_cnt[delay_ms]++;
 		/* pmlmeext->bcn_delay_ratio[delay_ms] = (pmlmeext->bcn_delay_cnt[delay_ms] * 100) /pmlmeext->bcn_cnt; */
 
 /*
 
-	क्रम (i = 0; i<9; i++)
-	अणु
+	for (i = 0; i<9; i++)
+	{
 			pmlmeext->bcn_delay_cnt[i] , i, pmlmeext->bcn_delay_ratio[i]);
-	पूर्ण
+	}
 */
 
-	/* dump क्रम  adaptive_early_32k */
-	अगर (pmlmeext->bcn_cnt > 100 && (pmlmeext->adaptive_tsf_करोne == true)) अणु
+	/* dump for  adaptive_early_32k */
+	if (pmlmeext->bcn_cnt > 100 && (pmlmeext->adaptive_tsf_done == true)) {
 		u8 ratio_20_delay, ratio_80_delay;
 		u8 DrvBcnEarly, DrvBcnTimeOut;
 
@@ -1808,102 +1807,102 @@ _mismatch:
 		DrvBcnEarly = 0xff;
 		DrvBcnTimeOut = 0xff;
 
-		क्रम (i = 0; i < 9; i++) अणु
+		for (i = 0; i < 9; i++) {
 			pmlmeext->bcn_delay_ratio[i] = (pmlmeext->bcn_delay_cnt[i] * 100) / pmlmeext->bcn_cnt;
 
 			ratio_20_delay += pmlmeext->bcn_delay_ratio[i];
 			ratio_80_delay += pmlmeext->bcn_delay_ratio[i];
 
-			अगर (ratio_20_delay > 20 && DrvBcnEarly == 0xff)
+			if (ratio_20_delay > 20 && DrvBcnEarly == 0xff)
 				DrvBcnEarly = i;
 
-			अगर (ratio_80_delay > 80 && DrvBcnTimeOut == 0xff)
+			if (ratio_80_delay > 80 && DrvBcnTimeOut == 0xff)
 				DrvBcnTimeOut = i;
 
 			/* reset adaptive_early_32k cnt */
 			pmlmeext->bcn_delay_cnt[i] = 0;
 			pmlmeext->bcn_delay_ratio[i] = 0;
-		पूर्ण
+		}
 
 		pmlmeext->DrvBcnEarly = DrvBcnEarly;
 		pmlmeext->DrvBcnTimeOut = DrvBcnTimeOut;
 
 		pmlmeext->bcn_cnt = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtw_alloc_macid(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
-	पूर्णांक i;
-	u8 bc_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
-	काष्ठा dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+void rtw_alloc_macid(struct adapter *padapter, struct sta_info *psta)
+{
+	int i;
+	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
 
-	अगर (!स_भेद(psta->hwaddr, bc_addr, ETH_ALEN))
-		वापस;
+	if (!memcmp(psta->hwaddr, bc_addr, ETH_ALEN))
+		return;
 
-	अगर (!स_भेद(psta->hwaddr, myid(&padapter->eeprompriv), ETH_ALEN)) अणु
+	if (!memcmp(psta->hwaddr, myid(&padapter->eeprompriv), ETH_ALEN)) {
 		psta->mac_id = NUM_STA;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_bh(&pdvobj->lock);
-	क्रम (i = 0; i < NUM_STA; i++) अणु
-		अगर (pdvobj->macid[i] == false) अणु
+	for (i = 0; i < NUM_STA; i++) {
+		if (pdvobj->macid[i] == false) {
 			pdvobj->macid[i]  = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_bh(&pdvobj->lock);
 
-	अगर (i > (NUM_STA - 1))
+	if (i > (NUM_STA - 1))
 		psta->mac_id = NUM_STA;
-	अन्यथा
+	else
 		psta->mac_id = i;
-पूर्ण
+}
 
-व्योम rtw_release_macid(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
-	u8 bc_addr[ETH_ALEN] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
-	काष्ठा dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+void rtw_release_macid(struct adapter *padapter, struct sta_info *psta)
+{
+	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
 
-	अगर (!स_भेद(psta->hwaddr, bc_addr, ETH_ALEN))
-		वापस;
+	if (!memcmp(psta->hwaddr, bc_addr, ETH_ALEN))
+		return;
 
-	अगर (!स_भेद(psta->hwaddr, myid(&padapter->eeprompriv), ETH_ALEN))
-		वापस;
+	if (!memcmp(psta->hwaddr, myid(&padapter->eeprompriv), ETH_ALEN))
+		return;
 
 	spin_lock_bh(&pdvobj->lock);
-	अगर (psta->mac_id < NUM_STA && psta->mac_id != 1) अणु
-		अगर (pdvobj->macid[psta->mac_id] == true) अणु
+	if (psta->mac_id < NUM_STA && psta->mac_id != 1) {
+		if (pdvobj->macid[psta->mac_id] == true) {
 			pdvobj->macid[psta->mac_id] = false;
 			psta->mac_id = NUM_STA;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_bh(&pdvobj->lock);
-पूर्ण
+}
 
 /* For 8188E RA */
-u8 rtw_search_max_mac_id(काष्ठा adapter *padapter)
-अणु
+u8 rtw_search_max_mac_id(struct adapter *padapter)
+{
 	u8 max_mac_id = 0;
-	काष्ठा dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
-	पूर्णांक i;
+	struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+	int i;
 
 	spin_lock_bh(&pdvobj->lock);
-	क्रम (i = (NUM_STA-1); i >= 0 ; i--) अणु
-		अगर (pdvobj->macid[i] == true)
-			अवरोध;
-	पूर्ण
+	for (i = (NUM_STA-1); i >= 0 ; i--) {
+		if (pdvobj->macid[i] == true)
+			break;
+	}
 	max_mac_id = i;
 	spin_unlock_bh(&pdvobj->lock);
 
-	वापस max_mac_id;
-पूर्ण
+	return max_mac_id;
+}
 
-काष्ठा adapter *dvobj_get_port0_adapter(काष्ठा dvobj_priv *dvobj)
-अणु
-	अगर (get_अगरace_type(dvobj->padapters[i]) != IFACE_PORT0)
-		वापस शून्य;
+struct adapter *dvobj_get_port0_adapter(struct dvobj_priv *dvobj)
+{
+	if (get_iface_type(dvobj->padapters[i]) != IFACE_PORT0)
+		return NULL;
 
-	वापस dvobj->padapters;
-पूर्ण
+	return dvobj->padapters;
+}

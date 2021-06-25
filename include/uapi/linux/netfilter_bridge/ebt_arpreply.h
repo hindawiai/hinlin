@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __LINUX_BRIDGE_EBT_ARPREPLY_H
-#घोषणा __LINUX_BRIDGE_EBT_ARPREPLY_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __LINUX_BRIDGE_EBT_ARPREPLY_H
+#define __LINUX_BRIDGE_EBT_ARPREPLY_H
 
-#समावेश <linux/अगर_ether.h>
+#include <linux/if_ether.h>
 
-काष्ठा ebt_arpreply_info अणु
-	अचिन्हित अक्षर mac[ETH_ALEN];
-	पूर्णांक target;
-पूर्ण;
-#घोषणा EBT_ARPREPLY_TARGET "arpreply"
+struct ebt_arpreply_info {
+	unsigned char mac[ETH_ALEN];
+	int target;
+};
+#define EBT_ARPREPLY_TARGET "arpreply"
 
-#पूर्ण_अगर
+#endif

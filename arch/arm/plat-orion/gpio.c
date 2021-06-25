@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * arch/arm/plat-orion/gpio.c
  *
@@ -9,198 +8,198 @@
  * warranty of any kind, whether express or implied.
  */
 
-#घोषणा DEBUG
+#define DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/leds.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/of_address.h>
-#समावेश <plat/orion-gpपन.स>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/bitops.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
+#include <linux/leds.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
+#include <linux/of_address.h>
+#include <plat/orion-gpio.h>
 
 /*
- * GPIO unit रेजिस्टर offsets.
+ * GPIO unit register offsets.
  */
-#घोषणा GPIO_OUT_OFF		0x0000
-#घोषणा GPIO_IO_CONF_OFF	0x0004
-#घोषणा GPIO_BLINK_EN_OFF	0x0008
-#घोषणा GPIO_IN_POL_OFF		0x000c
-#घोषणा GPIO_DATA_IN_OFF	0x0010
-#घोषणा GPIO_EDGE_CAUSE_OFF	0x0014
-#घोषणा GPIO_EDGE_MASK_OFF	0x0018
-#घोषणा GPIO_LEVEL_MASK_OFF	0x001c
+#define GPIO_OUT_OFF		0x0000
+#define GPIO_IO_CONF_OFF	0x0004
+#define GPIO_BLINK_EN_OFF	0x0008
+#define GPIO_IN_POL_OFF		0x000c
+#define GPIO_DATA_IN_OFF	0x0010
+#define GPIO_EDGE_CAUSE_OFF	0x0014
+#define GPIO_EDGE_MASK_OFF	0x0018
+#define GPIO_LEVEL_MASK_OFF	0x001c
 
-काष्ठा orion_gpio_chip अणु
-	काष्ठा gpio_chip	chip;
+struct orion_gpio_chip {
+	struct gpio_chip	chip;
 	spinlock_t		lock;
-	व्योम __iomem		*base;
-	अचिन्हित दीर्घ		valid_input;
-	अचिन्हित दीर्घ		valid_output;
-	पूर्णांक			mask_offset;
-	पूर्णांक			secondary_irq_base;
-	काष्ठा irq_करोमुख्य       *करोमुख्य;
-पूर्ण;
+	void __iomem		*base;
+	unsigned long		valid_input;
+	unsigned long		valid_output;
+	int			mask_offset;
+	int			secondary_irq_base;
+	struct irq_domain       *domain;
+};
 
-अटल व्योम __iomem *GPIO_OUT(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_OUT_OFF;
-पूर्ण
+static void __iomem *GPIO_OUT(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_OUT_OFF;
+}
 
-अटल व्योम __iomem *GPIO_IO_CONF(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_IO_CONF_OFF;
-पूर्ण
+static void __iomem *GPIO_IO_CONF(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_IO_CONF_OFF;
+}
 
-अटल व्योम __iomem *GPIO_BLINK_EN(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_BLINK_EN_OFF;
-पूर्ण
+static void __iomem *GPIO_BLINK_EN(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_BLINK_EN_OFF;
+}
 
-अटल व्योम __iomem *GPIO_IN_POL(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_IN_POL_OFF;
-पूर्ण
+static void __iomem *GPIO_IN_POL(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_IN_POL_OFF;
+}
 
-अटल व्योम __iomem *GPIO_DATA_IN(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_DATA_IN_OFF;
-पूर्ण
+static void __iomem *GPIO_DATA_IN(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_DATA_IN_OFF;
+}
 
-अटल व्योम __iomem *GPIO_EDGE_CAUSE(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + GPIO_EDGE_CAUSE_OFF;
-पूर्ण
+static void __iomem *GPIO_EDGE_CAUSE(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + GPIO_EDGE_CAUSE_OFF;
+}
 
-अटल व्योम __iomem *GPIO_EDGE_MASK(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + ochip->mask_offset + GPIO_EDGE_MASK_OFF;
-पूर्ण
+static void __iomem *GPIO_EDGE_MASK(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + ochip->mask_offset + GPIO_EDGE_MASK_OFF;
+}
 
-अटल व्योम __iomem *GPIO_LEVEL_MASK(काष्ठा orion_gpio_chip *ochip)
-अणु
-	वापस ochip->base + ochip->mask_offset + GPIO_LEVEL_MASK_OFF;
-पूर्ण
+static void __iomem *GPIO_LEVEL_MASK(struct orion_gpio_chip *ochip)
+{
+	return ochip->base + ochip->mask_offset + GPIO_LEVEL_MASK_OFF;
+}
 
 
-अटल काष्ठा orion_gpio_chip orion_gpio_chips[2];
-अटल पूर्णांक orion_gpio_chip_count;
+static struct orion_gpio_chip orion_gpio_chips[2];
+static int orion_gpio_chip_count;
 
-अटल अंतरभूत व्योम
-__set_direction(काष्ठा orion_gpio_chip *ochip, अचिन्हित pin, पूर्णांक input)
-अणु
+static inline void
+__set_direction(struct orion_gpio_chip *ochip, unsigned pin, int input)
+{
 	u32 u;
 
-	u = पढ़ोl(GPIO_IO_CONF(ochip));
-	अगर (input)
+	u = readl(GPIO_IO_CONF(ochip));
+	if (input)
 		u |= 1 << pin;
-	अन्यथा
+	else
 		u &= ~(1 << pin);
-	ग_लिखोl(u, GPIO_IO_CONF(ochip));
-पूर्ण
+	writel(u, GPIO_IO_CONF(ochip));
+}
 
-अटल व्योम __set_level(काष्ठा orion_gpio_chip *ochip, अचिन्हित pin, पूर्णांक high)
-अणु
+static void __set_level(struct orion_gpio_chip *ochip, unsigned pin, int high)
+{
 	u32 u;
 
-	u = पढ़ोl(GPIO_OUT(ochip));
-	अगर (high)
+	u = readl(GPIO_OUT(ochip));
+	if (high)
 		u |= 1 << pin;
-	अन्यथा
+	else
 		u &= ~(1 << pin);
-	ग_लिखोl(u, GPIO_OUT(ochip));
-पूर्ण
+	writel(u, GPIO_OUT(ochip));
+}
 
-अटल अंतरभूत व्योम
-__set_blinking(काष्ठा orion_gpio_chip *ochip, अचिन्हित pin, पूर्णांक blink)
-अणु
+static inline void
+__set_blinking(struct orion_gpio_chip *ochip, unsigned pin, int blink)
+{
 	u32 u;
 
-	u = पढ़ोl(GPIO_BLINK_EN(ochip));
-	अगर (blink)
+	u = readl(GPIO_BLINK_EN(ochip));
+	if (blink)
 		u |= 1 << pin;
-	अन्यथा
+	else
 		u &= ~(1 << pin);
-	ग_लिखोl(u, GPIO_BLINK_EN(ochip));
-पूर्ण
+	writel(u, GPIO_BLINK_EN(ochip));
+}
 
-अटल अंतरभूत पूर्णांक
-orion_gpio_is_valid(काष्ठा orion_gpio_chip *ochip, अचिन्हित pin, पूर्णांक mode)
-अणु
-	अगर (pin >= ochip->chip.ngpio)
-		जाओ err_out;
+static inline int
+orion_gpio_is_valid(struct orion_gpio_chip *ochip, unsigned pin, int mode)
+{
+	if (pin >= ochip->chip.ngpio)
+		goto err_out;
 
-	अगर ((mode & GPIO_INPUT_OK) && !test_bit(pin, &ochip->valid_input))
-		जाओ err_out;
+	if ((mode & GPIO_INPUT_OK) && !test_bit(pin, &ochip->valid_input))
+		goto err_out;
 
-	अगर ((mode & GPIO_OUTPUT_OK) && !test_bit(pin, &ochip->valid_output))
-		जाओ err_out;
+	if ((mode & GPIO_OUTPUT_OK) && !test_bit(pin, &ochip->valid_output))
+		goto err_out;
 
-	वापस 1;
+	return 1;
 
 err_out:
 	pr_debug("%s: invalid GPIO %d\n", __func__, pin);
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * GPIO primitives.
  */
-अटल पूर्णांक orion_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित pin)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
+static int orion_gpio_request(struct gpio_chip *chip, unsigned pin)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
 
-	अगर (orion_gpio_is_valid(ochip, pin, GPIO_INPUT_OK) ||
+	if (orion_gpio_is_valid(ochip, pin, GPIO_INPUT_OK) ||
 	    orion_gpio_is_valid(ochip, pin, GPIO_OUTPUT_OK))
-		वापस 0;
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक orion_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित pin)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static int orion_gpio_direction_input(struct gpio_chip *chip, unsigned pin)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
+	unsigned long flags;
 
-	अगर (!orion_gpio_is_valid(ochip, pin, GPIO_INPUT_OK))
-		वापस -EINVAL;
+	if (!orion_gpio_is_valid(ochip, pin, GPIO_INPUT_OK))
+		return -EINVAL;
 
 	spin_lock_irqsave(&ochip->lock, flags);
 	__set_direction(ochip, pin, 1);
 	spin_unlock_irqrestore(&ochip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orion_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित pin)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
-	पूर्णांक val;
+static int orion_gpio_get(struct gpio_chip *chip, unsigned pin)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
+	int val;
 
-	अगर (पढ़ोl(GPIO_IO_CONF(ochip)) & (1 << pin)) अणु
-		val = पढ़ोl(GPIO_DATA_IN(ochip)) ^ पढ़ोl(GPIO_IN_POL(ochip));
-	पूर्ण अन्यथा अणु
-		val = पढ़ोl(GPIO_OUT(ochip));
-	पूर्ण
+	if (readl(GPIO_IO_CONF(ochip)) & (1 << pin)) {
+		val = readl(GPIO_DATA_IN(ochip)) ^ readl(GPIO_IN_POL(ochip));
+	} else {
+		val = readl(GPIO_OUT(ochip));
+	}
 
-	वापस (val >> pin) & 1;
-पूर्ण
+	return (val >> pin) & 1;
+}
 
-अटल पूर्णांक
-orion_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित pin, पूर्णांक value)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static int
+orion_gpio_direction_output(struct gpio_chip *chip, unsigned pin, int value)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
+	unsigned long flags;
 
-	अगर (!orion_gpio_is_valid(ochip, pin, GPIO_OUTPUT_OK))
-		वापस -EINVAL;
+	if (!orion_gpio_is_valid(ochip, pin, GPIO_OUTPUT_OK))
+		return -EINVAL;
 
 	spin_lock_irqsave(&ochip->lock, flags);
 	__set_blinking(ochip, pin, 0);
@@ -208,331 +207,331 @@ orion_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्�
 	__set_direction(ochip, pin, 0);
 	spin_unlock_irqrestore(&ochip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम orion_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित pin, पूर्णांक value)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static void orion_gpio_set(struct gpio_chip *chip, unsigned pin, int value)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
+	unsigned long flags;
 
 	spin_lock_irqsave(&ochip->lock, flags);
 	__set_level(ochip, pin, value);
 	spin_unlock_irqrestore(&ochip->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक orion_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित pin)
-अणु
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
+static int orion_gpio_to_irq(struct gpio_chip *chip, unsigned pin)
+{
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
 
-	वापस irq_create_mapping(ochip->करोमुख्य,
+	return irq_create_mapping(ochip->domain,
 				  ochip->secondary_irq_base + pin);
-पूर्ण
+}
 
 /*
- * Orion-specअगरic GPIO API extensions.
+ * Orion-specific GPIO API extensions.
  */
-अटल काष्ठा orion_gpio_chip *orion_gpio_chip_find(पूर्णांक pin)
-अणु
-	पूर्णांक i;
+static struct orion_gpio_chip *orion_gpio_chip_find(int pin)
+{
+	int i;
 
-	क्रम (i = 0; i < orion_gpio_chip_count; i++) अणु
-		काष्ठा orion_gpio_chip *ochip = orion_gpio_chips + i;
-		काष्ठा gpio_chip *chip = &ochip->chip;
+	for (i = 0; i < orion_gpio_chip_count; i++) {
+		struct orion_gpio_chip *ochip = orion_gpio_chips + i;
+		struct gpio_chip *chip = &ochip->chip;
 
-		अगर (pin >= chip->base && pin < chip->base + chip->ngpio)
-			वापस ochip;
-	पूर्ण
+		if (pin >= chip->base && pin < chip->base + chip->ngpio)
+			return ochip;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम __init orion_gpio_set_unused(अचिन्हित pin)
-अणु
-	काष्ठा orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
+void __init orion_gpio_set_unused(unsigned pin)
+{
+	struct orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
 
-	अगर (ochip == शून्य)
-		वापस;
+	if (ochip == NULL)
+		return;
 
 	pin -= ochip->chip.base;
 
 	/* Configure as output, drive low. */
 	__set_level(ochip, pin, 0);
 	__set_direction(ochip, pin, 0);
-पूर्ण
+}
 
-व्योम __init orion_gpio_set_valid(अचिन्हित pin, पूर्णांक mode)
-अणु
-	काष्ठा orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
+void __init orion_gpio_set_valid(unsigned pin, int mode)
+{
+	struct orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
 
-	अगर (ochip == शून्य)
-		वापस;
+	if (ochip == NULL)
+		return;
 
 	pin -= ochip->chip.base;
 
-	अगर (mode == 1)
+	if (mode == 1)
 		mode = GPIO_INPUT_OK | GPIO_OUTPUT_OK;
 
-	अगर (mode & GPIO_INPUT_OK)
+	if (mode & GPIO_INPUT_OK)
 		__set_bit(pin, &ochip->valid_input);
-	अन्यथा
+	else
 		__clear_bit(pin, &ochip->valid_input);
 
-	अगर (mode & GPIO_OUTPUT_OK)
+	if (mode & GPIO_OUTPUT_OK)
 		__set_bit(pin, &ochip->valid_output);
-	अन्यथा
+	else
 		__clear_bit(pin, &ochip->valid_output);
-पूर्ण
+}
 
-व्योम orion_gpio_set_blink(अचिन्हित pin, पूर्णांक blink)
-अणु
-	काष्ठा orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
-	अचिन्हित दीर्घ flags;
+void orion_gpio_set_blink(unsigned pin, int blink)
+{
+	struct orion_gpio_chip *ochip = orion_gpio_chip_find(pin);
+	unsigned long flags;
 
-	अगर (ochip == शून्य)
-		वापस;
+	if (ochip == NULL)
+		return;
 
 	spin_lock_irqsave(&ochip->lock, flags);
 	__set_level(ochip, pin & 31, 0);
 	__set_blinking(ochip, pin & 31, blink);
 	spin_unlock_irqrestore(&ochip->lock, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(orion_gpio_set_blink);
 
-#घोषणा ORION_BLINK_HALF_PERIOD 100 /* ms */
+#define ORION_BLINK_HALF_PERIOD 100 /* ms */
 
-पूर्णांक orion_gpio_led_blink_set(काष्ठा gpio_desc *desc, पूर्णांक state,
-	अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
-अणु
-	अचिन्हित gpio = desc_to_gpio(desc);
+int orion_gpio_led_blink_set(struct gpio_desc *desc, int state,
+	unsigned long *delay_on, unsigned long *delay_off)
+{
+	unsigned gpio = desc_to_gpio(desc);
 
-	अगर (delay_on && delay_off && !*delay_on && !*delay_off)
+	if (delay_on && delay_off && !*delay_on && !*delay_off)
 		*delay_on = *delay_off = ORION_BLINK_HALF_PERIOD;
 
-	चयन (state) अणु
-	हाल GPIO_LED_NO_BLINK_LOW:
-	हाल GPIO_LED_NO_BLINK_HIGH:
+	switch (state) {
+	case GPIO_LED_NO_BLINK_LOW:
+	case GPIO_LED_NO_BLINK_HIGH:
 		orion_gpio_set_blink(gpio, 0);
 		gpio_set_value(gpio, state);
-		अवरोध;
-	हाल GPIO_LED_BLINK:
+		break;
+	case GPIO_LED_BLINK:
 		orion_gpio_set_blink(gpio, 1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 EXPORT_SYMBOL_GPL(orion_gpio_led_blink_set);
 
 
 /*****************************************************************************
  * Orion GPIO IRQ
  *
- * GPIO_IN_POL रेजिस्टर controls whether GPIO_DATA_IN will hold the same
+ * GPIO_IN_POL register controls whether GPIO_DATA_IN will hold the same
  * value of the line or the opposite value.
  *
- * Level IRQ handlers: DATA_IN is used directly as cause रेजिस्टर.
- *                     Interrupt are masked by LEVEL_MASK रेजिस्टरs.
+ * Level IRQ handlers: DATA_IN is used directly as cause register.
+ *                     Interrupt are masked by LEVEL_MASK registers.
  * Edge IRQ handlers:  Change in DATA_IN are latched in EDGE_CAUSE.
- *                     Interrupt are masked by EDGE_MASK रेजिस्टरs.
+ *                     Interrupt are masked by EDGE_MASK registers.
  * Both-edge handlers: Similar to regular Edge handlers, but also swaps
  *                     the polarity to catch the next line transaction.
  *                     This is a race condition that might not perfectly
- *                     work on some use हालs.
+ *                     work on some use cases.
  *
- * Every eight GPIO lines are grouped (OR'ed) beक्रमe going up to मुख्य
- * cause रेजिस्टर.
+ * Every eight GPIO lines are grouped (OR'ed) before going up to main
+ * cause register.
  *
  *                    EDGE  cause    mask
  *        data-in   /--------| |-----| |----\
- *     -----| |-----                         ---- to मुख्य cause reg
+ *     -----| |-----                         ---- to main cause reg
  *           X      \----------------| |----/
  *        polarity    LEVEL          mask
  *
  ****************************************************************************/
 
-अटल पूर्णांक gpio_irq_set_type(काष्ठा irq_data *d, u32 type)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
-	काष्ठा orion_gpio_chip *ochip = gc->निजी;
-	पूर्णांक pin;
+static int gpio_irq_set_type(struct irq_data *d, u32 type)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct irq_chip_type *ct = irq_data_get_chip_type(d);
+	struct orion_gpio_chip *ochip = gc->private;
+	int pin;
 	u32 u;
 
 	pin = d->hwirq - ochip->secondary_irq_base;
 
-	u = पढ़ोl(GPIO_IO_CONF(ochip)) & (1 << pin);
-	अगर (!u) अणु
-		वापस -EINVAL;
-	पूर्ण
+	u = readl(GPIO_IO_CONF(ochip)) & (1 << pin);
+	if (!u) {
+		return -EINVAL;
+	}
 
 	type &= IRQ_TYPE_SENSE_MASK;
-	अगर (type == IRQ_TYPE_NONE)
-		वापस -EINVAL;
+	if (type == IRQ_TYPE_NONE)
+		return -EINVAL;
 
-	/* Check अगर we need to change chip and handler */
-	अगर (!(ct->type & type))
-		अगर (irq_setup_alt_chip(d, type))
-			वापस -EINVAL;
+	/* Check if we need to change chip and handler */
+	if (!(ct->type & type))
+		if (irq_setup_alt_chip(d, type))
+			return -EINVAL;
 
 	/*
-	 * Configure पूर्णांकerrupt polarity.
+	 * Configure interrupt polarity.
 	 */
-	अगर (type == IRQ_TYPE_EDGE_RISING || type == IRQ_TYPE_LEVEL_HIGH) अणु
-		u = पढ़ोl(GPIO_IN_POL(ochip));
+	if (type == IRQ_TYPE_EDGE_RISING || type == IRQ_TYPE_LEVEL_HIGH) {
+		u = readl(GPIO_IN_POL(ochip));
 		u &= ~(1 << pin);
-		ग_लिखोl(u, GPIO_IN_POL(ochip));
-	पूर्ण अन्यथा अगर (type == IRQ_TYPE_EDGE_FALLING || type == IRQ_TYPE_LEVEL_LOW) अणु
-		u = पढ़ोl(GPIO_IN_POL(ochip));
+		writel(u, GPIO_IN_POL(ochip));
+	} else if (type == IRQ_TYPE_EDGE_FALLING || type == IRQ_TYPE_LEVEL_LOW) {
+		u = readl(GPIO_IN_POL(ochip));
 		u |= 1 << pin;
-		ग_लिखोl(u, GPIO_IN_POL(ochip));
-	पूर्ण अन्यथा अगर (type == IRQ_TYPE_EDGE_BOTH) अणु
+		writel(u, GPIO_IN_POL(ochip));
+	} else if (type == IRQ_TYPE_EDGE_BOTH) {
 		u32 v;
 
-		v = पढ़ोl(GPIO_IN_POL(ochip)) ^ पढ़ोl(GPIO_DATA_IN(ochip));
+		v = readl(GPIO_IN_POL(ochip)) ^ readl(GPIO_DATA_IN(ochip));
 
 		/*
 		 * set initial polarity based on current input level
 		 */
-		u = पढ़ोl(GPIO_IN_POL(ochip));
-		अगर (v & (1 << pin))
+		u = readl(GPIO_IN_POL(ochip));
+		if (v & (1 << pin))
 			u |= 1 << pin;		/* falling */
-		अन्यथा
+		else
 			u &= ~(1 << pin);	/* rising */
-		ग_लिखोl(u, GPIO_IN_POL(ochip));
-	पूर्ण
-	वापस 0;
-पूर्ण
+		writel(u, GPIO_IN_POL(ochip));
+	}
+	return 0;
+}
 
-अटल व्योम gpio_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा orion_gpio_chip *ochip = irq_desc_get_handler_data(desc);
+static void gpio_irq_handler(struct irq_desc *desc)
+{
+	struct orion_gpio_chip *ochip = irq_desc_get_handler_data(desc);
 	u32 cause, type;
-	पूर्णांक i;
+	int i;
 
-	अगर (ochip == शून्य)
-		वापस;
+	if (ochip == NULL)
+		return;
 
-	cause = पढ़ोl(GPIO_DATA_IN(ochip)) & पढ़ोl(GPIO_LEVEL_MASK(ochip));
-	cause |= पढ़ोl(GPIO_EDGE_CAUSE(ochip)) & पढ़ोl(GPIO_EDGE_MASK(ochip));
+	cause = readl(GPIO_DATA_IN(ochip)) & readl(GPIO_LEVEL_MASK(ochip));
+	cause |= readl(GPIO_EDGE_CAUSE(ochip)) & readl(GPIO_EDGE_MASK(ochip));
 
-	क्रम (i = 0; i < ochip->chip.ngpio; i++) अणु
-		पूर्णांक irq;
+	for (i = 0; i < ochip->chip.ngpio; i++) {
+		int irq;
 
 		irq = ochip->secondary_irq_base + i;
 
-		अगर (!(cause & (1 << i)))
-			जारी;
+		if (!(cause & (1 << i)))
+			continue;
 
 		type = irq_get_trigger_type(irq);
-		अगर ((type & IRQ_TYPE_SENSE_MASK) == IRQ_TYPE_EDGE_BOTH) अणु
+		if ((type & IRQ_TYPE_SENSE_MASK) == IRQ_TYPE_EDGE_BOTH) {
 			/* Swap polarity (race with GPIO line) */
 			u32 polarity;
 
-			polarity = पढ़ोl(GPIO_IN_POL(ochip));
+			polarity = readl(GPIO_IN_POL(ochip));
 			polarity ^= 1 << i;
-			ग_लिखोl(polarity, GPIO_IN_POL(ochip));
-		पूर्ण
+			writel(polarity, GPIO_IN_POL(ochip));
+		}
 		generic_handle_irq(irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-#समावेश <linux/seq_file.h>
+#ifdef CONFIG_DEBUG_FS
+#include <linux/seq_file.h>
 
-अटल व्योम orion_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
-अणु
+static void orion_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
+{
 
-	काष्ठा orion_gpio_chip *ochip = gpiochip_get_data(chip);
+	struct orion_gpio_chip *ochip = gpiochip_get_data(chip);
 	u32 out, io_conf, blink, in_pol, data_in, cause, edg_msk, lvl_msk;
-	स्थिर अक्षर *label;
-	पूर्णांक i;
+	const char *label;
+	int i;
 
-	out	= पढ़ोl_relaxed(GPIO_OUT(ochip));
-	io_conf	= पढ़ोl_relaxed(GPIO_IO_CONF(ochip));
-	blink	= पढ़ोl_relaxed(GPIO_BLINK_EN(ochip));
-	in_pol	= पढ़ोl_relaxed(GPIO_IN_POL(ochip));
-	data_in	= पढ़ोl_relaxed(GPIO_DATA_IN(ochip));
-	cause	= पढ़ोl_relaxed(GPIO_EDGE_CAUSE(ochip));
-	edg_msk	= पढ़ोl_relaxed(GPIO_EDGE_MASK(ochip));
-	lvl_msk	= पढ़ोl_relaxed(GPIO_LEVEL_MASK(ochip));
+	out	= readl_relaxed(GPIO_OUT(ochip));
+	io_conf	= readl_relaxed(GPIO_IO_CONF(ochip));
+	blink	= readl_relaxed(GPIO_BLINK_EN(ochip));
+	in_pol	= readl_relaxed(GPIO_IN_POL(ochip));
+	data_in	= readl_relaxed(GPIO_DATA_IN(ochip));
+	cause	= readl_relaxed(GPIO_EDGE_CAUSE(ochip));
+	edg_msk	= readl_relaxed(GPIO_EDGE_MASK(ochip));
+	lvl_msk	= readl_relaxed(GPIO_LEVEL_MASK(ochip));
 
-	क्रम_each_requested_gpio(chip, i, label) अणु
+	for_each_requested_gpio(chip, i, label) {
 		u32 msk;
 		bool is_out;
 
 		msk = 1 << i;
 		is_out = !(io_conf & msk);
 
-		seq_म_लिखो(s, " gpio-%-3d (%-20.20s)", chip->base + i, label);
+		seq_printf(s, " gpio-%-3d (%-20.20s)", chip->base + i, label);
 
-		अगर (is_out) अणु
-			seq_म_लिखो(s, " out %s %s\n",
+		if (is_out) {
+			seq_printf(s, " out %s %s\n",
 				   out & msk ? "hi" : "lo",
 				   blink & msk ? "(blink )" : "");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		seq_म_लिखो(s, " in  %s (act %s) - IRQ",
+		seq_printf(s, " in  %s (act %s) - IRQ",
 			   (data_in ^ in_pol) & msk  ? "hi" : "lo",
 			   in_pol & msk ? "lo" : "hi");
-		अगर (!((edg_msk | lvl_msk) & msk)) अणु
-			seq_माला_दो(s, " disabled\n");
-			जारी;
-		पूर्ण
-		अगर (edg_msk & msk)
-			seq_माला_दो(s, " edge ");
-		अगर (lvl_msk & msk)
-			seq_माला_दो(s, " level");
-		seq_म_लिखो(s, " (%s)\n", cause & msk ? "pending" : "clear  ");
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा orion_gpio_dbg_show शून्य
-#पूर्ण_अगर
+		if (!((edg_msk | lvl_msk) & msk)) {
+			seq_puts(s, " disabled\n");
+			continue;
+		}
+		if (edg_msk & msk)
+			seq_puts(s, " edge ");
+		if (lvl_msk & msk)
+			seq_puts(s, " level");
+		seq_printf(s, " (%s)\n", cause & msk ? "pending" : "clear  ");
+	}
+}
+#else
+#define orion_gpio_dbg_show NULL
+#endif
 
-अटल व्योम orion_gpio_unmask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+static void orion_gpio_unmask_irq(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct irq_chip_type *ct = irq_data_get_chip_type(d);
 	u32 reg_val;
 	u32 mask = d->mask;
 
 	irq_gc_lock(gc);
-	reg_val = irq_reg_पढ़ोl(gc, ct->regs.mask);
+	reg_val = irq_reg_readl(gc, ct->regs.mask);
 	reg_val |= mask;
-	irq_reg_ग_लिखोl(gc, reg_val, ct->regs.mask);
+	irq_reg_writel(gc, reg_val, ct->regs.mask);
 	irq_gc_unlock(gc);
-पूर्ण
+}
 
-अटल व्योम orion_gpio_mask_irq(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+static void orion_gpio_mask_irq(struct irq_data *d)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct irq_chip_type *ct = irq_data_get_chip_type(d);
 	u32 mask = d->mask;
 	u32 reg_val;
 
 	irq_gc_lock(gc);
-	reg_val = irq_reg_पढ़ोl(gc, ct->regs.mask);
+	reg_val = irq_reg_readl(gc, ct->regs.mask);
 	reg_val &= ~mask;
-	irq_reg_ग_लिखोl(gc, reg_val, ct->regs.mask);
+	irq_reg_writel(gc, reg_val, ct->regs.mask);
 	irq_gc_unlock(gc);
-पूर्ण
+}
 
-व्योम __init orion_gpio_init(काष्ठा device_node *np,
-			    पूर्णांक gpio_base, पूर्णांक ngpio,
-			    व्योम __iomem *base, पूर्णांक mask_offset,
-			    पूर्णांक secondary_irq_base,
-			    पूर्णांक irqs[4])
-अणु
-	काष्ठा orion_gpio_chip *ochip;
-	काष्ठा irq_chip_generic *gc;
-	काष्ठा irq_chip_type *ct;
-	अक्षर gc_label[16];
-	पूर्णांक i;
+void __init orion_gpio_init(struct device_node *np,
+			    int gpio_base, int ngpio,
+			    void __iomem *base, int mask_offset,
+			    int secondary_irq_base,
+			    int irqs[4])
+{
+	struct orion_gpio_chip *ochip;
+	struct irq_chip_generic *gc;
+	struct irq_chip_type *ct;
+	char gc_label[16];
+	int i;
 
-	अगर (orion_gpio_chip_count == ARRAY_SIZE(orion_gpio_chips))
-		वापस;
+	if (orion_gpio_chip_count == ARRAY_SIZE(orion_gpio_chips))
+		return;
 
-	snम_लिखो(gc_label, माप(gc_label), "orion_gpio%d",
+	snprintf(gc_label, sizeof(gc_label), "orion_gpio%d",
 		orion_gpio_chip_count);
 
 	ochip = orion_gpio_chips + orion_gpio_chip_count;
@@ -546,13 +545,13 @@ EXPORT_SYMBOL_GPL(orion_gpio_led_blink_set);
 	ochip->chip.base = gpio_base;
 	ochip->chip.ngpio = ngpio;
 	ochip->chip.can_sleep = 0;
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 	ochip->chip.of_node = np;
-#पूर्ण_अगर
+#endif
 	ochip->chip.dbg_show = orion_gpio_dbg_show;
 
 	spin_lock_init(&ochip->lock);
-	ochip->base = (व्योम __iomem *)base;
+	ochip->base = (void __iomem *)base;
 	ochip->valid_input = 0;
 	ochip->valid_output = 0;
 	ochip->mask_offset = mask_offset;
@@ -561,28 +560,28 @@ EXPORT_SYMBOL_GPL(orion_gpio_led_blink_set);
 	gpiochip_add_data(&ochip->chip, ochip);
 
 	/*
-	 * Mask and clear GPIO पूर्णांकerrupts.
+	 * Mask and clear GPIO interrupts.
 	 */
-	ग_लिखोl(0, GPIO_EDGE_CAUSE(ochip));
-	ग_लिखोl(0, GPIO_EDGE_MASK(ochip));
-	ग_लिखोl(0, GPIO_LEVEL_MASK(ochip));
+	writel(0, GPIO_EDGE_CAUSE(ochip));
+	writel(0, GPIO_EDGE_MASK(ochip));
+	writel(0, GPIO_LEVEL_MASK(ochip));
 
-	/* Setup the पूर्णांकerrupt handlers. Each chip can have up to 4
-	 * पूर्णांकerrupt handlers, with each handler dealing with 8 GPIO
+	/* Setup the interrupt handlers. Each chip can have up to 4
+	 * interrupt handlers, with each handler dealing with 8 GPIO
 	 * pins. */
 
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (irqs[i]) अणु
+	for (i = 0; i < 4; i++) {
+		if (irqs[i]) {
 			irq_set_chained_handler_and_data(irqs[i],
 							 gpio_irq_handler,
 							 ochip);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	gc = irq_alloc_generic_chip("orion_gpio_irq", 2,
 				    secondary_irq_base,
 				    ochip->base, handle_level_irq);
-	gc->निजी = ochip;
+	gc->private = ochip;
 	ct = gc->chip_types;
 	ct->regs.mask = ochip->mask_offset + GPIO_LEVEL_MASK_OFF;
 	ct->type = IRQ_TYPE_LEVEL_HIGH | IRQ_TYPE_LEVEL_LOW;
@@ -605,16 +604,16 @@ EXPORT_SYMBOL_GPL(orion_gpio_led_blink_set);
 	irq_setup_generic_chip(gc, IRQ_MSK(ngpio), IRQ_GC_INIT_MASK_CACHE,
 			       IRQ_NOREQUEST, IRQ_LEVEL | IRQ_NOPROBE);
 
-	/* Setup irq करोमुख्य on top of the generic chip. */
-	ochip->करोमुख्य = irq_करोमुख्य_add_legacy(np,
+	/* Setup irq domain on top of the generic chip. */
+	ochip->domain = irq_domain_add_legacy(np,
 					      ochip->chip.ngpio,
 					      ochip->secondary_irq_base,
 					      ochip->secondary_irq_base,
-					      &irq_करोमुख्य_simple_ops,
+					      &irq_domain_simple_ops,
 					      ochip);
-	अगर (!ochip->करोमुख्य)
+	if (!ochip->domain)
 		panic("%s: couldn't allocate irq domain (DT).\n",
 		      ochip->chip.label);
 
 	orion_gpio_chip_count++;
-पूर्ण
+}

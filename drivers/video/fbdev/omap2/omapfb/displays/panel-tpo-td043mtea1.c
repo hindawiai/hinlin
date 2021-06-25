@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * TPO TD043MTEA1 Panel driver
  *
- * Author: Graधठvydas Ignotas <notasas@gmail.com>
+ * Author: Gražvydas Ignotas <notasas@gmail.com>
  * Converted to new DSS device model: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_gpपन.स>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/spi/spi.h>
+#include <linux/regulator/consumer.h>
+#include <linux/gpio.h>
+#include <linux/err.h>
+#include <linux/slab.h>
+#include <linux/of_gpio.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-#घोषणा TPO_R02_MODE(x)		((x) & 7)
-#घोषणा TPO_R02_MODE_800x480	7
-#घोषणा TPO_R02_NCLK_RISING	BIT(3)
-#घोषणा TPO_R02_HSYNC_HIGH	BIT(4)
-#घोषणा TPO_R02_VSYNC_HIGH	BIT(5)
+#define TPO_R02_MODE(x)		((x) & 7)
+#define TPO_R02_MODE_800x480	7
+#define TPO_R02_NCLK_RISING	BIT(3)
+#define TPO_R02_HSYNC_HIGH	BIT(4)
+#define TPO_R02_VSYNC_HIGH	BIT(5)
 
-#घोषणा TPO_R03_NSTANDBY	BIT(0)
-#घोषणा TPO_R03_EN_CP_CLK	BIT(1)
-#घोषणा TPO_R03_EN_VGL_PUMP	BIT(2)
-#घोषणा TPO_R03_EN_PWM		BIT(3)
-#घोषणा TPO_R03_DRIVING_CAP_100	BIT(4)
-#घोषणा TPO_R03_EN_PRE_CHARGE	BIT(6)
-#घोषणा TPO_R03_SOFTWARE_CTL	BIT(7)
+#define TPO_R03_NSTANDBY	BIT(0)
+#define TPO_R03_EN_CP_CLK	BIT(1)
+#define TPO_R03_EN_VGL_PUMP	BIT(2)
+#define TPO_R03_EN_PWM		BIT(3)
+#define TPO_R03_DRIVING_CAP_100	BIT(4)
+#define TPO_R03_EN_PRE_CHARGE	BIT(6)
+#define TPO_R03_SOFTWARE_CTL	BIT(7)
 
-#घोषणा TPO_R04_NFLIP_H		BIT(0)
-#घोषणा TPO_R04_NFLIP_V		BIT(1)
-#घोषणा TPO_R04_CP_CLK_FREQ_1H	BIT(2)
-#घोषणा TPO_R04_VGL_FREQ_1H	BIT(4)
+#define TPO_R04_NFLIP_H		BIT(0)
+#define TPO_R04_NFLIP_V		BIT(1)
+#define TPO_R04_CP_CLK_FREQ_1H	BIT(2)
+#define TPO_R04_VGL_FREQ_1H	BIT(4)
 
-#घोषणा TPO_R03_VAL_NORMAL (TPO_R03_NSTANDBY | TPO_R03_EN_CP_CLK | \
+#define TPO_R03_VAL_NORMAL (TPO_R03_NSTANDBY | TPO_R03_EN_CP_CLK | \
 			TPO_R03_EN_VGL_PUMP |  TPO_R03_EN_PWM | \
 			TPO_R03_DRIVING_CAP_100 | TPO_R03_EN_PRE_CHARGE | \
 			TPO_R03_SOFTWARE_CTL)
 
-#घोषणा TPO_R03_VAL_STANDBY (TPO_R03_DRIVING_CAP_100 | \
+#define TPO_R03_VAL_STANDBY (TPO_R03_DRIVING_CAP_100 | \
 			TPO_R03_EN_PRE_CHARGE | TPO_R03_SOFTWARE_CTL)
 
-अटल स्थिर u16 tpo_td043_def_gamma[12] = अणु
+static const u16 tpo_td043_def_gamma[12] = {
 	105, 315, 381, 431, 490, 537, 579, 686, 780, 837, 880, 1023
-पूर्ण;
+};
 
-काष्ठा panel_drv_data अणु
-	काष्ठा omap_dss_device	dssdev;
-	काष्ठा omap_dss_device *in;
+struct panel_drv_data {
+	struct omap_dss_device	dssdev;
+	struct omap_dss_device *in;
 
-	काष्ठा omap_video_timings videomode;
+	struct omap_video_timings videomode;
 
-	पूर्णांक data_lines;
+	int data_lines;
 
-	काष्ठा spi_device *spi;
-	काष्ठा regulator *vcc_reg;
-	पूर्णांक nreset_gpio;
+	struct spi_device *spi;
+	struct regulator *vcc_reg;
+	int nreset_gpio;
 	u16 gamma[12];
 	u32 mode;
 	u32 hmirror:1;
 	u32 vmirror:1;
-	u32 घातered_on:1;
+	u32 powered_on:1;
 	u32 spi_suspended:1;
-	u32 घातer_on_resume:1;
-पूर्ण;
+	u32 power_on_resume:1;
+};
 
-अटल स्थिर काष्ठा omap_video_timings tpo_td043_timings = अणु
+static const struct omap_video_timings tpo_td043_timings = {
 	.x_res		= 800,
 	.y_res		= 480,
 
-	.pixelघड़ी	= 36000000,
+	.pixelclock	= 36000000,
 
 	.hsw		= 1,
 	.hfp		= 68,
@@ -88,20 +87,20 @@
 	.data_pclk_edge	= OMAPDSS_DRIVE_SIG_FALLING_EDGE,
 	.de_level	= OMAPDSS_SIG_ACTIVE_HIGH,
 	.sync_pclk_edge	= OMAPDSS_DRIVE_SIG_RISING_EDGE,
-पूर्ण;
+};
 
-#घोषणा to_panel_data(p) container_of(p, काष्ठा panel_drv_data, dssdev)
+#define to_panel_data(p) container_of(p, struct panel_drv_data, dssdev)
 
-अटल पूर्णांक tpo_td043_ग_लिखो(काष्ठा spi_device *spi, u8 addr, u8 data)
-अणु
-	काष्ठा spi_message	m;
-	काष्ठा spi_transfer	xfer;
+static int tpo_td043_write(struct spi_device *spi, u8 addr, u8 data)
+{
+	struct spi_message	m;
+	struct spi_transfer	xfer;
 	u16			w;
-	पूर्णांक			r;
+	int			r;
 
 	spi_message_init(&m);
 
-	स_रखो(&xfer, 0, माप(xfer));
+	memset(&xfer, 0, sizeof(xfer));
 
 	w = ((u16)addr << 10) | (1 << 8) | data;
 	xfer.tx_buf = &w;
@@ -110,335 +109,335 @@
 	spi_message_add_tail(&xfer, &m);
 
 	r = spi_sync(spi, &m);
-	अगर (r < 0)
+	if (r < 0)
 		dev_warn(&spi->dev, "failed to write to LCD reg (%d)\n", r);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम tpo_td043_ग_लिखो_gamma(काष्ठा spi_device *spi, u16 gamma[12])
-अणु
+static void tpo_td043_write_gamma(struct spi_device *spi, u16 gamma[12])
+{
 	u8 i, val;
 
 	/* gamma bits [9:8] */
-	क्रम (val = i = 0; i < 4; i++)
+	for (val = i = 0; i < 4; i++)
 		val |= (gamma[i] & 0x300) >> ((i + 1) * 2);
-	tpo_td043_ग_लिखो(spi, 0x11, val);
+	tpo_td043_write(spi, 0x11, val);
 
-	क्रम (val = i = 0; i < 4; i++)
+	for (val = i = 0; i < 4; i++)
 		val |= (gamma[i+4] & 0x300) >> ((i + 1) * 2);
-	tpo_td043_ग_लिखो(spi, 0x12, val);
+	tpo_td043_write(spi, 0x12, val);
 
-	क्रम (val = i = 0; i < 4; i++)
+	for (val = i = 0; i < 4; i++)
 		val |= (gamma[i+8] & 0x300) >> ((i + 1) * 2);
-	tpo_td043_ग_लिखो(spi, 0x13, val);
+	tpo_td043_write(spi, 0x13, val);
 
 	/* gamma bits [7:0] */
-	क्रम (val = i = 0; i < 12; i++)
-		tpo_td043_ग_लिखो(spi, 0x14 + i, gamma[i] & 0xff);
-पूर्ण
+	for (val = i = 0; i < 12; i++)
+		tpo_td043_write(spi, 0x14 + i, gamma[i] & 0xff);
+}
 
-अटल पूर्णांक tpo_td043_ग_लिखो_mirror(काष्ठा spi_device *spi, bool h, bool v)
-अणु
+static int tpo_td043_write_mirror(struct spi_device *spi, bool h, bool v)
+{
 	u8 reg4 = TPO_R04_NFLIP_H | TPO_R04_NFLIP_V |
 		TPO_R04_CP_CLK_FREQ_1H | TPO_R04_VGL_FREQ_1H;
-	अगर (h)
+	if (h)
 		reg4 &= ~TPO_R04_NFLIP_H;
-	अगर (v)
+	if (v)
 		reg4 &= ~TPO_R04_NFLIP_V;
 
-	वापस tpo_td043_ग_लिखो(spi, 4, reg4);
-पूर्ण
+	return tpo_td043_write(spi, 4, reg4);
+}
 
-अटल पूर्णांक tpo_td043_set_hmirror(काष्ठा omap_dss_device *dssdev, bool enable)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dssdev->dev);
+static int tpo_td043_set_hmirror(struct omap_dss_device *dssdev, bool enable)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dssdev->dev);
 
 	ddata->hmirror = enable;
-	वापस tpo_td043_ग_लिखो_mirror(ddata->spi, ddata->hmirror,
+	return tpo_td043_write_mirror(ddata->spi, ddata->hmirror,
 			ddata->vmirror);
-पूर्ण
+}
 
-अटल bool tpo_td043_get_hmirror(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dssdev->dev);
+static bool tpo_td043_get_hmirror(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dssdev->dev);
 
-	वापस ddata->hmirror;
-पूर्ण
+	return ddata->hmirror;
+}
 
-अटल sमाप_प्रकार tpo_td043_vmirror_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
+static ssize_t tpo_td043_vmirror_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ddata->vmirror);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", ddata->vmirror);
+}
 
-अटल sमाप_प्रकार tpo_td043_vmirror_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	पूर्णांक val;
-	पूर्णांक ret;
+static ssize_t tpo_td043_vmirror_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	int val;
+	int ret;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret < 0)
+		return ret;
 
 	val = !!val;
 
-	ret = tpo_td043_ग_लिखो_mirror(ddata->spi, ddata->hmirror, val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tpo_td043_write_mirror(ddata->spi, ddata->hmirror, val);
+	if (ret < 0)
+		return ret;
 
 	ddata->vmirror = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार tpo_td043_mode_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
+static ssize_t tpo_td043_mode_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ddata->mode);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", ddata->mode);
+}
 
-अटल sमाप_प्रकार tpo_td043_mode_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	दीर्घ val;
-	पूर्णांक ret;
+static ssize_t tpo_td043_mode_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	long val;
+	int ret;
 
-	ret = kम_से_दीर्घ(buf, 0, &val);
-	अगर (ret != 0 || val & ~7)
-		वापस -EINVAL;
+	ret = kstrtol(buf, 0, &val);
+	if (ret != 0 || val & ~7)
+		return -EINVAL;
 
 	ddata->mode = val;
 
 	val |= TPO_R02_NCLK_RISING;
-	tpo_td043_ग_लिखो(ddata->spi, 2, val);
+	tpo_td043_write(ddata->spi, 2, val);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार tpo_td043_gamma_show(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	sमाप_प्रकार len = 0;
-	पूर्णांक ret;
-	पूर्णांक i;
+static ssize_t tpo_td043_gamma_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	ssize_t len = 0;
+	int ret;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ddata->gamma); i++) अणु
-		ret = snम_लिखो(buf + len, PAGE_SIZE - len, "%u ",
+	for (i = 0; i < ARRAY_SIZE(ddata->gamma); i++) {
+		ret = snprintf(buf + len, PAGE_SIZE - len, "%u ",
 				ddata->gamma[i]);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		len += ret;
-	पूर्ण
+	}
 	buf[len - 1] = '\n';
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार tpo_td043_gamma_store(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक g[12];
-	पूर्णांक ret;
-	पूर्णांक i;
+static ssize_t tpo_td043_gamma_store(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	unsigned int g[12];
+	int ret;
+	int i;
 
-	ret = माला_पूछो(buf, "%u %u %u %u %u %u %u %u %u %u %u %u",
+	ret = sscanf(buf, "%u %u %u %u %u %u %u %u %u %u %u %u",
 			&g[0], &g[1], &g[2], &g[3], &g[4], &g[5],
 			&g[6], &g[7], &g[8], &g[9], &g[10], &g[11]);
 
-	अगर (ret != 12)
-		वापस -EINVAL;
+	if (ret != 12)
+		return -EINVAL;
 
-	क्रम (i = 0; i < 12; i++)
+	for (i = 0; i < 12; i++)
 		ddata->gamma[i] = g[i];
 
-	tpo_td043_ग_लिखो_gamma(ddata->spi, ddata->gamma);
+	tpo_td043_write_gamma(ddata->spi, ddata->gamma);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(vmirror, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(vmirror, S_IRUGO | S_IWUSR,
 		tpo_td043_vmirror_show, tpo_td043_vmirror_store);
-अटल DEVICE_ATTR(mode, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(mode, S_IRUGO | S_IWUSR,
 		tpo_td043_mode_show, tpo_td043_mode_store);
-अटल DEVICE_ATTR(gamma, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(gamma, S_IRUGO | S_IWUSR,
 		tpo_td043_gamma_show, tpo_td043_gamma_store);
 
-अटल काष्ठा attribute *tpo_td043_attrs[] = अणु
+static struct attribute *tpo_td043_attrs[] = {
 	&dev_attr_vmirror.attr,
 	&dev_attr_mode.attr,
 	&dev_attr_gamma.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group tpo_td043_attr_group = अणु
+static const struct attribute_group tpo_td043_attr_group = {
 	.attrs = tpo_td043_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक tpo_td043_घातer_on(काष्ठा panel_drv_data *ddata)
-अणु
-	पूर्णांक r;
+static int tpo_td043_power_on(struct panel_drv_data *ddata)
+{
+	int r;
 
-	अगर (ddata->घातered_on)
-		वापस 0;
+	if (ddata->powered_on)
+		return 0;
 
 	r = regulator_enable(ddata->vcc_reg);
-	अगर (r != 0)
-		वापस r;
+	if (r != 0)
+		return r;
 
-	/* रुको क्रम panel to stabilize */
+	/* wait for panel to stabilize */
 	msleep(160);
 
-	अगर (gpio_is_valid(ddata->nreset_gpio))
+	if (gpio_is_valid(ddata->nreset_gpio))
 		gpio_set_value(ddata->nreset_gpio, 1);
 
-	tpo_td043_ग_लिखो(ddata->spi, 2,
+	tpo_td043_write(ddata->spi, 2,
 			TPO_R02_MODE(ddata->mode) | TPO_R02_NCLK_RISING);
-	tpo_td043_ग_लिखो(ddata->spi, 3, TPO_R03_VAL_NORMAL);
-	tpo_td043_ग_लिखो(ddata->spi, 0x20, 0xf0);
-	tpo_td043_ग_लिखो(ddata->spi, 0x21, 0xf0);
-	tpo_td043_ग_लिखो_mirror(ddata->spi, ddata->hmirror,
+	tpo_td043_write(ddata->spi, 3, TPO_R03_VAL_NORMAL);
+	tpo_td043_write(ddata->spi, 0x20, 0xf0);
+	tpo_td043_write(ddata->spi, 0x21, 0xf0);
+	tpo_td043_write_mirror(ddata->spi, ddata->hmirror,
 			ddata->vmirror);
-	tpo_td043_ग_लिखो_gamma(ddata->spi, ddata->gamma);
+	tpo_td043_write_gamma(ddata->spi, ddata->gamma);
 
-	ddata->घातered_on = 1;
-	वापस 0;
-पूर्ण
+	ddata->powered_on = 1;
+	return 0;
+}
 
-अटल व्योम tpo_td043_घातer_off(काष्ठा panel_drv_data *ddata)
-अणु
-	अगर (!ddata->घातered_on)
-		वापस;
+static void tpo_td043_power_off(struct panel_drv_data *ddata)
+{
+	if (!ddata->powered_on)
+		return;
 
-	tpo_td043_ग_लिखो(ddata->spi, 3,
+	tpo_td043_write(ddata->spi, 3,
 			TPO_R03_VAL_STANDBY | TPO_R03_EN_PWM);
 
-	अगर (gpio_is_valid(ddata->nreset_gpio))
+	if (gpio_is_valid(ddata->nreset_gpio))
 		gpio_set_value(ddata->nreset_gpio, 0);
 
-	/* रुको क्रम at least 2 vsyncs beक्रमe cutting off घातer */
+	/* wait for at least 2 vsyncs before cutting off power */
 	msleep(50);
 
-	tpo_td043_ग_लिखो(ddata->spi, 3, TPO_R03_VAL_STANDBY);
+	tpo_td043_write(ddata->spi, 3, TPO_R03_VAL_STANDBY);
 
 	regulator_disable(ddata->vcc_reg);
 
-	ddata->घातered_on = 0;
-पूर्ण
+	ddata->powered_on = 0;
+}
 
-अटल पूर्णांक tpo_td043_connect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int tpo_td043_connect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (omapdss_device_is_connected(dssdev))
-		वापस 0;
+	if (omapdss_device_is_connected(dssdev))
+		return 0;
 
-	वापस in->ops.dpi->connect(in, dssdev);
-पूर्ण
+	return in->ops.dpi->connect(in, dssdev);
+}
 
-अटल व्योम tpo_td043_disconnect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpo_td043_disconnect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस;
+	if (!omapdss_device_is_connected(dssdev))
+		return;
 
 	in->ops.dpi->disconnect(in, dssdev);
-पूर्ण
+}
 
-अटल पूर्णांक tpo_td043_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int tpo_td043_enable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस -ENODEV;
+	if (!omapdss_device_is_connected(dssdev))
+		return -ENODEV;
 
-	अगर (omapdss_device_is_enabled(dssdev))
-		वापस 0;
+	if (omapdss_device_is_enabled(dssdev))
+		return 0;
 
-	अगर (ddata->data_lines)
+	if (ddata->data_lines)
 		in->ops.dpi->set_data_lines(in, ddata->data_lines);
 	in->ops.dpi->set_timings(in, &ddata->videomode);
 
 	r = in->ops.dpi->enable(in);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	/*
-	 * If we are resuming from प्रणाली suspend, SPI घड़ीs might not be
+	 * If we are resuming from system suspend, SPI clocks might not be
 	 * enabled yet, so we'll program the LCD from SPI PM resume callback.
 	 */
-	अगर (!ddata->spi_suspended) अणु
-		r = tpo_td043_घातer_on(ddata);
-		अगर (r) अणु
+	if (!ddata->spi_suspended) {
+		r = tpo_td043_power_on(ddata);
+		if (r) {
 			in->ops.dpi->disable(in);
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpo_td043_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpo_td043_disable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (!omapdss_device_is_enabled(dssdev))
-		वापस;
+	if (!omapdss_device_is_enabled(dssdev))
+		return;
 
 	in->ops.dpi->disable(in);
 
-	अगर (!ddata->spi_suspended)
-		tpo_td043_घातer_off(ddata);
+	if (!ddata->spi_suspended)
+		tpo_td043_power_off(ddata);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-पूर्ण
+}
 
-अटल व्योम tpo_td043_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void tpo_td043_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	ddata->videomode = *timings;
 	dssdev->panel.timings = *timings;
 
 	in->ops.dpi->set_timings(in, timings);
-पूर्ण
+}
 
-अटल व्योम tpo_td043_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static void tpo_td043_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->videomode;
-पूर्ण
+}
 
-अटल पूर्णांक tpo_td043_check_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int tpo_td043_check_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	वापस in->ops.dpi->check_timings(in, timings);
-पूर्ण
+	return in->ops.dpi->check_timings(in, timings);
+}
 
-अटल काष्ठा omap_dss_driver tpo_td043_ops = अणु
+static struct omap_dss_driver tpo_td043_ops = {
 	.connect	= tpo_td043_connect,
 	.disconnect	= tpo_td043_disconnect,
 
@@ -452,92 +451,92 @@
 	.set_mirror	= tpo_td043_set_hmirror,
 	.get_mirror	= tpo_td043_get_hmirror,
 
-	.get_resolution	= omapdss_शेष_get_resolution,
-पूर्ण;
+	.get_resolution	= omapdss_default_get_resolution,
+};
 
 
-अटल पूर्णांक tpo_td043_probe_of(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device_node *node = spi->dev.of_node;
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
-	काष्ठा omap_dss_device *in;
-	पूर्णांक gpio;
+static int tpo_td043_probe_of(struct spi_device *spi)
+{
+	struct device_node *node = spi->dev.of_node;
+	struct panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
+	struct omap_dss_device *in;
+	int gpio;
 
 	gpio = of_get_named_gpio(node, "reset-gpios", 0);
-	अगर (!gpio_is_valid(gpio)) अणु
+	if (!gpio_is_valid(gpio)) {
 		dev_err(&spi->dev, "failed to parse enable gpio\n");
-		वापस gpio;
-	पूर्ण
+		return gpio;
+	}
 	ddata->nreset_gpio = gpio;
 
-	in = omapdss_of_find_source_क्रम_first_ep(node);
-	अगर (IS_ERR(in)) अणु
+	in = omapdss_of_find_source_for_first_ep(node);
+	if (IS_ERR(in)) {
 		dev_err(&spi->dev, "failed to find video source\n");
-		वापस PTR_ERR(in);
-	पूर्ण
+		return PTR_ERR(in);
+	}
 
 	ddata->in = in;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpo_td043_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा panel_drv_data *ddata;
-	काष्ठा omap_dss_device *dssdev;
-	पूर्णांक r;
+static int tpo_td043_probe(struct spi_device *spi)
+{
+	struct panel_drv_data *ddata;
+	struct omap_dss_device *dssdev;
+	int r;
 
 	dev_dbg(&spi->dev, "%s\n", __func__);
 
-	अगर (!spi->dev.of_node)
-		वापस -ENODEV;
+	if (!spi->dev.of_node)
+		return -ENODEV;
 
 	spi->bits_per_word = 16;
 	spi->mode = SPI_MODE_0;
 
 	r = spi_setup(spi);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		dev_err(&spi->dev, "spi_setup failed: %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	ddata = devm_kzalloc(&spi->dev, माप(*ddata), GFP_KERNEL);
-	अगर (ddata == शून्य)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&spi->dev, sizeof(*ddata), GFP_KERNEL);
+	if (ddata == NULL)
+		return -ENOMEM;
 
 	dev_set_drvdata(&spi->dev, ddata);
 
 	ddata->spi = spi;
 
 	r = tpo_td043_probe_of(spi);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ddata->mode = TPO_R02_MODE_800x480;
-	स_नकल(ddata->gamma, tpo_td043_def_gamma, माप(ddata->gamma));
+	memcpy(ddata->gamma, tpo_td043_def_gamma, sizeof(ddata->gamma));
 
 	ddata->vcc_reg = devm_regulator_get(&spi->dev, "vcc");
-	अगर (IS_ERR(ddata->vcc_reg)) अणु
+	if (IS_ERR(ddata->vcc_reg)) {
 		dev_err(&spi->dev, "failed to get LCD VCC regulator\n");
 		r = PTR_ERR(ddata->vcc_reg);
-		जाओ err_regulator;
-	पूर्ण
+		goto err_regulator;
+	}
 
-	अगर (gpio_is_valid(ddata->nreset_gpio)) अणु
+	if (gpio_is_valid(ddata->nreset_gpio)) {
 		r = devm_gpio_request_one(&spi->dev,
 				ddata->nreset_gpio, GPIOF_OUT_INIT_LOW,
 				"lcd reset");
-		अगर (r < 0) अणु
+		if (r < 0) {
 			dev_err(&spi->dev, "couldn't request reset GPIO\n");
-			जाओ err_gpio_req;
-		पूर्ण
-	पूर्ण
+			goto err_gpio_req;
+		}
+	}
 
 	r = sysfs_create_group(&spi->dev.kobj, &tpo_td043_attr_group);
-	अगर (r) अणु
+	if (r) {
 		dev_err(&spi->dev, "failed to create sysfs files\n");
-		जाओ err_sysfs;
-	पूर्ण
+		goto err_sysfs;
+	}
 
 	ddata->videomode = tpo_td043_timings;
 
@@ -548,99 +547,99 @@
 	dssdev->owner = THIS_MODULE;
 	dssdev->panel.timings = ddata->videomode;
 
-	r = omapdss_रेजिस्टर_display(dssdev);
-	अगर (r) अणु
+	r = omapdss_register_display(dssdev);
+	if (r) {
 		dev_err(&spi->dev, "Failed to register panel\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	वापस 0;
+	return 0;
 
 err_reg:
-	sysfs_हटाओ_group(&spi->dev.kobj, &tpo_td043_attr_group);
+	sysfs_remove_group(&spi->dev.kobj, &tpo_td043_attr_group);
 err_sysfs:
 err_gpio_req:
 err_regulator:
 	omap_dss_put_device(ddata->in);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक tpo_td043_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा omap_dss_device *in = ddata->in;
+static int tpo_td043_remove(struct spi_device *spi)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&spi->dev);
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(&ddata->spi->dev, "%s\n", __func__);
 
-	omapdss_unरेजिस्टर_display(dssdev);
+	omapdss_unregister_display(dssdev);
 
 	tpo_td043_disable(dssdev);
 	tpo_td043_disconnect(dssdev);
 
 	omap_dss_put_device(in);
 
-	sysfs_हटाओ_group(&spi->dev.kobj, &tpo_td043_attr_group);
+	sysfs_remove_group(&spi->dev.kobj, &tpo_td043_attr_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tpo_td043_spi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int tpo_td043_spi_suspend(struct device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "tpo_td043_spi_suspend, tpo %p\n", ddata);
 
-	ddata->घातer_on_resume = ddata->घातered_on;
-	tpo_td043_घातer_off(ddata);
+	ddata->power_on_resume = ddata->powered_on;
+	tpo_td043_power_off(ddata);
 	ddata->spi_suspended = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpo_td043_spi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int tpo_td043_spi_resume(struct device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	int ret;
 
 	dev_dbg(dev, "tpo_td043_spi_resume\n");
 
-	अगर (ddata->घातer_on_resume) अणु
-		ret = tpo_td043_घातer_on(ddata);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (ddata->power_on_resume) {
+		ret = tpo_td043_power_on(ddata);
+		if (ret)
+			return ret;
+	}
 	ddata->spi_suspended = 0;
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(tpo_td043_spi_pm,
+static SIMPLE_DEV_PM_OPS(tpo_td043_spi_pm,
 	tpo_td043_spi_suspend, tpo_td043_spi_resume);
 
-अटल स्थिर काष्ठा of_device_id tpo_td043_of_match[] = अणु
-	अणु .compatible = "omapdss,tpo,td043mtea1", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id tpo_td043_of_match[] = {
+	{ .compatible = "omapdss,tpo,td043mtea1", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, tpo_td043_of_match);
 
-अटल काष्ठा spi_driver tpo_td043_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver tpo_td043_spi_driver = {
+	.driver = {
 		.name	= "panel-tpo-td043mtea1",
 		.pm	= &tpo_td043_spi_pm,
 		.of_match_table = tpo_td043_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe	= tpo_td043_probe,
-	.हटाओ	= tpo_td043_हटाओ,
-पूर्ण;
+	.remove	= tpo_td043_remove,
+};
 
 module_spi_driver(tpo_td043_spi_driver);
 
 MODULE_ALIAS("spi:tpo,td043mtea1");
-MODULE_AUTHOR("Graधठvydas Ignotas <notasas@gmail.com>");
+MODULE_AUTHOR("Gražvydas Ignotas <notasas@gmail.com>");
 MODULE_DESCRIPTION("TPO TD043MTEA1 LCD Driver");
 MODULE_LICENSE("GPL");

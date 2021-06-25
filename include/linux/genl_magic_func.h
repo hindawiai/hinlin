@@ -1,295 +1,294 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित GENL_MAGIC_FUNC_H
-#घोषणा GENL_MAGIC_FUNC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef GENL_MAGIC_FUNC_H
+#define GENL_MAGIC_FUNC_H
 
-#समावेश <linux/build_bug.h>
-#समावेश <linux/genl_magic_काष्ठा.h>
+#include <linux/build_bug.h>
+#include <linux/genl_magic_struct.h>
 
 /*
- * Magic: declare tla policy						अणुअणुअणु1
+ * Magic: declare tla policy						{{{1
  * Magic: declare nested policies
- *									अणुअणुअणु2
+ *									{{{2
  */
-#अघोषित GENL_mc_group
-#घोषणा GENL_mc_group(group)
+#undef GENL_mc_group
+#define GENL_mc_group(group)
 
-#अघोषित GENL_notअगरication
-#घोषणा GENL_notअगरication(op_name, op_num, mcast_group, tla_list)
+#undef GENL_notification
+#define GENL_notification(op_name, op_num, mcast_group, tla_list)
 
-#अघोषित GENL_op
-#घोषणा GENL_op(op_name, op_num, handler, tla_list)
+#undef GENL_op
+#define GENL_op(op_name, op_num, handler, tla_list)
 
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
-	[tag_name] = अणु .type = NLA_NESTED पूर्ण,
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
+	[tag_name] = { .type = NLA_NESTED },
 
-अटल काष्ठा nla_policy CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy)[] = अणु
-#समावेश GENL_MAGIC_INCLUDE_खाता
-पूर्ण;
+static struct nla_policy CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy)[] = {
+#include GENL_MAGIC_INCLUDE_FILE
+};
 
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
-अटल काष्ठा nla_policy s_name ## _nl_policy[] __पढ़ो_mostly =		\
-अणु s_fields पूर्ण;
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
+static struct nla_policy s_name ## _nl_policy[] __read_mostly =		\
+{ s_fields };
 
-#अघोषित __field
-#घोषणा __field(attr_nr, attr_flag, name, nla_type, _type, __get,	\
-		 __put, __is_चिन्हित)					\
-	[attr_nr] = अणु .type = nla_type पूर्ण,
+#undef __field
+#define __field(attr_nr, attr_flag, name, nla_type, _type, __get,	\
+		 __put, __is_signed)					\
+	[attr_nr] = { .type = nla_type },
 
-#अघोषित __array
-#घोषणा __array(attr_nr, attr_flag, name, nla_type, _type, maxlen,	\
-		__get, __put, __is_चिन्हित)				\
-	[attr_nr] = अणु .type = nla_type,					\
-		      .len = maxlen - (nla_type == NLA_NUL_STRING) पूर्ण,
+#undef __array
+#define __array(attr_nr, attr_flag, name, nla_type, _type, maxlen,	\
+		__get, __put, __is_signed)				\
+	[attr_nr] = { .type = nla_type,					\
+		      .len = maxlen - (nla_type == NLA_NUL_STRING) },
 
-#समावेश GENL_MAGIC_INCLUDE_खाता
+#include GENL_MAGIC_INCLUDE_FILE
 
-#अगर_अघोषित __KERNEL__
-#अगर_अघोषित pr_info
-#घोषणा pr_info(args...)	ख_लिखो(मानक_त्रुटि, args);
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifndef __KERNEL__
+#ifndef pr_info
+#define pr_info(args...)	fprintf(stderr, args);
+#endif
+#endif
 
-#अगर_घोषित GENL_MAGIC_DEBUG
-अटल व्योम dprपूर्णांक_field(स्थिर अक्षर *dir, पूर्णांक nla_type,
-		स्थिर अक्षर *name, व्योम *valp)
-अणु
+#ifdef GENL_MAGIC_DEBUG
+static void dprint_field(const char *dir, int nla_type,
+		const char *name, void *valp)
+{
 	__u64 val = valp ? *(__u32 *)valp : 1;
-	चयन (nla_type) अणु
-	हाल NLA_U8:  val = (__u8)val;
-	हाल NLA_U16: val = (__u16)val;
-	हाल NLA_U32: val = (__u32)val;
+	switch (nla_type) {
+	case NLA_U8:  val = (__u8)val;
+	case NLA_U16: val = (__u16)val;
+	case NLA_U32: val = (__u32)val;
 		pr_info("%s attr %s: %d 0x%08x\n", dir,
-			name, (पूर्णांक)val, (अचिन्हित)val);
-		अवरोध;
-	हाल NLA_U64:
+			name, (int)val, (unsigned)val);
+		break;
+	case NLA_U64:
 		val = *(__u64*)valp;
 		pr_info("%s attr %s: %lld 0x%08llx\n", dir,
-			name, (दीर्घ दीर्घ)val, (अचिन्हित दीर्घ दीर्घ)val);
-		अवरोध;
-	हाल NLA_FLAG:
-		अगर (val)
+			name, (long long)val, (unsigned long long)val);
+		break;
+	case NLA_FLAG:
+		if (val)
 			pr_info("%s attr %s: set\n", dir, name);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम dprपूर्णांक_array(स्थिर अक्षर *dir, पूर्णांक nla_type,
-		स्थिर अक्षर *name, स्थिर अक्षर *val, अचिन्हित len)
-अणु
-	चयन (nla_type) अणु
-	हाल NLA_NUL_STRING:
-		अगर (len && val[len-1] == '\0')
+static void dprint_array(const char *dir, int nla_type,
+		const char *name, const char *val, unsigned len)
+{
+	switch (nla_type) {
+	case NLA_NUL_STRING:
+		if (len && val[len-1] == '\0')
 			len--;
 		pr_info("%s attr %s: [len:%u] '%s'\n", dir, name, len, val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* we can always show 4 byte,
 		 * thats what nlattr are aligned to. */
 		pr_info("%s attr %s: [len:%u] %02x%02x%02x%02x ...\n",
 			dir, name, len, val[0], val[1], val[2], val[3]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा DPRINT_TLA(a, op, b) pr_info("%s %s %s\n", a, op, b);
+#define DPRINT_TLA(a, op, b) pr_info("%s %s %s\n", a, op, b);
 
-/* Name is a member field name of the काष्ठा s.
- * If s is शून्य (only parsing, no copy requested in *_from_attrs()),
- * nla is supposed to poपूर्णांक to the attribute containing the inक्रमmation
- * corresponding to that काष्ठा member. */
-#घोषणा DPRINT_FIELD(dir, nla_type, name, s, nla)			\
-	करो अणु								\
-		अगर (s)							\
-			dprपूर्णांक_field(dir, nla_type, #name, &s->name);	\
-		अन्यथा अगर (nla)						\
-			dprपूर्णांक_field(dir, nla_type, #name,		\
-				(nla_type == NLA_FLAG) ? शून्य		\
+/* Name is a member field name of the struct s.
+ * If s is NULL (only parsing, no copy requested in *_from_attrs()),
+ * nla is supposed to point to the attribute containing the information
+ * corresponding to that struct member. */
+#define DPRINT_FIELD(dir, nla_type, name, s, nla)			\
+	do {								\
+		if (s)							\
+			dprint_field(dir, nla_type, #name, &s->name);	\
+		else if (nla)						\
+			dprint_field(dir, nla_type, #name,		\
+				(nla_type == NLA_FLAG) ? NULL		\
 						: nla_data(nla));	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा	DPRINT_ARRAY(dir, nla_type, name, s, nla)			\
-	करो अणु								\
-		अगर (s)							\
-			dprपूर्णांक_array(dir, nla_type, #name,		\
+#define	DPRINT_ARRAY(dir, nla_type, name, s, nla)			\
+	do {								\
+		if (s)							\
+			dprint_array(dir, nla_type, #name,		\
 					s->name, s->name ## _len);	\
-		अन्यथा अगर (nla)						\
-			dprपूर्णांक_array(dir, nla_type, #name,		\
+		else if (nla)						\
+			dprint_array(dir, nla_type, #name,		\
 					nla_data(nla), nla_len(nla));	\
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा DPRINT_TLA(a, op, b) करो अणुपूर्ण जबतक (0)
-#घोषणा DPRINT_FIELD(dir, nla_type, name, s, nla) करो अणुपूर्ण जबतक (0)
-#घोषणा	DPRINT_ARRAY(dir, nla_type, name, s, nla) करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#else
+#define DPRINT_TLA(a, op, b) do {} while (0)
+#define DPRINT_FIELD(dir, nla_type, name, s, nla) do {} while (0)
+#define	DPRINT_ARRAY(dir, nla_type, name, s, nla) do {} while (0)
+#endif
 
 /*
- * Magic: provide conversion functions					अणुअणुअणु1
- * populate काष्ठा from attribute table:
- *									अणुअणुअणु2
+ * Magic: provide conversion functions					{{{1
+ * populate struct from attribute table:
+ *									{{{2
  */
 
 /* processing of generic netlink messages is serialized.
- * use one अटल buffer क्रम parsing of nested attributes */
-अटल काष्ठा nlattr *nested_attr_tb[128];
+ * use one static buffer for parsing of nested attributes */
+static struct nlattr *nested_attr_tb[128];
 
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
-/* *_from_attrs functions are अटल, but potentially unused */		\
-अटल पूर्णांक __ ## s_name ## _from_attrs(काष्ठा s_name *s,		\
-		काष्ठा genl_info *info, bool exclude_invariants)	\
-अणु									\
-	स्थिर पूर्णांक maxtype = ARRAY_SIZE(s_name ## _nl_policy)-1;		\
-	काष्ठा nlattr *tla = info->attrs[tag_number];			\
-	काष्ठा nlattr **ntb = nested_attr_tb;				\
-	काष्ठा nlattr *nla;						\
-	पूर्णांक err;							\
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
+/* *_from_attrs functions are static, but potentially unused */		\
+static int __ ## s_name ## _from_attrs(struct s_name *s,		\
+		struct genl_info *info, bool exclude_invariants)	\
+{									\
+	const int maxtype = ARRAY_SIZE(s_name ## _nl_policy)-1;		\
+	struct nlattr *tla = info->attrs[tag_number];			\
+	struct nlattr **ntb = nested_attr_tb;				\
+	struct nlattr *nla;						\
+	int err;							\
 	BUILD_BUG_ON(ARRAY_SIZE(s_name ## _nl_policy) > ARRAY_SIZE(nested_attr_tb));	\
-	अगर (!tla)							\
-		वापस -ENOMSG;						\
+	if (!tla)							\
+		return -ENOMSG;						\
 	DPRINT_TLA(#s_name, "<=-", #tag_name);				\
 	err = drbd_nla_parse_nested(ntb, maxtype, tla, s_name ## _nl_policy);	\
-	अगर (err)							\
-		वापस err;						\
+	if (err)							\
+		return err;						\
 									\
 	s_fields							\
-	वापस 0;							\
-पूर्ण					__attribute__((unused))		\
-अटल पूर्णांक s_name ## _from_attrs(काष्ठा s_name *s,			\
-						काष्ठा genl_info *info)	\
-अणु									\
-	वापस __ ## s_name ## _from_attrs(s, info, false);		\
-पूर्ण					__attribute__((unused))		\
-अटल पूर्णांक s_name ## _from_attrs_क्रम_change(काष्ठा s_name *s,		\
-						काष्ठा genl_info *info)	\
-अणु									\
-	वापस __ ## s_name ## _from_attrs(s, info, true);		\
-पूर्ण					__attribute__((unused))		\
+	return 0;							\
+}					__attribute__((unused))		\
+static int s_name ## _from_attrs(struct s_name *s,			\
+						struct genl_info *info)	\
+{									\
+	return __ ## s_name ## _from_attrs(s, info, false);		\
+}					__attribute__((unused))		\
+static int s_name ## _from_attrs_for_change(struct s_name *s,		\
+						struct genl_info *info)	\
+{									\
+	return __ ## s_name ## _from_attrs(s, info, true);		\
+}					__attribute__((unused))		\
 
-#घोषणा __assign(attr_nr, attr_flag, name, nla_type, type, assignment...)	\
+#define __assign(attr_nr, attr_flag, name, nla_type, type, assignment...)	\
 		nla = ntb[attr_nr];						\
-		अगर (nla) अणु						\
-			अगर (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) अणु		\
+		if (nla) {						\
+			if (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) {		\
 				pr_info("<< must not change invariant attr: %s\n", #name);	\
-				वापस -EEXIST;				\
-			पूर्ण						\
+				return -EEXIST;				\
+			}						\
 			assignment;					\
-		पूर्ण अन्यथा अगर (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) अणु		\
+		} else if (exclude_invariants && !!((attr_flag) & DRBD_F_INVARIANT)) {		\
 			/* attribute missing from payload, */		\
 			/* which was expected */			\
-		पूर्ण अन्यथा अगर ((attr_flag) & DRBD_F_REQUIRED) अणु		\
+		} else if ((attr_flag) & DRBD_F_REQUIRED) {		\
 			pr_info("<< missing attr: %s\n", #name);	\
-			वापस -ENOMSG;					\
-		पूर्ण
+			return -ENOMSG;					\
+		}
 
-#अघोषित __field
-#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		__is_चिन्हित)						\
+#undef __field
+#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		__is_signed)						\
 	__assign(attr_nr, attr_flag, name, nla_type, type,		\
-			अगर (s)						\
+			if (s)						\
 				s->name = __get(nla);			\
 			DPRINT_FIELD("<<", nla_type, name, s, nla))
 
-/* validate_nla() alपढ़ोy checked nla_len <= maxlen appropriately. */
-#अघोषित __array
-#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, __is_चिन्हित)				\
+/* validate_nla() already checked nla_len <= maxlen appropriately. */
+#undef __array
+#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, __is_signed)				\
 	__assign(attr_nr, attr_flag, name, nla_type, type,		\
-			अगर (s)						\
+			if (s)						\
 				s->name ## _len =			\
 					__get(s->name, nla, maxlen);	\
 			DPRINT_ARRAY("<<", nla_type, name, s, nla))
 
-#समावेश GENL_MAGIC_INCLUDE_खाता
+#include GENL_MAGIC_INCLUDE_FILE
 
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)
 
 /*
- * Magic: define op number to op name mapping				अणुअणुअणु1
- *									अणुअणुअणु2
+ * Magic: define op number to op name mapping				{{{1
+ *									{{{2
  */
-स्थिर अक्षर *CONCAT_(GENL_MAGIC_FAMILY, _genl_cmd_to_str)(__u8 cmd)
-अणु
-	चयन (cmd) अणु
-#अघोषित GENL_op
-#घोषणा GENL_op(op_name, op_num, handler, tla_list)		\
-	हाल op_num: वापस #op_name;
-#समावेश GENL_MAGIC_INCLUDE_खाता
-	शेष:
-		     वापस "unknown";
-	पूर्ण
-पूर्ण
+const char *CONCAT_(GENL_MAGIC_FAMILY, _genl_cmd_to_str)(__u8 cmd)
+{
+	switch (cmd) {
+#undef GENL_op
+#define GENL_op(op_name, op_num, handler, tla_list)		\
+	case op_num: return #op_name;
+#include GENL_MAGIC_INCLUDE_FILE
+	default:
+		     return "unknown";
+	}
+}
 
-#अगर_घोषित __KERNEL__
-#समावेश <linux/stringअगरy.h>
+#ifdef __KERNEL__
+#include <linux/stringify.h>
 /*
- * Magic: define genl_ops						अणुअणुअणु1
- *									अणुअणुअणु2
+ * Magic: define genl_ops						{{{1
+ *									{{{2
  */
 
-#अघोषित GENL_op
-#घोषणा GENL_op(op_name, op_num, handler, tla_list)		\
-अणु								\
+#undef GENL_op
+#define GENL_op(op_name, op_num, handler, tla_list)		\
+{								\
 	handler							\
 	.cmd = op_name,						\
-पूर्ण,
+},
 
-#घोषणा ZZZ_genl_ops		CONCAT_(GENL_MAGIC_FAMILY, _genl_ops)
-अटल काष्ठा genl_ops ZZZ_genl_ops[] __पढ़ो_mostly = अणु
-#समावेश GENL_MAGIC_INCLUDE_खाता
-पूर्ण;
+#define ZZZ_genl_ops		CONCAT_(GENL_MAGIC_FAMILY, _genl_ops)
+static struct genl_ops ZZZ_genl_ops[] __read_mostly = {
+#include GENL_MAGIC_INCLUDE_FILE
+};
 
-#अघोषित GENL_op
-#घोषणा GENL_op(op_name, op_num, handler, tla_list)
+#undef GENL_op
+#define GENL_op(op_name, op_num, handler, tla_list)
 
 /*
- * Define the genl_family, multicast groups,				अणुअणुअणु1
- * and provide रेजिस्टर/unरेजिस्टर functions.
- *									अणुअणुअणु2
+ * Define the genl_family, multicast groups,				{{{1
+ * and provide register/unregister functions.
+ *									{{{2
  */
-#घोषणा ZZZ_genl_family		CONCAT_(GENL_MAGIC_FAMILY, _genl_family)
-अटल काष्ठा genl_family ZZZ_genl_family;
+#define ZZZ_genl_family		CONCAT_(GENL_MAGIC_FAMILY, _genl_family)
+static struct genl_family ZZZ_genl_family;
 /*
  * Magic: define multicast groups
  * Magic: define multicast group registration helper
  */
-#घोषणा ZZZ_genl_mcgrps		CONCAT_(GENL_MAGIC_FAMILY, _genl_mcgrps)
-अटल स्थिर काष्ठा genl_multicast_group ZZZ_genl_mcgrps[] = अणु
-#अघोषित GENL_mc_group
-#घोषणा GENL_mc_group(group) अणु .name = #group, पूर्ण,
-#समावेश GENL_MAGIC_INCLUDE_खाता
-पूर्ण;
+#define ZZZ_genl_mcgrps		CONCAT_(GENL_MAGIC_FAMILY, _genl_mcgrps)
+static const struct genl_multicast_group ZZZ_genl_mcgrps[] = {
+#undef GENL_mc_group
+#define GENL_mc_group(group) { .name = #group, },
+#include GENL_MAGIC_INCLUDE_FILE
+};
 
-क्रमागत CONCAT_(GENL_MAGIC_FAMILY, group_ids) अणु
-#अघोषित GENL_mc_group
-#घोषणा GENL_mc_group(group) CONCAT_(GENL_MAGIC_FAMILY, _group_ ## group),
-#समावेश GENL_MAGIC_INCLUDE_खाता
-पूर्ण;
+enum CONCAT_(GENL_MAGIC_FAMILY, group_ids) {
+#undef GENL_mc_group
+#define GENL_mc_group(group) CONCAT_(GENL_MAGIC_FAMILY, _group_ ## group),
+#include GENL_MAGIC_INCLUDE_FILE
+};
 
-#अघोषित GENL_mc_group
-#घोषणा GENL_mc_group(group)						\
-अटल पूर्णांक CONCAT_(GENL_MAGIC_FAMILY, _genl_multicast_ ## group)(	\
-	काष्ठा sk_buff *skb, gfp_t flags)				\
-अणु									\
-	अचिन्हित पूर्णांक group_id =						\
+#undef GENL_mc_group
+#define GENL_mc_group(group)						\
+static int CONCAT_(GENL_MAGIC_FAMILY, _genl_multicast_ ## group)(	\
+	struct sk_buff *skb, gfp_t flags)				\
+{									\
+	unsigned int group_id =						\
 		CONCAT_(GENL_MAGIC_FAMILY, _group_ ## group);		\
-	वापस genlmsg_multicast(&ZZZ_genl_family, skb, 0,		\
+	return genlmsg_multicast(&ZZZ_genl_family, skb, 0,		\
 				 group_id, flags);			\
-पूर्ण
+}
 
-#समावेश GENL_MAGIC_INCLUDE_खाता
+#include GENL_MAGIC_INCLUDE_FILE
 
-#अघोषित GENL_mc_group
-#घोषणा GENL_mc_group(group)
+#undef GENL_mc_group
+#define GENL_mc_group(group)
 
-अटल काष्ठा genl_family ZZZ_genl_family __ro_after_init = अणु
-	.name = __stringअगरy(GENL_MAGIC_FAMILY),
+static struct genl_family ZZZ_genl_family __ro_after_init = {
+	.name = __stringify(GENL_MAGIC_FAMILY),
 	.version = GENL_MAGIC_VERSION,
-#अगर_घोषित GENL_MAGIC_FAMILY_HDRSZ
+#ifdef GENL_MAGIC_FAMILY_HDRSZ
 	.hdrsize = NLA_ALIGN(GENL_MAGIC_FAMILY_HDRSZ),
-#पूर्ण_अगर
+#endif
 	.maxattr = ARRAY_SIZE(CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy))-1,
 	.policy	= CONCAT_(GENL_MAGIC_FAMILY, _tla_nl_policy),
 	.ops = ZZZ_genl_ops,
@@ -297,111 +296,111 @@
 	.mcgrps = ZZZ_genl_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(ZZZ_genl_mcgrps),
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-पूर्णांक CONCAT_(GENL_MAGIC_FAMILY, _genl_रेजिस्टर)(व्योम)
-अणु
-	वापस genl_रेजिस्टर_family(&ZZZ_genl_family);
-पूर्ण
+int CONCAT_(GENL_MAGIC_FAMILY, _genl_register)(void)
+{
+	return genl_register_family(&ZZZ_genl_family);
+}
 
-व्योम CONCAT_(GENL_MAGIC_FAMILY, _genl_unरेजिस्टर)(व्योम)
-अणु
-	genl_unरेजिस्टर_family(&ZZZ_genl_family);
-पूर्ण
+void CONCAT_(GENL_MAGIC_FAMILY, _genl_unregister)(void)
+{
+	genl_unregister_family(&ZZZ_genl_family);
+}
 
 /*
- * Magic: provide conversion functions					अणुअणुअणु1
- * populate skb from काष्ठा.
- *									अणुअणुअणु2
+ * Magic: provide conversion functions					{{{1
+ * populate skb from struct.
+ *									{{{2
  */
 
-#अघोषित GENL_op
-#घोषणा GENL_op(op_name, op_num, handler, tla_list)
+#undef GENL_op
+#define GENL_op(op_name, op_num, handler, tla_list)
 
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
-अटल पूर्णांक s_name ## _to_skb(काष्ठा sk_buff *skb, काष्ठा s_name *s,	\
-		स्थिर bool exclude_sensitive)				\
-अणु									\
-	काष्ठा nlattr *tla = nla_nest_start(skb, tag_number);		\
-	अगर (!tla)							\
-		जाओ nla_put_failure;					\
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
+static int s_name ## _to_skb(struct sk_buff *skb, struct s_name *s,	\
+		const bool exclude_sensitive)				\
+{									\
+	struct nlattr *tla = nla_nest_start(skb, tag_number);		\
+	if (!tla)							\
+		goto nla_put_failure;					\
 	DPRINT_TLA(#s_name, "-=>", #tag_name);				\
 	s_fields							\
 	nla_nest_end(skb, tla);						\
-	वापस 0;							\
+	return 0;							\
 									\
 nla_put_failure:							\
-	अगर (tla)							\
+	if (tla)							\
 		nla_nest_cancel(skb, tla);				\
-        वापस -EMSGSIZE;						\
-पूर्ण									\
-अटल अंतरभूत पूर्णांक s_name ## _to_priv_skb(काष्ठा sk_buff *skb,		\
-		काष्ठा s_name *s)					\
-अणु									\
-	वापस s_name ## _to_skb(skb, s, 0);				\
-पूर्ण									\
-अटल अंतरभूत पूर्णांक s_name ## _to_unpriv_skb(काष्ठा sk_buff *skb,		\
-		काष्ठा s_name *s)					\
-अणु									\
-	वापस s_name ## _to_skb(skb, s, 1);				\
-पूर्ण
+        return -EMSGSIZE;						\
+}									\
+static inline int s_name ## _to_priv_skb(struct sk_buff *skb,		\
+		struct s_name *s)					\
+{									\
+	return s_name ## _to_skb(skb, s, 0);				\
+}									\
+static inline int s_name ## _to_unpriv_skb(struct sk_buff *skb,		\
+		struct s_name *s)					\
+{									\
+	return s_name ## _to_skb(skb, s, 1);				\
+}
 
 
-#अघोषित __field
-#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		__is_चिन्हित)						\
-	अगर (!exclude_sensitive || !((attr_flag) & DRBD_F_SENSITIVE)) अणु	\
-		DPRINT_FIELD(">>", nla_type, name, s, शून्य);		\
-		अगर (__put(skb, attr_nr, s->name))			\
-			जाओ nla_put_failure;				\
-	पूर्ण
+#undef __field
+#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		__is_signed)						\
+	if (!exclude_sensitive || !((attr_flag) & DRBD_F_SENSITIVE)) {	\
+		DPRINT_FIELD(">>", nla_type, name, s, NULL);		\
+		if (__put(skb, attr_nr, s->name))			\
+			goto nla_put_failure;				\
+	}
 
-#अघोषित __array
-#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, __is_चिन्हित)				\
-	अगर (!exclude_sensitive || !((attr_flag) & DRBD_F_SENSITIVE)) अणु	\
-		DPRINT_ARRAY(">>",nla_type, name, s, शून्य);		\
-		अगर (__put(skb, attr_nr, min_t(पूर्णांक, maxlen,		\
+#undef __array
+#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, __is_signed)				\
+	if (!exclude_sensitive || !((attr_flag) & DRBD_F_SENSITIVE)) {	\
+		DPRINT_ARRAY(">>",nla_type, name, s, NULL);		\
+		if (__put(skb, attr_nr, min_t(int, maxlen,		\
 			s->name ## _len + (nla_type == NLA_NUL_STRING)),\
 						s->name))		\
-			जाओ nla_put_failure;				\
-	पूर्ण
+			goto nla_put_failure;				\
+	}
 
-#समावेश GENL_MAGIC_INCLUDE_खाता
+#include GENL_MAGIC_INCLUDE_FILE
 
 
-/* Functions क्रम initializing काष्ठाs to शेष values.  */
+/* Functions for initializing structs to default values.  */
 
-#अघोषित __field
-#घोषणा __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
-		__is_चिन्हित)
-#अघोषित __array
-#घोषणा __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
-		__get, __put, __is_चिन्हित)
-#अघोषित __u32_field_def
-#घोषणा __u32_field_def(attr_nr, attr_flag, name, शेष)		\
-	x->name = शेष;
-#अघोषित __s32_field_def
-#घोषणा __s32_field_def(attr_nr, attr_flag, name, शेष)		\
-	x->name = शेष;
-#अघोषित __flg_field_def
-#घोषणा __flg_field_def(attr_nr, attr_flag, name, शेष)		\
-	x->name = शेष;
-#अघोषित __str_field_def
-#घोषणा __str_field_def(attr_nr, attr_flag, name, maxlen)		\
-	स_रखो(x->name, 0, माप(x->name));				\
+#undef __field
+#define __field(attr_nr, attr_flag, name, nla_type, type, __get, __put,	\
+		__is_signed)
+#undef __array
+#define __array(attr_nr, attr_flag, name, nla_type, type, maxlen,	\
+		__get, __put, __is_signed)
+#undef __u32_field_def
+#define __u32_field_def(attr_nr, attr_flag, name, default)		\
+	x->name = default;
+#undef __s32_field_def
+#define __s32_field_def(attr_nr, attr_flag, name, default)		\
+	x->name = default;
+#undef __flg_field_def
+#define __flg_field_def(attr_nr, attr_flag, name, default)		\
+	x->name = default;
+#undef __str_field_def
+#define __str_field_def(attr_nr, attr_flag, name, maxlen)		\
+	memset(x->name, 0, sizeof(x->name));				\
 	x->name ## _len = 0;
-#अघोषित GENL_काष्ठा
-#घोषणा GENL_काष्ठा(tag_name, tag_number, s_name, s_fields)		\
-अटल व्योम set_ ## s_name ## _शेषs(काष्ठा s_name *x) __attribute__((unused)); \
-अटल व्योम set_ ## s_name ## _शेषs(काष्ठा s_name *x) अणु	\
+#undef GENL_struct
+#define GENL_struct(tag_name, tag_number, s_name, s_fields)		\
+static void set_ ## s_name ## _defaults(struct s_name *x) __attribute__((unused)); \
+static void set_ ## s_name ## _defaults(struct s_name *x) {	\
 s_fields								\
-पूर्ण
+}
 
-#समावेश GENL_MAGIC_INCLUDE_खाता
+#include GENL_MAGIC_INCLUDE_FILE
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-/* पूर्णपूर्णपूर्ण1 */
-#पूर्ण_अगर /* GENL_MAGIC_FUNC_H */
+/* }}}1 */
+#endif /* GENL_MAGIC_FUNC_H */

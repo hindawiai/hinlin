@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2016-17 IBM Corp.
  */
 
-#अगर_अघोषित _ASM_POWERPC_VAS_H
-#घोषणा _ASM_POWERPC_VAS_H
+#ifndef _ASM_POWERPC_VAS_H
+#define _ASM_POWERPC_VAS_H
 
-काष्ठा vas_winकरोw;
+struct vas_window;
 
 /*
  * Min and max FIFO sizes are based on Version 1.05 Section 3.1.4.25
  * (Local FIFO Size Register) of the VAS workbook.
  */
-#घोषणा VAS_RX_FIFO_SIZE_MIN	(1 << 10)	/* 1KB */
-#घोषणा VAS_RX_FIFO_SIZE_MAX	(8 << 20)	/* 8MB */
+#define VAS_RX_FIFO_SIZE_MIN	(1 << 10)	/* 1KB */
+#define VAS_RX_FIFO_SIZE_MAX	(8 << 20)	/* 8MB */
 
 /*
- * Threshold Control Mode: Have paste operation fail अगर the number of
+ * Threshold Control Mode: Have paste operation fail if the number of
  * requests in receive FIFO exceeds a threshold.
  *
- * NOTE: No special error code yet अगर paste is rejected because of these
+ * NOTE: No special error code yet if paste is rejected because of these
  *	 limits. So users can't distinguish between this and other errors.
  */
-#घोषणा VAS_THRESH_DISABLED		0
-#घोषणा VAS_THRESH_FIFO_GT_HALF_FULL	1
-#घोषणा VAS_THRESH_FIFO_GT_QTR_FULL	2
-#घोषणा VAS_THRESH_FIFO_GT_EIGHTH_FULL	3
+#define VAS_THRESH_DISABLED		0
+#define VAS_THRESH_FIFO_GT_HALF_FULL	1
+#define VAS_THRESH_FIFO_GT_QTR_FULL	2
+#define VAS_THRESH_FIFO_GT_EIGHTH_FULL	3
 
 /*
  * Get/Set bit fields
  */
-#घोषणा GET_FIELD(m, v)                (((v) & (m)) >> MASK_LSH(m))
-#घोषणा MASK_LSH(m)            (__builtin_ffsl(m) - 1)
-#घोषणा SET_FIELD(m, v, val)   \
+#define GET_FIELD(m, v)                (((v) & (m)) >> MASK_LSH(m))
+#define MASK_LSH(m)            (__builtin_ffsl(m) - 1)
+#define SET_FIELD(m, v, val)   \
 		(((v) & ~(m)) | ((((typeof(v))(val)) << MASK_LSH(m)) & (m)))
 
 /*
  * Co-processor Engine type.
  */
-क्रमागत vas_cop_type अणु
+enum vas_cop_type {
 	VAS_COP_TYPE_FAULT,
 	VAS_COP_TYPE_842,
 	VAS_COP_TYPE_842_HIPRI,
@@ -47,15 +46,15 @@
 	VAS_COP_TYPE_GZIP_HIPRI,
 	VAS_COP_TYPE_FTW,
 	VAS_COP_TYPE_MAX,
-पूर्ण;
+};
 
 /*
- * Receive winकरोw attributes specअगरied by the (in-kernel) owner of winकरोw.
+ * Receive window attributes specified by the (in-kernel) owner of window.
  */
-काष्ठा vas_rx_win_attr अणु
-	व्योम *rx_fअगरo;
-	पूर्णांक rx_fअगरo_size;
-	पूर्णांक wcreds_max;
+struct vas_rx_win_attr {
+	void *rx_fifo;
+	int rx_fifo_size;
+	int wcreds_max;
 
 	bool pin_win;
 	bool rej_no_credit;
@@ -67,29 +66,29 @@
 	bool nx_win;
 	bool fault_win;
 	bool user_win;
-	bool notअगरy_disable;
-	bool पूर्णांकr_disable;
-	bool notअगरy_early;
+	bool notify_disable;
+	bool intr_disable;
+	bool notify_early;
 
-	पूर्णांक lnotअगरy_lpid;
-	पूर्णांक lnotअगरy_pid;
-	पूर्णांक lnotअगरy_tid;
+	int lnotify_lpid;
+	int lnotify_pid;
+	int lnotify_tid;
 	u32 pswid;
 
-	पूर्णांक tc_mode;
-पूर्ण;
+	int tc_mode;
+};
 
 /*
- * Winकरोw attributes specअगरied by the in-kernel owner of a send winकरोw.
+ * Window attributes specified by the in-kernel owner of a send window.
  */
-काष्ठा vas_tx_win_attr अणु
-	क्रमागत vas_cop_type cop;
-	पूर्णांक wcreds_max;
-	पूर्णांक lpid;
-	पूर्णांक pidr;		/* hardware PID (from SPRN_PID) */
-	पूर्णांक pswid;
-	पूर्णांक rsvd_txbuf_count;
-	पूर्णांक tc_mode;
+struct vas_tx_win_attr {
+	enum vas_cop_type cop;
+	int wcreds_max;
+	int lpid;
+	int pidr;		/* hardware PID (from SPRN_PID) */
+	int pswid;
+	int rsvd_txbuf_count;
+	int tc_mode;
 
 	bool user_win;
 	bool pin_win;
@@ -99,80 +98,80 @@
 	bool rx_wcred_mode;
 	bool tx_win_ord_mode;
 	bool rx_win_ord_mode;
-पूर्ण;
+};
 
 /*
  * Helper to map a chip id to VAS id.
  * For POWER9, this is a 1:1 mapping. In the future this maybe a 1:N
- * mapping in which हाल, we will need to update this helper.
+ * mapping in which case, we will need to update this helper.
  *
- * Return the VAS id or -1 अगर no matching vasid is found.
+ * Return the VAS id or -1 if no matching vasid is found.
  */
-पूर्णांक chip_to_vas_id(पूर्णांक chipid);
+int chip_to_vas_id(int chipid);
 
 /*
- * Helper to initialize receive winकरोw attributes to शेषs क्रम an
- * NX winकरोw.
+ * Helper to initialize receive window attributes to defaults for an
+ * NX window.
  */
-व्योम vas_init_rx_win_attr(काष्ठा vas_rx_win_attr *rxattr, क्रमागत vas_cop_type cop);
+void vas_init_rx_win_attr(struct vas_rx_win_attr *rxattr, enum vas_cop_type cop);
 
 /*
- * Open a VAS receive winकरोw क्रम the instance of VAS identअगरied by @vasid
- * Use @attr to initialize the attributes of the winकरोw.
+ * Open a VAS receive window for the instance of VAS identified by @vasid
+ * Use @attr to initialize the attributes of the window.
  *
- * Return a handle to the winकरोw or ERR_PTR() on error.
+ * Return a handle to the window or ERR_PTR() on error.
  */
-काष्ठा vas_winकरोw *vas_rx_win_खोलो(पूर्णांक vasid, क्रमागत vas_cop_type cop,
-				   काष्ठा vas_rx_win_attr *attr);
+struct vas_window *vas_rx_win_open(int vasid, enum vas_cop_type cop,
+				   struct vas_rx_win_attr *attr);
 
 /*
- * Helper to initialize send winकरोw attributes to शेषs क्रम an NX winकरोw.
+ * Helper to initialize send window attributes to defaults for an NX window.
  */
-बाह्य व्योम vas_init_tx_win_attr(काष्ठा vas_tx_win_attr *txattr,
-			क्रमागत vas_cop_type cop);
+extern void vas_init_tx_win_attr(struct vas_tx_win_attr *txattr,
+			enum vas_cop_type cop);
 
 /*
- * Open a VAS send winकरोw क्रम the instance of VAS identअगरied by @vasid
+ * Open a VAS send window for the instance of VAS identified by @vasid
  * and the co-processor type @cop. Use @attr to initialize attributes
- * of the winकरोw.
+ * of the window.
  *
- * Note: The instance of VAS must alपढ़ोy have an खोलो receive winकरोw क्रम
+ * Note: The instance of VAS must already have an open receive window for
  * the coprocessor type @cop.
  *
- * Return a handle to the send winकरोw or ERR_PTR() on error.
+ * Return a handle to the send window or ERR_PTR() on error.
  */
-काष्ठा vas_winकरोw *vas_tx_win_खोलो(पूर्णांक vasid, क्रमागत vas_cop_type cop,
-			काष्ठा vas_tx_win_attr *attr);
+struct vas_window *vas_tx_win_open(int vasid, enum vas_cop_type cop,
+			struct vas_tx_win_attr *attr);
 
 /*
- * Close the send or receive winकरोw identअगरied by @win. For receive winकरोws
- * वापस -EAGAIN अगर there are active send winकरोws attached to this receive
- * winकरोw.
+ * Close the send or receive window identified by @win. For receive windows
+ * return -EAGAIN if there are active send windows attached to this receive
+ * window.
  */
-पूर्णांक vas_win_बंद(काष्ठा vas_winकरोw *win);
+int vas_win_close(struct vas_window *win);
 
 /*
- * Copy the co-processor request block (CRB) @crb पूर्णांकo the local L2 cache.
+ * Copy the co-processor request block (CRB) @crb into the local L2 cache.
  */
-पूर्णांक vas_copy_crb(व्योम *crb, पूर्णांक offset);
+int vas_copy_crb(void *crb, int offset);
 
 /*
  * Paste a previously copied CRB (see vas_copy_crb()) from the L2 cache to
- * the hardware address associated with the winकरोw @win. @re is expected/
- * assumed to be true क्रम NX winकरोws.
+ * the hardware address associated with the window @win. @re is expected/
+ * assumed to be true for NX windows.
  */
-पूर्णांक vas_paste_crb(काष्ठा vas_winकरोw *win, पूर्णांक offset, bool re);
+int vas_paste_crb(struct vas_window *win, int offset, bool re);
 
 /*
- * Register / unरेजिस्टर coprocessor type to VAS API which will be exported
- * to user space. Applications can use this API to खोलो / बंद winकरोw
+ * Register / unregister coprocessor type to VAS API which will be exported
+ * to user space. Applications can use this API to open / close window
  * which can be used to send / receive requests directly to cooprcessor.
  *
  * Only NX GZIP coprocessor type is supported now, but this API can be
- * used क्रम others in future.
+ * used for others in future.
  */
-पूर्णांक vas_रेजिस्टर_coproc_api(काष्ठा module *mod, क्रमागत vas_cop_type cop_type,
-				स्थिर अक्षर *name);
-व्योम vas_unरेजिस्टर_coproc_api(व्योम);
+int vas_register_coproc_api(struct module *mod, enum vas_cop_type cop_type,
+				const char *name);
+void vas_unregister_coproc_api(void);
 
-#पूर्ण_अगर /* __ASM_POWERPC_VAS_H */
+#endif /* __ASM_POWERPC_VAS_H */

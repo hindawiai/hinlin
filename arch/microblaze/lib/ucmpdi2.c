@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
 
-#समावेश "libgcc.h"
+#include "libgcc.h"
 
-word_type __ucmpdi2(अचिन्हित दीर्घ दीर्घ a, अचिन्हित दीर्घ दीर्घ b)
-अणु
-	स्थिर DWजोड़ au = अणु.ll = aपूर्ण;
-	स्थिर DWजोड़ bu = अणु.ll = bपूर्ण;
+word_type __ucmpdi2(unsigned long long a, unsigned long long b)
+{
+	const DWunion au = {.ll = a};
+	const DWunion bu = {.ll = b};
 
-	अगर ((अचिन्हित पूर्णांक) au.s.high < (अचिन्हित पूर्णांक) bu.s.high)
-		वापस 0;
-	अन्यथा अगर ((अचिन्हित पूर्णांक) au.s.high > (अचिन्हित पूर्णांक) bu.s.high)
-		वापस 2;
-	अगर ((अचिन्हित पूर्णांक) au.s.low < (अचिन्हित पूर्णांक) bu.s.low)
-		वापस 0;
-	अन्यथा अगर ((अचिन्हित पूर्णांक) au.s.low > (अचिन्हित पूर्णांक) bu.s.low)
-		वापस 2;
-	वापस 1;
-पूर्ण
+	if ((unsigned int) au.s.high < (unsigned int) bu.s.high)
+		return 0;
+	else if ((unsigned int) au.s.high > (unsigned int) bu.s.high)
+		return 2;
+	if ((unsigned int) au.s.low < (unsigned int) bu.s.low)
+		return 0;
+	else if ((unsigned int) au.s.low > (unsigned int) bu.s.low)
+		return 2;
+	return 1;
+}
 EXPORT_SYMBOL(__ucmpdi2);

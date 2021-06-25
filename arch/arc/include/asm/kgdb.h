@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * kgdb support क्रम ARC
+ * kgdb support for ARC
  *
  * Copyright (C) 2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#अगर_अघोषित __ARC_KGDB_H__
-#घोषणा __ARC_KGDB_H__
+#ifndef __ARC_KGDB_H__
+#define __ARC_KGDB_H__
 
-#अगर_घोषित CONFIG_KGDB
+#ifdef CONFIG_KGDB
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
-/* to ensure compatibility with Linux 2.6.35, we करोn't implement the get/set
- * रेजिस्टर API yet */
-#अघोषित DBG_MAX_REG_NUM
+/* to ensure compatibility with Linux 2.6.35, we don't implement the get/set
+ * register API yet */
+#undef DBG_MAX_REG_NUM
 
-#घोषणा GDB_MAX_REGS		87
+#define GDB_MAX_REGS		87
 
-#घोषणा BREAK_INSTR_SIZE	2
-#घोषणा CACHE_FLUSH_IS_SAFE	1
-#घोषणा NUMREGBYTES		(GDB_MAX_REGS * 4)
-#घोषणा BUFMAX			2048
+#define BREAK_INSTR_SIZE	2
+#define CACHE_FLUSH_IS_SAFE	1
+#define NUMREGBYTES		(GDB_MAX_REGS * 4)
+#define BUFMAX			2048
 
-अटल अंतरभूत व्योम arch_kgdb_अवरोधpoपूर्णांक(व्योम)
-अणु
-	__यंत्र__ __अस्थिर__ ("trap_s	0x4\n");
-पूर्ण
+static inline void arch_kgdb_breakpoint(void)
+{
+	__asm__ __volatile__ ("trap_s	0x4\n");
+}
 
-बाह्य व्योम kgdb_trap(काष्ठा pt_regs *regs);
+extern void kgdb_trap(struct pt_regs *regs);
 
-/* This is the numbering of रेजिस्टरs according to the GDB. See GDB's
- * arc-tdep.h क्रम details.
+/* This is the numbering of registers according to the GDB. See GDB's
+ * arc-tdep.h for details.
  *
- * Registers are ordered क्रम GDB 7.5. It is incompatible with GDB 6.8. */
-क्रमागत arc_linux_regnums अणु
+ * Registers are ordered for GDB 7.5. It is incompatible with GDB 6.8. */
+enum arc_linux_regnums {
 	_R0		= 0,
 	_R1, _R2, _R3, _R4, _R5, _R6, _R7, _R8, _R9, _R10, _R11, _R12, _R13,
 	_R14, _R15, _R16, _R17, _R18, _R19, _R20, _R21, _R22, _R23, _R24,
@@ -52,10 +51,10 @@
 	_STATUS32	= 67,
 	_ECR		= 76,
 	_BTA		= 82,
-पूर्ण;
+};
 
-#अन्यथा
-#घोषणा kgdb_trap(regs)
-#पूर्ण_अगर
+#else
+#define kgdb_trap(regs)
+#endif
 
-#पूर्ण_अगर	/* __ARC_KGDB_H__ */
+#endif	/* __ARC_KGDB_H__ */

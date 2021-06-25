@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * This file contains functions which manage high resolution tick
  * related events.
@@ -8,122 +7,122 @@
  * Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/err.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/sched.h>
+#include <linux/cpu.h>
+#include <linux/err.h>
+#include <linux/hrtimer.h>
+#include <linux/interrupt.h>
+#include <linux/percpu.h>
+#include <linux/profile.h>
+#include <linux/sched.h>
 
-#समावेश "tick-internal.h"
+#include "tick-internal.h"
 
 /**
  * tick_program_event
  */
-पूर्णांक tick_program_event(kसमय_प्रकार expires, पूर्णांक क्रमce)
-अणु
-	काष्ठा घड़ी_event_device *dev = __this_cpu_पढ़ो(tick_cpu_device.evtdev);
+int tick_program_event(ktime_t expires, int force)
+{
+	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
 
-	अगर (unlikely(expires == KTIME_MAX)) अणु
+	if (unlikely(expires == KTIME_MAX)) {
 		/*
-		 * We करोn't need the घड़ी event device any more, stop it.
+		 * We don't need the clock event device any more, stop it.
 		 */
-		घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_ONESHOT_STOPPED);
+		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT_STOPPED);
 		dev->next_event = KTIME_MAX;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (unlikely(घड़ीevent_state_oneshot_stopped(dev))) अणु
+	if (unlikely(clockevent_state_oneshot_stopped(dev))) {
 		/*
-		 * We need the घड़ी event again, configure it in ONESHOT mode
-		 * beक्रमe using it.
+		 * We need the clock event again, configure it in ONESHOT mode
+		 * before using it.
 		 */
-		घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_ONESHOT);
-	पूर्ण
+		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
+	}
 
-	वापस घड़ीevents_program_event(dev, expires, क्रमce);
-पूर्ण
+	return clockevents_program_event(dev, expires, force);
+}
 
 /**
  * tick_resume_oneshot - resume oneshot mode
  */
-व्योम tick_resume_oneshot(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *dev = __this_cpu_पढ़ो(tick_cpu_device.evtdev);
+void tick_resume_oneshot(void)
+{
+	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
 
-	घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_ONESHOT);
-	घड़ीevents_program_event(dev, kसमय_get(), true);
-पूर्ण
+	clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
+	clockevents_program_event(dev, ktime_get(), true);
+}
 
 /**
- * tick_setup_oneshot - setup the event device क्रम oneshot mode (hres or nohz)
+ * tick_setup_oneshot - setup the event device for oneshot mode (hres or nohz)
  */
-व्योम tick_setup_oneshot(काष्ठा घड़ी_event_device *newdev,
-			व्योम (*handler)(काष्ठा घड़ी_event_device *),
-			kसमय_प्रकार next_event)
-अणु
+void tick_setup_oneshot(struct clock_event_device *newdev,
+			void (*handler)(struct clock_event_device *),
+			ktime_t next_event)
+{
 	newdev->event_handler = handler;
-	घड़ीevents_चयन_state(newdev, CLOCK_EVT_STATE_ONESHOT);
-	घड़ीevents_program_event(newdev, next_event, true);
-पूर्ण
+	clockevents_switch_state(newdev, CLOCK_EVT_STATE_ONESHOT);
+	clockevents_program_event(newdev, next_event, true);
+}
 
 /**
- * tick_चयन_to_oneshot - चयन to oneshot mode
+ * tick_switch_to_oneshot - switch to oneshot mode
  */
-पूर्णांक tick_चयन_to_oneshot(व्योम (*handler)(काष्ठा घड़ी_event_device *))
-अणु
-	काष्ठा tick_device *td = this_cpu_ptr(&tick_cpu_device);
-	काष्ठा घड़ी_event_device *dev = td->evtdev;
+int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *))
+{
+	struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
+	struct clock_event_device *dev = td->evtdev;
 
-	अगर (!dev || !(dev->features & CLOCK_EVT_FEAT_ONESHOT) ||
-		    !tick_device_is_functional(dev)) अणु
+	if (!dev || !(dev->features & CLOCK_EVT_FEAT_ONESHOT) ||
+		    !tick_device_is_functional(dev)) {
 
 		pr_info("Clockevents: could not switch to one-shot mode:");
-		अगर (!dev) अणु
+		if (!dev) {
 			pr_cont(" no tick device\n");
-		पूर्ण अन्यथा अणु
-			अगर (!tick_device_is_functional(dev))
+		} else {
+			if (!tick_device_is_functional(dev))
 				pr_cont(" %s is not functional.\n", dev->name);
-			अन्यथा
+			else
 				pr_cont(" %s does not support one-shot mode.\n",
 					dev->name);
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+		}
+		return -EINVAL;
+	}
 
 	td->mode = TICKDEV_MODE_ONESHOT;
 	dev->event_handler = handler;
-	घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_ONESHOT);
-	tick_broadcast_चयन_to_oneshot();
-	वापस 0;
-पूर्ण
+	clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
+	tick_broadcast_switch_to_oneshot();
+	return 0;
+}
 
 /**
- * tick_check_oneshot_mode - check whether the प्रणाली is in oneshot mode
+ * tick_check_oneshot_mode - check whether the system is in oneshot mode
  *
- * वापसs 1 when either nohz or highres are enabled. otherwise 0.
+ * returns 1 when either nohz or highres are enabled. otherwise 0.
  */
-पूर्णांक tick_oneshot_mode_active(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+int tick_oneshot_mode_active(void)
+{
+	unsigned long flags;
+	int ret;
 
 	local_irq_save(flags);
-	ret = __this_cpu_पढ़ो(tick_cpu_device.mode) == TICKDEV_MODE_ONESHOT;
+	ret = __this_cpu_read(tick_cpu_device.mode) == TICKDEV_MODE_ONESHOT;
 	local_irq_restore(flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
+#ifdef CONFIG_HIGH_RES_TIMERS
 /**
- * tick_init_highres - चयन to high resolution mode
+ * tick_init_highres - switch to high resolution mode
  *
- * Called with पूर्णांकerrupts disabled.
+ * Called with interrupts disabled.
  */
-पूर्णांक tick_init_highres(व्योम)
-अणु
-	वापस tick_चयन_to_oneshot(hrसमयr_पूर्णांकerrupt);
-पूर्ण
-#पूर्ण_अगर
+int tick_init_highres(void)
+{
+	return tick_switch_to_oneshot(hrtimer_interrupt);
+}
+#endif

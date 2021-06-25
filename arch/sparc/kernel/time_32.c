@@ -1,357 +1,356 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* linux/arch/sparc/kernel/समय.c
+// SPDX-License-Identifier: GPL-2.0
+/* linux/arch/sparc/kernel/time.c
  *
  * Copyright (C) 1995 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1996 Thomas K. Dyas (tdyas@eden.rutgers.edu)
  *
  * Chris Davis (cdavis@cois.on.ca) 03/27/1998
- * Added support क्रम the पूर्णांकersil on the sun4/4200
+ * Added support for the intersil on the sun4/4200
  *
  * Gleb Raiko (rajko@mech.math.msu.su) 08/18/1998
- * Support क्रम MicroSPARC-IIep, PCI CPU.
+ * Support for MicroSPARC-IIep, PCI CPU.
  *
- * This file handles the Sparc specअगरic समय handling details.
+ * This file handles the Sparc specific time handling details.
  *
- * 1997-09-10	Updated NTP code according to technical memoअक्रमum Jan '96
+ * 1997-09-10	Updated NTP code according to technical memorandum Jan '96
  *		"A Kernel Model for Precision Timekeeping" by Dave Mills
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/rtc/m48t59.h>
-#समावेश <linux/समयx.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/time.h>
+#include <linux/rtc/m48t59.h>
+#include <linux/timex.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/ioport.h>
+#include <linux/profile.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/mc146818rtc.h>
-#समावेश <यंत्र/oplib.h>
-#समावेश <यंत्र/समयx.h>
-#समावेश <यंत्र/समयr.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/idprom.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/pcic.h>
-#समावेश <यंत्र/irq_regs.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/mc146818rtc.h>
+#include <asm/oplib.h>
+#include <asm/timex.h>
+#include <asm/timer.h>
+#include <asm/irq.h>
+#include <asm/io.h>
+#include <asm/idprom.h>
+#include <asm/page.h>
+#include <asm/pcic.h>
+#include <asm/irq_regs.h>
+#include <asm/setup.h>
 
-#समावेश "kernel.h"
-#समावेश "irq.h"
+#include "kernel.h"
+#include "irq.h"
 
-अटल __cacheline_aligned_in_smp DEFINE_SEQLOCK(समयr_cs_lock);
-अटल __अस्थिर__ u64 समयr_cs_पूर्णांकernal_counter = 0;
-अटल अक्षर समयr_cs_enabled = 0;
+static __cacheline_aligned_in_smp DEFINE_SEQLOCK(timer_cs_lock);
+static __volatile__ u64 timer_cs_internal_counter = 0;
+static char timer_cs_enabled = 0;
 
-अटल काष्ठा घड़ी_event_device समयr_ce;
-अटल अक्षर समयr_ce_enabled = 0;
+static struct clock_event_device timer_ce;
+static char timer_ce_enabled = 0;
 
-#अगर_घोषित CONFIG_SMP
-DEFINE_PER_CPU(काष्ठा घड़ी_event_device, sparc32_घड़ीevent);
-#पूर्ण_अगर
+#ifdef CONFIG_SMP
+DEFINE_PER_CPU(struct clock_event_device, sparc32_clockevent);
+#endif
 
 DEFINE_SPINLOCK(rtc_lock);
 EXPORT_SYMBOL(rtc_lock);
 
-अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *regs)
-अणु
-	बाह्य अक्षर __copy_user_begin[], __copy_user_end[];
-	बाह्य अक्षर __bzero_begin[], __bzero_end[];
+unsigned long profile_pc(struct pt_regs *regs)
+{
+	extern char __copy_user_begin[], __copy_user_end[];
+	extern char __bzero_begin[], __bzero_end[];
 
-	अचिन्हित दीर्घ pc = regs->pc;
+	unsigned long pc = regs->pc;
 
-	अगर (in_lock_functions(pc) ||
-	    (pc >= (अचिन्हित दीर्घ) __copy_user_begin &&
-	     pc < (अचिन्हित दीर्घ) __copy_user_end) ||
-	    (pc >= (अचिन्हित दीर्घ) __bzero_begin &&
-	     pc < (अचिन्हित दीर्घ) __bzero_end))
+	if (in_lock_functions(pc) ||
+	    (pc >= (unsigned long) __copy_user_begin &&
+	     pc < (unsigned long) __copy_user_end) ||
+	    (pc >= (unsigned long) __bzero_begin &&
+	     pc < (unsigned long) __bzero_end))
 		pc = regs->u_regs[UREG_RETPC];
-	वापस pc;
-पूर्ण
+	return pc;
+}
 
 EXPORT_SYMBOL(profile_pc);
 
-अस्थिर u32 __iomem *master_l10_counter;
+volatile u32 __iomem *master_l10_counter;
 
-irqवापस_t notrace समयr_पूर्णांकerrupt(पूर्णांक dummy, व्योम *dev_id)
-अणु
-	अगर (समयr_cs_enabled) अणु
-		ग_लिखो_seqlock(&समयr_cs_lock);
-		समयr_cs_पूर्णांकernal_counter++;
-		sparc_config.clear_घड़ी_irq();
-		ग_लिखो_sequnlock(&समयr_cs_lock);
-	पूर्ण अन्यथा अणु
-		sparc_config.clear_घड़ी_irq();
-	पूर्ण
+irqreturn_t notrace timer_interrupt(int dummy, void *dev_id)
+{
+	if (timer_cs_enabled) {
+		write_seqlock(&timer_cs_lock);
+		timer_cs_internal_counter++;
+		sparc_config.clear_clock_irq();
+		write_sequnlock(&timer_cs_lock);
+	} else {
+		sparc_config.clear_clock_irq();
+	}
 
-	अगर (समयr_ce_enabled)
-		समयr_ce.event_handler(&समयr_ce);
+	if (timer_ce_enabled)
+		timer_ce.event_handler(&timer_ce);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक समयr_ce_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	समयr_ce_enabled = 0;
+static int timer_ce_shutdown(struct clock_event_device *evt)
+{
+	timer_ce_enabled = 0;
 	smp_mb();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक समयr_ce_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	समयr_ce_enabled = 1;
+static int timer_ce_set_periodic(struct clock_event_device *evt)
+{
+	timer_ce_enabled = 1;
 	smp_mb();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __init व्योम setup_समयr_ce(व्योम)
-अणु
-	काष्ठा घड़ी_event_device *ce = &समयr_ce;
+static __init void setup_timer_ce(void)
+{
+	struct clock_event_device *ce = &timer_ce;
 
 	BUG_ON(smp_processor_id() != boot_cpu_id);
 
 	ce->name     = "timer_ce";
 	ce->rating   = 100;
 	ce->features = CLOCK_EVT_FEAT_PERIODIC;
-	ce->set_state_shutकरोwn = समयr_ce_shutकरोwn;
-	ce->set_state_periodic = समयr_ce_set_periodic;
-	ce->tick_resume = समयr_ce_set_periodic;
+	ce->set_state_shutdown = timer_ce_shutdown;
+	ce->set_state_periodic = timer_ce_set_periodic;
+	ce->tick_resume = timer_ce_set_periodic;
 	ce->cpumask  = cpu_possible_mask;
-	ce->shअगरt    = 32;
-	ce->mult     = भाग_sc(sparc_config.घड़ी_rate, NSEC_PER_SEC,
-	                      ce->shअगरt);
-	घड़ीevents_रेजिस्टर_device(ce);
-पूर्ण
+	ce->shift    = 32;
+	ce->mult     = div_sc(sparc_config.clock_rate, NSEC_PER_SEC,
+	                      ce->shift);
+	clockevents_register_device(ce);
+}
 
-अटल अचिन्हित पूर्णांक sbus_cycles_offset(व्योम)
-अणु
+static unsigned int sbus_cycles_offset(void)
+{
 	u32 val, offset;
 
-	val = sbus_पढ़ोl(master_l10_counter);
+	val = sbus_readl(master_l10_counter);
 	offset = (val >> TIMER_VALUE_SHIFT) & TIMER_VALUE_MASK;
 
 	/* Limit hit? */
-	अगर (val & TIMER_LIMIT_BIT)
+	if (val & TIMER_LIMIT_BIT)
 		offset += sparc_config.cs_period;
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल u64 समयr_cs_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	अचिन्हित पूर्णांक seq, offset;
+static u64 timer_cs_read(struct clocksource *cs)
+{
+	unsigned int seq, offset;
 	u64 cycles;
 
-	करो अणु
-		seq = पढ़ो_seqbegin(&समयr_cs_lock);
+	do {
+		seq = read_seqbegin(&timer_cs_lock);
 
-		cycles = समयr_cs_पूर्णांकernal_counter;
+		cycles = timer_cs_internal_counter;
 		offset = sparc_config.get_cycles_offset();
-	पूर्ण जबतक (पढ़ो_seqretry(&समयr_cs_lock, seq));
+	} while (read_seqretry(&timer_cs_lock, seq));
 
-	/* Count असलolute cycles */
+	/* Count absolute cycles */
 	cycles *= sparc_config.cs_period;
 	cycles += offset;
 
-	वापस cycles;
-पूर्ण
+	return cycles;
+}
 
-अटल काष्ठा घड़ीsource समयr_cs = अणु
+static struct clocksource timer_cs = {
 	.name	= "timer_cs",
 	.rating	= 100,
-	.पढ़ो	= समयr_cs_पढ़ो,
+	.read	= timer_cs_read,
 	.mask	= CLOCKSOURCE_MASK(64),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल __init पूर्णांक setup_समयr_cs(व्योम)
-अणु
-	समयr_cs_enabled = 1;
-	वापस घड़ीsource_रेजिस्टर_hz(&समयr_cs, sparc_config.घड़ी_rate);
-पूर्ण
+static __init int setup_timer_cs(void)
+{
+	timer_cs_enabled = 1;
+	return clocksource_register_hz(&timer_cs, sparc_config.clock_rate);
+}
 
-#अगर_घोषित CONFIG_SMP
-अटल पूर्णांक percpu_ce_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	पूर्णांक cpu = cpumask_first(evt->cpumask);
+#ifdef CONFIG_SMP
+static int percpu_ce_shutdown(struct clock_event_device *evt)
+{
+	int cpu = cpumask_first(evt->cpumask);
 
 	sparc_config.load_profile_irq(cpu, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक percpu_ce_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	पूर्णांक cpu = cpumask_first(evt->cpumask);
+static int percpu_ce_set_periodic(struct clock_event_device *evt)
+{
+	int cpu = cpumask_first(evt->cpumask);
 
 	sparc_config.load_profile_irq(cpu, SBUS_CLOCK_RATE / HZ);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक percpu_ce_set_next_event(अचिन्हित दीर्घ delta,
-				    काष्ठा घड़ी_event_device *evt)
-अणु
-	पूर्णांक cpu = cpumask_first(evt->cpumask);
-	अचिन्हित पूर्णांक next = (अचिन्हित पूर्णांक)delta;
+static int percpu_ce_set_next_event(unsigned long delta,
+				    struct clock_event_device *evt)
+{
+	int cpu = cpumask_first(evt->cpumask);
+	unsigned int next = (unsigned int)delta;
 
 	sparc_config.load_profile_irq(cpu, next);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम रेजिस्टर_percpu_ce(पूर्णांक cpu)
-अणु
-	काष्ठा घड़ी_event_device *ce = &per_cpu(sparc32_घड़ीevent, cpu);
-	अचिन्हित पूर्णांक features = CLOCK_EVT_FEAT_PERIODIC;
+void register_percpu_ce(int cpu)
+{
+	struct clock_event_device *ce = &per_cpu(sparc32_clockevent, cpu);
+	unsigned int features = CLOCK_EVT_FEAT_PERIODIC;
 
-	अगर (sparc_config.features & FEAT_L14_ONESHOT)
+	if (sparc_config.features & FEAT_L14_ONESHOT)
 		features |= CLOCK_EVT_FEAT_ONESHOT;
 
 	ce->name           = "percpu_ce";
 	ce->rating         = 200;
 	ce->features       = features;
-	ce->set_state_shutकरोwn = percpu_ce_shutकरोwn;
+	ce->set_state_shutdown = percpu_ce_shutdown;
 	ce->set_state_periodic = percpu_ce_set_periodic;
-	ce->set_state_oneshot = percpu_ce_shutकरोwn;
+	ce->set_state_oneshot = percpu_ce_shutdown;
 	ce->set_next_event = percpu_ce_set_next_event;
 	ce->cpumask        = cpumask_of(cpu);
-	ce->shअगरt          = 32;
-	ce->mult           = भाग_sc(sparc_config.घड़ी_rate, NSEC_PER_SEC,
-	                            ce->shअगरt);
-	ce->max_delta_ns   = घड़ीevent_delta2ns(sparc_config.घड़ी_rate, ce);
-	ce->max_delta_ticks = (अचिन्हित दीर्घ)sparc_config.घड़ी_rate;
-	ce->min_delta_ns   = घड़ीevent_delta2ns(100, ce);
+	ce->shift          = 32;
+	ce->mult           = div_sc(sparc_config.clock_rate, NSEC_PER_SEC,
+	                            ce->shift);
+	ce->max_delta_ns   = clockevent_delta2ns(sparc_config.clock_rate, ce);
+	ce->max_delta_ticks = (unsigned long)sparc_config.clock_rate;
+	ce->min_delta_ns   = clockevent_delta2ns(100, ce);
 	ce->min_delta_ticks = 100;
 
-	घड़ीevents_रेजिस्टर_device(ce);
-पूर्ण
-#पूर्ण_अगर
+	clockevents_register_device(ce);
+}
+#endif
 
-अटल अचिन्हित अक्षर mostek_पढ़ो_byte(काष्ठा device *dev, u32 ofs)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा m48t59_plat_data *pdata = pdev->dev.platक्रमm_data;
+static unsigned char mostek_read_byte(struct device *dev, u32 ofs)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct m48t59_plat_data *pdata = pdev->dev.platform_data;
 
-	वापस पढ़ोb(pdata->ioaddr + ofs);
-पूर्ण
+	return readb(pdata->ioaddr + ofs);
+}
 
-अटल व्योम mostek_ग_लिखो_byte(काष्ठा device *dev, u32 ofs, u8 val)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा m48t59_plat_data *pdata = pdev->dev.platक्रमm_data;
+static void mostek_write_byte(struct device *dev, u32 ofs, u8 val)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct m48t59_plat_data *pdata = pdev->dev.platform_data;
 
-	ग_लिखोb(val, pdata->ioaddr + ofs);
-पूर्ण
+	writeb(val, pdata->ioaddr + ofs);
+}
 
-अटल काष्ठा m48t59_plat_data m48t59_data = अणु
-	.पढ़ो_byte = mostek_पढ़ो_byte,
-	.ग_लिखो_byte = mostek_ग_लिखो_byte,
-पूर्ण;
+static struct m48t59_plat_data m48t59_data = {
+	.read_byte = mostek_read_byte,
+	.write_byte = mostek_write_byte,
+};
 
-/* resource is set at runसमय */
-अटल काष्ठा platक्रमm_device m48t59_rtc = अणु
+/* resource is set at runtime */
+static struct platform_device m48t59_rtc = {
 	.name		= "rtc-m48t59",
 	.id		= 0,
 	.num_resources	= 1,
-	.dev	= अणु
-		.platक्रमm_data = &m48t59_data,
-	पूर्ण,
-पूर्ण;
+	.dev	= {
+		.platform_data = &m48t59_data,
+	},
+};
 
-अटल पूर्णांक घड़ी_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *dp = op->dev.of_node;
-	स्थिर अक्षर *model = of_get_property(dp, "model", शून्य);
+static int clock_probe(struct platform_device *op)
+{
+	struct device_node *dp = op->dev.of_node;
+	const char *model = of_get_property(dp, "model", NULL);
 
-	अगर (!model)
-		वापस -ENODEV;
+	if (!model)
+		return -ENODEV;
 
 	/* Only the primary RTC has an address property */
-	अगर (!of_find_property(dp, "address", शून्य))
-		वापस -ENODEV;
+	if (!of_find_property(dp, "address", NULL))
+		return -ENODEV;
 
 	m48t59_rtc.resource = &op->resource[0];
-	अगर (!म_भेद(model, "mk48t02")) अणु
-		/* Map the घड़ी रेजिस्टर io area पढ़ो-only */
+	if (!strcmp(model, "mk48t02")) {
+		/* Map the clock register io area read-only */
 		m48t59_data.ioaddr = of_ioremap(&op->resource[0], 0,
 						2048, "rtc-m48t59");
 		m48t59_data.type = M48T59RTC_TYPE_M48T02;
-	पूर्ण अन्यथा अगर (!म_भेद(model, "mk48t08")) अणु
+	} else if (!strcmp(model, "mk48t08")) {
 		m48t59_data.ioaddr = of_ioremap(&op->resource[0], 0,
 						8192, "rtc-m48t59");
 		m48t59_data.type = M48T59RTC_TYPE_M48T08;
-	पूर्ण अन्यथा
-		वापस -ENODEV;
+	} else
+		return -ENODEV;
 
-	अगर (platक्रमm_device_रेजिस्टर(&m48t59_rtc) < 0)
-		prपूर्णांकk(KERN_ERR "Registering RTC device failed\n");
+	if (platform_device_register(&m48t59_rtc) < 0)
+		printk(KERN_ERR "Registering RTC device failed\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id घड़ी_match[] = अणु
-	अणु
+static const struct of_device_id clock_match[] = {
+	{
 		.name = "eeprom",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver घड़ी_driver = अणु
-	.probe		= घड़ी_probe,
-	.driver = अणु
+static struct platform_driver clock_driver = {
+	.probe		= clock_probe,
+	.driver = {
 		.name = "rtc",
-		.of_match_table = घड़ी_match,
-	पूर्ण,
-पूर्ण;
+		.of_match_table = clock_match,
+	},
+};
 
 
-/* Probe क्रम the mostek real समय घड़ी chip. */
-अटल पूर्णांक __init घड़ी_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&घड़ी_driver);
-पूर्ण
+/* Probe for the mostek real time clock chip. */
+static int __init clock_init(void)
+{
+	return platform_driver_register(&clock_driver);
+}
 /* Must be after subsys_initcall() so that busses are probed.  Must
- * be beक्रमe device_initcall() because things like the RTC driver
- * need to see the घड़ी रेजिस्टरs.
+ * be before device_initcall() because things like the RTC driver
+ * need to see the clock registers.
  */
-fs_initcall(घड़ी_init);
+fs_initcall(clock_init);
 
-अटल व्योम __init sparc32_late_समय_init(व्योम)
-अणु
-	अगर (sparc_config.features & FEAT_L10_CLOCKEVENT)
-		setup_समयr_ce();
-	अगर (sparc_config.features & FEAT_L10_CLOCKSOURCE)
-		setup_समयr_cs();
-#अगर_घोषित CONFIG_SMP
-	रेजिस्टर_percpu_ce(smp_processor_id());
-#पूर्ण_अगर
-पूर्ण
+static void __init sparc32_late_time_init(void)
+{
+	if (sparc_config.features & FEAT_L10_CLOCKEVENT)
+		setup_timer_ce();
+	if (sparc_config.features & FEAT_L10_CLOCKSOURCE)
+		setup_timer_cs();
+#ifdef CONFIG_SMP
+	register_percpu_ce(smp_processor_id());
+#endif
+}
 
-अटल व्योम __init sbus_समय_init(व्योम)
-अणु
+static void __init sbus_time_init(void)
+{
 	sparc_config.get_cycles_offset = sbus_cycles_offset;
-	sparc_config.init_समयrs();
-पूर्ण
+	sparc_config.init_timers();
+}
 
-व्योम __init समय_init(व्योम)
-अणु
+void __init time_init(void)
+{
 	sparc_config.features = 0;
-	late_समय_init = sparc32_late_समय_init;
+	late_time_init = sparc32_late_time_init;
 
-	अगर (pcic_present())
-		pci_समय_init();
-	अन्यथा
-		sbus_समय_init();
-पूर्ण
+	if (pcic_present())
+		pci_time_init();
+	else
+		sbus_time_init();
+}
 

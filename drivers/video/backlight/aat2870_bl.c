@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/drivers/video/backlight/aat2870_bl.c
  *
@@ -7,214 +6,214 @@
  * Author: Jin Park <jinyoungp@nvidia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/mfd/aat2870.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/mfd/aat2870.h>
 
-काष्ठा aat2870_bl_driver_data अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा backlight_device *bd;
+struct aat2870_bl_driver_data {
+	struct platform_device *pdev;
+	struct backlight_device *bd;
 
-	पूर्णांक channels;
-	पूर्णांक max_current;
-	पूर्णांक brightness; /* current brightness */
-पूर्ण;
+	int channels;
+	int max_current;
+	int brightness; /* current brightness */
+};
 
-अटल अंतरभूत पूर्णांक aat2870_brightness(काष्ठा aat2870_bl_driver_data *aat2870_bl,
-				     पूर्णांक brightness)
-अणु
-	काष्ठा backlight_device *bd = aat2870_bl->bd;
-	पूर्णांक val;
+static inline int aat2870_brightness(struct aat2870_bl_driver_data *aat2870_bl,
+				     int brightness)
+{
+	struct backlight_device *bd = aat2870_bl->bd;
+	int val;
 
 	val = brightness * (aat2870_bl->max_current - 1);
 	val /= bd->props.max_brightness;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत पूर्णांक aat2870_bl_enable(काष्ठा aat2870_bl_driver_data *aat2870_bl)
-अणु
-	काष्ठा aat2870_data *aat2870
+static inline int aat2870_bl_enable(struct aat2870_bl_driver_data *aat2870_bl)
+{
+	struct aat2870_data *aat2870
 			= dev_get_drvdata(aat2870_bl->pdev->dev.parent);
 
-	वापस aat2870->ग_लिखो(aat2870, AAT2870_BL_CH_EN,
+	return aat2870->write(aat2870, AAT2870_BL_CH_EN,
 			      (u8)aat2870_bl->channels);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक aat2870_bl_disable(काष्ठा aat2870_bl_driver_data *aat2870_bl)
-अणु
-	काष्ठा aat2870_data *aat2870
+static inline int aat2870_bl_disable(struct aat2870_bl_driver_data *aat2870_bl)
+{
+	struct aat2870_data *aat2870
 			= dev_get_drvdata(aat2870_bl->pdev->dev.parent);
 
-	वापस aat2870->ग_लिखो(aat2870, AAT2870_BL_CH_EN, 0x0);
-पूर्ण
+	return aat2870->write(aat2870, AAT2870_BL_CH_EN, 0x0);
+}
 
-अटल पूर्णांक aat2870_bl_update_status(काष्ठा backlight_device *bd)
-अणु
-	काष्ठा aat2870_bl_driver_data *aat2870_bl = bl_get_data(bd);
-	काष्ठा aat2870_data *aat2870 =
+static int aat2870_bl_update_status(struct backlight_device *bd)
+{
+	struct aat2870_bl_driver_data *aat2870_bl = bl_get_data(bd);
+	struct aat2870_data *aat2870 =
 			dev_get_drvdata(aat2870_bl->pdev->dev.parent);
-	पूर्णांक brightness = bd->props.brightness;
-	पूर्णांक ret;
+	int brightness = bd->props.brightness;
+	int ret;
 
-	अगर ((brightness < 0) || (bd->props.max_brightness < brightness)) अणु
+	if ((brightness < 0) || (bd->props.max_brightness < brightness)) {
 		dev_err(&bd->dev, "invalid brightness, %d\n", brightness);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(&bd->dev, "brightness=%d, power=%d, state=%d\n",
-		 bd->props.brightness, bd->props.घातer, bd->props.state);
+		 bd->props.brightness, bd->props.power, bd->props.state);
 
-	अगर ((bd->props.घातer != FB_BLANK_UNBLANK) ||
+	if ((bd->props.power != FB_BLANK_UNBLANK) ||
 			(bd->props.state & BL_CORE_FBBLANK) ||
 			(bd->props.state & BL_CORE_SUSPENDED))
 		brightness = 0;
 
-	ret = aat2870->ग_लिखो(aat2870, AAT2870_BLM,
+	ret = aat2870->write(aat2870, AAT2870_BLM,
 			     (u8)aat2870_brightness(aat2870_bl, brightness));
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (brightness == 0) अणु
+	if (brightness == 0) {
 		ret = aat2870_bl_disable(aat2870_bl);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अगर (aat2870_bl->brightness == 0) अणु
+		if (ret < 0)
+			return ret;
+	} else if (aat2870_bl->brightness == 0) {
 		ret = aat2870_bl_enable(aat2870_bl);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	aat2870_bl->brightness = brightness;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aat2870_bl_check_fb(काष्ठा backlight_device *bd, काष्ठा fb_info *fi)
-अणु
-	वापस 1;
-पूर्ण
+static int aat2870_bl_check_fb(struct backlight_device *bd, struct fb_info *fi)
+{
+	return 1;
+}
 
-अटल स्थिर काष्ठा backlight_ops aat2870_bl_ops = अणु
+static const struct backlight_ops aat2870_bl_ops = {
 	.options = BL_CORE_SUSPENDRESUME,
 	.update_status = aat2870_bl_update_status,
 	.check_fb = aat2870_bl_check_fb,
-पूर्ण;
+};
 
-अटल पूर्णांक aat2870_bl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aat2870_bl_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा aat2870_bl_driver_data *aat2870_bl;
-	काष्ठा backlight_device *bd;
-	काष्ठा backlight_properties props;
-	पूर्णांक ret = 0;
+static int aat2870_bl_probe(struct platform_device *pdev)
+{
+	struct aat2870_bl_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct aat2870_bl_driver_data *aat2870_bl;
+	struct backlight_device *bd;
+	struct backlight_properties props;
+	int ret = 0;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "No platform data\n");
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdev->id != AAT2870_ID_BL) अणु
+	if (pdev->id != AAT2870_ID_BL) {
 		dev_err(&pdev->dev, "Invalid device ID, %d\n", pdev->id);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	aat2870_bl = devm_kzalloc(&pdev->dev,
-				  माप(काष्ठा aat2870_bl_driver_data),
+				  sizeof(struct aat2870_bl_driver_data),
 				  GFP_KERNEL);
-	अगर (!aat2870_bl) अणु
+	if (!aat2870_bl) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 
 	props.type = BACKLIGHT_RAW;
-	bd = devm_backlight_device_रेजिस्टर(&pdev->dev, "aat2870-backlight",
+	bd = devm_backlight_device_register(&pdev->dev, "aat2870-backlight",
 					&pdev->dev, aat2870_bl, &aat2870_bl_ops,
 					&props);
-	अगर (IS_ERR(bd)) अणु
+	if (IS_ERR(bd)) {
 		dev_err(&pdev->dev,
 			"Failed allocate memory for backlight device\n");
 		ret = PTR_ERR(bd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	aat2870_bl->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, aat2870_bl);
+	platform_set_drvdata(pdev, aat2870_bl);
 
 	aat2870_bl->bd = bd;
 
-	अगर (pdata->channels > 0)
+	if (pdata->channels > 0)
 		aat2870_bl->channels = pdata->channels;
-	अन्यथा
+	else
 		aat2870_bl->channels = AAT2870_BL_CH_ALL;
 
-	अगर (pdata->max_current > 0)
+	if (pdata->max_current > 0)
 		aat2870_bl->max_current = pdata->max_current;
-	अन्यथा
+	else
 		aat2870_bl->max_current = AAT2870_CURRENT_27_9;
 
-	अगर (pdata->max_brightness > 0)
+	if (pdata->max_brightness > 0)
 		bd->props.max_brightness = pdata->max_brightness;
-	अन्यथा
+	else
 		bd->props.max_brightness = 255;
 
 	aat2870_bl->brightness = 0;
-	bd->props.घातer = FB_BLANK_UNBLANK;
+	bd->props.power = FB_BLANK_UNBLANK;
 	bd->props.brightness = bd->props.max_brightness;
 
 	ret = aat2870_bl_update_status(bd);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to initialize\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
+	return 0;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक aat2870_bl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aat2870_bl_driver_data *aat2870_bl = platक्रमm_get_drvdata(pdev);
-	काष्ठा backlight_device *bd = aat2870_bl->bd;
+static int aat2870_bl_remove(struct platform_device *pdev)
+{
+	struct aat2870_bl_driver_data *aat2870_bl = platform_get_drvdata(pdev);
+	struct backlight_device *bd = aat2870_bl->bd;
 
-	bd->props.घातer = FB_BLANK_POWERDOWN;
+	bd->props.power = FB_BLANK_POWERDOWN;
 	bd->props.brightness = 0;
 	backlight_update_status(bd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver aat2870_bl_driver = अणु
-	.driver = अणु
+static struct platform_driver aat2870_bl_driver = {
+	.driver = {
 		.name	= "aat2870-backlight",
-	पूर्ण,
+	},
 	.probe		= aat2870_bl_probe,
-	.हटाओ		= aat2870_bl_हटाओ,
-पूर्ण;
+	.remove		= aat2870_bl_remove,
+};
 
-अटल पूर्णांक __init aat2870_bl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&aat2870_bl_driver);
-पूर्ण
+static int __init aat2870_bl_init(void)
+{
+	return platform_driver_register(&aat2870_bl_driver);
+}
 subsys_initcall(aat2870_bl_init);
 
-अटल व्योम __निकास aat2870_bl_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&aat2870_bl_driver);
-पूर्ण
-module_निकास(aat2870_bl_निकास);
+static void __exit aat2870_bl_exit(void)
+{
+	platform_driver_unregister(&aat2870_bl_driver);
+}
+module_exit(aat2870_bl_exit);
 
 MODULE_DESCRIPTION("AnalogicTech AAT2870 Backlight");
 MODULE_LICENSE("GPL");

@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * fs/sysfs/sysfs.h - sysfs पूर्णांकernal header file
+ * fs/sysfs/sysfs.h - sysfs internal header file
  *
  * Copyright (c) 2001-3 Patrick Mochel
  * Copyright (c) 2007 SUSE Linux Products GmbH
  * Copyright (c) 2007 Tejun Heo <teheo@suse.de>
  */
 
-#अगर_अघोषित __SYSFS_INTERNAL_H
-#घोषणा __SYSFS_INTERNAL_H
+#ifndef __SYSFS_INTERNAL_H
+#define __SYSFS_INTERNAL_H
 
-#समावेश <linux/sysfs.h>
+#include <linux/sysfs.h>
 
 /*
  * mount.c
  */
-बाह्य काष्ठा kernfs_node *sysfs_root_kn;
+extern struct kernfs_node *sysfs_root_kn;
 
 /*
  * dir.c
  */
-बाह्य spinlock_t sysfs_symlink_target_lock;
+extern spinlock_t sysfs_symlink_target_lock;
 
-व्योम sysfs_warn_dup(काष्ठा kernfs_node *parent, स्थिर अक्षर *name);
+void sysfs_warn_dup(struct kernfs_node *parent, const char *name);
 
 /*
  * file.c
  */
-पूर्णांक sysfs_add_file_mode_ns(काष्ठा kernfs_node *parent,
-			   स्थिर काष्ठा attribute *attr, bool is_bin,
+int sysfs_add_file_mode_ns(struct kernfs_node *parent,
+			   const struct attribute *attr, bool is_bin,
 			   umode_t amode, kuid_t uid, kgid_t gid,
-			   स्थिर व्योम *ns);
+			   const void *ns);
 
 /*
  * symlink.c
  */
-पूर्णांक sysfs_create_link_sd(काष्ठा kernfs_node *kn, काष्ठा kobject *target,
-			 स्थिर अक्षर *name);
+int sysfs_create_link_sd(struct kernfs_node *kn, struct kobject *target,
+			 const char *name);
 
-#पूर्ण_अगर	/* __SYSFS_INTERNAL_H */
+#endif	/* __SYSFS_INTERNAL_H */

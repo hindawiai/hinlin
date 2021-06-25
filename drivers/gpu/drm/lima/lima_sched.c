@@ -1,410 +1,409 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#समावेश <linux/dma-buf-map.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/dma-buf-map.h>
+#include <linux/kthread.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "lima_devfreq.h"
-#समावेश "lima_drv.h"
-#समावेश "lima_sched.h"
-#समावेश "lima_vm.h"
-#समावेश "lima_mmu.h"
-#समावेश "lima_l2_cache.h"
-#समावेश "lima_gem.h"
-#समावेश "lima_trace.h"
+#include "lima_devfreq.h"
+#include "lima_drv.h"
+#include "lima_sched.h"
+#include "lima_vm.h"
+#include "lima_mmu.h"
+#include "lima_l2_cache.h"
+#include "lima_gem.h"
+#include "lima_trace.h"
 
-काष्ठा lima_fence अणु
-	काष्ठा dma_fence base;
-	काष्ठा lima_sched_pipe *pipe;
-पूर्ण;
+struct lima_fence {
+	struct dma_fence base;
+	struct lima_sched_pipe *pipe;
+};
 
-अटल काष्ठा kmem_cache *lima_fence_slab;
-अटल पूर्णांक lima_fence_slab_refcnt;
+static struct kmem_cache *lima_fence_slab;
+static int lima_fence_slab_refcnt;
 
-पूर्णांक lima_sched_slab_init(व्योम)
-अणु
-	अगर (!lima_fence_slab) अणु
+int lima_sched_slab_init(void)
+{
+	if (!lima_fence_slab) {
 		lima_fence_slab = kmem_cache_create(
-			"lima_fence", माप(काष्ठा lima_fence), 0,
-			SLAB_HWCACHE_ALIGN, शून्य);
-		अगर (!lima_fence_slab)
-			वापस -ENOMEM;
-	पूर्ण
+			"lima_fence", sizeof(struct lima_fence), 0,
+			SLAB_HWCACHE_ALIGN, NULL);
+		if (!lima_fence_slab)
+			return -ENOMEM;
+	}
 
 	lima_fence_slab_refcnt++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम lima_sched_slab_fini(व्योम)
-अणु
-	अगर (!--lima_fence_slab_refcnt) अणु
+void lima_sched_slab_fini(void)
+{
+	if (!--lima_fence_slab_refcnt) {
 		kmem_cache_destroy(lima_fence_slab);
-		lima_fence_slab = शून्य;
-	पूर्ण
-पूर्ण
+		lima_fence_slab = NULL;
+	}
+}
 
-अटल अंतरभूत काष्ठा lima_fence *to_lima_fence(काष्ठा dma_fence *fence)
-अणु
-	वापस container_of(fence, काष्ठा lima_fence, base);
-पूर्ण
+static inline struct lima_fence *to_lima_fence(struct dma_fence *fence)
+{
+	return container_of(fence, struct lima_fence, base);
+}
 
-अटल स्थिर अक्षर *lima_fence_get_driver_name(काष्ठा dma_fence *fence)
-अणु
-	वापस "lima";
-पूर्ण
+static const char *lima_fence_get_driver_name(struct dma_fence *fence)
+{
+	return "lima";
+}
 
-अटल स्थिर अक्षर *lima_fence_get_समयline_name(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा lima_fence *f = to_lima_fence(fence);
+static const char *lima_fence_get_timeline_name(struct dma_fence *fence)
+{
+	struct lima_fence *f = to_lima_fence(fence);
 
-	वापस f->pipe->base.name;
-पूर्ण
+	return f->pipe->base.name;
+}
 
-अटल व्योम lima_fence_release_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा dma_fence *f = container_of(rcu, काष्ठा dma_fence, rcu);
-	काष्ठा lima_fence *fence = to_lima_fence(f);
+static void lima_fence_release_rcu(struct rcu_head *rcu)
+{
+	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
+	struct lima_fence *fence = to_lima_fence(f);
 
-	kmem_cache_मुक्त(lima_fence_slab, fence);
-पूर्ण
+	kmem_cache_free(lima_fence_slab, fence);
+}
 
-अटल व्योम lima_fence_release(काष्ठा dma_fence *fence)
-अणु
-	काष्ठा lima_fence *f = to_lima_fence(fence);
+static void lima_fence_release(struct dma_fence *fence)
+{
+	struct lima_fence *f = to_lima_fence(fence);
 
 	call_rcu(&f->base.rcu, lima_fence_release_rcu);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dma_fence_ops lima_fence_ops = अणु
+static const struct dma_fence_ops lima_fence_ops = {
 	.get_driver_name = lima_fence_get_driver_name,
-	.get_समयline_name = lima_fence_get_समयline_name,
+	.get_timeline_name = lima_fence_get_timeline_name,
 	.release = lima_fence_release,
-पूर्ण;
+};
 
-अटल काष्ठा lima_fence *lima_fence_create(काष्ठा lima_sched_pipe *pipe)
-अणु
-	काष्ठा lima_fence *fence;
+static struct lima_fence *lima_fence_create(struct lima_sched_pipe *pipe)
+{
+	struct lima_fence *fence;
 
 	fence = kmem_cache_zalloc(lima_fence_slab, GFP_KERNEL);
-	अगर (!fence)
-		वापस शून्य;
+	if (!fence)
+		return NULL;
 
 	fence->pipe = pipe;
 	dma_fence_init(&fence->base, &lima_fence_ops, &pipe->fence_lock,
 		       pipe->fence_context, ++pipe->fence_seqno);
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-अटल अंतरभूत काष्ठा lima_sched_task *to_lima_task(काष्ठा drm_sched_job *job)
-अणु
-	वापस container_of(job, काष्ठा lima_sched_task, base);
-पूर्ण
+static inline struct lima_sched_task *to_lima_task(struct drm_sched_job *job)
+{
+	return container_of(job, struct lima_sched_task, base);
+}
 
-अटल अंतरभूत काष्ठा lima_sched_pipe *to_lima_pipe(काष्ठा drm_gpu_scheduler *sched)
-अणु
-	वापस container_of(sched, काष्ठा lima_sched_pipe, base);
-पूर्ण
+static inline struct lima_sched_pipe *to_lima_pipe(struct drm_gpu_scheduler *sched)
+{
+	return container_of(sched, struct lima_sched_pipe, base);
+}
 
-पूर्णांक lima_sched_task_init(काष्ठा lima_sched_task *task,
-			 काष्ठा lima_sched_context *context,
-			 काष्ठा lima_bo **bos, पूर्णांक num_bos,
-			 काष्ठा lima_vm *vm)
-अणु
-	पूर्णांक err, i;
+int lima_sched_task_init(struct lima_sched_task *task,
+			 struct lima_sched_context *context,
+			 struct lima_bo **bos, int num_bos,
+			 struct lima_vm *vm)
+{
+	int err, i;
 
-	task->bos = kmemdup(bos, माप(*bos) * num_bos, GFP_KERNEL);
-	अगर (!task->bos)
-		वापस -ENOMEM;
+	task->bos = kmemdup(bos, sizeof(*bos) * num_bos, GFP_KERNEL);
+	if (!task->bos)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < num_bos; i++)
+	for (i = 0; i < num_bos; i++)
 		drm_gem_object_get(&bos[i]->base.base);
 
 	err = drm_sched_job_init(&task->base, &context->base, vm);
-	अगर (err) अणु
-		kमुक्त(task->bos);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(task->bos);
+		return err;
+	}
 
 	task->num_bos = num_bos;
 	task->vm = lima_vm_get(vm);
 
 	xa_init_flags(&task->deps, XA_FLAGS_ALLOC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम lima_sched_task_fini(काष्ठा lima_sched_task *task)
-अणु
-	काष्ठा dma_fence *fence;
-	अचिन्हित दीर्घ index;
-	पूर्णांक i;
+void lima_sched_task_fini(struct lima_sched_task *task)
+{
+	struct dma_fence *fence;
+	unsigned long index;
+	int i;
 
 	drm_sched_job_cleanup(&task->base);
 
-	xa_क्रम_each(&task->deps, index, fence) अणु
+	xa_for_each(&task->deps, index, fence) {
 		dma_fence_put(fence);
-	पूर्ण
+	}
 	xa_destroy(&task->deps);
 
-	अगर (task->bos) अणु
-		क्रम (i = 0; i < task->num_bos; i++)
+	if (task->bos) {
+		for (i = 0; i < task->num_bos; i++)
 			drm_gem_object_put(&task->bos[i]->base.base);
-		kमुक्त(task->bos);
-	पूर्ण
+		kfree(task->bos);
+	}
 
 	lima_vm_put(task->vm);
-पूर्ण
+}
 
-पूर्णांक lima_sched_context_init(काष्ठा lima_sched_pipe *pipe,
-			    काष्ठा lima_sched_context *context,
+int lima_sched_context_init(struct lima_sched_pipe *pipe,
+			    struct lima_sched_context *context,
 			    atomic_t *guilty)
-अणु
-	काष्ठा drm_gpu_scheduler *sched = &pipe->base;
+{
+	struct drm_gpu_scheduler *sched = &pipe->base;
 
-	वापस drm_sched_entity_init(&context->base, DRM_SCHED_PRIORITY_NORMAL,
+	return drm_sched_entity_init(&context->base, DRM_SCHED_PRIORITY_NORMAL,
 				     &sched, 1, guilty);
-पूर्ण
+}
 
-व्योम lima_sched_context_fini(काष्ठा lima_sched_pipe *pipe,
-			     काष्ठा lima_sched_context *context)
-अणु
+void lima_sched_context_fini(struct lima_sched_pipe *pipe,
+			     struct lima_sched_context *context)
+{
 	drm_sched_entity_fini(&context->base);
-पूर्ण
+}
 
-काष्ठा dma_fence *lima_sched_context_queue_task(काष्ठा lima_sched_context *context,
-						काष्ठा lima_sched_task *task)
-अणु
-	काष्ठा dma_fence *fence = dma_fence_get(&task->base.s_fence->finished);
+struct dma_fence *lima_sched_context_queue_task(struct lima_sched_context *context,
+						struct lima_sched_task *task)
+{
+	struct dma_fence *fence = dma_fence_get(&task->base.s_fence->finished);
 
 	trace_lima_task_submit(task);
 	drm_sched_entity_push_job(&task->base, &context->base);
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-अटल काष्ठा dma_fence *lima_sched_dependency(काष्ठा drm_sched_job *job,
-					       काष्ठा drm_sched_entity *entity)
-अणु
-	काष्ठा lima_sched_task *task = to_lima_task(job);
+static struct dma_fence *lima_sched_dependency(struct drm_sched_job *job,
+					       struct drm_sched_entity *entity)
+{
+	struct lima_sched_task *task = to_lima_task(job);
 
-	अगर (!xa_empty(&task->deps))
-		वापस xa_erase(&task->deps, task->last_dep++);
+	if (!xa_empty(&task->deps))
+		return xa_erase(&task->deps, task->last_dep++);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक lima_pm_busy(काष्ठा lima_device *ldev)
-अणु
-	पूर्णांक ret;
+static int lima_pm_busy(struct lima_device *ldev)
+{
+	int ret;
 
-	/* resume GPU अगर it has been suspended by runसमय PM */
-	ret = pm_runसमय_resume_and_get(ldev->dev);
-	अगर (ret < 0)
-		वापस ret;
+	/* resume GPU if it has been suspended by runtime PM */
+	ret = pm_runtime_resume_and_get(ldev->dev);
+	if (ret < 0)
+		return ret;
 
 	lima_devfreq_record_busy(&ldev->devfreq);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lima_pm_idle(काष्ठा lima_device *ldev)
-अणु
+static void lima_pm_idle(struct lima_device *ldev)
+{
 	lima_devfreq_record_idle(&ldev->devfreq);
 
-	/* GPU can करो स्वतः runसमय suspend */
-	pm_runसमय_mark_last_busy(ldev->dev);
-	pm_runसमय_put_स्वतःsuspend(ldev->dev);
-पूर्ण
+	/* GPU can do auto runtime suspend */
+	pm_runtime_mark_last_busy(ldev->dev);
+	pm_runtime_put_autosuspend(ldev->dev);
+}
 
-अटल काष्ठा dma_fence *lima_sched_run_job(काष्ठा drm_sched_job *job)
-अणु
-	काष्ठा lima_sched_task *task = to_lima_task(job);
-	काष्ठा lima_sched_pipe *pipe = to_lima_pipe(job->sched);
-	काष्ठा lima_device *ldev = pipe->ldev;
-	काष्ठा lima_fence *fence;
-	पूर्णांक i, err;
+static struct dma_fence *lima_sched_run_job(struct drm_sched_job *job)
+{
+	struct lima_sched_task *task = to_lima_task(job);
+	struct lima_sched_pipe *pipe = to_lima_pipe(job->sched);
+	struct lima_device *ldev = pipe->ldev;
+	struct lima_fence *fence;
+	int i, err;
 
 	/* after GPU reset */
-	अगर (job->s_fence->finished.error < 0)
-		वापस शून्य;
+	if (job->s_fence->finished.error < 0)
+		return NULL;
 
 	fence = lima_fence_create(pipe);
-	अगर (!fence)
-		वापस शून्य;
+	if (!fence)
+		return NULL;
 
 	err = lima_pm_busy(ldev);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dma_fence_put(&fence->base);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	task->fence = &fence->base;
 
-	/* क्रम caller usage of the fence, otherwise irq handler
-	 * may consume the fence beक्रमe caller use it
+	/* for caller usage of the fence, otherwise irq handler
+	 * may consume the fence before caller use it
 	 */
 	dma_fence_get(task->fence);
 
 	pipe->current_task = task;
 
-	/* this is needed क्रम MMU to work correctly, otherwise GP/PP
-	 * will hang or page fault क्रम unknown reason after running क्रम
-	 * a जबतक.
+	/* this is needed for MMU to work correctly, otherwise GP/PP
+	 * will hang or page fault for unknown reason after running for
+	 * a while.
 	 *
 	 * Need to investigate:
 	 * 1. is it related to TLB
-	 * 2. how much perक्रमmance will be affected by L2 cache flush
+	 * 2. how much performance will be affected by L2 cache flush
 	 * 3. can we reduce the calling of this function because all
 	 *    GP/PP use the same L2 cache on mali400
 	 *
 	 * TODO:
-	 * 1. move this to task fini to save some रुको समय?
-	 * 2. when GP/PP use dअगरferent l2 cache, need PP रुको GP l2
+	 * 1. move this to task fini to save some wait time?
+	 * 2. when GP/PP use different l2 cache, need PP wait GP l2
 	 *    cache flush?
 	 */
-	क्रम (i = 0; i < pipe->num_l2_cache; i++)
+	for (i = 0; i < pipe->num_l2_cache; i++)
 		lima_l2_cache_flush(pipe->l2_cache[i]);
 
 	lima_vm_put(pipe->current_vm);
 	pipe->current_vm = lima_vm_get(task->vm);
 
-	अगर (pipe->bcast_mmu)
-		lima_mmu_चयन_vm(pipe->bcast_mmu, pipe->current_vm);
-	अन्यथा अणु
-		क्रम (i = 0; i < pipe->num_mmu; i++)
-			lima_mmu_चयन_vm(pipe->mmu[i], pipe->current_vm);
-	पूर्ण
+	if (pipe->bcast_mmu)
+		lima_mmu_switch_vm(pipe->bcast_mmu, pipe->current_vm);
+	else {
+		for (i = 0; i < pipe->num_mmu; i++)
+			lima_mmu_switch_vm(pipe->mmu[i], pipe->current_vm);
+	}
 
 	trace_lima_task_run(task);
 
 	pipe->error = false;
 	pipe->task_run(pipe, task);
 
-	वापस task->fence;
-पूर्ण
+	return task->fence;
+}
 
-अटल व्योम lima_sched_build_error_task_list(काष्ठा lima_sched_task *task)
-अणु
-	काष्ठा lima_sched_error_task *et;
-	काष्ठा lima_sched_pipe *pipe = to_lima_pipe(task->base.sched);
-	काष्ठा lima_ip *ip = pipe->processor[0];
-	पूर्णांक pipe_id = ip->id == lima_ip_gp ? lima_pipe_gp : lima_pipe_pp;
-	काष्ठा lima_device *dev = ip->dev;
-	काष्ठा lima_sched_context *sched_ctx =
+static void lima_sched_build_error_task_list(struct lima_sched_task *task)
+{
+	struct lima_sched_error_task *et;
+	struct lima_sched_pipe *pipe = to_lima_pipe(task->base.sched);
+	struct lima_ip *ip = pipe->processor[0];
+	int pipe_id = ip->id == lima_ip_gp ? lima_pipe_gp : lima_pipe_pp;
+	struct lima_device *dev = ip->dev;
+	struct lima_sched_context *sched_ctx =
 		container_of(task->base.entity,
-			     काष्ठा lima_sched_context, base);
-	काष्ठा lima_ctx *ctx =
-		container_of(sched_ctx, काष्ठा lima_ctx, context[pipe_id]);
-	काष्ठा lima_dump_task *dt;
-	काष्ठा lima_dump_chunk *chunk;
-	काष्ठा lima_dump_chunk_pid *pid_chunk;
-	काष्ठा lima_dump_chunk_buffer *buffer_chunk;
+			     struct lima_sched_context, base);
+	struct lima_ctx *ctx =
+		container_of(sched_ctx, struct lima_ctx, context[pipe_id]);
+	struct lima_dump_task *dt;
+	struct lima_dump_chunk *chunk;
+	struct lima_dump_chunk_pid *pid_chunk;
+	struct lima_dump_chunk_buffer *buffer_chunk;
 	u32 size, task_size, mem_size;
-	पूर्णांक i;
-	काष्ठा dma_buf_map map;
-	पूर्णांक ret;
+	int i;
+	struct dma_buf_map map;
+	int ret;
 
 	mutex_lock(&dev->error_task_list_lock);
 
-	अगर (dev->dump.num_tasks >= lima_max_error_tasks) अणु
+	if (dev->dump.num_tasks >= lima_max_error_tasks) {
 		dev_info(dev->dev, "fail to save task state from %s pid %d: "
 			 "error task list is full\n", ctx->pname, ctx->pid);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* frame chunk */
-	size = माप(काष्ठा lima_dump_chunk) + pipe->frame_size;
+	size = sizeof(struct lima_dump_chunk) + pipe->frame_size;
 	/* process name chunk */
-	size += माप(काष्ठा lima_dump_chunk) + माप(ctx->pname);
+	size += sizeof(struct lima_dump_chunk) + sizeof(ctx->pname);
 	/* pid chunk */
-	size += माप(काष्ठा lima_dump_chunk);
+	size += sizeof(struct lima_dump_chunk);
 	/* buffer chunks */
-	क्रम (i = 0; i < task->num_bos; i++) अणु
-		काष्ठा lima_bo *bo = task->bos[i];
+	for (i = 0; i < task->num_bos; i++) {
+		struct lima_bo *bo = task->bos[i];
 
-		size += माप(काष्ठा lima_dump_chunk);
+		size += sizeof(struct lima_dump_chunk);
 		size += bo->heap_size ? bo->heap_size : lima_bo_size(bo);
-	पूर्ण
+	}
 
-	task_size = size + माप(काष्ठा lima_dump_task);
-	mem_size = task_size + माप(*et);
-	et = kvदो_स्मृति(mem_size, GFP_KERNEL);
-	अगर (!et) अणु
+	task_size = size + sizeof(struct lima_dump_task);
+	mem_size = task_size + sizeof(*et);
+	et = kvmalloc(mem_size, GFP_KERNEL);
+	if (!et) {
 		dev_err(dev->dev, "fail to alloc task dump buffer of size %x\n",
 			mem_size);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	et->data = et + 1;
 	et->size = task_size;
 
 	dt = et->data;
-	स_रखो(dt, 0, माप(*dt));
+	memset(dt, 0, sizeof(*dt));
 	dt->id = pipe_id;
 	dt->size = size;
 
-	chunk = (काष्ठा lima_dump_chunk *)(dt + 1);
-	स_रखो(chunk, 0, माप(*chunk));
+	chunk = (struct lima_dump_chunk *)(dt + 1);
+	memset(chunk, 0, sizeof(*chunk));
 	chunk->id = LIMA_DUMP_CHUNK_FRAME;
 	chunk->size = pipe->frame_size;
-	स_नकल(chunk + 1, task->frame, pipe->frame_size);
+	memcpy(chunk + 1, task->frame, pipe->frame_size);
 	dt->num_chunks++;
 
-	chunk = (व्योम *)(chunk + 1) + chunk->size;
-	स_रखो(chunk, 0, माप(*chunk));
+	chunk = (void *)(chunk + 1) + chunk->size;
+	memset(chunk, 0, sizeof(*chunk));
 	chunk->id = LIMA_DUMP_CHUNK_PROCESS_NAME;
-	chunk->size = माप(ctx->pname);
-	स_नकल(chunk + 1, ctx->pname, माप(ctx->pname));
+	chunk->size = sizeof(ctx->pname);
+	memcpy(chunk + 1, ctx->pname, sizeof(ctx->pname));
 	dt->num_chunks++;
 
-	pid_chunk = (व्योम *)(chunk + 1) + chunk->size;
-	स_रखो(pid_chunk, 0, माप(*pid_chunk));
+	pid_chunk = (void *)(chunk + 1) + chunk->size;
+	memset(pid_chunk, 0, sizeof(*pid_chunk));
 	pid_chunk->id = LIMA_DUMP_CHUNK_PROCESS_ID;
 	pid_chunk->pid = ctx->pid;
 	dt->num_chunks++;
 
-	buffer_chunk = (व्योम *)(pid_chunk + 1) + pid_chunk->size;
-	क्रम (i = 0; i < task->num_bos; i++) अणु
-		काष्ठा lima_bo *bo = task->bos[i];
-		व्योम *data;
+	buffer_chunk = (void *)(pid_chunk + 1) + pid_chunk->size;
+	for (i = 0; i < task->num_bos; i++) {
+		struct lima_bo *bo = task->bos[i];
+		void *data;
 
-		स_रखो(buffer_chunk, 0, माप(*buffer_chunk));
+		memset(buffer_chunk, 0, sizeof(*buffer_chunk));
 		buffer_chunk->id = LIMA_DUMP_CHUNK_BUFFER;
 		buffer_chunk->va = lima_vm_get_va(task->vm, bo);
 
-		अगर (bo->heap_size) अणु
+		if (bo->heap_size) {
 			buffer_chunk->size = bo->heap_size;
 
 			data = vmap(bo->base.pages, bo->heap_size >> PAGE_SHIFT,
-				    VM_MAP, pgprot_ग_लिखोcombine(PAGE_KERNEL));
-			अगर (!data) अणु
-				kvमुक्त(et);
-				जाओ out;
-			पूर्ण
+				    VM_MAP, pgprot_writecombine(PAGE_KERNEL));
+			if (!data) {
+				kvfree(et);
+				goto out;
+			}
 
-			स_नकल(buffer_chunk + 1, data, buffer_chunk->size);
+			memcpy(buffer_chunk + 1, data, buffer_chunk->size);
 
 			vunmap(data);
-		पूर्ण अन्यथा अणु
+		} else {
 			buffer_chunk->size = lima_bo_size(bo);
 
 			ret = drm_gem_shmem_vmap(&bo->base.base, &map);
-			अगर (ret) अणु
-				kvमुक्त(et);
-				जाओ out;
-			पूर्ण
+			if (ret) {
+				kvfree(et);
+				goto out;
+			}
 
-			स_नकल(buffer_chunk + 1, map.vaddr, buffer_chunk->size);
+			memcpy(buffer_chunk + 1, map.vaddr, buffer_chunk->size);
 
 			drm_gem_shmem_vunmap(&bo->base.base, &map);
-		पूर्ण
+		}
 
-		buffer_chunk = (व्योम *)(buffer_chunk + 1) + buffer_chunk->size;
+		buffer_chunk = (void *)(buffer_chunk + 1) + buffer_chunk->size;
 		dt->num_chunks++;
-	पूर्ण
+	}
 
 	list_add(&et->list, &dev->error_task_list);
 	dev->dump.size += et->size;
@@ -414,15 +413,15 @@
 
 out:
 	mutex_unlock(&dev->error_task_list_lock);
-पूर्ण
+}
 
-अटल क्रमागत drm_gpu_sched_stat lima_sched_समयकरोut_job(काष्ठा drm_sched_job *job)
-अणु
-	काष्ठा lima_sched_pipe *pipe = to_lima_pipe(job->sched);
-	काष्ठा lima_sched_task *task = to_lima_task(job);
-	काष्ठा lima_device *ldev = pipe->ldev;
+static enum drm_gpu_sched_stat lima_sched_timedout_job(struct drm_sched_job *job)
+{
+	struct lima_sched_pipe *pipe = to_lima_pipe(job->sched);
+	struct lima_sched_task *task = to_lima_task(job);
+	struct lima_device *ldev = pipe->ldev;
 
-	अगर (!pipe->error)
+	if (!pipe->error)
 		DRM_ERROR("lima job timeout\n");
 
 	drm_sched_stop(&pipe->base, &task->base);
@@ -433,105 +432,105 @@ out:
 
 	pipe->task_error(pipe);
 
-	अगर (pipe->bcast_mmu)
+	if (pipe->bcast_mmu)
 		lima_mmu_page_fault_resume(pipe->bcast_mmu);
-	अन्यथा अणु
-		पूर्णांक i;
+	else {
+		int i;
 
-		क्रम (i = 0; i < pipe->num_mmu; i++)
+		for (i = 0; i < pipe->num_mmu; i++)
 			lima_mmu_page_fault_resume(pipe->mmu[i]);
-	पूर्ण
+	}
 
 	lima_vm_put(pipe->current_vm);
-	pipe->current_vm = शून्य;
-	pipe->current_task = शून्य;
+	pipe->current_vm = NULL;
+	pipe->current_task = NULL;
 
 	lima_pm_idle(ldev);
 
 	drm_sched_resubmit_jobs(&pipe->base);
 	drm_sched_start(&pipe->base, true);
 
-	वापस DRM_GPU_SCHED_STAT_NOMINAL;
-पूर्ण
+	return DRM_GPU_SCHED_STAT_NOMINAL;
+}
 
-अटल व्योम lima_sched_मुक्त_job(काष्ठा drm_sched_job *job)
-अणु
-	काष्ठा lima_sched_task *task = to_lima_task(job);
-	काष्ठा lima_sched_pipe *pipe = to_lima_pipe(job->sched);
-	काष्ठा lima_vm *vm = task->vm;
-	काष्ठा lima_bo **bos = task->bos;
-	पूर्णांक i;
+static void lima_sched_free_job(struct drm_sched_job *job)
+{
+	struct lima_sched_task *task = to_lima_task(job);
+	struct lima_sched_pipe *pipe = to_lima_pipe(job->sched);
+	struct lima_vm *vm = task->vm;
+	struct lima_bo **bos = task->bos;
+	int i;
 
 	dma_fence_put(task->fence);
 
-	क्रम (i = 0; i < task->num_bos; i++)
+	for (i = 0; i < task->num_bos; i++)
 		lima_vm_bo_del(vm, bos[i]);
 
 	lima_sched_task_fini(task);
-	kmem_cache_मुक्त(pipe->task_slab, task);
-पूर्ण
+	kmem_cache_free(pipe->task_slab, task);
+}
 
-अटल स्थिर काष्ठा drm_sched_backend_ops lima_sched_ops = अणु
+static const struct drm_sched_backend_ops lima_sched_ops = {
 	.dependency = lima_sched_dependency,
 	.run_job = lima_sched_run_job,
-	.समयकरोut_job = lima_sched_समयकरोut_job,
-	.मुक्त_job = lima_sched_मुक्त_job,
-पूर्ण;
+	.timedout_job = lima_sched_timedout_job,
+	.free_job = lima_sched_free_job,
+};
 
-अटल व्योम lima_sched_recover_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा lima_sched_pipe *pipe =
-		container_of(work, काष्ठा lima_sched_pipe, recover_work);
-	पूर्णांक i;
+static void lima_sched_recover_work(struct work_struct *work)
+{
+	struct lima_sched_pipe *pipe =
+		container_of(work, struct lima_sched_pipe, recover_work);
+	int i;
 
-	क्रम (i = 0; i < pipe->num_l2_cache; i++)
+	for (i = 0; i < pipe->num_l2_cache; i++)
 		lima_l2_cache_flush(pipe->l2_cache[i]);
 
-	अगर (pipe->bcast_mmu) अणु
+	if (pipe->bcast_mmu) {
 		lima_mmu_flush_tlb(pipe->bcast_mmu);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < pipe->num_mmu; i++)
+	} else {
+		for (i = 0; i < pipe->num_mmu; i++)
 			lima_mmu_flush_tlb(pipe->mmu[i]);
-	पूर्ण
+	}
 
-	अगर (pipe->task_recover(pipe))
+	if (pipe->task_recover(pipe))
 		drm_sched_fault(&pipe->base);
-पूर्ण
+}
 
-पूर्णांक lima_sched_pipe_init(काष्ठा lima_sched_pipe *pipe, स्थिर अक्षर *name)
-अणु
-	अचिन्हित पूर्णांक समयout = lima_sched_समयout_ms > 0 ?
-			       lima_sched_समयout_ms : 500;
+int lima_sched_pipe_init(struct lima_sched_pipe *pipe, const char *name)
+{
+	unsigned int timeout = lima_sched_timeout_ms > 0 ?
+			       lima_sched_timeout_ms : 500;
 
 	pipe->fence_context = dma_fence_context_alloc(1);
 	spin_lock_init(&pipe->fence_lock);
 
 	INIT_WORK(&pipe->recover_work, lima_sched_recover_work);
 
-	वापस drm_sched_init(&pipe->base, &lima_sched_ops, 1,
-			      lima_job_hang_limit, msecs_to_jअगरfies(समयout),
-			      शून्य, name);
-पूर्ण
+	return drm_sched_init(&pipe->base, &lima_sched_ops, 1,
+			      lima_job_hang_limit, msecs_to_jiffies(timeout),
+			      NULL, name);
+}
 
-व्योम lima_sched_pipe_fini(काष्ठा lima_sched_pipe *pipe)
-अणु
+void lima_sched_pipe_fini(struct lima_sched_pipe *pipe)
+{
 	drm_sched_fini(&pipe->base);
-पूर्ण
+}
 
-व्योम lima_sched_pipe_task_करोne(काष्ठा lima_sched_pipe *pipe)
-अणु
-	काष्ठा lima_sched_task *task = pipe->current_task;
-	काष्ठा lima_device *ldev = pipe->ldev;
+void lima_sched_pipe_task_done(struct lima_sched_pipe *pipe)
+{
+	struct lima_sched_task *task = pipe->current_task;
+	struct lima_device *ldev = pipe->ldev;
 
-	अगर (pipe->error) अणु
-		अगर (task && task->recoverable)
+	if (pipe->error) {
+		if (task && task->recoverable)
 			schedule_work(&pipe->recover_work);
-		अन्यथा
+		else
 			drm_sched_fault(&pipe->base);
-	पूर्ण अन्यथा अणु
+	} else {
 		pipe->task_fini(pipe);
-		dma_fence_संकेत(task->fence);
+		dma_fence_signal(task->fence);
 
 		lima_pm_idle(ldev);
-	पूर्ण
-पूर्ण
+	}
+}

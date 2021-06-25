@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/spi/spi.h>
-#समावेश "fbtft.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/gpio/consumer.h>
+#include <linux/spi/spi.h>
+#include "fbtft.h"
 
-पूर्णांक fbtft_ग_लिखो_spi(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा spi_transfer t = अणु
+int fbtft_write_spi(struct fbtft_par *par, void *buf, size_t len)
+{
+	struct spi_transfer t = {
 		.tx_buf = buf,
 		.len = len,
-	पूर्ण;
-	काष्ठा spi_message m;
+	};
+	struct spi_message m;
 
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	अगर (!par->spi) अणु
+	if (!par->spi) {
 		dev_err(par->info->device,
 			"%s: par->spi is unexpectedly NULL\n", __func__);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
-	वापस spi_sync(par->spi, &m);
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_spi);
+	return spi_sync(par->spi, &m);
+}
+EXPORT_SYMBOL(fbtft_write_spi);
 
 /**
- * fbtft_ग_लिखो_spi_emulate_9() - ग_लिखो SPI emulating 9-bit
+ * fbtft_write_spi_emulate_9() - write SPI emulating 9-bit
  * @par: Driver data
- * @buf: Buffer to ग_लिखो
- * @len: Length of buffer (must be भागisible by 8)
+ * @buf: Buffer to write
+ * @len: Length of buffer (must be divisible by 8)
  *
  * When 9-bit SPI is not available, this function can be used to emulate that.
- * par->extra must hold a transक्रमmation buffer used क्रम transfer.
+ * par->extra must hold a transformation buffer used for transfer.
  */
-पूर्णांक fbtft_ग_लिखो_spi_emulate_9(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
+int fbtft_write_spi_emulate_9(struct fbtft_par *par, void *buf, size_t len)
+{
 	u16 *src = buf;
 	u8 *dst = par->extra;
-	माप_प्रकार size = len / 2;
-	माप_प्रकार added = 0;
-	पूर्णांक bits, i, j;
-	u64 val, dc, पंचांगp;
+	size_t size = len / 2;
+	size_t added = 0;
+	int bits, i, j;
+	u64 val, dc, tmp;
 
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	अगर (!par->extra) अणु
+	if (!par->extra) {
 		dev_err(par->info->device, "%s: error: par->extra is NULL\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((len % 8) != 0) अणु
+		return -EINVAL;
+	}
+	if ((len % 8) != 0) {
 		dev_err(par->info->device,
 			"error: len=%zu must be divisible by 8\n", len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < size; i += 8) अणु
-		पंचांगp = 0;
+	for (i = 0; i < size; i += 8) {
+		tmp = 0;
 		bits = 63;
-		क्रम (j = 0; j < 7; j++) अणु
+		for (j = 0; j < 7; j++) {
 			dc = (*src & 0x0100) ? 1 : 0;
 			val = *src & 0x00FF;
-			पंचांगp |= dc << bits;
+			tmp |= dc << bits;
 			bits -= 8;
-			पंचांगp |= val << bits--;
+			tmp |= val << bits--;
 			src++;
-		पूर्ण
-		पंचांगp |= ((*src & 0x0100) ? 1 : 0);
-		*(__be64 *)dst = cpu_to_be64(पंचांगp);
+		}
+		tmp |= ((*src & 0x0100) ? 1 : 0);
+		*(__be64 *)dst = cpu_to_be64(tmp);
 		dst += 8;
 		*dst++ = (u8)(*src++ & 0x00FF);
 		added++;
-	पूर्ण
+	}
 
-	वापस spi_ग_लिखो(par->spi, par->extra, size + added);
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_spi_emulate_9);
+	return spi_write(par->spi, par->extra, size + added);
+}
+EXPORT_SYMBOL(fbtft_write_spi_emulate_9);
 
-पूर्णांक fbtft_पढ़ो_spi(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	u8 txbuf[32] = अणु 0, पूर्ण;
-	काष्ठा spi_transfer	t = अणु
+int fbtft_read_spi(struct fbtft_par *par, void *buf, size_t len)
+{
+	int ret;
+	u8 txbuf[32] = { 0, };
+	struct spi_transfer	t = {
 			.speed_hz = 2000000,
 			.rx_buf		= buf,
 			.len		= len,
-		पूर्ण;
-	काष्ठा spi_message	m;
+		};
+	struct spi_message	m;
 
-	अगर (!par->spi) अणु
+	if (!par->spi) {
 		dev_err(par->info->device,
 			"%s: par->spi is unexpectedly NULL\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (par->startbyte) अणु
-		अगर (len > 32) अणु
+	if (par->startbyte) {
+		if (len > 32) {
 			dev_err(par->info->device,
 				"len=%zu can't be larger than 32 when using 'startbyte'\n",
 				len);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		txbuf[0] = par->startbyte | 0x3;
 		t.tx_buf = txbuf;
 		fbtft_par_dbg_hex(DEBUG_READ, par, par->info->device, u8,
 				  txbuf, len, "%s(len=%zu) txbuf => ",
 				  __func__, len);
-	पूर्ण
+	}
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
@@ -120,118 +119,118 @@ EXPORT_SYMBOL(fbtft_ग_लिखो_spi_emulate_9);
 	fbtft_par_dbg_hex(DEBUG_READ, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu) buf <= ", __func__, len);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(fbtft_पढ़ो_spi);
+	return ret;
+}
+EXPORT_SYMBOL(fbtft_read_spi);
 
 /*
  * Optimized use of gpiolib is twice as fast as no optimization
- * only one driver can use the optimized version at a समय
+ * only one driver can use the optimized version at a time
  */
-पूर्णांक fbtft_ग_लिखो_gpio8_wr(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
+int fbtft_write_gpio8_wr(struct fbtft_par *par, void *buf, size_t len)
+{
 	u8 data;
-	पूर्णांक i;
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
-	अटल u8 prev_data;
-#पूर्ण_अगर
+	int i;
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+	static u8 prev_data;
+#endif
 
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	जबतक (len--) अणु
+	while (len--) {
 		data = *(u8 *)buf;
 
-		/* Start writing by pulling करोwn /WR */
+		/* Start writing by pulling down /WR */
 		gpiod_set_value(par->gpio.wr, 0);
 
 		/* Set data */
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
-		अगर (data == prev_data) अणु
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+		if (data == prev_data) {
 			gpiod_set_value(par->gpio.wr, 0); /* used as delay */
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < 8; i++) अणु
-				अगर ((data & 1) != (prev_data & 1))
+		} else {
+			for (i = 0; i < 8; i++) {
+				if ((data & 1) != (prev_data & 1))
 					gpiod_set_value(par->gpio.db[i],
 							data & 1);
 				data >>= 1;
 				prev_data >>= 1;
-			पूर्ण
-		पूर्ण
-#अन्यथा
-		क्रम (i = 0; i < 8; i++) अणु
+			}
+		}
+#else
+		for (i = 0; i < 8; i++) {
 			gpiod_set_value(par->gpio.db[i], data & 1);
 			data >>= 1;
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
 		/* Pullup /WR */
 		gpiod_set_value(par->gpio.wr, 1);
 
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
 		prev_data = *(u8 *)buf;
-#पूर्ण_अगर
+#endif
 		buf++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_gpio8_wr);
+	return 0;
+}
+EXPORT_SYMBOL(fbtft_write_gpio8_wr);
 
-पूर्णांक fbtft_ग_लिखो_gpio16_wr(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
+int fbtft_write_gpio16_wr(struct fbtft_par *par, void *buf, size_t len)
+{
 	u16 data;
-	पूर्णांक i;
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
-	अटल u16 prev_data;
-#पूर्ण_अगर
+	int i;
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+	static u16 prev_data;
+#endif
 
 	fbtft_par_dbg_hex(DEBUG_WRITE, par, par->info->device, u8, buf, len,
 			  "%s(len=%zu): ", __func__, len);
 
-	जबतक (len) अणु
+	while (len) {
 		data = *(u16 *)buf;
 
-		/* Start writing by pulling करोwn /WR */
+		/* Start writing by pulling down /WR */
 		gpiod_set_value(par->gpio.wr, 0);
 
 		/* Set data */
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
-		अगर (data == prev_data) अणु
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+		if (data == prev_data) {
 			gpiod_set_value(par->gpio.wr, 0); /* used as delay */
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < 16; i++) अणु
-				अगर ((data & 1) != (prev_data & 1))
+		} else {
+			for (i = 0; i < 16; i++) {
+				if ((data & 1) != (prev_data & 1))
 					gpiod_set_value(par->gpio.db[i],
 							data & 1);
 				data >>= 1;
 				prev_data >>= 1;
-			पूर्ण
-		पूर्ण
-#अन्यथा
-		क्रम (i = 0; i < 16; i++) अणु
+			}
+		}
+#else
+		for (i = 0; i < 16; i++) {
 			gpiod_set_value(par->gpio.db[i], data & 1);
 			data >>= 1;
-		पूर्ण
-#पूर्ण_अगर
+		}
+#endif
 
 		/* Pullup /WR */
 		gpiod_set_value(par->gpio.wr, 1);
 
-#अगर_अघोषित DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
+#ifndef DO_NOT_OPTIMIZE_FBTFT_WRITE_GPIO
 		prev_data = *(u16 *)buf;
-#पूर्ण_अगर
+#endif
 		buf += 2;
 		len -= 2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_gpio16_wr);
+	return 0;
+}
+EXPORT_SYMBOL(fbtft_write_gpio16_wr);
 
-पूर्णांक fbtft_ग_लिखो_gpio16_wr_latched(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len)
-अणु
+int fbtft_write_gpio16_wr_latched(struct fbtft_par *par, void *buf, size_t len)
+{
 	dev_err(par->info->device, "%s: function not implemented\n", __func__);
-	वापस -1;
-पूर्ण
-EXPORT_SYMBOL(fbtft_ग_लिखो_gpio16_wr_latched);
+	return -1;
+}
+EXPORT_SYMBOL(fbtft_write_gpio16_wr_latched);

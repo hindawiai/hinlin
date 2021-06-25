@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_MLME_C_
+#define _RTW_MLME_C_
 
-#समावेश <linux/etherdevice.h>
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
-#समावेश <hal_btcoex.h>
-#समावेश <linux/jअगरfies.h>
+#include <linux/etherdevice.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
+#include <hal_btcoex.h>
+#include <linux/jiffies.h>
 
-पूर्णांक	rtw_init_mlme_priv(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक	i;
+int	rtw_init_mlme_priv(struct adapter *padapter)
+{
+	int	i;
 	u8 *pbuf;
-	काष्ठा wlan_network	*pnetwork;
-	काष्ठा mlme_priv	*pmlmepriv = &padapter->mlmepriv;
-	पूर्णांक	res = _SUCCESS;
+	struct wlan_network	*pnetwork;
+	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+	int	res = _SUCCESS;
 
 	pmlmepriv->nic_hdl = (u8 *)padapter;
 
-	pmlmepriv->pscanned = शून्य;
+	pmlmepriv->pscanned = NULL;
 	pmlmepriv->fw_state = WIFI_STATION_STATE; /*  Must sync with rtw_wdev_alloc() */
-	/*  wdev->अगरtype = NL80211_IFTYPE_STATION */
-	pmlmepriv->cur_network.network.Infraकाष्ठाureMode = Ndis802_11AutoUnknown;
-	pmlmepriv->scan_mode = SCAN_ACTIVE;/*  1: active, 0: pasive. Maybe someday we should नाम this varable to "active_mode" (Jeff) */
+	/*  wdev->iftype = NL80211_IFTYPE_STATION */
+	pmlmepriv->cur_network.network.InfrastructureMode = Ndis802_11AutoUnknown;
+	pmlmepriv->scan_mode = SCAN_ACTIVE;/*  1: active, 0: pasive. Maybe someday we should rename this varable to "active_mode" (Jeff) */
 
 	spin_lock_init(&pmlmepriv->lock);
-	_rtw_init_queue(&pmlmepriv->मुक्त_bss_pool);
+	_rtw_init_queue(&pmlmepriv->free_bss_pool);
 	_rtw_init_queue(&pmlmepriv->scanned_queue);
 
 	set_scanned_network_val(pmlmepriv, 0);
 
-	स_रखो(&pmlmepriv->assoc_ssid, 0, माप(काष्ठा ndis_802_11_ssid));
+	memset(&pmlmepriv->assoc_ssid, 0, sizeof(struct ndis_802_11_ssid));
 
-	pbuf = vzalloc(array_size(MAX_BSS_CNT, माप(काष्ठा wlan_network)));
+	pbuf = vzalloc(array_size(MAX_BSS_CNT, sizeof(struct wlan_network)));
 
-	अगर (!pbuf) अणु
+	if (!pbuf) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
-	pmlmepriv->मुक्त_bss_buf = pbuf;
+		goto exit;
+	}
+	pmlmepriv->free_bss_buf = pbuf;
 
-	pnetwork = (काष्ठा wlan_network *)pbuf;
+	pnetwork = (struct wlan_network *)pbuf;
 
-	क्रम (i = 0; i < MAX_BSS_CNT; i++) अणु
+	for (i = 0; i < MAX_BSS_CNT; i++) {
 		INIT_LIST_HEAD(&pnetwork->list);
 
-		list_add_tail(&pnetwork->list, &pmlmepriv->मुक्त_bss_pool.queue);
+		list_add_tail(&pnetwork->list, &pmlmepriv->free_bss_pool.queue);
 
 		pnetwork++;
-	पूर्ण
+	}
 
-	/* allocate DMA-able/Non-Page memory क्रम cmd_buf and rsp_buf */
+	/* allocate DMA-able/Non-Page memory for cmd_buf and rsp_buf */
 
 	rtw_clear_scan_deny(padapter);
 
-	#घोषणा RTW_ROAM_SCAN_RESULT_EXP_MS 5000
-	#घोषणा RTW_ROAM_RSSI_DIFF_TH 10
-	#घोषणा RTW_ROAM_SCAN_INTERVAL_MS 10000
+	#define RTW_ROAM_SCAN_RESULT_EXP_MS 5000
+	#define RTW_ROAM_RSSI_DIFF_TH 10
+	#define RTW_ROAM_SCAN_INTERVAL_MS 10000
 
 	pmlmepriv->roam_flags = 0
 		| RTW_ROAM_ON_EXPIRED
@@ -69,590 +68,590 @@
 		;
 
 	pmlmepriv->roam_scanr_exp_ms = RTW_ROAM_SCAN_RESULT_EXP_MS;
-	pmlmepriv->roam_rssi_dअगरf_th = RTW_ROAM_RSSI_DIFF_TH;
-	pmlmepriv->roam_scan_पूर्णांक_ms = RTW_ROAM_SCAN_INTERVAL_MS;
+	pmlmepriv->roam_rssi_diff_th = RTW_ROAM_RSSI_DIFF_TH;
+	pmlmepriv->roam_scan_int_ms = RTW_ROAM_SCAN_INTERVAL_MS;
 
-	rtw_init_mlme_समयr(padapter);
+	rtw_init_mlme_timer(padapter);
 
-निकास:
+exit:
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम rtw_मुक्त_mlme_ie_data(u8 **ppie, u32 *plen)
-अणु
-	अगर (*ppie) अणु
-		kमुक्त(*ppie);
+static void rtw_free_mlme_ie_data(u8 **ppie, u32 *plen)
+{
+	if (*ppie) {
+		kfree(*ppie);
 		*plen = 0;
-		*ppie = शून्य;
-	पूर्ण
-पूर्ण
+		*ppie = NULL;
+	}
+}
 
-व्योम rtw_मुक्त_mlme_priv_ie_data(काष्ठा mlme_priv *pmlmepriv)
-अणु
-	rtw_buf_मुक्त(&pmlmepriv->assoc_req, &pmlmepriv->assoc_req_len);
-	rtw_buf_मुक्त(&pmlmepriv->assoc_rsp, &pmlmepriv->assoc_rsp_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->wps_beacon_ie, &pmlmepriv->wps_beacon_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->wps_probe_req_ie, &pmlmepriv->wps_probe_req_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->wps_probe_resp_ie, &pmlmepriv->wps_probe_resp_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->wps_assoc_resp_ie, &pmlmepriv->wps_assoc_resp_ie_len);
+void rtw_free_mlme_priv_ie_data(struct mlme_priv *pmlmepriv)
+{
+	rtw_buf_free(&pmlmepriv->assoc_req, &pmlmepriv->assoc_req_len);
+	rtw_buf_free(&pmlmepriv->assoc_rsp, &pmlmepriv->assoc_rsp_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->wps_beacon_ie, &pmlmepriv->wps_beacon_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->wps_probe_req_ie, &pmlmepriv->wps_probe_req_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->wps_probe_resp_ie, &pmlmepriv->wps_probe_resp_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->wps_assoc_resp_ie, &pmlmepriv->wps_assoc_resp_ie_len);
 
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->p2p_beacon_ie, &pmlmepriv->p2p_beacon_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->p2p_probe_req_ie, &pmlmepriv->p2p_probe_req_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->p2p_probe_resp_ie, &pmlmepriv->p2p_probe_resp_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->p2p_go_probe_resp_ie, &pmlmepriv->p2p_go_probe_resp_ie_len);
-	rtw_मुक्त_mlme_ie_data(&pmlmepriv->p2p_assoc_req_ie, &pmlmepriv->p2p_assoc_req_ie_len);
-पूर्ण
+	rtw_free_mlme_ie_data(&pmlmepriv->p2p_beacon_ie, &pmlmepriv->p2p_beacon_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->p2p_probe_req_ie, &pmlmepriv->p2p_probe_req_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->p2p_probe_resp_ie, &pmlmepriv->p2p_probe_resp_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->p2p_go_probe_resp_ie, &pmlmepriv->p2p_go_probe_resp_ie_len);
+	rtw_free_mlme_ie_data(&pmlmepriv->p2p_assoc_req_ie, &pmlmepriv->p2p_assoc_req_ie_len);
+}
 
-व्योम _rtw_मुक्त_mlme_priv(काष्ठा mlme_priv *pmlmepriv)
-अणु
-	अगर (pmlmepriv) अणु
-		rtw_मुक्त_mlme_priv_ie_data(pmlmepriv);
-		vमुक्त(pmlmepriv->मुक्त_bss_buf);
-	पूर्ण
-पूर्ण
+void _rtw_free_mlme_priv(struct mlme_priv *pmlmepriv)
+{
+	if (pmlmepriv) {
+		rtw_free_mlme_priv_ie_data(pmlmepriv);
+		vfree(pmlmepriv->free_bss_buf);
+	}
+}
 
 /*
-काष्ठा	wlan_network *_rtw_dequeue_network(काष्ठा __queue *queue)
-अणु
+struct	wlan_network *_rtw_dequeue_network(struct __queue *queue)
+{
 	_irqL irqL;
 
-	काष्ठा wlan_network *pnetwork;
+	struct wlan_network *pnetwork;
 
 	spin_lock_bh(&queue->lock);
 
-	अगर (list_empty(&queue->queue))
+	if (list_empty(&queue->queue))
 
-		pnetwork = शून्य;
+		pnetwork = NULL;
 
-	अन्यथा
-	अणु
-		pnetwork = container_of(get_next(&queue->queue), काष्ठा wlan_network, list);
+	else
+	{
+		pnetwork = container_of(get_next(&queue->queue), struct wlan_network, list);
 
 		list_del_init(&(pnetwork->list));
-	पूर्ण
+	}
 
 	spin_unlock_bh(&queue->lock);
 
-	वापस pnetwork;
-पूर्ण
+	return pnetwork;
+}
 */
 
-काष्ठा	wlan_network *rtw_alloc_network(काष्ठा	mlme_priv *pmlmepriv)
-अणु
-	काष्ठा	wlan_network	*pnetwork;
-	काष्ठा __queue *मुक्त_queue = &pmlmepriv->मुक्त_bss_pool;
-	काष्ठा list_head *plist = शून्य;
+struct	wlan_network *rtw_alloc_network(struct	mlme_priv *pmlmepriv)
+{
+	struct	wlan_network	*pnetwork;
+	struct __queue *free_queue = &pmlmepriv->free_bss_pool;
+	struct list_head *plist = NULL;
 
-	spin_lock_bh(&मुक्त_queue->lock);
+	spin_lock_bh(&free_queue->lock);
 
-	अगर (list_empty(&मुक्त_queue->queue)) अणु
-		pnetwork = शून्य;
-		जाओ निकास;
-	पूर्ण
-	plist = get_next(&(मुक्त_queue->queue));
+	if (list_empty(&free_queue->queue)) {
+		pnetwork = NULL;
+		goto exit;
+	}
+	plist = get_next(&(free_queue->queue));
 
-	pnetwork = container_of(plist, काष्ठा wlan_network, list);
+	pnetwork = container_of(plist, struct wlan_network, list);
 
 	list_del_init(&pnetwork->list);
 
 	pnetwork->network_type = 0;
 	pnetwork->fixed = false;
-	pnetwork->last_scanned = jअगरfies;
+	pnetwork->last_scanned = jiffies;
 	pnetwork->aid = 0;
 	pnetwork->join_res = 0;
 
 	pmlmepriv->num_of_scanned++;
 
-निकास:
-	spin_unlock_bh(&मुक्त_queue->lock);
+exit:
+	spin_unlock_bh(&free_queue->lock);
 
-	वापस pnetwork;
-पूर्ण
+	return pnetwork;
+}
 
-व्योम _rtw_मुक्त_network(काष्ठा	mlme_priv *pmlmepriv, काष्ठा wlan_network *pnetwork, u8 isमुक्तall)
-अणु
-	अचिन्हित पूर्णांक delta_समय;
-	u32 lअगरeसमय = SCANQUEUE_LIFETIME;
+void _rtw_free_network(struct	mlme_priv *pmlmepriv, struct wlan_network *pnetwork, u8 isfreeall)
+{
+	unsigned int delta_time;
+	u32 lifetime = SCANQUEUE_LIFETIME;
 /* 	_irqL irqL; */
-	काष्ठा __queue *मुक्त_queue = &(pmlmepriv->मुक्त_bss_pool);
+	struct __queue *free_queue = &(pmlmepriv->free_bss_pool);
 
-	अगर (!pnetwork)
-		वापस;
+	if (!pnetwork)
+		return;
 
-	अगर (pnetwork->fixed)
-		वापस;
+	if (pnetwork->fixed)
+		return;
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true) ||
+	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true) ||
 		(check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true))
-		lअगरeसमय = 1;
+		lifetime = 1;
 
-	अगर (!isमुक्तall) अणु
-		delta_समय = jअगरfies_to_msecs(jअगरfies - pnetwork->last_scanned);
-		अगर (delta_समय < lअगरeसमय)/*  unit:msec */
-			वापस;
-	पूर्ण
+	if (!isfreeall) {
+		delta_time = jiffies_to_msecs(jiffies - pnetwork->last_scanned);
+		if (delta_time < lifetime)/*  unit:msec */
+			return;
+	}
 
-	spin_lock_bh(&मुक्त_queue->lock);
-
-	list_del_init(&(pnetwork->list));
-
-	list_add_tail(&(pnetwork->list), &(मुक्त_queue->queue));
-
-	pmlmepriv->num_of_scanned--;
-
-	spin_unlock_bh(&मुक्त_queue->lock);
-पूर्ण
-
-व्योम _rtw_मुक्त_network_nolock(काष्ठा	mlme_priv *pmlmepriv, काष्ठा wlan_network *pnetwork)
-अणु
-
-	काष्ठा __queue *मुक्त_queue = &(pmlmepriv->मुक्त_bss_pool);
-
-	अगर (!pnetwork)
-		वापस;
-
-	अगर (pnetwork->fixed)
-		वापस;
-
-	/* spin_lock_irqsave(&मुक्त_queue->lock, irqL); */
+	spin_lock_bh(&free_queue->lock);
 
 	list_del_init(&(pnetwork->list));
 
-	list_add_tail(&(pnetwork->list), get_list_head(मुक्त_queue));
+	list_add_tail(&(pnetwork->list), &(free_queue->queue));
 
 	pmlmepriv->num_of_scanned--;
 
-	/* spin_unlock_irqrestore(&मुक्त_queue->lock, irqL); */
-पूर्ण
+	spin_unlock_bh(&free_queue->lock);
+}
+
+void _rtw_free_network_nolock(struct	mlme_priv *pmlmepriv, struct wlan_network *pnetwork)
+{
+
+	struct __queue *free_queue = &(pmlmepriv->free_bss_pool);
+
+	if (!pnetwork)
+		return;
+
+	if (pnetwork->fixed)
+		return;
+
+	/* spin_lock_irqsave(&free_queue->lock, irqL); */
+
+	list_del_init(&(pnetwork->list));
+
+	list_add_tail(&(pnetwork->list), get_list_head(free_queue));
+
+	pmlmepriv->num_of_scanned--;
+
+	/* spin_unlock_irqrestore(&free_queue->lock, irqL); */
+}
 
 /*
-	वापस the wlan_network with the matching addr
+	return the wlan_network with the matching addr
 
-	Shall be called under atomic context... to aव्योम possible racing condition...
+	Shall be called under atomic context... to avoid possible racing condition...
 */
-काष्ठा wlan_network *_rtw_find_network(काष्ठा __queue *scanned_queue, u8 *addr)
-अणु
-	काष्ठा list_head	*phead, *plist;
-	काष्ठा	wlan_network *pnetwork = शून्य;
-	u8 zero_addr[ETH_ALEN] = अणु0, 0, 0, 0, 0, 0पूर्ण;
+struct wlan_network *_rtw_find_network(struct __queue *scanned_queue, u8 *addr)
+{
+	struct list_head	*phead, *plist;
+	struct	wlan_network *pnetwork = NULL;
+	u8 zero_addr[ETH_ALEN] = {0, 0, 0, 0, 0, 0};
 
-	अगर (!स_भेद(zero_addr, addr, ETH_ALEN)) अणु
-		pnetwork = शून्य;
-		जाओ निकास;
-	पूर्ण
+	if (!memcmp(zero_addr, addr, ETH_ALEN)) {
+		pnetwork = NULL;
+		goto exit;
+	}
 
 	/* spin_lock_bh(&scanned_queue->lock); */
 
 	phead = get_list_head(scanned_queue);
 	plist = get_next(phead);
 
-	जबतक (plist != phead) अणु
-		pnetwork = container_of(plist, काष्ठा wlan_network, list);
+	while (plist != phead) {
+		pnetwork = container_of(plist, struct wlan_network, list);
 
-		अगर (!स_भेद(addr, pnetwork->network.MacAddress, ETH_ALEN))
-			अवरोध;
+		if (!memcmp(addr, pnetwork->network.MacAddress, ETH_ALEN))
+			break;
 
 		plist = get_next(plist);
-	पूर्ण
+	}
 
-	अगर (plist == phead)
-		pnetwork = शून्य;
+	if (plist == phead)
+		pnetwork = NULL;
 
 	/* spin_unlock_bh(&scanned_queue->lock); */
 
-निकास:
-	वापस pnetwork;
-पूर्ण
+exit:
+	return pnetwork;
+}
 
-व्योम rtw_मुक्त_network_queue(काष्ठा adapter *padapter, u8 isमुक्तall)
-अणु
-	काष्ठा list_head *phead, *plist;
-	काष्ठा wlan_network *pnetwork;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा __queue *scanned_queue = &pmlmepriv->scanned_queue;
+void rtw_free_network_queue(struct adapter *padapter, u8 isfreeall)
+{
+	struct list_head *phead, *plist;
+	struct wlan_network *pnetwork;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct __queue *scanned_queue = &pmlmepriv->scanned_queue;
 
 	spin_lock_bh(&scanned_queue->lock);
 
 	phead = get_list_head(scanned_queue);
 	plist = get_next(phead);
 
-	जबतक (phead != plist) अणु
+	while (phead != plist) {
 
-		pnetwork = container_of(plist, काष्ठा wlan_network, list);
+		pnetwork = container_of(plist, struct wlan_network, list);
 
 		plist = get_next(plist);
 
-		_rtw_मुक्त_network(pmlmepriv, pnetwork, isमुक्तall);
+		_rtw_free_network(pmlmepriv, pnetwork, isfreeall);
 
-	पूर्ण
+	}
 
 	spin_unlock_bh(&scanned_queue->lock);
-पूर्ण
+}
 
-चिन्हित पूर्णांक rtw_अगर_up(काष्ठा adapter *padapter)
-अणु
-	चिन्हित पूर्णांक res;
+signed int rtw_if_up(struct adapter *padapter)
+{
+	signed int res;
 
-	अगर (padapter->bDriverStopped || padapter->bSurpriseRemoved ||
+	if (padapter->bDriverStopped || padapter->bSurpriseRemoved ||
 		(check_fwstate(&padapter->mlmepriv, _FW_LINKED) == false))
 		res = false;
-	अन्यथा
+	else
 		res =  true;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-व्योम rtw_generate_अक्रमom_ibss(u8 *pibss)
-अणु
-	अचिन्हित दीर्घ curसमय = jअगरfies;
+void rtw_generate_random_ibss(u8 *pibss)
+{
+	unsigned long curtime = jiffies;
 
 	pibss[0] = 0x02;  /* in ad-hoc mode bit1 must set to 1 */
 	pibss[1] = 0x11;
 	pibss[2] = 0x87;
-	pibss[3] = (u8)(curसमय & 0xff) ;/* p[0]; */
-	pibss[4] = (u8)((curसमय>>8) & 0xff) ;/* p[1]; */
-	pibss[5] = (u8)((curसमय>>16) & 0xff) ;/* p[2]; */
-पूर्ण
+	pibss[3] = (u8)(curtime & 0xff) ;/* p[0]; */
+	pibss[4] = (u8)((curtime>>8) & 0xff) ;/* p[1]; */
+	pibss[5] = (u8)((curtime>>16) & 0xff) ;/* p[2]; */
+}
 
 u8 *rtw_get_capability_from_ie(u8 *ie)
-अणु
-	वापस ie + 8 + 2;
-पूर्ण
+{
+	return ie + 8 + 2;
+}
 
-u16 rtw_get_capability(काष्ठा wlan_bssid_ex *bss)
-अणु
+u16 rtw_get_capability(struct wlan_bssid_ex *bss)
+{
 	__le16	val;
 
-	स_नकल((u8 *)&val, rtw_get_capability_from_ie(bss->IEs), 2);
+	memcpy((u8 *)&val, rtw_get_capability_from_ie(bss->IEs), 2);
 
-	वापस le16_to_cpu(val);
-पूर्ण
+	return le16_to_cpu(val);
+}
 
-u8 *rtw_get_beacon_पूर्णांकerval_from_ie(u8 *ie)
-अणु
-	वापस ie + 8;
-पूर्ण
+u8 *rtw_get_beacon_interval_from_ie(u8 *ie)
+{
+	return ie + 8;
+}
 
-व्योम rtw_मुक्त_mlme_priv(काष्ठा mlme_priv *pmlmepriv)
-अणु
-	_rtw_मुक्त_mlme_priv(pmlmepriv);
-पूर्ण
+void rtw_free_mlme_priv(struct mlme_priv *pmlmepriv)
+{
+	_rtw_free_mlme_priv(pmlmepriv);
+}
 
 /*
-अटल काष्ठा	wlan_network *rtw_dequeue_network(काष्ठा __queue *queue)
-अणु
-	काष्ठा wlan_network *pnetwork;
+static struct	wlan_network *rtw_dequeue_network(struct __queue *queue)
+{
+	struct wlan_network *pnetwork;
 
 	pnetwork = _rtw_dequeue_network(queue);
-	वापस pnetwork;
-पूर्ण
+	return pnetwork;
+}
 */
 
-व्योम rtw_मुक्त_network_nolock(काष्ठा adapter *padapter, काष्ठा wlan_network *pnetwork);
-व्योम rtw_मुक्त_network_nolock(काष्ठा adapter *padapter, काष्ठा wlan_network *pnetwork)
-अणु
-	_rtw_मुक्त_network_nolock(&(padapter->mlmepriv), pnetwork);
+void rtw_free_network_nolock(struct adapter *padapter, struct wlan_network *pnetwork);
+void rtw_free_network_nolock(struct adapter *padapter, struct wlan_network *pnetwork)
+{
+	_rtw_free_network_nolock(&(padapter->mlmepriv), pnetwork);
 	rtw_cfg80211_unlink_bss(padapter, pnetwork);
-पूर्ण
+}
 
 /*
-	वापस the wlan_network with the matching addr
+	return the wlan_network with the matching addr
 
-	Shall be called under atomic context... to aव्योम possible racing condition...
+	Shall be called under atomic context... to avoid possible racing condition...
 */
-काष्ठा	wlan_network *rtw_find_network(काष्ठा __queue *scanned_queue, u8 *addr)
-अणु
-	काष्ठा	wlan_network *pnetwork = _rtw_find_network(scanned_queue, addr);
+struct	wlan_network *rtw_find_network(struct __queue *scanned_queue, u8 *addr)
+{
+	struct	wlan_network *pnetwork = _rtw_find_network(scanned_queue, addr);
 
-	वापस pnetwork;
-पूर्ण
+	return pnetwork;
+}
 
-पूर्णांक rtw_is_same_ibss(काष्ठा adapter *adapter, काष्ठा wlan_network *pnetwork)
-अणु
-	पूर्णांक ret = true;
-	काष्ठा security_priv *psecuritypriv = &adapter->securitypriv;
+int rtw_is_same_ibss(struct adapter *adapter, struct wlan_network *pnetwork)
+{
+	int ret = true;
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
 
-	अगर ((psecuritypriv->करोt11PrivacyAlgrthm != _NO_PRIVACY_) &&
+	if ((psecuritypriv->dot11PrivacyAlgrthm != _NO_PRIVACY_) &&
 		    (pnetwork->network.Privacy == 0))
 		ret = false;
-	अन्यथा अगर ((psecuritypriv->करोt11PrivacyAlgrthm == _NO_PRIVACY_) &&
+	else if ((psecuritypriv->dot11PrivacyAlgrthm == _NO_PRIVACY_) &&
 		 (pnetwork->network.Privacy == 1))
 		ret = false;
-	अन्यथा
+	else
 		ret = true;
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अंतरभूत पूर्णांक is_same_ess(काष्ठा wlan_bssid_ex *a, काष्ठा wlan_bssid_ex *b)
-अणु
-	वापस (a->Ssid.SsidLength == b->Ssid.SsidLength)
-		&&  !स_भेद(a->Ssid.Ssid, b->Ssid.Ssid, a->Ssid.SsidLength);
-पूर्ण
+inline int is_same_ess(struct wlan_bssid_ex *a, struct wlan_bssid_ex *b)
+{
+	return (a->Ssid.SsidLength == b->Ssid.SsidLength)
+		&&  !memcmp(a->Ssid.Ssid, b->Ssid.Ssid, a->Ssid.SsidLength);
+}
 
-पूर्णांक is_same_network(काष्ठा wlan_bssid_ex *src, काष्ठा wlan_bssid_ex *dst, u8 feature)
-अणु
+int is_same_network(struct wlan_bssid_ex *src, struct wlan_bssid_ex *dst, u8 feature)
+{
 	u16 s_cap, d_cap;
-	__le16 पंचांगps, पंचांगpd;
+	__le16 tmps, tmpd;
 
-	अगर (rtw_bug_check(dst, src, &s_cap, &d_cap) == false)
-			वापस false;
+	if (rtw_bug_check(dst, src, &s_cap, &d_cap) == false)
+			return false;
 
-	स_नकल((u8 *)&पंचांगps, rtw_get_capability_from_ie(src->IEs), 2);
-	स_नकल((u8 *)&पंचांगpd, rtw_get_capability_from_ie(dst->IEs), 2);
+	memcpy((u8 *)&tmps, rtw_get_capability_from_ie(src->IEs), 2);
+	memcpy((u8 *)&tmpd, rtw_get_capability_from_ie(dst->IEs), 2);
 
-	s_cap = le16_to_cpu(पंचांगps);
-	d_cap = le16_to_cpu(पंचांगpd);
+	s_cap = le16_to_cpu(tmps);
+	d_cap = le16_to_cpu(tmpd);
 
-	वापस (src->Ssid.SsidLength == dst->Ssid.SsidLength) &&
+	return (src->Ssid.SsidLength == dst->Ssid.SsidLength) &&
 		/* 	(src->Configuration.DSConfig == dst->Configuration.DSConfig) && */
-			((!स_भेद(src->MacAddress, dst->MacAddress, ETH_ALEN))) &&
-			((!स_भेद(src->Ssid.Ssid, dst->Ssid.Ssid, src->Ssid.SsidLength))) &&
+			((!memcmp(src->MacAddress, dst->MacAddress, ETH_ALEN))) &&
+			((!memcmp(src->Ssid.Ssid, dst->Ssid.Ssid, src->Ssid.SsidLength))) &&
 			((s_cap & WLAN_CAPABILITY_IBSS) ==
 			(d_cap & WLAN_CAPABILITY_IBSS)) &&
 			((s_cap & WLAN_CAPABILITY_ESS) ==
 			(d_cap & WLAN_CAPABILITY_ESS));
 
-पूर्ण
+}
 
-काष्ठा wlan_network *_rtw_find_same_network(काष्ठा __queue *scanned_queue, काष्ठा wlan_network *network)
-अणु
-	काष्ठा list_head *phead, *plist;
-	काष्ठा wlan_network *found = शून्य;
+struct wlan_network *_rtw_find_same_network(struct __queue *scanned_queue, struct wlan_network *network)
+{
+	struct list_head *phead, *plist;
+	struct wlan_network *found = NULL;
 
 	phead = get_list_head(scanned_queue);
 	plist = get_next(phead);
 
-	जबतक (plist != phead) अणु
-		found = container_of(plist, काष्ठा wlan_network, list);
+	while (plist != phead) {
+		found = container_of(plist, struct wlan_network, list);
 
-		अगर (is_same_network(&network->network, &found->network, 0))
-			अवरोध;
+		if (is_same_network(&network->network, &found->network, 0))
+			break;
 
 		plist = get_next(plist);
-	पूर्ण
+	}
 
-	अगर (plist == phead)
-		found = शून्य;
+	if (plist == phead)
+		found = NULL;
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-काष्ठा	wlan_network	*rtw_get_oldest_wlan_network(काष्ठा __queue *scanned_queue)
-अणु
-	काष्ठा list_head	*plist, *phead;
+struct	wlan_network	*rtw_get_oldest_wlan_network(struct __queue *scanned_queue)
+{
+	struct list_head	*plist, *phead;
 
-	काष्ठा	wlan_network	*pwlan = शून्य;
-	काष्ठा	wlan_network	*oldest = शून्य;
+	struct	wlan_network	*pwlan = NULL;
+	struct	wlan_network	*oldest = NULL;
 
 	phead = get_list_head(scanned_queue);
 
 	plist = get_next(phead);
 
-	जबतक (1) अणु
+	while (1) {
 
-		अगर (phead == plist)
-			अवरोध;
+		if (phead == plist)
+			break;
 
-		pwlan = container_of(plist, काष्ठा wlan_network, list);
+		pwlan = container_of(plist, struct wlan_network, list);
 
-		अगर (!pwlan->fixed) अणु
-			अगर (oldest == शून्य || समय_after(oldest->last_scanned, pwlan->last_scanned))
+		if (!pwlan->fixed) {
+			if (oldest == NULL || time_after(oldest->last_scanned, pwlan->last_scanned))
 				oldest = pwlan;
-		पूर्ण
+		}
 
 		plist = get_next(plist);
-	पूर्ण
-	वापस oldest;
+	}
+	return oldest;
 
-पूर्ण
+}
 
-व्योम update_network(काष्ठा wlan_bssid_ex *dst, काष्ठा wlan_bssid_ex *src,
-	काष्ठा adapter *padapter, bool update_ie)
-अणु
-	दीर्घ rssi_ori = dst->Rssi;
+void update_network(struct wlan_bssid_ex *dst, struct wlan_bssid_ex *src,
+	struct adapter *padapter, bool update_ie)
+{
+	long rssi_ori = dst->Rssi;
 
 	u8 sq_smp = src->PhyInfo.SignalQuality;
 
 	u8 ss_final;
 	u8 sq_final;
-	दीर्घ rssi_final;
+	long rssi_final;
 
-	/* The rule below is 1/5 क्रम sample value, 4/5 क्रम history value */
-	अगर (check_fwstate(&padapter->mlmepriv, _FW_LINKED) && is_same_network(&(padapter->mlmepriv.cur_network.network), src, 0)) अणु
-		/* Take the recvpriv's value क्रम the connected AP*/
-		ss_final = padapter->recvpriv.संकेत_strength;
-		sq_final = padapter->recvpriv.संकेत_qual;
-		/* the rssi value here is undecorated, and will be used क्रम antenna भागersity */
-		अगर (sq_smp != 101) /* from the right channel */
+	/* The rule below is 1/5 for sample value, 4/5 for history value */
+	if (check_fwstate(&padapter->mlmepriv, _FW_LINKED) && is_same_network(&(padapter->mlmepriv.cur_network.network), src, 0)) {
+		/* Take the recvpriv's value for the connected AP*/
+		ss_final = padapter->recvpriv.signal_strength;
+		sq_final = padapter->recvpriv.signal_qual;
+		/* the rssi value here is undecorated, and will be used for antenna diversity */
+		if (sq_smp != 101) /* from the right channel */
 			rssi_final = (src->Rssi+dst->Rssi*4)/5;
-		अन्यथा
+		else
 			rssi_final = rssi_ori;
-	पूर्ण अन्यथा अणु
-		अगर (sq_smp != 101) अणु /* from the right channel */
+	} else {
+		if (sq_smp != 101) { /* from the right channel */
 			ss_final = ((u32)(src->PhyInfo.SignalStrength)+(u32)(dst->PhyInfo.SignalStrength)*4)/5;
 			sq_final = ((u32)(src->PhyInfo.SignalQuality)+(u32)(dst->PhyInfo.SignalQuality)*4)/5;
 			rssi_final = (src->Rssi+dst->Rssi*4)/5;
-		पूर्ण अन्यथा अणु
-			/* bss info not receiving from the right channel, use the original RX संकेत infos */
+		} else {
+			/* bss info not receiving from the right channel, use the original RX signal infos */
 			ss_final = dst->PhyInfo.SignalStrength;
 			sq_final = dst->PhyInfo.SignalQuality;
 			rssi_final = dst->Rssi;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	अगर (update_ie) अणु
+	if (update_ie) {
 		dst->Reserved[0] = src->Reserved[0];
 		dst->Reserved[1] = src->Reserved[1];
-		स_नकल((u8 *)dst, (u8 *)src, get_wlan_bssid_ex_sz(src));
-	पूर्ण
+		memcpy((u8 *)dst, (u8 *)src, get_wlan_bssid_ex_sz(src));
+	}
 
 	dst->PhyInfo.SignalStrength = ss_final;
 	dst->PhyInfo.SignalQuality = sq_final;
 	dst->Rssi = rssi_final;
-पूर्ण
+}
 
-अटल व्योम update_current_network(काष्ठा adapter *adapter, काष्ठा wlan_bssid_ex *pnetwork)
-अणु
-	काष्ठा	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+static void update_current_network(struct adapter *adapter, struct wlan_bssid_ex *pnetwork)
+{
+	struct	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
 
 	rtw_bug_check(&(pmlmepriv->cur_network.network),
 		&(pmlmepriv->cur_network.network),
 		&(pmlmepriv->cur_network.network),
 		&(pmlmepriv->cur_network.network));
 
-	अगर ((check_fwstate(pmlmepriv, _FW_LINKED) == true) && (is_same_network(&(pmlmepriv->cur_network.network), pnetwork, 0))) अणु
-		/* अगर (pmlmepriv->cur_network.network.IELength<= pnetwork->IELength) */
-		अणु
+	if ((check_fwstate(pmlmepriv, _FW_LINKED) == true) && (is_same_network(&(pmlmepriv->cur_network.network), pnetwork, 0))) {
+		/* if (pmlmepriv->cur_network.network.IELength<= pnetwork->IELength) */
+		{
 			update_network(&(pmlmepriv->cur_network.network), pnetwork, adapter, true);
-			rtw_update_protection(adapter, (pmlmepriv->cur_network.network.IEs) + माप(काष्ठा ndis_802_11_fix_ie),
+			rtw_update_protection(adapter, (pmlmepriv->cur_network.network.IEs) + sizeof(struct ndis_802_11_fix_ie),
 									pmlmepriv->cur_network.network.IELength);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
 Caller must hold pmlmepriv->lock first.
 */
-व्योम rtw_update_scanned_network(काष्ठा adapter *adapter, काष्ठा wlan_bssid_ex *target)
-अणु
-	काष्ठा list_head	*plist, *phead;
+void rtw_update_scanned_network(struct adapter *adapter, struct wlan_bssid_ex *target)
+{
+	struct list_head	*plist, *phead;
 	u32 bssid_ex_sz;
-	काष्ठा mlme_priv *pmlmepriv = &(adapter->mlmepriv);
-	काष्ठा __queue	*queue	= &(pmlmepriv->scanned_queue);
-	काष्ठा wlan_network	*pnetwork = शून्य;
-	काष्ठा wlan_network	*oldest = शून्य;
-	पूर्णांक target_find = 0;
+	struct mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct __queue	*queue	= &(pmlmepriv->scanned_queue);
+	struct wlan_network	*pnetwork = NULL;
+	struct wlan_network	*oldest = NULL;
+	int target_find = 0;
 	u8 feature = 0;
 
 	spin_lock_bh(&queue->lock);
 	phead = get_list_head(queue);
 	plist = get_next(phead);
 
-	जबतक (1) अणु
-		अगर (phead == plist)
-			अवरोध;
+	while (1) {
+		if (phead == plist)
+			break;
 
-		pnetwork = container_of(plist, काष्ठा wlan_network, list);
+		pnetwork = container_of(plist, struct wlan_network, list);
 
 		rtw_bug_check(pnetwork, pnetwork, pnetwork, pnetwork);
 
-		अगर (is_same_network(&(pnetwork->network), target, feature)) अणु
+		if (is_same_network(&(pnetwork->network), target, feature)) {
 			target_find = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (rtw_roam_flags(adapter)) अणु
-			/* TODO: करोn't select network in the same ess as oldest if it's new enough*/
-		पूर्ण
+		if (rtw_roam_flags(adapter)) {
+			/* TODO: don't select network in the same ess as oldest if it's new enough*/
+		}
 
-		अगर (oldest == शून्य || समय_after(oldest->last_scanned, pnetwork->last_scanned))
+		if (oldest == NULL || time_after(oldest->last_scanned, pnetwork->last_scanned))
 			oldest = pnetwork;
 
 		plist = get_next(plist);
 
-	पूर्ण
+	}
 
 	/* If we didn't find a match, then get a new network slot to initialize
-	 * with this beacon's inक्रमmation */
-	/* अगर (phead == plist) अणु */
-	अगर (!target_find) अणु
-		अगर (list_empty(&pmlmepriv->मुक्त_bss_pool.queue)) अणु
+	 * with this beacon's information */
+	/* if (phead == plist) { */
+	if (!target_find) {
+		if (list_empty(&pmlmepriv->free_bss_pool.queue)) {
 			/* If there are no more slots, expire the oldest */
 			/* list_del_init(&oldest->list); */
 			pnetwork = oldest;
-			अगर (!pnetwork)
-				जाओ निकास;
+			if (!pnetwork)
+				goto exit;
 
-			स_नकल(&(pnetwork->network), target,  get_wlan_bssid_ex_sz(target));
+			memcpy(&(pnetwork->network), target,  get_wlan_bssid_ex_sz(target));
 			/*  variable initialize */
 			pnetwork->fixed = false;
-			pnetwork->last_scanned = jअगरfies;
+			pnetwork->last_scanned = jiffies;
 
 			pnetwork->network_type = 0;
 			pnetwork->aid = 0;
 			pnetwork->join_res = 0;
 
 			/* bss info not receiving from the right channel */
-			अगर (pnetwork->network.PhyInfo.SignalQuality == 101)
+			if (pnetwork->network.PhyInfo.SignalQuality == 101)
 				pnetwork->network.PhyInfo.SignalQuality = 0;
-		पूर्ण अन्यथा अणु
-			/* Otherwise just pull from the मुक्त list */
+		} else {
+			/* Otherwise just pull from the free list */
 
-			pnetwork = rtw_alloc_network(pmlmepriv); /*  will update scan_समय */
+			pnetwork = rtw_alloc_network(pmlmepriv); /*  will update scan_time */
 
-			अगर (!pnetwork)
-				जाओ निकास;
+			if (!pnetwork)
+				goto exit;
 
 			bssid_ex_sz = get_wlan_bssid_ex_sz(target);
 			target->Length = bssid_ex_sz;
-			स_नकल(&(pnetwork->network), target, bssid_ex_sz);
+			memcpy(&(pnetwork->network), target, bssid_ex_sz);
 
-			pnetwork->last_scanned = jअगरfies;
+			pnetwork->last_scanned = jiffies;
 
 			/* bss info not receiving from the right channel */
-			अगर (pnetwork->network.PhyInfo.SignalQuality == 101)
+			if (pnetwork->network.PhyInfo.SignalQuality == 101)
 				pnetwork->network.PhyInfo.SignalQuality = 0;
 
 			list_add_tail(&(pnetwork->list), &(queue->queue));
 
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* we have an entry and we are going to update it. But this entry may
-		 * be alपढ़ोy expired. In this हाल we करो the same as we found a new
+		 * be already expired. In this case we do the same as we found a new
 		 * net and call the new_net handler
 		 */
 		bool update_ie = true;
 
-		pnetwork->last_scanned = jअगरfies;
+		pnetwork->last_scanned = jiffies;
 
 		/* target.Reserved[0]== 1, means that scanned network is a bcn frame. */
-		अगर ((pnetwork->network.IELength > target->IELength) && (target->Reserved[0] == 1))
+		if ((pnetwork->network.IELength > target->IELength) && (target->Reserved[0] == 1))
 			update_ie = false;
 
 		/*  probe resp(3) > beacon(1) > probe req(2) */
-		अगर ((target->Reserved[0] != 2) &&
+		if ((target->Reserved[0] != 2) &&
 			(target->Reserved[0] >= pnetwork->network.Reserved[0])
-			) अणु
+			) {
 			update_ie = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			update_ie = false;
-		पूर्ण
+		}
 
 		update_network(&(pnetwork->network), target, adapter, update_ie);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	spin_unlock_bh(&queue->lock);
-पूर्ण
+}
 
-व्योम rtw_add_network(काष्ठा adapter *adapter, काष्ठा wlan_bssid_ex *pnetwork);
-व्योम rtw_add_network(काष्ठा adapter *adapter, काष्ठा wlan_bssid_ex *pnetwork)
-अणु
-	/* काष्ठा __queue	*queue	= &(pmlmepriv->scanned_queue); */
+void rtw_add_network(struct adapter *adapter, struct wlan_bssid_ex *pnetwork);
+void rtw_add_network(struct adapter *adapter, struct wlan_bssid_ex *pnetwork)
+{
+	/* struct __queue	*queue	= &(pmlmepriv->scanned_queue); */
 
 	/* spin_lock_bh(&queue->lock); */
 
@@ -661,7 +660,7 @@ Caller must hold pmlmepriv->lock first.
 	rtw_update_scanned_network(adapter, pnetwork);
 
 	/* spin_unlock_bh(&queue->lock); */
-पूर्ण
+}
 
 /* select the desired network based on the capability of the (i)bss. */
 /*  check items: (1) security */
@@ -669,396 +668,396 @@ Caller must hold pmlmepriv->lock first.
 /* 			   (3) WMM */
 /* 			   (4) HT */
 /*                      (5) others */
-पूर्णांक rtw_is_desired_network(काष्ठा adapter *adapter, काष्ठा wlan_network *pnetwork);
-पूर्णांक rtw_is_desired_network(काष्ठा adapter *adapter, काष्ठा wlan_network *pnetwork)
-अणु
-	काष्ठा security_priv *psecuritypriv = &adapter->securitypriv;
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
+int rtw_is_desired_network(struct adapter *adapter, struct wlan_network *pnetwork);
+int rtw_is_desired_network(struct adapter *adapter, struct wlan_network *pnetwork)
+{
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
 	u32 desired_encmode;
 	u32 privacy;
 
 	/* u8 wps_ie[512]; */
-	uपूर्णांक wps_ielen;
+	uint wps_ielen;
 
-	पूर्णांक bselected = true;
+	int bselected = true;
 
 	desired_encmode = psecuritypriv->ndisencryptstatus;
 	privacy = pnetwork->network.Privacy;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_UNDER_WPS)) अणु
-		अगर (rtw_get_wps_ie(pnetwork->network.IEs+_FIXED_IE_LENGTH_, pnetwork->network.IELength-_FIXED_IE_LENGTH_, शून्य, &wps_ielen))
-			वापस true;
-		अन्यथा
-			वापस false;
+	if (check_fwstate(pmlmepriv, WIFI_UNDER_WPS)) {
+		if (rtw_get_wps_ie(pnetwork->network.IEs+_FIXED_IE_LENGTH_, pnetwork->network.IELength-_FIXED_IE_LENGTH_, NULL, &wps_ielen))
+			return true;
+		else
+			return false;
 
-	पूर्ण
-	अगर (adapter->registrypriv.wअगरi_spec == 1) अणु /* क्रम  correct flow of 8021X  to करो.... */
-		u8 *p = शून्य;
-		uपूर्णांक ie_len = 0;
+	}
+	if (adapter->registrypriv.wifi_spec == 1) { /* for  correct flow of 8021X  to do.... */
+		u8 *p = NULL;
+		uint ie_len = 0;
 
-		अगर ((desired_encmode == Ndis802_11EncryptionDisabled) && (privacy != 0))
+		if ((desired_encmode == Ndis802_11EncryptionDisabled) && (privacy != 0))
 	    bselected = false;
 
-		अगर (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK) अणु
+		if (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK) {
 			p = rtw_get_ie(pnetwork->network.IEs + _BEACON_IE_OFFSET_, WLAN_EID_RSN, &ie_len, (pnetwork->network.IELength - _BEACON_IE_OFFSET_));
-			अगर (p && ie_len > 0)
+			if (p && ie_len > 0)
 				bselected = true;
-			अन्यथा
+			else
 				bselected = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((desired_encmode != Ndis802_11EncryptionDisabled) && (privacy == 0))
+	if ((desired_encmode != Ndis802_11EncryptionDisabled) && (privacy == 0))
 		bselected = false;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) अणु
-		अगर (pnetwork->network.Infraकाष्ठाureMode != pmlmepriv->cur_network.network.Infraकाष्ठाureMode)
+	if (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) {
+		if (pnetwork->network.InfrastructureMode != pmlmepriv->cur_network.network.InfrastructureMode)
 			bselected = false;
-	पूर्ण
+	}
 
-	वापस bselected;
-पूर्ण
+	return bselected;
+}
 
 /* TODO: Perry : For Power Management */
-व्योम rtw_atimकरोne_event_callback(काष्ठा adapter	*adapter, u8 *pbuf)
-अणु
-पूर्ण
+void rtw_atimdone_event_callback(struct adapter	*adapter, u8 *pbuf)
+{
+}
 
-व्योम rtw_survey_event_callback(काष्ठा adapter	*adapter, u8 *pbuf)
-अणु
+void rtw_survey_event_callback(struct adapter	*adapter, u8 *pbuf)
+{
 	u32 len;
-	काष्ठा wlan_bssid_ex *pnetwork;
-	काष्ठा	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct wlan_bssid_ex *pnetwork;
+	struct	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
 
-	pnetwork = (काष्ठा wlan_bssid_ex *)pbuf;
+	pnetwork = (struct wlan_bssid_ex *)pbuf;
 
 	len = get_wlan_bssid_ex_sz(pnetwork);
-	अगर (len > (माप(काष्ठा wlan_bssid_ex)))
-		वापस;
+	if (len > (sizeof(struct wlan_bssid_ex)))
+		return;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
-	/*  update IBSS_network 's बारtamp */
-	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE)) == true) अणु
-		अगर (!स_भेद(&(pmlmepriv->cur_network.network.MacAddress), pnetwork->MacAddress, ETH_ALEN)) अणु
-			काष्ठा wlan_network *ibss_wlan = शून्य;
+	/*  update IBSS_network 's timestamp */
+	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE)) == true) {
+		if (!memcmp(&(pmlmepriv->cur_network.network.MacAddress), pnetwork->MacAddress, ETH_ALEN)) {
+			struct wlan_network *ibss_wlan = NULL;
 
-			स_नकल(pmlmepriv->cur_network.network.IEs, pnetwork->IEs, 8);
+			memcpy(pmlmepriv->cur_network.network.IEs, pnetwork->IEs, 8);
 			spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
 			ibss_wlan = rtw_find_network(&pmlmepriv->scanned_queue,  pnetwork->MacAddress);
-			अगर (ibss_wlan) अणु
-				स_नकल(ibss_wlan->network.IEs, pnetwork->IEs, 8);
+			if (ibss_wlan) {
+				memcpy(ibss_wlan->network.IEs, pnetwork->IEs, 8);
 				spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 			spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*  lock pmlmepriv->lock when you accessing network_q */
-	अगर ((check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) == false) अणु
-		अगर (pnetwork->Ssid.Ssid[0] == 0)
+	if ((check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) == false) {
+		if (pnetwork->Ssid.Ssid[0] == 0)
 			pnetwork->Ssid.SsidLength = 0;
 		rtw_add_network(adapter, pnetwork);
-	पूर्ण
+	}
 
-निकास:
+exit:
 
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
-व्योम rtw_surveyकरोne_event_callback(काष्ठा adapter	*adapter, u8 *pbuf)
-अणु
-	काष्ठा	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+void rtw_surveydone_event_callback(struct adapter	*adapter, u8 *pbuf)
+{
+	struct	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
 
 	spin_lock_bh(&pmlmepriv->lock);
-	अगर (pmlmepriv->wps_probe_req_ie) अणु
+	if (pmlmepriv->wps_probe_req_ie) {
 		pmlmepriv->wps_probe_req_ie_len = 0;
-		kमुक्त(pmlmepriv->wps_probe_req_ie);
-		pmlmepriv->wps_probe_req_ie = शून्य;
-	पूर्ण
+		kfree(pmlmepriv->wps_probe_req_ie);
+		pmlmepriv->wps_probe_req_ie = NULL;
+	}
 
-	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) अणु
-		del_समयr_sync(&pmlmepriv->scan_to_समयr);
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) {
+		del_timer_sync(&pmlmepriv->scan_to_timer);
 		_clr_fwstate_(pmlmepriv, _FW_UNDER_SURVEY);
-	पूर्ण
+	}
 
-	rtw_set_संकेत_stat_समयr(&adapter->recvpriv);
+	rtw_set_signal_stat_timer(&adapter->recvpriv);
 
-	अगर (pmlmepriv->to_join) अणु
-		अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED) == false) अणु
+	if (pmlmepriv->to_join) {
+		if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) {
+			if (check_fwstate(pmlmepriv, _FW_LINKED) == false) {
 				set_fwstate(pmlmepriv, _FW_UNDER_LINKING);
 
-				अगर (rtw_select_and_join_from_scanned_queue(pmlmepriv) == _SUCCESS) अणु
-					_set_समयr(&pmlmepriv->assoc_समयr, MAX_JOIN_TIMEOUT);
-				पूर्ण अन्यथा अणु
+				if (rtw_select_and_join_from_scanned_queue(pmlmepriv) == _SUCCESS) {
+					_set_timer(&pmlmepriv->assoc_timer, MAX_JOIN_TIMEOUT);
+				} else {
 					u8 ret = _SUCCESS;
-					काष्ठा wlan_bssid_ex    *pdev_network = &(adapter->registrypriv.dev_network);
+					struct wlan_bssid_ex    *pdev_network = &(adapter->registrypriv.dev_network);
 					u8 *pibss = adapter->registrypriv.dev_network.MacAddress;
 
-					/* pmlmepriv->fw_state ^= _FW_UNDER_SURVEY;because करोn't set assoc_समयr */
+					/* pmlmepriv->fw_state ^= _FW_UNDER_SURVEY;because don't set assoc_timer */
 					_clr_fwstate_(pmlmepriv, _FW_UNDER_SURVEY);
 
-					स_नकल(&pdev_network->Ssid, &pmlmepriv->assoc_ssid, माप(काष्ठा ndis_802_11_ssid));
+					memcpy(&pdev_network->Ssid, &pmlmepriv->assoc_ssid, sizeof(struct ndis_802_11_ssid));
 
 					rtw_update_registrypriv_dev_network(adapter);
-					rtw_generate_अक्रमom_ibss(pibss);
+					rtw_generate_random_ibss(pibss);
 
 					pmlmepriv->fw_state = WIFI_ADHOC_MASTER_STATE;
 
 					pmlmepriv->to_join = false;
 
 					ret = rtw_createbss_cmd(adapter);
-					अगर (ret != _SUCCESS)
-						जाओ unlock;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			पूर्णांक s_ret;
+					if (ret != _SUCCESS)
+						goto unlock;
+				}
+			}
+		} else {
+			int s_ret;
 
 			set_fwstate(pmlmepriv, _FW_UNDER_LINKING);
 			pmlmepriv->to_join = false;
 			s_ret = rtw_select_and_join_from_scanned_queue(pmlmepriv);
-			अगर (_SUCCESS == s_ret) अणु
-			     _set_समयr(&pmlmepriv->assoc_समयr, MAX_JOIN_TIMEOUT);
-			पूर्ण अन्यथा अगर (s_ret == 2) अणु/* there is no need to रुको क्रम join */
+			if (_SUCCESS == s_ret) {
+			     _set_timer(&pmlmepriv->assoc_timer, MAX_JOIN_TIMEOUT);
+			} else if (s_ret == 2) {/* there is no need to wait for join */
 				_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
 				rtw_indicate_connect(adapter);
-			पूर्ण अन्यथा अणु
-				अगर (rtw_to_roam(adapter) != 0) अणु
-					अगर (rtw_dec_to_roam(adapter) == 0
-						|| _SUCCESS != rtw_sitesurvey_cmd(adapter, &pmlmepriv->assoc_ssid, 1, शून्य, 0)
-					) अणु
+			} else {
+				if (rtw_to_roam(adapter) != 0) {
+					if (rtw_dec_to_roam(adapter) == 0
+						|| _SUCCESS != rtw_sitesurvey_cmd(adapter, &pmlmepriv->assoc_ssid, 1, NULL, 0)
+					) {
 						rtw_set_to_roam(adapter, 0);
-						rtw_मुक्त_assoc_resources(adapter, 1);
+						rtw_free_assoc_resources(adapter, 1);
 						rtw_indicate_disconnect(adapter);
-					पूर्ण अन्यथा अणु
+					} else {
 						pmlmepriv->to_join = true;
-					पूर्ण
-				पूर्ण अन्यथा
+					}
+				} else
 					rtw_indicate_disconnect(adapter);
 
 				_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) अणु
-			अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE)
-				&& check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-				अगर (rtw_select_roaming_candidate(pmlmepriv) == _SUCCESS) अणु
+			}
+		}
+	} else {
+		if (rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) {
+			if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)
+				&& check_fwstate(pmlmepriv, _FW_LINKED)) {
+				if (rtw_select_roaming_candidate(pmlmepriv) == _SUCCESS) {
 					receive_disconnect(adapter, pmlmepriv->cur_network.network.MacAddress
 						, WLAN_REASON_ACTIVE_ROAM);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 unlock:
 	spin_unlock_bh(&pmlmepriv->lock);
 
 	rtw_os_xmit_schedule(adapter);
 
-	rtw_cfg80211_surveyकरोne_event_callback(adapter);
+	rtw_cfg80211_surveydone_event_callback(adapter);
 
-	rtw_indicate_scan_करोne(adapter, false);
-पूर्ण
+	rtw_indicate_scan_done(adapter, false);
+}
 
-व्योम rtw_dummy_event_callback(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-पूर्ण
+void rtw_dummy_event_callback(struct adapter *adapter, u8 *pbuf)
+{
+}
 
-व्योम rtw_fwdbg_event_callback(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-पूर्ण
+void rtw_fwdbg_event_callback(struct adapter *adapter, u8 *pbuf)
+{
+}
 
-अटल व्योम मुक्त_scanqueue(काष्ठा	mlme_priv *pmlmepriv)
-अणु
-	काष्ठा __queue *मुक्त_queue = &pmlmepriv->मुक्त_bss_pool;
-	काष्ठा __queue *scan_queue = &pmlmepriv->scanned_queue;
-	काष्ठा list_head	*plist, *phead, *ptemp;
+static void free_scanqueue(struct	mlme_priv *pmlmepriv)
+{
+	struct __queue *free_queue = &pmlmepriv->free_bss_pool;
+	struct __queue *scan_queue = &pmlmepriv->scanned_queue;
+	struct list_head	*plist, *phead, *ptemp;
 
 	spin_lock_bh(&scan_queue->lock);
-	spin_lock_bh(&मुक्त_queue->lock);
+	spin_lock_bh(&free_queue->lock);
 
 	phead = get_list_head(scan_queue);
 	plist = get_next(phead);
 
-	जबतक (plist != phead) अणु
+	while (plist != phead) {
 		ptemp = get_next(plist);
 		list_del_init(plist);
-		list_add_tail(plist, &मुक्त_queue->queue);
+		list_add_tail(plist, &free_queue->queue);
 		plist = ptemp;
 		pmlmepriv->num_of_scanned--;
-	पूर्ण
+	}
 
-	spin_unlock_bh(&मुक्त_queue->lock);
+	spin_unlock_bh(&free_queue->lock);
 	spin_unlock_bh(&scan_queue->lock);
-पूर्ण
+}
 
-अटल व्योम rtw_reset_rx_info(काष्ठा debug_priv *pdbgpriv)
-अणु
+static void rtw_reset_rx_info(struct debug_priv *pdbgpriv)
+{
 	pdbgpriv->dbg_rx_ampdu_drop_count = 0;
-	pdbgpriv->dbg_rx_ampdu_क्रमced_indicate_count = 0;
+	pdbgpriv->dbg_rx_ampdu_forced_indicate_count = 0;
 	pdbgpriv->dbg_rx_ampdu_loss_count = 0;
 	pdbgpriv->dbg_rx_dup_mgt_frame_drop_count = 0;
-	pdbgpriv->dbg_rx_ampdu_winकरोw_shअगरt_cnt = 0;
-पूर्ण
+	pdbgpriv->dbg_rx_ampdu_window_shift_cnt = 0;
+}
 
-अटल व्योम find_network(काष्ठा adapter *adapter)
-अणु
-	काष्ठा wlan_network *pwlan = शून्य;
-	काष्ठा	mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	काष्ठा wlan_network *tgt_network = &pmlmepriv->cur_network;
+static void find_network(struct adapter *adapter)
+{
+	struct wlan_network *pwlan = NULL;
+	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct wlan_network *tgt_network = &pmlmepriv->cur_network;
 
 	pwlan = rtw_find_network(&pmlmepriv->scanned_queue, tgt_network->network.MacAddress);
-	अगर (pwlan)
+	if (pwlan)
 		pwlan->fixed = false;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) &&
+	if (check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) &&
 	    (adapter->stapriv.asoc_sta_count == 1))
-		rtw_मुक्त_network_nolock(adapter, pwlan);
-पूर्ण
+		rtw_free_network_nolock(adapter, pwlan);
+}
 
 /*
-*rtw_मुक्त_assoc_resources: the caller has to lock pmlmepriv->lock
+*rtw_free_assoc_resources: the caller has to lock pmlmepriv->lock
 */
-व्योम rtw_मुक्त_assoc_resources(काष्ठा adapter *adapter, पूर्णांक lock_scanned_queue)
-अणु
-	काष्ठा	mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	काष्ठा wlan_network *tgt_network = &pmlmepriv->cur_network;
-	काष्ठा	sta_priv *pstapriv = &adapter->stapriv;
-	काष्ठा dvobj_priv *psdpriv = adapter->dvobj;
-	काष्ठा debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+void rtw_free_assoc_resources(struct adapter *adapter, int lock_scanned_queue)
+{
+	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct wlan_network *tgt_network = &pmlmepriv->cur_network;
+	struct	sta_priv *pstapriv = &adapter->stapriv;
+	struct dvobj_priv *psdpriv = adapter->dvobj;
+	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE|WIFI_AP_STATE)) अणु
-		काष्ठा sta_info *psta;
+	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE|WIFI_AP_STATE)) {
+		struct sta_info *psta;
 
 		psta = rtw_get_stainfo(&adapter->stapriv, tgt_network->network.MacAddress);
 		spin_lock_bh(&(pstapriv->sta_hash_lock));
-		rtw_मुक्त_stainfo(adapter,  psta);
+		rtw_free_stainfo(adapter,  psta);
 
 		spin_unlock_bh(&(pstapriv->sta_hash_lock));
 
-	पूर्ण
+	}
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE|WIFI_AP_STATE)) अणु
-		काष्ठा sta_info *psta;
+	if (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE|WIFI_AP_STATE)) {
+		struct sta_info *psta;
 
-		rtw_मुक्त_all_stainfo(adapter);
+		rtw_free_all_stainfo(adapter);
 
 		psta = rtw_get_bcmc_stainfo(adapter);
-		rtw_मुक्त_stainfo(adapter, psta);
+		rtw_free_stainfo(adapter, psta);
 
 		rtw_init_bcmc_stainfo(adapter);
-	पूर्ण
+	}
 
 	find_network(adapter);
 
-	अगर (lock_scanned_queue)
+	if (lock_scanned_queue)
 		adapter->securitypriv.key_mask = 0;
 
 	rtw_reset_rx_info(pdbgpriv);
-पूर्ण
+}
 
 /*
 *rtw_indicate_connect: the caller has to lock pmlmepriv->lock
 */
-व्योम rtw_indicate_connect(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+void rtw_indicate_connect(struct adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	pmlmepriv->to_join = false;
 
-	अगर (!check_fwstate(&padapter->mlmepriv, _FW_LINKED)) अणु
+	if (!check_fwstate(&padapter->mlmepriv, _FW_LINKED)) {
 
 		set_fwstate(pmlmepriv, _FW_LINKED);
 
 		rtw_os_indicate_connect(padapter);
-	पूर्ण
+	}
 
 	rtw_set_to_roam(padapter, 0);
 	rtw_set_scan_deny(padapter, 3000);
 
-पूर्ण
+}
 
 /*
 *rtw_indicate_disconnect: the caller has to lock pmlmepriv->lock
 */
-व्योम rtw_indicate_disconnect(काष्ठा adapter *padapter)
-अणु
-	काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+void rtw_indicate_disconnect(struct adapter *padapter)
+{
+	struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING|WIFI_UNDER_WPS);
 
-	अगर (rtw_to_roam(padapter) > 0)
+	if (rtw_to_roam(padapter) > 0)
 		_clr_fwstate_(pmlmepriv, _FW_LINKED);
 
-	अगर (check_fwstate(&padapter->mlmepriv, _FW_LINKED)
+	if (check_fwstate(&padapter->mlmepriv, _FW_LINKED)
 		|| (rtw_to_roam(padapter) <= 0)
-	) अणु
+	) {
 		rtw_os_indicate_disconnect(padapter);
 
-		/* set ips_deny_समय to aव्योम enter IPS beक्रमe LPS leave */
+		/* set ips_deny_time to avoid enter IPS before LPS leave */
 		rtw_set_ips_deny(padapter, 3000);
 
 		_clr_fwstate_(pmlmepriv, _FW_LINKED);
 
 		rtw_clear_scan_deny(padapter);
-	पूर्ण
+	}
 
 	rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_DISCONNECT, 1);
-पूर्ण
+}
 
-अंतरभूत व्योम rtw_indicate_scan_करोne(काष्ठा adapter *padapter, bool पातed)
-अणु
-	rtw_os_indicate_scan_करोne(padapter, पातed);
+inline void rtw_indicate_scan_done(struct adapter *padapter, bool aborted)
+{
+	rtw_os_indicate_scan_done(padapter, aborted);
 
-	अगर (is_primary_adapter(padapter) &&
+	if (is_primary_adapter(padapter) &&
 	    (!adapter_to_pwrctl(padapter)->bInSuspend) &&
 	    (!check_fwstate(&padapter->mlmepriv,
-			    WIFI_ASOC_STATE|WIFI_UNDER_LINKING))) अणु
+			    WIFI_ASOC_STATE|WIFI_UNDER_LINKING))) {
 		rtw_set_ips_deny(padapter, 0);
-		_set_समयr(&padapter->mlmepriv.dynamic_chk_समयr, 1);
-	पूर्ण
-पूर्ण
+		_set_timer(&padapter->mlmepriv.dynamic_chk_timer, 1);
+	}
+}
 
-व्योम rtw_scan_पात(काष्ठा adapter *adapter)
-अणु
-	अचिन्हित दीर्घ start;
-	काष्ठा mlme_priv *pmlmepriv = &(adapter->mlmepriv);
-	काष्ठा mlme_ext_priv *pmlmeext = &(adapter->mlmeextpriv);
+void rtw_scan_abort(struct adapter *adapter)
+{
+	unsigned long start;
+	struct mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct mlme_ext_priv *pmlmeext = &(adapter->mlmeextpriv);
 
-	start = jअगरfies;
-	pmlmeext->scan_पात = true;
-	जबतक (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)
-		&& jअगरfies_to_msecs(start) <= 200) अणु
+	start = jiffies;
+	pmlmeext->scan_abort = true;
+	while (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)
+		&& jiffies_to_msecs(start) <= 200) {
 
-		अगर (adapter->bDriverStopped || adapter->bSurpriseRemoved)
-			अवरोध;
+		if (adapter->bDriverStopped || adapter->bSurpriseRemoved)
+			break;
 
 		msleep(20);
-	पूर्ण
+	}
 
-	अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
-		rtw_indicate_scan_करोne(adapter, true);
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+		rtw_indicate_scan_done(adapter, true);
 
-	pmlmeext->scan_पात = false;
-पूर्ण
+	pmlmeext->scan_abort = false;
+}
 
-अटल काष्ठा sta_info *rtw_joinbss_update_stainfo(काष्ठा adapter *padapter, काष्ठा wlan_network *pnetwork)
-अणु
-	पूर्णांक i;
-	काष्ठा sta_info *bmc_sta, *psta = शून्य;
-	काष्ठा recv_reorder_ctrl *preorder_ctrl;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+static struct sta_info *rtw_joinbss_update_stainfo(struct adapter *padapter, struct wlan_network *pnetwork)
+{
+	int i;
+	struct sta_info *bmc_sta, *psta = NULL;
+	struct recv_reorder_ctrl *preorder_ctrl;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 
 	psta = rtw_get_stainfo(pstapriv, pnetwork->network.MacAddress);
-	अगर (!psta)
+	if (!psta)
 		psta = rtw_alloc_stainfo(pstapriv, pnetwork->network.MacAddress);
 
-	अगर (psta) अणु /* update ptarget_sta */
+	if (psta) { /* update ptarget_sta */
 
 		psta->aid  = pnetwork->join_res;
 
@@ -1066,7 +1065,7 @@ unlock:
 
 		/* update station supportRate */
 		psta->bssratelen = rtw_get_rateset_len(pnetwork->network.SupportedRates);
-		स_नकल(psta->bssrateset, pnetwork->network.SupportedRates, psta->bssratelen);
+		memcpy(psta->bssrateset, pnetwork->network.SupportedRates, psta->bssratelen);
 		rtw_hal_update_sta_rate_mask(padapter, psta);
 
 		psta->wireless_mode = pmlmeext->cur_wireless_mode;
@@ -1076,286 +1075,286 @@ unlock:
 		rtw_hal_set_odm_var(padapter, HAL_ODM_STA_INFO, psta, true);
 
 		/* security related */
-		अगर (padapter->securitypriv.करोt11AuthAlgrthm == करोt11AuthAlgrthm_8021X) अणु
+		if (padapter->securitypriv.dot11AuthAlgrthm == dot11AuthAlgrthm_8021X) {
 			padapter->securitypriv.binstallGrpkey = false;
 			padapter->securitypriv.busetkipkey = false;
 			padapter->securitypriv.bgrpkey_handshake = false;
 
 			psta->ieee8021x_blocked = true;
-			psta->करोt118021XPrivacy = padapter->securitypriv.करोt11PrivacyAlgrthm;
+			psta->dot118021XPrivacy = padapter->securitypriv.dot11PrivacyAlgrthm;
 
-			स_रखो((u8 *)&psta->करोt118021x_UncstKey, 0, माप(जोड़ Keytype));
+			memset((u8 *)&psta->dot118021x_UncstKey, 0, sizeof(union Keytype));
 
-			स_रखो((u8 *)&psta->करोt11tkiprxmickey, 0, माप(जोड़ Keytype));
-			स_रखो((u8 *)&psta->करोt11tkiptxmickey, 0, माप(जोड़ Keytype));
+			memset((u8 *)&psta->dot11tkiprxmickey, 0, sizeof(union Keytype));
+			memset((u8 *)&psta->dot11tkiptxmickey, 0, sizeof(union Keytype));
 
-			स_रखो((u8 *)&psta->करोt11txpn, 0, माप(जोड़ pn48));
-			psta->करोt11txpn.val = psta->करोt11txpn.val + 1;
-			स_रखो((u8 *)&psta->करोt11wtxpn, 0, माप(जोड़ pn48));
-			स_रखो((u8 *)&psta->करोt11rxpn, 0, माप(जोड़ pn48));
-		पूर्ण
+			memset((u8 *)&psta->dot11txpn, 0, sizeof(union pn48));
+			psta->dot11txpn.val = psta->dot11txpn.val + 1;
+			memset((u8 *)&psta->dot11wtxpn, 0, sizeof(union pn48));
+			memset((u8 *)&psta->dot11rxpn, 0, sizeof(union pn48));
+		}
 
 		/* 	Commented by Albert 2012/07/21 */
-		/* 	When करोing the WPS, the wps_ie_len won't equal to 0 */
+		/* 	When doing the WPS, the wps_ie_len won't equal to 0 */
 		/* 	And the Wi-Fi driver shouldn't allow the data packet to be transmitted. */
-		अगर (padapter->securitypriv.wps_ie_len != 0) अणु
+		if (padapter->securitypriv.wps_ie_len != 0) {
 			psta->ieee8021x_blocked = true;
 			padapter->securitypriv.wps_ie_len = 0;
-		पूर्ण
+		}
 
-		/* क्रम A-MPDU Rx reordering buffer control क्रम bmc_sta & sta_info */
-		/* अगर A-MPDU Rx is enabled, resetting  rx_ordering_ctrl wstart_b(indicate_seq) to शेष value = 0xffff */
-		/* toकरो: check अगर AP can send A-MPDU packets */
-		क्रम (i = 0; i < 16 ; i++) अणु
+		/* for A-MPDU Rx reordering buffer control for bmc_sta & sta_info */
+		/* if A-MPDU Rx is enabled, resetting  rx_ordering_ctrl wstart_b(indicate_seq) to default value = 0xffff */
+		/* todo: check if AP can send A-MPDU packets */
+		for (i = 0; i < 16 ; i++) {
 			/* preorder_ctrl = &precvpriv->recvreorder_ctrl[i]; */
 			preorder_ctrl = &psta->recvreorder_ctrl[i];
 			preorder_ctrl->enable = false;
 			preorder_ctrl->indicate_seq = 0xffff;
 			preorder_ctrl->wend_b = 0xffff;
 			preorder_ctrl->wsize_b = 64;/* max_ampdu_sz;ex. 32(kbytes) -> wsize_b =32 */
-		पूर्ण
+		}
 
 		bmc_sta = rtw_get_bcmc_stainfo(padapter);
-		अगर (bmc_sta) अणु
-			क्रम (i = 0; i < 16 ; i++) अणु
+		if (bmc_sta) {
+			for (i = 0; i < 16 ; i++) {
 				/* preorder_ctrl = &precvpriv->recvreorder_ctrl[i]; */
 				preorder_ctrl = &bmc_sta->recvreorder_ctrl[i];
 				preorder_ctrl->enable = false;
 				preorder_ctrl->indicate_seq = 0xffff;
 				preorder_ctrl->wend_b = 0xffff;
 				preorder_ctrl->wsize_b = 64;/* max_ampdu_sz;ex. 32(kbytes) -> wsize_b =32 */
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस psta;
+	return psta;
 
-पूर्ण
+}
 
-/* pnetwork : वापसs from rtw_joinbss_event_callback */
+/* pnetwork : returns from rtw_joinbss_event_callback */
 /* ptarget_wlan: found from scanned_queue */
-अटल व्योम rtw_joinbss_update_network(काष्ठा adapter *padapter, काष्ठा wlan_network *ptarget_wlan, काष्ठा wlan_network  *pnetwork)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &(padapter->mlmepriv);
-	काष्ठा wlan_network  *cur_network = &(pmlmepriv->cur_network);
+static void rtw_joinbss_update_network(struct adapter *padapter, struct wlan_network *ptarget_wlan, struct wlan_network  *pnetwork)
+{
+	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct wlan_network  *cur_network = &(pmlmepriv->cur_network);
 
 	/*  why not use ptarget_wlan?? */
-	स_नकल(&cur_network->network, &pnetwork->network, pnetwork->network.Length);
+	memcpy(&cur_network->network, &pnetwork->network, pnetwork->network.Length);
 	/*  some IEs in pnetwork is wrong, so we should use ptarget_wlan IEs */
 	cur_network->network.IELength = ptarget_wlan->network.IELength;
-	स_नकल(&cur_network->network.IEs[0], &ptarget_wlan->network.IEs[0], MAX_IE_SZ);
+	memcpy(&cur_network->network.IEs[0], &ptarget_wlan->network.IEs[0], MAX_IE_SZ);
 
 	cur_network->aid = pnetwork->join_res;
 
-	rtw_set_संकेत_stat_समयr(&padapter->recvpriv);
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
 
-	padapter->recvpriv.संकेत_strength = ptarget_wlan->network.PhyInfo.SignalStrength;
-	padapter->recvpriv.संकेत_qual = ptarget_wlan->network.PhyInfo.SignalQuality;
+	padapter->recvpriv.signal_strength = ptarget_wlan->network.PhyInfo.SignalStrength;
+	padapter->recvpriv.signal_qual = ptarget_wlan->network.PhyInfo.SignalQuality;
 	/* the ptarget_wlan->network.Rssi is raw data, we use ptarget_wlan->network.PhyInfo.SignalStrength instead (has scaled) */
 	padapter->recvpriv.rssi = translate_percentage_to_dbm(ptarget_wlan->network.PhyInfo.SignalStrength);
 
-	rtw_set_संकेत_stat_समयr(&padapter->recvpriv);
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
 
 	/* update fw_state will clr _FW_UNDER_LINKING here indirectly */
-	चयन (pnetwork->network.Infraकाष्ठाureMode) अणु
-	हाल Ndis802_11Infraकाष्ठाure:
+	switch (pnetwork->network.InfrastructureMode) {
+	case Ndis802_11Infrastructure:
 
-			अगर (pmlmepriv->fw_state&WIFI_UNDER_WPS)
+			if (pmlmepriv->fw_state&WIFI_UNDER_WPS)
 				pmlmepriv->fw_state = WIFI_STATION_STATE|WIFI_UNDER_WPS;
-			अन्यथा
+			else
 				pmlmepriv->fw_state = WIFI_STATION_STATE;
 
-			अवरोध;
-	हाल Ndis802_11IBSS:
+			break;
+	case Ndis802_11IBSS:
 			pmlmepriv->fw_state = WIFI_ADHOC_STATE;
-			अवरोध;
-	शेष:
-			pmlmepriv->fw_state = WIFI_शून्य_STATE;
-			अवरोध;
-	पूर्ण
+			break;
+	default:
+			pmlmepriv->fw_state = WIFI_NULL_STATE;
+			break;
+	}
 
-	rtw_update_protection(padapter, (cur_network->network.IEs) + माप(काष्ठा ndis_802_11_fix_ie),
+	rtw_update_protection(padapter, (cur_network->network.IEs) + sizeof(struct ndis_802_11_fix_ie),
 									(cur_network->network.IELength));
 
 	rtw_update_ht_cap(padapter, cur_network->network.IEs, cur_network->network.IELength, (u8) cur_network->network.Configuration.DSConfig);
-पूर्ण
+}
 
 /* Notes: the function could be > passive_level (the same context as Rx tasklet) */
-/* pnetwork : वापसs from rtw_joinbss_event_callback */
+/* pnetwork : returns from rtw_joinbss_event_callback */
 /* ptarget_wlan: found from scanned_queue */
-/* अगर join_res > 0, क्रम (fw_state ==WIFI_STATION_STATE), we check अगर  "ptarget_sta" & "ptarget_wlan" exist. */
-/* अगर join_res > 0, क्रम (fw_state ==WIFI_ADHOC_STATE), we only check अगर "ptarget_wlan" exist. */
-/* अगर join_res > 0, update "cur_network->network" from "pnetwork->network" अगर (ptarget_wlan != शून्य). */
+/* if join_res > 0, for (fw_state ==WIFI_STATION_STATE), we check if  "ptarget_sta" & "ptarget_wlan" exist. */
+/* if join_res > 0, for (fw_state ==WIFI_ADHOC_STATE), we only check if "ptarget_wlan" exist. */
+/* if join_res > 0, update "cur_network->network" from "pnetwork->network" if (ptarget_wlan != NULL). */
 /*  */
 /* define REJOIN */
-व्योम rtw_joinbss_event_prehandle(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-	अटल u8 retry;
-	काष्ठा sta_info *ptarget_sta = शून्य, *pcur_sta = शून्य;
-	काष्ठा	sta_priv *pstapriv = &adapter->stapriv;
-	काष्ठा	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
-	काष्ठा wlan_network	*pnetwork	= (काष्ठा wlan_network *)pbuf;
-	काष्ठा wlan_network	*cur_network = &(pmlmepriv->cur_network);
-	काष्ठा wlan_network	*pcur_wlan = शून्य, *ptarget_wlan = शून्य;
-	अचिन्हित पूर्णांक		the_same_macaddr = false;
+void rtw_joinbss_event_prehandle(struct adapter *adapter, u8 *pbuf)
+{
+	static u8 retry;
+	struct sta_info *ptarget_sta = NULL, *pcur_sta = NULL;
+	struct	sta_priv *pstapriv = &adapter->stapriv;
+	struct	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct wlan_network	*pnetwork	= (struct wlan_network *)pbuf;
+	struct wlan_network	*cur_network = &(pmlmepriv->cur_network);
+	struct wlan_network	*pcur_wlan = NULL, *ptarget_wlan = NULL;
+	unsigned int		the_same_macaddr = false;
 
 	rtw_get_encrypt_decrypt_from_registrypriv(adapter);
 
-	the_same_macaddr = !स_भेद(pnetwork->network.MacAddress, cur_network->network.MacAddress, ETH_ALEN);
+	the_same_macaddr = !memcmp(pnetwork->network.MacAddress, cur_network->network.MacAddress, ETH_ALEN);
 
 	pnetwork->network.Length = get_wlan_bssid_ex_sz(&pnetwork->network);
-	अगर (pnetwork->network.Length > माप(काष्ठा wlan_bssid_ex))
-		वापस;
+	if (pnetwork->network.Length > sizeof(struct wlan_bssid_ex))
+		return;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
 	pmlmepriv->LinkDetectInfo.TrafficTransitionCount = 0;
 	pmlmepriv->LinkDetectInfo.LowPowerTransitionCount = 0;
 
-	अगर (pnetwork->join_res > 0) अणु
+	if (pnetwork->join_res > 0) {
 		spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
 		retry = 0;
-		अगर (check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) अणु
+		if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) {
 			/* s1. find ptarget_wlan */
-			अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
-				अगर (the_same_macaddr) अणु
+			if (check_fwstate(pmlmepriv, _FW_LINKED)) {
+				if (the_same_macaddr) {
 					ptarget_wlan = rtw_find_network(&pmlmepriv->scanned_queue, cur_network->network.MacAddress);
-				पूर्ण अन्यथा अणु
+				} else {
 					pcur_wlan = rtw_find_network(&pmlmepriv->scanned_queue, cur_network->network.MacAddress);
-					अगर (pcur_wlan)
+					if (pcur_wlan)
 						pcur_wlan->fixed = false;
 
 					pcur_sta = rtw_get_stainfo(pstapriv, cur_network->network.MacAddress);
-					अगर (pcur_sta)
-						rtw_मुक्त_stainfo(adapter,  pcur_sta);
+					if (pcur_sta)
+						rtw_free_stainfo(adapter,  pcur_sta);
 
 					ptarget_wlan = rtw_find_network(&pmlmepriv->scanned_queue, pnetwork->network.MacAddress);
-					अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) अणु
-						अगर (ptarget_wlan)
+					if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) {
+						if (ptarget_wlan)
 							ptarget_wlan->fixed = true;
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-			पूर्ण अन्यथा अणु
+			} else {
 				ptarget_wlan = _rtw_find_same_network(&pmlmepriv->scanned_queue, pnetwork);
-				अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) अणु
-					अगर (ptarget_wlan)
+				if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) {
+					if (ptarget_wlan)
 						ptarget_wlan->fixed = true;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			/* s2. update cur_network */
-			अगर (ptarget_wlan) अणु
+			if (ptarget_wlan) {
 				rtw_joinbss_update_network(adapter, ptarget_wlan, pnetwork);
-			पूर्ण अन्यथा अणु
+			} else {
 				netdev_dbg(adapter->pnetdev,
 					   "Can't find ptarget_wlan when joinbss_event callback\n");
 				spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-				जाओ ignore_joinbss_callback;
-			पूर्ण
+				goto ignore_joinbss_callback;
+			}
 
-			/* s3. find ptarget_sta & update ptarget_sta after update cur_network only क्रम station mode */
-			अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) अणु
+			/* s3. find ptarget_sta & update ptarget_sta after update cur_network only for station mode */
+			if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) {
 				ptarget_sta = rtw_joinbss_update_stainfo(adapter, pnetwork);
-				अगर (!ptarget_sta) अणु
+				if (!ptarget_sta) {
 					spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-					जाओ ignore_joinbss_callback;
-				पूर्ण
-			पूर्ण
+					goto ignore_joinbss_callback;
+				}
+			}
 
 			/* s4. indicate connect */
-			अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) अणु
+			if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) == true) {
 				pmlmepriv->cur_network_scanned = ptarget_wlan;
 				rtw_indicate_connect(adapter);
-			पूर्ण
+			}
 
-			/* s5. Cancel assoc_समयr */
-			del_समयr_sync(&pmlmepriv->assoc_समयr);
+			/* s5. Cancel assoc_timer */
+			del_timer_sync(&pmlmepriv->assoc_timer);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-			जाओ ignore_joinbss_callback;
-		पूर्ण
+			goto ignore_joinbss_callback;
+		}
 
 		spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
 
-	पूर्ण अन्यथा अगर (pnetwork->join_res == -4) अणु
+	} else if (pnetwork->join_res == -4) {
 		rtw_reset_securitypriv(adapter);
-		_set_समयr(&pmlmepriv->assoc_समयr, 1);
+		_set_timer(&pmlmepriv->assoc_timer, 1);
 
-		/* rtw_मुक्त_assoc_resources(adapter, 1); */
+		/* rtw_free_assoc_resources(adapter, 1); */
 
-		अगर ((check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) == true)
+		if ((check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) == true)
 			_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
 
-	पूर्ण अन्यथा अणु/* अगर join_res < 0 (join fails), then try again */
+	} else {/* if join_res < 0 (join fails), then try again */
 
-		#अगर_घोषित REJOIN
+		#ifdef REJOIN
 		res = _FAIL;
-		अगर (retry < 2)
+		if (retry < 2)
 			res = rtw_select_and_join_from_scanned_queue(pmlmepriv);
 
-		अगर (res == _SUCCESS) अणु
-			/* extend समय of assoc_समयr */
-			_set_समयr(&pmlmepriv->assoc_समयr, MAX_JOIN_TIMEOUT);
+		if (res == _SUCCESS) {
+			/* extend time of assoc_timer */
+			_set_timer(&pmlmepriv->assoc_timer, MAX_JOIN_TIMEOUT);
 			retry++;
-		पूर्ण अन्यथा अगर (res == 2) अणु/* there is no need to रुको क्रम join */
+		} else if (res == 2) {/* there is no need to wait for join */
 			_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
 			rtw_indicate_connect(adapter);
-		पूर्ण अन्यथा अणु
-		#पूर्ण_अगर
+		} else {
+		#endif
 
-			_set_समयr(&pmlmepriv->assoc_समयr, 1);
-			/* rtw_मुक्त_assoc_resources(adapter, 1); */
+			_set_timer(&pmlmepriv->assoc_timer, 1);
+			/* rtw_free_assoc_resources(adapter, 1); */
 			_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
 
-		#अगर_घोषित REJOIN
+		#ifdef REJOIN
 			retry = 0;
-		पूर्ण
-		#पूर्ण_अगर
-	पूर्ण
+		}
+		#endif
+	}
 
 ignore_joinbss_callback:
 
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
-व्योम rtw_joinbss_event_callback(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-	काष्ठा wlan_network	*pnetwork	= (काष्ठा wlan_network *)pbuf;
+void rtw_joinbss_event_callback(struct adapter *adapter, u8 *pbuf)
+{
+	struct wlan_network	*pnetwork	= (struct wlan_network *)pbuf;
 
 	mlmeext_joinbss_event_callback(adapter, pnetwork->join_res);
 
 	rtw_os_xmit_schedule(adapter);
-पूर्ण
+}
 
 /* FOR STA, AP , AD-HOC mode */
-व्योम rtw_sta_media_status_rpt(काष्ठा adapter *adapter, काष्ठा sta_info *psta, u32 mstatus)
-अणु
+void rtw_sta_media_status_rpt(struct adapter *adapter, struct sta_info *psta, u32 mstatus)
+{
 	u16 media_status_rpt;
 
-	अगर (!psta)
-		वापस;
+	if (!psta)
+		return;
 
 	media_status_rpt = (u16)((psta->mac_id<<8)|mstatus); /*   MACID|OPMODE:1 connect */
 	rtw_hal_set_hwreg(adapter, HW_VAR_H2C_MEDIA_STATUS_RPT, (u8 *)&media_status_rpt);
-पूर्ण
+}
 
-व्योम rtw_stassoc_event_callback(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-	काष्ठा sta_info *psta;
-	काष्ठा mlme_priv *pmlmepriv = &(adapter->mlmepriv);
-	काष्ठा stassoc_event	*pstassoc	= (काष्ठा stassoc_event *)pbuf;
-	काष्ठा wlan_network	*cur_network = &(pmlmepriv->cur_network);
-	काष्ठा wlan_network	*ptarget_wlan = शून्य;
+void rtw_stassoc_event_callback(struct adapter *adapter, u8 *pbuf)
+{
+	struct sta_info *psta;
+	struct mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct stassoc_event	*pstassoc	= (struct stassoc_event *)pbuf;
+	struct wlan_network	*cur_network = &(pmlmepriv->cur_network);
+	struct wlan_network	*ptarget_wlan = NULL;
 
-	अगर (rtw_access_ctrl(adapter, pstassoc->macaddr) == false)
-		वापस;
+	if (rtw_access_ctrl(adapter, pstassoc->macaddr) == false)
+		return;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE)) अणु
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
 		psta = rtw_get_stainfo(&adapter->stapriv, pstassoc->macaddr);
-		अगर (psta) अणु
-			u8 *passoc_req = शून्य;
+		if (psta) {
+			u8 *passoc_req = NULL;
 			u32 assoc_req_len = 0;
 
 			rtw_sta_media_status_rpt(adapter, psta, 1);
@@ -1364,263 +1363,263 @@ ignore_joinbss_callback:
 
 			/* report to upper layer */
 			spin_lock_bh(&psta->lock);
-			अगर (psta->passoc_req && psta->assoc_req_len > 0) अणु
-				passoc_req = rtw_zदो_स्मृति(psta->assoc_req_len);
-				अगर (passoc_req) अणु
+			if (psta->passoc_req && psta->assoc_req_len > 0) {
+				passoc_req = rtw_zmalloc(psta->assoc_req_len);
+				if (passoc_req) {
 					assoc_req_len = psta->assoc_req_len;
-					स_नकल(passoc_req, psta->passoc_req, assoc_req_len);
+					memcpy(passoc_req, psta->passoc_req, assoc_req_len);
 
-					kमुक्त(psta->passoc_req);
-					psta->passoc_req = शून्य;
+					kfree(psta->passoc_req);
+					psta->passoc_req = NULL;
 					psta->assoc_req_len = 0;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			spin_unlock_bh(&psta->lock);
 
-			अगर (passoc_req && assoc_req_len > 0) अणु
+			if (passoc_req && assoc_req_len > 0) {
 				rtw_cfg80211_indicate_sta_assoc(adapter, passoc_req, assoc_req_len);
 
-				kमुक्त(passoc_req);
-			पूर्ण
-		पूर्ण
-		वापस;
-	पूर्ण
+				kfree(passoc_req);
+			}
+		}
+		return;
+	}
 
-	/* क्रम AD-HOC mode */
+	/* for AD-HOC mode */
 	psta = rtw_get_stainfo(&adapter->stapriv, pstassoc->macaddr);
-	अगर (psta) अणु
-		/* the sta have been in sta_info_queue => करो nothing */
+	if (psta) {
+		/* the sta have been in sta_info_queue => do nothing */
 
-		वापस; /* between drv has received this event beक्रमe and  fw have not yet to set key to CAM_ENTRY) */
-	पूर्ण
+		return; /* between drv has received this event before and  fw have not yet to set key to CAM_ENTRY) */
+	}
 
 	psta = rtw_alloc_stainfo(&adapter->stapriv, pstassoc->macaddr);
-	अगर (!psta)
-		वापस;
+	if (!psta)
+		return;
 
-	/* to करो : init sta_info variable */
+	/* to do : init sta_info variable */
 	psta->qos_option = 0;
-	psta->mac_id = (uपूर्णांक)pstassoc->cam_id;
-	/* psta->aid = (uपूर्णांक)pstassoc->cam_id; */
+	psta->mac_id = (uint)pstassoc->cam_id;
+	/* psta->aid = (uint)pstassoc->cam_id; */
 
-	/* क्रम ad-hoc mode */
+	/* for ad-hoc mode */
 	rtw_hal_set_odm_var(adapter, HAL_ODM_STA_INFO, psta, true);
 
 	rtw_sta_media_status_rpt(adapter, psta, 1);
 
-	अगर (adapter->securitypriv.करोt11AuthAlgrthm == करोt11AuthAlgrthm_8021X)
-		psta->करोt118021XPrivacy = adapter->securitypriv.करोt11PrivacyAlgrthm;
+	if (adapter->securitypriv.dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)
+		psta->dot118021XPrivacy = adapter->securitypriv.dot11PrivacyAlgrthm;
 
 	psta->ieee8021x_blocked = false;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true) ||
-		(check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) अणु
-		अगर (adapter->stapriv.asoc_sta_count == 2) अणु
+	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true) ||
+		(check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) {
+		if (adapter->stapriv.asoc_sta_count == 2) {
 			spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
 			ptarget_wlan = rtw_find_network(&pmlmepriv->scanned_queue, cur_network->network.MacAddress);
 			pmlmepriv->cur_network_scanned = ptarget_wlan;
-			अगर (ptarget_wlan)
+			if (ptarget_wlan)
 				ptarget_wlan->fixed = true;
 			spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
 			/*  a sta + bc/mc_stainfo (not Ibss_stainfo) */
 			rtw_indicate_connect(adapter);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&pmlmepriv->lock);
 
 	mlmeext_sta_add_event_callback(adapter, psta);
-पूर्ण
+}
 
-व्योम rtw_stadel_event_callback(काष्ठा adapter *adapter, u8 *pbuf)
-अणु
-	पूर्णांक mac_id = (-1);
-	काष्ठा sta_info *psta;
-	काष्ठा wlan_network *pwlan = शून्य;
-	काष्ठा wlan_bssid_ex    *pdev_network = शून्य;
-	u8 *pibss = शून्य;
-	काष्ठा	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
-	काष्ठा	stadel_event *pstadel	= (काष्ठा stadel_event *)pbuf;
-	काष्ठा wlan_network *tgt_network = &(pmlmepriv->cur_network);
-	काष्ठा mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void rtw_stadel_event_callback(struct adapter *adapter, u8 *pbuf)
+{
+	int mac_id = (-1);
+	struct sta_info *psta;
+	struct wlan_network *pwlan = NULL;
+	struct wlan_bssid_ex    *pdev_network = NULL;
+	u8 *pibss = NULL;
+	struct	mlme_priv *pmlmepriv = &(adapter->mlmepriv);
+	struct	stadel_event *pstadel	= (struct stadel_event *)pbuf;
+	struct wlan_network *tgt_network = &(pmlmepriv->cur_network);
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	psta = rtw_get_stainfo(&adapter->stapriv, pstadel->macaddr);
-	अगर (psta)
+	if (psta)
 		mac_id = psta->mac_id;
-	अन्यथा
+	else
 		mac_id = pstadel->mac_id;
 
-	अगर (mac_id >= 0) अणु
+	if (mac_id >= 0) {
 		u16 media_status;
 
 		media_status = (mac_id<<8)|0; /*   MACID|OPMODE:0 means disconnect */
-		/* क्रम STA, AP, ADHOC mode, report disconnect stauts to FW */
+		/* for STA, AP, ADHOC mode, report disconnect stauts to FW */
 		rtw_hal_set_hwreg(adapter, HW_VAR_H2C_MEDIA_STATUS_RPT, (u8 *)&media_status);
-	पूर्ण
+	}
 
-	/* अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE)) */
-	अगर ((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE)
-		वापस;
+	/* if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) */
+	if ((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE)
+		return;
 
 	mlmeext_sta_del_event_callback(adapter);
 
 	spin_lock_bh(&pmlmepriv->lock);
 
-	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) अणु
-		u16 reason = *((अचिन्हित लघु *)(pstadel->rsvd));
+	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {
+		u16 reason = *((unsigned short *)(pstadel->rsvd));
 		bool roam = false;
-		काष्ठा wlan_network *roam_target = शून्य;
+		struct wlan_network *roam_target = NULL;
 
-		अगर (adapter->registrypriv.wअगरi_spec == 1) अणु
+		if (adapter->registrypriv.wifi_spec == 1) {
 			roam = false;
-		पूर्ण अन्यथा अगर (reason == WLAN_REASON_EXPIRATION_CHK && rtw_chk_roam_flags(adapter, RTW_ROAM_ON_EXPIRED)) अणु
+		} else if (reason == WLAN_REASON_EXPIRATION_CHK && rtw_chk_roam_flags(adapter, RTW_ROAM_ON_EXPIRED)) {
 			roam = true;
-		पूर्ण अन्यथा अगर (reason == WLAN_REASON_ACTIVE_ROAM && rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) अणु
+		} else if (reason == WLAN_REASON_ACTIVE_ROAM && rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) {
 			roam = true;
 			roam_target = pmlmepriv->roam_network;
-		पूर्ण
+		}
 
-		अगर (roam) अणु
-			अगर (rtw_to_roam(adapter) > 0)
+		if (roam) {
+			if (rtw_to_roam(adapter) > 0)
 				rtw_dec_to_roam(adapter); /* this stadel_event is caused by roaming, decrease to_roam */
-			अन्यथा अगर (rtw_to_roam(adapter) == 0)
-				rtw_set_to_roam(adapter, adapter->registrypriv.max_roaming_बार);
-		पूर्ण अन्यथा अणु
+			else if (rtw_to_roam(adapter) == 0)
+				rtw_set_to_roam(adapter, adapter->registrypriv.max_roaming_times);
+		} else {
 			rtw_set_to_roam(adapter, 0);
-		पूर्ण
+		}
 
-		rtw_मुक्त_uc_swdec_pending_queue(adapter);
+		rtw_free_uc_swdec_pending_queue(adapter);
 
-		rtw_मुक्त_assoc_resources(adapter, 1);
+		rtw_free_assoc_resources(adapter, 1);
 		rtw_indicate_disconnect(adapter);
 
 		spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
-		/*  हटाओ the network entry in scanned_queue */
+		/*  remove the network entry in scanned_queue */
 		pwlan = rtw_find_network(&pmlmepriv->scanned_queue, tgt_network->network.MacAddress);
-		अगर (pwlan) अणु
+		if (pwlan) {
 			pwlan->fixed = false;
-			rtw_मुक्त_network_nolock(adapter, pwlan);
-		पूर्ण
+			rtw_free_network_nolock(adapter, pwlan);
+		}
 		spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
 
 		_rtw_roaming(adapter, roam_target);
-	पूर्ण
+	}
 
-	अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) ||
-	      check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) अणु
+	if (check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) ||
+	      check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) {
 
-		rtw_मुक्त_stainfo(adapter,  psta);
+		rtw_free_stainfo(adapter,  psta);
 
-		अगर (adapter->stapriv.asoc_sta_count == 1) अणु/* a sta + bc/mc_stainfo (not Ibss_stainfo) */
+		if (adapter->stapriv.asoc_sta_count == 1) {/* a sta + bc/mc_stainfo (not Ibss_stainfo) */
 			u8 ret = _SUCCESS;
-			/* rtw_indicate_disconnect(adapter);हटाओd@20091105 */
+			/* rtw_indicate_disconnect(adapter);removed@20091105 */
 			spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
-			/* मुक्त old ibss network */
+			/* free old ibss network */
 			/* pwlan = rtw_find_network(&pmlmepriv->scanned_queue, pstadel->macaddr); */
 			pwlan = rtw_find_network(&pmlmepriv->scanned_queue, tgt_network->network.MacAddress);
-			अगर (pwlan) अणु
+			if (pwlan) {
 				pwlan->fixed = false;
-				rtw_मुक्त_network_nolock(adapter, pwlan);
-			पूर्ण
+				rtw_free_network_nolock(adapter, pwlan);
+			}
 			spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
 			/* re-create ibss */
 			pdev_network = &(adapter->registrypriv.dev_network);
 			pibss = adapter->registrypriv.dev_network.MacAddress;
 
-			स_नकल(pdev_network, &tgt_network->network, get_wlan_bssid_ex_sz(&tgt_network->network));
+			memcpy(pdev_network, &tgt_network->network, get_wlan_bssid_ex_sz(&tgt_network->network));
 
-			स_नकल(&pdev_network->Ssid, &pmlmepriv->assoc_ssid, माप(काष्ठा ndis_802_11_ssid));
+			memcpy(&pdev_network->Ssid, &pmlmepriv->assoc_ssid, sizeof(struct ndis_802_11_ssid));
 
 			rtw_update_registrypriv_dev_network(adapter);
 
-			rtw_generate_अक्रमom_ibss(pibss);
+			rtw_generate_random_ibss(pibss);
 
-			अगर (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) अणु
+			if (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)) {
 				set_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE);
 				_clr_fwstate_(pmlmepriv, WIFI_ADHOC_STATE);
-			पूर्ण
+			}
 
 			ret = rtw_createbss_cmd(adapter);
-			अगर (ret != _SUCCESS)
-				जाओ unlock;
-		पूर्ण
+			if (ret != _SUCCESS)
+				goto unlock;
+		}
 
-	पूर्ण
+	}
 
 unlock:
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
-व्योम rtw_cpwm_event_callback(काष्ठा adapter *padapter, u8 *pbuf)
-अणु
-	काष्ठा reportpwrstate_parm *preportpwrstate;
+void rtw_cpwm_event_callback(struct adapter *padapter, u8 *pbuf)
+{
+	struct reportpwrstate_parm *preportpwrstate;
 
-	preportpwrstate = (काष्ठा reportpwrstate_parm *)pbuf;
+	preportpwrstate = (struct reportpwrstate_parm *)pbuf;
 	preportpwrstate->state |= (u8)(adapter_to_pwrctl(padapter)->cpwm_tog + 0x80);
-	cpwm_पूर्णांक_hdl(padapter, preportpwrstate);
-पूर्ण
+	cpwm_int_hdl(padapter, preportpwrstate);
+}
 
-व्योम rtw_wmm_event_callback(काष्ठा adapter *padapter, u8 *pbuf)
-अणु
+void rtw_wmm_event_callback(struct adapter *padapter, u8 *pbuf)
+{
 	WMMOnAssocRsp(padapter);
-पूर्ण
+}
 
 /*
-* _rtw_join_समयout_handler - Timeout/failure handler क्रम CMD JoinBss
-* @adapter: poपूर्णांकer to काष्ठा adapter काष्ठाure
+* _rtw_join_timeout_handler - Timeout/failure handler for CMD JoinBss
+* @adapter: pointer to struct adapter structure
 */
-व्योम _rtw_join_समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा adapter *adapter = from_समयr(adapter, t,
-						  mlmepriv.assoc_समयr);
-	काष्ठा	mlme_priv *pmlmepriv = &adapter->mlmepriv;
+void _rtw_join_timeout_handler(struct timer_list *t)
+{
+	struct adapter *adapter = from_timer(adapter, t,
+						  mlmepriv.assoc_timer);
+	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
 
-	अगर (adapter->bDriverStopped || adapter->bSurpriseRemoved)
-		वापस;
+	if (adapter->bDriverStopped || adapter->bSurpriseRemoved)
+		return;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
-	अगर (rtw_to_roam(adapter) > 0) अणु /* join समयout caused by roaming */
-		जबतक (1) अणु
+	if (rtw_to_roam(adapter) > 0) { /* join timeout caused by roaming */
+		while (1) {
 			rtw_dec_to_roam(adapter);
-			अगर (rtw_to_roam(adapter) != 0) अणु /* try another */
-				पूर्णांक करो_join_r;
+			if (rtw_to_roam(adapter) != 0) { /* try another */
+				int do_join_r;
 
-				करो_join_r = rtw_करो_join(adapter);
-				अगर (_SUCCESS != करो_join_r) अणु
-					जारी;
-				पूर्ण
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				do_join_r = rtw_do_join(adapter);
+				if (_SUCCESS != do_join_r) {
+					continue;
+				}
+				break;
+			} else {
 				rtw_indicate_disconnect(adapter);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		rtw_indicate_disconnect(adapter);
-		मुक्त_scanqueue(pmlmepriv);/*  */
+		free_scanqueue(pmlmepriv);/*  */
 
-		/* indicate disconnect क्रम the हाल that join_समयout and check_fwstate != FW_LINKED */
+		/* indicate disconnect for the case that join_timeout and check_fwstate != FW_LINKED */
 		rtw_cfg80211_indicate_disconnect(adapter);
 
-	पूर्ण
+	}
 
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
+}
 
 /*
-* rtw_scan_समयout_handler - Timeout/Failure handler क्रम CMD SiteSurvey
-* @adapter: poपूर्णांकer to काष्ठा adapter काष्ठाure
+* rtw_scan_timeout_handler - Timeout/Failure handler for CMD SiteSurvey
+* @adapter: pointer to struct adapter structure
 */
-व्योम rtw_scan_समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा adapter *adapter = from_समयr(adapter, t,
-						  mlmepriv.scan_to_समयr);
-	काष्ठा	mlme_priv *pmlmepriv = &adapter->mlmepriv;
+void rtw_scan_timeout_handler(struct timer_list *t)
+{
+	struct adapter *adapter = from_timer(adapter, t,
+						  mlmepriv.scan_to_timer);
+	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
@@ -1628,243 +1627,243 @@ unlock:
 
 	spin_unlock_bh(&pmlmepriv->lock);
 
-	rtw_indicate_scan_करोne(adapter, true);
-पूर्ण
+	rtw_indicate_scan_done(adapter, true);
+}
 
-व्योम rtw_mlme_reset_स्वतः_scan_पूर्णांक(काष्ठा adapter *adapter)
-अणु
-	काष्ठा mlme_priv *mlme = &adapter->mlmepriv;
-	काष्ठा mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+void rtw_mlme_reset_auto_scan_int(struct adapter *adapter)
+{
+	struct mlme_priv *mlme = &adapter->mlmepriv;
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
-	अगर (pmlmeinfo->VHT_enable) /* disable स्वतः scan when connect to 11AC AP */
-		mlme->स्वतः_scan_पूर्णांक_ms = 0;
-	अन्यथा अगर (adapter->registrypriv.wअगरi_spec && is_client_associated_to_ap(adapter) == true)
-		mlme->स्वतः_scan_पूर्णांक_ms = 60*1000;
-	अन्यथा अगर (rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) अणु
-		अगर (check_fwstate(mlme, WIFI_STATION_STATE) && check_fwstate(mlme, _FW_LINKED))
-			mlme->स्वतः_scan_पूर्णांक_ms = mlme->roam_scan_पूर्णांक_ms;
-	पूर्ण अन्यथा
-		mlme->स्वतः_scan_पूर्णांक_ms = 0; /* disabled */
-पूर्ण
+	if (pmlmeinfo->VHT_enable) /* disable auto scan when connect to 11AC AP */
+		mlme->auto_scan_int_ms = 0;
+	else if (adapter->registrypriv.wifi_spec && is_client_associated_to_ap(adapter) == true)
+		mlme->auto_scan_int_ms = 60*1000;
+	else if (rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) {
+		if (check_fwstate(mlme, WIFI_STATION_STATE) && check_fwstate(mlme, _FW_LINKED))
+			mlme->auto_scan_int_ms = mlme->roam_scan_int_ms;
+	} else
+		mlme->auto_scan_int_ms = 0; /* disabled */
+}
 
-अटल व्योम rtw_स्वतः_scan_handler(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+static void rtw_auto_scan_handler(struct adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	rtw_mlme_reset_स्वतः_scan_पूर्णांक(padapter);
+	rtw_mlme_reset_auto_scan_int(padapter);
 
-	अगर (pmlmepriv->स्वतः_scan_पूर्णांक_ms != 0
-		&& jअगरfies_to_msecs(jअगरfies - pmlmepriv->scan_start_समय) > pmlmepriv->स्वतः_scan_पूर्णांक_ms) अणु
+	if (pmlmepriv->auto_scan_int_ms != 0
+		&& jiffies_to_msecs(jiffies - pmlmepriv->scan_start_time) > pmlmepriv->auto_scan_int_ms) {
 
-		अगर (!padapter->registrypriv.wअगरi_spec) अणु
-			अगर (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING) == true)
-				जाओ निकास;
+		if (!padapter->registrypriv.wifi_spec) {
+			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING) == true)
+				goto exit;
 
-			अगर (pmlmepriv->LinkDetectInfo.bBusyTraffic)
-				जाओ निकास;
-		पूर्ण
+			if (pmlmepriv->LinkDetectInfo.bBusyTraffic)
+				goto exit;
+		}
 
-		rtw_set_802_11_bssid_list_scan(padapter, शून्य, 0);
-	पूर्ण
+		rtw_set_802_11_bssid_list_scan(padapter, NULL, 0);
+	}
 
-निकास:
-	वापस;
-पूर्ण
+exit:
+	return;
+}
 
-व्योम rtw_dynamic_check_समयr_handler(काष्ठा adapter *adapter)
-अणु
-	अगर (!adapter)
-		वापस;
+void rtw_dynamic_check_timer_handler(struct adapter *adapter)
+{
+	if (!adapter)
+		return;
 
-	अगर (!adapter->hw_init_completed)
-		वापस;
+	if (!adapter->hw_init_completed)
+		return;
 
-	अगर (adapter->bDriverStopped || adapter->bSurpriseRemoved)
-		वापस;
+	if (adapter->bDriverStopped || adapter->bSurpriseRemoved)
+		return;
 
-	अगर (adapter->net_बंदd)
-		वापस;
+	if (adapter->net_closed)
+		return;
 
-	अगर ((adapter_to_pwrctl(adapter)->fw_current_in_ps_mode)
+	if ((adapter_to_pwrctl(adapter)->fw_current_in_ps_mode)
 		&& !(hal_btcoex_IsBtControlLps(adapter))
-		) अणु
+		) {
 		u8 bEnterPS;
 
 		linked_status_chk(adapter);
 
-		bEnterPS = traffic_status_watchकरोg(adapter, 1);
-		अगर (bEnterPS) अणु
+		bEnterPS = traffic_status_watchdog(adapter, 1);
+		if (bEnterPS) {
 			/* rtw_lps_ctrl_wk_cmd(adapter, LPS_CTRL_ENTER, 1); */
-			rtw_hal_dm_watchकरोg_in_lps(adapter);
-		पूर्ण अन्यथा अणु
-			/* call rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_LEAVE, 1) in traffic_status_watchकरोg() */
-		पूर्ण
+			rtw_hal_dm_watchdog_in_lps(adapter);
+		} else {
+			/* call rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_LEAVE, 1) in traffic_status_watchdog() */
+		}
 
-	पूर्ण अन्यथा अणु
-		अगर (is_primary_adapter(adapter))
+	} else {
+		if (is_primary_adapter(adapter))
 			rtw_dynamic_chk_wk_cmd(adapter);
-	पूर्ण
+	}
 
-	/* स्वतः site survey */
-	rtw_स्वतः_scan_handler(adapter);
-पूर्ण
+	/* auto site survey */
+	rtw_auto_scan_handler(adapter);
+}
 
-अंतरभूत bool rtw_is_scan_deny(काष्ठा adapter *adapter)
-अणु
-	काष्ठा mlme_priv *mlmepriv = &adapter->mlmepriv;
+inline bool rtw_is_scan_deny(struct adapter *adapter)
+{
+	struct mlme_priv *mlmepriv = &adapter->mlmepriv;
 
-	वापस (atomic_पढ़ो(&mlmepriv->set_scan_deny) != 0) ? true : false;
-पूर्ण
+	return (atomic_read(&mlmepriv->set_scan_deny) != 0) ? true : false;
+}
 
-अंतरभूत व्योम rtw_clear_scan_deny(काष्ठा adapter *adapter)
-अणु
-	काष्ठा mlme_priv *mlmepriv = &adapter->mlmepriv;
+inline void rtw_clear_scan_deny(struct adapter *adapter)
+{
+	struct mlme_priv *mlmepriv = &adapter->mlmepriv;
 
 	atomic_set(&mlmepriv->set_scan_deny, 0);
-पूर्ण
+}
 
-व्योम rtw_set_scan_deny(काष्ठा adapter *adapter, u32 ms)
-अणु
-	काष्ठा mlme_priv *mlmepriv = &adapter->mlmepriv;
+void rtw_set_scan_deny(struct adapter *adapter, u32 ms)
+{
+	struct mlme_priv *mlmepriv = &adapter->mlmepriv;
 
 	atomic_set(&mlmepriv->set_scan_deny, 1);
-	_set_समयr(&mlmepriv->set_scan_deny_समयr, ms);
-पूर्ण
+	_set_timer(&mlmepriv->set_scan_deny_timer, ms);
+}
 
 /*
 * Select a new roaming candidate from the original @param candidate and @param competitor
-* @वापस true: candidate is updated
-* @वापस false: candidate is not updated
+* @return true: candidate is updated
+* @return false: candidate is not updated
 */
-अटल पूर्णांक rtw_check_roaming_candidate(काष्ठा mlme_priv *mlme
-	, काष्ठा wlan_network **candidate, काष्ठा wlan_network *competitor)
-अणु
-	पूर्णांक updated = false;
-	काष्ठा adapter *adapter = container_of(mlme, काष्ठा adapter, mlmepriv);
+static int rtw_check_roaming_candidate(struct mlme_priv *mlme
+	, struct wlan_network **candidate, struct wlan_network *competitor)
+{
+	int updated = false;
+	struct adapter *adapter = container_of(mlme, struct adapter, mlmepriv);
 
-	अगर (is_same_ess(&competitor->network, &mlme->cur_network.network) == false)
-		जाओ निकास;
+	if (is_same_ess(&competitor->network, &mlme->cur_network.network) == false)
+		goto exit;
 
-	अगर (rtw_is_desired_network(adapter, competitor) == false)
-		जाओ निकास;
+	if (rtw_is_desired_network(adapter, competitor) == false)
+		goto exit;
 
-	/* got specअगरic addr to roam */
-	अगर (!is_zero_mac_addr(mlme->roam_tgt_addr)) अणु
-		अगर (!स_भेद(mlme->roam_tgt_addr, competitor->network.MacAddress, ETH_ALEN))
-			जाओ update;
-		अन्यथा
-			जाओ निकास;
-	पूर्ण
-	अगर (jअगरfies_to_msecs(jअगरfies - competitor->last_scanned) >= mlme->roam_scanr_exp_ms)
-		जाओ निकास;
+	/* got specific addr to roam */
+	if (!is_zero_mac_addr(mlme->roam_tgt_addr)) {
+		if (!memcmp(mlme->roam_tgt_addr, competitor->network.MacAddress, ETH_ALEN))
+			goto update;
+		else
+			goto exit;
+	}
+	if (jiffies_to_msecs(jiffies - competitor->last_scanned) >= mlme->roam_scanr_exp_ms)
+		goto exit;
 
-	अगर (competitor->network.Rssi - mlme->cur_network_scanned->network.Rssi < mlme->roam_rssi_dअगरf_th)
-		जाओ निकास;
+	if (competitor->network.Rssi - mlme->cur_network_scanned->network.Rssi < mlme->roam_rssi_diff_th)
+		goto exit;
 
-	अगर (*candidate && (*candidate)->network.Rssi >= competitor->network.Rssi)
-		जाओ निकास;
+	if (*candidate && (*candidate)->network.Rssi >= competitor->network.Rssi)
+		goto exit;
 
 update:
 	*candidate = competitor;
 	updated = true;
 
-निकास:
-	वापस updated;
-पूर्ण
+exit:
+	return updated;
+}
 
-पूर्णांक rtw_select_roaming_candidate(काष्ठा mlme_priv *mlme)
-अणु
-	पूर्णांक ret = _FAIL;
-	काष्ठा list_head	*phead;
-	काष्ठा __queue	*queue	= &(mlme->scanned_queue);
-	काष्ठा	wlan_network	*pnetwork = शून्य;
-	काष्ठा	wlan_network	*candidate = शून्य;
+int rtw_select_roaming_candidate(struct mlme_priv *mlme)
+{
+	int ret = _FAIL;
+	struct list_head	*phead;
+	struct __queue	*queue	= &(mlme->scanned_queue);
+	struct	wlan_network	*pnetwork = NULL;
+	struct	wlan_network	*candidate = NULL;
 
-	अगर (!mlme->cur_network_scanned) अणु
+	if (!mlme->cur_network_scanned) {
 		rtw_warn_on(1);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_bh(&(mlme->scanned_queue.lock));
 	phead = get_list_head(queue);
 
 	mlme->pscanned = get_next(phead);
 
-	जबतक (phead != mlme->pscanned) अणु
+	while (phead != mlme->pscanned) {
 
-		pnetwork = container_of(mlme->pscanned, काष्ठा wlan_network, list);
-		अगर (!pnetwork) अणु
+		pnetwork = container_of(mlme->pscanned, struct wlan_network, list);
+		if (!pnetwork) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		mlme->pscanned = get_next(mlme->pscanned);
 
 		rtw_check_roaming_candidate(mlme, &candidate, pnetwork);
 
-	पूर्ण
+	}
 
-	अगर (!candidate) अणु
+	if (!candidate) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण अन्यथा अणु
+		goto exit;
+	} else {
 		mlme->roam_network = candidate;
 
-		अगर (!स_भेद(candidate->network.MacAddress, mlme->roam_tgt_addr, ETH_ALEN))
+		if (!memcmp(candidate->network.MacAddress, mlme->roam_tgt_addr, ETH_ALEN))
 			eth_zero_addr(mlme->roam_tgt_addr);
-	पूर्ण
+	}
 
 	ret = _SUCCESS;
-निकास:
+exit:
 	spin_unlock_bh(&(mlme->scanned_queue.lock));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
 * Select a new join candidate from the original @param candidate and @param competitor
-* @वापस true: candidate is updated
-* @वापस false: candidate is not updated
+* @return true: candidate is updated
+* @return false: candidate is not updated
 */
-अटल पूर्णांक rtw_check_join_candidate(काष्ठा mlme_priv *mlme
-	, काष्ठा wlan_network **candidate, काष्ठा wlan_network *competitor)
-अणु
-	पूर्णांक updated = false;
-	काष्ठा adapter *adapter = container_of(mlme, काष्ठा adapter, mlmepriv);
+static int rtw_check_join_candidate(struct mlme_priv *mlme
+	, struct wlan_network **candidate, struct wlan_network *competitor)
+{
+	int updated = false;
+	struct adapter *adapter = container_of(mlme, struct adapter, mlmepriv);
 
-	/* check bssid, अगर needed */
-	अगर (mlme->assoc_by_bssid) अणु
-		अगर (स_भेद(competitor->network.MacAddress, mlme->assoc_bssid, ETH_ALEN))
-			जाओ निकास;
-	पूर्ण
+	/* check bssid, if needed */
+	if (mlme->assoc_by_bssid) {
+		if (memcmp(competitor->network.MacAddress, mlme->assoc_bssid, ETH_ALEN))
+			goto exit;
+	}
 
-	/* check ssid, अगर needed */
-	अगर (mlme->assoc_ssid.Ssid[0] && mlme->assoc_ssid.SsidLength) अणु
-		अगर (competitor->network.Ssid.SsidLength != mlme->assoc_ssid.SsidLength
-			|| स_भेद(competitor->network.Ssid.Ssid, mlme->assoc_ssid.Ssid, mlme->assoc_ssid.SsidLength)
+	/* check ssid, if needed */
+	if (mlme->assoc_ssid.Ssid[0] && mlme->assoc_ssid.SsidLength) {
+		if (competitor->network.Ssid.SsidLength != mlme->assoc_ssid.SsidLength
+			|| memcmp(competitor->network.Ssid.Ssid, mlme->assoc_ssid.Ssid, mlme->assoc_ssid.SsidLength)
 		)
-			जाओ निकास;
-	पूर्ण
+			goto exit;
+	}
 
-	अगर (rtw_is_desired_network(adapter, competitor)  == false)
-		जाओ निकास;
+	if (rtw_is_desired_network(adapter, competitor)  == false)
+		goto exit;
 
-	अगर (rtw_to_roam(adapter) > 0) अणु
-		अगर (jअगरfies_to_msecs(jअगरfies - competitor->last_scanned) >= mlme->roam_scanr_exp_ms
+	if (rtw_to_roam(adapter) > 0) {
+		if (jiffies_to_msecs(jiffies - competitor->last_scanned) >= mlme->roam_scanr_exp_ms
 			|| is_same_ess(&competitor->network, &mlme->cur_network.network) == false
 		)
-			जाओ निकास;
-	पूर्ण
+			goto exit;
+	}
 
-	अगर (*candidate == शून्य || (*candidate)->network.Rssi < competitor->network.Rssi) अणु
+	if (*candidate == NULL || (*candidate)->network.Rssi < competitor->network.Rssi) {
 		*candidate = competitor;
 		updated = true;
-	पूर्ण
+	}
 
-निकास:
-	वापस updated;
-पूर्ण
+exit:
+	return updated;
+}
 
 /*
 Calling context:
@@ -1873,205 +1872,205 @@ The caller must hold the following spinlock
 pmlmepriv->lock
 */
 
-पूर्णांक rtw_select_and_join_from_scanned_queue(काष्ठा mlme_priv *pmlmepriv)
-अणु
-	पूर्णांक ret;
-	काष्ठा list_head	*phead;
-	काष्ठा adapter *adapter;
-	काष्ठा __queue	*queue	= &(pmlmepriv->scanned_queue);
-	काष्ठा	wlan_network	*pnetwork = शून्य;
-	काष्ठा	wlan_network	*candidate = शून्य;
+int rtw_select_and_join_from_scanned_queue(struct mlme_priv *pmlmepriv)
+{
+	int ret;
+	struct list_head	*phead;
+	struct adapter *adapter;
+	struct __queue	*queue	= &(pmlmepriv->scanned_queue);
+	struct	wlan_network	*pnetwork = NULL;
+	struct	wlan_network	*candidate = NULL;
 
-	adapter = (काष्ठा adapter *)pmlmepriv->nic_hdl;
+	adapter = (struct adapter *)pmlmepriv->nic_hdl;
 
 	spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
 
-	अगर (pmlmepriv->roam_network) अणु
+	if (pmlmepriv->roam_network) {
 		candidate = pmlmepriv->roam_network;
-		pmlmepriv->roam_network = शून्य;
-		जाओ candidate_exist;
-	पूर्ण
+		pmlmepriv->roam_network = NULL;
+		goto candidate_exist;
+	}
 
 	phead = get_list_head(queue);
 	pmlmepriv->pscanned = get_next(phead);
 
-	जबतक (phead != pmlmepriv->pscanned) अणु
+	while (phead != pmlmepriv->pscanned) {
 
-		pnetwork = container_of(pmlmepriv->pscanned, काष्ठा wlan_network, list);
-		अगर (!pnetwork) अणु
+		pnetwork = container_of(pmlmepriv->pscanned, struct wlan_network, list);
+		if (!pnetwork) {
 			ret = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		pmlmepriv->pscanned = get_next(pmlmepriv->pscanned);
 
 		rtw_check_join_candidate(pmlmepriv, &candidate, pnetwork);
 
-	पूर्ण
+	}
 
-	अगर (!candidate) अणु
+	if (!candidate) {
 		ret = _FAIL;
-		जाओ निकास;
-	पूर्ण अन्यथा अणु
-		जाओ candidate_exist;
-	पूर्ण
+		goto exit;
+	} else {
+		goto candidate_exist;
+	}
 
 candidate_exist:
 
-	/*  check क्रम situation of  _FW_LINKED */
-	अगर (check_fwstate(pmlmepriv, _FW_LINKED) == true) अणु
+	/*  check for situation of  _FW_LINKED */
+	if (check_fwstate(pmlmepriv, _FW_LINKED) == true) {
 		rtw_disassoc_cmd(adapter, 0, true);
 		rtw_indicate_disconnect(adapter);
-		rtw_मुक्त_assoc_resources(adapter, 0);
-	पूर्ण
+		rtw_free_assoc_resources(adapter, 0);
+	}
 
 	set_fwstate(pmlmepriv, _FW_UNDER_LINKING);
 	ret = rtw_joinbss_cmd(adapter, candidate);
 
-निकास:
+exit:
 	spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-चिन्हित पूर्णांक rtw_set_auth(काष्ठा adapter *adapter, काष्ठा security_priv *psecuritypriv)
-अणु
-	काष्ठा	cmd_obj *pcmd;
-	काष्ठा	setauth_parm *psetauthparm;
-	काष्ठा	cmd_priv *pcmdpriv = &(adapter->cmdpriv);
-	चिन्हित पूर्णांक		res = _SUCCESS;
+signed int rtw_set_auth(struct adapter *adapter, struct security_priv *psecuritypriv)
+{
+	struct	cmd_obj *pcmd;
+	struct	setauth_parm *psetauthparm;
+	struct	cmd_priv *pcmdpriv = &(adapter->cmdpriv);
+	signed int		res = _SUCCESS;
 
-	pcmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
-	अगर (!pcmd) अणु
+	pcmd = rtw_zmalloc(sizeof(struct cmd_obj));
+	if (!pcmd) {
 		res = _FAIL;  /* try again */
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	psetauthparm = rtw_zदो_स्मृति(माप(काष्ठा setauth_parm));
-	अगर (!psetauthparm) अणु
-		kमुक्त(pcmd);
+	psetauthparm = rtw_zmalloc(sizeof(struct setauth_parm));
+	if (!psetauthparm) {
+		kfree(pcmd);
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	psetauthparm->mode = (अचिन्हित अक्षर)psecuritypriv->करोt11AuthAlgrthm;
+	psetauthparm->mode = (unsigned char)psecuritypriv->dot11AuthAlgrthm;
 
 	pcmd->cmdcode = _SetAuth_CMD_;
-	pcmd->parmbuf = (अचिन्हित अक्षर *)psetauthparm;
-	pcmd->cmdsz =  (माप(काष्ठा setauth_parm));
-	pcmd->rsp = शून्य;
+	pcmd->parmbuf = (unsigned char *)psetauthparm;
+	pcmd->cmdsz =  (sizeof(struct setauth_parm));
+	pcmd->rsp = NULL;
 	pcmd->rspsz = 0;
 
 	INIT_LIST_HEAD(&pcmd->list);
 
 	res = rtw_enqueue_cmd(pcmdpriv, pcmd);
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
-चिन्हित पूर्णांक rtw_set_key(काष्ठा adapter *adapter, काष्ठा security_priv *psecuritypriv, चिन्हित पूर्णांक keyid, u8 set_tx, bool enqueue)
-अणु
+signed int rtw_set_key(struct adapter *adapter, struct security_priv *psecuritypriv, signed int keyid, u8 set_tx, bool enqueue)
+{
 	u8 keylen;
-	काष्ठा cmd_obj		*pcmd;
-	काष्ठा setkey_parm	*psetkeyparm;
-	काष्ठा cmd_priv 	*pcmdpriv = &(adapter->cmdpriv);
-	चिन्हित पूर्णांक	res = _SUCCESS;
+	struct cmd_obj		*pcmd;
+	struct setkey_parm	*psetkeyparm;
+	struct cmd_priv 	*pcmdpriv = &(adapter->cmdpriv);
+	signed int	res = _SUCCESS;
 
-	psetkeyparm = rtw_zदो_स्मृति(माप(काष्ठा setkey_parm));
-	अगर (!psetkeyparm) अणु
+	psetkeyparm = rtw_zmalloc(sizeof(struct setkey_parm));
+	if (!psetkeyparm) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (psecuritypriv->करोt11AuthAlgrthm == करोt11AuthAlgrthm_8021X)
-		psetkeyparm->algorithm = (अचिन्हित अक्षर)psecuritypriv->करोt118021XGrpPrivacy;
-	अन्यथा
-		psetkeyparm->algorithm = (u8)psecuritypriv->करोt11PrivacyAlgrthm;
+	if (psecuritypriv->dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)
+		psetkeyparm->algorithm = (unsigned char)psecuritypriv->dot118021XGrpPrivacy;
+	else
+		psetkeyparm->algorithm = (u8)psecuritypriv->dot11PrivacyAlgrthm;
 
 	psetkeyparm->keyid = (u8)keyid;/* 0~3 */
 	psetkeyparm->set_tx = set_tx;
-	अगर (is_wep_enc(psetkeyparm->algorithm))
+	if (is_wep_enc(psetkeyparm->algorithm))
 		adapter->securitypriv.key_mask |= BIT(psetkeyparm->keyid);
 
-	चयन (psetkeyparm->algorithm) अणु
+	switch (psetkeyparm->algorithm) {
 
-	हाल _WEP40_:
+	case _WEP40_:
 		keylen = 5;
-		स_नकल(&(psetkeyparm->key[0]), &(psecuritypriv->करोt11DefKey[keyid].skey[0]), keylen);
-		अवरोध;
-	हाल _WEP104_:
+		memcpy(&(psetkeyparm->key[0]), &(psecuritypriv->dot11DefKey[keyid].skey[0]), keylen);
+		break;
+	case _WEP104_:
 		keylen = 13;
-		स_नकल(&(psetkeyparm->key[0]), &(psecuritypriv->करोt11DefKey[keyid].skey[0]), keylen);
-		अवरोध;
-	हाल _TKIP_:
+		memcpy(&(psetkeyparm->key[0]), &(psecuritypriv->dot11DefKey[keyid].skey[0]), keylen);
+		break;
+	case _TKIP_:
 		keylen = 16;
-		स_नकल(&psetkeyparm->key, &psecuritypriv->करोt118021XGrpKey[keyid], keylen);
+		memcpy(&psetkeyparm->key, &psecuritypriv->dot118021XGrpKey[keyid], keylen);
 		psetkeyparm->grpkey = 1;
-		अवरोध;
-	हाल _AES_:
+		break;
+	case _AES_:
 		keylen = 16;
-		स_नकल(&psetkeyparm->key, &psecuritypriv->करोt118021XGrpKey[keyid], keylen);
+		memcpy(&psetkeyparm->key, &psecuritypriv->dot118021XGrpKey[keyid], keylen);
 		psetkeyparm->grpkey = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		res = _FAIL;
-		kमुक्त(psetkeyparm);
-		जाओ निकास;
-	पूर्ण
+		kfree(psetkeyparm);
+		goto exit;
+	}
 
-	अगर (enqueue) अणु
-		pcmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
-		अगर (!pcmd) अणु
-			kमुक्त(psetkeyparm);
+	if (enqueue) {
+		pcmd = rtw_zmalloc(sizeof(struct cmd_obj));
+		if (!pcmd) {
+			kfree(psetkeyparm);
 			res = _FAIL;  /* try again */
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		pcmd->cmdcode = _SetKey_CMD_;
 		pcmd->parmbuf = (u8 *)psetkeyparm;
-		pcmd->cmdsz =  (माप(काष्ठा setkey_parm));
-		pcmd->rsp = शून्य;
+		pcmd->cmdsz =  (sizeof(struct setkey_parm));
+		pcmd->rsp = NULL;
 		pcmd->rspsz = 0;
 
 		INIT_LIST_HEAD(&pcmd->list);
 
 		res = rtw_enqueue_cmd(pcmdpriv, pcmd);
-	पूर्ण अन्यथा अणु
+	} else {
 		setkey_hdl(adapter, (u8 *)psetkeyparm);
-		kमुक्त(psetkeyparm);
-	पूर्ण
-निकास:
-	वापस res;
-पूर्ण
+		kfree(psetkeyparm);
+	}
+exit:
+	return res;
+}
 
-/* adjust IEs क्रम rtw_joinbss_cmd in WMM */
-पूर्णांक rtw_reकाष्ठा_wmm_ie(काष्ठा adapter *adapter, u8 *in_ie, u8 *out_ie, uपूर्णांक in_len, uपूर्णांक initial_out_len)
-अणु
-	अचिन्हित	पूर्णांक ielength = 0;
-	अचिन्हित पूर्णांक i, j;
+/* adjust IEs for rtw_joinbss_cmd in WMM */
+int rtw_restruct_wmm_ie(struct adapter *adapter, u8 *in_ie, u8 *out_ie, uint in_len, uint initial_out_len)
+{
+	unsigned	int ielength = 0;
+	unsigned int i, j;
 
 	i = 12; /* after the fixed IE */
-	जबतक (i < in_len) अणु
+	while (i < in_len) {
 		ielength = initial_out_len;
 
-		अगर (in_ie[i] == 0xDD && in_ie[i+2] == 0x00 && in_ie[i+3] == 0x50  && in_ie[i+4] == 0xF2 && in_ie[i+5] == 0x02 && i+5 < in_len) अणु /* WMM element ID and OUI */
-			क्रम (j = i; j < i + 9; j++) अणु
+		if (in_ie[i] == 0xDD && in_ie[i+2] == 0x00 && in_ie[i+3] == 0x50  && in_ie[i+4] == 0xF2 && in_ie[i+5] == 0x02 && i+5 < in_len) { /* WMM element ID and OUI */
+			for (j = i; j < i + 9; j++) {
 					out_ie[ielength] = in_ie[j];
 					ielength++;
-			पूर्ण
+			}
 			out_ie[initial_out_len + 1] = 0x07;
 			out_ie[initial_out_len + 6] = 0x00;
 			out_ie[initial_out_len + 8] = 0x00;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i += (in_ie[i+1]+2); /*  to the next IE element */
-	पूर्ण
+	}
 
-	वापस ielength;
+	return ielength;
 
-पूर्ण
+}
 
 /*  */
 /*  Ported from 8185: IsInPreAuthKeyList(). (Renamed from SecIsInPreAuthKeyList(), 2006-10-13.) */
@@ -2079,175 +2078,175 @@ candidate_exist:
 /*  */
 /*  Search by BSSID, */
 /*  Return Value: */
-/* 		-1		:अगर there is no pre-auth key in the  table */
-/* 		>= 0		:अगर there is pre-auth key, and   वापस the entry id */
+/* 		-1		:if there is no pre-auth key in the  table */
+/* 		>= 0		:if there is pre-auth key, and   return the entry id */
 /*  */
 /*  */
 
-अटल पूर्णांक SecIsInPMKIDList(काष्ठा adapter *Adapter, u8 *bssid)
-अणु
-	काष्ठा security_priv *psecuritypriv = &Adapter->securitypriv;
-	पूर्णांक i = 0;
+static int SecIsInPMKIDList(struct adapter *Adapter, u8 *bssid)
+{
+	struct security_priv *psecuritypriv = &Adapter->securitypriv;
+	int i = 0;
 
-	करो अणु
-		अगर ((psecuritypriv->PMKIDList[i].bUsed) &&
-				(!स_भेद(psecuritypriv->PMKIDList[i].Bssid, bssid, ETH_ALEN))) अणु
-			अवरोध;
-		पूर्ण अन्यथा अणु
+	do {
+		if ((psecuritypriv->PMKIDList[i].bUsed) &&
+				(!memcmp(psecuritypriv->PMKIDList[i].Bssid, bssid, ETH_ALEN))) {
+			break;
+		} else {
 			i++;
-			/* जारी; */
-		पूर्ण
+			/* continue; */
+		}
 
-	पूर्ण जबतक (i < NUM_PMKID_CACHE);
+	} while (i < NUM_PMKID_CACHE);
 
-	अगर (i == NUM_PMKID_CACHE) अणु
+	if (i == NUM_PMKID_CACHE) {
 		i = -1;/*  Could not find. */
-	पूर्ण अन्यथा अणु
-		/*  There is one Pre-Authentication Key क्रम the specअगरic BSSID. */
-	पूर्ण
+	} else {
+		/*  There is one Pre-Authentication Key for the specific BSSID. */
+	}
 
-	वापस i;
+	return i;
 
-पूर्ण
+}
 
 /*  */
 /*  Check the RSN IE length */
-/*  If the RSN IE length <= 20, the RSN IE didn't include the PMKID inक्रमmation */
+/*  If the RSN IE length <= 20, the RSN IE didn't include the PMKID information */
 /*  0-11th element in the array are the fixed IE */
 /*  12th element in the array is the IE */
 /*  13th element in the array is the IE length */
 /*  */
 
-अटल पूर्णांक rtw_append_pmkid(काष्ठा adapter *Adapter, पूर्णांक iEntry, u8 *ie, uपूर्णांक ie_len)
-अणु
-	काष्ठा security_priv *psecuritypriv = &Adapter->securitypriv;
+static int rtw_append_pmkid(struct adapter *Adapter, int iEntry, u8 *ie, uint ie_len)
+{
+	struct security_priv *psecuritypriv = &Adapter->securitypriv;
 
-	अगर (ie[13] <= 20) अणु
-		/*  The RSN IE didn't include the PMK ID, append the PMK inक्रमmation */
+	if (ie[13] <= 20) {
+		/*  The RSN IE didn't include the PMK ID, append the PMK information */
 			ie[ie_len] = 1;
 			ie_len++;
 			ie[ie_len] = 0;	/* PMKID count = 0x0100 */
 			ie_len++;
-			स_नकल(&ie[ie_len], &psecuritypriv->PMKIDList[iEntry].PMKID, 16);
+			memcpy(&ie[ie_len], &psecuritypriv->PMKIDList[iEntry].PMKID, 16);
 
 			ie_len += 16;
 			ie[13] += 18;/* PMKID length = 2+16 */
 
-	पूर्ण
-	वापस ie_len;
-पूर्ण
+	}
+	return ie_len;
+}
 
-चिन्हित पूर्णांक rtw_reकाष्ठा_sec_ie(काष्ठा adapter *adapter, u8 *in_ie, u8 *out_ie, uपूर्णांक in_len)
-अणु
+signed int rtw_restruct_sec_ie(struct adapter *adapter, u8 *in_ie, u8 *out_ie, uint in_len)
+{
 	u8 authmode = 0x0;
-	uपूर्णांक	ielength;
-	पूर्णांक iEntry;
+	uint	ielength;
+	int iEntry;
 
-	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
-	काष्ठा security_priv *psecuritypriv = &adapter->securitypriv;
-	uपूर्णांक	ndisauthmode = psecuritypriv->ndisauthtype;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
+	uint	ndisauthmode = psecuritypriv->ndisauthtype;
 
 	/* copy fixed ie only */
-	स_नकल(out_ie, in_ie, 12);
+	memcpy(out_ie, in_ie, 12);
 	ielength = 12;
-	अगर ((ndisauthmode == Ndis802_11AuthModeWPA) || (ndisauthmode == Ndis802_11AuthModeWPAPSK))
+	if ((ndisauthmode == Ndis802_11AuthModeWPA) || (ndisauthmode == Ndis802_11AuthModeWPAPSK))
 			authmode = WLAN_EID_VENDOR_SPECIFIC;
-	अगर ((ndisauthmode == Ndis802_11AuthModeWPA2) || (ndisauthmode == Ndis802_11AuthModeWPA2PSK))
+	if ((ndisauthmode == Ndis802_11AuthModeWPA2) || (ndisauthmode == Ndis802_11AuthModeWPA2PSK))
 			authmode = WLAN_EID_RSN;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_UNDER_WPS)) अणु
-		स_नकल(out_ie+ielength, psecuritypriv->wps_ie, psecuritypriv->wps_ie_len);
+	if (check_fwstate(pmlmepriv, WIFI_UNDER_WPS)) {
+		memcpy(out_ie+ielength, psecuritypriv->wps_ie, psecuritypriv->wps_ie_len);
 
 		ielength += psecuritypriv->wps_ie_len;
-	पूर्ण अन्यथा अगर ((authmode == WLAN_EID_VENDOR_SPECIFIC) || (authmode == WLAN_EID_RSN)) अणु
+	} else if ((authmode == WLAN_EID_VENDOR_SPECIFIC) || (authmode == WLAN_EID_RSN)) {
 		/* copy RSN or SSN */
-		स_नकल(&out_ie[ielength], &psecuritypriv->supplicant_ie[0], psecuritypriv->supplicant_ie[1]+2);
-		/* debug क्रम CONFIG_IEEE80211W
-		अणु
-			पूर्णांक jj;
-			prपूर्णांकk("supplicant_ie_length =%d &&&&&&&&&&&&&&&&&&&\n", psecuritypriv->supplicant_ie[1]+2);
-			क्रम (jj = 0; jj < psecuritypriv->supplicant_ie[1]+2; jj++)
-				prपूर्णांकk(" %02x ", psecuritypriv->supplicant_ie[jj]);
-			prपूर्णांकk("\n");
-		पूर्ण*/
+		memcpy(&out_ie[ielength], &psecuritypriv->supplicant_ie[0], psecuritypriv->supplicant_ie[1]+2);
+		/* debug for CONFIG_IEEE80211W
+		{
+			int jj;
+			printk("supplicant_ie_length =%d &&&&&&&&&&&&&&&&&&&\n", psecuritypriv->supplicant_ie[1]+2);
+			for (jj = 0; jj < psecuritypriv->supplicant_ie[1]+2; jj++)
+				printk(" %02x ", psecuritypriv->supplicant_ie[jj]);
+			printk("\n");
+		}*/
 		ielength += psecuritypriv->supplicant_ie[1]+2;
 		rtw_report_sec_ie(adapter, authmode, psecuritypriv->supplicant_ie);
-	पूर्ण
+	}
 
 	iEntry = SecIsInPMKIDList(adapter, pmlmepriv->assoc_bssid);
-	अगर (iEntry < 0) अणु
-		वापस ielength;
-	पूर्ण अन्यथा अणु
-		अगर (authmode == WLAN_EID_RSN)
+	if (iEntry < 0) {
+		return ielength;
+	} else {
+		if (authmode == WLAN_EID_RSN)
 			ielength = rtw_append_pmkid(adapter, iEntry, out_ie, ielength);
-	पूर्ण
-	वापस ielength;
-पूर्ण
+	}
+	return ielength;
+}
 
-व्योम rtw_init_registrypriv_dev_network(काष्ठा adapter *adapter)
-अणु
-	काष्ठा registry_priv *pregistrypriv = &adapter->registrypriv;
-	काष्ठा eeprom_priv *peepriv = &adapter->eeprompriv;
-	काष्ठा wlan_bssid_ex    *pdev_network = &pregistrypriv->dev_network;
+void rtw_init_registrypriv_dev_network(struct adapter *adapter)
+{
+	struct registry_priv *pregistrypriv = &adapter->registrypriv;
+	struct eeprom_priv *peepriv = &adapter->eeprompriv;
+	struct wlan_bssid_ex    *pdev_network = &pregistrypriv->dev_network;
 	u8 *myhwaddr = myid(peepriv);
 
-	स_नकल(pdev_network->MacAddress, myhwaddr, ETH_ALEN);
+	memcpy(pdev_network->MacAddress, myhwaddr, ETH_ALEN);
 
-	स_नकल(&pdev_network->Ssid, &pregistrypriv->ssid, माप(काष्ठा ndis_802_11_ssid));
+	memcpy(&pdev_network->Ssid, &pregistrypriv->ssid, sizeof(struct ndis_802_11_ssid));
 
-	pdev_network->Configuration.Length = माप(काष्ठा ndis_802_11_conf);
+	pdev_network->Configuration.Length = sizeof(struct ndis_802_11_conf);
 	pdev_network->Configuration.BeaconPeriod = 100;
 	pdev_network->Configuration.FHConfig.Length = 0;
 	pdev_network->Configuration.FHConfig.HopPattern = 0;
 	pdev_network->Configuration.FHConfig.HopSet = 0;
 	pdev_network->Configuration.FHConfig.DwellTime = 0;
-पूर्ण
+}
 
-व्योम rtw_update_registrypriv_dev_network(काष्ठा adapter *adapter)
-अणु
-	पूर्णांक sz = 0;
-	काष्ठा registry_priv *pregistrypriv = &adapter->registrypriv;
-	काष्ठा wlan_bssid_ex    *pdev_network = &pregistrypriv->dev_network;
-	काष्ठा	security_priv *psecuritypriv = &adapter->securitypriv;
-	काष्ठा	wlan_network	*cur_network = &adapter->mlmepriv.cur_network;
-	/* काष्ठा	xmit_priv *pxmitpriv = &adapter->xmitpriv; */
+void rtw_update_registrypriv_dev_network(struct adapter *adapter)
+{
+	int sz = 0;
+	struct registry_priv *pregistrypriv = &adapter->registrypriv;
+	struct wlan_bssid_ex    *pdev_network = &pregistrypriv->dev_network;
+	struct	security_priv *psecuritypriv = &adapter->securitypriv;
+	struct	wlan_network	*cur_network = &adapter->mlmepriv.cur_network;
+	/* struct	xmit_priv *pxmitpriv = &adapter->xmitpriv; */
 
-	pdev_network->Privacy = (psecuritypriv->करोt11PrivacyAlgrthm > 0 ? 1 : 0) ; /*  adhoc no 802.1x */
+	pdev_network->Privacy = (psecuritypriv->dot11PrivacyAlgrthm > 0 ? 1 : 0) ; /*  adhoc no 802.1x */
 
 	pdev_network->Rssi = 0;
 
-	चयन (pregistrypriv->wireless_mode) अणु
-	हाल WIRELESS_11B:
+	switch (pregistrypriv->wireless_mode) {
+	case WIRELESS_11B:
 		pdev_network->NetworkTypeInUse = (Ndis802_11DS);
-		अवरोध;
-	हाल WIRELESS_11G:
-	हाल WIRELESS_11BG:
-	हाल WIRELESS_11_24N:
-	हाल WIRELESS_11G_24N:
-	हाल WIRELESS_11BG_24N:
+		break;
+	case WIRELESS_11G:
+	case WIRELESS_11BG:
+	case WIRELESS_11_24N:
+	case WIRELESS_11G_24N:
+	case WIRELESS_11BG_24N:
 		pdev_network->NetworkTypeInUse = (Ndis802_11OFDM24);
-		अवरोध;
-	हाल WIRELESS_11A:
-	हाल WIRELESS_11A_5N:
+		break;
+	case WIRELESS_11A:
+	case WIRELESS_11A_5N:
 		pdev_network->NetworkTypeInUse = (Ndis802_11OFDM5);
-		अवरोध;
-	हाल WIRELESS_11ABGN:
-		अगर (pregistrypriv->channel > 14)
+		break;
+	case WIRELESS_11ABGN:
+		if (pregistrypriv->channel > 14)
 			pdev_network->NetworkTypeInUse = (Ndis802_11OFDM5);
-		अन्यथा
+		else
 			pdev_network->NetworkTypeInUse = (Ndis802_11OFDM24);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*  TODO */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	pdev_network->Configuration.DSConfig = (pregistrypriv->channel);
 
-	अगर (cur_network->network.Infraकाष्ठाureMode == Ndis802_11IBSS)
-		pdev_network->Configuration.ATIMWinकरोw = (0);
+	if (cur_network->network.InfrastructureMode == Ndis802_11IBSS)
+		pdev_network->Configuration.ATIMWindow = (0);
 
-	pdev_network->Infraकाष्ठाureMode = (cur_network->network.Infraकाष्ठाureMode);
+	pdev_network->InfrastructureMode = (cur_network->network.InfrastructureMode);
 
 	/*  1. Supported rates */
 	/*  2. IE */
@@ -2257,25 +2256,25 @@ candidate_exist:
 
 	pdev_network->IELength = sz;
 
-	pdev_network->Length = get_wlan_bssid_ex_sz((काष्ठा wlan_bssid_ex  *)pdev_network);
+	pdev_network->Length = get_wlan_bssid_ex_sz((struct wlan_bssid_ex  *)pdev_network);
 
 	/* notes: translate IELength & Length after assign the Length to cmdsz in createbss_cmd(); */
 	/* pdev_network->IELength = cpu_to_le32(sz); */
-पूर्ण
+}
 
-व्योम rtw_get_encrypt_decrypt_from_registrypriv(काष्ठा adapter *adapter)
-अणु
-पूर्ण
+void rtw_get_encrypt_decrypt_from_registrypriv(struct adapter *adapter)
+{
+}
 
 /* the function is at passive_level */
-व्योम rtw_joinbss_reset(काष्ठा adapter *padapter)
-अणु
+void rtw_joinbss_reset(struct adapter *padapter)
+{
 	u8 threshold;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	काष्ठा ht_priv 	*phtpriv = &pmlmepriv->htpriv;
+	struct ht_priv 	*phtpriv = &pmlmepriv->htpriv;
 
-	/* toकरो: अगर you want to करो something io/reg/hw setting beक्रमe join_bss, please add code here */
+	/* todo: if you want to do something io/reg/hw setting before join_bss, please add code here */
 
 	pmlmepriv->num_FortyMHzIntolerant = 0;
 
@@ -2285,327 +2284,327 @@ candidate_exist:
 
 	/*  TH = 1 => means that invalidate usb rx aggregation */
 	/*  TH = 0 => means that validate usb rx aggregation, use init value. */
-	अगर (phtpriv->ht_option) अणु
-		अगर (padapter->registrypriv.wअगरi_spec == 1)
+	if (phtpriv->ht_option) {
+		if (padapter->registrypriv.wifi_spec == 1)
 			threshold = 1;
-		अन्यथा
+		else
 			threshold = 0;
 		rtw_hal_set_hwreg(padapter, HW_VAR_RXDMA_AGG_PG_TH, (u8 *)(&threshold));
-	पूर्ण अन्यथा अणु
+	} else {
 		threshold = 1;
 		rtw_hal_set_hwreg(padapter, HW_VAR_RXDMA_AGG_PG_TH, (u8 *)(&threshold));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम rtw_ht_use_शेष_setting(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv 	*pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv 	*phtpriv = &pmlmepriv->htpriv;
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
+void rtw_ht_use_default_setting(struct adapter *padapter)
+{
+	struct mlme_priv 	*pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv 	*phtpriv = &pmlmepriv->htpriv;
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
 	bool		bHwLDPCSupport = false, bHwSTBCSupport = false;
-	bool		bHwSupportBeamक्रमmer = false, bHwSupportBeamक्रमmee = false;
+	bool		bHwSupportBeamformer = false, bHwSupportBeamformee = false;
 
-	अगर (pregistrypriv->wअगरi_spec)
+	if (pregistrypriv->wifi_spec)
 		phtpriv->bss_coexist = 1;
-	अन्यथा
+	else
 		phtpriv->bss_coexist = 0;
 
-	phtpriv->sgi_40m = TEST_FLAG(pregistrypriv->लघु_gi, BIT1) ? true : false;
-	phtpriv->sgi_20m = TEST_FLAG(pregistrypriv->लघु_gi, BIT0) ? true : false;
+	phtpriv->sgi_40m = TEST_FLAG(pregistrypriv->short_gi, BIT1) ? true : false;
+	phtpriv->sgi_20m = TEST_FLAG(pregistrypriv->short_gi, BIT0) ? true : false;
 
 	/*  LDPC support */
 	rtw_hal_get_def_var(padapter, HAL_DEF_RX_LDPC, (u8 *)&bHwLDPCSupport);
 	CLEAR_FLAGS(phtpriv->ldpc_cap);
-	अगर (bHwLDPCSupport) अणु
-		अगर (TEST_FLAG(pregistrypriv->ldpc_cap, BIT4))
+	if (bHwLDPCSupport) {
+		if (TEST_FLAG(pregistrypriv->ldpc_cap, BIT4))
 			SET_FLAG(phtpriv->ldpc_cap, LDPC_HT_ENABLE_RX);
-	पूर्ण
+	}
 	rtw_hal_get_def_var(padapter, HAL_DEF_TX_LDPC, (u8 *)&bHwLDPCSupport);
-	अगर (bHwLDPCSupport) अणु
-		अगर (TEST_FLAG(pregistrypriv->ldpc_cap, BIT5))
+	if (bHwLDPCSupport) {
+		if (TEST_FLAG(pregistrypriv->ldpc_cap, BIT5))
 			SET_FLAG(phtpriv->ldpc_cap, LDPC_HT_ENABLE_TX);
-	पूर्ण
+	}
 
 	/*  STBC */
 	rtw_hal_get_def_var(padapter, HAL_DEF_TX_STBC, (u8 *)&bHwSTBCSupport);
 	CLEAR_FLAGS(phtpriv->stbc_cap);
-	अगर (bHwSTBCSupport) अणु
-		अगर (TEST_FLAG(pregistrypriv->stbc_cap, BIT5))
+	if (bHwSTBCSupport) {
+		if (TEST_FLAG(pregistrypriv->stbc_cap, BIT5))
 			SET_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX);
-	पूर्ण
+	}
 	rtw_hal_get_def_var(padapter, HAL_DEF_RX_STBC, (u8 *)&bHwSTBCSupport);
-	अगर (bHwSTBCSupport) अणु
-		अगर (TEST_FLAG(pregistrypriv->stbc_cap, BIT4))
+	if (bHwSTBCSupport) {
+		if (TEST_FLAG(pregistrypriv->stbc_cap, BIT4))
 			SET_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_RX);
-	पूर्ण
+	}
 
-	/*  Beamक्रमming setting */
-	rtw_hal_get_def_var(padapter, HAL_DEF_EXPLICIT_BEAMFORMER, (u8 *)&bHwSupportBeamक्रमmer);
-	rtw_hal_get_def_var(padapter, HAL_DEF_EXPLICIT_BEAMFORMEE, (u8 *)&bHwSupportBeamक्रमmee);
-	CLEAR_FLAGS(phtpriv->beamक्रमm_cap);
-	अगर (TEST_FLAG(pregistrypriv->beamक्रमm_cap, BIT4) && bHwSupportBeamक्रमmer)
-		SET_FLAG(phtpriv->beamक्रमm_cap, BEAMFORMING_HT_BEAMFORMER_ENABLE);
+	/*  Beamforming setting */
+	rtw_hal_get_def_var(padapter, HAL_DEF_EXPLICIT_BEAMFORMER, (u8 *)&bHwSupportBeamformer);
+	rtw_hal_get_def_var(padapter, HAL_DEF_EXPLICIT_BEAMFORMEE, (u8 *)&bHwSupportBeamformee);
+	CLEAR_FLAGS(phtpriv->beamform_cap);
+	if (TEST_FLAG(pregistrypriv->beamform_cap, BIT4) && bHwSupportBeamformer)
+		SET_FLAG(phtpriv->beamform_cap, BEAMFORMING_HT_BEAMFORMER_ENABLE);
 
-	अगर (TEST_FLAG(pregistrypriv->beamक्रमm_cap, BIT5) && bHwSupportBeamक्रमmee)
-		SET_FLAG(phtpriv->beamक्रमm_cap, BEAMFORMING_HT_BEAMFORMEE_ENABLE);
-पूर्ण
+	if (TEST_FLAG(pregistrypriv->beamform_cap, BIT5) && bHwSupportBeamformee)
+		SET_FLAG(phtpriv->beamform_cap, BEAMFORMING_HT_BEAMFORMEE_ENABLE);
+}
 
-व्योम rtw_build_wmm_ie_ht(काष्ठा adapter *padapter, u8 *out_ie, uपूर्णांक *pout_len)
-अणु
-	अचिन्हित अक्षर WMM_IE[] = अणु0x00, 0x50, 0xf2, 0x02, 0x00, 0x01, 0x00पूर्ण;
-	पूर्णांक out_len;
+void rtw_build_wmm_ie_ht(struct adapter *padapter, u8 *out_ie, uint *pout_len)
+{
+	unsigned char WMM_IE[] = {0x00, 0x50, 0xf2, 0x02, 0x00, 0x01, 0x00};
+	int out_len;
 	u8 *pframe;
 
-	अगर (padapter->mlmepriv.qospriv.qos_option == 0) अणु
+	if (padapter->mlmepriv.qospriv.qos_option == 0) {
 		out_len = *pout_len;
 		pframe = rtw_set_ie(out_ie+out_len, WLAN_EID_VENDOR_SPECIFIC,
 							_WMM_IE_Length_, WMM_IE, pout_len);
 
 		padapter->mlmepriv.qospriv.qos_option = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* the function is >= passive_level */
-अचिन्हित पूर्णांक rtw_reकाष्ठाure_ht_ie(काष्ठा adapter *padapter, u8 *in_ie, u8 *out_ie, uपूर्णांक in_len, uपूर्णांक *pout_len, u8 channel)
-अणु
+unsigned int rtw_restructure_ht_ie(struct adapter *padapter, u8 *in_ie, u8 *out_ie, uint in_len, uint *pout_len, u8 channel)
+{
 	u32 ielen, out_len;
-	क्रमागत ieee80211_max_ampdu_length_exp max_rx_ampdu_factor;
-	अचिन्हित अक्षर *p, *pframe;
-	काष्ठा ieee80211_ht_cap ht_capie;
+	enum ieee80211_max_ampdu_length_exp max_rx_ampdu_factor;
+	unsigned char *p, *pframe;
+	struct ieee80211_ht_cap ht_capie;
 	u8 cbw40_enable = 0, stbc_rx_enable = 0, rf_type = 0, operation_bw = 0;
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv 	*phtpriv = &pmlmepriv->htpriv;
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv 	*phtpriv = &pmlmepriv->htpriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 
 	phtpriv->ht_option = false;
 
 	out_len = *pout_len;
 
-	स_रखो(&ht_capie, 0, माप(काष्ठा ieee80211_ht_cap));
+	memset(&ht_capie, 0, sizeof(struct ieee80211_ht_cap));
 
 	ht_capie.cap_info = cpu_to_le16(IEEE80211_HT_CAP_DSSSCCK40);
 
-	अगर (phtpriv->sgi_20m)
+	if (phtpriv->sgi_20m)
 		ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_SGI_20);
 
 	/* Get HT BW */
-	अगर (!in_ie) अणु
+	if (!in_ie) {
 		/* TDLS: TODO 20/40 issue */
-		अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) अणु
+		if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {
 			operation_bw = padapter->mlmeextpriv.cur_bwmode;
-			अगर (operation_bw > CHANNEL_WIDTH_40)
+			if (operation_bw > CHANNEL_WIDTH_40)
 				operation_bw = CHANNEL_WIDTH_40;
-		पूर्ण अन्यथा
+		} else
 			/* TDLS: TODO 40? */
 			operation_bw = CHANNEL_WIDTH_40;
-	पूर्ण अन्यथा अणु
+	} else {
 		p = rtw_get_ie(in_ie, WLAN_EID_HT_OPERATION, &ielen, in_len);
-		अगर (p && (ielen == माप(काष्ठा ieee80211_ht_addt_info))) अणु
-			काष्ठा HT_info_element *pht_info = (काष्ठा HT_info_element *)(p+2);
+		if (p && (ielen == sizeof(struct ieee80211_ht_addt_info))) {
+			struct HT_info_element *pht_info = (struct HT_info_element *)(p+2);
 
-			अगर (pht_info->infos[0] & BIT(2)) अणु
-				चयन (pht_info->infos[0] & 0x3) अणु
-				हाल 1:
-				हाल 3:
+			if (pht_info->infos[0] & BIT(2)) {
+				switch (pht_info->infos[0] & 0x3) {
+				case 1:
+				case 3:
 					operation_bw = CHANNEL_WIDTH_40;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					operation_bw = CHANNEL_WIDTH_20;
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+					break;
+				}
+			} else {
 				operation_bw = CHANNEL_WIDTH_20;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* to disable 40M Hz support जबतक gd_bw_40MHz_en = 0 */
-	अगर (channel > 14) अणु
-		अगर ((pregistrypriv->bw_mode & 0xf0) > 0)
+	/* to disable 40M Hz support while gd_bw_40MHz_en = 0 */
+	if (channel > 14) {
+		if ((pregistrypriv->bw_mode & 0xf0) > 0)
 			cbw40_enable = 1;
-	पूर्ण अन्यथा अणु
-		अगर ((pregistrypriv->bw_mode & 0x0f) > 0)
+	} else {
+		if ((pregistrypriv->bw_mode & 0x0f) > 0)
 			cbw40_enable = 1;
-	पूर्ण
+	}
 
-	अगर ((cbw40_enable == 1) && (operation_bw == CHANNEL_WIDTH_40)) अणु
+	if ((cbw40_enable == 1) && (operation_bw == CHANNEL_WIDTH_40)) {
 		ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_SUP_WIDTH);
-		अगर (phtpriv->sgi_40m)
+		if (phtpriv->sgi_40m)
 			ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_SGI_40);
-	पूर्ण
+	}
 
-	अगर (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX))
+	if (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_TX))
 		ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_TX_STBC);
 
-	/* toकरो: disable SM घातer save mode */
+	/* todo: disable SM power save mode */
 	ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_SM_PS);
 
-	अगर (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_RX)) अणु
-		अगर ((channel <= 14 && pregistrypriv->rx_stbc == 0x1) ||	/* enable क्रम 2.4GHz */
-			(pregistrypriv->wअगरi_spec == 1))
+	if (TEST_FLAG(phtpriv->stbc_cap, STBC_HT_ENABLE_RX)) {
+		if ((channel <= 14 && pregistrypriv->rx_stbc == 0x1) ||	/* enable for 2.4GHz */
+			(pregistrypriv->wifi_spec == 1))
 			stbc_rx_enable = 1;
-	पूर्ण
+	}
 
-	/* fill शेष supported_mcs_set */
-	स_नकल(ht_capie.mcs.rx_mask, pmlmeext->शेष_supported_mcs_set, 16);
+	/* fill default supported_mcs_set */
+	memcpy(ht_capie.mcs.rx_mask, pmlmeext->default_supported_mcs_set, 16);
 
-	/* update शेष supported_mcs_set */
+	/* update default supported_mcs_set */
 	rtw_hal_get_hwreg(padapter, HW_VAR_RF_TYPE, (u8 *)(&rf_type));
 
-	चयन (rf_type) अणु
-	हाल RF_1T1R:
-		अगर (stbc_rx_enable)
+	switch (rf_type) {
+	case RF_1T1R:
+		if (stbc_rx_enable)
 			ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_RX_STBC_1R);/* RX STBC One spatial stream */
 
 		set_mcs_rate_by_mask(ht_capie.mcs.rx_mask, MCS_RATE_1R);
-		अवरोध;
+		break;
 
-	हाल RF_2T2R:
-	हाल RF_1T2R:
-	शेष:
-		अगर (stbc_rx_enable)
+	case RF_2T2R:
+	case RF_1T2R:
+	default:
+		if (stbc_rx_enable)
 			ht_capie.cap_info |= cpu_to_le16(IEEE80211_HT_CAP_RX_STBC_2R);/* RX STBC two spatial stream */
 
 		set_mcs_rate_by_mask(ht_capie.mcs.rx_mask, MCS_RATE_2R);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अणु
+	{
 		u32 rx_packet_offset, max_recvbuf_sz;
 
 		rtw_hal_get_def_var(padapter, HAL_DEF_RX_PACKET_OFFSET, &rx_packet_offset);
 		rtw_hal_get_def_var(padapter, HAL_DEF_MAX_RECVBUF_SZ, &max_recvbuf_sz);
-	पूर्ण
+	}
 
-	अगर (padapter->driver_rx_ampdu_factor != 0xFF)
+	if (padapter->driver_rx_ampdu_factor != 0xFF)
 		max_rx_ampdu_factor =
-		  (क्रमागत ieee80211_max_ampdu_length_exp)padapter->driver_rx_ampdu_factor;
-	अन्यथा
+		  (enum ieee80211_max_ampdu_length_exp)padapter->driver_rx_ampdu_factor;
+	else
 		rtw_hal_get_def_var(padapter, HW_VAR_MAX_RX_AMPDU_FACTOR,
 				    &max_rx_ampdu_factor);
 
 	/* rtw_hal_get_def_var(padapter, HW_VAR_MAX_RX_AMPDU_FACTOR, &max_rx_ampdu_factor); */
 	ht_capie.ampdu_params_info = (max_rx_ampdu_factor&0x03);
 
-	अगर (padapter->securitypriv.करोt11PrivacyAlgrthm == _AES_)
+	if (padapter->securitypriv.dot11PrivacyAlgrthm == _AES_)
 		ht_capie.ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_DENSITY&(0x07<<2));
-	अन्यथा
+	else
 		ht_capie.ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_DENSITY&0x00);
 
 	pframe = rtw_set_ie(out_ie+out_len, WLAN_EID_HT_CAPABILITY,
-						माप(काष्ठा ieee80211_ht_cap), (अचिन्हित अक्षर *)&ht_capie, pout_len);
+						sizeof(struct ieee80211_ht_cap), (unsigned char *)&ht_capie, pout_len);
 
 	phtpriv->ht_option = true;
 
-	अगर (in_ie) अणु
+	if (in_ie) {
 		p = rtw_get_ie(in_ie, WLAN_EID_HT_OPERATION, &ielen, in_len);
-		अगर (p && (ielen == माप(काष्ठा ieee80211_ht_addt_info))) अणु
+		if (p && (ielen == sizeof(struct ieee80211_ht_addt_info))) {
 			out_len = *pout_len;
 			pframe = rtw_set_ie(out_ie+out_len, WLAN_EID_HT_OPERATION, ielen, p+2, pout_len);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस phtpriv->ht_option;
+	return phtpriv->ht_option;
 
-पूर्ण
+}
 
 /* the function is > passive_level (in critical_section) */
-व्योम rtw_update_ht_cap(काष्ठा adapter *padapter, u8 *pie, uपूर्णांक ie_len, u8 channel)
-अणु
+void rtw_update_ht_cap(struct adapter *padapter, u8 *pie, uint ie_len, u8 channel)
+{
 	u8 *p, max_ampdu_sz;
-	पूर्णांक len;
-	/* काष्ठा sta_info *bmc_sta, *psta; */
-	काष्ठा ieee80211_ht_cap *pht_capie;
-	काष्ठा ieee80211_ht_addt_info *pht_addtinfo;
-	/* काष्ठा recv_reorder_ctrl *preorder_ctrl; */
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv 	*phtpriv = &pmlmepriv->htpriv;
-	/* काष्ठा recv_priv *precvpriv = &padapter->recvpriv; */
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
-	/* काष्ठा wlan_network *pcur_network = &(pmlmepriv->cur_network);; */
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	int len;
+	/* struct sta_info *bmc_sta, *psta; */
+	struct ieee80211_ht_cap *pht_capie;
+	struct ieee80211_ht_addt_info *pht_addtinfo;
+	/* struct recv_reorder_ctrl *preorder_ctrl; */
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv 	*phtpriv = &pmlmepriv->htpriv;
+	/* struct recv_priv *precvpriv = &padapter->recvpriv; */
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
+	/* struct wlan_network *pcur_network = &(pmlmepriv->cur_network);; */
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 	u8 cbw40_enable = 0;
 
-	अगर (!phtpriv->ht_option)
-		वापस;
+	if (!phtpriv->ht_option)
+		return;
 
-	अगर ((!pmlmeinfo->HT_info_enable) || (!pmlmeinfo->HT_caps_enable))
-		वापस;
+	if ((!pmlmeinfo->HT_info_enable) || (!pmlmeinfo->HT_caps_enable))
+		return;
 
-	/* maybe needs check अगर ap supports rx ampdu. */
-	अगर (!(phtpriv->ampdu_enable) && pregistrypriv->ampdu_enable == 1) अणु
+	/* maybe needs check if ap supports rx ampdu. */
+	if (!(phtpriv->ampdu_enable) && pregistrypriv->ampdu_enable == 1) {
 		phtpriv->ampdu_enable = true;
-	पूर्ण
+	}
 
 	/* check Max Rx A-MPDU Size */
 	len = 0;
-	p = rtw_get_ie(pie+माप(काष्ठा ndis_802_11_fix_ie), WLAN_EID_HT_CAPABILITY, &len, ie_len-माप(काष्ठा ndis_802_11_fix_ie));
-	अगर (p && len > 0) अणु
-		pht_capie = (काष्ठा ieee80211_ht_cap *)(p+2);
+	p = rtw_get_ie(pie+sizeof(struct ndis_802_11_fix_ie), WLAN_EID_HT_CAPABILITY, &len, ie_len-sizeof(struct ndis_802_11_fix_ie));
+	if (p && len > 0) {
+		pht_capie = (struct ieee80211_ht_cap *)(p+2);
 		max_ampdu_sz = (pht_capie->ampdu_params_info & IEEE80211_HT_CAP_AMPDU_FACTOR);
 		max_ampdu_sz = 1 << (max_ampdu_sz+3); /*  max_ampdu_sz (kbytes); */
 
 		phtpriv->rx_ampdu_maxlen = max_ampdu_sz;
 
-	पूर्ण
+	}
 
 	len = 0;
-	p = rtw_get_ie(pie+माप(काष्ठा ndis_802_11_fix_ie), WLAN_EID_HT_OPERATION, &len, ie_len-माप(काष्ठा ndis_802_11_fix_ie));
-	अगर (p && len > 0) अणु
-		pht_addtinfo = (काष्ठा ieee80211_ht_addt_info *)(p+2);
-		/* toकरो: */
-	पूर्ण
+	p = rtw_get_ie(pie+sizeof(struct ndis_802_11_fix_ie), WLAN_EID_HT_OPERATION, &len, ie_len-sizeof(struct ndis_802_11_fix_ie));
+	if (p && len > 0) {
+		pht_addtinfo = (struct ieee80211_ht_addt_info *)(p+2);
+		/* todo: */
+	}
 
-	अगर (channel > 14) अणु
-		अगर ((pregistrypriv->bw_mode & 0xf0) > 0)
+	if (channel > 14) {
+		if ((pregistrypriv->bw_mode & 0xf0) > 0)
 			cbw40_enable = 1;
-	पूर्ण अन्यथा अणु
-		अगर ((pregistrypriv->bw_mode & 0x0f) > 0)
+	} else {
+		if ((pregistrypriv->bw_mode & 0x0f) > 0)
 			cbw40_enable = 1;
-	पूर्ण
+	}
 
 	/* update cur_bwmode & cur_ch_offset */
-	अगर ((cbw40_enable) &&
+	if ((cbw40_enable) &&
 	    (le16_to_cpu(pmlmeinfo->HT_caps.u.HT_cap_element.HT_caps_info) &
-	      BIT(1)) && (pmlmeinfo->HT_info.infos[0] & BIT(2))) अणु
-		पूर्णांक i;
+	      BIT(1)) && (pmlmeinfo->HT_info.infos[0] & BIT(2))) {
+		int i;
 		u8 rf_type;
 
 		rtw_hal_get_hwreg(padapter, HW_VAR_RF_TYPE, (u8 *)(&rf_type));
 
 		/* update the MCS set */
-		क्रम (i = 0; i < 16; i++)
-			pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate[i] &= pmlmeext->शेष_supported_mcs_set[i];
+		for (i = 0; i < 16; i++)
+			pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate[i] &= pmlmeext->default_supported_mcs_set[i];
 
 		/* update the MCS rates */
-		चयन (rf_type) अणु
-		हाल RF_1T1R:
-		हाल RF_1T2R:
+		switch (rf_type) {
+		case RF_1T1R:
+		case RF_1T2R:
 			set_mcs_rate_by_mask(pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate, MCS_RATE_1R);
-			अवरोध;
-		हाल RF_2T2R:
-		शेष:
+			break;
+		case RF_2T2R:
+		default:
 			set_mcs_rate_by_mask(pmlmeinfo->HT_caps.u.HT_cap_element.MCS_rate, MCS_RATE_2R);
-		पूर्ण
+		}
 
-		/* चयन to the 40M Hz mode according to the AP */
+		/* switch to the 40M Hz mode according to the AP */
 		/* pmlmeext->cur_bwmode = CHANNEL_WIDTH_40; */
-		चयन ((pmlmeinfo->HT_info.infos[0] & 0x3)) अणु
-		हाल EXTCHNL_OFFSET_UPPER:
+		switch ((pmlmeinfo->HT_info.infos[0] & 0x3)) {
+		case EXTCHNL_OFFSET_UPPER:
 			pmlmeext->cur_ch_offset = HAL_PRIME_CHNL_OFFSET_LOWER;
-			अवरोध;
+			break;
 
-		हाल EXTCHNL_OFFSET_LOWER:
+		case EXTCHNL_OFFSET_LOWER:
 			pmlmeext->cur_ch_offset = HAL_PRIME_CHNL_OFFSET_UPPER;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			pmlmeext->cur_ch_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*  */
 	/*  Config SM Power Save setting */
@@ -2618,124 +2617,124 @@ candidate_exist:
 	/*  Config current HT Protection mode. */
 	/*  */
 	pmlmeinfo->HT_protection = pmlmeinfo->HT_info.infos[1] & 0x3;
-पूर्ण
+}
 
-व्योम rtw_issue_addbareq_cmd(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
+void rtw_issue_addbareq_cmd(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
 	u8 issued;
-	पूर्णांक priority;
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा ht_priv *phtpriv;
-	काष्ठा pkt_attrib *pattrib = &pxmitframe->attrib;
+	int priority;
+	struct sta_info *psta = NULL;
+	struct ht_priv *phtpriv;
+	struct pkt_attrib *pattrib = &pxmitframe->attrib;
 	s32 bmcst = IS_MCAST(pattrib->ra);
 
-	/* अगर (bmcst || (padapter->mlmepriv.LinkDetectInfo.bTxBusyTraffic == false)) */
-	अगर (bmcst || (padapter->mlmepriv.LinkDetectInfo.NumTxOkInPeriod < 100))
-		वापस;
+	/* if (bmcst || (padapter->mlmepriv.LinkDetectInfo.bTxBusyTraffic == false)) */
+	if (bmcst || (padapter->mlmepriv.LinkDetectInfo.NumTxOkInPeriod < 100))
+		return;
 
 	priority = pattrib->priority;
 
 	psta = rtw_get_stainfo(&padapter->stapriv, pattrib->ra);
-	अगर (pattrib->psta != psta)
-		वापस;
+	if (pattrib->psta != psta)
+		return;
 
-	अगर (!psta)
-		वापस;
+	if (!psta)
+		return;
 
-	अगर (!(psta->state & _FW_LINKED))
-		वापस;
+	if (!(psta->state & _FW_LINKED))
+		return;
 
 	phtpriv = &psta->htpriv;
 
-	अगर (phtpriv->ht_option && phtpriv->ampdu_enable) अणु
-		issued = (phtpriv->agg_enable_biपंचांगap>>priority)&0x1;
-		issued |= (phtpriv->candidate_tid_biपंचांगap>>priority)&0x1;
+	if (phtpriv->ht_option && phtpriv->ampdu_enable) {
+		issued = (phtpriv->agg_enable_bitmap>>priority)&0x1;
+		issued |= (phtpriv->candidate_tid_bitmap>>priority)&0x1;
 
-		अगर (0 == issued) अणु
-			psta->htpriv.candidate_tid_biपंचांगap |= BIT((u8)priority);
+		if (0 == issued) {
+			psta->htpriv.candidate_tid_bitmap |= BIT((u8)priority);
 			rtw_addbareq_cmd(padapter, (u8) priority, pattrib->ra);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-पूर्ण
+}
 
-व्योम rtw_append_exented_cap(काष्ठा adapter *padapter, u8 *out_ie, uपूर्णांक *pout_len)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ht_priv 	*phtpriv = &pmlmepriv->htpriv;
-	u8 cap_content[8] = अणु0पूर्ण;
+void rtw_append_exented_cap(struct adapter *padapter, u8 *out_ie, uint *pout_len)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ht_priv 	*phtpriv = &pmlmepriv->htpriv;
+	u8 cap_content[8] = {0};
 
-	अगर (phtpriv->bss_coexist)
+	if (phtpriv->bss_coexist)
 		SET_EXT_CAPABILITY_ELE_BSS_COEXIST(cap_content, 1);
 
 	rtw_set_ie(out_ie + *pout_len, WLAN_EID_EXT_CAPABILITY, 8, cap_content, pout_len);
-पूर्ण
+}
 
-अंतरभूत व्योम rtw_set_to_roam(काष्ठा adapter *adapter, u8 to_roam)
-अणु
-	अगर (to_roam == 0)
+inline void rtw_set_to_roam(struct adapter *adapter, u8 to_roam)
+{
+	if (to_roam == 0)
 		adapter->mlmepriv.to_join = false;
 	adapter->mlmepriv.to_roam = to_roam;
-पूर्ण
+}
 
-अंतरभूत u8 rtw_dec_to_roam(काष्ठा adapter *adapter)
-अणु
+inline u8 rtw_dec_to_roam(struct adapter *adapter)
+{
 	adapter->mlmepriv.to_roam--;
-	वापस adapter->mlmepriv.to_roam;
-पूर्ण
+	return adapter->mlmepriv.to_roam;
+}
 
-अंतरभूत u8 rtw_to_roam(काष्ठा adapter *adapter)
-अणु
-	वापस adapter->mlmepriv.to_roam;
-पूर्ण
+inline u8 rtw_to_roam(struct adapter *adapter)
+{
+	return adapter->mlmepriv.to_roam;
+}
 
-व्योम rtw_roaming(काष्ठा adapter *padapter, काष्ठा wlan_network *tgt_network)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+void rtw_roaming(struct adapter *padapter, struct wlan_network *tgt_network)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	spin_lock_bh(&pmlmepriv->lock);
 	_rtw_roaming(padapter, tgt_network);
 	spin_unlock_bh(&pmlmepriv->lock);
-पूर्ण
-व्योम _rtw_roaming(काष्ठा adapter *padapter, काष्ठा wlan_network *tgt_network)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा wlan_network *cur_network = &pmlmepriv->cur_network;
-	पूर्णांक करो_join_r;
+}
+void _rtw_roaming(struct adapter *padapter, struct wlan_network *tgt_network)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct wlan_network *cur_network = &pmlmepriv->cur_network;
+	int do_join_r;
 
-	अगर (0 < rtw_to_roam(padapter)) अणु
-		स_नकल(&pmlmepriv->assoc_ssid, &cur_network->network.Ssid, माप(काष्ठा ndis_802_11_ssid));
+	if (0 < rtw_to_roam(padapter)) {
+		memcpy(&pmlmepriv->assoc_ssid, &cur_network->network.Ssid, sizeof(struct ndis_802_11_ssid));
 
 		pmlmepriv->assoc_by_bssid = false;
 
-		जबतक (1) अणु
-			करो_join_r = rtw_करो_join(padapter);
-			अगर (_SUCCESS == करो_join_r) अणु
-				अवरोध;
-			पूर्ण अन्यथा अणु
+		while (1) {
+			do_join_r = rtw_do_join(padapter);
+			if (_SUCCESS == do_join_r) {
+				break;
+			} else {
 				rtw_dec_to_roam(padapter);
 
-				अगर (rtw_to_roam(padapter) > 0) अणु
-					जारी;
-				पूर्ण अन्यथा अणु
+				if (rtw_to_roam(padapter) > 0) {
+					continue;
+				} else {
 					rtw_indicate_disconnect(padapter);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+		}
+	}
 
-पूर्ण
+}
 
-चिन्हित पूर्णांक rtw_linked_check(काष्ठा adapter *padapter)
-अणु
-	अगर ((check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == true) ||
-			(check_fwstate(&padapter->mlmepriv, WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE) == true)) अणु
-		अगर (padapter->stapriv.asoc_sta_count > 2)
-			वापस true;
-	पूर्ण अन्यथा अणु	/* Station mode */
-		अगर (check_fwstate(&padapter->mlmepriv, _FW_LINKED) == true)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+signed int rtw_linked_check(struct adapter *padapter)
+{
+	if ((check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == true) ||
+			(check_fwstate(&padapter->mlmepriv, WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE) == true)) {
+		if (padapter->stapriv.asoc_sta_count > 2)
+			return true;
+	} else {	/* Station mode */
+		if (check_fwstate(&padapter->mlmepriv, _FW_LINKED) == true)
+			return true;
+	}
+	return false;
+}

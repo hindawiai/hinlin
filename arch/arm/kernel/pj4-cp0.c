@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/kernel/pj4-cp0.c
  *
- * PJ4 iWMMXt coprocessor context चयनing and handling
+ * PJ4 iWMMXt coprocessor context switching and handling
  *
  * Copyright (c) 2010 Marvell International Inc.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/thपढ़ो_notअगरy.h>
-#समावेश <यंत्र/cputype.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <asm/thread_notify.h>
+#include <asm/cputype.h>
 
-अटल पूर्णांक iwmmxt_करो(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd, व्योम *t)
-अणु
-	काष्ठा thपढ़ो_info *thपढ़ो = t;
+static int iwmmxt_do(struct notifier_block *self, unsigned long cmd, void *t)
+{
+	struct thread_info *thread = t;
 
-	चयन (cmd) अणु
-	हाल THREAD_NOTIFY_FLUSH:
+	switch (cmd) {
+	case THREAD_NOTIFY_FLUSH:
 		/*
-		 * flush_thपढ़ो() zeroes thपढ़ो->fpstate, so no need
-		 * to करो anything here.
+		 * flush_thread() zeroes thread->fpstate, so no need
+		 * to do anything here.
 		 *
-		 * FALLTHROUGH: Ensure we करोn't try to overग_लिखो our newly
-		 * initialised state inक्रमmation on the first fault.
+		 * FALLTHROUGH: Ensure we don't try to overwrite our newly
+		 * initialised state information on the first fault.
 		 */
 
-	हाल THREAD_NOTIFY_EXIT:
-		iwmmxt_task_release(thपढ़ो);
-		अवरोध;
+	case THREAD_NOTIFY_EXIT:
+		iwmmxt_task_release(thread);
+		break;
 
-	हाल THREAD_NOTIFY_SWITCH:
-		iwmmxt_task_चयन(thपढ़ो);
-		अवरोध;
-	पूर्ण
+	case THREAD_NOTIFY_SWITCH:
+		iwmmxt_task_switch(thread);
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block __maybe_unused iwmmxt_notअगरier_block = अणु
-	.notअगरier_call	= iwmmxt_करो,
-पूर्ण;
+static struct notifier_block __maybe_unused iwmmxt_notifier_block = {
+	.notifier_call	= iwmmxt_do,
+};
 
 
-अटल u32 __init pj4_cp_access_पढ़ो(व्योम)
-अणु
+static u32 __init pj4_cp_access_read(void)
+{
 	u32 value;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"mrc	p15, 0, %0, c1, c0, 2\n\t"
 		: "=r" (value));
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल व्योम __init pj4_cp_access_ग_लिखो(u32 value)
-अणु
+static void __init pj4_cp_access_write(u32 value)
+{
 	u32 temp;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		"mcr	p15, 0, %1, c1, c0, 2\n\t"
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL
 		"isb\n\t"
-#अन्यथा
+#else
 		"mrc	p15, 0, %0, c1, c0, 2\n\t"
 		"mov	%0, %0\n\t"
 		"sub	pc, pc, #4\n\t"
-#पूर्ण_अगर
+#endif
 		: "=r" (temp) : "r" (value));
-पूर्ण
+}
 
-अटल पूर्णांक __init pj4_get_iwmmxt_version(व्योम)
-अणु
+static int __init pj4_get_iwmmxt_version(void)
+{
 	u32 cp_access, wcid;
 
-	cp_access = pj4_cp_access_पढ़ो();
-	pj4_cp_access_ग_लिखो(cp_access | 0xf);
+	cp_access = pj4_cp_access_read();
+	pj4_cp_access_write(cp_access | 0xf);
 
-	/* check अगर coprocessor 0 and 1 are available */
-	अगर ((pj4_cp_access_पढ़ो() & 0xf) != 0xf) अणु
-		pj4_cp_access_ग_लिखो(cp_access);
-		वापस -ENODEV;
-	पूर्ण
+	/* check if coprocessor 0 and 1 are available */
+	if ((pj4_cp_access_read() & 0xf) != 0xf) {
+		pj4_cp_access_write(cp_access);
+		return -ENODEV;
+	}
 
-	/* पढ़ो iWMMXt coprocessor id रेजिस्टर p1, c0 */
-	__यंत्र__ __अस्थिर__ ("mrc    p1, 0, %0, c0, c0, 0\n" : "=r" (wcid));
+	/* read iWMMXt coprocessor id register p1, c0 */
+	__asm__ __volatile__ ("mrc    p1, 0, %0, c0, c0, 0\n" : "=r" (wcid));
 
-	pj4_cp_access_ग_लिखो(cp_access);
+	pj4_cp_access_write(cp_access);
 
 	/* iWMMXt v1 */
-	अगर ((wcid & 0xffffff00) == 0x56051000)
-		वापस 1;
+	if ((wcid & 0xffffff00) == 0x56051000)
+		return 1;
 	/* iWMMXt v2 */
-	अगर ((wcid & 0xffffff00) == 0x56052000)
-		वापस 2;
+	if ((wcid & 0xffffff00) == 0x56052000)
+		return 2;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Disable CP0/CP1 on boot, and let call_fpe() and the iWMMXt lazy
- * चयन code handle iWMMXt context चयनing.
+ * switch code handle iWMMXt context switching.
  */
-अटल पूर्णांक __init pj4_cp0_init(व्योम)
-अणु
+static int __init pj4_cp0_init(void)
+{
 	u32 __maybe_unused cp_access;
-	पूर्णांक vers;
+	int vers;
 
-	अगर (!cpu_is_pj4())
-		वापस 0;
+	if (!cpu_is_pj4())
+		return 0;
 
 	vers = pj4_get_iwmmxt_version();
-	अगर (vers < 0)
-		वापस 0;
+	if (vers < 0)
+		return 0;
 
-#अगर_अघोषित CONFIG_IWMMXT
+#ifndef CONFIG_IWMMXT
 	pr_info("PJ4 iWMMXt coprocessor detected, but kernel support is missing.\n");
-#अन्यथा
-	cp_access = pj4_cp_access_पढ़ो() & ~0xf;
-	pj4_cp_access_ग_लिखो(cp_access);
+#else
+	cp_access = pj4_cp_access_read() & ~0xf;
+	pj4_cp_access_write(cp_access);
 
 	pr_info("PJ4 iWMMXt v%d coprocessor enabled.\n", vers);
 	elf_hwcap |= HWCAP_IWMMXT;
-	thपढ़ो_रेजिस्टर_notअगरier(&iwmmxt_notअगरier_block);
-#पूर्ण_अगर
+	thread_register_notifier(&iwmmxt_notifier_block);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 late_initcall(pj4_cp0_init);

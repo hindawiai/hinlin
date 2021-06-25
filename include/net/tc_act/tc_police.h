@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_TC_POLICE_H
-#घोषणा __NET_TC_POLICE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_TC_POLICE_H
+#define __NET_TC_POLICE_H
 
-#समावेश <net/act_api.h>
+#include <net/act_api.h>
 
-काष्ठा tcf_police_params अणु
-	पूर्णांक			tcfp_result;
+struct tcf_police_params {
+	int			tcfp_result;
 	u32			tcfp_ewma_rate;
 	s64			tcfp_burst;
 	u32			tcfp_mtu;
 	s64			tcfp_mtu_ptoks;
 	s64			tcfp_pkt_burst;
-	काष्ठा psched_ratecfg	rate;
+	struct psched_ratecfg	rate;
 	bool			rate_present;
-	काष्ठा psched_ratecfg	peak;
+	struct psched_ratecfg	peak;
 	bool			peak_present;
-	काष्ठा psched_pktrate	ppsrate;
+	struct psched_pktrate	ppsrate;
 	bool			pps_present;
-	काष्ठा rcu_head rcu;
-पूर्ण;
+	struct rcu_head rcu;
+};
 
-काष्ठा tcf_police अणु
-	काष्ठा tc_action	common;
-	काष्ठा tcf_police_params __rcu *params;
+struct tcf_police {
+	struct tc_action	common;
+	struct tcf_police_params __rcu *params;
 
 	spinlock_t		tcfp_lock ____cacheline_aligned_in_smp;
 	s64			tcfp_toks;
 	s64			tcfp_ptoks;
 	s64			tcfp_pkttoks;
 	s64			tcfp_t_c;
-पूर्ण;
+};
 
-#घोषणा to_police(pc) ((काष्ठा tcf_police *)pc)
+#define to_police(pc) ((struct tcf_police *)pc)
 
-/* old policer काष्ठाure from beक्रमe tc actions */
-काष्ठा tc_police_compat अणु
+/* old policer structure from before tc actions */
+struct tc_police_compat {
 	u32			index;
-	पूर्णांक			action;
+	int			action;
 	u32			limit;
 	u32			burst;
 	u32			mtu;
-	काष्ठा tc_ratespec	rate;
-	काष्ठा tc_ratespec	peakrate;
-पूर्ण;
+	struct tc_ratespec	rate;
+	struct tc_ratespec	peakrate;
+};
 
-अटल अंतरभूत bool is_tcf_police(स्थिर काष्ठा tc_action *act)
-अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-	अगर (act->ops && act->ops->id == TCA_ID_POLICE)
-		वापस true;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+static inline bool is_tcf_police(const struct tc_action *act)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	if (act->ops && act->ops->id == TCA_ID_POLICE)
+		return true;
+#endif
+	return false;
+}
 
-अटल अंतरभूत u64 tcf_police_rate_bytes_ps(स्थिर काष्ठा tc_action *act)
-अणु
-	काष्ठा tcf_police *police = to_police(act);
-	काष्ठा tcf_police_params *params;
+static inline u64 tcf_police_rate_bytes_ps(const struct tc_action *act)
+{
+	struct tcf_police *police = to_police(act);
+	struct tcf_police_params *params;
 
-	params = rcu_dereference_रक्षित(police->params,
+	params = rcu_dereference_protected(police->params,
 					   lockdep_is_held(&police->tcf_lock));
-	वापस params->rate.rate_bytes_ps;
-पूर्ण
+	return params->rate.rate_bytes_ps;
+}
 
-अटल अंतरभूत u32 tcf_police_burst(स्थिर काष्ठा tc_action *act)
-अणु
-	काष्ठा tcf_police *police = to_police(act);
-	काष्ठा tcf_police_params *params;
+static inline u32 tcf_police_burst(const struct tc_action *act)
+{
+	struct tcf_police *police = to_police(act);
+	struct tcf_police_params *params;
 	u32 burst;
 
-	params = rcu_dereference_रक्षित(police->params,
+	params = rcu_dereference_protected(police->params,
 					   lockdep_is_held(&police->tcf_lock));
 
 	/*
@@ -96,29 +95,29 @@
 	 * = ---------------- bytes/second
 	 *     NSEC_PER_SEC
 	 */
-	burst = भाग_u64(params->tcfp_burst * params->rate.rate_bytes_ps,
+	burst = div_u64(params->tcfp_burst * params->rate.rate_bytes_ps,
 			NSEC_PER_SEC);
 
-	वापस burst;
-पूर्ण
+	return burst;
+}
 
-अटल अंतरभूत u64 tcf_police_rate_pkt_ps(स्थिर काष्ठा tc_action *act)
-अणु
-	काष्ठा tcf_police *police = to_police(act);
-	काष्ठा tcf_police_params *params;
+static inline u64 tcf_police_rate_pkt_ps(const struct tc_action *act)
+{
+	struct tcf_police *police = to_police(act);
+	struct tcf_police_params *params;
 
-	params = rcu_dereference_रक्षित(police->params,
+	params = rcu_dereference_protected(police->params,
 					   lockdep_is_held(&police->tcf_lock));
-	वापस params->ppsrate.rate_pkts_ps;
-पूर्ण
+	return params->ppsrate.rate_pkts_ps;
+}
 
-अटल अंतरभूत u32 tcf_police_burst_pkt(स्थिर काष्ठा tc_action *act)
-अणु
-	काष्ठा tcf_police *police = to_police(act);
-	काष्ठा tcf_police_params *params;
+static inline u32 tcf_police_burst_pkt(const struct tc_action *act)
+{
+	struct tcf_police *police = to_police(act);
+	struct tcf_police_params *params;
 	u32 burst;
 
-	params = rcu_dereference_रक्षित(police->params,
+	params = rcu_dereference_protected(police->params,
 					   lockdep_is_held(&police->tcf_lock));
 
 	/*
@@ -144,20 +143,20 @@
 	 * = ---------------- pkts/second
 	 *     NSEC_PER_SEC
 	 */
-	burst = भाग_u64(params->tcfp_pkt_burst * params->ppsrate.rate_pkts_ps,
+	burst = div_u64(params->tcfp_pkt_burst * params->ppsrate.rate_pkts_ps,
 			NSEC_PER_SEC);
 
-	वापस burst;
-पूर्ण
+	return burst;
+}
 
-अटल अंतरभूत u32 tcf_police_tcfp_mtu(स्थिर काष्ठा tc_action *act)
-अणु
-	काष्ठा tcf_police *police = to_police(act);
-	काष्ठा tcf_police_params *params;
+static inline u32 tcf_police_tcfp_mtu(const struct tc_action *act)
+{
+	struct tcf_police *police = to_police(act);
+	struct tcf_police_params *params;
 
-	params = rcu_dereference_रक्षित(police->params,
+	params = rcu_dereference_protected(police->params,
 					   lockdep_is_held(&police->tcf_lock));
-	वापस params->tcfp_mtu;
-पूर्ण
+	return params->tcfp_mtu;
+}
 
-#पूर्ण_अगर /* __NET_TC_POLICE_H */
+#endif /* __NET_TC_POLICE_H */

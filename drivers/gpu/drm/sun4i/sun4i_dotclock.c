@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Free Electrons
  * Copyright (C) 2016 NextThing Co
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
 
-#समावेश "sun4i_tcon.h"
-#समावेश "sun4i_dotclock.h"
+#include "sun4i_tcon.h"
+#include "sun4i_dotclock.h"
 
-काष्ठा sun4i_dclk अणु
-	काष्ठा clk_hw		hw;
-	काष्ठा regmap		*regmap;
-	काष्ठा sun4i_tcon	*tcon;
-पूर्ण;
+struct sun4i_dclk {
+	struct clk_hw		hw;
+	struct regmap		*regmap;
+	struct sun4i_tcon	*tcon;
+};
 
-अटल अंतरभूत काष्ठा sun4i_dclk *hw_to_dclk(काष्ठा clk_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा sun4i_dclk, hw);
-पूर्ण
+static inline struct sun4i_dclk *hw_to_dclk(struct clk_hw *hw)
+{
+	return container_of(hw, struct sun4i_dclk, hw);
+}
 
-अटल व्योम sun4i_dclk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static void sun4i_dclk_disable(struct clk_hw *hw)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 
 	regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
 			   BIT(SUN4I_TCON0_DCLK_GATE_BIT), 0);
-पूर्ण
+}
 
-अटल पूर्णांक sun4i_dclk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static int sun4i_dclk_enable(struct clk_hw *hw)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 
-	वापस regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
+	return regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
 				  BIT(SUN4I_TCON0_DCLK_GATE_BIT),
 				  BIT(SUN4I_TCON0_DCLK_GATE_BIT));
-पूर्ण
+}
 
-अटल पूर्णांक sun4i_dclk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static int sun4i_dclk_is_enabled(struct clk_hw *hw)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 	u32 val;
 
-	regmap_पढ़ो(dclk->regmap, SUN4I_TCON0_DCLK_REG, &val);
+	regmap_read(dclk->regmap, SUN4I_TCON0_DCLK_REG, &val);
 
-	वापस val & BIT(SUN4I_TCON0_DCLK_GATE_BIT);
-पूर्ण
+	return val & BIT(SUN4I_TCON0_DCLK_GATE_BIT);
+}
 
-अटल अचिन्हित दीर्घ sun4i_dclk_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static unsigned long sun4i_dclk_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 	u32 val;
 
-	regmap_पढ़ो(dclk->regmap, SUN4I_TCON0_DCLK_REG, &val);
+	regmap_read(dclk->regmap, SUN4I_TCON0_DCLK_REG, &val);
 
 	val >>= SUN4I_TCON0_DCLK_DIV_SHIFT;
 	val &= (1 << SUN4I_TCON0_DCLK_DIV_WIDTH) - 1;
 
-	अगर (!val)
+	if (!val)
 		val = 1;
 
-	वापस parent_rate / val;
-पूर्ण
+	return parent_rate / val;
+}
 
-अटल दीर्घ sun4i_dclk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
-	काष्ठा sun4i_tcon *tcon = dclk->tcon;
-	अचिन्हित दीर्घ best_parent = 0;
-	u8 best_भाग = 1;
-	पूर्णांक i;
+static long sun4i_dclk_round_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long *parent_rate)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
+	struct sun4i_tcon *tcon = dclk->tcon;
+	unsigned long best_parent = 0;
+	u8 best_div = 1;
+	int i;
 
-	क्रम (i = tcon->dclk_min_भाग; i <= tcon->dclk_max_भाग; i++) अणु
+	for (i = tcon->dclk_min_div; i <= tcon->dclk_max_div; i++) {
 		u64 ideal = (u64)rate * i;
-		अचिन्हित दीर्घ rounded;
+		unsigned long rounded;
 
 		/*
 		 * ideal has overflowed the max value that can be stored in an
-		 * अचिन्हित दीर्घ, and every clk operation we might करो on a
+		 * unsigned long, and every clk operation we might do on a
 		 * truncated u64 value will give us incorrect results.
-		 * Let's just stop there since bigger भागiders will result in
+		 * Let's just stop there since bigger dividers will result in
 		 * the same overflow issue.
 		 */
-		अगर (ideal > अच_दीर्घ_उच्च)
-			जाओ out;
+		if (ideal > ULONG_MAX)
+			goto out;
 
 		rounded = clk_hw_round_rate(clk_hw_get_parent(hw),
 					    ideal);
 
-		अगर (rounded == ideal) अणु
+		if (rounded == ideal) {
 			best_parent = rounded;
-			best_भाग = i;
-			जाओ out;
-		पूर्ण
+			best_div = i;
+			goto out;
+		}
 
-		अगर (असल(rate - rounded / i) <
-		    असल(rate - best_parent / best_भाग)) अणु
+		if (abs(rate - rounded / i) <
+		    abs(rate - best_parent / best_div)) {
 			best_parent = rounded;
-			best_भाग = i;
-		पूर्ण
-	पूर्ण
+			best_div = i;
+		}
+	}
 
 out:
 	*parent_rate = best_parent;
 
-	वापस best_parent / best_भाग;
-पूर्ण
+	return best_parent / best_div;
+}
 
-अटल पूर्णांक sun4i_dclk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
-	u8 भाग = parent_rate / rate;
+static int sun4i_dclk_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
+	u8 div = parent_rate / rate;
 
-	वापस regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
-				  GENMASK(6, 0), भाग);
-पूर्ण
+	return regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
+				  GENMASK(6, 0), div);
+}
 
-अटल पूर्णांक sun4i_dclk_get_phase(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static int sun4i_dclk_get_phase(struct clk_hw *hw)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 	u32 val;
 
-	regmap_पढ़ो(dclk->regmap, SUN4I_TCON0_IO_POL_REG, &val);
+	regmap_read(dclk->regmap, SUN4I_TCON0_IO_POL_REG, &val);
 
 	val >>= 28;
 	val &= 3;
 
-	वापस val * 120;
-पूर्ण
+	return val * 120;
+}
 
-अटल पूर्णांक sun4i_dclk_set_phase(काष्ठा clk_hw *hw, पूर्णांक degrees)
-अणु
-	काष्ठा sun4i_dclk *dclk = hw_to_dclk(hw);
+static int sun4i_dclk_set_phase(struct clk_hw *hw, int degrees)
+{
+	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 	u32 val = degrees / 120;
 
 	val <<= 28;
@@ -147,10 +146,10 @@ out:
 			   GENMASK(29, 28),
 			   val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops sun4i_dclk_ops = अणु
+static const struct clk_ops sun4i_dclk_ops = {
 	.disable	= sun4i_dclk_disable,
 	.enable		= sun4i_dclk_enable,
 	.is_enabled	= sun4i_dclk_is_enabled,
@@ -161,25 +160,25 @@ out:
 
 	.get_phase	= sun4i_dclk_get_phase,
 	.set_phase	= sun4i_dclk_set_phase,
-पूर्ण;
+};
 
-पूर्णांक sun4i_dclk_create(काष्ठा device *dev, काष्ठा sun4i_tcon *tcon)
-अणु
-	स्थिर अक्षर *clk_name, *parent_name;
-	काष्ठा clk_init_data init;
-	काष्ठा sun4i_dclk *dclk;
-	पूर्णांक ret;
+int sun4i_dclk_create(struct device *dev, struct sun4i_tcon *tcon)
+{
+	const char *clk_name, *parent_name;
+	struct clk_init_data init;
+	struct sun4i_dclk *dclk;
+	int ret;
 
 	parent_name = __clk_get_name(tcon->sclk0);
-	ret = of_property_पढ़ो_string_index(dev->of_node,
+	ret = of_property_read_string_index(dev->of_node,
 					    "clock-output-names", 0,
 					    &clk_name);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	dclk = devm_kzalloc(dev, माप(*dclk), GFP_KERNEL);
-	अगर (!dclk)
-		वापस -ENOMEM;
+	dclk = devm_kzalloc(dev, sizeof(*dclk), GFP_KERNEL);
+	if (!dclk)
+		return -ENOMEM;
 	dclk->tcon = tcon;
 
 	init.name = clk_name;
@@ -191,17 +190,17 @@ out:
 	dclk->regmap = tcon->regs;
 	dclk->hw.init = &init;
 
-	tcon->dclk = clk_रेजिस्टर(dev, &dclk->hw);
-	अगर (IS_ERR(tcon->dclk))
-		वापस PTR_ERR(tcon->dclk);
+	tcon->dclk = clk_register(dev, &dclk->hw);
+	if (IS_ERR(tcon->dclk))
+		return PTR_ERR(tcon->dclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(sun4i_dclk_create);
 
-पूर्णांक sun4i_dclk_मुक्त(काष्ठा sun4i_tcon *tcon)
-अणु
-	clk_unरेजिस्टर(tcon->dclk);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(sun4i_dclk_मुक्त);
+int sun4i_dclk_free(struct sun4i_tcon *tcon)
+{
+	clk_unregister(tcon->dclk);
+	return 0;
+}
+EXPORT_SYMBOL(sun4i_dclk_free);

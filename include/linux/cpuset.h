@@ -1,286 +1,285 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_CPUSET_H
-#घोषणा _LINUX_CPUSET_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_CPUSET_H
+#define _LINUX_CPUSET_H
 /*
- *  cpuset पूर्णांकerface
+ *  cpuset interface
  *
  *  Copyright (C) 2003 BULL SA
  *  Copyright (C) 2004-2006 Silicon Graphics, Inc.
  *
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/topology.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/jump_label.h>
+#include <linux/sched.h>
+#include <linux/sched/topology.h>
+#include <linux/sched/task.h>
+#include <linux/cpumask.h>
+#include <linux/nodemask.h>
+#include <linux/mm.h>
+#include <linux/jump_label.h>
 
-#अगर_घोषित CONFIG_CPUSETS
+#ifdef CONFIG_CPUSETS
 
 /*
- * Static branch reग_लिखोs can happen in an arbitrary order क्रम a given
- * key. In code paths where we need to loop with पढ़ो_mems_allowed_begin() and
- * पढ़ो_mems_allowed_retry() to get a consistent view of mems_allowed, we need
- * to ensure that begin() always माला_लो rewritten beक्रमe retry() in the
- * disabled -> enabled transition. If not, then अगर local irqs are disabled
+ * Static branch rewrites can happen in an arbitrary order for a given
+ * key. In code paths where we need to loop with read_mems_allowed_begin() and
+ * read_mems_allowed_retry() to get a consistent view of mems_allowed, we need
+ * to ensure that begin() always gets rewritten before retry() in the
+ * disabled -> enabled transition. If not, then if local irqs are disabled
  * around the loop, we can deadlock since retry() would always be
  * comparing the latest value of the mems_allowed seqcount against 0 as
  * begin() still would see cpusets_enabled() as false. The enabled -> disabled
- * transition should happen in reverse order क्रम the same reasons (want to stop
+ * transition should happen in reverse order for the same reasons (want to stop
  * looking at real value of mems_allowed.sequence in retry() first).
  */
-बाह्य काष्ठा अटल_key_false cpusets_pre_enable_key;
-बाह्य काष्ठा अटल_key_false cpusets_enabled_key;
-अटल अंतरभूत bool cpusets_enabled(व्योम)
-अणु
-	वापस अटल_branch_unlikely(&cpusets_enabled_key);
-पूर्ण
+extern struct static_key_false cpusets_pre_enable_key;
+extern struct static_key_false cpusets_enabled_key;
+static inline bool cpusets_enabled(void)
+{
+	return static_branch_unlikely(&cpusets_enabled_key);
+}
 
-अटल अंतरभूत व्योम cpuset_inc(व्योम)
-अणु
-	अटल_branch_inc_cpuslocked(&cpusets_pre_enable_key);
-	अटल_branch_inc_cpuslocked(&cpusets_enabled_key);
-पूर्ण
+static inline void cpuset_inc(void)
+{
+	static_branch_inc_cpuslocked(&cpusets_pre_enable_key);
+	static_branch_inc_cpuslocked(&cpusets_enabled_key);
+}
 
-अटल अंतरभूत व्योम cpuset_dec(व्योम)
-अणु
-	अटल_branch_dec_cpuslocked(&cpusets_enabled_key);
-	अटल_branch_dec_cpuslocked(&cpusets_pre_enable_key);
-पूर्ण
+static inline void cpuset_dec(void)
+{
+	static_branch_dec_cpuslocked(&cpusets_enabled_key);
+	static_branch_dec_cpuslocked(&cpusets_pre_enable_key);
+}
 
-बाह्य पूर्णांक cpuset_init(व्योम);
-बाह्य व्योम cpuset_init_smp(व्योम);
-बाह्य व्योम cpuset_क्रमce_rebuild(व्योम);
-बाह्य व्योम cpuset_update_active_cpus(व्योम);
-बाह्य व्योम cpuset_रुको_क्रम_hotplug(व्योम);
-बाह्य व्योम cpuset_पढ़ो_lock(व्योम);
-बाह्य व्योम cpuset_पढ़ो_unlock(व्योम);
-बाह्य व्योम cpuset_cpus_allowed(काष्ठा task_काष्ठा *p, काष्ठा cpumask *mask);
-बाह्य व्योम cpuset_cpus_allowed_fallback(काष्ठा task_काष्ठा *p);
-बाह्य nodemask_t cpuset_mems_allowed(काष्ठा task_काष्ठा *p);
-#घोषणा cpuset_current_mems_allowed (current->mems_allowed)
-व्योम cpuset_init_current_mems_allowed(व्योम);
-पूर्णांक cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask);
+extern int cpuset_init(void);
+extern void cpuset_init_smp(void);
+extern void cpuset_force_rebuild(void);
+extern void cpuset_update_active_cpus(void);
+extern void cpuset_wait_for_hotplug(void);
+extern void cpuset_read_lock(void);
+extern void cpuset_read_unlock(void);
+extern void cpuset_cpus_allowed(struct task_struct *p, struct cpumask *mask);
+extern void cpuset_cpus_allowed_fallback(struct task_struct *p);
+extern nodemask_t cpuset_mems_allowed(struct task_struct *p);
+#define cpuset_current_mems_allowed (current->mems_allowed)
+void cpuset_init_current_mems_allowed(void);
+int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask);
 
-बाह्य bool __cpuset_node_allowed(पूर्णांक node, gfp_t gfp_mask);
+extern bool __cpuset_node_allowed(int node, gfp_t gfp_mask);
 
-अटल अंतरभूत bool cpuset_node_allowed(पूर्णांक node, gfp_t gfp_mask)
-अणु
-	अगर (cpusets_enabled())
-		वापस __cpuset_node_allowed(node, gfp_mask);
-	वापस true;
-पूर्ण
+static inline bool cpuset_node_allowed(int node, gfp_t gfp_mask)
+{
+	if (cpusets_enabled())
+		return __cpuset_node_allowed(node, gfp_mask);
+	return true;
+}
 
-अटल अंतरभूत bool __cpuset_zone_allowed(काष्ठा zone *z, gfp_t gfp_mask)
-अणु
-	वापस __cpuset_node_allowed(zone_to_nid(z), gfp_mask);
-पूर्ण
+static inline bool __cpuset_zone_allowed(struct zone *z, gfp_t gfp_mask)
+{
+	return __cpuset_node_allowed(zone_to_nid(z), gfp_mask);
+}
 
-अटल अंतरभूत bool cpuset_zone_allowed(काष्ठा zone *z, gfp_t gfp_mask)
-अणु
-	अगर (cpusets_enabled())
-		वापस __cpuset_zone_allowed(z, gfp_mask);
-	वापस true;
-पूर्ण
+static inline bool cpuset_zone_allowed(struct zone *z, gfp_t gfp_mask)
+{
+	if (cpusets_enabled())
+		return __cpuset_zone_allowed(z, gfp_mask);
+	return true;
+}
 
-बाह्य पूर्णांक cpuset_mems_allowed_पूर्णांकersects(स्थिर काष्ठा task_काष्ठा *tsk1,
-					  स्थिर काष्ठा task_काष्ठा *tsk2);
+extern int cpuset_mems_allowed_intersects(const struct task_struct *tsk1,
+					  const struct task_struct *tsk2);
 
-#घोषणा cpuset_memory_pressure_bump() 				\
-	करो अणु							\
-		अगर (cpuset_memory_pressure_enabled)		\
+#define cpuset_memory_pressure_bump() 				\
+	do {							\
+		if (cpuset_memory_pressure_enabled)		\
 			__cpuset_memory_pressure_bump();	\
-	पूर्ण जबतक (0)
-बाह्य पूर्णांक cpuset_memory_pressure_enabled;
-बाह्य व्योम __cpuset_memory_pressure_bump(व्योम);
+	} while (0)
+extern int cpuset_memory_pressure_enabled;
+extern void __cpuset_memory_pressure_bump(void);
 
-बाह्य व्योम cpuset_task_status_allowed(काष्ठा seq_file *m,
-					काष्ठा task_काष्ठा *task);
-बाह्य पूर्णांक proc_cpuset_show(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
-			    काष्ठा pid *pid, काष्ठा task_काष्ठा *tsk);
+extern void cpuset_task_status_allowed(struct seq_file *m,
+					struct task_struct *task);
+extern int proc_cpuset_show(struct seq_file *m, struct pid_namespace *ns,
+			    struct pid *pid, struct task_struct *tsk);
 
-बाह्य पूर्णांक cpuset_mem_spपढ़ो_node(व्योम);
-बाह्य पूर्णांक cpuset_slab_spपढ़ो_node(व्योम);
+extern int cpuset_mem_spread_node(void);
+extern int cpuset_slab_spread_node(void);
 
-अटल अंतरभूत पूर्णांक cpuset_करो_page_mem_spपढ़ो(व्योम)
-अणु
-	वापस task_spपढ़ो_page(current);
-पूर्ण
+static inline int cpuset_do_page_mem_spread(void)
+{
+	return task_spread_page(current);
+}
 
-अटल अंतरभूत पूर्णांक cpuset_करो_slab_mem_spपढ़ो(व्योम)
-अणु
-	वापस task_spपढ़ो_slab(current);
-पूर्ण
+static inline int cpuset_do_slab_mem_spread(void)
+{
+	return task_spread_slab(current);
+}
 
-बाह्य bool current_cpuset_is_being_rebound(व्योम);
+extern bool current_cpuset_is_being_rebound(void);
 
-बाह्य व्योम rebuild_sched_करोमुख्यs(व्योम);
+extern void rebuild_sched_domains(void);
 
-बाह्य व्योम cpuset_prपूर्णांक_current_mems_allowed(व्योम);
+extern void cpuset_print_current_mems_allowed(void);
 
 /*
- * पढ़ो_mems_allowed_begin is required when making decisions involving
+ * read_mems_allowed_begin is required when making decisions involving
  * mems_allowed such as during page allocation. mems_allowed can be updated in
  * parallel and depending on the new value an operation can fail potentially
- * causing process failure. A retry loop with पढ़ो_mems_allowed_begin and
- * पढ़ो_mems_allowed_retry prevents these artअगरicial failures.
+ * causing process failure. A retry loop with read_mems_allowed_begin and
+ * read_mems_allowed_retry prevents these artificial failures.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक पढ़ो_mems_allowed_begin(व्योम)
-अणु
-	अगर (!अटल_branch_unlikely(&cpusets_pre_enable_key))
-		वापस 0;
+static inline unsigned int read_mems_allowed_begin(void)
+{
+	if (!static_branch_unlikely(&cpusets_pre_enable_key))
+		return 0;
 
-	वापस पढ़ो_seqcount_begin(&current->mems_allowed_seq);
-पूर्ण
+	return read_seqcount_begin(&current->mems_allowed_seq);
+}
 
 /*
- * If this वापसs true, the operation that took place after
- * पढ़ो_mems_allowed_begin may have failed artअगरicially due to a concurrent
- * update of mems_allowed. It is up to the caller to retry the operation अगर
+ * If this returns true, the operation that took place after
+ * read_mems_allowed_begin may have failed artificially due to a concurrent
+ * update of mems_allowed. It is up to the caller to retry the operation if
  * appropriate.
  */
-अटल अंतरभूत bool पढ़ो_mems_allowed_retry(अचिन्हित पूर्णांक seq)
-अणु
-	अगर (!अटल_branch_unlikely(&cpusets_enabled_key))
-		वापस false;
+static inline bool read_mems_allowed_retry(unsigned int seq)
+{
+	if (!static_branch_unlikely(&cpusets_enabled_key))
+		return false;
 
-	वापस पढ़ो_seqcount_retry(&current->mems_allowed_seq, seq);
-पूर्ण
+	return read_seqcount_retry(&current->mems_allowed_seq, seq);
+}
 
-अटल अंतरभूत व्योम set_mems_allowed(nodemask_t nodemask)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void set_mems_allowed(nodemask_t nodemask)
+{
+	unsigned long flags;
 
 	task_lock(current);
 	local_irq_save(flags);
-	ग_लिखो_seqcount_begin(&current->mems_allowed_seq);
+	write_seqcount_begin(&current->mems_allowed_seq);
 	current->mems_allowed = nodemask;
-	ग_लिखो_seqcount_end(&current->mems_allowed_seq);
+	write_seqcount_end(&current->mems_allowed_seq);
 	local_irq_restore(flags);
 	task_unlock(current);
-पूर्ण
+}
 
-#अन्यथा /* !CONFIG_CPUSETS */
+#else /* !CONFIG_CPUSETS */
 
-अटल अंतरभूत bool cpusets_enabled(व्योम) अणु वापस false; पूर्ण
+static inline bool cpusets_enabled(void) { return false; }
 
-अटल अंतरभूत पूर्णांक cpuset_init(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम cpuset_init_smp(व्योम) अणुपूर्ण
+static inline int cpuset_init(void) { return 0; }
+static inline void cpuset_init_smp(void) {}
 
-अटल अंतरभूत व्योम cpuset_क्रमce_rebuild(व्योम) अणु पूर्ण
+static inline void cpuset_force_rebuild(void) { }
 
-अटल अंतरभूत व्योम cpuset_update_active_cpus(व्योम)
-अणु
-	partition_sched_करोमुख्यs(1, शून्य, शून्य);
-पूर्ण
+static inline void cpuset_update_active_cpus(void)
+{
+	partition_sched_domains(1, NULL, NULL);
+}
 
-अटल अंतरभूत व्योम cpuset_रुको_क्रम_hotplug(व्योम) अणु पूर्ण
+static inline void cpuset_wait_for_hotplug(void) { }
 
-अटल अंतरभूत व्योम cpuset_पढ़ो_lock(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम cpuset_पढ़ो_unlock(व्योम) अणु पूर्ण
+static inline void cpuset_read_lock(void) { }
+static inline void cpuset_read_unlock(void) { }
 
-अटल अंतरभूत व्योम cpuset_cpus_allowed(काष्ठा task_काष्ठा *p,
-				       काष्ठा cpumask *mask)
-अणु
+static inline void cpuset_cpus_allowed(struct task_struct *p,
+				       struct cpumask *mask)
+{
 	cpumask_copy(mask, cpu_possible_mask);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cpuset_cpus_allowed_fallback(काष्ठा task_काष्ठा *p)
-अणु
-पूर्ण
+static inline void cpuset_cpus_allowed_fallback(struct task_struct *p)
+{
+}
 
-अटल अंतरभूत nodemask_t cpuset_mems_allowed(काष्ठा task_काष्ठा *p)
-अणु
-	वापस node_possible_map;
-पूर्ण
+static inline nodemask_t cpuset_mems_allowed(struct task_struct *p)
+{
+	return node_possible_map;
+}
 
-#घोषणा cpuset_current_mems_allowed (node_states[N_MEMORY])
-अटल अंतरभूत व्योम cpuset_init_current_mems_allowed(व्योम) अणुपूर्ण
+#define cpuset_current_mems_allowed (node_states[N_MEMORY])
+static inline void cpuset_init_current_mems_allowed(void) {}
 
-अटल अंतरभूत पूर्णांक cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)
-अणु
-	वापस 1;
-पूर्ण
+static inline int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)
+{
+	return 1;
+}
 
-अटल अंतरभूत bool cpuset_node_allowed(पूर्णांक node, gfp_t gfp_mask)
-अणु
-	वापस true;
-पूर्ण
+static inline bool cpuset_node_allowed(int node, gfp_t gfp_mask)
+{
+	return true;
+}
 
-अटल अंतरभूत bool __cpuset_zone_allowed(काष्ठा zone *z, gfp_t gfp_mask)
-अणु
-	वापस true;
-पूर्ण
+static inline bool __cpuset_zone_allowed(struct zone *z, gfp_t gfp_mask)
+{
+	return true;
+}
 
-अटल अंतरभूत bool cpuset_zone_allowed(काष्ठा zone *z, gfp_t gfp_mask)
-अणु
-	वापस true;
-पूर्ण
+static inline bool cpuset_zone_allowed(struct zone *z, gfp_t gfp_mask)
+{
+	return true;
+}
 
-अटल अंतरभूत पूर्णांक cpuset_mems_allowed_पूर्णांकersects(स्थिर काष्ठा task_काष्ठा *tsk1,
-						 स्थिर काष्ठा task_काष्ठा *tsk2)
-अणु
-	वापस 1;
-पूर्ण
+static inline int cpuset_mems_allowed_intersects(const struct task_struct *tsk1,
+						 const struct task_struct *tsk2)
+{
+	return 1;
+}
 
-अटल अंतरभूत व्योम cpuset_memory_pressure_bump(व्योम) अणुपूर्ण
+static inline void cpuset_memory_pressure_bump(void) {}
 
-अटल अंतरभूत व्योम cpuset_task_status_allowed(काष्ठा seq_file *m,
-						काष्ठा task_काष्ठा *task)
-अणु
-पूर्ण
+static inline void cpuset_task_status_allowed(struct seq_file *m,
+						struct task_struct *task)
+{
+}
 
-अटल अंतरभूत पूर्णांक cpuset_mem_spपढ़ो_node(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cpuset_mem_spread_node(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक cpuset_slab_spपढ़ो_node(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cpuset_slab_spread_node(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक cpuset_करो_page_mem_spपढ़ो(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cpuset_do_page_mem_spread(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक cpuset_करो_slab_mem_spपढ़ो(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int cpuset_do_slab_mem_spread(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool current_cpuset_is_being_rebound(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool current_cpuset_is_being_rebound(void)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम rebuild_sched_करोमुख्यs(व्योम)
-अणु
-	partition_sched_करोमुख्यs(1, शून्य, शून्य);
-पूर्ण
+static inline void rebuild_sched_domains(void)
+{
+	partition_sched_domains(1, NULL, NULL);
+}
 
-अटल अंतरभूत व्योम cpuset_prपूर्णांक_current_mems_allowed(व्योम)
-अणु
-पूर्ण
+static inline void cpuset_print_current_mems_allowed(void)
+{
+}
 
-अटल अंतरभूत व्योम set_mems_allowed(nodemask_t nodemask)
-अणु
-पूर्ण
+static inline void set_mems_allowed(nodemask_t nodemask)
+{
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक पढ़ो_mems_allowed_begin(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline unsigned int read_mems_allowed_begin(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool पढ़ो_mems_allowed_retry(अचिन्हित पूर्णांक seq)
-अणु
-	वापस false;
-पूर्ण
+static inline bool read_mems_allowed_retry(unsigned int seq)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* !CONFIG_CPUSETS */
+#endif /* !CONFIG_CPUSETS */
 
-#पूर्ण_अगर /* _LINUX_CPUSET_H */
+#endif /* _LINUX_CPUSET_H */

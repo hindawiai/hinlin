@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,17 +23,17 @@
  *
  */
 
-#समावेश "dcn302_hwseq.h"
+#include "dcn302_hwseq.h"
 
-#समावेश "dcn30/dcn30_init.h"
+#include "dcn30/dcn30_init.h"
 
-#समावेश "dc.h"
+#include "dc.h"
 
-व्योम dcn302_hw_sequencer_स्थिरruct(काष्ठा dc *dc)
-अणु
-	dcn30_hw_sequencer_स्थिरruct(dc);
+void dcn302_hw_sequencer_construct(struct dc *dc)
+{
+	dcn30_hw_sequencer_construct(dc);
 
 	dc->hwseq->funcs.dpp_pg_control = dcn302_dpp_pg_control;
 	dc->hwseq->funcs.hubp_pg_control = dcn302_hubp_pg_control;
 	dc->hwseq->funcs.dsc_pg_control = dcn302_dsc_pg_control;
-पूर्ण
+}

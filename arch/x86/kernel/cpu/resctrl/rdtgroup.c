@@ -1,561 +1,560 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * User पूर्णांकerface क्रम Resource Allocation in Resource Director Technology(RDT)
+ * User interface for Resource Allocation in Resource Director Technology(RDT)
  *
  * Copyright (C) 2016 Intel Corporation
  *
- * Author: Fenghua Yu <fenghua.yu@पूर्णांकel.com>
+ * Author: Fenghua Yu <fenghua.yu@intel.com>
  *
- * More inक्रमmation about RDT be found in the Intel (R) x86 Architecture
+ * More information about RDT be found in the Intel (R) x86 Architecture
  * Software Developer Manual.
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/cacheinfo.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/fs_parser.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/kernfs.h>
-#समावेश <linux/seq_buf.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/task_work.h>
-#समावेश <linux/user_namespace.h>
+#include <linux/cacheinfo.h>
+#include <linux/cpu.h>
+#include <linux/debugfs.h>
+#include <linux/fs.h>
+#include <linux/fs_parser.h>
+#include <linux/sysfs.h>
+#include <linux/kernfs.h>
+#include <linux/seq_buf.h>
+#include <linux/seq_file.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task.h>
+#include <linux/slab.h>
+#include <linux/task_work.h>
+#include <linux/user_namespace.h>
 
-#समावेश <uapi/linux/magic.h>
+#include <uapi/linux/magic.h>
 
-#समावेश <यंत्र/resctrl.h>
-#समावेश "internal.h"
+#include <asm/resctrl.h>
+#include "internal.h"
 
 DEFINE_STATIC_KEY_FALSE(rdt_enable_key);
 DEFINE_STATIC_KEY_FALSE(rdt_mon_enable_key);
 DEFINE_STATIC_KEY_FALSE(rdt_alloc_enable_key);
-अटल काष्ठा kernfs_root *rdt_root;
-काष्ठा rdtgroup rdtgroup_शेष;
+static struct kernfs_root *rdt_root;
+struct rdtgroup rdtgroup_default;
 LIST_HEAD(rdt_all_groups);
 
-/* Kernel fs node क्रम "info" directory under root */
-अटल काष्ठा kernfs_node *kn_info;
+/* Kernel fs node for "info" directory under root */
+static struct kernfs_node *kn_info;
 
-/* Kernel fs node क्रम "mon_groups" directory under root */
-अटल काष्ठा kernfs_node *kn_mongrp;
+/* Kernel fs node for "mon_groups" directory under root */
+static struct kernfs_node *kn_mongrp;
 
-/* Kernel fs node क्रम "mon_data" directory under root */
-अटल काष्ठा kernfs_node *kn_mondata;
+/* Kernel fs node for "mon_data" directory under root */
+static struct kernfs_node *kn_mondata;
 
-अटल काष्ठा seq_buf last_cmd_status;
-अटल अक्षर last_cmd_status_buf[512];
+static struct seq_buf last_cmd_status;
+static char last_cmd_status_buf[512];
 
-काष्ठा dentry *debugfs_resctrl;
+struct dentry *debugfs_resctrl;
 
-व्योम rdt_last_cmd_clear(व्योम)
-अणु
-	lockdep_निश्चित_held(&rdtgroup_mutex);
+void rdt_last_cmd_clear(void)
+{
+	lockdep_assert_held(&rdtgroup_mutex);
 	seq_buf_clear(&last_cmd_status);
-पूर्ण
+}
 
-व्योम rdt_last_cmd_माला_दो(स्थिर अक्षर *s)
-अणु
-	lockdep_निश्चित_held(&rdtgroup_mutex);
-	seq_buf_माला_दो(&last_cmd_status, s);
-पूर्ण
+void rdt_last_cmd_puts(const char *s)
+{
+	lockdep_assert_held(&rdtgroup_mutex);
+	seq_buf_puts(&last_cmd_status, s);
+}
 
-व्योम rdt_last_cmd_म_लिखो(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+void rdt_last_cmd_printf(const char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	lockdep_निश्चित_held(&rdtgroup_mutex);
-	seq_buf_भ_लिखो(&last_cmd_status, fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	lockdep_assert_held(&rdtgroup_mutex);
+	seq_buf_vprintf(&last_cmd_status, fmt, ap);
+	va_end(ap);
+}
 
 /*
- * Trivial allocator क्रम CLOSIDs. Since h/w only supports a small number,
- * we can keep a biपंचांगap of मुक्त CLOSIDs in a single पूर्णांकeger.
+ * Trivial allocator for CLOSIDs. Since h/w only supports a small number,
+ * we can keep a bitmap of free CLOSIDs in a single integer.
  *
  * Using a global CLOSID across all resources has some advantages and
  * some drawbacks:
  * + We can simply set "current->closid" to assign a task to a resource
  *   group.
- * + Context चयन code can aव्योम extra memory references deciding which
- *   CLOSID to load पूर्णांकo the PQR_ASSOC MSR
+ * + Context switch code can avoid extra memory references deciding which
+ *   CLOSID to load into the PQR_ASSOC MSR
  * - We give up some options in configuring resource groups across multi-socket
- *   प्रणालीs.
+ *   systems.
  * - Our choices on how to configure each resource become progressively more
  *   limited as the number of resources grows.
  */
-अटल पूर्णांक closid_मुक्त_map;
-अटल पूर्णांक closid_मुक्त_map_len;
+static int closid_free_map;
+static int closid_free_map_len;
 
-पूर्णांक closids_supported(व्योम)
-अणु
-	वापस closid_मुक्त_map_len;
-पूर्ण
+int closids_supported(void)
+{
+	return closid_free_map_len;
+}
 
-अटल व्योम closid_init(व्योम)
-अणु
-	काष्ठा rdt_resource *r;
-	पूर्णांक rdt_min_closid = 32;
+static void closid_init(void)
+{
+	struct rdt_resource *r;
+	int rdt_min_closid = 32;
 
 	/* Compute rdt_min_closid across all resources */
-	क्रम_each_alloc_enabled_rdt_resource(r)
+	for_each_alloc_enabled_rdt_resource(r)
 		rdt_min_closid = min(rdt_min_closid, r->num_closid);
 
-	closid_मुक्त_map = BIT_MASK(rdt_min_closid) - 1;
+	closid_free_map = BIT_MASK(rdt_min_closid) - 1;
 
-	/* CLOSID 0 is always reserved क्रम the शेष group */
-	closid_मुक्त_map &= ~1;
-	closid_मुक्त_map_len = rdt_min_closid;
-पूर्ण
+	/* CLOSID 0 is always reserved for the default group */
+	closid_free_map &= ~1;
+	closid_free_map_len = rdt_min_closid;
+}
 
-अटल पूर्णांक closid_alloc(व्योम)
-अणु
-	u32 closid = ffs(closid_मुक्त_map);
+static int closid_alloc(void)
+{
+	u32 closid = ffs(closid_free_map);
 
-	अगर (closid == 0)
-		वापस -ENOSPC;
+	if (closid == 0)
+		return -ENOSPC;
 	closid--;
-	closid_मुक्त_map &= ~(1 << closid);
+	closid_free_map &= ~(1 << closid);
 
-	वापस closid;
-पूर्ण
+	return closid;
+}
 
-व्योम closid_मुक्त(पूर्णांक closid)
-अणु
-	closid_मुक्त_map |= 1 << closid;
-पूर्ण
+void closid_free(int closid)
+{
+	closid_free_map |= 1 << closid;
+}
 
 /**
- * closid_allocated - test अगर provided closid is in use
+ * closid_allocated - test if provided closid is in use
  * @closid: closid to be tested
  *
- * Return: true अगर @closid is currently associated with a resource group,
- * false अगर @closid is मुक्त
+ * Return: true if @closid is currently associated with a resource group,
+ * false if @closid is free
  */
-अटल bool closid_allocated(अचिन्हित पूर्णांक closid)
-अणु
-	वापस (closid_मुक्त_map & (1 << closid)) == 0;
-पूर्ण
+static bool closid_allocated(unsigned int closid)
+{
+	return (closid_free_map & (1 << closid)) == 0;
+}
 
 /**
  * rdtgroup_mode_by_closid - Return mode of resource group with closid
- * @closid: closid अगर the resource group
+ * @closid: closid if the resource group
  *
  * Each resource group is associated with a @closid. Here the mode
- * of a resource group can be queried by searching क्रम it using its closid.
+ * of a resource group can be queried by searching for it using its closid.
  *
- * Return: mode as &क्रमागत rdtgrp_mode of resource group with closid @closid
+ * Return: mode as &enum rdtgrp_mode of resource group with closid @closid
  */
-क्रमागत rdtgrp_mode rdtgroup_mode_by_closid(पूर्णांक closid)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
+enum rdtgrp_mode rdtgroup_mode_by_closid(int closid)
+{
+	struct rdtgroup *rdtgrp;
 
-	list_क्रम_each_entry(rdtgrp, &rdt_all_groups, rdtgroup_list) अणु
-		अगर (rdtgrp->closid == closid)
-			वापस rdtgrp->mode;
-	पूर्ण
+	list_for_each_entry(rdtgrp, &rdt_all_groups, rdtgroup_list) {
+		if (rdtgrp->closid == closid)
+			return rdtgrp->mode;
+	}
 
-	वापस RDT_NUM_MODES;
-पूर्ण
+	return RDT_NUM_MODES;
+}
 
-अटल स्थिर अक्षर * स्थिर rdt_mode_str[] = अणु
+static const char * const rdt_mode_str[] = {
 	[RDT_MODE_SHAREABLE]		= "shareable",
 	[RDT_MODE_EXCLUSIVE]		= "exclusive",
 	[RDT_MODE_PSEUDO_LOCKSETUP]	= "pseudo-locksetup",
 	[RDT_MODE_PSEUDO_LOCKED]	= "pseudo-locked",
-पूर्ण;
+};
 
 /**
  * rdtgroup_mode_str - Return the string representation of mode
- * @mode: the resource group mode as &क्रमागत rdtgroup_mode
+ * @mode: the resource group mode as &enum rdtgroup_mode
  *
  * Return: string representation of valid mode, "unknown" otherwise
  */
-अटल स्थिर अक्षर *rdtgroup_mode_str(क्रमागत rdtgrp_mode mode)
-अणु
-	अगर (mode < RDT_MODE_SHAREABLE || mode >= RDT_NUM_MODES)
-		वापस "unknown";
+static const char *rdtgroup_mode_str(enum rdtgrp_mode mode)
+{
+	if (mode < RDT_MODE_SHAREABLE || mode >= RDT_NUM_MODES)
+		return "unknown";
 
-	वापस rdt_mode_str[mode];
-पूर्ण
+	return rdt_mode_str[mode];
+}
 
 /* set uid and gid of rdtgroup dirs and files to that of the creator */
-अटल पूर्णांक rdtgroup_kn_set_ugid(काष्ठा kernfs_node *kn)
-अणु
-	काष्ठा iattr iattr = अणु .ia_valid = ATTR_UID | ATTR_GID,
+static int rdtgroup_kn_set_ugid(struct kernfs_node *kn)
+{
+	struct iattr iattr = { .ia_valid = ATTR_UID | ATTR_GID,
 				.ia_uid = current_fsuid(),
-				.ia_gid = current_fsgid(), पूर्ण;
+				.ia_gid = current_fsgid(), };
 
-	अगर (uid_eq(iattr.ia_uid, GLOBAL_ROOT_UID) &&
+	if (uid_eq(iattr.ia_uid, GLOBAL_ROOT_UID) &&
 	    gid_eq(iattr.ia_gid, GLOBAL_ROOT_GID))
-		वापस 0;
+		return 0;
 
-	वापस kernfs_setattr(kn, &iattr);
-पूर्ण
+	return kernfs_setattr(kn, &iattr);
+}
 
-अटल पूर्णांक rdtgroup_add_file(काष्ठा kernfs_node *parent_kn, काष्ठा rftype *rft)
-अणु
-	काष्ठा kernfs_node *kn;
-	पूर्णांक ret;
+static int rdtgroup_add_file(struct kernfs_node *parent_kn, struct rftype *rft)
+{
+	struct kernfs_node *kn;
+	int ret;
 
 	kn = __kernfs_create_file(parent_kn, rft->name, rft->mode,
 				  GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
-				  0, rft->kf_ops, rft, शून्य, शून्य);
-	अगर (IS_ERR(kn))
-		वापस PTR_ERR(kn);
+				  0, rft->kf_ops, rft, NULL, NULL);
+	if (IS_ERR(kn))
+		return PTR_ERR(kn);
 
 	ret = rdtgroup_kn_set_ugid(kn);
-	अगर (ret) अणु
-		kernfs_हटाओ(kn);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kernfs_remove(kn);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdtgroup_seqfile_show(काष्ठा seq_file *m, व्योम *arg)
-अणु
-	काष्ठा kernfs_खोलो_file *of = m->निजी;
-	काष्ठा rftype *rft = of->kn->priv;
+static int rdtgroup_seqfile_show(struct seq_file *m, void *arg)
+{
+	struct kernfs_open_file *of = m->private;
+	struct rftype *rft = of->kn->priv;
 
-	अगर (rft->seq_show)
-		वापस rft->seq_show(of, m, arg);
-	वापस 0;
-पूर्ण
+	if (rft->seq_show)
+		return rft->seq_show(of, m, arg);
+	return 0;
+}
 
-अटल sमाप_प्रकार rdtgroup_file_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
-				   माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा rftype *rft = of->kn->priv;
+static ssize_t rdtgroup_file_write(struct kernfs_open_file *of, char *buf,
+				   size_t nbytes, loff_t off)
+{
+	struct rftype *rft = of->kn->priv;
 
-	अगर (rft->ग_लिखो)
-		वापस rft->ग_लिखो(of, buf, nbytes, off);
+	if (rft->write)
+		return rft->write(of, buf, nbytes, off);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा kernfs_ops rdtgroup_kf_single_ops = अणु
-	.atomic_ग_लिखो_len	= PAGE_SIZE,
-	.ग_लिखो			= rdtgroup_file_ग_लिखो,
+static const struct kernfs_ops rdtgroup_kf_single_ops = {
+	.atomic_write_len	= PAGE_SIZE,
+	.write			= rdtgroup_file_write,
 	.seq_show		= rdtgroup_seqfile_show,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kernfs_ops kf_mondata_ops = अणु
-	.atomic_ग_लिखो_len	= PAGE_SIZE,
+static const struct kernfs_ops kf_mondata_ops = {
+	.atomic_write_len	= PAGE_SIZE,
 	.seq_show		= rdtgroup_mondata_show,
-पूर्ण;
+};
 
-अटल bool is_cpu_list(काष्ठा kernfs_खोलो_file *of)
-अणु
-	काष्ठा rftype *rft = of->kn->priv;
+static bool is_cpu_list(struct kernfs_open_file *of)
+{
+	struct rftype *rft = of->kn->priv;
 
-	वापस rft->flags & RFTYPE_FLAGS_CPUS_LIST;
-पूर्ण
+	return rft->flags & RFTYPE_FLAGS_CPUS_LIST;
+}
 
-अटल पूर्णांक rdtgroup_cpus_show(काष्ठा kernfs_खोलो_file *of,
-			      काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	काष्ठा cpumask *mask;
-	पूर्णांक ret = 0;
+static int rdtgroup_cpus_show(struct kernfs_open_file *of,
+			      struct seq_file *s, void *v)
+{
+	struct rdtgroup *rdtgrp;
+	struct cpumask *mask;
+	int ret = 0;
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
 
-	अगर (rdtgrp) अणु
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) अणु
-			अगर (!rdtgrp->plr->d) अणु
+	if (rdtgrp) {
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) {
+			if (!rdtgrp->plr->d) {
 				rdt_last_cmd_clear();
-				rdt_last_cmd_माला_दो("Cache domain offline\n");
+				rdt_last_cmd_puts("Cache domain offline\n");
 				ret = -ENODEV;
-			पूर्ण अन्यथा अणु
+			} else {
 				mask = &rdtgrp->plr->d->cpu_mask;
-				seq_म_लिखो(s, is_cpu_list(of) ?
+				seq_printf(s, is_cpu_list(of) ?
 					   "%*pbl\n" : "%*pb\n",
 					   cpumask_pr_args(mask));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			seq_म_लिखो(s, is_cpu_list(of) ? "%*pbl\n" : "%*pb\n",
+			}
+		} else {
+			seq_printf(s, is_cpu_list(of) ? "%*pbl\n" : "%*pb\n",
 				   cpumask_pr_args(&rdtgrp->cpu_mask));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = -ENOENT;
-	पूर्ण
+	}
 	rdtgroup_kn_unlock(of->kn);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This is safe against resctrl_sched_in() called from __चयन_to()
- * because __चयन_to() is executed with पूर्णांकerrupts disabled. A local call
- * from update_closid_rmid() is रक्षित against __चयन_to() because
+ * This is safe against resctrl_sched_in() called from __switch_to()
+ * because __switch_to() is executed with interrupts disabled. A local call
+ * from update_closid_rmid() is protected against __switch_to() because
  * preemption is disabled.
  */
-अटल व्योम update_cpu_closid_rmid(व्योम *info)
-अणु
-	काष्ठा rdtgroup *r = info;
+static void update_cpu_closid_rmid(void *info)
+{
+	struct rdtgroup *r = info;
 
-	अगर (r) अणु
-		this_cpu_ग_लिखो(pqr_state.शेष_closid, r->closid);
-		this_cpu_ग_लिखो(pqr_state.शेष_rmid, r->mon.rmid);
-	पूर्ण
+	if (r) {
+		this_cpu_write(pqr_state.default_closid, r->closid);
+		this_cpu_write(pqr_state.default_rmid, r->mon.rmid);
+	}
 
 	/*
-	 * We cannot unconditionally ग_लिखो the MSR because the current
+	 * We cannot unconditionally write the MSR because the current
 	 * executing task might have its own closid selected. Just reuse
-	 * the context चयन code.
+	 * the context switch code.
 	 */
 	resctrl_sched_in();
-पूर्ण
+}
 
 /*
  * Update the PGR_ASSOC MSR on all cpus in @cpu_mask,
  *
- * Per task closids/rmids must have been set up beक्रमe calling this function.
+ * Per task closids/rmids must have been set up before calling this function.
  */
-अटल व्योम
-update_closid_rmid(स्थिर काष्ठा cpumask *cpu_mask, काष्ठा rdtgroup *r)
-अणु
-	पूर्णांक cpu = get_cpu();
+static void
+update_closid_rmid(const struct cpumask *cpu_mask, struct rdtgroup *r)
+{
+	int cpu = get_cpu();
 
-	अगर (cpumask_test_cpu(cpu, cpu_mask))
+	if (cpumask_test_cpu(cpu, cpu_mask))
 		update_cpu_closid_rmid(r);
 	smp_call_function_many(cpu_mask, update_cpu_closid_rmid, r, 1);
 	put_cpu();
-पूर्ण
+}
 
-अटल पूर्णांक cpus_mon_ग_लिखो(काष्ठा rdtgroup *rdtgrp, cpumask_var_t newmask,
-			  cpumask_var_t पंचांगpmask)
-अणु
-	काष्ठा rdtgroup *prgrp = rdtgrp->mon.parent, *crgrp;
-	काष्ठा list_head *head;
+static int cpus_mon_write(struct rdtgroup *rdtgrp, cpumask_var_t newmask,
+			  cpumask_var_t tmpmask)
+{
+	struct rdtgroup *prgrp = rdtgrp->mon.parent, *crgrp;
+	struct list_head *head;
 
-	/* Check whether cpus beदीर्घ to parent ctrl group */
-	cpumask_andnot(पंचांगpmask, newmask, &prgrp->cpu_mask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
-		rdt_last_cmd_माला_दो("Can only add CPUs to mongroup that belong to parent\n");
-		वापस -EINVAL;
-	पूर्ण
+	/* Check whether cpus belong to parent ctrl group */
+	cpumask_andnot(tmpmask, newmask, &prgrp->cpu_mask);
+	if (cpumask_weight(tmpmask)) {
+		rdt_last_cmd_puts("Can only add CPUs to mongroup that belong to parent\n");
+		return -EINVAL;
+	}
 
 	/* Check whether cpus are dropped from this group */
-	cpumask_andnot(पंचांगpmask, &rdtgrp->cpu_mask, newmask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
+	cpumask_andnot(tmpmask, &rdtgrp->cpu_mask, newmask);
+	if (cpumask_weight(tmpmask)) {
 		/* Give any dropped cpus to parent rdtgroup */
-		cpumask_or(&prgrp->cpu_mask, &prgrp->cpu_mask, पंचांगpmask);
-		update_closid_rmid(पंचांगpmask, prgrp);
-	पूर्ण
+		cpumask_or(&prgrp->cpu_mask, &prgrp->cpu_mask, tmpmask);
+		update_closid_rmid(tmpmask, prgrp);
+	}
 
 	/*
-	 * If we added cpus, हटाओ them from previous group that owned them
+	 * If we added cpus, remove them from previous group that owned them
 	 * and update per-cpu rmid
 	 */
-	cpumask_andnot(पंचांगpmask, newmask, &rdtgrp->cpu_mask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
+	cpumask_andnot(tmpmask, newmask, &rdtgrp->cpu_mask);
+	if (cpumask_weight(tmpmask)) {
 		head = &prgrp->mon.crdtgrp_list;
-		list_क्रम_each_entry(crgrp, head, mon.crdtgrp_list) अणु
-			अगर (crgrp == rdtgrp)
-				जारी;
+		list_for_each_entry(crgrp, head, mon.crdtgrp_list) {
+			if (crgrp == rdtgrp)
+				continue;
 			cpumask_andnot(&crgrp->cpu_mask, &crgrp->cpu_mask,
-				       पंचांगpmask);
-		पूर्ण
-		update_closid_rmid(पंचांगpmask, rdtgrp);
-	पूर्ण
+				       tmpmask);
+		}
+		update_closid_rmid(tmpmask, rdtgrp);
+	}
 
 	/* Done pushing/pulling - update this group with new mask */
 	cpumask_copy(&rdtgrp->cpu_mask, newmask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cpumask_rdtgrp_clear(काष्ठा rdtgroup *r, काष्ठा cpumask *m)
-अणु
-	काष्ठा rdtgroup *crgrp;
+static void cpumask_rdtgrp_clear(struct rdtgroup *r, struct cpumask *m)
+{
+	struct rdtgroup *crgrp;
 
 	cpumask_andnot(&r->cpu_mask, &r->cpu_mask, m);
 	/* update the child mon group masks as well*/
-	list_क्रम_each_entry(crgrp, &r->mon.crdtgrp_list, mon.crdtgrp_list)
+	list_for_each_entry(crgrp, &r->mon.crdtgrp_list, mon.crdtgrp_list)
 		cpumask_and(&crgrp->cpu_mask, &r->cpu_mask, &crgrp->cpu_mask);
-पूर्ण
+}
 
-अटल पूर्णांक cpus_ctrl_ग_लिखो(काष्ठा rdtgroup *rdtgrp, cpumask_var_t newmask,
-			   cpumask_var_t पंचांगpmask, cpumask_var_t पंचांगpmask1)
-अणु
-	काष्ठा rdtgroup *r, *crgrp;
-	काष्ठा list_head *head;
+static int cpus_ctrl_write(struct rdtgroup *rdtgrp, cpumask_var_t newmask,
+			   cpumask_var_t tmpmask, cpumask_var_t tmpmask1)
+{
+	struct rdtgroup *r, *crgrp;
+	struct list_head *head;
 
 	/* Check whether cpus are dropped from this group */
-	cpumask_andnot(पंचांगpmask, &rdtgrp->cpu_mask, newmask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
-		/* Can't drop from शेष group */
-		अगर (rdtgrp == &rdtgroup_शेष) अणु
-			rdt_last_cmd_माला_दो("Can't drop CPUs from default group\n");
-			वापस -EINVAL;
-		पूर्ण
+	cpumask_andnot(tmpmask, &rdtgrp->cpu_mask, newmask);
+	if (cpumask_weight(tmpmask)) {
+		/* Can't drop from default group */
+		if (rdtgrp == &rdtgroup_default) {
+			rdt_last_cmd_puts("Can't drop CPUs from default group\n");
+			return -EINVAL;
+		}
 
-		/* Give any dropped cpus to rdtgroup_शेष */
-		cpumask_or(&rdtgroup_शेष.cpu_mask,
-			   &rdtgroup_शेष.cpu_mask, पंचांगpmask);
-		update_closid_rmid(पंचांगpmask, &rdtgroup_शेष);
-	पूर्ण
+		/* Give any dropped cpus to rdtgroup_default */
+		cpumask_or(&rdtgroup_default.cpu_mask,
+			   &rdtgroup_default.cpu_mask, tmpmask);
+		update_closid_rmid(tmpmask, &rdtgroup_default);
+	}
 
 	/*
-	 * If we added cpus, हटाओ them from previous group and
+	 * If we added cpus, remove them from previous group and
 	 * the prev group's child groups that owned them
 	 * and update per-cpu closid/rmid.
 	 */
-	cpumask_andnot(पंचांगpmask, newmask, &rdtgrp->cpu_mask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
-		list_क्रम_each_entry(r, &rdt_all_groups, rdtgroup_list) अणु
-			अगर (r == rdtgrp)
-				जारी;
-			cpumask_and(पंचांगpmask1, &r->cpu_mask, पंचांगpmask);
-			अगर (cpumask_weight(पंचांगpmask1))
-				cpumask_rdtgrp_clear(r, पंचांगpmask1);
-		पूर्ण
-		update_closid_rmid(पंचांगpmask, rdtgrp);
-	पूर्ण
+	cpumask_andnot(tmpmask, newmask, &rdtgrp->cpu_mask);
+	if (cpumask_weight(tmpmask)) {
+		list_for_each_entry(r, &rdt_all_groups, rdtgroup_list) {
+			if (r == rdtgrp)
+				continue;
+			cpumask_and(tmpmask1, &r->cpu_mask, tmpmask);
+			if (cpumask_weight(tmpmask1))
+				cpumask_rdtgrp_clear(r, tmpmask1);
+		}
+		update_closid_rmid(tmpmask, rdtgrp);
+	}
 
 	/* Done pushing/pulling - update this group with new mask */
 	cpumask_copy(&rdtgrp->cpu_mask, newmask);
 
 	/*
 	 * Clear child mon group masks since there is a new parent mask
-	 * now and update the rmid क्रम the cpus the child lost.
+	 * now and update the rmid for the cpus the child lost.
 	 */
 	head = &rdtgrp->mon.crdtgrp_list;
-	list_क्रम_each_entry(crgrp, head, mon.crdtgrp_list) अणु
-		cpumask_and(पंचांगpmask, &rdtgrp->cpu_mask, &crgrp->cpu_mask);
-		update_closid_rmid(पंचांगpmask, rdtgrp);
+	list_for_each_entry(crgrp, head, mon.crdtgrp_list) {
+		cpumask_and(tmpmask, &rdtgrp->cpu_mask, &crgrp->cpu_mask);
+		update_closid_rmid(tmpmask, rdtgrp);
 		cpumask_clear(&crgrp->cpu_mask);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार rdtgroup_cpus_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
-				   अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	cpumask_var_t पंचांगpmask, newmask, पंचांगpmask1;
-	काष्ठा rdtgroup *rdtgrp;
-	पूर्णांक ret;
+static ssize_t rdtgroup_cpus_write(struct kernfs_open_file *of,
+				   char *buf, size_t nbytes, loff_t off)
+{
+	cpumask_var_t tmpmask, newmask, tmpmask1;
+	struct rdtgroup *rdtgrp;
+	int ret;
 
-	अगर (!buf)
-		वापस -EINVAL;
+	if (!buf)
+		return -EINVAL;
 
-	अगर (!zalloc_cpumask_var(&पंचांगpmask, GFP_KERNEL))
-		वापस -ENOMEM;
-	अगर (!zalloc_cpumask_var(&newmask, GFP_KERNEL)) अणु
-		मुक्त_cpumask_var(पंचांगpmask);
-		वापस -ENOMEM;
-	पूर्ण
-	अगर (!zalloc_cpumask_var(&पंचांगpmask1, GFP_KERNEL)) अणु
-		मुक्त_cpumask_var(पंचांगpmask);
-		मुक्त_cpumask_var(newmask);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!zalloc_cpumask_var(&tmpmask, GFP_KERNEL))
+		return -ENOMEM;
+	if (!zalloc_cpumask_var(&newmask, GFP_KERNEL)) {
+		free_cpumask_var(tmpmask);
+		return -ENOMEM;
+	}
+	if (!zalloc_cpumask_var(&tmpmask1, GFP_KERNEL)) {
+		free_cpumask_var(tmpmask);
+		free_cpumask_var(newmask);
+		return -ENOMEM;
+	}
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		ret = -ENOENT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED ||
-	    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) अणु
+	if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED ||
+	    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) {
 		ret = -EINVAL;
-		rdt_last_cmd_माला_दो("Pseudo-locking in progress\n");
-		जाओ unlock;
-	पूर्ण
+		rdt_last_cmd_puts("Pseudo-locking in progress\n");
+		goto unlock;
+	}
 
-	अगर (is_cpu_list(of))
+	if (is_cpu_list(of))
 		ret = cpulist_parse(buf, newmask);
-	अन्यथा
+	else
 		ret = cpumask_parse(buf, newmask);
 
-	अगर (ret) अणु
-		rdt_last_cmd_माला_दो("Bad CPU list/mask\n");
-		जाओ unlock;
-	पूर्ण
+	if (ret) {
+		rdt_last_cmd_puts("Bad CPU list/mask\n");
+		goto unlock;
+	}
 
-	/* check that user didn't specअगरy any offline cpus */
-	cpumask_andnot(पंचांगpmask, newmask, cpu_online_mask);
-	अगर (cpumask_weight(पंचांगpmask)) अणु
+	/* check that user didn't specify any offline cpus */
+	cpumask_andnot(tmpmask, newmask, cpu_online_mask);
+	if (cpumask_weight(tmpmask)) {
 		ret = -EINVAL;
-		rdt_last_cmd_माला_दो("Can only assign online CPUs\n");
-		जाओ unlock;
-	पूर्ण
+		rdt_last_cmd_puts("Can only assign online CPUs\n");
+		goto unlock;
+	}
 
-	अगर (rdtgrp->type == RDTCTRL_GROUP)
-		ret = cpus_ctrl_ग_लिखो(rdtgrp, newmask, पंचांगpmask, पंचांगpmask1);
-	अन्यथा अगर (rdtgrp->type == RDTMON_GROUP)
-		ret = cpus_mon_ग_लिखो(rdtgrp, newmask, पंचांगpmask);
-	अन्यथा
+	if (rdtgrp->type == RDTCTRL_GROUP)
+		ret = cpus_ctrl_write(rdtgrp, newmask, tmpmask, tmpmask1);
+	else if (rdtgrp->type == RDTMON_GROUP)
+		ret = cpus_mon_write(rdtgrp, newmask, tmpmask);
+	else
 		ret = -EINVAL;
 
 unlock:
 	rdtgroup_kn_unlock(of->kn);
-	मुक्त_cpumask_var(पंचांगpmask);
-	मुक्त_cpumask_var(newmask);
-	मुक्त_cpumask_var(पंचांगpmask1);
+	free_cpumask_var(tmpmask);
+	free_cpumask_var(newmask);
+	free_cpumask_var(tmpmask1);
 
-	वापस ret ?: nbytes;
-पूर्ण
+	return ret ?: nbytes;
+}
 
 /**
- * rdtgroup_हटाओ - the helper to हटाओ resource group safely
- * @rdtgrp: resource group to हटाओ
+ * rdtgroup_remove - the helper to remove resource group safely
+ * @rdtgrp: resource group to remove
  *
- * On resource group creation via a सूची_गढ़ो, an extra kernfs_node reference is
- * taken to ensure that the rdtgroup काष्ठाure reमुख्यs accessible क्रम the
- * rdtgroup_kn_unlock() calls where it is हटाओd.
+ * On resource group creation via a mkdir, an extra kernfs_node reference is
+ * taken to ensure that the rdtgroup structure remains accessible for the
+ * rdtgroup_kn_unlock() calls where it is removed.
  *
- * Drop the extra reference here, then मुक्त the rdtgroup काष्ठाure.
+ * Drop the extra reference here, then free the rdtgroup structure.
  *
- * Return: व्योम
+ * Return: void
  */
-अटल व्योम rdtgroup_हटाओ(काष्ठा rdtgroup *rdtgrp)
-अणु
+static void rdtgroup_remove(struct rdtgroup *rdtgrp)
+{
 	kernfs_put(rdtgrp->kn);
-	kमुक्त(rdtgrp);
-पूर्ण
+	kfree(rdtgrp);
+}
 
-अटल व्योम _update_task_closid_rmid(व्योम *task)
-अणु
+static void _update_task_closid_rmid(void *task)
+{
 	/*
 	 * If the task is still current on this CPU, update PQR_ASSOC MSR.
 	 * Otherwise, the MSR is updated when the task is scheduled in.
 	 */
-	अगर (task == current)
+	if (task == current)
 		resctrl_sched_in();
-पूर्ण
+}
 
-अटल व्योम update_task_closid_rmid(काष्ठा task_काष्ठा *t)
-अणु
-	अगर (IS_ENABLED(CONFIG_SMP) && task_curr(t))
+static void update_task_closid_rmid(struct task_struct *t)
+{
+	if (IS_ENABLED(CONFIG_SMP) && task_curr(t))
 		smp_call_function_single(task_cpu(t), _update_task_closid_rmid, t, 1);
-	अन्यथा
+	else
 		_update_task_closid_rmid(t);
-पूर्ण
+}
 
-अटल पूर्णांक __rdtgroup_move_task(काष्ठा task_काष्ठा *tsk,
-				काष्ठा rdtgroup *rdtgrp)
-अणु
-	/* If the task is alपढ़ोy in rdtgrp, no need to move the task. */
-	अगर ((rdtgrp->type == RDTCTRL_GROUP && tsk->closid == rdtgrp->closid &&
+static int __rdtgroup_move_task(struct task_struct *tsk,
+				struct rdtgroup *rdtgrp)
+{
+	/* If the task is already in rdtgrp, no need to move the task. */
+	if ((rdtgrp->type == RDTCTRL_GROUP && tsk->closid == rdtgrp->closid &&
 	     tsk->rmid == rdtgrp->mon.rmid) ||
 	    (rdtgrp->type == RDTMON_GROUP && tsk->rmid == rdtgrp->mon.rmid &&
 	     tsk->closid == rdtgrp->mon.parent->closid))
-		वापस 0;
+		return 0;
 
 	/*
-	 * Set the task's closid/rmid beक्रमe the PQR_ASSOC MSR can be
+	 * Set the task's closid/rmid before the PQR_ASSOC MSR can be
 	 * updated by them.
 	 *
 	 * For ctrl_mon groups, move both closid and rmid.
@@ -563,183 +562,183 @@ unlock:
 	 * their parent CTRL group.
 	 */
 
-	अगर (rdtgrp->type == RDTCTRL_GROUP) अणु
+	if (rdtgrp->type == RDTCTRL_GROUP) {
 		WRITE_ONCE(tsk->closid, rdtgrp->closid);
 		WRITE_ONCE(tsk->rmid, rdtgrp->mon.rmid);
-	पूर्ण अन्यथा अगर (rdtgrp->type == RDTMON_GROUP) अणु
-		अगर (rdtgrp->mon.parent->closid == tsk->closid) अणु
+	} else if (rdtgrp->type == RDTMON_GROUP) {
+		if (rdtgrp->mon.parent->closid == tsk->closid) {
 			WRITE_ONCE(tsk->rmid, rdtgrp->mon.rmid);
-		पूर्ण अन्यथा अणु
-			rdt_last_cmd_माला_दो("Can't move task to different control group\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+		} else {
+			rdt_last_cmd_puts("Can't move task to different control group\n");
+			return -EINVAL;
+		}
+	}
 
 	/*
-	 * Ensure the task's closid and rmid are written beक्रमe determining अगर
-	 * the task is current that will decide अगर it will be पूर्णांकerrupted.
+	 * Ensure the task's closid and rmid are written before determining if
+	 * the task is current that will decide if it will be interrupted.
 	 */
 	barrier();
 
 	/*
 	 * By now, the task's closid and rmid are set. If the task is current
 	 * on a CPU, the PQR_ASSOC MSR needs to be updated to make the resource
-	 * group go पूर्णांकo effect. If the task is not current, the MSR will be
+	 * group go into effect. If the task is not current, the MSR will be
 	 * updated when the task is scheduled in.
 	 */
 	update_task_closid_rmid(tsk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool is_closid_match(काष्ठा task_काष्ठा *t, काष्ठा rdtgroup *r)
-अणु
-	वापस (rdt_alloc_capable &&
+static bool is_closid_match(struct task_struct *t, struct rdtgroup *r)
+{
+	return (rdt_alloc_capable &&
 	       (r->type == RDTCTRL_GROUP) && (t->closid == r->closid));
-पूर्ण
+}
 
-अटल bool is_rmid_match(काष्ठा task_काष्ठा *t, काष्ठा rdtgroup *r)
-अणु
-	वापस (rdt_mon_capable &&
+static bool is_rmid_match(struct task_struct *t, struct rdtgroup *r)
+{
+	return (rdt_mon_capable &&
 	       (r->type == RDTMON_GROUP) && (t->rmid == r->mon.rmid));
-पूर्ण
+}
 
 /**
- * rdtgroup_tasks_asचिन्हित - Test अगर tasks have been asचिन्हित to resource group
+ * rdtgroup_tasks_assigned - Test if tasks have been assigned to resource group
  * @r: Resource group
  *
- * Return: 1 अगर tasks have been asचिन्हित to @r, 0 otherwise
+ * Return: 1 if tasks have been assigned to @r, 0 otherwise
  */
-पूर्णांक rdtgroup_tasks_asचिन्हित(काष्ठा rdtgroup *r)
-अणु
-	काष्ठा task_काष्ठा *p, *t;
-	पूर्णांक ret = 0;
+int rdtgroup_tasks_assigned(struct rdtgroup *r)
+{
+	struct task_struct *p, *t;
+	int ret = 0;
 
-	lockdep_निश्चित_held(&rdtgroup_mutex);
+	lockdep_assert_held(&rdtgroup_mutex);
 
-	rcu_पढ़ो_lock();
-	क्रम_each_process_thपढ़ो(p, t) अणु
-		अगर (is_closid_match(t, r) || is_rmid_match(t, r)) अणु
+	rcu_read_lock();
+	for_each_process_thread(p, t) {
+		if (is_closid_match(t, r) || is_rmid_match(t, r)) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			break;
+		}
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rdtgroup_task_ग_लिखो_permission(काष्ठा task_काष्ठा *task,
-					  काष्ठा kernfs_खोलो_file *of)
-अणु
-	स्थिर काष्ठा cred *tcred = get_task_cred(task);
-	स्थिर काष्ठा cred *cred = current_cred();
-	पूर्णांक ret = 0;
+static int rdtgroup_task_write_permission(struct task_struct *task,
+					  struct kernfs_open_file *of)
+{
+	const struct cred *tcred = get_task_cred(task);
+	const struct cred *cred = current_cred();
+	int ret = 0;
 
 	/*
-	 * Even अगर we're attaching all tasks in the thपढ़ो group, we only
+	 * Even if we're attaching all tasks in the thread group, we only
 	 * need to check permissions on one of them.
 	 */
-	अगर (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
+	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
 	    !uid_eq(cred->euid, tcred->uid) &&
-	    !uid_eq(cred->euid, tcred->suid)) अणु
-		rdt_last_cmd_म_लिखो("No permission to move task %d\n", task->pid);
+	    !uid_eq(cred->euid, tcred->suid)) {
+		rdt_last_cmd_printf("No permission to move task %d\n", task->pid);
 		ret = -EPERM;
-	पूर्ण
+	}
 
 	put_cred(tcred);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rdtgroup_move_task(pid_t pid, काष्ठा rdtgroup *rdtgrp,
-			      काष्ठा kernfs_खोलो_file *of)
-अणु
-	काष्ठा task_काष्ठा *tsk;
-	पूर्णांक ret;
+static int rdtgroup_move_task(pid_t pid, struct rdtgroup *rdtgrp,
+			      struct kernfs_open_file *of)
+{
+	struct task_struct *tsk;
+	int ret;
 
-	rcu_पढ़ो_lock();
-	अगर (pid) अणु
+	rcu_read_lock();
+	if (pid) {
 		tsk = find_task_by_vpid(pid);
-		अगर (!tsk) अणु
-			rcu_पढ़ो_unlock();
-			rdt_last_cmd_म_लिखो("No task %d\n", pid);
-			वापस -ESRCH;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		if (!tsk) {
+			rcu_read_unlock();
+			rdt_last_cmd_printf("No task %d\n", pid);
+			return -ESRCH;
+		}
+	} else {
 		tsk = current;
-	पूर्ण
+	}
 
-	get_task_काष्ठा(tsk);
-	rcu_पढ़ो_unlock();
+	get_task_struct(tsk);
+	rcu_read_unlock();
 
-	ret = rdtgroup_task_ग_लिखो_permission(tsk, of);
-	अगर (!ret)
+	ret = rdtgroup_task_write_permission(tsk, of);
+	if (!ret)
 		ret = __rdtgroup_move_task(tsk, rdtgrp);
 
-	put_task_काष्ठा(tsk);
-	वापस ret;
-पूर्ण
+	put_task_struct(tsk);
+	return ret;
+}
 
-अटल sमाप_प्रकार rdtgroup_tasks_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
-				    अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	पूर्णांक ret = 0;
+static ssize_t rdtgroup_tasks_write(struct kernfs_open_file *of,
+				    char *buf, size_t nbytes, loff_t off)
+{
+	struct rdtgroup *rdtgrp;
+	int ret = 0;
 	pid_t pid;
 
-	अगर (kstrtoपूर्णांक(म_मालाip(buf), 0, &pid) || pid < 0)
-		वापस -EINVAL;
+	if (kstrtoint(strstrip(buf), 0, &pid) || pid < 0)
+		return -EINVAL;
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		rdtgroup_kn_unlock(of->kn);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	rdt_last_cmd_clear();
 
-	अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED ||
-	    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) अणु
+	if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED ||
+	    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) {
 		ret = -EINVAL;
-		rdt_last_cmd_माला_दो("Pseudo-locking in progress\n");
-		जाओ unlock;
-	पूर्ण
+		rdt_last_cmd_puts("Pseudo-locking in progress\n");
+		goto unlock;
+	}
 
 	ret = rdtgroup_move_task(pid, rdtgrp, of);
 
 unlock:
 	rdtgroup_kn_unlock(of->kn);
 
-	वापस ret ?: nbytes;
-पूर्ण
+	return ret ?: nbytes;
+}
 
-अटल व्योम show_rdt_tasks(काष्ठा rdtgroup *r, काष्ठा seq_file *s)
-अणु
-	काष्ठा task_काष्ठा *p, *t;
+static void show_rdt_tasks(struct rdtgroup *r, struct seq_file *s)
+{
+	struct task_struct *p, *t;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_process_thपढ़ो(p, t) अणु
-		अगर (is_closid_match(t, r) || is_rmid_match(t, r))
-			seq_म_लिखो(s, "%d\n", t->pid);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	for_each_process_thread(p, t) {
+		if (is_closid_match(t, r) || is_rmid_match(t, r))
+			seq_printf(s, "%d\n", t->pid);
+	}
+	rcu_read_unlock();
+}
 
-अटल पूर्णांक rdtgroup_tasks_show(काष्ठा kernfs_खोलो_file *of,
-			       काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	पूर्णांक ret = 0;
+static int rdtgroup_tasks_show(struct kernfs_open_file *of,
+			       struct seq_file *s, void *v)
+{
+	struct rdtgroup *rdtgrp;
+	int ret = 0;
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (rdtgrp)
+	if (rdtgrp)
 		show_rdt_tasks(rdtgrp, s);
-	अन्यथा
+	else
 		ret = -ENOENT;
 	rdtgroup_kn_unlock(of->kn);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_PROC_CPU_RESCTRL
+#ifdef CONFIG_PROC_CPU_RESCTRL
 
 /*
  * A task can only be part of one resctrl control group and of one monitor
@@ -772,938 +771,938 @@ unlock:
  *
  *    Task is part of resctrl control group group0 and monitor group mon1.
  */
-पूर्णांक proc_resctrl_show(काष्ठा seq_file *s, काष्ठा pid_namespace *ns,
-		      काष्ठा pid *pid, काष्ठा task_काष्ठा *tsk)
-अणु
-	काष्ठा rdtgroup *rdtg;
-	पूर्णांक ret = 0;
+int proc_resctrl_show(struct seq_file *s, struct pid_namespace *ns,
+		      struct pid *pid, struct task_struct *tsk)
+{
+	struct rdtgroup *rdtg;
+	int ret = 0;
 
 	mutex_lock(&rdtgroup_mutex);
 
-	/* Return empty अगर resctrl has not been mounted. */
-	अगर (!अटल_branch_unlikely(&rdt_enable_key)) अणु
-		seq_माला_दो(s, "res:\nmon:\n");
-		जाओ unlock;
-	पूर्ण
+	/* Return empty if resctrl has not been mounted. */
+	if (!static_branch_unlikely(&rdt_enable_key)) {
+		seq_puts(s, "res:\nmon:\n");
+		goto unlock;
+	}
 
-	list_क्रम_each_entry(rdtg, &rdt_all_groups, rdtgroup_list) अणु
-		काष्ठा rdtgroup *crg;
+	list_for_each_entry(rdtg, &rdt_all_groups, rdtgroup_list) {
+		struct rdtgroup *crg;
 
 		/*
-		 * Task inक्रमmation is only relevant क्रम shareable
+		 * Task information is only relevant for shareable
 		 * and exclusive groups.
 		 */
-		अगर (rdtg->mode != RDT_MODE_SHAREABLE &&
+		if (rdtg->mode != RDT_MODE_SHAREABLE &&
 		    rdtg->mode != RDT_MODE_EXCLUSIVE)
-			जारी;
+			continue;
 
-		अगर (rdtg->closid != tsk->closid)
-			जारी;
+		if (rdtg->closid != tsk->closid)
+			continue;
 
-		seq_म_लिखो(s, "res:%s%s\n", (rdtg == &rdtgroup_शेष) ? "/" : "",
+		seq_printf(s, "res:%s%s\n", (rdtg == &rdtgroup_default) ? "/" : "",
 			   rdtg->kn->name);
-		seq_माला_दो(s, "mon:");
-		list_क्रम_each_entry(crg, &rdtg->mon.crdtgrp_list,
-				    mon.crdtgrp_list) अणु
-			अगर (tsk->rmid != crg->mon.rmid)
-				जारी;
-			seq_म_लिखो(s, "%s", crg->kn->name);
-			अवरोध;
-		पूर्ण
-		seq_अ_दो(s, '\n');
-		जाओ unlock;
-	पूर्ण
+		seq_puts(s, "mon:");
+		list_for_each_entry(crg, &rdtg->mon.crdtgrp_list,
+				    mon.crdtgrp_list) {
+			if (tsk->rmid != crg->mon.rmid)
+				continue;
+			seq_printf(s, "%s", crg->kn->name);
+			break;
+		}
+		seq_putc(s, '\n');
+		goto unlock;
+	}
 	/*
-	 * The above search should succeed. Otherwise वापस
+	 * The above search should succeed. Otherwise return
 	 * with an error.
 	 */
 	ret = -ENOENT;
 unlock:
 	mutex_unlock(&rdtgroup_mutex);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक rdt_last_cmd_status_show(काष्ठा kernfs_खोलो_file *of,
-				    काष्ठा seq_file *seq, व्योम *v)
-अणु
-	पूर्णांक len;
+static int rdt_last_cmd_status_show(struct kernfs_open_file *of,
+				    struct seq_file *seq, void *v)
+{
+	int len;
 
 	mutex_lock(&rdtgroup_mutex);
 	len = seq_buf_used(&last_cmd_status);
-	अगर (len)
-		seq_म_लिखो(seq, "%.*s", len, last_cmd_status_buf);
-	अन्यथा
-		seq_माला_दो(seq, "ok\n");
+	if (len)
+		seq_printf(seq, "%.*s", len, last_cmd_status_buf);
+	else
+		seq_puts(seq, "ok\n");
 	mutex_unlock(&rdtgroup_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdt_num_closids_show(काष्ठा kernfs_खोलो_file *of,
-				काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_num_closids_show(struct kernfs_open_file *of,
+				struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%d\n", r->num_closid);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%d\n", r->num_closid);
+	return 0;
+}
 
-अटल पूर्णांक rdt_शेष_ctrl_show(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_default_ctrl_show(struct kernfs_open_file *of,
+			     struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%x\n", r->शेष_ctrl);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%x\n", r->default_ctrl);
+	return 0;
+}
 
-अटल पूर्णांक rdt_min_cbm_bits_show(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_min_cbm_bits_show(struct kernfs_open_file *of,
+			     struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%u\n", r->cache.min_cbm_bits);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%u\n", r->cache.min_cbm_bits);
+	return 0;
+}
 
-अटल पूर्णांक rdt_shareable_bits_show(काष्ठा kernfs_खोलो_file *of,
-				   काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_shareable_bits_show(struct kernfs_open_file *of,
+				   struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%x\n", r->cache.shareable_bits);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%x\n", r->cache.shareable_bits);
+	return 0;
+}
 
 /**
  * rdt_bit_usage_show - Display current usage of resources
  *
- * A करोमुख्य is a shared resource that can now be allocated dअगरferently. Here
- * we display the current regions of the करोमुख्य as an annotated biपंचांगask.
- * For each करोमुख्य of this resource its allocation biपंचांगask
+ * A domain is a shared resource that can now be allocated differently. Here
+ * we display the current regions of the domain as an annotated bitmask.
+ * For each domain of this resource its allocation bitmask
  * is annotated as below to indicate the current usage of the corresponding bit:
  *   0 - currently unused
- *   X - currently available क्रम sharing and used by software and hardware
- *   H - currently used by hardware only but available क्रम software use
+ *   X - currently available for sharing and used by software and hardware
+ *   H - currently used by hardware only but available for software use
  *   S - currently used and shareable by software only
  *   E - currently used exclusively by one resource group
- *   P - currently pseuकरो-locked by one resource group
+ *   P - currently pseudo-locked by one resource group
  */
-अटल पूर्णांक rdt_bit_usage_show(काष्ठा kernfs_खोलो_file *of,
-			      काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_bit_usage_show(struct kernfs_open_file *of,
+			      struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 	/*
-	 * Use अचिन्हित दीर्घ even though only 32 bits are used to ensure
+	 * Use unsigned long even though only 32 bits are used to ensure
 	 * test_bit() is used safely.
 	 */
-	अचिन्हित दीर्घ sw_shareable = 0, hw_shareable = 0;
-	अचिन्हित दीर्घ exclusive = 0, pseuकरो_locked = 0;
-	काष्ठा rdt_करोमुख्य *करोm;
-	पूर्णांक i, hwb, swb, excl, psl;
-	क्रमागत rdtgrp_mode mode;
+	unsigned long sw_shareable = 0, hw_shareable = 0;
+	unsigned long exclusive = 0, pseudo_locked = 0;
+	struct rdt_domain *dom;
+	int i, hwb, swb, excl, psl;
+	enum rdtgrp_mode mode;
 	bool sep = false;
 	u32 *ctrl;
 
 	mutex_lock(&rdtgroup_mutex);
 	hw_shareable = r->cache.shareable_bits;
-	list_क्रम_each_entry(करोm, &r->करोमुख्यs, list) अणु
-		अगर (sep)
-			seq_अ_दो(seq, ';');
-		ctrl = करोm->ctrl_val;
+	list_for_each_entry(dom, &r->domains, list) {
+		if (sep)
+			seq_putc(seq, ';');
+		ctrl = dom->ctrl_val;
 		sw_shareable = 0;
 		exclusive = 0;
-		seq_म_लिखो(seq, "%d=", करोm->id);
-		क्रम (i = 0; i < closids_supported(); i++, ctrl++) अणु
-			अगर (!closid_allocated(i))
-				जारी;
+		seq_printf(seq, "%d=", dom->id);
+		for (i = 0; i < closids_supported(); i++, ctrl++) {
+			if (!closid_allocated(i))
+				continue;
 			mode = rdtgroup_mode_by_closid(i);
-			चयन (mode) अणु
-			हाल RDT_MODE_SHAREABLE:
+			switch (mode) {
+			case RDT_MODE_SHAREABLE:
 				sw_shareable |= *ctrl;
-				अवरोध;
-			हाल RDT_MODE_EXCLUSIVE:
+				break;
+			case RDT_MODE_EXCLUSIVE:
 				exclusive |= *ctrl;
-				अवरोध;
-			हाल RDT_MODE_PSEUDO_LOCKSETUP:
+				break;
+			case RDT_MODE_PSEUDO_LOCKSETUP:
 			/*
 			 * RDT_MODE_PSEUDO_LOCKSETUP is possible
 			 * here but not included since the CBM
 			 * associated with this CLOSID in this mode
 			 * is not initialized and no task or cpu can be
-			 * asचिन्हित this CLOSID.
+			 * assigned this CLOSID.
 			 */
-				अवरोध;
-			हाल RDT_MODE_PSEUDO_LOCKED:
-			हाल RDT_NUM_MODES:
+				break;
+			case RDT_MODE_PSEUDO_LOCKED:
+			case RDT_NUM_MODES:
 				WARN(1,
 				     "invalid mode for closid %d\n", i);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		क्रम (i = r->cache.cbm_len - 1; i >= 0; i--) अणु
-			pseuकरो_locked = करोm->plr ? करोm->plr->cbm : 0;
+				break;
+			}
+		}
+		for (i = r->cache.cbm_len - 1; i >= 0; i--) {
+			pseudo_locked = dom->plr ? dom->plr->cbm : 0;
 			hwb = test_bit(i, &hw_shareable);
 			swb = test_bit(i, &sw_shareable);
 			excl = test_bit(i, &exclusive);
-			psl = test_bit(i, &pseuकरो_locked);
-			अगर (hwb && swb)
-				seq_अ_दो(seq, 'X');
-			अन्यथा अगर (hwb && !swb)
-				seq_अ_दो(seq, 'H');
-			अन्यथा अगर (!hwb && swb)
-				seq_अ_दो(seq, 'S');
-			अन्यथा अगर (excl)
-				seq_अ_दो(seq, 'E');
-			अन्यथा अगर (psl)
-				seq_अ_दो(seq, 'P');
-			अन्यथा /* Unused bits reमुख्य */
-				seq_अ_दो(seq, '0');
-		पूर्ण
+			psl = test_bit(i, &pseudo_locked);
+			if (hwb && swb)
+				seq_putc(seq, 'X');
+			else if (hwb && !swb)
+				seq_putc(seq, 'H');
+			else if (!hwb && swb)
+				seq_putc(seq, 'S');
+			else if (excl)
+				seq_putc(seq, 'E');
+			else if (psl)
+				seq_putc(seq, 'P');
+			else /* Unused bits remain */
+				seq_putc(seq, '0');
+		}
 		sep = true;
-	पूर्ण
-	seq_अ_दो(seq, '\n');
+	}
+	seq_putc(seq, '\n');
 	mutex_unlock(&rdtgroup_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdt_min_bw_show(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_min_bw_show(struct kernfs_open_file *of,
+			     struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%u\n", r->membw.min_bw);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%u\n", r->membw.min_bw);
+	return 0;
+}
 
-अटल पूर्णांक rdt_num_rmids_show(काष्ठा kernfs_खोलो_file *of,
-			      काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_num_rmids_show(struct kernfs_open_file *of,
+			      struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%d\n", r->num_rmid);
+	seq_printf(seq, "%d\n", r->num_rmid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdt_mon_features_show(काष्ठा kernfs_खोलो_file *of,
-				 काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
-	काष्ठा mon_evt *mevt;
+static int rdt_mon_features_show(struct kernfs_open_file *of,
+				 struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
+	struct mon_evt *mevt;
 
-	list_क्रम_each_entry(mevt, &r->evt_list, list)
-		seq_म_लिखो(seq, "%s\n", mevt->name);
+	list_for_each_entry(mevt, &r->evt_list, list)
+		seq_printf(seq, "%s\n", mevt->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdt_bw_gran_show(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_bw_gran_show(struct kernfs_open_file *of,
+			     struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%u\n", r->membw.bw_gran);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%u\n", r->membw.bw_gran);
+	return 0;
+}
 
-अटल पूर्णांक rdt_delay_linear_show(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_delay_linear_show(struct kernfs_open_file *of,
+			     struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%u\n", r->membw.delay_linear);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "%u\n", r->membw.delay_linear);
+	return 0;
+}
 
-अटल पूर्णांक max_threshold_occ_show(काष्ठा kernfs_खोलो_file *of,
-				  काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int max_threshold_occ_show(struct kernfs_open_file *of,
+				  struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	seq_म_लिखो(seq, "%u\n", resctrl_cqm_threshold * r->mon_scale);
+	seq_printf(seq, "%u\n", resctrl_cqm_threshold * r->mon_scale);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdt_thपढ़ो_throttle_mode_show(काष्ठा kernfs_खोलो_file *of,
-					 काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
+static int rdt_thread_throttle_mode_show(struct kernfs_open_file *of,
+					 struct seq_file *seq, void *v)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
 
-	अगर (r->membw.throttle_mode == THREAD_THROTTLE_PER_THREAD)
-		seq_माला_दो(seq, "per-thread\n");
-	अन्यथा
-		seq_माला_दो(seq, "max\n");
+	if (r->membw.throttle_mode == THREAD_THROTTLE_PER_THREAD)
+		seq_puts(seq, "per-thread\n");
+	else
+		seq_puts(seq, "max\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार max_threshold_occ_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
-				       अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा rdt_resource *r = of->kn->parent->priv;
-	अचिन्हित पूर्णांक bytes;
-	पूर्णांक ret;
+static ssize_t max_threshold_occ_write(struct kernfs_open_file *of,
+				       char *buf, size_t nbytes, loff_t off)
+{
+	struct rdt_resource *r = of->kn->parent->priv;
+	unsigned int bytes;
+	int ret;
 
-	ret = kstrtouपूर्णांक(buf, 0, &bytes);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtouint(buf, 0, &bytes);
+	if (ret)
+		return ret;
 
-	अगर (bytes > (boot_cpu_data.x86_cache_size * 1024))
-		वापस -EINVAL;
+	if (bytes > (boot_cpu_data.x86_cache_size * 1024))
+		return -EINVAL;
 
 	resctrl_cqm_threshold = bytes / r->mon_scale;
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
 /*
  * rdtgroup_mode_show - Display mode of this resource group
  */
-अटल पूर्णांक rdtgroup_mode_show(काष्ठा kernfs_खोलो_file *of,
-			      काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
+static int rdtgroup_mode_show(struct kernfs_open_file *of,
+			      struct seq_file *s, void *v)
+{
+	struct rdtgroup *rdtgrp;
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		rdtgroup_kn_unlock(of->kn);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	seq_म_लिखो(s, "%s\n", rdtgroup_mode_str(rdtgrp->mode));
+	seq_printf(s, "%s\n", rdtgroup_mode_str(rdtgrp->mode));
 
 	rdtgroup_kn_unlock(of->kn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * rdt_cdp_peer_get - Retrieve CDP peer अगर it exists
- * @r: RDT resource to which RDT करोमुख्य @d beदीर्घs
- * @d: Cache instance क्रम which a CDP peer is requested
+ * rdt_cdp_peer_get - Retrieve CDP peer if it exists
+ * @r: RDT resource to which RDT domain @d belongs
+ * @d: Cache instance for which a CDP peer is requested
  * @r_cdp: RDT resource that shares hardware with @r (RDT resource peer)
- *         Used to वापस the result.
- * @d_cdp: RDT करोमुख्य that shares hardware with @d (RDT करोमुख्य peer)
- *         Used to वापस the result.
+ *         Used to return the result.
+ * @d_cdp: RDT domain that shares hardware with @d (RDT domain peer)
+ *         Used to return the result.
  *
- * RDT resources are managed independently and by extension the RDT करोमुख्यs
+ * RDT resources are managed independently and by extension the RDT domains
  * (RDT resource instances) are managed independently also. The Code and
- * Data Prioritization (CDP) RDT resources, जबतक managed independently,
+ * Data Prioritization (CDP) RDT resources, while managed independently,
  * could refer to the same underlying hardware. For example,
  * RDT_RESOURCE_L2CODE and RDT_RESOURCE_L2DATA both refer to the L2 cache.
  *
  * When provided with an RDT resource @r and an instance of that RDT
- * resource @d rdt_cdp_peer_get() will वापस अगर there is a peer RDT
+ * resource @d rdt_cdp_peer_get() will return if there is a peer RDT
  * resource and the exact instance that shares the same hardware.
  *
- * Return: 0 अगर a CDP peer was found, <0 on error or अगर no CDP peer exists.
- *         If a CDP peer was found, @r_cdp will poपूर्णांक to the peer RDT resource
- *         and @d_cdp will poपूर्णांक to the peer RDT करोमुख्य.
+ * Return: 0 if a CDP peer was found, <0 on error or if no CDP peer exists.
+ *         If a CDP peer was found, @r_cdp will point to the peer RDT resource
+ *         and @d_cdp will point to the peer RDT domain.
  */
-अटल पूर्णांक rdt_cdp_peer_get(काष्ठा rdt_resource *r, काष्ठा rdt_करोमुख्य *d,
-			    काष्ठा rdt_resource **r_cdp,
-			    काष्ठा rdt_करोमुख्य **d_cdp)
-अणु
-	काष्ठा rdt_resource *_r_cdp = शून्य;
-	काष्ठा rdt_करोमुख्य *_d_cdp = शून्य;
-	पूर्णांक ret = 0;
+static int rdt_cdp_peer_get(struct rdt_resource *r, struct rdt_domain *d,
+			    struct rdt_resource **r_cdp,
+			    struct rdt_domain **d_cdp)
+{
+	struct rdt_resource *_r_cdp = NULL;
+	struct rdt_domain *_d_cdp = NULL;
+	int ret = 0;
 
-	चयन (r->rid) अणु
-	हाल RDT_RESOURCE_L3DATA:
+	switch (r->rid) {
+	case RDT_RESOURCE_L3DATA:
 		_r_cdp = &rdt_resources_all[RDT_RESOURCE_L3CODE];
-		अवरोध;
-	हाल RDT_RESOURCE_L3CODE:
+		break;
+	case RDT_RESOURCE_L3CODE:
 		_r_cdp =  &rdt_resources_all[RDT_RESOURCE_L3DATA];
-		अवरोध;
-	हाल RDT_RESOURCE_L2DATA:
+		break;
+	case RDT_RESOURCE_L2DATA:
 		_r_cdp =  &rdt_resources_all[RDT_RESOURCE_L2CODE];
-		अवरोध;
-	हाल RDT_RESOURCE_L2CODE:
+		break;
+	case RDT_RESOURCE_L2CODE:
 		_r_cdp =  &rdt_resources_all[RDT_RESOURCE_L2DATA];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * When a new CPU comes online and CDP is enabled then the new
-	 * RDT करोमुख्यs (अगर any) associated with both CDP RDT resources
-	 * are added in the same CPU online routine जबतक the
-	 * rdtgroup_mutex is held. It should thus not happen क्रम one
-	 * RDT करोमुख्य to exist and be associated with its RDT CDP
-	 * resource but there is no RDT करोमुख्य associated with the
+	 * RDT domains (if any) associated with both CDP RDT resources
+	 * are added in the same CPU online routine while the
+	 * rdtgroup_mutex is held. It should thus not happen for one
+	 * RDT domain to exist and be associated with its RDT CDP
+	 * resource but there is no RDT domain associated with the
 	 * peer RDT CDP resource. Hence the WARN.
 	 */
-	_d_cdp = rdt_find_करोमुख्य(_r_cdp, d->id, शून्य);
-	अगर (WARN_ON(IS_ERR_OR_शून्य(_d_cdp))) अणु
-		_r_cdp = शून्य;
-		_d_cdp = शून्य;
+	_d_cdp = rdt_find_domain(_r_cdp, d->id, NULL);
+	if (WARN_ON(IS_ERR_OR_NULL(_d_cdp))) {
+		_r_cdp = NULL;
+		_d_cdp = NULL;
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 out:
 	*r_cdp = _r_cdp;
 	*d_cdp = _d_cdp;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * __rdtgroup_cbm_overlaps - Does CBM क्रम पूर्णांकended closid overlap with other
- * @r: Resource to which करोमुख्य instance @d beदीर्घs.
- * @d: The करोमुख्य instance क्रम which @closid is being tested.
- * @cbm: Capacity biपंचांगask being tested.
- * @closid: Intended closid क्रम @cbm.
- * @exclusive: Only check अगर overlaps with exclusive resource groups
+ * __rdtgroup_cbm_overlaps - Does CBM for intended closid overlap with other
+ * @r: Resource to which domain instance @d belongs.
+ * @d: The domain instance for which @closid is being tested.
+ * @cbm: Capacity bitmask being tested.
+ * @closid: Intended closid for @cbm.
+ * @exclusive: Only check if overlaps with exclusive resource groups
  *
- * Checks अगर provided @cbm पूर्णांकended to be used क्रम @closid on करोमुख्य
+ * Checks if provided @cbm intended to be used for @closid on domain
  * @d overlaps with any other closids or other hardware usage associated
- * with this करोमुख्य. If @exclusive is true then only overlaps with
+ * with this domain. If @exclusive is true then only overlaps with
  * resource groups in exclusive mode will be considered. If @exclusive
  * is false then overlaps with any resource group or hardware entities
  * will be considered.
  *
- * @cbm is अचिन्हित दीर्घ, even अगर only 32 bits are used, to make the
- * biपंचांगap functions work correctly.
+ * @cbm is unsigned long, even if only 32 bits are used, to make the
+ * bitmap functions work correctly.
  *
- * Return: false अगर CBM करोes not overlap, true अगर it करोes.
+ * Return: false if CBM does not overlap, true if it does.
  */
-अटल bool __rdtgroup_cbm_overlaps(काष्ठा rdt_resource *r, काष्ठा rdt_करोमुख्य *d,
-				    अचिन्हित दीर्घ cbm, पूर्णांक closid, bool exclusive)
-अणु
-	क्रमागत rdtgrp_mode mode;
-	अचिन्हित दीर्घ ctrl_b;
+static bool __rdtgroup_cbm_overlaps(struct rdt_resource *r, struct rdt_domain *d,
+				    unsigned long cbm, int closid, bool exclusive)
+{
+	enum rdtgrp_mode mode;
+	unsigned long ctrl_b;
 	u32 *ctrl;
-	पूर्णांक i;
+	int i;
 
-	/* Check क्रम any overlap with regions used by hardware directly */
-	अगर (!exclusive) अणु
+	/* Check for any overlap with regions used by hardware directly */
+	if (!exclusive) {
 		ctrl_b = r->cache.shareable_bits;
-		अगर (biपंचांगap_पूर्णांकersects(&cbm, &ctrl_b, r->cache.cbm_len))
-			वापस true;
-	पूर्ण
+		if (bitmap_intersects(&cbm, &ctrl_b, r->cache.cbm_len))
+			return true;
+	}
 
-	/* Check क्रम overlap with other resource groups */
+	/* Check for overlap with other resource groups */
 	ctrl = d->ctrl_val;
-	क्रम (i = 0; i < closids_supported(); i++, ctrl++) अणु
+	for (i = 0; i < closids_supported(); i++, ctrl++) {
 		ctrl_b = *ctrl;
 		mode = rdtgroup_mode_by_closid(i);
-		अगर (closid_allocated(i) && i != closid &&
-		    mode != RDT_MODE_PSEUDO_LOCKSETUP) अणु
-			अगर (biपंचांगap_पूर्णांकersects(&cbm, &ctrl_b, r->cache.cbm_len)) अणु
-				अगर (exclusive) अणु
-					अगर (mode == RDT_MODE_EXCLUSIVE)
-						वापस true;
-					जारी;
-				पूर्ण
-				वापस true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		if (closid_allocated(i) && i != closid &&
+		    mode != RDT_MODE_PSEUDO_LOCKSETUP) {
+			if (bitmap_intersects(&cbm, &ctrl_b, r->cache.cbm_len)) {
+				if (exclusive) {
+					if (mode == RDT_MODE_EXCLUSIVE)
+						return true;
+					continue;
+				}
+				return true;
+			}
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
  * rdtgroup_cbm_overlaps - Does CBM overlap with other use of hardware
- * @r: Resource to which करोमुख्य instance @d beदीर्घs.
- * @d: The करोमुख्य instance क्रम which @closid is being tested.
- * @cbm: Capacity biपंचांगask being tested.
- * @closid: Intended closid क्रम @cbm.
- * @exclusive: Only check अगर overlaps with exclusive resource groups
+ * @r: Resource to which domain instance @d belongs.
+ * @d: The domain instance for which @closid is being tested.
+ * @cbm: Capacity bitmask being tested.
+ * @closid: Intended closid for @cbm.
+ * @exclusive: Only check if overlaps with exclusive resource groups
  *
  * Resources that can be allocated using a CBM can use the CBM to control
  * the overlap of these allocations. rdtgroup_cmb_overlaps() is the test
- * क्रम overlap. Overlap test is not limited to the specअगरic resource क्रम
- * which the CBM is पूर्णांकended though - when dealing with CDP resources that
- * share the underlying hardware the overlap check should be perक्रमmed on
+ * for overlap. Overlap test is not limited to the specific resource for
+ * which the CBM is intended though - when dealing with CDP resources that
+ * share the underlying hardware the overlap check should be performed on
  * the CDP resource sharing the hardware also.
  *
- * Refer to description of __rdtgroup_cbm_overlaps() क्रम the details of the
+ * Refer to description of __rdtgroup_cbm_overlaps() for the details of the
  * overlap test.
  *
- * Return: true अगर CBM overlap detected, false अगर there is no overlap
+ * Return: true if CBM overlap detected, false if there is no overlap
  */
-bool rdtgroup_cbm_overlaps(काष्ठा rdt_resource *r, काष्ठा rdt_करोमुख्य *d,
-			   अचिन्हित दीर्घ cbm, पूर्णांक closid, bool exclusive)
-अणु
-	काष्ठा rdt_resource *r_cdp;
-	काष्ठा rdt_करोमुख्य *d_cdp;
+bool rdtgroup_cbm_overlaps(struct rdt_resource *r, struct rdt_domain *d,
+			   unsigned long cbm, int closid, bool exclusive)
+{
+	struct rdt_resource *r_cdp;
+	struct rdt_domain *d_cdp;
 
-	अगर (__rdtgroup_cbm_overlaps(r, d, cbm, closid, exclusive))
-		वापस true;
+	if (__rdtgroup_cbm_overlaps(r, d, cbm, closid, exclusive))
+		return true;
 
-	अगर (rdt_cdp_peer_get(r, d, &r_cdp, &d_cdp) < 0)
-		वापस false;
+	if (rdt_cdp_peer_get(r, d, &r_cdp, &d_cdp) < 0)
+		return false;
 
-	वापस  __rdtgroup_cbm_overlaps(r_cdp, d_cdp, cbm, closid, exclusive);
-पूर्ण
+	return  __rdtgroup_cbm_overlaps(r_cdp, d_cdp, cbm, closid, exclusive);
+}
 
 /**
- * rdtgroup_mode_test_exclusive - Test अगर this resource group can be exclusive
+ * rdtgroup_mode_test_exclusive - Test if this resource group can be exclusive
  *
  * An exclusive resource group implies that there should be no sharing of
- * its allocated resources. At the समय this group is considered to be
- * exclusive this test can determine अगर its current schemata supports this
- * setting by testing क्रम overlap with all other resource groups.
+ * its allocated resources. At the time this group is considered to be
+ * exclusive this test can determine if its current schemata supports this
+ * setting by testing for overlap with all other resource groups.
  *
- * Return: true अगर resource group can be exclusive, false अगर there is overlap
+ * Return: true if resource group can be exclusive, false if there is overlap
  * with allocations of other resource groups and thus this resource group
  * cannot be exclusive.
  */
-अटल bool rdtgroup_mode_test_exclusive(काष्ठा rdtgroup *rdtgrp)
-अणु
-	पूर्णांक closid = rdtgrp->closid;
-	काष्ठा rdt_resource *r;
+static bool rdtgroup_mode_test_exclusive(struct rdtgroup *rdtgrp)
+{
+	int closid = rdtgrp->closid;
+	struct rdt_resource *r;
 	bool has_cache = false;
-	काष्ठा rdt_करोमुख्य *d;
+	struct rdt_domain *d;
 
-	क्रम_each_alloc_enabled_rdt_resource(r) अणु
-		अगर (r->rid == RDT_RESOURCE_MBA)
-			जारी;
+	for_each_alloc_enabled_rdt_resource(r) {
+		if (r->rid == RDT_RESOURCE_MBA)
+			continue;
 		has_cache = true;
-		list_क्रम_each_entry(d, &r->करोमुख्यs, list) अणु
-			अगर (rdtgroup_cbm_overlaps(r, d, d->ctrl_val[closid],
-						  rdtgrp->closid, false)) अणु
-				rdt_last_cmd_माला_दो("Schemata overlaps\n");
-				वापस false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		list_for_each_entry(d, &r->domains, list) {
+			if (rdtgroup_cbm_overlaps(r, d, d->ctrl_val[closid],
+						  rdtgrp->closid, false)) {
+				rdt_last_cmd_puts("Schemata overlaps\n");
+				return false;
+			}
+		}
+	}
 
-	अगर (!has_cache) अणु
-		rdt_last_cmd_माला_दो("Cannot be exclusive without CAT/CDP\n");
-		वापस false;
-	पूर्ण
+	if (!has_cache) {
+		rdt_last_cmd_puts("Cannot be exclusive without CAT/CDP\n");
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * rdtgroup_mode_ग_लिखो - Modअगरy the resource group's mode
+ * rdtgroup_mode_write - Modify the resource group's mode
  *
  */
-अटल sमाप_प्रकार rdtgroup_mode_ग_लिखो(काष्ठा kernfs_खोलो_file *of,
-				   अक्षर *buf, माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	क्रमागत rdtgrp_mode mode;
-	पूर्णांक ret = 0;
+static ssize_t rdtgroup_mode_write(struct kernfs_open_file *of,
+				   char *buf, size_t nbytes, loff_t off)
+{
+	struct rdtgroup *rdtgrp;
+	enum rdtgrp_mode mode;
+	int ret = 0;
 
 	/* Valid input requires a trailing newline */
-	अगर (nbytes == 0 || buf[nbytes - 1] != '\n')
-		वापस -EINVAL;
+	if (nbytes == 0 || buf[nbytes - 1] != '\n')
+		return -EINVAL;
 	buf[nbytes - 1] = '\0';
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		rdtgroup_kn_unlock(of->kn);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	rdt_last_cmd_clear();
 
 	mode = rdtgrp->mode;
 
-	अगर ((!म_भेद(buf, "shareable") && mode == RDT_MODE_SHAREABLE) ||
-	    (!म_भेद(buf, "exclusive") && mode == RDT_MODE_EXCLUSIVE) ||
-	    (!म_भेद(buf, "pseudo-locksetup") &&
+	if ((!strcmp(buf, "shareable") && mode == RDT_MODE_SHAREABLE) ||
+	    (!strcmp(buf, "exclusive") && mode == RDT_MODE_EXCLUSIVE) ||
+	    (!strcmp(buf, "pseudo-locksetup") &&
 	     mode == RDT_MODE_PSEUDO_LOCKSETUP) ||
-	    (!म_भेद(buf, "pseudo-locked") && mode == RDT_MODE_PSEUDO_LOCKED))
-		जाओ out;
+	    (!strcmp(buf, "pseudo-locked") && mode == RDT_MODE_PSEUDO_LOCKED))
+		goto out;
 
-	अगर (mode == RDT_MODE_PSEUDO_LOCKED) अणु
-		rdt_last_cmd_माला_दो("Cannot change pseudo-locked group\n");
+	if (mode == RDT_MODE_PSEUDO_LOCKED) {
+		rdt_last_cmd_puts("Cannot change pseudo-locked group\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!म_भेद(buf, "shareable")) अणु
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) अणु
-			ret = rdtgroup_locksetup_निकास(rdtgrp);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
+	if (!strcmp(buf, "shareable")) {
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) {
+			ret = rdtgroup_locksetup_exit(rdtgrp);
+			if (ret)
+				goto out;
+		}
 		rdtgrp->mode = RDT_MODE_SHAREABLE;
-	पूर्ण अन्यथा अगर (!म_भेद(buf, "exclusive")) अणु
-		अगर (!rdtgroup_mode_test_exclusive(rdtgrp)) अणु
+	} else if (!strcmp(buf, "exclusive")) {
+		if (!rdtgroup_mode_test_exclusive(rdtgrp)) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) अणु
-			ret = rdtgroup_locksetup_निकास(rdtgrp);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
+			goto out;
+		}
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) {
+			ret = rdtgroup_locksetup_exit(rdtgrp);
+			if (ret)
+				goto out;
+		}
 		rdtgrp->mode = RDT_MODE_EXCLUSIVE;
-	पूर्ण अन्यथा अगर (!म_भेद(buf, "pseudo-locksetup")) अणु
+	} else if (!strcmp(buf, "pseudo-locksetup")) {
 		ret = rdtgroup_locksetup_enter(rdtgrp);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		rdtgrp->mode = RDT_MODE_PSEUDO_LOCKSETUP;
-	पूर्ण अन्यथा अणु
-		rdt_last_cmd_माला_दो("Unknown or unsupported mode\n");
+	} else {
+		rdt_last_cmd_puts("Unknown or unsupported mode\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
 out:
 	rdtgroup_kn_unlock(of->kn);
-	वापस ret ?: nbytes;
-पूर्ण
+	return ret ?: nbytes;
+}
 
 /**
  * rdtgroup_cbm_to_size - Translate CBM to size in bytes
- * @r: RDT resource to which @d beदीर्घs.
- * @d: RDT करोमुख्य instance.
- * @cbm: biपंचांगask क्रम which the size should be computed.
+ * @r: RDT resource to which @d belongs.
+ * @d: RDT domain instance.
+ * @cbm: bitmask for which the size should be computed.
  *
- * The biपंचांगask provided associated with the RDT करोमुख्य instance @d will be
- * translated पूर्णांकo how many bytes it represents. The size in bytes is
- * computed by first भागiding the total cache size by the CBM length to
- * determine how many bytes each bit in the biपंचांगask represents. The result
- * is multiplied with the number of bits set in the biपंचांगask.
+ * The bitmask provided associated with the RDT domain instance @d will be
+ * translated into how many bytes it represents. The size in bytes is
+ * computed by first dividing the total cache size by the CBM length to
+ * determine how many bytes each bit in the bitmask represents. The result
+ * is multiplied with the number of bits set in the bitmask.
  *
- * @cbm is अचिन्हित दीर्घ, even अगर only 32 bits are used to make the
- * biपंचांगap functions work correctly.
+ * @cbm is unsigned long, even if only 32 bits are used to make the
+ * bitmap functions work correctly.
  */
-अचिन्हित पूर्णांक rdtgroup_cbm_to_size(काष्ठा rdt_resource *r,
-				  काष्ठा rdt_करोमुख्य *d, अचिन्हित दीर्घ cbm)
-अणु
-	काष्ठा cpu_cacheinfo *ci;
-	अचिन्हित पूर्णांक size = 0;
-	पूर्णांक num_b, i;
+unsigned int rdtgroup_cbm_to_size(struct rdt_resource *r,
+				  struct rdt_domain *d, unsigned long cbm)
+{
+	struct cpu_cacheinfo *ci;
+	unsigned int size = 0;
+	int num_b, i;
 
-	num_b = biपंचांगap_weight(&cbm, r->cache.cbm_len);
+	num_b = bitmap_weight(&cbm, r->cache.cbm_len);
 	ci = get_cpu_cacheinfo(cpumask_any(&d->cpu_mask));
-	क्रम (i = 0; i < ci->num_leaves; i++) अणु
-		अगर (ci->info_list[i].level == r->cache_level) अणु
+	for (i = 0; i < ci->num_leaves; i++) {
+		if (ci->info_list[i].level == r->cache_level) {
 			size = ci->info_list[i].size / r->cache.cbm_len * num_b;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
 /**
  * rdtgroup_size_show - Display size in bytes of allocated regions
  *
- * The "size" file mirrors the layout of the "schemata" file, prपूर्णांकing the
- * size in bytes of each region instead of the capacity biपंचांगask.
+ * The "size" file mirrors the layout of the "schemata" file, printing the
+ * size in bytes of each region instead of the capacity bitmask.
  *
  */
-अटल पूर्णांक rdtgroup_size_show(काष्ठा kernfs_खोलो_file *of,
-			      काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	काष्ठा rdt_resource *r;
-	काष्ठा rdt_करोमुख्य *d;
-	अचिन्हित पूर्णांक size;
-	पूर्णांक ret = 0;
+static int rdtgroup_size_show(struct kernfs_open_file *of,
+			      struct seq_file *s, void *v)
+{
+	struct rdtgroup *rdtgrp;
+	struct rdt_resource *r;
+	struct rdt_domain *d;
+	unsigned int size;
+	int ret = 0;
 	bool sep;
 	u32 ctrl;
 
 	rdtgrp = rdtgroup_kn_lock_live(of->kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		rdtgroup_kn_unlock(of->kn);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) अणु
-		अगर (!rdtgrp->plr->d) अणु
+	if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) {
+		if (!rdtgrp->plr->d) {
 			rdt_last_cmd_clear();
-			rdt_last_cmd_माला_दो("Cache domain offline\n");
+			rdt_last_cmd_puts("Cache domain offline\n");
 			ret = -ENODEV;
-		पूर्ण अन्यथा अणु
-			seq_म_लिखो(s, "%*s:", max_name_width,
+		} else {
+			seq_printf(s, "%*s:", max_name_width,
 				   rdtgrp->plr->r->name);
 			size = rdtgroup_cbm_to_size(rdtgrp->plr->r,
 						    rdtgrp->plr->d,
 						    rdtgrp->plr->cbm);
-			seq_म_लिखो(s, "%d=%u\n", rdtgrp->plr->d->id, size);
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			seq_printf(s, "%d=%u\n", rdtgrp->plr->d->id, size);
+		}
+		goto out;
+	}
 
-	क्रम_each_alloc_enabled_rdt_resource(r) अणु
+	for_each_alloc_enabled_rdt_resource(r) {
 		sep = false;
-		seq_म_लिखो(s, "%*s:", max_name_width, r->name);
-		list_क्रम_each_entry(d, &r->करोमुख्यs, list) अणु
-			अगर (sep)
-				seq_अ_दो(s, ';');
-			अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) अणु
+		seq_printf(s, "%*s:", max_name_width, r->name);
+		list_for_each_entry(d, &r->domains, list) {
+			if (sep)
+				seq_putc(s, ';');
+			if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP) {
 				size = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				ctrl = (!is_mba_sc(r) ?
 						d->ctrl_val[rdtgrp->closid] :
 						d->mbps_val[rdtgrp->closid]);
-				अगर (r->rid == RDT_RESOURCE_MBA)
+				if (r->rid == RDT_RESOURCE_MBA)
 					size = ctrl;
-				अन्यथा
+				else
 					size = rdtgroup_cbm_to_size(r, d, ctrl);
-			पूर्ण
-			seq_म_लिखो(s, "%d=%u", d->id, size);
+			}
+			seq_printf(s, "%d=%u", d->id, size);
 			sep = true;
-		पूर्ण
-		seq_अ_दो(s, '\n');
-	पूर्ण
+		}
+		seq_putc(s, '\n');
+	}
 
 out:
 	rdtgroup_kn_unlock(of->kn);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* rdtgroup inक्रमmation files क्रम one cache resource. */
-अटल काष्ठा rftype res_common_files[] = अणु
-	अणु
+/* rdtgroup information files for one cache resource. */
+static struct rftype res_common_files[] = {
+	{
 		.name		= "last_cmd_status",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_last_cmd_status_show,
 		.fflags		= RF_TOP_INFO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "num_closids",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_num_closids_show,
 		.fflags		= RF_CTRL_INFO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "mon_features",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_mon_features_show,
 		.fflags		= RF_MON_INFO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "num_rmids",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_num_rmids_show,
 		.fflags		= RF_MON_INFO,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "cbm_mask",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.seq_show	= rdt_शेष_ctrl_show,
+		.seq_show	= rdt_default_ctrl_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_CACHE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "min_cbm_bits",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_min_cbm_bits_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_CACHE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "shareable_bits",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_shareable_bits_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_CACHE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "bit_usage",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_bit_usage_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_CACHE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "min_bandwidth",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_min_bw_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_MB,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "bandwidth_gran",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_bw_gran_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_MB,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "delay_linear",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdt_delay_linear_show,
 		.fflags		= RF_CTRL_INFO | RFTYPE_RES_MB,
-	पूर्ण,
+	},
 	/*
-	 * Platक्रमm specअगरic which (अगर any) capabilities are provided by
-	 * thपढ़ो_throttle_mode. Defer "fflags" initialization to platक्रमm
+	 * Platform specific which (if any) capabilities are provided by
+	 * thread_throttle_mode. Defer "fflags" initialization to platform
 	 * discovery.
 	 */
-	अणु
+	{
 		.name		= "thread_throttle_mode",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.seq_show	= rdt_thपढ़ो_throttle_mode_show,
-	पूर्ण,
-	अणु
+		.seq_show	= rdt_thread_throttle_mode_show,
+	},
+	{
 		.name		= "max_threshold_occupancy",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= max_threshold_occ_ग_लिखो,
+		.write		= max_threshold_occ_write,
 		.seq_show	= max_threshold_occ_show,
 		.fflags		= RF_MON_INFO | RFTYPE_RES_CACHE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "cpus",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= rdtgroup_cpus_ग_लिखो,
+		.write		= rdtgroup_cpus_write,
 		.seq_show	= rdtgroup_cpus_show,
 		.fflags		= RFTYPE_BASE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "cpus_list",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= rdtgroup_cpus_ग_लिखो,
+		.write		= rdtgroup_cpus_write,
 		.seq_show	= rdtgroup_cpus_show,
 		.flags		= RFTYPE_FLAGS_CPUS_LIST,
 		.fflags		= RFTYPE_BASE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "tasks",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= rdtgroup_tasks_ग_लिखो,
+		.write		= rdtgroup_tasks_write,
 		.seq_show	= rdtgroup_tasks_show,
 		.fflags		= RFTYPE_BASE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "schemata",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= rdtgroup_schemata_ग_लिखो,
+		.write		= rdtgroup_schemata_write,
 		.seq_show	= rdtgroup_schemata_show,
 		.fflags		= RF_CTRL_BASE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "mode",
 		.mode		= 0644,
 		.kf_ops		= &rdtgroup_kf_single_ops,
-		.ग_लिखो		= rdtgroup_mode_ग_लिखो,
+		.write		= rdtgroup_mode_write,
 		.seq_show	= rdtgroup_mode_show,
 		.fflags		= RF_CTRL_BASE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "size",
 		.mode		= 0444,
 		.kf_ops		= &rdtgroup_kf_single_ops,
 		.seq_show	= rdtgroup_size_show,
 		.fflags		= RF_CTRL_BASE,
-	पूर्ण,
+	},
 
-पूर्ण;
+};
 
-अटल पूर्णांक rdtgroup_add_files(काष्ठा kernfs_node *kn, अचिन्हित दीर्घ fflags)
-अणु
-	काष्ठा rftype *rfts, *rft;
-	पूर्णांक ret, len;
+static int rdtgroup_add_files(struct kernfs_node *kn, unsigned long fflags)
+{
+	struct rftype *rfts, *rft;
+	int ret, len;
 
 	rfts = res_common_files;
 	len = ARRAY_SIZE(res_common_files);
 
-	lockdep_निश्चित_held(&rdtgroup_mutex);
+	lockdep_assert_held(&rdtgroup_mutex);
 
-	क्रम (rft = rfts; rft < rfts + len; rft++) अणु
-		अगर (rft->fflags && ((fflags & rft->fflags) == rft->fflags)) अणु
+	for (rft = rfts; rft < rfts + len; rft++) {
+		if (rft->fflags && ((fflags & rft->fflags) == rft->fflags)) {
 			ret = rdtgroup_add_file(kn, rft);
-			अगर (ret)
-				जाओ error;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto error;
+		}
+	}
 
-	वापस 0;
+	return 0;
 error:
 	pr_warn("Failed to add %s, err=%d\n", rft->name, ret);
-	जबतक (--rft >= rfts) अणु
-		अगर ((fflags & rft->fflags) == rft->fflags)
-			kernfs_हटाओ_by_name(kn, rft->name);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	while (--rft >= rfts) {
+		if ((fflags & rft->fflags) == rft->fflags)
+			kernfs_remove_by_name(kn, rft->name);
+	}
+	return ret;
+}
 
-अटल काष्ठा rftype *rdtgroup_get_rftype_by_name(स्थिर अक्षर *name)
-अणु
-	काष्ठा rftype *rfts, *rft;
-	पूर्णांक len;
+static struct rftype *rdtgroup_get_rftype_by_name(const char *name)
+{
+	struct rftype *rfts, *rft;
+	int len;
 
 	rfts = res_common_files;
 	len = ARRAY_SIZE(res_common_files);
 
-	क्रम (rft = rfts; rft < rfts + len; rft++) अणु
-		अगर (!म_भेद(rft->name, name))
-			वापस rft;
-	पूर्ण
+	for (rft = rfts; rft < rfts + len; rft++) {
+		if (!strcmp(rft->name, name))
+			return rft;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम __init thपढ़ो_throttle_mode_init(व्योम)
-अणु
-	काष्ठा rftype *rft;
+void __init thread_throttle_mode_init(void)
+{
+	struct rftype *rft;
 
 	rft = rdtgroup_get_rftype_by_name("thread_throttle_mode");
-	अगर (!rft)
-		वापस;
+	if (!rft)
+		return;
 
 	rft->fflags = RF_CTRL_INFO | RFTYPE_RES_MB;
-पूर्ण
+}
 
 /**
  * rdtgroup_kn_mode_restrict - Restrict user access to named resctrl file
  * @r: The resource group with which the file is associated.
  * @name: Name of the file
  *
- * The permissions of named resctrl file, directory, or link are modअगरied
- * to not allow पढ़ो, ग_लिखो, or execute by any user.
+ * The permissions of named resctrl file, directory, or link are modified
+ * to not allow read, write, or execute by any user.
  *
- * WARNING: This function is पूर्णांकended to communicate to the user that the
- * resctrl file has been locked करोwn - that it is not relevant to the
- * particular state the प्रणाली finds itself in. It should not be relied
+ * WARNING: This function is intended to communicate to the user that the
+ * resctrl file has been locked down - that it is not relevant to the
+ * particular state the system finds itself in. It should not be relied
  * on to protect from user access because after the file's permissions
  * are restricted the user can still change the permissions using chmod
  * from the command line.
  *
  * Return: 0 on success, <0 on failure.
  */
-पूर्णांक rdtgroup_kn_mode_restrict(काष्ठा rdtgroup *r, स्थिर अक्षर *name)
-अणु
-	काष्ठा iattr iattr = अणु.ia_valid = ATTR_MODE,पूर्ण;
-	काष्ठा kernfs_node *kn;
-	पूर्णांक ret = 0;
+int rdtgroup_kn_mode_restrict(struct rdtgroup *r, const char *name)
+{
+	struct iattr iattr = {.ia_valid = ATTR_MODE,};
+	struct kernfs_node *kn;
+	int ret = 0;
 
-	kn = kernfs_find_and_get_ns(r->kn, name, शून्य);
-	अगर (!kn)
-		वापस -ENOENT;
+	kn = kernfs_find_and_get_ns(r->kn, name, NULL);
+	if (!kn)
+		return -ENOENT;
 
-	चयन (kernfs_type(kn)) अणु
-	हाल KERNFS_सूची:
-		iattr.ia_mode = S_IFसूची;
-		अवरोध;
-	हाल KERNFS_खाता:
+	switch (kernfs_type(kn)) {
+	case KERNFS_DIR:
+		iattr.ia_mode = S_IFDIR;
+		break;
+	case KERNFS_FILE:
 		iattr.ia_mode = S_IFREG;
-		अवरोध;
-	हाल KERNFS_LINK:
+		break;
+	case KERNFS_LINK:
 		iattr.ia_mode = S_IFLNK;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = kernfs_setattr(kn, &iattr);
 	kernfs_put(kn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * rdtgroup_kn_mode_restore - Restore user access to named resctrl file
@@ -1716,1179 +1715,1179 @@ error:
  *
  * Return: 0 on success, <0 on failure.
  */
-पूर्णांक rdtgroup_kn_mode_restore(काष्ठा rdtgroup *r, स्थिर अक्षर *name,
+int rdtgroup_kn_mode_restore(struct rdtgroup *r, const char *name,
 			     umode_t mask)
-अणु
-	काष्ठा iattr iattr = अणु.ia_valid = ATTR_MODE,पूर्ण;
-	काष्ठा kernfs_node *kn, *parent;
-	काष्ठा rftype *rfts, *rft;
-	पूर्णांक ret, len;
+{
+	struct iattr iattr = {.ia_valid = ATTR_MODE,};
+	struct kernfs_node *kn, *parent;
+	struct rftype *rfts, *rft;
+	int ret, len;
 
 	rfts = res_common_files;
 	len = ARRAY_SIZE(res_common_files);
 
-	क्रम (rft = rfts; rft < rfts + len; rft++) अणु
-		अगर (!म_भेद(rft->name, name))
+	for (rft = rfts; rft < rfts + len; rft++) {
+		if (!strcmp(rft->name, name))
 			iattr.ia_mode = rft->mode & mask;
-	पूर्ण
+	}
 
-	kn = kernfs_find_and_get_ns(r->kn, name, शून्य);
-	अगर (!kn)
-		वापस -ENOENT;
+	kn = kernfs_find_and_get_ns(r->kn, name, NULL);
+	if (!kn)
+		return -ENOENT;
 
-	चयन (kernfs_type(kn)) अणु
-	हाल KERNFS_सूची:
+	switch (kernfs_type(kn)) {
+	case KERNFS_DIR:
 		parent = kernfs_get_parent(kn);
-		अगर (parent) अणु
+		if (parent) {
 			iattr.ia_mode |= parent->mode;
 			kernfs_put(parent);
-		पूर्ण
-		iattr.ia_mode |= S_IFसूची;
-		अवरोध;
-	हाल KERNFS_खाता:
+		}
+		iattr.ia_mode |= S_IFDIR;
+		break;
+	case KERNFS_FILE:
 		iattr.ia_mode |= S_IFREG;
-		अवरोध;
-	हाल KERNFS_LINK:
+		break;
+	case KERNFS_LINK:
 		iattr.ia_mode |= S_IFLNK;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ret = kernfs_setattr(kn, &iattr);
 	kernfs_put(kn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rdtgroup_सूची_गढ़ो_info_resdir(काष्ठा rdt_resource *r, अक्षर *name,
-				      अचिन्हित दीर्घ fflags)
-अणु
-	काष्ठा kernfs_node *kn_subdir;
-	पूर्णांक ret;
+static int rdtgroup_mkdir_info_resdir(struct rdt_resource *r, char *name,
+				      unsigned long fflags)
+{
+	struct kernfs_node *kn_subdir;
+	int ret;
 
 	kn_subdir = kernfs_create_dir(kn_info, name,
 				      kn_info->mode, r);
-	अगर (IS_ERR(kn_subdir))
-		वापस PTR_ERR(kn_subdir);
+	if (IS_ERR(kn_subdir))
+		return PTR_ERR(kn_subdir);
 
 	ret = rdtgroup_kn_set_ugid(kn_subdir);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = rdtgroup_add_files(kn_subdir, fflags);
-	अगर (!ret)
+	if (!ret)
 		kernfs_activate(kn_subdir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rdtgroup_create_info_dir(काष्ठा kernfs_node *parent_kn)
-अणु
-	काष्ठा rdt_resource *r;
-	अचिन्हित दीर्घ fflags;
-	अक्षर name[32];
-	पूर्णांक ret;
+static int rdtgroup_create_info_dir(struct kernfs_node *parent_kn)
+{
+	struct rdt_resource *r;
+	unsigned long fflags;
+	char name[32];
+	int ret;
 
 	/* create the directory */
-	kn_info = kernfs_create_dir(parent_kn, "info", parent_kn->mode, शून्य);
-	अगर (IS_ERR(kn_info))
-		वापस PTR_ERR(kn_info);
+	kn_info = kernfs_create_dir(parent_kn, "info", parent_kn->mode, NULL);
+	if (IS_ERR(kn_info))
+		return PTR_ERR(kn_info);
 
 	ret = rdtgroup_add_files(kn_info, RF_TOP_INFO);
-	अगर (ret)
-		जाओ out_destroy;
+	if (ret)
+		goto out_destroy;
 
-	क्रम_each_alloc_enabled_rdt_resource(r) अणु
+	for_each_alloc_enabled_rdt_resource(r) {
 		fflags =  r->fflags | RF_CTRL_INFO;
-		ret = rdtgroup_सूची_गढ़ो_info_resdir(r, r->name, fflags);
-		अगर (ret)
-			जाओ out_destroy;
-	पूर्ण
+		ret = rdtgroup_mkdir_info_resdir(r, r->name, fflags);
+		if (ret)
+			goto out_destroy;
+	}
 
-	क्रम_each_mon_enabled_rdt_resource(r) अणु
+	for_each_mon_enabled_rdt_resource(r) {
 		fflags =  r->fflags | RF_MON_INFO;
-		प्र_लिखो(name, "%s_MON", r->name);
-		ret = rdtgroup_सूची_गढ़ो_info_resdir(r, name, fflags);
-		अगर (ret)
-			जाओ out_destroy;
-	पूर्ण
+		sprintf(name, "%s_MON", r->name);
+		ret = rdtgroup_mkdir_info_resdir(r, name, fflags);
+		if (ret)
+			goto out_destroy;
+	}
 
 	ret = rdtgroup_kn_set_ugid(kn_info);
-	अगर (ret)
-		जाओ out_destroy;
+	if (ret)
+		goto out_destroy;
 
 	kernfs_activate(kn_info);
 
-	वापस 0;
+	return 0;
 
 out_destroy:
-	kernfs_हटाओ(kn_info);
-	वापस ret;
-पूर्ण
+	kernfs_remove(kn_info);
+	return ret;
+}
 
-अटल पूर्णांक
-mongroup_create_dir(काष्ठा kernfs_node *parent_kn, काष्ठा rdtgroup *prgrp,
-		    अक्षर *name, काष्ठा kernfs_node **dest_kn)
-अणु
-	काष्ठा kernfs_node *kn;
-	पूर्णांक ret;
+static int
+mongroup_create_dir(struct kernfs_node *parent_kn, struct rdtgroup *prgrp,
+		    char *name, struct kernfs_node **dest_kn)
+{
+	struct kernfs_node *kn;
+	int ret;
 
 	/* create the directory */
 	kn = kernfs_create_dir(parent_kn, name, parent_kn->mode, prgrp);
-	अगर (IS_ERR(kn))
-		वापस PTR_ERR(kn);
+	if (IS_ERR(kn))
+		return PTR_ERR(kn);
 
-	अगर (dest_kn)
+	if (dest_kn)
 		*dest_kn = kn;
 
 	ret = rdtgroup_kn_set_ugid(kn);
-	अगर (ret)
-		जाओ out_destroy;
+	if (ret)
+		goto out_destroy;
 
 	kernfs_activate(kn);
 
-	वापस 0;
+	return 0;
 
 out_destroy:
-	kernfs_हटाओ(kn);
-	वापस ret;
-पूर्ण
+	kernfs_remove(kn);
+	return ret;
+}
 
-अटल व्योम l3_qos_cfg_update(व्योम *arg)
-अणु
+static void l3_qos_cfg_update(void *arg)
+{
 	bool *enable = arg;
 
 	wrmsrl(MSR_IA32_L3_QOS_CFG, *enable ? L3_QOS_CDP_ENABLE : 0ULL);
-पूर्ण
+}
 
-अटल व्योम l2_qos_cfg_update(व्योम *arg)
-अणु
+static void l2_qos_cfg_update(void *arg)
+{
 	bool *enable = arg;
 
 	wrmsrl(MSR_IA32_L2_QOS_CFG, *enable ? L2_QOS_CDP_ENABLE : 0ULL);
-पूर्ण
+}
 
-अटल अंतरभूत bool is_mba_linear(व्योम)
-अणु
-	वापस rdt_resources_all[RDT_RESOURCE_MBA].membw.delay_linear;
-पूर्ण
+static inline bool is_mba_linear(void)
+{
+	return rdt_resources_all[RDT_RESOURCE_MBA].membw.delay_linear;
+}
 
-अटल पूर्णांक set_cache_qos_cfg(पूर्णांक level, bool enable)
-अणु
-	व्योम (*update)(व्योम *arg);
-	काष्ठा rdt_resource *r_l;
+static int set_cache_qos_cfg(int level, bool enable)
+{
+	void (*update)(void *arg);
+	struct rdt_resource *r_l;
 	cpumask_var_t cpu_mask;
-	काष्ठा rdt_करोमुख्य *d;
-	पूर्णांक cpu;
+	struct rdt_domain *d;
+	int cpu;
 
-	अगर (level == RDT_RESOURCE_L3)
+	if (level == RDT_RESOURCE_L3)
 		update = l3_qos_cfg_update;
-	अन्यथा अगर (level == RDT_RESOURCE_L2)
+	else if (level == RDT_RESOURCE_L2)
 		update = l2_qos_cfg_update;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (!zalloc_cpumask_var(&cpu_mask, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&cpu_mask, GFP_KERNEL))
+		return -ENOMEM;
 
 	r_l = &rdt_resources_all[level];
-	list_क्रम_each_entry(d, &r_l->करोमुख्यs, list) अणु
-		अगर (r_l->cache.arch_has_per_cpu_cfg)
-			/* Pick all the CPUs in the करोमुख्य instance */
-			क्रम_each_cpu(cpu, &d->cpu_mask)
+	list_for_each_entry(d, &r_l->domains, list) {
+		if (r_l->cache.arch_has_per_cpu_cfg)
+			/* Pick all the CPUs in the domain instance */
+			for_each_cpu(cpu, &d->cpu_mask)
 				cpumask_set_cpu(cpu, cpu_mask);
-		अन्यथा
-			/* Pick one CPU from each करोमुख्य instance to update MSR */
+		else
+			/* Pick one CPU from each domain instance to update MSR */
 			cpumask_set_cpu(cpumask_any(&d->cpu_mask), cpu_mask);
-	पूर्ण
+	}
 	cpu = get_cpu();
-	/* Update QOS_CFG MSR on this cpu अगर it's in cpu_mask. */
-	अगर (cpumask_test_cpu(cpu, cpu_mask))
+	/* Update QOS_CFG MSR on this cpu if it's in cpu_mask. */
+	if (cpumask_test_cpu(cpu, cpu_mask))
 		update(&enable);
 	/* Update QOS_CFG MSR on all other cpus in cpu_mask. */
 	smp_call_function_many(cpu_mask, update, &enable, 1);
 	put_cpu();
 
-	मुक्त_cpumask_var(cpu_mask);
+	free_cpumask_var(cpu_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Restore the qos cfg state when a करोमुख्य comes online */
-व्योम rdt_करोमुख्य_reconfigure_cdp(काष्ठा rdt_resource *r)
-अणु
-	अगर (!r->alloc_capable)
-		वापस;
+/* Restore the qos cfg state when a domain comes online */
+void rdt_domain_reconfigure_cdp(struct rdt_resource *r)
+{
+	if (!r->alloc_capable)
+		return;
 
-	अगर (r == &rdt_resources_all[RDT_RESOURCE_L2DATA])
+	if (r == &rdt_resources_all[RDT_RESOURCE_L2DATA])
 		l2_qos_cfg_update(&r->alloc_enabled);
 
-	अगर (r == &rdt_resources_all[RDT_RESOURCE_L3DATA])
+	if (r == &rdt_resources_all[RDT_RESOURCE_L3DATA])
 		l3_qos_cfg_update(&r->alloc_enabled);
-पूर्ण
+}
 
 /*
  * Enable or disable the MBA software controller
- * which helps user specअगरy bandwidth in MBps.
- * MBA software controller is supported only अगर
+ * which helps user specify bandwidth in MBps.
+ * MBA software controller is supported only if
  * MBM is supported and MBA is in linear scale.
  */
-अटल पूर्णांक set_mba_sc(bool mba_sc)
-अणु
-	काष्ठा rdt_resource *r = &rdt_resources_all[RDT_RESOURCE_MBA];
-	काष्ठा rdt_करोमुख्य *d;
+static int set_mba_sc(bool mba_sc)
+{
+	struct rdt_resource *r = &rdt_resources_all[RDT_RESOURCE_MBA];
+	struct rdt_domain *d;
 
-	अगर (!is_mbm_enabled() || !is_mba_linear() ||
+	if (!is_mbm_enabled() || !is_mba_linear() ||
 	    mba_sc == is_mba_sc(r))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	r->membw.mba_sc = mba_sc;
-	list_क्रम_each_entry(d, &r->करोमुख्यs, list)
-		setup_शेष_ctrlval(r, d->ctrl_val, d->mbps_val);
+	list_for_each_entry(d, &r->domains, list)
+		setup_default_ctrlval(r, d->ctrl_val, d->mbps_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cdp_enable(पूर्णांक level, पूर्णांक data_type, पूर्णांक code_type)
-अणु
-	काष्ठा rdt_resource *r_ldata = &rdt_resources_all[data_type];
-	काष्ठा rdt_resource *r_lcode = &rdt_resources_all[code_type];
-	काष्ठा rdt_resource *r_l = &rdt_resources_all[level];
-	पूर्णांक ret;
+static int cdp_enable(int level, int data_type, int code_type)
+{
+	struct rdt_resource *r_ldata = &rdt_resources_all[data_type];
+	struct rdt_resource *r_lcode = &rdt_resources_all[code_type];
+	struct rdt_resource *r_l = &rdt_resources_all[level];
+	int ret;
 
-	अगर (!r_l->alloc_capable || !r_ldata->alloc_capable ||
+	if (!r_l->alloc_capable || !r_ldata->alloc_capable ||
 	    !r_lcode->alloc_capable)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ret = set_cache_qos_cfg(level, true);
-	अगर (!ret) अणु
+	if (!ret) {
 		r_l->alloc_enabled = false;
 		r_ldata->alloc_enabled = true;
 		r_lcode->alloc_enabled = true;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक cdpl3_enable(व्योम)
-अणु
-	वापस cdp_enable(RDT_RESOURCE_L3, RDT_RESOURCE_L3DATA,
+static int cdpl3_enable(void)
+{
+	return cdp_enable(RDT_RESOURCE_L3, RDT_RESOURCE_L3DATA,
 			  RDT_RESOURCE_L3CODE);
-पूर्ण
+}
 
-अटल पूर्णांक cdpl2_enable(व्योम)
-अणु
-	वापस cdp_enable(RDT_RESOURCE_L2, RDT_RESOURCE_L2DATA,
+static int cdpl2_enable(void)
+{
+	return cdp_enable(RDT_RESOURCE_L2, RDT_RESOURCE_L2DATA,
 			  RDT_RESOURCE_L2CODE);
-पूर्ण
+}
 
-अटल व्योम cdp_disable(पूर्णांक level, पूर्णांक data_type, पूर्णांक code_type)
-अणु
-	काष्ठा rdt_resource *r = &rdt_resources_all[level];
+static void cdp_disable(int level, int data_type, int code_type)
+{
+	struct rdt_resource *r = &rdt_resources_all[level];
 
 	r->alloc_enabled = r->alloc_capable;
 
-	अगर (rdt_resources_all[data_type].alloc_enabled) अणु
+	if (rdt_resources_all[data_type].alloc_enabled) {
 		rdt_resources_all[data_type].alloc_enabled = false;
 		rdt_resources_all[code_type].alloc_enabled = false;
 		set_cache_qos_cfg(level, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम cdpl3_disable(व्योम)
-अणु
+static void cdpl3_disable(void)
+{
 	cdp_disable(RDT_RESOURCE_L3, RDT_RESOURCE_L3DATA, RDT_RESOURCE_L3CODE);
-पूर्ण
+}
 
-अटल व्योम cdpl2_disable(व्योम)
-अणु
+static void cdpl2_disable(void)
+{
 	cdp_disable(RDT_RESOURCE_L2, RDT_RESOURCE_L2DATA, RDT_RESOURCE_L2CODE);
-पूर्ण
+}
 
-अटल व्योम cdp_disable_all(व्योम)
-अणु
-	अगर (rdt_resources_all[RDT_RESOURCE_L3DATA].alloc_enabled)
+static void cdp_disable_all(void)
+{
+	if (rdt_resources_all[RDT_RESOURCE_L3DATA].alloc_enabled)
 		cdpl3_disable();
-	अगर (rdt_resources_all[RDT_RESOURCE_L2DATA].alloc_enabled)
+	if (rdt_resources_all[RDT_RESOURCE_L2DATA].alloc_enabled)
 		cdpl2_disable();
-पूर्ण
+}
 
 /*
- * We करोn't allow rdtgroup directories to be created anywhere
- * except the root directory. Thus when looking क्रम the rdtgroup
- * काष्ठाure क्रम a kernfs node we are either looking at a directory,
- * in which हाल the rdtgroup काष्ठाure is poपूर्णांकed at by the "priv"
+ * We don't allow rdtgroup directories to be created anywhere
+ * except the root directory. Thus when looking for the rdtgroup
+ * structure for a kernfs node we are either looking at a directory,
+ * in which case the rdtgroup structure is pointed at by the "priv"
  * field, otherwise we have a file, and need only look to the parent
  * to find the rdtgroup.
  */
-अटल काष्ठा rdtgroup *kernfs_to_rdtgroup(काष्ठा kernfs_node *kn)
-अणु
-	अगर (kernfs_type(kn) == KERNFS_सूची) अणु
+static struct rdtgroup *kernfs_to_rdtgroup(struct kernfs_node *kn)
+{
+	if (kernfs_type(kn) == KERNFS_DIR) {
 		/*
 		 * All the resource directories use "kn->priv"
-		 * to poपूर्णांक to the "struct rdtgroup" क्रम the
-		 * resource. "info" and its subdirectories करोn't
-		 * have rdtgroup काष्ठाures, so वापस शून्य here.
+		 * to point to the "struct rdtgroup" for the
+		 * resource. "info" and its subdirectories don't
+		 * have rdtgroup structures, so return NULL here.
 		 */
-		अगर (kn == kn_info || kn->parent == kn_info)
-			वापस शून्य;
-		अन्यथा
-			वापस kn->priv;
-	पूर्ण अन्यथा अणु
-		वापस kn->parent->priv;
-	पूर्ण
-पूर्ण
+		if (kn == kn_info || kn->parent == kn_info)
+			return NULL;
+		else
+			return kn->priv;
+	} else {
+		return kn->parent->priv;
+	}
+}
 
-काष्ठा rdtgroup *rdtgroup_kn_lock_live(काष्ठा kernfs_node *kn)
-अणु
-	काष्ठा rdtgroup *rdtgrp = kernfs_to_rdtgroup(kn);
+struct rdtgroup *rdtgroup_kn_lock_live(struct kernfs_node *kn)
+{
+	struct rdtgroup *rdtgrp = kernfs_to_rdtgroup(kn);
 
-	अगर (!rdtgrp)
-		वापस शून्य;
+	if (!rdtgrp)
+		return NULL;
 
-	atomic_inc(&rdtgrp->रुकोcount);
-	kernfs_अवरोध_active_protection(kn);
+	atomic_inc(&rdtgrp->waitcount);
+	kernfs_break_active_protection(kn);
 
 	mutex_lock(&rdtgroup_mutex);
 
-	/* Was this group deleted जबतक we रुकोed? */
-	अगर (rdtgrp->flags & RDT_DELETED)
-		वापस शून्य;
+	/* Was this group deleted while we waited? */
+	if (rdtgrp->flags & RDT_DELETED)
+		return NULL;
 
-	वापस rdtgrp;
-पूर्ण
+	return rdtgrp;
+}
 
-व्योम rdtgroup_kn_unlock(काष्ठा kernfs_node *kn)
-अणु
-	काष्ठा rdtgroup *rdtgrp = kernfs_to_rdtgroup(kn);
+void rdtgroup_kn_unlock(struct kernfs_node *kn)
+{
+	struct rdtgroup *rdtgrp = kernfs_to_rdtgroup(kn);
 
-	अगर (!rdtgrp)
-		वापस;
+	if (!rdtgrp)
+		return;
 
 	mutex_unlock(&rdtgroup_mutex);
 
-	अगर (atomic_dec_and_test(&rdtgrp->रुकोcount) &&
-	    (rdtgrp->flags & RDT_DELETED)) अणु
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
+	if (atomic_dec_and_test(&rdtgrp->waitcount) &&
+	    (rdtgrp->flags & RDT_DELETED)) {
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
 		    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED)
-			rdtgroup_pseuकरो_lock_हटाओ(rdtgrp);
-		kernfs_unअवरोध_active_protection(kn);
-		rdtgroup_हटाओ(rdtgrp);
-	पूर्ण अन्यथा अणु
-		kernfs_unअवरोध_active_protection(kn);
-	पूर्ण
-पूर्ण
+			rdtgroup_pseudo_lock_remove(rdtgrp);
+		kernfs_unbreak_active_protection(kn);
+		rdtgroup_remove(rdtgrp);
+	} else {
+		kernfs_unbreak_active_protection(kn);
+	}
+}
 
-अटल पूर्णांक सूची_गढ़ो_mondata_all(काष्ठा kernfs_node *parent_kn,
-			     काष्ठा rdtgroup *prgrp,
-			     काष्ठा kernfs_node **mon_data_kn);
+static int mkdir_mondata_all(struct kernfs_node *parent_kn,
+			     struct rdtgroup *prgrp,
+			     struct kernfs_node **mon_data_kn);
 
-अटल पूर्णांक rdt_enable_ctx(काष्ठा rdt_fs_context *ctx)
-अणु
-	पूर्णांक ret = 0;
+static int rdt_enable_ctx(struct rdt_fs_context *ctx)
+{
+	int ret = 0;
 
-	अगर (ctx->enable_cdpl2)
+	if (ctx->enable_cdpl2)
 		ret = cdpl2_enable();
 
-	अगर (!ret && ctx->enable_cdpl3)
+	if (!ret && ctx->enable_cdpl3)
 		ret = cdpl3_enable();
 
-	अगर (!ret && ctx->enable_mba_mbps)
+	if (!ret && ctx->enable_mba_mbps)
 		ret = set_mba_sc(true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक rdt_get_tree(काष्ठा fs_context *fc)
-अणु
-	काष्ठा rdt_fs_context *ctx = rdt_fc2context(fc);
-	काष्ठा rdt_करोमुख्य *करोm;
-	काष्ठा rdt_resource *r;
-	पूर्णांक ret;
+static int rdt_get_tree(struct fs_context *fc)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
+	struct rdt_domain *dom;
+	struct rdt_resource *r;
+	int ret;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	mutex_lock(&rdtgroup_mutex);
 	/*
-	 * resctrl file प्रणाली can only be mounted once.
+	 * resctrl file system can only be mounted once.
 	 */
-	अगर (अटल_branch_unlikely(&rdt_enable_key)) अणु
+	if (static_branch_unlikely(&rdt_enable_key)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = rdt_enable_ctx(ctx);
-	अगर (ret < 0)
-		जाओ out_cdp;
+	if (ret < 0)
+		goto out_cdp;
 
 	closid_init();
 
-	ret = rdtgroup_create_info_dir(rdtgroup_शेष.kn);
-	अगर (ret < 0)
-		जाओ out_mba;
+	ret = rdtgroup_create_info_dir(rdtgroup_default.kn);
+	if (ret < 0)
+		goto out_mba;
 
-	अगर (rdt_mon_capable) अणु
-		ret = mongroup_create_dir(rdtgroup_शेष.kn,
-					  &rdtgroup_शेष, "mon_groups",
+	if (rdt_mon_capable) {
+		ret = mongroup_create_dir(rdtgroup_default.kn,
+					  &rdtgroup_default, "mon_groups",
 					  &kn_mongrp);
-		अगर (ret < 0)
-			जाओ out_info;
+		if (ret < 0)
+			goto out_info;
 
-		ret = सूची_गढ़ो_mondata_all(rdtgroup_शेष.kn,
-					&rdtgroup_शेष, &kn_mondata);
-		अगर (ret < 0)
-			जाओ out_mongrp;
-		rdtgroup_शेष.mon.mon_data_kn = kn_mondata;
-	पूर्ण
+		ret = mkdir_mondata_all(rdtgroup_default.kn,
+					&rdtgroup_default, &kn_mondata);
+		if (ret < 0)
+			goto out_mongrp;
+		rdtgroup_default.mon.mon_data_kn = kn_mondata;
+	}
 
-	ret = rdt_pseuकरो_lock_init();
-	अगर (ret)
-		जाओ out_mondata;
+	ret = rdt_pseudo_lock_init();
+	if (ret)
+		goto out_mondata;
 
 	ret = kernfs_get_tree(fc);
-	अगर (ret < 0)
-		जाओ out_psl;
+	if (ret < 0)
+		goto out_psl;
 
-	अगर (rdt_alloc_capable)
-		अटल_branch_enable_cpuslocked(&rdt_alloc_enable_key);
-	अगर (rdt_mon_capable)
-		अटल_branch_enable_cpuslocked(&rdt_mon_enable_key);
+	if (rdt_alloc_capable)
+		static_branch_enable_cpuslocked(&rdt_alloc_enable_key);
+	if (rdt_mon_capable)
+		static_branch_enable_cpuslocked(&rdt_mon_enable_key);
 
-	अगर (rdt_alloc_capable || rdt_mon_capable)
-		अटल_branch_enable_cpuslocked(&rdt_enable_key);
+	if (rdt_alloc_capable || rdt_mon_capable)
+		static_branch_enable_cpuslocked(&rdt_enable_key);
 
-	अगर (is_mbm_enabled()) अणु
+	if (is_mbm_enabled()) {
 		r = &rdt_resources_all[RDT_RESOURCE_L3];
-		list_क्रम_each_entry(करोm, &r->करोमुख्यs, list)
-			mbm_setup_overflow_handler(करोm, MBM_OVERFLOW_INTERVAL);
-	पूर्ण
+		list_for_each_entry(dom, &r->domains, list)
+			mbm_setup_overflow_handler(dom, MBM_OVERFLOW_INTERVAL);
+	}
 
-	जाओ out;
+	goto out;
 
 out_psl:
-	rdt_pseuकरो_lock_release();
+	rdt_pseudo_lock_release();
 out_mondata:
-	अगर (rdt_mon_capable)
-		kernfs_हटाओ(kn_mondata);
+	if (rdt_mon_capable)
+		kernfs_remove(kn_mondata);
 out_mongrp:
-	अगर (rdt_mon_capable)
-		kernfs_हटाओ(kn_mongrp);
+	if (rdt_mon_capable)
+		kernfs_remove(kn_mongrp);
 out_info:
-	kernfs_हटाओ(kn_info);
+	kernfs_remove(kn_info);
 out_mba:
-	अगर (ctx->enable_mba_mbps)
+	if (ctx->enable_mba_mbps)
 		set_mba_sc(false);
 out_cdp:
 	cdp_disable_all();
 out:
 	rdt_last_cmd_clear();
 	mutex_unlock(&rdtgroup_mutex);
-	cpus_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	cpus_read_unlock();
+	return ret;
+}
 
-क्रमागत rdt_param अणु
+enum rdt_param {
 	Opt_cdp,
 	Opt_cdpl2,
 	Opt_mba_mbps,
 	nr__rdt_params
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा fs_parameter_spec rdt_fs_parameters[] = अणु
+static const struct fs_parameter_spec rdt_fs_parameters[] = {
 	fsparam_flag("cdp",		Opt_cdp),
 	fsparam_flag("cdpl2",		Opt_cdpl2),
 	fsparam_flag("mba_MBps",	Opt_mba_mbps),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल पूर्णांक rdt_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param)
-अणु
-	काष्ठा rdt_fs_context *ctx = rdt_fc2context(fc);
-	काष्ठा fs_parse_result result;
-	पूर्णांक opt;
+static int rdt_parse_param(struct fs_context *fc, struct fs_parameter *param)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
+	struct fs_parse_result result;
+	int opt;
 
 	opt = fs_parse(fc, rdt_fs_parameters, param, &result);
-	अगर (opt < 0)
-		वापस opt;
+	if (opt < 0)
+		return opt;
 
-	चयन (opt) अणु
-	हाल Opt_cdp:
+	switch (opt) {
+	case Opt_cdp:
 		ctx->enable_cdpl3 = true;
-		वापस 0;
-	हाल Opt_cdpl2:
+		return 0;
+	case Opt_cdpl2:
 		ctx->enable_cdpl2 = true;
-		वापस 0;
-	हाल Opt_mba_mbps:
-		अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL)
-			वापस -EINVAL;
+		return 0;
+	case Opt_mba_mbps:
+		if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
+			return -EINVAL;
 		ctx->enable_mba_mbps = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम rdt_fs_context_मुक्त(काष्ठा fs_context *fc)
-अणु
-	काष्ठा rdt_fs_context *ctx = rdt_fc2context(fc);
+static void rdt_fs_context_free(struct fs_context *fc)
+{
+	struct rdt_fs_context *ctx = rdt_fc2context(fc);
 
-	kernfs_मुक्त_fs_context(fc);
-	kमुक्त(ctx);
-पूर्ण
+	kernfs_free_fs_context(fc);
+	kfree(ctx);
+}
 
-अटल स्थिर काष्ठा fs_context_operations rdt_fs_context_ops = अणु
-	.मुक्त		= rdt_fs_context_मुक्त,
+static const struct fs_context_operations rdt_fs_context_ops = {
+	.free		= rdt_fs_context_free,
 	.parse_param	= rdt_parse_param,
 	.get_tree	= rdt_get_tree,
-पूर्ण;
+};
 
-अटल पूर्णांक rdt_init_fs_context(काष्ठा fs_context *fc)
-अणु
-	काष्ठा rdt_fs_context *ctx;
+static int rdt_init_fs_context(struct fs_context *fc)
+{
+	struct rdt_fs_context *ctx;
 
-	ctx = kzalloc(माप(काष्ठा rdt_fs_context), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = kzalloc(sizeof(struct rdt_fs_context), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
 	ctx->kfc.root = rdt_root;
 	ctx->kfc.magic = RDTGROUP_SUPER_MAGIC;
-	fc->fs_निजी = &ctx->kfc;
+	fc->fs_private = &ctx->kfc;
 	fc->ops = &rdt_fs_context_ops;
 	put_user_ns(fc->user_ns);
 	fc->user_ns = get_user_ns(&init_user_ns);
 	fc->global = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reset_all_ctrls(काष्ठा rdt_resource *r)
-अणु
-	काष्ठा msr_param msr_param;
+static int reset_all_ctrls(struct rdt_resource *r)
+{
+	struct msr_param msr_param;
 	cpumask_var_t cpu_mask;
-	काष्ठा rdt_करोमुख्य *d;
-	पूर्णांक i, cpu;
+	struct rdt_domain *d;
+	int i, cpu;
 
-	अगर (!zalloc_cpumask_var(&cpu_mask, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&cpu_mask, GFP_KERNEL))
+		return -ENOMEM;
 
 	msr_param.res = r;
 	msr_param.low = 0;
 	msr_param.high = r->num_closid;
 
 	/*
-	 * Disable resource control क्रम this resource by setting all
-	 * CBMs in all करोमुख्यs to the maximum mask value. Pick one CPU
-	 * from each करोमुख्य to update the MSRs below.
+	 * Disable resource control for this resource by setting all
+	 * CBMs in all domains to the maximum mask value. Pick one CPU
+	 * from each domain to update the MSRs below.
 	 */
-	list_क्रम_each_entry(d, &r->करोमुख्यs, list) अणु
+	list_for_each_entry(d, &r->domains, list) {
 		cpumask_set_cpu(cpumask_any(&d->cpu_mask), cpu_mask);
 
-		क्रम (i = 0; i < r->num_closid; i++)
-			d->ctrl_val[i] = r->शेष_ctrl;
-	पूर्ण
+		for (i = 0; i < r->num_closid; i++)
+			d->ctrl_val[i] = r->default_ctrl;
+	}
 	cpu = get_cpu();
-	/* Update CBM on this cpu अगर it's in cpu_mask. */
-	अगर (cpumask_test_cpu(cpu, cpu_mask))
+	/* Update CBM on this cpu if it's in cpu_mask. */
+	if (cpumask_test_cpu(cpu, cpu_mask))
 		rdt_ctrl_update(&msr_param);
 	/* Update CBM on all other cpus in cpu_mask. */
 	smp_call_function_many(cpu_mask, rdt_ctrl_update, &msr_param, 1);
 	put_cpu();
 
-	मुक्त_cpumask_var(cpu_mask);
+	free_cpumask_var(cpu_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Move tasks from one to the other group. If @from is शून्य, then all tasks
- * in the प्रणालीs are moved unconditionally (used क्रम tearकरोwn).
+ * Move tasks from one to the other group. If @from is NULL, then all tasks
+ * in the systems are moved unconditionally (used for teardown).
  *
- * If @mask is not शून्य the cpus on which moved tasks are running are set
+ * If @mask is not NULL the cpus on which moved tasks are running are set
  * in that mask so the update smp function call is restricted to affected
  * cpus.
  */
-अटल व्योम rdt_move_group_tasks(काष्ठा rdtgroup *from, काष्ठा rdtgroup *to,
-				 काष्ठा cpumask *mask)
-अणु
-	काष्ठा task_काष्ठा *p, *t;
+static void rdt_move_group_tasks(struct rdtgroup *from, struct rdtgroup *to,
+				 struct cpumask *mask)
+{
+	struct task_struct *p, *t;
 
-	पढ़ो_lock(&tasklist_lock);
-	क्रम_each_process_thपढ़ो(p, t) अणु
-		अगर (!from || is_closid_match(t, from) ||
-		    is_rmid_match(t, from)) अणु
+	read_lock(&tasklist_lock);
+	for_each_process_thread(p, t) {
+		if (!from || is_closid_match(t, from) ||
+		    is_rmid_match(t, from)) {
 			WRITE_ONCE(t->closid, to->closid);
 			WRITE_ONCE(t->rmid, to->mon.rmid);
 
 			/*
 			 * If the task is on a CPU, set the CPU in the mask.
 			 * The detection is inaccurate as tasks might move or
-			 * schedule beक्रमe the smp function call takes place.
-			 * In such a हाल the function call is poपूर्णांकless, but
+			 * schedule before the smp function call takes place.
+			 * In such a case the function call is pointless, but
 			 * there is no other side effect.
 			 */
-			अगर (IS_ENABLED(CONFIG_SMP) && mask && task_curr(t))
+			if (IS_ENABLED(CONFIG_SMP) && mask && task_curr(t))
 				cpumask_set_cpu(task_cpu(t), mask);
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&tasklist_lock);
-पूर्ण
+		}
+	}
+	read_unlock(&tasklist_lock);
+}
 
-अटल व्योम मुक्त_all_child_rdtgrp(काष्ठा rdtgroup *rdtgrp)
-अणु
-	काष्ठा rdtgroup *sentry, *sपंचांगp;
-	काष्ठा list_head *head;
+static void free_all_child_rdtgrp(struct rdtgroup *rdtgrp)
+{
+	struct rdtgroup *sentry, *stmp;
+	struct list_head *head;
 
 	head = &rdtgrp->mon.crdtgrp_list;
-	list_क्रम_each_entry_safe(sentry, sपंचांगp, head, mon.crdtgrp_list) अणु
-		मुक्त_rmid(sentry->mon.rmid);
+	list_for_each_entry_safe(sentry, stmp, head, mon.crdtgrp_list) {
+		free_rmid(sentry->mon.rmid);
 		list_del(&sentry->mon.crdtgrp_list);
 
-		अगर (atomic_पढ़ो(&sentry->रुकोcount) != 0)
+		if (atomic_read(&sentry->waitcount) != 0)
 			sentry->flags = RDT_DELETED;
-		अन्यथा
-			rdtgroup_हटाओ(sentry);
-	पूर्ण
-पूर्ण
+		else
+			rdtgroup_remove(sentry);
+	}
+}
 
 /*
- * Forcibly हटाओ all of subdirectories under root.
+ * Forcibly remove all of subdirectories under root.
  */
-अटल व्योम सूची_हटाओ_all_sub(व्योम)
-अणु
-	काष्ठा rdtgroup *rdtgrp, *पंचांगp;
+static void rmdir_all_sub(void)
+{
+	struct rdtgroup *rdtgrp, *tmp;
 
-	/* Move all tasks to the शेष resource group */
-	rdt_move_group_tasks(शून्य, &rdtgroup_शेष, शून्य);
+	/* Move all tasks to the default resource group */
+	rdt_move_group_tasks(NULL, &rdtgroup_default, NULL);
 
-	list_क्रम_each_entry_safe(rdtgrp, पंचांगp, &rdt_all_groups, rdtgroup_list) अणु
+	list_for_each_entry_safe(rdtgrp, tmp, &rdt_all_groups, rdtgroup_list) {
 		/* Free any child rmids */
-		मुक्त_all_child_rdtgrp(rdtgrp);
+		free_all_child_rdtgrp(rdtgrp);
 
 		/* Remove each rdtgroup other than root */
-		अगर (rdtgrp == &rdtgroup_शेष)
-			जारी;
+		if (rdtgrp == &rdtgroup_default)
+			continue;
 
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
 		    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED)
-			rdtgroup_pseuकरो_lock_हटाओ(rdtgrp);
+			rdtgroup_pseudo_lock_remove(rdtgrp);
 
 		/*
-		 * Give any CPUs back to the शेष group. We cannot copy
+		 * Give any CPUs back to the default group. We cannot copy
 		 * cpu_online_mask because a CPU might have executed the
-		 * offline callback alपढ़ोy, but is still marked online.
+		 * offline callback already, but is still marked online.
 		 */
-		cpumask_or(&rdtgroup_शेष.cpu_mask,
-			   &rdtgroup_शेष.cpu_mask, &rdtgrp->cpu_mask);
+		cpumask_or(&rdtgroup_default.cpu_mask,
+			   &rdtgroup_default.cpu_mask, &rdtgrp->cpu_mask);
 
-		मुक्त_rmid(rdtgrp->mon.rmid);
+		free_rmid(rdtgrp->mon.rmid);
 
-		kernfs_हटाओ(rdtgrp->kn);
+		kernfs_remove(rdtgrp->kn);
 		list_del(&rdtgrp->rdtgroup_list);
 
-		अगर (atomic_पढ़ो(&rdtgrp->रुकोcount) != 0)
+		if (atomic_read(&rdtgrp->waitcount) != 0)
 			rdtgrp->flags = RDT_DELETED;
-		अन्यथा
-			rdtgroup_हटाओ(rdtgrp);
-	पूर्ण
-	/* Notअगरy online CPUs to update per cpu storage and PQR_ASSOC MSR */
-	update_closid_rmid(cpu_online_mask, &rdtgroup_शेष);
+		else
+			rdtgroup_remove(rdtgrp);
+	}
+	/* Notify online CPUs to update per cpu storage and PQR_ASSOC MSR */
+	update_closid_rmid(cpu_online_mask, &rdtgroup_default);
 
-	kernfs_हटाओ(kn_info);
-	kernfs_हटाओ(kn_mongrp);
-	kernfs_हटाओ(kn_mondata);
-पूर्ण
+	kernfs_remove(kn_info);
+	kernfs_remove(kn_mongrp);
+	kernfs_remove(kn_mondata);
+}
 
-अटल व्योम rdt_समाप्त_sb(काष्ठा super_block *sb)
-अणु
-	काष्ठा rdt_resource *r;
+static void rdt_kill_sb(struct super_block *sb)
+{
+	struct rdt_resource *r;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	mutex_lock(&rdtgroup_mutex);
 
 	set_mba_sc(false);
 
-	/*Put everything back to शेष values. */
-	क्रम_each_alloc_enabled_rdt_resource(r)
+	/*Put everything back to default values. */
+	for_each_alloc_enabled_rdt_resource(r)
 		reset_all_ctrls(r);
 	cdp_disable_all();
-	सूची_हटाओ_all_sub();
-	rdt_pseuकरो_lock_release();
-	rdtgroup_शेष.mode = RDT_MODE_SHAREABLE;
-	अटल_branch_disable_cpuslocked(&rdt_alloc_enable_key);
-	अटल_branch_disable_cpuslocked(&rdt_mon_enable_key);
-	अटल_branch_disable_cpuslocked(&rdt_enable_key);
-	kernfs_समाप्त_sb(sb);
+	rmdir_all_sub();
+	rdt_pseudo_lock_release();
+	rdtgroup_default.mode = RDT_MODE_SHAREABLE;
+	static_branch_disable_cpuslocked(&rdt_alloc_enable_key);
+	static_branch_disable_cpuslocked(&rdt_mon_enable_key);
+	static_branch_disable_cpuslocked(&rdt_enable_key);
+	kernfs_kill_sb(sb);
 	mutex_unlock(&rdtgroup_mutex);
-	cpus_पढ़ो_unlock();
-पूर्ण
+	cpus_read_unlock();
+}
 
-अटल काष्ठा file_प्रणाली_type rdt_fs_type = अणु
+static struct file_system_type rdt_fs_type = {
 	.name			= "resctrl",
 	.init_fs_context	= rdt_init_fs_context,
 	.parameters		= rdt_fs_parameters,
-	.समाप्त_sb		= rdt_समाप्त_sb,
-पूर्ण;
+	.kill_sb		= rdt_kill_sb,
+};
 
-अटल पूर्णांक mon_addfile(काष्ठा kernfs_node *parent_kn, स्थिर अक्षर *name,
-		       व्योम *priv)
-अणु
-	काष्ठा kernfs_node *kn;
-	पूर्णांक ret = 0;
+static int mon_addfile(struct kernfs_node *parent_kn, const char *name,
+		       void *priv)
+{
+	struct kernfs_node *kn;
+	int ret = 0;
 
 	kn = __kernfs_create_file(parent_kn, name, 0444,
 				  GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, 0,
-				  &kf_mondata_ops, priv, शून्य, शून्य);
-	अगर (IS_ERR(kn))
-		वापस PTR_ERR(kn);
+				  &kf_mondata_ops, priv, NULL, NULL);
+	if (IS_ERR(kn))
+		return PTR_ERR(kn);
 
 	ret = rdtgroup_kn_set_ugid(kn);
-	अगर (ret) अणु
-		kernfs_हटाओ(kn);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kernfs_remove(kn);
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Remove all subdirectories of mon_data of ctrl_mon groups
- * and monitor groups with given करोमुख्य id.
+ * and monitor groups with given domain id.
  */
-व्योम सूची_हटाओ_mondata_subdir_allrdtgrp(काष्ठा rdt_resource *r, अचिन्हित पूर्णांक करोm_id)
-अणु
-	काष्ठा rdtgroup *prgrp, *crgrp;
-	अक्षर name[32];
+void rmdir_mondata_subdir_allrdtgrp(struct rdt_resource *r, unsigned int dom_id)
+{
+	struct rdtgroup *prgrp, *crgrp;
+	char name[32];
 
-	अगर (!r->mon_enabled)
-		वापस;
+	if (!r->mon_enabled)
+		return;
 
-	list_क्रम_each_entry(prgrp, &rdt_all_groups, rdtgroup_list) अणु
-		प्र_लिखो(name, "mon_%s_%02d", r->name, करोm_id);
-		kernfs_हटाओ_by_name(prgrp->mon.mon_data_kn, name);
+	list_for_each_entry(prgrp, &rdt_all_groups, rdtgroup_list) {
+		sprintf(name, "mon_%s_%02d", r->name, dom_id);
+		kernfs_remove_by_name(prgrp->mon.mon_data_kn, name);
 
-		list_क्रम_each_entry(crgrp, &prgrp->mon.crdtgrp_list, mon.crdtgrp_list)
-			kernfs_हटाओ_by_name(crgrp->mon.mon_data_kn, name);
-	पूर्ण
-पूर्ण
+		list_for_each_entry(crgrp, &prgrp->mon.crdtgrp_list, mon.crdtgrp_list)
+			kernfs_remove_by_name(crgrp->mon.mon_data_kn, name);
+	}
+}
 
-अटल पूर्णांक सूची_गढ़ो_mondata_subdir(काष्ठा kernfs_node *parent_kn,
-				काष्ठा rdt_करोमुख्य *d,
-				काष्ठा rdt_resource *r, काष्ठा rdtgroup *prgrp)
-अणु
-	जोड़ mon_data_bits priv;
-	काष्ठा kernfs_node *kn;
-	काष्ठा mon_evt *mevt;
-	काष्ठा rmid_पढ़ो rr;
-	अक्षर name[32];
-	पूर्णांक ret;
+static int mkdir_mondata_subdir(struct kernfs_node *parent_kn,
+				struct rdt_domain *d,
+				struct rdt_resource *r, struct rdtgroup *prgrp)
+{
+	union mon_data_bits priv;
+	struct kernfs_node *kn;
+	struct mon_evt *mevt;
+	struct rmid_read rr;
+	char name[32];
+	int ret;
 
-	प्र_लिखो(name, "mon_%s_%02d", r->name, d->id);
+	sprintf(name, "mon_%s_%02d", r->name, d->id);
 	/* create the directory */
 	kn = kernfs_create_dir(parent_kn, name, parent_kn->mode, prgrp);
-	अगर (IS_ERR(kn))
-		वापस PTR_ERR(kn);
+	if (IS_ERR(kn))
+		return PTR_ERR(kn);
 
 	ret = rdtgroup_kn_set_ugid(kn);
-	अगर (ret)
-		जाओ out_destroy;
+	if (ret)
+		goto out_destroy;
 
-	अगर (WARN_ON(list_empty(&r->evt_list))) अणु
+	if (WARN_ON(list_empty(&r->evt_list))) {
 		ret = -EPERM;
-		जाओ out_destroy;
-	पूर्ण
+		goto out_destroy;
+	}
 
 	priv.u.rid = r->rid;
-	priv.u.करोmid = d->id;
-	list_क्रम_each_entry(mevt, &r->evt_list, list) अणु
+	priv.u.domid = d->id;
+	list_for_each_entry(mevt, &r->evt_list, list) {
 		priv.u.evtid = mevt->evtid;
 		ret = mon_addfile(kn, mevt->name, priv.priv);
-		अगर (ret)
-			जाओ out_destroy;
+		if (ret)
+			goto out_destroy;
 
-		अगर (is_mbm_event(mevt->evtid))
-			mon_event_पढ़ो(&rr, r, d, prgrp, mevt->evtid, true);
-	पूर्ण
+		if (is_mbm_event(mevt->evtid))
+			mon_event_read(&rr, r, d, prgrp, mevt->evtid, true);
+	}
 	kernfs_activate(kn);
-	वापस 0;
+	return 0;
 
 out_destroy:
-	kernfs_हटाओ(kn);
-	वापस ret;
-पूर्ण
+	kernfs_remove(kn);
+	return ret;
+}
 
 /*
- * Add all subdirectories of mon_data क्रम "ctrl_mon" groups
- * and "monitor" groups with given करोमुख्य id.
+ * Add all subdirectories of mon_data for "ctrl_mon" groups
+ * and "monitor" groups with given domain id.
  */
-व्योम सूची_गढ़ो_mondata_subdir_allrdtgrp(काष्ठा rdt_resource *r,
-				    काष्ठा rdt_करोमुख्य *d)
-अणु
-	काष्ठा kernfs_node *parent_kn;
-	काष्ठा rdtgroup *prgrp, *crgrp;
-	काष्ठा list_head *head;
+void mkdir_mondata_subdir_allrdtgrp(struct rdt_resource *r,
+				    struct rdt_domain *d)
+{
+	struct kernfs_node *parent_kn;
+	struct rdtgroup *prgrp, *crgrp;
+	struct list_head *head;
 
-	अगर (!r->mon_enabled)
-		वापस;
+	if (!r->mon_enabled)
+		return;
 
-	list_क्रम_each_entry(prgrp, &rdt_all_groups, rdtgroup_list) अणु
+	list_for_each_entry(prgrp, &rdt_all_groups, rdtgroup_list) {
 		parent_kn = prgrp->mon.mon_data_kn;
-		सूची_गढ़ो_mondata_subdir(parent_kn, d, r, prgrp);
+		mkdir_mondata_subdir(parent_kn, d, r, prgrp);
 
 		head = &prgrp->mon.crdtgrp_list;
-		list_क्रम_each_entry(crgrp, head, mon.crdtgrp_list) अणु
+		list_for_each_entry(crgrp, head, mon.crdtgrp_list) {
 			parent_kn = crgrp->mon.mon_data_kn;
-			सूची_गढ़ो_mondata_subdir(parent_kn, d, r, crgrp);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			mkdir_mondata_subdir(parent_kn, d, r, crgrp);
+		}
+	}
+}
 
-अटल पूर्णांक सूची_गढ़ो_mondata_subdir_allकरोm(काष्ठा kernfs_node *parent_kn,
-				       काष्ठा rdt_resource *r,
-				       काष्ठा rdtgroup *prgrp)
-अणु
-	काष्ठा rdt_करोमुख्य *करोm;
-	पूर्णांक ret;
+static int mkdir_mondata_subdir_alldom(struct kernfs_node *parent_kn,
+				       struct rdt_resource *r,
+				       struct rdtgroup *prgrp)
+{
+	struct rdt_domain *dom;
+	int ret;
 
-	list_क्रम_each_entry(करोm, &r->करोमुख्यs, list) अणु
-		ret = सूची_गढ़ो_mondata_subdir(parent_kn, करोm, r, prgrp);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	list_for_each_entry(dom, &r->domains, list) {
+		ret = mkdir_mondata_subdir(parent_kn, dom, r, prgrp);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * This creates a directory mon_data which contains the monitored data.
  *
- * mon_data has one directory क्रम each करोमुख्य which are named
- * in the क्रमmat mon_<करोमुख्य_name>_<करोमुख्य_id>. For ex: A mon_data
- * with L3 करोमुख्य looks as below:
+ * mon_data has one directory for each domain which are named
+ * in the format mon_<domain_name>_<domain_id>. For ex: A mon_data
+ * with L3 domain looks as below:
  * ./mon_data:
  * mon_L3_00
  * mon_L3_01
  * mon_L3_02
  * ...
  *
- * Each करोमुख्य directory has one file per event:
+ * Each domain directory has one file per event:
  * ./mon_L3_00/:
  * llc_occupancy
  *
  */
-अटल पूर्णांक सूची_गढ़ो_mondata_all(काष्ठा kernfs_node *parent_kn,
-			     काष्ठा rdtgroup *prgrp,
-			     काष्ठा kernfs_node **dest_kn)
-अणु
-	काष्ठा rdt_resource *r;
-	काष्ठा kernfs_node *kn;
-	पूर्णांक ret;
+static int mkdir_mondata_all(struct kernfs_node *parent_kn,
+			     struct rdtgroup *prgrp,
+			     struct kernfs_node **dest_kn)
+{
+	struct rdt_resource *r;
+	struct kernfs_node *kn;
+	int ret;
 
 	/*
 	 * Create the mon_data directory first.
 	 */
 	ret = mongroup_create_dir(parent_kn, prgrp, "mon_data", &kn);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (dest_kn)
+	if (dest_kn)
 		*dest_kn = kn;
 
 	/*
-	 * Create the subdirectories क्रम each करोमुख्य. Note that all events
-	 * in a करोमुख्य like L3 are grouped पूर्णांकo a resource whose करोमुख्य is L3
+	 * Create the subdirectories for each domain. Note that all events
+	 * in a domain like L3 are grouped into a resource whose domain is L3
 	 */
-	क्रम_each_mon_enabled_rdt_resource(r) अणु
-		ret = सूची_गढ़ो_mondata_subdir_allकरोm(kn, r, prgrp);
-		अगर (ret)
-			जाओ out_destroy;
-	पूर्ण
+	for_each_mon_enabled_rdt_resource(r) {
+		ret = mkdir_mondata_subdir_alldom(kn, r, prgrp);
+		if (ret)
+			goto out_destroy;
+	}
 
-	वापस 0;
+	return 0;
 
 out_destroy:
-	kernfs_हटाओ(kn);
-	वापस ret;
-पूर्ण
+	kernfs_remove(kn);
+	return ret;
+}
 
 /**
- * cbm_ensure_valid - Enक्रमce validity on provided CBM
+ * cbm_ensure_valid - Enforce validity on provided CBM
  * @_val:	Candidate CBM
- * @r:		RDT resource to which the CBM beदीर्घs
+ * @r:		RDT resource to which the CBM belongs
  *
- * The provided CBM represents all cache portions available क्रम use. This
- * may be represented by a biपंचांगap that करोes not consist of contiguous ones
+ * The provided CBM represents all cache portions available for use. This
+ * may be represented by a bitmap that does not consist of contiguous ones
  * and thus be an invalid CBM.
- * Here the provided CBM is क्रमced to be a valid CBM by only considering
+ * Here the provided CBM is forced to be a valid CBM by only considering
  * the first set of contiguous bits as valid and clearing all bits.
- * The पूर्णांकention here is to provide a valid शेष CBM with which a new
+ * The intention here is to provide a valid default CBM with which a new
  * resource group is initialized. The user can follow this with a
- * modअगरication to the CBM अगर the शेष करोes not satisfy the
+ * modification to the CBM if the default does not satisfy the
  * requirements.
  */
-अटल u32 cbm_ensure_valid(u32 _val, काष्ठा rdt_resource *r)
-अणु
-	अचिन्हित पूर्णांक cbm_len = r->cache.cbm_len;
-	अचिन्हित दीर्घ first_bit, zero_bit;
-	अचिन्हित दीर्घ val = _val;
+static u32 cbm_ensure_valid(u32 _val, struct rdt_resource *r)
+{
+	unsigned int cbm_len = r->cache.cbm_len;
+	unsigned long first_bit, zero_bit;
+	unsigned long val = _val;
 
-	अगर (!val)
-		वापस 0;
+	if (!val)
+		return 0;
 
 	first_bit = find_first_bit(&val, cbm_len);
 	zero_bit = find_next_zero_bit(&val, cbm_len, first_bit);
 
-	/* Clear any reमुख्यing bits to ensure contiguous region */
-	biपंचांगap_clear(&val, zero_bit, cbm_len - zero_bit);
-	वापस (u32)val;
-पूर्ण
+	/* Clear any remaining bits to ensure contiguous region */
+	bitmap_clear(&val, zero_bit, cbm_len - zero_bit);
+	return (u32)val;
+}
 
 /*
- * Initialize cache resources per RDT करोमुख्य
+ * Initialize cache resources per RDT domain
  *
- * Set the RDT करोमुख्य up to start off with all usable allocations. That is,
+ * Set the RDT domain up to start off with all usable allocations. That is,
  * all shareable and unused bits. All-zero CBM is invalid.
  */
-अटल पूर्णांक __init_one_rdt_करोमुख्य(काष्ठा rdt_करोमुख्य *d, काष्ठा rdt_resource *r,
+static int __init_one_rdt_domain(struct rdt_domain *d, struct rdt_resource *r,
 				 u32 closid)
-अणु
-	काष्ठा rdt_resource *r_cdp = शून्य;
-	काष्ठा rdt_करोमुख्य *d_cdp = शून्य;
+{
+	struct rdt_resource *r_cdp = NULL;
+	struct rdt_domain *d_cdp = NULL;
 	u32 used_b = 0, unused_b = 0;
-	अचिन्हित दीर्घ पंचांगp_cbm;
-	क्रमागत rdtgrp_mode mode;
+	unsigned long tmp_cbm;
+	enum rdtgrp_mode mode;
 	u32 peer_ctl, *ctrl;
-	पूर्णांक i;
+	int i;
 
 	rdt_cdp_peer_get(r, d, &r_cdp, &d_cdp);
 	d->have_new_ctrl = false;
 	d->new_ctrl = r->cache.shareable_bits;
 	used_b = r->cache.shareable_bits;
 	ctrl = d->ctrl_val;
-	क्रम (i = 0; i < closids_supported(); i++, ctrl++) अणु
-		अगर (closid_allocated(i) && i != closid) अणु
+	for (i = 0; i < closids_supported(); i++, ctrl++) {
+		if (closid_allocated(i) && i != closid) {
 			mode = rdtgroup_mode_by_closid(i);
-			अगर (mode == RDT_MODE_PSEUDO_LOCKSETUP)
+			if (mode == RDT_MODE_PSEUDO_LOCKSETUP)
 				/*
-				 * ctrl values क्रम locksetup aren't relevant
+				 * ctrl values for locksetup aren't relevant
 				 * until the schemata is written, and the mode
 				 * becomes RDT_MODE_PSEUDO_LOCKED.
 				 */
-				जारी;
+				continue;
 			/*
-			 * If CDP is active include peer करोमुख्य's
+			 * If CDP is active include peer domain's
 			 * usage to ensure there is no overlap
 			 * with an exclusive group.
 			 */
-			अगर (d_cdp)
+			if (d_cdp)
 				peer_ctl = d_cdp->ctrl_val[i];
-			अन्यथा
+			else
 				peer_ctl = 0;
 			used_b |= *ctrl | peer_ctl;
-			अगर (mode == RDT_MODE_SHAREABLE)
+			if (mode == RDT_MODE_SHAREABLE)
 				d->new_ctrl |= *ctrl | peer_ctl;
-		पूर्ण
-	पूर्ण
-	अगर (d->plr && d->plr->cbm > 0)
+		}
+	}
+	if (d->plr && d->plr->cbm > 0)
 		used_b |= d->plr->cbm;
 	unused_b = used_b ^ (BIT_MASK(r->cache.cbm_len) - 1);
 	unused_b &= BIT_MASK(r->cache.cbm_len) - 1;
 	d->new_ctrl |= unused_b;
 	/*
 	 * Force the initial CBM to be valid, user can
-	 * modअगरy the CBM based on प्रणाली availability.
+	 * modify the CBM based on system availability.
 	 */
 	d->new_ctrl = cbm_ensure_valid(d->new_ctrl, r);
 	/*
-	 * Assign the u32 CBM to an अचिन्हित दीर्घ to ensure that
-	 * biपंचांगap_weight() करोes not access out-of-bound memory.
+	 * Assign the u32 CBM to an unsigned long to ensure that
+	 * bitmap_weight() does not access out-of-bound memory.
 	 */
-	पंचांगp_cbm = d->new_ctrl;
-	अगर (biपंचांगap_weight(&पंचांगp_cbm, r->cache.cbm_len) < r->cache.min_cbm_bits) अणु
-		rdt_last_cmd_म_लिखो("No space on %s:%d\n", r->name, d->id);
-		वापस -ENOSPC;
-	पूर्ण
+	tmp_cbm = d->new_ctrl;
+	if (bitmap_weight(&tmp_cbm, r->cache.cbm_len) < r->cache.min_cbm_bits) {
+		rdt_last_cmd_printf("No space on %s:%d\n", r->name, d->id);
+		return -ENOSPC;
+	}
 	d->have_new_ctrl = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Initialize cache resources with शेष values.
+ * Initialize cache resources with default values.
  *
  * A new RDT group is being created on an allocation capable (CAT)
- * supporting प्रणाली. Set this group up to start off with all usable
+ * supporting system. Set this group up to start off with all usable
  * allocations.
  *
- * If there are no more shareable bits available on any करोमुख्य then
+ * If there are no more shareable bits available on any domain then
  * the entire allocation will fail.
  */
-अटल पूर्णांक rdtgroup_init_cat(काष्ठा rdt_resource *r, u32 closid)
-अणु
-	काष्ठा rdt_करोमुख्य *d;
-	पूर्णांक ret;
+static int rdtgroup_init_cat(struct rdt_resource *r, u32 closid)
+{
+	struct rdt_domain *d;
+	int ret;
 
-	list_क्रम_each_entry(d, &r->करोमुख्यs, list) अणु
-		ret = __init_one_rdt_करोमुख्य(d, r, closid);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	list_for_each_entry(d, &r->domains, list) {
+		ret = __init_one_rdt_domain(d, r, closid);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Initialize MBA resource with शेष values. */
-अटल व्योम rdtgroup_init_mba(काष्ठा rdt_resource *r)
-अणु
-	काष्ठा rdt_करोमुख्य *d;
+/* Initialize MBA resource with default values. */
+static void rdtgroup_init_mba(struct rdt_resource *r)
+{
+	struct rdt_domain *d;
 
-	list_क्रम_each_entry(d, &r->करोमुख्यs, list) अणु
-		d->new_ctrl = is_mba_sc(r) ? MBA_MAX_MBPS : r->शेष_ctrl;
+	list_for_each_entry(d, &r->domains, list) {
+		d->new_ctrl = is_mba_sc(r) ? MBA_MAX_MBPS : r->default_ctrl;
 		d->have_new_ctrl = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Initialize the RDT group's allocations. */
-अटल पूर्णांक rdtgroup_init_alloc(काष्ठा rdtgroup *rdtgrp)
-अणु
-	काष्ठा rdt_resource *r;
-	पूर्णांक ret;
+static int rdtgroup_init_alloc(struct rdtgroup *rdtgrp)
+{
+	struct rdt_resource *r;
+	int ret;
 
-	क्रम_each_alloc_enabled_rdt_resource(r) अणु
-		अगर (r->rid == RDT_RESOURCE_MBA) अणु
+	for_each_alloc_enabled_rdt_resource(r) {
+		if (r->rid == RDT_RESOURCE_MBA) {
 			rdtgroup_init_mba(r);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = rdtgroup_init_cat(r, rdtgrp->closid);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
+			if (ret < 0)
+				return ret;
+		}
 
-		ret = update_करोमुख्यs(r, rdtgrp->closid);
-		अगर (ret < 0) अणु
-			rdt_last_cmd_माला_दो("Failed to initialize allocations\n");
-			वापस ret;
-		पूर्ण
+		ret = update_domains(r, rdtgrp->closid);
+		if (ret < 0) {
+			rdt_last_cmd_puts("Failed to initialize allocations\n");
+			return ret;
+		}
 
-	पूर्ण
+	}
 
 	rdtgrp->mode = RDT_MODE_SHAREABLE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक सूची_गढ़ो_rdt_prepare(काष्ठा kernfs_node *parent_kn,
-			     स्थिर अक्षर *name, umode_t mode,
-			     क्रमागत rdt_group_type rtype, काष्ठा rdtgroup **r)
-अणु
-	काष्ठा rdtgroup *prdtgrp, *rdtgrp;
-	काष्ठा kernfs_node *kn;
-	uपूर्णांक files = 0;
-	पूर्णांक ret;
+static int mkdir_rdt_prepare(struct kernfs_node *parent_kn,
+			     const char *name, umode_t mode,
+			     enum rdt_group_type rtype, struct rdtgroup **r)
+{
+	struct rdtgroup *prdtgrp, *rdtgrp;
+	struct kernfs_node *kn;
+	uint files = 0;
+	int ret;
 
 	prdtgrp = rdtgroup_kn_lock_live(parent_kn);
-	अगर (!prdtgrp) अणु
+	if (!prdtgrp) {
 		ret = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (rtype == RDTMON_GROUP &&
+	if (rtype == RDTMON_GROUP &&
 	    (prdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
-	     prdtgrp->mode == RDT_MODE_PSEUDO_LOCKED)) अणु
+	     prdtgrp->mode == RDT_MODE_PSEUDO_LOCKED)) {
 		ret = -EINVAL;
-		rdt_last_cmd_माला_दो("Pseudo-locking in progress\n");
-		जाओ out_unlock;
-	पूर्ण
+		rdt_last_cmd_puts("Pseudo-locking in progress\n");
+		goto out_unlock;
+	}
 
 	/* allocate the rdtgroup. */
-	rdtgrp = kzalloc(माप(*rdtgrp), GFP_KERNEL);
-	अगर (!rdtgrp) अणु
+	rdtgrp = kzalloc(sizeof(*rdtgrp), GFP_KERNEL);
+	if (!rdtgrp) {
 		ret = -ENOSPC;
-		rdt_last_cmd_माला_दो("Kernel out of memory\n");
-		जाओ out_unlock;
-	पूर्ण
+		rdt_last_cmd_puts("Kernel out of memory\n");
+		goto out_unlock;
+	}
 	*r = rdtgrp;
 	rdtgrp->mon.parent = prdtgrp;
 	rdtgrp->type = rtype;
 	INIT_LIST_HEAD(&rdtgrp->mon.crdtgrp_list);
 
-	/* kernfs creates the directory क्रम rdtgrp */
+	/* kernfs creates the directory for rdtgrp */
 	kn = kernfs_create_dir(parent_kn, name, mode, rdtgrp);
-	अगर (IS_ERR(kn)) अणु
+	if (IS_ERR(kn)) {
 		ret = PTR_ERR(kn);
-		rdt_last_cmd_माला_दो("kernfs create error\n");
-		जाओ out_मुक्त_rgrp;
-	पूर्ण
+		rdt_last_cmd_puts("kernfs create error\n");
+		goto out_free_rgrp;
+	}
 	rdtgrp->kn = kn;
 
 	/*
-	 * kernfs_हटाओ() will drop the reference count on "kn" which
-	 * will मुक्त it. But we still need it to stick around क्रम the
+	 * kernfs_remove() will drop the reference count on "kn" which
+	 * will free it. But we still need it to stick around for the
 	 * rdtgroup_kn_unlock(kn) call. Take one extra reference here,
-	 * which will be dropped by kernfs_put() in rdtgroup_हटाओ().
+	 * which will be dropped by kernfs_put() in rdtgroup_remove().
 	 */
 	kernfs_get(kn);
 
 	ret = rdtgroup_kn_set_ugid(kn);
-	अगर (ret) अणु
-		rdt_last_cmd_माला_दो("kernfs perm error\n");
-		जाओ out_destroy;
-	पूर्ण
+	if (ret) {
+		rdt_last_cmd_puts("kernfs perm error\n");
+		goto out_destroy;
+	}
 
 	files = RFTYPE_BASE | BIT(RF_CTRLSHIFT + rtype);
 	ret = rdtgroup_add_files(kn, files);
-	अगर (ret) अणु
-		rdt_last_cmd_माला_दो("kernfs fill error\n");
-		जाओ out_destroy;
-	पूर्ण
+	if (ret) {
+		rdt_last_cmd_puts("kernfs fill error\n");
+		goto out_destroy;
+	}
 
-	अगर (rdt_mon_capable) अणु
+	if (rdt_mon_capable) {
 		ret = alloc_rmid();
-		अगर (ret < 0) अणु
-			rdt_last_cmd_माला_दो("Out of RMIDs\n");
-			जाओ out_destroy;
-		पूर्ण
+		if (ret < 0) {
+			rdt_last_cmd_puts("Out of RMIDs\n");
+			goto out_destroy;
+		}
 		rdtgrp->mon.rmid = ret;
 
-		ret = सूची_गढ़ो_mondata_all(kn, rdtgrp, &rdtgrp->mon.mon_data_kn);
-		अगर (ret) अणु
-			rdt_last_cmd_माला_दो("kernfs subdir error\n");
-			जाओ out_idमुक्त;
-		पूर्ण
-	पूर्ण
+		ret = mkdir_mondata_all(kn, rdtgrp, &rdtgrp->mon.mon_data_kn);
+		if (ret) {
+			rdt_last_cmd_puts("kernfs subdir error\n");
+			goto out_idfree;
+		}
+	}
 	kernfs_activate(kn);
 
 	/*
 	 * The caller unlocks the parent_kn upon success.
 	 */
-	वापस 0;
+	return 0;
 
-out_idमुक्त:
-	मुक्त_rmid(rdtgrp->mon.rmid);
+out_idfree:
+	free_rmid(rdtgrp->mon.rmid);
 out_destroy:
 	kernfs_put(rdtgrp->kn);
-	kernfs_हटाओ(rdtgrp->kn);
-out_मुक्त_rgrp:
-	kमुक्त(rdtgrp);
+	kernfs_remove(rdtgrp->kn);
+out_free_rgrp:
+	kfree(rdtgrp);
 out_unlock:
 	rdtgroup_kn_unlock(parent_kn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम सूची_गढ़ो_rdt_prepare_clean(काष्ठा rdtgroup *rgrp)
-अणु
-	kernfs_हटाओ(rgrp->kn);
-	मुक्त_rmid(rgrp->mon.rmid);
-	rdtgroup_हटाओ(rgrp);
-पूर्ण
+static void mkdir_rdt_prepare_clean(struct rdtgroup *rgrp)
+{
+	kernfs_remove(rgrp->kn);
+	free_rmid(rgrp->mon.rmid);
+	rdtgroup_remove(rgrp);
+}
 
 /*
  * Create a monitor group under "mon_groups" directory of a control
  * and monitor group(ctrl_mon). This is a resource group
  * to monitor a subset of tasks and cpus in its parent ctrl_mon group.
  */
-अटल पूर्णांक rdtgroup_सूची_गढ़ो_mon(काष्ठा kernfs_node *parent_kn,
-			      स्थिर अक्षर *name, umode_t mode)
-अणु
-	काष्ठा rdtgroup *rdtgrp, *prgrp;
-	पूर्णांक ret;
+static int rdtgroup_mkdir_mon(struct kernfs_node *parent_kn,
+			      const char *name, umode_t mode)
+{
+	struct rdtgroup *rdtgrp, *prgrp;
+	int ret;
 
-	ret = सूची_गढ़ो_rdt_prepare(parent_kn, name, mode, RDTMON_GROUP, &rdtgrp);
-	अगर (ret)
-		वापस ret;
+	ret = mkdir_rdt_prepare(parent_kn, name, mode, RDTMON_GROUP, &rdtgrp);
+	if (ret)
+		return ret;
 
 	prgrp = rdtgrp->mon.parent;
 	rdtgrp->closid = prgrp->closid;
@@ -2900,69 +2899,69 @@ out_unlock:
 	list_add_tail(&rdtgrp->mon.crdtgrp_list, &prgrp->mon.crdtgrp_list);
 
 	rdtgroup_kn_unlock(parent_kn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * These are rdtgroups created under the root directory. Can be used
  * to allocate and monitor resources.
  */
-अटल पूर्णांक rdtgroup_सूची_गढ़ो_ctrl_mon(काष्ठा kernfs_node *parent_kn,
-				   स्थिर अक्षर *name, umode_t mode)
-अणु
-	काष्ठा rdtgroup *rdtgrp;
-	काष्ठा kernfs_node *kn;
+static int rdtgroup_mkdir_ctrl_mon(struct kernfs_node *parent_kn,
+				   const char *name, umode_t mode)
+{
+	struct rdtgroup *rdtgrp;
+	struct kernfs_node *kn;
 	u32 closid;
-	पूर्णांक ret;
+	int ret;
 
-	ret = सूची_गढ़ो_rdt_prepare(parent_kn, name, mode, RDTCTRL_GROUP, &rdtgrp);
-	अगर (ret)
-		वापस ret;
+	ret = mkdir_rdt_prepare(parent_kn, name, mode, RDTCTRL_GROUP, &rdtgrp);
+	if (ret)
+		return ret;
 
 	kn = rdtgrp->kn;
 	ret = closid_alloc();
-	अगर (ret < 0) अणु
-		rdt_last_cmd_माला_दो("Out of CLOSIDs\n");
-		जाओ out_common_fail;
-	पूर्ण
+	if (ret < 0) {
+		rdt_last_cmd_puts("Out of CLOSIDs\n");
+		goto out_common_fail;
+	}
 	closid = ret;
 	ret = 0;
 
 	rdtgrp->closid = closid;
 	ret = rdtgroup_init_alloc(rdtgrp);
-	अगर (ret < 0)
-		जाओ out_id_मुक्त;
+	if (ret < 0)
+		goto out_id_free;
 
 	list_add(&rdtgrp->rdtgroup_list, &rdt_all_groups);
 
-	अगर (rdt_mon_capable) अणु
+	if (rdt_mon_capable) {
 		/*
 		 * Create an empty mon_groups directory to hold the subset
 		 * of tasks and cpus to monitor.
 		 */
-		ret = mongroup_create_dir(kn, rdtgrp, "mon_groups", शून्य);
-		अगर (ret) अणु
-			rdt_last_cmd_माला_दो("kernfs subdir error\n");
-			जाओ out_del_list;
-		पूर्ण
-	पूर्ण
+		ret = mongroup_create_dir(kn, rdtgrp, "mon_groups", NULL);
+		if (ret) {
+			rdt_last_cmd_puts("kernfs subdir error\n");
+			goto out_del_list;
+		}
+	}
 
-	जाओ out_unlock;
+	goto out_unlock;
 
 out_del_list:
 	list_del(&rdtgrp->rdtgroup_list);
-out_id_मुक्त:
-	closid_मुक्त(closid);
+out_id_free:
+	closid_free(closid);
 out_common_fail:
-	सूची_गढ़ो_rdt_prepare_clean(rdtgrp);
+	mkdir_rdt_prepare_clean(rdtgrp);
 out_unlock:
 	rdtgroup_kn_unlock(parent_kn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * We allow creating mon groups only with in a directory called "mon_groups"
- * which is present in every ctrl_mon group. Check अगर this is a valid
+ * which is present in every ctrl_mon group. Check if this is a valid
  * "mon_groups" directory.
  *
  * 1. The directory should be named "mon_groups".
@@ -2970,57 +2969,57 @@ out_unlock:
  *   This makes sure "mon_groups" directory always has a ctrl_mon group
  *   as parent.
  */
-अटल bool is_mon_groups(काष्ठा kernfs_node *kn, स्थिर अक्षर *name)
-अणु
-	वापस (!म_भेद(kn->name, "mon_groups") &&
-		म_भेद(name, "mon_groups"));
-पूर्ण
+static bool is_mon_groups(struct kernfs_node *kn, const char *name)
+{
+	return (!strcmp(kn->name, "mon_groups") &&
+		strcmp(name, "mon_groups"));
+}
 
-अटल पूर्णांक rdtgroup_सूची_गढ़ो(काष्ठा kernfs_node *parent_kn, स्थिर अक्षर *name,
+static int rdtgroup_mkdir(struct kernfs_node *parent_kn, const char *name,
 			  umode_t mode)
-अणु
-	/* Do not accept '\n' to aव्योम unparsable situation. */
-	अगर (म_अक्षर(name, '\n'))
-		वापस -EINVAL;
+{
+	/* Do not accept '\n' to avoid unparsable situation. */
+	if (strchr(name, '\n'))
+		return -EINVAL;
 
 	/*
 	 * If the parent directory is the root directory and RDT
 	 * allocation is supported, add a control and monitoring
 	 * subdirectory
 	 */
-	अगर (rdt_alloc_capable && parent_kn == rdtgroup_शेष.kn)
-		वापस rdtgroup_सूची_गढ़ो_ctrl_mon(parent_kn, name, mode);
+	if (rdt_alloc_capable && parent_kn == rdtgroup_default.kn)
+		return rdtgroup_mkdir_ctrl_mon(parent_kn, name, mode);
 
 	/*
 	 * If RDT monitoring is supported and the parent directory is a valid
 	 * "mon_groups" directory, add a monitoring subdirectory.
 	 */
-	अगर (rdt_mon_capable && is_mon_groups(parent_kn, name))
-		वापस rdtgroup_सूची_गढ़ो_mon(parent_kn, name, mode);
+	if (rdt_mon_capable && is_mon_groups(parent_kn, name))
+		return rdtgroup_mkdir_mon(parent_kn, name, mode);
 
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
-अटल पूर्णांक rdtgroup_सूची_हटाओ_mon(काष्ठा rdtgroup *rdtgrp, cpumask_var_t पंचांगpmask)
-अणु
-	काष्ठा rdtgroup *prdtgrp = rdtgrp->mon.parent;
-	पूर्णांक cpu;
+static int rdtgroup_rmdir_mon(struct rdtgroup *rdtgrp, cpumask_var_t tmpmask)
+{
+	struct rdtgroup *prdtgrp = rdtgrp->mon.parent;
+	int cpu;
 
 	/* Give any tasks back to the parent group */
-	rdt_move_group_tasks(rdtgrp, prdtgrp, पंचांगpmask);
+	rdt_move_group_tasks(rdtgrp, prdtgrp, tmpmask);
 
 	/* Update per cpu rmid of the moved CPUs first */
-	क्रम_each_cpu(cpu, &rdtgrp->cpu_mask)
-		per_cpu(pqr_state.शेष_rmid, cpu) = prdtgrp->mon.rmid;
+	for_each_cpu(cpu, &rdtgrp->cpu_mask)
+		per_cpu(pqr_state.default_rmid, cpu) = prdtgrp->mon.rmid;
 	/*
 	 * Update the MSR on moved CPUs and CPUs which have moved
 	 * task running on them.
 	 */
-	cpumask_or(पंचांगpmask, पंचांगpmask, &rdtgrp->cpu_mask);
-	update_closid_rmid(पंचांगpmask, शून्य);
+	cpumask_or(tmpmask, tmpmask, &rdtgrp->cpu_mask);
+	update_closid_rmid(tmpmask, NULL);
 
 	rdtgrp->flags = RDT_DELETED;
-	मुक्त_rmid(rdtgrp->mon.rmid);
+	free_rmid(rdtgrp->mon.rmid);
 
 	/*
 	 * Remove the rdtgrp from the parent ctrl_mon group's list
@@ -3028,220 +3027,220 @@ out_unlock:
 	WARN_ON(list_empty(&prdtgrp->mon.crdtgrp_list));
 	list_del(&rdtgrp->mon.crdtgrp_list);
 
-	kernfs_हटाओ(rdtgrp->kn);
+	kernfs_remove(rdtgrp->kn);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdtgroup_ctrl_हटाओ(काष्ठा rdtgroup *rdtgrp)
-अणु
+static int rdtgroup_ctrl_remove(struct rdtgroup *rdtgrp)
+{
 	rdtgrp->flags = RDT_DELETED;
 	list_del(&rdtgrp->rdtgroup_list);
 
-	kernfs_हटाओ(rdtgrp->kn);
-	वापस 0;
-पूर्ण
+	kernfs_remove(rdtgrp->kn);
+	return 0;
+}
 
-अटल पूर्णांक rdtgroup_सूची_हटाओ_ctrl(काष्ठा rdtgroup *rdtgrp, cpumask_var_t पंचांगpmask)
-अणु
-	पूर्णांक cpu;
+static int rdtgroup_rmdir_ctrl(struct rdtgroup *rdtgrp, cpumask_var_t tmpmask)
+{
+	int cpu;
 
-	/* Give any tasks back to the शेष group */
-	rdt_move_group_tasks(rdtgrp, &rdtgroup_शेष, पंचांगpmask);
+	/* Give any tasks back to the default group */
+	rdt_move_group_tasks(rdtgrp, &rdtgroup_default, tmpmask);
 
-	/* Give any CPUs back to the शेष group */
-	cpumask_or(&rdtgroup_शेष.cpu_mask,
-		   &rdtgroup_शेष.cpu_mask, &rdtgrp->cpu_mask);
+	/* Give any CPUs back to the default group */
+	cpumask_or(&rdtgroup_default.cpu_mask,
+		   &rdtgroup_default.cpu_mask, &rdtgrp->cpu_mask);
 
 	/* Update per cpu closid and rmid of the moved CPUs first */
-	क्रम_each_cpu(cpu, &rdtgrp->cpu_mask) अणु
-		per_cpu(pqr_state.शेष_closid, cpu) = rdtgroup_शेष.closid;
-		per_cpu(pqr_state.शेष_rmid, cpu) = rdtgroup_शेष.mon.rmid;
-	पूर्ण
+	for_each_cpu(cpu, &rdtgrp->cpu_mask) {
+		per_cpu(pqr_state.default_closid, cpu) = rdtgroup_default.closid;
+		per_cpu(pqr_state.default_rmid, cpu) = rdtgroup_default.mon.rmid;
+	}
 
 	/*
 	 * Update the MSR on moved CPUs and CPUs which have moved
 	 * task running on them.
 	 */
-	cpumask_or(पंचांगpmask, पंचांगpmask, &rdtgrp->cpu_mask);
-	update_closid_rmid(पंचांगpmask, शून्य);
+	cpumask_or(tmpmask, tmpmask, &rdtgrp->cpu_mask);
+	update_closid_rmid(tmpmask, NULL);
 
-	closid_मुक्त(rdtgrp->closid);
-	मुक्त_rmid(rdtgrp->mon.rmid);
+	closid_free(rdtgrp->closid);
+	free_rmid(rdtgrp->mon.rmid);
 
-	rdtgroup_ctrl_हटाओ(rdtgrp);
+	rdtgroup_ctrl_remove(rdtgrp);
 
 	/*
 	 * Free all the child monitor group rmids.
 	 */
-	मुक्त_all_child_rdtgrp(rdtgrp);
+	free_all_child_rdtgrp(rdtgrp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rdtgroup_सूची_हटाओ(काष्ठा kernfs_node *kn)
-अणु
-	काष्ठा kernfs_node *parent_kn = kn->parent;
-	काष्ठा rdtgroup *rdtgrp;
-	cpumask_var_t पंचांगpmask;
-	पूर्णांक ret = 0;
+static int rdtgroup_rmdir(struct kernfs_node *kn)
+{
+	struct kernfs_node *parent_kn = kn->parent;
+	struct rdtgroup *rdtgrp;
+	cpumask_var_t tmpmask;
+	int ret = 0;
 
-	अगर (!zalloc_cpumask_var(&पंचांगpmask, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&tmpmask, GFP_KERNEL))
+		return -ENOMEM;
 
 	rdtgrp = rdtgroup_kn_lock_live(kn);
-	अगर (!rdtgrp) अणु
+	if (!rdtgrp) {
 		ret = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * If the rdtgroup is a ctrl_mon group and parent directory
-	 * is the root directory, हटाओ the ctrl_mon group.
+	 * is the root directory, remove the ctrl_mon group.
 	 *
 	 * If the rdtgroup is a mon group and parent directory
-	 * is a valid "mon_groups" directory, हटाओ the mon group.
+	 * is a valid "mon_groups" directory, remove the mon group.
 	 */
-	अगर (rdtgrp->type == RDTCTRL_GROUP && parent_kn == rdtgroup_शेष.kn &&
-	    rdtgrp != &rdtgroup_शेष) अणु
-		अगर (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
-		    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) अणु
-			ret = rdtgroup_ctrl_हटाओ(rdtgrp);
-		पूर्ण अन्यथा अणु
-			ret = rdtgroup_सूची_हटाओ_ctrl(rdtgrp, पंचांगpmask);
-		पूर्ण
-	पूर्ण अन्यथा अगर (rdtgrp->type == RDTMON_GROUP &&
-		 is_mon_groups(parent_kn, kn->name)) अणु
-		ret = rdtgroup_सूची_हटाओ_mon(rdtgrp, पंचांगpmask);
-	पूर्ण अन्यथा अणु
+	if (rdtgrp->type == RDTCTRL_GROUP && parent_kn == rdtgroup_default.kn &&
+	    rdtgrp != &rdtgroup_default) {
+		if (rdtgrp->mode == RDT_MODE_PSEUDO_LOCKSETUP ||
+		    rdtgrp->mode == RDT_MODE_PSEUDO_LOCKED) {
+			ret = rdtgroup_ctrl_remove(rdtgrp);
+		} else {
+			ret = rdtgroup_rmdir_ctrl(rdtgrp, tmpmask);
+		}
+	} else if (rdtgrp->type == RDTMON_GROUP &&
+		 is_mon_groups(parent_kn, kn->name)) {
+		ret = rdtgroup_rmdir_mon(rdtgrp, tmpmask);
+	} else {
 		ret = -EPERM;
-	पूर्ण
+	}
 
 out:
 	rdtgroup_kn_unlock(kn);
-	मुक्त_cpumask_var(पंचांगpmask);
-	वापस ret;
-पूर्ण
+	free_cpumask_var(tmpmask);
+	return ret;
+}
 
-अटल पूर्णांक rdtgroup_show_options(काष्ठा seq_file *seq, काष्ठा kernfs_root *kf)
-अणु
-	अगर (rdt_resources_all[RDT_RESOURCE_L3DATA].alloc_enabled)
-		seq_माला_दो(seq, ",cdp");
+static int rdtgroup_show_options(struct seq_file *seq, struct kernfs_root *kf)
+{
+	if (rdt_resources_all[RDT_RESOURCE_L3DATA].alloc_enabled)
+		seq_puts(seq, ",cdp");
 
-	अगर (rdt_resources_all[RDT_RESOURCE_L2DATA].alloc_enabled)
-		seq_माला_दो(seq, ",cdpl2");
+	if (rdt_resources_all[RDT_RESOURCE_L2DATA].alloc_enabled)
+		seq_puts(seq, ",cdpl2");
 
-	अगर (is_mba_sc(&rdt_resources_all[RDT_RESOURCE_MBA]))
-		seq_माला_दो(seq, ",mba_MBps");
+	if (is_mba_sc(&rdt_resources_all[RDT_RESOURCE_MBA]))
+		seq_puts(seq, ",mba_MBps");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा kernfs_syscall_ops rdtgroup_kf_syscall_ops = अणु
-	.सूची_गढ़ो		= rdtgroup_सूची_गढ़ो,
-	.सूची_हटाओ		= rdtgroup_सूची_हटाओ,
+static struct kernfs_syscall_ops rdtgroup_kf_syscall_ops = {
+	.mkdir		= rdtgroup_mkdir,
+	.rmdir		= rdtgroup_rmdir,
 	.show_options	= rdtgroup_show_options,
-पूर्ण;
+};
 
-अटल पूर्णांक __init rdtgroup_setup_root(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init rdtgroup_setup_root(void)
+{
+	int ret;
 
 	rdt_root = kernfs_create_root(&rdtgroup_kf_syscall_ops,
 				      KERNFS_ROOT_CREATE_DEACTIVATED |
 				      KERNFS_ROOT_EXTRA_OPEN_PERM_CHECK,
-				      &rdtgroup_शेष);
-	अगर (IS_ERR(rdt_root))
-		वापस PTR_ERR(rdt_root);
+				      &rdtgroup_default);
+	if (IS_ERR(rdt_root))
+		return PTR_ERR(rdt_root);
 
 	mutex_lock(&rdtgroup_mutex);
 
-	rdtgroup_शेष.closid = 0;
-	rdtgroup_शेष.mon.rmid = 0;
-	rdtgroup_शेष.type = RDTCTRL_GROUP;
-	INIT_LIST_HEAD(&rdtgroup_शेष.mon.crdtgrp_list);
+	rdtgroup_default.closid = 0;
+	rdtgroup_default.mon.rmid = 0;
+	rdtgroup_default.type = RDTCTRL_GROUP;
+	INIT_LIST_HEAD(&rdtgroup_default.mon.crdtgrp_list);
 
-	list_add(&rdtgroup_शेष.rdtgroup_list, &rdt_all_groups);
+	list_add(&rdtgroup_default.rdtgroup_list, &rdt_all_groups);
 
 	ret = rdtgroup_add_files(rdt_root->kn, RF_CTRL_BASE);
-	अगर (ret) अणु
+	if (ret) {
 		kernfs_destroy_root(rdt_root);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	rdtgroup_शेष.kn = rdt_root->kn;
-	kernfs_activate(rdtgroup_शेष.kn);
+	rdtgroup_default.kn = rdt_root->kn;
+	kernfs_activate(rdtgroup_default.kn);
 
 out:
 	mutex_unlock(&rdtgroup_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * rdtgroup_init - rdtgroup initialization
  *
- * Setup resctrl file प्रणाली including set up root, create mount poपूर्णांक,
- * रेजिस्टर rdtgroup fileप्रणाली, and initialize files under root directory.
+ * Setup resctrl file system including set up root, create mount point,
+ * register rdtgroup filesystem, and initialize files under root directory.
  *
- * Return: 0 on success or -त्रुटि_सं
+ * Return: 0 on success or -errno
  */
-पूर्णांक __init rdtgroup_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+int __init rdtgroup_init(void)
+{
+	int ret = 0;
 
 	seq_buf_init(&last_cmd_status, last_cmd_status_buf,
-		     माप(last_cmd_status_buf));
+		     sizeof(last_cmd_status_buf));
 
 	ret = rdtgroup_setup_root();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = sysfs_create_mount_poपूर्णांक(fs_kobj, "resctrl");
-	अगर (ret)
-		जाओ cleanup_root;
+	ret = sysfs_create_mount_point(fs_kobj, "resctrl");
+	if (ret)
+		goto cleanup_root;
 
-	ret = रेजिस्टर_fileप्रणाली(&rdt_fs_type);
-	अगर (ret)
-		जाओ cleanup_mountpoपूर्णांक;
+	ret = register_filesystem(&rdt_fs_type);
+	if (ret)
+		goto cleanup_mountpoint;
 
 	/*
 	 * Adding the resctrl debugfs directory here may not be ideal since
 	 * it would let the resctrl debugfs directory appear on the debugfs
-	 * fileप्रणाली beक्रमe the resctrl fileप्रणाली is mounted.
-	 * It may also be ok since that would enable debugging of RDT beक्रमe
+	 * filesystem before the resctrl filesystem is mounted.
+	 * It may also be ok since that would enable debugging of RDT before
 	 * resctrl is mounted.
 	 * The reason why the debugfs directory is created here and not in
 	 * rdt_get_tree() is because rdt_get_tree() takes rdtgroup_mutex and
 	 * during the debugfs directory creation also &sb->s_type->i_mutex_key
-	 * (the lockdep class of inode->i_rwsem). Other fileप्रणाली
-	 * पूर्णांकeractions (eg. SyS_getdents) have the lock ordering:
+	 * (the lockdep class of inode->i_rwsem). Other filesystem
+	 * interactions (eg. SyS_getdents) have the lock ordering:
 	 * &sb->s_type->i_mutex_key --> &mm->mmap_lock
 	 * During mmap(), called with &mm->mmap_lock, the rdtgroup_mutex
 	 * is taken, thus creating dependency:
-	 * &mm->mmap_lock --> rdtgroup_mutex क्रम the latter that can cause
+	 * &mm->mmap_lock --> rdtgroup_mutex for the latter that can cause
 	 * issues considering the other two lock dependencies.
-	 * By creating the debugfs directory here we aव्योम a dependency
+	 * By creating the debugfs directory here we avoid a dependency
 	 * that may cause deadlock (even though file operations cannot
-	 * occur until the fileप्रणाली is mounted, but I करो not know how to
+	 * occur until the filesystem is mounted, but I do not know how to
 	 * tell lockdep that).
 	 */
-	debugfs_resctrl = debugfs_create_dir("resctrl", शून्य);
+	debugfs_resctrl = debugfs_create_dir("resctrl", NULL);
 
-	वापस 0;
+	return 0;
 
-cleanup_mountpoपूर्णांक:
-	sysfs_हटाओ_mount_poपूर्णांक(fs_kobj, "resctrl");
+cleanup_mountpoint:
+	sysfs_remove_mount_point(fs_kobj, "resctrl");
 cleanup_root:
 	kernfs_destroy_root(rdt_root);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __निकास rdtgroup_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(debugfs_resctrl);
-	unरेजिस्टर_fileप्रणाली(&rdt_fs_type);
-	sysfs_हटाओ_mount_poपूर्णांक(fs_kobj, "resctrl");
+void __exit rdtgroup_exit(void)
+{
+	debugfs_remove_recursive(debugfs_resctrl);
+	unregister_filesystem(&rdt_fs_type);
+	sysfs_remove_mount_point(fs_kobj, "resctrl");
 	kernfs_destroy_root(rdt_root);
-पूर्ण
+}

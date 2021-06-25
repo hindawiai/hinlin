@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * eCryptfs: Linux fileप्रणाली encryption layer
+ * eCryptfs: Linux filesystem encryption layer
  * In-kernel key management code.  Includes functions to parse and
- * ग_लिखो authentication token-related packets with the underlying
+ * write authentication token-related packets with the underlying
  * file.
  *
  * Copyright (C) 2004-2006 International Business Machines Corp.
@@ -12,202 +11,202 @@
  *              Trevor S. Highland <trevor.highland@gmail.com>
  */
 
-#समावेश <crypto/hash.h>
-#समावेश <crypto/skcipher.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/key.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/slab.h>
-#समावेश "ecryptfs_kernel.h"
+#include <crypto/hash.h>
+#include <crypto/skcipher.h>
+#include <linux/string.h>
+#include <linux/pagemap.h>
+#include <linux/key.h>
+#include <linux/random.h>
+#include <linux/scatterlist.h>
+#include <linux/slab.h>
+#include "ecryptfs_kernel.h"
 
 /*
- * request_key वापसed an error instead of a valid key address;
+ * request_key returned an error instead of a valid key address;
  * determine the type of error, make appropriate log entries, and
- * वापस an error code.
+ * return an error code.
  */
-अटल पूर्णांक process_request_key_err(दीर्घ err_code)
-अणु
-	पूर्णांक rc = 0;
+static int process_request_key_err(long err_code)
+{
+	int rc = 0;
 
-	चयन (err_code) अणु
-	हाल -ENOKEY:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "No key\n");
+	switch (err_code) {
+	case -ENOKEY:
+		ecryptfs_printk(KERN_WARNING, "No key\n");
 		rc = -ENOENT;
-		अवरोध;
-	हाल -EKEYEXPIRED:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Key expired\n");
+		break;
+	case -EKEYEXPIRED:
+		ecryptfs_printk(KERN_WARNING, "Key expired\n");
 		rc = -ETIME;
-		अवरोध;
-	हाल -EKEYREVOKED:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Key revoked\n");
+		break;
+	case -EKEYREVOKED:
+		ecryptfs_printk(KERN_WARNING, "Key revoked\n");
 		rc = -EINVAL;
-		अवरोध;
-	शेष:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Unknown error code: "
+		break;
+	default:
+		ecryptfs_printk(KERN_WARNING, "Unknown error code: "
 				"[0x%.16lx]\n", err_code);
 		rc = -EINVAL;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक process_find_global_auth_tok_क्रम_sig_err(पूर्णांक err_code)
-अणु
-	पूर्णांक rc = err_code;
+static int process_find_global_auth_tok_for_sig_err(int err_code)
+{
+	int rc = err_code;
 
-	चयन (err_code) अणु
-	हाल -ENOENT:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Missing auth tok\n");
-		अवरोध;
-	हाल -EINVAL:
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Invalid auth tok\n");
-		अवरोध;
-	शेष:
+	switch (err_code) {
+	case -ENOENT:
+		ecryptfs_printk(KERN_WARNING, "Missing auth tok\n");
+		break;
+	case -EINVAL:
+		ecryptfs_printk(KERN_WARNING, "Invalid auth tok\n");
+		break;
+	default:
 		rc = process_request_key_err(err_code);
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		break;
+	}
+	return rc;
+}
 
 /**
  * ecryptfs_parse_packet_length
- * @data: Poपूर्णांकer to memory containing length at offset
- * @size: This function ग_लिखोs the decoded size to this memory
+ * @data: Pointer to memory containing length at offset
+ * @size: This function writes the decoded size to this memory
  *        address; zero on error
  * @length_size: The number of bytes occupied by the encoded length
  *
  * Returns zero on success; non-zero on error
  */
-पूर्णांक ecryptfs_parse_packet_length(अचिन्हित अक्षर *data, माप_प्रकार *size,
-				 माप_प्रकार *length_size)
-अणु
-	पूर्णांक rc = 0;
+int ecryptfs_parse_packet_length(unsigned char *data, size_t *size,
+				 size_t *length_size)
+{
+	int rc = 0;
 
 	(*length_size) = 0;
 	(*size) = 0;
-	अगर (data[0] < 192) अणु
+	if (data[0] < 192) {
 		/* One-byte length */
 		(*size) = data[0];
 		(*length_size) = 1;
-	पूर्ण अन्यथा अगर (data[0] < 224) अणु
+	} else if (data[0] < 224) {
 		/* Two-byte length */
 		(*size) = (data[0] - 192) * 256;
 		(*size) += data[1] + 192;
 		(*length_size) = 2;
-	पूर्ण अन्यथा अगर (data[0] == 255) अणु
+	} else if (data[0] == 255) {
 		/* If support is added, adjust ECRYPTFS_MAX_PKT_LEN_SIZE */
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Five-byte packet length not "
+		ecryptfs_printk(KERN_ERR, "Five-byte packet length not "
 				"supported\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error parsing packet length\n");
+		goto out;
+	} else {
+		ecryptfs_printk(KERN_ERR, "Error parsing packet length\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_ग_लिखो_packet_length
- * @dest: The byte array target पूर्णांकo which to ग_लिखो the length. Must
+ * ecryptfs_write_packet_length
+ * @dest: The byte array target into which to write the length. Must
  *        have at least ECRYPTFS_MAX_PKT_LEN_SIZE bytes allocated.
- * @size: The length to ग_लिखो.
+ * @size: The length to write.
  * @packet_size_length: The number of bytes used to encode the packet
  *                      length is written to this address.
  *
  * Returns zero on success; non-zero on error.
  */
-पूर्णांक ecryptfs_ग_लिखो_packet_length(अक्षर *dest, माप_प्रकार size,
-				 माप_प्रकार *packet_size_length)
-अणु
-	पूर्णांक rc = 0;
+int ecryptfs_write_packet_length(char *dest, size_t size,
+				 size_t *packet_size_length)
+{
+	int rc = 0;
 
-	अगर (size < 192) अणु
+	if (size < 192) {
 		dest[0] = size;
 		(*packet_size_length) = 1;
-	पूर्ण अन्यथा अगर (size < 65536) अणु
+	} else if (size < 65536) {
 		dest[0] = (((size - 192) / 256) + 192);
 		dest[1] = ((size - 192) % 256);
 		(*packet_size_length) = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* If support is added, adjust ECRYPTFS_MAX_PKT_LEN_SIZE */
 		rc = -EINVAL;
-		ecryptfs_prपूर्णांकk(KERN_WARNING,
+		ecryptfs_printk(KERN_WARNING,
 				"Unsupported packet size: [%zd]\n", size);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक
-ग_लिखो_tag_64_packet(अक्षर *signature, काष्ठा ecryptfs_session_key *session_key,
-		    अक्षर **packet, माप_प्रकार *packet_len)
-अणु
-	माप_प्रकार i = 0;
-	माप_प्रकार data_len;
-	माप_प्रकार packet_size_len;
-	अक्षर *message;
-	पूर्णांक rc;
+static int
+write_tag_64_packet(char *signature, struct ecryptfs_session_key *session_key,
+		    char **packet, size_t *packet_len)
+{
+	size_t i = 0;
+	size_t data_len;
+	size_t packet_size_len;
+	char *message;
+	int rc;
 
 	/*
 	 *              ***** TAG 64 Packet Format *****
 	 *    | Content Type                       | 1 byte       |
-	 *    | Key Identअगरier Size                | 1 or 2 bytes |
-	 *    | Key Identअगरier                     | arbitrary    |
+	 *    | Key Identifier Size                | 1 or 2 bytes |
+	 *    | Key Identifier                     | arbitrary    |
 	 *    | Encrypted File Encryption Key Size | 1 or 2 bytes |
 	 *    | Encrypted File Encryption Key      | arbitrary    |
 	 */
 	data_len = (5 + ECRYPTFS_SIG_SIZE_HEX
 		    + session_key->encrypted_key_size);
-	*packet = kदो_स्मृति(data_len, GFP_KERNEL);
+	*packet = kmalloc(data_len, GFP_KERNEL);
 	message = *packet;
-	अगर (!message) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Unable to allocate memory\n");
+	if (!message) {
+		ecryptfs_printk(KERN_ERR, "Unable to allocate memory\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	message[i++] = ECRYPTFS_TAG_64_PACKET_TYPE;
-	rc = ecryptfs_ग_लिखो_packet_length(&message[i], ECRYPTFS_SIG_SIZE_HEX,
+	rc = ecryptfs_write_packet_length(&message[i], ECRYPTFS_SIG_SIZE_HEX,
 					  &packet_size_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 64 packet "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 64 packet "
 				"header; cannot generate packet length\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += packet_size_len;
-	स_नकल(&message[i], signature, ECRYPTFS_SIG_SIZE_HEX);
+	memcpy(&message[i], signature, ECRYPTFS_SIG_SIZE_HEX);
 	i += ECRYPTFS_SIG_SIZE_HEX;
-	rc = ecryptfs_ग_लिखो_packet_length(&message[i],
+	rc = ecryptfs_write_packet_length(&message[i],
 					  session_key->encrypted_key_size,
 					  &packet_size_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 64 packet "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 64 packet "
 				"header; cannot generate packet length\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += packet_size_len;
-	स_नकल(&message[i], session_key->encrypted_key,
+	memcpy(&message[i], session_key->encrypted_key,
 	       session_key->encrypted_key_size);
 	i += session_key->encrypted_key_size;
 	*packet_len = i;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-parse_tag_65_packet(काष्ठा ecryptfs_session_key *session_key, u8 *cipher_code,
-		    काष्ठा ecryptfs_message *msg)
-अणु
-	माप_प्रकार i = 0;
-	अक्षर *data;
-	माप_प्रकार data_len;
-	माप_प्रकार m_size;
-	माप_प्रकार message_len;
+static int
+parse_tag_65_packet(struct ecryptfs_session_key *session_key, u8 *cipher_code,
+		    struct ecryptfs_message *msg)
+{
+	size_t i = 0;
+	char *data;
+	size_t data_len;
+	size_t m_size;
+	size_t message_len;
 	u16 checksum = 0;
 	u16 expected_checksum = 0;
-	पूर्णांक rc;
+	int rc;
 
 	/*
 	 *              ***** TAG 65 Packet Format *****
@@ -218,140 +217,140 @@ parse_tag_65_packet(काष्ठा ecryptfs_session_key *session_key, u8 *ci
 	 */
 	message_len = msg->data_len;
 	data = msg->data;
-	अगर (message_len < 4) अणु
+	if (message_len < 4) {
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
-	अगर (data[i++] != ECRYPTFS_TAG_65_PACKET_TYPE) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Type should be ECRYPTFS_TAG_65\n");
+		goto out;
+	}
+	if (data[i++] != ECRYPTFS_TAG_65_PACKET_TYPE) {
+		ecryptfs_printk(KERN_ERR, "Type should be ECRYPTFS_TAG_65\n");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
-	अगर (data[i++]) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Status indicator has non-zero value "
+		goto out;
+	}
+	if (data[i++]) {
+		ecryptfs_printk(KERN_ERR, "Status indicator has non-zero value "
 				"[%d]\n", data[i-1]);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = ecryptfs_parse_packet_length(&data[i], &m_size, &data_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error parsing packet length; "
+	if (rc) {
+		ecryptfs_printk(KERN_WARNING, "Error parsing packet length; "
 				"rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += data_len;
-	अगर (message_len < (i + m_size)) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "The message received from ecryptfsd "
+	if (message_len < (i + m_size)) {
+		ecryptfs_printk(KERN_ERR, "The message received from ecryptfsd "
 				"is shorter than expected\n");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
-	अगर (m_size < 3) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR,
+		goto out;
+	}
+	if (m_size < 3) {
+		ecryptfs_printk(KERN_ERR,
 				"The decrypted key is not long enough to "
 				"include a cipher code and checksum\n");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	*cipher_code = data[i++];
 	/* The decrypted key includes 1 byte cipher code and 2 byte checksum */
 	session_key->decrypted_key_size = m_size - 3;
-	अगर (session_key->decrypted_key_size > ECRYPTFS_MAX_KEY_BYTES) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "key_size [%d] larger than "
+	if (session_key->decrypted_key_size > ECRYPTFS_MAX_KEY_BYTES) {
+		ecryptfs_printk(KERN_ERR, "key_size [%d] larger than "
 				"the maximum key size [%d]\n",
 				session_key->decrypted_key_size,
 				ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES);
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
-	स_नकल(session_key->decrypted_key, &data[i],
+		goto out;
+	}
+	memcpy(session_key->decrypted_key, &data[i],
 	       session_key->decrypted_key_size);
 	i += session_key->decrypted_key_size;
-	expected_checksum += (अचिन्हित अक्षर)(data[i++]) << 8;
-	expected_checksum += (अचिन्हित अक्षर)(data[i++]);
-	क्रम (i = 0; i < session_key->decrypted_key_size; i++)
+	expected_checksum += (unsigned char)(data[i++]) << 8;
+	expected_checksum += (unsigned char)(data[i++]);
+	for (i = 0; i < session_key->decrypted_key_size; i++)
 		checksum += session_key->decrypted_key[i];
-	अगर (expected_checksum != checksum) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Invalid checksum for file "
+	if (expected_checksum != checksum) {
+		ecryptfs_printk(KERN_ERR, "Invalid checksum for file "
 				"encryption  key; expected [%x]; calculated "
 				"[%x]\n", expected_checksum, checksum);
 		rc = -EIO;
-	पूर्ण
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल पूर्णांक
-ग_लिखो_tag_66_packet(अक्षर *signature, u8 cipher_code,
-		    काष्ठा ecryptfs_crypt_stat *crypt_stat, अक्षर **packet,
-		    माप_प्रकार *packet_len)
-अणु
-	माप_प्रकार i = 0;
-	माप_प्रकार j;
-	माप_प्रकार data_len;
-	माप_प्रकार checksum = 0;
-	माप_प्रकार packet_size_len;
-	अक्षर *message;
-	पूर्णांक rc;
+static int
+write_tag_66_packet(char *signature, u8 cipher_code,
+		    struct ecryptfs_crypt_stat *crypt_stat, char **packet,
+		    size_t *packet_len)
+{
+	size_t i = 0;
+	size_t j;
+	size_t data_len;
+	size_t checksum = 0;
+	size_t packet_size_len;
+	char *message;
+	int rc;
 
 	/*
 	 *              ***** TAG 66 Packet Format *****
 	 *         | Content Type             | 1 byte       |
-	 *         | Key Identअगरier Size      | 1 or 2 bytes |
-	 *         | Key Identअगरier           | arbitrary    |
+	 *         | Key Identifier Size      | 1 or 2 bytes |
+	 *         | Key Identifier           | arbitrary    |
 	 *         | File Encryption Key Size | 1 or 2 bytes |
 	 *         | File Encryption Key      | arbitrary    |
 	 */
 	data_len = (5 + ECRYPTFS_SIG_SIZE_HEX + crypt_stat->key_size);
-	*packet = kदो_स्मृति(data_len, GFP_KERNEL);
+	*packet = kmalloc(data_len, GFP_KERNEL);
 	message = *packet;
-	अगर (!message) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Unable to allocate memory\n");
+	if (!message) {
+		ecryptfs_printk(KERN_ERR, "Unable to allocate memory\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	message[i++] = ECRYPTFS_TAG_66_PACKET_TYPE;
-	rc = ecryptfs_ग_लिखो_packet_length(&message[i], ECRYPTFS_SIG_SIZE_HEX,
+	rc = ecryptfs_write_packet_length(&message[i], ECRYPTFS_SIG_SIZE_HEX,
 					  &packet_size_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 66 packet "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 66 packet "
 				"header; cannot generate packet length\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += packet_size_len;
-	स_नकल(&message[i], signature, ECRYPTFS_SIG_SIZE_HEX);
+	memcpy(&message[i], signature, ECRYPTFS_SIG_SIZE_HEX);
 	i += ECRYPTFS_SIG_SIZE_HEX;
 	/* The encrypted key includes 1 byte cipher code and 2 byte checksum */
-	rc = ecryptfs_ग_लिखो_packet_length(&message[i], crypt_stat->key_size + 3,
+	rc = ecryptfs_write_packet_length(&message[i], crypt_stat->key_size + 3,
 					  &packet_size_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 66 packet "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 66 packet "
 				"header; cannot generate packet length\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += packet_size_len;
 	message[i++] = cipher_code;
-	स_नकल(&message[i], crypt_stat->key, crypt_stat->key_size);
+	memcpy(&message[i], crypt_stat->key, crypt_stat->key_size);
 	i += crypt_stat->key_size;
-	क्रम (j = 0; j < crypt_stat->key_size; j++)
+	for (j = 0; j < crypt_stat->key_size; j++)
 		checksum += crypt_stat->key[j];
 	message[i++] = (checksum / 256) % 256;
 	message[i++] = (checksum % 256);
 	*packet_len = i;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-parse_tag_67_packet(काष्ठा ecryptfs_key_record *key_rec,
-		    काष्ठा ecryptfs_message *msg)
-अणु
-	माप_प्रकार i = 0;
-	अक्षर *data;
-	माप_प्रकार data_len;
-	माप_प्रकार message_len;
-	पूर्णांक rc;
+static int
+parse_tag_67_packet(struct ecryptfs_key_record *key_rec,
+		    struct ecryptfs_message *msg)
+{
+	size_t i = 0;
+	char *data;
+	size_t data_len;
+	size_t message_len;
+	int rc;
 
 	/*
 	 *              ***** TAG 65 Packet Format *****
@@ -362,399 +361,399 @@ parse_tag_67_packet(काष्ठा ecryptfs_key_record *key_rec,
 	 */
 	message_len = msg->data_len;
 	data = msg->data;
-	/* verअगरy that everything through the encrypted FEK size is present */
-	अगर (message_len < 4) अणु
+	/* verify that everything through the encrypted FEK size is present */
+	if (message_len < 4) {
 		rc = -EIO;
-		prपूर्णांकk(KERN_ERR "%s: message_len is [%zd]; minimum acceptable "
+		printk(KERN_ERR "%s: message_len is [%zd]; minimum acceptable "
 		       "message length is [%d]\n", __func__, message_len, 4);
-		जाओ out;
-	पूर्ण
-	अगर (data[i++] != ECRYPTFS_TAG_67_PACKET_TYPE) अणु
+		goto out;
+	}
+	if (data[i++] != ECRYPTFS_TAG_67_PACKET_TYPE) {
 		rc = -EIO;
-		prपूर्णांकk(KERN_ERR "%s: Type should be ECRYPTFS_TAG_67\n",
+		printk(KERN_ERR "%s: Type should be ECRYPTFS_TAG_67\n",
 		       __func__);
-		जाओ out;
-	पूर्ण
-	अगर (data[i++]) अणु
+		goto out;
+	}
+	if (data[i++]) {
 		rc = -EIO;
-		prपूर्णांकk(KERN_ERR "%s: Status indicator has non zero "
+		printk(KERN_ERR "%s: Status indicator has non zero "
 		       "value [%d]\n", __func__, data[i-1]);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = ecryptfs_parse_packet_length(&data[i], &key_rec->enc_key_size,
 					  &data_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error parsing packet length; "
+	if (rc) {
+		ecryptfs_printk(KERN_WARNING, "Error parsing packet length; "
 				"rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	i += data_len;
-	अगर (message_len < (i + key_rec->enc_key_size)) अणु
+	if (message_len < (i + key_rec->enc_key_size)) {
 		rc = -EIO;
-		prपूर्णांकk(KERN_ERR "%s: message_len [%zd]; max len is [%zd]\n",
+		printk(KERN_ERR "%s: message_len [%zd]; max len is [%zd]\n",
 		       __func__, message_len, (i + key_rec->enc_key_size));
-		जाओ out;
-	पूर्ण
-	अगर (key_rec->enc_key_size > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) अणु
+		goto out;
+	}
+	if (key_rec->enc_key_size > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) {
 		rc = -EIO;
-		prपूर्णांकk(KERN_ERR "%s: Encrypted key_size [%zd] larger than "
+		printk(KERN_ERR "%s: Encrypted key_size [%zd] larger than "
 		       "the maximum key size [%d]\n", __func__,
 		       key_rec->enc_key_size,
 		       ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES);
-		जाओ out;
-	पूर्ण
-	स_नकल(key_rec->enc_key, &data[i], key_rec->enc_key_size);
+		goto out;
+	}
+	memcpy(key_rec->enc_key, &data[i], key_rec->enc_key_size);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_verअगरy_version
+ * ecryptfs_verify_version
  * @version: The version number to confirm
  *
  * Returns zero on good version; non-zero otherwise
  */
-अटल पूर्णांक ecryptfs_verअगरy_version(u16 version)
-अणु
-	पूर्णांक rc = 0;
-	अचिन्हित अक्षर major;
-	अचिन्हित अक्षर minor;
+static int ecryptfs_verify_version(u16 version)
+{
+	int rc = 0;
+	unsigned char major;
+	unsigned char minor;
 
 	major = ((version >> 8) & 0xFF);
 	minor = (version & 0xFF);
-	अगर (major != ECRYPTFS_VERSION_MAJOR) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Major version number mismatch. "
+	if (major != ECRYPTFS_VERSION_MAJOR) {
+		ecryptfs_printk(KERN_ERR, "Major version number mismatch. "
 				"Expected [%d]; got [%d]\n",
 				ECRYPTFS_VERSION_MAJOR, major);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (minor != ECRYPTFS_VERSION_MINOR) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Minor version number mismatch. "
+		goto out;
+	}
+	if (minor != ECRYPTFS_VERSION_MINOR) {
+		ecryptfs_printk(KERN_ERR, "Minor version number mismatch. "
 				"Expected [%d]; got [%d]\n",
 				ECRYPTFS_VERSION_MINOR, minor);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_verअगरy_auth_tok_from_key
+ * ecryptfs_verify_auth_tok_from_key
  * @auth_tok_key: key containing the authentication token
  * @auth_tok: authentication token
  *
- * Returns zero on valid auth tok; -EINVAL अगर the payload is invalid; or
- * -EKEYREVOKED अगर the key was revoked beक्रमe we acquired its semaphore.
+ * Returns zero on valid auth tok; -EINVAL if the payload is invalid; or
+ * -EKEYREVOKED if the key was revoked before we acquired its semaphore.
  */
-अटल पूर्णांक
-ecryptfs_verअगरy_auth_tok_from_key(काष्ठा key *auth_tok_key,
-				  काष्ठा ecryptfs_auth_tok **auth_tok)
-अणु
-	पूर्णांक rc = 0;
+static int
+ecryptfs_verify_auth_tok_from_key(struct key *auth_tok_key,
+				  struct ecryptfs_auth_tok **auth_tok)
+{
+	int rc = 0;
 
 	(*auth_tok) = ecryptfs_get_key_payload_data(auth_tok_key);
-	अगर (IS_ERR(*auth_tok)) अणु
+	if (IS_ERR(*auth_tok)) {
 		rc = PTR_ERR(*auth_tok);
-		*auth_tok = शून्य;
-		जाओ out;
-	पूर्ण
+		*auth_tok = NULL;
+		goto out;
+	}
 
-	अगर (ecryptfs_verअगरy_version((*auth_tok)->version)) अणु
-		prपूर्णांकk(KERN_ERR "Data structure version mismatch. Userspace "
+	if (ecryptfs_verify_version((*auth_tok)->version)) {
+		printk(KERN_ERR "Data structure version mismatch. Userspace "
 		       "tools must match eCryptfs kernel module with major "
 		       "version [%d] and minor version [%d]\n",
 		       ECRYPTFS_VERSION_MAJOR, ECRYPTFS_VERSION_MINOR);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर ((*auth_tok)->token_type != ECRYPTFS_PASSWORD
-	    && (*auth_tok)->token_type != ECRYPTFS_PRIVATE_KEY) अणु
-		prपूर्णांकk(KERN_ERR "Invalid auth_tok structure "
+		goto out;
+	}
+	if ((*auth_tok)->token_type != ECRYPTFS_PASSWORD
+	    && (*auth_tok)->token_type != ECRYPTFS_PRIVATE_KEY) {
+		printk(KERN_ERR "Invalid auth_tok structure "
 		       "returned from key query\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-ecryptfs_find_global_auth_tok_क्रम_sig(
-	काष्ठा key **auth_tok_key,
-	काष्ठा ecryptfs_auth_tok **auth_tok,
-	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat, अक्षर *sig)
-अणु
-	काष्ठा ecryptfs_global_auth_tok *walker;
-	पूर्णांक rc = 0;
+static int
+ecryptfs_find_global_auth_tok_for_sig(
+	struct key **auth_tok_key,
+	struct ecryptfs_auth_tok **auth_tok,
+	struct ecryptfs_mount_crypt_stat *mount_crypt_stat, char *sig)
+{
+	struct ecryptfs_global_auth_tok *walker;
+	int rc = 0;
 
-	(*auth_tok_key) = शून्य;
-	(*auth_tok) = शून्य;
+	(*auth_tok_key) = NULL;
+	(*auth_tok) = NULL;
 	mutex_lock(&mount_crypt_stat->global_auth_tok_list_mutex);
-	list_क्रम_each_entry(walker,
+	list_for_each_entry(walker,
 			    &mount_crypt_stat->global_auth_tok_list,
-			    mount_crypt_stat_list) अणु
-		अगर (स_भेद(walker->sig, sig, ECRYPTFS_SIG_SIZE_HEX))
-			जारी;
+			    mount_crypt_stat_list) {
+		if (memcmp(walker->sig, sig, ECRYPTFS_SIG_SIZE_HEX))
+			continue;
 
-		अगर (walker->flags & ECRYPTFS_AUTH_TOK_INVALID) अणु
+		if (walker->flags & ECRYPTFS_AUTH_TOK_INVALID) {
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		rc = key_validate(walker->global_auth_tok_key);
-		अगर (rc) अणु
-			अगर (rc == -EKEYEXPIRED)
-				जाओ out;
-			जाओ out_invalid_auth_tok;
-		पूर्ण
+		if (rc) {
+			if (rc == -EKEYEXPIRED)
+				goto out;
+			goto out_invalid_auth_tok;
+		}
 
-		करोwn_ग_लिखो(&(walker->global_auth_tok_key->sem));
-		rc = ecryptfs_verअगरy_auth_tok_from_key(
+		down_write(&(walker->global_auth_tok_key->sem));
+		rc = ecryptfs_verify_auth_tok_from_key(
 				walker->global_auth_tok_key, auth_tok);
-		अगर (rc)
-			जाओ out_invalid_auth_tok_unlock;
+		if (rc)
+			goto out_invalid_auth_tok_unlock;
 
 		(*auth_tok_key) = walker->global_auth_tok_key;
 		key_get(*auth_tok_key);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = -ENOENT;
-	जाओ out;
+	goto out;
 out_invalid_auth_tok_unlock:
-	up_ग_लिखो(&(walker->global_auth_tok_key->sem));
+	up_write(&(walker->global_auth_tok_key->sem));
 out_invalid_auth_tok:
-	prपूर्णांकk(KERN_WARNING "Invalidating auth tok with sig = [%s]\n", sig);
+	printk(KERN_WARNING "Invalidating auth tok with sig = [%s]\n", sig);
 	walker->flags |= ECRYPTFS_AUTH_TOK_INVALID;
 	key_put(walker->global_auth_tok_key);
-	walker->global_auth_tok_key = शून्य;
+	walker->global_auth_tok_key = NULL;
 out:
 	mutex_unlock(&mount_crypt_stat->global_auth_tok_list_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
- * ecryptfs_find_auth_tok_क्रम_sig
+ * ecryptfs_find_auth_tok_for_sig
  * @auth_tok_key: key containing the authentication token
- * @auth_tok: Set to the matching auth_tok; शून्य अगर not found
+ * @auth_tok: Set to the matching auth_tok; NULL if not found
  * @mount_crypt_stat: inode crypt_stat crypto context
  * @sig: Sig of auth_tok to find
  *
- * For now, this function simply looks at the रेजिस्टरed auth_tok's
+ * For now, this function simply looks at the registered auth_tok's
  * linked off the mount_crypt_stat, so all the auth_toks that can be
- * used must be रेजिस्टरed at mount समय. This function could
+ * used must be registered at mount time. This function could
  * potentially try a lot harder to find auth_tok's (e.g., by calling
  * out to ecryptfsd to dynamically retrieve an auth_tok object) so
- * that अटल registration of auth_tok's will no दीर्घer be necessary.
+ * that static registration of auth_tok's will no longer be necessary.
  *
  * Returns zero on no error; non-zero on error
  */
-अटल पूर्णांक
-ecryptfs_find_auth_tok_क्रम_sig(
-	काष्ठा key **auth_tok_key,
-	काष्ठा ecryptfs_auth_tok **auth_tok,
-	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat,
-	अक्षर *sig)
-अणु
-	पूर्णांक rc = 0;
+static int
+ecryptfs_find_auth_tok_for_sig(
+	struct key **auth_tok_key,
+	struct ecryptfs_auth_tok **auth_tok,
+	struct ecryptfs_mount_crypt_stat *mount_crypt_stat,
+	char *sig)
+{
+	int rc = 0;
 
-	rc = ecryptfs_find_global_auth_tok_क्रम_sig(auth_tok_key, auth_tok,
+	rc = ecryptfs_find_global_auth_tok_for_sig(auth_tok_key, auth_tok,
 						   mount_crypt_stat, sig);
-	अगर (rc == -ENOENT) अणु
-		/* अगर the flag ECRYPTFS_GLOBAL_MOUNT_AUTH_TOK_ONLY is set in the
-		 * mount_crypt_stat काष्ठाure, we prevent to use auth toks that
+	if (rc == -ENOENT) {
+		/* if the flag ECRYPTFS_GLOBAL_MOUNT_AUTH_TOK_ONLY is set in the
+		 * mount_crypt_stat structure, we prevent to use auth toks that
 		 * are not inserted through the ecryptfs_add_global_auth_tok
 		 * function.
 		 */
-		अगर (mount_crypt_stat->flags
+		if (mount_crypt_stat->flags
 				& ECRYPTFS_GLOBAL_MOUNT_AUTH_TOK_ONLY)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		rc = ecryptfs_keyring_auth_tok_क्रम_sig(auth_tok_key, auth_tok,
+		rc = ecryptfs_keyring_auth_tok_for_sig(auth_tok_key, auth_tok,
 						       sig);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /*
- * ग_लिखो_tag_70_packet can gobble a lot of stack space. We stuff most
- * of the function's parameters in a kmalloc'd काष्ठा to help reduce
+ * write_tag_70_packet can gobble a lot of stack space. We stuff most
+ * of the function's parameters in a kmalloc'd struct to help reduce
  * eCryptfs' overall stack usage.
  */
-काष्ठा ecryptfs_ग_लिखो_tag_70_packet_silly_stack अणु
+struct ecryptfs_write_tag_70_packet_silly_stack {
 	u8 cipher_code;
-	माप_प्रकार max_packet_size;
-	माप_प्रकार packet_size_len;
-	माप_प्रकार block_aligned_filename_size;
-	माप_प्रकार block_size;
-	माप_प्रकार i;
-	माप_प्रकार j;
-	माप_प्रकार num_अक्रम_bytes;
-	काष्ठा mutex *tfm_mutex;
-	अक्षर *block_aligned_filename;
-	काष्ठा ecryptfs_auth_tok *auth_tok;
-	काष्ठा scatterlist src_sg[2];
-	काष्ठा scatterlist dst_sg[2];
-	काष्ठा crypto_skcipher *skcipher_tfm;
-	काष्ठा skcipher_request *skcipher_req;
-	अक्षर iv[ECRYPTFS_MAX_IV_BYTES];
-	अक्षर hash[ECRYPTFS_TAG_70_DIGEST_SIZE];
-	अक्षर पंचांगp_hash[ECRYPTFS_TAG_70_DIGEST_SIZE];
-	काष्ठा crypto_shash *hash_tfm;
-	काष्ठा shash_desc *hash_desc;
-पूर्ण;
+	size_t max_packet_size;
+	size_t packet_size_len;
+	size_t block_aligned_filename_size;
+	size_t block_size;
+	size_t i;
+	size_t j;
+	size_t num_rand_bytes;
+	struct mutex *tfm_mutex;
+	char *block_aligned_filename;
+	struct ecryptfs_auth_tok *auth_tok;
+	struct scatterlist src_sg[2];
+	struct scatterlist dst_sg[2];
+	struct crypto_skcipher *skcipher_tfm;
+	struct skcipher_request *skcipher_req;
+	char iv[ECRYPTFS_MAX_IV_BYTES];
+	char hash[ECRYPTFS_TAG_70_DIGEST_SIZE];
+	char tmp_hash[ECRYPTFS_TAG_70_DIGEST_SIZE];
+	struct crypto_shash *hash_tfm;
+	struct shash_desc *hash_desc;
+};
 
 /*
- * ग_लिखो_tag_70_packet - Write encrypted filename (EFN) packet against FNEK
- * @filename: शून्य-terminated filename string
+ * write_tag_70_packet - Write encrypted filename (EFN) packet against FNEK
+ * @filename: NULL-terminated filename string
  *
- * This is the simplest mechanism क्रम achieving filename encryption in
+ * This is the simplest mechanism for achieving filename encryption in
  * eCryptfs. It encrypts the given filename with the mount-wide
  * filename encryption key (FNEK) and stores it in a packet to @dest,
- * which the callee will encode and ग_लिखो directly पूर्णांकo the dentry
+ * which the callee will encode and write directly into the dentry
  * name.
  */
-पूर्णांक
-ecryptfs_ग_लिखो_tag_70_packet(अक्षर *dest, माप_प्रकार *reमुख्यing_bytes,
-			     माप_प्रकार *packet_size,
-			     काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat,
-			     अक्षर *filename, माप_प्रकार filename_size)
-अणु
-	काष्ठा ecryptfs_ग_लिखो_tag_70_packet_silly_stack *s;
-	काष्ठा key *auth_tok_key = शून्य;
-	पूर्णांक rc = 0;
+int
+ecryptfs_write_tag_70_packet(char *dest, size_t *remaining_bytes,
+			     size_t *packet_size,
+			     struct ecryptfs_mount_crypt_stat *mount_crypt_stat,
+			     char *filename, size_t filename_size)
+{
+	struct ecryptfs_write_tag_70_packet_silly_stack *s;
+	struct key *auth_tok_key = NULL;
+	int rc = 0;
 
-	s = kzalloc(माप(*s), GFP_KERNEL);
-	अगर (!s)
-		वापस -ENOMEM;
+	s = kzalloc(sizeof(*s), GFP_KERNEL);
+	if (!s)
+		return -ENOMEM;
 
 	(*packet_size) = 0;
-	rc = ecryptfs_find_auth_tok_क्रम_sig(
+	rc = ecryptfs_find_auth_tok_for_sig(
 		&auth_tok_key,
 		&s->auth_tok, mount_crypt_stat,
-		mount_crypt_stat->global_शेष_fnek_sig);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to find auth tok for "
+		mount_crypt_stat->global_default_fnek_sig);
+	if (rc) {
+		printk(KERN_ERR "%s: Error attempting to find auth tok for "
 		       "fnek sig [%s]; rc = [%d]\n", __func__,
-		       mount_crypt_stat->global_शेष_fnek_sig, rc);
-		जाओ out;
-	पूर्ण
-	rc = ecryptfs_get_tfm_and_mutex_क्रम_cipher_name(
+		       mount_crypt_stat->global_default_fnek_sig, rc);
+		goto out;
+	}
+	rc = ecryptfs_get_tfm_and_mutex_for_cipher_name(
 		&s->skcipher_tfm,
-		&s->tfm_mutex, mount_crypt_stat->global_शेष_fn_cipher_name);
-	अगर (unlikely(rc)) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to get "
+		&s->tfm_mutex, mount_crypt_stat->global_default_fn_cipher_name);
+	if (unlikely(rc)) {
+		printk(KERN_ERR "Internal error whilst attempting to get "
 		       "tfm and mutex for cipher name [%s]; rc = [%d]\n",
-		       mount_crypt_stat->global_शेष_fn_cipher_name, rc);
-		जाओ out;
-	पूर्ण
+		       mount_crypt_stat->global_default_fn_cipher_name, rc);
+		goto out;
+	}
 	mutex_lock(s->tfm_mutex);
 	s->block_size = crypto_skcipher_blocksize(s->skcipher_tfm);
-	/* Plus one क्रम the \0 separator between the अक्रमom prefix
-	 * and the plaपूर्णांकext filename */
-	s->num_अक्रम_bytes = (ECRYPTFS_खाताNAME_MIN_RANDOM_PREPEND_BYTES + 1);
-	s->block_aligned_filename_size = (s->num_अक्रम_bytes + filename_size);
-	अगर ((s->block_aligned_filename_size % s->block_size) != 0) अणु
-		s->num_अक्रम_bytes += (s->block_size
+	/* Plus one for the \0 separator between the random prefix
+	 * and the plaintext filename */
+	s->num_rand_bytes = (ECRYPTFS_FILENAME_MIN_RANDOM_PREPEND_BYTES + 1);
+	s->block_aligned_filename_size = (s->num_rand_bytes + filename_size);
+	if ((s->block_aligned_filename_size % s->block_size) != 0) {
+		s->num_rand_bytes += (s->block_size
 				      - (s->block_aligned_filename_size
 					 % s->block_size));
-		s->block_aligned_filename_size = (s->num_अक्रम_bytes
+		s->block_aligned_filename_size = (s->num_rand_bytes
 						  + filename_size);
-	पूर्ण
-	/* Octet 0: Tag 70 identअगरier
-	 * Octets 1-N1: Tag 70 packet size (includes cipher identअगरier
+	}
+	/* Octet 0: Tag 70 identifier
+	 * Octets 1-N1: Tag 70 packet size (includes cipher identifier
 	 *              and block-aligned encrypted filename size)
 	 * Octets N1-N2: FNEK sig (ECRYPTFS_SIG_SIZE)
-	 * Octet N2-N3: Cipher identअगरier (1 octet)
+	 * Octet N2-N3: Cipher identifier (1 octet)
 	 * Octets N3-N4: Block-aligned encrypted filename
-	 *  - Consists of a minimum number of अक्रमom अक्षरacters, a \0
+	 *  - Consists of a minimum number of random characters, a \0
 	 *    separator, and then the filename */
 	s->max_packet_size = (ECRYPTFS_TAG_70_MAX_METADATA_SIZE
 			      + s->block_aligned_filename_size);
-	अगर (!dest) अणु
+	if (!dest) {
 		(*packet_size) = s->max_packet_size;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (s->max_packet_size > (*reमुख्यing_bytes)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Require [%zd] bytes to write; only "
+		goto out_unlock;
+	}
+	if (s->max_packet_size > (*remaining_bytes)) {
+		printk(KERN_WARNING "%s: Require [%zd] bytes to write; only "
 		       "[%zd] available\n", __func__, s->max_packet_size,
-		       (*reमुख्यing_bytes));
+		       (*remaining_bytes));
 		rc = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	s->skcipher_req = skcipher_request_alloc(s->skcipher_tfm, GFP_KERNEL);
-	अगर (!s->skcipher_req) अणु
-		prपूर्णांकk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
+	if (!s->skcipher_req) {
+		printk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
 		       "skcipher_request_alloc for %s\n", __func__,
 		       crypto_skcipher_driver_name(s->skcipher_tfm));
 		rc = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	skcipher_request_set_callback(s->skcipher_req,
-				      CRYPTO_TFM_REQ_MAY_SLEEP, शून्य, शून्य);
+				      CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
 
 	s->block_aligned_filename = kzalloc(s->block_aligned_filename_size,
 					    GFP_KERNEL);
-	अगर (!s->block_aligned_filename) अणु
+	if (!s->block_aligned_filename) {
 		rc = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	dest[s->i++] = ECRYPTFS_TAG_70_PACKET_TYPE;
-	rc = ecryptfs_ग_लिखो_packet_length(&dest[s->i],
+	rc = ecryptfs_write_packet_length(&dest[s->i],
 					  (ECRYPTFS_SIG_SIZE
 					   + 1 /* Cipher code */
 					   + s->block_aligned_filename_size),
 					  &s->packet_size_len);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error generating tag 70 packet "
+	if (rc) {
+		printk(KERN_ERR "%s: Error generating tag 70 packet "
 		       "header; cannot generate packet length; rc = [%d]\n",
 		       __func__, rc);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 	s->i += s->packet_size_len;
 	ecryptfs_from_hex(&dest[s->i],
-			  mount_crypt_stat->global_शेष_fnek_sig,
+			  mount_crypt_stat->global_default_fnek_sig,
 			  ECRYPTFS_SIG_SIZE);
 	s->i += ECRYPTFS_SIG_SIZE;
-	s->cipher_code = ecryptfs_code_क्रम_cipher_string(
-		mount_crypt_stat->global_शेष_fn_cipher_name,
-		mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
-	अगर (s->cipher_code == 0) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Unable to generate code for "
+	s->cipher_code = ecryptfs_code_for_cipher_string(
+		mount_crypt_stat->global_default_fn_cipher_name,
+		mount_crypt_stat->global_default_fn_cipher_key_bytes);
+	if (s->cipher_code == 0) {
+		printk(KERN_WARNING "%s: Unable to generate code for "
 		       "cipher [%s] with key bytes [%zd]\n", __func__,
-		       mount_crypt_stat->global_शेष_fn_cipher_name,
-		       mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
+		       mount_crypt_stat->global_default_fn_cipher_name,
+		       mount_crypt_stat->global_default_fn_cipher_key_bytes);
 		rc = -EINVAL;
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 	dest[s->i++] = s->cipher_code;
-	/* TODO: Support other key modules than passphrase क्रम
+	/* TODO: Support other key modules than passphrase for
 	 * filename encryption */
-	अगर (s->auth_tok->token_type != ECRYPTFS_PASSWORD) अणु
+	if (s->auth_tok->token_type != ECRYPTFS_PASSWORD) {
 		rc = -EOPNOTSUPP;
-		prपूर्णांकk(KERN_INFO "%s: Filename encryption only supports "
+		printk(KERN_INFO "%s: Filename encryption only supports "
 		       "password tokens\n", __func__);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 	s->hash_tfm = crypto_alloc_shash(ECRYPTFS_TAG_70_DIGEST, 0, 0);
-	अगर (IS_ERR(s->hash_tfm)) अणु
+	if (IS_ERR(s->hash_tfm)) {
 			rc = PTR_ERR(s->hash_tfm);
-			prपूर्णांकk(KERN_ERR "%s: Error attempting to "
+			printk(KERN_ERR "%s: Error attempting to "
 			       "allocate hash crypto context; rc = [%d]\n",
 			       __func__, rc);
-			जाओ out_मुक्त_unlock;
-	पूर्ण
+			goto out_free_unlock;
+	}
 
-	s->hash_desc = kदो_स्मृति(माप(*s->hash_desc) +
+	s->hash_desc = kmalloc(sizeof(*s->hash_desc) +
 			       crypto_shash_descsize(s->hash_tfm), GFP_KERNEL);
-	अगर (!s->hash_desc) अणु
+	if (!s->hash_desc) {
 		rc = -ENOMEM;
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
+		goto out_release_free_unlock;
+	}
 
 	s->hash_desc->tfm = s->hash_tfm;
 
@@ -762,123 +761,123 @@ ecryptfs_ग_लिखो_tag_70_packet(अक्षर *dest, माप_प्�
 				 (u8 *)s->auth_tok->token.password.session_key_encryption_key,
 				 s->auth_tok->token.password.session_key_encryption_key_bytes,
 				 s->hash);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR
+	if (rc) {
+		printk(KERN_ERR
 		       "%s: Error computing crypto hash; rc = [%d]\n",
 		       __func__, rc);
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
-	क्रम (s->j = 0; s->j < (s->num_अक्रम_bytes - 1); s->j++) अणु
+		goto out_release_free_unlock;
+	}
+	for (s->j = 0; s->j < (s->num_rand_bytes - 1); s->j++) {
 		s->block_aligned_filename[s->j] =
 			s->hash[(s->j % ECRYPTFS_TAG_70_DIGEST_SIZE)];
-		अगर ((s->j % ECRYPTFS_TAG_70_DIGEST_SIZE)
-		    == (ECRYPTFS_TAG_70_DIGEST_SIZE - 1)) अणु
+		if ((s->j % ECRYPTFS_TAG_70_DIGEST_SIZE)
+		    == (ECRYPTFS_TAG_70_DIGEST_SIZE - 1)) {
 			rc = crypto_shash_digest(s->hash_desc, (u8 *)s->hash,
 						ECRYPTFS_TAG_70_DIGEST_SIZE,
-						s->पंचांगp_hash);
-			अगर (rc) अणु
-				prपूर्णांकk(KERN_ERR
+						s->tmp_hash);
+			if (rc) {
+				printk(KERN_ERR
 				       "%s: Error computing crypto hash; "
 				       "rc = [%d]\n", __func__, rc);
-				जाओ out_release_मुक्त_unlock;
-			पूर्ण
-			स_नकल(s->hash, s->पंचांगp_hash,
+				goto out_release_free_unlock;
+			}
+			memcpy(s->hash, s->tmp_hash,
 			       ECRYPTFS_TAG_70_DIGEST_SIZE);
-		पूर्ण
-		अगर (s->block_aligned_filename[s->j] == '\0')
-			s->block_aligned_filename[s->j] = ECRYPTFS_NON_शून्य;
-	पूर्ण
-	स_नकल(&s->block_aligned_filename[s->num_अक्रम_bytes], filename,
+		}
+		if (s->block_aligned_filename[s->j] == '\0')
+			s->block_aligned_filename[s->j] = ECRYPTFS_NON_NULL;
+	}
+	memcpy(&s->block_aligned_filename[s->num_rand_bytes], filename,
 	       filename_size);
 	rc = virt_to_scatterlist(s->block_aligned_filename,
 				 s->block_aligned_filename_size, s->src_sg, 2);
-	अगर (rc < 1) अणु
-		prपूर्णांकk(KERN_ERR "%s: Internal error whilst attempting to "
+	if (rc < 1) {
+		printk(KERN_ERR "%s: Internal error whilst attempting to "
 		       "convert filename memory to scatterlist; rc = [%d]. "
 		       "block_aligned_filename_size = [%zd]\n", __func__, rc,
 		       s->block_aligned_filename_size);
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
+		goto out_release_free_unlock;
+	}
 	rc = virt_to_scatterlist(&dest[s->i], s->block_aligned_filename_size,
 				 s->dst_sg, 2);
-	अगर (rc < 1) अणु
-		prपूर्णांकk(KERN_ERR "%s: Internal error whilst attempting to "
+	if (rc < 1) {
+		printk(KERN_ERR "%s: Internal error whilst attempting to "
 		       "convert encrypted filename memory to scatterlist; "
 		       "rc = [%d]. block_aligned_filename_size = [%zd]\n",
 		       __func__, rc, s->block_aligned_filename_size);
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
-	/* The अक्षरacters in the first block effectively करो the job
-	 * of the IV here, so we just use 0's क्रम the IV. Note the
-	 * स्थिरraपूर्णांक that ECRYPTFS_खाताNAME_MIN_RANDOM_PREPEND_BYTES
+		goto out_release_free_unlock;
+	}
+	/* The characters in the first block effectively do the job
+	 * of the IV here, so we just use 0's for the IV. Note the
+	 * constraint that ECRYPTFS_FILENAME_MIN_RANDOM_PREPEND_BYTES
 	 * >= ECRYPTFS_MAX_IV_BYTES. */
 	rc = crypto_skcipher_setkey(
 		s->skcipher_tfm,
 		s->auth_tok->token.password.session_key_encryption_key,
-		mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
-	अगर (rc < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error setting key for crypto context; "
+		mount_crypt_stat->global_default_fn_cipher_key_bytes);
+	if (rc < 0) {
+		printk(KERN_ERR "%s: Error setting key for crypto context; "
 		       "rc = [%d]. s->auth_tok->token.password.session_key_"
 		       "encryption_key = [0x%p]; mount_crypt_stat->"
 		       "global_default_fn_cipher_key_bytes = [%zd]\n", __func__,
 		       rc,
 		       s->auth_tok->token.password.session_key_encryption_key,
-		       mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
+		       mount_crypt_stat->global_default_fn_cipher_key_bytes);
+		goto out_release_free_unlock;
+	}
 	skcipher_request_set_crypt(s->skcipher_req, s->src_sg, s->dst_sg,
 				   s->block_aligned_filename_size, s->iv);
 	rc = crypto_skcipher_encrypt(s->skcipher_req);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to encrypt filename; "
+	if (rc) {
+		printk(KERN_ERR "%s: Error attempting to encrypt filename; "
 		       "rc = [%d]\n", __func__, rc);
-		जाओ out_release_मुक्त_unlock;
-	पूर्ण
+		goto out_release_free_unlock;
+	}
 	s->i += s->block_aligned_filename_size;
 	(*packet_size) = s->i;
-	(*reमुख्यing_bytes) -= (*packet_size);
-out_release_मुक्त_unlock:
-	crypto_मुक्त_shash(s->hash_tfm);
-out_मुक्त_unlock:
-	kमुक्त_sensitive(s->block_aligned_filename);
+	(*remaining_bytes) -= (*packet_size);
+out_release_free_unlock:
+	crypto_free_shash(s->hash_tfm);
+out_free_unlock:
+	kfree_sensitive(s->block_aligned_filename);
 out_unlock:
 	mutex_unlock(s->tfm_mutex);
 out:
-	अगर (auth_tok_key) अणु
-		up_ग_लिखो(&(auth_tok_key->sem));
+	if (auth_tok_key) {
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
-	पूर्ण
-	skcipher_request_मुक्त(s->skcipher_req);
-	kमुक्त_sensitive(s->hash_desc);
-	kमुक्त(s);
-	वापस rc;
-पूर्ण
+	}
+	skcipher_request_free(s->skcipher_req);
+	kfree_sensitive(s->hash_desc);
+	kfree(s);
+	return rc;
+}
 
-काष्ठा ecryptfs_parse_tag_70_packet_silly_stack अणु
+struct ecryptfs_parse_tag_70_packet_silly_stack {
 	u8 cipher_code;
-	माप_प्रकार max_packet_size;
-	माप_प्रकार packet_size_len;
-	माप_प्रकार parsed_tag_70_packet_size;
-	माप_प्रकार block_aligned_filename_size;
-	माप_प्रकार block_size;
-	माप_प्रकार i;
-	काष्ठा mutex *tfm_mutex;
-	अक्षर *decrypted_filename;
-	काष्ठा ecryptfs_auth_tok *auth_tok;
-	काष्ठा scatterlist src_sg[2];
-	काष्ठा scatterlist dst_sg[2];
-	काष्ठा crypto_skcipher *skcipher_tfm;
-	काष्ठा skcipher_request *skcipher_req;
-	अक्षर fnek_sig_hex[ECRYPTFS_SIG_SIZE_HEX + 1];
-	अक्षर iv[ECRYPTFS_MAX_IV_BYTES];
-	अक्षर cipher_string[ECRYPTFS_MAX_CIPHER_NAME_SIZE + 1];
-पूर्ण;
+	size_t max_packet_size;
+	size_t packet_size_len;
+	size_t parsed_tag_70_packet_size;
+	size_t block_aligned_filename_size;
+	size_t block_size;
+	size_t i;
+	struct mutex *tfm_mutex;
+	char *decrypted_filename;
+	struct ecryptfs_auth_tok *auth_tok;
+	struct scatterlist src_sg[2];
+	struct scatterlist dst_sg[2];
+	struct crypto_skcipher *skcipher_tfm;
+	struct skcipher_request *skcipher_req;
+	char fnek_sig_hex[ECRYPTFS_SIG_SIZE_HEX + 1];
+	char iv[ECRYPTFS_MAX_IV_BYTES];
+	char cipher_string[ECRYPTFS_MAX_CIPHER_NAME_SIZE + 1];
+};
 
 /**
  * ecryptfs_parse_tag_70_packet - Parse and process FNEK-encrypted passphrase packet
- * @filename: This function kदो_स्मृति's the memory क्रम the filename
+ * @filename: This function kmalloc's the memory for the filename
  * @filename_size: This function sets this to the amount of memory
- *                 kदो_स्मृति'd क्रम the filename
+ *                 kmalloc'd for the filename
  * @packet_size: This function sets this to the the number of octets
  *               in the packet parsed
  * @mount_crypt_stat: The mount-wide cryptographic context
@@ -889,64 +888,64 @@ out:
  *
  * Returns zero on success; non-zero otherwise
  */
-पूर्णांक
-ecryptfs_parse_tag_70_packet(अक्षर **filename, माप_प्रकार *filename_size,
-			     माप_प्रकार *packet_size,
-			     काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat,
-			     अक्षर *data, माप_प्रकार max_packet_size)
-अणु
-	काष्ठा ecryptfs_parse_tag_70_packet_silly_stack *s;
-	काष्ठा key *auth_tok_key = शून्य;
-	पूर्णांक rc = 0;
+int
+ecryptfs_parse_tag_70_packet(char **filename, size_t *filename_size,
+			     size_t *packet_size,
+			     struct ecryptfs_mount_crypt_stat *mount_crypt_stat,
+			     char *data, size_t max_packet_size)
+{
+	struct ecryptfs_parse_tag_70_packet_silly_stack *s;
+	struct key *auth_tok_key = NULL;
+	int rc = 0;
 
 	(*packet_size) = 0;
 	(*filename_size) = 0;
-	(*filename) = शून्य;
-	s = kzalloc(माप(*s), GFP_KERNEL);
-	अगर (!s)
-		वापस -ENOMEM;
+	(*filename) = NULL;
+	s = kzalloc(sizeof(*s), GFP_KERNEL);
+	if (!s)
+		return -ENOMEM;
 
-	अगर (max_packet_size < ECRYPTFS_TAG_70_MIN_METADATA_SIZE) अणु
-		prपूर्णांकk(KERN_WARNING "%s: max_packet_size is [%zd]; it must be "
+	if (max_packet_size < ECRYPTFS_TAG_70_MIN_METADATA_SIZE) {
+		printk(KERN_WARNING "%s: max_packet_size is [%zd]; it must be "
 		       "at least [%d]\n", __func__, max_packet_size,
 		       ECRYPTFS_TAG_70_MIN_METADATA_SIZE);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	/* Octet 0: Tag 70 identअगरier
-	 * Octets 1-N1: Tag 70 packet size (includes cipher identअगरier
+		goto out;
+	}
+	/* Octet 0: Tag 70 identifier
+	 * Octets 1-N1: Tag 70 packet size (includes cipher identifier
 	 *              and block-aligned encrypted filename size)
 	 * Octets N1-N2: FNEK sig (ECRYPTFS_SIG_SIZE)
-	 * Octet N2-N3: Cipher identअगरier (1 octet)
+	 * Octet N2-N3: Cipher identifier (1 octet)
 	 * Octets N3-N4: Block-aligned encrypted filename
-	 *  - Consists of a minimum number of अक्रमom numbers, a \0
+	 *  - Consists of a minimum number of random numbers, a \0
 	 *    separator, and then the filename */
-	अगर (data[(*packet_size)++] != ECRYPTFS_TAG_70_PACKET_TYPE) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Invalid packet tag [0x%.2x]; must be "
+	if (data[(*packet_size)++] != ECRYPTFS_TAG_70_PACKET_TYPE) {
+		printk(KERN_WARNING "%s: Invalid packet tag [0x%.2x]; must be "
 		       "tag [0x%.2x]\n", __func__,
 		       data[((*packet_size) - 1)], ECRYPTFS_TAG_70_PACKET_TYPE);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = ecryptfs_parse_packet_length(&data[(*packet_size)],
 					  &s->parsed_tag_70_packet_size,
 					  &s->packet_size_len);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Error parsing packet length; "
+	if (rc) {
+		printk(KERN_WARNING "%s: Error parsing packet length; "
 		       "rc = [%d]\n", __func__, rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	s->block_aligned_filename_size = (s->parsed_tag_70_packet_size
 					  - ECRYPTFS_SIG_SIZE - 1);
-	अगर ((1 + s->packet_size_len + s->parsed_tag_70_packet_size)
-	    > max_packet_size) अणु
-		prपूर्णांकk(KERN_WARNING "%s: max_packet_size is [%zd]; real packet "
+	if ((1 + s->packet_size_len + s->parsed_tag_70_packet_size)
+	    > max_packet_size) {
+		printk(KERN_WARNING "%s: max_packet_size is [%zd]; real packet "
 		       "size is [%zd]\n", __func__, max_packet_size,
 		       (1 + s->packet_size_len + 1
 			+ s->block_aligned_filename_size));
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*packet_size) += s->packet_size_len;
 	ecryptfs_to_hex(s->fnek_sig_hex, &data[(*packet_size)],
 			ECRYPTFS_SIG_SIZE);
@@ -954,167 +953,167 @@ ecryptfs_parse_tag_70_packet(अक्षर **filename, माप_प्रक�
 	(*packet_size) += ECRYPTFS_SIG_SIZE;
 	s->cipher_code = data[(*packet_size)++];
 	rc = ecryptfs_cipher_code_to_string(s->cipher_string, s->cipher_code);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Cipher code [%d] is invalid\n",
+	if (rc) {
+		printk(KERN_WARNING "%s: Cipher code [%d] is invalid\n",
 		       __func__, s->cipher_code);
-		जाओ out;
-	पूर्ण
-	rc = ecryptfs_find_auth_tok_क्रम_sig(&auth_tok_key,
+		goto out;
+	}
+	rc = ecryptfs_find_auth_tok_for_sig(&auth_tok_key,
 					    &s->auth_tok, mount_crypt_stat,
 					    s->fnek_sig_hex);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to find auth tok for "
+	if (rc) {
+		printk(KERN_ERR "%s: Error attempting to find auth tok for "
 		       "fnek sig [%s]; rc = [%d]\n", __func__, s->fnek_sig_hex,
 		       rc);
-		जाओ out;
-	पूर्ण
-	rc = ecryptfs_get_tfm_and_mutex_क्रम_cipher_name(&s->skcipher_tfm,
+		goto out;
+	}
+	rc = ecryptfs_get_tfm_and_mutex_for_cipher_name(&s->skcipher_tfm,
 							&s->tfm_mutex,
 							s->cipher_string);
-	अगर (unlikely(rc)) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to get "
+	if (unlikely(rc)) {
+		printk(KERN_ERR "Internal error whilst attempting to get "
 		       "tfm and mutex for cipher name [%s]; rc = [%d]\n",
 		       s->cipher_string, rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_lock(s->tfm_mutex);
 	rc = virt_to_scatterlist(&data[(*packet_size)],
 				 s->block_aligned_filename_size, s->src_sg, 2);
-	अगर (rc < 1) अणु
-		prपूर्णांकk(KERN_ERR "%s: Internal error whilst attempting to "
+	if (rc < 1) {
+		printk(KERN_ERR "%s: Internal error whilst attempting to "
 		       "convert encrypted filename memory to scatterlist; "
 		       "rc = [%d]. block_aligned_filename_size = [%zd]\n",
 		       __func__, rc, s->block_aligned_filename_size);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	(*packet_size) += s->block_aligned_filename_size;
-	s->decrypted_filename = kदो_स्मृति(s->block_aligned_filename_size,
+	s->decrypted_filename = kmalloc(s->block_aligned_filename_size,
 					GFP_KERNEL);
-	अगर (!s->decrypted_filename) अणु
+	if (!s->decrypted_filename) {
 		rc = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	rc = virt_to_scatterlist(s->decrypted_filename,
 				 s->block_aligned_filename_size, s->dst_sg, 2);
-	अगर (rc < 1) अणु
-		prपूर्णांकk(KERN_ERR "%s: Internal error whilst attempting to "
+	if (rc < 1) {
+		printk(KERN_ERR "%s: Internal error whilst attempting to "
 		       "convert decrypted filename memory to scatterlist; "
 		       "rc = [%d]. block_aligned_filename_size = [%zd]\n",
 		       __func__, rc, s->block_aligned_filename_size);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 
 	s->skcipher_req = skcipher_request_alloc(s->skcipher_tfm, GFP_KERNEL);
-	अगर (!s->skcipher_req) अणु
-		prपूर्णांकk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
+	if (!s->skcipher_req) {
+		printk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
 		       "skcipher_request_alloc for %s\n", __func__,
 		       crypto_skcipher_driver_name(s->skcipher_tfm));
 		rc = -ENOMEM;
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 
 	skcipher_request_set_callback(s->skcipher_req,
-				      CRYPTO_TFM_REQ_MAY_SLEEP, शून्य, शून्य);
+				      CRYPTO_TFM_REQ_MAY_SLEEP, NULL, NULL);
 
-	/* The अक्षरacters in the first block effectively करो the job of
-	 * the IV here, so we just use 0's क्रम the IV. Note the
-	 * स्थिरraपूर्णांक that ECRYPTFS_खाताNAME_MIN_RANDOM_PREPEND_BYTES
+	/* The characters in the first block effectively do the job of
+	 * the IV here, so we just use 0's for the IV. Note the
+	 * constraint that ECRYPTFS_FILENAME_MIN_RANDOM_PREPEND_BYTES
 	 * >= ECRYPTFS_MAX_IV_BYTES. */
-	/* TODO: Support other key modules than passphrase क्रम
+	/* TODO: Support other key modules than passphrase for
 	 * filename encryption */
-	अगर (s->auth_tok->token_type != ECRYPTFS_PASSWORD) अणु
+	if (s->auth_tok->token_type != ECRYPTFS_PASSWORD) {
 		rc = -EOPNOTSUPP;
-		prपूर्णांकk(KERN_INFO "%s: Filename encryption only supports "
+		printk(KERN_INFO "%s: Filename encryption only supports "
 		       "password tokens\n", __func__);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 	rc = crypto_skcipher_setkey(
 		s->skcipher_tfm,
 		s->auth_tok->token.password.session_key_encryption_key,
-		mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
-	अगर (rc < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error setting key for crypto context; "
+		mount_crypt_stat->global_default_fn_cipher_key_bytes);
+	if (rc < 0) {
+		printk(KERN_ERR "%s: Error setting key for crypto context; "
 		       "rc = [%d]. s->auth_tok->token.password.session_key_"
 		       "encryption_key = [0x%p]; mount_crypt_stat->"
 		       "global_default_fn_cipher_key_bytes = [%zd]\n", __func__,
 		       rc,
 		       s->auth_tok->token.password.session_key_encryption_key,
-		       mount_crypt_stat->global_शेष_fn_cipher_key_bytes);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		       mount_crypt_stat->global_default_fn_cipher_key_bytes);
+		goto out_free_unlock;
+	}
 	skcipher_request_set_crypt(s->skcipher_req, s->src_sg, s->dst_sg,
 				   s->block_aligned_filename_size, s->iv);
 	rc = crypto_skcipher_decrypt(s->skcipher_req);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "%s: Error attempting to decrypt filename; "
+	if (rc) {
+		printk(KERN_ERR "%s: Error attempting to decrypt filename; "
 		       "rc = [%d]\n", __func__, rc);
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 
-	जबतक (s->i < s->block_aligned_filename_size &&
+	while (s->i < s->block_aligned_filename_size &&
 	       s->decrypted_filename[s->i] != '\0')
 		s->i++;
-	अगर (s->i == s->block_aligned_filename_size) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Invalid tag 70 packet; could not "
+	if (s->i == s->block_aligned_filename_size) {
+		printk(KERN_WARNING "%s: Invalid tag 70 packet; could not "
 		       "find valid separator between random characters and "
 		       "the filename\n", __func__);
 		rc = -EINVAL;
-		जाओ out_मुक्त_unlock;
-	पूर्ण
+		goto out_free_unlock;
+	}
 	s->i++;
 	(*filename_size) = (s->block_aligned_filename_size - s->i);
-	अगर (!((*filename_size) > 0 && (*filename_size < PATH_MAX))) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Filename size is [%zd], which is "
+	if (!((*filename_size) > 0 && (*filename_size < PATH_MAX))) {
+		printk(KERN_WARNING "%s: Filename size is [%zd], which is "
 		       "invalid\n", __func__, (*filename_size));
 		rc = -EINVAL;
-		जाओ out_मुक्त_unlock;
-	पूर्ण
-	(*filename) = kदो_स्मृति(((*filename_size) + 1), GFP_KERNEL);
-	अगर (!(*filename)) अणु
+		goto out_free_unlock;
+	}
+	(*filename) = kmalloc(((*filename_size) + 1), GFP_KERNEL);
+	if (!(*filename)) {
 		rc = -ENOMEM;
-		जाओ out_मुक्त_unlock;
-	पूर्ण
-	स_नकल((*filename), &s->decrypted_filename[s->i], (*filename_size));
+		goto out_free_unlock;
+	}
+	memcpy((*filename), &s->decrypted_filename[s->i], (*filename_size));
 	(*filename)[(*filename_size)] = '\0';
-out_मुक्त_unlock:
-	kमुक्त(s->decrypted_filename);
+out_free_unlock:
+	kfree(s->decrypted_filename);
 out_unlock:
 	mutex_unlock(s->tfm_mutex);
 out:
-	अगर (rc) अणु
+	if (rc) {
 		(*packet_size) = 0;
 		(*filename_size) = 0;
-		(*filename) = शून्य;
-	पूर्ण
-	अगर (auth_tok_key) अणु
-		up_ग_लिखो(&(auth_tok_key->sem));
+		(*filename) = NULL;
+	}
+	if (auth_tok_key) {
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
-	पूर्ण
-	skcipher_request_मुक्त(s->skcipher_req);
-	kमुक्त(s);
-	वापस rc;
-पूर्ण
+	}
+	skcipher_request_free(s->skcipher_req);
+	kfree(s);
+	return rc;
+}
 
-अटल पूर्णांक
-ecryptfs_get_auth_tok_sig(अक्षर **sig, काष्ठा ecryptfs_auth_tok *auth_tok)
-अणु
-	पूर्णांक rc = 0;
+static int
+ecryptfs_get_auth_tok_sig(char **sig, struct ecryptfs_auth_tok *auth_tok)
+{
+	int rc = 0;
 
-	(*sig) = शून्य;
-	चयन (auth_tok->token_type) अणु
-	हाल ECRYPTFS_PASSWORD:
+	(*sig) = NULL;
+	switch (auth_tok->token_type) {
+	case ECRYPTFS_PASSWORD:
 		(*sig) = auth_tok->token.password.signature;
-		अवरोध;
-	हाल ECRYPTFS_PRIVATE_KEY:
-		(*sig) = auth_tok->token.निजी_key.signature;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "Cannot get sig for auth_tok of type [%d]\n",
+		break;
+	case ECRYPTFS_PRIVATE_KEY:
+		(*sig) = auth_tok->token.private_key.signature;
+		break;
+	default:
+		printk(KERN_ERR "Cannot get sig for auth_tok of type [%d]\n",
 		       auth_tok->token_type);
 		rc = -EINVAL;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
 /**
  * decrypt_pki_encrypted_session_key - Decrypt the session key with the given auth_tok.
@@ -1123,192 +1122,192 @@ ecryptfs_get_auth_tok_sig(अक्षर **sig, काष्ठा ecryptfs_aut
  *
  * Returns zero on success; non-zero error otherwise.
  */
-अटल पूर्णांक
-decrypt_pki_encrypted_session_key(काष्ठा ecryptfs_auth_tok *auth_tok,
-				  काष्ठा ecryptfs_crypt_stat *crypt_stat)
-अणु
+static int
+decrypt_pki_encrypted_session_key(struct ecryptfs_auth_tok *auth_tok,
+				  struct ecryptfs_crypt_stat *crypt_stat)
+{
 	u8 cipher_code = 0;
-	काष्ठा ecryptfs_msg_ctx *msg_ctx;
-	काष्ठा ecryptfs_message *msg = शून्य;
-	अक्षर *auth_tok_sig;
-	अक्षर *payload = शून्य;
-	माप_प्रकार payload_len = 0;
-	पूर्णांक rc;
+	struct ecryptfs_msg_ctx *msg_ctx;
+	struct ecryptfs_message *msg = NULL;
+	char *auth_tok_sig;
+	char *payload = NULL;
+	size_t payload_len = 0;
+	int rc;
 
 	rc = ecryptfs_get_auth_tok_sig(&auth_tok_sig, auth_tok);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Unrecognized auth tok type: [%d]\n",
+	if (rc) {
+		printk(KERN_ERR "Unrecognized auth tok type: [%d]\n",
 		       auth_tok->token_type);
-		जाओ out;
-	पूर्ण
-	rc = ग_लिखो_tag_64_packet(auth_tok_sig, &(auth_tok->session_key),
+		goto out;
+	}
+	rc = write_tag_64_packet(auth_tok_sig, &(auth_tok->session_key),
 				 &payload, &payload_len);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Failed to write tag 64 packet\n");
-		जाओ out;
-	पूर्ण
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Failed to write tag 64 packet\n");
+		goto out;
+	}
 	rc = ecryptfs_send_message(payload, payload_len, &msg_ctx);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error sending message to "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error sending message to "
 				"ecryptfsd: %d\n", rc);
-		जाओ out;
-	पूर्ण
-	rc = ecryptfs_रुको_क्रम_response(msg_ctx, &msg);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Failed to receive tag 65 packet "
+		goto out;
+	}
+	rc = ecryptfs_wait_for_response(msg_ctx, &msg);
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Failed to receive tag 65 packet "
 				"from the user space daemon\n");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = parse_tag_65_packet(&(auth_tok->session_key),
 				 &cipher_code, msg);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Failed to parse tag 65 packet; rc = [%d]\n",
+	if (rc) {
+		printk(KERN_ERR "Failed to parse tag 65 packet; rc = [%d]\n",
 		       rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	auth_tok->session_key.flags |= ECRYPTFS_CONTAINS_DECRYPTED_KEY;
-	स_नकल(crypt_stat->key, auth_tok->session_key.decrypted_key,
+	memcpy(crypt_stat->key, auth_tok->session_key.decrypted_key,
 	       auth_tok->session_key.decrypted_key_size);
 	crypt_stat->key_size = auth_tok->session_key.decrypted_key_size;
 	rc = ecryptfs_cipher_code_to_string(crypt_stat->cipher, cipher_code);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Cipher code [%d] is invalid\n",
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Cipher code [%d] is invalid\n",
 				cipher_code);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	crypt_stat->flags |= ECRYPTFS_KEY_VALID;
-	अगर (ecryptfs_verbosity > 0) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Decrypted session key:\n");
+	if (ecryptfs_verbosity > 0) {
+		ecryptfs_printk(KERN_DEBUG, "Decrypted session key:\n");
 		ecryptfs_dump_hex(crypt_stat->key,
 				  crypt_stat->key_size);
-	पूर्ण
+	}
 out:
-	kमुक्त(msg);
-	kमुक्त(payload);
-	वापस rc;
-पूर्ण
+	kfree(msg);
+	kfree(payload);
+	return rc;
+}
 
-अटल व्योम wipe_auth_tok_list(काष्ठा list_head *auth_tok_list_head)
-अणु
-	काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item;
-	काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item_पंचांगp;
+static void wipe_auth_tok_list(struct list_head *auth_tok_list_head)
+{
+	struct ecryptfs_auth_tok_list_item *auth_tok_list_item;
+	struct ecryptfs_auth_tok_list_item *auth_tok_list_item_tmp;
 
-	list_क्रम_each_entry_safe(auth_tok_list_item, auth_tok_list_item_पंचांगp,
-				 auth_tok_list_head, list) अणु
+	list_for_each_entry_safe(auth_tok_list_item, auth_tok_list_item_tmp,
+				 auth_tok_list_head, list) {
 		list_del(&auth_tok_list_item->list);
-		kmem_cache_मुक्त(ecryptfs_auth_tok_list_item_cache,
+		kmem_cache_free(ecryptfs_auth_tok_list_item_cache,
 				auth_tok_list_item);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा kmem_cache *ecryptfs_auth_tok_list_item_cache;
+struct kmem_cache *ecryptfs_auth_tok_list_item_cache;
 
 /**
  * parse_tag_1_packet
- * @crypt_stat: The cryptographic context to modअगरy based on packet contents
+ * @crypt_stat: The cryptographic context to modify based on packet contents
  * @data: The raw bytes of the packet.
- * @auth_tok_list: eCryptfs parses packets पूर्णांकo authentication tokens;
+ * @auth_tok_list: eCryptfs parses packets into authentication tokens;
  *                 a new authentication token will be placed at the
- *                 end of this list क्रम this packet.
- * @new_auth_tok: Poपूर्णांकer to a poपूर्णांकer to memory that this function
- *                allocates; sets the memory address of the poपूर्णांकer to
- *                शून्य on error. This object is added to the
+ *                 end of this list for this packet.
+ * @new_auth_tok: Pointer to a pointer to memory that this function
+ *                allocates; sets the memory address of the pointer to
+ *                NULL on error. This object is added to the
  *                auth_tok_list.
- * @packet_size: This function ग_लिखोs the size of the parsed packet
- *               पूर्णांकo this memory location; zero on error.
+ * @packet_size: This function writes the size of the parsed packet
+ *               into this memory location; zero on error.
  * @max_packet_size: The maximum allowable packet size
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-parse_tag_1_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
-		   अचिन्हित अक्षर *data, काष्ठा list_head *auth_tok_list,
-		   काष्ठा ecryptfs_auth_tok **new_auth_tok,
-		   माप_प्रकार *packet_size, माप_प्रकार max_packet_size)
-अणु
-	माप_प्रकार body_size;
-	काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item;
-	माप_प्रकार length_size;
-	पूर्णांक rc = 0;
+static int
+parse_tag_1_packet(struct ecryptfs_crypt_stat *crypt_stat,
+		   unsigned char *data, struct list_head *auth_tok_list,
+		   struct ecryptfs_auth_tok **new_auth_tok,
+		   size_t *packet_size, size_t max_packet_size)
+{
+	size_t body_size;
+	struct ecryptfs_auth_tok_list_item *auth_tok_list_item;
+	size_t length_size;
+	int rc = 0;
 
 	(*packet_size) = 0;
-	(*new_auth_tok) = शून्य;
+	(*new_auth_tok) = NULL;
 	/**
-	 * This क्रमmat is inspired by OpenPGP; see RFC 2440
+	 * This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 1
 	 *
-	 * Tag 1 identअगरier (1 byte)
+	 * Tag 1 identifier (1 byte)
 	 * Max Tag 1 packet size (max 3 bytes)
 	 * Version (1 byte)
-	 * Key identअगरier (8 bytes; ECRYPTFS_SIG_SIZE)
-	 * Cipher identअगरier (1 byte)
+	 * Key identifier (8 bytes; ECRYPTFS_SIG_SIZE)
+	 * Cipher identifier (1 byte)
 	 * Encrypted key size (arbitrary)
 	 *
 	 * 12 bytes minimum packet size
 	 */
-	अगर (unlikely(max_packet_size < 12)) अणु
-		prपूर्णांकk(KERN_ERR "Invalid max packet size; must be >=12\n");
+	if (unlikely(max_packet_size < 12)) {
+		printk(KERN_ERR "Invalid max packet size; must be >=12\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (data[(*packet_size)++] != ECRYPTFS_TAG_1_PACKET_TYPE) अणु
-		prपूर्णांकk(KERN_ERR "Enter w/ first byte != 0x%.2x\n",
+		goto out;
+	}
+	if (data[(*packet_size)++] != ECRYPTFS_TAG_1_PACKET_TYPE) {
+		printk(KERN_ERR "Enter w/ first byte != 0x%.2x\n",
 		       ECRYPTFS_TAG_1_PACKET_TYPE);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* Released: wipe_auth_tok_list called in ecryptfs_parse_packet_set or
 	 * at end of function upon failure */
 	auth_tok_list_item =
 		kmem_cache_zalloc(ecryptfs_auth_tok_list_item_cache,
 				  GFP_KERNEL);
-	अगर (!auth_tok_list_item) अणु
-		prपूर्णांकk(KERN_ERR "Unable to allocate memory\n");
+	if (!auth_tok_list_item) {
+		printk(KERN_ERR "Unable to allocate memory\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*new_auth_tok) = &auth_tok_list_item->auth_tok;
 	rc = ecryptfs_parse_packet_length(&data[(*packet_size)], &body_size,
 					  &length_size);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "Error parsing packet length; "
+	if (rc) {
+		printk(KERN_WARNING "Error parsing packet length; "
 		       "rc = [%d]\n", rc);
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (unlikely(body_size < (ECRYPTFS_SIG_SIZE + 2))) अणु
-		prपूर्णांकk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
+		goto out_free;
+	}
+	if (unlikely(body_size < (ECRYPTFS_SIG_SIZE + 2))) {
+		printk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	(*packet_size) += length_size;
-	अगर (unlikely((*packet_size) + body_size > max_packet_size)) अणु
-		prपूर्णांकk(KERN_WARNING "Packet size exceeds max\n");
+	if (unlikely((*packet_size) + body_size > max_packet_size)) {
+		printk(KERN_WARNING "Packet size exceeds max\n");
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (unlikely(data[(*packet_size)++] != 0x03)) अणु
-		prपूर्णांकk(KERN_WARNING "Unknown version number [%d]\n",
+		goto out_free;
+	}
+	if (unlikely(data[(*packet_size)++] != 0x03)) {
+		printk(KERN_WARNING "Unknown version number [%d]\n",
 		       data[(*packet_size) - 1]);
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
-	ecryptfs_to_hex((*new_auth_tok)->token.निजी_key.signature,
+		goto out_free;
+	}
+	ecryptfs_to_hex((*new_auth_tok)->token.private_key.signature,
 			&data[(*packet_size)], ECRYPTFS_SIG_SIZE);
 	*packet_size += ECRYPTFS_SIG_SIZE;
-	/* This byte is skipped because the kernel करोes not need to
-	 * know which खुला key encryption algorithm was used */
+	/* This byte is skipped because the kernel does not need to
+	 * know which public key encryption algorithm was used */
 	(*packet_size)++;
 	(*new_auth_tok)->session_key.encrypted_key_size =
 		body_size - (ECRYPTFS_SIG_SIZE + 2);
-	अगर ((*new_auth_tok)->session_key.encrypted_key_size
-	    > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) अणु
-		prपूर्णांकk(KERN_WARNING "Tag 1 packet contains key larger "
+	if ((*new_auth_tok)->session_key.encrypted_key_size
+	    > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) {
+		printk(KERN_WARNING "Tag 1 packet contains key larger "
 		       "than ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES\n");
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
-	स_नकल((*new_auth_tok)->session_key.encrypted_key,
+		goto out_free;
+	}
+	memcpy((*new_auth_tok)->session_key.encrypted_key,
 	       &data[(*packet_size)], (body_size - (ECRYPTFS_SIG_SIZE + 2)));
 	(*packet_size) += (*new_auth_tok)->session_key.encrypted_key_size;
 	(*new_auth_tok)->session_key.flags &=
@@ -1322,147 +1321,147 @@ parse_tag_1_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
 	(*new_auth_tok)->session_key.flags &=
 		~(ECRYPTFS_USERSPACE_SHOULD_TRY_TO_ENCRYPT);
 	list_add(&auth_tok_list_item->list, auth_tok_list);
-	जाओ out;
-out_मुक्त:
-	(*new_auth_tok) = शून्य;
-	स_रखो(auth_tok_list_item, 0,
-	       माप(काष्ठा ecryptfs_auth_tok_list_item));
-	kmem_cache_मुक्त(ecryptfs_auth_tok_list_item_cache,
+	goto out;
+out_free:
+	(*new_auth_tok) = NULL;
+	memset(auth_tok_list_item, 0,
+	       sizeof(struct ecryptfs_auth_tok_list_item));
+	kmem_cache_free(ecryptfs_auth_tok_list_item_cache,
 			auth_tok_list_item);
 out:
-	अगर (rc)
+	if (rc)
 		(*packet_size) = 0;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * parse_tag_3_packet
- * @crypt_stat: The cryptographic context to modअगरy based on packet
+ * @crypt_stat: The cryptographic context to modify based on packet
  *              contents.
  * @data: The raw bytes of the packet.
- * @auth_tok_list: eCryptfs parses packets पूर्णांकo authentication tokens;
+ * @auth_tok_list: eCryptfs parses packets into authentication tokens;
  *                 a new authentication token will be placed at the end
- *                 of this list क्रम this packet.
- * @new_auth_tok: Poपूर्णांकer to a poपूर्णांकer to memory that this function
- *                allocates; sets the memory address of the poपूर्णांकer to
- *                शून्य on error. This object is added to the
+ *                 of this list for this packet.
+ * @new_auth_tok: Pointer to a pointer to memory that this function
+ *                allocates; sets the memory address of the pointer to
+ *                NULL on error. This object is added to the
  *                auth_tok_list.
- * @packet_size: This function ग_लिखोs the size of the parsed packet
- *               पूर्णांकo this memory location; zero on error.
+ * @packet_size: This function writes the size of the parsed packet
+ *               into this memory location; zero on error.
  * @max_packet_size: maximum number of bytes to parse
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-parse_tag_3_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
-		   अचिन्हित अक्षर *data, काष्ठा list_head *auth_tok_list,
-		   काष्ठा ecryptfs_auth_tok **new_auth_tok,
-		   माप_प्रकार *packet_size, माप_प्रकार max_packet_size)
-अणु
-	माप_प्रकार body_size;
-	काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item;
-	माप_प्रकार length_size;
-	पूर्णांक rc = 0;
+static int
+parse_tag_3_packet(struct ecryptfs_crypt_stat *crypt_stat,
+		   unsigned char *data, struct list_head *auth_tok_list,
+		   struct ecryptfs_auth_tok **new_auth_tok,
+		   size_t *packet_size, size_t max_packet_size)
+{
+	size_t body_size;
+	struct ecryptfs_auth_tok_list_item *auth_tok_list_item;
+	size_t length_size;
+	int rc = 0;
 
 	(*packet_size) = 0;
-	(*new_auth_tok) = शून्य;
+	(*new_auth_tok) = NULL;
 	/**
-	 *This क्रमmat is inspired by OpenPGP; see RFC 2440
+	 *This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 3
 	 *
-	 * Tag 3 identअगरier (1 byte)
+	 * Tag 3 identifier (1 byte)
 	 * Max Tag 3 packet size (max 3 bytes)
 	 * Version (1 byte)
 	 * Cipher code (1 byte)
-	 * S2K specअगरier (1 byte)
-	 * Hash identअगरier (1 byte)
+	 * S2K specifier (1 byte)
+	 * Hash identifier (1 byte)
 	 * Salt (ECRYPTFS_SALT_SIZE)
 	 * Hash iterations (1 byte)
 	 * Encrypted key (arbitrary)
 	 *
 	 * (ECRYPTFS_SALT_SIZE + 7) minimum packet size
 	 */
-	अगर (max_packet_size < (ECRYPTFS_SALT_SIZE + 7)) अणु
-		prपूर्णांकk(KERN_ERR "Max packet size too large\n");
+	if (max_packet_size < (ECRYPTFS_SALT_SIZE + 7)) {
+		printk(KERN_ERR "Max packet size too large\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (data[(*packet_size)++] != ECRYPTFS_TAG_3_PACKET_TYPE) अणु
-		prपूर्णांकk(KERN_ERR "First byte != 0x%.2x; invalid packet\n",
+		goto out;
+	}
+	if (data[(*packet_size)++] != ECRYPTFS_TAG_3_PACKET_TYPE) {
+		printk(KERN_ERR "First byte != 0x%.2x; invalid packet\n",
 		       ECRYPTFS_TAG_3_PACKET_TYPE);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* Released: wipe_auth_tok_list called in ecryptfs_parse_packet_set or
 	 * at end of function upon failure */
 	auth_tok_list_item =
 	    kmem_cache_zalloc(ecryptfs_auth_tok_list_item_cache, GFP_KERNEL);
-	अगर (!auth_tok_list_item) अणु
-		prपूर्णांकk(KERN_ERR "Unable to allocate memory\n");
+	if (!auth_tok_list_item) {
+		printk(KERN_ERR "Unable to allocate memory\n");
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*new_auth_tok) = &auth_tok_list_item->auth_tok;
 	rc = ecryptfs_parse_packet_length(&data[(*packet_size)], &body_size,
 					  &length_size);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "Error parsing packet length; rc = [%d]\n",
+	if (rc) {
+		printk(KERN_WARNING "Error parsing packet length; rc = [%d]\n",
 		       rc);
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (unlikely(body_size < (ECRYPTFS_SALT_SIZE + 5))) अणु
-		prपूर्णांकk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
+		goto out_free;
+	}
+	if (unlikely(body_size < (ECRYPTFS_SALT_SIZE + 5))) {
+		printk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	(*packet_size) += length_size;
-	अगर (unlikely((*packet_size) + body_size > max_packet_size)) अणु
-		prपूर्णांकk(KERN_ERR "Packet size exceeds max\n");
+	if (unlikely((*packet_size) + body_size > max_packet_size)) {
+		printk(KERN_ERR "Packet size exceeds max\n");
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	(*new_auth_tok)->session_key.encrypted_key_size =
 		(body_size - (ECRYPTFS_SALT_SIZE + 5));
-	अगर ((*new_auth_tok)->session_key.encrypted_key_size
-	    > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) अणु
-		prपूर्णांकk(KERN_WARNING "Tag 3 packet contains key larger "
+	if ((*new_auth_tok)->session_key.encrypted_key_size
+	    > ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES) {
+		printk(KERN_WARNING "Tag 3 packet contains key larger "
 		       "than ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES\n");
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (unlikely(data[(*packet_size)++] != 0x04)) अणु
-		prपूर्णांकk(KERN_WARNING "Unknown version number [%d]\n",
+		goto out_free;
+	}
+	if (unlikely(data[(*packet_size)++] != 0x04)) {
+		printk(KERN_WARNING "Unknown version number [%d]\n",
 		       data[(*packet_size) - 1]);
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	rc = ecryptfs_cipher_code_to_string(crypt_stat->cipher,
 					    (u16)data[(*packet_size)]);
-	अगर (rc)
-		जाओ out_मुक्त;
-	/* A little extra work to dअगरferentiate among the AES key
+	if (rc)
+		goto out_free;
+	/* A little extra work to differentiate among the AES key
 	 * sizes; see RFC2440 */
-	चयन(data[(*packet_size)++]) अणु
-	हाल RFC2440_CIPHER_AES_192:
+	switch(data[(*packet_size)++]) {
+	case RFC2440_CIPHER_AES_192:
 		crypt_stat->key_size = 24;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		crypt_stat->key_size =
 			(*new_auth_tok)->session_key.encrypted_key_size;
-	पूर्ण
+	}
 	rc = ecryptfs_init_crypt_ctx(crypt_stat);
-	अगर (rc)
-		जाओ out_मुक्त;
-	अगर (unlikely(data[(*packet_size)++] != 0x03)) अणु
-		prपूर्णांकk(KERN_WARNING "Only S2K ID 3 is currently supported\n");
+	if (rc)
+		goto out_free;
+	if (unlikely(data[(*packet_size)++] != 0x03)) {
+		printk(KERN_WARNING "Only S2K ID 3 is currently supported\n");
 		rc = -ENOSYS;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	/* TODO: finish the hash mapping */
-	चयन (data[(*packet_size)++]) अणु
-	हाल 0x01: /* See RFC2440 क्रम these numbers and their mappings */
+	switch (data[(*packet_size)++]) {
+	case 0x01: /* See RFC2440 for these numbers and their mappings */
 		/* Choose MD5 */
-		स_नकल((*new_auth_tok)->token.password.salt,
+		memcpy((*new_auth_tok)->token.password.salt,
 		       &data[(*packet_size)], ECRYPTFS_SALT_SIZE);
 		(*packet_size) += ECRYPTFS_SALT_SIZE;
 		/* This conversion was taken straight from RFC2440 */
@@ -1473,7 +1472,7 @@ parse_tag_3_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
 		/* Friendly reminder:
 		 * (*new_auth_tok)->session_key.encrypted_key_size =
 		 *         (body_size - (ECRYPTFS_SALT_SIZE + 5)); */
-		स_नकल((*new_auth_tok)->session_key.encrypted_key,
+		memcpy((*new_auth_tok)->session_key.encrypted_key,
 		       &data[(*packet_size)],
 		       (*new_auth_tok)->session_key.encrypted_key_size);
 		(*packet_size) +=
@@ -1483,13 +1482,13 @@ parse_tag_3_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
 		(*new_auth_tok)->session_key.flags |=
 			ECRYPTFS_CONTAINS_ENCRYPTED_KEY;
 		(*new_auth_tok)->token.password.hash_algo = 0x01; /* MD5 */
-		अवरोध;
-	शेष:
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Unsupported hash algorithm: "
+		break;
+	default:
+		ecryptfs_printk(KERN_ERR, "Unsupported hash algorithm: "
 				"[%d]\n", data[(*packet_size) - 1]);
 		rc = -ENOSYS;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	(*new_auth_tok)->token_type = ECRYPTFS_PASSWORD;
 	/* TODO: Parametarize; we might actually want userspace to
 	 * decrypt the session key. */
@@ -1498,143 +1497,143 @@ parse_tag_3_packet(काष्ठा ecryptfs_crypt_stat *crypt_stat,
 	(*new_auth_tok)->session_key.flags &=
 			    ~(ECRYPTFS_USERSPACE_SHOULD_TRY_TO_ENCRYPT);
 	list_add(&auth_tok_list_item->list, auth_tok_list);
-	जाओ out;
-out_मुक्त:
-	(*new_auth_tok) = शून्य;
-	स_रखो(auth_tok_list_item, 0,
-	       माप(काष्ठा ecryptfs_auth_tok_list_item));
-	kmem_cache_मुक्त(ecryptfs_auth_tok_list_item_cache,
+	goto out;
+out_free:
+	(*new_auth_tok) = NULL;
+	memset(auth_tok_list_item, 0,
+	       sizeof(struct ecryptfs_auth_tok_list_item));
+	kmem_cache_free(ecryptfs_auth_tok_list_item_cache,
 			auth_tok_list_item);
 out:
-	अगर (rc)
+	if (rc)
 		(*packet_size) = 0;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * parse_tag_11_packet
  * @data: The raw bytes of the packet
- * @contents: This function ग_लिखोs the data contents of the literal
- *            packet पूर्णांकo this memory location
+ * @contents: This function writes the data contents of the literal
+ *            packet into this memory location
  * @max_contents_bytes: The maximum number of bytes that this function
- *                      is allowed to ग_लिखो पूर्णांकo contents
- * @tag_11_contents_size: This function ग_लिखोs the size of the parsed
- *                        contents पूर्णांकo this memory location; zero on
+ *                      is allowed to write into contents
+ * @tag_11_contents_size: This function writes the size of the parsed
+ *                        contents into this memory location; zero on
  *                        error
- * @packet_size: This function ग_लिखोs the size of the parsed packet
- *               पूर्णांकo this memory location; zero on error
+ * @packet_size: This function writes the size of the parsed packet
+ *               into this memory location; zero on error
  * @max_packet_size: maximum number of bytes to parse
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-parse_tag_11_packet(अचिन्हित अक्षर *data, अचिन्हित अक्षर *contents,
-		    माप_प्रकार max_contents_bytes, माप_प्रकार *tag_11_contents_size,
-		    माप_प्रकार *packet_size, माप_प्रकार max_packet_size)
-अणु
-	माप_प्रकार body_size;
-	माप_प्रकार length_size;
-	पूर्णांक rc = 0;
+static int
+parse_tag_11_packet(unsigned char *data, unsigned char *contents,
+		    size_t max_contents_bytes, size_t *tag_11_contents_size,
+		    size_t *packet_size, size_t max_packet_size)
+{
+	size_t body_size;
+	size_t length_size;
+	int rc = 0;
 
 	(*packet_size) = 0;
 	(*tag_11_contents_size) = 0;
-	/* This क्रमmat is inspired by OpenPGP; see RFC 2440
+	/* This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 11
 	 *
-	 * Tag 11 identअगरier (1 byte)
+	 * Tag 11 identifier (1 byte)
 	 * Max Tag 11 packet size (max 3 bytes)
-	 * Binary क्रमmat specअगरier (1 byte)
+	 * Binary format specifier (1 byte)
 	 * Filename length (1 byte)
 	 * Filename ("_CONSOLE") (8 bytes)
-	 * Modअगरication date (4 bytes)
+	 * Modification date (4 bytes)
 	 * Literal data (arbitrary)
 	 *
-	 * We need at least 16 bytes of data क्रम the packet to even be
+	 * We need at least 16 bytes of data for the packet to even be
 	 * valid.
 	 */
-	अगर (max_packet_size < 16) अणु
-		prपूर्णांकk(KERN_ERR "Maximum packet size too small\n");
+	if (max_packet_size < 16) {
+		printk(KERN_ERR "Maximum packet size too small\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (data[(*packet_size)++] != ECRYPTFS_TAG_11_PACKET_TYPE) अणु
-		prपूर्णांकk(KERN_WARNING "Invalid tag 11 packet format\n");
+		goto out;
+	}
+	if (data[(*packet_size)++] != ECRYPTFS_TAG_11_PACKET_TYPE) {
+		printk(KERN_WARNING "Invalid tag 11 packet format\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = ecryptfs_parse_packet_length(&data[(*packet_size)], &body_size,
 					  &length_size);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_WARNING "Invalid tag 11 packet format\n");
-		जाओ out;
-	पूर्ण
-	अगर (body_size < 14) अणु
-		prपूर्णांकk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
+	if (rc) {
+		printk(KERN_WARNING "Invalid tag 11 packet format\n");
+		goto out;
+	}
+	if (body_size < 14) {
+		printk(KERN_WARNING "Invalid body size ([%td])\n", body_size);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*packet_size) += length_size;
 	(*tag_11_contents_size) = (body_size - 14);
-	अगर (unlikely((*packet_size) + body_size + 1 > max_packet_size)) अणु
-		prपूर्णांकk(KERN_ERR "Packet size exceeds max\n");
+	if (unlikely((*packet_size) + body_size + 1 > max_packet_size)) {
+		printk(KERN_ERR "Packet size exceeds max\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (unlikely((*tag_11_contents_size) > max_contents_bytes)) अणु
-		prपूर्णांकk(KERN_ERR "Literal data section in tag 11 packet exceeds "
+		goto out;
+	}
+	if (unlikely((*tag_11_contents_size) > max_contents_bytes)) {
+		printk(KERN_ERR "Literal data section in tag 11 packet exceeds "
 		       "expected size\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (data[(*packet_size)++] != 0x62) अणु
-		prपूर्णांकk(KERN_WARNING "Unrecognizable packet\n");
+		goto out;
+	}
+	if (data[(*packet_size)++] != 0x62) {
+		printk(KERN_WARNING "Unrecognizable packet\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	अगर (data[(*packet_size)++] != 0x08) अणु
-		prपूर्णांकk(KERN_WARNING "Unrecognizable packet\n");
+		goto out;
+	}
+	if (data[(*packet_size)++] != 0x08) {
+		printk(KERN_WARNING "Unrecognizable packet\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
-	(*packet_size) += 12; /* Ignore filename and modअगरication date */
-	स_नकल(contents, &data[(*packet_size)], (*tag_11_contents_size));
+		goto out;
+	}
+	(*packet_size) += 12; /* Ignore filename and modification date */
+	memcpy(contents, &data[(*packet_size)], (*tag_11_contents_size));
 	(*packet_size) += (*tag_11_contents_size);
 out:
-	अगर (rc) अणु
+	if (rc) {
 		(*packet_size) = 0;
 		(*tag_11_contents_size) = 0;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-पूर्णांक ecryptfs_keyring_auth_tok_क्रम_sig(काष्ठा key **auth_tok_key,
-				      काष्ठा ecryptfs_auth_tok **auth_tok,
-				      अक्षर *sig)
-अणु
-	पूर्णांक rc = 0;
+int ecryptfs_keyring_auth_tok_for_sig(struct key **auth_tok_key,
+				      struct ecryptfs_auth_tok **auth_tok,
+				      char *sig)
+{
+	int rc = 0;
 
-	(*auth_tok_key) = request_key(&key_type_user, sig, शून्य);
-	अगर (IS_ERR(*auth_tok_key)) अणु
+	(*auth_tok_key) = request_key(&key_type_user, sig, NULL);
+	if (IS_ERR(*auth_tok_key)) {
 		(*auth_tok_key) = ecryptfs_get_encrypted_key(sig);
-		अगर (IS_ERR(*auth_tok_key)) अणु
-			prपूर्णांकk(KERN_ERR "Could not find key with description: [%s]\n",
+		if (IS_ERR(*auth_tok_key)) {
+			printk(KERN_ERR "Could not find key with description: [%s]\n",
 			      sig);
 			rc = process_request_key_err(PTR_ERR(*auth_tok_key));
-			(*auth_tok_key) = शून्य;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	करोwn_ग_लिखो(&(*auth_tok_key)->sem);
-	rc = ecryptfs_verअगरy_auth_tok_from_key(*auth_tok_key, auth_tok);
-	अगर (rc) अणु
-		up_ग_लिखो(&(*auth_tok_key)->sem);
+			(*auth_tok_key) = NULL;
+			goto out;
+		}
+	}
+	down_write(&(*auth_tok_key)->sem);
+	rc = ecryptfs_verify_auth_tok_from_key(*auth_tok_key, auth_tok);
+	if (rc) {
+		up_write(&(*auth_tok_key)->sem);
 		key_put(*auth_tok_key);
-		(*auth_tok_key) = शून्य;
-		जाओ out;
-	पूर्ण
+		(*auth_tok_key) = NULL;
+		goto out;
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * decrypt_passphrase_encrypted_session_key - Decrypt the session key with the given auth_tok.
@@ -1643,100 +1642,100 @@ out:
  *
  * Returns zero on success; non-zero error otherwise
  */
-अटल पूर्णांक
-decrypt_passphrase_encrypted_session_key(काष्ठा ecryptfs_auth_tok *auth_tok,
-					 काष्ठा ecryptfs_crypt_stat *crypt_stat)
-अणु
-	काष्ठा scatterlist dst_sg[2];
-	काष्ठा scatterlist src_sg[2];
-	काष्ठा mutex *tfm_mutex;
-	काष्ठा crypto_skcipher *tfm;
-	काष्ठा skcipher_request *req = शून्य;
-	पूर्णांक rc = 0;
+static int
+decrypt_passphrase_encrypted_session_key(struct ecryptfs_auth_tok *auth_tok,
+					 struct ecryptfs_crypt_stat *crypt_stat)
+{
+	struct scatterlist dst_sg[2];
+	struct scatterlist src_sg[2];
+	struct mutex *tfm_mutex;
+	struct crypto_skcipher *tfm;
+	struct skcipher_request *req = NULL;
+	int rc = 0;
 
-	अगर (unlikely(ecryptfs_verbosity > 0)) अणु
-		ecryptfs_prपूर्णांकk(
+	if (unlikely(ecryptfs_verbosity > 0)) {
+		ecryptfs_printk(
 			KERN_DEBUG, "Session key encryption key (size [%d]):\n",
 			auth_tok->token.password.session_key_encryption_key_bytes);
 		ecryptfs_dump_hex(
 			auth_tok->token.password.session_key_encryption_key,
 			auth_tok->token.password.session_key_encryption_key_bytes);
-	पूर्ण
-	rc = ecryptfs_get_tfm_and_mutex_क्रम_cipher_name(&tfm, &tfm_mutex,
+	}
+	rc = ecryptfs_get_tfm_and_mutex_for_cipher_name(&tfm, &tfm_mutex,
 							crypt_stat->cipher);
-	अगर (unlikely(rc)) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to get "
+	if (unlikely(rc)) {
+		printk(KERN_ERR "Internal error whilst attempting to get "
 		       "tfm and mutex for cipher name [%s]; rc = [%d]\n",
 		       crypt_stat->cipher, rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = virt_to_scatterlist(auth_tok->session_key.encrypted_key,
 				 auth_tok->session_key.encrypted_key_size,
 				 src_sg, 2);
-	अगर (rc < 1 || rc > 2) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to convert "
+	if (rc < 1 || rc > 2) {
+		printk(KERN_ERR "Internal error whilst attempting to convert "
 			"auth_tok->session_key.encrypted_key to scatterlist; "
 			"expected rc = 1; got rc = [%d]. "
 		       "auth_tok->session_key.encrypted_key_size = [%d]\n", rc,
 			auth_tok->session_key.encrypted_key_size);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	auth_tok->session_key.decrypted_key_size =
 		auth_tok->session_key.encrypted_key_size;
 	rc = virt_to_scatterlist(auth_tok->session_key.decrypted_key,
 				 auth_tok->session_key.decrypted_key_size,
 				 dst_sg, 2);
-	अगर (rc < 1 || rc > 2) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to convert "
+	if (rc < 1 || rc > 2) {
+		printk(KERN_ERR "Internal error whilst attempting to convert "
 			"auth_tok->session_key.decrypted_key to scatterlist; "
 			"expected rc = 1; got rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_lock(tfm_mutex);
 	req = skcipher_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		mutex_unlock(tfm_mutex);
-		prपूर्णांकk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
+		printk(KERN_ERR "%s: Out of kernel memory whilst attempting to "
 		       "skcipher_request_alloc for %s\n", __func__,
 		       crypto_skcipher_driver_name(tfm));
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP,
-				      शून्य, शून्य);
+				      NULL, NULL);
 	rc = crypto_skcipher_setkey(
 		tfm, auth_tok->token.password.session_key_encryption_key,
 		crypt_stat->key_size);
-	अगर (unlikely(rc < 0)) अणु
+	if (unlikely(rc < 0)) {
 		mutex_unlock(tfm_mutex);
-		prपूर्णांकk(KERN_ERR "Error setting key for crypto context\n");
+		printk(KERN_ERR "Error setting key for crypto context\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	skcipher_request_set_crypt(req, src_sg, dst_sg,
 				   auth_tok->session_key.encrypted_key_size,
-				   शून्य);
+				   NULL);
 	rc = crypto_skcipher_decrypt(req);
 	mutex_unlock(tfm_mutex);
-	अगर (unlikely(rc)) अणु
-		prपूर्णांकk(KERN_ERR "Error decrypting; rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+	if (unlikely(rc)) {
+		printk(KERN_ERR "Error decrypting; rc = [%d]\n", rc);
+		goto out;
+	}
 	auth_tok->session_key.flags |= ECRYPTFS_CONTAINS_DECRYPTED_KEY;
-	स_नकल(crypt_stat->key, auth_tok->session_key.decrypted_key,
+	memcpy(crypt_stat->key, auth_tok->session_key.decrypted_key,
 	       auth_tok->session_key.decrypted_key_size);
 	crypt_stat->flags |= ECRYPTFS_KEY_VALID;
-	अगर (unlikely(ecryptfs_verbosity > 0)) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "FEK of size [%zd]:\n",
+	if (unlikely(ecryptfs_verbosity > 0)) {
+		ecryptfs_printk(KERN_DEBUG, "FEK of size [%zd]:\n",
 				crypt_stat->key_size);
 		ecryptfs_dump_hex(crypt_stat->key,
 				  crypt_stat->key_size);
-	पूर्ण
+	}
 out:
-	skcipher_request_मुक्त(req);
-	वापस rc;
-पूर्ण
+	skcipher_request_free(req);
+	return rc;
+}
 
 /**
  * ecryptfs_parse_packet_set
@@ -1744,118 +1743,118 @@ out:
  * @src: Virtual address of region of memory containing the packets
  * @ecryptfs_dentry: The eCryptfs dentry associated with the packet set
  *
- * Get crypt_stat to have the file's session key अगर the requisite key
+ * Get crypt_stat to have the file's session key if the requisite key
  * is available to decrypt the session key.
  *
- * Returns Zero अगर a valid authentication token was retrieved and
- * processed; negative value क्रम file not encrypted or क्रम error
+ * Returns Zero if a valid authentication token was retrieved and
+ * processed; negative value for file not encrypted or for error
  * conditions.
  */
-पूर्णांक ecryptfs_parse_packet_set(काष्ठा ecryptfs_crypt_stat *crypt_stat,
-			      अचिन्हित अक्षर *src,
-			      काष्ठा dentry *ecryptfs_dentry)
-अणु
-	माप_प्रकार i = 0;
-	माप_प्रकार found_auth_tok;
-	माप_प्रकार next_packet_is_auth_tok_packet;
-	काष्ठा list_head auth_tok_list;
-	काष्ठा ecryptfs_auth_tok *matching_auth_tok;
-	काष्ठा ecryptfs_auth_tok *candidate_auth_tok;
-	अक्षर *candidate_auth_tok_sig;
-	माप_प्रकार packet_size;
-	काष्ठा ecryptfs_auth_tok *new_auth_tok;
-	अचिन्हित अक्षर sig_पंचांगp_space[ECRYPTFS_SIG_SIZE];
-	काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item;
-	माप_प्रकार tag_11_contents_size;
-	माप_प्रकार tag_11_packet_size;
-	काष्ठा key *auth_tok_key = शून्य;
-	पूर्णांक rc = 0;
+int ecryptfs_parse_packet_set(struct ecryptfs_crypt_stat *crypt_stat,
+			      unsigned char *src,
+			      struct dentry *ecryptfs_dentry)
+{
+	size_t i = 0;
+	size_t found_auth_tok;
+	size_t next_packet_is_auth_tok_packet;
+	struct list_head auth_tok_list;
+	struct ecryptfs_auth_tok *matching_auth_tok;
+	struct ecryptfs_auth_tok *candidate_auth_tok;
+	char *candidate_auth_tok_sig;
+	size_t packet_size;
+	struct ecryptfs_auth_tok *new_auth_tok;
+	unsigned char sig_tmp_space[ECRYPTFS_SIG_SIZE];
+	struct ecryptfs_auth_tok_list_item *auth_tok_list_item;
+	size_t tag_11_contents_size;
+	size_t tag_11_packet_size;
+	struct key *auth_tok_key = NULL;
+	int rc = 0;
 
 	INIT_LIST_HEAD(&auth_tok_list);
 	/* Parse the header to find as many packets as we can; these will be
 	 * added the our &auth_tok_list */
 	next_packet_is_auth_tok_packet = 1;
-	जबतक (next_packet_is_auth_tok_packet) अणु
-		माप_प्रकार max_packet_size = ((PAGE_SIZE - 8) - i);
+	while (next_packet_is_auth_tok_packet) {
+		size_t max_packet_size = ((PAGE_SIZE - 8) - i);
 
-		चयन (src[i]) अणु
-		हाल ECRYPTFS_TAG_3_PACKET_TYPE:
+		switch (src[i]) {
+		case ECRYPTFS_TAG_3_PACKET_TYPE:
 			rc = parse_tag_3_packet(crypt_stat,
-						(अचिन्हित अक्षर *)&src[i],
+						(unsigned char *)&src[i],
 						&auth_tok_list, &new_auth_tok,
 						&packet_size, max_packet_size);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_ERR, "Error parsing "
+			if (rc) {
+				ecryptfs_printk(KERN_ERR, "Error parsing "
 						"tag 3 packet\n");
 				rc = -EIO;
-				जाओ out_wipe_list;
-			पूर्ण
+				goto out_wipe_list;
+			}
 			i += packet_size;
-			rc = parse_tag_11_packet((अचिन्हित अक्षर *)&src[i],
-						 sig_पंचांगp_space,
+			rc = parse_tag_11_packet((unsigned char *)&src[i],
+						 sig_tmp_space,
 						 ECRYPTFS_SIG_SIZE,
 						 &tag_11_contents_size,
 						 &tag_11_packet_size,
 						 max_packet_size);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_ERR, "No valid "
+			if (rc) {
+				ecryptfs_printk(KERN_ERR, "No valid "
 						"(ecryptfs-specific) literal "
 						"packet containing "
 						"authentication token "
 						"signature found after "
 						"tag 3 packet\n");
 				rc = -EIO;
-				जाओ out_wipe_list;
-			पूर्ण
+				goto out_wipe_list;
+			}
 			i += tag_11_packet_size;
-			अगर (ECRYPTFS_SIG_SIZE != tag_11_contents_size) अणु
-				ecryptfs_prपूर्णांकk(KERN_ERR, "Expected "
+			if (ECRYPTFS_SIG_SIZE != tag_11_contents_size) {
+				ecryptfs_printk(KERN_ERR, "Expected "
 						"signature of size [%d]; "
 						"read size [%zd]\n",
 						ECRYPTFS_SIG_SIZE,
 						tag_11_contents_size);
 				rc = -EIO;
-				जाओ out_wipe_list;
-			पूर्ण
+				goto out_wipe_list;
+			}
 			ecryptfs_to_hex(new_auth_tok->token.password.signature,
-					sig_पंचांगp_space, tag_11_contents_size);
+					sig_tmp_space, tag_11_contents_size);
 			new_auth_tok->token.password.signature[
 				ECRYPTFS_PASSWORD_SIG_SIZE] = '\0';
 			crypt_stat->flags |= ECRYPTFS_ENCRYPTED;
-			अवरोध;
-		हाल ECRYPTFS_TAG_1_PACKET_TYPE:
+			break;
+		case ECRYPTFS_TAG_1_PACKET_TYPE:
 			rc = parse_tag_1_packet(crypt_stat,
-						(अचिन्हित अक्षर *)&src[i],
+						(unsigned char *)&src[i],
 						&auth_tok_list, &new_auth_tok,
 						&packet_size, max_packet_size);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_ERR, "Error parsing "
+			if (rc) {
+				ecryptfs_printk(KERN_ERR, "Error parsing "
 						"tag 1 packet\n");
 				rc = -EIO;
-				जाओ out_wipe_list;
-			पूर्ण
+				goto out_wipe_list;
+			}
 			i += packet_size;
 			crypt_stat->flags |= ECRYPTFS_ENCRYPTED;
-			अवरोध;
-		हाल ECRYPTFS_TAG_11_PACKET_TYPE:
-			ecryptfs_prपूर्णांकk(KERN_WARNING, "Invalid packet set "
+			break;
+		case ECRYPTFS_TAG_11_PACKET_TYPE:
+			ecryptfs_printk(KERN_WARNING, "Invalid packet set "
 					"(Tag 11 not allowed by itself)\n");
 			rc = -EIO;
-			जाओ out_wipe_list;
-		शेष:
-			ecryptfs_prपूर्णांकk(KERN_DEBUG, "No packet at offset [%zd] "
+			goto out_wipe_list;
+		default:
+			ecryptfs_printk(KERN_DEBUG, "No packet at offset [%zd] "
 					"of the file header; hex value of "
 					"character is [0x%.2x]\n", i, src[i]);
 			next_packet_is_auth_tok_packet = 0;
-		पूर्ण
-	पूर्ण
-	अगर (list_empty(&auth_tok_list)) अणु
-		prपूर्णांकk(KERN_ERR "The lower file appears to be a non-encrypted "
+		}
+	}
+	if (list_empty(&auth_tok_list)) {
+		printk(KERN_ERR "The lower file appears to be a non-encrypted "
 		       "eCryptfs file; this is not supported in this version "
 		       "of the eCryptfs kernel module\n");
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* auth_tok_list contains the set of authentication tokens
 	 * parsed from the metadata. We need to find a matching
 	 * authentication token that has the secret component(s)
@@ -1864,669 +1863,669 @@ out:
 	 * just one will be sufficient to decrypt to get the FEK. */
 find_next_matching_auth_tok:
 	found_auth_tok = 0;
-	list_क्रम_each_entry(auth_tok_list_item, &auth_tok_list, list) अणु
+	list_for_each_entry(auth_tok_list_item, &auth_tok_list, list) {
 		candidate_auth_tok = &auth_tok_list_item->auth_tok;
-		अगर (unlikely(ecryptfs_verbosity > 0)) अणु
-			ecryptfs_prपूर्णांकk(KERN_DEBUG,
+		if (unlikely(ecryptfs_verbosity > 0)) {
+			ecryptfs_printk(KERN_DEBUG,
 					"Considering candidate auth tok:\n");
 			ecryptfs_dump_auth_tok(candidate_auth_tok);
-		पूर्ण
+		}
 		rc = ecryptfs_get_auth_tok_sig(&candidate_auth_tok_sig,
 					       candidate_auth_tok);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_ERR
+		if (rc) {
+			printk(KERN_ERR
 			       "Unrecognized candidate auth tok type: [%d]\n",
 			       candidate_auth_tok->token_type);
 			rc = -EINVAL;
-			जाओ out_wipe_list;
-		पूर्ण
-		rc = ecryptfs_find_auth_tok_क्रम_sig(&auth_tok_key,
+			goto out_wipe_list;
+		}
+		rc = ecryptfs_find_auth_tok_for_sig(&auth_tok_key,
 					       &matching_auth_tok,
 					       crypt_stat->mount_crypt_stat,
 					       candidate_auth_tok_sig);
-		अगर (!rc) अणु
+		if (!rc) {
 			found_auth_tok = 1;
-			जाओ found_matching_auth_tok;
-		पूर्ण
-	पूर्ण
-	अगर (!found_auth_tok) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Could not find a usable "
+			goto found_matching_auth_tok;
+		}
+	}
+	if (!found_auth_tok) {
+		ecryptfs_printk(KERN_ERR, "Could not find a usable "
 				"authentication token\n");
 		rc = -EIO;
-		जाओ out_wipe_list;
-	पूर्ण
+		goto out_wipe_list;
+	}
 found_matching_auth_tok:
-	अगर (candidate_auth_tok->token_type == ECRYPTFS_PRIVATE_KEY) अणु
-		स_नकल(&(candidate_auth_tok->token.निजी_key),
-		       &(matching_auth_tok->token.निजी_key),
-		       माप(काष्ठा ecryptfs_निजी_key));
-		up_ग_लिखो(&(auth_tok_key->sem));
+	if (candidate_auth_tok->token_type == ECRYPTFS_PRIVATE_KEY) {
+		memcpy(&(candidate_auth_tok->token.private_key),
+		       &(matching_auth_tok->token.private_key),
+		       sizeof(struct ecryptfs_private_key));
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
 		rc = decrypt_pki_encrypted_session_key(candidate_auth_tok,
 						       crypt_stat);
-	पूर्ण अन्यथा अगर (candidate_auth_tok->token_type == ECRYPTFS_PASSWORD) अणु
-		स_नकल(&(candidate_auth_tok->token.password),
+	} else if (candidate_auth_tok->token_type == ECRYPTFS_PASSWORD) {
+		memcpy(&(candidate_auth_tok->token.password),
 		       &(matching_auth_tok->token.password),
-		       माप(काष्ठा ecryptfs_password));
-		up_ग_लिखो(&(auth_tok_key->sem));
+		       sizeof(struct ecryptfs_password));
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
 		rc = decrypt_passphrase_encrypted_session_key(
 			candidate_auth_tok, crypt_stat);
-	पूर्ण अन्यथा अणु
-		up_ग_लिखो(&(auth_tok_key->sem));
+	} else {
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
 		rc = -EINVAL;
-	पूर्ण
-	अगर (rc) अणु
-		काष्ठा ecryptfs_auth_tok_list_item *auth_tok_list_item_पंचांगp;
+	}
+	if (rc) {
+		struct ecryptfs_auth_tok_list_item *auth_tok_list_item_tmp;
 
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Error decrypting the "
+		ecryptfs_printk(KERN_WARNING, "Error decrypting the "
 				"session key for authentication token with sig "
 				"[%.*s]; rc = [%d]. Removing auth tok "
 				"candidate from the list and searching for "
 				"the next match.\n", ECRYPTFS_SIG_SIZE_HEX,
 				candidate_auth_tok_sig,	rc);
-		list_क्रम_each_entry_safe(auth_tok_list_item,
-					 auth_tok_list_item_पंचांगp,
-					 &auth_tok_list, list) अणु
-			अगर (candidate_auth_tok
-			    == &auth_tok_list_item->auth_tok) अणु
+		list_for_each_entry_safe(auth_tok_list_item,
+					 auth_tok_list_item_tmp,
+					 &auth_tok_list, list) {
+			if (candidate_auth_tok
+			    == &auth_tok_list_item->auth_tok) {
 				list_del(&auth_tok_list_item->list);
-				kmem_cache_मुक्त(
+				kmem_cache_free(
 					ecryptfs_auth_tok_list_item_cache,
 					auth_tok_list_item);
-				जाओ find_next_matching_auth_tok;
-			पूर्ण
-		पूर्ण
+				goto find_next_matching_auth_tok;
+			}
+		}
 		BUG();
-	पूर्ण
+	}
 	rc = ecryptfs_compute_root_iv(crypt_stat);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error computing "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error computing "
 				"the root IV\n");
-		जाओ out_wipe_list;
-	पूर्ण
+		goto out_wipe_list;
+	}
 	rc = ecryptfs_init_crypt_ctx(crypt_stat);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error initializing crypto "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error initializing crypto "
 				"context for cipher [%s]; rc = [%d]\n",
 				crypt_stat->cipher, rc);
-	पूर्ण
+	}
 out_wipe_list:
 	wipe_auth_tok_list(&auth_tok_list);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक
-pki_encrypt_session_key(काष्ठा key *auth_tok_key,
-			काष्ठा ecryptfs_auth_tok *auth_tok,
-			काष्ठा ecryptfs_crypt_stat *crypt_stat,
-			काष्ठा ecryptfs_key_record *key_rec)
-अणु
-	काष्ठा ecryptfs_msg_ctx *msg_ctx = शून्य;
-	अक्षर *payload = शून्य;
-	माप_प्रकार payload_len = 0;
-	काष्ठा ecryptfs_message *msg;
-	पूर्णांक rc;
+static int
+pki_encrypt_session_key(struct key *auth_tok_key,
+			struct ecryptfs_auth_tok *auth_tok,
+			struct ecryptfs_crypt_stat *crypt_stat,
+			struct ecryptfs_key_record *key_rec)
+{
+	struct ecryptfs_msg_ctx *msg_ctx = NULL;
+	char *payload = NULL;
+	size_t payload_len = 0;
+	struct ecryptfs_message *msg;
+	int rc;
 
-	rc = ग_लिखो_tag_66_packet(auth_tok->token.निजी_key.signature,
-				 ecryptfs_code_क्रम_cipher_string(
+	rc = write_tag_66_packet(auth_tok->token.private_key.signature,
+				 ecryptfs_code_for_cipher_string(
 					 crypt_stat->cipher,
 					 crypt_stat->key_size),
 				 crypt_stat, &payload, &payload_len);
-	up_ग_लिखो(&(auth_tok_key->sem));
+	up_write(&(auth_tok_key->sem));
 	key_put(auth_tok_key);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 66 packet\n");
-		जाओ out;
-	पूर्ण
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 66 packet\n");
+		goto out;
+	}
 	rc = ecryptfs_send_message(payload, payload_len, &msg_ctx);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error sending message to "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error sending message to "
 				"ecryptfsd: %d\n", rc);
-		जाओ out;
-	पूर्ण
-	rc = ecryptfs_रुको_क्रम_response(msg_ctx, &msg);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Failed to receive tag 67 packet "
+		goto out;
+	}
+	rc = ecryptfs_wait_for_response(msg_ctx, &msg);
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Failed to receive tag 67 packet "
 				"from the user space daemon\n");
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = parse_tag_67_packet(key_rec, msg);
-	अगर (rc)
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error parsing tag 67 packet\n");
-	kमुक्त(msg);
+	if (rc)
+		ecryptfs_printk(KERN_ERR, "Error parsing tag 67 packet\n");
+	kfree(msg);
 out:
-	kमुक्त(payload);
-	वापस rc;
-पूर्ण
+	kfree(payload);
+	return rc;
+}
 /**
- * ग_लिखो_tag_1_packet - Write an RFC2440-compatible tag 1 (खुला key) packet
- * @dest: Buffer पूर्णांकo which to ग_लिखो the packet
- * @reमुख्यing_bytes: Maximum number of bytes that can be writtn
- * @auth_tok_key: The authentication token key to unlock and put when करोne with
+ * write_tag_1_packet - Write an RFC2440-compatible tag 1 (public key) packet
+ * @dest: Buffer into which to write the packet
+ * @remaining_bytes: Maximum number of bytes that can be writtn
+ * @auth_tok_key: The authentication token key to unlock and put when done with
  *                @auth_tok
- * @auth_tok: The authentication token used क्रम generating the tag 1 packet
+ * @auth_tok: The authentication token used for generating the tag 1 packet
  * @crypt_stat: The cryptographic context
- * @key_rec: The key record काष्ठा क्रम the tag 1 packet
- * @packet_size: This function will ग_लिखो the number of bytes that end
- *               up स्थिरituting the packet; set to zero on error
+ * @key_rec: The key record struct for the tag 1 packet
+ * @packet_size: This function will write the number of bytes that end
+ *               up constituting the packet; set to zero on error
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-ग_लिखो_tag_1_packet(अक्षर *dest, माप_प्रकार *reमुख्यing_bytes,
-		   काष्ठा key *auth_tok_key, काष्ठा ecryptfs_auth_tok *auth_tok,
-		   काष्ठा ecryptfs_crypt_stat *crypt_stat,
-		   काष्ठा ecryptfs_key_record *key_rec, माप_प्रकार *packet_size)
-अणु
-	माप_प्रकार i;
-	माप_प्रकार encrypted_session_key_valid = 0;
-	माप_प्रकार packet_size_length;
-	माप_प्रकार max_packet_size;
-	पूर्णांक rc = 0;
+static int
+write_tag_1_packet(char *dest, size_t *remaining_bytes,
+		   struct key *auth_tok_key, struct ecryptfs_auth_tok *auth_tok,
+		   struct ecryptfs_crypt_stat *crypt_stat,
+		   struct ecryptfs_key_record *key_rec, size_t *packet_size)
+{
+	size_t i;
+	size_t encrypted_session_key_valid = 0;
+	size_t packet_size_length;
+	size_t max_packet_size;
+	int rc = 0;
 
 	(*packet_size) = 0;
-	ecryptfs_from_hex(key_rec->sig, auth_tok->token.निजी_key.signature,
+	ecryptfs_from_hex(key_rec->sig, auth_tok->token.private_key.signature,
 			  ECRYPTFS_SIG_SIZE);
 	encrypted_session_key_valid = 0;
-	क्रम (i = 0; i < crypt_stat->key_size; i++)
+	for (i = 0; i < crypt_stat->key_size; i++)
 		encrypted_session_key_valid |=
 			auth_tok->session_key.encrypted_key[i];
-	अगर (encrypted_session_key_valid) अणु
-		स_नकल(key_rec->enc_key,
+	if (encrypted_session_key_valid) {
+		memcpy(key_rec->enc_key,
 		       auth_tok->session_key.encrypted_key,
 		       auth_tok->session_key.encrypted_key_size);
-		up_ग_लिखो(&(auth_tok_key->sem));
+		up_write(&(auth_tok_key->sem));
 		key_put(auth_tok_key);
-		जाओ encrypted_session_key_set;
-	पूर्ण
-	अगर (auth_tok->session_key.encrypted_key_size == 0)
+		goto encrypted_session_key_set;
+	}
+	if (auth_tok->session_key.encrypted_key_size == 0)
 		auth_tok->session_key.encrypted_key_size =
-			auth_tok->token.निजी_key.key_size;
+			auth_tok->token.private_key.key_size;
 	rc = pki_encrypt_session_key(auth_tok_key, auth_tok, crypt_stat,
 				     key_rec);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Failed to encrypt session key via a key "
+	if (rc) {
+		printk(KERN_ERR "Failed to encrypt session key via a key "
 		       "module; rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
-	अगर (ecryptfs_verbosity > 0) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Encrypted key:\n");
+		goto out;
+	}
+	if (ecryptfs_verbosity > 0) {
+		ecryptfs_printk(KERN_DEBUG, "Encrypted key:\n");
 		ecryptfs_dump_hex(key_rec->enc_key, key_rec->enc_key_size);
-	पूर्ण
+	}
 encrypted_session_key_set:
-	/* This क्रमmat is inspired by OpenPGP; see RFC 2440
+	/* This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 1 */
-	max_packet_size = (1                         /* Tag 1 identअगरier */
+	max_packet_size = (1                         /* Tag 1 identifier */
 			   + 3                       /* Max Tag 1 packet size */
 			   + 1                       /* Version */
-			   + ECRYPTFS_SIG_SIZE       /* Key identअगरier */
-			   + 1                       /* Cipher identअगरier */
+			   + ECRYPTFS_SIG_SIZE       /* Key identifier */
+			   + 1                       /* Cipher identifier */
 			   + key_rec->enc_key_size); /* Encrypted key size */
-	अगर (max_packet_size > (*reमुख्यing_bytes)) अणु
-		prपूर्णांकk(KERN_ERR "Packet length larger than maximum allowable; "
+	if (max_packet_size > (*remaining_bytes)) {
+		printk(KERN_ERR "Packet length larger than maximum allowable; "
 		       "need up to [%td] bytes, but there are only [%td] "
-		       "available\n", max_packet_size, (*reमुख्यing_bytes));
+		       "available\n", max_packet_size, (*remaining_bytes));
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dest[(*packet_size)++] = ECRYPTFS_TAG_1_PACKET_TYPE;
-	rc = ecryptfs_ग_लिखो_packet_length(&dest[(*packet_size)],
+	rc = ecryptfs_write_packet_length(&dest[(*packet_size)],
 					  (max_packet_size - 4),
 					  &packet_size_length);
-	अगर (rc) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating tag 1 packet "
+	if (rc) {
+		ecryptfs_printk(KERN_ERR, "Error generating tag 1 packet "
 				"header; cannot generate packet length\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*packet_size) += packet_size_length;
 	dest[(*packet_size)++] = 0x03; /* version 3 */
-	स_नकल(&dest[(*packet_size)], key_rec->sig, ECRYPTFS_SIG_SIZE);
+	memcpy(&dest[(*packet_size)], key_rec->sig, ECRYPTFS_SIG_SIZE);
 	(*packet_size) += ECRYPTFS_SIG_SIZE;
 	dest[(*packet_size)++] = RFC2440_CIPHER_RSA;
-	स_नकल(&dest[(*packet_size)], key_rec->enc_key,
+	memcpy(&dest[(*packet_size)], key_rec->enc_key,
 	       key_rec->enc_key_size);
 	(*packet_size) += key_rec->enc_key_size;
 out:
-	अगर (rc)
+	if (rc)
 		(*packet_size) = 0;
-	अन्यथा
-		(*reमुख्यing_bytes) -= (*packet_size);
-	वापस rc;
-पूर्ण
+	else
+		(*remaining_bytes) -= (*packet_size);
+	return rc;
+}
 
 /**
- * ग_लिखो_tag_11_packet
- * @dest: Target पूर्णांकo which Tag 11 packet is to be written
- * @reमुख्यing_bytes: Maximum packet length
+ * write_tag_11_packet
+ * @dest: Target into which Tag 11 packet is to be written
+ * @remaining_bytes: Maximum packet length
  * @contents: Byte array of contents to copy in
  * @contents_length: Number of bytes in contents
  * @packet_length: Length of the Tag 11 packet written; zero on error
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-ग_लिखो_tag_11_packet(अक्षर *dest, माप_प्रकार *reमुख्यing_bytes, अक्षर *contents,
-		    माप_प्रकार contents_length, माप_प्रकार *packet_length)
-अणु
-	माप_प्रकार packet_size_length;
-	माप_प्रकार max_packet_size;
-	पूर्णांक rc = 0;
+static int
+write_tag_11_packet(char *dest, size_t *remaining_bytes, char *contents,
+		    size_t contents_length, size_t *packet_length)
+{
+	size_t packet_size_length;
+	size_t max_packet_size;
+	int rc = 0;
 
 	(*packet_length) = 0;
-	/* This क्रमmat is inspired by OpenPGP; see RFC 2440
+	/* This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 11 */
-	max_packet_size = (1                   /* Tag 11 identअगरier */
+	max_packet_size = (1                   /* Tag 11 identifier */
 			   + 3                 /* Max Tag 11 packet size */
-			   + 1                 /* Binary क्रमmat specअगरier */
+			   + 1                 /* Binary format specifier */
 			   + 1                 /* Filename length */
 			   + 8                 /* Filename ("_CONSOLE") */
-			   + 4                 /* Modअगरication date */
+			   + 4                 /* Modification date */
 			   + contents_length); /* Literal data */
-	अगर (max_packet_size > (*reमुख्यing_bytes)) अणु
-		prपूर्णांकk(KERN_ERR "Packet length larger than maximum allowable; "
+	if (max_packet_size > (*remaining_bytes)) {
+		printk(KERN_ERR "Packet length larger than maximum allowable; "
 		       "need up to [%td] bytes, but there are only [%td] "
-		       "available\n", max_packet_size, (*reमुख्यing_bytes));
+		       "available\n", max_packet_size, (*remaining_bytes));
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dest[(*packet_length)++] = ECRYPTFS_TAG_11_PACKET_TYPE;
-	rc = ecryptfs_ग_लिखो_packet_length(&dest[(*packet_length)],
+	rc = ecryptfs_write_packet_length(&dest[(*packet_length)],
 					  (max_packet_size - 4),
 					  &packet_size_length);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Error generating tag 11 packet header; cannot "
+	if (rc) {
+		printk(KERN_ERR "Error generating tag 11 packet header; cannot "
 		       "generate packet length. rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*packet_length) += packet_size_length;
-	dest[(*packet_length)++] = 0x62; /* binary data क्रमmat specअगरier */
+	dest[(*packet_length)++] = 0x62; /* binary data format specifier */
 	dest[(*packet_length)++] = 8;
-	स_नकल(&dest[(*packet_length)], "_CONSOLE", 8);
+	memcpy(&dest[(*packet_length)], "_CONSOLE", 8);
 	(*packet_length) += 8;
-	स_रखो(&dest[(*packet_length)], 0x00, 4);
+	memset(&dest[(*packet_length)], 0x00, 4);
 	(*packet_length) += 4;
-	स_नकल(&dest[(*packet_length)], contents, contents_length);
+	memcpy(&dest[(*packet_length)], contents, contents_length);
 	(*packet_length) += contents_length;
  out:
-	अगर (rc)
+	if (rc)
 		(*packet_length) = 0;
-	अन्यथा
-		(*reमुख्यing_bytes) -= (*packet_length);
-	वापस rc;
-पूर्ण
+	else
+		(*remaining_bytes) -= (*packet_length);
+	return rc;
+}
 
 /**
- * ग_लिखो_tag_3_packet
- * @dest: Buffer पूर्णांकo which to ग_लिखो the packet
- * @reमुख्यing_bytes: Maximum number of bytes that can be written
+ * write_tag_3_packet
+ * @dest: Buffer into which to write the packet
+ * @remaining_bytes: Maximum number of bytes that can be written
  * @auth_tok: Authentication token
  * @crypt_stat: The cryptographic context
  * @key_rec: encrypted key
- * @packet_size: This function will ग_लिखो the number of bytes that end
- *               up स्थिरituting the packet; set to zero on error
+ * @packet_size: This function will write the number of bytes that end
+ *               up constituting the packet; set to zero on error
  *
  * Returns zero on success; non-zero on error.
  */
-अटल पूर्णांक
-ग_लिखो_tag_3_packet(अक्षर *dest, माप_प्रकार *reमुख्यing_bytes,
-		   काष्ठा ecryptfs_auth_tok *auth_tok,
-		   काष्ठा ecryptfs_crypt_stat *crypt_stat,
-		   काष्ठा ecryptfs_key_record *key_rec, माप_प्रकार *packet_size)
-अणु
-	माप_प्रकार i;
-	माप_प्रकार encrypted_session_key_valid = 0;
-	अक्षर session_key_encryption_key[ECRYPTFS_MAX_KEY_BYTES];
-	काष्ठा scatterlist dst_sg[2];
-	काष्ठा scatterlist src_sg[2];
-	काष्ठा mutex *tfm_mutex = शून्य;
+static int
+write_tag_3_packet(char *dest, size_t *remaining_bytes,
+		   struct ecryptfs_auth_tok *auth_tok,
+		   struct ecryptfs_crypt_stat *crypt_stat,
+		   struct ecryptfs_key_record *key_rec, size_t *packet_size)
+{
+	size_t i;
+	size_t encrypted_session_key_valid = 0;
+	char session_key_encryption_key[ECRYPTFS_MAX_KEY_BYTES];
+	struct scatterlist dst_sg[2];
+	struct scatterlist src_sg[2];
+	struct mutex *tfm_mutex = NULL;
 	u8 cipher_code;
-	माप_प्रकार packet_size_length;
-	माप_प्रकार max_packet_size;
-	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat =
+	size_t packet_size_length;
+	size_t max_packet_size;
+	struct ecryptfs_mount_crypt_stat *mount_crypt_stat =
 		crypt_stat->mount_crypt_stat;
-	काष्ठा crypto_skcipher *tfm;
-	काष्ठा skcipher_request *req;
-	पूर्णांक rc = 0;
+	struct crypto_skcipher *tfm;
+	struct skcipher_request *req;
+	int rc = 0;
 
 	(*packet_size) = 0;
 	ecryptfs_from_hex(key_rec->sig, auth_tok->token.password.signature,
 			  ECRYPTFS_SIG_SIZE);
-	rc = ecryptfs_get_tfm_and_mutex_क्रम_cipher_name(&tfm, &tfm_mutex,
+	rc = ecryptfs_get_tfm_and_mutex_for_cipher_name(&tfm, &tfm_mutex,
 							crypt_stat->cipher);
-	अगर (unlikely(rc)) अणु
-		prपूर्णांकk(KERN_ERR "Internal error whilst attempting to get "
+	if (unlikely(rc)) {
+		printk(KERN_ERR "Internal error whilst attempting to get "
 		       "tfm and mutex for cipher name [%s]; rc = [%d]\n",
 		       crypt_stat->cipher, rc);
-		जाओ out;
-	पूर्ण
-	अगर (mount_crypt_stat->global_शेष_cipher_key_size == 0) अणु
-		prपूर्णांकk(KERN_WARNING "No key size specified at mount; "
+		goto out;
+	}
+	if (mount_crypt_stat->global_default_cipher_key_size == 0) {
+		printk(KERN_WARNING "No key size specified at mount; "
 		       "defaulting to [%d]\n",
 		       crypto_skcipher_max_keysize(tfm));
-		mount_crypt_stat->global_शेष_cipher_key_size =
+		mount_crypt_stat->global_default_cipher_key_size =
 			crypto_skcipher_max_keysize(tfm);
-	पूर्ण
-	अगर (crypt_stat->key_size == 0)
+	}
+	if (crypt_stat->key_size == 0)
 		crypt_stat->key_size =
-			mount_crypt_stat->global_शेष_cipher_key_size;
-	अगर (auth_tok->session_key.encrypted_key_size == 0)
+			mount_crypt_stat->global_default_cipher_key_size;
+	if (auth_tok->session_key.encrypted_key_size == 0)
 		auth_tok->session_key.encrypted_key_size =
 			crypt_stat->key_size;
-	अगर (crypt_stat->key_size == 24
-	    && म_भेद("aes", crypt_stat->cipher) == 0) अणु
-		स_रखो((crypt_stat->key + 24), 0, 8);
+	if (crypt_stat->key_size == 24
+	    && strcmp("aes", crypt_stat->cipher) == 0) {
+		memset((crypt_stat->key + 24), 0, 8);
 		auth_tok->session_key.encrypted_key_size = 32;
-	पूर्ण अन्यथा
+	} else
 		auth_tok->session_key.encrypted_key_size = crypt_stat->key_size;
 	key_rec->enc_key_size =
 		auth_tok->session_key.encrypted_key_size;
 	encrypted_session_key_valid = 0;
-	क्रम (i = 0; i < auth_tok->session_key.encrypted_key_size; i++)
+	for (i = 0; i < auth_tok->session_key.encrypted_key_size; i++)
 		encrypted_session_key_valid |=
 			auth_tok->session_key.encrypted_key[i];
-	अगर (encrypted_session_key_valid) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "encrypted_session_key_valid != 0; "
+	if (encrypted_session_key_valid) {
+		ecryptfs_printk(KERN_DEBUG, "encrypted_session_key_valid != 0; "
 				"using auth_tok->session_key.encrypted_key, "
 				"where key_rec->enc_key_size = [%zd]\n",
 				key_rec->enc_key_size);
-		स_नकल(key_rec->enc_key,
+		memcpy(key_rec->enc_key,
 		       auth_tok->session_key.encrypted_key,
 		       key_rec->enc_key_size);
-		जाओ encrypted_session_key_set;
-	पूर्ण
-	अगर (auth_tok->token.password.flags &
-	    ECRYPTFS_SESSION_KEY_ENCRYPTION_KEY_SET) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Using previously generated "
+		goto encrypted_session_key_set;
+	}
+	if (auth_tok->token.password.flags &
+	    ECRYPTFS_SESSION_KEY_ENCRYPTION_KEY_SET) {
+		ecryptfs_printk(KERN_DEBUG, "Using previously generated "
 				"session key encryption key of size [%d]\n",
 				auth_tok->token.password.
 				session_key_encryption_key_bytes);
-		स_नकल(session_key_encryption_key,
+		memcpy(session_key_encryption_key,
 		       auth_tok->token.password.session_key_encryption_key,
 		       crypt_stat->key_size);
-		ecryptfs_prपूर्णांकk(KERN_DEBUG,
+		ecryptfs_printk(KERN_DEBUG,
 				"Cached session key encryption key:\n");
-		अगर (ecryptfs_verbosity > 0)
+		if (ecryptfs_verbosity > 0)
 			ecryptfs_dump_hex(session_key_encryption_key, 16);
-	पूर्ण
-	अगर (unlikely(ecryptfs_verbosity > 0)) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "Session key encryption key:\n");
+	}
+	if (unlikely(ecryptfs_verbosity > 0)) {
+		ecryptfs_printk(KERN_DEBUG, "Session key encryption key:\n");
 		ecryptfs_dump_hex(session_key_encryption_key, 16);
-	पूर्ण
+	}
 	rc = virt_to_scatterlist(crypt_stat->key, key_rec->enc_key_size,
 				 src_sg, 2);
-	अगर (rc < 1 || rc > 2) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating scatterlist "
+	if (rc < 1 || rc > 2) {
+		ecryptfs_printk(KERN_ERR, "Error generating scatterlist "
 				"for crypt_stat session key; expected rc = 1; "
 				"got rc = [%d]. key_rec->enc_key_size = [%zd]\n",
 				rc, key_rec->enc_key_size);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = virt_to_scatterlist(key_rec->enc_key, key_rec->enc_key_size,
 				 dst_sg, 2);
-	अगर (rc < 1 || rc > 2) अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error generating scatterlist "
+	if (rc < 1 || rc > 2) {
+		ecryptfs_printk(KERN_ERR, "Error generating scatterlist "
 				"for crypt_stat encrypted session key; "
 				"expected rc = 1; got rc = [%d]. "
 				"key_rec->enc_key_size = [%zd]\n", rc,
 				key_rec->enc_key_size);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_lock(tfm_mutex);
 	rc = crypto_skcipher_setkey(tfm, session_key_encryption_key,
 				    crypt_stat->key_size);
-	अगर (rc < 0) अणु
+	if (rc < 0) {
 		mutex_unlock(tfm_mutex);
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error setting key for crypto "
+		ecryptfs_printk(KERN_ERR, "Error setting key for crypto "
 				"context; rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	req = skcipher_request_alloc(tfm, GFP_KERNEL);
-	अगर (!req) अणु
+	if (!req) {
 		mutex_unlock(tfm_mutex);
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Out of kernel memory whilst "
+		ecryptfs_printk(KERN_ERR, "Out of kernel memory whilst "
 				"attempting to skcipher_request_alloc for "
 				"%s\n", crypto_skcipher_driver_name(tfm));
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP,
-				      शून्य, शून्य);
+				      NULL, NULL);
 
 	rc = 0;
-	ecryptfs_prपूर्णांकk(KERN_DEBUG, "Encrypting [%zd] bytes of the key\n",
+	ecryptfs_printk(KERN_DEBUG, "Encrypting [%zd] bytes of the key\n",
 			crypt_stat->key_size);
 	skcipher_request_set_crypt(req, src_sg, dst_sg,
-				   (*key_rec).enc_key_size, शून्य);
+				   (*key_rec).enc_key_size, NULL);
 	rc = crypto_skcipher_encrypt(req);
 	mutex_unlock(tfm_mutex);
-	skcipher_request_मुक्त(req);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Error encrypting; rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
-	ecryptfs_prपूर्णांकk(KERN_DEBUG, "This should be the encrypted key:\n");
-	अगर (ecryptfs_verbosity > 0) अणु
-		ecryptfs_prपूर्णांकk(KERN_DEBUG, "EFEK of size [%zd]:\n",
+	skcipher_request_free(req);
+	if (rc) {
+		printk(KERN_ERR "Error encrypting; rc = [%d]\n", rc);
+		goto out;
+	}
+	ecryptfs_printk(KERN_DEBUG, "This should be the encrypted key:\n");
+	if (ecryptfs_verbosity > 0) {
+		ecryptfs_printk(KERN_DEBUG, "EFEK of size [%zd]:\n",
 				key_rec->enc_key_size);
 		ecryptfs_dump_hex(key_rec->enc_key,
 				  key_rec->enc_key_size);
-	पूर्ण
+	}
 encrypted_session_key_set:
-	/* This क्रमmat is inspired by OpenPGP; see RFC 2440
+	/* This format is inspired by OpenPGP; see RFC 2440
 	 * packet tag 3 */
-	max_packet_size = (1                         /* Tag 3 identअगरier */
+	max_packet_size = (1                         /* Tag 3 identifier */
 			   + 3                       /* Max Tag 3 packet size */
 			   + 1                       /* Version */
 			   + 1                       /* Cipher code */
-			   + 1                       /* S2K specअगरier */
-			   + 1                       /* Hash identअगरier */
+			   + 1                       /* S2K specifier */
+			   + 1                       /* Hash identifier */
 			   + ECRYPTFS_SALT_SIZE      /* Salt */
 			   + 1                       /* Hash iterations */
 			   + key_rec->enc_key_size); /* Encrypted key size */
-	अगर (max_packet_size > (*reमुख्यing_bytes)) अणु
-		prपूर्णांकk(KERN_ERR "Packet too large; need up to [%td] bytes, but "
+	if (max_packet_size > (*remaining_bytes)) {
+		printk(KERN_ERR "Packet too large; need up to [%td] bytes, but "
 		       "there are only [%td] available\n", max_packet_size,
-		       (*reमुख्यing_bytes));
+		       (*remaining_bytes));
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dest[(*packet_size)++] = ECRYPTFS_TAG_3_PACKET_TYPE;
-	/* Chop off the Tag 3 identअगरier(1) and Tag 3 packet size(3)
+	/* Chop off the Tag 3 identifier(1) and Tag 3 packet size(3)
 	 * to get the number of octets in the actual Tag 3 packet */
-	rc = ecryptfs_ग_लिखो_packet_length(&dest[(*packet_size)],
+	rc = ecryptfs_write_packet_length(&dest[(*packet_size)],
 					  (max_packet_size - 4),
 					  &packet_size_length);
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "Error generating tag 3 packet header; cannot "
+	if (rc) {
+		printk(KERN_ERR "Error generating tag 3 packet header; cannot "
 		       "generate packet length. rc = [%d]\n", rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	(*packet_size) += packet_size_length;
 	dest[(*packet_size)++] = 0x04; /* version 4 */
 	/* TODO: Break from RFC2440 so that arbitrary ciphers can be
-	 * specअगरied with strings */
-	cipher_code = ecryptfs_code_क्रम_cipher_string(crypt_stat->cipher,
+	 * specified with strings */
+	cipher_code = ecryptfs_code_for_cipher_string(crypt_stat->cipher,
 						      crypt_stat->key_size);
-	अगर (cipher_code == 0) अणु
-		ecryptfs_prपूर्णांकk(KERN_WARNING, "Unable to generate code for "
+	if (cipher_code == 0) {
+		ecryptfs_printk(KERN_WARNING, "Unable to generate code for "
 				"cipher [%s]\n", crypt_stat->cipher);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dest[(*packet_size)++] = cipher_code;
 	dest[(*packet_size)++] = 0x03;	/* S2K */
 	dest[(*packet_size)++] = 0x01;	/* MD5 (TODO: parameterize) */
-	स_नकल(&dest[(*packet_size)], auth_tok->token.password.salt,
+	memcpy(&dest[(*packet_size)], auth_tok->token.password.salt,
 	       ECRYPTFS_SALT_SIZE);
 	(*packet_size) += ECRYPTFS_SALT_SIZE;	/* salt */
 	dest[(*packet_size)++] = 0x60;	/* hash iterations (65536) */
-	स_नकल(&dest[(*packet_size)], key_rec->enc_key,
+	memcpy(&dest[(*packet_size)], key_rec->enc_key,
 	       key_rec->enc_key_size);
 	(*packet_size) += key_rec->enc_key_size;
 out:
-	अगर (rc)
+	if (rc)
 		(*packet_size) = 0;
-	अन्यथा
-		(*reमुख्यing_bytes) -= (*packet_size);
-	वापस rc;
-पूर्ण
+	else
+		(*remaining_bytes) -= (*packet_size);
+	return rc;
+}
 
-काष्ठा kmem_cache *ecryptfs_key_record_cache;
+struct kmem_cache *ecryptfs_key_record_cache;
 
 /**
  * ecryptfs_generate_key_packet_set
- * @dest_base: Virtual address from which to ग_लिखो the key record set
+ * @dest_base: Virtual address from which to write the key record set
  * @crypt_stat: The cryptographic context from which the
  *              authentication tokens will be retrieved
  * @ecryptfs_dentry: The dentry, used to retrieve the mount crypt stat
- *                   क्रम the global parameters
+ *                   for the global parameters
  * @len: The amount written
  * @max: The maximum amount of data allowed to be written
  *
- * Generates a key packet set and ग_लिखोs it to the भव address
+ * Generates a key packet set and writes it to the virtual address
  * passed in.
  *
  * Returns zero on success; non-zero on error.
  */
-पूर्णांक
-ecryptfs_generate_key_packet_set(अक्षर *dest_base,
-				 काष्ठा ecryptfs_crypt_stat *crypt_stat,
-				 काष्ठा dentry *ecryptfs_dentry, माप_प्रकार *len,
-				 माप_प्रकार max)
-अणु
-	काष्ठा ecryptfs_auth_tok *auth_tok;
-	काष्ठा key *auth_tok_key = शून्य;
-	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat =
-		&ecryptfs_superblock_to_निजी(
+int
+ecryptfs_generate_key_packet_set(char *dest_base,
+				 struct ecryptfs_crypt_stat *crypt_stat,
+				 struct dentry *ecryptfs_dentry, size_t *len,
+				 size_t max)
+{
+	struct ecryptfs_auth_tok *auth_tok;
+	struct key *auth_tok_key = NULL;
+	struct ecryptfs_mount_crypt_stat *mount_crypt_stat =
+		&ecryptfs_superblock_to_private(
 			ecryptfs_dentry->d_sb)->mount_crypt_stat;
-	माप_प्रकार written;
-	काष्ठा ecryptfs_key_record *key_rec;
-	काष्ठा ecryptfs_key_sig *key_sig;
-	पूर्णांक rc = 0;
+	size_t written;
+	struct ecryptfs_key_record *key_rec;
+	struct ecryptfs_key_sig *key_sig;
+	int rc = 0;
 
 	(*len) = 0;
 	mutex_lock(&crypt_stat->keysig_list_mutex);
 	key_rec = kmem_cache_alloc(ecryptfs_key_record_cache, GFP_KERNEL);
-	अगर (!key_rec) अणु
+	if (!key_rec) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
-	list_क्रम_each_entry(key_sig, &crypt_stat->keysig_list,
-			    crypt_stat_list) अणु
-		स_रखो(key_rec, 0, माप(*key_rec));
-		rc = ecryptfs_find_global_auth_tok_क्रम_sig(&auth_tok_key,
+		goto out;
+	}
+	list_for_each_entry(key_sig, &crypt_stat->keysig_list,
+			    crypt_stat_list) {
+		memset(key_rec, 0, sizeof(*key_rec));
+		rc = ecryptfs_find_global_auth_tok_for_sig(&auth_tok_key,
 							   &auth_tok,
 							   mount_crypt_stat,
 							   key_sig->keysig);
-		अगर (rc) अणु
-			prपूर्णांकk(KERN_WARNING "Unable to retrieve auth tok with "
+		if (rc) {
+			printk(KERN_WARNING "Unable to retrieve auth tok with "
 			       "sig = [%s]\n", key_sig->keysig);
-			rc = process_find_global_auth_tok_क्रम_sig_err(rc);
-			जाओ out_मुक्त;
-		पूर्ण
-		अगर (auth_tok->token_type == ECRYPTFS_PASSWORD) अणु
-			rc = ग_लिखो_tag_3_packet((dest_base + (*len)),
+			rc = process_find_global_auth_tok_for_sig_err(rc);
+			goto out_free;
+		}
+		if (auth_tok->token_type == ECRYPTFS_PASSWORD) {
+			rc = write_tag_3_packet((dest_base + (*len)),
 						&max, auth_tok,
 						crypt_stat, key_rec,
 						&written);
-			up_ग_लिखो(&(auth_tok_key->sem));
+			up_write(&(auth_tok_key->sem));
 			key_put(auth_tok_key);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_WARNING, "Error "
+			if (rc) {
+				ecryptfs_printk(KERN_WARNING, "Error "
 						"writing tag 3 packet\n");
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			(*len) += written;
 			/* Write auth tok signature packet */
-			rc = ग_लिखो_tag_11_packet((dest_base + (*len)), &max,
+			rc = write_tag_11_packet((dest_base + (*len)), &max,
 						 key_rec->sig,
 						 ECRYPTFS_SIG_SIZE, &written);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_ERR, "Error writing "
+			if (rc) {
+				ecryptfs_printk(KERN_ERR, "Error writing "
 						"auth tok signature packet\n");
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			(*len) += written;
-		पूर्ण अन्यथा अगर (auth_tok->token_type == ECRYPTFS_PRIVATE_KEY) अणु
-			rc = ग_लिखो_tag_1_packet(dest_base + (*len), &max,
+		} else if (auth_tok->token_type == ECRYPTFS_PRIVATE_KEY) {
+			rc = write_tag_1_packet(dest_base + (*len), &max,
 						auth_tok_key, auth_tok,
 						crypt_stat, key_rec, &written);
-			अगर (rc) अणु
-				ecryptfs_prपूर्णांकk(KERN_WARNING, "Error "
+			if (rc) {
+				ecryptfs_printk(KERN_WARNING, "Error "
 						"writing tag 1 packet\n");
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			(*len) += written;
-		पूर्ण अन्यथा अणु
-			up_ग_लिखो(&(auth_tok_key->sem));
+		} else {
+			up_write(&(auth_tok_key->sem));
 			key_put(auth_tok_key);
-			ecryptfs_prपूर्णांकk(KERN_WARNING, "Unsupported "
+			ecryptfs_printk(KERN_WARNING, "Unsupported "
 					"authentication token type\n");
 			rc = -EINVAL;
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण
-	अगर (likely(max > 0)) अणु
+			goto out_free;
+		}
+	}
+	if (likely(max > 0)) {
 		dest_base[(*len)] = 0x00;
-	पूर्ण अन्यथा अणु
-		ecryptfs_prपूर्णांकk(KERN_ERR, "Error writing boundary byte\n");
+	} else {
+		ecryptfs_printk(KERN_ERR, "Error writing boundary byte\n");
 		rc = -EIO;
-	पूर्ण
-out_मुक्त:
-	kmem_cache_मुक्त(ecryptfs_key_record_cache, key_rec);
+	}
+out_free:
+	kmem_cache_free(ecryptfs_key_record_cache, key_rec);
 out:
-	अगर (rc)
+	if (rc)
 		(*len) = 0;
 	mutex_unlock(&crypt_stat->keysig_list_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा kmem_cache *ecryptfs_key_sig_cache;
+struct kmem_cache *ecryptfs_key_sig_cache;
 
-पूर्णांक ecryptfs_add_keysig(काष्ठा ecryptfs_crypt_stat *crypt_stat, अक्षर *sig)
-अणु
-	काष्ठा ecryptfs_key_sig *new_key_sig;
+int ecryptfs_add_keysig(struct ecryptfs_crypt_stat *crypt_stat, char *sig)
+{
+	struct ecryptfs_key_sig *new_key_sig;
 
 	new_key_sig = kmem_cache_alloc(ecryptfs_key_sig_cache, GFP_KERNEL);
-	अगर (!new_key_sig)
-		वापस -ENOMEM;
+	if (!new_key_sig)
+		return -ENOMEM;
 
-	स_नकल(new_key_sig->keysig, sig, ECRYPTFS_SIG_SIZE_HEX);
+	memcpy(new_key_sig->keysig, sig, ECRYPTFS_SIG_SIZE_HEX);
 	new_key_sig->keysig[ECRYPTFS_SIG_SIZE_HEX] = '\0';
 	/* Caller must hold keysig_list_mutex */
 	list_add(&new_key_sig->crypt_stat_list, &crypt_stat->keysig_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा kmem_cache *ecryptfs_global_auth_tok_cache;
+struct kmem_cache *ecryptfs_global_auth_tok_cache;
 
-पूर्णांक
-ecryptfs_add_global_auth_tok(काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat,
-			     अक्षर *sig, u32 global_auth_tok_flags)
-अणु
-	काष्ठा ecryptfs_global_auth_tok *new_auth_tok;
+int
+ecryptfs_add_global_auth_tok(struct ecryptfs_mount_crypt_stat *mount_crypt_stat,
+			     char *sig, u32 global_auth_tok_flags)
+{
+	struct ecryptfs_global_auth_tok *new_auth_tok;
 
 	new_auth_tok = kmem_cache_zalloc(ecryptfs_global_auth_tok_cache,
 					GFP_KERNEL);
-	अगर (!new_auth_tok)
-		वापस -ENOMEM;
+	if (!new_auth_tok)
+		return -ENOMEM;
 
-	स_नकल(new_auth_tok->sig, sig, ECRYPTFS_SIG_SIZE_HEX);
+	memcpy(new_auth_tok->sig, sig, ECRYPTFS_SIG_SIZE_HEX);
 	new_auth_tok->flags = global_auth_tok_flags;
 	new_auth_tok->sig[ECRYPTFS_SIG_SIZE_HEX] = '\0';
 	mutex_lock(&mount_crypt_stat->global_auth_tok_list_mutex);
 	list_add(&new_auth_tok->mount_crypt_stat_list,
 		 &mount_crypt_stat->global_auth_tok_list);
 	mutex_unlock(&mount_crypt_stat->global_auth_tok_list_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

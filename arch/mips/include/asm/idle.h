@@ -1,33 +1,32 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_IDLE_H
-#घोषणा __ASM_IDLE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_IDLE_H
+#define __ASM_IDLE_H
 
-#समावेश <linux/cpuidle.h>
-#समावेश <linux/linkage.h>
+#include <linux/cpuidle.h>
+#include <linux/linkage.h>
 
-बाह्य व्योम (*cpu_रुको)(व्योम);
-बाह्य व्योम r4k_रुको(व्योम);
-बाह्य यंत्रlinkage व्योम __r4k_रुको(व्योम);
-बाह्य व्योम r4k_रुको_irqoff(व्योम);
+extern void (*cpu_wait)(void);
+extern void r4k_wait(void);
+extern asmlinkage void __r4k_wait(void);
+extern void r4k_wait_irqoff(void);
 
-अटल अंतरभूत पूर्णांक using_rollback_handler(व्योम)
-अणु
-	वापस cpu_रुको == r4k_रुको;
-पूर्ण
+static inline int using_rollback_handler(void)
+{
+	return cpu_wait == r4k_wait;
+}
 
-बाह्य व्योम __init check_रुको(व्योम);
+extern void __init check_wait(void);
 
-बाह्य पूर्णांक mips_cpuidle_रुको_enter(काष्ठा cpuidle_device *dev,
-				   काष्ठा cpuidle_driver *drv, पूर्णांक index);
+extern int mips_cpuidle_wait_enter(struct cpuidle_device *dev,
+				   struct cpuidle_driver *drv, int index);
 
-#घोषणा MIPS_CPUIDLE_WAIT_STATE अणु\
-	.enter			= mips_cpuidle_रुको_enter,\
-	.निकास_latency		= 1,\
+#define MIPS_CPUIDLE_WAIT_STATE {\
+	.enter			= mips_cpuidle_wait_enter,\
+	.exit_latency		= 1,\
 	.target_residency	= 1,\
-	.घातer_usage		= अच_पूर्णांक_उच्च,\
+	.power_usage		= UINT_MAX,\
 	.name			= "wait",\
 	.desc			= "MIPS wait",\
-पूर्ण
+}
 
-#पूर्ण_अगर /* __ASM_IDLE_H  */
+#endif /* __ASM_IDLE_H  */

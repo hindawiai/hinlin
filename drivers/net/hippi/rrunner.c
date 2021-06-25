@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * rrunner.c: Linux driver क्रम the Essential RoadRunner HIPPI board.
+ * rrunner.c: Linux driver for the Essential RoadRunner HIPPI board.
  *
- * Copyright (C) 1998-2002 by Jes Sorensen, <jes@wilकरोpensource.com>.
+ * Copyright (C) 1998-2002 by Jes Sorensen, <jes@wildopensource.com>.
  *
- * Thanks to Essential Communication क्रम providing us with hardware
- * and very comprehensive करोcumentation without which I would not have
- * been able to ग_लिखो this driver. A special thank you to John Gibbon
- * क्रम sorting out the legal issues, with the NDA, allowing the code to
+ * Thanks to Essential Communication for providing us with hardware
+ * and very comprehensive documentation without which I would not have
+ * been able to write this driver. A special thank you to John Gibbon
+ * for sorting out the legal issues, with the NDA, allowing the code to
  * be released under the GPL.
  *
- * Thanks to Jayaram Bhat from ODS/Essential क्रम fixing some of the
+ * Thanks to Jayaram Bhat from ODS/Essential for fixing some of the
  * stupid bugs in my code.
  *
  * Softnet support and various other patches from Val Henson of
@@ -21,96 +20,96 @@
  */
 
 
-#घोषणा DEBUG 1
-#घोषणा RX_DMA_SKBUFF 1
-#घोषणा PKT_COPY_THRESHOLD 512
+#define DEBUG 1
+#define RX_DMA_SKBUFF 1
+#define PKT_COPY_THRESHOLD 512
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/hippidevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/hippidevice.h>
+#include <linux/skbuff.h>
+#include <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <net/sock.h>
 
-#समावेश <यंत्र/cache.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
+#include <asm/cache.h>
+#include <asm/byteorder.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
 
-#घोषणा rr_अगर_busy(dev)     netअगर_queue_stopped(dev)
-#घोषणा rr_अगर_running(dev)  netअगर_running(dev)
+#define rr_if_busy(dev)     netif_queue_stopped(dev)
+#define rr_if_running(dev)  netif_running(dev)
 
-#समावेश "rrunner.h"
+#include "rrunner.h"
 
-#घोषणा RUN_AT(x) (jअगरfies + (x))
+#define RUN_AT(x) (jiffies + (x))
 
 
 MODULE_AUTHOR("Jes Sorensen <jes@wildopensource.com>");
 MODULE_DESCRIPTION("Essential RoadRunner HIPPI driver");
 MODULE_LICENSE("GPL");
 
-अटल स्थिर अक्षर version[] =
+static const char version[] =
 "rrunner.c: v0.50 11/11/2002  Jes Sorensen (jes@wildopensource.com)\n";
 
 
-अटल स्थिर काष्ठा net_device_ops rr_netdev_ops = अणु
-	.nकरो_खोलो 		= rr_खोलो,
-	.nकरो_stop		= rr_बंद,
-	.nकरो_करो_ioctl		= rr_ioctl,
-	.nकरो_start_xmit		= rr_start_xmit,
-	.nकरो_set_mac_address	= hippi_mac_addr,
-पूर्ण;
+static const struct net_device_ops rr_netdev_ops = {
+	.ndo_open 		= rr_open,
+	.ndo_stop		= rr_close,
+	.ndo_do_ioctl		= rr_ioctl,
+	.ndo_start_xmit		= rr_start_xmit,
+	.ndo_set_mac_address	= hippi_mac_addr,
+};
 
 /*
  * Implementation notes:
  *
- * The DMA engine only allows क्रम DMA within physical 64KB chunks of
+ * The DMA engine only allows for DMA within physical 64KB chunks of
  * memory. The current approach of the driver (and stack) is to use
- * linear blocks of memory क्रम the skbuffs. However, as the data block
+ * linear blocks of memory for the skbuffs. However, as the data block
  * is always the first part of the skb and skbs are 2^n aligned so we
  * are guarantted to get the whole block within one 64KB align 64KB
  * chunk.
  *
- * On the दीर्घ term, relying on being able to allocate 64KB linear
+ * On the long term, relying on being able to allocate 64KB linear
  * chunks of memory is not feasible and the skb handling code and the
  * stack will need to know about I/O vectors or something similar.
  */
 
-अटल पूर्णांक rr_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा net_device *dev;
-	अटल पूर्णांक version_disp;
+static int rr_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	struct net_device *dev;
+	static int version_disp;
 	u8 pci_latency;
-	काष्ठा rr_निजी *rrpriv;
-	व्योम *पंचांगpptr;
+	struct rr_private *rrpriv;
+	void *tmpptr;
 	dma_addr_t ring_dma;
-	पूर्णांक ret = -ENOMEM;
+	int ret = -ENOMEM;
 
-	dev = alloc_hippi_dev(माप(काष्ठा rr_निजी));
-	अगर (!dev)
-		जाओ out3;
+	dev = alloc_hippi_dev(sizeof(struct rr_private));
+	if (!dev)
+		goto out3;
 
 	ret = pci_enable_device(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -ENODEV;
-		जाओ out2;
-	पूर्ण
+		goto out2;
+	}
 
 	rrpriv = netdev_priv(dev);
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	ret = pci_request_regions(pdev, "rrunner");
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	pci_set_drvdata(pdev, dev);
 
@@ -120,328 +119,328 @@ MODULE_LICENSE("GPL");
 
 	dev->netdev_ops = &rr_netdev_ops;
 
-	/* display version info अगर adapter is found */
-	अगर (!version_disp) अणु
+	/* display version info if adapter is found */
+	if (!version_disp) {
 		/* set display flag to TRUE so that */
 		/* we only display this string ONCE */
 		version_disp = 1;
-		prपूर्णांकk(version);
-	पूर्ण
+		printk(version);
+	}
 
-	pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
-	अगर (pci_latency <= 0x58)अणु
+	pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
+	if (pci_latency <= 0x58){
 		pci_latency = 0x58;
-		pci_ग_लिखो_config_byte(pdev, PCI_LATENCY_TIMER, pci_latency);
-	पूर्ण
+		pci_write_config_byte(pdev, PCI_LATENCY_TIMER, pci_latency);
+	}
 
 	pci_set_master(pdev);
 
-	prपूर्णांकk(KERN_INFO "%s: Essential RoadRunner serial HIPPI "
+	printk(KERN_INFO "%s: Essential RoadRunner serial HIPPI "
 	       "at 0x%llx, irq %i, PCI latency %i\n", dev->name,
-	       (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 0),
+	       (unsigned long long)pci_resource_start(pdev, 0),
 	       pdev->irq, pci_latency);
 
 	/*
-	 * Remap the MMIO regs पूर्णांकo kernel space.
+	 * Remap the MMIO regs into kernel space.
 	 */
 	rrpriv->regs = pci_iomap(pdev, 0, 0x1000);
-	अगर (!rrpriv->regs) अणु
-		prपूर्णांकk(KERN_ERR "%s:  Unable to map I/O register, "
+	if (!rrpriv->regs) {
+		printk(KERN_ERR "%s:  Unable to map I/O register, "
 			"RoadRunner will be disabled.\n", dev->name);
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	पंचांगpptr = dma_alloc_coherent(&pdev->dev, TX_TOTAL_SIZE, &ring_dma,
+	tmpptr = dma_alloc_coherent(&pdev->dev, TX_TOTAL_SIZE, &ring_dma,
 				    GFP_KERNEL);
-	rrpriv->tx_ring = पंचांगpptr;
+	rrpriv->tx_ring = tmpptr;
 	rrpriv->tx_ring_dma = ring_dma;
 
-	अगर (!पंचांगpptr) अणु
+	if (!tmpptr) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	पंचांगpptr = dma_alloc_coherent(&pdev->dev, RX_TOTAL_SIZE, &ring_dma,
+	tmpptr = dma_alloc_coherent(&pdev->dev, RX_TOTAL_SIZE, &ring_dma,
 				    GFP_KERNEL);
-	rrpriv->rx_ring = पंचांगpptr;
+	rrpriv->rx_ring = tmpptr;
 	rrpriv->rx_ring_dma = ring_dma;
 
-	अगर (!पंचांगpptr) अणु
+	if (!tmpptr) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	पंचांगpptr = dma_alloc_coherent(&pdev->dev, EVT_RING_SIZE, &ring_dma,
+	tmpptr = dma_alloc_coherent(&pdev->dev, EVT_RING_SIZE, &ring_dma,
 				    GFP_KERNEL);
-	rrpriv->evt_ring = पंचांगpptr;
+	rrpriv->evt_ring = tmpptr;
 	rrpriv->evt_ring_dma = ring_dma;
 
-	अगर (!पंचांगpptr) अणु
+	if (!tmpptr) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Don't access any रेजिस्टर beक्रमe this poपूर्णांक!
+	 * Don't access any register before this point!
 	 */
-#अगर_घोषित __BIG_ENDIAN
-	ग_लिखोl(पढ़ोl(&rrpriv->regs->HostCtrl) | NO_SWAP,
+#ifdef __BIG_ENDIAN
+	writel(readl(&rrpriv->regs->HostCtrl) | NO_SWAP,
 		&rrpriv->regs->HostCtrl);
-#पूर्ण_अगर
+#endif
 	/*
-	 * Need to add a हाल क्रम little-endian 64-bit hosts here.
+	 * Need to add a case for little-endian 64-bit hosts here.
 	 */
 
 	rr_init(dev);
 
-	ret = रेजिस्टर_netdev(dev);
-	अगर (ret)
-		जाओ out;
-	वापस 0;
+	ret = register_netdev(dev);
+	if (ret)
+		goto out;
+	return 0;
 
  out:
-	अगर (rrpriv->evt_ring)
-		dma_मुक्त_coherent(&pdev->dev, EVT_RING_SIZE, rrpriv->evt_ring,
+	if (rrpriv->evt_ring)
+		dma_free_coherent(&pdev->dev, EVT_RING_SIZE, rrpriv->evt_ring,
 				  rrpriv->evt_ring_dma);
-	अगर (rrpriv->rx_ring)
-		dma_मुक्त_coherent(&pdev->dev, RX_TOTAL_SIZE, rrpriv->rx_ring,
+	if (rrpriv->rx_ring)
+		dma_free_coherent(&pdev->dev, RX_TOTAL_SIZE, rrpriv->rx_ring,
 				  rrpriv->rx_ring_dma);
-	अगर (rrpriv->tx_ring)
-		dma_मुक्त_coherent(&pdev->dev, TX_TOTAL_SIZE, rrpriv->tx_ring,
+	if (rrpriv->tx_ring)
+		dma_free_coherent(&pdev->dev, TX_TOTAL_SIZE, rrpriv->tx_ring,
 				  rrpriv->tx_ring_dma);
-	अगर (rrpriv->regs)
+	if (rrpriv->regs)
 		pci_iounmap(pdev, rrpriv->regs);
-	अगर (pdev)
+	if (pdev)
 		pci_release_regions(pdev);
  out2:
-	मुक्त_netdev(dev);
+	free_netdev(dev);
  out3:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rr_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *dev = pci_get_drvdata(pdev);
-	काष्ठा rr_निजी *rr = netdev_priv(dev);
+static void rr_remove_one(struct pci_dev *pdev)
+{
+	struct net_device *dev = pci_get_drvdata(pdev);
+	struct rr_private *rr = netdev_priv(dev);
 
-	अगर (!(पढ़ोl(&rr->regs->HostCtrl) & NIC_HALTED)) अणु
-		prपूर्णांकk(KERN_ERR "%s: trying to unload running NIC\n",
+	if (!(readl(&rr->regs->HostCtrl) & NIC_HALTED)) {
+		printk(KERN_ERR "%s: trying to unload running NIC\n",
 		       dev->name);
-		ग_लिखोl(HALT_NIC, &rr->regs->HostCtrl);
-	पूर्ण
+		writel(HALT_NIC, &rr->regs->HostCtrl);
+	}
 
-	unरेजिस्टर_netdev(dev);
-	dma_मुक्त_coherent(&pdev->dev, EVT_RING_SIZE, rr->evt_ring,
+	unregister_netdev(dev);
+	dma_free_coherent(&pdev->dev, EVT_RING_SIZE, rr->evt_ring,
 			  rr->evt_ring_dma);
-	dma_मुक्त_coherent(&pdev->dev, RX_TOTAL_SIZE, rr->rx_ring,
+	dma_free_coherent(&pdev->dev, RX_TOTAL_SIZE, rr->rx_ring,
 			  rr->rx_ring_dma);
-	dma_मुक्त_coherent(&pdev->dev, TX_TOTAL_SIZE, rr->tx_ring,
+	dma_free_coherent(&pdev->dev, TX_TOTAL_SIZE, rr->tx_ring,
 			  rr->tx_ring_dma);
 	pci_iounmap(pdev, rr->regs);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	मुक्त_netdev(dev);
-पूर्ण
+	free_netdev(dev);
+}
 
 
 /*
  * Commands are considered to be slow, thus there is no reason to
- * अंतरभूत this.
+ * inline this.
  */
-अटल व्योम rr_issue_cmd(काष्ठा rr_निजी *rrpriv, काष्ठा cmd *cmd)
-अणु
-	काष्ठा rr_regs __iomem *regs;
+static void rr_issue_cmd(struct rr_private *rrpriv, struct cmd *cmd)
+{
+	struct rr_regs __iomem *regs;
 	u32 idx;
 
 	regs = rrpriv->regs;
 	/*
 	 * This is temporary - it will go away in the final version.
-	 * We probably also want to make this function अंतरभूत.
+	 * We probably also want to make this function inline.
 	 */
-	अगर (पढ़ोl(&regs->HostCtrl) & NIC_HALTED)अणु
-		prपूर्णांकk("issuing command for halted NIC, code 0x%x, "
-		       "HostCtrl %08x\n", cmd->code, पढ़ोl(&regs->HostCtrl));
-		अगर (पढ़ोl(&regs->Mode) & FATAL_ERR)
-			prपूर्णांकk("error codes Fail1 %02x, Fail2 %02x\n",
-			       पढ़ोl(&regs->Fail1), पढ़ोl(&regs->Fail2));
-	पूर्ण
+	if (readl(&regs->HostCtrl) & NIC_HALTED){
+		printk("issuing command for halted NIC, code 0x%x, "
+		       "HostCtrl %08x\n", cmd->code, readl(&regs->HostCtrl));
+		if (readl(&regs->Mode) & FATAL_ERR)
+			printk("error codes Fail1 %02x, Fail2 %02x\n",
+			       readl(&regs->Fail1), readl(&regs->Fail2));
+	}
 
 	idx = rrpriv->info->cmd_ctrl.pi;
 
-	ग_लिखोl(*(u32*)(cmd), &regs->CmdRing[idx]);
+	writel(*(u32*)(cmd), &regs->CmdRing[idx]);
 	wmb();
 
 	idx = (idx - 1) % CMD_RING_ENTRIES;
 	rrpriv->info->cmd_ctrl.pi = idx;
 	wmb();
 
-	अगर (पढ़ोl(&regs->Mode) & FATAL_ERR)
-		prपूर्णांकk("error code %02x\n", पढ़ोl(&regs->Fail1));
-पूर्ण
+	if (readl(&regs->Mode) & FATAL_ERR)
+		printk("error code %02x\n", readl(&regs->Fail1));
+}
 
 
 /*
- * Reset the board in a sensible manner. The NIC is alपढ़ोy halted
+ * Reset the board in a sensible manner. The NIC is already halted
  * when we get here and a spin-lock is held.
  */
-अटल पूर्णांक rr_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
+static int rr_reset(struct net_device *dev)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
 	u32 start_pc;
-	पूर्णांक i;
+	int i;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
 	rr_load_firmware(dev);
 
-	ग_लिखोl(0x01000000, &regs->TX_state);
-	ग_लिखोl(0xff800000, &regs->RX_state);
-	ग_लिखोl(0, &regs->AssistState);
-	ग_लिखोl(CLEAR_INTA, &regs->LocalCtrl);
-	ग_लिखोl(0x01, &regs->BrkPt);
-	ग_लिखोl(0, &regs->Timer);
-	ग_लिखोl(0, &regs->TimerRef);
-	ग_लिखोl(RESET_DMA, &regs->DmaReadState);
-	ग_लिखोl(RESET_DMA, &regs->DmaWriteState);
-	ग_लिखोl(0, &regs->DmaWriteHostHi);
-	ग_लिखोl(0, &regs->DmaWriteHostLo);
-	ग_लिखोl(0, &regs->DmaReadHostHi);
-	ग_लिखोl(0, &regs->DmaReadHostLo);
-	ग_लिखोl(0, &regs->DmaReadLen);
-	ग_लिखोl(0, &regs->DmaWriteLen);
-	ग_लिखोl(0, &regs->DmaWriteLcl);
-	ग_लिखोl(0, &regs->DmaWriteIPchecksum);
-	ग_लिखोl(0, &regs->DmaReadLcl);
-	ग_लिखोl(0, &regs->DmaReadIPchecksum);
-	ग_लिखोl(0, &regs->PciState);
-#अगर (BITS_PER_LONG == 64) && defined __LITTLE_ENDIAN
-	ग_लिखोl(SWAP_DATA | PTR64BIT | PTR_WD_SWAP, &regs->Mode);
-#या_अगर (BITS_PER_LONG == 64)
-	ग_लिखोl(SWAP_DATA | PTR64BIT | PTR_WD_NOSWAP, &regs->Mode);
-#अन्यथा
-	ग_लिखोl(SWAP_DATA | PTR32BIT | PTR_WD_NOSWAP, &regs->Mode);
-#पूर्ण_अगर
+	writel(0x01000000, &regs->TX_state);
+	writel(0xff800000, &regs->RX_state);
+	writel(0, &regs->AssistState);
+	writel(CLEAR_INTA, &regs->LocalCtrl);
+	writel(0x01, &regs->BrkPt);
+	writel(0, &regs->Timer);
+	writel(0, &regs->TimerRef);
+	writel(RESET_DMA, &regs->DmaReadState);
+	writel(RESET_DMA, &regs->DmaWriteState);
+	writel(0, &regs->DmaWriteHostHi);
+	writel(0, &regs->DmaWriteHostLo);
+	writel(0, &regs->DmaReadHostHi);
+	writel(0, &regs->DmaReadHostLo);
+	writel(0, &regs->DmaReadLen);
+	writel(0, &regs->DmaWriteLen);
+	writel(0, &regs->DmaWriteLcl);
+	writel(0, &regs->DmaWriteIPchecksum);
+	writel(0, &regs->DmaReadLcl);
+	writel(0, &regs->DmaReadIPchecksum);
+	writel(0, &regs->PciState);
+#if (BITS_PER_LONG == 64) && defined __LITTLE_ENDIAN
+	writel(SWAP_DATA | PTR64BIT | PTR_WD_SWAP, &regs->Mode);
+#elif (BITS_PER_LONG == 64)
+	writel(SWAP_DATA | PTR64BIT | PTR_WD_NOSWAP, &regs->Mode);
+#else
+	writel(SWAP_DATA | PTR32BIT | PTR_WD_NOSWAP, &regs->Mode);
+#endif
 
-#अगर 0
+#if 0
 	/*
 	 * Don't worry, this is just black magic.
 	 */
-	ग_लिखोl(0xdf000, &regs->RxBase);
-	ग_लिखोl(0xdf000, &regs->RxPrd);
-	ग_लिखोl(0xdf000, &regs->RxCon);
-	ग_लिखोl(0xce000, &regs->TxBase);
-	ग_लिखोl(0xce000, &regs->TxPrd);
-	ग_लिखोl(0xce000, &regs->TxCon);
-	ग_लिखोl(0, &regs->RxIndPro);
-	ग_लिखोl(0, &regs->RxIndCon);
-	ग_लिखोl(0, &regs->RxIndRef);
-	ग_लिखोl(0, &regs->TxIndPro);
-	ग_लिखोl(0, &regs->TxIndCon);
-	ग_लिखोl(0, &regs->TxIndRef);
-	ग_लिखोl(0xcc000, &regs->pad10[0]);
-	ग_लिखोl(0, &regs->DrCmndPro);
-	ग_लिखोl(0, &regs->DrCmndCon);
-	ग_लिखोl(0, &regs->DwCmndPro);
-	ग_लिखोl(0, &regs->DwCmndCon);
-	ग_लिखोl(0, &regs->DwCmndRef);
-	ग_लिखोl(0, &regs->DrDataPro);
-	ग_लिखोl(0, &regs->DrDataCon);
-	ग_लिखोl(0, &regs->DrDataRef);
-	ग_लिखोl(0, &regs->DwDataPro);
-	ग_लिखोl(0, &regs->DwDataCon);
-	ग_लिखोl(0, &regs->DwDataRef);
-#पूर्ण_अगर
+	writel(0xdf000, &regs->RxBase);
+	writel(0xdf000, &regs->RxPrd);
+	writel(0xdf000, &regs->RxCon);
+	writel(0xce000, &regs->TxBase);
+	writel(0xce000, &regs->TxPrd);
+	writel(0xce000, &regs->TxCon);
+	writel(0, &regs->RxIndPro);
+	writel(0, &regs->RxIndCon);
+	writel(0, &regs->RxIndRef);
+	writel(0, &regs->TxIndPro);
+	writel(0, &regs->TxIndCon);
+	writel(0, &regs->TxIndRef);
+	writel(0xcc000, &regs->pad10[0]);
+	writel(0, &regs->DrCmndPro);
+	writel(0, &regs->DrCmndCon);
+	writel(0, &regs->DwCmndPro);
+	writel(0, &regs->DwCmndCon);
+	writel(0, &regs->DwCmndRef);
+	writel(0, &regs->DrDataPro);
+	writel(0, &regs->DrDataCon);
+	writel(0, &regs->DrDataRef);
+	writel(0, &regs->DwDataPro);
+	writel(0, &regs->DwDataCon);
+	writel(0, &regs->DwDataRef);
+#endif
 
-	ग_लिखोl(0xffffffff, &regs->MbEvent);
-	ग_लिखोl(0, &regs->Event);
+	writel(0xffffffff, &regs->MbEvent);
+	writel(0, &regs->Event);
 
-	ग_लिखोl(0, &regs->TxPi);
-	ग_लिखोl(0, &regs->IpRxPi);
+	writel(0, &regs->TxPi);
+	writel(0, &regs->IpRxPi);
 
-	ग_लिखोl(0, &regs->EvtCon);
-	ग_लिखोl(0, &regs->EvtPrd);
+	writel(0, &regs->EvtCon);
+	writel(0, &regs->EvtPrd);
 
 	rrpriv->info->evt_ctrl.pi = 0;
 
-	क्रम (i = 0; i < CMD_RING_ENTRIES; i++)
-		ग_लिखोl(0, &regs->CmdRing[i]);
+	for (i = 0; i < CMD_RING_ENTRIES; i++)
+		writel(0, &regs->CmdRing[i]);
 
 /*
  * Why 32 ? is this not cache line size dependent?
  */
-	ग_लिखोl(RBURST_64|WBURST_64, &regs->PciState);
+	writel(RBURST_64|WBURST_64, &regs->PciState);
 	wmb();
 
-	start_pc = rr_पढ़ो_eeprom_word(rrpriv,
-			दुरत्व(काष्ठा eeprom, rncd_info.FwStart));
+	start_pc = rr_read_eeprom_word(rrpriv,
+			offsetof(struct eeprom, rncd_info.FwStart));
 
-#अगर (DEBUG > 1)
-	prपूर्णांकk("%s: Executing firmware at address 0x%06x\n",
+#if (DEBUG > 1)
+	printk("%s: Executing firmware at address 0x%06x\n",
 	       dev->name, start_pc);
-#पूर्ण_अगर
+#endif
 
-	ग_लिखोl(start_pc + 0x800, &regs->Pc);
+	writel(start_pc + 0x800, &regs->Pc);
 	wmb();
 	udelay(5);
 
-	ग_लिखोl(start_pc, &regs->Pc);
+	writel(start_pc, &regs->Pc);
 	wmb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * Read a string from the EEPROM.
  */
-अटल अचिन्हित पूर्णांक rr_पढ़ो_eeprom(काष्ठा rr_निजी *rrpriv,
-				अचिन्हित दीर्घ offset,
-				अचिन्हित अक्षर *buf,
-				अचिन्हित दीर्घ length)
-अणु
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
+static unsigned int rr_read_eeprom(struct rr_private *rrpriv,
+				unsigned long offset,
+				unsigned char *buf,
+				unsigned long length)
+{
+	struct rr_regs __iomem *regs = rrpriv->regs;
 	u32 misc, io, host, i;
 
-	io = पढ़ोl(&regs->ExtIo);
-	ग_लिखोl(0, &regs->ExtIo);
-	misc = पढ़ोl(&regs->LocalCtrl);
-	ग_लिखोl(0, &regs->LocalCtrl);
-	host = पढ़ोl(&regs->HostCtrl);
-	ग_लिखोl(host | HALT_NIC, &regs->HostCtrl);
+	io = readl(&regs->ExtIo);
+	writel(0, &regs->ExtIo);
+	misc = readl(&regs->LocalCtrl);
+	writel(0, &regs->LocalCtrl);
+	host = readl(&regs->HostCtrl);
+	writel(host | HALT_NIC, &regs->HostCtrl);
 	mb();
 
-	क्रम (i = 0; i < length; i++)अणु
-		ग_लिखोl((EEPROM_BASE + ((offset+i) << 3)), &regs->WinBase);
+	for (i = 0; i < length; i++){
+		writel((EEPROM_BASE + ((offset+i) << 3)), &regs->WinBase);
 		mb();
-		buf[i] = (पढ़ोl(&regs->WinData) >> 24) & 0xff;
+		buf[i] = (readl(&regs->WinData) >> 24) & 0xff;
 		mb();
-	पूर्ण
+	}
 
-	ग_लिखोl(host, &regs->HostCtrl);
-	ग_लिखोl(misc, &regs->LocalCtrl);
-	ग_लिखोl(io, &regs->ExtIo);
+	writel(host, &regs->HostCtrl);
+	writel(misc, &regs->LocalCtrl);
+	writel(io, &regs->ExtIo);
 	mb();
-	वापस i;
-पूर्ण
+	return i;
+}
 
 
 /*
- * Shortcut to पढ़ो one word (4 bytes) out of the EEPROM and convert
+ * Shortcut to read one word (4 bytes) out of the EEPROM and convert
  * it to our CPU byte-order.
  */
-अटल u32 rr_पढ़ो_eeprom_word(काष्ठा rr_निजी *rrpriv,
-			    माप_प्रकार offset)
-अणु
+static u32 rr_read_eeprom_word(struct rr_private *rrpriv,
+			    size_t offset)
+{
 	__be32 word;
 
-	अगर ((rr_पढ़ो_eeprom(rrpriv, offset,
-			    (अचिन्हित अक्षर *)&word, 4) == 4))
-		वापस be32_to_cpu(word);
-	वापस 0;
-पूर्ण
+	if ((rr_read_eeprom(rrpriv, offset,
+			    (unsigned char *)&word, 4) == 4))
+		return be32_to_cpu(word);
+	return 0;
+}
 
 
 /*
@@ -449,170 +448,170 @@ MODULE_LICENSE("GPL");
  *
  * This is only called when the firmware is not running.
  */
-अटल अचिन्हित पूर्णांक ग_लिखो_eeprom(काष्ठा rr_निजी *rrpriv,
-				 अचिन्हित दीर्घ offset,
-				 अचिन्हित अक्षर *buf,
-				 अचिन्हित दीर्घ length)
-अणु
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
-	u32 misc, io, data, i, j, पढ़ोy, error = 0;
+static unsigned int write_eeprom(struct rr_private *rrpriv,
+				 unsigned long offset,
+				 unsigned char *buf,
+				 unsigned long length)
+{
+	struct rr_regs __iomem *regs = rrpriv->regs;
+	u32 misc, io, data, i, j, ready, error = 0;
 
-	io = पढ़ोl(&regs->ExtIo);
-	ग_लिखोl(0, &regs->ExtIo);
-	misc = पढ़ोl(&regs->LocalCtrl);
-	ग_लिखोl(ENABLE_EEPROM_WRITE, &regs->LocalCtrl);
+	io = readl(&regs->ExtIo);
+	writel(0, &regs->ExtIo);
+	misc = readl(&regs->LocalCtrl);
+	writel(ENABLE_EEPROM_WRITE, &regs->LocalCtrl);
 	mb();
 
-	क्रम (i = 0; i < length; i++)अणु
-		ग_लिखोl((EEPROM_BASE + ((offset+i) << 3)), &regs->WinBase);
+	for (i = 0; i < length; i++){
+		writel((EEPROM_BASE + ((offset+i) << 3)), &regs->WinBase);
 		mb();
 		data = buf[i] << 24;
 		/*
-		 * Only try to ग_लिखो the data अगर it is not the same
-		 * value alपढ़ोy.
+		 * Only try to write the data if it is not the same
+		 * value already.
 		 */
-		अगर ((पढ़ोl(&regs->WinData) & 0xff000000) != data)अणु
-			ग_लिखोl(data, &regs->WinData);
-			पढ़ोy = 0;
+		if ((readl(&regs->WinData) & 0xff000000) != data){
+			writel(data, &regs->WinData);
+			ready = 0;
 			j = 0;
 			mb();
-			जबतक(!पढ़ोy)अणु
+			while(!ready){
 				udelay(20);
-				अगर ((पढ़ोl(&regs->WinData) & 0xff000000) ==
+				if ((readl(&regs->WinData) & 0xff000000) ==
 				    data)
-					पढ़ोy = 1;
+					ready = 1;
 				mb();
-				अगर (j++ > 5000)अणु
-					prपूर्णांकk("data mismatch: %08x, "
+				if (j++ > 5000){
+					printk("data mismatch: %08x, "
 					       "WinData %08x\n", data,
-					       पढ़ोl(&regs->WinData));
-					पढ़ोy = 1;
+					       readl(&regs->WinData));
+					ready = 1;
 					error = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	ग_लिखोl(misc, &regs->LocalCtrl);
-	ग_लिखोl(io, &regs->ExtIo);
+	writel(misc, &regs->LocalCtrl);
+	writel(io, &regs->ExtIo);
 	mb();
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 
-अटल पूर्णांक rr_init(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
+static int rr_init(struct net_device *dev)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
 	u32 sram_size, rev;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
-	rev = पढ़ोl(&regs->FwRev);
+	rev = readl(&regs->FwRev);
 	rrpriv->fw_rev = rev;
-	अगर (rev > 0x00020024)
-		prपूर्णांकk("  Firmware revision: %i.%i.%i\n", (rev >> 16),
+	if (rev > 0x00020024)
+		printk("  Firmware revision: %i.%i.%i\n", (rev >> 16),
 		       ((rev >> 8) & 0xff), (rev & 0xff));
-	अन्यथा अगर (rev >= 0x00020000) अणु
-		prपूर्णांकk("  Firmware revision: %i.%i.%i (2.0.37 or "
+	else if (rev >= 0x00020000) {
+		printk("  Firmware revision: %i.%i.%i (2.0.37 or "
 		       "later is recommended)\n", (rev >> 16),
 		       ((rev >> 8) & 0xff), (rev & 0xff));
-	पूर्णअन्यथाअणु
-		prपूर्णांकk("  Firmware revision too old: %i.%i.%i, please "
+	}else{
+		printk("  Firmware revision too old: %i.%i.%i, please "
 		       "upgrade to 2.0.37 or later.\n",
 		       (rev >> 16), ((rev >> 8) & 0xff), (rev & 0xff));
-	पूर्ण
+	}
 
-#अगर (DEBUG > 2)
-	prपूर्णांकk("  Maximum receive rings %i\n", पढ़ोl(&regs->MaxRxRng));
-#पूर्ण_अगर
+#if (DEBUG > 2)
+	printk("  Maximum receive rings %i\n", readl(&regs->MaxRxRng));
+#endif
 
 	/*
 	 * Read the hardware address from the eeprom.  The HW address
-	 * is not really necessary क्रम HIPPI but awfully convenient.
-	 * The poपूर्णांकer arithmetic to put it in dev_addr is ugly, but
-	 * Donald Becker करोes it this way क्रम the GigE version of this
-	 * card and it's लघुer and more portable than any
+	 * is not really necessary for HIPPI but awfully convenient.
+	 * The pointer arithmetic to put it in dev_addr is ugly, but
+	 * Donald Becker does it this way for the GigE version of this
+	 * card and it's shorter and more portable than any
 	 * other method I've seen.  -VAL
 	 */
 
 	*(__be16 *)(dev->dev_addr) =
-	  htons(rr_पढ़ो_eeprom_word(rrpriv, दुरत्व(काष्ठा eeprom, manf.BoardULA)));
+	  htons(rr_read_eeprom_word(rrpriv, offsetof(struct eeprom, manf.BoardULA)));
 	*(__be32 *)(dev->dev_addr+2) =
-	  htonl(rr_पढ़ो_eeprom_word(rrpriv, दुरत्व(काष्ठा eeprom, manf.BoardULA[4])));
+	  htonl(rr_read_eeprom_word(rrpriv, offsetof(struct eeprom, manf.BoardULA[4])));
 
-	prपूर्णांकk("  MAC: %pM\n", dev->dev_addr);
+	printk("  MAC: %pM\n", dev->dev_addr);
 
-	sram_size = rr_पढ़ो_eeprom_word(rrpriv, 8);
-	prपूर्णांकk("  SRAM size 0x%06x\n", sram_size);
+	sram_size = rr_read_eeprom_word(rrpriv, 8);
+	printk("  SRAM size 0x%06x\n", sram_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक rr_init1(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
-	अचिन्हित दीर्घ myjअगर, flags;
-	काष्ठा cmd cmd;
+static int rr_init1(struct net_device *dev)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
+	unsigned long myjif, flags;
+	struct cmd cmd;
 	u32 hostctrl;
-	पूर्णांक ecode = 0;
-	लघु i;
+	int ecode = 0;
+	short i;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
 	spin_lock_irqsave(&rrpriv->lock, flags);
 
-	hostctrl = पढ़ोl(&regs->HostCtrl);
-	ग_लिखोl(hostctrl | HALT_NIC | RR_CLEAR_INT, &regs->HostCtrl);
+	hostctrl = readl(&regs->HostCtrl);
+	writel(hostctrl | HALT_NIC | RR_CLEAR_INT, &regs->HostCtrl);
 	wmb();
 
-	अगर (hostctrl & PARITY_ERR)अणु
-		prपूर्णांकk("%s: Parity error halting NIC - this is serious!\n",
+	if (hostctrl & PARITY_ERR){
+		printk("%s: Parity error halting NIC - this is serious!\n",
 		       dev->name);
 		spin_unlock_irqrestore(&rrpriv->lock, flags);
 		ecode = -EFAULT;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	set_rxaddr(regs, rrpriv->rx_ctrl_dma);
 	set_infoaddr(regs, rrpriv->info_dma);
 
-	rrpriv->info->evt_ctrl.entry_size = माप(काष्ठा event);
+	rrpriv->info->evt_ctrl.entry_size = sizeof(struct event);
 	rrpriv->info->evt_ctrl.entries = EVT_RING_ENTRIES;
 	rrpriv->info->evt_ctrl.mode = 0;
 	rrpriv->info->evt_ctrl.pi = 0;
 	set_rraddr(&rrpriv->info->evt_ctrl.rngptr, rrpriv->evt_ring_dma);
 
-	rrpriv->info->cmd_ctrl.entry_size = माप(काष्ठा cmd);
+	rrpriv->info->cmd_ctrl.entry_size = sizeof(struct cmd);
 	rrpriv->info->cmd_ctrl.entries = CMD_RING_ENTRIES;
 	rrpriv->info->cmd_ctrl.mode = 0;
 	rrpriv->info->cmd_ctrl.pi = 15;
 
-	क्रम (i = 0; i < CMD_RING_ENTRIES; i++) अणु
-		ग_लिखोl(0, &regs->CmdRing[i]);
-	पूर्ण
+	for (i = 0; i < CMD_RING_ENTRIES; i++) {
+		writel(0, &regs->CmdRing[i]);
+	}
 
-	क्रम (i = 0; i < TX_RING_ENTRIES; i++) अणु
+	for (i = 0; i < TX_RING_ENTRIES; i++) {
 		rrpriv->tx_ring[i].size = 0;
 		set_rraddr(&rrpriv->tx_ring[i].addr, 0);
-		rrpriv->tx_skbuff[i] = शून्य;
-	पूर्ण
-	rrpriv->info->tx_ctrl.entry_size = माप(काष्ठा tx_desc);
+		rrpriv->tx_skbuff[i] = NULL;
+	}
+	rrpriv->info->tx_ctrl.entry_size = sizeof(struct tx_desc);
 	rrpriv->info->tx_ctrl.entries = TX_RING_ENTRIES;
 	rrpriv->info->tx_ctrl.mode = 0;
 	rrpriv->info->tx_ctrl.pi = 0;
 	set_rraddr(&rrpriv->info->tx_ctrl.rngptr, rrpriv->tx_ring_dma);
 
 	/*
-	 * Set dirty_tx beक्रमe we start receiving पूर्णांकerrupts, otherwise
-	 * the पूर्णांकerrupt handler might think it is supposed to process
-	 * tx पूर्णांकs beक्रमe we are up and running, which may cause a null
-	 * poपूर्णांकer access in the पूर्णांक handler.
+	 * Set dirty_tx before we start receiving interrupts, otherwise
+	 * the interrupt handler might think it is supposed to process
+	 * tx ints before we are up and running, which may cause a null
+	 * pointer access in the int handler.
 	 */
 	rrpriv->tx_full = 0;
 	rrpriv->cur_rx = 0;
@@ -621,51 +620,51 @@ MODULE_LICENSE("GPL");
 	rr_reset(dev);
 
 	/* Tuning values */
-	ग_लिखोl(0x5000, &regs->ConRetry);
-	ग_लिखोl(0x100, &regs->ConRetryTmr);
-	ग_लिखोl(0x500000, &regs->ConTmout);
- 	ग_लिखोl(0x60, &regs->IntrTmr);
-	ग_लिखोl(0x500000, &regs->TxDataMvTimeout);
-	ग_लिखोl(0x200000, &regs->RxDataMvTimeout);
- 	ग_लिखोl(0x80, &regs->WriteDmaThresh);
- 	ग_लिखोl(0x80, &regs->ReadDmaThresh);
+	writel(0x5000, &regs->ConRetry);
+	writel(0x100, &regs->ConRetryTmr);
+	writel(0x500000, &regs->ConTmout);
+ 	writel(0x60, &regs->IntrTmr);
+	writel(0x500000, &regs->TxDataMvTimeout);
+	writel(0x200000, &regs->RxDataMvTimeout);
+ 	writel(0x80, &regs->WriteDmaThresh);
+ 	writel(0x80, &regs->ReadDmaThresh);
 
 	rrpriv->fw_running = 0;
 	wmb();
 
 	hostctrl &= ~(HALT_NIC | INVALID_INST_B | PARITY_ERR);
-	ग_लिखोl(hostctrl, &regs->HostCtrl);
+	writel(hostctrl, &regs->HostCtrl);
 	wmb();
 
 	spin_unlock_irqrestore(&rrpriv->lock, flags);
 
-	क्रम (i = 0; i < RX_RING_ENTRIES; i++) अणु
-		काष्ठा sk_buff *skb;
+	for (i = 0; i < RX_RING_ENTRIES; i++) {
+		struct sk_buff *skb;
 		dma_addr_t addr;
 
 		rrpriv->rx_ring[i].mode = 0;
 		skb = alloc_skb(dev->mtu + HIPPI_HLEN, GFP_ATOMIC);
-		अगर (!skb) अणु
-			prपूर्णांकk(KERN_WARNING "%s: Unable to allocate memory "
+		if (!skb) {
+			printk(KERN_WARNING "%s: Unable to allocate memory "
 			       "for receive ring - halting NIC\n", dev->name);
 			ecode = -ENOMEM;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		rrpriv->rx_skbuff[i] = skb;
 		addr = dma_map_single(&rrpriv->pci_dev->dev, skb->data,
 				      dev->mtu + HIPPI_HLEN, DMA_FROM_DEVICE);
 		/*
-		 * Sanity test to see अगर we conflict with the DMA
+		 * Sanity test to see if we conflict with the DMA
 		 * limitations of the Roadrunner.
 		 */
-		अगर ((((अचिन्हित दीर्घ)skb->data) & 0xfff) > ~65320)
-			prपूर्णांकk("skb alloc error\n");
+		if ((((unsigned long)skb->data) & 0xfff) > ~65320)
+			printk("skb alloc error\n");
 
 		set_rraddr(&rrpriv->rx_ring[i].addr, addr);
 		rrpriv->rx_ring[i].size = dev->mtu + HIPPI_HLEN;
-	पूर्ण
+	}
 
-	rrpriv->rx_ctrl[4].entry_size = माप(काष्ठा rx_desc);
+	rrpriv->rx_ctrl[4].entry_size = sizeof(struct rx_desc);
 	rrpriv->rx_ctrl[4].entries = RX_RING_ENTRIES;
 	rrpriv->rx_ctrl[4].mode = 8;
 	rrpriv->rx_ctrl[4].pi = 0;
@@ -684,217 +683,217 @@ MODULE_LICENSE("GPL");
 	rr_issue_cmd(rrpriv, &cmd);
 
 	/*
-	 * Give the FirmWare समय to chew on the `get running' command.
+	 * Give the FirmWare time to chew on the `get running' command.
 	 */
-	myjअगर = jअगरfies + 5 * HZ;
-	जबतक (समय_beक्रमe(jअगरfies, myjअगर) && !rrpriv->fw_running)
+	myjif = jiffies + 5 * HZ;
+	while (time_before(jiffies, myjif) && !rrpriv->fw_running)
 		cpu_relax();
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस ecode;
+	return ecode;
 
  error:
 	/*
 	 * We might have gotten here because we are out of memory,
-	 * make sure we release everything we allocated beक्रमe failing
+	 * make sure we release everything we allocated before failing
 	 */
-	क्रम (i = 0; i < RX_RING_ENTRIES; i++) अणु
-		काष्ठा sk_buff *skb = rrpriv->rx_skbuff[i];
+	for (i = 0; i < RX_RING_ENTRIES; i++) {
+		struct sk_buff *skb = rrpriv->rx_skbuff[i];
 
-		अगर (skb) अणु
+		if (skb) {
 			dma_unmap_single(&rrpriv->pci_dev->dev,
 					 rrpriv->rx_ring[i].addr.addrlo,
 					 dev->mtu + HIPPI_HLEN,
 					 DMA_FROM_DEVICE);
 			rrpriv->rx_ring[i].size = 0;
 			set_rraddr(&rrpriv->rx_ring[i].addr, 0);
-			dev_kमुक्त_skb(skb);
-			rrpriv->rx_skbuff[i] = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस ecode;
-पूर्ण
+			dev_kfree_skb(skb);
+			rrpriv->rx_skbuff[i] = NULL;
+		}
+	}
+	return ecode;
+}
 
 
 /*
- * All events are considered to be slow (RX/TX पूर्णांकs करो not generate
- * events) and are handled here, outside the मुख्य पूर्णांकerrupt handler,
+ * All events are considered to be slow (RX/TX ints do not generate
+ * events) and are handled here, outside the main interrupt handler,
  * to reduce the size of the handler.
  */
-अटल u32 rr_handle_event(काष्ठा net_device *dev, u32 prodidx, u32 eidx)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
-	u32 पंचांगp;
+static u32 rr_handle_event(struct net_device *dev, u32 prodidx, u32 eidx)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
+	u32 tmp;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
-	जबतक (prodidx != eidx)अणु
-		चयन (rrpriv->evt_ring[eidx].code)अणु
-		हाल E_NIC_UP:
-			पंचांगp = पढ़ोl(&regs->FwRev);
-			prपूर्णांकk(KERN_INFO "%s: Firmware revision %i.%i.%i "
+	while (prodidx != eidx){
+		switch (rrpriv->evt_ring[eidx].code){
+		case E_NIC_UP:
+			tmp = readl(&regs->FwRev);
+			printk(KERN_INFO "%s: Firmware revision %i.%i.%i "
 			       "up and running\n", dev->name,
-			       (पंचांगp >> 16), ((पंचांगp >> 8) & 0xff), (पंचांगp & 0xff));
+			       (tmp >> 16), ((tmp >> 8) & 0xff), (tmp & 0xff));
 			rrpriv->fw_running = 1;
-			ग_लिखोl(RX_RING_ENTRIES - 1, &regs->IpRxPi);
+			writel(RX_RING_ENTRIES - 1, &regs->IpRxPi);
 			wmb();
-			अवरोध;
-		हाल E_LINK_ON:
-			prपूर्णांकk(KERN_INFO "%s: Optical link ON\n", dev->name);
-			अवरोध;
-		हाल E_LINK_OFF:
-			prपूर्णांकk(KERN_INFO "%s: Optical link OFF\n", dev->name);
-			अवरोध;
-		हाल E_RX_IDLE:
-			prपूर्णांकk(KERN_WARNING "%s: RX data not moving\n",
+			break;
+		case E_LINK_ON:
+			printk(KERN_INFO "%s: Optical link ON\n", dev->name);
+			break;
+		case E_LINK_OFF:
+			printk(KERN_INFO "%s: Optical link OFF\n", dev->name);
+			break;
+		case E_RX_IDLE:
+			printk(KERN_WARNING "%s: RX data not moving\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_WATCHDOG:
-			prपूर्णांकk(KERN_INFO "%s: The watchdog is here to see "
+			goto drop;
+		case E_WATCHDOG:
+			printk(KERN_INFO "%s: The watchdog is here to see "
 			       "us\n", dev->name);
-			अवरोध;
-		हाल E_INTERN_ERR:
-			prपूर्णांकk(KERN_ERR "%s: HIPPI Internal NIC error\n",
+			break;
+		case E_INTERN_ERR:
+			printk(KERN_ERR "%s: HIPPI Internal NIC error\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_HOST_ERR:
-			prपूर्णांकk(KERN_ERR "%s: Host software error\n",
+			break;
+		case E_HOST_ERR:
+			printk(KERN_ERR "%s: Host software error\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
+			break;
 		/*
 		 * TX events.
 		 */
-		हाल E_CON_REJ:
-			prपूर्णांकk(KERN_WARNING "%s: Connection rejected\n",
+		case E_CON_REJ:
+			printk(KERN_WARNING "%s: Connection rejected\n",
 			       dev->name);
-			dev->stats.tx_पातed_errors++;
-			अवरोध;
-		हाल E_CON_TMOUT:
-			prपूर्णांकk(KERN_WARNING "%s: Connection timeout\n",
+			dev->stats.tx_aborted_errors++;
+			break;
+		case E_CON_TMOUT:
+			printk(KERN_WARNING "%s: Connection timeout\n",
 			       dev->name);
-			अवरोध;
-		हाल E_DISC_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: HIPPI disconnect error\n",
+			break;
+		case E_DISC_ERR:
+			printk(KERN_WARNING "%s: HIPPI disconnect error\n",
 			       dev->name);
-			dev->stats.tx_पातed_errors++;
-			अवरोध;
-		हाल E_INT_PRTY:
-			prपूर्णांकk(KERN_ERR "%s: HIPPI Internal Parity error\n",
+			dev->stats.tx_aborted_errors++;
+			break;
+		case E_INT_PRTY:
+			printk(KERN_ERR "%s: HIPPI Internal Parity error\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_TX_IDLE:
-			prपूर्णांकk(KERN_WARNING "%s: Transmitter idle\n",
+			break;
+		case E_TX_IDLE:
+			printk(KERN_WARNING "%s: Transmitter idle\n",
 			       dev->name);
-			अवरोध;
-		हाल E_TX_LINK_DROP:
-			prपूर्णांकk(KERN_WARNING "%s: Link lost during transmit\n",
+			break;
+		case E_TX_LINK_DROP:
+			printk(KERN_WARNING "%s: Link lost during transmit\n",
 			       dev->name);
-			dev->stats.tx_पातed_errors++;
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			dev->stats.tx_aborted_errors++;
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_TX_INV_RNG:
-			prपूर्णांकk(KERN_ERR "%s: Invalid send ring block\n",
+			break;
+		case E_TX_INV_RNG:
+			printk(KERN_ERR "%s: Invalid send ring block\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_TX_INV_BUF:
-			prपूर्णांकk(KERN_ERR "%s: Invalid send buffer address\n",
+			break;
+		case E_TX_INV_BUF:
+			printk(KERN_ERR "%s: Invalid send buffer address\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_TX_INV_DSC:
-			prपूर्णांकk(KERN_ERR "%s: Invalid descriptor address\n",
+			break;
+		case E_TX_INV_DSC:
+			printk(KERN_ERR "%s: Invalid descriptor address\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
+			break;
 		/*
 		 * RX events.
 		 */
-		हाल E_RX_RNG_OUT:
-			prपूर्णांकk(KERN_INFO "%s: Receive ring full\n", dev->name);
-			अवरोध;
+		case E_RX_RNG_OUT:
+			printk(KERN_INFO "%s: Receive ring full\n", dev->name);
+			break;
 
-		हाल E_RX_PAR_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Receive parity error\n",
+		case E_RX_PAR_ERR:
+			printk(KERN_WARNING "%s: Receive parity error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_RX_LLRC_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Receive LLRC error\n",
+			goto drop;
+		case E_RX_LLRC_ERR:
+			printk(KERN_WARNING "%s: Receive LLRC error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_PKT_LN_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Receive packet length "
+			goto drop;
+		case E_PKT_LN_ERR:
+			printk(KERN_WARNING "%s: Receive packet length "
 			       "error\n", dev->name);
-			जाओ drop;
-		हाल E_DTA_CKSM_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Data checksum error\n",
+			goto drop;
+		case E_DTA_CKSM_ERR:
+			printk(KERN_WARNING "%s: Data checksum error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_SHT_BST:
-			prपूर्णांकk(KERN_WARNING "%s: Unexpected short burst "
+			goto drop;
+		case E_SHT_BST:
+			printk(KERN_WARNING "%s: Unexpected short burst "
 			       "error\n", dev->name);
-			जाओ drop;
-		हाल E_STATE_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Recv. state transition"
+			goto drop;
+		case E_STATE_ERR:
+			printk(KERN_WARNING "%s: Recv. state transition"
 			       " error\n", dev->name);
-			जाओ drop;
-		हाल E_UNEXP_DATA:
-			prपूर्णांकk(KERN_WARNING "%s: Unexpected data error\n",
+			goto drop;
+		case E_UNEXP_DATA:
+			printk(KERN_WARNING "%s: Unexpected data error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_LST_LNK_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Link lost error\n",
+			goto drop;
+		case E_LST_LNK_ERR:
+			printk(KERN_WARNING "%s: Link lost error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_FRM_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Framing Error\n",
+			goto drop;
+		case E_FRM_ERR:
+			printk(KERN_WARNING "%s: Framing Error\n",
 			       dev->name);
-			जाओ drop;
-		हाल E_FLG_SYN_ERR:
-			prपूर्णांकk(KERN_WARNING "%s: Flag sync. lost during "
+			goto drop;
+		case E_FLG_SYN_ERR:
+			printk(KERN_WARNING "%s: Flag sync. lost during "
 			       "packet\n", dev->name);
-			जाओ drop;
-		हाल E_RX_INV_BUF:
-			prपूर्णांकk(KERN_ERR "%s: Invalid receive buffer "
+			goto drop;
+		case E_RX_INV_BUF:
+			printk(KERN_ERR "%s: Invalid receive buffer "
 			       "address\n", dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_RX_INV_DSC:
-			prपूर्णांकk(KERN_ERR "%s: Invalid receive descriptor "
+			break;
+		case E_RX_INV_DSC:
+			printk(KERN_ERR "%s: Invalid receive descriptor "
 			       "address\n", dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
-		हाल E_RNG_BLK:
-			prपूर्णांकk(KERN_ERR "%s: Invalid ring block\n",
+			break;
+		case E_RNG_BLK:
+			printk(KERN_ERR "%s: Invalid ring block\n",
 			       dev->name);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			wmb();
-			अवरोध;
+			break;
 		drop:
 			/* Label packet to be dropped.
 			 * Actual dropping occurs in rx
@@ -904,60 +903,60 @@ MODULE_LICENSE("GPL");
 			 * the index of the packet following
 			 * the bad packet. -kbf
 			 */
-			अणु
+			{
 				u16 index = rrpriv->evt_ring[eidx].index;
 				index = (index + (RX_RING_ENTRIES - 1)) %
 					RX_RING_ENTRIES;
 				rrpriv->rx_ring[index].mode |=
 					(PACKET_BAD | PACKET_END);
-			पूर्ण
-			अवरोध;
-		शेष:
-			prपूर्णांकk(KERN_WARNING "%s: Unhandled event 0x%02x\n",
+			}
+			break;
+		default:
+			printk(KERN_WARNING "%s: Unhandled event 0x%02x\n",
 			       dev->name, rrpriv->evt_ring[eidx].code);
-		पूर्ण
+		}
 		eidx = (eidx + 1) % EVT_RING_ENTRIES;
-	पूर्ण
+	}
 
 	rrpriv->info->evt_ctrl.pi = eidx;
 	wmb();
-	वापस eidx;
-पूर्ण
+	return eidx;
+}
 
 
-अटल व्योम rx_पूर्णांक(काष्ठा net_device *dev, u32 rxlimit, u32 index)
-अणु
-	काष्ठा rr_निजी *rrpriv = netdev_priv(dev);
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
+static void rx_int(struct net_device *dev, u32 rxlimit, u32 index)
+{
+	struct rr_private *rrpriv = netdev_priv(dev);
+	struct rr_regs __iomem *regs = rrpriv->regs;
 
-	करो अणु
-		काष्ठा rx_desc *desc;
+	do {
+		struct rx_desc *desc;
 		u32 pkt_len;
 
 		desc = &(rrpriv->rx_ring[index]);
 		pkt_len = desc->size;
-#अगर (DEBUG > 2)
-		prपूर्णांकk("index %i, rxlimit %i\n", index, rxlimit);
-		prपूर्णांकk("len %x, mode %x\n", pkt_len, desc->mode);
-#पूर्ण_अगर
-		अगर ( (rrpriv->rx_ring[index].mode & PACKET_BAD) == PACKET_BAD)अणु
+#if (DEBUG > 2)
+		printk("index %i, rxlimit %i\n", index, rxlimit);
+		printk("len %x, mode %x\n", pkt_len, desc->mode);
+#endif
+		if ( (rrpriv->rx_ring[index].mode & PACKET_BAD) == PACKET_BAD){
 			dev->stats.rx_dropped++;
-			जाओ defer;
-		पूर्ण
+			goto defer;
+		}
 
-		अगर (pkt_len > 0)अणु
-			काष्ठा sk_buff *skb, *rx_skb;
+		if (pkt_len > 0){
+			struct sk_buff *skb, *rx_skb;
 
 			rx_skb = rrpriv->rx_skbuff[index];
 
-			अगर (pkt_len < PKT_COPY_THRESHOLD) अणु
+			if (pkt_len < PKT_COPY_THRESHOLD) {
 				skb = alloc_skb(pkt_len, GFP_ATOMIC);
-				अगर (skb == शून्य)अणु
-					prपूर्णांकk(KERN_WARNING "%s: Unable to allocate skb (%i bytes), deferring packet\n", dev->name, pkt_len);
+				if (skb == NULL){
+					printk(KERN_WARNING "%s: Unable to allocate skb (%i bytes), deferring packet\n", dev->name, pkt_len);
 					dev->stats.rx_dropped++;
-					जाओ defer;
-				पूर्ण अन्यथा अणु
-					dma_sync_single_क्रम_cpu(&rrpriv->pci_dev->dev,
+					goto defer;
+				} else {
+					dma_sync_single_for_cpu(&rrpriv->pci_dev->dev,
 								desc->addr.addrlo,
 								pkt_len,
 								DMA_FROM_DEVICE);
@@ -965,17 +964,17 @@ MODULE_LICENSE("GPL");
 					skb_put_data(skb, rx_skb->data,
 						     pkt_len);
 
-					dma_sync_single_क्रम_device(&rrpriv->pci_dev->dev,
+					dma_sync_single_for_device(&rrpriv->pci_dev->dev,
 								   desc->addr.addrlo,
 								   pkt_len,
 								   DMA_FROM_DEVICE);
-				पूर्ण
-			पूर्णअन्यथाअणु
-				काष्ठा sk_buff *newskb;
+				}
+			}else{
+				struct sk_buff *newskb;
 
 				newskb = alloc_skb(dev->mtu + HIPPI_HLEN,
 					GFP_ATOMIC);
-				अगर (newskb)अणु
+				if (newskb){
 					dma_addr_t addr;
 
 					dma_unmap_single(&rrpriv->pci_dev->dev,
@@ -990,82 +989,82 @@ MODULE_LICENSE("GPL");
 							      dev->mtu + HIPPI_HLEN,
 							      DMA_FROM_DEVICE);
 					set_rraddr(&desc->addr, addr);
-				पूर्ण अन्यथा अणु
-					prपूर्णांकk("%s: Out of memory, deferring "
+				} else {
+					printk("%s: Out of memory, deferring "
 					       "packet\n", dev->name);
 					dev->stats.rx_dropped++;
-					जाओ defer;
-				पूर्ण
-			पूर्ण
+					goto defer;
+				}
+			}
 			skb->protocol = hippi_type_trans(skb, dev);
 
-			netअगर_rx(skb);		/* send it up */
+			netif_rx(skb);		/* send it up */
 
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += pkt_len;
-		पूर्ण
+		}
 	defer:
 		desc->mode = 0;
 		desc->size = dev->mtu + HIPPI_HLEN;
 
-		अगर ((index & 7) == 7)
-			ग_लिखोl(index, &regs->IpRxPi);
+		if ((index & 7) == 7)
+			writel(index, &regs->IpRxPi);
 
 		index = (index + 1) % RX_RING_ENTRIES;
-	पूर्ण जबतक(index != rxlimit);
+	} while(index != rxlimit);
 
 	rrpriv->cur_rx = index;
 	wmb();
-पूर्ण
+}
 
 
-अटल irqवापस_t rr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
-	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
+static irqreturn_t rr_interrupt(int irq, void *dev_id)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
+	struct net_device *dev = (struct net_device *)dev_id;
 	u32 prodidx, rxindex, eidx, txcsmr, rxlimit, txcon;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
-	अगर (!(पढ़ोl(&regs->HostCtrl) & RR_INT))
-		वापस IRQ_NONE;
+	if (!(readl(&regs->HostCtrl) & RR_INT))
+		return IRQ_NONE;
 
 	spin_lock(&rrpriv->lock);
 
-	prodidx = पढ़ोl(&regs->EvtPrd);
+	prodidx = readl(&regs->EvtPrd);
 	txcsmr = (prodidx >> 8) & 0xff;
 	rxlimit = (prodidx >> 16) & 0xff;
 	prodidx &= 0xff;
 
-#अगर (DEBUG > 2)
-	prपूर्णांकk("%s: interrupt, prodidx = %i, eidx = %i\n", dev->name,
+#if (DEBUG > 2)
+	printk("%s: interrupt, prodidx = %i, eidx = %i\n", dev->name,
 	       prodidx, rrpriv->info->evt_ctrl.pi);
-#पूर्ण_अगर
+#endif
 	/*
 	 * Order here is important.  We must handle events
-	 * beक्रमe करोing anything अन्यथा in order to catch
+	 * before doing anything else in order to catch
 	 * such things as LLRC errors, etc -kbf
 	 */
 
 	eidx = rrpriv->info->evt_ctrl.pi;
-	अगर (prodidx != eidx)
+	if (prodidx != eidx)
 		eidx = rr_handle_event(dev, prodidx, eidx);
 
 	rxindex = rrpriv->cur_rx;
-	अगर (rxindex != rxlimit)
-		rx_पूर्णांक(dev, rxlimit, rxindex);
+	if (rxindex != rxlimit)
+		rx_int(dev, rxlimit, rxindex);
 
 	txcon = rrpriv->dirty_tx;
-	अगर (txcsmr != txcon) अणु
-		करो अणु
+	if (txcsmr != txcon) {
+		do {
 			/* Due to occational firmware TX producer/consumer out
 			 * of sync. error need to check entry in ring -kbf
 			 */
-			अगर(rrpriv->tx_skbuff[txcon])अणु
-				काष्ठा tx_desc *desc;
-				काष्ठा sk_buff *skb;
+			if(rrpriv->tx_skbuff[txcon]){
+				struct tx_desc *desc;
+				struct sk_buff *skb;
 
 				desc = &(rrpriv->tx_ring[txcon]);
 				skb = rrpriv->tx_skbuff[txcon];
@@ -1076,67 +1075,67 @@ MODULE_LICENSE("GPL");
 				dma_unmap_single(&rrpriv->pci_dev->dev,
 						 desc->addr.addrlo, skb->len,
 						 DMA_TO_DEVICE);
-				dev_kमुक्त_skb_irq(skb);
+				dev_kfree_skb_irq(skb);
 
-				rrpriv->tx_skbuff[txcon] = शून्य;
+				rrpriv->tx_skbuff[txcon] = NULL;
 				desc->size = 0;
 				set_rraddr(&rrpriv->tx_ring[txcon].addr, 0);
 				desc->mode = 0;
-			पूर्ण
+			}
 			txcon = (txcon + 1) % TX_RING_ENTRIES;
-		पूर्ण जबतक (txcsmr != txcon);
+		} while (txcsmr != txcon);
 		wmb();
 
 		rrpriv->dirty_tx = txcon;
-		अगर (rrpriv->tx_full && rr_अगर_busy(dev) &&
+		if (rrpriv->tx_full && rr_if_busy(dev) &&
 		    (((rrpriv->info->tx_ctrl.pi + 1) % TX_RING_ENTRIES)
-		     != rrpriv->dirty_tx))अणु
+		     != rrpriv->dirty_tx)){
 			rrpriv->tx_full = 0;
-			netअगर_wake_queue(dev);
-		पूर्ण
-	पूर्ण
+			netif_wake_queue(dev);
+		}
+	}
 
 	eidx |= ((txcsmr << 8) | (rxlimit << 16));
-	ग_लिखोl(eidx, &regs->EvtCon);
+	writel(eidx, &regs->EvtCon);
 	wmb();
 
 	spin_unlock(&rrpriv->lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल अंतरभूत व्योम rr_raz_tx(काष्ठा rr_निजी *rrpriv,
-			     काष्ठा net_device *dev)
-अणु
-	पूर्णांक i;
+static inline void rr_raz_tx(struct rr_private *rrpriv,
+			     struct net_device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < TX_RING_ENTRIES; i++) अणु
-		काष्ठा sk_buff *skb = rrpriv->tx_skbuff[i];
+	for (i = 0; i < TX_RING_ENTRIES; i++) {
+		struct sk_buff *skb = rrpriv->tx_skbuff[i];
 
-		अगर (skb) अणु
-			काष्ठा tx_desc *desc = &(rrpriv->tx_ring[i]);
+		if (skb) {
+			struct tx_desc *desc = &(rrpriv->tx_ring[i]);
 
 			dma_unmap_single(&rrpriv->pci_dev->dev,
 					 desc->addr.addrlo, skb->len,
 					 DMA_TO_DEVICE);
 			desc->size = 0;
 			set_rraddr(&desc->addr, 0);
-			dev_kमुक्त_skb(skb);
-			rrpriv->tx_skbuff[i] = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			dev_kfree_skb(skb);
+			rrpriv->tx_skbuff[i] = NULL;
+		}
+	}
+}
 
 
-अटल अंतरभूत व्योम rr_raz_rx(काष्ठा rr_निजी *rrpriv,
-			     काष्ठा net_device *dev)
-अणु
-	पूर्णांक i;
+static inline void rr_raz_rx(struct rr_private *rrpriv,
+			     struct net_device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < RX_RING_ENTRIES; i++) अणु
-		काष्ठा sk_buff *skb = rrpriv->rx_skbuff[i];
+	for (i = 0; i < RX_RING_ENTRIES; i++) {
+		struct sk_buff *skb = rrpriv->rx_skbuff[i];
 
-		अगर (skb) अणु
-			काष्ठा rx_desc *desc = &(rrpriv->rx_ring[i]);
+		if (skb) {
+			struct rx_desc *desc = &(rrpriv->rx_ring[i]);
 
 			dma_unmap_single(&rrpriv->pci_dev->dev,
 					 desc->addr.addrlo,
@@ -1144,226 +1143,226 @@ MODULE_LICENSE("GPL");
 					 DMA_FROM_DEVICE);
 			desc->size = 0;
 			set_rraddr(&desc->addr, 0);
-			dev_kमुक्त_skb(skb);
-			rrpriv->rx_skbuff[i] = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			dev_kfree_skb(skb);
+			rrpriv->rx_skbuff[i] = NULL;
+		}
+	}
+}
 
-अटल व्योम rr_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा rr_निजी *rrpriv = from_समयr(rrpriv, t, समयr);
-	काष्ठा net_device *dev = pci_get_drvdata(rrpriv->pci_dev);
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
-	अचिन्हित दीर्घ flags;
+static void rr_timer(struct timer_list *t)
+{
+	struct rr_private *rrpriv = from_timer(rrpriv, t, timer);
+	struct net_device *dev = pci_get_drvdata(rrpriv->pci_dev);
+	struct rr_regs __iomem *regs = rrpriv->regs;
+	unsigned long flags;
 
-	अगर (पढ़ोl(&regs->HostCtrl) & NIC_HALTED)अणु
-		prपूर्णांकk("%s: Restarting nic\n", dev->name);
-		स_रखो(rrpriv->rx_ctrl, 0, 256 * माप(काष्ठा ring_ctrl));
-		स_रखो(rrpriv->info, 0, माप(काष्ठा rr_info));
+	if (readl(&regs->HostCtrl) & NIC_HALTED){
+		printk("%s: Restarting nic\n", dev->name);
+		memset(rrpriv->rx_ctrl, 0, 256 * sizeof(struct ring_ctrl));
+		memset(rrpriv->info, 0, sizeof(struct rr_info));
 		wmb();
 
 		rr_raz_tx(rrpriv, dev);
 		rr_raz_rx(rrpriv, dev);
 
-		अगर (rr_init1(dev)) अणु
+		if (rr_init1(dev)) {
 			spin_lock_irqsave(&rrpriv->lock, flags);
-			ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
+			writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT,
 			       &regs->HostCtrl);
 			spin_unlock_irqrestore(&rrpriv->lock, flags);
-		पूर्ण
-	पूर्ण
-	rrpriv->समयr.expires = RUN_AT(5*HZ);
-	add_समयr(&rrpriv->समयr);
-पूर्ण
+		}
+	}
+	rrpriv->timer.expires = RUN_AT(5*HZ);
+	add_timer(&rrpriv->timer);
+}
 
 
-अटल पूर्णांक rr_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv = netdev_priv(dev);
-	काष्ठा pci_dev *pdev = rrpriv->pci_dev;
-	काष्ठा rr_regs __iomem *regs;
-	पूर्णांक ecode = 0;
-	अचिन्हित दीर्घ flags;
+static int rr_open(struct net_device *dev)
+{
+	struct rr_private *rrpriv = netdev_priv(dev);
+	struct pci_dev *pdev = rrpriv->pci_dev;
+	struct rr_regs __iomem *regs;
+	int ecode = 0;
+	unsigned long flags;
 	dma_addr_t dma_addr;
 
 	regs = rrpriv->regs;
 
-	अगर (rrpriv->fw_rev < 0x00020000) अणु
-		prपूर्णांकk(KERN_WARNING "%s: trying to configure device with "
+	if (rrpriv->fw_rev < 0x00020000) {
+		printk(KERN_WARNING "%s: trying to configure device with "
 		       "obsolete firmware\n", dev->name);
 		ecode = -EBUSY;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	rrpriv->rx_ctrl = dma_alloc_coherent(&pdev->dev,
-					     256 * माप(काष्ठा ring_ctrl),
+					     256 * sizeof(struct ring_ctrl),
 					     &dma_addr, GFP_KERNEL);
-	अगर (!rrpriv->rx_ctrl) अणु
+	if (!rrpriv->rx_ctrl) {
 		ecode = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	rrpriv->rx_ctrl_dma = dma_addr;
 
-	rrpriv->info = dma_alloc_coherent(&pdev->dev, माप(काष्ठा rr_info),
+	rrpriv->info = dma_alloc_coherent(&pdev->dev, sizeof(struct rr_info),
 					  &dma_addr, GFP_KERNEL);
-	अगर (!rrpriv->info) अणु
+	if (!rrpriv->info) {
 		ecode = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	rrpriv->info_dma = dma_addr;
 	wmb();
 
 	spin_lock_irqsave(&rrpriv->lock, flags);
-	ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT, &regs->HostCtrl);
-	पढ़ोl(&regs->HostCtrl);
+	writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT, &regs->HostCtrl);
+	readl(&regs->HostCtrl);
 	spin_unlock_irqrestore(&rrpriv->lock, flags);
 
-	अगर (request_irq(pdev->irq, rr_पूर्णांकerrupt, IRQF_SHARED, dev->name, dev)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Requested IRQ %d is busy\n",
+	if (request_irq(pdev->irq, rr_interrupt, IRQF_SHARED, dev->name, dev)) {
+		printk(KERN_WARNING "%s: Requested IRQ %d is busy\n",
 		       dev->name, pdev->irq);
 		ecode = -EAGAIN;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर ((ecode = rr_init1(dev)))
-		जाओ error;
+	if ((ecode = rr_init1(dev)))
+		goto error;
 
-	/* Set the समयr to चयन to check क्रम link beat and perhaps चयन
+	/* Set the timer to switch to check for link beat and perhaps switch
 	   to an alternate media type. */
-	समयr_setup(&rrpriv->समयr, rr_समयr, 0);
-	rrpriv->समयr.expires = RUN_AT(5*HZ);           /* 5 sec. watchकरोg */
-	add_समयr(&rrpriv->समयr);
+	timer_setup(&rrpriv->timer, rr_timer, 0);
+	rrpriv->timer.expires = RUN_AT(5*HZ);           /* 5 sec. watchdog */
+	add_timer(&rrpriv->timer);
 
-	netअगर_start_queue(dev);
+	netif_start_queue(dev);
 
-	वापस ecode;
+	return ecode;
 
  error:
 	spin_lock_irqsave(&rrpriv->lock, flags);
-	ग_लिखोl(पढ़ोl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT, &regs->HostCtrl);
+	writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT, &regs->HostCtrl);
 	spin_unlock_irqrestore(&rrpriv->lock, flags);
 
-	अगर (rrpriv->info) अणु
-		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा rr_info),
+	if (rrpriv->info) {
+		dma_free_coherent(&pdev->dev, sizeof(struct rr_info),
 				  rrpriv->info, rrpriv->info_dma);
-		rrpriv->info = शून्य;
-	पूर्ण
-	अगर (rrpriv->rx_ctrl) अणु
-		dma_मुक्त_coherent(&pdev->dev, 256 * माप(काष्ठा ring_ctrl),
+		rrpriv->info = NULL;
+	}
+	if (rrpriv->rx_ctrl) {
+		dma_free_coherent(&pdev->dev, 256 * sizeof(struct ring_ctrl),
 				  rrpriv->rx_ctrl, rrpriv->rx_ctrl_dma);
-		rrpriv->rx_ctrl = शून्य;
-	पूर्ण
+		rrpriv->rx_ctrl = NULL;
+	}
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	वापस ecode;
-पूर्ण
+	return ecode;
+}
 
 
-अटल व्योम rr_dump(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
+static void rr_dump(struct net_device *dev)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
 	u32 index, cons;
-	लघु i;
-	पूर्णांक len;
+	short i;
+	int len;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
-	prपूर्णांकk("%s: dumping NIC TX rings\n", dev->name);
+	printk("%s: dumping NIC TX rings\n", dev->name);
 
-	prपूर्णांकk("RxPrd %08x, TxPrd %02x, EvtPrd %08x, TxPi %02x, TxCtrlPi %02x\n",
-	       पढ़ोl(&regs->RxPrd), पढ़ोl(&regs->TxPrd),
-	       पढ़ोl(&regs->EvtPrd), पढ़ोl(&regs->TxPi),
+	printk("RxPrd %08x, TxPrd %02x, EvtPrd %08x, TxPi %02x, TxCtrlPi %02x\n",
+	       readl(&regs->RxPrd), readl(&regs->TxPrd),
+	       readl(&regs->EvtPrd), readl(&regs->TxPi),
 	       rrpriv->info->tx_ctrl.pi);
 
-	prपूर्णांकk("Error code 0x%x\n", पढ़ोl(&regs->Fail1));
+	printk("Error code 0x%x\n", readl(&regs->Fail1));
 
-	index = (((पढ़ोl(&regs->EvtPrd) >> 8) & 0xff) - 1) % TX_RING_ENTRIES;
+	index = (((readl(&regs->EvtPrd) >> 8) & 0xff) - 1) % TX_RING_ENTRIES;
 	cons = rrpriv->dirty_tx;
-	prपूर्णांकk("TX ring index %i, TX consumer %i\n",
+	printk("TX ring index %i, TX consumer %i\n",
 	       index, cons);
 
-	अगर (rrpriv->tx_skbuff[index])अणु
-		len = min_t(पूर्णांक, 0x80, rrpriv->tx_skbuff[index]->len);
-		prपूर्णांकk("skbuff for index %i is valid - dumping data (0x%x bytes - DMA len 0x%x)\n", index, len, rrpriv->tx_ring[index].size);
-		क्रम (i = 0; i < len; i++)अणु
-			अगर (!(i & 7))
-				prपूर्णांकk("\n");
-			prपूर्णांकk("%02x ", (अचिन्हित अक्षर) rrpriv->tx_skbuff[index]->data[i]);
-		पूर्ण
-		prपूर्णांकk("\n");
-	पूर्ण
+	if (rrpriv->tx_skbuff[index]){
+		len = min_t(int, 0x80, rrpriv->tx_skbuff[index]->len);
+		printk("skbuff for index %i is valid - dumping data (0x%x bytes - DMA len 0x%x)\n", index, len, rrpriv->tx_ring[index].size);
+		for (i = 0; i < len; i++){
+			if (!(i & 7))
+				printk("\n");
+			printk("%02x ", (unsigned char) rrpriv->tx_skbuff[index]->data[i]);
+		}
+		printk("\n");
+	}
 
-	अगर (rrpriv->tx_skbuff[cons])अणु
-		len = min_t(पूर्णांक, 0x80, rrpriv->tx_skbuff[cons]->len);
-		prपूर्णांकk("skbuff for cons %i is valid - dumping data (0x%x bytes - skbuff len 0x%x)\n", cons, len, rrpriv->tx_skbuff[cons]->len);
-		prपूर्णांकk("mode 0x%x, size 0x%x,\n phys %08Lx, skbuff-addr %p, truesize 0x%x\n",
+	if (rrpriv->tx_skbuff[cons]){
+		len = min_t(int, 0x80, rrpriv->tx_skbuff[cons]->len);
+		printk("skbuff for cons %i is valid - dumping data (0x%x bytes - skbuff len 0x%x)\n", cons, len, rrpriv->tx_skbuff[cons]->len);
+		printk("mode 0x%x, size 0x%x,\n phys %08Lx, skbuff-addr %p, truesize 0x%x\n",
 		       rrpriv->tx_ring[cons].mode,
 		       rrpriv->tx_ring[cons].size,
-		       (अचिन्हित दीर्घ दीर्घ) rrpriv->tx_ring[cons].addr.addrlo,
+		       (unsigned long long) rrpriv->tx_ring[cons].addr.addrlo,
 		       rrpriv->tx_skbuff[cons]->data,
-		       (अचिन्हित पूर्णांक)rrpriv->tx_skbuff[cons]->truesize);
-		क्रम (i = 0; i < len; i++)अणु
-			अगर (!(i & 7))
-				prपूर्णांकk("\n");
-			prपूर्णांकk("%02x ", (अचिन्हित अक्षर)rrpriv->tx_ring[cons].size);
-		पूर्ण
-		prपूर्णांकk("\n");
-	पूर्ण
+		       (unsigned int)rrpriv->tx_skbuff[cons]->truesize);
+		for (i = 0; i < len; i++){
+			if (!(i & 7))
+				printk("\n");
+			printk("%02x ", (unsigned char)rrpriv->tx_ring[cons].size);
+		}
+		printk("\n");
+	}
 
-	prपूर्णांकk("dumping TX ring info:\n");
-	क्रम (i = 0; i < TX_RING_ENTRIES; i++)
-		prपूर्णांकk("mode 0x%x, size 0x%x, phys-addr %08Lx\n",
+	printk("dumping TX ring info:\n");
+	for (i = 0; i < TX_RING_ENTRIES; i++)
+		printk("mode 0x%x, size 0x%x, phys-addr %08Lx\n",
 		       rrpriv->tx_ring[i].mode,
 		       rrpriv->tx_ring[i].size,
-		       (अचिन्हित दीर्घ दीर्घ) rrpriv->tx_ring[i].addr.addrlo);
+		       (unsigned long long) rrpriv->tx_ring[i].addr.addrlo);
 
-पूर्ण
+}
 
 
-अटल पूर्णांक rr_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv = netdev_priv(dev);
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
-	काष्ठा pci_dev *pdev = rrpriv->pci_dev;
-	अचिन्हित दीर्घ flags;
-	u32 पंचांगp;
-	लघु i;
+static int rr_close(struct net_device *dev)
+{
+	struct rr_private *rrpriv = netdev_priv(dev);
+	struct rr_regs __iomem *regs = rrpriv->regs;
+	struct pci_dev *pdev = rrpriv->pci_dev;
+	unsigned long flags;
+	u32 tmp;
+	short i;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
 
 	/*
-	 * Lock to make sure we are not cleaning up जबतक another CPU
-	 * is handling पूर्णांकerrupts.
+	 * Lock to make sure we are not cleaning up while another CPU
+	 * is handling interrupts.
 	 */
 	spin_lock_irqsave(&rrpriv->lock, flags);
 
-	पंचांगp = पढ़ोl(&regs->HostCtrl);
-	अगर (पंचांगp & NIC_HALTED)अणु
-		prपूर्णांकk("%s: NIC already halted\n", dev->name);
+	tmp = readl(&regs->HostCtrl);
+	if (tmp & NIC_HALTED){
+		printk("%s: NIC already halted\n", dev->name);
 		rr_dump(dev);
-	पूर्णअन्यथाअणु
-		पंचांगp |= HALT_NIC | RR_CLEAR_INT;
-		ग_लिखोl(पंचांगp, &regs->HostCtrl);
-		पढ़ोl(&regs->HostCtrl);
-	पूर्ण
+	}else{
+		tmp |= HALT_NIC | RR_CLEAR_INT;
+		writel(tmp, &regs->HostCtrl);
+		readl(&regs->HostCtrl);
+	}
 
 	rrpriv->fw_running = 0;
 
-	del_समयr_sync(&rrpriv->समयr);
+	del_timer_sync(&rrpriv->timer);
 
-	ग_लिखोl(0, &regs->TxPi);
-	ग_लिखोl(0, &regs->IpRxPi);
+	writel(0, &regs->TxPi);
+	writel(0, &regs->IpRxPi);
 
-	ग_लिखोl(0, &regs->EvtCon);
-	ग_लिखोl(0, &regs->EvtPrd);
+	writel(0, &regs->EvtCon);
+	writel(0, &regs->EvtPrd);
 
-	क्रम (i = 0; i < CMD_RING_ENTRIES; i++)
-		ग_लिखोl(0, &regs->CmdRing[i]);
+	for (i = 0; i < CMD_RING_ENTRIES; i++)
+		writel(0, &regs->CmdRing[i]);
 
 	rrpriv->info->tx_ctrl.entries = 0;
 	rrpriv->info->cmd_ctrl.pi = 0;
@@ -1373,62 +1372,62 @@ MODULE_LICENSE("GPL");
 	rr_raz_tx(rrpriv, dev);
 	rr_raz_rx(rrpriv, dev);
 
-	dma_मुक्त_coherent(&pdev->dev, 256 * माप(काष्ठा ring_ctrl),
+	dma_free_coherent(&pdev->dev, 256 * sizeof(struct ring_ctrl),
 			  rrpriv->rx_ctrl, rrpriv->rx_ctrl_dma);
-	rrpriv->rx_ctrl = शून्य;
+	rrpriv->rx_ctrl = NULL;
 
-	dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा rr_info), rrpriv->info,
+	dma_free_coherent(&pdev->dev, sizeof(struct rr_info), rrpriv->info,
 			  rrpriv->info_dma);
-	rrpriv->info = शून्य;
+	rrpriv->info = NULL;
 
 	spin_unlock_irqrestore(&rrpriv->lock, flags);
-	मुक्त_irq(pdev->irq, dev);
+	free_irq(pdev->irq, dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल netdev_tx_t rr_start_xmit(काष्ठा sk_buff *skb,
-				 काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv = netdev_priv(dev);
-	काष्ठा rr_regs __iomem *regs = rrpriv->regs;
-	काष्ठा hippi_cb *hcb = (काष्ठा hippi_cb *) skb->cb;
-	काष्ठा ring_ctrl *txctrl;
-	अचिन्हित दीर्घ flags;
+static netdev_tx_t rr_start_xmit(struct sk_buff *skb,
+				 struct net_device *dev)
+{
+	struct rr_private *rrpriv = netdev_priv(dev);
+	struct rr_regs __iomem *regs = rrpriv->regs;
+	struct hippi_cb *hcb = (struct hippi_cb *) skb->cb;
+	struct ring_ctrl *txctrl;
+	unsigned long flags;
 	u32 index, len = skb->len;
-	u32 *अगरield;
-	काष्ठा sk_buff *new_skb;
+	u32 *ifield;
+	struct sk_buff *new_skb;
 
-	अगर (पढ़ोl(&regs->Mode) & FATAL_ERR)
-		prपूर्णांकk("error codes Fail1 %02x, Fail2 %02x\n",
-		       पढ़ोl(&regs->Fail1), पढ़ोl(&regs->Fail2));
+	if (readl(&regs->Mode) & FATAL_ERR)
+		printk("error codes Fail1 %02x, Fail2 %02x\n",
+		       readl(&regs->Fail1), readl(&regs->Fail2));
 
 	/*
 	 * We probably need to deal with tbusy here to prevent overruns.
 	 */
 
-	अगर (skb_headroom(skb) < 8)अणु
-		prपूर्णांकk("incoming skb too small - reallocating\n");
-		अगर (!(new_skb = dev_alloc_skb(len + 8))) अणु
-			dev_kमुक्त_skb(skb);
-			netअगर_wake_queue(dev);
-			वापस NETDEV_TX_OK;
-		पूर्ण
+	if (skb_headroom(skb) < 8){
+		printk("incoming skb too small - reallocating\n");
+		if (!(new_skb = dev_alloc_skb(len + 8))) {
+			dev_kfree_skb(skb);
+			netif_wake_queue(dev);
+			return NETDEV_TX_OK;
+		}
 		skb_reserve(new_skb, 8);
 		skb_put(new_skb, len);
 		skb_copy_from_linear_data(skb, new_skb->data, len);
-		dev_kमुक्त_skb(skb);
+		dev_kfree_skb(skb);
 		skb = new_skb;
-	पूर्ण
+	}
 
-	अगरield = skb_push(skb, 8);
+	ifield = skb_push(skb, 8);
 
-	अगरield[0] = 0;
-	अगरield[1] = hcb->अगरield;
+	ifield[0] = 0;
+	ifield[1] = hcb->ifield;
 
 	/*
-	 * We करोn't need the lock beक्रमe we are actually going to start
+	 * We don't need the lock before we are actually going to start
 	 * fiddling with the control blocks.
 	 */
 	spin_lock_irqsave(&rrpriv->lock, flags);
@@ -1444,239 +1443,239 @@ MODULE_LICENSE("GPL");
 	rrpriv->tx_ring[index].mode = PACKET_START | PACKET_END;
 	txctrl->pi = (index + 1) % TX_RING_ENTRIES;
 	wmb();
-	ग_लिखोl(txctrl->pi, &regs->TxPi);
+	writel(txctrl->pi, &regs->TxPi);
 
-	अगर (txctrl->pi == rrpriv->dirty_tx)अणु
+	if (txctrl->pi == rrpriv->dirty_tx){
 		rrpriv->tx_full = 1;
-		netअगर_stop_queue(dev);
-	पूर्ण
+		netif_stop_queue(dev);
+	}
 
 	spin_unlock_irqrestore(&rrpriv->lock, flags);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 
 /*
- * Read the firmware out of the EEPROM and put it पूर्णांकo the SRAM
+ * Read the firmware out of the EEPROM and put it into the SRAM
  * (or from user space - later)
  *
- * This operation requires the NIC to be halted and is perक्रमmed with
- * पूर्णांकerrupts disabled and with the spinlock hold.
+ * This operation requires the NIC to be halted and is performed with
+ * interrupts disabled and with the spinlock hold.
  */
-अटल पूर्णांक rr_load_firmware(काष्ठा net_device *dev)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	काष्ठा rr_regs __iomem *regs;
-	माप_प्रकार eptr, segptr;
-	पूर्णांक i, j;
-	u32 localctrl, sptr, len, पंचांगp;
+static int rr_load_firmware(struct net_device *dev)
+{
+	struct rr_private *rrpriv;
+	struct rr_regs __iomem *regs;
+	size_t eptr, segptr;
+	int i, j;
+	u32 localctrl, sptr, len, tmp;
 	u32 p2len, p2size, nr_seg, revision, io, sram_size;
 
 	rrpriv = netdev_priv(dev);
 	regs = rrpriv->regs;
 
-	अगर (dev->flags & IFF_UP)
-		वापस -EBUSY;
+	if (dev->flags & IFF_UP)
+		return -EBUSY;
 
-	अगर (!(पढ़ोl(&regs->HostCtrl) & NIC_HALTED))अणु
-		prपूर्णांकk("%s: Trying to load firmware to a running NIC.\n",
+	if (!(readl(&regs->HostCtrl) & NIC_HALTED)){
+		printk("%s: Trying to load firmware to a running NIC.\n",
 		       dev->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	localctrl = पढ़ोl(&regs->LocalCtrl);
-	ग_लिखोl(0, &regs->LocalCtrl);
+	localctrl = readl(&regs->LocalCtrl);
+	writel(0, &regs->LocalCtrl);
 
-	ग_लिखोl(0, &regs->EvtPrd);
-	ग_लिखोl(0, &regs->RxPrd);
-	ग_लिखोl(0, &regs->TxPrd);
+	writel(0, &regs->EvtPrd);
+	writel(0, &regs->RxPrd);
+	writel(0, &regs->TxPrd);
 
 	/*
-	 * First wipe the entire SRAM, otherwise we might run पूर्णांकo all
+	 * First wipe the entire SRAM, otherwise we might run into all
 	 * kinds of trouble ... sigh, this took almost all afternoon
-	 * to track करोwn ;-(
+	 * to track down ;-(
 	 */
-	io = पढ़ोl(&regs->ExtIo);
-	ग_लिखोl(0, &regs->ExtIo);
-	sram_size = rr_पढ़ो_eeprom_word(rrpriv, 8);
+	io = readl(&regs->ExtIo);
+	writel(0, &regs->ExtIo);
+	sram_size = rr_read_eeprom_word(rrpriv, 8);
 
-	क्रम (i = 200; i < sram_size / 4; i++)अणु
-		ग_लिखोl(i * 4, &regs->WinBase);
+	for (i = 200; i < sram_size / 4; i++){
+		writel(i * 4, &regs->WinBase);
 		mb();
-		ग_लिखोl(0, &regs->WinData);
+		writel(0, &regs->WinData);
 		mb();
-	पूर्ण
-	ग_लिखोl(io, &regs->ExtIo);
+	}
+	writel(io, &regs->ExtIo);
 	mb();
 
-	eptr = rr_पढ़ो_eeprom_word(rrpriv,
-		       दुरत्व(काष्ठा eeprom, rncd_info.AddrRunCodeSegs));
+	eptr = rr_read_eeprom_word(rrpriv,
+		       offsetof(struct eeprom, rncd_info.AddrRunCodeSegs));
 	eptr = ((eptr & 0x1fffff) >> 3);
 
-	p2len = rr_पढ़ो_eeprom_word(rrpriv, 0x83*4);
+	p2len = rr_read_eeprom_word(rrpriv, 0x83*4);
 	p2len = (p2len << 2);
-	p2size = rr_पढ़ो_eeprom_word(rrpriv, 0x84*4);
+	p2size = rr_read_eeprom_word(rrpriv, 0x84*4);
 	p2size = ((p2size & 0x1fffff) >> 3);
 
-	अगर ((eptr < p2size) || (eptr > (p2size + p2len)))अणु
-		prपूर्णांकk("%s: eptr is invalid\n", dev->name);
-		जाओ out;
-	पूर्ण
+	if ((eptr < p2size) || (eptr > (p2size + p2len))){
+		printk("%s: eptr is invalid\n", dev->name);
+		goto out;
+	}
 
-	revision = rr_पढ़ो_eeprom_word(rrpriv,
-			दुरत्व(काष्ठा eeprom, manf.HeaderFmt));
+	revision = rr_read_eeprom_word(rrpriv,
+			offsetof(struct eeprom, manf.HeaderFmt));
 
-	अगर (revision != 1)अणु
-		prपूर्णांकk("%s: invalid firmware format (%i)\n",
+	if (revision != 1){
+		printk("%s: invalid firmware format (%i)\n",
 		       dev->name, revision);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	nr_seg = rr_पढ़ो_eeprom_word(rrpriv, eptr);
+	nr_seg = rr_read_eeprom_word(rrpriv, eptr);
 	eptr +=4;
-#अगर (DEBUG > 1)
-	prपूर्णांकk("%s: nr_seg %i\n", dev->name, nr_seg);
-#पूर्ण_अगर
+#if (DEBUG > 1)
+	printk("%s: nr_seg %i\n", dev->name, nr_seg);
+#endif
 
-	क्रम (i = 0; i < nr_seg; i++)अणु
-		sptr = rr_पढ़ो_eeprom_word(rrpriv, eptr);
+	for (i = 0; i < nr_seg; i++){
+		sptr = rr_read_eeprom_word(rrpriv, eptr);
 		eptr += 4;
-		len = rr_पढ़ो_eeprom_word(rrpriv, eptr);
+		len = rr_read_eeprom_word(rrpriv, eptr);
 		eptr += 4;
-		segptr = rr_पढ़ो_eeprom_word(rrpriv, eptr);
+		segptr = rr_read_eeprom_word(rrpriv, eptr);
 		segptr = ((segptr & 0x1fffff) >> 3);
 		eptr += 4;
-#अगर (DEBUG > 1)
-		prपूर्णांकk("%s: segment %i, sram address %06x, length %04x, segptr %06x\n",
+#if (DEBUG > 1)
+		printk("%s: segment %i, sram address %06x, length %04x, segptr %06x\n",
 		       dev->name, i, sptr, len, segptr);
-#पूर्ण_अगर
-		क्रम (j = 0; j < len; j++)अणु
-			पंचांगp = rr_पढ़ो_eeprom_word(rrpriv, segptr);
-			ग_लिखोl(sptr, &regs->WinBase);
+#endif
+		for (j = 0; j < len; j++){
+			tmp = rr_read_eeprom_word(rrpriv, segptr);
+			writel(sptr, &regs->WinBase);
 			mb();
-			ग_लिखोl(पंचांगp, &regs->WinData);
+			writel(tmp, &regs->WinData);
 			mb();
 			segptr += 4;
 			sptr += 4;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
-	ग_लिखोl(localctrl, &regs->LocalCtrl);
+	writel(localctrl, &regs->LocalCtrl);
 	mb();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक rr_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
-अणु
-	काष्ठा rr_निजी *rrpriv;
-	अचिन्हित अक्षर *image, *oldimage;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक error = -EOPNOTSUPP;
+static int rr_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+{
+	struct rr_private *rrpriv;
+	unsigned char *image, *oldimage;
+	unsigned long flags;
+	unsigned int i;
+	int error = -EOPNOTSUPP;
 
 	rrpriv = netdev_priv(dev);
 
-	चयन(cmd)अणु
-	हाल SIOCRRGFW:
-		अगर (!capable(CAP_SYS_RAWIO))अणु
-			वापस -EPERM;
-		पूर्ण
+	switch(cmd){
+	case SIOCRRGFW:
+		if (!capable(CAP_SYS_RAWIO)){
+			return -EPERM;
+		}
 
-		image = kदो_स्मृति_array(EEPROM_WORDS, माप(u32), GFP_KERNEL);
-		अगर (!image)
-			वापस -ENOMEM;
+		image = kmalloc_array(EEPROM_WORDS, sizeof(u32), GFP_KERNEL);
+		if (!image)
+			return -ENOMEM;
 
-		अगर (rrpriv->fw_running)अणु
-			prपूर्णांकk("%s: Firmware already running\n", dev->name);
+		if (rrpriv->fw_running){
+			printk("%s: Firmware already running\n", dev->name);
 			error = -EPERM;
-			जाओ gf_out;
-		पूर्ण
+			goto gf_out;
+		}
 
 		spin_lock_irqsave(&rrpriv->lock, flags);
-		i = rr_पढ़ो_eeprom(rrpriv, 0, image, EEPROM_BYTES);
+		i = rr_read_eeprom(rrpriv, 0, image, EEPROM_BYTES);
 		spin_unlock_irqrestore(&rrpriv->lock, flags);
-		अगर (i != EEPROM_BYTES)अणु
-			prपूर्णांकk(KERN_ERR "%s: Error reading EEPROM\n",
+		if (i != EEPROM_BYTES){
+			printk(KERN_ERR "%s: Error reading EEPROM\n",
 			       dev->name);
 			error = -EFAULT;
-			जाओ gf_out;
-		पूर्ण
-		error = copy_to_user(rq->अगरr_data, image, EEPROM_BYTES);
-		अगर (error)
+			goto gf_out;
+		}
+		error = copy_to_user(rq->ifr_data, image, EEPROM_BYTES);
+		if (error)
 			error = -EFAULT;
 	gf_out:
-		kमुक्त(image);
-		वापस error;
+		kfree(image);
+		return error;
 
-	हाल SIOCRRPFW:
-		अगर (!capable(CAP_SYS_RAWIO))अणु
-			वापस -EPERM;
-		पूर्ण
+	case SIOCRRPFW:
+		if (!capable(CAP_SYS_RAWIO)){
+			return -EPERM;
+		}
 
-		image = memdup_user(rq->अगरr_data, EEPROM_BYTES);
-		अगर (IS_ERR(image))
-			वापस PTR_ERR(image);
+		image = memdup_user(rq->ifr_data, EEPROM_BYTES);
+		if (IS_ERR(image))
+			return PTR_ERR(image);
 
-		oldimage = kदो_स्मृति(EEPROM_BYTES, GFP_KERNEL);
-		अगर (!oldimage) अणु
-			kमुक्त(image);
-			वापस -ENOMEM;
-		पूर्ण
+		oldimage = kmalloc(EEPROM_BYTES, GFP_KERNEL);
+		if (!oldimage) {
+			kfree(image);
+			return -ENOMEM;
+		}
 
-		अगर (rrpriv->fw_running)अणु
-			prपूर्णांकk("%s: Firmware already running\n", dev->name);
+		if (rrpriv->fw_running){
+			printk("%s: Firmware already running\n", dev->name);
 			error = -EPERM;
-			जाओ wf_out;
-		पूर्ण
+			goto wf_out;
+		}
 
-		prपूर्णांकk("%s: Updating EEPROM firmware\n", dev->name);
+		printk("%s: Updating EEPROM firmware\n", dev->name);
 
 		spin_lock_irqsave(&rrpriv->lock, flags);
-		error = ग_लिखो_eeprom(rrpriv, 0, image, EEPROM_BYTES);
-		अगर (error)
-			prपूर्णांकk(KERN_ERR "%s: Error writing EEPROM\n",
+		error = write_eeprom(rrpriv, 0, image, EEPROM_BYTES);
+		if (error)
+			printk(KERN_ERR "%s: Error writing EEPROM\n",
 			       dev->name);
 
-		i = rr_पढ़ो_eeprom(rrpriv, 0, oldimage, EEPROM_BYTES);
+		i = rr_read_eeprom(rrpriv, 0, oldimage, EEPROM_BYTES);
 		spin_unlock_irqrestore(&rrpriv->lock, flags);
 
-		अगर (i != EEPROM_BYTES)
-			prपूर्णांकk(KERN_ERR "%s: Error reading back EEPROM "
+		if (i != EEPROM_BYTES)
+			printk(KERN_ERR "%s: Error reading back EEPROM "
 			       "image\n", dev->name);
 
-		error = स_भेद(image, oldimage, EEPROM_BYTES);
-		अगर (error)अणु
-			prपूर्णांकk(KERN_ERR "%s: Error verifying EEPROM image\n",
+		error = memcmp(image, oldimage, EEPROM_BYTES);
+		if (error){
+			printk(KERN_ERR "%s: Error verifying EEPROM image\n",
 			       dev->name);
 			error = -EFAULT;
-		पूर्ण
+		}
 	wf_out:
-		kमुक्त(oldimage);
-		kमुक्त(image);
-		वापस error;
+		kfree(oldimage);
+		kfree(image);
+		return error;
 
-	हाल SIOCRRID:
-		वापस put_user(0x52523032, (पूर्णांक __user *)rq->अगरr_data);
-	शेष:
-		वापस error;
-	पूर्ण
-पूर्ण
+	case SIOCRRID:
+		return put_user(0x52523032, (int __user *)rq->ifr_data);
+	default:
+		return error;
+	}
+}
 
-अटल स्थिर काष्ठा pci_device_id rr_pci_tbl[] = अणु
-	अणु PCI_VENDOR_ID_ESSENTIAL, PCI_DEVICE_ID_ESSENTIAL_ROADRUNNER,
-		PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
-	अणु 0,पूर्ण
-पूर्ण;
+static const struct pci_device_id rr_pci_tbl[] = {
+	{ PCI_VENDOR_ID_ESSENTIAL, PCI_DEVICE_ID_ESSENTIAL_ROADRUNNER,
+		PCI_ANY_ID, PCI_ANY_ID, },
+	{ 0,}
+};
 MODULE_DEVICE_TABLE(pci, rr_pci_tbl);
 
-अटल काष्ठा pci_driver rr_driver = अणु
+static struct pci_driver rr_driver = {
 	.name		= "rrunner",
 	.id_table	= rr_pci_tbl,
 	.probe		= rr_init_one,
-	.हटाओ		= rr_हटाओ_one,
-पूर्ण;
+	.remove		= rr_remove_one,
+};
 
 module_pci_driver(rr_driver);

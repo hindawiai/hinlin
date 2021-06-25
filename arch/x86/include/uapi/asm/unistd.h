@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_ASM_X86_UNISTD_H
-#घोषणा _UAPI_ASM_X86_UNISTD_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_ASM_X86_UNISTD_H
+#define _UAPI_ASM_X86_UNISTD_H
 
 /*
  * x32 syscall flag bit.  Some user programs expect syscall NR macros
- * and __X32_SYSCALL_BIT to have type पूर्णांक, even though syscall numbers
- * are, क्रम practical purposes, अचिन्हित दीर्घ.
+ * and __X32_SYSCALL_BIT to have type int, even though syscall numbers
+ * are, for practical purposes, unsigned long.
  *
- * Fortunately, expressions like (nr & ~__X32_SYSCALL_BIT) करो the right
+ * Fortunately, expressions like (nr & ~__X32_SYSCALL_BIT) do the right
  * thing regardless.
  */
-#घोषणा __X32_SYSCALL_BIT	0x40000000
+#define __X32_SYSCALL_BIT	0x40000000
 
-#अगर_अघोषित __KERNEL__
-# अगरdef __i386__
-#  include <यंत्र/unistd_32.h>
-# elअगर defined(__ILP32__)
-#  include <यंत्र/unistd_x32.h>
-# अन्यथा
-#  include <यंत्र/unistd_64.h>
-# endअगर
-#पूर्ण_अगर
+#ifndef __KERNEL__
+# ifdef __i386__
+#  include <asm/unistd_32.h>
+# elif defined(__ILP32__)
+#  include <asm/unistd_x32.h>
+# else
+#  include <asm/unistd_64.h>
+# endif
+#endif
 
-#पूर्ण_अगर /* _UAPI_ASM_X86_UNISTD_H */
+#endif /* _UAPI_ASM_X86_UNISTD_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * cyttsp_i2c.c
  * Cypress TrueTouch(TM) Standard Product (TTSP) I2C touchscreen driver.
@@ -9,58 +8,58 @@
  * CY8CTMA340
  *
  * Copyright (C) 2009, 2010, 2011 Cypress Semiconductor, Inc.
- * Copyright (C) 2012 Javier Martinez Canillas <javier@करोजबतक0.org>
+ * Copyright (C) 2012 Javier Martinez Canillas <javier@dowhile0.org>
  *
  * Contact Cypress Semiconductor at www.cypress.com <ttdrivers@cypress.com>
  */
 
-#समावेश "cyttsp_core.h"
+#include "cyttsp_core.h"
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/input.h>
+#include <linux/i2c.h>
+#include <linux/input.h>
 
-#घोषणा CY_I2C_DATA_SIZE	128
+#define CY_I2C_DATA_SIZE	128
 
-अटल स्थिर काष्ठा cyttsp_bus_ops cyttsp_i2c_bus_ops = अणु
+static const struct cyttsp_bus_ops cyttsp_i2c_bus_ops = {
 	.bustype	= BUS_I2C,
-	.ग_लिखो		= cyttsp_i2c_ग_लिखो_block_data,
-	.पढ़ो           = cyttsp_i2c_पढ़ो_block_data,
-पूर्ण;
+	.write		= cyttsp_i2c_write_block_data,
+	.read           = cyttsp_i2c_read_block_data,
+};
 
-अटल पूर्णांक cyttsp_i2c_probe(काष्ठा i2c_client *client,
-				      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा cyttsp *ts;
+static int cyttsp_i2c_probe(struct i2c_client *client,
+				      const struct i2c_device_id *id)
+{
+	struct cyttsp *ts;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "I2C functionality not Supported\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	ts = cyttsp_probe(&cyttsp_i2c_bus_ops, &client->dev, client->irq,
 			  CY_I2C_DATA_SIZE);
 
-	अगर (IS_ERR(ts))
-		वापस PTR_ERR(ts);
+	if (IS_ERR(ts))
+		return PTR_ERR(ts);
 
 	i2c_set_clientdata(client, ts);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id cyttsp_i2c_id[] = अणु
-	अणु CY_I2C_NAME, 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id cyttsp_i2c_id[] = {
+	{ CY_I2C_NAME, 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, cyttsp_i2c_id);
 
-अटल काष्ठा i2c_driver cyttsp_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver cyttsp_i2c_driver = {
+	.driver = {
 		.name	= CY_I2C_NAME,
 		.pm	= &cyttsp_pm_ops,
-	पूर्ण,
+	},
 	.probe		= cyttsp_i2c_probe,
 	.id_table	= cyttsp_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(cyttsp_i2c_driver);
 

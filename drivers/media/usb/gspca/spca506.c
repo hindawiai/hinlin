@@ -1,119 +1,118 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * SPCA506 chip based cameras function
- * M Xhaard 15/04/2004 based on dअगरferent work Mark Taylor and others
- * and my own snoopy file on a pv-321c करोnate by a german compagny
+ * M Xhaard 15/04/2004 based on different work Mark Taylor and others
+ * and my own snoopy file on a pv-321c donate by a german compagny
  *                "Firma Frank Gmbh" from  Saarbruecken
  *
- * V4L2 by Jean-Francois Moine <http://moinejf.मुक्त.fr>
+ * V4L2 by Jean-Francois Moine <http://moinejf.free.fr>
  */
 
-#घोषणा MODULE_NAME "spca506"
+#define MODULE_NAME "spca506"
 
-#समावेश "gspca.h"
+#include "gspca.h"
 
 MODULE_AUTHOR("Michel Xhaard <mxhaard@users.sourceforge.net>");
 MODULE_DESCRIPTION("GSPCA/SPCA506 USB Camera Driver");
 MODULE_LICENSE("GPL");
 
-/* specअगरic webcam descriptor */
-काष्ठा sd अणु
-	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
+/* specific webcam descriptor */
+struct sd {
+	struct gspca_dev gspca_dev;	/* !! must be the first item */
 
-	अक्षर norme;
-	अक्षर channel;
-पूर्ण;
+	char norme;
+	char channel;
+};
 
-अटल स्थिर काष्ठा v4l2_pix_क्रमmat vga_mode[] = अणु
-	अणु160, 120, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
+static const struct v4l2_pix_format vga_mode[] = {
+	{160, 120, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
 		.bytesperline = 160,
 		.sizeimage = 160 * 120 * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 5पूर्ण,
-	अणु176, 144, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
+		.priv = 5},
+	{176, 144, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
 		.bytesperline = 176,
 		.sizeimage = 176 * 144 * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 4पूर्ण,
-	अणु320, 240, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
+		.priv = 4},
+	{320, 240, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 2पूर्ण,
-	अणु352, 288, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
+		.priv = 2},
+	{352, 288, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
 		.bytesperline = 352,
 		.sizeimage = 352 * 288 * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 1पूर्ण,
-	अणु640, 480, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
+		.priv = 1},
+	{640, 480, V4L2_PIX_FMT_SPCA505, V4L2_FIELD_NONE,
 		.bytesperline = 640,
 		.sizeimage = 640 * 480 * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 0पूर्ण,
-पूर्ण;
+		.priv = 0},
+};
 
-#घोषणा SPCA50X_OFFSET_DATA 10
+#define SPCA50X_OFFSET_DATA 10
 
-#घोषणा SAA7113_bright 0x0a	/* शेषs 0x80 */
-#घोषणा SAA7113_contrast 0x0b	/* शेषs 0x47 */
-#घोषणा SAA7113_saturation 0x0c	/* शेषs 0x40 */
-#घोषणा SAA7113_hue 0x0d	/* शेषs 0x00 */
-#घोषणा SAA7113_I2C_BASE_WRITE 0x4a
+#define SAA7113_bright 0x0a	/* defaults 0x80 */
+#define SAA7113_contrast 0x0b	/* defaults 0x47 */
+#define SAA7113_saturation 0x0c	/* defaults 0x40 */
+#define SAA7113_hue 0x0d	/* defaults 0x00 */
+#define SAA7113_I2C_BASE_WRITE 0x4a
 
-/* पढ़ो 'len' bytes to gspca_dev->usb_buf */
-अटल व्योम reg_r(काष्ठा gspca_dev *gspca_dev,
+/* read 'len' bytes to gspca_dev->usb_buf */
+static void reg_r(struct gspca_dev *gspca_dev,
 		  __u16 req,
 		  __u16 index,
 		  __u16 length)
-अणु
+{
 	usb_control_msg(gspca_dev->dev,
 			usb_rcvctrlpipe(gspca_dev->dev, 0),
 			req,
-			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0,		/* value */
 			index, gspca_dev->usb_buf, length,
 			500);
-पूर्ण
+}
 
-अटल व्योम reg_w(काष्ठा usb_device *dev,
+static void reg_w(struct usb_device *dev,
 		  __u16 req,
 		  __u16 value,
 		  __u16 index)
-अणु
+{
 	usb_control_msg(dev,
 			usb_sndctrlpipe(dev, 0),
 			req,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			value, index,
-			शून्य, 0, 500);
-पूर्ण
+			NULL, 0, 500);
+}
 
-अटल व्योम spca506_Initi2c(काष्ठा gspca_dev *gspca_dev)
-अणु
+static void spca506_Initi2c(struct gspca_dev *gspca_dev)
+{
 	reg_w(gspca_dev->dev, 0x07, SAA7113_I2C_BASE_WRITE, 0x0004);
-पूर्ण
+}
 
-अटल व्योम spca506_WriteI2c(काष्ठा gspca_dev *gspca_dev, __u16 valeur,
+static void spca506_WriteI2c(struct gspca_dev *gspca_dev, __u16 valeur,
 			     __u16 reg)
-अणु
-	पूर्णांक retry = 60;
+{
+	int retry = 60;
 
 	reg_w(gspca_dev->dev, 0x07, reg, 0x0001);
 	reg_w(gspca_dev->dev, 0x07, valeur, 0x0000);
-	जबतक (retry--) अणु
+	while (retry--) {
 		reg_r(gspca_dev, 0x07, 0x0003, 2);
-		अगर ((gspca_dev->usb_buf[0] | gspca_dev->usb_buf[1]) == 0x00)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if ((gspca_dev->usb_buf[0] | gspca_dev->usb_buf[1]) == 0x00)
+			break;
+	}
+}
 
-अटल व्योम spca506_SetNormeInput(काष्ठा gspca_dev *gspca_dev,
+static void spca506_SetNormeInput(struct gspca_dev *gspca_dev,
 				 __u16 norme,
 				 __u16 channel)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-/* fixme: check अगर channel == 0..3 and 6..9 (8 values) */
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+/* fixme: check if channel == 0..3 and 6..9 (8 values) */
 	__u8 setbit0 = 0x00;
 	__u8 setbit1 = 0x00;
 	__u8 videomask = 0x00;
@@ -122,24 +121,24 @@ MODULE_LICENSE("GPL");
 	spca506_Initi2c(gspca_dev);
 	/* NTSC bit0 -> 1(525 l) PAL SECAM bit0 -> 0 (625 l) */
 	/* Composite channel bit1 -> 1 S-video bit 1 -> 0 */
-	/* and exclude SAA7113 reserved channel set शेष 0 otherwise */
-	अगर (norme & V4L2_STD_NTSC)
+	/* and exclude SAA7113 reserved channel set default 0 otherwise */
+	if (norme & V4L2_STD_NTSC)
 		setbit0 = 0x01;
-	अगर (channel == 4 || channel == 5 || channel > 9)
+	if (channel == 4 || channel == 5 || channel > 9)
 		channel = 0;
-	अगर (channel < 4)
+	if (channel < 4)
 		setbit1 = 0x02;
 	videomask = (0x48 | setbit0 | setbit1);
 	reg_w(gspca_dev->dev, 0x08, videomask, 0x0000);
 	spca506_WriteI2c(gspca_dev, (0xc0 | (channel & 0x0F)), 0x02);
 
-	अगर (norme & V4L2_STD_NTSC)
+	if (norme & V4L2_STD_NTSC)
 		spca506_WriteI2c(gspca_dev, 0x33, 0x0e);
 					/* Chrominance Control NTSC N */
-	अन्यथा अगर (norme & V4L2_STD_SECAM)
+	else if (norme & V4L2_STD_SECAM)
 		spca506_WriteI2c(gspca_dev, 0x53, 0x0e);
 					/* Chrominance Control SECAM */
-	अन्यथा
+	else
 		spca506_WriteI2c(gspca_dev, 0x03, 0x0e);
 					/* Chrominance Control PAL BGHIV */
 
@@ -148,25 +147,25 @@ MODULE_LICENSE("GPL");
 	gspca_dbg(gspca_dev, D_STREAM, "Set Video Byte to 0x%2x\n", videomask);
 	gspca_dbg(gspca_dev, D_STREAM, "Set Norme: %08x Channel %d",
 		  norme, channel);
-पूर्ण
+}
 
-अटल व्योम spca506_GetNormeInput(काष्ठा gspca_dev *gspca_dev,
+static void spca506_GetNormeInput(struct gspca_dev *gspca_dev,
 				  __u16 *norme, __u16 *channel)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	/* Read the रेजिस्टर is not so good value change so
-	   we use your own copy in spca50x काष्ठा */
+	/* Read the register is not so good value change so
+	   we use your own copy in spca50x struct */
 	*norme = sd->norme;
 	*channel = sd->channel;
 	gspca_dbg(gspca_dev, D_STREAM, "Get Norme: %d Channel %d\n",
 		  *norme, *channel);
-पूर्ण
+}
 
-अटल व्योम spca506_Setsize(काष्ठा gspca_dev *gspca_dev, __u16 code,
+static void spca506_Setsize(struct gspca_dev *gspca_dev, __u16 code,
 			    __u16 xmult, __u16 ymult)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
+{
+	struct usb_device *dev = gspca_dev->dev;
 
 	gspca_dbg(gspca_dev, D_STREAM, "** SetSize **\n");
 	reg_w(dev, 0x04, (0x18 | (code & 0x07)), 0x0000);
@@ -192,24 +191,24 @@ MODULE_LICENSE("GPL");
 	reg_w(dev, 0x04, 0x21, 0x000a);
 	/* quantization */
 	reg_w(dev, 0x04, 0x00, 0x000b);
-पूर्ण
+}
 
-/* this function is called at probe समय */
-अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
-			स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा cam *cam;
+/* this function is called at probe time */
+static int sd_config(struct gspca_dev *gspca_dev,
+			const struct usb_device_id *id)
+{
+	struct cam *cam;
 
 	cam = &gspca_dev->cam;
 	cam->cam_mode = vga_mode;
 	cam->nmodes = ARRAY_SIZE(vga_mode);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* this function is called at probe and resume समय */
-अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
+/* this function is called at probe and resume time */
+static int sd_init(struct gspca_dev *gspca_dev)
+{
+	struct usb_device *dev = gspca_dev->dev;
 
 	reg_w(dev, 0x03, 0x00, 0x0004);
 	reg_w(dev, 0x03, 0xFF, 0x0003);
@@ -241,8 +240,8 @@ MODULE_LICENSE("GPL");
 	reg_w(dev, 0x02, 0x00, 0x0000);
 	reg_w(dev, 0x03, 0x60, 0x0000);
 	reg_w(dev, 0x03, 0x18, 0x0001);
-	/* क्रम a better पढ़ोing mx :)	  */
-	/*sdca506_WriteI2c(value,रेजिस्टर) */
+	/* for a better reading mx :)	  */
+	/*sdca506_WriteI2c(value,register) */
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, 0x08, 0x01);
 	spca506_WriteI2c(gspca_dev, 0xc0, 0x02);
@@ -312,12 +311,12 @@ MODULE_LICENSE("GPL");
 	spca506_WriteI2c(gspca_dev, 0x05, 0x61);
 	spca506_WriteI2c(gspca_dev, 0x9f, 0x62);
 	gspca_dbg(gspca_dev, D_STREAM, "** Close Init *\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
+static int sd_start(struct gspca_dev *gspca_dev)
+{
+	struct usb_device *dev = gspca_dev->dev;
 	__u16 norme;
 	__u16 channel;
 
@@ -330,7 +329,7 @@ MODULE_LICENSE("GPL");
 	reg_w(dev, 0x03, 0x60, 0x0000);
 	reg_w(dev, 0x03, 0x18, 0x0001);
 
-	/*sdca506_WriteI2c(value,रेजिस्टर) */
+	/*sdca506_WriteI2c(value,register) */
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, 0x08, 0x01);	/* Increment Delay */
 /*	spca506_WriteI2c(gspca_dev, 0xc0, 0x02); * Analog Input Control 1 */
@@ -415,24 +414,24 @@ MODULE_LICENSE("GPL");
 	reg_w(dev, 0x05, 0x00, 0x0004);
 	reg_w(dev, 0x03, 0x10, 0x0001);
 	reg_w(dev, 0x03, 0x78, 0x0000);
-	चयन (gspca_dev->cam.cam_mode[(पूर्णांक) gspca_dev->curr_mode].priv) अणु
-	हाल 0:
+	switch (gspca_dev->cam.cam_mode[(int) gspca_dev->curr_mode].priv) {
+	case 0:
 		spca506_Setsize(gspca_dev, 0, 0x10, 0x10);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		spca506_Setsize(gspca_dev, 1, 0x1a, 0x1a);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		spca506_Setsize(gspca_dev, 2, 0x1c, 0x1c);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		spca506_Setsize(gspca_dev, 4, 0x34, 0x34);
-		अवरोध;
-	शेष:
-/*	हाल 5: */
+		break;
+	default:
+/*	case 5: */
 		spca506_Setsize(gspca_dev, 5, 0x40, 0x40);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* compress setting and size */
 	/* set i2c luma */
@@ -442,102 +441,102 @@ MODULE_LICENSE("GPL");
 	gspca_dbg(gspca_dev, D_STREAM, "webcam started\n");
 	spca506_GetNormeInput(gspca_dev, &norme, &channel);
 	spca506_SetNormeInput(gspca_dev, norme, channel);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
+static void sd_stopN(struct gspca_dev *gspca_dev)
+{
+	struct usb_device *dev = gspca_dev->dev;
 
 	reg_w(dev, 0x02, 0x00, 0x0000);
 	reg_w(dev, 0x03, 0x00, 0x0004);
 	reg_w(dev, 0x03, 0x00, 0x0003);
-पूर्ण
+}
 
-अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
+static void sd_pkt_scan(struct gspca_dev *gspca_dev,
 			u8 *data,			/* isoc packet */
-			पूर्णांक len)			/* iso packet length */
-अणु
-	चयन (data[0]) अणु
-	हाल 0:				/* start of frame */
-		gspca_frame_add(gspca_dev, LAST_PACKET, शून्य, 0);
+			int len)			/* iso packet length */
+{
+	switch (data[0]) {
+	case 0:				/* start of frame */
+		gspca_frame_add(gspca_dev, LAST_PACKET, NULL, 0);
 		data += SPCA50X_OFFSET_DATA;
 		len -= SPCA50X_OFFSET_DATA;
 		gspca_frame_add(gspca_dev, FIRST_PACKET, data, len);
-		अवरोध;
-	हाल 0xff:			/* drop */
+		break;
+	case 0xff:			/* drop */
 /*		gspca_dev->last_packet_type = DISCARD_PACKET; */
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data += 1;
 		len -= 1;
 		gspca_frame_add(gspca_dev, INTER_PACKET, data, len);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम setbrightness(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
+static void setbrightness(struct gspca_dev *gspca_dev, s32 val)
+{
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, val, SAA7113_bright);
 	spca506_WriteI2c(gspca_dev, 0x01, 0x09);
-पूर्ण
+}
 
-अटल व्योम setcontrast(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
+static void setcontrast(struct gspca_dev *gspca_dev, s32 val)
+{
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, val, SAA7113_contrast);
 	spca506_WriteI2c(gspca_dev, 0x01, 0x09);
-पूर्ण
+}
 
-अटल व्योम setcolors(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
+static void setcolors(struct gspca_dev *gspca_dev, s32 val)
+{
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, val, SAA7113_saturation);
 	spca506_WriteI2c(gspca_dev, 0x01, 0x09);
-पूर्ण
+}
 
-अटल व्योम sethue(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
+static void sethue(struct gspca_dev *gspca_dev, s32 val)
+{
 	spca506_Initi2c(gspca_dev);
 	spca506_WriteI2c(gspca_dev, val, SAA7113_hue);
 	spca506_WriteI2c(gspca_dev, 0x01, 0x09);
-पूर्ण
+}
 
-अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा gspca_dev *gspca_dev =
-		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
+static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct gspca_dev *gspca_dev =
+		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
 
 	gspca_dev->usb_err = 0;
 
-	अगर (!gspca_dev->streaming)
-		वापस 0;
+	if (!gspca_dev->streaming)
+		return 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_BRIGHTNESS:
+	switch (ctrl->id) {
+	case V4L2_CID_BRIGHTNESS:
 		setbrightness(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_CONTRAST:
+		break;
+	case V4L2_CID_CONTRAST:
 		setcontrast(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_SATURATION:
+		break;
+	case V4L2_CID_SATURATION:
 		setcolors(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_HUE:
+		break;
+	case V4L2_CID_HUE:
 		sethue(gspca_dev, ctrl->val);
-		अवरोध;
-	पूर्ण
-	वापस gspca_dev->usb_err;
-पूर्ण
+		break;
+	}
+	return gspca_dev->usb_err;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops sd_ctrl_ops = {
 	.s_ctrl = sd_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+static int sd_init_controls(struct gspca_dev *gspca_dev)
+{
+	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 4);
@@ -550,15 +549,15 @@ MODULE_LICENSE("GPL");
 	v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_HUE, 0, 255, 1, 0);
 
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		pr_err("Could not initialize controls\n");
-		वापस hdl->error;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return hdl->error;
+	}
+	return 0;
+}
 
 /* sub-driver description */
-अटल स्थिर काष्ठा sd_desc sd_desc = अणु
+static const struct sd_desc sd_desc = {
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -566,35 +565,35 @@ MODULE_LICENSE("GPL");
 	.start = sd_start,
 	.stopN = sd_stopN,
 	.pkt_scan = sd_pkt_scan,
-पूर्ण;
+};
 
 /* -- module initialisation -- */
-अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
-	अणुUSB_DEVICE(0x06e1, 0xa190)पूर्ण,
-/*	अणुUSB_DEVICE(0x0733, 0x0430)पूर्ण, FIXME: may be IntelPCCameraPro BRIDGE_SPCA505 */
-	अणुUSB_DEVICE(0x0734, 0x043b)पूर्ण,
-	अणुUSB_DEVICE(0x99fa, 0x8988)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id device_table[] = {
+	{USB_DEVICE(0x06e1, 0xa190)},
+/*	{USB_DEVICE(0x0733, 0x0430)}, FIXME: may be IntelPCCameraPro BRIDGE_SPCA505 */
+	{USB_DEVICE(0x0734, 0x043b)},
+	{USB_DEVICE(0x99fa, 0x8988)},
+	{}
+};
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
+static int sd_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
 				THIS_MODULE);
-पूर्ण
+}
 
-अटल काष्ठा usb_driver sd_driver = अणु
+static struct usb_driver sd_driver = {
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_usb_driver(sd_driver);

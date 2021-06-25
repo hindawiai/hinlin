@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 1993-2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,29 +21,29 @@
  */
 
 
-#अगर_अघोषित _clC37b_h_
-#घोषणा _clC37b_h_
+#ifndef _clC37b_h_
+#define _clC37b_h_
 
-// dma opcode inकाष्ठाions
-#घोषणा NVC37B_DMA
-#घोषणा NVC37B_DMA_OPCODE                                                        31:29
-#घोषणा NVC37B_DMA_OPCODE_METHOD                                            0x00000000
-#घोषणा NVC37B_DMA_OPCODE_JUMP                                              0x00000001
-#घोषणा NVC37B_DMA_OPCODE_NONINC_METHOD                                     0x00000002
-#घोषणा NVC37B_DMA_OPCODE_SET_SUBDEVICE_MASK                                0x00000003
-#घोषणा NVC37B_DMA_METHOD_COUNT                                                  27:18
-#घोषणा NVC37B_DMA_METHOD_OFFSET                                                  13:2
-#घोषणा NVC37B_DMA_DATA                                                           31:0
-#घोषणा NVC37B_DMA_DATA_NOP                                                 0x00000000
-#घोषणा NVC37B_DMA_JUMP_OFFSET                                                    11:2
-#घोषणा NVC37B_DMA_SET_SUBDEVICE_MASK_VALUE                                       11:0
+// dma opcode instructions
+#define NVC37B_DMA
+#define NVC37B_DMA_OPCODE                                                        31:29
+#define NVC37B_DMA_OPCODE_METHOD                                            0x00000000
+#define NVC37B_DMA_OPCODE_JUMP                                              0x00000001
+#define NVC37B_DMA_OPCODE_NONINC_METHOD                                     0x00000002
+#define NVC37B_DMA_OPCODE_SET_SUBDEVICE_MASK                                0x00000003
+#define NVC37B_DMA_METHOD_COUNT                                                  27:18
+#define NVC37B_DMA_METHOD_OFFSET                                                  13:2
+#define NVC37B_DMA_DATA                                                           31:0
+#define NVC37B_DMA_DATA_NOP                                                 0x00000000
+#define NVC37B_DMA_JUMP_OFFSET                                                    11:2
+#define NVC37B_DMA_SET_SUBDEVICE_MASK_VALUE                                       11:0
 
 // class methods
-#घोषणा NVC37B_UPDATE                                                           (0x00000200)
-#घोषणा NVC37B_UPDATE_INTERLOCK_WITH_WINDOW                                     1:1
-#घोषणा NVC37B_UPDATE_INTERLOCK_WITH_WINDOW_DISABLE                             (0x00000000)
-#घोषणा NVC37B_UPDATE_INTERLOCK_WITH_WINDOW_ENABLE                              (0x00000001)
-#घोषणा NVC37B_SET_POINT_OUT(b)                                                 (0x00000208 + (b)*0x00000004)
-#घोषणा NVC37B_SET_POINT_OUT_X                                                  15:0
-#घोषणा NVC37B_SET_POINT_OUT_Y                                                  31:16
-#पूर्ण_अगर // _clC37b_h
+#define NVC37B_UPDATE                                                           (0x00000200)
+#define NVC37B_UPDATE_INTERLOCK_WITH_WINDOW                                     1:1
+#define NVC37B_UPDATE_INTERLOCK_WITH_WINDOW_DISABLE                             (0x00000000)
+#define NVC37B_UPDATE_INTERLOCK_WITH_WINDOW_ENABLE                              (0x00000001)
+#define NVC37B_SET_POINT_OUT(b)                                                 (0x00000208 + (b)*0x00000004)
+#define NVC37B_SET_POINT_OUT_X                                                  15:0
+#define NVC37B_SET_POINT_OUT_Y                                                  31:16
+#endif // _clC37b_h

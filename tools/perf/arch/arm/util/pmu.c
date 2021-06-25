@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright(C) 2015 Linaro Limited. All rights reserved.
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#समावेश <माला.स>
-#समावेश <linux/coresight-pmu.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/माला.स>
+#include <string.h>
+#include <linux/coresight-pmu.h>
+#include <linux/perf_event.h>
+#include <linux/string.h>
 
-#समावेश "arm-spe.h"
-#समावेश "../../util/pmu.h"
+#include "arm-spe.h"
+#include "../../util/pmu.h"
 
-काष्ठा perf_event_attr
-*perf_pmu__get_शेष_config(काष्ठा perf_pmu *pmu __maybe_unused)
-अणु
-#अगर_घोषित HAVE_AUXTRACE_SUPPORT
-	अगर (!म_भेद(pmu->name, CORESIGHT_ETM_PMU_NAME)) अणु
-		/* add ETM शेष config here */
+struct perf_event_attr
+*perf_pmu__get_default_config(struct perf_pmu *pmu __maybe_unused)
+{
+#ifdef HAVE_AUXTRACE_SUPPORT
+	if (!strcmp(pmu->name, CORESIGHT_ETM_PMU_NAME)) {
+		/* add ETM default config here */
 		pmu->selectable = true;
-#अगर defined(__aarch64__)
-	पूर्ण अन्यथा अगर (strstarts(pmu->name, ARM_SPE_PMU_NAME)) अणु
-		वापस arm_spe_pmu_शेष_config(pmu);
-#पूर्ण_अगर
-	पूर्ण
+#if defined(__aarch64__)
+	} else if (strstarts(pmu->name, ARM_SPE_PMU_NAME)) {
+		return arm_spe_pmu_default_config(pmu);
+#endif
+	}
 
-#पूर्ण_अगर
-	वापस शून्य;
-पूर्ण
+#endif
+	return NULL;
+}

@@ -1,380 +1,379 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * net/core/ethtool.c - Ethtool ioctl handler
  * Copyright (c) 2003 Matthew Wilcox <matthew@wil.cx>
  *
  * This file is where we call all the ethtool_ops commands to get
- * the inक्रमmation ethtool needs.
+ * the information ethtool needs.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sfp.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/net.h>
-#समावेश <net/devlink.h>
-#समावेश <net/xdp_sock_drv.h>
-#समावेश <net/flow_offload.h>
-#समावेश <linux/ethtool_netlink.h>
-#समावेश <generated/utsrelease.h>
-#समावेश "common.h"
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/capability.h>
+#include <linux/errno.h>
+#include <linux/ethtool.h>
+#include <linux/netdevice.h>
+#include <linux/net_tstamp.h>
+#include <linux/phy.h>
+#include <linux/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/vmalloc.h>
+#include <linux/sfp.h>
+#include <linux/slab.h>
+#include <linux/rtnetlink.h>
+#include <linux/sched/signal.h>
+#include <linux/net.h>
+#include <net/devlink.h>
+#include <net/xdp_sock_drv.h>
+#include <net/flow_offload.h>
+#include <linux/ethtool_netlink.h>
+#include <generated/utsrelease.h>
+#include "common.h"
 
 /*
  * Some useful ethtool_ops methods that're device independent.
- * If we find that all drivers want to करो the same thing here,
- * we can turn these पूर्णांकo dev_() function calls.
+ * If we find that all drivers want to do the same thing here,
+ * we can turn these into dev_() function calls.
  */
 
-u32 ethtool_op_get_link(काष्ठा net_device *dev)
-अणु
-	वापस netअगर_carrier_ok(dev) ? 1 : 0;
-पूर्ण
+u32 ethtool_op_get_link(struct net_device *dev)
+{
+	return netif_carrier_ok(dev) ? 1 : 0;
+}
 EXPORT_SYMBOL(ethtool_op_get_link);
 
-पूर्णांक ethtool_op_get_ts_info(काष्ठा net_device *dev, काष्ठा ethtool_ts_info *info)
-अणु
-	info->so_बारtamping =
+int ethtool_op_get_ts_info(struct net_device *dev, struct ethtool_ts_info *info)
+{
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_SOFTWARE |
 		SOF_TIMESTAMPING_SOFTWARE;
 	info->phc_index = -1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ethtool_op_get_ts_info);
 
-/* Handlers क्रम each ethtool command */
+/* Handlers for each ethtool command */
 
-अटल पूर्णांक ethtool_get_features(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_gfeatures cmd = अणु
+static int ethtool_get_features(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_gfeatures cmd = {
 		.cmd = ETHTOOL_GFEATURES,
 		.size = ETHTOOL_DEV_FEATURE_WORDS,
-	पूर्ण;
-	काष्ठा ethtool_get_features_block features[ETHTOOL_DEV_FEATURE_WORDS];
+	};
+	struct ethtool_get_features_block features[ETHTOOL_DEV_FEATURE_WORDS];
 	u32 __user *sizeaddr;
 	u32 copy_size;
-	पूर्णांक i;
+	int i;
 
-	/* in हाल feature bits run out again */
-	BUILD_BUG_ON(ETHTOOL_DEV_FEATURE_WORDS * माप(u32) > माप(netdev_features_t));
+	/* in case feature bits run out again */
+	BUILD_BUG_ON(ETHTOOL_DEV_FEATURE_WORDS * sizeof(u32) > sizeof(netdev_features_t));
 
-	क्रम (i = 0; i < ETHTOOL_DEV_FEATURE_WORDS; ++i) अणु
+	for (i = 0; i < ETHTOOL_DEV_FEATURE_WORDS; ++i) {
 		features[i].available = (u32)(dev->hw_features >> (32 * i));
 		features[i].requested = (u32)(dev->wanted_features >> (32 * i));
 		features[i].active = (u32)(dev->features >> (32 * i));
 		features[i].never_changed =
 			(u32)(NETIF_F_NEVER_CHANGE >> (32 * i));
-	पूर्ण
+	}
 
-	sizeaddr = useraddr + दुरत्व(काष्ठा ethtool_gfeatures, size);
-	अगर (get_user(copy_size, sizeaddr))
-		वापस -EFAULT;
+	sizeaddr = useraddr + offsetof(struct ethtool_gfeatures, size);
+	if (get_user(copy_size, sizeaddr))
+		return -EFAULT;
 
-	अगर (copy_size > ETHTOOL_DEV_FEATURE_WORDS)
+	if (copy_size > ETHTOOL_DEV_FEATURE_WORDS)
 		copy_size = ETHTOOL_DEV_FEATURE_WORDS;
 
-	अगर (copy_to_user(useraddr, &cmd, माप(cmd)))
-		वापस -EFAULT;
-	useraddr += माप(cmd);
-	अगर (copy_to_user(useraddr, features, copy_size * माप(*features)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr, &cmd, sizeof(cmd)))
+		return -EFAULT;
+	useraddr += sizeof(cmd);
+	if (copy_to_user(useraddr, features, copy_size * sizeof(*features)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_features(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_sfeatures cmd;
-	काष्ठा ethtool_set_features_block features[ETHTOOL_DEV_FEATURE_WORDS];
+static int ethtool_set_features(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_sfeatures cmd;
+	struct ethtool_set_features_block features[ETHTOOL_DEV_FEATURE_WORDS];
 	netdev_features_t wanted = 0, valid = 0;
-	पूर्णांक i, ret = 0;
+	int i, ret = 0;
 
-	अगर (copy_from_user(&cmd, useraddr, माप(cmd)))
-		वापस -EFAULT;
-	useraddr += माप(cmd);
+	if (copy_from_user(&cmd, useraddr, sizeof(cmd)))
+		return -EFAULT;
+	useraddr += sizeof(cmd);
 
-	अगर (cmd.size != ETHTOOL_DEV_FEATURE_WORDS)
-		वापस -EINVAL;
+	if (cmd.size != ETHTOOL_DEV_FEATURE_WORDS)
+		return -EINVAL;
 
-	अगर (copy_from_user(features, useraddr, माप(features)))
-		वापस -EFAULT;
+	if (copy_from_user(features, useraddr, sizeof(features)))
+		return -EFAULT;
 
-	क्रम (i = 0; i < ETHTOOL_DEV_FEATURE_WORDS; ++i) अणु
+	for (i = 0; i < ETHTOOL_DEV_FEATURE_WORDS; ++i) {
 		valid |= (netdev_features_t)features[i].valid << (32 * i);
 		wanted |= (netdev_features_t)features[i].requested << (32 * i);
-	पूर्ण
+	}
 
-	अगर (valid & ~NETIF_F_ETHTOOL_BITS)
-		वापस -EINVAL;
+	if (valid & ~NETIF_F_ETHTOOL_BITS)
+		return -EINVAL;
 
-	अगर (valid & ~dev->hw_features) अणु
+	if (valid & ~dev->hw_features) {
 		valid &= dev->hw_features;
 		ret |= ETHTOOL_F_UNSUPPORTED;
-	पूर्ण
+	}
 
 	dev->wanted_features &= ~valid;
 	dev->wanted_features |= wanted & valid;
 	__netdev_update_features(dev);
 
-	अगर ((dev->wanted_features ^ dev->features) & valid)
+	if ((dev->wanted_features ^ dev->features) & valid)
 		ret |= ETHTOOL_F_WISH;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	स्थिर काष्ठा ethtool_phy_ops *phy_ops = ethtool_phy_ops;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int __ethtool_get_sset_count(struct net_device *dev, int sset)
+{
+	const struct ethtool_phy_ops *phy_ops = ethtool_phy_ops;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	अगर (sset == ETH_SS_FEATURES)
-		वापस ARRAY_SIZE(netdev_features_strings);
+	if (sset == ETH_SS_FEATURES)
+		return ARRAY_SIZE(netdev_features_strings);
 
-	अगर (sset == ETH_SS_RSS_HASH_FUNCS)
-		वापस ARRAY_SIZE(rss_hash_func_strings);
+	if (sset == ETH_SS_RSS_HASH_FUNCS)
+		return ARRAY_SIZE(rss_hash_func_strings);
 
-	अगर (sset == ETH_SS_TUNABLES)
-		वापस ARRAY_SIZE(tunable_strings);
+	if (sset == ETH_SS_TUNABLES)
+		return ARRAY_SIZE(tunable_strings);
 
-	अगर (sset == ETH_SS_PHY_TUNABLES)
-		वापस ARRAY_SIZE(phy_tunable_strings);
+	if (sset == ETH_SS_PHY_TUNABLES)
+		return ARRAY_SIZE(phy_tunable_strings);
 
-	अगर (sset == ETH_SS_PHY_STATS && dev->phydev &&
+	if (sset == ETH_SS_PHY_STATS && dev->phydev &&
 	    !ops->get_ethtool_phy_stats &&
 	    phy_ops && phy_ops->get_sset_count)
-		वापस phy_ops->get_sset_count(dev->phydev);
+		return phy_ops->get_sset_count(dev->phydev);
 
-	अगर (sset == ETH_SS_LINK_MODES)
-		वापस __ETHTOOL_LINK_MODE_MASK_NBITS;
+	if (sset == ETH_SS_LINK_MODES)
+		return __ETHTOOL_LINK_MODE_MASK_NBITS;
 
-	अगर (ops->get_sset_count && ops->get_strings)
-		वापस ops->get_sset_count(dev, sset);
-	अन्यथा
-		वापस -EOPNOTSUPP;
-पूर्ण
+	if (ops->get_sset_count && ops->get_strings)
+		return ops->get_sset_count(dev, sset);
+	else
+		return -EOPNOTSUPP;
+}
 
-अटल व्योम __ethtool_get_strings(काष्ठा net_device *dev,
+static void __ethtool_get_strings(struct net_device *dev,
 	u32 stringset, u8 *data)
-अणु
-	स्थिर काष्ठा ethtool_phy_ops *phy_ops = ethtool_phy_ops;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+{
+	const struct ethtool_phy_ops *phy_ops = ethtool_phy_ops;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	अगर (stringset == ETH_SS_FEATURES)
-		स_नकल(data, netdev_features_strings,
-			माप(netdev_features_strings));
-	अन्यथा अगर (stringset == ETH_SS_RSS_HASH_FUNCS)
-		स_नकल(data, rss_hash_func_strings,
-		       माप(rss_hash_func_strings));
-	अन्यथा अगर (stringset == ETH_SS_TUNABLES)
-		स_नकल(data, tunable_strings, माप(tunable_strings));
-	अन्यथा अगर (stringset == ETH_SS_PHY_TUNABLES)
-		स_नकल(data, phy_tunable_strings, माप(phy_tunable_strings));
-	अन्यथा अगर (stringset == ETH_SS_PHY_STATS && dev->phydev &&
+	if (stringset == ETH_SS_FEATURES)
+		memcpy(data, netdev_features_strings,
+			sizeof(netdev_features_strings));
+	else if (stringset == ETH_SS_RSS_HASH_FUNCS)
+		memcpy(data, rss_hash_func_strings,
+		       sizeof(rss_hash_func_strings));
+	else if (stringset == ETH_SS_TUNABLES)
+		memcpy(data, tunable_strings, sizeof(tunable_strings));
+	else if (stringset == ETH_SS_PHY_TUNABLES)
+		memcpy(data, phy_tunable_strings, sizeof(phy_tunable_strings));
+	else if (stringset == ETH_SS_PHY_STATS && dev->phydev &&
 		 !ops->get_ethtool_phy_stats && phy_ops &&
 		 phy_ops->get_strings)
 		phy_ops->get_strings(dev->phydev, data);
-	अन्यथा अगर (stringset == ETH_SS_LINK_MODES)
-		स_नकल(data, link_mode_names,
+	else if (stringset == ETH_SS_LINK_MODES)
+		memcpy(data, link_mode_names,
 		       __ETHTOOL_LINK_MODE_MASK_NBITS * ETH_GSTRING_LEN);
-	अन्यथा
+	else
 		/* ops->get_strings is valid because checked earlier */
 		ops->get_strings(dev, stringset, data);
-पूर्ण
+}
 
-अटल netdev_features_t ethtool_get_feature_mask(u32 eth_cmd)
-अणु
+static netdev_features_t ethtool_get_feature_mask(u32 eth_cmd)
+{
 	/* feature masks of legacy discrete ethtool ops */
 
-	चयन (eth_cmd) अणु
-	हाल ETHTOOL_GTXCSUM:
-	हाल ETHTOOL_STXCSUM:
-		वापस NETIF_F_CSUM_MASK | NETIF_F_FCOE_CRC |
+	switch (eth_cmd) {
+	case ETHTOOL_GTXCSUM:
+	case ETHTOOL_STXCSUM:
+		return NETIF_F_CSUM_MASK | NETIF_F_FCOE_CRC |
 		       NETIF_F_SCTP_CRC;
-	हाल ETHTOOL_GRXCSUM:
-	हाल ETHTOOL_SRXCSUM:
-		वापस NETIF_F_RXCSUM;
-	हाल ETHTOOL_GSG:
-	हाल ETHTOOL_SSG:
-		वापस NETIF_F_SG | NETIF_F_FRAGLIST;
-	हाल ETHTOOL_GTSO:
-	हाल ETHTOOL_STSO:
-		वापस NETIF_F_ALL_TSO;
-	हाल ETHTOOL_GGSO:
-	हाल ETHTOOL_SGSO:
-		वापस NETIF_F_GSO;
-	हाल ETHTOOL_GGRO:
-	हाल ETHTOOL_SGRO:
-		वापस NETIF_F_GRO;
-	शेष:
+	case ETHTOOL_GRXCSUM:
+	case ETHTOOL_SRXCSUM:
+		return NETIF_F_RXCSUM;
+	case ETHTOOL_GSG:
+	case ETHTOOL_SSG:
+		return NETIF_F_SG | NETIF_F_FRAGLIST;
+	case ETHTOOL_GTSO:
+	case ETHTOOL_STSO:
+		return NETIF_F_ALL_TSO;
+	case ETHTOOL_GGSO:
+	case ETHTOOL_SGSO:
+		return NETIF_F_GSO;
+	case ETHTOOL_GGRO:
+	case ETHTOOL_SGRO:
+		return NETIF_F_GRO;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ethtool_get_one_feature(काष्ठा net_device *dev,
-	अक्षर __user *useraddr, u32 ethcmd)
-अणु
+static int ethtool_get_one_feature(struct net_device *dev,
+	char __user *useraddr, u32 ethcmd)
+{
 	netdev_features_t mask = ethtool_get_feature_mask(ethcmd);
-	काष्ठा ethtool_value edata = अणु
+	struct ethtool_value edata = {
 		.cmd = ethcmd,
 		.data = !!(dev->features & mask),
-	पूर्ण;
+	};
 
-	अगर (copy_to_user(useraddr, &edata, माप(edata)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &edata, sizeof(edata)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_one_feature(काष्ठा net_device *dev,
-	व्योम __user *useraddr, u32 ethcmd)
-अणु
-	काष्ठा ethtool_value edata;
+static int ethtool_set_one_feature(struct net_device *dev,
+	void __user *useraddr, u32 ethcmd)
+{
+	struct ethtool_value edata;
 	netdev_features_t mask;
 
-	अगर (copy_from_user(&edata, useraddr, माप(edata)))
-		वापस -EFAULT;
+	if (copy_from_user(&edata, useraddr, sizeof(edata)))
+		return -EFAULT;
 
 	mask = ethtool_get_feature_mask(ethcmd);
 	mask &= dev->hw_features;
-	अगर (!mask)
-		वापस -EOPNOTSUPP;
+	if (!mask)
+		return -EOPNOTSUPP;
 
-	अगर (edata.data)
+	if (edata.data)
 		dev->wanted_features |= mask;
-	अन्यथा
+	else
 		dev->wanted_features &= ~mask;
 
 	__netdev_update_features(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा ETH_ALL_FLAGS    (ETH_FLAG_LRO | ETH_FLAG_RXVLAN | ETH_FLAG_TXVLAN | \
+#define ETH_ALL_FLAGS    (ETH_FLAG_LRO | ETH_FLAG_RXVLAN | ETH_FLAG_TXVLAN | \
 			  ETH_FLAG_NTUPLE | ETH_FLAG_RXHASH)
-#घोषणा ETH_ALL_FEATURES (NETIF_F_LRO | NETIF_F_HW_VLAN_CTAG_RX | \
+#define ETH_ALL_FEATURES (NETIF_F_LRO | NETIF_F_HW_VLAN_CTAG_RX | \
 			  NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_NTUPLE | \
 			  NETIF_F_RXHASH)
 
-अटल u32 __ethtool_get_flags(काष्ठा net_device *dev)
-अणु
+static u32 __ethtool_get_flags(struct net_device *dev)
+{
 	u32 flags = 0;
 
-	अगर (dev->features & NETIF_F_LRO)
+	if (dev->features & NETIF_F_LRO)
 		flags |= ETH_FLAG_LRO;
-	अगर (dev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (dev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		flags |= ETH_FLAG_RXVLAN;
-	अगर (dev->features & NETIF_F_HW_VLAN_CTAG_TX)
+	if (dev->features & NETIF_F_HW_VLAN_CTAG_TX)
 		flags |= ETH_FLAG_TXVLAN;
-	अगर (dev->features & NETIF_F_NTUPLE)
+	if (dev->features & NETIF_F_NTUPLE)
 		flags |= ETH_FLAG_NTUPLE;
-	अगर (dev->features & NETIF_F_RXHASH)
+	if (dev->features & NETIF_F_RXHASH)
 		flags |= ETH_FLAG_RXHASH;
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल पूर्णांक __ethtool_set_flags(काष्ठा net_device *dev, u32 data)
-अणु
+static int __ethtool_set_flags(struct net_device *dev, u32 data)
+{
 	netdev_features_t features = 0, changed;
 
-	अगर (data & ~ETH_ALL_FLAGS)
-		वापस -EINVAL;
+	if (data & ~ETH_ALL_FLAGS)
+		return -EINVAL;
 
-	अगर (data & ETH_FLAG_LRO)
+	if (data & ETH_FLAG_LRO)
 		features |= NETIF_F_LRO;
-	अगर (data & ETH_FLAG_RXVLAN)
+	if (data & ETH_FLAG_RXVLAN)
 		features |= NETIF_F_HW_VLAN_CTAG_RX;
-	अगर (data & ETH_FLAG_TXVLAN)
+	if (data & ETH_FLAG_TXVLAN)
 		features |= NETIF_F_HW_VLAN_CTAG_TX;
-	अगर (data & ETH_FLAG_NTUPLE)
+	if (data & ETH_FLAG_NTUPLE)
 		features |= NETIF_F_NTUPLE;
-	अगर (data & ETH_FLAG_RXHASH)
+	if (data & ETH_FLAG_RXHASH)
 		features |= NETIF_F_RXHASH;
 
 	/* allow changing only bits set in hw_features */
 	changed = (features ^ dev->features) & ETH_ALL_FEATURES;
-	अगर (changed & ~dev->hw_features)
-		वापस (changed & dev->hw_features) ? -EINVAL : -EOPNOTSUPP;
+	if (changed & ~dev->hw_features)
+		return (changed & dev->hw_features) ? -EINVAL : -EOPNOTSUPP;
 
 	dev->wanted_features =
 		(dev->wanted_features & ~changed) | (features & changed);
 
 	__netdev_update_features(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Given two link masks, AND them together and save the result in dst. */
-व्योम ethtool_पूर्णांकersect_link_masks(काष्ठा ethtool_link_ksettings *dst,
-				  काष्ठा ethtool_link_ksettings *src)
-अणु
-	अचिन्हित पूर्णांक size = BITS_TO_LONGS(__ETHTOOL_LINK_MODE_MASK_NBITS);
-	अचिन्हित पूर्णांक idx = 0;
+void ethtool_intersect_link_masks(struct ethtool_link_ksettings *dst,
+				  struct ethtool_link_ksettings *src)
+{
+	unsigned int size = BITS_TO_LONGS(__ETHTOOL_LINK_MODE_MASK_NBITS);
+	unsigned int idx = 0;
 
-	क्रम (; idx < size; idx++) अणु
+	for (; idx < size; idx++) {
 		dst->link_modes.supported[idx] &=
 			src->link_modes.supported[idx];
 		dst->link_modes.advertising[idx] &=
 			src->link_modes.advertising[idx];
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(ethtool_पूर्णांकersect_link_masks);
+	}
+}
+EXPORT_SYMBOL(ethtool_intersect_link_masks);
 
-व्योम ethtool_convert_legacy_u32_to_link_mode(अचिन्हित दीर्घ *dst,
+void ethtool_convert_legacy_u32_to_link_mode(unsigned long *dst,
 					     u32 legacy_u32)
-अणु
-	biपंचांगap_zero(dst, __ETHTOOL_LINK_MODE_MASK_NBITS);
+{
+	bitmap_zero(dst, __ETHTOOL_LINK_MODE_MASK_NBITS);
 	dst[0] = legacy_u32;
-पूर्ण
+}
 EXPORT_SYMBOL(ethtool_convert_legacy_u32_to_link_mode);
 
-/* वापस false अगर src had higher bits set. lower bits always updated. */
+/* return false if src had higher bits set. lower bits always updated. */
 bool ethtool_convert_link_mode_to_legacy_u32(u32 *legacy_u32,
-					     स्थिर अचिन्हित दीर्घ *src)
-अणु
+					     const unsigned long *src)
+{
 	bool retval = true;
 
 	/* TODO: following test will soon always be true */
-	अगर (__ETHTOOL_LINK_MODE_MASK_NBITS > 32) अणु
+	if (__ETHTOOL_LINK_MODE_MASK_NBITS > 32) {
 		__ETHTOOL_DECLARE_LINK_MODE_MASK(ext);
 
-		biपंचांगap_zero(ext, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		biपंचांगap_fill(ext, 32);
-		biपंचांगap_complement(ext, ext, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		अगर (biपंचांगap_पूर्णांकersects(ext, src,
-				      __ETHTOOL_LINK_MODE_MASK_NBITS)) अणु
+		bitmap_zero(ext, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		bitmap_fill(ext, 32);
+		bitmap_complement(ext, ext, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		if (bitmap_intersects(ext, src,
+				      __ETHTOOL_LINK_MODE_MASK_NBITS)) {
 			/* src mask goes beyond bit 31 */
 			retval = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*legacy_u32 = src[0];
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(ethtool_convert_link_mode_to_legacy_u32);
 
-/* वापस false अगर ksettings link modes had higher bits
- * set. legacy_settings always updated (best efक्रमt)
+/* return false if ksettings link modes had higher bits
+ * set. legacy_settings always updated (best effort)
  */
-अटल bool
+static bool
 convert_link_ksettings_to_legacy_settings(
-	काष्ठा ethtool_cmd *legacy_settings,
-	स्थिर काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
+	struct ethtool_cmd *legacy_settings,
+	const struct ethtool_link_ksettings *link_ksettings)
+{
 	bool retval = true;
 
-	स_रखो(legacy_settings, 0, माप(*legacy_settings));
-	/* this also clears the deprecated fields in legacy काष्ठाure:
+	memset(legacy_settings, 0, sizeof(*legacy_settings));
+	/* this also clears the deprecated fields in legacy structure:
 	 * __u8		transceiver;
 	 * __u32	maxtxpkt;
 	 * __u32	maxrxpkt;
@@ -396,8 +395,8 @@ convert_link_ksettings_to_legacy_settings(
 		= link_ksettings->base.port;
 	legacy_settings->phy_address
 		= link_ksettings->base.phy_address;
-	legacy_settings->स्वतःneg
-		= link_ksettings->base.स्वतःneg;
+	legacy_settings->autoneg
+		= link_ksettings->base.autoneg;
 	legacy_settings->mdio_support
 		= link_ksettings->base.mdio_support;
 	legacy_settings->eth_tp_mdix
@@ -406,66 +405,66 @@ convert_link_ksettings_to_legacy_settings(
 		= link_ksettings->base.eth_tp_mdix_ctrl;
 	legacy_settings->transceiver
 		= link_ksettings->base.transceiver;
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-/* number of 32-bit words to store the user's link mode biपंचांगaps */
-#घोषणा __ETHTOOL_LINK_MODE_MASK_NU32			\
+/* number of 32-bit words to store the user's link mode bitmaps */
+#define __ETHTOOL_LINK_MODE_MASK_NU32			\
 	DIV_ROUND_UP(__ETHTOOL_LINK_MODE_MASK_NBITS, 32)
 
-/* layout of the काष्ठा passed from/to userland */
-काष्ठा ethtool_link_usettings अणु
-	काष्ठा ethtool_link_settings base;
-	काष्ठा अणु
+/* layout of the struct passed from/to userland */
+struct ethtool_link_usettings {
+	struct ethtool_link_settings base;
+	struct {
 		__u32 supported[__ETHTOOL_LINK_MODE_MASK_NU32];
 		__u32 advertising[__ETHTOOL_LINK_MODE_MASK_NU32];
 		__u32 lp_advertising[__ETHTOOL_LINK_MODE_MASK_NU32];
-	पूर्ण link_modes;
-पूर्ण;
+	} link_modes;
+};
 
 /* Internal kernel helper to query a device ethtool_link_settings. */
-पूर्णांक __ethtool_get_link_ksettings(काष्ठा net_device *dev,
-				 काष्ठा ethtool_link_ksettings *link_ksettings)
-अणु
+int __ethtool_get_link_ksettings(struct net_device *dev,
+				 struct ethtool_link_ksettings *link_ksettings)
+{
 	ASSERT_RTNL();
 
-	अगर (!dev->ethtool_ops->get_link_ksettings)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_link_ksettings)
+		return -EOPNOTSUPP;
 
-	स_रखो(link_ksettings, 0, माप(*link_ksettings));
-	वापस dev->ethtool_ops->get_link_ksettings(dev, link_ksettings);
-पूर्ण
+	memset(link_ksettings, 0, sizeof(*link_ksettings));
+	return dev->ethtool_ops->get_link_ksettings(dev, link_ksettings);
+}
 EXPORT_SYMBOL(__ethtool_get_link_ksettings);
 
-/* convert ethtool_link_usettings in user space to a kernel पूर्णांकernal
- * ethtool_link_ksettings. वापस 0 on success, त्रुटि_सं on error.
+/* convert ethtool_link_usettings in user space to a kernel internal
+ * ethtool_link_ksettings. return 0 on success, errno on error.
  */
-अटल पूर्णांक load_link_ksettings_from_user(काष्ठा ethtool_link_ksettings *to,
-					 स्थिर व्योम __user *from)
-अणु
-	काष्ठा ethtool_link_usettings link_usettings;
+static int load_link_ksettings_from_user(struct ethtool_link_ksettings *to,
+					 const void __user *from)
+{
+	struct ethtool_link_usettings link_usettings;
 
-	अगर (copy_from_user(&link_usettings, from, माप(link_usettings)))
-		वापस -EFAULT;
+	if (copy_from_user(&link_usettings, from, sizeof(link_usettings)))
+		return -EFAULT;
 
-	स_नकल(&to->base, &link_usettings.base, माप(to->base));
-	biपंचांगap_from_arr32(to->link_modes.supported,
+	memcpy(&to->base, &link_usettings.base, sizeof(to->base));
+	bitmap_from_arr32(to->link_modes.supported,
 			  link_usettings.link_modes.supported,
 			  __ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_from_arr32(to->link_modes.advertising,
+	bitmap_from_arr32(to->link_modes.advertising,
 			  link_usettings.link_modes.advertising,
 			  __ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_from_arr32(to->link_modes.lp_advertising,
+	bitmap_from_arr32(to->link_modes.lp_advertising,
 			  link_usettings.link_modes.lp_advertising,
 			  __ETHTOOL_LINK_MODE_MASK_NBITS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check अगर the user is trying to change anything besides speed/duplex */
-bool ethtool_virtdev_validate_cmd(स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ethtool_link_settings base2 = अणुपूर्ण;
+/* Check if the user is trying to change anything besides speed/duplex */
+bool ethtool_virtdev_validate_cmd(const struct ethtool_link_ksettings *cmd)
+{
+	struct ethtool_link_settings base2 = {};
 
 	base2.speed = cmd->base.speed;
 	base2.port = PORT_OTHER;
@@ -473,85 +472,85 @@ bool ethtool_virtdev_validate_cmd(स्थिर काष्ठा ethtool_lin
 	base2.cmd = cmd->base.cmd;
 	base2.link_mode_masks_nwords = cmd->base.link_mode_masks_nwords;
 
-	वापस !स_भेद(&base2, &cmd->base, माप(base2)) &&
-		biपंचांगap_empty(cmd->link_modes.supported,
+	return !memcmp(&base2, &cmd->base, sizeof(base2)) &&
+		bitmap_empty(cmd->link_modes.supported,
 			     __ETHTOOL_LINK_MODE_MASK_NBITS) &&
-		biपंचांगap_empty(cmd->link_modes.lp_advertising,
+		bitmap_empty(cmd->link_modes.lp_advertising,
 			     __ETHTOOL_LINK_MODE_MASK_NBITS);
-पूर्ण
+}
 
-/* convert a kernel पूर्णांकernal ethtool_link_ksettings to
- * ethtool_link_usettings in user space. वापस 0 on success, त्रुटि_सं on
+/* convert a kernel internal ethtool_link_ksettings to
+ * ethtool_link_usettings in user space. return 0 on success, errno on
  * error.
  */
-अटल पूर्णांक
-store_link_ksettings_क्रम_user(व्योम __user *to,
-			      स्थिर काष्ठा ethtool_link_ksettings *from)
-अणु
-	काष्ठा ethtool_link_usettings link_usettings;
+static int
+store_link_ksettings_for_user(void __user *to,
+			      const struct ethtool_link_ksettings *from)
+{
+	struct ethtool_link_usettings link_usettings;
 
-	स_नकल(&link_usettings, from, माप(link_usettings));
-	biपंचांगap_to_arr32(link_usettings.link_modes.supported,
+	memcpy(&link_usettings, from, sizeof(link_usettings));
+	bitmap_to_arr32(link_usettings.link_modes.supported,
 			from->link_modes.supported,
 			__ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_to_arr32(link_usettings.link_modes.advertising,
+	bitmap_to_arr32(link_usettings.link_modes.advertising,
 			from->link_modes.advertising,
 			__ETHTOOL_LINK_MODE_MASK_NBITS);
-	biपंचांगap_to_arr32(link_usettings.link_modes.lp_advertising,
+	bitmap_to_arr32(link_usettings.link_modes.lp_advertising,
 			from->link_modes.lp_advertising,
 			__ETHTOOL_LINK_MODE_MASK_NBITS);
 
-	अगर (copy_to_user(to, &link_usettings, माप(link_usettings)))
-		वापस -EFAULT;
+	if (copy_to_user(to, &link_usettings, sizeof(link_usettings)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Query device क्रम its ethtool_link_settings. */
-अटल पूर्णांक ethtool_get_link_ksettings(काष्ठा net_device *dev,
-				      व्योम __user *useraddr)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा ethtool_link_ksettings link_ksettings;
+/* Query device for its ethtool_link_settings. */
+static int ethtool_get_link_ksettings(struct net_device *dev,
+				      void __user *useraddr)
+{
+	int err = 0;
+	struct ethtool_link_ksettings link_ksettings;
 
 	ASSERT_RTNL();
-	अगर (!dev->ethtool_ops->get_link_ksettings)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_link_ksettings)
+		return -EOPNOTSUPP;
 
-	/* handle biपंचांगap nbits handshake */
-	अगर (copy_from_user(&link_ksettings.base, useraddr,
-			   माप(link_ksettings.base)))
-		वापस -EFAULT;
+	/* handle bitmap nbits handshake */
+	if (copy_from_user(&link_ksettings.base, useraddr,
+			   sizeof(link_ksettings.base)))
+		return -EFAULT;
 
-	अगर (__ETHTOOL_LINK_MODE_MASK_NU32
-	    != link_ksettings.base.link_mode_masks_nwords) अणु
+	if (__ETHTOOL_LINK_MODE_MASK_NU32
+	    != link_ksettings.base.link_mode_masks_nwords) {
 		/* wrong link mode nbits requested */
-		स_रखो(&link_ksettings, 0, माप(link_ksettings));
+		memset(&link_ksettings, 0, sizeof(link_ksettings));
 		link_ksettings.base.cmd = ETHTOOL_GLINKSETTINGS;
 		/* send back number of words required as negative val */
-		compileसमय_निश्चित(__ETHTOOL_LINK_MODE_MASK_NU32 <= S8_MAX,
+		compiletime_assert(__ETHTOOL_LINK_MODE_MASK_NU32 <= S8_MAX,
 				   "need too many bits for link modes!");
 		link_ksettings.base.link_mode_masks_nwords
 			= -((s8)__ETHTOOL_LINK_MODE_MASK_NU32);
 
 		/* copy the base fields back to user, not the link
-		 * mode biपंचांगaps
+		 * mode bitmaps
 		 */
-		अगर (copy_to_user(useraddr, &link_ksettings.base,
-				 माप(link_ksettings.base)))
-			वापस -EFAULT;
+		if (copy_to_user(useraddr, &link_ksettings.base,
+				 sizeof(link_ksettings.base)))
+			return -EFAULT;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* handshake successful: user/kernel agree on
 	 * link_mode_masks_nwords
 	 */
 
-	स_रखो(&link_ksettings, 0, माप(link_ksettings));
+	memset(&link_ksettings, 0, sizeof(link_ksettings));
 	err = dev->ethtool_ops->get_link_ksettings(dev, &link_ksettings);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	/* make sure we tell the right values to user */
 	link_ksettings.base.cmd = ETHTOOL_GLINKSETTINGS;
@@ -560,1581 +559,1581 @@ store_link_ksettings_क्रम_user(व्योम __user *to,
 	link_ksettings.base.master_slave_cfg = MASTER_SLAVE_CFG_UNSUPPORTED;
 	link_ksettings.base.master_slave_state = MASTER_SLAVE_STATE_UNSUPPORTED;
 
-	वापस store_link_ksettings_क्रम_user(useraddr, &link_ksettings);
-पूर्ण
+	return store_link_ksettings_for_user(useraddr, &link_ksettings);
+}
 
 /* Update device ethtool_link_settings. */
-अटल पूर्णांक ethtool_set_link_ksettings(काष्ठा net_device *dev,
-				      व्योम __user *useraddr)
-अणु
-	पूर्णांक err;
-	काष्ठा ethtool_link_ksettings link_ksettings;
+static int ethtool_set_link_ksettings(struct net_device *dev,
+				      void __user *useraddr)
+{
+	int err;
+	struct ethtool_link_ksettings link_ksettings;
 
 	ASSERT_RTNL();
 
-	अगर (!dev->ethtool_ops->set_link_ksettings)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_link_ksettings)
+		return -EOPNOTSUPP;
 
 	/* make sure nbits field has expected value */
-	अगर (copy_from_user(&link_ksettings.base, useraddr,
-			   माप(link_ksettings.base)))
-		वापस -EFAULT;
+	if (copy_from_user(&link_ksettings.base, useraddr,
+			   sizeof(link_ksettings.base)))
+		return -EFAULT;
 
-	अगर (__ETHTOOL_LINK_MODE_MASK_NU32
+	if (__ETHTOOL_LINK_MODE_MASK_NU32
 	    != link_ksettings.base.link_mode_masks_nwords)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* copy the whole काष्ठाure, now that we know it has expected
-	 * क्रमmat
+	/* copy the whole structure, now that we know it has expected
+	 * format
 	 */
 	err = load_link_ksettings_from_user(&link_ksettings, useraddr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* re-check nwords field, just in हाल */
-	अगर (__ETHTOOL_LINK_MODE_MASK_NU32
+	/* re-check nwords field, just in case */
+	if (__ETHTOOL_LINK_MODE_MASK_NU32
 	    != link_ksettings.base.link_mode_masks_nwords)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (link_ksettings.base.master_slave_cfg ||
+	if (link_ksettings.base.master_slave_cfg ||
 	    link_ksettings.base.master_slave_state)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	err = dev->ethtool_ops->set_link_ksettings(dev, &link_ksettings);
-	अगर (err >= 0) अणु
-		ethtool_notअगरy(dev, ETHTOOL_MSG_LINKINFO_NTF, शून्य);
-		ethtool_notअगरy(dev, ETHTOOL_MSG_LINKMODES_NTF, शून्य);
-	पूर्ण
-	वापस err;
-पूर्ण
+	if (err >= 0) {
+		ethtool_notify(dev, ETHTOOL_MSG_LINKINFO_NTF, NULL);
+		ethtool_notify(dev, ETHTOOL_MSG_LINKMODES_NTF, NULL);
+	}
+	return err;
+}
 
-पूर्णांक ethtool_virtdev_set_link_ksettings(काष्ठा net_device *dev,
-				       स्थिर काष्ठा ethtool_link_ksettings *cmd,
+int ethtool_virtdev_set_link_ksettings(struct net_device *dev,
+				       const struct ethtool_link_ksettings *cmd,
 				       u32 *dev_speed, u8 *dev_duplex)
-अणु
+{
 	u32 speed;
 	u8 duplex;
 
 	speed = cmd->base.speed;
 	duplex = cmd->base.duplex;
-	/* करोn't allow custom speed and duplex */
-	अगर (!ethtool_validate_speed(speed) ||
+	/* don't allow custom speed and duplex */
+	if (!ethtool_validate_speed(speed) ||
 	    !ethtool_validate_duplex(duplex) ||
 	    !ethtool_virtdev_validate_cmd(cmd))
-		वापस -EINVAL;
+		return -EINVAL;
 	*dev_speed = speed;
 	*dev_duplex = duplex;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ethtool_virtdev_set_link_ksettings);
 
-/* Query device क्रम its ethtool_cmd settings.
+/* Query device for its ethtool_cmd settings.
  *
- * Backward compatibility note: क्रम compatibility with legacy ethtool, this is
+ * Backward compatibility note: for compatibility with legacy ethtool, this is
  * now implemented via get_link_ksettings. When driver reports higher link mode
  * bits, a kernel warning is logged once (with name of 1st driver/device) to
  * recommend user to upgrade ethtool, but the command is successful (only the
  * lower link mode bits reported back to user). Deprecated fields from
  * ethtool_cmd (transceiver/maxrxpkt/maxtxpkt) are always set to zero.
  */
-अटल पूर्णांक ethtool_get_settings(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_link_ksettings link_ksettings;
-	काष्ठा ethtool_cmd cmd;
-	पूर्णांक err;
+static int ethtool_get_settings(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_link_ksettings link_ksettings;
+	struct ethtool_cmd cmd;
+	int err;
 
 	ASSERT_RTNL();
-	अगर (!dev->ethtool_ops->get_link_ksettings)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_link_ksettings)
+		return -EOPNOTSUPP;
 
-	स_रखो(&link_ksettings, 0, माप(link_ksettings));
+	memset(&link_ksettings, 0, sizeof(link_ksettings));
 	err = dev->ethtool_ops->get_link_ksettings(dev, &link_ksettings);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	convert_link_ksettings_to_legacy_settings(&cmd, &link_ksettings);
 
 	/* send a sensible cmd tag back to user */
 	cmd.cmd = ETHTOOL_GSET;
 
-	अगर (copy_to_user(useraddr, &cmd, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr, &cmd, sizeof(cmd)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Update device link settings with given ethtool_cmd.
  *
- * Backward compatibility note: क्रम compatibility with legacy ethtool, this is
+ * Backward compatibility note: for compatibility with legacy ethtool, this is
  * now always implemented via set_link_settings. When user's request updates
  * deprecated ethtool_cmd fields (transceiver/maxrxpkt/maxtxpkt), a kernel
  * warning is logged once (with name of 1st driver/device) to recommend user to
  * upgrade ethtool, and the request is rejected.
  */
-अटल पूर्णांक ethtool_set_settings(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_link_ksettings link_ksettings;
-	काष्ठा ethtool_cmd cmd;
-	पूर्णांक ret;
+static int ethtool_set_settings(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_link_ksettings link_ksettings;
+	struct ethtool_cmd cmd;
+	int ret;
 
 	ASSERT_RTNL();
 
-	अगर (copy_from_user(&cmd, useraddr, माप(cmd)))
-		वापस -EFAULT;
-	अगर (!dev->ethtool_ops->set_link_ksettings)
-		वापस -EOPNOTSUPP;
+	if (copy_from_user(&cmd, useraddr, sizeof(cmd)))
+		return -EFAULT;
+	if (!dev->ethtool_ops->set_link_ksettings)
+		return -EOPNOTSUPP;
 
-	अगर (!convert_legacy_settings_to_link_ksettings(&link_ksettings, &cmd))
-		वापस -EINVAL;
+	if (!convert_legacy_settings_to_link_ksettings(&link_ksettings, &cmd))
+		return -EINVAL;
 	link_ksettings.base.link_mode_masks_nwords =
 		__ETHTOOL_LINK_MODE_MASK_NU32;
 	ret = dev->ethtool_ops->set_link_ksettings(dev, &link_ksettings);
-	अगर (ret >= 0) अणु
-		ethtool_notअगरy(dev, ETHTOOL_MSG_LINKINFO_NTF, शून्य);
-		ethtool_notअगरy(dev, ETHTOOL_MSG_LINKMODES_NTF, शून्य);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (ret >= 0) {
+		ethtool_notify(dev, ETHTOOL_MSG_LINKINFO_NTF, NULL);
+		ethtool_notify(dev, ETHTOOL_MSG_LINKMODES_NTF, NULL);
+	}
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_drvinfo(काष्ठा net_device *dev,
-						  व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_drvinfo info;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static noinline_for_stack int ethtool_get_drvinfo(struct net_device *dev,
+						  void __user *useraddr)
+{
+	struct ethtool_drvinfo info;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.cmd = ETHTOOL_GDRVINFO;
-	strlcpy(info.version, UTS_RELEASE, माप(info.version));
-	अगर (ops->get_drvinfo) अणु
+	strlcpy(info.version, UTS_RELEASE, sizeof(info.version));
+	if (ops->get_drvinfo) {
 		ops->get_drvinfo(dev, &info);
-	पूर्ण अन्यथा अगर (dev->dev.parent && dev->dev.parent->driver) अणु
+	} else if (dev->dev.parent && dev->dev.parent->driver) {
 		strlcpy(info.bus_info, dev_name(dev->dev.parent),
-			माप(info.bus_info));
+			sizeof(info.bus_info));
 		strlcpy(info.driver, dev->dev.parent->driver->name,
-			माप(info.driver));
-	पूर्ण अन्यथा अणु
-		वापस -EOPNOTSUPP;
-	पूर्ण
+			sizeof(info.driver));
+	} else {
+		return -EOPNOTSUPP;
+	}
 
 	/*
 	 * this method of obtaining string set info is deprecated;
 	 * Use ETHTOOL_GSSET_INFO instead.
 	 */
-	अगर (ops->get_sset_count) अणु
-		पूर्णांक rc;
+	if (ops->get_sset_count) {
+		int rc;
 
 		rc = ops->get_sset_count(dev, ETH_SS_TEST);
-		अगर (rc >= 0)
+		if (rc >= 0)
 			info.testinfo_len = rc;
 		rc = ops->get_sset_count(dev, ETH_SS_STATS);
-		अगर (rc >= 0)
+		if (rc >= 0)
 			info.n_stats = rc;
 		rc = ops->get_sset_count(dev, ETH_SS_PRIV_FLAGS);
-		अगर (rc >= 0)
+		if (rc >= 0)
 			info.n_priv_flags = rc;
-	पूर्ण
-	अगर (ops->get_regs_len) अणु
-		पूर्णांक ret = ops->get_regs_len(dev);
+	}
+	if (ops->get_regs_len) {
+		int ret = ops->get_regs_len(dev);
 
-		अगर (ret > 0)
+		if (ret > 0)
 			info.regdump_len = ret;
-	पूर्ण
+	}
 
-	अगर (ops->get_eeprom_len)
+	if (ops->get_eeprom_len)
 		info.eedump_len = ops->get_eeprom_len(dev);
 
-	अगर (!info.fw_version[0])
+	if (!info.fw_version[0])
 		devlink_compat_running_version(dev, info.fw_version,
-					       माप(info.fw_version));
+					       sizeof(info.fw_version));
 
-	अगर (copy_to_user(useraddr, &info, माप(info)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &info, sizeof(info)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_sset_info(काष्ठा net_device *dev,
-						    व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_sset_info info;
+static noinline_for_stack int ethtool_get_sset_info(struct net_device *dev,
+						    void __user *useraddr)
+{
+	struct ethtool_sset_info info;
 	u64 sset_mask;
-	पूर्णांक i, idx = 0, n_bits = 0, ret, rc;
-	u32 *info_buf = शून्य;
+	int i, idx = 0, n_bits = 0, ret, rc;
+	u32 *info_buf = NULL;
 
-	अगर (copy_from_user(&info, useraddr, माप(info)))
-		वापस -EFAULT;
+	if (copy_from_user(&info, useraddr, sizeof(info)))
+		return -EFAULT;
 
-	/* store copy of mask, because we zero काष्ठा later on */
+	/* store copy of mask, because we zero struct later on */
 	sset_mask = info.sset_mask;
-	अगर (!sset_mask)
-		वापस 0;
+	if (!sset_mask)
+		return 0;
 
-	/* calculate size of वापस buffer */
+	/* calculate size of return buffer */
 	n_bits = hweight64(sset_mask);
 
-	स_रखो(&info, 0, माप(info));
+	memset(&info, 0, sizeof(info));
 	info.cmd = ETHTOOL_GSSET_INFO;
 
-	info_buf = kसुस्मृति(n_bits, माप(u32), GFP_USER);
-	अगर (!info_buf)
-		वापस -ENOMEM;
+	info_buf = kcalloc(n_bits, sizeof(u32), GFP_USER);
+	if (!info_buf)
+		return -ENOMEM;
 
 	/*
-	 * fill वापस buffer based on input biपंचांगask and successful
-	 * get_sset_count वापस
+	 * fill return buffer based on input bitmask and successful
+	 * get_sset_count return
 	 */
-	क्रम (i = 0; i < 64; i++) अणु
-		अगर (!(sset_mask & (1ULL << i)))
-			जारी;
+	for (i = 0; i < 64; i++) {
+		if (!(sset_mask & (1ULL << i)))
+			continue;
 
 		rc = __ethtool_get_sset_count(dev, i);
-		अगर (rc >= 0) अणु
+		if (rc >= 0) {
 			info.sset_mask |= (1ULL << i);
 			info_buf[idx++] = rc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &info, माप(info)))
-		जाओ out;
+	if (copy_to_user(useraddr, &info, sizeof(info)))
+		goto out;
 
-	useraddr += दुरत्व(काष्ठा ethtool_sset_info, data);
-	अगर (copy_to_user(useraddr, info_buf, idx * माप(u32)))
-		जाओ out;
+	useraddr += offsetof(struct ethtool_sset_info, data);
+	if (copy_to_user(useraddr, info_buf, idx * sizeof(u32)))
+		goto out;
 
 	ret = 0;
 
 out:
-	kमुक्त(info_buf);
-	वापस ret;
-पूर्ण
+	kfree(info_buf);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_set_rxnfc(काष्ठा net_device *dev,
-						u32 cmd, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_rxnfc info;
-	माप_प्रकार info_size = माप(info);
-	पूर्णांक rc;
+static noinline_for_stack int ethtool_set_rxnfc(struct net_device *dev,
+						u32 cmd, void __user *useraddr)
+{
+	struct ethtool_rxnfc info;
+	size_t info_size = sizeof(info);
+	int rc;
 
-	अगर (!dev->ethtool_ops->set_rxnfc)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_rxnfc)
+		return -EOPNOTSUPP;
 
-	/* काष्ठा ethtool_rxnfc was originally defined क्रम
-	 * ETHTOOL_अणुG,Sपूर्णRXFH with only the cmd, flow_type and data
+	/* struct ethtool_rxnfc was originally defined for
+	 * ETHTOOL_{G,S}RXFH with only the cmd, flow_type and data
 	 * members.  User-space might still be using that
 	 * definition. */
-	अगर (cmd == ETHTOOL_SRXFH)
-		info_size = (दुरत्व(काष्ठा ethtool_rxnfc, data) +
-			     माप(info.data));
+	if (cmd == ETHTOOL_SRXFH)
+		info_size = (offsetof(struct ethtool_rxnfc, data) +
+			     sizeof(info.data));
 
-	अगर (copy_from_user(&info, useraddr, info_size))
-		वापस -EFAULT;
+	if (copy_from_user(&info, useraddr, info_size))
+		return -EFAULT;
 
 	rc = dev->ethtool_ops->set_rxnfc(dev, &info);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (cmd == ETHTOOL_SRXCLSRLINS &&
+	if (cmd == ETHTOOL_SRXCLSRLINS &&
 	    copy_to_user(useraddr, &info, info_size))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_rxnfc(काष्ठा net_device *dev,
-						u32 cmd, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_rxnfc info;
-	माप_प्रकार info_size = माप(info);
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	पूर्णांक ret;
-	व्योम *rule_buf = शून्य;
+static noinline_for_stack int ethtool_get_rxnfc(struct net_device *dev,
+						u32 cmd, void __user *useraddr)
+{
+	struct ethtool_rxnfc info;
+	size_t info_size = sizeof(info);
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	int ret;
+	void *rule_buf = NULL;
 
-	अगर (!ops->get_rxnfc)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_rxnfc)
+		return -EOPNOTSUPP;
 
-	/* काष्ठा ethtool_rxnfc was originally defined क्रम
-	 * ETHTOOL_अणुG,Sपूर्णRXFH with only the cmd, flow_type and data
+	/* struct ethtool_rxnfc was originally defined for
+	 * ETHTOOL_{G,S}RXFH with only the cmd, flow_type and data
 	 * members.  User-space might still be using that
 	 * definition. */
-	अगर (cmd == ETHTOOL_GRXFH)
-		info_size = (दुरत्व(काष्ठा ethtool_rxnfc, data) +
-			     माप(info.data));
+	if (cmd == ETHTOOL_GRXFH)
+		info_size = (offsetof(struct ethtool_rxnfc, data) +
+			     sizeof(info.data));
 
-	अगर (copy_from_user(&info, useraddr, info_size))
-		वापस -EFAULT;
+	if (copy_from_user(&info, useraddr, info_size))
+		return -EFAULT;
 
 	/* If FLOW_RSS was requested then user-space must be using the
 	 * new definition, as FLOW_RSS is newer.
 	 */
-	अगर (cmd == ETHTOOL_GRXFH && info.flow_type & FLOW_RSS) अणु
-		info_size = माप(info);
-		अगर (copy_from_user(&info, useraddr, info_size))
-			वापस -EFAULT;
-		/* Since malicious users may modअगरy the original data,
+	if (cmd == ETHTOOL_GRXFH && info.flow_type & FLOW_RSS) {
+		info_size = sizeof(info);
+		if (copy_from_user(&info, useraddr, info_size))
+			return -EFAULT;
+		/* Since malicious users may modify the original data,
 		 * we need to check whether FLOW_RSS is still requested.
 		 */
-		अगर (!(info.flow_type & FLOW_RSS))
-			वापस -EINVAL;
-	पूर्ण
+		if (!(info.flow_type & FLOW_RSS))
+			return -EINVAL;
+	}
 
-	अगर (info.cmd != cmd)
-		वापस -EINVAL;
+	if (info.cmd != cmd)
+		return -EINVAL;
 
-	अगर (info.cmd == ETHTOOL_GRXCLSRLALL) अणु
-		अगर (info.rule_cnt > 0) अणु
-			अगर (info.rule_cnt <= KMALLOC_MAX_SIZE / माप(u32))
-				rule_buf = kसुस्मृति(info.rule_cnt, माप(u32),
+	if (info.cmd == ETHTOOL_GRXCLSRLALL) {
+		if (info.rule_cnt > 0) {
+			if (info.rule_cnt <= KMALLOC_MAX_SIZE / sizeof(u32))
+				rule_buf = kcalloc(info.rule_cnt, sizeof(u32),
 						   GFP_USER);
-			अगर (!rule_buf)
-				वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			if (!rule_buf)
+				return -ENOMEM;
+		}
+	}
 
 	ret = ops->get_rxnfc(dev, &info, rule_buf);
-	अगर (ret < 0)
-		जाओ err_out;
+	if (ret < 0)
+		goto err_out;
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &info, info_size))
-		जाओ err_out;
+	if (copy_to_user(useraddr, &info, info_size))
+		goto err_out;
 
-	अगर (rule_buf) अणु
-		useraddr += दुरत्व(काष्ठा ethtool_rxnfc, rule_locs);
-		अगर (copy_to_user(useraddr, rule_buf,
-				 info.rule_cnt * माप(u32)))
-			जाओ err_out;
-	पूर्ण
+	if (rule_buf) {
+		useraddr += offsetof(struct ethtool_rxnfc, rule_locs);
+		if (copy_to_user(useraddr, rule_buf,
+				 info.rule_cnt * sizeof(u32)))
+			goto err_out;
+	}
 	ret = 0;
 
 err_out:
-	kमुक्त(rule_buf);
+	kfree(rule_buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ethtool_copy_validate_indir(u32 *indir, व्योम __user *useraddr,
-					काष्ठा ethtool_rxnfc *rx_rings,
+static int ethtool_copy_validate_indir(u32 *indir, void __user *useraddr,
+					struct ethtool_rxnfc *rx_rings,
 					u32 size)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
-	अगर (copy_from_user(indir, useraddr, size * माप(indir[0])))
-		वापस -EFAULT;
+	if (copy_from_user(indir, useraddr, size * sizeof(indir[0])))
+		return -EFAULT;
 
 	/* Validate ring indices */
-	क्रम (i = 0; i < size; i++)
-		अगर (indir[i] >= rx_rings->data)
-			वापस -EINVAL;
+	for (i = 0; i < size; i++)
+		if (indir[i] >= rx_rings->data)
+			return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u8 netdev_rss_key[NETDEV_RSS_KEY_LEN] __पढ़ो_mostly;
+u8 netdev_rss_key[NETDEV_RSS_KEY_LEN] __read_mostly;
 
-व्योम netdev_rss_key_fill(व्योम *buffer, माप_प्रकार len)
-अणु
-	BUG_ON(len > माप(netdev_rss_key));
-	net_get_अक्रमom_once(netdev_rss_key, माप(netdev_rss_key));
-	स_नकल(buffer, netdev_rss_key, len);
-पूर्ण
+void netdev_rss_key_fill(void *buffer, size_t len)
+{
+	BUG_ON(len > sizeof(netdev_rss_key));
+	net_get_random_once(netdev_rss_key, sizeof(netdev_rss_key));
+	memcpy(buffer, netdev_rss_key, len);
+}
 EXPORT_SYMBOL(netdev_rss_key_fill);
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_rxfh_indir(काष्ठा net_device *dev,
-						     व्योम __user *useraddr)
-अणु
+static noinline_for_stack int ethtool_get_rxfh_indir(struct net_device *dev,
+						     void __user *useraddr)
+{
 	u32 user_size, dev_size;
 	u32 *indir;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!dev->ethtool_ops->get_rxfh_indir_size ||
+	if (!dev->ethtool_ops->get_rxfh_indir_size ||
 	    !dev->ethtool_ops->get_rxfh)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 	dev_size = dev->ethtool_ops->get_rxfh_indir_size(dev);
-	अगर (dev_size == 0)
-		वापस -EOPNOTSUPP;
+	if (dev_size == 0)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&user_size,
-			   useraddr + दुरत्व(काष्ठा ethtool_rxfh_indir, size),
-			   माप(user_size)))
-		वापस -EFAULT;
+	if (copy_from_user(&user_size,
+			   useraddr + offsetof(struct ethtool_rxfh_indir, size),
+			   sizeof(user_size)))
+		return -EFAULT;
 
-	अगर (copy_to_user(useraddr + दुरत्व(काष्ठा ethtool_rxfh_indir, size),
-			 &dev_size, माप(dev_size)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr + offsetof(struct ethtool_rxfh_indir, size),
+			 &dev_size, sizeof(dev_size)))
+		return -EFAULT;
 
-	/* If the user buffer size is 0, this is just a query क्रम the
-	 * device table size.  Otherwise, अगर it's smaller than the
+	/* If the user buffer size is 0, this is just a query for the
+	 * device table size.  Otherwise, if it's smaller than the
 	 * device table size it's an error.
 	 */
-	अगर (user_size < dev_size)
-		वापस user_size == 0 ? 0 : -EINVAL;
+	if (user_size < dev_size)
+		return user_size == 0 ? 0 : -EINVAL;
 
-	indir = kसुस्मृति(dev_size, माप(indir[0]), GFP_USER);
-	अगर (!indir)
-		वापस -ENOMEM;
+	indir = kcalloc(dev_size, sizeof(indir[0]), GFP_USER);
+	if (!indir)
+		return -ENOMEM;
 
-	ret = dev->ethtool_ops->get_rxfh(dev, indir, शून्य, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = dev->ethtool_ops->get_rxfh(dev, indir, NULL, NULL);
+	if (ret)
+		goto out;
 
-	अगर (copy_to_user(useraddr +
-			 दुरत्व(काष्ठा ethtool_rxfh_indir, ring_index[0]),
-			 indir, dev_size * माप(indir[0])))
+	if (copy_to_user(useraddr +
+			 offsetof(struct ethtool_rxfh_indir, ring_index[0]),
+			 indir, dev_size * sizeof(indir[0])))
 		ret = -EFAULT;
 
 out:
-	kमुक्त(indir);
-	वापस ret;
-पूर्ण
+	kfree(indir);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_set_rxfh_indir(काष्ठा net_device *dev,
-						     व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_rxnfc rx_rings;
+static noinline_for_stack int ethtool_set_rxfh_indir(struct net_device *dev,
+						     void __user *useraddr)
+{
+	struct ethtool_rxnfc rx_rings;
 	u32 user_size, dev_size, i;
 	u32 *indir;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	पूर्णांक ret;
-	u32 ringidx_offset = दुरत्व(काष्ठा ethtool_rxfh_indir, ring_index[0]);
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	int ret;
+	u32 ringidx_offset = offsetof(struct ethtool_rxfh_indir, ring_index[0]);
 
-	अगर (!ops->get_rxfh_indir_size || !ops->set_rxfh ||
+	if (!ops->get_rxfh_indir_size || !ops->set_rxfh ||
 	    !ops->get_rxnfc)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	dev_size = ops->get_rxfh_indir_size(dev);
-	अगर (dev_size == 0)
-		वापस -EOPNOTSUPP;
+	if (dev_size == 0)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&user_size,
-			   useraddr + दुरत्व(काष्ठा ethtool_rxfh_indir, size),
-			   माप(user_size)))
-		वापस -EFAULT;
+	if (copy_from_user(&user_size,
+			   useraddr + offsetof(struct ethtool_rxfh_indir, size),
+			   sizeof(user_size)))
+		return -EFAULT;
 
-	अगर (user_size != 0 && user_size != dev_size)
-		वापस -EINVAL;
+	if (user_size != 0 && user_size != dev_size)
+		return -EINVAL;
 
-	indir = kसुस्मृति(dev_size, माप(indir[0]), GFP_USER);
-	अगर (!indir)
-		वापस -ENOMEM;
+	indir = kcalloc(dev_size, sizeof(indir[0]), GFP_USER);
+	if (!indir)
+		return -ENOMEM;
 
 	rx_rings.cmd = ETHTOOL_GRXRINGS;
-	ret = ops->get_rxnfc(dev, &rx_rings, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = ops->get_rxnfc(dev, &rx_rings, NULL);
+	if (ret)
+		goto out;
 
-	अगर (user_size == 0) अणु
-		क्रम (i = 0; i < dev_size; i++)
-			indir[i] = ethtool_rxfh_indir_शेष(i, rx_rings.data);
-	पूर्ण अन्यथा अणु
+	if (user_size == 0) {
+		for (i = 0; i < dev_size; i++)
+			indir[i] = ethtool_rxfh_indir_default(i, rx_rings.data);
+	} else {
 		ret = ethtool_copy_validate_indir(indir,
 						  useraddr + ringidx_offset,
 						  &rx_rings,
 						  dev_size);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	ret = ops->set_rxfh(dev, indir, शून्य, ETH_RSS_HASH_NO_CHANGE);
-	अगर (ret)
-		जाओ out;
+	ret = ops->set_rxfh(dev, indir, NULL, ETH_RSS_HASH_NO_CHANGE);
+	if (ret)
+		goto out;
 
-	/* indicate whether rxfh was set to शेष */
-	अगर (user_size == 0)
+	/* indicate whether rxfh was set to default */
+	if (user_size == 0)
 		dev->priv_flags &= ~IFF_RXFH_CONFIGURED;
-	अन्यथा
+	else
 		dev->priv_flags |= IFF_RXFH_CONFIGURED;
 
 out:
-	kमुक्त(indir);
-	वापस ret;
-पूर्ण
+	kfree(indir);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_rxfh(काष्ठा net_device *dev,
-					       व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static noinline_for_stack int ethtool_get_rxfh(struct net_device *dev,
+					       void __user *useraddr)
+{
+	int ret;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 	u32 user_indir_size, user_key_size;
 	u32 dev_indir_size = 0, dev_key_size = 0;
-	काष्ठा ethtool_rxfh rxfh;
+	struct ethtool_rxfh rxfh;
 	u32 total_size;
 	u32 indir_bytes;
-	u32 *indir = शून्य;
+	u32 *indir = NULL;
 	u8 dev_hfunc = 0;
-	u8 *hkey = शून्य;
+	u8 *hkey = NULL;
 	u8 *rss_config;
 
-	अगर (!ops->get_rxfh)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_rxfh)
+		return -EOPNOTSUPP;
 
-	अगर (ops->get_rxfh_indir_size)
+	if (ops->get_rxfh_indir_size)
 		dev_indir_size = ops->get_rxfh_indir_size(dev);
-	अगर (ops->get_rxfh_key_size)
+	if (ops->get_rxfh_key_size)
 		dev_key_size = ops->get_rxfh_key_size(dev);
 
-	अगर (copy_from_user(&rxfh, useraddr, माप(rxfh)))
-		वापस -EFAULT;
+	if (copy_from_user(&rxfh, useraddr, sizeof(rxfh)))
+		return -EFAULT;
 	user_indir_size = rxfh.indir_size;
 	user_key_size = rxfh.key_size;
 
-	/* Check that reserved fields are 0 क्रम now */
-	अगर (rxfh.rsvd8[0] || rxfh.rsvd8[1] || rxfh.rsvd8[2] || rxfh.rsvd32)
-		वापस -EINVAL;
-	/* Most drivers करोn't handle rss_context, check it's 0 as well */
-	अगर (rxfh.rss_context && !ops->get_rxfh_context)
-		वापस -EOPNOTSUPP;
+	/* Check that reserved fields are 0 for now */
+	if (rxfh.rsvd8[0] || rxfh.rsvd8[1] || rxfh.rsvd8[2] || rxfh.rsvd32)
+		return -EINVAL;
+	/* Most drivers don't handle rss_context, check it's 0 as well */
+	if (rxfh.rss_context && !ops->get_rxfh_context)
+		return -EOPNOTSUPP;
 
 	rxfh.indir_size = dev_indir_size;
 	rxfh.key_size = dev_key_size;
-	अगर (copy_to_user(useraddr, &rxfh, माप(rxfh)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr, &rxfh, sizeof(rxfh)))
+		return -EFAULT;
 
-	अगर ((user_indir_size && (user_indir_size != dev_indir_size)) ||
+	if ((user_indir_size && (user_indir_size != dev_indir_size)) ||
 	    (user_key_size && (user_key_size != dev_key_size)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	indir_bytes = user_indir_size * माप(indir[0]);
+	indir_bytes = user_indir_size * sizeof(indir[0]);
 	total_size = indir_bytes + user_key_size;
 	rss_config = kzalloc(total_size, GFP_USER);
-	अगर (!rss_config)
-		वापस -ENOMEM;
+	if (!rss_config)
+		return -ENOMEM;
 
-	अगर (user_indir_size)
+	if (user_indir_size)
 		indir = (u32 *)rss_config;
 
-	अगर (user_key_size)
+	if (user_key_size)
 		hkey = rss_config + indir_bytes;
 
-	अगर (rxfh.rss_context)
+	if (rxfh.rss_context)
 		ret = dev->ethtool_ops->get_rxfh_context(dev, indir, hkey,
 							 &dev_hfunc,
 							 rxfh.rss_context);
-	अन्यथा
+	else
 		ret = dev->ethtool_ops->get_rxfh(dev, indir, hkey, &dev_hfunc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (copy_to_user(useraddr + दुरत्व(काष्ठा ethtool_rxfh, hfunc),
-			 &dev_hfunc, माप(rxfh.hfunc))) अणु
+	if (copy_to_user(useraddr + offsetof(struct ethtool_rxfh, hfunc),
+			 &dev_hfunc, sizeof(rxfh.hfunc))) {
 		ret = -EFAULT;
-	पूर्ण अन्यथा अगर (copy_to_user(useraddr +
-			      दुरत्व(काष्ठा ethtool_rxfh, rss_config[0]),
-			      rss_config, total_size)) अणु
+	} else if (copy_to_user(useraddr +
+			      offsetof(struct ethtool_rxfh, rss_config[0]),
+			      rss_config, total_size)) {
 		ret = -EFAULT;
-	पूर्ण
+	}
 out:
-	kमुक्त(rss_config);
+	kfree(rss_config);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_set_rxfh(काष्ठा net_device *dev,
-					       व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	काष्ठा ethtool_rxnfc rx_rings;
-	काष्ठा ethtool_rxfh rxfh;
+static noinline_for_stack int ethtool_set_rxfh(struct net_device *dev,
+					       void __user *useraddr)
+{
+	int ret;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	struct ethtool_rxnfc rx_rings;
+	struct ethtool_rxfh rxfh;
 	u32 dev_indir_size = 0, dev_key_size = 0, i;
-	u32 *indir = शून्य, indir_bytes = 0;
-	u8 *hkey = शून्य;
+	u32 *indir = NULL, indir_bytes = 0;
+	u8 *hkey = NULL;
 	u8 *rss_config;
-	u32 rss_cfg_offset = दुरत्व(काष्ठा ethtool_rxfh, rss_config[0]);
+	u32 rss_cfg_offset = offsetof(struct ethtool_rxfh, rss_config[0]);
 	bool delete = false;
 
-	अगर (!ops->get_rxnfc || !ops->set_rxfh)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_rxnfc || !ops->set_rxfh)
+		return -EOPNOTSUPP;
 
-	अगर (ops->get_rxfh_indir_size)
+	if (ops->get_rxfh_indir_size)
 		dev_indir_size = ops->get_rxfh_indir_size(dev);
-	अगर (ops->get_rxfh_key_size)
+	if (ops->get_rxfh_key_size)
 		dev_key_size = ops->get_rxfh_key_size(dev);
 
-	अगर (copy_from_user(&rxfh, useraddr, माप(rxfh)))
-		वापस -EFAULT;
+	if (copy_from_user(&rxfh, useraddr, sizeof(rxfh)))
+		return -EFAULT;
 
-	/* Check that reserved fields are 0 क्रम now */
-	अगर (rxfh.rsvd8[0] || rxfh.rsvd8[1] || rxfh.rsvd8[2] || rxfh.rsvd32)
-		वापस -EINVAL;
-	/* Most drivers करोn't handle rss_context, check it's 0 as well */
-	अगर (rxfh.rss_context && !ops->set_rxfh_context)
-		वापस -EOPNOTSUPP;
+	/* Check that reserved fields are 0 for now */
+	if (rxfh.rsvd8[0] || rxfh.rsvd8[1] || rxfh.rsvd8[2] || rxfh.rsvd32)
+		return -EINVAL;
+	/* Most drivers don't handle rss_context, check it's 0 as well */
+	if (rxfh.rss_context && !ops->set_rxfh_context)
+		return -EOPNOTSUPP;
 
 	/* If either indir, hash key or function is valid, proceed further.
 	 * Must request at least one change: indir size, hash key or function.
 	 */
-	अगर ((rxfh.indir_size &&
-	     rxfh.indir_size != ETH_RXFH_INसूची_NO_CHANGE &&
+	if ((rxfh.indir_size &&
+	     rxfh.indir_size != ETH_RXFH_INDIR_NO_CHANGE &&
 	     rxfh.indir_size != dev_indir_size) ||
 	    (rxfh.key_size && (rxfh.key_size != dev_key_size)) ||
-	    (rxfh.indir_size == ETH_RXFH_INसूची_NO_CHANGE &&
+	    (rxfh.indir_size == ETH_RXFH_INDIR_NO_CHANGE &&
 	     rxfh.key_size == 0 && rxfh.hfunc == ETH_RSS_HASH_NO_CHANGE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (rxfh.indir_size != ETH_RXFH_INसूची_NO_CHANGE)
-		indir_bytes = dev_indir_size * माप(indir[0]);
+	if (rxfh.indir_size != ETH_RXFH_INDIR_NO_CHANGE)
+		indir_bytes = dev_indir_size * sizeof(indir[0]);
 
 	rss_config = kzalloc(indir_bytes + rxfh.key_size, GFP_USER);
-	अगर (!rss_config)
-		वापस -ENOMEM;
+	if (!rss_config)
+		return -ENOMEM;
 
 	rx_rings.cmd = ETHTOOL_GRXRINGS;
-	ret = ops->get_rxnfc(dev, &rx_rings, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = ops->get_rxnfc(dev, &rx_rings, NULL);
+	if (ret)
+		goto out;
 
-	/* rxfh.indir_size == 0 means reset the indir table to शेष (master
+	/* rxfh.indir_size == 0 means reset the indir table to default (master
 	 * context) or delete the context (other RSS contexts).
-	 * rxfh.indir_size == ETH_RXFH_INसूची_NO_CHANGE means leave it unchanged.
+	 * rxfh.indir_size == ETH_RXFH_INDIR_NO_CHANGE means leave it unchanged.
 	 */
-	अगर (rxfh.indir_size &&
-	    rxfh.indir_size != ETH_RXFH_INसूची_NO_CHANGE) अणु
+	if (rxfh.indir_size &&
+	    rxfh.indir_size != ETH_RXFH_INDIR_NO_CHANGE) {
 		indir = (u32 *)rss_config;
 		ret = ethtool_copy_validate_indir(indir,
 						  useraddr + rss_cfg_offset,
 						  &rx_rings,
 						  rxfh.indir_size);
-		अगर (ret)
-			जाओ out;
-	पूर्ण अन्यथा अगर (rxfh.indir_size == 0) अणु
-		अगर (rxfh.rss_context == 0) अणु
+		if (ret)
+			goto out;
+	} else if (rxfh.indir_size == 0) {
+		if (rxfh.rss_context == 0) {
 			indir = (u32 *)rss_config;
-			क्रम (i = 0; i < dev_indir_size; i++)
-				indir[i] = ethtool_rxfh_indir_शेष(i, rx_rings.data);
-		पूर्ण अन्यथा अणु
+			for (i = 0; i < dev_indir_size; i++)
+				indir[i] = ethtool_rxfh_indir_default(i, rx_rings.data);
+		} else {
 			delete = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rxfh.key_size) अणु
+	if (rxfh.key_size) {
 		hkey = rss_config + indir_bytes;
-		अगर (copy_from_user(hkey,
+		if (copy_from_user(hkey,
 				   useraddr + rss_cfg_offset + indir_bytes,
-				   rxfh.key_size)) अणु
+				   rxfh.key_size)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (rxfh.rss_context)
+	if (rxfh.rss_context)
 		ret = ops->set_rxfh_context(dev, indir, hkey, rxfh.hfunc,
 					    &rxfh.rss_context, delete);
-	अन्यथा
+	else
 		ret = ops->set_rxfh(dev, indir, hkey, rxfh.hfunc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (copy_to_user(useraddr + दुरत्व(काष्ठा ethtool_rxfh, rss_context),
-			 &rxfh.rss_context, माप(rxfh.rss_context)))
+	if (copy_to_user(useraddr + offsetof(struct ethtool_rxfh, rss_context),
+			 &rxfh.rss_context, sizeof(rxfh.rss_context)))
 		ret = -EFAULT;
 
-	अगर (!rxfh.rss_context) अणु
-		/* indicate whether rxfh was set to शेष */
-		अगर (rxfh.indir_size == 0)
+	if (!rxfh.rss_context) {
+		/* indicate whether rxfh was set to default */
+		if (rxfh.indir_size == 0)
 			dev->priv_flags &= ~IFF_RXFH_CONFIGURED;
-		अन्यथा अगर (rxfh.indir_size != ETH_RXFH_INसूची_NO_CHANGE)
+		else if (rxfh.indir_size != ETH_RXFH_INDIR_NO_CHANGE)
 			dev->priv_flags |= IFF_RXFH_CONFIGURED;
-	पूर्ण
+	}
 
 out:
-	kमुक्त(rss_config);
-	वापस ret;
-पूर्ण
+	kfree(rss_config);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_regs(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_regs regs;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	व्योम *regbuf;
-	पूर्णांक reglen, ret;
+static int ethtool_get_regs(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_regs regs;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	void *regbuf;
+	int reglen, ret;
 
-	अगर (!ops->get_regs || !ops->get_regs_len)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_regs || !ops->get_regs_len)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&regs, useraddr, माप(regs)))
-		वापस -EFAULT;
+	if (copy_from_user(&regs, useraddr, sizeof(regs)))
+		return -EFAULT;
 
 	reglen = ops->get_regs_len(dev);
-	अगर (reglen <= 0)
-		वापस reglen;
+	if (reglen <= 0)
+		return reglen;
 
-	अगर (regs.len > reglen)
+	if (regs.len > reglen)
 		regs.len = reglen;
 
 	regbuf = vzalloc(reglen);
-	अगर (!regbuf)
-		वापस -ENOMEM;
+	if (!regbuf)
+		return -ENOMEM;
 
-	अगर (regs.len < reglen)
+	if (regs.len < reglen)
 		reglen = regs.len;
 
 	ops->get_regs(dev, &regs, regbuf);
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &regs, माप(regs)))
-		जाओ out;
-	useraddr += दुरत्व(काष्ठा ethtool_regs, data);
-	अगर (copy_to_user(useraddr, regbuf, reglen))
-		जाओ out;
+	if (copy_to_user(useraddr, &regs, sizeof(regs)))
+		goto out;
+	useraddr += offsetof(struct ethtool_regs, data);
+	if (copy_to_user(useraddr, regbuf, reglen))
+		goto out;
 	ret = 0;
 
  out:
-	vमुक्त(regbuf);
-	वापस ret;
-पूर्ण
+	vfree(regbuf);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_reset(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_value reset;
-	पूर्णांक ret;
+static int ethtool_reset(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_value reset;
+	int ret;
 
-	अगर (!dev->ethtool_ops->reset)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->reset)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&reset, useraddr, माप(reset)))
-		वापस -EFAULT;
+	if (copy_from_user(&reset, useraddr, sizeof(reset)))
+		return -EFAULT;
 
 	ret = dev->ethtool_ops->reset(dev, &reset.data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (copy_to_user(useraddr, &reset, माप(reset)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &reset, sizeof(reset)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_wol(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_wolinfo wol;
+static int ethtool_get_wol(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_wolinfo wol;
 
-	अगर (!dev->ethtool_ops->get_wol)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_wol)
+		return -EOPNOTSUPP;
 
-	स_रखो(&wol, 0, माप(काष्ठा ethtool_wolinfo));
+	memset(&wol, 0, sizeof(struct ethtool_wolinfo));
 	wol.cmd = ETHTOOL_GWOL;
 	dev->ethtool_ops->get_wol(dev, &wol);
 
-	अगर (copy_to_user(useraddr, &wol, माप(wol)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &wol, sizeof(wol)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_wol(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_wolinfo wol;
-	पूर्णांक ret;
+static int ethtool_set_wol(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_wolinfo wol;
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_wol)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_wol)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&wol, useraddr, माप(wol)))
-		वापस -EFAULT;
+	if (copy_from_user(&wol, useraddr, sizeof(wol)))
+		return -EFAULT;
 
 	ret = dev->ethtool_ops->set_wol(dev, &wol);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev->wol_enabled = !!wol.wolopts;
-	ethtool_notअगरy(dev, ETHTOOL_MSG_WOL_NTF, शून्य);
+	ethtool_notify(dev, ETHTOOL_MSG_WOL_NTF, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_eee(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_eee edata;
-	पूर्णांक rc;
+static int ethtool_get_eee(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_eee edata;
+	int rc;
 
-	अगर (!dev->ethtool_ops->get_eee)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_eee)
+		return -EOPNOTSUPP;
 
-	स_रखो(&edata, 0, माप(काष्ठा ethtool_eee));
+	memset(&edata, 0, sizeof(struct ethtool_eee));
 	edata.cmd = ETHTOOL_GEEE;
 	rc = dev->ethtool_ops->get_eee(dev, &edata);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (copy_to_user(useraddr, &edata, माप(edata)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr, &edata, sizeof(edata)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_eee(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_eee edata;
-	पूर्णांक ret;
+static int ethtool_set_eee(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_eee edata;
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_eee)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_eee)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&edata, useraddr, माप(edata)))
-		वापस -EFAULT;
+	if (copy_from_user(&edata, useraddr, sizeof(edata)))
+		return -EFAULT;
 
 	ret = dev->ethtool_ops->set_eee(dev, &edata);
-	अगर (!ret)
-		ethtool_notअगरy(dev, ETHTOOL_MSG_EEE_NTF, शून्य);
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ethtool_notify(dev, ETHTOOL_MSG_EEE_NTF, NULL);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_nway_reset(काष्ठा net_device *dev)
-अणु
-	अगर (!dev->ethtool_ops->nway_reset)
-		वापस -EOPNOTSUPP;
+static int ethtool_nway_reset(struct net_device *dev)
+{
+	if (!dev->ethtool_ops->nway_reset)
+		return -EOPNOTSUPP;
 
-	वापस dev->ethtool_ops->nway_reset(dev);
-पूर्ण
+	return dev->ethtool_ops->nway_reset(dev);
+}
 
-अटल पूर्णांक ethtool_get_link(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_value edata = अणु .cmd = ETHTOOL_GLINK पूर्ण;
-	पूर्णांक link = __ethtool_get_link(dev);
+static int ethtool_get_link(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_value edata = { .cmd = ETHTOOL_GLINK };
+	int link = __ethtool_get_link(dev);
 
-	अगर (link < 0)
-		वापस link;
+	if (link < 0)
+		return link;
 
 	edata.data = link;
-	अगर (copy_to_user(useraddr, &edata, माप(edata)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &edata, sizeof(edata)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_any_eeprom(काष्ठा net_device *dev, व्योम __user *useraddr,
-				  पूर्णांक (*getter)(काष्ठा net_device *,
-						काष्ठा ethtool_eeprom *, u8 *),
+static int ethtool_get_any_eeprom(struct net_device *dev, void __user *useraddr,
+				  int (*getter)(struct net_device *,
+						struct ethtool_eeprom *, u8 *),
 				  u32 total_len)
-अणु
-	काष्ठा ethtool_eeprom eeprom;
-	व्योम __user *userbuf = useraddr + माप(eeprom);
-	u32 bytes_reमुख्यing;
+{
+	struct ethtool_eeprom eeprom;
+	void __user *userbuf = useraddr + sizeof(eeprom);
+	u32 bytes_remaining;
 	u8 *data;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (copy_from_user(&eeprom, useraddr, माप(eeprom)))
-		वापस -EFAULT;
+	if (copy_from_user(&eeprom, useraddr, sizeof(eeprom)))
+		return -EFAULT;
 
-	/* Check क्रम wrap and zero */
-	अगर (eeprom.offset + eeprom.len <= eeprom.offset)
-		वापस -EINVAL;
+	/* Check for wrap and zero */
+	if (eeprom.offset + eeprom.len <= eeprom.offset)
+		return -EINVAL;
 
-	/* Check क्रम exceeding total eeprom len */
-	अगर (eeprom.offset + eeprom.len > total_len)
-		वापस -EINVAL;
+	/* Check for exceeding total eeprom len */
+	if (eeprom.offset + eeprom.len > total_len)
+		return -EINVAL;
 
 	data = kzalloc(PAGE_SIZE, GFP_USER);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	bytes_reमुख्यing = eeprom.len;
-	जबतक (bytes_reमुख्यing > 0) अणु
-		eeprom.len = min(bytes_reमुख्यing, (u32)PAGE_SIZE);
+	bytes_remaining = eeprom.len;
+	while (bytes_remaining > 0) {
+		eeprom.len = min(bytes_remaining, (u32)PAGE_SIZE);
 
 		ret = getter(dev, &eeprom, data);
-		अगर (ret)
-			अवरोध;
-		अगर (copy_to_user(userbuf, data, eeprom.len)) अणु
+		if (ret)
+			break;
+		if (copy_to_user(userbuf, data, eeprom.len)) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		userbuf += eeprom.len;
 		eeprom.offset += eeprom.len;
-		bytes_reमुख्यing -= eeprom.len;
-	पूर्ण
+		bytes_remaining -= eeprom.len;
+	}
 
-	eeprom.len = userbuf - (useraddr + माप(eeprom));
+	eeprom.len = userbuf - (useraddr + sizeof(eeprom));
 	eeprom.offset -= eeprom.len;
-	अगर (copy_to_user(useraddr, &eeprom, माप(eeprom)))
+	if (copy_to_user(useraddr, &eeprom, sizeof(eeprom)))
 		ret = -EFAULT;
 
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_eeprom(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int ethtool_get_eeprom(struct net_device *dev, void __user *useraddr)
+{
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	अगर (!ops->get_eeprom || !ops->get_eeprom_len ||
+	if (!ops->get_eeprom || !ops->get_eeprom_len ||
 	    !ops->get_eeprom_len(dev))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	वापस ethtool_get_any_eeprom(dev, useraddr, ops->get_eeprom,
+	return ethtool_get_any_eeprom(dev, useraddr, ops->get_eeprom,
 				      ops->get_eeprom_len(dev));
-पूर्ण
+}
 
-अटल पूर्णांक ethtool_set_eeprom(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_eeprom eeprom;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	व्योम __user *userbuf = useraddr + माप(eeprom);
-	u32 bytes_reमुख्यing;
+static int ethtool_set_eeprom(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_eeprom eeprom;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	void __user *userbuf = useraddr + sizeof(eeprom);
+	u32 bytes_remaining;
 	u8 *data;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!ops->set_eeprom || !ops->get_eeprom_len ||
+	if (!ops->set_eeprom || !ops->get_eeprom_len ||
 	    !ops->get_eeprom_len(dev))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&eeprom, useraddr, माप(eeprom)))
-		वापस -EFAULT;
+	if (copy_from_user(&eeprom, useraddr, sizeof(eeprom)))
+		return -EFAULT;
 
-	/* Check क्रम wrap and zero */
-	अगर (eeprom.offset + eeprom.len <= eeprom.offset)
-		वापस -EINVAL;
+	/* Check for wrap and zero */
+	if (eeprom.offset + eeprom.len <= eeprom.offset)
+		return -EINVAL;
 
-	/* Check क्रम exceeding total eeprom len */
-	अगर (eeprom.offset + eeprom.len > ops->get_eeprom_len(dev))
-		वापस -EINVAL;
+	/* Check for exceeding total eeprom len */
+	if (eeprom.offset + eeprom.len > ops->get_eeprom_len(dev))
+		return -EINVAL;
 
 	data = kzalloc(PAGE_SIZE, GFP_USER);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	bytes_reमुख्यing = eeprom.len;
-	जबतक (bytes_reमुख्यing > 0) अणु
-		eeprom.len = min(bytes_reमुख्यing, (u32)PAGE_SIZE);
+	bytes_remaining = eeprom.len;
+	while (bytes_remaining > 0) {
+		eeprom.len = min(bytes_remaining, (u32)PAGE_SIZE);
 
-		अगर (copy_from_user(data, userbuf, eeprom.len)) अणु
+		if (copy_from_user(data, userbuf, eeprom.len)) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = ops->set_eeprom(dev, &eeprom, data);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		userbuf += eeprom.len;
 		eeprom.offset += eeprom.len;
-		bytes_reमुख्यing -= eeprom.len;
-	पूर्ण
+		bytes_remaining -= eeprom.len;
+	}
 
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_coalesce(काष्ठा net_device *dev,
-						   व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_coalesce coalesce = अणु .cmd = ETHTOOL_GCOALESCE पूर्ण;
-	पूर्णांक ret;
+static noinline_for_stack int ethtool_get_coalesce(struct net_device *dev,
+						   void __user *useraddr)
+{
+	struct ethtool_coalesce coalesce = { .cmd = ETHTOOL_GCOALESCE };
+	int ret;
 
-	अगर (!dev->ethtool_ops->get_coalesce)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_coalesce)
+		return -EOPNOTSUPP;
 
 	ret = dev->ethtool_ops->get_coalesce(dev, &coalesce);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (copy_to_user(useraddr, &coalesce, माप(coalesce)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &coalesce, sizeof(coalesce)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल bool
-ethtool_set_coalesce_supported(काष्ठा net_device *dev,
-			       काष्ठा ethtool_coalesce *coalesce)
-अणु
+static bool
+ethtool_set_coalesce_supported(struct net_device *dev,
+			       struct ethtool_coalesce *coalesce)
+{
 	u32 supported_params = dev->ethtool_ops->supported_coalesce_params;
 	u32 nonzero_params = 0;
 
-	अगर (coalesce->rx_coalesce_usecs)
+	if (coalesce->rx_coalesce_usecs)
 		nonzero_params |= ETHTOOL_COALESCE_RX_USECS;
-	अगर (coalesce->rx_max_coalesced_frames)
+	if (coalesce->rx_max_coalesced_frames)
 		nonzero_params |= ETHTOOL_COALESCE_RX_MAX_FRAMES;
-	अगर (coalesce->rx_coalesce_usecs_irq)
+	if (coalesce->rx_coalesce_usecs_irq)
 		nonzero_params |= ETHTOOL_COALESCE_RX_USECS_IRQ;
-	अगर (coalesce->rx_max_coalesced_frames_irq)
+	if (coalesce->rx_max_coalesced_frames_irq)
 		nonzero_params |= ETHTOOL_COALESCE_RX_MAX_FRAMES_IRQ;
-	अगर (coalesce->tx_coalesce_usecs)
+	if (coalesce->tx_coalesce_usecs)
 		nonzero_params |= ETHTOOL_COALESCE_TX_USECS;
-	अगर (coalesce->tx_max_coalesced_frames)
+	if (coalesce->tx_max_coalesced_frames)
 		nonzero_params |= ETHTOOL_COALESCE_TX_MAX_FRAMES;
-	अगर (coalesce->tx_coalesce_usecs_irq)
+	if (coalesce->tx_coalesce_usecs_irq)
 		nonzero_params |= ETHTOOL_COALESCE_TX_USECS_IRQ;
-	अगर (coalesce->tx_max_coalesced_frames_irq)
+	if (coalesce->tx_max_coalesced_frames_irq)
 		nonzero_params |= ETHTOOL_COALESCE_TX_MAX_FRAMES_IRQ;
-	अगर (coalesce->stats_block_coalesce_usecs)
+	if (coalesce->stats_block_coalesce_usecs)
 		nonzero_params |= ETHTOOL_COALESCE_STATS_BLOCK_USECS;
-	अगर (coalesce->use_adaptive_rx_coalesce)
+	if (coalesce->use_adaptive_rx_coalesce)
 		nonzero_params |= ETHTOOL_COALESCE_USE_ADAPTIVE_RX;
-	अगर (coalesce->use_adaptive_tx_coalesce)
+	if (coalesce->use_adaptive_tx_coalesce)
 		nonzero_params |= ETHTOOL_COALESCE_USE_ADAPTIVE_TX;
-	अगर (coalesce->pkt_rate_low)
+	if (coalesce->pkt_rate_low)
 		nonzero_params |= ETHTOOL_COALESCE_PKT_RATE_LOW;
-	अगर (coalesce->rx_coalesce_usecs_low)
+	if (coalesce->rx_coalesce_usecs_low)
 		nonzero_params |= ETHTOOL_COALESCE_RX_USECS_LOW;
-	अगर (coalesce->rx_max_coalesced_frames_low)
+	if (coalesce->rx_max_coalesced_frames_low)
 		nonzero_params |= ETHTOOL_COALESCE_RX_MAX_FRAMES_LOW;
-	अगर (coalesce->tx_coalesce_usecs_low)
+	if (coalesce->tx_coalesce_usecs_low)
 		nonzero_params |= ETHTOOL_COALESCE_TX_USECS_LOW;
-	अगर (coalesce->tx_max_coalesced_frames_low)
+	if (coalesce->tx_max_coalesced_frames_low)
 		nonzero_params |= ETHTOOL_COALESCE_TX_MAX_FRAMES_LOW;
-	अगर (coalesce->pkt_rate_high)
+	if (coalesce->pkt_rate_high)
 		nonzero_params |= ETHTOOL_COALESCE_PKT_RATE_HIGH;
-	अगर (coalesce->rx_coalesce_usecs_high)
+	if (coalesce->rx_coalesce_usecs_high)
 		nonzero_params |= ETHTOOL_COALESCE_RX_USECS_HIGH;
-	अगर (coalesce->rx_max_coalesced_frames_high)
+	if (coalesce->rx_max_coalesced_frames_high)
 		nonzero_params |= ETHTOOL_COALESCE_RX_MAX_FRAMES_HIGH;
-	अगर (coalesce->tx_coalesce_usecs_high)
+	if (coalesce->tx_coalesce_usecs_high)
 		nonzero_params |= ETHTOOL_COALESCE_TX_USECS_HIGH;
-	अगर (coalesce->tx_max_coalesced_frames_high)
+	if (coalesce->tx_max_coalesced_frames_high)
 		nonzero_params |= ETHTOOL_COALESCE_TX_MAX_FRAMES_HIGH;
-	अगर (coalesce->rate_sample_पूर्णांकerval)
+	if (coalesce->rate_sample_interval)
 		nonzero_params |= ETHTOOL_COALESCE_RATE_SAMPLE_INTERVAL;
 
-	वापस (supported_params & nonzero_params) == nonzero_params;
-पूर्ण
+	return (supported_params & nonzero_params) == nonzero_params;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_set_coalesce(काष्ठा net_device *dev,
-						   व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_coalesce coalesce;
-	पूर्णांक ret;
+static noinline_for_stack int ethtool_set_coalesce(struct net_device *dev,
+						   void __user *useraddr)
+{
+	struct ethtool_coalesce coalesce;
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_coalesce)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_coalesce)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&coalesce, useraddr, माप(coalesce)))
-		वापस -EFAULT;
+	if (copy_from_user(&coalesce, useraddr, sizeof(coalesce)))
+		return -EFAULT;
 
-	अगर (!ethtool_set_coalesce_supported(dev, &coalesce))
-		वापस -EOPNOTSUPP;
+	if (!ethtool_set_coalesce_supported(dev, &coalesce))
+		return -EOPNOTSUPP;
 
 	ret = dev->ethtool_ops->set_coalesce(dev, &coalesce);
-	अगर (!ret)
-		ethtool_notअगरy(dev, ETHTOOL_MSG_COALESCE_NTF, शून्य);
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ethtool_notify(dev, ETHTOOL_MSG_COALESCE_NTF, NULL);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_ringparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_ringparam ringparam = अणु .cmd = ETHTOOL_GRINGPARAM पूर्ण;
+static int ethtool_get_ringparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_ringparam ringparam = { .cmd = ETHTOOL_GRINGPARAM };
 
-	अगर (!dev->ethtool_ops->get_ringparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_ringparam)
+		return -EOPNOTSUPP;
 
 	dev->ethtool_ops->get_ringparam(dev, &ringparam);
 
-	अगर (copy_to_user(useraddr, &ringparam, माप(ringparam)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &ringparam, sizeof(ringparam)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_ringparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_ringparam ringparam, max = अणु .cmd = ETHTOOL_GRINGPARAM पूर्ण;
-	पूर्णांक ret;
+static int ethtool_set_ringparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_ringparam ringparam, max = { .cmd = ETHTOOL_GRINGPARAM };
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_ringparam || !dev->ethtool_ops->get_ringparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_ringparam || !dev->ethtool_ops->get_ringparam)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&ringparam, useraddr, माप(ringparam)))
-		वापस -EFAULT;
+	if (copy_from_user(&ringparam, useraddr, sizeof(ringparam)))
+		return -EFAULT;
 
 	dev->ethtool_ops->get_ringparam(dev, &max);
 
 	/* ensure new ring parameters are within the maximums */
-	अगर (ringparam.rx_pending > max.rx_max_pending ||
+	if (ringparam.rx_pending > max.rx_max_pending ||
 	    ringparam.rx_mini_pending > max.rx_mini_max_pending ||
 	    ringparam.rx_jumbo_pending > max.rx_jumbo_max_pending ||
 	    ringparam.tx_pending > max.tx_max_pending)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ret = dev->ethtool_ops->set_ringparam(dev, &ringparam);
-	अगर (!ret)
-		ethtool_notअगरy(dev, ETHTOOL_MSG_RINGS_NTF, शून्य);
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ethtool_notify(dev, ETHTOOL_MSG_RINGS_NTF, NULL);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_get_channels(काष्ठा net_device *dev,
-						   व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_channels channels = अणु .cmd = ETHTOOL_GCHANNELS पूर्ण;
+static noinline_for_stack int ethtool_get_channels(struct net_device *dev,
+						   void __user *useraddr)
+{
+	struct ethtool_channels channels = { .cmd = ETHTOOL_GCHANNELS };
 
-	अगर (!dev->ethtool_ops->get_channels)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_channels)
+		return -EOPNOTSUPP;
 
 	dev->ethtool_ops->get_channels(dev, &channels);
 
-	अगर (copy_to_user(useraddr, &channels, माप(channels)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &channels, sizeof(channels)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_set_channels(काष्ठा net_device *dev,
-						   व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_channels channels, curr = अणु .cmd = ETHTOOL_GCHANNELS पूर्ण;
+static noinline_for_stack int ethtool_set_channels(struct net_device *dev,
+						   void __user *useraddr)
+{
+	struct ethtool_channels channels, curr = { .cmd = ETHTOOL_GCHANNELS };
 	u16 from_channel, to_channel;
 	u32 max_rx_in_use = 0;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+	unsigned int i;
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_channels || !dev->ethtool_ops->get_channels)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_channels || !dev->ethtool_ops->get_channels)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&channels, useraddr, माप(channels)))
-		वापस -EFAULT;
+	if (copy_from_user(&channels, useraddr, sizeof(channels)))
+		return -EFAULT;
 
 	dev->ethtool_ops->get_channels(dev, &curr);
 
-	अगर (channels.rx_count == curr.rx_count &&
+	if (channels.rx_count == curr.rx_count &&
 	    channels.tx_count == curr.tx_count &&
 	    channels.combined_count == curr.combined_count &&
 	    channels.other_count == curr.other_count)
-		वापस 0;
+		return 0;
 
 	/* ensure new counts are within the maximums */
-	अगर (channels.rx_count > curr.max_rx ||
+	if (channels.rx_count > curr.max_rx ||
 	    channels.tx_count > curr.max_tx ||
 	    channels.combined_count > curr.max_combined ||
 	    channels.other_count > curr.max_other)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* ensure there is at least one RX and one TX channel */
-	अगर (!channels.combined_count &&
+	if (!channels.combined_count &&
 	    (!channels.rx_count || !channels.tx_count))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* ensure the new Rx count fits within the configured Rx flow
 	 * indirection table settings */
-	अगर (netअगर_is_rxfh_configured(dev) &&
+	if (netif_is_rxfh_configured(dev) &&
 	    !ethtool_get_max_rxfh_channel(dev, &max_rx_in_use) &&
 	    (channels.combined_count + channels.rx_count) <= max_rx_in_use)
-	    वापस -EINVAL;
+	    return -EINVAL;
 
 	/* Disabling channels, query zero-copy AF_XDP sockets */
 	from_channel = channels.combined_count +
 		min(channels.rx_count, channels.tx_count);
 	to_channel = curr.combined_count + max(curr.rx_count, curr.tx_count);
-	क्रम (i = from_channel; i < to_channel; i++)
-		अगर (xsk_get_pool_from_qid(dev, i))
-			वापस -EINVAL;
+	for (i = from_channel; i < to_channel; i++)
+		if (xsk_get_pool_from_qid(dev, i))
+			return -EINVAL;
 
 	ret = dev->ethtool_ops->set_channels(dev, &channels);
-	अगर (!ret)
-		ethtool_notअगरy(dev, ETHTOOL_MSG_CHANNELS_NTF, शून्य);
-	वापस ret;
-पूर्ण
+	if (!ret)
+		ethtool_notify(dev, ETHTOOL_MSG_CHANNELS_NTF, NULL);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_छोड़ोparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_छोड़ोparam छोड़ोparam = अणु .cmd = ETHTOOL_GPAUSEPARAM पूर्ण;
+static int ethtool_get_pauseparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_pauseparam pauseparam = { .cmd = ETHTOOL_GPAUSEPARAM };
 
-	अगर (!dev->ethtool_ops->get_छोड़ोparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_pauseparam)
+		return -EOPNOTSUPP;
 
-	dev->ethtool_ops->get_छोड़ोparam(dev, &छोड़ोparam);
+	dev->ethtool_ops->get_pauseparam(dev, &pauseparam);
 
-	अगर (copy_to_user(useraddr, &छोड़ोparam, माप(छोड़ोparam)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &pauseparam, sizeof(pauseparam)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_छोड़ोparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_छोड़ोparam छोड़ोparam;
-	पूर्णांक ret;
+static int ethtool_set_pauseparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_pauseparam pauseparam;
+	int ret;
 
-	अगर (!dev->ethtool_ops->set_छोड़ोparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_pauseparam)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&छोड़ोparam, useraddr, माप(छोड़ोparam)))
-		वापस -EFAULT;
+	if (copy_from_user(&pauseparam, useraddr, sizeof(pauseparam)))
+		return -EFAULT;
 
-	ret = dev->ethtool_ops->set_छोड़ोparam(dev, &छोड़ोparam);
-	अगर (!ret)
-		ethtool_notअगरy(dev, ETHTOOL_MSG_PAUSE_NTF, शून्य);
-	वापस ret;
-पूर्ण
+	ret = dev->ethtool_ops->set_pauseparam(dev, &pauseparam);
+	if (!ret)
+		ethtool_notify(dev, ETHTOOL_MSG_PAUSE_NTF, NULL);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_self_test(काष्ठा net_device *dev, अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_test test;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int ethtool_self_test(struct net_device *dev, char __user *useraddr)
+{
+	struct ethtool_test test;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 	u64 *data;
-	पूर्णांक ret, test_len;
+	int ret, test_len;
 
-	अगर (!ops->self_test || !ops->get_sset_count)
-		वापस -EOPNOTSUPP;
+	if (!ops->self_test || !ops->get_sset_count)
+		return -EOPNOTSUPP;
 
 	test_len = ops->get_sset_count(dev, ETH_SS_TEST);
-	अगर (test_len < 0)
-		वापस test_len;
+	if (test_len < 0)
+		return test_len;
 	WARN_ON(test_len == 0);
 
-	अगर (copy_from_user(&test, useraddr, माप(test)))
-		वापस -EFAULT;
+	if (copy_from_user(&test, useraddr, sizeof(test)))
+		return -EFAULT;
 
 	test.len = test_len;
-	data = kसुस्मृति(test_len, माप(u64), GFP_USER);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kcalloc(test_len, sizeof(u64), GFP_USER);
+	if (!data)
+		return -ENOMEM;
 
-	netअगर_testing_on(dev);
+	netif_testing_on(dev);
 	ops->self_test(dev, &test, data);
-	netअगर_testing_off(dev);
+	netif_testing_off(dev);
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &test, माप(test)))
-		जाओ out;
-	useraddr += माप(test);
-	अगर (copy_to_user(useraddr, data, test.len * माप(u64)))
-		जाओ out;
+	if (copy_to_user(useraddr, &test, sizeof(test)))
+		goto out;
+	useraddr += sizeof(test);
+	if (copy_to_user(useraddr, data, test.len * sizeof(u64)))
+		goto out;
 	ret = 0;
 
  out:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_strings(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_gstrings gstrings;
+static int ethtool_get_strings(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_gstrings gstrings;
 	u8 *data;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (copy_from_user(&gstrings, useraddr, माप(gstrings)))
-		वापस -EFAULT;
+	if (copy_from_user(&gstrings, useraddr, sizeof(gstrings)))
+		return -EFAULT;
 
 	ret = __ethtool_get_sset_count(dev, gstrings.string_set);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret > S32_MAX / ETH_GSTRING_LEN)
-		वापस -ENOMEM;
+	if (ret < 0)
+		return ret;
+	if (ret > S32_MAX / ETH_GSTRING_LEN)
+		return -ENOMEM;
 	WARN_ON_ONCE(!ret);
 
 	gstrings.len = ret;
 
-	अगर (gstrings.len) अणु
+	if (gstrings.len) {
 		data = vzalloc(array_size(gstrings.len, ETH_GSTRING_LEN));
-		अगर (!data)
-			वापस -ENOMEM;
+		if (!data)
+			return -ENOMEM;
 
 		__ethtool_get_strings(dev, gstrings.string_set, data);
-	पूर्ण अन्यथा अणु
-		data = शून्य;
-	पूर्ण
+	} else {
+		data = NULL;
+	}
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &gstrings, माप(gstrings)))
-		जाओ out;
-	useraddr += माप(gstrings);
-	अगर (gstrings.len &&
+	if (copy_to_user(useraddr, &gstrings, sizeof(gstrings)))
+		goto out;
+	useraddr += sizeof(gstrings);
+	if (gstrings.len &&
 	    copy_to_user(useraddr, data, gstrings.len * ETH_GSTRING_LEN))
-		जाओ out;
+		goto out;
 	ret = 0;
 
 out:
-	vमुक्त(data);
-	वापस ret;
-पूर्ण
+	vfree(data);
+	return ret;
+}
 
-__म_लिखो(2, 3) व्योम ethtool_प्र_लिखो(u8 **data, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+__printf(2, 3) void ethtool_sprintf(u8 **data, const char *fmt, ...)
+{
+	va_list args;
 
-	बहु_शुरू(args, fmt);
-	vsnम_लिखो(*data, ETH_GSTRING_LEN, fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	vsnprintf(*data, ETH_GSTRING_LEN, fmt, args);
+	va_end(args);
 
 	*data += ETH_GSTRING_LEN;
-पूर्ण
-EXPORT_SYMBOL(ethtool_प्र_लिखो);
+}
+EXPORT_SYMBOL(ethtool_sprintf);
 
-अटल पूर्णांक ethtool_phys_id(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_value id;
-	अटल bool busy;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	पूर्णांक rc;
+static int ethtool_phys_id(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_value id;
+	static bool busy;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	int rc;
 
-	अगर (!ops->set_phys_id)
-		वापस -EOPNOTSUPP;
+	if (!ops->set_phys_id)
+		return -EOPNOTSUPP;
 
-	अगर (busy)
-		वापस -EBUSY;
+	if (busy)
+		return -EBUSY;
 
-	अगर (copy_from_user(&id, useraddr, माप(id)))
-		वापस -EFAULT;
+	if (copy_from_user(&id, useraddr, sizeof(id)))
+		return -EFAULT;
 
 	rc = ops->set_phys_id(dev, ETHTOOL_ID_ACTIVE);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	/* Drop the RTNL lock जबतक रुकोing, but prevent reentry or
+	/* Drop the RTNL lock while waiting, but prevent reentry or
 	 * removal of the device.
 	 */
 	busy = true;
 	dev_hold(dev);
 	rtnl_unlock();
 
-	अगर (rc == 0) अणु
+	if (rc == 0) {
 		/* Driver will handle this itself */
-		schedule_समयout_पूर्णांकerruptible(
+		schedule_timeout_interruptible(
 			id.data ? (id.data * HZ) : MAX_SCHEDULE_TIMEOUT);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Driver expects to be called at twice the frequency in rc */
-		पूर्णांक n = rc * 2, पूर्णांकerval = HZ / n;
+		int n = rc * 2, interval = HZ / n;
 		u64 count = n * id.data, i = 0;
 
-		करो अणु
+		do {
 			rtnl_lock();
 			rc = ops->set_phys_id(dev,
 				    (i++ & 1) ? ETHTOOL_ID_OFF : ETHTOOL_ID_ON);
 			rtnl_unlock();
-			अगर (rc)
-				अवरोध;
-			schedule_समयout_पूर्णांकerruptible(पूर्णांकerval);
-		पूर्ण जबतक (!संकेत_pending(current) && (!id.data || i < count));
-	पूर्ण
+			if (rc)
+				break;
+			schedule_timeout_interruptible(interval);
+		} while (!signal_pending(current) && (!id.data || i < count));
+	}
 
 	rtnl_lock();
 	dev_put(dev);
 	busy = false;
 
-	(व्योम) ops->set_phys_id(dev, ETHTOOL_ID_INACTIVE);
-	वापस rc;
-पूर्ण
+	(void) ops->set_phys_id(dev, ETHTOOL_ID_INACTIVE);
+	return rc;
+}
 
-अटल पूर्णांक ethtool_get_stats(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_stats stats;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int ethtool_get_stats(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_stats stats;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 	u64 *data;
-	पूर्णांक ret, n_stats;
+	int ret, n_stats;
 
-	अगर (!ops->get_ethtool_stats || !ops->get_sset_count)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_ethtool_stats || !ops->get_sset_count)
+		return -EOPNOTSUPP;
 
 	n_stats = ops->get_sset_count(dev, ETH_SS_STATS);
-	अगर (n_stats < 0)
-		वापस n_stats;
-	अगर (n_stats > S32_MAX / माप(u64))
-		वापस -ENOMEM;
+	if (n_stats < 0)
+		return n_stats;
+	if (n_stats > S32_MAX / sizeof(u64))
+		return -ENOMEM;
 	WARN_ON_ONCE(!n_stats);
-	अगर (copy_from_user(&stats, useraddr, माप(stats)))
-		वापस -EFAULT;
+	if (copy_from_user(&stats, useraddr, sizeof(stats)))
+		return -EFAULT;
 
 	stats.n_stats = n_stats;
 
-	अगर (n_stats) अणु
-		data = vzalloc(array_size(n_stats, माप(u64)));
-		अगर (!data)
-			वापस -ENOMEM;
+	if (n_stats) {
+		data = vzalloc(array_size(n_stats, sizeof(u64)));
+		if (!data)
+			return -ENOMEM;
 		ops->get_ethtool_stats(dev, &stats, data);
-	पूर्ण अन्यथा अणु
-		data = शून्य;
-	पूर्ण
+	} else {
+		data = NULL;
+	}
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &stats, माप(stats)))
-		जाओ out;
-	useraddr += माप(stats);
-	अगर (n_stats && copy_to_user(useraddr, data, array_size(n_stats, माप(u64))))
-		जाओ out;
+	if (copy_to_user(useraddr, &stats, sizeof(stats)))
+		goto out;
+	useraddr += sizeof(stats);
+	if (n_stats && copy_to_user(useraddr, data, array_size(n_stats, sizeof(u64))))
+		goto out;
 	ret = 0;
 
  out:
-	vमुक्त(data);
-	वापस ret;
-पूर्ण
+	vfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_phy_stats(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	स्थिर काष्ठा ethtool_phy_ops *phy_ops = ethtool_phy_ops;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	काष्ठा phy_device *phydev = dev->phydev;
-	काष्ठा ethtool_stats stats;
+static int ethtool_get_phy_stats(struct net_device *dev, void __user *useraddr)
+{
+	const struct ethtool_phy_ops *phy_ops = ethtool_phy_ops;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	struct phy_device *phydev = dev->phydev;
+	struct ethtool_stats stats;
 	u64 *data;
-	पूर्णांक ret, n_stats;
+	int ret, n_stats;
 
-	अगर (!phydev && (!ops->get_ethtool_phy_stats || !ops->get_sset_count))
-		वापस -EOPNOTSUPP;
+	if (!phydev && (!ops->get_ethtool_phy_stats || !ops->get_sset_count))
+		return -EOPNOTSUPP;
 
-	अगर (dev->phydev && !ops->get_ethtool_phy_stats &&
+	if (dev->phydev && !ops->get_ethtool_phy_stats &&
 	    phy_ops && phy_ops->get_sset_count)
 		n_stats = phy_ops->get_sset_count(dev->phydev);
-	अन्यथा
+	else
 		n_stats = ops->get_sset_count(dev, ETH_SS_PHY_STATS);
-	अगर (n_stats < 0)
-		वापस n_stats;
-	अगर (n_stats > S32_MAX / माप(u64))
-		वापस -ENOMEM;
+	if (n_stats < 0)
+		return n_stats;
+	if (n_stats > S32_MAX / sizeof(u64))
+		return -ENOMEM;
 	WARN_ON_ONCE(!n_stats);
 
-	अगर (copy_from_user(&stats, useraddr, माप(stats)))
-		वापस -EFAULT;
+	if (copy_from_user(&stats, useraddr, sizeof(stats)))
+		return -EFAULT;
 
 	stats.n_stats = n_stats;
 
-	अगर (n_stats) अणु
-		data = vzalloc(array_size(n_stats, माप(u64)));
-		अगर (!data)
-			वापस -ENOMEM;
+	if (n_stats) {
+		data = vzalloc(array_size(n_stats, sizeof(u64)));
+		if (!data)
+			return -ENOMEM;
 
-		अगर (dev->phydev && !ops->get_ethtool_phy_stats &&
-		    phy_ops && phy_ops->get_stats) अणु
+		if (dev->phydev && !ops->get_ethtool_phy_stats &&
+		    phy_ops && phy_ops->get_stats) {
 			ret = phy_ops->get_stats(dev->phydev, &stats, data);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण अन्यथा अणु
+			if (ret < 0)
+				goto out;
+		} else {
 			ops->get_ethtool_phy_stats(dev, &stats, data);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		data = शून्य;
-	पूर्ण
+		}
+	} else {
+		data = NULL;
+	}
 
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, &stats, माप(stats)))
-		जाओ out;
-	useraddr += माप(stats);
-	अगर (n_stats && copy_to_user(useraddr, data, array_size(n_stats, माप(u64))))
-		जाओ out;
+	if (copy_to_user(useraddr, &stats, sizeof(stats)))
+		goto out;
+	useraddr += sizeof(stats);
+	if (n_stats && copy_to_user(useraddr, data, array_size(n_stats, sizeof(u64))))
+		goto out;
 	ret = 0;
 
  out:
-	vमुक्त(data);
-	वापस ret;
-पूर्ण
+	vfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_perm_addr(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_perm_addr epaddr;
+static int ethtool_get_perm_addr(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_perm_addr epaddr;
 
-	अगर (copy_from_user(&epaddr, useraddr, माप(epaddr)))
-		वापस -EFAULT;
+	if (copy_from_user(&epaddr, useraddr, sizeof(epaddr)))
+		return -EFAULT;
 
-	अगर (epaddr.size < dev->addr_len)
-		वापस -ETOOSMALL;
+	if (epaddr.size < dev->addr_len)
+		return -ETOOSMALL;
 	epaddr.size = dev->addr_len;
 
-	अगर (copy_to_user(useraddr, &epaddr, माप(epaddr)))
-		वापस -EFAULT;
-	useraddr += माप(epaddr);
-	अगर (copy_to_user(useraddr, dev->perm_addr, epaddr.size))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &epaddr, sizeof(epaddr)))
+		return -EFAULT;
+	useraddr += sizeof(epaddr);
+	if (copy_to_user(useraddr, dev->perm_addr, epaddr.size))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_value(काष्ठा net_device *dev, अक्षर __user *useraddr,
-			     u32 cmd, u32 (*actor)(काष्ठा net_device *))
-अणु
-	काष्ठा ethtool_value edata = अणु .cmd = cmd पूर्ण;
+static int ethtool_get_value(struct net_device *dev, char __user *useraddr,
+			     u32 cmd, u32 (*actor)(struct net_device *))
+{
+	struct ethtool_value edata = { .cmd = cmd };
 
-	अगर (!actor)
-		वापस -EOPNOTSUPP;
+	if (!actor)
+		return -EOPNOTSUPP;
 
 	edata.data = actor(dev);
 
-	अगर (copy_to_user(useraddr, &edata, माप(edata)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &edata, sizeof(edata)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_value_व्योम(काष्ठा net_device *dev, अक्षर __user *useraddr,
-			     व्योम (*actor)(काष्ठा net_device *, u32))
-अणु
-	काष्ठा ethtool_value edata;
+static int ethtool_set_value_void(struct net_device *dev, char __user *useraddr,
+			     void (*actor)(struct net_device *, u32))
+{
+	struct ethtool_value edata;
 
-	अगर (!actor)
-		वापस -EOPNOTSUPP;
+	if (!actor)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&edata, useraddr, माप(edata)))
-		वापस -EFAULT;
+	if (copy_from_user(&edata, useraddr, sizeof(edata)))
+		return -EFAULT;
 
 	actor(dev, edata.data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_value(काष्ठा net_device *dev, अक्षर __user *useraddr,
-			     पूर्णांक (*actor)(काष्ठा net_device *, u32))
-अणु
-	काष्ठा ethtool_value edata;
+static int ethtool_set_value(struct net_device *dev, char __user *useraddr,
+			     int (*actor)(struct net_device *, u32))
+{
+	struct ethtool_value edata;
 
-	अगर (!actor)
-		वापस -EOPNOTSUPP;
+	if (!actor)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&edata, useraddr, माप(edata)))
-		वापस -EFAULT;
+	if (copy_from_user(&edata, useraddr, sizeof(edata)))
+		return -EFAULT;
 
-	वापस actor(dev, edata.data);
-पूर्ण
+	return actor(dev, edata.data);
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक ethtool_flash_device(काष्ठा net_device *dev,
-						   अक्षर __user *useraddr)
-अणु
-	काष्ठा ethtool_flash efl;
+static noinline_for_stack int ethtool_flash_device(struct net_device *dev,
+						   char __user *useraddr)
+{
+	struct ethtool_flash efl;
 
-	अगर (copy_from_user(&efl, useraddr, माप(efl)))
-		वापस -EFAULT;
-	efl.data[ETHTOOL_FLASH_MAX_खाताNAME - 1] = 0;
+	if (copy_from_user(&efl, useraddr, sizeof(efl)))
+		return -EFAULT;
+	efl.data[ETHTOOL_FLASH_MAX_FILENAME - 1] = 0;
 
-	अगर (!dev->ethtool_ops->flash_device)
-		वापस devlink_compat_flash_update(dev, efl.data);
+	if (!dev->ethtool_ops->flash_device)
+		return devlink_compat_flash_update(dev, efl.data);
 
-	वापस dev->ethtool_ops->flash_device(dev, &efl);
-पूर्ण
+	return dev->ethtool_ops->flash_device(dev, &efl);
+}
 
-अटल पूर्णांक ethtool_set_dump(काष्ठा net_device *dev,
-			व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_dump dump;
+static int ethtool_set_dump(struct net_device *dev,
+			void __user *useraddr)
+{
+	struct ethtool_dump dump;
 
-	अगर (!dev->ethtool_ops->set_dump)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_dump)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&dump, useraddr, माप(dump)))
-		वापस -EFAULT;
+	if (copy_from_user(&dump, useraddr, sizeof(dump)))
+		return -EFAULT;
 
-	वापस dev->ethtool_ops->set_dump(dev, &dump);
-पूर्ण
+	return dev->ethtool_ops->set_dump(dev, &dump);
+}
 
-अटल पूर्णांक ethtool_get_dump_flag(काष्ठा net_device *dev,
-				व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	काष्ठा ethtool_dump dump;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
+static int ethtool_get_dump_flag(struct net_device *dev,
+				void __user *useraddr)
+{
+	int ret;
+	struct ethtool_dump dump;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
 
-	अगर (!ops->get_dump_flag)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_dump_flag)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&dump, useraddr, माप(dump)))
-		वापस -EFAULT;
+	if (copy_from_user(&dump, useraddr, sizeof(dump)))
+		return -EFAULT;
 
 	ret = ops->get_dump_flag(dev, &dump);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (copy_to_user(useraddr, &dump, माप(dump)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &dump, sizeof(dump)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_dump_data(काष्ठा net_device *dev,
-				व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
+static int ethtool_get_dump_data(struct net_device *dev,
+				void __user *useraddr)
+{
+	int ret;
 	__u32 len;
-	काष्ठा ethtool_dump dump, पंचांगp;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	व्योम *data = शून्य;
+	struct ethtool_dump dump, tmp;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	void *data = NULL;
 
-	अगर (!ops->get_dump_data || !ops->get_dump_flag)
-		वापस -EOPNOTSUPP;
+	if (!ops->get_dump_data || !ops->get_dump_flag)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&dump, useraddr, माप(dump)))
-		वापस -EFAULT;
+	if (copy_from_user(&dump, useraddr, sizeof(dump)))
+		return -EFAULT;
 
-	स_रखो(&पंचांगp, 0, माप(पंचांगp));
-	पंचांगp.cmd = ETHTOOL_GET_DUMP_FLAG;
-	ret = ops->get_dump_flag(dev, &पंचांगp);
-	अगर (ret)
-		वापस ret;
+	memset(&tmp, 0, sizeof(tmp));
+	tmp.cmd = ETHTOOL_GET_DUMP_FLAG;
+	ret = ops->get_dump_flag(dev, &tmp);
+	if (ret)
+		return ret;
 
-	len = min(पंचांगp.len, dump.len);
-	अगर (!len)
-		वापस -EFAULT;
+	len = min(tmp.len, dump.len);
+	if (!len)
+		return -EFAULT;
 
 	/* Don't ever let the driver think there's more space available
 	 * than it requested with .get_dump_flag().
@@ -2142,940 +2141,940 @@ EXPORT_SYMBOL(ethtool_प्र_लिखो);
 	dump.len = len;
 
 	/* Always allocate enough space to hold the whole thing so that the
-	 * driver करोes not need to check the length and bother with partial
+	 * driver does not need to check the length and bother with partial
 	 * dumping.
 	 */
-	data = vzalloc(पंचांगp.len);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = vzalloc(tmp.len);
+	if (!data)
+		return -ENOMEM;
 	ret = ops->get_dump_data(dev, &dump, data);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/* There are two sane possibilities:
-	 * 1. The driver's .get_dump_data() करोes not touch dump.len.
-	 * 2. Or it may set dump.len to how much it really ग_लिखोs, which
-	 *    should be पंचांगp.len (or len अगर it can करो a partial dump).
-	 * In any हाल respond to userspace with the actual length of data
+	 * 1. The driver's .get_dump_data() does not touch dump.len.
+	 * 2. Or it may set dump.len to how much it really writes, which
+	 *    should be tmp.len (or len if it can do a partial dump).
+	 * In any case respond to userspace with the actual length of data
 	 * it's receiving.
 	 */
-	WARN_ON(dump.len != len && dump.len != पंचांगp.len);
+	WARN_ON(dump.len != len && dump.len != tmp.len);
 	dump.len = len;
 
-	अगर (copy_to_user(useraddr, &dump, माप(dump))) अणु
+	if (copy_to_user(useraddr, &dump, sizeof(dump))) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
-	useraddr += दुरत्व(काष्ठा ethtool_dump, data);
-	अगर (copy_to_user(useraddr, data, len))
+		goto out;
+	}
+	useraddr += offsetof(struct ethtool_dump, data);
+	if (copy_to_user(useraddr, data, len))
 		ret = -EFAULT;
 out:
-	vमुक्त(data);
-	वापस ret;
-पूर्ण
+	vfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_ts_info(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_ts_info info;
-	पूर्णांक err;
+static int ethtool_get_ts_info(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_ts_info info;
+	int err;
 
 	err = __ethtool_get_ts_info(dev, &info);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (copy_to_user(useraddr, &info, माप(info)))
-		वापस -EFAULT;
+	if (copy_to_user(useraddr, &info, sizeof(info)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ethtool_get_module_info_call(काष्ठा net_device *dev,
-				 काष्ठा ethtool_modinfo *modinfo)
-अणु
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	काष्ठा phy_device *phydev = dev->phydev;
+int ethtool_get_module_info_call(struct net_device *dev,
+				 struct ethtool_modinfo *modinfo)
+{
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	struct phy_device *phydev = dev->phydev;
 
-	अगर (dev->sfp_bus)
-		वापस sfp_get_module_info(dev->sfp_bus, modinfo);
+	if (dev->sfp_bus)
+		return sfp_get_module_info(dev->sfp_bus, modinfo);
 
-	अगर (phydev && phydev->drv && phydev->drv->module_info)
-		वापस phydev->drv->module_info(phydev, modinfo);
+	if (phydev && phydev->drv && phydev->drv->module_info)
+		return phydev->drv->module_info(phydev, modinfo);
 
-	अगर (ops->get_module_info)
-		वापस ops->get_module_info(dev, modinfo);
+	if (ops->get_module_info)
+		return ops->get_module_info(dev, modinfo);
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक ethtool_get_module_info(काष्ठा net_device *dev,
-				   व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	काष्ठा ethtool_modinfo modinfo;
+static int ethtool_get_module_info(struct net_device *dev,
+				   void __user *useraddr)
+{
+	int ret;
+	struct ethtool_modinfo modinfo;
 
-	अगर (copy_from_user(&modinfo, useraddr, माप(modinfo)))
-		वापस -EFAULT;
-
-	ret = ethtool_get_module_info_call(dev, &modinfo);
-	अगर (ret)
-		वापस ret;
-
-	अगर (copy_to_user(useraddr, &modinfo, माप(modinfo)))
-		वापस -EFAULT;
-
-	वापस 0;
-पूर्ण
-
-पूर्णांक ethtool_get_module_eeprom_call(काष्ठा net_device *dev,
-				   काष्ठा ethtool_eeprom *ee, u8 *data)
-अणु
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	काष्ठा phy_device *phydev = dev->phydev;
-
-	अगर (dev->sfp_bus)
-		वापस sfp_get_module_eeprom(dev->sfp_bus, ee, data);
-
-	अगर (phydev && phydev->drv && phydev->drv->module_eeprom)
-		वापस phydev->drv->module_eeprom(phydev, ee, data);
-
-	अगर (ops->get_module_eeprom)
-		वापस ops->get_module_eeprom(dev, ee, data);
-
-	वापस -EOPNOTSUPP;
-पूर्ण
-
-अटल पूर्णांक ethtool_get_module_eeprom(काष्ठा net_device *dev,
-				     व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	काष्ठा ethtool_modinfo modinfo;
+	if (copy_from_user(&modinfo, useraddr, sizeof(modinfo)))
+		return -EFAULT;
 
 	ret = ethtool_get_module_info_call(dev, &modinfo);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस ethtool_get_any_eeprom(dev, useraddr,
+	if (copy_to_user(useraddr, &modinfo, sizeof(modinfo)))
+		return -EFAULT;
+
+	return 0;
+}
+
+int ethtool_get_module_eeprom_call(struct net_device *dev,
+				   struct ethtool_eeprom *ee, u8 *data)
+{
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	struct phy_device *phydev = dev->phydev;
+
+	if (dev->sfp_bus)
+		return sfp_get_module_eeprom(dev->sfp_bus, ee, data);
+
+	if (phydev && phydev->drv && phydev->drv->module_eeprom)
+		return phydev->drv->module_eeprom(phydev, ee, data);
+
+	if (ops->get_module_eeprom)
+		return ops->get_module_eeprom(dev, ee, data);
+
+	return -EOPNOTSUPP;
+}
+
+static int ethtool_get_module_eeprom(struct net_device *dev,
+				     void __user *useraddr)
+{
+	int ret;
+	struct ethtool_modinfo modinfo;
+
+	ret = ethtool_get_module_info_call(dev, &modinfo);
+	if (ret)
+		return ret;
+
+	return ethtool_get_any_eeprom(dev, useraddr,
 				      ethtool_get_module_eeprom_call,
 				      modinfo.eeprom_len);
-पूर्ण
+}
 
-अटल पूर्णांक ethtool_tunable_valid(स्थिर काष्ठा ethtool_tunable *tuna)
-अणु
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_RX_COPYBREAK:
-	हाल ETHTOOL_TX_COPYBREAK:
-		अगर (tuna->len != माप(u32) ||
+static int ethtool_tunable_valid(const struct ethtool_tunable *tuna)
+{
+	switch (tuna->id) {
+	case ETHTOOL_RX_COPYBREAK:
+	case ETHTOOL_TX_COPYBREAK:
+		if (tuna->len != sizeof(u32) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U32)
-			वापस -EINVAL;
-		अवरोध;
-	हाल ETHTOOL_PFC_PREVENTION_TOUT:
-		अगर (tuna->len != माप(u16) ||
+			return -EINVAL;
+		break;
+	case ETHTOOL_PFC_PREVENTION_TOUT:
+		if (tuna->len != sizeof(u16) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U16)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ethtool_get_tunable(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	काष्ठा ethtool_tunable tuna;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	व्योम *data;
+static int ethtool_get_tunable(struct net_device *dev, void __user *useraddr)
+{
+	int ret;
+	struct ethtool_tunable tuna;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	void *data;
 
-	अगर (!ops->get_tunable)
-		वापस -EOPNOTSUPP;
-	अगर (copy_from_user(&tuna, useraddr, माप(tuna)))
-		वापस -EFAULT;
+	if (!ops->get_tunable)
+		return -EOPNOTSUPP;
+	if (copy_from_user(&tuna, useraddr, sizeof(tuna)))
+		return -EFAULT;
 	ret = ethtool_tunable_valid(&tuna);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	data = kzalloc(tuna.len, GFP_USER);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 	ret = ops->get_tunable(dev, &tuna, data);
-	अगर (ret)
-		जाओ out;
-	useraddr += माप(tuna);
+	if (ret)
+		goto out;
+	useraddr += sizeof(tuna);
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, data, tuna.len))
-		जाओ out;
+	if (copy_to_user(useraddr, data, tuna.len))
+		goto out;
 	ret = 0;
 
 out:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_set_tunable(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	पूर्णांक ret;
-	काष्ठा ethtool_tunable tuna;
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	व्योम *data;
+static int ethtool_set_tunable(struct net_device *dev, void __user *useraddr)
+{
+	int ret;
+	struct ethtool_tunable tuna;
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	void *data;
 
-	अगर (!ops->set_tunable)
-		वापस -EOPNOTSUPP;
-	अगर (copy_from_user(&tuna, useraddr, माप(tuna)))
-		वापस -EFAULT;
+	if (!ops->set_tunable)
+		return -EOPNOTSUPP;
+	if (copy_from_user(&tuna, useraddr, sizeof(tuna)))
+		return -EFAULT;
 	ret = ethtool_tunable_valid(&tuna);
-	अगर (ret)
-		वापस ret;
-	useraddr += माप(tuna);
+	if (ret)
+		return ret;
+	useraddr += sizeof(tuna);
 	data = memdup_user(useraddr, tuna.len);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 	ret = ops->set_tunable(dev, &tuna, data);
 
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ethtool_get_per_queue_coalesce(काष्ठा net_device *dev,
-			       व्योम __user *useraddr,
-			       काष्ठा ethtool_per_queue_op *per_queue_opt)
-अणु
+static noinline_for_stack int
+ethtool_get_per_queue_coalesce(struct net_device *dev,
+			       void __user *useraddr,
+			       struct ethtool_per_queue_op *per_queue_opt)
+{
 	u32 bit;
-	पूर्णांक ret;
+	int ret;
 	DECLARE_BITMAP(queue_mask, MAX_NUM_QUEUE);
 
-	अगर (!dev->ethtool_ops->get_per_queue_coalesce)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_per_queue_coalesce)
+		return -EOPNOTSUPP;
 
-	useraddr += माप(*per_queue_opt);
+	useraddr += sizeof(*per_queue_opt);
 
-	biपंचांगap_from_arr32(queue_mask, per_queue_opt->queue_mask,
+	bitmap_from_arr32(queue_mask, per_queue_opt->queue_mask,
 			  MAX_NUM_QUEUE);
 
-	क्रम_each_set_bit(bit, queue_mask, MAX_NUM_QUEUE) अणु
-		काष्ठा ethtool_coalesce coalesce = अणु .cmd = ETHTOOL_GCOALESCE पूर्ण;
+	for_each_set_bit(bit, queue_mask, MAX_NUM_QUEUE) {
+		struct ethtool_coalesce coalesce = { .cmd = ETHTOOL_GCOALESCE };
 
 		ret = dev->ethtool_ops->get_per_queue_coalesce(dev, bit, &coalesce);
-		अगर (ret != 0)
-			वापस ret;
-		अगर (copy_to_user(useraddr, &coalesce, माप(coalesce)))
-			वापस -EFAULT;
-		useraddr += माप(coalesce);
-	पूर्ण
+		if (ret != 0)
+			return ret;
+		if (copy_to_user(useraddr, &coalesce, sizeof(coalesce)))
+			return -EFAULT;
+		useraddr += sizeof(coalesce);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक
-ethtool_set_per_queue_coalesce(काष्ठा net_device *dev,
-			       व्योम __user *useraddr,
-			       काष्ठा ethtool_per_queue_op *per_queue_opt)
-अणु
+static noinline_for_stack int
+ethtool_set_per_queue_coalesce(struct net_device *dev,
+			       void __user *useraddr,
+			       struct ethtool_per_queue_op *per_queue_opt)
+{
 	u32 bit;
-	पूर्णांक i, ret = 0;
-	पूर्णांक n_queue;
-	काष्ठा ethtool_coalesce *backup = शून्य, *पंचांगp = शून्य;
+	int i, ret = 0;
+	int n_queue;
+	struct ethtool_coalesce *backup = NULL, *tmp = NULL;
 	DECLARE_BITMAP(queue_mask, MAX_NUM_QUEUE);
 
-	अगर ((!dev->ethtool_ops->set_per_queue_coalesce) ||
+	if ((!dev->ethtool_ops->set_per_queue_coalesce) ||
 	    (!dev->ethtool_ops->get_per_queue_coalesce))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	useraddr += माप(*per_queue_opt);
+	useraddr += sizeof(*per_queue_opt);
 
-	biपंचांगap_from_arr32(queue_mask, per_queue_opt->queue_mask, MAX_NUM_QUEUE);
-	n_queue = biपंचांगap_weight(queue_mask, MAX_NUM_QUEUE);
-	पंचांगp = backup = kदो_स्मृति_array(n_queue, माप(*backup), GFP_KERNEL);
-	अगर (!backup)
-		वापस -ENOMEM;
+	bitmap_from_arr32(queue_mask, per_queue_opt->queue_mask, MAX_NUM_QUEUE);
+	n_queue = bitmap_weight(queue_mask, MAX_NUM_QUEUE);
+	tmp = backup = kmalloc_array(n_queue, sizeof(*backup), GFP_KERNEL);
+	if (!backup)
+		return -ENOMEM;
 
-	क्रम_each_set_bit(bit, queue_mask, MAX_NUM_QUEUE) अणु
-		काष्ठा ethtool_coalesce coalesce;
+	for_each_set_bit(bit, queue_mask, MAX_NUM_QUEUE) {
+		struct ethtool_coalesce coalesce;
 
-		ret = dev->ethtool_ops->get_per_queue_coalesce(dev, bit, पंचांगp);
-		अगर (ret != 0)
-			जाओ roll_back;
+		ret = dev->ethtool_ops->get_per_queue_coalesce(dev, bit, tmp);
+		if (ret != 0)
+			goto roll_back;
 
-		पंचांगp++;
+		tmp++;
 
-		अगर (copy_from_user(&coalesce, useraddr, माप(coalesce))) अणु
+		if (copy_from_user(&coalesce, useraddr, sizeof(coalesce))) {
 			ret = -EFAULT;
-			जाओ roll_back;
-		पूर्ण
+			goto roll_back;
+		}
 
-		अगर (!ethtool_set_coalesce_supported(dev, &coalesce)) अणु
+		if (!ethtool_set_coalesce_supported(dev, &coalesce)) {
 			ret = -EOPNOTSUPP;
-			जाओ roll_back;
-		पूर्ण
+			goto roll_back;
+		}
 
 		ret = dev->ethtool_ops->set_per_queue_coalesce(dev, bit, &coalesce);
-		अगर (ret != 0)
-			जाओ roll_back;
+		if (ret != 0)
+			goto roll_back;
 
-		useraddr += माप(coalesce);
-	पूर्ण
+		useraddr += sizeof(coalesce);
+	}
 
 roll_back:
-	अगर (ret != 0) अणु
-		पंचांगp = backup;
-		क्रम_each_set_bit(i, queue_mask, bit) अणु
-			dev->ethtool_ops->set_per_queue_coalesce(dev, i, पंचांगp);
-			पंचांगp++;
-		पूर्ण
-	पूर्ण
-	kमुक्त(backup);
+	if (ret != 0) {
+		tmp = backup;
+		for_each_set_bit(i, queue_mask, bit) {
+			dev->ethtool_ops->set_per_queue_coalesce(dev, i, tmp);
+			tmp++;
+		}
+	}
+	kfree(backup);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक noअंतरभूत_क्रम_stack ethtool_set_per_queue(काष्ठा net_device *dev,
-				 व्योम __user *useraddr, u32 sub_cmd)
-अणु
-	काष्ठा ethtool_per_queue_op per_queue_opt;
+static int noinline_for_stack ethtool_set_per_queue(struct net_device *dev,
+				 void __user *useraddr, u32 sub_cmd)
+{
+	struct ethtool_per_queue_op per_queue_opt;
 
-	अगर (copy_from_user(&per_queue_opt, useraddr, माप(per_queue_opt)))
-		वापस -EFAULT;
+	if (copy_from_user(&per_queue_opt, useraddr, sizeof(per_queue_opt)))
+		return -EFAULT;
 
-	अगर (per_queue_opt.sub_command != sub_cmd)
-		वापस -EINVAL;
+	if (per_queue_opt.sub_command != sub_cmd)
+		return -EINVAL;
 
-	चयन (per_queue_opt.sub_command) अणु
-	हाल ETHTOOL_GCOALESCE:
-		वापस ethtool_get_per_queue_coalesce(dev, useraddr, &per_queue_opt);
-	हाल ETHTOOL_SCOALESCE:
-		वापस ethtool_set_per_queue_coalesce(dev, useraddr, &per_queue_opt);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (per_queue_opt.sub_command) {
+	case ETHTOOL_GCOALESCE:
+		return ethtool_get_per_queue_coalesce(dev, useraddr, &per_queue_opt);
+	case ETHTOOL_SCOALESCE:
+		return ethtool_set_per_queue_coalesce(dev, useraddr, &per_queue_opt);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक ethtool_phy_tunable_valid(स्थिर काष्ठा ethtool_tunable *tuna)
-अणु
-	चयन (tuna->id) अणु
-	हाल ETHTOOL_PHY_DOWNSHIFT:
-	हाल ETHTOOL_PHY_FAST_LINK_DOWN:
-		अगर (tuna->len != माप(u8) ||
+static int ethtool_phy_tunable_valid(const struct ethtool_tunable *tuna)
+{
+	switch (tuna->id) {
+	case ETHTOOL_PHY_DOWNSHIFT:
+	case ETHTOOL_PHY_FAST_LINK_DOWN:
+		if (tuna->len != sizeof(u8) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U8)
-			वापस -EINVAL;
-		अवरोध;
-	हाल ETHTOOL_PHY_EDPD:
-		अगर (tuna->len != माप(u16) ||
+			return -EINVAL;
+		break;
+	case ETHTOOL_PHY_EDPD:
+		if (tuna->len != sizeof(u16) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U16)
-			वापस -EINVAL;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_phy_tunable(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा phy_device *phydev = dev->phydev;
-	काष्ठा ethtool_tunable tuna;
+static int get_phy_tunable(struct net_device *dev, void __user *useraddr)
+{
+	struct phy_device *phydev = dev->phydev;
+	struct ethtool_tunable tuna;
 	bool phy_drv_tunable;
-	व्योम *data;
-	पूर्णांक ret;
+	void *data;
+	int ret;
 
 	phy_drv_tunable = phydev && phydev->drv && phydev->drv->get_tunable;
-	अगर (!phy_drv_tunable && !dev->ethtool_ops->get_phy_tunable)
-		वापस -EOPNOTSUPP;
-	अगर (copy_from_user(&tuna, useraddr, माप(tuna)))
-		वापस -EFAULT;
+	if (!phy_drv_tunable && !dev->ethtool_ops->get_phy_tunable)
+		return -EOPNOTSUPP;
+	if (copy_from_user(&tuna, useraddr, sizeof(tuna)))
+		return -EFAULT;
 	ret = ethtool_phy_tunable_valid(&tuna);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	data = kzalloc(tuna.len, GFP_USER);
-	अगर (!data)
-		वापस -ENOMEM;
-	अगर (phy_drv_tunable) अणु
+	if (!data)
+		return -ENOMEM;
+	if (phy_drv_tunable) {
 		mutex_lock(&phydev->lock);
 		ret = phydev->drv->get_tunable(phydev, &tuna, data);
 		mutex_unlock(&phydev->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = dev->ethtool_ops->get_phy_tunable(dev, &tuna, data);
-	पूर्ण
-	अगर (ret)
-		जाओ out;
-	useraddr += माप(tuna);
+	}
+	if (ret)
+		goto out;
+	useraddr += sizeof(tuna);
 	ret = -EFAULT;
-	अगर (copy_to_user(useraddr, data, tuna.len))
-		जाओ out;
+	if (copy_to_user(useraddr, data, tuna.len))
+		goto out;
 	ret = 0;
 
 out:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक set_phy_tunable(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा phy_device *phydev = dev->phydev;
-	काष्ठा ethtool_tunable tuna;
+static int set_phy_tunable(struct net_device *dev, void __user *useraddr)
+{
+	struct phy_device *phydev = dev->phydev;
+	struct ethtool_tunable tuna;
 	bool phy_drv_tunable;
-	व्योम *data;
-	पूर्णांक ret;
+	void *data;
+	int ret;
 
 	phy_drv_tunable = phydev && phydev->drv && phydev->drv->get_tunable;
-	अगर (!phy_drv_tunable && !dev->ethtool_ops->set_phy_tunable)
-		वापस -EOPNOTSUPP;
-	अगर (copy_from_user(&tuna, useraddr, माप(tuna)))
-		वापस -EFAULT;
+	if (!phy_drv_tunable && !dev->ethtool_ops->set_phy_tunable)
+		return -EOPNOTSUPP;
+	if (copy_from_user(&tuna, useraddr, sizeof(tuna)))
+		return -EFAULT;
 	ret = ethtool_phy_tunable_valid(&tuna);
-	अगर (ret)
-		वापस ret;
-	useraddr += माप(tuna);
+	if (ret)
+		return ret;
+	useraddr += sizeof(tuna);
 	data = memdup_user(useraddr, tuna.len);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
-	अगर (phy_drv_tunable) अणु
+	if (IS_ERR(data))
+		return PTR_ERR(data);
+	if (phy_drv_tunable) {
 		mutex_lock(&phydev->lock);
 		ret = phydev->drv->set_tunable(phydev, &tuna, data);
 		mutex_unlock(&phydev->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = dev->ethtool_ops->set_phy_tunable(dev, &tuna, data);
-	पूर्ण
+	}
 
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 
-अटल पूर्णांक ethtool_get_fecparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_fecparam fecparam = अणु .cmd = ETHTOOL_GFECPARAM पूर्ण;
-	पूर्णांक rc;
+static int ethtool_get_fecparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_fecparam fecparam = { .cmd = ETHTOOL_GFECPARAM };
+	int rc;
 
-	अगर (!dev->ethtool_ops->get_fecparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->get_fecparam)
+		return -EOPNOTSUPP;
 
 	rc = dev->ethtool_ops->get_fecparam(dev, &fecparam);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (WARN_ON_ONCE(fecparam.reserved))
+	if (WARN_ON_ONCE(fecparam.reserved))
 		fecparam.reserved = 0;
 
-	अगर (copy_to_user(useraddr, &fecparam, माप(fecparam)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(useraddr, &fecparam, sizeof(fecparam)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक ethtool_set_fecparam(काष्ठा net_device *dev, व्योम __user *useraddr)
-अणु
-	काष्ठा ethtool_fecparam fecparam;
+static int ethtool_set_fecparam(struct net_device *dev, void __user *useraddr)
+{
+	struct ethtool_fecparam fecparam;
 
-	अगर (!dev->ethtool_ops->set_fecparam)
-		वापस -EOPNOTSUPP;
+	if (!dev->ethtool_ops->set_fecparam)
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&fecparam, useraddr, माप(fecparam)))
-		वापस -EFAULT;
+	if (copy_from_user(&fecparam, useraddr, sizeof(fecparam)))
+		return -EFAULT;
 
-	अगर (!fecparam.fec || fecparam.fec & ETHTOOL_FEC_NONE)
-		वापस -EINVAL;
+	if (!fecparam.fec || fecparam.fec & ETHTOOL_FEC_NONE)
+		return -EINVAL;
 
 	fecparam.active_fec = 0;
 	fecparam.reserved = 0;
 
-	वापस dev->ethtool_ops->set_fecparam(dev, &fecparam);
-पूर्ण
+	return dev->ethtool_ops->set_fecparam(dev, &fecparam);
+}
 
-/* The मुख्य entry poपूर्णांक in this file.  Called from net/core/dev_ioctl.c */
+/* The main entry point in this file.  Called from net/core/dev_ioctl.c */
 
-पूर्णांक dev_ethtool(काष्ठा net *net, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा net_device *dev = __dev_get_by_name(net, अगरr->अगरr_name);
-	व्योम __user *useraddr = अगरr->अगरr_data;
+int dev_ethtool(struct net *net, struct ifreq *ifr)
+{
+	struct net_device *dev = __dev_get_by_name(net, ifr->ifr_name);
+	void __user *useraddr = ifr->ifr_data;
 	u32 ethcmd, sub_cmd;
-	पूर्णांक rc;
+	int rc;
 	netdev_features_t old_features;
 
-	अगर (!dev || !netअगर_device_present(dev))
-		वापस -ENODEV;
+	if (!dev || !netif_device_present(dev))
+		return -ENODEV;
 
-	अगर (copy_from_user(&ethcmd, useraddr, माप(ethcmd)))
-		वापस -EFAULT;
+	if (copy_from_user(&ethcmd, useraddr, sizeof(ethcmd)))
+		return -EFAULT;
 
-	अगर (ethcmd == ETHTOOL_PERQUEUE) अणु
-		अगर (copy_from_user(&sub_cmd, useraddr + माप(ethcmd), माप(sub_cmd)))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
+	if (ethcmd == ETHTOOL_PERQUEUE) {
+		if (copy_from_user(&sub_cmd, useraddr + sizeof(ethcmd), sizeof(sub_cmd)))
+			return -EFAULT;
+	} else {
 		sub_cmd = ethcmd;
-	पूर्ण
-	/* Allow some commands to be करोne by anyone */
-	चयन (sub_cmd) अणु
-	हाल ETHTOOL_GSET:
-	हाल ETHTOOL_GDRVINFO:
-	हाल ETHTOOL_GMSGLVL:
-	हाल ETHTOOL_GLINK:
-	हाल ETHTOOL_GCOALESCE:
-	हाल ETHTOOL_GRINGPARAM:
-	हाल ETHTOOL_GPAUSEPARAM:
-	हाल ETHTOOL_GRXCSUM:
-	हाल ETHTOOL_GTXCSUM:
-	हाल ETHTOOL_GSG:
-	हाल ETHTOOL_GSSET_INFO:
-	हाल ETHTOOL_GSTRINGS:
-	हाल ETHTOOL_GSTATS:
-	हाल ETHTOOL_GPHYSTATS:
-	हाल ETHTOOL_GTSO:
-	हाल ETHTOOL_GPERMADDR:
-	हाल ETHTOOL_GUFO:
-	हाल ETHTOOL_GGSO:
-	हाल ETHTOOL_GGRO:
-	हाल ETHTOOL_GFLAGS:
-	हाल ETHTOOL_GPFLAGS:
-	हाल ETHTOOL_GRXFH:
-	हाल ETHTOOL_GRXRINGS:
-	हाल ETHTOOL_GRXCLSRLCNT:
-	हाल ETHTOOL_GRXCLSRULE:
-	हाल ETHTOOL_GRXCLSRLALL:
-	हाल ETHTOOL_GRXFHINसूची:
-	हाल ETHTOOL_GRSSH:
-	हाल ETHTOOL_GFEATURES:
-	हाल ETHTOOL_GCHANNELS:
-	हाल ETHTOOL_GET_TS_INFO:
-	हाल ETHTOOL_GEEE:
-	हाल ETHTOOL_GTUNABLE:
-	हाल ETHTOOL_PHY_GTUNABLE:
-	हाल ETHTOOL_GLINKSETTINGS:
-	हाल ETHTOOL_GFECPARAM:
-		अवरोध;
-	शेष:
-		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			वापस -EPERM;
-	पूर्ण
+	}
+	/* Allow some commands to be done by anyone */
+	switch (sub_cmd) {
+	case ETHTOOL_GSET:
+	case ETHTOOL_GDRVINFO:
+	case ETHTOOL_GMSGLVL:
+	case ETHTOOL_GLINK:
+	case ETHTOOL_GCOALESCE:
+	case ETHTOOL_GRINGPARAM:
+	case ETHTOOL_GPAUSEPARAM:
+	case ETHTOOL_GRXCSUM:
+	case ETHTOOL_GTXCSUM:
+	case ETHTOOL_GSG:
+	case ETHTOOL_GSSET_INFO:
+	case ETHTOOL_GSTRINGS:
+	case ETHTOOL_GSTATS:
+	case ETHTOOL_GPHYSTATS:
+	case ETHTOOL_GTSO:
+	case ETHTOOL_GPERMADDR:
+	case ETHTOOL_GUFO:
+	case ETHTOOL_GGSO:
+	case ETHTOOL_GGRO:
+	case ETHTOOL_GFLAGS:
+	case ETHTOOL_GPFLAGS:
+	case ETHTOOL_GRXFH:
+	case ETHTOOL_GRXRINGS:
+	case ETHTOOL_GRXCLSRLCNT:
+	case ETHTOOL_GRXCLSRULE:
+	case ETHTOOL_GRXCLSRLALL:
+	case ETHTOOL_GRXFHINDIR:
+	case ETHTOOL_GRSSH:
+	case ETHTOOL_GFEATURES:
+	case ETHTOOL_GCHANNELS:
+	case ETHTOOL_GET_TS_INFO:
+	case ETHTOOL_GEEE:
+	case ETHTOOL_GTUNABLE:
+	case ETHTOOL_PHY_GTUNABLE:
+	case ETHTOOL_GLINKSETTINGS:
+	case ETHTOOL_GFECPARAM:
+		break;
+	default:
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			return -EPERM;
+	}
 
-	अगर (dev->ethtool_ops->begin) अणु
+	if (dev->ethtool_ops->begin) {
 		rc = dev->ethtool_ops->begin(dev);
-		अगर (rc  < 0)
-			वापस rc;
-	पूर्ण
+		if (rc  < 0)
+			return rc;
+	}
 	old_features = dev->features;
 
-	चयन (ethcmd) अणु
-	हाल ETHTOOL_GSET:
+	switch (ethcmd) {
+	case ETHTOOL_GSET:
 		rc = ethtool_get_settings(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SSET:
+		break;
+	case ETHTOOL_SSET:
 		rc = ethtool_set_settings(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GDRVINFO:
+		break;
+	case ETHTOOL_GDRVINFO:
 		rc = ethtool_get_drvinfo(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GREGS:
+		break;
+	case ETHTOOL_GREGS:
 		rc = ethtool_get_regs(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GWOL:
+		break;
+	case ETHTOOL_GWOL:
 		rc = ethtool_get_wol(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SWOL:
+		break;
+	case ETHTOOL_SWOL:
 		rc = ethtool_set_wol(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GMSGLVL:
+		break;
+	case ETHTOOL_GMSGLVL:
 		rc = ethtool_get_value(dev, useraddr, ethcmd,
 				       dev->ethtool_ops->get_msglevel);
-		अवरोध;
-	हाल ETHTOOL_SMSGLVL:
-		rc = ethtool_set_value_व्योम(dev, useraddr,
+		break;
+	case ETHTOOL_SMSGLVL:
+		rc = ethtool_set_value_void(dev, useraddr,
 				       dev->ethtool_ops->set_msglevel);
-		अगर (!rc)
-			ethtool_notअगरy(dev, ETHTOOL_MSG_DEBUG_NTF, शून्य);
-		अवरोध;
-	हाल ETHTOOL_GEEE:
+		if (!rc)
+			ethtool_notify(dev, ETHTOOL_MSG_DEBUG_NTF, NULL);
+		break;
+	case ETHTOOL_GEEE:
 		rc = ethtool_get_eee(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SEEE:
+		break;
+	case ETHTOOL_SEEE:
 		rc = ethtool_set_eee(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_NWAY_RST:
+		break;
+	case ETHTOOL_NWAY_RST:
 		rc = ethtool_nway_reset(dev);
-		अवरोध;
-	हाल ETHTOOL_GLINK:
+		break;
+	case ETHTOOL_GLINK:
 		rc = ethtool_get_link(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GEEPROM:
+		break;
+	case ETHTOOL_GEEPROM:
 		rc = ethtool_get_eeprom(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SEEPROM:
+		break;
+	case ETHTOOL_SEEPROM:
 		rc = ethtool_set_eeprom(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GCOALESCE:
+		break;
+	case ETHTOOL_GCOALESCE:
 		rc = ethtool_get_coalesce(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SCOALESCE:
+		break;
+	case ETHTOOL_SCOALESCE:
 		rc = ethtool_set_coalesce(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GRINGPARAM:
+		break;
+	case ETHTOOL_GRINGPARAM:
 		rc = ethtool_get_ringparam(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SRINGPARAM:
+		break;
+	case ETHTOOL_SRINGPARAM:
 		rc = ethtool_set_ringparam(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GPAUSEPARAM:
-		rc = ethtool_get_छोड़ोparam(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SPAUSEPARAM:
-		rc = ethtool_set_छोड़ोparam(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_TEST:
+		break;
+	case ETHTOOL_GPAUSEPARAM:
+		rc = ethtool_get_pauseparam(dev, useraddr);
+		break;
+	case ETHTOOL_SPAUSEPARAM:
+		rc = ethtool_set_pauseparam(dev, useraddr);
+		break;
+	case ETHTOOL_TEST:
 		rc = ethtool_self_test(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GSTRINGS:
+		break;
+	case ETHTOOL_GSTRINGS:
 		rc = ethtool_get_strings(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_PHYS_ID:
+		break;
+	case ETHTOOL_PHYS_ID:
 		rc = ethtool_phys_id(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GSTATS:
+		break;
+	case ETHTOOL_GSTATS:
 		rc = ethtool_get_stats(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GPERMADDR:
+		break;
+	case ETHTOOL_GPERMADDR:
 		rc = ethtool_get_perm_addr(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GFLAGS:
+		break;
+	case ETHTOOL_GFLAGS:
 		rc = ethtool_get_value(dev, useraddr, ethcmd,
 					__ethtool_get_flags);
-		अवरोध;
-	हाल ETHTOOL_SFLAGS:
+		break;
+	case ETHTOOL_SFLAGS:
 		rc = ethtool_set_value(dev, useraddr, __ethtool_set_flags);
-		अवरोध;
-	हाल ETHTOOL_GPFLAGS:
+		break;
+	case ETHTOOL_GPFLAGS:
 		rc = ethtool_get_value(dev, useraddr, ethcmd,
 				       dev->ethtool_ops->get_priv_flags);
-		अगर (!rc)
-			ethtool_notअगरy(dev, ETHTOOL_MSG_PRIVFLAGS_NTF, शून्य);
-		अवरोध;
-	हाल ETHTOOL_SPFLAGS:
+		if (!rc)
+			ethtool_notify(dev, ETHTOOL_MSG_PRIVFLAGS_NTF, NULL);
+		break;
+	case ETHTOOL_SPFLAGS:
 		rc = ethtool_set_value(dev, useraddr,
 				       dev->ethtool_ops->set_priv_flags);
-		अवरोध;
-	हाल ETHTOOL_GRXFH:
-	हाल ETHTOOL_GRXRINGS:
-	हाल ETHTOOL_GRXCLSRLCNT:
-	हाल ETHTOOL_GRXCLSRULE:
-	हाल ETHTOOL_GRXCLSRLALL:
+		break;
+	case ETHTOOL_GRXFH:
+	case ETHTOOL_GRXRINGS:
+	case ETHTOOL_GRXCLSRLCNT:
+	case ETHTOOL_GRXCLSRULE:
+	case ETHTOOL_GRXCLSRLALL:
 		rc = ethtool_get_rxnfc(dev, ethcmd, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SRXFH:
-	हाल ETHTOOL_SRXCLSRLDEL:
-	हाल ETHTOOL_SRXCLSRLINS:
+		break;
+	case ETHTOOL_SRXFH:
+	case ETHTOOL_SRXCLSRLDEL:
+	case ETHTOOL_SRXCLSRLINS:
 		rc = ethtool_set_rxnfc(dev, ethcmd, useraddr);
-		अवरोध;
-	हाल ETHTOOL_FLASHDEV:
+		break;
+	case ETHTOOL_FLASHDEV:
 		rc = ethtool_flash_device(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_RESET:
+		break;
+	case ETHTOOL_RESET:
 		rc = ethtool_reset(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GSSET_INFO:
+		break;
+	case ETHTOOL_GSSET_INFO:
 		rc = ethtool_get_sset_info(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GRXFHINसूची:
+		break;
+	case ETHTOOL_GRXFHINDIR:
 		rc = ethtool_get_rxfh_indir(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SRXFHINसूची:
+		break;
+	case ETHTOOL_SRXFHINDIR:
 		rc = ethtool_set_rxfh_indir(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GRSSH:
+		break;
+	case ETHTOOL_GRSSH:
 		rc = ethtool_get_rxfh(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SRSSH:
+		break;
+	case ETHTOOL_SRSSH:
 		rc = ethtool_set_rxfh(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GFEATURES:
+		break;
+	case ETHTOOL_GFEATURES:
 		rc = ethtool_get_features(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SFEATURES:
+		break;
+	case ETHTOOL_SFEATURES:
 		rc = ethtool_set_features(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GTXCSUM:
-	हाल ETHTOOL_GRXCSUM:
-	हाल ETHTOOL_GSG:
-	हाल ETHTOOL_GTSO:
-	हाल ETHTOOL_GGSO:
-	हाल ETHTOOL_GGRO:
+		break;
+	case ETHTOOL_GTXCSUM:
+	case ETHTOOL_GRXCSUM:
+	case ETHTOOL_GSG:
+	case ETHTOOL_GTSO:
+	case ETHTOOL_GGSO:
+	case ETHTOOL_GGRO:
 		rc = ethtool_get_one_feature(dev, useraddr, ethcmd);
-		अवरोध;
-	हाल ETHTOOL_STXCSUM:
-	हाल ETHTOOL_SRXCSUM:
-	हाल ETHTOOL_SSG:
-	हाल ETHTOOL_STSO:
-	हाल ETHTOOL_SGSO:
-	हाल ETHTOOL_SGRO:
+		break;
+	case ETHTOOL_STXCSUM:
+	case ETHTOOL_SRXCSUM:
+	case ETHTOOL_SSG:
+	case ETHTOOL_STSO:
+	case ETHTOOL_SGSO:
+	case ETHTOOL_SGRO:
 		rc = ethtool_set_one_feature(dev, useraddr, ethcmd);
-		अवरोध;
-	हाल ETHTOOL_GCHANNELS:
+		break;
+	case ETHTOOL_GCHANNELS:
 		rc = ethtool_get_channels(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SCHANNELS:
+		break;
+	case ETHTOOL_SCHANNELS:
 		rc = ethtool_set_channels(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SET_DUMP:
+		break;
+	case ETHTOOL_SET_DUMP:
 		rc = ethtool_set_dump(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GET_DUMP_FLAG:
+		break;
+	case ETHTOOL_GET_DUMP_FLAG:
 		rc = ethtool_get_dump_flag(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GET_DUMP_DATA:
+		break;
+	case ETHTOOL_GET_DUMP_DATA:
 		rc = ethtool_get_dump_data(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GET_TS_INFO:
+		break;
+	case ETHTOOL_GET_TS_INFO:
 		rc = ethtool_get_ts_info(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GMODULEINFO:
+		break;
+	case ETHTOOL_GMODULEINFO:
 		rc = ethtool_get_module_info(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GMODULEEEPROM:
+		break;
+	case ETHTOOL_GMODULEEEPROM:
 		rc = ethtool_get_module_eeprom(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GTUNABLE:
+		break;
+	case ETHTOOL_GTUNABLE:
 		rc = ethtool_get_tunable(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_STUNABLE:
+		break;
+	case ETHTOOL_STUNABLE:
 		rc = ethtool_set_tunable(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GPHYSTATS:
+		break;
+	case ETHTOOL_GPHYSTATS:
 		rc = ethtool_get_phy_stats(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_PERQUEUE:
+		break;
+	case ETHTOOL_PERQUEUE:
 		rc = ethtool_set_per_queue(dev, useraddr, sub_cmd);
-		अवरोध;
-	हाल ETHTOOL_GLINKSETTINGS:
+		break;
+	case ETHTOOL_GLINKSETTINGS:
 		rc = ethtool_get_link_ksettings(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SLINKSETTINGS:
+		break;
+	case ETHTOOL_SLINKSETTINGS:
 		rc = ethtool_set_link_ksettings(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_PHY_GTUNABLE:
+		break;
+	case ETHTOOL_PHY_GTUNABLE:
 		rc = get_phy_tunable(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_PHY_STUNABLE:
+		break;
+	case ETHTOOL_PHY_STUNABLE:
 		rc = set_phy_tunable(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_GFECPARAM:
+		break;
+	case ETHTOOL_GFECPARAM:
 		rc = ethtool_get_fecparam(dev, useraddr);
-		अवरोध;
-	हाल ETHTOOL_SFECPARAM:
+		break;
+	case ETHTOOL_SFECPARAM:
 		rc = ethtool_set_fecparam(dev, useraddr);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EOPNOTSUPP;
-	पूर्ण
+	}
 
-	अगर (dev->ethtool_ops->complete)
+	if (dev->ethtool_ops->complete)
 		dev->ethtool_ops->complete(dev);
 
-	अगर (old_features != dev->features)
+	if (old_features != dev->features)
 		netdev_features_change(dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-काष्ठा ethtool_rx_flow_key अणु
-	काष्ठा flow_dissector_key_basic			basic;
-	जोड़ अणु
-		काष्ठा flow_dissector_key_ipv4_addrs	ipv4;
-		काष्ठा flow_dissector_key_ipv6_addrs	ipv6;
-	पूर्ण;
-	काष्ठा flow_dissector_key_ports			tp;
-	काष्ठा flow_dissector_key_ip			ip;
-	काष्ठा flow_dissector_key_vlan			vlan;
-	काष्ठा flow_dissector_key_eth_addrs		eth_addrs;
-पूर्ण __aligned(BITS_PER_LONG / 8); /* Ensure that we can करो comparisons as दीर्घs. */
+struct ethtool_rx_flow_key {
+	struct flow_dissector_key_basic			basic;
+	union {
+		struct flow_dissector_key_ipv4_addrs	ipv4;
+		struct flow_dissector_key_ipv6_addrs	ipv6;
+	};
+	struct flow_dissector_key_ports			tp;
+	struct flow_dissector_key_ip			ip;
+	struct flow_dissector_key_vlan			vlan;
+	struct flow_dissector_key_eth_addrs		eth_addrs;
+} __aligned(BITS_PER_LONG / 8); /* Ensure that we can do comparisons as longs. */
 
-काष्ठा ethtool_rx_flow_match अणु
-	काष्ठा flow_dissector		dissector;
-	काष्ठा ethtool_rx_flow_key	key;
-	काष्ठा ethtool_rx_flow_key	mask;
-पूर्ण;
+struct ethtool_rx_flow_match {
+	struct flow_dissector		dissector;
+	struct ethtool_rx_flow_key	key;
+	struct ethtool_rx_flow_key	mask;
+};
 
-काष्ठा ethtool_rx_flow_rule *
-ethtool_rx_flow_rule_create(स्थिर काष्ठा ethtool_rx_flow_spec_input *input)
-अणु
-	स्थिर काष्ठा ethtool_rx_flow_spec *fs = input->fs;
-	अटल काष्ठा in6_addr zero_addr = अणुपूर्ण;
-	काष्ठा ethtool_rx_flow_match *match;
-	काष्ठा ethtool_rx_flow_rule *flow;
-	काष्ठा flow_action_entry *act;
+struct ethtool_rx_flow_rule *
+ethtool_rx_flow_rule_create(const struct ethtool_rx_flow_spec_input *input)
+{
+	const struct ethtool_rx_flow_spec *fs = input->fs;
+	static struct in6_addr zero_addr = {};
+	struct ethtool_rx_flow_match *match;
+	struct ethtool_rx_flow_rule *flow;
+	struct flow_action_entry *act;
 
-	flow = kzalloc(माप(काष्ठा ethtool_rx_flow_rule) +
-		       माप(काष्ठा ethtool_rx_flow_match), GFP_KERNEL);
-	अगर (!flow)
-		वापस ERR_PTR(-ENOMEM);
+	flow = kzalloc(sizeof(struct ethtool_rx_flow_rule) +
+		       sizeof(struct ethtool_rx_flow_match), GFP_KERNEL);
+	if (!flow)
+		return ERR_PTR(-ENOMEM);
 
 	/* ethtool_rx supports only one single action per rule. */
 	flow->rule = flow_rule_alloc(1);
-	अगर (!flow->rule) अणु
-		kमुक्त(flow);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!flow->rule) {
+		kfree(flow);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	match = (काष्ठा ethtool_rx_flow_match *)flow->priv;
+	match = (struct ethtool_rx_flow_match *)flow->priv;
 	flow->rule->match.dissector	= &match->dissector;
 	flow->rule->match.mask		= &match->mask;
 	flow->rule->match.key		= &match->key;
 
 	match->mask.basic.n_proto = htons(0xffff);
 
-	चयन (fs->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS)) अणु
-	हाल ETHER_FLOW: अणु
-		स्थिर काष्ठा ethhdr *ether_spec, *ether_m_spec;
+	switch (fs->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS)) {
+	case ETHER_FLOW: {
+		const struct ethhdr *ether_spec, *ether_m_spec;
 
 		ether_spec = &fs->h_u.ether_spec;
 		ether_m_spec = &fs->m_u.ether_spec;
 
-		अगर (!is_zero_ether_addr(ether_m_spec->h_source)) अणु
+		if (!is_zero_ether_addr(ether_m_spec->h_source)) {
 			ether_addr_copy(match->key.eth_addrs.src,
 					ether_spec->h_source);
 			ether_addr_copy(match->mask.eth_addrs.src,
 					ether_m_spec->h_source);
-		पूर्ण
-		अगर (!is_zero_ether_addr(ether_m_spec->h_dest)) अणु
+		}
+		if (!is_zero_ether_addr(ether_m_spec->h_dest)) {
 			ether_addr_copy(match->key.eth_addrs.dst,
 					ether_spec->h_dest);
 			ether_addr_copy(match->mask.eth_addrs.dst,
 					ether_m_spec->h_dest);
-		पूर्ण
-		अगर (ether_m_spec->h_proto) अणु
+		}
+		if (ether_m_spec->h_proto) {
 			match->key.basic.n_proto = ether_spec->h_proto;
 			match->mask.basic.n_proto = ether_m_spec->h_proto;
-		पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल TCP_V4_FLOW:
-	हाल UDP_V4_FLOW: अणु
-		स्थिर काष्ठा ethtool_tcpip4_spec *v4_spec, *v4_m_spec;
+		}
+		}
+		break;
+	case TCP_V4_FLOW:
+	case UDP_V4_FLOW: {
+		const struct ethtool_tcpip4_spec *v4_spec, *v4_m_spec;
 
 		match->key.basic.n_proto = htons(ETH_P_IP);
 
 		v4_spec = &fs->h_u.tcp_ip4_spec;
 		v4_m_spec = &fs->m_u.tcp_ip4_spec;
 
-		अगर (v4_m_spec->ip4src) अणु
+		if (v4_m_spec->ip4src) {
 			match->key.ipv4.src = v4_spec->ip4src;
 			match->mask.ipv4.src = v4_m_spec->ip4src;
-		पूर्ण
-		अगर (v4_m_spec->ip4dst) अणु
+		}
+		if (v4_m_spec->ip4dst) {
 			match->key.ipv4.dst = v4_spec->ip4dst;
 			match->mask.ipv4.dst = v4_m_spec->ip4dst;
-		पूर्ण
-		अगर (v4_m_spec->ip4src ||
-		    v4_m_spec->ip4dst) अणु
+		}
+		if (v4_m_spec->ip4src ||
+		    v4_m_spec->ip4dst) {
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_IPV4_ADDRS);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_IPV4_ADDRS] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, ipv4);
-		पूर्ण
-		अगर (v4_m_spec->psrc) अणु
+				offsetof(struct ethtool_rx_flow_key, ipv4);
+		}
+		if (v4_m_spec->psrc) {
 			match->key.tp.src = v4_spec->psrc;
 			match->mask.tp.src = v4_m_spec->psrc;
-		पूर्ण
-		अगर (v4_m_spec->pdst) अणु
+		}
+		if (v4_m_spec->pdst) {
 			match->key.tp.dst = v4_spec->pdst;
 			match->mask.tp.dst = v4_m_spec->pdst;
-		पूर्ण
-		अगर (v4_m_spec->psrc ||
-		    v4_m_spec->pdst) अणु
+		}
+		if (v4_m_spec->psrc ||
+		    v4_m_spec->pdst) {
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_PORTS);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_PORTS] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, tp);
-		पूर्ण
-		अगर (v4_m_spec->tos) अणु
+				offsetof(struct ethtool_rx_flow_key, tp);
+		}
+		if (v4_m_spec->tos) {
 			match->key.ip.tos = v4_spec->tos;
 			match->mask.ip.tos = v4_m_spec->tos;
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_IP);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_IP] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, ip);
-		पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल TCP_V6_FLOW:
-	हाल UDP_V6_FLOW: अणु
-		स्थिर काष्ठा ethtool_tcpip6_spec *v6_spec, *v6_m_spec;
+				offsetof(struct ethtool_rx_flow_key, ip);
+		}
+		}
+		break;
+	case TCP_V6_FLOW:
+	case UDP_V6_FLOW: {
+		const struct ethtool_tcpip6_spec *v6_spec, *v6_m_spec;
 
 		match->key.basic.n_proto = htons(ETH_P_IPV6);
 
 		v6_spec = &fs->h_u.tcp_ip6_spec;
 		v6_m_spec = &fs->m_u.tcp_ip6_spec;
-		अगर (स_भेद(v6_m_spec->ip6src, &zero_addr, माप(zero_addr))) अणु
-			स_नकल(&match->key.ipv6.src, v6_spec->ip6src,
-			       माप(match->key.ipv6.src));
-			स_नकल(&match->mask.ipv6.src, v6_m_spec->ip6src,
-			       माप(match->mask.ipv6.src));
-		पूर्ण
-		अगर (स_भेद(v6_m_spec->ip6dst, &zero_addr, माप(zero_addr))) अणु
-			स_नकल(&match->key.ipv6.dst, v6_spec->ip6dst,
-			       माप(match->key.ipv6.dst));
-			स_नकल(&match->mask.ipv6.dst, v6_m_spec->ip6dst,
-			       माप(match->mask.ipv6.dst));
-		पूर्ण
-		अगर (स_भेद(v6_m_spec->ip6src, &zero_addr, माप(zero_addr)) ||
-		    स_भेद(v6_m_spec->ip6dst, &zero_addr, माप(zero_addr))) अणु
+		if (memcmp(v6_m_spec->ip6src, &zero_addr, sizeof(zero_addr))) {
+			memcpy(&match->key.ipv6.src, v6_spec->ip6src,
+			       sizeof(match->key.ipv6.src));
+			memcpy(&match->mask.ipv6.src, v6_m_spec->ip6src,
+			       sizeof(match->mask.ipv6.src));
+		}
+		if (memcmp(v6_m_spec->ip6dst, &zero_addr, sizeof(zero_addr))) {
+			memcpy(&match->key.ipv6.dst, v6_spec->ip6dst,
+			       sizeof(match->key.ipv6.dst));
+			memcpy(&match->mask.ipv6.dst, v6_m_spec->ip6dst,
+			       sizeof(match->mask.ipv6.dst));
+		}
+		if (memcmp(v6_m_spec->ip6src, &zero_addr, sizeof(zero_addr)) ||
+		    memcmp(v6_m_spec->ip6dst, &zero_addr, sizeof(zero_addr))) {
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_IPV6_ADDRS);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_IPV6_ADDRS] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, ipv6);
-		पूर्ण
-		अगर (v6_m_spec->psrc) अणु
+				offsetof(struct ethtool_rx_flow_key, ipv6);
+		}
+		if (v6_m_spec->psrc) {
 			match->key.tp.src = v6_spec->psrc;
 			match->mask.tp.src = v6_m_spec->psrc;
-		पूर्ण
-		अगर (v6_m_spec->pdst) अणु
+		}
+		if (v6_m_spec->pdst) {
 			match->key.tp.dst = v6_spec->pdst;
 			match->mask.tp.dst = v6_m_spec->pdst;
-		पूर्ण
-		अगर (v6_m_spec->psrc ||
-		    v6_m_spec->pdst) अणु
+		}
+		if (v6_m_spec->psrc ||
+		    v6_m_spec->pdst) {
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_PORTS);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_PORTS] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, tp);
-		पूर्ण
-		अगर (v6_m_spec->tclass) अणु
+				offsetof(struct ethtool_rx_flow_key, tp);
+		}
+		if (v6_m_spec->tclass) {
 			match->key.ip.tos = v6_spec->tclass;
 			match->mask.ip.tos = v6_m_spec->tclass;
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_IP);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_IP] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, ip);
-		पूर्ण
-		पूर्ण
-		अवरोध;
-	शेष:
+				offsetof(struct ethtool_rx_flow_key, ip);
+		}
+		}
+		break;
+	default:
 		ethtool_rx_flow_rule_destroy(flow);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	चयन (fs->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS)) अणु
-	हाल TCP_V4_FLOW:
-	हाल TCP_V6_FLOW:
+	switch (fs->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS)) {
+	case TCP_V4_FLOW:
+	case TCP_V6_FLOW:
 		match->key.basic.ip_proto = IPPROTO_TCP;
 		match->mask.basic.ip_proto = 0xff;
-		अवरोध;
-	हाल UDP_V4_FLOW:
-	हाल UDP_V6_FLOW:
+		break;
+	case UDP_V4_FLOW:
+	case UDP_V6_FLOW:
 		match->key.basic.ip_proto = IPPROTO_UDP;
 		match->mask.basic.ip_proto = 0xff;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	match->dissector.used_keys |= BIT(FLOW_DISSECTOR_KEY_BASIC);
 	match->dissector.offset[FLOW_DISSECTOR_KEY_BASIC] =
-		दुरत्व(काष्ठा ethtool_rx_flow_key, basic);
+		offsetof(struct ethtool_rx_flow_key, basic);
 
-	अगर (fs->flow_type & FLOW_EXT) अणु
-		स्थिर काष्ठा ethtool_flow_ext *ext_h_spec = &fs->h_ext;
-		स्थिर काष्ठा ethtool_flow_ext *ext_m_spec = &fs->m_ext;
+	if (fs->flow_type & FLOW_EXT) {
+		const struct ethtool_flow_ext *ext_h_spec = &fs->h_ext;
+		const struct ethtool_flow_ext *ext_m_spec = &fs->m_ext;
 
-		अगर (ext_m_spec->vlan_etype) अणु
+		if (ext_m_spec->vlan_etype) {
 			match->key.vlan.vlan_tpid = ext_h_spec->vlan_etype;
 			match->mask.vlan.vlan_tpid = ext_m_spec->vlan_etype;
-		पूर्ण
+		}
 
-		अगर (ext_m_spec->vlan_tci) अणु
+		if (ext_m_spec->vlan_tci) {
 			match->key.vlan.vlan_id =
 				ntohs(ext_h_spec->vlan_tci) & 0x0fff;
 			match->mask.vlan.vlan_id =
@@ -3090,56 +3089,56 @@ ethtool_rx_flow_rule_create(स्थिर काष्ठा ethtool_rx_flow_s
 				(ntohs(ext_h_spec->vlan_tci) & 0xe000) >> 13;
 			match->mask.vlan.vlan_priority =
 				(ntohs(ext_m_spec->vlan_tci) & 0xe000) >> 13;
-		पूर्ण
+		}
 
-		अगर (ext_m_spec->vlan_etype ||
-		    ext_m_spec->vlan_tci) अणु
+		if (ext_m_spec->vlan_etype ||
+		    ext_m_spec->vlan_tci) {
 			match->dissector.used_keys |=
 				BIT(FLOW_DISSECTOR_KEY_VLAN);
 			match->dissector.offset[FLOW_DISSECTOR_KEY_VLAN] =
-				दुरत्व(काष्ठा ethtool_rx_flow_key, vlan);
-		पूर्ण
-	पूर्ण
-	अगर (fs->flow_type & FLOW_MAC_EXT) अणु
-		स्थिर काष्ठा ethtool_flow_ext *ext_h_spec = &fs->h_ext;
-		स्थिर काष्ठा ethtool_flow_ext *ext_m_spec = &fs->m_ext;
+				offsetof(struct ethtool_rx_flow_key, vlan);
+		}
+	}
+	if (fs->flow_type & FLOW_MAC_EXT) {
+		const struct ethtool_flow_ext *ext_h_spec = &fs->h_ext;
+		const struct ethtool_flow_ext *ext_m_spec = &fs->m_ext;
 
-		स_नकल(match->key.eth_addrs.dst, ext_h_spec->h_dest,
+		memcpy(match->key.eth_addrs.dst, ext_h_spec->h_dest,
 		       ETH_ALEN);
-		स_नकल(match->mask.eth_addrs.dst, ext_m_spec->h_dest,
+		memcpy(match->mask.eth_addrs.dst, ext_m_spec->h_dest,
 		       ETH_ALEN);
 
 		match->dissector.used_keys |=
 			BIT(FLOW_DISSECTOR_KEY_ETH_ADDRS);
 		match->dissector.offset[FLOW_DISSECTOR_KEY_ETH_ADDRS] =
-			दुरत्व(काष्ठा ethtool_rx_flow_key, eth_addrs);
-	पूर्ण
+			offsetof(struct ethtool_rx_flow_key, eth_addrs);
+	}
 
 	act = &flow->rule->action.entries[0];
-	चयन (fs->ring_cookie) अणु
-	हाल RX_CLS_FLOW_DISC:
+	switch (fs->ring_cookie) {
+	case RX_CLS_FLOW_DISC:
 		act->id = FLOW_ACTION_DROP;
-		अवरोध;
-	हाल RX_CLS_FLOW_WAKE:
+		break;
+	case RX_CLS_FLOW_WAKE:
 		act->id = FLOW_ACTION_WAKE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		act->id = FLOW_ACTION_QUEUE;
-		अगर (fs->flow_type & FLOW_RSS)
+		if (fs->flow_type & FLOW_RSS)
 			act->queue.ctx = input->rss_ctx;
 
 		act->queue.vf = ethtool_get_flow_spec_ring_vf(fs->ring_cookie);
 		act->queue.index = ethtool_get_flow_spec_ring(fs->ring_cookie);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस flow;
-पूर्ण
+	return flow;
+}
 EXPORT_SYMBOL(ethtool_rx_flow_rule_create);
 
-व्योम ethtool_rx_flow_rule_destroy(काष्ठा ethtool_rx_flow_rule *flow)
-अणु
-	kमुक्त(flow->rule);
-	kमुक्त(flow);
-पूर्ण
+void ethtool_rx_flow_rule_destroy(struct ethtool_rx_flow_rule *flow)
+{
+	kfree(flow->rule);
+	kfree(flow);
+}
 EXPORT_SYMBOL(ethtool_rx_flow_rule_destroy);

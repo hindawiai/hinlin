@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2014 Marvell Technology Group Ltd.
  *
- * Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com>
+ * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
+#include <asm/div64.h>
 
-#समावेश "berlin2-div.h"
-#समावेश "berlin2-pll.h"
+#include "berlin2-div.h"
+#include "berlin2-pll.h"
 
-काष्ठा berlin2_pll अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *base;
-	काष्ठा berlin2_pll_map map;
-पूर्ण;
+struct berlin2_pll {
+	struct clk_hw hw;
+	void __iomem *base;
+	struct berlin2_pll_map map;
+};
 
-#घोषणा to_berlin2_pll(hw) container_of(hw, काष्ठा berlin2_pll, hw)
+#define to_berlin2_pll(hw) container_of(hw, struct berlin2_pll, hw)
 
-#घोषणा SPLL_CTRL0	0x00
-#घोषणा SPLL_CTRL1	0x04
-#घोषणा SPLL_CTRL2	0x08
-#घोषणा SPLL_CTRL3	0x0c
-#घोषणा SPLL_CTRL4	0x10
+#define SPLL_CTRL0	0x00
+#define SPLL_CTRL1	0x04
+#define SPLL_CTRL2	0x08
+#define SPLL_CTRL3	0x0c
+#define SPLL_CTRL4	0x10
 
-#घोषणा FBDIV_MASK	0x1ff
-#घोषणा RFDIV_MASK	0x1f
-#घोषणा DIVSEL_MASK	0xf
+#define FBDIV_MASK	0x1ff
+#define RFDIV_MASK	0x1f
+#define DIVSEL_MASK	0xf
 
 /*
- * The output frequency क्रमmula क्रम the pll is:
- * clkout = fbभाग / refभाग * parent / vcoभाग
+ * The output frequency formula for the pll is:
+ * clkout = fbdiv / refdiv * parent / vcodiv
  */
-अटल अचिन्हित दीर्घ
-berlin2_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा berlin2_pll *pll = to_berlin2_pll(hw);
-	काष्ठा berlin2_pll_map *map = &pll->map;
-	u32 val, fbभाग, rfभाग, vcoभागsel, vcoभाग;
+static unsigned long
+berlin2_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct berlin2_pll *pll = to_berlin2_pll(hw);
+	struct berlin2_pll_map *map = &pll->map;
+	u32 val, fbdiv, rfdiv, vcodivsel, vcodiv;
 	u64 rate = parent_rate;
 
-	val = पढ़ोl_relaxed(pll->base + SPLL_CTRL0);
-	fbभाग = (val >> map->fbभाग_shअगरt) & FBDIV_MASK;
-	rfभाग = (val >> map->rfभाग_shअगरt) & RFDIV_MASK;
-	अगर (rfभाग == 0) अणु
+	val = readl_relaxed(pll->base + SPLL_CTRL0);
+	fbdiv = (val >> map->fbdiv_shift) & FBDIV_MASK;
+	rfdiv = (val >> map->rfdiv_shift) & RFDIV_MASK;
+	if (rfdiv == 0) {
 		pr_warn("%s has zero rfdiv\n", clk_hw_get_name(hw));
-		rfभाग = 1;
-	पूर्ण
+		rfdiv = 1;
+	}
 
-	val = पढ़ोl_relaxed(pll->base + SPLL_CTRL1);
-	vcoभागsel = (val >> map->भागsel_shअगरt) & DIVSEL_MASK;
-	vcoभाग = map->vcoभाग[vcoभागsel];
-	अगर (vcoभाग == 0) अणु
+	val = readl_relaxed(pll->base + SPLL_CTRL1);
+	vcodivsel = (val >> map->divsel_shift) & DIVSEL_MASK;
+	vcodiv = map->vcodiv[vcodivsel];
+	if (vcodiv == 0) {
 		pr_warn("%s has zero vcodiv (index %d)\n",
-			clk_hw_get_name(hw), vcoभागsel);
-		vcoभाग = 1;
-	पूर्ण
+			clk_hw_get_name(hw), vcodivsel);
+		vcodiv = 1;
+	}
 
-	rate *= fbभाग * map->mult;
-	करो_भाग(rate, rfभाग * vcoभाग);
+	rate *= fbdiv * map->mult;
+	do_div(rate, rfdiv * vcodiv);
 
-	वापस (अचिन्हित दीर्घ)rate;
-पूर्ण
+	return (unsigned long)rate;
+}
 
-अटल स्थिर काष्ठा clk_ops berlin2_pll_ops = अणु
+static const struct clk_ops berlin2_pll_ops = {
 	.recalc_rate	= berlin2_pll_recalc_rate,
-पूर्ण;
+};
 
-पूर्णांक __init
-berlin2_pll_रेजिस्टर(स्थिर काष्ठा berlin2_pll_map *map,
-		     व्योम __iomem *base, स्थिर अक्षर *name,
-		     स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा berlin2_pll *pll;
+int __init
+berlin2_pll_register(const struct berlin2_pll_map *map,
+		     void __iomem *base, const char *name,
+		     const char *parent_name, unsigned long flags)
+{
+	struct clk_init_data init;
+	struct berlin2_pll *pll;
 
-	pll = kzalloc(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस -ENOMEM;
+	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return -ENOMEM;
 
-	/* copy pll_map to allow __initस्थिर */
-	स_नकल(&pll->map, map, माप(*map));
+	/* copy pll_map to allow __initconst */
+	memcpy(&pll->map, map, sizeof(*map));
 	pll->base = base;
 	pll->hw.init = &init;
 	init.name = name;
@@ -96,5 +95,5 @@ berlin2_pll_रेजिस्टर(स्थिर काष्ठा berlin2_
 	init.num_parents = 1;
 	init.flags = flags;
 
-	वापस clk_hw_रेजिस्टर(शून्य, &pll->hw);
-पूर्ण
+	return clk_hw_register(NULL, &pll->hw);
+}

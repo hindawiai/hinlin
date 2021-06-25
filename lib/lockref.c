@@ -1,221 +1,220 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/export.h>
-#समावेश <linux/lockref.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/export.h>
+#include <linux/lockref.h>
 
-#अगर USE_CMPXCHG_LOCKREF
+#if USE_CMPXCHG_LOCKREF
 
 /*
- * Note that the "cmpxchg()" reloads the "old" value क्रम the
- * failure हाल.
+ * Note that the "cmpxchg()" reloads the "old" value for the
+ * failure case.
  */
-#घोषणा CMPXCHG_LOOP(CODE, SUCCESS) करो अणु					\
-	पूर्णांक retry = 100;							\
-	काष्ठा lockref old;							\
-	BUILD_BUG_ON(माप(old) != 8);						\
+#define CMPXCHG_LOOP(CODE, SUCCESS) do {					\
+	int retry = 100;							\
+	struct lockref old;							\
+	BUILD_BUG_ON(sizeof(old) != 8);						\
 	old.lock_count = READ_ONCE(lockref->lock_count);			\
-	जबतक (likely(arch_spin_value_unlocked(old.lock.rlock.raw_lock))) अणु  	\
-		काष्ठा lockref new = old, prev = old;				\
+	while (likely(arch_spin_value_unlocked(old.lock.rlock.raw_lock))) {  	\
+		struct lockref new = old, prev = old;				\
 		CODE								\
 		old.lock_count = cmpxchg64_relaxed(&lockref->lock_count,	\
 						   old.lock_count,		\
 						   new.lock_count);		\
-		अगर (likely(old.lock_count == prev.lock_count)) अणु		\
+		if (likely(old.lock_count == prev.lock_count)) {		\
 			SUCCESS;						\
-		पूर्ण								\
-		अगर (!--retry)							\
-			अवरोध;							\
+		}								\
+		if (!--retry)							\
+			break;							\
 		cpu_relax();							\
-	पूर्ण									\
-पूर्ण जबतक (0)
+	}									\
+} while (0)
 
-#अन्यथा
+#else
 
-#घोषणा CMPXCHG_LOOP(CODE, SUCCESS) करो अणु पूर्ण जबतक (0)
+#define CMPXCHG_LOOP(CODE, SUCCESS) do { } while (0)
 
-#पूर्ण_अगर
+#endif
 
 /**
  * lockref_get - Increments reference count unconditionally
- * @lockref: poपूर्णांकer to lockref काष्ठाure
+ * @lockref: pointer to lockref structure
  *
- * This operation is only valid अगर you alपढ़ोy hold a reference
+ * This operation is only valid if you already hold a reference
  * to the object, so you know the count cannot be zero.
  */
-व्योम lockref_get(काष्ठा lockref *lockref)
-अणु
+void lockref_get(struct lockref *lockref)
+{
 	CMPXCHG_LOOP(
 		new.count++;
 	,
-		वापस;
+		return;
 	);
 
 	spin_lock(&lockref->lock);
 	lockref->count++;
 	spin_unlock(&lockref->lock);
-पूर्ण
+}
 EXPORT_SYMBOL(lockref_get);
 
 /**
  * lockref_get_not_zero - Increments count unless the count is 0 or dead
- * @lockref: poपूर्णांकer to lockref काष्ठाure
- * Return: 1 अगर count updated successfully or 0 अगर count was zero
+ * @lockref: pointer to lockref structure
+ * Return: 1 if count updated successfully or 0 if count was zero
  */
-पूर्णांक lockref_get_not_zero(काष्ठा lockref *lockref)
-अणु
-	पूर्णांक retval;
+int lockref_get_not_zero(struct lockref *lockref)
+{
+	int retval;
 
 	CMPXCHG_LOOP(
 		new.count++;
-		अगर (old.count <= 0)
-			वापस 0;
+		if (old.count <= 0)
+			return 0;
 	,
-		वापस 1;
+		return 1;
 	);
 
 	spin_lock(&lockref->lock);
 	retval = 0;
-	अगर (lockref->count > 0) अणु
+	if (lockref->count > 0) {
 		lockref->count++;
 		retval = 1;
-	पूर्ण
+	}
 	spin_unlock(&lockref->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(lockref_get_not_zero);
 
 /**
- * lockref_put_not_zero - Decrements count unless count <= 1 beक्रमe decrement
- * @lockref: poपूर्णांकer to lockref काष्ठाure
- * Return: 1 अगर count updated successfully or 0 अगर count would become zero
+ * lockref_put_not_zero - Decrements count unless count <= 1 before decrement
+ * @lockref: pointer to lockref structure
+ * Return: 1 if count updated successfully or 0 if count would become zero
  */
-पूर्णांक lockref_put_not_zero(काष्ठा lockref *lockref)
-अणु
-	पूर्णांक retval;
+int lockref_put_not_zero(struct lockref *lockref)
+{
+	int retval;
 
 	CMPXCHG_LOOP(
 		new.count--;
-		अगर (old.count <= 1)
-			वापस 0;
+		if (old.count <= 1)
+			return 0;
 	,
-		वापस 1;
+		return 1;
 	);
 
 	spin_lock(&lockref->lock);
 	retval = 0;
-	अगर (lockref->count > 1) अणु
+	if (lockref->count > 1) {
 		lockref->count--;
 		retval = 1;
-	पूर्ण
+	}
 	spin_unlock(&lockref->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(lockref_put_not_zero);
 
 /**
  * lockref_get_or_lock - Increments count unless the count is 0 or dead
- * @lockref: poपूर्णांकer to lockref काष्ठाure
- * Return: 1 अगर count updated successfully or 0 अगर count was zero
+ * @lockref: pointer to lockref structure
+ * Return: 1 if count updated successfully or 0 if count was zero
  * and we got the lock instead.
  */
-पूर्णांक lockref_get_or_lock(काष्ठा lockref *lockref)
-अणु
+int lockref_get_or_lock(struct lockref *lockref)
+{
 	CMPXCHG_LOOP(
 		new.count++;
-		अगर (old.count <= 0)
-			अवरोध;
+		if (old.count <= 0)
+			break;
 	,
-		वापस 1;
+		return 1;
 	);
 
 	spin_lock(&lockref->lock);
-	अगर (lockref->count <= 0)
-		वापस 0;
+	if (lockref->count <= 0)
+		return 0;
 	lockref->count++;
 	spin_unlock(&lockref->lock);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(lockref_get_or_lock);
 
 /**
- * lockref_put_वापस - Decrement reference count अगर possible
- * @lockref: poपूर्णांकer to lockref काष्ठाure
+ * lockref_put_return - Decrement reference count if possible
+ * @lockref: pointer to lockref structure
  *
- * Decrement the reference count and वापस the new value.
- * If the lockref was dead or locked, वापस an error.
+ * Decrement the reference count and return the new value.
+ * If the lockref was dead or locked, return an error.
  */
-पूर्णांक lockref_put_वापस(काष्ठा lockref *lockref)
-अणु
+int lockref_put_return(struct lockref *lockref)
+{
 	CMPXCHG_LOOP(
 		new.count--;
-		अगर (old.count <= 0)
-			वापस -1;
+		if (old.count <= 0)
+			return -1;
 	,
-		वापस new.count;
+		return new.count;
 	);
-	वापस -1;
-पूर्ण
-EXPORT_SYMBOL(lockref_put_वापस);
+	return -1;
+}
+EXPORT_SYMBOL(lockref_put_return);
 
 /**
- * lockref_put_or_lock - decrements count unless count <= 1 beक्रमe decrement
- * @lockref: poपूर्णांकer to lockref काष्ठाure
- * Return: 1 अगर count updated successfully or 0 अगर count <= 1 and lock taken
+ * lockref_put_or_lock - decrements count unless count <= 1 before decrement
+ * @lockref: pointer to lockref structure
+ * Return: 1 if count updated successfully or 0 if count <= 1 and lock taken
  */
-पूर्णांक lockref_put_or_lock(काष्ठा lockref *lockref)
-अणु
+int lockref_put_or_lock(struct lockref *lockref)
+{
 	CMPXCHG_LOOP(
 		new.count--;
-		अगर (old.count <= 1)
-			अवरोध;
+		if (old.count <= 1)
+			break;
 	,
-		वापस 1;
+		return 1;
 	);
 
 	spin_lock(&lockref->lock);
-	अगर (lockref->count <= 1)
-		वापस 0;
+	if (lockref->count <= 1)
+		return 0;
 	lockref->count--;
 	spin_unlock(&lockref->lock);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(lockref_put_or_lock);
 
 /**
  * lockref_mark_dead - mark lockref dead
- * @lockref: poपूर्णांकer to lockref काष्ठाure
+ * @lockref: pointer to lockref structure
  */
-व्योम lockref_mark_dead(काष्ठा lockref *lockref)
-अणु
-	निश्चित_spin_locked(&lockref->lock);
+void lockref_mark_dead(struct lockref *lockref)
+{
+	assert_spin_locked(&lockref->lock);
 	lockref->count = -128;
-पूर्ण
+}
 EXPORT_SYMBOL(lockref_mark_dead);
 
 /**
  * lockref_get_not_dead - Increments count unless the ref is dead
- * @lockref: poपूर्णांकer to lockref काष्ठाure
- * Return: 1 अगर count updated successfully or 0 अगर lockref was dead
+ * @lockref: pointer to lockref structure
+ * Return: 1 if count updated successfully or 0 if lockref was dead
  */
-पूर्णांक lockref_get_not_dead(काष्ठा lockref *lockref)
-अणु
-	पूर्णांक retval;
+int lockref_get_not_dead(struct lockref *lockref)
+{
+	int retval;
 
 	CMPXCHG_LOOP(
 		new.count++;
-		अगर (old.count < 0)
-			वापस 0;
+		if (old.count < 0)
+			return 0;
 	,
-		वापस 1;
+		return 1;
 	);
 
 	spin_lock(&lockref->lock);
 	retval = 0;
-	अगर (lockref->count >= 0) अणु
+	if (lockref->count >= 0) {
 		lockref->count++;
 		retval = 1;
-	पूर्ण
+	}
 	spin_unlock(&lockref->lock);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(lockref_get_not_dead);

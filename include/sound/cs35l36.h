@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * linux/sound/cs35l36.h -- Platक्रमm data क्रम CS35L36
+ * linux/sound/cs35l36.h -- Platform data for CS35L36
  *
  * Copyright 2018 Cirrus Logic, Inc.
  *
@@ -9,36 +8,36 @@
  *
  */
 
-#अगर_अघोषित __CS35L36_H
-#घोषणा __CS35L36_H
+#ifndef __CS35L36_H
+#define __CS35L36_H
 
-काष्ठा cs35l36_vpbr_cfg अणु
+struct cs35l36_vpbr_cfg {
 	bool is_present;
 	bool vpbr_en;
-	पूर्णांक vpbr_thld;
-	पूर्णांक vpbr_atk_rate;
-	पूर्णांक vpbr_atk_vol;
-	पूर्णांक vpbr_max_attn;
-	पूर्णांक vpbr_रुको;
-	पूर्णांक vpbr_rel_rate;
-	पूर्णांक vpbr_mute_en;
-पूर्ण;
+	int vpbr_thld;
+	int vpbr_atk_rate;
+	int vpbr_atk_vol;
+	int vpbr_max_attn;
+	int vpbr_wait;
+	int vpbr_rel_rate;
+	int vpbr_mute_en;
+};
 
-काष्ठा cs35l36_platक्रमm_data अणु
+struct cs35l36_platform_data {
 	bool multi_amp_mode;
 	bool dcm_mode;
 	bool amp_pcm_inv;
 	bool imon_pol_inv;
 	bool vmon_pol_inv;
-	पूर्णांक boost_ind;
-	पूर्णांक bst_vctl;
-	पूर्णांक bst_vctl_sel;
-	पूर्णांक bst_ipk;
-	bool बाह्य_boost;
-	पूर्णांक temp_warn_thld;
-	पूर्णांक irq_drv_sel;
-	पूर्णांक irq_gpio_sel;
-	काष्ठा cs35l36_vpbr_cfg vpbr_config;
-पूर्ण;
+	int boost_ind;
+	int bst_vctl;
+	int bst_vctl_sel;
+	int bst_ipk;
+	bool extern_boost;
+	int temp_warn_thld;
+	int irq_drv_sel;
+	int irq_gpio_sel;
+	struct cs35l36_vpbr_cfg vpbr_config;
+};
 
-#पूर्ण_अगर /* __CS35L36_H */
+#endif /* __CS35L36_H */

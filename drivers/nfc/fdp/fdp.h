@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* -------------------------------------------------------------------------
  * Copyright (C) 2014-2016, Intel Corporation
  *
  * -------------------------------------------------------------------------
  */
 
-#अगर_अघोषित __LOCAL_FDP_H_
-#घोषणा __LOCAL_FDP_H_
+#ifndef __LOCAL_FDP_H_
+#define __LOCAL_FDP_H_
 
-#समावेश <net/nfc/nci_core.h>
-#समावेश <linux/gpio/consumer.h>
+#include <net/nfc/nci_core.h>
+#include <linux/gpio/consumer.h>
 
-काष्ठा fdp_i2c_phy अणु
-	काष्ठा i2c_client *i2c_dev;
-	काष्ठा gpio_desc *घातer_gpio;
-	काष्ठा nci_dev *ndev;
+struct fdp_i2c_phy {
+	struct i2c_client *i2c_dev;
+	struct gpio_desc *power_gpio;
+	struct nci_dev *ndev;
 
-	/* < 0 अगर i2c error occurred */
-	पूर्णांक hard_fault;
-	uपूर्णांक16_t next_पढ़ो_size;
-पूर्ण;
+	/* < 0 if i2c error occurred */
+	int hard_fault;
+	uint16_t next_read_size;
+};
 
-पूर्णांक fdp_nci_probe(काष्ठा fdp_i2c_phy *phy, काष्ठा nfc_phy_ops *phy_ops,
-		  काष्ठा nci_dev **ndev, पूर्णांक tx_headroom, पूर्णांक tx_tailroom,
-		  u8 घड़ी_प्रकारype, u32 घड़ी_freq, u8 *fw_vsc_cfg);
-व्योम fdp_nci_हटाओ(काष्ठा nci_dev *ndev);
-पूर्णांक fdp_nci_recv_frame(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb);
+int fdp_nci_probe(struct fdp_i2c_phy *phy, struct nfc_phy_ops *phy_ops,
+		  struct nci_dev **ndev, int tx_headroom, int tx_tailroom,
+		  u8 clock_type, u32 clock_freq, u8 *fw_vsc_cfg);
+void fdp_nci_remove(struct nci_dev *ndev);
+int fdp_nci_recv_frame(struct nci_dev *ndev, struct sk_buff *skb);
 
-#पूर्ण_अगर /* __LOCAL_FDP_H_ */
+#endif /* __LOCAL_FDP_H_ */

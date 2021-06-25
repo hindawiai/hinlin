@@ -1,130 +1,129 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#अगर_अघोषित HINIC_CMDQ_H
-#घोषणा HINIC_CMDQ_H
+#ifndef HINIC_CMDQ_H
+#define HINIC_CMDQ_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/pci.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/completion.h>
+#include <linux/pci.h>
 
-#समावेश "hinic_hw_if.h"
-#समावेश "hinic_hw_wq.h"
+#include "hinic_hw_if.h"
+#include "hinic_hw_wq.h"
 
-#घोषणा HINIC_CMDQ_CTXT_CURR_WQE_PAGE_PFN_SHIFT         0
-#घोषणा HINIC_CMDQ_CTXT_EQ_ID_SHIFT                     56
-#घोषणा HINIC_CMDQ_CTXT_CEQ_ARM_SHIFT                   61
-#घोषणा HINIC_CMDQ_CTXT_CEQ_EN_SHIFT                    62
-#घोषणा HINIC_CMDQ_CTXT_WRAPPED_SHIFT                   63
+#define HINIC_CMDQ_CTXT_CURR_WQE_PAGE_PFN_SHIFT         0
+#define HINIC_CMDQ_CTXT_EQ_ID_SHIFT                     56
+#define HINIC_CMDQ_CTXT_CEQ_ARM_SHIFT                   61
+#define HINIC_CMDQ_CTXT_CEQ_EN_SHIFT                    62
+#define HINIC_CMDQ_CTXT_WRAPPED_SHIFT                   63
 
-#घोषणा HINIC_CMDQ_CTXT_CURR_WQE_PAGE_PFN_MASK          0xFFFFFFFFFFFFF
-#घोषणा HINIC_CMDQ_CTXT_EQ_ID_MASK                      0x1F
-#घोषणा HINIC_CMDQ_CTXT_CEQ_ARM_MASK                    0x1
-#घोषणा HINIC_CMDQ_CTXT_CEQ_EN_MASK                     0x1
-#घोषणा HINIC_CMDQ_CTXT_WRAPPED_MASK                    0x1
+#define HINIC_CMDQ_CTXT_CURR_WQE_PAGE_PFN_MASK          0xFFFFFFFFFFFFF
+#define HINIC_CMDQ_CTXT_EQ_ID_MASK                      0x1F
+#define HINIC_CMDQ_CTXT_CEQ_ARM_MASK                    0x1
+#define HINIC_CMDQ_CTXT_CEQ_EN_MASK                     0x1
+#define HINIC_CMDQ_CTXT_WRAPPED_MASK                    0x1
 
-#घोषणा HINIC_CMDQ_CTXT_PAGE_INFO_SET(val, member)      \
+#define HINIC_CMDQ_CTXT_PAGE_INFO_SET(val, member)      \
 			(((u64)(val) & HINIC_CMDQ_CTXT_##member##_MASK) \
 			 << HINIC_CMDQ_CTXT_##member##_SHIFT)
 
-#घोषणा HINIC_CMDQ_CTXT_PAGE_INFO_GET(val, member)	\
+#define HINIC_CMDQ_CTXT_PAGE_INFO_GET(val, member)	\
 			(((u64)(val) >> HINIC_CMDQ_CTXT_##member##_SHIFT) \
 			 & HINIC_CMDQ_CTXT_##member##_MASK)
 
-#घोषणा HINIC_CMDQ_CTXT_PAGE_INFO_CLEAR(val, member)    \
+#define HINIC_CMDQ_CTXT_PAGE_INFO_CLEAR(val, member)    \
 			((val) & (~((u64)HINIC_CMDQ_CTXT_##member##_MASK \
 			 << HINIC_CMDQ_CTXT_##member##_SHIFT)))
 
-#घोषणा HINIC_CMDQ_CTXT_WQ_BLOCK_PFN_SHIFT              0
-#घोषणा HINIC_CMDQ_CTXT_CI_SHIFT                        52
+#define HINIC_CMDQ_CTXT_WQ_BLOCK_PFN_SHIFT              0
+#define HINIC_CMDQ_CTXT_CI_SHIFT                        52
 
-#घोषणा HINIC_CMDQ_CTXT_WQ_BLOCK_PFN_MASK               0xFFFFFFFFFFFFF
-#घोषणा HINIC_CMDQ_CTXT_CI_MASK                         0xFFF
+#define HINIC_CMDQ_CTXT_WQ_BLOCK_PFN_MASK               0xFFFFFFFFFFFFF
+#define HINIC_CMDQ_CTXT_CI_MASK                         0xFFF
 
-#घोषणा HINIC_CMDQ_CTXT_BLOCK_INFO_SET(val, member)     \
+#define HINIC_CMDQ_CTXT_BLOCK_INFO_SET(val, member)     \
 			(((u64)(val) & HINIC_CMDQ_CTXT_##member##_MASK) \
 			 << HINIC_CMDQ_CTXT_##member##_SHIFT)
 
-#घोषणा HINIC_CMDQ_CTXT_BLOCK_INFO_GET(val, member)	\
+#define HINIC_CMDQ_CTXT_BLOCK_INFO_GET(val, member)	\
 			(((u64)(val) >> HINIC_CMDQ_CTXT_##member##_SHIFT) \
 			& HINIC_CMDQ_CTXT_##member##_MASK)
 
-#घोषणा HINIC_CMDQ_CTXT_BLOCK_INFO_CLEAR(val, member)   \
+#define HINIC_CMDQ_CTXT_BLOCK_INFO_CLEAR(val, member)   \
 			((val) & (~((u64)HINIC_CMDQ_CTXT_##member##_MASK \
 			 << HINIC_CMDQ_CTXT_##member##_SHIFT)))
 
-#घोषणा HINIC_SAVED_DATA_ARM_SHIFT                      31
+#define HINIC_SAVED_DATA_ARM_SHIFT                      31
 
-#घोषणा HINIC_SAVED_DATA_ARM_MASK                       0x1
+#define HINIC_SAVED_DATA_ARM_MASK                       0x1
 
-#घोषणा HINIC_SAVED_DATA_SET(val, member)               \
+#define HINIC_SAVED_DATA_SET(val, member)               \
 			(((u32)(val) & HINIC_SAVED_DATA_##member##_MASK) \
 			 << HINIC_SAVED_DATA_##member##_SHIFT)
 
-#घोषणा HINIC_SAVED_DATA_GET(val, member)               \
+#define HINIC_SAVED_DATA_GET(val, member)               \
 			(((val) >> HINIC_SAVED_DATA_##member##_SHIFT) \
 			 & HINIC_SAVED_DATA_##member##_MASK)
 
-#घोषणा HINIC_SAVED_DATA_CLEAR(val, member)             \
+#define HINIC_SAVED_DATA_CLEAR(val, member)             \
 			((val) & (~(HINIC_SAVED_DATA_##member##_MASK \
 			 << HINIC_SAVED_DATA_##member##_SHIFT)))
 
-#घोषणा HINIC_CMDQ_DB_INFO_HI_PROD_IDX_SHIFT            0
-#घोषणा HINIC_CMDQ_DB_INFO_PATH_SHIFT                   23
-#घोषणा HINIC_CMDQ_DB_INFO_CMDQ_TYPE_SHIFT              24
-#घोषणा HINIC_CMDQ_DB_INFO_DB_TYPE_SHIFT                27
+#define HINIC_CMDQ_DB_INFO_HI_PROD_IDX_SHIFT            0
+#define HINIC_CMDQ_DB_INFO_PATH_SHIFT                   23
+#define HINIC_CMDQ_DB_INFO_CMDQ_TYPE_SHIFT              24
+#define HINIC_CMDQ_DB_INFO_DB_TYPE_SHIFT                27
 
-#घोषणा HINIC_CMDQ_DB_INFO_HI_PROD_IDX_MASK             0xFF
-#घोषणा HINIC_CMDQ_DB_INFO_PATH_MASK                    0x1
-#घोषणा HINIC_CMDQ_DB_INFO_CMDQ_TYPE_MASK               0x7
-#घोषणा HINIC_CMDQ_DB_INFO_DB_TYPE_MASK                 0x1F
+#define HINIC_CMDQ_DB_INFO_HI_PROD_IDX_MASK             0xFF
+#define HINIC_CMDQ_DB_INFO_PATH_MASK                    0x1
+#define HINIC_CMDQ_DB_INFO_CMDQ_TYPE_MASK               0x7
+#define HINIC_CMDQ_DB_INFO_DB_TYPE_MASK                 0x1F
 
-#घोषणा HINIC_CMDQ_DB_INFO_SET(val, member)             \
+#define HINIC_CMDQ_DB_INFO_SET(val, member)             \
 			(((u32)(val) & HINIC_CMDQ_DB_INFO_##member##_MASK) \
 			 << HINIC_CMDQ_DB_INFO_##member##_SHIFT)
 
-#घोषणा HINIC_CMDQ_BUF_SIZE             2048
+#define HINIC_CMDQ_BUF_SIZE             2048
 
-#घोषणा HINIC_CMDQ_BUF_HW_RSVD          8
-#घोषणा HINIC_CMDQ_MAX_DATA_SIZE        (HINIC_CMDQ_BUF_SIZE - \
+#define HINIC_CMDQ_BUF_HW_RSVD          8
+#define HINIC_CMDQ_MAX_DATA_SIZE        (HINIC_CMDQ_BUF_SIZE - \
 					 HINIC_CMDQ_BUF_HW_RSVD)
 
-क्रमागत hinic_cmdq_type अणु
+enum hinic_cmdq_type {
 	HINIC_CMDQ_SYNC,
 
 	HINIC_MAX_CMDQ_TYPES,
-पूर्ण;
+};
 
-क्रमागत hinic_set_arm_qtype अणु
+enum hinic_set_arm_qtype {
 	HINIC_SET_ARM_CMDQ,
-पूर्ण;
+};
 
-क्रमागत hinic_cmd_ack_type अणु
+enum hinic_cmd_ack_type {
 	HINIC_CMD_ACK_TYPE_CMDQ,
-पूर्ण;
+};
 
-काष्ठा hinic_cmdq_buf अणु
-	व्योम            *buf;
+struct hinic_cmdq_buf {
+	void            *buf;
 	dma_addr_t      dma_addr;
-	माप_प्रकार          size;
-पूर्ण;
+	size_t          size;
+};
 
-काष्ठा hinic_cmdq_arm_bit अणु
+struct hinic_cmdq_arm_bit {
 	u32     q_type;
 	u32     q_id;
-पूर्ण;
+};
 
-काष्ठा hinic_cmdq_ctxt_info अणु
+struct hinic_cmdq_ctxt_info {
 	u64     curr_wqe_page_pfn;
 	u64     wq_block_pfn;
-पूर्ण;
+};
 
-काष्ठा hinic_cmdq_ctxt अणु
+struct hinic_cmdq_ctxt {
 	u8      status;
 	u8      version;
 	u8      rsvd0[6];
@@ -135,55 +134,55 @@
 
 	u8      rsvd2[4];
 
-	काष्ठा hinic_cmdq_ctxt_info ctxt_info;
-पूर्ण;
+	struct hinic_cmdq_ctxt_info ctxt_info;
+};
 
-काष्ठा hinic_cmdq अणु
-	काष्ठा hinic_hwdev      *hwdev;
+struct hinic_cmdq {
+	struct hinic_hwdev      *hwdev;
 
-	काष्ठा hinic_wq         *wq;
+	struct hinic_wq         *wq;
 
-	क्रमागत hinic_cmdq_type    cmdq_type;
-	पूर्णांक                     wrapped;
+	enum hinic_cmdq_type    cmdq_type;
+	int                     wrapped;
 
-	/* Lock क्रम keeping the करोorbell order */
+	/* Lock for keeping the doorbell order */
 	spinlock_t              cmdq_lock;
 
-	काष्ठा completion       **करोne;
-	पूर्णांक                     **errcode;
+	struct completion       **done;
+	int                     **errcode;
 
-	/* करोorbell area */
-	व्योम __iomem            *db_base;
-पूर्ण;
+	/* doorbell area */
+	void __iomem            *db_base;
+};
 
-काष्ठा hinic_cmdqs अणु
-	काष्ठा hinic_hwअगर       *hwअगर;
+struct hinic_cmdqs {
+	struct hinic_hwif       *hwif;
 
-	काष्ठा dma_pool         *cmdq_buf_pool;
+	struct dma_pool         *cmdq_buf_pool;
 
-	काष्ठा hinic_wq         *saved_wqs;
+	struct hinic_wq         *saved_wqs;
 
-	काष्ठा hinic_cmdq_pages cmdq_pages;
+	struct hinic_cmdq_pages cmdq_pages;
 
-	काष्ठा hinic_cmdq       cmdq[HINIC_MAX_CMDQ_TYPES];
-पूर्ण;
+	struct hinic_cmdq       cmdq[HINIC_MAX_CMDQ_TYPES];
+};
 
-पूर्णांक hinic_alloc_cmdq_buf(काष्ठा hinic_cmdqs *cmdqs,
-			 काष्ठा hinic_cmdq_buf *cmdq_buf);
+int hinic_alloc_cmdq_buf(struct hinic_cmdqs *cmdqs,
+			 struct hinic_cmdq_buf *cmdq_buf);
 
-व्योम hinic_मुक्त_cmdq_buf(काष्ठा hinic_cmdqs *cmdqs,
-			 काष्ठा hinic_cmdq_buf *cmdq_buf);
+void hinic_free_cmdq_buf(struct hinic_cmdqs *cmdqs,
+			 struct hinic_cmdq_buf *cmdq_buf);
 
-पूर्णांक hinic_cmdq_direct_resp(काष्ठा hinic_cmdqs *cmdqs,
-			   क्रमागत hinic_mod_type mod, u8 cmd,
-			   काष्ठा hinic_cmdq_buf *buf_in, u64 *out_param);
+int hinic_cmdq_direct_resp(struct hinic_cmdqs *cmdqs,
+			   enum hinic_mod_type mod, u8 cmd,
+			   struct hinic_cmdq_buf *buf_in, u64 *out_param);
 
-पूर्णांक hinic_set_arm_bit(काष्ठा hinic_cmdqs *cmdqs,
-		      क्रमागत hinic_set_arm_qtype q_type, u32 q_id);
+int hinic_set_arm_bit(struct hinic_cmdqs *cmdqs,
+		      enum hinic_set_arm_qtype q_type, u32 q_id);
 
-पूर्णांक hinic_init_cmdqs(काष्ठा hinic_cmdqs *cmdqs, काष्ठा hinic_hwअगर *hwअगर,
-		     व्योम __iomem **db_area);
+int hinic_init_cmdqs(struct hinic_cmdqs *cmdqs, struct hinic_hwif *hwif,
+		     void __iomem **db_area);
 
-व्योम hinic_मुक्त_cmdqs(काष्ठा hinic_cmdqs *cmdqs);
+void hinic_free_cmdqs(struct hinic_cmdqs *cmdqs);
 
-#पूर्ण_अगर
+#endif

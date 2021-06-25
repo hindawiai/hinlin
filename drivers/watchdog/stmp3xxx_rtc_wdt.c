@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Watchकरोg driver क्रम the RTC based watchकरोg in STMP3xxx and i.MX23/28
+ * Watchdog driver for the RTC based watchdog in STMP3xxx and i.MX23/28
  *
  * Author: Wolfram Sang <kernel@pengutronix.de>
  *
  * Copyright (C) 2011-12 Wolfram Sang, Pengutronix
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sपंचांगp3xxx_rtc_wdt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/watchdog.h>
+#include <linux/platform_device.h>
+#include <linux/stmp3xxx_rtc_wdt.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
 
-#घोषणा WDOG_TICK_RATE 1000 /* 1 kHz घड़ी */
-#घोषणा STMP3XXX_DEFAULT_TIMEOUT 19
-#घोषणा STMP3XXX_MAX_TIMEOUT (अच_पूर्णांक_उच्च / WDOG_TICK_RATE)
+#define WDOG_TICK_RATE 1000 /* 1 kHz clock */
+#define STMP3XXX_DEFAULT_TIMEOUT 19
+#define STMP3XXX_MAX_TIMEOUT (UINT_MAX / WDOG_TICK_RATE)
 
-अटल पूर्णांक heartbeat = STMP3XXX_DEFAULT_TIMEOUT;
-module_param(heartbeat, uपूर्णांक, 0);
+static int heartbeat = STMP3XXX_DEFAULT_TIMEOUT;
+module_param(heartbeat, uint, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeat period in seconds from 1 to "
 		 __MODULE_STRING(STMP3XXX_MAX_TIMEOUT) ", default "
 		 __MODULE_STRING(STMP3XXX_DEFAULT_TIMEOUT));
 
-अटल पूर्णांक wdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा device *dev = watchकरोg_get_drvdata(wdd);
-	काष्ठा sपंचांगp3xxx_wdt_pdata *pdata = dev_get_platdata(dev);
+static int wdt_start(struct watchdog_device *wdd)
+{
+	struct device *dev = watchdog_get_drvdata(wdd);
+	struct stmp3xxx_wdt_pdata *pdata = dev_get_platdata(dev);
 
-	pdata->wdt_set_समयout(dev->parent, wdd->समयout * WDOG_TICK_RATE);
-	वापस 0;
-पूर्ण
+	pdata->wdt_set_timeout(dev->parent, wdd->timeout * WDOG_TICK_RATE);
+	return 0;
+}
 
-अटल पूर्णांक wdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा device *dev = watchकरोg_get_drvdata(wdd);
-	काष्ठा sपंचांगp3xxx_wdt_pdata *pdata = dev_get_platdata(dev);
+static int wdt_stop(struct watchdog_device *wdd)
+{
+	struct device *dev = watchdog_get_drvdata(wdd);
+	struct stmp3xxx_wdt_pdata *pdata = dev_get_platdata(dev);
 
-	pdata->wdt_set_समयout(dev->parent, 0);
-	वापस 0;
-पूर्ण
+	pdata->wdt_set_timeout(dev->parent, 0);
+	return 0;
+}
 
-अटल पूर्णांक wdt_set_समयout(काष्ठा watchकरोg_device *wdd, अचिन्हित new_समयout)
-अणु
-	wdd->समयout = new_समयout;
-	वापस wdt_start(wdd);
-पूर्ण
+static int wdt_set_timeout(struct watchdog_device *wdd, unsigned new_timeout)
+{
+	wdd->timeout = new_timeout;
+	return wdt_start(wdd);
+}
 
-अटल स्थिर काष्ठा watchकरोg_info sपंचांगp3xxx_wdt_ident = अणु
+static const struct watchdog_info stmp3xxx_wdt_ident = {
 	.options = WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
 	.identity = "STMP3XXX RTC Watchdog",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops sपंचांगp3xxx_wdt_ops = अणु
+static const struct watchdog_ops stmp3xxx_wdt_ops = {
 	.owner = THIS_MODULE,
 	.start = wdt_start,
 	.stop = wdt_stop,
-	.set_समयout = wdt_set_समयout,
-पूर्ण;
+	.set_timeout = wdt_set_timeout,
+};
 
-अटल काष्ठा watchकरोg_device sपंचांगp3xxx_wdd = अणु
-	.info = &sपंचांगp3xxx_wdt_ident,
-	.ops = &sपंचांगp3xxx_wdt_ops,
-	.min_समयout = 1,
-	.max_समयout = STMP3XXX_MAX_TIMEOUT,
+static struct watchdog_device stmp3xxx_wdd = {
+	.info = &stmp3xxx_wdt_ident,
+	.ops = &stmp3xxx_wdt_ops,
+	.min_timeout = 1,
+	.max_timeout = STMP3XXX_MAX_TIMEOUT,
 	.status = WATCHDOG_NOWAYOUT_INIT_STATUS,
-पूर्ण;
+};
 
-अटल पूर्णांक wdt_notअगरy_sys(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code,
-			  व्योम *unused)
-अणु
-	चयन (code) अणु
-	हाल SYS_DOWN:	/* keep enabled, प्रणाली might crash जबतक going करोwn */
-		अवरोध;
-	हाल SYS_HALT:	/* allow the प्रणाली to actually halt */
-	हाल SYS_POWER_OFF:
-		wdt_stop(&sपंचांगp3xxx_wdd);
-		अवरोध;
-	पूर्ण
+static int wdt_notify_sys(struct notifier_block *nb, unsigned long code,
+			  void *unused)
+{
+	switch (code) {
+	case SYS_DOWN:	/* keep enabled, system might crash while going down */
+		break;
+	case SYS_HALT:	/* allow the system to actually halt */
+	case SYS_POWER_OFF:
+		wdt_stop(&stmp3xxx_wdd);
+		break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल काष्ठा notअगरier_block wdt_notअगरier = अणु
-	.notअगरier_call = wdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block wdt_notifier = {
+	.notifier_call = wdt_notify_sys,
+};
 
-अटल पूर्णांक sपंचांगp3xxx_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int stmp3xxx_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	watchकरोg_set_drvdata(&sपंचांगp3xxx_wdd, dev);
+	watchdog_set_drvdata(&stmp3xxx_wdd, dev);
 
-	sपंचांगp3xxx_wdd.समयout = clamp_t(अचिन्हित, heartbeat, 1, STMP3XXX_MAX_TIMEOUT);
-	sपंचांगp3xxx_wdd.parent = dev;
+	stmp3xxx_wdd.timeout = clamp_t(unsigned, heartbeat, 1, STMP3XXX_MAX_TIMEOUT);
+	stmp3xxx_wdd.parent = dev;
 
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, &sपंचांगp3xxx_wdd);
-	अगर (ret < 0)
-		वापस ret;
+	ret = devm_watchdog_register_device(dev, &stmp3xxx_wdd);
+	if (ret < 0)
+		return ret;
 
-	अगर (रेजिस्टर_reboot_notअगरier(&wdt_notअगरier))
+	if (register_reboot_notifier(&wdt_notifier))
 		dev_warn(dev, "cannot register reboot notifier\n");
 
 	dev_info(dev, "initialized watchdog with heartbeat %ds\n",
-		 sपंचांगp3xxx_wdd.समयout);
-	वापस 0;
-पूर्ण
+		 stmp3xxx_wdd.timeout);
+	return 0;
+}
 
-अटल पूर्णांक sपंचांगp3xxx_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	unरेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
-	वापस 0;
-पूर्ण
+static int stmp3xxx_wdt_remove(struct platform_device *pdev)
+{
+	unregister_reboot_notifier(&wdt_notifier);
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांगp3xxx_wdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा watchकरोg_device *wdd = &sपंचांगp3xxx_wdd;
+static int __maybe_unused stmp3xxx_wdt_suspend(struct device *dev)
+{
+	struct watchdog_device *wdd = &stmp3xxx_wdd;
 
-	अगर (watchकरोg_active(wdd))
-		वापस wdt_stop(wdd);
+	if (watchdog_active(wdd))
+		return wdt_stop(wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांगp3xxx_wdt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा watchकरोg_device *wdd = &sपंचांगp3xxx_wdd;
+static int __maybe_unused stmp3xxx_wdt_resume(struct device *dev)
+{
+	struct watchdog_device *wdd = &stmp3xxx_wdd;
 
-	अगर (watchकरोg_active(wdd))
-		वापस wdt_start(wdd);
+	if (watchdog_active(wdd))
+		return wdt_start(wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(sपंचांगp3xxx_wdt_pm_ops,
-			 sपंचांगp3xxx_wdt_suspend, sपंचांगp3xxx_wdt_resume);
+static SIMPLE_DEV_PM_OPS(stmp3xxx_wdt_pm_ops,
+			 stmp3xxx_wdt_suspend, stmp3xxx_wdt_resume);
 
-अटल काष्ठा platक्रमm_driver sपंचांगp3xxx_wdt_driver = अणु
-	.driver = अणु
+static struct platform_driver stmp3xxx_wdt_driver = {
+	.driver = {
 		.name = "stmp3xxx_rtc_wdt",
-		.pm = &sपंचांगp3xxx_wdt_pm_ops,
-	पूर्ण,
-	.probe = sपंचांगp3xxx_wdt_probe,
-	.हटाओ = sपंचांगp3xxx_wdt_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(sपंचांगp3xxx_wdt_driver);
+		.pm = &stmp3xxx_wdt_pm_ops,
+	},
+	.probe = stmp3xxx_wdt_probe,
+	.remove = stmp3xxx_wdt_remove,
+};
+module_platform_driver(stmp3xxx_wdt_driver);
 
 MODULE_DESCRIPTION("STMP3XXX RTC Watchdog Driver");
 MODULE_LICENSE("GPL v2");

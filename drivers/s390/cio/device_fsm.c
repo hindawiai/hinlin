@@ -1,955 +1,954 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * finite state machine क्रम device handling
+ * finite state machine for device handling
  *
  *    Copyright IBM Corp. 2002, 2008
  *    Author(s): Cornelia Huck (cornelia.huck@de.ibm.com)
  *		 Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/माला.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/string.h>
 
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <यंत्र/cपन.स>
-#समावेश <यंत्र/chpid.h>
+#include <asm/ccwdev.h>
+#include <asm/cio.h>
+#include <asm/chpid.h>
 
-#समावेश "cio.h"
-#समावेश "cio_debug.h"
-#समावेश "css.h"
-#समावेश "device.h"
-#समावेश "chsc.h"
-#समावेश "ioasm.h"
-#समावेश "chp.h"
+#include "cio.h"
+#include "cio_debug.h"
+#include "css.h"
+#include "device.h"
+#include "chsc.h"
+#include "ioasm.h"
+#include "chp.h"
 
-अटल पूर्णांक समयout_log_enabled;
+static int timeout_log_enabled;
 
-अटल पूर्णांक __init ccw_समयout_log_setup(अक्षर *unused)
-अणु
-	समयout_log_enabled = 1;
-	वापस 1;
-पूर्ण
+static int __init ccw_timeout_log_setup(char *unused)
+{
+	timeout_log_enabled = 1;
+	return 1;
+}
 
-__setup("ccw_timeout_log", ccw_समयout_log_setup);
+__setup("ccw_timeout_log", ccw_timeout_log_setup);
 
-अटल व्योम ccw_समयout_log(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा schib schib;
-	काष्ठा subchannel *sch;
-	काष्ठा io_subchannel_निजी *निजी;
-	जोड़ orb *orb;
-	पूर्णांक cc;
+static void ccw_timeout_log(struct ccw_device *cdev)
+{
+	struct schib schib;
+	struct subchannel *sch;
+	struct io_subchannel_private *private;
+	union orb *orb;
+	int cc;
 
 	sch = to_subchannel(cdev->dev.parent);
-	निजी = to_io_निजी(sch);
-	orb = &निजी->orb;
+	private = to_io_private(sch);
+	orb = &private->orb;
 	cc = stsch(sch->schid, &schib);
 
-	prपूर्णांकk(KERN_WARNING "cio: ccw device timeout occurred at %lx, "
-	       "device information:\n", get_tod_घड़ी());
-	prपूर्णांकk(KERN_WARNING "cio: orb:\n");
-	prपूर्णांक_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
-		       orb, माप(*orb), 0);
-	prपूर्णांकk(KERN_WARNING "cio: ccw device bus id: %s\n",
+	printk(KERN_WARNING "cio: ccw device timeout occurred at %lx, "
+	       "device information:\n", get_tod_clock());
+	printk(KERN_WARNING "cio: orb:\n");
+	print_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
+		       orb, sizeof(*orb), 0);
+	printk(KERN_WARNING "cio: ccw device bus id: %s\n",
 	       dev_name(&cdev->dev));
-	prपूर्णांकk(KERN_WARNING "cio: subchannel bus id: %s\n",
+	printk(KERN_WARNING "cio: subchannel bus id: %s\n",
 	       dev_name(&sch->dev));
-	prपूर्णांकk(KERN_WARNING "cio: subchannel lpm: %02x, opm: %02x, "
+	printk(KERN_WARNING "cio: subchannel lpm: %02x, opm: %02x, "
 	       "vpm: %02x\n", sch->lpm, sch->opm, sch->vpm);
 
-	अगर (orb->पंचांग.b) अणु
-		prपूर्णांकk(KERN_WARNING "cio: orb indicates transport mode\n");
-		prपूर्णांकk(KERN_WARNING "cio: last tcw:\n");
-		prपूर्णांक_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
-			       (व्योम *)(addr_t)orb->पंचांग.tcw,
-			       माप(काष्ठा tcw), 0);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_WARNING "cio: orb indicates command mode\n");
-		अगर ((व्योम *)(addr_t)orb->cmd.cpa ==
-		    &निजी->dma_area->sense_ccw ||
-		    (व्योम *)(addr_t)orb->cmd.cpa ==
-		    cdev->निजी->dma_area->iccws)
-			prपूर्णांकk(KERN_WARNING "cio: last channel program "
+	if (orb->tm.b) {
+		printk(KERN_WARNING "cio: orb indicates transport mode\n");
+		printk(KERN_WARNING "cio: last tcw:\n");
+		print_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
+			       (void *)(addr_t)orb->tm.tcw,
+			       sizeof(struct tcw), 0);
+	} else {
+		printk(KERN_WARNING "cio: orb indicates command mode\n");
+		if ((void *)(addr_t)orb->cmd.cpa ==
+		    &private->dma_area->sense_ccw ||
+		    (void *)(addr_t)orb->cmd.cpa ==
+		    cdev->private->dma_area->iccws)
+			printk(KERN_WARNING "cio: last channel program "
 			       "(intern):\n");
-		अन्यथा
-			prपूर्णांकk(KERN_WARNING "cio: last channel program:\n");
+		else
+			printk(KERN_WARNING "cio: last channel program:\n");
 
-		prपूर्णांक_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
-			       (व्योम *)(addr_t)orb->cmd.cpa,
-			       माप(काष्ठा ccw1), 0);
-	पूर्ण
-	prपूर्णांकk(KERN_WARNING "cio: ccw device state: %d\n",
-	       cdev->निजी->state);
-	prपूर्णांकk(KERN_WARNING "cio: store subchannel returned: cc=%d\n", cc);
-	prपूर्णांकk(KERN_WARNING "cio: schib:\n");
-	prपूर्णांक_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
-		       &schib, माप(schib), 0);
-	prपूर्णांकk(KERN_WARNING "cio: ccw device flags:\n");
-	prपूर्णांक_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
-		       &cdev->निजी->flags, माप(cdev->निजी->flags), 0);
-पूर्ण
+		print_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
+			       (void *)(addr_t)orb->cmd.cpa,
+			       sizeof(struct ccw1), 0);
+	}
+	printk(KERN_WARNING "cio: ccw device state: %d\n",
+	       cdev->private->state);
+	printk(KERN_WARNING "cio: store subchannel returned: cc=%d\n", cc);
+	printk(KERN_WARNING "cio: schib:\n");
+	print_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
+		       &schib, sizeof(schib), 0);
+	printk(KERN_WARNING "cio: ccw device flags:\n");
+	print_hex_dump(KERN_WARNING, "cio:  ", DUMP_PREFIX_NONE, 16, 1,
+		       &cdev->private->flags, sizeof(cdev->private->flags), 0);
+}
 
 /*
  * Timeout function. It just triggers a DEV_EVENT_TIMEOUT.
  */
-व्योम
-ccw_device_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ccw_device_निजी *priv = from_समयr(priv, t, समयr);
-	काष्ठा ccw_device *cdev = priv->cdev;
+void
+ccw_device_timeout(struct timer_list *t)
+{
+	struct ccw_device_private *priv = from_timer(priv, t, timer);
+	struct ccw_device *cdev = priv->cdev;
 
 	spin_lock_irq(cdev->ccwlock);
-	अगर (समयout_log_enabled)
-		ccw_समयout_log(cdev);
+	if (timeout_log_enabled)
+		ccw_timeout_log(cdev);
 	dev_fsm_event(cdev, DEV_EVENT_TIMEOUT);
 	spin_unlock_irq(cdev->ccwlock);
-पूर्ण
+}
 
 /*
- * Set समयout
+ * Set timeout
  */
-व्योम
-ccw_device_set_समयout(काष्ठा ccw_device *cdev, पूर्णांक expires)
-अणु
-	अगर (expires == 0) अणु
-		del_समयr(&cdev->निजी->समयr);
-		वापस;
-	पूर्ण
-	अगर (समयr_pending(&cdev->निजी->समयr)) अणु
-		अगर (mod_समयr(&cdev->निजी->समयr, jअगरfies + expires))
-			वापस;
-	पूर्ण
-	cdev->निजी->समयr.expires = jअगरfies + expires;
-	add_समयr(&cdev->निजी->समयr);
-पूर्ण
+void
+ccw_device_set_timeout(struct ccw_device *cdev, int expires)
+{
+	if (expires == 0) {
+		del_timer(&cdev->private->timer);
+		return;
+	}
+	if (timer_pending(&cdev->private->timer)) {
+		if (mod_timer(&cdev->private->timer, jiffies + expires))
+			return;
+	}
+	cdev->private->timer.expires = jiffies + expires;
+	add_timer(&cdev->private->timer);
+}
 
-पूर्णांक
-ccw_device_cancel_halt_clear(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+int
+ccw_device_cancel_halt_clear(struct ccw_device *cdev)
+{
+	struct subchannel *sch;
+	int ret;
 
 	sch = to_subchannel(cdev->dev.parent);
-	ret = cio_cancel_halt_clear(sch, &cdev->निजी->iretry);
+	ret = cio_cancel_halt_clear(sch, &cdev->private->iretry);
 
-	अगर (ret == -EIO)
+	if (ret == -EIO)
 		CIO_MSG_EVENT(0, "0.%x.%04x: could not stop I/O\n",
-			      cdev->निजी->dev_id.ssid,
-			      cdev->निजी->dev_id.devno);
+			      cdev->private->dev_id.ssid,
+			      cdev->private->dev_id.devno);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम ccw_device_update_sense_data(काष्ठा ccw_device *cdev)
-अणु
-	स_रखो(&cdev->id, 0, माप(cdev->id));
-	cdev->id.cu_type = cdev->निजी->dma_area->senseid.cu_type;
-	cdev->id.cu_model = cdev->निजी->dma_area->senseid.cu_model;
-	cdev->id.dev_type = cdev->निजी->dma_area->senseid.dev_type;
-	cdev->id.dev_model = cdev->निजी->dma_area->senseid.dev_model;
-पूर्ण
+void ccw_device_update_sense_data(struct ccw_device *cdev)
+{
+	memset(&cdev->id, 0, sizeof(cdev->id));
+	cdev->id.cu_type = cdev->private->dma_area->senseid.cu_type;
+	cdev->id.cu_model = cdev->private->dma_area->senseid.cu_model;
+	cdev->id.dev_type = cdev->private->dma_area->senseid.dev_type;
+	cdev->id.dev_model = cdev->private->dma_area->senseid.dev_model;
+}
 
-पूर्णांक ccw_device_test_sense_data(काष्ठा ccw_device *cdev)
-अणु
-	वापस cdev->id.cu_type ==
-		cdev->निजी->dma_area->senseid.cu_type &&
+int ccw_device_test_sense_data(struct ccw_device *cdev)
+{
+	return cdev->id.cu_type ==
+		cdev->private->dma_area->senseid.cu_type &&
 		cdev->id.cu_model ==
-		cdev->निजी->dma_area->senseid.cu_model &&
+		cdev->private->dma_area->senseid.cu_model &&
 		cdev->id.dev_type ==
-		cdev->निजी->dma_area->senseid.dev_type &&
+		cdev->private->dma_area->senseid.dev_type &&
 		cdev->id.dev_model ==
-		cdev->निजी->dma_area->senseid.dev_model;
-पूर्ण
+		cdev->private->dma_area->senseid.dev_model;
+}
 
 /*
- * The machine won't give us any notअगरication by machine check अगर a chpid has
+ * The machine won't give us any notification by machine check if a chpid has
  * been varied online on the SE so we have to find out by magic (i. e. driving
- * the channel subप्रणाली to device selection and updating our path masks).
+ * the channel subsystem to device selection and updating our path masks).
  */
-अटल व्योम
-__recover_lost_chpids(काष्ठा subchannel *sch, पूर्णांक old_lpm)
-अणु
-	पूर्णांक mask, i;
-	काष्ठा chp_id chpid;
+static void
+__recover_lost_chpids(struct subchannel *sch, int old_lpm)
+{
+	int mask, i;
+	struct chp_id chpid;
 
 	chp_id_init(&chpid);
-	क्रम (i = 0; i<8; i++) अणु
+	for (i = 0; i<8; i++) {
 		mask = 0x80 >> i;
-		अगर (!(sch->lpm & mask))
-			जारी;
-		अगर (old_lpm & mask)
-			जारी;
+		if (!(sch->lpm & mask))
+			continue;
+		if (old_lpm & mask)
+			continue;
 		chpid.id = sch->schib.pmcw.chpid[i];
-		अगर (!chp_is_रेजिस्टरed(chpid))
+		if (!chp_is_registered(chpid))
 			css_schedule_eval_all();
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Stop device recognition.
  */
-अटल व्योम
-ccw_device_recog_करोne(काष्ठा ccw_device *cdev, पूर्णांक state)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक old_lpm;
+static void
+ccw_device_recog_done(struct ccw_device *cdev, int state)
+{
+	struct subchannel *sch;
+	int old_lpm;
 
 	sch = to_subchannel(cdev->dev.parent);
 
-	अगर (cio_disable_subchannel(sch))
+	if (cio_disable_subchannel(sch))
 		state = DEV_STATE_NOT_OPER;
 	/*
-	 * Now that we tried recognition, we have perक्रमmed device selection
-	 * through ssch() and the path inक्रमmation is up to date.
+	 * Now that we tried recognition, we have performed device selection
+	 * through ssch() and the path information is up to date.
 	 */
 	old_lpm = sch->lpm;
 
 	/* Check since device may again have become not operational. */
-	अगर (cio_update_schib(sch))
+	if (cio_update_schib(sch))
 		state = DEV_STATE_NOT_OPER;
-	अन्यथा
+	else
 		sch->lpm = sch->schib.pmcw.pam & sch->opm;
 
-	अगर (cdev->निजी->state == DEV_STATE_DISCONNECTED_SENSE_ID)
+	if (cdev->private->state == DEV_STATE_DISCONNECTED_SENSE_ID)
 		/* Force reprobe on all chpids. */
 		old_lpm = 0;
-	अगर (sch->lpm != old_lpm)
+	if (sch->lpm != old_lpm)
 		__recover_lost_chpids(sch, old_lpm);
-	अगर (cdev->निजी->state == DEV_STATE_DISCONNECTED_SENSE_ID &&
-	    (state == DEV_STATE_NOT_OPER || state == DEV_STATE_BOXED)) अणु
-		cdev->निजी->flags.recog_करोne = 1;
-		cdev->निजी->state = DEV_STATE_DISCONNECTED;
-		wake_up(&cdev->निजी->रुको_q);
-		वापस;
-	पूर्ण
-	चयन (state) अणु
-	हाल DEV_STATE_NOT_OPER:
-		अवरोध;
-	हाल DEV_STATE_OFFLINE:
-		अगर (!cdev->online) अणु
+	if (cdev->private->state == DEV_STATE_DISCONNECTED_SENSE_ID &&
+	    (state == DEV_STATE_NOT_OPER || state == DEV_STATE_BOXED)) {
+		cdev->private->flags.recog_done = 1;
+		cdev->private->state = DEV_STATE_DISCONNECTED;
+		wake_up(&cdev->private->wait_q);
+		return;
+	}
+	switch (state) {
+	case DEV_STATE_NOT_OPER:
+		break;
+	case DEV_STATE_OFFLINE:
+		if (!cdev->online) {
 			ccw_device_update_sense_data(cdev);
-			अवरोध;
-		पूर्ण
-		cdev->निजी->state = DEV_STATE_OFFLINE;
-		cdev->निजी->flags.recog_करोne = 1;
-		अगर (ccw_device_test_sense_data(cdev)) अणु
-			cdev->निजी->flags.करोnotअगरy = 1;
+			break;
+		}
+		cdev->private->state = DEV_STATE_OFFLINE;
+		cdev->private->flags.recog_done = 1;
+		if (ccw_device_test_sense_data(cdev)) {
+			cdev->private->flags.donotify = 1;
 			ccw_device_online(cdev);
-			wake_up(&cdev->निजी->रुको_q);
-		पूर्ण अन्यथा अणु
+			wake_up(&cdev->private->wait_q);
+		} else {
 			ccw_device_update_sense_data(cdev);
-			ccw_device_sched_toकरो(cdev, CDEV_TODO_REBIND);
-		पूर्ण
-		वापस;
-	हाल DEV_STATE_BOXED:
-		अगर (cdev->id.cu_type != 0) अणु /* device was recognized beक्रमe */
-			cdev->निजी->flags.recog_करोne = 1;
-			cdev->निजी->state = DEV_STATE_BOXED;
-			wake_up(&cdev->निजी->रुको_q);
-			वापस;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	cdev->निजी->state = state;
-	io_subchannel_recog_करोne(cdev);
-	wake_up(&cdev->निजी->रुको_q);
-पूर्ण
+			ccw_device_sched_todo(cdev, CDEV_TODO_REBIND);
+		}
+		return;
+	case DEV_STATE_BOXED:
+		if (cdev->id.cu_type != 0) { /* device was recognized before */
+			cdev->private->flags.recog_done = 1;
+			cdev->private->state = DEV_STATE_BOXED;
+			wake_up(&cdev->private->wait_q);
+			return;
+		}
+		break;
+	}
+	cdev->private->state = state;
+	io_subchannel_recog_done(cdev);
+	wake_up(&cdev->private->wait_q);
+}
 
 /*
  * Function called from device_id.c after sense id has completed.
  */
-व्योम
-ccw_device_sense_id_करोne(काष्ठा ccw_device *cdev, पूर्णांक err)
-अणु
-	चयन (err) अणु
-	हाल 0:
-		ccw_device_recog_करोne(cdev, DEV_STATE_OFFLINE);
-		अवरोध;
-	हाल -ETIME:		/* Sense id stopped by समयout. */
-		ccw_device_recog_करोne(cdev, DEV_STATE_BOXED);
-		अवरोध;
-	शेष:
-		ccw_device_recog_करोne(cdev, DEV_STATE_NOT_OPER);
-		अवरोध;
-	पूर्ण
-पूर्ण
+void
+ccw_device_sense_id_done(struct ccw_device *cdev, int err)
+{
+	switch (err) {
+	case 0:
+		ccw_device_recog_done(cdev, DEV_STATE_OFFLINE);
+		break;
+	case -ETIME:		/* Sense id stopped by timeout. */
+		ccw_device_recog_done(cdev, DEV_STATE_BOXED);
+		break;
+	default:
+		ccw_device_recog_done(cdev, DEV_STATE_NOT_OPER);
+		break;
+	}
+}
 
 /**
-  * ccw_device_notअगरy() - inक्रमm the device's driver about an event
-  * @cdev: device क्रम which an event occurred
+  * ccw_device_notify() - inform the device's driver about an event
+  * @cdev: device for which an event occurred
   * @event: event that occurred
   *
   * Returns:
-  *   -%EINVAL अगर the device is offline or has no driver.
-  *   -%EOPNOTSUPP अगर the device's driver has no notअगरier रेजिस्टरed.
-  *   %NOTIFY_OK अगर the driver wants to keep the device.
-  *   %NOTIFY_BAD अगर the driver करोesn't want to keep the device.
+  *   -%EINVAL if the device is offline or has no driver.
+  *   -%EOPNOTSUPP if the device's driver has no notifier registered.
+  *   %NOTIFY_OK if the driver wants to keep the device.
+  *   %NOTIFY_BAD if the driver doesn't want to keep the device.
   */
-पूर्णांक ccw_device_notअगरy(काष्ठा ccw_device *cdev, पूर्णांक event)
-अणु
-	पूर्णांक ret = -EINVAL;
+int ccw_device_notify(struct ccw_device *cdev, int event)
+{
+	int ret = -EINVAL;
 
-	अगर (!cdev->drv)
-		जाओ out;
-	अगर (!cdev->online)
-		जाओ out;
+	if (!cdev->drv)
+		goto out;
+	if (!cdev->online)
+		goto out;
 	CIO_MSG_EVENT(2, "notify called for 0.%x.%04x, event=%d\n",
-		      cdev->निजी->dev_id.ssid, cdev->निजी->dev_id.devno,
+		      cdev->private->dev_id.ssid, cdev->private->dev_id.devno,
 		      event);
-	अगर (!cdev->drv->notअगरy) अणु
+	if (!cdev->drv->notify) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
-	अगर (cdev->drv->notअगरy(cdev, event))
+		goto out;
+	}
+	if (cdev->drv->notify(cdev, event))
 		ret = NOTIFY_OK;
-	अन्यथा
+	else
 		ret = NOTIFY_BAD;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ccw_device_oper_notअगरy(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+static void ccw_device_oper_notify(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
 
-	अगर (ccw_device_notअगरy(cdev, CIO_OPER) == NOTIFY_OK) अणु
-		/* Reenable channel measurements, अगर needed. */
-		ccw_device_sched_toकरो(cdev, CDEV_TODO_ENABLE_CMF);
-		/* Save indication क्रम new paths. */
-		cdev->निजी->path_new_mask = sch->vpm;
-		वापस;
-	पूर्ण
-	/* Driver करोesn't want device back. */
+	if (ccw_device_notify(cdev, CIO_OPER) == NOTIFY_OK) {
+		/* Reenable channel measurements, if needed. */
+		ccw_device_sched_todo(cdev, CDEV_TODO_ENABLE_CMF);
+		/* Save indication for new paths. */
+		cdev->private->path_new_mask = sch->vpm;
+		return;
+	}
+	/* Driver doesn't want device back. */
 	ccw_device_set_notoper(cdev);
-	ccw_device_sched_toकरो(cdev, CDEV_TODO_REBIND);
-पूर्ण
+	ccw_device_sched_todo(cdev, CDEV_TODO_REBIND);
+}
 
 /*
  * Finished with online/offline processing.
  */
-अटल व्योम
-ccw_device_करोne(काष्ठा ccw_device *cdev, पूर्णांक state)
-अणु
-	काष्ठा subchannel *sch;
+static void
+ccw_device_done(struct ccw_device *cdev, int state)
+{
+	struct subchannel *sch;
 
 	sch = to_subchannel(cdev->dev.parent);
 
-	ccw_device_set_समयout(cdev, 0);
+	ccw_device_set_timeout(cdev, 0);
 
-	अगर (state != DEV_STATE_ONLINE)
+	if (state != DEV_STATE_ONLINE)
 		cio_disable_subchannel(sch);
 
 	/* Reset device status. */
-	स_रखो(&cdev->निजी->dma_area->irb, 0, माप(काष्ठा irb));
+	memset(&cdev->private->dma_area->irb, 0, sizeof(struct irb));
 
-	cdev->निजी->state = state;
+	cdev->private->state = state;
 
-	चयन (state) अणु
-	हाल DEV_STATE_BOXED:
+	switch (state) {
+	case DEV_STATE_BOXED:
 		CIO_MSG_EVENT(0, "Boxed device %04x on subchannel %04x\n",
-			      cdev->निजी->dev_id.devno, sch->schid.sch_no);
-		अगर (cdev->online &&
-		    ccw_device_notअगरy(cdev, CIO_BOXED) != NOTIFY_OK)
-			ccw_device_sched_toकरो(cdev, CDEV_TODO_UNREG);
-		cdev->निजी->flags.करोnotअगरy = 0;
-		अवरोध;
-	हाल DEV_STATE_NOT_OPER:
+			      cdev->private->dev_id.devno, sch->schid.sch_no);
+		if (cdev->online &&
+		    ccw_device_notify(cdev, CIO_BOXED) != NOTIFY_OK)
+			ccw_device_sched_todo(cdev, CDEV_TODO_UNREG);
+		cdev->private->flags.donotify = 0;
+		break;
+	case DEV_STATE_NOT_OPER:
 		CIO_MSG_EVENT(0, "Device %04x gone on subchannel %04x\n",
-			      cdev->निजी->dev_id.devno, sch->schid.sch_no);
-		अगर (ccw_device_notअगरy(cdev, CIO_GONE) != NOTIFY_OK)
-			ccw_device_sched_toकरो(cdev, CDEV_TODO_UNREG);
-		अन्यथा
+			      cdev->private->dev_id.devno, sch->schid.sch_no);
+		if (ccw_device_notify(cdev, CIO_GONE) != NOTIFY_OK)
+			ccw_device_sched_todo(cdev, CDEV_TODO_UNREG);
+		else
 			ccw_device_set_disconnected(cdev);
-		cdev->निजी->flags.करोnotअगरy = 0;
-		अवरोध;
-	हाल DEV_STATE_DISCONNECTED:
+		cdev->private->flags.donotify = 0;
+		break;
+	case DEV_STATE_DISCONNECTED:
 		CIO_MSG_EVENT(0, "Disconnected device %04x on subchannel "
-			      "%04x\n", cdev->निजी->dev_id.devno,
+			      "%04x\n", cdev->private->dev_id.devno,
 			      sch->schid.sch_no);
-		अगर (ccw_device_notअगरy(cdev, CIO_NO_PATH) != NOTIFY_OK) अणु
-			cdev->निजी->state = DEV_STATE_NOT_OPER;
-			ccw_device_sched_toकरो(cdev, CDEV_TODO_UNREG);
-		पूर्ण अन्यथा
+		if (ccw_device_notify(cdev, CIO_NO_PATH) != NOTIFY_OK) {
+			cdev->private->state = DEV_STATE_NOT_OPER;
+			ccw_device_sched_todo(cdev, CDEV_TODO_UNREG);
+		} else
 			ccw_device_set_disconnected(cdev);
-		cdev->निजी->flags.करोnotअगरy = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		cdev->private->flags.donotify = 0;
+		break;
+	default:
+		break;
+	}
 
-	अगर (cdev->निजी->flags.करोnotअगरy) अणु
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_oper_notअगरy(cdev);
-	पूर्ण
-	wake_up(&cdev->निजी->रुको_q);
-पूर्ण
+	if (cdev->private->flags.donotify) {
+		cdev->private->flags.donotify = 0;
+		ccw_device_oper_notify(cdev);
+	}
+	wake_up(&cdev->private->wait_q);
+}
 
 /*
  * Start device recognition.
  */
-व्योम ccw_device_recognition(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+void ccw_device_recognition(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
 
 	/*
 	 * We used to start here with a sense pgid to find out whether a device
-	 * is locked by someone अन्यथा. Unक्रमtunately, the sense pgid command
+	 * is locked by someone else. Unfortunately, the sense pgid command
 	 * code has other meanings on devices predating the path grouping
 	 * algorithm, so we start with sense id and box the device after an
-	 * समयout (or अगर sense pgid during path verअगरication detects the device
+	 * timeout (or if sense pgid during path verification detects the device
 	 * is locked, as may happen on newer devices).
 	 */
-	cdev->निजी->flags.recog_करोne = 0;
-	cdev->निजी->state = DEV_STATE_SENSE_ID;
-	अगर (cio_enable_subchannel(sch, (u32) (addr_t) sch)) अणु
-		ccw_device_recog_करोne(cdev, DEV_STATE_NOT_OPER);
-		वापस;
-	पूर्ण
+	cdev->private->flags.recog_done = 0;
+	cdev->private->state = DEV_STATE_SENSE_ID;
+	if (cio_enable_subchannel(sch, (u32) (addr_t) sch)) {
+		ccw_device_recog_done(cdev, DEV_STATE_NOT_OPER);
+		return;
+	}
 	ccw_device_sense_id_start(cdev);
-पूर्ण
+}
 
 /*
- * Handle events क्रम states that use the ccw request infraकाष्ठाure.
+ * Handle events for states that use the ccw request infrastructure.
  */
-अटल व्योम ccw_device_request_event(काष्ठा ccw_device *cdev, क्रमागत dev_event e)
-अणु
-	चयन (e) अणु
-	हाल DEV_EVENT_NOTOPER:
+static void ccw_device_request_event(struct ccw_device *cdev, enum dev_event e)
+{
+	switch (e) {
+	case DEV_EVENT_NOTOPER:
 		ccw_request_notoper(cdev);
-		अवरोध;
-	हाल DEV_EVENT_INTERRUPT:
+		break;
+	case DEV_EVENT_INTERRUPT:
 		ccw_request_handler(cdev);
-		अवरोध;
-	हाल DEV_EVENT_TIMEOUT:
-		ccw_request_समयout(cdev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case DEV_EVENT_TIMEOUT:
+		ccw_request_timeout(cdev);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम ccw_device_report_path_events(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
-	पूर्णांक path_event[8];
-	पूर्णांक chp, mask;
+static void ccw_device_report_path_events(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
+	int path_event[8];
+	int chp, mask;
 
-	क्रम (chp = 0, mask = 0x80; chp < 8; chp++, mask >>= 1) अणु
+	for (chp = 0, mask = 0x80; chp < 8; chp++, mask >>= 1) {
 		path_event[chp] = PE_NONE;
-		अगर (mask & cdev->निजी->path_gone_mask & ~(sch->vpm))
+		if (mask & cdev->private->path_gone_mask & ~(sch->vpm))
 			path_event[chp] |= PE_PATH_GONE;
-		अगर (mask & cdev->निजी->path_new_mask & sch->vpm)
+		if (mask & cdev->private->path_new_mask & sch->vpm)
 			path_event[chp] |= PE_PATH_AVAILABLE;
-		अगर (mask & cdev->निजी->pgid_reset_mask & sch->vpm)
+		if (mask & cdev->private->pgid_reset_mask & sch->vpm)
 			path_event[chp] |= PE_PATHGROUP_ESTABLISHED;
-	पूर्ण
-	अगर (cdev->online && cdev->drv->path_event)
+	}
+	if (cdev->online && cdev->drv->path_event)
 		cdev->drv->path_event(cdev, path_event);
-पूर्ण
+}
 
-अटल व्योम ccw_device_reset_path_events(काष्ठा ccw_device *cdev)
-अणु
-	cdev->निजी->path_gone_mask = 0;
-	cdev->निजी->path_new_mask = 0;
-	cdev->निजी->pgid_reset_mask = 0;
-पूर्ण
+static void ccw_device_reset_path_events(struct ccw_device *cdev)
+{
+	cdev->private->path_gone_mask = 0;
+	cdev->private->path_new_mask = 0;
+	cdev->private->pgid_reset_mask = 0;
+}
 
-अटल व्योम create_fake_irb(काष्ठा irb *irb, पूर्णांक type)
-अणु
-	स_रखो(irb, 0, माप(*irb));
-	अगर (type == FAKE_CMD_IRB) अणु
-		काष्ठा cmd_scsw *scsw = &irb->scsw.cmd;
+static void create_fake_irb(struct irb *irb, int type)
+{
+	memset(irb, 0, sizeof(*irb));
+	if (type == FAKE_CMD_IRB) {
+		struct cmd_scsw *scsw = &irb->scsw.cmd;
 		scsw->cc = 1;
 		scsw->fctl = SCSW_FCTL_START_FUNC;
 		scsw->actl = SCSW_ACTL_START_PEND;
 		scsw->stctl = SCSW_STCTL_STATUS_PEND;
-	पूर्ण अन्यथा अगर (type == FAKE_TM_IRB) अणु
-		काष्ठा पंचांग_scsw *scsw = &irb->scsw.पंचांग;
+	} else if (type == FAKE_TM_IRB) {
+		struct tm_scsw *scsw = &irb->scsw.tm;
 		scsw->x = 1;
 		scsw->cc = 1;
 		scsw->fctl = SCSW_FCTL_START_FUNC;
 		scsw->actl = SCSW_ACTL_START_PEND;
 		scsw->stctl = SCSW_STCTL_STATUS_PEND;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ccw_device_handle_broken_paths(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+static void ccw_device_handle_broken_paths(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
 	u8 broken_paths = (sch->schib.pmcw.pam & sch->opm) ^ sch->vpm;
 
-	अगर (broken_paths && (cdev->निजी->path_broken_mask != broken_paths))
+	if (broken_paths && (cdev->private->path_broken_mask != broken_paths))
 		ccw_device_schedule_recovery();
 
-	cdev->निजी->path_broken_mask = broken_paths;
-पूर्ण
+	cdev->private->path_broken_mask = broken_paths;
+}
 
-व्योम ccw_device_verअगरy_करोne(काष्ठा ccw_device *cdev, पूर्णांक err)
-अणु
-	काष्ठा subchannel *sch;
+void ccw_device_verify_done(struct ccw_device *cdev, int err)
+{
+	struct subchannel *sch;
 
 	sch = to_subchannel(cdev->dev.parent);
 	/* Update schib - pom may have changed. */
-	अगर (cio_update_schib(sch)) अणु
+	if (cio_update_schib(sch)) {
 		err = -ENODEV;
-		जाओ callback;
-	पूर्ण
-	/* Update lpm with verअगरied path mask. */
+		goto callback;
+	}
+	/* Update lpm with verified path mask. */
 	sch->lpm = sch->vpm;
-	/* Repeat path verअगरication? */
-	अगर (cdev->निजी->flags.करोverअगरy) अणु
-		ccw_device_verअगरy_start(cdev);
-		वापस;
-	पूर्ण
+	/* Repeat path verification? */
+	if (cdev->private->flags.doverify) {
+		ccw_device_verify_start(cdev);
+		return;
+	}
 callback:
-	चयन (err) अणु
-	हाल 0:
-		ccw_device_करोne(cdev, DEV_STATE_ONLINE);
-		/* Deliver fake irb to device driver, अगर needed. */
-		अगर (cdev->निजी->flags.fake_irb) अणु
-			create_fake_irb(&cdev->निजी->dma_area->irb,
-					cdev->निजी->flags.fake_irb);
-			cdev->निजी->flags.fake_irb = 0;
-			अगर (cdev->handler)
-				cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
-					      &cdev->निजी->dma_area->irb);
-			स_रखो(&cdev->निजी->dma_area->irb, 0,
-			       माप(काष्ठा irb));
-		पूर्ण
+	switch (err) {
+	case 0:
+		ccw_device_done(cdev, DEV_STATE_ONLINE);
+		/* Deliver fake irb to device driver, if needed. */
+		if (cdev->private->flags.fake_irb) {
+			create_fake_irb(&cdev->private->dma_area->irb,
+					cdev->private->flags.fake_irb);
+			cdev->private->flags.fake_irb = 0;
+			if (cdev->handler)
+				cdev->handler(cdev, cdev->private->intparm,
+					      &cdev->private->dma_area->irb);
+			memset(&cdev->private->dma_area->irb, 0,
+			       sizeof(struct irb));
+		}
 		ccw_device_report_path_events(cdev);
 		ccw_device_handle_broken_paths(cdev);
-		अवरोध;
-	हाल -ETIME:
-	हाल -EUSERS:
-		/* Reset oper notअगरy indication after verअगरy error. */
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_करोne(cdev, DEV_STATE_BOXED);
-		अवरोध;
-	हाल -EACCES:
-		/* Reset oper notअगरy indication after verअगरy error. */
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_करोne(cdev, DEV_STATE_DISCONNECTED);
-		अवरोध;
-	शेष:
-		/* Reset oper notअगरy indication after verअगरy error. */
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_करोne(cdev, DEV_STATE_NOT_OPER);
-		अवरोध;
-	पूर्ण
+		break;
+	case -ETIME:
+	case -EUSERS:
+		/* Reset oper notify indication after verify error. */
+		cdev->private->flags.donotify = 0;
+		ccw_device_done(cdev, DEV_STATE_BOXED);
+		break;
+	case -EACCES:
+		/* Reset oper notify indication after verify error. */
+		cdev->private->flags.donotify = 0;
+		ccw_device_done(cdev, DEV_STATE_DISCONNECTED);
+		break;
+	default:
+		/* Reset oper notify indication after verify error. */
+		cdev->private->flags.donotify = 0;
+		ccw_device_done(cdev, DEV_STATE_NOT_OPER);
+		break;
+	}
 	ccw_device_reset_path_events(cdev);
-पूर्ण
+}
 
 /*
  * Get device online.
  */
-पूर्णांक
-ccw_device_online(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+int
+ccw_device_online(struct ccw_device *cdev)
+{
+	struct subchannel *sch;
+	int ret;
 
-	अगर ((cdev->निजी->state != DEV_STATE_OFFLINE) &&
-	    (cdev->निजी->state != DEV_STATE_BOXED))
-		वापस -EINVAL;
+	if ((cdev->private->state != DEV_STATE_OFFLINE) &&
+	    (cdev->private->state != DEV_STATE_BOXED))
+		return -EINVAL;
 	sch = to_subchannel(cdev->dev.parent);
 	ret = cio_enable_subchannel(sch, (u32)(addr_t)sch);
-	अगर (ret != 0) अणु
-		/* Couldn't enable the subchannel क्रम i/o. Sick device. */
-		अगर (ret == -ENODEV)
+	if (ret != 0) {
+		/* Couldn't enable the subchannel for i/o. Sick device. */
+		if (ret == -ENODEV)
 			dev_fsm_event(cdev, DEV_EVENT_NOTOPER);
-		वापस ret;
-	पूर्ण
-	/* Start initial path verअगरication. */
-	cdev->निजी->state = DEV_STATE_VERIFY;
-	ccw_device_verअगरy_start(cdev);
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	/* Start initial path verification. */
+	cdev->private->state = DEV_STATE_VERIFY;
+	ccw_device_verify_start(cdev);
+	return 0;
+}
 
-व्योम
-ccw_device_disband_करोne(काष्ठा ccw_device *cdev, पूर्णांक err)
-अणु
-	चयन (err) अणु
-	हाल 0:
-		ccw_device_करोne(cdev, DEV_STATE_OFFLINE);
-		अवरोध;
-	हाल -ETIME:
-		ccw_device_करोne(cdev, DEV_STATE_BOXED);
-		अवरोध;
-	शेष:
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_करोne(cdev, DEV_STATE_NOT_OPER);
-		अवरोध;
-	पूर्ण
-पूर्ण
+void
+ccw_device_disband_done(struct ccw_device *cdev, int err)
+{
+	switch (err) {
+	case 0:
+		ccw_device_done(cdev, DEV_STATE_OFFLINE);
+		break;
+	case -ETIME:
+		ccw_device_done(cdev, DEV_STATE_BOXED);
+		break;
+	default:
+		cdev->private->flags.donotify = 0;
+		ccw_device_done(cdev, DEV_STATE_NOT_OPER);
+		break;
+	}
+}
 
 /*
- * Shutकरोwn device.
+ * Shutdown device.
  */
-पूर्णांक
-ccw_device_offline(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch;
+int
+ccw_device_offline(struct ccw_device *cdev)
+{
+	struct subchannel *sch;
 
-	/* Allow ccw_device_offline जबतक disconnected. */
-	अगर (cdev->निजी->state == DEV_STATE_DISCONNECTED ||
-	    cdev->निजी->state == DEV_STATE_NOT_OPER) अणु
-		cdev->निजी->flags.करोnotअगरy = 0;
-		ccw_device_करोne(cdev, DEV_STATE_NOT_OPER);
-		वापस 0;
-	पूर्ण
-	अगर (cdev->निजी->state == DEV_STATE_BOXED) अणु
-		ccw_device_करोne(cdev, DEV_STATE_BOXED);
-		वापस 0;
-	पूर्ण
-	अगर (ccw_device_is_orphan(cdev)) अणु
-		ccw_device_करोne(cdev, DEV_STATE_OFFLINE);
-		वापस 0;
-	पूर्ण
+	/* Allow ccw_device_offline while disconnected. */
+	if (cdev->private->state == DEV_STATE_DISCONNECTED ||
+	    cdev->private->state == DEV_STATE_NOT_OPER) {
+		cdev->private->flags.donotify = 0;
+		ccw_device_done(cdev, DEV_STATE_NOT_OPER);
+		return 0;
+	}
+	if (cdev->private->state == DEV_STATE_BOXED) {
+		ccw_device_done(cdev, DEV_STATE_BOXED);
+		return 0;
+	}
+	if (ccw_device_is_orphan(cdev)) {
+		ccw_device_done(cdev, DEV_STATE_OFFLINE);
+		return 0;
+	}
 	sch = to_subchannel(cdev->dev.parent);
-	अगर (cio_update_schib(sch))
-		वापस -ENODEV;
-	अगर (scsw_actl(&sch->schib.scsw) != 0)
-		वापस -EBUSY;
-	अगर (cdev->निजी->state != DEV_STATE_ONLINE)
-		वापस -EINVAL;
-	/* Are we करोing path grouping? */
-	अगर (!cdev->निजी->flags.pgroup) अणु
+	if (cio_update_schib(sch))
+		return -ENODEV;
+	if (scsw_actl(&sch->schib.scsw) != 0)
+		return -EBUSY;
+	if (cdev->private->state != DEV_STATE_ONLINE)
+		return -EINVAL;
+	/* Are we doing path grouping? */
+	if (!cdev->private->flags.pgroup) {
 		/* No, set state offline immediately. */
-		ccw_device_करोne(cdev, DEV_STATE_OFFLINE);
-		वापस 0;
-	पूर्ण
+		ccw_device_done(cdev, DEV_STATE_OFFLINE);
+		return 0;
+	}
 	/* Start Set Path Group commands. */
-	cdev->निजी->state = DEV_STATE_DISBAND_PGID;
+	cdev->private->state = DEV_STATE_DISBAND_PGID;
 	ccw_device_disband_start(cdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Handle not operational event in non-special state.
  */
-अटल व्योम ccw_device_generic_notoper(काष्ठा ccw_device *cdev,
-				       क्रमागत dev_event dev_event)
-अणु
-	अगर (ccw_device_notअगरy(cdev, CIO_GONE) != NOTIFY_OK)
-		ccw_device_sched_toकरो(cdev, CDEV_TODO_UNREG);
-	अन्यथा
+static void ccw_device_generic_notoper(struct ccw_device *cdev,
+				       enum dev_event dev_event)
+{
+	if (ccw_device_notify(cdev, CIO_GONE) != NOTIFY_OK)
+		ccw_device_sched_todo(cdev, CDEV_TODO_UNREG);
+	else
 		ccw_device_set_disconnected(cdev);
-पूर्ण
+}
 
 /*
- * Handle path verअगरication event in offline state.
+ * Handle path verification event in offline state.
  */
-अटल व्योम ccw_device_offline_verअगरy(काष्ठा ccw_device *cdev,
-				      क्रमागत dev_event dev_event)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+static void ccw_device_offline_verify(struct ccw_device *cdev,
+				      enum dev_event dev_event)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
 
 	css_schedule_eval(sch->schid);
-पूर्ण
+}
 
 /*
- * Handle path verअगरication event.
+ * Handle path verification event.
  */
-अटल व्योम
-ccw_device_online_verअगरy(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	काष्ठा subchannel *sch;
+static void
+ccw_device_online_verify(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	struct subchannel *sch;
 
-	अगर (cdev->निजी->state == DEV_STATE_W4SENSE) अणु
-		cdev->निजी->flags.करोverअगरy = 1;
-		वापस;
-	पूर्ण
+	if (cdev->private->state == DEV_STATE_W4SENSE) {
+		cdev->private->flags.doverify = 1;
+		return;
+	}
 	sch = to_subchannel(cdev->dev.parent);
 	/*
-	 * Since we might not just be coming from an पूर्णांकerrupt from the
+	 * Since we might not just be coming from an interrupt from the
 	 * subchannel we have to update the schib.
 	 */
-	अगर (cio_update_schib(sch)) अणु
-		ccw_device_verअगरy_करोne(cdev, -ENODEV);
-		वापस;
-	पूर्ण
+	if (cio_update_schib(sch)) {
+		ccw_device_verify_done(cdev, -ENODEV);
+		return;
+	}
 
-	अगर (scsw_actl(&sch->schib.scsw) != 0 ||
+	if (scsw_actl(&sch->schib.scsw) != 0 ||
 	    (scsw_stctl(&sch->schib.scsw) & SCSW_STCTL_STATUS_PEND) ||
-	    (scsw_stctl(&cdev->निजी->dma_area->irb.scsw) &
-	     SCSW_STCTL_STATUS_PEND)) अणु
+	    (scsw_stctl(&cdev->private->dma_area->irb.scsw) &
+	     SCSW_STCTL_STATUS_PEND)) {
 		/*
 		 * No final status yet or final status not yet delivered
-		 * to the device driver. Can't करो path verअगरication now,
+		 * to the device driver. Can't do path verification now,
 		 * delay until final status was delivered.
 		 */
-		cdev->निजी->flags.करोverअगरy = 1;
-		वापस;
-	पूर्ण
-	/* Device is idle, we can करो the path verअगरication. */
-	cdev->निजी->state = DEV_STATE_VERIFY;
-	ccw_device_verअगरy_start(cdev);
-पूर्ण
+		cdev->private->flags.doverify = 1;
+		return;
+	}
+	/* Device is idle, we can do the path verification. */
+	cdev->private->state = DEV_STATE_VERIFY;
+	ccw_device_verify_start(cdev);
+}
 
 /*
- * Handle path verअगरication event in boxed state.
+ * Handle path verification event in boxed state.
  */
-अटल व्योम ccw_device_boxed_verअगरy(काष्ठा ccw_device *cdev,
-				    क्रमागत dev_event dev_event)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+static void ccw_device_boxed_verify(struct ccw_device *cdev,
+				    enum dev_event dev_event)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
 
-	अगर (cdev->online) अणु
-		अगर (cio_enable_subchannel(sch, (u32) (addr_t) sch))
-			ccw_device_करोne(cdev, DEV_STATE_NOT_OPER);
-		अन्यथा
-			ccw_device_online_verअगरy(cdev, dev_event);
-	पूर्ण अन्यथा
+	if (cdev->online) {
+		if (cio_enable_subchannel(sch, (u32) (addr_t) sch))
+			ccw_device_done(cdev, DEV_STATE_NOT_OPER);
+		else
+			ccw_device_online_verify(cdev, dev_event);
+	} else
 		css_schedule_eval(sch->schid);
-पूर्ण
+}
 
 /*
- * Pass पूर्णांकerrupt to device driver.
+ * Pass interrupt to device driver.
  */
-अटल पूर्णांक ccw_device_call_handler(काष्ठा ccw_device *cdev)
-अणु
-	अचिन्हित पूर्णांक stctl;
-	पूर्णांक ending_status;
+static int ccw_device_call_handler(struct ccw_device *cdev)
+{
+	unsigned int stctl;
+	int ending_status;
 
 	/*
-	 * we allow क्रम the device action handler अगर .
+	 * we allow for the device action handler if .
 	 *  - we received ending status
-	 *  - the action handler requested to see all पूर्णांकerrupts
-	 *  - we received an पूर्णांकermediate status
-	 *  - fast notअगरication was requested (primary status)
-	 *  - unsolicited पूर्णांकerrupts
+	 *  - the action handler requested to see all interrupts
+	 *  - we received an intermediate status
+	 *  - fast notification was requested (primary status)
+	 *  - unsolicited interrupts
 	 */
-	stctl = scsw_stctl(&cdev->निजी->dma_area->irb.scsw);
+	stctl = scsw_stctl(&cdev->private->dma_area->irb.scsw);
 	ending_status = (stctl & SCSW_STCTL_SEC_STATUS) ||
 		(stctl == (SCSW_STCTL_ALERT_STATUS | SCSW_STCTL_STATUS_PEND)) ||
 		(stctl == SCSW_STCTL_STATUS_PEND);
-	अगर (!ending_status &&
-	    !cdev->निजी->options.repall &&
+	if (!ending_status &&
+	    !cdev->private->options.repall &&
 	    !(stctl & SCSW_STCTL_INTER_STATUS) &&
-	    !(cdev->निजी->options.fast &&
+	    !(cdev->private->options.fast &&
 	      (stctl & SCSW_STCTL_PRIM_STATUS)))
-		वापस 0;
+		return 0;
 
-	अगर (ending_status)
-		ccw_device_set_समयout(cdev, 0);
+	if (ending_status)
+		ccw_device_set_timeout(cdev, 0);
 
-	अगर (cdev->handler)
-		cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
-			      &cdev->निजी->dma_area->irb);
+	if (cdev->handler)
+		cdev->handler(cdev, cdev->private->intparm,
+			      &cdev->private->dma_area->irb);
 
-	स_रखो(&cdev->निजी->dma_area->irb, 0, माप(काष्ठा irb));
-	वापस 1;
-पूर्ण
+	memset(&cdev->private->dma_area->irb, 0, sizeof(struct irb));
+	return 1;
+}
 
 /*
- * Got an पूर्णांकerrupt क्रम a normal io (state online).
+ * Got an interrupt for a normal io (state online).
  */
-अटल व्योम
-ccw_device_irq(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	काष्ठा irb *irb;
-	पूर्णांक is_cmd;
+static void
+ccw_device_irq(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	struct irb *irb;
+	int is_cmd;
 
 	irb = this_cpu_ptr(&cio_irb);
-	is_cmd = !scsw_is_पंचांग(&irb->scsw);
-	/* Check क्रम unsolicited पूर्णांकerrupt. */
-	अगर (!scsw_is_solicited(&irb->scsw)) अणु
-		अगर (is_cmd && (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) &&
-		    !irb->esw.esw0.erw.cons) अणु
+	is_cmd = !scsw_is_tm(&irb->scsw);
+	/* Check for unsolicited interrupt. */
+	if (!scsw_is_solicited(&irb->scsw)) {
+		if (is_cmd && (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) &&
+		    !irb->esw.esw0.erw.cons) {
 			/* Unit check but no sense data. Need basic sense. */
-			अगर (ccw_device_करो_sense(cdev, irb) != 0)
-				जाओ call_handler_unsol;
-			स_नकल(&cdev->निजी->dma_area->irb, irb,
-			       माप(काष्ठा irb));
-			cdev->निजी->state = DEV_STATE_W4SENSE;
-			cdev->निजी->पूर्णांकparm = 0;
-			वापस;
-		पूर्ण
+			if (ccw_device_do_sense(cdev, irb) != 0)
+				goto call_handler_unsol;
+			memcpy(&cdev->private->dma_area->irb, irb,
+			       sizeof(struct irb));
+			cdev->private->state = DEV_STATE_W4SENSE;
+			cdev->private->intparm = 0;
+			return;
+		}
 call_handler_unsol:
-		अगर (cdev->handler)
+		if (cdev->handler)
 			cdev->handler (cdev, 0, irb);
-		अगर (cdev->निजी->flags.करोverअगरy)
-			ccw_device_online_verअगरy(cdev, 0);
-		वापस;
-	पूर्ण
-	/* Accumulate status and find out अगर a basic sense is needed. */
+		if (cdev->private->flags.doverify)
+			ccw_device_online_verify(cdev, 0);
+		return;
+	}
+	/* Accumulate status and find out if a basic sense is needed. */
 	ccw_device_accumulate_irb(cdev, irb);
-	अगर (is_cmd && cdev->निजी->flags.करोsense) अणु
-		अगर (ccw_device_करो_sense(cdev, irb) == 0) अणु
-			cdev->निजी->state = DEV_STATE_W4SENSE;
-		पूर्ण
-		वापस;
-	पूर्ण
+	if (is_cmd && cdev->private->flags.dosense) {
+		if (ccw_device_do_sense(cdev, irb) == 0) {
+			cdev->private->state = DEV_STATE_W4SENSE;
+		}
+		return;
+	}
 	/* Call the handler. */
-	अगर (ccw_device_call_handler(cdev) && cdev->निजी->flags.करोverअगरy)
-		/* Start delayed path verअगरication. */
-		ccw_device_online_verअगरy(cdev, 0);
-पूर्ण
+	if (ccw_device_call_handler(cdev) && cdev->private->flags.doverify)
+		/* Start delayed path verification. */
+		ccw_device_online_verify(cdev, 0);
+}
 
 /*
- * Got an समयout in online state.
+ * Got an timeout in online state.
  */
-अटल व्योम
-ccw_device_online_समयout(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	पूर्णांक ret;
+static void
+ccw_device_online_timeout(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	int ret;
 
-	ccw_device_set_समयout(cdev, 0);
-	cdev->निजी->iretry = 255;
-	cdev->निजी->async_समाप्त_io_rc = -ETIMEDOUT;
+	ccw_device_set_timeout(cdev, 0);
+	cdev->private->iretry = 255;
+	cdev->private->async_kill_io_rc = -ETIMEDOUT;
 	ret = ccw_device_cancel_halt_clear(cdev);
-	अगर (ret == -EBUSY) अणु
-		ccw_device_set_समयout(cdev, 3*HZ);
-		cdev->निजी->state = DEV_STATE_TIMEOUT_KILL;
-		वापस;
-	पूर्ण
-	अगर (ret)
+	if (ret == -EBUSY) {
+		ccw_device_set_timeout(cdev, 3*HZ);
+		cdev->private->state = DEV_STATE_TIMEOUT_KILL;
+		return;
+	}
+	if (ret)
 		dev_fsm_event(cdev, DEV_EVENT_NOTOPER);
-	अन्यथा अगर (cdev->handler)
-		cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
+	else if (cdev->handler)
+		cdev->handler(cdev, cdev->private->intparm,
 			      ERR_PTR(-ETIMEDOUT));
-पूर्ण
+}
 
 /*
- * Got an पूर्णांकerrupt क्रम a basic sense.
+ * Got an interrupt for a basic sense.
  */
-अटल व्योम
-ccw_device_w4sense(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	काष्ठा irb *irb;
+static void
+ccw_device_w4sense(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	struct irb *irb;
 
 	irb = this_cpu_ptr(&cio_irb);
-	/* Check क्रम unsolicited पूर्णांकerrupt. */
-	अगर (scsw_stctl(&irb->scsw) ==
-	    (SCSW_STCTL_STATUS_PEND | SCSW_STCTL_ALERT_STATUS)) अणु
-		अगर (scsw_cc(&irb->scsw) == 1)
+	/* Check for unsolicited interrupt. */
+	if (scsw_stctl(&irb->scsw) ==
+	    (SCSW_STCTL_STATUS_PEND | SCSW_STCTL_ALERT_STATUS)) {
+		if (scsw_cc(&irb->scsw) == 1)
 			/* Basic sense hasn't started. Try again. */
-			ccw_device_करो_sense(cdev, irb);
-		अन्यथा अणु
+			ccw_device_do_sense(cdev, irb);
+		else {
 			CIO_MSG_EVENT(0, "0.%x.%04x: unsolicited "
 				      "interrupt during w4sense...\n",
-				      cdev->निजी->dev_id.ssid,
-				      cdev->निजी->dev_id.devno);
-			अगर (cdev->handler)
+				      cdev->private->dev_id.ssid,
+				      cdev->private->dev_id.devno);
+			if (cdev->handler)
 				cdev->handler (cdev, 0, irb);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 	/*
-	 * Check अगर a halt or clear has been issued in the meanजबतक. If yes,
-	 * only deliver the halt/clear पूर्णांकerrupt to the device driver as अगर it
-	 * had समाप्तed the original request.
+	 * Check if a halt or clear has been issued in the meanwhile. If yes,
+	 * only deliver the halt/clear interrupt to the device driver as if it
+	 * had killed the original request.
 	 */
-	अगर (scsw_fctl(&irb->scsw) &
-	    (SCSW_FCTL_CLEAR_FUNC | SCSW_FCTL_HALT_FUNC)) अणु
-		cdev->निजी->flags.करोsense = 0;
-		स_रखो(&cdev->निजी->dma_area->irb, 0, माप(काष्ठा irb));
+	if (scsw_fctl(&irb->scsw) &
+	    (SCSW_FCTL_CLEAR_FUNC | SCSW_FCTL_HALT_FUNC)) {
+		cdev->private->flags.dosense = 0;
+		memset(&cdev->private->dma_area->irb, 0, sizeof(struct irb));
 		ccw_device_accumulate_irb(cdev, irb);
-		जाओ call_handler;
-	पूर्ण
+		goto call_handler;
+	}
 	/* Add basic sense info to irb. */
 	ccw_device_accumulate_basic_sense(cdev, irb);
-	अगर (cdev->निजी->flags.करोsense) अणु
+	if (cdev->private->flags.dosense) {
 		/* Another basic sense is needed. */
-		ccw_device_करो_sense(cdev, irb);
-		वापस;
-	पूर्ण
+		ccw_device_do_sense(cdev, irb);
+		return;
+	}
 call_handler:
-	cdev->निजी->state = DEV_STATE_ONLINE;
-	/* In हाल sensing पूर्णांकerfered with setting the device online */
-	wake_up(&cdev->निजी->रुको_q);
+	cdev->private->state = DEV_STATE_ONLINE;
+	/* In case sensing interfered with setting the device online */
+	wake_up(&cdev->private->wait_q);
 	/* Call the handler. */
-	अगर (ccw_device_call_handler(cdev) && cdev->निजी->flags.करोverअगरy)
-		/* Start delayed path verअगरication. */
-		ccw_device_online_verअगरy(cdev, 0);
-पूर्ण
+	if (ccw_device_call_handler(cdev) && cdev->private->flags.doverify)
+		/* Start delayed path verification. */
+		ccw_device_online_verify(cdev, 0);
+}
 
-अटल व्योम
-ccw_device_समाप्तing_irq(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	ccw_device_set_समयout(cdev, 0);
-	/* Start delayed path verअगरication. */
-	ccw_device_online_verअगरy(cdev, 0);
-	/* OK, i/o is dead now. Call पूर्णांकerrupt handler. */
-	अगर (cdev->handler)
-		cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
-			      ERR_PTR(cdev->निजी->async_समाप्त_io_rc));
-पूर्ण
+static void
+ccw_device_killing_irq(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	ccw_device_set_timeout(cdev, 0);
+	/* Start delayed path verification. */
+	ccw_device_online_verify(cdev, 0);
+	/* OK, i/o is dead now. Call interrupt handler. */
+	if (cdev->handler)
+		cdev->handler(cdev, cdev->private->intparm,
+			      ERR_PTR(cdev->private->async_kill_io_rc));
+}
 
-अटल व्योम
-ccw_device_समाप्तing_समयout(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	पूर्णांक ret;
+static void
+ccw_device_killing_timeout(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	int ret;
 
 	ret = ccw_device_cancel_halt_clear(cdev);
-	अगर (ret == -EBUSY) अणु
-		ccw_device_set_समयout(cdev, 3*HZ);
-		वापस;
-	पूर्ण
-	/* Start delayed path verअगरication. */
-	ccw_device_online_verअगरy(cdev, 0);
-	अगर (cdev->handler)
-		cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
-			      ERR_PTR(cdev->निजी->async_समाप्त_io_rc));
-पूर्ण
+	if (ret == -EBUSY) {
+		ccw_device_set_timeout(cdev, 3*HZ);
+		return;
+	}
+	/* Start delayed path verification. */
+	ccw_device_online_verify(cdev, 0);
+	if (cdev->handler)
+		cdev->handler(cdev, cdev->private->intparm,
+			      ERR_PTR(cdev->private->async_kill_io_rc));
+}
 
-व्योम ccw_device_समाप्त_io(काष्ठा ccw_device *cdev)
-अणु
-	पूर्णांक ret;
+void ccw_device_kill_io(struct ccw_device *cdev)
+{
+	int ret;
 
-	ccw_device_set_समयout(cdev, 0);
-	cdev->निजी->iretry = 255;
-	cdev->निजी->async_समाप्त_io_rc = -EIO;
+	ccw_device_set_timeout(cdev, 0);
+	cdev->private->iretry = 255;
+	cdev->private->async_kill_io_rc = -EIO;
 	ret = ccw_device_cancel_halt_clear(cdev);
-	अगर (ret == -EBUSY) अणु
-		ccw_device_set_समयout(cdev, 3*HZ);
-		cdev->निजी->state = DEV_STATE_TIMEOUT_KILL;
-		वापस;
-	पूर्ण
-	/* Start delayed path verअगरication. */
-	ccw_device_online_verअगरy(cdev, 0);
-	अगर (cdev->handler)
-		cdev->handler(cdev, cdev->निजी->पूर्णांकparm,
+	if (ret == -EBUSY) {
+		ccw_device_set_timeout(cdev, 3*HZ);
+		cdev->private->state = DEV_STATE_TIMEOUT_KILL;
+		return;
+	}
+	/* Start delayed path verification. */
+	ccw_device_online_verify(cdev, 0);
+	if (cdev->handler)
+		cdev->handler(cdev, cdev->private->intparm,
 			      ERR_PTR(-EIO));
-पूर्ण
+}
 
-अटल व्योम
-ccw_device_delay_verअगरy(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	/* Start verअगरication after current task finished. */
-	cdev->निजी->flags.करोverअगरy = 1;
-पूर्ण
+static void
+ccw_device_delay_verify(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	/* Start verification after current task finished. */
+	cdev->private->flags.doverify = 1;
+}
 
-अटल व्योम
-ccw_device_start_id(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	काष्ठा subchannel *sch;
+static void
+ccw_device_start_id(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	struct subchannel *sch;
 
 	sch = to_subchannel(cdev->dev.parent);
-	अगर (cio_enable_subchannel(sch, (u32)(addr_t)sch) != 0)
-		/* Couldn't enable the subchannel क्रम i/o. Sick device. */
-		वापस;
-	cdev->निजी->state = DEV_STATE_DISCONNECTED_SENSE_ID;
+	if (cio_enable_subchannel(sch, (u32)(addr_t)sch) != 0)
+		/* Couldn't enable the subchannel for i/o. Sick device. */
+		return;
+	cdev->private->state = DEV_STATE_DISCONNECTED_SENSE_ID;
 	ccw_device_sense_id_start(cdev);
-पूर्ण
+}
 
-व्योम ccw_device_trigger_reprobe(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch;
+void ccw_device_trigger_reprobe(struct ccw_device *cdev)
+{
+	struct subchannel *sch;
 
-	अगर (cdev->निजी->state != DEV_STATE_DISCONNECTED)
-		वापस;
+	if (cdev->private->state != DEV_STATE_DISCONNECTED)
+		return;
 
 	sch = to_subchannel(cdev->dev.parent);
 	/* Update some values. */
-	अगर (cio_update_schib(sch))
-		वापस;
+	if (cio_update_schib(sch))
+		return;
 	/*
 	 * The pim, pam, pom values may not be accurate, but they are the best
-	 * we have beक्रमe perक्रमming device selection :/
+	 * we have before performing device selection :/
 	 */
 	sch->lpm = sch->schib.pmcw.pam & sch->opm;
 	/*
@@ -957,173 +956,173 @@ ccw_device_start_id(काष्ठा ccw_device *cdev, क्रमागत d
 	 * paths are valid.
 	 */
 	io_subchannel_init_config(sch);
-	अगर (cio_commit_config(sch))
-		वापस;
+	if (cio_commit_config(sch))
+		return;
 
-	/* We should also udate ssd info, but this has to रुको. */
-	/* Check अगर this is another device which appeared on the same sch. */
-	अगर (sch->schib.pmcw.dev != cdev->निजी->dev_id.devno)
+	/* We should also udate ssd info, but this has to wait. */
+	/* Check if this is another device which appeared on the same sch. */
+	if (sch->schib.pmcw.dev != cdev->private->dev_id.devno)
 		css_schedule_eval(sch->schid);
-	अन्यथा
+	else
 		ccw_device_start_id(cdev, 0);
-पूर्ण
+}
 
-अटल व्योम ccw_device_disabled_irq(काष्ठा ccw_device *cdev,
-				    क्रमागत dev_event dev_event)
-अणु
-	काष्ठा subchannel *sch;
+static void ccw_device_disabled_irq(struct ccw_device *cdev,
+				    enum dev_event dev_event)
+{
+	struct subchannel *sch;
 
 	sch = to_subchannel(cdev->dev.parent);
 	/*
-	 * An पूर्णांकerrupt in a disabled state means a previous disable was not
+	 * An interrupt in a disabled state means a previous disable was not
 	 * successful - should not happen, but we try to disable again.
 	 */
 	cio_disable_subchannel(sch);
-पूर्ण
+}
 
-अटल व्योम
-ccw_device_change_cmख_स्थितिe(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
+static void
+ccw_device_change_cmfstate(struct ccw_device *cdev, enum dev_event dev_event)
+{
 	retry_set_schib(cdev);
-	cdev->निजी->state = DEV_STATE_ONLINE;
+	cdev->private->state = DEV_STATE_ONLINE;
 	dev_fsm_event(cdev, dev_event);
-पूर्ण
+}
 
-अटल व्योम ccw_device_update_cmfblock(काष्ठा ccw_device *cdev,
-				       क्रमागत dev_event dev_event)
-अणु
+static void ccw_device_update_cmfblock(struct ccw_device *cdev,
+				       enum dev_event dev_event)
+{
 	cmf_retry_copy_block(cdev);
-	cdev->निजी->state = DEV_STATE_ONLINE;
+	cdev->private->state = DEV_STATE_ONLINE;
 	dev_fsm_event(cdev, dev_event);
-पूर्ण
+}
 
-अटल व्योम
-ccw_device_quiesce_करोne(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	ccw_device_set_समयout(cdev, 0);
-	cdev->निजी->state = DEV_STATE_NOT_OPER;
-	wake_up(&cdev->निजी->रुको_q);
-पूर्ण
+static void
+ccw_device_quiesce_done(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	ccw_device_set_timeout(cdev, 0);
+	cdev->private->state = DEV_STATE_NOT_OPER;
+	wake_up(&cdev->private->wait_q);
+}
 
-अटल व्योम
-ccw_device_quiesce_समयout(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	पूर्णांक ret;
+static void
+ccw_device_quiesce_timeout(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	int ret;
 
 	ret = ccw_device_cancel_halt_clear(cdev);
-	अगर (ret == -EBUSY) अणु
-		ccw_device_set_समयout(cdev, HZ/10);
-	पूर्ण अन्यथा अणु
-		cdev->निजी->state = DEV_STATE_NOT_OPER;
-		wake_up(&cdev->निजी->रुको_q);
-	पूर्ण
-पूर्ण
+	if (ret == -EBUSY) {
+		ccw_device_set_timeout(cdev, HZ/10);
+	} else {
+		cdev->private->state = DEV_STATE_NOT_OPER;
+		wake_up(&cdev->private->wait_q);
+	}
+}
 
 /*
- * No operation action. This is used e.g. to ignore a समयout event in
+ * No operation action. This is used e.g. to ignore a timeout event in
  * state offline.
  */
-अटल व्योम
-ccw_device_nop(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-पूर्ण
+static void
+ccw_device_nop(struct ccw_device *cdev, enum dev_event dev_event)
+{
+}
 
 /*
  * device statemachine
  */
-fsm_func_t *dev_jumptable[NR_DEV_STATES][NR_DEV_EVENTS] = अणु
-	[DEV_STATE_NOT_OPER] = अणु
+fsm_func_t *dev_jumptable[NR_DEV_STATES][NR_DEV_EVENTS] = {
+	[DEV_STATE_NOT_OPER] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_nop,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_disabled_irq,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_nop,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-	[DEV_STATE_SENSE_ID] = अणु
+	},
+	[DEV_STATE_SENSE_ID] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_request_event,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_request_event,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_request_event,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-	[DEV_STATE_OFFLINE] = अणु
+	},
+	[DEV_STATE_OFFLINE] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_generic_notoper,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_disabled_irq,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_nop,
-		[DEV_EVENT_VERIFY]	= ccw_device_offline_verअगरy,
-	पूर्ण,
-	[DEV_STATE_VERIFY] = अणु
+		[DEV_EVENT_VERIFY]	= ccw_device_offline_verify,
+	},
+	[DEV_STATE_VERIFY] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_request_event,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_request_event,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_request_event,
-		[DEV_EVENT_VERIFY]	= ccw_device_delay_verअगरy,
-	पूर्ण,
-	[DEV_STATE_ONLINE] = अणु
+		[DEV_EVENT_VERIFY]	= ccw_device_delay_verify,
+	},
+	[DEV_STATE_ONLINE] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_generic_notoper,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_irq,
-		[DEV_EVENT_TIMEOUT]	= ccw_device_online_समयout,
-		[DEV_EVENT_VERIFY]	= ccw_device_online_verअगरy,
-	पूर्ण,
-	[DEV_STATE_W4SENSE] = अणु
+		[DEV_EVENT_TIMEOUT]	= ccw_device_online_timeout,
+		[DEV_EVENT_VERIFY]	= ccw_device_online_verify,
+	},
+	[DEV_STATE_W4SENSE] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_generic_notoper,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_w4sense,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_nop,
-		[DEV_EVENT_VERIFY]	= ccw_device_online_verअगरy,
-	पूर्ण,
-	[DEV_STATE_DISBAND_PGID] = अणु
+		[DEV_EVENT_VERIFY]	= ccw_device_online_verify,
+	},
+	[DEV_STATE_DISBAND_PGID] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_request_event,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_request_event,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_request_event,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-	[DEV_STATE_BOXED] = अणु
+	},
+	[DEV_STATE_BOXED] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_generic_notoper,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_nop,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_nop,
-		[DEV_EVENT_VERIFY]	= ccw_device_boxed_verअगरy,
-	पूर्ण,
-	/* states to रुको क्रम i/o completion beक्रमe करोing something */
-	[DEV_STATE_TIMEOUT_KILL] = अणु
+		[DEV_EVENT_VERIFY]	= ccw_device_boxed_verify,
+	},
+	/* states to wait for i/o completion before doing something */
+	[DEV_STATE_TIMEOUT_KILL] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_generic_notoper,
-		[DEV_EVENT_INTERRUPT]	= ccw_device_समाप्तing_irq,
-		[DEV_EVENT_TIMEOUT]	= ccw_device_समाप्तing_समयout,
+		[DEV_EVENT_INTERRUPT]	= ccw_device_killing_irq,
+		[DEV_EVENT_TIMEOUT]	= ccw_device_killing_timeout,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop, //FIXME
-	पूर्ण,
-	[DEV_STATE_QUIESCE] = अणु
-		[DEV_EVENT_NOTOPER]	= ccw_device_quiesce_करोne,
-		[DEV_EVENT_INTERRUPT]	= ccw_device_quiesce_करोne,
-		[DEV_EVENT_TIMEOUT]	= ccw_device_quiesce_समयout,
+	},
+	[DEV_STATE_QUIESCE] = {
+		[DEV_EVENT_NOTOPER]	= ccw_device_quiesce_done,
+		[DEV_EVENT_INTERRUPT]	= ccw_device_quiesce_done,
+		[DEV_EVENT_TIMEOUT]	= ccw_device_quiesce_timeout,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-	/* special states क्रम devices gone not operational */
-	[DEV_STATE_DISCONNECTED] = अणु
+	},
+	/* special states for devices gone not operational */
+	[DEV_STATE_DISCONNECTED] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_nop,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_start_id,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_nop,
 		[DEV_EVENT_VERIFY]	= ccw_device_start_id,
-	पूर्ण,
-	[DEV_STATE_DISCONNECTED_SENSE_ID] = अणु
+	},
+	[DEV_STATE_DISCONNECTED_SENSE_ID] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_request_event,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_request_event,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_request_event,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-	[DEV_STATE_CMFCHANGE] = अणु
-		[DEV_EVENT_NOTOPER]	= ccw_device_change_cmख_स्थितिe,
-		[DEV_EVENT_INTERRUPT]	= ccw_device_change_cmख_स्थितिe,
-		[DEV_EVENT_TIMEOUT]	= ccw_device_change_cmख_स्थितिe,
-		[DEV_EVENT_VERIFY]	= ccw_device_change_cmख_स्थितिe,
-	पूर्ण,
-	[DEV_STATE_CMFUPDATE] = अणु
+	},
+	[DEV_STATE_CMFCHANGE] = {
+		[DEV_EVENT_NOTOPER]	= ccw_device_change_cmfstate,
+		[DEV_EVENT_INTERRUPT]	= ccw_device_change_cmfstate,
+		[DEV_EVENT_TIMEOUT]	= ccw_device_change_cmfstate,
+		[DEV_EVENT_VERIFY]	= ccw_device_change_cmfstate,
+	},
+	[DEV_STATE_CMFUPDATE] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_update_cmfblock,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_update_cmfblock,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_update_cmfblock,
 		[DEV_EVENT_VERIFY]	= ccw_device_update_cmfblock,
-	पूर्ण,
-	[DEV_STATE_STEAL_LOCK] = अणु
+	},
+	[DEV_STATE_STEAL_LOCK] = {
 		[DEV_EVENT_NOTOPER]	= ccw_device_request_event,
 		[DEV_EVENT_INTERRUPT]	= ccw_device_request_event,
 		[DEV_EVENT_TIMEOUT]	= ccw_device_request_event,
 		[DEV_EVENT_VERIFY]	= ccw_device_nop,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-EXPORT_SYMBOL_GPL(ccw_device_set_समयout);
+EXPORT_SYMBOL_GPL(ccw_device_set_timeout);

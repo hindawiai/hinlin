@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* Test हालs क्रम siphash.c
+/* Test cases for siphash.c
  *
  * Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  *
  * This file is provided under a dual BSD/GPLv2 license.
  *
- * SipHash: a fast लघु-input PRF
+ * SipHash: a fast short-input PRF
  * https://131002.net/siphash/
  *
- * This implementation is specअगरically क्रम SipHash2-4 क्रम a secure PRF
- * and HalfSipHash1-3/SipHash1-3 क्रम an insecure PRF only suitable क्रम
+ * This implementation is specifically for SipHash2-4 for a secure PRF
+ * and HalfSipHash1-3/SipHash1-3 for an insecure PRF only suitable for
  * hashtables.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/siphash.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
+#include <linux/siphash.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/module.h>
 
 /* Test vectors taken from reference source available at:
  *     https://github.com/veorq/SipHash
  */
 
-अटल स्थिर siphash_key_t test_key_siphash =
-	अणुअणु 0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL पूर्णपूर्ण;
+static const siphash_key_t test_key_siphash =
+	{{ 0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL }};
 
-अटल स्थिर u64 test_vectors_siphash[64] = अणु
+static const u64 test_vectors_siphash[64] = {
 	0x726fdb47dd0e0e31ULL, 0x74f839c593dc67fdULL, 0x0d6c8009d9a94f5aULL,
 	0x85676696d7fb7e2dULL, 0xcf2794e0277187b7ULL, 0x18765564cd99a68dULL,
 	0xcbc9466e58fee3ceULL, 0xab0200f58b01d137ULL, 0x93f5f5799a932462ULL,
@@ -51,13 +50,13 @@
 	0xea1ad565322a1a0bULL, 0x60e61c23a3795013ULL, 0x6606d7e446282b93ULL,
 	0x6ca4ecb15c5f91e1ULL, 0x9f626da15c9625f3ULL, 0xe51b38608ef25f57ULL,
 	0x958a324ceb064572ULL
-पूर्ण;
+};
 
-#अगर BITS_PER_LONG == 64
-अटल स्थिर hsiphash_key_t test_key_hsiphash =
-	अणुअणु 0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL पूर्णपूर्ण;
+#if BITS_PER_LONG == 64
+static const hsiphash_key_t test_key_hsiphash =
+	{{ 0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL }};
 
-अटल स्थिर u32 test_vectors_hsiphash[64] = अणु
+static const u32 test_vectors_hsiphash[64] = {
 	0x050fc4dcU, 0x7d57ca93U, 0x4dc7d44dU,
 	0xe7ddf7fbU, 0x88d38328U, 0x49533b67U,
 	0xc59f22a7U, 0x9bb11140U, 0x8d299a8eU,
@@ -80,12 +79,12 @@
 	0xfdb71513U, 0xa67d8a08U, 0xb7e8f148U,
 	0xf7a644eeU, 0x0f1837f2U, 0x4b6694e0U,
 	0xb7bbb3a8U
-पूर्ण;
-#अन्यथा
-अटल स्थिर hsiphash_key_t test_key_hsiphash =
-	अणुअणु 0x03020100U, 0x07060504U पूर्णपूर्ण;
+};
+#else
+static const hsiphash_key_t test_key_hsiphash =
+	{{ 0x03020100U, 0x07060504U }};
 
-अटल स्थिर u32 test_vectors_hsiphash[64] = अणु
+static const u32 test_vectors_hsiphash[64] = {
 	0x5814c896U, 0xe7e864caU, 0xbc4b0e30U,
 	0x01539939U, 0x7e059ea6U, 0x88e3d89bU,
 	0xa0080b65U, 0x9d38d9d6U, 0x577999b1U,
@@ -108,117 +107,117 @@
 	0x2ee80657U, 0x33dbb66aU, 0xae3f0577U,
 	0x88b4c4ccU, 0x3e7f480bU, 0x74c1ebf8U,
 	0x87178304U
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक __init siphash_test_init(व्योम)
-अणु
+static int __init siphash_test_init(void)
+{
 	u8 in[64] __aligned(SIPHASH_ALIGNMENT);
 	u8 in_unaligned[65] __aligned(SIPHASH_ALIGNMENT);
 	u8 i;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	क्रम (i = 0; i < 64; ++i) अणु
+	for (i = 0; i < 64; ++i) {
 		in[i] = i;
 		in_unaligned[i + 1] = i;
-		अगर (siphash(in, i, &test_key_siphash) !=
-						test_vectors_siphash[i]) अणु
+		if (siphash(in, i, &test_key_siphash) !=
+						test_vectors_siphash[i]) {
 			pr_info("siphash self-test aligned %u: FAIL\n", i + 1);
 			ret = -EINVAL;
-		पूर्ण
-		अगर (siphash(in_unaligned + 1, i, &test_key_siphash) !=
-						test_vectors_siphash[i]) अणु
+		}
+		if (siphash(in_unaligned + 1, i, &test_key_siphash) !=
+						test_vectors_siphash[i]) {
 			pr_info("siphash self-test unaligned %u: FAIL\n", i + 1);
 			ret = -EINVAL;
-		पूर्ण
-		अगर (hsiphash(in, i, &test_key_hsiphash) !=
-						test_vectors_hsiphash[i]) अणु
+		}
+		if (hsiphash(in, i, &test_key_hsiphash) !=
+						test_vectors_hsiphash[i]) {
 			pr_info("hsiphash self-test aligned %u: FAIL\n", i + 1);
 			ret = -EINVAL;
-		पूर्ण
-		अगर (hsiphash(in_unaligned + 1, i, &test_key_hsiphash) !=
-						test_vectors_hsiphash[i]) अणु
+		}
+		if (hsiphash(in_unaligned + 1, i, &test_key_hsiphash) !=
+						test_vectors_hsiphash[i]) {
 			pr_info("hsiphash self-test unaligned %u: FAIL\n", i + 1);
 			ret = -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (siphash_1u64(0x0706050403020100ULL, &test_key_siphash) !=
-						test_vectors_siphash[8]) अणु
+		}
+	}
+	if (siphash_1u64(0x0706050403020100ULL, &test_key_siphash) !=
+						test_vectors_siphash[8]) {
 		pr_info("siphash self-test 1u64: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_2u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
-			 &test_key_siphash) != test_vectors_siphash[16]) अणु
+	}
+	if (siphash_2u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
+			 &test_key_siphash) != test_vectors_siphash[16]) {
 		pr_info("siphash self-test 2u64: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_3u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
+	}
+	if (siphash_3u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
 			 0x1716151413121110ULL, &test_key_siphash) !=
-						test_vectors_siphash[24]) अणु
+						test_vectors_siphash[24]) {
 		pr_info("siphash self-test 3u64: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_4u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
+	}
+	if (siphash_4u64(0x0706050403020100ULL, 0x0f0e0d0c0b0a0908ULL,
 			 0x1716151413121110ULL, 0x1f1e1d1c1b1a1918ULL,
-			 &test_key_siphash) != test_vectors_siphash[32]) अणु
+			 &test_key_siphash) != test_vectors_siphash[32]) {
 		pr_info("siphash self-test 4u64: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_1u32(0x03020100U, &test_key_siphash) !=
-						test_vectors_siphash[4]) अणु
+	}
+	if (siphash_1u32(0x03020100U, &test_key_siphash) !=
+						test_vectors_siphash[4]) {
 		pr_info("siphash self-test 1u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_2u32(0x03020100U, 0x07060504U, &test_key_siphash) !=
-						test_vectors_siphash[8]) अणु
+	}
+	if (siphash_2u32(0x03020100U, 0x07060504U, &test_key_siphash) !=
+						test_vectors_siphash[8]) {
 		pr_info("siphash self-test 2u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_3u32(0x03020100U, 0x07060504U,
+	}
+	if (siphash_3u32(0x03020100U, 0x07060504U,
 			 0x0b0a0908U, &test_key_siphash) !=
-						test_vectors_siphash[12]) अणु
+						test_vectors_siphash[12]) {
 		pr_info("siphash self-test 3u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (siphash_4u32(0x03020100U, 0x07060504U,
+	}
+	if (siphash_4u32(0x03020100U, 0x07060504U,
 			 0x0b0a0908U, 0x0f0e0d0cU, &test_key_siphash) !=
-						test_vectors_siphash[16]) अणु
+						test_vectors_siphash[16]) {
 		pr_info("siphash self-test 4u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (hsiphash_1u32(0x03020100U, &test_key_hsiphash) !=
-						test_vectors_hsiphash[4]) अणु
+	}
+	if (hsiphash_1u32(0x03020100U, &test_key_hsiphash) !=
+						test_vectors_hsiphash[4]) {
 		pr_info("hsiphash self-test 1u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (hsiphash_2u32(0x03020100U, 0x07060504U, &test_key_hsiphash) !=
-						test_vectors_hsiphash[8]) अणु
+	}
+	if (hsiphash_2u32(0x03020100U, 0x07060504U, &test_key_hsiphash) !=
+						test_vectors_hsiphash[8]) {
 		pr_info("hsiphash self-test 2u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (hsiphash_3u32(0x03020100U, 0x07060504U,
+	}
+	if (hsiphash_3u32(0x03020100U, 0x07060504U,
 			  0x0b0a0908U, &test_key_hsiphash) !=
-						test_vectors_hsiphash[12]) अणु
+						test_vectors_hsiphash[12]) {
 		pr_info("hsiphash self-test 3u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (hsiphash_4u32(0x03020100U, 0x07060504U,
+	}
+	if (hsiphash_4u32(0x03020100U, 0x07060504U,
 			  0x0b0a0908U, 0x0f0e0d0cU, &test_key_hsiphash) !=
-						test_vectors_hsiphash[16]) अणु
+						test_vectors_hsiphash[16]) {
 		pr_info("hsiphash self-test 4u32: FAIL\n");
 		ret = -EINVAL;
-	पूर्ण
-	अगर (!ret)
+	}
+	if (!ret)
 		pr_info("self-tests: pass\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास siphash_test_निकास(व्योम)
-अणु
-पूर्ण
+static void __exit siphash_test_exit(void)
+{
+}
 
 module_init(siphash_test_init);
-module_निकास(siphash_test_निकास);
+module_exit(siphash_test_exit);
 
 MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com>");
 MODULE_LICENSE("Dual BSD/GPL");

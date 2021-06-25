@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Intel ICH6-10, Series 5 and 6, Atom C2000 (Avoton/Rangeley) GPIO driver
  *
  * Copyright (C) 2010 Extreme Engineering Solutions.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mfd/lpc_ich.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/ioport.h>
+#include <linux/mfd/lpc_ich.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
-#घोषणा DRV_NAME "gpio_ich"
+#define DRV_NAME "gpio_ich"
 
 /*
- * GPIO रेजिस्टर offsets in GPIO I/O space.
+ * GPIO register offsets in GPIO I/O space.
  * Each chunk of 32 GPIOs is manipulated via its own USE_SELx, IO_SELx, and
- * LVLx रेजिस्टरs.  Logic in the पढ़ो/ग_लिखो functions takes a रेजिस्टर and
- * an असलolute bit number and determines the proper रेजिस्टर offset and bit
- * number in that रेजिस्टर.  For example, to पढ़ो the value of GPIO bit 50
+ * LVLx registers.  Logic in the read/write functions takes a register and
+ * an absolute bit number and determines the proper register offset and bit
+ * number in that register.  For example, to read the value of GPIO bit 50
  * the code would access offset ichx_regs[2(=GPIO_LVL)][1(=50/32)],
  * bit 18 (50%32).
  */
-क्रमागत GPIO_REG अणु
+enum GPIO_REG {
 	GPIO_USE_SEL = 0,
 	GPIO_IO_SEL,
 	GPIO_LVL,
 	GPO_BLINK
-पूर्ण;
+};
 
-अटल स्थिर u8 ichx_regs[4][3] = अणु
-	अणु0x00, 0x30, 0x40पूर्ण,	/* USE_SEL[1-3] offsets */
-	अणु0x04, 0x34, 0x44पूर्ण,	/* IO_SEL[1-3] offsets */
-	अणु0x0c, 0x38, 0x48पूर्ण,	/* LVL[1-3] offsets */
-	अणु0x18, 0x18, 0x18पूर्ण,	/* BLINK offset */
-पूर्ण;
+static const u8 ichx_regs[4][3] = {
+	{0x00, 0x30, 0x40},	/* USE_SEL[1-3] offsets */
+	{0x04, 0x34, 0x44},	/* IO_SEL[1-3] offsets */
+	{0x0c, 0x38, 0x48},	/* LVL[1-3] offsets */
+	{0x18, 0x18, 0x18},	/* BLINK offset */
+};
 
-अटल स्थिर u8 ichx_reglen[3] = अणु
+static const u8 ichx_reglen[3] = {
 	0x30, 0x10, 0x10,
-पूर्ण;
+};
 
-अटल स्थिर u8 avoton_regs[4][3] = अणु
-	अणु0x00, 0x80, 0x00पूर्ण,
-	अणु0x04, 0x84, 0x00पूर्ण,
-	अणु0x08, 0x88, 0x00पूर्ण,
-पूर्ण;
+static const u8 avoton_regs[4][3] = {
+	{0x00, 0x80, 0x00},
+	{0x04, 0x84, 0x00},
+	{0x08, 0x88, 0x00},
+};
 
-अटल स्थिर u8 avoton_reglen[3] = अणु
+static const u8 avoton_reglen[3] = {
 	0x10, 0x10, 0x00,
-पूर्ण;
+};
 
-#घोषणा ICHX_WRITE(val, reg, base_res)	outl(val, (reg) + (base_res)->start)
-#घोषणा ICHX_READ(reg, base_res)	inl((reg) + (base_res)->start)
+#define ICHX_WRITE(val, reg, base_res)	outl(val, (reg) + (base_res)->start)
+#define ICHX_READ(reg, base_res)	inl((reg) + (base_res)->start)
 
-काष्ठा ichx_desc अणु
+struct ichx_desc {
 	/* Max GPIO pins the chipset can have */
-	uपूर्णांक ngpio;
+	uint ngpio;
 
-	/* chipset रेजिस्टरs */
-	स्थिर u8 (*regs)[3];
-	स्थिर u8 *reglen;
+	/* chipset registers */
+	const u8 (*regs)[3];
+	const u8 *reglen;
 
 	/* GPO_BLINK is available on this chipset */
 	bool have_blink;
@@ -73,198 +72,198 @@
 	u32 use_sel_ignore[3];
 
 	/* Some chipsets have quirks, let these use their own request/get */
-	पूर्णांक (*request)(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset);
-	पूर्णांक (*get)(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset);
+	int (*request)(struct gpio_chip *chip, unsigned int offset);
+	int (*get)(struct gpio_chip *chip, unsigned int offset);
 
 	/*
-	 * Some chipsets करोn't let पढ़ोing output values on GPIO_LVL रेजिस्टर
+	 * Some chipsets don't let reading output values on GPIO_LVL register
 	 * this option allows driver caching written output values
 	 */
 	bool use_outlvl_cache;
-पूर्ण;
+};
 
-अटल काष्ठा अणु
+static struct {
 	spinlock_t lock;
-	काष्ठा device *dev;
-	काष्ठा gpio_chip chip;
-	काष्ठा resource *gpio_base;	/* GPIO IO base */
-	काष्ठा resource *pm_base;	/* Power Management IO base */
-	काष्ठा ichx_desc *desc;	/* Poपूर्णांकer to chipset-specअगरic description */
-	u32 orig_gpio_ctrl;	/* Orig CTRL value, used to restore on निकास */
+	struct device *dev;
+	struct gpio_chip chip;
+	struct resource *gpio_base;	/* GPIO IO base */
+	struct resource *pm_base;	/* Power Management IO base */
+	struct ichx_desc *desc;	/* Pointer to chipset-specific description */
+	u32 orig_gpio_ctrl;	/* Orig CTRL value, used to restore on exit */
 	u8 use_gpio;		/* Which GPIO groups are usable */
-	पूर्णांक outlvl_cache[3];	/* cached output values */
-पूर्ण ichx_priv;
+	int outlvl_cache[3];	/* cached output values */
+} ichx_priv;
 
-अटल पूर्णांक modparam_gpiobase = -1;	/* dynamic */
-module_param_named(gpiobase, modparam_gpiobase, पूर्णांक, 0444);
+static int modparam_gpiobase = -1;	/* dynamic */
+module_param_named(gpiobase, modparam_gpiobase, int, 0444);
 MODULE_PARM_DESC(gpiobase, "The GPIO number base. -1 means dynamic, which is the default.");
 
-अटल पूर्णांक ichx_ग_लिखो_bit(पूर्णांक reg, अचिन्हित पूर्णांक nr, पूर्णांक val, पूर्णांक verअगरy)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 data, पंचांगp;
-	पूर्णांक reg_nr = nr / 32;
-	पूर्णांक bit = nr & 0x1f;
+static int ichx_write_bit(int reg, unsigned int nr, int val, int verify)
+{
+	unsigned long flags;
+	u32 data, tmp;
+	int reg_nr = nr / 32;
+	int bit = nr & 0x1f;
 
 	spin_lock_irqsave(&ichx_priv.lock, flags);
 
-	अगर (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
+	if (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
 		data = ichx_priv.outlvl_cache[reg_nr];
-	अन्यथा
+	else
 		data = ICHX_READ(ichx_priv.desc->regs[reg][reg_nr],
 				 ichx_priv.gpio_base);
 
-	अगर (val)
+	if (val)
 		data |= BIT(bit);
-	अन्यथा
+	else
 		data &= ~BIT(bit);
 	ICHX_WRITE(data, ichx_priv.desc->regs[reg][reg_nr],
 			 ichx_priv.gpio_base);
-	अगर (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
+	if (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
 		ichx_priv.outlvl_cache[reg_nr] = data;
 
-	पंचांगp = ICHX_READ(ichx_priv.desc->regs[reg][reg_nr],
+	tmp = ICHX_READ(ichx_priv.desc->regs[reg][reg_nr],
 			ichx_priv.gpio_base);
 
 	spin_unlock_irqrestore(&ichx_priv.lock, flags);
 
-	वापस (verअगरy && data != पंचांगp) ? -EPERM : 0;
-पूर्ण
+	return (verify && data != tmp) ? -EPERM : 0;
+}
 
-अटल पूर्णांक ichx_पढ़ो_bit(पूर्णांक reg, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित दीर्घ flags;
+static int ichx_read_bit(int reg, unsigned int nr)
+{
+	unsigned long flags;
 	u32 data;
-	पूर्णांक reg_nr = nr / 32;
-	पूर्णांक bit = nr & 0x1f;
+	int reg_nr = nr / 32;
+	int bit = nr & 0x1f;
 
 	spin_lock_irqsave(&ichx_priv.lock, flags);
 
 	data = ICHX_READ(ichx_priv.desc->regs[reg][reg_nr],
 			 ichx_priv.gpio_base);
 
-	अगर (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
+	if (reg == GPIO_LVL && ichx_priv.desc->use_outlvl_cache)
 		data = ichx_priv.outlvl_cache[reg_nr] | data;
 
 	spin_unlock_irqrestore(&ichx_priv.lock, flags);
 
-	वापस !!(data & BIT(bit));
-पूर्ण
+	return !!(data & BIT(bit));
+}
 
-अटल bool ichx_gpio_check_available(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
-अणु
-	वापस !!(ichx_priv.use_gpio & BIT(nr / 32));
-पूर्ण
+static bool ichx_gpio_check_available(struct gpio_chip *gpio, unsigned int nr)
+{
+	return !!(ichx_priv.use_gpio & BIT(nr / 32));
+}
 
-अटल पूर्णांक ichx_gpio_get_direction(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
-अणु
-	अगर (ichx_पढ़ो_bit(GPIO_IO_SEL, nr))
-		वापस GPIO_LINE_सूचीECTION_IN;
+static int ichx_gpio_get_direction(struct gpio_chip *gpio, unsigned int nr)
+{
+	if (ichx_read_bit(GPIO_IO_SEL, nr))
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक ichx_gpio_direction_input(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
-अणु
+static int ichx_gpio_direction_input(struct gpio_chip *gpio, unsigned int nr)
+{
 	/*
-	 * Try setting pin as an input and verअगरy it worked since many pins
+	 * Try setting pin as an input and verify it worked since many pins
 	 * are output-only.
 	 */
-	वापस ichx_ग_लिखो_bit(GPIO_IO_SEL, nr, 1, 1);
-पूर्ण
+	return ichx_write_bit(GPIO_IO_SEL, nr, 1, 1);
+}
 
-अटल पूर्णांक ichx_gpio_direction_output(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr,
-					पूर्णांक val)
-अणु
-	/* Disable blink hardware which is available क्रम GPIOs from 0 to 31. */
-	अगर (nr < 32 && ichx_priv.desc->have_blink)
-		ichx_ग_लिखो_bit(GPO_BLINK, nr, 0, 0);
+static int ichx_gpio_direction_output(struct gpio_chip *gpio, unsigned int nr,
+					int val)
+{
+	/* Disable blink hardware which is available for GPIOs from 0 to 31. */
+	if (nr < 32 && ichx_priv.desc->have_blink)
+		ichx_write_bit(GPO_BLINK, nr, 0, 0);
 
 	/* Set GPIO output value. */
-	ichx_ग_लिखो_bit(GPIO_LVL, nr, val, 0);
+	ichx_write_bit(GPIO_LVL, nr, val, 0);
 
 	/*
-	 * Try setting pin as an output and verअगरy it worked since many pins
+	 * Try setting pin as an output and verify it worked since many pins
 	 * are input-only.
 	 */
-	वापस ichx_ग_लिखो_bit(GPIO_IO_SEL, nr, 0, 1);
-पूर्ण
+	return ichx_write_bit(GPIO_IO_SEL, nr, 0, 1);
+}
 
-अटल पूर्णांक ichx_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक nr)
-अणु
-	वापस ichx_पढ़ो_bit(GPIO_LVL, nr);
-पूर्ण
+static int ichx_gpio_get(struct gpio_chip *chip, unsigned int nr)
+{
+	return ichx_read_bit(GPIO_LVL, nr);
+}
 
-अटल पूर्णांक ich6_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित दीर्घ flags;
+static int ich6_gpio_get(struct gpio_chip *chip, unsigned int nr)
+{
+	unsigned long flags;
 	u32 data;
 
 	/*
-	 * GPI 0 - 15 need to be पढ़ो from the घातer management रेजिस्टरs on
+	 * GPI 0 - 15 need to be read from the power management registers on
 	 * a ICH6/3100 bridge.
 	 */
-	अगर (nr < 16) अणु
-		अगर (!ichx_priv.pm_base)
-			वापस -ENXIO;
+	if (nr < 16) {
+		if (!ichx_priv.pm_base)
+			return -ENXIO;
 
 		spin_lock_irqsave(&ichx_priv.lock, flags);
 
-		/* GPI 0 - 15 are latched, ग_लिखो 1 to clear*/
+		/* GPI 0 - 15 are latched, write 1 to clear*/
 		ICHX_WRITE(BIT(16 + nr), 0, ichx_priv.pm_base);
 		data = ICHX_READ(0, ichx_priv.pm_base);
 
 		spin_unlock_irqrestore(&ichx_priv.lock, flags);
 
-		वापस !!((data >> 16) & BIT(nr));
-	पूर्ण अन्यथा अणु
-		वापस ichx_gpio_get(chip, nr);
-	पूर्ण
-पूर्ण
+		return !!((data >> 16) & BIT(nr));
+	} else {
+		return ichx_gpio_get(chip, nr);
+	}
+}
 
-अटल पूर्णांक ichx_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक nr)
-अणु
-	अगर (!ichx_gpio_check_available(chip, nr))
-		वापस -ENXIO;
+static int ichx_gpio_request(struct gpio_chip *chip, unsigned int nr)
+{
+	if (!ichx_gpio_check_available(chip, nr))
+		return -ENXIO;
 
 	/*
 	 * Note we assume the BIOS properly set a bridge's USE value.  Some
-	 * chips (eg Intel 3100) have bogus USE values though, so first see अगर
-	 * the chipset's USE value can be trusted क्रम this specअगरic bit.
+	 * chips (eg Intel 3100) have bogus USE values though, so first see if
+	 * the chipset's USE value can be trusted for this specific bit.
 	 * If it can't be trusted, assume that the pin can be used as a GPIO.
 	 */
-	अगर (ichx_priv.desc->use_sel_ignore[nr / 32] & BIT(nr & 0x1f))
-		वापस 0;
+	if (ichx_priv.desc->use_sel_ignore[nr / 32] & BIT(nr & 0x1f))
+		return 0;
 
-	वापस ichx_पढ़ो_bit(GPIO_USE_SEL, nr) ? 0 : -ENODEV;
-पूर्ण
+	return ichx_read_bit(GPIO_USE_SEL, nr) ? 0 : -ENODEV;
+}
 
-अटल पूर्णांक ich6_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक nr)
-अणु
+static int ich6_gpio_request(struct gpio_chip *chip, unsigned int nr)
+{
 	/*
-	 * Fixups क्रम bits 16 and 17 are necessary on the Intel ICH6/3100
-	 * bridge as they are controlled by USE रेजिस्टर bits 0 and 1.  See
-	 * "Table 704 GPIO_USE_SEL1 register" in the i3100 datasheet क्रम
+	 * Fixups for bits 16 and 17 are necessary on the Intel ICH6/3100
+	 * bridge as they are controlled by USE register bits 0 and 1.  See
+	 * "Table 704 GPIO_USE_SEL1 register" in the i3100 datasheet for
 	 * additional info.
 	 */
-	अगर (nr == 16 || nr == 17)
+	if (nr == 16 || nr == 17)
 		nr -= 16;
 
-	वापस ichx_gpio_request(chip, nr);
-पूर्ण
+	return ichx_gpio_request(chip, nr);
+}
 
-अटल व्योम ichx_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक nr, पूर्णांक val)
-अणु
-	ichx_ग_लिखो_bit(GPIO_LVL, nr, val, 0);
-पूर्ण
+static void ichx_gpio_set(struct gpio_chip *chip, unsigned int nr, int val)
+{
+	ichx_write_bit(GPIO_LVL, nr, val, 0);
+}
 
-अटल व्योम ichx_gpiolib_setup(काष्ठा gpio_chip *chip)
-अणु
+static void ichx_gpiolib_setup(struct gpio_chip *chip)
+{
 	chip->owner = THIS_MODULE;
 	chip->label = DRV_NAME;
 	chip->parent = ichx_priv.dev;
 
-	/* Allow chip-specअगरic overrides of request()/get() */
+	/* Allow chip-specific overrides of request()/get() */
 	chip->request = ichx_priv.desc->request ?
 		ichx_priv.desc->request : ichx_gpio_request;
 	chip->get = ichx_priv.desc->get ?
@@ -277,215 +276,215 @@ MODULE_PARM_DESC(gpiobase, "The GPIO number base. -1 means dynamic, which is the
 	chip->base = modparam_gpiobase;
 	chip->ngpio = ichx_priv.desc->ngpio;
 	chip->can_sleep = false;
-	chip->dbg_show = शून्य;
-पूर्ण
+	chip->dbg_show = NULL;
+}
 
 /* ICH6-based, 631xesb-based */
-अटल काष्ठा ichx_desc ich6_desc = अणु
-	/* Bridges using the ICH6 controller need fixups क्रम GPIO 0 - 17 */
+static struct ichx_desc ich6_desc = {
+	/* Bridges using the ICH6 controller need fixups for GPIO 0 - 17 */
 	.request = ich6_gpio_request,
 	.get = ich6_gpio_get,
 
-	/* GPIO 0-15 are पढ़ो in the GPE0_STS PM रेजिस्टर */
+	/* GPIO 0-15 are read in the GPE0_STS PM register */
 	.uses_gpe0 = true,
 
 	.ngpio = 50,
 	.have_blink = true,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
 /* Intel 3100 */
-अटल काष्ठा ichx_desc i3100_desc = अणु
+static struct ichx_desc i3100_desc = {
 	/*
-	 * Bits 16,17, 20 of USE_SEL and bit 16 of USE_SEL2 always पढ़ो 0 on
+	 * Bits 16,17, 20 of USE_SEL and bit 16 of USE_SEL2 always read 0 on
 	 * the Intel 3100.  See "Table 712. GPIO Summary Table" of 3100
-	 * Datasheet क्रम more info.
+	 * Datasheet for more info.
 	 */
-	.use_sel_ignore = अणु0x00130000, 0x00010000, 0x0पूर्ण,
+	.use_sel_ignore = {0x00130000, 0x00010000, 0x0},
 
-	/* The 3100 needs fixups क्रम GPIO 0 - 17 */
+	/* The 3100 needs fixups for GPIO 0 - 17 */
 	.request = ich6_gpio_request,
 	.get = ich6_gpio_get,
 
-	/* GPIO 0-15 are पढ़ो in the GPE0_STS PM रेजिस्टर */
+	/* GPIO 0-15 are read in the GPE0_STS PM register */
 	.uses_gpe0 = true,
 
 	.ngpio = 50,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
 /* ICH7 and ICH8-based */
-अटल काष्ठा ichx_desc ich7_desc = अणु
+static struct ichx_desc ich7_desc = {
 	.ngpio = 50,
 	.have_blink = true,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
 /* ICH9-based */
-अटल काष्ठा ichx_desc ich9_desc = अणु
+static struct ichx_desc ich9_desc = {
 	.ngpio = 61,
 	.have_blink = true,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
-/* ICH10-based - Consumer/corporate versions have dअगरferent amount of GPIO */
-अटल काष्ठा ichx_desc ich10_cons_desc = अणु
+/* ICH10-based - Consumer/corporate versions have different amount of GPIO */
+static struct ichx_desc ich10_cons_desc = {
 	.ngpio = 61,
 	.have_blink = true,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
-अटल काष्ठा ichx_desc ich10_corp_desc = अणु
+};
+static struct ichx_desc ich10_corp_desc = {
 	.ngpio = 72,
 	.have_blink = true,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
 /* Intel 5 series, 6 series, 3400 series, and C200 series */
-अटल काष्ठा ichx_desc पूर्णांकel5_desc = अणु
+static struct ichx_desc intel5_desc = {
 	.ngpio = 76,
 	.regs = ichx_regs,
 	.reglen = ichx_reglen,
-पूर्ण;
+};
 
 /* Avoton */
-अटल काष्ठा ichx_desc avoton_desc = अणु
-	/* Avoton has only 59 GPIOs, but we assume the first set of रेजिस्टर
+static struct ichx_desc avoton_desc = {
+	/* Avoton has only 59 GPIOs, but we assume the first set of register
 	 * (Core) has 32 instead of 31 to keep gpio-ich compliance
 	 */
 	.ngpio = 60,
 	.regs = avoton_regs,
 	.reglen = avoton_reglen,
 	.use_outlvl_cache = true,
-पूर्ण;
+};
 
-अटल पूर्णांक ichx_gpio_request_regions(काष्ठा device *dev,
-	काष्ठा resource *res_base, स्थिर अक्षर *name, u8 use_gpio)
-अणु
-	पूर्णांक i;
+static int ichx_gpio_request_regions(struct device *dev,
+	struct resource *res_base, const char *name, u8 use_gpio)
+{
+	int i;
 
-	अगर (!res_base || !res_base->start || !res_base->end)
-		वापस -ENODEV;
+	if (!res_base || !res_base->start || !res_base->end)
+		return -ENODEV;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ichx_priv.desc->regs[0]); i++) अणु
-		अगर (!(use_gpio & BIT(i)))
-			जारी;
-		अगर (!devm_request_region(dev,
+	for (i = 0; i < ARRAY_SIZE(ichx_priv.desc->regs[0]); i++) {
+		if (!(use_gpio & BIT(i)))
+			continue;
+		if (!devm_request_region(dev,
 				res_base->start + ichx_priv.desc->regs[0][i],
 				ichx_priv.desc->reglen[i], name))
-			वापस -EBUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EBUSY;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ichx_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा lpc_ich_info *ich_info = dev_get_platdata(dev);
-	काष्ठा resource *res_base, *res_pm;
-	पूर्णांक err;
+static int ichx_gpio_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct lpc_ich_info *ich_info = dev_get_platdata(dev);
+	struct resource *res_base, *res_pm;
+	int err;
 
-	अगर (!ich_info)
-		वापस -ENODEV;
+	if (!ich_info)
+		return -ENODEV;
 
-	चयन (ich_info->gpio_version) अणु
-	हाल ICH_I3100_GPIO:
+	switch (ich_info->gpio_version) {
+	case ICH_I3100_GPIO:
 		ichx_priv.desc = &i3100_desc;
-		अवरोध;
-	हाल ICH_V5_GPIO:
-		ichx_priv.desc = &पूर्णांकel5_desc;
-		अवरोध;
-	हाल ICH_V6_GPIO:
+		break;
+	case ICH_V5_GPIO:
+		ichx_priv.desc = &intel5_desc;
+		break;
+	case ICH_V6_GPIO:
 		ichx_priv.desc = &ich6_desc;
-		अवरोध;
-	हाल ICH_V7_GPIO:
+		break;
+	case ICH_V7_GPIO:
 		ichx_priv.desc = &ich7_desc;
-		अवरोध;
-	हाल ICH_V9_GPIO:
+		break;
+	case ICH_V9_GPIO:
 		ichx_priv.desc = &ich9_desc;
-		अवरोध;
-	हाल ICH_V10CORP_GPIO:
+		break;
+	case ICH_V10CORP_GPIO:
 		ichx_priv.desc = &ich10_corp_desc;
-		अवरोध;
-	हाल ICH_V10CONS_GPIO:
+		break;
+	case ICH_V10CONS_GPIO:
 		ichx_priv.desc = &ich10_cons_desc;
-		अवरोध;
-	हाल AVOTON_GPIO:
+		break;
+	case AVOTON_GPIO:
 		ichx_priv.desc = &avoton_desc;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
 
 	ichx_priv.dev = dev;
 	spin_lock_init(&ichx_priv.lock);
 
-	res_base = platक्रमm_get_resource(pdev, IORESOURCE_IO, ICH_RES_GPIO);
+	res_base = platform_get_resource(pdev, IORESOURCE_IO, ICH_RES_GPIO);
 	err = ichx_gpio_request_regions(dev, res_base, pdev->name,
 					ich_info->use_gpio);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ichx_priv.gpio_base = res_base;
 	ichx_priv.use_gpio = ich_info->use_gpio;
 
 	/*
-	 * If necessary, determine the I/O address of ACPI/घातer management
-	 * रेजिस्टरs which are needed to पढ़ो the GPE0 रेजिस्टर क्रम GPI pins
+	 * If necessary, determine the I/O address of ACPI/power management
+	 * registers which are needed to read the GPE0 register for GPI pins
 	 * 0 - 15 on some chipsets.
 	 */
-	अगर (!ichx_priv.desc->uses_gpe0)
-		जाओ init;
+	if (!ichx_priv.desc->uses_gpe0)
+		goto init;
 
-	res_pm = platक्रमm_get_resource(pdev, IORESOURCE_IO, ICH_RES_GPE0);
-	अगर (!res_pm) अणु
+	res_pm = platform_get_resource(pdev, IORESOURCE_IO, ICH_RES_GPE0);
+	if (!res_pm) {
 		dev_warn(dev, "ACPI BAR is unavailable, GPI 0 - 15 unavailable\n");
-		जाओ init;
-	पूर्ण
+		goto init;
+	}
 
-	अगर (!devm_request_region(dev, res_pm->start, resource_size(res_pm),
-				 pdev->name)) अणु
+	if (!devm_request_region(dev, res_pm->start, resource_size(res_pm),
+				 pdev->name)) {
 		dev_warn(dev, "ACPI BAR is busy, GPI 0 - 15 unavailable\n");
-		जाओ init;
-	पूर्ण
+		goto init;
+	}
 
 	ichx_priv.pm_base = res_pm;
 
 init:
 	ichx_gpiolib_setup(&ichx_priv.chip);
-	err = gpiochip_add_data(&ichx_priv.chip, शून्य);
-	अगर (err) अणु
+	err = gpiochip_add_data(&ichx_priv.chip, NULL);
+	if (err) {
 		dev_err(dev, "Failed to register GPIOs\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dev_info(dev, "GPIO from %d to %d\n", ichx_priv.chip.base,
 		 ichx_priv.chip.base + ichx_priv.chip.ngpio - 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ichx_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	gpiochip_हटाओ(&ichx_priv.chip);
+static int ichx_gpio_remove(struct platform_device *pdev)
+{
+	gpiochip_remove(&ichx_priv.chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ichx_gpio_driver = अणु
-	.driver		= अणु
+static struct platform_driver ichx_gpio_driver = {
+	.driver		= {
 		.name	= DRV_NAME,
-	पूर्ण,
+	},
 	.probe		= ichx_gpio_probe,
-	.हटाओ		= ichx_gpio_हटाओ,
-पूर्ण;
+	.remove		= ichx_gpio_remove,
+};
 
-module_platक्रमm_driver(ichx_gpio_driver);
+module_platform_driver(ichx_gpio_driver);
 
 MODULE_AUTHOR("Peter Tyser <ptyser@xes-inc.com>");
 MODULE_DESCRIPTION("GPIO interface for Intel ICH series");

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम Realtek PCI-Express card पढ़ोer
+ * Driver for Realtek PCI-Express card reader
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -10,71 +9,71 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/workqueue.h>
+#include <linux/blkdev.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/workqueue.h>
 
-#समावेश "rtsx.h"
-#समावेश "ms.h"
-#समावेश "sd.h"
-#समावेश "xd.h"
+#include "rtsx.h"
+#include "ms.h"
+#include "sd.h"
+#include "xd.h"
 
 MODULE_DESCRIPTION("Realtek PCI-Express card reader rts5208/rts5288 driver");
 MODULE_LICENSE("GPL");
 
-अटल अचिन्हित पूर्णांक delay_use = 1;
-module_param(delay_use, uपूर्णांक, 0644);
+static unsigned int delay_use = 1;
+module_param(delay_use, uint, 0644);
 MODULE_PARM_DESC(delay_use, "seconds to delay before using a new device");
 
-अटल पूर्णांक ss_en;
-module_param(ss_en, पूर्णांक, 0644);
+static int ss_en;
+module_param(ss_en, int, 0644);
 MODULE_PARM_DESC(ss_en, "enable selective suspend");
 
-अटल पूर्णांक ss_पूर्णांकerval = 50;
-module_param(ss_पूर्णांकerval, पूर्णांक, 0644);
-MODULE_PARM_DESC(ss_पूर्णांकerval, "Interval to enter ss state in seconds");
+static int ss_interval = 50;
+module_param(ss_interval, int, 0644);
+MODULE_PARM_DESC(ss_interval, "Interval to enter ss state in seconds");
 
-अटल पूर्णांक स्वतः_delink_en;
-module_param(स्वतः_delink_en, पूर्णांक, 0644);
-MODULE_PARM_DESC(स्वतः_delink_en, "enable auto delink");
+static int auto_delink_en;
+module_param(auto_delink_en, int, 0644);
+MODULE_PARM_DESC(auto_delink_en, "enable auto delink");
 
-अटल अचिन्हित अक्षर aspm_l0s_l1_en;
+static unsigned char aspm_l0s_l1_en;
 module_param(aspm_l0s_l1_en, byte, 0644);
 MODULE_PARM_DESC(aspm_l0s_l1_en, "enable device aspm");
 
-अटल पूर्णांक msi_en;
-module_param(msi_en, पूर्णांक, 0644);
+static int msi_en;
+module_param(msi_en, int, 0644);
 MODULE_PARM_DESC(msi_en, "enable msi");
 
-अटल irqवापस_t rtsx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+static irqreturn_t rtsx_interrupt(int irq, void *dev_id);
 
 /***********************************************************************
  * Host functions
  ***********************************************************************/
 
-अटल स्थिर अक्षर *host_info(काष्ठा Scsi_Host *host)
-अणु
-	वापस "SCSI emulation for PCI-Express Mass Storage devices";
-पूर्ण
+static const char *host_info(struct Scsi_Host *host)
+{
+	return "SCSI emulation for PCI-Express Mass Storage devices";
+}
 
-अटल पूर्णांक slave_alloc(काष्ठा scsi_device *sdev)
-अणु
+static int slave_alloc(struct scsi_device *sdev)
+{
 	/*
-	 * Set the INQUIRY transfer length to 36.  We करोn't use any of
-	 * the extra data and many devices choke अगर asked क्रम more or
+	 * Set the INQUIRY transfer length to 36.  We don't use any of
+	 * the extra data and many devices choke if asked for more or
 	 * less than 36 bytes.
 	 */
 	sdev->inquiry_len = 36;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक slave_configure(काष्ठा scsi_device *sdev)
-अणु
+static int slave_configure(struct scsi_device *sdev)
+{
 	/*
 	 * Scatter-gather buffers (all but the last) must have a length
-	 * भागisible by the bulk maxpacket size.  Otherwise a data packet
-	 * would end up being लघु, causing a premature end to the data
+	 * divisible by the bulk maxpacket size.  Otherwise a data packet
+	 * would end up being short, causing a premature end to the data
 	 * transfer.  Since high-speed bulk pipes have a maxpacket size
 	 * of 512, we'll use that as the scsi device queue's DMA alignment
 	 * mask.  Guaranteeing proper alignment of the first buffer will
@@ -84,132 +83,132 @@ MODULE_PARM_DESC(msi_en, "enable msi");
 	blk_queue_dma_alignment(sdev->request_queue, (512 - 1));
 
 	/* Set the SCSI level to at least 2.  We'll leave it at 3 if that's
-	 * what is originally reported.  We need this to aव्योम confusing
+	 * what is originally reported.  We need this to avoid confusing
 	 * the SCSI layer with devices that report 0 or 1, but need 10-byte
 	 * commands (ala ATAPI devices behind certain bridges, or devices
 	 * which simply have broken INQUIRY data).
 	 *
 	 * NOTE: This means /dev/sg programs (ala cdrecord) will get the
-	 * actual inक्रमmation.  This seems to be the preference क्रम
+	 * actual information.  This seems to be the preference for
 	 * programs like that.
 	 *
 	 * NOTE: This also means that /proc/scsi/scsi and sysfs may report
-	 * the actual value or the modअगरied one, depending on where the
+	 * the actual value or the modified one, depending on where the
 	 * data comes from.
 	 */
-	अगर (sdev->scsi_level < SCSI_2) अणु
+	if (sdev->scsi_level < SCSI_2) {
 		sdev->scsi_level = SCSI_2;
 		sdev->sdev_target->scsi_level = SCSI_2;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /***********************************************************************
  * /proc/scsi/ functions
  ***********************************************************************/
 
-/* we use this macro to help us ग_लिखो पूर्णांकo the buffer */
-#अघोषित SPRINTF
-#घोषणा SPRINTF(args...) \
-	करो अणु \
-		अगर (pos < buffer + length) \
-			pos += प्र_लिखो(pos, ## args); \
-	पूर्ण जबतक (0)
+/* we use this macro to help us write into the buffer */
+#undef SPRINTF
+#define SPRINTF(args...) \
+	do { \
+		if (pos < buffer + length) \
+			pos += sprintf(pos, ## args); \
+	} while (0)
 
 /* queue a command */
 /* This is always called with scsi_lock(host) held */
-अटल पूर्णांक queuecommand_lck(काष्ठा scsi_cmnd *srb,
-			    व्योम (*करोne)(काष्ठा scsi_cmnd *))
-अणु
-	काष्ठा rtsx_dev *dev = host_to_rtsx(srb->device->host);
-	काष्ठा rtsx_chip *chip = dev->chip;
+static int queuecommand_lck(struct scsi_cmnd *srb,
+			    void (*done)(struct scsi_cmnd *))
+{
+	struct rtsx_dev *dev = host_to_rtsx(srb->device->host);
+	struct rtsx_chip *chip = dev->chip;
 
-	/* check क्रम state-transition errors */
-	अगर (chip->srb) अणु
+	/* check for state-transition errors */
+	if (chip->srb) {
 		dev_err(&dev->pci->dev, "Error: chip->srb = %p\n",
 			chip->srb);
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
 
-	/* fail the command अगर we are disconnecting */
-	अगर (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) अणु
+	/* fail the command if we are disconnecting */
+	if (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 		dev_info(&dev->pci->dev, "Fail command during disconnect\n");
 		srb->result = DID_NO_CONNECT << 16;
-		करोne(srb);
-		वापस 0;
-	पूर्ण
+		done(srb);
+		return 0;
+	}
 
-	/* enqueue the command and wake up the control thपढ़ो */
-	srb->scsi_करोne = करोne;
+	/* enqueue the command and wake up the control thread */
+	srb->scsi_done = done;
 	chip->srb = srb;
-	complete(&dev->cmnd_पढ़ोy);
+	complete(&dev->cmnd_ready);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEF_SCSI_QCMD(queuecommand)
+static DEF_SCSI_QCMD(queuecommand)
 
 /***********************************************************************
  * Error handling functions
  ***********************************************************************/
 
-/* Command समयout and पात */
-अटल पूर्णांक command_पात(काष्ठा scsi_cmnd *srb)
-अणु
-	काष्ठा Scsi_Host *host = srb->device->host;
-	काष्ठा rtsx_dev *dev = host_to_rtsx(host);
-	काष्ठा rtsx_chip *chip = dev->chip;
+/* Command timeout and abort */
+static int command_abort(struct scsi_cmnd *srb)
+{
+	struct Scsi_Host *host = srb->device->host;
+	struct rtsx_dev *dev = host_to_rtsx(host);
+	struct rtsx_chip *chip = dev->chip;
 
 	dev_info(&dev->pci->dev, "%s called\n", __func__);
 
 	scsi_lock(host);
 
 	/* Is this command still active? */
-	अगर (chip->srb != srb) अणु
+	if (chip->srb != srb) {
 		scsi_unlock(host);
 		dev_info(&dev->pci->dev, "-- nothing to abort\n");
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
 	rtsx_set_stat(chip, RTSX_STAT_ABORT);
 
 	scsi_unlock(host);
 
-	/* Wait क्रम the पातed command to finish */
-	रुको_क्रम_completion(&dev->notअगरy);
+	/* Wait for the aborted command to finish */
+	wait_for_completion(&dev->notify);
 
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
 /*
  * This invokes the transport reset mechanism to reset the state of the
  * device
  */
-अटल पूर्णांक device_reset(काष्ठा scsi_cmnd *srb)
-अणु
-	काष्ठा rtsx_dev *dev = host_to_rtsx(srb->device->host);
+static int device_reset(struct scsi_cmnd *srb)
+{
+	struct rtsx_dev *dev = host_to_rtsx(srb->device->host);
 
 	dev_info(&dev->pci->dev, "%s called\n", __func__);
 
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
 /*
- * this defines our host ढाँचा, with which we'll allocate hosts
+ * this defines our host template, with which we'll allocate hosts
  */
 
-अटल काष्ठा scsi_host_ढाँचा rtsx_host_ढाँचा = अणु
-	/* basic userland पूर्णांकerface stuff */
+static struct scsi_host_template rtsx_host_template = {
+	/* basic userland interface stuff */
 	.name =				CR_DRIVER_NAME,
 	.proc_name =			CR_DRIVER_NAME,
 	.info =				host_info,
 
-	/* command पूर्णांकerface -- queued only */
+	/* command interface -- queued only */
 	.queuecommand =			queuecommand,
 
-	/* error and पात handlers */
-	.eh_पात_handler =		command_पात,
+	/* error and abort handlers */
+	.eh_abort_handler =		command_abort,
 	.eh_device_reset_handler =	device_reset,
 
 	/* queue commands only, only one command per LUN */
@@ -230,481 +229,481 @@ MODULE_PARM_DESC(msi_en, "enable msi");
 	/* emulated HBA */
 	.emulated =			1,
 
-	/* we करो our own delay after a device or bus reset */
+	/* we do our own delay after a device or bus reset */
 	.skip_settle_delay =		1,
 
 	/* module management */
 	.module =			THIS_MODULE
-पूर्ण;
+};
 
-अटल पूर्णांक rtsx_acquire_irq(काष्ठा rtsx_dev *dev)
-अणु
-	काष्ठा rtsx_chip *chip = dev->chip;
+static int rtsx_acquire_irq(struct rtsx_dev *dev)
+{
+	struct rtsx_chip *chip = dev->chip;
 
 	dev_info(&dev->pci->dev, "%s: chip->msi_en = %d, pci->irq = %d\n",
 		 __func__, chip->msi_en, dev->pci->irq);
 
-	अगर (request_irq(dev->pci->irq, rtsx_पूर्णांकerrupt,
+	if (request_irq(dev->pci->irq, rtsx_interrupt,
 			chip->msi_en ? 0 : IRQF_SHARED,
-			CR_DRIVER_NAME, dev)) अणु
+			CR_DRIVER_NAME, dev)) {
 		dev_err(&dev->pci->dev,
 			"rtsx: unable to grab IRQ %d, disabling device\n",
 			dev->pci->irq);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	dev->irq = dev->pci->irq;
-	pci_पूर्णांकx(dev->pci, !chip->msi_en);
+	pci_intx(dev->pci, !chip->msi_en);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * घातer management
+ * power management
  */
-अटल पूर्णांक __maybe_unused rtsx_suspend(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pci = to_pci_dev(dev_d);
-	काष्ठा rtsx_dev *dev = pci_get_drvdata(pci);
-	काष्ठा rtsx_chip *chip;
+static int __maybe_unused rtsx_suspend(struct device *dev_d)
+{
+	struct pci_dev *pci = to_pci_dev(dev_d);
+	struct rtsx_dev *dev = pci_get_drvdata(pci);
+	struct rtsx_chip *chip;
 
-	अगर (!dev)
-		वापस 0;
+	if (!dev)
+		return 0;
 
-	/* lock the device poपूर्णांकers */
+	/* lock the device pointers */
 	mutex_lock(&dev->dev_mutex);
 
 	chip = dev->chip;
 
-	rtsx_करो_beक्रमe_घातer_करोwn(chip, PM_S3);
+	rtsx_do_before_power_down(chip, PM_S3);
 
-	अगर (dev->irq >= 0) अणु
-		मुक्त_irq(dev->irq, (व्योम *)dev);
+	if (dev->irq >= 0) {
+		free_irq(dev->irq, (void *)dev);
 		dev->irq = -1;
-	पूर्ण
+	}
 
-	अगर (chip->msi_en)
-		pci_मुक्त_irq_vectors(pci);
+	if (chip->msi_en)
+		pci_free_irq_vectors(pci);
 
 	device_wakeup_enable(dev_d);
 
-	/* unlock the device poपूर्णांकers */
+	/* unlock the device pointers */
 	mutex_unlock(&dev->dev_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rtsx_resume(काष्ठा device *dev_d)
-अणु
-	काष्ठा pci_dev *pci = to_pci_dev(dev_d);
-	काष्ठा rtsx_dev *dev = pci_get_drvdata(pci);
-	काष्ठा rtsx_chip *chip;
+static int __maybe_unused rtsx_resume(struct device *dev_d)
+{
+	struct pci_dev *pci = to_pci_dev(dev_d);
+	struct rtsx_dev *dev = pci_get_drvdata(pci);
+	struct rtsx_chip *chip;
 
-	अगर (!dev)
-		वापस 0;
+	if (!dev)
+		return 0;
 
 	chip = dev->chip;
 
-	/* lock the device poपूर्णांकers */
+	/* lock the device pointers */
 	mutex_lock(&dev->dev_mutex);
 
 	pci_set_master(pci);
 
-	अगर (chip->msi_en) अणु
-		अगर (pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_MSI) < 0)
+	if (chip->msi_en) {
+		if (pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_MSI) < 0)
 			chip->msi_en = 0;
-	पूर्ण
+	}
 
-	अगर (rtsx_acquire_irq(dev) < 0) अणु
-		/* unlock the device poपूर्णांकers */
+	if (rtsx_acquire_irq(dev) < 0) {
+		/* unlock the device pointers */
 		mutex_unlock(&dev->dev_mutex);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	rtsx_ग_लिखो_रेजिस्टर(chip, HOST_SLEEP_STATE, 0x03, 0x00);
+	rtsx_write_register(chip, HOST_SLEEP_STATE, 0x03, 0x00);
 	rtsx_init_chip(chip);
 
-	/* unlock the device poपूर्णांकers */
+	/* unlock the device pointers */
 	mutex_unlock(&dev->dev_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rtsx_shutकरोwn(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा rtsx_dev *dev = pci_get_drvdata(pci);
-	काष्ठा rtsx_chip *chip;
+static void rtsx_shutdown(struct pci_dev *pci)
+{
+	struct rtsx_dev *dev = pci_get_drvdata(pci);
+	struct rtsx_chip *chip;
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	chip = dev->chip;
 
-	rtsx_करो_beक्रमe_घातer_करोwn(chip, PM_S1);
+	rtsx_do_before_power_down(chip, PM_S1);
 
-	अगर (dev->irq >= 0) अणु
-		मुक्त_irq(dev->irq, (व्योम *)dev);
+	if (dev->irq >= 0) {
+		free_irq(dev->irq, (void *)dev);
 		dev->irq = -1;
-	पूर्ण
+	}
 
-	अगर (chip->msi_en)
-		pci_मुक्त_irq_vectors(pci);
+	if (chip->msi_en)
+		pci_free_irq_vectors(pci);
 
 	pci_disable_device(pci);
-पूर्ण
+}
 
-अटल पूर्णांक rtsx_control_thपढ़ो(व्योम *__dev)
-अणु
-	काष्ठा rtsx_dev *dev = __dev;
-	काष्ठा rtsx_chip *chip = dev->chip;
-	काष्ठा Scsi_Host *host = rtsx_to_host(dev);
+static int rtsx_control_thread(void *__dev)
+{
+	struct rtsx_dev *dev = __dev;
+	struct rtsx_chip *chip = dev->chip;
+	struct Scsi_Host *host = rtsx_to_host(dev);
 
-	क्रम (;;) अणु
-		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&dev->cmnd_पढ़ोy))
-			अवरोध;
+	for (;;) {
+		if (wait_for_completion_interruptible(&dev->cmnd_ready))
+			break;
 
-		/* lock the device poपूर्णांकers */
+		/* lock the device pointers */
 		mutex_lock(&dev->dev_mutex);
 
-		/* अगर the device has disconnected, we are मुक्त to निकास */
-		अगर (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) अणु
+		/* if the device has disconnected, we are free to exit */
+		if (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 			dev_info(&dev->pci->dev, "-- rtsx-control exiting\n");
 			mutex_unlock(&dev->dev_mutex);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* lock access to the state */
 		scsi_lock(host);
 
-		/* has the command पातed ? */
-		अगर (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) अणु
+		/* has the command aborted ? */
+		if (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) {
 			chip->srb->result = DID_ABORT << 16;
-			जाओ skip_क्रम_पात;
-		पूर्ण
+			goto skip_for_abort;
+		}
 
 		scsi_unlock(host);
 
-		/* reject the command अगर the direction indicator
+		/* reject the command if the direction indicator
 		 * is UNKNOWN
 		 */
-		अगर (chip->srb->sc_data_direction == DMA_BIसूचीECTIONAL) अणु
+		if (chip->srb->sc_data_direction == DMA_BIDIRECTIONAL) {
 			dev_err(&dev->pci->dev, "UNKNOWN data direction\n");
 			chip->srb->result = DID_ERROR << 16;
-		पूर्ण
+		}
 
-		/* reject अगर target != 0 or अगर LUN is higher than
+		/* reject if target != 0 or if LUN is higher than
 		 * the maximum known LUN
 		 */
-		अन्यथा अगर (chip->srb->device->id) अणु
+		else if (chip->srb->device->id) {
 			dev_err(&dev->pci->dev, "Bad target number (%d:%d)\n",
 				chip->srb->device->id,
 				(u8)chip->srb->device->lun);
 			chip->srb->result = DID_BAD_TARGET << 16;
-		पूर्ण
+		}
 
-		अन्यथा अगर (chip->srb->device->lun > chip->max_lun) अणु
+		else if (chip->srb->device->lun > chip->max_lun) {
 			dev_err(&dev->pci->dev, "Bad LUN (%d:%d)\n",
 				chip->srb->device->id,
 				(u8)chip->srb->device->lun);
 			chip->srb->result = DID_BAD_TARGET << 16;
-		पूर्ण
+		}
 
-		/* we've got a command, let's करो it! */
-		अन्यथा अणु
+		/* we've got a command, let's do it! */
+		else {
 			scsi_show_command(chip);
 			rtsx_invoke_transport(chip->srb, chip);
-		पूर्ण
+		}
 
 		/* lock access to the state */
 		scsi_lock(host);
 
-		/* did the command alपढ़ोy complete because of a disconnect? */
-		अगर (!chip->srb)
-			;		/* nothing to करो */
+		/* did the command already complete because of a disconnect? */
+		if (!chip->srb)
+			;		/* nothing to do */
 
-		/* indicate that the command is करोne */
-		अन्यथा अगर (chip->srb->result != DID_ABORT << 16) अणु
-			chip->srb->scsi_करोne(chip->srb);
-		पूर्ण अन्यथा अणु
-skip_क्रम_पात:
+		/* indicate that the command is done */
+		else if (chip->srb->result != DID_ABORT << 16) {
+			chip->srb->scsi_done(chip->srb);
+		} else {
+skip_for_abort:
 			dev_err(&dev->pci->dev, "scsi command aborted\n");
-		पूर्ण
+		}
 
-		अगर (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) अणु
-			complete(&dev->notअगरy);
+		if (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) {
+			complete(&dev->notify);
 
 			rtsx_set_stat(chip, RTSX_STAT_IDLE);
-		पूर्ण
+		}
 
 		/* finished working on this command */
-		chip->srb = शून्य;
+		chip->srb = NULL;
 		scsi_unlock(host);
 
-		/* unlock the device poपूर्णांकers */
+		/* unlock the device pointers */
 		mutex_unlock(&dev->dev_mutex);
-	पूर्ण /* क्रम (;;) */
+	} /* for (;;) */
 
-	/* notअगरy the निकास routine that we're actually निकासing now
+	/* notify the exit routine that we're actually exiting now
 	 *
-	 * complete()/रुको_क्रम_completion() is similar to up()/करोwn(),
-	 * except that complete() is safe in the हाल where the काष्ठाure
+	 * complete()/wait_for_completion() is similar to up()/down(),
+	 * except that complete() is safe in the case where the structure
 	 * is getting deleted in a parallel mode of execution (i.e. just
-	 * after the करोwn() -- that's necessary क्रम the thपढ़ो-shutकरोwn
-	 * हाल.
+	 * after the down() -- that's necessary for the thread-shutdown
+	 * case.
 	 *
-	 * complete_and_निकास() goes even further than this -- it is safe in
-	 * the हाल that the thपढ़ो of the caller is going away (not just
-	 * the काष्ठाure) -- this is necessary क्रम the module-हटाओ हाल.
+	 * complete_and_exit() goes even further than this -- it is safe in
+	 * the case that the thread of the caller is going away (not just
+	 * the structure) -- this is necessary for the module-remove case.
 	 * This is important in preemption kernels, which transfer the flow
 	 * of execution immediately upon a complete().
 	 */
-	complete_and_निकास(&dev->control_निकास, 0);
-पूर्ण
+	complete_and_exit(&dev->control_exit, 0);
+}
 
-अटल पूर्णांक rtsx_polling_thपढ़ो(व्योम *__dev)
-अणु
-	काष्ठा rtsx_dev *dev = __dev;
-	काष्ठा rtsx_chip *chip = dev->chip;
-	काष्ठा sd_info *sd_card = &chip->sd_card;
-	काष्ठा xd_info *xd_card = &chip->xd_card;
-	काष्ठा ms_info *ms_card = &chip->ms_card;
+static int rtsx_polling_thread(void *__dev)
+{
+	struct rtsx_dev *dev = __dev;
+	struct rtsx_chip *chip = dev->chip;
+	struct sd_info *sd_card = &chip->sd_card;
+	struct xd_info *xd_card = &chip->xd_card;
+	struct ms_info *ms_card = &chip->ms_card;
 
 	sd_card->cleanup_counter = 0;
 	xd_card->cleanup_counter = 0;
 	ms_card->cleanup_counter = 0;
 
 	/* Wait until SCSI scan finished */
-	रुको_समयout((delay_use + 5) * 1000);
+	wait_timeout((delay_use + 5) * 1000);
 
-	क्रम (;;) अणु
+	for (;;) {
 		set_current_state(TASK_INTERRUPTIBLE);
-		schedule_समयout(msecs_to_jअगरfies(POLLING_INTERVAL));
+		schedule_timeout(msecs_to_jiffies(POLLING_INTERVAL));
 
-		/* lock the device poपूर्णांकers */
+		/* lock the device pointers */
 		mutex_lock(&dev->dev_mutex);
 
-		/* अगर the device has disconnected, we are मुक्त to निकास */
-		अगर (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) अणु
+		/* if the device has disconnected, we are free to exit */
+		if (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 			dev_info(&dev->pci->dev, "-- rtsx-polling exiting\n");
 			mutex_unlock(&dev->dev_mutex);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		mutex_unlock(&dev->dev_mutex);
 
-		mspro_polling_क्रमmat_status(chip);
+		mspro_polling_format_status(chip);
 
-		/* lock the device poपूर्णांकers */
+		/* lock the device pointers */
 		mutex_lock(&dev->dev_mutex);
 
 		rtsx_polling_func(chip);
 
-		/* unlock the device poपूर्णांकers */
+		/* unlock the device pointers */
 		mutex_unlock(&dev->dev_mutex);
-	पूर्ण
+	}
 
-	complete_and_निकास(&dev->polling_निकास, 0);
-पूर्ण
+	complete_and_exit(&dev->polling_exit, 0);
+}
 
 /*
- * पूर्णांकerrupt handler
+ * interrupt handler
  */
-अटल irqवापस_t rtsx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा rtsx_dev *dev = dev_id;
-	काष्ठा rtsx_chip *chip;
-	पूर्णांक retval;
+static irqreturn_t rtsx_interrupt(int irq, void *dev_id)
+{
+	struct rtsx_dev *dev = dev_id;
+	struct rtsx_chip *chip;
+	int retval;
 	u32 status;
 
-	अगर (dev)
+	if (dev)
 		chip = dev->chip;
-	अन्यथा
-		वापस IRQ_NONE;
+	else
+		return IRQ_NONE;
 
-	अगर (!chip)
-		वापस IRQ_NONE;
+	if (!chip)
+		return IRQ_NONE;
 
 	spin_lock(&dev->reg_lock);
 
-	retval = rtsx_pre_handle_पूर्णांकerrupt(chip);
-	अगर (retval == STATUS_FAIL) अणु
+	retval = rtsx_pre_handle_interrupt(chip);
+	if (retval == STATUS_FAIL) {
 		spin_unlock(&dev->reg_lock);
-		अगर (chip->पूर्णांक_reg == 0xFFFFFFFF)
-			वापस IRQ_HANDLED;
-		वापस IRQ_NONE;
-	पूर्ण
+		if (chip->int_reg == 0xFFFFFFFF)
+			return IRQ_HANDLED;
+		return IRQ_NONE;
+	}
 
-	status = chip->पूर्णांक_reg;
+	status = chip->int_reg;
 
-	अगर (dev->check_card_cd) अणु
-		अगर (!(dev->check_card_cd & status)) अणु
-			/* card not exist, वापस TRANS_RESULT_FAIL */
+	if (dev->check_card_cd) {
+		if (!(dev->check_card_cd & status)) {
+			/* card not exist, return TRANS_RESULT_FAIL */
 			dev->trans_result = TRANS_RESULT_FAIL;
-			अगर (dev->करोne)
-				complete(dev->करोne);
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			if (dev->done)
+				complete(dev->done);
+			goto exit;
+		}
+	}
 
-	अगर (status & (NEED_COMPLETE_INT | DELINK_INT)) अणु
-		अगर (status & (TRANS_FAIL_INT | DELINK_INT)) अणु
-			अगर (status & DELINK_INT)
+	if (status & (NEED_COMPLETE_INT | DELINK_INT)) {
+		if (status & (TRANS_FAIL_INT | DELINK_INT)) {
+			if (status & DELINK_INT)
 				RTSX_SET_DELINK(chip);
 			dev->trans_result = TRANS_RESULT_FAIL;
-			अगर (dev->करोne)
-				complete(dev->करोne);
-		पूर्ण अन्यथा अगर (status & TRANS_OK_INT) अणु
+			if (dev->done)
+				complete(dev->done);
+		} else if (status & TRANS_OK_INT) {
 			dev->trans_result = TRANS_RESULT_OK;
-			अगर (dev->करोne)
-				complete(dev->करोne);
-		पूर्ण अन्यथा अगर (status & DATA_DONE_INT) अणु
+			if (dev->done)
+				complete(dev->done);
+		} else if (status & DATA_DONE_INT) {
 			dev->trans_result = TRANS_NOT_READY;
-			अगर (dev->करोne && (dev->trans_state == STATE_TRANS_SG))
-				complete(dev->करोne);
-		पूर्ण
-	पूर्ण
+			if (dev->done && (dev->trans_state == STATE_TRANS_SG))
+				complete(dev->done);
+		}
+	}
 
-निकास:
+exit:
 	spin_unlock(&dev->reg_lock);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* Release all our dynamic resources */
-अटल व्योम rtsx_release_resources(काष्ठा rtsx_dev *dev)
-अणु
+static void rtsx_release_resources(struct rtsx_dev *dev)
+{
 	dev_info(&dev->pci->dev, "-- %s\n", __func__);
 
-	/* Tell the control thपढ़ो to निकास.  The SCSI host must
-	 * alपढ़ोy have been हटाओd so it won't try to queue
+	/* Tell the control thread to exit.  The SCSI host must
+	 * already have been removed so it won't try to queue
 	 * any more commands.
 	 */
 	dev_info(&dev->pci->dev, "-- sending exit command to thread\n");
-	complete(&dev->cmnd_पढ़ोy);
-	अगर (dev->ctl_thपढ़ो)
-		रुको_क्रम_completion(&dev->control_निकास);
-	अगर (dev->polling_thपढ़ो)
-		रुको_क्रम_completion(&dev->polling_निकास);
+	complete(&dev->cmnd_ready);
+	if (dev->ctl_thread)
+		wait_for_completion(&dev->control_exit);
+	if (dev->polling_thread)
+		wait_for_completion(&dev->polling_exit);
 
-	रुको_समयout(200);
+	wait_timeout(200);
 
-	अगर (dev->rtsx_resv_buf) अणु
-		dev->chip->host_cmds_ptr = शून्य;
-		dev->chip->host_sg_tbl_ptr = शून्य;
-	पूर्ण
+	if (dev->rtsx_resv_buf) {
+		dev->chip->host_cmds_ptr = NULL;
+		dev->chip->host_sg_tbl_ptr = NULL;
+	}
 
-	अगर (dev->irq > 0)
-		मुक्त_irq(dev->irq, (व्योम *)dev);
-	अगर (dev->chip->msi_en)
-		pci_मुक्त_irq_vectors(dev->pci);
-	अगर (dev->remap_addr)
+	if (dev->irq > 0)
+		free_irq(dev->irq, (void *)dev);
+	if (dev->chip->msi_en)
+		pci_free_irq_vectors(dev->pci);
+	if (dev->remap_addr)
 		iounmap(dev->remap_addr);
 
 	rtsx_release_chip(dev->chip);
-	kमुक्त(dev->chip);
-पूर्ण
+	kfree(dev->chip);
+}
 
 /*
- * First stage of disconnect processing: stop all commands and हटाओ
+ * First stage of disconnect processing: stop all commands and remove
  * the host
  */
-अटल व्योम quiesce_and_हटाओ_host(काष्ठा rtsx_dev *dev)
-अणु
-	काष्ठा Scsi_Host *host = rtsx_to_host(dev);
-	काष्ठा rtsx_chip *chip = dev->chip;
+static void quiesce_and_remove_host(struct rtsx_dev *dev)
+{
+	struct Scsi_Host *host = rtsx_to_host(dev);
+	struct rtsx_chip *chip = dev->chip;
 
 	/*
 	 * Prevent new transfers, stop the current command, and
-	 * पूर्णांकerrupt a SCSI-scan or device-reset delay
+	 * interrupt a SCSI-scan or device-reset delay
 	 */
 	mutex_lock(&dev->dev_mutex);
 	scsi_lock(host);
 	rtsx_set_stat(chip, RTSX_STAT_DISCONNECT);
 	scsi_unlock(host);
 	mutex_unlock(&dev->dev_mutex);
-	wake_up(&dev->delay_रुको);
-	रुको_क्रम_completion(&dev->scanning_करोne);
+	wake_up(&dev->delay_wait);
+	wait_for_completion(&dev->scanning_done);
 
-	/* Wait some समय to let other thपढ़ोs exist */
-	रुको_समयout(100);
+	/* Wait some time to let other threads exist */
+	wait_timeout(100);
 
 	/*
 	 * queuecommand won't accept any new commands and the control
-	 * thपढ़ो won't execute a previously-queued command.  If there
+	 * thread won't execute a previously-queued command.  If there
 	 * is such a command pending, complete it with an error.
 	 */
 	mutex_lock(&dev->dev_mutex);
-	अगर (chip->srb) अणु
+	if (chip->srb) {
 		chip->srb->result = DID_NO_CONNECT << 16;
 		scsi_lock(host);
-		chip->srb->scsi_करोne(dev->chip->srb);
-		chip->srb = शून्य;
+		chip->srb->scsi_done(dev->chip->srb);
+		chip->srb = NULL;
 		scsi_unlock(host);
-	पूर्ण
+	}
 	mutex_unlock(&dev->dev_mutex);
 
-	/* Now we own no commands so it's safe to हटाओ the SCSI host */
-	scsi_हटाओ_host(host);
-पूर्ण
+	/* Now we own no commands so it's safe to remove the SCSI host */
+	scsi_remove_host(host);
+}
 
 /* Second stage of disconnect processing: deallocate all resources */
-अटल व्योम release_everything(काष्ठा rtsx_dev *dev)
-अणु
+static void release_everything(struct rtsx_dev *dev)
+{
 	rtsx_release_resources(dev);
 
 	/*
-	 * Drop our reference to the host; the SCSI core will मुक्त it
+	 * Drop our reference to the host; the SCSI core will free it
 	 * when the refcount becomes 0.
 	 */
 	scsi_host_put(rtsx_to_host(dev));
-पूर्ण
+}
 
-/* Thपढ़ो to carry out delayed SCSI-device scanning */
-अटल पूर्णांक rtsx_scan_thपढ़ो(व्योम *__dev)
-अणु
-	काष्ठा rtsx_dev *dev = __dev;
-	काष्ठा rtsx_chip *chip = dev->chip;
+/* Thread to carry out delayed SCSI-device scanning */
+static int rtsx_scan_thread(void *__dev)
+{
+	struct rtsx_dev *dev = __dev;
+	struct rtsx_chip *chip = dev->chip;
 
-	/* Wait क्रम the समयout to expire or क्रम a disconnect */
-	अगर (delay_use > 0) अणु
+	/* Wait for the timeout to expire or for a disconnect */
+	if (delay_use > 0) {
 		dev_info(&dev->pci->dev,
 			 "%s: waiting for device to settle before scanning\n",
 			 CR_DRIVER_NAME);
-		रुको_event_पूर्णांकerruptible_समयout
-			(dev->delay_रुको,
+		wait_event_interruptible_timeout
+			(dev->delay_wait,
 			 rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT),
 			 delay_use * HZ);
-	पूर्ण
+	}
 
-	/* If the device is still connected, perक्रमm the scanning */
-	अगर (!rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) अणु
+	/* If the device is still connected, perform the scanning */
+	if (!rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 		scsi_scan_host(rtsx_to_host(dev));
 		dev_info(&dev->pci->dev, "%s: device scan complete\n",
 			 CR_DRIVER_NAME);
 
-		/* Should we unbind अगर no devices were detected? */
-	पूर्ण
+		/* Should we unbind if no devices were detected? */
+	}
 
-	complete_and_निकास(&dev->scanning_करोne, 0);
-पूर्ण
+	complete_and_exit(&dev->scanning_done, 0);
+}
 
-अटल व्योम rtsx_init_options(काष्ठा rtsx_chip *chip)
-अणु
-	chip->venकरोr_id = chip->rtsx->pci->venकरोr;
+static void rtsx_init_options(struct rtsx_chip *chip)
+{
+	chip->vendor_id = chip->rtsx->pci->vendor;
 	chip->product_id = chip->rtsx->pci->device;
 	chip->adma_mode = 1;
 	chip->lun_mc = 0;
 	chip->driver_first_load = 1;
-#अगर_घोषित HW_AUTO_SWITCH_SD_BUS
-	chip->sdio_in_अक्षरge = 0;
-#पूर्ण_अगर
+#ifdef HW_AUTO_SWITCH_SD_BUS
+	chip->sdio_in_charge = 0;
+#endif
 
-	chip->mspro_क्रमmatter_enable = 1;
+	chip->mspro_formatter_enable = 1;
 	chip->ignore_sd = 0;
 	chip->use_hw_setting = 0;
 	chip->lun_mode = DEFAULT_SINGLE;
-	chip->स्वतः_delink_en = स्वतः_delink_en;
+	chip->auto_delink_en = auto_delink_en;
 	chip->ss_en = ss_en;
-	chip->ss_idle_period = ss_पूर्णांकerval * 1000;
+	chip->ss_idle_period = ss_interval * 1000;
 	chip->remote_wakeup_en = 0;
 	chip->aspm_l0s_l1_en = aspm_l0s_l1_en;
 	chip->dynamic_aspm = 1;
@@ -740,11 +739,11 @@ skip_क्रम_पात:
 		       SUPPORT_MMC_DDR_MODE;
 	chip->sd_ddr_tx_phase = 0;
 	chip->mmc_ddr_tx_phase = 1;
-	chip->sd_शेष_tx_phase = 15;
-	chip->sd_शेष_rx_phase = 15;
-	chip->pmos_pwr_on_पूर्णांकerval = 200;
-	chip->sd_voltage_चयन_delay = 1000;
-	chip->ms_घातer_class_en = 3;
+	chip->sd_default_tx_phase = 15;
+	chip->sd_default_rx_phase = 15;
+	chip->pmos_pwr_on_interval = 200;
+	chip->sd_voltage_switch_delay = 1000;
+	chip->ms_power_class_en = 3;
 
 	chip->sd_400mA_ocp_thd = 1;
 	chip->sd_800mA_ocp_thd = 5;
@@ -754,21 +753,21 @@ skip_क्रम_पात:
 	chip->sd30_drive_sel_1v8 = 0x03;
 	chip->sd30_drive_sel_3v3 = 0x01;
 
-	chip->करो_delink_beक्रमe_घातer_करोwn = 1;
-	chip->स्वतः_घातer_करोwn = 1;
+	chip->do_delink_before_power_down = 1;
+	chip->auto_power_down = 1;
 	chip->polling_config = 0;
 
-	chip->क्रमce_clkreq_0 = 1;
+	chip->force_clkreq_0 = 1;
 	chip->ft2_fast_mode = 0;
 
 	chip->sdio_retry_cnt = 1;
 
-	chip->xd_समयout = 2000;
-	chip->sd_समयout = 10000;
-	chip->ms_समयout = 2000;
-	chip->mspro_समयout = 15000;
+	chip->xd_timeout = 2000;
+	chip->sd_timeout = 10000;
+	chip->ms_timeout = 2000;
+	chip->mspro_timeout = 15000;
 
-	chip->घातer_करोwn_in_ss = 1;
+	chip->power_down_in_ss = 1;
 
 	chip->sdr104_en = 1;
 	chip->sdr50_en = 1;
@@ -778,7 +777,7 @@ skip_क्रम_पात:
 	chip->delink_stage2_step = 40;
 	chip->delink_stage3_step = 20;
 
-	chip->स्वतः_delink_in_L1 = 1;
+	chip->auto_delink_in_L1 = 1;
 	chip->blink_led = 1;
 	chip->msi_en = msi_en;
 	chip->hp_watch_bios_hotplug = 0;
@@ -787,88 +786,88 @@ skip_क्रम_पात:
 
 	chip->support_ms_8bit = 1;
 	chip->s3_pwr_off_delay = 1000;
-पूर्ण
+}
 
-अटल पूर्णांक rtsx_probe(काष्ठा pci_dev *pci,
-		      स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	काष्ठा Scsi_Host *host;
-	काष्ठा rtsx_dev *dev;
-	पूर्णांक err = 0;
-	काष्ठा task_काष्ठा *th;
+static int rtsx_probe(struct pci_dev *pci,
+		      const struct pci_device_id *pci_id)
+{
+	struct Scsi_Host *host;
+	struct rtsx_dev *dev;
+	int err = 0;
+	struct task_struct *th;
 
 	dev_dbg(&pci->dev, "Realtek PCI-E card reader detected\n");
 
 	err = pcim_enable_device(pci);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pci->dev, "PCI enable device failed!\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = pci_request_regions(pci, CR_DRIVER_NAME);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pci->dev, "PCI request regions for %s failed!\n",
 			CR_DRIVER_NAME);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * Ask the SCSI layer to allocate a host काष्ठाure, with extra
-	 * space at the end क्रम our निजी rtsx_dev काष्ठाure.
+	 * Ask the SCSI layer to allocate a host structure, with extra
+	 * space at the end for our private rtsx_dev structure.
 	 */
-	host = scsi_host_alloc(&rtsx_host_ढाँचा, माप(*dev));
-	अगर (!host) अणु
+	host = scsi_host_alloc(&rtsx_host_template, sizeof(*dev));
+	if (!host) {
 		dev_err(&pci->dev, "Unable to allocate the scsi host\n");
 		err = -ENOMEM;
-		जाओ scsi_host_alloc_fail;
-	पूर्ण
+		goto scsi_host_alloc_fail;
+	}
 
 	dev = host_to_rtsx(host);
-	स_रखो(dev, 0, माप(काष्ठा rtsx_dev));
+	memset(dev, 0, sizeof(struct rtsx_dev));
 
-	dev->chip = kzalloc(माप(*dev->chip), GFP_KERNEL);
-	अगर (!dev->chip) अणु
+	dev->chip = kzalloc(sizeof(*dev->chip), GFP_KERNEL);
+	if (!dev->chip) {
 		err = -ENOMEM;
-		जाओ chip_alloc_fail;
-	पूर्ण
+		goto chip_alloc_fail;
+	}
 
 	spin_lock_init(&dev->reg_lock);
 	mutex_init(&dev->dev_mutex);
-	init_completion(&dev->cmnd_पढ़ोy);
-	init_completion(&dev->control_निकास);
-	init_completion(&dev->polling_निकास);
-	init_completion(&dev->notअगरy);
-	init_completion(&dev->scanning_करोne);
-	init_रुकोqueue_head(&dev->delay_रुको);
+	init_completion(&dev->cmnd_ready);
+	init_completion(&dev->control_exit);
+	init_completion(&dev->polling_exit);
+	init_completion(&dev->notify);
+	init_completion(&dev->scanning_done);
+	init_waitqueue_head(&dev->delay_wait);
 
 	dev->pci = pci;
 	dev->irq = -1;
 
 	dev_info(&pci->dev, "Resource length: 0x%x\n",
-		 (अचिन्हित पूर्णांक)pci_resource_len(pci, 0));
+		 (unsigned int)pci_resource_len(pci, 0));
 	dev->addr = pci_resource_start(pci, 0);
 	dev->remap_addr = ioremap(dev->addr, pci_resource_len(pci, 0));
-	अगर (!dev->remap_addr) अणु
+	if (!dev->remap_addr) {
 		dev_err(&pci->dev, "ioremap error\n");
 		err = -ENXIO;
-		जाओ ioremap_fail;
-	पूर्ण
+		goto ioremap_fail;
+	}
 
 	/*
 	 * Using "unsigned long" cast here to eliminate gcc warning in
-	 * 64-bit प्रणाली
+	 * 64-bit system
 	 */
 	dev_info(&pci->dev, "Original address: 0x%lx, remapped address: 0x%lx\n",
-		 (अचिन्हित दीर्घ)(dev->addr), (अचिन्हित दीर्घ)(dev->remap_addr));
+		 (unsigned long)(dev->addr), (unsigned long)(dev->remap_addr));
 
 	dev->rtsx_resv_buf = dmam_alloc_coherent(&pci->dev, RTSX_RESV_BUF_LEN,
 						 &dev->rtsx_resv_buf_addr,
 						 GFP_KERNEL);
-	अगर (!dev->rtsx_resv_buf) अणु
+	if (!dev->rtsx_resv_buf) {
 		dev_err(&pci->dev, "alloc dma buffer fail\n");
 		err = -ENXIO;
-		जाओ dma_alloc_fail;
-	पूर्ण
+		goto dma_alloc_fail;
+	}
 	dev->chip->host_cmds_ptr = dev->rtsx_resv_buf;
 	dev->chip->host_cmds_addr = dev->rtsx_resv_buf_addr;
 	dev->chip->host_sg_tbl_ptr = dev->rtsx_resv_buf + HOST_CMDS_BUF_LEN;
@@ -881,15 +880,15 @@ skip_क्रम_पात:
 
 	dev_info(&pci->dev, "pci->irq = %d\n", pci->irq);
 
-	अगर (dev->chip->msi_en) अणु
-		अगर (pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_MSI) < 0)
+	if (dev->chip->msi_en) {
+		if (pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_MSI) < 0)
 			dev->chip->msi_en = 0;
-	पूर्ण
+	}
 
-	अगर (rtsx_acquire_irq(dev) < 0) अणु
+	if (rtsx_acquire_irq(dev) < 0) {
 		err = -EBUSY;
-		जाओ irq_acquire_fail;
-	पूर्ण
+		goto irq_acquire_fail;
+	}
 
 	pci_set_master(pci);
 	synchronize_irq(dev->irq);
@@ -897,107 +896,107 @@ skip_क्रम_पात:
 	rtsx_init_chip(dev->chip);
 
 	/*
-	 * set the supported max_lun and max_id क्रम the scsi host
+	 * set the supported max_lun and max_id for the scsi host
 	 * NOTE: the minimal value of max_id is 1
 	 */
 	host->max_id = 1;
 	host->max_lun = dev->chip->max_lun;
 
-	/* Start up our control thपढ़ो */
-	th = kthपढ़ो_run(rtsx_control_thपढ़ो, dev, CR_DRIVER_NAME);
-	अगर (IS_ERR(th)) अणु
+	/* Start up our control thread */
+	th = kthread_run(rtsx_control_thread, dev, CR_DRIVER_NAME);
+	if (IS_ERR(th)) {
 		dev_err(&pci->dev, "Unable to start control thread\n");
 		err = PTR_ERR(th);
-		जाओ control_thपढ़ो_fail;
-	पूर्ण
-	dev->ctl_thपढ़ो = th;
+		goto control_thread_fail;
+	}
+	dev->ctl_thread = th;
 
 	err = scsi_add_host(host, &pci->dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pci->dev, "Unable to add the scsi host\n");
-		जाओ scsi_add_host_fail;
-	पूर्ण
+		goto scsi_add_host_fail;
+	}
 
-	/* Start up the thपढ़ो क्रम delayed SCSI-device scanning */
-	th = kthपढ़ो_run(rtsx_scan_thपढ़ो, dev, "rtsx-scan");
-	अगर (IS_ERR(th)) अणु
+	/* Start up the thread for delayed SCSI-device scanning */
+	th = kthread_run(rtsx_scan_thread, dev, "rtsx-scan");
+	if (IS_ERR(th)) {
 		dev_err(&pci->dev, "Unable to start the device-scanning thread\n");
-		complete(&dev->scanning_करोne);
+		complete(&dev->scanning_done);
 		err = PTR_ERR(th);
-		जाओ scan_thपढ़ो_fail;
-	पूर्ण
+		goto scan_thread_fail;
+	}
 
-	/* Start up the thपढ़ो क्रम polling thपढ़ो */
-	th = kthपढ़ो_run(rtsx_polling_thपढ़ो, dev, "rtsx-polling");
-	अगर (IS_ERR(th)) अणु
+	/* Start up the thread for polling thread */
+	th = kthread_run(rtsx_polling_thread, dev, "rtsx-polling");
+	if (IS_ERR(th)) {
 		dev_err(&pci->dev, "Unable to start the device-polling thread\n");
 		err = PTR_ERR(th);
-		जाओ scan_thपढ़ो_fail;
-	पूर्ण
-	dev->polling_thपढ़ो = th;
+		goto scan_thread_fail;
+	}
+	dev->polling_thread = th;
 
 	pci_set_drvdata(pci, dev);
 
-	वापस 0;
+	return 0;
 
-	/* We come here अगर there are any problems */
-scan_thपढ़ो_fail:
-	quiesce_and_हटाओ_host(dev);
+	/* We come here if there are any problems */
+scan_thread_fail:
+	quiesce_and_remove_host(dev);
 scsi_add_host_fail:
-	complete(&dev->cmnd_पढ़ोy);
-	रुको_क्रम_completion(&dev->control_निकास);
-control_thपढ़ो_fail:
-	मुक्त_irq(dev->irq, (व्योम *)dev);
+	complete(&dev->cmnd_ready);
+	wait_for_completion(&dev->control_exit);
+control_thread_fail:
+	free_irq(dev->irq, (void *)dev);
 	rtsx_release_chip(dev->chip);
 irq_acquire_fail:
-	dev->chip->host_cmds_ptr = शून्य;
-	dev->chip->host_sg_tbl_ptr = शून्य;
-	अगर (dev->chip->msi_en)
-		pci_मुक्त_irq_vectors(dev->pci);
+	dev->chip->host_cmds_ptr = NULL;
+	dev->chip->host_sg_tbl_ptr = NULL;
+	if (dev->chip->msi_en)
+		pci_free_irq_vectors(dev->pci);
 dma_alloc_fail:
 	iounmap(dev->remap_addr);
 ioremap_fail:
-	kमुक्त(dev->chip);
+	kfree(dev->chip);
 chip_alloc_fail:
 	dev_err(&pci->dev, "%s failed\n", __func__);
 	scsi_host_put(host);
 scsi_host_alloc_fail:
 	pci_release_regions(pci);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम rtsx_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	काष्ठा rtsx_dev *dev = pci_get_drvdata(pci);
+static void rtsx_remove(struct pci_dev *pci)
+{
+	struct rtsx_dev *dev = pci_get_drvdata(pci);
 
 	dev_info(&pci->dev, "%s called\n", __func__);
 
-	quiesce_and_हटाओ_host(dev);
+	quiesce_and_remove_host(dev);
 	release_everything(dev);
 	pci_release_regions(pci);
-पूर्ण
+}
 
 /* PCI IDs */
-अटल स्थिर काष्ठा pci_device_id rtsx_ids[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x5208),
-		PCI_CLASS_OTHERS << 16, 0xFF0000 पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x5288),
-		PCI_CLASS_OTHERS << 16, 0xFF0000 पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id rtsx_ids[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x5208),
+		PCI_CLASS_OTHERS << 16, 0xFF0000 },
+	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x5288),
+		PCI_CLASS_OTHERS << 16, 0xFF0000 },
+	{ 0, },
+};
 
 MODULE_DEVICE_TABLE(pci, rtsx_ids);
 
-अटल SIMPLE_DEV_PM_OPS(rtsx_pm_ops, rtsx_suspend, rtsx_resume);
+static SIMPLE_DEV_PM_OPS(rtsx_pm_ops, rtsx_suspend, rtsx_resume);
 
 /* pci_driver definition */
-अटल काष्ठा pci_driver rtsx_driver = अणु
+static struct pci_driver rtsx_driver = {
 	.name = CR_DRIVER_NAME,
 	.id_table = rtsx_ids,
 	.probe = rtsx_probe,
-	.हटाओ = rtsx_हटाओ,
+	.remove = rtsx_remove,
 	.driver.pm = &rtsx_pm_ops,
-	.shutकरोwn = rtsx_shutकरोwn,
-पूर्ण;
+	.shutdown = rtsx_shutdown,
+};
 
 module_pci_driver(rtsx_driver);

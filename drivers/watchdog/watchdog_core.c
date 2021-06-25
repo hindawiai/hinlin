@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- *	watchकरोg_core.c
+ *	watchdog_core.c
  *
  *	(c) Copyright 2008-2011 Alan Cox <alan@lxorguk.ukuu.org.uk>,
  *						All Rights Reserved.
@@ -9,435 +8,435 @@
  *	(c) Copyright 2008-2011 Wim Van Sebroeck <wim@iguana.be>.
  *
  *	This source code is part of the generic code that can be used
- *	by all the watchकरोg समयr drivers.
+ *	by all the watchdog timer drivers.
  *
  *	Based on source code of the following authors:
  *	  Matt Domsch <Matt_Domsch@dell.com>,
  *	  Rob Radez <rob@osinvestor.com>,
- *	  Rusty Lynch <rusty@linux.co.पूर्णांकel.com>
+ *	  Rusty Lynch <rusty@linux.co.intel.com>
  *	  Satyam Sharma <satyam@infradead.org>
- *	  Randy Dunlap <अक्रमy.dunlap@oracle.com>
+ *	  Randy Dunlap <randy.dunlap@oracle.com>
  *
  *	Neither Alan Cox, CymruNet Ltd., Wim Van Sebroeck nor Iguana vzw.
- *	admit liability nor provide warranty क्रम any of this software.
- *	This material is provided "AS-IS" and at no अक्षरge.
+ *	admit liability nor provide warranty for any of this software.
+ *	This material is provided "AS-IS" and at no charge.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>	/* For EXPORT_SYMBOL/module stuff/... */
-#समावेश <linux/types.h>	/* For standard types */
-#समावेश <linux/त्रुटिसं.स>	/* For the -ENODEV/... values */
-#समावेश <linux/kernel.h>	/* For prपूर्णांकk/panic/... */
-#समावेश <linux/reboot.h>	/* For restart handler */
-#समावेश <linux/watchकरोg.h>	/* For watchकरोg specअगरic items */
-#समावेश <linux/init.h>		/* For __init/__निकास/... */
-#समावेश <linux/idr.h>		/* For ida_* macros */
-#समावेश <linux/err.h>		/* For IS_ERR macros */
-#समावेश <linux/of.h>		/* For of_get_समयout_sec */
+#include <linux/module.h>	/* For EXPORT_SYMBOL/module stuff/... */
+#include <linux/types.h>	/* For standard types */
+#include <linux/errno.h>	/* For the -ENODEV/... values */
+#include <linux/kernel.h>	/* For printk/panic/... */
+#include <linux/reboot.h>	/* For restart handler */
+#include <linux/watchdog.h>	/* For watchdog specific items */
+#include <linux/init.h>		/* For __init/__exit/... */
+#include <linux/idr.h>		/* For ida_* macros */
+#include <linux/err.h>		/* For IS_ERR macros */
+#include <linux/of.h>		/* For of_get_timeout_sec */
 
-#समावेश "watchdog_core.h"	/* For watchकरोg_dev_रेजिस्टर/... */
+#include "watchdog_core.h"	/* For watchdog_dev_register/... */
 
-अटल DEFINE_IDA(watchकरोg_ida);
+static DEFINE_IDA(watchdog_ida);
 
-अटल पूर्णांक stop_on_reboot = -1;
-module_param(stop_on_reboot, पूर्णांक, 0444);
+static int stop_on_reboot = -1;
+module_param(stop_on_reboot, int, 0444);
 MODULE_PARM_DESC(stop_on_reboot, "Stop watchdogs on reboot (0=keep watching, 1=stop)");
 
 /*
- * Deferred Registration infraकाष्ठाure.
+ * Deferred Registration infrastructure.
  *
- * Someबार watchकरोg drivers needs to be loaded as soon as possible,
- * क्रम example when it's impossible to disable it. To करो so,
- * raising the initcall level of the watchकरोg driver is a solution.
- * But in such हाल, the miscdev is maybe not पढ़ोy (subsys_initcall), and
- * watchकरोg_core need miscdev to रेजिस्टर the watchकरोg as a अक्षर device.
+ * Sometimes watchdog drivers needs to be loaded as soon as possible,
+ * for example when it's impossible to disable it. To do so,
+ * raising the initcall level of the watchdog driver is a solution.
+ * But in such case, the miscdev is maybe not ready (subsys_initcall), and
+ * watchdog_core need miscdev to register the watchdog as a char device.
  *
- * The deferred registration infraकाष्ठाure offer a way क्रम the watchकरोg
- * subप्रणाली to रेजिस्टर a watchकरोg properly, even beक्रमe miscdev is पढ़ोy.
+ * The deferred registration infrastructure offer a way for the watchdog
+ * subsystem to register a watchdog properly, even before miscdev is ready.
  */
 
-अटल DEFINE_MUTEX(wtd_deferred_reg_mutex);
-अटल LIST_HEAD(wtd_deferred_reg_list);
-अटल bool wtd_deferred_reg_करोne;
+static DEFINE_MUTEX(wtd_deferred_reg_mutex);
+static LIST_HEAD(wtd_deferred_reg_list);
+static bool wtd_deferred_reg_done;
 
-अटल व्योम watchकरोg_deferred_registration_add(काष्ठा watchकरोg_device *wdd)
-अणु
+static void watchdog_deferred_registration_add(struct watchdog_device *wdd)
+{
 	list_add_tail(&wdd->deferred,
 		      &wtd_deferred_reg_list);
-पूर्ण
+}
 
-अटल व्योम watchकरोg_deferred_registration_del(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा list_head *p, *n;
-	काष्ठा watchकरोg_device *wdd_पंचांगp;
+static void watchdog_deferred_registration_del(struct watchdog_device *wdd)
+{
+	struct list_head *p, *n;
+	struct watchdog_device *wdd_tmp;
 
-	list_क्रम_each_safe(p, n, &wtd_deferred_reg_list) अणु
-		wdd_पंचांगp = list_entry(p, काष्ठा watchकरोg_device,
+	list_for_each_safe(p, n, &wtd_deferred_reg_list) {
+		wdd_tmp = list_entry(p, struct watchdog_device,
 				     deferred);
-		अगर (wdd_पंचांगp == wdd) अणु
-			list_del(&wdd_पंचांगp->deferred);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (wdd_tmp == wdd) {
+			list_del(&wdd_tmp->deferred);
+			break;
+		}
+	}
+}
 
-अटल व्योम watchकरोg_check_min_max_समयout(काष्ठा watchकरोg_device *wdd)
-अणु
+static void watchdog_check_min_max_timeout(struct watchdog_device *wdd)
+{
 	/*
-	 * Check that we have valid min and max समयout values, अगर
+	 * Check that we have valid min and max timeout values, if
 	 * not reset them both to 0 (=not used or unknown)
 	 */
-	अगर (!wdd->max_hw_heartbeat_ms && wdd->min_समयout > wdd->max_समयout) अणु
+	if (!wdd->max_hw_heartbeat_ms && wdd->min_timeout > wdd->max_timeout) {
 		pr_info("Invalid min and max timeout values, resetting to 0!\n");
-		wdd->min_समयout = 0;
-		wdd->max_समयout = 0;
-	पूर्ण
-पूर्ण
+		wdd->min_timeout = 0;
+		wdd->max_timeout = 0;
+	}
+}
 
 /**
- * watchकरोg_init_समयout() - initialize the समयout field
- * @wdd: watchकरोg device
- * @समयout_parm: समयout module parameter
- * @dev: Device that stores the समयout-sec property
+ * watchdog_init_timeout() - initialize the timeout field
+ * @wdd: watchdog device
+ * @timeout_parm: timeout module parameter
+ * @dev: Device that stores the timeout-sec property
  *
- * Initialize the समयout field of the watchकरोg_device काष्ठा with either the
- * समयout module parameter (अगर it is valid value) or the समयout-sec property
- * (only अगर it is a valid value and the समयout_parm is out of bounds).
+ * Initialize the timeout field of the watchdog_device struct with either the
+ * timeout module parameter (if it is valid value) or the timeout-sec property
+ * (only if it is a valid value and the timeout_parm is out of bounds).
  * If none of them are valid then we keep the old value (which should normally
- * be the शेष समयout value). Note that क्रम the module parameter, '0' means
- * 'use default' जबतक it is an invalid value क्रम the समयout-sec property.
- * It should simply be dropped अगर you want to use the शेष value then.
+ * be the default timeout value). Note that for the module parameter, '0' means
+ * 'use default' while it is an invalid value for the timeout-sec property.
+ * It should simply be dropped if you want to use the default value then.
  *
- * A zero is वापसed on success or -EINVAL अगर all provided values are out of
+ * A zero is returned on success or -EINVAL if all provided values are out of
  * bounds.
  */
-पूर्णांक watchकरोg_init_समयout(काष्ठा watchकरोg_device *wdd,
-				अचिन्हित पूर्णांक समयout_parm, काष्ठा device *dev)
-अणु
-	स्थिर अक्षर *dev_str = wdd->parent ? dev_name(wdd->parent) :
-			      (स्थिर अक्षर *)wdd->info->identity;
-	अचिन्हित पूर्णांक t = 0;
-	पूर्णांक ret = 0;
+int watchdog_init_timeout(struct watchdog_device *wdd,
+				unsigned int timeout_parm, struct device *dev)
+{
+	const char *dev_str = wdd->parent ? dev_name(wdd->parent) :
+			      (const char *)wdd->info->identity;
+	unsigned int t = 0;
+	int ret = 0;
 
-	watchकरोg_check_min_max_समयout(wdd);
+	watchdog_check_min_max_timeout(wdd);
 
 	/* check the driver supplied value (likely a module parameter) first */
-	अगर (समयout_parm) अणु
-		अगर (!watchकरोg_समयout_invalid(wdd, समयout_parm)) अणु
-			wdd->समयout = समयout_parm;
-			वापस 0;
-		पूर्ण
+	if (timeout_parm) {
+		if (!watchdog_timeout_invalid(wdd, timeout_parm)) {
+			wdd->timeout = timeout_parm;
+			return 0;
+		}
 		pr_err("%s: driver supplied timeout (%u) out of range\n",
-			dev_str, समयout_parm);
+			dev_str, timeout_parm);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	/* try to get the समयout_sec property */
-	अगर (dev && dev->of_node &&
-	    of_property_पढ़ो_u32(dev->of_node, "timeout-sec", &t) == 0) अणु
-		अगर (t && !watchकरोg_समयout_invalid(wdd, t)) अणु
-			wdd->समयout = t;
-			वापस 0;
-		पूर्ण
+	/* try to get the timeout_sec property */
+	if (dev && dev->of_node &&
+	    of_property_read_u32(dev->of_node, "timeout-sec", &t) == 0) {
+		if (t && !watchdog_timeout_invalid(wdd, t)) {
+			wdd->timeout = t;
+			return 0;
+		}
 		pr_err("%s: DT supplied timeout (%u) out of range\n", dev_str, t);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret < 0 && wdd->समयout)
+	if (ret < 0 && wdd->timeout)
 		pr_warn("%s: falling back to default timeout (%u)\n", dev_str,
-			wdd->समयout);
+			wdd->timeout);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(watchकरोg_init_समयout);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(watchdog_init_timeout);
 
-अटल पूर्णांक watchकरोg_reboot_notअगरier(काष्ठा notअगरier_block *nb,
-				    अचिन्हित दीर्घ code, व्योम *data)
-अणु
-	काष्ठा watchकरोg_device *wdd;
+static int watchdog_reboot_notifier(struct notifier_block *nb,
+				    unsigned long code, void *data)
+{
+	struct watchdog_device *wdd;
 
-	wdd = container_of(nb, काष्ठा watchकरोg_device, reboot_nb);
-	अगर (code == SYS_DOWN || code == SYS_HALT) अणु
-		अगर (watchकरोg_active(wdd) || watchकरोg_hw_running(wdd)) अणु
-			पूर्णांक ret;
+	wdd = container_of(nb, struct watchdog_device, reboot_nb);
+	if (code == SYS_DOWN || code == SYS_HALT) {
+		if (watchdog_active(wdd) || watchdog_hw_running(wdd)) {
+			int ret;
 
 			ret = wdd->ops->stop(wdd);
-			अगर (ret)
-				वापस NOTIFY_BAD;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return NOTIFY_BAD;
+		}
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक watchकरोg_restart_notअगरier(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ action, व्योम *data)
-अणु
-	काष्ठा watchकरोg_device *wdd = container_of(nb, काष्ठा watchकरोg_device,
+static int watchdog_restart_notifier(struct notifier_block *nb,
+				     unsigned long action, void *data)
+{
+	struct watchdog_device *wdd = container_of(nb, struct watchdog_device,
 						   restart_nb);
 
-	पूर्णांक ret;
+	int ret;
 
 	ret = wdd->ops->restart(wdd, action, data);
-	अगर (ret)
-		वापस NOTIFY_BAD;
+	if (ret)
+		return NOTIFY_BAD;
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /**
- * watchकरोg_set_restart_priority - Change priority of restart handler
- * @wdd: watchकरोg device
+ * watchdog_set_restart_priority - Change priority of restart handler
+ * @wdd: watchdog device
  * @priority: priority of the restart handler, should follow these guidelines:
- *   0:   use watchकरोg's restart function as last resort, has limited restart
+ *   0:   use watchdog's restart function as last resort, has limited restart
  *        capabilies
- *   128: शेष restart handler, use अगर no other handler is expected to be
- *        available and/or अगर restart is sufficient to restart the entire प्रणाली
+ *   128: default restart handler, use if no other handler is expected to be
+ *        available and/or if restart is sufficient to restart the entire system
  *   255: preempt all other handlers
  *
- * If a wdd->ops->restart function is provided when watchकरोg_रेजिस्टर_device is
- * called, it will be रेजिस्टरed as a restart handler with the priority given
+ * If a wdd->ops->restart function is provided when watchdog_register_device is
+ * called, it will be registered as a restart handler with the priority given
  * here.
  */
-व्योम watchकरोg_set_restart_priority(काष्ठा watchकरोg_device *wdd, पूर्णांक priority)
-अणु
+void watchdog_set_restart_priority(struct watchdog_device *wdd, int priority)
+{
 	wdd->restart_nb.priority = priority;
-पूर्ण
-EXPORT_SYMBOL_GPL(watchकरोg_set_restart_priority);
+}
+EXPORT_SYMBOL_GPL(watchdog_set_restart_priority);
 
-अटल पूर्णांक __watchकरोg_रेजिस्टर_device(काष्ठा watchकरोg_device *wdd)
-अणु
-	पूर्णांक ret, id = -1;
+static int __watchdog_register_device(struct watchdog_device *wdd)
+{
+	int ret, id = -1;
 
-	अगर (wdd == शून्य || wdd->info == शून्य || wdd->ops == शून्य)
-		वापस -EINVAL;
+	if (wdd == NULL || wdd->info == NULL || wdd->ops == NULL)
+		return -EINVAL;
 
 	/* Mandatory operations need to be supported */
-	अगर (!wdd->ops->start || (!wdd->ops->stop && !wdd->max_hw_heartbeat_ms))
-		वापस -EINVAL;
+	if (!wdd->ops->start || (!wdd->ops->stop && !wdd->max_hw_heartbeat_ms))
+		return -EINVAL;
 
-	watchकरोg_check_min_max_समयout(wdd);
+	watchdog_check_min_max_timeout(wdd);
 
 	/*
-	 * Note: now that all watchकरोg_device data has been verअगरied, we
-	 * will not check this anymore in other functions. If data माला_लो
+	 * Note: now that all watchdog_device data has been verified, we
+	 * will not check this anymore in other functions. If data gets
 	 * corrupted in a later stage then we expect a kernel panic!
 	 */
 
-	/* Use alias क्रम watchकरोg id अगर possible */
-	अगर (wdd->parent) अणु
+	/* Use alias for watchdog id if possible */
+	if (wdd->parent) {
 		ret = of_alias_get_id(wdd->parent->of_node, "watchdog");
-		अगर (ret >= 0)
-			id = ida_simple_get(&watchकरोg_ida, ret,
+		if (ret >= 0)
+			id = ida_simple_get(&watchdog_ida, ret,
 					    ret + 1, GFP_KERNEL);
-	पूर्ण
+	}
 
-	अगर (id < 0)
-		id = ida_simple_get(&watchकरोg_ida, 0, MAX_DOGS, GFP_KERNEL);
+	if (id < 0)
+		id = ida_simple_get(&watchdog_ida, 0, MAX_DOGS, GFP_KERNEL);
 
-	अगर (id < 0)
-		वापस id;
+	if (id < 0)
+		return id;
 	wdd->id = id;
 
-	ret = watchकरोg_dev_रेजिस्टर(wdd);
-	अगर (ret) अणु
-		ida_simple_हटाओ(&watchकरोg_ida, id);
-		अगर (!(id == 0 && ret == -EBUSY))
-			वापस ret;
+	ret = watchdog_dev_register(wdd);
+	if (ret) {
+		ida_simple_remove(&watchdog_ida, id);
+		if (!(id == 0 && ret == -EBUSY))
+			return ret;
 
-		/* Retry in हाल a legacy watchकरोg module exists */
-		id = ida_simple_get(&watchकरोg_ida, 1, MAX_DOGS, GFP_KERNEL);
-		अगर (id < 0)
-			वापस id;
+		/* Retry in case a legacy watchdog module exists */
+		id = ida_simple_get(&watchdog_ida, 1, MAX_DOGS, GFP_KERNEL);
+		if (id < 0)
+			return id;
 		wdd->id = id;
 
-		ret = watchकरोg_dev_रेजिस्टर(wdd);
-		अगर (ret) अणु
-			ida_simple_हटाओ(&watchकरोg_ida, id);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+		ret = watchdog_dev_register(wdd);
+		if (ret) {
+			ida_simple_remove(&watchdog_ida, id);
+			return ret;
+		}
+	}
 
-	/* Module parameter to क्रमce watchकरोg policy on reboot. */
-	अगर (stop_on_reboot != -1) अणु
-		अगर (stop_on_reboot)
+	/* Module parameter to force watchdog policy on reboot. */
+	if (stop_on_reboot != -1) {
+		if (stop_on_reboot)
 			set_bit(WDOG_STOP_ON_REBOOT, &wdd->status);
-		अन्यथा
+		else
 			clear_bit(WDOG_STOP_ON_REBOOT, &wdd->status);
-	पूर्ण
+	}
 
-	अगर (test_bit(WDOG_STOP_ON_REBOOT, &wdd->status)) अणु
-		अगर (!wdd->ops->stop)
+	if (test_bit(WDOG_STOP_ON_REBOOT, &wdd->status)) {
+		if (!wdd->ops->stop)
 			pr_warn("watchdog%d: stop_on_reboot not supported\n", wdd->id);
-		अन्यथा अणु
-			wdd->reboot_nb.notअगरier_call = watchकरोg_reboot_notअगरier;
+		else {
+			wdd->reboot_nb.notifier_call = watchdog_reboot_notifier;
 
-			ret = रेजिस्टर_reboot_notअगरier(&wdd->reboot_nb);
-			अगर (ret) अणु
+			ret = register_reboot_notifier(&wdd->reboot_nb);
+			if (ret) {
 				pr_err("watchdog%d: Cannot register reboot notifier (%d)\n",
 					wdd->id, ret);
-				watchकरोg_dev_unरेजिस्टर(wdd);
-				ida_simple_हटाओ(&watchकरोg_ida, id);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				watchdog_dev_unregister(wdd);
+				ida_simple_remove(&watchdog_ida, id);
+				return ret;
+			}
+		}
+	}
 
-	अगर (wdd->ops->restart) अणु
-		wdd->restart_nb.notअगरier_call = watchकरोg_restart_notअगरier;
+	if (wdd->ops->restart) {
+		wdd->restart_nb.notifier_call = watchdog_restart_notifier;
 
-		ret = रेजिस्टर_restart_handler(&wdd->restart_nb);
-		अगर (ret)
+		ret = register_restart_handler(&wdd->restart_nb);
+		if (ret)
 			pr_warn("watchdog%d: Cannot register restart handler (%d)\n",
 				wdd->id, ret);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * watchकरोg_रेजिस्टर_device() - रेजिस्टर a watchकरोg device
- * @wdd: watchकरोg device
+ * watchdog_register_device() - register a watchdog device
+ * @wdd: watchdog device
  *
- * Register a watchकरोg device with the kernel so that the
- * watchकरोg समयr can be accessed from userspace.
+ * Register a watchdog device with the kernel so that the
+ * watchdog timer can be accessed from userspace.
  *
- * A zero is वापसed on success and a negative त्रुटि_सं code क्रम
+ * A zero is returned on success and a negative errno code for
  * failure.
  */
 
-पूर्णांक watchकरोg_रेजिस्टर_device(काष्ठा watchकरोg_device *wdd)
-अणु
-	स्थिर अक्षर *dev_str;
-	पूर्णांक ret = 0;
+int watchdog_register_device(struct watchdog_device *wdd)
+{
+	const char *dev_str;
+	int ret = 0;
 
 	mutex_lock(&wtd_deferred_reg_mutex);
-	अगर (wtd_deferred_reg_करोne)
-		ret = __watchकरोg_रेजिस्टर_device(wdd);
-	अन्यथा
-		watchकरोg_deferred_registration_add(wdd);
+	if (wtd_deferred_reg_done)
+		ret = __watchdog_register_device(wdd);
+	else
+		watchdog_deferred_registration_add(wdd);
 	mutex_unlock(&wtd_deferred_reg_mutex);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_str = wdd->parent ? dev_name(wdd->parent) :
-			  (स्थिर अक्षर *)wdd->info->identity;
+			  (const char *)wdd->info->identity;
 		pr_err("%s: failed to register watchdog device (err = %d)\n",
 			dev_str, ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(watchकरोg_रेजिस्टर_device);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(watchdog_register_device);
 
-अटल व्योम __watchकरोg_unरेजिस्टर_device(काष्ठा watchकरोg_device *wdd)
-अणु
-	अगर (wdd == शून्य)
-		वापस;
+static void __watchdog_unregister_device(struct watchdog_device *wdd)
+{
+	if (wdd == NULL)
+		return;
 
-	अगर (wdd->ops->restart)
-		unरेजिस्टर_restart_handler(&wdd->restart_nb);
+	if (wdd->ops->restart)
+		unregister_restart_handler(&wdd->restart_nb);
 
-	अगर (test_bit(WDOG_STOP_ON_REBOOT, &wdd->status))
-		unरेजिस्टर_reboot_notअगरier(&wdd->reboot_nb);
+	if (test_bit(WDOG_STOP_ON_REBOOT, &wdd->status))
+		unregister_reboot_notifier(&wdd->reboot_nb);
 
-	watchकरोg_dev_unरेजिस्टर(wdd);
-	ida_simple_हटाओ(&watchकरोg_ida, wdd->id);
-पूर्ण
+	watchdog_dev_unregister(wdd);
+	ida_simple_remove(&watchdog_ida, wdd->id);
+}
 
 /**
- * watchकरोg_unरेजिस्टर_device() - unरेजिस्टर a watchकरोg device
- * @wdd: watchकरोg device to unरेजिस्टर
+ * watchdog_unregister_device() - unregister a watchdog device
+ * @wdd: watchdog device to unregister
  *
- * Unरेजिस्टर a watchकरोg device that was previously successfully
- * रेजिस्टरed with watchकरोg_रेजिस्टर_device().
+ * Unregister a watchdog device that was previously successfully
+ * registered with watchdog_register_device().
  */
 
-व्योम watchकरोg_unरेजिस्टर_device(काष्ठा watchकरोg_device *wdd)
-अणु
+void watchdog_unregister_device(struct watchdog_device *wdd)
+{
 	mutex_lock(&wtd_deferred_reg_mutex);
-	अगर (wtd_deferred_reg_करोne)
-		__watchकरोg_unरेजिस्टर_device(wdd);
-	अन्यथा
-		watchकरोg_deferred_registration_del(wdd);
+	if (wtd_deferred_reg_done)
+		__watchdog_unregister_device(wdd);
+	else
+		watchdog_deferred_registration_del(wdd);
 	mutex_unlock(&wtd_deferred_reg_mutex);
-पूर्ण
+}
 
-EXPORT_SYMBOL_GPL(watchकरोg_unरेजिस्टर_device);
+EXPORT_SYMBOL_GPL(watchdog_unregister_device);
 
-अटल व्योम devm_watchकरोg_unरेजिस्टर_device(काष्ठा device *dev, व्योम *res)
-अणु
-	watchकरोg_unरेजिस्टर_device(*(काष्ठा watchकरोg_device **)res);
-पूर्ण
+static void devm_watchdog_unregister_device(struct device *dev, void *res)
+{
+	watchdog_unregister_device(*(struct watchdog_device **)res);
+}
 
 /**
- * devm_watchकरोg_रेजिस्टर_device() - resource managed watchकरोg_रेजिस्टर_device()
- * @dev: device that is रेजिस्टरing this watchकरोg device
- * @wdd: watchकरोg device
+ * devm_watchdog_register_device() - resource managed watchdog_register_device()
+ * @dev: device that is registering this watchdog device
+ * @wdd: watchdog device
  *
- * Managed watchकरोg_रेजिस्टर_device(). For watchकरोg device रेजिस्टरed by this
- * function,  watchकरोg_unरेजिस्टर_device() is स्वतःmatically called on driver
- * detach. See watchकरोg_रेजिस्टर_device() क्रम more inक्रमmation.
+ * Managed watchdog_register_device(). For watchdog device registered by this
+ * function,  watchdog_unregister_device() is automatically called on driver
+ * detach. See watchdog_register_device() for more information.
  */
-पूर्णांक devm_watchकरोg_रेजिस्टर_device(काष्ठा device *dev,
-				काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा watchकरोg_device **rcwdd;
-	पूर्णांक ret;
+int devm_watchdog_register_device(struct device *dev,
+				struct watchdog_device *wdd)
+{
+	struct watchdog_device **rcwdd;
+	int ret;
 
-	rcwdd = devres_alloc(devm_watchकरोg_unरेजिस्टर_device, माप(*rcwdd),
+	rcwdd = devres_alloc(devm_watchdog_unregister_device, sizeof(*rcwdd),
 			     GFP_KERNEL);
-	अगर (!rcwdd)
-		वापस -ENOMEM;
+	if (!rcwdd)
+		return -ENOMEM;
 
-	ret = watchकरोg_रेजिस्टर_device(wdd);
-	अगर (!ret) अणु
+	ret = watchdog_register_device(wdd);
+	if (!ret) {
 		*rcwdd = wdd;
 		devres_add(dev, rcwdd);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(rcwdd);
-	पूर्ण
+	} else {
+		devres_free(rcwdd);
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_watchकरोg_रेजिस्टर_device);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_watchdog_register_device);
 
-अटल पूर्णांक __init watchकरोg_deferred_registration(व्योम)
-अणु
+static int __init watchdog_deferred_registration(void)
+{
 	mutex_lock(&wtd_deferred_reg_mutex);
-	wtd_deferred_reg_करोne = true;
-	जबतक (!list_empty(&wtd_deferred_reg_list)) अणु
-		काष्ठा watchकरोg_device *wdd;
+	wtd_deferred_reg_done = true;
+	while (!list_empty(&wtd_deferred_reg_list)) {
+		struct watchdog_device *wdd;
 
 		wdd = list_first_entry(&wtd_deferred_reg_list,
-				       काष्ठा watchकरोg_device, deferred);
+				       struct watchdog_device, deferred);
 		list_del(&wdd->deferred);
-		__watchकरोg_रेजिस्टर_device(wdd);
-	पूर्ण
+		__watchdog_register_device(wdd);
+	}
 	mutex_unlock(&wtd_deferred_reg_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init watchकरोg_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init watchdog_init(void)
+{
+	int err;
 
-	err = watchकरोg_dev_init();
-	अगर (err < 0)
-		वापस err;
+	err = watchdog_dev_init();
+	if (err < 0)
+		return err;
 
-	watchकरोg_deferred_registration();
-	वापस 0;
-पूर्ण
+	watchdog_deferred_registration();
+	return 0;
+}
 
-अटल व्योम __निकास watchकरोg_निकास(व्योम)
-अणु
-	watchकरोg_dev_निकास();
-	ida_destroy(&watchकरोg_ida);
-पूर्ण
+static void __exit watchdog_exit(void)
+{
+	watchdog_dev_exit();
+	ida_destroy(&watchdog_ida);
+}
 
-subsys_initcall_sync(watchकरोg_init);
-module_निकास(watchकरोg_निकास);
+subsys_initcall_sync(watchdog_init);
+module_exit(watchdog_exit);
 
 MODULE_AUTHOR("Alan Cox <alan@lxorguk.ukuu.org.uk>");
 MODULE_AUTHOR("Wim Van Sebroeck <wim@iguana.be>");

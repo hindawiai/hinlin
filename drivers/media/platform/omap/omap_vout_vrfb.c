@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * omap_vout_vrfb.c
  *
@@ -10,245 +9,245 @@
  *
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/platform_device.h>
+#include <linux/videodev2.h>
+#include <linux/slab.h>
 
-#समावेश <media/v4l2-device.h>
+#include <media/v4l2-device.h>
 
-#समावेश <video/omapvrfb.h>
+#include <video/omapvrfb.h>
 
-#समावेश "omap_voutdef.h"
-#समावेश "omap_voutlib.h"
-#समावेश "omap_vout_vrfb.h"
+#include "omap_voutdef.h"
+#include "omap_voutlib.h"
+#include "omap_vout_vrfb.h"
 
-#घोषणा OMAP_DMA_NO_DEVICE	0
+#define OMAP_DMA_NO_DEVICE	0
 
 /*
- * Function क्रम allocating video buffers
+ * Function for allocating video buffers
  */
-अटल पूर्णांक omap_vout_allocate_vrfb_buffers(काष्ठा omap_vout_device *vout,
-		अचिन्हित पूर्णांक *count, पूर्णांक startindex)
-अणु
-	पूर्णांक i, j;
+static int omap_vout_allocate_vrfb_buffers(struct omap_vout_device *vout,
+		unsigned int *count, int startindex)
+{
+	int i, j;
 
-	क्रम (i = 0; i < *count; i++) अणु
-		अगर (!vout->smsshaकरो_virt_addr[i]) अणु
-			vout->smsshaकरो_virt_addr[i] =
-				omap_vout_alloc_buffer(vout->smsshaकरो_size,
-						&vout->smsshaकरो_phy_addr[i]);
-		पूर्ण
-		अगर (!vout->smsshaकरो_virt_addr[i] && startindex != -1) अणु
-			अगर (vout->vq.memory == V4L2_MEMORY_MMAP && i >= startindex)
-				अवरोध;
-		पूर्ण
-		अगर (!vout->smsshaकरो_virt_addr[i]) अणु
-			क्रम (j = 0; j < i; j++) अणु
-				omap_vout_मुक्त_buffer(
-						vout->smsshaकरो_virt_addr[j],
-						vout->smsshaकरो_size);
-				vout->smsshaकरो_virt_addr[j] = 0;
-				vout->smsshaकरो_phy_addr[j] = 0;
-			पूर्ण
+	for (i = 0; i < *count; i++) {
+		if (!vout->smsshado_virt_addr[i]) {
+			vout->smsshado_virt_addr[i] =
+				omap_vout_alloc_buffer(vout->smsshado_size,
+						&vout->smsshado_phy_addr[i]);
+		}
+		if (!vout->smsshado_virt_addr[i] && startindex != -1) {
+			if (vout->vq.memory == V4L2_MEMORY_MMAP && i >= startindex)
+				break;
+		}
+		if (!vout->smsshado_virt_addr[i]) {
+			for (j = 0; j < i; j++) {
+				omap_vout_free_buffer(
+						vout->smsshado_virt_addr[j],
+						vout->smsshado_size);
+				vout->smsshado_virt_addr[j] = 0;
+				vout->smsshado_phy_addr[j] = 0;
+			}
 			*count = 0;
-			वापस -ENOMEM;
-		पूर्ण
-		स_रखो((व्योम *)(दीर्घ)vout->smsshaकरो_virt_addr[i], 0,
-		       vout->smsshaकरो_size);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -ENOMEM;
+		}
+		memset((void *)(long)vout->smsshado_virt_addr[i], 0,
+		       vout->smsshado_size);
+	}
+	return 0;
+}
 
 /*
  * Wakes up the application once the DMA transfer to VRFB space is completed.
  */
-अटल व्योम omap_vout_vrfb_dma_tx_callback(व्योम *data)
-अणु
-	काष्ठा vid_vrfb_dma *t = (काष्ठा vid_vrfb_dma *) data;
+static void omap_vout_vrfb_dma_tx_callback(void *data)
+{
+	struct vid_vrfb_dma *t = (struct vid_vrfb_dma *) data;
 
 	t->tx_status = 1;
-	wake_up_पूर्णांकerruptible(&t->रुको);
-पूर्ण
+	wake_up_interruptible(&t->wait);
+}
 
 /*
  * Free VRFB buffers
  */
-व्योम omap_vout_मुक्त_vrfb_buffers(काष्ठा omap_vout_device *vout)
-अणु
-	पूर्णांक j;
+void omap_vout_free_vrfb_buffers(struct omap_vout_device *vout)
+{
+	int j;
 
-	क्रम (j = 0; j < VRFB_NUM_BUFS; j++) अणु
-		अगर (vout->smsshaकरो_virt_addr[j]) अणु
-			omap_vout_मुक्त_buffer(vout->smsshaकरो_virt_addr[j],
-					      vout->smsshaकरो_size);
-			vout->smsshaकरो_virt_addr[j] = 0;
-			vout->smsshaकरो_phy_addr[j] = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (j = 0; j < VRFB_NUM_BUFS; j++) {
+		if (vout->smsshado_virt_addr[j]) {
+			omap_vout_free_buffer(vout->smsshado_virt_addr[j],
+					      vout->smsshado_size);
+			vout->smsshado_virt_addr[j] = 0;
+			vout->smsshado_phy_addr[j] = 0;
+		}
+	}
+}
 
-पूर्णांक omap_vout_setup_vrfb_bufs(काष्ठा platक्रमm_device *pdev, पूर्णांक vid_num,
-			      bool अटल_vrfb_allocation)
-अणु
-	पूर्णांक ret = 0, i, j;
-	काष्ठा omap_vout_device *vout;
-	काष्ठा video_device *vfd;
+int omap_vout_setup_vrfb_bufs(struct platform_device *pdev, int vid_num,
+			      bool static_vrfb_allocation)
+{
+	int ret = 0, i, j;
+	struct omap_vout_device *vout;
+	struct video_device *vfd;
 	dma_cap_mask_t mask;
-	पूर्णांक image_width, image_height;
-	पूर्णांक vrfb_num_bufs = VRFB_NUM_BUFS;
-	काष्ठा v4l2_device *v4l2_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा omap2video_device *vid_dev =
-		container_of(v4l2_dev, काष्ठा omap2video_device, v4l2_dev);
+	int image_width, image_height;
+	int vrfb_num_bufs = VRFB_NUM_BUFS;
+	struct v4l2_device *v4l2_dev = platform_get_drvdata(pdev);
+	struct omap2video_device *vid_dev =
+		container_of(v4l2_dev, struct omap2video_device, v4l2_dev);
 
 	vout = vid_dev->vouts[vid_num];
 	vfd = vout->vfd;
 
-	क्रम (i = 0; i < VRFB_NUM_BUFS; i++) अणु
-		अगर (omap_vrfb_request_ctx(&vout->vrfb_context[i])) अणु
+	for (i = 0; i < VRFB_NUM_BUFS; i++) {
+		if (omap_vrfb_request_ctx(&vout->vrfb_context[i])) {
 			dev_info(&pdev->dev, ": VRFB allocation failed\n");
-			क्रम (j = 0; j < i; j++)
+			for (j = 0; j < i; j++)
 				omap_vrfb_release_ctx(&vout->vrfb_context[j]);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
 	/* Calculate VRFB memory size */
-	/* allocate क्रम worst हाल size */
+	/* allocate for worst case size */
 	image_width = VID_MAX_WIDTH / TILE_SIZE;
-	अगर (VID_MAX_WIDTH % TILE_SIZE)
+	if (VID_MAX_WIDTH % TILE_SIZE)
 		image_width++;
 
 	image_width = image_width * TILE_SIZE;
 	image_height = VID_MAX_HEIGHT / TILE_SIZE;
 
-	अगर (VID_MAX_HEIGHT % TILE_SIZE)
+	if (VID_MAX_HEIGHT % TILE_SIZE)
 		image_height++;
 
 	image_height = image_height * TILE_SIZE;
-	vout->smsshaकरो_size = PAGE_ALIGN(image_width * image_height * 2 * 2);
+	vout->smsshado_size = PAGE_ALIGN(image_width * image_height * 2 * 2);
 
 	/*
-	 * Request and Initialize DMA, क्रम DMA based VRFB transfer
+	 * Request and Initialize DMA, for DMA based VRFB transfer
 	 */
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_INTERLEAVE, mask);
 	vout->vrfb_dma_tx.chan = dma_request_chan_by_mask(&mask);
-	अगर (IS_ERR(vout->vrfb_dma_tx.chan)) अणु
+	if (IS_ERR(vout->vrfb_dma_tx.chan)) {
 		vout->vrfb_dma_tx.req_status = DMA_CHAN_NOT_ALLOTED;
-	पूर्ण अन्यथा अणु
-		माप_प्रकार xt_size = माप(काष्ठा dma_पूर्णांकerleaved_ढाँचा) +
-				 माप(काष्ठा data_chunk);
+	} else {
+		size_t xt_size = sizeof(struct dma_interleaved_template) +
+				 sizeof(struct data_chunk);
 
 		vout->vrfb_dma_tx.xt = kzalloc(xt_size, GFP_KERNEL);
-		अगर (!vout->vrfb_dma_tx.xt) अणु
+		if (!vout->vrfb_dma_tx.xt) {
 			dma_release_channel(vout->vrfb_dma_tx.chan);
 			vout->vrfb_dma_tx.req_status = DMA_CHAN_NOT_ALLOTED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vout->vrfb_dma_tx.req_status == DMA_CHAN_NOT_ALLOTED)
+	if (vout->vrfb_dma_tx.req_status == DMA_CHAN_NOT_ALLOTED)
 		dev_info(&pdev->dev,
 			 ": failed to allocate DMA Channel for video%d\n",
 			 vfd->minor);
 
-	init_रुकोqueue_head(&vout->vrfb_dma_tx.रुको);
+	init_waitqueue_head(&vout->vrfb_dma_tx.wait);
 
 	/*
-	 * अटलally allocated the VRFB buffer is करोne through
+	 * statically allocated the VRFB buffer is done through
 	 * command line arguments
 	 */
-	अगर (अटल_vrfb_allocation) अणु
-		अगर (omap_vout_allocate_vrfb_buffers(vout, &vrfb_num_bufs, -1)) अणु
+	if (static_vrfb_allocation) {
+		if (omap_vout_allocate_vrfb_buffers(vout, &vrfb_num_bufs, -1)) {
 			ret =  -ENOMEM;
-			जाओ release_vrfb_ctx;
-		पूर्ण
-		vout->vrfb_अटल_allocation = true;
-	पूर्ण
-	वापस 0;
+			goto release_vrfb_ctx;
+		}
+		vout->vrfb_static_allocation = true;
+	}
+	return 0;
 
 release_vrfb_ctx:
-	क्रम (j = 0; j < VRFB_NUM_BUFS; j++)
+	for (j = 0; j < VRFB_NUM_BUFS; j++)
 		omap_vrfb_release_ctx(&vout->vrfb_context[j]);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Release the VRFB context once the module निकासs
+ * Release the VRFB context once the module exits
  */
-व्योम omap_vout_release_vrfb(काष्ठा omap_vout_device *vout)
-अणु
-	पूर्णांक i;
+void omap_vout_release_vrfb(struct omap_vout_device *vout)
+{
+	int i;
 
-	क्रम (i = 0; i < VRFB_NUM_BUFS; i++)
+	for (i = 0; i < VRFB_NUM_BUFS; i++)
 		omap_vrfb_release_ctx(&vout->vrfb_context[i]);
 
-	अगर (vout->vrfb_dma_tx.req_status == DMA_CHAN_ALLOTED) अणु
+	if (vout->vrfb_dma_tx.req_status == DMA_CHAN_ALLOTED) {
 		vout->vrfb_dma_tx.req_status = DMA_CHAN_NOT_ALLOTED;
-		kमुक्त(vout->vrfb_dma_tx.xt);
+		kfree(vout->vrfb_dma_tx.xt);
 		dmaengine_terminate_sync(vout->vrfb_dma_tx.chan);
 		dma_release_channel(vout->vrfb_dma_tx.chan);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Allocate the buffers क्रम the VRFB space.  Data is copied from V4L2
+ * Allocate the buffers for the VRFB space.  Data is copied from V4L2
  * buffers to the VRFB buffers using the DMA engine.
  */
-पूर्णांक omap_vout_vrfb_buffer_setup(काष्ठा omap_vout_device *vout,
-			  अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक startindex)
-अणु
-	पूर्णांक i;
+int omap_vout_vrfb_buffer_setup(struct omap_vout_device *vout,
+			  unsigned int *count, unsigned int startindex)
+{
+	int i;
 	bool yuv_mode;
 
-	अगर (!is_rotation_enabled(vout))
-		वापस 0;
+	if (!is_rotation_enabled(vout))
+		return 0;
 
-	/* If rotation is enabled, allocate memory क्रम VRFB space also */
+	/* If rotation is enabled, allocate memory for VRFB space also */
 	*count = *count > VRFB_NUM_BUFS ? VRFB_NUM_BUFS : *count;
 
-	/* Allocate the VRFB buffers only अगर the buffers are not
-	 * allocated during init समय.
+	/* Allocate the VRFB buffers only if the buffers are not
+	 * allocated during init time.
 	 */
-	अगर (!vout->vrfb_अटल_allocation)
-		अगर (omap_vout_allocate_vrfb_buffers(vout, count, startindex))
-			वापस -ENOMEM;
+	if (!vout->vrfb_static_allocation)
+		if (omap_vout_allocate_vrfb_buffers(vout, count, startindex))
+			return -ENOMEM;
 
-	अगर (vout->dss_mode == OMAP_DSS_COLOR_YUV2 ||
+	if (vout->dss_mode == OMAP_DSS_COLOR_YUV2 ||
 			vout->dss_mode == OMAP_DSS_COLOR_UYVY)
 		yuv_mode = true;
-	अन्यथा
+	else
 		yuv_mode = false;
 
-	क्रम (i = 0; i < *count; i++)
+	for (i = 0; i < *count; i++)
 		omap_vrfb_setup(&vout->vrfb_context[i],
-				vout->smsshaकरो_phy_addr[i], vout->pix.width,
+				vout->smsshado_phy_addr[i], vout->pix.width,
 				vout->pix.height, vout->bpp, yuv_mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक omap_vout_prepare_vrfb(काष्ठा omap_vout_device *vout,
-			   काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx;
-	क्रमागत dma_ctrl_flags flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
-	काष्ठा dma_chan *chan = vout->vrfb_dma_tx.chan;
-	काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt = vout->vrfb_dma_tx.xt;
+int omap_vout_prepare_vrfb(struct omap_vout_device *vout,
+			   struct vb2_buffer *vb)
+{
+	struct dma_async_tx_descriptor *tx;
+	enum dma_ctrl_flags flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
+	struct dma_chan *chan = vout->vrfb_dma_tx.chan;
+	struct dma_interleaved_template *xt = vout->vrfb_dma_tx.xt;
 	dma_cookie_t cookie;
 	dma_addr_t buf_phy_addr = vb2_dma_contig_plane_dma_addr(vb, 0);
-	क्रमागत dma_status status;
-	क्रमागत dss_rotation rotation;
-	माप_प्रकार dst_icg;
+	enum dma_status status;
+	enum dss_rotation rotation;
+	size_t dst_icg;
 	u32 pixsize;
 
-	अगर (!is_rotation_enabled(vout))
-		वापस 0;
+	if (!is_rotation_enabled(vout))
+		return 0;
 
-	/* If rotation is enabled, copy input buffer पूर्णांकo VRFB
+	/* If rotation is enabled, copy input buffer into VRFB
 	 * memory space using DMA. We are copying input buffer
-	 * पूर्णांकo VRFB memory space of desired angle and DSS will
-	 * पढ़ो image VRFB memory क्रम 0 degree angle
+	 * into VRFB memory space of desired angle and DSS will
+	 * read image VRFB memory for 0 degree angle
 	 */
 
 	pixsize = vout->bpp * vout->vrfb_bpp;
@@ -268,153 +267,153 @@ release_vrfb_ctx:
 	xt->dst_sgl = true;
 	xt->dst_inc = true;
 
-	tx = dmaengine_prep_पूर्णांकerleaved_dma(chan, xt, flags);
-	अगर (tx == शून्य) अणु
+	tx = dmaengine_prep_interleaved_dma(chan, xt, flags);
+	if (tx == NULL) {
 		pr_err("%s: DMA interleaved prep error\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tx->callback = omap_vout_vrfb_dma_tx_callback;
 	tx->callback_param = &vout->vrfb_dma_tx;
 
 	cookie = dmaengine_submit(tx);
-	अगर (dma_submit_error(cookie)) अणु
+	if (dma_submit_error(cookie)) {
 		pr_err("%s: dmaengine_submit failed (%d)\n", __func__, cookie);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vout->vrfb_dma_tx.tx_status = 0;
 	dma_async_issue_pending(chan);
 
-	रुको_event_पूर्णांकerruptible_समयout(vout->vrfb_dma_tx.रुको,
+	wait_event_interruptible_timeout(vout->vrfb_dma_tx.wait,
 					 vout->vrfb_dma_tx.tx_status == 1,
 					 VRFB_TX_TIMEOUT);
 
-	status = dma_async_is_tx_complete(chan, cookie, शून्य, शून्य);
+	status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
 
-	अगर (vout->vrfb_dma_tx.tx_status == 0) अणु
+	if (vout->vrfb_dma_tx.tx_status == 0) {
 		pr_err("%s: Timeout while waiting for DMA\n", __func__);
 		dmaengine_terminate_sync(chan);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (status != DMA_COMPLETE) अणु
+		return -EINVAL;
+	} else if (status != DMA_COMPLETE) {
 		pr_err("%s: DMA completion %s status\n", __func__,
 		       status == DMA_ERROR ? "error" : "busy");
 		dmaengine_terminate_sync(chan);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Store buffers physical address पूर्णांकo an array. Addresses
+	/* Store buffers physical address into an array. Addresses
 	 * from this array will be used to configure DSS */
 	rotation = calc_rotation(vout);
 	vout->queued_buf_addr[vb->index] = (u8 *)
 		vout->vrfb_context[vb->index].paddr[rotation];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Calculate the buffer offsets from which the streaming should
- * start. This offset calculation is मुख्यly required because of
+ * start. This offset calculation is mainly required because of
  * the VRFB 32 pixels alignment with rotation.
  */
-व्योम omap_vout_calculate_vrfb_offset(काष्ठा omap_vout_device *vout)
-अणु
-	क्रमागत dss_rotation rotation;
+void omap_vout_calculate_vrfb_offset(struct omap_vout_device *vout)
+{
+	enum dss_rotation rotation;
 	bool mirroring = vout->mirror;
-	काष्ठा v4l2_rect *crop = &vout->crop;
-	काष्ठा v4l2_pix_क्रमmat *pix = &vout->pix;
-	पूर्णांक *cropped_offset = &vout->cropped_offset;
-	पूर्णांक vr_ps = 1, ps = 2, temp_ps = 2;
-	पूर्णांक offset = 0, ctop = 0, cleft = 0, line_length = 0;
+	struct v4l2_rect *crop = &vout->crop;
+	struct v4l2_pix_format *pix = &vout->pix;
+	int *cropped_offset = &vout->cropped_offset;
+	int vr_ps = 1, ps = 2, temp_ps = 2;
+	int offset = 0, ctop = 0, cleft = 0, line_length = 0;
 
 	rotation = calc_rotation(vout);
 
-	अगर (V4L2_PIX_FMT_YUYV == pix->pixelक्रमmat ||
-			V4L2_PIX_FMT_UYVY == pix->pixelक्रमmat) अणु
-		अगर (is_rotation_enabled(vout)) अणु
+	if (V4L2_PIX_FMT_YUYV == pix->pixelformat ||
+			V4L2_PIX_FMT_UYVY == pix->pixelformat) {
+		if (is_rotation_enabled(vout)) {
 			/*
-			 * ps    - Actual pixel size क्रम YUYV/UYVY क्रम
+			 * ps    - Actual pixel size for YUYV/UYVY for
 			 *         VRFB/Mirroring is 4 bytes
-			 * vr_ps - Virtually pixel size क्रम YUYV/UYVY is
+			 * vr_ps - Virtually pixel size for YUYV/UYVY is
 			 *         2 bytes
 			 */
 			ps = 4;
 			vr_ps = 2;
-		पूर्ण अन्यथा अणु
+		} else {
 			ps = 2;	/* otherwise the pixel size is 2 byte */
-		पूर्ण
-	पूर्ण अन्यथा अगर (V4L2_PIX_FMT_RGB32 == pix->pixelक्रमmat) अणु
+		}
+	} else if (V4L2_PIX_FMT_RGB32 == pix->pixelformat) {
 		ps = 4;
-	पूर्ण अन्यथा अगर (V4L2_PIX_FMT_RGB24 == pix->pixelक्रमmat) अणु
+	} else if (V4L2_PIX_FMT_RGB24 == pix->pixelformat) {
 		ps = 3;
-	पूर्ण
+	}
 	vout->ps = ps;
 	vout->vr_ps = vr_ps;
 
-	अगर (is_rotation_enabled(vout)) अणु
+	if (is_rotation_enabled(vout)) {
 		line_length = MAX_PIXELS_PER_LINE;
 		ctop = (pix->height - crop->height) - crop->top;
 		cleft = (pix->width - crop->width) - crop->left;
-	पूर्ण अन्यथा अणु
+	} else {
 		line_length = pix->width;
-	पूर्ण
+	}
 	vout->line_length = line_length;
-	चयन (rotation) अणु
-	हाल dss_rotation_90_degree:
+	switch (rotation) {
+	case dss_rotation_90_degree:
 		offset = vout->vrfb_context[0].yoffset *
 			vout->vrfb_context[0].bytespp;
 		temp_ps = ps / vr_ps;
-		अगर (!mirroring) अणु
+		if (!mirroring) {
 			*cropped_offset = offset + line_length *
 				temp_ps * cleft + crop->top * temp_ps;
-		पूर्ण अन्यथा अणु
+		} else {
 			*cropped_offset = offset + line_length * temp_ps *
 				cleft + crop->top * temp_ps + (line_length *
 				((crop->width / (vr_ps)) - 1) * ps);
-		पूर्ण
-		अवरोध;
-	हाल dss_rotation_180_degree:
+		}
+		break;
+	case dss_rotation_180_degree:
 		offset = ((MAX_PIXELS_PER_LINE * vout->vrfb_context[0].yoffset *
 			vout->vrfb_context[0].bytespp) +
 			(vout->vrfb_context[0].xoffset *
 			vout->vrfb_context[0].bytespp));
-		अगर (!mirroring) अणु
+		if (!mirroring) {
 			*cropped_offset = offset + (line_length * ps * ctop) +
 				(cleft / vr_ps) * ps;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			*cropped_offset = offset + (line_length * ps * ctop) +
 				(cleft / vr_ps) * ps + (line_length *
 				(crop->height - 1) * ps);
-		पूर्ण
-		अवरोध;
-	हाल dss_rotation_270_degree:
+		}
+		break;
+	case dss_rotation_270_degree:
 		offset = MAX_PIXELS_PER_LINE * vout->vrfb_context[0].xoffset *
 			vout->vrfb_context[0].bytespp;
 		temp_ps = ps / vr_ps;
-		अगर (!mirroring) अणु
+		if (!mirroring) {
 			*cropped_offset = offset + line_length *
 			    temp_ps * crop->left + ctop * ps;
-		पूर्ण अन्यथा अणु
+		} else {
 			*cropped_offset = offset + line_length *
 				temp_ps * crop->left + ctop * ps +
 				(line_length * ((crop->width / vr_ps) - 1) *
 				 ps);
-		पूर्ण
-		अवरोध;
-	हाल dss_rotation_0_degree:
-		अगर (!mirroring) अणु
+		}
+		break;
+	case dss_rotation_0_degree:
+		if (!mirroring) {
 			*cropped_offset = (line_length * ps) *
 				crop->top + (crop->left / vr_ps) * ps;
-		पूर्ण अन्यथा अणु
+		} else {
 			*cropped_offset = (line_length * ps) *
 				crop->top + (crop->left / vr_ps) * ps +
 				(line_length * (crop->height - 1) * ps);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		*cropped_offset = (line_length * ps * crop->top) /
 			vr_ps + (crop->left * ps) / vr_ps +
 			((crop->width / vr_ps) - 1) * ps;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}

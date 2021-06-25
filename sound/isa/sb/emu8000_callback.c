@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  synth callback routines क्रम the emu8000 (AWE32/64)
+ *  synth callback routines for the emu8000 (AWE32/64)
  *
- *  Copyright (C) 1999 Steve Ratclअगरfe
+ *  Copyright (C) 1999 Steve Ratcliffe
  *  Copyright (C) 1999-2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश "emu8000_local.h"
-#समावेश <linux/export.h>
-#समावेश <sound/asoundef.h>
+#include "emu8000_local.h"
+#include <linux/export.h>
+#include <sound/asoundef.h>
 
 /*
  * prototypes
  */
-अटल काष्ठा snd_emux_voice *get_voice(काष्ठा snd_emux *emu,
-					काष्ठा snd_emux_port *port);
-अटल पूर्णांक start_voice(काष्ठा snd_emux_voice *vp);
-अटल व्योम trigger_voice(काष्ठा snd_emux_voice *vp);
-अटल व्योम release_voice(काष्ठा snd_emux_voice *vp);
-अटल व्योम update_voice(काष्ठा snd_emux_voice *vp, पूर्णांक update);
-अटल व्योम reset_voice(काष्ठा snd_emux *emu, पूर्णांक ch);
-अटल व्योम terminate_voice(काष्ठा snd_emux_voice *vp);
-अटल व्योम sysex(काष्ठा snd_emux *emu, अक्षर *buf, पूर्णांक len, पूर्णांक parsed,
-		  काष्ठा snd_midi_channel_set *chset);
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
-अटल पूर्णांक oss_ioctl(काष्ठा snd_emux *emu, पूर्णांक cmd, पूर्णांक p1, पूर्णांक p2);
-#पूर्ण_अगर
-अटल पूर्णांक load_fx(काष्ठा snd_emux *emu, पूर्णांक type, पूर्णांक mode,
-		   स्थिर व्योम __user *buf, दीर्घ len);
+static struct snd_emux_voice *get_voice(struct snd_emux *emu,
+					struct snd_emux_port *port);
+static int start_voice(struct snd_emux_voice *vp);
+static void trigger_voice(struct snd_emux_voice *vp);
+static void release_voice(struct snd_emux_voice *vp);
+static void update_voice(struct snd_emux_voice *vp, int update);
+static void reset_voice(struct snd_emux *emu, int ch);
+static void terminate_voice(struct snd_emux_voice *vp);
+static void sysex(struct snd_emux *emu, char *buf, int len, int parsed,
+		  struct snd_midi_channel_set *chset);
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+static int oss_ioctl(struct snd_emux *emu, int cmd, int p1, int p2);
+#endif
+static int load_fx(struct snd_emux *emu, int type, int mode,
+		   const void __user *buf, long len);
 
-अटल व्योम set_pitch(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_volume(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_pan(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_fmmod(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_tremfreq(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_fm2frq2(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम set_filterQ(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp);
-अटल व्योम snd_emu8000_tweak_voice(काष्ठा snd_emu8000 *emu, पूर्णांक ch);
-
-/*
- * Ensure a value is between two poपूर्णांकs
- * macro evaluates its args more than once, so changed to upper-हाल.
- */
-#घोषणा LIMITVALUE(x, a, b) करो अणु अगर ((x) < (a)) (x) = (a); अन्यथा अगर ((x) > (b)) (x) = (b); पूर्ण जबतक (0)
-#घोषणा LIMITMAX(x, a) करो अणुअगर ((x) > (a)) (x) = (a); पूर्ण जबतक (0)
-
+static void set_pitch(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_volume(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_pan(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_fmmod(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_tremfreq(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_fm2frq2(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void set_filterQ(struct snd_emu8000 *hw, struct snd_emux_voice *vp);
+static void snd_emu8000_tweak_voice(struct snd_emu8000 *emu, int ch);
 
 /*
- * set up चालकs
+ * Ensure a value is between two points
+ * macro evaluates its args more than once, so changed to upper-case.
  */
-अटल स्थिर काष्ठा snd_emux_चालकs emu8000_ops = अणु
+#define LIMITVALUE(x, a, b) do { if ((x) < (a)) (x) = (a); else if ((x) > (b)) (x) = (b); } while (0)
+#define LIMITMAX(x, a) do {if ((x) > (a)) (x) = (a); } while (0)
+
+
+/*
+ * set up operators
+ */
+static const struct snd_emux_operators emu8000_ops = {
 	.owner =	THIS_MODULE,
 	.get_voice =	get_voice,
 	.prepare =	start_voice,
@@ -60,172 +59,172 @@
 	.terminate =	terminate_voice,
 	.reset =	reset_voice,
 	.sample_new =	snd_emu8000_sample_new,
-	.sample_मुक्त =	snd_emu8000_sample_मुक्त,
+	.sample_free =	snd_emu8000_sample_free,
 	.sample_reset = snd_emu8000_sample_reset,
 	.load_fx =	load_fx,
 	.sysex =	sysex,
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
 	.oss_ioctl =	oss_ioctl,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-व्योम
-snd_emu8000_ops_setup(काष्ठा snd_emu8000 *hw)
-अणु
+void
+snd_emu8000_ops_setup(struct snd_emu8000 *hw)
+{
 	hw->emu->ops = emu8000_ops;
-पूर्ण
+}
 
 
 
 /*
  * Terminate a voice
  */
-अटल व्योम
-release_voice(काष्ठा snd_emux_voice *vp)
-अणु
-	पूर्णांक dcysusv;
-	काष्ठा snd_emu8000 *hw;
+static void
+release_voice(struct snd_emux_voice *vp)
+{
+	int dcysusv;
+	struct snd_emu8000 *hw;
 
 	hw = vp->hw;
-	dcysusv = 0x8000 | (अचिन्हित अक्षर)vp->reg.parm.modrelease;
+	dcysusv = 0x8000 | (unsigned char)vp->reg.parm.modrelease;
 	EMU8000_DCYSUS_WRITE(hw, vp->ch, dcysusv);
-	dcysusv = 0x8000 | (अचिन्हित अक्षर)vp->reg.parm.volrelease;
+	dcysusv = 0x8000 | (unsigned char)vp->reg.parm.volrelease;
 	EMU8000_DCYSUSV_WRITE(hw, vp->ch, dcysusv);
-पूर्ण
+}
 
 
 /*
  */
-अटल व्योम
-terminate_voice(काष्ठा snd_emux_voice *vp)
-अणु
-	काष्ठा snd_emu8000 *hw; 
+static void
+terminate_voice(struct snd_emux_voice *vp)
+{
+	struct snd_emu8000 *hw; 
 
 	hw = vp->hw;
 	EMU8000_DCYSUSV_WRITE(hw, vp->ch, 0x807F);
-पूर्ण
+}
 
 
 /*
  */
-अटल व्योम
-update_voice(काष्ठा snd_emux_voice *vp, पूर्णांक update)
-अणु
-	काष्ठा snd_emu8000 *hw;
+static void
+update_voice(struct snd_emux_voice *vp, int update)
+{
+	struct snd_emu8000 *hw;
 
 	hw = vp->hw;
-	अगर (update & SNDRV_EMUX_UPDATE_VOLUME)
+	if (update & SNDRV_EMUX_UPDATE_VOLUME)
 		set_volume(hw, vp);
-	अगर (update & SNDRV_EMUX_UPDATE_PITCH)
+	if (update & SNDRV_EMUX_UPDATE_PITCH)
 		set_pitch(hw, vp);
-	अगर ((update & SNDRV_EMUX_UPDATE_PAN) &&
+	if ((update & SNDRV_EMUX_UPDATE_PAN) &&
 	    vp->port->ctrls[EMUX_MD_REALTIME_PAN])
 		set_pan(hw, vp);
-	अगर (update & SNDRV_EMUX_UPDATE_FMMOD)
+	if (update & SNDRV_EMUX_UPDATE_FMMOD)
 		set_fmmod(hw, vp);
-	अगर (update & SNDRV_EMUX_UPDATE_TREMFREQ)
+	if (update & SNDRV_EMUX_UPDATE_TREMFREQ)
 		set_tremfreq(hw, vp);
-	अगर (update & SNDRV_EMUX_UPDATE_FM2FRQ2)
+	if (update & SNDRV_EMUX_UPDATE_FM2FRQ2)
 		set_fm2frq2(hw, vp);
-	अगर (update & SNDRV_EMUX_UPDATE_Q)
+	if (update & SNDRV_EMUX_UPDATE_Q)
 		set_filterQ(hw, vp);
-पूर्ण
+}
 
 
 /*
  * Find a channel (voice) within the EMU that is not in use or at least
- * less in use than other channels.  Always वापसs a valid poपूर्णांकer
- * no matter what.  If there is a real लघुage of voices then one
- * will be cut. Such is lअगरe.
+ * less in use than other channels.  Always returns a valid pointer
+ * no matter what.  If there is a real shortage of voices then one
+ * will be cut. Such is life.
  *
  * The channel index (vp->ch) must be initialized in this routine.
  * In Emu8k, it is identical with the array index.
  */
-अटल काष्ठा snd_emux_voice *
-get_voice(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port)
-अणु
-	पूर्णांक  i;
-	काष्ठा snd_emux_voice *vp;
-	काष्ठा snd_emu8000 *hw;
+static struct snd_emux_voice *
+get_voice(struct snd_emux *emu, struct snd_emux_port *port)
+{
+	int  i;
+	struct snd_emux_voice *vp;
+	struct snd_emu8000 *hw;
 
-	/* what we are looking क्रम, in order of preference */
-	क्रमागत अणु
+	/* what we are looking for, in order of preference */
+	enum {
 		OFF=0, RELEASED, PLAYING, END
-	पूर्ण;
+	};
 
 	/* Keeps track of what we are finding */
-	काष्ठा best अणु
-		अचिन्हित पूर्णांक  समय;
-		पूर्णांक voice;
-	पूर्ण best[END];
-	काष्ठा best *bp;
+	struct best {
+		unsigned int  time;
+		int voice;
+	} best[END];
+	struct best *bp;
 
 	hw = emu->hw;
 
-	क्रम (i = 0; i < END; i++) अणु
-		best[i].समय = (अचिन्हित पूर्णांक)(-1); /* XXX MAX_?INT really */
+	for (i = 0; i < END; i++) {
+		best[i].time = (unsigned int)(-1); /* XXX MAX_?INT really */
 		best[i].voice = -1;
-	पूर्ण
+	}
 
 	/*
 	 * Go through them all and get a best one to use.
 	 */
-	क्रम (i = 0; i < emu->max_voices; i++) अणु
-		पूर्णांक state, val;
+	for (i = 0; i < emu->max_voices; i++) {
+		int state, val;
 
 		vp = &emu->voices[i];
 		state = vp->state;
 
-		अगर (state == SNDRV_EMUX_ST_OFF)
+		if (state == SNDRV_EMUX_ST_OFF)
 			bp = best + OFF;
-		अन्यथा अगर (state == SNDRV_EMUX_ST_RELEASED ||
-			 state == SNDRV_EMUX_ST_PENDING) अणु
+		else if (state == SNDRV_EMUX_ST_RELEASED ||
+			 state == SNDRV_EMUX_ST_PENDING) {
 			bp = best + RELEASED;
 			val = (EMU8000_CVCF_READ(hw, vp->ch) >> 16) & 0xffff;
-			अगर (! val)
+			if (! val)
 				bp = best + OFF;
-		पूर्ण
-		अन्यथा अगर (state & SNDRV_EMUX_ST_ON)
+		}
+		else if (state & SNDRV_EMUX_ST_ON)
 			bp = best + PLAYING;
-		अन्यथा
-			जारी;
+		else
+			continue;
 
-		/* check अगर sample is finished playing (non-looping only) */
-		अगर (state != SNDRV_EMUX_ST_OFF &&
-		    (vp->reg.sample_mode & SNDRV_SFNT_SAMPLE_SINGLESHOT)) अणु
+		/* check if sample is finished playing (non-looping only) */
+		if (state != SNDRV_EMUX_ST_OFF &&
+		    (vp->reg.sample_mode & SNDRV_SFNT_SAMPLE_SINGLESHOT)) {
 			val = EMU8000_CCCA_READ(hw, vp->ch) & 0xffffff;
-			अगर (val >= vp->reg.loopstart)
+			if (val >= vp->reg.loopstart)
 				bp = best + OFF;
-		पूर्ण
+		}
 
-		अगर (vp->समय < bp->समय) अणु
-			bp->समय = vp->समय;
+		if (vp->time < bp->time) {
+			bp->time = vp->time;
 			bp->voice = i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < END; i++) अणु
-		अगर (best[i].voice >= 0) अणु
+	for (i = 0; i < END; i++) {
+		if (best[i].voice >= 0) {
 			vp = &emu->voices[best[i].voice];
 			vp->ch = best[i].voice;
-			वापस vp;
-		पूर्ण
-	पूर्ण
+			return vp;
+		}
+	}
 
 	/* not found */
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  */
-अटल पूर्णांक
-start_voice(काष्ठा snd_emux_voice *vp)
-अणु
-	अचिन्हित पूर्णांक temp;
-	पूर्णांक ch;
-	पूर्णांक addr;
-	काष्ठा snd_midi_channel *chan;
-	काष्ठा snd_emu8000 *hw;
+static int
+start_voice(struct snd_emux_voice *vp)
+{
+	unsigned int temp;
+	int ch;
+	int addr;
+	struct snd_midi_channel *chan;
+	struct snd_emu8000 *hw;
 
 	hw = vp->hw;
 	ch = vp->ch;
@@ -247,8 +246,8 @@ start_voice(काष्ठा snd_emux_voice *vp)
 	EMU8000_DCYSUS_WRITE(hw, ch, vp->reg.parm.moddcysus);
 	EMU8000_ENVVOL_WRITE(hw, ch, vp->reg.parm.voldelay);
 	EMU8000_ATKHLDV_WRITE(hw, ch, vp->reg.parm.volatkhld);
-	/* decay/sustain parameter क्रम volume envelope is used
-	   क्रम triggerg the voice */
+	/* decay/sustain parameter for volume envelope is used
+	   for triggerg the voice */
 
 	/* cutoff and volume */
 	set_volume(hw, vp);
@@ -260,7 +259,7 @@ start_voice(काष्ठा snd_emux_voice *vp)
 	EMU8000_LFO1VAL_WRITE(hw, ch, vp->reg.parm.lfo1delay);
 	EMU8000_LFO2VAL_WRITE(hw, ch, vp->reg.parm.lfo2delay);
 
-	/* lfo1 pitch & cutoff shअगरt */
+	/* lfo1 pitch & cutoff shift */
 	set_fmmod(hw, vp);
 	/* lfo1 volume & freq */
 	set_tremfreq(hw, vp);
@@ -270,20 +269,20 @@ start_voice(काष्ठा snd_emux_voice *vp)
 	set_pan(hw, vp);
 
 	/* chorus & loop end (chorus 8bit, MSB) */
-	addr = vp->reg.loखोलोd - 1;
+	addr = vp->reg.loopend - 1;
 	temp = vp->reg.parm.chorus;
-	temp += (पूर्णांक)chan->control[MIDI_CTL_E3_CHORUS_DEPTH] * 9 / 10;
+	temp += (int)chan->control[MIDI_CTL_E3_CHORUS_DEPTH] * 9 / 10;
 	LIMITMAX(temp, 255);
-	temp = (temp <<24) | (अचिन्हित पूर्णांक)addr;
+	temp = (temp <<24) | (unsigned int)addr;
 	EMU8000_CSL_WRITE(hw, ch, temp);
 
 	/* Q & current address (Q 4bit value, MSB) */
 	addr = vp->reg.start - 1;
 	temp = vp->reg.parm.filterQ;
-	temp = (temp<<28) | (अचिन्हित पूर्णांक)addr;
+	temp = (temp<<28) | (unsigned int)addr;
 	EMU8000_CCCA_WRITE(hw, ch, temp);
 
-	/* clear unknown रेजिस्टरs */
+	/* clear unknown registers */
 	EMU8000_00A0_WRITE(hw, ch, 0);
 	EMU8000_0080_WRITE(hw, ch, 0);
 
@@ -292,139 +291,139 @@ start_voice(काष्ठा snd_emux_voice *vp)
 	EMU8000_VTFT_WRITE(hw, ch, temp | vp->ftarget);
 	EMU8000_CVCF_WRITE(hw, ch, temp | 0xff00);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Start envelope
  */
-अटल व्योम
-trigger_voice(काष्ठा snd_emux_voice *vp)
-अणु
-	पूर्णांक ch = vp->ch;
-	अचिन्हित पूर्णांक temp;
-	काष्ठा snd_emu8000 *hw;
+static void
+trigger_voice(struct snd_emux_voice *vp)
+{
+	int ch = vp->ch;
+	unsigned int temp;
+	struct snd_emu8000 *hw;
 
 	hw = vp->hw;
 
 	/* set reverb and pitch target */
 	temp = vp->reg.parm.reverb;
-	temp += (पूर्णांक)vp->chan->control[MIDI_CTL_E1_REVERB_DEPTH] * 9 / 10;
+	temp += (int)vp->chan->control[MIDI_CTL_E1_REVERB_DEPTH] * 9 / 10;
 	LIMITMAX(temp, 255);
 	temp = (temp << 8) | (vp->ptarget << 16) | vp->aaux;
 	EMU8000_PTRX_WRITE(hw, ch, temp);
 	EMU8000_CPF_WRITE(hw, ch, vp->ptarget << 16);
 	EMU8000_DCYSUSV_WRITE(hw, ch, vp->reg.parm.voldcysus);
-पूर्ण
+}
 
 /*
  * reset voice parameters
  */
-अटल व्योम
-reset_voice(काष्ठा snd_emux *emu, पूर्णांक ch)
-अणु
-	काष्ठा snd_emu8000 *hw;
+static void
+reset_voice(struct snd_emux *emu, int ch)
+{
+	struct snd_emu8000 *hw;
 
 	hw = emu->hw;
 	EMU8000_DCYSUSV_WRITE(hw, ch, 0x807F);
 	snd_emu8000_tweak_voice(hw, ch);
-पूर्ण
+}
 
 /*
  * Set the pitch of a possibly playing note.
  */
-अटल व्योम
-set_pitch(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
+static void
+set_pitch(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
 	EMU8000_IP_WRITE(hw, vp->ch, vp->apitch);
-पूर्ण
+}
 
 /*
- * Set the volume of a possibly alपढ़ोy playing note
+ * Set the volume of a possibly already playing note
  */
-अटल व्योम
-set_volume(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
-	पूर्णांक  अगरatn;
+static void
+set_volume(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
+	int  ifatn;
 
-	अगरatn = (अचिन्हित अक्षर)vp->acutoff;
-	अगरatn = (अगरatn << 8);
-	अगरatn |= (अचिन्हित अक्षर)vp->avol;
-	EMU8000_IFATN_WRITE(hw, vp->ch, अगरatn);
-पूर्ण
+	ifatn = (unsigned char)vp->acutoff;
+	ifatn = (ifatn << 8);
+	ifatn |= (unsigned char)vp->avol;
+	EMU8000_IFATN_WRITE(hw, vp->ch, ifatn);
+}
 
 /*
  * Set pan and loop start address.
  */
-अटल व्योम
-set_pan(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
-	अचिन्हित पूर्णांक temp;
+static void
+set_pan(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
+	unsigned int temp;
 
-	temp = ((अचिन्हित पूर्णांक)vp->apan<<24) | ((अचिन्हित पूर्णांक)vp->reg.loopstart - 1);
+	temp = ((unsigned int)vp->apan<<24) | ((unsigned int)vp->reg.loopstart - 1);
 	EMU8000_PSST_WRITE(hw, vp->ch, temp);
-पूर्ण
+}
 
-#घोषणा MOD_SENSE 18
+#define MOD_SENSE 18
 
-अटल व्योम
-set_fmmod(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
-	अचिन्हित लघु fmmod;
-	लघु pitch;
-	अचिन्हित अक्षर cutoff;
-	पूर्णांक modulation;
+static void
+set_fmmod(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
+	unsigned short fmmod;
+	short pitch;
+	unsigned char cutoff;
+	int modulation;
 
-	pitch = (अक्षर)(vp->reg.parm.fmmod>>8);
+	pitch = (char)(vp->reg.parm.fmmod>>8);
 	cutoff = (vp->reg.parm.fmmod & 0xff);
 	modulation = vp->chan->gm_modulation + vp->chan->midi_pressure;
 	pitch += (MOD_SENSE * modulation) / 1200;
 	LIMITVALUE(pitch, -128, 127);
-	fmmod = ((अचिन्हित अक्षर)pitch<<8) | cutoff;
+	fmmod = ((unsigned char)pitch<<8) | cutoff;
 	EMU8000_FMMOD_WRITE(hw, vp->ch, fmmod);
-पूर्ण
+}
 
 /* set tremolo (lfo1) volume & frequency */
-अटल व्योम
-set_tremfreq(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
+static void
+set_tremfreq(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
 	EMU8000_TREMFRQ_WRITE(hw, vp->ch, vp->reg.parm.tremfrq);
-पूर्ण
+}
 
 /* set lfo2 pitch & frequency */
-अटल व्योम
-set_fm2frq2(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
-	अचिन्हित लघु fm2frq2;
-	लघु pitch;
-	अचिन्हित अक्षर freq;
-	पूर्णांक modulation;
+static void
+set_fm2frq2(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
+	unsigned short fm2frq2;
+	short pitch;
+	unsigned char freq;
+	int modulation;
 
-	pitch = (अक्षर)(vp->reg.parm.fm2frq2>>8);
+	pitch = (char)(vp->reg.parm.fm2frq2>>8);
 	freq = vp->reg.parm.fm2frq2 & 0xff;
 	modulation = vp->chan->gm_modulation + vp->chan->midi_pressure;
 	pitch += (MOD_SENSE * modulation) / 1200;
 	LIMITVALUE(pitch, -128, 127);
-	fm2frq2 = ((अचिन्हित अक्षर)pitch<<8) | freq;
+	fm2frq2 = ((unsigned char)pitch<<8) | freq;
 	EMU8000_FM2FRQ2_WRITE(hw, vp->ch, fm2frq2);
-पूर्ण
+}
 
 /* set filterQ */
-अटल व्योम
-set_filterQ(काष्ठा snd_emu8000 *hw, काष्ठा snd_emux_voice *vp)
-अणु
-	अचिन्हित पूर्णांक addr;
+static void
+set_filterQ(struct snd_emu8000 *hw, struct snd_emux_voice *vp)
+{
+	unsigned int addr;
 	addr = EMU8000_CCCA_READ(hw, vp->ch) & 0xffffff;
 	addr |= (vp->reg.parm.filterQ << 28);
 	EMU8000_CCCA_WRITE(hw, vp->ch, addr);
-पूर्ण
+}
 
 /*
- * set the envelope & LFO parameters to the शेष values
+ * set the envelope & LFO parameters to the default values
  */
-अटल व्योम
-snd_emu8000_tweak_voice(काष्ठा snd_emu8000 *emu, पूर्णांक i)
-अणु
+static void
+snd_emu8000_tweak_voice(struct snd_emu8000 *emu, int i)
+{
 	/* set all mod/vol envelope shape to minimum */
 	EMU8000_ENVVOL_WRITE(emu, i, 0x8000);
 	EMU8000_ENVVAL_WRITE(emu, i, 0x8000);
@@ -432,104 +431,104 @@ snd_emu8000_tweak_voice(काष्ठा snd_emu8000 *emu, पूर्णा�
 	EMU8000_ATKHLDV_WRITE(emu, i, 0x7F7F);
 	EMU8000_ATKHLD_WRITE(emu, i, 0x7F7F);
 	EMU8000_PEFE_WRITE(emu, i, 0);  /* mod envelope height to zero */
-	EMU8000_LFO1VAL_WRITE(emu, i, 0x8000); /* no delay क्रम LFO1 */
+	EMU8000_LFO1VAL_WRITE(emu, i, 0x8000); /* no delay for LFO1 */
 	EMU8000_LFO2VAL_WRITE(emu, i, 0x8000);
-	EMU8000_IP_WRITE(emu, i, 0xE000);	/* no pitch shअगरt */
+	EMU8000_IP_WRITE(emu, i, 0xE000);	/* no pitch shift */
 	EMU8000_IFATN_WRITE(emu, i, 0xFF00);	/* volume to minimum */
 	EMU8000_FMMOD_WRITE(emu, i, 0);
 	EMU8000_TREMFRQ_WRITE(emu, i, 0);
 	EMU8000_FM2FRQ2_WRITE(emu, i, 0);
-पूर्ण
+}
 
 /*
  * sysex callback
  */
-अटल व्योम
-sysex(काष्ठा snd_emux *emu, अक्षर *buf, पूर्णांक len, पूर्णांक parsed, काष्ठा snd_midi_channel_set *chset)
-अणु
-	काष्ठा snd_emu8000 *hw;
+static void
+sysex(struct snd_emux *emu, char *buf, int len, int parsed, struct snd_midi_channel_set *chset)
+{
+	struct snd_emu8000 *hw;
 
 	hw = emu->hw;
 
-	चयन (parsed) अणु
-	हाल SNDRV_MIDI_SYSEX_GS_CHORUS_MODE:
+	switch (parsed) {
+	case SNDRV_MIDI_SYSEX_GS_CHORUS_MODE:
 		hw->chorus_mode = chset->gs_chorus_mode;
 		snd_emu8000_update_chorus_mode(hw);
-		अवरोध;
+		break;
 
-	हाल SNDRV_MIDI_SYSEX_GS_REVERB_MODE:
+	case SNDRV_MIDI_SYSEX_GS_REVERB_MODE:
 		hw->reverb_mode = chset->gs_reverb_mode;
 		snd_emu8000_update_reverb_mode(hw);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 
-#अगर IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
+#if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
 /*
  * OSS ioctl callback
  */
-अटल पूर्णांक
-oss_ioctl(काष्ठा snd_emux *emu, पूर्णांक cmd, पूर्णांक p1, पूर्णांक p2)
-अणु
-	काष्ठा snd_emu8000 *hw;
+static int
+oss_ioctl(struct snd_emux *emu, int cmd, int p1, int p2)
+{
+	struct snd_emu8000 *hw;
 
 	hw = emu->hw;
 
-	चयन (cmd) अणु
-	हाल _EMUX_OSS_REVERB_MODE:
+	switch (cmd) {
+	case _EMUX_OSS_REVERB_MODE:
 		hw->reverb_mode = p1;
 		snd_emu8000_update_reverb_mode(hw);
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_CHORUS_MODE:
+	case _EMUX_OSS_CHORUS_MODE:
 		hw->chorus_mode = p1;
 		snd_emu8000_update_chorus_mode(hw);
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_INITIALIZE_CHIP:
+	case _EMUX_OSS_INITIALIZE_CHIP:
 		/* snd_emu8000_init(hw); */ /*ignored*/
-		अवरोध;
+		break;
 
-	हाल _EMUX_OSS_EQUALIZER:
+	case _EMUX_OSS_EQUALIZER:
 		hw->bass_level = p1;
 		hw->treble_level = p2;
 		snd_emu8000_update_equalizer(hw);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+		break;
+	}
+	return 0;
+}
+#endif
 
 
 /*
  * additional patch keys
  */
 
-#घोषणा SNDRV_EMU8000_LOAD_CHORUS_FX	0x10	/* optarg=mode */
-#घोषणा SNDRV_EMU8000_LOAD_REVERB_FX	0x11	/* optarg=mode */
+#define SNDRV_EMU8000_LOAD_CHORUS_FX	0x10	/* optarg=mode */
+#define SNDRV_EMU8000_LOAD_REVERB_FX	0x11	/* optarg=mode */
 
 
 /*
  * callback routine
  */
 
-अटल पूर्णांक
-load_fx(काष्ठा snd_emux *emu, पूर्णांक type, पूर्णांक mode, स्थिर व्योम __user *buf, दीर्घ len)
-अणु
-	काष्ठा snd_emu8000 *hw;
+static int
+load_fx(struct snd_emux *emu, int type, int mode, const void __user *buf, long len)
+{
+	struct snd_emu8000 *hw;
 	hw = emu->hw;
 
 	/* skip header */
 	buf += 16;
 	len -= 16;
 
-	चयन (type) अणु
-	हाल SNDRV_EMU8000_LOAD_CHORUS_FX:
-		वापस snd_emu8000_load_chorus_fx(hw, mode, buf, len);
-	हाल SNDRV_EMU8000_LOAD_REVERB_FX:
-		वापस snd_emu8000_load_reverb_fx(hw, mode, buf, len);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	switch (type) {
+	case SNDRV_EMU8000_LOAD_CHORUS_FX:
+		return snd_emu8000_load_chorus_fx(hw, mode, buf, len);
+	case SNDRV_EMU8000_LOAD_REVERB_FX:
+		return snd_emu8000_load_reverb_fx(hw, mode, buf, len);
+	}
+	return -EINVAL;
+}
 

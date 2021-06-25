@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /* Copyright 2019 NXP */
 
-#अगर_अघोषित CAAM_DEBUGFS_H
-#घोषणा CAAM_DEBUGFS_H
+#ifndef CAAM_DEBUGFS_H
+#define CAAM_DEBUGFS_H
 
-काष्ठा dentry;
-काष्ठा caam_drv_निजी;
+struct dentry;
+struct caam_drv_private;
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम caam_debugfs_init(काष्ठा caam_drv_निजी *ctrlpriv, काष्ठा dentry *root);
-#अन्यथा
-अटल अंतरभूत व्योम caam_debugfs_init(काष्ठा caam_drv_निजी *ctrlpriv,
-				     काष्ठा dentry *root)
-अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_FS
+void caam_debugfs_init(struct caam_drv_private *ctrlpriv, struct dentry *root);
+#else
+static inline void caam_debugfs_init(struct caam_drv_private *ctrlpriv,
+				     struct dentry *root)
+{}
+#endif
 
-#अगर defined(CONFIG_DEBUG_FS) && defined(CONFIG_CAAM_QI)
-व्योम caam_debugfs_qi_congested(व्योम);
-व्योम caam_debugfs_qi_init(काष्ठा caam_drv_निजी *ctrlpriv);
-#अन्यथा
-अटल अंतरभूत व्योम caam_debugfs_qi_congested(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम caam_debugfs_qi_init(काष्ठा caam_drv_निजी *ctrlpriv) अणुपूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_DEBUG_FS) && defined(CONFIG_CAAM_QI)
+void caam_debugfs_qi_congested(void);
+void caam_debugfs_qi_init(struct caam_drv_private *ctrlpriv);
+#else
+static inline void caam_debugfs_qi_congested(void) {}
+static inline void caam_debugfs_qi_init(struct caam_drv_private *ctrlpriv) {}
+#endif
 
-#पूर्ण_अगर /* CAAM_DEBUGFS_H */
+#endif /* CAAM_DEBUGFS_H */

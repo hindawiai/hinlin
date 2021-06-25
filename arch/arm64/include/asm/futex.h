@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_FUTEX_H
-#घोषणा __ASM_FUTEX_H
+#ifndef __ASM_FUTEX_H
+#define __ASM_FUTEX_H
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <asm/errno.h>
 
-#घोषणा FUTEX_MAX_LOOPS	128 /* What's the largest number you can think of? */
+#define FUTEX_MAX_LOOPS	128 /* What's the largest number you can think of? */
 
-#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, पंचांगp, oparg)		\
-करो अणु									\
-	अचिन्हित पूर्णांक loops = FUTEX_MAX_LOOPS;				\
+#define __futex_atomic_op(insn, ret, oldval, uaddr, tmp, oparg)		\
+do {									\
+	unsigned int loops = FUTEX_MAX_LOOPS;				\
 									\
 	uaccess_enable_privileged();					\
-	यंत्र अस्थिर(							\
+	asm volatile(							\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ldxr	%w1, %2\n"						\
 	insn "\n"							\
@@ -36,68 +35,68 @@
 "	.popsection\n"							\
 	_ASM_EXTABLE(1b, 4b)						\
 	_ASM_EXTABLE(2b, 4b)						\
-	: "=&r" (ret), "=&r" (oldval), "+Q" (*uaddr), "=&r" (पंचांगp),	\
+	: "=&r" (ret), "=&r" (oldval), "+Q" (*uaddr), "=&r" (tmp),	\
 	  "+r" (loops)							\
 	: "r" (oparg), "Ir" (-EFAULT), "Ir" (-EAGAIN)			\
 	: "memory");							\
 	uaccess_disable_privileged();					\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल अंतरभूत पूर्णांक
-arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *_uaddr)
-अणु
-	पूर्णांक oldval = 0, ret, पंचांगp;
+static inline int
+arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *_uaddr)
+{
+	int oldval = 0, ret, tmp;
 	u32 __user *uaddr = __uaccess_mask_ptr(_uaddr);
 
-	अगर (!access_ok(_uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(_uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_atomic_op("mov	%w3, %w5",
-				  ret, oldval, uaddr, पंचांगp, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+				  ret, oldval, uaddr, tmp, oparg);
+		break;
+	case FUTEX_OP_ADD:
 		__futex_atomic_op("add	%w3, %w1, %w5",
-				  ret, oldval, uaddr, पंचांगp, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+				  ret, oldval, uaddr, tmp, oparg);
+		break;
+	case FUTEX_OP_OR:
 		__futex_atomic_op("orr	%w3, %w1, %w5",
-				  ret, oldval, uaddr, पंचांगp, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+				  ret, oldval, uaddr, tmp, oparg);
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_atomic_op("and	%w3, %w1, %w5",
-				  ret, oldval, uaddr, पंचांगp, ~oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+				  ret, oldval, uaddr, tmp, ~oparg);
+		break;
+	case FUTEX_OP_XOR:
 		__futex_atomic_op("eor	%w3, %w1, %w5",
-				  ret, oldval, uaddr, पंचांगp, oparg);
-		अवरोध;
-	शेष:
+				  ret, oldval, uaddr, tmp, oparg);
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *_uaddr,
 			      u32 oldval, u32 newval)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक loops = FUTEX_MAX_LOOPS;
-	u32 val, पंचांगp;
+{
+	int ret = 0;
+	unsigned int loops = FUTEX_MAX_LOOPS;
+	u32 val, tmp;
 	u32 __user *uaddr;
 
-	अगर (!access_ok(_uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(_uaddr, sizeof(u32)))
+		return -EFAULT;
 
 	uaddr = __uaccess_mask_ptr(_uaddr);
 	uaccess_enable_privileged();
-	यंत्र अस्थिर("// futex_atomic_cmpxchg_inatomic\n"
+	asm volatile("// futex_atomic_cmpxchg_inatomic\n"
 "	prfm	pstl1strm, %2\n"
 "1:	ldxr	%w1, %2\n"
 "	sub	%w3, %w1, %w5\n"
@@ -116,15 +115,15 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *_uaddr,
 "	.popsection\n"
 	_ASM_EXTABLE(1b, 5b)
 	_ASM_EXTABLE(2b, 5b)
-	: "+r" (ret), "=&r" (val), "+Q" (*uaddr), "=&r" (पंचांगp), "+r" (loops)
+	: "+r" (ret), "=&r" (val), "+Q" (*uaddr), "=&r" (tmp), "+r" (loops)
 	: "r" (oldval), "r" (newval), "Ir" (-EFAULT), "Ir" (-EAGAIN)
 	: "memory");
 	uaccess_disable_privileged();
 
-	अगर (!ret)
+	if (!ret)
 		*uval = val;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* __ASM_FUTEX_H */
+#endif /* __ASM_FUTEX_H */

@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // MediaTek ALSA SoC Audio DAI I2S Control
 //
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/regmap.h>
-#समावेश <sound/pcm_params.h>
-#समावेश "mt8183-afe-clk.h"
-#समावेश "mt8183-afe-common.h"
-#समावेश "mt8183-interconnection.h"
-#समावेश "mt8183-reg.h"
+#include <linux/bitops.h>
+#include <linux/regmap.h>
+#include <sound/pcm_params.h>
+#include "mt8183-afe-clk.h"
+#include "mt8183-afe-common.h"
+#include "mt8183-interconnection.h"
+#include "mt8183-reg.h"
 
-क्रमागत अणु
+enum {
 	I2S_FMT_EIAJ = 0,
 	I2S_FMT_I2S = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	I2S_WLEN_16_BIT = 0,
 	I2S_WLEN_32_BIT = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	I2S_HD_NORMAL = 0,
 	I2S_HD_LOW_JITTER = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	I2S1_SEL_O28_O29 = 0,
 	I2S1_SEL_O03_O04 = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	I2S_IN_PAD_CONNSYS = 0,
 	I2S_IN_PAD_IO_MUX = 1,
-पूर्ण;
+};
 
-काष्ठा mtk_afe_i2s_priv अणु
-	पूर्णांक id;
-	पूर्णांक rate; /* क्रम determine which apll to use */
-	पूर्णांक low_jitter_en;
+struct mtk_afe_i2s_priv {
+	int id;
+	int rate; /* for determine which apll to use */
+	int low_jitter_en;
 
-	स्थिर अक्षर *share_property_name;
-	पूर्णांक share_i2s_id;
+	const char *share_property_name;
+	int share_i2s_id;
 
-	पूर्णांक mclk_id;
-	पूर्णांक mclk_rate;
-	पूर्णांक mclk_apll;
+	int mclk_id;
+	int mclk_rate;
+	int mclk_apll;
 
-	पूर्णांक use_eiaj;
-पूर्ण;
+	int use_eiaj;
+};
 
-अटल अचिन्हित पूर्णांक get_i2s_wlen(snd_pcm_क्रमmat_t क्रमmat)
-अणु
-	वापस snd_pcm_क्रमmat_physical_width(क्रमmat) <= 16 ?
+static unsigned int get_i2s_wlen(snd_pcm_format_t format)
+{
+	return snd_pcm_format_physical_width(format) <= 16 ?
 	       I2S_WLEN_16_BIT : I2S_WLEN_32_BIT;
-पूर्ण
+}
 
-#घोषणा MTK_AFE_I2S0_KCONTROL_NAME "I2S0_HD_Mux"
-#घोषणा MTK_AFE_I2S1_KCONTROL_NAME "I2S1_HD_Mux"
-#घोषणा MTK_AFE_I2S2_KCONTROL_NAME "I2S2_HD_Mux"
-#घोषणा MTK_AFE_I2S3_KCONTROL_NAME "I2S3_HD_Mux"
-#घोषणा MTK_AFE_I2S5_KCONTROL_NAME "I2S5_HD_Mux"
+#define MTK_AFE_I2S0_KCONTROL_NAME "I2S0_HD_Mux"
+#define MTK_AFE_I2S1_KCONTROL_NAME "I2S1_HD_Mux"
+#define MTK_AFE_I2S2_KCONTROL_NAME "I2S2_HD_Mux"
+#define MTK_AFE_I2S3_KCONTROL_NAME "I2S3_HD_Mux"
+#define MTK_AFE_I2S5_KCONTROL_NAME "I2S5_HD_Mux"
 
-#घोषणा I2S0_HD_EN_W_NAME "I2S0_HD_EN"
-#घोषणा I2S1_HD_EN_W_NAME "I2S1_HD_EN"
-#घोषणा I2S2_HD_EN_W_NAME "I2S2_HD_EN"
-#घोषणा I2S3_HD_EN_W_NAME "I2S3_HD_EN"
-#घोषणा I2S5_HD_EN_W_NAME "I2S5_HD_EN"
+#define I2S0_HD_EN_W_NAME "I2S0_HD_EN"
+#define I2S1_HD_EN_W_NAME "I2S1_HD_EN"
+#define I2S2_HD_EN_W_NAME "I2S2_HD_EN"
+#define I2S3_HD_EN_W_NAME "I2S3_HD_EN"
+#define I2S5_HD_EN_W_NAME "I2S5_HD_EN"
 
-#घोषणा I2S0_MCLK_EN_W_NAME "I2S0_MCLK_EN"
-#घोषणा I2S1_MCLK_EN_W_NAME "I2S1_MCLK_EN"
-#घोषणा I2S2_MCLK_EN_W_NAME "I2S2_MCLK_EN"
-#घोषणा I2S3_MCLK_EN_W_NAME "I2S3_MCLK_EN"
-#घोषणा I2S5_MCLK_EN_W_NAME "I2S5_MCLK_EN"
+#define I2S0_MCLK_EN_W_NAME "I2S0_MCLK_EN"
+#define I2S1_MCLK_EN_W_NAME "I2S1_MCLK_EN"
+#define I2S2_MCLK_EN_W_NAME "I2S2_MCLK_EN"
+#define I2S3_MCLK_EN_W_NAME "I2S3_MCLK_EN"
+#define I2S5_MCLK_EN_W_NAME "I2S5_MCLK_EN"
 
-अटल पूर्णांक get_i2s_id_by_name(काष्ठा mtk_base_afe *afe,
-			      स्थिर अक्षर *name)
-अणु
-	अगर (म_भेदन(name, "I2S0", 4) == 0)
-		वापस MT8183_DAI_I2S_0;
-	अन्यथा अगर (म_भेदन(name, "I2S1", 4) == 0)
-		वापस MT8183_DAI_I2S_1;
-	अन्यथा अगर (म_भेदन(name, "I2S2", 4) == 0)
-		वापस MT8183_DAI_I2S_2;
-	अन्यथा अगर (म_भेदन(name, "I2S3", 4) == 0)
-		वापस MT8183_DAI_I2S_3;
-	अन्यथा अगर (म_भेदन(name, "I2S5", 4) == 0)
-		वापस MT8183_DAI_I2S_5;
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static int get_i2s_id_by_name(struct mtk_base_afe *afe,
+			      const char *name)
+{
+	if (strncmp(name, "I2S0", 4) == 0)
+		return MT8183_DAI_I2S_0;
+	else if (strncmp(name, "I2S1", 4) == 0)
+		return MT8183_DAI_I2S_1;
+	else if (strncmp(name, "I2S2", 4) == 0)
+		return MT8183_DAI_I2S_2;
+	else if (strncmp(name, "I2S3", 4) == 0)
+		return MT8183_DAI_I2S_3;
+	else if (strncmp(name, "I2S5", 4) == 0)
+		return MT8183_DAI_I2S_5;
+	else
+		return -EINVAL;
+}
 
-अटल काष्ठा mtk_afe_i2s_priv *get_i2s_priv_by_name(काष्ठा mtk_base_afe *afe,
-						     स्थिर अक्षर *name)
-अणु
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	पूर्णांक dai_id = get_i2s_id_by_name(afe, name);
+static struct mtk_afe_i2s_priv *get_i2s_priv_by_name(struct mtk_base_afe *afe,
+						     const char *name)
+{
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	int dai_id = get_i2s_id_by_name(afe, name);
 
-	अगर (dai_id < 0)
-		वापस शून्य;
+	if (dai_id < 0)
+		return NULL;
 
-	वापस afe_priv->dai_priv[dai_id];
-पूर्ण
+	return afe_priv->dai_priv[dai_id];
+}
 
 /* low jitter control */
-अटल स्थिर अक्षर * स्थिर mt8183_i2s_hd_str[] = अणु
+static const char * const mt8183_i2s_hd_str[] = {
 	"Normal", "Low_Jitter"
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा soc_क्रमागत mt8183_i2s_क्रमागत[] = अणु
+static const struct soc_enum mt8183_i2s_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(mt8183_i2s_hd_str),
 			    mt8183_i2s_hd_str),
-पूर्ण;
+};
 
-अटल पूर्णांक mt8183_i2s_hd_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
+static int mt8183_i2s_hd_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
 
 	i2s_priv = get_i2s_priv_by_name(afe, kcontrol->id.name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ucontrol->value.पूर्णांकeger.value[0] = i2s_priv->low_jitter_en;
+	ucontrol->value.integer.value[0] = i2s_priv->low_jitter_en;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt8183_i2s_hd_set(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	पूर्णांक hd_en;
+static int mt8183_i2s_hd_set(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *cmpnt = snd_soc_kcontrol_component(kcontrol);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	int hd_en;
 
-	अगर (ucontrol->value.क्रमागतerated.item[0] >= e->items)
-		वापस -EINVAL;
+	if (ucontrol->value.enumerated.item[0] >= e->items)
+		return -EINVAL;
 
-	hd_en = ucontrol->value.पूर्णांकeger.value[0];
+	hd_en = ucontrol->value.integer.value[0];
 
 	dev_info(afe->dev, "%s(), kcontrol name %s, hd_en %d\n",
 		 __func__, kcontrol->id.name, hd_en);
 
 	i2s_priv = get_i2s_priv_by_name(afe, kcontrol->id.name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i2s_priv->low_jitter_en = hd_en;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_dai_i2s_controls[] = अणु
-	SOC_ENUM_EXT(MTK_AFE_I2S0_KCONTROL_NAME, mt8183_i2s_क्रमागत[0],
+static const struct snd_kcontrol_new mtk_dai_i2s_controls[] = {
+	SOC_ENUM_EXT(MTK_AFE_I2S0_KCONTROL_NAME, mt8183_i2s_enum[0],
 		     mt8183_i2s_hd_get, mt8183_i2s_hd_set),
-	SOC_ENUM_EXT(MTK_AFE_I2S1_KCONTROL_NAME, mt8183_i2s_क्रमागत[0],
+	SOC_ENUM_EXT(MTK_AFE_I2S1_KCONTROL_NAME, mt8183_i2s_enum[0],
 		     mt8183_i2s_hd_get, mt8183_i2s_hd_set),
-	SOC_ENUM_EXT(MTK_AFE_I2S2_KCONTROL_NAME, mt8183_i2s_क्रमागत[0],
+	SOC_ENUM_EXT(MTK_AFE_I2S2_KCONTROL_NAME, mt8183_i2s_enum[0],
 		     mt8183_i2s_hd_get, mt8183_i2s_hd_set),
-	SOC_ENUM_EXT(MTK_AFE_I2S3_KCONTROL_NAME, mt8183_i2s_क्रमागत[0],
+	SOC_ENUM_EXT(MTK_AFE_I2S3_KCONTROL_NAME, mt8183_i2s_enum[0],
 		     mt8183_i2s_hd_get, mt8183_i2s_hd_set),
-	SOC_ENUM_EXT(MTK_AFE_I2S5_KCONTROL_NAME, mt8183_i2s_क्रमागत[0],
+	SOC_ENUM_EXT(MTK_AFE_I2S5_KCONTROL_NAME, mt8183_i2s_enum[0],
 		     mt8183_i2s_hd_get, mt8183_i2s_hd_set),
-पूर्ण;
+};
 
 /* dai component */
-/* पूर्णांकerconnection */
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s3_ch1_mix[] = अणु
+/* interconnection */
+static const struct snd_kcontrol_new mtk_i2s3_ch1_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH1", AFE_CONN0, I_DL1_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH1", AFE_CONN0, I_DL2_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH1", AFE_CONN0, I_DL3_CH1, 1, 0),
@@ -190,9 +189,9 @@
 				    I_PCM_1_CAP_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH1", AFE_CONN0,
 				    I_PCM_2_CAP_CH1, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s3_ch2_mix[] = अणु
+static const struct snd_kcontrol_new mtk_i2s3_ch2_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH2", AFE_CONN1, I_DL1_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH2", AFE_CONN1, I_DL2_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH2", AFE_CONN1, I_DL3_CH2, 1, 0),
@@ -206,9 +205,9 @@
 				    I_PCM_1_CAP_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH2", AFE_CONN1,
 				    I_PCM_2_CAP_CH2, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s1_ch1_mix[] = अणु
+static const struct snd_kcontrol_new mtk_i2s1_ch1_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH1", AFE_CONN28, I_DL1_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH1", AFE_CONN28, I_DL2_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH1", AFE_CONN28, I_DL3_CH1, 1, 0),
@@ -218,9 +217,9 @@
 				    I_PCM_1_CAP_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH1", AFE_CONN28,
 				    I_PCM_2_CAP_CH1, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s1_ch2_mix[] = अणु
+static const struct snd_kcontrol_new mtk_i2s1_ch2_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH2", AFE_CONN29, I_DL1_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH2", AFE_CONN29, I_DL2_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH2", AFE_CONN29, I_DL3_CH2, 1, 0),
@@ -234,9 +233,9 @@
 				    I_PCM_1_CAP_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH2", AFE_CONN29,
 				    I_PCM_2_CAP_CH2, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s5_ch1_mix[] = अणु
+static const struct snd_kcontrol_new mtk_i2s5_ch1_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH1", AFE_CONN30, I_DL1_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH1", AFE_CONN30, I_DL2_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH1", AFE_CONN30, I_DL3_CH1, 1, 0),
@@ -246,9 +245,9 @@
 				    I_PCM_1_CAP_CH1, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH1", AFE_CONN30,
 				    I_PCM_2_CAP_CH1, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mtk_i2s5_ch2_mix[] = अणु
+static const struct snd_kcontrol_new mtk_i2s5_ch2_mix[] = {
 	SOC_DAPM_SINGLE_AUTODISABLE("DL1_CH2", AFE_CONN31, I_DL1_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL2_CH2", AFE_CONN31, I_DL2_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("DL3_CH2", AFE_CONN31, I_DL3_CH2, 1, 0),
@@ -262,79 +261,79 @@
 				    I_PCM_1_CAP_CH2, 1, 0),
 	SOC_DAPM_SINGLE_AUTODISABLE("PCM_2_CAP_CH2", AFE_CONN31,
 				    I_PCM_2_CAP_CH2, 1, 0),
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	SUPPLY_SEQ_APLL,
 	SUPPLY_SEQ_I2S_MCLK_EN,
 	SUPPLY_SEQ_I2S_HD_EN,
 	SUPPLY_SEQ_I2S_EN,
-पूर्ण;
+};
 
-अटल पूर्णांक mtk_apll_event(काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा snd_kcontrol *kcontrol,
-			  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+static int mtk_apll_event(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol,
+			  int event)
+{
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
 
 	dev_info(cmpnt->dev, "%s(), name %s, event 0x%x\n",
 		 __func__, w->name, event);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		अगर (म_भेद(w->name, APLL1_W_NAME) == 0)
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (strcmp(w->name, APLL1_W_NAME) == 0)
 			mt8183_apll1_enable(afe);
-		अन्यथा
+		else
 			mt8183_apll2_enable(afe);
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
-		अगर (म_भेद(w->name, APLL1_W_NAME) == 0)
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		if (strcmp(w->name, APLL1_W_NAME) == 0)
 			mt8183_apll1_disable(afe);
-		अन्यथा
+		else
 			mt8183_apll2_disable(afe);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_mclk_en_event(काष्ठा snd_soc_dapm_widget *w,
-			     काष्ठा snd_kcontrol *kcontrol,
-			     पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
+static int mtk_mclk_en_event(struct snd_soc_dapm_widget *w,
+			     struct snd_kcontrol *kcontrol,
+			     int event)
+{
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
 
 	dev_info(cmpnt->dev, "%s(), name %s, event 0x%x\n",
 		 __func__, w->name, event);
 
 	i2s_priv = get_i2s_priv_by_name(afe, w->name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
 		mt8183_mck_enable(afe, i2s_priv->mclk_id, i2s_priv->mclk_rate);
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
+		break;
+	case SND_SOC_DAPM_POST_PMD:
 		i2s_priv->mclk_rate = 0;
 		mt8183_mck_disable(afe, i2s_priv->mclk_id);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget mtk_dai_i2s_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget mtk_dai_i2s_widgets[] = {
 	SND_SOC_DAPM_MIXER("I2S1_CH1", SND_SOC_NOPM, 0, 0,
 			   mtk_i2s1_ch1_mix,
 			   ARRAY_SIZE(mtk_i2s1_ch1_mix)),
@@ -359,35 +358,35 @@
 	/* i2s en*/
 	SND_SOC_DAPM_SUPPLY_S("I2S0_EN", SUPPLY_SEQ_I2S_EN,
 			      AFE_I2S_CON, I2S_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S("I2S1_EN", SUPPLY_SEQ_I2S_EN,
 			      AFE_I2S_CON1, I2S_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S("I2S2_EN", SUPPLY_SEQ_I2S_EN,
 			      AFE_I2S_CON2, I2S_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S("I2S3_EN", SUPPLY_SEQ_I2S_EN,
 			      AFE_I2S_CON3, I2S_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S("I2S5_EN", SUPPLY_SEQ_I2S_EN,
 			      AFE_I2S_CON4, I2S5_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	/* i2s hd en */
 	SND_SOC_DAPM_SUPPLY_S(I2S0_HD_EN_W_NAME, SUPPLY_SEQ_I2S_HD_EN,
 			      AFE_I2S_CON, I2S1_HD_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S(I2S1_HD_EN_W_NAME, SUPPLY_SEQ_I2S_HD_EN,
 			      AFE_I2S_CON1, I2S2_HD_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S(I2S2_HD_EN_W_NAME, SUPPLY_SEQ_I2S_HD_EN,
 			      AFE_I2S_CON2, I2S3_HD_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S(I2S3_HD_EN_W_NAME, SUPPLY_SEQ_I2S_HD_EN,
 			      AFE_I2S_CON3, I2S4_HD_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 	SND_SOC_DAPM_SUPPLY_S(I2S5_HD_EN_W_NAME, SUPPLY_SEQ_I2S_HD_EN,
 			      AFE_I2S_CON4, I2S5_HD_EN_SFT, 0,
-			      शून्य, 0),
+			      NULL, 0),
 
 	/* i2s mclk en */
 	SND_SOC_DAPM_SUPPLY_S(I2S0_MCLK_EN_W_NAME, SUPPLY_SEQ_I2S_MCLK_EN,
@@ -420,74 +419,74 @@
 			      SND_SOC_NOPM, 0, 0,
 			      mtk_apll_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-पूर्ण;
+};
 
-अटल पूर्णांक mtk_afe_i2s_share_connect(काष्ठा snd_soc_dapm_widget *source,
-				     काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_dapm_widget *w = sink;
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-
-	i2s_priv = get_i2s_priv_by_name(afe, sink->name);
-
-	अगर (!i2s_priv) अणु
-		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस 0;
-	पूर्ण
-
-	अगर (i2s_priv->share_i2s_id < 0)
-		वापस 0;
-
-	वापस i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name);
-पूर्ण
-
-अटल पूर्णांक mtk_afe_i2s_hd_connect(काष्ठा snd_soc_dapm_widget *source,
-				  काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_dapm_widget *w = sink;
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
+static int mtk_afe_i2s_share_connect(struct snd_soc_dapm_widget *source,
+				     struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_dapm_widget *w = sink;
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
 
 	i2s_priv = get_i2s_priv_by_name(afe, sink->name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (get_i2s_id_by_name(afe, sink->name) ==
+	if (i2s_priv->share_i2s_id < 0)
+		return 0;
+
+	return i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name);
+}
+
+static int mtk_afe_i2s_hd_connect(struct snd_soc_dapm_widget *source,
+				  struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_dapm_widget *w = sink;
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
+
+	i2s_priv = get_i2s_priv_by_name(afe, sink->name);
+
+	if (!i2s_priv) {
+		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
+		return 0;
+	}
+
+	if (get_i2s_id_by_name(afe, sink->name) ==
 	    get_i2s_id_by_name(afe, source->name))
-		वापस i2s_priv->low_jitter_en;
+		return i2s_priv->low_jitter_en;
 
-	/* check अगर share i2s need hd en */
-	अगर (i2s_priv->share_i2s_id < 0)
-		वापस 0;
+	/* check if share i2s need hd en */
+	if (i2s_priv->share_i2s_id < 0)
+		return 0;
 
-	अगर (i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name))
-		वापस i2s_priv->low_jitter_en;
+	if (i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name))
+		return i2s_priv->low_jitter_en;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_afe_i2s_apll_connect(काष्ठा snd_soc_dapm_widget *source,
-				    काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_dapm_widget *w = sink;
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-	पूर्णांक cur_apll;
-	पूर्णांक i2s_need_apll;
+static int mtk_afe_i2s_apll_connect(struct snd_soc_dapm_widget *source,
+				    struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_dapm_widget *w = sink;
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
+	int cur_apll;
+	int i2s_need_apll;
 
 	i2s_priv = get_i2s_priv_by_name(afe, w->name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* which apll */
 	cur_apll = mt8183_get_apll_by_name(afe, source->name);
@@ -495,568 +494,568 @@
 	/* choose APLL from i2s rate */
 	i2s_need_apll = mt8183_get_apll_by_rate(afe, i2s_priv->rate);
 
-	वापस (i2s_need_apll == cur_apll) ? 1 : 0;
-पूर्ण
+	return (i2s_need_apll == cur_apll) ? 1 : 0;
+}
 
-अटल पूर्णांक mtk_afe_i2s_mclk_connect(काष्ठा snd_soc_dapm_widget *source,
-				    काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_dapm_widget *w = sink;
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
+static int mtk_afe_i2s_mclk_connect(struct snd_soc_dapm_widget *source,
+				    struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_dapm_widget *w = sink;
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
 
 	i2s_priv = get_i2s_priv_by_name(afe, sink->name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (get_i2s_id_by_name(afe, sink->name) ==
+	if (get_i2s_id_by_name(afe, sink->name) ==
 	    get_i2s_id_by_name(afe, source->name))
-		वापस (i2s_priv->mclk_rate > 0) ? 1 : 0;
+		return (i2s_priv->mclk_rate > 0) ? 1 : 0;
 
-	/* check अगर share i2s need mclk */
-	अगर (i2s_priv->share_i2s_id < 0)
-		वापस 0;
+	/* check if share i2s need mclk */
+	if (i2s_priv->share_i2s_id < 0)
+		return 0;
 
-	अगर (i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name))
-		वापस (i2s_priv->mclk_rate > 0) ? 1 : 0;
+	if (i2s_priv->share_i2s_id == get_i2s_id_by_name(afe, source->name))
+		return (i2s_priv->mclk_rate > 0) ? 1 : 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_afe_mclk_apll_connect(काष्ठा snd_soc_dapm_widget *source,
-				     काष्ठा snd_soc_dapm_widget *sink)
-अणु
-	काष्ठा snd_soc_dapm_widget *w = sink;
-	काष्ठा snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-	पूर्णांक cur_apll;
+static int mtk_afe_mclk_apll_connect(struct snd_soc_dapm_widget *source,
+				     struct snd_soc_dapm_widget *sink)
+{
+	struct snd_soc_dapm_widget *w = sink;
+	struct snd_soc_component *cmpnt = snd_soc_dapm_to_component(w->dapm);
+	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(cmpnt);
+	struct mtk_afe_i2s_priv *i2s_priv;
+	int cur_apll;
 
 	i2s_priv = get_i2s_priv_by_name(afe, w->name);
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* which apll */
 	cur_apll = mt8183_get_apll_by_name(afe, source->name);
 
-	वापस (i2s_priv->mclk_apll == cur_apll) ? 1 : 0;
-पूर्ण
+	return (i2s_priv->mclk_apll == cur_apll) ? 1 : 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_route mtk_dai_i2s_routes[] = अणु
+static const struct snd_soc_dapm_route mtk_dai_i2s_routes[] = {
 	/* i2s0 */
-	अणु"I2S0", शून्य, "I2S0_EN"पूर्ण,
-	अणु"I2S0", शून्य, "I2S1_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S0", शून्य, "I2S2_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S0", शून्य, "I2S3_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S0", शून्य, "I2S5_EN", mtk_afe_i2s_share_connectपूर्ण,
+	{"I2S0", NULL, "I2S0_EN"},
+	{"I2S0", NULL, "I2S1_EN", mtk_afe_i2s_share_connect},
+	{"I2S0", NULL, "I2S2_EN", mtk_afe_i2s_share_connect},
+	{"I2S0", NULL, "I2S3_EN", mtk_afe_i2s_share_connect},
+	{"I2S0", NULL, "I2S5_EN", mtk_afe_i2s_share_connect},
 
-	अणु"I2S0", शून्य, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणुI2S0_HD_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
-	अणुI2S0_HD_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
+	{"I2S0", NULL, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S0", NULL, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S0", NULL, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S0", NULL, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S0", NULL, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{I2S0_HD_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_i2s_apll_connect},
+	{I2S0_HD_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_i2s_apll_connect},
 
-	अणु"I2S0", शून्य, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S0", शून्य, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणुI2S0_MCLK_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-	अणुI2S0_MCLK_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
+	{"I2S0", NULL, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S0", NULL, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S0", NULL, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S0", NULL, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S0", NULL, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{I2S0_MCLK_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_mclk_apll_connect},
+	{I2S0_MCLK_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_mclk_apll_connect},
 
 	/* i2s1 */
-	अणु"I2S1_CH1", "DL1_CH1", "DL1"पूर्ण,
-	अणु"I2S1_CH2", "DL1_CH2", "DL1"पूर्ण,
+	{"I2S1_CH1", "DL1_CH1", "DL1"},
+	{"I2S1_CH2", "DL1_CH2", "DL1"},
 
-	अणु"I2S1_CH1", "DL2_CH1", "DL2"पूर्ण,
-	अणु"I2S1_CH2", "DL2_CH2", "DL2"पूर्ण,
+	{"I2S1_CH1", "DL2_CH1", "DL2"},
+	{"I2S1_CH2", "DL2_CH2", "DL2"},
 
-	अणु"I2S1_CH1", "DL3_CH1", "DL3"पूर्ण,
-	अणु"I2S1_CH2", "DL3_CH2", "DL3"पूर्ण,
+	{"I2S1_CH1", "DL3_CH1", "DL3"},
+	{"I2S1_CH2", "DL3_CH2", "DL3"},
 
-	अणु"I2S1", शून्य, "I2S1_CH1"पूर्ण,
-	अणु"I2S1", शून्य, "I2S1_CH2"पूर्ण,
+	{"I2S1", NULL, "I2S1_CH1"},
+	{"I2S1", NULL, "I2S1_CH2"},
 
-	अणु"I2S1", शून्य, "I2S0_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S1", शून्य, "I2S1_EN"पूर्ण,
-	अणु"I2S1", शून्य, "I2S2_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S1", शून्य, "I2S3_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S1", शून्य, "I2S5_EN", mtk_afe_i2s_share_connectपूर्ण,
+	{"I2S1", NULL, "I2S0_EN", mtk_afe_i2s_share_connect},
+	{"I2S1", NULL, "I2S1_EN"},
+	{"I2S1", NULL, "I2S2_EN", mtk_afe_i2s_share_connect},
+	{"I2S1", NULL, "I2S3_EN", mtk_afe_i2s_share_connect},
+	{"I2S1", NULL, "I2S5_EN", mtk_afe_i2s_share_connect},
 
-	अणु"I2S1", शून्य, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणुI2S1_HD_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
-	अणुI2S1_HD_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
+	{"I2S1", NULL, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S1", NULL, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S1", NULL, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S1", NULL, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S1", NULL, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{I2S1_HD_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_i2s_apll_connect},
+	{I2S1_HD_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_i2s_apll_connect},
 
-	अणु"I2S1", शून्य, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S1", शून्य, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणुI2S1_MCLK_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-	अणुI2S1_MCLK_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
+	{"I2S1", NULL, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S1", NULL, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S1", NULL, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S1", NULL, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S1", NULL, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{I2S1_MCLK_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_mclk_apll_connect},
+	{I2S1_MCLK_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_mclk_apll_connect},
 
 	/* i2s2 */
-	अणु"I2S2", शून्य, "I2S0_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S2", शून्य, "I2S1_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S2", शून्य, "I2S2_EN"पूर्ण,
-	अणु"I2S2", शून्य, "I2S3_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S2", शून्य, "I2S5_EN", mtk_afe_i2s_share_connectपूर्ण,
+	{"I2S2", NULL, "I2S0_EN", mtk_afe_i2s_share_connect},
+	{"I2S2", NULL, "I2S1_EN", mtk_afe_i2s_share_connect},
+	{"I2S2", NULL, "I2S2_EN"},
+	{"I2S2", NULL, "I2S3_EN", mtk_afe_i2s_share_connect},
+	{"I2S2", NULL, "I2S5_EN", mtk_afe_i2s_share_connect},
 
-	अणु"I2S2", शून्य, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणुI2S2_HD_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
-	अणुI2S2_HD_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
+	{"I2S2", NULL, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S2", NULL, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S2", NULL, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S2", NULL, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S2", NULL, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{I2S2_HD_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_i2s_apll_connect},
+	{I2S2_HD_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_i2s_apll_connect},
 
-	अणु"I2S2", शून्य, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S2", शून्य, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणुI2S2_MCLK_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-	अणुI2S2_MCLK_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
+	{"I2S2", NULL, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S2", NULL, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S2", NULL, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S2", NULL, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S2", NULL, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{I2S2_MCLK_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_mclk_apll_connect},
+	{I2S2_MCLK_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_mclk_apll_connect},
 
 	/* i2s3 */
-	अणु"I2S3_CH1", "DL1_CH1", "DL1"पूर्ण,
-	अणु"I2S3_CH2", "DL1_CH2", "DL1"पूर्ण,
+	{"I2S3_CH1", "DL1_CH1", "DL1"},
+	{"I2S3_CH2", "DL1_CH2", "DL1"},
 
-	अणु"I2S3_CH1", "DL2_CH1", "DL2"पूर्ण,
-	अणु"I2S3_CH2", "DL2_CH2", "DL2"पूर्ण,
+	{"I2S3_CH1", "DL2_CH1", "DL2"},
+	{"I2S3_CH2", "DL2_CH2", "DL2"},
 
-	अणु"I2S3_CH1", "DL3_CH1", "DL3"पूर्ण,
-	अणु"I2S3_CH2", "DL3_CH2", "DL3"पूर्ण,
+	{"I2S3_CH1", "DL3_CH1", "DL3"},
+	{"I2S3_CH2", "DL3_CH2", "DL3"},
 
-	अणु"I2S3", शून्य, "I2S3_CH1"पूर्ण,
-	अणु"I2S3", शून्य, "I2S3_CH2"पूर्ण,
+	{"I2S3", NULL, "I2S3_CH1"},
+	{"I2S3", NULL, "I2S3_CH2"},
 
-	अणु"I2S3", शून्य, "I2S0_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S3", शून्य, "I2S1_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S3", शून्य, "I2S2_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S3", शून्य, "I2S3_EN"पूर्ण,
-	अणु"I2S3", शून्य, "I2S5_EN", mtk_afe_i2s_share_connectपूर्ण,
+	{"I2S3", NULL, "I2S0_EN", mtk_afe_i2s_share_connect},
+	{"I2S3", NULL, "I2S1_EN", mtk_afe_i2s_share_connect},
+	{"I2S3", NULL, "I2S2_EN", mtk_afe_i2s_share_connect},
+	{"I2S3", NULL, "I2S3_EN"},
+	{"I2S3", NULL, "I2S5_EN", mtk_afe_i2s_share_connect},
 
-	अणु"I2S3", शून्य, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणुI2S3_HD_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
-	अणुI2S3_HD_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
+	{"I2S3", NULL, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S3", NULL, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S3", NULL, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S3", NULL, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S3", NULL, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{I2S3_HD_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_i2s_apll_connect},
+	{I2S3_HD_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_i2s_apll_connect},
 
-	अणु"I2S3", शून्य, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S3", शून्य, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणुI2S3_MCLK_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-	अणुI2S3_MCLK_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
+	{"I2S3", NULL, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S3", NULL, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S3", NULL, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S3", NULL, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S3", NULL, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{I2S3_MCLK_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_mclk_apll_connect},
+	{I2S3_MCLK_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_mclk_apll_connect},
 
 	/* i2s5 */
-	अणु"I2S5_CH1", "DL1_CH1", "DL1"पूर्ण,
-	अणु"I2S5_CH2", "DL1_CH2", "DL1"पूर्ण,
+	{"I2S5_CH1", "DL1_CH1", "DL1"},
+	{"I2S5_CH2", "DL1_CH2", "DL1"},
 
-	अणु"I2S5_CH1", "DL2_CH1", "DL2"पूर्ण,
-	अणु"I2S5_CH2", "DL2_CH2", "DL2"पूर्ण,
+	{"I2S5_CH1", "DL2_CH1", "DL2"},
+	{"I2S5_CH2", "DL2_CH2", "DL2"},
 
-	अणु"I2S5_CH1", "DL3_CH1", "DL3"पूर्ण,
-	अणु"I2S5_CH2", "DL3_CH2", "DL3"पूर्ण,
+	{"I2S5_CH1", "DL3_CH1", "DL3"},
+	{"I2S5_CH2", "DL3_CH2", "DL3"},
 
-	अणु"I2S5", शून्य, "I2S5_CH1"पूर्ण,
-	अणु"I2S5", शून्य, "I2S5_CH2"पूर्ण,
+	{"I2S5", NULL, "I2S5_CH1"},
+	{"I2S5", NULL, "I2S5_CH2"},
 
-	अणु"I2S5", शून्य, "I2S0_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S5", शून्य, "I2S1_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S5", शून्य, "I2S2_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S5", शून्य, "I2S3_EN", mtk_afe_i2s_share_connectपूर्ण,
-	अणु"I2S5", शून्य, "I2S5_EN"पूर्ण,
+	{"I2S5", NULL, "I2S0_EN", mtk_afe_i2s_share_connect},
+	{"I2S5", NULL, "I2S1_EN", mtk_afe_i2s_share_connect},
+	{"I2S5", NULL, "I2S2_EN", mtk_afe_i2s_share_connect},
+	{"I2S5", NULL, "I2S3_EN", mtk_afe_i2s_share_connect},
+	{"I2S5", NULL, "I2S5_EN"},
 
-	अणु"I2S5", शून्य, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connectपूर्ण,
-	अणुI2S5_HD_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
-	अणुI2S5_HD_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_i2s_apll_connectपूर्ण,
+	{"I2S5", NULL, I2S0_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S5", NULL, I2S1_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S5", NULL, I2S2_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S5", NULL, I2S3_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{"I2S5", NULL, I2S5_HD_EN_W_NAME, mtk_afe_i2s_hd_connect},
+	{I2S5_HD_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_i2s_apll_connect},
+	{I2S5_HD_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_i2s_apll_connect},
 
-	अणु"I2S5", शून्य, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणु"I2S5", शून्य, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connectपूर्ण,
-	अणुI2S5_MCLK_EN_W_NAME, शून्य, APLL1_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-	अणुI2S5_MCLK_EN_W_NAME, शून्य, APLL2_W_NAME, mtk_afe_mclk_apll_connectपूर्ण,
-पूर्ण;
+	{"I2S5", NULL, I2S0_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S5", NULL, I2S1_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S5", NULL, I2S2_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S5", NULL, I2S3_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{"I2S5", NULL, I2S5_MCLK_EN_W_NAME, mtk_afe_i2s_mclk_connect},
+	{I2S5_MCLK_EN_W_NAME, NULL, APLL1_W_NAME, mtk_afe_mclk_apll_connect},
+	{I2S5_MCLK_EN_W_NAME, NULL, APLL2_W_NAME, mtk_afe_mclk_apll_connect},
+};
 
 /* dai ops */
-अटल पूर्णांक mtk_dai_i2s_config(काष्ठा mtk_base_afe *afe,
-			      काष्ठा snd_pcm_hw_params *params,
-			      पूर्णांक i2s_id)
-अणु
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	काष्ठा mtk_afe_i2s_priv *i2s_priv = afe_priv->dai_priv[i2s_id];
+static int mtk_dai_i2s_config(struct mtk_base_afe *afe,
+			      struct snd_pcm_hw_params *params,
+			      int i2s_id)
+{
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	struct mtk_afe_i2s_priv *i2s_priv = afe_priv->dai_priv[i2s_id];
 
-	अचिन्हित पूर्णांक rate = params_rate(params);
-	अचिन्हित पूर्णांक rate_reg = mt8183_rate_transक्रमm(afe->dev,
+	unsigned int rate = params_rate(params);
+	unsigned int rate_reg = mt8183_rate_transform(afe->dev,
 						      rate, i2s_id);
-	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
-	अचिन्हित पूर्णांक i2s_con = 0, fmt_con = I2S_FMT_I2S << I2S_FMT_SFT;
-	पूर्णांक ret = 0;
+	snd_pcm_format_t format = params_format(params);
+	unsigned int i2s_con = 0, fmt_con = I2S_FMT_I2S << I2S_FMT_SFT;
+	int ret = 0;
 
 	dev_info(afe->dev, "%s(), id %d, rate %d, format %d\n",
 		 __func__,
 		 i2s_id,
-		 rate, क्रमmat);
+		 rate, format);
 
-	अगर (i2s_priv) अणु
+	if (i2s_priv) {
 		i2s_priv->rate = rate;
 
-		अगर (i2s_priv->use_eiaj)
+		if (i2s_priv->use_eiaj)
 			fmt_con = I2S_FMT_EIAJ << I2S_FMT_SFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-	पूर्ण
+	}
 
-	चयन (i2s_id) अणु
-	हाल MT8183_DAI_I2S_0:
+	switch (i2s_id) {
+	case MT8183_DAI_I2S_0:
 		regmap_update_bits(afe->regmap, AFE_DAC_CON1,
 				   I2S_MODE_MASK_SFT, rate_reg << I2S_MODE_SFT);
 		i2s_con = I2S_IN_PAD_IO_MUX << I2SIN_PAD_SEL_SFT;
 		i2s_con |= fmt_con;
-		i2s_con |= get_i2s_wlen(क्रमmat) << I2S_WLEN_SFT;
+		i2s_con |= get_i2s_wlen(format) << I2S_WLEN_SFT;
 		regmap_update_bits(afe->regmap, AFE_I2S_CON,
 				   0xffffeffe, i2s_con);
-		अवरोध;
-	हाल MT8183_DAI_I2S_1:
+		break;
+	case MT8183_DAI_I2S_1:
 		i2s_con = I2S1_SEL_O28_O29 << I2S2_SEL_O03_O04_SFT;
 		i2s_con |= rate_reg << I2S2_OUT_MODE_SFT;
 		i2s_con |= fmt_con;
-		i2s_con |= get_i2s_wlen(क्रमmat) << I2S2_WLEN_SFT;
+		i2s_con |= get_i2s_wlen(format) << I2S2_WLEN_SFT;
 		regmap_update_bits(afe->regmap, AFE_I2S_CON1,
 				   0xffffeffe, i2s_con);
-		अवरोध;
-	हाल MT8183_DAI_I2S_2:
+		break;
+	case MT8183_DAI_I2S_2:
 		i2s_con = 8 << I2S3_UPDATE_WORD_SFT;
 		i2s_con |= rate_reg << I2S3_OUT_MODE_SFT;
 		i2s_con |= fmt_con;
-		i2s_con |= get_i2s_wlen(क्रमmat) << I2S3_WLEN_SFT;
+		i2s_con |= get_i2s_wlen(format) << I2S3_WLEN_SFT;
 		regmap_update_bits(afe->regmap, AFE_I2S_CON2,
 				   0xffffeffe, i2s_con);
-		अवरोध;
-	हाल MT8183_DAI_I2S_3:
+		break;
+	case MT8183_DAI_I2S_3:
 		i2s_con = rate_reg << I2S4_OUT_MODE_SFT;
 		i2s_con |= fmt_con;
-		i2s_con |= get_i2s_wlen(क्रमmat) << I2S4_WLEN_SFT;
+		i2s_con |= get_i2s_wlen(format) << I2S4_WLEN_SFT;
 		regmap_update_bits(afe->regmap, AFE_I2S_CON3,
 				   0xffffeffe, i2s_con);
-		अवरोध;
-	हाल MT8183_DAI_I2S_5:
+		break;
+	case MT8183_DAI_I2S_5:
 		i2s_con = rate_reg << I2S5_OUT_MODE_SFT;
 		i2s_con |= fmt_con;
-		i2s_con |= get_i2s_wlen(क्रमmat) << I2S5_WLEN_SFT;
+		i2s_con |= get_i2s_wlen(format) << I2S5_WLEN_SFT;
 		regmap_update_bits(afe->regmap, AFE_I2S_CON4,
 				   0xffffeffe, i2s_con);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(afe->dev, "%s(), id %d not support\n",
 			 __func__, i2s_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* set share i2s */
-	अगर (i2s_priv && i2s_priv->share_i2s_id >= 0)
+	if (i2s_priv && i2s_priv->share_i2s_id >= 0)
 		ret = mtk_dai_i2s_config(afe, params, i2s_priv->share_i2s_id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mtk_dai_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				 काष्ठा snd_pcm_hw_params *params,
-				 काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+static int mtk_dai_i2s_hw_params(struct snd_pcm_substream *substream,
+				 struct snd_pcm_hw_params *params,
+				 struct snd_soc_dai *dai)
+{
+	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
 
-	वापस mtk_dai_i2s_config(afe, params, dai->id);
-पूर्ण
+	return mtk_dai_i2s_config(afe, params, dai->id);
+}
 
-अटल पूर्णांक mtk_dai_i2s_set_sysclk(काष्ठा snd_soc_dai *dai,
-				  पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा mtk_base_afe *afe = dev_get_drvdata(dai->dev);
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	काष्ठा mtk_afe_i2s_priv *i2s_priv = afe_priv->dai_priv[dai->id];
-	पूर्णांक apll;
-	पूर्णांक apll_rate;
+static int mtk_dai_i2s_set_sysclk(struct snd_soc_dai *dai,
+				  int clk_id, unsigned int freq, int dir)
+{
+	struct mtk_base_afe *afe = dev_get_drvdata(dai->dev);
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	struct mtk_afe_i2s_priv *i2s_priv = afe_priv->dai_priv[dai->id];
+	int apll;
+	int apll_rate;
 
-	अगर (!i2s_priv) अणु
+	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (dir != SND_SOC_CLOCK_OUT) अणु
+	if (dir != SND_SOC_CLOCK_OUT) {
 		dev_warn(afe->dev, "%s(), dir != SND_SOC_CLOCK_OUT", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_info(afe->dev, "%s(), freq %d\n", __func__, freq);
 
 	apll = mt8183_get_apll_by_rate(afe, freq);
 	apll_rate = mt8183_get_apll_rate(afe, apll);
 
-	अगर (freq > apll_rate) अणु
+	if (freq > apll_rate) {
 		dev_warn(afe->dev, "%s(), freq > apll rate", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (apll_rate % freq != 0) अणु
+	if (apll_rate % freq != 0) {
 		dev_warn(afe->dev, "%s(), APLL cannot generate freq Hz",
 			 __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i2s_priv->mclk_rate = freq;
 	i2s_priv->mclk_apll = apll;
 
-	अगर (i2s_priv->share_i2s_id > 0) अणु
-		काष्ठा mtk_afe_i2s_priv *share_i2s_priv;
+	if (i2s_priv->share_i2s_id > 0) {
+		struct mtk_afe_i2s_priv *share_i2s_priv;
 
 		share_i2s_priv = afe_priv->dai_priv[i2s_priv->share_i2s_id];
-		अगर (!share_i2s_priv) अणु
+		if (!share_i2s_priv) {
 			dev_warn(afe->dev, "%s(), share_i2s_priv == NULL",
 				 __func__);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		share_i2s_priv->mclk_rate = i2s_priv->mclk_rate;
 		share_i2s_priv->mclk_apll = i2s_priv->mclk_apll;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mtk_dai_i2s_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
+static int mtk_dai_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	struct mtk_afe_i2s_priv *i2s_priv;
 
-	चयन (dai->id) अणु
-	हाल MT8183_DAI_I2S_0:
-	हाल MT8183_DAI_I2S_1:
-	हाल MT8183_DAI_I2S_2:
-	हाल MT8183_DAI_I2S_3:
-	हाल MT8183_DAI_I2S_5:
-		अवरोध;
-	शेष:
+	switch (dai->id) {
+	case MT8183_DAI_I2S_0:
+	case MT8183_DAI_I2S_1:
+	case MT8183_DAI_I2S_2:
+	case MT8183_DAI_I2S_3:
+	case MT8183_DAI_I2S_5:
+		break;
+	default:
 		dev_warn(afe->dev, "%s(), id %d not support\n",
 			 __func__, dai->id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	i2s_priv = afe_priv->dai_priv[dai->id];
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_LEFT_J:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_LEFT_J:
 		i2s_priv->use_eiaj = 1;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		i2s_priv->use_eiaj = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_warn(afe->dev, "%s(), DAI format %d not support\n",
 			 __func__, fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops mtk_dai_i2s_ops = अणु
+static const struct snd_soc_dai_ops mtk_dai_i2s_ops = {
 	.hw_params = mtk_dai_i2s_hw_params,
 	.set_sysclk = mtk_dai_i2s_set_sysclk,
 	.set_fmt = mtk_dai_i2s_set_fmt,
-पूर्ण;
+};
 
 /* dai driver */
-#घोषणा MTK_I2S_RATES (SNDRV_PCM_RATE_8000_48000 |\
+#define MTK_I2S_RATES (SNDRV_PCM_RATE_8000_48000 |\
 		       SNDRV_PCM_RATE_88200 |\
 		       SNDRV_PCM_RATE_96000 |\
 		       SNDRV_PCM_RATE_176400 |\
 		       SNDRV_PCM_RATE_192000)
 
-#घोषणा MTK_I2S_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+#define MTK_I2S_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 			 SNDRV_PCM_FMTBIT_S24_LE |\
 			 SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल काष्ठा snd_soc_dai_driver mtk_dai_i2s_driver[] = अणु
-	अणु
+static struct snd_soc_dai_driver mtk_dai_i2s_driver[] = {
+	{
 		.name = "I2S0",
 		.id = MT8183_DAI_I2S_0,
-		.capture = अणु
+		.capture = {
 			.stream_name = "I2S0",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MTK_I2S_RATES,
-			.क्रमmats = MTK_I2S_FORMATS,
-		पूर्ण,
+			.formats = MTK_I2S_FORMATS,
+		},
 		.ops = &mtk_dai_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "I2S1",
 		.id = MT8183_DAI_I2S_1,
-		.playback = अणु
+		.playback = {
 			.stream_name = "I2S1",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MTK_I2S_RATES,
-			.क्रमmats = MTK_I2S_FORMATS,
-		पूर्ण,
+			.formats = MTK_I2S_FORMATS,
+		},
 		.ops = &mtk_dai_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "I2S2",
 		.id = MT8183_DAI_I2S_2,
-		.capture = अणु
+		.capture = {
 			.stream_name = "I2S2",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MTK_I2S_RATES,
-			.क्रमmats = MTK_I2S_FORMATS,
-		पूर्ण,
+			.formats = MTK_I2S_FORMATS,
+		},
 		.ops = &mtk_dai_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "I2S3",
 		.id = MT8183_DAI_I2S_3,
-		.playback = अणु
+		.playback = {
 			.stream_name = "I2S3",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MTK_I2S_RATES,
-			.क्रमmats = MTK_I2S_FORMATS,
-		पूर्ण,
+			.formats = MTK_I2S_FORMATS,
+		},
 		.ops = &mtk_dai_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "I2S5",
 		.id = MT8183_DAI_I2S_5,
-		.playback = अणु
+		.playback = {
 			.stream_name = "I2S5",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = MTK_I2S_RATES,
-			.क्रमmats = MTK_I2S_FORMATS,
-		पूर्ण,
+			.formats = MTK_I2S_FORMATS,
+		},
 		.ops = &mtk_dai_i2s_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* this क्रमागत is merely क्रम mtk_afe_i2s_priv declare */
-क्रमागत अणु
+/* this enum is merely for mtk_afe_i2s_priv declare */
+enum {
 	DAI_I2S0 = 0,
 	DAI_I2S1,
 	DAI_I2S2,
 	DAI_I2S3,
 	DAI_I2S5,
 	DAI_I2S_NUM,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_afe_i2s_priv mt8183_i2s_priv[DAI_I2S_NUM] = अणु
-	[DAI_I2S0] = अणु
+static const struct mtk_afe_i2s_priv mt8183_i2s_priv[DAI_I2S_NUM] = {
+	[DAI_I2S0] = {
 		.id = MT8183_DAI_I2S_0,
 		.mclk_id = MT8183_I2S0_MCK,
 		.share_property_name = "i2s0-share",
 		.share_i2s_id = -1,
-	पूर्ण,
-	[DAI_I2S1] = अणु
+	},
+	[DAI_I2S1] = {
 		.id = MT8183_DAI_I2S_1,
 		.mclk_id = MT8183_I2S1_MCK,
 		.share_property_name = "i2s1-share",
 		.share_i2s_id = -1,
-	पूर्ण,
-	[DAI_I2S2] = अणु
+	},
+	[DAI_I2S2] = {
 		.id = MT8183_DAI_I2S_2,
 		.mclk_id = MT8183_I2S2_MCK,
 		.share_property_name = "i2s2-share",
 		.share_i2s_id = -1,
-	पूर्ण,
-	[DAI_I2S3] = अणु
+	},
+	[DAI_I2S3] = {
 		.id = MT8183_DAI_I2S_3,
 		.mclk_id = MT8183_I2S3_MCK,
 		.share_property_name = "i2s3-share",
 		.share_i2s_id = -1,
-	पूर्ण,
-	[DAI_I2S5] = अणु
+	},
+	[DAI_I2S5] = {
 		.id = MT8183_DAI_I2S_5,
 		.mclk_id = MT8183_I2S5_MCK,
 		.share_property_name = "i2s5-share",
 		.share_i2s_id = -1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक mt8183_dai_i2s_get_share(काष्ठा mtk_base_afe *afe)
-अणु
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	स्थिर काष्ठा device_node *of_node = afe->dev->of_node;
-	स्थिर अक्षर *of_str;
-	स्थिर अक्षर *property_name;
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-	पूर्णांक i;
+static int mt8183_dai_i2s_get_share(struct mtk_base_afe *afe)
+{
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	const struct device_node *of_node = afe->dev->of_node;
+	const char *of_str;
+	const char *property_name;
+	struct mtk_afe_i2s_priv *i2s_priv;
+	int i;
 
-	क्रम (i = 0; i < DAI_I2S_NUM; i++) अणु
+	for (i = 0; i < DAI_I2S_NUM; i++) {
 		i2s_priv = afe_priv->dai_priv[mt8183_i2s_priv[i].id];
 		property_name = mt8183_i2s_priv[i].share_property_name;
-		अगर (of_property_पढ़ो_string(of_node, property_name, &of_str))
-			जारी;
+		if (of_property_read_string(of_node, property_name, &of_str))
+			continue;
 		i2s_priv->share_i2s_id = get_i2s_id_by_name(afe, of_str);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt8183_dai_i2s_set_priv(काष्ठा mtk_base_afe *afe)
-अणु
-	काष्ठा mt8183_afe_निजी *afe_priv = afe->platक्रमm_priv;
-	काष्ठा mtk_afe_i2s_priv *i2s_priv;
-	पूर्णांक i;
+static int mt8183_dai_i2s_set_priv(struct mtk_base_afe *afe)
+{
+	struct mt8183_afe_private *afe_priv = afe->platform_priv;
+	struct mtk_afe_i2s_priv *i2s_priv;
+	int i;
 
-	क्रम (i = 0; i < DAI_I2S_NUM; i++) अणु
+	for (i = 0; i < DAI_I2S_NUM; i++) {
 		i2s_priv = devm_kzalloc(afe->dev,
-					माप(काष्ठा mtk_afe_i2s_priv),
+					sizeof(struct mtk_afe_i2s_priv),
 					GFP_KERNEL);
-		अगर (!i2s_priv)
-			वापस -ENOMEM;
+		if (!i2s_priv)
+			return -ENOMEM;
 
-		स_नकल(i2s_priv, &mt8183_i2s_priv[i],
-		       माप(काष्ठा mtk_afe_i2s_priv));
+		memcpy(i2s_priv, &mt8183_i2s_priv[i],
+		       sizeof(struct mtk_afe_i2s_priv));
 
 		afe_priv->dai_priv[mt8183_i2s_priv[i].id] = i2s_priv;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt8183_dai_i2s_रेजिस्टर(काष्ठा mtk_base_afe *afe)
-अणु
-	काष्ठा mtk_base_afe_dai *dai;
-	पूर्णांक ret;
+int mt8183_dai_i2s_register(struct mtk_base_afe *afe)
+{
+	struct mtk_base_afe_dai *dai;
+	int ret;
 
-	dai = devm_kzalloc(afe->dev, माप(*dai), GFP_KERNEL);
-	अगर (!dai)
-		वापस -ENOMEM;
+	dai = devm_kzalloc(afe->dev, sizeof(*dai), GFP_KERNEL);
+	if (!dai)
+		return -ENOMEM;
 
 	list_add(&dai->list, &afe->sub_dais);
 
@@ -1065,20 +1064,20 @@
 
 	dai->controls = mtk_dai_i2s_controls;
 	dai->num_controls = ARRAY_SIZE(mtk_dai_i2s_controls);
-	dai->dapm_widमाला_लो = mtk_dai_i2s_widमाला_लो;
-	dai->num_dapm_widमाला_लो = ARRAY_SIZE(mtk_dai_i2s_widमाला_लो);
+	dai->dapm_widgets = mtk_dai_i2s_widgets;
+	dai->num_dapm_widgets = ARRAY_SIZE(mtk_dai_i2s_widgets);
 	dai->dapm_routes = mtk_dai_i2s_routes;
 	dai->num_dapm_routes = ARRAY_SIZE(mtk_dai_i2s_routes);
 
-	/* set all dai i2s निजी data */
+	/* set all dai i2s private data */
 	ret = mt8183_dai_i2s_set_priv(afe);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* parse share i2s */
 	ret = mt8183_dai_i2s_get_share(afe);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

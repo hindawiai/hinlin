@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
@@ -22,12 +21,12 @@
  * Data			Who		Remark
  *
  * 09/25/2008	MHC		Create initial version.
- * 11/05/2008	MHC		Add API क्रम tw घातer setting.
+ * 11/05/2008	MHC		Add API for tw power setting.
  *
  *
 ******************************************************************************/
 
-#समावेश <rtl8723b_hal.h>
+#include <rtl8723b_hal.h>
 
 /*---------------------------Define Local Constant---------------------------*/
 /*---------------------------Define Local Constant---------------------------*/
@@ -46,7 +45,7 @@
  *
  * Overview:    This function is called by SetBWModeCallback8190Pci() only
  *
- * Input:       काष्ठा adapter *			Adapter
+ * Input:       struct adapter *			Adapter
  *		WIRELESS_BANDWIDTH_E	Bandwidth	20M or 40M
  *
  * Output:      NONE
@@ -55,97 +54,97 @@
  *
  * Note:		For RF type 0222D
  *---------------------------------------------------------------------------*/
-व्योम PHY_RF6052SetBandwidth8723B(
-	काष्ठा adapter *Adapter, क्रमागत channel_width Bandwidth
+void PHY_RF6052SetBandwidth8723B(
+	struct adapter *Adapter, enum channel_width Bandwidth
 ) /* 20M or 40M */
-अणु
-	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+{
+	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
-	चयन (Bandwidth) अणु
-	हाल CHANNEL_WIDTH_20:
+	switch (Bandwidth) {
+	case CHANNEL_WIDTH_20:
 		pHalData->RfRegChnlVal[0] = ((pHalData->RfRegChnlVal[0] & 0xfffff3ff) | BIT10 | BIT11);
 		PHY_SetRFReg(Adapter, ODM_RF_PATH_A, RF_CHNLBW, bRFRegOffsetMask, pHalData->RfRegChnlVal[0]);
 		PHY_SetRFReg(Adapter, ODM_RF_PATH_B, RF_CHNLBW, bRFRegOffsetMask, pHalData->RfRegChnlVal[0]);
-		अवरोध;
+		break;
 
-	हाल CHANNEL_WIDTH_40:
+	case CHANNEL_WIDTH_40:
 		pHalData->RfRegChnlVal[0] = ((pHalData->RfRegChnlVal[0] & 0xfffff3ff) | BIT10);
 		PHY_SetRFReg(Adapter, ODM_RF_PATH_A, RF_CHNLBW, bRFRegOffsetMask, pHalData->RfRegChnlVal[0]);
 		PHY_SetRFReg(Adapter, ODM_RF_PATH_B, RF_CHNLBW, bRFRegOffsetMask, pHalData->RfRegChnlVal[0]);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक phy_RF6052_Config_ParaFile(काष्ठा adapter *Adapter)
-अणु
+static int phy_RF6052_Config_ParaFile(struct adapter *Adapter)
+{
 	u32 u4RegValue = 0;
 	u8 eRFPath;
-	काष्ठा bb_रेजिस्टर_def *pPhyReg;
-	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	struct bb_register_def *pPhyReg;
+	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 	/* 3----------------------------------------------------------------- */
 	/* 3 <2> Initialize RF */
 	/* 3----------------------------------------------------------------- */
-	/* क्रम (eRFPath = RF_PATH_A; eRFPath <pHalData->NumTotalRFPath; eRFPath++) */
-	क्रम (eRFPath = 0; eRFPath < pHalData->NumTotalRFPath; eRFPath++) अणु
+	/* for (eRFPath = RF_PATH_A; eRFPath <pHalData->NumTotalRFPath; eRFPath++) */
+	for (eRFPath = 0; eRFPath < pHalData->NumTotalRFPath; eRFPath++) {
 
 		pPhyReg = &pHalData->PHYRegDef[eRFPath];
 
 		/*----Store original RFENV control type----*/
-		चयन (eRFPath) अणु
-		हाल RF_PATH_A:
-		हाल RF_PATH_C:
-			u4RegValue = PHY_QueryBBReg(Adapter, pPhyReg->rfपूर्णांकfs, bRFSI_RFENV);
-			अवरोध;
-		हाल RF_PATH_B:
-		हाल RF_PATH_D:
-			u4RegValue = PHY_QueryBBReg(Adapter, pPhyReg->rfपूर्णांकfs, bRFSI_RFENV << 16);
-			अवरोध;
-		पूर्ण
+		switch (eRFPath) {
+		case RF_PATH_A:
+		case RF_PATH_C:
+			u4RegValue = PHY_QueryBBReg(Adapter, pPhyReg->rfintfs, bRFSI_RFENV);
+			break;
+		case RF_PATH_B:
+		case RF_PATH_D:
+			u4RegValue = PHY_QueryBBReg(Adapter, pPhyReg->rfintfs, bRFSI_RFENV << 16);
+			break;
+		}
 
 		/*----Set RF_ENV enable----*/
-		PHY_SetBBReg(Adapter, pPhyReg->rfपूर्णांकfe, bRFSI_RFENV << 16, 0x1);
-		udelay(1);/* Platक्रमmStallExecution(1); */
+		PHY_SetBBReg(Adapter, pPhyReg->rfintfe, bRFSI_RFENV << 16, 0x1);
+		udelay(1);/* PlatformStallExecution(1); */
 
 		/*----Set RF_ENV output high----*/
-		PHY_SetBBReg(Adapter, pPhyReg->rfपूर्णांकfo, bRFSI_RFENV, 0x1);
-		udelay(1);/* Platक्रमmStallExecution(1); */
+		PHY_SetBBReg(Adapter, pPhyReg->rfintfo, bRFSI_RFENV, 0x1);
+		udelay(1);/* PlatformStallExecution(1); */
 
-		/* Set bit number of Address and Data क्रम RF रेजिस्टर */
-		PHY_SetBBReg(Adapter, pPhyReg->rfHSSIPara2, b3WireAddressLength, 0x0);	/*  Set 1 to 4 bits क्रम 8255 */
-		udelay(1);/* Platक्रमmStallExecution(1); */
+		/* Set bit number of Address and Data for RF register */
+		PHY_SetBBReg(Adapter, pPhyReg->rfHSSIPara2, b3WireAddressLength, 0x0);	/*  Set 1 to 4 bits for 8255 */
+		udelay(1);/* PlatformStallExecution(1); */
 
-		PHY_SetBBReg(Adapter, pPhyReg->rfHSSIPara2, b3WireDataLength, 0x0);	/*  Set 0 to 12  bits क्रम 8255 */
-		udelay(1);/* Platक्रमmStallExecution(1); */
+		PHY_SetBBReg(Adapter, pPhyReg->rfHSSIPara2, b3WireDataLength, 0x0);	/*  Set 0 to 12  bits for 8255 */
+		udelay(1);/* PlatformStallExecution(1); */
 
 		/*----Initialize RF fom connfiguration file----*/
-		चयन (eRFPath) अणु
-		हाल RF_PATH_A:
-		हाल RF_PATH_B:
+		switch (eRFPath) {
+		case RF_PATH_A:
+		case RF_PATH_B:
 			ODM_ConfigRFWithHeaderFile(&pHalData->odmpriv,
 						   CONFIG_RF_RADIO, eRFPath);
-			अवरोध;
-		हाल RF_PATH_C:
-		हाल RF_PATH_D:
-			अवरोध;
-		पूर्ण
+			break;
+		case RF_PATH_C:
+		case RF_PATH_D:
+			break;
+		}
 
 		/*----Restore RFENV control type----*/
-		चयन (eRFPath) अणु
-		हाल RF_PATH_A:
-		हाल RF_PATH_C:
-			PHY_SetBBReg(Adapter, pPhyReg->rfपूर्णांकfs, bRFSI_RFENV, u4RegValue);
-			अवरोध;
-		हाल RF_PATH_B:
-		हाल RF_PATH_D:
-			PHY_SetBBReg(Adapter, pPhyReg->rfपूर्णांकfs, bRFSI_RFENV << 16, u4RegValue);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		switch (eRFPath) {
+		case RF_PATH_A:
+		case RF_PATH_C:
+			PHY_SetBBReg(Adapter, pPhyReg->rfintfs, bRFSI_RFENV, u4RegValue);
+			break;
+		case RF_PATH_B:
+		case RF_PATH_D:
+			PHY_SetBBReg(Adapter, pPhyReg->rfintfs, bRFSI_RFENV << 16, u4RegValue);
+			break;
+		}
+	}
 
 	/* 3 ----------------------------------------------------------------- */
 	/* 3 Configuration of Tx Power Tracking */
@@ -153,28 +152,28 @@
 
 	ODM_ConfigRFWithTxPwrTrackHeaderFile(&pHalData->odmpriv);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
 
-पूर्णांक PHY_RF6052_Config8723B(काष्ठा adapter *Adapter)
-अणु
-	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+int PHY_RF6052_Config8723B(struct adapter *Adapter)
+{
+	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 	/*  */
 	/*  Initialize general global value */
 	/*  */
 	/*  TODO: Extend RF_PATH_C and RF_PATH_D in the future */
-	अगर (pHalData->rf_type == RF_1T1R)
+	if (pHalData->rf_type == RF_1T1R)
 		pHalData->NumTotalRFPath = 1;
-	अन्यथा
+	else
 		pHalData->NumTotalRFPath = 2;
 
 	/*  */
 	/*  Config BB and RF */
 	/*  */
-	वापस phy_RF6052_Config_ParaFile(Adapter);
+	return phy_RF6052_Config_ParaFile(Adapter);
 
-पूर्ण
+}
 
 /* End of HalRf6052.c */

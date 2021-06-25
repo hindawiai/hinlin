@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -10,79 +9,79 @@
 *******************************************************************************
 ******************************************************************************/
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश "dlm_internal.h"
-#समावेश "lockspace.h"
-#समावेश "lock.h"
-#समावेश "user.h"
-#समावेश "memory.h"
-#समावेश "config.h"
-#समावेश "lowcomms.h"
+#include "dlm_internal.h"
+#include "lockspace.h"
+#include "lock.h"
+#include "user.h"
+#include "memory.h"
+#include "config.h"
+#include "lowcomms.h"
 
-अटल पूर्णांक __init init_dlm(व्योम)
-अणु
-	पूर्णांक error;
+static int __init init_dlm(void)
+{
+	int error;
 
 	error = dlm_memory_init();
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	error = dlm_lockspace_init();
-	अगर (error)
-		जाओ out_mem;
+	if (error)
+		goto out_mem;
 
 	error = dlm_config_init();
-	अगर (error)
-		जाओ out_lockspace;
+	if (error)
+		goto out_lockspace;
 
-	dlm_रेजिस्टर_debugfs();
+	dlm_register_debugfs();
 
 	error = dlm_user_init();
-	अगर (error)
-		जाओ out_debug;
+	if (error)
+		goto out_debug;
 
 	error = dlm_netlink_init();
-	अगर (error)
-		जाओ out_user;
+	if (error)
+		goto out_user;
 
 	error = dlm_plock_init();
-	अगर (error)
-		जाओ out_netlink;
+	if (error)
+		goto out_netlink;
 
-	prपूर्णांकk("DLM installed\n");
+	printk("DLM installed\n");
 
-	वापस 0;
+	return 0;
 
  out_netlink:
-	dlm_netlink_निकास();
+	dlm_netlink_exit();
  out_user:
-	dlm_user_निकास();
+	dlm_user_exit();
  out_debug:
-	dlm_unरेजिस्टर_debugfs();
-	dlm_config_निकास();
+	dlm_unregister_debugfs();
+	dlm_config_exit();
  out_lockspace:
-	dlm_lockspace_निकास();
+	dlm_lockspace_exit();
  out_mem:
-	dlm_memory_निकास();
+	dlm_memory_exit();
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम __निकास निकास_dlm(व्योम)
-अणु
-	dlm_plock_निकास();
-	dlm_netlink_निकास();
-	dlm_user_निकास();
-	dlm_config_निकास();
-	dlm_memory_निकास();
-	dlm_lockspace_निकास();
-	dlm_lowcomms_निकास();
-	dlm_unरेजिस्टर_debugfs();
-पूर्ण
+static void __exit exit_dlm(void)
+{
+	dlm_plock_exit();
+	dlm_netlink_exit();
+	dlm_user_exit();
+	dlm_config_exit();
+	dlm_memory_exit();
+	dlm_lockspace_exit();
+	dlm_lowcomms_exit();
+	dlm_unregister_debugfs();
+}
 
 module_init(init_dlm);
-module_निकास(निकास_dlm);
+module_exit(exit_dlm);
 
 MODULE_DESCRIPTION("Distributed Lock Manager");
 MODULE_AUTHOR("Red Hat, Inc.");

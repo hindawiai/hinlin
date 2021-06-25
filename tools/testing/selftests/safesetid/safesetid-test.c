@@ -1,318 +1,317 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <pwd.h>
-#समावेश <माला.स>
-#समावेश <syscall.h>
-#समावेश <sys/capability.h>
-#समावेश <sys/types.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/prctl.h>
-#समावेश <sys/रुको.h>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <fcntl.h>
-#समावेश <stdbool.h>
-#समावेश <मानकतर्क.स>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <errno.h>
+#include <pwd.h>
+#include <string.h>
+#include <syscall.h>
+#include <sys/capability.h>
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <sys/prctl.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <stdarg.h>
 
-#अगर_अघोषित CLONE_NEWUSER
+#ifndef CLONE_NEWUSER
 # define CLONE_NEWUSER 0x10000000
-#पूर्ण_अगर
+#endif
 
-#घोषणा ROOT_USER 0
-#घोषणा RESTRICTED_PARENT 1
-#घोषणा ALLOWED_CHILD1 2
-#घोषणा ALLOWED_CHILD2 3
-#घोषणा NO_POLICY_USER 4
+#define ROOT_USER 0
+#define RESTRICTED_PARENT 1
+#define ALLOWED_CHILD1 2
+#define ALLOWED_CHILD2 3
+#define NO_POLICY_USER 4
 
-अक्षर* add_whitelist_policy_file = "/sys/kernel/security/safesetid/add_whitelist_policy";
+char* add_whitelist_policy_file = "/sys/kernel/security/safesetid/add_whitelist_policy";
 
-अटल व्योम die(अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	बहु_शुरू(ap, fmt);
-	भख_लिखो(मानक_त्रुटि, fmt, ap);
-	बहु_पूर्ण(ap);
-	निकास(निकास_त्रुटि);
-पूर्ण
+static void die(char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
 
-अटल bool vmaybe_ग_लिखो_file(bool enoent_ok, अक्षर *filename, अक्षर *fmt, बहु_सूची ap)
-अणु
-	अक्षर buf[4096];
-	पूर्णांक fd;
-	sमाप_प्रकार written;
-	पूर्णांक buf_len;
+static bool vmaybe_write_file(bool enoent_ok, char *filename, char *fmt, va_list ap)
+{
+	char buf[4096];
+	int fd;
+	ssize_t written;
+	int buf_len;
 
-	buf_len = vsnम_लिखो(buf, माप(buf), fmt, ap);
-	अगर (buf_len < 0) अणु
-		म_लिखो("vsnprintf failed: %s\n",
-		    म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	अगर (buf_len >= माप(buf)) अणु
-		म_लिखो("vsnprintf output truncated\n");
-		वापस false;
-	पूर्ण
+	buf_len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (buf_len < 0) {
+		printf("vsnprintf failed: %s\n",
+		    strerror(errno));
+		return false;
+	}
+	if (buf_len >= sizeof(buf)) {
+		printf("vsnprintf output truncated\n");
+		return false;
+	}
 
-	fd = खोलो(filename, O_WRONLY);
-	अगर (fd < 0) अणु
-		अगर ((त्रुटि_सं == ENOENT) && enoent_ok)
-			वापस true;
-		वापस false;
-	पूर्ण
-	written = ग_लिखो(fd, buf, buf_len);
-	अगर (written != buf_len) अणु
-		अगर (written >= 0) अणु
-			म_लिखो("short write to %s\n", filename);
-			वापस false;
-		पूर्ण अन्यथा अणु
-			म_लिखो("write to %s failed: %s\n",
-				filename, म_त्रुटि(त्रुटि_सं));
-			वापस false;
-		पूर्ण
-	पूर्ण
-	अगर (बंद(fd) != 0) अणु
-		म_लिखो("close of %s failed: %s\n",
-			filename, म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	fd = open(filename, O_WRONLY);
+	if (fd < 0) {
+		if ((errno == ENOENT) && enoent_ok)
+			return true;
+		return false;
+	}
+	written = write(fd, buf, buf_len);
+	if (written != buf_len) {
+		if (written >= 0) {
+			printf("short write to %s\n", filename);
+			return false;
+		} else {
+			printf("write to %s failed: %s\n",
+				filename, strerror(errno));
+			return false;
+		}
+	}
+	if (close(fd) != 0) {
+		printf("close of %s failed: %s\n",
+			filename, strerror(errno));
+		return false;
+	}
+	return true;
+}
 
-अटल bool ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static bool write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 	bool ret;
 
-	बहु_शुरू(ap, fmt);
-	ret = vmaybe_ग_लिखो_file(false, filename, fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	ret = vmaybe_write_file(false, filename, fmt, ap);
+	va_end(ap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ensure_user_exists(uid_t uid)
-अणु
-	काष्ठा passwd p;
+static void ensure_user_exists(uid_t uid)
+{
+	struct passwd p;
 
-	खाता *fd;
-	अक्षर name_str[10];
+	FILE *fd;
+	char name_str[10];
 
-	अगर (getpwuid(uid) == शून्य) अणु
-		स_रखो(&p,0x00,माप(p));
-		fd=ख_खोलो("/etc/passwd","a");
-		अगर (fd == शून्य)
+	if (getpwuid(uid) == NULL) {
+		memset(&p,0x00,sizeof(p));
+		fd=fopen("/etc/passwd","a");
+		if (fd == NULL)
 			die("couldn't open file\n");
-		अगर (ख_जाओ(fd, 0, अंत_से))
+		if (fseek(fd, 0, SEEK_END))
 			die("couldn't fseek\n");
-		snम_लिखो(name_str, 10, "%d", uid);
+		snprintf(name_str, 10, "%d", uid);
 		p.pw_name=name_str;
 		p.pw_uid=uid;
 		p.pw_gecos="Test account";
 		p.pw_dir="/dev/null";
 		p.pw_shell="/bin/false";
-		पूर्णांक value = putpwent(&p,fd);
-		अगर (value != 0)
+		int value = putpwent(&p,fd);
+		if (value != 0)
 			die("putpwent failed\n");
-		अगर (ख_बंद(fd))
+		if (fclose(fd))
 			die("fclose failed\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ensure_securityfs_mounted(व्योम)
-अणु
-	पूर्णांक fd = खोलो(add_whitelist_policy_file, O_WRONLY);
-	अगर (fd < 0) अणु
-		अगर (त्रुटि_सं == ENOENT) अणु
+static void ensure_securityfs_mounted(void)
+{
+	int fd = open(add_whitelist_policy_file, O_WRONLY);
+	if (fd < 0) {
+		if (errno == ENOENT) {
 			// Need to mount securityfs
-			अगर (mount("securityfs", "/sys/kernel/security",
-						"securityfs", 0, शून्य) < 0)
+			if (mount("securityfs", "/sys/kernel/security",
+						"securityfs", 0, NULL) < 0)
 				die("mounting securityfs failed\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			die("couldn't find securityfs for unknown reason\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (बंद(fd) != 0) अणु
+		}
+	} else {
+		if (close(fd) != 0) {
 			die("close of %s failed: %s\n",
-				add_whitelist_policy_file, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
-पूर्ण
+				add_whitelist_policy_file, strerror(errno));
+		}
+	}
+}
 
-अटल व्योम ग_लिखो_policies(व्योम)
-अणु
-	अटल अक्षर *policy_str =
+static void write_policies(void)
+{
+	static char *policy_str =
 		"1:2\n"
 		"1:3\n"
 		"2:2\n"
 		"3:3\n";
-	sमाप_प्रकार written;
-	पूर्णांक fd;
+	ssize_t written;
+	int fd;
 
-	fd = खोलो(add_whitelist_policy_file, O_WRONLY);
-	अगर (fd < 0)
+	fd = open(add_whitelist_policy_file, O_WRONLY);
+	if (fd < 0)
 		die("cant open add_whitelist_policy file\n");
-	written = ग_लिखो(fd, policy_str, म_माप(policy_str));
-	अगर (written != म_माप(policy_str)) अणु
-		अगर (written >= 0) अणु
+	written = write(fd, policy_str, strlen(policy_str));
+	if (written != strlen(policy_str)) {
+		if (written >= 0) {
 			die("short write to %s\n", add_whitelist_policy_file);
-		पूर्ण अन्यथा अणु
+		} else {
 			die("write to %s failed: %s\n",
-				add_whitelist_policy_file, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
-	अगर (बंद(fd) != 0) अणु
+				add_whitelist_policy_file, strerror(errno));
+		}
+	}
+	if (close(fd) != 0) {
 		die("close of %s failed: %s\n",
-			add_whitelist_policy_file, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+			add_whitelist_policy_file, strerror(errno));
+	}
+}
 
-अटल bool test_userns(bool expect_success)
-अणु
+static bool test_userns(bool expect_success)
+{
 	uid_t uid;
-	अक्षर map_file_name[32];
-	माप_प्रकार sz = माप(map_file_name);
+	char map_file_name[32];
+	size_t sz = sizeof(map_file_name);
 	pid_t cpid;
 	bool success;
 
 	uid = getuid();
 
-	पूर्णांक clone_flags = CLONE_NEWUSER;
-	cpid = syscall(SYS_clone, clone_flags, शून्य);
-	अगर (cpid == -1) अणु
-	    म_लिखो("clone failed");
-	    वापस false;
-	पूर्ण
+	int clone_flags = CLONE_NEWUSER;
+	cpid = syscall(SYS_clone, clone_flags, NULL);
+	if (cpid == -1) {
+	    printf("clone failed");
+	    return false;
+	}
 
-	अगर (cpid == 0) अणु	/* Code executed by child */
-		// Give parent 1 second to ग_लिखो map file
+	if (cpid == 0) {	/* Code executed by child */
+		// Give parent 1 second to write map file
 		sleep(1);
-		निकास(निकास_सफल);
-	पूर्ण अन्यथा अणु		/* Code executed by parent */
-		अगर(snम_लिखो(map_file_name, sz, "/proc/%d/uid_map", cpid) < 0) अणु
-			म_लिखो("preparing file name string failed");
-			वापस false;
-		पूर्ण
-		success = ग_लिखो_file(map_file_name, "0 0 1", uid);
-		वापस success == expect_success;
-	पूर्ण
+		exit(EXIT_SUCCESS);
+	} else {		/* Code executed by parent */
+		if(snprintf(map_file_name, sz, "/proc/%d/uid_map", cpid) < 0) {
+			printf("preparing file name string failed");
+			return false;
+		}
+		success = write_file(map_file_name, "0 0 1", uid);
+		return success == expect_success;
+	}
 
-	म_लिखो("should not reach here");
-	वापस false;
-पूर्ण
+	printf("should not reach here");
+	return false;
+}
 
-अटल व्योम test_setuid(uid_t child_uid, bool expect_success)
-अणु
+static void test_setuid(uid_t child_uid, bool expect_success)
+{
 	pid_t cpid, w;
-	पूर्णांक wstatus;
+	int wstatus;
 
-	cpid = विभाजन();
-	अगर (cpid == -1) अणु
+	cpid = fork();
+	if (cpid == -1) {
 		die("fork\n");
-	पूर्ण
+	}
 
-	अगर (cpid == 0) अणु	    /* Code executed by child */
-		अगर (setuid(child_uid) < 0)
-			निकास(निकास_त्रुटि);
-		अगर (getuid() == child_uid)
-			निकास(निकास_सफल);
-		अन्यथा
-			निकास(निकास_त्रुटि);
-	पूर्ण अन्यथा अणु		 /* Code executed by parent */
-		करो अणु
-			w = रुकोpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
-			अगर (w == -1) अणु
+	if (cpid == 0) {	    /* Code executed by child */
+		if (setuid(child_uid) < 0)
+			exit(EXIT_FAILURE);
+		if (getuid() == child_uid)
+			exit(EXIT_SUCCESS);
+		else
+			exit(EXIT_FAILURE);
+	} else {		 /* Code executed by parent */
+		do {
+			w = waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
+			if (w == -1) {
 				die("waitpid\n");
-			पूर्ण
+			}
 
-			अगर (WIFEXITED(wstatus)) अणु
-				अगर (WEXITSTATUS(wstatus) == निकास_सफल) अणु
-					अगर (expect_success) अणु
-						वापस;
-					पूर्ण अन्यथा अणु
+			if (WIFEXITED(wstatus)) {
+				if (WEXITSTATUS(wstatus) == EXIT_SUCCESS) {
+					if (expect_success) {
+						return;
+					} else {
 						die("unexpected success\n");
-					पूर्ण
-				पूर्ण अन्यथा अणु
-					अगर (expect_success) अणु
+					}
+				} else {
+					if (expect_success) {
 						die("unexpected failure\n");
-					पूर्ण अन्यथा अणु
-						वापस;
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अगर (WIFSIGNALED(wstatus)) अणु
-				अगर (WTERMSIG(wstatus) == 9) अणु
-					अगर (expect_success)
+					} else {
+						return;
+					}
+				}
+			} else if (WIFSIGNALED(wstatus)) {
+				if (WTERMSIG(wstatus) == 9) {
+					if (expect_success)
 						die("killed unexpectedly\n");
-					अन्यथा
-						वापस;
-				पूर्ण अन्यथा अणु
+					else
+						return;
+				} else {
 					die("unexpected signal: %d\n", wstatus);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				die("unexpected status: %d\n", wstatus);
-			पूर्ण
-		पूर्ण जबतक (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
-	पूर्ण
+			}
+		} while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+	}
 
 	die("should not reach here\n");
-पूर्ण
+}
 
-अटल व्योम ensure_users_exist(व्योम)
-अणु
+static void ensure_users_exist(void)
+{
 	ensure_user_exists(ROOT_USER);
 	ensure_user_exists(RESTRICTED_PARENT);
 	ensure_user_exists(ALLOWED_CHILD1);
 	ensure_user_exists(ALLOWED_CHILD2);
 	ensure_user_exists(NO_POLICY_USER);
-पूर्ण
+}
 
-अटल व्योम drop_caps(bool setid_retained)
-अणु
-	cap_value_t cap_values[] = अणुCAP_SETUID, CAP_SETGIDपूर्ण;
+static void drop_caps(bool setid_retained)
+{
+	cap_value_t cap_values[] = {CAP_SETUID, CAP_SETGID};
 	cap_t caps;
 
 	caps = cap_get_proc();
-	अगर (setid_retained)
+	if (setid_retained)
 		cap_set_flag(caps, CAP_EFFECTIVE, 2, cap_values, CAP_SET);
-	अन्यथा
+	else
 		cap_clear(caps);
 	cap_set_proc(caps);
-	cap_मुक्त(caps);
-पूर्ण
+	cap_free(caps);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
+int main(int argc, char **argv)
+{
 	ensure_users_exist();
 	ensure_securityfs_mounted();
-	ग_लिखो_policies();
+	write_policies();
 
-	अगर (prctl(PR_SET_KEEPCAPS, 1L))
+	if (prctl(PR_SET_KEEPCAPS, 1L))
 		die("Error with set keepcaps\n");
 
-	// First test to make sure we can ग_लिखो userns mappings from a user
-	// that करोesn't have any restrictions (as दीर्घ as it has CAP_SETUID);
-	अगर (setuid(NO_POLICY_USER) < 0)
+	// First test to make sure we can write userns mappings from a user
+	// that doesn't have any restrictions (as long as it has CAP_SETUID);
+	if (setuid(NO_POLICY_USER) < 0)
 		die("Error with set uid(%d)\n", NO_POLICY_USER);
-	अगर (setgid(NO_POLICY_USER) < 0)
+	if (setgid(NO_POLICY_USER) < 0)
 		die("Error with set gid(%d)\n", NO_POLICY_USER);
 
 	// Take away all but setid caps
 	drop_caps(true);
 
-	// Need PR_SET_DUMPABLE flag set so we can ग_लिखो /proc/[pid]/uid_map
+	// Need PR_SET_DUMPABLE flag set so we can write /proc/[pid]/uid_map
 	// from non-root parent process.
-	अगर (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0))
+	if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0))
 		die("Error with set dumpable\n");
 
-	अगर (!test_userns(true)) अणु
+	if (!test_userns(true)) {
 		die("test_userns failed when it should work\n");
-	पूर्ण
+	}
 
-	अगर (setuid(RESTRICTED_PARENT) < 0)
+	if (setuid(RESTRICTED_PARENT) < 0)
 		die("Error with set uid(%d)\n", RESTRICTED_PARENT);
-	अगर (setgid(RESTRICTED_PARENT) < 0)
+	if (setgid(RESTRICTED_PARENT) < 0)
 		die("Error with set gid(%d)\n", RESTRICTED_PARENT);
 
 	test_setuid(ROOT_USER, false);
@@ -320,9 +319,9 @@
 	test_setuid(ALLOWED_CHILD2, true);
 	test_setuid(NO_POLICY_USER, false);
 
-	अगर (!test_userns(false)) अणु
+	if (!test_userns(false)) {
 		die("test_userns worked when it should fail\n");
-	पूर्ण
+	}
 
 	// Now take away all caps
 	drop_caps(false);
@@ -330,7 +329,7 @@
 	test_setuid(3, false);
 	test_setuid(4, false);
 
-	// NOTE: this test करोesn't clean up users that were created in
+	// NOTE: this test doesn't clean up users that were created in
 	// /etc/passwd or flush policies that were added to the LSM.
-	वापस निकास_सफल;
-पूर्ण
+	return EXIT_SUCCESS;
+}

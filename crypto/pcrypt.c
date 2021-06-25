@@ -1,377 +1,376 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * pcrypt - Parallel crypto wrapper.
  *
  * Copyright (C) 2009 secunet Security Networks AG
- * Copyright (C) 2009 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
+ * Copyright (C) 2009 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/aead.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/cpu.h>
-#समावेश <crypto/pcrypt.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/aead.h>
+#include <linux/atomic.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/kobject.h>
+#include <linux/cpu.h>
+#include <crypto/pcrypt.h>
 
-अटल काष्ठा padata_instance *pencrypt;
-अटल काष्ठा padata_instance *pdecrypt;
-अटल काष्ठा kset           *pcrypt_kset;
+static struct padata_instance *pencrypt;
+static struct padata_instance *pdecrypt;
+static struct kset           *pcrypt_kset;
 
-काष्ठा pcrypt_instance_ctx अणु
-	काष्ठा crypto_aead_spawn spawn;
-	काष्ठा padata_shell *psenc;
-	काष्ठा padata_shell *psdec;
+struct pcrypt_instance_ctx {
+	struct crypto_aead_spawn spawn;
+	struct padata_shell *psenc;
+	struct padata_shell *psdec;
 	atomic_t tfm_count;
-पूर्ण;
+};
 
-काष्ठा pcrypt_aead_ctx अणु
-	काष्ठा crypto_aead *child;
-	अचिन्हित पूर्णांक cb_cpu;
-पूर्ण;
+struct pcrypt_aead_ctx {
+	struct crypto_aead *child;
+	unsigned int cb_cpu;
+};
 
-अटल अंतरभूत काष्ठा pcrypt_instance_ctx *pcrypt_tfm_ictx(
-	काष्ठा crypto_aead *tfm)
-अणु
-	वापस aead_instance_ctx(aead_alg_instance(tfm));
-पूर्ण
+static inline struct pcrypt_instance_ctx *pcrypt_tfm_ictx(
+	struct crypto_aead *tfm)
+{
+	return aead_instance_ctx(aead_alg_instance(tfm));
+}
 
-अटल पूर्णांक pcrypt_aead_setkey(काष्ठा crypto_aead *parent,
-			      स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(parent);
+static int pcrypt_aead_setkey(struct crypto_aead *parent,
+			      const u8 *key, unsigned int keylen)
+{
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(parent);
 
-	वापस crypto_aead_setkey(ctx->child, key, keylen);
-पूर्ण
+	return crypto_aead_setkey(ctx->child, key, keylen);
+}
 
-अटल पूर्णांक pcrypt_aead_setauthsize(काष्ठा crypto_aead *parent,
-				   अचिन्हित पूर्णांक authsize)
-अणु
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(parent);
+static int pcrypt_aead_setauthsize(struct crypto_aead *parent,
+				   unsigned int authsize)
+{
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(parent);
 
-	वापस crypto_aead_setauthsize(ctx->child, authsize);
-पूर्ण
+	return crypto_aead_setauthsize(ctx->child, authsize);
+}
 
-अटल व्योम pcrypt_aead_serial(काष्ठा padata_priv *padata)
-अणु
-	काष्ठा pcrypt_request *preq = pcrypt_padata_request(padata);
-	काष्ठा aead_request *req = pcrypt_request_ctx(preq);
+static void pcrypt_aead_serial(struct padata_priv *padata)
+{
+	struct pcrypt_request *preq = pcrypt_padata_request(padata);
+	struct aead_request *req = pcrypt_request_ctx(preq);
 
 	aead_request_complete(req->base.data, padata->info);
-पूर्ण
+}
 
-अटल व्योम pcrypt_aead_करोne(काष्ठा crypto_async_request *areq, पूर्णांक err)
-अणु
-	काष्ठा aead_request *req = areq->data;
-	काष्ठा pcrypt_request *preq = aead_request_ctx(req);
-	काष्ठा padata_priv *padata = pcrypt_request_padata(preq);
+static void pcrypt_aead_done(struct crypto_async_request *areq, int err)
+{
+	struct aead_request *req = areq->data;
+	struct pcrypt_request *preq = aead_request_ctx(req);
+	struct padata_priv *padata = pcrypt_request_padata(preq);
 
 	padata->info = err;
 
-	padata_करो_serial(padata);
-पूर्ण
+	padata_do_serial(padata);
+}
 
-अटल व्योम pcrypt_aead_enc(काष्ठा padata_priv *padata)
-अणु
-	काष्ठा pcrypt_request *preq = pcrypt_padata_request(padata);
-	काष्ठा aead_request *req = pcrypt_request_ctx(preq);
+static void pcrypt_aead_enc(struct padata_priv *padata)
+{
+	struct pcrypt_request *preq = pcrypt_padata_request(padata);
+	struct aead_request *req = pcrypt_request_ctx(preq);
 
 	padata->info = crypto_aead_encrypt(req);
 
-	अगर (padata->info == -EINPROGRESS)
-		वापस;
+	if (padata->info == -EINPROGRESS)
+		return;
 
-	padata_करो_serial(padata);
-पूर्ण
+	padata_do_serial(padata);
+}
 
-अटल पूर्णांक pcrypt_aead_encrypt(काष्ठा aead_request *req)
-अणु
-	पूर्णांक err;
-	काष्ठा pcrypt_request *preq = aead_request_ctx(req);
-	काष्ठा aead_request *creq = pcrypt_request_ctx(preq);
-	काष्ठा padata_priv *padata = pcrypt_request_padata(preq);
-	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(aead);
+static int pcrypt_aead_encrypt(struct aead_request *req)
+{
+	int err;
+	struct pcrypt_request *preq = aead_request_ctx(req);
+	struct aead_request *creq = pcrypt_request_ctx(preq);
+	struct padata_priv *padata = pcrypt_request_padata(preq);
+	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(aead);
 	u32 flags = aead_request_flags(req);
-	काष्ठा pcrypt_instance_ctx *ictx;
+	struct pcrypt_instance_ctx *ictx;
 
 	ictx = pcrypt_tfm_ictx(aead);
 
-	स_रखो(padata, 0, माप(काष्ठा padata_priv));
+	memset(padata, 0, sizeof(struct padata_priv));
 
 	padata->parallel = pcrypt_aead_enc;
 	padata->serial = pcrypt_aead_serial;
 
 	aead_request_set_tfm(creq, ctx->child);
 	aead_request_set_callback(creq, flags & ~CRYPTO_TFM_REQ_MAY_SLEEP,
-				  pcrypt_aead_करोne, req);
+				  pcrypt_aead_done, req);
 	aead_request_set_crypt(creq, req->src, req->dst,
 			       req->cryptlen, req->iv);
 	aead_request_set_ad(creq, req->assoclen);
 
-	err = padata_करो_parallel(ictx->psenc, padata, &ctx->cb_cpu);
-	अगर (!err)
-		वापस -EINPROGRESS;
+	err = padata_do_parallel(ictx->psenc, padata, &ctx->cb_cpu);
+	if (!err)
+		return -EINPROGRESS;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम pcrypt_aead_dec(काष्ठा padata_priv *padata)
-अणु
-	काष्ठा pcrypt_request *preq = pcrypt_padata_request(padata);
-	काष्ठा aead_request *req = pcrypt_request_ctx(preq);
+static void pcrypt_aead_dec(struct padata_priv *padata)
+{
+	struct pcrypt_request *preq = pcrypt_padata_request(padata);
+	struct aead_request *req = pcrypt_request_ctx(preq);
 
 	padata->info = crypto_aead_decrypt(req);
 
-	अगर (padata->info == -EINPROGRESS)
-		वापस;
+	if (padata->info == -EINPROGRESS)
+		return;
 
-	padata_करो_serial(padata);
-पूर्ण
+	padata_do_serial(padata);
+}
 
-अटल पूर्णांक pcrypt_aead_decrypt(काष्ठा aead_request *req)
-अणु
-	पूर्णांक err;
-	काष्ठा pcrypt_request *preq = aead_request_ctx(req);
-	काष्ठा aead_request *creq = pcrypt_request_ctx(preq);
-	काष्ठा padata_priv *padata = pcrypt_request_padata(preq);
-	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(aead);
+static int pcrypt_aead_decrypt(struct aead_request *req)
+{
+	int err;
+	struct pcrypt_request *preq = aead_request_ctx(req);
+	struct aead_request *creq = pcrypt_request_ctx(preq);
+	struct padata_priv *padata = pcrypt_request_padata(preq);
+	struct crypto_aead *aead = crypto_aead_reqtfm(req);
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(aead);
 	u32 flags = aead_request_flags(req);
-	काष्ठा pcrypt_instance_ctx *ictx;
+	struct pcrypt_instance_ctx *ictx;
 
 	ictx = pcrypt_tfm_ictx(aead);
 
-	स_रखो(padata, 0, माप(काष्ठा padata_priv));
+	memset(padata, 0, sizeof(struct padata_priv));
 
 	padata->parallel = pcrypt_aead_dec;
 	padata->serial = pcrypt_aead_serial;
 
 	aead_request_set_tfm(creq, ctx->child);
 	aead_request_set_callback(creq, flags & ~CRYPTO_TFM_REQ_MAY_SLEEP,
-				  pcrypt_aead_करोne, req);
+				  pcrypt_aead_done, req);
 	aead_request_set_crypt(creq, req->src, req->dst,
 			       req->cryptlen, req->iv);
 	aead_request_set_ad(creq, req->assoclen);
 
-	err = padata_करो_parallel(ictx->psdec, padata, &ctx->cb_cpu);
-	अगर (!err)
-		वापस -EINPROGRESS;
+	err = padata_do_parallel(ictx->psdec, padata, &ctx->cb_cpu);
+	if (!err)
+		return -EINPROGRESS;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcrypt_aead_init_tfm(काष्ठा crypto_aead *tfm)
-अणु
-	पूर्णांक cpu, cpu_index;
-	काष्ठा aead_instance *inst = aead_alg_instance(tfm);
-	काष्ठा pcrypt_instance_ctx *ictx = aead_instance_ctx(inst);
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(tfm);
-	काष्ठा crypto_aead *cipher;
+static int pcrypt_aead_init_tfm(struct crypto_aead *tfm)
+{
+	int cpu, cpu_index;
+	struct aead_instance *inst = aead_alg_instance(tfm);
+	struct pcrypt_instance_ctx *ictx = aead_instance_ctx(inst);
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+	struct crypto_aead *cipher;
 
-	cpu_index = (अचिन्हित पूर्णांक)atomic_inc_वापस(&ictx->tfm_count) %
+	cpu_index = (unsigned int)atomic_inc_return(&ictx->tfm_count) %
 		    cpumask_weight(cpu_online_mask);
 
 	ctx->cb_cpu = cpumask_first(cpu_online_mask);
-	क्रम (cpu = 0; cpu < cpu_index; cpu++)
+	for (cpu = 0; cpu < cpu_index; cpu++)
 		ctx->cb_cpu = cpumask_next(ctx->cb_cpu, cpu_online_mask);
 
 	cipher = crypto_spawn_aead(&ictx->spawn);
 
-	अगर (IS_ERR(cipher))
-		वापस PTR_ERR(cipher);
+	if (IS_ERR(cipher))
+		return PTR_ERR(cipher);
 
 	ctx->child = cipher;
-	crypto_aead_set_reqsize(tfm, माप(काष्ठा pcrypt_request) +
-				     माप(काष्ठा aead_request) +
+	crypto_aead_set_reqsize(tfm, sizeof(struct pcrypt_request) +
+				     sizeof(struct aead_request) +
 				     crypto_aead_reqsize(cipher));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pcrypt_aead_निकास_tfm(काष्ठा crypto_aead *tfm)
-अणु
-	काष्ठा pcrypt_aead_ctx *ctx = crypto_aead_ctx(tfm);
+static void pcrypt_aead_exit_tfm(struct crypto_aead *tfm)
+{
+	struct pcrypt_aead_ctx *ctx = crypto_aead_ctx(tfm);
 
-	crypto_मुक्त_aead(ctx->child);
-पूर्ण
+	crypto_free_aead(ctx->child);
+}
 
-अटल व्योम pcrypt_मुक्त(काष्ठा aead_instance *inst)
-अणु
-	काष्ठा pcrypt_instance_ctx *ctx = aead_instance_ctx(inst);
+static void pcrypt_free(struct aead_instance *inst)
+{
+	struct pcrypt_instance_ctx *ctx = aead_instance_ctx(inst);
 
 	crypto_drop_aead(&ctx->spawn);
-	padata_मुक्त_shell(ctx->psdec);
-	padata_मुक्त_shell(ctx->psenc);
-	kमुक्त(inst);
-पूर्ण
+	padata_free_shell(ctx->psdec);
+	padata_free_shell(ctx->psenc);
+	kfree(inst);
+}
 
-अटल पूर्णांक pcrypt_init_instance(काष्ठा crypto_instance *inst,
-				काष्ठा crypto_alg *alg)
-अणु
-	अगर (snम_लिखो(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME,
+static int pcrypt_init_instance(struct crypto_instance *inst,
+				struct crypto_alg *alg)
+{
+	if (snprintf(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "pcrypt(%s)", alg->cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
-		वापस -ENAMETOOLONG;
+		return -ENAMETOOLONG;
 
-	स_नकल(inst->alg.cra_name, alg->cra_name, CRYPTO_MAX_ALG_NAME);
+	memcpy(inst->alg.cra_name, alg->cra_name, CRYPTO_MAX_ALG_NAME);
 
 	inst->alg.cra_priority = alg->cra_priority + 100;
 	inst->alg.cra_blocksize = alg->cra_blocksize;
 	inst->alg.cra_alignmask = alg->cra_alignmask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pcrypt_create_aead(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb,
-			      काष्ठा crypto_attr_type *algt)
-अणु
-	काष्ठा pcrypt_instance_ctx *ctx;
-	काष्ठा aead_instance *inst;
-	काष्ठा aead_alg *alg;
+static int pcrypt_create_aead(struct crypto_template *tmpl, struct rtattr **tb,
+			      struct crypto_attr_type *algt)
+{
+	struct pcrypt_instance_ctx *ctx;
+	struct aead_instance *inst;
+	struct aead_alg *alg;
 	u32 mask = crypto_algt_inherited_mask(algt);
-	पूर्णांक err;
+	int err;
 
-	inst = kzalloc(माप(*inst) + माप(*ctx), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*ctx), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 
 	err = -ENOMEM;
 
 	ctx = aead_instance_ctx(inst);
 	ctx->psenc = padata_alloc_shell(pencrypt);
-	अगर (!ctx->psenc)
-		जाओ err_मुक्त_inst;
+	if (!ctx->psenc)
+		goto err_free_inst;
 
 	ctx->psdec = padata_alloc_shell(pdecrypt);
-	अगर (!ctx->psdec)
-		जाओ err_मुक्त_inst;
+	if (!ctx->psdec)
+		goto err_free_inst;
 
 	err = crypto_grab_aead(&ctx->spawn, aead_crypto_instance(inst),
 			       crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 
 	alg = crypto_spawn_aead_alg(&ctx->spawn);
 	err = pcrypt_init_instance(aead_crypto_instance(inst), &alg->base);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 
 	inst->alg.base.cra_flags |= CRYPTO_ALG_ASYNC;
 
 	inst->alg.ivsize = crypto_aead_alg_ivsize(alg);
 	inst->alg.maxauthsize = crypto_aead_alg_maxauthsize(alg);
 
-	inst->alg.base.cra_ctxsize = माप(काष्ठा pcrypt_aead_ctx);
+	inst->alg.base.cra_ctxsize = sizeof(struct pcrypt_aead_ctx);
 
 	inst->alg.init = pcrypt_aead_init_tfm;
-	inst->alg.निकास = pcrypt_aead_निकास_tfm;
+	inst->alg.exit = pcrypt_aead_exit_tfm;
 
 	inst->alg.setkey = pcrypt_aead_setkey;
 	inst->alg.setauthsize = pcrypt_aead_setauthsize;
 	inst->alg.encrypt = pcrypt_aead_encrypt;
 	inst->alg.decrypt = pcrypt_aead_decrypt;
 
-	inst->मुक्त = pcrypt_मुक्त;
+	inst->free = pcrypt_free;
 
-	err = aead_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		pcrypt_मुक्त(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = aead_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		pcrypt_free(inst);
+	}
+	return err;
+}
 
-अटल पूर्णांक pcrypt_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	काष्ठा crypto_attr_type *algt;
+static int pcrypt_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	struct crypto_attr_type *algt;
 
 	algt = crypto_get_attr_type(tb);
-	अगर (IS_ERR(algt))
-		वापस PTR_ERR(algt);
+	if (IS_ERR(algt))
+		return PTR_ERR(algt);
 
-	चयन (algt->type & algt->mask & CRYPTO_ALG_TYPE_MASK) अणु
-	हाल CRYPTO_ALG_TYPE_AEAD:
-		वापस pcrypt_create_aead(पंचांगpl, tb, algt);
-	पूर्ण
+	switch (algt->type & algt->mask & CRYPTO_ALG_TYPE_MASK) {
+	case CRYPTO_ALG_TYPE_AEAD:
+		return pcrypt_create_aead(tmpl, tb, algt);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक pcrypt_sysfs_add(काष्ठा padata_instance *pinst, स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret;
+static int pcrypt_sysfs_add(struct padata_instance *pinst, const char *name)
+{
+	int ret;
 
 	pinst->kobj.kset = pcrypt_kset;
-	ret = kobject_add(&pinst->kobj, शून्य, "%s", name);
-	अगर (!ret)
+	ret = kobject_add(&pinst->kobj, NULL, "%s", name);
+	if (!ret)
 		kobject_uevent(&pinst->kobj, KOBJ_ADD);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pcrypt_init_padata(काष्ठा padata_instance **pinst, स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int pcrypt_init_padata(struct padata_instance **pinst, const char *name)
+{
+	int ret = -ENOMEM;
 
 	*pinst = padata_alloc(name);
-	अगर (!*pinst)
-		वापस ret;
+	if (!*pinst)
+		return ret;
 
 	ret = pcrypt_sysfs_add(*pinst, name);
-	अगर (ret)
-		padata_मुक्त(*pinst);
+	if (ret)
+		padata_free(*pinst);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा crypto_ढाँचा pcrypt_पंचांगpl = अणु
+static struct crypto_template pcrypt_tmpl = {
 	.name = "pcrypt",
 	.create = pcrypt_create,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pcrypt_init(व्योम)
-अणु
-	पूर्णांक err = -ENOMEM;
+static int __init pcrypt_init(void)
+{
+	int err = -ENOMEM;
 
-	pcrypt_kset = kset_create_and_add("pcrypt", शून्य, kernel_kobj);
-	अगर (!pcrypt_kset)
-		जाओ err;
+	pcrypt_kset = kset_create_and_add("pcrypt", NULL, kernel_kobj);
+	if (!pcrypt_kset)
+		goto err;
 
 	err = pcrypt_init_padata(&pencrypt, "pencrypt");
-	अगर (err)
-		जाओ err_unreg_kset;
+	if (err)
+		goto err_unreg_kset;
 
 	err = pcrypt_init_padata(&pdecrypt, "pdecrypt");
-	अगर (err)
-		जाओ err_deinit_pencrypt;
+	if (err)
+		goto err_deinit_pencrypt;
 
-	वापस crypto_रेजिस्टर_ढाँचा(&pcrypt_पंचांगpl);
+	return crypto_register_template(&pcrypt_tmpl);
 
 err_deinit_pencrypt:
-	padata_मुक्त(pencrypt);
+	padata_free(pencrypt);
 err_unreg_kset:
-	kset_unरेजिस्टर(pcrypt_kset);
+	kset_unregister(pcrypt_kset);
 err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास pcrypt_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचा(&pcrypt_पंचांगpl);
+static void __exit pcrypt_exit(void)
+{
+	crypto_unregister_template(&pcrypt_tmpl);
 
-	padata_मुक्त(pencrypt);
-	padata_मुक्त(pdecrypt);
+	padata_free(pencrypt);
+	padata_free(pdecrypt);
 
-	kset_unरेजिस्टर(pcrypt_kset);
-पूर्ण
+	kset_unregister(pcrypt_kset);
+}
 
 subsys_initcall(pcrypt_init);
-module_निकास(pcrypt_निकास);
+module_exit(pcrypt_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Steffen Klassert <steffen.klassert@secunet.com>");

@@ -1,207 +1,206 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__LINUX_FBIO_H
-#घोषणा _UAPI__LINUX_FBIO_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__LINUX_FBIO_H
+#define _UAPI__LINUX_FBIO_H
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/types.h>
 
-/* Constants used क्रम fbio SunOS compatibility */
+/* Constants used for fbio SunOS compatibility */
 /* (C) 1996 Miguel de Icaza */
 
 /* Frame buffer types */
-#घोषणा FBTYPE_NOTYPE           -1
-#घोषणा FBTYPE_SUN1BW           0   /* mono */
-#घोषणा FBTYPE_SUN1COLOR        1 
-#घोषणा FBTYPE_SUN2BW           2 
-#घोषणा FBTYPE_SUN2COLOR        3 
-#घोषणा FBTYPE_SUN2GP           4 
-#घोषणा FBTYPE_SUN5COLOR        5 
-#घोषणा FBTYPE_SUN3COLOR        6 
-#घोषणा FBTYPE_MEMCOLOR         7 
-#घोषणा FBTYPE_SUN4COLOR        8 
+#define FBTYPE_NOTYPE           -1
+#define FBTYPE_SUN1BW           0   /* mono */
+#define FBTYPE_SUN1COLOR        1 
+#define FBTYPE_SUN2BW           2 
+#define FBTYPE_SUN2COLOR        3 
+#define FBTYPE_SUN2GP           4 
+#define FBTYPE_SUN5COLOR        5 
+#define FBTYPE_SUN3COLOR        6 
+#define FBTYPE_MEMCOLOR         7 
+#define FBTYPE_SUN4COLOR        8 
  
-#घोषणा FBTYPE_NOTSUN1          9 
-#घोषणा FBTYPE_NOTSUN2          10
-#घोषणा FBTYPE_NOTSUN3          11
+#define FBTYPE_NOTSUN1          9 
+#define FBTYPE_NOTSUN2          10
+#define FBTYPE_NOTSUN3          11
  
-#घोषणा FBTYPE_SUNFAST_COLOR    12  /* cg6 */
-#घोषणा FBTYPE_SUNROP_COLOR     13
-#घोषणा FBTYPE_SUNFB_VIDEO      14
-#घोषणा FBTYPE_SUNGIFB          15
-#घोषणा FBTYPE_SUNGPLAS         16
-#घोषणा FBTYPE_SUNGP3           17
-#घोषणा FBTYPE_SUNGT            18
-#घोषणा FBTYPE_SUNLEO           19      /* zx Leo card */
-#घोषणा FBTYPE_MDICOLOR         20      /* cg14 */
-#घोषणा FBTYPE_TCXCOLOR		21	/* SUNW,tcx card */
+#define FBTYPE_SUNFAST_COLOR    12  /* cg6 */
+#define FBTYPE_SUNROP_COLOR     13
+#define FBTYPE_SUNFB_VIDEO      14
+#define FBTYPE_SUNGIFB          15
+#define FBTYPE_SUNGPLAS         16
+#define FBTYPE_SUNGP3           17
+#define FBTYPE_SUNGT            18
+#define FBTYPE_SUNLEO           19      /* zx Leo card */
+#define FBTYPE_MDICOLOR         20      /* cg14 */
+#define FBTYPE_TCXCOLOR		21	/* SUNW,tcx card */
 
-#घोषणा FBTYPE_LASTPLUSONE      21	/* This is not last + 1 in fact... */
+#define FBTYPE_LASTPLUSONE      21	/* This is not last + 1 in fact... */
 
 /* Does not seem to be listed in the Sun file either */
-#घोषणा FBTYPE_CREATOR          22
-#घोषणा FBTYPE_PCI_IGA1682	23
-#घोषणा FBTYPE_P9100COLOR	24
+#define FBTYPE_CREATOR          22
+#define FBTYPE_PCI_IGA1682	23
+#define FBTYPE_P9100COLOR	24
 
-#घोषणा FBTYPE_PCI_GENERIC	1000
-#घोषणा FBTYPE_PCI_MACH64	1001
+#define FBTYPE_PCI_GENERIC	1000
+#define FBTYPE_PCI_MACH64	1001
 
 /* fbio ioctls */
 /* Returned by FBIOGTYPE */
-काष्ठा  fbtype अणु
-        पूर्णांक     fb_type;        /* fb type, see above */
-        पूर्णांक     fb_height;      /* pixels */
-        पूर्णांक     fb_width;       /* pixels */
-        पूर्णांक     fb_depth;
-        पूर्णांक     fb_cmsize;      /* color map entries */
-        पूर्णांक     fb_size;        /* fb size in bytes */
-पूर्ण;
-#घोषणा FBIOGTYPE _IOR('F', 0, काष्ठा fbtype)
+struct  fbtype {
+        int     fb_type;        /* fb type, see above */
+        int     fb_height;      /* pixels */
+        int     fb_width;       /* pixels */
+        int     fb_depth;
+        int     fb_cmsize;      /* color map entries */
+        int     fb_size;        /* fb size in bytes */
+};
+#define FBIOGTYPE _IOR('F', 0, struct fbtype)
 
-काष्ठा  fbcmap अणु
-        पूर्णांक             index;          /* first element (0 origin) */
-        पूर्णांक             count;
-        अचिन्हित अक्षर   __user *red;
-        अचिन्हित अक्षर   __user *green;
-        अचिन्हित अक्षर   __user *blue;
-पूर्ण;
+struct  fbcmap {
+        int             index;          /* first element (0 origin) */
+        int             count;
+        unsigned char   __user *red;
+        unsigned char   __user *green;
+        unsigned char   __user *blue;
+};
 
-#अगर_अघोषित __KERNEL__
-#घोषणा FBIOPUTCMAP _IOW('F', 3, काष्ठा fbcmap)
-#घोषणा FBIOGETCMAP _IOW('F', 4, काष्ठा fbcmap)
-#पूर्ण_अगर
+#ifndef __KERNEL__
+#define FBIOPUTCMAP _IOW('F', 3, struct fbcmap)
+#define FBIOGETCMAP _IOW('F', 4, struct fbcmap)
+#endif
 
-/* # of device specअगरic values */
-#घोषणा FB_ATTR_NDEVSPECIFIC    8
+/* # of device specific values */
+#define FB_ATTR_NDEVSPECIFIC    8
 /* # of possible emulations */
-#घोषणा FB_ATTR_NEMUTYPES       4
+#define FB_ATTR_NEMUTYPES       4
  
-काष्ठा fbsattr अणु
-        पूर्णांक     flags;
-        पूर्णांक     emu_type;	/* -1 अगर none */
-        पूर्णांक     dev_specअगरic[FB_ATTR_NDEVSPECIFIC];
-पूर्ण;
+struct fbsattr {
+        int     flags;
+        int     emu_type;	/* -1 if none */
+        int     dev_specific[FB_ATTR_NDEVSPECIFIC];
+};
  
-काष्ठा fbgattr अणु
-        पूर्णांक     real_type;	/* real frame buffer type */
-        पूर्णांक     owner;		/* unknown */
-        काष्ठा fbtype fbtype;	/* real frame buffer fbtype */
-        काष्ठा fbsattr sattr;   
-        पूर्णांक     emu_types[FB_ATTR_NEMUTYPES]; /* supported emulations */
-पूर्ण;
-#घोषणा FBIOSATTR  _IOW('F', 5, काष्ठा fbgattr) /* Unsupported: */
-#घोषणा FBIOGATTR  _IOR('F', 6, काष्ठा fbgattr)	/* supported */
+struct fbgattr {
+        int     real_type;	/* real frame buffer type */
+        int     owner;		/* unknown */
+        struct fbtype fbtype;	/* real frame buffer fbtype */
+        struct fbsattr sattr;   
+        int     emu_types[FB_ATTR_NEMUTYPES]; /* supported emulations */
+};
+#define FBIOSATTR  _IOW('F', 5, struct fbgattr) /* Unsupported: */
+#define FBIOGATTR  _IOR('F', 6, struct fbgattr)	/* supported */
 
-#घोषणा FBIOSVIDEO _IOW('F', 7, पूर्णांक)
-#घोषणा FBIOGVIDEO _IOR('F', 8, पूर्णांक)
+#define FBIOSVIDEO _IOW('F', 7, int)
+#define FBIOGVIDEO _IOR('F', 8, int)
 
-काष्ठा fbcursor अणु
-        लघु set;              /* what to set, choose from the list above */
-        लघु enable;           /* cursor on/off */
-        काष्ठा fbcurpos pos;    /* cursor position */
-        काष्ठा fbcurpos hot;    /* cursor hot spot */
-        काष्ठा fbcmap cmap;     /* color map info */
-        काष्ठा fbcurpos size;   /* cursor bit map size */
-        अक्षर __user *image;     /* cursor image bits */
-        अक्षर __user *mask;      /* cursor mask bits */
-पूर्ण;
+struct fbcursor {
+        short set;              /* what to set, choose from the list above */
+        short enable;           /* cursor on/off */
+        struct fbcurpos pos;    /* cursor position */
+        struct fbcurpos hot;    /* cursor hot spot */
+        struct fbcmap cmap;     /* color map info */
+        struct fbcurpos size;   /* cursor bit map size */
+        char __user *image;     /* cursor image bits */
+        char __user *mask;      /* cursor mask bits */
+};
 
 /* set/get cursor attributes/shape */
-#घोषणा FBIOSCURSOR     _IOW('F', 24, काष्ठा fbcursor)
-#घोषणा FBIOGCURSOR     _IOWR('F', 25, काष्ठा fbcursor)
+#define FBIOSCURSOR     _IOW('F', 24, struct fbcursor)
+#define FBIOGCURSOR     _IOWR('F', 25, struct fbcursor)
  
 /* set/get cursor position */
-#घोषणा FBIOSCURPOS     _IOW('F', 26, काष्ठा fbcurpos)
-#घोषणा FBIOGCURPOS     _IOW('F', 27, काष्ठा fbcurpos)
+#define FBIOSCURPOS     _IOW('F', 26, struct fbcurpos)
+#define FBIOGCURPOS     _IOW('F', 27, struct fbcurpos)
  
 /* get max cursor size */
-#घोषणा FBIOGCURMAX     _IOR('F', 28, काष्ठा fbcurpos)
+#define FBIOGCURMAX     _IOR('F', 28, struct fbcurpos)
 
 /* wid manipulation */
-काष्ठा fb_wid_alloc अणु
-#घोषणा FB_WID_SHARED_8		0
-#घोषणा FB_WID_SHARED_24	1
-#घोषणा FB_WID_DBL_8		2
-#घोषणा FB_WID_DBL_24		3
+struct fb_wid_alloc {
+#define FB_WID_SHARED_8		0
+#define FB_WID_SHARED_24	1
+#define FB_WID_DBL_8		2
+#define FB_WID_DBL_24		3
 	__u32	wa_type;
-	__s32	wa_index;	/* Set on वापस */
+	__s32	wa_index;	/* Set on return */
 	__u32	wa_count;	
-पूर्ण;
-काष्ठा fb_wid_item अणु
+};
+struct fb_wid_item {
 	__u32	wi_type;
 	__s32	wi_index;
 	__u32	wi_attrs;
 	__u32	wi_values[32];
-पूर्ण;
-काष्ठा fb_wid_list अणु
+};
+struct fb_wid_list {
 	__u32	wl_flags;
 	__u32	wl_count;
-	काष्ठा fb_wid_item	*wl_list;
-पूर्ण;
+	struct fb_wid_item	*wl_list;
+};
 
-#घोषणा FBIO_WID_ALLOC	_IOWR('F', 30, काष्ठा fb_wid_alloc)
-#घोषणा FBIO_WID_FREE	_IOW('F', 31, काष्ठा fb_wid_alloc)
-#घोषणा FBIO_WID_PUT	_IOW('F', 32, काष्ठा fb_wid_list)
-#घोषणा FBIO_WID_GET	_IOWR('F', 33, काष्ठा fb_wid_list)
+#define FBIO_WID_ALLOC	_IOWR('F', 30, struct fb_wid_alloc)
+#define FBIO_WID_FREE	_IOW('F', 31, struct fb_wid_alloc)
+#define FBIO_WID_PUT	_IOW('F', 32, struct fb_wid_list)
+#define FBIO_WID_GET	_IOWR('F', 33, struct fb_wid_list)
 
 /* Creator ioctls */
-#घोषणा FFB_IOCTL	('F'<<8)
-#घोषणा FFB_SYS_INFO		(FFB_IOCTL|80)
-#घोषणा FFB_CLUTREAD		(FFB_IOCTL|81)
-#घोषणा FFB_CLUTPOST		(FFB_IOCTL|82)
-#घोषणा FFB_SETDIAGMODE		(FFB_IOCTL|83)
-#घोषणा FFB_GETMONITORID	(FFB_IOCTL|84)
-#घोषणा FFB_GETVIDEOMODE	(FFB_IOCTL|85)
-#घोषणा FFB_SETVIDEOMODE	(FFB_IOCTL|86)
-#घोषणा FFB_SETSERVER		(FFB_IOCTL|87)
-#घोषणा FFB_SETOVCTL		(FFB_IOCTL|88)
-#घोषणा FFB_GETOVCTL		(FFB_IOCTL|89)
-#घोषणा FFB_GETSAXNUM		(FFB_IOCTL|90)
-#घोषणा FFB_FBDEBUG		(FFB_IOCTL|91)
+#define FFB_IOCTL	('F'<<8)
+#define FFB_SYS_INFO		(FFB_IOCTL|80)
+#define FFB_CLUTREAD		(FFB_IOCTL|81)
+#define FFB_CLUTPOST		(FFB_IOCTL|82)
+#define FFB_SETDIAGMODE		(FFB_IOCTL|83)
+#define FFB_GETMONITORID	(FFB_IOCTL|84)
+#define FFB_GETVIDEOMODE	(FFB_IOCTL|85)
+#define FFB_SETVIDEOMODE	(FFB_IOCTL|86)
+#define FFB_SETSERVER		(FFB_IOCTL|87)
+#define FFB_SETOVCTL		(FFB_IOCTL|88)
+#define FFB_GETOVCTL		(FFB_IOCTL|89)
+#define FFB_GETSAXNUM		(FFB_IOCTL|90)
+#define FFB_FBDEBUG		(FFB_IOCTL|91)
 
 /* Cg14 ioctls */
-#घोषणा MDI_IOCTL          ('M'<<8)
-#घोषणा MDI_RESET          (MDI_IOCTL|1)
-#घोषणा MDI_GET_CFGINFO    (MDI_IOCTL|2)
-#घोषणा MDI_SET_PIXELMODE  (MDI_IOCTL|3)
+#define MDI_IOCTL          ('M'<<8)
+#define MDI_RESET          (MDI_IOCTL|1)
+#define MDI_GET_CFGINFO    (MDI_IOCTL|2)
+#define MDI_SET_PIXELMODE  (MDI_IOCTL|3)
 #    define MDI_32_PIX     32
 #    define MDI_16_PIX     16
 #    define MDI_8_PIX      8
 
-काष्ठा mdi_cfginfo अणु
-	पूर्णांक     mdi_ncluts;     /* Number of implemented CLUTs in this MDI */
-        पूर्णांक     mdi_type;       /* FBTYPE name */
-        पूर्णांक     mdi_height;     /* height */
-        पूर्णांक     mdi_width;      /* width */
-        पूर्णांक     mdi_size;       /* available ram */
-        पूर्णांक     mdi_mode;       /* 8bpp, 16bpp or 32bpp */
-        पूर्णांक     mdi_pixfreq;    /* pixel घड़ी (from PROM) */
-पूर्ण;
+struct mdi_cfginfo {
+	int     mdi_ncluts;     /* Number of implemented CLUTs in this MDI */
+        int     mdi_type;       /* FBTYPE name */
+        int     mdi_height;     /* height */
+        int     mdi_width;      /* width */
+        int     mdi_size;       /* available ram */
+        int     mdi_mode;       /* 8bpp, 16bpp or 32bpp */
+        int     mdi_pixfreq;    /* pixel clock (from PROM) */
+};
 
-/* SparcLinux specअगरic ioctl क्रम the MDI, should be replaced क्रम
+/* SparcLinux specific ioctl for the MDI, should be replaced for
  * the SET_XLUT/SET_CLUTn ioctls instead
  */
-#घोषणा MDI_CLEAR_XLUT       (MDI_IOCTL|9)
+#define MDI_CLEAR_XLUT       (MDI_IOCTL|9)
 
 /* leo & ffb ioctls */
-काष्ठा fb_clut_alloc अणु
-	__u32	clutid;	/* Set on वापस */
+struct fb_clut_alloc {
+	__u32	clutid;	/* Set on return */
  	__u32	flag;
  	__u32	index;
-पूर्ण;
+};
 
-काष्ठा fb_clut अणु
-#घोषणा FB_CLUT_WAIT	0x00000001	/* Not yet implemented */
+struct fb_clut {
+#define FB_CLUT_WAIT	0x00000001	/* Not yet implemented */
  	__u32	flag;
  	__u32	clutid;
  	__u32	offset;
  	__u32	count;
- 	अक्षर *	red;
- 	अक्षर *	green;
- 	अक्षर *	blue;
-पूर्ण;
+ 	char *	red;
+ 	char *	green;
+ 	char *	blue;
+};
 
-काष्ठा fb_clut32 अणु
+struct fb_clut32 {
  	__u32	flag;
  	__u32	clutid;
  	__u32	offset;
@@ -209,53 +208,53 @@
  	__u32	red;
  	__u32	green;
  	__u32	blue;
-पूर्ण;
+};
 
-#घोषणा LEO_CLUTALLOC	_IOWR('L', 53, काष्ठा fb_clut_alloc)
-#घोषणा LEO_CLUTFREE	_IOW('L', 54, काष्ठा fb_clut_alloc)
-#घोषणा LEO_CLUTREAD	_IOW('L', 55, काष्ठा fb_clut)
-#घोषणा LEO_CLUTPOST	_IOW('L', 56, काष्ठा fb_clut)
-#घोषणा LEO_SETGAMMA	_IOW('L', 68, पूर्णांक) /* Not yet implemented */
-#घोषणा LEO_GETGAMMA	_IOR('L', 69, पूर्णांक) /* Not yet implemented */
+#define LEO_CLUTALLOC	_IOWR('L', 53, struct fb_clut_alloc)
+#define LEO_CLUTFREE	_IOW('L', 54, struct fb_clut_alloc)
+#define LEO_CLUTREAD	_IOW('L', 55, struct fb_clut)
+#define LEO_CLUTPOST	_IOW('L', 56, struct fb_clut)
+#define LEO_SETGAMMA	_IOW('L', 68, int) /* Not yet implemented */
+#define LEO_GETGAMMA	_IOR('L', 69, int) /* Not yet implemented */
 
 
-/* These are exported to userland क्रम applications to use */
-/* Mappable offsets क्रम the cg14: control रेजिस्टरs */
-#घोषणा MDI_सूचीECT_MAP 0x10000000
-#घोषणा MDI_CTLREG_MAP 0x20000000
-#घोषणा MDI_CURSOR_MAP 0x30000000
-#घोषणा MDI_SHDW_VRT_MAP 0x40000000
+/* These are exported to userland for applications to use */
+/* Mappable offsets for the cg14: control registers */
+#define MDI_DIRECT_MAP 0x10000000
+#define MDI_CTLREG_MAP 0x20000000
+#define MDI_CURSOR_MAP 0x30000000
+#define MDI_SHDW_VRT_MAP 0x40000000
 
-/* Mappable offsets क्रम the cg14: frame buffer resolutions */
+/* Mappable offsets for the cg14: frame buffer resolutions */
 /* 32 bits */
-#घोषणा MDI_CHUNKY_XBGR_MAP 0x50000000
-#घोषणा MDI_CHUNKY_BGR_MAP 0x60000000
+#define MDI_CHUNKY_XBGR_MAP 0x50000000
+#define MDI_CHUNKY_BGR_MAP 0x60000000
 
 /* 16 bits */
-#घोषणा MDI_PLANAR_X16_MAP 0x70000000
-#घोषणा MDI_PLANAR_C16_MAP 0x80000000
+#define MDI_PLANAR_X16_MAP 0x70000000
+#define MDI_PLANAR_C16_MAP 0x80000000
 
-/* 8 bit is करोne as CG3 MMAP offset */
+/* 8 bit is done as CG3 MMAP offset */
 /* 32 bits, planar */
-#घोषणा MDI_PLANAR_X32_MAP 0x90000000
-#घोषणा MDI_PLANAR_B32_MAP 0xa0000000
-#घोषणा MDI_PLANAR_G32_MAP 0xb0000000
-#घोषणा MDI_PLANAR_R32_MAP 0xc0000000
+#define MDI_PLANAR_X32_MAP 0x90000000
+#define MDI_PLANAR_B32_MAP 0xa0000000
+#define MDI_PLANAR_G32_MAP 0xb0000000
+#define MDI_PLANAR_R32_MAP 0xc0000000
 
 /* Mappable offsets on leo */
-#घोषणा LEO_SS0_MAP            0x00000000
-#घोषणा LEO_LC_SS0_USR_MAP     0x00800000
-#घोषणा LEO_LD_SS0_MAP         0x00801000
-#घोषणा LEO_LX_CURSOR_MAP      0x00802000
-#घोषणा LEO_SS1_MAP            0x00803000
-#घोषणा LEO_LC_SS1_USR_MAP     0x01003000
-#घोषणा LEO_LD_SS1_MAP         0x01004000
-#घोषणा LEO_UNK_MAP            0x01005000
-#घोषणा LEO_LX_KRN_MAP         0x01006000
-#घोषणा LEO_LC_SS0_KRN_MAP     0x01007000
-#घोषणा LEO_LC_SS1_KRN_MAP     0x01008000
-#घोषणा LEO_LD_GBL_MAP         0x01009000
-#घोषणा LEO_UNK2_MAP           0x0100a000
+#define LEO_SS0_MAP            0x00000000
+#define LEO_LC_SS0_USR_MAP     0x00800000
+#define LEO_LD_SS0_MAP         0x00801000
+#define LEO_LX_CURSOR_MAP      0x00802000
+#define LEO_SS1_MAP            0x00803000
+#define LEO_LC_SS1_USR_MAP     0x01003000
+#define LEO_LD_SS1_MAP         0x01004000
+#define LEO_UNK_MAP            0x01005000
+#define LEO_LX_KRN_MAP         0x01006000
+#define LEO_LC_SS0_KRN_MAP     0x01007000
+#define LEO_LC_SS1_KRN_MAP     0x01008000
+#define LEO_LD_GBL_MAP         0x01009000
+#define LEO_UNK2_MAP           0x0100a000
 
 
-#पूर्ण_अगर /* _UAPI__LINUX_FBIO_H */
+#endif /* _UAPI__LINUX_FBIO_H */

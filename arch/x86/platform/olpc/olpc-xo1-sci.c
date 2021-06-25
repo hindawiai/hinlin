@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Support क्रम OLPC XO-1 System Control Interrupts (SCI)
+ * Support for OLPC XO-1 System Control Interrupts (SCI)
  *
  * Copyright (C) 2010 One Laptop per Child
  * Copyright (C) 2006 Red Hat, Inc.
  * Copyright (C) 2006 Advanced Micro Devices, Inc.
  */
 
-#समावेश <linux/cs5535.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_wakeup.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/olpc-ec.h>
+#include <linux/cs5535.h>
+#include <linux/device.h>
+#include <linux/gpio.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/pm_wakeup.h>
+#include <linux/power_supply.h>
+#include <linux/suspend.h>
+#include <linux/workqueue.h>
+#include <linux/olpc-ec.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/olpc.h>
+#include <asm/io.h>
+#include <asm/msr.h>
+#include <asm/olpc.h>
 
-#घोषणा DRV_NAME	"olpc-xo1-sci"
-#घोषणा PFX		DRV_NAME ": "
+#define DRV_NAME	"olpc-xo1-sci"
+#define PFX		DRV_NAME ": "
 
-अटल अचिन्हित दीर्घ acpi_base;
-अटल काष्ठा input_dev *घातer_button_idev;
-अटल काष्ठा input_dev *ebook_चयन_idev;
-अटल काष्ठा input_dev *lid_चयन_idev;
+static unsigned long acpi_base;
+static struct input_dev *power_button_idev;
+static struct input_dev *ebook_switch_idev;
+static struct input_dev *lid_switch_idev;
 
-अटल पूर्णांक sci_irq;
+static int sci_irq;
 
-अटल bool lid_खोलो;
-अटल bool lid_inverted;
-अटल पूर्णांक lid_wake_mode;
+static bool lid_open;
+static bool lid_inverted;
+static int lid_wake_mode;
 
-क्रमागत lid_wake_modes अणु
+enum lid_wake_modes {
 	LID_WAKE_ALWAYS,
 	LID_WAKE_OPEN,
 	LID_WAKE_CLOSE,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर lid_wake_mode_names[] = अणु
+static const char * const lid_wake_mode_names[] = {
 	[LID_WAKE_ALWAYS] = "always",
 	[LID_WAKE_OPEN] = "open",
 	[LID_WAKE_CLOSE] = "close",
-पूर्ण;
+};
 
-अटल व्योम battery_status_changed(व्योम)
-अणु
-	काष्ठा घातer_supply *psy = घातer_supply_get_by_name("olpc_battery");
+static void battery_status_changed(void)
+{
+	struct power_supply *psy = power_supply_get_by_name("olpc_battery");
 
-	अगर (psy) अणु
-		घातer_supply_changed(psy);
-		घातer_supply_put(psy);
-	पूर्ण
-पूर्ण
+	if (psy) {
+		power_supply_changed(psy);
+		power_supply_put(psy);
+	}
+}
 
-अटल व्योम ac_status_changed(व्योम)
-अणु
-	काष्ठा घातer_supply *psy = घातer_supply_get_by_name("olpc_ac");
+static void ac_status_changed(void)
+{
+	struct power_supply *psy = power_supply_get_by_name("olpc_ac");
 
-	अगर (psy) अणु
-		घातer_supply_changed(psy);
-		घातer_supply_put(psy);
-	पूर्ण
-पूर्ण
+	if (psy) {
+		power_supply_changed(psy);
+		power_supply_put(psy);
+	}
+}
 
-/* Report current ebook चयन state through input layer */
-अटल व्योम send_ebook_state(व्योम)
-अणु
-	अचिन्हित अक्षर state;
+/* Report current ebook switch state through input layer */
+static void send_ebook_state(void)
+{
+	unsigned char state;
 
-	अगर (olpc_ec_cmd(EC_READ_EB_MODE, शून्य, 0, &state, 1)) अणु
+	if (olpc_ec_cmd(EC_READ_EB_MODE, NULL, 0, &state, 1)) {
 		pr_err(PFX "failed to get ebook state\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!!test_bit(SW_TABLET_MODE, ebook_चयन_idev->sw) == state)
-		वापस; /* Nothing new to report. */
+	if (!!test_bit(SW_TABLET_MODE, ebook_switch_idev->sw) == state)
+		return; /* Nothing new to report. */
 
-	input_report_चयन(ebook_चयन_idev, SW_TABLET_MODE, state);
-	input_sync(ebook_चयन_idev);
-	pm_wakeup_event(&ebook_चयन_idev->dev, 0);
-पूर्ण
+	input_report_switch(ebook_switch_idev, SW_TABLET_MODE, state);
+	input_sync(ebook_switch_idev);
+	pm_wakeup_event(&ebook_switch_idev->dev, 0);
+}
 
-अटल व्योम flip_lid_inverter(व्योम)
-अणु
-	/* gpio is high; invert so we'll get l->h event पूर्णांकerrupt */
-	अगर (lid_inverted)
+static void flip_lid_inverter(void)
+{
+	/* gpio is high; invert so we'll get l->h event interrupt */
+	if (lid_inverted)
 		cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_INPUT_INVERT);
-	अन्यथा
+	else
 		cs5535_gpio_set(OLPC_GPIO_LID, GPIO_INPUT_INVERT);
 	lid_inverted = !lid_inverted;
-पूर्ण
+}
 
-अटल व्योम detect_lid_state(व्योम)
-अणु
+static void detect_lid_state(void)
+{
 	/*
-	 * the edge detector hookup on the gpio inमाला_दो on the geode is
+	 * the edge detector hookup on the gpio inputs on the geode is
 	 * odd, to say the least.  See http://dev.laptop.org/ticket/5703
-	 * क्रम details, but in a nutshell:  we करोn't use the edge
+	 * for details, but in a nutshell:  we don't use the edge
 	 * detectors.  instead, we make use of an anomaly:  with the both
 	 * edge detectors turned off, we still get an edge event on a
 	 * positive edge transition.  to take advantage of this, we use the
@@ -112,108 +111,108 @@
 	 * going to see next.
 	 */
 
-	पूर्णांक state;
+	int state;
 
 	state = cs5535_gpio_isset(OLPC_GPIO_LID, GPIO_READ_BACK);
-	lid_खोलो = !state ^ !lid_inverted; /* x ^^ y */
-	अगर (!state)
-		वापस;
+	lid_open = !state ^ !lid_inverted; /* x ^^ y */
+	if (!state)
+		return;
 
 	flip_lid_inverter();
-पूर्ण
+}
 
-/* Report current lid चयन state through input layer */
-अटल व्योम send_lid_state(व्योम)
-अणु
-	अगर (!!test_bit(SW_LID, lid_चयन_idev->sw) == !lid_खोलो)
-		वापस; /* Nothing new to report. */
+/* Report current lid switch state through input layer */
+static void send_lid_state(void)
+{
+	if (!!test_bit(SW_LID, lid_switch_idev->sw) == !lid_open)
+		return; /* Nothing new to report. */
 
-	input_report_चयन(lid_चयन_idev, SW_LID, !lid_खोलो);
-	input_sync(lid_चयन_idev);
-	pm_wakeup_event(&lid_चयन_idev->dev, 0);
-पूर्ण
+	input_report_switch(lid_switch_idev, SW_LID, !lid_open);
+	input_sync(lid_switch_idev);
+	pm_wakeup_event(&lid_switch_idev->dev, 0);
+}
 
-अटल sमाप_प्रकार lid_wake_mode_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	स्थिर अक्षर *mode = lid_wake_mode_names[lid_wake_mode];
-	वापस प्र_लिखो(buf, "%s\n", mode);
-पूर्ण
-अटल sमाप_प्रकार lid_wake_mode_set(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < ARRAY_SIZE(lid_wake_mode_names); i++) अणु
-		स्थिर अक्षर *mode = lid_wake_mode_names[i];
-		अगर (म_माप(mode) != count || strnहालcmp(mode, buf, count))
-			जारी;
+static ssize_t lid_wake_mode_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	const char *mode = lid_wake_mode_names[lid_wake_mode];
+	return sprintf(buf, "%s\n", mode);
+}
+static ssize_t lid_wake_mode_set(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(lid_wake_mode_names); i++) {
+		const char *mode = lid_wake_mode_names[i];
+		if (strlen(mode) != count || strncasecmp(mode, buf, count))
+			continue;
 
 		lid_wake_mode = i;
-		वापस count;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
-अटल DEVICE_ATTR(lid_wake_mode, S_IWUSR | S_IRUGO, lid_wake_mode_show,
+		return count;
+	}
+	return -EINVAL;
+}
+static DEVICE_ATTR(lid_wake_mode, S_IWUSR | S_IRUGO, lid_wake_mode_show,
 		   lid_wake_mode_set);
 
-अटल काष्ठा attribute *lid_attrs[] = अणु
+static struct attribute *lid_attrs[] = {
 	&dev_attr_lid_wake_mode.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(lid);
 
 /*
  * Process all items in the EC's SCI queue.
  *
  * This is handled in a workqueue because olpc_ec_cmd can be slow (and
- * can even समयout).
+ * can even timeout).
  *
  * If propagate_events is false, the queue is drained without events being
- * generated क्रम the पूर्णांकerrupts.
+ * generated for the interrupts.
  */
-अटल व्योम process_sci_queue(bool propagate_events)
-अणु
-	पूर्णांक r;
+static void process_sci_queue(bool propagate_events)
+{
+	int r;
 	u16 data;
 
-	करो अणु
+	do {
 		r = olpc_ec_sci_query(&data);
-		अगर (r || !data)
-			अवरोध;
+		if (r || !data)
+			break;
 
 		pr_debug(PFX "SCI 0x%x received\n", data);
 
-		चयन (data) अणु
-		हाल EC_SCI_SRC_BATERR:
-		हाल EC_SCI_SRC_BATSOC:
-		हाल EC_SCI_SRC_BATTERY:
-		हाल EC_SCI_SRC_BATCRIT:
+		switch (data) {
+		case EC_SCI_SRC_BATERR:
+		case EC_SCI_SRC_BATSOC:
+		case EC_SCI_SRC_BATTERY:
+		case EC_SCI_SRC_BATCRIT:
 			battery_status_changed();
-			अवरोध;
-		हाल EC_SCI_SRC_ACPWR:
+			break;
+		case EC_SCI_SRC_ACPWR:
 			ac_status_changed();
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (data == EC_SCI_SRC_EBOOK && propagate_events)
+		if (data == EC_SCI_SRC_EBOOK && propagate_events)
 			send_ebook_state();
-	पूर्ण जबतक (data);
+	} while (data);
 
-	अगर (r)
+	if (r)
 		pr_err(PFX "Failed to clear SCI queue");
-पूर्ण
+}
 
-अटल व्योम process_sci_queue_work(काष्ठा work_काष्ठा *work)
-अणु
+static void process_sci_queue_work(struct work_struct *work)
+{
 	process_sci_queue(true);
-पूर्ण
+}
 
-अटल DECLARE_WORK(sci_work, process_sci_queue_work);
+static DECLARE_WORK(sci_work, process_sci_queue_work);
 
-अटल irqवापस_t xo1_sci_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
+static irqreturn_t xo1_sci_intr(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
 	u32 sts;
 	u32 gpe;
 
@@ -225,61 +224,61 @@ ATTRIBUTE_GROUPS(lid);
 
 	dev_dbg(&pdev->dev, "sts %x gpe %x\n", sts, gpe);
 
-	अगर (sts & CS5536_PWRBTN_FLAG) अणु
-		अगर (!(sts & CS5536_WAK_FLAG)) अणु
-			/* Only report घातer button input when it was pressed
+	if (sts & CS5536_PWRBTN_FLAG) {
+		if (!(sts & CS5536_WAK_FLAG)) {
+			/* Only report power button input when it was pressed
 			 * during regular operation (as opposed to when it
-			 * was used to wake the प्रणाली). */
-			input_report_key(घातer_button_idev, KEY_POWER, 1);
-			input_sync(घातer_button_idev);
-			input_report_key(घातer_button_idev, KEY_POWER, 0);
-			input_sync(घातer_button_idev);
-		पूर्ण
-		/* Report the wakeup event in all हालs. */
-		pm_wakeup_event(&घातer_button_idev->dev, 0);
-	पूर्ण
+			 * was used to wake the system). */
+			input_report_key(power_button_idev, KEY_POWER, 1);
+			input_sync(power_button_idev);
+			input_report_key(power_button_idev, KEY_POWER, 0);
+			input_sync(power_button_idev);
+		}
+		/* Report the wakeup event in all cases. */
+		pm_wakeup_event(&power_button_idev->dev, 0);
+	}
 
-	अगर ((sts & (CS5536_RTC_FLAG | CS5536_WAK_FLAG)) ==
-			(CS5536_RTC_FLAG | CS5536_WAK_FLAG)) अणु
-		/* When the प्रणाली is woken by the RTC alarm, report the
+	if ((sts & (CS5536_RTC_FLAG | CS5536_WAK_FLAG)) ==
+			(CS5536_RTC_FLAG | CS5536_WAK_FLAG)) {
+		/* When the system is woken by the RTC alarm, report the
 		 * event on the rtc device. */
-		काष्ठा device *rtc = bus_find_device_by_name(
-			&platक्रमm_bus_type, शून्य, "rtc_cmos");
-		अगर (rtc) अणु
+		struct device *rtc = bus_find_device_by_name(
+			&platform_bus_type, NULL, "rtc_cmos");
+		if (rtc) {
 			pm_wakeup_event(rtc, 0);
 			put_device(rtc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (gpe & CS5536_GPIOM7_PME_FLAG) अणु /* EC GPIO */
+	if (gpe & CS5536_GPIOM7_PME_FLAG) { /* EC GPIO */
 		cs5535_gpio_set(OLPC_GPIO_ECSCI, GPIO_NEGATIVE_EDGE_STS);
 		schedule_work(&sci_work);
-	पूर्ण
+	}
 
 	cs5535_gpio_set(OLPC_GPIO_LID, GPIO_NEGATIVE_EDGE_STS);
 	cs5535_gpio_set(OLPC_GPIO_LID, GPIO_POSITIVE_EDGE_STS);
 	detect_lid_state();
 	send_lid_state();
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xo1_sci_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
-	अगर (device_may_wakeup(&घातer_button_idev->dev))
+static int xo1_sci_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	if (device_may_wakeup(&power_button_idev->dev))
 		olpc_xo1_pm_wakeup_set(CS5536_PM_PWRBTN);
-	अन्यथा
+	else
 		olpc_xo1_pm_wakeup_clear(CS5536_PM_PWRBTN);
 
-	अगर (device_may_wakeup(&ebook_चयन_idev->dev))
+	if (device_may_wakeup(&ebook_switch_idev->dev))
 		olpc_ec_wakeup_set(EC_SCI_SRC_EBOOK);
-	अन्यथा
+	else
 		olpc_ec_wakeup_clear(EC_SCI_SRC_EBOOK);
 
-	अगर (!device_may_wakeup(&lid_चयन_idev->dev)) अणु
+	if (!device_may_wakeup(&lid_switch_idev->dev)) {
 		cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_EVENTS_ENABLE);
-	पूर्ण अन्यथा अगर ((lid_खोलो && lid_wake_mode == LID_WAKE_OPEN) ||
-		   (!lid_खोलो && lid_wake_mode == LID_WAKE_CLOSE)) अणु
+	} else if ((lid_open && lid_wake_mode == LID_WAKE_OPEN) ||
+		   (!lid_open && lid_wake_mode == LID_WAKE_CLOSE)) {
 		flip_lid_inverter();
 
 		/* we may have just caused an event */
@@ -287,15 +286,15 @@ ATTRIBUTE_GROUPS(lid);
 		cs5535_gpio_set(OLPC_GPIO_LID, GPIO_POSITIVE_EDGE_STS);
 
 		cs5535_gpio_set(OLPC_GPIO_LID, GPIO_EVENTS_ENABLE);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xo1_sci_resume(काष्ठा platक्रमm_device *pdev)
-अणु
+static int xo1_sci_resume(struct platform_device *pdev)
+{
 	/*
-	 * We करोn't know what may have happened जबतक we were asleep.
+	 * We don't know what may have happened while we were asleep.
 	 * Reestablish our lid setup so we're sure to catch all transitions.
 	 */
 	detect_lid_state();
@@ -303,63 +302,63 @@ ATTRIBUTE_GROUPS(lid);
 	cs5535_gpio_set(OLPC_GPIO_LID, GPIO_EVENTS_ENABLE);
 
 	/* Enable all EC events */
-	olpc_ec_mask_ग_लिखो(EC_SCI_SRC_ALL);
+	olpc_ec_mask_write(EC_SCI_SRC_ALL);
 
 	/* Power/battery status might have changed too */
 	battery_status_changed();
 	ac_status_changed();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक setup_sci_पूर्णांकerrupt(काष्ठा platक्रमm_device *pdev)
-अणु
+static int setup_sci_interrupt(struct platform_device *pdev)
+{
 	u32 lo, hi;
 	u32 sts;
-	पूर्णांक r;
+	int r;
 
 	rdmsr(0x51400020, lo, hi);
 	sci_irq = (lo >> 20) & 15;
 
-	अगर (sci_irq) अणु
+	if (sci_irq) {
 		dev_info(&pdev->dev, "SCI is mapped to IRQ %d\n", sci_irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Zero means masked */
 		dev_info(&pdev->dev, "SCI unmapped. Mapping to IRQ 3\n");
 		sci_irq = 3;
 		lo |= 0x00300000;
 		wrmsrl(0x51400020, lo);
-	पूर्ण
+	}
 
 	/* Select level triggered in PIC */
-	अगर (sci_irq < 8) अणु
+	if (sci_irq < 8) {
 		lo = inb(CS5536_PIC_INT_SEL1);
 		lo |= 1 << sci_irq;
 		outb(lo, CS5536_PIC_INT_SEL1);
-	पूर्ण अन्यथा अणु
+	} else {
 		lo = inb(CS5536_PIC_INT_SEL2);
 		lo |= 1 << (sci_irq - 8);
 		outb(lo, CS5536_PIC_INT_SEL2);
-	पूर्ण
+	}
 
-	/* Enable पूर्णांकeresting SCI events, and clear pending पूर्णांकerrupts */
+	/* Enable interesting SCI events, and clear pending interrupts */
 	sts = inl(acpi_base + CS5536_PM1_STS);
 	outl(((CS5536_PM_PWRBTN | CS5536_PM_RTC) << 16) | 0xffff,
 	     acpi_base + CS5536_PM1_STS);
 
-	r = request_irq(sci_irq, xo1_sci_पूर्णांकr, 0, DRV_NAME, pdev);
-	अगर (r)
+	r = request_irq(sci_irq, xo1_sci_intr, 0, DRV_NAME, pdev);
+	if (r)
 		dev_err(&pdev->dev, "can't request interrupt\n");
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक setup_ec_sci(व्योम)
-अणु
-	पूर्णांक r;
+static int setup_ec_sci(void)
+{
+	int r;
 
 	r = gpio_request(OLPC_GPIO_ECSCI, "OLPC-ECSCI");
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	gpio_direction_input(OLPC_GPIO_ECSCI);
 
@@ -369,48 +368,48 @@ ATTRIBUTE_GROUPS(lid);
 
 	/*
 	 * Enable EC SCI events, and map them to both a PME and the SCI
-	 * पूर्णांकerrupt.
+	 * interrupt.
 	 *
 	 * Ordinarily, in addition to functioning as GPIOs, Geode GPIOs can
-	 * be mapped to regular पूर्णांकerrupts *or* Geode-specअगरic Power
-	 * Management Events (PMEs) - events that bring the प्रणाली out of
-	 * suspend. In this हाल, we want both of those things - the प्रणाली
-	 * wakeup, *and* the ability to get an पूर्णांकerrupt when an event occurs.
+	 * be mapped to regular interrupts *or* Geode-specific Power
+	 * Management Events (PMEs) - events that bring the system out of
+	 * suspend. In this case, we want both of those things - the system
+	 * wakeup, *and* the ability to get an interrupt when an event occurs.
 	 *
 	 * To achieve this, we map the GPIO to a PME, and then we use one
 	 * of the many generic knobs on the CS5535 PIC to additionally map the
-	 * PME to the regular SCI पूर्णांकerrupt line.
+	 * PME to the regular SCI interrupt line.
 	 */
 	cs5535_gpio_set(OLPC_GPIO_ECSCI, GPIO_EVENTS_ENABLE);
 
 	/* Set the SCI to cause a PME event on group 7 */
 	cs5535_gpio_setup_event(OLPC_GPIO_ECSCI, 7, 1);
 
-	/* And have group 7 also fire the SCI पूर्णांकerrupt */
+	/* And have group 7 also fire the SCI interrupt */
 	cs5535_pic_unreqz_select_high(7, sci_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_ec_sci(व्योम)
-अणु
-	gpio_मुक्त(OLPC_GPIO_ECSCI);
-पूर्ण
+static void free_ec_sci(void)
+{
+	gpio_free(OLPC_GPIO_ECSCI);
+}
 
-अटल पूर्णांक setup_lid_events(व्योम)
-अणु
-	पूर्णांक r;
+static int setup_lid_events(void)
+{
+	int r;
 
 	r = gpio_request(OLPC_GPIO_LID, "OLPC-LID");
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	gpio_direction_input(OLPC_GPIO_LID);
 
 	cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_INPUT_INVERT);
 	lid_inverted = 0;
 
-	/* Clear edge detection and event enable क्रम now */
+	/* Clear edge detection and event enable for now */
 	cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_EVENTS_ENABLE);
 	cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_NEGATIVE_EDGE_EN);
 	cs5535_gpio_clear(OLPC_GPIO_LID, GPIO_POSITIVE_EDGE_EN);
@@ -420,151 +419,151 @@ ATTRIBUTE_GROUPS(lid);
 	/* Set the LID to cause an PME event on group 6 */
 	cs5535_gpio_setup_event(OLPC_GPIO_LID, 6, 1);
 
-	/* Set PME group 6 to fire the SCI पूर्णांकerrupt */
+	/* Set PME group 6 to fire the SCI interrupt */
 	cs5535_gpio_set_irq(6, sci_irq);
 
 	/* Enable the event */
 	cs5535_gpio_set(OLPC_GPIO_LID, GPIO_EVENTS_ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_lid_events(व्योम)
-अणु
-	gpio_मुक्त(OLPC_GPIO_LID);
-पूर्ण
+static void free_lid_events(void)
+{
+	gpio_free(OLPC_GPIO_LID);
+}
 
-अटल पूर्णांक setup_घातer_button(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक r;
+static int setup_power_button(struct platform_device *pdev)
+{
+	int r;
 
-	घातer_button_idev = input_allocate_device();
-	अगर (!घातer_button_idev)
-		वापस -ENOMEM;
+	power_button_idev = input_allocate_device();
+	if (!power_button_idev)
+		return -ENOMEM;
 
-	घातer_button_idev->name = "Power Button";
-	घातer_button_idev->phys = DRV_NAME "/input0";
-	set_bit(EV_KEY, घातer_button_idev->evbit);
-	set_bit(KEY_POWER, घातer_button_idev->keybit);
+	power_button_idev->name = "Power Button";
+	power_button_idev->phys = DRV_NAME "/input0";
+	set_bit(EV_KEY, power_button_idev->evbit);
+	set_bit(KEY_POWER, power_button_idev->keybit);
 
-	घातer_button_idev->dev.parent = &pdev->dev;
-	device_init_wakeup(&घातer_button_idev->dev, 1);
+	power_button_idev->dev.parent = &pdev->dev;
+	device_init_wakeup(&power_button_idev->dev, 1);
 
-	r = input_रेजिस्टर_device(घातer_button_idev);
-	अगर (r) अणु
+	r = input_register_device(power_button_idev);
+	if (r) {
 		dev_err(&pdev->dev, "failed to register power button: %d\n", r);
-		input_मुक्त_device(घातer_button_idev);
-	पूर्ण
+		input_free_device(power_button_idev);
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम मुक्त_घातer_button(व्योम)
-अणु
-	input_unरेजिस्टर_device(घातer_button_idev);
-पूर्ण
+static void free_power_button(void)
+{
+	input_unregister_device(power_button_idev);
+}
 
-अटल पूर्णांक setup_ebook_चयन(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक r;
+static int setup_ebook_switch(struct platform_device *pdev)
+{
+	int r;
 
-	ebook_चयन_idev = input_allocate_device();
-	अगर (!ebook_चयन_idev)
-		वापस -ENOMEM;
+	ebook_switch_idev = input_allocate_device();
+	if (!ebook_switch_idev)
+		return -ENOMEM;
 
-	ebook_चयन_idev->name = "EBook Switch";
-	ebook_चयन_idev->phys = DRV_NAME "/input1";
-	set_bit(EV_SW, ebook_चयन_idev->evbit);
-	set_bit(SW_TABLET_MODE, ebook_चयन_idev->swbit);
+	ebook_switch_idev->name = "EBook Switch";
+	ebook_switch_idev->phys = DRV_NAME "/input1";
+	set_bit(EV_SW, ebook_switch_idev->evbit);
+	set_bit(SW_TABLET_MODE, ebook_switch_idev->swbit);
 
-	ebook_चयन_idev->dev.parent = &pdev->dev;
-	device_set_wakeup_capable(&ebook_चयन_idev->dev, true);
+	ebook_switch_idev->dev.parent = &pdev->dev;
+	device_set_wakeup_capable(&ebook_switch_idev->dev, true);
 
-	r = input_रेजिस्टर_device(ebook_चयन_idev);
-	अगर (r) अणु
+	r = input_register_device(ebook_switch_idev);
+	if (r) {
 		dev_err(&pdev->dev, "failed to register ebook switch: %d\n", r);
-		input_मुक्त_device(ebook_चयन_idev);
-	पूर्ण
+		input_free_device(ebook_switch_idev);
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम मुक्त_ebook_चयन(व्योम)
-अणु
-	input_unरेजिस्टर_device(ebook_चयन_idev);
-पूर्ण
+static void free_ebook_switch(void)
+{
+	input_unregister_device(ebook_switch_idev);
+}
 
-अटल पूर्णांक setup_lid_चयन(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक r;
+static int setup_lid_switch(struct platform_device *pdev)
+{
+	int r;
 
-	lid_चयन_idev = input_allocate_device();
-	अगर (!lid_चयन_idev)
-		वापस -ENOMEM;
+	lid_switch_idev = input_allocate_device();
+	if (!lid_switch_idev)
+		return -ENOMEM;
 
-	lid_चयन_idev->name = "Lid Switch";
-	lid_चयन_idev->phys = DRV_NAME "/input2";
-	set_bit(EV_SW, lid_चयन_idev->evbit);
-	set_bit(SW_LID, lid_चयन_idev->swbit);
+	lid_switch_idev->name = "Lid Switch";
+	lid_switch_idev->phys = DRV_NAME "/input2";
+	set_bit(EV_SW, lid_switch_idev->evbit);
+	set_bit(SW_LID, lid_switch_idev->swbit);
 
-	lid_चयन_idev->dev.parent = &pdev->dev;
-	device_set_wakeup_capable(&lid_चयन_idev->dev, true);
+	lid_switch_idev->dev.parent = &pdev->dev;
+	device_set_wakeup_capable(&lid_switch_idev->dev, true);
 
-	r = input_रेजिस्टर_device(lid_चयन_idev);
-	अगर (r) अणु
+	r = input_register_device(lid_switch_idev);
+	if (r) {
 		dev_err(&pdev->dev, "failed to register lid switch: %d\n", r);
-		जाओ err_रेजिस्टर;
-	पूर्ण
+		goto err_register;
+	}
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर:
-	input_मुक्त_device(lid_चयन_idev);
-	वापस r;
-पूर्ण
+err_register:
+	input_free_device(lid_switch_idev);
+	return r;
+}
 
-अटल व्योम मुक्त_lid_चयन(व्योम)
-अणु
-	input_unरेजिस्टर_device(lid_चयन_idev);
-पूर्ण
+static void free_lid_switch(void)
+{
+	input_unregister_device(lid_switch_idev);
+}
 
-अटल पूर्णांक xo1_sci_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक r;
+static int xo1_sci_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	int r;
 
-	/* करोn't run on non-XOs */
-	अगर (!machine_is_olpc())
-		वापस -ENODEV;
+	/* don't run on non-XOs */
+	if (!machine_is_olpc())
+		return -ENODEV;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "can't fetch device resource info\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	acpi_base = res->start;
 
-	r = setup_घातer_button(pdev);
-	अगर (r)
-		वापस r;
+	r = setup_power_button(pdev);
+	if (r)
+		return r;
 
-	r = setup_ebook_चयन(pdev);
-	अगर (r)
-		जाओ err_ebook;
+	r = setup_ebook_switch(pdev);
+	if (r)
+		goto err_ebook;
 
-	r = setup_lid_चयन(pdev);
-	अगर (r)
-		जाओ err_lid;
+	r = setup_lid_switch(pdev);
+	if (r)
+		goto err_lid;
 
 	r = setup_lid_events();
-	अगर (r)
-		जाओ err_lidevt;
+	if (r)
+		goto err_lidevt;
 
 	r = setup_ec_sci();
-	अगर (r)
-		जाओ err_ecsci;
+	if (r)
+		goto err_ecsci;
 
-	/* Enable PME generation क्रम EC-generated events */
+	/* Enable PME generation for EC-generated events */
 	outl(CS5536_GPIOM6_PME_EN | CS5536_GPIOM7_PME_EN,
 		acpi_base + CS5536_PM_GPE0_EN);
 
@@ -577,54 +576,54 @@ err_रेजिस्टर:
 	detect_lid_state();
 	send_lid_state();
 
-	r = setup_sci_पूर्णांकerrupt(pdev);
-	अगर (r)
-		जाओ err_sci;
+	r = setup_sci_interrupt(pdev);
+	if (r)
+		goto err_sci;
 
 	/* Enable all EC events */
-	olpc_ec_mask_ग_लिखो(EC_SCI_SRC_ALL);
+	olpc_ec_mask_write(EC_SCI_SRC_ALL);
 
-	वापस r;
+	return r;
 
 err_sci:
-	मुक्त_ec_sci();
+	free_ec_sci();
 err_ecsci:
-	मुक्त_lid_events();
+	free_lid_events();
 err_lidevt:
-	मुक्त_lid_चयन();
+	free_lid_switch();
 err_lid:
-	मुक्त_ebook_चयन();
+	free_ebook_switch();
 err_ebook:
-	मुक्त_घातer_button();
-	वापस r;
-पूर्ण
+	free_power_button();
+	return r;
+}
 
-अटल पूर्णांक xo1_sci_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	मुक्त_irq(sci_irq, pdev);
+static int xo1_sci_remove(struct platform_device *pdev)
+{
+	free_irq(sci_irq, pdev);
 	cancel_work_sync(&sci_work);
-	मुक्त_ec_sci();
-	मुक्त_lid_events();
-	मुक्त_lid_चयन();
-	मुक्त_ebook_चयन();
-	मुक्त_घातer_button();
+	free_ec_sci();
+	free_lid_events();
+	free_lid_switch();
+	free_ebook_switch();
+	free_power_button();
 	acpi_base = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver xo1_sci_driver = अणु
-	.driver = अणु
+static struct platform_driver xo1_sci_driver = {
+	.driver = {
 		.name = "olpc-xo1-sci-acpi",
 		.dev_groups = lid_groups,
-	पूर्ण,
+	},
 	.probe = xo1_sci_probe,
-	.हटाओ = xo1_sci_हटाओ,
+	.remove = xo1_sci_remove,
 	.suspend = xo1_sci_suspend,
 	.resume = xo1_sci_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xo1_sci_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&xo1_sci_driver);
-पूर्ण
+static int __init xo1_sci_init(void)
+{
+	return platform_driver_register(&xo1_sci_driver);
+}
 arch_initcall(xo1_sci_init);

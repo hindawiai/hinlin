@@ -1,421 +1,420 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2017-2018 Christoph Hellwig.
  */
 
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <trace/events/block.h>
-#समावेश "nvme.h"
+#include <linux/backing-dev.h>
+#include <linux/moduleparam.h>
+#include <trace/events/block.h>
+#include "nvme.h"
 
-अटल bool multipath = true;
+static bool multipath = true;
 module_param(multipath, bool, 0444);
 MODULE_PARM_DESC(multipath,
 	"turn on native support for multiple controllers per subsystem");
 
-व्योम nvme_mpath_unमुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-	काष्ठा nvme_ns_head *h;
+void nvme_mpath_unfreeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
 
-	lockdep_निश्चित_held(&subsys->lock);
-	list_क्रम_each_entry(h, &subsys->nsheads, entry)
-		अगर (h->disk)
-			blk_mq_unमुक्तze_queue(h->disk->queue);
-पूर्ण
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_mq_unfreeze_queue(h->disk->queue);
+}
 
-व्योम nvme_mpath_रुको_मुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-	काष्ठा nvme_ns_head *h;
+void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
 
-	lockdep_निश्चित_held(&subsys->lock);
-	list_क्रम_each_entry(h, &subsys->nsheads, entry)
-		अगर (h->disk)
-			blk_mq_मुक्तze_queue_रुको(h->disk->queue);
-पूर्ण
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_mq_freeze_queue_wait(h->disk->queue);
+}
 
-व्योम nvme_mpath_start_मुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-	काष्ठा nvme_ns_head *h;
+void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
 
-	lockdep_निश्चित_held(&subsys->lock);
-	list_क्रम_each_entry(h, &subsys->nsheads, entry)
-		अगर (h->disk)
-			blk_मुक्तze_queue_start(h->disk->queue);
-पूर्ण
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_freeze_queue_start(h->disk->queue);
+}
 
 /*
- * If multipathing is enabled we need to always use the subप्रणाली instance
- * number क्रम numbering our devices to aव्योम conflicts between subप्रणालीs that
- * have multiple controllers and thus use the multipath-aware subप्रणाली node
+ * If multipathing is enabled we need to always use the subsystem instance
+ * number for numbering our devices to avoid conflicts between subsystems that
+ * have multiple controllers and thus use the multipath-aware subsystem node
  * and those that have a single controller and use the controller node
  * directly.
  */
-bool nvme_mpath_set_disk_name(काष्ठा nvme_ns *ns, अक्षर *disk_name, पूर्णांक *flags)
-अणु
-	अगर (!multipath)
-		वापस false;
-	अगर (!ns->head->disk) अणु
-		प्र_लिखो(disk_name, "nvme%dn%d", ns->ctrl->subsys->instance,
+bool nvme_mpath_set_disk_name(struct nvme_ns *ns, char *disk_name, int *flags)
+{
+	if (!multipath)
+		return false;
+	if (!ns->head->disk) {
+		sprintf(disk_name, "nvme%dn%d", ns->ctrl->subsys->instance,
 			ns->head->instance);
-		वापस true;
-	पूर्ण
-	प्र_लिखो(disk_name, "nvme%dc%dn%d", ns->ctrl->subsys->instance,
+		return true;
+	}
+	sprintf(disk_name, "nvme%dc%dn%d", ns->ctrl->subsys->instance,
 		ns->ctrl->instance, ns->head->instance);
 	*flags = GENHD_FL_HIDDEN;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम nvme_failover_req(काष्ठा request *req)
-अणु
-	काष्ठा nvme_ns *ns = req->q->queuedata;
+void nvme_failover_req(struct request *req)
+{
+	struct nvme_ns *ns = req->q->queuedata;
 	u16 status = nvme_req(req)->status & 0x7ff;
-	अचिन्हित दीर्घ flags;
-	काष्ठा bio *bio;
+	unsigned long flags;
+	struct bio *bio;
 
 	nvme_mpath_clear_current_path(ns);
 
 	/*
 	 * If we got back an ANA error, we know the controller is alive but not
-	 * पढ़ोy to serve this namespace.  Kick of a re-पढ़ो of the ANA
-	 * inक्रमmation page, and just try any other available path क्रम now.
+	 * ready to serve this namespace.  Kick of a re-read of the ANA
+	 * information page, and just try any other available path for now.
 	 */
-	अगर (nvme_is_ana_error(status) && ns->ctrl->ana_log_buf) अणु
+	if (nvme_is_ana_error(status) && ns->ctrl->ana_log_buf) {
 		set_bit(NVME_NS_ANA_PENDING, &ns->flags);
 		queue_work(nvme_wq, &ns->ctrl->ana_work);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ns->head->requeue_lock, flags);
-	क्रम (bio = req->bio; bio; bio = bio->bi_next)
+	for (bio = req->bio; bio; bio = bio->bi_next)
 		bio_set_dev(bio, ns->head->disk->part0);
 	blk_steal_bios(&ns->head->requeue_list, req);
 	spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
 
 	blk_mq_end_request(req, 0);
 	kblockd_schedule_work(&ns->head->requeue_work);
-पूर्ण
+}
 
-व्योम nvme_kick_requeue_lists(काष्ठा nvme_ctrl *ctrl)
-अणु
-	काष्ठा nvme_ns *ns;
+void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+{
+	struct nvme_ns *ns;
 
-	करोwn_पढ़ो(&ctrl->namespaces_rwsem);
-	list_क्रम_each_entry(ns, &ctrl->namespaces, list) अणु
-		अगर (ns->head->disk)
+	down_read(&ctrl->namespaces_rwsem);
+	list_for_each_entry(ns, &ctrl->namespaces, list) {
+		if (ns->head->disk)
 			kblockd_schedule_work(&ns->head->requeue_work);
-	पूर्ण
-	up_पढ़ो(&ctrl->namespaces_rwsem);
-पूर्ण
+	}
+	up_read(&ctrl->namespaces_rwsem);
+}
 
-अटल स्थिर अक्षर *nvme_ana_state_names[] = अणु
+static const char *nvme_ana_state_names[] = {
 	[0]				= "invalid state",
 	[NVME_ANA_OPTIMIZED]		= "optimized",
 	[NVME_ANA_NONOPTIMIZED]		= "non-optimized",
 	[NVME_ANA_INACCESSIBLE]		= "inaccessible",
 	[NVME_ANA_PERSISTENT_LOSS]	= "persistent-loss",
 	[NVME_ANA_CHANGE]		= "change",
-पूर्ण;
+};
 
-bool nvme_mpath_clear_current_path(काष्ठा nvme_ns *ns)
-अणु
-	काष्ठा nvme_ns_head *head = ns->head;
+bool nvme_mpath_clear_current_path(struct nvme_ns *ns)
+{
+	struct nvme_ns_head *head = ns->head;
 	bool changed = false;
-	पूर्णांक node;
+	int node;
 
-	अगर (!head)
-		जाओ out;
+	if (!head)
+		goto out;
 
-	क्रम_each_node(node) अणु
-		अगर (ns == rcu_access_poपूर्णांकer(head->current_path[node])) अणु
-			rcu_assign_poपूर्णांकer(head->current_path[node], शून्य);
+	for_each_node(node) {
+		if (ns == rcu_access_pointer(head->current_path[node])) {
+			rcu_assign_pointer(head->current_path[node], NULL);
 			changed = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-व्योम nvme_mpath_clear_ctrl_paths(काष्ठा nvme_ctrl *ctrl)
-अणु
-	काष्ठा nvme_ns *ns;
+void nvme_mpath_clear_ctrl_paths(struct nvme_ctrl *ctrl)
+{
+	struct nvme_ns *ns;
 
 	mutex_lock(&ctrl->scan_lock);
-	करोwn_पढ़ो(&ctrl->namespaces_rwsem);
-	list_क्रम_each_entry(ns, &ctrl->namespaces, list)
-		अगर (nvme_mpath_clear_current_path(ns))
+	down_read(&ctrl->namespaces_rwsem);
+	list_for_each_entry(ns, &ctrl->namespaces, list)
+		if (nvme_mpath_clear_current_path(ns))
 			kblockd_schedule_work(&ns->head->requeue_work);
-	up_पढ़ो(&ctrl->namespaces_rwsem);
+	up_read(&ctrl->namespaces_rwsem);
 	mutex_unlock(&ctrl->scan_lock);
-पूर्ण
+}
 
-अटल bool nvme_path_is_disabled(काष्ठा nvme_ns *ns)
-अणु
+static bool nvme_path_is_disabled(struct nvme_ns *ns)
+{
 	/*
-	 * We करोn't treat NVME_CTRL_DELETING as a disabled path as I/O should
+	 * We don't treat NVME_CTRL_DELETING as a disabled path as I/O should
 	 * still be able to complete assuming that the controller is connected.
-	 * Otherwise it will fail immediately and वापस to the requeue list.
+	 * Otherwise it will fail immediately and return to the requeue list.
 	 */
-	अगर (ns->ctrl->state != NVME_CTRL_LIVE &&
+	if (ns->ctrl->state != NVME_CTRL_LIVE &&
 	    ns->ctrl->state != NVME_CTRL_DELETING)
-		वापस true;
-	अगर (test_bit(NVME_NS_ANA_PENDING, &ns->flags) ||
+		return true;
+	if (test_bit(NVME_NS_ANA_PENDING, &ns->flags) ||
 	    test_bit(NVME_NS_REMOVING, &ns->flags))
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-अटल काष्ठा nvme_ns *__nvme_find_path(काष्ठा nvme_ns_head *head, पूर्णांक node)
-अणु
-	पूर्णांक found_distance = पूर्णांक_उच्च, fallback_distance = पूर्णांक_उच्च, distance;
-	काष्ठा nvme_ns *found = शून्य, *fallback = शून्य, *ns;
+static struct nvme_ns *__nvme_find_path(struct nvme_ns_head *head, int node)
+{
+	int found_distance = INT_MAX, fallback_distance = INT_MAX, distance;
+	struct nvme_ns *found = NULL, *fallback = NULL, *ns;
 
-	list_क्रम_each_entry_rcu(ns, &head->list, siblings) अणु
-		अगर (nvme_path_is_disabled(ns))
-			जारी;
+	list_for_each_entry_rcu(ns, &head->list, siblings) {
+		if (nvme_path_is_disabled(ns))
+			continue;
 
-		अगर (READ_ONCE(head->subsys->iopolicy) == NVME_IOPOLICY_NUMA)
+		if (READ_ONCE(head->subsys->iopolicy) == NVME_IOPOLICY_NUMA)
 			distance = node_distance(node, ns->ctrl->numa_node);
-		अन्यथा
+		else
 			distance = LOCAL_DISTANCE;
 
-		चयन (ns->ana_state) अणु
-		हाल NVME_ANA_OPTIMIZED:
-			अगर (distance < found_distance) अणु
+		switch (ns->ana_state) {
+		case NVME_ANA_OPTIMIZED:
+			if (distance < found_distance) {
 				found_distance = distance;
 				found = ns;
-			पूर्ण
-			अवरोध;
-		हाल NVME_ANA_NONOPTIMIZED:
-			अगर (distance < fallback_distance) अणु
+			}
+			break;
+		case NVME_ANA_NONOPTIMIZED:
+			if (distance < fallback_distance) {
 				fallback_distance = distance;
 				fallback = ns;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		default:
+			break;
+		}
+	}
 
-	अगर (!found)
+	if (!found)
 		found = fallback;
-	अगर (found)
-		rcu_assign_poपूर्णांकer(head->current_path[node], found);
-	वापस found;
-पूर्ण
+	if (found)
+		rcu_assign_pointer(head->current_path[node], found);
+	return found;
+}
 
-अटल काष्ठा nvme_ns *nvme_next_ns(काष्ठा nvme_ns_head *head,
-		काष्ठा nvme_ns *ns)
-अणु
-	ns = list_next_or_null_rcu(&head->list, &ns->siblings, काष्ठा nvme_ns,
+static struct nvme_ns *nvme_next_ns(struct nvme_ns_head *head,
+		struct nvme_ns *ns)
+{
+	ns = list_next_or_null_rcu(&head->list, &ns->siblings, struct nvme_ns,
 			siblings);
-	अगर (ns)
-		वापस ns;
-	वापस list_first_or_null_rcu(&head->list, काष्ठा nvme_ns, siblings);
-पूर्ण
+	if (ns)
+		return ns;
+	return list_first_or_null_rcu(&head->list, struct nvme_ns, siblings);
+}
 
-अटल काष्ठा nvme_ns *nvme_round_robin_path(काष्ठा nvme_ns_head *head,
-		पूर्णांक node, काष्ठा nvme_ns *old)
-अणु
-	काष्ठा nvme_ns *ns, *found = शून्य;
+static struct nvme_ns *nvme_round_robin_path(struct nvme_ns_head *head,
+		int node, struct nvme_ns *old)
+{
+	struct nvme_ns *ns, *found = NULL;
 
-	अगर (list_is_singular(&head->list)) अणु
-		अगर (nvme_path_is_disabled(old))
-			वापस शून्य;
-		वापस old;
-	पूर्ण
+	if (list_is_singular(&head->list)) {
+		if (nvme_path_is_disabled(old))
+			return NULL;
+		return old;
+	}
 
-	क्रम (ns = nvme_next_ns(head, old);
+	for (ns = nvme_next_ns(head, old);
 	     ns && ns != old;
-	     ns = nvme_next_ns(head, ns)) अणु
-		अगर (nvme_path_is_disabled(ns))
-			जारी;
+	     ns = nvme_next_ns(head, ns)) {
+		if (nvme_path_is_disabled(ns))
+			continue;
 
-		अगर (ns->ana_state == NVME_ANA_OPTIMIZED) अणु
+		if (ns->ana_state == NVME_ANA_OPTIMIZED) {
 			found = ns;
-			जाओ out;
-		पूर्ण
-		अगर (ns->ana_state == NVME_ANA_NONOPTIMIZED)
+			goto out;
+		}
+		if (ns->ana_state == NVME_ANA_NONOPTIMIZED)
 			found = ns;
-	पूर्ण
+	}
 
 	/*
-	 * The loop above skips the current path क्रम round-robin semantics.
-	 * Fall back to the current path अगर either:
+	 * The loop above skips the current path for round-robin semantics.
+	 * Fall back to the current path if either:
 	 *  - no other optimized path found and current is optimized,
 	 *  - no other usable path found and current is usable.
 	 */
-	अगर (!nvme_path_is_disabled(old) &&
+	if (!nvme_path_is_disabled(old) &&
 	    (old->ana_state == NVME_ANA_OPTIMIZED ||
 	     (!found && old->ana_state == NVME_ANA_NONOPTIMIZED)))
-		वापस old;
+		return old;
 
-	अगर (!found)
-		वापस शून्य;
+	if (!found)
+		return NULL;
 out:
-	rcu_assign_poपूर्णांकer(head->current_path[node], found);
-	वापस found;
-पूर्ण
+	rcu_assign_pointer(head->current_path[node], found);
+	return found;
+}
 
-अटल अंतरभूत bool nvme_path_is_optimized(काष्ठा nvme_ns *ns)
-अणु
-	वापस ns->ctrl->state == NVME_CTRL_LIVE &&
+static inline bool nvme_path_is_optimized(struct nvme_ns *ns)
+{
+	return ns->ctrl->state == NVME_CTRL_LIVE &&
 		ns->ana_state == NVME_ANA_OPTIMIZED;
-पूर्ण
+}
 
-अंतरभूत काष्ठा nvme_ns *nvme_find_path(काष्ठा nvme_ns_head *head)
-अणु
-	पूर्णांक node = numa_node_id();
-	काष्ठा nvme_ns *ns;
+inline struct nvme_ns *nvme_find_path(struct nvme_ns_head *head)
+{
+	int node = numa_node_id();
+	struct nvme_ns *ns;
 
 	ns = srcu_dereference(head->current_path[node], &head->srcu);
-	अगर (unlikely(!ns))
-		वापस __nvme_find_path(head, node);
+	if (unlikely(!ns))
+		return __nvme_find_path(head, node);
 
-	अगर (READ_ONCE(head->subsys->iopolicy) == NVME_IOPOLICY_RR)
-		वापस nvme_round_robin_path(head, node, ns);
-	अगर (unlikely(!nvme_path_is_optimized(ns)))
-		वापस __nvme_find_path(head, node);
-	वापस ns;
-पूर्ण
+	if (READ_ONCE(head->subsys->iopolicy) == NVME_IOPOLICY_RR)
+		return nvme_round_robin_path(head, node, ns);
+	if (unlikely(!nvme_path_is_optimized(ns)))
+		return __nvme_find_path(head, node);
+	return ns;
+}
 
-अटल bool nvme_available_path(काष्ठा nvme_ns_head *head)
-अणु
-	काष्ठा nvme_ns *ns;
+static bool nvme_available_path(struct nvme_ns_head *head)
+{
+	struct nvme_ns *ns;
 
-	list_क्रम_each_entry_rcu(ns, &head->list, siblings) अणु
-		अगर (test_bit(NVME_CTRL_FAILFAST_EXPIRED, &ns->ctrl->flags))
-			जारी;
-		चयन (ns->ctrl->state) अणु
-		हाल NVME_CTRL_LIVE:
-		हाल NVME_CTRL_RESETTING:
-		हाल NVME_CTRL_CONNECTING:
+	list_for_each_entry_rcu(ns, &head->list, siblings) {
+		if (test_bit(NVME_CTRL_FAILFAST_EXPIRED, &ns->ctrl->flags))
+			continue;
+		switch (ns->ctrl->state) {
+		case NVME_CTRL_LIVE:
+		case NVME_CTRL_RESETTING:
+		case NVME_CTRL_CONNECTING:
 			/* fallthru */
-			वापस true;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		default:
+			break;
+		}
+	}
+	return false;
+}
 
-अटल blk_qc_t nvme_ns_head_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा nvme_ns_head *head = bio->bi_bdev->bd_disk->निजी_data;
-	काष्ठा device *dev = disk_to_dev(head->disk);
-	काष्ठा nvme_ns *ns;
+static blk_qc_t nvme_ns_head_submit_bio(struct bio *bio)
+{
+	struct nvme_ns_head *head = bio->bi_bdev->bd_disk->private_data;
+	struct device *dev = disk_to_dev(head->disk);
+	struct nvme_ns *ns;
 	blk_qc_t ret = BLK_QC_T_NONE;
-	पूर्णांक srcu_idx;
+	int srcu_idx;
 
 	/*
 	 * The namespace might be going away and the bio might be moved to a
-	 * dअगरferent queue via blk_steal_bios(), so we need to use the bio_split
+	 * different queue via blk_steal_bios(), so we need to use the bio_split
 	 * pool from the original queue to allocate the bvecs from.
 	 */
 	blk_queue_split(&bio);
 
-	srcu_idx = srcu_पढ़ो_lock(&head->srcu);
+	srcu_idx = srcu_read_lock(&head->srcu);
 	ns = nvme_find_path(head);
-	अगर (likely(ns)) अणु
+	if (likely(ns)) {
 		bio_set_dev(bio, ns->disk->part0);
 		bio->bi_opf |= REQ_NVME_MPATH;
 		trace_block_bio_remap(bio, disk_devt(ns->head->disk),
 				      bio->bi_iter.bi_sector);
 		ret = submit_bio_noacct(bio);
-	पूर्ण अन्यथा अगर (nvme_available_path(head)) अणु
+	} else if (nvme_available_path(head)) {
 		dev_warn_ratelimited(dev, "no usable path - requeuing I/O\n");
 
 		spin_lock_irq(&head->requeue_lock);
 		bio_list_add(&head->requeue_list, bio);
 		spin_unlock_irq(&head->requeue_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn_ratelimited(dev, "no available path - failing I/O\n");
 
 		bio->bi_status = BLK_STS_IOERR;
 		bio_endio(bio);
-	पूर्ण
+	}
 
-	srcu_पढ़ो_unlock(&head->srcu, srcu_idx);
-	वापस ret;
-पूर्ण
+	srcu_read_unlock(&head->srcu, srcu_idx);
+	return ret;
+}
 
-अटल पूर्णांक nvme_ns_head_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	अगर (!nvme_tryget_ns_head(bdev->bd_disk->निजी_data))
-		वापस -ENXIO;
-	वापस 0;
-पूर्ण
+static int nvme_ns_head_open(struct block_device *bdev, fmode_t mode)
+{
+	if (!nvme_tryget_ns_head(bdev->bd_disk->private_data))
+		return -ENXIO;
+	return 0;
+}
 
-अटल व्योम nvme_ns_head_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	nvme_put_ns_head(disk->निजी_data);
-पूर्ण
+static void nvme_ns_head_release(struct gendisk *disk, fmode_t mode)
+{
+	nvme_put_ns_head(disk->private_data);
+}
 
-स्थिर काष्ठा block_device_operations nvme_ns_head_ops = अणु
+const struct block_device_operations nvme_ns_head_ops = {
 	.owner		= THIS_MODULE,
 	.submit_bio	= nvme_ns_head_submit_bio,
-	.खोलो		= nvme_ns_head_खोलो,
+	.open		= nvme_ns_head_open,
 	.release	= nvme_ns_head_release,
 	.ioctl		= nvme_ns_head_ioctl,
 	.getgeo		= nvme_getgeo,
 	.report_zones	= nvme_report_zones,
 	.pr_ops		= &nvme_pr_ops,
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा nvme_ns_head *cdev_to_ns_head(काष्ठा cdev *cdev)
-अणु
-	वापस container_of(cdev, काष्ठा nvme_ns_head, cdev);
-पूर्ण
+static inline struct nvme_ns_head *cdev_to_ns_head(struct cdev *cdev)
+{
+	return container_of(cdev, struct nvme_ns_head, cdev);
+}
 
-अटल पूर्णांक nvme_ns_head_chr_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (!nvme_tryget_ns_head(cdev_to_ns_head(inode->i_cdev)))
-		वापस -ENXIO;
-	वापस 0;
-पूर्ण
+static int nvme_ns_head_chr_open(struct inode *inode, struct file *file)
+{
+	if (!nvme_tryget_ns_head(cdev_to_ns_head(inode->i_cdev)))
+		return -ENXIO;
+	return 0;
+}
 
-अटल पूर्णांक nvme_ns_head_chr_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int nvme_ns_head_chr_release(struct inode *inode, struct file *file)
+{
 	nvme_put_ns_head(cdev_to_ns_head(inode->i_cdev));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations nvme_ns_head_chr_fops = अणु
+static const struct file_operations nvme_ns_head_chr_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= nvme_ns_head_chr_खोलो,
+	.open		= nvme_ns_head_chr_open,
 	.release	= nvme_ns_head_chr_release,
 	.unlocked_ioctl	= nvme_ns_head_chr_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल पूर्णांक nvme_add_ns_head_cdev(काष्ठा nvme_ns_head *head)
-अणु
-	पूर्णांक ret;
+static int nvme_add_ns_head_cdev(struct nvme_ns_head *head)
+{
+	int ret;
 
 	head->cdev_device.parent = &head->subsys->dev;
 	ret = dev_set_name(&head->cdev_device, "ng%dn%d",
 			   head->subsys->instance, head->instance);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = nvme_cdev_add(&head->cdev, &head->cdev_device,
 			    &nvme_ns_head_chr_fops, THIS_MODULE);
-	अगर (ret)
-		kमुक्त_स्थिर(head->cdev_device.kobj.name);
-	वापस ret;
-पूर्ण
+	if (ret)
+		kfree_const(head->cdev_device.kobj.name);
+	return ret;
+}
 
-अटल व्योम nvme_requeue_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvme_ns_head *head =
-		container_of(work, काष्ठा nvme_ns_head, requeue_work);
-	काष्ठा bio *bio, *next;
+static void nvme_requeue_work(struct work_struct *work)
+{
+	struct nvme_ns_head *head =
+		container_of(work, struct nvme_ns_head, requeue_work);
+	struct bio *bio, *next;
 
 	spin_lock_irq(&head->requeue_lock);
 	next = bio_list_get(&head->requeue_list);
 	spin_unlock_irq(&head->requeue_lock);
 
-	जबतक ((bio = next) != शून्य) अणु
+	while ((bio = next) != NULL) {
 		next = bio->bi_next;
-		bio->bi_next = शून्य;
+		bio->bi_next = NULL;
 
 		/*
 		 * Reset disk to the mpath node and resubmit to select a new
@@ -423,12 +422,12 @@ out:
 		 */
 		bio_set_dev(bio, head->disk->part0);
 		submit_bio_noacct(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक nvme_mpath_alloc_disk(काष्ठा nvme_ctrl *ctrl, काष्ठा nvme_ns_head *head)
-अणु
-	काष्ठा request_queue *q;
+int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl, struct nvme_ns_head *head)
+{
+	struct request_queue *q;
 	bool vwc = false;
 
 	mutex_init(&head->lock);
@@ -437,404 +436,404 @@ out:
 	INIT_WORK(&head->requeue_work, nvme_requeue_work);
 
 	/*
-	 * Add a multipath node अगर the subप्रणालीs supports multiple controllers.
-	 * We also करो this क्रम निजी namespaces as the namespace sharing data could
+	 * Add a multipath node if the subsystems supports multiple controllers.
+	 * We also do this for private namespaces as the namespace sharing data could
 	 * change after a rescan.
 	 */
-	अगर (!(ctrl->subsys->cmic & NVME_CTRL_CMIC_MULTI_CTRL) || !multipath)
-		वापस 0;
+	if (!(ctrl->subsys->cmic & NVME_CTRL_CMIC_MULTI_CTRL) || !multipath)
+		return 0;
 
 	q = blk_alloc_queue(ctrl->numa_node);
-	अगर (!q)
-		जाओ out;
+	if (!q)
+		goto out;
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
-	/* set to a शेष value क्रम 512 until disk is validated */
+	/* set to a default value for 512 until disk is validated */
 	blk_queue_logical_block_size(q, 512);
 	blk_set_stacking_limits(&q->limits);
 
 	/* we need to propagate up the VMC settings */
-	अगर (ctrl->vwc & NVME_CTRL_VWC_PRESENT)
+	if (ctrl->vwc & NVME_CTRL_VWC_PRESENT)
 		vwc = true;
-	blk_queue_ग_लिखो_cache(q, vwc, vwc);
+	blk_queue_write_cache(q, vwc, vwc);
 
 	head->disk = alloc_disk(0);
-	अगर (!head->disk)
-		जाओ out_cleanup_queue;
+	if (!head->disk)
+		goto out_cleanup_queue;
 	head->disk->fops = &nvme_ns_head_ops;
-	head->disk->निजी_data = head;
+	head->disk->private_data = head;
 	head->disk->queue = q;
 	head->disk->flags = GENHD_FL_EXT_DEVT;
-	प्र_लिखो(head->disk->disk_name, "nvme%dn%d",
+	sprintf(head->disk->disk_name, "nvme%dn%d",
 			ctrl->subsys->instance, head->instance);
-	वापस 0;
+	return 0;
 
 out_cleanup_queue:
 	blk_cleanup_queue(q);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम nvme_mpath_set_live(काष्ठा nvme_ns *ns)
-अणु
-	काष्ठा nvme_ns_head *head = ns->head;
+static void nvme_mpath_set_live(struct nvme_ns *ns)
+{
+	struct nvme_ns_head *head = ns->head;
 
-	अगर (!head->disk)
-		वापस;
+	if (!head->disk)
+		return;
 
-	अगर (!test_and_set_bit(NVME_NSHEAD_DISK_LIVE, &head->flags)) अणु
+	if (!test_and_set_bit(NVME_NSHEAD_DISK_LIVE, &head->flags)) {
 		device_add_disk(&head->subsys->dev, head->disk,
 				nvme_ns_id_attr_groups);
 		nvme_add_ns_head_cdev(head);
-	पूर्ण
+	}
 
 	mutex_lock(&head->lock);
-	अगर (nvme_path_is_optimized(ns)) अणु
-		पूर्णांक node, srcu_idx;
+	if (nvme_path_is_optimized(ns)) {
+		int node, srcu_idx;
 
-		srcu_idx = srcu_पढ़ो_lock(&head->srcu);
-		क्रम_each_node(node)
+		srcu_idx = srcu_read_lock(&head->srcu);
+		for_each_node(node)
 			__nvme_find_path(head, node);
-		srcu_पढ़ो_unlock(&head->srcu, srcu_idx);
-	पूर्ण
+		srcu_read_unlock(&head->srcu, srcu_idx);
+	}
 	mutex_unlock(&head->lock);
 
 	synchronize_srcu(&head->srcu);
 	kblockd_schedule_work(&head->requeue_work);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_parse_ana_log(काष्ठा nvme_ctrl *ctrl, व्योम *data,
-		पूर्णांक (*cb)(काष्ठा nvme_ctrl *ctrl, काष्ठा nvme_ana_group_desc *,
-			व्योम *))
-अणु
-	व्योम *base = ctrl->ana_log_buf;
-	माप_प्रकार offset = माप(काष्ठा nvme_ana_rsp_hdr);
-	पूर्णांक error, i;
+static int nvme_parse_ana_log(struct nvme_ctrl *ctrl, void *data,
+		int (*cb)(struct nvme_ctrl *ctrl, struct nvme_ana_group_desc *,
+			void *))
+{
+	void *base = ctrl->ana_log_buf;
+	size_t offset = sizeof(struct nvme_ana_rsp_hdr);
+	int error, i;
 
-	lockdep_निश्चित_held(&ctrl->ana_lock);
+	lockdep_assert_held(&ctrl->ana_lock);
 
-	क्रम (i = 0; i < le16_to_cpu(ctrl->ana_log_buf->ngrps); i++) अणु
-		काष्ठा nvme_ana_group_desc *desc = base + offset;
+	for (i = 0; i < le16_to_cpu(ctrl->ana_log_buf->ngrps); i++) {
+		struct nvme_ana_group_desc *desc = base + offset;
 		u32 nr_nsids;
-		माप_प्रकार nsid_buf_size;
+		size_t nsid_buf_size;
 
-		अगर (WARN_ON_ONCE(offset > ctrl->ana_log_size - माप(*desc)))
-			वापस -EINVAL;
+		if (WARN_ON_ONCE(offset > ctrl->ana_log_size - sizeof(*desc)))
+			return -EINVAL;
 
 		nr_nsids = le32_to_cpu(desc->nnsids);
-		nsid_buf_size = nr_nsids * माप(__le32);
+		nsid_buf_size = nr_nsids * sizeof(__le32);
 
-		अगर (WARN_ON_ONCE(desc->grpid == 0))
-			वापस -EINVAL;
-		अगर (WARN_ON_ONCE(le32_to_cpu(desc->grpid) > ctrl->anagrpmax))
-			वापस -EINVAL;
-		अगर (WARN_ON_ONCE(desc->state == 0))
-			वापस -EINVAL;
-		अगर (WARN_ON_ONCE(desc->state > NVME_ANA_CHANGE))
-			वापस -EINVAL;
+		if (WARN_ON_ONCE(desc->grpid == 0))
+			return -EINVAL;
+		if (WARN_ON_ONCE(le32_to_cpu(desc->grpid) > ctrl->anagrpmax))
+			return -EINVAL;
+		if (WARN_ON_ONCE(desc->state == 0))
+			return -EINVAL;
+		if (WARN_ON_ONCE(desc->state > NVME_ANA_CHANGE))
+			return -EINVAL;
 
-		offset += माप(*desc);
-		अगर (WARN_ON_ONCE(offset > ctrl->ana_log_size - nsid_buf_size))
-			वापस -EINVAL;
+		offset += sizeof(*desc);
+		if (WARN_ON_ONCE(offset > ctrl->ana_log_size - nsid_buf_size))
+			return -EINVAL;
 
 		error = cb(ctrl, desc, data);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
 		offset += nsid_buf_size;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool nvme_state_is_live(क्रमागत nvme_ana_state state)
-अणु
-	वापस state == NVME_ANA_OPTIMIZED || state == NVME_ANA_NONOPTIMIZED;
-पूर्ण
+static inline bool nvme_state_is_live(enum nvme_ana_state state)
+{
+	return state == NVME_ANA_OPTIMIZED || state == NVME_ANA_NONOPTIMIZED;
+}
 
-अटल व्योम nvme_update_ns_ana_state(काष्ठा nvme_ana_group_desc *desc,
-		काष्ठा nvme_ns *ns)
-अणु
+static void nvme_update_ns_ana_state(struct nvme_ana_group_desc *desc,
+		struct nvme_ns *ns)
+{
 	ns->ana_grpid = le32_to_cpu(desc->grpid);
 	ns->ana_state = desc->state;
 	clear_bit(NVME_NS_ANA_PENDING, &ns->flags);
 
-	अगर (nvme_state_is_live(ns->ana_state))
+	if (nvme_state_is_live(ns->ana_state))
 		nvme_mpath_set_live(ns);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_update_ana_state(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा nvme_ana_group_desc *desc, व्योम *data)
-अणु
+static int nvme_update_ana_state(struct nvme_ctrl *ctrl,
+		struct nvme_ana_group_desc *desc, void *data)
+{
 	u32 nr_nsids = le32_to_cpu(desc->nnsids), n = 0;
-	अचिन्हित *nr_change_groups = data;
-	काष्ठा nvme_ns *ns;
+	unsigned *nr_change_groups = data;
+	struct nvme_ns *ns;
 
 	dev_dbg(ctrl->device, "ANA group %d: %s.\n",
 			le32_to_cpu(desc->grpid),
 			nvme_ana_state_names[desc->state]);
 
-	अगर (desc->state == NVME_ANA_CHANGE)
+	if (desc->state == NVME_ANA_CHANGE)
 		(*nr_change_groups)++;
 
-	अगर (!nr_nsids)
-		वापस 0;
+	if (!nr_nsids)
+		return 0;
 
-	करोwn_पढ़ो(&ctrl->namespaces_rwsem);
-	list_क्रम_each_entry(ns, &ctrl->namespaces, list) अणु
-		अचिन्हित nsid = le32_to_cpu(desc->nsids[n]);
+	down_read(&ctrl->namespaces_rwsem);
+	list_for_each_entry(ns, &ctrl->namespaces, list) {
+		unsigned nsid = le32_to_cpu(desc->nsids[n]);
 
-		अगर (ns->head->ns_id < nsid)
-			जारी;
-		अगर (ns->head->ns_id == nsid)
+		if (ns->head->ns_id < nsid)
+			continue;
+		if (ns->head->ns_id == nsid)
 			nvme_update_ns_ana_state(desc, ns);
-		अगर (++n == nr_nsids)
-			अवरोध;
-	पूर्ण
-	up_पढ़ो(&ctrl->namespaces_rwsem);
-	वापस 0;
-पूर्ण
+		if (++n == nr_nsids)
+			break;
+	}
+	up_read(&ctrl->namespaces_rwsem);
+	return 0;
+}
 
-अटल पूर्णांक nvme_पढ़ो_ana_log(काष्ठा nvme_ctrl *ctrl)
-अणु
+static int nvme_read_ana_log(struct nvme_ctrl *ctrl)
+{
 	u32 nr_change_groups = 0;
-	पूर्णांक error;
+	int error;
 
 	mutex_lock(&ctrl->ana_lock);
 	error = nvme_get_log(ctrl, NVME_NSID_ALL, NVME_LOG_ANA, 0, NVME_CSI_NVM,
 			ctrl->ana_log_buf, ctrl->ana_log_size, 0);
-	अगर (error) अणु
+	if (error) {
 		dev_warn(ctrl->device, "Failed to get ANA log: %d\n", error);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	error = nvme_parse_ana_log(ctrl, &nr_change_groups,
 			nvme_update_ana_state);
-	अगर (error)
-		जाओ out_unlock;
+	if (error)
+		goto out_unlock;
 
 	/*
-	 * In theory we should have an ANATT समयr per group as they might enter
-	 * the change state at dअगरferent बार.  But that is a lot of overhead
+	 * In theory we should have an ANATT timer per group as they might enter
+	 * the change state at different times.  But that is a lot of overhead
 	 * just to protect against a target that keeps entering new changes
-	 * states जबतक never finishing previous ones.  But we'll still
-	 * eventually समय out once all groups are in change state, so this
+	 * states while never finishing previous ones.  But we'll still
+	 * eventually time out once all groups are in change state, so this
 	 * isn't a big deal.
 	 *
-	 * We also द्विगुन the ANATT value to provide some slack क्रम transports
+	 * We also double the ANATT value to provide some slack for transports
 	 * or AEN processing overhead.
 	 */
-	अगर (nr_change_groups)
-		mod_समयr(&ctrl->anatt_समयr, ctrl->anatt * HZ * 2 + jअगरfies);
-	अन्यथा
-		del_समयr_sync(&ctrl->anatt_समयr);
+	if (nr_change_groups)
+		mod_timer(&ctrl->anatt_timer, ctrl->anatt * HZ * 2 + jiffies);
+	else
+		del_timer_sync(&ctrl->anatt_timer);
 out_unlock:
 	mutex_unlock(&ctrl->ana_lock);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम nvme_ana_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvme_ctrl *ctrl = container_of(work, काष्ठा nvme_ctrl, ana_work);
+static void nvme_ana_work(struct work_struct *work)
+{
+	struct nvme_ctrl *ctrl = container_of(work, struct nvme_ctrl, ana_work);
 
-	अगर (ctrl->state != NVME_CTRL_LIVE)
-		वापस;
+	if (ctrl->state != NVME_CTRL_LIVE)
+		return;
 
-	nvme_पढ़ो_ana_log(ctrl);
-पूर्ण
+	nvme_read_ana_log(ctrl);
+}
 
-अटल व्योम nvme_anatt_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा nvme_ctrl *ctrl = from_समयr(ctrl, t, anatt_समयr);
+static void nvme_anatt_timeout(struct timer_list *t)
+{
+	struct nvme_ctrl *ctrl = from_timer(ctrl, t, anatt_timer);
 
 	dev_info(ctrl->device, "ANATT timeout, resetting controller.\n");
 	nvme_reset_ctrl(ctrl);
-पूर्ण
+}
 
-व्योम nvme_mpath_stop(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अगर (!nvme_ctrl_use_ana(ctrl))
-		वापस;
-	del_समयr_sync(&ctrl->anatt_समयr);
+void nvme_mpath_stop(struct nvme_ctrl *ctrl)
+{
+	if (!nvme_ctrl_use_ana(ctrl))
+		return;
+	del_timer_sync(&ctrl->anatt_timer);
 	cancel_work_sync(&ctrl->ana_work);
-पूर्ण
+}
 
-#घोषणा SUBSYS_ATTR_RW(_name, _mode, _show, _store)  \
-	काष्ठा device_attribute subsys_attr_##_name =	\
+#define SUBSYS_ATTR_RW(_name, _mode, _show, _store)  \
+	struct device_attribute subsys_attr_##_name =	\
 		__ATTR(_name, _mode, _show, _store)
 
-अटल स्थिर अक्षर *nvme_iopolicy_names[] = अणु
+static const char *nvme_iopolicy_names[] = {
 	[NVME_IOPOLICY_NUMA]	= "numa",
 	[NVME_IOPOLICY_RR]	= "round-robin",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार nvme_subsys_iopolicy_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा nvme_subप्रणाली *subsys =
-		container_of(dev, काष्ठा nvme_subप्रणाली, dev);
+static ssize_t nvme_subsys_iopolicy_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct nvme_subsystem *subsys =
+		container_of(dev, struct nvme_subsystem, dev);
 
-	वापस sysfs_emit(buf, "%s\n",
+	return sysfs_emit(buf, "%s\n",
 			  nvme_iopolicy_names[READ_ONCE(subsys->iopolicy)]);
-पूर्ण
+}
 
-अटल sमाप_प्रकार nvme_subsys_iopolicy_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा nvme_subप्रणाली *subsys =
-		container_of(dev, काष्ठा nvme_subप्रणाली, dev);
-	पूर्णांक i;
+static ssize_t nvme_subsys_iopolicy_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct nvme_subsystem *subsys =
+		container_of(dev, struct nvme_subsystem, dev);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nvme_iopolicy_names); i++) अणु
-		अगर (sysfs_streq(buf, nvme_iopolicy_names[i])) अणु
+	for (i = 0; i < ARRAY_SIZE(nvme_iopolicy_names); i++) {
+		if (sysfs_streq(buf, nvme_iopolicy_names[i])) {
 			WRITE_ONCE(subsys->iopolicy, i);
-			वापस count;
-		पूर्ण
-	पूर्ण
+			return count;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 SUBSYS_ATTR_RW(iopolicy, S_IRUGO | S_IWUSR,
 		      nvme_subsys_iopolicy_show, nvme_subsys_iopolicy_store);
 
-अटल sमाप_प्रकार ana_grpid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%d\n", nvme_get_ns_from_dev(dev)->ana_grpid);
-पूर्ण
+static ssize_t ana_grpid_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	return sysfs_emit(buf, "%d\n", nvme_get_ns_from_dev(dev)->ana_grpid);
+}
 DEVICE_ATTR_RO(ana_grpid);
 
-अटल sमाप_प्रकार ana_state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा nvme_ns *ns = nvme_get_ns_from_dev(dev);
+static ssize_t ana_state_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct nvme_ns *ns = nvme_get_ns_from_dev(dev);
 
-	वापस sysfs_emit(buf, "%s\n", nvme_ana_state_names[ns->ana_state]);
-पूर्ण
+	return sysfs_emit(buf, "%s\n", nvme_ana_state_names[ns->ana_state]);
+}
 DEVICE_ATTR_RO(ana_state);
 
-अटल पूर्णांक nvme_lookup_ana_group_desc(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा nvme_ana_group_desc *desc, व्योम *data)
-अणु
-	काष्ठा nvme_ana_group_desc *dst = data;
+static int nvme_lookup_ana_group_desc(struct nvme_ctrl *ctrl,
+		struct nvme_ana_group_desc *desc, void *data)
+{
+	struct nvme_ana_group_desc *dst = data;
 
-	अगर (desc->grpid != dst->grpid)
-		वापस 0;
+	if (desc->grpid != dst->grpid)
+		return 0;
 
 	*dst = *desc;
-	वापस -ENXIO; /* just अवरोध out of the loop */
-पूर्ण
+	return -ENXIO; /* just break out of the loop */
+}
 
-व्योम nvme_mpath_add_disk(काष्ठा nvme_ns *ns, काष्ठा nvme_id_ns *id)
-अणु
-	अगर (nvme_ctrl_use_ana(ns->ctrl)) अणु
-		काष्ठा nvme_ana_group_desc desc = अणु
+void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id)
+{
+	if (nvme_ctrl_use_ana(ns->ctrl)) {
+		struct nvme_ana_group_desc desc = {
 			.grpid = id->anagrpid,
 			.state = 0,
-		पूर्ण;
+		};
 
 		mutex_lock(&ns->ctrl->ana_lock);
 		ns->ana_grpid = le32_to_cpu(id->anagrpid);
 		nvme_parse_ana_log(ns->ctrl, &desc, nvme_lookup_ana_group_desc);
 		mutex_unlock(&ns->ctrl->ana_lock);
-		अगर (desc.state) अणु
+		if (desc.state) {
 			/* found the group desc: update */
 			nvme_update_ns_ana_state(&desc, ns);
-		पूर्ण अन्यथा अणु
-			/* group desc not found: trigger a re-पढ़ो */
+		} else {
+			/* group desc not found: trigger a re-read */
 			set_bit(NVME_NS_ANA_PENDING, &ns->flags);
 			queue_work(nvme_wq, &ns->ctrl->ana_work);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ns->ana_state = NVME_ANA_OPTIMIZED;
 		nvme_mpath_set_live(ns);
-	पूर्ण
+	}
 
-	अगर (blk_queue_stable_ग_लिखोs(ns->queue) && ns->head->disk)
+	if (blk_queue_stable_writes(ns->queue) && ns->head->disk)
 		blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES,
 				   ns->head->disk->queue);
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-	अगर (blk_queue_is_zoned(ns->queue) && ns->head->disk)
+#ifdef CONFIG_BLK_DEV_ZONED
+	if (blk_queue_is_zoned(ns->queue) && ns->head->disk)
 		ns->head->disk->queue->nr_zones = ns->queue->nr_zones;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम nvme_mpath_हटाओ_disk(काष्ठा nvme_ns_head *head)
-अणु
-	अगर (!head->disk)
-		वापस;
-	अगर (head->disk->flags & GENHD_FL_UP) अणु
+void nvme_mpath_remove_disk(struct nvme_ns_head *head)
+{
+	if (!head->disk)
+		return;
+	if (head->disk->flags & GENHD_FL_UP) {
 		nvme_cdev_del(&head->cdev, &head->cdev_device);
 		del_gendisk(head->disk);
-	पूर्ण
+	}
 	blk_set_queue_dying(head->disk->queue);
 	/* make sure all pending bios are cleaned up */
 	kblockd_schedule_work(&head->requeue_work);
 	flush_work(&head->requeue_work);
 	blk_cleanup_queue(head->disk->queue);
-	अगर (!test_bit(NVME_NSHEAD_DISK_LIVE, &head->flags)) अणु
+	if (!test_bit(NVME_NSHEAD_DISK_LIVE, &head->flags)) {
 		/*
-		 * अगर device_add_disk wasn't called, prevent
+		 * if device_add_disk wasn't called, prevent
 		 * disk release to put a bogus reference on the
 		 * request queue
 		 */
-		head->disk->queue = शून्य;
-	पूर्ण
+		head->disk->queue = NULL;
+	}
 	put_disk(head->disk);
-पूर्ण
+}
 
-व्योम nvme_mpath_init_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
+void nvme_mpath_init_ctrl(struct nvme_ctrl *ctrl)
+{
 	mutex_init(&ctrl->ana_lock);
-	समयr_setup(&ctrl->anatt_समयr, nvme_anatt_समयout, 0);
+	timer_setup(&ctrl->anatt_timer, nvme_anatt_timeout, 0);
 	INIT_WORK(&ctrl->ana_work, nvme_ana_work);
-पूर्ण
+}
 
-पूर्णांक nvme_mpath_init_identअगरy(काष्ठा nvme_ctrl *ctrl, काष्ठा nvme_id_ctrl *id)
-अणु
-	माप_प्रकार max_transfer_size = ctrl->max_hw_sectors << SECTOR_SHIFT;
-	माप_प्रकार ana_log_size;
-	पूर्णांक error = 0;
+int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
+{
+	size_t max_transfer_size = ctrl->max_hw_sectors << SECTOR_SHIFT;
+	size_t ana_log_size;
+	int error = 0;
 
-	/* check अगर multipath is enabled and we have the capability */
-	अगर (!multipath || !ctrl->subsys ||
+	/* check if multipath is enabled and we have the capability */
+	if (!multipath || !ctrl->subsys ||
 	    !(ctrl->subsys->cmic & NVME_CTRL_CMIC_ANA))
-		वापस 0;
+		return 0;
 
 	ctrl->anacap = id->anacap;
 	ctrl->anatt = id->anatt;
 	ctrl->nanagrpid = le32_to_cpu(id->nanagrpid);
 	ctrl->anagrpmax = le32_to_cpu(id->anagrpmax);
 
-	ana_log_size = माप(काष्ठा nvme_ana_rsp_hdr) +
-		ctrl->nanagrpid * माप(काष्ठा nvme_ana_group_desc) +
-		ctrl->max_namespaces * माप(__le32);
-	अगर (ana_log_size > max_transfer_size) अणु
+	ana_log_size = sizeof(struct nvme_ana_rsp_hdr) +
+		ctrl->nanagrpid * sizeof(struct nvme_ana_group_desc) +
+		ctrl->max_namespaces * sizeof(__le32);
+	if (ana_log_size > max_transfer_size) {
 		dev_err(ctrl->device,
 			"ANA log page size (%zd) larger than MDTS (%zd).\n",
 			ana_log_size, max_transfer_size);
 		dev_err(ctrl->device, "disabling ANA support.\n");
-		जाओ out_uninit;
-	पूर्ण
-	अगर (ana_log_size > ctrl->ana_log_size) अणु
+		goto out_uninit;
+	}
+	if (ana_log_size > ctrl->ana_log_size) {
 		nvme_mpath_stop(ctrl);
-		kमुक्त(ctrl->ana_log_buf);
-		ctrl->ana_log_buf = kदो_स्मृति(ana_log_size, GFP_KERNEL);
-		अगर (!ctrl->ana_log_buf)
-			वापस -ENOMEM;
-	पूर्ण
+		kfree(ctrl->ana_log_buf);
+		ctrl->ana_log_buf = kmalloc(ana_log_size, GFP_KERNEL);
+		if (!ctrl->ana_log_buf)
+			return -ENOMEM;
+	}
 	ctrl->ana_log_size = ana_log_size;
-	error = nvme_पढ़ो_ana_log(ctrl);
-	अगर (error)
-		जाओ out_uninit;
-	वापस 0;
+	error = nvme_read_ana_log(ctrl);
+	if (error)
+		goto out_uninit;
+	return 0;
 
 out_uninit:
 	nvme_mpath_uninit(ctrl);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम nvme_mpath_uninit(काष्ठा nvme_ctrl *ctrl)
-अणु
-	kमुक्त(ctrl->ana_log_buf);
-	ctrl->ana_log_buf = शून्य;
-पूर्ण
+void nvme_mpath_uninit(struct nvme_ctrl *ctrl)
+{
+	kfree(ctrl->ana_log_buf);
+	ctrl->ana_log_buf = NULL;
+}

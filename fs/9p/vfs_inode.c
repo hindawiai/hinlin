@@ -1,344 +1,343 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/9p/vfs_inode.c
  *
- * This file contains vfs inode ops क्रम the 9P2000 protocol.
+ * This file contains vfs inode ops for the 9P2000 protocol.
  *
  *  Copyright (C) 2004 by Eric Van Hensbergen <ericvh@gmail.com>
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/inet.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/posix_acl.h>
-#समावेश <net/9p/9p.h>
-#समावेश <net/9p/client.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/pagemap.h>
+#include <linux/stat.h>
+#include <linux/string.h>
+#include <linux/inet.h>
+#include <linux/namei.h>
+#include <linux/idr.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/xattr.h>
+#include <linux/posix_acl.h>
+#include <net/9p/9p.h>
+#include <net/9p/client.h>
 
-#समावेश "v9fs.h"
-#समावेश "v9fs_vfs.h"
-#समावेश "fid.h"
-#समावेश "cache.h"
-#समावेश "xattr.h"
-#समावेश "acl.h"
+#include "v9fs.h"
+#include "v9fs_vfs.h"
+#include "fid.h"
+#include "cache.h"
+#include "xattr.h"
+#include "acl.h"
 
-अटल स्थिर काष्ठा inode_operations v9fs_dir_inode_operations;
-अटल स्थिर काष्ठा inode_operations v9fs_dir_inode_operations_करोtu;
-अटल स्थिर काष्ठा inode_operations v9fs_file_inode_operations;
-अटल स्थिर काष्ठा inode_operations v9fs_symlink_inode_operations;
+static const struct inode_operations v9fs_dir_inode_operations;
+static const struct inode_operations v9fs_dir_inode_operations_dotu;
+static const struct inode_operations v9fs_file_inode_operations;
+static const struct inode_operations v9fs_symlink_inode_operations;
 
 /**
  * unixmode2p9mode - convert unix mode bits to plan 9
- * @v9ses: v9fs session inक्रमmation
+ * @v9ses: v9fs session information
  * @mode: mode to convert
  *
  */
 
-अटल u32 unixmode2p9mode(काष्ठा v9fs_session_info *v9ses, umode_t mode)
-अणु
-	पूर्णांक res;
+static u32 unixmode2p9mode(struct v9fs_session_info *v9ses, umode_t mode)
+{
+	int res;
 	res = mode & 0777;
-	अगर (S_ISसूची(mode))
-		res |= P9_DMसूची;
-	अगर (v9fs_proto_करोtu(v9ses)) अणु
-		अगर (v9ses->nodev == 0) अणु
-			अगर (S_ISSOCK(mode))
+	if (S_ISDIR(mode))
+		res |= P9_DMDIR;
+	if (v9fs_proto_dotu(v9ses)) {
+		if (v9ses->nodev == 0) {
+			if (S_ISSOCK(mode))
 				res |= P9_DMSOCKET;
-			अगर (S_ISFIFO(mode))
+			if (S_ISFIFO(mode))
 				res |= P9_DMNAMEDPIPE;
-			अगर (S_ISBLK(mode))
+			if (S_ISBLK(mode))
 				res |= P9_DMDEVICE;
-			अगर (S_ISCHR(mode))
+			if (S_ISCHR(mode))
 				res |= P9_DMDEVICE;
-		पूर्ण
+		}
 
-		अगर ((mode & S_ISUID) == S_ISUID)
+		if ((mode & S_ISUID) == S_ISUID)
 			res |= P9_DMSETUID;
-		अगर ((mode & S_ISGID) == S_ISGID)
+		if ((mode & S_ISGID) == S_ISGID)
 			res |= P9_DMSETGID;
-		अगर ((mode & S_ISVTX) == S_ISVTX)
+		if ((mode & S_ISVTX) == S_ISVTX)
 			res |= P9_DMSETVTX;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
 /**
  * p9mode2perm- convert plan9 mode bits to unix permission bits
- * @v9ses: v9fs session inक्रमmation
+ * @v9ses: v9fs session information
  * @stat: p9_wstat from which mode need to be derived
  *
  */
-अटल पूर्णांक p9mode2perm(काष्ठा v9fs_session_info *v9ses,
-		       काष्ठा p9_wstat *stat)
-अणु
-	पूर्णांक res;
-	पूर्णांक mode = stat->mode;
+static int p9mode2perm(struct v9fs_session_info *v9ses,
+		       struct p9_wstat *stat)
+{
+	int res;
+	int mode = stat->mode;
 
 	res = mode & S_IALLUGO;
-	अगर (v9fs_proto_करोtu(v9ses)) अणु
-		अगर ((mode & P9_DMSETUID) == P9_DMSETUID)
+	if (v9fs_proto_dotu(v9ses)) {
+		if ((mode & P9_DMSETUID) == P9_DMSETUID)
 			res |= S_ISUID;
 
-		अगर ((mode & P9_DMSETGID) == P9_DMSETGID)
+		if ((mode & P9_DMSETGID) == P9_DMSETGID)
 			res |= S_ISGID;
 
-		अगर ((mode & P9_DMSETVTX) == P9_DMSETVTX)
+		if ((mode & P9_DMSETVTX) == P9_DMSETVTX)
 			res |= S_ISVTX;
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
 /**
  * p9mode2unixmode- convert plan9 mode bits to unix mode bits
- * @v9ses: v9fs session inक्रमmation
+ * @v9ses: v9fs session information
  * @stat: p9_wstat from which mode need to be derived
- * @rdev: major number, minor number in हाल of device files.
+ * @rdev: major number, minor number in case of device files.
  *
  */
-अटल umode_t p9mode2unixmode(काष्ठा v9fs_session_info *v9ses,
-			       काष्ठा p9_wstat *stat, dev_t *rdev)
-अणु
-	पूर्णांक res;
+static umode_t p9mode2unixmode(struct v9fs_session_info *v9ses,
+			       struct p9_wstat *stat, dev_t *rdev)
+{
+	int res;
 	u32 mode = stat->mode;
 
 	*rdev = 0;
 	res = p9mode2perm(v9ses, stat);
 
-	अगर ((mode & P9_DMसूची) == P9_DMसूची)
-		res |= S_IFसूची;
-	अन्यथा अगर ((mode & P9_DMSYMLINK) && (v9fs_proto_करोtu(v9ses)))
+	if ((mode & P9_DMDIR) == P9_DMDIR)
+		res |= S_IFDIR;
+	else if ((mode & P9_DMSYMLINK) && (v9fs_proto_dotu(v9ses)))
 		res |= S_IFLNK;
-	अन्यथा अगर ((mode & P9_DMSOCKET) && (v9fs_proto_करोtu(v9ses))
+	else if ((mode & P9_DMSOCKET) && (v9fs_proto_dotu(v9ses))
 		 && (v9ses->nodev == 0))
 		res |= S_IFSOCK;
-	अन्यथा अगर ((mode & P9_DMNAMEDPIPE) && (v9fs_proto_करोtu(v9ses))
+	else if ((mode & P9_DMNAMEDPIPE) && (v9fs_proto_dotu(v9ses))
 		 && (v9ses->nodev == 0))
 		res |= S_IFIFO;
-	अन्यथा अगर ((mode & P9_DMDEVICE) && (v9fs_proto_करोtu(v9ses))
-		 && (v9ses->nodev == 0)) अणु
-		अक्षर type = 0, ext[32];
-		पूर्णांक major = -1, minor = -1;
+	else if ((mode & P9_DMDEVICE) && (v9fs_proto_dotu(v9ses))
+		 && (v9ses->nodev == 0)) {
+		char type = 0, ext[32];
+		int major = -1, minor = -1;
 
-		strlcpy(ext, stat->extension, माप(ext));
-		माला_पूछो(ext, "%c %i %i", &type, &major, &minor);
-		चयन (type) अणु
-		हाल 'c':
+		strlcpy(ext, stat->extension, sizeof(ext));
+		sscanf(ext, "%c %i %i", &type, &major, &minor);
+		switch (type) {
+		case 'c':
 			res |= S_IFCHR;
-			अवरोध;
-		हाल 'b':
+			break;
+		case 'b':
 			res |= S_IFBLK;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			p9_debug(P9_DEBUG_ERROR, "Unknown special type %c %s\n",
 				 type, stat->extension);
-		पूर्ण
+		}
 		*rdev = MKDEV(major, minor);
-	पूर्ण अन्यथा
+	} else
 		res |= S_IFREG;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /**
- * v9fs_uflags2omode- convert posix खोलो flags to plan 9 mode bits
+ * v9fs_uflags2omode- convert posix open flags to plan 9 mode bits
  * @uflags: flags to convert
- * @extended: अगर .u extensions are active
+ * @extended: if .u extensions are active
  */
 
-पूर्णांक v9fs_uflags2omode(पूर्णांक uflags, पूर्णांक extended)
-अणु
-	पूर्णांक ret;
+int v9fs_uflags2omode(int uflags, int extended)
+{
+	int ret;
 
 	ret = 0;
-	चयन (uflags&3) अणु
-	शेष:
-	हाल O_RDONLY:
+	switch (uflags&3) {
+	default:
+	case O_RDONLY:
 		ret = P9_OREAD;
-		अवरोध;
+		break;
 
-	हाल O_WRONLY:
+	case O_WRONLY:
 		ret = P9_OWRITE;
-		अवरोध;
+		break;
 
-	हाल O_RDWR:
+	case O_RDWR:
 		ret = P9_ORDWR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (extended) अणु
-		अगर (uflags & O_EXCL)
+	if (extended) {
+		if (uflags & O_EXCL)
 			ret |= P9_OEXCL;
 
-		अगर (uflags & O_APPEND)
+		if (uflags & O_APPEND)
 			ret |= P9_OAPPEND;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * v9fs_blank_wstat - helper function to setup a 9P stat काष्ठाure
- * @wstat: काष्ठाure to initialize
+ * v9fs_blank_wstat - helper function to setup a 9P stat structure
+ * @wstat: structure to initialize
  *
  */
 
-व्योम
-v9fs_blank_wstat(काष्ठा p9_wstat *wstat)
-अणु
+void
+v9fs_blank_wstat(struct p9_wstat *wstat)
+{
 	wstat->type = ~0;
 	wstat->dev = ~0;
 	wstat->qid.type = ~0;
 	wstat->qid.version = ~0;
-	*((दीर्घ दीर्घ *)&wstat->qid.path) = ~0;
+	*((long long *)&wstat->qid.path) = ~0;
 	wstat->mode = ~0;
-	wstat->aसमय = ~0;
-	wstat->mसमय = ~0;
+	wstat->atime = ~0;
+	wstat->mtime = ~0;
 	wstat->length = ~0;
-	wstat->name = शून्य;
-	wstat->uid = शून्य;
-	wstat->gid = शून्य;
-	wstat->muid = शून्य;
+	wstat->name = NULL;
+	wstat->uid = NULL;
+	wstat->gid = NULL;
+	wstat->muid = NULL;
 	wstat->n_uid = INVALID_UID;
 	wstat->n_gid = INVALID_GID;
 	wstat->n_muid = INVALID_UID;
-	wstat->extension = शून्य;
-पूर्ण
+	wstat->extension = NULL;
+}
 
 /**
  * v9fs_alloc_inode - helper function to allocate an inode
  *
  */
-काष्ठा inode *v9fs_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा v9fs_inode *v9inode;
+struct inode *v9fs_alloc_inode(struct super_block *sb)
+{
+	struct v9fs_inode *v9inode;
 	v9inode = kmem_cache_alloc(v9fs_inode_cache, GFP_KERNEL);
-	अगर (!v9inode)
-		वापस शून्य;
-#अगर_घोषित CONFIG_9P_FSCACHE
-	v9inode->fscache = शून्य;
+	if (!v9inode)
+		return NULL;
+#ifdef CONFIG_9P_FSCACHE
+	v9inode->fscache = NULL;
 	mutex_init(&v9inode->fscache_lock);
-#पूर्ण_अगर
-	v9inode->ग_लिखोback_fid = शून्य;
+#endif
+	v9inode->writeback_fid = NULL;
 	v9inode->cache_validity = 0;
 	mutex_init(&v9inode->v_mutex);
-	वापस &v9inode->vfs_inode;
-पूर्ण
+	return &v9inode->vfs_inode;
+}
 
 /**
- * v9fs_मुक्त_inode - destroy an inode
+ * v9fs_free_inode - destroy an inode
  *
  */
 
-व्योम v9fs_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(v9fs_inode_cache, V9FS_I(inode));
-पूर्ण
+void v9fs_free_inode(struct inode *inode)
+{
+	kmem_cache_free(v9fs_inode_cache, V9FS_I(inode));
+}
 
-पूर्णांक v9fs_init_inode(काष्ठा v9fs_session_info *v9ses,
-		    काष्ठा inode *inode, umode_t mode, dev_t rdev)
-अणु
-	पूर्णांक err = 0;
+int v9fs_init_inode(struct v9fs_session_info *v9ses,
+		    struct inode *inode, umode_t mode, dev_t rdev)
+{
+	int err = 0;
 
-	inode_init_owner(&init_user_ns,inode,  शून्य, mode);
+	inode_init_owner(&init_user_ns,inode,  NULL, mode);
 	inode->i_blocks = 0;
 	inode->i_rdev = rdev;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
 	inode->i_mapping->a_ops = &v9fs_addr_operations;
-	inode->i_निजी = शून्य;
+	inode->i_private = NULL;
 
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFIFO:
-	हाल S_IFBLK:
-	हाल S_IFCHR:
-	हाल S_IFSOCK:
-		अगर (v9fs_proto_करोtl(v9ses)) अणु
-			inode->i_op = &v9fs_file_inode_operations_करोtl;
-		पूर्ण अन्यथा अगर (v9fs_proto_करोtu(v9ses)) अणु
+	switch (mode & S_IFMT) {
+	case S_IFIFO:
+	case S_IFBLK:
+	case S_IFCHR:
+	case S_IFSOCK:
+		if (v9fs_proto_dotl(v9ses)) {
+			inode->i_op = &v9fs_file_inode_operations_dotl;
+		} else if (v9fs_proto_dotu(v9ses)) {
 			inode->i_op = &v9fs_file_inode_operations;
-		पूर्ण अन्यथा अणु
+		} else {
 			p9_debug(P9_DEBUG_ERROR,
 				 "special files without extended mode\n");
 			err = -EINVAL;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-		अवरोध;
-	हाल S_IFREG:
-		अगर (v9fs_proto_करोtl(v9ses)) अणु
-			inode->i_op = &v9fs_file_inode_operations_करोtl;
-			अगर (v9ses->cache == CACHE_LOOSE ||
+		break;
+	case S_IFREG:
+		if (v9fs_proto_dotl(v9ses)) {
+			inode->i_op = &v9fs_file_inode_operations_dotl;
+			if (v9ses->cache == CACHE_LOOSE ||
 			    v9ses->cache == CACHE_FSCACHE)
 				inode->i_fop =
-					&v9fs_cached_file_operations_करोtl;
-			अन्यथा अगर (v9ses->cache == CACHE_MMAP)
-				inode->i_fop = &v9fs_mmap_file_operations_करोtl;
-			अन्यथा
-				inode->i_fop = &v9fs_file_operations_करोtl;
-		पूर्ण अन्यथा अणु
+					&v9fs_cached_file_operations_dotl;
+			else if (v9ses->cache == CACHE_MMAP)
+				inode->i_fop = &v9fs_mmap_file_operations_dotl;
+			else
+				inode->i_fop = &v9fs_file_operations_dotl;
+		} else {
 			inode->i_op = &v9fs_file_inode_operations;
-			अगर (v9ses->cache == CACHE_LOOSE ||
+			if (v9ses->cache == CACHE_LOOSE ||
 			    v9ses->cache == CACHE_FSCACHE)
 				inode->i_fop =
 					&v9fs_cached_file_operations;
-			अन्यथा अगर (v9ses->cache == CACHE_MMAP)
+			else if (v9ses->cache == CACHE_MMAP)
 				inode->i_fop = &v9fs_mmap_file_operations;
-			अन्यथा
+			else
 				inode->i_fop = &v9fs_file_operations;
-		पूर्ण
+		}
 
-		अवरोध;
-	हाल S_IFLNK:
-		अगर (!v9fs_proto_करोtu(v9ses) && !v9fs_proto_करोtl(v9ses)) अणु
+		break;
+	case S_IFLNK:
+		if (!v9fs_proto_dotu(v9ses) && !v9fs_proto_dotl(v9ses)) {
 			p9_debug(P9_DEBUG_ERROR,
 				 "extended modes used with legacy protocol\n");
 			err = -EINVAL;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (v9fs_proto_करोtl(v9ses))
-			inode->i_op = &v9fs_symlink_inode_operations_करोtl;
-		अन्यथा
+		if (v9fs_proto_dotl(v9ses))
+			inode->i_op = &v9fs_symlink_inode_operations_dotl;
+		else
 			inode->i_op = &v9fs_symlink_inode_operations;
 
-		अवरोध;
-	हाल S_IFसूची:
+		break;
+	case S_IFDIR:
 		inc_nlink(inode);
-		अगर (v9fs_proto_करोtl(v9ses))
-			inode->i_op = &v9fs_dir_inode_operations_करोtl;
-		अन्यथा अगर (v9fs_proto_करोtu(v9ses))
-			inode->i_op = &v9fs_dir_inode_operations_करोtu;
-		अन्यथा
+		if (v9fs_proto_dotl(v9ses))
+			inode->i_op = &v9fs_dir_inode_operations_dotl;
+		else if (v9fs_proto_dotu(v9ses))
+			inode->i_op = &v9fs_dir_inode_operations_dotu;
+		else
 			inode->i_op = &v9fs_dir_inode_operations;
 
-		अगर (v9fs_proto_करोtl(v9ses))
-			inode->i_fop = &v9fs_dir_operations_करोtl;
-		अन्यथा
+		if (v9fs_proto_dotl(v9ses))
+			inode->i_fop = &v9fs_dir_operations_dotl;
+		else
 			inode->i_fop = &v9fs_dir_operations;
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		p9_debug(P9_DEBUG_ERROR, "BAD mode 0x%hx S_IFMT 0x%x\n",
 			 mode, mode & S_IFMT);
 		err = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 error:
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
 /**
  * v9fs_get_inode - helper function to setup an inode
@@ -347,196 +346,196 @@ error:
  *
  */
 
-काष्ठा inode *v9fs_get_inode(काष्ठा super_block *sb, umode_t mode, dev_t rdev)
-अणु
-	पूर्णांक err;
-	काष्ठा inode *inode;
-	काष्ठा v9fs_session_info *v9ses = sb->s_fs_info;
+struct inode *v9fs_get_inode(struct super_block *sb, umode_t mode, dev_t rdev)
+{
+	int err;
+	struct inode *inode;
+	struct v9fs_session_info *v9ses = sb->s_fs_info;
 
 	p9_debug(P9_DEBUG_VFS, "super block: %p mode: %ho\n", sb, mode);
 
 	inode = new_inode(sb);
-	अगर (!inode) अणु
+	if (!inode) {
 		pr_warn("%s (%d): Problem allocating inode\n",
 			__func__, task_pid_nr(current));
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 	err = v9fs_init_inode(v9ses, inode, mode, rdev);
-	अगर (err) अणु
+	if (err) {
 		iput(inode);
-		वापस ERR_PTR(err);
-	पूर्ण
-	वापस inode;
-पूर्ण
+		return ERR_PTR(err);
+	}
+	return inode;
+}
 
 /**
  * v9fs_clear_inode - release an inode
  * @inode: inode to release
  *
  */
-व्योम v9fs_evict_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा v9fs_inode *v9inode = V9FS_I(inode);
+void v9fs_evict_inode(struct inode *inode)
+{
+	struct v9fs_inode *v9inode = V9FS_I(inode);
 
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
-	filemap_fdataग_लिखो(&inode->i_data);
+	filemap_fdatawrite(&inode->i_data);
 
 	v9fs_cache_inode_put_cookie(inode);
-	/* clunk the fid stashed in ग_लिखोback_fid */
-	अगर (v9inode->ग_लिखोback_fid) अणु
-		p9_client_clunk(v9inode->ग_लिखोback_fid);
-		v9inode->ग_लिखोback_fid = शून्य;
-	पूर्ण
-पूर्ण
+	/* clunk the fid stashed in writeback_fid */
+	if (v9inode->writeback_fid) {
+		p9_client_clunk(v9inode->writeback_fid);
+		v9inode->writeback_fid = NULL;
+	}
+}
 
-अटल पूर्णांक v9fs_test_inode(काष्ठा inode *inode, व्योम *data)
-अणु
-	पूर्णांक umode;
+static int v9fs_test_inode(struct inode *inode, void *data)
+{
+	int umode;
 	dev_t rdev;
-	काष्ठा v9fs_inode *v9inode = V9FS_I(inode);
-	काष्ठा p9_wstat *st = (काष्ठा p9_wstat *)data;
-	काष्ठा v9fs_session_info *v9ses = v9fs_inode2v9ses(inode);
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	struct p9_wstat *st = (struct p9_wstat *)data;
+	struct v9fs_session_info *v9ses = v9fs_inode2v9ses(inode);
 
 	umode = p9mode2unixmode(v9ses, st, &rdev);
-	/* करोn't match inode of dअगरferent type */
-	अगर (inode_wrong_type(inode, umode))
-		वापस 0;
+	/* don't match inode of different type */
+	if (inode_wrong_type(inode, umode))
+		return 0;
 
 	/* compare qid details */
-	अगर (स_भेद(&v9inode->qid.version,
-		   &st->qid.version, माप(v9inode->qid.version)))
-		वापस 0;
+	if (memcmp(&v9inode->qid.version,
+		   &st->qid.version, sizeof(v9inode->qid.version)))
+		return 0;
 
-	अगर (v9inode->qid.type != st->qid.type)
-		वापस 0;
+	if (v9inode->qid.type != st->qid.type)
+		return 0;
 
-	अगर (v9inode->qid.path != st->qid.path)
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (v9inode->qid.path != st->qid.path)
+		return 0;
+	return 1;
+}
 
-अटल पूर्णांक v9fs_test_new_inode(काष्ठा inode *inode, व्योम *data)
-अणु
-	वापस 0;
-पूर्ण
+static int v9fs_test_new_inode(struct inode *inode, void *data)
+{
+	return 0;
+}
 
-अटल पूर्णांक v9fs_set_inode(काष्ठा inode *inode,  व्योम *data)
-अणु
-	काष्ठा v9fs_inode *v9inode = V9FS_I(inode);
-	काष्ठा p9_wstat *st = (काष्ठा p9_wstat *)data;
+static int v9fs_set_inode(struct inode *inode,  void *data)
+{
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	struct p9_wstat *st = (struct p9_wstat *)data;
 
-	स_नकल(&v9inode->qid, &st->qid, माप(st->qid));
-	वापस 0;
-पूर्ण
+	memcpy(&v9inode->qid, &st->qid, sizeof(st->qid));
+	return 0;
+}
 
-अटल काष्ठा inode *v9fs_qid_iget(काष्ठा super_block *sb,
-				   काष्ठा p9_qid *qid,
-				   काष्ठा p9_wstat *st,
-				   पूर्णांक new)
-अणु
+static struct inode *v9fs_qid_iget(struct super_block *sb,
+				   struct p9_qid *qid,
+				   struct p9_wstat *st,
+				   int new)
+{
 	dev_t rdev;
-	पूर्णांक retval;
+	int retval;
 	umode_t umode;
-	अचिन्हित दीर्घ i_ino;
-	काष्ठा inode *inode;
-	काष्ठा v9fs_session_info *v9ses = sb->s_fs_info;
-	पूर्णांक (*test)(काष्ठा inode *, व्योम *);
+	unsigned long i_ino;
+	struct inode *inode;
+	struct v9fs_session_info *v9ses = sb->s_fs_info;
+	int (*test)(struct inode *, void *);
 
-	अगर (new)
+	if (new)
 		test = v9fs_test_new_inode;
-	अन्यथा
+	else
 		test = v9fs_test_inode;
 
 	i_ino = v9fs_qid2ino(qid);
 	inode = iget5_locked(sb, i_ino, test, v9fs_set_inode, st);
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
-	अगर (!(inode->i_state & I_NEW))
-		वापस inode;
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	if (!(inode->i_state & I_NEW))
+		return inode;
 	/*
 	 * initialize the inode with the stat info
-	 * FIXME!! we may need support क्रम stale inodes
+	 * FIXME!! we may need support for stale inodes
 	 * later.
 	 */
 	inode->i_ino = i_ino;
 	umode = p9mode2unixmode(v9ses, st, &rdev);
 	retval = v9fs_init_inode(v9ses, inode, umode, rdev);
-	अगर (retval)
-		जाओ error;
+	if (retval)
+		goto error;
 
 	v9fs_stat2inode(st, inode, sb, 0);
 	v9fs_cache_inode_get_cookie(inode);
 	unlock_new_inode(inode);
-	वापस inode;
+	return inode;
 error:
 	iget_failed(inode);
-	वापस ERR_PTR(retval);
+	return ERR_PTR(retval);
 
-पूर्ण
+}
 
-काष्ठा inode *
-v9fs_inode_from_fid(काष्ठा v9fs_session_info *v9ses, काष्ठा p9_fid *fid,
-		    काष्ठा super_block *sb, पूर्णांक new)
-अणु
-	काष्ठा p9_wstat *st;
-	काष्ठा inode *inode = शून्य;
+struct inode *
+v9fs_inode_from_fid(struct v9fs_session_info *v9ses, struct p9_fid *fid,
+		    struct super_block *sb, int new)
+{
+	struct p9_wstat *st;
+	struct inode *inode = NULL;
 
 	st = p9_client_stat(fid);
-	अगर (IS_ERR(st))
-		वापस ERR_CAST(st);
+	if (IS_ERR(st))
+		return ERR_CAST(st);
 
 	inode = v9fs_qid_iget(sb, &st->qid, st, new);
-	p9stat_मुक्त(st);
-	kमुक्त(st);
-	वापस inode;
-पूर्ण
+	p9stat_free(st);
+	kfree(st);
+	return inode;
+}
 
 /**
- * v9fs_at_to_करोtl_flags- convert Linux specअगरic AT flags to
+ * v9fs_at_to_dotl_flags- convert Linux specific AT flags to
  * plan 9 AT flag.
  * @flags: flags to convert
  */
-अटल पूर्णांक v9fs_at_to_करोtl_flags(पूर्णांक flags)
-अणु
-	पूर्णांक rflags = 0;
-	अगर (flags & AT_REMOVEसूची)
-		rflags |= P9_DOTL_AT_REMOVEसूची;
-	वापस rflags;
-पूर्ण
+static int v9fs_at_to_dotl_flags(int flags)
+{
+	int rflags = 0;
+	if (flags & AT_REMOVEDIR)
+		rflags |= P9_DOTL_AT_REMOVEDIR;
+	return rflags;
+}
 
 /**
  * v9fs_dec_count - helper functon to drop i_nlink.
  *
  * If a directory had nlink <= 2 (including . and ..), then we should not drop
- * the link count, which indicates the underlying exported fs करोesn't मुख्यtain
+ * the link count, which indicates the underlying exported fs doesn't maintain
  * nlink accurately. e.g.
- * - overlayfs sets nlink to 1 क्रम merged dir
- * - ext4 (with dir_nlink feature enabled) sets nlink to 1 अगर a dir has more
+ * - overlayfs sets nlink to 1 for merged dir
+ * - ext4 (with dir_nlink feature enabled) sets nlink to 1 if a dir has more
  *   than EXT4_LINK_MAX (65000) links.
  *
  * @inode: inode whose nlink is being dropped
  */
-अटल व्योम v9fs_dec_count(काष्ठा inode *inode)
-अणु
-	अगर (!S_ISसूची(inode->i_mode) || inode->i_nlink > 2)
+static void v9fs_dec_count(struct inode *inode)
+{
+	if (!S_ISDIR(inode->i_mode) || inode->i_nlink > 2)
 		drop_nlink(inode);
-पूर्ण
+}
 
 /**
- * v9fs_हटाओ - helper function to हटाओ files and directories
+ * v9fs_remove - helper function to remove files and directories
  * @dir: directory inode that is being deleted
  * @dentry:  dentry that is being deleted
  * @flags: removing a directory
  *
  */
 
-अटल पूर्णांक v9fs_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry, पूर्णांक flags)
-अणु
-	काष्ठा inode *inode;
-	पूर्णांक retval = -EOPNOTSUPP;
-	काष्ठा p9_fid *v9fid, *dfid;
-	काष्ठा v9fs_session_info *v9ses;
+static int v9fs_remove(struct inode *dir, struct dentry *dentry, int flags)
+{
+	struct inode *inode;
+	int retval = -EOPNOTSUPP;
+	struct p9_fid *v9fid, *dfid;
+	struct v9fs_session_info *v9ses;
 
 	p9_debug(P9_DEBUG_VFS, "inode: %p dentry: %p rmdir: %x\n",
 		 dir, dentry, flags);
@@ -544,131 +543,131 @@ v9fs_inode_from_fid(काष्ठा v9fs_session_info *v9ses, काष्ठ
 	v9ses = v9fs_inode2v9ses(dir);
 	inode = d_inode(dentry);
 	dfid = v9fs_parent_fid(dentry);
-	अगर (IS_ERR(dfid)) अणु
+	if (IS_ERR(dfid)) {
 		retval = PTR_ERR(dfid);
 		p9_debug(P9_DEBUG_VFS, "fid lookup failed %d\n", retval);
-		वापस retval;
-	पूर्ण
-	अगर (v9fs_proto_करोtl(v9ses))
+		return retval;
+	}
+	if (v9fs_proto_dotl(v9ses))
 		retval = p9_client_unlinkat(dfid, dentry->d_name.name,
-					    v9fs_at_to_करोtl_flags(flags));
+					    v9fs_at_to_dotl_flags(flags));
 	p9_client_clunk(dfid);
-	अगर (retval == -EOPNOTSUPP) अणु
+	if (retval == -EOPNOTSUPP) {
 		/* Try the one based on path */
 		v9fid = v9fs_fid_clone(dentry);
-		अगर (IS_ERR(v9fid))
-			वापस PTR_ERR(v9fid);
-		retval = p9_client_हटाओ(v9fid);
-	पूर्ण
-	अगर (!retval) अणु
+		if (IS_ERR(v9fid))
+			return PTR_ERR(v9fid);
+		retval = p9_client_remove(v9fid);
+	}
+	if (!retval) {
 		/*
 		 * directories on unlink should have zero
 		 * link count
 		 */
-		अगर (flags & AT_REMOVEसूची) अणु
+		if (flags & AT_REMOVEDIR) {
 			clear_nlink(inode);
 			v9fs_dec_count(dir);
-		पूर्ण अन्यथा
+		} else
 			v9fs_dec_count(inode);
 
 		v9fs_invalidate_inode_attr(inode);
 		v9fs_invalidate_inode_attr(dir);
 
 		/* invalidate all fids associated with dentry */
-		/* NOTE: This will not include खोलो fids */
+		/* NOTE: This will not include open fids */
 		dentry->d_op->d_release(dentry);
-	पूर्ण
-	वापस retval;
-पूर्ण
+	}
+	return retval;
+}
 
 /**
  * v9fs_create - Create a file
- * @v9ses: session inक्रमmation
+ * @v9ses: session information
  * @dir: directory that dentry is being created in
  * @dentry:  dentry that is being created
  * @extension: 9p2000.u extension string to support devices, etc.
  * @perm: create permissions
- * @mode: खोलो mode
+ * @mode: open mode
  *
  */
-अटल काष्ठा p9_fid *
-v9fs_create(काष्ठा v9fs_session_info *v9ses, काष्ठा inode *dir,
-		काष्ठा dentry *dentry, अक्षर *extension, u32 perm, u8 mode)
-अणु
-	पूर्णांक err;
-	स्थिर अचिन्हित अक्षर *name;
-	काष्ठा p9_fid *dfid, *ofid = शून्य, *fid = शून्य;
-	काष्ठा inode *inode;
+static struct p9_fid *
+v9fs_create(struct v9fs_session_info *v9ses, struct inode *dir,
+		struct dentry *dentry, char *extension, u32 perm, u8 mode)
+{
+	int err;
+	const unsigned char *name;
+	struct p9_fid *dfid, *ofid = NULL, *fid = NULL;
+	struct inode *inode;
 
 	p9_debug(P9_DEBUG_VFS, "name %pd\n", dentry);
 
 	err = 0;
 	name = dentry->d_name.name;
 	dfid = v9fs_parent_fid(dentry);
-	अगर (IS_ERR(dfid)) अणु
+	if (IS_ERR(dfid)) {
 		err = PTR_ERR(dfid);
 		p9_debug(P9_DEBUG_VFS, "fid lookup failed %d\n", err);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
-	/* clone a fid to use क्रम creation */
+	/* clone a fid to use for creation */
 	ofid = clone_fid(dfid);
-	अगर (IS_ERR(ofid)) अणु
+	if (IS_ERR(ofid)) {
 		err = PTR_ERR(ofid);
 		p9_debug(P9_DEBUG_VFS, "p9_client_walk failed %d\n", err);
 		p9_client_clunk(dfid);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
 	err = p9_client_fcreate(ofid, name, perm, mode, extension);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		p9_debug(P9_DEBUG_VFS, "p9_client_fcreate failed %d\n", err);
 		p9_client_clunk(dfid);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (!(perm & P9_DMLINK)) अणु
-		/* now walk from the parent so we can get unखोलोed fid */
+	if (!(perm & P9_DMLINK)) {
+		/* now walk from the parent so we can get unopened fid */
 		fid = p9_client_walk(dfid, 1, &name, 1);
-		अगर (IS_ERR(fid)) अणु
+		if (IS_ERR(fid)) {
 			err = PTR_ERR(fid);
 			p9_debug(P9_DEBUG_VFS,
 				   "p9_client_walk failed %d\n", err);
-			fid = शून्य;
+			fid = NULL;
 			p9_client_clunk(dfid);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		/*
-		 * instantiate inode and assign the unखोलोed fid to the dentry
+		 * instantiate inode and assign the unopened fid to the dentry
 		 */
 		inode = v9fs_get_new_inode_from_fid(v9ses, fid, dir->i_sb);
-		अगर (IS_ERR(inode)) अणु
+		if (IS_ERR(inode)) {
 			err = PTR_ERR(inode);
 			p9_debug(P9_DEBUG_VFS,
 				   "inode creation failed %d\n", err);
 			p9_client_clunk(dfid);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		v9fs_fid_add(dentry, fid);
 		d_instantiate(dentry, inode);
-	पूर्ण
+	}
 	p9_client_clunk(dfid);
-	वापस ofid;
+	return ofid;
 error:
-	अगर (ofid)
+	if (ofid)
 		p9_client_clunk(ofid);
 
-	अगर (fid)
+	if (fid)
 		p9_client_clunk(fid);
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
 /**
  * v9fs_vfs_create - VFS hook to create a regular file
  *
- * खोलो(.., O_CREAT) is handled in v9fs_vfs_atomic_खोलो().  This is only called
- * क्रम mknod(2).
+ * open(.., O_CREAT) is handled in v9fs_vfs_atomic_open().  This is only called
+ * for mknod(2).
  *
  * @dir: directory inode that is being created
  * @dentry:  dentry that is being deleted
@@ -676,59 +675,59 @@ error:
  *
  */
 
-अटल पूर्णांक
-v9fs_vfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		काष्ठा dentry *dentry, umode_t mode, bool excl)
-अणु
-	काष्ठा v9fs_session_info *v9ses = v9fs_inode2v9ses(dir);
+static int
+v9fs_vfs_create(struct user_namespace *mnt_userns, struct inode *dir,
+		struct dentry *dentry, umode_t mode, bool excl)
+{
+	struct v9fs_session_info *v9ses = v9fs_inode2v9ses(dir);
 	u32 perm = unixmode2p9mode(v9ses, mode);
-	काष्ठा p9_fid *fid;
+	struct p9_fid *fid;
 
 	/* P9_OEXCL? */
-	fid = v9fs_create(v9ses, dir, dentry, शून्य, perm, P9_ORDWR);
-	अगर (IS_ERR(fid))
-		वापस PTR_ERR(fid);
+	fid = v9fs_create(v9ses, dir, dentry, NULL, perm, P9_ORDWR);
+	if (IS_ERR(fid))
+		return PTR_ERR(fid);
 
 	v9fs_invalidate_inode_attr(dir);
 	p9_client_clunk(fid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * v9fs_vfs_सूची_गढ़ो - VFS सूची_गढ़ो hook to create a directory
+ * v9fs_vfs_mkdir - VFS mkdir hook to create a directory
  * @dir:  inode that is being unlinked
  * @dentry: dentry that is being unlinked
- * @mode: mode क्रम new directory
+ * @mode: mode for new directory
  *
  */
 
-अटल पूर्णांक v9fs_vfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-			  काष्ठा dentry *dentry, umode_t mode)
-अणु
-	पूर्णांक err;
+static int v9fs_vfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
+			  struct dentry *dentry, umode_t mode)
+{
+	int err;
 	u32 perm;
-	काष्ठा p9_fid *fid;
-	काष्ठा v9fs_session_info *v9ses;
+	struct p9_fid *fid;
+	struct v9fs_session_info *v9ses;
 
 	p9_debug(P9_DEBUG_VFS, "name %pd\n", dentry);
 	err = 0;
 	v9ses = v9fs_inode2v9ses(dir);
-	perm = unixmode2p9mode(v9ses, mode | S_IFसूची);
-	fid = v9fs_create(v9ses, dir, dentry, शून्य, perm, P9_OREAD);
-	अगर (IS_ERR(fid)) अणु
+	perm = unixmode2p9mode(v9ses, mode | S_IFDIR);
+	fid = v9fs_create(v9ses, dir, dentry, NULL, perm, P9_OREAD);
+	if (IS_ERR(fid)) {
 		err = PTR_ERR(fid);
-		fid = शून्य;
-	पूर्ण अन्यथा अणु
+		fid = NULL;
+	} else {
 		inc_nlink(dir);
 		v9fs_invalidate_inode_attr(dir);
-	पूर्ण
+	}
 
-	अगर (fid)
+	if (fid)
 		p9_client_clunk(fid);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * v9fs_vfs_lookup - VFS lookup hook to "walk" to a new inode
@@ -738,142 +737,142 @@ v9fs_vfs_create(काष्ठा user_namespace *mnt_userns, काष्ठ�
  *
  */
 
-काष्ठा dentry *v9fs_vfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
-				      अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा dentry *res;
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *dfid, *fid;
-	काष्ठा inode *inode;
-	स्थिर अचिन्हित अक्षर *name;
+struct dentry *v9fs_vfs_lookup(struct inode *dir, struct dentry *dentry,
+				      unsigned int flags)
+{
+	struct dentry *res;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *dfid, *fid;
+	struct inode *inode;
+	const unsigned char *name;
 
 	p9_debug(P9_DEBUG_VFS, "dir: %p dentry: (%pd) %p flags: %x\n",
 		 dir, dentry, dentry, flags);
 
-	अगर (dentry->d_name.len > NAME_MAX)
-		वापस ERR_PTR(-ENAMETOOLONG);
+	if (dentry->d_name.len > NAME_MAX)
+		return ERR_PTR(-ENAMETOOLONG);
 
 	v9ses = v9fs_inode2v9ses(dir);
 	/* We can walk d_parent because we hold the dir->i_mutex */
 	dfid = v9fs_parent_fid(dentry);
-	अगर (IS_ERR(dfid))
-		वापस ERR_CAST(dfid);
+	if (IS_ERR(dfid))
+		return ERR_CAST(dfid);
 
 	/*
-	 * Make sure we करोn't use a wrong inode due to parallel
-	 * unlink. For cached mode create calls request क्रम new
-	 * inode. But with cache disabled, lookup should करो this.
+	 * Make sure we don't use a wrong inode due to parallel
+	 * unlink. For cached mode create calls request for new
+	 * inode. But with cache disabled, lookup should do this.
 	 */
 	name = dentry->d_name.name;
 	fid = p9_client_walk(dfid, 1, &name, 1);
 	p9_client_clunk(dfid);
-	अगर (fid == ERR_PTR(-ENOENT))
-		inode = शून्य;
-	अन्यथा अगर (IS_ERR(fid))
+	if (fid == ERR_PTR(-ENOENT))
+		inode = NULL;
+	else if (IS_ERR(fid))
 		inode = ERR_CAST(fid);
-	अन्यथा अगर (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE)
+	else if (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE)
 		inode = v9fs_get_inode_from_fid(v9ses, fid, dir->i_sb);
-	अन्यथा
+	else
 		inode = v9fs_get_new_inode_from_fid(v9ses, fid, dir->i_sb);
 	/*
-	 * If we had a नाम on the server and a parallel lookup
-	 * क्रम the new name, then make sure we instantiate with
-	 * the new name. ie look up क्रम a/b, जबतक on server somebody
-	 * moved b under k and client parallely did a lookup क्रम
+	 * If we had a rename on the server and a parallel lookup
+	 * for the new name, then make sure we instantiate with
+	 * the new name. ie look up for a/b, while on server somebody
+	 * moved b under k and client parallely did a lookup for
 	 * k/b.
 	 */
 	res = d_splice_alias(inode, dentry);
-	अगर (!IS_ERR(fid)) अणु
-		अगर (!res)
+	if (!IS_ERR(fid)) {
+		if (!res)
 			v9fs_fid_add(dentry, fid);
-		अन्यथा अगर (!IS_ERR(res))
+		else if (!IS_ERR(res))
 			v9fs_fid_add(res, fid);
-		अन्यथा
+		else
 			p9_client_clunk(fid);
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 
-अटल पूर्णांक
-v9fs_vfs_atomic_खोलो(काष्ठा inode *dir, काष्ठा dentry *dentry,
-		     काष्ठा file *file, अचिन्हित flags, umode_t mode)
-अणु
-	पूर्णांक err;
+static int
+v9fs_vfs_atomic_open(struct inode *dir, struct dentry *dentry,
+		     struct file *file, unsigned flags, umode_t mode)
+{
+	int err;
 	u32 perm;
-	काष्ठा v9fs_inode *v9inode;
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *fid, *inode_fid;
-	काष्ठा dentry *res = शून्य;
-	काष्ठा inode *inode;
+	struct v9fs_inode *v9inode;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid, *inode_fid;
+	struct dentry *res = NULL;
+	struct inode *inode;
 
-	अगर (d_in_lookup(dentry)) अणु
+	if (d_in_lookup(dentry)) {
 		res = v9fs_vfs_lookup(dir, dentry, 0);
-		अगर (IS_ERR(res))
-			वापस PTR_ERR(res);
+		if (IS_ERR(res))
+			return PTR_ERR(res);
 
-		अगर (res)
+		if (res)
 			dentry = res;
-	पूर्ण
+	}
 
 	/* Only creates */
-	अगर (!(flags & O_CREAT) || d_really_is_positive(dentry))
-		वापस finish_no_खोलो(file, res);
+	if (!(flags & O_CREAT) || d_really_is_positive(dentry))
+		return finish_no_open(file, res);
 
 	err = 0;
 
 	v9ses = v9fs_inode2v9ses(dir);
 	perm = unixmode2p9mode(v9ses, mode);
-	fid = v9fs_create(v9ses, dir, dentry, शून्य, perm,
+	fid = v9fs_create(v9ses, dir, dentry, NULL, perm,
 				v9fs_uflags2omode(flags,
-						v9fs_proto_करोtu(v9ses)));
-	अगर (IS_ERR(fid)) अणु
+						v9fs_proto_dotu(v9ses)));
+	if (IS_ERR(fid)) {
 		err = PTR_ERR(fid);
-		fid = शून्य;
-		जाओ error;
-	पूर्ण
+		fid = NULL;
+		goto error;
+	}
 
 	v9fs_invalidate_inode_attr(dir);
 	inode = d_inode(dentry);
 	v9inode = V9FS_I(inode);
 	mutex_lock(&v9inode->v_mutex);
-	अगर ((v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) &&
-	    !v9inode->ग_लिखोback_fid &&
-	    ((flags & O_ACCMODE) != O_RDONLY)) अणु
+	if ((v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) &&
+	    !v9inode->writeback_fid &&
+	    ((flags & O_ACCMODE) != O_RDONLY)) {
 		/*
-		 * clone a fid and add it to ग_लिखोback_fid
-		 * we करो it during खोलो समय instead of
-		 * page dirty समय via ग_लिखो_begin/page_mkग_लिखो
-		 * because we want ग_लिखो after unlink useहाल
+		 * clone a fid and add it to writeback_fid
+		 * we do it during open time instead of
+		 * page dirty time via write_begin/page_mkwrite
+		 * because we want write after unlink usecase
 		 * to work.
 		 */
-		inode_fid = v9fs_ग_लिखोback_fid(dentry);
-		अगर (IS_ERR(inode_fid)) अणु
+		inode_fid = v9fs_writeback_fid(dentry);
+		if (IS_ERR(inode_fid)) {
 			err = PTR_ERR(inode_fid);
 			mutex_unlock(&v9inode->v_mutex);
-			जाओ error;
-		पूर्ण
-		v9inode->ग_लिखोback_fid = (व्योम *) inode_fid;
-	पूर्ण
+			goto error;
+		}
+		v9inode->writeback_fid = (void *) inode_fid;
+	}
 	mutex_unlock(&v9inode->v_mutex);
-	err = finish_खोलो(file, dentry, generic_file_खोलो);
-	अगर (err)
-		जाओ error;
+	err = finish_open(file, dentry, generic_file_open);
+	if (err)
+		goto error;
 
-	file->निजी_data = fid;
-	अगर (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE)
+	file->private_data = fid;
+	if (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE)
 		v9fs_cache_inode_set_cookie(d_inode(dentry), file);
-	v9fs_खोलो_fid_add(inode, fid);
+	v9fs_open_fid_add(inode, fid);
 
 	file->f_mode |= FMODE_CREATED;
 out:
 	dput(res);
-	वापस err;
+	return err;
 
 error:
-	अगर (fid)
+	if (fid)
 		p9_client_clunk(fid);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /**
  * v9fs_vfs_unlink - VFS unlink hook to delete an inode
@@ -882,25 +881,25 @@ error:
  *
  */
 
-पूर्णांक v9fs_vfs_unlink(काष्ठा inode *i, काष्ठा dentry *d)
-अणु
-	वापस v9fs_हटाओ(i, d, 0);
-पूर्ण
+int v9fs_vfs_unlink(struct inode *i, struct dentry *d)
+{
+	return v9fs_remove(i, d, 0);
+}
 
 /**
- * v9fs_vfs_सूची_हटाओ - VFS unlink hook to delete a directory
+ * v9fs_vfs_rmdir - VFS unlink hook to delete a directory
  * @i:  inode that is being unlinked
  * @d: dentry that is being unlinked
  *
  */
 
-पूर्णांक v9fs_vfs_सूची_हटाओ(काष्ठा inode *i, काष्ठा dentry *d)
-अणु
-	वापस v9fs_हटाओ(i, d, AT_REMOVEसूची);
-पूर्ण
+int v9fs_vfs_rmdir(struct inode *i, struct dentry *d)
+{
+	return v9fs_remove(i, d, AT_REMOVEDIR);
+}
 
 /**
- * v9fs_vfs_नाम - VFS hook to नाम an inode
+ * v9fs_vfs_rename - VFS hook to rename an inode
  * @old_dir:  old dir inode
  * @old_dentry: old dentry
  * @new_dir: new dir inode
@@ -908,22 +907,22 @@ error:
  *
  */
 
-पूर्णांक
-v9fs_vfs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
-		काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
-		काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
-अणु
-	पूर्णांक retval;
-	काष्ठा inode *old_inode;
-	काष्ठा inode *new_inode;
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *oldfid, *dfid;
-	काष्ठा p9_fid *olddirfid;
-	काष्ठा p9_fid *newdirfid;
-	काष्ठा p9_wstat wstat;
+int
+v9fs_vfs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
+		struct dentry *old_dentry, struct inode *new_dir,
+		struct dentry *new_dentry, unsigned int flags)
+{
+	int retval;
+	struct inode *old_inode;
+	struct inode *new_inode;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *oldfid, *dfid;
+	struct p9_fid *olddirfid;
+	struct p9_fid *newdirfid;
+	struct p9_wstat wstat;
 
-	अगर (flags)
-		वापस -EINVAL;
+	if (flags)
+		return -EINVAL;
 
 	p9_debug(P9_DEBUG_VFS, "\n");
 	retval = 0;
@@ -931,430 +930,430 @@ v9fs_vfs_नाम(काष्ठा user_namespace *mnt_userns, काष्�
 	new_inode = d_inode(new_dentry);
 	v9ses = v9fs_inode2v9ses(old_inode);
 	oldfid = v9fs_fid_lookup(old_dentry);
-	अगर (IS_ERR(oldfid))
-		वापस PTR_ERR(oldfid);
+	if (IS_ERR(oldfid))
+		return PTR_ERR(oldfid);
 
 	dfid = v9fs_parent_fid(old_dentry);
 	olddirfid = clone_fid(dfid);
-	अगर (dfid && !IS_ERR(dfid))
+	if (dfid && !IS_ERR(dfid))
 		p9_client_clunk(dfid);
 
-	अगर (IS_ERR(olddirfid)) अणु
+	if (IS_ERR(olddirfid)) {
 		retval = PTR_ERR(olddirfid);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	dfid = v9fs_parent_fid(new_dentry);
 	newdirfid = clone_fid(dfid);
 	p9_client_clunk(dfid);
 
-	अगर (IS_ERR(newdirfid)) अणु
+	if (IS_ERR(newdirfid)) {
 		retval = PTR_ERR(newdirfid);
-		जाओ clunk_olddir;
-	पूर्ण
+		goto clunk_olddir;
+	}
 
-	करोwn_ग_लिखो(&v9ses->नाम_sem);
-	अगर (v9fs_proto_करोtl(v9ses)) अणु
-		retval = p9_client_नामat(olddirfid, old_dentry->d_name.name,
+	down_write(&v9ses->rename_sem);
+	if (v9fs_proto_dotl(v9ses)) {
+		retval = p9_client_renameat(olddirfid, old_dentry->d_name.name,
 					    newdirfid, new_dentry->d_name.name);
-		अगर (retval == -EOPNOTSUPP)
-			retval = p9_client_नाम(oldfid, newdirfid,
+		if (retval == -EOPNOTSUPP)
+			retval = p9_client_rename(oldfid, newdirfid,
 						  new_dentry->d_name.name);
-		अगर (retval != -EOPNOTSUPP)
-			जाओ clunk_newdir;
-	पूर्ण
-	अगर (old_dentry->d_parent != new_dentry->d_parent) अणु
+		if (retval != -EOPNOTSUPP)
+			goto clunk_newdir;
+	}
+	if (old_dentry->d_parent != new_dentry->d_parent) {
 		/*
-		 * 9P .u can only handle file नाम in the same directory
+		 * 9P .u can only handle file rename in the same directory
 		 */
 
 		p9_debug(P9_DEBUG_ERROR, "old dir and new dir are different\n");
 		retval = -EXDEV;
-		जाओ clunk_newdir;
-	पूर्ण
+		goto clunk_newdir;
+	}
 	v9fs_blank_wstat(&wstat);
 	wstat.muid = v9ses->uname;
 	wstat.name = new_dentry->d_name.name;
 	retval = p9_client_wstat(oldfid, &wstat);
 
 clunk_newdir:
-	अगर (!retval) अणु
-		अगर (new_inode) अणु
-			अगर (S_ISसूची(new_inode->i_mode))
+	if (!retval) {
+		if (new_inode) {
+			if (S_ISDIR(new_inode->i_mode))
 				clear_nlink(new_inode);
-			अन्यथा
+			else
 				v9fs_dec_count(new_inode);
-		पूर्ण
-		अगर (S_ISसूची(old_inode->i_mode)) अणु
-			अगर (!new_inode)
+		}
+		if (S_ISDIR(old_inode->i_mode)) {
+			if (!new_inode)
 				inc_nlink(new_dir);
 			v9fs_dec_count(old_dir);
-		पूर्ण
+		}
 		v9fs_invalidate_inode_attr(old_inode);
 		v9fs_invalidate_inode_attr(old_dir);
 		v9fs_invalidate_inode_attr(new_dir);
 
-		/* successful नाम */
+		/* successful rename */
 		d_move(old_dentry, new_dentry);
-	पूर्ण
-	up_ग_लिखो(&v9ses->नाम_sem);
+	}
+	up_write(&v9ses->rename_sem);
 	p9_client_clunk(newdirfid);
 
 clunk_olddir:
 	p9_client_clunk(olddirfid);
 
-करोne:
+done:
 	p9_client_clunk(oldfid);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * v9fs_vfs_getattr - retrieve file metadata
  * @path: Object to query
- * @stat: metadata काष्ठाure to populate
- * @request_mask: Mask of STATX_xxx flags indicating the caller's पूर्णांकerests
+ * @stat: metadata structure to populate
+ * @request_mask: Mask of STATX_xxx flags indicating the caller's interests
  * @flags: AT_STATX_xxx setting
  *
  */
 
-अटल पूर्णांक
-v9fs_vfs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
-		 काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा dentry *dentry = path->dentry;
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *fid;
-	काष्ठा p9_wstat *st;
+static int
+v9fs_vfs_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		 struct kstat *stat, u32 request_mask, unsigned int flags)
+{
+	struct dentry *dentry = path->dentry;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid;
+	struct p9_wstat *st;
 
 	p9_debug(P9_DEBUG_VFS, "dentry: %p\n", dentry);
 	v9ses = v9fs_dentry2v9ses(dentry);
-	अगर (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) अणु
+	if (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) {
 		generic_fillattr(&init_user_ns, d_inode(dentry), stat);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	fid = v9fs_fid_lookup(dentry);
-	अगर (IS_ERR(fid))
-		वापस PTR_ERR(fid);
+	if (IS_ERR(fid))
+		return PTR_ERR(fid);
 
 	st = p9_client_stat(fid);
 	p9_client_clunk(fid);
-	अगर (IS_ERR(st))
-		वापस PTR_ERR(st);
+	if (IS_ERR(st))
+		return PTR_ERR(st);
 
 	v9fs_stat2inode(st, d_inode(dentry), dentry->d_sb, 0);
 	generic_fillattr(&init_user_ns, d_inode(dentry), stat);
 
-	p9stat_मुक्त(st);
-	kमुक्त(st);
-	वापस 0;
-पूर्ण
+	p9stat_free(st);
+	kfree(st);
+	return 0;
+}
 
 /**
  * v9fs_vfs_setattr - set file metadata
  * @dentry: file whose metadata to set
- * @iattr: metadata assignment काष्ठाure
+ * @iattr: metadata assignment structure
  *
  */
 
-अटल पूर्णांक v9fs_vfs_setattr(काष्ठा user_namespace *mnt_userns,
-			    काष्ठा dentry *dentry, काष्ठा iattr *iattr)
-अणु
-	पूर्णांक retval, use_dentry = 0;
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *fid = शून्य;
-	काष्ठा p9_wstat wstat;
+static int v9fs_vfs_setattr(struct user_namespace *mnt_userns,
+			    struct dentry *dentry, struct iattr *iattr)
+{
+	int retval, use_dentry = 0;
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid = NULL;
+	struct p9_wstat wstat;
 
 	p9_debug(P9_DEBUG_VFS, "\n");
 	retval = setattr_prepare(&init_user_ns, dentry, iattr);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	retval = -EPERM;
 	v9ses = v9fs_dentry2v9ses(dentry);
-	अगर (iattr->ia_valid & ATTR_खाता) अणु
-		fid = iattr->ia_file->निजी_data;
+	if (iattr->ia_valid & ATTR_FILE) {
+		fid = iattr->ia_file->private_data;
 		WARN_ON(!fid);
-	पूर्ण
-	अगर (!fid) अणु
+	}
+	if (!fid) {
 		fid = v9fs_fid_lookup(dentry);
 		use_dentry = 1;
-	पूर्ण
-	अगर(IS_ERR(fid))
-		वापस PTR_ERR(fid);
+	}
+	if(IS_ERR(fid))
+		return PTR_ERR(fid);
 
 	v9fs_blank_wstat(&wstat);
-	अगर (iattr->ia_valid & ATTR_MODE)
+	if (iattr->ia_valid & ATTR_MODE)
 		wstat.mode = unixmode2p9mode(v9ses, iattr->ia_mode);
 
-	अगर (iattr->ia_valid & ATTR_MTIME)
-		wstat.mसमय = iattr->ia_mसमय.tv_sec;
+	if (iattr->ia_valid & ATTR_MTIME)
+		wstat.mtime = iattr->ia_mtime.tv_sec;
 
-	अगर (iattr->ia_valid & ATTR_ATIME)
-		wstat.aसमय = iattr->ia_aसमय.tv_sec;
+	if (iattr->ia_valid & ATTR_ATIME)
+		wstat.atime = iattr->ia_atime.tv_sec;
 
-	अगर (iattr->ia_valid & ATTR_SIZE)
+	if (iattr->ia_valid & ATTR_SIZE)
 		wstat.length = iattr->ia_size;
 
-	अगर (v9fs_proto_करोtu(v9ses)) अणु
-		अगर (iattr->ia_valid & ATTR_UID)
+	if (v9fs_proto_dotu(v9ses)) {
+		if (iattr->ia_valid & ATTR_UID)
 			wstat.n_uid = iattr->ia_uid;
 
-		अगर (iattr->ia_valid & ATTR_GID)
+		if (iattr->ia_valid & ATTR_GID)
 			wstat.n_gid = iattr->ia_gid;
-	पूर्ण
+	}
 
 	/* Write all dirty data */
-	अगर (d_is_reg(dentry))
-		filemap_ग_लिखो_and_रुको(d_inode(dentry)->i_mapping);
+	if (d_is_reg(dentry))
+		filemap_write_and_wait(d_inode(dentry)->i_mapping);
 
 	retval = p9_client_wstat(fid, &wstat);
 
-	अगर (use_dentry)
+	if (use_dentry)
 		p9_client_clunk(fid);
 
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	अगर ((iattr->ia_valid & ATTR_SIZE) &&
-	    iattr->ia_size != i_size_पढ़ो(d_inode(dentry)))
+	if ((iattr->ia_valid & ATTR_SIZE) &&
+	    iattr->ia_size != i_size_read(d_inode(dentry)))
 		truncate_setsize(d_inode(dentry), iattr->ia_size);
 
 	v9fs_invalidate_inode_attr(d_inode(dentry));
 
 	setattr_copy(&init_user_ns, d_inode(dentry), iattr);
 	mark_inode_dirty(d_inode(dentry));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * v9fs_stat2inode - populate an inode काष्ठाure with mistat info
- * @stat: Plan 9 metadata (mistat) काष्ठाure
+ * v9fs_stat2inode - populate an inode structure with mistat info
+ * @stat: Plan 9 metadata (mistat) structure
  * @inode: inode to populate
- * @sb: superblock of fileप्रणाली
+ * @sb: superblock of filesystem
  * @flags: control flags (e.g. V9FS_STAT2INODE_KEEP_ISIZE)
  *
  */
 
-व्योम
-v9fs_stat2inode(काष्ठा p9_wstat *stat, काष्ठा inode *inode,
-		 काष्ठा super_block *sb, अचिन्हित पूर्णांक flags)
-अणु
+void
+v9fs_stat2inode(struct p9_wstat *stat, struct inode *inode,
+		 struct super_block *sb, unsigned int flags)
+{
 	umode_t mode;
-	काष्ठा v9fs_session_info *v9ses = sb->s_fs_info;
-	काष्ठा v9fs_inode *v9inode = V9FS_I(inode);
+	struct v9fs_session_info *v9ses = sb->s_fs_info;
+	struct v9fs_inode *v9inode = V9FS_I(inode);
 
 	set_nlink(inode, 1);
 
-	inode->i_aसमय.tv_sec = stat->aसमय;
-	inode->i_mसमय.tv_sec = stat->mसमय;
-	inode->i_स_समय.tv_sec = stat->mसमय;
+	inode->i_atime.tv_sec = stat->atime;
+	inode->i_mtime.tv_sec = stat->mtime;
+	inode->i_ctime.tv_sec = stat->mtime;
 
 	inode->i_uid = v9ses->dfltuid;
 	inode->i_gid = v9ses->dfltgid;
 
-	अगर (v9fs_proto_करोtu(v9ses)) अणु
+	if (v9fs_proto_dotu(v9ses)) {
 		inode->i_uid = stat->n_uid;
 		inode->i_gid = stat->n_gid;
-	पूर्ण
-	अगर ((S_ISREG(inode->i_mode)) || (S_ISसूची(inode->i_mode))) अणु
-		अगर (v9fs_proto_करोtu(v9ses)) अणु
-			अचिन्हित पूर्णांक i_nlink;
+	}
+	if ((S_ISREG(inode->i_mode)) || (S_ISDIR(inode->i_mode))) {
+		if (v9fs_proto_dotu(v9ses)) {
+			unsigned int i_nlink;
 			/*
 			 * Hadlink support got added later to the .u extension.
-			 * So there can be a server out there that करोesn't
+			 * So there can be a server out there that doesn't
 			 * support this even with .u extension. That would
 			 * just leave us with stat->extension being an empty
 			 * string, though.
 			 */
 			/* HARDLINKCOUNT %u */
-			अगर (माला_पूछो(stat->extension,
+			if (sscanf(stat->extension,
 				   " HARDLINKCOUNT %u", &i_nlink) == 1)
 				set_nlink(inode, i_nlink);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mode = p9mode2perm(v9ses, stat);
 	mode |= inode->i_mode & ~S_IALLUGO;
 	inode->i_mode = mode;
 
-	अगर (!(flags & V9FS_STAT2INODE_KEEP_ISIZE))
-		v9fs_i_size_ग_लिखो(inode, stat->length);
+	if (!(flags & V9FS_STAT2INODE_KEEP_ISIZE))
+		v9fs_i_size_write(inode, stat->length);
 	/* not real number of blocks, but 512 byte ones ... */
 	inode->i_blocks = (stat->length + 512 - 1) >> 9;
 	v9inode->cache_validity &= ~V9FS_INO_INVALID_ATTR;
-पूर्ण
+}
 
 /**
- * v9fs_qid2ino - convert qid पूर्णांकo inode number
+ * v9fs_qid2ino - convert qid into inode number
  * @qid: qid to hash
  *
- * BUG: potential क्रम inode number collisions?
+ * BUG: potential for inode number collisions?
  */
 
-ino_t v9fs_qid2ino(काष्ठा p9_qid *qid)
-अणु
+ino_t v9fs_qid2ino(struct p9_qid *qid)
+{
 	u64 path = qid->path + 2;
 	ino_t i = 0;
 
-	अगर (माप(ino_t) == माप(path))
-		स_नकल(&i, &path, माप(ino_t));
-	अन्यथा
+	if (sizeof(ino_t) == sizeof(path))
+		memcpy(&i, &path, sizeof(ino_t));
+	else
 		i = (ino_t) (path ^ (path >> 32));
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /**
  * v9fs_vfs_get_link - follow a symlink path
- * @dentry: dentry क्रम symlink
- * @inode: inode क्रम symlink
- * @करोne: delayed call क्रम when we are करोne with the वापस value
+ * @dentry: dentry for symlink
+ * @inode: inode for symlink
+ * @done: delayed call for when we are done with the return value
  */
 
-अटल स्थिर अक्षर *v9fs_vfs_get_link(काष्ठा dentry *dentry,
-				     काष्ठा inode *inode,
-				     काष्ठा delayed_call *करोne)
-अणु
-	काष्ठा v9fs_session_info *v9ses;
-	काष्ठा p9_fid *fid;
-	काष्ठा p9_wstat *st;
-	अक्षर *res;
+static const char *v9fs_vfs_get_link(struct dentry *dentry,
+				     struct inode *inode,
+				     struct delayed_call *done)
+{
+	struct v9fs_session_info *v9ses;
+	struct p9_fid *fid;
+	struct p9_wstat *st;
+	char *res;
 
-	अगर (!dentry)
-		वापस ERR_PTR(-ECHILD);
+	if (!dentry)
+		return ERR_PTR(-ECHILD);
 
 	v9ses = v9fs_dentry2v9ses(dentry);
 	fid = v9fs_fid_lookup(dentry);
 	p9_debug(P9_DEBUG_VFS, "%pd\n", dentry);
 
-	अगर (IS_ERR(fid))
-		वापस ERR_CAST(fid);
+	if (IS_ERR(fid))
+		return ERR_CAST(fid);
 
-	अगर (!v9fs_proto_करोtu(v9ses))
-		वापस ERR_PTR(-EBADF);
+	if (!v9fs_proto_dotu(v9ses))
+		return ERR_PTR(-EBADF);
 
 	st = p9_client_stat(fid);
 	p9_client_clunk(fid);
-	अगर (IS_ERR(st))
-		वापस ERR_CAST(st);
+	if (IS_ERR(st))
+		return ERR_CAST(st);
 
-	अगर (!(st->mode & P9_DMSYMLINK)) अणु
-		p9stat_मुक्त(st);
-		kमुक्त(st);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if (!(st->mode & P9_DMSYMLINK)) {
+		p9stat_free(st);
+		kfree(st);
+		return ERR_PTR(-EINVAL);
+	}
 	res = st->extension;
-	st->extension = शून्य;
-	अगर (म_माप(res) >= PATH_MAX)
+	st->extension = NULL;
+	if (strlen(res) >= PATH_MAX)
 		res[PATH_MAX - 1] = '\0';
 
-	p9stat_मुक्त(st);
-	kमुक्त(st);
-	set_delayed_call(करोne, kमुक्त_link, res);
-	वापस res;
-पूर्ण
+	p9stat_free(st);
+	kfree(st);
+	set_delayed_call(done, kfree_link, res);
+	return res;
+}
 
 /**
  * v9fs_vfs_mkspecial - create a special file
  * @dir: inode to create special file in
  * @dentry: dentry to create
  * @perm: mode to create special file
- * @extension: 9p2000.u क्रमmat extension string representing special file
+ * @extension: 9p2000.u format extension string representing special file
  *
  */
 
-अटल पूर्णांक v9fs_vfs_mkspecial(काष्ठा inode *dir, काष्ठा dentry *dentry,
-	u32 perm, स्थिर अक्षर *extension)
-अणु
-	काष्ठा p9_fid *fid;
-	काष्ठा v9fs_session_info *v9ses;
+static int v9fs_vfs_mkspecial(struct inode *dir, struct dentry *dentry,
+	u32 perm, const char *extension)
+{
+	struct p9_fid *fid;
+	struct v9fs_session_info *v9ses;
 
 	v9ses = v9fs_inode2v9ses(dir);
-	अगर (!v9fs_proto_करोtu(v9ses)) अणु
+	if (!v9fs_proto_dotu(v9ses)) {
 		p9_debug(P9_DEBUG_ERROR, "not extended\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	fid = v9fs_create(v9ses, dir, dentry, (अक्षर *) extension, perm,
+	fid = v9fs_create(v9ses, dir, dentry, (char *) extension, perm,
 								P9_OREAD);
-	अगर (IS_ERR(fid))
-		वापस PTR_ERR(fid);
+	if (IS_ERR(fid))
+		return PTR_ERR(fid);
 
 	v9fs_invalidate_inode_attr(dir);
 	p9_client_clunk(fid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * v9fs_vfs_symlink - helper function to create symlinks
  * @dir: directory inode containing symlink
- * @dentry: dentry क्रम symlink
+ * @dentry: dentry for symlink
  * @symname: symlink data
  *
- * See Also: 9P2000.u RFC क्रम more inक्रमmation
+ * See Also: 9P2000.u RFC for more information
  *
  */
 
-अटल पूर्णांक
-v9fs_vfs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-		 काष्ठा dentry *dentry, स्थिर अक्षर *symname)
-अणु
+static int
+v9fs_vfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
+		 struct dentry *dentry, const char *symname)
+{
 	p9_debug(P9_DEBUG_VFS, " %lu,%pd,%s\n",
 		 dir->i_ino, dentry, symname);
 
-	वापस v9fs_vfs_mkspecial(dir, dentry, P9_DMSYMLINK, symname);
-पूर्ण
+	return v9fs_vfs_mkspecial(dir, dentry, P9_DMSYMLINK, symname);
+}
 
-#घोषणा U32_MAX_DIGITS 10
+#define U32_MAX_DIGITS 10
 
 /**
  * v9fs_vfs_link - create a hardlink
- * @old_dentry: dentry क्रम file to link to
- * @dir: inode destination क्रम new link
- * @dentry: dentry क्रम link
+ * @old_dentry: dentry for file to link to
+ * @dir: inode destination for new link
+ * @dentry: dentry for link
  *
  */
 
-अटल पूर्णांक
-v9fs_vfs_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
-	      काष्ठा dentry *dentry)
-अणु
-	पूर्णांक retval;
-	अक्षर name[1 + U32_MAX_DIGITS + 2]; /* sign + number + \न + \0 */
-	काष्ठा p9_fid *oldfid;
+static int
+v9fs_vfs_link(struct dentry *old_dentry, struct inode *dir,
+	      struct dentry *dentry)
+{
+	int retval;
+	char name[1 + U32_MAX_DIGITS + 2]; /* sign + number + \n + \0 */
+	struct p9_fid *oldfid;
 
 	p9_debug(P9_DEBUG_VFS, " %lu,%pd,%pd\n",
 		 dir->i_ino, dentry, old_dentry);
 
 	oldfid = v9fs_fid_clone(old_dentry);
-	अगर (IS_ERR(oldfid))
-		वापस PTR_ERR(oldfid);
+	if (IS_ERR(oldfid))
+		return PTR_ERR(oldfid);
 
-	प्र_लिखो(name, "%d\n", oldfid->fid);
+	sprintf(name, "%d\n", oldfid->fid);
 	retval = v9fs_vfs_mkspecial(dir, dentry, P9_DMLINK, name);
-	अगर (!retval) अणु
+	if (!retval) {
 		v9fs_refresh_inode(oldfid, d_inode(old_dentry));
 		v9fs_invalidate_inode_attr(dir);
-	पूर्ण
+	}
 	p9_client_clunk(oldfid);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /**
  * v9fs_vfs_mknod - create a special file
- * @dir: inode destination क्रम new link
- * @dentry: dentry क्रम file
- * @mode: mode क्रम creation
+ * @dir: inode destination for new link
+ * @dentry: dentry for file
+ * @mode: mode for creation
  * @rdev: device associated with special file
  *
  */
 
-अटल पूर्णांक
-v9fs_vfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
-	       काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
-अणु
-	काष्ठा v9fs_session_info *v9ses = v9fs_inode2v9ses(dir);
-	पूर्णांक retval;
-	अक्षर name[2 + U32_MAX_DIGITS + 1 + U32_MAX_DIGITS + 1];
+static int
+v9fs_vfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
+	       struct dentry *dentry, umode_t mode, dev_t rdev)
+{
+	struct v9fs_session_info *v9ses = v9fs_inode2v9ses(dir);
+	int retval;
+	char name[2 + U32_MAX_DIGITS + 1 + U32_MAX_DIGITS + 1];
 	u32 perm;
 
 	p9_debug(P9_DEBUG_VFS, " %lu,%pd mode: %hx MAJOR: %u MINOR: %u\n",
@@ -1362,87 +1361,87 @@ v9fs_vfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा
 		 MAJOR(rdev), MINOR(rdev));
 
 	/* build extension */
-	अगर (S_ISBLK(mode))
-		प्र_लिखो(name, "b %u %u", MAJOR(rdev), MINOR(rdev));
-	अन्यथा अगर (S_ISCHR(mode))
-		प्र_लिखो(name, "c %u %u", MAJOR(rdev), MINOR(rdev));
-	अन्यथा
+	if (S_ISBLK(mode))
+		sprintf(name, "b %u %u", MAJOR(rdev), MINOR(rdev));
+	else if (S_ISCHR(mode))
+		sprintf(name, "c %u %u", MAJOR(rdev), MINOR(rdev));
+	else
 		*name = 0;
 
 	perm = unixmode2p9mode(v9ses, mode);
 	retval = v9fs_vfs_mkspecial(dir, dentry, perm, name);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-पूर्णांक v9fs_refresh_inode(काष्ठा p9_fid *fid, काष्ठा inode *inode)
-अणु
-	पूर्णांक umode;
+int v9fs_refresh_inode(struct p9_fid *fid, struct inode *inode)
+{
+	int umode;
 	dev_t rdev;
-	काष्ठा p9_wstat *st;
-	काष्ठा v9fs_session_info *v9ses;
-	अचिन्हित पूर्णांक flags;
+	struct p9_wstat *st;
+	struct v9fs_session_info *v9ses;
+	unsigned int flags;
 
 	v9ses = v9fs_inode2v9ses(inode);
 	st = p9_client_stat(fid);
-	अगर (IS_ERR(st))
-		वापस PTR_ERR(st);
+	if (IS_ERR(st))
+		return PTR_ERR(st);
 	/*
-	 * Don't update inode अगर the file type is dअगरferent
+	 * Don't update inode if the file type is different
 	 */
 	umode = p9mode2unixmode(v9ses, st, &rdev);
-	अगर (inode_wrong_type(inode, umode))
-		जाओ out;
+	if (inode_wrong_type(inode, umode))
+		goto out;
 
 	/*
-	 * We करोn't want to refresh inode->i_size,
+	 * We don't want to refresh inode->i_size,
 	 * because we may have cached data
 	 */
 	flags = (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) ?
 		V9FS_STAT2INODE_KEEP_ISIZE : 0;
 	v9fs_stat2inode(st, inode, inode->i_sb, flags);
 out:
-	p9stat_मुक्त(st);
-	kमुक्त(st);
-	वापस 0;
-पूर्ण
+	p9stat_free(st);
+	kfree(st);
+	return 0;
+}
 
-अटल स्थिर काष्ठा inode_operations v9fs_dir_inode_operations_करोtu = अणु
+static const struct inode_operations v9fs_dir_inode_operations_dotu = {
 	.create = v9fs_vfs_create,
 	.lookup = v9fs_vfs_lookup,
-	.atomic_खोलो = v9fs_vfs_atomic_खोलो,
+	.atomic_open = v9fs_vfs_atomic_open,
 	.symlink = v9fs_vfs_symlink,
 	.link = v9fs_vfs_link,
 	.unlink = v9fs_vfs_unlink,
-	.सूची_गढ़ो = v9fs_vfs_सूची_गढ़ो,
-	.सूची_हटाओ = v9fs_vfs_सूची_हटाओ,
+	.mkdir = v9fs_vfs_mkdir,
+	.rmdir = v9fs_vfs_rmdir,
 	.mknod = v9fs_vfs_mknod,
-	.नाम = v9fs_vfs_नाम,
+	.rename = v9fs_vfs_rename,
 	.getattr = v9fs_vfs_getattr,
 	.setattr = v9fs_vfs_setattr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा inode_operations v9fs_dir_inode_operations = अणु
+static const struct inode_operations v9fs_dir_inode_operations = {
 	.create = v9fs_vfs_create,
 	.lookup = v9fs_vfs_lookup,
-	.atomic_खोलो = v9fs_vfs_atomic_खोलो,
+	.atomic_open = v9fs_vfs_atomic_open,
 	.unlink = v9fs_vfs_unlink,
-	.सूची_गढ़ो = v9fs_vfs_सूची_गढ़ो,
-	.सूची_हटाओ = v9fs_vfs_सूची_हटाओ,
+	.mkdir = v9fs_vfs_mkdir,
+	.rmdir = v9fs_vfs_rmdir,
 	.mknod = v9fs_vfs_mknod,
-	.नाम = v9fs_vfs_नाम,
+	.rename = v9fs_vfs_rename,
 	.getattr = v9fs_vfs_getattr,
 	.setattr = v9fs_vfs_setattr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा inode_operations v9fs_file_inode_operations = अणु
+static const struct inode_operations v9fs_file_inode_operations = {
 	.getattr = v9fs_vfs_getattr,
 	.setattr = v9fs_vfs_setattr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा inode_operations v9fs_symlink_inode_operations = अणु
+static const struct inode_operations v9fs_symlink_inode_operations = {
 	.get_link = v9fs_vfs_get_link,
 	.getattr = v9fs_vfs_getattr,
 	.setattr = v9fs_vfs_setattr,
-पूर्ण;
+};
 

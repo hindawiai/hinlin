@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * net/dsa/dsa_priv.h - Hardware चयन handling
+ * net/dsa/dsa_priv.h - Hardware switch handling
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
-#अगर_अघोषित __DSA_PRIV_H
-#घोषणा __DSA_PRIV_H
+#ifndef __DSA_PRIV_H
+#define __DSA_PRIV_H
 
-#समावेश <linux/अगर_bridge.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netpoll.h>
-#समावेश <net/dsa.h>
-#समावेश <net/gro_cells.h>
+#include <linux/if_bridge.h>
+#include <linux/phy.h>
+#include <linux/netdevice.h>
+#include <linux/netpoll.h>
+#include <net/dsa.h>
+#include <net/gro_cells.h>
 
-क्रमागत अणु
+enum {
 	DSA_NOTIFIER_AGEING_TIME,
 	DSA_NOTIFIER_BRIDGE_JOIN,
 	DSA_NOTIFIER_BRIDGE_LEAVE,
@@ -36,334 +35,334 @@
 	DSA_NOTIFIER_MRP_DEL,
 	DSA_NOTIFIER_MRP_ADD_RING_ROLE,
 	DSA_NOTIFIER_MRP_DEL_RING_ROLE,
-पूर्ण;
+};
 
 /* DSA_NOTIFIER_AGEING_TIME */
-काष्ठा dsa_notअगरier_ageing_समय_info अणु
-	अचिन्हित पूर्णांक ageing_समय;
-पूर्ण;
+struct dsa_notifier_ageing_time_info {
+	unsigned int ageing_time;
+};
 
 /* DSA_NOTIFIER_BRIDGE_* */
-काष्ठा dsa_notअगरier_bridge_info अणु
-	काष्ठा net_device *br;
-	पूर्णांक tree_index;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-पूर्ण;
+struct dsa_notifier_bridge_info {
+	struct net_device *br;
+	int tree_index;
+	int sw_index;
+	int port;
+};
 
 /* DSA_NOTIFIER_FDB_* */
-काष्ठा dsa_notअगरier_fdb_info अणु
-	पूर्णांक sw_index;
-	पूर्णांक port;
-	स्थिर अचिन्हित अक्षर *addr;
+struct dsa_notifier_fdb_info {
+	int sw_index;
+	int port;
+	const unsigned char *addr;
 	u16 vid;
-पूर्ण;
+};
 
 /* DSA_NOTIFIER_MDB_* */
-काष्ठा dsa_notअगरier_mdb_info अणु
-	स्थिर काष्ठा चयनdev_obj_port_mdb *mdb;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-पूर्ण;
+struct dsa_notifier_mdb_info {
+	const struct switchdev_obj_port_mdb *mdb;
+	int sw_index;
+	int port;
+};
 
 /* DSA_NOTIFIER_LAG_* */
-काष्ठा dsa_notअगरier_lag_info अणु
-	काष्ठा net_device *lag;
-	पूर्णांक sw_index;
-	पूर्णांक port;
+struct dsa_notifier_lag_info {
+	struct net_device *lag;
+	int sw_index;
+	int port;
 
-	काष्ठा netdev_lag_upper_info *info;
-पूर्ण;
+	struct netdev_lag_upper_info *info;
+};
 
 /* DSA_NOTIFIER_VLAN_* */
-काष्ठा dsa_notअगरier_vlan_info अणु
-	स्थिर काष्ठा चयनdev_obj_port_vlan *vlan;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-	काष्ठा netlink_ext_ack *extack;
-पूर्ण;
+struct dsa_notifier_vlan_info {
+	const struct switchdev_obj_port_vlan *vlan;
+	int sw_index;
+	int port;
+	struct netlink_ext_ack *extack;
+};
 
 /* DSA_NOTIFIER_MTU */
-काष्ठा dsa_notअगरier_mtu_info अणु
+struct dsa_notifier_mtu_info {
 	bool propagate_upstream;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-	पूर्णांक mtu;
-पूर्ण;
+	int sw_index;
+	int port;
+	int mtu;
+};
 
 /* DSA_NOTIFIER_TAG_PROTO_* */
-काष्ठा dsa_notअगरier_tag_proto_info अणु
-	स्थिर काष्ठा dsa_device_ops *tag_ops;
-पूर्ण;
+struct dsa_notifier_tag_proto_info {
+	const struct dsa_device_ops *tag_ops;
+};
 
 /* DSA_NOTIFIER_MRP_* */
-काष्ठा dsa_notअगरier_mrp_info अणु
-	स्थिर काष्ठा चयनdev_obj_mrp *mrp;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-पूर्ण;
+struct dsa_notifier_mrp_info {
+	const struct switchdev_obj_mrp *mrp;
+	int sw_index;
+	int port;
+};
 
 /* DSA_NOTIFIER_MRP_* */
-काष्ठा dsa_notअगरier_mrp_ring_role_info अणु
-	स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-पूर्ण;
+struct dsa_notifier_mrp_ring_role_info {
+	const struct switchdev_obj_ring_role_mrp *mrp;
+	int sw_index;
+	int port;
+};
 
-काष्ठा dsa_चयनdev_event_work अणु
-	काष्ठा dsa_चयन *ds;
-	पूर्णांक port;
-	काष्ठा work_काष्ठा work;
-	अचिन्हित दीर्घ event;
-	/* Specअगरic क्रम SWITCHDEV_FDB_ADD_TO_DEVICE and
+struct dsa_switchdev_event_work {
+	struct dsa_switch *ds;
+	int port;
+	struct work_struct work;
+	unsigned long event;
+	/* Specific for SWITCHDEV_FDB_ADD_TO_DEVICE and
 	 * SWITCHDEV_FDB_DEL_TO_DEVICE
 	 */
-	अचिन्हित अक्षर addr[ETH_ALEN];
+	unsigned char addr[ETH_ALEN];
 	u16 vid;
-पूर्ण;
+};
 
 /* DSA_NOTIFIER_HSR_* */
-काष्ठा dsa_notअगरier_hsr_info अणु
-	काष्ठा net_device *hsr;
-	पूर्णांक sw_index;
-	पूर्णांक port;
-पूर्ण;
+struct dsa_notifier_hsr_info {
+	struct net_device *hsr;
+	int sw_index;
+	int port;
+};
 
-काष्ठा dsa_slave_priv अणु
-	/* Copy of CPU port xmit क्रम faster access in slave transmit hot path */
-	काष्ठा sk_buff *	(*xmit)(काष्ठा sk_buff *skb,
-					काष्ठा net_device *dev);
+struct dsa_slave_priv {
+	/* Copy of CPU port xmit for faster access in slave transmit hot path */
+	struct sk_buff *	(*xmit)(struct sk_buff *skb,
+					struct net_device *dev);
 
-	काष्ठा gro_cells	gcells;
+	struct gro_cells	gcells;
 
-	/* DSA port data, such as चयन, port index, etc. */
-	काष्ठा dsa_port		*dp;
+	/* DSA port data, such as switch, port index, etc. */
+	struct dsa_port		*dp;
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	काष्ठा netpoll		*netpoll;
-#पूर्ण_अगर
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	struct netpoll		*netpoll;
+#endif
 
 	/* TC context */
-	काष्ठा list_head	mall_tc_list;
-पूर्ण;
+	struct list_head	mall_tc_list;
+};
 
 /* dsa.c */
-स्थिर काष्ठा dsa_device_ops *dsa_tag_driver_get(पूर्णांक tag_protocol);
-व्योम dsa_tag_driver_put(स्थिर काष्ठा dsa_device_ops *ops);
-स्थिर काष्ठा dsa_device_ops *dsa_find_tagger_by_name(स्थिर अक्षर *buf);
+const struct dsa_device_ops *dsa_tag_driver_get(int tag_protocol);
+void dsa_tag_driver_put(const struct dsa_device_ops *ops);
+const struct dsa_device_ops *dsa_find_tagger_by_name(const char *buf);
 
-bool dsa_schedule_work(काष्ठा work_काष्ठा *work);
-स्थिर अक्षर *dsa_tag_protocol_to_str(स्थिर काष्ठा dsa_device_ops *ops);
+bool dsa_schedule_work(struct work_struct *work);
+const char *dsa_tag_protocol_to_str(const struct dsa_device_ops *ops);
 
 /* master.c */
-पूर्णांक dsa_master_setup(काष्ठा net_device *dev, काष्ठा dsa_port *cpu_dp);
-व्योम dsa_master_tearकरोwn(काष्ठा net_device *dev);
+int dsa_master_setup(struct net_device *dev, struct dsa_port *cpu_dp);
+void dsa_master_teardown(struct net_device *dev);
 
-अटल अंतरभूत काष्ठा net_device *dsa_master_find_slave(काष्ठा net_device *dev,
-						       पूर्णांक device, पूर्णांक port)
-अणु
-	काष्ठा dsa_port *cpu_dp = dev->dsa_ptr;
-	काष्ठा dsa_चयन_tree *dst = cpu_dp->dst;
-	काष्ठा dsa_port *dp;
+static inline struct net_device *dsa_master_find_slave(struct net_device *dev,
+						       int device, int port)
+{
+	struct dsa_port *cpu_dp = dev->dsa_ptr;
+	struct dsa_switch_tree *dst = cpu_dp->dst;
+	struct dsa_port *dp;
 
-	list_क्रम_each_entry(dp, &dst->ports, list)
-		अगर (dp->ds->index == device && dp->index == port &&
+	list_for_each_entry(dp, &dst->ports, list)
+		if (dp->ds->index == device && dp->index == port &&
 		    dp->type == DSA_PORT_TYPE_USER)
-			वापस dp->slave;
+			return dp->slave;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* port.c */
-व्योम dsa_port_set_tag_protocol(काष्ठा dsa_port *cpu_dp,
-			       स्थिर काष्ठा dsa_device_ops *tag_ops);
-पूर्णांक dsa_port_set_state(काष्ठा dsa_port *dp, u8 state);
-पूर्णांक dsa_port_enable_rt(काष्ठा dsa_port *dp, काष्ठा phy_device *phy);
-पूर्णांक dsa_port_enable(काष्ठा dsa_port *dp, काष्ठा phy_device *phy);
-व्योम dsa_port_disable_rt(काष्ठा dsa_port *dp);
-व्योम dsa_port_disable(काष्ठा dsa_port *dp);
-पूर्णांक dsa_port_bridge_join(काष्ठा dsa_port *dp, काष्ठा net_device *br,
-			 काष्ठा netlink_ext_ack *extack);
-व्योम dsa_port_bridge_leave(काष्ठा dsa_port *dp, काष्ठा net_device *br);
-पूर्णांक dsa_port_lag_change(काष्ठा dsa_port *dp,
-			काष्ठा netdev_lag_lower_state_info *linfo);
-पूर्णांक dsa_port_lag_join(काष्ठा dsa_port *dp, काष्ठा net_device *lag_dev,
-		      काष्ठा netdev_lag_upper_info *uinfo,
-		      काष्ठा netlink_ext_ack *extack);
-व्योम dsa_port_lag_leave(काष्ठा dsa_port *dp, काष्ठा net_device *lag_dev);
-पूर्णांक dsa_port_vlan_filtering(काष्ठा dsa_port *dp, bool vlan_filtering,
-			    काष्ठा netlink_ext_ack *extack);
-bool dsa_port_skip_vlan_configuration(काष्ठा dsa_port *dp);
-पूर्णांक dsa_port_ageing_समय(काष्ठा dsa_port *dp, घड़ी_प्रकार ageing_घड़ी);
-पूर्णांक dsa_port_mtu_change(काष्ठा dsa_port *dp, पूर्णांक new_mtu,
+void dsa_port_set_tag_protocol(struct dsa_port *cpu_dp,
+			       const struct dsa_device_ops *tag_ops);
+int dsa_port_set_state(struct dsa_port *dp, u8 state);
+int dsa_port_enable_rt(struct dsa_port *dp, struct phy_device *phy);
+int dsa_port_enable(struct dsa_port *dp, struct phy_device *phy);
+void dsa_port_disable_rt(struct dsa_port *dp);
+void dsa_port_disable(struct dsa_port *dp);
+int dsa_port_bridge_join(struct dsa_port *dp, struct net_device *br,
+			 struct netlink_ext_ack *extack);
+void dsa_port_bridge_leave(struct dsa_port *dp, struct net_device *br);
+int dsa_port_lag_change(struct dsa_port *dp,
+			struct netdev_lag_lower_state_info *linfo);
+int dsa_port_lag_join(struct dsa_port *dp, struct net_device *lag_dev,
+		      struct netdev_lag_upper_info *uinfo,
+		      struct netlink_ext_ack *extack);
+void dsa_port_lag_leave(struct dsa_port *dp, struct net_device *lag_dev);
+int dsa_port_vlan_filtering(struct dsa_port *dp, bool vlan_filtering,
+			    struct netlink_ext_ack *extack);
+bool dsa_port_skip_vlan_configuration(struct dsa_port *dp);
+int dsa_port_ageing_time(struct dsa_port *dp, clock_t ageing_clock);
+int dsa_port_mtu_change(struct dsa_port *dp, int new_mtu,
 			bool propagate_upstream);
-पूर्णांक dsa_port_fdb_add(काष्ठा dsa_port *dp, स्थिर अचिन्हित अक्षर *addr,
+int dsa_port_fdb_add(struct dsa_port *dp, const unsigned char *addr,
 		     u16 vid);
-पूर्णांक dsa_port_fdb_del(काष्ठा dsa_port *dp, स्थिर अचिन्हित अक्षर *addr,
+int dsa_port_fdb_del(struct dsa_port *dp, const unsigned char *addr,
 		     u16 vid);
-पूर्णांक dsa_port_fdb_dump(काष्ठा dsa_port *dp, dsa_fdb_dump_cb_t *cb, व्योम *data);
-पूर्णांक dsa_port_mdb_add(स्थिर काष्ठा dsa_port *dp,
-		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb);
-पूर्णांक dsa_port_mdb_del(स्थिर काष्ठा dsa_port *dp,
-		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb);
-पूर्णांक dsa_port_pre_bridge_flags(स्थिर काष्ठा dsa_port *dp,
-			      काष्ठा चयनdev_brport_flags flags,
-			      काष्ठा netlink_ext_ack *extack);
-पूर्णांक dsa_port_bridge_flags(स्थिर काष्ठा dsa_port *dp,
-			  काष्ठा चयनdev_brport_flags flags,
-			  काष्ठा netlink_ext_ack *extack);
-पूर्णांक dsa_port_mrouter(काष्ठा dsa_port *dp, bool mrouter,
-		     काष्ठा netlink_ext_ack *extack);
-पूर्णांक dsa_port_vlan_add(काष्ठा dsa_port *dp,
-		      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
-		      काष्ठा netlink_ext_ack *extack);
-पूर्णांक dsa_port_vlan_del(काष्ठा dsa_port *dp,
-		      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan);
-पूर्णांक dsa_port_mrp_add(स्थिर काष्ठा dsa_port *dp,
-		     स्थिर काष्ठा चयनdev_obj_mrp *mrp);
-पूर्णांक dsa_port_mrp_del(स्थिर काष्ठा dsa_port *dp,
-		     स्थिर काष्ठा चयनdev_obj_mrp *mrp);
-पूर्णांक dsa_port_mrp_add_ring_role(स्थिर काष्ठा dsa_port *dp,
-			       स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp);
-पूर्णांक dsa_port_mrp_del_ring_role(स्थिर काष्ठा dsa_port *dp,
-			       स्थिर काष्ठा चयनdev_obj_ring_role_mrp *mrp);
-पूर्णांक dsa_port_link_रेजिस्टर_of(काष्ठा dsa_port *dp);
-व्योम dsa_port_link_unरेजिस्टर_of(काष्ठा dsa_port *dp);
-पूर्णांक dsa_port_hsr_join(काष्ठा dsa_port *dp, काष्ठा net_device *hsr);
-व्योम dsa_port_hsr_leave(काष्ठा dsa_port *dp, काष्ठा net_device *hsr);
-बाह्य स्थिर काष्ठा phylink_mac_ops dsa_port_phylink_mac_ops;
+int dsa_port_fdb_dump(struct dsa_port *dp, dsa_fdb_dump_cb_t *cb, void *data);
+int dsa_port_mdb_add(const struct dsa_port *dp,
+		     const struct switchdev_obj_port_mdb *mdb);
+int dsa_port_mdb_del(const struct dsa_port *dp,
+		     const struct switchdev_obj_port_mdb *mdb);
+int dsa_port_pre_bridge_flags(const struct dsa_port *dp,
+			      struct switchdev_brport_flags flags,
+			      struct netlink_ext_ack *extack);
+int dsa_port_bridge_flags(const struct dsa_port *dp,
+			  struct switchdev_brport_flags flags,
+			  struct netlink_ext_ack *extack);
+int dsa_port_mrouter(struct dsa_port *dp, bool mrouter,
+		     struct netlink_ext_ack *extack);
+int dsa_port_vlan_add(struct dsa_port *dp,
+		      const struct switchdev_obj_port_vlan *vlan,
+		      struct netlink_ext_ack *extack);
+int dsa_port_vlan_del(struct dsa_port *dp,
+		      const struct switchdev_obj_port_vlan *vlan);
+int dsa_port_mrp_add(const struct dsa_port *dp,
+		     const struct switchdev_obj_mrp *mrp);
+int dsa_port_mrp_del(const struct dsa_port *dp,
+		     const struct switchdev_obj_mrp *mrp);
+int dsa_port_mrp_add_ring_role(const struct dsa_port *dp,
+			       const struct switchdev_obj_ring_role_mrp *mrp);
+int dsa_port_mrp_del_ring_role(const struct dsa_port *dp,
+			       const struct switchdev_obj_ring_role_mrp *mrp);
+int dsa_port_link_register_of(struct dsa_port *dp);
+void dsa_port_link_unregister_of(struct dsa_port *dp);
+int dsa_port_hsr_join(struct dsa_port *dp, struct net_device *hsr);
+void dsa_port_hsr_leave(struct dsa_port *dp, struct net_device *hsr);
+extern const struct phylink_mac_ops dsa_port_phylink_mac_ops;
 
-अटल अंतरभूत bool dsa_port_offloads_bridge_port(काष्ठा dsa_port *dp,
-						 काष्ठा net_device *dev)
-अणु
-	वापस dsa_port_to_bridge_port(dp) == dev;
-पूर्ण
+static inline bool dsa_port_offloads_bridge_port(struct dsa_port *dp,
+						 struct net_device *dev)
+{
+	return dsa_port_to_bridge_port(dp) == dev;
+}
 
-अटल अंतरभूत bool dsa_port_offloads_bridge(काष्ठा dsa_port *dp,
-					    काष्ठा net_device *bridge_dev)
-अणु
+static inline bool dsa_port_offloads_bridge(struct dsa_port *dp,
+					    struct net_device *bridge_dev)
+{
 	/* DSA ports connected to a bridge, and event was emitted
-	 * क्रम the bridge.
+	 * for the bridge.
 	 */
-	वापस dp->bridge_dev == bridge_dev;
-पूर्ण
+	return dp->bridge_dev == bridge_dev;
+}
 
-/* Returns true अगर any port of this tree offloads the given net_device */
-अटल अंतरभूत bool dsa_tree_offloads_bridge_port(काष्ठा dsa_चयन_tree *dst,
-						 काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_port *dp;
+/* Returns true if any port of this tree offloads the given net_device */
+static inline bool dsa_tree_offloads_bridge_port(struct dsa_switch_tree *dst,
+						 struct net_device *dev)
+{
+	struct dsa_port *dp;
 
-	list_क्रम_each_entry(dp, &dst->ports, list)
-		अगर (dsa_port_offloads_bridge_port(dp, dev))
-			वापस true;
+	list_for_each_entry(dp, &dst->ports, list)
+		if (dsa_port_offloads_bridge_port(dp, dev))
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* slave.c */
-बाह्य स्थिर काष्ठा dsa_device_ops notag_netdev_ops;
-बाह्य काष्ठा notअगरier_block dsa_slave_चयनdev_notअगरier;
-बाह्य काष्ठा notअगरier_block dsa_slave_चयनdev_blocking_notअगरier;
+extern const struct dsa_device_ops notag_netdev_ops;
+extern struct notifier_block dsa_slave_switchdev_notifier;
+extern struct notifier_block dsa_slave_switchdev_blocking_notifier;
 
-व्योम dsa_slave_mii_bus_init(काष्ठा dsa_चयन *ds);
-पूर्णांक dsa_slave_create(काष्ठा dsa_port *dp);
-व्योम dsa_slave_destroy(काष्ठा net_device *slave_dev);
-पूर्णांक dsa_slave_suspend(काष्ठा net_device *slave_dev);
-पूर्णांक dsa_slave_resume(काष्ठा net_device *slave_dev);
-पूर्णांक dsa_slave_रेजिस्टर_notअगरier(व्योम);
-व्योम dsa_slave_unरेजिस्टर_notअगरier(व्योम);
-व्योम dsa_slave_setup_tagger(काष्ठा net_device *slave);
-पूर्णांक dsa_slave_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu);
+void dsa_slave_mii_bus_init(struct dsa_switch *ds);
+int dsa_slave_create(struct dsa_port *dp);
+void dsa_slave_destroy(struct net_device *slave_dev);
+int dsa_slave_suspend(struct net_device *slave_dev);
+int dsa_slave_resume(struct net_device *slave_dev);
+int dsa_slave_register_notifier(void);
+void dsa_slave_unregister_notifier(void);
+void dsa_slave_setup_tagger(struct net_device *slave);
+int dsa_slave_change_mtu(struct net_device *dev, int new_mtu);
 
-अटल अंतरभूत काष्ठा dsa_port *dsa_slave_to_port(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_slave_priv *p = netdev_priv(dev);
+static inline struct dsa_port *dsa_slave_to_port(const struct net_device *dev)
+{
+	struct dsa_slave_priv *p = netdev_priv(dev);
 
-	वापस p->dp;
-पूर्ण
+	return p->dp;
+}
 
-अटल अंतरभूत काष्ठा net_device *
-dsa_slave_to_master(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(dev);
+static inline struct net_device *
+dsa_slave_to_master(const struct net_device *dev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(dev);
 
-	वापस dp->cpu_dp->master;
-पूर्ण
+	return dp->cpu_dp->master;
+}
 
 /* If under a bridge with vlan_filtering=0, make sure to send pvid-tagged
  * frames as untagged, since the bridge will not untag them.
  */
-अटल अंतरभूत काष्ठा sk_buff *dsa_untag_bridge_pvid(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(skb->dev);
-	काष्ठा net_device *br = dp->bridge_dev;
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा net_device *upper_dev;
+static inline struct sk_buff *dsa_untag_bridge_pvid(struct sk_buff *skb)
+{
+	struct dsa_port *dp = dsa_slave_to_port(skb->dev);
+	struct net_device *br = dp->bridge_dev;
+	struct net_device *dev = skb->dev;
+	struct net_device *upper_dev;
 	u16 vid, pvid, proto;
-	पूर्णांक err;
+	int err;
 
-	अगर (!br || br_vlan_enabled(br))
-		वापस skb;
+	if (!br || br_vlan_enabled(br))
+		return skb;
 
 	err = br_vlan_get_proto(br, &proto);
-	अगर (err)
-		वापस skb;
+	if (err)
+		return skb;
 
 	/* Move VLAN tag from data to hwaccel */
-	अगर (!skb_vlan_tag_present(skb) && skb->protocol == htons(proto)) अणु
+	if (!skb_vlan_tag_present(skb) && skb->protocol == htons(proto)) {
 		skb = skb_vlan_untag(skb);
-		अगर (!skb)
-			वापस शून्य;
-	पूर्ण
+		if (!skb)
+			return NULL;
+	}
 
-	अगर (!skb_vlan_tag_present(skb))
-		वापस skb;
+	if (!skb_vlan_tag_present(skb))
+		return skb;
 
 	vid = skb_vlan_tag_get_id(skb);
 
-	/* We alपढ़ोy run under an RCU पढ़ो-side critical section since
-	 * we are called from netअगर_receive_skb_list_पूर्णांकernal().
+	/* We already run under an RCU read-side critical section since
+	 * we are called from netif_receive_skb_list_internal().
 	 */
 	err = br_vlan_get_pvid_rcu(dev, &pvid);
-	अगर (err)
-		वापस skb;
+	if (err)
+		return skb;
 
-	अगर (vid != pvid)
-		वापस skb;
+	if (vid != pvid)
+		return skb;
 
 	/* The sad part about attempting to untag from DSA is that we
-	 * करोn't know, unless we check, अगर the skb will end up in
+	 * don't know, unless we check, if the skb will end up in
 	 * the bridge's data path - br_allowed_ingress() - or not.
-	 * For example, there might be an 8021q upper क्रम the
-	 * शेष_pvid of the bridge, which will steal VLAN-tagged traffic
+	 * For example, there might be an 8021q upper for the
+	 * default_pvid of the bridge, which will steal VLAN-tagged traffic
 	 * from the bridge's data path. This is a configuration that DSA
-	 * supports because vlan_filtering is 0. In that हाल, we should
+	 * supports because vlan_filtering is 0. In that case, we should
 	 * definitely keep the tag, to make sure it keeps working.
 	 */
 	upper_dev = __vlan_find_dev_deep_rcu(br, htons(proto), vid);
-	अगर (upper_dev)
-		वापस skb;
+	if (upper_dev)
+		return skb;
 
 	__vlan_hwaccel_clear_tag(skb);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-/* चयन.c */
-पूर्णांक dsa_चयन_रेजिस्टर_notअगरier(काष्ठा dsa_चयन *ds);
-व्योम dsa_चयन_unरेजिस्टर_notअगरier(काष्ठा dsa_चयन *ds);
+/* switch.c */
+int dsa_switch_register_notifier(struct dsa_switch *ds);
+void dsa_switch_unregister_notifier(struct dsa_switch *ds);
 
 /* dsa2.c */
-व्योम dsa_lag_map(काष्ठा dsa_चयन_tree *dst, काष्ठा net_device *lag);
-व्योम dsa_lag_unmap(काष्ठा dsa_चयन_tree *dst, काष्ठा net_device *lag);
-पूर्णांक dsa_tree_notअगरy(काष्ठा dsa_चयन_tree *dst, अचिन्हित दीर्घ e, व्योम *v);
-पूर्णांक dsa_broadcast(अचिन्हित दीर्घ e, व्योम *v);
-पूर्णांक dsa_tree_change_tag_proto(काष्ठा dsa_चयन_tree *dst,
-			      काष्ठा net_device *master,
-			      स्थिर काष्ठा dsa_device_ops *tag_ops,
-			      स्थिर काष्ठा dsa_device_ops *old_tag_ops);
+void dsa_lag_map(struct dsa_switch_tree *dst, struct net_device *lag);
+void dsa_lag_unmap(struct dsa_switch_tree *dst, struct net_device *lag);
+int dsa_tree_notify(struct dsa_switch_tree *dst, unsigned long e, void *v);
+int dsa_broadcast(unsigned long e, void *v);
+int dsa_tree_change_tag_proto(struct dsa_switch_tree *dst,
+			      struct net_device *master,
+			      const struct dsa_device_ops *tag_ops,
+			      const struct dsa_device_ops *old_tag_ops);
 
-बाह्य काष्ठा list_head dsa_tree_list;
+extern struct list_head dsa_tree_list;
 
-#पूर्ण_अगर
+#endif

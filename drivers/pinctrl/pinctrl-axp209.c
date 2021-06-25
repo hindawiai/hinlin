@@ -1,352 +1,351 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * AXP20x pinctrl and GPIO driver
  *
- * Copyright (C) 2016 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
- * Copyright (C) 2017 Quentin Schulz <quentin.schulz@मुक्त-electrons.com>
+ * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2017 Quentin Schulz <quentin.schulz@free-electrons.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/axp20x.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/gpio/driver.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/mfd/axp20x.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#घोषणा AXP20X_GPIO_FUNCTIONS		0x7
-#घोषणा AXP20X_GPIO_FUNCTION_OUT_LOW	0
-#घोषणा AXP20X_GPIO_FUNCTION_OUT_HIGH	1
-#घोषणा AXP20X_GPIO_FUNCTION_INPUT	2
+#define AXP20X_GPIO_FUNCTIONS		0x7
+#define AXP20X_GPIO_FUNCTION_OUT_LOW	0
+#define AXP20X_GPIO_FUNCTION_OUT_HIGH	1
+#define AXP20X_GPIO_FUNCTION_INPUT	2
 
-#घोषणा AXP20X_FUNC_GPIO_OUT		0
-#घोषणा AXP20X_FUNC_GPIO_IN		1
-#घोषणा AXP20X_FUNC_LDO			2
-#घोषणा AXP20X_FUNC_ADC			3
-#घोषणा AXP20X_FUNCS_NB			4
+#define AXP20X_FUNC_GPIO_OUT		0
+#define AXP20X_FUNC_GPIO_IN		1
+#define AXP20X_FUNC_LDO			2
+#define AXP20X_FUNC_ADC			3
+#define AXP20X_FUNCS_NB			4
 
-#घोषणा AXP20X_MUX_GPIO_OUT		0
-#घोषणा AXP20X_MUX_GPIO_IN		BIT(1)
-#घोषणा AXP20X_MUX_ADC			BIT(2)
+#define AXP20X_MUX_GPIO_OUT		0
+#define AXP20X_MUX_GPIO_IN		BIT(1)
+#define AXP20X_MUX_ADC			BIT(2)
 
-#घोषणा AXP813_MUX_ADC			(BIT(2) | BIT(0))
+#define AXP813_MUX_ADC			(BIT(2) | BIT(0))
 
-काष्ठा axp20x_pctrl_desc अणु
-	स्थिर काष्ठा pinctrl_pin_desc	*pins;
-	अचिन्हित पूर्णांक			npins;
+struct axp20x_pctrl_desc {
+	const struct pinctrl_pin_desc	*pins;
+	unsigned int			npins;
 	/* Stores the pins supporting LDO function. Bit offset is pin number. */
-	u8				lकरो_mask;
+	u8				ldo_mask;
 	/* Stores the pins supporting ADC function. Bit offset is pin number. */
 	u8				adc_mask;
 	u8				gpio_status_offset;
 	u8				adc_mux;
-पूर्ण;
+};
 
-काष्ठा axp20x_pinctrl_function अणु
-	स्थिर अक्षर	*name;
-	अचिन्हित पूर्णांक	muxval;
-	स्थिर अक्षर	**groups;
-	अचिन्हित पूर्णांक	ngroups;
-पूर्ण;
+struct axp20x_pinctrl_function {
+	const char	*name;
+	unsigned int	muxval;
+	const char	**groups;
+	unsigned int	ngroups;
+};
 
-काष्ठा axp20x_pctl अणु
-	काष्ठा gpio_chip	chip;
-	काष्ठा regmap		*regmap;
-	काष्ठा pinctrl_dev			*pctl_dev;
-	काष्ठा device				*dev;
-	स्थिर काष्ठा axp20x_pctrl_desc		*desc;
-	काष्ठा axp20x_pinctrl_function		funcs[AXP20X_FUNCS_NB];
-पूर्ण;
+struct axp20x_pctl {
+	struct gpio_chip	chip;
+	struct regmap		*regmap;
+	struct pinctrl_dev			*pctl_dev;
+	struct device				*dev;
+	const struct axp20x_pctrl_desc		*desc;
+	struct axp20x_pinctrl_function		funcs[AXP20X_FUNCS_NB];
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc axp209_pins[] = अणु
+static const struct pinctrl_pin_desc axp209_pins[] = {
 	PINCTRL_PIN(0, "GPIO0"),
 	PINCTRL_PIN(1, "GPIO1"),
 	PINCTRL_PIN(2, "GPIO2"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc axp813_pins[] = अणु
+static const struct pinctrl_pin_desc axp813_pins[] = {
 	PINCTRL_PIN(0, "GPIO0"),
 	PINCTRL_PIN(1, "GPIO1"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा axp20x_pctrl_desc axp20x_data = अणु
+static const struct axp20x_pctrl_desc axp20x_data = {
 	.pins	= axp209_pins,
 	.npins	= ARRAY_SIZE(axp209_pins),
-	.lकरो_mask = BIT(0) | BIT(1),
+	.ldo_mask = BIT(0) | BIT(1),
 	.adc_mask = BIT(0) | BIT(1),
 	.gpio_status_offset = 4,
 	.adc_mux = AXP20X_MUX_ADC,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा axp20x_pctrl_desc axp813_data = अणु
+static const struct axp20x_pctrl_desc axp813_data = {
 	.pins	= axp813_pins,
 	.npins	= ARRAY_SIZE(axp813_pins),
-	.lकरो_mask = BIT(0) | BIT(1),
+	.ldo_mask = BIT(0) | BIT(1),
 	.adc_mask = BIT(0),
 	.gpio_status_offset = 0,
 	.adc_mux = AXP813_MUX_ADC,
-पूर्ण;
+};
 
-अटल पूर्णांक axp20x_gpio_get_reg(अचिन्हित पूर्णांक offset)
-अणु
-	चयन (offset) अणु
-	हाल 0:
-		वापस AXP20X_GPIO0_CTRL;
-	हाल 1:
-		वापस AXP20X_GPIO1_CTRL;
-	हाल 2:
-		वापस AXP20X_GPIO2_CTRL;
-	पूर्ण
+static int axp20x_gpio_get_reg(unsigned int offset)
+{
+	switch (offset) {
+	case 0:
+		return AXP20X_GPIO0_CTRL;
+	case 1:
+		return AXP20X_GPIO1_CTRL;
+	case 2:
+		return AXP20X_GPIO2_CTRL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक axp20x_gpio_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	वापस pinctrl_gpio_direction_input(chip->base + offset);
-पूर्ण
+static int axp20x_gpio_input(struct gpio_chip *chip, unsigned int offset)
+{
+	return pinctrl_gpio_direction_input(chip->base + offset);
+}
 
-अटल पूर्णांक axp20x_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा axp20x_pctl *pctl = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int axp20x_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct axp20x_pctl *pctl = gpiochip_get_data(chip);
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(pctl->regmap, AXP20X_GPIO20_SS, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pctl->regmap, AXP20X_GPIO20_SS, &val);
+	if (ret)
+		return ret;
 
-	वापस !!(val & BIT(offset + pctl->desc->gpio_status_offset));
-पूर्ण
+	return !!(val & BIT(offset + pctl->desc->gpio_status_offset));
+}
 
-अटल पूर्णांक axp20x_gpio_get_direction(काष्ठा gpio_chip *chip,
-				     अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा axp20x_pctl *pctl = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक reg, ret;
+static int axp20x_gpio_get_direction(struct gpio_chip *chip,
+				     unsigned int offset)
+{
+	struct axp20x_pctl *pctl = gpiochip_get_data(chip);
+	unsigned int val;
+	int reg, ret;
 
 	reg = axp20x_gpio_get_reg(offset);
-	अगर (reg < 0)
-		वापस reg;
+	if (reg < 0)
+		return reg;
 
-	ret = regmap_पढ़ो(pctl->regmap, reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pctl->regmap, reg, &val);
+	if (ret)
+		return ret;
 
 	/*
-	 * This shouldn't really happen अगर the pin is in use alपढ़ोy,
-	 * or अगर it's not in use yet, it doesn't matter since we're
+	 * This shouldn't really happen if the pin is in use already,
+	 * or if it's not in use yet, it doesn't matter since we're
 	 * going to change the value soon anyway. Default to output.
 	 */
-	अगर ((val & AXP20X_GPIO_FUNCTIONS) > 2)
-		वापस GPIO_LINE_सूचीECTION_OUT;
+	if ((val & AXP20X_GPIO_FUNCTIONS) > 2)
+		return GPIO_LINE_DIRECTION_OUT;
 
 	/*
 	 * The GPIO directions are the three lowest values.
 	 * 2 is input, 0 and 1 are output
 	 */
-	अगर (val & 2)
-		वापस GPIO_LINE_सूचीECTION_IN;
+	if (val & 2)
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक axp20x_gpio_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			      पूर्णांक value)
-अणु
+static int axp20x_gpio_output(struct gpio_chip *chip, unsigned int offset,
+			      int value)
+{
 	chip->set(chip, offset, value);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम axp20x_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			    पूर्णांक value)
-अणु
-	काष्ठा axp20x_pctl *pctl = gpiochip_get_data(chip);
-	पूर्णांक reg;
+static void axp20x_gpio_set(struct gpio_chip *chip, unsigned int offset,
+			    int value)
+{
+	struct axp20x_pctl *pctl = gpiochip_get_data(chip);
+	int reg;
 
 	reg = axp20x_gpio_get_reg(offset);
-	अगर (reg < 0)
-		वापस;
+	if (reg < 0)
+		return;
 
 	regmap_update_bits(pctl->regmap, reg,
 			   AXP20X_GPIO_FUNCTIONS,
 			   value ? AXP20X_GPIO_FUNCTION_OUT_HIGH :
 			   AXP20X_GPIO_FUNCTION_OUT_LOW);
-पूर्ण
+}
 
-अटल पूर्णांक axp20x_pmx_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक offset,
+static int axp20x_pmx_set(struct pinctrl_dev *pctldev, unsigned int offset,
 			  u8 config)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	पूर्णांक reg;
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	int reg;
 
 	reg = axp20x_gpio_get_reg(offset);
-	अगर (reg < 0)
-		वापस reg;
+	if (reg < 0)
+		return reg;
 
-	वापस regmap_update_bits(pctl->regmap, reg, AXP20X_GPIO_FUNCTIONS,
+	return regmap_update_bits(pctl->regmap, reg, AXP20X_GPIO_FUNCTIONS,
 				  config);
-पूर्ण
+}
 
-अटल पूर्णांक axp20x_pmx_func_cnt(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static int axp20x_pmx_func_cnt(struct pinctrl_dev *pctldev)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस ARRAY_SIZE(pctl->funcs);
-पूर्ण
+	return ARRAY_SIZE(pctl->funcs);
+}
 
-अटल स्थिर अक्षर *axp20x_pmx_func_name(काष्ठा pinctrl_dev *pctldev,
-					अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static const char *axp20x_pmx_func_name(struct pinctrl_dev *pctldev,
+					unsigned int selector)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pctl->funcs[selector].name;
-पूर्ण
+	return pctl->funcs[selector].name;
+}
 
-अटल पूर्णांक axp20x_pmx_func_groups(काष्ठा pinctrl_dev *pctldev,
-				  अचिन्हित पूर्णांक selector,
-				  स्थिर अक्षर * स्थिर **groups,
-				  अचिन्हित पूर्णांक *num_groups)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static int axp20x_pmx_func_groups(struct pinctrl_dev *pctldev,
+				  unsigned int selector,
+				  const char * const **groups,
+				  unsigned int *num_groups)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctl->funcs[selector].groups;
 	*num_groups = pctl->funcs[selector].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axp20x_pmx_set_mux(काष्ठा pinctrl_dev *pctldev,
-			      अचिन्हित पूर्णांक function, अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	अचिन्हित पूर्णांक mask;
+static int axp20x_pmx_set_mux(struct pinctrl_dev *pctldev,
+			      unsigned int function, unsigned int group)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	unsigned int mask;
 
 	/* Every pin supports GPIO_OUT and GPIO_IN functions */
-	अगर (function <= AXP20X_FUNC_GPIO_IN)
-		वापस axp20x_pmx_set(pctldev, group,
+	if (function <= AXP20X_FUNC_GPIO_IN)
+		return axp20x_pmx_set(pctldev, group,
 				      pctl->funcs[function].muxval);
 
-	अगर (function == AXP20X_FUNC_LDO)
-		mask = pctl->desc->lकरो_mask;
-	अन्यथा
+	if (function == AXP20X_FUNC_LDO)
+		mask = pctl->desc->ldo_mask;
+	else
 		mask = pctl->desc->adc_mask;
 
-	अगर (!(BIT(group) & mask))
-		वापस -EINVAL;
+	if (!(BIT(group) & mask))
+		return -EINVAL;
 
 	/*
 	 * We let the regulator framework handle the LDO muxing as muxing bits
-	 * are basically also regulators on/off bits. It's better not to enक्रमce
-	 * any state of the regulator when selecting LDO mux so that we करोn't
-	 * पूर्णांकerfere with the regulator driver.
+	 * are basically also regulators on/off bits. It's better not to enforce
+	 * any state of the regulator when selecting LDO mux so that we don't
+	 * interfere with the regulator driver.
 	 */
-	अगर (function == AXP20X_FUNC_LDO)
-		वापस 0;
+	if (function == AXP20X_FUNC_LDO)
+		return 0;
 
-	वापस axp20x_pmx_set(pctldev, group, pctl->funcs[function].muxval);
-पूर्ण
+	return axp20x_pmx_set(pctldev, group, pctl->funcs[function].muxval);
+}
 
-अटल पूर्णांक axp20x_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-					 काष्ठा pinctrl_gpio_range *range,
-					 अचिन्हित पूर्णांक offset, bool input)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static int axp20x_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
+					 struct pinctrl_gpio_range *range,
+					 unsigned int offset, bool input)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	अगर (input)
-		वापस axp20x_pmx_set(pctldev, offset,
+	if (input)
+		return axp20x_pmx_set(pctldev, offset,
 				      pctl->funcs[AXP20X_FUNC_GPIO_IN].muxval);
 
-	वापस axp20x_pmx_set(pctldev, offset,
+	return axp20x_pmx_set(pctldev, offset,
 			      pctl->funcs[AXP20X_FUNC_GPIO_OUT].muxval);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pinmux_ops axp20x_pmx_ops = अणु
+static const struct pinmux_ops axp20x_pmx_ops = {
 	.get_functions_count	= axp20x_pmx_func_cnt,
 	.get_function_name	= axp20x_pmx_func_name,
 	.get_function_groups	= axp20x_pmx_func_groups,
 	.set_mux		= axp20x_pmx_set_mux,
 	.gpio_set_direction	= axp20x_pmx_gpio_set_direction,
 	.strict			= true,
-पूर्ण;
+};
 
-अटल पूर्णांक axp20x_groups_cnt(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static int axp20x_groups_cnt(struct pinctrl_dev *pctldev)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pctl->desc->npins;
-पूर्ण
+	return pctl->desc->npins;
+}
 
-अटल पूर्णांक axp20x_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक selector,
-			     स्थिर अचिन्हित पूर्णांक **pins, अचिन्हित पूर्णांक *num_pins)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static int axp20x_group_pins(struct pinctrl_dev *pctldev, unsigned int selector,
+			     const unsigned int **pins, unsigned int *num_pins)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	*pins = (अचिन्हित पूर्णांक *)&pctl->desc->pins[selector];
+	*pins = (unsigned int *)&pctl->desc->pins[selector];
 	*num_pins = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *axp20x_group_name(काष्ठा pinctrl_dev *pctldev,
-				     अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
+static const char *axp20x_group_name(struct pinctrl_dev *pctldev,
+				     unsigned int selector)
+{
+	struct axp20x_pctl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस pctl->desc->pins[selector].name;
-पूर्ण
+	return pctl->desc->pins[selector].name;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops axp20x_pctrl_ops = अणु
+static const struct pinctrl_ops axp20x_pctrl_ops = {
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_group,
-	.dt_मुक्त_map		= pinconf_generic_dt_मुक्त_map,
+	.dt_free_map		= pinconf_generic_dt_free_map,
 	.get_groups_count	= axp20x_groups_cnt,
 	.get_group_name		= axp20x_group_name,
 	.get_group_pins		= axp20x_group_pins,
-पूर्ण;
+};
 
-अटल पूर्णांक axp20x_funcs_groups_from_mask(काष्ठा device *dev, अचिन्हित पूर्णांक mask,
-					  अचिन्हित पूर्णांक mask_len,
-					  काष्ठा axp20x_pinctrl_function *func,
-					  स्थिर काष्ठा pinctrl_pin_desc *pins)
-अणु
-	अचिन्हित दीर्घ पूर्णांक mask_cpy = mask;
-	स्थिर अक्षर **group;
-	अचिन्हित पूर्णांक ngroups = hweight8(mask);
-	पूर्णांक bit;
+static int axp20x_funcs_groups_from_mask(struct device *dev, unsigned int mask,
+					  unsigned int mask_len,
+					  struct axp20x_pinctrl_function *func,
+					  const struct pinctrl_pin_desc *pins)
+{
+	unsigned long int mask_cpy = mask;
+	const char **group;
+	unsigned int ngroups = hweight8(mask);
+	int bit;
 
 	func->ngroups = ngroups;
-	अगर (func->ngroups > 0) अणु
-		func->groups = devm_kसुस्मृति(dev,
-					    ngroups, माप(स्थिर अक्षर *),
+	if (func->ngroups > 0) {
+		func->groups = devm_kcalloc(dev,
+					    ngroups, sizeof(const char *),
 					    GFP_KERNEL);
-		अगर (!func->groups)
-			वापस -ENOMEM;
+		if (!func->groups)
+			return -ENOMEM;
 		group = func->groups;
-		क्रम_each_set_bit(bit, &mask_cpy, mask_len) अणु
+		for_each_set_bit(bit, &mask_cpy, mask_len) {
 			*group = pins[bit].name;
 			group++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axp20x_build_funcs_groups(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा axp20x_pctl *pctl = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i, ret, pin, npins = pctl->desc->npins;
+static int axp20x_build_funcs_groups(struct platform_device *pdev)
+{
+	struct axp20x_pctl *pctl = platform_get_drvdata(pdev);
+	int i, ret, pin, npins = pctl->desc->npins;
 
 	pctl->funcs[AXP20X_FUNC_GPIO_OUT].name = "gpio_out";
 	pctl->funcs[AXP20X_FUNC_GPIO_OUT].muxval = AXP20X_MUX_GPIO_OUT;
@@ -354,70 +353,70 @@
 	pctl->funcs[AXP20X_FUNC_GPIO_IN].muxval = AXP20X_MUX_GPIO_IN;
 	pctl->funcs[AXP20X_FUNC_LDO].name = "ldo";
 	/*
-	 * Muxval क्रम LDO is useless as we won't use it.
+	 * Muxval for LDO is useless as we won't use it.
 	 * See comment in axp20x_pmx_set_mux.
 	 */
 	pctl->funcs[AXP20X_FUNC_ADC].name = "adc";
 	pctl->funcs[AXP20X_FUNC_ADC].muxval = pctl->desc->adc_mux;
 
 	/* Every pin supports GPIO_OUT and GPIO_IN functions */
-	क्रम (i = 0; i <= AXP20X_FUNC_GPIO_IN; i++) अणु
+	for (i = 0; i <= AXP20X_FUNC_GPIO_IN; i++) {
 		pctl->funcs[i].ngroups = npins;
-		pctl->funcs[i].groups = devm_kसुस्मृति(&pdev->dev,
-						     npins, माप(अक्षर *),
+		pctl->funcs[i].groups = devm_kcalloc(&pdev->dev,
+						     npins, sizeof(char *),
 						     GFP_KERNEL);
-		अगर (!pctl->funcs[i].groups)
-			वापस -ENOMEM;
-		क्रम (pin = 0; pin < npins; pin++)
+		if (!pctl->funcs[i].groups)
+			return -ENOMEM;
+		for (pin = 0; pin < npins; pin++)
 			pctl->funcs[i].groups[pin] = pctl->desc->pins[pin].name;
-	पूर्ण
+	}
 
-	ret = axp20x_funcs_groups_from_mask(&pdev->dev, pctl->desc->lकरो_mask,
+	ret = axp20x_funcs_groups_from_mask(&pdev->dev, pctl->desc->ldo_mask,
 				      npins, &pctl->funcs[AXP20X_FUNC_LDO],
 				      pctl->desc->pins);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = axp20x_funcs_groups_from_mask(&pdev->dev, pctl->desc->adc_mask,
 				      npins, &pctl->funcs[AXP20X_FUNC_ADC],
 				      pctl->desc->pins);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id axp20x_pctl_match[] = अणु
-	अणु .compatible = "x-powers,axp209-gpio", .data = &axp20x_data, पूर्ण,
-	अणु .compatible = "x-powers,axp813-gpio", .data = &axp813_data, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id axp20x_pctl_match[] = {
+	{ .compatible = "x-powers,axp209-gpio", .data = &axp20x_data, },
+	{ .compatible = "x-powers,axp813-gpio", .data = &axp813_data, },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, axp20x_pctl_match);
 
-अटल पूर्णांक axp20x_pctl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा axp20x_pctl *pctl;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा pinctrl_desc *pctrl_desc;
-	पूर्णांक ret;
+static int axp20x_pctl_probe(struct platform_device *pdev)
+{
+	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
+	struct axp20x_pctl *pctl;
+	struct device *dev = &pdev->dev;
+	struct pinctrl_desc *pctrl_desc;
+	int ret;
 
-	अगर (!of_device_is_available(pdev->dev.of_node))
-		वापस -ENODEV;
+	if (!of_device_is_available(pdev->dev.of_node))
+		return -ENODEV;
 
-	अगर (!axp20x) अणु
+	if (!axp20x) {
 		dev_err(&pdev->dev, "Parent drvdata not set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pctl = devm_kzalloc(&pdev->dev, माप(*pctl), GFP_KERNEL);
-	अगर (!pctl)
-		वापस -ENOMEM;
+	pctl = devm_kzalloc(&pdev->dev, sizeof(*pctl), GFP_KERNEL);
+	if (!pctl)
+		return -ENOMEM;
 
 	pctl->chip.base			= -1;
 	pctl->chip.can_sleep		= true;
 	pctl->chip.request		= gpiochip_generic_request;
-	pctl->chip.मुक्त			= gpiochip_generic_मुक्त;
+	pctl->chip.free			= gpiochip_generic_free;
 	pctl->chip.parent		= &pdev->dev;
 	pctl->chip.label		= dev_name(&pdev->dev);
 	pctl->chip.owner		= THIS_MODULE;
@@ -434,17 +433,17 @@ MODULE_DEVICE_TABLE(of, axp20x_pctl_match);
 	pctl->regmap = axp20x->regmap;
 	pctl->dev = &pdev->dev;
 
-	platक्रमm_set_drvdata(pdev, pctl);
+	platform_set_drvdata(pdev, pctl);
 
 	ret = axp20x_build_funcs_groups(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to build groups\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pctrl_desc = devm_kzalloc(&pdev->dev, माप(*pctrl_desc), GFP_KERNEL);
-	अगर (!pctrl_desc)
-		वापस -ENOMEM;
+	pctrl_desc = devm_kzalloc(&pdev->dev, sizeof(*pctrl_desc), GFP_KERNEL);
+	if (!pctrl_desc)
+		return -ENOMEM;
 
 	pctrl_desc->name = dev_name(&pdev->dev);
 	pctrl_desc->owner = THIS_MODULE;
@@ -453,41 +452,41 @@ MODULE_DEVICE_TABLE(of, axp20x_pctl_match);
 	pctrl_desc->pctlops = &axp20x_pctrl_ops;
 	pctrl_desc->pmxops = &axp20x_pmx_ops;
 
-	pctl->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, pctrl_desc, pctl);
-	अगर (IS_ERR(pctl->pctl_dev)) अणु
+	pctl->pctl_dev = devm_pinctrl_register(&pdev->dev, pctrl_desc, pctl);
+	if (IS_ERR(pctl->pctl_dev)) {
 		dev_err(&pdev->dev, "couldn't register pinctrl driver\n");
-		वापस PTR_ERR(pctl->pctl_dev);
-	पूर्ण
+		return PTR_ERR(pctl->pctl_dev);
+	}
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &pctl->chip, pctl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to register GPIO chip\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = gpiochip_add_pin_range(&pctl->chip, dev_name(&pdev->dev),
 				     pctl->desc->pins->number,
 				     pctl->desc->pins->number,
 				     pctl->desc->npins);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to add pin range\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_info(&pdev->dev, "AXP209 pinctrl and GPIO driver loaded\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver axp20x_pctl_driver = अणु
+static struct platform_driver axp20x_pctl_driver = {
 	.probe		= axp20x_pctl_probe,
-	.driver = अणु
+	.driver = {
 		.name		= "axp20x-gpio",
 		.of_match_table	= axp20x_pctl_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(axp20x_pctl_driver);
+module_platform_driver(axp20x_pctl_driver);
 
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com>");
 MODULE_AUTHOR("Quentin Schulz <quentin.schulz@free-electrons.com>");

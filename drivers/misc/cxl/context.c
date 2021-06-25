@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/pid.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/mmu_context.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/copro.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/bitmap.h>
+#include <linux/sched.h>
+#include <linux/pid.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
+#include <linux/idr.h>
+#include <linux/sched/mm.h>
+#include <linux/mmu_context.h>
+#include <asm/cputable.h>
+#include <asm/current.h>
+#include <asm/copro.h>
 
-#समावेश "cxl.h"
+#include "cxl.h"
 
 /*
- * Allocates space क्रम a CXL context.
+ * Allocates space for a CXL context.
  */
-काष्ठा cxl_context *cxl_context_alloc(व्योम)
-अणु
-	वापस kzalloc(माप(काष्ठा cxl_context), GFP_KERNEL);
-पूर्ण
+struct cxl_context *cxl_context_alloc(void)
+{
+	return kzalloc(sizeof(struct cxl_context), GFP_KERNEL);
+}
 
 /*
  * Initialises a CXL context.
  */
-पूर्णांक cxl_context_init(काष्ठा cxl_context *ctx, काष्ठा cxl_afu *afu, bool master)
-अणु
-	पूर्णांक i;
+int cxl_context_init(struct cxl_context *ctx, struct cxl_afu *afu, bool master)
+{
+	int i;
 
 	ctx->afu = afu;
 	ctx->master = master;
-	ctx->pid = शून्य; /* Set in start work ioctl */
+	ctx->pid = NULL; /* Set in start work ioctl */
 	mutex_init(&ctx->mapping_lock);
-	ctx->mapping = शून्य;
+	ctx->mapping = NULL;
 	ctx->tidr = 0;
 	ctx->assign_tidr = false;
 
-	अगर (cxl_is_घातer8()) अणु
+	if (cxl_is_power8()) {
 		spin_lock_init(&ctx->sste_lock);
 
 		/*
-		 * Allocate the segment table beक्रमe we put it in the IDR so that we
+		 * Allocate the segment table before we put it in the IDR so that we
 		 * can always access it when dereferenced from IDR. For the same
 		 * reason, the segment table is only destroyed after the context is
-		 * हटाओd from the IDR.  Access to this in the IOCTL is रक्षित by
-		 * Linux fileप्रणाली semantics (can't IOCTL until खोलो is complete).
+		 * removed from the IDR.  Access to this in the IOCTL is protected by
+		 * Linux filesystem semantics (can't IOCTL until open is complete).
 		 */
 		i = cxl_alloc_sst(ctx);
-		अगर (i)
-			वापस i;
-	पूर्ण
+		if (i)
+			return i;
+	}
 
 	INIT_WORK(&ctx->fault_work, cxl_handle_fault);
 
-	init_रुकोqueue_head(&ctx->wq);
+	init_waitqueue_head(&ctx->wq);
 	spin_lock_init(&ctx->lock);
 
-	ctx->irq_biपंचांगap = शून्य;
+	ctx->irq_bitmap = NULL;
 	ctx->pending_irq = false;
 	ctx->pending_fault = false;
 	ctx->pending_afu_err = false;
@@ -75,11 +74,11 @@
 	/*
 	 * When we have to destroy all contexts in cxl_context_detach_all() we
 	 * end up with afu_release_irqs() called from inside a
-	 * idr_क्रम_each_entry(). Hence we need to make sure that anything
-	 * dereferenced from this IDR is ok beक्रमe we allocate the IDR here.
+	 * idr_for_each_entry(). Hence we need to make sure that anything
+	 * dereferenced from this IDR is ok before we allocate the IDR here.
 	 * This clears out the IRQ ranges to ensure this.
 	 */
-	क्रम (i = 0; i < CXL_IRQ_RANGES; i++)
+	for (i = 0; i < CXL_IRQ_RANGES; i++)
 		ctx->irqs.range[i] = 0;
 
 	mutex_init(&ctx->status_mutex);
@@ -96,16 +95,16 @@
 		      ctx->afu->num_procs, GFP_NOWAIT);
 	idr_preload_end();
 	mutex_unlock(&afu->contexts_lock);
-	अगर (i < 0)
-		वापस i;
+	if (i < 0)
+		return i;
 
 	ctx->pe = i;
-	अगर (cpu_has_feature(CPU_FTR_HVMODE)) अणु
+	if (cpu_has_feature(CPU_FTR_HVMODE)) {
 		ctx->elem = &ctx->afu->native->spa[i];
-		ctx->बाह्यal_pe = ctx->pe;
-	पूर्ण अन्यथा अणु
-		ctx->बाह्यal_pe = -1; /* asचिन्हित when attaching */
-	पूर्ण
+		ctx->external_pe = ctx->pe;
+	} else {
+		ctx->external_pe = -1; /* assigned when attaching */
+	}
 	ctx->pe_inserted = false;
 
 	/*
@@ -113,21 +112,21 @@
 	 * this context is reclaimed inside reclaim_ctx.
 	 */
 	cxl_afu_get(afu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cxl_context_set_mapping(काष्ठा cxl_context *ctx,
-			काष्ठा address_space *mapping)
-अणु
+void cxl_context_set_mapping(struct cxl_context *ctx,
+			struct address_space *mapping)
+{
 	mutex_lock(&ctx->mapping_lock);
 	ctx->mapping = mapping;
 	mutex_unlock(&ctx->mapping_lock);
-पूर्ण
+}
 
-अटल vm_fault_t cxl_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा cxl_context *ctx = vma->vm_file->निजी_data;
+static vm_fault_t cxl_mmap_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct cxl_context *ctx = vma->vm_file->private_data;
 	u64 area, offset;
 	vm_fault_t ret;
 
@@ -136,87 +135,87 @@
 	pr_devel("%s: pe: %i address: 0x%lx offset: 0x%llx\n",
 			__func__, ctx->pe, vmf->address, offset);
 
-	अगर (ctx->afu->current_mode == CXL_MODE_DEDICATED) अणु
+	if (ctx->afu->current_mode == CXL_MODE_DEDICATED) {
 		area = ctx->afu->psn_phys;
-		अगर (offset >= ctx->afu->adapter->ps_size)
-			वापस VM_FAULT_SIGBUS;
-	पूर्ण अन्यथा अणु
+		if (offset >= ctx->afu->adapter->ps_size)
+			return VM_FAULT_SIGBUS;
+	} else {
 		area = ctx->psn_phys;
-		अगर (offset >= ctx->psn_size)
-			वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		if (offset >= ctx->psn_size)
+			return VM_FAULT_SIGBUS;
+	}
 
 	mutex_lock(&ctx->status_mutex);
 
-	अगर (ctx->status != STARTED) अणु
+	if (ctx->status != STARTED) {
 		mutex_unlock(&ctx->status_mutex);
 		pr_devel("%s: Context not started, failing problem state access\n", __func__);
-		अगर (ctx->mmio_err_ff) अणु
-			अगर (!ctx->ff_page) अणु
+		if (ctx->mmio_err_ff) {
+			if (!ctx->ff_page) {
 				ctx->ff_page = alloc_page(GFP_USER);
-				अगर (!ctx->ff_page)
-					वापस VM_FAULT_OOM;
-				स_रखो(page_address(ctx->ff_page), 0xff, PAGE_SIZE);
-			पूर्ण
+				if (!ctx->ff_page)
+					return VM_FAULT_OOM;
+				memset(page_address(ctx->ff_page), 0xff, PAGE_SIZE);
+			}
 			get_page(ctx->ff_page);
 			vmf->page = ctx->ff_page;
 			vma->vm_page_prot = pgprot_cached(vma->vm_page_prot);
-			वापस 0;
-		पूर्ण
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+			return 0;
+		}
+		return VM_FAULT_SIGBUS;
+	}
 
 	ret = vmf_insert_pfn(vma, vmf->address, (area + offset) >> PAGE_SHIFT);
 
 	mutex_unlock(&ctx->status_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा cxl_mmap_vmops = अणु
+static const struct vm_operations_struct cxl_mmap_vmops = {
 	.fault = cxl_mmap_fault,
-पूर्ण;
+};
 
 /*
- * Map a per-context mmio space पूर्णांकo the given vma.
+ * Map a per-context mmio space into the given vma.
  */
-पूर्णांक cxl_context_iomap(काष्ठा cxl_context *ctx, काष्ठा vm_area_काष्ठा *vma)
-अणु
+int cxl_context_iomap(struct cxl_context *ctx, struct vm_area_struct *vma)
+{
 	u64 start = vma->vm_pgoff << PAGE_SHIFT;
 	u64 len = vma->vm_end - vma->vm_start;
 
-	अगर (ctx->afu->current_mode == CXL_MODE_DEDICATED) अणु
-		अगर (start + len > ctx->afu->adapter->ps_size)
-			वापस -EINVAL;
+	if (ctx->afu->current_mode == CXL_MODE_DEDICATED) {
+		if (start + len > ctx->afu->adapter->ps_size)
+			return -EINVAL;
 
-		अगर (cxl_is_घातer9()) अणु
+		if (cxl_is_power9()) {
 			/*
 			 * Make sure there is a valid problem state
-			 * area space क्रम this AFU.
+			 * area space for this AFU.
 			 */
-			अगर (ctx->master && !ctx->afu->psa) अणु
+			if (ctx->master && !ctx->afu->psa) {
 				pr_devel("AFU doesn't support mmio space\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			/* Can't mmap until the AFU is enabled */
-			अगर (!ctx->afu->enabled)
-				वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (start + len > ctx->psn_size)
-			वापस -EINVAL;
+			if (!ctx->afu->enabled)
+				return -EBUSY;
+		}
+	} else {
+		if (start + len > ctx->psn_size)
+			return -EINVAL;
 
-		/* Make sure there is a valid per process space क्रम this AFU */
-		अगर ((ctx->master && !ctx->afu->psa) || (!ctx->afu->pp_psa)) अणु
+		/* Make sure there is a valid per process space for this AFU */
+		if ((ctx->master && !ctx->afu->psa) || (!ctx->afu->pp_psa)) {
 			pr_devel("AFU doesn't support mmio space\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Can't mmap until the AFU is enabled */
-		अगर (!ctx->afu->enabled)
-			वापस -EBUSY;
-	पूर्ण
+		if (!ctx->afu->enabled)
+			return -EBUSY;
+	}
 
 	pr_devel("%s: mmio physical: %llx pe: %i master:%i\n", __func__,
 		 ctx->psn_phys, ctx->pe , ctx->master);
@@ -224,38 +223,38 @@
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_ops = &cxl_mmap_vmops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Detach a context from the hardware. This disables पूर्णांकerrupts and करोesn't
- * वापस until all outstanding पूर्णांकerrupts क्रम this context have completed. The
- * hardware should no दीर्घer access *ctx after this has वापसed.
+ * Detach a context from the hardware. This disables interrupts and doesn't
+ * return until all outstanding interrupts for this context have completed. The
+ * hardware should no longer access *ctx after this has returned.
  */
-पूर्णांक __detach_context(काष्ठा cxl_context *ctx)
-अणु
-	क्रमागत cxl_context_status status;
+int __detach_context(struct cxl_context *ctx)
+{
+	enum cxl_context_status status;
 
 	mutex_lock(&ctx->status_mutex);
 	status = ctx->status;
 	ctx->status = CLOSED;
 	mutex_unlock(&ctx->status_mutex);
-	अगर (status != STARTED)
-		वापस -EBUSY;
+	if (status != STARTED)
+		return -EBUSY;
 
-	/* Only warn अगर we detached जबतक the link was OK.
-	 * If detach fails when hw is करोwn, we करोn't care.
+	/* Only warn if we detached while the link was OK.
+	 * If detach fails when hw is down, we don't care.
 	 */
 	WARN_ON(cxl_ops->detach_process(ctx) &&
 		cxl_ops->link_ok(ctx->afu->adapter, ctx->afu));
-	flush_work(&ctx->fault_work); /* Only needed क्रम dedicated process */
+	flush_work(&ctx->fault_work); /* Only needed for dedicated process */
 
 	/*
-	 * Wait until no further पूर्णांकerrupts are presented by the PSL
-	 * क्रम this context.
+	 * Wait until no further interrupts are presented by the PSL
+	 * for this context.
 	 */
-	अगर (cxl_ops->irq_रुको)
-		cxl_ops->irq_रुको(ctx);
+	if (cxl_ops->irq_wait)
+		cxl_ops->irq_wait(ctx);
 
 	/* release the reference to the group leader and mm handling pid */
 	put_pid(ctx->pid);
@@ -267,97 +266,97 @@
 
 	/* Decrease the mm count on the context */
 	cxl_context_mm_count_put(ctx);
-	अगर (ctx->mm)
-		mm_context_हटाओ_copro(ctx->mm);
-	ctx->mm = शून्य;
+	if (ctx->mm)
+		mm_context_remove_copro(ctx->mm);
+	ctx->mm = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Detach the given context from the AFU. This करोesn't actually
- * मुक्त the context but it should stop the context running in hardware
- * (ie. prevent this context from generating any further पूर्णांकerrupts
- * so that it can be मुक्तd).
+ * Detach the given context from the AFU. This doesn't actually
+ * free the context but it should stop the context running in hardware
+ * (ie. prevent this context from generating any further interrupts
+ * so that it can be freed).
  */
-व्योम cxl_context_detach(काष्ठा cxl_context *ctx)
-अणु
-	पूर्णांक rc;
+void cxl_context_detach(struct cxl_context *ctx)
+{
+	int rc;
 
 	rc = __detach_context(ctx);
-	अगर (rc)
-		वापस;
+	if (rc)
+		return;
 
 	afu_release_irqs(ctx, ctx);
 	wake_up_all(&ctx->wq);
-पूर्ण
+}
 
 /*
  * Detach all contexts on the given AFU.
  */
-व्योम cxl_context_detach_all(काष्ठा cxl_afu *afu)
-अणु
-	काष्ठा cxl_context *ctx;
-	पूर्णांक पंचांगp;
+void cxl_context_detach_all(struct cxl_afu *afu)
+{
+	struct cxl_context *ctx;
+	int tmp;
 
 	mutex_lock(&afu->contexts_lock);
-	idr_क्रम_each_entry(&afu->contexts_idr, ctx, पंचांगp) अणु
+	idr_for_each_entry(&afu->contexts_idr, ctx, tmp) {
 		/*
-		 * Anything करोne in here needs to be setup beक्रमe the IDR is
-		 * created and torn करोwn after the IDR हटाओd
+		 * Anything done in here needs to be setup before the IDR is
+		 * created and torn down after the IDR removed
 		 */
 		cxl_context_detach(ctx);
 
 		/*
-		 * We are क्रमce detaching - हटाओ any active PSA mappings so
-		 * userspace cannot पूर्णांकerfere with the card अगर it comes back.
+		 * We are force detaching - remove any active PSA mappings so
+		 * userspace cannot interfere with the card if it comes back.
 		 * Easiest way to exercise this is to unbind and rebind the
-		 * driver via sysfs जबतक it is in use.
+		 * driver via sysfs while it is in use.
 		 */
 		mutex_lock(&ctx->mapping_lock);
-		अगर (ctx->mapping)
+		if (ctx->mapping)
 			unmap_mapping_range(ctx->mapping, 0, 0, 1);
 		mutex_unlock(&ctx->mapping_lock);
-	पूर्ण
+	}
 	mutex_unlock(&afu->contexts_lock);
-पूर्ण
+}
 
-अटल व्योम reclaim_ctx(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा cxl_context *ctx = container_of(rcu, काष्ठा cxl_context, rcu);
+static void reclaim_ctx(struct rcu_head *rcu)
+{
+	struct cxl_context *ctx = container_of(rcu, struct cxl_context, rcu);
 
-	अगर (cxl_is_घातer8())
-		मुक्त_page((u64)ctx->sstp);
-	अगर (ctx->ff_page)
-		__मुक्त_page(ctx->ff_page);
-	ctx->sstp = शून्य;
+	if (cxl_is_power8())
+		free_page((u64)ctx->sstp);
+	if (ctx->ff_page)
+		__free_page(ctx->ff_page);
+	ctx->sstp = NULL;
 
-	kमुक्त(ctx->irq_biपंचांगap);
+	kfree(ctx->irq_bitmap);
 
 	/* Drop ref to the afu device taken during cxl_context_init */
 	cxl_afu_put(ctx->afu);
 
-	kमुक्त(ctx);
-पूर्ण
+	kfree(ctx);
+}
 
-व्योम cxl_context_मुक्त(काष्ठा cxl_context *ctx)
-अणु
-	अगर (ctx->kernelapi && ctx->mapping)
+void cxl_context_free(struct cxl_context *ctx)
+{
+	if (ctx->kernelapi && ctx->mapping)
 		cxl_release_mapping(ctx);
 	mutex_lock(&ctx->afu->contexts_lock);
-	idr_हटाओ(&ctx->afu->contexts_idr, ctx->pe);
+	idr_remove(&ctx->afu->contexts_idr, ctx->pe);
 	mutex_unlock(&ctx->afu->contexts_lock);
 	call_rcu(&ctx->rcu, reclaim_ctx);
-पूर्ण
+}
 
-व्योम cxl_context_mm_count_get(काष्ठा cxl_context *ctx)
-अणु
-	अगर (ctx->mm)
+void cxl_context_mm_count_get(struct cxl_context *ctx)
+{
+	if (ctx->mm)
 		mmgrab(ctx->mm);
-पूर्ण
+}
 
-व्योम cxl_context_mm_count_put(काष्ठा cxl_context *ctx)
-अणु
-	अगर (ctx->mm)
+void cxl_context_mm_count_put(struct cxl_context *ctx)
+{
+	if (ctx->mm)
 		mmdrop(ctx->mm);
-पूर्ण
+}

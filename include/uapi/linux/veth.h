@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __NET_VETH_H_
-#घोषणा __NET_VETH_H_
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __NET_VETH_H_
+#define __NET_VETH_H_
 
-क्रमागत अणु
+enum {
 	VETH_INFO_UNSPEC,
 	VETH_INFO_PEER,
 
 	__VETH_INFO_MAX
-#घोषणा VETH_INFO_MAX	(__VETH_INFO_MAX - 1)
-पूर्ण;
+#define VETH_INFO_MAX	(__VETH_INFO_MAX - 1)
+};
 
-#पूर्ण_अगर
+#endif

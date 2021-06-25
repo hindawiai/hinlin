@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 	STV6110(A) Silicon tuner driver
 
@@ -9,170 +8,170 @@
 
 */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
-#समावेश "stv6110x_reg.h"
-#समावेश "stv6110x.h"
-#समावेश "stv6110x_priv.h"
+#include "stv6110x_reg.h"
+#include "stv6110x.h"
+#include "stv6110x_priv.h"
 
-/* Max transfer size करोne by I2C transfer functions */
-#घोषणा MAX_XFER_SIZE  64
+/* Max transfer size done by I2C transfer functions */
+#define MAX_XFER_SIZE  64
 
-अटल अचिन्हित पूर्णांक verbose;
-module_param(verbose, पूर्णांक, 0644);
+static unsigned int verbose;
+module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "Set Verbosity level");
 
-अटल पूर्णांक stv6110x_पढ़ो_reg(काष्ठा stv6110x_state *stv6110x, u8 reg, u8 *data)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा stv6110x_config *config = stv6110x->config;
-	u8 b0[] = अणु reg पूर्ण;
-	u8 b1[] = अणु 0 पूर्ण;
-	काष्ठा i2c_msg msg[] = अणु
-		अणु .addr = config->addr, .flags = 0,	   .buf = b0, .len = 1 पूर्ण,
-		अणु .addr = config->addr, .flags = I2C_M_RD, .buf = b1, .len = 1 पूर्ण
-	पूर्ण;
+static int stv6110x_read_reg(struct stv6110x_state *stv6110x, u8 reg, u8 *data)
+{
+	int ret;
+	const struct stv6110x_config *config = stv6110x->config;
+	u8 b0[] = { reg };
+	u8 b1[] = { 0 };
+	struct i2c_msg msg[] = {
+		{ .addr = config->addr, .flags = 0,	   .buf = b0, .len = 1 },
+		{ .addr = config->addr, .flags = I2C_M_RD, .buf = b1, .len = 1 }
+	};
 
 	ret = i2c_transfer(stv6110x->i2c, msg, 2);
-	अगर (ret != 2) अणु
-		dprपूर्णांकk(FE_ERROR, 1, "I/O Error");
-		वापस -EREMOTEIO;
-	पूर्ण
+	if (ret != 2) {
+		dprintk(FE_ERROR, 1, "I/O Error");
+		return -EREMOTEIO;
+	}
 	*data = b1[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_ग_लिखो_regs(काष्ठा stv6110x_state *stv6110x, पूर्णांक start, u8 data[], पूर्णांक len)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा stv6110x_config *config = stv6110x->config;
+static int stv6110x_write_regs(struct stv6110x_state *stv6110x, int start, u8 data[], int len)
+{
+	int ret;
+	const struct stv6110x_config *config = stv6110x->config;
 	u8 buf[MAX_XFER_SIZE];
 
-	काष्ठा i2c_msg msg = अणु
+	struct i2c_msg msg = {
 		.addr = config->addr,
 		.flags = 0,
 		.buf = buf,
 		.len = len + 1
-	पूर्ण;
+	};
 
-	अगर (1 + len > माप(buf)) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (1 + len > sizeof(buf)) {
+		printk(KERN_WARNING
 		       "%s: i2c wr: len=%d is too big!\n",
 		       KBUILD_MODNAME, len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (start + len > 8)
-		वापस -EINVAL;
+	if (start + len > 8)
+		return -EINVAL;
 
 	buf[0] = start;
-	स_नकल(&buf[1], data, len);
+	memcpy(&buf[1], data, len);
 
 	ret = i2c_transfer(stv6110x->i2c, &msg, 1);
-	अगर (ret != 1) अणु
-		dprपूर्णांकk(FE_ERROR, 1, "I/O Error");
-		वापस -EREMOTEIO;
-	पूर्ण
+	if (ret != 1) {
+		dprintk(FE_ERROR, 1, "I/O Error");
+		return -EREMOTEIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_ग_लिखो_reg(काष्ठा stv6110x_state *stv6110x, u8 reg, u8 data)
-अणु
-	u8 पंचांगp = data; /* see gcc.gnu.org/bugzilla/show_bug.cgi?id=81715 */
+static int stv6110x_write_reg(struct stv6110x_state *stv6110x, u8 reg, u8 data)
+{
+	u8 tmp = data; /* see gcc.gnu.org/bugzilla/show_bug.cgi?id=81715 */
 
-	वापस stv6110x_ग_लिखो_regs(stv6110x, reg, &पंचांगp, 1);
-पूर्ण
+	return stv6110x_write_regs(stv6110x, reg, &tmp, 1);
+}
 
-अटल पूर्णांक stv6110x_init(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
-	पूर्णांक ret;
+static int stv6110x_init(struct dvb_frontend *fe)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
+	int ret;
 
-	ret = stv6110x_ग_लिखो_regs(stv6110x, 0, stv6110x->regs,
+	ret = stv6110x_write_regs(stv6110x, 0, stv6110x->regs,
 				  ARRAY_SIZE(stv6110x->regs));
-	अगर (ret < 0) अणु
-		dprपूर्णांकk(FE_ERROR, 1, "Initialization failed");
-		वापस -1;
-	पूर्ण
+	if (ret < 0) {
+		dprintk(FE_ERROR, 1, "Initialization failed");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_set_frequency(काष्ठा dvb_frontend *fe, u32 frequency)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
-	u32 rDiv, भागider;
+static int stv6110x_set_frequency(struct dvb_frontend *fe, u32 frequency)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
+	u32 rDiv, divider;
 	s32 pVal, pCalc, rDivOpt = 0, pCalcOpt = 1000;
 	u8 i;
 
 	STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_K, (REFCLOCK_MHz - 16));
 
-	अगर (frequency <= 1023000) अणु
+	if (frequency <= 1023000) {
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_DIV4SEL, 1);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_PRESC32_ON, 0);
 		pVal = 40;
-	पूर्ण अन्यथा अगर (frequency <= 1300000) अणु
+	} else if (frequency <= 1300000) {
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_DIV4SEL, 1);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_PRESC32_ON, 1);
 		pVal = 40;
-	पूर्ण अन्यथा अगर (frequency <= 2046000) अणु
+	} else if (frequency <= 2046000) {
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_DIV4SEL, 0);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_PRESC32_ON, 0);
 		pVal = 20;
-	पूर्ण अन्यथा अणु
+	} else {
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_DIV4SEL, 0);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_PRESC32_ON, 1);
 		pVal = 20;
-	पूर्ण
+	}
 
-	क्रम (rDiv = 0; rDiv <= 3; rDiv++) अणु
+	for (rDiv = 0; rDiv <= 3; rDiv++) {
 		pCalc = (REFCLOCK_kHz / 100) / R_DIV(rDiv);
 
-		अगर ((असल((s32)(pCalc - pVal))) < (असल((s32)(pCalcOpt - pVal))))
+		if ((abs((s32)(pCalc - pVal))) < (abs((s32)(pCalcOpt - pVal))))
 			rDivOpt = rDiv;
 
 		pCalcOpt = (REFCLOCK_kHz / 100) / R_DIV(rDivOpt);
-	पूर्ण
+	}
 
-	भागider = (frequency * R_DIV(rDivOpt) * pVal) / REFCLOCK_kHz;
-	भागider = (भागider + 5) / 10;
+	divider = (frequency * R_DIV(rDivOpt) * pVal) / REFCLOCK_kHz;
+	divider = (divider + 5) / 10;
 
 	STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_R_DIV, rDivOpt);
-	STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_N_DIV_11_8, MSB(भागider));
-	STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG0], TNG0_N_DIV_7_0, LSB(भागider));
+	STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG1], TNG1_N_DIV_11_8, MSB(divider));
+	STV6110x_SETFIELD(stv6110x->regs[STV6110x_TNG0], TNG0_N_DIV_7_0, LSB(divider));
 
 	/* VCO Auto calibration */
 	STV6110x_SETFIELD(stv6110x->regs[STV6110x_STAT1], STAT1_CALVCO_STRT, 1);
 
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL1, stv6110x->regs[STV6110x_CTRL1]);
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_TNG1, stv6110x->regs[STV6110x_TNG1]);
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_TNG0, stv6110x->regs[STV6110x_TNG0]);
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_STAT1, stv6110x->regs[STV6110x_STAT1]);
+	stv6110x_write_reg(stv6110x, STV6110x_CTRL1, stv6110x->regs[STV6110x_CTRL1]);
+	stv6110x_write_reg(stv6110x, STV6110x_TNG1, stv6110x->regs[STV6110x_TNG1]);
+	stv6110x_write_reg(stv6110x, STV6110x_TNG0, stv6110x->regs[STV6110x_TNG0]);
+	stv6110x_write_reg(stv6110x, STV6110x_STAT1, stv6110x->regs[STV6110x_STAT1]);
 
-	क्रम (i = 0; i < TRIALS; i++) अणु
-		stv6110x_पढ़ो_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
-		अगर (!STV6110x_GETFIELD(STAT1_CALVCO_STRT, stv6110x->regs[STV6110x_STAT1]))
-				अवरोध;
+	for (i = 0; i < TRIALS; i++) {
+		stv6110x_read_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
+		if (!STV6110x_GETFIELD(STAT1_CALVCO_STRT, stv6110x->regs[STV6110x_STAT1]))
+				break;
 		msleep(1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_get_frequency(struct dvb_frontend *fe, u32 *frequency)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	stv6110x_पढ़ो_reg(stv6110x, STV6110x_TNG1, &stv6110x->regs[STV6110x_TNG1]);
-	stv6110x_पढ़ो_reg(stv6110x, STV6110x_TNG0, &stv6110x->regs[STV6110x_TNG0]);
+	stv6110x_read_reg(stv6110x, STV6110x_TNG1, &stv6110x->regs[STV6110x_TNG1]);
+	stv6110x_read_reg(stv6110x, STV6110x_TNG0, &stv6110x->regs[STV6110x_TNG0]);
 
 	*frequency = (MAKEWORD16(STV6110x_GETFIELD(TNG1_N_DIV_11_8, stv6110x->regs[STV6110x_TNG1]),
 				 STV6110x_GETFIELD(TNG0_N_DIV_7_0, stv6110x->regs[STV6110x_TNG0]))) * REFCLOCK_kHz;
@@ -182,203 +181,203 @@ MODULE_PARM_DESC(verbose, "Set Verbosity level");
 
 	*frequency >>= 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_set_bandwidth(काष्ठा dvb_frontend *fe, u32 bandwidth)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_set_bandwidth(struct dvb_frontend *fe, u32 bandwidth)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 	u32 halfbw;
 	u8 i;
 
 	halfbw = bandwidth >> 1;
 
-	अगर (halfbw > 36000000)
+	if (halfbw > 36000000)
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_CF, 31); /* LPF */
-	अन्यथा अगर (halfbw < 5000000)
+	else if (halfbw < 5000000)
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_CF, 0); /* LPF */
-	अन्यथा
+	else
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_CF, ((halfbw / 1000000) - 5)); /* LPF */
 
 
 	STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_RCCLK_OFF, 0x0); /* cal. clk activated */
-	STV6110x_SETFIELD(stv6110x->regs[STV6110x_STAT1], STAT1_CALRC_STRT, 0x1); /* LPF स्वतः cal */
+	STV6110x_SETFIELD(stv6110x->regs[STV6110x_STAT1], STAT1_CALRC_STRT, 0x1); /* LPF auto cal */
 
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL3, stv6110x->regs[STV6110x_CTRL3]);
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_STAT1, stv6110x->regs[STV6110x_STAT1]);
+	stv6110x_write_reg(stv6110x, STV6110x_CTRL3, stv6110x->regs[STV6110x_CTRL3]);
+	stv6110x_write_reg(stv6110x, STV6110x_STAT1, stv6110x->regs[STV6110x_STAT1]);
 
-	क्रम (i = 0; i < TRIALS; i++) अणु
-		stv6110x_पढ़ो_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
-		अगर (!STV6110x_GETFIELD(STAT1_CALRC_STRT, stv6110x->regs[STV6110x_STAT1]))
-			अवरोध;
+	for (i = 0; i < TRIALS; i++) {
+		stv6110x_read_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
+		if (!STV6110x_GETFIELD(STAT1_CALRC_STRT, stv6110x->regs[STV6110x_STAT1]))
+			break;
 		msleep(1);
-	पूर्ण
-	STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_RCCLK_OFF, 0x1); /* cal. करोne */
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL3, stv6110x->regs[STV6110x_CTRL3]);
+	}
+	STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL3], CTRL3_RCCLK_OFF, 0x1); /* cal. done */
+	stv6110x_write_reg(stv6110x, STV6110x_CTRL3, stv6110x->regs[STV6110x_CTRL3]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	stv6110x_पढ़ो_reg(stv6110x, STV6110x_CTRL3, &stv6110x->regs[STV6110x_CTRL3]);
+	stv6110x_read_reg(stv6110x, STV6110x_CTRL3, &stv6110x->regs[STV6110x_CTRL3]);
 	*bandwidth = (STV6110x_GETFIELD(CTRL3_CF, stv6110x->regs[STV6110x_CTRL3]) + 5) * 2000000;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_set_refघड़ी(काष्ठा dvb_frontend *fe, u32 refघड़ी)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_set_refclock(struct dvb_frontend *fe, u32 refclock)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	/* setup भागider */
-	चयन (refघड़ी) अणु
-	शेष:
-	हाल 1:
+	/* setup divider */
+	switch (refclock) {
+	default:
+	case 1:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2], CTRL2_CO_DIV, 0);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2], CTRL2_CO_DIV, 1);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2], CTRL2_CO_DIV, 2);
-		अवरोध;
-	हाल 8:
-	हाल 0:
+		break;
+	case 8:
+	case 0:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2], CTRL2_CO_DIV, 3);
-		अवरोध;
-	पूर्ण
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL2, stv6110x->regs[STV6110x_CTRL2]);
+		break;
+	}
+	stv6110x_write_reg(stv6110x, STV6110x_CTRL2, stv6110x->regs[STV6110x_CTRL2]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_get_bbgain(काष्ठा dvb_frontend *fe, u32 *gain)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_get_bbgain(struct dvb_frontend *fe, u32 *gain)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	stv6110x_पढ़ो_reg(stv6110x, STV6110x_CTRL2, &stv6110x->regs[STV6110x_CTRL2]);
+	stv6110x_read_reg(stv6110x, STV6110x_CTRL2, &stv6110x->regs[STV6110x_CTRL2]);
 	*gain = 2 * STV6110x_GETFIELD(CTRL2_BBGAIN, stv6110x->regs[STV6110x_CTRL2]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_set_bbgain(काष्ठा dvb_frontend *fe, u32 gain)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_set_bbgain(struct dvb_frontend *fe, u32 gain)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
 	STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2], CTRL2_BBGAIN, gain / 2);
-	stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL2, stv6110x->regs[STV6110x_CTRL2]);
+	stv6110x_write_reg(stv6110x, STV6110x_CTRL2, stv6110x->regs[STV6110x_CTRL2]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_set_mode(काष्ठा dvb_frontend *fe, क्रमागत tuner_mode mode)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
-	पूर्णांक ret;
+static int stv6110x_set_mode(struct dvb_frontend *fe, enum tuner_mode mode)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
+	int ret;
 
-	चयन (mode) अणु
-	हाल TUNER_SLEEP:
+	switch (mode) {
+	case TUNER_SLEEP:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_SYN, 0);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_RX, 0);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_LPT, 0);
-		अवरोध;
+		break;
 
-	हाल TUNER_WAKE:
+	case TUNER_WAKE:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_SYN, 1);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_RX, 1);
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL1], CTRL1_LPT, 1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ret = stv6110x_ग_लिखो_reg(stv6110x, STV6110x_CTRL1, stv6110x->regs[STV6110x_CTRL1]);
-	अगर (ret < 0) अणु
-		dprपूर्णांकk(FE_ERROR, 1, "I/O Error");
-		वापस -EIO;
-	पूर्ण
+	ret = stv6110x_write_reg(stv6110x, STV6110x_CTRL1, stv6110x->regs[STV6110x_CTRL1]);
+	if (ret < 0) {
+		dprintk(FE_ERROR, 1, "I/O Error");
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_sleep(काष्ठा dvb_frontend *fe)
-अणु
-	अगर (fe->tuner_priv)
-		वापस stv6110x_set_mode(fe, TUNER_SLEEP);
+static int stv6110x_sleep(struct dvb_frontend *fe)
+{
+	if (fe->tuner_priv)
+		return stv6110x_set_mode(fe, TUNER_SLEEP);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_get_status(काष्ठा dvb_frontend *fe, u32 *status)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static int stv6110x_get_status(struct dvb_frontend *fe, u32 *status)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	stv6110x_पढ़ो_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
+	stv6110x_read_reg(stv6110x, STV6110x_STAT1, &stv6110x->regs[STV6110x_STAT1]);
 
-	अगर (STV6110x_GETFIELD(STAT1_LOCK, stv6110x->regs[STV6110x_STAT1]))
+	if (STV6110x_GETFIELD(STAT1_LOCK, stv6110x->regs[STV6110x_STAT1]))
 		*status = TUNER_PHASELOCKED;
-	अन्यथा
+	else
 		*status = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम stv6110x_release(काष्ठा dvb_frontend *fe)
-अणु
-	काष्ठा stv6110x_state *stv6110x = fe->tuner_priv;
+static void stv6110x_release(struct dvb_frontend *fe)
+{
+	struct stv6110x_state *stv6110x = fe->tuner_priv;
 
-	fe->tuner_priv = शून्य;
-	kमुक्त(stv6110x);
-पूर्ण
+	fe->tuner_priv = NULL;
+	kfree(stv6110x);
+}
 
-अटल व्योम st6110x_init_regs(काष्ठा stv6110x_state *stv6110x)
-अणु
-	u8 शेष_regs[] = अणु0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1eपूर्ण;
+static void st6110x_init_regs(struct stv6110x_state *stv6110x)
+{
+	u8 default_regs[] = {0x07, 0x11, 0xdc, 0x85, 0x17, 0x01, 0xe6, 0x1e};
 
-	स_नकल(stv6110x->regs, शेष_regs, 8);
-पूर्ण
+	memcpy(stv6110x->regs, default_regs, 8);
+}
 
-अटल व्योम stv6110x_setup_भागider(काष्ठा stv6110x_state *stv6110x)
-अणु
-	चयन (stv6110x->config->clk_भाग) अणु
-	शेष:
-	हाल 1:
+static void stv6110x_setup_divider(struct stv6110x_state *stv6110x)
+{
+	switch (stv6110x->config->clk_div) {
+	default:
+	case 1:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2],
 				  CTRL2_CO_DIV,
 				  0);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2],
 				  CTRL2_CO_DIV,
 				  1);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2],
 				  CTRL2_CO_DIV,
 				  2);
-		अवरोध;
-	हाल 8:
-	हाल 0:
+		break;
+	case 8:
+	case 0:
 		STV6110x_SETFIELD(stv6110x->regs[STV6110x_CTRL2],
 				  CTRL2_CO_DIV,
 				  3);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा dvb_tuner_ops stv6110x_ops = अणु
-	.info = अणु
+static const struct dvb_tuner_ops stv6110x_ops = {
+	.info = {
 		.name		  = "STV6110(A) Silicon Tuner",
 		.frequency_min_hz =  950 * MHz,
 		.frequency_max_hz = 2150 * MHz,
-	पूर्ण,
+	},
 	.release		= stv6110x_release
-पूर्ण;
+};
 
-अटल काष्ठा stv6110x_devctl stv6110x_ctl = अणु
+static struct stv6110x_devctl stv6110x_ctl = {
 	.tuner_init		= stv6110x_init,
 	.tuner_sleep		= stv6110x_sleep,
 	.tuner_set_mode		= stv6110x_set_mode,
@@ -388,35 +387,35 @@ MODULE_PARM_DESC(verbose, "Set Verbosity level");
 	.tuner_get_bandwidth	= stv6110x_get_bandwidth,
 	.tuner_set_bbgain	= stv6110x_set_bbgain,
 	.tuner_get_bbgain	= stv6110x_get_bbgain,
-	.tuner_set_refclk	= stv6110x_set_refघड़ी,
+	.tuner_set_refclk	= stv6110x_set_refclock,
 	.tuner_get_status	= stv6110x_get_status,
-पूर्ण;
+};
 
-अटल व्योम stv6110x_set_frontend_opts(काष्ठा stv6110x_state *stv6110x)
-अणु
+static void stv6110x_set_frontend_opts(struct stv6110x_state *stv6110x)
+{
 	stv6110x->frontend->tuner_priv		= stv6110x;
 	stv6110x->frontend->ops.tuner_ops	= stv6110x_ops;
-पूर्ण
+}
 
-अटल काष्ठा stv6110x_devctl *stv6110x_get_devctl(काष्ठा i2c_client *client)
-अणु
-	काष्ठा stv6110x_state *stv6110x = i2c_get_clientdata(client);
+static struct stv6110x_devctl *stv6110x_get_devctl(struct i2c_client *client)
+{
+	struct stv6110x_state *stv6110x = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "\n");
 
-	वापस stv6110x->devctl;
-पूर्ण
+	return stv6110x->devctl;
+}
 
-अटल पूर्णांक stv6110x_probe(काष्ठा i2c_client *client,
-			  स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा stv6110x_config *config = client->dev.platक्रमm_data;
+static int stv6110x_probe(struct i2c_client *client,
+			  const struct i2c_device_id *id)
+{
+	struct stv6110x_config *config = client->dev.platform_data;
 
-	काष्ठा stv6110x_state *stv6110x;
+	struct stv6110x_state *stv6110x;
 
-	stv6110x = kzalloc(माप(*stv6110x), GFP_KERNEL);
-	अगर (!stv6110x)
-		वापस -ENOMEM;
+	stv6110x = kzalloc(sizeof(*stv6110x), GFP_KERNEL);
+	if (!stv6110x)
+		return -ENOMEM;
 
 	stv6110x->frontend	= config->frontend;
 	stv6110x->i2c		= client->adapter;
@@ -424,7 +423,7 @@ MODULE_PARM_DESC(verbose, "Set Verbosity level");
 	stv6110x->devctl	= &stv6110x_ctl;
 
 	st6110x_init_regs(stv6110x);
-	stv6110x_setup_भागider(stv6110x);
+	stv6110x_setup_divider(stv6110x);
 	stv6110x_set_frontend_opts(stv6110x);
 
 	dev_info(&stv6110x->i2c->dev, "Probed STV6110x\n");
@@ -434,26 +433,26 @@ MODULE_PARM_DESC(verbose, "Set Verbosity level");
 	/* setup callbacks */
 	config->get_devctl = stv6110x_get_devctl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stv6110x_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा stv6110x_state *stv6110x = i2c_get_clientdata(client);
+static int stv6110x_remove(struct i2c_client *client)
+{
+	struct stv6110x_state *stv6110x = i2c_get_clientdata(client);
 
 	stv6110x_release(stv6110x->frontend);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा stv6110x_devctl *stv6110x_attach(काष्ठा dvb_frontend *fe,
-					स्थिर काष्ठा stv6110x_config *config,
-					काष्ठा i2c_adapter *i2c)
-अणु
-	काष्ठा stv6110x_state *stv6110x;
+const struct stv6110x_devctl *stv6110x_attach(struct dvb_frontend *fe,
+					const struct stv6110x_config *config,
+					struct i2c_adapter *i2c)
+{
+	struct stv6110x_state *stv6110x;
 
-	stv6110x = kzalloc(माप(*stv6110x), GFP_KERNEL);
-	अगर (!stv6110x)
-		वापस शून्य;
+	stv6110x = kzalloc(sizeof(*stv6110x), GFP_KERNEL);
+	if (!stv6110x)
+		return NULL;
 
 	stv6110x->frontend	= fe;
 	stv6110x->i2c		= i2c;
@@ -461,32 +460,32 @@ MODULE_PARM_DESC(verbose, "Set Verbosity level");
 	stv6110x->devctl	= &stv6110x_ctl;
 
 	st6110x_init_regs(stv6110x);
-	stv6110x_setup_भागider(stv6110x);
+	stv6110x_setup_divider(stv6110x);
 	stv6110x_set_frontend_opts(stv6110x);
 
 	fe->tuner_priv		= stv6110x;
 	fe->ops.tuner_ops	= stv6110x_ops;
 
 	dev_info(&stv6110x->i2c->dev, "Attaching STV6110x\n");
-	वापस stv6110x->devctl;
-पूर्ण
+	return stv6110x->devctl;
+}
 EXPORT_SYMBOL(stv6110x_attach);
 
-अटल स्थिर काष्ठा i2c_device_id stv6110x_id_table[] = अणु
-	अणु"stv6110x", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id stv6110x_id_table[] = {
+	{"stv6110x", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, stv6110x_id_table);
 
-अटल काष्ठा i2c_driver stv6110x_driver = अणु
-	.driver = अणु
+static struct i2c_driver stv6110x_driver = {
+	.driver = {
 		.name	= "stv6110x",
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe		= stv6110x_probe,
-	.हटाओ		= stv6110x_हटाओ,
+	.remove		= stv6110x_remove,
 	.id_table	= stv6110x_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(stv6110x_driver);
 

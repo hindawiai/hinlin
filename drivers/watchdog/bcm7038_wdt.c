@@ -1,213 +1,212 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2015 Broadcom Corporation
  *
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/watchकरोg.h>
+#include <linux/clk.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/watchdog.h>
 
-#घोषणा WDT_START_1		0xff00
-#घोषणा WDT_START_2		0x00ff
-#घोषणा WDT_STOP_1		0xee00
-#घोषणा WDT_STOP_2		0x00ee
+#define WDT_START_1		0xff00
+#define WDT_START_2		0x00ff
+#define WDT_STOP_1		0xee00
+#define WDT_STOP_2		0x00ee
 
-#घोषणा WDT_TIMEOUT_REG		0x0
-#घोषणा WDT_CMD_REG		0x4
+#define WDT_TIMEOUT_REG		0x0
+#define WDT_CMD_REG		0x4
 
-#घोषणा WDT_MIN_TIMEOUT		1 /* seconds */
-#घोषणा WDT_DEFAULT_TIMEOUT	30 /* seconds */
-#घोषणा WDT_DEFAULT_RATE	27000000
+#define WDT_MIN_TIMEOUT		1 /* seconds */
+#define WDT_DEFAULT_TIMEOUT	30 /* seconds */
+#define WDT_DEFAULT_RATE	27000000
 
-काष्ठा bcm7038_watchकरोg अणु
-	व्योम __iomem		*base;
-	काष्ठा watchकरोg_device	wdd;
+struct bcm7038_watchdog {
+	void __iomem		*base;
+	struct watchdog_device	wdd;
 	u32			rate;
-	काष्ठा clk		*clk;
-पूर्ण;
+	struct clk		*clk;
+};
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 
-अटल व्योम bcm7038_wdt_set_समयout_reg(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = watchकरोg_get_drvdata(wकरोg);
-	u32 समयout;
+static void bcm7038_wdt_set_timeout_reg(struct watchdog_device *wdog)
+{
+	struct bcm7038_watchdog *wdt = watchdog_get_drvdata(wdog);
+	u32 timeout;
 
-	समयout = wdt->rate * wकरोg->समयout;
+	timeout = wdt->rate * wdog->timeout;
 
-	ग_लिखोl(समयout, wdt->base + WDT_TIMEOUT_REG);
-पूर्ण
+	writel(timeout, wdt->base + WDT_TIMEOUT_REG);
+}
 
-अटल पूर्णांक bcm7038_wdt_ping(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = watchकरोg_get_drvdata(wकरोg);
+static int bcm7038_wdt_ping(struct watchdog_device *wdog)
+{
+	struct bcm7038_watchdog *wdt = watchdog_get_drvdata(wdog);
 
-	ग_लिखोl(WDT_START_1, wdt->base + WDT_CMD_REG);
-	ग_लिखोl(WDT_START_2, wdt->base + WDT_CMD_REG);
+	writel(WDT_START_1, wdt->base + WDT_CMD_REG);
+	writel(WDT_START_2, wdt->base + WDT_CMD_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm7038_wdt_start(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	bcm7038_wdt_set_समयout_reg(wकरोg);
-	bcm7038_wdt_ping(wकरोg);
+static int bcm7038_wdt_start(struct watchdog_device *wdog)
+{
+	bcm7038_wdt_set_timeout_reg(wdog);
+	bcm7038_wdt_ping(wdog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm7038_wdt_stop(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = watchकरोg_get_drvdata(wकरोg);
+static int bcm7038_wdt_stop(struct watchdog_device *wdog)
+{
+	struct bcm7038_watchdog *wdt = watchdog_get_drvdata(wdog);
 
-	ग_लिखोl(WDT_STOP_1, wdt->base + WDT_CMD_REG);
-	ग_लिखोl(WDT_STOP_2, wdt->base + WDT_CMD_REG);
+	writel(WDT_STOP_1, wdt->base + WDT_CMD_REG);
+	writel(WDT_STOP_2, wdt->base + WDT_CMD_REG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm7038_wdt_set_समयout(काष्ठा watchकरोg_device *wकरोg,
-				   अचिन्हित पूर्णांक t)
-अणु
-	/* Can't modअगरy समयout value अगर watchकरोg समयr is running */
-	bcm7038_wdt_stop(wकरोg);
-	wकरोg->समयout = t;
-	bcm7038_wdt_start(wकरोg);
+static int bcm7038_wdt_set_timeout(struct watchdog_device *wdog,
+				   unsigned int t)
+{
+	/* Can't modify timeout value if watchdog timer is running */
+	bcm7038_wdt_stop(wdog);
+	wdog->timeout = t;
+	bcm7038_wdt_start(wdog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक bcm7038_wdt_get_समयleft(काष्ठा watchकरोg_device *wकरोg)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = watchकरोg_get_drvdata(wकरोg);
-	u32 समय_left;
+static unsigned int bcm7038_wdt_get_timeleft(struct watchdog_device *wdog)
+{
+	struct bcm7038_watchdog *wdt = watchdog_get_drvdata(wdog);
+	u32 time_left;
 
-	समय_left = पढ़ोl(wdt->base + WDT_CMD_REG);
+	time_left = readl(wdt->base + WDT_CMD_REG);
 
-	वापस समय_left / wdt->rate;
-पूर्ण
+	return time_left / wdt->rate;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info bcm7038_wdt_info = अणु
+static const struct watchdog_info bcm7038_wdt_info = {
 	.identity	= "Broadcom BCM7038 Watchdog Timer",
 	.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 				WDIOF_MAGICCLOSE
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops bcm7038_wdt_ops = अणु
+static const struct watchdog_ops bcm7038_wdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= bcm7038_wdt_start,
 	.stop		= bcm7038_wdt_stop,
-	.set_समयout	= bcm7038_wdt_set_समयout,
-	.get_समयleft	= bcm7038_wdt_get_समयleft,
-पूर्ण;
+	.set_timeout	= bcm7038_wdt_set_timeout,
+	.get_timeleft	= bcm7038_wdt_get_timeleft,
+};
 
-अटल व्योम bcm7038_clk_disable_unprepare(व्योम *data)
-अणु
+static void bcm7038_clk_disable_unprepare(void *data)
+{
 	clk_disable_unprepare(data);
-पूर्ण
+}
 
-अटल पूर्णांक bcm7038_wdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा bcm7038_watchकरोg *wdt;
-	पूर्णांक err;
+static int bcm7038_wdt_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct bcm7038_watchdog *wdt;
+	int err;
 
-	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
-	अगर (!wdt)
-		वापस -ENOMEM;
+	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
+	if (!wdt)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, wdt);
+	platform_set_drvdata(pdev, wdt);
 
-	wdt->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(wdt->base))
-		वापस PTR_ERR(wdt->base);
+	wdt->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(wdt->base))
+		return PTR_ERR(wdt->base);
 
-	wdt->clk = devm_clk_get(dev, शून्य);
-	/* If unable to get घड़ी, use शेष frequency */
-	अगर (!IS_ERR(wdt->clk)) अणु
+	wdt->clk = devm_clk_get(dev, NULL);
+	/* If unable to get clock, use default frequency */
+	if (!IS_ERR(wdt->clk)) {
 		err = clk_prepare_enable(wdt->clk);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = devm_add_action_or_reset(dev,
 					       bcm7038_clk_disable_unprepare,
 					       wdt->clk);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		wdt->rate = clk_get_rate(wdt->clk);
-		/* Prevent भागide-by-zero exception */
-		अगर (!wdt->rate)
+		/* Prevent divide-by-zero exception */
+		if (!wdt->rate)
 			wdt->rate = WDT_DEFAULT_RATE;
-	पूर्ण अन्यथा अणु
+	} else {
 		wdt->rate = WDT_DEFAULT_RATE;
-		wdt->clk = शून्य;
-	पूर्ण
+		wdt->clk = NULL;
+	}
 
 	wdt->wdd.info		= &bcm7038_wdt_info;
 	wdt->wdd.ops		= &bcm7038_wdt_ops;
-	wdt->wdd.min_समयout	= WDT_MIN_TIMEOUT;
-	wdt->wdd.समयout	= WDT_DEFAULT_TIMEOUT;
-	wdt->wdd.max_समयout	= 0xffffffff / wdt->rate;
+	wdt->wdd.min_timeout	= WDT_MIN_TIMEOUT;
+	wdt->wdd.timeout	= WDT_DEFAULT_TIMEOUT;
+	wdt->wdd.max_timeout	= 0xffffffff / wdt->rate;
 	wdt->wdd.parent		= dev;
-	watchकरोg_set_drvdata(&wdt->wdd, wdt);
+	watchdog_set_drvdata(&wdt->wdd, wdt);
 
-	watchकरोg_stop_on_reboot(&wdt->wdd);
-	watchकरोg_stop_on_unरेजिस्टर(&wdt->wdd);
-	err = devm_watchकरोg_रेजिस्टर_device(dev, &wdt->wdd);
-	अगर (err)
-		वापस err;
+	watchdog_stop_on_reboot(&wdt->wdd);
+	watchdog_stop_on_unregister(&wdt->wdd);
+	err = devm_watchdog_register_device(dev, &wdt->wdd);
+	if (err)
+		return err;
 
 	dev_info(dev, "Registered BCM7038 Watchdog\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक bcm7038_wdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int bcm7038_wdt_suspend(struct device *dev)
+{
+	struct bcm7038_watchdog *wdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&wdt->wdd))
-		वापस bcm7038_wdt_stop(&wdt->wdd);
+	if (watchdog_active(&wdt->wdd))
+		return bcm7038_wdt_stop(&wdt->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm7038_wdt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा bcm7038_watchकरोg *wdt = dev_get_drvdata(dev);
+static int bcm7038_wdt_resume(struct device *dev)
+{
+	struct bcm7038_watchdog *wdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&wdt->wdd))
-		वापस bcm7038_wdt_start(&wdt->wdd);
+	if (watchdog_active(&wdt->wdd))
+		return bcm7038_wdt_start(&wdt->wdd);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(bcm7038_wdt_pm_ops, bcm7038_wdt_suspend,
+static SIMPLE_DEV_PM_OPS(bcm7038_wdt_pm_ops, bcm7038_wdt_suspend,
 			 bcm7038_wdt_resume);
 
-अटल स्थिर काष्ठा of_device_id bcm7038_wdt_match[] = अणु
-	अणु .compatible = "brcm,bcm7038-wdt" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id bcm7038_wdt_match[] = {
+	{ .compatible = "brcm,bcm7038-wdt" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, bcm7038_wdt_match);
 
-अटल काष्ठा platक्रमm_driver bcm7038_wdt_driver = अणु
+static struct platform_driver bcm7038_wdt_driver = {
 	.probe		= bcm7038_wdt_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "bcm7038-wdt",
 		.of_match_table	= bcm7038_wdt_match,
 		.pm		= &bcm7038_wdt_pm_ops,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(bcm7038_wdt_driver);
+	}
+};
+module_platform_driver(bcm7038_wdt_driver);
 
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="

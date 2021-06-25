@@ -1,146 +1,145 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ARCHRANDOM_H
-#घोषणा _ASM_ARCHRANDOM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ARCHRANDOM_H
+#define _ASM_ARCHRANDOM_H
 
-#अगर_घोषित CONFIG_ARCH_RANDOM
+#ifdef CONFIG_ARCH_RANDOM
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/cpufeature.h>
+#include <linux/arm-smccc.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <asm/cpufeature.h>
 
-#घोषणा ARM_SMCCC_TRNG_MIN_VERSION	0x10000UL
+#define ARM_SMCCC_TRNG_MIN_VERSION	0x10000UL
 
-बाह्य bool smccc_trng_available;
+extern bool smccc_trng_available;
 
-अटल अंतरभूत bool __init smccc_probe_trng(व्योम)
-अणु
-	काष्ठा arm_smccc_res res;
+static inline bool __init smccc_probe_trng(void)
+{
+	struct arm_smccc_res res;
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_TRNG_VERSION, &res);
-	अगर ((s32)res.a0 < 0)
-		वापस false;
+	if ((s32)res.a0 < 0)
+		return false;
 
-	वापस res.a0 >= ARM_SMCCC_TRNG_MIN_VERSION;
-पूर्ण
+	return res.a0 >= ARM_SMCCC_TRNG_MIN_VERSION;
+}
 
-अटल अंतरभूत bool __arm64_rndr(अचिन्हित दीर्घ *v)
-अणु
+static inline bool __arm64_rndr(unsigned long *v)
+{
 	bool ok;
 
 	/*
 	 * Reads of RNDR set PSTATE.NZCV to 0b0000 on success,
 	 * and set PSTATE.NZCV to 0b0100 otherwise.
 	 */
-	यंत्र अस्थिर(
+	asm volatile(
 		__mrs_s("%0", SYS_RNDR_EL0) "\n"
 	"	cset %w1, ne\n"
 	: "=r" (*v), "=r" (ok)
 	:
 	: "cc");
 
-	वापस ok;
-पूर्ण
+	return ok;
+}
 
-अटल अंतरभूत bool __must_check arch_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v)
-अणु
-	वापस false;
-पूर्ण
+static inline bool __must_check arch_get_random_long(unsigned long *v)
+{
+	return false;
+}
 
-अटल अंतरभूत bool __must_check arch_get_अक्रमom_पूर्णांक(अचिन्हित पूर्णांक *v)
-अणु
-	वापस false;
-पूर्ण
+static inline bool __must_check arch_get_random_int(unsigned int *v)
+{
+	return false;
+}
 
-अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_दीर्घ(अचिन्हित दीर्घ *v)
-अणु
-	काष्ठा arm_smccc_res res;
+static inline bool __must_check arch_get_random_seed_long(unsigned long *v)
+{
+	struct arm_smccc_res res;
 
 	/*
-	 * We prefer the SMCCC call, since its semantics (वापस actual
-	 * hardware backed entropy) is बंदr to the idea behind this
-	 * function here than what even the RNDRSS रेजिस्टर provides
-	 * (the output of a pseuकरो RNG freshly seeded by a TRNG).
+	 * We prefer the SMCCC call, since its semantics (return actual
+	 * hardware backed entropy) is closer to the idea behind this
+	 * function here than what even the RNDRSS register provides
+	 * (the output of a pseudo RNG freshly seeded by a TRNG).
 	 */
-	अगर (smccc_trng_available) अणु
+	if (smccc_trng_available) {
 		arm_smccc_1_1_invoke(ARM_SMCCC_TRNG_RND64, 64, &res);
-		अगर ((पूर्णांक)res.a0 >= 0) अणु
+		if ((int)res.a0 >= 0) {
 			*v = res.a3;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
 	/*
-	 * Only support the generic पूर्णांकerface after we have detected
-	 * the प्रणाली wide capability, aव्योमing complनिकासy with the
+	 * Only support the generic interface after we have detected
+	 * the system wide capability, avoiding complexity with the
 	 * cpufeature code and with potential scheduling between CPUs
 	 * with and without the feature.
 	 */
-	अगर (cpus_have_स्थिर_cap(ARM64_HAS_RNG) && __arm64_rndr(v))
-		वापस true;
+	if (cpus_have_const_cap(ARM64_HAS_RNG) && __arm64_rndr(v))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_पूर्णांक(अचिन्हित पूर्णांक *v)
-अणु
-	काष्ठा arm_smccc_res res;
-	अचिन्हित दीर्घ val;
+static inline bool __must_check arch_get_random_seed_int(unsigned int *v)
+{
+	struct arm_smccc_res res;
+	unsigned long val;
 
-	अगर (smccc_trng_available) अणु
+	if (smccc_trng_available) {
 		arm_smccc_1_1_invoke(ARM_SMCCC_TRNG_RND64, 32, &res);
-		अगर ((पूर्णांक)res.a0 >= 0) अणु
+		if ((int)res.a0 >= 0) {
 			*v = res.a3 & GENMASK(31, 0);
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	अगर (cpus_have_स्थिर_cap(ARM64_HAS_RNG)) अणु
-		अगर (__arm64_rndr(&val)) अणु
+	if (cpus_have_const_cap(ARM64_HAS_RNG)) {
+		if (__arm64_rndr(&val)) {
 			*v = val;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल अंतरभूत bool __init __early_cpu_has_rndr(व्योम)
-अणु
+static inline bool __init __early_cpu_has_rndr(void)
+{
 	/* Open code as we run prior to the first call to cpufeature. */
-	अचिन्हित दीर्घ ftr = पढ़ो_sysreg_s(SYS_ID_AA64ISAR0_EL1);
-	वापस (ftr >> ID_AA64ISAR0_RNDR_SHIFT) & 0xf;
-पूर्ण
+	unsigned long ftr = read_sysreg_s(SYS_ID_AA64ISAR0_EL1);
+	return (ftr >> ID_AA64ISAR0_RNDR_SHIFT) & 0xf;
+}
 
-अटल अंतरभूत bool __init __must_check
-arch_get_अक्रमom_seed_दीर्घ_early(अचिन्हित दीर्घ *v)
-अणु
-	WARN_ON(प्रणाली_state != SYSTEM_BOOTING);
+static inline bool __init __must_check
+arch_get_random_seed_long_early(unsigned long *v)
+{
+	WARN_ON(system_state != SYSTEM_BOOTING);
 
-	अगर (smccc_trng_available) अणु
-		काष्ठा arm_smccc_res res;
+	if (smccc_trng_available) {
+		struct arm_smccc_res res;
 
 		arm_smccc_1_1_invoke(ARM_SMCCC_TRNG_RND64, 64, &res);
-		अगर ((पूर्णांक)res.a0 >= 0) अणु
+		if ((int)res.a0 >= 0) {
 			*v = res.a3;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	अगर (__early_cpu_has_rndr() && __arm64_rndr(v))
-		वापस true;
+	if (__early_cpu_has_rndr() && __arm64_rndr(v))
+		return true;
 
-	वापस false;
-पूर्ण
-#घोषणा arch_get_अक्रमom_seed_दीर्घ_early arch_get_अक्रमom_seed_दीर्घ_early
+	return false;
+}
+#define arch_get_random_seed_long_early arch_get_random_seed_long_early
 
-#अन्यथा /* !CONFIG_ARCH_RANDOM */
+#else /* !CONFIG_ARCH_RANDOM */
 
-अटल अंतरभूत bool __init smccc_probe_trng(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool __init smccc_probe_trng(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* CONFIG_ARCH_RANDOM */
-#पूर्ण_अगर /* _ASM_ARCHRANDOM_H */
+#endif /* CONFIG_ARCH_RANDOM */
+#endif /* _ASM_ARCHRANDOM_H */

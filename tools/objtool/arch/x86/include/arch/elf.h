@@ -1,7 +1,6 @@
-<शैली गुरु>
-#अगर_अघोषित _OBJTOOL_ARCH_ELF
-#घोषणा _OBJTOOL_ARCH_ELF
+#ifndef _OBJTOOL_ARCH_ELF
+#define _OBJTOOL_ARCH_ELF
 
-#घोषणा R_NONE R_X86_64_NONE
+#define R_NONE R_X86_64_NONE
 
-#पूर्ण_अगर /* _OBJTOOL_ARCH_ELF */
+#endif /* _OBJTOOL_ARCH_ELF */

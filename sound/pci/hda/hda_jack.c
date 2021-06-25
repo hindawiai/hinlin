@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Jack-detection handling क्रम HD-audio
+ * Jack-detection handling for HD-audio
  *
  * Copyright (c) 2011 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_local.h"
-#समावेश "hda_auto_parser.h"
-#समावेश "hda_jack.h"
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/jack.h>
+#include <sound/hda_codec.h>
+#include "hda_local.h"
+#include "hda_auto_parser.h"
+#include "hda_jack.h"
 
 /**
  * is_jack_detectable - Check whether the given pin is jack-detectable
@@ -27,191 +26,191 @@
  * detection is prohibited in the codec level, the pin config has
  * AC_DEFCFG_MISC_NO_PRESENCE bit, no unsol support, etc.
  */
-bool is_jack_detectable(काष्ठा hda_codec *codec, hda_nid_t nid)
-अणु
-	अगर (codec->no_jack_detect)
-		वापस false;
-	अगर (!(snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_PRES_DETECT))
-		वापस false;
-	अगर (get_defcfg_misc(snd_hda_codec_get_pincfg(codec, nid)) &
+bool is_jack_detectable(struct hda_codec *codec, hda_nid_t nid)
+{
+	if (codec->no_jack_detect)
+		return false;
+	if (!(snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_PRES_DETECT))
+		return false;
+	if (get_defcfg_misc(snd_hda_codec_get_pincfg(codec, nid)) &
 	     AC_DEFCFG_MISC_NO_PRESENCE)
-		वापस false;
-	अगर (!(get_wcaps(codec, nid) & AC_WCAP_UNSOL_CAP) &&
-	    !codec->jackpoll_पूर्णांकerval)
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	if (!(get_wcaps(codec, nid) & AC_WCAP_UNSOL_CAP) &&
+	    !codec->jackpoll_interval)
+		return false;
+	return true;
+}
 EXPORT_SYMBOL_GPL(is_jack_detectable);
 
 /* execute pin sense measurement */
-अटल u32 पढ़ो_pin_sense(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक dev_id)
-अणु
+static u32 read_pin_sense(struct hda_codec *codec, hda_nid_t nid, int dev_id)
+{
 	u32 pincap;
 	u32 val;
 
-	अगर (!codec->no_trigger_sense) अणु
+	if (!codec->no_trigger_sense) {
 		pincap = snd_hda_query_pin_caps(codec, nid);
-		अगर (pincap & AC_PINCAP_TRIG_REQ) /* need trigger? */
-			snd_hda_codec_पढ़ो(codec, nid, 0,
+		if (pincap & AC_PINCAP_TRIG_REQ) /* need trigger? */
+			snd_hda_codec_read(codec, nid, 0,
 					AC_VERB_SET_PIN_SENSE, 0);
-	पूर्ण
-	val = snd_hda_codec_पढ़ो(codec, nid, 0,
+	}
+	val = snd_hda_codec_read(codec, nid, 0,
 				  AC_VERB_GET_PIN_SENSE, dev_id);
-	अगर (codec->inv_jack_detect)
+	if (codec->inv_jack_detect)
 		val ^= AC_PINSENSE_PRESENCE;
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /**
- * snd_hda_jack_tbl_get_mst - query the jack-table entry क्रम the given NID
+ * snd_hda_jack_tbl_get_mst - query the jack-table entry for the given NID
  * @codec: the HDA codec
  * @nid: pin NID to refer to
  * @dev_id: pin device entry id
  */
-काष्ठा hda_jack_tbl *
-snd_hda_jack_tbl_get_mst(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक dev_id)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i;
+struct hda_jack_tbl *
+snd_hda_jack_tbl_get_mst(struct hda_codec *codec, hda_nid_t nid, int dev_id)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i;
 
-	अगर (!nid || !jack)
-		वापस शून्य;
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->nid == nid && jack->dev_id == dev_id)
-			वापस jack;
-	वापस शून्य;
-पूर्ण
+	if (!nid || !jack)
+		return NULL;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->nid == nid && jack->dev_id == dev_id)
+			return jack;
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_tbl_get_mst);
 
 /**
- * snd_hda_jack_tbl_get_from_tag - query the jack-table entry क्रम the given tag
+ * snd_hda_jack_tbl_get_from_tag - query the jack-table entry for the given tag
  * @codec: the HDA codec
  * @tag: tag value to refer to
  * @dev_id: pin device entry id
  */
-काष्ठा hda_jack_tbl *
-snd_hda_jack_tbl_get_from_tag(काष्ठा hda_codec *codec,
-			      अचिन्हित अक्षर tag, पूर्णांक dev_id)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i;
+struct hda_jack_tbl *
+snd_hda_jack_tbl_get_from_tag(struct hda_codec *codec,
+			      unsigned char tag, int dev_id)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i;
 
-	अगर (!tag || !jack)
-		वापस शून्य;
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->tag == tag && jack->dev_id == dev_id)
-			वापस jack;
-	वापस शून्य;
-पूर्ण
+	if (!tag || !jack)
+		return NULL;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->tag == tag && jack->dev_id == dev_id)
+			return jack;
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_tbl_get_from_tag);
 
-अटल काष्ठा hda_jack_tbl *
-any_jack_tbl_get_from_nid(काष्ठा hda_codec *codec, hda_nid_t nid)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i;
+static struct hda_jack_tbl *
+any_jack_tbl_get_from_nid(struct hda_codec *codec, hda_nid_t nid)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i;
 
-	अगर (!nid || !jack)
-		वापस शून्य;
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->nid == nid)
-			वापस jack;
-	वापस शून्य;
-पूर्ण
+	if (!nid || !jack)
+		return NULL;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->nid == nid)
+			return jack;
+	return NULL;
+}
 
 /**
- * snd_hda_jack_tbl_new - create a jack-table entry क्रम the given NID
+ * snd_hda_jack_tbl_new - create a jack-table entry for the given NID
  * @codec: the HDA codec
  * @nid: pin NID to assign
  * @dev_id: pin device entry id
  */
-अटल काष्ठा hda_jack_tbl *
-snd_hda_jack_tbl_new(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक dev_id)
-अणु
-	काष्ठा hda_jack_tbl *jack =
+static struct hda_jack_tbl *
+snd_hda_jack_tbl_new(struct hda_codec *codec, hda_nid_t nid, int dev_id)
+{
+	struct hda_jack_tbl *jack =
 		snd_hda_jack_tbl_get_mst(codec, nid, dev_id);
-	काष्ठा hda_jack_tbl *existing_nid_jack =
+	struct hda_jack_tbl *existing_nid_jack =
 		any_jack_tbl_get_from_nid(codec, nid);
 
 	WARN_ON(dev_id != 0 && !codec->dp_mst);
 
-	अगर (jack)
-		वापस jack;
+	if (jack)
+		return jack;
 	jack = snd_array_new(&codec->jacktbl);
-	अगर (!jack)
-		वापस शून्य;
+	if (!jack)
+		return NULL;
 	jack->nid = nid;
 	jack->dev_id = dev_id;
 	jack->jack_dirty = 1;
-	अगर (existing_nid_jack) अणु
+	if (existing_nid_jack) {
 		jack->tag = existing_nid_jack->tag;
 
 		/*
-		 * Copy jack_detect from existing_nid_jack to aव्योम
+		 * Copy jack_detect from existing_nid_jack to avoid
 		 * snd_hda_jack_detect_enable_callback_mst() making multiple
 		 * SET_UNSOLICITED_ENABLE calls on the same pin.
 		 */
 		jack->jack_detect = existing_nid_jack->jack_detect;
-	पूर्ण अन्यथा अणु
+	} else {
 		jack->tag = codec->jacktbl.used;
-	पूर्ण
+	}
 
-	वापस jack;
-पूर्ण
+	return jack;
+}
 
-व्योम snd_hda_jack_tbl_clear(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i;
+void snd_hda_jack_tbl_clear(struct hda_codec *codec)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i;
 
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++) अणु
-		काष्ठा hda_jack_callback *cb, *next;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++) {
+		struct hda_jack_callback *cb, *next;
 
-		/* मुक्त jack instances manually when clearing/reconfiguring */
-		अगर (!codec->bus->shutकरोwn && jack->jack)
-			snd_device_मुक्त(codec->card, jack->jack);
+		/* free jack instances manually when clearing/reconfiguring */
+		if (!codec->bus->shutdown && jack->jack)
+			snd_device_free(codec->card, jack->jack);
 
-		क्रम (cb = jack->callback; cb; cb = next) अणु
+		for (cb = jack->callback; cb; cb = next) {
 			next = cb->next;
-			kमुक्त(cb);
-		पूर्ण
-	पूर्ण
-	snd_array_मुक्त(&codec->jacktbl);
-पूर्ण
+			kfree(cb);
+		}
+	}
+	snd_array_free(&codec->jacktbl);
+}
 
-#घोषणा get_jack_plug_state(sense) !!(sense & AC_PINSENSE_PRESENCE)
+#define get_jack_plug_state(sense) !!(sense & AC_PINSENSE_PRESENCE)
 
-/* update the cached value and notअगरication flag अगर needed */
-अटल व्योम jack_detect_update(काष्ठा hda_codec *codec,
-			       काष्ठा hda_jack_tbl *jack)
-अणु
-	अगर (!jack->jack_dirty)
-		वापस;
+/* update the cached value and notification flag if needed */
+static void jack_detect_update(struct hda_codec *codec,
+			       struct hda_jack_tbl *jack)
+{
+	if (!jack->jack_dirty)
+		return;
 
-	अगर (jack->phantom_jack)
+	if (jack->phantom_jack)
 		jack->pin_sense = AC_PINSENSE_PRESENCE;
-	अन्यथा
-		jack->pin_sense = पढ़ो_pin_sense(codec, jack->nid,
+	else
+		jack->pin_sense = read_pin_sense(codec, jack->nid,
 						 jack->dev_id);
 
-	/* A gating jack indicates the jack is invalid अगर gating is unplugged */
-	अगर (jack->gating_jack &&
+	/* A gating jack indicates the jack is invalid if gating is unplugged */
+	if (jack->gating_jack &&
 	    !snd_hda_jack_detect_mst(codec, jack->gating_jack, jack->dev_id))
 		jack->pin_sense &= ~AC_PINSENSE_PRESENCE;
 
 	jack->jack_dirty = 0;
 
 	/* If a jack is gated by this one update it. */
-	अगर (jack->gated_jack) अणु
-		काष्ठा hda_jack_tbl *gated =
+	if (jack->gated_jack) {
+		struct hda_jack_tbl *gated =
 			snd_hda_jack_tbl_get_mst(codec, jack->gated_jack,
 						 jack->dev_id);
-		अगर (gated) अणु
+		if (gated) {
 			gated->jack_dirty = 1;
 			jack_detect_update(codec, gated);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * snd_hda_jack_set_dirty_all - Mark all the cached as dirty
@@ -220,15 +219,15 @@ snd_hda_jack_tbl_new(काष्ठा hda_codec *codec, hda_nid_t nid, पू�
  * This function sets the dirty flag to all entries of jack table.
  * It's called from the resume path in hda_codec.c.
  */
-व्योम snd_hda_jack_set_dirty_all(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i;
+void snd_hda_jack_set_dirty_all(struct hda_codec *codec)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i;
 
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->nid)
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->nid)
 			jack->jack_dirty = 1;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_set_dirty_all);
 
 /**
@@ -237,19 +236,19 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_set_dirty_all);
  * @nid: the pin NID to sense
  * @dev_id: pin device entry id
  *
- * Execute necessary pin sense measurement and वापस its Presence Detect,
+ * Execute necessary pin sense measurement and return its Presence Detect,
  * Impedance, ELD Valid etc. status bits.
  */
-u32 snd_hda_jack_pin_sense(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक dev_id)
-अणु
-	काष्ठा hda_jack_tbl *jack =
+u32 snd_hda_jack_pin_sense(struct hda_codec *codec, hda_nid_t nid, int dev_id)
+{
+	struct hda_jack_tbl *jack =
 		snd_hda_jack_tbl_get_mst(codec, nid, dev_id);
-	अगर (jack) अणु
+	if (jack) {
 		jack_detect_update(codec, jack);
-		वापस jack->pin_sense;
-	पूर्ण
-	वापस पढ़ो_pin_sense(codec, nid, dev_id);
-पूर्ण
+		return jack->pin_sense;
+	}
+	return read_pin_sense(codec, nid, dev_id);
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_pin_sense);
 
 /**
@@ -258,89 +257,89 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_pin_sense);
  * @nid: the pin NID to sense
  * @dev_id: pin device entry id
  *
- * Query and वापस the pin's Presence Detect status, as either
+ * Query and return the pin's Presence Detect status, as either
  * HDA_JACK_NOT_PRESENT, HDA_JACK_PRESENT or HDA_JACK_PHANTOM.
  */
-पूर्णांक snd_hda_jack_detect_state_mst(काष्ठा hda_codec *codec,
-				  hda_nid_t nid, पूर्णांक dev_id)
-अणु
-	काष्ठा hda_jack_tbl *jack =
+int snd_hda_jack_detect_state_mst(struct hda_codec *codec,
+				  hda_nid_t nid, int dev_id)
+{
+	struct hda_jack_tbl *jack =
 		snd_hda_jack_tbl_get_mst(codec, nid, dev_id);
-	अगर (jack && jack->phantom_jack)
-		वापस HDA_JACK_PHANTOM;
-	अन्यथा अगर (snd_hda_jack_pin_sense(codec, nid, dev_id) &
+	if (jack && jack->phantom_jack)
+		return HDA_JACK_PHANTOM;
+	else if (snd_hda_jack_pin_sense(codec, nid, dev_id) &
 		 AC_PINSENSE_PRESENCE)
-		वापस HDA_JACK_PRESENT;
-	अन्यथा
-		वापस HDA_JACK_NOT_PRESENT;
-पूर्ण
+		return HDA_JACK_PRESENT;
+	else
+		return HDA_JACK_NOT_PRESENT;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_detect_state_mst);
 
-अटल काष्ठा hda_jack_callback *
-find_callback_from_list(काष्ठा hda_jack_tbl *jack,
+static struct hda_jack_callback *
+find_callback_from_list(struct hda_jack_tbl *jack,
 			hda_jack_callback_fn func)
-अणु
-	काष्ठा hda_jack_callback *cb;
+{
+	struct hda_jack_callback *cb;
 
-	अगर (!func)
-		वापस शून्य;
+	if (!func)
+		return NULL;
 
-	क्रम (cb = jack->callback; cb; cb = cb->next) अणु
-		अगर (cb->func == func)
-			वापस cb;
-	पूर्ण
+	for (cb = jack->callback; cb; cb = cb->next) {
+		if (cb->func == func)
+			return cb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * snd_hda_jack_detect_enable_callback_mst - enable the jack-detection
  * @codec: the HDA codec
  * @nid: pin NID to enable
- * @func: callback function to रेजिस्टर
+ * @func: callback function to register
  * @dev_id: pin device entry id
  *
- * In the हाल of error, the वापस value will be a poपूर्णांकer embedded with
- * त्रुटि_सं.  Check and handle the वापस value appropriately with standard
+ * In the case of error, the return value will be a pointer embedded with
+ * errno.  Check and handle the return value appropriately with standard
  * macros such as @IS_ERR() and @PTR_ERR().
  */
-काष्ठा hda_jack_callback *
-snd_hda_jack_detect_enable_callback_mst(काष्ठा hda_codec *codec, hda_nid_t nid,
-					पूर्णांक dev_id, hda_jack_callback_fn func)
-अणु
-	काष्ठा hda_jack_tbl *jack;
-	काष्ठा hda_jack_callback *callback = शून्य;
-	पूर्णांक err;
+struct hda_jack_callback *
+snd_hda_jack_detect_enable_callback_mst(struct hda_codec *codec, hda_nid_t nid,
+					int dev_id, hda_jack_callback_fn func)
+{
+	struct hda_jack_tbl *jack;
+	struct hda_jack_callback *callback = NULL;
+	int err;
 
 	jack = snd_hda_jack_tbl_new(codec, nid, dev_id);
-	अगर (!jack)
-		वापस ERR_PTR(-ENOMEM);
+	if (!jack)
+		return ERR_PTR(-ENOMEM);
 
 	callback = find_callback_from_list(jack, func);
 
-	अगर (func && !callback) अणु
-		callback = kzalloc(माप(*callback), GFP_KERNEL);
-		अगर (!callback)
-			वापस ERR_PTR(-ENOMEM);
+	if (func && !callback) {
+		callback = kzalloc(sizeof(*callback), GFP_KERNEL);
+		if (!callback)
+			return ERR_PTR(-ENOMEM);
 		callback->func = func;
 		callback->nid = jack->nid;
 		callback->dev_id = jack->dev_id;
 		callback->next = jack->callback;
 		jack->callback = callback;
-	पूर्ण
+	}
 
-	अगर (jack->jack_detect)
-		वापस callback; /* alपढ़ोy रेजिस्टरed */
+	if (jack->jack_detect)
+		return callback; /* already registered */
 	jack->jack_detect = 1;
-	अगर (codec->jackpoll_पूर्णांकerval > 0)
-		वापस callback; /* No unsol अगर we're polling instead */
-	err = snd_hda_codec_ग_लिखो_cache(codec, nid, 0,
+	if (codec->jackpoll_interval > 0)
+		return callback; /* No unsol if we're polling instead */
+	err = snd_hda_codec_write_cache(codec, nid, 0,
 					 AC_VERB_SET_UNSOLICITED_ENABLE,
 					 AC_USRSP_EN | jack->tag);
-	अगर (err < 0)
-		वापस ERR_PTR(err);
-	वापस callback;
-पूर्ण
+	if (err < 0)
+		return ERR_PTR(err);
+	return callback;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_detect_enable_callback_mst);
 
 /**
@@ -349,17 +348,17 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_detect_enable_callback_mst);
  * @nid: pin NID to enable jack detection
  * @dev_id: pin device entry id
  *
- * Enable the jack detection with the शेष callback.  Returns zero अगर
+ * Enable the jack detection with the default callback.  Returns zero if
  * successful or a negative error code.
  */
-पूर्णांक snd_hda_jack_detect_enable(काष्ठा hda_codec *codec, hda_nid_t nid,
-			       पूर्णांक dev_id)
-अणु
-	वापस PTR_ERR_OR_ZERO(snd_hda_jack_detect_enable_callback_mst(codec,
+int snd_hda_jack_detect_enable(struct hda_codec *codec, hda_nid_t nid,
+			       int dev_id)
+{
+	return PTR_ERR_OR_ZERO(snd_hda_jack_detect_enable_callback_mst(codec,
 								       nid,
 								       dev_id,
-								       शून्य));
-पूर्ण
+								       NULL));
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_detect_enable);
 
 /**
@@ -370,23 +369,23 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_detect_enable);
  *
  * Indicates the gated jack is only valid when the gating jack is plugged.
  */
-पूर्णांक snd_hda_jack_set_gating_jack(काष्ठा hda_codec *codec, hda_nid_t gated_nid,
+int snd_hda_jack_set_gating_jack(struct hda_codec *codec, hda_nid_t gated_nid,
 				 hda_nid_t gating_nid)
-अणु
-	काष्ठा hda_jack_tbl *gated = snd_hda_jack_tbl_new(codec, gated_nid, 0);
-	काष्ठा hda_jack_tbl *gating =
+{
+	struct hda_jack_tbl *gated = snd_hda_jack_tbl_new(codec, gated_nid, 0);
+	struct hda_jack_tbl *gating =
 		snd_hda_jack_tbl_new(codec, gating_nid, 0);
 
 	WARN_ON(codec->dp_mst);
 
-	अगर (!gated || !gating)
-		वापस -EINVAL;
+	if (!gated || !gating)
+		return -EINVAL;
 
 	gated->gating_jack = gating_nid;
 	gating->gated_jack = gated_nid;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_set_gating_jack);
 
 /**
@@ -396,30 +395,30 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_set_gating_jack);
  * @keymap: map of key type and key code
  * @jack_nid: key reports to the jack of this pin NID
  *
- * This function is used in the हाल of key is generated from one NID जबतक is
+ * This function is used in the case of key is generated from one NID while is
  * reported to the jack of another NID.
  */
-पूर्णांक snd_hda_jack_bind_keymap(काष्ठा hda_codec *codec, hda_nid_t key_nid,
-			     स्थिर काष्ठा hda_jack_keymap *keymap,
+int snd_hda_jack_bind_keymap(struct hda_codec *codec, hda_nid_t key_nid,
+			     const struct hda_jack_keymap *keymap,
 			     hda_nid_t jack_nid)
-अणु
-	स्थिर काष्ठा hda_jack_keymap *map;
-	काष्ठा hda_jack_tbl *key_gen = snd_hda_jack_tbl_get(codec, key_nid);
-	काष्ठा hda_jack_tbl *report_to = snd_hda_jack_tbl_get(codec, jack_nid);
+{
+	const struct hda_jack_keymap *map;
+	struct hda_jack_tbl *key_gen = snd_hda_jack_tbl_get(codec, key_nid);
+	struct hda_jack_tbl *report_to = snd_hda_jack_tbl_get(codec, jack_nid);
 
 	WARN_ON(codec->dp_mst);
 
-	अगर (!key_gen || !report_to || !report_to->jack)
-		वापस -EINVAL;
+	if (!key_gen || !report_to || !report_to->jack)
+		return -EINVAL;
 
 	key_gen->key_report_jack = jack_nid;
 
-	अगर (keymap)
-		क्रम (map = keymap; map->type; map++)
+	if (keymap)
+		for (map = keymap; map->type; map++)
 			snd_jack_set_key(report_to->jack, map->type, map->key);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_bind_keymap);
 
 /**
@@ -430,304 +429,304 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_bind_keymap);
  *
  * Codec driver calls this function to report the button event.
  */
-व्योम snd_hda_jack_set_button_state(काष्ठा hda_codec *codec, hda_nid_t jack_nid,
-				   पूर्णांक button_state)
-अणु
-	काष्ठा hda_jack_tbl *jack = snd_hda_jack_tbl_get(codec, jack_nid);
+void snd_hda_jack_set_button_state(struct hda_codec *codec, hda_nid_t jack_nid,
+				   int button_state)
+{
+	struct hda_jack_tbl *jack = snd_hda_jack_tbl_get(codec, jack_nid);
 
-	अगर (!jack)
-		वापस;
+	if (!jack)
+		return;
 
-	अगर (jack->key_report_jack) अणु
-		काष्ठा hda_jack_tbl *report_to =
+	if (jack->key_report_jack) {
+		struct hda_jack_tbl *report_to =
 			snd_hda_jack_tbl_get(codec, jack->key_report_jack);
 
-		अगर (report_to) अणु
+		if (report_to) {
 			report_to->button_state = button_state;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	jack->button_state = button_state;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_set_button_state);
 
 /**
- * snd_hda_jack_report_sync - sync the states of all jacks and report अगर changed
+ * snd_hda_jack_report_sync - sync the states of all jacks and report if changed
  * @codec: the HDA codec
  */
-व्योम snd_hda_jack_report_sync(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_jack_tbl *jack;
-	पूर्णांक i, state;
+void snd_hda_jack_report_sync(struct hda_codec *codec)
+{
+	struct hda_jack_tbl *jack;
+	int i, state;
 
 	/* update all jacks at first */
 	jack = codec->jacktbl.list;
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->nid)
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->nid)
 			jack_detect_update(codec, jack);
 
-	/* report the updated jacks; it's करोne after updating all jacks
+	/* report the updated jacks; it's done after updating all jacks
 	 * to make sure that all gating jacks properly have been set
 	 */
 	jack = codec->jacktbl.list;
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++)
-		अगर (jack->nid) अणु
-			अगर (!jack->jack || jack->block_report)
-				जारी;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++)
+		if (jack->nid) {
+			if (!jack->jack || jack->block_report)
+				continue;
 			state = jack->button_state;
-			अगर (get_jack_plug_state(jack->pin_sense))
+			if (get_jack_plug_state(jack->pin_sense))
 				state |= jack->type;
 			snd_jack_report(jack->jack, state);
-			अगर (jack->button_state) अणु
+			if (jack->button_state) {
 				snd_jack_report(jack->jack,
 						state & ~jack->button_state);
 				jack->button_state = 0; /* button released */
-			पूर्ण
-		पूर्ण
-पूर्ण
+			}
+		}
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_report_sync);
 
 /* guess the jack type from the pin-config */
-अटल पूर्णांक get_input_jack_type(काष्ठा hda_codec *codec, hda_nid_t nid)
-अणु
-	अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid);
-	चयन (get_defcfg_device(def_conf)) अणु
-	हाल AC_JACK_LINE_OUT:
-	हाल AC_JACK_SPEAKER:
-		वापस SND_JACK_LINEOUT;
-	हाल AC_JACK_HP_OUT:
-		वापस SND_JACK_HEADPHONE;
-	हाल AC_JACK_SPDIF_OUT:
-	हाल AC_JACK_DIG_OTHER_OUT:
-		वापस SND_JACK_AVOUT;
-	हाल AC_JACK_MIC_IN:
-		वापस SND_JACK_MICROPHONE;
-	शेष:
-		वापस SND_JACK_LINEIN;
-	पूर्ण
-पूर्ण
+static int get_input_jack_type(struct hda_codec *codec, hda_nid_t nid)
+{
+	unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid);
+	switch (get_defcfg_device(def_conf)) {
+	case AC_JACK_LINE_OUT:
+	case AC_JACK_SPEAKER:
+		return SND_JACK_LINEOUT;
+	case AC_JACK_HP_OUT:
+		return SND_JACK_HEADPHONE;
+	case AC_JACK_SPDIF_OUT:
+	case AC_JACK_DIG_OTHER_OUT:
+		return SND_JACK_AVOUT;
+	case AC_JACK_MIC_IN:
+		return SND_JACK_MICROPHONE;
+	default:
+		return SND_JACK_LINEIN;
+	}
+}
 
-अटल व्योम hda_मुक्त_jack_priv(काष्ठा snd_jack *jack)
-अणु
-	काष्ठा hda_jack_tbl *jacks = jack->निजी_data;
+static void hda_free_jack_priv(struct snd_jack *jack)
+{
+	struct hda_jack_tbl *jacks = jack->private_data;
 	jacks->nid = 0;
-	jacks->jack = शून्य;
-पूर्ण
+	jacks->jack = NULL;
+}
 
 /**
- * snd_hda_jack_add_kctl_mst - Add a kctl क्रम the given pin
+ * snd_hda_jack_add_kctl_mst - Add a kctl for the given pin
  * @codec: the HDA codec
  * @nid: pin NID to assign
  * @dev_id : pin device entry id
- * @name: string name क्रम the jack
+ * @name: string name for the jack
  * @phantom_jack: flag to deal as a phantom jack
- * @type: jack type bits to be reported, 0 क्रम guessing from pincfg
+ * @type: jack type bits to be reported, 0 for guessing from pincfg
  * @keymap: optional jack / key mapping
  *
  * This assigns a jack-detection kctl to the given pin.  The kcontrol
  * will have the given name and index.
  */
-पूर्णांक snd_hda_jack_add_kctl_mst(काष्ठा hda_codec *codec, hda_nid_t nid,
-			      पूर्णांक dev_id, स्थिर अक्षर *name, bool phantom_jack,
-			      पूर्णांक type, स्थिर काष्ठा hda_jack_keymap *keymap)
-अणु
-	काष्ठा hda_jack_tbl *jack;
-	स्थिर काष्ठा hda_jack_keymap *map;
-	पूर्णांक err, state, buttons;
+int snd_hda_jack_add_kctl_mst(struct hda_codec *codec, hda_nid_t nid,
+			      int dev_id, const char *name, bool phantom_jack,
+			      int type, const struct hda_jack_keymap *keymap)
+{
+	struct hda_jack_tbl *jack;
+	const struct hda_jack_keymap *map;
+	int err, state, buttons;
 
 	jack = snd_hda_jack_tbl_new(codec, nid, dev_id);
-	अगर (!jack)
-		वापस 0;
-	अगर (jack->jack)
-		वापस 0; /* alपढ़ोy created */
+	if (!jack)
+		return 0;
+	if (jack->jack)
+		return 0; /* already created */
 
-	अगर (!type)
+	if (!type)
 		type = get_input_jack_type(codec, nid);
 
 	buttons = 0;
-	अगर (keymap) अणु
-		क्रम (map = keymap; map->type; map++)
+	if (keymap) {
+		for (map = keymap; map->type; map++)
 			buttons |= map->type;
-	पूर्ण
+	}
 
 	err = snd_jack_new(codec->card, name, type | buttons,
 			   &jack->jack, true, phantom_jack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	jack->phantom_jack = !!phantom_jack;
 	jack->type = type;
 	jack->button_state = 0;
-	jack->jack->निजी_data = jack;
-	jack->jack->निजी_मुक्त = hda_मुक्त_jack_priv;
-	अगर (keymap) अणु
-		क्रम (map = keymap; map->type; map++)
+	jack->jack->private_data = jack;
+	jack->jack->private_free = hda_free_jack_priv;
+	if (keymap) {
+		for (map = keymap; map->type; map++)
 			snd_jack_set_key(jack->jack, map->type, map->key);
-	पूर्ण
+	}
 
 	state = snd_hda_jack_detect_mst(codec, nid, dev_id);
 	snd_jack_report(jack->jack, state ? jack->type : 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_add_kctl_mst);
 
-अटल पूर्णांक add_jack_kctl(काष्ठा hda_codec *codec, hda_nid_t nid,
-			 स्थिर काष्ठा स्वतः_pin_cfg *cfg,
-			 स्थिर अक्षर *base_name)
-अणु
-	अचिन्हित पूर्णांक def_conf, conn;
-	अक्षर name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
-	पूर्णांक err;
+static int add_jack_kctl(struct hda_codec *codec, hda_nid_t nid,
+			 const struct auto_pin_cfg *cfg,
+			 const char *base_name)
+{
+	unsigned int def_conf, conn;
+	char name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN];
+	int err;
 	bool phantom_jack;
 
 	WARN_ON(codec->dp_mst);
 
-	अगर (!nid)
-		वापस 0;
+	if (!nid)
+		return 0;
 	def_conf = snd_hda_codec_get_pincfg(codec, nid);
 	conn = get_defcfg_connect(def_conf);
-	अगर (conn == AC_JACK_PORT_NONE)
-		वापस 0;
+	if (conn == AC_JACK_PORT_NONE)
+		return 0;
 	phantom_jack = (conn != AC_JACK_PORT_COMPLEX) ||
 		       !is_jack_detectable(codec, nid);
 
-	अगर (base_name)
-		strscpy(name, base_name, माप(name));
-	अन्यथा
-		snd_hda_get_pin_label(codec, nid, cfg, name, माप(name), शून्य);
-	अगर (phantom_jack)
+	if (base_name)
+		strscpy(name, base_name, sizeof(name));
+	else
+		snd_hda_get_pin_label(codec, nid, cfg, name, sizeof(name), NULL);
+	if (phantom_jack)
 		/* Example final name: "Internal Mic Phantom Jack" */
-		म_जोड़न(name, " Phantom", माप(name) - म_माप(name) - 1);
-	err = snd_hda_jack_add_kctl(codec, nid, name, phantom_jack, 0, शून्य);
-	अगर (err < 0)
-		वापस err;
+		strncat(name, " Phantom", sizeof(name) - strlen(name) - 1);
+	err = snd_hda_jack_add_kctl(codec, nid, name, phantom_jack, 0, NULL);
+	if (err < 0)
+		return err;
 
-	अगर (!phantom_jack)
-		वापस snd_hda_jack_detect_enable(codec, nid, 0);
-	वापस 0;
-पूर्ण
+	if (!phantom_jack)
+		return snd_hda_jack_detect_enable(codec, nid, 0);
+	return 0;
+}
 
 /**
- * snd_hda_jack_add_kctls - Add kctls क्रम all pins included in the given pincfg
+ * snd_hda_jack_add_kctls - Add kctls for all pins included in the given pincfg
  * @codec: the HDA codec
  * @cfg: pin config table to parse
  */
-पूर्णांक snd_hda_jack_add_kctls(काष्ठा hda_codec *codec,
-			   स्थिर काष्ठा स्वतः_pin_cfg *cfg)
-अणु
-	स्थिर hda_nid_t *p;
-	पूर्णांक i, err;
+int snd_hda_jack_add_kctls(struct hda_codec *codec,
+			   const struct auto_pin_cfg *cfg)
+{
+	const hda_nid_t *p;
+	int i, err;
 
-	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
+	for (i = 0; i < cfg->num_inputs; i++) {
 		/* If we have headphone mics; make sure they get the right name
-		   beक्रमe grabbed by output pins */
-		अगर (cfg->inमाला_दो[i].is_headphone_mic) अणु
-			अगर (स्वतः_cfg_hp_outs(cfg) == 1)
-				err = add_jack_kctl(codec, स्वतः_cfg_hp_pins(cfg)[0],
+		   before grabbed by output pins */
+		if (cfg->inputs[i].is_headphone_mic) {
+			if (auto_cfg_hp_outs(cfg) == 1)
+				err = add_jack_kctl(codec, auto_cfg_hp_pins(cfg)[0],
 						    cfg, "Headphone Mic");
-			अन्यथा
-				err = add_jack_kctl(codec, cfg->inमाला_दो[i].pin,
+			else
+				err = add_jack_kctl(codec, cfg->inputs[i].pin,
 						    cfg, "Headphone Mic");
-		पूर्ण अन्यथा
-			err = add_jack_kctl(codec, cfg->inमाला_दो[i].pin, cfg,
-					    शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		} else
+			err = add_jack_kctl(codec, cfg->inputs[i].pin, cfg,
+					    NULL);
+		if (err < 0)
+			return err;
+	}
 
-	क्रम (i = 0, p = cfg->line_out_pins; i < cfg->line_outs; i++, p++) अणु
-		err = add_jack_kctl(codec, *p, cfg, शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	क्रम (i = 0, p = cfg->hp_pins; i < cfg->hp_outs; i++, p++) अणु
-		अगर (*p == *cfg->line_out_pins) /* might be duplicated */
-			अवरोध;
-		err = add_jack_kctl(codec, *p, cfg, शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	क्रम (i = 0, p = cfg->speaker_pins; i < cfg->speaker_outs; i++, p++) अणु
-		अगर (*p == *cfg->line_out_pins) /* might be duplicated */
-			अवरोध;
-		err = add_jack_kctl(codec, *p, cfg, शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	क्रम (i = 0, p = cfg->dig_out_pins; i < cfg->dig_outs; i++, p++) अणु
-		err = add_jack_kctl(codec, *p, cfg, शून्य);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	err = add_jack_kctl(codec, cfg->dig_in_pin, cfg, शून्य);
-	अगर (err < 0)
-		वापस err;
-	err = add_jack_kctl(codec, cfg->mono_out_pin, cfg, शून्य);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	for (i = 0, p = cfg->line_out_pins; i < cfg->line_outs; i++, p++) {
+		err = add_jack_kctl(codec, *p, cfg, NULL);
+		if (err < 0)
+			return err;
+	}
+	for (i = 0, p = cfg->hp_pins; i < cfg->hp_outs; i++, p++) {
+		if (*p == *cfg->line_out_pins) /* might be duplicated */
+			break;
+		err = add_jack_kctl(codec, *p, cfg, NULL);
+		if (err < 0)
+			return err;
+	}
+	for (i = 0, p = cfg->speaker_pins; i < cfg->speaker_outs; i++, p++) {
+		if (*p == *cfg->line_out_pins) /* might be duplicated */
+			break;
+		err = add_jack_kctl(codec, *p, cfg, NULL);
+		if (err < 0)
+			return err;
+	}
+	for (i = 0, p = cfg->dig_out_pins; i < cfg->dig_outs; i++, p++) {
+		err = add_jack_kctl(codec, *p, cfg, NULL);
+		if (err < 0)
+			return err;
+	}
+	err = add_jack_kctl(codec, cfg->dig_in_pin, cfg, NULL);
+	if (err < 0)
+		return err;
+	err = add_jack_kctl(codec, cfg->mono_out_pin, cfg, NULL);
+	if (err < 0)
+		return err;
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_add_kctls);
 
-अटल व्योम call_jack_callback(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक res,
-			       काष्ठा hda_jack_tbl *jack)
-अणु
-	काष्ठा hda_jack_callback *cb;
+static void call_jack_callback(struct hda_codec *codec, unsigned int res,
+			       struct hda_jack_tbl *jack)
+{
+	struct hda_jack_callback *cb;
 
-	क्रम (cb = jack->callback; cb; cb = cb->next) अणु
+	for (cb = jack->callback; cb; cb = cb->next) {
 		cb->jack = jack;
 		cb->unsol_res = res;
 		cb->func(codec, cb);
-	पूर्ण
-	अगर (jack->gated_jack) अणु
-		काष्ठा hda_jack_tbl *gated =
+	}
+	if (jack->gated_jack) {
+		struct hda_jack_tbl *gated =
 			snd_hda_jack_tbl_get_mst(codec, jack->gated_jack,
 						 jack->dev_id);
-		अगर (gated) अणु
-			क्रम (cb = gated->callback; cb; cb = cb->next) अणु
+		if (gated) {
+			for (cb = gated->callback; cb; cb = cb->next) {
 				cb->jack = gated;
 				cb->unsol_res = res;
 				cb->func(codec, cb);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /**
  * snd_hda_jack_unsol_event - Handle an unsolicited event
  * @codec: the HDA codec
  * @res: the unsolicited event data
  */
-व्योम snd_hda_jack_unsol_event(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक res)
-अणु
-	काष्ठा hda_jack_tbl *event;
-	पूर्णांक tag = (res & AC_UNSOL_RES_TAG) >> AC_UNSOL_RES_TAG_SHIFT;
+void snd_hda_jack_unsol_event(struct hda_codec *codec, unsigned int res)
+{
+	struct hda_jack_tbl *event;
+	int tag = (res & AC_UNSOL_RES_TAG) >> AC_UNSOL_RES_TAG_SHIFT;
 
-	अगर (codec->dp_mst) अणु
-		पूर्णांक dev_entry =
+	if (codec->dp_mst) {
+		int dev_entry =
 			(res & AC_UNSOL_RES_DE) >> AC_UNSOL_RES_DE_SHIFT;
 
 		event = snd_hda_jack_tbl_get_from_tag(codec, tag, dev_entry);
-	पूर्ण अन्यथा अणु
+	} else {
 		event = snd_hda_jack_tbl_get_from_tag(codec, tag, 0);
-	पूर्ण
-	अगर (!event)
-		वापस;
+	}
+	if (!event)
+		return;
 
-	अगर (event->key_report_jack) अणु
-		काष्ठा hda_jack_tbl *report_to =
+	if (event->key_report_jack) {
+		struct hda_jack_tbl *report_to =
 			snd_hda_jack_tbl_get_mst(codec, event->key_report_jack,
 						 event->dev_id);
-		अगर (report_to)
+		if (report_to)
 			report_to->jack_dirty = 1;
-	पूर्ण अन्यथा
+	} else
 		event->jack_dirty = 1;
 
 	call_jack_callback(codec, res, event);
 	snd_hda_jack_report_sync(codec);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_unsol_event);
 
 /**
@@ -735,26 +734,26 @@ EXPORT_SYMBOL_GPL(snd_hda_jack_unsol_event);
  * @codec: the HDA codec
  *
  * Poll all detectable jacks with dirty flag, update the status, call
- * callbacks and call snd_hda_jack_report_sync() अगर any changes are found.
+ * callbacks and call snd_hda_jack_report_sync() if any changes are found.
  */
-व्योम snd_hda_jack_poll_all(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा hda_jack_tbl *jack = codec->jacktbl.list;
-	पूर्णांक i, changes = 0;
+void snd_hda_jack_poll_all(struct hda_codec *codec)
+{
+	struct hda_jack_tbl *jack = codec->jacktbl.list;
+	int i, changes = 0;
 
-	क्रम (i = 0; i < codec->jacktbl.used; i++, jack++) अणु
-		अचिन्हित पूर्णांक old_sense;
-		अगर (!jack->nid || !jack->jack_dirty || jack->phantom_jack)
-			जारी;
+	for (i = 0; i < codec->jacktbl.used; i++, jack++) {
+		unsigned int old_sense;
+		if (!jack->nid || !jack->jack_dirty || jack->phantom_jack)
+			continue;
 		old_sense = get_jack_plug_state(jack->pin_sense);
 		jack_detect_update(codec, jack);
-		अगर (old_sense == get_jack_plug_state(jack->pin_sense))
-			जारी;
+		if (old_sense == get_jack_plug_state(jack->pin_sense))
+			continue;
 		changes = 1;
 		call_jack_callback(codec, 0, jack);
-	पूर्ण
-	अगर (changes)
+	}
+	if (changes)
 		snd_hda_jack_report_sync(codec);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_hda_jack_poll_all);
 

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,74 +22,74 @@
  *
  * Authors:
  *    Ke Yu
- *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@intel.com>
  *
  * Contributors:
- *    Terrence Xu <terrence.xu@पूर्णांकel.com>
- *    Changbin Du <changbin.du@पूर्णांकel.com>
- *    Bing Niu <bing.niu@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Terrence Xu <terrence.xu@intel.com>
+ *    Changbin Du <changbin.du@intel.com>
+ *    Bing Niu <bing.niu@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  */
 
-#समावेश "i915_drv.h"
-#समावेश "gvt.h"
+#include "i915_drv.h"
+#include "gvt.h"
 
-अटल पूर्णांक get_edp_pipe(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
+static int get_edp_pipe(struct intel_vgpu *vgpu)
+{
 	u32 data = vgpu_vreg(vgpu, _TRANS_DDI_FUNC_CTL_EDP);
-	पूर्णांक pipe = -1;
+	int pipe = -1;
 
-	चयन (data & TRANS_DDI_EDP_INPUT_MASK) अणु
-	हाल TRANS_DDI_EDP_INPUT_A_ON:
-	हाल TRANS_DDI_EDP_INPUT_A_ONOFF:
+	switch (data & TRANS_DDI_EDP_INPUT_MASK) {
+	case TRANS_DDI_EDP_INPUT_A_ON:
+	case TRANS_DDI_EDP_INPUT_A_ONOFF:
 		pipe = PIPE_A;
-		अवरोध;
-	हाल TRANS_DDI_EDP_INPUT_B_ONOFF:
+		break;
+	case TRANS_DDI_EDP_INPUT_B_ONOFF:
 		pipe = PIPE_B;
-		अवरोध;
-	हाल TRANS_DDI_EDP_INPUT_C_ONOFF:
+		break;
+	case TRANS_DDI_EDP_INPUT_C_ONOFF:
 		pipe = PIPE_C;
-		अवरोध;
-	पूर्ण
-	वापस pipe;
-पूर्ण
+		break;
+	}
+	return pipe;
+}
 
-अटल पूर्णांक edp_pipe_is_enabled(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
+static int edp_pipe_is_enabled(struct intel_vgpu *vgpu)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
 
-	अगर (!(vgpu_vreg_t(vgpu, PIPECONF(_PIPE_EDP)) & PIPECONF_ENABLE))
-		वापस 0;
+	if (!(vgpu_vreg_t(vgpu, PIPECONF(_PIPE_EDP)) & PIPECONF_ENABLE))
+		return 0;
 
-	अगर (!(vgpu_vreg(vgpu, _TRANS_DDI_FUNC_CTL_EDP) & TRANS_DDI_FUNC_ENABLE))
-		वापस 0;
-	वापस 1;
-पूर्ण
+	if (!(vgpu_vreg(vgpu, _TRANS_DDI_FUNC_CTL_EDP) & TRANS_DDI_FUNC_ENABLE))
+		return 0;
+	return 1;
+}
 
-पूर्णांक pipe_is_enabled(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक pipe)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
+int pipe_is_enabled(struct intel_vgpu *vgpu, int pipe)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
 
-	अगर (drm_WARN_ON(&dev_priv->drm,
+	if (drm_WARN_ON(&dev_priv->drm,
 			pipe < PIPE_A || pipe >= I915_MAX_PIPES))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (vgpu_vreg_t(vgpu, PIPECONF(pipe)) & PIPECONF_ENABLE)
-		वापस 1;
+	if (vgpu_vreg_t(vgpu, PIPECONF(pipe)) & PIPECONF_ENABLE)
+		return 1;
 
-	अगर (edp_pipe_is_enabled(vgpu) &&
+	if (edp_pipe_is_enabled(vgpu) &&
 			get_edp_pipe(vgpu) == pipe)
-		वापस 1;
-	वापस 0;
-पूर्ण
+		return 1;
+	return 0;
+}
 
-अटल अचिन्हित अक्षर भव_dp_monitor_edid[GVT_EDID_NUM][EDID_SIZE] = अणु
-	अणु
+static unsigned char virtual_dp_monitor_edid[GVT_EDID_NUM][EDID_SIZE] = {
+	{
 /* EDID with 1024x768 as its resolution */
 		/*Header*/
 		0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
-		/* Venकरोr & Product Identअगरication */
+		/* Vendor & Product Identification */
 		0x22, 0xf0, 0x54, 0x29, 0x00, 0x00, 0x00, 0x00, 0x04, 0x17,
 		/* Version & Revision */
 		0x01, 0x04,
@@ -119,12 +118,12 @@
 		0x00,
 		/* Checksum */
 		0xef,
-	पूर्ण,
-	अणु
+	},
+	{
 /* EDID with 1920x1200 as its resolution */
 		/*Header*/
 		0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
-		/* Venकरोr & Product Identअगरication */
+		/* Vendor & Product Identification */
 		0x22, 0xf0, 0x54, 0x29, 0x00, 0x00, 0x00, 0x00, 0x04, 0x17,
 		/* Version & Revision */
 		0x01, 0x04,
@@ -158,50 +157,50 @@
 		0x00,
 		/* Checksum */
 		0x45,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा DPCD_HEADER_SIZE        0xb
+#define DPCD_HEADER_SIZE        0xb
 
-/* let the भव display supports DP1.2 */
-अटल u8 dpcd_fix_data[DPCD_HEADER_SIZE] = अणु
+/* let the virtual display supports DP1.2 */
+static u8 dpcd_fix_data[DPCD_HEADER_SIZE] = {
 	0x12, 0x014, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
-अटल व्योम emulate_monitor_status_change(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
-	पूर्णांक pipe;
+static void emulate_monitor_status_change(struct intel_vgpu *vgpu)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
+	int pipe;
 
-	अगर (IS_BROXTON(dev_priv)) अणु
-		क्रमागत transcoder trans;
-		क्रमागत port port;
+	if (IS_BROXTON(dev_priv)) {
+		enum transcoder trans;
+		enum port port;
 
-		/* Clear PIPE, DDI, PHY, HPD beक्रमe setting new */
+		/* Clear PIPE, DDI, PHY, HPD before setting new */
 		vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) &=
 			~(GEN8_DE_PORT_HOTPLUG(HPD_PORT_A) |
 			  GEN8_DE_PORT_HOTPLUG(HPD_PORT_B) |
 			  GEN8_DE_PORT_HOTPLUG(HPD_PORT_C));
 
-		क्रम_each_pipe(dev_priv, pipe) अणु
+		for_each_pipe(dev_priv, pipe) {
 			vgpu_vreg_t(vgpu, PIPECONF(pipe)) &=
 				~(PIPECONF_ENABLE | I965_PIPECONF_ACTIVE);
 			vgpu_vreg_t(vgpu, DSPCNTR(pipe)) &= ~DISPLAY_PLANE_ENABLE;
 			vgpu_vreg_t(vgpu, SPRCTL(pipe)) &= ~SPRITE_ENABLE;
 			vgpu_vreg_t(vgpu, CURCNTR(pipe)) &= ~MCURSOR_MODE;
 			vgpu_vreg_t(vgpu, CURCNTR(pipe)) |= MCURSOR_MODE_DISABLE;
-		पूर्ण
+		}
 
-		क्रम (trans = TRANSCODER_A; trans <= TRANSCODER_EDP; trans++) अणु
+		for (trans = TRANSCODER_A; trans <= TRANSCODER_EDP; trans++) {
 			vgpu_vreg_t(vgpu, TRANS_DDI_FUNC_CTL(trans)) &=
 				~(TRANS_DDI_BPC_MASK | TRANS_DDI_MODE_SELECT_MASK |
 				  TRANS_DDI_PORT_MASK | TRANS_DDI_FUNC_ENABLE);
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, TRANS_DDI_FUNC_CTL(TRANSCODER_A)) &=
 			~(TRANS_DDI_BPC_MASK | TRANS_DDI_MODE_SELECT_MASK |
 			  TRANS_DDI_PORT_MASK);
 
-		क्रम (port = PORT_A; port <= PORT_C; port++) अणु
+		for (port = PORT_A; port <= PORT_C; port++) {
 			vgpu_vreg_t(vgpu, BXT_PHY_CTL(port)) &=
 				~BXT_PHY_LANE_ENABLED;
 			vgpu_vreg_t(vgpu, BXT_PHY_CTL(port)) |=
@@ -217,7 +216,7 @@
 				~(DDI_INIT_DISPLAY_DETECTED |
 				  DDI_BUF_CTL_ENABLE);
 			vgpu_vreg_t(vgpu, DDI_BUF_CTL(port)) |= DDI_BUF_IS_IDLE;
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) &=
 			~(PORTA_HOTPLUG_ENABLE | PORTA_HOTPLUG_STATUS_MASK);
 		vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) &=
@@ -243,15 +242,15 @@
 		 * Only 1 PIPE enabled in current vGPU display and PIPE_A is
 		 *  tied to TRANSCODER_A in HW, so it's safe to assume PIPE_A,
 		 *   TRANSCODER_A can be enabled. PORT_x depends on the input of
-		 *   setup_भव_dp_monitor.
+		 *   setup_virtual_dp_monitor.
 		 */
 		vgpu_vreg_t(vgpu, PIPECONF(PIPE_A)) |= PIPECONF_ENABLE;
 		vgpu_vreg_t(vgpu, PIPECONF(PIPE_A)) |= I965_PIPECONF_ACTIVE;
 
 		/*
 		 * Golden M/N are calculated based on:
-		 *   24 bpp, 4 lanes, 154000 pixel clk (from भव EDID),
-		 *   DP link clk 1620 MHz and non-स्थिरant_n.
+		 *   24 bpp, 4 lanes, 154000 pixel clk (from virtual EDID),
+		 *   DP link clk 1620 MHz and non-constant_n.
 		 * TODO: calculate DP link symbol clk and stream clk m/n.
 		 */
 		vgpu_vreg_t(vgpu, PIPE_DATA_M1(TRANSCODER_A)) = 63 << TU_SIZE_SHIFT;
@@ -261,7 +260,7 @@
 		vgpu_vreg_t(vgpu, PIPE_LINK_N1(TRANSCODER_A)) = 0x80000;
 
 		/* Enable per-DDI/PORT vreg */
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_A)) अणु
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_A)) {
 			vgpu_vreg_t(vgpu, BXT_P_CR_GT_DISP_PWRON) |= BIT(1);
 			vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY1)) |=
 				PHY_POWER_GOOD;
@@ -287,9 +286,9 @@
 				PORTA_HOTPLUG_ENABLE;
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_A);
-		पूर्ण
+		}
 
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_B)) अणु
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_B)) {
 			vgpu_vreg_t(vgpu, SFUSE_STRAP) |= SFUSE_STRAP_DDIB_DETECTED;
 			vgpu_vreg_t(vgpu, BXT_P_CR_GT_DISP_PWRON) |= BIT(0);
 			vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY0)) |=
@@ -317,9 +316,9 @@
 				PORTB_HOTPLUG_ENABLE;
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_B);
-		पूर्ण
+		}
 
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_C)) अणु
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_C)) {
 			vgpu_vreg_t(vgpu, SFUSE_STRAP) |= SFUSE_STRAP_DDIC_DETECTED;
 			vgpu_vreg_t(vgpu, BXT_P_CR_GT_DISP_PWRON) |= BIT(0);
 			vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY0)) |=
@@ -347,19 +346,19 @@
 				PORTC_HOTPLUG_ENABLE;
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_C);
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	vgpu_vreg_t(vgpu, SDEISR) &= ~(SDE_PORTB_HOTPLUG_CPT |
 			SDE_PORTC_HOTPLUG_CPT |
 			SDE_PORTD_HOTPLUG_CPT);
 
-	अगर (IS_SKYLAKE(dev_priv) ||
+	if (IS_SKYLAKE(dev_priv) ||
 	    IS_KABYLAKE(dev_priv) ||
 	    IS_COFFEELAKE(dev_priv) ||
-	    IS_COMETLAKE(dev_priv)) अणु
+	    IS_COMETLAKE(dev_priv)) {
 		vgpu_vreg_t(vgpu, SDEISR) &= ~(SDE_PORTA_HOTPLUG_SPT |
 				SDE_PORTE_HOTPLUG_SPT);
 		vgpu_vreg_t(vgpu, SKL_FUSE_STATUS) |=
@@ -371,7 +370,7 @@
 		 * Only 1 PIPE enabled in current vGPU display and PIPE_A is
 		 *  tied to TRANSCODER_A in HW, so it's safe to assume PIPE_A,
 		 *   TRANSCODER_A can be enabled. PORT_x depends on the input of
-		 *   setup_भव_dp_monitor, we can bind DPLL0 to any PORT_x
+		 *   setup_virtual_dp_monitor, we can bind DPLL0 to any PORT_x
 		 *   so we fixed to DPLL0 here.
 		 * Setup DPLL0: DP link clk 1620 MHz, non SSC, DP Mode
 		 */
@@ -384,8 +383,8 @@
 		vgpu_vreg_t(vgpu, DPLL_STATUS) = DPLL_LOCK(DPLL_ID_SKL_DPLL0);
 		/*
 		 * Golden M/N are calculated based on:
-		 *   24 bpp, 4 lanes, 154000 pixel clk (from भव EDID),
-		 *   DP link clk 1620 MHz and non-स्थिरant_n.
+		 *   24 bpp, 4 lanes, 154000 pixel clk (from virtual EDID),
+		 *   DP link clk 1620 MHz and non-constant_n.
 		 * TODO: calculate DP link symbol clk and stream clk m/n.
 		 */
 		vgpu_vreg_t(vgpu, PIPE_DATA_M1(TRANSCODER_A)) = 63 << TU_SIZE_SHIFT;
@@ -393,9 +392,9 @@
 		vgpu_vreg_t(vgpu, PIPE_DATA_N1(TRANSCODER_A)) = 0x800000;
 		vgpu_vreg_t(vgpu, PIPE_LINK_M1(TRANSCODER_A)) = 0x3cd6e;
 		vgpu_vreg_t(vgpu, PIPE_LINK_N1(TRANSCODER_A)) = 0x80000;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_B)) अणु
+	if (intel_vgpu_has_monitor_on_port(vgpu, PORT_B)) {
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) &=
 			~DPLL_CTRL2_DDI_CLK_OFF(PORT_B);
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) |=
@@ -410,18 +409,18 @@
 			(TRANS_DDI_BPC_8 | TRANS_DDI_MODE_SELECT_DP_SST |
 			(PORT_B << TRANS_DDI_PORT_SHIFT) |
 			TRANS_DDI_FUNC_ENABLE);
-		अगर (IS_BROADWELL(dev_priv)) अणु
+		if (IS_BROADWELL(dev_priv)) {
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_B)) &=
 				~PORT_CLK_SEL_MASK;
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_B)) |=
 				PORT_CLK_SEL_LCPLL_810;
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_B)) |= DDI_BUF_CTL_ENABLE;
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_B)) &= ~DDI_BUF_IS_IDLE;
 		vgpu_vreg_t(vgpu, SDEISR) |= SDE_PORTB_HOTPLUG_CPT;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_C)) अणु
+	if (intel_vgpu_has_monitor_on_port(vgpu, PORT_C)) {
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) &=
 			~DPLL_CTRL2_DDI_CLK_OFF(PORT_C);
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) |=
@@ -436,18 +435,18 @@
 			(TRANS_DDI_BPC_8 | TRANS_DDI_MODE_SELECT_DP_SST |
 			(PORT_C << TRANS_DDI_PORT_SHIFT) |
 			TRANS_DDI_FUNC_ENABLE);
-		अगर (IS_BROADWELL(dev_priv)) अणु
+		if (IS_BROADWELL(dev_priv)) {
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_C)) &=
 				~PORT_CLK_SEL_MASK;
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_C)) |=
 				PORT_CLK_SEL_LCPLL_810;
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_C)) |= DDI_BUF_CTL_ENABLE;
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_C)) &= ~DDI_BUF_IS_IDLE;
 		vgpu_vreg_t(vgpu, SFUSE_STRAP) |= SFUSE_STRAP_DDIC_DETECTED;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_D)) अणु
+	if (intel_vgpu_has_monitor_on_port(vgpu, PORT_D)) {
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) &=
 			~DPLL_CTRL2_DDI_CLK_OFF(PORT_D);
 		vgpu_vreg_t(vgpu, DPLL_CTRL2) |=
@@ -462,101 +461,101 @@
 			(TRANS_DDI_BPC_8 | TRANS_DDI_MODE_SELECT_DP_SST |
 			(PORT_D << TRANS_DDI_PORT_SHIFT) |
 			TRANS_DDI_FUNC_ENABLE);
-		अगर (IS_BROADWELL(dev_priv)) अणु
+		if (IS_BROADWELL(dev_priv)) {
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_D)) &=
 				~PORT_CLK_SEL_MASK;
 			vgpu_vreg_t(vgpu, PORT_CLK_SEL(PORT_D)) |=
 				PORT_CLK_SEL_LCPLL_810;
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_D)) |= DDI_BUF_CTL_ENABLE;
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_D)) &= ~DDI_BUF_IS_IDLE;
 		vgpu_vreg_t(vgpu, SFUSE_STRAP) |= SFUSE_STRAP_DDID_DETECTED;
-	पूर्ण
+	}
 
-	अगर ((IS_SKYLAKE(dev_priv) ||
+	if ((IS_SKYLAKE(dev_priv) ||
 	     IS_KABYLAKE(dev_priv) ||
 	     IS_COFFEELAKE(dev_priv) ||
 	     IS_COMETLAKE(dev_priv)) &&
-			पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_E)) अणु
+			intel_vgpu_has_monitor_on_port(vgpu, PORT_E)) {
 		vgpu_vreg_t(vgpu, SDEISR) |= SDE_PORTE_HOTPLUG_SPT;
-	पूर्ण
+	}
 
-	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_A)) अणु
-		अगर (IS_BROADWELL(dev_priv))
+	if (intel_vgpu_has_monitor_on_port(vgpu, PORT_A)) {
+		if (IS_BROADWELL(dev_priv))
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_A);
-		अन्यथा
+		else
 			vgpu_vreg_t(vgpu, SDEISR) |= SDE_PORTA_HOTPLUG_SPT;
 
 		vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_A)) |= DDI_INIT_DISPLAY_DETECTED;
-	पूर्ण
+	}
 
 	/* Clear host CRT status, so guest couldn't detect this host CRT. */
-	अगर (IS_BROADWELL(dev_priv))
+	if (IS_BROADWELL(dev_priv))
 		vgpu_vreg_t(vgpu, PCH_ADPA) &= ~ADPA_CRT_HOTPLUG_MONITOR_MASK;
 
 	/* Disable Primary/Sprite/Cursor plane */
-	क्रम_each_pipe(dev_priv, pipe) अणु
+	for_each_pipe(dev_priv, pipe) {
 		vgpu_vreg_t(vgpu, DSPCNTR(pipe)) &= ~DISPLAY_PLANE_ENABLE;
 		vgpu_vreg_t(vgpu, SPRCTL(pipe)) &= ~SPRITE_ENABLE;
 		vgpu_vreg_t(vgpu, CURCNTR(pipe)) &= ~MCURSOR_MODE;
 		vgpu_vreg_t(vgpu, CURCNTR(pipe)) |= MCURSOR_MODE_DISABLE;
-	पूर्ण
+	}
 
 	vgpu_vreg_t(vgpu, PIPECONF(PIPE_A)) |= PIPECONF_ENABLE;
-पूर्ण
+}
 
-अटल व्योम clean_भव_dp_monitor(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक port_num)
-अणु
-	काष्ठा पूर्णांकel_vgpu_port *port = पूर्णांकel_vgpu_port(vgpu, port_num);
+static void clean_virtual_dp_monitor(struct intel_vgpu *vgpu, int port_num)
+{
+	struct intel_vgpu_port *port = intel_vgpu_port(vgpu, port_num);
 
-	kमुक्त(port->edid);
-	port->edid = शून्य;
+	kfree(port->edid);
+	port->edid = NULL;
 
-	kमुक्त(port->dpcd);
-	port->dpcd = शून्य;
-पूर्ण
+	kfree(port->dpcd);
+	port->dpcd = NULL;
+}
 
-अटल क्रमागत hrसमयr_restart vblank_समयr_fn(काष्ठा hrसमयr *data)
-अणु
-	काष्ठा पूर्णांकel_vgpu_vblank_समयr *vblank_समयr;
-	काष्ठा पूर्णांकel_vgpu *vgpu;
+static enum hrtimer_restart vblank_timer_fn(struct hrtimer *data)
+{
+	struct intel_vgpu_vblank_timer *vblank_timer;
+	struct intel_vgpu *vgpu;
 
-	vblank_समयr = container_of(data, काष्ठा पूर्णांकel_vgpu_vblank_समयr, समयr);
-	vgpu = container_of(vblank_समयr, काष्ठा पूर्णांकel_vgpu, vblank_समयr);
+	vblank_timer = container_of(data, struct intel_vgpu_vblank_timer, timer);
+	vgpu = container_of(vblank_timer, struct intel_vgpu, vblank_timer);
 
 	/* Set vblank emulation request per-vGPU bit */
-	पूर्णांकel_gvt_request_service(vgpu->gvt,
+	intel_gvt_request_service(vgpu->gvt,
 				  INTEL_GVT_REQUEST_EMULATE_VBLANK + vgpu->id);
-	hrसमयr_add_expires_ns(&vblank_समयr->समयr, vblank_समयr->period);
-	वापस HRTIMER_RESTART;
-पूर्ण
+	hrtimer_add_expires_ns(&vblank_timer->timer, vblank_timer->period);
+	return HRTIMER_RESTART;
+}
 
-अटल पूर्णांक setup_भव_dp_monitor(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक port_num,
-				    पूर्णांक type, अचिन्हित पूर्णांक resolution)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
-	काष्ठा पूर्णांकel_vgpu_port *port = पूर्णांकel_vgpu_port(vgpu, port_num);
-	काष्ठा पूर्णांकel_vgpu_vblank_समयr *vblank_समयr = &vgpu->vblank_समयr;
+static int setup_virtual_dp_monitor(struct intel_vgpu *vgpu, int port_num,
+				    int type, unsigned int resolution)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+	struct intel_vgpu_port *port = intel_vgpu_port(vgpu, port_num);
+	struct intel_vgpu_vblank_timer *vblank_timer = &vgpu->vblank_timer;
 
-	अगर (drm_WARN_ON(&i915->drm, resolution >= GVT_EDID_NUM))
-		वापस -EINVAL;
+	if (drm_WARN_ON(&i915->drm, resolution >= GVT_EDID_NUM))
+		return -EINVAL;
 
-	port->edid = kzalloc(माप(*(port->edid)), GFP_KERNEL);
-	अगर (!port->edid)
-		वापस -ENOMEM;
+	port->edid = kzalloc(sizeof(*(port->edid)), GFP_KERNEL);
+	if (!port->edid)
+		return -ENOMEM;
 
-	port->dpcd = kzalloc(माप(*(port->dpcd)), GFP_KERNEL);
-	अगर (!port->dpcd) अणु
-		kमुक्त(port->edid);
-		वापस -ENOMEM;
-	पूर्ण
+	port->dpcd = kzalloc(sizeof(*(port->dpcd)), GFP_KERNEL);
+	if (!port->dpcd) {
+		kfree(port->edid);
+		return -ENOMEM;
+	}
 
-	स_नकल(port->edid->edid_block, भव_dp_monitor_edid[resolution],
+	memcpy(port->edid->edid_block, virtual_dp_monitor_edid[resolution],
 			EDID_SIZE);
 	port->edid->data_valid = true;
 
-	स_नकल(port->dpcd->data, dpcd_fix_data, DPCD_HEADER_SIZE);
+	memcpy(port->dpcd->data, dpcd_fix_data, DPCD_HEADER_SIZE);
 	port->dpcd->data_valid = true;
 	port->dpcd->data[DPCD_SINK_COUNT] = 0x1;
 	port->type = type;
@@ -564,245 +563,245 @@
 	port->vrefresh_k = GVT_DEFAULT_REFRESH_RATE * MSEC_PER_SEC;
 	vgpu->display.port_num = port_num;
 
-	/* Init hrसमयr based on शेष refresh rate */
-	hrसमयr_init(&vblank_समयr->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	vblank_समयr->समयr.function = vblank_समयr_fn;
-	vblank_समयr->vrefresh_k = port->vrefresh_k;
-	vblank_समयr->period = DIV64_U64_ROUND_CLOSEST(NSEC_PER_SEC * MSEC_PER_SEC, vblank_समयr->vrefresh_k);
+	/* Init hrtimer based on default refresh rate */
+	hrtimer_init(&vblank_timer->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	vblank_timer->timer.function = vblank_timer_fn;
+	vblank_timer->vrefresh_k = port->vrefresh_k;
+	vblank_timer->period = DIV64_U64_ROUND_CLOSEST(NSEC_PER_SEC * MSEC_PER_SEC, vblank_timer->vrefresh_k);
 
 	emulate_monitor_status_change(vgpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vgpu_update_vblank_emulation - Update per-vGPU vblank_समयr
+ * vgpu_update_vblank_emulation - Update per-vGPU vblank_timer
  * @vgpu: vGPU operated
- * @turnon: Turn ON/OFF vblank_समयr
+ * @turnon: Turn ON/OFF vblank_timer
  *
- * This function is used to turn on/off or update the per-vGPU vblank_समयr
- * when PIPECONF is enabled or disabled. vblank_समयr period is also updated
- * अगर guest changed the refresh rate.
+ * This function is used to turn on/off or update the per-vGPU vblank_timer
+ * when PIPECONF is enabled or disabled. vblank_timer period is also updated
+ * if guest changed the refresh rate.
  *
  */
-व्योम vgpu_update_vblank_emulation(काष्ठा पूर्णांकel_vgpu *vgpu, bool turnon)
-अणु
-	काष्ठा पूर्णांकel_vgpu_vblank_समयr *vblank_समयr = &vgpu->vblank_समयr;
-	काष्ठा पूर्णांकel_vgpu_port *port =
-		पूर्णांकel_vgpu_port(vgpu, vgpu->display.port_num);
+void vgpu_update_vblank_emulation(struct intel_vgpu *vgpu, bool turnon)
+{
+	struct intel_vgpu_vblank_timer *vblank_timer = &vgpu->vblank_timer;
+	struct intel_vgpu_port *port =
+		intel_vgpu_port(vgpu, vgpu->display.port_num);
 
-	अगर (turnon) अणु
+	if (turnon) {
 		/*
-		 * Skip the re-enable अगर alपढ़ोy active and vrefresh unchanged.
-		 * Otherwise, stop समयr अगर alपढ़ोy active and restart with new
+		 * Skip the re-enable if already active and vrefresh unchanged.
+		 * Otherwise, stop timer if already active and restart with new
 		 *   period.
 		 */
-		अगर (vblank_समयr->vrefresh_k != port->vrefresh_k ||
-		    !hrसमयr_active(&vblank_समयr->समयr)) अणु
-			/* Stop समयr beक्रमe start with new period अगर active */
-			अगर (hrसमयr_active(&vblank_समयr->समयr))
-				hrसमयr_cancel(&vblank_समयr->समयr);
+		if (vblank_timer->vrefresh_k != port->vrefresh_k ||
+		    !hrtimer_active(&vblank_timer->timer)) {
+			/* Stop timer before start with new period if active */
+			if (hrtimer_active(&vblank_timer->timer))
+				hrtimer_cancel(&vblank_timer->timer);
 
-			/* Make sure new refresh rate updated to समयr period */
-			vblank_समयr->vrefresh_k = port->vrefresh_k;
-			vblank_समयr->period = DIV64_U64_ROUND_CLOSEST(NSEC_PER_SEC * MSEC_PER_SEC, vblank_समयr->vrefresh_k);
-			hrसमयr_start(&vblank_समयr->समयr,
-				      kसमय_add_ns(kसमय_get(), vblank_समयr->period),
+			/* Make sure new refresh rate updated to timer period */
+			vblank_timer->vrefresh_k = port->vrefresh_k;
+			vblank_timer->period = DIV64_U64_ROUND_CLOSEST(NSEC_PER_SEC * MSEC_PER_SEC, vblank_timer->vrefresh_k);
+			hrtimer_start(&vblank_timer->timer,
+				      ktime_add_ns(ktime_get(), vblank_timer->period),
 				      HRTIMER_MODE_ABS);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Caller request to stop vblank */
-		hrसमयr_cancel(&vblank_समयr->समयr);
-	पूर्ण
-पूर्ण
+		hrtimer_cancel(&vblank_timer->timer);
+	}
+}
 
-अटल व्योम emulate_vblank_on_pipe(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक pipe)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
-	काष्ठा पूर्णांकel_vgpu_irq *irq = &vgpu->irq;
-	पूर्णांक vblank_event[] = अणु
+static void emulate_vblank_on_pipe(struct intel_vgpu *vgpu, int pipe)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
+	struct intel_vgpu_irq *irq = &vgpu->irq;
+	int vblank_event[] = {
 		[PIPE_A] = PIPE_A_VBLANK,
 		[PIPE_B] = PIPE_B_VBLANK,
 		[PIPE_C] = PIPE_C_VBLANK,
-	पूर्ण;
-	पूर्णांक event;
+	};
+	int event;
 
-	अगर (pipe < PIPE_A || pipe > PIPE_C)
-		वापस;
+	if (pipe < PIPE_A || pipe > PIPE_C)
+		return;
 
-	क्रम_each_set_bit(event, irq->flip_करोne_event[pipe],
-			INTEL_GVT_EVENT_MAX) अणु
-		clear_bit(event, irq->flip_करोne_event[pipe]);
-		अगर (!pipe_is_enabled(vgpu, pipe))
-			जारी;
+	for_each_set_bit(event, irq->flip_done_event[pipe],
+			INTEL_GVT_EVENT_MAX) {
+		clear_bit(event, irq->flip_done_event[pipe]);
+		if (!pipe_is_enabled(vgpu, pipe))
+			continue;
 
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-	पूर्ण
+		intel_vgpu_trigger_virtual_event(vgpu, event);
+	}
 
-	अगर (pipe_is_enabled(vgpu, pipe)) अणु
+	if (pipe_is_enabled(vgpu, pipe)) {
 		vgpu_vreg_t(vgpu, PIPE_FRMCOUNT_G4X(pipe))++;
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, vblank_event[pipe]);
-	पूर्ण
-पूर्ण
+		intel_vgpu_trigger_virtual_event(vgpu, vblank_event[pipe]);
+	}
+}
 
-व्योम पूर्णांकel_vgpu_emulate_vblank(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	पूर्णांक pipe;
+void intel_vgpu_emulate_vblank(struct intel_vgpu *vgpu)
+{
+	int pipe;
 
 	mutex_lock(&vgpu->vgpu_lock);
-	क्रम_each_pipe(vgpu->gvt->gt->i915, pipe)
+	for_each_pipe(vgpu->gvt->gt->i915, pipe)
 		emulate_vblank_on_pipe(vgpu, pipe);
 	mutex_unlock(&vgpu->vgpu_lock);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_vgpu_emulate_hotplug - trigger hotplug event क्रम vGPU
+ * intel_vgpu_emulate_hotplug - trigger hotplug event for vGPU
  * @vgpu: a vGPU
  * @connected: link state
  *
- * This function is used to trigger hotplug पूर्णांकerrupt क्रम vGPU
+ * This function is used to trigger hotplug interrupt for vGPU
  *
  */
-व्योम पूर्णांकel_vgpu_emulate_hotplug(काष्ठा पूर्णांकel_vgpu *vgpu, bool connected)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+void intel_vgpu_emulate_hotplug(struct intel_vgpu *vgpu, bool connected)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
 
-	/* TODO: add more platक्रमms support */
-	अगर (IS_SKYLAKE(i915) ||
+	/* TODO: add more platforms support */
+	if (IS_SKYLAKE(i915) ||
 	    IS_KABYLAKE(i915) ||
 	    IS_COFFEELAKE(i915) ||
-	    IS_COMETLAKE(i915)) अणु
-		अगर (connected) अणु
+	    IS_COMETLAKE(i915)) {
+		if (connected) {
 			vgpu_vreg_t(vgpu, SFUSE_STRAP) |=
 				SFUSE_STRAP_DDID_DETECTED;
 			vgpu_vreg_t(vgpu, SDEISR) |= SDE_PORTD_HOTPLUG_CPT;
-		पूर्ण अन्यथा अणु
+		} else {
 			vgpu_vreg_t(vgpu, SFUSE_STRAP) &=
 				~SFUSE_STRAP_DDID_DETECTED;
 			vgpu_vreg_t(vgpu, SDEISR) &= ~SDE_PORTD_HOTPLUG_CPT;
-		पूर्ण
+		}
 		vgpu_vreg_t(vgpu, SDEIIR) |= SDE_PORTD_HOTPLUG_CPT;
 		vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) |=
 				PORTD_HOTPLUG_STATUS_MASK;
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, DP_D_HOTPLUG);
-	पूर्ण अन्यथा अगर (IS_BROXTON(i915)) अणु
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_A)) अणु
-			अगर (connected) अणु
+		intel_vgpu_trigger_virtual_event(vgpu, DP_D_HOTPLUG);
+	} else if (IS_BROXTON(i915)) {
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_A)) {
+			if (connected) {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 					GEN8_DE_PORT_HOTPLUG(HPD_PORT_A);
-			पूर्ण अन्यथा अणु
+			} else {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) &=
 					~GEN8_DE_PORT_HOTPLUG(HPD_PORT_A);
-			पूर्ण
+			}
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_IIR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_A);
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) &=
 				~PORTA_HOTPLUG_STATUS_MASK;
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) |=
 				PORTA_HOTPLUG_LONG_DETECT;
-			पूर्णांकel_vgpu_trigger_भव_event(vgpu, DP_A_HOTPLUG);
-		पूर्ण
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_B)) अणु
-			अगर (connected) अणु
+			intel_vgpu_trigger_virtual_event(vgpu, DP_A_HOTPLUG);
+		}
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_B)) {
+			if (connected) {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 					GEN8_DE_PORT_HOTPLUG(HPD_PORT_B);
 				vgpu_vreg_t(vgpu, SFUSE_STRAP) |=
 					SFUSE_STRAP_DDIB_DETECTED;
-			पूर्ण अन्यथा अणु
+			} else {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) &=
 					~GEN8_DE_PORT_HOTPLUG(HPD_PORT_B);
 				vgpu_vreg_t(vgpu, SFUSE_STRAP) &=
 					~SFUSE_STRAP_DDIB_DETECTED;
-			पूर्ण
+			}
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_IIR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_B);
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) &=
 				~PORTB_HOTPLUG_STATUS_MASK;
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) |=
 				PORTB_HOTPLUG_LONG_DETECT;
-			पूर्णांकel_vgpu_trigger_भव_event(vgpu, DP_B_HOTPLUG);
-		पूर्ण
-		अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, PORT_C)) अणु
-			अगर (connected) अणु
+			intel_vgpu_trigger_virtual_event(vgpu, DP_B_HOTPLUG);
+		}
+		if (intel_vgpu_has_monitor_on_port(vgpu, PORT_C)) {
+			if (connected) {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) |=
 					GEN8_DE_PORT_HOTPLUG(HPD_PORT_C);
 				vgpu_vreg_t(vgpu, SFUSE_STRAP) |=
 					SFUSE_STRAP_DDIC_DETECTED;
-			पूर्ण अन्यथा अणु
+			} else {
 				vgpu_vreg_t(vgpu, GEN8_DE_PORT_ISR) &=
 					~GEN8_DE_PORT_HOTPLUG(HPD_PORT_C);
 				vgpu_vreg_t(vgpu, SFUSE_STRAP) &=
 					~SFUSE_STRAP_DDIC_DETECTED;
-			पूर्ण
+			}
 			vgpu_vreg_t(vgpu, GEN8_DE_PORT_IIR) |=
 				GEN8_DE_PORT_HOTPLUG(HPD_PORT_C);
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) &=
 				~PORTC_HOTPLUG_STATUS_MASK;
 			vgpu_vreg_t(vgpu, PCH_PORT_HOTPLUG) |=
 				PORTC_HOTPLUG_LONG_DETECT;
-			पूर्णांकel_vgpu_trigger_भव_event(vgpu, DP_C_HOTPLUG);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			intel_vgpu_trigger_virtual_event(vgpu, DP_C_HOTPLUG);
+		}
+	}
+}
 
 /**
- * पूर्णांकel_vgpu_clean_display - clean vGPU भव display emulation
+ * intel_vgpu_clean_display - clean vGPU virtual display emulation
  * @vgpu: a vGPU
  *
- * This function is used to clean vGPU भव display emulation stuffs
+ * This function is used to clean vGPU virtual display emulation stuffs
  *
  */
-व्योम पूर्णांकel_vgpu_clean_display(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
+void intel_vgpu_clean_display(struct intel_vgpu *vgpu)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
 
-	अगर (IS_SKYLAKE(dev_priv) ||
+	if (IS_SKYLAKE(dev_priv) ||
 	    IS_KABYLAKE(dev_priv) ||
 	    IS_COFFEELAKE(dev_priv) ||
 	    IS_COMETLAKE(dev_priv))
-		clean_भव_dp_monitor(vgpu, PORT_D);
-	अन्यथा
-		clean_भव_dp_monitor(vgpu, PORT_B);
+		clean_virtual_dp_monitor(vgpu, PORT_D);
+	else
+		clean_virtual_dp_monitor(vgpu, PORT_B);
 
 	vgpu_update_vblank_emulation(vgpu, false);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_vgpu_init_display- initialize vGPU भव display emulation
+ * intel_vgpu_init_display- initialize vGPU virtual display emulation
  * @vgpu: a vGPU
- * @resolution: resolution index क्रम पूर्णांकel_vgpu_edid
+ * @resolution: resolution index for intel_vgpu_edid
  *
- * This function is used to initialize vGPU भव display emulation stuffs
+ * This function is used to initialize vGPU virtual display emulation stuffs
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  *
  */
-पूर्णांक पूर्णांकel_vgpu_init_display(काष्ठा पूर्णांकel_vgpu *vgpu, u64 resolution)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
+int intel_vgpu_init_display(struct intel_vgpu *vgpu, u64 resolution)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
 
-	पूर्णांकel_vgpu_init_i2c_edid(vgpu);
+	intel_vgpu_init_i2c_edid(vgpu);
 
-	अगर (IS_SKYLAKE(dev_priv) ||
+	if (IS_SKYLAKE(dev_priv) ||
 	    IS_KABYLAKE(dev_priv) ||
 	    IS_COFFEELAKE(dev_priv) ||
 	    IS_COMETLAKE(dev_priv))
-		वापस setup_भव_dp_monitor(vgpu, PORT_D, GVT_DP_D,
+		return setup_virtual_dp_monitor(vgpu, PORT_D, GVT_DP_D,
 						resolution);
-	अन्यथा
-		वापस setup_भव_dp_monitor(vgpu, PORT_B, GVT_DP_B,
+	else
+		return setup_virtual_dp_monitor(vgpu, PORT_B, GVT_DP_B,
 						resolution);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_vgpu_reset_display- reset vGPU भव display emulation
+ * intel_vgpu_reset_display- reset vGPU virtual display emulation
  * @vgpu: a vGPU
  *
- * This function is used to reset vGPU भव display emulation stuffs
+ * This function is used to reset vGPU virtual display emulation stuffs
  *
  */
-व्योम पूर्णांकel_vgpu_reset_display(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
+void intel_vgpu_reset_display(struct intel_vgpu *vgpu)
+{
 	emulate_monitor_status_change(vgpu);
-पूर्ण
+}

@@ -1,61 +1,60 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/ieee80211.h>
-#समावेश <linux/export.h>
-#समावेश <net/cfg80211.h>
-#समावेश "nl80211.h"
-#समावेश "core.h"
-#समावेश "rdev-ops.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/ieee80211.h>
+#include <linux/export.h>
+#include <net/cfg80211.h>
+#include "nl80211.h"
+#include "core.h"
+#include "rdev-ops.h"
 
 
-पूर्णांक __cfg80211_stop_ap(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-		       काष्ठा net_device *dev, bool notअगरy)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	पूर्णांक err;
+int __cfg80211_stop_ap(struct cfg80211_registered_device *rdev,
+		       struct net_device *dev, bool notify)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	int err;
 
 	ASSERT_WDEV_LOCK(wdev);
 
-	अगर (!rdev->ops->stop_ap)
-		वापस -EOPNOTSUPP;
+	if (!rdev->ops->stop_ap)
+		return -EOPNOTSUPP;
 
-	अगर (dev->ieee80211_ptr->अगरtype != NL80211_IFTYPE_AP &&
-	    dev->ieee80211_ptr->अगरtype != NL80211_IFTYPE_P2P_GO)
-		वापस -EOPNOTSUPP;
+	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_AP &&
+	    dev->ieee80211_ptr->iftype != NL80211_IFTYPE_P2P_GO)
+		return -EOPNOTSUPP;
 
-	अगर (!wdev->beacon_पूर्णांकerval)
-		वापस -ENOENT;
+	if (!wdev->beacon_interval)
+		return -ENOENT;
 
 	err = rdev_stop_ap(rdev, dev);
-	अगर (!err) अणु
+	if (!err) {
 		wdev->conn_owner_nlportid = 0;
-		wdev->beacon_पूर्णांकerval = 0;
-		स_रखो(&wdev->chandef, 0, माप(wdev->chandef));
+		wdev->beacon_interval = 0;
+		memset(&wdev->chandef, 0, sizeof(wdev->chandef));
 		wdev->ssid_len = 0;
-		rdev_set_qos_map(rdev, dev, शून्य);
-		अगर (notअगरy)
+		rdev_set_qos_map(rdev, dev, NULL);
+		if (notify)
 			nl80211_send_ap_stopped(wdev);
 
-		/* Should we apply the grace period during beaconing पूर्णांकerface
-		 * shutकरोwn also?
+		/* Should we apply the grace period during beaconing interface
+		 * shutdown also?
 		 */
 		cfg80211_sched_dfs_chan_update(rdev);
-	पूर्ण
+	}
 
 	schedule_work(&cfg80211_disconnect_work);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cfg80211_stop_ap(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
-		     काष्ठा net_device *dev, bool notअगरy)
-अणु
-	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
-	पूर्णांक err;
+int cfg80211_stop_ap(struct cfg80211_registered_device *rdev,
+		     struct net_device *dev, bool notify)
+{
+	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	int err;
 
 	wdev_lock(wdev);
-	err = __cfg80211_stop_ap(rdev, dev, notअगरy);
+	err = __cfg80211_stop_ap(rdev, dev, notify);
 	wdev_unlock(wdev);
 
-	वापस err;
-पूर्ण
+	return err;
+}

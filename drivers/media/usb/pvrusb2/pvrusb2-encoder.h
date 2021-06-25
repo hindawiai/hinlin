@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
- *  Copyright (C) 2004 Aurelien Alleaume <slts@मुक्त.fr>
+ *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
-#अगर_अघोषित __PVRUSB2_ENCODER_H
-#घोषणा __PVRUSB2_ENCODER_H
+#ifndef __PVRUSB2_ENCODER_H
+#define __PVRUSB2_ENCODER_H
 
-काष्ठा pvr2_hdw;
+struct pvr2_hdw;
 
-पूर्णांक pvr2_encoder_adjust(काष्ठा pvr2_hdw *);
-पूर्णांक pvr2_encoder_configure(काष्ठा pvr2_hdw *);
-पूर्णांक pvr2_encoder_start(काष्ठा pvr2_hdw *);
-पूर्णांक pvr2_encoder_stop(काष्ठा pvr2_hdw *);
+int pvr2_encoder_adjust(struct pvr2_hdw *);
+int pvr2_encoder_configure(struct pvr2_hdw *);
+int pvr2_encoder_start(struct pvr2_hdw *);
+int pvr2_encoder_stop(struct pvr2_hdw *);
 
-#पूर्ण_अगर /* __PVRUSB2_ENCODER_H */
+#endif /* __PVRUSB2_ENCODER_H */

@@ -1,230 +1,229 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Test IPV6_FLOWINFO cmsg on send and recv */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <arpa/inet.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <error.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <linux/in6.h>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
+#include <arpa/inet.h>
+#include <asm/byteorder.h>
+#include <error.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <linux/in6.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* uapi/glibc weirdness may leave this undefined */
-#अगर_अघोषित IPV6_FLOWINFO
-#घोषणा IPV6_FLOWINFO 11
-#पूर्ण_अगर
+#ifndef IPV6_FLOWINFO
+#define IPV6_FLOWINFO 11
+#endif
 
-#अगर_अघोषित IPV6_FLOWLABEL_MGR
-#घोषणा IPV6_FLOWLABEL_MGR 32
-#पूर्ण_अगर
+#ifndef IPV6_FLOWLABEL_MGR
+#define IPV6_FLOWLABEL_MGR 32
+#endif
 
-#घोषणा FLOWLABEL_WILDCARD	((uपूर्णांक32_t) -1)
+#define FLOWLABEL_WILDCARD	((uint32_t) -1)
 
-अटल स्थिर अक्षर cfg_data[]	= "a";
-अटल uपूर्णांक32_t cfg_label	= 1;
+static const char cfg_data[]	= "a";
+static uint32_t cfg_label	= 1;
 
-अटल व्योम करो_send(पूर्णांक fd, bool with_flowlabel, uपूर्णांक32_t flowlabel)
-अणु
-	अक्षर control[CMSG_SPACE(माप(flowlabel))] = अणु0पूर्ण;
-	काष्ठा msghdr msg = अणु0पूर्ण;
-	काष्ठा iovec iov = अणु0पूर्ण;
-	पूर्णांक ret;
+static void do_send(int fd, bool with_flowlabel, uint32_t flowlabel)
+{
+	char control[CMSG_SPACE(sizeof(flowlabel))] = {0};
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	int ret;
 
-	iov.iov_base = (अक्षर *)cfg_data;
-	iov.iov_len = माप(cfg_data);
+	iov.iov_base = (char *)cfg_data;
+	iov.iov_len = sizeof(cfg_data);
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-	अगर (with_flowlabel) अणु
-		काष्ठा cmsghdr *cm;
+	if (with_flowlabel) {
+		struct cmsghdr *cm;
 
-		cm = (व्योम *)control;
-		cm->cmsg_len = CMSG_LEN(माप(flowlabel));
+		cm = (void *)control;
+		cm->cmsg_len = CMSG_LEN(sizeof(flowlabel));
 		cm->cmsg_level = SOL_IPV6;
 		cm->cmsg_type = IPV6_FLOWINFO;
-		*(uपूर्णांक32_t *)CMSG_DATA(cm) = htonl(flowlabel);
+		*(uint32_t *)CMSG_DATA(cm) = htonl(flowlabel);
 
 		msg.msg_control = control;
-		msg.msg_controllen = माप(control);
-	पूर्ण
+		msg.msg_controllen = sizeof(control);
+	}
 
 	ret = sendmsg(fd, &msg, 0);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "send");
+	if (ret == -1)
+		error(1, errno, "send");
 
-	अगर (with_flowlabel)
-		ख_लिखो(मानक_त्रुटि, "sent with label %u\n", flowlabel);
-	अन्यथा
-		ख_लिखो(मानक_त्रुटि, "sent without label\n");
-पूर्ण
+	if (with_flowlabel)
+		fprintf(stderr, "sent with label %u\n", flowlabel);
+	else
+		fprintf(stderr, "sent without label\n");
+}
 
-अटल व्योम करो_recv(पूर्णांक fd, bool with_flowlabel, uपूर्णांक32_t expect)
-अणु
-	अक्षर control[CMSG_SPACE(माप(expect))];
-	अक्षर data[माप(cfg_data)];
-	काष्ठा msghdr msg = अणु0पूर्ण;
-	काष्ठा iovec iov = अणु0पूर्ण;
-	काष्ठा cmsghdr *cm;
-	uपूर्णांक32_t flowlabel;
-	पूर्णांक ret;
+static void do_recv(int fd, bool with_flowlabel, uint32_t expect)
+{
+	char control[CMSG_SPACE(sizeof(expect))];
+	char data[sizeof(cfg_data)];
+	struct msghdr msg = {0};
+	struct iovec iov = {0};
+	struct cmsghdr *cm;
+	uint32_t flowlabel;
+	int ret;
 
 	iov.iov_base = data;
-	iov.iov_len = माप(data);
+	iov.iov_len = sizeof(data);
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
-	स_रखो(control, 0, माप(control));
+	memset(control, 0, sizeof(control));
 	msg.msg_control = control;
-	msg.msg_controllen = माप(control);
+	msg.msg_controllen = sizeof(control);
 
 	ret = recvmsg(fd, &msg, 0);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "recv");
-	अगर (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC))
+	if (ret == -1)
+		error(1, errno, "recv");
+	if (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC))
 		error(1, 0, "recv: truncated");
-	अगर (ret != माप(cfg_data))
+	if (ret != sizeof(cfg_data))
 		error(1, 0, "recv: length mismatch");
-	अगर (स_भेद(data, cfg_data, माप(data)))
+	if (memcmp(data, cfg_data, sizeof(data)))
 		error(1, 0, "recv: data mismatch");
 
 	cm = CMSG_FIRSTHDR(&msg);
-	अगर (with_flowlabel) अणु
-		अगर (!cm)
+	if (with_flowlabel) {
+		if (!cm)
 			error(1, 0, "recv: missing cmsg");
-		अगर (CMSG_NXTHDR(&msg, cm))
+		if (CMSG_NXTHDR(&msg, cm))
 			error(1, 0, "recv: too many cmsg");
-		अगर (cm->cmsg_level != SOL_IPV6 ||
+		if (cm->cmsg_level != SOL_IPV6 ||
 		    cm->cmsg_type != IPV6_FLOWINFO)
 			error(1, 0, "recv: unexpected cmsg level or type");
 
-		flowlabel = ntohl(*(uपूर्णांक32_t *)CMSG_DATA(cm));
-		ख_लिखो(मानक_त्रुटि, "recv with label %u\n", flowlabel);
+		flowlabel = ntohl(*(uint32_t *)CMSG_DATA(cm));
+		fprintf(stderr, "recv with label %u\n", flowlabel);
 
-		अगर (expect != FLOWLABEL_WILDCARD && expect != flowlabel)
-			ख_लिखो(मानक_त्रुटि, "recv: incorrect flowlabel %u != %u\n",
+		if (expect != FLOWLABEL_WILDCARD && expect != flowlabel)
+			fprintf(stderr, "recv: incorrect flowlabel %u != %u\n",
 					flowlabel, expect);
 
-	पूर्ण अन्यथा अणु
-		ख_लिखो(मानक_त्रुटि, "recv without label\n");
-	पूर्ण
-पूर्ण
+	} else {
+		fprintf(stderr, "recv without label\n");
+	}
+}
 
-अटल bool get_स्वतःflowlabel_enabled(व्योम)
-अणु
-	पूर्णांक fd, ret;
-	अक्षर val;
+static bool get_autoflowlabel_enabled(void)
+{
+	int fd, ret;
+	char val;
 
-	fd = खोलो("/proc/sys/net/ipv6/auto_flowlabels", O_RDONLY);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "open sysctl");
+	fd = open("/proc/sys/net/ipv6/auto_flowlabels", O_RDONLY);
+	if (fd == -1)
+		error(1, errno, "open sysctl");
 
-	ret = पढ़ो(fd, &val, 1);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "read sysctl");
-	अगर (ret == 0)
+	ret = read(fd, &val, 1);
+	if (ret == -1)
+		error(1, errno, "read sysctl");
+	if (ret == 0)
 		error(1, 0, "read sysctl: 0");
 
-	अगर (बंद(fd))
-		error(1, त्रुटि_सं, "close sysctl");
+	if (close(fd))
+		error(1, errno, "close sysctl");
 
-	वापस val == '1';
-पूर्ण
+	return val == '1';
+}
 
-अटल व्योम flowlabel_get(पूर्णांक fd, uपूर्णांक32_t label, uपूर्णांक8_t share, uपूर्णांक16_t flags)
-अणु
-	काष्ठा in6_flowlabel_req req = अणु
+static void flowlabel_get(int fd, uint32_t label, uint8_t share, uint16_t flags)
+{
+	struct in6_flowlabel_req req = {
 		.flr_action = IPV6_FL_A_GET,
 		.flr_label = htonl(label),
 		.flr_flags = flags,
 		.flr_share = share,
-	पूर्ण;
+	};
 
-	/* करो not pass IPV6_ADDR_ANY or IPV6_ADDR_MAPPED */
+	/* do not pass IPV6_ADDR_ANY or IPV6_ADDR_MAPPED */
 	req.flr_dst.s6_addr[0] = 0xfd;
 	req.flr_dst.s6_addr[15] = 0x1;
 
-	अगर (setsockopt(fd, SOL_IPV6, IPV6_FLOWLABEL_MGR, &req, माप(req)))
-		error(1, त्रुटि_सं, "setsockopt flowlabel get");
-पूर्ण
+	if (setsockopt(fd, SOL_IPV6, IPV6_FLOWLABEL_MGR, &req, sizeof(req)))
+		error(1, errno, "setsockopt flowlabel get");
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक c;
+static void parse_opts(int argc, char **argv)
+{
+	int c;
 
-	जबतक ((c = getopt(argc, argv, "l:")) != -1) अणु
-		चयन (c) अणु
-		हाल 'l':
-			cfg_label = म_से_अदीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		शेष:
+	while ((c = getopt(argc, argv, "l:")) != -1) {
+		switch (c) {
+		case 'l':
+			cfg_label = strtoul(optarg, NULL, 0);
+			break;
+		default:
 			error(1, 0, "%s: parse error", argv[0]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा sockaddr_in6 addr = अणु
+int main(int argc, char **argv)
+{
+	struct sockaddr_in6 addr = {
 		.sin6_family = AF_INET6,
 		.sin6_port = htons(8000),
 		.sin6_addr = IN6ADDR_LOOPBACK_INIT,
-	पूर्ण;
-	स्थिर पूर्णांक one = 1;
-	पूर्णांक fdt, fdr;
+	};
+	const int one = 1;
+	int fdt, fdr;
 
 	parse_opts(argc, argv);
 
 	fdt = socket(PF_INET6, SOCK_DGRAM, 0);
-	अगर (fdt == -1)
-		error(1, त्रुटि_सं, "socket t");
+	if (fdt == -1)
+		error(1, errno, "socket t");
 
 	fdr = socket(PF_INET6, SOCK_DGRAM, 0);
-	अगर (fdr == -1)
-		error(1, त्रुटि_सं, "socket r");
+	if (fdr == -1)
+		error(1, errno, "socket r");
 
-	अगर (connect(fdt, (व्योम *)&addr, माप(addr)))
-		error(1, त्रुटि_सं, "connect");
-	अगर (bind(fdr, (व्योम *)&addr, माप(addr)))
-		error(1, त्रुटि_सं, "bind");
+	if (connect(fdt, (void *)&addr, sizeof(addr)))
+		error(1, errno, "connect");
+	if (bind(fdr, (void *)&addr, sizeof(addr)))
+		error(1, errno, "bind");
 
 	flowlabel_get(fdt, cfg_label, IPV6_FL_S_EXCL, IPV6_FL_F_CREATE);
 
-	अगर (setsockopt(fdr, SOL_IPV6, IPV6_FLOWINFO, &one, माप(one)))
-		error(1, त्रुटि_सं, "setsockopt flowinfo");
+	if (setsockopt(fdr, SOL_IPV6, IPV6_FLOWINFO, &one, sizeof(one)))
+		error(1, errno, "setsockopt flowinfo");
 
-	अगर (get_स्वतःflowlabel_enabled()) अणु
-		ख_लिखो(मानक_त्रुटि, "send no label: recv auto flowlabel\n");
-		करो_send(fdt, false, 0);
-		करो_recv(fdr, true, FLOWLABEL_WILDCARD);
-	पूर्ण अन्यथा अणु
-		ख_लिखो(मानक_त्रुटि, "send no label: recv no label (auto off)\n");
-		करो_send(fdt, false, 0);
-		करो_recv(fdr, false, 0);
-	पूर्ण
+	if (get_autoflowlabel_enabled()) {
+		fprintf(stderr, "send no label: recv auto flowlabel\n");
+		do_send(fdt, false, 0);
+		do_recv(fdr, true, FLOWLABEL_WILDCARD);
+	} else {
+		fprintf(stderr, "send no label: recv no label (auto off)\n");
+		do_send(fdt, false, 0);
+		do_recv(fdr, false, 0);
+	}
 
-	ख_लिखो(मानक_त्रुटि, "send label\n");
-	करो_send(fdt, true, cfg_label);
-	करो_recv(fdr, true, cfg_label);
+	fprintf(stderr, "send label\n");
+	do_send(fdt, true, cfg_label);
+	do_recv(fdr, true, cfg_label);
 
-	अगर (बंद(fdr))
-		error(1, त्रुटि_सं, "close r");
-	अगर (बंद(fdt))
-		error(1, त्रुटि_सं, "close t");
+	if (close(fdr))
+		error(1, errno, "close r");
+	if (close(fdt))
+		error(1, errno, "close t");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

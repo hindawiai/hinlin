@@ -1,402 +1,401 @@
-<शैली गुरु>
 /*
-  FUSE: Fileप्रणाली in Userspace
+  FUSE: Filesystem in Userspace
   Copyright (C) 2001-2008  Miklos Szeredi <miklos@szeredi.hu>
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 */
 
-#समावेश "fuse_i.h"
+#include "fuse_i.h"
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs_context.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/fs_context.h>
 
-#घोषणा FUSE_CTL_SUPER_MAGIC 0x65735543
+#define FUSE_CTL_SUPER_MAGIC 0x65735543
 
 /*
- * This is non-शून्य when the single instance of the control fileप्रणाली
+ * This is non-NULL when the single instance of the control filesystem
  * exists.  Protected by fuse_mutex
  */
-अटल काष्ठा super_block *fuse_control_sb;
+static struct super_block *fuse_control_sb;
 
-अटल काष्ठा fuse_conn *fuse_ctl_file_conn_get(काष्ठा file *file)
-अणु
-	काष्ठा fuse_conn *fc;
+static struct fuse_conn *fuse_ctl_file_conn_get(struct file *file)
+{
+	struct fuse_conn *fc;
 	mutex_lock(&fuse_mutex);
-	fc = file_inode(file)->i_निजी;
-	अगर (fc)
+	fc = file_inode(file)->i_private;
+	if (fc)
 		fc = fuse_conn_get(fc);
 	mutex_unlock(&fuse_mutex);
-	वापस fc;
-पूर्ण
+	return fc;
+}
 
-अटल sमाप_प्रकार fuse_conn_पात_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा fuse_conn *fc = fuse_ctl_file_conn_get(file);
-	अगर (fc) अणु
-		अगर (fc->पात_err)
-			fc->पातed = true;
-		fuse_पात_conn(fc);
+static ssize_t fuse_conn_abort_write(struct file *file, const char __user *buf,
+				     size_t count, loff_t *ppos)
+{
+	struct fuse_conn *fc = fuse_ctl_file_conn_get(file);
+	if (fc) {
+		if (fc->abort_err)
+			fc->aborted = true;
+		fuse_abort_conn(fc);
 		fuse_conn_put(fc);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-अटल sमाप_प्रकार fuse_conn_रुकोing_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				      माप_प्रकार len, loff_t *ppos)
-अणु
-	अक्षर पंचांगp[32];
-	माप_प्रकार size;
+static ssize_t fuse_conn_waiting_read(struct file *file, char __user *buf,
+				      size_t len, loff_t *ppos)
+{
+	char tmp[32];
+	size_t size;
 
-	अगर (!*ppos) अणु
-		दीर्घ value;
-		काष्ठा fuse_conn *fc = fuse_ctl_file_conn_get(file);
-		अगर (!fc)
-			वापस 0;
+	if (!*ppos) {
+		long value;
+		struct fuse_conn *fc = fuse_ctl_file_conn_get(file);
+		if (!fc)
+			return 0;
 
-		value = atomic_पढ़ो(&fc->num_रुकोing);
-		file->निजी_data = (व्योम *)value;
+		value = atomic_read(&fc->num_waiting);
+		file->private_data = (void *)value;
 		fuse_conn_put(fc);
-	पूर्ण
-	size = प्र_लिखो(पंचांगp, "%ld\n", (दीर्घ)file->निजी_data);
-	वापस simple_पढ़ो_from_buffer(buf, len, ppos, पंचांगp, size);
-पूर्ण
+	}
+	size = sprintf(tmp, "%ld\n", (long)file->private_data);
+	return simple_read_from_buffer(buf, len, ppos, tmp, size);
+}
 
-अटल sमाप_प्रकार fuse_conn_limit_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				    माप_प्रकार len, loff_t *ppos, अचिन्हित val)
-अणु
-	अक्षर पंचांगp[32];
-	माप_प्रकार size = प्र_लिखो(पंचांगp, "%u\n", val);
+static ssize_t fuse_conn_limit_read(struct file *file, char __user *buf,
+				    size_t len, loff_t *ppos, unsigned val)
+{
+	char tmp[32];
+	size_t size = sprintf(tmp, "%u\n", val);
 
-	वापस simple_पढ़ो_from_buffer(buf, len, ppos, पंचांगp, size);
-पूर्ण
+	return simple_read_from_buffer(buf, len, ppos, tmp, size);
+}
 
-अटल sमाप_प्रकार fuse_conn_limit_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				     माप_प्रकार count, loff_t *ppos, अचिन्हित *val,
-				     अचिन्हित global_limit)
-अणु
-	अचिन्हित दीर्घ t;
-	अचिन्हित limit = (1 << 16) - 1;
-	पूर्णांक err;
+static ssize_t fuse_conn_limit_write(struct file *file, const char __user *buf,
+				     size_t count, loff_t *ppos, unsigned *val,
+				     unsigned global_limit)
+{
+	unsigned long t;
+	unsigned limit = (1 << 16) - 1;
+	int err;
 
-	अगर (*ppos)
-		वापस -EINVAL;
+	if (*ppos)
+		return -EINVAL;
 
-	err = kम_से_अदीर्घ_from_user(buf, count, 0, &t);
-	अगर (err)
-		वापस err;
+	err = kstrtoul_from_user(buf, count, 0, &t);
+	if (err)
+		return err;
 
-	अगर (!capable(CAP_SYS_ADMIN))
+	if (!capable(CAP_SYS_ADMIN))
 		limit = min(limit, global_limit);
 
-	अगर (t > limit)
-		वापस -EINVAL;
+	if (t > limit)
+		return -EINVAL;
 
 	*val = t;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार fuse_conn_max_background_पढ़ो(काष्ठा file *file,
-					     अक्षर __user *buf, माप_प्रकार len,
+static ssize_t fuse_conn_max_background_read(struct file *file,
+					     char __user *buf, size_t len,
 					     loff_t *ppos)
-अणु
-	काष्ठा fuse_conn *fc;
-	अचिन्हित val;
+{
+	struct fuse_conn *fc;
+	unsigned val;
 
 	fc = fuse_ctl_file_conn_get(file);
-	अगर (!fc)
-		वापस 0;
+	if (!fc)
+		return 0;
 
 	val = READ_ONCE(fc->max_background);
 	fuse_conn_put(fc);
 
-	वापस fuse_conn_limit_पढ़ो(file, buf, len, ppos, val);
-पूर्ण
+	return fuse_conn_limit_read(file, buf, len, ppos, val);
+}
 
-अटल sमाप_प्रकार fuse_conn_max_background_ग_लिखो(काष्ठा file *file,
-					      स्थिर अक्षर __user *buf,
-					      माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित val;
-	sमाप_प्रकार ret;
+static ssize_t fuse_conn_max_background_write(struct file *file,
+					      const char __user *buf,
+					      size_t count, loff_t *ppos)
+{
+	unsigned val;
+	ssize_t ret;
 
-	ret = fuse_conn_limit_ग_लिखो(file, buf, count, ppos, &val,
+	ret = fuse_conn_limit_write(file, buf, count, ppos, &val,
 				    max_user_bgreq);
-	अगर (ret > 0) अणु
-		काष्ठा fuse_conn *fc = fuse_ctl_file_conn_get(file);
-		अगर (fc) अणु
+	if (ret > 0) {
+		struct fuse_conn *fc = fuse_ctl_file_conn_get(file);
+		if (fc) {
 			spin_lock(&fc->bg_lock);
 			fc->max_background = val;
 			fc->blocked = fc->num_background >= fc->max_background;
-			अगर (!fc->blocked)
-				wake_up(&fc->blocked_रुकोq);
+			if (!fc->blocked)
+				wake_up(&fc->blocked_waitq);
 			spin_unlock(&fc->bg_lock);
 			fuse_conn_put(fc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार fuse_conn_congestion_threshold_पढ़ो(काष्ठा file *file,
-						   अक्षर __user *buf, माप_प्रकार len,
+static ssize_t fuse_conn_congestion_threshold_read(struct file *file,
+						   char __user *buf, size_t len,
 						   loff_t *ppos)
-अणु
-	काष्ठा fuse_conn *fc;
-	अचिन्हित val;
+{
+	struct fuse_conn *fc;
+	unsigned val;
 
 	fc = fuse_ctl_file_conn_get(file);
-	अगर (!fc)
-		वापस 0;
+	if (!fc)
+		return 0;
 
 	val = READ_ONCE(fc->congestion_threshold);
 	fuse_conn_put(fc);
 
-	वापस fuse_conn_limit_पढ़ो(file, buf, len, ppos, val);
-पूर्ण
+	return fuse_conn_limit_read(file, buf, len, ppos, val);
+}
 
-अटल sमाप_प्रकार fuse_conn_congestion_threshold_ग_लिखो(काष्ठा file *file,
-						    स्थिर अक्षर __user *buf,
-						    माप_प्रकार count, loff_t *ppos)
-अणु
-	अचिन्हित val;
-	काष्ठा fuse_conn *fc;
-	काष्ठा fuse_mount *fm;
-	sमाप_प्रकार ret;
+static ssize_t fuse_conn_congestion_threshold_write(struct file *file,
+						    const char __user *buf,
+						    size_t count, loff_t *ppos)
+{
+	unsigned val;
+	struct fuse_conn *fc;
+	struct fuse_mount *fm;
+	ssize_t ret;
 
-	ret = fuse_conn_limit_ग_लिखो(file, buf, count, ppos, &val,
+	ret = fuse_conn_limit_write(file, buf, count, ppos, &val,
 				    max_user_congthresh);
-	अगर (ret <= 0)
-		जाओ out;
+	if (ret <= 0)
+		goto out;
 	fc = fuse_ctl_file_conn_get(file);
-	अगर (!fc)
-		जाओ out;
+	if (!fc)
+		goto out;
 
-	करोwn_पढ़ो(&fc->समाप्तsb);
+	down_read(&fc->killsb);
 	spin_lock(&fc->bg_lock);
 	fc->congestion_threshold = val;
 
 	/*
-	 * Get any fuse_mount beदीर्घing to this fuse_conn; s_bdi is
+	 * Get any fuse_mount belonging to this fuse_conn; s_bdi is
 	 * shared between all of them
 	 */
 
-	अगर (!list_empty(&fc->mounts)) अणु
-		fm = list_first_entry(&fc->mounts, काष्ठा fuse_mount, fc_entry);
-		अगर (fc->num_background < fc->congestion_threshold) अणु
+	if (!list_empty(&fc->mounts)) {
+		fm = list_first_entry(&fc->mounts, struct fuse_mount, fc_entry);
+		if (fc->num_background < fc->congestion_threshold) {
 			clear_bdi_congested(fm->sb->s_bdi, BLK_RW_SYNC);
 			clear_bdi_congested(fm->sb->s_bdi, BLK_RW_ASYNC);
-		पूर्ण अन्यथा अणु
+		} else {
 			set_bdi_congested(fm->sb->s_bdi, BLK_RW_SYNC);
 			set_bdi_congested(fm->sb->s_bdi, BLK_RW_ASYNC);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&fc->bg_lock);
-	up_पढ़ो(&fc->समाप्तsb);
+	up_read(&fc->killsb);
 	fuse_conn_put(fc);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations fuse_ctl_पात_ops = अणु
-	.खोलो = nonseekable_खोलो,
-	.ग_लिखो = fuse_conn_पात_ग_लिखो,
+static const struct file_operations fuse_ctl_abort_ops = {
+	.open = nonseekable_open,
+	.write = fuse_conn_abort_write,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations fuse_ctl_रुकोing_ops = अणु
-	.खोलो = nonseekable_खोलो,
-	.पढ़ो = fuse_conn_रुकोing_पढ़ो,
+static const struct file_operations fuse_ctl_waiting_ops = {
+	.open = nonseekable_open,
+	.read = fuse_conn_waiting_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations fuse_conn_max_background_ops = अणु
-	.खोलो = nonseekable_खोलो,
-	.पढ़ो = fuse_conn_max_background_पढ़ो,
-	.ग_लिखो = fuse_conn_max_background_ग_लिखो,
+static const struct file_operations fuse_conn_max_background_ops = {
+	.open = nonseekable_open,
+	.read = fuse_conn_max_background_read,
+	.write = fuse_conn_max_background_write,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations fuse_conn_congestion_threshold_ops = अणु
-	.खोलो = nonseekable_खोलो,
-	.पढ़ो = fuse_conn_congestion_threshold_पढ़ो,
-	.ग_लिखो = fuse_conn_congestion_threshold_ग_लिखो,
+static const struct file_operations fuse_conn_congestion_threshold_ops = {
+	.open = nonseekable_open,
+	.read = fuse_conn_congestion_threshold_read,
+	.write = fuse_conn_congestion_threshold_write,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा dentry *fuse_ctl_add_dentry(काष्ठा dentry *parent,
-					  काष्ठा fuse_conn *fc,
-					  स्थिर अक्षर *name,
-					  पूर्णांक mode, पूर्णांक nlink,
-					  स्थिर काष्ठा inode_operations *iop,
-					  स्थिर काष्ठा file_operations *fop)
-अणु
-	काष्ठा dentry *dentry;
-	काष्ठा inode *inode;
+static struct dentry *fuse_ctl_add_dentry(struct dentry *parent,
+					  struct fuse_conn *fc,
+					  const char *name,
+					  int mode, int nlink,
+					  const struct inode_operations *iop,
+					  const struct file_operations *fop)
+{
+	struct dentry *dentry;
+	struct inode *inode;
 
 	BUG_ON(fc->ctl_ndents >= FUSE_CTL_NUM_DENTRIES);
 	dentry = d_alloc_name(parent, name);
-	अगर (!dentry)
-		वापस शून्य;
+	if (!dentry)
+		return NULL;
 
 	inode = new_inode(fuse_control_sb);
-	अगर (!inode) अणु
+	if (!inode) {
 		dput(dentry);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
 	inode->i_uid = fc->user_id;
 	inode->i_gid = fc->group_id;
-	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
-	/* setting ->i_op to शून्य is not allowed */
-	अगर (iop)
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	/* setting ->i_op to NULL is not allowed */
+	if (iop)
 		inode->i_op = iop;
 	inode->i_fop = fop;
 	set_nlink(inode, nlink);
-	inode->i_निजी = fc;
+	inode->i_private = fc;
 	d_add(dentry, inode);
 
 	fc->ctl_dentry[fc->ctl_ndents++] = dentry;
 
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
 /*
- * Add a connection to the control fileप्रणाली (अगर it exists).  Caller
+ * Add a connection to the control filesystem (if it exists).  Caller
  * must hold fuse_mutex
  */
-पूर्णांक fuse_ctl_add_conn(काष्ठा fuse_conn *fc)
-अणु
-	काष्ठा dentry *parent;
-	अक्षर name[32];
+int fuse_ctl_add_conn(struct fuse_conn *fc)
+{
+	struct dentry *parent;
+	char name[32];
 
-	अगर (!fuse_control_sb)
-		वापस 0;
+	if (!fuse_control_sb)
+		return 0;
 
 	parent = fuse_control_sb->s_root;
 	inc_nlink(d_inode(parent));
-	प्र_लिखो(name, "%u", fc->dev);
-	parent = fuse_ctl_add_dentry(parent, fc, name, S_IFसूची | 0500, 2,
+	sprintf(name, "%u", fc->dev);
+	parent = fuse_ctl_add_dentry(parent, fc, name, S_IFDIR | 0500, 2,
 				     &simple_dir_inode_operations,
 				     &simple_dir_operations);
-	अगर (!parent)
-		जाओ err;
+	if (!parent)
+		goto err;
 
-	अगर (!fuse_ctl_add_dentry(parent, fc, "waiting", S_IFREG | 0400, 1,
-				 शून्य, &fuse_ctl_रुकोing_ops) ||
+	if (!fuse_ctl_add_dentry(parent, fc, "waiting", S_IFREG | 0400, 1,
+				 NULL, &fuse_ctl_waiting_ops) ||
 	    !fuse_ctl_add_dentry(parent, fc, "abort", S_IFREG | 0200, 1,
-				 शून्य, &fuse_ctl_पात_ops) ||
+				 NULL, &fuse_ctl_abort_ops) ||
 	    !fuse_ctl_add_dentry(parent, fc, "max_background", S_IFREG | 0600,
-				 1, शून्य, &fuse_conn_max_background_ops) ||
+				 1, NULL, &fuse_conn_max_background_ops) ||
 	    !fuse_ctl_add_dentry(parent, fc, "congestion_threshold",
-				 S_IFREG | 0600, 1, शून्य,
+				 S_IFREG | 0600, 1, NULL,
 				 &fuse_conn_congestion_threshold_ops))
-		जाओ err;
+		goto err;
 
-	वापस 0;
+	return 0;
 
  err:
-	fuse_ctl_हटाओ_conn(fc);
-	वापस -ENOMEM;
-पूर्ण
+	fuse_ctl_remove_conn(fc);
+	return -ENOMEM;
+}
 
 /*
- * Remove a connection from the control fileप्रणाली (अगर it exists).
+ * Remove a connection from the control filesystem (if it exists).
  * Caller must hold fuse_mutex
  */
-व्योम fuse_ctl_हटाओ_conn(काष्ठा fuse_conn *fc)
-अणु
-	पूर्णांक i;
+void fuse_ctl_remove_conn(struct fuse_conn *fc)
+{
+	int i;
 
-	अगर (!fuse_control_sb)
-		वापस;
+	if (!fuse_control_sb)
+		return;
 
-	क्रम (i = fc->ctl_ndents - 1; i >= 0; i--) अणु
-		काष्ठा dentry *dentry = fc->ctl_dentry[i];
-		d_inode(dentry)->i_निजी = शून्य;
-		अगर (!i) अणु
+	for (i = fc->ctl_ndents - 1; i >= 0; i--) {
+		struct dentry *dentry = fc->ctl_dentry[i];
+		d_inode(dentry)->i_private = NULL;
+		if (!i) {
 			/* Get rid of submounts: */
 			d_invalidate(dentry);
-		पूर्ण
+		}
 		dput(dentry);
-	पूर्ण
+	}
 	drop_nlink(d_inode(fuse_control_sb->s_root));
-पूर्ण
+}
 
-अटल पूर्णांक fuse_ctl_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fctx)
-अणु
-	अटल स्थिर काष्ठा tree_descr empty_descr = अणु""पूर्ण;
-	काष्ठा fuse_conn *fc;
-	पूर्णांक err;
+static int fuse_ctl_fill_super(struct super_block *sb, struct fs_context *fctx)
+{
+	static const struct tree_descr empty_descr = {""};
+	struct fuse_conn *fc;
+	int err;
 
 	err = simple_fill_super(sb, FUSE_CTL_SUPER_MAGIC, &empty_descr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mutex_lock(&fuse_mutex);
 	BUG_ON(fuse_control_sb);
 	fuse_control_sb = sb;
-	list_क्रम_each_entry(fc, &fuse_conn_list, entry) अणु
+	list_for_each_entry(fc, &fuse_conn_list, entry) {
 		err = fuse_ctl_add_conn(fc);
-		अगर (err) अणु
-			fuse_control_sb = शून्य;
+		if (err) {
+			fuse_control_sb = NULL;
 			mutex_unlock(&fuse_mutex);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 	mutex_unlock(&fuse_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fuse_ctl_get_tree(काष्ठा fs_context *fc)
-अणु
-	वापस get_tree_single(fc, fuse_ctl_fill_super);
-पूर्ण
+static int fuse_ctl_get_tree(struct fs_context *fc)
+{
+	return get_tree_single(fc, fuse_ctl_fill_super);
+}
 
-अटल स्थिर काष्ठा fs_context_operations fuse_ctl_context_ops = अणु
+static const struct fs_context_operations fuse_ctl_context_ops = {
 	.get_tree	= fuse_ctl_get_tree,
-पूर्ण;
+};
 
-अटल पूर्णांक fuse_ctl_init_fs_context(काष्ठा fs_context *fc)
-अणु
+static int fuse_ctl_init_fs_context(struct fs_context *fc)
+{
 	fc->ops = &fuse_ctl_context_ops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fuse_ctl_समाप्त_sb(काष्ठा super_block *sb)
-अणु
-	काष्ठा fuse_conn *fc;
+static void fuse_ctl_kill_sb(struct super_block *sb)
+{
+	struct fuse_conn *fc;
 
 	mutex_lock(&fuse_mutex);
-	fuse_control_sb = शून्य;
-	list_क्रम_each_entry(fc, &fuse_conn_list, entry)
+	fuse_control_sb = NULL;
+	list_for_each_entry(fc, &fuse_conn_list, entry)
 		fc->ctl_ndents = 0;
 	mutex_unlock(&fuse_mutex);
 
-	समाप्त_litter_super(sb);
-पूर्ण
+	kill_litter_super(sb);
+}
 
-अटल काष्ठा file_प्रणाली_type fuse_ctl_fs_type = अणु
+static struct file_system_type fuse_ctl_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "fusectl",
 	.init_fs_context = fuse_ctl_init_fs_context,
-	.समाप्त_sb	= fuse_ctl_समाप्त_sb,
-पूर्ण;
+	.kill_sb	= fuse_ctl_kill_sb,
+};
 MODULE_ALIAS_FS("fusectl");
 
-पूर्णांक __init fuse_ctl_init(व्योम)
-अणु
-	वापस रेजिस्टर_fileप्रणाली(&fuse_ctl_fs_type);
-पूर्ण
+int __init fuse_ctl_init(void)
+{
+	return register_filesystem(&fuse_ctl_fs_type);
+}
 
-व्योम __निकास fuse_ctl_cleanup(व्योम)
-अणु
-	unरेजिस्टर_fileप्रणाली(&fuse_ctl_fs_type);
-पूर्ण
+void __exit fuse_ctl_cleanup(void)
+{
+	unregister_filesystem(&fuse_ctl_fs_type);
+}

@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Parts of INFTL headers shared with userspace
  *
  */
 
-#अगर_अघोषित __MTD_INFTL_USER_H__
-#घोषणा __MTD_INFTL_USER_H__
+#ifndef __MTD_INFTL_USER_H__
+#define __MTD_INFTL_USER_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा	OSAK_VERSION	0x5120
-#घोषणा	PERCENTUSED	98
+#define	OSAK_VERSION	0x5120
+#define	PERCENTUSED	98
 
-#घोषणा	SECTORSIZE	512
+#define	SECTORSIZE	512
 
-/* Block Control Inक्रमmation */
+/* Block Control Information */
 
-काष्ठा inftl_bci अणु
+struct inftl_bci {
 	__u8 ECCsig[6];
 	__u8 Status;
 	__u8 Status1;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा inftl_unithead1 अणु
-	__u16 भवUnitNo;
+struct inftl_unithead1 {
+	__u16 virtualUnitNo;
 	__u16 prevUnitNo;
 	__u8 ANAC;
 	__u8 NACs;
 	__u8 parityPerField;
 	__u8 discarded;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा inftl_unithead2 अणु
+struct inftl_unithead2 {
 	__u8 parityPerField;
 	__u8 ANAC;
 	__u16 prevUnitNo;
-	__u16 भवUnitNo;
+	__u16 virtualUnitNo;
 	__u8 NACs;
 	__u8 discarded;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा inftl_unittail अणु
+struct inftl_unittail {
 	__u8 Reserved[4];
 	__u16 EraseMark;
 	__u16 EraseMark1;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-जोड़ inftl_uci अणु
-	काष्ठा inftl_unithead1 a;
-	काष्ठा inftl_unithead2 b;
-	काष्ठा inftl_unittail c;
-पूर्ण;
+union inftl_uci {
+	struct inftl_unithead1 a;
+	struct inftl_unithead2 b;
+	struct inftl_unittail c;
+};
 
-काष्ठा inftl_oob अणु
-	काष्ठा inftl_bci b;
-	जोड़ inftl_uci u;
-पूर्ण;
+struct inftl_oob {
+	struct inftl_bci b;
+	union inftl_uci u;
+};
 
 
 /* INFTL Media Header */
 
-काष्ठा INFTLPartition अणु
-	__u32 भवUnits;
+struct INFTLPartition {
+	__u32 virtualUnits;
 	__u32 firstUnit;
 	__u32 lastUnit;
 	__u32 flags;
 	__u32 spareUnits;
 	__u32 Reserved0;
 	__u32 Reserved1;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा INFTLMediaHeader अणु
-	अक्षर bootRecordID[8];
+struct INFTLMediaHeader {
+	char bootRecordID[8];
 	__u32 NoOfBootImageBlocks;
 	__u32 NoOfBinaryPartitions;
 	__u32 NoOfBDTLPartitions;
@@ -80,14 +79,14 @@
 	__u32 FormatFlags;
 	__u32 OsakVersion;
 	__u32 PercentUsed;
-	काष्ठा INFTLPartition Partitions[4];
-पूर्ण __attribute__((packed));
+	struct INFTLPartition Partitions[4];
+} __attribute__((packed));
 
 /* Partition flag types */
-#घोषणा	INFTL_BINARY	0x20000000
-#घोषणा	INFTL_BDTL	0x40000000
-#घोषणा	INFTL_LAST	0x80000000
+#define	INFTL_BINARY	0x20000000
+#define	INFTL_BDTL	0x40000000
+#define	INFTL_LAST	0x80000000
 
-#पूर्ण_अगर /* __MTD_INFTL_USER_H__ */
+#endif /* __MTD_INFTL_USER_H__ */
 
 

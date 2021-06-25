@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Test the statx() प्रणाली call.
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Test the statx() system call.
  *
- * Note that the output of this program is पूर्णांकended to look like the output of
+ * Note that the output of this program is intended to look like the output of
  * /bin/stat where possible.
  *
  * Copyright (C) 2015 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#घोषणा _GNU_SOURCE
-#घोषणा _ATखाता_SOURCE
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <प्रकार.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <समय.स>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/fcntl.h>
-#घोषणा statx foo
-#घोषणा statx_बारtamp foo_बारtamp
-काष्ठा statx;
-काष्ठा statx_बारtamp;
-#समावेश <sys/स्थिति.स>
-#अघोषित statx
-#अघोषित statx_बारtamp
+#define _GNU_SOURCE
+#define _ATFILE_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <linux/stat.h>
+#include <linux/fcntl.h>
+#define statx foo
+#define statx_timestamp foo_timestamp
+struct statx;
+struct statx_timestamp;
+#include <sys/stat.h>
+#undef statx
+#undef statx_timestamp
 
-#घोषणा AT_STATX_SYNC_TYPE	0x6000
-#घोषणा AT_STATX_SYNC_AS_STAT	0x0000
-#घोषणा AT_STATX_FORCE_SYNC	0x2000
-#घोषणा AT_STATX_DONT_SYNC	0x4000
+#define AT_STATX_SYNC_TYPE	0x6000
+#define AT_STATX_SYNC_AS_STAT	0x0000
+#define AT_STATX_FORCE_SYNC	0x2000
+#define AT_STATX_DONT_SYNC	0x4000
 
-#अगर_अघोषित __NR_statx
-#घोषणा __NR_statx -1
-#पूर्ण_अगर
+#ifndef __NR_statx
+#define __NR_statx -1
+#endif
 
-अटल __attribute__((unused))
-sमाप_प्रकार statx(पूर्णांक dfd, स्थिर अक्षर *filename, अचिन्हित flags,
-	      अचिन्हित पूर्णांक mask, काष्ठा statx *buffer)
-अणु
-	वापस syscall(__NR_statx, dfd, filename, flags, mask, buffer);
-पूर्ण
+static __attribute__((unused))
+ssize_t statx(int dfd, const char *filename, unsigned flags,
+	      unsigned int mask, struct statx *buffer)
+{
+	return syscall(__NR_statx, dfd, filename, flags, mask, buffer);
+}
 
-अटल व्योम prपूर्णांक_समय(स्थिर अक्षर *field, काष्ठा statx_बारtamp *ts)
-अणु
-	काष्ठा पंचांग पंचांग;
-	समय_प्रकार tim;
-	अक्षर buffer[100];
-	पूर्णांक len;
+static void print_time(const char *field, struct statx_timestamp *ts)
+{
+	struct tm tm;
+	time_t tim;
+	char buffer[100];
+	int len;
 
 	tim = ts->tv_sec;
-	अगर (!स_स्थानीय_r(&tim, &पंचांग)) अणु
-		लिखो_त्रुटि("localtime_r");
-		निकास(1);
-	पूर्ण
-	len = स_माला(buffer, 100, "%F %T", &पंचांग);
-	अगर (len == 0) अणु
-		लिखो_त्रुटि("strftime");
-		निकास(1);
-	पूर्ण
-	म_लिखो("%s", field);
-	ख_डालो(buffer, 1, len, मानक_निकास);
-	म_लिखो(".%09u", ts->tv_nsec);
-	len = स_माला(buffer, 100, "%z", &पंचांग);
-	अगर (len == 0) अणु
-		लिखो_त्रुटि("strftime2");
-		निकास(1);
-	पूर्ण
-	ख_डालो(buffer, 1, len, मानक_निकास);
-	म_लिखो("\n");
-पूर्ण
+	if (!localtime_r(&tim, &tm)) {
+		perror("localtime_r");
+		exit(1);
+	}
+	len = strftime(buffer, 100, "%F %T", &tm);
+	if (len == 0) {
+		perror("strftime");
+		exit(1);
+	}
+	printf("%s", field);
+	fwrite(buffer, 1, len, stdout);
+	printf(".%09u", ts->tv_nsec);
+	len = strftime(buffer, 100, "%z", &tm);
+	if (len == 0) {
+		perror("strftime2");
+		exit(1);
+	}
+	fwrite(buffer, 1, len, stdout);
+	printf("\n");
+}
 
-अटल व्योम dump_statx(काष्ठा statx *stx)
-अणु
-	अक्षर buffer[256], ft = '?';
+static void dump_statx(struct statx *stx)
+{
+	char buffer[256], ft = '?';
 
-	म_लिखो("results=%x\n", stx->stx_mask);
+	printf("results=%x\n", stx->stx_mask);
 
-	म_लिखो(" ");
-	अगर (stx->stx_mask & STATX_SIZE)
-		म_लिखो(" Size: %-15llu", (अचिन्हित दीर्घ दीर्घ)stx->stx_size);
-	अगर (stx->stx_mask & STATX_BLOCKS)
-		म_लिखो(" Blocks: %-10llu", (अचिन्हित दीर्घ दीर्घ)stx->stx_blocks);
-	म_लिखो(" IO Block: %-6llu", (अचिन्हित दीर्घ दीर्घ)stx->stx_blksize);
-	अगर (stx->stx_mask & STATX_TYPE) अणु
-		चयन (stx->stx_mode & S_IFMT) अणु
-		हाल S_IFIFO:	म_लिखो("  FIFO\n");			ft = 'p'; अवरोध;
-		हाल S_IFCHR:	म_लिखो("  character special file\n");	ft = 'c'; अवरोध;
-		हाल S_IFसूची:	म_लिखो("  directory\n");		ft = 'd'; अवरोध;
-		हाल S_IFBLK:	म_लिखो("  block special file\n");	ft = 'b'; अवरोध;
-		हाल S_IFREG:	म_लिखो("  regular file\n");		ft = '-'; अवरोध;
-		हाल S_IFLNK:	म_लिखो("  symbolic link\n");		ft = 'l'; अवरोध;
-		हाल S_IFSOCK:	म_लिखो("  socket\n");			ft = 's'; अवरोध;
-		शेष:
-			म_लिखो(" unknown type (%o)\n", stx->stx_mode & S_IFMT);
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		म_लिखो(" no type\n");
-	पूर्ण
+	printf(" ");
+	if (stx->stx_mask & STATX_SIZE)
+		printf(" Size: %-15llu", (unsigned long long)stx->stx_size);
+	if (stx->stx_mask & STATX_BLOCKS)
+		printf(" Blocks: %-10llu", (unsigned long long)stx->stx_blocks);
+	printf(" IO Block: %-6llu", (unsigned long long)stx->stx_blksize);
+	if (stx->stx_mask & STATX_TYPE) {
+		switch (stx->stx_mode & S_IFMT) {
+		case S_IFIFO:	printf("  FIFO\n");			ft = 'p'; break;
+		case S_IFCHR:	printf("  character special file\n");	ft = 'c'; break;
+		case S_IFDIR:	printf("  directory\n");		ft = 'd'; break;
+		case S_IFBLK:	printf("  block special file\n");	ft = 'b'; break;
+		case S_IFREG:	printf("  regular file\n");		ft = '-'; break;
+		case S_IFLNK:	printf("  symbolic link\n");		ft = 'l'; break;
+		case S_IFSOCK:	printf("  socket\n");			ft = 's'; break;
+		default:
+			printf(" unknown type (%o)\n", stx->stx_mode & S_IFMT);
+			break;
+		}
+	} else {
+		printf(" no type\n");
+	}
 
-	प्र_लिखो(buffer, "%02x:%02x", stx->stx_dev_major, stx->stx_dev_minor);
-	म_लिखो("Device: %-15s", buffer);
-	अगर (stx->stx_mask & STATX_INO)
-		म_लिखो(" Inode: %-11llu", (अचिन्हित दीर्घ दीर्घ) stx->stx_ino);
-	अगर (stx->stx_mask & STATX_NLINK)
-		म_लिखो(" Links: %-5u", stx->stx_nlink);
-	अगर (stx->stx_mask & STATX_TYPE) अणु
-		चयन (stx->stx_mode & S_IFMT) अणु
-		हाल S_IFBLK:
-		हाल S_IFCHR:
-			म_लिखो(" Device type: %u,%u",
+	sprintf(buffer, "%02x:%02x", stx->stx_dev_major, stx->stx_dev_minor);
+	printf("Device: %-15s", buffer);
+	if (stx->stx_mask & STATX_INO)
+		printf(" Inode: %-11llu", (unsigned long long) stx->stx_ino);
+	if (stx->stx_mask & STATX_NLINK)
+		printf(" Links: %-5u", stx->stx_nlink);
+	if (stx->stx_mask & STATX_TYPE) {
+		switch (stx->stx_mode & S_IFMT) {
+		case S_IFBLK:
+		case S_IFCHR:
+			printf(" Device type: %u,%u",
 			       stx->stx_rdev_major, stx->stx_rdev_minor);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	म_लिखो("\n");
+			break;
+		}
+	}
+	printf("\n");
 
-	अगर (stx->stx_mask & STATX_MODE)
-		म_लिखो("Access: (%04o/%c%c%c%c%c%c%c%c%c%c)  ",
+	if (stx->stx_mask & STATX_MODE)
+		printf("Access: (%04o/%c%c%c%c%c%c%c%c%c%c)  ",
 		       stx->stx_mode & 07777,
 		       ft,
 		       stx->stx_mode & S_IRUSR ? 'r' : '-',
@@ -134,25 +133,25 @@ sमाप_प्रकार statx(पूर्णांक dfd, स्थि�
 		       stx->stx_mode & S_IROTH ? 'r' : '-',
 		       stx->stx_mode & S_IWOTH ? 'w' : '-',
 		       stx->stx_mode & S_IXOTH ? 'x' : '-');
-	अगर (stx->stx_mask & STATX_UID)
-		म_लिखो("Uid: %5d   ", stx->stx_uid);
-	अगर (stx->stx_mask & STATX_GID)
-		म_लिखो("Gid: %5d\n", stx->stx_gid);
+	if (stx->stx_mask & STATX_UID)
+		printf("Uid: %5d   ", stx->stx_uid);
+	if (stx->stx_mask & STATX_GID)
+		printf("Gid: %5d\n", stx->stx_gid);
 
-	अगर (stx->stx_mask & STATX_ATIME)
-		prपूर्णांक_समय("Access: ", &stx->stx_aसमय);
-	अगर (stx->stx_mask & STATX_MTIME)
-		prपूर्णांक_समय("Modify: ", &stx->stx_mसमय);
-	अगर (stx->stx_mask & STATX_CTIME)
-		prपूर्णांक_समय("Change: ", &stx->stx_स_समय);
-	अगर (stx->stx_mask & STATX_BTIME)
-		prपूर्णांक_समय(" Birth: ", &stx->stx_bसमय);
+	if (stx->stx_mask & STATX_ATIME)
+		print_time("Access: ", &stx->stx_atime);
+	if (stx->stx_mask & STATX_MTIME)
+		print_time("Modify: ", &stx->stx_mtime);
+	if (stx->stx_mask & STATX_CTIME)
+		print_time("Change: ", &stx->stx_ctime);
+	if (stx->stx_mask & STATX_BTIME)
+		print_time(" Birth: ", &stx->stx_btime);
 
-	अगर (stx->stx_attributes_mask) अणु
-		अचिन्हित अक्षर bits, mbits;
-		पूर्णांक loop, byte;
+	if (stx->stx_attributes_mask) {
+		unsigned char bits, mbits;
+		int loop, byte;
 
-		अटल अक्षर attr_representation[64 + 1] =
+		static char attr_representation[64 + 1] =
 			/* STATX_ATTR_ flags: */
 			"????????"	/* 63-56 */
 			"????????"	/* 55-48 */
@@ -164,103 +163,103 @@ sमाप_प्रकार statx(पूर्णांक dfd, स्थि�
 			"?dai?c??"	/*  7- 0	0x00000000-000000ff */
 			;
 
-		म_लिखो("Attributes: %016llx (",
-		       (अचिन्हित दीर्घ दीर्घ)stx->stx_attributes);
-		क्रम (byte = 64 - 8; byte >= 0; byte -= 8) अणु
+		printf("Attributes: %016llx (",
+		       (unsigned long long)stx->stx_attributes);
+		for (byte = 64 - 8; byte >= 0; byte -= 8) {
 			bits = stx->stx_attributes >> byte;
 			mbits = stx->stx_attributes_mask >> byte;
-			क्रम (loop = 7; loop >= 0; loop--) अणु
-				पूर्णांक bit = byte + loop;
+			for (loop = 7; loop >= 0; loop--) {
+				int bit = byte + loop;
 
-				अगर (!(mbits & 0x80))
-					अक्षर_दो('.');	/* Not supported */
-				अन्यथा अगर (bits & 0x80)
-					अक्षर_दो(attr_representation[63 - bit]);
-				अन्यथा
-					अक्षर_दो('-');	/* Not set */
+				if (!(mbits & 0x80))
+					putchar('.');	/* Not supported */
+				else if (bits & 0x80)
+					putchar(attr_representation[63 - bit]);
+				else
+					putchar('-');	/* Not set */
 				bits <<= 1;
 				mbits <<= 1;
-			पूर्ण
-			अगर (byte)
-				अक्षर_दो(' ');
-		पूर्ण
-		म_लिखो(")\n");
-	पूर्ण
-पूर्ण
+			}
+			if (byte)
+				putchar(' ');
+		}
+		printf(")\n");
+	}
+}
 
-अटल व्योम dump_hex(अचिन्हित दीर्घ दीर्घ *data, पूर्णांक from, पूर्णांक to)
-अणु
-	अचिन्हित offset, prपूर्णांक_offset = 1, col = 0;
+static void dump_hex(unsigned long long *data, int from, int to)
+{
+	unsigned offset, print_offset = 1, col = 0;
 
 	from /= 8;
 	to = (to + 7) / 8;
 
-	क्रम (offset = from; offset < to; offset++) अणु
-		अगर (prपूर्णांक_offset) अणु
-			म_लिखो("%04x: ", offset * 8);
-			prपूर्णांक_offset = 0;
-		पूर्ण
-		म_लिखो("%016llx", data[offset]);
+	for (offset = from; offset < to; offset++) {
+		if (print_offset) {
+			printf("%04x: ", offset * 8);
+			print_offset = 0;
+		}
+		printf("%016llx", data[offset]);
 		col++;
-		अगर ((col & 3) == 0) अणु
-			म_लिखो("\n");
-			prपूर्णांक_offset = 1;
-		पूर्ण अन्यथा अणु
-			म_लिखो(" ");
-		पूर्ण
-	पूर्ण
+		if ((col & 3) == 0) {
+			printf("\n");
+			print_offset = 1;
+		} else {
+			printf(" ");
+		}
+	}
 
-	अगर (!prपूर्णांक_offset)
-		म_लिखो("\n");
-पूर्ण
+	if (!print_offset)
+		printf("\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा statx stx;
-	पूर्णांक ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
+int main(int argc, char **argv)
+{
+	struct statx stx;
+	int ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
 
-	अचिन्हित पूर्णांक mask = STATX_BASIC_STATS | STATX_BTIME;
+	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
 
-	क्रम (argv++; *argv; argv++) अणु
-		अगर (म_भेद(*argv, "-F") == 0) अणु
+	for (argv++; *argv; argv++) {
+		if (strcmp(*argv, "-F") == 0) {
 			atflag &= ~AT_STATX_SYNC_TYPE;
 			atflag |= AT_STATX_FORCE_SYNC;
-			जारी;
-		पूर्ण
-		अगर (म_भेद(*argv, "-D") == 0) अणु
+			continue;
+		}
+		if (strcmp(*argv, "-D") == 0) {
 			atflag &= ~AT_STATX_SYNC_TYPE;
 			atflag |= AT_STATX_DONT_SYNC;
-			जारी;
-		पूर्ण
-		अगर (म_भेद(*argv, "-L") == 0) अणु
+			continue;
+		}
+		if (strcmp(*argv, "-L") == 0) {
 			atflag &= ~AT_SYMLINK_NOFOLLOW;
-			जारी;
-		पूर्ण
-		अगर (म_भेद(*argv, "-O") == 0) अणु
+			continue;
+		}
+		if (strcmp(*argv, "-O") == 0) {
 			mask &= ~STATX_BASIC_STATS;
-			जारी;
-		पूर्ण
-		अगर (म_भेद(*argv, "-A") == 0) अणु
+			continue;
+		}
+		if (strcmp(*argv, "-A") == 0) {
 			atflag |= AT_NO_AUTOMOUNT;
-			जारी;
-		पूर्ण
-		अगर (म_भेद(*argv, "-R") == 0) अणु
+			continue;
+		}
+		if (strcmp(*argv, "-R") == 0) {
 			raw = 1;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		स_रखो(&stx, 0xbf, माप(stx));
+		memset(&stx, 0xbf, sizeof(stx));
 		ret = statx(AT_FDCWD, *argv, atflag, mask, &stx);
-		म_लिखो("statx(%s) = %d\n", *argv, ret);
-		अगर (ret < 0) अणु
-			लिखो_त्रुटि(*argv);
-			निकास(1);
-		पूर्ण
+		printf("statx(%s) = %d\n", *argv, ret);
+		if (ret < 0) {
+			perror(*argv);
+			exit(1);
+		}
 
-		अगर (raw)
-			dump_hex((अचिन्हित दीर्घ दीर्घ *)&stx, 0, माप(stx));
+		if (raw)
+			dump_hex((unsigned long long *)&stx, 0, sizeof(stx));
 
 		dump_statx(&stx);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

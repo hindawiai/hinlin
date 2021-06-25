@@ -1,104 +1,103 @@
-<शैली गुरु>
 /*
  *  Atari Falcon IDE Driver
  *
  *     Created 12 Jul 1997 by Geert Uytterhoeven
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License.  See the file COPYING in the main directory of this archive for
  *  more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <linux/blkdev.h>
+#include <linux/ide.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
 
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/atarihw.h>
-#समावेश <यंत्र/atariपूर्णांकs.h>
-#समावेश <यंत्र/atari_stdma.h>
-#समावेश <यंत्र/ide.h>
+#include <asm/setup.h>
+#include <asm/atarihw.h>
+#include <asm/atariints.h>
+#include <asm/atari_stdma.h>
+#include <asm/ide.h>
 
-#घोषणा DRV_NAME "falconide"
+#define DRV_NAME "falconide"
 
     /*
      *  Offsets from base address
      */
 
-#घोषणा ATA_HD_CONTROL	0x39
+#define ATA_HD_CONTROL	0x39
 
     /*
-     *  falconide_पूर्णांकr_lock is used to obtain access to the IDE पूर्णांकerrupt,
+     *  falconide_intr_lock is used to obtain access to the IDE interrupt,
      *  which is shared between several drivers.
      */
 
-अटल पूर्णांक falconide_पूर्णांकr_lock;
+static int falconide_intr_lock;
 
-अटल व्योम falconide_release_lock(व्योम)
-अणु
-	अगर (falconide_पूर्णांकr_lock == 0) अणु
-		prपूर्णांकk(KERN_ERR "%s: bug\n", __func__);
-		वापस;
-	पूर्ण
-	falconide_पूर्णांकr_lock = 0;
+static void falconide_release_lock(void)
+{
+	if (falconide_intr_lock == 0) {
+		printk(KERN_ERR "%s: bug\n", __func__);
+		return;
+	}
+	falconide_intr_lock = 0;
 	stdma_release();
-पूर्ण
+}
 
-अटल व्योम falconide_get_lock(irq_handler_t handler, व्योम *data)
-अणु
-	अगर (falconide_पूर्णांकr_lock == 0) अणु
+static void falconide_get_lock(irq_handler_t handler, void *data)
+{
+	if (falconide_intr_lock == 0) {
 		stdma_lock(handler, data);
-		falconide_पूर्णांकr_lock = 1;
-	पूर्ण
-पूर्ण
+		falconide_intr_lock = 1;
+	}
+}
 
-अटल व्योम falconide_input_data(ide_drive_t *drive, काष्ठा ide_cmd *cmd,
-				 व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित दीर्घ data_addr = drive->hwअगर->io_ports.data_addr;
+static void falconide_input_data(ide_drive_t *drive, struct ide_cmd *cmd,
+				 void *buf, unsigned int len)
+{
+	unsigned long data_addr = drive->hwif->io_ports.data_addr;
 
-	अगर (drive->media == ide_disk && cmd && (cmd->tf_flags & IDE_TFLAG_FS)) अणु
+	if (drive->media == ide_disk && cmd && (cmd->tf_flags & IDE_TFLAG_FS)) {
 		__ide_mm_insw(data_addr, buf, (len + 1) / 2);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_insw_swapw((u16 *)data_addr, buf, (len + 1) / 2);
-पूर्ण
+}
 
-अटल व्योम falconide_output_data(ide_drive_t *drive, काष्ठा ide_cmd *cmd,
-				  व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित दीर्घ data_addr = drive->hwअगर->io_ports.data_addr;
+static void falconide_output_data(ide_drive_t *drive, struct ide_cmd *cmd,
+				  void *buf, unsigned int len)
+{
+	unsigned long data_addr = drive->hwif->io_ports.data_addr;
 
-	अगर (drive->media == ide_disk && cmd && (cmd->tf_flags & IDE_TFLAG_FS)) अणु
+	if (drive->media == ide_disk && cmd && (cmd->tf_flags & IDE_TFLAG_FS)) {
 		__ide_mm_outsw(data_addr, buf, (len + 1) / 2);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	raw_outsw_swapw((u16 *)data_addr, buf, (len + 1) / 2);
-पूर्ण
+}
 
-/* Atari has a byte-swapped IDE पूर्णांकerface */
-अटल स्थिर काष्ठा ide_tp_ops falconide_tp_ops = अणु
+/* Atari has a byte-swapped IDE interface */
+static const struct ide_tp_ops falconide_tp_ops = {
 	.exec_command		= ide_exec_command,
-	.पढ़ो_status		= ide_पढ़ो_status,
-	.पढ़ो_altstatus		= ide_पढ़ो_altstatus,
-	.ग_लिखो_devctl		= ide_ग_लिखो_devctl,
+	.read_status		= ide_read_status,
+	.read_altstatus		= ide_read_altstatus,
+	.write_devctl		= ide_write_devctl,
 
 	.dev_select		= ide_dev_select,
 	.tf_load		= ide_tf_load,
-	.tf_पढ़ो		= ide_tf_पढ़ो,
+	.tf_read		= ide_tf_read,
 
 	.input_data		= falconide_input_data,
 	.output_data		= falconide_output_data,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_info falconide_port_info = अणु
+static const struct ide_port_info falconide_port_info = {
 	.get_lock		= falconide_get_lock,
 	.release_lock		= falconide_release_lock,
 	.tp_ops			= &falconide_tp_ops,
@@ -106,91 +105,91 @@
 				  IDE_HFLAG_NO_DMA,
 	.irq_flags		= IRQF_SHARED,
 	.chipset		= ide_generic,
-पूर्ण;
+};
 
-अटल व्योम __init falconide_setup_ports(काष्ठा ide_hw *hw, अचिन्हित दीर्घ base)
-अणु
-	पूर्णांक i;
+static void __init falconide_setup_ports(struct ide_hw *hw, unsigned long base)
+{
+	int i;
 
-	स_रखो(hw, 0, माप(*hw));
+	memset(hw, 0, sizeof(*hw));
 
 	hw->io_ports.data_addr = base;
 
-	क्रम (i = 1; i < 8; i++)
+	for (i = 1; i < 8; i++)
 		hw->io_ports_array[i] = base + 1 + i * 4;
 
 	hw->io_ports.ctl_addr = base + ATA_HD_CONTROL;
 
 	hw->irq = IRQ_MFP_IDE;
-पूर्ण
+}
 
     /*
-     *  Probe क्रम a Falcon IDE पूर्णांकerface
+     *  Probe for a Falcon IDE interface
      */
 
-अटल पूर्णांक __init falconide_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा ide_host *host;
-	काष्ठा ide_hw hw, *hws[] = अणु &hw पूर्ण;
-	अचिन्हित दीर्घ base;
-	पूर्णांक rc;
+static int __init falconide_init(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct ide_host *host;
+	struct ide_hw hw, *hws[] = { &hw };
+	unsigned long base;
+	int rc;
 
 	dev_info(&pdev->dev, "Atari Falcon IDE controller\n");
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENODEV;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENODEV;
 
-	अगर (!devm_request_mem_region(&pdev->dev, res->start,
-				     resource_size(res), DRV_NAME)) अणु
+	if (!devm_request_mem_region(&pdev->dev, res->start,
+				     resource_size(res), DRV_NAME)) {
 		dev_err(&pdev->dev, "resources busy\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	base = (अचिन्हित दीर्घ)res->start;
+	base = (unsigned long)res->start;
 
 	falconide_setup_ports(&hw, base);
 
 	host = ide_host_alloc(&falconide_port_info, hws, 1);
-	अगर (host == शून्य) अणु
+	if (host == NULL) {
 		rc = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	falconide_get_lock(शून्य, शून्य);
-	rc = ide_host_रेजिस्टर(host, &falconide_port_info, hws);
+	falconide_get_lock(NULL, NULL);
+	rc = ide_host_register(host, &falconide_port_info, hws);
 	falconide_release_lock();
 
-	अगर (rc)
-		जाओ err_मुक्त;
+	if (rc)
+		goto err_free;
 
-	platक्रमm_set_drvdata(pdev, host);
-	वापस 0;
-err_मुक्त:
-	ide_host_मुक्त(host);
+	platform_set_drvdata(pdev, host);
+	return 0;
+err_free:
+	ide_host_free(host);
 err:
 	release_mem_region(res->start, resource_size(res));
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक falconide_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ide_host *host = platक्रमm_get_drvdata(pdev);
+static int falconide_remove(struct platform_device *pdev)
+{
+	struct ide_host *host = platform_get_drvdata(pdev);
 
-	ide_host_हटाओ(host);
+	ide_host_remove(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ide_falcon_driver = अणु
-	.हटाओ = falconide_हटाओ,
-	.driver   = अणु
+static struct platform_driver ide_falcon_driver = {
+	.remove = falconide_remove,
+	.driver   = {
 		.name	= "atari-falcon-ide",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver_probe(ide_falcon_driver, falconide_init);
+module_platform_driver_probe(ide_falcon_driver, falconide_init);
 
 MODULE_AUTHOR("Geert Uytterhoeven");
 MODULE_DESCRIPTION("low-level driver for Atari Falcon IDE");

@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानकघोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <stdbool.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/pkt_cls.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
+#include <linux/bpf.h>
+#include <linux/stddef.h>
+#include <linux/pkt_cls.h>
+#include <linux/if_ether.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
 
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-#अगर_अघोषित ctx_ptr
-# define ctx_ptr(field)		(व्योम *)(दीर्घ)(field)
-#पूर्ण_अगर
+#ifndef ctx_ptr
+# define ctx_ptr(field)		(void *)(long)(field)
+#endif
 
-#घोषणा ip4_src			0xac100164 /* 172.16.1.100 */
-#घोषणा ip4_dst			0xac100264 /* 172.16.2.100 */
+#define ip4_src			0xac100164 /* 172.16.1.100 */
+#define ip4_dst			0xac100264 /* 172.16.2.100 */
 
-#घोषणा ip6_src			अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-				  0x00, 0x01, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe पूर्ण
-#घोषणा ip6_dst			अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-				  0x00, 0x02, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe पूर्ण
+#define ip6_src			{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+				  0x00, 0x01, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe }
+#define ip6_dst			{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+				  0x00, 0x02, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe }
 
-#अगर_अघोषित v6_equal
+#ifndef v6_equal
 # define v6_equal(a, b)		(a.s6_addr32[0] == b.s6_addr32[0] && \
 				 a.s6_addr32[1] == b.s6_addr32[1] && \
 				 a.s6_addr32[2] == b.s6_addr32[2] && \
 				 a.s6_addr32[3] == b.s6_addr32[3])
-#पूर्ण_अगर
+#endif
 
-अस्थिर स्थिर __u32 IFINDEX_SRC;
-अस्थिर स्थिर __u32 IFINDEX_DST;
+volatile const __u32 IFINDEX_SRC;
+volatile const __u32 IFINDEX_DST;
 
-अटल __always_अंतरभूत bool is_remote_ep_v4(काष्ठा __sk_buff *skb,
+static __always_inline bool is_remote_ep_v4(struct __sk_buff *skb,
 					    __be32 addr)
-अणु
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
-	काष्ठा iphdr *ip4h;
+{
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
+	struct iphdr *ip4h;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस false;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return false;
 
-	ip4h = (काष्ठा iphdr *)(data + माप(काष्ठा ethhdr));
-	अगर ((व्योम *)(ip4h + 1) > data_end)
-		वापस false;
+	ip4h = (struct iphdr *)(data + sizeof(struct ethhdr));
+	if ((void *)(ip4h + 1) > data_end)
+		return false;
 
-	वापस ip4h->daddr == addr;
-पूर्ण
+	return ip4h->daddr == addr;
+}
 
-अटल __always_अंतरभूत bool is_remote_ep_v6(काष्ठा __sk_buff *skb,
-					    काष्ठा in6_addr addr)
-अणु
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
-	काष्ठा ipv6hdr *ip6h;
+static __always_inline bool is_remote_ep_v6(struct __sk_buff *skb,
+					    struct in6_addr addr)
+{
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
+	struct ipv6hdr *ip6h;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस false;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return false;
 
-	ip6h = (काष्ठा ipv6hdr *)(data + माप(काष्ठा ethhdr));
-	अगर ((व्योम *)(ip6h + 1) > data_end)
-		वापस false;
+	ip6h = (struct ipv6hdr *)(data + sizeof(struct ethhdr));
+	if ((void *)(ip6h + 1) > data_end)
+		return false;
 
-	वापस v6_equal(ip6h->daddr, addr);
-पूर्ण
+	return v6_equal(ip6h->daddr, addr);
+}
 
 SEC("classifier/chk_egress")
-पूर्णांक tc_chk(काष्ठा __sk_buff *skb)
-अणु
-	व्योम *data_end = ctx_ptr(skb->data_end);
-	व्योम *data = ctx_ptr(skb->data);
+int tc_chk(struct __sk_buff *skb)
+{
+	void *data_end = ctx_ptr(skb->data_end);
+	void *data = ctx_ptr(skb->data);
 	__u32 *raw = data;
 
-	अगर (data + माप(काष्ठा ethhdr) > data_end)
-		वापस TC_ACT_SHOT;
+	if (data + sizeof(struct ethhdr) > data_end)
+		return TC_ACT_SHOT;
 
-	वापस !raw[0] && !raw[1] && !raw[2] ? TC_ACT_SHOT : TC_ACT_OK;
-पूर्ण
+	return !raw[0] && !raw[1] && !raw[2] ? TC_ACT_SHOT : TC_ACT_OK;
+}
 
 SEC("classifier/dst_ingress")
-पूर्णांक tc_dst(काष्ठा __sk_buff *skb)
-अणु
+int tc_dst(struct __sk_buff *skb)
+{
 	__u8 zero[ETH_ALEN * 2];
 	bool redirect = false;
 
-	चयन (skb->protocol) अणु
-	हाल __bpf_स्थिरant_htons(ETH_P_IP):
-		redirect = is_remote_ep_v4(skb, __bpf_स्थिरant_htonl(ip4_src));
-		अवरोध;
-	हाल __bpf_स्थिरant_htons(ETH_P_IPV6):
-		redirect = is_remote_ep_v6(skb, (काष्ठा in6_addr)ip6_src);
-		अवरोध;
-	पूर्ण
+	switch (skb->protocol) {
+	case __bpf_constant_htons(ETH_P_IP):
+		redirect = is_remote_ep_v4(skb, __bpf_constant_htonl(ip4_src));
+		break;
+	case __bpf_constant_htons(ETH_P_IPV6):
+		redirect = is_remote_ep_v6(skb, (struct in6_addr)ip6_src);
+		break;
+	}
 
-	अगर (!redirect)
-		वापस TC_ACT_OK;
+	if (!redirect)
+		return TC_ACT_OK;
 
-	__builtin_स_रखो(&zero, 0, माप(zero));
-	अगर (bpf_skb_store_bytes(skb, 0, &zero, माप(zero), 0) < 0)
-		वापस TC_ACT_SHOT;
+	__builtin_memset(&zero, 0, sizeof(zero));
+	if (bpf_skb_store_bytes(skb, 0, &zero, sizeof(zero), 0) < 0)
+		return TC_ACT_SHOT;
 
-	वापस bpf_redirect_neigh(IFINDEX_SRC, शून्य, 0, 0);
-पूर्ण
+	return bpf_redirect_neigh(IFINDEX_SRC, NULL, 0, 0);
+}
 
 SEC("classifier/src_ingress")
-पूर्णांक tc_src(काष्ठा __sk_buff *skb)
-अणु
+int tc_src(struct __sk_buff *skb)
+{
 	__u8 zero[ETH_ALEN * 2];
 	bool redirect = false;
 
-	चयन (skb->protocol) अणु
-	हाल __bpf_स्थिरant_htons(ETH_P_IP):
-		redirect = is_remote_ep_v4(skb, __bpf_स्थिरant_htonl(ip4_dst));
-		अवरोध;
-	हाल __bpf_स्थिरant_htons(ETH_P_IPV6):
-		redirect = is_remote_ep_v6(skb, (काष्ठा in6_addr)ip6_dst);
-		अवरोध;
-	पूर्ण
+	switch (skb->protocol) {
+	case __bpf_constant_htons(ETH_P_IP):
+		redirect = is_remote_ep_v4(skb, __bpf_constant_htonl(ip4_dst));
+		break;
+	case __bpf_constant_htons(ETH_P_IPV6):
+		redirect = is_remote_ep_v6(skb, (struct in6_addr)ip6_dst);
+		break;
+	}
 
-	अगर (!redirect)
-		वापस TC_ACT_OK;
+	if (!redirect)
+		return TC_ACT_OK;
 
-	__builtin_स_रखो(&zero, 0, माप(zero));
-	अगर (bpf_skb_store_bytes(skb, 0, &zero, माप(zero), 0) < 0)
-		वापस TC_ACT_SHOT;
+	__builtin_memset(&zero, 0, sizeof(zero));
+	if (bpf_skb_store_bytes(skb, 0, &zero, sizeof(zero), 0) < 0)
+		return TC_ACT_SHOT;
 
-	वापस bpf_redirect_neigh(IFINDEX_DST, शून्य, 0, 0);
-पूर्ण
+	return bpf_redirect_neigh(IFINDEX_DST, NULL, 0, 0);
+}
 
-अक्षर __license[] SEC("license") = "GPL";
+char __license[] SEC("license") = "GPL";

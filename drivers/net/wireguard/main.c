@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#समावेश "version.h"
-#समावेश "device.h"
-#समावेश "noise.h"
-#समावेश "queueing.h"
-#समावेश "ratelimiter.h"
-#समावेश "netlink.h"
+#include "version.h"
+#include "device.h"
+#include "noise.h"
+#include "queueing.h"
+#include "ratelimiter.h"
+#include "netlink.h"
 
-#समावेश <uapi/linux/wireguard.h>
+#include <uapi/linux/wireguard.h>
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/genetlink.h>
-#समावेश <net/rtnetlink.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/genetlink.h>
+#include <net/rtnetlink.h>
 
-अटल पूर्णांक __init mod_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init mod_init(void)
+{
+	int ret;
 
 	ret = wg_allowedips_slab_init();
-	अगर (ret < 0)
-		जाओ err_allowedips;
+	if (ret < 0)
+		goto err_allowedips;
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	ret = -ENOTRECOVERABLE;
-	अगर (!wg_allowedips_selftest() || !wg_packet_counter_selftest() ||
+	if (!wg_allowedips_selftest() || !wg_packet_counter_selftest() ||
 	    !wg_ratelimiter_selftest())
-		जाओ err_peer;
-#पूर्ण_अगर
+		goto err_peer;
+#endif
 	wg_noise_init();
 
 	ret = wg_peer_init();
-	अगर (ret < 0)
-		जाओ err_peer;
+	if (ret < 0)
+		goto err_peer;
 
 	ret = wg_device_init();
-	अगर (ret < 0)
-		जाओ err_device;
+	if (ret < 0)
+		goto err_device;
 
 	ret = wg_genetlink_init();
-	अगर (ret < 0)
-		जाओ err_netlink;
+	if (ret < 0)
+		goto err_netlink;
 
 	pr_info("WireGuard " WIREGUARD_VERSION " loaded. See www.wireguard.com for information.\n");
 	pr_info("Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.\n");
 
-	वापस 0;
+	return 0;
 
 err_netlink:
 	wg_device_uninit();
@@ -58,19 +57,19 @@ err_device:
 err_peer:
 	wg_allowedips_slab_uninit();
 err_allowedips:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास mod_निकास(व्योम)
-अणु
+static void __exit mod_exit(void)
+{
 	wg_genetlink_uninit();
 	wg_device_uninit();
 	wg_peer_uninit();
 	wg_allowedips_slab_uninit();
-पूर्ण
+}
 
 module_init(mod_init);
-module_निकास(mod_निकास);
+module_exit(mod_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("WireGuard secure network tunnel");
 MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com>");

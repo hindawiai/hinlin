@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2014-2015 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#अगर_अघोषित __IIO_DMAENGINE_H__
-#घोषणा __IIO_DMAENGINE_H__
+#ifndef __IIO_DMAENGINE_H__
+#define __IIO_DMAENGINE_H__
 
-काष्ठा iio_dev;
-काष्ठा device;
+struct iio_dev;
+struct device;
 
-पूर्णांक devm_iio_dmaengine_buffer_setup(काष्ठा device *dev,
-				    काष्ठा iio_dev *indio_dev,
-				    स्थिर अक्षर *channel);
+int devm_iio_dmaengine_buffer_setup(struct device *dev,
+				    struct iio_dev *indio_dev,
+				    const char *channel);
 
-#पूर्ण_अगर
+#endif

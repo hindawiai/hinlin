@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Actions Semi Leopard
  *
- * This file is based on arm realview smp platक्रमm.
+ * This file is based on arm realview smp platform.
  *
  * Copyright 2012 Actions Semi Inc.
  * Author: Actions Semi, Inc.
  *
- * Copyright (c) 2017 Andreas Fथअrber
+ * Copyright (c) 2017 Andreas Färber
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/soc/actions/owl-sps.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/smp_scu.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/smp.h>
+#include <linux/soc/actions/owl-sps.h>
+#include <asm/cacheflush.h>
+#include <asm/smp_plat.h>
+#include <asm/smp_scu.h>
 
-#घोषणा OWL_CPU1_ADDR	0x50
-#घोषणा OWL_CPU1_FLAG	0x5c
+#define OWL_CPU1_ADDR	0x50
+#define OWL_CPU1_FLAG	0x5c
 
-#घोषणा OWL_CPUx_FLAG_BOOT	0x55aa
+#define OWL_CPUx_FLAG_BOOT	0x55aa
 
-#घोषणा OWL_SPS_PG_CTL_PWR_CPU2	BIT(5)
-#घोषणा OWL_SPS_PG_CTL_PWR_CPU3	BIT(6)
-#घोषणा OWL_SPS_PG_CTL_ACK_CPU2	BIT(21)
-#घोषणा OWL_SPS_PG_CTL_ACK_CPU3	BIT(22)
+#define OWL_SPS_PG_CTL_PWR_CPU2	BIT(5)
+#define OWL_SPS_PG_CTL_PWR_CPU3	BIT(6)
+#define OWL_SPS_PG_CTL_ACK_CPU2	BIT(21)
+#define OWL_SPS_PG_CTL_ACK_CPU3	BIT(22)
 
-अटल व्योम __iomem *scu_base_addr;
-अटल व्योम __iomem *sps_base_addr;
-अटल व्योम __iomem *समयr_base_addr;
-अटल पूर्णांक ncores;
+static void __iomem *scu_base_addr;
+static void __iomem *sps_base_addr;
+static void __iomem *timer_base_addr;
+static int ncores;
 
-अटल पूर्णांक s500_wakeup_secondary(अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक ret;
+static int s500_wakeup_secondary(unsigned int cpu)
+{
+	int ret;
 
-	अगर (cpu > 3)
-		वापस -EINVAL;
+	if (cpu > 3)
+		return -EINVAL;
 
-	/* The generic PM करोमुख्य driver is not available this early. */
-	चयन (cpu) अणु
-	हाल 2:
+	/* The generic PM domain driver is not available this early. */
+	switch (cpu) {
+	case 2:
 		ret = owl_sps_set_pg(sps_base_addr,
 		                     OWL_SPS_PG_CTL_PWR_CPU2,
 				     OWL_SPS_PG_CTL_ACK_CPU2, true);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	हाल 3:
+		if (ret)
+			return ret;
+		break;
+	case 3:
 		ret = owl_sps_set_pg(sps_base_addr,
 		                     OWL_SPS_PG_CTL_PWR_CPU3,
 				     OWL_SPS_PG_CTL_ACK_CPU3, true);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	पूर्ण
+		if (ret)
+			return ret;
+		break;
+	}
 
-	/* रुको क्रम CPUx to run to WFE inकाष्ठाion */
+	/* wait for CPUx to run to WFE instruction */
 	udelay(200);
 
-	ग_लिखोl(__pa_symbol(secondary_startup),
-	       समयr_base_addr + OWL_CPU1_ADDR + (cpu - 1) * 4);
-	ग_लिखोl(OWL_CPUx_FLAG_BOOT,
-	       समयr_base_addr + OWL_CPU1_FLAG + (cpu - 1) * 4);
+	writel(__pa_symbol(secondary_startup),
+	       timer_base_addr + OWL_CPU1_ADDR + (cpu - 1) * 4);
+	writel(OWL_CPUx_FLAG_BOOT,
+	       timer_base_addr + OWL_CPU1_FLAG + (cpu - 1) * 4);
 
 	dsb_sev();
 	mb();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s500_smp_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	पूर्णांक ret;
+static int s500_smp_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	int ret;
 
 	ret = s500_wakeup_secondary(cpu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	udelay(10);
 
 	smp_send_reschedule(cpu);
 
-	ग_लिखोl(0, समयr_base_addr + OWL_CPU1_ADDR + (cpu - 1) * 4);
-	ग_लिखोl(0, समयr_base_addr + OWL_CPU1_FLAG + (cpu - 1) * 4);
+	writel(0, timer_base_addr + OWL_CPU1_ADDR + (cpu - 1) * 4);
+	writel(0, timer_base_addr + OWL_CPU1_FLAG + (cpu - 1) * 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init s500_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	काष्ठा device_node *node;
+static void __init s500_smp_prepare_cpus(unsigned int max_cpus)
+{
+	struct device_node *node;
 
-	node = of_find_compatible_node(शून्य, शून्य, "actions,s500-timer");
-	अगर (!node) अणु
+	node = of_find_compatible_node(NULL, NULL, "actions,s500-timer");
+	if (!node) {
 		pr_err("%s: missing timer\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	समयr_base_addr = of_iomap(node, 0);
-	अगर (!समयr_base_addr) अणु
+	timer_base_addr = of_iomap(node, 0);
+	if (!timer_base_addr) {
 		pr_err("%s: could not map timer registers\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	node = of_find_compatible_node(शून्य, शून्य, "actions,s500-sps");
-	अगर (!node) अणु
+	node = of_find_compatible_node(NULL, NULL, "actions,s500-sps");
+	if (!node) {
 		pr_err("%s: missing sps\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sps_base_addr = of_iomap(node, 0);
-	अगर (!sps_base_addr) अणु
+	if (!sps_base_addr) {
 		pr_err("%s: could not map sps registers\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_CORTEX_A9) अणु
-		node = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9-scu");
-		अगर (!node) अणु
+	if (read_cpuid_part() == ARM_CPU_PART_CORTEX_A9) {
+		node = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-scu");
+		if (!node) {
 			pr_err("%s: missing scu\n", __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		scu_base_addr = of_iomap(node, 0);
-		अगर (!scu_base_addr) अणु
+		if (!scu_base_addr) {
 			pr_err("%s: could not map scu registers\n", __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/*
 		 * While the number of cpus is gathered from dt, also get the
-		 * number of cores from the scu to verअगरy this value when
+		 * number of cores from the scu to verify this value when
 		 * booting the cores.
 		 */
 		ncores = scu_get_core_count(scu_base_addr);
 		pr_debug("%s: ncores %d\n", __func__, ncores);
 
 		scu_enable(scu_base_addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा smp_operations s500_smp_ops __initस्थिर = अणु
+static const struct smp_operations s500_smp_ops __initconst = {
 	.smp_prepare_cpus = s500_smp_prepare_cpus,
 	.smp_boot_secondary = s500_smp_boot_secondary,
-पूर्ण;
+};
 CPU_METHOD_OF_DECLARE(s500_smp, "actions,s500-smp", &s500_smp_ops);

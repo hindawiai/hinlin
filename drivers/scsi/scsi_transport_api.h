@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SCSI_TRANSPORT_API_H
-#घोषणा _SCSI_TRANSPORT_API_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SCSI_TRANSPORT_API_H
+#define _SCSI_TRANSPORT_API_H
 
-व्योम scsi_schedule_eh(काष्ठा Scsi_Host *shost);
+void scsi_schedule_eh(struct Scsi_Host *shost);
 
-#पूर्ण_अगर /* _SCSI_TRANSPORT_API_H */
+#endif /* _SCSI_TRANSPORT_API_H */

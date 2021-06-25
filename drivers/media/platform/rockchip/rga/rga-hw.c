@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
-#समावेश <linux/pm_runसमय.स>
+#include <linux/pm_runtime.h>
 
-#समावेश "rga-hw.h"
-#समावेश "rga.h"
+#include "rga-hw.h"
+#include "rga.h"
 
-क्रमागत e_rga_start_pos अणु
+enum e_rga_start_pos {
 	LT = 0,
 	LB = 1,
 	RT = 2,
 	RB = 3,
-पूर्ण;
+};
 
-काष्ठा rga_addr_offset अणु
-	अचिन्हित पूर्णांक y_off;
-	अचिन्हित पूर्णांक u_off;
-	अचिन्हित पूर्णांक v_off;
-पूर्ण;
+struct rga_addr_offset {
+	unsigned int y_off;
+	unsigned int u_off;
+	unsigned int v_off;
+};
 
-काष्ठा rga_corners_addr_offset अणु
-	काष्ठा rga_addr_offset left_top;
-	काष्ठा rga_addr_offset right_top;
-	काष्ठा rga_addr_offset left_bottom;
-	काष्ठा rga_addr_offset right_bottom;
-पूर्ण;
+struct rga_corners_addr_offset {
+	struct rga_addr_offset left_top;
+	struct rga_addr_offset right_top;
+	struct rga_addr_offset left_bottom;
+	struct rga_addr_offset right_bottom;
+};
 
-अटल अचिन्हित पूर्णांक rga_get_scaling(अचिन्हित पूर्णांक src, अचिन्हित पूर्णांक dst)
-अणु
+static unsigned int rga_get_scaling(unsigned int src, unsigned int dst)
+{
 	/*
 	 * The rga hw scaling factor is a normalized inverse of the
 	 * scaling factor.
@@ -40,143 +39,143 @@
 	 * The normalization factor (NC) is 2^16 = 0x10000.
 	 */
 
-	वापस (src > dst) ? ((dst << 16) / src) : ((src << 16) / dst);
-पूर्ण
+	return (src > dst) ? ((dst << 16) / src) : ((src << 16) / dst);
+}
 
-अटल काष्ठा rga_corners_addr_offset
-rga_get_addr_offset(काष्ठा rga_frame *frm, अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y,
-		    अचिन्हित पूर्णांक w, अचिन्हित पूर्णांक h)
-अणु
-	काष्ठा rga_corners_addr_offset offsets;
-	काष्ठा rga_addr_offset *lt, *lb, *rt, *rb;
-	अचिन्हित पूर्णांक x_भाग = 0,
-		     y_भाग = 0, uv_stride = 0, pixel_width = 0, uv_factor = 0;
+static struct rga_corners_addr_offset
+rga_get_addr_offset(struct rga_frame *frm, unsigned int x, unsigned int y,
+		    unsigned int w, unsigned int h)
+{
+	struct rga_corners_addr_offset offsets;
+	struct rga_addr_offset *lt, *lb, *rt, *rb;
+	unsigned int x_div = 0,
+		     y_div = 0, uv_stride = 0, pixel_width = 0, uv_factor = 0;
 
 	lt = &offsets.left_top;
 	lb = &offsets.left_bottom;
 	rt = &offsets.right_top;
 	rb = &offsets.right_bottom;
 
-	x_भाग = frm->fmt->x_भाग;
-	y_भाग = frm->fmt->y_भाग;
+	x_div = frm->fmt->x_div;
+	y_div = frm->fmt->y_div;
 	uv_factor = frm->fmt->uv_factor;
-	uv_stride = frm->stride / x_भाग;
+	uv_stride = frm->stride / x_div;
 	pixel_width = frm->stride / frm->width;
 
 	lt->y_off = y * frm->stride + x * pixel_width;
 	lt->u_off =
-		frm->width * frm->height + (y / y_भाग) * uv_stride + x / x_भाग;
+		frm->width * frm->height + (y / y_div) * uv_stride + x / x_div;
 	lt->v_off = lt->u_off + frm->width * frm->height / uv_factor;
 
 	lb->y_off = lt->y_off + (h - 1) * frm->stride;
-	lb->u_off = lt->u_off + (h / y_भाग - 1) * uv_stride;
-	lb->v_off = lt->v_off + (h / y_भाग - 1) * uv_stride;
+	lb->u_off = lt->u_off + (h / y_div - 1) * uv_stride;
+	lb->v_off = lt->v_off + (h / y_div - 1) * uv_stride;
 
 	rt->y_off = lt->y_off + (w - 1) * pixel_width;
-	rt->u_off = lt->u_off + w / x_भाग - 1;
-	rt->v_off = lt->v_off + w / x_भाग - 1;
+	rt->u_off = lt->u_off + w / x_div - 1;
+	rt->v_off = lt->v_off + w / x_div - 1;
 
 	rb->y_off = lb->y_off + (w - 1) * pixel_width;
-	rb->u_off = lb->u_off + w / x_भाग - 1;
-	rb->v_off = lb->v_off + w / x_भाग - 1;
+	rb->u_off = lb->u_off + w / x_div - 1;
+	rb->v_off = lb->v_off + w / x_div - 1;
 
-	वापस offsets;
-पूर्ण
+	return offsets;
+}
 
-अटल काष्ठा rga_addr_offset *rga_lookup_draw_pos(काष्ठा
+static struct rga_addr_offset *rga_lookup_draw_pos(struct
 		rga_corners_addr_offset
 		* offsets, u32 rotate_mode,
 		u32 mirr_mode)
-अणु
-	अटल क्रमागत e_rga_start_pos rot_mir_poपूर्णांक_matrix[4][4] = अणु
-		अणु
+{
+	static enum e_rga_start_pos rot_mir_point_matrix[4][4] = {
+		{
 			LT, RT, LB, RB,
-		पूर्ण,
-		अणु
+		},
+		{
 			RT, LT, RB, LB,
-		पूर्ण,
-		अणु
+		},
+		{
 			RB, LB, RT, LT,
-		पूर्ण,
-		अणु
+		},
+		{
 			LB, RB, LT, RT,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	अगर (!offsets)
-		वापस शून्य;
+	if (!offsets)
+		return NULL;
 
-	चयन (rot_mir_poपूर्णांक_matrix[rotate_mode][mirr_mode]) अणु
-	हाल LT:
-		वापस &offsets->left_top;
-	हाल LB:
-		वापस &offsets->left_bottom;
-	हाल RT:
-		वापस &offsets->right_top;
-	हाल RB:
-		वापस &offsets->right_bottom;
-	पूर्ण
+	switch (rot_mir_point_matrix[rotate_mode][mirr_mode]) {
+	case LT:
+		return &offsets->left_top;
+	case LB:
+		return &offsets->left_bottom;
+	case RT:
+		return &offsets->right_top;
+	case RB:
+		return &offsets->right_bottom;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम rga_cmd_set_src_addr(काष्ठा rga_ctx *ctx, व्योम *mmu_pages)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set_src_addr(struct rga_ctx *ctx, void *mmu_pages)
+{
+	struct rockchip_rga *rga = ctx->rga;
 	u32 *dest = rga->cmdbuf_virt;
-	अचिन्हित पूर्णांक reg;
+	unsigned int reg;
 
 	reg = RGA_MMU_SRC_BASE - RGA_MODE_BASE_REG;
 	dest[reg >> 2] = virt_to_phys(mmu_pages) >> 4;
 
 	reg = RGA_MMU_CTRL1 - RGA_MODE_BASE_REG;
 	dest[reg >> 2] |= 0x7;
-पूर्ण
+}
 
-अटल व्योम rga_cmd_set_src1_addr(काष्ठा rga_ctx *ctx, व्योम *mmu_pages)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set_src1_addr(struct rga_ctx *ctx, void *mmu_pages)
+{
+	struct rockchip_rga *rga = ctx->rga;
 	u32 *dest = rga->cmdbuf_virt;
-	अचिन्हित पूर्णांक reg;
+	unsigned int reg;
 
 	reg = RGA_MMU_SRC1_BASE - RGA_MODE_BASE_REG;
 	dest[reg >> 2] = virt_to_phys(mmu_pages) >> 4;
 
 	reg = RGA_MMU_CTRL1 - RGA_MODE_BASE_REG;
 	dest[reg >> 2] |= 0x7 << 4;
-पूर्ण
+}
 
-अटल व्योम rga_cmd_set_dst_addr(काष्ठा rga_ctx *ctx, व्योम *mmu_pages)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set_dst_addr(struct rga_ctx *ctx, void *mmu_pages)
+{
+	struct rockchip_rga *rga = ctx->rga;
 	u32 *dest = rga->cmdbuf_virt;
-	अचिन्हित पूर्णांक reg;
+	unsigned int reg;
 
 	reg = RGA_MMU_DST_BASE - RGA_MODE_BASE_REG;
 	dest[reg >> 2] = virt_to_phys(mmu_pages) >> 4;
 
 	reg = RGA_MMU_CTRL1 - RGA_MODE_BASE_REG;
 	dest[reg >> 2] |= 0x7 << 8;
-पूर्ण
+}
 
-अटल व्योम rga_cmd_set_trans_info(काष्ठा rga_ctx *ctx)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set_trans_info(struct rga_ctx *ctx)
+{
+	struct rockchip_rga *rga = ctx->rga;
 	u32 *dest = rga->cmdbuf_virt;
-	अचिन्हित पूर्णांक scale_dst_w, scale_dst_h;
-	अचिन्हित पूर्णांक src_h, src_w, src_x, src_y, dst_h, dst_w, dst_x, dst_y;
-	जोड़ rga_src_info src_info;
-	जोड़ rga_dst_info dst_info;
-	जोड़ rga_src_x_factor x_factor;
-	जोड़ rga_src_y_factor y_factor;
-	जोड़ rga_src_vir_info src_vir_info;
-	जोड़ rga_src_act_info src_act_info;
-	जोड़ rga_dst_vir_info dst_vir_info;
-	जोड़ rga_dst_act_info dst_act_info;
+	unsigned int scale_dst_w, scale_dst_h;
+	unsigned int src_h, src_w, src_x, src_y, dst_h, dst_w, dst_x, dst_y;
+	union rga_src_info src_info;
+	union rga_dst_info dst_info;
+	union rga_src_x_factor x_factor;
+	union rga_src_y_factor y_factor;
+	union rga_src_vir_info src_vir_info;
+	union rga_src_act_info src_act_info;
+	union rga_dst_vir_info dst_vir_info;
+	union rga_dst_act_info dst_act_info;
 
-	काष्ठा rga_addr_offset *dst_offset;
-	काष्ठा rga_corners_addr_offset offsets;
-	काष्ठा rga_corners_addr_offset src_offsets;
+	struct rga_addr_offset *dst_offset;
+	struct rga_corners_addr_offset offsets;
+	struct rga_corners_addr_offset src_offsets;
 
 	src_h = ctx->in.crop.height;
 	src_w = ctx->in.crop.width;
@@ -196,111 +195,111 @@ rga_get_addr_offset(काष्ठा rga_frame *frm, अचिन्हित 
 	dst_vir_info.val = dest[(RGA_DST_VIR_INFO - RGA_MODE_BASE_REG) >> 2];
 	dst_act_info.val = dest[(RGA_DST_ACT_INFO - RGA_MODE_BASE_REG) >> 2];
 
-	src_info.data.क्रमmat = ctx->in.fmt->hw_क्रमmat;
+	src_info.data.format = ctx->in.fmt->hw_format;
 	src_info.data.swap = ctx->in.fmt->color_swap;
-	dst_info.data.क्रमmat = ctx->out.fmt->hw_क्रमmat;
+	dst_info.data.format = ctx->out.fmt->hw_format;
 	dst_info.data.swap = ctx->out.fmt->color_swap;
 
 	/*
-	 * CSC mode must only be set when the colorspace families dअगरfer between
-	 * input and output. It must reमुख्य unset (zeroed) अगर both are the same.
+	 * CSC mode must only be set when the colorspace families differ between
+	 * input and output. It must remain unset (zeroed) if both are the same.
 	 */
 
-	अगर (RGA_COLOR_FMT_IS_YUV(ctx->in.fmt->hw_क्रमmat) &&
-	    RGA_COLOR_FMT_IS_RGB(ctx->out.fmt->hw_क्रमmat)) अणु
-		चयन (ctx->in.colorspace) अणु
-		हाल V4L2_COLORSPACE_REC709:
+	if (RGA_COLOR_FMT_IS_YUV(ctx->in.fmt->hw_format) &&
+	    RGA_COLOR_FMT_IS_RGB(ctx->out.fmt->hw_format)) {
+		switch (ctx->in.colorspace) {
+		case V4L2_COLORSPACE_REC709:
 			src_info.data.csc_mode = RGA_SRC_CSC_MODE_BT709_R0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			src_info.data.csc_mode = RGA_SRC_CSC_MODE_BT601_R0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (RGA_COLOR_FMT_IS_RGB(ctx->in.fmt->hw_क्रमmat) &&
-	    RGA_COLOR_FMT_IS_YUV(ctx->out.fmt->hw_क्रमmat)) अणु
-		चयन (ctx->out.colorspace) अणु
-		हाल V4L2_COLORSPACE_REC709:
+	if (RGA_COLOR_FMT_IS_RGB(ctx->in.fmt->hw_format) &&
+	    RGA_COLOR_FMT_IS_YUV(ctx->out.fmt->hw_format)) {
+		switch (ctx->out.colorspace) {
+		case V4L2_COLORSPACE_REC709:
 			dst_info.data.csc_mode = RGA_SRC_CSC_MODE_BT709_R0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dst_info.data.csc_mode = RGA_DST_CSC_MODE_BT601_R0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ctx->vflip)
+	if (ctx->vflip)
 		src_info.data.mir_mode |= RGA_SRC_MIRR_MODE_X;
 
-	अगर (ctx->hflip)
+	if (ctx->hflip)
 		src_info.data.mir_mode |= RGA_SRC_MIRR_MODE_Y;
 
-	चयन (ctx->rotate) अणु
-	हाल 90:
+	switch (ctx->rotate) {
+	case 90:
 		src_info.data.rot_mode = RGA_SRC_ROT_MODE_90_DEGREE;
-		अवरोध;
-	हाल 180:
+		break;
+	case 180:
 		src_info.data.rot_mode = RGA_SRC_ROT_MODE_180_DEGREE;
-		अवरोध;
-	हाल 270:
+		break;
+	case 270:
 		src_info.data.rot_mode = RGA_SRC_ROT_MODE_270_DEGREE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		src_info.data.rot_mode = RGA_SRC_ROT_MODE_0_DEGREE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * Calculate the up/करोwn scaling mode/factor.
+	 * Calculate the up/down scaling mode/factor.
 	 *
 	 * RGA used to scale the picture first, and then rotate second,
 	 * so we need to swap the w/h when rotate degree is 90/270.
 	 */
-	अगर (src_info.data.rot_mode == RGA_SRC_ROT_MODE_90_DEGREE ||
-	    src_info.data.rot_mode == RGA_SRC_ROT_MODE_270_DEGREE) अणु
-		अगर (rga->version.major == 0 || rga->version.minor == 0) अणु
-			अगर (dst_w == src_h)
+	if (src_info.data.rot_mode == RGA_SRC_ROT_MODE_90_DEGREE ||
+	    src_info.data.rot_mode == RGA_SRC_ROT_MODE_270_DEGREE) {
+		if (rga->version.major == 0 || rga->version.minor == 0) {
+			if (dst_w == src_h)
 				src_h -= 8;
-			अगर (असल(src_w - dst_h) < 16)
+			if (abs(src_w - dst_h) < 16)
 				src_w -= 16;
-		पूर्ण
+		}
 
 		scale_dst_h = dst_w;
 		scale_dst_w = dst_h;
-	पूर्ण अन्यथा अणु
+	} else {
 		scale_dst_w = dst_w;
 		scale_dst_h = dst_h;
-	पूर्ण
+	}
 
-	अगर (src_w == scale_dst_w) अणु
+	if (src_w == scale_dst_w) {
 		src_info.data.hscl_mode = RGA_SRC_HSCL_MODE_NO;
 		x_factor.val = 0;
-	पूर्ण अन्यथा अगर (src_w > scale_dst_w) अणु
+	} else if (src_w > scale_dst_w) {
 		src_info.data.hscl_mode = RGA_SRC_HSCL_MODE_DOWN;
-		x_factor.data.करोwn_scale_factor =
+		x_factor.data.down_scale_factor =
 			rga_get_scaling(src_w, scale_dst_w) + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		src_info.data.hscl_mode = RGA_SRC_HSCL_MODE_UP;
 		x_factor.data.up_scale_factor =
 			rga_get_scaling(src_w - 1, scale_dst_w - 1);
-	पूर्ण
+	}
 
-	अगर (src_h == scale_dst_h) अणु
+	if (src_h == scale_dst_h) {
 		src_info.data.vscl_mode = RGA_SRC_VSCL_MODE_NO;
 		y_factor.val = 0;
-	पूर्ण अन्यथा अगर (src_h > scale_dst_h) अणु
+	} else if (src_h > scale_dst_h) {
 		src_info.data.vscl_mode = RGA_SRC_VSCL_MODE_DOWN;
-		y_factor.data.करोwn_scale_factor =
+		y_factor.data.down_scale_factor =
 			rga_get_scaling(src_h, scale_dst_h) + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		src_info.data.vscl_mode = RGA_SRC_VSCL_MODE_UP;
 		y_factor.data.up_scale_factor =
 			rga_get_scaling(src_h - 1, scale_dst_h - 1);
-	पूर्ण
+	}
 
 	/*
-	 * Calculate the framebuffer भव strides and active size,
+	 * Calculate the framebuffer virtual strides and active size,
 	 * note that the step of vir_stride / vir_width is 4 byte words
 	 */
 	src_vir_info.data.vir_stride = ctx->in.stride >> 2;
@@ -351,15 +350,15 @@ rga_get_addr_offset(काष्ठा rga_frame *frm, अचिन्हित 
 	dest[(RGA_DST_ACT_INFO - RGA_MODE_BASE_REG) >> 2] = dst_act_info.val;
 
 	dest[(RGA_DST_INFO - RGA_MODE_BASE_REG) >> 2] = dst_info.val;
-पूर्ण
+}
 
-अटल व्योम rga_cmd_set_mode(काष्ठा rga_ctx *ctx)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set_mode(struct rga_ctx *ctx)
+{
+	struct rockchip_rga *rga = ctx->rga;
 	u32 *dest = rga->cmdbuf_virt;
-	जोड़ rga_mode_ctrl mode;
-	जोड़ rga_alpha_ctrl0 alpha_ctrl0;
-	जोड़ rga_alpha_ctrl1 alpha_ctrl1;
+	union rga_mode_ctrl mode;
+	union rga_alpha_ctrl0 alpha_ctrl0;
+	union rga_alpha_ctrl1 alpha_ctrl1;
 
 	mode.val = 0;
 	alpha_ctrl0.val = 0;
@@ -374,13 +373,13 @@ rga_get_addr_offset(काष्ठा rga_frame *frm, अचिन्हित 
 	dest[(RGA_ALPHA_CTRL1 - RGA_MODE_BASE_REG) >> 2] = alpha_ctrl1.val;
 
 	dest[(RGA_MODE_CTRL - RGA_MODE_BASE_REG) >> 2] = mode.val;
-पूर्ण
+}
 
-अटल व्योम rga_cmd_set(काष्ठा rga_ctx *ctx)
-अणु
-	काष्ठा rockchip_rga *rga = ctx->rga;
+static void rga_cmd_set(struct rga_ctx *ctx)
+{
+	struct rockchip_rga *rga = ctx->rga;
 
-	स_रखो(rga->cmdbuf_virt, 0, RGA_CMDBUF_SIZE * 4);
+	memset(rga->cmdbuf_virt, 0, RGA_CMDBUF_SIZE * 4);
 
 	rga_cmd_set_src_addr(ctx, rga->src_mmu_pages);
 	/*
@@ -394,24 +393,24 @@ rga_get_addr_offset(काष्ठा rga_frame *frm, अचिन्हित 
 
 	rga_cmd_set_trans_info(ctx);
 
-	rga_ग_लिखो(rga, RGA_CMD_BASE, rga->cmdbuf_phy);
+	rga_write(rga, RGA_CMD_BASE, rga->cmdbuf_phy);
 
-	/* sync CMD buf क्रम RGA */
-	dma_sync_single_क्रम_device(rga->dev, rga->cmdbuf_phy,
-		PAGE_SIZE, DMA_BIसूचीECTIONAL);
-पूर्ण
+	/* sync CMD buf for RGA */
+	dma_sync_single_for_device(rga->dev, rga->cmdbuf_phy,
+		PAGE_SIZE, DMA_BIDIRECTIONAL);
+}
 
-व्योम rga_hw_start(काष्ठा rockchip_rga *rga)
-अणु
-	काष्ठा rga_ctx *ctx = rga->curr;
+void rga_hw_start(struct rockchip_rga *rga)
+{
+	struct rga_ctx *ctx = rga->curr;
 
 	rga_cmd_set(ctx);
 
-	rga_ग_लिखो(rga, RGA_SYS_CTRL, 0x00);
+	rga_write(rga, RGA_SYS_CTRL, 0x00);
 
-	rga_ग_लिखो(rga, RGA_SYS_CTRL, 0x22);
+	rga_write(rga, RGA_SYS_CTRL, 0x22);
 
-	rga_ग_लिखो(rga, RGA_INT, 0x600);
+	rga_write(rga, RGA_INT, 0x600);
 
-	rga_ग_लिखो(rga, RGA_CMD_CTRL, 0x1);
-पूर्ण
+	rga_write(rga, RGA_CMD_CTRL, 0x1);
+}

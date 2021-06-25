@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Clk driver क्रम NXP LPC18xx/43xx Configuration Registers (CREG)
+ * Clk driver for NXP LPC18xx/43xx Configuration Registers (CREG)
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -9,140 +8,140 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#घोषणा LPC18XX_CREG_CREG0			0x004
-#घोषणा  LPC18XX_CREG_CREG0_EN1KHZ		BIT(0)
-#घोषणा  LPC18XX_CREG_CREG0_EN32KHZ		BIT(1)
-#घोषणा  LPC18XX_CREG_CREG0_RESET32KHZ		BIT(2)
-#घोषणा  LPC18XX_CREG_CREG0_PD32KHZ		BIT(3)
+#define LPC18XX_CREG_CREG0			0x004
+#define  LPC18XX_CREG_CREG0_EN1KHZ		BIT(0)
+#define  LPC18XX_CREG_CREG0_EN32KHZ		BIT(1)
+#define  LPC18XX_CREG_CREG0_RESET32KHZ		BIT(2)
+#define  LPC18XX_CREG_CREG0_PD32KHZ		BIT(3)
 
-#घोषणा to_clk_creg(_hw) container_of(_hw, काष्ठा clk_creg_data, hw)
+#define to_clk_creg(_hw) container_of(_hw, struct clk_creg_data, hw)
 
-क्रमागत अणु
+enum {
 	CREG_CLK_1KHZ,
 	CREG_CLK_32KHZ,
 	CREG_CLK_MAX,
-पूर्ण;
+};
 
-काष्ठा clk_creg_data अणु
-	काष्ठा clk_hw hw;
-	स्थिर अक्षर *name;
-	काष्ठा regmap *reg;
-	अचिन्हित पूर्णांक en_mask;
-	स्थिर काष्ठा clk_ops *ops;
-पूर्ण;
+struct clk_creg_data {
+	struct clk_hw hw;
+	const char *name;
+	struct regmap *reg;
+	unsigned int en_mask;
+	const struct clk_ops *ops;
+};
 
-#घोषणा CREG_CLK(_name, _emask, _ops)		\
-अणु						\
+#define CREG_CLK(_name, _emask, _ops)		\
+{						\
 	.name = _name,				\
 	.en_mask = LPC18XX_CREG_CREG0_##_emask,	\
 	.ops = &_ops,				\
-पूर्ण
+}
 
-अटल पूर्णांक clk_creg_32k_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
-	पूर्णांक ret;
+static int clk_creg_32k_prepare(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
+	int ret;
 
 	ret = regmap_update_bits(creg->reg, LPC18XX_CREG_CREG0,
 				 LPC18XX_CREG_CREG0_PD32KHZ |
 				 LPC18XX_CREG_CREG0_RESET32KHZ, 0);
 
 	/*
-	 * Powering up the 32k oscillator takes a दीर्घ जबतक
+	 * Powering up the 32k oscillator takes a long while
 	 * and sadly there aren't any status bit to poll.
 	 */
 	msleep(2500);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clk_creg_32k_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
+static void clk_creg_32k_unprepare(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
 
 	regmap_update_bits(creg->reg, LPC18XX_CREG_CREG0,
 			   LPC18XX_CREG_CREG0_PD32KHZ,
 			   LPC18XX_CREG_CREG0_PD32KHZ);
-पूर्ण
+}
 
-अटल पूर्णांक clk_creg_32k_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
+static int clk_creg_32k_is_prepared(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
 	u32 reg;
 
-	regmap_पढ़ो(creg->reg, LPC18XX_CREG_CREG0, &reg);
+	regmap_read(creg->reg, LPC18XX_CREG_CREG0, &reg);
 
-	वापस !(reg & LPC18XX_CREG_CREG0_PD32KHZ) &&
+	return !(reg & LPC18XX_CREG_CREG0_PD32KHZ) &&
 	       !(reg & LPC18XX_CREG_CREG0_RESET32KHZ);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_creg_1k_recalc_rate(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस parent_rate / 32;
-पूर्ण
+static unsigned long clk_creg_1k_recalc_rate(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	return parent_rate / 32;
+}
 
-अटल पूर्णांक clk_creg_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
+static int clk_creg_enable(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
 
-	वापस regmap_update_bits(creg->reg, LPC18XX_CREG_CREG0,
+	return regmap_update_bits(creg->reg, LPC18XX_CREG_CREG0,
 				  creg->en_mask, creg->en_mask);
-पूर्ण
+}
 
-अटल व्योम clk_creg_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
+static void clk_creg_disable(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
 
 	regmap_update_bits(creg->reg, LPC18XX_CREG_CREG0,
 			   creg->en_mask, 0);
-पूर्ण
+}
 
-अटल पूर्णांक clk_creg_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_creg_data *creg = to_clk_creg(hw);
+static int clk_creg_is_enabled(struct clk_hw *hw)
+{
+	struct clk_creg_data *creg = to_clk_creg(hw);
 	u32 reg;
 
-	regmap_पढ़ो(creg->reg, LPC18XX_CREG_CREG0, &reg);
+	regmap_read(creg->reg, LPC18XX_CREG_CREG0, &reg);
 
-	वापस !!(reg & creg->en_mask);
-पूर्ण
+	return !!(reg & creg->en_mask);
+}
 
-अटल स्थिर काष्ठा clk_ops clk_creg_32k = अणु
+static const struct clk_ops clk_creg_32k = {
 	.enable		= clk_creg_enable,
 	.disable	= clk_creg_disable,
 	.is_enabled	= clk_creg_is_enabled,
 	.prepare	= clk_creg_32k_prepare,
 	.unprepare	= clk_creg_32k_unprepare,
 	.is_prepared	= clk_creg_32k_is_prepared,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops clk_creg_1k = अणु
+static const struct clk_ops clk_creg_1k = {
 	.enable		= clk_creg_enable,
 	.disable	= clk_creg_disable,
 	.is_enabled	= clk_creg_is_enabled,
 	.recalc_rate	= clk_creg_1k_recalc_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk_creg_data clk_creg_घड़ीs[] = अणु
+static struct clk_creg_data clk_creg_clocks[] = {
 	[CREG_CLK_1KHZ]  = CREG_CLK("1khz_clk",  EN1KHZ,  clk_creg_1k),
 	[CREG_CLK_32KHZ] = CREG_CLK("32khz_clk", EN32KHZ, clk_creg_32k),
-पूर्ण;
+};
 
-अटल काष्ठा clk *clk_रेजिस्टर_creg_clk(काष्ठा device *dev,
-					 काष्ठा clk_creg_data *creg_clk,
-					 स्थिर अक्षर **parent_name,
-					 काष्ठा regmap *syscon)
-अणु
-	काष्ठा clk_init_data init;
+static struct clk *clk_register_creg_clk(struct device *dev,
+					 struct clk_creg_data *creg_clk,
+					 const char **parent_name,
+					 struct regmap *syscon)
+{
+	struct clk_init_data init;
 
 	init.ops = creg_clk->ops;
 	init.name = creg_clk->name;
@@ -153,77 +152,77 @@
 	creg_clk->reg = syscon;
 	creg_clk->hw.init = &init;
 
-	अगर (dev)
-		वापस devm_clk_रेजिस्टर(dev, &creg_clk->hw);
+	if (dev)
+		return devm_clk_register(dev, &creg_clk->hw);
 
-	वापस clk_रेजिस्टर(शून्य, &creg_clk->hw);
-पूर्ण
+	return clk_register(NULL, &creg_clk->hw);
+}
 
-अटल काष्ठा clk *clk_creg_early[CREG_CLK_MAX];
-अटल काष्ठा clk_onecell_data clk_creg_early_data = अणु
+static struct clk *clk_creg_early[CREG_CLK_MAX];
+static struct clk_onecell_data clk_creg_early_data = {
 	.clks = clk_creg_early,
 	.clk_num = CREG_CLK_MAX,
-पूर्ण;
+};
 
-अटल व्योम __init lpc18xx_creg_clk_init(काष्ठा device_node *np)
-अणु
-	स्थिर अक्षर *clk_32khz_parent;
-	काष्ठा regmap *syscon;
+static void __init lpc18xx_creg_clk_init(struct device_node *np)
+{
+	const char *clk_32khz_parent;
+	struct regmap *syscon;
 
 	syscon = syscon_node_to_regmap(np->parent);
-	अगर (IS_ERR(syscon)) अणु
+	if (IS_ERR(syscon)) {
 		pr_err("%s: syscon lookup failed\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	clk_32khz_parent = of_clk_get_parent_name(np, 0);
 
 	clk_creg_early[CREG_CLK_32KHZ] =
-		clk_रेजिस्टर_creg_clk(शून्य, &clk_creg_घड़ीs[CREG_CLK_32KHZ],
+		clk_register_creg_clk(NULL, &clk_creg_clocks[CREG_CLK_32KHZ],
 				      &clk_32khz_parent, syscon);
 	clk_creg_early[CREG_CLK_1KHZ] = ERR_PTR(-EPROBE_DEFER);
 
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_creg_early_data);
-पूर्ण
+}
 CLK_OF_DECLARE_DRIVER(lpc18xx_creg_clk, "nxp,lpc1850-creg-clk",
 		      lpc18xx_creg_clk_init);
 
-अटल काष्ठा clk *clk_creg[CREG_CLK_MAX];
-अटल काष्ठा clk_onecell_data clk_creg_data = अणु
+static struct clk *clk_creg[CREG_CLK_MAX];
+static struct clk_onecell_data clk_creg_data = {
 	.clks = clk_creg,
 	.clk_num = CREG_CLK_MAX,
-पूर्ण;
+};
 
-अटल पूर्णांक lpc18xx_creg_clk_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा regmap *syscon;
+static int lpc18xx_creg_clk_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct regmap *syscon;
 
 	syscon = syscon_node_to_regmap(np->parent);
-	अगर (IS_ERR(syscon)) अणु
+	if (IS_ERR(syscon)) {
 		dev_err(&pdev->dev, "syscon lookup failed\n");
-		वापस PTR_ERR(syscon);
-	पूर्ण
+		return PTR_ERR(syscon);
+	}
 
 	clk_creg[CREG_CLK_32KHZ] = clk_creg_early[CREG_CLK_32KHZ];
 	clk_creg[CREG_CLK_1KHZ] =
-		clk_रेजिस्टर_creg_clk(शून्य, &clk_creg_घड़ीs[CREG_CLK_1KHZ],
-				      &clk_creg_घड़ीs[CREG_CLK_32KHZ].name,
+		clk_register_creg_clk(NULL, &clk_creg_clocks[CREG_CLK_1KHZ],
+				      &clk_creg_clocks[CREG_CLK_32KHZ].name,
 				      syscon);
 
-	वापस of_clk_add_provider(np, of_clk_src_onecell_get, &clk_creg_data);
-पूर्ण
+	return of_clk_add_provider(np, of_clk_src_onecell_get, &clk_creg_data);
+}
 
-अटल स्थिर काष्ठा of_device_id lpc18xx_creg_clk_of_match[] = अणु
-	अणु .compatible = "nxp,lpc1850-creg-clk" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id lpc18xx_creg_clk_of_match[] = {
+	{ .compatible = "nxp,lpc1850-creg-clk" },
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver lpc18xx_creg_clk_driver = अणु
+static struct platform_driver lpc18xx_creg_clk_driver = {
 	.probe = lpc18xx_creg_clk_probe,
-	.driver = अणु
+	.driver = {
 		.name = "lpc18xx-creg-clk",
 		.of_match_table = lpc18xx_creg_clk_of_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(lpc18xx_creg_clk_driver);
+	},
+};
+builtin_platform_driver(lpc18xx_creg_clk_driver);

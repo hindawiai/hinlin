@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
 
-#समावेश "mt7921.h"
-#समावेश "mac.h"
-#समावेश "mcu.h"
-#समावेश "../trace.h"
+#include "mt7921.h"
+#include "mac.h"
+#include "mcu.h"
+#include "../trace.h"
 
-अटल स्थिर काष्ठा pci_device_id mt7921_pci_device_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7961) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id mt7921_pci_device_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7961) },
+	{ },
+};
 
-अटल व्योम
-mt7921_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q)
-अणु
-	काष्ठा mt7921_dev *dev = container_of(mdev, काष्ठा mt7921_dev, mt76);
+static void
+mt7921_rx_poll_complete(struct mt76_dev *mdev, enum mt76_rxq_id q)
+{
+	struct mt7921_dev *dev = container_of(mdev, struct mt7921_dev, mt76);
 
-	अगर (q == MT_RXQ_MAIN)
+	if (q == MT_RXQ_MAIN)
 		mt7921_irq_enable(dev, MT_INT_RX_DONE_DATA);
-	अन्यथा अगर (q == MT_RXQ_MCU_WA)
+	else if (q == MT_RXQ_MCU_WA)
 		mt7921_irq_enable(dev, MT_INT_RX_DONE_WM2);
-	अन्यथा
+	else
 		mt7921_irq_enable(dev, MT_INT_RX_DONE_WM);
-पूर्ण
+}
 
-अटल irqवापस_t mt7921_irq_handler(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा mt7921_dev *dev = dev_instance;
+static irqreturn_t mt7921_irq_handler(int irq, void *dev_instance)
+{
+	struct mt7921_dev *dev = dev_instance;
 
 	mt76_wr(dev, MT_WFDMA0_HOST_INT_ENA, 0);
 
-	अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
-		वापस IRQ_NONE;
+	if (!test_bit(MT76_STATE_INITIALIZED, &dev->mphy.state))
+		return IRQ_NONE;
 
 	tasklet_schedule(&dev->irq_tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mt7921_irq_tasklet(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा mt7921_dev *dev = (काष्ठा mt7921_dev *)data;
-	u32 पूर्णांकr, mask = 0;
+static void mt7921_irq_tasklet(unsigned long data)
+{
+	struct mt7921_dev *dev = (struct mt7921_dev *)data;
+	u32 intr, mask = 0;
 
 	mt76_wr(dev, MT_WFDMA0_HOST_INT_ENA, 0);
 
-	पूर्णांकr = mt76_rr(dev, MT_WFDMA0_HOST_INT_STA);
-	पूर्णांकr &= dev->mt76.mmio.irqmask;
-	mt76_wr(dev, MT_WFDMA0_HOST_INT_STA, पूर्णांकr);
+	intr = mt76_rr(dev, MT_WFDMA0_HOST_INT_STA);
+	intr &= dev->mt76.mmio.irqmask;
+	mt76_wr(dev, MT_WFDMA0_HOST_INT_STA, intr);
 
-	trace_dev_irq(&dev->mt76, पूर्णांकr, dev->mt76.mmio.irqmask);
+	trace_dev_irq(&dev->mt76, intr, dev->mt76.mmio.irqmask);
 
-	mask |= पूर्णांकr & MT_INT_RX_DONE_ALL;
-	अगर (पूर्णांकr & MT_INT_TX_DONE_MCU)
+	mask |= intr & MT_INT_RX_DONE_ALL;
+	if (intr & MT_INT_TX_DONE_MCU)
 		mask |= MT_INT_TX_DONE_MCU;
 
-	अगर (पूर्णांकr & MT_INT_MCU_CMD) अणु
-		u32 पूर्णांकr_sw;
+	if (intr & MT_INT_MCU_CMD) {
+		u32 intr_sw;
 
-		पूर्णांकr_sw = mt76_rr(dev, MT_MCU_CMD);
+		intr_sw = mt76_rr(dev, MT_MCU_CMD);
 		/* ack MCU2HOST_SW_INT_STA */
-		mt76_wr(dev, MT_MCU_CMD, पूर्णांकr_sw);
-		अगर (पूर्णांकr_sw & MT_MCU_CMD_WAKE_RX_PCIE) अणु
+		mt76_wr(dev, MT_MCU_CMD, intr_sw);
+		if (intr_sw & MT_MCU_CMD_WAKE_RX_PCIE) {
 			mask |= MT_INT_RX_DONE_DATA;
-			पूर्णांकr |= MT_INT_RX_DONE_DATA;
-		पूर्ण
-	पूर्ण
+			intr |= MT_INT_RX_DONE_DATA;
+		}
+	}
 
 	mt76_set_irq_mask(&dev->mt76, MT_WFDMA0_HOST_INT_ENA, mask, 0);
 
-	अगर (पूर्णांकr & MT_INT_TX_DONE_ALL)
+	if (intr & MT_INT_TX_DONE_ALL)
 		napi_schedule(&dev->mt76.tx_napi);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_WM)
+	if (intr & MT_INT_RX_DONE_WM)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MCU]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_WM2)
+	if (intr & MT_INT_RX_DONE_WM2)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MCU_WA]);
 
-	अगर (पूर्णांकr & MT_INT_RX_DONE_DATA)
+	if (intr & MT_INT_RX_DONE_DATA)
 		napi_schedule(&dev->mt76.napi[MT_RXQ_MAIN]);
-पूर्ण
+}
 
-अटल पूर्णांक mt7921_pci_probe(काष्ठा pci_dev *pdev,
-			    स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर काष्ठा mt76_driver_ops drv_ops = अणु
+static int mt7921_pci_probe(struct pci_dev *pdev,
+			    const struct pci_device_id *id)
+{
+	static const struct mt76_driver_ops drv_ops = {
 		/* txwi_size = txd size + txp size */
-		.txwi_size = MT_TXD_SIZE + माप(काष्ठा mt7921_txp_common),
+		.txwi_size = MT_TXD_SIZE + sizeof(struct mt7921_txp_common),
 		.drv_flags = MT_DRV_TXWI_NO_FREE | MT_DRV_HW_MGMT_TXQ |
 			     MT_DRV_AMSDU_OFFLOAD,
 		.survey_flags = SURVEY_INFO_TIME_TX |
@@ -107,44 +106,44 @@ mt7921_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 		.rx_poll_complete = mt7921_rx_poll_complete,
 		.sta_ps = mt7921_sta_ps,
 		.sta_add = mt7921_mac_sta_add,
-		.sta_हटाओ = mt7921_mac_sta_हटाओ,
+		.sta_remove = mt7921_mac_sta_remove,
 		.update_survey = mt7921_update_channel,
-	पूर्ण;
-	काष्ठा mt7921_dev *dev;
-	काष्ठा mt76_dev *mdev;
-	पूर्णांक ret;
+	};
+	struct mt7921_dev *dev;
+	struct mt76_dev *mdev;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pcim_iomap_regions(pdev, BIT(0), pci_name(pdev));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pci_set_master(pdev);
 
 	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_ALL_TYPES);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (ret)
-		जाओ err_मुक्त_pci_vec;
+	if (ret)
+		goto err_free_pci_vec;
 
 	mt76_pci_disable_aspm(pdev);
 
-	mdev = mt76_alloc_device(&pdev->dev, माप(*dev), &mt7921_ops,
+	mdev = mt76_alloc_device(&pdev->dev, sizeof(*dev), &mt7921_ops,
 				 &drv_ops);
-	अगर (!mdev) अणु
+	if (!mdev) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_pci_vec;
-	पूर्ण
+		goto err_free_pci_vec;
+	}
 
-	dev = container_of(mdev, काष्ठा mt7921_dev, mt76);
+	dev = container_of(mdev, struct mt7921_dev, mt76);
 
 	mt76_mmio_init(&dev->mt76, pcim_iomap_table(pdev)[0]);
-	tasklet_init(&dev->irq_tasklet, mt7921_irq_tasklet, (अचिन्हित दीर्घ)dev);
+	tasklet_init(&dev->irq_tasklet, mt7921_irq_tasklet, (unsigned long)dev);
 	mdev->rev = (mt7921_l1_rr(dev, MT_HW_CHIPID) << 16) |
 		    (mt7921_l1_rr(dev, MT_HW_REV) & 0xff);
 	dev_err(mdev->dev, "ASIC revision: %04x\n", mdev->rev);
@@ -155,67 +154,67 @@ mt7921_rx_poll_complete(काष्ठा mt76_dev *mdev, क्रमागत
 
 	ret = devm_request_irq(mdev->dev, pdev->irq, mt7921_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	अगर (ret)
-		जाओ err_मुक्त_dev;
+	if (ret)
+		goto err_free_dev;
 
-	ret = mt7921_रेजिस्टर_device(dev);
-	अगर (ret)
-		जाओ err_मुक्त_irq;
+	ret = mt7921_register_device(dev);
+	if (ret)
+		goto err_free_irq;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_irq:
-	devm_मुक्त_irq(&pdev->dev, pdev->irq, dev);
-err_मुक्त_dev:
-	mt76_मुक्त_device(&dev->mt76);
-err_मुक्त_pci_vec:
-	pci_मुक्त_irq_vectors(pdev);
+err_free_irq:
+	devm_free_irq(&pdev->dev, pdev->irq, dev);
+err_free_dev:
+	mt76_free_device(&dev->mt76);
+err_free_pci_vec:
+	pci_free_irq_vectors(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mt7921_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
-	काष्ठा mt7921_dev *dev = container_of(mdev, काष्ठा mt7921_dev, mt76);
+static void mt7921_pci_remove(struct pci_dev *pdev)
+{
+	struct mt76_dev *mdev = pci_get_drvdata(pdev);
+	struct mt7921_dev *dev = container_of(mdev, struct mt7921_dev, mt76);
 
-	mt7921_unरेजिस्टर_device(dev);
-	devm_मुक्त_irq(&pdev->dev, pdev->irq, dev);
-	pci_मुक्त_irq_vectors(pdev);
-पूर्ण
+	mt7921_unregister_device(dev);
+	devm_free_irq(&pdev->dev, pdev->irq, dev);
+	pci_free_irq_vectors(pdev);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक mt7921_pci_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
-अणु
-	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
-	काष्ठा mt7921_dev *dev = container_of(mdev, काष्ठा mt7921_dev, mt76);
-	bool hअगर_suspend;
-	पूर्णांक i, err;
+#ifdef CONFIG_PM
+static int mt7921_pci_suspend(struct pci_dev *pdev, pm_message_t state)
+{
+	struct mt76_dev *mdev = pci_get_drvdata(pdev);
+	struct mt7921_dev *dev = container_of(mdev, struct mt7921_dev, mt76);
+	bool hif_suspend;
+	int i, err;
 
 	err = mt76_connac_pm_wake(&dev->mphy, &dev->pm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	hअगर_suspend = !test_bit(MT76_STATE_SUSPEND, &dev->mphy.state);
-	अगर (hअगर_suspend) अणु
-		err = mt76_connac_mcu_set_hअगर_suspend(mdev, true);
-		अगर (err)
-			वापस err;
-	पूर्ण
+	hif_suspend = !test_bit(MT76_STATE_SUSPEND, &dev->mphy.state);
+	if (hif_suspend) {
+		err = mt76_connac_mcu_set_hif_suspend(mdev, true);
+		if (err)
+			return err;
+	}
 
-	अगर (!dev->pm.enable)
+	if (!dev->pm.enable)
 		mt76_connac_mcu_set_deep_sleep(&dev->mt76, true);
 
 	napi_disable(&mdev->tx_napi);
 	mt76_worker_disable(&mdev->tx_worker);
 
-	mt76_क्रम_each_q_rx(mdev, i) अणु
+	mt76_for_each_q_rx(mdev, i) {
 		napi_disable(&mdev->napi[i]);
-	पूर्ण
+	}
 
 	pci_enable_wake(pdev, pci_choose_state(pdev, state), true);
 
-	/* रुको until dma is idle  */
+	/* wait until dma is idle  */
 	mt76_poll(dev, MT_WFDMA0_GLO_CFG,
 		  MT_WFDMA0_GLO_CFG_TX_DMA_BUSY |
 		  MT_WFDMA0_GLO_CFG_RX_DMA_BUSY, 0, 1000);
@@ -224,57 +223,57 @@ err_मुक्त_pci_vec:
 	mt76_clear(dev, MT_WFDMA0_GLO_CFG,
 		   MT_WFDMA0_GLO_CFG_TX_DMA_EN | MT_WFDMA0_GLO_CFG_RX_DMA_EN);
 
-	/* disable पूर्णांकerrupt */
+	/* disable interrupt */
 	mt76_wr(dev, MT_WFDMA0_HOST_INT_ENA, 0);
 	mt76_wr(dev, MT_PCIE_MAC_INT_ENABLE, 0x0);
 	synchronize_irq(pdev->irq);
-	tasklet_समाप्त(&dev->irq_tasklet);
+	tasklet_kill(&dev->irq_tasklet);
 
 	err = mt7921_mcu_fw_pmctrl(dev);
-	अगर (err)
-		जाओ restore;
+	if (err)
+		goto restore;
 
 	pci_save_state(pdev);
-	err = pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
-	अगर (err)
-		जाओ restore;
+	err = pci_set_power_state(pdev, pci_choose_state(pdev, state));
+	if (err)
+		goto restore;
 
-	वापस 0;
+	return 0;
 
 restore:
-	mt76_क्रम_each_q_rx(mdev, i) अणु
+	mt76_for_each_q_rx(mdev, i) {
 		napi_enable(&mdev->napi[i]);
-	पूर्ण
+	}
 	napi_enable(&mdev->tx_napi);
 
-	अगर (!dev->pm.enable)
+	if (!dev->pm.enable)
 		mt76_connac_mcu_set_deep_sleep(&dev->mt76, false);
 
-	अगर (hअगर_suspend)
-		mt76_connac_mcu_set_hअगर_suspend(mdev, false);
+	if (hif_suspend)
+		mt76_connac_mcu_set_hif_suspend(mdev, false);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mt7921_pci_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
-	काष्ठा mt7921_dev *dev = container_of(mdev, काष्ठा mt7921_dev, mt76);
-	पूर्णांक i, err;
+static int mt7921_pci_resume(struct pci_dev *pdev)
+{
+	struct mt76_dev *mdev = pci_get_drvdata(pdev);
+	struct mt7921_dev *dev = container_of(mdev, struct mt7921_dev, mt76);
+	int i, err;
 
-	err = pci_set_घातer_state(pdev, PCI_D0);
-	अगर (err)
-		वापस err;
+	err = pci_set_power_state(pdev, PCI_D0);
+	if (err)
+		return err;
 
 	pci_restore_state(pdev);
 
 	err = mt7921_mcu_drv_pmctrl(dev);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	mt7921_wpdma_reinit_cond(dev);
 
-	/* enable पूर्णांकerrupt */
+	/* enable interrupt */
 	mt76_wr(dev, MT_PCIE_MAC_INT_ENABLE, 0xff);
 	mt7921_irq_enable(dev, MT_INT_RX_DONE_ALL | MT_INT_TX_DONE_ALL |
 			  MT_INT_MCU_CMD);
@@ -285,33 +284,33 @@ restore:
 		 MT_WFDMA0_GLO_CFG_TX_DMA_EN | MT_WFDMA0_GLO_CFG_RX_DMA_EN);
 
 	mt76_worker_enable(&mdev->tx_worker);
-	mt76_क्रम_each_q_rx(mdev, i) अणु
+	mt76_for_each_q_rx(mdev, i) {
 		napi_enable(&mdev->napi[i]);
 		napi_schedule(&mdev->napi[i]);
-	पूर्ण
+	}
 	napi_enable(&mdev->tx_napi);
 	napi_schedule(&mdev->tx_napi);
 
-	अगर (!dev->pm.enable)
+	if (!dev->pm.enable)
 		mt76_connac_mcu_set_deep_sleep(&dev->mt76, false);
 
-	अगर (!test_bit(MT76_STATE_SUSPEND, &dev->mphy.state))
-		err = mt76_connac_mcu_set_hअगर_suspend(mdev, false);
+	if (!test_bit(MT76_STATE_SUSPEND, &dev->mphy.state))
+		err = mt76_connac_mcu_set_hif_suspend(mdev, false);
 
-	वापस err;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return err;
+}
+#endif /* CONFIG_PM */
 
-काष्ठा pci_driver mt7921_pci_driver = अणु
+struct pci_driver mt7921_pci_driver = {
 	.name		= KBUILD_MODNAME,
 	.id_table	= mt7921_pci_device_table,
 	.probe		= mt7921_pci_probe,
-	.हटाओ		= mt7921_pci_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= mt7921_pci_remove,
+#ifdef CONFIG_PM
 	.suspend	= mt7921_pci_suspend,
 	.resume		= mt7921_pci_resume,
-#पूर्ण_अगर /* CONFIG_PM */
-पूर्ण;
+#endif /* CONFIG_PM */
+};
 
 module_pci_driver(mt7921_pci_driver);
 

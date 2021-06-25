@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _OS_INTFS_C_
+#define _OS_INTFS_C_
 
-#समावेश <osdep_service.h>
-#समावेश <osdep_पूर्णांकf.h>
-#समावेश <drv_types.h>
-#समावेश <xmit_osdep.h>
-#समावेश <recv_osdep.h>
-#समावेश <hal_पूर्णांकf.h>
-#समावेश <rtw_ioctl.h>
-#समावेश <rtl8188e_hal.h>
+#include <osdep_service.h>
+#include <osdep_intf.h>
+#include <drv_types.h>
+#include <xmit_osdep.h>
+#include <recv_osdep.h>
+#include <hal_intf.h>
+#include <rtw_ioctl.h>
+#include <rtl8188e_hal.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Realtek Wireless Lan Driver");
@@ -22,128 +21,128 @@ MODULE_AUTHOR("Realtek Semiconductor Corp.");
 MODULE_VERSION(DRIVERVERSION);
 MODULE_FIRMWARE("rtlwifi/rtl8188eufw.bin");
 
-#घोषणा RTW_NOTCH_FILTER 0 /* 0:Disable, 1:Enable, */
+#define RTW_NOTCH_FILTER 0 /* 0:Disable, 1:Enable, */
 
-/* module param शेषs */
-/* Ndis802_11Infraकाष्ठाure; infra, ad-hoc, स्वतः */
-अटल पूर्णांक rtw_channel = 1;/* ad-hoc support requirement */
-अटल पूर्णांक rtw_wireless_mode = WIRELESS_11BG_24N;
-अटल पूर्णांक rtw_vrtl_carrier_sense = AUTO_VCS;
-अटल पूर्णांक rtw_vcs_type = RTS_CTS;/*  */
-अटल पूर्णांक rtw_rts_thresh = 2347;/*  */
-अटल पूर्णांक rtw_frag_thresh = 2346;/*  */
-अटल पूर्णांक rtw_preamble = PREAMBLE_LONG;/* दीर्घ, लघु, स्वतः */
-अटल पूर्णांक rtw_घातer_mgnt = 1;
-अटल पूर्णांक rtw_ips_mode = IPS_NORMAL;
+/* module param defaults */
+/* Ndis802_11Infrastructure; infra, ad-hoc, auto */
+static int rtw_channel = 1;/* ad-hoc support requirement */
+static int rtw_wireless_mode = WIRELESS_11BG_24N;
+static int rtw_vrtl_carrier_sense = AUTO_VCS;
+static int rtw_vcs_type = RTS_CTS;/*  */
+static int rtw_rts_thresh = 2347;/*  */
+static int rtw_frag_thresh = 2346;/*  */
+static int rtw_preamble = PREAMBLE_LONG;/* long, short, auto */
+static int rtw_power_mgnt = 1;
+static int rtw_ips_mode = IPS_NORMAL;
 
-अटल पूर्णांक rtw_smart_ps = 2;
+static int rtw_smart_ps = 2;
 
-module_param(rtw_ips_mode, पूर्णांक, 0644);
+module_param(rtw_ips_mode, int, 0644);
 MODULE_PARM_DESC(rtw_ips_mode, "The default IPS mode");
 
-अटल पूर्णांक rtw_debug = 1;
+static int rtw_debug = 1;
 
-अटल पूर्णांक rtw_acm_method;/*  0:By SW 1:By HW. */
+static int rtw_acm_method;/*  0:By SW 1:By HW. */
 
-अटल पूर्णांक rtw_wmm_enable = 1;/*  शेष is set to enable the wmm. */
-अटल पूर्णांक rtw_uapsd_enable;
+static int rtw_wmm_enable = 1;/*  default is set to enable the wmm. */
+static int rtw_uapsd_enable;
 
-अटल पूर्णांक rtw_ht_enable = 1;
+static int rtw_ht_enable = 1;
 /* 0 :disable, bit(0): enable 2.4g, bit(1): enable 5g */
-अटल पूर्णांक rtw_cbw40_enable = 3;
-अटल पूर्णांक rtw_ampdu_enable = 1;/* क्रम enable tx_ampdu */
+static int rtw_cbw40_enable = 3;
+static int rtw_ampdu_enable = 1;/* for enable tx_ampdu */
 
 /* 0: disable
  * bit(0):enable 2.4g
  * bit(1):enable 5g
- * शेष is set to enable 2.4GHZ क्रम IOT issue with bufflao's AP at 5GHZ
+ * default is set to enable 2.4GHZ for IOT issue with bufflao's AP at 5GHZ
  */
-अटल पूर्णांक rtw_rx_stbc = 1;
-अटल पूर्णांक rtw_ampdu_amsdu;/*  0: disabled, 1:enabled, 2:स्वतः */
+static int rtw_rx_stbc = 1;
+static int rtw_ampdu_amsdu;/*  0: disabled, 1:enabled, 2:auto */
 
-अटल पूर्णांक rtw_wअगरi_spec;
-अटल पूर्णांक rtw_channel_plan = RT_CHANNEL_DOMAIN_MAX;
+static int rtw_wifi_spec;
+static int rtw_channel_plan = RT_CHANNEL_DOMAIN_MAX;
 
-अटल पूर्णांक rtw_antभाग_cfg = 2; /*  0:OFF , 1:ON, 2:decide by Efuse config */
+static int rtw_antdiv_cfg = 2; /*  0:OFF , 1:ON, 2:decide by Efuse config */
 
 /* 0: decide by efuse
- * 1: क्रम 88EE, 1Tx and 1RxCG are भागersity (2 Ant with SPDT)
- * 2: क्रम 88EE, 1Tx and 2Rx are भागersity (2 Ant, Tx and RxCG are both on aux
- *    port, RxCS is on मुख्य port)
- * 3: क्रम 88EE, 1Tx and 1RxCG are fixed (1Ant, Tx and RxCG are both on aux port)
+ * 1: for 88EE, 1Tx and 1RxCG are diversity (2 Ant with SPDT)
+ * 2: for 88EE, 1Tx and 2Rx are diversity (2 Ant, Tx and RxCG are both on aux
+ *    port, RxCS is on main port)
+ * 3: for 88EE, 1Tx and 1RxCG are fixed (1Ant, Tx and RxCG are both on aux port)
  */
-अटल पूर्णांक rtw_antभाग_प्रकारype;
+static int rtw_antdiv_type;
 
-अटल पूर्णांक rtw_enusbss;/* 0:disable, 1:enable */
+static int rtw_enusbss;/* 0:disable, 1:enable */
 
-अटल पूर्णांक rtw_hwpdn_mode = 2;/* 0:disable, 1:enable, 2: by EFUSE config */
+static int rtw_hwpdn_mode = 2;/* 0:disable, 1:enable, 2: by EFUSE config */
 
-पूर्णांक rtw_mc2u_disable;
+int rtw_mc2u_disable;
 
-अटल पूर्णांक rtw_80211d;
+static int rtw_80211d;
 
-अटल अक्षर *अगरname = "wlan%d";
-module_param(अगरname, अक्षरp, 0644);
-MODULE_PARM_DESC(अगरname, "The default name to allocate for first interface");
+static char *ifname = "wlan%d";
+module_param(ifname, charp, 0644);
+MODULE_PARM_DESC(ifname, "The default name to allocate for first interface");
 
-अटल अक्षर *अगर2name = "wlan%d";
-module_param(अगर2name, अक्षरp, 0644);
-MODULE_PARM_DESC(अगर2name, "The default name to allocate for second interface");
+static char *if2name = "wlan%d";
+module_param(if2name, charp, 0644);
+MODULE_PARM_DESC(if2name, "The default name to allocate for second interface");
 
-/* temp mac address अगर users want to use instead of the mac address in Efuse */
-अक्षर *rtw_iniपंचांगac;
+/* temp mac address if users want to use instead of the mac address in Efuse */
+char *rtw_initmac;
 
-module_param(rtw_iniपंचांगac, अक्षरp, 0644);
-module_param(rtw_channel_plan, पूर्णांक, 0644);
-module_param(rtw_channel, पूर्णांक, 0644);
-module_param(rtw_wmm_enable, पूर्णांक, 0644);
-module_param(rtw_vrtl_carrier_sense, पूर्णांक, 0644);
-module_param(rtw_vcs_type, पूर्णांक, 0644);
-module_param(rtw_ht_enable, पूर्णांक, 0644);
-module_param(rtw_cbw40_enable, पूर्णांक, 0644);
-module_param(rtw_ampdu_enable, पूर्णांक, 0644);
-module_param(rtw_rx_stbc, पूर्णांक, 0644);
-module_param(rtw_ampdu_amsdu, पूर्णांक, 0644);
-module_param(rtw_घातer_mgnt, पूर्णांक, 0644);
-module_param(rtw_smart_ps, पूर्णांक, 0644);
-module_param(rtw_wअगरi_spec, पूर्णांक, 0644);
-module_param(rtw_antभाग_cfg, पूर्णांक, 0644);
-module_param(rtw_antभाग_प्रकारype, पूर्णांक, 0644);
-module_param(rtw_enusbss, पूर्णांक, 0644);
-module_param(rtw_hwpdn_mode, पूर्णांक, 0644);
+module_param(rtw_initmac, charp, 0644);
+module_param(rtw_channel_plan, int, 0644);
+module_param(rtw_channel, int, 0644);
+module_param(rtw_wmm_enable, int, 0644);
+module_param(rtw_vrtl_carrier_sense, int, 0644);
+module_param(rtw_vcs_type, int, 0644);
+module_param(rtw_ht_enable, int, 0644);
+module_param(rtw_cbw40_enable, int, 0644);
+module_param(rtw_ampdu_enable, int, 0644);
+module_param(rtw_rx_stbc, int, 0644);
+module_param(rtw_ampdu_amsdu, int, 0644);
+module_param(rtw_power_mgnt, int, 0644);
+module_param(rtw_smart_ps, int, 0644);
+module_param(rtw_wifi_spec, int, 0644);
+module_param(rtw_antdiv_cfg, int, 0644);
+module_param(rtw_antdiv_type, int, 0644);
+module_param(rtw_enusbss, int, 0644);
+module_param(rtw_hwpdn_mode, int, 0644);
 
-अटल uपूर्णांक rtw_max_roaming_बार = 2;
-module_param(rtw_max_roaming_बार, uपूर्णांक, 0644);
-MODULE_PARM_DESC(rtw_max_roaming_बार, "The max roaming times to try");
+static uint rtw_max_roaming_times = 2;
+module_param(rtw_max_roaming_times, uint, 0644);
+MODULE_PARM_DESC(rtw_max_roaming_times, "The max roaming times to try");
 
-अटल पूर्णांक rtw_fw_iol = 1;/*  0:Disable, 1:enable, 2:by usb speed */
-module_param(rtw_fw_iol, पूर्णांक, 0644);
+static int rtw_fw_iol = 1;/*  0:Disable, 1:enable, 2:by usb speed */
+module_param(rtw_fw_iol, int, 0644);
 MODULE_PARM_DESC(rtw_fw_iol, "FW IOL");
 
-module_param(rtw_mc2u_disable, पूर्णांक, 0644);
+module_param(rtw_mc2u_disable, int, 0644);
 
-module_param(rtw_80211d, पूर्णांक, 0644);
+module_param(rtw_80211d, int, 0644);
 MODULE_PARM_DESC(rtw_80211d, "Enable 802.11d mechanism");
 
-अटल uपूर्णांक rtw_notch_filter = RTW_NOTCH_FILTER;
-module_param(rtw_notch_filter, uपूर्णांक, 0644);
+static uint rtw_notch_filter = RTW_NOTCH_FILTER;
+module_param(rtw_notch_filter, uint, 0644);
 MODULE_PARM_DESC(rtw_notch_filter, "0:Disable, 1:Enable, 2:Enable only for P2P");
-module_param_named(debug, rtw_debug, पूर्णांक, 0444);
+module_param_named(debug, rtw_debug, int, 0444);
 MODULE_PARM_DESC(debug, "Set debug level (1-9) (default 1)");
 
-अटल bool rtw_monitor_enable;
+static bool rtw_monitor_enable;
 module_param_named(monitor_enable, rtw_monitor_enable, bool, 0444);
 MODULE_PARM_DESC(monitor_enable, "Enable monitor interface (default: false)");
 
-अटल पूर्णांक netdev_बंद(काष्ठा net_device *pnetdev);
+static int netdev_close(struct net_device *pnetdev);
 
-अटल व्योम loadparam(काष्ठा adapter *padapter, काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा registry_priv *registry_par = &padapter->registrypriv;
+static void loadparam(struct adapter *padapter, struct net_device *pnetdev)
+{
+	struct registry_priv *registry_par = &padapter->registrypriv;
 
 	GlobalDebugLevel = rtw_debug;
 
-	स_नकल(registry_par->ssid.ssid, "ANY", 3);
+	memcpy(registry_par->ssid.ssid, "ANY", 3);
 	registry_par->ssid.ssid_length = 3;
 
 	registry_par->channel = (u8)rtw_channel;
@@ -154,7 +153,7 @@ MODULE_PARM_DESC(monitor_enable, "Enable monitor interface (default: false)");
 	registry_par->frag_thresh = (u16)rtw_frag_thresh;
 	registry_par->preamble = (u8)rtw_preamble;
 	registry_par->smart_ps =  (u8)rtw_smart_ps;
-	registry_par->घातer_mgnt = (u8)rtw_घातer_mgnt;
+	registry_par->power_mgnt = (u8)rtw_power_mgnt;
 	registry_par->ips_mode = (u8)rtw_ips_mode;
 	registry_par->mp_mode = 0;
 	registry_par->acm_method = (u8)rtw_acm_method;
@@ -168,40 +167,40 @@ MODULE_PARM_DESC(monitor_enable, "Enable monitor interface (default: false)");
 	registry_par->ampdu_enable = (u8)rtw_ampdu_enable;
 	registry_par->rx_stbc = (u8)rtw_rx_stbc;
 	registry_par->ampdu_amsdu = (u8)rtw_ampdu_amsdu;
-	registry_par->wअगरi_spec = (u8)rtw_wअगरi_spec;
+	registry_par->wifi_spec = (u8)rtw_wifi_spec;
 	registry_par->channel_plan = (u8)rtw_channel_plan;
 	registry_par->accept_addba_req = true;
-	registry_par->antभाग_cfg = (u8)rtw_antभाग_cfg;
-	registry_par->antभाग_प्रकारype = (u8)rtw_antभाग_प्रकारype;
+	registry_par->antdiv_cfg = (u8)rtw_antdiv_cfg;
+	registry_par->antdiv_type = (u8)rtw_antdiv_type;
 	registry_par->hwpdn_mode = (u8)rtw_hwpdn_mode;
 
-	registry_par->max_roaming_बार = (u8)rtw_max_roaming_बार;
+	registry_par->max_roaming_times = (u8)rtw_max_roaming_times;
 
 	registry_par->fw_iol = rtw_fw_iol;
 
 	registry_par->enable80211d = (u8)rtw_80211d;
-	snम_लिखो(registry_par->अगरname, 16, "%s", अगरname);
-	snम_लिखो(registry_par->अगर2name, 16, "%s", अगर2name);
+	snprintf(registry_par->ifname, 16, "%s", ifname);
+	snprintf(registry_par->if2name, 16, "%s", if2name);
 	registry_par->notch_filter = (u8)rtw_notch_filter;
 	registry_par->monitor_enable = rtw_monitor_enable;
-पूर्ण
+}
 
-अटल पूर्णांक rtw_net_set_mac_address(काष्ठा net_device *pnetdev, व्योम *p)
-अणु
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा sockaddr *addr = p;
+static int rtw_net_set_mac_address(struct net_device *pnetdev, void *p)
+{
+	struct adapter *padapter = netdev_priv(pnetdev);
+	struct sockaddr *addr = p;
 
-	अगर (!padapter->bup)
-		स_नकल(padapter->eeprompriv.mac_addr, addr->sa_data, ETH_ALEN);
+	if (!padapter->bup)
+		memcpy(padapter->eeprompriv.mac_addr, addr->sa_data, ETH_ALEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा net_device_stats *rtw_net_get_stats(काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+static struct net_device_stats *rtw_net_get_stats(struct net_device *pnetdev)
+{
+	struct adapter *padapter = netdev_priv(pnetdev);
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct recv_priv *precvpriv = &padapter->recvpriv;
 
 	padapter->stats.tx_packets = pxmitpriv->tx_pkts;
 	padapter->stats.rx_packets = precvpriv->rx_pkts;
@@ -209,8 +208,8 @@ MODULE_PARM_DESC(monitor_enable, "Enable monitor interface (default: false)");
 	padapter->stats.rx_dropped = precvpriv->rx_drop;
 	padapter->stats.tx_bytes = pxmitpriv->tx_bytes;
 	padapter->stats.rx_bytes = precvpriv->rx_bytes;
-	वापस &padapter->stats;
-पूर्ण
+	return &padapter->stats;
+}
 
 /*
  * AC to queue mapping
@@ -220,140 +219,140 @@ MODULE_PARM_DESC(monitor_enable, "Enable monitor interface (default: false)");
  * AC_BE -> queue 2
  * AC_BK -> queue 3
  */
-अटल स्थिर u16 rtw_1d_to_queue[8] = अणु 2, 3, 3, 2, 1, 1, 0, 0 पूर्ण;
+static const u16 rtw_1d_to_queue[8] = { 2, 3, 3, 2, 1, 1, 0, 0 };
 
 /* Given a data frame determine the 802.1p/1d tag to use. */
-अटल अचिन्हित पूर्णांक rtw_classअगरy8021d(काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक dscp;
+static unsigned int rtw_classify8021d(struct sk_buff *skb)
+{
+	unsigned int dscp;
 
 	/* skb->priority values from 256->263 are magic values to
-	 * directly indicate a specअगरic 802.1d priority.  This is used
+	 * directly indicate a specific 802.1d priority.  This is used
 	 * to allow 802.1d priority to be passed directly in from VLAN
 	 * tags, etc.
 	 */
-	अगर (skb->priority >= 256 && skb->priority <= 263)
-		वापस skb->priority - 256;
+	if (skb->priority >= 256 && skb->priority <= 263)
+		return skb->priority - 256;
 
-	चयन (skb->protocol) अणु
-	हाल htons(ETH_P_IP):
+	switch (skb->protocol) {
+	case htons(ETH_P_IP):
 		dscp = ip_hdr(skb)->tos & 0xfc;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	वापस dscp >> 5;
-पूर्ण
+	return dscp >> 5;
+}
 
-अटल u16 rtw_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
-			    काष्ठा net_device *sb_dev)
-अणु
-	काष्ठा adapter *padapter = netdev_priv(dev);
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
+			    struct net_device *sb_dev)
+{
+	struct adapter *padapter = netdev_priv(dev);
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	skb->priority = rtw_classअगरy8021d(skb);
+	skb->priority = rtw_classify8021d(skb);
 
-	अगर (pmlmepriv->acm_mask != 0)
+	if (pmlmepriv->acm_mask != 0)
 		skb->priority = qos_acm(pmlmepriv->acm_mask, skb->priority);
 
-	वापस rtw_1d_to_queue[skb->priority];
-पूर्ण
+	return rtw_1d_to_queue[skb->priority];
+}
 
-u16 rtw_recv_select_queue(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा iphdr *piphdr;
-	अचिन्हित पूर्णांक dscp;
+u16 rtw_recv_select_queue(struct sk_buff *skb)
+{
+	struct iphdr *piphdr;
+	unsigned int dscp;
 	__be16 eth_type;
 	u32 priority;
 	u8 *pdata = skb->data;
 
-	स_नकल(&eth_type, pdata + (ETH_ALEN << 1), 2);
+	memcpy(&eth_type, pdata + (ETH_ALEN << 1), 2);
 
-	चयन (eth_type) अणु
-	हाल htons(ETH_P_IP):
-		piphdr = (काष्ठा iphdr *)(pdata + ETH_HLEN);
+	switch (eth_type) {
+	case htons(ETH_P_IP):
+		piphdr = (struct iphdr *)(pdata + ETH_HLEN);
 		dscp = piphdr->tos & 0xfc;
 		priority = dscp >> 5;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		priority = 0;
-	पूर्ण
+	}
 
-	वापस rtw_1d_to_queue[priority];
-पूर्ण
+	return rtw_1d_to_queue[priority];
+}
 
-अटल स्थिर काष्ठा net_device_ops rtw_netdev_ops = अणु
-	.nकरो_खोलो = netdev_खोलो,
-	.nकरो_stop = netdev_बंद,
-	.nकरो_start_xmit = rtw_xmit_entry,
-	.nकरो_select_queue = rtw_select_queue,
-	.nकरो_set_mac_address = rtw_net_set_mac_address,
-	.nकरो_get_stats = rtw_net_get_stats,
-	.nकरो_करो_ioctl = rtw_ioctl,
-पूर्ण;
+static const struct net_device_ops rtw_netdev_ops = {
+	.ndo_open = netdev_open,
+	.ndo_stop = netdev_close,
+	.ndo_start_xmit = rtw_xmit_entry,
+	.ndo_select_queue = rtw_select_queue,
+	.ndo_set_mac_address = rtw_net_set_mac_address,
+	.ndo_get_stats = rtw_net_get_stats,
+	.ndo_do_ioctl = rtw_ioctl,
+};
 
-अटल स्थिर काष्ठा device_type wlan_type = अणु
+static const struct device_type wlan_type = {
 	.name = "wlan",
-पूर्ण;
+};
 
-काष्ठा net_device *rtw_init_netdev(व्योम)
-अणु
-	काष्ठा adapter *padapter;
-	काष्ठा net_device *pnetdev;
+struct net_device *rtw_init_netdev(void)
+{
+	struct adapter *padapter;
+	struct net_device *pnetdev;
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+init_net_dev\n"));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+init_net_dev\n"));
 
-	pnetdev = alloc_etherdev_mq(माप(काष्ठा adapter), 4);
-	अगर (!pnetdev)
-		वापस शून्य;
+	pnetdev = alloc_etherdev_mq(sizeof(struct adapter), 4);
+	if (!pnetdev)
+		return NULL;
 
 	pnetdev->dev.type = &wlan_type;
 	padapter = netdev_priv(pnetdev);
 	padapter->pnetdev = pnetdev;
 	DBG_88E("register rtw_netdev_ops to netdev_ops\n");
 	pnetdev->netdev_ops = &rtw_netdev_ops;
-	pnetdev->watchकरोg_समयo = HZ * 3; /* 3 second समयout */
-	pnetdev->wireless_handlers = (काष्ठा iw_handler_def *)&rtw_handlers_def;
+	pnetdev->watchdog_timeo = HZ * 3; /* 3 second timeout */
+	pnetdev->wireless_handlers = (struct iw_handler_def *)&rtw_handlers_def;
 
 	loadparam(padapter, pnetdev);
 
-	वापस pnetdev;
-पूर्ण
+	return pnetdev;
+}
 
-अटल पूर्णांक rtw_start_drv_thपढ़ोs(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक err = 0;
+static int rtw_start_drv_threads(struct adapter *padapter)
+{
+	int err = 0;
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+%s\n", __func__));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+%s\n", __func__));
 
-	padapter->cmdThपढ़ो = kthपढ़ो_run(rtw_cmd_thपढ़ो, padapter,
+	padapter->cmdThread = kthread_run(rtw_cmd_thread, padapter,
 					  "RTW_CMD_THREAD");
-	अगर (IS_ERR(padapter->cmdThपढ़ो))
-		err = PTR_ERR(padapter->cmdThपढ़ो);
-	अन्यथा
-		/* रुको क्रम cmd_thपढ़ो to run */
-		रुको_क्रम_completion_पूर्णांकerruptible(&padapter->cmdpriv.terminate_cmdthपढ़ो_comp);
+	if (IS_ERR(padapter->cmdThread))
+		err = PTR_ERR(padapter->cmdThread);
+	else
+		/* wait for cmd_thread to run */
+		wait_for_completion_interruptible(&padapter->cmdpriv.terminate_cmdthread_comp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम rtw_stop_drv_thपढ़ोs(काष्ठा adapter *padapter)
-अणु
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+%s\n", __func__));
+void rtw_stop_drv_threads(struct adapter *padapter)
+{
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+%s\n", __func__));
 
-	/* Below is to terminate rtw_cmd_thपढ़ो & event_thपढ़ो... */
+	/* Below is to terminate rtw_cmd_thread & event_thread... */
 	complete(&padapter->cmdpriv.cmd_queue_comp);
-	अगर (padapter->cmdThपढ़ो)
-		रुको_क्रम_completion_पूर्णांकerruptible(&padapter->cmdpriv.terminate_cmdthपढ़ो_comp);
-पूर्ण
+	if (padapter->cmdThread)
+		wait_for_completion_interruptible(&padapter->cmdpriv.terminate_cmdthread_comp);
+}
 
-अटल u8 rtw_init_शेष_value(काष्ठा adapter *padapter)
-अणु
-	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+static u8 rtw_init_default_value(struct adapter *padapter)
+{
+	struct registry_priv *pregistrypriv = &padapter->registrypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 
 	/* xmit_priv */
 	pxmitpriv->vcs_setting = pregistrypriv->vrtl_carrier_sense;
@@ -362,7 +361,7 @@ u16 rtw_recv_select_queue(काष्ठा sk_buff *skb)
 	pxmitpriv->frag_len = pregistrypriv->frag_thresh;
 
 	/* mlme_priv */
-	pmlmepriv->scan_पूर्णांकerval = SCAN_INTERVAL;/*  30*2 sec = 60sec */
+	pmlmepriv->scan_interval = SCAN_INTERVAL;/*  30*2 sec = 60sec */
 	pmlmepriv->scan_mode = SCAN_ACTIVE;
 
 	/* ht_priv */
@@ -370,11 +369,11 @@ u16 rtw_recv_select_queue(काष्ठा sk_buff *skb)
 
 	/* security_priv */
 	psecuritypriv->binstallGrpkey = _FAIL;
-	psecuritypriv->करोt11AuthAlgrthm = करोt11AuthAlgrthm_Open;
-	psecuritypriv->करोt11PrivacyAlgrthm = _NO_PRIVACY_;
-	psecuritypriv->करोt11PrivacyKeyIndex = 0;
-	psecuritypriv->करोt118021XGrpPrivacy = _NO_PRIVACY_;
-	psecuritypriv->करोt118021XGrpKeyid = 1;
+	psecuritypriv->dot11AuthAlgrthm = dot11AuthAlgrthm_Open;
+	psecuritypriv->dot11PrivacyAlgrthm = _NO_PRIVACY_;
+	psecuritypriv->dot11PrivacyKeyIndex = 0;
+	psecuritypriv->dot118021XGrpPrivacy = _NO_PRIVACY_;
+	psecuritypriv->dot118021XGrpKeyid = 1;
 	psecuritypriv->ndisauthtype = Ndis802_11AuthModeOpen;
 	psecuritypriv->ndisencryptstatus = Ndis802_11WEPDisabled;
 
@@ -388,19 +387,19 @@ u16 rtw_recv_select_queue(काष्ठा sk_buff *skb)
 	/* misc. */
 	padapter->bReadPortCancel = false;
 	padapter->bWritePortCancel = false;
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-u8 rtw_reset_drv_sw(काष्ठा adapter *padapter)
-अणु
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+u8 rtw_reset_drv_sw(struct adapter *padapter)
+{
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
 	/* hal_priv */
 	rtw_hal_def_value_init(padapter);
 	padapter->bReadPortCancel = false;
 	padapter->bWritePortCancel = false;
-	pmlmepriv->scan_पूर्णांकerval = SCAN_INTERVAL;/*  30*2 sec = 60sec */
+	pmlmepriv->scan_interval = SCAN_INTERVAL;/*  30*2 sec = 60sec */
 
 	padapter->xmitpriv.tx_pkts = 0;
 	padapter->recvpriv.rx_pkts = 0;
@@ -414,54 +413,54 @@ u8 rtw_reset_drv_sw(काष्ठा adapter *padapter)
 	/* mlmeextpriv */
 	padapter->mlmeextpriv.sitesurvey_res.state = SCAN_DISABLE;
 
-	rtw_set_संकेत_stat_समयr(&padapter->recvpriv);
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-u8 rtw_init_drv_sw(काष्ठा adapter *padapter)
-अणु
+u8 rtw_init_drv_sw(struct adapter *padapter)
+{
 	u8 ret8 = _SUCCESS;
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+%s\n", __func__));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+%s\n", __func__));
 
-	अगर ((rtw_init_cmd_priv(&padapter->cmdpriv)) == _FAIL) अणु
-		RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("\n Can't init cmd_priv\n"));
+	if ((rtw_init_cmd_priv(&padapter->cmdpriv)) == _FAIL) {
+		RT_TRACE(_module_os_intfs_c_, _drv_err_, ("\n Can't init cmd_priv\n"));
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	padapter->cmdpriv.padapter = padapter;
 
-	अगर (rtw_init_mlme_priv(padapter) == _FAIL) अणु
-		RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("\n Can't init mlme_priv\n"));
+	if (rtw_init_mlme_priv(padapter) == _FAIL) {
+		RT_TRACE(_module_os_intfs_c_, _drv_err_, ("\n Can't init mlme_priv\n"));
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (init_mlme_ext_priv(padapter) == _FAIL) अणु
-		RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("\n Can't init mlme_ext_priv\n"));
+	if (init_mlme_ext_priv(padapter) == _FAIL) {
+		RT_TRACE(_module_os_intfs_c_, _drv_err_, ("\n Can't init mlme_ext_priv\n"));
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (_rtw_init_xmit_priv(&padapter->xmitpriv, padapter) == _FAIL) अणु
+	if (_rtw_init_xmit_priv(&padapter->xmitpriv, padapter) == _FAIL) {
 		DBG_88E("Can't _rtw_init_xmit_priv\n");
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (_rtw_init_recv_priv(&padapter->recvpriv, padapter) == _FAIL) अणु
+	if (_rtw_init_recv_priv(&padapter->recvpriv, padapter) == _FAIL) {
 		DBG_88E("Can't _rtw_init_recv_priv\n");
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (_rtw_init_sta_priv(&padapter->stapriv) == _FAIL) अणु
+	if (_rtw_init_sta_priv(&padapter->stapriv) == _FAIL) {
 		DBG_88E("Can't _rtw_init_sta_priv\n");
 		ret8 = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	padapter->stapriv.padapter = padapter;
 
@@ -469,244 +468,244 @@ u8 rtw_init_drv_sw(काष्ठा adapter *padapter)
 
 	rtw_init_pwrctrl_priv(padapter);
 
-	ret8 = rtw_init_शेष_value(padapter);
+	ret8 = rtw_init_default_value(padapter);
 
 	rtw_hal_dm_init(padapter);
 	rtw_hal_sw_led_init(padapter);
 
 	rtw_hal_sreset_init(padapter);
 
-निकास:
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("-%s\n", __func__));
+exit:
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("-%s\n", __func__));
 
-	वापस ret8;
-पूर्ण
+	return ret8;
+}
 
-व्योम rtw_cancel_all_समयr(काष्ठा adapter *padapter)
-अणु
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+%s\n", __func__));
+void rtw_cancel_all_timer(struct adapter *padapter)
+{
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+%s\n", __func__));
 
-	del_समयr_sync(&padapter->mlmepriv.assoc_समयr);
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("%s:cancel association timer complete!\n", __func__));
+	del_timer_sync(&padapter->mlmepriv.assoc_timer);
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("%s:cancel association timer complete!\n", __func__));
 
-	del_समयr_sync(&padapter->mlmepriv.scan_to_समयr);
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("%s:cancel scan_to_timer!\n", __func__));
+	del_timer_sync(&padapter->mlmepriv.scan_to_timer);
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("%s:cancel scan_to_timer!\n", __func__));
 
-	del_समयr_sync(&padapter->mlmepriv.dynamic_chk_समयr);
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("%s:cancel dynamic_chk_timer!\n", __func__));
+	del_timer_sync(&padapter->mlmepriv.dynamic_chk_timer);
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("%s:cancel dynamic_chk_timer!\n", __func__));
 
-	/*  cancel sw led समयr */
+	/*  cancel sw led timer */
 	rtw_hal_sw_led_deinit(padapter);
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("%s:cancel DeInitSwLeds!\n", __func__));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("%s:cancel DeInitSwLeds!\n", __func__));
 
-	del_समयr_sync(&padapter->pwrctrlpriv.pwr_state_check_समयr);
+	del_timer_sync(&padapter->pwrctrlpriv.pwr_state_check_timer);
 
-	del_समयr_sync(&padapter->recvpriv.संकेत_stat_समयr);
-पूर्ण
+	del_timer_sync(&padapter->recvpriv.signal_stat_timer);
+}
 
-u8 rtw_मुक्त_drv_sw(काष्ठा adapter *padapter)
-अणु
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("==>%s", __func__));
+u8 rtw_free_drv_sw(struct adapter *padapter)
+{
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("==>%s", __func__));
 
-	मुक्त_mlme_ext_priv(&padapter->mlmeextpriv);
+	free_mlme_ext_priv(&padapter->mlmeextpriv);
 
-	rtw_मुक्त_mlme_priv(&padapter->mlmepriv);
-	_rtw_मुक्त_xmit_priv(&padapter->xmitpriv);
+	rtw_free_mlme_priv(&padapter->mlmepriv);
+	_rtw_free_xmit_priv(&padapter->xmitpriv);
 
-	/* will मुक्त bcmc_stainfo here */
-	_rtw_मुक्त_sta_priv(&padapter->stapriv);
+	/* will free bcmc_stainfo here */
+	_rtw_free_sta_priv(&padapter->stapriv);
 
-	_rtw_मुक्त_recv_priv(&padapter->recvpriv);
+	_rtw_free_recv_priv(&padapter->recvpriv);
 
-	rtw_hal_मुक्त_data(padapter);
+	rtw_hal_free_data(padapter);
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("<== %s\n", __func__));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("<== %s\n", __func__));
 
 	mutex_destroy(&padapter->hw_init_mutex);
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("-%s\n", __func__));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("-%s\n", __func__));
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-अटल पूर्णांक _netdev_खोलो(काष्ठा net_device *pnetdev)
-अणु
-	uपूर्णांक status;
-	पूर्णांक err;
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
-	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+static int _netdev_open(struct net_device *pnetdev)
+{
+	uint status;
+	int err;
+	struct adapter *padapter = netdev_priv(pnetdev);
+	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+88eu_drv - dev_open\n"));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+88eu_drv - dev_open\n"));
 	DBG_88E("+88eu_drv - drv_open, bup =%d\n", padapter->bup);
 
-	अगर (pwrctrlpriv->ps_flag) अणु
-		padapter->net_बंदd = false;
-		जाओ netdev_खोलो_normal_process;
-	पूर्ण
+	if (pwrctrlpriv->ps_flag) {
+		padapter->net_closed = false;
+		goto netdev_open_normal_process;
+	}
 
-	अगर (!padapter->bup) अणु
+	if (!padapter->bup) {
 		padapter->bDriverStopped = false;
 		padapter->bSurpriseRemoved = false;
 
 		status = rtw_hal_init(padapter);
-		अगर (status == _FAIL) अणु
-			RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("rtl88eu_hal_init(): Can't init h/w!\n"));
-			जाओ netdev_खोलो_error;
-		पूर्ण
+		if (status == _FAIL) {
+			RT_TRACE(_module_os_intfs_c_, _drv_err_, ("rtl88eu_hal_init(): Can't init h/w!\n"));
+			goto netdev_open_error;
+		}
 
 		pr_info("MAC Address = %pM\n", pnetdev->dev_addr);
 
-		err = rtw_start_drv_thपढ़ोs(padapter);
-		अगर (err) अणु
+		err = rtw_start_drv_threads(padapter);
+		if (err) {
 			pr_info("Initialize driver software resource Failed!\n");
-			जाओ netdev_खोलो_error;
-		पूर्ण
+			goto netdev_open_error;
+		}
 
-		अगर (init_hw_mlme_ext(padapter) == _FAIL) अणु
+		if (init_hw_mlme_ext(padapter) == _FAIL) {
 			pr_info("can't init mlme_ext_priv\n");
-			जाओ netdev_खोलो_error;
-		पूर्ण
+			goto netdev_open_error;
+		}
 		rtw_hal_inirp_init(padapter);
 
 		led_control_8188eu(padapter, LED_CTL_NO_LINK);
 
 		padapter->bup = true;
-	पूर्ण
-	padapter->net_बंदd = false;
+	}
+	padapter->net_closed = false;
 
-	mod_समयr(&padapter->mlmepriv.dynamic_chk_समयr,
-		  jअगरfies + msecs_to_jअगरfies(2000));
+	mod_timer(&padapter->mlmepriv.dynamic_chk_timer,
+		  jiffies + msecs_to_jiffies(2000));
 
 	padapter->pwrctrlpriv.bips_processing = false;
-	rtw_set_pwr_state_check_समयr(&padapter->pwrctrlpriv);
+	rtw_set_pwr_state_check_timer(&padapter->pwrctrlpriv);
 
-	अगर (!rtw_netअगर_queue_stopped(pnetdev))
-		netअगर_tx_start_all_queues(pnetdev);
-	अन्यथा
-		netअगर_tx_wake_all_queues(pnetdev);
+	if (!rtw_netif_queue_stopped(pnetdev))
+		netif_tx_start_all_queues(pnetdev);
+	else
+		netif_tx_wake_all_queues(pnetdev);
 
-netdev_खोलो_normal_process:
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("-88eu_drv - dev_open\n"));
+netdev_open_normal_process:
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("-88eu_drv - dev_open\n"));
 	DBG_88E("-88eu_drv - drv_open, bup =%d\n", padapter->bup);
-	वापस 0;
+	return 0;
 
-netdev_खोलो_error:
+netdev_open_error:
 	padapter->bup = false;
-	netअगर_carrier_off(pnetdev);
-	netअगर_tx_stop_all_queues(pnetdev);
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("-88eu_drv - dev_open, fail!\n"));
+	netif_carrier_off(pnetdev);
+	netif_tx_stop_all_queues(pnetdev);
+	RT_TRACE(_module_os_intfs_c_, _drv_err_, ("-88eu_drv - dev_open, fail!\n"));
 	DBG_88E("-88eu_drv - drv_open fail, bup =%d\n", padapter->bup);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-पूर्णांक netdev_खोलो(काष्ठा net_device *pnetdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
+int netdev_open(struct net_device *pnetdev)
+{
+	int ret;
+	struct adapter *padapter = netdev_priv(pnetdev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&padapter->hw_init_mutex))
-		वापस -ERESTARTSYS;
-	ret = _netdev_खोलो(pnetdev);
+	if (mutex_lock_interruptible(&padapter->hw_init_mutex))
+		return -ERESTARTSYS;
+	ret = _netdev_open(pnetdev);
 	mutex_unlock(&padapter->hw_init_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक  ips_netdrv_खोलो(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक status = _SUCCESS;
+int  ips_netdrv_open(struct adapter *padapter)
+{
+	int status = _SUCCESS;
 
-	padapter->net_बंदd = false;
+	padapter->net_closed = false;
 	DBG_88E("===> %s.........\n", __func__);
 
 	padapter->bDriverStopped = false;
 	padapter->bSurpriseRemoved = false;
 
 	status = rtw_hal_init(padapter);
-	अगर (status == _FAIL) अणु
-		RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_err_, ("%s(): Can't init h/w!\n", __func__));
-		जाओ netdev_खोलो_error;
-	पूर्ण
+	if (status == _FAIL) {
+		RT_TRACE(_module_os_intfs_c_, _drv_err_, ("%s(): Can't init h/w!\n", __func__));
+		goto netdev_open_error;
+	}
 
 	rtw_hal_inirp_init(padapter);
 
-	rtw_set_pwr_state_check_समयr(&padapter->pwrctrlpriv);
-	mod_समयr(&padapter->mlmepriv.dynamic_chk_समयr,
-		  jअगरfies + msecs_to_jअगरfies(5000));
+	rtw_set_pwr_state_check_timer(&padapter->pwrctrlpriv);
+	mod_timer(&padapter->mlmepriv.dynamic_chk_timer,
+		  jiffies + msecs_to_jiffies(5000));
 
-	वापस _SUCCESS;
+	return _SUCCESS;
 
-netdev_खोलो_error:
+netdev_open_error:
 	DBG_88E("-%s - drv_open failure, bup =%d\n", __func__, padapter->bup);
 
-	वापस _FAIL;
-पूर्ण
+	return _FAIL;
+}
 
-पूर्णांक rtw_ips_pwr_up(काष्ठा adapter *padapter)
-अणु
-	पूर्णांक result;
-	अचिन्हित दीर्घ start_समय = jअगरfies;
+int rtw_ips_pwr_up(struct adapter *padapter)
+{
+	int result;
+	unsigned long start_time = jiffies;
 
 	DBG_88E("===>  %s..............\n", __func__);
 	rtw_reset_drv_sw(padapter);
 
-	result = ips_netdrv_खोलो(padapter);
+	result = ips_netdrv_open(padapter);
 
 	led_control_8188eu(padapter, LED_CTL_NO_LINK);
 
 	DBG_88E("<===  %s.............. in %dms\n", __func__,
-		jअगरfies_to_msecs(jअगरfies - start_समय));
-	वापस result;
-पूर्ण
+		jiffies_to_msecs(jiffies - start_time));
+	return result;
+}
 
-व्योम rtw_ips_pwr_करोwn(काष्ठा adapter *padapter)
-अणु
-	अचिन्हित दीर्घ start_समय = jअगरfies;
+void rtw_ips_pwr_down(struct adapter *padapter)
+{
+	unsigned long start_time = jiffies;
 
 	DBG_88E("===> %s...................\n", __func__);
 
-	padapter->net_बंदd = true;
+	padapter->net_closed = true;
 
 	led_control_8188eu(padapter, LED_CTL_POWER_OFF);
 
 	rtw_ips_dev_unload(padapter);
 	DBG_88E("<=== %s..................... in %dms\n", __func__,
-		jअगरfies_to_msecs(jअगरfies - start_समय));
-पूर्ण
+		jiffies_to_msecs(jiffies - start_time));
+}
 
-व्योम rtw_ips_dev_unload(काष्ठा adapter *padapter)
-अणु
+void rtw_ips_dev_unload(struct adapter *padapter)
+{
 	DBG_88E("====> %s...\n", __func__);
 
-	rtw_hal_set_hwreg(padapter, HW_VAR_FIFO_CLEARN_UP, शून्य);
+	rtw_hal_set_hwreg(padapter, HW_VAR_FIFO_CLEARN_UP, NULL);
 
-	usb_पूर्णांकf_stop(padapter);
+	usb_intf_stop(padapter);
 
 	/* s5. */
-	अगर (!padapter->bSurpriseRemoved)
+	if (!padapter->bSurpriseRemoved)
 		rtw_hal_deinit(padapter);
-पूर्ण
+}
 
-अटल पूर्णांक netdev_बंद(काष्ठा net_device *pnetdev)
-अणु
-	काष्ठा adapter *padapter = netdev_priv(pnetdev);
+static int netdev_close(struct net_device *pnetdev)
+{
+	struct adapter *padapter = netdev_priv(pnetdev);
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("+88eu_drv - drv_close\n"));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("+88eu_drv - drv_close\n"));
 
-	अगर (padapter->pwrctrlpriv.bInternalAutoSuspend) अणु
-		अगर (padapter->pwrctrlpriv.rf_pwrstate == rf_off)
+	if (padapter->pwrctrlpriv.bInternalAutoSuspend) {
+		if (padapter->pwrctrlpriv.rf_pwrstate == rf_off)
 			padapter->pwrctrlpriv.ps_flag = true;
-	पूर्ण
-	padapter->net_बंदd = true;
+	}
+	padapter->net_closed = true;
 
-	अगर (padapter->pwrctrlpriv.rf_pwrstate == rf_on) अणु
+	if (padapter->pwrctrlpriv.rf_pwrstate == rf_on) {
 		DBG_88E("(2)88eu_drv - drv_close, bup =%d, hw_init_completed =%d\n",
 			padapter->bup, padapter->hw_init_completed);
 
 		/* s1. */
-		अगर (pnetdev) अणु
-			अगर (!rtw_netअगर_queue_stopped(pnetdev))
-				netअगर_tx_stop_all_queues(pnetdev);
-		पूर्ण
+		if (pnetdev) {
+			if (!rtw_netif_queue_stopped(pnetdev))
+				netif_tx_stop_all_queues(pnetdev);
+		}
 
 		/* s2. */
 		LeaveAllPowerSaveMode(padapter);
@@ -714,14 +713,14 @@ netdev_खोलो_error:
 		/* s2-2.  indicate disconnect to os */
 		rtw_indicate_disconnect(padapter);
 		/* s2-3. */
-		rtw_मुक्त_assoc_resources(padapter);
+		rtw_free_assoc_resources(padapter);
 		/* s2-4. */
-		rtw_मुक्त_network_queue(padapter, true);
+		rtw_free_network_queue(padapter, true);
 		/*  Close LED */
 		led_control_8188eu(padapter, LED_CTL_POWER_OFF);
-	पूर्ण
+	}
 
-	RT_TRACE(_module_os_पूर्णांकfs_c_, _drv_info_, ("-88eu_drv - drv_close\n"));
+	RT_TRACE(_module_os_intfs_c_, _drv_info_, ("-88eu_drv - drv_close\n"));
 	DBG_88E("-88eu_drv - drv_close, bup =%d\n", padapter->bup);
-	वापस 0;
-पूर्ण
+	return 0;
+}

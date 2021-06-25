@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश "dpu_hwio.h"
-#समावेश "dpu_hw_catalog.h"
-#समावेश "dpu_hw_lm.h"
-#समावेश "dpu_hw_dspp.h"
-#समावेश "dpu_kms.h"
+#include "dpu_hwio.h"
+#include "dpu_hw_catalog.h"
+#include "dpu_hw_lm.h"
+#include "dpu_hw_dspp.h"
+#include "dpu_kms.h"
 
 
 /* DSPP_PCC */
-#घोषणा PCC_EN BIT(0)
-#घोषणा PCC_DIS 0
-#घोषणा PCC_RED_R_OFF 0x10
-#घोषणा PCC_RED_G_OFF 0x1C
-#घोषणा PCC_RED_B_OFF 0x28
-#घोषणा PCC_GREEN_R_OFF 0x14
-#घोषणा PCC_GREEN_G_OFF 0x20
-#घोषणा PCC_GREEN_B_OFF 0x2C
-#घोषणा PCC_BLUE_R_OFF 0x18
-#घोषणा PCC_BLUE_G_OFF 0x24
-#घोषणा PCC_BLUE_B_OFF 0x30
+#define PCC_EN BIT(0)
+#define PCC_DIS 0
+#define PCC_RED_R_OFF 0x10
+#define PCC_RED_G_OFF 0x1C
+#define PCC_RED_B_OFF 0x28
+#define PCC_GREEN_R_OFF 0x14
+#define PCC_GREEN_G_OFF 0x20
+#define PCC_GREEN_B_OFF 0x2C
+#define PCC_BLUE_R_OFF 0x18
+#define PCC_BLUE_G_OFF 0x24
+#define PCC_BLUE_B_OFF 0x30
 
-अटल व्योम dpu_setup_dspp_pcc(काष्ठा dpu_hw_dspp *ctx,
-		काष्ठा dpu_hw_pcc_cfg *cfg)
-अणु
+static void dpu_setup_dspp_pcc(struct dpu_hw_dspp *ctx,
+		struct dpu_hw_pcc_cfg *cfg)
+{
 
 	u32 base = ctx->cap->sblk->pcc.base;
 
-	अगर (!ctx || !base) अणु
+	if (!ctx || !base) {
 		DRM_ERROR("invalid ctx %pK pcc base 0x%x\n", ctx, base);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!cfg) अणु
+	if (!cfg) {
 		DRM_DEBUG_DRIVER("disable pcc feature\n");
 		DPU_REG_WRITE(&ctx->hw, base, PCC_DIS);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	DPU_REG_WRITE(&ctx->hw, base + PCC_RED_R_OFF, cfg->r.r);
 	DPU_REG_WRITE(&ctx->hw, base + PCC_RED_G_OFF, cfg->r.g);
@@ -53,60 +52,60 @@
 	DPU_REG_WRITE(&ctx->hw, base + PCC_BLUE_B_OFF, cfg->b.b);
 
 	DPU_REG_WRITE(&ctx->hw, base, PCC_EN);
-पूर्ण
+}
 
-अटल व्योम _setup_dspp_ops(काष्ठा dpu_hw_dspp *c,
-		अचिन्हित दीर्घ features)
-अणु
-	अगर (test_bit(DPU_DSPP_PCC, &features))
+static void _setup_dspp_ops(struct dpu_hw_dspp *c,
+		unsigned long features)
+{
+	if (test_bit(DPU_DSPP_PCC, &features))
 		c->ops.setup_pcc = dpu_setup_dspp_pcc;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dpu_dspp_cfg *_dspp_offset(क्रमागत dpu_dspp dspp,
-		स्थिर काष्ठा dpu_mdss_cfg *m,
-		व्योम __iomem *addr,
-		काष्ठा dpu_hw_blk_reg_map *b)
-अणु
-	पूर्णांक i;
+static const struct dpu_dspp_cfg *_dspp_offset(enum dpu_dspp dspp,
+		const struct dpu_mdss_cfg *m,
+		void __iomem *addr,
+		struct dpu_hw_blk_reg_map *b)
+{
+	int i;
 
-	अगर (!m || !addr || !b)
-		वापस ERR_PTR(-EINVAL);
+	if (!m || !addr || !b)
+		return ERR_PTR(-EINVAL);
 
-	क्रम (i = 0; i < m->dspp_count; i++) अणु
-		अगर (dspp == m->dspp[i].id) अणु
+	for (i = 0; i < m->dspp_count; i++) {
+		if (dspp == m->dspp[i].id) {
 			b->base_off = addr;
 			b->blk_off = m->dspp[i].base;
 			b->length = m->dspp[i].len;
 			b->hwversion = m->hwversion;
 			b->log_mask = DPU_DBG_MASK_DSPP;
-			वापस &m->dspp[i];
-		पूर्ण
-	पूर्ण
+			return &m->dspp[i];
+		}
+	}
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-अटल काष्ठा dpu_hw_blk_ops dpu_hw_ops;
+static struct dpu_hw_blk_ops dpu_hw_ops;
 
-काष्ठा dpu_hw_dspp *dpu_hw_dspp_init(क्रमागत dpu_dspp idx,
-			व्योम __iomem *addr,
-			स्थिर काष्ठा dpu_mdss_cfg *m)
-अणु
-	काष्ठा dpu_hw_dspp *c;
-	स्थिर काष्ठा dpu_dspp_cfg *cfg;
+struct dpu_hw_dspp *dpu_hw_dspp_init(enum dpu_dspp idx,
+			void __iomem *addr,
+			const struct dpu_mdss_cfg *m)
+{
+	struct dpu_hw_dspp *c;
+	const struct dpu_dspp_cfg *cfg;
 
-	अगर (!addr || !m)
-		वापस ERR_PTR(-EINVAL);
+	if (!addr || !m)
+		return ERR_PTR(-EINVAL);
 
-	c = kzalloc(माप(*c), GFP_KERNEL);
-	अगर (!c)
-		वापस ERR_PTR(-ENOMEM);
+	c = kzalloc(sizeof(*c), GFP_KERNEL);
+	if (!c)
+		return ERR_PTR(-ENOMEM);
 
 	cfg = _dspp_offset(idx, m, addr, &c->hw);
-	अगर (IS_ERR_OR_शून्य(cfg)) अणु
-		kमुक्त(c);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if (IS_ERR_OR_NULL(cfg)) {
+		kfree(c);
+		return ERR_PTR(-EINVAL);
+	}
 
 	/* Assign ops */
 	c->idx = idx;
@@ -115,15 +114,15 @@
 
 	dpu_hw_blk_init(&c->base, DPU_HW_BLK_DSPP, idx, &dpu_hw_ops);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-व्योम dpu_hw_dspp_destroy(काष्ठा dpu_hw_dspp *dspp)
-अणु
-	अगर (dspp)
+void dpu_hw_dspp_destroy(struct dpu_hw_dspp *dspp)
+{
+	if (dspp)
 		dpu_hw_blk_destroy(&dspp->base);
 
-	kमुक्त(dspp);
-पूर्ण
+	kfree(dspp);
+}
 
 

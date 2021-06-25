@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * IOAPIC/IOxAPIC/IOSAPIC driver
  *
@@ -10,240 +9,240 @@
  *
  * Based on original drivers/pci/ioapic.c
  *	Yinghai Lu <yinghai@kernel.org>
- *	Jiang Liu <jiang.liu@पूर्णांकel.com>
+ *	Jiang Liu <jiang.liu@intel.com>
  */
 
 /*
  * This driver manages I/O APICs added by hotplug after boot.
  * We try to claim all I/O APIC devices, but those present at boot were
- * रेजिस्टरed when we parsed the ACPI MADT.
+ * registered when we parsed the ACPI MADT.
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: IOAPIC: " fmt
+#define pr_fmt(fmt) "ACPI: IOAPIC: " fmt
 
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/pci.h>
-#समावेश <acpi/acpi.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/pci.h>
+#include <acpi/acpi.h>
 
-काष्ठा acpi_pci_ioapic अणु
+struct acpi_pci_ioapic {
 	acpi_handle	root_handle;
 	acpi_handle	handle;
 	u32		gsi_base;
-	काष्ठा resource	res;
-	काष्ठा pci_dev	*pdev;
-	काष्ठा list_head list;
-पूर्ण;
+	struct resource	res;
+	struct pci_dev	*pdev;
+	struct list_head list;
+};
 
-अटल LIST_HEAD(ioapic_list);
-अटल DEFINE_MUTEX(ioapic_list_lock);
+static LIST_HEAD(ioapic_list);
+static DEFINE_MUTEX(ioapic_list_lock);
 
-अटल acpi_status setup_res(काष्ठा acpi_resource *acpi_res, व्योम *data)
-अणु
-	काष्ठा resource *res = data;
-	काष्ठा resource_win win;
+static acpi_status setup_res(struct acpi_resource *acpi_res, void *data)
+{
+	struct resource *res = data;
+	struct resource_win win;
 
 	/*
-	 * We might assign this to 'res' later, make sure all poपूर्णांकers are
-	 * cleared beक्रमe the resource is added to the global list
+	 * We might assign this to 'res' later, make sure all pointers are
+	 * cleared before the resource is added to the global list
 	 */
-	स_रखो(&win, 0, माप(win));
+	memset(&win, 0, sizeof(win));
 
 	res->flags = 0;
-	अगर (acpi_dev_filter_resource_type(acpi_res, IORESOURCE_MEM))
-		वापस AE_OK;
+	if (acpi_dev_filter_resource_type(acpi_res, IORESOURCE_MEM))
+		return AE_OK;
 
-	अगर (!acpi_dev_resource_memory(acpi_res, res)) अणु
-		अगर (acpi_dev_resource_address_space(acpi_res, &win) ||
+	if (!acpi_dev_resource_memory(acpi_res, res)) {
+		if (acpi_dev_resource_address_space(acpi_res, &win) ||
 		    acpi_dev_resource_ext_address_space(acpi_res, &win))
 			*res = win.res;
-	पूर्ण
-	अगर ((res->flags & IORESOURCE_PREFETCH) ||
+	}
+	if ((res->flags & IORESOURCE_PREFETCH) ||
 	    (res->flags & IORESOURCE_DISABLED))
 		res->flags = 0;
 
-	वापस AE_CTRL_TERMINATE;
-पूर्ण
+	return AE_CTRL_TERMINATE;
+}
 
-अटल bool acpi_is_ioapic(acpi_handle handle, अक्षर **type)
-अणु
+static bool acpi_is_ioapic(acpi_handle handle, char **type)
+{
 	acpi_status status;
-	काष्ठा acpi_device_info *info;
-	अक्षर *hid = शून्य;
+	struct acpi_device_info *info;
+	char *hid = NULL;
 	bool match = false;
 
-	अगर (!acpi_has_method(handle, "_GSB"))
-		वापस false;
+	if (!acpi_has_method(handle, "_GSB"))
+		return false;
 
 	status = acpi_get_object_info(handle, &info);
-	अगर (ACPI_SUCCESS(status)) अणु
-		अगर (info->valid & ACPI_VALID_HID)
+	if (ACPI_SUCCESS(status)) {
+		if (info->valid & ACPI_VALID_HID)
 			hid = info->hardware_id.string;
-		अगर (hid) अणु
-			अगर (म_भेद(hid, "ACPI0009") == 0) अणु
+		if (hid) {
+			if (strcmp(hid, "ACPI0009") == 0) {
 				*type = "IOxAPIC";
 				match = true;
-			पूर्ण अन्यथा अगर (म_भेद(hid, "ACPI000A") == 0) अणु
+			} else if (strcmp(hid, "ACPI000A") == 0) {
 				*type = "IOAPIC";
 				match = true;
-			पूर्ण
-		पूर्ण
-		kमुक्त(info);
-	पूर्ण
+			}
+		}
+		kfree(info);
+	}
 
-	वापस match;
-पूर्ण
+	return match;
+}
 
-अटल acpi_status handle_ioapic_add(acpi_handle handle, u32 lvl,
-				     व्योम *context, व्योम **rv)
-अणु
+static acpi_status handle_ioapic_add(acpi_handle handle, u32 lvl,
+				     void *context, void **rv)
+{
 	acpi_status status;
-	अचिन्हित दीर्घ दीर्घ gsi_base;
-	काष्ठा acpi_pci_ioapic *ioapic;
-	काष्ठा pci_dev *dev = शून्य;
-	काष्ठा resource *res = शून्य, *pci_res = शून्य, *crs_res;
-	अक्षर *type = शून्य;
+	unsigned long long gsi_base;
+	struct acpi_pci_ioapic *ioapic;
+	struct pci_dev *dev = NULL;
+	struct resource *res = NULL, *pci_res = NULL, *crs_res;
+	char *type = NULL;
 
-	अगर (!acpi_is_ioapic(handle, &type))
-		वापस AE_OK;
+	if (!acpi_is_ioapic(handle, &type))
+		return AE_OK;
 
 	mutex_lock(&ioapic_list_lock);
-	list_क्रम_each_entry(ioapic, &ioapic_list, list)
-		अगर (ioapic->handle == handle) अणु
+	list_for_each_entry(ioapic, &ioapic_list, list)
+		if (ioapic->handle == handle) {
 			mutex_unlock(&ioapic_list_lock);
-			वापस AE_OK;
-		पूर्ण
+			return AE_OK;
+		}
 
-	status = acpi_evaluate_पूर्णांकeger(handle, "_GSB", शून्य, &gsi_base);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_evaluate_integer(handle, "_GSB", NULL, &gsi_base);
+	if (ACPI_FAILURE(status)) {
 		acpi_handle_warn(handle, "failed to evaluate _GSB method\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	ioapic = kzalloc(माप(*ioapic), GFP_KERNEL);
-	अगर (!ioapic) अणु
+	ioapic = kzalloc(sizeof(*ioapic), GFP_KERNEL);
+	if (!ioapic) {
 		pr_err("cannot allocate memory for new IOAPIC\n");
-		जाओ निकास;
-	पूर्ण अन्यथा अणु
+		goto exit;
+	} else {
 		ioapic->root_handle = (acpi_handle)context;
 		ioapic->handle = handle;
 		ioapic->gsi_base = (u32)gsi_base;
 		INIT_LIST_HEAD(&ioapic->list);
-	पूर्ण
+	}
 
-	अगर (acpi_ioapic_रेजिस्टरed(handle, (u32)gsi_base))
-		जाओ करोne;
+	if (acpi_ioapic_registered(handle, (u32)gsi_base))
+		goto done;
 
 	dev = acpi_get_pci_dev(handle);
-	अगर (dev && pci_resource_len(dev, 0)) अणु
-		अगर (pci_enable_device(dev) < 0)
-			जाओ निकास_put;
+	if (dev && pci_resource_len(dev, 0)) {
+		if (pci_enable_device(dev) < 0)
+			goto exit_put;
 		pci_set_master(dev);
-		अगर (pci_request_region(dev, 0, type))
-			जाओ निकास_disable;
+		if (pci_request_region(dev, 0, type))
+			goto exit_disable;
 		pci_res = &dev->resource[0];
 		ioapic->pdev = dev;
-	पूर्ण अन्यथा अणु
+	} else {
 		pci_dev_put(dev);
-		dev = शून्य;
-	पूर्ण
+		dev = NULL;
+	}
 
 	crs_res = &ioapic->res;
 	acpi_walk_resources(handle, METHOD_NAME__CRS, setup_res, crs_res);
 	crs_res->name = type;
 	crs_res->flags |= IORESOURCE_BUSY;
-	अगर (crs_res->flags == 0) अणु
+	if (crs_res->flags == 0) {
 		acpi_handle_warn(handle, "failed to get resource\n");
-		जाओ निकास_release;
-	पूर्ण अन्यथा अगर (insert_resource(&iomem_resource, crs_res)) अणु
+		goto exit_release;
+	} else if (insert_resource(&iomem_resource, crs_res)) {
 		acpi_handle_warn(handle, "failed to insert resource\n");
-		जाओ निकास_release;
-	पूर्ण
+		goto exit_release;
+	}
 
 	/* try pci resource first, then "_CRS" resource */
 	res = pci_res;
-	अगर (!res || !res->flags)
+	if (!res || !res->flags)
 		res = crs_res;
 
-	अगर (acpi_रेजिस्टर_ioapic(handle, res->start, (u32)gsi_base)) अणु
+	if (acpi_register_ioapic(handle, res->start, (u32)gsi_base)) {
 		acpi_handle_warn(handle, "failed to register IOAPIC\n");
-		जाओ निकास_release;
-	पूर्ण
-करोne:
+		goto exit_release;
+	}
+done:
 	list_add(&ioapic->list, &ioapic_list);
 	mutex_unlock(&ioapic_list_lock);
 
-	अगर (dev)
+	if (dev)
 		dev_info(&dev->dev, "%s at %pR, GSI %u\n",
 			 type, res, (u32)gsi_base);
-	अन्यथा
+	else
 		acpi_handle_info(handle, "%s at %pR, GSI %u\n",
 				 type, res, (u32)gsi_base);
 
-	वापस AE_OK;
+	return AE_OK;
 
-निकास_release:
-	अगर (dev)
+exit_release:
+	if (dev)
 		pci_release_region(dev, 0);
-	अगर (ioapic->res.flags && ioapic->res.parent)
+	if (ioapic->res.flags && ioapic->res.parent)
 		release_resource(&ioapic->res);
-निकास_disable:
-	अगर (dev)
+exit_disable:
+	if (dev)
 		pci_disable_device(dev);
-निकास_put:
+exit_put:
 	pci_dev_put(dev);
-	kमुक्त(ioapic);
-निकास:
+	kfree(ioapic);
+exit:
 	mutex_unlock(&ioapic_list_lock);
 	*(acpi_status *)rv = AE_ERROR;
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-पूर्णांक acpi_ioapic_add(acpi_handle root_handle)
-अणु
+int acpi_ioapic_add(acpi_handle root_handle)
+{
 	acpi_status status, retval = AE_OK;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, root_handle,
-				     अच_पूर्णांक_उच्च, handle_ioapic_add, शून्य,
-				     root_handle, (व्योम **)&retval);
+				     UINT_MAX, handle_ioapic_add, NULL,
+				     root_handle, (void **)&retval);
 
-	वापस ACPI_SUCCESS(status) && ACPI_SUCCESS(retval) ? 0 : -ENODEV;
-पूर्ण
+	return ACPI_SUCCESS(status) && ACPI_SUCCESS(retval) ? 0 : -ENODEV;
+}
 
-व्योम pci_ioapic_हटाओ(काष्ठा acpi_pci_root *root)
-अणु
-	काष्ठा acpi_pci_ioapic *ioapic, *पंचांगp;
+void pci_ioapic_remove(struct acpi_pci_root *root)
+{
+	struct acpi_pci_ioapic *ioapic, *tmp;
 
 	mutex_lock(&ioapic_list_lock);
-	list_क्रम_each_entry_safe(ioapic, पंचांगp, &ioapic_list, list) अणु
-		अगर (root->device->handle != ioapic->root_handle)
-			जारी;
-		अगर (ioapic->pdev) अणु
+	list_for_each_entry_safe(ioapic, tmp, &ioapic_list, list) {
+		if (root->device->handle != ioapic->root_handle)
+			continue;
+		if (ioapic->pdev) {
 			pci_release_region(ioapic->pdev, 0);
 			pci_disable_device(ioapic->pdev);
 			pci_dev_put(ioapic->pdev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&ioapic_list_lock);
-पूर्ण
+}
 
-पूर्णांक acpi_ioapic_हटाओ(काष्ठा acpi_pci_root *root)
-अणु
-	पूर्णांक retval = 0;
-	काष्ठा acpi_pci_ioapic *ioapic, *पंचांगp;
+int acpi_ioapic_remove(struct acpi_pci_root *root)
+{
+	int retval = 0;
+	struct acpi_pci_ioapic *ioapic, *tmp;
 
 	mutex_lock(&ioapic_list_lock);
-	list_क्रम_each_entry_safe(ioapic, पंचांगp, &ioapic_list, list) अणु
-		अगर (root->device->handle != ioapic->root_handle)
-			जारी;
-		अगर (acpi_unरेजिस्टर_ioapic(ioapic->handle, ioapic->gsi_base))
+	list_for_each_entry_safe(ioapic, tmp, &ioapic_list, list) {
+		if (root->device->handle != ioapic->root_handle)
+			continue;
+		if (acpi_unregister_ioapic(ioapic->handle, ioapic->gsi_base))
 			retval = -EBUSY;
-		अगर (ioapic->res.flags && ioapic->res.parent)
+		if (ioapic->res.flags && ioapic->res.parent)
 			release_resource(&ioapic->res);
 		list_del(&ioapic->list);
-		kमुक्त(ioapic);
-	पूर्ण
+		kfree(ioapic);
+	}
 	mutex_unlock(&ioapic_list_lock);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}

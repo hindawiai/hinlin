@@ -1,90 +1,89 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * H/W layer of ISHTP provider device (ISH)
  *
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
-#अगर_अघोषित _ISHTP_HW_ISH_H_
-#घोषणा _ISHTP_HW_ISH_H_
+#ifndef _ISHTP_HW_ISH_H_
+#define _ISHTP_HW_ISH_H_
 
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश "hw-ish-regs.h"
-#समावेश "ishtp-dev.h"
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include "hw-ish-regs.h"
+#include "ishtp-dev.h"
 
-#घोषणा CHV_DEVICE_ID		0x22D8
-#घोषणा BXT_Ax_DEVICE_ID	0x0AA2
-#घोषणा BXT_Bx_DEVICE_ID	0x1AA2
-#घोषणा APL_Ax_DEVICE_ID	0x5AA2
-#घोषणा SPT_Ax_DEVICE_ID	0x9D35
-#घोषणा CNL_Ax_DEVICE_ID	0x9DFC
-#घोषणा GLK_Ax_DEVICE_ID	0x31A2
-#घोषणा CNL_H_DEVICE_ID		0xA37C
-#घोषणा ICL_MOBILE_DEVICE_ID	0x34FC
-#घोषणा SPT_H_DEVICE_ID		0xA135
-#घोषणा CML_LP_DEVICE_ID	0x02FC
-#घोषणा CMP_H_DEVICE_ID		0x06FC
-#घोषणा EHL_Ax_DEVICE_ID	0x4BB3
-#घोषणा TGL_LP_DEVICE_ID	0xA0FC
-#घोषणा TGL_H_DEVICE_ID		0x43FC
-#घोषणा ADL_S_DEVICE_ID		0x7AF8
-#घोषणा ADL_P_DEVICE_ID		0x51FC
+#define CHV_DEVICE_ID		0x22D8
+#define BXT_Ax_DEVICE_ID	0x0AA2
+#define BXT_Bx_DEVICE_ID	0x1AA2
+#define APL_Ax_DEVICE_ID	0x5AA2
+#define SPT_Ax_DEVICE_ID	0x9D35
+#define CNL_Ax_DEVICE_ID	0x9DFC
+#define GLK_Ax_DEVICE_ID	0x31A2
+#define CNL_H_DEVICE_ID		0xA37C
+#define ICL_MOBILE_DEVICE_ID	0x34FC
+#define SPT_H_DEVICE_ID		0xA135
+#define CML_LP_DEVICE_ID	0x02FC
+#define CMP_H_DEVICE_ID		0x06FC
+#define EHL_Ax_DEVICE_ID	0x4BB3
+#define TGL_LP_DEVICE_ID	0xA0FC
+#define TGL_H_DEVICE_ID		0x43FC
+#define ADL_S_DEVICE_ID		0x7AF8
+#define ADL_P_DEVICE_ID		0x51FC
 
-#घोषणा	REVISION_ID_CHT_A0	0x6
-#घोषणा	REVISION_ID_CHT_Ax_SI	0x0
-#घोषणा	REVISION_ID_CHT_Bx_SI	0x10
-#घोषणा	REVISION_ID_CHT_Kx_SI	0x20
-#घोषणा	REVISION_ID_CHT_Dx_SI	0x30
-#घोषणा	REVISION_ID_CHT_B0	0xB0
-#घोषणा	REVISION_ID_SI_MASK	0x70
+#define	REVISION_ID_CHT_A0	0x6
+#define	REVISION_ID_CHT_Ax_SI	0x0
+#define	REVISION_ID_CHT_Bx_SI	0x10
+#define	REVISION_ID_CHT_Kx_SI	0x20
+#define	REVISION_ID_CHT_Dx_SI	0x30
+#define	REVISION_ID_CHT_B0	0xB0
+#define	REVISION_ID_SI_MASK	0x70
 
-काष्ठा ipc_rst_payload_type अणु
-	uपूर्णांक16_t	reset_id;
-	uपूर्णांक16_t	reserved;
-पूर्ण;
+struct ipc_rst_payload_type {
+	uint16_t	reset_id;
+	uint16_t	reserved;
+};
 
-काष्ठा समय_sync_क्रमmat अणु
-	uपूर्णांक8_t ts1_source;
-	uपूर्णांक8_t ts2_source;
-	uपूर्णांक16_t reserved;
-पूर्ण __packed;
+struct time_sync_format {
+	uint8_t ts1_source;
+	uint8_t ts2_source;
+	uint16_t reserved;
+} __packed;
 
-काष्ठा ipc_समय_update_msg अणु
-	uपूर्णांक64_t primary_host_समय;
-	काष्ठा समय_sync_क्रमmat sync_info;
-	uपूर्णांक64_t secondary_host_समय;
-पूर्ण __packed;
+struct ipc_time_update_msg {
+	uint64_t primary_host_time;
+	struct time_sync_format sync_info;
+	uint64_t secondary_host_time;
+} __packed;
 
-क्रमागत अणु
+enum {
 	HOST_UTC_TIME_USEC = 0,
 	HOST_SYSTEM_TIME_USEC = 1
-पूर्ण;
+};
 
-काष्ठा ish_hw अणु
-	व्योम __iomem *mem_addr;
-पूर्ण;
+struct ish_hw {
+	void __iomem *mem_addr;
+};
 
 /*
  * ISH FW status type
  */
-क्रमागत अणु
+enum {
 	FWSTS_AFTER_RESET		= 0,
 	FWSTS_WAIT_FOR_HOST		= 4,
 	FWSTS_START_KERNEL_DMA		= 5,
 	FWSTS_FW_IS_RUNNING		= 7,
 	FWSTS_SENSOR_APP_LOADED		= 8,
 	FWSTS_SENSOR_APP_RUNNING	= 15
-पूर्ण;
+};
 
-#घोषणा to_ish_hw(dev) (काष्ठा ish_hw *)((dev)->hw)
+#define to_ish_hw(dev) (struct ish_hw *)((dev)->hw)
 
-irqवापस_t ish_irq_handler(पूर्णांक irq, व्योम *dev_id);
-काष्ठा ishtp_device *ish_dev_init(काष्ठा pci_dev *pdev);
-पूर्णांक ish_hw_start(काष्ठा ishtp_device *dev);
-व्योम ish_device_disable(काष्ठा ishtp_device *dev);
-पूर्णांक ish_disable_dma(काष्ठा ishtp_device *dev);
-व्योम ish_set_host_पढ़ोy(काष्ठा ishtp_device *dev);
+irqreturn_t ish_irq_handler(int irq, void *dev_id);
+struct ishtp_device *ish_dev_init(struct pci_dev *pdev);
+int ish_hw_start(struct ishtp_device *dev);
+void ish_device_disable(struct ishtp_device *dev);
+int ish_disable_dma(struct ishtp_device *dev);
+void ish_set_host_ready(struct ishtp_device *dev);
 
-#पूर्ण_अगर /* _ISHTP_HW_ISH_H_ */
+#endif /* _ISHTP_HW_ISH_H_ */

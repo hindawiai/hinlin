@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (c) Copyright 2002-2010, Ralink Technology, Inc.
- * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
-#समावेश "mt7601u.h"
-#समावेश "mcu.h"
-#समावेश "eeprom.h"
-#समावेश "trace.h"
-#समावेश "initvals_phy.h"
+#include "mt7601u.h"
+#include "mcu.h"
+#include "eeprom.h"
+#include "trace.h"
+#include "initvals_phy.h"
 
-#समावेश <linux/etherdevice.h>
+#include <linux/etherdevice.h>
 
-अटल व्योम mt7601u_agc_reset(काष्ठा mt7601u_dev *dev);
+static void mt7601u_agc_reset(struct mt7601u_dev *dev);
 
-अटल पूर्णांक
-mt7601u_rf_wr(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset, u8 value)
-अणु
-	पूर्णांक ret = 0;
+static int
+mt7601u_rf_wr(struct mt7601u_dev *dev, u8 bank, u8 offset, u8 value)
+{
+	int ret = 0;
 
-	अगर (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
+	if (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
 	    WARN_ON(offset > 63))
-		वापस -EINVAL;
-	अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-		वापस 0;
+		return -EINVAL;
+	if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+		return 0;
 
 	mutex_lock(&dev->reg_atomic_mutex);
 
-	अगर (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100)) अणु
+	if (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100)) {
 		ret = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mt7601u_wr(dev, MT_RF_CSR_CFG,
 		   FIELD_PREP(MT_RF_CSR_CFG_DATA, value) |
@@ -40,216 +39,216 @@ mt7601u_rf_wr(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset, u8 value)
 		   FIELD_PREP(MT_RF_CSR_CFG_REG_ID, offset) |
 		   MT_RF_CSR_CFG_WR |
 		   MT_RF_CSR_CFG_KICK);
-	trace_rf_ग_लिखो(dev, bank, offset, value);
+	trace_rf_write(dev, bank, offset, value);
 out:
 	mutex_unlock(&dev->reg_atomic_mutex);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev->dev, "Error: RF write %02hhx:%02hhx failed:%d!!\n",
 			bank, offset, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-mt7601u_rf_rr(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset)
-अणु
-	पूर्णांक ret = -ETIMEDOUT;
+static int
+mt7601u_rf_rr(struct mt7601u_dev *dev, u8 bank, u8 offset)
+{
+	int ret = -ETIMEDOUT;
 	u32 val;
 
-	अगर (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
+	if (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
 	    WARN_ON(offset > 63))
-		वापस -EINVAL;
-	अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-		वापस 0xff;
+		return -EINVAL;
+	if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+		return 0xff;
 
 	mutex_lock(&dev->reg_atomic_mutex);
 
-	अगर (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100))
-		जाओ out;
+	if (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100))
+		goto out;
 
 	mt7601u_wr(dev, MT_RF_CSR_CFG,
 		   FIELD_PREP(MT_RF_CSR_CFG_REG_BANK, bank) |
 		   FIELD_PREP(MT_RF_CSR_CFG_REG_ID, offset) |
 		   MT_RF_CSR_CFG_KICK);
 
-	अगर (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100))
-		जाओ out;
+	if (!mt76_poll(dev, MT_RF_CSR_CFG, MT_RF_CSR_CFG_KICK, 0, 100))
+		goto out;
 
 	val = mt7601u_rr(dev, MT_RF_CSR_CFG);
-	अगर (FIELD_GET(MT_RF_CSR_CFG_REG_ID, val) == offset &&
-	    FIELD_GET(MT_RF_CSR_CFG_REG_BANK, val) == bank) अणु
+	if (FIELD_GET(MT_RF_CSR_CFG_REG_ID, val) == offset &&
+	    FIELD_GET(MT_RF_CSR_CFG_REG_BANK, val) == bank) {
 		ret = FIELD_GET(MT_RF_CSR_CFG_DATA, val);
-		trace_rf_पढ़ो(dev, bank, offset, ret);
-	पूर्ण
+		trace_rf_read(dev, bank, offset, ret);
+	}
 out:
 	mutex_unlock(&dev->reg_atomic_mutex);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev->dev, "Error: RF read %02hhx:%02hhx failed:%d!!\n",
 			bank, offset, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-mt7601u_rf_rmw(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset, u8 mask, u8 val)
-अणु
-	पूर्णांक ret;
+static int
+mt7601u_rf_rmw(struct mt7601u_dev *dev, u8 bank, u8 offset, u8 mask, u8 val)
+{
+	int ret;
 
 	ret = mt7601u_rf_rr(dev, bank, offset);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	val |= ret & ~mask;
 	ret = mt7601u_rf_wr(dev, bank, offset, val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक
-mt7601u_rf_set(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset, u8 val)
-अणु
-	वापस mt7601u_rf_rmw(dev, bank, offset, 0, val);
-पूर्ण
+static int
+mt7601u_rf_set(struct mt7601u_dev *dev, u8 bank, u8 offset, u8 val)
+{
+	return mt7601u_rf_rmw(dev, bank, offset, 0, val);
+}
 
-अटल पूर्णांक
-mt7601u_rf_clear(काष्ठा mt7601u_dev *dev, u8 bank, u8 offset, u8 mask)
-अणु
-	वापस mt7601u_rf_rmw(dev, bank, offset, mask, 0);
-पूर्ण
+static int
+mt7601u_rf_clear(struct mt7601u_dev *dev, u8 bank, u8 offset, u8 mask)
+{
+	return mt7601u_rf_rmw(dev, bank, offset, mask, 0);
+}
 
-अटल व्योम mt7601u_bbp_wr(काष्ठा mt7601u_dev *dev, u8 offset, u8 val)
-अणु
-	अगर (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
+static void mt7601u_bbp_wr(struct mt7601u_dev *dev, u8 offset, u8 val)
+{
+	if (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)) ||
 	    test_bit(MT7601U_STATE_REMOVED, &dev->state))
-		वापस;
+		return;
 
 	mutex_lock(&dev->reg_atomic_mutex);
 
-	अगर (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000)) अणु
+	if (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000)) {
 		dev_err(dev->dev, "Error: BBP write %02hhx failed!!\n", offset);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mt7601u_wr(dev, MT_BBP_CSR_CFG,
 		   FIELD_PREP(MT_BBP_CSR_CFG_VAL, val) |
 		   FIELD_PREP(MT_BBP_CSR_CFG_REG_NUM, offset) |
 		   MT_BBP_CSR_CFG_RW_MODE | MT_BBP_CSR_CFG_BUSY);
-	trace_bbp_ग_लिखो(dev, offset, val);
+	trace_bbp_write(dev, offset, val);
 out:
 	mutex_unlock(&dev->reg_atomic_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक mt7601u_bbp_rr(काष्ठा mt7601u_dev *dev, u8 offset)
-अणु
+static int mt7601u_bbp_rr(struct mt7601u_dev *dev, u8 offset)
+{
 	u32 val;
-	पूर्णांक ret = -ETIMEDOUT;
+	int ret = -ETIMEDOUT;
 
-	अगर (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)))
-		वापस -EINVAL;
-	अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-		वापस 0xff;
+	if (WARN_ON(!test_bit(MT7601U_STATE_WLAN_RUNNING, &dev->state)))
+		return -EINVAL;
+	if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+		return 0xff;
 
 	mutex_lock(&dev->reg_atomic_mutex);
 
-	अगर (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000))
-		जाओ out;
+	if (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000))
+		goto out;
 
 	mt7601u_wr(dev, MT_BBP_CSR_CFG,
 		   FIELD_PREP(MT_BBP_CSR_CFG_REG_NUM, offset) |
 		   MT_BBP_CSR_CFG_RW_MODE | MT_BBP_CSR_CFG_BUSY |
 		   MT_BBP_CSR_CFG_READ);
 
-	अगर (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000))
-		जाओ out;
+	if (!mt76_poll(dev, MT_BBP_CSR_CFG, MT_BBP_CSR_CFG_BUSY, 0, 1000))
+		goto out;
 
 	val = mt7601u_rr(dev, MT_BBP_CSR_CFG);
-	अगर (FIELD_GET(MT_BBP_CSR_CFG_REG_NUM, val) == offset) अणु
+	if (FIELD_GET(MT_BBP_CSR_CFG_REG_NUM, val) == offset) {
 		ret = FIELD_GET(MT_BBP_CSR_CFG_VAL, val);
-		trace_bbp_पढ़ो(dev, offset, ret);
-	पूर्ण
+		trace_bbp_read(dev, offset, ret);
+	}
 out:
 	mutex_unlock(&dev->reg_atomic_mutex);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev->dev, "Error: BBP read %02hhx failed:%d!!\n",
 			offset, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt7601u_bbp_rmw(काष्ठा mt7601u_dev *dev, u8 offset, u8 mask, u8 val)
-अणु
-	पूर्णांक ret;
+static int mt7601u_bbp_rmw(struct mt7601u_dev *dev, u8 offset, u8 mask, u8 val)
+{
+	int ret;
 
 	ret = mt7601u_bbp_rr(dev, offset);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	val |= ret & ~mask;
 	mt7601u_bbp_wr(dev, offset, val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u8 mt7601u_bbp_rmc(काष्ठा mt7601u_dev *dev, u8 offset, u8 mask, u8 val)
-अणु
-	पूर्णांक ret;
+static u8 mt7601u_bbp_rmc(struct mt7601u_dev *dev, u8 offset, u8 mask, u8 val)
+{
+	int ret;
 
 	ret = mt7601u_bbp_rr(dev, offset);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	val |= ret & ~mask;
-	अगर (ret != val)
+	if (ret != val)
 		mt7601u_bbp_wr(dev, offset, val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-पूर्णांक mt7601u_रुको_bbp_पढ़ोy(काष्ठा mt7601u_dev *dev)
-अणु
-	पूर्णांक i = 20;
+int mt7601u_wait_bbp_ready(struct mt7601u_dev *dev)
+{
+	int i = 20;
 	u8 val;
 
-	करो अणु
+	do {
 		val = mt7601u_bbp_rr(dev, MT_BBP_REG_VERSION);
-		अगर (val && val != 0xff)
-			अवरोध;
-	पूर्ण जबतक (--i);
+		if (val && val != 0xff)
+			break;
+	} while (--i);
 
-	अगर (!i) अणु
+	if (!i) {
 		dev_err(dev->dev, "Error: BBP is not ready\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
-अणु
-	वापस mt7601u_bbp_rmc(dev, 3, 0x20, below ? 0x20 : 0);
-पूर्ण
+u32 mt7601u_bbp_set_ctrlch(struct mt7601u_dev *dev, bool below)
+{
+	return mt7601u_bbp_rmc(dev, 3, 0x20, below ? 0x20 : 0);
+}
 
-पूर्णांक mt7601u_phy_get_rssi(काष्ठा mt7601u_dev *dev,
-			 काष्ठा mt7601u_rxwi *rxwi, u16 rate)
-अणु
-	अटल स्थिर s8 lna[2][2][3] = अणु
-		/* मुख्य LNA */ अणु
-			/* bw20 */ अणु -2, 15, 33 पूर्ण,
-			/* bw40 */ अणु  0, 16, 34 पूर्ण
-		पूर्ण,
-		/*  aux LNA */ अणु
-			/* bw20 */ अणु -2, 15, 33 पूर्ण,
-			/* bw40 */ अणु -2, 16, 34 पूर्ण
-		पूर्ण
-	पूर्ण;
-	पूर्णांक bw = FIELD_GET(MT_RXWI_RATE_BW, rate);
-	पूर्णांक aux_lna = FIELD_GET(MT_RXWI_ANT_AUX_LNA, rxwi->ant);
-	पूर्णांक lna_id = FIELD_GET(MT_RXWI_GAIN_RSSI_LNA_ID, rxwi->gain);
-	पूर्णांक val;
+int mt7601u_phy_get_rssi(struct mt7601u_dev *dev,
+			 struct mt7601u_rxwi *rxwi, u16 rate)
+{
+	static const s8 lna[2][2][3] = {
+		/* main LNA */ {
+			/* bw20 */ { -2, 15, 33 },
+			/* bw40 */ {  0, 16, 34 }
+		},
+		/*  aux LNA */ {
+			/* bw20 */ { -2, 15, 33 },
+			/* bw40 */ { -2, 16, 34 }
+		}
+	};
+	int bw = FIELD_GET(MT_RXWI_RATE_BW, rate);
+	int aux_lna = FIELD_GET(MT_RXWI_ANT_AUX_LNA, rxwi->ant);
+	int lna_id = FIELD_GET(MT_RXWI_GAIN_RSSI_LNA_ID, rxwi->gain);
+	int val;
 
-	अगर (lna_id) /* LNA id can be 0, 2, 3. */
+	if (lna_id) /* LNA id can be 0, 2, 3. */
 		lna_id--;
 
 	val = 8;
@@ -258,142 +257,142 @@ u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
 	val -= dev->ee->lna_gain;
 	val -= dev->ee->rssi_offset[0];
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम mt7601u_vco_cal(काष्ठा mt7601u_dev *dev)
-अणु
+static void mt7601u_vco_cal(struct mt7601u_dev *dev)
+{
 	mt7601u_rf_wr(dev, 0, 4, 0x0a);
 	mt7601u_rf_wr(dev, 0, 5, 0x20);
 	mt7601u_rf_set(dev, 0, 4, BIT(7));
 	msleep(2);
-पूर्ण
+}
 
-अटल पूर्णांक mt7601u_set_bw_filter(काष्ठा mt7601u_dev *dev, bool cal)
-अणु
+static int mt7601u_set_bw_filter(struct mt7601u_dev *dev, bool cal)
+{
 	u32 filter = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!cal)
+	if (!cal)
 		filter |= 0x10000;
-	अगर (dev->bw != MT_BW_20)
+	if (dev->bw != MT_BW_20)
 		filter |= 0x00100;
 
 	/* TX */
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_BW, filter | 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* RX */
-	वापस mt7601u_mcu_calibrate(dev, MCU_CAL_BW, filter);
-पूर्ण
+	return mt7601u_mcu_calibrate(dev, MCU_CAL_BW, filter);
+}
 
-अटल पूर्णांक mt7601u_load_bbp_temp_table_bw(काष्ठा mt7601u_dev *dev)
-अणु
-	स्थिर काष्ठा reg_table *t;
+static int mt7601u_load_bbp_temp_table_bw(struct mt7601u_dev *dev)
+{
+	const struct reg_table *t;
 
-	अगर (WARN_ON(dev->temp_mode > MT_TEMP_MODE_LOW))
-		वापस -EINVAL;
+	if (WARN_ON(dev->temp_mode > MT_TEMP_MODE_LOW))
+		return -EINVAL;
 
 	t = &bbp_mode_table[dev->temp_mode][dev->bw];
 
-	वापस mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP, t->regs, t->n);
-पूर्ण
+	return mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP, t->regs, t->n);
+}
 
-अटल पूर्णांक mt7601u_bbp_temp(काष्ठा mt7601u_dev *dev, पूर्णांक mode, स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा reg_table *t;
-	पूर्णांक ret;
+static int mt7601u_bbp_temp(struct mt7601u_dev *dev, int mode, const char *name)
+{
+	const struct reg_table *t;
+	int ret;
 
-	अगर (dev->temp_mode == mode)
-		वापस 0;
+	if (dev->temp_mode == mode)
+		return 0;
 
 	dev->temp_mode = mode;
 	trace_temp_mode(dev, mode);
 
 	t = bbp_mode_table[dev->temp_mode];
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
+	ret = mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
 				      t[2].regs, t[2].n);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
+	return mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
 				       t[dev->bw].regs, t[dev->bw].n);
-पूर्ण
+}
 
-अटल व्योम mt7601u_apply_ch14_fixup(काष्ठा mt7601u_dev *dev, पूर्णांक hw_chan)
-अणु
-	काष्ठा mt7601u_rate_घातer *t = &dev->ee->घातer_rate_table;
+static void mt7601u_apply_ch14_fixup(struct mt7601u_dev *dev, int hw_chan)
+{
+	struct mt7601u_rate_power *t = &dev->ee->power_rate_table;
 
-	अगर (hw_chan != 14 || dev->bw != MT_BW_20) अणु
+	if (hw_chan != 14 || dev->bw != MT_BW_20) {
 		mt7601u_bbp_rmw(dev, 4, 0x20, 0);
 		mt7601u_bbp_wr(dev, 178, 0xff);
 
 		t->cck[0].bw20 = dev->ee->real_cck_bw20[0];
 		t->cck[1].bw20 = dev->ee->real_cck_bw20[1];
-	पूर्ण अन्यथा अणु /* Apply CH14 OBW fixup */
+	} else { /* Apply CH14 OBW fixup */
 		mt7601u_bbp_wr(dev, 4, 0x60);
 		mt7601u_bbp_wr(dev, 178, 0);
 
-		/* Note: venकरोr code is buggy here क्रम negative values */
+		/* Note: vendor code is buggy here for negative values */
 		t->cck[0].bw20 = dev->ee->real_cck_bw20[0] - 2;
 		t->cck[1].bw20 = dev->ee->real_cck_bw20[1] - 2;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __mt7601u_phy_set_channel(काष्ठा mt7601u_dev *dev,
-				     काष्ठा cfg80211_chan_def *chandef)
-अणु
-#घोषणा FREQ_PLAN_REGS	4
-	अटल स्थिर u8 freq_plan[14][FREQ_PLAN_REGS] = अणु
-		अणु 0x99,	0x99,	0x09,	0x50 पूर्ण,
-		अणु 0x46,	0x44,	0x0a,	0x50 पूर्ण,
-		अणु 0xec,	0xee,	0x0a,	0x50 पूर्ण,
-		अणु 0x99,	0x99,	0x0b,	0x50 पूर्ण,
-		अणु 0x46,	0x44,	0x08,	0x51 पूर्ण,
-		अणु 0xec,	0xee,	0x08,	0x51 पूर्ण,
-		अणु 0x99,	0x99,	0x09,	0x51 पूर्ण,
-		अणु 0x46,	0x44,	0x0a,	0x51 पूर्ण,
-		अणु 0xec,	0xee,	0x0a,	0x51 पूर्ण,
-		अणु 0x99,	0x99,	0x0b,	0x51 पूर्ण,
-		अणु 0x46,	0x44,	0x08,	0x52 पूर्ण,
-		अणु 0xec,	0xee,	0x08,	0x52 पूर्ण,
-		अणु 0x99,	0x99,	0x09,	0x52 पूर्ण,
-		अणु 0x33,	0x33,	0x0b,	0x52 पूर्ण,
-	पूर्ण;
-	काष्ठा mt76_reg_pair channel_freq_plan[FREQ_PLAN_REGS] = अणु
-		अणु 17, 0 पूर्ण, अणु 18, 0 पूर्ण, अणु 19, 0 पूर्ण, अणु 20, 0 पूर्ण,
-	पूर्ण;
-	काष्ठा mt76_reg_pair bbp_settings[3] = अणु
-		अणु 62, 0x37 - dev->ee->lna_gain पूर्ण,
-		अणु 63, 0x37 - dev->ee->lna_gain पूर्ण,
-		अणु 64, 0x37 - dev->ee->lna_gain पूर्ण,
-	पूर्ण;
+static int __mt7601u_phy_set_channel(struct mt7601u_dev *dev,
+				     struct cfg80211_chan_def *chandef)
+{
+#define FREQ_PLAN_REGS	4
+	static const u8 freq_plan[14][FREQ_PLAN_REGS] = {
+		{ 0x99,	0x99,	0x09,	0x50 },
+		{ 0x46,	0x44,	0x0a,	0x50 },
+		{ 0xec,	0xee,	0x0a,	0x50 },
+		{ 0x99,	0x99,	0x0b,	0x50 },
+		{ 0x46,	0x44,	0x08,	0x51 },
+		{ 0xec,	0xee,	0x08,	0x51 },
+		{ 0x99,	0x99,	0x09,	0x51 },
+		{ 0x46,	0x44,	0x0a,	0x51 },
+		{ 0xec,	0xee,	0x0a,	0x51 },
+		{ 0x99,	0x99,	0x0b,	0x51 },
+		{ 0x46,	0x44,	0x08,	0x52 },
+		{ 0xec,	0xee,	0x08,	0x52 },
+		{ 0x99,	0x99,	0x09,	0x52 },
+		{ 0x33,	0x33,	0x0b,	0x52 },
+	};
+	struct mt76_reg_pair channel_freq_plan[FREQ_PLAN_REGS] = {
+		{ 17, 0 }, { 18, 0 }, { 19, 0 }, { 20, 0 },
+	};
+	struct mt76_reg_pair bbp_settings[3] = {
+		{ 62, 0x37 - dev->ee->lna_gain },
+		{ 63, 0x37 - dev->ee->lna_gain },
+		{ 64, 0x37 - dev->ee->lna_gain },
+	};
 
-	काष्ठा ieee80211_channel *chan = chandef->chan;
-	क्रमागत nl80211_channel_type chan_type =
+	struct ieee80211_channel *chan = chandef->chan;
+	enum nl80211_channel_type chan_type =
 		cfg80211_get_chandef_type(chandef);
-	काष्ठा mt7601u_rate_घातer *t = &dev->ee->घातer_rate_table;
-	पूर्णांक chan_idx;
+	struct mt7601u_rate_power *t = &dev->ee->power_rate_table;
+	int chan_idx;
 	bool chan_ext_below;
 	u8 bw;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	bw = MT_BW_20;
 	chan_ext_below = (chan_type == NL80211_CHAN_HT40MINUS);
 	chan_idx = chan->hw_value - 1;
 
-	अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+	if (chandef->width == NL80211_CHAN_WIDTH_40) {
 		bw = MT_BW_40;
 
-		अगर (chan_idx > 1 && chan_type == NL80211_CHAN_HT40MINUS)
+		if (chan_idx > 1 && chan_type == NL80211_CHAN_HT40MINUS)
 			chan_idx -= 2;
-		अन्यथा अगर (chan_idx < 12 && chan_type == NL80211_CHAN_HT40PLUS)
+		else if (chan_idx < 12 && chan_type == NL80211_CHAN_HT40PLUS)
 			chan_idx += 2;
-		अन्यथा
+		else
 			dev_err(dev->dev, "Error: invalid 40MHz channel!!\n");
-	पूर्ण
+	}
 
-	अगर (bw != dev->bw || chan_ext_below != dev->chan_ext_below) अणु
+	if (bw != dev->bw || chan_ext_below != dev->chan_ext_below) {
 		dev_dbg(dev->dev, "Info: switching HT mode bw:%d below:%d\n",
 			bw, chan_ext_below);
 
@@ -402,48 +401,48 @@ u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
 		mt7601u_bbp_set_ctrlch(dev, chan_ext_below);
 		mt7601u_mac_set_ctrlch(dev, chan_ext_below);
 		dev->chan_ext_below = chan_ext_below;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < FREQ_PLAN_REGS; i++)
+	for (i = 0; i < FREQ_PLAN_REGS; i++)
 		channel_freq_plan[i].value = freq_plan[chan_idx][i];
 
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_RF,
+	ret = mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_RF,
 				      channel_freq_plan, FREQ_PLAN_REGS);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7601u_rmw(dev, MT_TX_ALC_CFG_0, 0x3f3f,
 		    dev->ee->chan_pwr[chan_idx] & 0x3f);
 
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
+	ret = mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
 				      bbp_settings, ARRAY_SIZE(bbp_settings));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7601u_vco_cal(dev);
 	mt7601u_bbp_set_bw(dev, bw);
 	ret = mt7601u_set_bw_filter(dev, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7601u_apply_ch14_fixup(dev, chan->hw_value);
-	mt7601u_wr(dev, MT_TX_PWR_CFG_0, पूर्णांक_to_s6(t->ofdm[1].bw20) << 24 |
-					 पूर्णांक_to_s6(t->ofdm[0].bw20) << 16 |
-					 पूर्णांक_to_s6(t->cck[1].bw20) << 8 |
-					 पूर्णांक_to_s6(t->cck[0].bw20));
+	mt7601u_wr(dev, MT_TX_PWR_CFG_0, int_to_s6(t->ofdm[1].bw20) << 24 |
+					 int_to_s6(t->ofdm[0].bw20) << 16 |
+					 int_to_s6(t->cck[1].bw20) << 8 |
+					 int_to_s6(t->cck[0].bw20));
 
-	अगर (test_bit(MT7601U_STATE_SCANNING, &dev->state))
+	if (test_bit(MT7601U_STATE_SCANNING, &dev->state))
 		mt7601u_agc_reset(dev);
 
 	dev->chandef = *chandef;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt7601u_phy_set_channel(काष्ठा mt7601u_dev *dev,
-			    काष्ठा cfg80211_chan_def *chandef)
-अणु
-	पूर्णांक ret;
+int mt7601u_phy_set_channel(struct mt7601u_dev *dev,
+			    struct cfg80211_chan_def *chandef)
+{
+	int ret;
 
 	cancel_delayed_work_sync(&dev->cal_work);
 	cancel_delayed_work_sync(&dev->freq_cal.work);
@@ -451,50 +450,50 @@ u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
 	mutex_lock(&dev->hw_atomic_mutex);
 	ret = __mt7601u_phy_set_channel(dev, chandef);
 	mutex_unlock(&dev->hw_atomic_mutex);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (test_bit(MT7601U_STATE_SCANNING, &dev->state))
-		वापस 0;
+	if (test_bit(MT7601U_STATE_SCANNING, &dev->state))
+		return 0;
 
 	ieee80211_queue_delayed_work(dev->hw, &dev->cal_work,
 				     MT_CALIBRATE_INTERVAL);
-	अगर (dev->freq_cal.enabled)
+	if (dev->freq_cal.enabled)
 		ieee80211_queue_delayed_work(dev->hw, &dev->freq_cal.work,
 					     MT_FREQ_CAL_INIT_DELAY);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा BBP_R47_FLAG		GENMASK(2, 0)
-#घोषणा BBP_R47_F_TSSI		0
-#घोषणा BBP_R47_F_PKT_T		1
-#घोषणा BBP_R47_F_TX_RATE	2
-#घोषणा BBP_R47_F_TEMP		4
+#define BBP_R47_FLAG		GENMASK(2, 0)
+#define BBP_R47_F_TSSI		0
+#define BBP_R47_F_PKT_T		1
+#define BBP_R47_F_TX_RATE	2
+#define BBP_R47_F_TEMP		4
 /**
- * mt7601u_bbp_r47_get - पढ़ो value through BBP R47/R49 pair
- * @dev:	poपूर्णांकer to adapter काष्ठाure
- * @reg:	value of BBP R47 beक्रमe the operation
+ * mt7601u_bbp_r47_get - read value through BBP R47/R49 pair
+ * @dev:	pointer to adapter structure
+ * @reg:	value of BBP R47 before the operation
  * @flag:	one of the BBP_R47_F_* flags
  *
- * Convenience helper क्रम पढ़ोing values through BBP R47/R49 pair.
+ * Convenience helper for reading values through BBP R47/R49 pair.
  * Takes old value of BBP R47 as @reg, because callers usually have it
- * cached alपढ़ोy.
+ * cached already.
  *
  * Return: value of BBP R49.
  */
-अटल u8 mt7601u_bbp_r47_get(काष्ठा mt7601u_dev *dev, u8 reg, u8 flag)
-अणु
+static u8 mt7601u_bbp_r47_get(struct mt7601u_dev *dev, u8 reg, u8 flag)
+{
 	flag |= reg & ~BBP_R47_FLAG;
 	mt7601u_bbp_wr(dev, 47, flag);
 	usleep_range(500, 700);
-	वापस mt7601u_bbp_rr(dev, 49);
-पूर्ण
+	return mt7601u_bbp_rr(dev, 49);
+}
 
-अटल s8 mt7601u_पढ़ो_bootup_temp(काष्ठा mt7601u_dev *dev)
-अणु
+static s8 mt7601u_read_bootup_temp(struct mt7601u_dev *dev)
+{
 	u8 bbp_val, temp;
 	u32 rf_bp, rf_set;
-	पूर्णांक i;
+	int i;
 
 	rf_set = mt7601u_rr(dev, MT_RF_SETTING_0);
 	rf_bp = mt7601u_rr(dev, MT_RF_BYPASS_0);
@@ -507,7 +506,7 @@ u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
 
 	mt7601u_bbp_wr(dev, 22, 0x40);
 
-	क्रम (i = 100; i && (bbp_val & 0x10); i--)
+	for (i = 100; i && (bbp_val & 0x10); i--)
 		bbp_val = mt7601u_bbp_rr(dev, 47);
 
 	temp = mt7601u_bbp_r47_get(dev, bbp_val, BBP_R47_F_TEMP);
@@ -524,125 +523,125 @@ u32 mt7601u_bbp_set_ctrlch(काष्ठा mt7601u_dev *dev, bool below)
 	mt7601u_wr(dev, MT_RF_SETTING_0, rf_set);
 	mt7601u_wr(dev, MT_RF_BYPASS_0, rf_bp);
 
-	trace_पढ़ो_temp(dev, temp);
-	वापस temp;
-पूर्ण
+	trace_read_temp(dev, temp);
+	return temp;
+}
 
-अटल s8 mt7601u_पढ़ो_temp(काष्ठा mt7601u_dev *dev)
-अणु
-	पूर्णांक i;
+static s8 mt7601u_read_temp(struct mt7601u_dev *dev)
+{
+	int i;
 	u8 val;
 	s8 temp;
 
 	val = mt7601u_bbp_rmw(dev, 47, 0x7f, 0x10);
 
-	/* Note: this rarely succeeds, temp can change even अगर it fails. */
-	क्रम (i = 100; i && (val & 0x10); i--)
+	/* Note: this rarely succeeds, temp can change even if it fails. */
+	for (i = 100; i && (val & 0x10); i--)
 		val = mt7601u_bbp_rr(dev, 47);
 
 	temp = mt7601u_bbp_r47_get(dev, val, BBP_R47_F_TEMP);
 
-	trace_पढ़ो_temp(dev, temp);
-	वापस temp;
-पूर्ण
+	trace_read_temp(dev, temp);
+	return temp;
+}
 
-अटल व्योम mt7601u_rxdc_cal(काष्ठा mt7601u_dev *dev)
-अणु
-	अटल स्थिर काष्ठा mt76_reg_pair पूर्णांकro[] = अणु
-		अणु 158, 0x8d पूर्ण, अणु 159, 0xfc पूर्ण,
-		अणु 158, 0x8c पूर्ण, अणु 159, 0x4c पूर्ण,
-	पूर्ण, outro[] = अणु
-		अणु 158, 0x8d पूर्ण, अणु 159, 0xe0 पूर्ण,
-	पूर्ण;
+static void mt7601u_rxdc_cal(struct mt7601u_dev *dev)
+{
+	static const struct mt76_reg_pair intro[] = {
+		{ 158, 0x8d }, { 159, 0xfc },
+		{ 158, 0x8c }, { 159, 0x4c },
+	}, outro[] = {
+		{ 158, 0x8d }, { 159, 0xe0 },
+	};
 	u32 mac_ctrl;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	mac_ctrl = mt7601u_rr(dev, MT_MAC_SYS_CTRL);
 	mt7601u_wr(dev, MT_MAC_SYS_CTRL, MT_MAC_SYS_CTRL_ENABLE_RX);
 
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
-				      पूर्णांकro, ARRAY_SIZE(पूर्णांकro));
-	अगर (ret)
+	ret = mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
+				      intro, ARRAY_SIZE(intro));
+	if (ret)
 		dev_err(dev->dev, "%s intro failed:%d\n", __func__, ret);
 
-	क्रम (i = 20; i; i--) अणु
+	for (i = 20; i; i--) {
 		usleep_range(300, 500);
 
 		mt7601u_bbp_wr(dev, 158, 0x8c);
-		अगर (mt7601u_bbp_rr(dev, 159) == 0x0c)
-			अवरोध;
-	पूर्ण
-	अगर (!i)
+		if (mt7601u_bbp_rr(dev, 159) == 0x0c)
+			break;
+	}
+	if (!i)
 		dev_err(dev->dev, "%s timed out\n", __func__);
 
 	mt7601u_wr(dev, MT_MAC_SYS_CTRL, 0);
 
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
+	ret = mt7601u_write_reg_pairs(dev, MT_MCU_MEMMAP_BBP,
 				      outro, ARRAY_SIZE(outro));
-	अगर (ret)
+	if (ret)
 		dev_err(dev->dev, "%s outro failed:%d\n", __func__, ret);
 
 	mt7601u_wr(dev, MT_MAC_SYS_CTRL, mac_ctrl);
-पूर्ण
+}
 
-व्योम mt7601u_phy_recalibrate_after_assoc(काष्ठा mt7601u_dev *dev)
-अणु
-	अगर (test_bit(MT7601U_STATE_REMOVED, &dev->state))
-		वापस;
+void mt7601u_phy_recalibrate_after_assoc(struct mt7601u_dev *dev)
+{
+	if (test_bit(MT7601U_STATE_REMOVED, &dev->state))
+		return;
 
 	mt7601u_mcu_calibrate(dev, MCU_CAL_DPD, dev->curr_temp);
 
 	mt7601u_rxdc_cal(dev);
-पूर्ण
+}
 
-/* Note: function copied from venकरोr driver */
-अटल s16 lin2dBd(u16 linear)
-अणु
-	लघु exp = 0;
-	अचिन्हित पूर्णांक mantisa;
-	पूर्णांक app, dBd;
+/* Note: function copied from vendor driver */
+static s16 lin2dBd(u16 linear)
+{
+	short exp = 0;
+	unsigned int mantisa;
+	int app, dBd;
 
-	अगर (WARN_ON(!linear))
-		वापस -10000;
+	if (WARN_ON(!linear))
+		return -10000;
 
 	mantisa = linear;
 
 	exp = fls(mantisa) - 16;
-	अगर (exp > 0)
+	if (exp > 0)
 		mantisa >>= exp;
-	अन्यथा
-		mantisa <<= असल(exp);
+	else
+		mantisa <<= abs(exp);
 
-	अगर (mantisa <= 0xb800)
+	if (mantisa <= 0xb800)
 		app = (mantisa + (mantisa >> 3) + (mantisa >> 4) - 0x9600);
-	अन्यथा
+	else
 		app = (mantisa - (mantisa >> 3) - (mantisa >> 6) - 0x5a00);
-	अगर (app < 0)
+	if (app < 0)
 		app = 0;
 
 	dBd = ((15 + exp) << 15) + app;
 	dBd = (dBd << 2) + (dBd << 1) + (dBd >> 6) + (dBd >> 7);
 	dBd = (dBd >> 10);
 
-	वापस dBd;
-पूर्ण
+	return dBd;
+}
 
-अटल व्योम
-mt7601u_set_initial_tssi(काष्ठा mt7601u_dev *dev, s16 tssi_db, s16 tssi_hvga_db)
-अणु
-	काष्ठा tssi_data *d = &dev->ee->tssi_data;
-	पूर्णांक init_offset;
+static void
+mt7601u_set_initial_tssi(struct mt7601u_dev *dev, s16 tssi_db, s16 tssi_hvga_db)
+{
+	struct tssi_data *d = &dev->ee->tssi_data;
+	int init_offset;
 
 	init_offset = -((tssi_db * d->slope + d->offset[1]) / 4096) + 10;
 
 	mt76_rmw(dev, MT_TX_ALC_CFG_1, MT_TX_ALC_CFG_1_TEMP_COMP,
-		 पूर्णांक_to_s6(init_offset) & MT_TX_ALC_CFG_1_TEMP_COMP);
-पूर्ण
+		 int_to_s6(init_offset) & MT_TX_ALC_CFG_1_TEMP_COMP);
+}
 
-अटल व्योम mt7601u_tssi_dc_gain_cal(काष्ठा mt7601u_dev *dev)
-अणु
+static void mt7601u_tssi_dc_gain_cal(struct mt7601u_dev *dev)
+{
 	u8 rf_vga, rf_mixer, bbp_r47;
-	पूर्णांक i, j;
+	int i, j;
 	s8 res[4];
 	s16 tssi_init_db, tssi_init_hvga_db;
 
@@ -663,7 +662,7 @@ mt7601u_set_initial_tssi(काष्ठा mt7601u_dev *dev, s16 tssi_db, s16 t
 	rf_mixer = mt7601u_rf_rr(dev, 4, 39);
 	mt7601u_rf_wr(dev, 4, 39, 0);
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		mt7601u_rf_wr(dev, 4, 39, (i & 1) ? rf_mixer : 0);
 
 		mt7601u_bbp_wr(dev, 23, (i < 2) ? 0x08 : 0x02);
@@ -681,19 +680,19 @@ mt7601u_set_initial_tssi(काष्ठा mt7601u_dev *dev, s16 tssi_db, s16 t
 		mt7601u_bbp_wr(dev, 47, 0x50);
 		mt7601u_bbp_wr(dev, (i & 1) ? 244 : 22, (i & 1) ? 0x31 : 0x40);
 
-		क्रम (j = 20; j; j--)
-			अगर (!(mt7601u_bbp_rr(dev, 47) & 0x10))
-				अवरोध;
-		अगर (!j)
+		for (j = 20; j; j--)
+			if (!(mt7601u_bbp_rr(dev, 47) & 0x10))
+				break;
+		if (!j)
 			dev_err(dev->dev, "%s timed out\n", __func__);
 
-		/* TSSI पढ़ो */
+		/* TSSI read */
 		mt7601u_bbp_wr(dev, 47, 0x40);
 		res[i] = mt7601u_bbp_rr(dev, 49);
-	पूर्ण
+	}
 
-	tssi_init_db = lin2dBd((लघु)res[1] - res[0]);
-	tssi_init_hvga_db = lin2dBd(((लघु)res[3] - res[2]) * 4);
+	tssi_init_db = lin2dBd((short)res[1] - res[0]);
+	tssi_init_hvga_db = lin2dBd(((short)res[3] - res[2]) * 4);
 	dev->tssi_init = res[0];
 	dev->tssi_init_hvga = res[2];
 	dev->tssi_init_hvga_offset_db = tssi_init_hvga_db - tssi_init_db;
@@ -718,99 +717,99 @@ mt7601u_set_initial_tssi(काष्ठा mt7601u_dev *dev, s16 tssi_db, s16 t
 	mt7601u_bbp_wr(dev, 47, bbp_r47);
 
 	mt7601u_set_initial_tssi(dev, tssi_init_db, tssi_init_hvga_db);
-पूर्ण
+}
 
-अटल पूर्णांक mt7601u_temp_comp(काष्ठा mt7601u_dev *dev, bool on)
-अणु
-	पूर्णांक ret, temp, hi_temp = 400, lo_temp = -200;
+static int mt7601u_temp_comp(struct mt7601u_dev *dev, bool on)
+{
+	int ret, temp, hi_temp = 400, lo_temp = -200;
 
 	temp = (dev->raw_temp - dev->ee->ref_temp) * MT_EE_TEMPERATURE_SLOPE;
 	dev->curr_temp = temp;
 
 	/* DPD Calibration */
-	अगर (temp - dev->dpd_temp > 450 || temp - dev->dpd_temp < -450) अणु
+	if (temp - dev->dpd_temp > 450 || temp - dev->dpd_temp < -450) {
 		dev->dpd_temp = temp;
 
 		ret = mt7601u_mcu_calibrate(dev, MCU_CAL_DPD, dev->dpd_temp);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		mt7601u_vco_cal(dev);
 
 		dev_dbg(dev->dev, "Recalibrate DPD\n");
-	पूर्ण
+	}
 
 	/* PLL Lock Protect */
-	अगर (temp < -50 && !dev->pll_lock_protect) अणु /* < 20C */
+	if (temp < -50 && !dev->pll_lock_protect) { /* < 20C */
 		dev->pll_lock_protect =  true;
 
 		mt7601u_rf_wr(dev, 4, 4, 6);
 		mt7601u_rf_clear(dev, 4, 10, 0x30);
 
 		dev_dbg(dev->dev, "PLL lock protect on - too cold\n");
-	पूर्ण अन्यथा अगर (temp > 50 && dev->pll_lock_protect) अणु /* > 30C */
+	} else if (temp > 50 && dev->pll_lock_protect) { /* > 30C */
 		dev->pll_lock_protect = false;
 
 		mt7601u_rf_wr(dev, 4, 4, 0);
 		mt7601u_rf_rmw(dev, 4, 10, 0x30, 0x10);
 
 		dev_dbg(dev->dev, "PLL lock protect off\n");
-	पूर्ण
+	}
 
-	अगर (on) अणु
+	if (on) {
 		hi_temp -= 50;
 		lo_temp -= 50;
-	पूर्ण
+	}
 
-	/* BBP CR क्रम H, L, N temperature */
-	अगर (temp > hi_temp)
-		वापस mt7601u_bbp_temp(dev, MT_TEMP_MODE_HIGH, "high");
-	अन्यथा अगर (temp > lo_temp)
-		वापस mt7601u_bbp_temp(dev, MT_TEMP_MODE_NORMAL, "normal");
-	अन्यथा
-		वापस mt7601u_bbp_temp(dev, MT_TEMP_MODE_LOW, "low");
-पूर्ण
+	/* BBP CR for H, L, N temperature */
+	if (temp > hi_temp)
+		return mt7601u_bbp_temp(dev, MT_TEMP_MODE_HIGH, "high");
+	else if (temp > lo_temp)
+		return mt7601u_bbp_temp(dev, MT_TEMP_MODE_NORMAL, "normal");
+	else
+		return mt7601u_bbp_temp(dev, MT_TEMP_MODE_LOW, "low");
+}
 
 /* Note: this is used only with TSSI, we can just use trgt_pwr from eeprom. */
-अटल पूर्णांक mt7601u_current_tx_घातer(काष्ठा mt7601u_dev *dev)
-अणु
-	वापस dev->ee->chan_pwr[dev->chandef.chan->hw_value - 1];
-पूर्ण
+static int mt7601u_current_tx_power(struct mt7601u_dev *dev)
+{
+	return dev->ee->chan_pwr[dev->chandef.chan->hw_value - 1];
+}
 
-अटल bool mt7601u_use_hvga(काष्ठा mt7601u_dev *dev)
-अणु
-	वापस !(mt7601u_current_tx_घातer(dev) > 20);
-पूर्ण
+static bool mt7601u_use_hvga(struct mt7601u_dev *dev)
+{
+	return !(mt7601u_current_tx_power(dev) > 20);
+}
 
-अटल s16
-mt7601u_phy_rf_pa_mode_val(काष्ठा mt7601u_dev *dev, पूर्णांक phy_mode, पूर्णांक tx_rate)
-अणु
-	अटल स्थिर s16 decode_tb[] = अणु 0, 8847, -5734, -5734 पूर्ण;
+static s16
+mt7601u_phy_rf_pa_mode_val(struct mt7601u_dev *dev, int phy_mode, int tx_rate)
+{
+	static const s16 decode_tb[] = { 0, 8847, -5734, -5734 };
 	u32 reg;
 
-	चयन (phy_mode) अणु
-	हाल MT_PHY_TYPE_OFDM:
+	switch (phy_mode) {
+	case MT_PHY_TYPE_OFDM:
 		tx_rate += 4;
 		fallthrough;
-	हाल MT_PHY_TYPE_CCK:
+	case MT_PHY_TYPE_CCK:
 		reg = dev->rf_pa_mode[0];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		reg = dev->rf_pa_mode[1];
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस decode_tb[(reg >> (tx_rate * 2)) & 0x3];
-पूर्ण
+	return decode_tb[(reg >> (tx_rate * 2)) & 0x3];
+}
 
-अटल काष्ठा mt7601u_tssi_params
-mt7601u_tssi_params_get(काष्ठा mt7601u_dev *dev)
-अणु
-	अटल स्थिर u8 ofdm_pkt2rate[8] = अणु 6, 4, 2, 0, 7, 5, 3, 1 पूर्ण;
-	अटल स्थिर पूर्णांक अटल_घातer[4] = अणु 0, -49152, -98304, 49152 पूर्ण;
-	काष्ठा mt7601u_tssi_params p;
+static struct mt7601u_tssi_params
+mt7601u_tssi_params_get(struct mt7601u_dev *dev)
+{
+	static const u8 ofdm_pkt2rate[8] = { 6, 4, 2, 0, 7, 5, 3, 1 };
+	static const int static_power[4] = { 0, -49152, -98304, 49152 };
+	struct mt7601u_tssi_params p;
 	u8 bbp_r47, pkt_type, tx_rate;
-	काष्ठा घातer_per_rate *rate_table;
+	struct power_per_rate *rate_table;
 
 	bbp_r47 = mt7601u_bbp_rr(dev, 47);
 
@@ -818,81 +817,81 @@ mt7601u_tssi_params_get(काष्ठा mt7601u_dev *dev)
 	dev->raw_temp = mt7601u_bbp_r47_get(dev, bbp_r47, BBP_R47_F_TEMP);
 	pkt_type = mt7601u_bbp_r47_get(dev, bbp_r47, BBP_R47_F_PKT_T);
 
-	p.trgt_घातer = mt7601u_current_tx_घातer(dev);
+	p.trgt_power = mt7601u_current_tx_power(dev);
 
-	चयन (pkt_type & 0x03) अणु
-	हाल MT_PHY_TYPE_CCK:
+	switch (pkt_type & 0x03) {
+	case MT_PHY_TYPE_CCK:
 		tx_rate = (pkt_type >> 4) & 0x03;
-		rate_table = dev->ee->घातer_rate_table.cck;
-		अवरोध;
+		rate_table = dev->ee->power_rate_table.cck;
+		break;
 
-	हाल MT_PHY_TYPE_OFDM:
+	case MT_PHY_TYPE_OFDM:
 		tx_rate = ofdm_pkt2rate[(pkt_type >> 4) & 0x07];
-		rate_table = dev->ee->घातer_rate_table.ofdm;
-		अवरोध;
+		rate_table = dev->ee->power_rate_table.ofdm;
+		break;
 
-	शेष:
+	default:
 		tx_rate = mt7601u_bbp_r47_get(dev, bbp_r47, BBP_R47_F_TX_RATE);
 		tx_rate &= 0x7f;
-		rate_table = dev->ee->घातer_rate_table.ht;
-		अवरोध;
-	पूर्ण
+		rate_table = dev->ee->power_rate_table.ht;
+		break;
+	}
 
-	अगर (dev->bw == MT_BW_20)
-		p.trgt_घातer += rate_table[tx_rate / 2].bw20;
-	अन्यथा
-		p.trgt_घातer += rate_table[tx_rate / 2].bw40;
+	if (dev->bw == MT_BW_20)
+		p.trgt_power += rate_table[tx_rate / 2].bw20;
+	else
+		p.trgt_power += rate_table[tx_rate / 2].bw40;
 
-	p.trgt_घातer <<= 12;
+	p.trgt_power <<= 12;
 
-	dev_dbg(dev->dev, "tx_rate:%02hhx pwr:%08x\n", tx_rate, p.trgt_घातer);
+	dev_dbg(dev->dev, "tx_rate:%02hhx pwr:%08x\n", tx_rate, p.trgt_power);
 
-	p.trgt_घातer += mt7601u_phy_rf_pa_mode_val(dev, pkt_type & 0x03,
+	p.trgt_power += mt7601u_phy_rf_pa_mode_val(dev, pkt_type & 0x03,
 						   tx_rate);
 
 	/* Channel 14, cck, bw20 */
-	अगर ((pkt_type & 0x03) == MT_PHY_TYPE_CCK) अणु
-		अगर (mt7601u_bbp_rr(dev, 4) & 0x20)
-			p.trgt_घातer += mt7601u_bbp_rr(dev, 178) ? 18022 : 9830;
-		अन्यथा
-			p.trgt_घातer += mt7601u_bbp_rr(dev, 178) ? 819 : 24576;
-	पूर्ण
+	if ((pkt_type & 0x03) == MT_PHY_TYPE_CCK) {
+		if (mt7601u_bbp_rr(dev, 4) & 0x20)
+			p.trgt_power += mt7601u_bbp_rr(dev, 178) ? 18022 : 9830;
+		else
+			p.trgt_power += mt7601u_bbp_rr(dev, 178) ? 819 : 24576;
+	}
 
-	p.trgt_घातer += अटल_घातer[mt7601u_bbp_rr(dev, 1) & 0x03];
+	p.trgt_power += static_power[mt7601u_bbp_rr(dev, 1) & 0x03];
 
-	p.trgt_घातer += dev->ee->tssi_data.tx0_delta_offset;
+	p.trgt_power += dev->ee->tssi_data.tx0_delta_offset;
 
 	dev_dbg(dev->dev,
 		"tssi:%02hhx t_power:%08x temp:%02hhx pkt_type:%02hhx\n",
-		p.tssi0, p.trgt_घातer, dev->raw_temp, pkt_type);
+		p.tssi0, p.trgt_power, dev->raw_temp, pkt_type);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल bool mt7601u_tssi_पढ़ो_पढ़ोy(काष्ठा mt7601u_dev *dev)
-अणु
-	वापस !(mt7601u_bbp_rr(dev, 47) & 0x10);
-पूर्ण
+static bool mt7601u_tssi_read_ready(struct mt7601u_dev *dev)
+{
+	return !(mt7601u_bbp_rr(dev, 47) & 0x10);
+}
 
-अटल पूर्णांक mt7601u_tssi_cal(काष्ठा mt7601u_dev *dev)
-अणु
-	काष्ठा mt7601u_tssi_params params;
-	पूर्णांक curr_pwr, dअगरf_pwr;
-	अक्षर tssi_offset;
+static int mt7601u_tssi_cal(struct mt7601u_dev *dev)
+{
+	struct mt7601u_tssi_params params;
+	int curr_pwr, diff_pwr;
+	char tssi_offset;
 	s8 tssi_init;
 	s16 tssi_m_dc, tssi_db;
 	bool hvga;
 	u32 val;
 
-	अगर (!dev->ee->tssi_enabled)
-		वापस 0;
+	if (!dev->ee->tssi_enabled)
+		return 0;
 
 	hvga = mt7601u_use_hvga(dev);
-	अगर (!dev->tssi_पढ़ो_trig)
-		वापस mt7601u_mcu_tssi_पढ़ो_kick(dev, hvga);
+	if (!dev->tssi_read_trig)
+		return mt7601u_mcu_tssi_read_kick(dev, hvga);
 
-	अगर (!mt7601u_tssi_पढ़ो_पढ़ोy(dev))
-		वापस 0;
+	if (!mt7601u_tssi_read_ready(dev))
+		return 0;
 
 	params = mt7601u_tssi_params_get(dev);
 
@@ -902,185 +901,185 @@ mt7601u_tssi_params_get(काष्ठा mt7601u_dev *dev)
 	dev_dbg(dev->dev, "tssi dc:%04hx db:%04hx hvga:%d\n",
 		tssi_m_dc, tssi_db, hvga);
 
-	अगर (dev->chandef.chan->hw_value < 5)
+	if (dev->chandef.chan->hw_value < 5)
 		tssi_offset = dev->ee->tssi_data.offset[0];
-	अन्यथा अगर (dev->chandef.chan->hw_value < 9)
+	else if (dev->chandef.chan->hw_value < 9)
 		tssi_offset = dev->ee->tssi_data.offset[1];
-	अन्यथा
+	else
 		tssi_offset = dev->ee->tssi_data.offset[2];
 
-	अगर (hvga)
+	if (hvga)
 		tssi_db -= dev->tssi_init_hvga_offset_db;
 
 	curr_pwr = tssi_db * dev->ee->tssi_data.slope + (tssi_offset << 9);
-	dअगरf_pwr = params.trgt_घातer - curr_pwr;
-	dev_dbg(dev->dev, "Power curr:%08x diff:%08x\n", curr_pwr, dअगरf_pwr);
+	diff_pwr = params.trgt_power - curr_pwr;
+	dev_dbg(dev->dev, "Power curr:%08x diff:%08x\n", curr_pwr, diff_pwr);
 
-	अगर (params.tssi0 > 126 && dअगरf_pwr > 0) अणु
+	if (params.tssi0 > 126 && diff_pwr > 0) {
 		dev_err(dev->dev, "Error: TSSI upper saturation\n");
-		dअगरf_pwr = 0;
-	पूर्ण
-	अगर (params.tssi0 - tssi_init < 1 && dअगरf_pwr < 0) अणु
+		diff_pwr = 0;
+	}
+	if (params.tssi0 - tssi_init < 1 && diff_pwr < 0) {
 		dev_err(dev->dev, "Error: TSSI lower saturation\n");
-		dअगरf_pwr = 0;
-	पूर्ण
+		diff_pwr = 0;
+	}
 
-	अगर ((dev->prev_pwr_dअगरf ^ dअगरf_pwr) < 0 && असल(dअगरf_pwr) < 4096 &&
-	    (असल(dअगरf_pwr) > असल(dev->prev_pwr_dअगरf) ||
-	     (dअगरf_pwr > 0 && dअगरf_pwr == -dev->prev_pwr_dअगरf)))
-		dअगरf_pwr = 0;
-	अन्यथा
-		dev->prev_pwr_dअगरf = dअगरf_pwr;
+	if ((dev->prev_pwr_diff ^ diff_pwr) < 0 && abs(diff_pwr) < 4096 &&
+	    (abs(diff_pwr) > abs(dev->prev_pwr_diff) ||
+	     (diff_pwr > 0 && diff_pwr == -dev->prev_pwr_diff)))
+		diff_pwr = 0;
+	else
+		dev->prev_pwr_diff = diff_pwr;
 
-	dअगरf_pwr += (dअगरf_pwr > 0) ? 2048 : -2048;
-	dअगरf_pwr /= 4096;
+	diff_pwr += (diff_pwr > 0) ? 2048 : -2048;
+	diff_pwr /= 4096;
 
-	dev_dbg(dev->dev, "final diff: %08x\n", dअगरf_pwr);
+	dev_dbg(dev->dev, "final diff: %08x\n", diff_pwr);
 
 	val = mt7601u_rr(dev, MT_TX_ALC_CFG_1);
-	curr_pwr = s6_to_पूर्णांक(FIELD_GET(MT_TX_ALC_CFG_1_TEMP_COMP, val));
-	dअगरf_pwr += curr_pwr;
-	val = (val & ~MT_TX_ALC_CFG_1_TEMP_COMP) | पूर्णांक_to_s6(dअगरf_pwr);
+	curr_pwr = s6_to_int(FIELD_GET(MT_TX_ALC_CFG_1_TEMP_COMP, val));
+	diff_pwr += curr_pwr;
+	val = (val & ~MT_TX_ALC_CFG_1_TEMP_COMP) | int_to_s6(diff_pwr);
 	mt7601u_wr(dev, MT_TX_ALC_CFG_1, val);
 
-	वापस mt7601u_mcu_tssi_पढ़ो_kick(dev, hvga);
-पूर्ण
+	return mt7601u_mcu_tssi_read_kick(dev, hvga);
+}
 
-अटल u8 mt7601u_agc_शेष(काष्ठा mt7601u_dev *dev)
-अणु
-	वापस (dev->ee->lna_gain - 8) * 2 + 0x34;
-पूर्ण
+static u8 mt7601u_agc_default(struct mt7601u_dev *dev)
+{
+	return (dev->ee->lna_gain - 8) * 2 + 0x34;
+}
 
-अटल व्योम mt7601u_agc_reset(काष्ठा mt7601u_dev *dev)
-अणु
-	u8 agc = mt7601u_agc_शेष(dev);
+static void mt7601u_agc_reset(struct mt7601u_dev *dev)
+{
+	u8 agc = mt7601u_agc_default(dev);
 
 	mt7601u_bbp_wr(dev, 66,	agc);
-पूर्ण
+}
 
-व्योम mt7601u_agc_save(काष्ठा mt7601u_dev *dev)
-अणु
+void mt7601u_agc_save(struct mt7601u_dev *dev)
+{
 	dev->agc_save = mt7601u_bbp_rr(dev, 66);
-पूर्ण
+}
 
-व्योम mt7601u_agc_restore(काष्ठा mt7601u_dev *dev)
-अणु
+void mt7601u_agc_restore(struct mt7601u_dev *dev)
+{
 	mt7601u_bbp_wr(dev, 66, dev->agc_save);
-पूर्ण
+}
 
-अटल व्योम mt7601u_agc_tune(काष्ठा mt7601u_dev *dev)
-अणु
-	u8 val = mt7601u_agc_शेष(dev);
-	दीर्घ avg_rssi;
+static void mt7601u_agc_tune(struct mt7601u_dev *dev)
+{
+	u8 val = mt7601u_agc_default(dev);
+	long avg_rssi;
 
-	अगर (test_bit(MT7601U_STATE_SCANNING, &dev->state))
-		वापस;
+	if (test_bit(MT7601U_STATE_SCANNING, &dev->state))
+		return;
 
-	/* Note: only in STA mode and not करोzing; perhaps करो this only अगर
+	/* Note: only in STA mode and not dozing; perhaps do this only if
 	 *	 there is enough rssi updates since last run?
 	 *	 Rssi updates are only on beacons and U2M so should work...
 	 */
 	spin_lock_bh(&dev->con_mon_lock);
-	avg_rssi = ewma_rssi_पढ़ो(&dev->avg_rssi);
+	avg_rssi = ewma_rssi_read(&dev->avg_rssi);
 	spin_unlock_bh(&dev->con_mon_lock);
-	अगर (avg_rssi == 0)
-		वापस;
+	if (avg_rssi == 0)
+		return;
 
 	avg_rssi = -avg_rssi;
-	अगर (avg_rssi <= -70)
+	if (avg_rssi <= -70)
 		val -= 0x20;
-	अन्यथा अगर (avg_rssi <= -60)
+	else if (avg_rssi <= -60)
 		val -= 0x10;
 
-	अगर (val != mt7601u_bbp_rr(dev, 66))
+	if (val != mt7601u_bbp_rr(dev, 66))
 		mt7601u_bbp_wr(dev, 66, val);
 
-	/* TODO: also अगर lost a lot of beacons try resetting
+	/* TODO: also if lost a lot of beacons try resetting
 	 *       (see RTMPSetAGCInitValue() call in mlme.c).
 	 */
-पूर्ण
+}
 
-अटल व्योम mt7601u_phy_calibrate(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt7601u_dev *dev = container_of(work, काष्ठा mt7601u_dev,
+static void mt7601u_phy_calibrate(struct work_struct *work)
+{
+	struct mt7601u_dev *dev = container_of(work, struct mt7601u_dev,
 					    cal_work.work);
 
 	mt7601u_agc_tune(dev);
 	mt7601u_tssi_cal(dev);
-	/* If TSSI calibration was run it alपढ़ोy updated temperature. */
-	अगर (!dev->ee->tssi_enabled)
-		dev->raw_temp = mt7601u_पढ़ो_temp(dev);
-	mt7601u_temp_comp(dev, true); /* TODO: find right value क्रम @on */
+	/* If TSSI calibration was run it already updated temperature. */
+	if (!dev->ee->tssi_enabled)
+		dev->raw_temp = mt7601u_read_temp(dev);
+	mt7601u_temp_comp(dev, true); /* TODO: find right value for @on */
 
 	ieee80211_queue_delayed_work(dev->hw, &dev->cal_work,
 				     MT_CALIBRATE_INTERVAL);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-__mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 phy_mode)
-अणु
+static unsigned long
+__mt7601u_phy_freq_cal(struct mt7601u_dev *dev, s8 last_offset, u8 phy_mode)
+{
 	u8 activate_threshold, deactivate_threshold;
 
 	trace_freq_cal_offset(dev, phy_mode, last_offset);
 
 	/* No beacons received - reschedule soon */
-	अगर (last_offset == MT_FREQ_OFFSET_INVALID)
-		वापस MT_FREQ_CAL_ADJ_INTERVAL;
+	if (last_offset == MT_FREQ_OFFSET_INVALID)
+		return MT_FREQ_CAL_ADJ_INTERVAL;
 
-	चयन (phy_mode) अणु
-	हाल MT_PHY_TYPE_CCK:
+	switch (phy_mode) {
+	case MT_PHY_TYPE_CCK:
 		activate_threshold = 19;
 		deactivate_threshold = 5;
-		अवरोध;
-	हाल MT_PHY_TYPE_OFDM:
+		break;
+	case MT_PHY_TYPE_OFDM:
 		activate_threshold = 102;
 		deactivate_threshold = 32;
-		अवरोध;
-	हाल MT_PHY_TYPE_HT:
-	हाल MT_PHY_TYPE_HT_GF:
+		break;
+	case MT_PHY_TYPE_HT:
+	case MT_PHY_TYPE_HT_GF:
 		activate_threshold = 82;
 		deactivate_threshold = 20;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस MT_FREQ_CAL_CHECK_INTERVAL;
-	पूर्ण
+		return MT_FREQ_CAL_CHECK_INTERVAL;
+	}
 
-	अगर (असल(last_offset) >= activate_threshold)
+	if (abs(last_offset) >= activate_threshold)
 		dev->freq_cal.adjusting = true;
-	अन्यथा अगर (असल(last_offset) <= deactivate_threshold)
+	else if (abs(last_offset) <= deactivate_threshold)
 		dev->freq_cal.adjusting = false;
 
-	अगर (!dev->freq_cal.adjusting)
-		वापस MT_FREQ_CAL_CHECK_INTERVAL;
+	if (!dev->freq_cal.adjusting)
+		return MT_FREQ_CAL_CHECK_INTERVAL;
 
-	अगर (last_offset > deactivate_threshold) अणु
-		अगर (dev->freq_cal.freq > 0)
+	if (last_offset > deactivate_threshold) {
+		if (dev->freq_cal.freq > 0)
 			dev->freq_cal.freq--;
-		अन्यथा
+		else
 			dev->freq_cal.adjusting = false;
-	पूर्ण अन्यथा अगर (last_offset < -deactivate_threshold) अणु
-		अगर (dev->freq_cal.freq < 0xbf)
+	} else if (last_offset < -deactivate_threshold) {
+		if (dev->freq_cal.freq < 0xbf)
 			dev->freq_cal.freq++;
-		अन्यथा
+		else
 			dev->freq_cal.adjusting = false;
-	पूर्ण
+	}
 
 	trace_freq_cal_adjust(dev, dev->freq_cal.freq);
 	mt7601u_rf_wr(dev, 0, 12, dev->freq_cal.freq);
 	mt7601u_vco_cal(dev);
 
-	वापस dev->freq_cal.adjusting ? MT_FREQ_CAL_ADJ_INTERVAL :
+	return dev->freq_cal.adjusting ? MT_FREQ_CAL_ADJ_INTERVAL :
 					 MT_FREQ_CAL_CHECK_INTERVAL;
-पूर्ण
+}
 
-अटल व्योम mt7601u_phy_freq_cal(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt7601u_dev *dev = container_of(work, काष्ठा mt7601u_dev,
+static void mt7601u_phy_freq_cal(struct work_struct *work)
+{
+	struct mt7601u_dev *dev = container_of(work, struct mt7601u_dev,
 					       freq_cal.work.work);
 	s8 last_offset;
 	u8 phy_mode;
-	अचिन्हित दीर्घ delay;
+	unsigned long delay;
 
 	spin_lock_bh(&dev->con_mon_lock);
 	last_offset = dev->bcn_freq_off;
@@ -1093,12 +1092,12 @@ __mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 p
 	spin_lock_bh(&dev->con_mon_lock);
 	dev->bcn_freq_off = MT_FREQ_OFFSET_INVALID;
 	spin_unlock_bh(&dev->con_mon_lock);
-पूर्ण
+}
 
-व्योम mt7601u_phy_con_cal_onoff(काष्ठा mt7601u_dev *dev,
-			       काष्ठा ieee80211_bss_conf *info)
-अणु
-	अगर (!info->assoc)
+void mt7601u_phy_con_cal_onoff(struct mt7601u_dev *dev,
+			       struct ieee80211_bss_conf *info)
+{
+	if (!info->assoc)
 		cancel_delayed_work_sync(&dev->freq_cal.work);
 
 	/* Start/stop collecting beacon data */
@@ -1112,17 +1111,17 @@ __mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 p
 	dev->freq_cal.enabled = info->assoc;
 	dev->freq_cal.adjusting = false;
 
-	अगर (info->assoc)
+	if (info->assoc)
 		ieee80211_queue_delayed_work(dev->hw, &dev->freq_cal.work,
 					     MT_FREQ_CAL_INIT_DELAY);
-पूर्ण
+}
 
-अटल पूर्णांक mt7601u_init_cal(काष्ठा mt7601u_dev *dev)
-अणु
+static int mt7601u_init_cal(struct mt7601u_dev *dev)
+{
 	u32 mac_ctrl;
-	पूर्णांक ret;
+	int ret;
 
-	dev->raw_temp = mt7601u_पढ़ो_bootup_temp(dev);
+	dev->raw_temp = mt7601u_read_bootup_temp(dev);
 	dev->curr_temp = (dev->raw_temp - dev->ee->ref_temp) *
 		MT_EE_TEMPERATURE_SLOPE;
 	dev->dpd_temp = dev->curr_temp;
@@ -1130,39 +1129,39 @@ __mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 p
 	mac_ctrl = mt7601u_rr(dev, MT_MAC_SYS_CTRL);
 
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_R, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mt7601u_rf_rr(dev, 0, 4);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret |= 0x80;
 	ret = mt7601u_rf_wr(dev, 0, 4, ret);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	msleep(2);
 
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_TXDCOC, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7601u_rxdc_cal(dev);
 
 	ret = mt7601u_set_bw_filter(dev, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_LOFT, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_TXIQ, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_RXIQ, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = mt7601u_mcu_calibrate(dev, MCU_CAL_DPD, dev->dpd_temp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mt7601u_rxdc_cal(dev);
 
@@ -1172,22 +1171,22 @@ __mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 p
 
 	mt7601u_temp_comp(dev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt7601u_bbp_set_bw(काष्ठा mt7601u_dev *dev, पूर्णांक bw)
-अणु
+int mt7601u_bbp_set_bw(struct mt7601u_dev *dev, int bw)
+{
 	u32 val, old;
 
-	अगर (bw == dev->bw) अणु
-		/* Venकरोr driver करोes the rmc even when no change is needed. */
+	if (bw == dev->bw) {
+		/* Vendor driver does the rmc even when no change is needed. */
 		mt7601u_bbp_rmc(dev, 4, 0x18, bw == MT_BW_20 ? 0 : 0x10);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	dev->bw = bw;
 
-	/* Stop MAC क्रम the समय of bw change */
+	/* Stop MAC for the time of bw change */
 	old = mt7601u_rr(dev, MT_MAC_SYS_CTRL);
 	val = old & ~(MT_MAC_SYS_CTRL_ENABLE_TX | MT_MAC_SYS_CTRL_ENABLE_RX);
 	mt7601u_wr(dev, MT_MAC_SYS_CTRL, val);
@@ -1198,59 +1197,59 @@ __mt7601u_phy_freq_cal(काष्ठा mt7601u_dev *dev, s8 last_offset, u8 p
 
 	mt7601u_wr(dev, MT_MAC_SYS_CTRL, old);
 
-	वापस mt7601u_load_bbp_temp_table_bw(dev);
-पूर्ण
+	return mt7601u_load_bbp_temp_table_bw(dev);
+}
 
 /**
  * mt7601u_set_rx_path - set rx path in BBP
- * @dev:	poपूर्णांकer to adapter काष्ठाure
+ * @dev:	pointer to adapter structure
  * @path:	rx path to set values are 0-based
  */
-व्योम mt7601u_set_rx_path(काष्ठा mt7601u_dev *dev, u8 path)
-अणु
+void mt7601u_set_rx_path(struct mt7601u_dev *dev, u8 path)
+{
 	mt7601u_bbp_rmw(dev, 3, 0x18, path << 3);
-पूर्ण
+}
 
 /**
  * mt7601u_set_tx_dac - set which tx DAC to use
- * @dev:	poपूर्णांकer to adapter काष्ठाure
+ * @dev:	pointer to adapter structure
  * @dac:	DAC index, values are 0-based
  */
-व्योम mt7601u_set_tx_dac(काष्ठा mt7601u_dev *dev, u8 dac)
-अणु
+void mt7601u_set_tx_dac(struct mt7601u_dev *dev, u8 dac)
+{
 	mt7601u_bbp_rmc(dev, 1, 0x18, dac << 3);
-पूर्ण
+}
 
-पूर्णांक mt7601u_phy_init(काष्ठा mt7601u_dev *dev)
-अणु
-	पूर्णांक ret;
+int mt7601u_phy_init(struct mt7601u_dev *dev)
+{
+	int ret;
 
 	dev->rf_pa_mode[0] = mt7601u_rr(dev, MT_RF_PA_MODE_CFG0);
 	dev->rf_pa_mode[1] = mt7601u_rr(dev, MT_RF_PA_MODE_CFG1);
 
 	ret = mt7601u_rf_wr(dev, 0, 12, dev->ee->rf_freq_off);
-	अगर (ret)
-		वापस ret;
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, 0, rf_central,
+	if (ret)
+		return ret;
+	ret = mt7601u_write_reg_pairs(dev, 0, rf_central,
 				      ARRAY_SIZE(rf_central));
-	अगर (ret)
-		वापस ret;
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, 0, rf_channel,
+	if (ret)
+		return ret;
+	ret = mt7601u_write_reg_pairs(dev, 0, rf_channel,
 				      ARRAY_SIZE(rf_channel));
-	अगर (ret)
-		वापस ret;
-	ret = mt7601u_ग_लिखो_reg_pairs(dev, 0, rf_vga, ARRAY_SIZE(rf_vga));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
+	ret = mt7601u_write_reg_pairs(dev, 0, rf_vga, ARRAY_SIZE(rf_vga));
+	if (ret)
+		return ret;
 
 	ret = mt7601u_init_cal(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	dev->prev_pwr_dअगरf = 100;
+	dev->prev_pwr_diff = 100;
 
 	INIT_DELAYED_WORK(&dev->cal_work, mt7601u_phy_calibrate);
 	INIT_DELAYED_WORK(&dev->freq_cal.work, mt7601u_phy_freq_cal);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

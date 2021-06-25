@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PARISC_CHECKSUM_H
-#घोषणा _PARISC_CHECKSUM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PARISC_CHECKSUM_H
+#define _PARISC_CHECKSUM_H
 
-#समावेश <linux/in6.h>
+#include <linux/in6.h>
 
 /*
  * computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
+ * returns a 32-bit number suitable for feeding into itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * क्रम the last fragment, which may be odd
+ * for the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 32-bit boundary
  */
-बाह्य __wsum csum_partial(स्थिर व्योम *, पूर्णांक, __wsum);
+extern __wsum csum_partial(const void *, int, __wsum);
 
 /*
- *	Optimized क्रम IP headers, which always checksum on 4 octet boundaries.
+ *	Optimized for IP headers, which always checksum on 4 octet boundaries.
  *
- *	Written by Ranकरोlph Chung <tausq@debian.org>, and then mucked with by
+ *	Written by Randolph Chung <tausq@debian.org>, and then mucked with by
  *	LaMont Jones <lamont@debian.org>
  */
-अटल अंतरभूत __sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl)
-अणु
-	अचिन्हित पूर्णांक sum;
-	अचिन्हित दीर्घ t0, t1, t2;
+static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
+{
+	unsigned int sum;
+	unsigned long t0, t1, t2;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 "	ldws,ma		4(%1), %0\n"
 "	addib,<=	-4, %2, 2f\n"
 "\n"
@@ -55,76 +54,76 @@
 	: "1" (iph), "2" (ihl)
 	: "memory");
 
-	वापस (__क्रमce __sum16)sum;
-पूर्ण
+	return (__force __sum16)sum;
+}
 
 /*
  *	Fold a partial checksum
  */
-अटल अंतरभूत __sum16 csum_fold(__wsum csum)
-अणु
-	u32 sum = (__क्रमce u32)csum;
+static inline __sum16 csum_fold(__wsum csum)
+{
+	u32 sum = (__force u32)csum;
 	/* add the swapped two 16-bit halves of sum,
 	   a possible carry from adding the two 16-bit halves,
-	   will carry from the lower half पूर्णांकo the upper half,
+	   will carry from the lower half into the upper half,
 	   giving us the correct sum in the upper half. */
 	sum += (sum << 16) + (sum >> 16);
-	वापस (__क्रमce __sum16)(~sum >> 16);
-पूर्ण
+	return (__force __sum16)(~sum >> 16);
+}
  
-अटल अंतरभूत __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
+static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-अणु
-	__यंत्र__(
+{
+	__asm__(
 	"	add  %1, %0, %0\n"
 	"	addc %2, %0, %0\n"
 	"	addc %3, %0, %0\n"
 	"	addc %%r0, %0, %0\n"
 		: "=r" (sum)
 		: "r" (daddr), "r"(saddr), "r"(proto+len), "0"(sum));
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
 /*
- * computes the checksum of the TCP/UDP pseuकरो-header
- * वापसs a 16-bit checksum, alपढ़ोy complemented
+ * computes the checksum of the TCP/UDP pseudo-header
+ * returns a 16-bit checksum, already complemented
  */
-अटल अंतरभूत __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
+static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-अणु
-	वापस csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
-पूर्ण
+{
+	return csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
+}
 
 /*
- * this routine is used क्रम miscellaneous IP-like checksums, मुख्यly
+ * this routine is used for miscellaneous IP-like checksums, mainly
  * in icmp.c
  */
-अटल अंतरभूत __sum16 ip_compute_csum(स्थिर व्योम *buf, पूर्णांक len)
-अणु
-	 वापस csum_fold (csum_partial(buf, len, 0));
-पूर्ण
+static inline __sum16 ip_compute_csum(const void *buf, int len)
+{
+	 return csum_fold (csum_partial(buf, len, 0));
+}
 
 
-#घोषणा _HAVE_ARCH_IPV6_CSUM
-अटल __अंतरभूत__ __sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
-					  स्थिर काष्ठा in6_addr *daddr,
+#define _HAVE_ARCH_IPV6_CSUM
+static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
+					  const struct in6_addr *daddr,
 					  __u32 len, __u8 proto,
 					  __wsum sum)
-अणु
-	अचिन्हित दीर्घ t0, t1, t2, t3;
+{
+	unsigned long t0, t1, t2, t3;
 
 	len += proto;	/* add 16-bit proto + len */
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 
-#अगर BITS_PER_LONG > 32
+#if BITS_PER_LONG > 32
 
 	/*
 	** We can execute two loads and two adds per cycle on PA 8000.
-	** But add insn's get serialized रुकोing क्रम the carry bit.
-	** Try to keep 4 रेजिस्टरs with "live" values ahead of the ALU.
+	** But add insn's get serialized waiting for the carry bit.
+	** Try to keep 4 registers with "live" values ahead of the ALU.
 	*/
 
 "	ldd,ma		8(%1), %4\n"	/* get 1st saddr word */
@@ -136,15 +135,15 @@
 "	add,dc		%6, %0, %0\n"
 "	add,dc		%7, %0, %0\n"
 "	add,dc		%3, %0, %0\n"  /* fold in proto+len | carry bit */
-"	extrd,u		%0, 31, 32, %4\n"/* copy upper half करोwn */
+"	extrd,u		%0, 31, 32, %4\n"/* copy upper half down */
 "	depdi		0, 31, 32, %0\n"/* clear upper half */
-"	add		%4, %0, %0\n"	/* fold पूर्णांकo 32-bits */
+"	add		%4, %0, %0\n"	/* fold into 32-bits */
 "	addc		0, %0, %0\n"	/* add carry */
 
-#अन्यथा
+#else
 
 	/*
-	** For PA 1.x, the insn order करोesn't matter as much.
+	** For PA 1.x, the insn order doesn't matter as much.
 	** Insn stream is serialized on the carry bit here too.
 	** result from the previous operation (eg r0 + x)
 	*/
@@ -166,13 +165,13 @@
 "	addc		%7, %0, %0\n"
 "	addc		%3, %0, %0\n"	/* fold in proto+len, catch carry */
 
-#पूर्ण_अगर
+#endif
 	: "=r" (sum), "=r" (saddr), "=r" (daddr), "=r" (len),
 	  "=r" (t0), "=r" (t1), "=r" (t2), "=r" (t3)
 	: "0" (sum), "1" (saddr), "2" (daddr), "3" (len)
 	: "memory");
-	वापस csum_fold(sum);
-पूर्ण
+	return csum_fold(sum);
+}
 
-#पूर्ण_अगर
+#endif
 

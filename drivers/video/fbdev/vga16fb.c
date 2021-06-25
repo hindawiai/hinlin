@@ -1,38 +1,37 @@
-<शैली गुरु>
 /*
  * linux/drivers/video/vga16.c -- VGA 16-color framebuffer driver
  * 
  * Copyright 1999 Ben Pfaff <pfaffben@debian.org> and Petr Vandrovec <VANDROVE@vc.cvut.cz>
- * Based on VGA info at http://www.goodnet.com/~tinara/FreeVGA/home.hपंचांग
+ * Based on VGA info at http://www.goodnet.com/~tinara/FreeVGA/home.htm
  * Based on VESA framebuffer (c) 1998 Gerd Knorr <kraxel@goldbach.in-berlin.de>
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the मुख्य directory of this
- * archive क्रम more details.  
+ * Public License.  See the file COPYING in the main directory of this
+ * archive for more details.  
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/screen_info.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/screen_info.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <video/vga.h>
+#include <asm/io.h>
+#include <video/vga.h>
 
-#घोषणा VGA_FB_PHYS 0xA0000
-#घोषणा VGA_FB_PHYS_LEN 65536
+#define VGA_FB_PHYS 0xA0000
+#define VGA_FB_PHYS_LEN 65536
 
-#घोषणा MODE_SKIP4	1
-#घोषणा MODE_8BPP	2
-#घोषणा MODE_CFB	4
-#घोषणा MODE_TEXT	8
+#define MODE_SKIP4	1
+#define MODE_8BPP	2
+#define MODE_CFB	4
+#define MODE_TEXT	8
 
 /* --------------------------------------------------------------------- */
 
@@ -40,42 +39,42 @@
  * card parameters
  */
 
-काष्ठा vga16fb_par अणु
-	/* काष्ठाure holding original VGA रेजिस्टर settings when the
+struct vga16fb_par {
+	/* structure holding original VGA register settings when the
            screen is blanked */
-	काष्ठा अणु
-		अचिन्हित अक्षर	SeqCtrlIndex;	  /* Sequencer Index reg.   */
-		अचिन्हित अक्षर	CrtCtrlIndex;	  /* CRT-Contr. Index reg.  */
-		अचिन्हित अक्षर	CrtMiscIO;	  /* Miscellaneous रेजिस्टर */
-		अचिन्हित अक्षर	HorizontalTotal;  /* CRT-Controller:00h */
-		अचिन्हित अक्षर	HorizDisplayEnd;  /* CRT-Controller:01h */
-		अचिन्हित अक्षर	StartHorizRetrace;/* CRT-Controller:04h */
-		अचिन्हित अक्षर	EndHorizRetrace;  /* CRT-Controller:05h */
-		अचिन्हित अक्षर	Overflow;	  /* CRT-Controller:07h */
-		अचिन्हित अक्षर	StartVertRetrace; /* CRT-Controller:10h */
-		अचिन्हित अक्षर	EndVertRetrace;	  /* CRT-Controller:11h */
-		अचिन्हित अक्षर	ModeControl;	  /* CRT-Controller:17h */
-		अचिन्हित अक्षर	ClockingMode;	  /* Seq-Controller:01h */
-	पूर्ण vga_state;
-	काष्ठा vgastate state;
-	अचिन्हित पूर्णांक ref_count;
-	पूर्णांक palette_blanked, vesa_blanked, mode, isVGA;
-	u8 misc, pel_msk, vss, clkभाग;
+	struct {
+		unsigned char	SeqCtrlIndex;	  /* Sequencer Index reg.   */
+		unsigned char	CrtCtrlIndex;	  /* CRT-Contr. Index reg.  */
+		unsigned char	CrtMiscIO;	  /* Miscellaneous register */
+		unsigned char	HorizontalTotal;  /* CRT-Controller:00h */
+		unsigned char	HorizDisplayEnd;  /* CRT-Controller:01h */
+		unsigned char	StartHorizRetrace;/* CRT-Controller:04h */
+		unsigned char	EndHorizRetrace;  /* CRT-Controller:05h */
+		unsigned char	Overflow;	  /* CRT-Controller:07h */
+		unsigned char	StartVertRetrace; /* CRT-Controller:10h */
+		unsigned char	EndVertRetrace;	  /* CRT-Controller:11h */
+		unsigned char	ModeControl;	  /* CRT-Controller:17h */
+		unsigned char	ClockingMode;	  /* Seq-Controller:01h */
+	} vga_state;
+	struct vgastate state;
+	unsigned int ref_count;
+	int palette_blanked, vesa_blanked, mode, isVGA;
+	u8 misc, pel_msk, vss, clkdiv;
 	u8 crtc[VGA_CRT_C];
-पूर्ण;
+};
 
 /* --------------------------------------------------------------------- */
 
-अटल काष्ठा fb_var_screeninfo vga16fb_defined = अणु
+static struct fb_var_screeninfo vga16fb_defined = {
 	.xres		= 640,
 	.yres		= 480,
-	.xres_भव	= 640,
-	.yres_भव	= 480,
+	.xres_virtual	= 640,
+	.yres_virtual	= 480,
 	.bits_per_pixel	= 4,	
 	.activate	= FB_ACTIVATE_TEST,
 	.height		= -1,
 	.width		= -1,
-	.pixघड़ी	= 39721,
+	.pixclock	= 39721,
 	.left_margin	= 48,
 	.right_margin	= 16,
 	.upper_margin	= 33,
@@ -83,10 +82,10 @@
 	.hsync_len 	= 96,
 	.vsync_len	= 2,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 
 /* name should not depend on EGA/VGA */
-अटल स्थिर काष्ठा fb_fix_screeninfo vga16fb_fix = अणु
+static const struct fb_fix_screeninfo vga16fb_fix = {
 	.id		= "VGA16 VGA",
 	.smem_start	= VGA_FB_PHYS,
 	.smem_len	= VGA_FB_PHYS_LEN,
@@ -97,291 +96,291 @@
 	.ypanstep	= 1,
 	.line_length	= 640 / 8,
 	.accel		= FB_ACCEL_NONE
-पूर्ण;
+};
 
-/* The VGA's weird architecture often requires that we पढ़ो a byte and
-   ग_लिखो a byte to the same location.  It करोesn't matter *what* byte
-   we ग_लिखो, however.  This is because all the action goes on behind
-   the scenes in the VGA's 32-bit latch रेजिस्टर, and पढ़ोing and writing
+/* The VGA's weird architecture often requires that we read a byte and
+   write a byte to the same location.  It doesn't matter *what* byte
+   we write, however.  This is because all the action goes on behind
+   the scenes in the VGA's 32-bit latch register, and reading and writing
    video memory just invokes latch behavior.
 
-   To aव्योम race conditions (is this necessary?), पढ़ोing and writing
-   the memory byte should be करोne with a single inकाष्ठाion.  One
-   suitable inकाष्ठाion is the x86 bitwise OR.  The following
-   पढ़ो-modअगरy-ग_लिखो routine should optimize to one such bitwise
+   To avoid race conditions (is this necessary?), reading and writing
+   the memory byte should be done with a single instruction.  One
+   suitable instruction is the x86 bitwise OR.  The following
+   read-modify-write routine should optimize to one such bitwise
    OR. */
-अटल अंतरभूत व्योम rmw(अस्थिर अक्षर __iomem *p)
-अणु
-	पढ़ोb(p);
-	ग_लिखोb(1, p);
-पूर्ण
+static inline void rmw(volatile char __iomem *p)
+{
+	readb(p);
+	writeb(1, p);
+}
 
-/* Set the Graphics Mode Register, and वापस its previous value.
-   Bits 0-1 are ग_लिखो mode, bit 3 is पढ़ो mode. */
-अटल अंतरभूत पूर्णांक seपंचांगode(पूर्णांक mode)
-अणु
-	पूर्णांक oldmode;
+/* Set the Graphics Mode Register, and return its previous value.
+   Bits 0-1 are write mode, bit 3 is read mode. */
+static inline int setmode(int mode)
+{
+	int oldmode;
 	
 	oldmode = vga_io_rgfx(VGA_GFX_MODE);
 	vga_io_w(VGA_GFX_D, mode);
-	वापस oldmode;
-पूर्ण
+	return oldmode;
+}
 
-/* Select the Bit Mask Register and वापस its value. */
-अटल अंतरभूत पूर्णांक selecपंचांगask(व्योम)
-अणु
-	वापस vga_io_rgfx(VGA_GFX_BIT_MASK);
-पूर्ण
+/* Select the Bit Mask Register and return its value. */
+static inline int selectmask(void)
+{
+	return vga_io_rgfx(VGA_GFX_BIT_MASK);
+}
 
-/* Set the value of the Bit Mask Register.  It must alपढ़ोy have been
-   selected with selecपंचांगask(). */
-अटल अंतरभूत व्योम seपंचांगask(पूर्णांक mask)
-अणु
+/* Set the value of the Bit Mask Register.  It must already have been
+   selected with selectmask(). */
+static inline void setmask(int mask)
+{
 	vga_io_w(VGA_GFX_D, mask);
-पूर्ण
+}
 
-/* Set the Data Rotate Register and वापस its old value. 
+/* Set the Data Rotate Register and return its old value. 
    Bits 0-2 are rotate count, bits 3-4 are logical operation
    (0=NOP, 1=AND, 2=OR, 3=XOR). */
-अटल अंतरभूत पूर्णांक setop(पूर्णांक op)
-अणु
-	पूर्णांक olकरोp;
+static inline int setop(int op)
+{
+	int oldop;
 	
-	olकरोp = vga_io_rgfx(VGA_GFX_DATA_ROTATE);
+	oldop = vga_io_rgfx(VGA_GFX_DATA_ROTATE);
 	vga_io_w(VGA_GFX_D, op);
-	वापस olकरोp;
-पूर्ण
+	return oldop;
+}
 
-/* Set the Enable Set/Reset Register and वापस its old value.  
-   The code here always uses value 0xf क्रम this रेजिस्टर. */
-अटल अंतरभूत पूर्णांक setsr(पूर्णांक sr)
-अणु
-	पूर्णांक oldsr;
+/* Set the Enable Set/Reset Register and return its old value.  
+   The code here always uses value 0xf for this register. */
+static inline int setsr(int sr)
+{
+	int oldsr;
 
 	oldsr = vga_io_rgfx(VGA_GFX_SR_ENABLE);
 	vga_io_w(VGA_GFX_D, sr);
-	वापस oldsr;
-पूर्ण
+	return oldsr;
+}
 
-/* Set the Set/Reset Register and वापस its old value. */
-अटल अंतरभूत पूर्णांक setcolor(पूर्णांक color)
-अणु
-	पूर्णांक oldcolor;
+/* Set the Set/Reset Register and return its old value. */
+static inline int setcolor(int color)
+{
+	int oldcolor;
 
 	oldcolor = vga_io_rgfx(VGA_GFX_SR_VALUE);
 	vga_io_w(VGA_GFX_D, color);
-	वापस oldcolor;
-पूर्ण
+	return oldcolor;
+}
 
 /* Return the value in the Graphics Address Register. */
-अटल अंतरभूत पूर्णांक getindex(व्योम)
-अणु
-	वापस vga_io_r(VGA_GFX_I);
-पूर्ण
+static inline int getindex(void)
+{
+	return vga_io_r(VGA_GFX_I);
+}
 
 /* Set the value in the Graphics Address Register. */
-अटल अंतरभूत व्योम setindex(पूर्णांक index)
-अणु
+static inline void setindex(int index)
+{
 	vga_io_w(VGA_GFX_I, index);
-पूर्ण
+}
 
-अटल व्योम vga16fb_pan_var(काष्ठा fb_info *info, 
-			    काष्ठा fb_var_screeninfo *var)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static void vga16fb_pan_var(struct fb_info *info, 
+			    struct fb_var_screeninfo *var)
+{
+	struct vga16fb_par *par = info->par;
 	u32 xoffset, pos;
 
 	xoffset = var->xoffset;
-	अगर (info->var.bits_per_pixel == 8) अणु
-		pos = (info->var.xres_भव * var->yoffset + xoffset) >> 2;
-	पूर्ण अन्यथा अगर (par->mode & MODE_TEXT) अणु
-		पूर्णांक fh = 16; // FIXME !!! font height. Fugde क्रम now.
-		pos = (info->var.xres_भव * (var->yoffset / fh) + xoffset) >> 3;
-	पूर्ण अन्यथा अणु
-		अगर (info->var.nonstd)
+	if (info->var.bits_per_pixel == 8) {
+		pos = (info->var.xres_virtual * var->yoffset + xoffset) >> 2;
+	} else if (par->mode & MODE_TEXT) {
+		int fh = 16; // FIXME !!! font height. Fugde for now.
+		pos = (info->var.xres_virtual * (var->yoffset / fh) + xoffset) >> 3;
+	} else {
+		if (info->var.nonstd)
 			xoffset--;
-		pos = (info->var.xres_भव * var->yoffset + xoffset) >> 3;
-	पूर्ण
+		pos = (info->var.xres_virtual * var->yoffset + xoffset) >> 3;
+	}
 	vga_io_wcrt(VGA_CRTC_START_HI, pos >> 8);
 	vga_io_wcrt(VGA_CRTC_START_LO, pos & 0xFF);
-	/* अगर we support CFB4, then we must! support xoffset with pixel
-	 * granularity अगर someone supports xoffset in bit resolution */
+	/* if we support CFB4, then we must! support xoffset with pixel
+	 * granularity if someone supports xoffset in bit resolution */
 	vga_io_r(VGA_IS1_RC);		/* reset flip-flop */
 	vga_io_w(VGA_ATT_IW, VGA_ATC_PEL);
-	अगर (info->var.bits_per_pixel == 8)
+	if (info->var.bits_per_pixel == 8)
 		vga_io_w(VGA_ATT_IW, (xoffset & 3) << 1);
-	अन्यथा
+	else
 		vga_io_w(VGA_ATT_IW, xoffset & 7);
 	vga_io_r(VGA_IS1_RC);
 	vga_io_w(VGA_ATT_IW, 0x20);
-पूर्ण
+}
 
-अटल व्योम vga16fb_update_fix(काष्ठा fb_info *info)
-अणु
-	अगर (info->var.bits_per_pixel == 4) अणु
-		अगर (info->var.nonstd) अणु
+static void vga16fb_update_fix(struct fb_info *info)
+{
+	if (info->var.bits_per_pixel == 4) {
+		if (info->var.nonstd) {
 			info->fix.type = FB_TYPE_PACKED_PIXELS;
-			info->fix.line_length = info->var.xres_भव / 2;
-		पूर्ण अन्यथा अणु
+			info->fix.line_length = info->var.xres_virtual / 2;
+		} else {
 			info->fix.type = FB_TYPE_VGA_PLANES;
 			info->fix.type_aux = FB_AUX_VGA_PLANES_VGA4;
-			info->fix.line_length = info->var.xres_भव / 8;
-		पूर्ण
-	पूर्ण अन्यथा अगर (info->var.bits_per_pixel == 0) अणु
+			info->fix.line_length = info->var.xres_virtual / 8;
+		}
+	} else if (info->var.bits_per_pixel == 0) {
 		info->fix.type = FB_TYPE_TEXT;
 		info->fix.type_aux = FB_AUX_TEXT_CGA;
-		info->fix.line_length = info->var.xres_भव / 4;
-	पूर्ण अन्यथा अणु	/* 8bpp */
-		अगर (info->var.nonstd) अणु
+		info->fix.line_length = info->var.xres_virtual / 4;
+	} else {	/* 8bpp */
+		if (info->var.nonstd) {
 			info->fix.type = FB_TYPE_VGA_PLANES;
 			info->fix.type_aux = FB_AUX_VGA_PLANES_CFB8;
-			info->fix.line_length = info->var.xres_भव / 4;
-		पूर्ण अन्यथा अणु
+			info->fix.line_length = info->var.xres_virtual / 4;
+		} else {
 			info->fix.type = FB_TYPE_PACKED_PIXELS;
-			info->fix.line_length = info->var.xres_भव;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			info->fix.line_length = info->var.xres_virtual;
+		}
+	}
+}
 
-अटल व्योम vga16fb_घड़ी_chip(काष्ठा vga16fb_par *par,
-			       अचिन्हित पूर्णांक *pixघड़ी,
-			       स्थिर काष्ठा fb_info *info,
-			       पूर्णांक mul, पूर्णांक भाग)
-अणु
-	अटल स्थिर काष्ठा अणु
-		u32 pixघड़ी;
+static void vga16fb_clock_chip(struct vga16fb_par *par,
+			       unsigned int *pixclock,
+			       const struct fb_info *info,
+			       int mul, int div)
+{
+	static const struct {
+		u32 pixclock;
 		u8  misc;
-		u8  seq_घड़ी_mode;
-	पूर्ण *ptr, *best, vgaघड़ीs[] = अणु
-		अणु 79442 /* 12.587 */, 0x00, 0x08पूर्ण,
-		अणु 70616 /* 14.161 */, 0x04, 0x08पूर्ण,
-		अणु 39721 /* 25.175 */, 0x00, 0x00पूर्ण,
-		अणु 35308 /* 28.322 */, 0x04, 0x00पूर्ण,
-		अणु     0 /* bad */,    0x00, 0x00पूर्णपूर्ण;
-	पूर्णांक err;
+		u8  seq_clock_mode;
+	} *ptr, *best, vgaclocks[] = {
+		{ 79442 /* 12.587 */, 0x00, 0x08},
+		{ 70616 /* 14.161 */, 0x04, 0x08},
+		{ 39721 /* 25.175 */, 0x00, 0x00},
+		{ 35308 /* 28.322 */, 0x04, 0x00},
+		{     0 /* bad */,    0x00, 0x00}};
+	int err;
 
-	*pixघड़ी = (*pixघड़ी * mul) / भाग;
-	best = vgaघड़ीs;
-	err = *pixघड़ी - best->pixघड़ी;
-	अगर (err < 0) err = -err;
-	क्रम (ptr = vgaघड़ीs + 1; ptr->pixघड़ी; ptr++) अणु
-		पूर्णांक पंचांगp;
+	*pixclock = (*pixclock * mul) / div;
+	best = vgaclocks;
+	err = *pixclock - best->pixclock;
+	if (err < 0) err = -err;
+	for (ptr = vgaclocks + 1; ptr->pixclock; ptr++) {
+		int tmp;
 
-		पंचांगp = *pixघड़ी - ptr->pixघड़ी;
-		अगर (पंचांगp < 0) पंचांगp = -पंचांगp;
-		अगर (पंचांगp < err) अणु
-			err = पंचांगp;
+		tmp = *pixclock - ptr->pixclock;
+		if (tmp < 0) tmp = -tmp;
+		if (tmp < err) {
+			err = tmp;
 			best = ptr;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	par->misc |= best->misc;
-	par->clkभाग = best->seq_घड़ी_mode;
-	*pixघड़ी = (best->pixघड़ी * भाग) / mul;
-पूर्ण
+	par->clkdiv = best->seq_clock_mode;
+	*pixclock = (best->pixclock * div) / mul;
+}
 			       
-#घोषणा FAIL(X) वापस -EINVAL
+#define FAIL(X) return -EINVAL
 
-अटल पूर्णांक vga16fb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static int vga16fb_open(struct fb_info *info, int user)
+{
+	struct vga16fb_par *par = info->par;
 
-	अगर (!par->ref_count) अणु
-		स_रखो(&par->state, 0, माप(काष्ठा vgastate));
+	if (!par->ref_count) {
+		memset(&par->state, 0, sizeof(struct vgastate));
 		par->state.flags = VGA_SAVE_FONTS | VGA_SAVE_MODE |
 			VGA_SAVE_CMAP;
 		save_vga(&par->state);
-	पूर्ण
+	}
 	par->ref_count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vga16fb_release(काष्ठा fb_info *info, पूर्णांक user)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static int vga16fb_release(struct fb_info *info, int user)
+{
+	struct vga16fb_par *par = info->par;
 
-	अगर (!par->ref_count)
-		वापस -EINVAL;
+	if (!par->ref_count)
+		return -EINVAL;
 
-	अगर (par->ref_count == 1)
+	if (par->ref_count == 1)
 		restore_vga(&par->state);
 	par->ref_count--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vga16fb_check_var(काष्ठा fb_var_screeninfo *var,
-			     काष्ठा fb_info *info)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static int vga16fb_check_var(struct fb_var_screeninfo *var,
+			     struct fb_info *info)
+{
+	struct vga16fb_par *par = info->par;
 	u32 xres, right, hslen, left, xtotal;
 	u32 yres, lower, vslen, upper, ytotal;
 	u32 vxres, xoffset, vyres, yoffset;
 	u32 pos;
 	u8 r7, rMode;
-	पूर्णांक shअगरt;
-	पूर्णांक mode;
+	int shift;
+	int mode;
 	u32 maxmem;
 
 	par->pel_msk = 0xFF;
 
-	अगर (var->bits_per_pixel == 4) अणु
-		अगर (var->nonstd) अणु
-			अगर (!par->isVGA)
-				वापस -EINVAL;
-			shअगरt = 3;
+	if (var->bits_per_pixel == 4) {
+		if (var->nonstd) {
+			if (!par->isVGA)
+				return -EINVAL;
+			shift = 3;
 			mode = MODE_SKIP4 | MODE_CFB;
 			maxmem = 16384;
 			par->pel_msk = 0x0F;
-		पूर्ण अन्यथा अणु
-			shअगरt = 3;
+		} else {
+			shift = 3;
 			mode = 0;
 			maxmem = 65536;
-		पूर्ण
-	पूर्ण अन्यथा अगर (var->bits_per_pixel == 8) अणु
-		अगर (!par->isVGA)
-			वापस -EINVAL;	/* no support on EGA */
-		shअगरt = 2;
-		अगर (var->nonstd) अणु
+		}
+	} else if (var->bits_per_pixel == 8) {
+		if (!par->isVGA)
+			return -EINVAL;	/* no support on EGA */
+		shift = 2;
+		if (var->nonstd) {
 			mode = MODE_8BPP | MODE_CFB;
 			maxmem = 65536;
-		पूर्ण अन्यथा अणु
+		} else {
 			mode = MODE_SKIP4 | MODE_8BPP | MODE_CFB;
 			maxmem = 16384;
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+		}
+	} else
+		return -EINVAL;
 
 	xres = (var->xres + 7) & ~7;
-	vxres = (var->xres_भव + 0xF) & ~0xF;
+	vxres = (var->xres_virtual + 0xF) & ~0xF;
 	xoffset = (var->xoffset + 7) & ~7;
 	left = (var->left_margin + 7) & ~7;
 	right = (var->right_margin + 7) & ~7;
 	hslen = (var->hsync_len + 7) & ~7;
 
-	अगर (vxres < xres)
+	if (vxres < xres)
 		vxres = xres;
-	अगर (xres + xoffset > vxres)
+	if (xres + xoffset > vxres)
 		xoffset = vxres - xres;
 
 	var->xres = xres;
 	var->right_margin = right;
 	var->hsync_len = hslen;
 	var->left_margin = left;
-	var->xres_भव = vxres;
+	var->xres_virtual = vxres;
 	var->xoffset = xoffset;
 
-	xres >>= shअगरt;
-	right >>= shअगरt;
-	hslen >>= shअगरt;
-	left >>= shअगरt;
-	vxres >>= shअगरt;
+	xres >>= shift;
+	right >>= shift;
+	hslen >>= shift;
+	left >>= shift;
+	vxres >>= shift;
 	xtotal = xres + right + hslen + left;
-	अगर (xtotal >= 256)
+	if (xtotal >= 256)
 		FAIL("xtotal too big");
-	अगर (hslen > 32)
+	if (hslen > 32)
 		FAIL("hslen too big");
-	अगर (right + hslen + left > 64)
+	if (right + hslen + left > 64)
 		FAIL("hblank too big");
 	par->crtc[VGA_CRTC_H_TOTAL] = xtotal - 5;
 	par->crtc[VGA_CRTC_H_BLANK_START] = xres - 1;
@@ -392,65 +391,65 @@
 	par->crtc[VGA_CRTC_H_SYNC_END] = pos & 0x1F;
 	pos += left - 2; /* blank_end + 2 <= total + 5 */
 	par->crtc[VGA_CRTC_H_BLANK_END] = (pos & 0x1F) | 0x80;
-	अगर (pos & 0x20)
+	if (pos & 0x20)
 		par->crtc[VGA_CRTC_H_SYNC_END] |= 0x80;
 
 	yres = var->yres;
 	lower = var->lower_margin;
 	vslen = var->vsync_len;
 	upper = var->upper_margin;
-	vyres = var->yres_भव;
+	vyres = var->yres_virtual;
 	yoffset = var->yoffset;
 
-	अगर (yres > vyres)
+	if (yres > vyres)
 		vyres = yres;
-	अगर (vxres * vyres > maxmem) अणु
+	if (vxres * vyres > maxmem) {
 		vyres = maxmem / vxres;
-		अगर (vyres < yres)
-			वापस -ENOMEM;
-	पूर्ण
-	अगर (yoffset + yres > vyres)
+		if (vyres < yres)
+			return -ENOMEM;
+	}
+	if (yoffset + yres > vyres)
 		yoffset = vyres - yres;
 	var->yres = yres;
 	var->lower_margin = lower;
 	var->vsync_len = vslen;
 	var->upper_margin = upper;
-	var->yres_भव = vyres;
+	var->yres_virtual = vyres;
 	var->yoffset = yoffset;
 
-	अगर (var->vmode & FB_VMODE_DOUBLE) अणु
+	if (var->vmode & FB_VMODE_DOUBLE) {
 		yres <<= 1;
 		lower <<= 1;
 		vslen <<= 1;
 		upper <<= 1;
-	पूर्ण
+	}
 	ytotal = yres + lower + vslen + upper;
-	अगर (ytotal > 1024) अणु
+	if (ytotal > 1024) {
 		ytotal >>= 1;
 		yres >>= 1;
 		lower >>= 1;
 		vslen >>= 1;
 		upper >>= 1;
 		rMode = 0x04;
-	पूर्ण अन्यथा
+	} else
 		rMode = 0x00;
-	अगर (ytotal > 1024)
+	if (ytotal > 1024)
 		FAIL("ytotal too big");
-	अगर (vslen > 16)
+	if (vslen > 16)
 		FAIL("vslen too big");
 	par->crtc[VGA_CRTC_V_TOTAL] = ytotal - 2;
 	r7 = 0x10;	/* disable linecompare */
-	अगर (ytotal & 0x100) r7 |= 0x01;
-	अगर (ytotal & 0x200) r7 |= 0x20;
+	if (ytotal & 0x100) r7 |= 0x01;
+	if (ytotal & 0x200) r7 |= 0x20;
 	par->crtc[VGA_CRTC_PRESET_ROW] = 0;
 	par->crtc[VGA_CRTC_MAX_SCAN] = 0x40;	/* 1 scanline, no linecmp */
-	अगर (var->vmode & FB_VMODE_DOUBLE)
+	if (var->vmode & FB_VMODE_DOUBLE)
 		par->crtc[VGA_CRTC_MAX_SCAN] |= 0x80;
 	par->crtc[VGA_CRTC_CURSOR_START] = 0x20;
 	par->crtc[VGA_CRTC_CURSOR_END]   = 0x00;
-	अगर ((mode & (MODE_CFB | MODE_8BPP)) == MODE_CFB)
+	if ((mode & (MODE_CFB | MODE_8BPP)) == MODE_CFB)
 		xoffset--;
-	pos = yoffset * vxres + (xoffset >> shअगरt);
+	pos = yoffset * vxres + (xoffset >> shift);
 	par->crtc[VGA_CRTC_START_HI]     = pos >> 8;
 	par->crtc[VGA_CRTC_START_LO]     = pos & 0xFF;
 	par->crtc[VGA_CRTC_CURSOR_HI]    = 0x00;
@@ -458,29 +457,29 @@
 	pos = yres - 1;
 	par->crtc[VGA_CRTC_V_DISP_END] = pos & 0xFF;
 	par->crtc[VGA_CRTC_V_BLANK_START] = pos & 0xFF;
-	अगर (pos & 0x100)
+	if (pos & 0x100)
 		r7 |= 0x0A;	/* 0x02 -> DISP_END, 0x08 -> BLANK_START */
-	अगर (pos & 0x200) अणु
+	if (pos & 0x200) {
 		r7 |= 0x40;	/* 0x40 -> DISP_END */
 		par->crtc[VGA_CRTC_MAX_SCAN] |= 0x20; /* BLANK_START */
-	पूर्ण
+	}
 	pos += lower;
 	par->crtc[VGA_CRTC_V_SYNC_START] = pos & 0xFF;
-	अगर (pos & 0x100)
+	if (pos & 0x100)
 		r7 |= 0x04;
-	अगर (pos & 0x200)
+	if (pos & 0x200)
 		r7 |= 0x80;
 	pos += vslen;
 	par->crtc[VGA_CRTC_V_SYNC_END] = (pos & 0x0F) & ~0x10; /* disabled IRQ */
 	pos += upper - 1; /* blank_end + 1 <= ytotal + 2 */
-	par->crtc[VGA_CRTC_V_BLANK_END] = pos & 0xFF; /* 0x7F क्रम original VGA,
+	par->crtc[VGA_CRTC_V_BLANK_END] = pos & 0xFF; /* 0x7F for original VGA,
                      but some SVGA chips requires all 8 bits to set */
-	अगर (vxres >= 512)
+	if (vxres >= 512)
 		FAIL("vxres too long");
 	par->crtc[VGA_CRTC_OFFSET] = vxres >> 1;
-	अगर (mode & MODE_SKIP4)
+	if (mode & MODE_SKIP4)
 		par->crtc[VGA_CRTC_UNDERLINE] = 0x5F;	/* 256, cfb8 */
-	अन्यथा
+	else
 		par->crtc[VGA_CRTC_UNDERLINE] = 0x1F;	/* 16, vgap */
 	par->crtc[VGA_CRTC_MODE] = rMode | ((mode & MODE_TEXT) ? 0xA3 : 0xE3);
 	par->crtc[VGA_CRTC_LINE_COMPARE] = 0xFF;
@@ -489,19 +488,19 @@
 	par->vss = 0x00;	/* 3DA */
 
 	par->misc = 0xE3;	/* enable CPU, ports 0x3Dx, positive sync */
-	अगर (var->sync & FB_SYNC_HOR_HIGH_ACT)
+	if (var->sync & FB_SYNC_HOR_HIGH_ACT)
 		par->misc &= ~0x40;
-	अगर (var->sync & FB_SYNC_VERT_HIGH_ACT)
+	if (var->sync & FB_SYNC_VERT_HIGH_ACT)
 		par->misc &= ~0x80;
 	
 	par->mode = mode;
 
-	अगर (mode & MODE_8BPP)
-		/* pixel घड़ी == vga घड़ी / 2 */
-		vga16fb_घड़ी_chip(par, &var->pixघड़ी, info, 1, 2);
-	अन्यथा
-		/* pixel घड़ी == vga घड़ी */
-		vga16fb_घड़ी_chip(par, &var->pixघड़ी, info, 1, 1);
+	if (mode & MODE_8BPP)
+		/* pixel clock == vga clock / 2 */
+		vga16fb_clock_chip(par, &var->pixclock, info, 1, 2);
+	else
+		/* pixel clock == vga clock */
+		vga16fb_clock_chip(par, &var->pixclock, info, 1, 1);
 	
 	var->red.offset = var->green.offset = var->blue.offset = 
 	var->transp.offset = 0;
@@ -512,29 +511,29 @@
 	var->height = -1;
 	var->width = -1;
 	var->accel_flags = 0;
-	वापस 0;
-पूर्ण
-#अघोषित FAIL
+	return 0;
+}
+#undef FAIL
 
-अटल पूर्णांक vga16fb_set_par(काष्ठा fb_info *info)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static int vga16fb_set_par(struct fb_info *info)
+{
+	struct vga16fb_par *par = info->par;
 	u8 gdc[VGA_GFX_C];
 	u8 seq[VGA_SEQ_C];
 	u8 atc[VGA_ATT_C];
-	पूर्णांक fh, i;
+	int fh, i;
 
-	seq[VGA_SEQ_CLOCK_MODE] = 0x01 | par->clkभाग;
-	अगर (par->mode & MODE_TEXT)
+	seq[VGA_SEQ_CLOCK_MODE] = 0x01 | par->clkdiv;
+	if (par->mode & MODE_TEXT)
 		seq[VGA_SEQ_PLANE_WRITE] = 0x03;
-	अन्यथा
+	else
 		seq[VGA_SEQ_PLANE_WRITE] = 0x0F;
 	seq[VGA_SEQ_CHARACTER_MAP] = 0x00;
-	अगर (par->mode & MODE_TEXT)
+	if (par->mode & MODE_TEXT)
 		seq[VGA_SEQ_MEMORY_MODE] = 0x03;
-	अन्यथा अगर (par->mode & MODE_SKIP4)
+	else if (par->mode & MODE_SKIP4)
 		seq[VGA_SEQ_MEMORY_MODE] = 0x0E;
-	अन्यथा
+	else
 		seq[VGA_SEQ_MEMORY_MODE] = 0x06;
 
 	gdc[VGA_GFX_SR_VALUE] = 0x00;
@@ -542,87 +541,87 @@
 	gdc[VGA_GFX_COMPARE_VALUE] = 0x00;
 	gdc[VGA_GFX_DATA_ROTATE] = 0x00;
 	gdc[VGA_GFX_PLANE_READ] = 0;
-	अगर (par->mode & MODE_TEXT) अणु
+	if (par->mode & MODE_TEXT) {
 		gdc[VGA_GFX_MODE] = 0x10;
 		gdc[VGA_GFX_MISC] = 0x06;
-	पूर्ण अन्यथा अणु
-		अगर (par->mode & MODE_CFB)
+	} else {
+		if (par->mode & MODE_CFB)
 			gdc[VGA_GFX_MODE] = 0x40;
-		अन्यथा
+		else
 			gdc[VGA_GFX_MODE] = 0x00;
 		gdc[VGA_GFX_MISC] = 0x05;
-	पूर्ण
+	}
 	gdc[VGA_GFX_COMPARE_MASK] = 0x0F;
 	gdc[VGA_GFX_BIT_MASK] = 0xFF;
 
-	क्रम (i = 0x00; i < 0x10; i++)
+	for (i = 0x00; i < 0x10; i++)
 		atc[i] = i;
-	अगर (par->mode & MODE_TEXT)
+	if (par->mode & MODE_TEXT)
 		atc[VGA_ATC_MODE] = 0x04;
-	अन्यथा अगर (par->mode & MODE_8BPP)
+	else if (par->mode & MODE_8BPP)
 		atc[VGA_ATC_MODE] = 0x41;
-	अन्यथा
+	else
 		atc[VGA_ATC_MODE] = 0x81;
-	atc[VGA_ATC_OVERSCAN] = 0x00;	/* 0 क्रम EGA, 0xFF क्रम VGA */
+	atc[VGA_ATC_OVERSCAN] = 0x00;	/* 0 for EGA, 0xFF for VGA */
 	atc[VGA_ATC_PLANE_ENABLE] = 0x0F;
-	अगर (par->mode & MODE_8BPP)
+	if (par->mode & MODE_8BPP)
 		atc[VGA_ATC_PEL] = (info->var.xoffset & 3) << 1;
-	अन्यथा
+	else
 		atc[VGA_ATC_PEL] = info->var.xoffset & 7;
 	atc[VGA_ATC_COLOR_PAGE] = 0x00;
 	
-	अगर (par->mode & MODE_TEXT) अणु
+	if (par->mode & MODE_TEXT) {
 		fh = 16; // FIXME !!! Fudge font height. 
 		par->crtc[VGA_CRTC_MAX_SCAN] = (par->crtc[VGA_CRTC_MAX_SCAN] 
 					       & ~0x1F) | (fh - 1);
-	पूर्ण
+	}
 
 	vga_io_w(VGA_MIS_W, vga_io_r(VGA_MIS_R) | 0x01);
 
-	/* Enable graphics रेजिस्टर modअगरication */
-	अगर (!par->isVGA) अणु
+	/* Enable graphics register modification */
+	if (!par->isVGA) {
 		vga_io_w(EGA_GFX_E0, 0x00);
 		vga_io_w(EGA_GFX_E1, 0x01);
-	पूर्ण
+	}
 	
-	/* update misc output रेजिस्टर */
+	/* update misc output register */
 	vga_io_w(VGA_MIS_W, par->misc);
 	
 	/* synchronous reset on */
 	vga_io_wseq(0x00, 0x01);
 
-	अगर (par->isVGA)
+	if (par->isVGA)
 		vga_io_w(VGA_PEL_MSK, par->pel_msk);
 
-	/* ग_लिखो sequencer रेजिस्टरs */
+	/* write sequencer registers */
 	vga_io_wseq(VGA_SEQ_CLOCK_MODE, seq[VGA_SEQ_CLOCK_MODE] | 0x20);
-	क्रम (i = 2; i < VGA_SEQ_C; i++) अणु
+	for (i = 2; i < VGA_SEQ_C; i++) {
 		vga_io_wseq(i, seq[i]);
-	पूर्ण
+	}
 	
 	/* synchronous reset off */
 	vga_io_wseq(0x00, 0x03);
 
-	/* deprotect CRT रेजिस्टरs 0-7 */
+	/* deprotect CRT registers 0-7 */
 	vga_io_wcrt(VGA_CRTC_V_SYNC_END, par->crtc[VGA_CRTC_V_SYNC_END]);
 
-	/* ग_लिखो CRT रेजिस्टरs */
-	क्रम (i = 0; i < VGA_CRTC_REGS; i++) अणु
+	/* write CRT registers */
+	for (i = 0; i < VGA_CRTC_REGS; i++) {
 		vga_io_wcrt(i, par->crtc[i]);
-	पूर्ण
+	}
 	
-	/* ग_लिखो graphics controller रेजिस्टरs */
-	क्रम (i = 0; i < VGA_GFX_C; i++) अणु
+	/* write graphics controller registers */
+	for (i = 0; i < VGA_GFX_C; i++) {
 		vga_io_wgfx(i, gdc[i]);
-	पूर्ण
+	}
 	
-	/* ग_लिखो attribute controller रेजिस्टरs */
-	क्रम (i = 0; i < VGA_ATT_C; i++) अणु
+	/* write attribute controller registers */
+	for (i = 0; i < VGA_ATT_C; i++) {
 		vga_io_r(VGA_IS1_RC);		/* reset flip-flop */
 		vga_io_wattr(i, atc[i]);
-	पूर्ण
+	}
 
-	/* Wait क्रम screen to stabilize. */
+	/* Wait for screen to stabilize. */
 	mdelay(50);
 
 	vga_io_wseq(VGA_SEQ_CLOCK_MODE, seq[VGA_SEQ_CLOCK_MODE]);
@@ -631,80 +630,80 @@
 	vga_io_w(VGA_ATT_IW, 0x20);
 
 	vga16fb_update_fix(info);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ega16_setpalette(पूर्णांक regno, अचिन्हित red, अचिन्हित green, अचिन्हित blue)
-अणु
-	अटल स्थिर अचिन्हित अक्षर map[] = अणु 000, 001, 010, 011 पूर्ण;
-	पूर्णांक val;
+static void ega16_setpalette(int regno, unsigned red, unsigned green, unsigned blue)
+{
+	static const unsigned char map[] = { 000, 001, 010, 011 };
+	int val;
 	
-	अगर (regno >= 16)
-		वापस;
+	if (regno >= 16)
+		return;
 	val = map[red>>14] | ((map[green>>14]) << 1) | ((map[blue>>14]) << 2);
 	vga_io_r(VGA_IS1_RC);   /* ! 0x3BA */
 	vga_io_wattr(regno, val);
 	vga_io_r(VGA_IS1_RC);   /* some clones need it */
 	vga_io_w(VGA_ATT_IW, 0x20); /* unblank screen */
-पूर्ण
+}
 
-अटल व्योम vga16_setpalette(पूर्णांक regno, अचिन्हित red, अचिन्हित green, अचिन्हित blue)
-अणु
+static void vga16_setpalette(int regno, unsigned red, unsigned green, unsigned blue)
+{
 	outb(regno,       VGA_PEL_IW);
 	outb(red   >> 10, VGA_PEL_D);
 	outb(green >> 10, VGA_PEL_D);
 	outb(blue  >> 10, VGA_PEL_D);
-पूर्ण
+}
 
-अटल पूर्णांक vga16fb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-			     अचिन्हित blue, अचिन्हित transp,
-			     काष्ठा fb_info *info)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
-	पूर्णांक gray;
+static int vga16fb_setcolreg(unsigned regno, unsigned red, unsigned green,
+			     unsigned blue, unsigned transp,
+			     struct fb_info *info)
+{
+	struct vga16fb_par *par = info->par;
+	int gray;
 
 	/*
-	 *  Set a single color रेजिस्टर. The values supplied are
-	 *  alपढ़ोy rounded करोwn to the hardware's capabilities
-	 *  (according to the entries in the `var' काष्ठाure). Return
-	 *  != 0 क्रम invalid regno.
+	 *  Set a single color register. The values supplied are
+	 *  already rounded down to the hardware's capabilities
+	 *  (according to the entries in the `var' structure). Return
+	 *  != 0 for invalid regno.
 	 */
 	
-	अगर (regno >= 256)
-		वापस 1;
+	if (regno >= 256)
+		return 1;
 
 	gray = info->var.grayscale;
 	
-	अगर (gray) अणु
+	if (gray) {
 		/* gray = 0.30*R + 0.59*G + 0.11*B */
 		red = green = blue = (red * 77 + green * 151 + blue * 28) >> 8;
-	पूर्ण
-	अगर (par->isVGA) 
+	}
+	if (par->isVGA) 
 		vga16_setpalette(regno,red,green,blue);
-	अन्यथा
+	else
 		ega16_setpalette(regno,red,green,blue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vga16fb_pan_display(काष्ठा fb_var_screeninfo *var,
-			       काष्ठा fb_info *info) 
-अणु
+static int vga16fb_pan_display(struct fb_var_screeninfo *var,
+			       struct fb_info *info) 
+{
 	vga16fb_pan_var(info, var);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The following VESA blanking code is taken from vgacon.c.  The VGA
-   blanking code was originally by Huang shi chao, and modअगरied by
-   Christoph Rimek (chrimek@toppoपूर्णांक.de) and todd j. derr
-   (tjd@barefoot.org) क्रम Linux. */
+   blanking code was originally by Huang shi chao, and modified by
+   Christoph Rimek (chrimek@toppoint.de) and todd j. derr
+   (tjd@barefoot.org) for Linux. */
 
-अटल व्योम vga_vesa_blank(काष्ठा vga16fb_par *par, पूर्णांक mode)
-अणु
-	अचिन्हित अक्षर SeqCtrlIndex = vga_io_r(VGA_SEQ_I);
-	अचिन्हित अक्षर CrtCtrlIndex = vga_io_r(VGA_CRT_IC);
+static void vga_vesa_blank(struct vga16fb_par *par, int mode)
+{
+	unsigned char SeqCtrlIndex = vga_io_r(VGA_SEQ_I);
+	unsigned char CrtCtrlIndex = vga_io_r(VGA_CRT_IC);
 	
-	/* save original values of VGA controller रेजिस्टरs */
-	अगर(!par->vesa_blanked) अणु
+	/* save original values of VGA controller registers */
+	if(!par->vesa_blanked) {
 		par->vga_state.CrtMiscIO = vga_io_r(VGA_MIS_R);
 		//sti();
 
@@ -717,14 +716,14 @@
 		par->vga_state.EndVertRetrace = vga_io_rcrt(0x11);	/* EndVertRetrace */
 		par->vga_state.ModeControl = vga_io_rcrt(0x17);	/* ModeControl */
 		par->vga_state.ClockingMode = vga_io_rseq(0x01);	/* ClockingMode */
-	पूर्ण
+	}
 
 	/* assure that video is enabled */
-	/* "0x20" is VIDEO_ENABLE_bit in रेजिस्टर 01 of sequencer */
+	/* "0x20" is VIDEO_ENABLE_bit in register 01 of sequencer */
 	vga_io_wseq(0x01, par->vga_state.ClockingMode | 0x20);
 
-	/* test क्रम vertical retrace in process.... */
-	अगर ((par->vga_state.CrtMiscIO & 0x80) == 0x80)
+	/* test for vertical retrace in process.... */
+	if ((par->vga_state.CrtMiscIO & 0x80) == 0x80)
 		vga_io_w(VGA_MIS_W, par->vga_state.CrtMiscIO & 0xef);
 
 	/*
@@ -732,14 +731,14 @@
 	 * <Start of vertical Retrace> to maximum (incl. overflow)
 	 * Result: turn off vertical sync (VSync) pulse.
 	 */
-	अगर (mode & FB_BLANK_VSYNC_SUSPEND) अणु
+	if (mode & FB_BLANK_VSYNC_SUSPEND) {
 		vga_io_wcrt(VGA_CRTC_V_SYNC_START, 0xff);
 		vga_io_wcrt(VGA_CRTC_V_SYNC_END, 0x40);
 		/* bits 9,10 of vert. retrace */
 		vga_io_wcrt(VGA_CRTC_OVERFLOW, par->vga_state.Overflow | 0x84);
-	पूर्ण
+	}
 
-	अगर (mode & FB_BLANK_HSYNC_SUSPEND) अणु
+	if (mode & FB_BLANK_HSYNC_SUSPEND) {
 		/*
 		 * Set <End of horizontal retrace> to minimum (0) and
 		 *  <Start of horizontal Retrace> to maximum
@@ -747,19 +746,19 @@
 		 */
 		vga_io_wcrt(VGA_CRTC_H_SYNC_START, 0xff);
 		vga_io_wcrt(VGA_CRTC_H_SYNC_END, 0x00);
-	पूर्ण
+	}
 
-	/* restore both index रेजिस्टरs */
+	/* restore both index registers */
 	outb_p(SeqCtrlIndex, VGA_SEQ_I);
 	outb_p(CrtCtrlIndex, VGA_CRT_IC);
-पूर्ण
+}
 
-अटल व्योम vga_vesa_unblank(काष्ठा vga16fb_par *par)
-अणु
-	अचिन्हित अक्षर SeqCtrlIndex = vga_io_r(VGA_SEQ_I);
-	अचिन्हित अक्षर CrtCtrlIndex = vga_io_r(VGA_CRT_IC);
+static void vga_vesa_unblank(struct vga16fb_par *par)
+{
+	unsigned char SeqCtrlIndex = vga_io_r(VGA_SEQ_I);
+	unsigned char CrtCtrlIndex = vga_io_r(VGA_CRT_IC);
 	
-	/* restore original values of VGA controller रेजिस्टरs */
+	/* restore original values of VGA controller registers */
 	vga_io_w(VGA_MIS_W, par->vga_state.CrtMiscIO);
 
 	/* HorizontalTotal */
@@ -781,114 +780,114 @@
 	/* ClockingMode */
 	vga_io_wseq(0x01, par->vga_state.ClockingMode);
 
-	/* restore index/control रेजिस्टरs */
+	/* restore index/control registers */
 	vga_io_w(VGA_SEQ_I, SeqCtrlIndex);
 	vga_io_w(VGA_CRT_IC, CrtCtrlIndex);
-पूर्ण
+}
 
-अटल व्योम vga_pal_blank(व्योम)
-अणु
-	पूर्णांक i;
+static void vga_pal_blank(void)
+{
+	int i;
 
-	क्रम (i=0; i<16; i++) अणु
+	for (i=0; i<16; i++) {
 		outb_p(i, VGA_PEL_IW);
 		outb_p(0, VGA_PEL_D);
 		outb_p(0, VGA_PEL_D);
 		outb_p(0, VGA_PEL_D);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* 0 unblank, 1 blank, 2 no vsync, 3 no hsync, 4 off */
-अटल पूर्णांक vga16fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
-अणु
-	काष्ठा vga16fb_par *par = info->par;
+static int vga16fb_blank(int blank, struct fb_info *info)
+{
+	struct vga16fb_par *par = info->par;
 
-	चयन (blank) अणु
-	हाल FB_BLANK_UNBLANK:				/* Unblank */
-		अगर (par->vesa_blanked) अणु
+	switch (blank) {
+	case FB_BLANK_UNBLANK:				/* Unblank */
+		if (par->vesa_blanked) {
 			vga_vesa_unblank(par);
 			par->vesa_blanked = 0;
-		पूर्ण
-		अगर (par->palette_blanked) अणु
+		}
+		if (par->palette_blanked) {
 			par->palette_blanked = 0;
-		पूर्ण
-		अवरोध;
-	हाल FB_BLANK_NORMAL:				/* blank */
+		}
+		break;
+	case FB_BLANK_NORMAL:				/* blank */
 		vga_pal_blank();
 		par->palette_blanked = 1;
-		अवरोध;
-	शेष:			/* VESA blanking */
+		break;
+	default:			/* VESA blanking */
 		vga_vesa_blank(par, blank);
 		par->vesa_blanked = 1;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल व्योम vga_8planes_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
-अणु
+static void vga_8planes_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
+{
 	u32 dx = rect->dx, width = rect->width;
-        अक्षर oldindex = getindex();
-        अक्षर oldmode = seपंचांगode(0x40);
-        अक्षर oldmask = selecपंचांगask();
-        पूर्णांक line_ofs, height;
-        अक्षर olकरोp, oldsr;
-        अक्षर __iomem *where;
+        char oldindex = getindex();
+        char oldmode = setmode(0x40);
+        char oldmask = selectmask();
+        int line_ofs, height;
+        char oldop, oldsr;
+        char __iomem *where;
 
         dx /= 4;
         where = info->screen_base + dx + rect->dy * info->fix.line_length;
 
-        अगर (rect->rop == ROP_COPY) अणु
-                olकरोp = setop(0);
+        if (rect->rop == ROP_COPY) {
+                oldop = setop(0);
                 oldsr = setsr(0);
 
                 width /= 4;
                 line_ofs = info->fix.line_length - width;
-                seपंचांगask(0xff);
+                setmask(0xff);
 
                 height = rect->height;
 
-                जबतक (height--) अणु
-                        पूर्णांक x;
+                while (height--) {
+                        int x;
 
-                        /* we can करो स_रखो... */
-                        क्रम (x = width; x > 0; --x) अणु
-                                ग_लिखोb(rect->color, where);
+                        /* we can do memset... */
+                        for (x = width; x > 0; --x) {
+                                writeb(rect->color, where);
                                 where++;
-                        पूर्ण
+                        }
                         where += line_ofs;
-                पूर्ण
-        पूर्ण अन्यथा अणु
-                अक्षर oldcolor = setcolor(0xf);
-                पूर्णांक y;
+                }
+        } else {
+                char oldcolor = setcolor(0xf);
+                int y;
 
-                olकरोp = setop(0x18);
+                oldop = setop(0x18);
                 oldsr = setsr(0xf);
-                seपंचांगask(0x0F);
-                क्रम (y = 0; y < rect->height; y++) अणु
+                setmask(0x0F);
+                for (y = 0; y < rect->height; y++) {
                         rmw(where);
                         rmw(where+1);
                         where += info->fix.line_length;
-                पूर्ण
+                }
                 setcolor(oldcolor);
-        पूर्ण
-        seपंचांगask(oldmask);
+        }
+        setmask(oldmask);
         setsr(oldsr);
-        setop(olकरोp);
-        seपंचांगode(oldmode);
+        setop(oldop);
+        setmode(oldmode);
         setindex(oldindex);
-पूर्ण
+}
 
-अटल व्योम vga16fb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
-अणु
-	पूर्णांक x, x2, y2, vxres, vyres, width, height, line_ofs;
-	अक्षर __iomem *dst;
+static void vga16fb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
+{
+	int x, x2, y2, vxres, vyres, width, height, line_ofs;
+	char __iomem *dst;
 
-	vxres = info->var.xres_भव;
-	vyres = info->var.yres_भव;
+	vxres = info->var.xres_virtual;
+	vyres = info->var.yres_virtual;
 
-	अगर (!rect->width || !rect->height || rect->dx > vxres || rect->dy > vyres)
-		वापस;
+	if (!rect->width || !rect->height || rect->dx > vxres || rect->dy > vyres)
+		return;
 
 	/* We could use hardware clipping but on many cards you get around
 	 * hardware clipping by writing to framebuffer directly. */
@@ -899,9 +898,9 @@
 	y2 = y2 < vyres ? y2 : vyres;
 	width = x2 - rect->dx;
 
-	चयन (info->fix.type) अणु
-	हाल FB_TYPE_VGA_PLANES:
-		अगर (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) अणु
+	switch (info->fix.type) {
+	case FB_TYPE_VGA_PLANES:
+		if (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) {
 
 			height = y2 - rect->dy;
 			width = rect->width/8;
@@ -909,61 +908,61 @@
 			line_ofs = info->fix.line_length - width;
 			dst = info->screen_base + (rect->dx/8) + rect->dy * info->fix.line_length;
 
-			चयन (rect->rop) अणु
-			हाल ROP_COPY:
-				seपंचांगode(0);
+			switch (rect->rop) {
+			case ROP_COPY:
+				setmode(0);
 				setop(0);
 				setsr(0xf);
 				setcolor(rect->color);
-				selecपंचांगask();
+				selectmask();
 
-				seपंचांगask(0xff);
+				setmask(0xff);
 
-				जबतक (height--) अणु
-					क्रम (x = 0; x < width; x++) अणु
-						ग_लिखोb(0, dst);
+				while (height--) {
+					for (x = 0; x < width; x++) {
+						writeb(0, dst);
 						dst++;
-					पूर्ण
+					}
 					dst += line_ofs;
-				पूर्ण
-				अवरोध;
-			हाल ROP_XOR:
-				seपंचांगode(0);
+				}
+				break;
+			case ROP_XOR:
+				setmode(0);
 				setop(0x18);
 				setsr(0xf);
 				setcolor(0xf);
-				selecपंचांगask();
+				selectmask();
 
-				seपंचांगask(0xff);
-				जबतक (height--) अणु
-					क्रम (x = 0; x < width; x++) अणु
+				setmask(0xff);
+				while (height--) {
+					for (x = 0; x < width; x++) {
 						rmw(dst);
 						dst++;
-					पूर्ण
+					}
 					dst += line_ofs;
-				पूर्ण
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा 
+				}
+				break;
+			}
+		} else 
 			vga_8planes_fillrect(info, rect);
-		अवरोध;
-	हाल FB_TYPE_PACKED_PIXELS:
-	शेष:
+		break;
+	case FB_TYPE_PACKED_PIXELS:
+	default:
 		cfb_fillrect(info, rect);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम vga_8planes_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
-अणु
-        अक्षर oldindex = getindex();
-        अक्षर oldmode = seपंचांगode(0x41);
-        अक्षर olकरोp = setop(0);
-        अक्षर oldsr = setsr(0xf);
-        पूर्णांक height, line_ofs, x;
+static void vga_8planes_copyarea(struct fb_info *info, const struct fb_copyarea *area)
+{
+        char oldindex = getindex();
+        char oldmode = setmode(0x41);
+        char oldop = setop(0);
+        char oldsr = setsr(0xf);
+        int height, line_ofs, x;
 	u32 sx, dx, width;
-	अक्षर __iomem *dest;
-	अक्षर __iomem *src;
+	char __iomem *dest;
+	char __iomem *src;
 
         height = area->height;
 
@@ -971,58 +970,58 @@
         dx = area->dx / 4;
         width = area->width / 4;
 
-        अगर (area->dy < area->sy || (area->dy == area->sy && dx < sx)) अणु
+        if (area->dy < area->sy || (area->dy == area->sy && dx < sx)) {
                 line_ofs = info->fix.line_length - width;
                 dest = info->screen_base + dx + area->dy * info->fix.line_length;
                 src = info->screen_base + sx + area->sy * info->fix.line_length;
-                जबतक (height--) अणु
-                        क्रम (x = 0; x < width; x++) अणु
-                                पढ़ोb(src);
-                                ग_लिखोb(0, dest);
+                while (height--) {
+                        for (x = 0; x < width; x++) {
+                                readb(src);
+                                writeb(0, dest);
                                 src++;
                                 dest++;
-                        पूर्ण
+                        }
                         src += line_ofs;
                         dest += line_ofs;
-                पूर्ण
-        पूर्ण अन्यथा अणु
+                }
+        } else {
                 line_ofs = info->fix.line_length - width;
                 dest = info->screen_base + dx + width +
 			(area->dy + height - 1) * info->fix.line_length;
                 src = info->screen_base + sx + width +
 			(area->sy + height - 1) * info->fix.line_length;
-                जबतक (height--) अणु
-                        क्रम (x = 0; x < width; x++) अणु
+                while (height--) {
+                        for (x = 0; x < width; x++) {
                                 --src;
                                 --dest;
-                                पढ़ोb(src);
-                                ग_लिखोb(0, dest);
-                        पूर्ण
+                                readb(src);
+                                writeb(0, dest);
+                        }
                         src -= line_ofs;
                         dest -= line_ofs;
-                पूर्ण
-        पूर्ण
+                }
+        }
 
         setsr(oldsr);
-        setop(olकरोp);
-        seपंचांगode(oldmode);
+        setop(oldop);
+        setmode(oldmode);
         setindex(oldindex);
-पूर्ण
+}
 
-अटल व्योम vga16fb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
-अणु
+static void vga16fb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
+{
 	u32 dx = area->dx, dy = area->dy, sx = area->sx, sy = area->sy; 
-	पूर्णांक x, x2, y2, old_dx, old_dy, vxres, vyres;
-	पूर्णांक height, width, line_ofs;
-	अक्षर __iomem *dst = शून्य;
-	अक्षर __iomem *src = शून्य;
+	int x, x2, y2, old_dx, old_dy, vxres, vyres;
+	int height, width, line_ofs;
+	char __iomem *dst = NULL;
+	char __iomem *src = NULL;
 
-	vxres = info->var.xres_भव;
-	vyres = info->var.yres_भव;
+	vxres = info->var.xres_virtual;
+	vyres = info->var.yres_virtual;
 
-	अगर (area->dx > vxres || area->sx > vxres || area->dy > vyres ||
+	if (area->dx > vxres || area->sx > vxres || area->dy > vyres ||
 	    area->sy > vyres)
-		वापस;
+		return;
 
 	/* clip the destination */
 	old_dx = area->dx;
@@ -1041,239 +1040,239 @@
 	width = x2 - dx;
 	height = y2 - dy;
 
-	अगर (sx + dx < old_dx || sy + dy < old_dy)
-		वापस;
+	if (sx + dx < old_dx || sy + dy < old_dy)
+		return;
 
 	/* update sx1,sy1 */
 	sx += (dx - old_dx);
 	sy += (dy - old_dy);
 
-	/* the source must be completely inside the भव screen */
-	अगर (sx + width > vxres || sy + height > vyres)
-		वापस;
+	/* the source must be completely inside the virtual screen */
+	if (sx + width > vxres || sy + height > vyres)
+		return;
 
-	चयन (info->fix.type) अणु
-	हाल FB_TYPE_VGA_PLANES:
-		अगर (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) अणु
+	switch (info->fix.type) {
+	case FB_TYPE_VGA_PLANES:
+		if (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) {
 			width = width/8;
 			line_ofs = info->fix.line_length - width;
 
-			seपंचांगode(1);
+			setmode(1);
 			setop(0);
 			setsr(0xf);
 
-			अगर (dy < sy || (dy == sy && dx < sx)) अणु
+			if (dy < sy || (dy == sy && dx < sx)) {
 				dst = info->screen_base + (dx/8) + dy * info->fix.line_length;
 				src = info->screen_base + (sx/8) + sy * info->fix.line_length;
-				जबतक (height--) अणु
-					क्रम (x = 0; x < width; x++) अणु
-						पढ़ोb(src);
-						ग_लिखोb(0, dst);
+				while (height--) {
+					for (x = 0; x < width; x++) {
+						readb(src);
+						writeb(0, dst);
 						dst++;
 						src++;
-					पूर्ण
+					}
 					src += line_ofs;
 					dst += line_ofs;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				dst = info->screen_base + (dx/8) + width + 
 					(dy + height - 1) * info->fix.line_length;
 				src = info->screen_base + (sx/8) + width + 
 					(sy + height  - 1) * info->fix.line_length;
-				जबतक (height--) अणु
-					क्रम (x = 0; x < width; x++) अणु
+				while (height--) {
+					for (x = 0; x < width; x++) {
 						dst--;
 						src--;
-						पढ़ोb(src);
-						ग_लिखोb(0, dst);
-					पूर्ण
+						readb(src);
+						writeb(0, dst);
+					}
 					src -= line_ofs;
 					dst -= line_ofs;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा 
+				}
+			}
+		} else 
 			vga_8planes_copyarea(info, area);
-		अवरोध;
-	हाल FB_TYPE_PACKED_PIXELS:
-	शेष:
+		break;
+	case FB_TYPE_PACKED_PIXELS:
+	default:
 		cfb_copyarea(info, area);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-#घोषणा TRANS_MASK_LOW  अणु0x0,0x8,0x4,0xC,0x2,0xA,0x6,0xE,0x1,0x9,0x5,0xD,0x3,0xB,0x7,0xFपूर्ण
-#घोषणा TRANS_MASK_HIGH अणु0x000, 0x800, 0x400, 0xC00, 0x200, 0xA00, 0x600, 0xE00, \
-			 0x100, 0x900, 0x500, 0xD00, 0x300, 0xB00, 0x700, 0xF00पूर्ण
+#define TRANS_MASK_LOW  {0x0,0x8,0x4,0xC,0x2,0xA,0x6,0xE,0x1,0x9,0x5,0xD,0x3,0xB,0x7,0xF}
+#define TRANS_MASK_HIGH {0x000, 0x800, 0x400, 0xC00, 0x200, 0xA00, 0x600, 0xE00, \
+			 0x100, 0x900, 0x500, 0xD00, 0x300, 0xB00, 0x700, 0xF00}
 
-#अगर defined(__LITTLE_ENDIAN)
-अटल स्थिर u16 transl_l[] = TRANS_MASK_LOW;
-अटल स्थिर u16 transl_h[] = TRANS_MASK_HIGH;
-#या_अगर defined(__BIG_ENDIAN)
-अटल स्थिर u16 transl_l[] = TRANS_MASK_HIGH;
-अटल स्थिर u16 transl_h[] = TRANS_MASK_LOW;
-#अन्यथा
-#त्रुटि "Only __BIG_ENDIAN and __LITTLE_ENDIAN are supported in vga-planes"
-#पूर्ण_अगर
+#if defined(__LITTLE_ENDIAN)
+static const u16 transl_l[] = TRANS_MASK_LOW;
+static const u16 transl_h[] = TRANS_MASK_HIGH;
+#elif defined(__BIG_ENDIAN)
+static const u16 transl_l[] = TRANS_MASK_HIGH;
+static const u16 transl_h[] = TRANS_MASK_LOW;
+#else
+#error "Only __BIG_ENDIAN and __LITTLE_ENDIAN are supported in vga-planes"
+#endif
 
-अटल व्योम vga_8planes_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
-अणु
-        अक्षर oldindex = getindex();
-        अक्षर oldmode = seपंचांगode(0x40);
-        अक्षर olकरोp = setop(0);
-        अक्षर oldsr = setsr(0);
-        अक्षर oldmask = selecपंचांगask();
-	स्थिर अचिन्हित अक्षर *cdat = image->data;
+static void vga_8planes_imageblit(struct fb_info *info, const struct fb_image *image)
+{
+        char oldindex = getindex();
+        char oldmode = setmode(0x40);
+        char oldop = setop(0);
+        char oldsr = setsr(0);
+        char oldmask = selectmask();
+	const unsigned char *cdat = image->data;
 	u32 dx = image->dx;
-        अक्षर __iomem *where;
-        पूर्णांक y;
+        char __iomem *where;
+        int y;
 
         dx /= 4;
         where = info->screen_base + dx + image->dy * info->fix.line_length;
 
-        seपंचांगask(0xff);
-        ग_लिखोb(image->bg_color, where);
-        पढ़ोb(where);
-        selecपंचांगask();
-        seपंचांगask(image->fg_color ^ image->bg_color);
-        seपंचांगode(0x42);
+        setmask(0xff);
+        writeb(image->bg_color, where);
+        readb(where);
+        selectmask();
+        setmask(image->fg_color ^ image->bg_color);
+        setmode(0x42);
         setop(0x18);
-        क्रम (y = 0; y < image->height; y++, where += info->fix.line_length)
-                ग_लिखोw(transl_h[cdat[y]&0xF] | transl_l[cdat[y] >> 4], where);
-        seपंचांगask(oldmask);
+        for (y = 0; y < image->height; y++, where += info->fix.line_length)
+                writew(transl_h[cdat[y]&0xF] | transl_l[cdat[y] >> 4], where);
+        setmask(oldmask);
         setsr(oldsr);
-        setop(olकरोp);
-        seपंचांगode(oldmode);
+        setop(oldop);
+        setmode(oldmode);
         setindex(oldindex);
-पूर्ण
+}
 
-अटल व्योम vga_imageblit_expand(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
-अणु
-	अक्षर __iomem *where = info->screen_base + (image->dx/8) +
+static void vga_imageblit_expand(struct fb_info *info, const struct fb_image *image)
+{
+	char __iomem *where = info->screen_base + (image->dx/8) +
 		image->dy * info->fix.line_length;
-	काष्ठा vga16fb_par *par = info->par;
-	अक्षर *cdat = (अक्षर *) image->data;
-	अक्षर __iomem *dst;
-	पूर्णांक x, y;
+	struct vga16fb_par *par = info->par;
+	char *cdat = (char *) image->data;
+	char __iomem *dst;
+	int x, y;
 
-	चयन (info->fix.type) अणु
-	हाल FB_TYPE_VGA_PLANES:
-		अगर (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) अणु
-			अगर (par->isVGA) अणु
-				seपंचांगode(2);
+	switch (info->fix.type) {
+	case FB_TYPE_VGA_PLANES:
+		if (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4) {
+			if (par->isVGA) {
+				setmode(2);
 				setop(0);
 				setsr(0xf);
 				setcolor(image->fg_color);
-				selecपंचांगask();
+				selectmask();
 				
-				seपंचांगask(0xff);
-				ग_लिखोb(image->bg_color, where);
+				setmask(0xff);
+				writeb(image->bg_color, where);
 				rmb();
-				पढ़ोb(where); /* fill latches */
-				seपंचांगode(3);
+				readb(where); /* fill latches */
+				setmode(3);
 				wmb();
-				क्रम (y = 0; y < image->height; y++) अणु
+				for (y = 0; y < image->height; y++) {
 					dst = where;
-					क्रम (x = image->width/8; x--;) 
-						ग_लिखोb(*cdat++, dst++);
+					for (x = image->width/8; x--;) 
+						writeb(*cdat++, dst++);
 					where += info->fix.line_length;
-				पूर्ण
+				}
 				wmb();
-			पूर्ण अन्यथा अणु
-				seपंचांगode(0);
+			} else {
+				setmode(0);
 				setop(0);
 				setsr(0xf);
 				setcolor(image->bg_color);
-				selecपंचांगask();
+				selectmask();
 				
-				seपंचांगask(0xff);
-				क्रम (y = 0; y < image->height; y++) अणु
+				setmask(0xff);
+				for (y = 0; y < image->height; y++) {
 					dst = where;
-					क्रम (x=image->width/8; x--;)अणु
+					for (x=image->width/8; x--;){
 						rmw(dst);
 						setcolor(image->fg_color);
-						selecपंचांगask();
-						अगर (*cdat) अणु
-							seपंचांगask(*cdat++);
+						selectmask();
+						if (*cdat) {
+							setmask(*cdat++);
 							rmw(dst++);
-						पूर्ण
-					पूर्ण
+						}
+					}
 					where += info->fix.line_length;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा 
+				}
+			}
+		} else 
 			vga_8planes_imageblit(info, image);
-		अवरोध;
-	हाल FB_TYPE_PACKED_PIXELS:
-	शेष:
+		break;
+	case FB_TYPE_PACKED_PIXELS:
+	default:
 		cfb_imageblit(info, image);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम vga_imageblit_color(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
-अणु
+static void vga_imageblit_color(struct fb_info *info, const struct fb_image *image)
+{
 	/*
 	 * Draw logo 
 	 */
-	काष्ठा vga16fb_par *par = info->par;
-	अक्षर __iomem *where =
+	struct vga16fb_par *par = info->par;
+	char __iomem *where =
 		info->screen_base + image->dy * info->fix.line_length +
 		image->dx/8;
-	स्थिर अक्षर *cdat = image->data;
-	अक्षर __iomem *dst;
-	पूर्णांक x, y;
+	const char *cdat = image->data;
+	char __iomem *dst;
+	int x, y;
 
-	चयन (info->fix.type) अणु
-	हाल FB_TYPE_VGA_PLANES:
-		अगर (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4 &&
-		    par->isVGA) अणु
+	switch (info->fix.type) {
+	case FB_TYPE_VGA_PLANES:
+		if (info->fix.type_aux == FB_AUX_VGA_PLANES_VGA4 &&
+		    par->isVGA) {
 			setsr(0xf);
 			setop(0);
-			seपंचांगode(0);
+			setmode(0);
 			
-			क्रम (y = 0; y < image->height; y++) अणु
-				क्रम (x = 0; x < image->width; x++) अणु
+			for (y = 0; y < image->height; y++) {
+				for (x = 0; x < image->width; x++) {
 					dst = where + x/8;
 
 					setcolor(*cdat);
-					selecपंचांगask();
-					seपंचांगask(1 << (7 - (x % 8)));
-					fb_पढ़ोb(dst);
-					fb_ग_लिखोb(0, dst);
+					selectmask();
+					setmask(1 << (7 - (x % 8)));
+					fb_readb(dst);
+					fb_writeb(0, dst);
 
 					cdat++;
-				पूर्ण
+				}
 				where += info->fix.line_length;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल FB_TYPE_PACKED_PIXELS:
+			}
+		}
+		break;
+	case FB_TYPE_PACKED_PIXELS:
 		cfb_imageblit(info, image);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 				
-अटल व्योम vga16fb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
-अणु
-	अगर (image->depth == 1)
+static void vga16fb_imageblit(struct fb_info *info, const struct fb_image *image)
+{
+	if (image->depth == 1)
 		vga_imageblit_expand(info, image);
-	अन्यथा
+	else
 		vga_imageblit_color(info, image);
-पूर्ण
+}
 
-अटल व्योम vga16fb_destroy(काष्ठा fb_info *info)
-अणु
+static void vga16fb_destroy(struct fb_info *info)
+{
 	iounmap(info->screen_base);
 	fb_dealloc_cmap(&info->cmap);
 	/* XXX unshare VGA regions */
 	framebuffer_release(info);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा fb_ops vga16fb_ops = अणु
+static const struct fb_ops vga16fb_ops = {
 	.owner		= THIS_MODULE,
-	.fb_खोलो        = vga16fb_खोलो,
+	.fb_open        = vga16fb_open,
 	.fb_release     = vga16fb_release,
 	.fb_destroy	= vga16fb_destroy,
 	.fb_check_var	= vga16fb_check_var,
@@ -1284,53 +1283,53 @@
 	.fb_fillrect	= vga16fb_fillrect,
 	.fb_copyarea	= vga16fb_copyarea,
 	.fb_imageblit	= vga16fb_imageblit,
-पूर्ण;
+};
 
-#अगर_अघोषित MODULE
-अटल पूर्णांक __init vga16fb_setup(अक्षर *options)
-अणु
-	अक्षर *this_opt;
+#ifndef MODULE
+static int __init vga16fb_setup(char *options)
+{
+	char *this_opt;
 	
-	अगर (!options || !*options)
-		वापस 0;
+	if (!options || !*options)
+		return 0;
 	
-	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
-		अगर (!*this_opt) जारी;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	while ((this_opt = strsep(&options, ",")) != NULL) {
+		if (!*this_opt) continue;
+	}
+	return 0;
+}
+#endif
 
-अटल पूर्णांक vga16fb_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा fb_info *info;
-	काष्ठा vga16fb_par *par;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+static int vga16fb_probe(struct platform_device *dev)
+{
+	struct fb_info *info;
+	struct vga16fb_par *par;
+	int i;
+	int ret = 0;
 
-	prपूर्णांकk(KERN_DEBUG "vga16fb: initializing\n");
-	info = framebuffer_alloc(माप(काष्ठा vga16fb_par), &dev->dev);
+	printk(KERN_DEBUG "vga16fb: initializing\n");
+	info = framebuffer_alloc(sizeof(struct vga16fb_par), &dev->dev);
 
-	अगर (!info) अणु
+	if (!info) {
 		ret = -ENOMEM;
-		जाओ err_fb_alloc;
-	पूर्ण
+		goto err_fb_alloc;
+	}
 	info->apertures = alloc_apertures(1);
-	अगर (!info->apertures) अणु
+	if (!info->apertures) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	/* XXX share VGA_FB_PHYS and I/O region with vgacon and others */
-	info->screen_base = (व्योम __iomem *)VGA_MAP_MEM(VGA_FB_PHYS, 0);
+	info->screen_base = (void __iomem *)VGA_MAP_MEM(VGA_FB_PHYS, 0);
 
-	अगर (!info->screen_base) अणु
-		prपूर्णांकk(KERN_ERR "vga16fb: unable to map device\n");
+	if (!info->screen_base) {
+		printk(KERN_ERR "vga16fb: unable to map device\n");
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	prपूर्णांकk(KERN_INFO "vga16fb: mapped to 0x%p\n", info->screen_base);
+	printk(KERN_INFO "vga16fb: mapped to 0x%p\n", info->screen_base);
 	par = info->par;
 
 	par->isVGA = screen_info.orig_video_isVGA;
@@ -1354,33 +1353,33 @@
 
 	i = (info->var.bits_per_pixel == 8) ? 256 : 16;
 	ret = fb_alloc_cmap(&info->cmap, i, 0);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_ERR "vga16fb: unable to allocate colormap\n");
+	if (ret) {
+		printk(KERN_ERR "vga16fb: unable to allocate colormap\n");
 		ret = -ENOMEM;
-		जाओ err_alloc_cmap;
-	पूर्ण
+		goto err_alloc_cmap;
+	}
 
-	अगर (vga16fb_check_var(&info->var, info)) अणु
-		prपूर्णांकk(KERN_ERR "vga16fb: unable to validate variable\n");
+	if (vga16fb_check_var(&info->var, info)) {
+		printk(KERN_ERR "vga16fb: unable to validate variable\n");
 		ret = -EINVAL;
-		जाओ err_check_var;
-	पूर्ण
+		goto err_check_var;
+	}
 
 	vga16fb_update_fix(info);
 
 	info->apertures->ranges[0].base = VGA_FB_PHYS;
 	info->apertures->ranges[0].size = VGA_FB_PHYS_LEN;
 
-	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
-		prपूर्णांकk(KERN_ERR "vga16fb: unable to register framebuffer\n");
+	if (register_framebuffer(info) < 0) {
+		printk(KERN_ERR "vga16fb: unable to register framebuffer\n");
 		ret = -EINVAL;
-		जाओ err_check_var;
-	पूर्ण
+		goto err_check_var;
+	}
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
-	platक्रमm_set_drvdata(dev, info);
+	platform_set_drvdata(dev, info);
 
-	वापस 0;
+	return 0;
 
  err_check_var:
 	fb_dealloc_cmap(&info->cmap);
@@ -1389,66 +1388,66 @@
  err_ioremap:
 	framebuffer_release(info);
  err_fb_alloc:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vga16fb_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+static int vga16fb_remove(struct platform_device *dev)
+{
+	struct fb_info *info = platform_get_drvdata(dev);
 
-	अगर (info)
-		unरेजिस्टर_framebuffer(info);
+	if (info)
+		unregister_framebuffer(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver vga16fb_driver = अणु
+static struct platform_driver vga16fb_driver = {
 	.probe = vga16fb_probe,
-	.हटाओ = vga16fb_हटाओ,
-	.driver = अणु
+	.remove = vga16fb_remove,
+	.driver = {
 		.name = "vga16fb",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device *vga16fb_device;
+static struct platform_device *vga16fb_device;
 
-अटल पूर्णांक __init vga16fb_init(व्योम)
-अणु
-	पूर्णांक ret;
-#अगर_अघोषित MODULE
-	अक्षर *option = शून्य;
+static int __init vga16fb_init(void)
+{
+	int ret;
+#ifndef MODULE
+	char *option = NULL;
 
-	अगर (fb_get_options("vga16fb", &option))
-		वापस -ENODEV;
+	if (fb_get_options("vga16fb", &option))
+		return -ENODEV;
 
 	vga16fb_setup(option);
-#पूर्ण_अगर
-	ret = platक्रमm_driver_रेजिस्टर(&vga16fb_driver);
+#endif
+	ret = platform_driver_register(&vga16fb_driver);
 
-	अगर (!ret) अणु
-		vga16fb_device = platक्रमm_device_alloc("vga16fb", 0);
+	if (!ret) {
+		vga16fb_device = platform_device_alloc("vga16fb", 0);
 
-		अगर (vga16fb_device)
-			ret = platक्रमm_device_add(vga16fb_device);
-		अन्यथा
+		if (vga16fb_device)
+			ret = platform_device_add(vga16fb_device);
+		else
 			ret = -ENOMEM;
 
-		अगर (ret) अणु
-			platक्रमm_device_put(vga16fb_device);
-			platक्रमm_driver_unरेजिस्टर(&vga16fb_driver);
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			platform_device_put(vga16fb_device);
+			platform_driver_unregister(&vga16fb_driver);
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास vga16fb_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(vga16fb_device);
-	platक्रमm_driver_unरेजिस्टर(&vga16fb_driver);
-पूर्ण
+static void __exit vga16fb_exit(void)
+{
+	platform_device_unregister(vga16fb_device);
+	platform_driver_unregister(&vga16fb_driver);
+}
 
 MODULE_DESCRIPTION("Legacy VGA framebuffer device driver");
 MODULE_LICENSE("GPL");
 module_init(vga16fb_init);
-module_निकास(vga16fb_निकास);
+module_exit(vga16fb_exit);

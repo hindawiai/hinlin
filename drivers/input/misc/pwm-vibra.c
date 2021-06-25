@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  PWM vibrator driver
  *
@@ -12,145 +11,145 @@
  *  Copyright (C) 2010, Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
+#include <linux/pwm.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
-काष्ठा pwm_vibrator अणु
-	काष्ठा input_dev *input;
-	काष्ठा pwm_device *pwm;
-	काष्ठा pwm_device *pwm_dir;
-	काष्ठा regulator *vcc;
+struct pwm_vibrator {
+	struct input_dev *input;
+	struct pwm_device *pwm;
+	struct pwm_device *pwm_dir;
+	struct regulator *vcc;
 
-	काष्ठा work_काष्ठा play_work;
+	struct work_struct play_work;
 	u16 level;
 	u32 direction_duty_cycle;
 	bool vcc_on;
-पूर्ण;
+};
 
-अटल पूर्णांक pwm_vibrator_start(काष्ठा pwm_vibrator *vibrator)
-अणु
-	काष्ठा device *pdev = vibrator->input->dev.parent;
-	काष्ठा pwm_state state;
-	पूर्णांक err;
+static int pwm_vibrator_start(struct pwm_vibrator *vibrator)
+{
+	struct device *pdev = vibrator->input->dev.parent;
+	struct pwm_state state;
+	int err;
 
-	अगर (!vibrator->vcc_on) अणु
+	if (!vibrator->vcc_on) {
 		err = regulator_enable(vibrator->vcc);
-		अगर (err) अणु
+		if (err) {
 			dev_err(pdev, "failed to enable regulator: %d", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 		vibrator->vcc_on = true;
-	पूर्ण
+	}
 
 	pwm_get_state(vibrator->pwm, &state);
 	pwm_set_relative_duty_cycle(&state, vibrator->level, 0xffff);
 	state.enabled = true;
 
 	err = pwm_apply_state(vibrator->pwm, &state);
-	अगर (err) अणु
+	if (err) {
 		dev_err(pdev, "failed to apply pwm state: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (vibrator->pwm_dir) अणु
+	if (vibrator->pwm_dir) {
 		pwm_get_state(vibrator->pwm_dir, &state);
 		state.duty_cycle = vibrator->direction_duty_cycle;
 		state.enabled = true;
 
 		err = pwm_apply_state(vibrator->pwm_dir, &state);
-		अगर (err) अणु
+		if (err) {
 			dev_err(pdev, "failed to apply dir-pwm state: %d", err);
 			pwm_disable(vibrator->pwm);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pwm_vibrator_stop(काष्ठा pwm_vibrator *vibrator)
-अणु
-	अगर (vibrator->pwm_dir)
+static void pwm_vibrator_stop(struct pwm_vibrator *vibrator)
+{
+	if (vibrator->pwm_dir)
 		pwm_disable(vibrator->pwm_dir);
 	pwm_disable(vibrator->pwm);
 
-	अगर (vibrator->vcc_on) अणु
+	if (vibrator->vcc_on) {
 		regulator_disable(vibrator->vcc);
 		vibrator->vcc_on = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pwm_vibrator_play_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा pwm_vibrator *vibrator = container_of(work,
-					काष्ठा pwm_vibrator, play_work);
+static void pwm_vibrator_play_work(struct work_struct *work)
+{
+	struct pwm_vibrator *vibrator = container_of(work,
+					struct pwm_vibrator, play_work);
 
-	अगर (vibrator->level)
+	if (vibrator->level)
 		pwm_vibrator_start(vibrator);
-	अन्यथा
+	else
 		pwm_vibrator_stop(vibrator);
-पूर्ण
+}
 
-अटल पूर्णांक pwm_vibrator_play_effect(काष्ठा input_dev *dev, व्योम *data,
-				    काष्ठा ff_effect *effect)
-अणु
-	काष्ठा pwm_vibrator *vibrator = input_get_drvdata(dev);
+static int pwm_vibrator_play_effect(struct input_dev *dev, void *data,
+				    struct ff_effect *effect)
+{
+	struct pwm_vibrator *vibrator = input_get_drvdata(dev);
 
 	vibrator->level = effect->u.rumble.strong_magnitude;
-	अगर (!vibrator->level)
+	if (!vibrator->level)
 		vibrator->level = effect->u.rumble.weak_magnitude;
 
 	schedule_work(&vibrator->play_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pwm_vibrator_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा pwm_vibrator *vibrator = input_get_drvdata(input);
+static void pwm_vibrator_close(struct input_dev *input)
+{
+	struct pwm_vibrator *vibrator = input_get_drvdata(input);
 
 	cancel_work_sync(&vibrator->play_work);
 	pwm_vibrator_stop(vibrator);
-पूर्ण
+}
 
-अटल पूर्णांक pwm_vibrator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pwm_vibrator *vibrator;
-	काष्ठा pwm_state state;
-	पूर्णांक err;
+static int pwm_vibrator_probe(struct platform_device *pdev)
+{
+	struct pwm_vibrator *vibrator;
+	struct pwm_state state;
+	int err;
 
-	vibrator = devm_kzalloc(&pdev->dev, माप(*vibrator), GFP_KERNEL);
-	अगर (!vibrator)
-		वापस -ENOMEM;
+	vibrator = devm_kzalloc(&pdev->dev, sizeof(*vibrator), GFP_KERNEL);
+	if (!vibrator)
+		return -ENOMEM;
 
 	vibrator->input = devm_input_allocate_device(&pdev->dev);
-	अगर (!vibrator->input)
-		वापस -ENOMEM;
+	if (!vibrator->input)
+		return -ENOMEM;
 
 	vibrator->vcc = devm_regulator_get(&pdev->dev, "vcc");
 	err = PTR_ERR_OR_ZERO(vibrator->vcc);
-	अगर (err) अणु
-		अगर (err != -EPROBE_DEFER)
+	if (err) {
+		if (err != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Failed to request regulator: %d",
 				err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	vibrator->pwm = devm_pwm_get(&pdev->dev, "enable");
 	err = PTR_ERR_OR_ZERO(vibrator->pwm);
-	अगर (err) अणु
-		अगर (err != -EPROBE_DEFER)
+	if (err) {
+		if (err != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Failed to request main pwm: %d",
 				err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	INIT_WORK(&vibrator->play_work, pwm_vibrator_play_work);
 
@@ -158,112 +157,112 @@
 	pwm_init_state(vibrator->pwm, &state);
 	state.enabled = false;
 	err = pwm_apply_state(vibrator->pwm, &state);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to apply initial PWM state: %d",
 			err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	vibrator->pwm_dir = devm_pwm_get(&pdev->dev, "direction");
 	err = PTR_ERR_OR_ZERO(vibrator->pwm_dir);
-	चयन (err) अणु
-	हाल 0:
+	switch (err) {
+	case 0:
 		/* Sync up PWM state and ensure it is off. */
 		pwm_init_state(vibrator->pwm_dir, &state);
 		state.enabled = false;
 		err = pwm_apply_state(vibrator->pwm_dir, &state);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev, "failed to apply initial PWM state: %d",
 				err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		vibrator->direction_duty_cycle =
 			pwm_get_period(vibrator->pwm_dir) / 2;
-		device_property_पढ़ो_u32(&pdev->dev, "direction-duty-cycle-ns",
+		device_property_read_u32(&pdev->dev, "direction-duty-cycle-ns",
 					 &vibrator->direction_duty_cycle);
-		अवरोध;
+		break;
 
-	हाल -ENODATA:
+	case -ENODATA:
 		/* Direction PWM is optional */
-		vibrator->pwm_dir = शून्य;
-		अवरोध;
+		vibrator->pwm_dir = NULL;
+		break;
 
-	शेष:
+	default:
 		dev_err(&pdev->dev, "Failed to request direction pwm: %d", err);
 		fallthrough;
 
-	हाल -EPROBE_DEFER:
-		वापस err;
-	पूर्ण
+	case -EPROBE_DEFER:
+		return err;
+	}
 
 	vibrator->input->name = "pwm-vibrator";
 	vibrator->input->id.bustype = BUS_HOST;
 	vibrator->input->dev.parent = &pdev->dev;
-	vibrator->input->बंद = pwm_vibrator_बंद;
+	vibrator->input->close = pwm_vibrator_close;
 
 	input_set_drvdata(vibrator->input, vibrator);
 	input_set_capability(vibrator->input, EV_FF, FF_RUMBLE);
 
-	err = input_ff_create_memless(vibrator->input, शून्य,
+	err = input_ff_create_memless(vibrator->input, NULL,
 				      pwm_vibrator_play_effect);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Couldn't create FF dev: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = input_रेजिस्टर_device(vibrator->input);
-	अगर (err) अणु
+	err = input_register_device(vibrator->input);
+	if (err) {
 		dev_err(&pdev->dev, "Couldn't register input dev: %d", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	platक्रमm_set_drvdata(pdev, vibrator);
+	platform_set_drvdata(pdev, vibrator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused pwm_vibrator_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा pwm_vibrator *vibrator = dev_get_drvdata(dev);
+static int __maybe_unused pwm_vibrator_suspend(struct device *dev)
+{
+	struct pwm_vibrator *vibrator = dev_get_drvdata(dev);
 
 	cancel_work_sync(&vibrator->play_work);
-	अगर (vibrator->level)
+	if (vibrator->level)
 		pwm_vibrator_stop(vibrator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused pwm_vibrator_resume(काष्ठा device *dev)
-अणु
-	काष्ठा pwm_vibrator *vibrator = dev_get_drvdata(dev);
+static int __maybe_unused pwm_vibrator_resume(struct device *dev)
+{
+	struct pwm_vibrator *vibrator = dev_get_drvdata(dev);
 
-	अगर (vibrator->level)
+	if (vibrator->level)
 		pwm_vibrator_start(vibrator);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(pwm_vibrator_pm_ops,
+static SIMPLE_DEV_PM_OPS(pwm_vibrator_pm_ops,
 			 pwm_vibrator_suspend, pwm_vibrator_resume);
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pwm_vibra_dt_match_table[] = अणु
-	अणु .compatible = "pwm-vibrator" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pwm_vibra_dt_match_table[] = {
+	{ .compatible = "pwm-vibrator" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, pwm_vibra_dt_match_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver pwm_vibrator_driver = अणु
+static struct platform_driver pwm_vibrator_driver = {
 	.probe	= pwm_vibrator_probe,
-	.driver	= अणु
+	.driver	= {
 		.name	= "pwm-vibrator",
 		.pm	= &pwm_vibrator_pm_ops,
 		.of_match_table = of_match_ptr(pwm_vibra_dt_match_table),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(pwm_vibrator_driver);
+	},
+};
+module_platform_driver(pwm_vibrator_driver);
 
 MODULE_AUTHOR("Sebastian Reichel <sre@kernel.org>");
 MODULE_DESCRIPTION("PWM vibrator driver");

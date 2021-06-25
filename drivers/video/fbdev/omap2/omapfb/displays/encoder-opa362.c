@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * OPA362 analog video amplअगरier with output/घातer control
+ * OPA362 analog video amplifier with output/power control
  *
  * Copyright (C) 2014 Golden Delicious Computers
  * Author: H. Nikolaus Schaller <hns@goldelico.com>
@@ -12,120 +11,120 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#समावेश <linux/gpपन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of_gpपन.स>
+#include <linux/gpio.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/of_gpio.h>
 
-#समावेश <video/omapfb_dss.h>
+#include <video/omapfb_dss.h>
 
-काष्ठा panel_drv_data अणु
-	काष्ठा omap_dss_device dssdev;
-	काष्ठा omap_dss_device *in;
+struct panel_drv_data {
+	struct omap_dss_device dssdev;
+	struct omap_dss_device *in;
 
-	काष्ठा gpio_desc *enable_gpio;
+	struct gpio_desc *enable_gpio;
 
-	काष्ठा omap_video_timings timings;
-पूर्ण;
+	struct omap_video_timings timings;
+};
 
-#घोषणा to_panel_data(x) container_of(x, काष्ठा panel_drv_data, dssdev)
+#define to_panel_data(x) container_of(x, struct panel_drv_data, dssdev)
 
-अटल पूर्णांक opa362_connect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int opa362_connect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(dssdev->dev, "connect\n");
 
-	अगर (omapdss_device_is_connected(dssdev))
-		वापस -EBUSY;
+	if (omapdss_device_is_connected(dssdev))
+		return -EBUSY;
 
 	r = in->ops.atv->connect(in, dssdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	dst->src = dssdev;
 	dssdev->dst = dst;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम opa362_disconnect(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_dss_device *dst)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void opa362_disconnect(struct omap_dss_device *dssdev,
+		struct omap_dss_device *dst)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(dssdev->dev, "disconnect\n");
 
 	WARN_ON(!omapdss_device_is_connected(dssdev));
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस;
+	if (!omapdss_device_is_connected(dssdev))
+		return;
 
 	WARN_ON(dst != dssdev->dst);
-	अगर (dst != dssdev->dst)
-		वापस;
+	if (dst != dssdev->dst)
+		return;
 
-	dst->src = शून्य;
-	dssdev->dst = शून्य;
+	dst->src = NULL;
+	dssdev->dst = NULL;
 
 	in->ops.atv->disconnect(in, &ddata->dssdev);
-पूर्ण
+}
 
-अटल पूर्णांक opa362_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int opa362_enable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(dssdev->dev, "enable\n");
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस -ENODEV;
+	if (!omapdss_device_is_connected(dssdev))
+		return -ENODEV;
 
-	अगर (omapdss_device_is_enabled(dssdev))
-		वापस 0;
+	if (omapdss_device_is_enabled(dssdev))
+		return 0;
 
 	in->ops.atv->set_timings(in, &ddata->timings);
 
 	r = in->ops.atv->enable(in);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	अगर (ddata->enable_gpio)
+	if (ddata->enable_gpio)
 		gpiod_set_value_cansleep(ddata->enable_gpio, 1);
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम opa362_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void opa362_disable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(dssdev->dev, "disable\n");
 
-	अगर (!omapdss_device_is_enabled(dssdev))
-		वापस;
+	if (!omapdss_device_is_enabled(dssdev))
+		return;
 
-	अगर (ddata->enable_gpio)
+	if (ddata->enable_gpio)
 		gpiod_set_value_cansleep(ddata->enable_gpio, 0);
 
 	in->ops.atv->disable(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-पूर्ण
+}
 
-अटल व्योम opa362_set_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void opa362_set_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(dssdev->dev, "set_timings\n");
 
@@ -133,38 +132,38 @@
 	dssdev->panel.timings = *timings;
 
 	in->ops.atv->set_timings(in, timings);
-पूर्ण
+}
 
-अटल व्योम opa362_get_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+static void opa362_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
 
 	dev_dbg(dssdev->dev, "get_timings\n");
 
 	*timings = ddata->timings;
-पूर्ण
+}
 
-अटल पूर्णांक opa362_check_timings(काष्ठा omap_dss_device *dssdev,
-		काष्ठा omap_video_timings *timings)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int opa362_check_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(dssdev->dev, "check_timings\n");
 
-	वापस in->ops.atv->check_timings(in, timings);
-पूर्ण
+	return in->ops.atv->check_timings(in, timings);
+}
 
-अटल व्योम opa362_set_type(काष्ठा omap_dss_device *dssdev,
-		क्रमागत omap_dss_venc_type type)
-अणु
+static void opa362_set_type(struct omap_dss_device *dssdev,
+		enum omap_dss_venc_type type)
+{
 	/* we can only drive a COMPOSITE output */
 	WARN_ON(type != OMAP_DSS_VENC_TYPE_COMPOSITE);
 
-पूर्ण
+}
 
-अटल स्थिर काष्ठा omapdss_atv_ops opa362_atv_ops = अणु
+static const struct omapdss_atv_ops opa362_atv_ops = {
 	.connect	= opa362_connect,
 	.disconnect	= opa362_disconnect,
 
@@ -176,40 +175,40 @@
 	.get_timings	= opa362_get_timings,
 
 	.set_type	= opa362_set_type,
-पूर्ण;
+};
 
-अटल पूर्णांक opa362_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा panel_drv_data *ddata;
-	काष्ठा omap_dss_device *dssdev, *in;
-	काष्ठा gpio_desc *gpio;
-	पूर्णांक r;
+static int opa362_probe(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct panel_drv_data *ddata;
+	struct omap_dss_device *dssdev, *in;
+	struct gpio_desc *gpio;
+	int r;
 
 	dev_dbg(&pdev->dev, "probe\n");
 
-	अगर (node == शून्य) अणु
+	if (node == NULL) {
 		dev_err(&pdev->dev, "Unable to find device tree\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "enable", GPIOD_OUT_LOW);
-	अगर (IS_ERR(gpio))
-		वापस PTR_ERR(gpio);
+	if (IS_ERR(gpio))
+		return PTR_ERR(gpio);
 
 	ddata->enable_gpio = gpio;
 
-	in = omapdss_of_find_source_क्रम_first_ep(node);
-	अगर (IS_ERR(in)) अणु
+	in = omapdss_of_find_source_for_first_ep(node);
+	if (IS_ERR(in)) {
 		dev_err(&pdev->dev, "failed to find video source\n");
-		वापस PTR_ERR(in);
-	पूर्ण
+		return PTR_ERR(in);
+	}
 
 	ddata->in = in;
 
@@ -220,56 +219,56 @@
 	dssdev->output_type = OMAP_DISPLAY_TYPE_VENC;
 	dssdev->owner = THIS_MODULE;
 
-	r = omapdss_रेजिस्टर_output(dssdev);
-	अगर (r) अणु
+	r = omapdss_register_output(dssdev);
+	if (r) {
 		dev_err(&pdev->dev, "Failed to register output\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
-	वापस 0;
+	return 0;
 err_reg:
 	omap_dss_put_device(ddata->in);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक __निकास opa362_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा omap_dss_device *in = ddata->in;
+static int __exit opa362_remove(struct platform_device *pdev)
+{
+	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct omap_dss_device *in = ddata->in;
 
-	omapdss_unरेजिस्टर_output(&ddata->dssdev);
+	omapdss_unregister_output(&ddata->dssdev);
 
 	WARN_ON(omapdss_device_is_enabled(dssdev));
-	अगर (omapdss_device_is_enabled(dssdev))
+	if (omapdss_device_is_enabled(dssdev))
 		opa362_disable(dssdev);
 
 	WARN_ON(omapdss_device_is_connected(dssdev));
-	अगर (omapdss_device_is_connected(dssdev))
+	if (omapdss_device_is_connected(dssdev))
 		opa362_disconnect(dssdev, dssdev->dst);
 
 	omap_dss_put_device(in);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id opa362_of_match[] = अणु
-	अणु .compatible = "omapdss,ti,opa362", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id opa362_of_match[] = {
+	{ .compatible = "omapdss,ti,opa362", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, opa362_of_match);
 
-अटल काष्ठा platक्रमm_driver opa362_driver = अणु
+static struct platform_driver opa362_driver = {
 	.probe	= opa362_probe,
-	.हटाओ	= __निकास_p(opa362_हटाओ),
-	.driver	= अणु
+	.remove	= __exit_p(opa362_remove),
+	.driver	= {
 		.name	= "amplifier-opa362",
 		.of_match_table = opa362_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(opa362_driver);
+module_platform_driver(opa362_driver);
 
 MODULE_AUTHOR("H. Nikolaus Schaller <hns@goldelico.com>");
 MODULE_DESCRIPTION("OPA362 analog video amplifier with output/power control");

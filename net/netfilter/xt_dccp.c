@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * iptables module क्रम DCCP protocol header matching
+ * iptables module for DCCP protocol header matching
  *
- * (C) 2005 by Harald Welte <laक्रमge@netfilter.org>
+ * (C) 2005 by Harald Welte <laforge@netfilter.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <net/ip.h>
-#समावेश <linux/dccp.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <net/ip.h>
+#include <linux/dccp.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_dccp.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_dccp.h>
 
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
@@ -25,91 +24,91 @@ MODULE_DESCRIPTION("Xtables: DCCP protocol packet match");
 MODULE_ALIAS("ipt_dccp");
 MODULE_ALIAS("ip6t_dccp");
 
-#घोषणा DCCHECK(cond, option, flag, invflag) (!((flag) & (option)) \
+#define DCCHECK(cond, option, flag, invflag) (!((flag) & (option)) \
 				  || (!!((invflag) & (option)) ^ (cond)))
 
-अटल अचिन्हित अक्षर *dccp_optbuf;
-अटल DEFINE_SPINLOCK(dccp_buflock);
+static unsigned char *dccp_optbuf;
+static DEFINE_SPINLOCK(dccp_buflock);
 
-अटल अंतरभूत bool
-dccp_find_option(u_पूर्णांक8_t option,
-		 स्थिर काष्ठा sk_buff *skb,
-		 अचिन्हित पूर्णांक protoff,
-		 स्थिर काष्ठा dccp_hdr *dh,
+static inline bool
+dccp_find_option(u_int8_t option,
+		 const struct sk_buff *skb,
+		 unsigned int protoff,
+		 const struct dccp_hdr *dh,
 		 bool *hotdrop)
-अणु
-	/* tcp.करोff is only 4 bits, ie. max 15 * 4 bytes */
-	स्थिर अचिन्हित अक्षर *op;
-	अचिन्हित पूर्णांक optoff = __dccp_hdr_len(dh);
-	अचिन्हित पूर्णांक optlen = dh->dccph_करोff*4 - __dccp_hdr_len(dh);
-	अचिन्हित पूर्णांक i;
+{
+	/* tcp.doff is only 4 bits, ie. max 15 * 4 bytes */
+	const unsigned char *op;
+	unsigned int optoff = __dccp_hdr_len(dh);
+	unsigned int optlen = dh->dccph_doff*4 - __dccp_hdr_len(dh);
+	unsigned int i;
 
-	अगर (dh->dccph_करोff * 4 < __dccp_hdr_len(dh))
-		जाओ invalid;
+	if (dh->dccph_doff * 4 < __dccp_hdr_len(dh))
+		goto invalid;
 
-	अगर (!optlen)
-		वापस false;
+	if (!optlen)
+		return false;
 
 	spin_lock_bh(&dccp_buflock);
-	op = skb_header_poपूर्णांकer(skb, protoff + optoff, optlen, dccp_optbuf);
-	अगर (op == शून्य) अणु
-		/* If we करोn't have the whole header, drop packet. */
-		जाओ partial;
-	पूर्ण
+	op = skb_header_pointer(skb, protoff + optoff, optlen, dccp_optbuf);
+	if (op == NULL) {
+		/* If we don't have the whole header, drop packet. */
+		goto partial;
+	}
 
-	क्रम (i = 0; i < optlen; ) अणु
-		अगर (op[i] == option) अणु
+	for (i = 0; i < optlen; ) {
+		if (op[i] == option) {
 			spin_unlock_bh(&dccp_buflock);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		अगर (op[i] < 2)
+		if (op[i] < 2)
 			i++;
-		अन्यथा
+		else
 			i += op[i+1]?:1;
-	पूर्ण
+	}
 
 	spin_unlock_bh(&dccp_buflock);
-	वापस false;
+	return false;
 
 partial:
 	spin_unlock_bh(&dccp_buflock);
 invalid:
 	*hotdrop = true;
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
-अटल अंतरभूत bool
-match_types(स्थिर काष्ठा dccp_hdr *dh, u_पूर्णांक16_t typemask)
-अणु
-	वापस typemask & (1 << dh->dccph_type);
-पूर्ण
+static inline bool
+match_types(const struct dccp_hdr *dh, u_int16_t typemask)
+{
+	return typemask & (1 << dh->dccph_type);
+}
 
-अटल अंतरभूत bool
-match_option(u_पूर्णांक8_t option, स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
-	     स्थिर काष्ठा dccp_hdr *dh, bool *hotdrop)
-अणु
-	वापस dccp_find_option(option, skb, protoff, dh, hotdrop);
-पूर्ण
+static inline bool
+match_option(u_int8_t option, const struct sk_buff *skb, unsigned int protoff,
+	     const struct dccp_hdr *dh, bool *hotdrop)
+{
+	return dccp_find_option(option, skb, protoff, dh, hotdrop);
+}
 
-अटल bool
-dccp_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_dccp_info *info = par->matchinfo;
-	स्थिर काष्ठा dccp_hdr *dh;
-	काष्ठा dccp_hdr _dh;
+static bool
+dccp_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_dccp_info *info = par->matchinfo;
+	const struct dccp_hdr *dh;
+	struct dccp_hdr _dh;
 
-	अगर (par->fragoff != 0)
-		वापस false;
+	if (par->fragoff != 0)
+		return false;
 
-	dh = skb_header_poपूर्णांकer(skb, par->thoff, माप(_dh), &_dh);
-	अगर (dh == शून्य) अणु
+	dh = skb_header_pointer(skb, par->thoff, sizeof(_dh), &_dh);
+	if (dh == NULL) {
 		par->hotdrop = true;
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस  DCCHECK(ntohs(dh->dccph_sport) >= info->spts[0]
+	return  DCCHECK(ntohs(dh->dccph_sport) >= info->spts[0]
 			&& ntohs(dh->dccph_sport) <= info->spts[1],
 			XT_DCCP_SRC_PORTS, info->flags, info->invflags)
 		&& DCCHECK(ntohs(dh->dccph_dport) >= info->dpts[0]
@@ -120,67 +119,67 @@ dccp_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_a
 		&& DCCHECK(match_option(info->option, skb, par->thoff, dh,
 					&par->hotdrop),
 			   XT_DCCP_OPTION, info->flags, info->invflags);
-पूर्ण
+}
 
-अटल पूर्णांक dccp_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_dccp_info *info = par->matchinfo;
+static int dccp_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_dccp_info *info = par->matchinfo;
 
-	अगर (info->flags & ~XT_DCCP_VALID_FLAGS)
-		वापस -EINVAL;
-	अगर (info->invflags & ~XT_DCCP_VALID_FLAGS)
-		वापस -EINVAL;
-	अगर (info->invflags & ~info->flags)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (info->flags & ~XT_DCCP_VALID_FLAGS)
+		return -EINVAL;
+	if (info->invflags & ~XT_DCCP_VALID_FLAGS)
+		return -EINVAL;
+	if (info->invflags & ~info->flags)
+		return -EINVAL;
+	return 0;
+}
 
-अटल काष्ठा xt_match dccp_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match dccp_mt_reg[] __read_mostly = {
+	{
 		.name 		= "dccp",
 		.family		= NFPROTO_IPV4,
 		.checkentry	= dccp_mt_check,
 		.match		= dccp_mt,
-		.matchsize	= माप(काष्ठा xt_dccp_info),
+		.matchsize	= sizeof(struct xt_dccp_info),
 		.proto		= IPPROTO_DCCP,
 		.me 		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name 		= "dccp",
 		.family		= NFPROTO_IPV6,
 		.checkentry	= dccp_mt_check,
 		.match		= dccp_mt,
-		.matchsize	= माप(काष्ठा xt_dccp_info),
+		.matchsize	= sizeof(struct xt_dccp_info),
 		.proto		= IPPROTO_DCCP,
 		.me 		= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init dccp_mt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init dccp_mt_init(void)
+{
+	int ret;
 
-	/* करोff is 8 bits, so the maximum option size is (4*256).  Don't put
-	 * this in BSS since DaveM is worried about locked TLB's क्रम kernel
+	/* doff is 8 bits, so the maximum option size is (4*256).  Don't put
+	 * this in BSS since DaveM is worried about locked TLB's for kernel
 	 * BSS. */
-	dccp_optbuf = kदो_स्मृति(256 * 4, GFP_KERNEL);
-	अगर (!dccp_optbuf)
-		वापस -ENOMEM;
-	ret = xt_रेजिस्टर_matches(dccp_mt_reg, ARRAY_SIZE(dccp_mt_reg));
-	अगर (ret)
-		जाओ out_kमुक्त;
-	वापस ret;
+	dccp_optbuf = kmalloc(256 * 4, GFP_KERNEL);
+	if (!dccp_optbuf)
+		return -ENOMEM;
+	ret = xt_register_matches(dccp_mt_reg, ARRAY_SIZE(dccp_mt_reg));
+	if (ret)
+		goto out_kfree;
+	return ret;
 
-out_kमुक्त:
-	kमुक्त(dccp_optbuf);
-	वापस ret;
-पूर्ण
+out_kfree:
+	kfree(dccp_optbuf);
+	return ret;
+}
 
-अटल व्योम __निकास dccp_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(dccp_mt_reg, ARRAY_SIZE(dccp_mt_reg));
-	kमुक्त(dccp_optbuf);
-पूर्ण
+static void __exit dccp_mt_exit(void)
+{
+	xt_unregister_matches(dccp_mt_reg, ARRAY_SIZE(dccp_mt_reg));
+	kfree(dccp_optbuf);
+}
 
 module_init(dccp_mt_init);
-module_निकास(dccp_mt_निकास);
+module_exit(dccp_mt_exit);

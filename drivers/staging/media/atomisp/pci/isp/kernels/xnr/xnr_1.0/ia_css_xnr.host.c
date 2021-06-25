@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "ia_css_types.h"
-#समावेश "sh_css_defs.h"
-#समावेश "ia_css_debug.h"
-#समावेश "sh_css_frac.h"
+#include "ia_css_types.h"
+#include "sh_css_defs.h"
+#include "ia_css_debug.h"
+#include "sh_css_frac.h"
 
-#समावेश "ia_css_xnr.host.h"
+#include "ia_css_xnr.host.h"
 
-स्थिर काष्ठा ia_css_xnr_config शेष_xnr_config = अणु
-	/* शेष threshold 6400 translates to 25 on ISP. */
+const struct ia_css_xnr_config default_xnr_config = {
+	/* default threshold 6400 translates to 25 on ISP. */
 	6400
-पूर्ण;
+};
 
-व्योम
+void
 ia_css_xnr_table_vamem_encode(
-    काष्ठा sh_css_isp_xnr_vamem_params *to,
-    स्थिर काष्ठा ia_css_xnr_table *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)size;
-	स_नकल(&to->xnr,  &from->data, माप(to->xnr));
-पूर्ण
+    struct sh_css_isp_xnr_vamem_params *to,
+    const struct ia_css_xnr_table *from,
+    unsigned int size)
+{
+	(void)size;
+	memcpy(&to->xnr,  &from->data, sizeof(to->xnr));
+}
 
-व्योम
+void
 ia_css_xnr_encode(
-    काष्ठा sh_css_isp_xnr_params *to,
-    स्थिर काष्ठा ia_css_xnr_config *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)size;
+    struct sh_css_isp_xnr_params *to,
+    const struct ia_css_xnr_config *from,
+    unsigned int size)
+{
+	(void)size;
 
 	to->threshold =
-	    (uपूर्णांक16_t)uDIGIT_FITTING(from->threshold, 16, SH_CSS_ISP_YUV_BITS);
-पूर्ण
+	    (uint16_t)uDIGIT_FITTING(from->threshold, 16, SH_CSS_ISP_YUV_BITS);
+}
 
-व्योम
+void
 ia_css_xnr_table_debug_dtrace(
-    स्थिर काष्ठा ia_css_xnr_table *config,
-    अचिन्हित पूर्णांक level)
-अणु
-	(व्योम)config;
-	(व्योम)level;
-पूर्ण
+    const struct ia_css_xnr_table *config,
+    unsigned int level)
+{
+	(void)config;
+	(void)level;
+}
 
-व्योम
+void
 ia_css_xnr_debug_dtrace(
-    स्थिर काष्ठा ia_css_xnr_config *config,
-    अचिन्हित पूर्णांक level)
-अणु
+    const struct ia_css_xnr_config *config,
+    unsigned int level)
+{
 	ia_css_debug_dtrace(level,
 			    "config.threshold=%d\n", config->threshold);
-पूर्ण
+}

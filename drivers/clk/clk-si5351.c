@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * clk-si5351.c: Silicon Laboratories Si5351A/B/C I2C Clock Generator
  *
@@ -8,163 +7,163 @@
  *
  * References:
  * [1] "Si5351A/B/C Data Sheet"
- *     https://www.siद_असल.com/Support%20Documents/TechnicalDocs/Si5351.pdf
+ *     https://www.silabs.com/Support%20Documents/TechnicalDocs/Si5351.pdf
  * [2] "Manually Generating an Si5351 Register Map"
- *     https://www.siद_असल.com/Support%20Documents/TechnicalDocs/AN619.pdf
+ *     https://www.silabs.com/Support%20Documents/TechnicalDocs/AN619.pdf
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/rational.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_data/si5351.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/rational.h>
+#include <linux/i2c.h>
+#include <linux/of_platform.h>
+#include <linux/platform_data/si5351.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <asm/div64.h>
 
-#समावेश "clk-si5351.h"
+#include "clk-si5351.h"
 
-काष्ठा si5351_driver_data;
+struct si5351_driver_data;
 
-काष्ठा si5351_parameters अणु
-	अचिन्हित दीर्घ	p1;
-	अचिन्हित दीर्घ	p2;
-	अचिन्हित दीर्घ	p3;
-	पूर्णांक		valid;
-पूर्ण;
+struct si5351_parameters {
+	unsigned long	p1;
+	unsigned long	p2;
+	unsigned long	p3;
+	int		valid;
+};
 
-काष्ठा si5351_hw_data अणु
-	काष्ठा clk_hw			hw;
-	काष्ठा si5351_driver_data	*drvdata;
-	काष्ठा si5351_parameters	params;
-	अचिन्हित अक्षर			num;
-पूर्ण;
+struct si5351_hw_data {
+	struct clk_hw			hw;
+	struct si5351_driver_data	*drvdata;
+	struct si5351_parameters	params;
+	unsigned char			num;
+};
 
-काष्ठा si5351_driver_data अणु
-	क्रमागत si5351_variant	variant;
-	काष्ठा i2c_client	*client;
-	काष्ठा regmap		*regmap;
+struct si5351_driver_data {
+	enum si5351_variant	variant;
+	struct i2c_client	*client;
+	struct regmap		*regmap;
 
-	काष्ठा clk		*pxtal;
-	स्थिर अक्षर		*pxtal_name;
-	काष्ठा clk_hw		xtal;
-	काष्ठा clk		*pclkin;
-	स्थिर अक्षर		*pclkin_name;
-	काष्ठा clk_hw		clkin;
+	struct clk		*pxtal;
+	const char		*pxtal_name;
+	struct clk_hw		xtal;
+	struct clk		*pclkin;
+	const char		*pclkin_name;
+	struct clk_hw		clkin;
 
-	काष्ठा si5351_hw_data	pll[2];
-	काष्ठा si5351_hw_data	*msynth;
-	काष्ठा si5351_hw_data	*clkout;
-	माप_प्रकार			num_clkout;
-पूर्ण;
+	struct si5351_hw_data	pll[2];
+	struct si5351_hw_data	*msynth;
+	struct si5351_hw_data	*clkout;
+	size_t			num_clkout;
+};
 
-अटल स्थिर अक्षर * स्थिर si5351_input_names[] = अणु
+static const char * const si5351_input_names[] = {
 	"xtal", "clkin"
-पूर्ण;
-अटल स्थिर अक्षर * स्थिर si5351_pll_names[] = अणु
+};
+static const char * const si5351_pll_names[] = {
 	"si5351_plla", "si5351_pllb", "si5351_vxco"
-पूर्ण;
-अटल स्थिर अक्षर * स्थिर si5351_msynth_names[] = अणु
+};
+static const char * const si5351_msynth_names[] = {
 	"ms0", "ms1", "ms2", "ms3", "ms4", "ms5", "ms6", "ms7"
-पूर्ण;
-अटल स्थिर अक्षर * स्थिर si5351_clkout_names[] = अणु
+};
+static const char * const si5351_clkout_names[] = {
 	"clk0", "clk1", "clk2", "clk3", "clk4", "clk5", "clk6", "clk7"
-पूर्ण;
+};
 
 /*
  * Si5351 i2c regmap
  */
-अटल अंतरभूत u8 si5351_reg_पढ़ो(काष्ठा si5351_driver_data *drvdata, u8 reg)
-अणु
+static inline u8 si5351_reg_read(struct si5351_driver_data *drvdata, u8 reg)
+{
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(drvdata->regmap, reg, &val);
-	अगर (ret) अणु
+	ret = regmap_read(drvdata->regmap, reg, &val);
+	if (ret) {
 		dev_err(&drvdata->client->dev,
 			"unable to read from reg%02x\n", reg);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस (u8)val;
-पूर्ण
+	return (u8)val;
+}
 
-अटल अंतरभूत पूर्णांक si5351_bulk_पढ़ो(काष्ठा si5351_driver_data *drvdata,
+static inline int si5351_bulk_read(struct si5351_driver_data *drvdata,
 				   u8 reg, u8 count, u8 *buf)
-अणु
-	वापस regmap_bulk_पढ़ो(drvdata->regmap, reg, buf, count);
-पूर्ण
+{
+	return regmap_bulk_read(drvdata->regmap, reg, buf, count);
+}
 
-अटल अंतरभूत पूर्णांक si5351_reg_ग_लिखो(काष्ठा si5351_driver_data *drvdata,
+static inline int si5351_reg_write(struct si5351_driver_data *drvdata,
 				   u8 reg, u8 val)
-अणु
-	वापस regmap_ग_लिखो(drvdata->regmap, reg, val);
-पूर्ण
+{
+	return regmap_write(drvdata->regmap, reg, val);
+}
 
-अटल अंतरभूत पूर्णांक si5351_bulk_ग_लिखो(काष्ठा si5351_driver_data *drvdata,
-				    u8 reg, u8 count, स्थिर u8 *buf)
-अणु
-	वापस regmap_raw_ग_लिखो(drvdata->regmap, reg, buf, count);
-पूर्ण
+static inline int si5351_bulk_write(struct si5351_driver_data *drvdata,
+				    u8 reg, u8 count, const u8 *buf)
+{
+	return regmap_raw_write(drvdata->regmap, reg, buf, count);
+}
 
-अटल अंतरभूत पूर्णांक si5351_set_bits(काष्ठा si5351_driver_data *drvdata,
+static inline int si5351_set_bits(struct si5351_driver_data *drvdata,
 				  u8 reg, u8 mask, u8 val)
-अणु
-	वापस regmap_update_bits(drvdata->regmap, reg, mask, val);
-पूर्ण
+{
+	return regmap_update_bits(drvdata->regmap, reg, mask, val);
+}
 
-अटल अंतरभूत u8 si5351_msynth_params_address(पूर्णांक num)
-अणु
-	अगर (num > 5)
-		वापस SI5351_CLK6_PARAMETERS + (num - 6);
-	वापस SI5351_CLK0_PARAMETERS + (SI5351_PARAMETERS_LENGTH * num);
-पूर्ण
+static inline u8 si5351_msynth_params_address(int num)
+{
+	if (num > 5)
+		return SI5351_CLK6_PARAMETERS + (num - 6);
+	return SI5351_CLK0_PARAMETERS + (SI5351_PARAMETERS_LENGTH * num);
+}
 
-अटल व्योम si5351_पढ़ो_parameters(काष्ठा si5351_driver_data *drvdata,
-				   u8 reg, काष्ठा si5351_parameters *params)
-अणु
+static void si5351_read_parameters(struct si5351_driver_data *drvdata,
+				   u8 reg, struct si5351_parameters *params)
+{
 	u8 buf[SI5351_PARAMETERS_LENGTH];
 
-	चयन (reg) अणु
-	हाल SI5351_CLK6_PARAMETERS:
-	हाल SI5351_CLK7_PARAMETERS:
-		buf[0] = si5351_reg_पढ़ो(drvdata, reg);
+	switch (reg) {
+	case SI5351_CLK6_PARAMETERS:
+	case SI5351_CLK7_PARAMETERS:
+		buf[0] = si5351_reg_read(drvdata, reg);
 		params->p1 = buf[0];
 		params->p2 = 0;
 		params->p3 = 1;
-		अवरोध;
-	शेष:
-		si5351_bulk_पढ़ो(drvdata, reg, SI5351_PARAMETERS_LENGTH, buf);
+		break;
+	default:
+		si5351_bulk_read(drvdata, reg, SI5351_PARAMETERS_LENGTH, buf);
 		params->p1 = ((buf[2] & 0x03) << 16) | (buf[3] << 8) | buf[4];
 		params->p2 = ((buf[5] & 0x0f) << 16) | (buf[6] << 8) | buf[7];
 		params->p3 = ((buf[5] & 0xf0) << 12) | (buf[0] << 8) | buf[1];
-	पूर्ण
+	}
 	params->valid = 1;
-पूर्ण
+}
 
-अटल व्योम si5351_ग_लिखो_parameters(काष्ठा si5351_driver_data *drvdata,
-				    u8 reg, काष्ठा si5351_parameters *params)
-अणु
+static void si5351_write_parameters(struct si5351_driver_data *drvdata,
+				    u8 reg, struct si5351_parameters *params)
+{
 	u8 buf[SI5351_PARAMETERS_LENGTH];
 
-	चयन (reg) अणु
-	हाल SI5351_CLK6_PARAMETERS:
-	हाल SI5351_CLK7_PARAMETERS:
+	switch (reg) {
+	case SI5351_CLK6_PARAMETERS:
+	case SI5351_CLK7_PARAMETERS:
 		buf[0] = params->p1 & 0xff;
-		si5351_reg_ग_लिखो(drvdata, reg, buf[0]);
-		अवरोध;
-	शेष:
+		si5351_reg_write(drvdata, reg, buf[0]);
+		break;
+	default:
 		buf[0] = ((params->p3 & 0x0ff00) >> 8) & 0xff;
 		buf[1] = params->p3 & 0xff;
-		/* save rभाग and भागby4 */
-		buf[2] = si5351_reg_पढ़ो(drvdata, reg + 2) & ~0x03;
+		/* save rdiv and divby4 */
+		buf[2] = si5351_reg_read(drvdata, reg + 2) & ~0x03;
 		buf[2] |= ((params->p1 & 0x30000) >> 16) & 0x03;
 		buf[3] = ((params->p1 & 0x0ff00) >> 8) & 0xff;
 		buf[4] = params->p1 & 0xff;
@@ -172,170 +171,170 @@
 			((params->p2 & 0xf0000) >> 16);
 		buf[6] = ((params->p2 & 0x0ff00) >> 8) & 0xff;
 		buf[7] = params->p2 & 0xff;
-		si5351_bulk_ग_लिखो(drvdata, reg, SI5351_PARAMETERS_LENGTH, buf);
-	पूर्ण
-पूर्ण
+		si5351_bulk_write(drvdata, reg, SI5351_PARAMETERS_LENGTH, buf);
+	}
+}
 
-अटल bool si5351_regmap_is_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SI5351_DEVICE_STATUS:
-	हाल SI5351_INTERRUPT_STATUS:
-	हाल SI5351_PLL_RESET:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static bool si5351_regmap_is_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SI5351_DEVICE_STATUS:
+	case SI5351_INTERRUPT_STATUS:
+	case SI5351_PLL_RESET:
+		return true;
+	}
+	return false;
+}
 
-अटल bool si5351_regmap_is_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	/* reserved रेजिस्टरs */
-	अगर (reg >= 4 && reg <= 8)
-		वापस false;
-	अगर (reg >= 10 && reg <= 14)
-		वापस false;
-	अगर (reg >= 173 && reg <= 176)
-		वापस false;
-	अगर (reg >= 178 && reg <= 182)
-		वापस false;
-	/* पढ़ो-only */
-	अगर (reg == SI5351_DEVICE_STATUS)
-		वापस false;
-	वापस true;
-पूर्ण
+static bool si5351_regmap_is_writeable(struct device *dev, unsigned int reg)
+{
+	/* reserved registers */
+	if (reg >= 4 && reg <= 8)
+		return false;
+	if (reg >= 10 && reg <= 14)
+		return false;
+	if (reg >= 173 && reg <= 176)
+		return false;
+	if (reg >= 178 && reg <= 182)
+		return false;
+	/* read-only */
+	if (reg == SI5351_DEVICE_STATUS)
+		return false;
+	return true;
+}
 
-अटल स्थिर काष्ठा regmap_config si5351_regmap_config = अणु
+static const struct regmap_config si5351_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.max_रेजिस्टर = 187,
-	.ग_लिखोable_reg = si5351_regmap_is_ग_लिखोable,
-	.अस्थिर_reg = si5351_regmap_is_अस्थिर,
-पूर्ण;
+	.max_register = 187,
+	.writeable_reg = si5351_regmap_is_writeable,
+	.volatile_reg = si5351_regmap_is_volatile,
+};
 
 /*
- * Si5351 xtal घड़ी input
+ * Si5351 xtal clock input
  */
-अटल पूर्णांक si5351_xtal_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_driver_data *drvdata =
-		container_of(hw, काष्ठा si5351_driver_data, xtal);
+static int si5351_xtal_prepare(struct clk_hw *hw)
+{
+	struct si5351_driver_data *drvdata =
+		container_of(hw, struct si5351_driver_data, xtal);
 	si5351_set_bits(drvdata, SI5351_FANOUT_ENABLE,
 			SI5351_XTAL_ENABLE, SI5351_XTAL_ENABLE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम si5351_xtal_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_driver_data *drvdata =
-		container_of(hw, काष्ठा si5351_driver_data, xtal);
+static void si5351_xtal_unprepare(struct clk_hw *hw)
+{
+	struct si5351_driver_data *drvdata =
+		container_of(hw, struct si5351_driver_data, xtal);
 	si5351_set_bits(drvdata, SI5351_FANOUT_ENABLE,
 			SI5351_XTAL_ENABLE, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_xtal_ops = अणु
+static const struct clk_ops si5351_xtal_ops = {
 	.prepare = si5351_xtal_prepare,
 	.unprepare = si5351_xtal_unprepare,
-पूर्ण;
+};
 
 /*
- * Si5351 clkin घड़ी input (Si5351C only)
+ * Si5351 clkin clock input (Si5351C only)
  */
-अटल पूर्णांक si5351_clkin_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_driver_data *drvdata =
-		container_of(hw, काष्ठा si5351_driver_data, clkin);
+static int si5351_clkin_prepare(struct clk_hw *hw)
+{
+	struct si5351_driver_data *drvdata =
+		container_of(hw, struct si5351_driver_data, clkin);
 	si5351_set_bits(drvdata, SI5351_FANOUT_ENABLE,
 			SI5351_CLKIN_ENABLE, SI5351_CLKIN_ENABLE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम si5351_clkin_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_driver_data *drvdata =
-		container_of(hw, काष्ठा si5351_driver_data, clkin);
+static void si5351_clkin_unprepare(struct clk_hw *hw)
+{
+	struct si5351_driver_data *drvdata =
+		container_of(hw, struct si5351_driver_data, clkin);
 	si5351_set_bits(drvdata, SI5351_FANOUT_ENABLE,
 			SI5351_CLKIN_ENABLE, 0);
-पूर्ण
+}
 
 /*
- * CMOS घड़ी source स्थिरraपूर्णांकs:
+ * CMOS clock source constraints:
  * The input frequency range of the PLL is 10Mhz to 40MHz.
- * If CLKIN is >40MHz, the input भागider must be used.
+ * If CLKIN is >40MHz, the input divider must be used.
  */
-अटल अचिन्हित दीर्घ si5351_clkin_recalc_rate(काष्ठा clk_hw *hw,
-					      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_driver_data *drvdata =
-		container_of(hw, काष्ठा si5351_driver_data, clkin);
-	अचिन्हित दीर्घ rate;
-	अचिन्हित अक्षर iभाग;
+static unsigned long si5351_clkin_recalc_rate(struct clk_hw *hw,
+					      unsigned long parent_rate)
+{
+	struct si5351_driver_data *drvdata =
+		container_of(hw, struct si5351_driver_data, clkin);
+	unsigned long rate;
+	unsigned char idiv;
 
 	rate = parent_rate;
-	अगर (parent_rate > 160000000) अणु
-		iभाग = SI5351_CLKIN_DIV_8;
+	if (parent_rate > 160000000) {
+		idiv = SI5351_CLKIN_DIV_8;
 		rate /= 8;
-	पूर्ण अन्यथा अगर (parent_rate > 80000000) अणु
-		iभाग = SI5351_CLKIN_DIV_4;
+	} else if (parent_rate > 80000000) {
+		idiv = SI5351_CLKIN_DIV_4;
 		rate /= 4;
-	पूर्ण अन्यथा अगर (parent_rate > 40000000) अणु
-		iभाग = SI5351_CLKIN_DIV_2;
+	} else if (parent_rate > 40000000) {
+		idiv = SI5351_CLKIN_DIV_2;
 		rate /= 2;
-	पूर्ण अन्यथा अणु
-		iभाग = SI5351_CLKIN_DIV_1;
-	पूर्ण
+	} else {
+		idiv = SI5351_CLKIN_DIV_1;
+	}
 
 	si5351_set_bits(drvdata, SI5351_PLL_INPUT_SOURCE,
-			SI5351_CLKIN_DIV_MASK, iभाग);
+			SI5351_CLKIN_DIV_MASK, idiv);
 
 	dev_dbg(&drvdata->client->dev, "%s - clkin div = %d, rate = %lu\n",
-		__func__, (1 << (iभाग >> 6)), rate);
+		__func__, (1 << (idiv >> 6)), rate);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_clkin_ops = अणु
+static const struct clk_ops si5351_clkin_ops = {
 	.prepare = si5351_clkin_prepare,
 	.unprepare = si5351_clkin_unprepare,
 	.recalc_rate = si5351_clkin_recalc_rate,
-पूर्ण;
+};
 
 /*
- * Si5351 vxco घड़ी input (Si5351B only)
+ * Si5351 vxco clock input (Si5351B only)
  */
 
-अटल पूर्णांक si5351_vxco_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static int si5351_vxco_prepare(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 
 	dev_warn(&hwdata->drvdata->client->dev, "VXCO currently unsupported\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम si5351_vxco_unprepare(काष्ठा clk_hw *hw)
-अणु
-पूर्ण
+static void si5351_vxco_unprepare(struct clk_hw *hw)
+{
+}
 
-अटल अचिन्हित दीर्घ si5351_vxco_recalc_rate(काष्ठा clk_hw *hw,
-					     अचिन्हित दीर्घ parent_rate)
-अणु
-	वापस 0;
-पूर्ण
+static unsigned long si5351_vxco_recalc_rate(struct clk_hw *hw,
+					     unsigned long parent_rate)
+{
+	return 0;
+}
 
-अटल पूर्णांक si5351_vxco_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent)
-अणु
-	वापस 0;
-पूर्ण
+static int si5351_vxco_set_rate(struct clk_hw *hw, unsigned long rate,
+				unsigned long parent)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_vxco_ops = अणु
+static const struct clk_ops si5351_vxco_ops = {
 	.prepare = si5351_vxco_prepare,
 	.unprepare = si5351_vxco_unprepare,
 	.recalc_rate = si5351_vxco_recalc_rate,
 	.set_rate = si5351_vxco_set_rate,
-पूर्ण;
+};
 
 /*
  * Si5351 pll a/b
@@ -349,11 +348,11 @@
  *
  * Feedback Multisynth Register Equations
  *
- * (1) MSNx_P1[17:0] = 128 * a + न्यूनमान(128 * b/c) - 512
- * (2) MSNx_P2[19:0] = 128 * b - c * न्यूनमान(128 * b/c) = (128*b) mod c
+ * (1) MSNx_P1[17:0] = 128 * a + floor(128 * b/c) - 512
+ * (2) MSNx_P2[19:0] = 128 * b - c * floor(128 * b/c) = (128*b) mod c
  * (3) MSNx_P3[19:0] = c
  *
- * Transposing (2) yields: (4) न्यूनमान(128 * b/c) = (128 * b / MSNx_P2)/c
+ * Transposing (2) yields: (4) floor(128 * b/c) = (128 * b / MSNx_P2)/c
  *
  * Using (4) on (1) yields:
  * MSNx_P1 = 128 * a + (128 * b/MSNx_P2)/c - 512
@@ -363,117 +362,117 @@
  *         = (MSNx_P1*MSNx_P3 + MSNx_P2 + 512*MSNx_P3)/(128*MSNx_P3)
  *
  */
-अटल पूर्णांक _si5351_pll_reparent(काष्ठा si5351_driver_data *drvdata,
-				पूर्णांक num, क्रमागत si5351_pll_src parent)
-अणु
+static int _si5351_pll_reparent(struct si5351_driver_data *drvdata,
+				int num, enum si5351_pll_src parent)
+{
 	u8 mask = (num == 0) ? SI5351_PLLA_SOURCE : SI5351_PLLB_SOURCE;
 
-	अगर (parent == SI5351_PLL_SRC_DEFAULT)
-		वापस 0;
+	if (parent == SI5351_PLL_SRC_DEFAULT)
+		return 0;
 
-	अगर (num > 2)
-		वापस -EINVAL;
+	if (num > 2)
+		return -EINVAL;
 
-	अगर (drvdata->variant != SI5351_VARIANT_C &&
+	if (drvdata->variant != SI5351_VARIANT_C &&
 	    parent != SI5351_PLL_SRC_XTAL)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	si5351_set_bits(drvdata, SI5351_PLL_INPUT_SOURCE, mask,
 			(parent == SI5351_PLL_SRC_XTAL) ? 0 : mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित अक्षर si5351_pll_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static unsigned char si5351_pll_get_parent(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 mask = (hwdata->num == 0) ? SI5351_PLLA_SOURCE : SI5351_PLLB_SOURCE;
 	u8 val;
 
-	val = si5351_reg_पढ़ो(hwdata->drvdata, SI5351_PLL_INPUT_SOURCE);
+	val = si5351_reg_read(hwdata->drvdata, SI5351_PLL_INPUT_SOURCE);
 
-	वापस (val & mask) ? 1 : 0;
-पूर्ण
+	return (val & mask) ? 1 : 0;
+}
 
-अटल पूर्णांक si5351_pll_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static int si5351_pll_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 
-	अगर (hwdata->drvdata->variant != SI5351_VARIANT_C &&
+	if (hwdata->drvdata->variant != SI5351_VARIANT_C &&
 	    index > 0)
-		वापस -EPERM;
+		return -EPERM;
 
-	अगर (index > 1)
-		वापस -EINVAL;
+	if (index > 1)
+		return -EINVAL;
 
-	वापस _si5351_pll_reparent(hwdata->drvdata, hwdata->num,
+	return _si5351_pll_reparent(hwdata->drvdata, hwdata->num,
 			     (index == 0) ? SI5351_PLL_SRC_XTAL :
 			     SI5351_PLL_SRC_CLKIN);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ si5351_pll_recalc_rate(काष्ठा clk_hw *hw,
-					    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static unsigned long si5351_pll_recalc_rate(struct clk_hw *hw,
+					    unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 reg = (hwdata->num == 0) ? SI5351_PLLA_PARAMETERS :
 		SI5351_PLLB_PARAMETERS;
-	अचिन्हित दीर्घ दीर्घ rate;
+	unsigned long long rate;
 
-	अगर (!hwdata->params.valid)
-		si5351_पढ़ो_parameters(hwdata->drvdata, reg, &hwdata->params);
+	if (!hwdata->params.valid)
+		si5351_read_parameters(hwdata->drvdata, reg, &hwdata->params);
 
-	अगर (hwdata->params.p3 == 0)
-		वापस parent_rate;
+	if (hwdata->params.p3 == 0)
+		return parent_rate;
 
 	/* fVCO = fIN * (P1*P3 + 512*P3 + P2)/(128*P3) */
 	rate  = hwdata->params.p1 * hwdata->params.p3;
 	rate += 512 * hwdata->params.p3;
 	rate += hwdata->params.p2;
 	rate *= parent_rate;
-	करो_भाग(rate, 128 * hwdata->params.p3);
+	do_div(rate, 128 * hwdata->params.p3);
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: p1 = %lu, p2 = %lu, p3 = %lu, parent_rate = %lu, rate = %lu\n",
 		__func__, clk_hw_get_name(hw),
 		hwdata->params.p1, hwdata->params.p2, hwdata->params.p3,
-		parent_rate, (अचिन्हित दीर्घ)rate);
+		parent_rate, (unsigned long)rate);
 
-	वापस (अचिन्हित दीर्घ)rate;
-पूर्ण
+	return (unsigned long)rate;
+}
 
-अटल दीर्घ si5351_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	अचिन्हित दीर्घ rfrac, denom, a, b, c;
-	अचिन्हित दीर्घ दीर्घ llपंचांगp;
+static long si5351_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long *parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	unsigned long rfrac, denom, a, b, c;
+	unsigned long long lltmp;
 
-	अगर (rate < SI5351_PLL_VCO_MIN)
+	if (rate < SI5351_PLL_VCO_MIN)
 		rate = SI5351_PLL_VCO_MIN;
-	अगर (rate > SI5351_PLL_VCO_MAX)
+	if (rate > SI5351_PLL_VCO_MAX)
 		rate = SI5351_PLL_VCO_MAX;
 
-	/* determine पूर्णांकeger part of feedback equation */
+	/* determine integer part of feedback equation */
 	a = rate / *parent_rate;
 
-	अगर (a < SI5351_PLL_A_MIN)
+	if (a < SI5351_PLL_A_MIN)
 		rate = *parent_rate * SI5351_PLL_A_MIN;
-	अगर (a > SI5351_PLL_A_MAX)
+	if (a > SI5351_PLL_A_MAX)
 		rate = *parent_rate * SI5351_PLL_A_MAX;
 
-	/* find best approximation क्रम b/c = fVCO mod fIN */
+	/* find best approximation for b/c = fVCO mod fIN */
 	denom = 1000 * 1000;
-	llपंचांगp = rate % (*parent_rate);
-	llपंचांगp *= denom;
-	करो_भाग(llपंचांगp, *parent_rate);
-	rfrac = (अचिन्हित दीर्घ)llपंचांगp;
+	lltmp = rate % (*parent_rate);
+	lltmp *= denom;
+	do_div(lltmp, *parent_rate);
+	rfrac = (unsigned long)lltmp;
 
 	b = 0;
 	c = 1;
-	अगर (rfrac)
+	if (rfrac)
 		rational_best_approximation(rfrac, denom,
 				    SI5351_PLL_B_MAX, SI5351_PLL_C_MAX, &b, &c);
 
@@ -485,11 +484,11 @@
 	hwdata->params.p1 -= 512;
 
 	/* recalculate rate by fIN * (a + b/c) */
-	llपंचांगp  = *parent_rate;
-	llपंचांगp *= b;
-	करो_भाग(llपंचांगp, c);
+	lltmp  = *parent_rate;
+	lltmp *= b;
+	do_div(lltmp, c);
 
-	rate  = (अचिन्हित दीर्घ)llपंचांगp;
+	rate  = (unsigned long)lltmp;
 	rate += *parent_rate * a;
 
 	dev_dbg(&hwdata->drvdata->client->dev,
@@ -497,27 +496,27 @@
 		__func__, clk_hw_get_name(hw), a, b, c,
 		*parent_rate, rate);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक si5351_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static int si5351_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 reg = (hwdata->num == 0) ? SI5351_PLLA_PARAMETERS :
 		SI5351_PLLB_PARAMETERS;
 
-	/* ग_लिखो multisynth parameters */
-	si5351_ग_लिखो_parameters(hwdata->drvdata, reg, &hwdata->params);
+	/* write multisynth parameters */
+	si5351_write_parameters(hwdata->drvdata, reg, &hwdata->params);
 
-	/* plla/pllb ctrl is in clk6/clk7 ctrl रेजिस्टरs */
+	/* plla/pllb ctrl is in clk6/clk7 ctrl registers */
 	si5351_set_bits(hwdata->drvdata, SI5351_CLK6_CTRL + hwdata->num,
 		SI5351_CLK_INTEGER_MODE,
 		(hwdata->params.p2 == 0) ? SI5351_CLK_INTEGER_MODE : 0);
 
 	/* Do a pll soft reset on the affected pll */
-	si5351_reg_ग_लिखो(hwdata->drvdata, SI5351_PLL_RESET,
+	si5351_reg_write(hwdata->drvdata, SI5351_PLL_RESET,
 			 hwdata->num == 0 ? SI5351_PLL_RESET_A :
 					    SI5351_PLL_RESET_B);
 
@@ -527,21 +526,21 @@
 		hwdata->params.p1, hwdata->params.p2, hwdata->params.p3,
 		parent_rate, rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_pll_ops = अणु
+static const struct clk_ops si5351_pll_ops = {
 	.set_parent = si5351_pll_set_parent,
 	.get_parent = si5351_pll_get_parent,
 	.recalc_rate = si5351_pll_recalc_rate,
 	.round_rate = si5351_pll_round_rate,
 	.set_rate = si5351_pll_set_rate,
-पूर्ण;
+};
 
 /*
- * Si5351 multisync भागider
+ * Si5351 multisync divider
  *
- * क्रम fOUT <= 150 MHz:
+ * for fOUT <= 150 MHz:
  *
  * fOUT = (fIN * (a + b/c)) / CLKOUTDIV
  *
@@ -550,594 +549,594 @@
  *
  * Output Clock Multisynth Register Equations
  *
- * MSx_P1[17:0] = 128 * a + न्यूनमान(128 * b/c) - 512
- * MSx_P2[19:0] = 128 * b - c * न्यूनमान(128 * b/c) = (128*b) mod c
+ * MSx_P1[17:0] = 128 * a + floor(128 * b/c) - 512
+ * MSx_P2[19:0] = 128 * b - c * floor(128 * b/c) = (128*b) mod c
  * MSx_P3[19:0] = c
  *
- * MS[6,7] are पूर्णांकeger (P1) भागide only, P1 = भागide value,
+ * MS[6,7] are integer (P1) divide only, P1 = divide value,
  * P2 and P3 are not applicable
  *
- * क्रम 150MHz < fOUT <= 160MHz:
+ * for 150MHz < fOUT <= 160MHz:
  *
  * MSx_P1 = 0, MSx_P2 = 0, MSx_P3 = 1, MSx_INT = 1, MSx_DIVBY4 = 11b
  */
-अटल पूर्णांक _si5351_msynth_reparent(काष्ठा si5351_driver_data *drvdata,
-				   पूर्णांक num, क्रमागत si5351_multisynth_src parent)
-अणु
-	अगर (parent == SI5351_MULTISYNTH_SRC_DEFAULT)
-		वापस 0;
+static int _si5351_msynth_reparent(struct si5351_driver_data *drvdata,
+				   int num, enum si5351_multisynth_src parent)
+{
+	if (parent == SI5351_MULTISYNTH_SRC_DEFAULT)
+		return 0;
 
-	अगर (num > 8)
-		वापस -EINVAL;
+	if (num > 8)
+		return -EINVAL;
 
 	si5351_set_bits(drvdata, SI5351_CLK0_CTRL + num, SI5351_CLK_PLL_SELECT,
 			(parent == SI5351_MULTISYNTH_SRC_VCO0) ? 0 :
 			SI5351_CLK_PLL_SELECT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित अक्षर si5351_msynth_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static unsigned char si5351_msynth_get_parent(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 val;
 
-	val = si5351_reg_पढ़ो(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num);
+	val = si5351_reg_read(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num);
 
-	वापस (val & SI5351_CLK_PLL_SELECT) ? 1 : 0;
-पूर्ण
+	return (val & SI5351_CLK_PLL_SELECT) ? 1 : 0;
+}
 
-अटल पूर्णांक si5351_msynth_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static int si5351_msynth_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 
-	वापस _si5351_msynth_reparent(hwdata->drvdata, hwdata->num,
+	return _si5351_msynth_reparent(hwdata->drvdata, hwdata->num,
 			       (index == 0) ? SI5351_MULTISYNTH_SRC_VCO0 :
 			       SI5351_MULTISYNTH_SRC_VCO1);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ si5351_msynth_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static unsigned long si5351_msynth_recalc_rate(struct clk_hw *hw,
+					       unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 reg = si5351_msynth_params_address(hwdata->num);
-	अचिन्हित दीर्घ दीर्घ rate;
-	अचिन्हित दीर्घ m;
+	unsigned long long rate;
+	unsigned long m;
 
-	अगर (!hwdata->params.valid)
-		si5351_पढ़ो_parameters(hwdata->drvdata, reg, &hwdata->params);
+	if (!hwdata->params.valid)
+		si5351_read_parameters(hwdata->drvdata, reg, &hwdata->params);
 
 	/*
 	 * multisync0-5: fOUT = (128 * P3 * fIN) / (P1*P3 + P2 + 512*P3)
 	 * multisync6-7: fOUT = fIN / P1
 	 */
 	rate = parent_rate;
-	अगर (hwdata->num > 5) अणु
+	if (hwdata->num > 5) {
 		m = hwdata->params.p1;
-	पूर्ण अन्यथा अगर (hwdata->params.p3 == 0) अणु
-		वापस parent_rate;
-	पूर्ण अन्यथा अगर ((si5351_reg_पढ़ो(hwdata->drvdata, reg + 2) &
-		    SI5351_OUTPUT_CLK_DIVBY4) == SI5351_OUTPUT_CLK_DIVBY4) अणु
+	} else if (hwdata->params.p3 == 0) {
+		return parent_rate;
+	} else if ((si5351_reg_read(hwdata->drvdata, reg + 2) &
+		    SI5351_OUTPUT_CLK_DIVBY4) == SI5351_OUTPUT_CLK_DIVBY4) {
 		m = 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		rate *= 128 * hwdata->params.p3;
 		m = hwdata->params.p1 * hwdata->params.p3;
 		m += hwdata->params.p2;
 		m += 512 * hwdata->params.p3;
-	पूर्ण
+	}
 
-	अगर (m == 0)
-		वापस 0;
-	करो_भाग(rate, m);
+	if (m == 0)
+		return 0;
+	do_div(rate, m);
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: p1 = %lu, p2 = %lu, p3 = %lu, m = %lu, parent_rate = %lu, rate = %lu\n",
 		__func__, clk_hw_get_name(hw),
 		hwdata->params.p1, hwdata->params.p2, hwdata->params.p3,
-		m, parent_rate, (अचिन्हित दीर्घ)rate);
+		m, parent_rate, (unsigned long)rate);
 
-	वापस (अचिन्हित दीर्घ)rate;
-पूर्ण
+	return (unsigned long)rate;
+}
 
-अटल दीर्घ si5351_msynth_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	अचिन्हित दीर्घ दीर्घ llपंचांगp;
-	अचिन्हित दीर्घ a, b, c;
-	पूर्णांक भागby4;
+static long si5351_msynth_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	unsigned long long lltmp;
+	unsigned long a, b, c;
+	int divby4;
 
 	/* multisync6-7 can only handle freqencies < 150MHz */
-	अगर (hwdata->num >= 6 && rate > SI5351_MULTISYNTH67_MAX_FREQ)
+	if (hwdata->num >= 6 && rate > SI5351_MULTISYNTH67_MAX_FREQ)
 		rate = SI5351_MULTISYNTH67_MAX_FREQ;
 
 	/* multisync frequency is 1MHz .. 160MHz */
-	अगर (rate > SI5351_MULTISYNTH_MAX_FREQ)
+	if (rate > SI5351_MULTISYNTH_MAX_FREQ)
 		rate = SI5351_MULTISYNTH_MAX_FREQ;
-	अगर (rate < SI5351_MULTISYNTH_MIN_FREQ)
+	if (rate < SI5351_MULTISYNTH_MIN_FREQ)
 		rate = SI5351_MULTISYNTH_MIN_FREQ;
 
-	भागby4 = 0;
-	अगर (rate > SI5351_MULTISYNTH_DIVBY4_FREQ)
-		भागby4 = 1;
+	divby4 = 0;
+	if (rate > SI5351_MULTISYNTH_DIVBY4_FREQ)
+		divby4 = 1;
 
 	/* multisync can set pll */
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) अणु
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) {
 		/*
-		 * find largest पूर्णांकeger भागider क्रम max
+		 * find largest integer divider for max
 		 * vco frequency and given target rate
 		 */
-		अगर (भागby4 == 0) अणु
-			llपंचांगp = SI5351_PLL_VCO_MAX;
-			करो_भाग(llपंचांगp, rate);
-			a = (अचिन्हित दीर्घ)llपंचांगp;
-		पूर्ण अन्यथा
+		if (divby4 == 0) {
+			lltmp = SI5351_PLL_VCO_MAX;
+			do_div(lltmp, rate);
+			a = (unsigned long)lltmp;
+		} else
 			a = 4;
 
 		b = 0;
 		c = 1;
 
 		*parent_rate = a * rate;
-	पूर्ण अन्यथा अगर (hwdata->num >= 6) अणु
-		/* determine the बंदst पूर्णांकeger भागider */
+	} else if (hwdata->num >= 6) {
+		/* determine the closest integer divider */
 		a = DIV_ROUND_CLOSEST(*parent_rate, rate);
-		अगर (a < SI5351_MULTISYNTH_A_MIN)
+		if (a < SI5351_MULTISYNTH_A_MIN)
 			a = SI5351_MULTISYNTH_A_MIN;
-		अगर (a > SI5351_MULTISYNTH67_A_MAX)
+		if (a > SI5351_MULTISYNTH67_A_MAX)
 			a = SI5351_MULTISYNTH67_A_MAX;
 
 		b = 0;
 		c = 1;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ rfrac, denom;
+	} else {
+		unsigned long rfrac, denom;
 
-		/* disable भागby4 */
-		अगर (भागby4) अणु
+		/* disable divby4 */
+		if (divby4) {
 			rate = SI5351_MULTISYNTH_DIVBY4_FREQ;
-			भागby4 = 0;
-		पूर्ण
+			divby4 = 0;
+		}
 
-		/* determine पूर्णांकeger part of भागider equation */
+		/* determine integer part of divider equation */
 		a = *parent_rate / rate;
-		अगर (a < SI5351_MULTISYNTH_A_MIN)
+		if (a < SI5351_MULTISYNTH_A_MIN)
 			a = SI5351_MULTISYNTH_A_MIN;
-		अगर (a > SI5351_MULTISYNTH_A_MAX)
+		if (a > SI5351_MULTISYNTH_A_MAX)
 			a = SI5351_MULTISYNTH_A_MAX;
 
-		/* find best approximation क्रम b/c = fVCO mod fOUT */
+		/* find best approximation for b/c = fVCO mod fOUT */
 		denom = 1000 * 1000;
-		llपंचांगp = (*parent_rate) % rate;
-		llपंचांगp *= denom;
-		करो_भाग(llपंचांगp, rate);
-		rfrac = (अचिन्हित दीर्घ)llपंचांगp;
+		lltmp = (*parent_rate) % rate;
+		lltmp *= denom;
+		do_div(lltmp, rate);
+		rfrac = (unsigned long)lltmp;
 
 		b = 0;
 		c = 1;
-		अगर (rfrac)
+		if (rfrac)
 			rational_best_approximation(rfrac, denom,
 			    SI5351_MULTISYNTH_B_MAX, SI5351_MULTISYNTH_C_MAX,
 			    &b, &c);
-	पूर्ण
+	}
 
 	/* recalculate rate by fOUT = fIN / (a + b/c) */
-	llपंचांगp  = *parent_rate;
-	llपंचांगp *= c;
-	करो_भाग(llपंचांगp, a * c + b);
-	rate  = (अचिन्हित दीर्घ)llपंचांगp;
+	lltmp  = *parent_rate;
+	lltmp *= c;
+	do_div(lltmp, a * c + b);
+	rate  = (unsigned long)lltmp;
 
 	/* calculate parameters */
-	अगर (भागby4) अणु
+	if (divby4) {
 		hwdata->params.p3 = 1;
 		hwdata->params.p2 = 0;
 		hwdata->params.p1 = 0;
-	पूर्ण अन्यथा अगर (hwdata->num >= 6) अणु
+	} else if (hwdata->num >= 6) {
 		hwdata->params.p3 = 0;
 		hwdata->params.p2 = 0;
 		hwdata->params.p1 = a;
-	पूर्ण अन्यथा अणु
+	} else {
 		hwdata->params.p3  = c;
 		hwdata->params.p2  = (128 * b) % c;
 		hwdata->params.p1  = 128 * a;
 		hwdata->params.p1 += (128 * b / c);
 		hwdata->params.p1 -= 512;
-	पूर्ण
+	}
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: a = %lu, b = %lu, c = %lu, divby4 = %d, parent_rate = %lu, rate = %lu\n",
-		__func__, clk_hw_get_name(hw), a, b, c, भागby4,
+		__func__, clk_hw_get_name(hw), a, b, c, divby4,
 		*parent_rate, rate);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक si5351_msynth_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static int si5351_msynth_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 	u8 reg = si5351_msynth_params_address(hwdata->num);
-	पूर्णांक भागby4 = 0;
+	int divby4 = 0;
 
-	/* ग_लिखो multisynth parameters */
-	si5351_ग_लिखो_parameters(hwdata->drvdata, reg, &hwdata->params);
+	/* write multisynth parameters */
+	si5351_write_parameters(hwdata->drvdata, reg, &hwdata->params);
 
-	अगर (rate > SI5351_MULTISYNTH_DIVBY4_FREQ)
-		भागby4 = 1;
+	if (rate > SI5351_MULTISYNTH_DIVBY4_FREQ)
+		divby4 = 1;
 
-	/* enable/disable पूर्णांकeger mode and भागby4 on multisynth0-5 */
-	अगर (hwdata->num < 6) अणु
+	/* enable/disable integer mode and divby4 on multisynth0-5 */
+	if (hwdata->num < 6) {
 		si5351_set_bits(hwdata->drvdata, reg + 2,
 				SI5351_OUTPUT_CLK_DIVBY4,
-				(भागby4) ? SI5351_OUTPUT_CLK_DIVBY4 : 0);
+				(divby4) ? SI5351_OUTPUT_CLK_DIVBY4 : 0);
 		si5351_set_bits(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num,
 			SI5351_CLK_INTEGER_MODE,
 			(hwdata->params.p2 == 0) ? SI5351_CLK_INTEGER_MODE : 0);
-	पूर्ण
+	}
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: p1 = %lu, p2 = %lu, p3 = %lu, divby4 = %d, parent_rate = %lu, rate = %lu\n",
 		__func__, clk_hw_get_name(hw),
 		hwdata->params.p1, hwdata->params.p2, hwdata->params.p3,
-		भागby4, parent_rate, rate);
+		divby4, parent_rate, rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_msynth_ops = अणु
+static const struct clk_ops si5351_msynth_ops = {
 	.set_parent = si5351_msynth_set_parent,
 	.get_parent = si5351_msynth_get_parent,
 	.recalc_rate = si5351_msynth_recalc_rate,
 	.round_rate = si5351_msynth_round_rate,
 	.set_rate = si5351_msynth_set_rate,
-पूर्ण;
+};
 
 /*
- * Si5351 clkout भागider
+ * Si5351 clkout divider
  */
-अटल पूर्णांक _si5351_clkout_reparent(काष्ठा si5351_driver_data *drvdata,
-				   पूर्णांक num, क्रमागत si5351_clkout_src parent)
-अणु
+static int _si5351_clkout_reparent(struct si5351_driver_data *drvdata,
+				   int num, enum si5351_clkout_src parent)
+{
 	u8 val;
 
-	अगर (num > 8)
-		वापस -EINVAL;
+	if (num > 8)
+		return -EINVAL;
 
-	चयन (parent) अणु
-	हाल SI5351_CLKOUT_SRC_MSYNTH_N:
+	switch (parent) {
+	case SI5351_CLKOUT_SRC_MSYNTH_N:
 		val = SI5351_CLK_INPUT_MULTISYNTH_N;
-		अवरोध;
-	हाल SI5351_CLKOUT_SRC_MSYNTH_0_4:
+		break;
+	case SI5351_CLKOUT_SRC_MSYNTH_0_4:
 		/* clk0/clk4 can only connect to its own multisync */
-		अगर (num == 0 || num == 4)
+		if (num == 0 || num == 4)
 			val = SI5351_CLK_INPUT_MULTISYNTH_N;
-		अन्यथा
+		else
 			val = SI5351_CLK_INPUT_MULTISYNTH_0_4;
-		अवरोध;
-	हाल SI5351_CLKOUT_SRC_XTAL:
+		break;
+	case SI5351_CLKOUT_SRC_XTAL:
 		val = SI5351_CLK_INPUT_XTAL;
-		अवरोध;
-	हाल SI5351_CLKOUT_SRC_CLKIN:
-		अगर (drvdata->variant != SI5351_VARIANT_C)
-			वापस -EINVAL;
+		break;
+	case SI5351_CLKOUT_SRC_CLKIN:
+		if (drvdata->variant != SI5351_VARIANT_C)
+			return -EINVAL;
 
 		val = SI5351_CLK_INPUT_CLKIN;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
 	si5351_set_bits(drvdata, SI5351_CLK0_CTRL + num,
 			SI5351_CLK_INPUT_MASK, val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _si5351_clkout_set_drive_strength(
-	काष्ठा si5351_driver_data *drvdata, पूर्णांक num,
-	क्रमागत si5351_drive_strength drive)
-अणु
+static int _si5351_clkout_set_drive_strength(
+	struct si5351_driver_data *drvdata, int num,
+	enum si5351_drive_strength drive)
+{
 	u8 mask;
 
-	अगर (num > 8)
-		वापस -EINVAL;
+	if (num > 8)
+		return -EINVAL;
 
-	चयन (drive) अणु
-	हाल SI5351_DRIVE_2MA:
+	switch (drive) {
+	case SI5351_DRIVE_2MA:
 		mask = SI5351_CLK_DRIVE_STRENGTH_2MA;
-		अवरोध;
-	हाल SI5351_DRIVE_4MA:
+		break;
+	case SI5351_DRIVE_4MA:
 		mask = SI5351_CLK_DRIVE_STRENGTH_4MA;
-		अवरोध;
-	हाल SI5351_DRIVE_6MA:
+		break;
+	case SI5351_DRIVE_6MA:
 		mask = SI5351_CLK_DRIVE_STRENGTH_6MA;
-		अवरोध;
-	हाल SI5351_DRIVE_8MA:
+		break;
+	case SI5351_DRIVE_8MA:
 		mask = SI5351_CLK_DRIVE_STRENGTH_8MA;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
 	si5351_set_bits(drvdata, SI5351_CLK0_CTRL + num,
 			SI5351_CLK_DRIVE_STRENGTH_MASK, mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _si5351_clkout_set_disable_state(
-	काष्ठा si5351_driver_data *drvdata, पूर्णांक num,
-	क्रमागत si5351_disable_state state)
-अणु
+static int _si5351_clkout_set_disable_state(
+	struct si5351_driver_data *drvdata, int num,
+	enum si5351_disable_state state)
+{
 	u8 reg = (num < 4) ? SI5351_CLK3_0_DISABLE_STATE :
 		SI5351_CLK7_4_DISABLE_STATE;
-	u8 shअगरt = (num < 4) ? (2 * num) : (2 * (num-4));
-	u8 mask = SI5351_CLK_DISABLE_STATE_MASK << shअगरt;
+	u8 shift = (num < 4) ? (2 * num) : (2 * (num-4));
+	u8 mask = SI5351_CLK_DISABLE_STATE_MASK << shift;
 	u8 val;
 
-	अगर (num > 8)
-		वापस -EINVAL;
+	if (num > 8)
+		return -EINVAL;
 
-	चयन (state) अणु
-	हाल SI5351_DISABLE_LOW:
+	switch (state) {
+	case SI5351_DISABLE_LOW:
 		val = SI5351_CLK_DISABLE_STATE_LOW;
-		अवरोध;
-	हाल SI5351_DISABLE_HIGH:
+		break;
+	case SI5351_DISABLE_HIGH:
 		val = SI5351_CLK_DISABLE_STATE_HIGH;
-		अवरोध;
-	हाल SI5351_DISABLE_FLOATING:
+		break;
+	case SI5351_DISABLE_FLOATING:
 		val = SI5351_CLK_DISABLE_STATE_FLOAT;
-		अवरोध;
-	हाल SI5351_DISABLE_NEVER:
+		break;
+	case SI5351_DISABLE_NEVER:
 		val = SI5351_CLK_DISABLE_STATE_NEVER;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	si5351_set_bits(drvdata, reg, mask, val << shअगरt);
+	si5351_set_bits(drvdata, reg, mask, val << shift);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम _si5351_clkout_reset_pll(काष्ठा si5351_driver_data *drvdata, पूर्णांक num)
-अणु
-	u8 val = si5351_reg_पढ़ो(drvdata, SI5351_CLK0_CTRL + num);
+static void _si5351_clkout_reset_pll(struct si5351_driver_data *drvdata, int num)
+{
+	u8 val = si5351_reg_read(drvdata, SI5351_CLK0_CTRL + num);
 	u8 mask = val & SI5351_CLK_PLL_SELECT ? SI5351_PLL_RESET_B :
 						       SI5351_PLL_RESET_A;
-	अचिन्हित पूर्णांक v;
-	पूर्णांक err;
+	unsigned int v;
+	int err;
 
-	चयन (val & SI5351_CLK_INPUT_MASK) अणु
-	हाल SI5351_CLK_INPUT_XTAL:
-	हाल SI5351_CLK_INPUT_CLKIN:
-		वापस;  /* pll not used, no need to reset */
-	पूर्ण
+	switch (val & SI5351_CLK_INPUT_MASK) {
+	case SI5351_CLK_INPUT_XTAL:
+	case SI5351_CLK_INPUT_CLKIN:
+		return;  /* pll not used, no need to reset */
+	}
 
-	si5351_reg_ग_लिखो(drvdata, SI5351_PLL_RESET, mask);
+	si5351_reg_write(drvdata, SI5351_PLL_RESET, mask);
 
-	err = regmap_पढ़ो_poll_समयout(drvdata->regmap, SI5351_PLL_RESET, v,
+	err = regmap_read_poll_timeout(drvdata->regmap, SI5351_PLL_RESET, v,
 				 !(v & mask), 0, 20000);
-	अगर (err < 0)
+	if (err < 0)
 		dev_err(&drvdata->client->dev, "Reset bit didn't clear\n");
 
 	dev_dbg(&drvdata->client->dev, "%s - %s: pll = %d\n",
 		__func__, clk_hw_get_name(&drvdata->clkout[num].hw),
 		(val & SI5351_CLK_PLL_SELECT) ? 1 : 0);
-पूर्ण
+}
 
-अटल पूर्णांक si5351_clkout_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	काष्ठा si5351_platक्रमm_data *pdata =
-		hwdata->drvdata->client->dev.platक्रमm_data;
+static int si5351_clkout_prepare(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	struct si5351_platform_data *pdata =
+		hwdata->drvdata->client->dev.platform_data;
 
 	si5351_set_bits(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num,
 			SI5351_CLK_POWERDOWN, 0);
 
 	/*
 	 * Do a pll soft reset on the parent pll -- needed to get a
-	 * deterministic phase relationship between the output घड़ीs.
+	 * deterministic phase relationship between the output clocks.
 	 */
-	अगर (pdata->clkout[hwdata->num].pll_reset)
+	if (pdata->clkout[hwdata->num].pll_reset)
 		_si5351_clkout_reset_pll(hwdata->drvdata, hwdata->num);
 
 	si5351_set_bits(hwdata->drvdata, SI5351_OUTPUT_ENABLE_CTRL,
 			(1 << hwdata->num), 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम si5351_clkout_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
+static void si5351_clkout_unprepare(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
 
 	si5351_set_bits(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num,
 			SI5351_CLK_POWERDOWN, SI5351_CLK_POWERDOWN);
 	si5351_set_bits(hwdata->drvdata, SI5351_OUTPUT_ENABLE_CTRL,
 			(1 << hwdata->num), (1 << hwdata->num));
-पूर्ण
+}
 
-अटल u8 si5351_clkout_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	पूर्णांक index = 0;
-	अचिन्हित अक्षर val;
+static u8 si5351_clkout_get_parent(struct clk_hw *hw)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	int index = 0;
+	unsigned char val;
 
-	val = si5351_reg_पढ़ो(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num);
-	चयन (val & SI5351_CLK_INPUT_MASK) अणु
-	हाल SI5351_CLK_INPUT_MULTISYNTH_N:
+	val = si5351_reg_read(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num);
+	switch (val & SI5351_CLK_INPUT_MASK) {
+	case SI5351_CLK_INPUT_MULTISYNTH_N:
 		index = 0;
-		अवरोध;
-	हाल SI5351_CLK_INPUT_MULTISYNTH_0_4:
+		break;
+	case SI5351_CLK_INPUT_MULTISYNTH_0_4:
 		index = 1;
-		अवरोध;
-	हाल SI5351_CLK_INPUT_XTAL:
+		break;
+	case SI5351_CLK_INPUT_XTAL:
 		index = 2;
-		अवरोध;
-	हाल SI5351_CLK_INPUT_CLKIN:
+		break;
+	case SI5351_CLK_INPUT_CLKIN:
 		index = 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल पूर्णांक si5351_clkout_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	क्रमागत si5351_clkout_src parent = SI5351_CLKOUT_SRC_DEFAULT;
+static int si5351_clkout_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	enum si5351_clkout_src parent = SI5351_CLKOUT_SRC_DEFAULT;
 
-	चयन (index) अणु
-	हाल 0:
+	switch (index) {
+	case 0:
 		parent = SI5351_CLKOUT_SRC_MSYNTH_N;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		parent = SI5351_CLKOUT_SRC_MSYNTH_0_4;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		parent = SI5351_CLKOUT_SRC_XTAL;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		parent = SI5351_CLKOUT_SRC_CLKIN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस _si5351_clkout_reparent(hwdata->drvdata, hwdata->num, parent);
-पूर्ण
+	return _si5351_clkout_reparent(hwdata->drvdata, hwdata->num, parent);
+}
 
-अटल अचिन्हित दीर्घ si5351_clkout_recalc_rate(काष्ठा clk_hw *hw,
-					       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	अचिन्हित अक्षर reg;
-	अचिन्हित अक्षर rभाग;
+static unsigned long si5351_clkout_recalc_rate(struct clk_hw *hw,
+					       unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	unsigned char reg;
+	unsigned char rdiv;
 
-	अगर (hwdata->num <= 5)
+	if (hwdata->num <= 5)
 		reg = si5351_msynth_params_address(hwdata->num) + 2;
-	अन्यथा
+	else
 		reg = SI5351_CLK6_7_OUTPUT_DIVIDER;
 
-	rभाग = si5351_reg_पढ़ो(hwdata->drvdata, reg);
-	अगर (hwdata->num == 6) अणु
-		rभाग &= SI5351_OUTPUT_CLK6_DIV_MASK;
-	पूर्ण अन्यथा अणु
-		rभाग &= SI5351_OUTPUT_CLK_DIV_MASK;
-		rभाग >>= SI5351_OUTPUT_CLK_DIV_SHIFT;
-	पूर्ण
+	rdiv = si5351_reg_read(hwdata->drvdata, reg);
+	if (hwdata->num == 6) {
+		rdiv &= SI5351_OUTPUT_CLK6_DIV_MASK;
+	} else {
+		rdiv &= SI5351_OUTPUT_CLK_DIV_MASK;
+		rdiv >>= SI5351_OUTPUT_CLK_DIV_SHIFT;
+	}
 
-	वापस parent_rate >> rभाग;
-पूर्ण
+	return parent_rate >> rdiv;
+}
 
-अटल दीर्घ si5351_clkout_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	अचिन्हित अक्षर rभाग;
+static long si5351_clkout_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	unsigned char rdiv;
 
 	/* clkout6/7 can only handle output freqencies < 150MHz */
-	अगर (hwdata->num >= 6 && rate > SI5351_CLKOUT67_MAX_FREQ)
+	if (hwdata->num >= 6 && rate > SI5351_CLKOUT67_MAX_FREQ)
 		rate = SI5351_CLKOUT67_MAX_FREQ;
 
 	/* clkout freqency is 8kHz - 160MHz */
-	अगर (rate > SI5351_CLKOUT_MAX_FREQ)
+	if (rate > SI5351_CLKOUT_MAX_FREQ)
 		rate = SI5351_CLKOUT_MAX_FREQ;
-	अगर (rate < SI5351_CLKOUT_MIN_FREQ)
+	if (rate < SI5351_CLKOUT_MIN_FREQ)
 		rate = SI5351_CLKOUT_MIN_FREQ;
 
-	/* request frequency अगर multisync master */
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) अणु
-		/* use r भागider क्रम frequencies below 1MHz */
-		rभाग = SI5351_OUTPUT_CLK_DIV_1;
-		जबतक (rate < SI5351_MULTISYNTH_MIN_FREQ &&
-		       rभाग < SI5351_OUTPUT_CLK_DIV_128) अणु
-			rभाग += 1;
+	/* request frequency if multisync master */
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) {
+		/* use r divider for frequencies below 1MHz */
+		rdiv = SI5351_OUTPUT_CLK_DIV_1;
+		while (rate < SI5351_MULTISYNTH_MIN_FREQ &&
+		       rdiv < SI5351_OUTPUT_CLK_DIV_128) {
+			rdiv += 1;
 			rate *= 2;
-		पूर्ण
+		}
 		*parent_rate = rate;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ new_rate, new_err, err;
+	} else {
+		unsigned long new_rate, new_err, err;
 
-		/* round to बंदd rभाग */
-		rभाग = SI5351_OUTPUT_CLK_DIV_1;
+		/* round to closed rdiv */
+		rdiv = SI5351_OUTPUT_CLK_DIV_1;
 		new_rate = *parent_rate;
-		err = असल(new_rate - rate);
-		करो अणु
+		err = abs(new_rate - rate);
+		do {
 			new_rate >>= 1;
-			new_err = असल(new_rate - rate);
-			अगर (new_err > err || rभाग == SI5351_OUTPUT_CLK_DIV_128)
-				अवरोध;
-			rभाग++;
+			new_err = abs(new_rate - rate);
+			if (new_err > err || rdiv == SI5351_OUTPUT_CLK_DIV_128)
+				break;
+			rdiv++;
 			err = new_err;
-		पूर्ण जबतक (1);
-	पूर्ण
-	rate = *parent_rate >> rभाग;
+		} while (1);
+	}
+	rate = *parent_rate >> rdiv;
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: rdiv = %u, parent_rate = %lu, rate = %lu\n",
-		__func__, clk_hw_get_name(hw), (1 << rभाग),
+		__func__, clk_hw_get_name(hw), (1 << rdiv),
 		*parent_rate, rate);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल पूर्णांक si5351_clkout_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा si5351_hw_data *hwdata =
-		container_of(hw, काष्ठा si5351_hw_data, hw);
-	अचिन्हित दीर्घ new_rate, new_err, err;
-	अचिन्हित अक्षर rभाग;
+static int si5351_clkout_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long parent_rate)
+{
+	struct si5351_hw_data *hwdata =
+		container_of(hw, struct si5351_hw_data, hw);
+	unsigned long new_rate, new_err, err;
+	unsigned char rdiv;
 
-	/* round to बंदd rभाग */
-	rभाग = SI5351_OUTPUT_CLK_DIV_1;
+	/* round to closed rdiv */
+	rdiv = SI5351_OUTPUT_CLK_DIV_1;
 	new_rate = parent_rate;
-	err = असल(new_rate - rate);
-	करो अणु
+	err = abs(new_rate - rate);
+	do {
 		new_rate >>= 1;
-		new_err = असल(new_rate - rate);
-		अगर (new_err > err || rभाग == SI5351_OUTPUT_CLK_DIV_128)
-			अवरोध;
-		rभाग++;
+		new_err = abs(new_rate - rate);
+		if (new_err > err || rdiv == SI5351_OUTPUT_CLK_DIV_128)
+			break;
+		rdiv++;
 		err = new_err;
-	पूर्ण जबतक (1);
+	} while (1);
 
-	/* ग_लिखो output भागider */
-	चयन (hwdata->num) अणु
-	हाल 6:
+	/* write output divider */
+	switch (hwdata->num) {
+	case 6:
 		si5351_set_bits(hwdata->drvdata, SI5351_CLK6_7_OUTPUT_DIVIDER,
-				SI5351_OUTPUT_CLK6_DIV_MASK, rभाग);
-		अवरोध;
-	हाल 7:
+				SI5351_OUTPUT_CLK6_DIV_MASK, rdiv);
+		break;
+	case 7:
 		si5351_set_bits(hwdata->drvdata, SI5351_CLK6_7_OUTPUT_DIVIDER,
 				SI5351_OUTPUT_CLK_DIV_MASK,
-				rभाग << SI5351_OUTPUT_CLK_DIV_SHIFT);
-		अवरोध;
-	शेष:
+				rdiv << SI5351_OUTPUT_CLK_DIV_SHIFT);
+		break;
+	default:
 		si5351_set_bits(hwdata->drvdata,
 				si5351_msynth_params_address(hwdata->num) + 2,
 				SI5351_OUTPUT_CLK_DIV_MASK,
-				rभाग << SI5351_OUTPUT_CLK_DIV_SHIFT);
-	पूर्ण
+				rdiv << SI5351_OUTPUT_CLK_DIV_SHIFT);
+	}
 
-	/* घातerup clkout */
+	/* powerup clkout */
 	si5351_set_bits(hwdata->drvdata, SI5351_CLK0_CTRL + hwdata->num,
 			SI5351_CLK_POWERDOWN, 0);
 
 	dev_dbg(&hwdata->drvdata->client->dev,
 		"%s - %s: rdiv = %u, parent_rate = %lu, rate = %lu\n",
-		__func__, clk_hw_get_name(hw), (1 << rभाग),
+		__func__, clk_hw_get_name(hw), (1 << rdiv),
 		parent_rate, rate);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops si5351_clkout_ops = अणु
+static const struct clk_ops si5351_clkout_ops = {
 	.prepare = si5351_clkout_prepare,
 	.unprepare = si5351_clkout_unprepare,
 	.set_parent = si5351_clkout_set_parent,
@@ -1145,251 +1144,251 @@
 	.recalc_rate = si5351_clkout_recalc_rate,
 	.round_rate = si5351_clkout_round_rate,
 	.set_rate = si5351_clkout_set_rate,
-पूर्ण;
+};
 
 /*
  * Si5351 i2c probe and DT
  */
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id si5351_dt_ids[] = अणु
-	अणु .compatible = "silabs,si5351a", .data = (व्योम *)SI5351_VARIANT_A, पूर्ण,
-	अणु .compatible = "silabs,si5351a-msop",
-					 .data = (व्योम *)SI5351_VARIANT_A3, पूर्ण,
-	अणु .compatible = "silabs,si5351b", .data = (व्योम *)SI5351_VARIANT_B, पूर्ण,
-	अणु .compatible = "silabs,si5351c", .data = (व्योम *)SI5351_VARIANT_C, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id si5351_dt_ids[] = {
+	{ .compatible = "silabs,si5351a", .data = (void *)SI5351_VARIANT_A, },
+	{ .compatible = "silabs,si5351a-msop",
+					 .data = (void *)SI5351_VARIANT_A3, },
+	{ .compatible = "silabs,si5351b", .data = (void *)SI5351_VARIANT_B, },
+	{ .compatible = "silabs,si5351c", .data = (void *)SI5351_VARIANT_C, },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, si5351_dt_ids);
 
-अटल पूर्णांक si5351_dt_parse(काष्ठा i2c_client *client,
-			   क्रमागत si5351_variant variant)
-अणु
-	काष्ठा device_node *child, *np = client->dev.of_node;
-	काष्ठा si5351_platक्रमm_data *pdata;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
-	पूर्णांक num = 0;
+static int si5351_dt_parse(struct i2c_client *client,
+			   enum si5351_variant variant)
+{
+	struct device_node *child, *np = client->dev.of_node;
+	struct si5351_platform_data *pdata;
+	struct property *prop;
+	const __be32 *p;
+	int num = 0;
 	u32 val;
 
-	अगर (np == शून्य)
-		वापस 0;
+	if (np == NULL)
+		return 0;
 
-	pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
 	/*
-	 * property siद_असल,pll-source : <num src>, [<..>]
+	 * property silabs,pll-source : <num src>, [<..>]
 	 * allow to selectively set pll source
 	 */
-	of_property_क्रम_each_u32(np, "silabs,pll-source", prop, p, num) अणु
-		अगर (num >= 2) अणु
+	of_property_for_each_u32(np, "silabs,pll-source", prop, p, num) {
+		if (num >= 2) {
 			dev_err(&client->dev,
 				"invalid pll %d on pll-source prop\n", num);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		p = of_prop_next_u32(prop, p, &val);
-		अगर (!p) अणु
+		if (!p) {
 			dev_err(&client->dev,
 				"missing pll-source for pll %d\n", num);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		चयन (val) अणु
-		हाल 0:
+		switch (val) {
+		case 0:
 			pdata->pll_src[num] = SI5351_PLL_SRC_XTAL;
-			अवरोध;
-		हाल 1:
-			अगर (variant != SI5351_VARIANT_C) अणु
+			break;
+		case 1:
+			if (variant != SI5351_VARIANT_C) {
 				dev_err(&client->dev,
 					"invalid parent %d for pll %d\n",
 					val, num);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			pdata->pll_src[num] = SI5351_PLL_SRC_CLKIN;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(&client->dev,
 				 "invalid parent %d for pll %d\n", val, num);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	/* per clkout properties */
-	क्रम_each_child_of_node(np, child) अणु
-		अगर (of_property_पढ़ो_u32(child, "reg", &num)) अणु
+	for_each_child_of_node(np, child) {
+		if (of_property_read_u32(child, "reg", &num)) {
 			dev_err(&client->dev, "missing reg property of %pOFn\n",
 				child);
-			जाओ put_child;
-		पूर्ण
+			goto put_child;
+		}
 
-		अगर (num >= 8 ||
-		    (variant == SI5351_VARIANT_A3 && num >= 3)) अणु
+		if (num >= 8 ||
+		    (variant == SI5351_VARIANT_A3 && num >= 3)) {
 			dev_err(&client->dev, "invalid clkout %d\n", num);
-			जाओ put_child;
-		पूर्ण
+			goto put_child;
+		}
 
-		अगर (!of_property_पढ़ो_u32(child, "silabs,multisynth-source",
-					  &val)) अणु
-			चयन (val) अणु
-			हाल 0:
+		if (!of_property_read_u32(child, "silabs,multisynth-source",
+					  &val)) {
+			switch (val) {
+			case 0:
 				pdata->clkout[num].multisynth_src =
 					SI5351_MULTISYNTH_SRC_VCO0;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				pdata->clkout[num].multisynth_src =
 					SI5351_MULTISYNTH_SRC_VCO1;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(&client->dev,
 					"invalid parent %d for multisynth %d\n",
 					val, num);
-				जाओ put_child;
-			पूर्ण
-		पूर्ण
+				goto put_child;
+			}
+		}
 
-		अगर (!of_property_पढ़ो_u32(child, "silabs,clock-source", &val)) अणु
-			चयन (val) अणु
-			हाल 0:
+		if (!of_property_read_u32(child, "silabs,clock-source", &val)) {
+			switch (val) {
+			case 0:
 				pdata->clkout[num].clkout_src =
 					SI5351_CLKOUT_SRC_MSYNTH_N;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				pdata->clkout[num].clkout_src =
 					SI5351_CLKOUT_SRC_MSYNTH_0_4;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				pdata->clkout[num].clkout_src =
 					SI5351_CLKOUT_SRC_XTAL;
-				अवरोध;
-			हाल 3:
-				अगर (variant != SI5351_VARIANT_C) अणु
+				break;
+			case 3:
+				if (variant != SI5351_VARIANT_C) {
 					dev_err(&client->dev,
 						"invalid parent %d for clkout %d\n",
 						val, num);
-					जाओ put_child;
-				पूर्ण
+					goto put_child;
+				}
 				pdata->clkout[num].clkout_src =
 					SI5351_CLKOUT_SRC_CLKIN;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(&client->dev,
 					"invalid parent %d for clkout %d\n",
 					val, num);
-				जाओ put_child;
-			पूर्ण
-		पूर्ण
+				goto put_child;
+			}
+		}
 
-		अगर (!of_property_पढ़ो_u32(child, "silabs,drive-strength",
-					  &val)) अणु
-			चयन (val) अणु
-			हाल SI5351_DRIVE_2MA:
-			हाल SI5351_DRIVE_4MA:
-			हाल SI5351_DRIVE_6MA:
-			हाल SI5351_DRIVE_8MA:
+		if (!of_property_read_u32(child, "silabs,drive-strength",
+					  &val)) {
+			switch (val) {
+			case SI5351_DRIVE_2MA:
+			case SI5351_DRIVE_4MA:
+			case SI5351_DRIVE_6MA:
+			case SI5351_DRIVE_8MA:
 				pdata->clkout[num].drive = val;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(&client->dev,
 					"invalid drive strength %d for clkout %d\n",
 					val, num);
-				जाओ put_child;
-			पूर्ण
-		पूर्ण
+				goto put_child;
+			}
+		}
 
-		अगर (!of_property_पढ़ो_u32(child, "silabs,disable-state",
-					  &val)) अणु
-			चयन (val) अणु
-			हाल 0:
+		if (!of_property_read_u32(child, "silabs,disable-state",
+					  &val)) {
+			switch (val) {
+			case 0:
 				pdata->clkout[num].disable_state =
 					SI5351_DISABLE_LOW;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				pdata->clkout[num].disable_state =
 					SI5351_DISABLE_HIGH;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				pdata->clkout[num].disable_state =
 					SI5351_DISABLE_FLOATING;
-				अवरोध;
-			हाल 3:
+				break;
+			case 3:
 				pdata->clkout[num].disable_state =
 					SI5351_DISABLE_NEVER;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				dev_err(&client->dev,
 					"invalid disable state %d for clkout %d\n",
 					val, num);
-				जाओ put_child;
-			पूर्ण
-		पूर्ण
+				goto put_child;
+			}
+		}
 
-		अगर (!of_property_पढ़ो_u32(child, "clock-frequency", &val))
+		if (!of_property_read_u32(child, "clock-frequency", &val))
 			pdata->clkout[num].rate = val;
 
 		pdata->clkout[num].pll_master =
-			of_property_पढ़ो_bool(child, "silabs,pll-master");
+			of_property_read_bool(child, "silabs,pll-master");
 
 		pdata->clkout[num].pll_reset =
-			of_property_पढ़ो_bool(child, "silabs,pll-reset");
-	पूर्ण
-	client->dev.platक्रमm_data = pdata;
+			of_property_read_bool(child, "silabs,pll-reset");
+	}
+	client->dev.platform_data = pdata;
 
-	वापस 0;
+	return 0;
 put_child:
 	of_node_put(child);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा clk_hw *
-si53351_of_clk_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा si5351_driver_data *drvdata = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+si53351_of_clk_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct si5351_driver_data *drvdata = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= drvdata->num_clkout) अणु
+	if (idx >= drvdata->num_clkout) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &drvdata->clkout[idx].hw;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक si5351_dt_parse(काष्ठा i2c_client *client, क्रमागत si5351_variant variant)
-अणु
-	वापस 0;
-पूर्ण
+	return &drvdata->clkout[idx].hw;
+}
+#else
+static int si5351_dt_parse(struct i2c_client *client, enum si5351_variant variant)
+{
+	return 0;
+}
 
-अटल काष्ठा clk_hw *
-si53351_of_clk_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_OF */
+static struct clk_hw *
+si53351_of_clk_get(struct of_phandle_args *clkspec, void *data)
+{
+	return NULL;
+}
+#endif /* CONFIG_OF */
 
-अटल पूर्णांक si5351_i2c_probe(काष्ठा i2c_client *client,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	क्रमागत si5351_variant variant = (क्रमागत si5351_variant)id->driver_data;
-	काष्ठा si5351_platक्रमm_data *pdata;
-	काष्ठा si5351_driver_data *drvdata;
-	काष्ठा clk_init_data init;
-	स्थिर अक्षर *parent_names[4];
-	u8 num_parents, num_घड़ीs;
-	पूर्णांक ret, n;
+static int si5351_i2c_probe(struct i2c_client *client,
+			    const struct i2c_device_id *id)
+{
+	enum si5351_variant variant = (enum si5351_variant)id->driver_data;
+	struct si5351_platform_data *pdata;
+	struct si5351_driver_data *drvdata;
+	struct clk_init_data init;
+	const char *parent_names[4];
+	u8 num_parents, num_clocks;
+	int ret, n;
 
 	ret = si5351_dt_parse(client, variant);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pdata = client->dev.platक्रमm_data;
-	अगर (!pdata)
-		वापस -EINVAL;
+	pdata = client->dev.platform_data;
+	if (!pdata)
+		return -EINVAL;
 
-	drvdata = devm_kzalloc(&client->dev, माप(*drvdata), GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	drvdata = devm_kzalloc(&client->dev, sizeof(*drvdata), GFP_KERNEL);
+	if (!drvdata)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, drvdata);
 	drvdata->client = client;
@@ -1397,207 +1396,207 @@ si53351_of_clk_get(काष्ठा of_phandle_args *clkspec, व्योम 
 	drvdata->pxtal = devm_clk_get(&client->dev, "xtal");
 	drvdata->pclkin = devm_clk_get(&client->dev, "clkin");
 
-	अगर (PTR_ERR(drvdata->pxtal) == -EPROBE_DEFER ||
+	if (PTR_ERR(drvdata->pxtal) == -EPROBE_DEFER ||
 	    PTR_ERR(drvdata->pclkin) == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
+		return -EPROBE_DEFER;
 
 	/*
-	 * Check क्रम valid parent घड़ी: VARIANT_A and VARIANT_B need XTAL,
+	 * Check for valid parent clock: VARIANT_A and VARIANT_B need XTAL,
 	 *   VARIANT_C can have CLKIN instead.
 	 */
-	अगर (IS_ERR(drvdata->pxtal) &&
-	    (drvdata->variant != SI5351_VARIANT_C || IS_ERR(drvdata->pclkin))) अणु
+	if (IS_ERR(drvdata->pxtal) &&
+	    (drvdata->variant != SI5351_VARIANT_C || IS_ERR(drvdata->pclkin))) {
 		dev_err(&client->dev, "missing parent clock\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	drvdata->regmap = devm_regmap_init_i2c(client, &si5351_regmap_config);
-	अगर (IS_ERR(drvdata->regmap)) अणु
+	if (IS_ERR(drvdata->regmap)) {
 		dev_err(&client->dev, "failed to allocate register map\n");
-		वापस PTR_ERR(drvdata->regmap);
-	पूर्ण
+		return PTR_ERR(drvdata->regmap);
+	}
 
-	/* Disable पूर्णांकerrupts */
-	si5351_reg_ग_लिखो(drvdata, SI5351_INTERRUPT_MASK, 0xf0);
-	/* Ensure pll select is on XTAL क्रम Si5351A/B */
-	अगर (drvdata->variant != SI5351_VARIANT_C)
+	/* Disable interrupts */
+	si5351_reg_write(drvdata, SI5351_INTERRUPT_MASK, 0xf0);
+	/* Ensure pll select is on XTAL for Si5351A/B */
+	if (drvdata->variant != SI5351_VARIANT_C)
 		si5351_set_bits(drvdata, SI5351_PLL_INPUT_SOURCE,
 				SI5351_PLLA_SOURCE | SI5351_PLLB_SOURCE, 0);
 
-	/* setup घड़ी configuration */
-	क्रम (n = 0; n < 2; n++) अणु
+	/* setup clock configuration */
+	for (n = 0; n < 2; n++) {
 		ret = _si5351_pll_reparent(drvdata, n, pdata->pll_src[n]);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"failed to reparent pll %d to %d\n",
 				n, pdata->pll_src[n]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	क्रम (n = 0; n < 8; n++) अणु
+	for (n = 0; n < 8; n++) {
 		ret = _si5351_msynth_reparent(drvdata, n,
 					      pdata->clkout[n].multisynth_src);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"failed to reparent multisynth %d to %d\n",
 				n, pdata->clkout[n].multisynth_src);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = _si5351_clkout_reparent(drvdata, n,
 					      pdata->clkout[n].clkout_src);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"failed to reparent clkout %d to %d\n",
 				n, pdata->clkout[n].clkout_src);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = _si5351_clkout_set_drive_strength(drvdata, n,
 							pdata->clkout[n].drive);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"failed set drive strength of clkout%d to %d\n",
 				n, pdata->clkout[n].drive);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = _si5351_clkout_set_disable_state(drvdata, n,
 						pdata->clkout[n].disable_state);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"failed set disable state of clkout%d to %d\n",
 				n, pdata->clkout[n].disable_state);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* रेजिस्टर xtal input घड़ी gate */
-	स_रखो(&init, 0, माप(init));
+	/* register xtal input clock gate */
+	memset(&init, 0, sizeof(init));
 	init.name = si5351_input_names[0];
 	init.ops = &si5351_xtal_ops;
 	init.flags = 0;
-	अगर (!IS_ERR(drvdata->pxtal)) अणु
+	if (!IS_ERR(drvdata->pxtal)) {
 		drvdata->pxtal_name = __clk_get_name(drvdata->pxtal);
 		init.parent_names = &drvdata->pxtal_name;
 		init.num_parents = 1;
-	पूर्ण
+	}
 	drvdata->xtal.init = &init;
-	ret = devm_clk_hw_रेजिस्टर(&client->dev, &drvdata->xtal);
-	अगर (ret) अणु
+	ret = devm_clk_hw_register(&client->dev, &drvdata->xtal);
+	if (ret) {
 		dev_err(&client->dev, "unable to register %s\n", init.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर clkin input घड़ी gate */
-	अगर (drvdata->variant == SI5351_VARIANT_C) अणु
-		स_रखो(&init, 0, माप(init));
+	/* register clkin input clock gate */
+	if (drvdata->variant == SI5351_VARIANT_C) {
+		memset(&init, 0, sizeof(init));
 		init.name = si5351_input_names[1];
 		init.ops = &si5351_clkin_ops;
-		अगर (!IS_ERR(drvdata->pclkin)) अणु
+		if (!IS_ERR(drvdata->pclkin)) {
 			drvdata->pclkin_name = __clk_get_name(drvdata->pclkin);
 			init.parent_names = &drvdata->pclkin_name;
 			init.num_parents = 1;
-		पूर्ण
+		}
 		drvdata->clkin.init = &init;
-		ret = devm_clk_hw_रेजिस्टर(&client->dev, &drvdata->clkin);
-		अगर (ret) अणु
+		ret = devm_clk_hw_register(&client->dev, &drvdata->clkin);
+		if (ret) {
 			dev_err(&client->dev, "unable to register %s\n",
 				init.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Si5351C allows to mux either xtal or clkin to PLL input */
 	num_parents = (drvdata->variant == SI5351_VARIANT_C) ? 2 : 1;
 	parent_names[0] = si5351_input_names[0];
 	parent_names[1] = si5351_input_names[1];
 
-	/* रेजिस्टर PLLA */
+	/* register PLLA */
 	drvdata->pll[0].num = 0;
 	drvdata->pll[0].drvdata = drvdata;
 	drvdata->pll[0].hw.init = &init;
-	स_रखो(&init, 0, माप(init));
+	memset(&init, 0, sizeof(init));
 	init.name = si5351_pll_names[0];
 	init.ops = &si5351_pll_ops;
 	init.flags = 0;
 	init.parent_names = parent_names;
 	init.num_parents = num_parents;
-	ret = devm_clk_hw_रेजिस्टर(&client->dev, &drvdata->pll[0].hw);
-	अगर (ret) अणु
+	ret = devm_clk_hw_register(&client->dev, &drvdata->pll[0].hw);
+	if (ret) {
 		dev_err(&client->dev, "unable to register %s\n", init.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर PLLB or VXCO (Si5351B) */
+	/* register PLLB or VXCO (Si5351B) */
 	drvdata->pll[1].num = 1;
 	drvdata->pll[1].drvdata = drvdata;
 	drvdata->pll[1].hw.init = &init;
-	स_रखो(&init, 0, माप(init));
-	अगर (drvdata->variant == SI5351_VARIANT_B) अणु
+	memset(&init, 0, sizeof(init));
+	if (drvdata->variant == SI5351_VARIANT_B) {
 		init.name = si5351_pll_names[2];
 		init.ops = &si5351_vxco_ops;
 		init.flags = 0;
-		init.parent_names = शून्य;
+		init.parent_names = NULL;
 		init.num_parents = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		init.name = si5351_pll_names[1];
 		init.ops = &si5351_pll_ops;
 		init.flags = 0;
 		init.parent_names = parent_names;
 		init.num_parents = num_parents;
-	पूर्ण
-	ret = devm_clk_hw_रेजिस्टर(&client->dev, &drvdata->pll[1].hw);
-	अगर (ret) अणु
+	}
+	ret = devm_clk_hw_register(&client->dev, &drvdata->pll[1].hw);
+	if (ret) {
 		dev_err(&client->dev, "unable to register %s\n", init.name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर clk multisync and clk out भागider */
-	num_घड़ीs = (drvdata->variant == SI5351_VARIANT_A3) ? 3 : 8;
+	/* register clk multisync and clk out divider */
+	num_clocks = (drvdata->variant == SI5351_VARIANT_A3) ? 3 : 8;
 	parent_names[0] = si5351_pll_names[0];
-	अगर (drvdata->variant == SI5351_VARIANT_B)
+	if (drvdata->variant == SI5351_VARIANT_B)
 		parent_names[1] = si5351_pll_names[2];
-	अन्यथा
+	else
 		parent_names[1] = si5351_pll_names[1];
 
-	drvdata->msynth = devm_kसुस्मृति(&client->dev, num_घड़ीs,
-				       माप(*drvdata->msynth), GFP_KERNEL);
-	drvdata->clkout = devm_kसुस्मृति(&client->dev, num_घड़ीs,
-				       माप(*drvdata->clkout), GFP_KERNEL);
-	drvdata->num_clkout = num_घड़ीs;
+	drvdata->msynth = devm_kcalloc(&client->dev, num_clocks,
+				       sizeof(*drvdata->msynth), GFP_KERNEL);
+	drvdata->clkout = devm_kcalloc(&client->dev, num_clocks,
+				       sizeof(*drvdata->clkout), GFP_KERNEL);
+	drvdata->num_clkout = num_clocks;
 
-	अगर (WARN_ON(!drvdata->msynth || !drvdata->clkout)) अणु
+	if (WARN_ON(!drvdata->msynth || !drvdata->clkout)) {
 		ret = -ENOMEM;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (n = 0; n < num_घड़ीs; n++) अणु
+	for (n = 0; n < num_clocks; n++) {
 		drvdata->msynth[n].num = n;
 		drvdata->msynth[n].drvdata = drvdata;
 		drvdata->msynth[n].hw.init = &init;
-		स_रखो(&init, 0, माप(init));
+		memset(&init, 0, sizeof(init));
 		init.name = si5351_msynth_names[n];
 		init.ops = &si5351_msynth_ops;
 		init.flags = 0;
-		अगर (pdata->clkout[n].pll_master)
+		if (pdata->clkout[n].pll_master)
 			init.flags |= CLK_SET_RATE_PARENT;
 		init.parent_names = parent_names;
 		init.num_parents = 2;
-		ret = devm_clk_hw_रेजिस्टर(&client->dev,
+		ret = devm_clk_hw_register(&client->dev,
 					   &drvdata->msynth[n].hw);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "unable to register %s\n",
 				init.name);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	num_parents = (drvdata->variant == SI5351_VARIANT_C) ? 4 : 3;
 	parent_names[2] = si5351_input_names[0];
 	parent_names[3] = si5351_input_names[1];
-	क्रम (n = 0; n < num_घड़ीs; n++) अणु
+	for (n = 0; n < num_clocks; n++) {
 		parent_names[0] = si5351_msynth_names[n];
 		parent_names[1] = (n < 4) ? si5351_msynth_names[0] :
 			si5351_msynth_names[4];
@@ -1605,69 +1604,69 @@ si53351_of_clk_get(काष्ठा of_phandle_args *clkspec, व्योम 
 		drvdata->clkout[n].num = n;
 		drvdata->clkout[n].drvdata = drvdata;
 		drvdata->clkout[n].hw.init = &init;
-		स_रखो(&init, 0, माप(init));
+		memset(&init, 0, sizeof(init));
 		init.name = si5351_clkout_names[n];
 		init.ops = &si5351_clkout_ops;
 		init.flags = 0;
-		अगर (pdata->clkout[n].clkout_src == SI5351_CLKOUT_SRC_MSYNTH_N)
+		if (pdata->clkout[n].clkout_src == SI5351_CLKOUT_SRC_MSYNTH_N)
 			init.flags |= CLK_SET_RATE_PARENT;
 		init.parent_names = parent_names;
 		init.num_parents = num_parents;
-		ret = devm_clk_hw_रेजिस्टर(&client->dev,
+		ret = devm_clk_hw_register(&client->dev,
 					   &drvdata->clkout[n].hw);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "unable to register %s\n",
 				init.name);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* set initial clkout rate */
-		अगर (pdata->clkout[n].rate != 0) अणु
-			पूर्णांक ret;
+		if (pdata->clkout[n].rate != 0) {
+			int ret;
 			ret = clk_set_rate(drvdata->clkout[n].hw.clk,
 					   pdata->clkout[n].rate);
-			अगर (ret != 0) अणु
+			if (ret != 0) {
 				dev_err(&client->dev, "Cannot set rate : %d\n",
 					ret);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	ret = of_clk_add_hw_provider(client->dev.of_node, si53351_of_clk_get,
 				     drvdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "unable to add clk provider\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक si5351_i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
+static int si5351_i2c_remove(struct i2c_client *client)
+{
 	of_clk_del_provider(client->dev.of_node);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id si5351_i2c_ids[] = अणु
-	अणु "si5351a", SI5351_VARIANT_A पूर्ण,
-	अणु "si5351a-msop", SI5351_VARIANT_A3 पूर्ण,
-	अणु "si5351b", SI5351_VARIANT_B पूर्ण,
-	अणु "si5351c", SI5351_VARIANT_C पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id si5351_i2c_ids[] = {
+	{ "si5351a", SI5351_VARIANT_A },
+	{ "si5351a-msop", SI5351_VARIANT_A3 },
+	{ "si5351b", SI5351_VARIANT_B },
+	{ "si5351c", SI5351_VARIANT_C },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, si5351_i2c_ids);
 
-अटल काष्ठा i2c_driver si5351_driver = अणु
-	.driver = अणु
+static struct i2c_driver si5351_driver = {
+	.driver = {
 		.name = "si5351",
 		.of_match_table = of_match_ptr(si5351_dt_ids),
-	पूर्ण,
+	},
 	.probe = si5351_i2c_probe,
-	.हटाओ = si5351_i2c_हटाओ,
+	.remove = si5351_i2c_remove,
 	.id_table = si5351_i2c_ids,
-पूर्ण;
+};
 module_i2c_driver(si5351_driver);
 
 MODULE_AUTHOR("Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com");

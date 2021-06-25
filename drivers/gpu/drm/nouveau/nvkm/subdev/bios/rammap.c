@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,88 +21,88 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/bit.h>
-#समावेश <subdev/bios/rammap.h>
+#include <subdev/bios.h>
+#include <subdev/bios/bit.h>
+#include <subdev/bios/rammap.h>
 
 u32
-nvbios_rammapTe(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr,
+nvbios_rammapTe(struct nvkm_bios *bios, u8 *ver, u8 *hdr,
 		u8 *cnt, u8 *len, u8 *snr, u8 *ssz)
-अणु
-	काष्ठा bit_entry bit_P;
+{
+	struct bit_entry bit_P;
 	u32 rammap = 0x0000;
 
-	अगर (!bit_entry(bios, 'P', &bit_P)) अणु
-		अगर (bit_P.version == 2)
+	if (!bit_entry(bios, 'P', &bit_P)) {
+		if (bit_P.version == 2)
 			rammap = nvbios_rd32(bios, bit_P.offset + 4);
 
-		अगर (rammap) अणु
+		if (rammap) {
 			*ver = nvbios_rd08(bios, rammap + 0);
-			चयन (*ver) अणु
-			हाल 0x10:
-			हाल 0x11:
+			switch (*ver) {
+			case 0x10:
+			case 0x11:
 				*hdr = nvbios_rd08(bios, rammap + 1);
 				*cnt = nvbios_rd08(bios, rammap + 5);
 				*len = nvbios_rd08(bios, rammap + 2);
 				*snr = nvbios_rd08(bios, rammap + 4);
 				*ssz = nvbios_rd08(bios, rammap + 3);
-				वापस rammap;
-			शेष:
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return rammap;
+			default:
+				break;
+			}
+		}
+	}
 
-	वापस 0x0000;
-पूर्ण
+	return 0x0000;
+}
 
 u32
-nvbios_rammapEe(काष्ठा nvkm_bios *bios, पूर्णांक idx,
+nvbios_rammapEe(struct nvkm_bios *bios, int idx,
 		u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-अणु
+{
 	u8  snr, ssz;
 	u32 rammap = nvbios_rammapTe(bios, ver, hdr, cnt, len, &snr, &ssz);
-	अगर (rammap && idx < *cnt) अणु
+	if (rammap && idx < *cnt) {
 		rammap = rammap + *hdr + (idx * (*len + (snr * ssz)));
 		*hdr = *len;
 		*cnt = snr;
 		*len = ssz;
-		वापस rammap;
-	पूर्ण
-	वापस 0x0000;
-पूर्ण
+		return rammap;
+	}
+	return 0x0000;
+}
 
-/* Pretend a perक्रमmance mode is also a rammap entry, helps coalesce entries
+/* Pretend a performance mode is also a rammap entry, helps coalesce entries
  * later on */
 u32
-nvbios_rammapEp_from_perf(काष्ठा nvkm_bios *bios, u32 data, u8 size,
-		काष्ठा nvbios_ramcfg *p)
-अणु
-	स_रखो(p, 0x00, माप(*p));
+nvbios_rammapEp_from_perf(struct nvkm_bios *bios, u32 data, u8 size,
+		struct nvbios_ramcfg *p)
+{
+	memset(p, 0x00, sizeof(*p));
 
 	p->rammap_00_16_20 = (nvbios_rd08(bios, data + 0x16) & 0x20) >> 5;
 	p->rammap_00_16_40 = (nvbios_rd08(bios, data + 0x16) & 0x40) >> 6;
 	p->rammap_00_17_02 = (nvbios_rd08(bios, data + 0x17) & 0x02) >> 1;
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 u32
-nvbios_rammapEp(काष्ठा nvkm_bios *bios, पूर्णांक idx,
-		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_ramcfg *p)
-अणु
+nvbios_rammapEp(struct nvkm_bios *bios, int idx,
+		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_ramcfg *p)
+{
 	u32 data = nvbios_rammapEe(bios, idx, ver, hdr, cnt, len), temp;
-	स_रखो(p, 0x00, माप(*p));
+	memset(p, 0x00, sizeof(*p));
 	p->rammap_ver = *ver;
 	p->rammap_hdr = *hdr;
-	चयन (!!data * *ver) अणु
-	हाल 0x10:
+	switch (!!data * *ver) {
+	case 0x10:
 		p->rammap_min      =  nvbios_rd16(bios, data + 0x00);
 		p->rammap_max      =  nvbios_rd16(bios, data + 0x02);
 		p->rammap_10_04_02 = (nvbios_rd08(bios, data + 0x04) & 0x02) >> 1;
 		p->rammap_10_04_08 = (nvbios_rd08(bios, data + 0x04) & 0x08) >> 3;
-		अवरोध;
-	हाल 0x11:
+		break;
+	case 0x11:
 		p->rammap_min      =  nvbios_rd16(bios, data + 0x00);
 		p->rammap_max      =  nvbios_rd16(bios, data + 0x02);
 		p->rammap_11_08_01 = (nvbios_rd08(bios, data + 0x08) & 0x01) >> 0;
@@ -122,48 +121,48 @@ nvbios_rammapEp(काष्ठा nvkm_bios *bios, पूर्णांक idx
 		p->rammap_11_0e    =  nvbios_rd08(bios, data + 0x0e);
 		p->rammap_11_0f    =  nvbios_rd08(bios, data + 0x0f);
 		p->rammap_11_11_0c = (nvbios_rd08(bios, data + 0x11) & 0x0c) >> 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data = 0;
-		अवरोध;
-	पूर्ण
-	वापस data;
-पूर्ण
+		break;
+	}
+	return data;
+}
 
 u32
-nvbios_rammapEm(काष्ठा nvkm_bios *bios, u16 mhz,
-		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_ramcfg *info)
-अणु
-	पूर्णांक idx = 0;
+nvbios_rammapEm(struct nvkm_bios *bios, u16 mhz,
+		u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_ramcfg *info)
+{
+	int idx = 0;
 	u32 data;
-	जबतक ((data = nvbios_rammapEp(bios, idx++, ver, hdr, cnt, len, info))) अणु
-		अगर (mhz >= info->rammap_min && mhz <= info->rammap_max)
-			अवरोध;
-	पूर्ण
-	वापस data;
-पूर्ण
+	while ((data = nvbios_rammapEp(bios, idx++, ver, hdr, cnt, len, info))) {
+		if (mhz >= info->rammap_min && mhz <= info->rammap_max)
+			break;
+	}
+	return data;
+}
 
 u32
-nvbios_rammapSe(काष्ठा nvkm_bios *bios, u32 data,
-		u8 ever, u8 ehdr, u8 ecnt, u8 elen, पूर्णांक idx, u8 *ver, u8 *hdr)
-अणु
-	अगर (idx < ecnt) अणु
+nvbios_rammapSe(struct nvkm_bios *bios, u32 data,
+		u8 ever, u8 ehdr, u8 ecnt, u8 elen, int idx, u8 *ver, u8 *hdr)
+{
+	if (idx < ecnt) {
 		data = data + ehdr + (idx * elen);
 		*ver = ever;
 		*hdr = elen;
-		वापस data;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return data;
+	}
+	return 0;
+}
 
 u32
-nvbios_rammapSp_from_perf(काष्ठा nvkm_bios *bios, u32 data, u8 size, पूर्णांक idx,
-		काष्ठा nvbios_ramcfg *p)
-अणु
+nvbios_rammapSp_from_perf(struct nvkm_bios *bios, u32 data, u8 size, int idx,
+		struct nvbios_ramcfg *p)
+{
 	data += (idx * size);
 
-	अगर (size < 11)
-		वापस 0x00000000;
+	if (size < 11)
+		return 0x00000000;
 
 	p->ramcfg_ver = 0;
 	p->ramcfg_timing   =  nvbios_rd08(bios, data + 0x01);
@@ -184,19 +183,19 @@ nvbios_rammapSp_from_perf(काष्ठा nvkm_bios *bios, u32 data, u8 size,
 	p->ramcfg_00_0a_0f = (nvbios_rd08(bios, data + 0x0a) & 0x0f) >> 0;
 	p->ramcfg_00_0a_f0 = (nvbios_rd08(bios, data + 0x0a) & 0xf0) >> 4;
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
 u32
-nvbios_rammapSp(काष्ठा nvkm_bios *bios, u32 data,
-		u8 ever, u8 ehdr, u8 ecnt, u8 elen, पूर्णांक idx,
-		u8 *ver, u8 *hdr, काष्ठा nvbios_ramcfg *p)
-अणु
+nvbios_rammapSp(struct nvkm_bios *bios, u32 data,
+		u8 ever, u8 ehdr, u8 ecnt, u8 elen, int idx,
+		u8 *ver, u8 *hdr, struct nvbios_ramcfg *p)
+{
 	data = nvbios_rammapSe(bios, data, ever, ehdr, ecnt, elen, idx, ver, hdr);
 	p->ramcfg_ver = *ver;
 	p->ramcfg_hdr = *hdr;
-	चयन (!!data * *ver) अणु
-	हाल 0x10:
+	switch (!!data * *ver) {
+	case 0x10:
 		p->ramcfg_timing   =  nvbios_rd08(bios, data + 0x01);
 		p->ramcfg_10_02_01 = (nvbios_rd08(bios, data + 0x02) & 0x01) >> 0;
 		p->ramcfg_10_02_02 = (nvbios_rd08(bios, data + 0x02) & 0x02) >> 1;
@@ -214,8 +213,8 @@ nvbios_rammapSp(काष्ठा nvkm_bios *bios, u32 data,
 		p->ramcfg_10_08    = (nvbios_rd08(bios, data + 0x08) & 0xff) >> 0;
 		p->ramcfg_10_09_0f = (nvbios_rd08(bios, data + 0x09) & 0x0f) >> 0;
 		p->ramcfg_10_09_f0 = (nvbios_rd08(bios, data + 0x09) & 0xf0) >> 4;
-		अवरोध;
-	हाल 0x11:
+		break;
+	case 0x11:
 		p->ramcfg_timing   =  nvbios_rd08(bios, data + 0x00);
 		p->ramcfg_11_01_01 = (nvbios_rd08(bios, data + 0x01) & 0x01) >> 0;
 		p->ramcfg_11_01_02 = (nvbios_rd08(bios, data + 0x01) & 0x02) >> 1;
@@ -250,10 +249,10 @@ nvbios_rammapSp(काष्ठा nvkm_bios *bios, u32 data,
 		p->ramcfg_11_08_10 = (nvbios_rd08(bios, data + 0x08) & 0x10) >> 4;
 		p->ramcfg_11_08_20 = (nvbios_rd08(bios, data + 0x08) & 0x20) >> 5;
 		p->ramcfg_11_09    = (nvbios_rd08(bios, data + 0x09) & 0xff) >> 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		data = 0;
-		अवरोध;
-	पूर्ण
-	वापस data;
-पूर्ण
+		break;
+	}
+	return data;
+}

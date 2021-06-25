@@ -1,334 +1,333 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Aपंचांगel PDMIC driver
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Atmel PDMIC driver
  *
- * Copyright (C) 2015 Aपंचांगel
+ * Copyright (C) 2015 Atmel
  *
- * Author: Songjun Wu <songjun.wu@aपंचांगel.com>
+ * Author: Songjun Wu <songjun.wu@atmel.com>
  */
 
-#समावेश <linux/of.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <sound/core.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/tlv.h>
-#समावेश "atmel-pdmic.h"
+#include <linux/of.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <sound/core.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/tlv.h>
+#include "atmel-pdmic.h"
 
-काष्ठा aपंचांगel_pdmic_pdata अणु
+struct atmel_pdmic_pdata {
 	u32 mic_min_freq;
 	u32 mic_max_freq;
 	s32 mic_offset;
-	स्थिर अक्षर *card_name;
-पूर्ण;
+	const char *card_name;
+};
 
-काष्ठा aपंचांगel_pdmic अणु
+struct atmel_pdmic {
 	dma_addr_t phy_base;
-	काष्ठा regmap *regmap;
-	काष्ठा clk *pclk;
-	काष्ठा clk *gclk;
-	काष्ठा device *dev;
-	पूर्णांक irq;
-	काष्ठा snd_pcm_substream *substream;
-	स्थिर काष्ठा aपंचांगel_pdmic_pdata *pdata;
-पूर्ण;
+	struct regmap *regmap;
+	struct clk *pclk;
+	struct clk *gclk;
+	struct device *dev;
+	int irq;
+	struct snd_pcm_substream *substream;
+	const struct atmel_pdmic_pdata *pdata;
+};
 
-अटल स्थिर काष्ठा of_device_id aपंचांगel_pdmic_of_match[] = अणु
-	अणु
+static const struct of_device_id atmel_pdmic_of_match[] = {
+	{
 		.compatible = "atmel,sama5d2-pdmic",
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, aपंचांगel_pdmic_of_match);
+	}
+};
+MODULE_DEVICE_TABLE(of, atmel_pdmic_of_match);
 
-#घोषणा PDMIC_OFFSET_MAX_VAL	S16_MAX
-#घोषणा PDMIC_OFFSET_MIN_VAL	S16_MIN
+#define PDMIC_OFFSET_MAX_VAL	S16_MAX
+#define PDMIC_OFFSET_MIN_VAL	S16_MIN
 
-अटल काष्ठा aपंचांगel_pdmic_pdata *aपंचांगel_pdmic_dt_init(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा aपंचांगel_pdmic_pdata *pdata;
+static struct atmel_pdmic_pdata *atmel_pdmic_dt_init(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct atmel_pdmic_pdata *pdata;
 
-	अगर (!np) अणु
+	if (!np) {
 		dev_err(dev, "device node not found\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (of_property_पढ़ो_string(np, "atmel,model", &pdata->card_name))
+	if (of_property_read_string(np, "atmel,model", &pdata->card_name))
 		pdata->card_name = "PDMIC";
 
-	अगर (of_property_पढ़ो_u32(np, "atmel,mic-min-freq",
-				 &pdata->mic_min_freq)) अणु
+	if (of_property_read_u32(np, "atmel,mic-min-freq",
+				 &pdata->mic_min_freq)) {
 		dev_err(dev, "failed to get mic-min-freq\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (of_property_पढ़ो_u32(np, "atmel,mic-max-freq",
-				 &pdata->mic_max_freq)) अणु
+	if (of_property_read_u32(np, "atmel,mic-max-freq",
+				 &pdata->mic_max_freq)) {
 		dev_err(dev, "failed to get mic-max-freq\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (pdata->mic_max_freq < pdata->mic_min_freq) अणु
+	if (pdata->mic_max_freq < pdata->mic_min_freq) {
 		dev_err(dev,
 			"mic-max-freq should not be less than mic-min-freq\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (of_property_पढ़ो_s32(np, "atmel,mic-offset", &pdata->mic_offset))
+	if (of_property_read_s32(np, "atmel,mic-offset", &pdata->mic_offset))
 		pdata->mic_offset = 0;
 
-	अगर (pdata->mic_offset > PDMIC_OFFSET_MAX_VAL) अणु
+	if (pdata->mic_offset > PDMIC_OFFSET_MAX_VAL) {
 		dev_warn(dev,
 			 "mic-offset value %d is larger than the max value %d, the max value is specified\n",
 			 pdata->mic_offset, PDMIC_OFFSET_MAX_VAL);
 		pdata->mic_offset = PDMIC_OFFSET_MAX_VAL;
-	पूर्ण अन्यथा अगर (pdata->mic_offset < PDMIC_OFFSET_MIN_VAL) अणु
+	} else if (pdata->mic_offset < PDMIC_OFFSET_MIN_VAL) {
 		dev_warn(dev,
 			 "mic-offset value %d is less than the min value %d, the min value is specified\n",
 			 pdata->mic_offset, PDMIC_OFFSET_MIN_VAL);
 		pdata->mic_offset = PDMIC_OFFSET_MIN_VAL;
-	पूर्ण
+	}
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
 /* cpu dai component */
-अटल पूर्णांक aपंचांगel_pdmic_cpu_dai_startup(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
-	पूर्णांक ret;
+static int atmel_pdmic_cpu_dai_startup(struct snd_pcm_substream *substream,
+					struct snd_soc_dai *cpu_dai)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
+	int ret;
 
 	ret = clk_prepare_enable(dd->gclk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret =  clk_prepare_enable(dd->pclk);
-	अगर (ret) अणु
+	if (ret) {
 		clk_disable_unprepare(dd->gclk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Clear all bits in the Control Register(PDMIC_CR) */
-	regmap_ग_लिखो(dd->regmap, PDMIC_CR, 0);
+	regmap_write(dd->regmap, PDMIC_CR, 0);
 
 	dd->substream = substream;
 
-	/* Enable the overrun error पूर्णांकerrupt */
-	regmap_ग_लिखो(dd->regmap, PDMIC_IER, PDMIC_IER_OVRE);
+	/* Enable the overrun error interrupt */
+	regmap_write(dd->regmap, PDMIC_IER, PDMIC_IER_OVRE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_pdmic_cpu_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
+static void atmel_pdmic_cpu_dai_shutdown(struct snd_pcm_substream *substream,
+					struct snd_soc_dai *cpu_dai)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
 
-	/* Disable the overrun error पूर्णांकerrupt */
-	regmap_ग_लिखो(dd->regmap, PDMIC_IDR, PDMIC_IDR_OVRE);
+	/* Disable the overrun error interrupt */
+	regmap_write(dd->regmap, PDMIC_IDR, PDMIC_IDR_OVRE);
 
 	clk_disable_unprepare(dd->gclk);
 	clk_disable_unprepare(dd->pclk);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_pdmic_cpu_dai_prepare(काष्ठा snd_pcm_substream *substream,
-					काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
-	काष्ठा snd_soc_component *component = cpu_dai->component;
+static int atmel_pdmic_cpu_dai_prepare(struct snd_pcm_substream *substream,
+					struct snd_soc_dai *cpu_dai)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_component *component = cpu_dai->component;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	/* Clean the PDMIC Converted Data Register */
-	ret = regmap_पढ़ो(dd->regmap, PDMIC_CDR, &val);
-	अगर (ret < 0)
-		वापस 0;
+	ret = regmap_read(dd->regmap, PDMIC_CDR, &val);
+	if (ret < 0)
+		return 0;
 
 	ret = snd_soc_component_update_bits(component, PDMIC_CR,
 					    PDMIC_CR_ENPDM_MASK,
 					    PDMIC_CR_ENPDM_DIS <<
 					    PDMIC_CR_ENPDM_SHIFT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा ATMEL_PDMIC_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE)
+#define ATMEL_PDMIC_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-/* platक्रमm */
-#घोषणा ATMEL_PDMIC_MAX_BUF_SIZE  (64 * 1024)
-#घोषणा ATMEL_PDMIC_PREALLOC_BUF_SIZE  ATMEL_PDMIC_MAX_BUF_SIZE
+/* platform */
+#define ATMEL_PDMIC_MAX_BUF_SIZE  (64 * 1024)
+#define ATMEL_PDMIC_PREALLOC_BUF_SIZE  ATMEL_PDMIC_MAX_BUF_SIZE
 
-अटल स्थिर काष्ठा snd_pcm_hardware aपंचांगel_pdmic_hw = अणु
+static const struct snd_pcm_hardware atmel_pdmic_hw = {
 	.info			= SNDRV_PCM_INFO_MMAP
 				| SNDRV_PCM_INFO_MMAP_VALID
 				| SNDRV_PCM_INFO_INTERLEAVED
 				| SNDRV_PCM_INFO_RESUME
 				| SNDRV_PCM_INFO_PAUSE,
-	.क्रमmats		= ATMEL_PDMIC_FORMATS,
+	.formats		= ATMEL_PDMIC_FORMATS,
 	.buffer_bytes_max	= ATMEL_PDMIC_MAX_BUF_SIZE,
 	.period_bytes_min	= 256,
 	.period_bytes_max	= 32 * 1024,
 	.periods_min		= 2,
 	.periods_max		= 256,
-पूर्ण;
+};
 
-अटल पूर्णांक
-aपंचांगel_pdmic_platक्रमm_configure_dma(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params,
-				काष्ठा dma_slave_config *slave_config)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
-	पूर्णांक ret;
+static int
+atmel_pdmic_platform_configure_dma(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct dma_slave_config *slave_config)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
+	int ret;
 
 	ret = snd_hwparams_to_dma_slave_config(substream, params,
 					       slave_config);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dd->dev,
 			"hw params to dma slave configure failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	slave_config->src_addr		= dd->phy_base + PDMIC_CDR;
 	slave_config->src_maxburst	= 1;
 	slave_config->dst_maxburst	= 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_dmaengine_pcm_config
-aपंचांगel_pdmic_dmaengine_pcm_config = अणु
-	.prepare_slave_config	= aपंचांगel_pdmic_platक्रमm_configure_dma,
-	.pcm_hardware		= &aपंचांगel_pdmic_hw,
-	.pपुनः_स्मृति_buffer_size	= ATMEL_PDMIC_PREALLOC_BUF_SIZE,
-पूर्ण;
+static const struct snd_dmaengine_pcm_config
+atmel_pdmic_dmaengine_pcm_config = {
+	.prepare_slave_config	= atmel_pdmic_platform_configure_dma,
+	.pcm_hardware		= &atmel_pdmic_hw,
+	.prealloc_buffer_size	= ATMEL_PDMIC_PREALLOC_BUF_SIZE,
+};
 
 /* codec */
 /* Mic Gain = dgain * 2^(-scale) */
-काष्ठा mic_gain अणु
-	अचिन्हित पूर्णांक dgain;
-	अचिन्हित पूर्णांक scale;
-पूर्ण;
+struct mic_gain {
+	unsigned int dgain;
+	unsigned int scale;
+};
 
 /* range from -90 dB to 90 dB */
-अटल स्थिर काष्ठा mic_gain mic_gain_table[] = अणु
-अणु    1, 15पूर्ण, अणु    1, 14पूर्ण,                           /* -90, -84 dB */
-अणु    3, 15पूर्ण, अणु    1, 13पूर्ण, अणु    3, 14पूर्ण, अणु    1, 12पूर्ण, /* -81, -78, -75, -72 dB */
-अणु    5, 14पूर्ण, अणु   13, 15पूर्ण,                           /* -70, -68 dB */
-अणु    9, 14पूर्ण, अणु   21, 15पूर्ण, अणु   23, 15पूर्ण, अणु   13, 14पूर्ण, /* -65 ~ -62 dB */
-अणु   29, 15पूर्ण, अणु   33, 15पूर्ण, अणु   37, 15पूर्ण, अणु   41, 15पूर्ण, /* -61 ~ -58 dB */
-अणु   23, 14पूर्ण, अणु   13, 13पूर्ण, अणु   58, 15पूर्ण, अणु   65, 15पूर्ण, /* -57 ~ -54 dB */
-अणु   73, 15पूर्ण, अणु   41, 14पूर्ण, अणु   23, 13पूर्ण, अणु   13, 12पूर्ण, /* -53 ~ -50 dB */
-अणु   29, 13पूर्ण, अणु   65, 14पूर्ण, अणु   73, 14पूर्ण, अणु   41, 13पूर्ण, /* -49 ~ -46 dB */
-अणु   23, 12पूर्ण, अणु  207, 15पूर्ण, अणु   29, 12पूर्ण, अणु   65, 13पूर्ण, /* -45 ~ -42 dB */
-अणु   73, 13पूर्ण, अणु   41, 12पूर्ण, अणु   23, 11पूर्ण, अणु  413, 15पूर्ण, /* -41 ~ -38 dB */
-अणु  463, 15पूर्ण, अणु  519, 15पूर्ण, अणु  583, 15पूर्ण, अणु  327, 14पूर्ण, /* -37 ~ -34 dB */
-अणु  367, 14पूर्ण, अणु  823, 15पूर्ण, अणु  231, 13पूर्ण, अणु 1036, 15पूर्ण, /* -33 ~ -30 dB */
-अणु 1163, 15पूर्ण, अणु 1305, 15पूर्ण, अणु  183, 12पूर्ण, अणु 1642, 15पूर्ण, /* -29 ~ -26 dB */
-अणु 1843, 15पूर्ण, अणु 2068, 15पूर्ण, अणु  145, 11पूर्ण, अणु 2603, 15पूर्ण, /* -25 ~ -22 dB */
-अणु  365, 12पूर्ण, अणु 3277, 15पूर्ण, अणु 3677, 15पूर्ण, अणु 4125, 15पूर्ण, /* -21 ~ -18 dB */
-अणु 4629, 15पूर्ण, अणु 5193, 15पूर्ण, अणु 5827, 15पूर्ण, अणु 3269, 14पूर्ण, /* -17 ~ -14 dB */
-अणु  917, 12पूर्ण, अणु 8231, 15पूर्ण, अणु 9235, 15पूर्ण, अणु 5181, 14पूर्ण, /* -13 ~ -10 dB */
-अणु11627, 15पूर्ण, अणु13045, 15पूर्ण, अणु14637, 15पूर्ण, अणु16423, 15पूर्ण, /*  -9 ~ -6 dB */
-अणु18427, 15पूर्ण, अणु20675, 15पूर्ण, अणु 5799, 13पूर्ण, अणु26029, 15पूर्ण, /*  -5 ~ -2 dB */
-अणु 7301, 13पूर्ण, अणु    1,  0पूर्ण, अणु18383, 14पूर्ण, अणु10313, 13पूर्ण, /*  -1 ~ 2 dB */
-अणु23143, 14पूर्ण, अणु25967, 14पूर्ण, अणु29135, 14पूर्ण, अणु16345, 13पूर्ण, /*   3 ~ 6 dB */
-अणु 4585, 11पूर्ण, अणु20577, 13पूर्ण, अणु 1443,  9पूर्ण, अणु25905, 13पूर्ण, /*   7 ~ 10 dB */
-अणु14533, 12पूर्ण, अणु 8153, 11पूर्ण, अणु 2287,  9पूर्ण, अणु20529, 12पूर्ण, /*  11 ~ 14 dB */
-अणु11517, 11पूर्ण, अणु 6461, 10पूर्ण, अणु28997, 12पूर्ण, अणु 4067,  9पूर्ण, /*  15 ~ 18 dB */
-अणु18253, 11पूर्ण, अणु   10,  0पूर्ण, अणु22979, 11पूर्ण, अणु25783, 11पूर्ण, /*  19 ~ 22 dB */
-अणु28929, 11पूर्ण, अणु32459, 11पूर्ण, अणु 9105,  9पूर्ण, अणु20431, 10पूर्ण, /*  23 ~ 26 dB */
-अणु22925, 10पूर्ण, अणु12861,  9पूर्ण, अणु 7215,  8पूर्ण, अणु16191,  9पूर्ण, /*  27 ~ 30 dB */
-अणु 9083,  8पूर्ण, अणु20383,  9पूर्ण, अणु11435,  8पूर्ण, अणु 6145,  7पूर्ण, /*  31 ~ 34 dB */
-अणु 3599,  6पूर्ण, अणु32305,  9पूर्ण, अणु18123,  8पूर्ण, अणु20335,  8पूर्ण, /*  35 ~ 38 dB */
-अणु  713,  3पूर्ण, अणु  100,  0पूर्ण, अणु 7181,  6पूर्ण, अणु 8057,  6पूर्ण, /*  39 ~ 42 dB */
-अणु  565,  2पूर्ण, अणु20287,  7पूर्ण, अणु11381,  6पूर्ण, अणु25539,  7पूर्ण, /*  43 ~ 46 dB */
-अणु 1791,  3पूर्ण, अणु 4019,  4पूर्ण, अणु 9019,  5पूर्ण, अणु20239,  6पूर्ण, /*  47 ~ 50 dB */
-अणु 5677,  4पूर्ण, अणु25479,  6पूर्ण, अणु 7147,  4पूर्ण, अणु 8019,  4पूर्ण, /*  51 ~ 54 dB */
-अणु17995,  5पूर्ण, अणु20191,  5पूर्ण, अणु11327,  4पूर्ण, अणु12709,  4पूर्ण, /*  55 ~ 58 dB */
-अणु 3565,  2पूर्ण, अणु 1000,  0पूर्ण, अणु 1122,  0पूर्ण, अणु 1259,  0पूर्ण, /*  59 ~ 62 dB */
-अणु 2825,  1पूर्ण, अणु12679,  3पूर्ण, अणु 7113,  2पूर्ण, अणु 7981,  2पूर्ण, /*  63 ~ 66 dB */
-अणु 8955,  2पूर्ण, अणु20095,  3पूर्ण, अणु22547,  3पूर्ण, अणु12649,  2पूर्ण, /*  67 ~ 70 dB */
-अणु28385,  3पूर्ण, अणु 3981,  0पूर्ण, अणु17867,  2पूर्ण, अणु20047,  2पूर्ण, /*  71 ~ 74 dB */
-अणु11247,  1पूर्ण, अणु12619,  1पूर्ण, अणु14159,  1पूर्ण, अणु31773,  2पूर्ण, /*  75 ~ 78 dB */
-अणु17825,  1पूर्ण, अणु10000,  0पूर्ण, अणु11220,  0पूर्ण, अणु12589,  0पूर्ण, /*  79 ~ 82 dB */
-अणु28251,  1पूर्ण, अणु15849,  0पूर्ण, अणु17783,  0पूर्ण, अणु19953,  0पूर्ण, /*  83 ~ 86 dB */
-अणु22387,  0पूर्ण, अणु25119,  0पूर्ण, अणु28184,  0पूर्ण, अणु31623,  0पूर्ण, /*  87 ~ 90 dB */
-पूर्ण;
+static const struct mic_gain mic_gain_table[] = {
+{    1, 15}, {    1, 14},                           /* -90, -84 dB */
+{    3, 15}, {    1, 13}, {    3, 14}, {    1, 12}, /* -81, -78, -75, -72 dB */
+{    5, 14}, {   13, 15},                           /* -70, -68 dB */
+{    9, 14}, {   21, 15}, {   23, 15}, {   13, 14}, /* -65 ~ -62 dB */
+{   29, 15}, {   33, 15}, {   37, 15}, {   41, 15}, /* -61 ~ -58 dB */
+{   23, 14}, {   13, 13}, {   58, 15}, {   65, 15}, /* -57 ~ -54 dB */
+{   73, 15}, {   41, 14}, {   23, 13}, {   13, 12}, /* -53 ~ -50 dB */
+{   29, 13}, {   65, 14}, {   73, 14}, {   41, 13}, /* -49 ~ -46 dB */
+{   23, 12}, {  207, 15}, {   29, 12}, {   65, 13}, /* -45 ~ -42 dB */
+{   73, 13}, {   41, 12}, {   23, 11}, {  413, 15}, /* -41 ~ -38 dB */
+{  463, 15}, {  519, 15}, {  583, 15}, {  327, 14}, /* -37 ~ -34 dB */
+{  367, 14}, {  823, 15}, {  231, 13}, { 1036, 15}, /* -33 ~ -30 dB */
+{ 1163, 15}, { 1305, 15}, {  183, 12}, { 1642, 15}, /* -29 ~ -26 dB */
+{ 1843, 15}, { 2068, 15}, {  145, 11}, { 2603, 15}, /* -25 ~ -22 dB */
+{  365, 12}, { 3277, 15}, { 3677, 15}, { 4125, 15}, /* -21 ~ -18 dB */
+{ 4629, 15}, { 5193, 15}, { 5827, 15}, { 3269, 14}, /* -17 ~ -14 dB */
+{  917, 12}, { 8231, 15}, { 9235, 15}, { 5181, 14}, /* -13 ~ -10 dB */
+{11627, 15}, {13045, 15}, {14637, 15}, {16423, 15}, /*  -9 ~ -6 dB */
+{18427, 15}, {20675, 15}, { 5799, 13}, {26029, 15}, /*  -5 ~ -2 dB */
+{ 7301, 13}, {    1,  0}, {18383, 14}, {10313, 13}, /*  -1 ~ 2 dB */
+{23143, 14}, {25967, 14}, {29135, 14}, {16345, 13}, /*   3 ~ 6 dB */
+{ 4585, 11}, {20577, 13}, { 1443,  9}, {25905, 13}, /*   7 ~ 10 dB */
+{14533, 12}, { 8153, 11}, { 2287,  9}, {20529, 12}, /*  11 ~ 14 dB */
+{11517, 11}, { 6461, 10}, {28997, 12}, { 4067,  9}, /*  15 ~ 18 dB */
+{18253, 11}, {   10,  0}, {22979, 11}, {25783, 11}, /*  19 ~ 22 dB */
+{28929, 11}, {32459, 11}, { 9105,  9}, {20431, 10}, /*  23 ~ 26 dB */
+{22925, 10}, {12861,  9}, { 7215,  8}, {16191,  9}, /*  27 ~ 30 dB */
+{ 9083,  8}, {20383,  9}, {11435,  8}, { 6145,  7}, /*  31 ~ 34 dB */
+{ 3599,  6}, {32305,  9}, {18123,  8}, {20335,  8}, /*  35 ~ 38 dB */
+{  713,  3}, {  100,  0}, { 7181,  6}, { 8057,  6}, /*  39 ~ 42 dB */
+{  565,  2}, {20287,  7}, {11381,  6}, {25539,  7}, /*  43 ~ 46 dB */
+{ 1791,  3}, { 4019,  4}, { 9019,  5}, {20239,  6}, /*  47 ~ 50 dB */
+{ 5677,  4}, {25479,  6}, { 7147,  4}, { 8019,  4}, /*  51 ~ 54 dB */
+{17995,  5}, {20191,  5}, {11327,  4}, {12709,  4}, /*  55 ~ 58 dB */
+{ 3565,  2}, { 1000,  0}, { 1122,  0}, { 1259,  0}, /*  59 ~ 62 dB */
+{ 2825,  1}, {12679,  3}, { 7113,  2}, { 7981,  2}, /*  63 ~ 66 dB */
+{ 8955,  2}, {20095,  3}, {22547,  3}, {12649,  2}, /*  67 ~ 70 dB */
+{28385,  3}, { 3981,  0}, {17867,  2}, {20047,  2}, /*  71 ~ 74 dB */
+{11247,  1}, {12619,  1}, {14159,  1}, {31773,  2}, /*  75 ~ 78 dB */
+{17825,  1}, {10000,  0}, {11220,  0}, {12589,  0}, /*  79 ~ 82 dB */
+{28251,  1}, {15849,  0}, {17783,  0}, {19953,  0}, /*  83 ~ 86 dB */
+{22387,  0}, {25119,  0}, {28184,  0}, {31623,  0}, /*  87 ~ 90 dB */
+};
 
-अटल स्थिर DECLARE_TLV_DB_RANGE(mic_gain_tlv,
+static const DECLARE_TLV_DB_RANGE(mic_gain_tlv,
 	0, 1, TLV_DB_SCALE_ITEM(-9000, 600, 0),
 	2, 5, TLV_DB_SCALE_ITEM(-8100, 300, 0),
 	6, 7, TLV_DB_SCALE_ITEM(-7000, 200, 0),
 	8, ARRAY_SIZE(mic_gain_table)-1, TLV_DB_SCALE_ITEM(-6500, 100, 0),
 );
 
-अटल पूर्णांक pdmic_get_mic_volsw(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	अचिन्हित पूर्णांक dgain_val, scale_val;
-	पूर्णांक i;
+static int pdmic_get_mic_volsw(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	unsigned int dgain_val, scale_val;
+	int i;
 
-	dgain_val = (snd_soc_component_पढ़ो(component, PDMIC_DSPR1) & PDMIC_DSPR1_DGAIN_MASK)
+	dgain_val = (snd_soc_component_read(component, PDMIC_DSPR1) & PDMIC_DSPR1_DGAIN_MASK)
 		    >> PDMIC_DSPR1_DGAIN_SHIFT;
 
-	scale_val = (snd_soc_component_पढ़ो(component, PDMIC_DSPR0) & PDMIC_DSPR0_SCALE_MASK)
+	scale_val = (snd_soc_component_read(component, PDMIC_DSPR0) & PDMIC_DSPR0_SCALE_MASK)
 		    >> PDMIC_DSPR0_SCALE_SHIFT;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mic_gain_table); i++) अणु
-		अगर ((mic_gain_table[i].dgain == dgain_val) &&
+	for (i = 0; i < ARRAY_SIZE(mic_gain_table); i++) {
+		if ((mic_gain_table[i].dgain == dgain_val) &&
 		    (mic_gain_table[i].scale == scale_val))
-			ucontrol->value.पूर्णांकeger.value[0] = i;
-	पूर्ण
+			ucontrol->value.integer.value[0] = i;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pdmic_put_mic_volsw(काष्ठा snd_kcontrol *kcontrol,
-	काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	पूर्णांक max = mc->max;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static int pdmic_put_mic_volsw(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	int max = mc->max;
+	unsigned int val;
+	int ret;
 
-	val = ucontrol->value.पूर्णांकeger.value[0];
+	val = ucontrol->value.integer.value[0];
 
-	अगर (val > max)
-		वापस -EINVAL;
+	if (val > max)
+		return -EINVAL;
 
 	ret = snd_soc_component_update_bits(component, PDMIC_DSPR1, PDMIC_DSPR1_DGAIN_MASK,
 			 mic_gain_table[val].dgain << PDMIC_DSPR1_DGAIN_SHIFT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = snd_soc_component_update_bits(component, PDMIC_DSPR0, PDMIC_DSPR0_SCALE_MASK,
 			 mic_gain_table[val].scale << PDMIC_DSPR0_SCALE_SHIFT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new aपंचांगel_pdmic_snd_controls[] = अणु
+static const struct snd_kcontrol_new atmel_pdmic_snd_controls[] = {
 SOC_SINGLE_EXT_TLV("Mic Capture Volume", PDMIC_DSPR1, PDMIC_DSPR1_DGAIN_SHIFT,
 		   ARRAY_SIZE(mic_gain_table)-1, 0,
 		   pdmic_get_mic_volsw, pdmic_put_mic_volsw, mic_gain_tlv),
@@ -337,71 +336,71 @@ SOC_SINGLE("High Pass Filter Switch", PDMIC_DSPR0,
 	   PDMIC_DSPR0_HPFBYP_SHIFT, 1, 1),
 
 SOC_SINGLE("SINCC Filter Switch", PDMIC_DSPR0, PDMIC_DSPR0_SINBYP_SHIFT, 1, 1),
-पूर्ण;
+};
 
-अटल पूर्णांक aपंचांगel_pdmic_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_card *card = snd_soc_component_get_drvdata(component);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(card);
+static int atmel_pdmic_component_probe(struct snd_soc_component *component)
+{
+	struct snd_soc_card *card = snd_soc_component_get_drvdata(component);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(card);
 
 	snd_soc_component_update_bits(component, PDMIC_DSPR1, PDMIC_DSPR1_OFFSET_MASK,
 		     (u32)(dd->pdata->mic_offset << PDMIC_DSPR1_OFFSET_SHIFT));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा PDMIC_MR_PRESCAL_MAX_VAL 127
+#define PDMIC_MR_PRESCAL_MAX_VAL 127
 
-अटल पूर्णांक
-aपंचांगel_pdmic_cpu_dai_hw_params(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_pcm_hw_params *params,
-			      काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
-	काष्ठा snd_soc_component *component = cpu_dai->component;
-	अचिन्हित पूर्णांक rate_min = substream->runसमय->hw.rate_min;
-	अचिन्हित पूर्णांक rate_max = substream->runसमय->hw.rate_max;
-	पूर्णांक fs = params_rate(params);
-	पूर्णांक bits = params_width(params);
-	अचिन्हित दीर्घ pclk_rate, gclk_rate;
-	अचिन्हित पूर्णांक f_pdmic;
+static int
+atmel_pdmic_cpu_dai_hw_params(struct snd_pcm_substream *substream,
+			      struct snd_pcm_hw_params *params,
+			      struct snd_soc_dai *cpu_dai)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_component *component = cpu_dai->component;
+	unsigned int rate_min = substream->runtime->hw.rate_min;
+	unsigned int rate_max = substream->runtime->hw.rate_max;
+	int fs = params_rate(params);
+	int bits = params_width(params);
+	unsigned long pclk_rate, gclk_rate;
+	unsigned int f_pdmic;
 	u32 mr_val, dspr0_val, pclk_prescal, gclk_prescal;
 
-	अगर (params_channels(params) != 1) अणु
+	if (params_channels(params) != 1) {
 		dev_err(component->dev,
 			"only supports one channel\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((fs < rate_min) || (fs > rate_max)) अणु
+	if ((fs < rate_min) || (fs > rate_max)) {
 		dev_err(component->dev,
 			"sample rate is %dHz, min rate is %dHz, max rate is %dHz\n",
 			fs, rate_min, rate_max);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (bits) अणु
-	हाल 16:
+	switch (bits) {
+	case 16:
 		dspr0_val = (PDMIC_DSPR0_SIZE_16_BITS
 			     << PDMIC_DSPR0_SIZE_SHIFT);
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		dspr0_val = (PDMIC_DSPR0_SIZE_32_BITS
 			     << PDMIC_DSPR0_SIZE_SHIFT);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर ((fs << 7) > (rate_max << 6)) अणु
+	if ((fs << 7) > (rate_max << 6)) {
 		f_pdmic = fs << 6;
 		dspr0_val |= PDMIC_DSPR0_OSR_64 << PDMIC_DSPR0_OSR_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		f_pdmic = fs << 7;
 		dspr0_val |= PDMIC_DSPR0_OSR_128 << PDMIC_DSPR0_OSR_SHIFT;
-	पूर्ण
+	}
 
 	pclk_rate = clk_get_rate(dd->pclk);
 	gclk_rate = clk_get_rate(dd->gclk);
@@ -410,15 +409,15 @@ aपंचांगel_pdmic_cpu_dai_hw_params(काष्ठा snd_pcm_substre
 	pclk_prescal = (u32)(pclk_rate/(f_pdmic << 1)) - 1;
 	gclk_prescal = (u32)(gclk_rate/(f_pdmic << 1)) - 1;
 
-	अगर ((pclk_prescal > PDMIC_MR_PRESCAL_MAX_VAL) ||
+	if ((pclk_prescal > PDMIC_MR_PRESCAL_MAX_VAL) ||
 	    (gclk_rate/((gclk_prescal + 1) << 1) <
-	     pclk_rate/((pclk_prescal + 1) << 1))) अणु
+	     pclk_rate/((pclk_prescal + 1) << 1))) {
 		mr_val = gclk_prescal << PDMIC_MR_PRESCAL_SHIFT;
 		mr_val |= PDMIC_MR_CLKS_GCK << PDMIC_MR_CLKS_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		mr_val = pclk_prescal << PDMIC_MR_PRESCAL_SHIFT;
 		mr_val |= PDMIC_MR_CLKS_PCK << PDMIC_MR_CLKS_SHIFT;
-	पूर्ण
+	}
 
 	snd_soc_component_update_bits(component, PDMIC_MR,
 		PDMIC_MR_PRESCAL_MASK | PDMIC_MR_CLKS_MASK, mr_val);
@@ -426,289 +425,289 @@ aपंचांगel_pdmic_cpu_dai_hw_params(काष्ठा snd_pcm_substre
 	snd_soc_component_update_bits(component, PDMIC_DSPR0,
 		PDMIC_DSPR0_OSR_MASK | PDMIC_DSPR0_SIZE_MASK, dspr0_val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_pdmic_cpu_dai_trigger(काष्ठा snd_pcm_substream *substream,
-				       पूर्णांक cmd, काष्ठा snd_soc_dai *cpu_dai)
-अणु
-	काष्ठा snd_soc_component *component = cpu_dai->component;
+static int atmel_pdmic_cpu_dai_trigger(struct snd_pcm_substream *substream,
+				       int cmd, struct snd_soc_dai *cpu_dai)
+{
+	struct snd_soc_component *component = cpu_dai->component;
 	u32 val;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		val = PDMIC_CR_ENPDM_EN << PDMIC_CR_ENPDM_SHIFT;
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		val = PDMIC_CR_ENPDM_DIS << PDMIC_CR_ENPDM_SHIFT;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, PDMIC_CR, PDMIC_CR_ENPDM_MASK, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops aपंचांगel_pdmic_cpu_dai_ops = अणु
-	.startup	= aपंचांगel_pdmic_cpu_dai_startup,
-	.shutकरोwn	= aपंचांगel_pdmic_cpu_dai_shutकरोwn,
-	.prepare	= aपंचांगel_pdmic_cpu_dai_prepare,
-	.hw_params	= aपंचांगel_pdmic_cpu_dai_hw_params,
-	.trigger	= aपंचांगel_pdmic_cpu_dai_trigger,
-पूर्ण;
+static const struct snd_soc_dai_ops atmel_pdmic_cpu_dai_ops = {
+	.startup	= atmel_pdmic_cpu_dai_startup,
+	.shutdown	= atmel_pdmic_cpu_dai_shutdown,
+	.prepare	= atmel_pdmic_cpu_dai_prepare,
+	.hw_params	= atmel_pdmic_cpu_dai_hw_params,
+	.trigger	= atmel_pdmic_cpu_dai_trigger,
+};
 
 
-अटल काष्ठा snd_soc_dai_driver aपंचांगel_pdmic_cpu_dai = अणु
-	.capture = अणु
+static struct snd_soc_dai_driver atmel_pdmic_cpu_dai = {
+	.capture = {
 		.stream_name	= "Capture",
 		.channels_min	= 1,
 		.channels_max	= 1,
 		.rates		= SNDRV_PCM_RATE_KNOT,
-		.क्रमmats	= ATMEL_PDMIC_FORMATS,
-	पूर्ण,
-	.ops = &aपंचांगel_pdmic_cpu_dai_ops,
-पूर्ण;
+		.formats	= ATMEL_PDMIC_FORMATS,
+	},
+	.ops = &atmel_pdmic_cpu_dai_ops,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver aपंचांगel_pdmic_cpu_dai_component = अणु
+static const struct snd_soc_component_driver atmel_pdmic_cpu_dai_component = {
 	.name			= "atmel-pdmic",
-	.probe			= aपंचांगel_pdmic_component_probe,
-	.controls		= aपंचांगel_pdmic_snd_controls,
-	.num_controls		= ARRAY_SIZE(aपंचांगel_pdmic_snd_controls),
+	.probe			= atmel_pdmic_component_probe,
+	.controls		= atmel_pdmic_snd_controls,
+	.num_controls		= ARRAY_SIZE(atmel_pdmic_snd_controls),
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
-पूर्ण;
+};
 
 /* ASoC sound card */
-अटल पूर्णांक aपंचांगel_pdmic_asoc_card_init(काष्ठा device *dev,
-				काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा snd_soc_dai_link *dai_link;
-	काष्ठा aपंचांगel_pdmic *dd = snd_soc_card_get_drvdata(card);
-	काष्ठा snd_soc_dai_link_component *comp;
+static int atmel_pdmic_asoc_card_init(struct device *dev,
+				struct snd_soc_card *card)
+{
+	struct snd_soc_dai_link *dai_link;
+	struct atmel_pdmic *dd = snd_soc_card_get_drvdata(card);
+	struct snd_soc_dai_link_component *comp;
 
-	dai_link = devm_kzalloc(dev, माप(*dai_link), GFP_KERNEL);
-	अगर (!dai_link)
-		वापस -ENOMEM;
+	dai_link = devm_kzalloc(dev, sizeof(*dai_link), GFP_KERNEL);
+	if (!dai_link)
+		return -ENOMEM;
 
-	comp = devm_kzalloc(dev, 3 * माप(*comp), GFP_KERNEL);
-	अगर (!comp)
-		वापस -ENOMEM;
+	comp = devm_kzalloc(dev, 3 * sizeof(*comp), GFP_KERNEL);
+	if (!comp)
+		return -ENOMEM;
 
 	dai_link->cpus		= &comp[0];
 	dai_link->codecs	= &comp[1];
-	dai_link->platक्रमms	= &comp[2];
+	dai_link->platforms	= &comp[2];
 
 	dai_link->num_cpus	= 1;
 	dai_link->num_codecs	= 1;
-	dai_link->num_platक्रमms	= 1;
+	dai_link->num_platforms	= 1;
 
 	dai_link->name			= "PDMIC";
 	dai_link->stream_name		= "PDMIC PCM";
 	dai_link->codecs->dai_name	= "snd-soc-dummy-dai";
 	dai_link->cpus->dai_name	= dev_name(dev);
 	dai_link->codecs->name		= "snd-soc-dummy";
-	dai_link->platक्रमms->name	= dev_name(dev);
+	dai_link->platforms->name	= dev_name(dev);
 
 	card->dai_link	= dai_link;
 	card->num_links	= 1;
 	card->name	= dd->pdata->card_name;
 	card->dev	= dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_pdmic_get_sample_rate(काष्ठा aपंचांगel_pdmic *dd,
-	अचिन्हित पूर्णांक *rate_min, अचिन्हित पूर्णांक *rate_max)
-अणु
+static void atmel_pdmic_get_sample_rate(struct atmel_pdmic *dd,
+	unsigned int *rate_min, unsigned int *rate_max)
+{
 	u32 mic_min_freq = dd->pdata->mic_min_freq;
 	u32 mic_max_freq = dd->pdata->mic_max_freq;
 	u32 clk_max_rate = (u32)(clk_get_rate(dd->pclk) >> 1);
 	u32 clk_min_rate = (u32)(clk_get_rate(dd->gclk) >> 8);
 
-	अगर (mic_max_freq > clk_max_rate)
+	if (mic_max_freq > clk_max_rate)
 		mic_max_freq = clk_max_rate;
 
-	अगर (mic_min_freq < clk_min_rate)
+	if (mic_min_freq < clk_min_rate)
 		mic_min_freq = clk_min_rate;
 
 	*rate_min = DIV_ROUND_CLOSEST(mic_min_freq, 128);
 	*rate_max = mic_max_freq >> 6;
-पूर्ण
+}
 
-/* PDMIC पूर्णांकerrupt handler */
-अटल irqवापस_t aपंचांगel_pdmic_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा aपंचांगel_pdmic *dd = (काष्ठा aपंचांगel_pdmic *)dev_id;
+/* PDMIC interrupt handler */
+static irqreturn_t atmel_pdmic_interrupt(int irq, void *dev_id)
+{
+	struct atmel_pdmic *dd = (struct atmel_pdmic *)dev_id;
 	u32 pdmic_isr;
-	irqवापस_t ret = IRQ_NONE;
+	irqreturn_t ret = IRQ_NONE;
 
-	regmap_पढ़ो(dd->regmap, PDMIC_ISR, &pdmic_isr);
+	regmap_read(dd->regmap, PDMIC_ISR, &pdmic_isr);
 
-	अगर (pdmic_isr & PDMIC_ISR_OVRE) अणु
+	if (pdmic_isr & PDMIC_ISR_OVRE) {
 		regmap_update_bits(dd->regmap, PDMIC_CR, PDMIC_CR_ENPDM_MASK,
 				   PDMIC_CR_ENPDM_DIS << PDMIC_CR_ENPDM_SHIFT);
 
 		snd_pcm_stop_xrun(dd->substream);
 
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* regmap configuration */
-#घोषणा ATMEL_PDMIC_REG_MAX    0x124
-अटल स्थिर काष्ठा regmap_config aपंचांगel_pdmic_regmap_config = अणु
+#define ATMEL_PDMIC_REG_MAX    0x124
+static const struct regmap_config atmel_pdmic_regmap_config = {
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_रेजिस्टर	= ATMEL_PDMIC_REG_MAX,
-पूर्ण;
+	.max_register	= ATMEL_PDMIC_REG_MAX,
+};
 
-अटल पूर्णांक aपंचांगel_pdmic_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा aपंचांगel_pdmic *dd;
-	काष्ठा resource *res;
-	व्योम __iomem *io_base;
-	स्थिर काष्ठा aपंचांगel_pdmic_pdata *pdata;
-	काष्ठा snd_soc_card *card;
-	अचिन्हित पूर्णांक rate_min, rate_max;
-	पूर्णांक ret;
+static int atmel_pdmic_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct atmel_pdmic *dd;
+	struct resource *res;
+	void __iomem *io_base;
+	const struct atmel_pdmic_pdata *pdata;
+	struct snd_soc_card *card;
+	unsigned int rate_min, rate_max;
+	int ret;
 
-	pdata = aपंचांगel_pdmic_dt_init(dev);
-	अगर (IS_ERR(pdata))
-		वापस PTR_ERR(pdata);
+	pdata = atmel_pdmic_dt_init(dev);
+	if (IS_ERR(pdata))
+		return PTR_ERR(pdata);
 
-	dd = devm_kzalloc(dev, माप(*dd), GFP_KERNEL);
-	अगर (!dd)
-		वापस -ENOMEM;
+	dd = devm_kzalloc(dev, sizeof(*dd), GFP_KERNEL);
+	if (!dd)
+		return -ENOMEM;
 
 	dd->pdata = pdata;
 	dd->dev = dev;
 
-	dd->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (dd->irq < 0)
-		वापस dd->irq;
+	dd->irq = platform_get_irq(pdev, 0);
+	if (dd->irq < 0)
+		return dd->irq;
 
 	dd->pclk = devm_clk_get(dev, "pclk");
-	अगर (IS_ERR(dd->pclk)) अणु
+	if (IS_ERR(dd->pclk)) {
 		ret = PTR_ERR(dd->pclk);
 		dev_err(dev, "failed to get peripheral clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dd->gclk = devm_clk_get(dev, "gclk");
-	अगर (IS_ERR(dd->gclk)) अणु
+	if (IS_ERR(dd->gclk)) {
 		ret = PTR_ERR(dd->gclk);
 		dev_err(dev, "failed to get GCK: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* The gclk घड़ी frequency must always be three बार
-	 * lower than the pclk घड़ी frequency
+	/* The gclk clock frequency must always be three times
+	 * lower than the pclk clock frequency
 	 */
 	ret = clk_set_rate(dd->gclk, clk_get_rate(dd->pclk)/3);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set GCK clock rate: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	io_base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(io_base))
-		वापस PTR_ERR(io_base);
+	if (IS_ERR(io_base))
+		return PTR_ERR(io_base);
 
 	dd->phy_base = res->start;
 
 	dd->regmap = devm_regmap_init_mmio(dev, io_base,
-					   &aपंचांगel_pdmic_regmap_config);
-	अगर (IS_ERR(dd->regmap)) अणु
+					   &atmel_pdmic_regmap_config);
+	if (IS_ERR(dd->regmap)) {
 		ret = PTR_ERR(dd->regmap);
 		dev_err(dev, "failed to init register map: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret =  devm_request_irq(dev, dd->irq, aपंचांगel_pdmic_पूर्णांकerrupt, 0,
-				"PDMIC", (व्योम *)dd);
-	अगर (ret < 0) अणु
+	ret =  devm_request_irq(dev, dd->irq, atmel_pdmic_interrupt, 0,
+				"PDMIC", (void *)dd);
+	if (ret < 0) {
 		dev_err(dev, "can't register ISR for IRQ %u (ret=%i)\n",
 			dd->irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Get the minimal and maximal sample rate that the microphone supports */
-	aपंचांगel_pdmic_get_sample_rate(dd, &rate_min, &rate_max);
+	atmel_pdmic_get_sample_rate(dd, &rate_min, &rate_max);
 
-	/* रेजिस्टर cpu dai */
-	aपंचांगel_pdmic_cpu_dai.capture.rate_min = rate_min;
-	aपंचांगel_pdmic_cpu_dai.capture.rate_max = rate_max;
-	ret = devm_snd_soc_रेजिस्टर_component(dev,
-					      &aपंचांगel_pdmic_cpu_dai_component,
-					      &aपंचांगel_pdmic_cpu_dai, 1);
-	अगर (ret) अणु
+	/* register cpu dai */
+	atmel_pdmic_cpu_dai.capture.rate_min = rate_min;
+	atmel_pdmic_cpu_dai.capture.rate_max = rate_max;
+	ret = devm_snd_soc_register_component(dev,
+					      &atmel_pdmic_cpu_dai_component,
+					      &atmel_pdmic_cpu_dai, 1);
+	if (ret) {
 		dev_err(dev, "could not register CPU DAI: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर platक्रमm */
-	ret = devm_snd_dmaengine_pcm_रेजिस्टर(dev,
-					     &aपंचांगel_pdmic_dmaengine_pcm_config,
+	/* register platform */
+	ret = devm_snd_dmaengine_pcm_register(dev,
+					     &atmel_pdmic_dmaengine_pcm_config,
 					     0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "could not register platform: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टर sound card */
-	card = devm_kzalloc(dev, माप(*card), GFP_KERNEL);
-	अगर (!card) अणु
+	/* register sound card */
+	card = devm_kzalloc(dev, sizeof(*card), GFP_KERNEL);
+	if (!card) {
 		ret = -ENOMEM;
-		जाओ unरेजिस्टर_codec;
-	पूर्ण
+		goto unregister_codec;
+	}
 
 	snd_soc_card_set_drvdata(card, dd);
 
-	ret = aपंचांगel_pdmic_asoc_card_init(dev, card);
-	अगर (ret) अणु
+	ret = atmel_pdmic_asoc_card_init(dev, card);
+	if (ret) {
 		dev_err(dev, "failed to init sound card: %d\n", ret);
-		जाओ unरेजिस्टर_codec;
-	पूर्ण
+		goto unregister_codec;
+	}
 
-	ret = devm_snd_soc_रेजिस्टर_card(dev, card);
-	अगर (ret) अणु
+	ret = devm_snd_soc_register_card(dev, card);
+	if (ret) {
 		dev_err(dev, "failed to register sound card: %d\n", ret);
-		जाओ unरेजिस्टर_codec;
-	पूर्ण
+		goto unregister_codec;
+	}
 
-	वापस 0;
+	return 0;
 
-unरेजिस्टर_codec:
-	वापस ret;
-पूर्ण
+unregister_codec:
+	return ret;
+}
 
-अटल पूर्णांक aपंचांगel_pdmic_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस 0;
-पूर्ण
+static int atmel_pdmic_remove(struct platform_device *pdev)
+{
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_pdmic_driver = अणु
-	.driver	= अणु
+static struct platform_driver atmel_pdmic_driver = {
+	.driver	= {
 		.name		= "atmel-pdmic",
-		.of_match_table	= of_match_ptr(aपंचांगel_pdmic_of_match),
+		.of_match_table	= of_match_ptr(atmel_pdmic_of_match),
 		.pm		= &snd_soc_pm_ops,
-	पूर्ण,
-	.probe	= aपंचांगel_pdmic_probe,
-	.हटाओ	= aपंचांगel_pdmic_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(aपंचांगel_pdmic_driver);
+	},
+	.probe	= atmel_pdmic_probe,
+	.remove	= atmel_pdmic_remove,
+};
+module_platform_driver(atmel_pdmic_driver);
 
 MODULE_DESCRIPTION("Atmel PDMIC driver under ALSA SoC architecture");
 MODULE_AUTHOR("Songjun Wu <songjun.wu@atmel.com>");

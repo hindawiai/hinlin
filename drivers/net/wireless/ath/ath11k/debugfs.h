@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
+/* SPDX-License-Identifier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _ATH11K_DEBUGFS_H_
-#घोषणा _ATH11K_DEBUGFS_H_
+#ifndef _ATH11K_DEBUGFS_H_
+#define _ATH11K_DEBUGFS_H_
 
-#समावेश "hal_tx.h"
+#include "hal_tx.h"
 
-#घोषणा ATH11K_TX_POWER_MAX_VAL	70
-#घोषणा ATH11K_TX_POWER_MIN_VAL	0
+#define ATH11K_TX_POWER_MAX_VAL	70
+#define ATH11K_TX_POWER_MIN_VAL	0
 
 /* htt_dbg_ext_stats_type */
-क्रमागत ath11k_dbg_htt_ext_stats_type अणु
+enum ath11k_dbg_htt_ext_stats_type {
 	ATH11K_DBG_HTT_EXT_STATS_RESET                      =  0,
 	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX                    =  1,
 	ATH11K_DBG_HTT_EXT_STATS_PDEV_RX                    =  2,
@@ -42,34 +41,34 @@
 
 	/* keep this last */
 	ATH11K_DBG_HTT_NUM_EXT_STATS,
-पूर्ण;
+};
 
-काष्ठा debug_htt_stats_req अणु
-	bool करोne;
+struct debug_htt_stats_req {
+	bool done;
 	u8 pdev_id;
 	u8 type;
 	u8 peer_addr[ETH_ALEN];
-	काष्ठा completion cmpln;
+	struct completion cmpln;
 	u32 buf_len;
 	u8 buf[];
-पूर्ण;
+};
 
-काष्ठा ath_pktlog_hdr अणु
+struct ath_pktlog_hdr {
 	u16 flags;
 	u16 missed_cnt;
 	u16 log_type;
 	u16 size;
-	u32 बारtamp;
-	u32 type_specअगरic_data;
+	u32 timestamp;
+	u32 type_specific_data;
 	u8 payload[];
-पूर्ण;
+};
 
-#घोषणा ATH11K_HTT_PEER_STATS_RESET BIT(16)
+#define ATH11K_HTT_PEER_STATS_RESET BIT(16)
 
-#घोषणा ATH11K_HTT_STATS_BUF_SIZE (1024 * 512)
-#घोषणा ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
+#define ATH11K_HTT_STATS_BUF_SIZE (1024 * 512)
+#define ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
 
-क्रमागत ath11k_pktlog_filter अणु
+enum ath11k_pktlog_filter {
 	ATH11K_PKTLOG_RX		= 0x000000001,
 	ATH11K_PKTLOG_TX		= 0x000000002,
 	ATH11K_PKTLOG_RCFIND		= 0x000000004,
@@ -77,14 +76,14 @@
 	ATH11K_PKTLOG_EVENT_SMART_ANT	= 0x000000020,
 	ATH11K_PKTLOG_EVENT_SW		= 0x000000040,
 	ATH11K_PKTLOG_ANY		= 0x00000006f,
-पूर्ण;
+};
 
-क्रमागत ath11k_pktlog_mode अणु
+enum ath11k_pktlog_mode {
 	ATH11K_PKTLOG_MODE_LITE = 1,
 	ATH11K_PKTLOG_MODE_FULL = 2,
-पूर्ण;
+};
 
-क्रमागत ath11k_pktlog_क्रमागत अणु
+enum ath11k_pktlog_enum {
 	ATH11K_PKTLOG_TYPE_TX_CTRL      = 1,
 	ATH11K_PKTLOG_TYPE_TX_STAT      = 2,
 	ATH11K_PKTLOG_TYPE_TX_MSDU_ID   = 3,
@@ -96,123 +95,123 @@
 	ATH11K_PKTLOG_TYPE_RX_STATBUF   = 22,
 	ATH11K_PKTLOG_TYPE_PPDU_STATS   = 23,
 	ATH11K_PKTLOG_TYPE_LITE_RX      = 24,
-पूर्ण;
+};
 
-क्रमागत ath11k_dbg_aggr_mode अणु
+enum ath11k_dbg_aggr_mode {
 	ATH11K_DBG_AGGR_MODE_AUTO,
 	ATH11K_DBG_AGGR_MODE_MANUAL,
 	ATH11K_DBG_AGGR_MODE_MAX,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_ATH11K_DEBUGFS
-पूर्णांक ath11k_debugfs_soc_create(काष्ठा ath11k_base *ab);
-व्योम ath11k_debugfs_soc_destroy(काष्ठा ath11k_base *ab);
-पूर्णांक ath11k_debugfs_pdev_create(काष्ठा ath11k_base *ab);
-व्योम ath11k_debugfs_pdev_destroy(काष्ठा ath11k_base *ab);
-पूर्णांक ath11k_debugfs_रेजिस्टर(काष्ठा ath11k *ar);
-व्योम ath11k_debugfs_unरेजिस्टर(काष्ठा ath11k *ar);
-व्योम ath11k_debugfs_fw_stats_process(काष्ठा ath11k_base *ab, काष्ठा sk_buff *skb);
+#ifdef CONFIG_ATH11K_DEBUGFS
+int ath11k_debugfs_soc_create(struct ath11k_base *ab);
+void ath11k_debugfs_soc_destroy(struct ath11k_base *ab);
+int ath11k_debugfs_pdev_create(struct ath11k_base *ab);
+void ath11k_debugfs_pdev_destroy(struct ath11k_base *ab);
+int ath11k_debugfs_register(struct ath11k *ar);
+void ath11k_debugfs_unregister(struct ath11k *ar);
+void ath11k_debugfs_fw_stats_process(struct ath11k_base *ab, struct sk_buff *skb);
 
-व्योम ath11k_debugfs_fw_stats_init(काष्ठा ath11k *ar);
+void ath11k_debugfs_fw_stats_init(struct ath11k *ar);
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_lite_mode_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस (ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE);
-पूर्ण
+static inline bool ath11k_debugfs_is_pktlog_lite_mode_enabled(struct ath11k *ar)
+{
+	return (ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE);
+}
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_rx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस (!ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode);
-पूर्ण
+static inline bool ath11k_debugfs_is_pktlog_rx_stats_enabled(struct ath11k *ar)
+{
+	return (!ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode);
+}
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_peer_valid(काष्ठा ath11k *ar, u8 *addr)
-अणु
-	वापस (ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode &&
+static inline bool ath11k_debugfs_is_pktlog_peer_valid(struct ath11k *ar, u8 *addr)
+{
+	return (ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode &&
 		ether_addr_equal(addr, ar->debug.pktlog_peer_addr));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_is_extd_tx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस ar->debug.extd_tx_stats;
-पूर्ण
+static inline int ath11k_debugfs_is_extd_tx_stats_enabled(struct ath11k *ar)
+{
+	return ar->debug.extd_tx_stats;
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_is_extd_rx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस ar->debug.extd_rx_stats;
-पूर्ण
+static inline int ath11k_debugfs_is_extd_rx_stats_enabled(struct ath11k *ar)
+{
+	return ar->debug.extd_rx_stats;
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_rx_filter(काष्ठा ath11k *ar)
-अणु
-	वापस ar->debug.rx_filter;
-पूर्ण
+static inline int ath11k_debugfs_rx_filter(struct ath11k *ar)
+{
+	return ar->debug.rx_filter;
+}
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक ath11k_debugfs_soc_create(काष्ठा ath11k_base *ab)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static inline int ath11k_debugfs_soc_create(struct ath11k_base *ab)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ath11k_debugfs_soc_destroy(काष्ठा ath11k_base *ab)
-अणु
-पूर्ण
+static inline void ath11k_debugfs_soc_destroy(struct ath11k_base *ab)
+{
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_pdev_create(काष्ठा ath11k_base *ab)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath11k_debugfs_pdev_create(struct ath11k_base *ab)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ath11k_debugfs_pdev_destroy(काष्ठा ath11k_base *ab)
-अणु
-पूर्ण
+static inline void ath11k_debugfs_pdev_destroy(struct ath11k_base *ab)
+{
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_रेजिस्टर(काष्ठा ath11k *ar)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath11k_debugfs_register(struct ath11k *ar)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ath11k_debugfs_unरेजिस्टर(काष्ठा ath11k *ar)
-अणु
-पूर्ण
+static inline void ath11k_debugfs_unregister(struct ath11k *ar)
+{
+}
 
-अटल अंतरभूत व्योम ath11k_debugfs_fw_stats_process(काष्ठा ath11k_base *ab,
-						   काष्ठा sk_buff *skb)
-अणु
-पूर्ण
+static inline void ath11k_debugfs_fw_stats_process(struct ath11k_base *ab,
+						   struct sk_buff *skb)
+{
+}
 
-अटल अंतरभूत व्योम ath11k_debugfs_fw_stats_init(काष्ठा ath11k *ar)
-अणु
-पूर्ण
+static inline void ath11k_debugfs_fw_stats_init(struct ath11k *ar)
+{
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_is_extd_tx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath11k_debugfs_is_extd_tx_stats_enabled(struct ath11k *ar)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_is_extd_rx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath11k_debugfs_is_extd_rx_stats_enabled(struct ath11k *ar)
+{
+	return 0;
+}
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_lite_mode_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस false;
-पूर्ण
+static inline bool ath11k_debugfs_is_pktlog_lite_mode_enabled(struct ath11k *ar)
+{
+	return false;
+}
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_rx_stats_enabled(काष्ठा ath11k *ar)
-अणु
-	वापस false;
-पूर्ण
+static inline bool ath11k_debugfs_is_pktlog_rx_stats_enabled(struct ath11k *ar)
+{
+	return false;
+}
 
-अटल अंतरभूत bool ath11k_debugfs_is_pktlog_peer_valid(काष्ठा ath11k *ar, u8 *addr)
-अणु
-	वापस false;
-पूर्ण
+static inline bool ath11k_debugfs_is_pktlog_peer_valid(struct ath11k *ar, u8 *addr)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक ath11k_debugfs_rx_filter(काष्ठा ath11k *ar)
-अणु
-	वापस 0;
-पूर्ण
+static inline int ath11k_debugfs_rx_filter(struct ath11k *ar)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_MAC80211_DEBUGFS*/
+#endif /* CONFIG_MAC80211_DEBUGFS*/
 
-#पूर्ण_अगर /* _ATH11K_DEBUGFS_H_ */
+#endif /* _ATH11K_DEBUGFS_H_ */

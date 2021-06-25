@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__ALPHA_PAL_H
-#घोषणा _UAPI__ALPHA_PAL_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__ALPHA_PAL_H
+#define _UAPI__ALPHA_PAL_H
 
 /*
  * Common PAL-code
  */
-#घोषणा PAL_halt	  0
-#घोषणा PAL_cflush	  1
-#घोषणा PAL_draina	  2
-#घोषणा PAL_bpt		128
-#घोषणा PAL_bugchk	129
-#घोषणा PAL_chmk	131
-#घोषणा PAL_callsys	131
-#घोषणा PAL_imb		134
-#घोषणा PAL_rduniq	158
-#घोषणा PAL_wruniq	159
-#घोषणा PAL_gentrap	170
-#घोषणा PAL_nphalt	190
+#define PAL_halt	  0
+#define PAL_cflush	  1
+#define PAL_draina	  2
+#define PAL_bpt		128
+#define PAL_bugchk	129
+#define PAL_chmk	131
+#define PAL_callsys	131
+#define PAL_imb		134
+#define PAL_rduniq	158
+#define PAL_wruniq	159
+#define PAL_gentrap	170
+#define PAL_nphalt	190
 
 /*
- * VMS specअगरic PAL-code
+ * VMS specific PAL-code
  */
-#घोषणा PAL_swppal	10
-#घोषणा PAL_mfpr_vptb	41
+#define PAL_swppal	10
+#define PAL_mfpr_vptb	41
 
 /*
- * OSF specअगरic PAL-code
+ * OSF specific PAL-code
  */
-#घोषणा PAL_cserve	 9
-#घोषणा PAL_wripir	13
-#घोषणा PAL_rdmces	16
-#घोषणा PAL_wrmces	17
-#घोषणा PAL_wrfen	43
-#घोषणा PAL_wrvptptr	45
-#घोषणा PAL_jtopal	46
-#घोषणा PAL_swpctx	48
-#घोषणा PAL_wrval	49
-#घोषणा PAL_rdval	50
-#घोषणा PAL_tbi		51
-#घोषणा PAL_wrent	52
-#घोषणा PAL_swpipl	53
-#घोषणा PAL_rdps	54
-#घोषणा PAL_wrkgp	55
-#घोषणा PAL_wrusp	56
-#घोषणा PAL_wrperfmon	57
-#घोषणा PAL_rdusp	58
-#घोषणा PAL_whami	60
-#घोषणा PAL_retsys	61
-#घोषणा PAL_wtपूर्णांक	62
-#घोषणा PAL_rti		63
+#define PAL_cserve	 9
+#define PAL_wripir	13
+#define PAL_rdmces	16
+#define PAL_wrmces	17
+#define PAL_wrfen	43
+#define PAL_wrvptptr	45
+#define PAL_jtopal	46
+#define PAL_swpctx	48
+#define PAL_wrval	49
+#define PAL_rdval	50
+#define PAL_tbi		51
+#define PAL_wrent	52
+#define PAL_swpipl	53
+#define PAL_rdps	54
+#define PAL_wrkgp	55
+#define PAL_wrusp	56
+#define PAL_wrperfmon	57
+#define PAL_rdusp	58
+#define PAL_whami	60
+#define PAL_retsys	61
+#define PAL_wtint	62
+#define PAL_rti		63
 
 
-#पूर्ण_अगर /* _UAPI__ALPHA_PAL_H */
+#endif /* _UAPI__ALPHA_PAL_H */

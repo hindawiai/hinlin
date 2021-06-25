@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_PREEMPT_H
-#घोषणा __LINUX_PREEMPT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_PREEMPT_H
+#define __LINUX_PREEMPT_H
 
-बाह्य पूर्णांक preempt_count;
+extern int preempt_count;
 
-#घोषणा preempt_disable()	uatomic_inc(&preempt_count)
-#घोषणा preempt_enable()	uatomic_dec(&preempt_count)
+#define preempt_disable()	uatomic_inc(&preempt_count)
+#define preempt_enable()	uatomic_dec(&preempt_count)
 
-अटल अंतरभूत पूर्णांक in_पूर्णांकerrupt(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int in_interrupt(void)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* __LINUX_PREEMPT_H */
+#endif /* __LINUX_PREEMPT_H */

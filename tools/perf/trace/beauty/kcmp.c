@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * trace/beauty/kcmp.c
  *
- *  Copyright (C) 2017, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ *  Copyright (C) 2017, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
 
-#समावेश "trace/beauty/beauty.h"
-#समावेश <linux/kernel.h>
-#समावेश <sys/types.h>
-#समावेश <machine.h>
-#समावेश <uapi/linux/kcmp.h>
+#include "trace/beauty/beauty.h"
+#include <linux/kernel.h>
+#include <sys/types.h>
+#include <machine.h>
+#include <uapi/linux/kcmp.h>
 
-#समावेश "trace/beauty/generated/kcmp_type_array.c"
+#include "trace/beauty/generated/kcmp_type_array.c"
 
-माप_प्रकार syscall_arg__scnम_लिखो_kcmp_idx(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ fd = arg->val;
-	पूर्णांक type = syscall_arg__val(arg, 2);
+size_t syscall_arg__scnprintf_kcmp_idx(char *bf, size_t size, struct syscall_arg *arg)
+{
+	unsigned long fd = arg->val;
+	int type = syscall_arg__val(arg, 2);
 	pid_t pid;
 
-	अगर (type != KCMP_खाता)
-		वापस syscall_arg__scnम_लिखो_दीर्घ(bf, size, arg);
+	if (type != KCMP_FILE)
+		return syscall_arg__scnprintf_long(bf, size, arg);
 
 	pid = syscall_arg__val(arg, arg->idx == 3 ? 0 : 1); /* idx1 -> pid1, idx2 -> pid2 */
-	वापस pid__scnम_लिखो_fd(arg->trace, pid, fd, bf, size);
-पूर्ण
+	return pid__scnprintf_fd(arg->trace, pid, fd, bf, size);
+}
 
-अटल माप_प्रकार kcmp__scnम_लिखो_type(पूर्णांक type, अक्षर *bf, माप_प्रकार size, bool show_prefix)
-अणु
-	अटल DEFINE_STRARRAY(kcmp_types, "KCMP_");
-	वापस strarray__scnम_लिखो(&strarray__kcmp_types, bf, size, "%d", show_prefix, type);
-पूर्ण
+static size_t kcmp__scnprintf_type(int type, char *bf, size_t size, bool show_prefix)
+{
+	static DEFINE_STRARRAY(kcmp_types, "KCMP_");
+	return strarray__scnprintf(&strarray__kcmp_types, bf, size, "%d", show_prefix, type);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_kcmp_type(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ type = arg->val;
+size_t syscall_arg__scnprintf_kcmp_type(char *bf, size_t size, struct syscall_arg *arg)
+{
+	unsigned long type = arg->val;
 
-	अगर (type != KCMP_खाता)
+	if (type != KCMP_FILE)
 		arg->mask |= (1 << 3) | (1 << 4); /* Ignore idx1 and idx2 */
 
-	वापस kcmp__scnम_लिखो_type(type, bf, size, arg->show_string_prefix);
-पूर्ण
+	return kcmp__scnprintf_type(type, bf, size, arg->show_string_prefix);
+}

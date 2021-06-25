@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
     Legend Silicon LGS-8GL5 DMB-TH OFDM demodulator driver
 
@@ -9,25 +8,25 @@
 
 */
 
-#अगर_अघोषित LGS8GL5_H
-#घोषणा LGS8GL5_H
+#ifndef LGS8GL5_H
+#define LGS8GL5_H
 
-#समावेश <linux/dvb/frontend.h>
+#include <linux/dvb/frontend.h>
 
-काष्ठा lgs8gl5_config अणु
+struct lgs8gl5_config {
 	/* the demodulator's i2c address */
 	u8 demod_address;
-पूर्ण;
+};
 
-#अगर IS_REACHABLE(CONFIG_DVB_LGS8GL5)
-बाह्य काष्ठा dvb_frontend *lgs8gl5_attach(
-	स्थिर काष्ठा lgs8gl5_config *config, काष्ठा i2c_adapter *i2c);
-#अन्यथा
-अटल अंतरभूत काष्ठा dvb_frontend *lgs8gl5_attach(
-	स्थिर काष्ठा lgs8gl5_config *config, काष्ठा i2c_adapter *i2c) अणु
-	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DVB_LGS8GL5 */
+#if IS_REACHABLE(CONFIG_DVB_LGS8GL5)
+extern struct dvb_frontend *lgs8gl5_attach(
+	const struct lgs8gl5_config *config, struct i2c_adapter *i2c);
+#else
+static inline struct dvb_frontend *lgs8gl5_attach(
+	const struct lgs8gl5_config *config, struct i2c_adapter *i2c) {
+	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
+#endif /* CONFIG_DVB_LGS8GL5 */
 
-#पूर्ण_अगर /* LGS8GL5_H */
+#endif /* LGS8GL5_H */

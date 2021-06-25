@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
@@ -9,87 +8,87 @@
  *
  * This file is part of the SCTP kernel implementation
  *
- * These are the state tables क्रम the SCTP state machine.
+ * These are the state tables for the SCTP state machine.
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modअगरied by:
+ * Written or modified by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Karl Knutson          <karl@athena.chicago.il.us>
  *    Jon Grimm             <jgrimm@us.ibm.com>
  *    Hui Huang		    <hui.huang@nokia.com>
  *    Daisy Chang	    <daisyc@us.ibm.com>
- *    Ardelle Fan	    <ardelle.fan@पूर्णांकel.com>
+ *    Ardelle Fan	    <ardelle.fan@intel.com>
  *    Sridhar Samudrala	    <sri@us.ibm.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/skbuff.h>
-#समावेश <net/sctp/sctp.h>
-#समावेश <net/sctp/sm.h>
+#include <linux/skbuff.h>
+#include <net/sctp/sctp.h>
+#include <net/sctp/sm.h>
 
-अटल स्थिर काष्ठा sctp_sm_table_entry
+static const struct sctp_sm_table_entry
 primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES];
-अटल स्थिर काष्ठा sctp_sm_table_entry
+static const struct sctp_sm_table_entry
 other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
-अटल स्थिर काष्ठा sctp_sm_table_entry
-समयout_event_table[SCTP_NUM_TIMEOUT_TYPES][SCTP_STATE_NUM_STATES];
+static const struct sctp_sm_table_entry
+timeout_event_table[SCTP_NUM_TIMEOUT_TYPES][SCTP_STATE_NUM_STATES];
 
-अटल स्थिर काष्ठा sctp_sm_table_entry *sctp_chunk_event_lookup(
-						काष्ठा net *net,
-						क्रमागत sctp_cid cid,
-						क्रमागत sctp_state state);
+static const struct sctp_sm_table_entry *sctp_chunk_event_lookup(
+						struct net *net,
+						enum sctp_cid cid,
+						enum sctp_state state);
 
 
-अटल स्थिर काष्ठा sctp_sm_table_entry bug = अणु
+static const struct sctp_sm_table_entry bug = {
 	.fn = sctp_sf_bug,
 	.name = "sctp_sf_bug"
-पूर्ण;
+};
 
-#घोषणा DO_LOOKUP(_max, _type, _table)					\
-(अणु									\
-	स्थिर काष्ठा sctp_sm_table_entry *rtn;				\
+#define DO_LOOKUP(_max, _type, _table)					\
+({									\
+	const struct sctp_sm_table_entry *rtn;				\
 									\
-	अगर ((event_subtype._type > (_max))) अणु				\
+	if ((event_subtype._type > (_max))) {				\
 		pr_warn("table %p possible attack: event %d exceeds max %d\n", \
 			_table, event_subtype._type, _max);		\
 		rtn = &bug;						\
-	पूर्ण अन्यथा								\
-		rtn = &_table[event_subtype._type][(पूर्णांक)state];		\
+	} else								\
+		rtn = &_table[event_subtype._type][(int)state];		\
 									\
 	rtn;								\
-पूर्ण)
+})
 
-स्थिर काष्ठा sctp_sm_table_entry *sctp_sm_lookup_event(
-					काष्ठा net *net,
-					क्रमागत sctp_event_type event_type,
-					क्रमागत sctp_state state,
-					जोड़ sctp_subtype event_subtype)
-अणु
-	चयन (event_type) अणु
-	हाल SCTP_EVENT_T_CHUNK:
-		वापस sctp_chunk_event_lookup(net, event_subtype.chunk, state);
-	हाल SCTP_EVENT_T_TIMEOUT:
-		वापस DO_LOOKUP(SCTP_EVENT_TIMEOUT_MAX, समयout,
-				 समयout_event_table);
-	हाल SCTP_EVENT_T_OTHER:
-		वापस DO_LOOKUP(SCTP_EVENT_OTHER_MAX, other,
+const struct sctp_sm_table_entry *sctp_sm_lookup_event(
+					struct net *net,
+					enum sctp_event_type event_type,
+					enum sctp_state state,
+					union sctp_subtype event_subtype)
+{
+	switch (event_type) {
+	case SCTP_EVENT_T_CHUNK:
+		return sctp_chunk_event_lookup(net, event_subtype.chunk, state);
+	case SCTP_EVENT_T_TIMEOUT:
+		return DO_LOOKUP(SCTP_EVENT_TIMEOUT_MAX, timeout,
+				 timeout_event_table);
+	case SCTP_EVENT_T_OTHER:
+		return DO_LOOKUP(SCTP_EVENT_OTHER_MAX, other,
 				 other_event_table);
-	हाल SCTP_EVENT_T_PRIMITIVE:
-		वापस DO_LOOKUP(SCTP_EVENT_PRIMITIVE_MAX, primitive,
+	case SCTP_EVENT_T_PRIMITIVE:
+		return DO_LOOKUP(SCTP_EVENT_PRIMITIVE_MAX, primitive,
 				 primitive_event_table);
-	शेष:
+	default:
 		/* Yikes!  We got an illegal event type.  */
-		वापस &bug;
-	पूर्ण
-पूर्ण
+		return &bug;
+	}
+}
 
-#घोषणा TYPE_SCTP_FUNC(func) अणु.fn = func, .name = #funcपूर्ण
+#define TYPE_SCTP_FUNC(func) {.fn = func, .name = #func}
 
-#घोषणा TYPE_SCTP_DATA अणु \
+#define TYPE_SCTP_DATA { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -106,32 +105,32 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_DATA */
+} /* TYPE_SCTP_DATA */
 
-#घोषणा TYPE_SCTP_INIT अणु \
+#define TYPE_SCTP_INIT { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_1B_init), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_1B_init), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_1_siminit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_1_siminit), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_1_siminit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_1_siminit), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_2_dupinit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_2_dupinit), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_2_dupinit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_2_dupinit), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_2_dupinit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_2_dupinit), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_2_dupinit), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_2_dupinit), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_reshutack), \
-पूर्ण /* TYPE_SCTP_INIT */
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_reshutack), \
+} /* TYPE_SCTP_INIT */
 
-#घोषणा TYPE_SCTP_INIT_ACK अणु \
+#define TYPE_SCTP_INIT_ACK { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_3_initack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_3_initack), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_1C_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_1C_ack), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_ESTABLISHED */ \
@@ -144,9 +143,9 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_INIT_ACK */
+} /* TYPE_SCTP_INIT_ACK */
 
-#घोषणा TYPE_SCTP_SACK अणु \
+#define TYPE_SCTP_SACK { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -163,9 +162,9 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	TYPE_SCTP_FUNC(sctp_sf_eat_sack_6_2), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_SACK */
+} /* TYPE_SCTP_SACK */
 
-#घोषणा TYPE_SCTP_HEARTBEAT अणु \
+#define TYPE_SCTP_HEARTBEAT { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -183,9 +182,9 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	/* This should not happen, but we are nice.  */ \
 	TYPE_SCTP_FUNC(sctp_sf_beat_8_3), \
-पूर्ण /* TYPE_SCTP_HEARTBEAT */
+} /* TYPE_SCTP_HEARTBEAT */
 
-#घोषणा TYPE_SCTP_HEARTBEAT_ACK अणु \
+#define TYPE_SCTP_HEARTBEAT_ACK { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -202,28 +201,28 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	TYPE_SCTP_FUNC(sctp_sf_backbeat_8_3), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_HEARTBEAT_ACK */
+} /* TYPE_SCTP_HEARTBEAT_ACK */
 
-#घोषणा TYPE_SCTP_ABORT अणु \
+#define TYPE_SCTP_ABORT { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_pdiscard), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_रुको_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_wait_abort), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_abort), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_1_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_1_abort), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_pending_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_pending_abort), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_sent_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_sent_abort), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_1_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_1_abort), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_ack_sent_पात), \
-पूर्ण /* TYPE_SCTP_ABORT */
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_ack_sent_abort), \
+} /* TYPE_SCTP_ABORT */
 
-#घोषणा TYPE_SCTP_SHUTDOWN अणु \
+#define TYPE_SCTP_SHUTDOWN { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -231,37 +230,37 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_shutकरोwn_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_shutdown_ack), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_shut_ctsn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_shut_ctsn), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_SHUTDOWN */
+} /* TYPE_SCTP_SHUTDOWN */
 
-#घोषणा TYPE_SCTP_SHUTDOWN_ACK अणु \
+#define TYPE_SCTP_SHUTDOWN_ACK { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_8_5_1_E_sa), \
+	TYPE_SCTP_FUNC(sctp_sf_do_8_5_1_E_sa), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_8_5_1_E_sa), \
+	TYPE_SCTP_FUNC(sctp_sf_do_8_5_1_E_sa), \
 	/* SCTP_STATE_ESTABLISHED */ \
 	TYPE_SCTP_FUNC(sctp_sf_violation), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
 	TYPE_SCTP_FUNC(sctp_sf_violation), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_final), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_final), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
 	TYPE_SCTP_FUNC(sctp_sf_violation), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_final), \
-पूर्ण /* TYPE_SCTP_SHUTDOWN_ACK */
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_final), \
+} /* TYPE_SCTP_SHUTDOWN_ACK */
 
-#घोषणा TYPE_SCTP_ERROR अणु \
+#define TYPE_SCTP_ERROR { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -269,100 +268,43 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_err), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_operr_notअगरy), \
+	TYPE_SCTP_FUNC(sctp_sf_operr_notify), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_operr_notअगरy), \
+	TYPE_SCTP_FUNC(sctp_sf_operr_notify), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_operr_notअगरy), \
+	TYPE_SCTP_FUNC(sctp_sf_operr_notify), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_ERROR */
+} /* TYPE_SCTP_ERROR */
 
-#घोषणा TYPE_SCTP_COOKIE_ECHO अणु \
+#define TYPE_SCTP_COOKIE_ECHO { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_1D_ce), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_1D_ce), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_2_4_dupcook), \
-पूर्ण /* TYPE_SCTP_COOKIE_ECHO */
+	TYPE_SCTP_FUNC(sctp_sf_do_5_2_4_dupcook), \
+} /* TYPE_SCTP_COOKIE_ECHO */
 
-#घोषणा TYPE_SCTP_COOKIE_ACK अणु \
+#define TYPE_SCTP_COOKIE_ACK { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_5_1E_ca), \
-	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_COOKIE_ACK */
-
-#घोषणा TYPE_SCTP_ECN_ECNE अणु \
-	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecne), \
-	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecne), \
-	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecne), \
-	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecne), \
-	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecne), \
-	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_ECN_ECNE */
-
-#घोषणा TYPE_SCTP_ECN_CWR अणु \
-	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecn_cwr), \
-	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecn_cwr), \
-	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_ecn_cwr), \
-	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_ECN_CWR */
-
-#घोषणा TYPE_SCTP_SHUTDOWN_COMPLETE अणु \
-	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	TYPE_SCTP_FUNC(sctp_sf_do_5_1E_ca), \
 	/* SCTP_STATE_ESTABLISHED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
@@ -372,16 +314,73 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES];
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_4_C), \
-पूर्ण /* TYPE_SCTP_SHUTDOWN_COMPLETE */
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+} /* TYPE_SCTP_COOKIE_ACK */
 
-/* The primary index क्रम this table is the chunk type.
- * The secondary index क्रम this table is the state.
+#define TYPE_SCTP_ECN_ECNE { \
+	/* SCTP_STATE_CLOSED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_WAIT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_ECHOED */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecne), \
+	/* SCTP_STATE_ESTABLISHED */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecne), \
+	/* SCTP_STATE_SHUTDOWN_PENDING */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecne), \
+	/* SCTP_STATE_SHUTDOWN_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecne), \
+	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecne), \
+	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+} /* TYPE_SCTP_ECN_ECNE */
+
+#define TYPE_SCTP_ECN_CWR { \
+	/* SCTP_STATE_CLOSED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_WAIT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_ECHOED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_ESTABLISHED */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecn_cwr), \
+	/* SCTP_STATE_SHUTDOWN_PENDING */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecn_cwr), \
+	/* SCTP_STATE_SHUTDOWN_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_ecn_cwr), \
+	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+} /* TYPE_SCTP_ECN_CWR */
+
+#define TYPE_SCTP_SHUTDOWN_COMPLETE { \
+	/* SCTP_STATE_CLOSED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_WAIT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_COOKIE_ECHOED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_ESTABLISHED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_SHUTDOWN_PENDING */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_SHUTDOWN_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
+	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
+	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
+	TYPE_SCTP_FUNC(sctp_sf_do_4_C), \
+} /* TYPE_SCTP_SHUTDOWN_COMPLETE */
+
+/* The primary index for this table is the chunk type.
+ * The secondary index for this table is the state.
  *
  * For base protocol (RFC 2960).
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-chunk_event_table[SCTP_NUM_BASE_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+chunk_event_table[SCTP_NUM_BASE_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_DATA,
 	TYPE_SCTP_INIT,
 	TYPE_SCTP_INIT_ACK,
@@ -397,9 +396,9 @@ chunk_event_table[SCTP_NUM_BASE_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_ECN_ECNE,
 	TYPE_SCTP_ECN_CWR,
 	TYPE_SCTP_SHUTDOWN_COMPLETE,
-पूर्ण; /* state_fn_t chunk_event_table[][] */
+}; /* state_fn_t chunk_event_table[][] */
 
-#घोषणा TYPE_SCTP_ASCONF अणु \
+#define TYPE_SCTP_ASCONF { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -407,18 +406,18 @@ chunk_event_table[SCTP_NUM_BASE_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_ASCONF */
+} /* TYPE_SCTP_ASCONF */
 
-#घोषणा TYPE_SCTP_ASCONF_ACK अणु \
+#define TYPE_SCTP_ASCONF_ACK { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -426,27 +425,27 @@ chunk_event_table[SCTP_NUM_BASE_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf_ack), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf_ack), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf_ack), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_asconf_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_asconf_ack), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_ASCONF_ACK */
+} /* TYPE_SCTP_ASCONF_ACK */
 
-/* The primary index क्रम this table is the chunk type.
- * The secondary index क्रम this table is the state.
+/* The primary index for this table is the chunk type.
+ * The secondary index for this table is the state.
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-addip_chunk_event_table[SCTP_NUM_ADDIP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+addip_chunk_event_table[SCTP_NUM_ADDIP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_ASCONF,
 	TYPE_SCTP_ASCONF_ACK,
-पूर्ण; /*state_fn_t addip_chunk_event_table[][] */
+}; /*state_fn_t addip_chunk_event_table[][] */
 
-#घोषणा TYPE_SCTP_FWD_TSN अणु \
+#define TYPE_SCTP_FWD_TSN { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -463,17 +462,17 @@ addip_chunk_event_table[SCTP_NUM_ADDIP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अ
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_FWD_TSN */
+} /* TYPE_SCTP_FWD_TSN */
 
-/* The primary index क्रम this table is the chunk type.
- * The secondary index क्रम this table is the state.
+/* The primary index for this table is the chunk type.
+ * The secondary index for this table is the state.
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-prsctp_chunk_event_table[SCTP_NUM_PRSCTP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+prsctp_chunk_event_table[SCTP_NUM_PRSCTP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_FWD_TSN,
-पूर्ण; /*state_fn_t prsctp_chunk_event_table[][] */
+}; /*state_fn_t prsctp_chunk_event_table[][] */
 
-#घोषणा TYPE_SCTP_RECONF अणु \
+#define TYPE_SCTP_RECONF { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -481,26 +480,26 @@ prsctp_chunk_event_table[SCTP_NUM_PRSCTP_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = �
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_reconf), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_reconf), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_discard_chunk), \
-पूर्ण /* TYPE_SCTP_RECONF */
+} /* TYPE_SCTP_RECONF */
 
-/* The primary index क्रम this table is the chunk type.
- * The secondary index क्रम this table is the state.
+/* The primary index for this table is the chunk type.
+ * The secondary index for this table is the state.
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-reconf_chunk_event_table[SCTP_NUM_RECONF_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+reconf_chunk_event_table[SCTP_NUM_RECONF_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_RECONF,
-पूर्ण; /*state_fn_t reconf_chunk_event_table[][] */
+}; /*state_fn_t reconf_chunk_event_table[][] */
 
-#घोषणा TYPE_SCTP_AUTH अणु \
+#define TYPE_SCTP_AUTH { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ootb), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -517,18 +516,18 @@ reconf_chunk_event_table[SCTP_NUM_RECONF_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = �
 	TYPE_SCTP_FUNC(sctp_sf_eat_auth), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_eat_auth), \
-पूर्ण /* TYPE_SCTP_AUTH */
+} /* TYPE_SCTP_AUTH */
 
-/* The primary index क्रम this table is the chunk type.
- * The secondary index क्रम this table is the state.
+/* The primary index for this table is the chunk type.
+ * The secondary index for this table is the state.
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-auth_chunk_event_table[SCTP_NUM_AUTH_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+auth_chunk_event_table[SCTP_NUM_AUTH_CHUNK_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_AUTH,
-पूर्ण; /*state_fn_t auth_chunk_event_table[][] */
+}; /*state_fn_t auth_chunk_event_table[][] */
 
-अटल स्थिर काष्ठा sctp_sm_table_entry
-chunk_event_table_unknown[SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+chunk_event_table_unknown[SCTP_STATE_NUM_STATES] = {
 	/* SCTP_STATE_CLOSED */
 	TYPE_SCTP_FUNC(sctp_sf_ootb),
 	/* SCTP_STATE_COOKIE_WAIT */
@@ -545,12 +544,12 @@ chunk_event_table_unknown[SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_FUNC(sctp_sf_unk_chunk),
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */
 	TYPE_SCTP_FUNC(sctp_sf_unk_chunk),
-पूर्ण;	/* chunk unknown */
+};	/* chunk unknown */
 
 
-#घोषणा TYPE_SCTP_PRIMITIVE_ASSOCIATE  अणु \
+#define TYPE_SCTP_PRIMITIVE_ASSOCIATE  { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_asoc), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_asoc), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
 	TYPE_SCTP_FUNC(sctp_sf_not_impl), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
@@ -565,17 +564,17 @@ chunk_event_table_unknown[SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_FUNC(sctp_sf_not_impl), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_not_impl), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_ASSOCIATE */
+} /* TYPE_SCTP_PRIMITIVE_ASSOCIATE */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_SHUTDOWN  अणु \
+#define TYPE_SCTP_PRIMITIVE_SHUTDOWN  { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_रुको_prm_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_wait_prm_shutdown), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_prm_shutकरोwn),\
+	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_prm_shutdown),\
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_prm_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_prm_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_primitive), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
@@ -584,108 +583,108 @@ chunk_event_table_unknown[SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_FUNC(sctp_sf_ignore_primitive), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_primitive), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_SHUTDOWN */
+} /* TYPE_SCTP_PRIMITIVE_SHUTDOWN */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_ABORT  अणु \
+#define TYPE_SCTP_PRIMITIVE_ABORT  { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_रुको_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_wait_prm_abort), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_echoed_prm_abort), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_1_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_1_prm_abort), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_pending_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_pending_prm_abort), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_sent_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_sent_prm_abort), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_1_prm_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_1_prm_abort), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_shutकरोwn_ack_sent_prm_पात), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_ABORT */
+	TYPE_SCTP_FUNC(sctp_sf_shutdown_ack_sent_prm_abort), \
+} /* TYPE_SCTP_PRIMITIVE_ABORT */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_SEND  अणु \
+#define TYPE_SCTP_PRIMITIVE_SEND  { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_send), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_send), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_send), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_send), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_send), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_send), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_SEND */
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
+} /* TYPE_SCTP_PRIMITIVE_SEND */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_REQUESTHEARTBEAT  अणु \
+#define TYPE_SCTP_PRIMITIVE_REQUESTHEARTBEAT  { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_requestheartbeat),          \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_REQUESTHEARTBEAT */
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_requestheartbeat),          \
+} /* TYPE_SCTP_PRIMITIVE_REQUESTHEARTBEAT */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_ASCONF अणु \
+#define TYPE_SCTP_PRIMITIVE_ASCONF { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_asconf), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_asconf), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_asconf), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_asconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_asconf), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_ASCONF */
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
+} /* TYPE_SCTP_PRIMITIVE_ASCONF */
 
-#घोषणा TYPE_SCTP_PRIMITIVE_RECONF अणु \
+#define TYPE_SCTP_PRIMITIVE_RECONF { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_बंदd), \
+	TYPE_SCTP_FUNC(sctp_sf_error_closed), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_reconf), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_reconf), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_reconf), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_prm_reconf), \
+	TYPE_SCTP_FUNC(sctp_sf_do_prm_reconf), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_error_shutकरोwn), \
-पूर्ण /* TYPE_SCTP_PRIMITIVE_RECONF */
+	TYPE_SCTP_FUNC(sctp_sf_error_shutdown), \
+} /* TYPE_SCTP_PRIMITIVE_RECONF */
 
-/* The primary index क्रम this table is the primitive type.
- * The secondary index क्रम this table is the state.
+/* The primary index for this table is the primitive type.
+ * The secondary index for this table is the state.
  */
-अटल स्थिर काष्ठा sctp_sm_table_entry
-primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_PRIMITIVE_ASSOCIATE,
 	TYPE_SCTP_PRIMITIVE_SHUTDOWN,
 	TYPE_SCTP_PRIMITIVE_ABORT,
@@ -693,9 +692,9 @@ primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES] = अण�
 	TYPE_SCTP_PRIMITIVE_REQUESTHEARTBEAT,
 	TYPE_SCTP_PRIMITIVE_ASCONF,
 	TYPE_SCTP_PRIMITIVE_RECONF,
-पूर्ण;
+};
 
-#घोषणा TYPE_SCTP_OTHER_NO_PENDING_TSN  अणु \
+#define TYPE_SCTP_OTHER_NO_PENDING_TSN  { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -703,22 +702,22 @@ primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES] = अण�
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_no_pending_tsn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_no_pending_tsn), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_start_shutकरोwn), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_start_shutdown), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_9_2_shutकरोwn_ack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_9_2_shutdown_ack), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
-पूर्ण
+}
 
-#घोषणा TYPE_SCTP_OTHER_ICMP_PROTO_UNREACH  अणु \
+#define TYPE_SCTP_OTHER_ICMP_PROTO_UNREACH  { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_cookie_रुको_icmp_पात), \
+	TYPE_SCTP_FUNC(sctp_sf_cookie_wait_icmp_abort), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_ESTABLISHED */ \
@@ -731,15 +730,15 @@ primitive_event_table[SCTP_NUM_PRIMITIVE_TYPES][SCTP_STATE_NUM_STATES] = अण�
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_ignore_other), \
-पूर्ण
+}
 
-अटल स्थिर काष्ठा sctp_sm_table_entry
-other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_OTHER_NO_PENDING_TSN,
 	TYPE_SCTP_OTHER_ICMP_PROTO_UNREACH,
-पूर्ण;
+};
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_NONE अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_NONE { \
 	/* SCTP_STATE_CLOSED */ \
 	TYPE_SCTP_FUNC(sctp_sf_bug), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
@@ -756,200 +755,200 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_FUNC(sctp_sf_bug), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
 	TYPE_SCTP_FUNC(sctp_sf_bug), \
-पूर्ण
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T1_COOKIE अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T1_COOKIE { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
 	TYPE_SCTP_FUNC(sctp_sf_bug), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_t1_cookie_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t1_cookie_timer_expire), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T1_INIT अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T1_INIT { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_t1_init_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t1_init_timer_expire), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T2_SHUTDOWN अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T2_SHUTDOWN { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_t2_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t2_timer_expire), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_t2_समयr_expire), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_t2_timer_expire), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T3_RTX अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T3_RTX { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_3_3_rtx), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_3_3_rtx), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_3_3_rtx), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_3_3_rtx), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_3_3_rtx), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_3_3_rtx), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_3_3_rtx), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_3_3_rtx), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T4_RTO अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T4_RTO { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_t4_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t4_timer_expire), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_T5_SHUTDOWN_GUARD अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_T5_SHUTDOWN_GUARD { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_t5_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t5_timer_expire), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_t5_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_t5_timer_expire), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_HEARTBEAT अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_HEARTBEAT { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
 	TYPE_SCTP_FUNC(sctp_sf_sendbeat_8_3), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
 	TYPE_SCTP_FUNC(sctp_sf_sendbeat_8_3), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
 	TYPE_SCTP_FUNC(sctp_sf_sendbeat_8_3), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_SACK अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_SACK { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_2_sack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_2_sack), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_2_sack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_2_sack), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_करो_6_2_sack), \
+	TYPE_SCTP_FUNC(sctp_sf_do_6_2_sack), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_AUTOCLOSE अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_AUTOCLOSE { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
-	TYPE_SCTP_FUNC(sctp_sf_स्वतःबंद_समयr_expire), \
+	TYPE_SCTP_FUNC(sctp_sf_autoclose_timer_expire), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-#घोषणा TYPE_SCTP_EVENT_TIMEOUT_RECONF अणु \
+#define TYPE_SCTP_EVENT_TIMEOUT_RECONF { \
 	/* SCTP_STATE_CLOSED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_WAIT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_COOKIE_ECHOED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_ESTABLISHED */ \
 	TYPE_SCTP_FUNC(sctp_sf_send_reconf), \
 	/* SCTP_STATE_SHUTDOWN_PENDING */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_RECEIVED */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
 	/* SCTP_STATE_SHUTDOWN_ACK_SENT */ \
-	TYPE_SCTP_FUNC(sctp_sf_समयr_ignore), \
-पूर्ण
+	TYPE_SCTP_FUNC(sctp_sf_timer_ignore), \
+}
 
-अटल स्थिर काष्ठा sctp_sm_table_entry
-समयout_event_table[SCTP_NUM_TIMEOUT_TYPES][SCTP_STATE_NUM_STATES] = अणु
+static const struct sctp_sm_table_entry
+timeout_event_table[SCTP_NUM_TIMEOUT_TYPES][SCTP_STATE_NUM_STATES] = {
 	TYPE_SCTP_EVENT_TIMEOUT_NONE,
 	TYPE_SCTP_EVENT_TIMEOUT_T1_COOKIE,
 	TYPE_SCTP_EVENT_TIMEOUT_T1_INIT,
@@ -961,39 +960,39 @@ other_event_table[SCTP_NUM_OTHER_TYPES][SCTP_STATE_NUM_STATES] = अणु
 	TYPE_SCTP_EVENT_TIMEOUT_RECONF,
 	TYPE_SCTP_EVENT_TIMEOUT_SACK,
 	TYPE_SCTP_EVENT_TIMEOUT_AUTOCLOSE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sctp_sm_table_entry *sctp_chunk_event_lookup(
-						काष्ठा net *net,
-						क्रमागत sctp_cid cid,
-						क्रमागत sctp_state state)
-अणु
-	अगर (state > SCTP_STATE_MAX)
-		वापस &bug;
+static const struct sctp_sm_table_entry *sctp_chunk_event_lookup(
+						struct net *net,
+						enum sctp_cid cid,
+						enum sctp_state state)
+{
+	if (state > SCTP_STATE_MAX)
+		return &bug;
 
-	अगर (cid == SCTP_CID_I_DATA)
+	if (cid == SCTP_CID_I_DATA)
 		cid = SCTP_CID_DATA;
 
-	अगर (cid <= SCTP_CID_BASE_MAX)
-		वापस &chunk_event_table[cid][state];
+	if (cid <= SCTP_CID_BASE_MAX)
+		return &chunk_event_table[cid][state];
 
-	चयन ((u16)cid) अणु
-	हाल SCTP_CID_FWD_TSN:
-	हाल SCTP_CID_I_FWD_TSN:
-		वापस &prsctp_chunk_event_table[0][state];
+	switch ((u16)cid) {
+	case SCTP_CID_FWD_TSN:
+	case SCTP_CID_I_FWD_TSN:
+		return &prsctp_chunk_event_table[0][state];
 
-	हाल SCTP_CID_ASCONF:
-		वापस &addip_chunk_event_table[0][state];
+	case SCTP_CID_ASCONF:
+		return &addip_chunk_event_table[0][state];
 
-	हाल SCTP_CID_ASCONF_ACK:
-		वापस &addip_chunk_event_table[1][state];
+	case SCTP_CID_ASCONF_ACK:
+		return &addip_chunk_event_table[1][state];
 
-	हाल SCTP_CID_RECONF:
-		वापस &reconf_chunk_event_table[0][state];
+	case SCTP_CID_RECONF:
+		return &reconf_chunk_event_table[0][state];
 
-	हाल SCTP_CID_AUTH:
-		वापस &auth_chunk_event_table[0][state];
-	पूर्ण
+	case SCTP_CID_AUTH:
+		return &auth_chunk_event_table[0][state];
+	}
 
-	वापस &chunk_event_table_unknown[state];
-पूर्ण
+	return &chunk_event_table_unknown[state];
+}

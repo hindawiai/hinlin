@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * EP93XX PATA controller driver.
  *
@@ -14,7 +13,7 @@
  *
  * Original copyrights:
  *
- * Support क्रम Cirrus Logic's EP93xx (EP9312, EP9315) CPUs
+ * Support for Cirrus Logic's EP93xx (EP9312, EP9315) CPUs
  * PATA host controller driver.
  *
  * Copyright (c) 2009, Bartlomiej Zolnierkiewicz
@@ -27,31 +26,31 @@
  * EP93XX PATA controller driver.
  * Copyright (C) 2007 Lennert Buytenhek <buytenh@wantstofly.org>
  *
- * An ATA driver क्रम the Cirrus Logic EP93xx PATA controller.
+ * An ATA driver for the Cirrus Logic EP93xx PATA controller.
  *
  * Based on an earlier version by Alessandro Zummo, which is:
  *   Copyright (C) 2006 Tower Technologies
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/blkdev.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/ata.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/kसमय.स>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_host.h>
+#include <linux/ata.h>
+#include <linux/libata.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/ktime.h>
 
-#समावेश <linux/platक्रमm_data/dma-ep93xx.h>
-#समावेश <linux/soc/cirrus/ep93xx.h>
+#include <linux/platform_data/dma-ep93xx.h>
+#include <linux/soc/cirrus/ep93xx.h>
 
-#घोषणा DRV_NAME	"ep93xx-ide"
-#घोषणा DRV_VERSION	"1.0"
+#define DRV_NAME	"ep93xx-ide"
+#define DRV_VERSION	"1.0"
 
-क्रमागत अणु
+enum {
 	/* IDE Control Register */
 	IDECTRL				= 0x00,
 	IDECTRL_CS0N			= (1 << 0),
@@ -61,14 +60,14 @@
 	IDECTRL_INTRQ			= (1 << 9),
 	IDECTRL_IORDY			= (1 << 10),
 	/*
-	 * the device IDE रेजिस्टर to be accessed is selected through
-	 * IDECTRL रेजिस्टर's specific bitfields 'DA', 'CS1N' and 'CS0N':
+	 * the device IDE register to be accessed is selected through
+	 * IDECTRL register's specific bitfields 'DA', 'CS1N' and 'CS0N':
 	 *   b4   b3   b2    b1     b0
 	 *   A2   A1   A0   CS1N   CS0N
-	 * the values filled in this काष्ठाure allows the value to be directly
-	 * ORed to the IDECTRL रेजिस्टर, hence giving directly the A[2:0] and
-	 * CS1N/CS0N values क्रम each IDE रेजिस्टर.
-	 * The values correspond to the transक्रमmation:
+	 * the values filled in this structure allows the value to be directly
+	 * ORed to the IDECTRL register, hence giving directly the A[2:0] and
+	 * CS1N/CS0N values for each IDE register.
+	 * The values correspond to the transformation:
 	 *   ((real IDE address) << 2) | CS1N value << 1 | CS0N value
 	 */
 	IDECTRL_ADDR_CMD		= 0 + 2, /* CS1 */
@@ -123,48 +122,48 @@
 
 	/* UDMA Debug Status Register */
 	IDEUDMADEBUG			= 0x2c,
-पूर्ण;
+};
 
-काष्ठा ep93xx_pata_data अणु
-	स्थिर काष्ठा platक्रमm_device *pdev;
-	व्योम __iomem *ide_base;
-	काष्ठा ata_timing t;
+struct ep93xx_pata_data {
+	const struct platform_device *pdev;
+	void __iomem *ide_base;
+	struct ata_timing t;
 	bool iordy;
 
-	अचिन्हित दीर्घ udma_in_phys;
-	अचिन्हित दीर्घ udma_out_phys;
+	unsigned long udma_in_phys;
+	unsigned long udma_out_phys;
 
-	काष्ठा dma_chan *dma_rx_channel;
-	काष्ठा ep93xx_dma_data dma_rx_data;
-	काष्ठा dma_chan *dma_tx_channel;
-	काष्ठा ep93xx_dma_data dma_tx_data;
-पूर्ण;
+	struct dma_chan *dma_rx_channel;
+	struct ep93xx_dma_data dma_rx_data;
+	struct dma_chan *dma_tx_channel;
+	struct ep93xx_dma_data dma_tx_data;
+};
 
-अटल व्योम ep93xx_pata_clear_regs(व्योम __iomem *base)
-अणु
-	ग_लिखोl(IDECTRL_CS0N | IDECTRL_CS1N | IDECTRL_DIORN |
+static void ep93xx_pata_clear_regs(void __iomem *base)
+{
+	writel(IDECTRL_CS0N | IDECTRL_CS1N | IDECTRL_DIORN |
 		IDECTRL_DIOWN, base + IDECTRL);
 
-	ग_लिखोl(0, base + IDECFG);
-	ग_लिखोl(0, base + IDEMDMAOP);
-	ग_लिखोl(0, base + IDEUDMAOP);
-	ग_लिखोl(0, base + IDEDATAOUT);
-	ग_लिखोl(0, base + IDEDATAIN);
-	ग_लिखोl(0, base + IDEMDMADATAOUT);
-	ग_लिखोl(0, base + IDEMDMADATAIN);
-	ग_लिखोl(0, base + IDEUDMADATAOUT);
-	ग_लिखोl(0, base + IDEUDMADATAIN);
-	ग_लिखोl(0, base + IDEUDMADEBUG);
-पूर्ण
+	writel(0, base + IDECFG);
+	writel(0, base + IDEMDMAOP);
+	writel(0, base + IDEUDMAOP);
+	writel(0, base + IDEDATAOUT);
+	writel(0, base + IDEDATAIN);
+	writel(0, base + IDEMDMADATAOUT);
+	writel(0, base + IDEMDMADATAIN);
+	writel(0, base + IDEUDMADATAOUT);
+	writel(0, base + IDEUDMADATAIN);
+	writel(0, base + IDEUDMADEBUG);
+}
 
-अटल bool ep93xx_pata_check_iordy(व्योम __iomem *base)
-अणु
-	वापस !!(पढ़ोl(base + IDECTRL) & IDECTRL_IORDY);
-पूर्ण
+static bool ep93xx_pata_check_iordy(void __iomem *base)
+{
+	return !!(readl(base + IDECTRL) & IDECTRL_IORDY);
+}
 
 /*
- * According to EP93xx User's Guide, WST field of IDECFG specअगरies number
- * of HCLK cycles to hold the data bus after a PIO ग_लिखो operation.
+ * According to EP93xx User's Guide, WST field of IDECFG specifies number
+ * of HCLK cycles to hold the data bus after a PIO write operation.
  * It should be programmed to guarantee following delays:
  *
  * PIO Mode   [ns]
@@ -174,39 +173,39 @@
  * 3          10
  * 4          5
  *
- * Maximum possible value क्रम HCLK is 100MHz.
+ * Maximum possible value for HCLK is 100MHz.
  */
-अटल पूर्णांक ep93xx_pata_get_wst(पूर्णांक pio_mode)
-अणु
-	पूर्णांक val;
+static int ep93xx_pata_get_wst(int pio_mode)
+{
+	int val;
 
-	अगर (pio_mode == 0)
+	if (pio_mode == 0)
 		val = 3;
-	अन्यथा अगर (pio_mode < 3)
+	else if (pio_mode < 3)
 		val = 2;
-	अन्यथा
+	else
 		val = 1;
 
-	वापस val << IDECFG_WST_SHIFT;
-पूर्ण
+	return val << IDECFG_WST_SHIFT;
+}
 
-अटल व्योम ep93xx_pata_enable_pio(व्योम __iomem *base, पूर्णांक pio_mode)
-अणु
-	ग_लिखोl(IDECFG_IDEEN | IDECFG_PIO |
+static void ep93xx_pata_enable_pio(void __iomem *base, int pio_mode)
+{
+	writel(IDECFG_IDEEN | IDECFG_PIO |
 		ep93xx_pata_get_wst(pio_mode) |
 		(pio_mode << IDECFG_MODE_SHIFT), base + IDECFG);
-पूर्ण
+}
 
 /*
  * Based on delay loop found in mach-pxa/mp900.c.
  *
  * Single iteration should take 5 cpu cycles. This is 25ns assuming the
- * fastest ep93xx cpu speed (200MHz) and is better optimized क्रम PIO4 timings
+ * fastest ep93xx cpu speed (200MHz) and is better optimized for PIO4 timings
  * than eg. 20ns.
  */
-अटल व्योम ep93xx_pata_delay(अचिन्हित दीर्घ count)
-अणु
-	__यंत्र__ अस्थिर (
+static void ep93xx_pata_delay(unsigned long count)
+{
+	__asm__ volatile (
 		"0:\n"
 		"mov r0, r0\n"
 		"subs %0, %1, #1\n"
@@ -214,449 +213,449 @@
 		: "=r" (count)
 		: "0" (count)
 	);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ ep93xx_pata_रुको_क्रम_iordy(व्योम __iomem *base,
-						अचिन्हित दीर्घ t2)
-अणु
+static unsigned long ep93xx_pata_wait_for_iordy(void __iomem *base,
+						unsigned long t2)
+{
 	/*
-	 * According to ATA specअगरication, IORDY pin can be first sampled
+	 * According to ATA specification, IORDY pin can be first sampled
 	 * tA = 35ns after activation of DIOR-/DIOW-. Maximum IORDY pulse
 	 * width is tB = 1250ns.
 	 *
-	 * We are alपढ़ोy t2 delay loop iterations after activation of
-	 * DIOR-/DIOW-, so we set समयout to (1250 + 35) / 25 - t2 additional
+	 * We are already t2 delay loop iterations after activation of
+	 * DIOR-/DIOW-, so we set timeout to (1250 + 35) / 25 - t2 additional
 	 * delay loop iterations.
 	 */
-	अचिन्हित दीर्घ start = (1250 + 35) / 25 - t2;
-	अचिन्हित दीर्घ counter = start;
+	unsigned long start = (1250 + 35) / 25 - t2;
+	unsigned long counter = start;
 
-	जबतक (!ep93xx_pata_check_iordy(base) && counter--)
+	while (!ep93xx_pata_check_iordy(base) && counter--)
 		ep93xx_pata_delay(1);
-	वापस start - counter;
-पूर्ण
+	return start - counter;
+}
 
-/* common part at start of ep93xx_pata_पढ़ो/ग_लिखो() */
-अटल व्योम ep93xx_pata_rw_begin(व्योम __iomem *base, अचिन्हित दीर्घ addr,
-				 अचिन्हित दीर्घ t1)
-अणु
-	ग_लिखोl(IDECTRL_DIOWN | IDECTRL_DIORN | addr, base + IDECTRL);
+/* common part at start of ep93xx_pata_read/write() */
+static void ep93xx_pata_rw_begin(void __iomem *base, unsigned long addr,
+				 unsigned long t1)
+{
+	writel(IDECTRL_DIOWN | IDECTRL_DIORN | addr, base + IDECTRL);
 	ep93xx_pata_delay(t1);
-पूर्ण
+}
 
-/* common part at end of ep93xx_pata_पढ़ो/ग_लिखो() */
-अटल व्योम ep93xx_pata_rw_end(व्योम __iomem *base, अचिन्हित दीर्घ addr,
-			       bool iordy, अचिन्हित दीर्घ t0, अचिन्हित दीर्घ t2,
-			       अचिन्हित दीर्घ t2i)
-अणु
+/* common part at end of ep93xx_pata_read/write() */
+static void ep93xx_pata_rw_end(void __iomem *base, unsigned long addr,
+			       bool iordy, unsigned long t0, unsigned long t2,
+			       unsigned long t2i)
+{
 	ep93xx_pata_delay(t2);
-	/* lengthen t2 अगर needed */
-	अगर (iordy)
-		t2 += ep93xx_pata_रुको_क्रम_iordy(base, t2);
-	ग_लिखोl(IDECTRL_DIOWN | IDECTRL_DIORN | addr, base + IDECTRL);
-	अगर (t0 > t2 && t0 - t2 > t2i)
+	/* lengthen t2 if needed */
+	if (iordy)
+		t2 += ep93xx_pata_wait_for_iordy(base, t2);
+	writel(IDECTRL_DIOWN | IDECTRL_DIORN | addr, base + IDECTRL);
+	if (t0 > t2 && t0 - t2 > t2i)
 		ep93xx_pata_delay(t0 - t2);
-	अन्यथा
+	else
 		ep93xx_pata_delay(t2i);
-पूर्ण
+}
 
-अटल u16 ep93xx_pata_पढ़ो(काष्ठा ep93xx_pata_data *drv_data,
-			    अचिन्हित दीर्घ addr,
+static u16 ep93xx_pata_read(struct ep93xx_pata_data *drv_data,
+			    unsigned long addr,
 			    bool reg)
-अणु
-	व्योम __iomem *base = drv_data->ide_base;
-	स्थिर काष्ठा ata_timing *t = &drv_data->t;
-	अचिन्हित दीर्घ t0 = reg ? t->cyc8b : t->cycle;
-	अचिन्हित दीर्घ t2 = reg ? t->act8b : t->active;
-	अचिन्हित दीर्घ t2i = reg ? t->rec8b : t->recover;
+{
+	void __iomem *base = drv_data->ide_base;
+	const struct ata_timing *t = &drv_data->t;
+	unsigned long t0 = reg ? t->cyc8b : t->cycle;
+	unsigned long t2 = reg ? t->act8b : t->active;
+	unsigned long t2i = reg ? t->rec8b : t->recover;
 
 	ep93xx_pata_rw_begin(base, addr, t->setup);
-	ग_लिखोl(IDECTRL_DIOWN | addr, base + IDECTRL);
+	writel(IDECTRL_DIOWN | addr, base + IDECTRL);
 	/*
-	 * The IDEDATAIN रेजिस्टर is loaded from the DD pins at the positive
-	 * edge of the DIORN संकेत. (EP93xx UG p27-14)
+	 * The IDEDATAIN register is loaded from the DD pins at the positive
+	 * edge of the DIORN signal. (EP93xx UG p27-14)
 	 */
 	ep93xx_pata_rw_end(base, addr, drv_data->iordy, t0, t2, t2i);
-	वापस पढ़ोl(base + IDEDATAIN);
-पूर्ण
+	return readl(base + IDEDATAIN);
+}
 
-/* IDE रेजिस्टर पढ़ो */
-अटल u16 ep93xx_pata_पढ़ो_reg(काष्ठा ep93xx_pata_data *drv_data,
-				अचिन्हित दीर्घ addr)
-अणु
-	वापस ep93xx_pata_पढ़ो(drv_data, addr, true);
-पूर्ण
+/* IDE register read */
+static u16 ep93xx_pata_read_reg(struct ep93xx_pata_data *drv_data,
+				unsigned long addr)
+{
+	return ep93xx_pata_read(drv_data, addr, true);
+}
 
-/* PIO data पढ़ो */
-अटल u16 ep93xx_pata_पढ़ो_data(काष्ठा ep93xx_pata_data *drv_data,
-				 अचिन्हित दीर्घ addr)
-अणु
-	वापस ep93xx_pata_पढ़ो(drv_data, addr, false);
-पूर्ण
+/* PIO data read */
+static u16 ep93xx_pata_read_data(struct ep93xx_pata_data *drv_data,
+				 unsigned long addr)
+{
+	return ep93xx_pata_read(drv_data, addr, false);
+}
 
-अटल व्योम ep93xx_pata_ग_लिखो(काष्ठा ep93xx_pata_data *drv_data,
-			      u16 value, अचिन्हित दीर्घ addr,
+static void ep93xx_pata_write(struct ep93xx_pata_data *drv_data,
+			      u16 value, unsigned long addr,
 			      bool reg)
-अणु
-	व्योम __iomem *base = drv_data->ide_base;
-	स्थिर काष्ठा ata_timing *t = &drv_data->t;
-	अचिन्हित दीर्घ t0 = reg ? t->cyc8b : t->cycle;
-	अचिन्हित दीर्घ t2 = reg ? t->act8b : t->active;
-	अचिन्हित दीर्घ t2i = reg ? t->rec8b : t->recover;
+{
+	void __iomem *base = drv_data->ide_base;
+	const struct ata_timing *t = &drv_data->t;
+	unsigned long t0 = reg ? t->cyc8b : t->cycle;
+	unsigned long t2 = reg ? t->act8b : t->active;
+	unsigned long t2i = reg ? t->rec8b : t->recover;
 
 	ep93xx_pata_rw_begin(base, addr, t->setup);
 	/*
-	 * Value from IDEDATAOUT रेजिस्टर is driven onto the DD pins when
+	 * Value from IDEDATAOUT register is driven onto the DD pins when
 	 * DIOWN is low. (EP93xx UG p27-13)
 	 */
-	ग_लिखोl(value, base + IDEDATAOUT);
-	ग_लिखोl(IDECTRL_DIORN | addr, base + IDECTRL);
+	writel(value, base + IDEDATAOUT);
+	writel(IDECTRL_DIORN | addr, base + IDECTRL);
 	ep93xx_pata_rw_end(base, addr, drv_data->iordy, t0, t2, t2i);
-पूर्ण
+}
 
-/* IDE रेजिस्टर ग_लिखो */
-अटल व्योम ep93xx_pata_ग_लिखो_reg(काष्ठा ep93xx_pata_data *drv_data,
-				  u16 value, अचिन्हित दीर्घ addr)
-अणु
-	ep93xx_pata_ग_लिखो(drv_data, value, addr, true);
-पूर्ण
+/* IDE register write */
+static void ep93xx_pata_write_reg(struct ep93xx_pata_data *drv_data,
+				  u16 value, unsigned long addr)
+{
+	ep93xx_pata_write(drv_data, value, addr, true);
+}
 
-/* PIO data ग_लिखो */
-अटल व्योम ep93xx_pata_ग_लिखो_data(काष्ठा ep93xx_pata_data *drv_data,
-				   u16 value, अचिन्हित दीर्घ addr)
-अणु
-	ep93xx_pata_ग_लिखो(drv_data, value, addr, false);
-पूर्ण
+/* PIO data write */
+static void ep93xx_pata_write_data(struct ep93xx_pata_data *drv_data,
+				   u16 value, unsigned long addr)
+{
+	ep93xx_pata_write(drv_data, value, addr, false);
+}
 
-अटल व्योम ep93xx_pata_set_piomode(काष्ठा ata_port *ap,
-				    काष्ठा ata_device *adev)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
-	काष्ठा ata_device *pair = ata_dev_pair(adev);
+static void ep93xx_pata_set_piomode(struct ata_port *ap,
+				    struct ata_device *adev)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
+	struct ata_device *pair = ata_dev_pair(adev);
 	/*
-	 * Calculate timings क्रम the delay loop, assuming ep93xx cpu speed
-	 * is 200MHz (maximum possible क्रम ep93xx). If actual cpu speed is
-	 * slower, we will रुको a bit दीर्घer in each delay.
-	 * Additional भागision of cpu speed by 5, because single iteration
+	 * Calculate timings for the delay loop, assuming ep93xx cpu speed
+	 * is 200MHz (maximum possible for ep93xx). If actual cpu speed is
+	 * slower, we will wait a bit longer in each delay.
+	 * Additional division of cpu speed by 5, because single iteration
 	 * of our delay loop takes 5 cpu cycles (25ns).
 	 */
-	अचिन्हित दीर्घ T = 1000000 / (200 / 5);
+	unsigned long T = 1000000 / (200 / 5);
 
 	ata_timing_compute(adev, adev->pio_mode, &drv_data->t, T, 0);
-	अगर (pair && pair->pio_mode) अणु
-		काष्ठा ata_timing t;
+	if (pair && pair->pio_mode) {
+		struct ata_timing t;
 		ata_timing_compute(pair, pair->pio_mode, &t, T, 0);
 		ata_timing_merge(&t, &drv_data->t, &drv_data->t,
 			ATA_TIMING_SETUP | ATA_TIMING_8BIT);
-	पूर्ण
+	}
 	drv_data->iordy = ata_pio_need_iordy(adev);
 
 	ep93xx_pata_enable_pio(drv_data->ide_base,
 			       adev->pio_mode - XFER_PIO_0);
-पूर्ण
+}
 
 /* Note: original code is ata_sff_check_status */
-अटल u8 ep93xx_pata_check_status(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static u8 ep93xx_pata_check_status(struct ata_port *ap)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
-	वापस ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_STATUS);
-पूर्ण
+	return ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_STATUS);
+}
 
-अटल u8 ep93xx_pata_check_altstatus(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static u8 ep93xx_pata_check_altstatus(struct ata_port *ap)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
-	वापस ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_ALTSTATUS);
-पूर्ण
+	return ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_ALTSTATUS);
+}
 
 /* Note: original code is ata_sff_tf_load */
-अटल व्योम ep93xx_pata_tf_load(काष्ठा ata_port *ap,
-				स्थिर काष्ठा ata_taskfile *tf)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
-	अचिन्हित पूर्णांक is_addr = tf->flags & ATA_TFLAG_ISADDR;
+static void ep93xx_pata_tf_load(struct ata_port *ap,
+				const struct ata_taskfile *tf)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
+	unsigned int is_addr = tf->flags & ATA_TFLAG_ISADDR;
 
-	अगर (tf->ctl != ap->last_ctl) अणु
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->ctl, IDECTRL_ADDR_CTL);
+	if (tf->ctl != ap->last_ctl) {
+		ep93xx_pata_write_reg(drv_data, tf->ctl, IDECTRL_ADDR_CTL);
 		ap->last_ctl = tf->ctl;
-		ata_रुको_idle(ap);
-	पूर्ण
+		ata_wait_idle(ap);
+	}
 
-	अगर (is_addr && (tf->flags & ATA_TFLAG_LBA48)) अणु
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->hob_feature,
+	if (is_addr && (tf->flags & ATA_TFLAG_LBA48)) {
+		ep93xx_pata_write_reg(drv_data, tf->hob_feature,
 			IDECTRL_ADDR_FEATURE);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->hob_nsect,
+		ep93xx_pata_write_reg(drv_data, tf->hob_nsect,
 			IDECTRL_ADDR_NSECT);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->hob_lbal,
+		ep93xx_pata_write_reg(drv_data, tf->hob_lbal,
 			IDECTRL_ADDR_LBAL);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->hob_lbam,
+		ep93xx_pata_write_reg(drv_data, tf->hob_lbam,
 			IDECTRL_ADDR_LBAM);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->hob_lbah,
+		ep93xx_pata_write_reg(drv_data, tf->hob_lbah,
 			IDECTRL_ADDR_LBAH);
-	पूर्ण
+	}
 
-	अगर (is_addr) अणु
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->feature,
+	if (is_addr) {
+		ep93xx_pata_write_reg(drv_data, tf->feature,
 			IDECTRL_ADDR_FEATURE);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->nsect, IDECTRL_ADDR_NSECT);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->lbal, IDECTRL_ADDR_LBAL);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->lbam, IDECTRL_ADDR_LBAM);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->lbah, IDECTRL_ADDR_LBAH);
-	पूर्ण
+		ep93xx_pata_write_reg(drv_data, tf->nsect, IDECTRL_ADDR_NSECT);
+		ep93xx_pata_write_reg(drv_data, tf->lbal, IDECTRL_ADDR_LBAL);
+		ep93xx_pata_write_reg(drv_data, tf->lbam, IDECTRL_ADDR_LBAM);
+		ep93xx_pata_write_reg(drv_data, tf->lbah, IDECTRL_ADDR_LBAH);
+	}
 
-	अगर (tf->flags & ATA_TFLAG_DEVICE)
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->device,
+	if (tf->flags & ATA_TFLAG_DEVICE)
+		ep93xx_pata_write_reg(drv_data, tf->device,
 			IDECTRL_ADDR_DEVICE);
 
-	ata_रुको_idle(ap);
-पूर्ण
+	ata_wait_idle(ap);
+}
 
-/* Note: original code is ata_sff_tf_पढ़ो */
-अटल व्योम ep93xx_pata_tf_पढ़ो(काष्ठा ata_port *ap, काष्ठा ata_taskfile *tf)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+/* Note: original code is ata_sff_tf_read */
+static void ep93xx_pata_tf_read(struct ata_port *ap, struct ata_taskfile *tf)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
 	tf->command = ep93xx_pata_check_status(ap);
-	tf->feature = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_FEATURE);
-	tf->nsect = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_NSECT);
-	tf->lbal = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_LBAL);
-	tf->lbam = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_LBAM);
-	tf->lbah = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_LBAH);
-	tf->device = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_DEVICE);
+	tf->feature = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_FEATURE);
+	tf->nsect = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_NSECT);
+	tf->lbal = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_LBAL);
+	tf->lbam = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_LBAM);
+	tf->lbah = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_LBAH);
+	tf->device = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_DEVICE);
 
-	अगर (tf->flags & ATA_TFLAG_LBA48) अणु
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->ctl | ATA_HOB,
+	if (tf->flags & ATA_TFLAG_LBA48) {
+		ep93xx_pata_write_reg(drv_data, tf->ctl | ATA_HOB,
 			IDECTRL_ADDR_CTL);
-		tf->hob_feature = ep93xx_pata_पढ़ो_reg(drv_data,
+		tf->hob_feature = ep93xx_pata_read_reg(drv_data,
 			IDECTRL_ADDR_FEATURE);
-		tf->hob_nsect = ep93xx_pata_पढ़ो_reg(drv_data,
+		tf->hob_nsect = ep93xx_pata_read_reg(drv_data,
 			IDECTRL_ADDR_NSECT);
-		tf->hob_lbal = ep93xx_pata_पढ़ो_reg(drv_data,
+		tf->hob_lbal = ep93xx_pata_read_reg(drv_data,
 			IDECTRL_ADDR_LBAL);
-		tf->hob_lbam = ep93xx_pata_पढ़ो_reg(drv_data,
+		tf->hob_lbam = ep93xx_pata_read_reg(drv_data,
 			IDECTRL_ADDR_LBAM);
-		tf->hob_lbah = ep93xx_pata_पढ़ो_reg(drv_data,
+		tf->hob_lbah = ep93xx_pata_read_reg(drv_data,
 			IDECTRL_ADDR_LBAH);
-		ep93xx_pata_ग_लिखो_reg(drv_data, tf->ctl, IDECTRL_ADDR_CTL);
+		ep93xx_pata_write_reg(drv_data, tf->ctl, IDECTRL_ADDR_CTL);
 		ap->last_ctl = tf->ctl;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Note: original code is ata_sff_exec_command */
-अटल व्योम ep93xx_pata_exec_command(काष्ठा ata_port *ap,
-				     स्थिर काष्ठा ata_taskfile *tf)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static void ep93xx_pata_exec_command(struct ata_port *ap,
+				     const struct ata_taskfile *tf)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, tf->command,
+	ep93xx_pata_write_reg(drv_data, tf->command,
 			  IDECTRL_ADDR_COMMAND);
-	ata_sff_छोड़ो(ap);
-पूर्ण
+	ata_sff_pause(ap);
+}
 
 /* Note: original code is ata_sff_dev_select */
-अटल व्योम ep93xx_pata_dev_select(काष्ठा ata_port *ap, अचिन्हित पूर्णांक device)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
-	u8 पंचांगp = ATA_DEVICE_OBS;
+static void ep93xx_pata_dev_select(struct ata_port *ap, unsigned int device)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
+	u8 tmp = ATA_DEVICE_OBS;
 
-	अगर (device != 0)
-		पंचांगp |= ATA_DEV1;
+	if (device != 0)
+		tmp |= ATA_DEV1;
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, पंचांगp, IDECTRL_ADDR_DEVICE);
-	ata_sff_छोड़ो(ap);	/* needed; also flushes, क्रम mmio */
-पूर्ण
+	ep93xx_pata_write_reg(drv_data, tmp, IDECTRL_ADDR_DEVICE);
+	ata_sff_pause(ap);	/* needed; also flushes, for mmio */
+}
 
 /* Note: original code is ata_sff_set_devctl */
-अटल व्योम ep93xx_pata_set_devctl(काष्ठा ata_port *ap, u8 ctl)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static void ep93xx_pata_set_devctl(struct ata_port *ap, u8 ctl)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, ctl, IDECTRL_ADDR_CTL);
-पूर्ण
+	ep93xx_pata_write_reg(drv_data, ctl, IDECTRL_ADDR_CTL);
+}
 
 /* Note: original code is ata_sff_data_xfer */
-अटल अचिन्हित पूर्णांक ep93xx_pata_data_xfer(काष्ठा ata_queued_cmd *qc,
-					  अचिन्हित अक्षर *buf,
-					  अचिन्हित पूर्णांक buflen, पूर्णांक rw)
-अणु
-	काष्ठा ata_port *ap = qc->dev->link->ap;
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static unsigned int ep93xx_pata_data_xfer(struct ata_queued_cmd *qc,
+					  unsigned char *buf,
+					  unsigned int buflen, int rw)
+{
+	struct ata_port *ap = qc->dev->link->ap;
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 	u16 *data = (u16 *)buf;
-	अचिन्हित पूर्णांक words = buflen >> 1;
+	unsigned int words = buflen >> 1;
 
 	/* Transfer multiple of 2 bytes */
-	जबतक (words--)
-		अगर (rw == READ)
+	while (words--)
+		if (rw == READ)
 			*data++ = cpu_to_le16(
-				ep93xx_pata_पढ़ो_data(
+				ep93xx_pata_read_data(
 					drv_data, IDECTRL_ADDR_DATA));
-		अन्यथा
-			ep93xx_pata_ग_लिखो_data(drv_data, le16_to_cpu(*data++),
+		else
+			ep93xx_pata_write_data(drv_data, le16_to_cpu(*data++),
 				IDECTRL_ADDR_DATA);
 
-	/* Transfer trailing 1 byte, अगर any. */
-	अगर (unlikely(buflen & 0x01)) अणु
-		अचिन्हित अक्षर pad[2] = अणु पूर्ण;
+	/* Transfer trailing 1 byte, if any. */
+	if (unlikely(buflen & 0x01)) {
+		unsigned char pad[2] = { };
 
 		buf += buflen - 1;
 
-		अगर (rw == READ) अणु
+		if (rw == READ) {
 			*pad = cpu_to_le16(
-				ep93xx_pata_पढ़ो_data(
+				ep93xx_pata_read_data(
 					drv_data, IDECTRL_ADDR_DATA));
 			*buf = pad[0];
-		पूर्ण अन्यथा अणु
+		} else {
 			pad[0] = *buf;
-			ep93xx_pata_ग_लिखो_data(drv_data, le16_to_cpu(*pad),
+			ep93xx_pata_write_data(drv_data, le16_to_cpu(*pad),
 					  IDECTRL_ADDR_DATA);
-		पूर्ण
+		}
 		words++;
-	पूर्ण
+	}
 
-	वापस words << 1;
-पूर्ण
+	return words << 1;
+}
 
 /* Note: original code is ata_devchk */
-अटल bool ep93xx_pata_device_is_present(काष्ठा ata_port *ap,
-					  अचिन्हित पूर्णांक device)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static bool ep93xx_pata_device_is_present(struct ata_port *ap,
+					  unsigned int device)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 	u8 nsect, lbal;
 
 	ap->ops->sff_dev_select(ap, device);
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0x55, IDECTRL_ADDR_NSECT);
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0xaa, IDECTRL_ADDR_LBAL);
+	ep93xx_pata_write_reg(drv_data, 0x55, IDECTRL_ADDR_NSECT);
+	ep93xx_pata_write_reg(drv_data, 0xaa, IDECTRL_ADDR_LBAL);
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0xaa, IDECTRL_ADDR_NSECT);
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0x55, IDECTRL_ADDR_LBAL);
+	ep93xx_pata_write_reg(drv_data, 0xaa, IDECTRL_ADDR_NSECT);
+	ep93xx_pata_write_reg(drv_data, 0x55, IDECTRL_ADDR_LBAL);
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0x55, IDECTRL_ADDR_NSECT);
-	ep93xx_pata_ग_लिखो_reg(drv_data, 0xaa, IDECTRL_ADDR_LBAL);
+	ep93xx_pata_write_reg(drv_data, 0x55, IDECTRL_ADDR_NSECT);
+	ep93xx_pata_write_reg(drv_data, 0xaa, IDECTRL_ADDR_LBAL);
 
-	nsect = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_NSECT);
-	lbal = ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_LBAL);
+	nsect = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_NSECT);
+	lbal = ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_LBAL);
 
-	अगर ((nsect == 0x55) && (lbal == 0xaa))
-		वापस true;
+	if ((nsect == 0x55) && (lbal == 0xaa))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-/* Note: original code is ata_sff_रुको_after_reset */
-अटल पूर्णांक ep93xx_pata_रुको_after_reset(काष्ठा ata_link *link,
-					अचिन्हित पूर्णांक devmask,
-					अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
-	अचिन्हित पूर्णांक dev0 = devmask & (1 << 0);
-	अचिन्हित पूर्णांक dev1 = devmask & (1 << 1);
-	पूर्णांक rc, ret = 0;
+/* Note: original code is ata_sff_wait_after_reset */
+static int ep93xx_pata_wait_after_reset(struct ata_link *link,
+					unsigned int devmask,
+					unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
+	unsigned int dev0 = devmask & (1 << 0);
+	unsigned int dev1 = devmask & (1 << 1);
+	int rc, ret = 0;
 
 	ata_msleep(ap, ATA_WAIT_AFTER_RESET);
 
-	/* always check पढ़ोiness of the master device */
-	rc = ata_sff_रुको_पढ़ोy(link, deadline);
+	/* always check readiness of the master device */
+	rc = ata_sff_wait_ready(link, deadline);
 	/*
-	 * -ENODEV means the odd clown क्रमgot the D7 pullकरोwn resistor
+	 * -ENODEV means the odd clown forgot the D7 pulldown resistor
 	 * and TF status is 0xff, bail out on it too.
 	 */
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
-	 * अगर device 1 was found in ata_devchk, रुको क्रम रेजिस्टर
-	 * access briefly, then रुको क्रम BSY to clear.
+	 * if device 1 was found in ata_devchk, wait for register
+	 * access briefly, then wait for BSY to clear.
 	 */
-	अगर (dev1) अणु
-		पूर्णांक i;
+	if (dev1) {
+		int i;
 
 		ap->ops->sff_dev_select(ap, 1);
 
 		/*
-		 * Wait क्रम रेजिस्टर access.  Some ATAPI devices fail
-		 * to set nsect/lbal after reset, so करोn't waste too
-		 * much समय on it.  We're gonna रुको क्रम !BSY anyway.
+		 * Wait for register access.  Some ATAPI devices fail
+		 * to set nsect/lbal after reset, so don't waste too
+		 * much time on it.  We're gonna wait for !BSY anyway.
 		 */
-		क्रम (i = 0; i < 2; i++) अणु
+		for (i = 0; i < 2; i++) {
 			u8 nsect, lbal;
 
-			nsect = ep93xx_pata_पढ़ो_reg(drv_data,
+			nsect = ep93xx_pata_read_reg(drv_data,
 				IDECTRL_ADDR_NSECT);
-			lbal = ep93xx_pata_पढ़ो_reg(drv_data,
+			lbal = ep93xx_pata_read_reg(drv_data,
 				IDECTRL_ADDR_LBAL);
-			अगर (nsect == 1 && lbal == 1)
-				अवरोध;
+			if (nsect == 1 && lbal == 1)
+				break;
 			msleep(50);	/* give drive a breather */
-		पूर्ण
+		}
 
-		rc = ata_sff_रुको_पढ़ोy(link, deadline);
-		अगर (rc) अणु
-			अगर (rc != -ENODEV)
-				वापस rc;
+		rc = ata_sff_wait_ready(link, deadline);
+		if (rc) {
+			if (rc != -ENODEV)
+				return rc;
 			ret = rc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* is all this really necessary? */
 	ap->ops->sff_dev_select(ap, 0);
-	अगर (dev1)
+	if (dev1)
 		ap->ops->sff_dev_select(ap, 1);
-	अगर (dev0)
+	if (dev0)
 		ap->ops->sff_dev_select(ap, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Note: original code is ata_bus_softreset */
-अटल पूर्णांक ep93xx_pata_bus_softreset(काष्ठा ata_port *ap, अचिन्हित पूर्णांक devmask,
-				     अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static int ep93xx_pata_bus_softreset(struct ata_port *ap, unsigned int devmask,
+				     unsigned long deadline)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
-	ep93xx_pata_ग_लिखो_reg(drv_data, ap->ctl, IDECTRL_ADDR_CTL);
+	ep93xx_pata_write_reg(drv_data, ap->ctl, IDECTRL_ADDR_CTL);
 	udelay(20);		/* FIXME: flush */
-	ep93xx_pata_ग_लिखो_reg(drv_data, ap->ctl | ATA_SRST, IDECTRL_ADDR_CTL);
+	ep93xx_pata_write_reg(drv_data, ap->ctl | ATA_SRST, IDECTRL_ADDR_CTL);
 	udelay(20);		/* FIXME: flush */
-	ep93xx_pata_ग_लिखो_reg(drv_data, ap->ctl, IDECTRL_ADDR_CTL);
+	ep93xx_pata_write_reg(drv_data, ap->ctl, IDECTRL_ADDR_CTL);
 	ap->last_ctl = ap->ctl;
 
-	वापस ep93xx_pata_रुको_after_reset(&ap->link, devmask, deadline);
-पूर्ण
+	return ep93xx_pata_wait_after_reset(&ap->link, devmask, deadline);
+}
 
-अटल व्योम ep93xx_pata_release_dma(काष्ठा ep93xx_pata_data *drv_data)
-अणु
-	अगर (drv_data->dma_rx_channel) अणु
+static void ep93xx_pata_release_dma(struct ep93xx_pata_data *drv_data)
+{
+	if (drv_data->dma_rx_channel) {
 		dma_release_channel(drv_data->dma_rx_channel);
-		drv_data->dma_rx_channel = शून्य;
-	पूर्ण
-	अगर (drv_data->dma_tx_channel) अणु
+		drv_data->dma_rx_channel = NULL;
+	}
+	if (drv_data->dma_tx_channel) {
 		dma_release_channel(drv_data->dma_tx_channel);
-		drv_data->dma_tx_channel = शून्य;
-	पूर्ण
-पूर्ण
+		drv_data->dma_tx_channel = NULL;
+	}
+}
 
-अटल bool ep93xx_pata_dma_filter(काष्ठा dma_chan *chan, व्योम *filter_param)
-अणु
-	अगर (ep93xx_dma_chan_is_m2p(chan))
-		वापस false;
+static bool ep93xx_pata_dma_filter(struct dma_chan *chan, void *filter_param)
+{
+	if (ep93xx_dma_chan_is_m2p(chan))
+		return false;
 
-	chan->निजी = filter_param;
-	वापस true;
-पूर्ण
+	chan->private = filter_param;
+	return true;
+}
 
-अटल व्योम ep93xx_pata_dma_init(काष्ठा ep93xx_pata_data *drv_data)
-अणु
-	स्थिर काष्ठा platक्रमm_device *pdev = drv_data->pdev;
+static void ep93xx_pata_dma_init(struct ep93xx_pata_data *drv_data)
+{
+	const struct platform_device *pdev = drv_data->pdev;
 	dma_cap_mask_t mask;
-	काष्ठा dma_slave_config conf;
+	struct dma_slave_config conf;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
 	/*
-	 * Request two channels क्रम IDE. Another possibility would be
+	 * Request two channels for IDE. Another possibility would be
 	 * to request only one channel, and reprogram it's direction at
 	 * start of new transfer.
 	 */
@@ -665,156 +664,156 @@
 	drv_data->dma_rx_data.name = "ep93xx-pata-rx";
 	drv_data->dma_rx_channel = dma_request_channel(mask,
 		ep93xx_pata_dma_filter, &drv_data->dma_rx_data);
-	अगर (!drv_data->dma_rx_channel)
-		वापस;
+	if (!drv_data->dma_rx_channel)
+		return;
 
 	drv_data->dma_tx_data.port = EP93XX_DMA_IDE;
 	drv_data->dma_tx_data.direction = DMA_MEM_TO_DEV;
 	drv_data->dma_tx_data.name = "ep93xx-pata-tx";
 	drv_data->dma_tx_channel = dma_request_channel(mask,
 		ep93xx_pata_dma_filter, &drv_data->dma_tx_data);
-	अगर (!drv_data->dma_tx_channel) अणु
+	if (!drv_data->dma_tx_channel) {
 		dma_release_channel(drv_data->dma_rx_channel);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Configure receive channel direction and source address */
-	स_रखो(&conf, 0, माप(conf));
+	memset(&conf, 0, sizeof(conf));
 	conf.direction = DMA_DEV_TO_MEM;
 	conf.src_addr = drv_data->udma_in_phys;
 	conf.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	अगर (dmaengine_slave_config(drv_data->dma_rx_channel, &conf)) अणु
+	if (dmaengine_slave_config(drv_data->dma_rx_channel, &conf)) {
 		dev_err(&pdev->dev, "failed to configure rx dma channel\n");
 		ep93xx_pata_release_dma(drv_data);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Configure transmit channel direction and destination address */
-	स_रखो(&conf, 0, माप(conf));
+	memset(&conf, 0, sizeof(conf));
 	conf.direction = DMA_MEM_TO_DEV;
 	conf.dst_addr = drv_data->udma_out_phys;
 	conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-	अगर (dmaengine_slave_config(drv_data->dma_tx_channel, &conf)) अणु
+	if (dmaengine_slave_config(drv_data->dma_tx_channel, &conf)) {
 		dev_err(&pdev->dev, "failed to configure tx dma channel\n");
 		ep93xx_pata_release_dma(drv_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ep93xx_pata_dma_start(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा dma_async_tx_descriptor *txd;
-	काष्ठा ep93xx_pata_data *drv_data = qc->ap->host->निजी_data;
-	व्योम __iomem *base = drv_data->ide_base;
-	काष्ठा ata_device *adev = qc->dev;
+static void ep93xx_pata_dma_start(struct ata_queued_cmd *qc)
+{
+	struct dma_async_tx_descriptor *txd;
+	struct ep93xx_pata_data *drv_data = qc->ap->host->private_data;
+	void __iomem *base = drv_data->ide_base;
+	struct ata_device *adev = qc->dev;
 	u32 v = qc->dma_dir == DMA_TO_DEVICE ? IDEUDMAOP_RWOP : 0;
-	काष्ठा dma_chan *channel = qc->dma_dir == DMA_TO_DEVICE
+	struct dma_chan *channel = qc->dma_dir == DMA_TO_DEVICE
 		? drv_data->dma_tx_channel : drv_data->dma_rx_channel;
 
 	txd = dmaengine_prep_slave_sg(channel, qc->sg, qc->n_elem, qc->dma_dir,
 		DMA_CTRL_ACK);
-	अगर (!txd) अणु
+	if (!txd) {
 		dev_err(qc->ap->dev, "failed to prepare slave for sg dma\n");
-		वापस;
-	पूर्ण
-	txd->callback = शून्य;
-	txd->callback_param = शून्य;
+		return;
+	}
+	txd->callback = NULL;
+	txd->callback_param = NULL;
 
-	अगर (dmaengine_submit(txd) < 0) अणु
+	if (dmaengine_submit(txd) < 0) {
 		dev_err(qc->ap->dev, "failed to submit dma transfer\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	dma_async_issue_pending(channel);
 
 	/*
-	 * When enabling UDMA operation, IDEUDMAOP रेजिस्टर needs to be
+	 * When enabling UDMA operation, IDEUDMAOP register needs to be
 	 * programmed in three step sequence:
 	 * 1) set or clear the RWOP bit,
-	 * 2) perक्रमm dummy पढ़ो of the रेजिस्टर,
+	 * 2) perform dummy read of the register,
 	 * 3) set the UEN bit.
 	 */
-	ग_लिखोl(v, base + IDEUDMAOP);
-	पढ़ोl(base + IDEUDMAOP);
-	ग_लिखोl(v | IDEUDMAOP_UEN, base + IDEUDMAOP);
+	writel(v, base + IDEUDMAOP);
+	readl(base + IDEUDMAOP);
+	writel(v | IDEUDMAOP_UEN, base + IDEUDMAOP);
 
-	ग_लिखोl(IDECFG_IDEEN | IDECFG_UDMA |
+	writel(IDECFG_IDEEN | IDECFG_UDMA |
 		((adev->xfer_mode - XFER_UDMA_0) << IDECFG_MODE_SHIFT),
 		base + IDECFG);
-पूर्ण
+}
 
-अटल व्योम ep93xx_pata_dma_stop(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = qc->ap->host->निजी_data;
-	व्योम __iomem *base = drv_data->ide_base;
+static void ep93xx_pata_dma_stop(struct ata_queued_cmd *qc)
+{
+	struct ep93xx_pata_data *drv_data = qc->ap->host->private_data;
+	void __iomem *base = drv_data->ide_base;
 
-	/* terminate all dma transfers, अगर not yet finished */
+	/* terminate all dma transfers, if not yet finished */
 	dmaengine_terminate_all(drv_data->dma_rx_channel);
 	dmaengine_terminate_all(drv_data->dma_tx_channel);
 
 	/*
-	 * To properly stop IDE-DMA, IDEUDMAOP रेजिस्टर must to be cleared
-	 * and IDECTRL रेजिस्टर must be set to शेष value.
+	 * To properly stop IDE-DMA, IDEUDMAOP register must to be cleared
+	 * and IDECTRL register must be set to default value.
 	 */
-	ग_लिखोl(0, base + IDEUDMAOP);
-	ग_लिखोl(पढ़ोl(base + IDECTRL) | IDECTRL_DIOWN | IDECTRL_DIORN |
+	writel(0, base + IDEUDMAOP);
+	writel(readl(base + IDECTRL) | IDECTRL_DIOWN | IDECTRL_DIORN |
 		IDECTRL_CS0N | IDECTRL_CS1N, base + IDECTRL);
 
 	ep93xx_pata_enable_pio(drv_data->ide_base,
 		qc->dev->pio_mode - XFER_PIO_0);
 
-	ata_sff_dma_छोड़ो(qc->ap);
-पूर्ण
+	ata_sff_dma_pause(qc->ap);
+}
 
-अटल व्योम ep93xx_pata_dma_setup(काष्ठा ata_queued_cmd *qc)
-अणु
+static void ep93xx_pata_dma_setup(struct ata_queued_cmd *qc)
+{
 	qc->ap->ops->sff_exec_command(qc->ap, &qc->tf);
-पूर्ण
+}
 
-अटल u8 ep93xx_pata_dma_status(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
-	u32 val = पढ़ोl(drv_data->ide_base + IDEUDMASTS);
+static u8 ep93xx_pata_dma_status(struct ata_port *ap)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
+	u32 val = readl(drv_data->ide_base + IDEUDMASTS);
 
 	/*
 	 * UDMA Status Register bits:
 	 *
-	 * DMAIDE - DMA request संकेत from UDMA state machine,
+	 * DMAIDE - DMA request signal from UDMA state machine,
 	 * INTIDE - INT line generated by UDMA because of errors in the
 	 *          state machine,
 	 * SBUSY - UDMA state machine busy, not in idle state,
-	 * NDO   - error क्रम data-out not completed,
-	 * NDI   - error क्रम data-in not completed,
-	 * N4X   - error क्रम data transferred not multiplies of four
+	 * NDO   - error for data-out not completed,
+	 * NDI   - error for data-in not completed,
+	 * N4X   - error for data transferred not multiplies of four
 	 *         32-bit words.
 	 * (EP93xx UG p27-17)
 	 */
-	अगर (val & IDEUDMASTS_NDO || val & IDEUDMASTS_NDI ||
+	if (val & IDEUDMASTS_NDO || val & IDEUDMASTS_NDI ||
 	    val & IDEUDMASTS_N4X || val & IDEUDMASTS_INTIDE)
-		वापस ATA_DMA_ERR;
+		return ATA_DMA_ERR;
 
-	/* पढ़ो INTRQ (INT[3]) pin input state */
-	अगर (पढ़ोl(drv_data->ide_base + IDECTRL) & IDECTRL_INTRQ)
-		वापस ATA_DMA_INTR;
+	/* read INTRQ (INT[3]) pin input state */
+	if (readl(drv_data->ide_base + IDECTRL) & IDECTRL_INTRQ)
+		return ATA_DMA_INTR;
 
-	अगर (val & IDEUDMASTS_SBUSY || val & IDEUDMASTS_DMAIDE)
-		वापस ATA_DMA_ACTIVE;
+	if (val & IDEUDMASTS_SBUSY || val & IDEUDMASTS_DMAIDE)
+		return ATA_DMA_ACTIVE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Note: original code is ata_sff_softreset */
-अटल पूर्णांक ep93xx_pata_softreset(काष्ठा ata_link *al, अचिन्हित पूर्णांक *classes,
-				 अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = al->ap;
-	अचिन्हित पूर्णांक slave_possible = ap->flags & ATA_FLAG_SLAVE_POSS;
-	अचिन्हित पूर्णांक devmask = 0;
-	पूर्णांक rc;
+static int ep93xx_pata_softreset(struct ata_link *al, unsigned int *classes,
+				 unsigned long deadline)
+{
+	struct ata_port *ap = al->ap;
+	unsigned int slave_possible = ap->flags & ATA_FLAG_SLAVE_POSS;
+	unsigned int devmask = 0;
+	int rc;
 	u8 err;
 
-	/* determine अगर device 0/1 are present */
-	अगर (ep93xx_pata_device_is_present(ap, 0))
+	/* determine if device 0/1 are present */
+	if (ep93xx_pata_device_is_present(ap, 0))
 		devmask |= (1 << 0);
-	अगर (slave_possible && ep93xx_pata_device_is_present(ap, 1))
+	if (slave_possible && ep93xx_pata_device_is_present(ap, 1))
 		devmask |= (1 << 1);
 
 	/* select device 0 again */
@@ -822,84 +821,84 @@
 
 	/* issue bus reset */
 	rc = ep93xx_pata_bus_softreset(ap, devmask, deadline);
-	/* अगर link is ocuppied, -ENODEV too is an error */
-	अगर (rc && (rc != -ENODEV || sata_scr_valid(al))) अणु
+	/* if link is ocuppied, -ENODEV too is an error */
+	if (rc && (rc != -ENODEV || sata_scr_valid(al))) {
 		ata_link_err(al, "SRST failed (errno=%d)\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/* determine by signature whether we have ATA or ATAPI devices */
-	classes[0] = ata_sff_dev_classअगरy(&al->device[0], devmask & (1 << 0),
+	classes[0] = ata_sff_dev_classify(&al->device[0], devmask & (1 << 0),
 					  &err);
-	अगर (slave_possible && err != 0x81)
-		classes[1] = ata_sff_dev_classअगरy(&al->device[1],
+	if (slave_possible && err != 0x81)
+		classes[1] = ata_sff_dev_classify(&al->device[1],
 						  devmask & (1 << 1), &err);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Note: original code is ata_sff_drain_fअगरo */
-अटल व्योम ep93xx_pata_drain_fअगरo(काष्ठा ata_queued_cmd *qc)
-अणु
-	पूर्णांक count;
-	काष्ठा ata_port *ap;
-	काष्ठा ep93xx_pata_data *drv_data;
+/* Note: original code is ata_sff_drain_fifo */
+static void ep93xx_pata_drain_fifo(struct ata_queued_cmd *qc)
+{
+	int count;
+	struct ata_port *ap;
+	struct ep93xx_pata_data *drv_data;
 
 	/* We only need to flush incoming data when a command was running */
-	अगर (qc == शून्य || qc->dma_dir == DMA_TO_DEVICE)
-		वापस;
+	if (qc == NULL || qc->dma_dir == DMA_TO_DEVICE)
+		return;
 
 	ap = qc->ap;
-	drv_data = ap->host->निजी_data;
-	/* Drain up to 64K of data beक्रमe we give up this recovery method */
-	क्रम (count = 0; (ap->ops->sff_check_status(ap) & ATA_DRQ)
+	drv_data = ap->host->private_data;
+	/* Drain up to 64K of data before we give up this recovery method */
+	for (count = 0; (ap->ops->sff_check_status(ap) & ATA_DRQ)
 		     && count < 65536; count += 2)
-		ep93xx_pata_पढ़ो_reg(drv_data, IDECTRL_ADDR_DATA);
+		ep93xx_pata_read_reg(drv_data, IDECTRL_ADDR_DATA);
 
 	/* Can become DEBUG later */
-	अगर (count)
+	if (count)
 		ata_port_dbg(ap, "drained %d bytes to clear DRQ.\n", count);
 
-पूर्ण
+}
 
-अटल पूर्णांक ep93xx_pata_port_start(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data = ap->host->निजी_data;
+static int ep93xx_pata_port_start(struct ata_port *ap)
+{
+	struct ep93xx_pata_data *drv_data = ap->host->private_data;
 
 	/*
 	 * Set timings to safe values at startup (= number of ns from ATA
-	 * specअगरication), we'll चयन to properly calculated values later.
+	 * specification), we'll switch to properly calculated values later.
 	 */
 	drv_data->t = *ata_timing_find_mode(XFER_PIO_0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा scsi_host_ढाँचा ep93xx_pata_sht = अणु
+static struct scsi_host_template ep93xx_pata_sht = {
 	ATA_BASE_SHT(DRV_NAME),
 	/* ep93xx dma implementation limit */
 	.sg_tablesize		= 32,
 	/* ep93xx dma can't transfer 65536 bytes at once */
 	.dma_boundary		= 0x7fff,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations ep93xx_pata_port_ops = अणु
+static struct ata_port_operations ep93xx_pata_port_ops = {
 	.inherits		= &ata_bmdma_port_ops,
 
 	.qc_prep		= ata_noop_qc_prep,
 
 	.softreset		= ep93xx_pata_softreset,
-	.hardreset		= ATA_OP_शून्य,
+	.hardreset		= ATA_OP_NULL,
 
 	.sff_dev_select		= ep93xx_pata_dev_select,
 	.sff_set_devctl		= ep93xx_pata_set_devctl,
 	.sff_check_status	= ep93xx_pata_check_status,
 	.sff_check_altstatus	= ep93xx_pata_check_altstatus,
 	.sff_tf_load		= ep93xx_pata_tf_load,
-	.sff_tf_पढ़ो		= ep93xx_pata_tf_पढ़ो,
+	.sff_tf_read		= ep93xx_pata_tf_read,
 	.sff_exec_command	= ep93xx_pata_exec_command,
 	.sff_data_xfer		= ep93xx_pata_data_xfer,
-	.sff_drain_fअगरo		= ep93xx_pata_drain_fअगरo,
-	.sff_irq_clear		= ATA_OP_शून्य,
+	.sff_drain_fifo		= ep93xx_pata_drain_fifo,
+	.sff_irq_clear		= ATA_OP_NULL,
 
 	.set_piomode		= ep93xx_pata_set_piomode,
 
@@ -910,41 +909,41 @@
 
 	.cable_detect		= ata_cable_unknown,
 	.port_start		= ep93xx_pata_port_start,
-पूर्ण;
+};
 
-अटल पूर्णांक ep93xx_pata_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ep93xx_pata_data *drv_data;
-	काष्ठा ata_host *host;
-	काष्ठा ata_port *ap;
-	पूर्णांक irq;
-	काष्ठा resource *mem_res;
-	व्योम __iomem *ide_base;
-	पूर्णांक err;
+static int ep93xx_pata_probe(struct platform_device *pdev)
+{
+	struct ep93xx_pata_data *drv_data;
+	struct ata_host *host;
+	struct ata_port *ap;
+	int irq;
+	struct resource *mem_res;
+	void __iomem *ide_base;
+	int err;
 
 	err = ep93xx_ide_acquire_gpio(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* INT[3] (IRQ_EP93XX_EXT3) line connected as pull करोwn */
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	/* INT[3] (IRQ_EP93XX_EXT3) line connected as pull down */
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		err = -ENXIO;
-		जाओ err_rel_gpio;
-	पूर्ण
+		goto err_rel_gpio;
+	}
 
-	mem_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ide_base = devm_ioremap_resource(&pdev->dev, mem_res);
-	अगर (IS_ERR(ide_base)) अणु
+	if (IS_ERR(ide_base)) {
 		err = PTR_ERR(ide_base);
-		जाओ err_rel_gpio;
-	पूर्ण
+		goto err_rel_gpio;
+	}
 
-	drv_data = devm_kzalloc(&pdev->dev, माप(*drv_data), GFP_KERNEL);
-	अगर (!drv_data) अणु
+	drv_data = devm_kzalloc(&pdev->dev, sizeof(*drv_data), GFP_KERNEL);
+	if (!drv_data) {
 		err = -ENXIO;
-		जाओ err_rel_gpio;
-	पूर्ण
+		goto err_rel_gpio;
+	}
 
 	drv_data->pdev = pdev;
 	drv_data->ide_base = ide_base;
@@ -954,14 +953,14 @@
 
 	/* allocate host */
 	host = ata_host_alloc(&pdev->dev, 1);
-	अगर (!host) अणु
+	if (!host) {
 		err = -ENXIO;
-		जाओ err_rel_dma;
-	पूर्ण
+		goto err_rel_dma;
+	}
 
 	ep93xx_pata_clear_regs(ide_base);
 
-	host->निजी_data = drv_data;
+	host->private_data = drv_data;
 
 	ap = host->ports[0];
 	ap->dev = &pdev->dev;
@@ -975,59 +974,59 @@
 	 * EP931x rev.E1 - UDMA3
 	 * EP931x rev.E2 - UDMA4
 	 *
-	 * MWDMA support was हटाओd from EP931x rev.E2,
+	 * MWDMA support was removed from EP931x rev.E2,
 	 * so this driver supports only UDMA modes.
 	 */
-	अगर (drv_data->dma_rx_channel && drv_data->dma_tx_channel) अणु
-		पूर्णांक chip_rev = ep93xx_chip_revision();
+	if (drv_data->dma_rx_channel && drv_data->dma_tx_channel) {
+		int chip_rev = ep93xx_chip_revision();
 
-		अगर (chip_rev == EP93XX_CHIP_REV_E1)
+		if (chip_rev == EP93XX_CHIP_REV_E1)
 			ap->udma_mask = ATA_UDMA3;
-		अन्यथा अगर (chip_rev == EP93XX_CHIP_REV_E2)
+		else if (chip_rev == EP93XX_CHIP_REV_E2)
 			ap->udma_mask = ATA_UDMA4;
-		अन्यथा
+		else
 			ap->udma_mask = ATA_UDMA2;
-	पूर्ण
+	}
 
-	/* शेषs, pio 0 */
+	/* defaults, pio 0 */
 	ep93xx_pata_enable_pio(ide_base, 0);
 
 	dev_info(&pdev->dev, "version " DRV_VERSION "\n");
 
 	/* activate host */
-	err = ata_host_activate(host, irq, ata_bmdma_पूर्णांकerrupt, 0,
+	err = ata_host_activate(host, irq, ata_bmdma_interrupt, 0,
 		&ep93xx_pata_sht);
-	अगर (err == 0)
-		वापस 0;
+	if (err == 0)
+		return 0;
 
 err_rel_dma:
 	ep93xx_pata_release_dma(drv_data);
 err_rel_gpio:
 	ep93xx_ide_release_gpio(pdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ep93xx_pata_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
-	काष्ठा ep93xx_pata_data *drv_data = host->निजी_data;
+static int ep93xx_pata_remove(struct platform_device *pdev)
+{
+	struct ata_host *host = platform_get_drvdata(pdev);
+	struct ep93xx_pata_data *drv_data = host->private_data;
 
 	ata_host_detach(host);
 	ep93xx_pata_release_dma(drv_data);
 	ep93xx_pata_clear_regs(drv_data->ide_base);
 	ep93xx_ide_release_gpio(pdev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ep93xx_pata_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver ep93xx_pata_platform_driver = {
+	.driver = {
 		.name = DRV_NAME,
-	पूर्ण,
+	},
 	.probe = ep93xx_pata_probe,
-	.हटाओ = ep93xx_pata_हटाओ,
-पूर्ण;
+	.remove = ep93xx_pata_remove,
+};
 
-module_platक्रमm_driver(ep93xx_pata_platक्रमm_driver);
+module_platform_driver(ep93xx_pata_platform_driver);
 
 MODULE_AUTHOR("Alessandro Zummo, Lennert Buytenhek, Joao Ramos, "
 		"Bartlomiej Zolnierkiewicz, Rafal Prylowski");

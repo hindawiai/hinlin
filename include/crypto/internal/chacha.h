@@ -1,44 +1,43 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित _CRYPTO_INTERNAL_CHACHA_H
-#घोषणा _CRYPTO_INTERNAL_CHACHA_H
+#ifndef _CRYPTO_INTERNAL_CHACHA_H
+#define _CRYPTO_INTERNAL_CHACHA_H
 
-#समावेश <crypto/chacha.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <linux/crypto.h>
+#include <crypto/chacha.h>
+#include <crypto/internal/skcipher.h>
+#include <linux/crypto.h>
 
-काष्ठा chacha_ctx अणु
+struct chacha_ctx {
 	u32 key[8];
-	पूर्णांक nrounds;
-पूर्ण;
+	int nrounds;
+};
 
-अटल अंतरभूत पूर्णांक chacha_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-				अचिन्हित पूर्णांक keysize, पूर्णांक nrounds)
-अणु
-	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
-	पूर्णांक i;
+static inline int chacha_setkey(struct crypto_skcipher *tfm, const u8 *key,
+				unsigned int keysize, int nrounds)
+{
+	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+	int i;
 
-	अगर (keysize != CHACHA_KEY_SIZE)
-		वापस -EINVAL;
+	if (keysize != CHACHA_KEY_SIZE)
+		return -EINVAL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ctx->key); i++)
-		ctx->key[i] = get_unaligned_le32(key + i * माप(u32));
+	for (i = 0; i < ARRAY_SIZE(ctx->key); i++)
+		ctx->key[i] = get_unaligned_le32(key + i * sizeof(u32));
 
 	ctx->nrounds = nrounds;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक chacha20_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-				  अचिन्हित पूर्णांक keysize)
-अणु
-	वापस chacha_setkey(tfm, key, keysize, 20);
-पूर्ण
+static inline int chacha20_setkey(struct crypto_skcipher *tfm, const u8 *key,
+				  unsigned int keysize)
+{
+	return chacha_setkey(tfm, key, keysize, 20);
+}
 
-अटल अंतरभूत पूर्णांक chacha12_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
-				  अचिन्हित पूर्णांक keysize)
-अणु
-	वापस chacha_setkey(tfm, key, keysize, 12);
-पूर्ण
+static inline int chacha12_setkey(struct crypto_skcipher *tfm, const u8 *key,
+				  unsigned int keysize)
+{
+	return chacha_setkey(tfm, key, keysize, 12);
+}
 
-#पूर्ण_अगर /* _CRYPTO_CHACHA_H */
+#endif /* _CRYPTO_CHACHA_H */

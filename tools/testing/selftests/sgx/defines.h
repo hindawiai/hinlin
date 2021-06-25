@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2016-20 Intel Corporation.
  */
 
-#अगर_अघोषित DEFINES_H
-#घोषणा DEFINES_H
+#ifndef DEFINES_H
+#define DEFINES_H
 
-#समावेश <मानक_निवेशt.h>
+#include <stdint.h>
 
-#घोषणा PAGE_SIZE 4096
-#घोषणा PAGE_MASK (~(PAGE_SIZE - 1))
+#define PAGE_SIZE 4096
+#define PAGE_MASK (~(PAGE_SIZE - 1))
 
-#घोषणा __aligned(x) __attribute__((__aligned__(x)))
-#घोषणा __packed __attribute__((packed))
+#define __aligned(x) __attribute__((__aligned__(x)))
+#define __packed __attribute__((packed))
 
-#समावेश "../../../../arch/x86/include/asm/sgx.h"
-#समावेश "../../../../arch/x86/include/asm/enclu.h"
-#समावेश "../../../../arch/x86/include/uapi/asm/sgx.h"
+#include "../../../../arch/x86/include/asm/sgx.h"
+#include "../../../../arch/x86/include/asm/enclu.h"
+#include "../../../../arch/x86/include/uapi/asm/sgx.h"
 
-#पूर्ण_अगर /* DEFINES_H */
+#endif /* DEFINES_H */

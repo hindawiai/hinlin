@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // VF610 pinctrl driver based on imx pinmux and pinconf core
 //
 // Copyright 2013 Freescale Semiconductor, Inc.
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-क्रमागत vf610_pads अणु
+enum vf610_pads {
 	VF610_PAD_PTA6 = 0,
 	VF610_PAD_PTA8 = 1,
 	VF610_PAD_PTA9 = 2,
@@ -150,10 +149,10 @@
 	VF610_PAD_PTE27 = 132,
 	VF610_PAD_PTE28 = 133,
 	VF610_PAD_PTA7 = 134,
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc vf610_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc vf610_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(VF610_PAD_PTA6),
 	IMX_PINCTRL_PIN(VF610_PAD_PTA8),
 	IMX_PINCTRL_PIN(VF610_PAD_PTA9),
@@ -289,61 +288,61 @@
 	IMX_PINCTRL_PIN(VF610_PAD_PTE27),
 	IMX_PINCTRL_PIN(VF610_PAD_PTE28),
 	IMX_PINCTRL_PIN(VF610_PAD_PTA7),
-पूर्ण;
+};
 
-अटल पूर्णांक vf610_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-					काष्ठा pinctrl_gpio_range *range,
-					अचिन्हित offset, bool input)
-अणु
-	काष्ठा imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा imx_pin_reg *pin_reg;
+static int vf610_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
+					struct pinctrl_gpio_range *range,
+					unsigned offset, bool input)
+{
+	struct imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	const struct imx_pin_reg *pin_reg;
 	u32 reg;
 
 	pin_reg = &ipctl->pin_regs[offset];
-	अगर (pin_reg->mux_reg == -1)
-		वापस -EINVAL;
+	if (pin_reg->mux_reg == -1)
+		return -EINVAL;
 
-	/* IBE always enabled allows us to पढ़ो the value "on the wire" */
-	reg = पढ़ोl(ipctl->base + pin_reg->mux_reg);
-	अगर (input)
+	/* IBE always enabled allows us to read the value "on the wire" */
+	reg = readl(ipctl->base + pin_reg->mux_reg);
+	if (input)
 		reg &= ~0x2;
-	अन्यथा
+	else
 		reg |= 0x2;
-	ग_लिखोl(reg, ipctl->base + pin_reg->mux_reg);
+	writel(reg, ipctl->base + pin_reg->mux_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info vf610_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info vf610_pinctrl_info = {
 	.pins = vf610_pinctrl_pads,
 	.npins = ARRAY_SIZE(vf610_pinctrl_pads),
 	.flags = SHARE_MUX_CONF_REG | ZERO_OFFSET_VALID,
 	.gpio_set_direction = vf610_pmx_gpio_set_direction,
 	.mux_mask = 0x700000,
-	.mux_shअगरt = 20,
-पूर्ण;
+	.mux_shift = 20,
+};
 
-अटल स्थिर काष्ठा of_device_id vf610_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,vf610-iomuxc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id vf610_pinctrl_of_match[] = {
+	{ .compatible = "fsl,vf610-iomuxc", },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक vf610_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस imx_pinctrl_probe(pdev, &vf610_pinctrl_info);
-पूर्ण
+static int vf610_pinctrl_probe(struct platform_device *pdev)
+{
+	return imx_pinctrl_probe(pdev, &vf610_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver vf610_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver vf610_pinctrl_driver = {
+	.driver = {
 		.name = "vf610-pinctrl",
 		.of_match_table = vf610_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = vf610_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init vf610_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&vf610_pinctrl_driver);
-पूर्ण
+static int __init vf610_pinctrl_init(void)
+{
+	return platform_driver_register(&vf610_pinctrl_driver);
+}
 arch_initcall(vf610_pinctrl_init);

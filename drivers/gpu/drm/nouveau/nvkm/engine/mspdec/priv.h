@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_MSPDEC_PRIV_H__
-#घोषणा __NVKM_MSPDEC_PRIV_H__
-#समावेश <engine/mspdec.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_MSPDEC_PRIV_H__
+#define __NVKM_MSPDEC_PRIV_H__
+#include <engine/mspdec.h>
 
-पूर्णांक nvkm_mspdec_new_(स्थिर काष्ठा nvkm_falcon_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
-		     पूर्णांक, काष्ठा nvkm_engine **);
+int nvkm_mspdec_new_(const struct nvkm_falcon_func *, struct nvkm_device *, enum nvkm_subdev_type,
+		     int, struct nvkm_engine **);
 
-व्योम g98_mspdec_init(काष्ठा nvkm_falcon *);
+void g98_mspdec_init(struct nvkm_falcon *);
 
-व्योम gf100_mspdec_init(काष्ठा nvkm_falcon *);
-#पूर्ण_अगर
+void gf100_mspdec_init(struct nvkm_falcon *);
+#endif

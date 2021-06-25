@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * IPVS         An implementation of the IP भव server support क्रम the
- *              LINUX operating प्रणाली.  IPVS is now implemented as a module
+ * IPVS         An implementation of the IP virtual server support for the
+ *              LINUX operating system.  IPVS is now implemented as a module
  *              over the NetFilter framework. IPVS can be used to build a
- *              high-perक्रमmance and highly available server based on a
+ *              high-performance and highly available server based on a
  *              cluster of servers.
  *
  * Version 1,   is capable of handling both version 0 and 1 messages.
- *              Version 0 is the plain old क्रमmat.
+ *              Version 0 is the plain old format.
  *              Note Version 0 receivers will just drop Ver 1 messages.
  *              Version 1 is capable of handle IPv6, Persistence data,
- *              समय-outs, and firewall marks.
+ *              time-outs, and firewall marks.
  *              In ver.1 "ip_vs_sync_conn_options" will be sent in netw. order.
  *              Ver. 0 can be turned on by sysctl -w net.ipv4.vs.sync_version=0
  *
@@ -19,57 +18,57 @@
  *              Sync_conn: is a part of a Message
  *              Param Data is an option to a Sync_conn.
  *
- * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
  *
  * ip_vs_sync:  sync connection info from master load balancer to backups
  *              through multicast
  *
  * Changes:
- *	Alexandre Cassen	:	Added master & backup support at a समय.
- *	Alexandre Cassen	:	Added SyncID support क्रम incoming sync
+ *	Alexandre Cassen	:	Added master & backup support at a time.
+ *	Alexandre Cassen	:	Added SyncID support for incoming sync
  *					messages filtering.
  *	Justin Ossevoort	:	Fix endian problem on sync message size.
  *	Hans Schillstrom	:	Added Version 1: i.e. IPv6,
- *					Persistence support, fwmark and समय-out.
+ *					Persistence support, fwmark and time-out.
  */
 
-#घोषणा KMSG_COMPONENT "IPVS"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "IPVS"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/net.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/in.h>
-#समावेश <linux/igmp.h>                 /* क्रम ip_mc_join_group */
-#समावेश <linux/udp.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/inetdevice.h>
+#include <linux/net.h>
+#include <linux/completion.h>
+#include <linux/delay.h>
+#include <linux/skbuff.h>
+#include <linux/in.h>
+#include <linux/igmp.h>                 /* for ip_mc_join_group */
+#include <linux/udp.h>
+#include <linux/err.h>
+#include <linux/kthread.h>
+#include <linux/wait.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
 
-#समावेश <यंत्र/unaligned.h>		/* Used क्रम ntoh_seq and hton_seq */
+#include <asm/unaligned.h>		/* Used for ntoh_seq and hton_seq */
 
-#समावेश <net/ip.h>
-#समावेश <net/sock.h>
+#include <net/ip.h>
+#include <net/sock.h>
 
-#समावेश <net/ip_vs.h>
+#include <net/ip_vs.h>
 
-#घोषणा IP_VS_SYNC_GROUP 0xe0000051    /* multicast addr - 224.0.0.81 */
-#घोषणा IP_VS_SYNC_PORT  8848          /* multicast port */
+#define IP_VS_SYNC_GROUP 0xe0000051    /* multicast addr - 224.0.0.81 */
+#define IP_VS_SYNC_PORT  8848          /* multicast port */
 
-#घोषणा SYNC_PROTO_VER  1		/* Protocol version in header */
+#define SYNC_PROTO_VER  1		/* Protocol version in header */
 
-अटल काष्ठा lock_class_key __ipvs_sync_key;
+static struct lock_class_key __ipvs_sync_key;
 /*
  *	IPVS sync connection entry
  *	Version 0, i.e. original version.
  */
-काष्ठा ip_vs_sync_conn_v0 अणु
+struct ip_vs_sync_conn_v0 {
 	__u8			reserved;
 
 	/* Protocol, addresses and port numbers */
@@ -78,7 +77,7 @@
 	__be16                  vport;
 	__be16                  dport;
 	__be32                  caddr;          /* client address */
-	__be32                  vaddr;          /* भव address */
+	__be32                  vaddr;          /* virtual address */
 	__be32                  daddr;          /* destination address */
 
 	/* Flags and state transition */
@@ -86,15 +85,15 @@
 	__be16                  state;          /* state info */
 
 	/* The sequence options start here */
-पूर्ण;
+};
 
-काष्ठा ip_vs_sync_conn_options अणु
-	काष्ठा ip_vs_seq        in_seq;         /* incoming seq. काष्ठा */
-	काष्ठा ip_vs_seq        out_seq;        /* outgoing seq. काष्ठा */
-पूर्ण;
+struct ip_vs_sync_conn_options {
+	struct ip_vs_seq        in_seq;         /* incoming seq. struct */
+	struct ip_vs_seq        out_seq;        /* outgoing seq. struct */
+};
 
 /*
-     Sync Connection क्रमmat (sync_conn)
+     Sync Connection format (sync_conn)
 
        0                   1                   2                   3
        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -109,7 +108,7 @@
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |                             fwmark                            |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |                             समयout  (in sec.)                |
+      |                             timeout  (in sec.)                |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |                              ...                              |
       |                        IP-Addresses  (v4 or v6)               |
@@ -124,14 +123,14 @@
       |                               | Param Type    | Param. Length |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |                           Param  data                         |
-      |         Last Param data should be padded क्रम 32 bit alignment |
+      |         Last Param data should be padded for 32 bit alignment |
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
 /*
- *  Type 0, IPv4 sync connection क्रमmat
+ *  Type 0, IPv4 sync connection format
  */
-काष्ठा ip_vs_sync_v4 अणु
+struct ip_vs_sync_v4 {
 	__u8			type;
 	__u8			protocol;	/* Which protocol (TCP/UDP) */
 	__be16			ver_size;	/* Version msb 4 bits */
@@ -143,17 +142,17 @@
 	__be16			vport;
 	__be16			dport;
 	__be32			fwmark;		/* Firewall mark from skb */
-	__be32			समयout;	/* cp समयout */
+	__be32			timeout;	/* cp timeout */
 	__be32			caddr;		/* client address */
-	__be32			vaddr;		/* भव address */
+	__be32			vaddr;		/* virtual address */
 	__be32			daddr;		/* destination address */
 	/* The sequence options start here */
 	/* PE data padded to 32bit alignment after seq. options */
-पूर्ण;
+};
 /*
  * Type 2 messages IPv6
  */
-काष्ठा ip_vs_sync_v6 अणु
+struct ip_vs_sync_v6 {
 	__u8			type;
 	__u8			protocol;	/* Which protocol (TCP/UDP) */
 	__be16			ver_size;	/* Version msb 4 bits */
@@ -165,53 +164,53 @@
 	__be16			vport;
 	__be16			dport;
 	__be32			fwmark;		/* Firewall mark from skb */
-	__be32			समयout;	/* cp समयout */
-	काष्ठा in6_addr		caddr;		/* client address */
-	काष्ठा in6_addr		vaddr;		/* भव address */
-	काष्ठा in6_addr		daddr;		/* destination address */
+	__be32			timeout;	/* cp timeout */
+	struct in6_addr		caddr;		/* client address */
+	struct in6_addr		vaddr;		/* virtual address */
+	struct in6_addr		daddr;		/* destination address */
 	/* The sequence options start here */
 	/* PE data padded to 32bit alignment after seq. options */
-पूर्ण;
+};
 
-जोड़ ip_vs_sync_conn अणु
-	काष्ठा ip_vs_sync_v4	v4;
-	काष्ठा ip_vs_sync_v6	v6;
-पूर्ण;
+union ip_vs_sync_conn {
+	struct ip_vs_sync_v4	v4;
+	struct ip_vs_sync_v6	v6;
+};
 
 /* Bits in Type field in above */
-#घोषणा STYPE_INET6		0
-#घोषणा STYPE_F_INET6		(1 << STYPE_INET6)
+#define STYPE_INET6		0
+#define STYPE_F_INET6		(1 << STYPE_INET6)
 
-#घोषणा SVER_SHIFT		12		/* Shअगरt to get version */
-#घोषणा SVER_MASK		0x0fff		/* Mask to strip version */
+#define SVER_SHIFT		12		/* Shift to get version */
+#define SVER_MASK		0x0fff		/* Mask to strip version */
 
-#घोषणा IPVS_OPT_SEQ_DATA	1
-#घोषणा IPVS_OPT_PE_DATA	2
-#घोषणा IPVS_OPT_PE_NAME	3
-#घोषणा IPVS_OPT_PARAM		7
+#define IPVS_OPT_SEQ_DATA	1
+#define IPVS_OPT_PE_DATA	2
+#define IPVS_OPT_PE_NAME	3
+#define IPVS_OPT_PARAM		7
 
-#घोषणा IPVS_OPT_F_SEQ_DATA	(1 << (IPVS_OPT_SEQ_DATA-1))
-#घोषणा IPVS_OPT_F_PE_DATA	(1 << (IPVS_OPT_PE_DATA-1))
-#घोषणा IPVS_OPT_F_PE_NAME	(1 << (IPVS_OPT_PE_NAME-1))
-#घोषणा IPVS_OPT_F_PARAM	(1 << (IPVS_OPT_PARAM-1))
+#define IPVS_OPT_F_SEQ_DATA	(1 << (IPVS_OPT_SEQ_DATA-1))
+#define IPVS_OPT_F_PE_DATA	(1 << (IPVS_OPT_PE_DATA-1))
+#define IPVS_OPT_F_PE_NAME	(1 << (IPVS_OPT_PE_NAME-1))
+#define IPVS_OPT_F_PARAM	(1 << (IPVS_OPT_PARAM-1))
 
-काष्ठा ip_vs_sync_thपढ़ो_data अणु
-	काष्ठा task_काष्ठा *task;
-	काष्ठा netns_ipvs *ipvs;
-	काष्ठा socket *sock;
-	अक्षर *buf;
-	पूर्णांक id;
-पूर्ण;
+struct ip_vs_sync_thread_data {
+	struct task_struct *task;
+	struct netns_ipvs *ipvs;
+	struct socket *sock;
+	char *buf;
+	int id;
+};
 
 /* Version 0 definition of packet sizes */
-#घोषणा SIMPLE_CONN_SIZE  (माप(काष्ठा ip_vs_sync_conn_v0))
-#घोषणा FULL_CONN_SIZE  \
-(माप(काष्ठा ip_vs_sync_conn_v0) + माप(काष्ठा ip_vs_sync_conn_options))
+#define SIMPLE_CONN_SIZE  (sizeof(struct ip_vs_sync_conn_v0))
+#define FULL_CONN_SIZE  \
+(sizeof(struct ip_vs_sync_conn_v0) + sizeof(struct ip_vs_sync_conn_options))
 
 
 /*
   The master mulitcasts messages (Datagrams) to the backup load balancers
-  in the following क्रमmat.
+  in the following format.
 
  Version 1:
   Note, first byte should be Zero, so ver 0 receivers will drop the packet.
@@ -244,16 +243,16 @@
 */
 
 /* Version 0 header */
-काष्ठा ip_vs_sync_mesg_v0 अणु
+struct ip_vs_sync_mesg_v0 {
 	__u8                    nr_conns;
 	__u8                    syncid;
 	__be16                  size;
 
 	/* ip_vs_sync_conn entries start here */
-पूर्ण;
+};
 
 /* Version 1 header */
-काष्ठा ip_vs_sync_mesg अणु
+struct ip_vs_sync_mesg {
 	__u8			reserved;	/* must be zero */
 	__u8			syncid;
 	__be16			size;
@@ -261,334 +260,334 @@
 	__s8			version;	/* SYNC_PROTO_VER  */
 	__u16			spare;
 	/* ip_vs_sync_conn entries start here */
-पूर्ण;
+};
 
-जोड़ ipvs_sockaddr अणु
-	काष्ठा sockaddr_in	in;
-	काष्ठा sockaddr_in6	in6;
-पूर्ण;
+union ipvs_sockaddr {
+	struct sockaddr_in	in;
+	struct sockaddr_in6	in6;
+};
 
-काष्ठा ip_vs_sync_buff अणु
-	काष्ठा list_head        list;
-	अचिन्हित दीर्घ           firstuse;
+struct ip_vs_sync_buff {
+	struct list_head        list;
+	unsigned long           firstuse;
 
-	/* poपूर्णांकers क्रम the message data */
-	काष्ठा ip_vs_sync_mesg  *mesg;
-	अचिन्हित अक्षर           *head;
-	अचिन्हित अक्षर           *end;
-पूर्ण;
+	/* pointers for the message data */
+	struct ip_vs_sync_mesg  *mesg;
+	unsigned char           *head;
+	unsigned char           *end;
+};
 
 /*
- * Copy of काष्ठा ip_vs_seq
+ * Copy of struct ip_vs_seq
  * From unaligned network order to aligned host order
  */
-अटल व्योम ntoh_seq(काष्ठा ip_vs_seq *no, काष्ठा ip_vs_seq *ho)
-अणु
-	स_रखो(ho, 0, माप(*ho));
+static void ntoh_seq(struct ip_vs_seq *no, struct ip_vs_seq *ho)
+{
+	memset(ho, 0, sizeof(*ho));
 	ho->init_seq       = get_unaligned_be32(&no->init_seq);
 	ho->delta          = get_unaligned_be32(&no->delta);
 	ho->previous_delta = get_unaligned_be32(&no->previous_delta);
-पूर्ण
+}
 
 /*
- * Copy of काष्ठा ip_vs_seq
+ * Copy of struct ip_vs_seq
  * From Aligned host order to unaligned network order
  */
-अटल व्योम hton_seq(काष्ठा ip_vs_seq *ho, काष्ठा ip_vs_seq *no)
-अणु
+static void hton_seq(struct ip_vs_seq *ho, struct ip_vs_seq *no)
+{
 	put_unaligned_be32(ho->init_seq, &no->init_seq);
 	put_unaligned_be32(ho->delta, &no->delta);
 	put_unaligned_be32(ho->previous_delta, &no->previous_delta);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा ip_vs_sync_buff *
-sb_dequeue(काष्ठा netns_ipvs *ipvs, काष्ठा ipvs_master_sync_state *ms)
-अणु
-	काष्ठा ip_vs_sync_buff *sb;
+static inline struct ip_vs_sync_buff *
+sb_dequeue(struct netns_ipvs *ipvs, struct ipvs_master_sync_state *ms)
+{
+	struct ip_vs_sync_buff *sb;
 
 	spin_lock_bh(&ipvs->sync_lock);
-	अगर (list_empty(&ms->sync_queue)) अणु
-		sb = शून्य;
+	if (list_empty(&ms->sync_queue)) {
+		sb = NULL;
 		__set_current_state(TASK_INTERRUPTIBLE);
-	पूर्ण अन्यथा अणु
-		sb = list_entry(ms->sync_queue.next, काष्ठा ip_vs_sync_buff,
+	} else {
+		sb = list_entry(ms->sync_queue.next, struct ip_vs_sync_buff,
 				list);
 		list_del(&sb->list);
 		ms->sync_queue_len--;
-		अगर (!ms->sync_queue_len)
+		if (!ms->sync_queue_len)
 			ms->sync_queue_delay = 0;
-	पूर्ण
+	}
 	spin_unlock_bh(&ipvs->sync_lock);
 
-	वापस sb;
-पूर्ण
+	return sb;
+}
 
 /*
- * Create a new sync buffer क्रम Version 1 proto.
+ * Create a new sync buffer for Version 1 proto.
  */
-अटल अंतरभूत काष्ठा ip_vs_sync_buff *
-ip_vs_sync_buff_create(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ip_vs_sync_buff *sb;
+static inline struct ip_vs_sync_buff *
+ip_vs_sync_buff_create(struct netns_ipvs *ipvs, unsigned int len)
+{
+	struct ip_vs_sync_buff *sb;
 
-	अगर (!(sb=kदो_स्मृति(माप(काष्ठा ip_vs_sync_buff), GFP_ATOMIC)))
-		वापस शून्य;
+	if (!(sb=kmalloc(sizeof(struct ip_vs_sync_buff), GFP_ATOMIC)))
+		return NULL;
 
-	len = max_t(अचिन्हित पूर्णांक, len + माप(काष्ठा ip_vs_sync_mesg),
+	len = max_t(unsigned int, len + sizeof(struct ip_vs_sync_mesg),
 		    ipvs->mcfg.sync_maxlen);
-	sb->mesg = kदो_स्मृति(len, GFP_ATOMIC);
-	अगर (!sb->mesg) अणु
-		kमुक्त(sb);
-		वापस शून्य;
-	पूर्ण
+	sb->mesg = kmalloc(len, GFP_ATOMIC);
+	if (!sb->mesg) {
+		kfree(sb);
+		return NULL;
+	}
 	sb->mesg->reserved = 0;  /* old nr_conns i.e. must be zero now */
 	sb->mesg->version = SYNC_PROTO_VER;
 	sb->mesg->syncid = ipvs->mcfg.syncid;
-	sb->mesg->size = htons(माप(काष्ठा ip_vs_sync_mesg));
+	sb->mesg->size = htons(sizeof(struct ip_vs_sync_mesg));
 	sb->mesg->nr_conns = 0;
 	sb->mesg->spare = 0;
-	sb->head = (अचिन्हित अक्षर *)sb->mesg + माप(काष्ठा ip_vs_sync_mesg);
-	sb->end = (अचिन्हित अक्षर *)sb->mesg + len;
+	sb->head = (unsigned char *)sb->mesg + sizeof(struct ip_vs_sync_mesg);
+	sb->end = (unsigned char *)sb->mesg + len;
 
-	sb->firstuse = jअगरfies;
-	वापस sb;
-पूर्ण
+	sb->firstuse = jiffies;
+	return sb;
+}
 
-अटल अंतरभूत व्योम ip_vs_sync_buff_release(काष्ठा ip_vs_sync_buff *sb)
-अणु
-	kमुक्त(sb->mesg);
-	kमुक्त(sb);
-पूर्ण
+static inline void ip_vs_sync_buff_release(struct ip_vs_sync_buff *sb)
+{
+	kfree(sb->mesg);
+	kfree(sb);
+}
 
-अटल अंतरभूत व्योम sb_queue_tail(काष्ठा netns_ipvs *ipvs,
-				 काष्ठा ipvs_master_sync_state *ms)
-अणु
-	काष्ठा ip_vs_sync_buff *sb = ms->sync_buff;
+static inline void sb_queue_tail(struct netns_ipvs *ipvs,
+				 struct ipvs_master_sync_state *ms)
+{
+	struct ip_vs_sync_buff *sb = ms->sync_buff;
 
 	spin_lock(&ipvs->sync_lock);
-	अगर (ipvs->sync_state & IP_VS_STATE_MASTER &&
-	    ms->sync_queue_len < sysctl_sync_qlen_max(ipvs)) अणु
-		अगर (!ms->sync_queue_len)
+	if (ipvs->sync_state & IP_VS_STATE_MASTER &&
+	    ms->sync_queue_len < sysctl_sync_qlen_max(ipvs)) {
+		if (!ms->sync_queue_len)
 			schedule_delayed_work(&ms->master_wakeup_work,
 					      max(IPVS_SYNC_SEND_DELAY, 1));
 		ms->sync_queue_len++;
 		list_add_tail(&sb->list, &ms->sync_queue);
-		अगर ((++ms->sync_queue_delay) == IPVS_SYNC_WAKEUP_RATE) अणु
-			पूर्णांक id = (पूर्णांक)(ms - ipvs->ms);
+		if ((++ms->sync_queue_delay) == IPVS_SYNC_WAKEUP_RATE) {
+			int id = (int)(ms - ipvs->ms);
 
 			wake_up_process(ipvs->master_tinfo[id].task);
-		पूर्ण
-	पूर्ण अन्यथा
+		}
+	} else
 		ip_vs_sync_buff_release(sb);
 	spin_unlock(&ipvs->sync_lock);
-पूर्ण
+}
 
 /*
- *	Get the current sync buffer अगर it has been created क्रम more
- *	than the specअगरied समय or the specअगरied समय is zero.
+ *	Get the current sync buffer if it has been created for more
+ *	than the specified time or the specified time is zero.
  */
-अटल अंतरभूत काष्ठा ip_vs_sync_buff *
-get_curr_sync_buff(काष्ठा netns_ipvs *ipvs, काष्ठा ipvs_master_sync_state *ms,
-		   अचिन्हित दीर्घ समय)
-अणु
-	काष्ठा ip_vs_sync_buff *sb;
+static inline struct ip_vs_sync_buff *
+get_curr_sync_buff(struct netns_ipvs *ipvs, struct ipvs_master_sync_state *ms,
+		   unsigned long time)
+{
+	struct ip_vs_sync_buff *sb;
 
 	spin_lock_bh(&ipvs->sync_buff_lock);
 	sb = ms->sync_buff;
-	अगर (sb && समय_after_eq(jअगरfies - sb->firstuse, समय)) अणु
-		ms->sync_buff = शून्य;
+	if (sb && time_after_eq(jiffies - sb->firstuse, time)) {
+		ms->sync_buff = NULL;
 		__set_current_state(TASK_RUNNING);
-	पूर्ण अन्यथा
-		sb = शून्य;
+	} else
+		sb = NULL;
 	spin_unlock_bh(&ipvs->sync_buff_lock);
-	वापस sb;
-पूर्ण
+	return sb;
+}
 
-अटल अंतरभूत पूर्णांक
-select_master_thपढ़ो_id(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_conn *cp)
-अणु
-	वापस ((दीर्घ) cp >> (1 + ilog2(माप(*cp)))) & ipvs->thपढ़ोs_mask;
-पूर्ण
+static inline int
+select_master_thread_id(struct netns_ipvs *ipvs, struct ip_vs_conn *cp)
+{
+	return ((long) cp >> (1 + ilog2(sizeof(*cp)))) & ipvs->threads_mask;
+}
 
 /*
- * Create a new sync buffer क्रम Version 0 proto.
+ * Create a new sync buffer for Version 0 proto.
  */
-अटल अंतरभूत काष्ठा ip_vs_sync_buff *
-ip_vs_sync_buff_create_v0(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ip_vs_sync_buff *sb;
-	काष्ठा ip_vs_sync_mesg_v0 *mesg;
+static inline struct ip_vs_sync_buff *
+ip_vs_sync_buff_create_v0(struct netns_ipvs *ipvs, unsigned int len)
+{
+	struct ip_vs_sync_buff *sb;
+	struct ip_vs_sync_mesg_v0 *mesg;
 
-	अगर (!(sb=kदो_स्मृति(माप(काष्ठा ip_vs_sync_buff), GFP_ATOMIC)))
-		वापस शून्य;
+	if (!(sb=kmalloc(sizeof(struct ip_vs_sync_buff), GFP_ATOMIC)))
+		return NULL;
 
-	len = max_t(अचिन्हित पूर्णांक, len + माप(काष्ठा ip_vs_sync_mesg_v0),
+	len = max_t(unsigned int, len + sizeof(struct ip_vs_sync_mesg_v0),
 		    ipvs->mcfg.sync_maxlen);
-	sb->mesg = kदो_स्मृति(len, GFP_ATOMIC);
-	अगर (!sb->mesg) अणु
-		kमुक्त(sb);
-		वापस शून्य;
-	पूर्ण
-	mesg = (काष्ठा ip_vs_sync_mesg_v0 *)sb->mesg;
+	sb->mesg = kmalloc(len, GFP_ATOMIC);
+	if (!sb->mesg) {
+		kfree(sb);
+		return NULL;
+	}
+	mesg = (struct ip_vs_sync_mesg_v0 *)sb->mesg;
 	mesg->nr_conns = 0;
 	mesg->syncid = ipvs->mcfg.syncid;
-	mesg->size = htons(माप(काष्ठा ip_vs_sync_mesg_v0));
-	sb->head = (अचिन्हित अक्षर *)mesg + माप(काष्ठा ip_vs_sync_mesg_v0);
-	sb->end = (अचिन्हित अक्षर *)mesg + len;
-	sb->firstuse = jअगरfies;
-	वापस sb;
-पूर्ण
+	mesg->size = htons(sizeof(struct ip_vs_sync_mesg_v0));
+	sb->head = (unsigned char *)mesg + sizeof(struct ip_vs_sync_mesg_v0);
+	sb->end = (unsigned char *)mesg + len;
+	sb->firstuse = jiffies;
+	return sb;
+}
 
-/* Check अगर connection is controlled by persistence */
-अटल अंतरभूत bool in_persistence(काष्ठा ip_vs_conn *cp)
-अणु
-	क्रम (cp = cp->control; cp; cp = cp->control) अणु
-		अगर (cp->flags & IP_VS_CONN_F_TEMPLATE)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+/* Check if connection is controlled by persistence */
+static inline bool in_persistence(struct ip_vs_conn *cp)
+{
+	for (cp = cp->control; cp; cp = cp->control) {
+		if (cp->flags & IP_VS_CONN_F_TEMPLATE)
+			return true;
+	}
+	return false;
+}
 
-/* Check अगर conn should be synced.
- * pkts: conn packets, use sysctl_sync_threshold to aव्योम packet check
+/* Check if conn should be synced.
+ * pkts: conn packets, use sysctl_sync_threshold to avoid packet check
  * - (1) sync_refresh_period: reduce sync rate. Additionally, retry
- *	sync_retries बार with period of sync_refresh_period/8
- * - (2) अगर both sync_refresh_period and sync_period are 0 send sync only
- *	क्रम state changes or only once when pkts matches sync_threshold
- * - (3) ढाँचाs: rate can be reduced only with sync_refresh_period or
+ *	sync_retries times with period of sync_refresh_period/8
+ * - (2) if both sync_refresh_period and sync_period are 0 send sync only
+ *	for state changes or only once when pkts matches sync_threshold
+ * - (3) templates: rate can be reduced only with sync_refresh_period or
  *	with (2)
  */
-अटल पूर्णांक ip_vs_sync_conn_needed(काष्ठा netns_ipvs *ipvs,
-				  काष्ठा ip_vs_conn *cp, पूर्णांक pkts)
-अणु
-	अचिन्हित दीर्घ orig = READ_ONCE(cp->sync_endसमय);
-	अचिन्हित दीर्घ now = jअगरfies;
-	अचिन्हित दीर्घ n = (now + cp->समयout) & ~3UL;
-	अचिन्हित पूर्णांक sync_refresh_period;
-	पूर्णांक sync_period;
-	पूर्णांक क्रमce;
+static int ip_vs_sync_conn_needed(struct netns_ipvs *ipvs,
+				  struct ip_vs_conn *cp, int pkts)
+{
+	unsigned long orig = READ_ONCE(cp->sync_endtime);
+	unsigned long now = jiffies;
+	unsigned long n = (now + cp->timeout) & ~3UL;
+	unsigned int sync_refresh_period;
+	int sync_period;
+	int force;
 
-	/* Check अगर we sync in current state */
-	अगर (unlikely(cp->flags & IP_VS_CONN_F_TEMPLATE))
-		क्रमce = 0;
-	अन्यथा अगर (unlikely(sysctl_sync_persist_mode(ipvs) && in_persistence(cp)))
-		वापस 0;
-	अन्यथा अगर (likely(cp->protocol == IPPROTO_TCP)) अणु
-		अगर (!((1 << cp->state) &
+	/* Check if we sync in current state */
+	if (unlikely(cp->flags & IP_VS_CONN_F_TEMPLATE))
+		force = 0;
+	else if (unlikely(sysctl_sync_persist_mode(ipvs) && in_persistence(cp)))
+		return 0;
+	else if (likely(cp->protocol == IPPROTO_TCP)) {
+		if (!((1 << cp->state) &
 		      ((1 << IP_VS_TCP_S_ESTABLISHED) |
 		       (1 << IP_VS_TCP_S_FIN_WAIT) |
 		       (1 << IP_VS_TCP_S_CLOSE) |
 		       (1 << IP_VS_TCP_S_CLOSE_WAIT) |
 		       (1 << IP_VS_TCP_S_TIME_WAIT))))
-			वापस 0;
-		क्रमce = cp->state != cp->old_state;
-		अगर (क्रमce && cp->state != IP_VS_TCP_S_ESTABLISHED)
-			जाओ set;
-	पूर्ण अन्यथा अगर (unlikely(cp->protocol == IPPROTO_SCTP)) अणु
-		अगर (!((1 << cp->state) &
+			return 0;
+		force = cp->state != cp->old_state;
+		if (force && cp->state != IP_VS_TCP_S_ESTABLISHED)
+			goto set;
+	} else if (unlikely(cp->protocol == IPPROTO_SCTP)) {
+		if (!((1 << cp->state) &
 		      ((1 << IP_VS_SCTP_S_ESTABLISHED) |
 		       (1 << IP_VS_SCTP_S_SHUTDOWN_SENT) |
 		       (1 << IP_VS_SCTP_S_SHUTDOWN_RECEIVED) |
 		       (1 << IP_VS_SCTP_S_SHUTDOWN_ACK_SENT) |
 		       (1 << IP_VS_SCTP_S_CLOSED))))
-			वापस 0;
-		क्रमce = cp->state != cp->old_state;
-		अगर (क्रमce && cp->state != IP_VS_SCTP_S_ESTABLISHED)
-			जाओ set;
-	पूर्ण अन्यथा अणु
+			return 0;
+		force = cp->state != cp->old_state;
+		if (force && cp->state != IP_VS_SCTP_S_ESTABLISHED)
+			goto set;
+	} else {
 		/* UDP or another protocol with single state */
-		क्रमce = 0;
-	पूर्ण
+		force = 0;
+	}
 
 	sync_refresh_period = sysctl_sync_refresh_period(ipvs);
-	अगर (sync_refresh_period > 0) अणु
-		दीर्घ dअगरf = n - orig;
-		दीर्घ min_dअगरf = max(cp->समयout >> 1, 10UL * HZ);
+	if (sync_refresh_period > 0) {
+		long diff = n - orig;
+		long min_diff = max(cp->timeout >> 1, 10UL * HZ);
 
-		/* Aव्योम sync अगर dअगरference is below sync_refresh_period
-		 * and below the half समयout.
+		/* Avoid sync if difference is below sync_refresh_period
+		 * and below the half timeout.
 		 */
-		अगर (असल(dअगरf) < min_t(दीर्घ, sync_refresh_period, min_dअगरf)) अणु
-			पूर्णांक retries = orig & 3;
+		if (abs(diff) < min_t(long, sync_refresh_period, min_diff)) {
+			int retries = orig & 3;
 
-			अगर (retries >= sysctl_sync_retries(ipvs))
-				वापस 0;
-			अगर (समय_beक्रमe(now, orig - cp->समयout +
+			if (retries >= sysctl_sync_retries(ipvs))
+				return 0;
+			if (time_before(now, orig - cp->timeout +
 					(sync_refresh_period >> 3)))
-				वापस 0;
+				return 0;
 			n |= retries + 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sync_period = sysctl_sync_period(ipvs);
-	अगर (sync_period > 0) अणु
-		अगर (!(cp->flags & IP_VS_CONN_F_TEMPLATE) &&
+	if (sync_period > 0) {
+		if (!(cp->flags & IP_VS_CONN_F_TEMPLATE) &&
 		    pkts % sync_period != sysctl_sync_threshold(ipvs))
-			वापस 0;
-	पूर्ण अन्यथा अगर (!sync_refresh_period &&
+			return 0;
+	} else if (!sync_refresh_period &&
 		   pkts != sysctl_sync_threshold(ipvs))
-		वापस 0;
+		return 0;
 
 set:
 	cp->old_state = cp->state;
-	n = cmpxchg(&cp->sync_endसमय, orig, n);
-	वापस n == orig || क्रमce;
-पूर्ण
+	n = cmpxchg(&cp->sync_endtime, orig, n);
+	return n == orig || force;
+}
 
 /*
- *      Version 0 , could be चयनed in by sys_ctl.
- *      Add an ip_vs_conn inक्रमmation पूर्णांकo the current sync_buff.
+ *      Version 0 , could be switched in by sys_ctl.
+ *      Add an ip_vs_conn information into the current sync_buff.
  */
-अटल व्योम ip_vs_sync_conn_v0(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_conn *cp,
-			       पूर्णांक pkts)
-अणु
-	काष्ठा ip_vs_sync_mesg_v0 *m;
-	काष्ठा ip_vs_sync_conn_v0 *s;
-	काष्ठा ip_vs_sync_buff *buff;
-	काष्ठा ipvs_master_sync_state *ms;
-	पूर्णांक id;
-	अचिन्हित पूर्णांक len;
+static void ip_vs_sync_conn_v0(struct netns_ipvs *ipvs, struct ip_vs_conn *cp,
+			       int pkts)
+{
+	struct ip_vs_sync_mesg_v0 *m;
+	struct ip_vs_sync_conn_v0 *s;
+	struct ip_vs_sync_buff *buff;
+	struct ipvs_master_sync_state *ms;
+	int id;
+	unsigned int len;
 
-	अगर (unlikely(cp->af != AF_INET))
-		वापस;
+	if (unlikely(cp->af != AF_INET))
+		return;
 	/* Do not sync ONE PACKET */
-	अगर (cp->flags & IP_VS_CONN_F_ONE_PACKET)
-		वापस;
+	if (cp->flags & IP_VS_CONN_F_ONE_PACKET)
+		return;
 
-	अगर (!ip_vs_sync_conn_needed(ipvs, cp, pkts))
-		वापस;
+	if (!ip_vs_sync_conn_needed(ipvs, cp, pkts))
+		return;
 
 	spin_lock_bh(&ipvs->sync_buff_lock);
-	अगर (!(ipvs->sync_state & IP_VS_STATE_MASTER)) अणु
+	if (!(ipvs->sync_state & IP_VS_STATE_MASTER)) {
 		spin_unlock_bh(&ipvs->sync_buff_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	id = select_master_thपढ़ो_id(ipvs, cp);
+	id = select_master_thread_id(ipvs, cp);
 	ms = &ipvs->ms[id];
 	buff = ms->sync_buff;
 	len = (cp->flags & IP_VS_CONN_F_SEQ_MASK) ? FULL_CONN_SIZE :
 		SIMPLE_CONN_SIZE;
-	अगर (buff) अणु
-		m = (काष्ठा ip_vs_sync_mesg_v0 *) buff->mesg;
-		/* Send buffer अगर it is क्रम v1 */
-		अगर (buff->head + len > buff->end || !m->nr_conns) अणु
+	if (buff) {
+		m = (struct ip_vs_sync_mesg_v0 *) buff->mesg;
+		/* Send buffer if it is for v1 */
+		if (buff->head + len > buff->end || !m->nr_conns) {
 			sb_queue_tail(ipvs, ms);
-			ms->sync_buff = शून्य;
-			buff = शून्य;
-		पूर्ण
-	पूर्ण
-	अगर (!buff) अणु
+			ms->sync_buff = NULL;
+			buff = NULL;
+		}
+	}
+	if (!buff) {
 		buff = ip_vs_sync_buff_create_v0(ipvs, len);
-		अगर (!buff) अणु
+		if (!buff) {
 			spin_unlock_bh(&ipvs->sync_buff_lock);
 			pr_err("ip_vs_sync_buff_create failed.\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		ms->sync_buff = buff;
-	पूर्ण
+	}
 
-	m = (काष्ठा ip_vs_sync_mesg_v0 *) buff->mesg;
-	s = (काष्ठा ip_vs_sync_conn_v0 *) buff->head;
+	m = (struct ip_vs_sync_mesg_v0 *) buff->mesg;
+	s = (struct ip_vs_sync_conn_v0 *) buff->head;
 
 	/* copy members */
 	s->reserved = 0;
@@ -601,123 +600,123 @@ set:
 	s->daddr = cp->daddr.ip;
 	s->flags = htons(cp->flags & ~IP_VS_CONN_F_HASHED);
 	s->state = htons(cp->state);
-	अगर (cp->flags & IP_VS_CONN_F_SEQ_MASK) अणु
-		काष्ठा ip_vs_sync_conn_options *opt =
-			(काष्ठा ip_vs_sync_conn_options *)&s[1];
-		स_नकल(opt, &cp->in_seq, माप(*opt));
-	पूर्ण
+	if (cp->flags & IP_VS_CONN_F_SEQ_MASK) {
+		struct ip_vs_sync_conn_options *opt =
+			(struct ip_vs_sync_conn_options *)&s[1];
+		memcpy(opt, &cp->in_seq, sizeof(*opt));
+	}
 
 	m->nr_conns++;
 	m->size = htons(ntohs(m->size) + len);
 	buff->head += len;
 	spin_unlock_bh(&ipvs->sync_buff_lock);
 
-	/* synchronize its controller अगर it has */
+	/* synchronize its controller if it has */
 	cp = cp->control;
-	अगर (cp) अणु
-		अगर (cp->flags & IP_VS_CONN_F_TEMPLATE)
-			pkts = atomic_inc_वापस(&cp->in_pkts);
-		अन्यथा
+	if (cp) {
+		if (cp->flags & IP_VS_CONN_F_TEMPLATE)
+			pkts = atomic_inc_return(&cp->in_pkts);
+		else
 			pkts = sysctl_sync_threshold(ipvs);
 		ip_vs_sync_conn(ipvs, cp, pkts);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- *      Add an ip_vs_conn inक्रमmation पूर्णांकo the current sync_buff.
+ *      Add an ip_vs_conn information into the current sync_buff.
  *      Called by ip_vs_in.
  *      Sending Version 1 messages
  */
-व्योम ip_vs_sync_conn(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_conn *cp, पूर्णांक pkts)
-अणु
-	काष्ठा ip_vs_sync_mesg *m;
-	जोड़ ip_vs_sync_conn *s;
-	काष्ठा ip_vs_sync_buff *buff;
-	काष्ठा ipvs_master_sync_state *ms;
-	पूर्णांक id;
+void ip_vs_sync_conn(struct netns_ipvs *ipvs, struct ip_vs_conn *cp, int pkts)
+{
+	struct ip_vs_sync_mesg *m;
+	union ip_vs_sync_conn *s;
+	struct ip_vs_sync_buff *buff;
+	struct ipvs_master_sync_state *ms;
+	int id;
 	__u8 *p;
-	अचिन्हित पूर्णांक len, pe_name_len, pad;
+	unsigned int len, pe_name_len, pad;
 
 	/* Handle old version of the protocol */
-	अगर (sysctl_sync_ver(ipvs) == 0) अणु
+	if (sysctl_sync_ver(ipvs) == 0) {
 		ip_vs_sync_conn_v0(ipvs, cp, pkts);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* Do not sync ONE PACKET */
-	अगर (cp->flags & IP_VS_CONN_F_ONE_PACKET)
-		जाओ control;
+	if (cp->flags & IP_VS_CONN_F_ONE_PACKET)
+		goto control;
 sloop:
-	अगर (!ip_vs_sync_conn_needed(ipvs, cp, pkts))
-		जाओ control;
+	if (!ip_vs_sync_conn_needed(ipvs, cp, pkts))
+		goto control;
 
 	/* Sanity checks */
 	pe_name_len = 0;
-	अगर (cp->pe_data_len) अणु
-		अगर (!cp->pe_data || !cp->dest) अणु
+	if (cp->pe_data_len) {
+		if (!cp->pe_data || !cp->dest) {
 			IP_VS_ERR_RL("SYNC, connection pe_data invalid\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		pe_name_len = strnlen(cp->pe->name, IP_VS_PENAME_MAXLEN);
-	पूर्ण
+	}
 
 	spin_lock_bh(&ipvs->sync_buff_lock);
-	अगर (!(ipvs->sync_state & IP_VS_STATE_MASTER)) अणु
+	if (!(ipvs->sync_state & IP_VS_STATE_MASTER)) {
 		spin_unlock_bh(&ipvs->sync_buff_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	id = select_master_thपढ़ो_id(ipvs, cp);
+	id = select_master_thread_id(ipvs, cp);
 	ms = &ipvs->ms[id];
 
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (cp->af == AF_INET6)
-		len = माप(काष्ठा ip_vs_sync_v6);
-	अन्यथा
-#पूर्ण_अगर
-		len = माप(काष्ठा ip_vs_sync_v4);
+#ifdef CONFIG_IP_VS_IPV6
+	if (cp->af == AF_INET6)
+		len = sizeof(struct ip_vs_sync_v6);
+	else
+#endif
+		len = sizeof(struct ip_vs_sync_v4);
 
-	अगर (cp->flags & IP_VS_CONN_F_SEQ_MASK)
-		len += माप(काष्ठा ip_vs_sync_conn_options) + 2;
+	if (cp->flags & IP_VS_CONN_F_SEQ_MASK)
+		len += sizeof(struct ip_vs_sync_conn_options) + 2;
 
-	अगर (cp->pe_data_len)
+	if (cp->pe_data_len)
 		len += cp->pe_data_len + 2;	/* + Param hdr field */
-	अगर (pe_name_len)
+	if (pe_name_len)
 		len += pe_name_len + 2;
 
-	/* check अगर there is a space क्रम this one  */
+	/* check if there is a space for this one  */
 	pad = 0;
 	buff = ms->sync_buff;
-	अगर (buff) अणु
+	if (buff) {
 		m = buff->mesg;
-		pad = (4 - (माप_प्रकार) buff->head) & 3;
-		/* Send buffer अगर it is क्रम v0 */
-		अगर (buff->head + len + pad > buff->end || m->reserved) अणु
+		pad = (4 - (size_t) buff->head) & 3;
+		/* Send buffer if it is for v0 */
+		if (buff->head + len + pad > buff->end || m->reserved) {
 			sb_queue_tail(ipvs, ms);
-			ms->sync_buff = शून्य;
-			buff = शून्य;
+			ms->sync_buff = NULL;
+			buff = NULL;
 			pad = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!buff) अणु
+	if (!buff) {
 		buff = ip_vs_sync_buff_create(ipvs, len);
-		अगर (!buff) अणु
+		if (!buff) {
 			spin_unlock_bh(&ipvs->sync_buff_lock);
 			pr_err("ip_vs_sync_buff_create failed.\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		ms->sync_buff = buff;
 		m = buff->mesg;
-	पूर्ण
+	}
 
 	p = buff->head;
 	buff->head += pad + len;
 	m->size = htons(ntohs(m->size) + pad + len);
 	/* Add ev. padding from prev. sync_conn */
-	जबतक (pad--)
+	while (pad--)
 		*(p++) = 0;
 
-	s = (जोड़ ip_vs_sync_conn *)p;
+	s = (union ip_vs_sync_conn *)p;
 
 	/* Set message type  & copy members */
 	s->v4.type = (cp->af == AF_INET6 ? STYPE_F_INET6 : 0);
@@ -729,180 +728,180 @@ sloop:
 	s->v4.vport = cp->vport;
 	s->v4.dport = cp->dport;
 	s->v4.fwmark = htonl(cp->fwmark);
-	s->v4.समयout = htonl(cp->समयout / HZ);
+	s->v4.timeout = htonl(cp->timeout / HZ);
 	m->nr_conns++;
 
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (cp->af == AF_INET6) अणु
-		p += माप(काष्ठा ip_vs_sync_v6);
+#ifdef CONFIG_IP_VS_IPV6
+	if (cp->af == AF_INET6) {
+		p += sizeof(struct ip_vs_sync_v6);
 		s->v6.caddr = cp->caddr.in6;
 		s->v6.vaddr = cp->vaddr.in6;
 		s->v6.daddr = cp->daddr.in6;
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
-		p += माप(काष्ठा ip_vs_sync_v4);	/* options ptr */
+	} else
+#endif
+	{
+		p += sizeof(struct ip_vs_sync_v4);	/* options ptr */
 		s->v4.caddr = cp->caddr.ip;
 		s->v4.vaddr = cp->vaddr.ip;
 		s->v4.daddr = cp->daddr.ip;
-	पूर्ण
-	अगर (cp->flags & IP_VS_CONN_F_SEQ_MASK) अणु
+	}
+	if (cp->flags & IP_VS_CONN_F_SEQ_MASK) {
 		*(p++) = IPVS_OPT_SEQ_DATA;
-		*(p++) = माप(काष्ठा ip_vs_sync_conn_options);
-		hton_seq((काष्ठा ip_vs_seq *)p, &cp->in_seq);
-		p += माप(काष्ठा ip_vs_seq);
-		hton_seq((काष्ठा ip_vs_seq *)p, &cp->out_seq);
-		p += माप(काष्ठा ip_vs_seq);
-	पूर्ण
+		*(p++) = sizeof(struct ip_vs_sync_conn_options);
+		hton_seq((struct ip_vs_seq *)p, &cp->in_seq);
+		p += sizeof(struct ip_vs_seq);
+		hton_seq((struct ip_vs_seq *)p, &cp->out_seq);
+		p += sizeof(struct ip_vs_seq);
+	}
 	/* Handle pe data */
-	अगर (cp->pe_data_len && cp->pe_data) अणु
+	if (cp->pe_data_len && cp->pe_data) {
 		*(p++) = IPVS_OPT_PE_DATA;
 		*(p++) = cp->pe_data_len;
-		स_नकल(p, cp->pe_data, cp->pe_data_len);
+		memcpy(p, cp->pe_data, cp->pe_data_len);
 		p += cp->pe_data_len;
-		अगर (pe_name_len) अणु
+		if (pe_name_len) {
 			/* Add PE_NAME */
 			*(p++) = IPVS_OPT_PE_NAME;
 			*(p++) = pe_name_len;
-			स_नकल(p, cp->pe->name, pe_name_len);
+			memcpy(p, cp->pe->name, pe_name_len);
 			p += pe_name_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&ipvs->sync_buff_lock);
 
 control:
-	/* synchronize its controller अगर it has */
+	/* synchronize its controller if it has */
 	cp = cp->control;
-	अगर (!cp)
-		वापस;
-	अगर (cp->flags & IP_VS_CONN_F_TEMPLATE)
-		pkts = atomic_inc_वापस(&cp->in_pkts);
-	अन्यथा
+	if (!cp)
+		return;
+	if (cp->flags & IP_VS_CONN_F_TEMPLATE)
+		pkts = atomic_inc_return(&cp->in_pkts);
+	else
 		pkts = sysctl_sync_threshold(ipvs);
-	जाओ sloop;
-पूर्ण
+	goto sloop;
+}
 
 /*
  *  fill_param used by version 1
  */
-अटल अंतरभूत पूर्णांक
-ip_vs_conn_fill_param_sync(काष्ठा netns_ipvs *ipvs, पूर्णांक af, जोड़ ip_vs_sync_conn *sc,
-			   काष्ठा ip_vs_conn_param *p,
-			   __u8 *pe_data, अचिन्हित पूर्णांक pe_data_len,
-			   __u8 *pe_name, अचिन्हित पूर्णांक pe_name_len)
-अणु
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (af == AF_INET6)
+static inline int
+ip_vs_conn_fill_param_sync(struct netns_ipvs *ipvs, int af, union ip_vs_sync_conn *sc,
+			   struct ip_vs_conn_param *p,
+			   __u8 *pe_data, unsigned int pe_data_len,
+			   __u8 *pe_name, unsigned int pe_name_len)
+{
+#ifdef CONFIG_IP_VS_IPV6
+	if (af == AF_INET6)
 		ip_vs_conn_fill_param(ipvs, af, sc->v6.protocol,
-				      (स्थिर जोड़ nf_inet_addr *)&sc->v6.caddr,
+				      (const union nf_inet_addr *)&sc->v6.caddr,
 				      sc->v6.cport,
-				      (स्थिर जोड़ nf_inet_addr *)&sc->v6.vaddr,
+				      (const union nf_inet_addr *)&sc->v6.vaddr,
 				      sc->v6.vport, p);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		ip_vs_conn_fill_param(ipvs, af, sc->v4.protocol,
-				      (स्थिर जोड़ nf_inet_addr *)&sc->v4.caddr,
+				      (const union nf_inet_addr *)&sc->v4.caddr,
 				      sc->v4.cport,
-				      (स्थिर जोड़ nf_inet_addr *)&sc->v4.vaddr,
+				      (const union nf_inet_addr *)&sc->v4.vaddr,
 				      sc->v4.vport, p);
 	/* Handle pe data */
-	अगर (pe_data_len) अणु
-		अगर (pe_name_len) अणु
-			अक्षर buff[IP_VS_PENAME_MAXLEN+1];
+	if (pe_data_len) {
+		if (pe_name_len) {
+			char buff[IP_VS_PENAME_MAXLEN+1];
 
-			स_नकल(buff, pe_name, pe_name_len);
+			memcpy(buff, pe_name, pe_name_len);
 			buff[pe_name_len]=0;
 			p->pe = __ip_vs_pe_getbyname(buff);
-			अगर (!p->pe) अणु
+			if (!p->pe) {
 				IP_VS_DBG(3, "BACKUP, no %s engine found/loaded\n",
 					     buff);
-				वापस 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return 1;
+			}
+		} else {
 			IP_VS_ERR_RL("BACKUP, Invalid PE parameters\n");
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		p->pe_data = kmemdup(pe_data, pe_data_len, GFP_ATOMIC);
-		अगर (!p->pe_data) अणु
+		if (!p->pe_data) {
 			module_put(p->pe->module);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		p->pe_data_len = pe_data_len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  *  Connection Add / Update.
- *  Common क्रम version 0 and 1 reception of backup sync_conns.
+ *  Common for version 0 and 1 reception of backup sync_conns.
  *  Param: ...
- *         समयout is in sec.
+ *         timeout is in sec.
  */
-अटल व्योम ip_vs_proc_conn(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_conn_param *param,
-			    अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक state,
-			    अचिन्हित पूर्णांक protocol, अचिन्हित पूर्णांक type,
-			    स्थिर जोड़ nf_inet_addr *daddr, __be16 dport,
-			    अचिन्हित दीर्घ समयout, __u32 fwmark,
-			    काष्ठा ip_vs_sync_conn_options *opt)
-अणु
-	काष्ठा ip_vs_dest *dest;
-	काष्ठा ip_vs_conn *cp;
+static void ip_vs_proc_conn(struct netns_ipvs *ipvs, struct ip_vs_conn_param *param,
+			    unsigned int flags, unsigned int state,
+			    unsigned int protocol, unsigned int type,
+			    const union nf_inet_addr *daddr, __be16 dport,
+			    unsigned long timeout, __u32 fwmark,
+			    struct ip_vs_sync_conn_options *opt)
+{
+	struct ip_vs_dest *dest;
+	struct ip_vs_conn *cp;
 
-	अगर (!(flags & IP_VS_CONN_F_TEMPLATE)) अणु
+	if (!(flags & IP_VS_CONN_F_TEMPLATE)) {
 		cp = ip_vs_conn_in_get(param);
-		अगर (cp && ((cp->dport != dport) ||
-			   !ip_vs_addr_equal(cp->daf, &cp->daddr, daddr))) अणु
-			अगर (!(flags & IP_VS_CONN_F_INACTIVE)) अणु
+		if (cp && ((cp->dport != dport) ||
+			   !ip_vs_addr_equal(cp->daf, &cp->daddr, daddr))) {
+			if (!(flags & IP_VS_CONN_F_INACTIVE)) {
 				ip_vs_conn_expire_now(cp);
 				__ip_vs_conn_put(cp);
-				cp = शून्य;
-			पूर्ण अन्यथा अणु
-				/* This is the expiration message क्रम the
-				 * connection that was alपढ़ोy replaced, so we
+				cp = NULL;
+			} else {
+				/* This is the expiration message for the
+				 * connection that was already replaced, so we
 				 * just ignore it.
 				 */
 				__ip_vs_conn_put(cp);
-				kमुक्त(param->pe_data);
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				kfree(param->pe_data);
+				return;
+			}
+		}
+	} else {
 		cp = ip_vs_ct_in_get(param);
-	पूर्ण
+	}
 
-	अगर (cp) अणु
+	if (cp) {
 		/* Free pe_data */
-		kमुक्त(param->pe_data);
+		kfree(param->pe_data);
 
 		dest = cp->dest;
 		spin_lock_bh(&cp->lock);
-		अगर ((cp->flags ^ flags) & IP_VS_CONN_F_INACTIVE &&
-		    !(flags & IP_VS_CONN_F_TEMPLATE) && dest) अणु
-			अगर (flags & IP_VS_CONN_F_INACTIVE) अणु
+		if ((cp->flags ^ flags) & IP_VS_CONN_F_INACTIVE &&
+		    !(flags & IP_VS_CONN_F_TEMPLATE) && dest) {
+			if (flags & IP_VS_CONN_F_INACTIVE) {
 				atomic_dec(&dest->activeconns);
 				atomic_inc(&dest->inactconns);
-			पूर्ण अन्यथा अणु
+			} else {
 				atomic_inc(&dest->activeconns);
 				atomic_dec(&dest->inactconns);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		flags &= IP_VS_CONN_F_BACKUP_UPD_MASK;
 		flags |= cp->flags & ~IP_VS_CONN_F_BACKUP_UPD_MASK;
 		cp->flags = flags;
 		spin_unlock_bh(&cp->lock);
-		अगर (!dest)
+		if (!dest)
 			ip_vs_try_bind_dest(cp);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Find the appropriate destination क्रम the connection.
-		 * If it is not found the connection will reमुख्य unbound
+		 * Find the appropriate destination for the connection.
+		 * If it is not found the connection will remain unbound
 		 * but still handled.
 		 */
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		/* This function is only invoked by the synchronization
-		 * code. We करो not currently support heterogeneous pools
+		 * code. We do not currently support heterogeneous pools
 		 * with synchronization, so we can make the assumption that
 		 * the svc_af is the same as the dest_af
 		 */
@@ -912,984 +911,984 @@ ip_vs_conn_fill_param_sync(काष्ठा netns_ipvs *ipvs, पूर्ण�
 
 		cp = ip_vs_conn_new(param, type, daddr, dport, flags, dest,
 				    fwmark);
-		rcu_पढ़ो_unlock();
-		अगर (!cp) अणु
-			kमुक्त(param->pe_data);
+		rcu_read_unlock();
+		if (!cp) {
+			kfree(param->pe_data);
 			IP_VS_DBG(2, "BACKUP, add new conn. failed\n");
-			वापस;
-		पूर्ण
-		अगर (!(flags & IP_VS_CONN_F_TEMPLATE))
-			kमुक्त(param->pe_data);
-	पूर्ण
+			return;
+		}
+		if (!(flags & IP_VS_CONN_F_TEMPLATE))
+			kfree(param->pe_data);
+	}
 
-	अगर (opt) अणु
+	if (opt) {
 		cp->in_seq = opt->in_seq;
 		cp->out_seq = opt->out_seq;
-	पूर्ण
+	}
 	atomic_set(&cp->in_pkts, sysctl_sync_threshold(ipvs));
 	cp->state = state;
 	cp->old_state = cp->state;
 	/*
 	 * For Ver 0 messages style
-	 *  - Not possible to recover the right समयout क्रम ढाँचाs
+	 *  - Not possible to recover the right timeout for templates
 	 *  - can not find the right fwmark
-	 *    भव service. If needed, we can करो it क्रम
+	 *    virtual service. If needed, we can do it for
 	 *    non-fwmark persistent services.
 	 * Ver 1 messages style.
 	 *  - No problem.
 	 */
-	अगर (समयout) अणु
-		अगर (समयout > MAX_SCHEDULE_TIMEOUT / HZ)
-			समयout = MAX_SCHEDULE_TIMEOUT / HZ;
-		cp->समयout = समयout*HZ;
-	पूर्ण अन्यथा अणु
-		काष्ठा ip_vs_proto_data *pd;
+	if (timeout) {
+		if (timeout > MAX_SCHEDULE_TIMEOUT / HZ)
+			timeout = MAX_SCHEDULE_TIMEOUT / HZ;
+		cp->timeout = timeout*HZ;
+	} else {
+		struct ip_vs_proto_data *pd;
 
 		pd = ip_vs_proto_data_get(ipvs, protocol);
-		अगर (!(flags & IP_VS_CONN_F_TEMPLATE) && pd && pd->समयout_table)
-			cp->समयout = pd->समयout_table[state];
-		अन्यथा
-			cp->समयout = (3*60*HZ);
-	पूर्ण
+		if (!(flags & IP_VS_CONN_F_TEMPLATE) && pd && pd->timeout_table)
+			cp->timeout = pd->timeout_table[state];
+		else
+			cp->timeout = (3*60*HZ);
+	}
 	ip_vs_conn_put(cp);
-पूर्ण
+}
 
 /*
- *  Process received multicast message क्रम Version 0
+ *  Process received multicast message for Version 0
  */
-अटल व्योम ip_vs_process_message_v0(काष्ठा netns_ipvs *ipvs, स्थिर अक्षर *buffer,
-				     स्थिर माप_प्रकार buflen)
-अणु
-	काष्ठा ip_vs_sync_mesg_v0 *m = (काष्ठा ip_vs_sync_mesg_v0 *)buffer;
-	काष्ठा ip_vs_sync_conn_v0 *s;
-	काष्ठा ip_vs_sync_conn_options *opt;
-	काष्ठा ip_vs_protocol *pp;
-	काष्ठा ip_vs_conn_param param;
-	अक्षर *p;
-	पूर्णांक i;
+static void ip_vs_process_message_v0(struct netns_ipvs *ipvs, const char *buffer,
+				     const size_t buflen)
+{
+	struct ip_vs_sync_mesg_v0 *m = (struct ip_vs_sync_mesg_v0 *)buffer;
+	struct ip_vs_sync_conn_v0 *s;
+	struct ip_vs_sync_conn_options *opt;
+	struct ip_vs_protocol *pp;
+	struct ip_vs_conn_param param;
+	char *p;
+	int i;
 
-	p = (अक्षर *)buffer + माप(काष्ठा ip_vs_sync_mesg_v0);
-	क्रम (i=0; i<m->nr_conns; i++) अणु
-		अचिन्हित पूर्णांक flags, state;
+	p = (char *)buffer + sizeof(struct ip_vs_sync_mesg_v0);
+	for (i=0; i<m->nr_conns; i++) {
+		unsigned int flags, state;
 
-		अगर (p + SIMPLE_CONN_SIZE > buffer+buflen) अणु
+		if (p + SIMPLE_CONN_SIZE > buffer+buflen) {
 			IP_VS_ERR_RL("BACKUP v0, bogus conn\n");
-			वापस;
-		पूर्ण
-		s = (काष्ठा ip_vs_sync_conn_v0 *) p;
+			return;
+		}
+		s = (struct ip_vs_sync_conn_v0 *) p;
 		flags = ntohs(s->flags) | IP_VS_CONN_F_SYNC;
 		flags &= ~IP_VS_CONN_F_HASHED;
-		अगर (flags & IP_VS_CONN_F_SEQ_MASK) अणु
-			opt = (काष्ठा ip_vs_sync_conn_options *)&s[1];
+		if (flags & IP_VS_CONN_F_SEQ_MASK) {
+			opt = (struct ip_vs_sync_conn_options *)&s[1];
 			p += FULL_CONN_SIZE;
-			अगर (p > buffer+buflen) अणु
+			if (p > buffer+buflen) {
 				IP_VS_ERR_RL("BACKUP v0, Dropping buffer bogus conn options\n");
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			opt = शून्य;
+				return;
+			}
+		} else {
+			opt = NULL;
 			p += SIMPLE_CONN_SIZE;
-		पूर्ण
+		}
 
 		state = ntohs(s->state);
-		अगर (!(flags & IP_VS_CONN_F_TEMPLATE)) अणु
+		if (!(flags & IP_VS_CONN_F_TEMPLATE)) {
 			pp = ip_vs_proto_get(s->protocol);
-			अगर (!pp) अणु
+			if (!pp) {
 				IP_VS_DBG(2, "BACKUP v0, Unsupported protocol %u\n",
 					s->protocol);
-				जारी;
-			पूर्ण
-			अगर (state >= pp->num_states) अणु
+				continue;
+			}
+			if (state >= pp->num_states) {
 				IP_VS_DBG(2, "BACKUP v0, Invalid %s state %u\n",
 					pp->name, state);
-				जारी;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (state >= IP_VS_CTPL_S_LAST)
+				continue;
+			}
+		} else {
+			if (state >= IP_VS_CTPL_S_LAST)
 				IP_VS_DBG(7, "BACKUP v0, Invalid tpl state %u\n",
 					  state);
-		पूर्ण
+		}
 
 		ip_vs_conn_fill_param(ipvs, AF_INET, s->protocol,
-				      (स्थिर जोड़ nf_inet_addr *)&s->caddr,
+				      (const union nf_inet_addr *)&s->caddr,
 				      s->cport,
-				      (स्थिर जोड़ nf_inet_addr *)&s->vaddr,
+				      (const union nf_inet_addr *)&s->vaddr,
 				      s->vport, &param);
 
-		/* Send समयout as Zero */
+		/* Send timeout as Zero */
 		ip_vs_proc_conn(ipvs, &param, flags, state, s->protocol, AF_INET,
-				(जोड़ nf_inet_addr *)&s->daddr, s->dport,
+				(union nf_inet_addr *)&s->daddr, s->dport,
 				0, 0, opt);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Handle options
  */
-अटल अंतरभूत पूर्णांक ip_vs_proc_seqopt(__u8 *p, अचिन्हित पूर्णांक plen,
+static inline int ip_vs_proc_seqopt(__u8 *p, unsigned int plen,
 				    __u32 *opt_flags,
-				    काष्ठा ip_vs_sync_conn_options *opt)
-अणु
-	काष्ठा ip_vs_sync_conn_options *topt;
+				    struct ip_vs_sync_conn_options *opt)
+{
+	struct ip_vs_sync_conn_options *topt;
 
-	topt = (काष्ठा ip_vs_sync_conn_options *)p;
+	topt = (struct ip_vs_sync_conn_options *)p;
 
-	अगर (plen != माप(काष्ठा ip_vs_sync_conn_options)) अणु
+	if (plen != sizeof(struct ip_vs_sync_conn_options)) {
 		IP_VS_DBG(2, "BACKUP, bogus conn options length\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (*opt_flags & IPVS_OPT_F_SEQ_DATA) अणु
+		return -EINVAL;
+	}
+	if (*opt_flags & IPVS_OPT_F_SEQ_DATA) {
 		IP_VS_DBG(2, "BACKUP, conn options found twice\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	ntoh_seq(&topt->in_seq, &opt->in_seq);
 	ntoh_seq(&topt->out_seq, &opt->out_seq);
 	*opt_flags |= IPVS_OPT_F_SEQ_DATA;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ip_vs_proc_str(__u8 *p, अचिन्हित पूर्णांक plen, अचिन्हित पूर्णांक *data_len,
-			  __u8 **data, अचिन्हित पूर्णांक maxlen,
+static int ip_vs_proc_str(__u8 *p, unsigned int plen, unsigned int *data_len,
+			  __u8 **data, unsigned int maxlen,
 			  __u32 *opt_flags, __u32 flag)
-अणु
-	अगर (plen > maxlen) अणु
+{
+	if (plen > maxlen) {
 		IP_VS_DBG(2, "BACKUP, bogus par.data len > %d\n", maxlen);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (*opt_flags & flag) अणु
+		return -EINVAL;
+	}
+	if (*opt_flags & flag) {
 		IP_VS_DBG(2, "BACKUP, Par.data found twice 0x%x\n", flag);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	*data_len = plen;
 	*data = p;
 	*opt_flags |= flag;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*
  *   Process a Version 1 sync. connection
  */
-अटल अंतरभूत पूर्णांक ip_vs_proc_sync_conn(काष्ठा netns_ipvs *ipvs, __u8 *p, __u8 *msg_end)
-अणु
-	काष्ठा ip_vs_sync_conn_options opt;
-	जोड़  ip_vs_sync_conn *s;
-	काष्ठा ip_vs_protocol *pp;
-	काष्ठा ip_vs_conn_param param;
+static inline int ip_vs_proc_sync_conn(struct netns_ipvs *ipvs, __u8 *p, __u8 *msg_end)
+{
+	struct ip_vs_sync_conn_options opt;
+	union  ip_vs_sync_conn *s;
+	struct ip_vs_protocol *pp;
+	struct ip_vs_conn_param param;
 	__u32 flags;
-	अचिन्हित पूर्णांक af, state, pe_data_len=0, pe_name_len=0;
-	__u8 *pe_data=शून्य, *pe_name=शून्य;
+	unsigned int af, state, pe_data_len=0, pe_name_len=0;
+	__u8 *pe_data=NULL, *pe_name=NULL;
 	__u32 opt_flags=0;
-	पूर्णांक retc=0;
+	int retc=0;
 
-	s = (जोड़ ip_vs_sync_conn *) p;
+	s = (union ip_vs_sync_conn *) p;
 
-	अगर (s->v6.type & STYPE_F_INET6) अणु
-#अगर_घोषित CONFIG_IP_VS_IPV6
+	if (s->v6.type & STYPE_F_INET6) {
+#ifdef CONFIG_IP_VS_IPV6
 		af = AF_INET6;
-		p += माप(काष्ठा ip_vs_sync_v6);
-#अन्यथा
+		p += sizeof(struct ip_vs_sync_v6);
+#else
 		IP_VS_DBG(3,"BACKUP, IPv6 msg received, and IPVS is not compiled for IPv6\n");
 		retc = 10;
-		जाओ out;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (!s->v4.type) अणु
+		goto out;
+#endif
+	} else if (!s->v4.type) {
 		af = AF_INET;
-		p += माप(काष्ठा ip_vs_sync_v4);
-	पूर्ण अन्यथा अणु
-		वापस -10;
-	पूर्ण
-	अगर (p > msg_end)
-		वापस -20;
+		p += sizeof(struct ip_vs_sync_v4);
+	} else {
+		return -10;
+	}
+	if (p > msg_end)
+		return -20;
 
 	/* Process optional params check Type & Len. */
-	जबतक (p < msg_end) अणु
-		पूर्णांक ptype;
-		पूर्णांक plen;
+	while (p < msg_end) {
+		int ptype;
+		int plen;
 
-		अगर (p+2 > msg_end)
-			वापस -30;
+		if (p+2 > msg_end)
+			return -30;
 		ptype = *(p++);
 		plen  = *(p++);
 
-		अगर (!plen || ((p + plen) > msg_end))
-			वापस -40;
+		if (!plen || ((p + plen) > msg_end))
+			return -40;
 		/* Handle seq option  p = param data */
-		चयन (ptype & ~IPVS_OPT_F_PARAM) अणु
-		हाल IPVS_OPT_SEQ_DATA:
-			अगर (ip_vs_proc_seqopt(p, plen, &opt_flags, &opt))
-				वापस -50;
-			अवरोध;
+		switch (ptype & ~IPVS_OPT_F_PARAM) {
+		case IPVS_OPT_SEQ_DATA:
+			if (ip_vs_proc_seqopt(p, plen, &opt_flags, &opt))
+				return -50;
+			break;
 
-		हाल IPVS_OPT_PE_DATA:
-			अगर (ip_vs_proc_str(p, plen, &pe_data_len, &pe_data,
+		case IPVS_OPT_PE_DATA:
+			if (ip_vs_proc_str(p, plen, &pe_data_len, &pe_data,
 					   IP_VS_PEDATA_MAXLEN, &opt_flags,
 					   IPVS_OPT_F_PE_DATA))
-				वापस -60;
-			अवरोध;
+				return -60;
+			break;
 
-		हाल IPVS_OPT_PE_NAME:
-			अगर (ip_vs_proc_str(p, plen,&pe_name_len, &pe_name,
+		case IPVS_OPT_PE_NAME:
+			if (ip_vs_proc_str(p, plen,&pe_name_len, &pe_name,
 					   IP_VS_PENAME_MAXLEN, &opt_flags,
 					   IPVS_OPT_F_PE_NAME))
-				वापस -70;
-			अवरोध;
+				return -70;
+			break;
 
-		शेष:
+		default:
 			/* Param data mandatory ? */
-			अगर (!(ptype & IPVS_OPT_F_PARAM)) अणु
+			if (!(ptype & IPVS_OPT_F_PARAM)) {
 				IP_VS_DBG(3, "BACKUP, Unknown mandatory param %d found\n",
 					  ptype & ~IPVS_OPT_F_PARAM);
 				retc = 20;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		p += plen;  /* Next option */
-	पूर्ण
+	}
 
 	/* Get flags and Mask off unsupported */
 	flags  = ntohl(s->v4.flags) & IP_VS_CONN_F_BACKUP_MASK;
 	flags |= IP_VS_CONN_F_SYNC;
 	state = ntohs(s->v4.state);
 
-	अगर (!(flags & IP_VS_CONN_F_TEMPLATE)) अणु
+	if (!(flags & IP_VS_CONN_F_TEMPLATE)) {
 		pp = ip_vs_proto_get(s->v4.protocol);
-		अगर (!pp) अणु
+		if (!pp) {
 			IP_VS_DBG(3,"BACKUP, Unsupported protocol %u\n",
 				s->v4.protocol);
 			retc = 30;
-			जाओ out;
-		पूर्ण
-		अगर (state >= pp->num_states) अणु
+			goto out;
+		}
+		if (state >= pp->num_states) {
 			IP_VS_DBG(3, "BACKUP, Invalid %s state %u\n",
 				pp->name, state);
 			retc = 40;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (state >= IP_VS_CTPL_S_LAST)
+			goto out;
+		}
+	} else {
+		if (state >= IP_VS_CTPL_S_LAST)
 			IP_VS_DBG(7, "BACKUP, Invalid tpl state %u\n",
 				  state);
-	पूर्ण
-	अगर (ip_vs_conn_fill_param_sync(ipvs, af, s, &param, pe_data,
-				       pe_data_len, pe_name, pe_name_len)) अणु
+	}
+	if (ip_vs_conn_fill_param_sync(ipvs, af, s, &param, pe_data,
+				       pe_data_len, pe_name, pe_name_len)) {
 		retc = 50;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	/* If only IPv4, just silent skip IPv6 */
-	अगर (af == AF_INET)
+	if (af == AF_INET)
 		ip_vs_proc_conn(ipvs, &param, flags, state, s->v4.protocol, af,
-				(जोड़ nf_inet_addr *)&s->v4.daddr, s->v4.dport,
-				ntohl(s->v4.समयout), ntohl(s->v4.fwmark),
-				(opt_flags & IPVS_OPT_F_SEQ_DATA ? &opt : शून्य)
+				(union nf_inet_addr *)&s->v4.daddr, s->v4.dport,
+				ntohl(s->v4.timeout), ntohl(s->v4.fwmark),
+				(opt_flags & IPVS_OPT_F_SEQ_DATA ? &opt : NULL)
 				);
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अन्यथा
+#ifdef CONFIG_IP_VS_IPV6
+	else
 		ip_vs_proc_conn(ipvs, &param, flags, state, s->v6.protocol, af,
-				(जोड़ nf_inet_addr *)&s->v6.daddr, s->v6.dport,
-				ntohl(s->v6.समयout), ntohl(s->v6.fwmark),
-				(opt_flags & IPVS_OPT_F_SEQ_DATA ? &opt : शून्य)
+				(union nf_inet_addr *)&s->v6.daddr, s->v6.dport,
+				ntohl(s->v6.timeout), ntohl(s->v6.fwmark),
+				(opt_flags & IPVS_OPT_F_SEQ_DATA ? &opt : NULL)
 				);
-#पूर्ण_अगर
+#endif
 	ip_vs_pe_put(param.pe);
-	वापस 0;
-	/* Error निकास */
+	return 0;
+	/* Error exit */
 out:
 	IP_VS_DBG(2, "BACKUP, Single msg dropped err:%d\n", retc);
-	वापस retc;
+	return retc;
 
-पूर्ण
+}
 /*
  *      Process received multicast message and create the corresponding
  *      ip_vs_conn entries.
  *      Handles Version 0 & 1
  */
-अटल व्योम ip_vs_process_message(काष्ठा netns_ipvs *ipvs, __u8 *buffer,
-				  स्थिर माप_प्रकार buflen)
-अणु
-	काष्ठा ip_vs_sync_mesg *m2 = (काष्ठा ip_vs_sync_mesg *)buffer;
+static void ip_vs_process_message(struct netns_ipvs *ipvs, __u8 *buffer,
+				  const size_t buflen)
+{
+	struct ip_vs_sync_mesg *m2 = (struct ip_vs_sync_mesg *)buffer;
 	__u8 *p, *msg_end;
-	पूर्णांक i, nr_conns;
+	int i, nr_conns;
 
-	अगर (buflen < माप(काष्ठा ip_vs_sync_mesg_v0)) अणु
+	if (buflen < sizeof(struct ip_vs_sync_mesg_v0)) {
 		IP_VS_DBG(2, "BACKUP, message header too short\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (buflen != ntohs(m2->size)) अणु
+	if (buflen != ntohs(m2->size)) {
 		IP_VS_DBG(2, "BACKUP, bogus message size\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* SyncID sanity check */
-	अगर (ipvs->bcfg.syncid != 0 && m2->syncid != ipvs->bcfg.syncid) अणु
+	if (ipvs->bcfg.syncid != 0 && m2->syncid != ipvs->bcfg.syncid) {
 		IP_VS_DBG(7, "BACKUP, Ignoring syncid = %d\n", m2->syncid);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* Handle version 1  message */
-	अगर ((m2->version == SYNC_PROTO_VER) && (m2->reserved == 0)
-	    && (m2->spare == 0)) अणु
+	if ((m2->version == SYNC_PROTO_VER) && (m2->reserved == 0)
+	    && (m2->spare == 0)) {
 
-		msg_end = buffer + माप(काष्ठा ip_vs_sync_mesg);
+		msg_end = buffer + sizeof(struct ip_vs_sync_mesg);
 		nr_conns = m2->nr_conns;
 
-		क्रम (i=0; i<nr_conns; i++) अणु
-			जोड़ ip_vs_sync_conn *s;
-			अचिन्हित पूर्णांक size;
-			पूर्णांक retc;
+		for (i=0; i<nr_conns; i++) {
+			union ip_vs_sync_conn *s;
+			unsigned int size;
+			int retc;
 
 			p = msg_end;
-			अगर (p + माप(s->v4) > buffer+buflen) अणु
+			if (p + sizeof(s->v4) > buffer+buflen) {
 				IP_VS_ERR_RL("BACKUP, Dropping buffer, too small\n");
-				वापस;
-			पूर्ण
-			s = (जोड़ ip_vs_sync_conn *)p;
+				return;
+			}
+			s = (union ip_vs_sync_conn *)p;
 			size = ntohs(s->v4.ver_size) & SVER_MASK;
 			msg_end = p + size;
 			/* Basic sanity checks */
-			अगर (msg_end  > buffer+buflen) अणु
+			if (msg_end  > buffer+buflen) {
 				IP_VS_ERR_RL("BACKUP, Dropping buffer, msg > buffer\n");
-				वापस;
-			पूर्ण
-			अगर (ntohs(s->v4.ver_size) >> SVER_SHIFT) अणु
+				return;
+			}
+			if (ntohs(s->v4.ver_size) >> SVER_SHIFT) {
 				IP_VS_ERR_RL("BACKUP, Dropping buffer, Unknown version %d\n",
 					      ntohs(s->v4.ver_size) >> SVER_SHIFT);
-				वापस;
-			पूर्ण
+				return;
+			}
 			/* Process a single sync_conn */
 			retc = ip_vs_proc_sync_conn(ipvs, p, msg_end);
-			अगर (retc < 0) अणु
+			if (retc < 0) {
 				IP_VS_ERR_RL("BACKUP, Dropping buffer, Err: %d in decoding\n",
 					     retc);
-				वापस;
-			पूर्ण
+				return;
+			}
 			/* Make sure we have 32 bit alignment */
 			msg_end = p + ((size + 3) & ~3);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Old type of message */
 		ip_vs_process_message_v0(ipvs, buffer, buflen);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
 
 /*
  *      Setup sndbuf (mode=1) or rcvbuf (mode=0)
  */
-अटल व्योम set_sock_size(काष्ठा sock *sk, पूर्णांक mode, पूर्णांक val)
-अणु
-	/* setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &val, माप(val)); */
-	/* setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &val, माप(val)); */
+static void set_sock_size(struct sock *sk, int mode, int val)
+{
+	/* setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &val, sizeof(val)); */
+	/* setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &val, sizeof(val)); */
 	lock_sock(sk);
-	अगर (mode) अणु
-		val = clamp_t(पूर्णांक, val, (SOCK_MIN_SNDBUF + 1) / 2,
+	if (mode) {
+		val = clamp_t(int, val, (SOCK_MIN_SNDBUF + 1) / 2,
 			      sysctl_wmem_max);
 		sk->sk_sndbuf = val * 2;
 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
-	पूर्ण अन्यथा अणु
-		val = clamp_t(पूर्णांक, val, (SOCK_MIN_RCVBUF + 1) / 2,
+	} else {
+		val = clamp_t(int, val, (SOCK_MIN_RCVBUF + 1) / 2,
 			      sysctl_rmem_max);
 		sk->sk_rcvbuf = val * 2;
 		sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
-	पूर्ण
+	}
 	release_sock(sk);
-पूर्ण
+}
 
 /*
  *      Setup loopback of outgoing multicasts on a sending socket
  */
-अटल व्योम set_mcast_loop(काष्ठा sock *sk, u_अक्षर loop)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
+static void set_mcast_loop(struct sock *sk, u_char loop)
+{
+	struct inet_sock *inet = inet_sk(sk);
 
-	/* setsockopt(sock, SOL_IP, IP_MULTICAST_LOOP, &loop, माप(loop)); */
+	/* setsockopt(sock, SOL_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop)); */
 	lock_sock(sk);
 	inet->mc_loop = loop ? 1 : 0;
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (sk->sk_family == AF_INET6) अणु
-		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+#ifdef CONFIG_IP_VS_IPV6
+	if (sk->sk_family == AF_INET6) {
+		struct ipv6_pinfo *np = inet6_sk(sk);
 
 		/* IPV6_MULTICAST_LOOP */
 		np->mc_loop = loop ? 1 : 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	release_sock(sk);
-पूर्ण
+}
 
 /*
- *      Specअगरy TTL क्रम outgoing multicasts on a sending socket
+ *      Specify TTL for outgoing multicasts on a sending socket
  */
-अटल व्योम set_mcast_ttl(काष्ठा sock *sk, u_अक्षर ttl)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
+static void set_mcast_ttl(struct sock *sk, u_char ttl)
+{
+	struct inet_sock *inet = inet_sk(sk);
 
-	/* setsockopt(sock, SOL_IP, IP_MULTICAST_TTL, &ttl, माप(ttl)); */
+	/* setsockopt(sock, SOL_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)); */
 	lock_sock(sk);
 	inet->mc_ttl = ttl;
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (sk->sk_family == AF_INET6) अणु
-		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+#ifdef CONFIG_IP_VS_IPV6
+	if (sk->sk_family == AF_INET6) {
+		struct ipv6_pinfo *np = inet6_sk(sk);
 
 		/* IPV6_MULTICAST_HOPS */
 		np->mcast_hops = ttl;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	release_sock(sk);
-पूर्ण
+}
 
 /* Control fragmentation of messages */
-अटल व्योम set_mcast_pmtudisc(काष्ठा sock *sk, पूर्णांक val)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
+static void set_mcast_pmtudisc(struct sock *sk, int val)
+{
+	struct inet_sock *inet = inet_sk(sk);
 
-	/* setsockopt(sock, SOL_IP, IP_MTU_DISCOVER, &val, माप(val)); */
+	/* setsockopt(sock, SOL_IP, IP_MTU_DISCOVER, &val, sizeof(val)); */
 	lock_sock(sk);
 	inet->pmtudisc = val;
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (sk->sk_family == AF_INET6) अणु
-		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+#ifdef CONFIG_IP_VS_IPV6
+	if (sk->sk_family == AF_INET6) {
+		struct ipv6_pinfo *np = inet6_sk(sk);
 
 		/* IPV6_MTU_DISCOVER */
 		np->pmtudisc = val;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	release_sock(sk);
-पूर्ण
+}
 
 /*
- *      Specअगरiy शेष पूर्णांकerface क्रम outgoing multicasts
+ *      Specifiy default interface for outgoing multicasts
  */
-अटल पूर्णांक set_mcast_अगर(काष्ठा sock *sk, काष्ठा net_device *dev)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
+static int set_mcast_if(struct sock *sk, struct net_device *dev)
+{
+	struct inet_sock *inet = inet_sk(sk);
 
-	अगर (sk->sk_bound_dev_अगर && dev->अगरindex != sk->sk_bound_dev_अगर)
-		वापस -EINVAL;
+	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
+		return -EINVAL;
 
 	lock_sock(sk);
-	inet->mc_index = dev->अगरindex;
+	inet->mc_index = dev->ifindex;
 	/*  inet->mc_addr  = 0; */
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (sk->sk_family == AF_INET6) अणु
-		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+#ifdef CONFIG_IP_VS_IPV6
+	if (sk->sk_family == AF_INET6) {
+		struct ipv6_pinfo *np = inet6_sk(sk);
 
 		/* IPV6_MULTICAST_IF */
-		np->mcast_oअगर = dev->अगरindex;
-	पूर्ण
-#पूर्ण_अगर
+		np->mcast_oif = dev->ifindex;
+	}
+#endif
 	release_sock(sk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  *      Join a multicast group.
- *      the group is specअगरied by a class D multicast address 224.0.0.0/8
- *      in the in_addr काष्ठाure passed in as a parameter.
+ *      the group is specified by a class D multicast address 224.0.0.0/8
+ *      in the in_addr structure passed in as a parameter.
  */
-अटल पूर्णांक
-join_mcast_group(काष्ठा sock *sk, काष्ठा in_addr *addr, काष्ठा net_device *dev)
-अणु
-	काष्ठा ip_mreqn mreq;
-	पूर्णांक ret;
+static int
+join_mcast_group(struct sock *sk, struct in_addr *addr, struct net_device *dev)
+{
+	struct ip_mreqn mreq;
+	int ret;
 
-	स_रखो(&mreq, 0, माप(mreq));
-	स_नकल(&mreq.imr_multiaddr, addr, माप(काष्ठा in_addr));
+	memset(&mreq, 0, sizeof(mreq));
+	memcpy(&mreq.imr_multiaddr, addr, sizeof(struct in_addr));
 
-	अगर (sk->sk_bound_dev_अगर && dev->अगरindex != sk->sk_bound_dev_अगर)
-		वापस -EINVAL;
+	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
+		return -EINVAL;
 
-	mreq.imr_अगरindex = dev->अगरindex;
+	mreq.imr_ifindex = dev->ifindex;
 
 	lock_sock(sk);
 	ret = ip_mc_join_group(sk, &mreq);
 	release_sock(sk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_IP_VS_IPV6
-अटल पूर्णांक join_mcast_group6(काष्ठा sock *sk, काष्ठा in6_addr *addr,
-			     काष्ठा net_device *dev)
-अणु
-	पूर्णांक ret;
+#ifdef CONFIG_IP_VS_IPV6
+static int join_mcast_group6(struct sock *sk, struct in6_addr *addr,
+			     struct net_device *dev)
+{
+	int ret;
 
-	अगर (sk->sk_bound_dev_अगर && dev->अगरindex != sk->sk_bound_dev_अगर)
-		वापस -EINVAL;
+	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
+		return -EINVAL;
 
 	lock_sock(sk);
-	ret = ipv6_sock_mc_join(sk, dev->अगरindex, addr);
+	ret = ipv6_sock_mc_join(sk, dev->ifindex, addr);
 	release_sock(sk);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक bind_mcastअगर_addr(काष्ठा socket *sock, काष्ठा net_device *dev)
-अणु
+static int bind_mcastif_addr(struct socket *sock, struct net_device *dev)
+{
 	__be32 addr;
-	काष्ठा sockaddr_in sin;
+	struct sockaddr_in sin;
 
 	addr = inet_select_addr(dev, 0, RT_SCOPE_UNIVERSE);
-	अगर (!addr)
+	if (!addr)
 		pr_err("You probably need to specify IP address on "
 		       "multicast interface.\n");
 
 	IP_VS_DBG(7, "binding socket with (%s) %pI4\n",
 		  dev->name, &addr);
 
-	/* Now bind the socket with the address of multicast पूर्णांकerface */
+	/* Now bind the socket with the address of multicast interface */
 	sin.sin_family	     = AF_INET;
 	sin.sin_addr.s_addr  = addr;
 	sin.sin_port         = 0;
 
-	वापस sock->ops->bind(sock, (काष्ठा sockaddr*)&sin, माप(sin));
-पूर्ण
+	return sock->ops->bind(sock, (struct sockaddr*)&sin, sizeof(sin));
+}
 
-अटल व्योम get_mcast_sockaddr(जोड़ ipvs_sockaddr *sa, पूर्णांक *salen,
-			       काष्ठा ipvs_sync_daemon_cfg *c, पूर्णांक id)
-अणु
-	अगर (AF_INET6 == c->mcast_af) अणु
-		sa->in6 = (काष्ठा sockaddr_in6) अणु
+static void get_mcast_sockaddr(union ipvs_sockaddr *sa, int *salen,
+			       struct ipvs_sync_daemon_cfg *c, int id)
+{
+	if (AF_INET6 == c->mcast_af) {
+		sa->in6 = (struct sockaddr_in6) {
 			.sin6_family = AF_INET6,
 			.sin6_port = htons(c->mcast_port + id),
-		पूर्ण;
+		};
 		sa->in6.sin6_addr = c->mcast_group.in6;
-		*salen = माप(sa->in6);
-	पूर्ण अन्यथा अणु
-		sa->in = (काष्ठा sockaddr_in) अणु
+		*salen = sizeof(sa->in6);
+	} else {
+		sa->in = (struct sockaddr_in) {
 			.sin_family = AF_INET,
 			.sin_port = htons(c->mcast_port + id),
-		पूर्ण;
+		};
 		sa->in.sin_addr = c->mcast_group.in;
-		*salen = माप(sa->in);
-	पूर्ण
-पूर्ण
+		*salen = sizeof(sa->in);
+	}
+}
 
 /*
  *      Set up sending multicast socket over UDP
  */
-अटल पूर्णांक make_send_sock(काष्ठा netns_ipvs *ipvs, पूर्णांक id,
-			  काष्ठा net_device *dev, काष्ठा socket **sock_ret)
-अणु
+static int make_send_sock(struct netns_ipvs *ipvs, int id,
+			  struct net_device *dev, struct socket **sock_ret)
+{
 	/* multicast addr */
-	जोड़ ipvs_sockaddr mcast_addr;
-	काष्ठा socket *sock;
-	पूर्णांक result, salen;
+	union ipvs_sockaddr mcast_addr;
+	struct socket *sock;
+	int result, salen;
 
 	/* First create a socket */
 	result = sock_create_kern(ipvs->net, ipvs->mcfg.mcast_af, SOCK_DGRAM,
 				  IPPROTO_UDP, &sock);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_err("Error during creation of socket; terminating\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	*sock_ret = sock;
-	result = set_mcast_अगर(sock->sk, dev);
-	अगर (result < 0) अणु
+	result = set_mcast_if(sock->sk, dev);
+	if (result < 0) {
 		pr_err("Error setting outbound mcast interface\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	set_mcast_loop(sock->sk, 0);
 	set_mcast_ttl(sock->sk, ipvs->mcfg.mcast_ttl);
-	/* Allow fragmentation अगर MTU changes */
+	/* Allow fragmentation if MTU changes */
 	set_mcast_pmtudisc(sock->sk, IP_PMTUDISC_DONT);
 	result = sysctl_sync_sock_size(ipvs);
-	अगर (result > 0)
+	if (result > 0)
 		set_sock_size(sock->sk, 1, result);
 
-	अगर (AF_INET == ipvs->mcfg.mcast_af)
-		result = bind_mcastअगर_addr(sock, dev);
-	अन्यथा
+	if (AF_INET == ipvs->mcfg.mcast_af)
+		result = bind_mcastif_addr(sock, dev);
+	else
 		result = 0;
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_err("Error binding address of the mcast interface\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	get_mcast_sockaddr(&mcast_addr, &salen, &ipvs->mcfg, id);
-	result = sock->ops->connect(sock, (काष्ठा sockaddr *) &mcast_addr,
+	result = sock->ops->connect(sock, (struct sockaddr *) &mcast_addr,
 				    salen, 0);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_err("Error connecting to the multicast addr\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
 /*
  *      Set up receiving multicast socket over UDP
  */
-अटल पूर्णांक make_receive_sock(काष्ठा netns_ipvs *ipvs, पूर्णांक id,
-			     काष्ठा net_device *dev, काष्ठा socket **sock_ret)
-अणु
+static int make_receive_sock(struct netns_ipvs *ipvs, int id,
+			     struct net_device *dev, struct socket **sock_ret)
+{
 	/* multicast addr */
-	जोड़ ipvs_sockaddr mcast_addr;
-	काष्ठा socket *sock;
-	पूर्णांक result, salen;
+	union ipvs_sockaddr mcast_addr;
+	struct socket *sock;
+	int result, salen;
 
 	/* First create a socket */
 	result = sock_create_kern(ipvs->net, ipvs->bcfg.mcast_af, SOCK_DGRAM,
 				  IPPROTO_UDP, &sock);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_err("Error during creation of socket; terminating\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	*sock_ret = sock;
 	/* it is equivalent to the REUSEADDR option in user-space */
 	sock->sk->sk_reuse = SK_CAN_REUSE;
 	result = sysctl_sync_sock_size(ipvs);
-	अगर (result > 0)
+	if (result > 0)
 		set_sock_size(sock->sk, 0, result);
 
 	get_mcast_sockaddr(&mcast_addr, &salen, &ipvs->bcfg, id);
-	sock->sk->sk_bound_dev_अगर = dev->अगरindex;
-	result = sock->ops->bind(sock, (काष्ठा sockaddr *)&mcast_addr, salen);
-	अगर (result < 0) अणु
+	sock->sk->sk_bound_dev_if = dev->ifindex;
+	result = sock->ops->bind(sock, (struct sockaddr *)&mcast_addr, salen);
+	if (result < 0) {
 		pr_err("Error binding to the multicast addr\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* join the multicast group */
-#अगर_घोषित CONFIG_IP_VS_IPV6
-	अगर (ipvs->bcfg.mcast_af == AF_INET6)
+#ifdef CONFIG_IP_VS_IPV6
+	if (ipvs->bcfg.mcast_af == AF_INET6)
 		result = join_mcast_group6(sock->sk, &mcast_addr.in6.sin6_addr,
 					   dev);
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		result = join_mcast_group(sock->sk, &mcast_addr.in.sin_addr,
 					  dev);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		pr_err("Error joining to the multicast group\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-अटल पूर्णांक
-ip_vs_send_async(काष्ठा socket *sock, स्थिर अक्षर *buffer, स्थिर माप_प्रकार length)
-अणु
-	काष्ठा msghdr	msg = अणु.msg_flags = MSG_DONTWAIT|MSG_NOSIGNALपूर्ण;
-	काष्ठा kvec	iov;
-	पूर्णांक		len;
+static int
+ip_vs_send_async(struct socket *sock, const char *buffer, const size_t length)
+{
+	struct msghdr	msg = {.msg_flags = MSG_DONTWAIT|MSG_NOSIGNAL};
+	struct kvec	iov;
+	int		len;
 
 	EnterFunction(7);
-	iov.iov_base     = (व्योम *)buffer;
+	iov.iov_base     = (void *)buffer;
 	iov.iov_len      = length;
 
-	len = kernel_sendmsg(sock, &msg, &iov, 1, (माप_प्रकार)(length));
+	len = kernel_sendmsg(sock, &msg, &iov, 1, (size_t)(length));
 
 	LeaveFunction(7);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक
-ip_vs_send_sync_msg(काष्ठा socket *sock, काष्ठा ip_vs_sync_mesg *msg)
-अणु
-	पूर्णांक msize;
-	पूर्णांक ret;
+static int
+ip_vs_send_sync_msg(struct socket *sock, struct ip_vs_sync_mesg *msg)
+{
+	int msize;
+	int ret;
 
 	msize = ntohs(msg->size);
 
-	ret = ip_vs_send_async(sock, (अक्षर *)msg, msize);
-	अगर (ret >= 0 || ret == -EAGAIN)
-		वापस ret;
+	ret = ip_vs_send_async(sock, (char *)msg, msize);
+	if (ret >= 0 || ret == -EAGAIN)
+		return ret;
 	pr_err("ip_vs_send_async error %d\n", ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ip_vs_receive(काष्ठा socket *sock, अक्षर *buffer, स्थिर माप_प्रकार buflen)
-अणु
-	काष्ठा msghdr		msg = अणुशून्य,पूर्ण;
-	काष्ठा kvec		iov = अणुbuffer, buflenपूर्ण;
-	पूर्णांक			len;
+static int
+ip_vs_receive(struct socket *sock, char *buffer, const size_t buflen)
+{
+	struct msghdr		msg = {NULL,};
+	struct kvec		iov = {buffer, buflen};
+	int			len;
 
 	EnterFunction(7);
 
 	/* Receive a packet */
 	iov_iter_kvec(&msg.msg_iter, READ, &iov, 1, buflen);
 	len = sock_recvmsg(sock, &msg, MSG_DONTWAIT);
-	अगर (len < 0)
-		वापस len;
+	if (len < 0)
+		return len;
 
 	LeaveFunction(7);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-/* Wakeup the master thपढ़ो क्रम sending */
-अटल व्योम master_wakeup_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ipvs_master_sync_state *ms =
-		container_of(work, काष्ठा ipvs_master_sync_state,
+/* Wakeup the master thread for sending */
+static void master_wakeup_work_handler(struct work_struct *work)
+{
+	struct ipvs_master_sync_state *ms =
+		container_of(work, struct ipvs_master_sync_state,
 			     master_wakeup_work.work);
-	काष्ठा netns_ipvs *ipvs = ms->ipvs;
+	struct netns_ipvs *ipvs = ms->ipvs;
 
 	spin_lock_bh(&ipvs->sync_lock);
-	अगर (ms->sync_queue_len &&
-	    ms->sync_queue_delay < IPVS_SYNC_WAKEUP_RATE) अणु
-		पूर्णांक id = (पूर्णांक)(ms - ipvs->ms);
+	if (ms->sync_queue_len &&
+	    ms->sync_queue_delay < IPVS_SYNC_WAKEUP_RATE) {
+		int id = (int)(ms - ipvs->ms);
 
 		ms->sync_queue_delay = IPVS_SYNC_WAKEUP_RATE;
 		wake_up_process(ipvs->master_tinfo[id].task);
-	पूर्ण
+	}
 	spin_unlock_bh(&ipvs->sync_lock);
-पूर्ण
+}
 
 /* Get next buffer to send */
-अटल अंतरभूत काष्ठा ip_vs_sync_buff *
-next_sync_buff(काष्ठा netns_ipvs *ipvs, काष्ठा ipvs_master_sync_state *ms)
-अणु
-	काष्ठा ip_vs_sync_buff *sb;
+static inline struct ip_vs_sync_buff *
+next_sync_buff(struct netns_ipvs *ipvs, struct ipvs_master_sync_state *ms)
+{
+	struct ip_vs_sync_buff *sb;
 
 	sb = sb_dequeue(ipvs, ms);
-	अगर (sb)
-		वापस sb;
-	/* Do not delay entries in buffer क्रम more than 2 seconds */
-	वापस get_curr_sync_buff(ipvs, ms, IPVS_SYNC_FLUSH_TIME);
-पूर्ण
+	if (sb)
+		return sb;
+	/* Do not delay entries in buffer for more than 2 seconds */
+	return get_curr_sync_buff(ipvs, ms, IPVS_SYNC_FLUSH_TIME);
+}
 
-अटल पूर्णांक sync_thपढ़ो_master(व्योम *data)
-अणु
-	काष्ठा ip_vs_sync_thपढ़ो_data *tinfo = data;
-	काष्ठा netns_ipvs *ipvs = tinfo->ipvs;
-	काष्ठा ipvs_master_sync_state *ms = &ipvs->ms[tinfo->id];
-	काष्ठा sock *sk = tinfo->sock->sk;
-	काष्ठा ip_vs_sync_buff *sb;
+static int sync_thread_master(void *data)
+{
+	struct ip_vs_sync_thread_data *tinfo = data;
+	struct netns_ipvs *ipvs = tinfo->ipvs;
+	struct ipvs_master_sync_state *ms = &ipvs->ms[tinfo->id];
+	struct sock *sk = tinfo->sock->sk;
+	struct ip_vs_sync_buff *sb;
 
 	pr_info("sync thread started: state = MASTER, mcast_ifn = %s, "
 		"syncid = %d, id = %d\n",
-		ipvs->mcfg.mcast_अगरn, ipvs->mcfg.syncid, tinfo->id);
+		ipvs->mcfg.mcast_ifn, ipvs->mcfg.syncid, tinfo->id);
 
-	क्रम (;;) अणु
+	for (;;) {
 		sb = next_sync_buff(ipvs, ms);
-		अगर (unlikely(kthपढ़ो_should_stop()))
-			अवरोध;
-		अगर (!sb) अणु
-			schedule_समयout(IPVS_SYNC_CHECK_PERIOD);
-			जारी;
-		पूर्ण
-		जबतक (ip_vs_send_sync_msg(tinfo->sock, sb->mesg) < 0) अणु
-			/* (Ab)use पूर्णांकerruptible sleep to aव्योम increasing
+		if (unlikely(kthread_should_stop()))
+			break;
+		if (!sb) {
+			schedule_timeout(IPVS_SYNC_CHECK_PERIOD);
+			continue;
+		}
+		while (ip_vs_send_sync_msg(tinfo->sock, sb->mesg) < 0) {
+			/* (Ab)use interruptible sleep to avoid increasing
 			 * the load avg.
 			 */
-			__रुको_event_पूर्णांकerruptible(*sk_sleep(sk),
-						   sock_ग_लिखोable(sk) ||
-						   kthपढ़ो_should_stop());
-			अगर (unlikely(kthपढ़ो_should_stop()))
-				जाओ करोne;
-		पूर्ण
+			__wait_event_interruptible(*sk_sleep(sk),
+						   sock_writeable(sk) ||
+						   kthread_should_stop());
+			if (unlikely(kthread_should_stop()))
+				goto done;
+		}
 		ip_vs_sync_buff_release(sb);
-	पूर्ण
+	}
 
-करोne:
+done:
 	__set_current_state(TASK_RUNNING);
-	अगर (sb)
+	if (sb)
 		ip_vs_sync_buff_release(sb);
 
 	/* clean up the sync_buff queue */
-	जबतक ((sb = sb_dequeue(ipvs, ms)))
+	while ((sb = sb_dequeue(ipvs, ms)))
 		ip_vs_sync_buff_release(sb);
 	__set_current_state(TASK_RUNNING);
 
 	/* clean up the current sync_buff */
 	sb = get_curr_sync_buff(ipvs, ms, 0);
-	अगर (sb)
+	if (sb)
 		ip_vs_sync_buff_release(sb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक sync_thपढ़ो_backup(व्योम *data)
-अणु
-	काष्ठा ip_vs_sync_thपढ़ो_data *tinfo = data;
-	काष्ठा netns_ipvs *ipvs = tinfo->ipvs;
-	काष्ठा sock *sk = tinfo->sock->sk;
-	काष्ठा udp_sock *up = udp_sk(sk);
-	पूर्णांक len;
+static int sync_thread_backup(void *data)
+{
+	struct ip_vs_sync_thread_data *tinfo = data;
+	struct netns_ipvs *ipvs = tinfo->ipvs;
+	struct sock *sk = tinfo->sock->sk;
+	struct udp_sock *up = udp_sk(sk);
+	int len;
 
 	pr_info("sync thread started: state = BACKUP, mcast_ifn = %s, "
 		"syncid = %d, id = %d\n",
-		ipvs->bcfg.mcast_अगरn, ipvs->bcfg.syncid, tinfo->id);
+		ipvs->bcfg.mcast_ifn, ipvs->bcfg.syncid, tinfo->id);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		रुको_event_पूर्णांकerruptible(*sk_sleep(sk),
+	while (!kthread_should_stop()) {
+		wait_event_interruptible(*sk_sleep(sk),
 					 !skb_queue_empty_lockless(&sk->sk_receive_queue) ||
-					 !skb_queue_empty_lockless(&up->पढ़ोer_queue) ||
-					 kthपढ़ो_should_stop());
+					 !skb_queue_empty_lockless(&up->reader_queue) ||
+					 kthread_should_stop());
 
-		/* करो we have data now? */
-		जबतक (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
-		       !skb_queue_empty_lockless(&up->पढ़ोer_queue)) अणु
+		/* do we have data now? */
+		while (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
+		       !skb_queue_empty_lockless(&up->reader_queue)) {
 			len = ip_vs_receive(tinfo->sock, tinfo->buf,
 					ipvs->bcfg.sync_maxlen);
-			अगर (len <= 0) अणु
-				अगर (len != -EAGAIN)
+			if (len <= 0) {
+				if (len != -EAGAIN)
 					pr_err("receiving message error\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			ip_vs_process_message(ipvs, tinfo->buf, len);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-पूर्णांक start_sync_thपढ़ो(काष्ठा netns_ipvs *ipvs, काष्ठा ipvs_sync_daemon_cfg *c,
-		      पूर्णांक state)
-अणु
-	काष्ठा ip_vs_sync_thपढ़ो_data *ti = शून्य, *tinfo;
-	काष्ठा task_काष्ठा *task;
-	काष्ठा net_device *dev;
-	अक्षर *name;
-	पूर्णांक (*thपढ़ोfn)(व्योम *data);
-	पूर्णांक id = 0, count, hlen;
-	पूर्णांक result = -ENOMEM;
+int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
+		      int state)
+{
+	struct ip_vs_sync_thread_data *ti = NULL, *tinfo;
+	struct task_struct *task;
+	struct net_device *dev;
+	char *name;
+	int (*threadfn)(void *data);
+	int id = 0, count, hlen;
+	int result = -ENOMEM;
 	u16 mtu, min_mtu;
 
 	IP_VS_DBG(7, "%s(): pid %d\n", __func__, task_pid_nr(current));
 	IP_VS_DBG(7, "Each ip_vs_sync_conn entry needs %zd bytes\n",
-		  माप(काष्ठा ip_vs_sync_conn_v0));
+		  sizeof(struct ip_vs_sync_conn_v0));
 
 	/* increase the module use count */
-	अगर (!ip_vs_use_count_inc())
-		वापस -ENOPROTOOPT;
+	if (!ip_vs_use_count_inc())
+		return -ENOPROTOOPT;
 
 	/* Do not hold one mutex and then to block on another */
-	क्रम (;;) अणु
+	for (;;) {
 		rtnl_lock();
-		अगर (mutex_trylock(&ipvs->sync_mutex))
-			अवरोध;
+		if (mutex_trylock(&ipvs->sync_mutex))
+			break;
 		rtnl_unlock();
 		mutex_lock(&ipvs->sync_mutex);
-		अगर (rtnl_trylock())
-			अवरोध;
+		if (rtnl_trylock())
+			break;
 		mutex_unlock(&ipvs->sync_mutex);
-	पूर्ण
+	}
 
-	अगर (!ipvs->sync_state) अणु
+	if (!ipvs->sync_state) {
 		count = clamp(sysctl_sync_ports(ipvs), 1, IPVS_SYNC_PORTS_MAX);
-		ipvs->thपढ़ोs_mask = count - 1;
-	पूर्ण अन्यथा
-		count = ipvs->thपढ़ोs_mask + 1;
+		ipvs->threads_mask = count - 1;
+	} else
+		count = ipvs->threads_mask + 1;
 
-	अगर (c->mcast_af == AF_UNSPEC) अणु
+	if (c->mcast_af == AF_UNSPEC) {
 		c->mcast_af = AF_INET;
 		c->mcast_group.ip = cpu_to_be32(IP_VS_SYNC_GROUP);
-	पूर्ण
-	अगर (!c->mcast_port)
+	}
+	if (!c->mcast_port)
 		c->mcast_port = IP_VS_SYNC_PORT;
-	अगर (!c->mcast_ttl)
+	if (!c->mcast_ttl)
 		c->mcast_ttl = 1;
 
-	dev = __dev_get_by_name(ipvs->net, c->mcast_अगरn);
-	अगर (!dev) अणु
-		pr_err("Unknown mcast interface: %s\n", c->mcast_अगरn);
+	dev = __dev_get_by_name(ipvs->net, c->mcast_ifn);
+	if (!dev) {
+		pr_err("Unknown mcast interface: %s\n", c->mcast_ifn);
 		result = -ENODEV;
-		जाओ out_early;
-	पूर्ण
+		goto out_early;
+	}
 	hlen = (AF_INET6 == c->mcast_af) ?
-	       माप(काष्ठा ipv6hdr) + माप(काष्ठा udphdr) :
-	       माप(काष्ठा iphdr) + माप(काष्ठा udphdr);
+	       sizeof(struct ipv6hdr) + sizeof(struct udphdr) :
+	       sizeof(struct iphdr) + sizeof(struct udphdr);
 	mtu = (state == IP_VS_STATE_BACKUP) ?
 		  clamp(dev->mtu, 1500U, 65535U) : 1500U;
 	min_mtu = (state == IP_VS_STATE_BACKUP) ? 1024 : 1;
 
-	अगर (c->sync_maxlen)
-		c->sync_maxlen = clamp_t(अचिन्हित पूर्णांक,
+	if (c->sync_maxlen)
+		c->sync_maxlen = clamp_t(unsigned int,
 					 c->sync_maxlen, min_mtu,
 					 65535 - hlen);
-	अन्यथा
+	else
 		c->sync_maxlen = mtu - hlen;
 
-	अगर (state == IP_VS_STATE_MASTER) अणु
+	if (state == IP_VS_STATE_MASTER) {
 		result = -EEXIST;
-		अगर (ipvs->ms)
-			जाओ out_early;
+		if (ipvs->ms)
+			goto out_early;
 
 		ipvs->mcfg = *c;
 		name = "ipvs-m:%d:%d";
-		thपढ़ोfn = sync_thपढ़ो_master;
-	पूर्ण अन्यथा अगर (state == IP_VS_STATE_BACKUP) अणु
+		threadfn = sync_thread_master;
+	} else if (state == IP_VS_STATE_BACKUP) {
 		result = -EEXIST;
-		अगर (ipvs->backup_tinfo)
-			जाओ out_early;
+		if (ipvs->backup_tinfo)
+			goto out_early;
 
 		ipvs->bcfg = *c;
 		name = "ipvs-b:%d:%d";
-		thपढ़ोfn = sync_thपढ़ो_backup;
-	पूर्ण अन्यथा अणु
+		threadfn = sync_thread_backup;
+	} else {
 		result = -EINVAL;
-		जाओ out_early;
-	पूर्ण
+		goto out_early;
+	}
 
-	अगर (state == IP_VS_STATE_MASTER) अणु
-		काष्ठा ipvs_master_sync_state *ms;
+	if (state == IP_VS_STATE_MASTER) {
+		struct ipvs_master_sync_state *ms;
 
 		result = -ENOMEM;
-		ipvs->ms = kसुस्मृति(count, माप(ipvs->ms[0]), GFP_KERNEL);
-		अगर (!ipvs->ms)
-			जाओ out;
+		ipvs->ms = kcalloc(count, sizeof(ipvs->ms[0]), GFP_KERNEL);
+		if (!ipvs->ms)
+			goto out;
 		ms = ipvs->ms;
-		क्रम (id = 0; id < count; id++, ms++) अणु
+		for (id = 0; id < count; id++, ms++) {
 			INIT_LIST_HEAD(&ms->sync_queue);
 			ms->sync_queue_len = 0;
 			ms->sync_queue_delay = 0;
 			INIT_DELAYED_WORK(&ms->master_wakeup_work,
 					  master_wakeup_work_handler);
 			ms->ipvs = ipvs;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	result = -ENOMEM;
-	ti = kसुस्मृति(count, माप(काष्ठा ip_vs_sync_thपढ़ो_data),
+	ti = kcalloc(count, sizeof(struct ip_vs_sync_thread_data),
 		     GFP_KERNEL);
-	अगर (!ti)
-		जाओ out;
+	if (!ti)
+		goto out;
 
-	क्रम (id = 0; id < count; id++) अणु
+	for (id = 0; id < count; id++) {
 		tinfo = &ti[id];
 		tinfo->ipvs = ipvs;
-		अगर (state == IP_VS_STATE_BACKUP) अणु
+		if (state == IP_VS_STATE_BACKUP) {
 			result = -ENOMEM;
-			tinfo->buf = kदो_स्मृति(ipvs->bcfg.sync_maxlen,
+			tinfo->buf = kmalloc(ipvs->bcfg.sync_maxlen,
 					     GFP_KERNEL);
-			अगर (!tinfo->buf)
-				जाओ out;
-		पूर्ण
+			if (!tinfo->buf)
+				goto out;
+		}
 		tinfo->id = id;
-		अगर (state == IP_VS_STATE_MASTER)
+		if (state == IP_VS_STATE_MASTER)
 			result = make_send_sock(ipvs, id, dev, &tinfo->sock);
-		अन्यथा
+		else
 			result = make_receive_sock(ipvs, id, dev, &tinfo->sock);
-		अगर (result < 0)
-			जाओ out;
+		if (result < 0)
+			goto out;
 
-		task = kthपढ़ो_run(thपढ़ोfn, tinfo, name, ipvs->gen, id);
-		अगर (IS_ERR(task)) अणु
+		task = kthread_run(threadfn, tinfo, name, ipvs->gen, id);
+		if (IS_ERR(task)) {
 			result = PTR_ERR(task);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		tinfo->task = task;
-	पूर्ण
+	}
 
 	/* mark as active */
 
-	अगर (state == IP_VS_STATE_MASTER)
+	if (state == IP_VS_STATE_MASTER)
 		ipvs->master_tinfo = ti;
-	अन्यथा
+	else
 		ipvs->backup_tinfo = ti;
 	spin_lock_bh(&ipvs->sync_buff_lock);
 	ipvs->sync_state |= state;
@@ -1898,39 +1897,39 @@ next_sync_buff(काष्ठा netns_ipvs *ipvs, काष्ठा ipvs_mast
 	mutex_unlock(&ipvs->sync_mutex);
 	rtnl_unlock();
 
-	वापस 0;
+	return 0;
 
 out:
-	/* We करो not need RTNL lock anymore, release it here so that
+	/* We do not need RTNL lock anymore, release it here so that
 	 * sock_release below can use rtnl_lock to leave the mcast group.
 	 */
 	rtnl_unlock();
 	id = min(id, count - 1);
-	अगर (ti) अणु
-		क्रम (tinfo = ti + id; tinfo >= ti; tinfo--) अणु
-			अगर (tinfo->task)
-				kthपढ़ो_stop(tinfo->task);
-		पूर्ण
-	पूर्ण
-	अगर (!(ipvs->sync_state & IP_VS_STATE_MASTER)) अणु
-		kमुक्त(ipvs->ms);
-		ipvs->ms = शून्य;
-	पूर्ण
+	if (ti) {
+		for (tinfo = ti + id; tinfo >= ti; tinfo--) {
+			if (tinfo->task)
+				kthread_stop(tinfo->task);
+		}
+	}
+	if (!(ipvs->sync_state & IP_VS_STATE_MASTER)) {
+		kfree(ipvs->ms);
+		ipvs->ms = NULL;
+	}
 	mutex_unlock(&ipvs->sync_mutex);
 
 	/* No more mutexes, release socks */
-	अगर (ti) अणु
-		क्रम (tinfo = ti + id; tinfo >= ti; tinfo--) अणु
-			अगर (tinfo->sock)
+	if (ti) {
+		for (tinfo = ti + id; tinfo >= ti; tinfo--) {
+			if (tinfo->sock)
 				sock_release(tinfo->sock);
-			kमुक्त(tinfo->buf);
-		पूर्ण
-		kमुक्त(ti);
-	पूर्ण
+			kfree(tinfo->buf);
+		}
+		kfree(ti);
+	}
 
 	/* decrease the module use count */
 	ip_vs_use_count_dec();
-	वापस result;
+	return result;
 
 out_early:
 	mutex_unlock(&ipvs->sync_mutex);
@@ -1938,28 +1937,28 @@ out_early:
 
 	/* decrease the module use count */
 	ip_vs_use_count_dec();
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-पूर्णांक stop_sync_thपढ़ो(काष्ठा netns_ipvs *ipvs, पूर्णांक state)
-अणु
-	काष्ठा ip_vs_sync_thपढ़ो_data *ti, *tinfo;
-	पूर्णांक id;
-	पूर्णांक retc = -EINVAL;
+int stop_sync_thread(struct netns_ipvs *ipvs, int state)
+{
+	struct ip_vs_sync_thread_data *ti, *tinfo;
+	int id;
+	int retc = -EINVAL;
 
 	IP_VS_DBG(7, "%s(): pid %d\n", __func__, task_pid_nr(current));
 
 	mutex_lock(&ipvs->sync_mutex);
-	अगर (state == IP_VS_STATE_MASTER) अणु
+	if (state == IP_VS_STATE_MASTER) {
 		retc = -ESRCH;
-		अगर (!ipvs->ms)
-			जाओ err;
+		if (!ipvs->ms)
+			goto err;
 		ti = ipvs->master_tinfo;
 
 		/*
-		 * The lock synchronizes with sb_queue_tail(), so that we करोn't
-		 * add sync buffers to the queue, when we are alपढ़ोy in
+		 * The lock synchronizes with sb_queue_tail(), so that we don't
+		 * add sync buffers to the queue, when we are already in
 		 * progress of stopping the master sync daemon.
 		 */
 
@@ -1970,83 +1969,83 @@ out_early:
 		spin_unlock_bh(&ipvs->sync_buff_lock);
 
 		retc = 0;
-		क्रम (id = ipvs->thपढ़ोs_mask; id >= 0; id--) अणु
-			काष्ठा ipvs_master_sync_state *ms = &ipvs->ms[id];
-			पूर्णांक ret;
+		for (id = ipvs->threads_mask; id >= 0; id--) {
+			struct ipvs_master_sync_state *ms = &ipvs->ms[id];
+			int ret;
 
 			tinfo = &ti[id];
 			pr_info("stopping master sync thread %d ...\n",
 				task_pid_nr(tinfo->task));
 			cancel_delayed_work_sync(&ms->master_wakeup_work);
-			ret = kthपढ़ो_stop(tinfo->task);
-			अगर (retc >= 0)
+			ret = kthread_stop(tinfo->task);
+			if (retc >= 0)
 				retc = ret;
-		पूर्ण
-		kमुक्त(ipvs->ms);
-		ipvs->ms = शून्य;
-		ipvs->master_tinfo = शून्य;
-	पूर्ण अन्यथा अगर (state == IP_VS_STATE_BACKUP) अणु
+		}
+		kfree(ipvs->ms);
+		ipvs->ms = NULL;
+		ipvs->master_tinfo = NULL;
+	} else if (state == IP_VS_STATE_BACKUP) {
 		retc = -ESRCH;
-		अगर (!ipvs->backup_tinfo)
-			जाओ err;
+		if (!ipvs->backup_tinfo)
+			goto err;
 		ti = ipvs->backup_tinfo;
 
 		ipvs->sync_state &= ~IP_VS_STATE_BACKUP;
 		retc = 0;
-		क्रम (id = ipvs->thपढ़ोs_mask; id >= 0; id--) अणु
-			पूर्णांक ret;
+		for (id = ipvs->threads_mask; id >= 0; id--) {
+			int ret;
 
 			tinfo = &ti[id];
 			pr_info("stopping backup sync thread %d ...\n",
 				task_pid_nr(tinfo->task));
-			ret = kthपढ़ो_stop(tinfo->task);
-			अगर (retc >= 0)
+			ret = kthread_stop(tinfo->task);
+			if (retc >= 0)
 				retc = ret;
-		पूर्ण
-		ipvs->backup_tinfo = शून्य;
-	पूर्ण अन्यथा अणु
-		जाओ err;
-	पूर्ण
-	id = ipvs->thपढ़ोs_mask;
+		}
+		ipvs->backup_tinfo = NULL;
+	} else {
+		goto err;
+	}
+	id = ipvs->threads_mask;
 	mutex_unlock(&ipvs->sync_mutex);
 
 	/* No more mutexes, release socks */
-	क्रम (tinfo = ti + id; tinfo >= ti; tinfo--) अणु
-		अगर (tinfo->sock)
+	for (tinfo = ti + id; tinfo >= ti; tinfo--) {
+		if (tinfo->sock)
 			sock_release(tinfo->sock);
-		kमुक्त(tinfo->buf);
-	पूर्ण
-	kमुक्त(ti);
+		kfree(tinfo->buf);
+	}
+	kfree(ti);
 
 	/* decrease the module use count */
 	ip_vs_use_count_dec();
-	वापस retc;
+	return retc;
 
 err:
 	mutex_unlock(&ipvs->sync_mutex);
-	वापस retc;
-पूर्ण
+	return retc;
+}
 
 /*
- * Initialize data काष्ठा क्रम each netns
+ * Initialize data struct for each netns
  */
-पूर्णांक __net_init ip_vs_sync_net_init(काष्ठा netns_ipvs *ipvs)
-अणु
+int __net_init ip_vs_sync_net_init(struct netns_ipvs *ipvs)
+{
 	__mutex_init(&ipvs->sync_mutex, "ipvs->sync_mutex", &__ipvs_sync_key);
 	spin_lock_init(&ipvs->sync_lock);
 	spin_lock_init(&ipvs->sync_buff_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ip_vs_sync_net_cleanup(काष्ठा netns_ipvs *ipvs)
-अणु
-	पूर्णांक retc;
+void ip_vs_sync_net_cleanup(struct netns_ipvs *ipvs)
+{
+	int retc;
 
-	retc = stop_sync_thपढ़ो(ipvs, IP_VS_STATE_MASTER);
-	अगर (retc && retc != -ESRCH)
+	retc = stop_sync_thread(ipvs, IP_VS_STATE_MASTER);
+	if (retc && retc != -ESRCH)
 		pr_err("Failed to stop Master Daemon\n");
 
-	retc = stop_sync_thपढ़ो(ipvs, IP_VS_STATE_BACKUP);
-	अगर (retc && retc != -ESRCH)
+	retc = stop_sync_thread(ipvs, IP_VS_STATE_BACKUP);
+	if (retc && retc != -ESRCH)
 		pr_err("Failed to stop Backup Daemon\n");
-पूर्ण
+}

@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Rob Clark <rob@ti.com>
  */
 
-#अगर_अघोषित __OMAPDRM_DRV_H__
-#घोषणा __OMAPDRM_DRV_H__
+#ifndef __OMAPDRM_DRV_H__
+#define __OMAPDRM_DRV_H__
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#समावेश "dss/omapdss.h"
-#समावेश "dss/dss.h"
+#include "dss/omapdss.h"
+#include "dss/dss.h"
 
-#समावेश <drm/drm_gem.h>
-#समावेश <drm/omap_drm.h>
+#include <drm/drm_gem.h>
+#include <drm/omap_drm.h>
 
-#समावेश "omap_crtc.h"
-#समावेश "omap_encoder.h"
-#समावेश "omap_fb.h"
-#समावेश "omap_fbdev.h"
-#समावेश "omap_gem.h"
-#समावेश "omap_irq.h"
-#समावेश "omap_plane.h"
+#include "omap_crtc.h"
+#include "omap_encoder.h"
+#include "omap_fb.h"
+#include "omap_fbdev.h"
+#include "omap_gem.h"
+#include "omap_irq.h"
+#include "omap_plane.h"
 
-#घोषणा DBG(fmt, ...) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
-#घोषणा VERB(fmt, ...) अगर (0) DRM_DEBUG_DRIVER(fmt, ##__VA_ARGS__) /* verbose debug */
+#define DBG(fmt, ...) DRM_DEBUG_DRIVER(fmt"\n", ##__VA_ARGS__)
+#define VERB(fmt, ...) if (0) DRM_DEBUG_DRIVER(fmt, ##__VA_ARGS__) /* verbose debug */
 
-#घोषणा MODULE_NAME     "omapdrm"
+#define MODULE_NAME     "omapdrm"
 
-काष्ठा omap_drm_usergart;
+struct omap_drm_usergart;
 
-काष्ठा omap_drm_pipeline अणु
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा drm_connector *connector;
-	काष्ठा omap_dss_device *output;
-	अचिन्हित पूर्णांक alias_id;
-पूर्ण;
+struct omap_drm_pipeline {
+	struct drm_crtc *crtc;
+	struct drm_encoder *encoder;
+	struct drm_connector *connector;
+	struct omap_dss_device *output;
+	unsigned int alias_id;
+};
 
-काष्ठा omap_drm_निजी अणु
-	काष्ठा drm_device *ddev;
-	काष्ठा device *dev;
+struct omap_drm_private {
+	struct drm_device *ddev;
+	struct device *dev;
 	u32 omaprev;
 
-	काष्ठा dss_device *dss;
-	काष्ठा dispc_device *dispc;
+	struct dss_device *dss;
+	struct dispc_device *dispc;
 
-	अचिन्हित पूर्णांक num_pipes;
-	काष्ठा omap_drm_pipeline pipes[8];
-	काष्ठा omap_drm_pipeline *channels[8];
+	unsigned int num_pipes;
+	struct omap_drm_pipeline pipes[8];
+	struct omap_drm_pipeline *channels[8];
 
-	अचिन्हित पूर्णांक num_planes;
-	काष्ठा drm_plane *planes[8];
+	unsigned int num_planes;
+	struct drm_plane *planes[8];
 
-	काष्ठा drm_fb_helper *fbdev;
+	struct drm_fb_helper *fbdev;
 
-	काष्ठा workqueue_काष्ठा *wq;
+	struct workqueue_struct *wq;
 
-	/* lock क्रम obj_list below */
-	काष्ठा mutex list_lock;
+	/* lock for obj_list below */
+	struct mutex list_lock;
 
 	/* list of GEM objects: */
-	काष्ठा list_head obj_list;
+	struct list_head obj_list;
 
-	काष्ठा omap_drm_usergart *usergart;
+	struct omap_drm_usergart *usergart;
 	bool has_dmm;
 
 	/* properties: */
-	काष्ठा drm_property *zorder_prop;
+	struct drm_property *zorder_prop;
 
 	/* irq handling: */
-	spinlock_t रुको_lock;		/* protects the रुको_list */
-	काष्ठा list_head रुको_list;	/* list of omap_irq_रुको */
-	u32 irq_mask;			/* enabled irqs in addition to रुको_list */
+	spinlock_t wait_lock;		/* protects the wait_list */
+	struct list_head wait_list;	/* list of omap_irq_wait */
+	u32 irq_mask;			/* enabled irqs in addition to wait_list */
 
-	/* memory bandwidth limit अगर it is needed on the platक्रमm */
-	अचिन्हित पूर्णांक max_bandwidth;
-पूर्ण;
+	/* memory bandwidth limit if it is needed on the platform */
+	unsigned int max_bandwidth;
+};
 
 
-व्योम omap_debugfs_init(काष्ठा drm_minor *minor);
+void omap_debugfs_init(struct drm_minor *minor);
 
-#पूर्ण_अगर /* __OMAPDRM_DRV_H__ */
+#endif /* __OMAPDRM_DRV_H__ */

@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020, Oracle and/or its affiliates.
  *    Author: Alan Maguire <alan.maguire@oracle.com>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
+#include <linux/debugfs.h>
+#include <linux/module.h>
 
-#समावेश <kunit/test.h>
+#include <kunit/test.h>
 
-#समावेश "string-stream.h"
+#include "string-stream.h"
 
-#घोषणा KUNIT_DEBUGFS_ROOT             "kunit"
-#घोषणा KUNIT_DEBUGFS_RESULTS          "results"
+#define KUNIT_DEBUGFS_ROOT             "kunit"
+#define KUNIT_DEBUGFS_RESULTS          "results"
 
 /*
  * Create a debugfs representation of test suites:
  *
  * Path						Semantics
- * /sys/kernel/debug/kunit/<testsuite>/results	Show results of last run क्रम
+ * /sys/kernel/debug/kunit/<testsuite>/results	Show results of last run for
  *						testsuite
  *
  */
 
-अटल काष्ठा dentry *debugfs_rootdir;
+static struct dentry *debugfs_rootdir;
 
-व्योम kunit_debugfs_cleanup(व्योम)
-अणु
-	debugfs_हटाओ_recursive(debugfs_rootdir);
-पूर्ण
+void kunit_debugfs_cleanup(void)
+{
+	debugfs_remove_recursive(debugfs_rootdir);
+}
 
-व्योम kunit_debugfs_init(व्योम)
-अणु
-	अगर (!debugfs_rootdir)
-		debugfs_rootdir = debugfs_create_dir(KUNIT_DEBUGFS_ROOT, शून्य);
-पूर्ण
+void kunit_debugfs_init(void)
+{
+	if (!debugfs_rootdir)
+		debugfs_rootdir = debugfs_create_dir(KUNIT_DEBUGFS_ROOT, NULL);
+}
 
-अटल व्योम debugfs_prपूर्णांक_result(काष्ठा seq_file *seq,
-				 काष्ठा kunit_suite *suite,
-				 काष्ठा kunit_हाल *test_हाल)
-अणु
-	अगर (!test_हाल || !test_हाल->log)
-		वापस;
+static void debugfs_print_result(struct seq_file *seq,
+				 struct kunit_suite *suite,
+				 struct kunit_case *test_case)
+{
+	if (!test_case || !test_case->log)
+		return;
 
-	seq_म_लिखो(seq, "%s", test_हाल->log);
-पूर्ण
+	seq_printf(seq, "%s", test_case->log);
+}
 
 /*
- * /sys/kernel/debug/kunit/<testsuite>/results shows all results क्रम testsuite.
+ * /sys/kernel/debug/kunit/<testsuite>/results shows all results for testsuite.
  */
-अटल पूर्णांक debugfs_prपूर्णांक_results(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा kunit_suite *suite = (काष्ठा kunit_suite *)seq->निजी;
+static int debugfs_print_results(struct seq_file *seq, void *v)
+{
+	struct kunit_suite *suite = (struct kunit_suite *)seq->private;
 	bool success = kunit_suite_has_succeeded(suite);
-	काष्ठा kunit_हाल *test_हाल;
+	struct kunit_case *test_case;
 
-	अगर (!suite || !suite->log)
-		वापस 0;
+	if (!suite || !suite->log)
+		return 0;
 
-	seq_म_लिखो(seq, "%s", suite->log);
+	seq_printf(seq, "%s", suite->log);
 
-	kunit_suite_क्रम_each_test_हाल(suite, test_हाल)
-		debugfs_prपूर्णांक_result(seq, suite, test_हाल);
+	kunit_suite_for_each_test_case(suite, test_case)
+		debugfs_print_result(seq, suite, test_case);
 
-	seq_म_लिखो(seq, "%s %d - %s\n",
+	seq_printf(seq, "%s %d - %s\n",
 		   kunit_status_to_string(success), 1, suite->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक debugfs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_release(inode, file);
-पूर्ण
+static int debugfs_release(struct inode *inode, struct file *file)
+{
+	return single_release(inode, file);
+}
 
-अटल पूर्णांक debugfs_results_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा kunit_suite *suite;
+static int debugfs_results_open(struct inode *inode, struct file *file)
+{
+	struct kunit_suite *suite;
 
-	suite = (काष्ठा kunit_suite *)inode->i_निजी;
+	suite = (struct kunit_suite *)inode->i_private;
 
-	वापस single_खोलो(file, debugfs_prपूर्णांक_results, suite);
-पूर्ण
+	return single_open(file, debugfs_print_results, suite);
+}
 
-अटल स्थिर काष्ठा file_operations debugfs_results_fops = अणु
-	.खोलो = debugfs_results_खोलो,
-	.पढ़ो = seq_पढ़ो,
+static const struct file_operations debugfs_results_fops = {
+	.open = debugfs_results_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = debugfs_release,
-पूर्ण;
+};
 
-व्योम kunit_debugfs_create_suite(काष्ठा kunit_suite *suite)
-अणु
-	काष्ठा kunit_हाल *test_हाल;
+void kunit_debugfs_create_suite(struct kunit_suite *suite)
+{
+	struct kunit_case *test_case;
 
-	/* Allocate logs beक्रमe creating debugfs representation. */
+	/* Allocate logs before creating debugfs representation. */
 	suite->log = kzalloc(KUNIT_LOG_SIZE, GFP_KERNEL);
-	kunit_suite_क्रम_each_test_हाल(suite, test_हाल)
-		test_हाल->log = kzalloc(KUNIT_LOG_SIZE, GFP_KERNEL);
+	kunit_suite_for_each_test_case(suite, test_case)
+		test_case->log = kzalloc(KUNIT_LOG_SIZE, GFP_KERNEL);
 
 	suite->debugfs = debugfs_create_dir(suite->name, debugfs_rootdir);
 
 	debugfs_create_file(KUNIT_DEBUGFS_RESULTS, S_IFREG | 0444,
 			    suite->debugfs,
 			    suite, &debugfs_results_fops);
-पूर्ण
+}
 
-व्योम kunit_debugfs_destroy_suite(काष्ठा kunit_suite *suite)
-अणु
-	काष्ठा kunit_हाल *test_हाल;
+void kunit_debugfs_destroy_suite(struct kunit_suite *suite)
+{
+	struct kunit_case *test_case;
 
-	debugfs_हटाओ_recursive(suite->debugfs);
-	kमुक्त(suite->log);
-	kunit_suite_क्रम_each_test_हाल(suite, test_हाल)
-		kमुक्त(test_हाल->log);
-पूर्ण
+	debugfs_remove_recursive(suite->debugfs);
+	kfree(suite->log);
+	kunit_suite_for_each_test_case(suite, test_case)
+		kfree(test_case->log);
+}

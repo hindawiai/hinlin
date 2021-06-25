@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may करो so under either license.
+ *   redistributing this file, you may do so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright(c) 2012 Intel Corporation. All rights reserved.
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
  *
- *   This program is मुक्त software; you can redistribute it and/or modअगरy
+ *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
@@ -17,25 +16,25 @@
  *   Copyright(c) 2012 Intel Corporation. All rights reserved.
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
  *
- *   Redistribution and use in source and binary क्रमms, with or without
- *   modअगरication, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copy
+ *     * Redistributions in binary form must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the करोcumentation and/or other materials provided with the
+ *       the documentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to enकरोrse or promote products derived
- *       from this software without specअगरic prior written permission.
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,140 +44,140 @@
  *
  * PCIe NTB Transport Linux driver
  *
- * Contact Inक्रमmation:
- * Jon Mason <jon.mason@पूर्णांकel.com>
+ * Contact Information:
+ * Jon Mason <jon.mason@intel.com>
  */
-#समावेश <linux/debugfs.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश "linux/ntb.h"
-#समावेश "linux/ntb_transport.h"
+#include <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include "linux/ntb.h"
+#include "linux/ntb_transport.h"
 
-#घोषणा NTB_TRANSPORT_VERSION	4
-#घोषणा NTB_TRANSPORT_VER	"4"
-#घोषणा NTB_TRANSPORT_NAME	"ntb_transport"
-#घोषणा NTB_TRANSPORT_DESC	"Software Queue-Pair Transport over NTB"
-#घोषणा NTB_TRANSPORT_MIN_SPADS (MW0_SZ_HIGH + 2)
+#define NTB_TRANSPORT_VERSION	4
+#define NTB_TRANSPORT_VER	"4"
+#define NTB_TRANSPORT_NAME	"ntb_transport"
+#define NTB_TRANSPORT_DESC	"Software Queue-Pair Transport over NTB"
+#define NTB_TRANSPORT_MIN_SPADS (MW0_SZ_HIGH + 2)
 
 MODULE_DESCRIPTION(NTB_TRANSPORT_DESC);
 MODULE_VERSION(NTB_TRANSPORT_VER);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Intel Corporation");
 
-अटल अचिन्हित दीर्घ max_mw_size;
-module_param(max_mw_size, uदीर्घ, 0644);
+static unsigned long max_mw_size;
+module_param(max_mw_size, ulong, 0644);
 MODULE_PARM_DESC(max_mw_size, "Limit size of large memory windows");
 
-अटल अचिन्हित पूर्णांक transport_mtu = 0x10000;
-module_param(transport_mtu, uपूर्णांक, 0644);
+static unsigned int transport_mtu = 0x10000;
+module_param(transport_mtu, uint, 0644);
 MODULE_PARM_DESC(transport_mtu, "Maximum size of NTB transport packets");
 
-अटल अचिन्हित अक्षर max_num_clients;
+static unsigned char max_num_clients;
 module_param(max_num_clients, byte, 0644);
 MODULE_PARM_DESC(max_num_clients, "Maximum number of NTB transport clients");
 
-अटल अचिन्हित पूर्णांक copy_bytes = 1024;
-module_param(copy_bytes, uपूर्णांक, 0644);
+static unsigned int copy_bytes = 1024;
+module_param(copy_bytes, uint, 0644);
 MODULE_PARM_DESC(copy_bytes, "Threshold under which NTB will use the CPU to copy instead of DMA");
 
-अटल bool use_dma;
+static bool use_dma;
 module_param(use_dma, bool, 0644);
 MODULE_PARM_DESC(use_dma, "Use DMA engine to perform large data copy");
 
-अटल bool use_msi;
-#अगर_घोषित CONFIG_NTB_MSI
+static bool use_msi;
+#ifdef CONFIG_NTB_MSI
 module_param(use_msi, bool, 0644);
 MODULE_PARM_DESC(use_msi, "Use MSI interrupts instead of doorbells");
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा dentry *nt_debugfs_dir;
+static struct dentry *nt_debugfs_dir;
 
 /* Only two-ports NTB devices are supported */
-#घोषणा PIDX		NTB_DEF_PEER_IDX
+#define PIDX		NTB_DEF_PEER_IDX
 
-काष्ठा ntb_queue_entry अणु
+struct ntb_queue_entry {
 	/* ntb_queue list reference */
-	काष्ठा list_head entry;
-	/* poपूर्णांकers to data to be transferred */
-	व्योम *cb_data;
-	व्योम *buf;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक retries;
-	पूर्णांक errors;
-	अचिन्हित पूर्णांक tx_index;
-	अचिन्हित पूर्णांक rx_index;
+	struct list_head entry;
+	/* pointers to data to be transferred */
+	void *cb_data;
+	void *buf;
+	unsigned int len;
+	unsigned int flags;
+	int retries;
+	int errors;
+	unsigned int tx_index;
+	unsigned int rx_index;
 
-	काष्ठा ntb_transport_qp *qp;
-	जोड़ अणु
-		काष्ठा ntb_payload_header __iomem *tx_hdr;
-		काष्ठा ntb_payload_header *rx_hdr;
-	पूर्ण;
-पूर्ण;
+	struct ntb_transport_qp *qp;
+	union {
+		struct ntb_payload_header __iomem *tx_hdr;
+		struct ntb_payload_header *rx_hdr;
+	};
+};
 
-काष्ठा ntb_rx_info अणु
-	अचिन्हित पूर्णांक entry;
-पूर्ण;
+struct ntb_rx_info {
+	unsigned int entry;
+};
 
-काष्ठा ntb_transport_qp अणु
-	काष्ठा ntb_transport_ctx *transport;
-	काष्ठा ntb_dev *ndev;
-	व्योम *cb_data;
-	काष्ठा dma_chan *tx_dma_chan;
-	काष्ठा dma_chan *rx_dma_chan;
+struct ntb_transport_qp {
+	struct ntb_transport_ctx *transport;
+	struct ntb_dev *ndev;
+	void *cb_data;
+	struct dma_chan *tx_dma_chan;
+	struct dma_chan *rx_dma_chan;
 
-	bool client_पढ़ोy;
+	bool client_ready;
 	bool link_is_up;
 	bool active;
 
 	u8 qp_num;	/* Only 64 QP's are allowed.  0-63 */
 	u64 qp_bit;
 
-	काष्ठा ntb_rx_info __iomem *rx_info;
-	काष्ठा ntb_rx_info *remote_rx_info;
+	struct ntb_rx_info __iomem *rx_info;
+	struct ntb_rx_info *remote_rx_info;
 
-	व्योम (*tx_handler)(काष्ठा ntb_transport_qp *qp, व्योम *qp_data,
-			   व्योम *data, पूर्णांक len);
-	काष्ठा list_head tx_मुक्त_q;
-	spinlock_t ntb_tx_मुक्त_q_lock;
-	व्योम __iomem *tx_mw;
+	void (*tx_handler)(struct ntb_transport_qp *qp, void *qp_data,
+			   void *data, int len);
+	struct list_head tx_free_q;
+	spinlock_t ntb_tx_free_q_lock;
+	void __iomem *tx_mw;
 	phys_addr_t tx_mw_phys;
-	माप_प्रकार tx_mw_size;
+	size_t tx_mw_size;
 	dma_addr_t tx_mw_dma_addr;
-	अचिन्हित पूर्णांक tx_index;
-	अचिन्हित पूर्णांक tx_max_entry;
-	अचिन्हित पूर्णांक tx_max_frame;
+	unsigned int tx_index;
+	unsigned int tx_max_entry;
+	unsigned int tx_max_frame;
 
-	व्योम (*rx_handler)(काष्ठा ntb_transport_qp *qp, व्योम *qp_data,
-			   व्योम *data, पूर्णांक len);
-	काष्ठा list_head rx_post_q;
-	काष्ठा list_head rx_pend_q;
-	काष्ठा list_head rx_मुक्त_q;
+	void (*rx_handler)(struct ntb_transport_qp *qp, void *qp_data,
+			   void *data, int len);
+	struct list_head rx_post_q;
+	struct list_head rx_pend_q;
+	struct list_head rx_free_q;
 	/* ntb_rx_q_lock: synchronize access to rx_XXXX_q */
 	spinlock_t ntb_rx_q_lock;
-	व्योम *rx_buff;
-	अचिन्हित पूर्णांक rx_index;
-	अचिन्हित पूर्णांक rx_max_entry;
-	अचिन्हित पूर्णांक rx_max_frame;
-	अचिन्हित पूर्णांक rx_alloc_entry;
+	void *rx_buff;
+	unsigned int rx_index;
+	unsigned int rx_max_entry;
+	unsigned int rx_max_frame;
+	unsigned int rx_alloc_entry;
 	dma_cookie_t last_cookie;
-	काष्ठा tasklet_काष्ठा rxc_db_work;
+	struct tasklet_struct rxc_db_work;
 
-	व्योम (*event_handler)(व्योम *data, पूर्णांक status);
-	काष्ठा delayed_work link_work;
-	काष्ठा work_काष्ठा link_cleanup;
+	void (*event_handler)(void *data, int status);
+	struct delayed_work link_work;
+	struct work_struct link_cleanup;
 
-	काष्ठा dentry *debugfs_dir;
-	काष्ठा dentry *debugfs_stats;
+	struct dentry *debugfs_dir;
+	struct dentry *debugfs_stats;
 
 	/* Stats */
 	u64 rx_bytes;
@@ -187,443 +186,443 @@ MODULE_PARM_DESC(use_msi, "Use MSI interrupts instead of doorbells");
 	u64 rx_err_no_buf;
 	u64 rx_err_oflow;
 	u64 rx_err_ver;
-	u64 rx_स_नकल;
+	u64 rx_memcpy;
 	u64 rx_async;
 	u64 tx_bytes;
 	u64 tx_pkts;
 	u64 tx_ring_full;
 	u64 tx_err_no_buf;
-	u64 tx_स_नकल;
+	u64 tx_memcpy;
 	u64 tx_async;
 
 	bool use_msi;
-	पूर्णांक msi_irq;
-	काष्ठा ntb_msi_desc msi_desc;
-	काष्ठा ntb_msi_desc peer_msi_desc;
-पूर्ण;
+	int msi_irq;
+	struct ntb_msi_desc msi_desc;
+	struct ntb_msi_desc peer_msi_desc;
+};
 
-काष्ठा ntb_transport_mw अणु
+struct ntb_transport_mw {
 	phys_addr_t phys_addr;
-	resource_माप_प्रकार phys_size;
-	व्योम __iomem *vbase;
-	माप_प्रकार xlat_size;
-	माप_प्रकार buff_size;
-	माप_प्रकार alloc_size;
-	व्योम *alloc_addr;
-	व्योम *virt_addr;
+	resource_size_t phys_size;
+	void __iomem *vbase;
+	size_t xlat_size;
+	size_t buff_size;
+	size_t alloc_size;
+	void *alloc_addr;
+	void *virt_addr;
 	dma_addr_t dma_addr;
-पूर्ण;
+};
 
-काष्ठा ntb_transport_client_dev अणु
-	काष्ठा list_head entry;
-	काष्ठा ntb_transport_ctx *nt;
-	काष्ठा device dev;
-पूर्ण;
+struct ntb_transport_client_dev {
+	struct list_head entry;
+	struct ntb_transport_ctx *nt;
+	struct device dev;
+};
 
-काष्ठा ntb_transport_ctx अणु
-	काष्ठा list_head entry;
-	काष्ठा list_head client_devs;
+struct ntb_transport_ctx {
+	struct list_head entry;
+	struct list_head client_devs;
 
-	काष्ठा ntb_dev *ndev;
+	struct ntb_dev *ndev;
 
-	काष्ठा ntb_transport_mw *mw_vec;
-	काष्ठा ntb_transport_qp *qp_vec;
-	अचिन्हित पूर्णांक mw_count;
-	अचिन्हित पूर्णांक qp_count;
-	u64 qp_biपंचांगap;
-	u64 qp_biपंचांगap_मुक्त;
+	struct ntb_transport_mw *mw_vec;
+	struct ntb_transport_qp *qp_vec;
+	unsigned int mw_count;
+	unsigned int qp_count;
+	u64 qp_bitmap;
+	u64 qp_bitmap_free;
 
 	bool use_msi;
-	अचिन्हित पूर्णांक msi_spad_offset;
+	unsigned int msi_spad_offset;
 	u64 msi_db_mask;
 
 	bool link_is_up;
-	काष्ठा delayed_work link_work;
-	काष्ठा work_काष्ठा link_cleanup;
+	struct delayed_work link_work;
+	struct work_struct link_cleanup;
 
-	काष्ठा dentry *debugfs_node_dir;
-पूर्ण;
+	struct dentry *debugfs_node_dir;
+};
 
-क्रमागत अणु
+enum {
 	DESC_DONE_FLAG = BIT(0),
 	LINK_DOWN_FLAG = BIT(1),
-पूर्ण;
+};
 
-काष्ठा ntb_payload_header अणु
-	अचिन्हित पूर्णांक ver;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct ntb_payload_header {
+	unsigned int ver;
+	unsigned int len;
+	unsigned int flags;
+};
 
-क्रमागत अणु
+enum {
 	VERSION = 0,
 	QP_LINKS,
 	NUM_QPS,
 	NUM_MWS,
 	MW0_SZ_HIGH,
 	MW0_SZ_LOW,
-पूर्ण;
+};
 
-#घोषणा dev_client_dev(__dev) \
-	container_of((__dev), काष्ठा ntb_transport_client_dev, dev)
+#define dev_client_dev(__dev) \
+	container_of((__dev), struct ntb_transport_client_dev, dev)
 
-#घोषणा drv_client(__drv) \
-	container_of((__drv), काष्ठा ntb_transport_client, driver)
+#define drv_client(__drv) \
+	container_of((__drv), struct ntb_transport_client, driver)
 
-#घोषणा QP_TO_MW(nt, qp)	((qp) % nt->mw_count)
-#घोषणा NTB_QP_DEF_NUM_ENTRIES	100
-#घोषणा NTB_LINK_DOWN_TIMEOUT	10
+#define QP_TO_MW(nt, qp)	((qp) % nt->mw_count)
+#define NTB_QP_DEF_NUM_ENTRIES	100
+#define NTB_LINK_DOWN_TIMEOUT	10
 
-अटल व्योम ntb_transport_rxc_db(अचिन्हित दीर्घ data);
-अटल स्थिर काष्ठा ntb_ctx_ops ntb_transport_ops;
-अटल काष्ठा ntb_client ntb_transport_client;
-अटल पूर्णांक ntb_async_tx_submit(काष्ठा ntb_transport_qp *qp,
-			       काष्ठा ntb_queue_entry *entry);
-अटल व्योम ntb_स_नकल_tx(काष्ठा ntb_queue_entry *entry, व्योम __iomem *offset);
-अटल पूर्णांक ntb_async_rx_submit(काष्ठा ntb_queue_entry *entry, व्योम *offset);
-अटल व्योम ntb_स_नकल_rx(काष्ठा ntb_queue_entry *entry, व्योम *offset);
+static void ntb_transport_rxc_db(unsigned long data);
+static const struct ntb_ctx_ops ntb_transport_ops;
+static struct ntb_client ntb_transport_client;
+static int ntb_async_tx_submit(struct ntb_transport_qp *qp,
+			       struct ntb_queue_entry *entry);
+static void ntb_memcpy_tx(struct ntb_queue_entry *entry, void __iomem *offset);
+static int ntb_async_rx_submit(struct ntb_queue_entry *entry, void *offset);
+static void ntb_memcpy_rx(struct ntb_queue_entry *entry, void *offset);
 
 
-अटल पूर्णांक ntb_transport_bus_match(काष्ठा device *dev,
-				   काष्ठा device_driver *drv)
-अणु
-	वापस !म_भेदन(dev_name(dev), drv->name, म_माप(drv->name));
-पूर्ण
+static int ntb_transport_bus_match(struct device *dev,
+				   struct device_driver *drv)
+{
+	return !strncmp(dev_name(dev), drv->name, strlen(drv->name));
+}
 
-अटल पूर्णांक ntb_transport_bus_probe(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा ntb_transport_client *client;
-	पूर्णांक rc;
+static int ntb_transport_bus_probe(struct device *dev)
+{
+	const struct ntb_transport_client *client;
+	int rc;
 
 	get_device(dev);
 
 	client = drv_client(dev->driver);
 	rc = client->probe(dev);
-	अगर (rc)
+	if (rc)
 		put_device(dev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ntb_transport_bus_हटाओ(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा ntb_transport_client *client;
+static int ntb_transport_bus_remove(struct device *dev)
+{
+	const struct ntb_transport_client *client;
 
 	client = drv_client(dev->driver);
-	client->हटाओ(dev);
+	client->remove(dev);
 
 	put_device(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा bus_type ntb_transport_bus = अणु
+static struct bus_type ntb_transport_bus = {
 	.name = "ntb_transport",
 	.match = ntb_transport_bus_match,
 	.probe = ntb_transport_bus_probe,
-	.हटाओ = ntb_transport_bus_हटाओ,
-पूर्ण;
+	.remove = ntb_transport_bus_remove,
+};
 
-अटल LIST_HEAD(ntb_transport_list);
+static LIST_HEAD(ntb_transport_list);
 
-अटल पूर्णांक ntb_bus_init(काष्ठा ntb_transport_ctx *nt)
-अणु
+static int ntb_bus_init(struct ntb_transport_ctx *nt)
+{
 	list_add_tail(&nt->entry, &ntb_transport_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ntb_bus_हटाओ(काष्ठा ntb_transport_ctx *nt)
-अणु
-	काष्ठा ntb_transport_client_dev *client_dev, *cd;
+static void ntb_bus_remove(struct ntb_transport_ctx *nt)
+{
+	struct ntb_transport_client_dev *client_dev, *cd;
 
-	list_क्रम_each_entry_safe(client_dev, cd, &nt->client_devs, entry) अणु
+	list_for_each_entry_safe(client_dev, cd, &nt->client_devs, entry) {
 		dev_err(client_dev->dev.parent, "%s still attached to bus, removing\n",
 			dev_name(&client_dev->dev));
 		list_del(&client_dev->entry);
-		device_unरेजिस्टर(&client_dev->dev);
-	पूर्ण
+		device_unregister(&client_dev->dev);
+	}
 
 	list_del(&nt->entry);
-पूर्ण
+}
 
-अटल व्योम ntb_transport_client_release(काष्ठा device *dev)
-अणु
-	काष्ठा ntb_transport_client_dev *client_dev;
+static void ntb_transport_client_release(struct device *dev)
+{
+	struct ntb_transport_client_dev *client_dev;
 
 	client_dev = dev_client_dev(dev);
-	kमुक्त(client_dev);
-पूर्ण
+	kfree(client_dev);
+}
 
 /**
- * ntb_transport_unरेजिस्टर_client_dev - Unरेजिस्टर NTB client device
+ * ntb_transport_unregister_client_dev - Unregister NTB client device
  * @device_name: Name of NTB client device
  *
- * Unरेजिस्टर an NTB client device with the NTB transport layer
+ * Unregister an NTB client device with the NTB transport layer
  */
-व्योम ntb_transport_unरेजिस्टर_client_dev(अक्षर *device_name)
-अणु
-	काष्ठा ntb_transport_client_dev *client, *cd;
-	काष्ठा ntb_transport_ctx *nt;
+void ntb_transport_unregister_client_dev(char *device_name)
+{
+	struct ntb_transport_client_dev *client, *cd;
+	struct ntb_transport_ctx *nt;
 
-	list_क्रम_each_entry(nt, &ntb_transport_list, entry)
-		list_क्रम_each_entry_safe(client, cd, &nt->client_devs, entry)
-			अगर (!म_भेदन(dev_name(&client->dev), device_name,
-				     म_माप(device_name))) अणु
+	list_for_each_entry(nt, &ntb_transport_list, entry)
+		list_for_each_entry_safe(client, cd, &nt->client_devs, entry)
+			if (!strncmp(dev_name(&client->dev), device_name,
+				     strlen(device_name))) {
 				list_del(&client->entry);
-				device_unरेजिस्टर(&client->dev);
-			पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_unरेजिस्टर_client_dev);
+				device_unregister(&client->dev);
+			}
+}
+EXPORT_SYMBOL_GPL(ntb_transport_unregister_client_dev);
 
 /**
- * ntb_transport_रेजिस्टर_client_dev - Register NTB client device
+ * ntb_transport_register_client_dev - Register NTB client device
  * @device_name: Name of NTB client device
  *
  * Register an NTB client device with the NTB transport layer
  */
-पूर्णांक ntb_transport_रेजिस्टर_client_dev(अक्षर *device_name)
-अणु
-	काष्ठा ntb_transport_client_dev *client_dev;
-	काष्ठा ntb_transport_ctx *nt;
-	पूर्णांक node;
-	पूर्णांक rc, i = 0;
+int ntb_transport_register_client_dev(char *device_name)
+{
+	struct ntb_transport_client_dev *client_dev;
+	struct ntb_transport_ctx *nt;
+	int node;
+	int rc, i = 0;
 
-	अगर (list_empty(&ntb_transport_list))
-		वापस -ENODEV;
+	if (list_empty(&ntb_transport_list))
+		return -ENODEV;
 
-	list_क्रम_each_entry(nt, &ntb_transport_list, entry) अणु
-		काष्ठा device *dev;
+	list_for_each_entry(nt, &ntb_transport_list, entry) {
+		struct device *dev;
 
 		node = dev_to_node(&nt->ndev->dev);
 
-		client_dev = kzalloc_node(माप(*client_dev),
+		client_dev = kzalloc_node(sizeof(*client_dev),
 					  GFP_KERNEL, node);
-		अगर (!client_dev) अणु
+		if (!client_dev) {
 			rc = -ENOMEM;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		dev = &client_dev->dev;
 
-		/* setup and रेजिस्टर client devices */
+		/* setup and register client devices */
 		dev_set_name(dev, "%s%d", device_name, i);
 		dev->bus = &ntb_transport_bus;
 		dev->release = ntb_transport_client_release;
 		dev->parent = &nt->ndev->dev;
 
-		rc = device_रेजिस्टर(dev);
-		अगर (rc) अणु
-			kमुक्त(client_dev);
-			जाओ err;
-		पूर्ण
+		rc = device_register(dev);
+		if (rc) {
+			kfree(client_dev);
+			goto err;
+		}
 
 		list_add_tail(&client_dev->entry, &nt->client_devs);
 		i++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	ntb_transport_unरेजिस्टर_client_dev(device_name);
+	ntb_transport_unregister_client_dev(device_name);
 
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_रेजिस्टर_client_dev);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(ntb_transport_register_client_dev);
 
 /**
- * ntb_transport_रेजिस्टर_client - Register NTB client driver
- * @drv: NTB client driver to be रेजिस्टरed
+ * ntb_transport_register_client - Register NTB client driver
+ * @drv: NTB client driver to be registered
  *
  * Register an NTB client driver with the NTB transport layer
  *
- * RETURNS: An appropriate -ERRNO error value on error, or zero क्रम success.
+ * RETURNS: An appropriate -ERRNO error value on error, or zero for success.
  */
-पूर्णांक ntb_transport_रेजिस्टर_client(काष्ठा ntb_transport_client *drv)
-अणु
+int ntb_transport_register_client(struct ntb_transport_client *drv)
+{
 	drv->driver.bus = &ntb_transport_bus;
 
-	अगर (list_empty(&ntb_transport_list))
-		वापस -ENODEV;
+	if (list_empty(&ntb_transport_list))
+		return -ENODEV;
 
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_रेजिस्टर_client);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(ntb_transport_register_client);
 
 /**
- * ntb_transport_unरेजिस्टर_client - Unरेजिस्टर NTB client driver
- * @drv: NTB client driver to be unरेजिस्टरed
+ * ntb_transport_unregister_client - Unregister NTB client driver
+ * @drv: NTB client driver to be unregistered
  *
- * Unरेजिस्टर an NTB client driver with the NTB transport layer
+ * Unregister an NTB client driver with the NTB transport layer
  *
- * RETURNS: An appropriate -ERRNO error value on error, or zero क्रम success.
+ * RETURNS: An appropriate -ERRNO error value on error, or zero for success.
  */
-व्योम ntb_transport_unरेजिस्टर_client(काष्ठा ntb_transport_client *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_unरेजिस्टर_client);
+void ntb_transport_unregister_client(struct ntb_transport_client *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(ntb_transport_unregister_client);
 
-अटल sमाप_प्रकार debugfs_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार count,
+static ssize_t debugfs_read(struct file *filp, char __user *ubuf, size_t count,
 			    loff_t *offp)
-अणु
-	काष्ठा ntb_transport_qp *qp;
-	अक्षर *buf;
-	sमाप_प्रकार ret, out_offset, out_count;
+{
+	struct ntb_transport_qp *qp;
+	char *buf;
+	ssize_t ret, out_offset, out_count;
 
-	qp = filp->निजी_data;
+	qp = filp->private_data;
 
-	अगर (!qp || !qp->link_is_up)
-		वापस 0;
+	if (!qp || !qp->link_is_up)
+		return 0;
 
 	out_count = 1000;
 
-	buf = kदो_स्मृति(out_count, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kmalloc(out_count, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	out_offset = 0;
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "\nNTB QP stats:\n\n");
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_bytes - \t%llu\n", qp->rx_bytes);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_pkts - \t%llu\n", qp->rx_pkts);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
-			       "rx_memcpy - \t%llu\n", qp->rx_स_नकल);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+			       "rx_memcpy - \t%llu\n", qp->rx_memcpy);
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_async - \t%llu\n", qp->rx_async);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_ring_empty - %llu\n", qp->rx_ring_empty);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_err_no_buf - %llu\n", qp->rx_err_no_buf);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_err_oflow - \t%llu\n", qp->rx_err_oflow);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_err_ver - \t%llu\n", qp->rx_err_ver);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_buff - \t0x%p\n", qp->rx_buff);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_index - \t%u\n", qp->rx_index);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_max_entry - \t%u\n", qp->rx_max_entry);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "rx_alloc_entry - \t%u\n\n", qp->rx_alloc_entry);
 
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_bytes - \t%llu\n", qp->tx_bytes);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_pkts - \t%llu\n", qp->tx_pkts);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
-			       "tx_memcpy - \t%llu\n", qp->tx_स_नकल);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
+			       "tx_memcpy - \t%llu\n", qp->tx_memcpy);
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_async - \t%llu\n", qp->tx_async);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_ring_full - \t%llu\n", qp->tx_ring_full);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_err_no_buf - %llu\n", qp->tx_err_no_buf);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_mw - \t0x%p\n", qp->tx_mw);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_index (H) - \t%u\n", qp->tx_index);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "RRI (T) - \t%u\n",
 			       qp->remote_rx_info->entry);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "tx_max_entry - \t%u\n", qp->tx_max_entry);
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "free tx - \t%u\n",
-			       ntb_transport_tx_मुक्त_entry(qp));
+			       ntb_transport_tx_free_entry(qp));
 
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "\n");
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "Using TX DMA - \t%s\n",
 			       qp->tx_dma_chan ? "Yes" : "No");
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "Using RX DMA - \t%s\n",
 			       qp->rx_dma_chan ? "Yes" : "No");
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "QP Link - \t%s\n",
 			       qp->link_is_up ? "Up" : "Down");
-	out_offset += scnम_लिखो(buf + out_offset, out_count - out_offset,
+	out_offset += scnprintf(buf + out_offset, out_count - out_offset,
 			       "\n");
 
-	अगर (out_offset > out_count)
+	if (out_offset > out_count)
 		out_offset = out_count;
 
-	ret = simple_पढ़ो_from_buffer(ubuf, count, offp, buf, out_offset);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	ret = simple_read_from_buffer(ubuf, count, offp, buf, out_offset);
+	kfree(buf);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations ntb_qp_debugfs_stats = अणु
+static const struct file_operations ntb_qp_debugfs_stats = {
 	.owner = THIS_MODULE,
-	.खोलो = simple_खोलो,
-	.पढ़ो = debugfs_पढ़ो,
-पूर्ण;
+	.open = simple_open,
+	.read = debugfs_read,
+};
 
-अटल व्योम ntb_list_add(spinlock_t *lock, काष्ठा list_head *entry,
-			 काष्ठा list_head *list)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ntb_list_add(spinlock_t *lock, struct list_head *entry,
+			 struct list_head *list)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(lock, flags);
 	list_add_tail(entry, list);
 	spin_unlock_irqrestore(lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा ntb_queue_entry *ntb_list_rm(spinlock_t *lock,
-					   काष्ठा list_head *list)
-अणु
-	काष्ठा ntb_queue_entry *entry;
-	अचिन्हित दीर्घ flags;
+static struct ntb_queue_entry *ntb_list_rm(spinlock_t *lock,
+					   struct list_head *list)
+{
+	struct ntb_queue_entry *entry;
+	unsigned long flags;
 
 	spin_lock_irqsave(lock, flags);
-	अगर (list_empty(list)) अणु
-		entry = शून्य;
-		जाओ out;
-	पूर्ण
-	entry = list_first_entry(list, काष्ठा ntb_queue_entry, entry);
+	if (list_empty(list)) {
+		entry = NULL;
+		goto out;
+	}
+	entry = list_first_entry(list, struct ntb_queue_entry, entry);
 	list_del(&entry->entry);
 
 out:
 	spin_unlock_irqrestore(lock, flags);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल काष्ठा ntb_queue_entry *ntb_list_mv(spinlock_t *lock,
-					   काष्ठा list_head *list,
-					   काष्ठा list_head *to_list)
-अणु
-	काष्ठा ntb_queue_entry *entry;
-	अचिन्हित दीर्घ flags;
+static struct ntb_queue_entry *ntb_list_mv(spinlock_t *lock,
+					   struct list_head *list,
+					   struct list_head *to_list)
+{
+	struct ntb_queue_entry *entry;
+	unsigned long flags;
 
 	spin_lock_irqsave(lock, flags);
 
-	अगर (list_empty(list)) अणु
-		entry = शून्य;
-	पूर्ण अन्यथा अणु
-		entry = list_first_entry(list, काष्ठा ntb_queue_entry, entry);
+	if (list_empty(list)) {
+		entry = NULL;
+	} else {
+		entry = list_first_entry(list, struct ntb_queue_entry, entry);
 		list_move_tail(&entry->entry, to_list);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(lock, flags);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल पूर्णांक ntb_transport_setup_qp_mw(काष्ठा ntb_transport_ctx *nt,
-				     अचिन्हित पूर्णांक qp_num)
-अणु
-	काष्ठा ntb_transport_qp *qp = &nt->qp_vec[qp_num];
-	काष्ठा ntb_transport_mw *mw;
-	काष्ठा ntb_dev *ndev = nt->ndev;
-	काष्ठा ntb_queue_entry *entry;
-	अचिन्हित पूर्णांक rx_size, num_qps_mw;
-	अचिन्हित पूर्णांक mw_num, mw_count, qp_count;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक node;
+static int ntb_transport_setup_qp_mw(struct ntb_transport_ctx *nt,
+				     unsigned int qp_num)
+{
+	struct ntb_transport_qp *qp = &nt->qp_vec[qp_num];
+	struct ntb_transport_mw *mw;
+	struct ntb_dev *ndev = nt->ndev;
+	struct ntb_queue_entry *entry;
+	unsigned int rx_size, num_qps_mw;
+	unsigned int mw_num, mw_count, qp_count;
+	unsigned int i;
+	int node;
 
 	mw_count = nt->mw_count;
 	qp_count = nt->qp_count;
@@ -631,17 +630,17 @@ out:
 	mw_num = QP_TO_MW(nt, qp_num);
 	mw = &nt->mw_vec[mw_num];
 
-	अगर (!mw->virt_addr)
-		वापस -ENOMEM;
+	if (!mw->virt_addr)
+		return -ENOMEM;
 
-	अगर (mw_num < qp_count % mw_count)
+	if (mw_num < qp_count % mw_count)
 		num_qps_mw = qp_count / mw_count + 1;
-	अन्यथा
+	else
 		num_qps_mw = qp_count / mw_count;
 
-	rx_size = (अचिन्हित पूर्णांक)mw->xlat_size / num_qps_mw;
+	rx_size = (unsigned int)mw->xlat_size / num_qps_mw;
 	qp->rx_buff = mw->virt_addr + rx_size * (qp_num / mw_count);
-	rx_size -= माप(काष्ठा ntb_rx_info);
+	rx_size -= sizeof(struct ntb_rx_info);
 
 	qp->remote_rx_info = qp->rx_buff + rx_size;
 
@@ -651,269 +650,269 @@ out:
 	qp->rx_index = 0;
 
 	/*
-	 * Checking to see अगर we have more entries than the शेष.
-	 * We should add additional entries अगर that is the हाल so we
+	 * Checking to see if we have more entries than the default.
+	 * We should add additional entries if that is the case so we
 	 * can be in sync with the transport frames.
 	 */
 	node = dev_to_node(&ndev->dev);
-	क्रम (i = qp->rx_alloc_entry; i < qp->rx_max_entry; i++) अणु
-		entry = kzalloc_node(माप(*entry), GFP_KERNEL, node);
-		अगर (!entry)
-			वापस -ENOMEM;
+	for (i = qp->rx_alloc_entry; i < qp->rx_max_entry; i++) {
+		entry = kzalloc_node(sizeof(*entry), GFP_KERNEL, node);
+		if (!entry)
+			return -ENOMEM;
 
 		entry->qp = qp;
 		ntb_list_add(&qp->ntb_rx_q_lock, &entry->entry,
-			     &qp->rx_मुक्त_q);
+			     &qp->rx_free_q);
 		qp->rx_alloc_entry++;
-	पूर्ण
+	}
 
 	qp->remote_rx_info->entry = qp->rx_max_entry - 1;
 
 	/* setup the hdr offsets with 0's */
-	क्रम (i = 0; i < qp->rx_max_entry; i++) अणु
-		व्योम *offset = (qp->rx_buff + qp->rx_max_frame * (i + 1) -
-				माप(काष्ठा ntb_payload_header));
-		स_रखो(offset, 0, माप(काष्ठा ntb_payload_header));
-	पूर्ण
+	for (i = 0; i < qp->rx_max_entry; i++) {
+		void *offset = (qp->rx_buff + qp->rx_max_frame * (i + 1) -
+				sizeof(struct ntb_payload_header));
+		memset(offset, 0, sizeof(struct ntb_payload_header));
+	}
 
 	qp->rx_pkts = 0;
 	qp->tx_pkts = 0;
 	qp->tx_index = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t ntb_transport_isr(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा ntb_transport_qp *qp = dev;
+static irqreturn_t ntb_transport_isr(int irq, void *dev)
+{
+	struct ntb_transport_qp *qp = dev;
 
 	tasklet_schedule(&qp->rxc_db_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम ntb_transport_setup_qp_peer_msi(काष्ठा ntb_transport_ctx *nt,
-					    अचिन्हित पूर्णांक qp_num)
-अणु
-	काष्ठा ntb_transport_qp *qp = &nt->qp_vec[qp_num];
-	पूर्णांक spad = qp_num * 2 + nt->msi_spad_offset;
+static void ntb_transport_setup_qp_peer_msi(struct ntb_transport_ctx *nt,
+					    unsigned int qp_num)
+{
+	struct ntb_transport_qp *qp = &nt->qp_vec[qp_num];
+	int spad = qp_num * 2 + nt->msi_spad_offset;
 
-	अगर (!nt->use_msi)
-		वापस;
+	if (!nt->use_msi)
+		return;
 
-	अगर (spad >= ntb_spad_count(nt->ndev))
-		वापस;
+	if (spad >= ntb_spad_count(nt->ndev))
+		return;
 
 	qp->peer_msi_desc.addr_offset =
-		ntb_peer_spad_पढ़ो(qp->ndev, PIDX, spad);
+		ntb_peer_spad_read(qp->ndev, PIDX, spad);
 	qp->peer_msi_desc.data =
-		ntb_peer_spad_पढ़ो(qp->ndev, PIDX, spad + 1);
+		ntb_peer_spad_read(qp->ndev, PIDX, spad + 1);
 
 	dev_dbg(&qp->ndev->pdev->dev, "QP%d Peer MSI addr=%x data=%x\n",
 		qp_num, qp->peer_msi_desc.addr_offset, qp->peer_msi_desc.data);
 
-	अगर (qp->peer_msi_desc.addr_offset) अणु
+	if (qp->peer_msi_desc.addr_offset) {
 		qp->use_msi = true;
 		dev_info(&qp->ndev->pdev->dev,
 			 "Using MSI interrupts for QP%d\n", qp_num);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ntb_transport_setup_qp_msi(काष्ठा ntb_transport_ctx *nt,
-				       अचिन्हित पूर्णांक qp_num)
-अणु
-	काष्ठा ntb_transport_qp *qp = &nt->qp_vec[qp_num];
-	पूर्णांक spad = qp_num * 2 + nt->msi_spad_offset;
-	पूर्णांक rc;
+static void ntb_transport_setup_qp_msi(struct ntb_transport_ctx *nt,
+				       unsigned int qp_num)
+{
+	struct ntb_transport_qp *qp = &nt->qp_vec[qp_num];
+	int spad = qp_num * 2 + nt->msi_spad_offset;
+	int rc;
 
-	अगर (!nt->use_msi)
-		वापस;
+	if (!nt->use_msi)
+		return;
 
-	अगर (spad >= ntb_spad_count(nt->ndev)) अणु
+	if (spad >= ntb_spad_count(nt->ndev)) {
 		dev_warn_once(&qp->ndev->pdev->dev,
 			      "Not enough SPADS to use MSI interrupts\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ntb_spad_ग_लिखो(qp->ndev, spad, 0);
-	ntb_spad_ग_लिखो(qp->ndev, spad + 1, 0);
+	ntb_spad_write(qp->ndev, spad, 0);
+	ntb_spad_write(qp->ndev, spad + 1, 0);
 
-	अगर (!qp->msi_irq) अणु
+	if (!qp->msi_irq) {
 		qp->msi_irq = ntbm_msi_request_irq(qp->ndev, ntb_transport_isr,
 						   KBUILD_MODNAME, qp,
 						   &qp->msi_desc);
-		अगर (qp->msi_irq < 0) अणु
+		if (qp->msi_irq < 0) {
 			dev_warn(&qp->ndev->pdev->dev,
 				 "Unable to allocate MSI interrupt for qp%d\n",
 				 qp_num);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	rc = ntb_spad_ग_लिखो(qp->ndev, spad, qp->msi_desc.addr_offset);
-	अगर (rc)
-		जाओ err_मुक्त_पूर्णांकerrupt;
+	rc = ntb_spad_write(qp->ndev, spad, qp->msi_desc.addr_offset);
+	if (rc)
+		goto err_free_interrupt;
 
-	rc = ntb_spad_ग_लिखो(qp->ndev, spad + 1, qp->msi_desc.data);
-	अगर (rc)
-		जाओ err_मुक्त_पूर्णांकerrupt;
+	rc = ntb_spad_write(qp->ndev, spad + 1, qp->msi_desc.data);
+	if (rc)
+		goto err_free_interrupt;
 
 	dev_dbg(&qp->ndev->pdev->dev, "QP%d MSI %d addr=%x data=%x\n",
 		qp_num, qp->msi_irq, qp->msi_desc.addr_offset,
 		qp->msi_desc.data);
 
-	वापस;
+	return;
 
-err_मुक्त_पूर्णांकerrupt:
-	devm_मुक्त_irq(&nt->ndev->dev, qp->msi_irq, qp);
-पूर्ण
+err_free_interrupt:
+	devm_free_irq(&nt->ndev->dev, qp->msi_irq, qp);
+}
 
-अटल व्योम ntb_transport_msi_peer_desc_changed(काष्ठा ntb_transport_ctx *nt)
-अणु
-	पूर्णांक i;
+static void ntb_transport_msi_peer_desc_changed(struct ntb_transport_ctx *nt)
+{
+	int i;
 
 	dev_dbg(&nt->ndev->pdev->dev, "Peer MSI descriptors changed");
 
-	क्रम (i = 0; i < nt->qp_count; i++)
+	for (i = 0; i < nt->qp_count; i++)
 		ntb_transport_setup_qp_peer_msi(nt, i);
-पूर्ण
+}
 
-अटल व्योम ntb_transport_msi_desc_changed(व्योम *data)
-अणु
-	काष्ठा ntb_transport_ctx *nt = data;
-	पूर्णांक i;
+static void ntb_transport_msi_desc_changed(void *data)
+{
+	struct ntb_transport_ctx *nt = data;
+	int i;
 
 	dev_dbg(&nt->ndev->pdev->dev, "MSI descriptors changed");
 
-	क्रम (i = 0; i < nt->qp_count; i++)
+	for (i = 0; i < nt->qp_count; i++)
 		ntb_transport_setup_qp_msi(nt, i);
 
 	ntb_peer_db_set(nt->ndev, nt->msi_db_mask);
-पूर्ण
+}
 
-अटल व्योम ntb_मुक्त_mw(काष्ठा ntb_transport_ctx *nt, पूर्णांक num_mw)
-अणु
-	काष्ठा ntb_transport_mw *mw = &nt->mw_vec[num_mw];
-	काष्ठा pci_dev *pdev = nt->ndev->pdev;
+static void ntb_free_mw(struct ntb_transport_ctx *nt, int num_mw)
+{
+	struct ntb_transport_mw *mw = &nt->mw_vec[num_mw];
+	struct pci_dev *pdev = nt->ndev->pdev;
 
-	अगर (!mw->virt_addr)
-		वापस;
+	if (!mw->virt_addr)
+		return;
 
 	ntb_mw_clear_trans(nt->ndev, PIDX, num_mw);
-	dma_मुक्त_coherent(&pdev->dev, mw->alloc_size,
+	dma_free_coherent(&pdev->dev, mw->alloc_size,
 			  mw->alloc_addr, mw->dma_addr);
 	mw->xlat_size = 0;
 	mw->buff_size = 0;
 	mw->alloc_size = 0;
-	mw->alloc_addr = शून्य;
-	mw->virt_addr = शून्य;
-पूर्ण
+	mw->alloc_addr = NULL;
+	mw->virt_addr = NULL;
+}
 
-अटल पूर्णांक ntb_alloc_mw_buffer(काष्ठा ntb_transport_mw *mw,
-			       काष्ठा device *dma_dev, माप_प्रकार align)
-अणु
+static int ntb_alloc_mw_buffer(struct ntb_transport_mw *mw,
+			       struct device *dma_dev, size_t align)
+{
 	dma_addr_t dma_addr;
-	व्योम *alloc_addr, *virt_addr;
-	पूर्णांक rc;
+	void *alloc_addr, *virt_addr;
+	int rc;
 
 	alloc_addr = dma_alloc_coherent(dma_dev, mw->alloc_size,
 					&dma_addr, GFP_KERNEL);
-	अगर (!alloc_addr) अणु
+	if (!alloc_addr) {
 		dev_err(dma_dev, "Unable to alloc MW buff of size %zu\n",
 			mw->alloc_size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	virt_addr = alloc_addr;
 
 	/*
 	 * we must ensure that the memory address allocated is BAR size
-	 * aligned in order क्रम the XLAT रेजिस्टर to take the value. This
+	 * aligned in order for the XLAT register to take the value. This
 	 * is a requirement of the hardware. It is recommended to setup CMA
-	 * क्रम BAR sizes equal or greater than 4MB.
+	 * for BAR sizes equal or greater than 4MB.
 	 */
-	अगर (!IS_ALIGNED(dma_addr, align)) अणु
-		अगर (mw->alloc_size > mw->buff_size) अणु
+	if (!IS_ALIGNED(dma_addr, align)) {
+		if (mw->alloc_size > mw->buff_size) {
 			virt_addr = PTR_ALIGN(alloc_addr, align);
 			dma_addr = ALIGN(dma_addr, align);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = -ENOMEM;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	mw->alloc_addr = alloc_addr;
 	mw->virt_addr = virt_addr;
 	mw->dma_addr = dma_addr;
 
-	वापस 0;
+	return 0;
 
 err:
-	dma_मुक्त_coherent(dma_dev, mw->alloc_size, alloc_addr, dma_addr);
+	dma_free_coherent(dma_dev, mw->alloc_size, alloc_addr, dma_addr);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक ntb_set_mw(काष्ठा ntb_transport_ctx *nt, पूर्णांक num_mw,
-		      resource_माप_प्रकार size)
-अणु
-	काष्ठा ntb_transport_mw *mw = &nt->mw_vec[num_mw];
-	काष्ठा pci_dev *pdev = nt->ndev->pdev;
-	माप_प्रकार xlat_size, buff_size;
-	resource_माप_प्रकार xlat_align;
-	resource_माप_प्रकार xlat_align_size;
-	पूर्णांक rc;
+static int ntb_set_mw(struct ntb_transport_ctx *nt, int num_mw,
+		      resource_size_t size)
+{
+	struct ntb_transport_mw *mw = &nt->mw_vec[num_mw];
+	struct pci_dev *pdev = nt->ndev->pdev;
+	size_t xlat_size, buff_size;
+	resource_size_t xlat_align;
+	resource_size_t xlat_align_size;
+	int rc;
 
-	अगर (!size)
-		वापस -EINVAL;
+	if (!size)
+		return -EINVAL;
 
 	rc = ntb_mw_get_align(nt->ndev, PIDX, num_mw, &xlat_align,
-			      &xlat_align_size, शून्य);
-	अगर (rc)
-		वापस rc;
+			      &xlat_align_size, NULL);
+	if (rc)
+		return rc;
 
 	xlat_size = round_up(size, xlat_align_size);
 	buff_size = round_up(size, xlat_align);
 
 	/* No need to re-setup */
-	अगर (mw->xlat_size == xlat_size)
-		वापस 0;
+	if (mw->xlat_size == xlat_size)
+		return 0;
 
-	अगर (mw->buff_size)
-		ntb_मुक्त_mw(nt, num_mw);
+	if (mw->buff_size)
+		ntb_free_mw(nt, num_mw);
 
-	/* Alloc memory क्रम receiving data.  Must be aligned */
+	/* Alloc memory for receiving data.  Must be aligned */
 	mw->xlat_size = xlat_size;
 	mw->buff_size = buff_size;
 	mw->alloc_size = buff_size;
 
 	rc = ntb_alloc_mw_buffer(mw, &pdev->dev, xlat_align);
-	अगर (rc) अणु
+	if (rc) {
 		mw->alloc_size *= 2;
 		rc = ntb_alloc_mw_buffer(mw, &pdev->dev, xlat_align);
-		अगर (rc) अणु
+		if (rc) {
 			dev_err(&pdev->dev,
 				"Unable to alloc aligned MW buff\n");
 			mw->xlat_size = 0;
 			mw->buff_size = 0;
 			mw->alloc_size = 0;
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	/* Notअगरy HW the memory location of the receive buffer */
+	/* Notify HW the memory location of the receive buffer */
 	rc = ntb_mw_set_trans(nt->ndev, PIDX, num_mw, mw->dma_addr,
 			      mw->xlat_size);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&pdev->dev, "Unable to set mw%d translation", num_mw);
-		ntb_मुक्त_mw(nt, num_mw);
-		वापस -EIO;
-	पूर्ण
+		ntb_free_mw(nt, num_mw);
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ntb_qp_link_करोwn_reset(काष्ठा ntb_transport_qp *qp)
-अणु
+static void ntb_qp_link_down_reset(struct ntb_transport_qp *qp)
+{
 	qp->link_is_up = false;
 	qp->active = false;
 
@@ -925,245 +924,245 @@ err:
 	qp->rx_err_no_buf = 0;
 	qp->rx_err_oflow = 0;
 	qp->rx_err_ver = 0;
-	qp->rx_स_नकल = 0;
+	qp->rx_memcpy = 0;
 	qp->rx_async = 0;
 	qp->tx_bytes = 0;
 	qp->tx_pkts = 0;
 	qp->tx_ring_full = 0;
 	qp->tx_err_no_buf = 0;
-	qp->tx_स_नकल = 0;
+	qp->tx_memcpy = 0;
 	qp->tx_async = 0;
-पूर्ण
+}
 
-अटल व्योम ntb_qp_link_cleanup(काष्ठा ntb_transport_qp *qp)
-अणु
-	काष्ठा ntb_transport_ctx *nt = qp->transport;
-	काष्ठा pci_dev *pdev = nt->ndev->pdev;
+static void ntb_qp_link_cleanup(struct ntb_transport_qp *qp)
+{
+	struct ntb_transport_ctx *nt = qp->transport;
+	struct pci_dev *pdev = nt->ndev->pdev;
 
 	dev_info(&pdev->dev, "qp %d: Link Cleanup\n", qp->qp_num);
 
 	cancel_delayed_work_sync(&qp->link_work);
-	ntb_qp_link_करोwn_reset(qp);
+	ntb_qp_link_down_reset(qp);
 
-	अगर (qp->event_handler)
+	if (qp->event_handler)
 		qp->event_handler(qp->cb_data, qp->link_is_up);
-पूर्ण
+}
 
-अटल व्योम ntb_qp_link_cleanup_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ntb_transport_qp *qp = container_of(work,
-						   काष्ठा ntb_transport_qp,
+static void ntb_qp_link_cleanup_work(struct work_struct *work)
+{
+	struct ntb_transport_qp *qp = container_of(work,
+						   struct ntb_transport_qp,
 						   link_cleanup);
-	काष्ठा ntb_transport_ctx *nt = qp->transport;
+	struct ntb_transport_ctx *nt = qp->transport;
 
 	ntb_qp_link_cleanup(qp);
 
-	अगर (nt->link_is_up)
+	if (nt->link_is_up)
 		schedule_delayed_work(&qp->link_work,
-				      msecs_to_jअगरfies(NTB_LINK_DOWN_TIMEOUT));
-पूर्ण
+				      msecs_to_jiffies(NTB_LINK_DOWN_TIMEOUT));
+}
 
-अटल व्योम ntb_qp_link_करोwn(काष्ठा ntb_transport_qp *qp)
-अणु
+static void ntb_qp_link_down(struct ntb_transport_qp *qp)
+{
 	schedule_work(&qp->link_cleanup);
-पूर्ण
+}
 
-अटल व्योम ntb_transport_link_cleanup(काष्ठा ntb_transport_ctx *nt)
-अणु
-	काष्ठा ntb_transport_qp *qp;
-	u64 qp_biपंचांगap_alloc;
-	अचिन्हित पूर्णांक i, count;
+static void ntb_transport_link_cleanup(struct ntb_transport_ctx *nt)
+{
+	struct ntb_transport_qp *qp;
+	u64 qp_bitmap_alloc;
+	unsigned int i, count;
 
-	qp_biपंचांगap_alloc = nt->qp_biपंचांगap & ~nt->qp_biपंचांगap_मुक्त;
+	qp_bitmap_alloc = nt->qp_bitmap & ~nt->qp_bitmap_free;
 
-	/* Pass aदीर्घ the info to any clients */
-	क्रम (i = 0; i < nt->qp_count; i++)
-		अगर (qp_biपंचांगap_alloc & BIT_ULL(i)) अणु
+	/* Pass along the info to any clients */
+	for (i = 0; i < nt->qp_count; i++)
+		if (qp_bitmap_alloc & BIT_ULL(i)) {
 			qp = &nt->qp_vec[i];
 			ntb_qp_link_cleanup(qp);
 			cancel_work_sync(&qp->link_cleanup);
 			cancel_delayed_work_sync(&qp->link_work);
-		पूर्ण
+		}
 
-	अगर (!nt->link_is_up)
+	if (!nt->link_is_up)
 		cancel_delayed_work_sync(&nt->link_work);
 
-	क्रम (i = 0; i < nt->mw_count; i++)
-		ntb_मुक्त_mw(nt, i);
+	for (i = 0; i < nt->mw_count; i++)
+		ntb_free_mw(nt, i);
 
-	/* The scratchpad रेजिस्टरs keep the values अगर the remote side
-	 * goes करोwn, blast them now to give them a sane value the next
-	 * समय they are accessed
+	/* The scratchpad registers keep the values if the remote side
+	 * goes down, blast them now to give them a sane value the next
+	 * time they are accessed
 	 */
 	count = ntb_spad_count(nt->ndev);
-	क्रम (i = 0; i < count; i++)
-		ntb_spad_ग_लिखो(nt->ndev, i, 0);
-पूर्ण
+	for (i = 0; i < count; i++)
+		ntb_spad_write(nt->ndev, i, 0);
+}
 
-अटल व्योम ntb_transport_link_cleanup_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ntb_transport_ctx *nt =
-		container_of(work, काष्ठा ntb_transport_ctx, link_cleanup);
+static void ntb_transport_link_cleanup_work(struct work_struct *work)
+{
+	struct ntb_transport_ctx *nt =
+		container_of(work, struct ntb_transport_ctx, link_cleanup);
 
 	ntb_transport_link_cleanup(nt);
-पूर्ण
+}
 
-अटल व्योम ntb_transport_event_callback(व्योम *data)
-अणु
-	काष्ठा ntb_transport_ctx *nt = data;
+static void ntb_transport_event_callback(void *data)
+{
+	struct ntb_transport_ctx *nt = data;
 
-	अगर (ntb_link_is_up(nt->ndev, शून्य, शून्य) == 1)
+	if (ntb_link_is_up(nt->ndev, NULL, NULL) == 1)
 		schedule_delayed_work(&nt->link_work, 0);
-	अन्यथा
+	else
 		schedule_work(&nt->link_cleanup);
-पूर्ण
+}
 
-अटल व्योम ntb_transport_link_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ntb_transport_ctx *nt =
-		container_of(work, काष्ठा ntb_transport_ctx, link_work.work);
-	काष्ठा ntb_dev *ndev = nt->ndev;
-	काष्ठा pci_dev *pdev = ndev->pdev;
-	resource_माप_प्रकार size;
+static void ntb_transport_link_work(struct work_struct *work)
+{
+	struct ntb_transport_ctx *nt =
+		container_of(work, struct ntb_transport_ctx, link_work.work);
+	struct ntb_dev *ndev = nt->ndev;
+	struct pci_dev *pdev = ndev->pdev;
+	resource_size_t size;
 	u32 val;
-	पूर्णांक rc = 0, i, spad;
+	int rc = 0, i, spad;
 
-	/* send the local info, in the opposite order of the way we पढ़ो it */
+	/* send the local info, in the opposite order of the way we read it */
 
-	अगर (nt->use_msi) अणु
+	if (nt->use_msi) {
 		rc = ntb_msi_setup_mws(ndev);
-		अगर (rc) अणु
+		if (rc) {
 			dev_warn(&pdev->dev,
 				 "Failed to register MSI memory window: %d\n",
 				 rc);
 			nt->use_msi = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < nt->qp_count; i++)
+	for (i = 0; i < nt->qp_count; i++)
 		ntb_transport_setup_qp_msi(nt, i);
 
-	क्रम (i = 0; i < nt->mw_count; i++) अणु
+	for (i = 0; i < nt->mw_count; i++) {
 		size = nt->mw_vec[i].phys_size;
 
-		अगर (max_mw_size && size > max_mw_size)
+		if (max_mw_size && size > max_mw_size)
 			size = max_mw_size;
 
 		spad = MW0_SZ_HIGH + (i * 2);
-		ntb_peer_spad_ग_लिखो(ndev, PIDX, spad, upper_32_bits(size));
+		ntb_peer_spad_write(ndev, PIDX, spad, upper_32_bits(size));
 
 		spad = MW0_SZ_LOW + (i * 2);
-		ntb_peer_spad_ग_लिखो(ndev, PIDX, spad, lower_32_bits(size));
-	पूर्ण
+		ntb_peer_spad_write(ndev, PIDX, spad, lower_32_bits(size));
+	}
 
-	ntb_peer_spad_ग_लिखो(ndev, PIDX, NUM_MWS, nt->mw_count);
+	ntb_peer_spad_write(ndev, PIDX, NUM_MWS, nt->mw_count);
 
-	ntb_peer_spad_ग_लिखो(ndev, PIDX, NUM_QPS, nt->qp_count);
+	ntb_peer_spad_write(ndev, PIDX, NUM_QPS, nt->qp_count);
 
-	ntb_peer_spad_ग_लिखो(ndev, PIDX, VERSION, NTB_TRANSPORT_VERSION);
+	ntb_peer_spad_write(ndev, PIDX, VERSION, NTB_TRANSPORT_VERSION);
 
-	/* Query the remote side क्रम its info */
-	val = ntb_spad_पढ़ो(ndev, VERSION);
+	/* Query the remote side for its info */
+	val = ntb_spad_read(ndev, VERSION);
 	dev_dbg(&pdev->dev, "Remote version = %d\n", val);
-	अगर (val != NTB_TRANSPORT_VERSION)
-		जाओ out;
+	if (val != NTB_TRANSPORT_VERSION)
+		goto out;
 
-	val = ntb_spad_पढ़ो(ndev, NUM_QPS);
+	val = ntb_spad_read(ndev, NUM_QPS);
 	dev_dbg(&pdev->dev, "Remote max number of qps = %d\n", val);
-	अगर (val != nt->qp_count)
-		जाओ out;
+	if (val != nt->qp_count)
+		goto out;
 
-	val = ntb_spad_पढ़ो(ndev, NUM_MWS);
+	val = ntb_spad_read(ndev, NUM_MWS);
 	dev_dbg(&pdev->dev, "Remote number of mws = %d\n", val);
-	अगर (val != nt->mw_count)
-		जाओ out;
+	if (val != nt->mw_count)
+		goto out;
 
-	क्रम (i = 0; i < nt->mw_count; i++) अणु
+	for (i = 0; i < nt->mw_count; i++) {
 		u64 val64;
 
-		val = ntb_spad_पढ़ो(ndev, MW0_SZ_HIGH + (i * 2));
+		val = ntb_spad_read(ndev, MW0_SZ_HIGH + (i * 2));
 		val64 = (u64)val << 32;
 
-		val = ntb_spad_पढ़ो(ndev, MW0_SZ_LOW + (i * 2));
+		val = ntb_spad_read(ndev, MW0_SZ_LOW + (i * 2));
 		val64 |= val;
 
 		dev_dbg(&pdev->dev, "Remote MW%d size = %#llx\n", i, val64);
 
 		rc = ntb_set_mw(nt, i, val64);
-		अगर (rc)
-			जाओ out1;
-	पूर्ण
+		if (rc)
+			goto out1;
+	}
 
 	nt->link_is_up = true;
 
-	क्रम (i = 0; i < nt->qp_count; i++) अणु
-		काष्ठा ntb_transport_qp *qp = &nt->qp_vec[i];
+	for (i = 0; i < nt->qp_count; i++) {
+		struct ntb_transport_qp *qp = &nt->qp_vec[i];
 
 		ntb_transport_setup_qp_mw(nt, i);
 		ntb_transport_setup_qp_peer_msi(nt, i);
 
-		अगर (qp->client_पढ़ोy)
+		if (qp->client_ready)
 			schedule_delayed_work(&qp->link_work, 0);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 out1:
-	क्रम (i = 0; i < nt->mw_count; i++)
-		ntb_मुक्त_mw(nt, i);
+	for (i = 0; i < nt->mw_count; i++)
+		ntb_free_mw(nt, i);
 
-	/* अगर there's an actual failure, we should just bail */
-	अगर (rc < 0)
-		वापस;
+	/* if there's an actual failure, we should just bail */
+	if (rc < 0)
+		return;
 
 out:
-	अगर (ntb_link_is_up(ndev, शून्य, शून्य) == 1)
+	if (ntb_link_is_up(ndev, NULL, NULL) == 1)
 		schedule_delayed_work(&nt->link_work,
-				      msecs_to_jअगरfies(NTB_LINK_DOWN_TIMEOUT));
-पूर्ण
+				      msecs_to_jiffies(NTB_LINK_DOWN_TIMEOUT));
+}
 
-अटल व्योम ntb_qp_link_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ntb_transport_qp *qp = container_of(work,
-						   काष्ठा ntb_transport_qp,
+static void ntb_qp_link_work(struct work_struct *work)
+{
+	struct ntb_transport_qp *qp = container_of(work,
+						   struct ntb_transport_qp,
 						   link_work.work);
-	काष्ठा pci_dev *pdev = qp->ndev->pdev;
-	काष्ठा ntb_transport_ctx *nt = qp->transport;
-	पूर्णांक val;
+	struct pci_dev *pdev = qp->ndev->pdev;
+	struct ntb_transport_ctx *nt = qp->transport;
+	int val;
 
 	WARN_ON(!nt->link_is_up);
 
-	val = ntb_spad_पढ़ो(nt->ndev, QP_LINKS);
+	val = ntb_spad_read(nt->ndev, QP_LINKS);
 
-	ntb_peer_spad_ग_लिखो(nt->ndev, PIDX, QP_LINKS, val | BIT(qp->qp_num));
+	ntb_peer_spad_write(nt->ndev, PIDX, QP_LINKS, val | BIT(qp->qp_num));
 
-	/* query remote spad क्रम qp पढ़ोy bits */
+	/* query remote spad for qp ready bits */
 	dev_dbg_ratelimited(&pdev->dev, "Remote QP link status = %x\n", val);
 
-	/* See अगर the remote side is up */
-	अगर (val & BIT(qp->qp_num)) अणु
+	/* See if the remote side is up */
+	if (val & BIT(qp->qp_num)) {
 		dev_info(&pdev->dev, "qp %d: Link Up\n", qp->qp_num);
 		qp->link_is_up = true;
 		qp->active = true;
 
-		अगर (qp->event_handler)
+		if (qp->event_handler)
 			qp->event_handler(qp->cb_data, qp->link_is_up);
 
-		अगर (qp->active)
+		if (qp->active)
 			tasklet_schedule(&qp->rxc_db_work);
-	पूर्ण अन्यथा अगर (nt->link_is_up)
+	} else if (nt->link_is_up)
 		schedule_delayed_work(&qp->link_work,
-				      msecs_to_jअगरfies(NTB_LINK_DOWN_TIMEOUT));
-पूर्ण
+				      msecs_to_jiffies(NTB_LINK_DOWN_TIMEOUT));
+}
 
-अटल पूर्णांक ntb_transport_init_queue(काष्ठा ntb_transport_ctx *nt,
-				    अचिन्हित पूर्णांक qp_num)
-अणु
-	काष्ठा ntb_transport_qp *qp;
+static int ntb_transport_init_queue(struct ntb_transport_ctx *nt,
+				    unsigned int qp_num)
+{
+	struct ntb_transport_qp *qp;
 	phys_addr_t mw_base;
-	resource_माप_प्रकार mw_size;
-	अचिन्हित पूर्णांक num_qps_mw, tx_size;
-	अचिन्हित पूर्णांक mw_num, mw_count, qp_count;
+	resource_size_t mw_size;
+	unsigned int num_qps_mw, tx_size;
+	unsigned int mw_num, mw_count, qp_count;
 	u64 qp_offset;
 
 	mw_count = nt->mw_count;
@@ -1175,402 +1174,402 @@ out:
 	qp->qp_num = qp_num;
 	qp->transport = nt;
 	qp->ndev = nt->ndev;
-	qp->client_पढ़ोy = false;
-	qp->event_handler = शून्य;
-	ntb_qp_link_करोwn_reset(qp);
+	qp->client_ready = false;
+	qp->event_handler = NULL;
+	ntb_qp_link_down_reset(qp);
 
-	अगर (mw_num < qp_count % mw_count)
+	if (mw_num < qp_count % mw_count)
 		num_qps_mw = qp_count / mw_count + 1;
-	अन्यथा
+	else
 		num_qps_mw = qp_count / mw_count;
 
 	mw_base = nt->mw_vec[mw_num].phys_addr;
 	mw_size = nt->mw_vec[mw_num].phys_size;
 
-	अगर (max_mw_size && mw_size > max_mw_size)
+	if (max_mw_size && mw_size > max_mw_size)
 		mw_size = max_mw_size;
 
-	tx_size = (अचिन्हित पूर्णांक)mw_size / num_qps_mw;
+	tx_size = (unsigned int)mw_size / num_qps_mw;
 	qp_offset = tx_size * (qp_num / mw_count);
 
 	qp->tx_mw_size = tx_size;
 	qp->tx_mw = nt->mw_vec[mw_num].vbase + qp_offset;
-	अगर (!qp->tx_mw)
-		वापस -EINVAL;
+	if (!qp->tx_mw)
+		return -EINVAL;
 
 	qp->tx_mw_phys = mw_base + qp_offset;
-	अगर (!qp->tx_mw_phys)
-		वापस -EINVAL;
+	if (!qp->tx_mw_phys)
+		return -EINVAL;
 
-	tx_size -= माप(काष्ठा ntb_rx_info);
+	tx_size -= sizeof(struct ntb_rx_info);
 	qp->rx_info = qp->tx_mw + tx_size;
 
 	/* Due to housekeeping, there must be atleast 2 buffs */
 	qp->tx_max_frame = min(transport_mtu, tx_size / 2);
 	qp->tx_max_entry = tx_size / qp->tx_max_frame;
 
-	अगर (nt->debugfs_node_dir) अणु
-		अक्षर debugfs_name[4];
+	if (nt->debugfs_node_dir) {
+		char debugfs_name[4];
 
-		snम_लिखो(debugfs_name, 4, "qp%d", qp_num);
+		snprintf(debugfs_name, 4, "qp%d", qp_num);
 		qp->debugfs_dir = debugfs_create_dir(debugfs_name,
 						     nt->debugfs_node_dir);
 
 		qp->debugfs_stats = debugfs_create_file("stats", S_IRUSR,
 							qp->debugfs_dir, qp,
 							&ntb_qp_debugfs_stats);
-	पूर्ण अन्यथा अणु
-		qp->debugfs_dir = शून्य;
-		qp->debugfs_stats = शून्य;
-	पूर्ण
+	} else {
+		qp->debugfs_dir = NULL;
+		qp->debugfs_stats = NULL;
+	}
 
 	INIT_DELAYED_WORK(&qp->link_work, ntb_qp_link_work);
 	INIT_WORK(&qp->link_cleanup, ntb_qp_link_cleanup_work);
 
 	spin_lock_init(&qp->ntb_rx_q_lock);
-	spin_lock_init(&qp->ntb_tx_मुक्त_q_lock);
+	spin_lock_init(&qp->ntb_tx_free_q_lock);
 
 	INIT_LIST_HEAD(&qp->rx_post_q);
 	INIT_LIST_HEAD(&qp->rx_pend_q);
-	INIT_LIST_HEAD(&qp->rx_मुक्त_q);
-	INIT_LIST_HEAD(&qp->tx_मुक्त_q);
+	INIT_LIST_HEAD(&qp->rx_free_q);
+	INIT_LIST_HEAD(&qp->tx_free_q);
 
 	tasklet_init(&qp->rxc_db_work, ntb_transport_rxc_db,
-		     (अचिन्हित दीर्घ)qp);
+		     (unsigned long)qp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ntb_transport_probe(काष्ठा ntb_client *self, काष्ठा ntb_dev *ndev)
-अणु
-	काष्ठा ntb_transport_ctx *nt;
-	काष्ठा ntb_transport_mw *mw;
-	अचिन्हित पूर्णांक mw_count, qp_count, spad_count, max_mw_count_क्रम_spads;
-	u64 qp_biपंचांगap;
-	पूर्णांक node;
-	पूर्णांक rc, i;
+static int ntb_transport_probe(struct ntb_client *self, struct ntb_dev *ndev)
+{
+	struct ntb_transport_ctx *nt;
+	struct ntb_transport_mw *mw;
+	unsigned int mw_count, qp_count, spad_count, max_mw_count_for_spads;
+	u64 qp_bitmap;
+	int node;
+	int rc, i;
 
 	mw_count = ntb_peer_mw_count(ndev);
 
-	अगर (!ndev->ops->mw_set_trans) अणु
+	if (!ndev->ops->mw_set_trans) {
 		dev_err(&ndev->dev, "Inbound MW based NTB API is required\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ntb_db_is_unsafe(ndev))
+	if (ntb_db_is_unsafe(ndev))
 		dev_dbg(&ndev->dev,
 			"doorbell is unsafe, proceed anyway...\n");
-	अगर (ntb_spad_is_unsafe(ndev))
+	if (ntb_spad_is_unsafe(ndev))
 		dev_dbg(&ndev->dev,
 			"scratchpad is unsafe, proceed anyway...\n");
 
-	अगर (ntb_peer_port_count(ndev) != NTB_DEF_PEER_CNT)
+	if (ntb_peer_port_count(ndev) != NTB_DEF_PEER_CNT)
 		dev_warn(&ndev->dev, "Multi-port NTB devices unsupported\n");
 
 	node = dev_to_node(&ndev->dev);
 
-	nt = kzalloc_node(माप(*nt), GFP_KERNEL, node);
-	अगर (!nt)
-		वापस -ENOMEM;
+	nt = kzalloc_node(sizeof(*nt), GFP_KERNEL, node);
+	if (!nt)
+		return -ENOMEM;
 
 	nt->ndev = ndev;
 
 	/*
-	 * If we are using MSI, and have at least one extra memory winकरोw,
-	 * we will reserve the last MW क्रम the MSI winकरोw.
+	 * If we are using MSI, and have at least one extra memory window,
+	 * we will reserve the last MW for the MSI window.
 	 */
-	अगर (use_msi && mw_count > 1) अणु
+	if (use_msi && mw_count > 1) {
 		rc = ntb_msi_init(ndev, ntb_transport_msi_desc_changed);
-		अगर (!rc) अणु
+		if (!rc) {
 			mw_count -= 1;
 			nt->use_msi = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spad_count = ntb_spad_count(ndev);
 
 	/* Limit the MW's based on the availability of scratchpads */
 
-	अगर (spad_count < NTB_TRANSPORT_MIN_SPADS) अणु
+	if (spad_count < NTB_TRANSPORT_MIN_SPADS) {
 		nt->mw_count = 0;
 		rc = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	max_mw_count_क्रम_spads = (spad_count - MW0_SZ_HIGH) / 2;
-	nt->mw_count = min(mw_count, max_mw_count_क्रम_spads);
+	max_mw_count_for_spads = (spad_count - MW0_SZ_HIGH) / 2;
+	nt->mw_count = min(mw_count, max_mw_count_for_spads);
 
 	nt->msi_spad_offset = nt->mw_count * 2 + MW0_SZ_HIGH;
 
-	nt->mw_vec = kसुस्मृति_node(mw_count, माप(*nt->mw_vec),
+	nt->mw_vec = kcalloc_node(mw_count, sizeof(*nt->mw_vec),
 				  GFP_KERNEL, node);
-	अगर (!nt->mw_vec) अणु
+	if (!nt->mw_vec) {
 		rc = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < mw_count; i++) अणु
+	for (i = 0; i < mw_count; i++) {
 		mw = &nt->mw_vec[i];
 
 		rc = ntb_peer_mw_get_addr(ndev, i, &mw->phys_addr,
 					  &mw->phys_size);
-		अगर (rc)
-			जाओ err1;
+		if (rc)
+			goto err1;
 
 		mw->vbase = ioremap_wc(mw->phys_addr, mw->phys_size);
-		अगर (!mw->vbase) अणु
+		if (!mw->vbase) {
 			rc = -ENOMEM;
-			जाओ err1;
-		पूर्ण
+			goto err1;
+		}
 
 		mw->buff_size = 0;
 		mw->xlat_size = 0;
-		mw->virt_addr = शून्य;
+		mw->virt_addr = NULL;
 		mw->dma_addr = 0;
-	पूर्ण
+	}
 
-	qp_biपंचांगap = ntb_db_valid_mask(ndev);
+	qp_bitmap = ntb_db_valid_mask(ndev);
 
-	qp_count = ilog2(qp_biपंचांगap);
-	अगर (nt->use_msi) अणु
+	qp_count = ilog2(qp_bitmap);
+	if (nt->use_msi) {
 		qp_count -= 1;
 		nt->msi_db_mask = 1 << qp_count;
 		ntb_db_clear_mask(ndev, nt->msi_db_mask);
-	पूर्ण
+	}
 
-	अगर (max_num_clients && max_num_clients < qp_count)
+	if (max_num_clients && max_num_clients < qp_count)
 		qp_count = max_num_clients;
-	अन्यथा अगर (nt->mw_count < qp_count)
+	else if (nt->mw_count < qp_count)
 		qp_count = nt->mw_count;
 
-	qp_biपंचांगap &= BIT_ULL(qp_count) - 1;
+	qp_bitmap &= BIT_ULL(qp_count) - 1;
 
 	nt->qp_count = qp_count;
-	nt->qp_biपंचांगap = qp_biपंचांगap;
-	nt->qp_biपंचांगap_मुक्त = qp_biपंचांगap;
+	nt->qp_bitmap = qp_bitmap;
+	nt->qp_bitmap_free = qp_bitmap;
 
-	nt->qp_vec = kसुस्मृति_node(qp_count, माप(*nt->qp_vec),
+	nt->qp_vec = kcalloc_node(qp_count, sizeof(*nt->qp_vec),
 				  GFP_KERNEL, node);
-	अगर (!nt->qp_vec) अणु
+	if (!nt->qp_vec) {
 		rc = -ENOMEM;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (nt_debugfs_dir) अणु
+	if (nt_debugfs_dir) {
 		nt->debugfs_node_dir =
 			debugfs_create_dir(pci_name(ndev->pdev),
 					   nt_debugfs_dir);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < qp_count; i++) अणु
+	for (i = 0; i < qp_count; i++) {
 		rc = ntb_transport_init_queue(nt, i);
-		अगर (rc)
-			जाओ err2;
-	पूर्ण
+		if (rc)
+			goto err2;
+	}
 
 	INIT_DELAYED_WORK(&nt->link_work, ntb_transport_link_work);
 	INIT_WORK(&nt->link_cleanup, ntb_transport_link_cleanup_work);
 
 	rc = ntb_set_ctx(ndev, nt, &ntb_transport_ops);
-	अगर (rc)
-		जाओ err2;
+	if (rc)
+		goto err2;
 
 	INIT_LIST_HEAD(&nt->client_devs);
 	rc = ntb_bus_init(nt);
-	अगर (rc)
-		जाओ err3;
+	if (rc)
+		goto err3;
 
 	nt->link_is_up = false;
 	ntb_link_enable(ndev, NTB_SPEED_AUTO, NTB_WIDTH_AUTO);
 	ntb_link_event(ndev);
 
-	वापस 0;
+	return 0;
 
 err3:
 	ntb_clear_ctx(ndev);
 err2:
-	kमुक्त(nt->qp_vec);
+	kfree(nt->qp_vec);
 err1:
-	जबतक (i--) अणु
+	while (i--) {
 		mw = &nt->mw_vec[i];
 		iounmap(mw->vbase);
-	पूर्ण
-	kमुक्त(nt->mw_vec);
+	}
+	kfree(nt->mw_vec);
 err:
-	kमुक्त(nt);
-	वापस rc;
-पूर्ण
+	kfree(nt);
+	return rc;
+}
 
-अटल व्योम ntb_transport_मुक्त(काष्ठा ntb_client *self, काष्ठा ntb_dev *ndev)
-अणु
-	काष्ठा ntb_transport_ctx *nt = ndev->ctx;
-	काष्ठा ntb_transport_qp *qp;
-	u64 qp_biपंचांगap_alloc;
-	पूर्णांक i;
+static void ntb_transport_free(struct ntb_client *self, struct ntb_dev *ndev)
+{
+	struct ntb_transport_ctx *nt = ndev->ctx;
+	struct ntb_transport_qp *qp;
+	u64 qp_bitmap_alloc;
+	int i;
 
 	ntb_transport_link_cleanup(nt);
 	cancel_work_sync(&nt->link_cleanup);
 	cancel_delayed_work_sync(&nt->link_work);
 
-	qp_biपंचांगap_alloc = nt->qp_biपंचांगap & ~nt->qp_biपंचांगap_मुक्त;
+	qp_bitmap_alloc = nt->qp_bitmap & ~nt->qp_bitmap_free;
 
-	/* verअगरy that all the qp's are मुक्तd */
-	क्रम (i = 0; i < nt->qp_count; i++) अणु
+	/* verify that all the qp's are freed */
+	for (i = 0; i < nt->qp_count; i++) {
 		qp = &nt->qp_vec[i];
-		अगर (qp_biपंचांगap_alloc & BIT_ULL(i))
-			ntb_transport_मुक्त_queue(qp);
-		debugfs_हटाओ_recursive(qp->debugfs_dir);
-	पूर्ण
+		if (qp_bitmap_alloc & BIT_ULL(i))
+			ntb_transport_free_queue(qp);
+		debugfs_remove_recursive(qp->debugfs_dir);
+	}
 
 	ntb_link_disable(ndev);
 	ntb_clear_ctx(ndev);
 
-	ntb_bus_हटाओ(nt);
+	ntb_bus_remove(nt);
 
-	क्रम (i = nt->mw_count; i--; ) अणु
-		ntb_मुक्त_mw(nt, i);
+	for (i = nt->mw_count; i--; ) {
+		ntb_free_mw(nt, i);
 		iounmap(nt->mw_vec[i].vbase);
-	पूर्ण
+	}
 
-	kमुक्त(nt->qp_vec);
-	kमुक्त(nt->mw_vec);
-	kमुक्त(nt);
-पूर्ण
+	kfree(nt->qp_vec);
+	kfree(nt->mw_vec);
+	kfree(nt);
+}
 
-अटल व्योम ntb_complete_rxc(काष्ठा ntb_transport_qp *qp)
-अणु
-	काष्ठा ntb_queue_entry *entry;
-	व्योम *cb_data;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित दीर्घ irqflags;
+static void ntb_complete_rxc(struct ntb_transport_qp *qp)
+{
+	struct ntb_queue_entry *entry;
+	void *cb_data;
+	unsigned int len;
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&qp->ntb_rx_q_lock, irqflags);
 
-	जबतक (!list_empty(&qp->rx_post_q)) अणु
+	while (!list_empty(&qp->rx_post_q)) {
 		entry = list_first_entry(&qp->rx_post_q,
-					 काष्ठा ntb_queue_entry, entry);
-		अगर (!(entry->flags & DESC_DONE_FLAG))
-			अवरोध;
+					 struct ntb_queue_entry, entry);
+		if (!(entry->flags & DESC_DONE_FLAG))
+			break;
 
 		entry->rx_hdr->flags = 0;
-		ioग_लिखो32(entry->rx_index, &qp->rx_info->entry);
+		iowrite32(entry->rx_index, &qp->rx_info->entry);
 
 		cb_data = entry->cb_data;
 		len = entry->len;
 
-		list_move_tail(&entry->entry, &qp->rx_मुक्त_q);
+		list_move_tail(&entry->entry, &qp->rx_free_q);
 
 		spin_unlock_irqrestore(&qp->ntb_rx_q_lock, irqflags);
 
-		अगर (qp->rx_handler && qp->client_पढ़ोy)
+		if (qp->rx_handler && qp->client_ready)
 			qp->rx_handler(qp, qp->cb_data, cb_data, len);
 
 		spin_lock_irqsave(&qp->ntb_rx_q_lock, irqflags);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->ntb_rx_q_lock, irqflags);
-पूर्ण
+}
 
-अटल व्योम ntb_rx_copy_callback(व्योम *data,
-				 स्थिर काष्ठा dmaengine_result *res)
-अणु
-	काष्ठा ntb_queue_entry *entry = data;
+static void ntb_rx_copy_callback(void *data,
+				 const struct dmaengine_result *res)
+{
+	struct ntb_queue_entry *entry = data;
 
-	/* we need to check DMA results अगर we are using DMA */
-	अगर (res) अणु
-		क्रमागत dmaengine_tx_result dma_err = res->result;
+	/* we need to check DMA results if we are using DMA */
+	if (res) {
+		enum dmaengine_tx_result dma_err = res->result;
 
-		चयन (dma_err) अणु
-		हाल DMA_TRANS_READ_FAILED:
-		हाल DMA_TRANS_WRITE_FAILED:
+		switch (dma_err) {
+		case DMA_TRANS_READ_FAILED:
+		case DMA_TRANS_WRITE_FAILED:
 			entry->errors++;
 			fallthrough;
-		हाल DMA_TRANS_ABORTED:
-		अणु
-			काष्ठा ntb_transport_qp *qp = entry->qp;
-			व्योम *offset = qp->rx_buff + qp->rx_max_frame *
+		case DMA_TRANS_ABORTED:
+		{
+			struct ntb_transport_qp *qp = entry->qp;
+			void *offset = qp->rx_buff + qp->rx_max_frame *
 					qp->rx_index;
 
-			ntb_स_नकल_rx(entry, offset);
-			qp->rx_स_नकल++;
-			वापस;
-		पूर्ण
+			ntb_memcpy_rx(entry, offset);
+			qp->rx_memcpy++;
+			return;
+		}
 
-		हाल DMA_TRANS_NOERROR:
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		case DMA_TRANS_NOERROR:
+		default:
+			break;
+		}
+	}
 
 	entry->flags |= DESC_DONE_FLAG;
 
 	ntb_complete_rxc(entry->qp);
-पूर्ण
+}
 
-अटल व्योम ntb_स_नकल_rx(काष्ठा ntb_queue_entry *entry, व्योम *offset)
-अणु
-	व्योम *buf = entry->buf;
-	माप_प्रकार len = entry->len;
+static void ntb_memcpy_rx(struct ntb_queue_entry *entry, void *offset)
+{
+	void *buf = entry->buf;
+	size_t len = entry->len;
 
-	स_नकल(buf, offset, len);
+	memcpy(buf, offset, len);
 
-	/* Ensure that the data is fully copied out beक्रमe clearing the flag */
+	/* Ensure that the data is fully copied out before clearing the flag */
 	wmb();
 
-	ntb_rx_copy_callback(entry, शून्य);
-पूर्ण
+	ntb_rx_copy_callback(entry, NULL);
+}
 
-अटल पूर्णांक ntb_async_rx_submit(काष्ठा ntb_queue_entry *entry, व्योम *offset)
-अणु
-	काष्ठा dma_async_tx_descriptor *txd;
-	काष्ठा ntb_transport_qp *qp = entry->qp;
-	काष्ठा dma_chan *chan = qp->rx_dma_chan;
-	काष्ठा dma_device *device;
-	माप_प्रकार pay_off, buff_off, len;
-	काष्ठा dmaengine_unmap_data *unmap;
+static int ntb_async_rx_submit(struct ntb_queue_entry *entry, void *offset)
+{
+	struct dma_async_tx_descriptor *txd;
+	struct ntb_transport_qp *qp = entry->qp;
+	struct dma_chan *chan = qp->rx_dma_chan;
+	struct dma_device *device;
+	size_t pay_off, buff_off, len;
+	struct dmaengine_unmap_data *unmap;
 	dma_cookie_t cookie;
-	व्योम *buf = entry->buf;
+	void *buf = entry->buf;
 
 	len = entry->len;
 	device = chan->device;
-	pay_off = (माप_प्रकार)offset & ~PAGE_MASK;
-	buff_off = (माप_प्रकार)buf & ~PAGE_MASK;
+	pay_off = (size_t)offset & ~PAGE_MASK;
+	buff_off = (size_t)buf & ~PAGE_MASK;
 
-	अगर (!is_dma_copy_aligned(device, pay_off, buff_off, len))
-		जाओ err;
+	if (!is_dma_copy_aligned(device, pay_off, buff_off, len))
+		goto err;
 
 	unmap = dmaengine_get_unmap_data(device->dev, 2, GFP_NOWAIT);
-	अगर (!unmap)
-		जाओ err;
+	if (!unmap)
+		goto err;
 
 	unmap->len = len;
 	unmap->addr[0] = dma_map_page(device->dev, virt_to_page(offset),
 				      pay_off, len, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(device->dev, unmap->addr[0]))
-		जाओ err_get_unmap;
+	if (dma_mapping_error(device->dev, unmap->addr[0]))
+		goto err_get_unmap;
 
 	unmap->to_cnt = 1;
 
 	unmap->addr[1] = dma_map_page(device->dev, virt_to_page(buf),
 				      buff_off, len, DMA_FROM_DEVICE);
-	अगर (dma_mapping_error(device->dev, unmap->addr[1]))
-		जाओ err_get_unmap;
+	if (dma_mapping_error(device->dev, unmap->addr[1]))
+		goto err_get_unmap;
 
 	unmap->from_cnt = 1;
 
-	txd = device->device_prep_dma_स_नकल(chan, unmap->addr[1],
+	txd = device->device_prep_dma_memcpy(chan, unmap->addr[1],
 					     unmap->addr[0], len,
 					     DMA_PREP_INTERRUPT);
-	अगर (!txd)
-		जाओ err_get_unmap;
+	if (!txd)
+		goto err_get_unmap;
 
 	txd->callback_result = ntb_rx_copy_callback;
 	txd->callback_param = entry;
 	dma_set_unmap(txd, unmap);
 
 	cookie = dmaengine_submit(txd);
-	अगर (dma_submit_error(cookie))
-		जाओ err_set_unmap;
+	if (dma_submit_error(cookie))
+		goto err_set_unmap;
 
 	dmaengine_unmap_put(unmap);
 
@@ -1578,86 +1577,86 @@ err:
 
 	qp->rx_async++;
 
-	वापस 0;
+	return 0;
 
 err_set_unmap:
 	dmaengine_unmap_put(unmap);
 err_get_unmap:
 	dmaengine_unmap_put(unmap);
 err:
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-अटल व्योम ntb_async_rx(काष्ठा ntb_queue_entry *entry, व्योम *offset)
-अणु
-	काष्ठा ntb_transport_qp *qp = entry->qp;
-	काष्ठा dma_chan *chan = qp->rx_dma_chan;
-	पूर्णांक res;
+static void ntb_async_rx(struct ntb_queue_entry *entry, void *offset)
+{
+	struct ntb_transport_qp *qp = entry->qp;
+	struct dma_chan *chan = qp->rx_dma_chan;
+	int res;
 
-	अगर (!chan)
-		जाओ err;
+	if (!chan)
+		goto err;
 
-	अगर (entry->len < copy_bytes)
-		जाओ err;
+	if (entry->len < copy_bytes)
+		goto err;
 
 	res = ntb_async_rx_submit(entry, offset);
-	अगर (res < 0)
-		जाओ err;
+	if (res < 0)
+		goto err;
 
-	अगर (!entry->retries)
+	if (!entry->retries)
 		qp->rx_async++;
 
-	वापस;
+	return;
 
 err:
-	ntb_स_नकल_rx(entry, offset);
-	qp->rx_स_नकल++;
-पूर्ण
+	ntb_memcpy_rx(entry, offset);
+	qp->rx_memcpy++;
+}
 
-अटल पूर्णांक ntb_process_rxc(काष्ठा ntb_transport_qp *qp)
-अणु
-	काष्ठा ntb_payload_header *hdr;
-	काष्ठा ntb_queue_entry *entry;
-	व्योम *offset;
+static int ntb_process_rxc(struct ntb_transport_qp *qp)
+{
+	struct ntb_payload_header *hdr;
+	struct ntb_queue_entry *entry;
+	void *offset;
 
 	offset = qp->rx_buff + qp->rx_max_frame * qp->rx_index;
-	hdr = offset + qp->rx_max_frame - माप(काष्ठा ntb_payload_header);
+	hdr = offset + qp->rx_max_frame - sizeof(struct ntb_payload_header);
 
 	dev_dbg(&qp->ndev->pdev->dev, "qp %d: RX ver %u len %d flags %x\n",
 		qp->qp_num, hdr->ver, hdr->len, hdr->flags);
 
-	अगर (!(hdr->flags & DESC_DONE_FLAG)) अणु
+	if (!(hdr->flags & DESC_DONE_FLAG)) {
 		dev_dbg(&qp->ndev->pdev->dev, "done flag not set\n");
 		qp->rx_ring_empty++;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (hdr->flags & LINK_DOWN_FLAG) अणु
+	if (hdr->flags & LINK_DOWN_FLAG) {
 		dev_dbg(&qp->ndev->pdev->dev, "link down flag set\n");
-		ntb_qp_link_करोwn(qp);
+		ntb_qp_link_down(qp);
 		hdr->flags = 0;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (hdr->ver != (u32)qp->rx_pkts) अणु
+	if (hdr->ver != (u32)qp->rx_pkts) {
 		dev_dbg(&qp->ndev->pdev->dev,
 			"version mismatch, expected %llu - got %u\n",
 			qp->rx_pkts, hdr->ver);
 		qp->rx_err_ver++;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	entry = ntb_list_mv(&qp->ntb_rx_q_lock, &qp->rx_pend_q, &qp->rx_post_q);
-	अगर (!entry) अणु
+	if (!entry) {
 		dev_dbg(&qp->ndev->pdev->dev, "no receive buffer\n");
 		qp->rx_err_no_buf++;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	entry->rx_hdr = hdr;
 	entry->rx_index = qp->rx_index;
 
-	अगर (hdr->len > entry->len) अणु
+	if (hdr->len > entry->len) {
 		dev_dbg(&qp->ndev->pdev->dev,
 			"receive buffer overflow! Wanted %d got %d\n",
 			hdr->len, entry->len);
@@ -1667,7 +1666,7 @@ err:
 		entry->flags |= DESC_DONE_FLAG;
 
 		ntb_complete_rxc(qp);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(&qp->ndev->pdev->dev,
 			"RX OK index %u ver %u size %d into buf size %d\n",
 			qp->rx_index, hdr->ver, hdr->len, entry->len);
@@ -1678,238 +1677,238 @@ err:
 		entry->len = hdr->len;
 
 		ntb_async_rx(entry, offset);
-	पूर्ण
+	}
 
 	qp->rx_index++;
 	qp->rx_index %= qp->rx_max_entry;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ntb_transport_rxc_db(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा ntb_transport_qp *qp = (व्योम *)data;
-	पूर्णांक rc, i;
+static void ntb_transport_rxc_db(unsigned long data)
+{
+	struct ntb_transport_qp *qp = (void *)data;
+	int rc, i;
 
 	dev_dbg(&qp->ndev->pdev->dev, "%s: doorbell %d received\n",
 		__func__, qp->qp_num);
 
-	/* Limit the number of packets processed in a single पूर्णांकerrupt to
+	/* Limit the number of packets processed in a single interrupt to
 	 * provide fairness to others
 	 */
-	क्रम (i = 0; i < qp->rx_max_entry; i++) अणु
+	for (i = 0; i < qp->rx_max_entry; i++) {
 		rc = ntb_process_rxc(qp);
-		अगर (rc)
-			अवरोध;
-	पूर्ण
+		if (rc)
+			break;
+	}
 
-	अगर (i && qp->rx_dma_chan)
+	if (i && qp->rx_dma_chan)
 		dma_async_issue_pending(qp->rx_dma_chan);
 
-	अगर (i == qp->rx_max_entry) अणु
-		/* there is more work to करो */
-		अगर (qp->active)
+	if (i == qp->rx_max_entry) {
+		/* there is more work to do */
+		if (qp->active)
 			tasklet_schedule(&qp->rxc_db_work);
-	पूर्ण अन्यथा अगर (ntb_db_पढ़ो(qp->ndev) & BIT_ULL(qp->qp_num)) अणु
-		/* the करोorbell bit is set: clear it */
+	} else if (ntb_db_read(qp->ndev) & BIT_ULL(qp->qp_num)) {
+		/* the doorbell bit is set: clear it */
 		ntb_db_clear(qp->ndev, BIT_ULL(qp->qp_num));
-		/* ntb_db_पढ़ो ensures ntb_db_clear ग_लिखो is committed */
-		ntb_db_पढ़ो(qp->ndev);
+		/* ntb_db_read ensures ntb_db_clear write is committed */
+		ntb_db_read(qp->ndev);
 
-		/* an पूर्णांकerrupt may have arrived between finishing
-		 * ntb_process_rxc and clearing the करोorbell bit:
-		 * there might be some more work to करो.
+		/* an interrupt may have arrived between finishing
+		 * ntb_process_rxc and clearing the doorbell bit:
+		 * there might be some more work to do.
 		 */
-		अगर (qp->active)
+		if (qp->active)
 			tasklet_schedule(&qp->rxc_db_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ntb_tx_copy_callback(व्योम *data,
-				 स्थिर काष्ठा dmaengine_result *res)
-अणु
-	काष्ठा ntb_queue_entry *entry = data;
-	काष्ठा ntb_transport_qp *qp = entry->qp;
-	काष्ठा ntb_payload_header __iomem *hdr = entry->tx_hdr;
+static void ntb_tx_copy_callback(void *data,
+				 const struct dmaengine_result *res)
+{
+	struct ntb_queue_entry *entry = data;
+	struct ntb_transport_qp *qp = entry->qp;
+	struct ntb_payload_header __iomem *hdr = entry->tx_hdr;
 
-	/* we need to check DMA results अगर we are using DMA */
-	अगर (res) अणु
-		क्रमागत dmaengine_tx_result dma_err = res->result;
+	/* we need to check DMA results if we are using DMA */
+	if (res) {
+		enum dmaengine_tx_result dma_err = res->result;
 
-		चयन (dma_err) अणु
-		हाल DMA_TRANS_READ_FAILED:
-		हाल DMA_TRANS_WRITE_FAILED:
+		switch (dma_err) {
+		case DMA_TRANS_READ_FAILED:
+		case DMA_TRANS_WRITE_FAILED:
 			entry->errors++;
 			fallthrough;
-		हाल DMA_TRANS_ABORTED:
-		अणु
-			व्योम __iomem *offset =
+		case DMA_TRANS_ABORTED:
+		{
+			void __iomem *offset =
 				qp->tx_mw + qp->tx_max_frame *
 				entry->tx_index;
 
 			/* resubmit via CPU */
-			ntb_स_नकल_tx(entry, offset);
-			qp->tx_स_नकल++;
-			वापस;
-		पूर्ण
+			ntb_memcpy_tx(entry, offset);
+			qp->tx_memcpy++;
+			return;
+		}
 
-		हाल DMA_TRANS_NOERROR:
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		case DMA_TRANS_NOERROR:
+		default:
+			break;
+		}
+	}
 
-	ioग_लिखो32(entry->flags | DESC_DONE_FLAG, &hdr->flags);
+	iowrite32(entry->flags | DESC_DONE_FLAG, &hdr->flags);
 
-	अगर (qp->use_msi)
+	if (qp->use_msi)
 		ntb_msi_peer_trigger(qp->ndev, PIDX, &qp->peer_msi_desc);
-	अन्यथा
+	else
 		ntb_peer_db_set(qp->ndev, BIT_ULL(qp->qp_num));
 
-	/* The entry length can only be zero अगर the packet is पूर्णांकended to be a
+	/* The entry length can only be zero if the packet is intended to be a
 	 * "link down" or similar.  Since no payload is being sent in these
-	 * हालs, there is nothing to add to the completion queue.
+	 * cases, there is nothing to add to the completion queue.
 	 */
-	अगर (entry->len > 0) अणु
+	if (entry->len > 0) {
 		qp->tx_bytes += entry->len;
 
-		अगर (qp->tx_handler)
+		if (qp->tx_handler)
 			qp->tx_handler(qp, qp->cb_data, entry->cb_data,
 				       entry->len);
-	पूर्ण
+	}
 
-	ntb_list_add(&qp->ntb_tx_मुक्त_q_lock, &entry->entry, &qp->tx_मुक्त_q);
-पूर्ण
+	ntb_list_add(&qp->ntb_tx_free_q_lock, &entry->entry, &qp->tx_free_q);
+}
 
-अटल व्योम ntb_स_नकल_tx(काष्ठा ntb_queue_entry *entry, व्योम __iomem *offset)
-अणु
-#अगर_घोषित ARCH_HAS_NOCACHE_UACCESS
+static void ntb_memcpy_tx(struct ntb_queue_entry *entry, void __iomem *offset)
+{
+#ifdef ARCH_HAS_NOCACHE_UACCESS
 	/*
-	 * Using non-temporal mov to improve perक्रमmance on non-cached
-	 * ग_लिखोs, even though we aren't actually copying from user space.
+	 * Using non-temporal mov to improve performance on non-cached
+	 * writes, even though we aren't actually copying from user space.
 	 */
 	__copy_from_user_inatomic_nocache(offset, entry->buf, entry->len);
-#अन्यथा
-	स_नकल_toio(offset, entry->buf, entry->len);
-#पूर्ण_अगर
+#else
+	memcpy_toio(offset, entry->buf, entry->len);
+#endif
 
-	/* Ensure that the data is fully copied out beक्रमe setting the flags */
+	/* Ensure that the data is fully copied out before setting the flags */
 	wmb();
 
-	ntb_tx_copy_callback(entry, शून्य);
-पूर्ण
+	ntb_tx_copy_callback(entry, NULL);
+}
 
-अटल पूर्णांक ntb_async_tx_submit(काष्ठा ntb_transport_qp *qp,
-			       काष्ठा ntb_queue_entry *entry)
-अणु
-	काष्ठा dma_async_tx_descriptor *txd;
-	काष्ठा dma_chan *chan = qp->tx_dma_chan;
-	काष्ठा dma_device *device;
-	माप_प्रकार len = entry->len;
-	व्योम *buf = entry->buf;
-	माप_प्रकार dest_off, buff_off;
-	काष्ठा dmaengine_unmap_data *unmap;
+static int ntb_async_tx_submit(struct ntb_transport_qp *qp,
+			       struct ntb_queue_entry *entry)
+{
+	struct dma_async_tx_descriptor *txd;
+	struct dma_chan *chan = qp->tx_dma_chan;
+	struct dma_device *device;
+	size_t len = entry->len;
+	void *buf = entry->buf;
+	size_t dest_off, buff_off;
+	struct dmaengine_unmap_data *unmap;
 	dma_addr_t dest;
 	dma_cookie_t cookie;
 
 	device = chan->device;
 	dest = qp->tx_mw_dma_addr + qp->tx_max_frame * entry->tx_index;
-	buff_off = (माप_प्रकार)buf & ~PAGE_MASK;
-	dest_off = (माप_प्रकार)dest & ~PAGE_MASK;
+	buff_off = (size_t)buf & ~PAGE_MASK;
+	dest_off = (size_t)dest & ~PAGE_MASK;
 
-	अगर (!is_dma_copy_aligned(device, buff_off, dest_off, len))
-		जाओ err;
+	if (!is_dma_copy_aligned(device, buff_off, dest_off, len))
+		goto err;
 
 	unmap = dmaengine_get_unmap_data(device->dev, 1, GFP_NOWAIT);
-	अगर (!unmap)
-		जाओ err;
+	if (!unmap)
+		goto err;
 
 	unmap->len = len;
 	unmap->addr[0] = dma_map_page(device->dev, virt_to_page(buf),
 				      buff_off, len, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(device->dev, unmap->addr[0]))
-		जाओ err_get_unmap;
+	if (dma_mapping_error(device->dev, unmap->addr[0]))
+		goto err_get_unmap;
 
 	unmap->to_cnt = 1;
 
-	txd = device->device_prep_dma_स_नकल(chan, dest, unmap->addr[0], len,
+	txd = device->device_prep_dma_memcpy(chan, dest, unmap->addr[0], len,
 					     DMA_PREP_INTERRUPT);
-	अगर (!txd)
-		जाओ err_get_unmap;
+	if (!txd)
+		goto err_get_unmap;
 
 	txd->callback_result = ntb_tx_copy_callback;
 	txd->callback_param = entry;
 	dma_set_unmap(txd, unmap);
 
 	cookie = dmaengine_submit(txd);
-	अगर (dma_submit_error(cookie))
-		जाओ err_set_unmap;
+	if (dma_submit_error(cookie))
+		goto err_set_unmap;
 
 	dmaengine_unmap_put(unmap);
 
 	dma_async_issue_pending(chan);
 
-	वापस 0;
+	return 0;
 err_set_unmap:
 	dmaengine_unmap_put(unmap);
 err_get_unmap:
 	dmaengine_unmap_put(unmap);
 err:
-	वापस -ENXIO;
-पूर्ण
+	return -ENXIO;
+}
 
-अटल व्योम ntb_async_tx(काष्ठा ntb_transport_qp *qp,
-			 काष्ठा ntb_queue_entry *entry)
-अणु
-	काष्ठा ntb_payload_header __iomem *hdr;
-	काष्ठा dma_chan *chan = qp->tx_dma_chan;
-	व्योम __iomem *offset;
-	पूर्णांक res;
+static void ntb_async_tx(struct ntb_transport_qp *qp,
+			 struct ntb_queue_entry *entry)
+{
+	struct ntb_payload_header __iomem *hdr;
+	struct dma_chan *chan = qp->tx_dma_chan;
+	void __iomem *offset;
+	int res;
 
 	entry->tx_index = qp->tx_index;
 	offset = qp->tx_mw + qp->tx_max_frame * entry->tx_index;
-	hdr = offset + qp->tx_max_frame - माप(काष्ठा ntb_payload_header);
+	hdr = offset + qp->tx_max_frame - sizeof(struct ntb_payload_header);
 	entry->tx_hdr = hdr;
 
-	ioग_लिखो32(entry->len, &hdr->len);
-	ioग_लिखो32((u32)qp->tx_pkts, &hdr->ver);
+	iowrite32(entry->len, &hdr->len);
+	iowrite32((u32)qp->tx_pkts, &hdr->ver);
 
-	अगर (!chan)
-		जाओ err;
+	if (!chan)
+		goto err;
 
-	अगर (entry->len < copy_bytes)
-		जाओ err;
+	if (entry->len < copy_bytes)
+		goto err;
 
 	res = ntb_async_tx_submit(qp, entry);
-	अगर (res < 0)
-		जाओ err;
+	if (res < 0)
+		goto err;
 
-	अगर (!entry->retries)
+	if (!entry->retries)
 		qp->tx_async++;
 
-	वापस;
+	return;
 
 err:
-	ntb_स_नकल_tx(entry, offset);
-	qp->tx_स_नकल++;
-पूर्ण
+	ntb_memcpy_tx(entry, offset);
+	qp->tx_memcpy++;
+}
 
-अटल पूर्णांक ntb_process_tx(काष्ठा ntb_transport_qp *qp,
-			  काष्ठा ntb_queue_entry *entry)
-अणु
-	अगर (qp->tx_index == qp->remote_rx_info->entry) अणु
+static int ntb_process_tx(struct ntb_transport_qp *qp,
+			  struct ntb_queue_entry *entry)
+{
+	if (qp->tx_index == qp->remote_rx_info->entry) {
 		qp->tx_ring_full++;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (entry->len > qp->tx_max_frame - माप(काष्ठा ntb_payload_header)) अणु
-		अगर (qp->tx_handler)
-			qp->tx_handler(qp, qp->cb_data, शून्य, -EIO);
+	if (entry->len > qp->tx_max_frame - sizeof(struct ntb_payload_header)) {
+		if (qp->tx_handler)
+			qp->tx_handler(qp, qp->cb_data, NULL, -EIO);
 
-		ntb_list_add(&qp->ntb_tx_मुक्त_q_lock, &entry->entry,
-			     &qp->tx_मुक्त_q);
-		वापस 0;
-	पूर्ण
+		ntb_list_add(&qp->ntb_tx_free_q_lock, &entry->entry,
+			     &qp->tx_free_q);
+		return 0;
+	}
 
 	ntb_async_tx(qp, entry);
 
@@ -1918,47 +1917,47 @@ err:
 
 	qp->tx_pkts++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ntb_send_link_करोwn(काष्ठा ntb_transport_qp *qp)
-अणु
-	काष्ठा pci_dev *pdev = qp->ndev->pdev;
-	काष्ठा ntb_queue_entry *entry;
-	पूर्णांक i, rc;
+static void ntb_send_link_down(struct ntb_transport_qp *qp)
+{
+	struct pci_dev *pdev = qp->ndev->pdev;
+	struct ntb_queue_entry *entry;
+	int i, rc;
 
-	अगर (!qp->link_is_up)
-		वापस;
+	if (!qp->link_is_up)
+		return;
 
 	dev_info(&pdev->dev, "qp %d: Send Link Down\n", qp->qp_num);
 
-	क्रम (i = 0; i < NTB_LINK_DOWN_TIMEOUT; i++) अणु
-		entry = ntb_list_rm(&qp->ntb_tx_मुक्त_q_lock, &qp->tx_मुक्त_q);
-		अगर (entry)
-			अवरोध;
+	for (i = 0; i < NTB_LINK_DOWN_TIMEOUT; i++) {
+		entry = ntb_list_rm(&qp->ntb_tx_free_q_lock, &qp->tx_free_q);
+		if (entry)
+			break;
 		msleep(100);
-	पूर्ण
+	}
 
-	अगर (!entry)
-		वापस;
+	if (!entry)
+		return;
 
-	entry->cb_data = शून्य;
-	entry->buf = शून्य;
+	entry->cb_data = NULL;
+	entry->buf = NULL;
 	entry->len = 0;
 	entry->flags = LINK_DOWN_FLAG;
 
 	rc = ntb_process_tx(qp, entry);
-	अगर (rc)
+	if (rc)
 		dev_err(&pdev->dev, "ntb: QP%d unable to send linkdown msg\n",
 			qp->qp_num);
 
-	ntb_qp_link_करोwn_reset(qp);
-पूर्ण
+	ntb_qp_link_down_reset(qp);
+}
 
-अटल bool ntb_dma_filter_fn(काष्ठा dma_chan *chan, व्योम *node)
-अणु
-	वापस dev_to_node(&chan->dev->device) == (पूर्णांक)(अचिन्हित दीर्घ)node;
-पूर्ण
+static bool ntb_dma_filter_fn(struct dma_chan *chan, void *node)
+{
+	return dev_to_node(&chan->dev->device) == (int)(unsigned long)node;
+}
 
 /**
  * ntb_transport_create_queue - Create a new NTB transport layer queue
@@ -1967,27 +1966,27 @@ err:
  * @event_handler: event callback function
  *
  * Create a new NTB transport layer queue and provide the queue with a callback
- * routine क्रम both transmit and receive.  The receive callback routine will be
+ * routine for both transmit and receive.  The receive callback routine will be
  * used to pass up data when the transport has received it on the queue.   The
  * transmit callback routine will be called when the transport has completed the
- * transmission of the data on the queue and the data is पढ़ोy to be मुक्तd.
+ * transmission of the data on the queue and the data is ready to be freed.
  *
- * RETURNS: poपूर्णांकer to newly created ntb_queue, शून्य on error.
+ * RETURNS: pointer to newly created ntb_queue, NULL on error.
  */
-काष्ठा ntb_transport_qp *
-ntb_transport_create_queue(व्योम *data, काष्ठा device *client_dev,
-			   स्थिर काष्ठा ntb_queue_handlers *handlers)
-अणु
-	काष्ठा ntb_dev *ndev;
-	काष्ठा pci_dev *pdev;
-	काष्ठा ntb_transport_ctx *nt;
-	काष्ठा ntb_queue_entry *entry;
-	काष्ठा ntb_transport_qp *qp;
+struct ntb_transport_qp *
+ntb_transport_create_queue(void *data, struct device *client_dev,
+			   const struct ntb_queue_handlers *handlers)
+{
+	struct ntb_dev *ndev;
+	struct pci_dev *pdev;
+	struct ntb_transport_ctx *nt;
+	struct ntb_queue_entry *entry;
+	struct ntb_transport_qp *qp;
 	u64 qp_bit;
-	अचिन्हित पूर्णांक मुक्त_queue;
+	unsigned int free_queue;
 	dma_cap_mask_t dma_mask;
-	पूर्णांक node;
-	पूर्णांक i;
+	int node;
+	int i;
 
 	ndev = dev_ntb(client_dev->parent);
 	pdev = ndev->pdev;
@@ -1995,17 +1994,17 @@ ntb_transport_create_queue(व्योम *data, काष्ठा device *cli
 
 	node = dev_to_node(&ndev->dev);
 
-	मुक्त_queue = ffs(nt->qp_biपंचांगap_मुक्त);
-	अगर (!मुक्त_queue)
-		जाओ err;
+	free_queue = ffs(nt->qp_bitmap_free);
+	if (!free_queue)
+		goto err;
 
-	/* decrement मुक्त_queue to make it zero based */
-	मुक्त_queue--;
+	/* decrement free_queue to make it zero based */
+	free_queue--;
 
-	qp = &nt->qp_vec[मुक्त_queue];
+	qp = &nt->qp_vec[free_queue];
 	qp_bit = BIT_ULL(qp->qp_num);
 
-	nt->qp_biपंचांगap_मुक्त &= ~qp_bit;
+	nt->qp_bitmap_free &= ~qp_bit;
 
 	qp->cb_data = data;
 	qp->rx_handler = handlers->rx_handler;
@@ -2015,35 +2014,35 @@ ntb_transport_create_queue(व्योम *data, काष्ठा device *cli
 	dma_cap_zero(dma_mask);
 	dma_cap_set(DMA_MEMCPY, dma_mask);
 
-	अगर (use_dma) अणु
+	if (use_dma) {
 		qp->tx_dma_chan =
 			dma_request_channel(dma_mask, ntb_dma_filter_fn,
-					    (व्योम *)(अचिन्हित दीर्घ)node);
-		अगर (!qp->tx_dma_chan)
+					    (void *)(unsigned long)node);
+		if (!qp->tx_dma_chan)
 			dev_info(&pdev->dev, "Unable to allocate TX DMA channel\n");
 
 		qp->rx_dma_chan =
 			dma_request_channel(dma_mask, ntb_dma_filter_fn,
-					    (व्योम *)(अचिन्हित दीर्घ)node);
-		अगर (!qp->rx_dma_chan)
+					    (void *)(unsigned long)node);
+		if (!qp->rx_dma_chan)
 			dev_info(&pdev->dev, "Unable to allocate RX DMA channel\n");
-	पूर्ण अन्यथा अणु
-		qp->tx_dma_chan = शून्य;
-		qp->rx_dma_chan = शून्य;
-	पूर्ण
+	} else {
+		qp->tx_dma_chan = NULL;
+		qp->rx_dma_chan = NULL;
+	}
 
 	qp->tx_mw_dma_addr = 0;
-	अगर (qp->tx_dma_chan) अणु
+	if (qp->tx_dma_chan) {
 		qp->tx_mw_dma_addr =
 			dma_map_resource(qp->tx_dma_chan->device->dev,
 					 qp->tx_mw_phys, qp->tx_mw_size,
 					 DMA_FROM_DEVICE, 0);
-		अगर (dma_mapping_error(qp->tx_dma_chan->device->dev,
-				      qp->tx_mw_dma_addr)) अणु
+		if (dma_mapping_error(qp->tx_dma_chan->device->dev,
+				      qp->tx_mw_dma_addr)) {
 			qp->tx_mw_dma_addr = 0;
-			जाओ err1;
-		पूर्ण
-	पूर्ण
+			goto err1;
+		}
+	}
 
 	dev_dbg(&pdev->dev, "Using %s memcpy for TX\n",
 		qp->tx_dma_chan ? "DMA" : "CPU");
@@ -2051,85 +2050,85 @@ ntb_transport_create_queue(व्योम *data, काष्ठा device *cli
 	dev_dbg(&pdev->dev, "Using %s memcpy for RX\n",
 		qp->rx_dma_chan ? "DMA" : "CPU");
 
-	क्रम (i = 0; i < NTB_QP_DEF_NUM_ENTRIES; i++) अणु
-		entry = kzalloc_node(माप(*entry), GFP_KERNEL, node);
-		अगर (!entry)
-			जाओ err1;
+	for (i = 0; i < NTB_QP_DEF_NUM_ENTRIES; i++) {
+		entry = kzalloc_node(sizeof(*entry), GFP_KERNEL, node);
+		if (!entry)
+			goto err1;
 
 		entry->qp = qp;
 		ntb_list_add(&qp->ntb_rx_q_lock, &entry->entry,
-			     &qp->rx_मुक्त_q);
-	पूर्ण
+			     &qp->rx_free_q);
+	}
 	qp->rx_alloc_entry = NTB_QP_DEF_NUM_ENTRIES;
 
-	क्रम (i = 0; i < qp->tx_max_entry; i++) अणु
-		entry = kzalloc_node(माप(*entry), GFP_KERNEL, node);
-		अगर (!entry)
-			जाओ err2;
+	for (i = 0; i < qp->tx_max_entry; i++) {
+		entry = kzalloc_node(sizeof(*entry), GFP_KERNEL, node);
+		if (!entry)
+			goto err2;
 
 		entry->qp = qp;
-		ntb_list_add(&qp->ntb_tx_मुक्त_q_lock, &entry->entry,
-			     &qp->tx_मुक्त_q);
-	पूर्ण
+		ntb_list_add(&qp->ntb_tx_free_q_lock, &entry->entry,
+			     &qp->tx_free_q);
+	}
 
 	ntb_db_clear(qp->ndev, qp_bit);
 	ntb_db_clear_mask(qp->ndev, qp_bit);
 
 	dev_info(&pdev->dev, "NTB Transport QP %d created\n", qp->qp_num);
 
-	वापस qp;
+	return qp;
 
 err2:
-	जबतक ((entry = ntb_list_rm(&qp->ntb_tx_मुक्त_q_lock, &qp->tx_मुक्त_q)))
-		kमुक्त(entry);
+	while ((entry = ntb_list_rm(&qp->ntb_tx_free_q_lock, &qp->tx_free_q)))
+		kfree(entry);
 err1:
 	qp->rx_alloc_entry = 0;
-	जबतक ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_मुक्त_q)))
-		kमुक्त(entry);
-	अगर (qp->tx_mw_dma_addr)
+	while ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_free_q)))
+		kfree(entry);
+	if (qp->tx_mw_dma_addr)
 		dma_unmap_resource(qp->tx_dma_chan->device->dev,
 				   qp->tx_mw_dma_addr, qp->tx_mw_size,
 				   DMA_FROM_DEVICE, 0);
-	अगर (qp->tx_dma_chan)
+	if (qp->tx_dma_chan)
 		dma_release_channel(qp->tx_dma_chan);
-	अगर (qp->rx_dma_chan)
+	if (qp->rx_dma_chan)
 		dma_release_channel(qp->rx_dma_chan);
-	nt->qp_biपंचांगap_मुक्त |= qp_bit;
+	nt->qp_bitmap_free |= qp_bit;
 err:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_create_queue);
 
 /**
- * ntb_transport_मुक्त_queue - Frees NTB transport queue
- * @qp: NTB queue to be मुक्तd
+ * ntb_transport_free_queue - Frees NTB transport queue
+ * @qp: NTB queue to be freed
  *
  * Frees NTB transport queue
  */
-व्योम ntb_transport_मुक्त_queue(काष्ठा ntb_transport_qp *qp)
-अणु
-	काष्ठा pci_dev *pdev;
-	काष्ठा ntb_queue_entry *entry;
+void ntb_transport_free_queue(struct ntb_transport_qp *qp)
+{
+	struct pci_dev *pdev;
+	struct ntb_queue_entry *entry;
 	u64 qp_bit;
 
-	अगर (!qp)
-		वापस;
+	if (!qp)
+		return;
 
 	pdev = qp->ndev->pdev;
 
 	qp->active = false;
 
-	अगर (qp->tx_dma_chan) अणु
-		काष्ठा dma_chan *chan = qp->tx_dma_chan;
-		/* Putting the dma_chan to शून्य will क्रमce any new traffic to be
+	if (qp->tx_dma_chan) {
+		struct dma_chan *chan = qp->tx_dma_chan;
+		/* Putting the dma_chan to NULL will force any new traffic to be
 		 * processed by the CPU instead of the DAM engine
 		 */
-		qp->tx_dma_chan = शून्य;
+		qp->tx_dma_chan = NULL;
 
-		/* Try to be nice and रुको क्रम any queued DMA engine
-		 * transactions to process beक्रमe smashing it with a rock
+		/* Try to be nice and wait for any queued DMA engine
+		 * transactions to process before smashing it with a rock
 		 */
-		dma_sync_रुको(chan, qp->last_cookie);
+		dma_sync_wait(chan, qp->last_cookie);
 		dmaengine_terminate_all(chan);
 
 		dma_unmap_resource(chan->device->dev,
@@ -2137,111 +2136,111 @@ EXPORT_SYMBOL_GPL(ntb_transport_create_queue);
 				   DMA_FROM_DEVICE, 0);
 
 		dma_release_channel(chan);
-	पूर्ण
+	}
 
-	अगर (qp->rx_dma_chan) अणु
-		काष्ठा dma_chan *chan = qp->rx_dma_chan;
-		/* Putting the dma_chan to शून्य will क्रमce any new traffic to be
+	if (qp->rx_dma_chan) {
+		struct dma_chan *chan = qp->rx_dma_chan;
+		/* Putting the dma_chan to NULL will force any new traffic to be
 		 * processed by the CPU instead of the DAM engine
 		 */
-		qp->rx_dma_chan = शून्य;
+		qp->rx_dma_chan = NULL;
 
-		/* Try to be nice and रुको क्रम any queued DMA engine
-		 * transactions to process beक्रमe smashing it with a rock
+		/* Try to be nice and wait for any queued DMA engine
+		 * transactions to process before smashing it with a rock
 		 */
-		dma_sync_रुको(chan, qp->last_cookie);
+		dma_sync_wait(chan, qp->last_cookie);
 		dmaengine_terminate_all(chan);
 		dma_release_channel(chan);
-	पूर्ण
+	}
 
 	qp_bit = BIT_ULL(qp->qp_num);
 
 	ntb_db_set_mask(qp->ndev, qp_bit);
-	tasklet_समाप्त(&qp->rxc_db_work);
+	tasklet_kill(&qp->rxc_db_work);
 
 	cancel_delayed_work_sync(&qp->link_work);
 
-	qp->cb_data = शून्य;
-	qp->rx_handler = शून्य;
-	qp->tx_handler = शून्य;
-	qp->event_handler = शून्य;
+	qp->cb_data = NULL;
+	qp->rx_handler = NULL;
+	qp->tx_handler = NULL;
+	qp->event_handler = NULL;
 
-	जबतक ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_मुक्त_q)))
-		kमुक्त(entry);
+	while ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_free_q)))
+		kfree(entry);
 
-	जबतक ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_pend_q))) अणु
+	while ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_pend_q))) {
 		dev_warn(&pdev->dev, "Freeing item from non-empty rx_pend_q\n");
-		kमुक्त(entry);
-	पूर्ण
+		kfree(entry);
+	}
 
-	जबतक ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_post_q))) अणु
+	while ((entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_post_q))) {
 		dev_warn(&pdev->dev, "Freeing item from non-empty rx_post_q\n");
-		kमुक्त(entry);
-	पूर्ण
+		kfree(entry);
+	}
 
-	जबतक ((entry = ntb_list_rm(&qp->ntb_tx_मुक्त_q_lock, &qp->tx_मुक्त_q)))
-		kमुक्त(entry);
+	while ((entry = ntb_list_rm(&qp->ntb_tx_free_q_lock, &qp->tx_free_q)))
+		kfree(entry);
 
-	qp->transport->qp_biपंचांगap_मुक्त |= qp_bit;
+	qp->transport->qp_bitmap_free |= qp_bit;
 
 	dev_info(&pdev->dev, "NTB Transport QP %d freed\n", qp->qp_num);
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_मुक्त_queue);
+}
+EXPORT_SYMBOL_GPL(ntb_transport_free_queue);
 
 /**
- * ntb_transport_rx_हटाओ - Dequeues enqueued rx packet
- * @qp: NTB queue to be मुक्तd
- * @len: poपूर्णांकer to variable to ग_लिखो enqueued buffers length
+ * ntb_transport_rx_remove - Dequeues enqueued rx packet
+ * @qp: NTB queue to be freed
+ * @len: pointer to variable to write enqueued buffers length
  *
  * Dequeues unused buffers from receive queue.  Should only be used during
- * shutकरोwn of qp.
+ * shutdown of qp.
  *
- * RETURNS: शून्य error value on error, or व्योम* क्रम success.
+ * RETURNS: NULL error value on error, or void* for success.
  */
-व्योम *ntb_transport_rx_हटाओ(काष्ठा ntb_transport_qp *qp, अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा ntb_queue_entry *entry;
-	व्योम *buf;
+void *ntb_transport_rx_remove(struct ntb_transport_qp *qp, unsigned int *len)
+{
+	struct ntb_queue_entry *entry;
+	void *buf;
 
-	अगर (!qp || qp->client_पढ़ोy)
-		वापस शून्य;
+	if (!qp || qp->client_ready)
+		return NULL;
 
 	entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_pend_q);
-	अगर (!entry)
-		वापस शून्य;
+	if (!entry)
+		return NULL;
 
 	buf = entry->cb_data;
 	*len = entry->len;
 
-	ntb_list_add(&qp->ntb_rx_q_lock, &entry->entry, &qp->rx_मुक्त_q);
+	ntb_list_add(&qp->ntb_rx_q_lock, &entry->entry, &qp->rx_free_q);
 
-	वापस buf;
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_rx_हटाओ);
+	return buf;
+}
+EXPORT_SYMBOL_GPL(ntb_transport_rx_remove);
 
 /**
  * ntb_transport_rx_enqueue - Enqueue a new NTB queue entry
  * @qp: NTB transport layer queue the entry is to be enqueued on
- * @cb: per buffer poपूर्णांकer क्रम callback function to use
- * @data: poपूर्णांकer to data buffer that incoming packets will be copied पूर्णांकo
+ * @cb: per buffer pointer for callback function to use
+ * @data: pointer to data buffer that incoming packets will be copied into
  * @len: length of the data buffer
  *
- * Enqueue a new receive buffer onto the transport queue पूर्णांकo which a NTB
- * payload can be received पूर्णांकo.
+ * Enqueue a new receive buffer onto the transport queue into which a NTB
+ * payload can be received into.
  *
- * RETURNS: An appropriate -ERRNO error value on error, or zero क्रम success.
+ * RETURNS: An appropriate -ERRNO error value on error, or zero for success.
  */
-पूर्णांक ntb_transport_rx_enqueue(काष्ठा ntb_transport_qp *qp, व्योम *cb, व्योम *data,
-			     अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ntb_queue_entry *entry;
+int ntb_transport_rx_enqueue(struct ntb_transport_qp *qp, void *cb, void *data,
+			     unsigned int len)
+{
+	struct ntb_queue_entry *entry;
 
-	अगर (!qp)
-		वापस -EINVAL;
+	if (!qp)
+		return -EINVAL;
 
-	entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_मुक्त_q);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = ntb_list_rm(&qp->ntb_rx_q_lock, &qp->rx_free_q);
+	if (!entry)
+		return -ENOMEM;
 
 	entry->cb_data = cb;
 	entry->buf = data;
@@ -2253,40 +2252,40 @@ EXPORT_SYMBOL_GPL(ntb_transport_rx_हटाओ);
 
 	ntb_list_add(&qp->ntb_rx_q_lock, &entry->entry, &qp->rx_pend_q);
 
-	अगर (qp->active)
+	if (qp->active)
 		tasklet_schedule(&qp->rxc_db_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_rx_enqueue);
 
 /**
  * ntb_transport_tx_enqueue - Enqueue a new NTB queue entry
  * @qp: NTB transport layer queue the entry is to be enqueued on
- * @cb: per buffer poपूर्णांकer क्रम callback function to use
- * @data: poपूर्णांकer to data buffer that will be sent
+ * @cb: per buffer pointer for callback function to use
+ * @data: pointer to data buffer that will be sent
  * @len: length of the data buffer
  *
  * Enqueue a new transmit buffer onto the transport queue from which a NTB
  * payload will be transmitted.  This assumes that a lock is being held to
  * serialize access to the qp.
  *
- * RETURNS: An appropriate -ERRNO error value on error, or zero क्रम success.
+ * RETURNS: An appropriate -ERRNO error value on error, or zero for success.
  */
-पूर्णांक ntb_transport_tx_enqueue(काष्ठा ntb_transport_qp *qp, व्योम *cb, व्योम *data,
-			     अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ntb_queue_entry *entry;
-	पूर्णांक rc;
+int ntb_transport_tx_enqueue(struct ntb_transport_qp *qp, void *cb, void *data,
+			     unsigned int len)
+{
+	struct ntb_queue_entry *entry;
+	int rc;
 
-	अगर (!qp || !qp->link_is_up || !len)
-		वापस -EINVAL;
+	if (!qp || !qp->link_is_up || !len)
+		return -EINVAL;
 
-	entry = ntb_list_rm(&qp->ntb_tx_मुक्त_q_lock, &qp->tx_मुक्त_q);
-	अगर (!entry) अणु
+	entry = ntb_list_rm(&qp->ntb_tx_free_q_lock, &qp->tx_free_q);
+	if (!entry) {
 		qp->tx_err_no_buf++;
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	entry->cb_data = cb;
 	entry->buf = data;
@@ -2297,75 +2296,75 @@ EXPORT_SYMBOL_GPL(ntb_transport_rx_enqueue);
 	entry->tx_index = 0;
 
 	rc = ntb_process_tx(qp, entry);
-	अगर (rc)
-		ntb_list_add(&qp->ntb_tx_मुक्त_q_lock, &entry->entry,
-			     &qp->tx_मुक्त_q);
+	if (rc)
+		ntb_list_add(&qp->ntb_tx_free_q_lock, &entry->entry,
+			     &qp->tx_free_q);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_tx_enqueue);
 
 /**
- * ntb_transport_link_up - Notअगरy NTB transport of client पढ़ोiness to use queue
+ * ntb_transport_link_up - Notify NTB transport of client readiness to use queue
  * @qp: NTB transport layer queue to be enabled
  *
- * Notअगरy NTB transport layer of client पढ़ोiness to use queue
+ * Notify NTB transport layer of client readiness to use queue
  */
-व्योम ntb_transport_link_up(काष्ठा ntb_transport_qp *qp)
-अणु
-	अगर (!qp)
-		वापस;
+void ntb_transport_link_up(struct ntb_transport_qp *qp)
+{
+	if (!qp)
+		return;
 
-	qp->client_पढ़ोy = true;
+	qp->client_ready = true;
 
-	अगर (qp->transport->link_is_up)
+	if (qp->transport->link_is_up)
 		schedule_delayed_work(&qp->link_work, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ntb_transport_link_up);
 
 /**
- * ntb_transport_link_करोwn - Notअगरy NTB transport to no दीर्घer enqueue data
+ * ntb_transport_link_down - Notify NTB transport to no longer enqueue data
  * @qp: NTB transport layer queue to be disabled
  *
- * Notअगरy NTB transport layer of client's desire to no दीर्घer receive data on
- * transport queue specअगरied.  It is the client's responsibility to ensure all
+ * Notify NTB transport layer of client's desire to no longer receive data on
+ * transport queue specified.  It is the client's responsibility to ensure all
  * entries on queue are purged or otherwise handled appropriately.
  */
-व्योम ntb_transport_link_करोwn(काष्ठा ntb_transport_qp *qp)
-अणु
-	पूर्णांक val;
+void ntb_transport_link_down(struct ntb_transport_qp *qp)
+{
+	int val;
 
-	अगर (!qp)
-		वापस;
+	if (!qp)
+		return;
 
-	qp->client_पढ़ोy = false;
+	qp->client_ready = false;
 
-	val = ntb_spad_पढ़ो(qp->ndev, QP_LINKS);
+	val = ntb_spad_read(qp->ndev, QP_LINKS);
 
-	ntb_peer_spad_ग_लिखो(qp->ndev, PIDX, QP_LINKS, val & ~BIT(qp->qp_num));
+	ntb_peer_spad_write(qp->ndev, PIDX, QP_LINKS, val & ~BIT(qp->qp_num));
 
-	अगर (qp->link_is_up)
-		ntb_send_link_करोwn(qp);
-	अन्यथा
+	if (qp->link_is_up)
+		ntb_send_link_down(qp);
+	else
 		cancel_delayed_work_sync(&qp->link_work);
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_link_करोwn);
+}
+EXPORT_SYMBOL_GPL(ntb_transport_link_down);
 
 /**
  * ntb_transport_link_query - Query transport link state
  * @qp: NTB transport layer queue to be queried
  *
- * Query connectivity to the remote प्रणाली of the NTB transport queue
+ * Query connectivity to the remote system of the NTB transport queue
  *
- * RETURNS: true क्रम link up or false क्रम link करोwn
+ * RETURNS: true for link up or false for link down
  */
-bool ntb_transport_link_query(काष्ठा ntb_transport_qp *qp)
-अणु
-	अगर (!qp)
-		वापस false;
+bool ntb_transport_link_query(struct ntb_transport_qp *qp)
+{
+	if (!qp)
+		return false;
 
-	वापस qp->link_is_up;
-पूर्ण
+	return qp->link_is_up;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_link_query);
 
 /**
@@ -2374,15 +2373,15 @@ EXPORT_SYMBOL_GPL(ntb_transport_link_query);
  *
  * Query qp number of the NTB transport queue
  *
- * RETURNS: a zero based number specअगरying the qp number
+ * RETURNS: a zero based number specifying the qp number
  */
-अचिन्हित अक्षर ntb_transport_qp_num(काष्ठा ntb_transport_qp *qp)
-अणु
-	अगर (!qp)
-		वापस 0;
+unsigned char ntb_transport_qp_num(struct ntb_transport_qp *qp)
+{
+	if (!qp)
+		return 0;
 
-	वापस qp->qp_num;
-पूर्ण
+	return qp->qp_num;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_qp_num);
 
 /**
@@ -2393,14 +2392,14 @@ EXPORT_SYMBOL_GPL(ntb_transport_qp_num);
  *
  * RETURNS: the max payload size of a qp
  */
-अचिन्हित पूर्णांक ntb_transport_max_size(काष्ठा ntb_transport_qp *qp)
-अणु
-	अचिन्हित पूर्णांक max_size;
-	अचिन्हित पूर्णांक copy_align;
-	काष्ठा dma_chan *rx_chan, *tx_chan;
+unsigned int ntb_transport_max_size(struct ntb_transport_qp *qp)
+{
+	unsigned int max_size;
+	unsigned int copy_align;
+	struct dma_chan *rx_chan, *tx_chan;
 
-	अगर (!qp)
-		वापस 0;
+	if (!qp)
+		return 0;
 
 	rx_chan = qp->rx_dma_chan;
 	tx_chan = qp->tx_dma_chan;
@@ -2408,92 +2407,92 @@ EXPORT_SYMBOL_GPL(ntb_transport_qp_num);
 	copy_align = max(rx_chan ? rx_chan->device->copy_align : 0,
 			 tx_chan ? tx_chan->device->copy_align : 0);
 
-	/* If DMA engine usage is possible, try to find the max size क्रम that */
-	max_size = qp->tx_max_frame - माप(काष्ठा ntb_payload_header);
-	max_size = round_करोwn(max_size, 1 << copy_align);
+	/* If DMA engine usage is possible, try to find the max size for that */
+	max_size = qp->tx_max_frame - sizeof(struct ntb_payload_header);
+	max_size = round_down(max_size, 1 << copy_align);
 
-	वापस max_size;
-पूर्ण
+	return max_size;
+}
 EXPORT_SYMBOL_GPL(ntb_transport_max_size);
 
-अचिन्हित पूर्णांक ntb_transport_tx_मुक्त_entry(काष्ठा ntb_transport_qp *qp)
-अणु
-	अचिन्हित पूर्णांक head = qp->tx_index;
-	अचिन्हित पूर्णांक tail = qp->remote_rx_info->entry;
+unsigned int ntb_transport_tx_free_entry(struct ntb_transport_qp *qp)
+{
+	unsigned int head = qp->tx_index;
+	unsigned int tail = qp->remote_rx_info->entry;
 
-	वापस tail > head ? tail - head : qp->tx_max_entry + tail - head;
-पूर्ण
-EXPORT_SYMBOL_GPL(ntb_transport_tx_मुक्त_entry);
+	return tail > head ? tail - head : qp->tx_max_entry + tail - head;
+}
+EXPORT_SYMBOL_GPL(ntb_transport_tx_free_entry);
 
-अटल व्योम ntb_transport_करोorbell_callback(व्योम *data, पूर्णांक vector)
-अणु
-	काष्ठा ntb_transport_ctx *nt = data;
-	काष्ठा ntb_transport_qp *qp;
+static void ntb_transport_doorbell_callback(void *data, int vector)
+{
+	struct ntb_transport_ctx *nt = data;
+	struct ntb_transport_qp *qp;
 	u64 db_bits;
-	अचिन्हित पूर्णांक qp_num;
+	unsigned int qp_num;
 
-	अगर (ntb_db_पढ़ो(nt->ndev) & nt->msi_db_mask) अणु
+	if (ntb_db_read(nt->ndev) & nt->msi_db_mask) {
 		ntb_transport_msi_peer_desc_changed(nt);
 		ntb_db_clear(nt->ndev, nt->msi_db_mask);
-	पूर्ण
+	}
 
-	db_bits = (nt->qp_biपंचांगap & ~nt->qp_biपंचांगap_मुक्त &
+	db_bits = (nt->qp_bitmap & ~nt->qp_bitmap_free &
 		   ntb_db_vector_mask(nt->ndev, vector));
 
-	जबतक (db_bits) अणु
+	while (db_bits) {
 		qp_num = __ffs(db_bits);
 		qp = &nt->qp_vec[qp_num];
 
-		अगर (qp->active)
+		if (qp->active)
 			tasklet_schedule(&qp->rxc_db_work);
 
 		db_bits &= ~BIT_ULL(qp_num);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा ntb_ctx_ops ntb_transport_ops = अणु
+static const struct ntb_ctx_ops ntb_transport_ops = {
 	.link_event = ntb_transport_event_callback,
-	.db_event = ntb_transport_करोorbell_callback,
-पूर्ण;
+	.db_event = ntb_transport_doorbell_callback,
+};
 
-अटल काष्ठा ntb_client ntb_transport_client = अणु
-	.ops = अणु
+static struct ntb_client ntb_transport_client = {
+	.ops = {
 		.probe = ntb_transport_probe,
-		.हटाओ = ntb_transport_मुक्त,
-	पूर्ण,
-पूर्ण;
+		.remove = ntb_transport_free,
+	},
+};
 
-अटल पूर्णांक __init ntb_transport_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init ntb_transport_init(void)
+{
+	int rc;
 
 	pr_info("%s, version %s\n", NTB_TRANSPORT_DESC, NTB_TRANSPORT_VER);
 
-	अगर (debugfs_initialized())
-		nt_debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
+	if (debugfs_initialized())
+		nt_debugfs_dir = debugfs_create_dir(KBUILD_MODNAME, NULL);
 
-	rc = bus_रेजिस्टर(&ntb_transport_bus);
-	अगर (rc)
-		जाओ err_bus;
+	rc = bus_register(&ntb_transport_bus);
+	if (rc)
+		goto err_bus;
 
-	rc = ntb_रेजिस्टर_client(&ntb_transport_client);
-	अगर (rc)
-		जाओ err_client;
+	rc = ntb_register_client(&ntb_transport_client);
+	if (rc)
+		goto err_client;
 
-	वापस 0;
+	return 0;
 
 err_client:
-	bus_unरेजिस्टर(&ntb_transport_bus);
+	bus_unregister(&ntb_transport_bus);
 err_bus:
-	debugfs_हटाओ_recursive(nt_debugfs_dir);
-	वापस rc;
-पूर्ण
+	debugfs_remove_recursive(nt_debugfs_dir);
+	return rc;
+}
 module_init(ntb_transport_init);
 
-अटल व्योम __निकास ntb_transport_निकास(व्योम)
-अणु
-	ntb_unरेजिस्टर_client(&ntb_transport_client);
-	bus_unरेजिस्टर(&ntb_transport_bus);
-	debugfs_हटाओ_recursive(nt_debugfs_dir);
-पूर्ण
-module_निकास(ntb_transport_निकास);
+static void __exit ntb_transport_exit(void)
+{
+	ntb_unregister_client(&ntb_transport_client);
+	bus_unregister(&ntb_transport_bus);
+	debugfs_remove_recursive(nt_debugfs_dir);
+}
+module_exit(ntb_transport_exit);

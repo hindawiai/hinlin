@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Unusual Devices File क्रम the Alauda-based card पढ़ोers
+ * Unusual Devices File for the Alauda-based card readers
  */
 
-#अगर defined(CONFIG_USB_STORAGE_ALAUDA) || \
+#if defined(CONFIG_USB_STORAGE_ALAUDA) || \
 		defined(CONFIG_USB_STORAGE_ALAUDA_MODULE)
 
 UNUSUAL_DEV(  0x0584, 0x0008, 0x0102, 0x0102,
@@ -17,4 +16,4 @@ UNUSUAL_DEV(  0x07b4, 0x010a, 0x0102, 0x0102,
 		"MAUSB-10 (Alauda)",
 		USB_SC_SCSI, USB_PR_ALAUDA, init_alauda, 0),
 
-#पूर्ण_अगर /* defined(CONFIG_USB_STORAGE_ALAUDA) || ... */
+#endif /* defined(CONFIG_USB_STORAGE_ALAUDA) || ... */

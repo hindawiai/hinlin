@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * dptf_घातer:  DPTF platक्रमm घातer driver
+ * dptf_power:  DPTF platform power driver
  * Copyright (c) 2016, Intel Corporation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/acpi.h>
+#include <linux/platform_device.h>
 
 /*
- * Presentation of attributes which are defined क्रम INT3407 and INT3532.
+ * Presentation of attributes which are defined for INT3407 and INT3532.
  * They are:
- * PMAX : Maximum platक्रमm घातe
- * PSRC : Platक्रमm घातer source
+ * PMAX : Maximum platform powe
+ * PSRC : Platform power source
  * ARTG : Adapter rating
  * CTYP : Charger type
- * PBSS : Battery steady घातer
- * PROP : Rest of worst हाल platक्रमm Power
+ * PBSS : Battery steady power
+ * PROP : Rest of worst case platform Power
  * PBSS : Power Battery Steady State
  * PBSS : Power Battery Steady State
  * RBHF : High Frequency Impedance
  * VBNL : Instantaneous No-Load Voltage
- * CMPP : Current Disअक्षरge Capability
+ * CMPP : Current Discharge Capability
  */
-#घोषणा DPTF_POWER_SHOW(name, object) \
-अटल sमाप_प्रकार name##_show(काष्ठा device *dev,\
-			   काष्ठा device_attribute *attr,\
-			   अक्षर *buf)\
-अणु\
-	काष्ठा acpi_device *acpi_dev = dev_get_drvdata(dev);\
-	अचिन्हित दीर्घ दीर्घ val;\
+#define DPTF_POWER_SHOW(name, object) \
+static ssize_t name##_show(struct device *dev,\
+			   struct device_attribute *attr,\
+			   char *buf)\
+{\
+	struct acpi_device *acpi_dev = dev_get_drvdata(dev);\
+	unsigned long long val;\
 	acpi_status status;\
 \
-	status = acpi_evaluate_पूर्णांकeger(acpi_dev->handle, #object,\
-				       शून्य, &val);\
-	अगर (ACPI_SUCCESS(status))\
-		वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)val);\
-	अन्यथा \
-		वापस -EINVAL;\
-पूर्ण
+	status = acpi_evaluate_integer(acpi_dev->handle, #object,\
+				       NULL, &val);\
+	if (ACPI_SUCCESS(status))\
+		return sprintf(buf, "%d\n", (int)val);\
+	else \
+		return -EINVAL;\
+}
 
-DPTF_POWER_SHOW(max_platक्रमm_घातer_mw, PMAX)
-DPTF_POWER_SHOW(platक्रमm_घातer_source, PSRC)
+DPTF_POWER_SHOW(max_platform_power_mw, PMAX)
+DPTF_POWER_SHOW(platform_power_source, PSRC)
 DPTF_POWER_SHOW(adapter_rating_mw, ARTG)
-DPTF_POWER_SHOW(battery_steady_घातer_mw, PBSS)
-DPTF_POWER_SHOW(अक्षरger_type, CTYP)
-DPTF_POWER_SHOW(rest_of_platक्रमm_घातer_mw, PROP)
-DPTF_POWER_SHOW(max_steady_state_घातer_mw, PBSS)
+DPTF_POWER_SHOW(battery_steady_power_mw, PBSS)
+DPTF_POWER_SHOW(charger_type, CTYP)
+DPTF_POWER_SHOW(rest_of_platform_power_mw, PROP)
+DPTF_POWER_SHOW(max_steady_state_power_mw, PBSS)
 DPTF_POWER_SHOW(high_freq_impedance_mohm, RBHF)
 DPTF_POWER_SHOW(no_load_voltage_mv, VBNL)
-DPTF_POWER_SHOW(current_disअक्षरge_capbility_ma, CMPP);
+DPTF_POWER_SHOW(current_discharge_capbility_ma, CMPP);
 
-अटल DEVICE_ATTR_RO(max_platक्रमm_घातer_mw);
-अटल DEVICE_ATTR_RO(platक्रमm_घातer_source);
-अटल DEVICE_ATTR_RO(adapter_rating_mw);
-अटल DEVICE_ATTR_RO(battery_steady_घातer_mw);
-अटल DEVICE_ATTR_RO(अक्षरger_type);
-अटल DEVICE_ATTR_RO(rest_of_platक्रमm_घातer_mw);
-अटल DEVICE_ATTR_RO(max_steady_state_घातer_mw);
-अटल DEVICE_ATTR_RO(high_freq_impedance_mohm);
-अटल DEVICE_ATTR_RO(no_load_voltage_mv);
-अटल DEVICE_ATTR_RO(current_disअक्षरge_capbility_ma);
+static DEVICE_ATTR_RO(max_platform_power_mw);
+static DEVICE_ATTR_RO(platform_power_source);
+static DEVICE_ATTR_RO(adapter_rating_mw);
+static DEVICE_ATTR_RO(battery_steady_power_mw);
+static DEVICE_ATTR_RO(charger_type);
+static DEVICE_ATTR_RO(rest_of_platform_power_mw);
+static DEVICE_ATTR_RO(max_steady_state_power_mw);
+static DEVICE_ATTR_RO(high_freq_impedance_mohm);
+static DEVICE_ATTR_RO(no_load_voltage_mv);
+static DEVICE_ATTR_RO(current_discharge_capbility_ma);
 
-अटल sमाप_प्रकार prochot_confirm_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा acpi_device *acpi_dev = dev_get_drvdata(dev);
+static ssize_t prochot_confirm_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct acpi_device *acpi_dev = dev_get_drvdata(dev);
 	acpi_status status;
-	पूर्णांक seq_no;
+	int seq_no;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &seq_no) < 0)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &seq_no) < 0)
+		return -EINVAL;
 
 	status = acpi_execute_simple_method(acpi_dev->handle, "PBOK", seq_no);
-	अगर (ACPI_SUCCESS(status))
-		वापस count;
+	if (ACPI_SUCCESS(status))
+		return count;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल DEVICE_ATTR_WO(prochot_confirm);
+static DEVICE_ATTR_WO(prochot_confirm);
 
-अटल काष्ठा attribute *dptf_घातer_attrs[] = अणु
-	&dev_attr_max_platक्रमm_घातer_mw.attr,
-	&dev_attr_platक्रमm_घातer_source.attr,
+static struct attribute *dptf_power_attrs[] = {
+	&dev_attr_max_platform_power_mw.attr,
+	&dev_attr_platform_power_source.attr,
 	&dev_attr_adapter_rating_mw.attr,
-	&dev_attr_battery_steady_घातer_mw.attr,
-	&dev_attr_अक्षरger_type.attr,
-	&dev_attr_rest_of_platक्रमm_घातer_mw.attr,
+	&dev_attr_battery_steady_power_mw.attr,
+	&dev_attr_charger_type.attr,
+	&dev_attr_rest_of_platform_power_mw.attr,
 	&dev_attr_prochot_confirm.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group dptf_घातer_attribute_group = अणु
-	.attrs = dptf_घातer_attrs,
+static const struct attribute_group dptf_power_attribute_group = {
+	.attrs = dptf_power_attrs,
 	.name = "dptf_power"
-पूर्ण;
+};
 
-अटल काष्ठा attribute *dptf_battery_attrs[] = अणु
-	&dev_attr_max_platक्रमm_घातer_mw.attr,
-	&dev_attr_max_steady_state_घातer_mw.attr,
+static struct attribute *dptf_battery_attrs[] = {
+	&dev_attr_max_platform_power_mw.attr,
+	&dev_attr_max_steady_state_power_mw.attr,
 	&dev_attr_high_freq_impedance_mohm.attr,
 	&dev_attr_no_load_voltage_mv.attr,
-	&dev_attr_current_disअक्षरge_capbility_ma.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_current_discharge_capbility_ma.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group dptf_battery_attribute_group = अणु
+static const struct attribute_group dptf_battery_attribute_group = {
 	.attrs = dptf_battery_attrs,
 	.name = "dptf_battery"
-पूर्ण;
+};
 
-#घोषणा MAX_POWER_CHANGED		0x80
-#घोषणा POWER_STATE_CHANGED		0x81
-#घोषणा STEADY_STATE_POWER_CHANGED	0x83
-#घोषणा POWER_PROP_CHANGE_EVENT	0x84
-#घोषणा IMPEDANCED_CHNGED		0x85
-#घोषणा VOLTAGE_CURRENT_CHANGED	0x86
+#define MAX_POWER_CHANGED		0x80
+#define POWER_STATE_CHANGED		0x81
+#define STEADY_STATE_POWER_CHANGED	0x83
+#define POWER_PROP_CHANGE_EVENT	0x84
+#define IMPEDANCED_CHNGED		0x85
+#define VOLTAGE_CURRENT_CHANGED	0x86
 
-अटल दीर्घ दीर्घ dptf_participant_type(acpi_handle handle)
-अणु
-	अचिन्हित दीर्घ दीर्घ ptype;
+static long long dptf_participant_type(acpi_handle handle)
+{
+	unsigned long long ptype;
 	acpi_status status;
 
-	status = acpi_evaluate_पूर्णांकeger(handle, "PTYP", शून्य, &ptype);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_evaluate_integer(handle, "PTYP", NULL, &ptype);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	वापस ptype;
-पूर्ण
+	return ptype;
+}
 
-अटल व्योम dptf_घातer_notअगरy(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = data;
-	अक्षर *attr;
+static void dptf_power_notify(acpi_handle handle, u32 event, void *data)
+{
+	struct platform_device *pdev = data;
+	char *attr;
 
-	चयन (event) अणु
-	हाल POWER_STATE_CHANGED:
+	switch (event) {
+	case POWER_STATE_CHANGED:
 		attr = "platform_power_source";
-		अवरोध;
-	हाल POWER_PROP_CHANGE_EVENT:
+		break;
+	case POWER_PROP_CHANGE_EVENT:
 		attr = "rest_of_platform_power_mw";
-		अवरोध;
-	हाल MAX_POWER_CHANGED:
+		break;
+	case MAX_POWER_CHANGED:
 		attr = "max_platform_power_mw";
-		अवरोध;
-	हाल STEADY_STATE_POWER_CHANGED:
+		break;
+	case STEADY_STATE_POWER_CHANGED:
 		attr = "max_steady_state_power_mw";
-		अवरोध;
-	हाल VOLTAGE_CURRENT_CHANGED:
+		break;
+	case VOLTAGE_CURRENT_CHANGED:
 		attr = "no_load_voltage_mv";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "Unsupported event [0x%x]\n", event);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Notअगरy that an attribute is changed, so that user space can पढ़ो
+	 * Notify that an attribute is changed, so that user space can read
 	 * again.
 	 */
-	अगर (dptf_participant_type(handle) == 0x0CULL)
-		sysfs_notअगरy(&pdev->dev.kobj, "dptf_battery", attr);
-	अन्यथा
-		sysfs_notअगरy(&pdev->dev.kobj, "dptf_power", attr);
-पूर्ण
+	if (dptf_participant_type(handle) == 0x0CULL)
+		sysfs_notify(&pdev->dev.kobj, "dptf_battery", attr);
+	else
+		sysfs_notify(&pdev->dev.kobj, "dptf_power", attr);
+}
 
-अटल पूर्णांक dptf_घातer_add(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा attribute_group *attr_group;
-	काष्ठा acpi_device *acpi_dev;
-	अचिन्हित दीर्घ दीर्घ ptype;
-	पूर्णांक result;
+static int dptf_power_add(struct platform_device *pdev)
+{
+	const struct attribute_group *attr_group;
+	struct acpi_device *acpi_dev;
+	unsigned long long ptype;
+	int result;
 
 	acpi_dev = ACPI_COMPANION(&(pdev->dev));
-	अगर (!acpi_dev)
-		वापस -ENODEV;
+	if (!acpi_dev)
+		return -ENODEV;
 
 	ptype = dptf_participant_type(acpi_dev->handle);
-	अगर (ptype == 0x11)
-		attr_group = &dptf_घातer_attribute_group;
-	अन्यथा अगर (ptype == 0x0C)
+	if (ptype == 0x11)
+		attr_group = &dptf_power_attribute_group;
+	else if (ptype == 0x0C)
 		attr_group = &dptf_battery_attribute_group;
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
-	result = acpi_install_notअगरy_handler(acpi_dev->handle,
+	result = acpi_install_notify_handler(acpi_dev->handle,
 					     ACPI_DEVICE_NOTIFY,
-					     dptf_घातer_notअगरy,
-					     (व्योम *)pdev);
-	अगर (result)
-		वापस result;
+					     dptf_power_notify,
+					     (void *)pdev);
+	if (result)
+		return result;
 
 	result = sysfs_create_group(&pdev->dev.kobj,
 				    attr_group);
-	अगर (result) अणु
-		acpi_हटाओ_notअगरy_handler(acpi_dev->handle,
+	if (result) {
+		acpi_remove_notify_handler(acpi_dev->handle,
 					   ACPI_DEVICE_NOTIFY,
-					   dptf_घातer_notअगरy);
-		वापस result;
-	पूर्ण
+					   dptf_power_notify);
+		return result;
+	}
 
-	platक्रमm_set_drvdata(pdev, acpi_dev);
+	platform_set_drvdata(pdev, acpi_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dptf_घातer_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा acpi_device *acpi_dev = platक्रमm_get_drvdata(pdev);
+static int dptf_power_remove(struct platform_device *pdev)
+{
+	struct acpi_device *acpi_dev = platform_get_drvdata(pdev);
 
-	acpi_हटाओ_notअगरy_handler(acpi_dev->handle,
+	acpi_remove_notify_handler(acpi_dev->handle,
 				   ACPI_DEVICE_NOTIFY,
-				   dptf_घातer_notअगरy);
+				   dptf_power_notify);
 
-	अगर (dptf_participant_type(acpi_dev->handle) == 0x0CULL)
-		sysfs_हटाओ_group(&pdev->dev.kobj, &dptf_battery_attribute_group);
-	अन्यथा
-		sysfs_हटाओ_group(&pdev->dev.kobj, &dptf_घातer_attribute_group);
+	if (dptf_participant_type(acpi_dev->handle) == 0x0CULL)
+		sysfs_remove_group(&pdev->dev.kobj, &dptf_battery_attribute_group);
+	else
+		sysfs_remove_group(&pdev->dev.kobj, &dptf_power_attribute_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id पूर्णांक3407_device_ids[] = अणु
-	अणु"INT3407", 0पूर्ण,
-	अणु"INT3532", 0पूर्ण,
-	अणु"INTC1047", 0पूर्ण,
-	अणु"INTC1050", 0पूर्ण,
-	अणु"INTC1060", 0पूर्ण,
-	अणु"INTC1061", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, पूर्णांक3407_device_ids);
+static const struct acpi_device_id int3407_device_ids[] = {
+	{"INT3407", 0},
+	{"INT3532", 0},
+	{"INTC1047", 0},
+	{"INTC1050", 0},
+	{"INTC1060", 0},
+	{"INTC1061", 0},
+	{"", 0},
+};
+MODULE_DEVICE_TABLE(acpi, int3407_device_ids);
 
-अटल काष्ठा platक्रमm_driver dptf_घातer_driver = अणु
-	.probe = dptf_घातer_add,
-	.हटाओ = dptf_घातer_हटाओ,
-	.driver = अणु
+static struct platform_driver dptf_power_driver = {
+	.probe = dptf_power_add,
+	.remove = dptf_power_remove,
+	.driver = {
 		.name = "dptf_power",
-		.acpi_match_table = पूर्णांक3407_device_ids,
-	पूर्ण,
-पूर्ण;
+		.acpi_match_table = int3407_device_ids,
+	},
+};
 
-module_platक्रमm_driver(dptf_घातer_driver);
+module_platform_driver(dptf_power_driver);
 
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>");
 MODULE_LICENSE("GPL v2");

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /* Copyright 2008-2013 Broadcom Corporation
  * Copyright (c) 2014 QLogic Corporation
  * All rights reserved
@@ -6,7 +5,7 @@
  * Unless you and QLogic execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2, available
- * at http://www.gnu.org/licenses/gpl-2.0.hपंचांगl (the "GPL").
+ * at http://www.gnu.org/licenses/gpl-2.0.html (the "GPL").
  *
  * Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Qlogic software provided under a
@@ -17,129 +16,129 @@
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mutex.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/delay.h>
+#include <linux/ethtool.h>
+#include <linux/mutex.h>
 
-#समावेश "bnx2x.h"
-#समावेश "bnx2x_cmn.h"
+#include "bnx2x.h"
+#include "bnx2x_cmn.h"
 
-प्रकार पूर्णांक (*पढ़ो_sfp_module_eeprom_func_p)(काष्ठा bnx2x_phy *phy,
-					     काष्ठा link_params *params,
+typedef int (*read_sfp_module_eeprom_func_p)(struct bnx2x_phy *phy,
+					     struct link_params *params,
 					     u8 dev_addr, u16 addr, u8 byte_cnt,
 					     u8 *o_buf, u8);
 /********************************************************/
-#घोषणा MDIO_ACCESS_TIMEOUT		1000
-#घोषणा WC_LANE_MAX			4
-#घोषणा I2C_SWITCH_WIDTH		2
-#घोषणा I2C_BSC0			0
-#घोषणा I2C_BSC1			1
-#घोषणा I2C_WA_RETRY_CNT		3
-#घोषणा I2C_WA_PWR_ITER			(I2C_WA_RETRY_CNT - 1)
-#घोषणा MCPR_IMC_COMMAND_READ_OP	1
-#घोषणा MCPR_IMC_COMMAND_WRITE_OP	2
+#define MDIO_ACCESS_TIMEOUT		1000
+#define WC_LANE_MAX			4
+#define I2C_SWITCH_WIDTH		2
+#define I2C_BSC0			0
+#define I2C_BSC1			1
+#define I2C_WA_RETRY_CNT		3
+#define I2C_WA_PWR_ITER			(I2C_WA_RETRY_CNT - 1)
+#define MCPR_IMC_COMMAND_READ_OP	1
+#define MCPR_IMC_COMMAND_WRITE_OP	2
 
 /* LED Blink rate that will achieve ~15.9Hz */
-#घोषणा LED_BLINK_RATE_VAL_E3		354
-#घोषणा LED_BLINK_RATE_VAL_E1X_E2	480
+#define LED_BLINK_RATE_VAL_E3		354
+#define LED_BLINK_RATE_VAL_E1X_E2	480
 /***********************************************************/
 /*			Shortcut definitions		   */
 /***********************************************************/
 
-#घोषणा NIG_LATCH_BC_ENABLE_MI_INT 0
+#define NIG_LATCH_BC_ENABLE_MI_INT 0
 
-#घोषणा NIG_STATUS_EMAC0_MI_INT \
+#define NIG_STATUS_EMAC0_MI_INT \
 		NIG_STATUS_INTERRUPT_PORT0_REG_STATUS_EMAC0_MISC_MI_INT
-#घोषणा NIG_STATUS_XGXS0_LINK10G \
+#define NIG_STATUS_XGXS0_LINK10G \
 		NIG_STATUS_INTERRUPT_PORT0_REG_STATUS_XGXS0_LINK10G
-#घोषणा NIG_STATUS_XGXS0_LINK_STATUS \
+#define NIG_STATUS_XGXS0_LINK_STATUS \
 		NIG_STATUS_INTERRUPT_PORT0_REG_STATUS_XGXS0_LINK_STATUS
-#घोषणा NIG_STATUS_XGXS0_LINK_STATUS_SIZE \
+#define NIG_STATUS_XGXS0_LINK_STATUS_SIZE \
 		NIG_STATUS_INTERRUPT_PORT0_REG_STATUS_XGXS0_LINK_STATUS_SIZE
-#घोषणा NIG_STATUS_SERDES0_LINK_STATUS \
+#define NIG_STATUS_SERDES0_LINK_STATUS \
 		NIG_STATUS_INTERRUPT_PORT0_REG_STATUS_SERDES0_LINK_STATUS
-#घोषणा NIG_MASK_MI_INT \
+#define NIG_MASK_MI_INT \
 		NIG_MASK_INTERRUPT_PORT0_REG_MASK_EMAC0_MISC_MI_INT
-#घोषणा NIG_MASK_XGXS0_LINK10G \
+#define NIG_MASK_XGXS0_LINK10G \
 		NIG_MASK_INTERRUPT_PORT0_REG_MASK_XGXS0_LINK10G
-#घोषणा NIG_MASK_XGXS0_LINK_STATUS \
+#define NIG_MASK_XGXS0_LINK_STATUS \
 		NIG_MASK_INTERRUPT_PORT0_REG_MASK_XGXS0_LINK_STATUS
-#घोषणा NIG_MASK_SERDES0_LINK_STATUS \
+#define NIG_MASK_SERDES0_LINK_STATUS \
 		NIG_MASK_INTERRUPT_PORT0_REG_MASK_SERDES0_LINK_STATUS
 
-#घोषणा MDIO_AN_CL73_OR_37_COMPLETE \
+#define MDIO_AN_CL73_OR_37_COMPLETE \
 		(MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_AUTONEG_COMPLETE | \
 		 MDIO_GP_STATUS_TOP_AN_STATUS1_CL37_AUTONEG_COMPLETE)
 
-#घोषणा XGXS_RESET_BITS \
+#define XGXS_RESET_BITS \
 	(MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_XGXS0_RSTB_HW |   \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_XGXS0_IDDQ |      \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_XGXS0_PWRDWN |    \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_XGXS0_PWRDWN_SD | \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_XGXS0_TXD_FIFO_RSTB)
 
-#घोषणा SERDES_RESET_BITS \
+#define SERDES_RESET_BITS \
 	(MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_SERDES0_RSTB_HW | \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_SERDES0_IDDQ |    \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_SERDES0_PWRDWN |  \
 	 MISC_REGISTERS_RESET_REG_3_MISC_NIG_MUX_SERDES0_PWRDWN_SD)
 
-#घोषणा AUTONEG_CL37		SHARED_HW_CFG_AN_ENABLE_CL37
-#घोषणा AUTONEG_CL73		SHARED_HW_CFG_AN_ENABLE_CL73
-#घोषणा AUTONEG_BAM		SHARED_HW_CFG_AN_ENABLE_BAM
-#घोषणा AUTONEG_PARALLEL \
+#define AUTONEG_CL37		SHARED_HW_CFG_AN_ENABLE_CL37
+#define AUTONEG_CL73		SHARED_HW_CFG_AN_ENABLE_CL73
+#define AUTONEG_BAM		SHARED_HW_CFG_AN_ENABLE_BAM
+#define AUTONEG_PARALLEL \
 				SHARED_HW_CFG_AN_ENABLE_PARALLEL_DETECTION
-#घोषणा AUTONEG_SGMII_FIBER_AUTODET \
+#define AUTONEG_SGMII_FIBER_AUTODET \
 				SHARED_HW_CFG_AN_EN_SGMII_FIBER_AUTO_DETECT
-#घोषणा AUTONEG_REMOTE_PHY	SHARED_HW_CFG_AN_ENABLE_REMOTE_PHY
+#define AUTONEG_REMOTE_PHY	SHARED_HW_CFG_AN_ENABLE_REMOTE_PHY
 
-#घोषणा GP_STATUS_PAUSE_RSOLUTION_TXSIDE \
+#define GP_STATUS_PAUSE_RSOLUTION_TXSIDE \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_PAUSE_RSOLUTION_TXSIDE
-#घोषणा GP_STATUS_PAUSE_RSOLUTION_RXSIDE \
+#define GP_STATUS_PAUSE_RSOLUTION_RXSIDE \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_PAUSE_RSOLUTION_RXSIDE
-#घोषणा GP_STATUS_SPEED_MASK \
+#define GP_STATUS_SPEED_MASK \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_MASK
-#घोषणा GP_STATUS_10M	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10M
-#घोषणा GP_STATUS_100M	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_100M
-#घोषणा GP_STATUS_1G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_1G
-#घोषणा GP_STATUS_2_5G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_2_5G
-#घोषणा GP_STATUS_5G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_5G
-#घोषणा GP_STATUS_6G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_6G
-#घोषणा GP_STATUS_10G_HIG \
+#define GP_STATUS_10M	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10M
+#define GP_STATUS_100M	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_100M
+#define GP_STATUS_1G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_1G
+#define GP_STATUS_2_5G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_2_5G
+#define GP_STATUS_5G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_5G
+#define GP_STATUS_6G	MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_6G
+#define GP_STATUS_10G_HIG \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_HIG
-#घोषणा GP_STATUS_10G_CX4 \
+#define GP_STATUS_10G_CX4 \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_CX4
-#घोषणा GP_STATUS_1G_KX MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_1G_KX
-#घोषणा GP_STATUS_10G_KX4 \
+#define GP_STATUS_1G_KX MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_1G_KX
+#define GP_STATUS_10G_KX4 \
 			MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_KX4
-#घोषणा	GP_STATUS_10G_KR MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_KR
-#घोषणा	GP_STATUS_10G_XFI   MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_XFI
-#घोषणा	GP_STATUS_20G_DXGXS MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_20G_DXGXS
-#घोषणा	GP_STATUS_10G_SFI   MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_SFI
-#घोषणा	GP_STATUS_20G_KR2 MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_20G_KR2
-#घोषणा LINK_10THD		LINK_STATUS_SPEED_AND_DUPLEX_10THD
-#घोषणा LINK_10TFD		LINK_STATUS_SPEED_AND_DUPLEX_10TFD
-#घोषणा LINK_100TXHD		LINK_STATUS_SPEED_AND_DUPLEX_100TXHD
-#घोषणा LINK_100T4		LINK_STATUS_SPEED_AND_DUPLEX_100T4
-#घोषणा LINK_100TXFD		LINK_STATUS_SPEED_AND_DUPLEX_100TXFD
-#घोषणा LINK_1000THD		LINK_STATUS_SPEED_AND_DUPLEX_1000THD
-#घोषणा LINK_1000TFD		LINK_STATUS_SPEED_AND_DUPLEX_1000TFD
-#घोषणा LINK_1000XFD		LINK_STATUS_SPEED_AND_DUPLEX_1000XFD
-#घोषणा LINK_2500THD		LINK_STATUS_SPEED_AND_DUPLEX_2500THD
-#घोषणा LINK_2500TFD		LINK_STATUS_SPEED_AND_DUPLEX_2500TFD
-#घोषणा LINK_2500XFD		LINK_STATUS_SPEED_AND_DUPLEX_2500XFD
-#घोषणा LINK_10GTFD		LINK_STATUS_SPEED_AND_DUPLEX_10GTFD
-#घोषणा LINK_10GXFD		LINK_STATUS_SPEED_AND_DUPLEX_10GXFD
-#घोषणा LINK_20GTFD		LINK_STATUS_SPEED_AND_DUPLEX_20GTFD
-#घोषणा LINK_20GXFD		LINK_STATUS_SPEED_AND_DUPLEX_20GXFD
+#define	GP_STATUS_10G_KR MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_KR
+#define	GP_STATUS_10G_XFI   MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_XFI
+#define	GP_STATUS_20G_DXGXS MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_20G_DXGXS
+#define	GP_STATUS_10G_SFI   MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_10G_SFI
+#define	GP_STATUS_20G_KR2 MDIO_GP_STATUS_TOP_AN_STATUS1_ACTUAL_SPEED_20G_KR2
+#define LINK_10THD		LINK_STATUS_SPEED_AND_DUPLEX_10THD
+#define LINK_10TFD		LINK_STATUS_SPEED_AND_DUPLEX_10TFD
+#define LINK_100TXHD		LINK_STATUS_SPEED_AND_DUPLEX_100TXHD
+#define LINK_100T4		LINK_STATUS_SPEED_AND_DUPLEX_100T4
+#define LINK_100TXFD		LINK_STATUS_SPEED_AND_DUPLEX_100TXFD
+#define LINK_1000THD		LINK_STATUS_SPEED_AND_DUPLEX_1000THD
+#define LINK_1000TFD		LINK_STATUS_SPEED_AND_DUPLEX_1000TFD
+#define LINK_1000XFD		LINK_STATUS_SPEED_AND_DUPLEX_1000XFD
+#define LINK_2500THD		LINK_STATUS_SPEED_AND_DUPLEX_2500THD
+#define LINK_2500TFD		LINK_STATUS_SPEED_AND_DUPLEX_2500TFD
+#define LINK_2500XFD		LINK_STATUS_SPEED_AND_DUPLEX_2500XFD
+#define LINK_10GTFD		LINK_STATUS_SPEED_AND_DUPLEX_10GTFD
+#define LINK_10GXFD		LINK_STATUS_SPEED_AND_DUPLEX_10GXFD
+#define LINK_20GTFD		LINK_STATUS_SPEED_AND_DUPLEX_20GTFD
+#define LINK_20GXFD		LINK_STATUS_SPEED_AND_DUPLEX_20GXFD
 
-#घोषणा LINK_UPDATE_MASK \
+#define LINK_UPDATE_MASK \
 			(LINK_STATUS_SPEED_AND_DUPLEX_MASK | \
 			 LINK_STATUS_LINK_UP | \
 			 LINK_STATUS_PHYSICAL_LINK_FLAG | \
@@ -150,231 +149,231 @@
 			 LINK_STATUS_LINK_PARTNER_SYMMETRIC_PAUSE | \
 			 LINK_STATUS_LINK_PARTNER_ASYMMETRIC_PAUSE)
 
-#घोषणा SFP_EEPROM_CON_TYPE_ADDR		0x2
-	#घोषणा SFP_EEPROM_CON_TYPE_VAL_UNKNOWN	0x0
-	#घोषणा SFP_EEPROM_CON_TYPE_VAL_LC	0x7
-	#घोषणा SFP_EEPROM_CON_TYPE_VAL_COPPER	0x21
-	#घोषणा SFP_EEPROM_CON_TYPE_VAL_RJ45	0x22
+#define SFP_EEPROM_CON_TYPE_ADDR		0x2
+	#define SFP_EEPROM_CON_TYPE_VAL_UNKNOWN	0x0
+	#define SFP_EEPROM_CON_TYPE_VAL_LC	0x7
+	#define SFP_EEPROM_CON_TYPE_VAL_COPPER	0x21
+	#define SFP_EEPROM_CON_TYPE_VAL_RJ45	0x22
 
 
-#घोषणा SFP_EEPROM_10G_COMP_CODE_ADDR		0x3
-	#घोषणा SFP_EEPROM_10G_COMP_CODE_SR_MASK	(1<<4)
-	#घोषणा SFP_EEPROM_10G_COMP_CODE_LR_MASK	(1<<5)
-	#घोषणा SFP_EEPROM_10G_COMP_CODE_LRM_MASK	(1<<6)
+#define SFP_EEPROM_10G_COMP_CODE_ADDR		0x3
+	#define SFP_EEPROM_10G_COMP_CODE_SR_MASK	(1<<4)
+	#define SFP_EEPROM_10G_COMP_CODE_LR_MASK	(1<<5)
+	#define SFP_EEPROM_10G_COMP_CODE_LRM_MASK	(1<<6)
 
-#घोषणा SFP_EEPROM_1G_COMP_CODE_ADDR		0x6
-	#घोषणा SFP_EEPROM_1G_COMP_CODE_SX	(1<<0)
-	#घोषणा SFP_EEPROM_1G_COMP_CODE_LX	(1<<1)
-	#घोषणा SFP_EEPROM_1G_COMP_CODE_CX	(1<<2)
-	#घोषणा SFP_EEPROM_1G_COMP_CODE_BASE_T	(1<<3)
+#define SFP_EEPROM_1G_COMP_CODE_ADDR		0x6
+	#define SFP_EEPROM_1G_COMP_CODE_SX	(1<<0)
+	#define SFP_EEPROM_1G_COMP_CODE_LX	(1<<1)
+	#define SFP_EEPROM_1G_COMP_CODE_CX	(1<<2)
+	#define SFP_EEPROM_1G_COMP_CODE_BASE_T	(1<<3)
 
-#घोषणा SFP_EEPROM_FC_TX_TECH_ADDR		0x8
-	#घोषणा SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_PASSIVE 0x4
-	#घोषणा SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_ACTIVE  0x8
+#define SFP_EEPROM_FC_TX_TECH_ADDR		0x8
+	#define SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_PASSIVE 0x4
+	#define SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_ACTIVE  0x8
 
-#घोषणा SFP_EEPROM_OPTIONS_ADDR			0x40
-	#घोषणा SFP_EEPROM_OPTIONS_LINEAR_RX_OUT_MASK 0x1
-#घोषणा SFP_EEPROM_OPTIONS_SIZE			2
+#define SFP_EEPROM_OPTIONS_ADDR			0x40
+	#define SFP_EEPROM_OPTIONS_LINEAR_RX_OUT_MASK 0x1
+#define SFP_EEPROM_OPTIONS_SIZE			2
 
-#घोषणा EDC_MODE_LINEAR				0x0022
-#घोषणा EDC_MODE_LIMITING				0x0044
-#घोषणा EDC_MODE_PASSIVE_DAC			0x0055
-#घोषणा EDC_MODE_ACTIVE_DAC			0x0066
+#define EDC_MODE_LINEAR				0x0022
+#define EDC_MODE_LIMITING				0x0044
+#define EDC_MODE_PASSIVE_DAC			0x0055
+#define EDC_MODE_ACTIVE_DAC			0x0066
 
 /* ETS defines*/
-#घोषणा DCBX_INVALID_COS					(0xFF)
+#define DCBX_INVALID_COS					(0xFF)
 
-#घोषणा ETS_BW_LIMIT_CREDIT_UPPER_BOUND		(0x5000)
-#घोषणा ETS_BW_LIMIT_CREDIT_WEIGHT		(0x5000)
-#घोषणा ETS_E3B0_NIG_MIN_W_VAL_UP_TO_10GBPS		(1360)
-#घोषणा ETS_E3B0_NIG_MIN_W_VAL_20GBPS			(2720)
-#घोषणा ETS_E3B0_PBF_MIN_W_VAL				(10000)
+#define ETS_BW_LIMIT_CREDIT_UPPER_BOUND		(0x5000)
+#define ETS_BW_LIMIT_CREDIT_WEIGHT		(0x5000)
+#define ETS_E3B0_NIG_MIN_W_VAL_UP_TO_10GBPS		(1360)
+#define ETS_E3B0_NIG_MIN_W_VAL_20GBPS			(2720)
+#define ETS_E3B0_PBF_MIN_W_VAL				(10000)
 
-#घोषणा MAX_PACKET_SIZE					(9700)
-#घोषणा MAX_KR_LINK_RETRY				4
-#घोषणा DEFAULT_TX_DRV_BRDCT		2
-#घोषणा DEFAULT_TX_DRV_IFIR		0
-#घोषणा DEFAULT_TX_DRV_POST2		3
-#घोषणा DEFAULT_TX_DRV_IPRE_DRIVER	6
+#define MAX_PACKET_SIZE					(9700)
+#define MAX_KR_LINK_RETRY				4
+#define DEFAULT_TX_DRV_BRDCT		2
+#define DEFAULT_TX_DRV_IFIR		0
+#define DEFAULT_TX_DRV_POST2		3
+#define DEFAULT_TX_DRV_IPRE_DRIVER	6
 
 /**********************************************************/
 /*                     INTERFACE                          */
 /**********************************************************/
 
-#घोषणा CL22_WR_OVER_CL45(_bp, _phy, _bank, _addr, _val) \
-	bnx2x_cl45_ग_लिखो(_bp, _phy, \
+#define CL22_WR_OVER_CL45(_bp, _phy, _bank, _addr, _val) \
+	bnx2x_cl45_write(_bp, _phy, \
 		(_phy)->def_md_devad, \
 		(_bank + (_addr & 0xf)), \
 		_val)
 
-#घोषणा CL22_RD_OVER_CL45(_bp, _phy, _bank, _addr, _val) \
-	bnx2x_cl45_पढ़ो(_bp, _phy, \
+#define CL22_RD_OVER_CL45(_bp, _phy, _bank, _addr, _val) \
+	bnx2x_cl45_read(_bp, _phy, \
 		(_phy)->def_md_devad, \
 		(_bank + (_addr & 0xf)), \
 		_val)
 
-अटल पूर्णांक bnx2x_check_half_खोलो_conn(काष्ठा link_params *params,
-				      काष्ठा link_vars *vars, u8 notअगरy);
-अटल पूर्णांक bnx2x_sfp_module_detection(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params);
+static int bnx2x_check_half_open_conn(struct link_params *params,
+				      struct link_vars *vars, u8 notify);
+static int bnx2x_sfp_module_detection(struct bnx2x_phy *phy,
+				      struct link_params *params);
 
-अटल u32 bnx2x_bits_en(काष्ठा bnx2x *bp, u32 reg, u32 bits)
-अणु
+static u32 bnx2x_bits_en(struct bnx2x *bp, u32 reg, u32 bits)
+{
 	u32 val = REG_RD(bp, reg);
 
 	val |= bits;
 	REG_WR(bp, reg, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u32 bnx2x_bits_dis(काष्ठा bnx2x *bp, u32 reg, u32 bits)
-अणु
+static u32 bnx2x_bits_dis(struct bnx2x *bp, u32 reg, u32 bits)
+{
 	u32 val = REG_RD(bp, reg);
 
 	val &= ~bits;
 	REG_WR(bp, reg, val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
- * bnx2x_check_lfa - This function checks अगर link reinitialization is required,
- *                   or link flap can be aव्योमed.
+ * bnx2x_check_lfa - This function checks if link reinitialization is required,
+ *                   or link flap can be avoided.
  *
  * @params:	link parameters
- * Returns 0 अगर Link Flap Aव्योमance conditions are met otherwise, the failed
+ * Returns 0 if Link Flap Avoidance conditions are met otherwise, the failed
  *         condition code.
  */
-अटल पूर्णांक bnx2x_check_lfa(काष्ठा link_params *params)
-अणु
+static int bnx2x_check_lfa(struct link_params *params)
+{
 	u32 link_status, cfg_idx, lfa_mask, cfg_size;
-	u32 cur_speed_cap_mask, cur_req_fc_स्वतः_adv, additional_config;
+	u32 cur_speed_cap_mask, cur_req_fc_auto_adv, additional_config;
 	u32 saved_val, req_val, eee_status;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
 	additional_config =
 		REG_RD(bp, params->lfa_base +
-			   दुरत्व(काष्ठा shmem_lfa, additional_config));
+			   offsetof(struct shmem_lfa, additional_config));
 
 	/* NOTE: must be first condition checked -
-	* to verअगरy DCC bit is cleared in any हाल!
+	* to verify DCC bit is cleared in any case!
 	*/
-	अगर (additional_config & NO_LFA_DUE_TO_DCC_MASK) अणु
+	if (additional_config & NO_LFA_DUE_TO_DCC_MASK) {
 		DP(NETIF_MSG_LINK, "No LFA due to DCC flap after clp exit\n");
 		REG_WR(bp, params->lfa_base +
-			   दुरत्व(काष्ठा shmem_lfa, additional_config),
+			   offsetof(struct shmem_lfa, additional_config),
 		       additional_config & ~NO_LFA_DUE_TO_DCC_MASK);
-		वापस LFA_DCC_LFA_DISABLED;
-	पूर्ण
+		return LFA_DCC_LFA_DISABLED;
+	}
 
-	/* Verअगरy that link is up */
+	/* Verify that link is up */
 	link_status = REG_RD(bp, params->shmem_base +
-			     दुरत्व(काष्ठा shmem_region,
+			     offsetof(struct shmem_region,
 				      port_mb[params->port].link_status));
-	अगर (!(link_status & LINK_STATUS_LINK_UP))
-		वापस LFA_LINK_DOWN;
+	if (!(link_status & LINK_STATUS_LINK_UP))
+		return LFA_LINK_DOWN;
 
-	/* अगर loaded after BOOT from SAN, करोn't flap the link in any हाल and
+	/* if loaded after BOOT from SAN, don't flap the link in any case and
 	 * rely on link set by preboot driver
 	 */
-	अगर (params->feature_config_flags & FEATURE_CONFIG_BOOT_FROM_SAN)
-		वापस 0;
+	if (params->feature_config_flags & FEATURE_CONFIG_BOOT_FROM_SAN)
+		return 0;
 
-	/* Verअगरy that loopback mode is not set */
-	अगर (params->loopback_mode)
-		वापस LFA_LOOPBACK_ENABLED;
+	/* Verify that loopback mode is not set */
+	if (params->loopback_mode)
+		return LFA_LOOPBACK_ENABLED;
 
-	/* Verअगरy that MFW supports LFA */
-	अगर (!params->lfa_base)
-		वापस LFA_MFW_IS_TOO_OLD;
+	/* Verify that MFW supports LFA */
+	if (!params->lfa_base)
+		return LFA_MFW_IS_TOO_OLD;
 
-	अगर (params->num_phys == 3) अणु
+	if (params->num_phys == 3) {
 		cfg_size = 2;
 		lfa_mask = 0xffffffff;
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg_size = 1;
 		lfa_mask = 0xffff;
-	पूर्ण
+	}
 
 	/* Compare Duplex */
 	saved_val = REG_RD(bp, params->lfa_base +
-			   दुरत्व(काष्ठा shmem_lfa, req_duplex));
+			   offsetof(struct shmem_lfa, req_duplex));
 	req_val = params->req_duplex[0] | (params->req_duplex[1] << 16);
-	अगर ((saved_val & lfa_mask) != (req_val & lfa_mask)) अणु
+	if ((saved_val & lfa_mask) != (req_val & lfa_mask)) {
 		DP(NETIF_MSG_LINK, "Duplex mismatch %x vs. %x\n",
 			       (saved_val & lfa_mask), (req_val & lfa_mask));
-		वापस LFA_DUPLEX_MISMATCH;
-	पूर्ण
+		return LFA_DUPLEX_MISMATCH;
+	}
 	/* Compare Flow Control */
 	saved_val = REG_RD(bp, params->lfa_base +
-			   दुरत्व(काष्ठा shmem_lfa, req_flow_ctrl));
+			   offsetof(struct shmem_lfa, req_flow_ctrl));
 	req_val = params->req_flow_ctrl[0] | (params->req_flow_ctrl[1] << 16);
-	अगर ((saved_val & lfa_mask) != (req_val & lfa_mask)) अणु
+	if ((saved_val & lfa_mask) != (req_val & lfa_mask)) {
 		DP(NETIF_MSG_LINK, "Flow control mismatch %x vs. %x\n",
 			       (saved_val & lfa_mask), (req_val & lfa_mask));
-		वापस LFA_FLOW_CTRL_MISMATCH;
-	पूर्ण
+		return LFA_FLOW_CTRL_MISMATCH;
+	}
 	/* Compare Link Speed */
 	saved_val = REG_RD(bp, params->lfa_base +
-			   दुरत्व(काष्ठा shmem_lfa, req_line_speed));
+			   offsetof(struct shmem_lfa, req_line_speed));
 	req_val = params->req_line_speed[0] | (params->req_line_speed[1] << 16);
-	अगर ((saved_val & lfa_mask) != (req_val & lfa_mask)) अणु
+	if ((saved_val & lfa_mask) != (req_val & lfa_mask)) {
 		DP(NETIF_MSG_LINK, "Link speed mismatch %x vs. %x\n",
 			       (saved_val & lfa_mask), (req_val & lfa_mask));
-		वापस LFA_LINK_SPEED_MISMATCH;
-	पूर्ण
+		return LFA_LINK_SPEED_MISMATCH;
+	}
 
-	क्रम (cfg_idx = 0; cfg_idx < cfg_size; cfg_idx++) अणु
+	for (cfg_idx = 0; cfg_idx < cfg_size; cfg_idx++) {
 		cur_speed_cap_mask = REG_RD(bp, params->lfa_base +
-					    दुरत्व(काष्ठा shmem_lfa,
+					    offsetof(struct shmem_lfa,
 						     speed_cap_mask[cfg_idx]));
 
-		अगर (cur_speed_cap_mask != params->speed_cap_mask[cfg_idx]) अणु
+		if (cur_speed_cap_mask != params->speed_cap_mask[cfg_idx]) {
 			DP(NETIF_MSG_LINK, "Speed Cap mismatch %x vs. %x\n",
 				       cur_speed_cap_mask,
 				       params->speed_cap_mask[cfg_idx]);
-			वापस LFA_SPEED_CAP_MISMATCH;
-		पूर्ण
-	पूर्ण
+			return LFA_SPEED_CAP_MISMATCH;
+		}
+	}
 
-	cur_req_fc_स्वतः_adv =
+	cur_req_fc_auto_adv =
 		REG_RD(bp, params->lfa_base +
-		       दुरत्व(काष्ठा shmem_lfa, additional_config)) &
+		       offsetof(struct shmem_lfa, additional_config)) &
 		REQ_FC_AUTO_ADV_MASK;
 
-	अगर ((u16)cur_req_fc_स्वतः_adv != params->req_fc_स्वतः_adv) अणु
+	if ((u16)cur_req_fc_auto_adv != params->req_fc_auto_adv) {
 		DP(NETIF_MSG_LINK, "Flow Ctrl AN mismatch %x vs. %x\n",
-			       cur_req_fc_स्वतः_adv, params->req_fc_स्वतः_adv);
-		वापस LFA_FLOW_CTRL_MISMATCH;
-	पूर्ण
+			       cur_req_fc_auto_adv, params->req_fc_auto_adv);
+		return LFA_FLOW_CTRL_MISMATCH;
+	}
 
 	eee_status = REG_RD(bp, params->shmem2_base +
-			    दुरत्व(काष्ठा shmem2_region,
+			    offsetof(struct shmem2_region,
 				     eee_status[params->port]));
 
-	अगर (((eee_status & SHMEM_EEE_LPI_REQUESTED_BIT) ^
+	if (((eee_status & SHMEM_EEE_LPI_REQUESTED_BIT) ^
 	     (params->eee_mode & EEE_MODE_ENABLE_LPI)) ||
 	    ((eee_status & SHMEM_EEE_REQUESTED_BIT) ^
-	     (params->eee_mode & EEE_MODE_ADV_LPI))) अणु
+	     (params->eee_mode & EEE_MODE_ADV_LPI))) {
 		DP(NETIF_MSG_LINK, "EEE mismatch %x vs. %x\n", params->eee_mode,
 			       eee_status);
-		वापस LFA_EEE_MISMATCH;
-	पूर्ण
+		return LFA_EEE_MISMATCH;
+	}
 
 	/* LFA conditions are met */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /******************************************************************/
 /*			EPIO/GPIO section			  */
 /******************************************************************/
-अटल व्योम bnx2x_get_epio(काष्ठा bnx2x *bp, u32 epio_pin, u32 *en)
-अणु
+static void bnx2x_get_epio(struct bnx2x *bp, u32 epio_pin, u32 *en)
+{
 	u32 epio_mask, gp_oenable;
 	*en = 0;
 	/* Sanity check */
-	अगर (epio_pin > 31) अणु
+	if (epio_pin > 31) {
 		DP(NETIF_MSG_LINK, "Invalid EPIO pin %d to get\n", epio_pin);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	epio_mask = 1 << epio_pin;
 	/* Set this EPIO to output */
@@ -382,66 +381,66 @@
 	REG_WR(bp, MCP_REG_MCPR_GP_OENABLE, gp_oenable & ~epio_mask);
 
 	*en = (REG_RD(bp, MCP_REG_MCPR_GP_INPUTS) & epio_mask) >> epio_pin;
-पूर्ण
-अटल व्योम bnx2x_set_epio(काष्ठा bnx2x *bp, u32 epio_pin, u32 en)
-अणु
+}
+static void bnx2x_set_epio(struct bnx2x *bp, u32 epio_pin, u32 en)
+{
 	u32 epio_mask, gp_output, gp_oenable;
 
 	/* Sanity check */
-	अगर (epio_pin > 31) अणु
+	if (epio_pin > 31) {
 		DP(NETIF_MSG_LINK, "Invalid EPIO pin %d to set\n", epio_pin);
-		वापस;
-	पूर्ण
+		return;
+	}
 	DP(NETIF_MSG_LINK, "Setting EPIO pin %d to %d\n", epio_pin, en);
 	epio_mask = 1 << epio_pin;
 	/* Set this EPIO to output */
 	gp_output = REG_RD(bp, MCP_REG_MCPR_GP_OUTPUTS);
-	अगर (en)
+	if (en)
 		gp_output |= epio_mask;
-	अन्यथा
+	else
 		gp_output &= ~epio_mask;
 
 	REG_WR(bp, MCP_REG_MCPR_GP_OUTPUTS, gp_output);
 
-	/* Set the value क्रम this EPIO */
+	/* Set the value for this EPIO */
 	gp_oenable = REG_RD(bp, MCP_REG_MCPR_GP_OENABLE);
 	REG_WR(bp, MCP_REG_MCPR_GP_OENABLE, gp_oenable | epio_mask);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_cfg_pin(काष्ठा bnx2x *bp, u32 pin_cfg, u32 val)
-अणु
-	अगर (pin_cfg == PIN_CFG_NA)
-		वापस;
-	अगर (pin_cfg >= PIN_CFG_EPIO0) अणु
+static void bnx2x_set_cfg_pin(struct bnx2x *bp, u32 pin_cfg, u32 val)
+{
+	if (pin_cfg == PIN_CFG_NA)
+		return;
+	if (pin_cfg >= PIN_CFG_EPIO0) {
 		bnx2x_set_epio(bp, pin_cfg - PIN_CFG_EPIO0, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 gpio_num = (pin_cfg - PIN_CFG_GPIO0_P0) & 0x3;
 		u8 gpio_port = (pin_cfg - PIN_CFG_GPIO0_P0) >> 2;
 		bnx2x_set_gpio(bp, gpio_num, (u8)val, gpio_port);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 bnx2x_get_cfg_pin(काष्ठा bnx2x *bp, u32 pin_cfg, u32 *val)
-अणु
-	अगर (pin_cfg == PIN_CFG_NA)
-		वापस -EINVAL;
-	अगर (pin_cfg >= PIN_CFG_EPIO0) अणु
+static u32 bnx2x_get_cfg_pin(struct bnx2x *bp, u32 pin_cfg, u32 *val)
+{
+	if (pin_cfg == PIN_CFG_NA)
+		return -EINVAL;
+	if (pin_cfg >= PIN_CFG_EPIO0) {
 		bnx2x_get_epio(bp, pin_cfg - PIN_CFG_EPIO0, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 gpio_num = (pin_cfg - PIN_CFG_GPIO0_P0) & 0x3;
 		u8 gpio_port = (pin_cfg - PIN_CFG_GPIO0_P0) >> 2;
 		*val = bnx2x_get_gpio(bp, gpio_num, gpio_port);
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 
-पूर्ण
+}
 /******************************************************************/
 /*				ETS section			  */
 /******************************************************************/
-अटल व्योम bnx2x_ets_e2e3a0_disabled(काष्ठा link_params *params)
-अणु
+static void bnx2x_ets_e2e3a0_disabled(struct link_params *params)
+{
 	/* ETS disabled configuration*/
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
 	DP(NETIF_MSG_LINK, "ETS E2E3 disabled configuration\n");
 
@@ -453,7 +452,7 @@
 	 */
 
 	REG_WR(bp, NIG_REG_P0_TX_ARB_PRIORITY_CLIENT, 0x4688);
-	/* Biपंचांगap of 5bits length. Each bit specअगरies whether the entry behaves
+	/* Bitmap of 5bits length. Each bit specifies whether the entry behaves
 	 * as strict.  Bits 0,1,2 - debug and management entries, 3 -
 	 * COS0 entry, 4 - COS1 entry.
 	 * COS1 | COS0 | DEBUG1 | DEBUG0 | MGMT
@@ -465,10 +464,10 @@
 	/* defines which entries (clients) are subjected to WFQ arbitration */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_IS_SUBJECT2WFQ, 0);
 	/* For strict priority entries defines the number of consecutive
-	 * slots क्रम the highest priority.
+	 * slots for the highest priority.
 	 */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_NUM_STRICT_ARB_SLOTS, 0x100);
-	/* mapping between the CREDIT_WEIGHT रेजिस्टरs and actual client
+	/* mapping between the CREDIT_WEIGHT registers and actual client
 	 * numbers
 	 */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_CREDIT_MAP, 0);
@@ -481,60 +480,60 @@
 	/* ETS mode disable */
 	REG_WR(bp, PBF_REG_ETS_ENABLED, 0);
 	/* If ETS mode is enabled (there is no strict priority) defines a WFQ
-	 * weight क्रम COS0/COS1.
+	 * weight for COS0/COS1.
 	 */
 	REG_WR(bp, PBF_REG_COS0_WEIGHT, 0x2710);
 	REG_WR(bp, PBF_REG_COS1_WEIGHT, 0x2710);
 	/* Upper bound that COS0_WEIGHT can reach in the WFQ arbiter */
 	REG_WR(bp, PBF_REG_COS0_UPPER_BOUND, 0x989680);
 	REG_WR(bp, PBF_REG_COS1_UPPER_BOUND, 0x989680);
-	/* Defines the number of consecutive slots क्रम the strict priority */
+	/* Defines the number of consecutive slots for the strict priority */
 	REG_WR(bp, PBF_REG_NUM_STRICT_ARB_SLOTS, 0);
-पूर्ण
+}
 /******************************************************************************
 * Description:
 *	Getting min_w_val will be set according to line speed .
 *.
 ******************************************************************************/
-अटल u32 bnx2x_ets_get_min_w_val_nig(स्थिर काष्ठा link_vars *vars)
-अणु
+static u32 bnx2x_ets_get_min_w_val_nig(const struct link_vars *vars)
+{
 	u32 min_w_val = 0;
 	/* Calculate min_w_val.*/
-	अगर (vars->link_up) अणु
-		अगर (vars->line_speed == SPEED_20000)
+	if (vars->link_up) {
+		if (vars->line_speed == SPEED_20000)
 			min_w_val = ETS_E3B0_NIG_MIN_W_VAL_20GBPS;
-		अन्यथा
+		else
 			min_w_val = ETS_E3B0_NIG_MIN_W_VAL_UP_TO_10GBPS;
-	पूर्ण अन्यथा
+	} else
 		min_w_val = ETS_E3B0_NIG_MIN_W_VAL_20GBPS;
-	/* If the link isn't up (अटल configuration क्रम example ) The
+	/* If the link isn't up (static configuration for example ) The
 	 * link will be according to 20GBPS.
 	 */
-	वापस min_w_val;
-पूर्ण
+	return min_w_val;
+}
 /******************************************************************************
 * Description:
-*	Getting credit upper bound क्रमm min_w_val.
+*	Getting credit upper bound form min_w_val.
 *.
 ******************************************************************************/
-अटल u32 bnx2x_ets_get_credit_upper_bound(स्थिर u32 min_w_val)
-अणु
-	स्थिर u32 credit_upper_bound = (u32)MAXVAL((150 * min_w_val),
+static u32 bnx2x_ets_get_credit_upper_bound(const u32 min_w_val)
+{
+	const u32 credit_upper_bound = (u32)MAXVAL((150 * min_w_val),
 						MAX_PACKET_SIZE);
-	वापस credit_upper_bound;
-पूर्ण
+	return credit_upper_bound;
+}
 /******************************************************************************
 * Description:
-*	Set credit upper bound क्रम NIG.
+*	Set credit upper bound for NIG.
 *.
 ******************************************************************************/
-अटल व्योम bnx2x_ets_e3b0_set_credit_upper_bound_nig(
-	स्थिर काष्ठा link_params *params,
-	स्थिर u32 min_w_val)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u8 port = params->port;
-	स्थिर u32 credit_upper_bound =
+static void bnx2x_ets_e3b0_set_credit_upper_bound_nig(
+	const struct link_params *params,
+	const u32 min_w_val)
+{
+	struct bnx2x *bp = params->bp;
+	const u8 port = params->port;
+	const u32 credit_upper_bound =
 	    bnx2x_ets_get_credit_upper_bound(min_w_val);
 
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CREDIT_UPPER_BOUND_0 :
@@ -550,80 +549,80 @@
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CREDIT_UPPER_BOUND_5 :
 		   NIG_REG_P0_TX_ARB_CREDIT_UPPER_BOUND_5, credit_upper_bound);
 
-	अगर (!port) अणु
+	if (!port) {
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_UPPER_BOUND_6,
 			credit_upper_bound);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_UPPER_BOUND_7,
 			credit_upper_bound);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_UPPER_BOUND_8,
 			credit_upper_bound);
-	पूर्ण
-पूर्ण
+	}
+}
 /******************************************************************************
 * Description:
-*	Will वापस the NIG ETS रेजिस्टरs to init values.Except
+*	Will return the NIG ETS registers to init values.Except
 *	credit_upper_bound.
 *	That isn't used in this configuration (No WFQ is enabled) and will be
 *	configured according to spec
 *.
 ******************************************************************************/
-अटल व्योम bnx2x_ets_e3b0_nig_disabled(स्थिर काष्ठा link_params *params,
-					स्थिर काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u8 port = params->port;
-	स्थिर u32 min_w_val = bnx2x_ets_get_min_w_val_nig(vars);
+static void bnx2x_ets_e3b0_nig_disabled(const struct link_params *params,
+					const struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	const u8 port = params->port;
+	const u32 min_w_val = bnx2x_ets_get_min_w_val_nig(vars);
 	/* Mapping between entry  priority to client number (0,1,2 -debug and
 	 * management clients, 3 - COS0 client, 4 - COS1, ... 8 -
-	 * COS5)(HIGHEST) 4bits client num.TODO_ETS - Should be करोne by
+	 * COS5)(HIGHEST) 4bits client num.TODO_ETS - Should be done by
 	 * reset value or init tool
 	 */
-	अगर (port) अणु
+	if (port) {
 		REG_WR(bp, NIG_REG_P1_TX_ARB_PRIORITY_CLIENT2_LSB, 0x543210);
 		REG_WR(bp, NIG_REG_P1_TX_ARB_PRIORITY_CLIENT2_MSB, 0x0);
-	पूर्ण अन्यथा अणु
+	} else {
 		REG_WR(bp, NIG_REG_P0_TX_ARB_PRIORITY_CLIENT2_LSB, 0x76543210);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_PRIORITY_CLIENT2_MSB, 0x8);
-	पूर्ण
+	}
 	/* For strict priority entries defines the number of consecutive
-	 * slots क्रम the highest priority.
+	 * slots for the highest priority.
 	 */
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_NUM_STRICT_ARB_SLOTS :
 		   NIG_REG_P0_TX_ARB_NUM_STRICT_ARB_SLOTS, 0x100);
-	/* Mapping between the CREDIT_WEIGHT रेजिस्टरs and actual client
+	/* Mapping between the CREDIT_WEIGHT registers and actual client
 	 * numbers
 	 */
-	अगर (port) अणु
+	if (port) {
 		/*Port 1 has 6 COS*/
 		REG_WR(bp, NIG_REG_P1_TX_ARB_CLIENT_CREDIT_MAP2_LSB, 0x210543);
 		REG_WR(bp, NIG_REG_P1_TX_ARB_CLIENT_CREDIT_MAP2_MSB, 0x0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*Port 0 has 9 COS*/
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_CREDIT_MAP2_LSB,
 		       0x43210876);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_CREDIT_MAP2_MSB, 0x5);
-	पूर्ण
+	}
 
-	/* Biपंचांगap of 5bits length. Each bit specअगरies whether the entry behaves
+	/* Bitmap of 5bits length. Each bit specifies whether the entry behaves
 	 * as strict.  Bits 0,1,2 - debug and management entries, 3 -
 	 * COS0 entry, 4 - COS1 entry.
 	 * COS1 | COS0 | DEBUG1 | DEBUG0 | MGMT
 	 * bit4   bit3	  bit2   bit1	  bit0
 	 * MCP and debug are strict
 	 */
-	अगर (port)
+	if (port)
 		REG_WR(bp, NIG_REG_P1_TX_ARB_CLIENT_IS_STRICT, 0x3f);
-	अन्यथा
+	else
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_IS_STRICT, 0x1ff);
 	/* defines which entries (clients) are subjected to WFQ arbitration */
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CLIENT_IS_SUBJECT2WFQ :
 		   NIG_REG_P0_TX_ARB_CLIENT_IS_SUBJECT2WFQ, 0);
 
-	/* Please notice the रेजिस्टर address are note continuous and a
-	 * क्रम here is note appropriate.In 2 port mode port0 only COS0-5
-	 * can be used. DEBUG1,DEBUG1,MGMT are never used क्रम WFQ* In 4
+	/* Please notice the register address are note continuous and a
+	 * for here is note appropriate.In 2 port mode port0 only COS0-5
+	 * can be used. DEBUG1,DEBUG1,MGMT are never used for WFQ* In 4
 	 * port mode port1 only COS0-2 can be used. DEBUG1,DEBUG1,MGMT
-	 * are never used क्रम WFQ
+	 * are never used for WFQ
 	 */
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CREDIT_WEIGHT_0 :
 		   NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_0, 0x0);
@@ -637,78 +636,78 @@
 		   NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_4, 0x0);
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CREDIT_WEIGHT_5 :
 		   NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_5, 0x0);
-	अगर (!port) अणु
+	if (!port) {
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_6, 0x0);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_7, 0x0);
 		REG_WR(bp, NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_8, 0x0);
-	पूर्ण
+	}
 
 	bnx2x_ets_e3b0_set_credit_upper_bound_nig(params, min_w_val);
-पूर्ण
+}
 /******************************************************************************
 * Description:
-*	Set credit upper bound क्रम PBF.
+*	Set credit upper bound for PBF.
 *.
 ******************************************************************************/
-अटल व्योम bnx2x_ets_e3b0_set_credit_upper_bound_pbf(
-	स्थिर काष्ठा link_params *params,
-	स्थिर u32 min_w_val)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u32 credit_upper_bound =
+static void bnx2x_ets_e3b0_set_credit_upper_bound_pbf(
+	const struct link_params *params,
+	const u32 min_w_val)
+{
+	struct bnx2x *bp = params->bp;
+	const u32 credit_upper_bound =
 	    bnx2x_ets_get_credit_upper_bound(min_w_val);
-	स्थिर u8 port = params->port;
+	const u8 port = params->port;
 	u32 base_upper_bound = 0;
 	u8 max_cos = 0;
 	u8 i = 0;
-	/* In 2 port mode port0 has COS0-5 that can be used क्रम WFQ.In 4
-	 * port mode port1 has COS0-2 that can be used क्रम WFQ.
+	/* In 2 port mode port0 has COS0-5 that can be used for WFQ.In 4
+	 * port mode port1 has COS0-2 that can be used for WFQ.
 	 */
-	अगर (!port) अणु
+	if (!port) {
 		base_upper_bound = PBF_REG_COS0_UPPER_BOUND_P0;
 		max_cos = DCBX_E3B0_MAX_NUM_COS_PORT0;
-	पूर्ण अन्यथा अणु
+	} else {
 		base_upper_bound = PBF_REG_COS0_UPPER_BOUND_P1;
 		max_cos = DCBX_E3B0_MAX_NUM_COS_PORT1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < max_cos; i++)
+	for (i = 0; i < max_cos; i++)
 		REG_WR(bp, base_upper_bound + (i << 2), credit_upper_bound);
-पूर्ण
+}
 
 /******************************************************************************
 * Description:
-*	Will वापस the PBF ETS रेजिस्टरs to init values.Except
+*	Will return the PBF ETS registers to init values.Except
 *	credit_upper_bound.
 *	That isn't used in this configuration (No WFQ is enabled) and will be
 *	configured according to spec
 *.
 ******************************************************************************/
-अटल व्योम bnx2x_ets_e3b0_pbf_disabled(स्थिर काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u8 port = params->port;
-	स्थिर u32 min_w_val_pbf = ETS_E3B0_PBF_MIN_W_VAL;
+static void bnx2x_ets_e3b0_pbf_disabled(const struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	const u8 port = params->port;
+	const u32 min_w_val_pbf = ETS_E3B0_PBF_MIN_W_VAL;
 	u8 i = 0;
 	u32 base_weight = 0;
 	u8 max_cos = 0;
 
 	/* Mapping between entry  priority to client number 0 - COS0
 	 * client, 2 - COS1, ... 5 - COS5)(HIGHEST) 4bits client num.
-	 * TODO_ETS - Should be करोne by reset value or init tool
+	 * TODO_ETS - Should be done by reset value or init tool
 	 */
-	अगर (port)
+	if (port)
 		/*  0x688 (|011|0 10|00 1|000) */
 		REG_WR(bp, PBF_REG_ETS_ARB_PRIORITY_CLIENT_P1 , 0x688);
-	अन्यथा
+	else
 		/*  (10 1|100 |011|0 10|00 1|000) */
 		REG_WR(bp, PBF_REG_ETS_ARB_PRIORITY_CLIENT_P0 , 0x2C688);
 
-	/* TODO_ETS - Should be करोne by reset value or init tool */
-	अगर (port)
+	/* TODO_ETS - Should be done by reset value or init tool */
+	if (port)
 		/* 0x688 (|011|0 10|00 1|000)*/
 		REG_WR(bp, PBF_REG_ETS_ARB_CLIENT_CREDIT_MAP_P1, 0x688);
-	अन्यथा
+	else
 	/* 0x2C688 (10 1|100 |011|0 10|00 1|000) */
 	REG_WR(bp, PBF_REG_ETS_ARB_CLIENT_CREDIT_MAP_P0, 0x2C688);
 
@@ -721,190 +720,190 @@
 
 	REG_WR(bp, (port) ? PBF_REG_ETS_ARB_CLIENT_IS_SUBJECT2WFQ_P1 :
 		   PBF_REG_ETS_ARB_CLIENT_IS_SUBJECT2WFQ_P0 , 0);
-	/* In 2 port mode port0 has COS0-5 that can be used क्रम WFQ.
-	 * In 4 port mode port1 has COS0-2 that can be used क्रम WFQ.
+	/* In 2 port mode port0 has COS0-5 that can be used for WFQ.
+	 * In 4 port mode port1 has COS0-2 that can be used for WFQ.
 	 */
-	अगर (!port) अणु
+	if (!port) {
 		base_weight = PBF_REG_COS0_WEIGHT_P0;
 		max_cos = DCBX_E3B0_MAX_NUM_COS_PORT0;
-	पूर्ण अन्यथा अणु
+	} else {
 		base_weight = PBF_REG_COS0_WEIGHT_P1;
 		max_cos = DCBX_E3B0_MAX_NUM_COS_PORT1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < max_cos; i++)
+	for (i = 0; i < max_cos; i++)
 		REG_WR(bp, base_weight + (0x4 * i), 0);
 
 	bnx2x_ets_e3b0_set_credit_upper_bound_pbf(params, min_w_val_pbf);
-पूर्ण
+}
 /******************************************************************************
 * Description:
-*	E3B0 disable will वापस basically the values to init values.
+*	E3B0 disable will return basically the values to init values.
 *.
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_disabled(स्थिर काष्ठा link_params *params,
-				   स्थिर काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_ets_e3b0_disabled(const struct link_params *params,
+				   const struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 
-	अगर (!CHIP_IS_E3B0(bp)) अणु
+	if (!CHIP_IS_E3B0(bp)) {
 		DP(NETIF_MSG_LINK,
 		   "bnx2x_ets_e3b0_disabled the chip isn't E3B0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bnx2x_ets_e3b0_nig_disabled(params, vars);
 
 	bnx2x_ets_e3b0_pbf_disabled(params);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /******************************************************************************
 * Description:
-*	Disable will वापस basically the values to init values.
+*	Disable will return basically the values to init values.
 *
 ******************************************************************************/
-पूर्णांक bnx2x_ets_disabled(काष्ठा link_params *params,
-		      काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	पूर्णांक bnx2x_status = 0;
+int bnx2x_ets_disabled(struct link_params *params,
+		      struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	int bnx2x_status = 0;
 
-	अगर ((CHIP_IS_E2(bp)) || (CHIP_IS_E3A0(bp)))
+	if ((CHIP_IS_E2(bp)) || (CHIP_IS_E3A0(bp)))
 		bnx2x_ets_e2e3a0_disabled(params);
-	अन्यथा अगर (CHIP_IS_E3B0(bp))
+	else if (CHIP_IS_E3B0(bp))
 		bnx2x_status = bnx2x_ets_e3b0_disabled(params, vars);
-	अन्यथा अणु
+	else {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_disabled - chip not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस bnx2x_status;
-पूर्ण
+	return bnx2x_status;
+}
 
 /******************************************************************************
 * Description
-*	Set the COS mappimg to SP and BW until this poपूर्णांक all the COS are not
+*	Set the COS mappimg to SP and BW until this point all the COS are not
 *	set as SP or BW.
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_cli_map(स्थिर काष्ठा link_params *params,
-				  स्थिर काष्ठा bnx2x_ets_params *ets_params,
-				  स्थिर u8 cos_sp_biपंचांगap,
-				  स्थिर u8 cos_bw_biपंचांगap)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u8 port = params->port;
-	स्थिर u8 nig_cli_sp_biपंचांगap = 0x7 | (cos_sp_biपंचांगap << 3);
-	स्थिर u8 pbf_cli_sp_biपंचांगap = cos_sp_biपंचांगap;
-	स्थिर u8 nig_cli_subject2wfq_biपंचांगap = cos_bw_biपंचांगap << 3;
-	स्थिर u8 pbf_cli_subject2wfq_biपंचांगap = cos_bw_biपंचांगap;
+static int bnx2x_ets_e3b0_cli_map(const struct link_params *params,
+				  const struct bnx2x_ets_params *ets_params,
+				  const u8 cos_sp_bitmap,
+				  const u8 cos_bw_bitmap)
+{
+	struct bnx2x *bp = params->bp;
+	const u8 port = params->port;
+	const u8 nig_cli_sp_bitmap = 0x7 | (cos_sp_bitmap << 3);
+	const u8 pbf_cli_sp_bitmap = cos_sp_bitmap;
+	const u8 nig_cli_subject2wfq_bitmap = cos_bw_bitmap << 3;
+	const u8 pbf_cli_subject2wfq_bitmap = cos_bw_bitmap;
 
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CLIENT_IS_STRICT :
-	       NIG_REG_P0_TX_ARB_CLIENT_IS_STRICT, nig_cli_sp_biपंचांगap);
+	       NIG_REG_P0_TX_ARB_CLIENT_IS_STRICT, nig_cli_sp_bitmap);
 
 	REG_WR(bp, (port) ? PBF_REG_ETS_ARB_CLIENT_IS_STRICT_P1 :
-	       PBF_REG_ETS_ARB_CLIENT_IS_STRICT_P0 , pbf_cli_sp_biपंचांगap);
+	       PBF_REG_ETS_ARB_CLIENT_IS_STRICT_P0 , pbf_cli_sp_bitmap);
 
 	REG_WR(bp, (port) ? NIG_REG_P1_TX_ARB_CLIENT_IS_SUBJECT2WFQ :
 	       NIG_REG_P0_TX_ARB_CLIENT_IS_SUBJECT2WFQ,
-	       nig_cli_subject2wfq_biपंचांगap);
+	       nig_cli_subject2wfq_bitmap);
 
 	REG_WR(bp, (port) ? PBF_REG_ETS_ARB_CLIENT_IS_SUBJECT2WFQ_P1 :
 	       PBF_REG_ETS_ARB_CLIENT_IS_SUBJECT2WFQ_P0,
-	       pbf_cli_subject2wfq_biपंचांगap);
+	       pbf_cli_subject2wfq_bitmap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /******************************************************************************
 * Description:
 *	This function is needed because NIG ARB_CREDIT_WEIGHT_X are
-*	not जारीs and ARB_CREDIT_WEIGHT_0 + offset is suitable.
+*	not continues and ARB_CREDIT_WEIGHT_0 + offset is suitable.
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_set_cos_bw(काष्ठा bnx2x *bp,
-				     स्थिर u8 cos_entry,
-				     स्थिर u32 min_w_val_nig,
-				     स्थिर u32 min_w_val_pbf,
-				     स्थिर u16 total_bw,
-				     स्थिर u8 bw,
-				     स्थिर u8 port)
-अणु
+static int bnx2x_ets_e3b0_set_cos_bw(struct bnx2x *bp,
+				     const u8 cos_entry,
+				     const u32 min_w_val_nig,
+				     const u32 min_w_val_pbf,
+				     const u16 total_bw,
+				     const u8 bw,
+				     const u8 port)
+{
 	u32 nig_reg_adress_crd_weight = 0;
 	u32 pbf_reg_adress_crd_weight = 0;
-	/* Calculate and set BW क्रम this COS - use 1 instead of 0 क्रम BW */
-	स्थिर u32 cos_bw_nig = ((bw ? bw : 1) * min_w_val_nig) / total_bw;
-	स्थिर u32 cos_bw_pbf = ((bw ? bw : 1) * min_w_val_pbf) / total_bw;
+	/* Calculate and set BW for this COS - use 1 instead of 0 for BW */
+	const u32 cos_bw_nig = ((bw ? bw : 1) * min_w_val_nig) / total_bw;
+	const u32 cos_bw_pbf = ((bw ? bw : 1) * min_w_val_pbf) / total_bw;
 
-	चयन (cos_entry) अणु
-	हाल 0:
+	switch (cos_entry) {
+	case 0:
 		nig_reg_adress_crd_weight =
 			(port) ? NIG_REG_P1_TX_ARB_CREDIT_WEIGHT_0 :
 			NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_0;
 		pbf_reg_adress_crd_weight = (port) ?
 		    PBF_REG_COS0_WEIGHT_P1 : PBF_REG_COS0_WEIGHT_P0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		nig_reg_adress_crd_weight = (port) ?
 			NIG_REG_P1_TX_ARB_CREDIT_WEIGHT_1 :
 			NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_1;
 		pbf_reg_adress_crd_weight = (port) ?
 			PBF_REG_COS1_WEIGHT_P1 : PBF_REG_COS1_WEIGHT_P0;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		nig_reg_adress_crd_weight = (port) ?
 			NIG_REG_P1_TX_ARB_CREDIT_WEIGHT_2 :
 			NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_2;
 
 		pbf_reg_adress_crd_weight = (port) ?
 			PBF_REG_COS2_WEIGHT_P1 : PBF_REG_COS2_WEIGHT_P0;
-		अवरोध;
-	हाल 3:
-		अगर (port)
-			वापस -EINVAL;
+		break;
+	case 3:
+		if (port)
+			return -EINVAL;
 		nig_reg_adress_crd_weight = NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_3;
 		pbf_reg_adress_crd_weight = PBF_REG_COS3_WEIGHT_P0;
-		अवरोध;
-	हाल 4:
-		अगर (port)
-			वापस -EINVAL;
+		break;
+	case 4:
+		if (port)
+			return -EINVAL;
 		nig_reg_adress_crd_weight = NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_4;
 		pbf_reg_adress_crd_weight = PBF_REG_COS4_WEIGHT_P0;
-		अवरोध;
-	हाल 5:
-		अगर (port)
-			वापस -EINVAL;
+		break;
+	case 5:
+		if (port)
+			return -EINVAL;
 		nig_reg_adress_crd_weight = NIG_REG_P0_TX_ARB_CREDIT_WEIGHT_5;
 		pbf_reg_adress_crd_weight = PBF_REG_COS5_WEIGHT_P0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	REG_WR(bp, nig_reg_adress_crd_weight, cos_bw_nig);
 
 	REG_WR(bp, pbf_reg_adress_crd_weight, cos_bw_pbf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /******************************************************************************
 * Description:
 *	Calculate the total BW.A value of 0 isn't legal.
 *
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_get_total_bw(
-	स्थिर काष्ठा link_params *params,
-	काष्ठा bnx2x_ets_params *ets_params,
+static int bnx2x_ets_e3b0_get_total_bw(
+	const struct link_params *params,
+	struct bnx2x_ets_params *ets_params,
 	u16 *total_bw)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 cos_idx = 0;
 	u8 is_bw_cos_exist = 0;
 
 	*total_bw = 0 ;
 	/* Calculate total BW requested */
-	क्रम (cos_idx = 0; cos_idx < ets_params->num_of_cos; cos_idx++) अणु
-		अगर (ets_params->cos[cos_idx].state == bnx2x_cos_state_bw) अणु
+	for (cos_idx = 0; cos_idx < ets_params->num_of_cos; cos_idx++) {
+		if (ets_params->cos[cos_idx].state == bnx2x_cos_state_bw) {
 			is_bw_cos_exist = 1;
-			अगर (!ets_params->cos[cos_idx].params.bw_params.bw) अणु
+			if (!ets_params->cos[cos_idx].params.bw_params.bw) {
 				DP(NETIF_MSG_LINK, "bnx2x_ets_E3B0_config BW"
 						   "was set to 0\n");
 				/* This is to prevent a state when ramrods
@@ -912,205 +911,205 @@
 				 */
 				ets_params->cos[cos_idx].params.bw_params.bw
 					 = 1;
-			पूर्ण
+			}
 			*total_bw +=
 				ets_params->cos[cos_idx].params.bw_params.bw;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Check total BW is valid */
-	अगर ((is_bw_cos_exist == 1) && (*total_bw != 100)) अणु
-		अगर (*total_bw == 0) अणु
+	if ((is_bw_cos_exist == 1) && (*total_bw != 100)) {
+		if (*total_bw == 0) {
 			DP(NETIF_MSG_LINK,
 			   "bnx2x_ets_E3B0_config total BW shouldn't be 0\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		DP(NETIF_MSG_LINK,
 		   "bnx2x_ets_E3B0_config total BW should be 100\n");
-		/* We can handle a हाल whre the BW isn't 100 this can happen
-		 * अगर the TC are joined.
+		/* We can handle a case whre the BW isn't 100 this can happen
+		 * if the TC are joined.
 		 */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /******************************************************************************
 * Description:
 *	Invalidate all the sp_pri_to_cos.
 *
 ******************************************************************************/
-अटल व्योम bnx2x_ets_e3b0_sp_pri_to_cos_init(u8 *sp_pri_to_cos)
-अणु
+static void bnx2x_ets_e3b0_sp_pri_to_cos_init(u8 *sp_pri_to_cos)
+{
 	u8 pri = 0;
-	क्रम (pri = 0; pri < DCBX_MAX_NUM_COS; pri++)
+	for (pri = 0; pri < DCBX_MAX_NUM_COS; pri++)
 		sp_pri_to_cos[pri] = DCBX_INVALID_COS;
-पूर्ण
+}
 /******************************************************************************
 * Description:
-*	Calculate and set the SP (ARB_PRIORITY_CLIENT) NIG and PBF रेजिस्टरs
+*	Calculate and set the SP (ARB_PRIORITY_CLIENT) NIG and PBF registers
 *	according to sp_pri_to_cos.
 *
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_sp_pri_to_cos_set(स्थिर काष्ठा link_params *params,
-					    u8 *sp_pri_to_cos, स्थिर u8 pri,
-					    स्थिर u8 cos_entry)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u8 port = params->port;
-	स्थिर u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
+static int bnx2x_ets_e3b0_sp_pri_to_cos_set(const struct link_params *params,
+					    u8 *sp_pri_to_cos, const u8 pri,
+					    const u8 cos_entry)
+{
+	struct bnx2x *bp = params->bp;
+	const u8 port = params->port;
+	const u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
 		DCBX_E3B0_MAX_NUM_COS_PORT0;
 
-	अगर (pri >= max_num_of_cos) अणु
+	if (pri >= max_num_of_cos) {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_e3b0_sp_pri_to_cos_set invalid "
 		   "parameter Illegal strict priority\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (sp_pri_to_cos[pri] != DCBX_INVALID_COS) अणु
+	if (sp_pri_to_cos[pri] != DCBX_INVALID_COS) {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_e3b0_sp_pri_to_cos_set invalid "
 				   "parameter There can't be two COS's with "
 				   "the same strict pri\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sp_pri_to_cos[pri] = cos_entry;
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
 /******************************************************************************
 * Description:
 *	Returns the correct value according to COS and priority in
-*	the sp_pri_cli रेजिस्टर.
+*	the sp_pri_cli register.
 *
 ******************************************************************************/
-अटल u64 bnx2x_e3b0_sp_get_pri_cli_reg(स्थिर u8 cos, स्थिर u8 cos_offset,
-					 स्थिर u8 pri_set,
-					 स्थिर u8 pri_offset,
-					 स्थिर u8 entry_size)
-अणु
+static u64 bnx2x_e3b0_sp_get_pri_cli_reg(const u8 cos, const u8 cos_offset,
+					 const u8 pri_set,
+					 const u8 pri_offset,
+					 const u8 entry_size)
+{
 	u64 pri_cli_nig = 0;
 	pri_cli_nig = ((u64)(cos + cos_offset)) << (entry_size *
 						    (pri_set + pri_offset));
 
-	वापस pri_cli_nig;
-पूर्ण
+	return pri_cli_nig;
+}
 /******************************************************************************
 * Description:
 *	Returns the correct value according to COS and priority in the
-*	sp_pri_cli रेजिस्टर क्रम NIG.
+*	sp_pri_cli register for NIG.
 *
 ******************************************************************************/
-अटल u64 bnx2x_e3b0_sp_get_pri_cli_reg_nig(स्थिर u8 cos, स्थिर u8 pri_set)
-अणु
+static u64 bnx2x_e3b0_sp_get_pri_cli_reg_nig(const u8 cos, const u8 pri_set)
+{
 	/* MCP Dbg0 and dbg1 are always with higher strict pri*/
-	स्थिर u8 nig_cos_offset = 3;
-	स्थिर u8 nig_pri_offset = 3;
+	const u8 nig_cos_offset = 3;
+	const u8 nig_pri_offset = 3;
 
-	वापस bnx2x_e3b0_sp_get_pri_cli_reg(cos, nig_cos_offset, pri_set,
+	return bnx2x_e3b0_sp_get_pri_cli_reg(cos, nig_cos_offset, pri_set,
 		nig_pri_offset, 4);
 
-पूर्ण
+}
 /******************************************************************************
 * Description:
 *	Returns the correct value according to COS and priority in the
-*	sp_pri_cli रेजिस्टर क्रम PBF.
+*	sp_pri_cli register for PBF.
 *
 ******************************************************************************/
-अटल u64 bnx2x_e3b0_sp_get_pri_cli_reg_pbf(स्थिर u8 cos, स्थिर u8 pri_set)
-अणु
-	स्थिर u8 pbf_cos_offset = 0;
-	स्थिर u8 pbf_pri_offset = 0;
+static u64 bnx2x_e3b0_sp_get_pri_cli_reg_pbf(const u8 cos, const u8 pri_set)
+{
+	const u8 pbf_cos_offset = 0;
+	const u8 pbf_pri_offset = 0;
 
-	वापस bnx2x_e3b0_sp_get_pri_cli_reg(cos, pbf_cos_offset, pri_set,
+	return bnx2x_e3b0_sp_get_pri_cli_reg(cos, pbf_cos_offset, pri_set,
 		pbf_pri_offset, 3);
 
-पूर्ण
+}
 
 /******************************************************************************
 * Description:
-*	Calculate and set the SP (ARB_PRIORITY_CLIENT) NIG and PBF रेजिस्टरs
+*	Calculate and set the SP (ARB_PRIORITY_CLIENT) NIG and PBF registers
 *	according to sp_pri_to_cos.(which COS has higher priority)
 *
 ******************************************************************************/
-अटल पूर्णांक bnx2x_ets_e3b0_sp_set_pri_cli_reg(स्थिर काष्ठा link_params *params,
+static int bnx2x_ets_e3b0_sp_set_pri_cli_reg(const struct link_params *params,
 					     u8 *sp_pri_to_cos)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 i = 0;
-	स्थिर u8 port = params->port;
+	const u8 port = params->port;
 	/* MCP Dbg0 and dbg1 are always with higher strict pri*/
 	u64 pri_cli_nig = 0x210;
 	u32 pri_cli_pbf = 0x0;
 	u8 pri_set = 0;
-	u8 pri_biपंचांगask = 0;
-	स्थिर u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
+	u8 pri_bitmask = 0;
+	const u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
 		DCBX_E3B0_MAX_NUM_COS_PORT0;
 
 	u8 cos_bit_to_set = (1 << max_num_of_cos) - 1;
 
 	/* Set all the strict priority first */
-	क्रम (i = 0; i < max_num_of_cos; i++) अणु
-		अगर (sp_pri_to_cos[i] != DCBX_INVALID_COS) अणु
-			अगर (sp_pri_to_cos[i] >= DCBX_MAX_NUM_COS) अणु
+	for (i = 0; i < max_num_of_cos; i++) {
+		if (sp_pri_to_cos[i] != DCBX_INVALID_COS) {
+			if (sp_pri_to_cos[i] >= DCBX_MAX_NUM_COS) {
 				DP(NETIF_MSG_LINK,
 					   "bnx2x_ets_e3b0_sp_set_pri_cli_reg "
 					   "invalid cos entry\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
 			pri_cli_nig |= bnx2x_e3b0_sp_get_pri_cli_reg_nig(
 			    sp_pri_to_cos[i], pri_set);
 
 			pri_cli_pbf |= bnx2x_e3b0_sp_get_pri_cli_reg_pbf(
 			    sp_pri_to_cos[i], pri_set);
-			pri_biपंचांगask = 1 << sp_pri_to_cos[i];
-			/* COS is used हटाओ it from biपंचांगap.*/
-			अगर (!(pri_biपंचांगask & cos_bit_to_set)) अणु
+			pri_bitmask = 1 << sp_pri_to_cos[i];
+			/* COS is used remove it from bitmap.*/
+			if (!(pri_bitmask & cos_bit_to_set)) {
 				DP(NETIF_MSG_LINK,
 					"bnx2x_ets_e3b0_sp_set_pri_cli_reg "
 					"invalid There can't be two COS's with"
 					" the same strict pri\n");
-				वापस -EINVAL;
-			पूर्ण
-			cos_bit_to_set &= ~pri_biपंचांगask;
+				return -EINVAL;
+			}
+			cos_bit_to_set &= ~pri_bitmask;
 			pri_set++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Set all the Non strict priority i= COS*/
-	क्रम (i = 0; i < max_num_of_cos; i++) अणु
-		pri_biपंचांगask = 1 << i;
-		/* Check अगर COS was alपढ़ोy used क्रम SP */
-		अगर (pri_biपंचांगask & cos_bit_to_set) अणु
-			/* COS wasn't used क्रम SP */
+	for (i = 0; i < max_num_of_cos; i++) {
+		pri_bitmask = 1 << i;
+		/* Check if COS was already used for SP */
+		if (pri_bitmask & cos_bit_to_set) {
+			/* COS wasn't used for SP */
 			pri_cli_nig |= bnx2x_e3b0_sp_get_pri_cli_reg_nig(
 			    i, pri_set);
 
 			pri_cli_pbf |= bnx2x_e3b0_sp_get_pri_cli_reg_pbf(
 			    i, pri_set);
-			/* COS is used हटाओ it from biपंचांगap.*/
-			cos_bit_to_set &= ~pri_biपंचांगask;
+			/* COS is used remove it from bitmap.*/
+			cos_bit_to_set &= ~pri_bitmask;
 			pri_set++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pri_set != max_num_of_cos) अणु
+	if (pri_set != max_num_of_cos) {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_e3b0_sp_set_pri_cli_reg not all "
 				   "entries were set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (port) अणु
+	if (port) {
 		/* Only 6 usable clients*/
 		REG_WR(bp, NIG_REG_P1_TX_ARB_PRIORITY_CLIENT2_LSB,
 		       (u32)pri_cli_nig);
 
 		REG_WR(bp, PBF_REG_ETS_ARB_PRIORITY_CLIENT_P1 , pri_cli_pbf);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Only 9 usable clients*/
-		स्थिर u32 pri_cli_nig_lsb = (u32) (pri_cli_nig);
-		स्थिर u32 pri_cli_nig_msb = (u32) ((pri_cli_nig >> 32) & 0xF);
+		const u32 pri_cli_nig_lsb = (u32) (pri_cli_nig);
+		const u32 pri_cli_nig_msb = (u32) ((pri_cli_nig >> 32) & 0xF);
 
 		REG_WR(bp, NIG_REG_P0_TX_ARB_PRIORITY_CLIENT2_LSB,
 		       pri_cli_nig_lsb);
@@ -1118,42 +1117,42 @@
 		       pri_cli_nig_msb);
 
 		REG_WR(bp, PBF_REG_ETS_ARB_PRIORITY_CLIENT_P0 , pri_cli_pbf);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /******************************************************************************
 * Description:
 *	Configure the COS to ETS according to BW and SP settings.
 ******************************************************************************/
-पूर्णांक bnx2x_ets_e3b0_config(स्थिर काष्ठा link_params *params,
-			 स्थिर काष्ठा link_vars *vars,
-			 काष्ठा bnx2x_ets_params *ets_params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	पूर्णांक bnx2x_status = 0;
-	स्थिर u8 port = params->port;
+int bnx2x_ets_e3b0_config(const struct link_params *params,
+			 const struct link_vars *vars,
+			 struct bnx2x_ets_params *ets_params)
+{
+	struct bnx2x *bp = params->bp;
+	int bnx2x_status = 0;
+	const u8 port = params->port;
 	u16 total_bw = 0;
-	स्थिर u32 min_w_val_nig = bnx2x_ets_get_min_w_val_nig(vars);
-	स्थिर u32 min_w_val_pbf = ETS_E3B0_PBF_MIN_W_VAL;
-	u8 cos_bw_biपंचांगap = 0;
-	u8 cos_sp_biपंचांगap = 0;
-	u8 sp_pri_to_cos[DCBX_MAX_NUM_COS] = अणु0पूर्ण;
-	स्थिर u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
+	const u32 min_w_val_nig = bnx2x_ets_get_min_w_val_nig(vars);
+	const u32 min_w_val_pbf = ETS_E3B0_PBF_MIN_W_VAL;
+	u8 cos_bw_bitmap = 0;
+	u8 cos_sp_bitmap = 0;
+	u8 sp_pri_to_cos[DCBX_MAX_NUM_COS] = {0};
+	const u8 max_num_of_cos = (port) ? DCBX_E3B0_MAX_NUM_COS_PORT1 :
 		DCBX_E3B0_MAX_NUM_COS_PORT0;
 	u8 cos_entry = 0;
 
-	अगर (!CHIP_IS_E3B0(bp)) अणु
+	if (!CHIP_IS_E3B0(bp)) {
 		DP(NETIF_MSG_LINK,
 		   "bnx2x_ets_e3b0_disabled the chip isn't E3B0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((ets_params->num_of_cos > max_num_of_cos)) अणु
+	if ((ets_params->num_of_cos > max_num_of_cos)) {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_E3B0_config the number of COS "
 				   "isn't supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Prepare sp strict priority parameters*/
 	bnx2x_ets_e3b0_sp_pri_to_cos_init(sp_pri_to_cos);
@@ -1161,22 +1160,22 @@
 	/* Prepare BW parameters*/
 	bnx2x_status = bnx2x_ets_e3b0_get_total_bw(params, ets_params,
 						   &total_bw);
-	अगर (bnx2x_status) अणु
+	if (bnx2x_status) {
 		DP(NETIF_MSG_LINK,
 		   "bnx2x_ets_E3B0_config get_total_bw failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Upper bound is set according to current link speed (min_w_val
-	 * should be the same क्रम upper bound and COS credit val).
+	 * should be the same for upper bound and COS credit val).
 	 */
 	bnx2x_ets_e3b0_set_credit_upper_bound_nig(params, min_w_val_nig);
 	bnx2x_ets_e3b0_set_credit_upper_bound_pbf(params, min_w_val_pbf);
 
 
-	क्रम (cos_entry = 0; cos_entry < ets_params->num_of_cos; cos_entry++) अणु
-		अगर (bnx2x_cos_state_bw == ets_params->cos[cos_entry].state) अणु
-			cos_bw_biपंचांगap |= (1 << cos_entry);
+	for (cos_entry = 0; cos_entry < ets_params->num_of_cos; cos_entry++) {
+		if (bnx2x_cos_state_bw == ets_params->cos[cos_entry].state) {
+			cos_bw_bitmap |= (1 << cos_entry);
 			/* The function also sets the BW in HW(not the mappin
 			 * yet)
 			 */
@@ -1185,9 +1184,9 @@
 				total_bw,
 				ets_params->cos[cos_entry].params.bw_params.bw,
 				 port);
-		पूर्ण अन्यथा अगर (bnx2x_cos_state_strict ==
-			ets_params->cos[cos_entry].state)अणु
-			cos_sp_biपंचांगap |= (1 << cos_entry);
+		} else if (bnx2x_cos_state_strict ==
+			ets_params->cos[cos_entry].state){
+			cos_sp_bitmap |= (1 << cos_entry);
 
 			bnx2x_status = bnx2x_ets_e3b0_sp_pri_to_cos_set(
 				params,
@@ -1195,51 +1194,51 @@
 				ets_params->cos[cos_entry].params.sp_params.pri,
 				cos_entry);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			DP(NETIF_MSG_LINK,
 			   "bnx2x_ets_e3b0_config cos state not valid\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (bnx2x_status) अणु
+			return -EINVAL;
+		}
+		if (bnx2x_status) {
 			DP(NETIF_MSG_LINK,
 			   "bnx2x_ets_e3b0_config set cos bw failed\n");
-			वापस bnx2x_status;
-		पूर्ण
-	पूर्ण
+			return bnx2x_status;
+		}
+	}
 
-	/* Set SP रेजिस्टर (which COS has higher priority) */
+	/* Set SP register (which COS has higher priority) */
 	bnx2x_status = bnx2x_ets_e3b0_sp_set_pri_cli_reg(params,
 							 sp_pri_to_cos);
 
-	अगर (bnx2x_status) अणु
+	if (bnx2x_status) {
 		DP(NETIF_MSG_LINK,
 		   "bnx2x_ets_E3B0_config set_pri_cli_reg failed\n");
-		वापस bnx2x_status;
-	पूर्ण
+		return bnx2x_status;
+	}
 
 	/* Set client mapping of BW and strict */
 	bnx2x_status = bnx2x_ets_e3b0_cli_map(params, ets_params,
-					      cos_sp_biपंचांगap,
-					      cos_bw_biपंचांगap);
+					      cos_sp_bitmap,
+					      cos_bw_bitmap);
 
-	अगर (bnx2x_status) अणु
+	if (bnx2x_status) {
 		DP(NETIF_MSG_LINK, "bnx2x_ets_E3B0_config SP failed\n");
-		वापस bnx2x_status;
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल व्योम bnx2x_ets_bw_limit_common(स्थिर काष्ठा link_params *params)
-अणु
+		return bnx2x_status;
+	}
+	return 0;
+}
+static void bnx2x_ets_bw_limit_common(const struct link_params *params)
+{
 	/* ETS disabled configuration */
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "ETS enabled BW limit configuration\n");
 	/* Defines which entries (clients) are subjected to WFQ arbitration
 	 * COS0 0x8
 	 * COS1 0x10
 	 */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_IS_SUBJECT2WFQ, 0x18);
-	/* Mapping between the ARB_CREDIT_WEIGHT रेजिस्टरs and actual
-	 * client numbers (WEIGHT_0 करोes not actually have to represent
+	/* Mapping between the ARB_CREDIT_WEIGHT registers and actual
+	 * client numbers (WEIGHT_0 does not actually have to represent
 	 * client 0)
 	 *    PRI4    |    PRI3    |    PRI2    |    PRI1    |    PRI0
 	 *  cos1-001     cos0-000     dbg1-100     dbg0-011     MCP-010
@@ -1254,9 +1253,9 @@
 	/* ETS mode enabled*/
 	REG_WR(bp, PBF_REG_ETS_ENABLED, 1);
 
-	/* Defines the number of consecutive slots क्रम the strict priority */
+	/* Defines the number of consecutive slots for the strict priority */
 	REG_WR(bp, PBF_REG_NUM_STRICT_ARB_SLOTS, 0);
-	/* Biपंचांगap of 5bits length. Each bit specअगरies whether the entry behaves
+	/* Bitmap of 5bits length. Each bit specifies whether the entry behaves
 	 * as strict.  Bits 0,1,2 - debug and management entries, 3 - COS0
 	 * entry, 4 - COS1 entry.
 	 * COS1 | COS0 | DEBUG21 | DEBUG0 | MGMT
@@ -1270,25 +1269,25 @@
 	       ETS_BW_LIMIT_CREDIT_UPPER_BOUND);
 	REG_WR(bp, PBF_REG_COS1_UPPER_BOUND,
 	       ETS_BW_LIMIT_CREDIT_UPPER_BOUND);
-पूर्ण
+}
 
-व्योम bnx2x_ets_bw_limit(स्थिर काष्ठा link_params *params, स्थिर u32 cos0_bw,
-			स्थिर u32 cos1_bw)
-अणु
+void bnx2x_ets_bw_limit(const struct link_params *params, const u32 cos0_bw,
+			const u32 cos1_bw)
+{
 	/* ETS disabled configuration*/
-	काष्ठा bnx2x *bp = params->bp;
-	स्थिर u32 total_bw = cos0_bw + cos1_bw;
+	struct bnx2x *bp = params->bp;
+	const u32 total_bw = cos0_bw + cos1_bw;
 	u32 cos0_credit_weight = 0;
 	u32 cos1_credit_weight = 0;
 
 	DP(NETIF_MSG_LINK, "ETS enabled BW limit configuration\n");
 
-	अगर ((!total_bw) ||
+	if ((!total_bw) ||
 	    (!cos0_bw) ||
-	    (!cos1_bw)) अणु
+	    (!cos1_bw)) {
 		DP(NETIF_MSG_LINK, "Total BW can't be zero\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cos0_credit_weight = (cos0_bw * ETS_BW_LIMIT_CREDIT_WEIGHT)/
 		total_bw;
@@ -1302,16 +1301,16 @@
 
 	REG_WR(bp, PBF_REG_COS0_WEIGHT, cos0_credit_weight);
 	REG_WR(bp, PBF_REG_COS1_WEIGHT, cos1_credit_weight);
-पूर्ण
+}
 
-पूर्णांक bnx2x_ets_strict(स्थिर काष्ठा link_params *params, स्थिर u8 strict_cos)
-अणु
+int bnx2x_ets_strict(const struct link_params *params, const u8 strict_cos)
+{
 	/* ETS disabled configuration*/
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 val	= 0;
 
 	DP(NETIF_MSG_LINK, "ETS enabled strict configuration\n");
-	/* Biपंचांगap of 5bits length. Each bit specअगरies whether the entry behaves
+	/* Bitmap of 5bits length. Each bit specifies whether the entry behaves
 	 * as strict.  Bits 0,1,2 - debug and management entries,
 	 * 3 - COS0 entry, 4 - COS1 entry.
 	 *  COS1 | COS0 | DEBUG21 | DEBUG0 | MGMT
@@ -1320,15 +1319,15 @@
 	 */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_CLIENT_IS_STRICT, 0x1F);
 	/* For strict priority entries defines the number of consecutive slots
-	 * क्रम the highest priority.
+	 * for the highest priority.
 	 */
 	REG_WR(bp, NIG_REG_P0_TX_ARB_NUM_STRICT_ARB_SLOTS, 0x100);
 	/* ETS mode disable */
 	REG_WR(bp, PBF_REG_ETS_ENABLED, 0);
-	/* Defines the number of consecutive slots क्रम the strict priority */
+	/* Defines the number of consecutive slots for the strict priority */
 	REG_WR(bp, PBF_REG_NUM_STRICT_ARB_SLOTS, 0x100);
 
-	/* Defines the number of consecutive slots क्रम the strict priority */
+	/* Defines the number of consecutive slots for the strict priority */
 	REG_WR(bp, PBF_REG_HIGH_PRIORITY_COS_NUM, strict_cos);
 
 	/* Mapping between entry  priority to client number (0,1,2 -debug and
@@ -1341,61 +1340,61 @@
 	val = (!strict_cos) ? 0x2318 : 0x22E0;
 	REG_WR(bp, NIG_REG_P0_TX_ARB_PRIORITY_CLIENT, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /******************************************************************/
 /*			PFC section				  */
 /******************************************************************/
-अटल व्योम bnx2x_update_pfc_xmac(काष्ठा link_params *params,
-				  काष्ठा link_vars *vars,
+static void bnx2x_update_pfc_xmac(struct link_params *params,
+				  struct link_vars *vars,
 				  u8 is_lb)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u32 xmac_base;
-	u32 छोड़ो_val, pfc0_val, pfc1_val;
+	u32 pause_val, pfc0_val, pfc1_val;
 
 	/* XMAC base adrr */
 	xmac_base = (params->port) ? GRCBASE_XMAC1 : GRCBASE_XMAC0;
 
-	/* Initialize छोड़ो and pfc रेजिस्टरs */
-	छोड़ो_val = 0x18000;
+	/* Initialize pause and pfc registers */
+	pause_val = 0x18000;
 	pfc0_val = 0xFFFF8000;
 	pfc1_val = 0x2;
 
 	/* No PFC support */
-	अगर (!(params->feature_config_flags &
-	      FEATURE_CONFIG_PFC_ENABLED)) अणु
+	if (!(params->feature_config_flags &
+	      FEATURE_CONFIG_PFC_ENABLED)) {
 
-		/* RX flow control - Process छोड़ो frame in receive direction
+		/* RX flow control - Process pause frame in receive direction
 		 */
-		अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
-			छोड़ो_val |= XMAC_PAUSE_CTRL_REG_RX_PAUSE_EN;
+		if (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
+			pause_val |= XMAC_PAUSE_CTRL_REG_RX_PAUSE_EN;
 
-		/* TX flow control - Send छोड़ो packet when buffer is full */
-		अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
-			छोड़ो_val |= XMAC_PAUSE_CTRL_REG_TX_PAUSE_EN;
-	पूर्ण अन्यथा अणु/* PFC support */
+		/* TX flow control - Send pause packet when buffer is full */
+		if (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
+			pause_val |= XMAC_PAUSE_CTRL_REG_TX_PAUSE_EN;
+	} else {/* PFC support */
 		pfc1_val |= XMAC_PFC_CTRL_HI_REG_PFC_REFRESH_EN |
 			XMAC_PFC_CTRL_HI_REG_PFC_STATS_EN |
 			XMAC_PFC_CTRL_HI_REG_RX_PFC_EN |
 			XMAC_PFC_CTRL_HI_REG_TX_PFC_EN |
 			XMAC_PFC_CTRL_HI_REG_FORCE_PFC_XON;
-		/* Write छोड़ो and PFC रेजिस्टरs */
-		REG_WR(bp, xmac_base + XMAC_REG_PAUSE_CTRL, छोड़ो_val);
+		/* Write pause and PFC registers */
+		REG_WR(bp, xmac_base + XMAC_REG_PAUSE_CTRL, pause_val);
 		REG_WR(bp, xmac_base + XMAC_REG_PFC_CTRL, pfc0_val);
 		REG_WR(bp, xmac_base + XMAC_REG_PFC_CTRL_HI, pfc1_val);
 		pfc1_val &= ~XMAC_PFC_CTRL_HI_REG_FORCE_PFC_XON;
 
-	पूर्ण
+	}
 
-	/* Write छोड़ो and PFC रेजिस्टरs */
-	REG_WR(bp, xmac_base + XMAC_REG_PAUSE_CTRL, छोड़ो_val);
+	/* Write pause and PFC registers */
+	REG_WR(bp, xmac_base + XMAC_REG_PAUSE_CTRL, pause_val);
 	REG_WR(bp, xmac_base + XMAC_REG_PFC_CTRL, pfc0_val);
 	REG_WR(bp, xmac_base + XMAC_REG_PFC_CTRL_HI, pfc1_val);
 
 
-	/* Set MAC address क्रम source TX Pause/PFC frames */
+	/* Set MAC address for source TX Pause/PFC frames */
 	REG_WR(bp, xmac_base + XMAC_REG_CTRL_SA_LO,
 	       ((params->mac_addr[2] << 24) |
 		(params->mac_addr[3] << 16) |
@@ -1406,29 +1405,29 @@
 		(params->mac_addr[1])));
 
 	udelay(30);
-पूर्ण
+}
 
 /******************************************************************/
 /*			MAC/PBF section				  */
 /******************************************************************/
-अटल व्योम bnx2x_set_mdio_clk(काष्ठा bnx2x *bp, u32 chip_id,
+static void bnx2x_set_mdio_clk(struct bnx2x *bp, u32 chip_id,
 			       u32 emac_base)
-अणु
+{
 	u32 new_mode, cur_mode;
 	u32 clc_cnt;
-	/* Set clause 45 mode, slow करोwn the MDIO घड़ी to 2.5MHz
+	/* Set clause 45 mode, slow down the MDIO clock to 2.5MHz
 	 * (a value of 49==0x31) and make sure that the AUTO poll is off
 	 */
 	cur_mode = REG_RD(bp, emac_base + EMAC_REG_EMAC_MDIO_MODE);
 
-	अगर (USES_WARPCORE(bp))
+	if (USES_WARPCORE(bp))
 		clc_cnt = 74L << EMAC_MDIO_MODE_CLOCK_CNT_BITSHIFT;
-	अन्यथा
+	else
 		clc_cnt = 49L << EMAC_MDIO_MODE_CLOCK_CNT_BITSHIFT;
 
-	अगर (((cur_mode & EMAC_MDIO_MODE_CLOCK_CNT) == clc_cnt) &&
+	if (((cur_mode & EMAC_MDIO_MODE_CLOCK_CNT) == clc_cnt) &&
 	    (cur_mode & (EMAC_MDIO_MODE_CLAUSE_45)))
-		वापस;
+		return;
 
 	new_mode = cur_mode &
 		~(EMAC_MDIO_MODE_AUTO_POLL | EMAC_MDIO_MODE_CLOCK_CNT);
@@ -1439,41 +1438,41 @@
 	   cur_mode, new_mode);
 	REG_WR(bp, emac_base + EMAC_REG_EMAC_MDIO_MODE, new_mode);
 	udelay(40);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_mdio_emac_per_phy(काष्ठा bnx2x *bp,
-					काष्ठा link_params *params)
-अणु
+static void bnx2x_set_mdio_emac_per_phy(struct bnx2x *bp,
+					struct link_params *params)
+{
 	u8 phy_index;
-	/* Set mdio घड़ी per phy */
-	क्रम (phy_index = INT_PHY; phy_index < params->num_phys;
+	/* Set mdio clock per phy */
+	for (phy_index = INT_PHY; phy_index < params->num_phys;
 	      phy_index++)
 		bnx2x_set_mdio_clk(bp, params->chip_id,
 				   params->phy[phy_index].mdio_ctrl);
-पूर्ण
+}
 
-अटल u8 bnx2x_is_4_port_mode(काष्ठा bnx2x *bp)
-अणु
+static u8 bnx2x_is_4_port_mode(struct bnx2x *bp)
+{
 	u32 port4mode_ovwr_val;
 	/* Check 4-port override enabled */
 	port4mode_ovwr_val = REG_RD(bp, MISC_REG_PORT4MODE_EN_OVWR);
-	अगर (port4mode_ovwr_val & (1<<0)) अणु
+	if (port4mode_ovwr_val & (1<<0)) {
 		/* Return 4-port mode override value */
-		वापस ((port4mode_ovwr_val & (1<<1)) == (1<<1));
-	पूर्ण
+		return ((port4mode_ovwr_val & (1<<1)) == (1<<1));
+	}
 	/* Return 4-port mode from input pin */
-	वापस (u8)REG_RD(bp, MISC_REG_PORT4MODE_EN);
-पूर्ण
+	return (u8)REG_RD(bp, MISC_REG_PORT4MODE_EN);
+}
 
-अटल व्योम bnx2x_emac_init(काष्ठा link_params *params,
-			    काष्ठा link_vars *vars)
-अणु
+static void bnx2x_emac_init(struct link_params *params,
+			    struct link_vars *vars)
+{
 	/* reset and unreset the emac core */
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 emac_base = port ? GRCBASE_EMAC1 : GRCBASE_EMAC0;
 	u32 val;
-	u16 समयout;
+	u16 timeout;
 
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
 	       (MISC_REGISTERS_RESET_REG_2_RST_EMAC0_HARD_CORE << port));
@@ -1481,21 +1480,21 @@
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_SET,
 	       (MISC_REGISTERS_RESET_REG_2_RST_EMAC0_HARD_CORE << port));
 
-	/* init emac - use पढ़ो-modअगरy-ग_लिखो */
+	/* init emac - use read-modify-write */
 	/* self clear reset */
 	val = REG_RD(bp, emac_base + EMAC_REG_EMAC_MODE);
 	EMAC_WR(bp, EMAC_REG_EMAC_MODE, (val | EMAC_MODE_RESET));
 
-	समयout = 200;
-	करो अणु
+	timeout = 200;
+	do {
 		val = REG_RD(bp, emac_base + EMAC_REG_EMAC_MODE);
 		DP(NETIF_MSG_LINK, "EMAC reset reg is %u\n", val);
-		अगर (!समयout) अणु
+		if (!timeout) {
 			DP(NETIF_MSG_LINK, "EMAC timeout!\n");
-			वापस;
-		पूर्ण
-		समयout--;
-	पूर्ण जबतक (val & EMAC_MODE_RESET);
+			return;
+		}
+		timeout--;
+	} while (val & EMAC_MODE_RESET);
 
 	bnx2x_set_mdio_emac_per_phy(bp, params);
 	/* Set mac address */
@@ -1508,47 +1507,47 @@
 	       (params->mac_addr[4] << 8) |
 		params->mac_addr[5]);
 	EMAC_WR(bp, EMAC_REG_EMAC_MAC_MATCH + 4, val);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_xumac_nig(काष्ठा link_params *params,
-				u16 tx_छोड़ो_en,
+static void bnx2x_set_xumac_nig(struct link_params *params,
+				u16 tx_pause_en,
 				u8 enable)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 
 	REG_WR(bp, params->port ? NIG_REG_P1_MAC_IN_EN : NIG_REG_P0_MAC_IN_EN,
 	       enable);
 	REG_WR(bp, params->port ? NIG_REG_P1_MAC_OUT_EN : NIG_REG_P0_MAC_OUT_EN,
 	       enable);
 	REG_WR(bp, params->port ? NIG_REG_P1_MAC_PAUSE_OUT_EN :
-	       NIG_REG_P0_MAC_PAUSE_OUT_EN, tx_छोड़ो_en);
-पूर्ण
+	       NIG_REG_P0_MAC_PAUSE_OUT_EN, tx_pause_en);
+}
 
-अटल व्योम bnx2x_set_umac_rxtx(काष्ठा link_params *params, u8 en)
-अणु
+static void bnx2x_set_umac_rxtx(struct link_params *params, u8 en)
+{
 	u32 umac_base = params->port ? GRCBASE_UMAC1 : GRCBASE_UMAC0;
 	u32 val;
-	काष्ठा bnx2x *bp = params->bp;
-	अगर (!(REG_RD(bp, MISC_REG_RESET_REG_2) &
+	struct bnx2x *bp = params->bp;
+	if (!(REG_RD(bp, MISC_REG_RESET_REG_2) &
 		   (MISC_REGISTERS_RESET_REG_2_UMAC0 << params->port)))
-		वापस;
+		return;
 	val = REG_RD(bp, umac_base + UMAC_REG_COMMAND_CONFIG);
-	अगर (en)
+	if (en)
 		val |= (UMAC_COMMAND_CONFIG_REG_TX_ENA |
 			UMAC_COMMAND_CONFIG_REG_RX_ENA);
-	अन्यथा
+	else
 		val &= ~(UMAC_COMMAND_CONFIG_REG_TX_ENA |
 			 UMAC_COMMAND_CONFIG_REG_RX_ENA);
 	/* Disable RX and TX */
 	REG_WR(bp, umac_base + UMAC_REG_COMMAND_CONFIG, val);
-पूर्ण
+}
 
-अटल व्योम bnx2x_umac_enable(काष्ठा link_params *params,
-			    काष्ठा link_vars *vars, u8 lb)
-अणु
+static void bnx2x_umac_enable(struct link_params *params,
+			    struct link_vars *vars, u8 lb)
+{
 	u32 val;
 	u32 umac_base = params->port ? GRCBASE_UMAC1 : GRCBASE_UMAC0;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	/* Reset UMAC */
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
 	       (MISC_REGISTERS_RESET_REG_2_UMAC0 << params->port));
@@ -1559,54 +1558,54 @@
 
 	DP(NETIF_MSG_LINK, "enabling UMAC\n");
 
-	/* This रेजिस्टर खोलोs the gate क्रम the UMAC despite its name */
+	/* This register opens the gate for the UMAC despite its name */
 	REG_WR(bp, NIG_REG_EGRESS_EMAC0_PORT + params->port*4, 1);
 
 	val = UMAC_COMMAND_CONFIG_REG_PROMIS_EN |
 		UMAC_COMMAND_CONFIG_REG_PAD_EN |
 		UMAC_COMMAND_CONFIG_REG_SW_RESET |
 		UMAC_COMMAND_CONFIG_REG_NO_LGTH_CHECK;
-	चयन (vars->line_speed) अणु
-	हाल SPEED_10:
+	switch (vars->line_speed) {
+	case SPEED_10:
 		val |= (0<<2);
-		अवरोध;
-	हाल SPEED_100:
+		break;
+	case SPEED_100:
 		val |= (1<<2);
-		अवरोध;
-	हाल SPEED_1000:
+		break;
+	case SPEED_1000:
 		val |= (2<<2);
-		अवरोध;
-	हाल SPEED_2500:
+		break;
+	case SPEED_2500:
 		val |= (3<<2);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP(NETIF_MSG_LINK, "Invalid speed for UMAC %d\n",
 			       vars->line_speed);
-		अवरोध;
-	पूर्ण
-	अगर (!(vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
+		break;
+	}
+	if (!(vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 		val |= UMAC_COMMAND_CONFIG_REG_IGNORE_TX_PAUSE;
 
-	अगर (!(vars->flow_ctrl & BNX2X_FLOW_CTRL_RX))
+	if (!(vars->flow_ctrl & BNX2X_FLOW_CTRL_RX))
 		val |= UMAC_COMMAND_CONFIG_REG_PAUSE_IGNORE;
 
-	अगर (vars->duplex == DUPLEX_HALF)
+	if (vars->duplex == DUPLEX_HALF)
 		val |= UMAC_COMMAND_CONFIG_REG_HD_ENA;
 
 	REG_WR(bp, umac_base + UMAC_REG_COMMAND_CONFIG, val);
 	udelay(50);
 
-	/* Configure UMAC क्रम EEE */
-	अगर (vars->eee_status & SHMEM_EEE_ADV_STATUS_MASK) अणु
+	/* Configure UMAC for EEE */
+	if (vars->eee_status & SHMEM_EEE_ADV_STATUS_MASK) {
 		DP(NETIF_MSG_LINK, "configured UMAC for EEE\n");
 		REG_WR(bp, umac_base + UMAC_REG_UMAC_EEE_CTRL,
 		       UMAC_UMAC_EEE_CTRL_REG_EEE_EN);
 		REG_WR(bp, umac_base + UMAC_REG_EEE_WAKE_TIMER, 0x11);
-	पूर्ण अन्यथा अणु
+	} else {
 		REG_WR(bp, umac_base + UMAC_REG_UMAC_EEE_CTRL, 0x0);
-	पूर्ण
+	}
 
-	/* Set MAC address क्रम source TX Pause/PFC frames (under SW reset) */
+	/* Set MAC address for source TX Pause/PFC frames (under SW reset) */
 	REG_WR(bp, umac_base + UMAC_REG_MAC_ADDR0,
 	       ((params->mac_addr[2] << 24) |
 		(params->mac_addr[3] << 16) |
@@ -1627,7 +1626,7 @@
 	val &= ~UMAC_COMMAND_CONFIG_REG_SW_RESET;
 
 	/* Check loopback mode */
-	अगर (lb)
+	if (lb)
 		val |= UMAC_COMMAND_CONFIG_REG_LOOP_ENA;
 	REG_WR(bp, umac_base + UMAC_REG_COMMAND_CONFIG, val);
 
@@ -1639,30 +1638,30 @@
 			    ((vars->flow_ctrl & BNX2X_FLOW_CTRL_TX) != 0), 1);
 	vars->mac_type = MAC_TYPE_UMAC;
 
-पूर्ण
+}
 
 /* Define the XMAC mode */
-अटल व्योम bnx2x_xmac_init(काष्ठा link_params *params, u32 max_speed)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_xmac_init(struct link_params *params, u32 max_speed)
+{
+	struct bnx2x *bp = params->bp;
 	u32 is_port4mode = bnx2x_is_4_port_mode(bp);
 
-	/* In 4-port mode, need to set the mode only once, so अगर XMAC is
-	 * alपढ़ोy out of reset, it means the mode has alपढ़ोy been set,
+	/* In 4-port mode, need to set the mode only once, so if XMAC is
+	 * already out of reset, it means the mode has already been set,
 	 * and it must not* reset the XMAC again, since it controls both
 	 * ports of the path
 	 */
 
-	अगर (((CHIP_NUM(bp) == CHIP_NUM_57840_4_10) ||
+	if (((CHIP_NUM(bp) == CHIP_NUM_57840_4_10) ||
 	     (CHIP_NUM(bp) == CHIP_NUM_57840_2_20) ||
 	     (CHIP_NUM(bp) == CHIP_NUM_57840_OBSOLETE)) &&
 	    is_port4mode &&
 	    (REG_RD(bp, MISC_REG_RESET_REG_2) &
-	     MISC_REGISTERS_RESET_REG_2_XMAC)) अणु
+	     MISC_REGISTERS_RESET_REG_2_XMAC)) {
 		DP(NETIF_MSG_LINK,
 		   "XMAC already out of reset in 4-port mode\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Hard reset */
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
@@ -1671,29 +1670,29 @@
 
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_SET,
 	       MISC_REGISTERS_RESET_REG_2_XMAC);
-	अगर (is_port4mode) अणु
+	if (is_port4mode) {
 		DP(NETIF_MSG_LINK, "Init XMAC to 2 ports x 10G per path\n");
 
-		/* Set the number of ports on the प्रणाली side to up to 2 */
+		/* Set the number of ports on the system side to up to 2 */
 		REG_WR(bp, MISC_REG_XMAC_CORE_PORT_MODE, 1);
 
 		/* Set the number of ports on the Warp Core to 10G */
 		REG_WR(bp, MISC_REG_XMAC_PHY_PORT_MODE, 3);
-	पूर्ण अन्यथा अणु
-		/* Set the number of ports on the प्रणाली side to 1 */
+	} else {
+		/* Set the number of ports on the system side to 1 */
 		REG_WR(bp, MISC_REG_XMAC_CORE_PORT_MODE, 0);
-		अगर (max_speed == SPEED_10000) अणु
+		if (max_speed == SPEED_10000) {
 			DP(NETIF_MSG_LINK,
 			   "Init XMAC to 10G x 1 port per path\n");
 			/* Set the number of ports on the Warp Core to 10G */
 			REG_WR(bp, MISC_REG_XMAC_PHY_PORT_MODE, 3);
-		पूर्ण अन्यथा अणु
+		} else {
 			DP(NETIF_MSG_LINK,
 			   "Init XMAC to 20G x 2 ports per path\n");
 			/* Set the number of ports on the Warp Core to 20G */
 			REG_WR(bp, MISC_REG_XMAC_PHY_PORT_MODE, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* Soft reset */
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
 	       MISC_REGISTERS_RESET_REG_2_XMAC_SOFT);
@@ -1702,17 +1701,17 @@
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_SET,
 	       MISC_REGISTERS_RESET_REG_2_XMAC_SOFT);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_xmac_rxtx(काष्ठा link_params *params, u8 en)
-अणु
+static void bnx2x_set_xmac_rxtx(struct link_params *params, u8 en)
+{
 	u8 port = params->port;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 pfc_ctrl, xmac_base = (port) ? GRCBASE_XMAC1 : GRCBASE_XMAC0;
 	u32 val;
 
-	अगर (REG_RD(bp, MISC_REG_RESET_REG_2) &
-	    MISC_REGISTERS_RESET_REG_2_XMAC) अणु
+	if (REG_RD(bp, MISC_REG_RESET_REG_2) &
+	    MISC_REGISTERS_RESET_REG_2_XMAC) {
 		/* Send an indication to change the state in the NIG back to XON
 		 * Clearing this bit enables the next set of this bit to get
 		 * rising edge
@@ -1724,38 +1723,38 @@
 		       (pfc_ctrl | (1<<1)));
 		DP(NETIF_MSG_LINK, "Disable XMAC on port %x\n", port);
 		val = REG_RD(bp, xmac_base + XMAC_REG_CTRL);
-		अगर (en)
+		if (en)
 			val |= (XMAC_CTRL_REG_TX_EN | XMAC_CTRL_REG_RX_EN);
-		अन्यथा
+		else
 			val &= ~(XMAC_CTRL_REG_TX_EN | XMAC_CTRL_REG_RX_EN);
 		REG_WR(bp, xmac_base + XMAC_REG_CTRL, val);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnx2x_xmac_enable(काष्ठा link_params *params,
-			     काष्ठा link_vars *vars, u8 lb)
-अणु
+static int bnx2x_xmac_enable(struct link_params *params,
+			     struct link_vars *vars, u8 lb)
+{
 	u32 val, xmac_base;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "enabling XMAC\n");
 
 	xmac_base = (params->port) ? GRCBASE_XMAC1 : GRCBASE_XMAC0;
 
 	bnx2x_xmac_init(params, vars->line_speed);
 
-	/* This रेजिस्टर determines on which events the MAC will निश्चित
-	 * error on the i/f to the NIG aदीर्घ w/ EOP.
+	/* This register determines on which events the MAC will assert
+	 * error on the i/f to the NIG along w/ EOP.
 	 */
 
-	/* This रेजिस्टर tells the NIG whether to send traffic to UMAC
+	/* This register tells the NIG whether to send traffic to UMAC
 	 * or XMAC
 	 */
 	REG_WR(bp, NIG_REG_EGRESS_EMAC0_PORT + params->port*4, 0);
 
-	/* When XMAC is in XLGMII mode, disable sending idles क्रम fault
+	/* When XMAC is in XLGMII mode, disable sending idles for fault
 	 * detection.
 	 */
-	अगर (!(params->phy[INT_PHY].flags & FLAGS_TX_ERROR_CHECK)) अणु
+	if (!(params->phy[INT_PHY].flags & FLAGS_TX_ERROR_CHECK)) {
 		REG_WR(bp, xmac_base + XMAC_REG_RX_LSS_CTRL,
 		       (XMAC_RX_LSS_CTRL_REG_LOCAL_FAULT_DISABLE |
 			XMAC_RX_LSS_CTRL_REG_REMOTE_FAULT_DISABLE));
@@ -1763,35 +1762,35 @@
 		REG_WR(bp, xmac_base + XMAC_REG_CLEAR_RX_LSS_STATUS,
 		       XMAC_CLEAR_RX_LSS_STATUS_REG_CLEAR_LOCAL_FAULT_STATUS |
 		       XMAC_CLEAR_RX_LSS_STATUS_REG_CLEAR_REMOTE_FAULT_STATUS);
-	पूर्ण
+	}
 	/* Set Max packet size */
 	REG_WR(bp, xmac_base + XMAC_REG_RX_MAX_SIZE, 0x2710);
 
-	/* CRC append क्रम Tx packets */
+	/* CRC append for Tx packets */
 	REG_WR(bp, xmac_base + XMAC_REG_TX_CTRL, 0xC800);
 
 	/* update PFC */
 	bnx2x_update_pfc_xmac(params, vars, 0);
 
-	अगर (vars->eee_status & SHMEM_EEE_ADV_STATUS_MASK) अणु
+	if (vars->eee_status & SHMEM_EEE_ADV_STATUS_MASK) {
 		DP(NETIF_MSG_LINK, "Setting XMAC for EEE\n");
 		REG_WR(bp, xmac_base + XMAC_REG_EEE_TIMERS_HI, 0x1380008);
 		REG_WR(bp, xmac_base + XMAC_REG_EEE_CTRL, 0x1);
-	पूर्ण अन्यथा अणु
+	} else {
 		REG_WR(bp, xmac_base + XMAC_REG_EEE_CTRL, 0x0);
-	पूर्ण
+	}
 
 	/* Enable TX and RX */
 	val = XMAC_CTRL_REG_TX_EN | XMAC_CTRL_REG_RX_EN;
 
-	/* Set MAC in XLGMII mode क्रम dual-mode */
-	अगर ((vars->line_speed == SPEED_20000) &&
+	/* Set MAC in XLGMII mode for dual-mode */
+	if ((vars->line_speed == SPEED_20000) &&
 	    (params->phy[INT_PHY].supported &
 	     SUPPORTED_20000baseKR2_Full))
 		val |= XMAC_CTRL_REG_XLGMII_ALIGN_ENB;
 
 	/* Check loopback mode */
-	अगर (lb)
+	if (lb)
 		val |= XMAC_CTRL_REG_LINE_LOCAL_LPBK;
 	REG_WR(bp, xmac_base + XMAC_REG_CTRL, val);
 	bnx2x_set_xumac_nig(params,
@@ -1799,13 +1798,13 @@
 
 	vars->mac_type = MAC_TYPE_XMAC;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_emac_enable(काष्ठा link_params *params,
-			     काष्ठा link_vars *vars, u8 lb)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_emac_enable(struct link_params *params,
+			     struct link_vars *vars, u8 lb)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 emac_base = port ? GRCBASE_EMAC1 : GRCBASE_EMAC0;
 	u32 val;
@@ -1820,7 +1819,7 @@
 	REG_WR(bp, NIG_REG_EGRESS_EMAC0_PORT + port*4, 1);
 
 	/* ASIC */
-	अगर (vars->phy_flags & PHY_XGXS_FLAG) अणु
+	if (vars->phy_flags & PHY_XGXS_FLAG) {
 		u32 ser_lane = ((params->lane_config &
 				 PORT_HW_CFG_LANE_SWAP_CFG_MASTER_MASK) >>
 				PORT_HW_CFG_LANE_SWAP_CFG_MASTER_SHIFT);
@@ -1831,37 +1830,37 @@
 		/* select XGXS */
 		REG_WR(bp, NIG_REG_XGXS_SERDES0_MODE_SEL + port*4, 1);
 
-	पूर्ण अन्यथा अणु /* SerDes */
+	} else { /* SerDes */
 		DP(NETIF_MSG_LINK, "SerDes\n");
 		/* select SerDes */
 		REG_WR(bp, NIG_REG_XGXS_SERDES0_MODE_SEL + port*4, 0);
-	पूर्ण
+	}
 
 	bnx2x_bits_en(bp, emac_base + EMAC_REG_EMAC_RX_MODE,
 		      EMAC_RX_MODE_RESET);
 	bnx2x_bits_en(bp, emac_base + EMAC_REG_EMAC_TX_MODE,
 		      EMAC_TX_MODE_RESET);
 
-	/* छोड़ो enable/disable */
+	/* pause enable/disable */
 	bnx2x_bits_dis(bp, emac_base + EMAC_REG_EMAC_RX_MODE,
 		       EMAC_RX_MODE_FLOW_EN);
 
 	bnx2x_bits_dis(bp,  emac_base + EMAC_REG_EMAC_TX_MODE,
 		       (EMAC_TX_MODE_EXT_PAUSE_EN |
 			EMAC_TX_MODE_FLOW_EN));
-	अगर (!(params->feature_config_flags &
-	      FEATURE_CONFIG_PFC_ENABLED)) अणु
-		अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
+	if (!(params->feature_config_flags &
+	      FEATURE_CONFIG_PFC_ENABLED)) {
+		if (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
 			bnx2x_bits_en(bp, emac_base +
 				      EMAC_REG_EMAC_RX_MODE,
 				      EMAC_RX_MODE_FLOW_EN);
 
-		अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
+		if (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
 			bnx2x_bits_en(bp, emac_base +
 				      EMAC_REG_EMAC_TX_MODE,
 				      (EMAC_TX_MODE_EXT_PAUSE_EN |
 				       EMAC_TX_MODE_FLOW_EN));
-	पूर्ण अन्यथा
+	} else
 		bnx2x_bits_en(bp, emac_base + EMAC_REG_EMAC_TX_MODE,
 			      EMAC_TX_MODE_FLOW_EN);
 
@@ -1869,15 +1868,15 @@
 	val = REG_RD(bp, emac_base + EMAC_REG_EMAC_RX_MODE);
 	val |= EMAC_RX_MODE_KEEP_VLAN_TAG | EMAC_RX_MODE_PROMISCUOUS;
 
-	/* Setting this bit causes MAC control frames (except क्रम छोड़ो
-	 * frames) to be passed on क्रम processing. This setting has no
-	 * affect on the operation of the छोड़ो frames. This bit effects
+	/* Setting this bit causes MAC control frames (except for pause
+	 * frames) to be passed on for processing. This setting has no
+	 * affect on the operation of the pause frames. This bit effects
 	 * all packets regardless of RX Parser packet sorting logic.
-	 * Turn the PFC off to make sure we are in Xon state beक्रमe
+	 * Turn the PFC off to make sure we are in Xon state before
 	 * enabling it.
 	 */
 	EMAC_WR(bp, EMAC_REG_RX_PFC_MODE, 0);
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED) अणु
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED) {
 		DP(NETIF_MSG_LINK, "PFC is enabled\n");
 		/* Enable PFC again */
 		EMAC_WR(bp, EMAC_REG_RX_PFC_MODE,
@@ -1891,21 +1890,21 @@
 			 (0x00ff <<
 			  EMAC_REG_RX_PFC_PARAM_PRIORITY_EN_BITSHIFT)));
 		val |= EMAC_RX_MODE_KEEP_MAC_CONTROL;
-	पूर्ण
+	}
 	EMAC_WR(bp, EMAC_REG_EMAC_RX_MODE, val);
 
 	/* Set Loopback */
 	val = REG_RD(bp, emac_base + EMAC_REG_EMAC_MODE);
-	अगर (lb)
+	if (lb)
 		val |= 0x810;
-	अन्यथा
+	else
 		val &= ~0x810;
 	EMAC_WR(bp, EMAC_REG_EMAC_MODE, val);
 
 	/* Enable emac */
 	REG_WR(bp, NIG_REG_NIG_EMAC0_EN + port*4, 1);
 
-	/* Enable emac क्रम jumbo packets */
+	/* Enable emac for jumbo packets */
 	EMAC_WR(bp, EMAC_REG_EMAC_RX_MTU_SIZE,
 		(EMAC_RX_MTU_SIZE_JUMBO_ENA |
 		 (ETH_MAX_JUMBO_PACKET_SIZE + ETH_OVERHEAD)));
@@ -1921,7 +1920,7 @@
 	/* Enable the NIG in/out to the emac */
 	REG_WR(bp, NIG_REG_EMAC0_IN_EN + port*4, 0x1);
 	val = 0;
-	अगर ((params->feature_config_flags &
+	if ((params->feature_config_flags &
 	      FEATURE_CONFIG_PFC_ENABLED) ||
 	    (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 		val = 1;
@@ -1932,19 +1931,19 @@
 	REG_WR(bp, NIG_REG_BMAC0_REGS_OUT_EN + port*4, 0x0);
 
 	vars->mac_type = MAC_TYPE_EMAC;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_update_pfc_bmac1(काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static void bnx2x_update_pfc_bmac1(struct link_params *params,
+				   struct link_vars *vars)
+{
 	u32 wb_data[2];
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 bmac_addr =  params->port ? NIG_REG_INGRESS_BMAC1_MEM :
 		NIG_REG_INGRESS_BMAC0_MEM;
 
 	u32 val = 0x14;
-	अगर ((!(params->feature_config_flags &
+	if ((!(params->feature_config_flags &
 	      FEATURE_CONFIG_PFC_ENABLED)) &&
 		(vars->flow_ctrl & BNX2X_FLOW_CTRL_RX))
 		/* Enable BigMAC to react on received Pause packets */
@@ -1955,29 +1954,29 @@
 
 	/* TX control */
 	val = 0xc0;
-	अगर (!(params->feature_config_flags &
+	if (!(params->feature_config_flags &
 	      FEATURE_CONFIG_PFC_ENABLED) &&
 		(vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 		val |= 0x800000;
 	wb_data[0] = val;
 	wb_data[1] = 0;
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC_REGISTER_TX_CONTROL, wb_data, 2);
-पूर्ण
+}
 
-अटल व्योम bnx2x_update_pfc_bmac2(काष्ठा link_params *params,
-				   काष्ठा link_vars *vars,
+static void bnx2x_update_pfc_bmac2(struct link_params *params,
+				   struct link_vars *vars,
 				   u8 is_lb)
-अणु
+{
 	/* Set rx control: Strip CRC and enable BigMAC to relay
-	 * control packets to the प्रणाली as well
+	 * control packets to the system as well
 	 */
 	u32 wb_data[2];
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 bmac_addr = params->port ? NIG_REG_INGRESS_BMAC1_MEM :
 		NIG_REG_INGRESS_BMAC0_MEM;
 	u32 val = 0x14;
 
-	अगर ((!(params->feature_config_flags &
+	if ((!(params->feature_config_flags &
 	      FEATURE_CONFIG_PFC_ENABLED)) &&
 		(vars->flow_ctrl & BNX2X_FLOW_CTRL_RX))
 		/* Enable BigMAC to react on received Pause packets */
@@ -1989,7 +1988,7 @@
 
 	/* Tx control */
 	val = 0xc0;
-	अगर (!(params->feature_config_flags &
+	if (!(params->feature_config_flags &
 				FEATURE_CONFIG_PFC_ENABLED) &&
 	    (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 		val |= 0x800000;
@@ -1997,7 +1996,7 @@
 	wb_data[1] = 0;
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_TX_CONTROL, wb_data, 2);
 
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED) अणु
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED) {
 		DP(NETIF_MSG_LINK, "PFC is enabled\n");
 		/* Enable PFC RX & TX & STATS and set 8 COS  */
 		wb_data[0] = 0x0;
@@ -2009,25 +2008,25 @@
 		wb_data[1] = 0;
 		REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_PFC_CONTROL,
 			    wb_data, 2);
-		/* Clear the क्रमce Xon */
+		/* Clear the force Xon */
 		wb_data[0] &= ~(1<<2);
-	पूर्ण अन्यथा अणु
+	} else {
 		DP(NETIF_MSG_LINK, "PFC is disabled\n");
 		/* Disable PFC RX & TX & STATS and set 8 COS */
 		wb_data[0] = 0x8;
 		wb_data[1] = 0;
-	पूर्ण
+	}
 
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_PFC_CONTROL, wb_data, 2);
 
-	/* Set Time (based unit is 512 bit समय) between स्वतःmatic
-	 * re-sending of PP packets amd enable स्वतःmatic re-send of
-	 * Per-Priroity Packet as दीर्घ as pp_gen is निश्चितed and
+	/* Set Time (based unit is 512 bit time) between automatic
+	 * re-sending of PP packets amd enable automatic re-send of
+	 * Per-Priroity Packet as long as pp_gen is asserted and
 	 * pp_disable is low.
 	 */
 	val = 0x8000;
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
-		val |= (1<<16); /* enable स्वतःmatic re-send */
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
+		val |= (1<<16); /* enable automatic re-send */
 
 	wb_data[0] = val;
 	wb_data[1] = 0;
@@ -2036,143 +2035,143 @@
 
 	/* mac control */
 	val = 0x3; /* Enable RX and TX */
-	अगर (is_lb) अणु
+	if (is_lb) {
 		val |= 0x4; /* Local loopback */
 		DP(NETIF_MSG_LINK, "enable bmac loopback\n");
-	पूर्ण
-	/* When PFC enabled, Pass छोड़ो frames towards the NIG. */
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
+	}
+	/* When PFC enabled, Pass pause frames towards the NIG. */
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
 		val |= ((1<<6)|(1<<5));
 
 	wb_data[0] = val;
 	wb_data[1] = 0;
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_BMAC_CONTROL, wb_data, 2);
-पूर्ण
+}
 
 /******************************************************************************
 * Description:
 *  This function is needed because NIG ARB_CREDIT_WEIGHT_X are
-*  not जारीs and ARB_CREDIT_WEIGHT_0 + offset is suitable.
+*  not continues and ARB_CREDIT_WEIGHT_0 + offset is suitable.
 ******************************************************************************/
-अटल पूर्णांक bnx2x_pfc_nig_rx_priority_mask(काष्ठा bnx2x *bp,
+static int bnx2x_pfc_nig_rx_priority_mask(struct bnx2x *bp,
 					   u8 cos_entry,
 					   u32 priority_mask, u8 port)
-अणु
+{
 	u32 nig_reg_rx_priority_mask_add = 0;
 
-	चयन (cos_entry) अणु
-	हाल 0:
+	switch (cos_entry) {
+	case 0:
 	     nig_reg_rx_priority_mask_add = (port) ?
 		 NIG_REG_P1_RX_COS0_PRIORITY_MASK :
 		 NIG_REG_P0_RX_COS0_PRIORITY_MASK;
-	     अवरोध;
-	हाल 1:
+	     break;
+	case 1:
 	    nig_reg_rx_priority_mask_add = (port) ?
 		NIG_REG_P1_RX_COS1_PRIORITY_MASK :
 		NIG_REG_P0_RX_COS1_PRIORITY_MASK;
-	    अवरोध;
-	हाल 2:
+	    break;
+	case 2:
 	    nig_reg_rx_priority_mask_add = (port) ?
 		NIG_REG_P1_RX_COS2_PRIORITY_MASK :
 		NIG_REG_P0_RX_COS2_PRIORITY_MASK;
-	    अवरोध;
-	हाल 3:
-	    अगर (port)
-		वापस -EINVAL;
+	    break;
+	case 3:
+	    if (port)
+		return -EINVAL;
 	    nig_reg_rx_priority_mask_add = NIG_REG_P0_RX_COS3_PRIORITY_MASK;
-	    अवरोध;
-	हाल 4:
-	    अगर (port)
-		वापस -EINVAL;
+	    break;
+	case 4:
+	    if (port)
+		return -EINVAL;
 	    nig_reg_rx_priority_mask_add = NIG_REG_P0_RX_COS4_PRIORITY_MASK;
-	    अवरोध;
-	हाल 5:
-	    अगर (port)
-		वापस -EINVAL;
+	    break;
+	case 5:
+	    if (port)
+		return -EINVAL;
 	    nig_reg_rx_priority_mask_add = NIG_REG_P0_RX_COS5_PRIORITY_MASK;
-	    अवरोध;
-	पूर्ण
+	    break;
+	}
 
 	REG_WR(bp, nig_reg_rx_priority_mask_add, priority_mask);
 
-	वापस 0;
-पूर्ण
-अटल व्योम bnx2x_update_mng(काष्ठा link_params *params, u32 link_status)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+	return 0;
+}
+static void bnx2x_update_mng(struct link_params *params, u32 link_status)
+{
+	struct bnx2x *bp = params->bp;
 
 	REG_WR(bp, params->shmem_base +
-	       दुरत्व(काष्ठा shmem_region,
+	       offsetof(struct shmem_region,
 			port_mb[params->port].link_status), link_status);
-पूर्ण
+}
 
-अटल व्योम bnx2x_update_link_attr(काष्ठा link_params *params, u32 link_attr)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_update_link_attr(struct link_params *params, u32 link_attr)
+{
+	struct bnx2x *bp = params->bp;
 
-	अगर (SHMEM2_HAS(bp, link_attr_sync))
+	if (SHMEM2_HAS(bp, link_attr_sync))
 		REG_WR(bp, params->shmem2_base +
-		       दुरत्व(काष्ठा shmem2_region,
+		       offsetof(struct shmem2_region,
 				link_attr_sync[params->port]), link_attr);
-पूर्ण
+}
 
-अटल व्योम bnx2x_update_pfc_nig(काष्ठा link_params *params,
-		काष्ठा link_vars *vars,
-		काष्ठा bnx2x_nig_brb_pfc_port_params *nig_params)
-अणु
-	u32 xcm_mask = 0, ppp_enable = 0, छोड़ो_enable = 0, llfc_out_en = 0;
+static void bnx2x_update_pfc_nig(struct link_params *params,
+		struct link_vars *vars,
+		struct bnx2x_nig_brb_pfc_port_params *nig_params)
+{
+	u32 xcm_mask = 0, ppp_enable = 0, pause_enable = 0, llfc_out_en = 0;
 	u32 llfc_enable = 0, xcm_out_en = 0, hwpfc_enable = 0;
 	u32 pkt_priority_to_cos = 0;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 
-	पूर्णांक set_pfc = params->feature_config_flags &
+	int set_pfc = params->feature_config_flags &
 		FEATURE_CONFIG_PFC_ENABLED;
 	DP(NETIF_MSG_LINK, "updating pfc nig parameters\n");
 
 	/* When NIG_LLH0_XCM_MASK_REG_LLHX_XCM_MASK_BCN bit is set
-	 * MAC control frames (that are not छोड़ो packets)
-	 * will be क्रमwarded to the XCM.
+	 * MAC control frames (that are not pause packets)
+	 * will be forwarded to the XCM.
 	 */
 	xcm_mask = REG_RD(bp, port ? NIG_REG_LLH1_XCM_MASK :
 			  NIG_REG_LLH0_XCM_MASK);
 	/* NIG params will override non PFC params, since it's possible to
-	 * करो transition from PFC to SAFC
+	 * do transition from PFC to SAFC
 	 */
-	अगर (set_pfc) अणु
-		छोड़ो_enable = 0;
+	if (set_pfc) {
+		pause_enable = 0;
 		llfc_out_en = 0;
 		llfc_enable = 0;
-		अगर (CHIP_IS_E3(bp))
+		if (CHIP_IS_E3(bp))
 			ppp_enable = 0;
-		अन्यथा
+		else
 			ppp_enable = 1;
 		xcm_mask &= ~(port ? NIG_LLH1_XCM_MASK_REG_LLH1_XCM_MASK_BCN :
 				     NIG_LLH0_XCM_MASK_REG_LLH0_XCM_MASK_BCN);
 		xcm_out_en = 0;
 		hwpfc_enable = 1;
-	पूर्ण अन्यथा  अणु
-		अगर (nig_params) अणु
+	} else  {
+		if (nig_params) {
 			llfc_out_en = nig_params->llfc_out_en;
 			llfc_enable = nig_params->llfc_enable;
-			छोड़ो_enable = nig_params->छोड़ो_enable;
-		पूर्ण अन्यथा  /* Default non PFC mode - PAUSE */
-			छोड़ो_enable = 1;
+			pause_enable = nig_params->pause_enable;
+		} else  /* Default non PFC mode - PAUSE */
+			pause_enable = 1;
 
 		xcm_mask |= (port ? NIG_LLH1_XCM_MASK_REG_LLH1_XCM_MASK_BCN :
 			NIG_LLH0_XCM_MASK_REG_LLH0_XCM_MASK_BCN);
 		xcm_out_en = 1;
-	पूर्ण
+	}
 
-	अगर (CHIP_IS_E3(bp))
+	if (CHIP_IS_E3(bp))
 		REG_WR(bp, port ? NIG_REG_BRB1_PAUSE_IN_EN :
-		       NIG_REG_BRB0_PAUSE_IN_EN, छोड़ो_enable);
+		       NIG_REG_BRB0_PAUSE_IN_EN, pause_enable);
 	REG_WR(bp, port ? NIG_REG_LLFC_OUT_EN_1 :
 	       NIG_REG_LLFC_OUT_EN_0, llfc_out_en);
 	REG_WR(bp, port ? NIG_REG_LLFC_ENABLE_1 :
 	       NIG_REG_LLFC_ENABLE_0, llfc_enable);
 	REG_WR(bp, port ? NIG_REG_PAUSE_ENABLE_1 :
-	       NIG_REG_PAUSE_ENABLE_0, छोड़ो_enable);
+	       NIG_REG_PAUSE_ENABLE_0, pause_enable);
 
 	REG_WR(bp, port ? NIG_REG_PPP_ENABLE_1 :
 	       NIG_REG_PPP_ENABLE_0, ppp_enable);
@@ -2183,7 +2182,7 @@
 	REG_WR(bp, port ? NIG_REG_LLFC_EGRESS_SRC_ENABLE_1 :
 	       NIG_REG_LLFC_EGRESS_SRC_ENABLE_0, 0x7);
 
-	/* Output enable क्रम RX_XCM # IF */
+	/* Output enable for RX_XCM # IF */
 	REG_WR(bp, port ? NIG_REG_XCM1_OUT_EN :
 	       NIG_REG_XCM0_OUT_EN, xcm_out_en);
 
@@ -2191,11 +2190,11 @@
 	REG_WR(bp, port ? NIG_REG_P1_HWPFC_ENABLE :
 	       NIG_REG_P0_HWPFC_ENABLE, hwpfc_enable);
 
-	अगर (nig_params) अणु
+	if (nig_params) {
 		u8 i = 0;
 		pkt_priority_to_cos = nig_params->pkt_priority_to_cos;
 
-		क्रम (i = 0; i < nig_params->num_of_rx_cos_priority_mask; i++)
+		for (i = 0; i < nig_params->num_of_rx_cos_priority_mask; i++)
 			bnx2x_pfc_nig_rx_priority_mask(bp, i,
 		nig_params->rx_cos_priority_mask[i], port);
 
@@ -2206,27 +2205,27 @@
 		REG_WR(bp, port ? NIG_REG_LLFC_LOW_PRIORITY_CLASSES_1 :
 		       NIG_REG_LLFC_LOW_PRIORITY_CLASSES_0,
 		       nig_params->llfc_low_priority_classes);
-	पूर्ण
+	}
 	REG_WR(bp, port ? NIG_REG_P1_PKT_PRIORITY_TO_COS :
 	       NIG_REG_P0_PKT_PRIORITY_TO_COS,
 	       pkt_priority_to_cos);
-पूर्ण
+}
 
-पूर्णांक bnx2x_update_pfc(काष्ठा link_params *params,
-		      काष्ठा link_vars *vars,
-		      काष्ठा bnx2x_nig_brb_pfc_port_params *pfc_params)
-अणु
-	/* The PFC and छोड़ो are orthogonal to one another, meaning when
-	 * PFC is enabled, the छोड़ो are disabled, and when PFC is
-	 * disabled, छोड़ो are set according to the छोड़ो result.
+int bnx2x_update_pfc(struct link_params *params,
+		      struct link_vars *vars,
+		      struct bnx2x_nig_brb_pfc_port_params *pfc_params)
+{
+	/* The PFC and pause are orthogonal to one another, meaning when
+	 * PFC is enabled, the pause are disabled, and when PFC is
+	 * disabled, pause are set according to the pause result.
 	 */
 	u32 val;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u8 bmac_loopback = (params->loopback_mode == LOOPBACK_BMAC);
 
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
 		vars->link_status |= LINK_STATUS_PFC_ENABLED;
-	अन्यथा
+	else
 		vars->link_status &= ~LINK_STATUS_PFC_ENABLED;
 
 	bnx2x_update_mng(params, vars->link_status);
@@ -2234,43 +2233,43 @@
 	/* Update NIG params */
 	bnx2x_update_pfc_nig(params, vars, pfc_params);
 
-	अगर (!vars->link_up)
-		वापस 0;
+	if (!vars->link_up)
+		return 0;
 
 	DP(NETIF_MSG_LINK, "About to update PFC in BMAC\n");
 
-	अगर (CHIP_IS_E3(bp)) अणु
-		अगर (vars->mac_type == MAC_TYPE_XMAC)
+	if (CHIP_IS_E3(bp)) {
+		if (vars->mac_type == MAC_TYPE_XMAC)
 			bnx2x_update_pfc_xmac(params, vars, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = REG_RD(bp, MISC_REG_RESET_REG_2);
-		अगर ((val &
+		if ((val &
 		     (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << params->port))
-		    == 0) अणु
+		    == 0) {
 			DP(NETIF_MSG_LINK, "About to update PFC in EMAC\n");
 			bnx2x_emac_enable(params, vars, 0);
-			वापस 0;
-		पूर्ण
-		अगर (CHIP_IS_E2(bp))
+			return 0;
+		}
+		if (CHIP_IS_E2(bp))
 			bnx2x_update_pfc_bmac2(params, vars, bmac_loopback);
-		अन्यथा
+		else
 			bnx2x_update_pfc_bmac1(params, vars);
 
 		val = 0;
-		अगर ((params->feature_config_flags &
+		if ((params->feature_config_flags &
 		     FEATURE_CONFIG_PFC_ENABLED) ||
 		    (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 			val = 1;
 		REG_WR(bp, NIG_REG_BMAC0_PAUSE_OUT_EN + params->port*4, val);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_bmac1_enable(काष्ठा link_params *params,
-			      काष्ठा link_vars *vars,
+static int bnx2x_bmac1_enable(struct link_params *params,
+			      struct link_vars *vars,
 			      u8 is_lb)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 bmac_addr = port ? NIG_REG_INGRESS_BMAC1_MEM :
 			       NIG_REG_INGRESS_BMAC0_MEM;
@@ -2296,10 +2295,10 @@
 
 	/* MAC control */
 	val = 0x3;
-	अगर (is_lb) अणु
+	if (is_lb) {
 		val |= 0x4;
 		DP(NETIF_MSG_LINK, "enable bmac loopback\n");
-	पूर्ण
+	}
 	wb_data[0] = val;
 	wb_data[1] = 0;
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC_REGISTER_BMAC_CONTROL, wb_data, 2);
@@ -2327,14 +2326,14 @@
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC_REGISTER_RX_LLFC_MSG_FLDS,
 		    wb_data, 2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_bmac2_enable(काष्ठा link_params *params,
-			      काष्ठा link_vars *vars,
+static int bnx2x_bmac2_enable(struct link_params *params,
+			      struct link_vars *vars,
 			      u8 is_lb)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 bmac_addr = port ? NIG_REG_INGRESS_BMAC1_MEM :
 			       NIG_REG_INGRESS_BMAC0_MEM;
@@ -2347,7 +2346,7 @@
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_BMAC_CONTROL, wb_data, 2);
 	udelay(30);
 
-	/* XGXS control: Reset phy HW, MDIO रेजिस्टरs, PHY PLL and BMAC */
+	/* XGXS control: Reset phy HW, MDIO registers, PHY PLL and BMAC */
 	wb_data[0] = 0x3c;
 	wb_data[1] = 0;
 	REG_WR_DMAE(bp, bmac_addr + BIGMAC2_REGISTER_BMAC_XGXS_CONTROL,
@@ -2392,40 +2391,40 @@
 	udelay(30);
 	bnx2x_update_pfc_bmac2(params, vars, is_lb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_bmac_enable(काष्ठा link_params *params,
-			     काष्ठा link_vars *vars,
+static int bnx2x_bmac_enable(struct link_params *params,
+			     struct link_vars *vars,
 			     u8 is_lb, u8 reset_bmac)
-अणु
-	पूर्णांक rc = 0;
+{
+	int rc = 0;
 	u8 port = params->port;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 val;
 	/* Reset and unreset the BigMac */
-	अगर (reset_bmac) अणु
+	if (reset_bmac) {
 		REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
 		       (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << port));
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_SET,
 	       (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << port));
 
-	/* Enable access क्रम bmac रेजिस्टरs */
+	/* Enable access for bmac registers */
 	REG_WR(bp, NIG_REG_BMAC0_REGS_OUT_EN + port*4, 0x1);
 
 	/* Enable BMAC according to BMAC type*/
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		rc = bnx2x_bmac2_enable(params, vars, is_lb);
-	अन्यथा
+	else
 		rc = bnx2x_bmac1_enable(params, vars, is_lb);
 	REG_WR(bp, NIG_REG_XGXS_SERDES0_MODE_SEL + port*4, 0x1);
 	REG_WR(bp, NIG_REG_XGXS_LANE_SEL_P0 + port*4, 0x0);
 	REG_WR(bp, NIG_REG_EGRESS_EMAC0_PORT + port*4, 0x0);
 	val = 0;
-	अगर ((params->feature_config_flags &
+	if ((params->feature_config_flags &
 	      FEATURE_CONFIG_PFC_ENABLED) ||
 	    (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX))
 		val = 1;
@@ -2437,39 +2436,39 @@
 	REG_WR(bp, NIG_REG_BMAC0_OUT_EN + port*4, 0x1);
 
 	vars->mac_type = MAC_TYPE_BMAC;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम bnx2x_set_bmac_rx(काष्ठा bnx2x *bp, u32 chip_id, u8 port, u8 en)
-अणु
+static void bnx2x_set_bmac_rx(struct bnx2x *bp, u32 chip_id, u8 port, u8 en)
+{
 	u32 bmac_addr = port ? NIG_REG_INGRESS_BMAC1_MEM :
 			NIG_REG_INGRESS_BMAC0_MEM;
 	u32 wb_data[2];
 	u32 nig_bmac_enable = REG_RD(bp, NIG_REG_BMAC0_REGS_OUT_EN + port*4);
 
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		bmac_addr += BIGMAC2_REGISTER_BMAC_CONTROL;
-	अन्यथा
+	else
 		bmac_addr += BIGMAC_REGISTER_BMAC_CONTROL;
-	/* Only अगर the bmac is out of reset */
-	अगर (REG_RD(bp, MISC_REG_RESET_REG_2) &
+	/* Only if the bmac is out of reset */
+	if (REG_RD(bp, MISC_REG_RESET_REG_2) &
 			(MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << port) &&
-	    nig_bmac_enable) अणु
-		/* Clear Rx Enable bit in BMAC_CONTROL रेजिस्टर */
+	    nig_bmac_enable) {
+		/* Clear Rx Enable bit in BMAC_CONTROL register */
 		REG_RD_DMAE(bp, bmac_addr, wb_data, 2);
-		अगर (en)
+		if (en)
 			wb_data[0] |= BMAC_CONTROL_RX_ENABLE;
-		अन्यथा
+		else
 			wb_data[0] &= ~BMAC_CONTROL_RX_ENABLE;
 		REG_WR_DMAE(bp, bmac_addr, wb_data, 2);
 		usleep_range(1000, 2000);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnx2x_pbf_update(काष्ठा link_params *params, u32 flow_ctrl,
+static int bnx2x_pbf_update(struct link_params *params, u32 flow_ctrl,
 			    u32 line_speed)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 init_crd, crd;
 	u32 count = 1000;
@@ -2477,51 +2476,51 @@
 	/* Disable port */
 	REG_WR(bp, PBF_REG_DISABLE_NEW_TASK_PROC_P0 + port*4, 0x1);
 
-	/* Wait क्रम init credit */
+	/* Wait for init credit */
 	init_crd = REG_RD(bp, PBF_REG_P0_INIT_CRD + port*4);
 	crd = REG_RD(bp, PBF_REG_P0_CREDIT + port*8);
 	DP(NETIF_MSG_LINK, "init_crd 0x%x  crd 0x%x\n", init_crd, crd);
 
-	जबतक ((init_crd != crd) && count) अणु
+	while ((init_crd != crd) && count) {
 		usleep_range(5000, 10000);
 		crd = REG_RD(bp, PBF_REG_P0_CREDIT + port*8);
 		count--;
-	पूर्ण
+	}
 	crd = REG_RD(bp, PBF_REG_P0_CREDIT + port*8);
-	अगर (init_crd != crd) अणु
+	if (init_crd != crd) {
 		DP(NETIF_MSG_LINK, "BUG! init_crd 0x%x != crd 0x%x\n",
 			  init_crd, crd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (flow_ctrl & BNX2X_FLOW_CTRL_RX ||
+	if (flow_ctrl & BNX2X_FLOW_CTRL_RX ||
 	    line_speed == SPEED_10 ||
 	    line_speed == SPEED_100 ||
 	    line_speed == SPEED_1000 ||
-	    line_speed == SPEED_2500) अणु
+	    line_speed == SPEED_2500) {
 		REG_WR(bp, PBF_REG_P0_PAUSE_ENABLE + port*4, 1);
 		/* Update threshold */
 		REG_WR(bp, PBF_REG_P0_ARB_THRSH + port*4, 0);
 		/* Update init credit */
 		init_crd = 778;		/* (800-18-4) */
 
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 thresh = (ETH_MAX_JUMBO_PACKET_SIZE +
 			      ETH_OVERHEAD)/16;
 		REG_WR(bp, PBF_REG_P0_PAUSE_ENABLE + port*4, 0);
 		/* Update threshold */
 		REG_WR(bp, PBF_REG_P0_ARB_THRSH + port*4, thresh);
 		/* Update init credit */
-		चयन (line_speed) अणु
-		हाल SPEED_10000:
+		switch (line_speed) {
+		case SPEED_10000:
 			init_crd = thresh + 553 - 22;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DP(NETIF_MSG_LINK, "Invalid line_speed 0x%x\n",
 				  line_speed);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	REG_WR(bp, PBF_REG_P0_INIT_CRD + port*4, init_crd);
 	DP(NETIF_MSG_LINK, "PBF updated to speed %d credit %d\n",
 		 line_speed, init_crd);
@@ -2533,8 +2532,8 @@
 
 	/* Enable port */
 	REG_WR(bp, PBF_REG_DISABLE_NEW_TASK_PROC_P0 + port*4, 0x0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * bnx2x_get_emac_base - retrive emac base address
@@ -2545,89 +2544,89 @@
  *
  * This function selects the MDC/MDIO access (through emac0 or
  * emac1) depend on the mdc_mdio_access, port, port swapped. Each
- * phy has a शेष access mode, which could also be overridden
+ * phy has a default access mode, which could also be overridden
  * by nvram configuration. This parameter, whether this is the
- * शेष phy configuration, or the nvram overrun
+ * default phy configuration, or the nvram overrun
  * configuration, is passed here as mdc_mdio_access and selects
- * the emac_base क्रम the CL45 पढ़ो/ग_लिखोs operations
+ * the emac_base for the CL45 read/writes operations
  */
-अटल u32 bnx2x_get_emac_base(काष्ठा bnx2x *bp,
+static u32 bnx2x_get_emac_base(struct bnx2x *bp,
 			       u32 mdc_mdio_access, u8 port)
-अणु
+{
 	u32 emac_base = 0;
-	चयन (mdc_mdio_access) अणु
-	हाल SHARED_HW_CFG_MDC_MDIO_ACCESS1_PHY_TYPE:
-		अवरोध;
-	हाल SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC0:
-		अगर (REG_RD(bp, NIG_REG_PORT_SWAP))
+	switch (mdc_mdio_access) {
+	case SHARED_HW_CFG_MDC_MDIO_ACCESS1_PHY_TYPE:
+		break;
+	case SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC0:
+		if (REG_RD(bp, NIG_REG_PORT_SWAP))
 			emac_base = GRCBASE_EMAC1;
-		अन्यथा
+		else
 			emac_base = GRCBASE_EMAC0;
-		अवरोध;
-	हाल SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC1:
-		अगर (REG_RD(bp, NIG_REG_PORT_SWAP))
+		break;
+	case SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC1:
+		if (REG_RD(bp, NIG_REG_PORT_SWAP))
 			emac_base = GRCBASE_EMAC0;
-		अन्यथा
+		else
 			emac_base = GRCBASE_EMAC1;
-		अवरोध;
-	हाल SHARED_HW_CFG_MDC_MDIO_ACCESS1_BOTH:
+		break;
+	case SHARED_HW_CFG_MDC_MDIO_ACCESS1_BOTH:
 		emac_base = (port) ? GRCBASE_EMAC1 : GRCBASE_EMAC0;
-		अवरोध;
-	हाल SHARED_HW_CFG_MDC_MDIO_ACCESS1_SWAPPED:
+		break;
+	case SHARED_HW_CFG_MDC_MDIO_ACCESS1_SWAPPED:
 		emac_base = (port) ? GRCBASE_EMAC0 : GRCBASE_EMAC1;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस emac_base;
+		break;
+	default:
+		break;
+	}
+	return emac_base;
 
-पूर्ण
+}
 
 /******************************************************************/
 /*			CL22 access functions			  */
 /******************************************************************/
-अटल पूर्णांक bnx2x_cl22_ग_लिखो(काष्ठा bnx2x *bp,
-				       काष्ठा bnx2x_phy *phy,
+static int bnx2x_cl22_write(struct bnx2x *bp,
+				       struct bnx2x_phy *phy,
 				       u16 reg, u16 val)
-अणु
-	u32 पंचांगp, mode;
+{
+	u32 tmp, mode;
 	u8 i;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	/* Switch to CL22 */
 	mode = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_MODE);
 	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_MODE,
 	       mode & ~EMAC_MDIO_MODE_CLAUSE_45);
 
 	/* Address */
-	पंचांगp = ((phy->addr << 21) | (reg << 16) | val |
+	tmp = ((phy->addr << 21) | (reg << 16) | val |
 	       EMAC_MDIO_COMM_COMMAND_WRITE_22 |
 	       EMAC_MDIO_COMM_START_BUSY);
-	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, पंचांगp);
+	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, tmp);
 
-	क्रम (i = 0; i < 50; i++) अणु
+	for (i = 0; i < 50; i++) {
 		udelay(10);
 
-		पंचांगp = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
-		अगर (!(पंचांगp & EMAC_MDIO_COMM_START_BUSY)) अणु
+		tmp = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
+		if (!(tmp & EMAC_MDIO_COMM_START_BUSY)) {
 			udelay(5);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (पंचांगp & EMAC_MDIO_COMM_START_BUSY) अणु
+			break;
+		}
+	}
+	if (tmp & EMAC_MDIO_COMM_START_BUSY) {
 		DP(NETIF_MSG_LINK, "write phy register failed\n");
 		rc = -EFAULT;
-	पूर्ण
+	}
 	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_MODE, mode);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnx2x_cl22_पढ़ो(काष्ठा bnx2x *bp,
-				      काष्ठा bnx2x_phy *phy,
+static int bnx2x_cl22_read(struct bnx2x *bp,
+				      struct bnx2x_phy *phy,
 				      u16 reg, u16 *ret_val)
-अणु
+{
 	u32 val, mode;
 	u16 i;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Switch to CL22 */
 	mode = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_MODE);
@@ -2640,43 +2639,43 @@
 	       EMAC_MDIO_COMM_START_BUSY);
 	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, val);
 
-	क्रम (i = 0; i < 50; i++) अणु
+	for (i = 0; i < 50; i++) {
 		udelay(10);
 
 		val = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
-		अगर (!(val & EMAC_MDIO_COMM_START_BUSY)) अणु
+		if (!(val & EMAC_MDIO_COMM_START_BUSY)) {
 			*ret_val = (u16)(val & EMAC_MDIO_COMM_DATA);
 			udelay(5);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (val & EMAC_MDIO_COMM_START_BUSY) अणु
+			break;
+		}
+	}
+	if (val & EMAC_MDIO_COMM_START_BUSY) {
 		DP(NETIF_MSG_LINK, "read phy register failed\n");
 
 		*ret_val = 0;
 		rc = -EFAULT;
-	पूर्ण
+	}
 	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_MODE, mode);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /******************************************************************/
 /*			CL45 access functions			  */
 /******************************************************************/
-अटल पूर्णांक bnx2x_cl45_पढ़ो(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy,
+static int bnx2x_cl45_read(struct bnx2x *bp, struct bnx2x_phy *phy,
 			   u8 devad, u16 reg, u16 *ret_val)
-अणु
+{
 	u32 val;
 	u16 i;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	u32 chip_id;
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_G) अणु
+	if (phy->flags & FLAGS_MDC_MDIO_WA_G) {
 		chip_id = (REG_RD(bp, MISC_REG_CHIP_NUM) << 16) |
 			  ((REG_RD(bp, MISC_REG_CHIP_REV) & 0xf) << 12);
 		bnx2x_set_mdio_clk(bp, chip_id, phy->mdio_ctrl);
-	पूर्ण
+	}
 
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_B0)
+	if (phy->flags & FLAGS_MDC_MDIO_WA_B0)
 		bnx2x_bits_en(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_STATUS,
 			      EMAC_MDIO_STATUS_10MB);
 	/* Address */
@@ -2685,383 +2684,383 @@
 	       EMAC_MDIO_COMM_START_BUSY);
 	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, val);
 
-	क्रम (i = 0; i < 50; i++) अणु
+	for (i = 0; i < 50; i++) {
 		udelay(10);
 
 		val = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
-		अगर (!(val & EMAC_MDIO_COMM_START_BUSY)) अणु
+		if (!(val & EMAC_MDIO_COMM_START_BUSY)) {
 			udelay(5);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (val & EMAC_MDIO_COMM_START_BUSY) अणु
+			break;
+		}
+	}
+	if (val & EMAC_MDIO_COMM_START_BUSY) {
 		DP(NETIF_MSG_LINK, "read phy register failed\n");
 		netdev_err(bp->dev,  "MDC/MDIO access timeout\n");
 		*ret_val = 0;
 		rc = -EFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Data */
 		val = ((phy->addr << 21) | (devad << 16) |
 		       EMAC_MDIO_COMM_COMMAND_READ_45 |
 		       EMAC_MDIO_COMM_START_BUSY);
 		REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, val);
 
-		क्रम (i = 0; i < 50; i++) अणु
+		for (i = 0; i < 50; i++) {
 			udelay(10);
 
 			val = REG_RD(bp, phy->mdio_ctrl +
 				     EMAC_REG_EMAC_MDIO_COMM);
-			अगर (!(val & EMAC_MDIO_COMM_START_BUSY)) अणु
+			if (!(val & EMAC_MDIO_COMM_START_BUSY)) {
 				*ret_val = (u16)(val & EMAC_MDIO_COMM_DATA);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (val & EMAC_MDIO_COMM_START_BUSY) अणु
+				break;
+			}
+		}
+		if (val & EMAC_MDIO_COMM_START_BUSY) {
 			DP(NETIF_MSG_LINK, "read phy register failed\n");
 			netdev_err(bp->dev,  "MDC/MDIO access timeout\n");
 			*ret_val = 0;
 			rc = -EFAULT;
-		पूर्ण
-	पूर्ण
-	/* Work around क्रम E3 A0 */
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA) अणु
+		}
+	}
+	/* Work around for E3 A0 */
+	if (phy->flags & FLAGS_MDC_MDIO_WA) {
 		phy->flags ^= FLAGS_DUMMY_READ;
-		अगर (phy->flags & FLAGS_DUMMY_READ) अणु
+		if (phy->flags & FLAGS_DUMMY_READ) {
 			u16 temp_val;
-			bnx2x_cl45_पढ़ो(bp, phy, devad, 0xf, &temp_val);
-		पूर्ण
-	पूर्ण
+			bnx2x_cl45_read(bp, phy, devad, 0xf, &temp_val);
+		}
+	}
 
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_B0)
+	if (phy->flags & FLAGS_MDC_MDIO_WA_B0)
 		bnx2x_bits_dis(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_STATUS,
 			       EMAC_MDIO_STATUS_10MB);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnx2x_cl45_ग_लिखो(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy,
+static int bnx2x_cl45_write(struct bnx2x *bp, struct bnx2x_phy *phy,
 			    u8 devad, u16 reg, u16 val)
-अणु
-	u32 पंचांगp;
+{
+	u32 tmp;
 	u8 i;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	u32 chip_id;
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_G) अणु
+	if (phy->flags & FLAGS_MDC_MDIO_WA_G) {
 		chip_id = (REG_RD(bp, MISC_REG_CHIP_NUM) << 16) |
 			  ((REG_RD(bp, MISC_REG_CHIP_REV) & 0xf) << 12);
 		bnx2x_set_mdio_clk(bp, chip_id, phy->mdio_ctrl);
-	पूर्ण
+	}
 
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_B0)
+	if (phy->flags & FLAGS_MDC_MDIO_WA_B0)
 		bnx2x_bits_en(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_STATUS,
 			      EMAC_MDIO_STATUS_10MB);
 
 	/* Address */
-	पंचांगp = ((phy->addr << 21) | (devad << 16) | reg |
+	tmp = ((phy->addr << 21) | (devad << 16) | reg |
 	       EMAC_MDIO_COMM_COMMAND_ADDRESS |
 	       EMAC_MDIO_COMM_START_BUSY);
-	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, पंचांगp);
+	REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, tmp);
 
-	क्रम (i = 0; i < 50; i++) अणु
+	for (i = 0; i < 50; i++) {
 		udelay(10);
 
-		पंचांगp = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
-		अगर (!(पंचांगp & EMAC_MDIO_COMM_START_BUSY)) अणु
+		tmp = REG_RD(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM);
+		if (!(tmp & EMAC_MDIO_COMM_START_BUSY)) {
 			udelay(5);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (पंचांगp & EMAC_MDIO_COMM_START_BUSY) अणु
+			break;
+		}
+	}
+	if (tmp & EMAC_MDIO_COMM_START_BUSY) {
 		DP(NETIF_MSG_LINK, "write phy register failed\n");
 		netdev_err(bp->dev,  "MDC/MDIO access timeout\n");
 		rc = -EFAULT;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Data */
-		पंचांगp = ((phy->addr << 21) | (devad << 16) | val |
+		tmp = ((phy->addr << 21) | (devad << 16) | val |
 		       EMAC_MDIO_COMM_COMMAND_WRITE_45 |
 		       EMAC_MDIO_COMM_START_BUSY);
-		REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, पंचांगp);
+		REG_WR(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_COMM, tmp);
 
-		क्रम (i = 0; i < 50; i++) अणु
+		for (i = 0; i < 50; i++) {
 			udelay(10);
 
-			पंचांगp = REG_RD(bp, phy->mdio_ctrl +
+			tmp = REG_RD(bp, phy->mdio_ctrl +
 				     EMAC_REG_EMAC_MDIO_COMM);
-			अगर (!(पंचांगp & EMAC_MDIO_COMM_START_BUSY)) अणु
+			if (!(tmp & EMAC_MDIO_COMM_START_BUSY)) {
 				udelay(5);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (पंचांगp & EMAC_MDIO_COMM_START_BUSY) अणु
+				break;
+			}
+		}
+		if (tmp & EMAC_MDIO_COMM_START_BUSY) {
 			DP(NETIF_MSG_LINK, "write phy register failed\n");
 			netdev_err(bp->dev,  "MDC/MDIO access timeout\n");
 			rc = -EFAULT;
-		पूर्ण
-	पूर्ण
-	/* Work around क्रम E3 A0 */
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA) अणु
+		}
+	}
+	/* Work around for E3 A0 */
+	if (phy->flags & FLAGS_MDC_MDIO_WA) {
 		phy->flags ^= FLAGS_DUMMY_READ;
-		अगर (phy->flags & FLAGS_DUMMY_READ) अणु
+		if (phy->flags & FLAGS_DUMMY_READ) {
 			u16 temp_val;
-			bnx2x_cl45_पढ़ो(bp, phy, devad, 0xf, &temp_val);
-		पूर्ण
-	पूर्ण
-	अगर (phy->flags & FLAGS_MDC_MDIO_WA_B0)
+			bnx2x_cl45_read(bp, phy, devad, 0xf, &temp_val);
+		}
+	}
+	if (phy->flags & FLAGS_MDC_MDIO_WA_B0)
 		bnx2x_bits_dis(bp, phy->mdio_ctrl + EMAC_REG_EMAC_MDIO_STATUS,
 			       EMAC_MDIO_STATUS_10MB);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /******************************************************************/
 /*			EEE section				   */
 /******************************************************************/
-अटल u8 bnx2x_eee_has_cap(काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_eee_has_cap(struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 
-	अगर (REG_RD(bp, params->shmem2_base) <=
-		   दुरत्व(काष्ठा shmem2_region, eee_status[params->port]))
-		वापस 0;
+	if (REG_RD(bp, params->shmem2_base) <=
+		   offsetof(struct shmem2_region, eee_status[params->port]))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक bnx2x_eee_nvram_to_समय(u32 nvram_mode, u32 *idle_समयr)
-अणु
-	चयन (nvram_mode) अणु
-	हाल PORT_FEAT_CFG_EEE_POWER_MODE_BALANCED:
-		*idle_समयr = EEE_MODE_NVRAM_BALANCED_TIME;
-		अवरोध;
-	हाल PORT_FEAT_CFG_EEE_POWER_MODE_AGGRESSIVE:
-		*idle_समयr = EEE_MODE_NVRAM_AGGRESSIVE_TIME;
-		अवरोध;
-	हाल PORT_FEAT_CFG_EEE_POWER_MODE_LOW_LATENCY:
-		*idle_समयr = EEE_MODE_NVRAM_LATENCY_TIME;
-		अवरोध;
-	शेष:
-		*idle_समयr = 0;
-		अवरोध;
-	पूर्ण
+static int bnx2x_eee_nvram_to_time(u32 nvram_mode, u32 *idle_timer)
+{
+	switch (nvram_mode) {
+	case PORT_FEAT_CFG_EEE_POWER_MODE_BALANCED:
+		*idle_timer = EEE_MODE_NVRAM_BALANCED_TIME;
+		break;
+	case PORT_FEAT_CFG_EEE_POWER_MODE_AGGRESSIVE:
+		*idle_timer = EEE_MODE_NVRAM_AGGRESSIVE_TIME;
+		break;
+	case PORT_FEAT_CFG_EEE_POWER_MODE_LOW_LATENCY:
+		*idle_timer = EEE_MODE_NVRAM_LATENCY_TIME;
+		break;
+	default:
+		*idle_timer = 0;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_eee_समय_प्रकारo_nvram(u32 idle_समयr, u32 *nvram_mode)
-अणु
-	चयन (idle_समयr) अणु
-	हाल EEE_MODE_NVRAM_BALANCED_TIME:
+static int bnx2x_eee_time_to_nvram(u32 idle_timer, u32 *nvram_mode)
+{
+	switch (idle_timer) {
+	case EEE_MODE_NVRAM_BALANCED_TIME:
 		*nvram_mode = PORT_FEAT_CFG_EEE_POWER_MODE_BALANCED;
-		अवरोध;
-	हाल EEE_MODE_NVRAM_AGGRESSIVE_TIME:
+		break;
+	case EEE_MODE_NVRAM_AGGRESSIVE_TIME:
 		*nvram_mode = PORT_FEAT_CFG_EEE_POWER_MODE_AGGRESSIVE;
-		अवरोध;
-	हाल EEE_MODE_NVRAM_LATENCY_TIME:
+		break;
+	case EEE_MODE_NVRAM_LATENCY_TIME:
 		*nvram_mode = PORT_FEAT_CFG_EEE_POWER_MODE_LOW_LATENCY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*nvram_mode = PORT_FEAT_CFG_EEE_POWER_MODE_DISABLED;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 bnx2x_eee_calc_समयr(काष्ठा link_params *params)
-अणु
+static u32 bnx2x_eee_calc_timer(struct link_params *params)
+{
 	u32 eee_mode, eee_idle;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	अगर (params->eee_mode & EEE_MODE_OVERRIDE_NVRAM) अणु
-		अगर (params->eee_mode & EEE_MODE_OUTPUT_TIME) अणु
-			/* समय value in eee_mode --> used directly*/
+	if (params->eee_mode & EEE_MODE_OVERRIDE_NVRAM) {
+		if (params->eee_mode & EEE_MODE_OUTPUT_TIME) {
+			/* time value in eee_mode --> used directly*/
 			eee_idle = params->eee_mode & EEE_MODE_TIMER_MASK;
-		पूर्ण अन्यथा अणु
-			/* hsi value in eee_mode --> समय */
-			अगर (bnx2x_eee_nvram_to_समय(params->eee_mode &
+		} else {
+			/* hsi value in eee_mode --> time */
+			if (bnx2x_eee_nvram_to_time(params->eee_mode &
 						    EEE_MODE_NVRAM_MASK,
 						    &eee_idle))
-				वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* hsi values in nvram --> समय*/
+				return 0;
+		}
+	} else {
+		/* hsi values in nvram --> time*/
 		eee_mode = ((REG_RD(bp, params->shmem_base +
-				    दुरत्व(काष्ठा shmem_region, dev_info.
+				    offsetof(struct shmem_region, dev_info.
 				    port_feature_config[params->port].
-				    eee_घातer_mode)) &
+				    eee_power_mode)) &
 			     PORT_FEAT_CFG_EEE_POWER_MODE_MASK) >>
 			    PORT_FEAT_CFG_EEE_POWER_MODE_SHIFT);
 
-		अगर (bnx2x_eee_nvram_to_समय(eee_mode, &eee_idle))
-			वापस 0;
-	पूर्ण
+		if (bnx2x_eee_nvram_to_time(eee_mode, &eee_idle))
+			return 0;
+	}
 
-	वापस eee_idle;
-पूर्ण
+	return eee_idle;
+}
 
-अटल पूर्णांक bnx2x_eee_set_समयrs(काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static int bnx2x_eee_set_timers(struct link_params *params,
+				   struct link_vars *vars)
+{
 	u32 eee_idle = 0, eee_mode;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	eee_idle = bnx2x_eee_calc_समयr(params);
+	eee_idle = bnx2x_eee_calc_timer(params);
 
-	अगर (eee_idle) अणु
+	if (eee_idle) {
 		REG_WR(bp, MISC_REG_CPMU_LP_IDLE_THR_P0 + (params->port << 2),
 		       eee_idle);
-	पूर्ण अन्यथा अगर ((params->eee_mode & EEE_MODE_ENABLE_LPI) &&
+	} else if ((params->eee_mode & EEE_MODE_ENABLE_LPI) &&
 		   (params->eee_mode & EEE_MODE_OVERRIDE_NVRAM) &&
-		   (params->eee_mode & EEE_MODE_OUTPUT_TIME)) अणु
+		   (params->eee_mode & EEE_MODE_OUTPUT_TIME)) {
 		DP(NETIF_MSG_LINK, "Error: Tx LPI is enabled with timer 0\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vars->eee_status &= ~(SHMEM_EEE_TIMER_MASK | SHMEM_EEE_TIME_OUTPUT_BIT);
-	अगर (params->eee_mode & EEE_MODE_OUTPUT_TIME) अणु
+	if (params->eee_mode & EEE_MODE_OUTPUT_TIME) {
 		/* eee_idle in 1u --> eee_status in 16u */
 		eee_idle >>= 4;
 		vars->eee_status |= (eee_idle & SHMEM_EEE_TIMER_MASK) |
 				    SHMEM_EEE_TIME_OUTPUT_BIT;
-	पूर्ण अन्यथा अणु
-		अगर (bnx2x_eee_समय_प्रकारo_nvram(eee_idle, &eee_mode))
-			वापस -EINVAL;
+	} else {
+		if (bnx2x_eee_time_to_nvram(eee_idle, &eee_mode))
+			return -EINVAL;
 		vars->eee_status |= eee_mode;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_eee_initial_config(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars, u8 mode)
-अणु
+static int bnx2x_eee_initial_config(struct link_params *params,
+				     struct link_vars *vars, u8 mode)
+{
 	vars->eee_status |= ((u32) mode) << SHMEM_EEE_SUPPORTED_SHIFT;
 
-	/* Propagate params' bits --> vars (क्रम migration exposure) */
-	अगर (params->eee_mode & EEE_MODE_ENABLE_LPI)
+	/* Propagate params' bits --> vars (for migration exposure) */
+	if (params->eee_mode & EEE_MODE_ENABLE_LPI)
 		vars->eee_status |= SHMEM_EEE_LPI_REQUESTED_BIT;
-	अन्यथा
+	else
 		vars->eee_status &= ~SHMEM_EEE_LPI_REQUESTED_BIT;
 
-	अगर (params->eee_mode & EEE_MODE_ADV_LPI)
+	if (params->eee_mode & EEE_MODE_ADV_LPI)
 		vars->eee_status |= SHMEM_EEE_REQUESTED_BIT;
-	अन्यथा
+	else
 		vars->eee_status &= ~SHMEM_EEE_REQUESTED_BIT;
 
-	वापस bnx2x_eee_set_समयrs(params, vars);
-पूर्ण
+	return bnx2x_eee_set_timers(params, vars);
+}
 
-अटल पूर्णांक bnx2x_eee_disable(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params,
-				काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_eee_disable(struct bnx2x_phy *phy,
+				struct link_params *params,
+				struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 
 	/* Make Certain LPI is disabled */
 	REG_WR(bp, MISC_REG_CPMU_LP_FW_ENABLE_P0 + (params->port << 2), 0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, 0x0);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, 0x0);
 
 	vars->eee_status &= ~SHMEM_EEE_ADV_STATUS_MASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_eee_advertise(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
-				  काष्ठा link_vars *vars, u8 modes)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_eee_advertise(struct bnx2x_phy *phy,
+				  struct link_params *params,
+				  struct link_vars *vars, u8 modes)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val = 0;
 
 	/* Mask events preventing LPI generation */
 	REG_WR(bp, MISC_REG_CPMU_LP_MASK_EXT_P0 + (params->port << 2), 0xfc20);
 
-	अगर (modes & SHMEM_EEE_10G_ADV) अणु
+	if (modes & SHMEM_EEE_10G_ADV) {
 		DP(NETIF_MSG_LINK, "Advertise 10GBase-T EEE\n");
 		val |= 0x8;
-	पूर्ण
-	अगर (modes & SHMEM_EEE_1G_ADV) अणु
+	}
+	if (modes & SHMEM_EEE_1G_ADV) {
 		DP(NETIF_MSG_LINK, "Advertise 1GBase-T EEE\n");
 		val |= 0x4;
-	पूर्ण
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, val);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, val);
 
 	vars->eee_status &= ~SHMEM_EEE_ADV_STATUS_MASK;
 	vars->eee_status |= (modes << SHMEM_EEE_ADV_STATUS_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_update_mng_eee(काष्ठा link_params *params, u32 eee_status)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_update_mng_eee(struct link_params *params, u32 eee_status)
+{
+	struct bnx2x *bp = params->bp;
 
-	अगर (bnx2x_eee_has_cap(params))
+	if (bnx2x_eee_has_cap(params))
 		REG_WR(bp, params->shmem2_base +
-		       दुरत्व(काष्ठा shmem2_region,
+		       offsetof(struct shmem2_region,
 				eee_status[params->port]), eee_status);
-पूर्ण
+}
 
-अटल व्योम bnx2x_eee_an_resolve(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
-				  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_eee_an_resolve(struct bnx2x_phy *phy,
+				  struct link_params *params,
+				  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 adv = 0, lp = 0;
 	u32 lp_adv = 0;
 	u8 neg = 0;
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, &adv);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_LP_EEE_ADV, &lp);
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_EEE_ADV, &adv);
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_LP_EEE_ADV, &lp);
 
-	अगर (lp & 0x2) अणु
+	if (lp & 0x2) {
 		lp_adv |= SHMEM_EEE_100M_ADV;
-		अगर (adv & 0x2) अणु
-			अगर (vars->line_speed == SPEED_100)
+		if (adv & 0x2) {
+			if (vars->line_speed == SPEED_100)
 				neg = 1;
 			DP(NETIF_MSG_LINK, "EEE negotiated - 100M\n");
-		पूर्ण
-	पूर्ण
-	अगर (lp & 0x14) अणु
+		}
+	}
+	if (lp & 0x14) {
 		lp_adv |= SHMEM_EEE_1G_ADV;
-		अगर (adv & 0x14) अणु
-			अगर (vars->line_speed == SPEED_1000)
+		if (adv & 0x14) {
+			if (vars->line_speed == SPEED_1000)
 				neg = 1;
 			DP(NETIF_MSG_LINK, "EEE negotiated - 1G\n");
-		पूर्ण
-	पूर्ण
-	अगर (lp & 0x68) अणु
+		}
+	}
+	if (lp & 0x68) {
 		lp_adv |= SHMEM_EEE_10G_ADV;
-		अगर (adv & 0x68) अणु
-			अगर (vars->line_speed == SPEED_10000)
+		if (adv & 0x68) {
+			if (vars->line_speed == SPEED_10000)
 				neg = 1;
 			DP(NETIF_MSG_LINK, "EEE negotiated - 10G\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	vars->eee_status &= ~SHMEM_EEE_LP_ADV_STATUS_MASK;
 	vars->eee_status |= (lp_adv << SHMEM_EEE_LP_ADV_STATUS_SHIFT);
 
-	अगर (neg) अणु
+	if (neg) {
 		DP(NETIF_MSG_LINK, "EEE is active\n");
 		vars->eee_status |= SHMEM_EEE_ACTIVE_BIT;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 /******************************************************************/
 /*			BSC access functions from E3	          */
 /******************************************************************/
-अटल व्योम bnx2x_bsc_module_sel(काष्ठा link_params *params)
-अणु
-	पूर्णांक idx;
+static void bnx2x_bsc_module_sel(struct link_params *params)
+{
+	int idx;
 	u32 board_cfg, sfp_ctrl;
 	u32 i2c_pins[I2C_SWITCH_WIDTH], i2c_val[I2C_SWITCH_WIDTH];
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	/* Read I2C output PINs */
 	board_cfg = REG_RD(bp, params->shmem_base +
-			   दुरत्व(काष्ठा shmem_region,
+			   offsetof(struct shmem_region,
 				    dev_info.shared_hw_config.board));
 	i2c_pins[I2C_BSC0] = board_cfg & SHARED_HW_CFG_E3_I2C_MUX0_MASK;
 	i2c_pins[I2C_BSC1] = (board_cfg & SHARED_HW_CFG_E3_I2C_MUX1_MASK) >>
@@ -3069,32 +3068,32 @@
 
 	/* Read I2C output value */
 	sfp_ctrl = REG_RD(bp, params->shmem_base +
-			  दुरत्व(काष्ठा shmem_region,
+			  offsetof(struct shmem_region,
 				 dev_info.port_hw_config[port].e3_cmn_pin_cfg));
 	i2c_val[I2C_BSC0] = (sfp_ctrl & PORT_HW_CFG_E3_I2C_MUX0_MASK) > 0;
 	i2c_val[I2C_BSC1] = (sfp_ctrl & PORT_HW_CFG_E3_I2C_MUX1_MASK) > 0;
 	DP(NETIF_MSG_LINK, "Setting BSC switch\n");
-	क्रम (idx = 0; idx < I2C_SWITCH_WIDTH; idx++)
+	for (idx = 0; idx < I2C_SWITCH_WIDTH; idx++)
 		bnx2x_set_cfg_pin(bp, i2c_pins[idx], i2c_val[idx]);
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_bsc_पढ़ो(काष्ठा link_params *params,
-			  काष्ठा bnx2x *bp,
+static int bnx2x_bsc_read(struct link_params *params,
+			  struct bnx2x *bp,
 			  u8 sl_devid,
 			  u16 sl_addr,
 			  u8 lc_addr,
 			  u8 xfer_cnt,
 			  u32 *data_array)
-अणु
+{
 	u64 t0, delta;
 	u32 val, i;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	अगर (xfer_cnt > 16) अणु
+	if (xfer_cnt > 16) {
 		DP(NETIF_MSG_LINK, "invalid xfer_cnt %d. Max is 16 bytes\n",
 					xfer_cnt);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	bnx2x_bsc_module_sel(params);
 
 	xfer_cnt = 16 - lc_addr;
@@ -3108,31 +3107,31 @@
 	val = (sl_devid << 16) | sl_addr;
 	REG_WR(bp, MCP_REG_MCPR_IMC_SLAVE_CONTROL, val);
 
-	/* Start xfer with 0 byte to update the address poपूर्णांकer ???*/
+	/* Start xfer with 0 byte to update the address pointer ???*/
 	val = (MCPR_IMC_COMMAND_ENABLE) |
 	      (MCPR_IMC_COMMAND_WRITE_OP <<
 		MCPR_IMC_COMMAND_OPERATION_BITSHIFT) |
 		(lc_addr << MCPR_IMC_COMMAND_TRANSFER_ADDRESS_BITSHIFT) | (0);
 	REG_WR(bp, MCP_REG_MCPR_IMC_COMMAND, val);
 
-	/* Poll क्रम completion */
-	t0 = kसमय_get_ns();
+	/* Poll for completion */
+	t0 = ktime_get_ns();
 	val = REG_RD(bp, MCP_REG_MCPR_IMC_COMMAND);
-	जबतक (((val >> MCPR_IMC_COMMAND_IMC_STATUS_BITSHIFT) & 0x3) != 1) अणु
-		delta = kसमय_get_ns() - t0;
-		अगर (delta > 10 * NSEC_PER_MSEC) अणु
+	while (((val >> MCPR_IMC_COMMAND_IMC_STATUS_BITSHIFT) & 0x3) != 1) {
+		delta = ktime_get_ns() - t0;
+		if (delta > 10 * NSEC_PER_MSEC) {
 			DP(NETIF_MSG_LINK, "wr 0 byte timed out after %Lu ns\n",
 					   delta);
 			rc = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		usleep_range(10, 20);
 		val = REG_RD(bp, MCP_REG_MCPR_IMC_COMMAND);
-	पूर्ण
-	अगर (rc == -EFAULT)
-		वापस rc;
+	}
+	if (rc == -EFAULT)
+		return rc;
 
-	/* Start xfer with पढ़ो op */
+	/* Start xfer with read op */
 	val = (MCPR_IMC_COMMAND_ENABLE) |
 		(MCPR_IMC_COMMAND_READ_OP <<
 		MCPR_IMC_COMMAND_OPERATION_BITSHIFT) |
@@ -3140,178 +3139,178 @@
 		  (xfer_cnt);
 	REG_WR(bp, MCP_REG_MCPR_IMC_COMMAND, val);
 
-	/* Poll क्रम completion */
-	t0 = kसमय_get_ns();
+	/* Poll for completion */
+	t0 = ktime_get_ns();
 	val = REG_RD(bp, MCP_REG_MCPR_IMC_COMMAND);
-	जबतक (((val >> MCPR_IMC_COMMAND_IMC_STATUS_BITSHIFT) & 0x3) != 1) अणु
-		delta = kसमय_get_ns() - t0;
-		अगर (delta > 10 * NSEC_PER_MSEC) अणु
+	while (((val >> MCPR_IMC_COMMAND_IMC_STATUS_BITSHIFT) & 0x3) != 1) {
+		delta = ktime_get_ns() - t0;
+		if (delta > 10 * NSEC_PER_MSEC) {
 			DP(NETIF_MSG_LINK, "rd op timed out after %Lu ns\n",
 					   delta);
 			rc = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		usleep_range(10, 20);
 		val = REG_RD(bp, MCP_REG_MCPR_IMC_COMMAND);
-	पूर्ण
-	अगर (rc == -EFAULT)
-		वापस rc;
+	}
+	if (rc == -EFAULT)
+		return rc;
 
-	क्रम (i = (lc_addr >> 2); i < 4; i++) अणु
+	for (i = (lc_addr >> 2); i < 4; i++) {
 		data_array[i] = REG_RD(bp, (MCP_REG_MCPR_IMC_DATAREG0 + i*4));
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 		data_array[i] = ((data_array[i] & 0x000000ff) << 24) |
 				((data_array[i] & 0x0000ff00) << 8) |
 				((data_array[i] & 0x00ff0000) >> 8) |
 				((data_array[i] & 0xff000000) >> 24);
-#पूर्ण_अगर
-	पूर्ण
-	वापस rc;
-पूर्ण
+#endif
+	}
+	return rc;
+}
 
-अटल व्योम bnx2x_cl45_पढ़ो_or_ग_लिखो(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy,
+static void bnx2x_cl45_read_or_write(struct bnx2x *bp, struct bnx2x_phy *phy,
 				     u8 devad, u16 reg, u16 or_val)
-अणु
+{
 	u16 val;
-	bnx2x_cl45_पढ़ो(bp, phy, devad, reg, &val);
-	bnx2x_cl45_ग_लिखो(bp, phy, devad, reg, val | or_val);
-पूर्ण
+	bnx2x_cl45_read(bp, phy, devad, reg, &val);
+	bnx2x_cl45_write(bp, phy, devad, reg, val | or_val);
+}
 
-अटल व्योम bnx2x_cl45_पढ़ो_and_ग_लिखो(काष्ठा bnx2x *bp,
-				      काष्ठा bnx2x_phy *phy,
+static void bnx2x_cl45_read_and_write(struct bnx2x *bp,
+				      struct bnx2x_phy *phy,
 				      u8 devad, u16 reg, u16 and_val)
-अणु
+{
 	u16 val;
-	bnx2x_cl45_पढ़ो(bp, phy, devad, reg, &val);
-	bnx2x_cl45_ग_लिखो(bp, phy, devad, reg, val & and_val);
-पूर्ण
+	bnx2x_cl45_read(bp, phy, devad, reg, &val);
+	bnx2x_cl45_write(bp, phy, devad, reg, val & and_val);
+}
 
-पूर्णांक bnx2x_phy_पढ़ो(काष्ठा link_params *params, u8 phy_addr,
+int bnx2x_phy_read(struct link_params *params, u8 phy_addr,
 		   u8 devad, u16 reg, u16 *ret_val)
-अणु
+{
 	u8 phy_index;
-	/* Probe क्रम the phy according to the given phy_addr, and execute
-	 * the पढ़ो request on it
+	/* Probe for the phy according to the given phy_addr, and execute
+	 * the read request on it
 	 */
-	क्रम (phy_index = 0; phy_index < params->num_phys; phy_index++) अणु
-		अगर (params->phy[phy_index].addr == phy_addr) अणु
-			वापस bnx2x_cl45_पढ़ो(params->bp,
+	for (phy_index = 0; phy_index < params->num_phys; phy_index++) {
+		if (params->phy[phy_index].addr == phy_addr) {
+			return bnx2x_cl45_read(params->bp,
 					       &params->phy[phy_index], devad,
 					       reg, ret_val);
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		}
+	}
+	return -EINVAL;
+}
 
-पूर्णांक bnx2x_phy_ग_लिखो(काष्ठा link_params *params, u8 phy_addr,
+int bnx2x_phy_write(struct link_params *params, u8 phy_addr,
 		    u8 devad, u16 reg, u16 val)
-अणु
+{
 	u8 phy_index;
-	/* Probe क्रम the phy according to the given phy_addr, and execute
-	 * the ग_लिखो request on it
+	/* Probe for the phy according to the given phy_addr, and execute
+	 * the write request on it
 	 */
-	क्रम (phy_index = 0; phy_index < params->num_phys; phy_index++) अणु
-		अगर (params->phy[phy_index].addr == phy_addr) अणु
-			वापस bnx2x_cl45_ग_लिखो(params->bp,
+	for (phy_index = 0; phy_index < params->num_phys; phy_index++) {
+		if (params->phy[phy_index].addr == phy_addr) {
+			return bnx2x_cl45_write(params->bp,
 						&params->phy[phy_index], devad,
 						reg, val);
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
-अटल u8 bnx2x_get_warpcore_lane(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params)
-अणु
+		}
+	}
+	return -EINVAL;
+}
+static u8 bnx2x_get_warpcore_lane(struct bnx2x_phy *phy,
+				  struct link_params *params)
+{
 	u8 lane = 0;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 path_swap, path_swap_ovr;
 	u8 path, port;
 
 	path = BP_PATH(bp);
 	port = params->port;
 
-	अगर (bnx2x_is_4_port_mode(bp)) अणु
+	if (bnx2x_is_4_port_mode(bp)) {
 		u32 port_swap, port_swap_ovr;
 
 		/* Figure out path swap value */
 		path_swap_ovr = REG_RD(bp, MISC_REG_FOUR_PORT_PATH_SWAP_OVWR);
-		अगर (path_swap_ovr & 0x1)
+		if (path_swap_ovr & 0x1)
 			path_swap = (path_swap_ovr & 0x2);
-		अन्यथा
+		else
 			path_swap = REG_RD(bp, MISC_REG_FOUR_PORT_PATH_SWAP);
 
-		अगर (path_swap)
+		if (path_swap)
 			path = path ^ 1;
 
 		/* Figure out port swap value */
 		port_swap_ovr = REG_RD(bp, MISC_REG_FOUR_PORT_PORT_SWAP_OVWR);
-		अगर (port_swap_ovr & 0x1)
+		if (port_swap_ovr & 0x1)
 			port_swap = (port_swap_ovr & 0x2);
-		अन्यथा
+		else
 			port_swap = REG_RD(bp, MISC_REG_FOUR_PORT_PORT_SWAP);
 
-		अगर (port_swap)
+		if (port_swap)
 			port = port ^ 1;
 
 		lane = (port<<1) + path;
-	पूर्ण अन्यथा अणु /* Two port mode - no port swap */
+	} else { /* Two port mode - no port swap */
 
 		/* Figure out path swap value */
 		path_swap_ovr =
 			REG_RD(bp, MISC_REG_TWO_PORT_PATH_SWAP_OVWR);
-		अगर (path_swap_ovr & 0x1) अणु
+		if (path_swap_ovr & 0x1) {
 			path_swap = (path_swap_ovr & 0x2);
-		पूर्ण अन्यथा अणु
+		} else {
 			path_swap =
 				REG_RD(bp, MISC_REG_TWO_PORT_PATH_SWAP);
-		पूर्ण
-		अगर (path_swap)
+		}
+		if (path_swap)
 			path = path ^ 1;
 
 		lane = path << 1 ;
-	पूर्ण
-	वापस lane;
-पूर्ण
+	}
+	return lane;
+}
 
-अटल व्योम bnx2x_set_aer_mmd(काष्ठा link_params *params,
-			      काष्ठा bnx2x_phy *phy)
-अणु
+static void bnx2x_set_aer_mmd(struct link_params *params,
+			      struct bnx2x_phy *phy)
+{
 	u32 ser_lane;
 	u16 offset, aer_val;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	ser_lane = ((params->lane_config &
 		     PORT_HW_CFG_LANE_SWAP_CFG_MASTER_MASK) >>
 		     PORT_HW_CFG_LANE_SWAP_CFG_MASTER_SHIFT);
 
-	offset = (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT) ?
+	offset = (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT) ?
 		(phy->addr + ser_lane) : 0;
 
-	अगर (USES_WARPCORE(bp)) अणु
+	if (USES_WARPCORE(bp)) {
 		aer_val = bnx2x_get_warpcore_lane(phy, params);
 		/* In Dual-lane mode, two lanes are joined together,
 		 * so in order to configure them, the AER broadcast method is
 		 * used here.
-		 * 0x200 is the broadcast address क्रम lanes 0,1
-		 * 0x201 is the broadcast address क्रम lanes 2,3
+		 * 0x200 is the broadcast address for lanes 0,1
+		 * 0x201 is the broadcast address for lanes 2,3
 		 */
-		अगर (phy->flags & FLAGS_WC_DUAL_MODE)
+		if (phy->flags & FLAGS_WC_DUAL_MODE)
 			aer_val = (aer_val >> 1) | 0x200;
-	पूर्ण अन्यथा अगर (CHIP_IS_E2(bp))
+	} else if (CHIP_IS_E2(bp))
 		aer_val = 0x3800 + offset - 1;
-	अन्यथा
+	else
 		aer_val = 0x3800 + offset;
 
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, aer_val);
 
-पूर्ण
+}
 
 /******************************************************************/
 /*			Internal phy section			  */
 /******************************************************************/
 
-अटल व्योम bnx2x_set_serdes_access(काष्ठा bnx2x *bp, u8 port)
-अणु
+static void bnx2x_set_serdes_access(struct bnx2x *bp, u8 port)
+{
 	u32 emac_base = (port) ? GRCBASE_EMAC1 : GRCBASE_EMAC0;
 
 	/* Set Clause 22 */
@@ -3322,10 +3321,10 @@
 	udelay(500);
 	 /* Set Clause 45 */
 	REG_WR(bp, NIG_REG_SERDES0_CTRL_MD_ST + port*0x10, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_serdes_deनिश्चित(काष्ठा bnx2x *bp, u8 port)
-अणु
+static void bnx2x_serdes_deassert(struct bnx2x *bp, u8 port)
+{
 	u32 val;
 
 	DP(NETIF_MSG_LINK, "bnx2x_serdes_deassert\n");
@@ -3341,26 +3340,26 @@
 
 	REG_WR(bp, NIG_REG_SERDES0_CTRL_MD_DEVAD + port*0x10,
 	       DEFAULT_PHY_DEV_ADDR);
-पूर्ण
+}
 
-अटल व्योम bnx2x_xgxs_specअगरic_func(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
+static void bnx2x_xgxs_specific_func(struct bnx2x_phy *phy,
+				     struct link_params *params,
 				     u32 action)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	चयन (action) अणु
-	हाल PHY_INIT:
+{
+	struct bnx2x *bp = params->bp;
+	switch (action) {
+	case PHY_INIT:
 		/* Set correct devad */
 		REG_WR(bp, NIG_REG_XGXS0_CTRL_MD_ST + params->port*0x18, 0);
 		REG_WR(bp, NIG_REG_XGXS0_CTRL_MD_DEVAD + params->port*0x18,
 		       phy->def_md_devad);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम bnx2x_xgxs_deनिश्चित(काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_xgxs_deassert(struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port;
 	u32 val;
 	DP(NETIF_MSG_LINK, "bnx2x_xgxs_deassert\n");
@@ -3372,68 +3371,68 @@
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_3_CLEAR, val);
 	udelay(500);
 	REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_3_SET, val);
-	bnx2x_xgxs_specअगरic_func(&params->phy[INT_PHY], params,
+	bnx2x_xgxs_specific_func(&params->phy[INT_PHY], params,
 				 PHY_INIT);
-पूर्ण
+}
 
-अटल व्योम bnx2x_calc_ieee_aneg_adv(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params, u16 *ieee_fc)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_calc_ieee_aneg_adv(struct bnx2x_phy *phy,
+				     struct link_params *params, u16 *ieee_fc)
+{
+	struct bnx2x *bp = params->bp;
 	*ieee_fc = MDIO_COMBO_IEEE0_AUTO_NEG_ADV_FULL_DUPLEX;
-	/* Resolve छोड़ो mode and advertisement Please refer to Table
+	/* Resolve pause mode and advertisement Please refer to Table
 	 * 28B-3 of the 802.3ab-1999 spec
 	 */
 
-	चयन (phy->req_flow_ctrl) अणु
-	हाल BNX2X_FLOW_CTRL_AUTO:
-		चयन (params->req_fc_स्वतः_adv) अणु
-		हाल BNX2X_FLOW_CTRL_BOTH:
-		हाल BNX2X_FLOW_CTRL_RX:
+	switch (phy->req_flow_ctrl) {
+	case BNX2X_FLOW_CTRL_AUTO:
+		switch (params->req_fc_auto_adv) {
+		case BNX2X_FLOW_CTRL_BOTH:
+		case BNX2X_FLOW_CTRL_RX:
 			*ieee_fc |= MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH;
-			अवरोध;
-		हाल BNX2X_FLOW_CTRL_TX:
+			break;
+		case BNX2X_FLOW_CTRL_TX:
 			*ieee_fc |=
 				MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल BNX2X_FLOW_CTRL_TX:
+			break;
+		default:
+			break;
+		}
+		break;
+	case BNX2X_FLOW_CTRL_TX:
 		*ieee_fc |= MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC;
-		अवरोध;
+		break;
 
-	हाल BNX2X_FLOW_CTRL_RX:
-	हाल BNX2X_FLOW_CTRL_BOTH:
+	case BNX2X_FLOW_CTRL_RX:
+	case BNX2X_FLOW_CTRL_BOTH:
 		*ieee_fc |= MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH;
-		अवरोध;
+		break;
 
-	हाल BNX2X_FLOW_CTRL_NONE:
-	शेष:
+	case BNX2X_FLOW_CTRL_NONE:
+	default:
 		*ieee_fc |= MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_NONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	DP(NETIF_MSG_LINK, "ieee_fc = 0x%x\n", *ieee_fc);
-पूर्ण
+}
 
-अटल व्योम set_phy_vars(काष्ठा link_params *params,
-			 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void set_phy_vars(struct link_params *params,
+			 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 actual_phy_idx, phy_index, link_cfg_idx;
 	u8 phy_config_swapped = params->multi_phy_config &
 			PORT_HW_CFG_PHY_SWAPPED_ENABLED;
-	क्रम (phy_index = INT_PHY; phy_index < params->num_phys;
-	      phy_index++) अणु
+	for (phy_index = INT_PHY; phy_index < params->num_phys;
+	      phy_index++) {
 		link_cfg_idx = LINK_CONFIG_IDX(phy_index);
 		actual_phy_idx = phy_index;
-		अगर (phy_config_swapped) अणु
-			अगर (phy_index == EXT_PHY1)
+		if (phy_config_swapped) {
+			if (phy_index == EXT_PHY1)
 				actual_phy_idx = EXT_PHY2;
-			अन्यथा अगर (phy_index == EXT_PHY2)
+			else if (phy_index == EXT_PHY2)
 				actual_phy_idx = EXT_PHY1;
-		पूर्ण
+		}
 		params->phy[actual_phy_idx].req_flow_ctrl =
 			params->req_flow_ctrl[link_cfg_idx];
 
@@ -3446,7 +3445,7 @@
 		params->phy[actual_phy_idx].req_duplex =
 			params->req_duplex[link_cfg_idx];
 
-		अगर (params->req_line_speed[link_cfg_idx] ==
+		if (params->req_line_speed[link_cfg_idx] ==
 		    SPEED_AUTO_NEG)
 			vars->link_status |= LINK_STATUS_AUTO_NEGOTIATE_ENABLED;
 
@@ -3455,555 +3454,555 @@
 			   params->phy[actual_phy_idx].req_flow_ctrl,
 			   params->phy[actual_phy_idx].req_line_speed,
 			   params->phy[actual_phy_idx].speed_cap_mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_ext_phy_set_छोड़ो(काष्ठा link_params *params,
-				    काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_vars *vars)
-अणु
+static void bnx2x_ext_phy_set_pause(struct link_params *params,
+				    struct bnx2x_phy *phy,
+				    struct link_vars *vars)
+{
 	u16 val;
-	काष्ठा bnx2x *bp = params->bp;
-	/* Read modअगरy ग_लिखो छोड़ो advertizing */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV_PAUSE, &val);
+	struct bnx2x *bp = params->bp;
+	/* Read modify write pause advertizing */
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV_PAUSE, &val);
 
 	val &= ~MDIO_AN_REG_ADV_PAUSE_BOTH;
 
 	/* Please refer to Table 28B-3 of 802.3ab-1999 spec. */
 	bnx2x_calc_ieee_aneg_adv(phy, params, &vars->ieee_fc);
-	अगर ((vars->ieee_fc &
+	if ((vars->ieee_fc &
 	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) ==
-	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) अणु
+	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) {
 		val |= MDIO_AN_REG_ADV_PAUSE_ASYMMETRIC;
-	पूर्ण
-	अगर ((vars->ieee_fc &
+	}
+	if ((vars->ieee_fc &
 	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) ==
-	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) अणु
+	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) {
 		val |= MDIO_AN_REG_ADV_PAUSE_PAUSE;
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "Ext phy AN advertize 0x%x\n", val);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV_PAUSE, val);
-पूर्ण
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV_PAUSE, val);
+}
 
-अटल व्योम bnx2x_छोड़ो_resolve(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params,
-				काष्ठा link_vars *vars,
-				u32 छोड़ो_result)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_pause_resolve(struct bnx2x_phy *phy,
+				struct link_params *params,
+				struct link_vars *vars,
+				u32 pause_result)
+{
+	struct bnx2x *bp = params->bp;
 						/*  LD	    LP	 */
-	चयन (छोड़ो_result) अणु			/* ASYM P ASYM P */
-	हाल 0xb:				/*   1  0   1  1 */
+	switch (pause_result) {			/* ASYM P ASYM P */
+	case 0xb:				/*   1  0   1  1 */
 		DP(NETIF_MSG_LINK, "Flow Control: TX only\n");
 		vars->flow_ctrl = BNX2X_FLOW_CTRL_TX;
-		अवरोध;
+		break;
 
-	हाल 0xe:				/*   1  1   1  0 */
+	case 0xe:				/*   1  1   1  0 */
 		DP(NETIF_MSG_LINK, "Flow Control: RX only\n");
 		vars->flow_ctrl = BNX2X_FLOW_CTRL_RX;
-		अवरोध;
+		break;
 
-	हाल 0x5:				/*   0  1   0  1 */
-	हाल 0x7:				/*   0  1   1  1 */
-	हाल 0xd:				/*   1  1   0  1 */
-	हाल 0xf:				/*   1  1   1  1 */
+	case 0x5:				/*   0  1   0  1 */
+	case 0x7:				/*   0  1   1  1 */
+	case 0xd:				/*   1  1   0  1 */
+	case 0xf:				/*   1  1   1  1 */
 		/* If the user selected to advertise RX ONLY,
 		 * although we advertised both, need to enable
 		 * RX only.
 		 */
-		अगर (params->req_fc_स्वतः_adv == BNX2X_FLOW_CTRL_BOTH) अणु
+		if (params->req_fc_auto_adv == BNX2X_FLOW_CTRL_BOTH) {
 			DP(NETIF_MSG_LINK, "Flow Control: RX & TX\n");
 			vars->flow_ctrl = BNX2X_FLOW_CTRL_BOTH;
-		पूर्ण अन्यथा अणु
+		} else {
 			DP(NETIF_MSG_LINK, "Flow Control: RX only\n");
 			vars->flow_ctrl = BNX2X_FLOW_CTRL_RX;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		DP(NETIF_MSG_LINK, "Flow Control: None\n");
 		vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
-		अवरोध;
-	पूर्ण
-	अगर (छोड़ो_result & (1<<0))
+		break;
+	}
+	if (pause_result & (1<<0))
 		vars->link_status |= LINK_STATUS_LINK_PARTNER_SYMMETRIC_PAUSE;
-	अगर (छोड़ो_result & (1<<1))
+	if (pause_result & (1<<1))
 		vars->link_status |= LINK_STATUS_LINK_PARTNER_ASYMMETRIC_PAUSE;
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_ext_phy_update_adv_fc(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params,
-					काष्ठा link_vars *vars)
-अणु
-	u16 ld_छोड़ो;		/* local */
-	u16 lp_छोड़ो;		/* link partner */
-	u16 छोड़ो_result;
-	काष्ठा bnx2x *bp = params->bp;
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE) अणु
-		bnx2x_cl22_पढ़ो(bp, phy, 0x4, &ld_छोड़ो);
-		bnx2x_cl22_पढ़ो(bp, phy, 0x5, &lp_छोड़ो);
-	पूर्ण अन्यथा अगर (CHIP_IS_E3(bp) &&
-		SINGLE_MEDIA_सूचीECT(params)) अणु
+static void bnx2x_ext_phy_update_adv_fc(struct bnx2x_phy *phy,
+					struct link_params *params,
+					struct link_vars *vars)
+{
+	u16 ld_pause;		/* local */
+	u16 lp_pause;		/* link partner */
+	u16 pause_result;
+	struct bnx2x *bp = params->bp;
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE) {
+		bnx2x_cl22_read(bp, phy, 0x4, &ld_pause);
+		bnx2x_cl22_read(bp, phy, 0x5, &lp_pause);
+	} else if (CHIP_IS_E3(bp) &&
+		SINGLE_MEDIA_DIRECT(params)) {
 		u8 lane = bnx2x_get_warpcore_lane(phy, params);
 		u16 gp_status, gp_mask;
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD, MDIO_WC_REG_GP2_STATUS_GP_2_4,
 				&gp_status);
 		gp_mask = (MDIO_WC_REG_GP2_STATUS_GP_2_4_CL73_AN_CMPL |
 			   MDIO_WC_REG_GP2_STATUS_GP_2_4_CL37_LP_AN_CAP) <<
 			lane;
-		अगर ((gp_status & gp_mask) == gp_mask) अणु
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
-					MDIO_AN_REG_ADV_PAUSE, &ld_छोड़ो);
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
-					MDIO_AN_REG_LP_AUTO_NEG, &lp_छोड़ो);
-		पूर्ण अन्यथा अणु
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
-					MDIO_AN_REG_CL37_FC_LD, &ld_छोड़ो);
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
-					MDIO_AN_REG_CL37_FC_LP, &lp_छोड़ो);
-			ld_छोड़ो = ((ld_छोड़ो &
+		if ((gp_status & gp_mask) == gp_mask) {
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
+					MDIO_AN_REG_ADV_PAUSE, &ld_pause);
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
+					MDIO_AN_REG_LP_AUTO_NEG, &lp_pause);
+		} else {
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
+					MDIO_AN_REG_CL37_FC_LD, &ld_pause);
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
+					MDIO_AN_REG_CL37_FC_LP, &lp_pause);
+			ld_pause = ((ld_pause &
 				     MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH)
 				    << 3);
-			lp_छोड़ो = ((lp_छोड़ो &
+			lp_pause = ((lp_pause &
 				     MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH)
 				    << 3);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+		}
+	} else {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
-				MDIO_AN_REG_ADV_PAUSE, &ld_छोड़ो);
-		bnx2x_cl45_पढ़ो(bp, phy,
+				MDIO_AN_REG_ADV_PAUSE, &ld_pause);
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
-				MDIO_AN_REG_LP_AUTO_NEG, &lp_छोड़ो);
-	पूर्ण
-	छोड़ो_result = (ld_छोड़ो &
+				MDIO_AN_REG_LP_AUTO_NEG, &lp_pause);
+	}
+	pause_result = (ld_pause &
 			MDIO_AN_REG_ADV_PAUSE_MASK) >> 8;
-	छोड़ो_result |= (lp_छोड़ो &
+	pause_result |= (lp_pause &
 			 MDIO_AN_REG_ADV_PAUSE_MASK) >> 10;
-	DP(NETIF_MSG_LINK, "Ext PHY pause result 0x%x\n", छोड़ो_result);
-	bnx2x_छोड़ो_resolve(phy, params, vars, छोड़ो_result);
+	DP(NETIF_MSG_LINK, "Ext PHY pause result 0x%x\n", pause_result);
+	bnx2x_pause_resolve(phy, params, vars, pause_result);
 
-पूर्ण
+}
 
-अटल u8 bnx2x_ext_phy_resolve_fc(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static u8 bnx2x_ext_phy_resolve_fc(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
 	u8 ret = 0;
 	vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
-	अगर (phy->req_flow_ctrl != BNX2X_FLOW_CTRL_AUTO) अणु
+	if (phy->req_flow_ctrl != BNX2X_FLOW_CTRL_AUTO) {
 		/* Update the advertised flow-controled of LD/LP in AN */
-		अगर (phy->req_line_speed == SPEED_AUTO_NEG)
+		if (phy->req_line_speed == SPEED_AUTO_NEG)
 			bnx2x_ext_phy_update_adv_fc(phy, params, vars);
 		/* But set the flow-control result as the requested one */
 		vars->flow_ctrl = phy->req_flow_ctrl;
-	पूर्ण अन्यथा अगर (phy->req_line_speed != SPEED_AUTO_NEG)
-		vars->flow_ctrl = params->req_fc_स्वतः_adv;
-	अन्यथा अगर (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) अणु
+	} else if (phy->req_line_speed != SPEED_AUTO_NEG)
+		vars->flow_ctrl = params->req_fc_auto_adv;
+	else if (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) {
 		ret = 1;
 		bnx2x_ext_phy_update_adv_fc(phy, params, vars);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 /******************************************************************/
 /*			Warpcore section			  */
 /******************************************************************/
-/* The init_पूर्णांकernal_warpcore should mirror the xgxs,
- * i.e. reset the lane (अगर needed), set aer क्रम the
+/* The init_internal_warpcore should mirror the xgxs,
+ * i.e. reset the lane (if needed), set aer for the
  * init configuration, and set/clear SGMII flag. Internal
- * phy init is करोne purely in phy_init stage.
+ * phy init is done purely in phy_init stage.
  */
-#घोषणा WC_TX_DRIVER(post2, idriver, ipre, अगरir) \
+#define WC_TX_DRIVER(post2, idriver, ipre, ifir) \
 	((post2 << MDIO_WC_REG_TX0_TX_DRIVER_POST2_COEFF_OFFSET) | \
 	 (idriver << MDIO_WC_REG_TX0_TX_DRIVER_IDRIVER_OFFSET) | \
 	 (ipre << MDIO_WC_REG_TX0_TX_DRIVER_IPRE_DRIVER_OFFSET) | \
-	 (अगरir << MDIO_WC_REG_TX0_TX_DRIVER_IFIR_OFFSET))
+	 (ifir << MDIO_WC_REG_TX0_TX_DRIVER_IFIR_OFFSET))
 
-#घोषणा WC_TX_FIR(post, मुख्य, pre) \
+#define WC_TX_FIR(post, main, pre) \
 	((post << MDIO_WC_REG_TX_FIR_TAP_POST_TAP_OFFSET) | \
-	 (मुख्य << MDIO_WC_REG_TX_FIR_TAP_MAIN_TAP_OFFSET) | \
+	 (main << MDIO_WC_REG_TX_FIR_TAP_MAIN_TAP_OFFSET) | \
 	 (pre << MDIO_WC_REG_TX_FIR_TAP_PRE_TAP_OFFSET))
 
-अटल व्योम bnx2x_warpcore_enable_AN_KR2(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params,
-					 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_warpcore_enable_AN_KR2(struct bnx2x_phy *phy,
+					 struct link_params *params,
+					 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 i;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
+	static struct bnx2x_reg_set reg_set[] = {
 		/* Step 1 - Program the TX/RX alignment markers */
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL5, 0xa157पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL7, 0xcbe2पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL6, 0x7537पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL9, 0xa157पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL11, 0xcbe2पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL10, 0x7537पूर्ण,
-		/* Step 2 - Configure the NP रेजिस्टरs */
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_USERB0_CTRL, 0x000aपूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL1, 0x6400पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL3, 0x0620पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CODE_FIELD, 0x0157पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI1, 0x6464पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI2, 0x3150पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI3, 0x3150पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_BAM_CODE, 0x0157पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_UD_CODE, 0x0620पूर्ण
-	पूर्ण;
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL5, 0xa157},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL7, 0xcbe2},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL6, 0x7537},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL9, 0xa157},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL11, 0xcbe2},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL10, 0x7537},
+		/* Step 2 - Configure the NP registers */
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_USERB0_CTRL, 0x000a},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL1, 0x6400},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL3, 0x0620},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CODE_FIELD, 0x0157},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI1, 0x6464},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI2, 0x3150},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI3, 0x3150},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_BAM_CODE, 0x0157},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_UD_CODE, 0x0620}
+	};
 	DP(NETIF_MSG_LINK, "Enabling 20G-KR2\n");
 
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_CL49_USERB0_CTRL, (3<<6));
 
-	क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad, reg_set[i].reg,
+	for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+		bnx2x_cl45_write(bp, phy, reg_set[i].devad, reg_set[i].reg,
 				 reg_set[i].val);
 
-	/* Start KR2 work-around समयr which handles BCM8073 link-parner */
+	/* Start KR2 work-around timer which handles BCM8073 link-parner */
 	params->link_attr_sync |= LINK_ATTR_SYNC_KR2_ENABLE;
 	bnx2x_update_link_attr(params, params->link_attr_sync);
-पूर्ण
+}
 
-अटल व्योम bnx2x_disable_kr2(काष्ठा link_params *params,
-			      काष्ठा link_vars *vars,
-			      काष्ठा bnx2x_phy *phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	पूर्णांक i;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
+static void bnx2x_disable_kr2(struct link_params *params,
+			      struct link_vars *vars,
+			      struct bnx2x_phy *phy)
+{
+	struct bnx2x *bp = params->bp;
+	int i;
+	static struct bnx2x_reg_set reg_set[] = {
 		/* Step 1 - Program the TX/RX alignment markers */
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL5, 0x7690पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL7, 0xe647पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL6, 0xc4f0पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL9, 0x7690पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL11, 0xe647पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL10, 0xc4f0पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_USERB0_CTRL, 0x000cपूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL1, 0x6000पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL3, 0x0000पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CODE_FIELD, 0x0002पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI1, 0x0000पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI2, 0x0af7पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI3, 0x0af7पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_BAM_CODE, 0x0002पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_UD_CODE, 0x0000पूर्ण
-	पूर्ण;
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL5, 0x7690},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL7, 0xe647},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL6, 0xc4f0},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_TX_CTRL9, 0x7690},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL11, 0xe647},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL82_USERB1_RX_CTRL10, 0xc4f0},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_USERB0_CTRL, 0x000c},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL1, 0x6000},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CTRL3, 0x0000},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL73_BAM_CODE_FIELD, 0x0002},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI1, 0x0000},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI2, 0x0af7},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_OUI3, 0x0af7},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_BAM_CODE, 0x0002},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_ETA_CL73_LD_UD_CODE, 0x0000}
+	};
 	DP(NETIF_MSG_LINK, "Disabling 20G-KR2\n");
 
-	क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad, reg_set[i].reg,
+	for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+		bnx2x_cl45_write(bp, phy, reg_set[i].devad, reg_set[i].reg,
 				 reg_set[i].val);
 	params->link_attr_sync &= ~LINK_ATTR_SYNC_KR2_ENABLE;
 	bnx2x_update_link_attr(params, params->link_attr_sync);
 
 	vars->check_kr2_recovery_cnt = CHECK_KR2_RECOVERY_CNT;
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_lpi_passthrough(काष्ठा bnx2x_phy *phy,
-					       काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_warpcore_set_lpi_passthrough(struct bnx2x_phy *phy,
+					       struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 
 	DP(NETIF_MSG_LINK, "Configure WC for LPI pass through\n");
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_EEE_COMBO_CONTROL0, 0x7c);
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_DIGITAL4_MISC5, 0xc000);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_restart_AN_KR(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params)
-अणु
-	/* Restart स्वतःneg on the leading lane only */
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_warpcore_restart_AN_KR(struct bnx2x_phy *phy,
+					 struct link_params *params)
+{
+	/* Restart autoneg on the leading lane only */
+	struct bnx2x *bp = params->bp;
 	u16 lane = bnx2x_get_warpcore_lane(phy, params);
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, lane);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x1200);
 
 	/* Restore AER */
 	bnx2x_set_aer_mmd(params, phy);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_enable_AN_KR(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params,
-					काष्ठा link_vars *vars) अणु
+static void bnx2x_warpcore_enable_AN_KR(struct bnx2x_phy *phy,
+					struct link_params *params,
+					struct link_vars *vars) {
 	u16 lane, i, cl72_ctrl, an_adv = 0, val;
 	u32 wc_lane_config;
-	काष्ठा bnx2x *bp = params->bp;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, 0x7पूर्ण,
-		अणुMDIO_PMA_DEVAD, MDIO_WC_REG_IEEE0BLK_AUTONEGNP, 0x0पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_RX66_CONTROL, 0x7415पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_MISC2, 0x6190पूर्ण,
-		/* Disable Autoneg: re-enable it after adv is करोne. */
-		अणुMDIO_AN_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0पूर्ण,
-		अणुMDIO_PMA_DEVAD, MDIO_WC_REG_PMD_KR_CONTROL, 0x2पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL72_USERB0_CL72_TX_FIR_TAP, 0पूर्ण,
-	पूर्ण;
+	struct bnx2x *bp = params->bp;
+	static struct bnx2x_reg_set reg_set[] = {
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, 0x7},
+		{MDIO_PMA_DEVAD, MDIO_WC_REG_IEEE0BLK_AUTONEGNP, 0x0},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_RX66_CONTROL, 0x7415},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_MISC2, 0x6190},
+		/* Disable Autoneg: re-enable it after adv is done. */
+		{MDIO_AN_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0},
+		{MDIO_PMA_DEVAD, MDIO_WC_REG_PMD_KR_CONTROL, 0x2},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL72_USERB0_CL72_TX_FIR_TAP, 0},
+	};
 	DP(NETIF_MSG_LINK, "Enable Auto Negotiation for KR\n");
-	/* Set to शेष रेजिस्टरs that may be overriden by 10G क्रमce */
-	क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad, reg_set[i].reg,
+	/* Set to default registers that may be overriden by 10G force */
+	for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+		bnx2x_cl45_write(bp, phy, reg_set[i].devad, reg_set[i].reg,
 				 reg_set[i].val);
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL, &cl72_ctrl);
 	cl72_ctrl &= 0x08ff;
 	cl72_ctrl |= 0x3800;
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL, cl72_ctrl);
 
-	/* Check adding advertisement क्रम 1G KX */
-	अगर (((vars->line_speed == SPEED_AUTO_NEG) &&
+	/* Check adding advertisement for 1G KX */
+	if (((vars->line_speed == SPEED_AUTO_NEG) &&
 	     (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)) ||
-	    (vars->line_speed == SPEED_1000)) अणु
+	    (vars->line_speed == SPEED_1000)) {
 		u16 addr = MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2;
 		an_adv |= (1<<5);
 
 		/* Enable CL37 1G Parallel Detect */
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD, addr, 0x1);
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD, addr, 0x1);
 		DP(NETIF_MSG_LINK, "Advertize 1G\n");
-	पूर्ण
-	अगर (((vars->line_speed == SPEED_AUTO_NEG) &&
+	}
+	if (((vars->line_speed == SPEED_AUTO_NEG) &&
 	     (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) ||
-	    (vars->line_speed ==  SPEED_10000)) अणु
-		/* Check adding advertisement क्रम 10G KR */
+	    (vars->line_speed ==  SPEED_10000)) {
+		/* Check adding advertisement for 10G KR */
 		an_adv |= (1<<7);
 		/* Enable 10G Parallel Detect */
 		CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 				  MDIO_AER_BLOCK_AER_REG, 0);
 
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 				 MDIO_WC_REG_PAR_DET_10G_CTRL, 1);
 		bnx2x_set_aer_mmd(params, phy);
 		DP(NETIF_MSG_LINK, "Advertize 10G\n");
-	पूर्ण
+	}
 
 	/* Set Transmit PMD settings */
 	lane = bnx2x_get_warpcore_lane(phy, params);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX0_TX_DRIVER + 0x10*lane,
 			 WC_TX_DRIVER(0x02, 0x06, 0x09, 0));
-	/* Configure the next lane अगर dual mode */
-	अगर (phy->flags & FLAGS_WC_DUAL_MODE)
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Configure the next lane if dual mode */
+	if (phy->flags & FLAGS_WC_DUAL_MODE)
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_TX0_TX_DRIVER + 0x10*(lane+1),
 				 WC_TX_DRIVER(0x02, 0x06, 0x09, 0));
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL72_USERB0_CL72_OS_DEF_CTRL,
 			 0x03f0);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL72_USERB0_CL72_2P5_DEF_CTRL,
 			 0x03f0);
 
 	/* Advertised speeds */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 			 MDIO_WC_REG_AN_IEEE1BLK_AN_ADVERTISEMENT1, an_adv);
 
 	/* Advertised and set FEC (Forward Error Correction) */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 			 MDIO_WC_REG_AN_IEEE1BLK_AN_ADVERTISEMENT2,
 			 (MDIO_WC_REG_AN_IEEE1BLK_AN_ADV2_FEC_ABILITY |
 			  MDIO_WC_REG_AN_IEEE1BLK_AN_ADV2_FEC_REQ));
 
 	/* Enable CL37 BAM */
-	अगर (REG_RD(bp, params->shmem_base +
-		   दुरत्व(काष्ठा shmem_region, dev_info.
-			    port_hw_config[params->port].शेष_cfg)) &
-	    PORT_HW_CFG_ENABLE_BAM_ON_KR_ENABLED) अणु
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	if (REG_RD(bp, params->shmem_base +
+		   offsetof(struct shmem_region, dev_info.
+			    port_hw_config[params->port].default_cfg)) &
+	    PORT_HW_CFG_ENABLE_BAM_ON_KR_ENABLED) {
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_DIGITAL6_MP5_NEXTPAGECTRL,
 					 1);
 		DP(NETIF_MSG_LINK, "Enable CL37 BAM on KR\n");
-	पूर्ण
+	}
 
-	/* Advertise छोड़ो */
-	bnx2x_ext_phy_set_छोड़ो(params, phy, vars);
+	/* Advertise pause */
+	bnx2x_ext_phy_set_pause(params, phy, vars);
 	vars->rx_tx_asic_rst = MAX_KR_LINK_RETRY;
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_DIGITAL5_MISC7, 0x100);
 
 	/* Over 1G - AN local device user page 1 */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_DIGITAL3_UP1, 0x1f);
 
-	अगर (((phy->req_line_speed == SPEED_AUTO_NEG) &&
+	if (((phy->req_line_speed == SPEED_AUTO_NEG) &&
 	     (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_20G)) ||
-	    (phy->req_line_speed == SPEED_20000)) अणु
+	    (phy->req_line_speed == SPEED_20000)) {
 
 		CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 				  MDIO_AER_BLOCK_AER_REG, lane);
 
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_RX1_PCI_CTRL + (0x10*lane),
 					 (1<<11));
 
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_XGXS_X2_CONTROL3, 0x7);
 		bnx2x_set_aer_mmd(params, phy);
 
 		bnx2x_warpcore_enable_AN_KR2(phy, params, vars);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Enable Auto-Detect to support 1G over CL37 as well */
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1, 0x10);
 		wc_lane_config = REG_RD(bp, params->shmem_base +
-					दुरत्व(काष्ठा shmem_region, dev_info.
+					offsetof(struct shmem_region, dev_info.
 					shared_hw_config.wc_lane_config));
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_RX0_PCI_CTRL + (lane << 4), &val);
-		/* Force cl48 sync_status LOW to aव्योम getting stuck in CL73
+		/* Force cl48 sync_status LOW to avoid getting stuck in CL73
 		 * parallel-detect loop when CL73 and CL37 are enabled.
 		 */
 		val |= 1 << 11;
 
-		/* Restore Polarity settings in हाल it was run over by
+		/* Restore Polarity settings in case it was run over by
 		 * previous link owner
 		 */
-		अगर (wc_lane_config &
+		if (wc_lane_config &
 		    (SHARED_HW_CFG_RX_LANE0_POL_FLIP_ENABLED << lane))
 			val |= 3 << 2;
-		अन्यथा
+		else
 			val &= ~(3 << 2);
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_RX0_PCI_CTRL + (lane << 4),
 				 val);
 
 		bnx2x_disable_kr2(params, vars, phy);
-	पूर्ण
+	}
 
-	/* Enable Autoneg: only on the मुख्य lane */
+	/* Enable Autoneg: only on the main lane */
 	bnx2x_warpcore_restart_AN_KR(phy, params);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_10G_KR(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params,
-				      काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_warpcore_set_10G_KR(struct bnx2x_phy *phy,
+				      struct link_params *params,
+				      struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val16, i, lane;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
+	static struct bnx2x_reg_set reg_set[] = {
 		/* Disable Autoneg */
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, 0x7पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL,
-			0x3f00पूर्ण,
-		अणुMDIO_AN_DEVAD, MDIO_WC_REG_AN_IEEE1BLK_AN_ADVERTISEMENT1, 0पूर्ण,
-		अणुMDIO_AN_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x0पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL3_UP1, 0x1पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL5_MISC7, 0xaपूर्ण,
-		/* Leave cl72 training enable, needed क्रम KR */
-		अणुMDIO_PMA_DEVAD, MDIO_WC_REG_PMD_KR_CONTROL, 0x2पूर्ण
-	पूर्ण;
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, 0x7},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL,
+			0x3f00},
+		{MDIO_AN_DEVAD, MDIO_WC_REG_AN_IEEE1BLK_AN_ADVERTISEMENT1, 0},
+		{MDIO_AN_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x0},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL3_UP1, 0x1},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL5_MISC7, 0xa},
+		/* Leave cl72 training enable, needed for KR */
+		{MDIO_PMA_DEVAD, MDIO_WC_REG_PMD_KR_CONTROL, 0x2}
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad, reg_set[i].reg,
+	for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+		bnx2x_cl45_write(bp, phy, reg_set[i].devad, reg_set[i].reg,
 				 reg_set[i].val);
 
 	lane = bnx2x_get_warpcore_lane(phy, params);
-	/* Global रेजिस्टरs */
+	/* Global registers */
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, 0);
 	/* Disable CL36 PCS Tx */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_XGXSBLK1_LANECTRL0, &val16);
 	val16 &= ~(0x0011 << lane);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_XGXSBLK1_LANECTRL0, val16);
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_XGXSBLK1_LANECTRL1, &val16);
 	val16 |= (0x0303 << (lane << 1));
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_XGXSBLK1_LANECTRL1, val16);
 	/* Restore AER */
 	bnx2x_set_aer_mmd(params, phy);
-	/* Set speed via PMA/PMD रेजिस्टर */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD,
+	/* Set speed via PMA/PMD register */
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x2040);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_AUTONEGNP, 0xB);
 
-	/* Enable encoded क्रमced speed */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Enable encoded forced speed */
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_SERDESDIGITAL_MISC2, 0x30);
 
 	/* Turn TX scramble payload only the 64/66 scrambler */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX66_CONTROL, 0x9);
 
 	/* Turn RX scramble payload only the 64/66 scrambler */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_RX66_CONTROL, 0xF9);
 
 	/* Set and clear loopback to cause a reset to 64/66 decoder */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x4000);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x0);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_10G_XFI(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params,
+static void bnx2x_warpcore_set_10G_XFI(struct bnx2x_phy *phy,
+				       struct link_params *params,
 				       u8 is_xfi)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 misc1_val, tap_val, tx_driver_val, lane, val;
 	u32 cfg_tap_val, tx_drv_brdct, tx_equal;
-	u32 अगरir_val, ipost2_val, ipre_driver_val;
+	u32 ifir_val, ipost2_val, ipre_driver_val;
 
 	/* Hold rxSeqStart */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_DSC2B0_DSC_MISC_CTRL0, 0x8000);
 
-	/* Hold tx_fअगरo_reset */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Hold tx_fifo_reset */
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X3, 0x1);
 
 	/* Disable CL73 AN */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0);
 
 	/* Disable 100FX Enable and Auto-Detect */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_FX100_CTRL1, 0xFFFA);
 
 	/* Disable 100FX Idle detect */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_FX100_CTRL3, 0x0080);
 
-	/* Set Block address to Remote PHY & Clear क्रमced_speed[5] */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Set Block address to Remote PHY & Clear forced_speed[5] */
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_DIGITAL4_MISC3, 0xFF7F);
 
-	/* Turn off स्वतः-detect & fiber mode */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Turn off auto-detect & fiber mode */
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1,
 				  0xFFEE);
 
-	/* Set filter_क्रमce_link, disable_false_link and parallel_detect */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	/* Set filter_force_link, disable_false_link and parallel_detect */
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, &val);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2,
 			 ((val | 0x0006) & 0xFFFE));
 
 	/* Set XFI / SFI */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_MISC1, &misc1_val);
 
 	misc1_val &= ~(0x1f);
 
-	अगर (is_xfi) अणु
+	if (is_xfi) {
 		misc1_val |= 0x5;
 		tap_val = WC_TX_FIR(0x08, 0x37, 0x00);
 		tx_driver_val = WC_TX_DRIVER(0x00, 0x02, 0x03, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg_tap_val = REG_RD(bp, params->shmem_base +
-				     दुरत्व(काष्ठा shmem_region, dev_info.
+				     offsetof(struct shmem_region, dev_info.
 					      port_hw_config[params->port].
 					      sfi_tap_values));
 
@@ -4011,13 +4010,13 @@
 
 		misc1_val |= 0x9;
 
-		/* TAP values are controlled by nvram, अगर value there isn't 0 */
-		अगर (tx_equal)
+		/* TAP values are controlled by nvram, if value there isn't 0 */
+		if (tx_equal)
 			tap_val = (u16)tx_equal;
-		अन्यथा
+		else
 			tap_val = WC_TX_FIR(0x0f, 0x2b, 0x02);
 
-		अगरir_val = DEFAULT_TX_DRV_IFIR;
+		ifir_val = DEFAULT_TX_DRV_IFIR;
 		ipost2_val = DEFAULT_TX_DRV_POST2;
 		ipre_driver_val = DEFAULT_TX_DRV_IPRE_DRIVER;
 		tx_drv_brdct = DEFAULT_TX_DRV_BRDCT;
@@ -4025,10 +4024,10 @@
 		/* If any of the IFIR/IPRE_DRIVER/POST@ is set, apply all
 		 * configuration.
 		 */
-		अगर (cfg_tap_val & (PORT_HW_CFG_TX_DRV_IFIR_MASK |
+		if (cfg_tap_val & (PORT_HW_CFG_TX_DRV_IFIR_MASK |
 				   PORT_HW_CFG_TX_DRV_IPREDRIVER_MASK |
-				   PORT_HW_CFG_TX_DRV_POST2_MASK)) अणु
-			अगरir_val = (cfg_tap_val &
+				   PORT_HW_CFG_TX_DRV_POST2_MASK)) {
+			ifir_val = (cfg_tap_val &
 				    PORT_HW_CFG_TX_DRV_IFIR_MASK) >>
 				PORT_HW_CFG_TX_DRV_IFIR_SHIFT;
 			ipre_driver_val = (cfg_tap_val &
@@ -4037,446 +4036,446 @@
 			ipost2_val = (cfg_tap_val &
 				      PORT_HW_CFG_TX_DRV_POST2_MASK) >>
 				PORT_HW_CFG_TX_DRV_POST2_SHIFT;
-		पूर्ण
+		}
 
-		अगर (cfg_tap_val & PORT_HW_CFG_TX_DRV_BROADCAST_MASK) अणु
+		if (cfg_tap_val & PORT_HW_CFG_TX_DRV_BROADCAST_MASK) {
 			tx_drv_brdct = (cfg_tap_val &
 					PORT_HW_CFG_TX_DRV_BROADCAST_MASK) >>
 				PORT_HW_CFG_TX_DRV_BROADCAST_SHIFT;
-		पूर्ण
+		}
 
 		tx_driver_val = WC_TX_DRIVER(ipost2_val, tx_drv_brdct,
-					     ipre_driver_val, अगरir_val);
-	पूर्ण
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+					     ipre_driver_val, ifir_val);
+	}
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_SERDESDIGITAL_MISC1, misc1_val);
 
 	/* Set Transmit PMD settings */
 	lane = bnx2x_get_warpcore_lane(phy, params);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX_FIR_TAP,
 			 tap_val | MDIO_WC_REG_TX_FIR_TAP_ENABLE);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX0_TX_DRIVER + 0x10*lane,
 			 tx_driver_val);
 
 	/* Enable fiber mode, enable and invert sig_det */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1, 0xd);
 
-	/* Set Block address to Remote PHY & Set क्रमced_speed[5], 40bit mode */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Set Block address to Remote PHY & Set forced_speed[5], 40bit mode */
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_DIGITAL4_MISC3, 0x8080);
 
 	bnx2x_warpcore_set_lpi_passthrough(phy, params);
 
 	/* 10G XFI Full Duplex */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x100);
 
-	/* Release tx_fअगरo_reset */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Release tx_fifo_reset */
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X3,
 				  0xFFFE);
 	/* Release rxSeqStart */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_DSC2B0_DSC_MISC_CTRL0, 0x7FFF);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_20G_क्रमce_KR2(काष्ठा bnx2x_phy *phy,
-					     काष्ठा link_params *params)
-अणु
+static void bnx2x_warpcore_set_20G_force_KR2(struct bnx2x_phy *phy,
+					     struct link_params *params)
+{
 	u16 val;
-	काष्ठा bnx2x *bp = params->bp;
-	/* Set global रेजिस्टरs, so set AER lane to 0 */
+	struct bnx2x *bp = params->bp;
+	/* Set global registers, so set AER lane to 0 */
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, 0);
 
 	/* Disable sequencer */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_XGXSBLK0_XGXSCONTROL, ~(1<<13));
 
 	bnx2x_set_aer_mmd(params, phy);
 
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_PMA_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_PMA_DEVAD,
 				  MDIO_WC_REG_PMD_KR_CONTROL, ~(1<<1));
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 			 MDIO_AN_REG_CTRL, 0);
 	/* Turn off CL73 */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_CL73_USERB0_CTRL, &val);
 	val &= ~(1<<5);
 	val |= (1<<6);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL73_USERB0_CTRL, val);
 
-	/* Set 20G KR2 क्रमce speed */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Set 20G KR2 force speed */
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_SERDESDIGITAL_MISC1, 0x1f);
 
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_DIGITAL4_MISC3, (1<<7));
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL, &val);
 	val &= ~(3<<14);
 	val |= (1<<15);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL72_USERB0_CL72_MISC1_CONTROL, val);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_CL72_USERB0_CL72_TX_FIR_TAP, 0x835A);
 
 	/* Enable sequencer (over lane 0) */
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, 0);
 
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_XGXSBLK0_XGXSCONTROL, (1<<13));
 
 	bnx2x_set_aer_mmd(params, phy);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_20G_DXGXS(काष्ठा bnx2x *bp,
-					 काष्ठा bnx2x_phy *phy,
+static void bnx2x_warpcore_set_20G_DXGXS(struct bnx2x *bp,
+					 struct bnx2x_phy *phy,
 					 u16 lane)
-अणु
+{
 	/* Rx0 anaRxControl1G */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX0_ANARXCONTROL1G, 0x90);
 
 	/* Rx2 anaRxControl1G */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX2_ANARXCONTROL1G, 0x90);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW0, 0xE070);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW1, 0xC0D0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW2, 0xA0B0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW3, 0x8090);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW0_MASK, 0xF0F0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW1_MASK, 0xF0F0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW2_MASK, 0xF0F0);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_RX66_SCW3_MASK, 0xF0F0);
 
 	/* Serdes Digital Misc1 */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_SERDESDIGITAL_MISC1, 0x6008);
 
 	/* Serdes Digital4 Misc3 */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_DIGITAL4_MISC3, 0x8088);
 
 	/* Set Transmit PMD settings */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX_FIR_TAP,
 			 (WC_TX_FIR(0x12, 0x2d, 0x00) |
 			  MDIO_WC_REG_TX_FIR_TAP_ENABLE));
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX0_TX_DRIVER + 0x10*lane,
 			 WC_TX_DRIVER(0x02, 0x02, 0x02, 0));
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_set_sgmii_speed(काष्ठा bnx2x_phy *phy,
-					   काष्ठा link_params *params,
+static void bnx2x_warpcore_set_sgmii_speed(struct bnx2x_phy *phy,
+					   struct link_params *params,
 					   u8 fiber_mode,
-					   u8 always_स्वतःneg)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+					   u8 always_autoneg)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val16, digctrl_kx1, digctrl_kx2;
 
-	/* Clear XFI घड़ी comp in non-10G single lane mode. */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Clear XFI clock comp in non-10G single lane mode. */
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_RX66_CONTROL, ~(3<<13));
 
 	bnx2x_warpcore_set_lpi_passthrough(phy, params);
 
-	अगर (always_स्वतःneg || phy->req_line_speed == SPEED_AUTO_NEG) अणु
+	if (always_autoneg || phy->req_line_speed == SPEED_AUTO_NEG) {
 		/* SGMII Autoneg */
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_COMBO_IEEE0_MIICTRL,
 					 0x1000);
 		DP(NETIF_MSG_LINK, "set SGMII AUTONEG\n");
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	} else {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_COMBO_IEEE0_MIICTRL, &val16);
 		val16 &= 0xcebf;
-		चयन (phy->req_line_speed) अणु
-		हाल SPEED_10:
-			अवरोध;
-		हाल SPEED_100:
+		switch (phy->req_line_speed) {
+		case SPEED_10:
+			break;
+		case SPEED_100:
 			val16 |= 0x2000;
-			अवरोध;
-		हाल SPEED_1000:
+			break;
+		case SPEED_1000:
 			val16 |= 0x0040;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DP(NETIF_MSG_LINK,
 			   "Speed not supported: 0x%x\n", phy->req_line_speed);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (phy->req_duplex == DUPLEX_FULL)
+		if (phy->req_duplex == DUPLEX_FULL)
 			val16 |= 0x0100;
 
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_COMBO_IEEE0_MIICTRL, val16);
 
 		DP(NETIF_MSG_LINK, "set SGMII force speed %d\n",
 			       phy->req_line_speed);
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_COMBO_IEEE0_MIICTRL, &val16);
 		DP(NETIF_MSG_LINK, "  (readback) %x\n", val16);
-	पूर्ण
+	}
 
-	/* SGMII Slave mode and disable संकेत detect */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	/* SGMII Slave mode and disable signal detect */
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1, &digctrl_kx1);
-	अगर (fiber_mode)
+	if (fiber_mode)
 		digctrl_kx1 = 1;
-	अन्यथा
+	else
 		digctrl_kx1 &= 0xff4a;
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1,
 			digctrl_kx1);
 
 	/* Turn off parallel detect */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2, &digctrl_kx2);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2,
 			(digctrl_kx2 & ~(1<<2)));
 
 	/* Re-enable parallel detect */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2,
 			(digctrl_kx2 | (1<<2)));
 
-	/* Enable स्वतःdet */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	/* Enable autodet */
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1,
 			(digctrl_kx1 | 0x10));
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_reset_lane(काष्ठा bnx2x *bp,
-				      काष्ठा bnx2x_phy *phy,
+static void bnx2x_warpcore_reset_lane(struct bnx2x *bp,
+				      struct bnx2x_phy *phy,
 				      u8 reset)
-अणु
+{
 	u16 val;
 	/* Take lane out of reset after configuration is finished */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_DIGITAL5_MISC6, &val);
-	अगर (reset)
+	if (reset)
 		val |= 0xC000;
-	अन्यथा
+	else
 		val &= 0x3FFF;
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_DIGITAL5_MISC6, val);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_DIGITAL5_MISC6, &val);
-पूर्ण
-/* Clear SFI/XFI link settings रेजिस्टरs */
-अटल व्योम bnx2x_warpcore_clear_regs(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params,
+}
+/* Clear SFI/XFI link settings registers */
+static void bnx2x_warpcore_clear_regs(struct bnx2x_phy *phy,
+				      struct link_params *params,
 				      u16 lane)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 i;
-	अटल काष्ठा bnx2x_reg_set wc_regs[] = अणु
-		अणुMDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_FX100_CTRL1, 0x014aपूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_FX100_CTRL3, 0x0800पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL4_MISC3, 0x8008पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1,
-			0x0195पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2,
-			0x0007पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X3,
-			0x0002पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_MISC1, 0x6000पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_TX_FIR_TAP, 0x0000पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x2040पूर्ण,
-		अणुMDIO_WC_DEVAD, MDIO_WC_REG_COMBO_IEEE0_MIICTRL, 0x0140पूर्ण
-	पूर्ण;
-	/* Set XFI घड़ी comp as शेष. */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	static struct bnx2x_reg_set wc_regs[] = {
+		{MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_FX100_CTRL1, 0x014a},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_FX100_CTRL3, 0x0800},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_DIGITAL4_MISC3, 0x8008},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X1,
+			0x0195},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X2,
+			0x0007},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_CONTROL1000X3,
+			0x0002},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_SERDESDIGITAL_MISC1, 0x6000},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_TX_FIR_TAP, 0x0000},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x2040},
+		{MDIO_WC_DEVAD, MDIO_WC_REG_COMBO_IEEE0_MIICTRL, 0x0140}
+	};
+	/* Set XFI clock comp as default. */
+	bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_RX66_CONTROL, (3<<13));
 
-	क्रम (i = 0; i < ARRAY_SIZE(wc_regs); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, wc_regs[i].devad, wc_regs[i].reg,
+	for (i = 0; i < ARRAY_SIZE(wc_regs); i++)
+		bnx2x_cl45_write(bp, phy, wc_regs[i].devad, wc_regs[i].reg,
 				 wc_regs[i].val);
 
 	lane = bnx2x_get_warpcore_lane(phy, params);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_TX0_TX_DRIVER + 0x10*lane, 0x0990);
 
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_get_mod_असल_पूर्णांक_cfg(काष्ठा bnx2x *bp,
+static int bnx2x_get_mod_abs_int_cfg(struct bnx2x *bp,
 						u32 chip_id,
 						u32 shmem_base, u8 port,
 						u8 *gpio_num, u8 *gpio_port)
-अणु
+{
 	u32 cfg_pin;
 	*gpio_num = 0;
 	*gpio_port = 0;
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		cfg_pin = (REG_RD(bp, shmem_base +
-				दुरत्व(काष्ठा shmem_region,
+				offsetof(struct shmem_region,
 				dev_info.port_hw_config[port].e3_sfp_ctrl)) &
 				PORT_HW_CFG_E3_MOD_ABS_MASK) >>
 				PORT_HW_CFG_E3_MOD_ABS_SHIFT;
 
-		/* Should not happen. This function called upon पूर्णांकerrupt
-		 * triggered by GPIO ( since EPIO can only generate पूर्णांकerrupts
+		/* Should not happen. This function called upon interrupt
+		 * triggered by GPIO ( since EPIO can only generate interrupts
 		 * to MCP).
-		 * So अगर this function was called and none of the GPIOs was set,
+		 * So if this function was called and none of the GPIOs was set,
 		 * it means the shit hit the fan.
 		 */
-		अगर ((cfg_pin < PIN_CFG_GPIO0_P0) ||
-		    (cfg_pin > PIN_CFG_GPIO3_P1)) अणु
+		if ((cfg_pin < PIN_CFG_GPIO0_P0) ||
+		    (cfg_pin > PIN_CFG_GPIO3_P1)) {
 			DP(NETIF_MSG_LINK,
 			   "No cfg pin %x for module detect indication\n",
 			   cfg_pin);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		*gpio_num = (cfg_pin - PIN_CFG_GPIO0_P0) & 0x3;
 		*gpio_port = (cfg_pin - PIN_CFG_GPIO0_P0) >> 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		*gpio_num = MISC_REGISTERS_GPIO_3;
 		*gpio_port = port;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_is_sfp_module_plugged(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_is_sfp_module_plugged(struct bnx2x_phy *phy,
+				       struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 gpio_num, gpio_port;
 	u32 gpio_val;
-	अगर (bnx2x_get_mod_असल_पूर्णांक_cfg(bp, params->chip_id,
+	if (bnx2x_get_mod_abs_int_cfg(bp, params->chip_id,
 				      params->shmem_base, params->port,
 				      &gpio_num, &gpio_port) != 0)
-		वापस 0;
+		return 0;
 	gpio_val = bnx2x_get_gpio(bp, gpio_num, gpio_port);
 
-	/* Call the handling function in हाल module is detected */
-	अगर (gpio_val == 0)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
-अटल पूर्णांक bnx2x_warpcore_get_sigdet(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params)
-अणु
+	/* Call the handling function in case module is detected */
+	if (gpio_val == 0)
+		return 1;
+	else
+		return 0;
+}
+static int bnx2x_warpcore_get_sigdet(struct bnx2x_phy *phy,
+				     struct link_params *params)
+{
 	u16 gp2_status_reg0, lane;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
 	lane = bnx2x_get_warpcore_lane(phy, params);
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD, MDIO_WC_REG_GP2_STATUS_GP_2_0,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD, MDIO_WC_REG_GP2_STATUS_GP_2_0,
 				 &gp2_status_reg0);
 
-	वापस (gp2_status_reg0 >> (8+lane)) & 0x1;
-पूर्ण
+	return (gp2_status_reg0 >> (8+lane)) & 0x1;
+}
 
-अटल व्योम bnx2x_warpcore_config_runसमय(काष्ठा bnx2x_phy *phy,
-					  काष्ठा link_params *params,
-					  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u32 serdes_net_अगर;
+static void bnx2x_warpcore_config_runtime(struct bnx2x_phy *phy,
+					  struct link_params *params,
+					  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	u32 serdes_net_if;
 	u16 gp_status1 = 0, lnkup = 0, lnkup_kr = 0;
 
 	vars->turn_to_run_wc_rt = vars->turn_to_run_wc_rt ? 0 : 1;
 
-	अगर (!vars->turn_to_run_wc_rt)
-		वापस;
+	if (!vars->turn_to_run_wc_rt)
+		return;
 
-	अगर (vars->rx_tx_asic_rst) अणु
+	if (vars->rx_tx_asic_rst) {
 		u16 lane = bnx2x_get_warpcore_lane(phy, params);
-		serdes_net_अगर = (REG_RD(bp, params->shmem_base +
-				दुरत्व(काष्ठा shmem_region, dev_info.
-				port_hw_config[params->port].शेष_cfg)) &
+		serdes_net_if = (REG_RD(bp, params->shmem_base +
+				offsetof(struct shmem_region, dev_info.
+				port_hw_config[params->port].default_cfg)) &
 				PORT_HW_CFG_NET_SERDES_IF_MASK);
 
-		चयन (serdes_net_अगर) अणु
-		हाल PORT_HW_CFG_NET_SERDES_IF_KR:
+		switch (serdes_net_if) {
+		case PORT_HW_CFG_NET_SERDES_IF_KR:
 			/* Do we get link yet? */
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD, 0x81d1,
+			bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD, 0x81d1,
 					&gp_status1);
 			lnkup = (gp_status1 >> (8+lane)) & 0x1;/* 1G */
 				/*10G KR*/
 			lnkup_kr = (gp_status1 >> (12+lane)) & 0x1;
 
-			अगर (lnkup_kr || lnkup) अणु
+			if (lnkup_kr || lnkup) {
 				vars->rx_tx_asic_rst = 0;
-			पूर्ण अन्यथा अणु
-				/* Reset the lane to see अगर link comes up.*/
+			} else {
+				/* Reset the lane to see if link comes up.*/
 				bnx2x_warpcore_reset_lane(bp, phy, 1);
 				bnx2x_warpcore_reset_lane(bp, phy, 0);
 
 				/* Restart Autoneg */
-				bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+				bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 					MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x1200);
 
 				vars->rx_tx_asic_rst--;
 				DP(NETIF_MSG_LINK, "0x%x retry left\n",
 				vars->rx_tx_asic_rst);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-	पूर्ण /*params->rx_tx_asic_rst*/
+	} /*params->rx_tx_asic_rst*/
 
-पूर्ण
-अटल व्योम bnx2x_warpcore_config_sfi(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params)
-अणु
+}
+static void bnx2x_warpcore_config_sfi(struct bnx2x_phy *phy,
+				      struct link_params *params)
+{
 	u16 lane = bnx2x_get_warpcore_lane(phy, params);
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	bnx2x_warpcore_clear_regs(phy, params, lane);
-	अगर ((params->req_line_speed[LINK_CONFIG_IDX(INT_PHY)] ==
+	if ((params->req_line_speed[LINK_CONFIG_IDX(INT_PHY)] ==
 	     SPEED_10000) &&
-	    (phy->media_type != ETH_PHY_SFP_1G_FIBER)) अणु
+	    (phy->media_type != ETH_PHY_SFP_1G_FIBER)) {
 		DP(NETIF_MSG_LINK, "Setting 10G SFI\n");
 		bnx2x_warpcore_set_10G_XFI(phy, params, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		DP(NETIF_MSG_LINK, "Setting 1G Fiber\n");
 		bnx2x_warpcore_set_sgmii_speed(phy, params, 1, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_sfp_e3_set_transmitter(काष्ठा link_params *params,
-					 काष्ठा bnx2x_phy *phy,
+static void bnx2x_sfp_e3_set_transmitter(struct link_params *params,
+					 struct bnx2x_phy *phy,
 					 u8 tx_en)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u32 cfg_pin;
 	u8 port = params->port;
 
 	cfg_pin = REG_RD(bp, params->shmem_base +
-			 दुरत्व(काष्ठा shmem_region,
+			 offsetof(struct shmem_region,
 				  dev_info.port_hw_config[port].e3_sfp_ctrl)) &
 		PORT_HW_CFG_E3_TX_LASER_MASK;
 	/* Set the !tx_en since this pin is DISABLE_TX_LASER */
@@ -4484,307 +4483,307 @@
 
 	/* For 20G, the expected pin to be used is 3 pins after the current */
 	bnx2x_set_cfg_pin(bp, cfg_pin, tx_en ^ 1);
-	अगर (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_20G)
+	if (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_20G)
 		bnx2x_set_cfg_pin(bp, cfg_pin + 3, tx_en ^ 1);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_config_init(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params,
-				       काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u32 serdes_net_अगर;
+static void bnx2x_warpcore_config_init(struct bnx2x_phy *phy,
+				       struct link_params *params,
+				       struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	u32 serdes_net_if;
 	u8 fiber_mode;
 	u16 lane = bnx2x_get_warpcore_lane(phy, params);
-	serdes_net_अगर = (REG_RD(bp, params->shmem_base +
-			 दुरत्व(काष्ठा shmem_region, dev_info.
-				  port_hw_config[params->port].शेष_cfg)) &
+	serdes_net_if = (REG_RD(bp, params->shmem_base +
+			 offsetof(struct shmem_region, dev_info.
+				  port_hw_config[params->port].default_cfg)) &
 			 PORT_HW_CFG_NET_SERDES_IF_MASK);
 	DP(NETIF_MSG_LINK, "Begin Warpcore init, link_speed %d, "
 			   "serdes_net_if = 0x%x\n",
-		       vars->line_speed, serdes_net_अगर);
+		       vars->line_speed, serdes_net_if);
 	bnx2x_set_aer_mmd(params, phy);
 	bnx2x_warpcore_reset_lane(bp, phy, 1);
 	vars->phy_flags |= PHY_XGXS_FLAG;
-	अगर ((serdes_net_अगर == PORT_HW_CFG_NET_SERDES_IF_SGMII) ||
+	if ((serdes_net_if == PORT_HW_CFG_NET_SERDES_IF_SGMII) ||
 	    (phy->req_line_speed &&
 	     ((phy->req_line_speed == SPEED_100) ||
-	      (phy->req_line_speed == SPEED_10)))) अणु
+	      (phy->req_line_speed == SPEED_10)))) {
 		vars->phy_flags |= PHY_SGMII_FLAG;
 		DP(NETIF_MSG_LINK, "Setting SGMII mode\n");
 		bnx2x_warpcore_clear_regs(phy, params, lane);
 		bnx2x_warpcore_set_sgmii_speed(phy, params, 0, 1);
-	पूर्ण अन्यथा अणु
-		चयन (serdes_net_अगर) अणु
-		हाल PORT_HW_CFG_NET_SERDES_IF_KR:
+	} else {
+		switch (serdes_net_if) {
+		case PORT_HW_CFG_NET_SERDES_IF_KR:
 			/* Enable KR Auto Neg */
-			अगर (params->loopback_mode != LOOPBACK_EXT)
+			if (params->loopback_mode != LOOPBACK_EXT)
 				bnx2x_warpcore_enable_AN_KR(phy, params, vars);
-			अन्यथा अणु
+			else {
 				DP(NETIF_MSG_LINK, "Setting KR 10G-Force\n");
 				bnx2x_warpcore_set_10G_KR(phy, params, vars);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल PORT_HW_CFG_NET_SERDES_IF_XFI:
+		case PORT_HW_CFG_NET_SERDES_IF_XFI:
 			bnx2x_warpcore_clear_regs(phy, params, lane);
-			अगर (vars->line_speed == SPEED_10000) अणु
+			if (vars->line_speed == SPEED_10000) {
 				DP(NETIF_MSG_LINK, "Setting 10G XFI\n");
 				bnx2x_warpcore_set_10G_XFI(phy, params, 1);
-			पूर्ण अन्यथा अणु
-				अगर (SINGLE_MEDIA_सूचीECT(params)) अणु
+			} else {
+				if (SINGLE_MEDIA_DIRECT(params)) {
 					DP(NETIF_MSG_LINK, "1G Fiber\n");
 					fiber_mode = 1;
-				पूर्ण अन्यथा अणु
+				} else {
 					DP(NETIF_MSG_LINK, "10/100/1G SGMII\n");
 					fiber_mode = 0;
-				पूर्ण
+				}
 				bnx2x_warpcore_set_sgmii_speed(phy,
 								params,
 								fiber_mode,
 								0);
-			पूर्ण
+			}
 
-			अवरोध;
+			break;
 
-		हाल PORT_HW_CFG_NET_SERDES_IF_SFI:
-			/* Issue Module detection अगर module is plugged, or
-			 * enabled transmitter to aव्योम current leakage in हाल
+		case PORT_HW_CFG_NET_SERDES_IF_SFI:
+			/* Issue Module detection if module is plugged, or
+			 * enabled transmitter to avoid current leakage in case
 			 * no module is connected
 			 */
-			अगर ((params->loopback_mode == LOOPBACK_NONE) ||
-			    (params->loopback_mode == LOOPBACK_EXT)) अणु
-				अगर (bnx2x_is_sfp_module_plugged(phy, params))
+			if ((params->loopback_mode == LOOPBACK_NONE) ||
+			    (params->loopback_mode == LOOPBACK_EXT)) {
+				if (bnx2x_is_sfp_module_plugged(phy, params))
 					bnx2x_sfp_module_detection(phy, params);
-				अन्यथा
+				else
 					bnx2x_sfp_e3_set_transmitter(params,
 								     phy, 1);
-			पूर्ण
+			}
 
 			bnx2x_warpcore_config_sfi(phy, params);
-			अवरोध;
+			break;
 
-		हाल PORT_HW_CFG_NET_SERDES_IF_DXGXS:
-			अगर (vars->line_speed != SPEED_20000) अणु
+		case PORT_HW_CFG_NET_SERDES_IF_DXGXS:
+			if (vars->line_speed != SPEED_20000) {
 				DP(NETIF_MSG_LINK, "Speed not supported yet\n");
-				वापस;
-			पूर्ण
+				return;
+			}
 			DP(NETIF_MSG_LINK, "Setting 20G DXGXS\n");
 			bnx2x_warpcore_set_20G_DXGXS(bp, phy, lane);
 			/* Issue Module detection */
 
 			bnx2x_sfp_module_detection(phy, params);
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_KR2:
-			अगर (!params->loopback_mode) अणु
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_KR2:
+			if (!params->loopback_mode) {
 				bnx2x_warpcore_enable_AN_KR(phy, params, vars);
-			पूर्ण अन्यथा अणु
+			} else {
 				DP(NETIF_MSG_LINK, "Setting KR 20G-Force\n");
-				bnx2x_warpcore_set_20G_क्रमce_KR2(phy, params);
-			पूर्ण
-			अवरोध;
-		शेष:
+				bnx2x_warpcore_set_20G_force_KR2(phy, params);
+			}
+			break;
+		default:
 			DP(NETIF_MSG_LINK,
 			   "Unsupported Serdes Net Interface 0x%x\n",
-			   serdes_net_अगर);
-			वापस;
-		पूर्ण
-	पूर्ण
+			   serdes_net_if);
+			return;
+		}
+	}
 
 	/* Take lane out of reset after configuration is finished */
 	bnx2x_warpcore_reset_lane(bp, phy, 0);
 	DP(NETIF_MSG_LINK, "Exit config init\n");
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_link_reset(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_warpcore_link_reset(struct bnx2x_phy *phy,
+				      struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val16, lane;
 	bnx2x_sfp_e3_set_transmitter(params, phy, 0);
 	bnx2x_set_mdio_emac_per_phy(bp, params);
 	bnx2x_set_aer_mmd(params, phy);
-	/* Global रेजिस्टर */
+	/* Global register */
 	bnx2x_warpcore_reset_lane(bp, phy, 1);
 
-	/* Clear loopback settings (अगर any) */
+	/* Clear loopback settings (if any) */
 	/* 10G & 20G */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_COMBO_IEEE0_MIICTRL, 0xBFFF);
 
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_IEEE0BLK_MIICNTL, 0xfffe);
 
-	/* Update those 1-copy रेजिस्टरs */
+	/* Update those 1-copy registers */
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, 0);
 	/* Enable 1G MDIO (1-copy) */
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_XGXSBLK0_XGXSCONTROL,
 				  ~0x10);
 
-	bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read_and_write(bp, phy, MDIO_WC_DEVAD,
 				  MDIO_WC_REG_XGXSBLK1_LANECTRL2, 0xff00);
 	lane = bnx2x_get_warpcore_lane(phy, params);
 	/* Disable CL36 PCS Tx */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_XGXSBLK1_LANECTRL0, &val16);
 	val16 |= (0x11 << lane);
-	अगर (phy->flags & FLAGS_WC_DUAL_MODE)
+	if (phy->flags & FLAGS_WC_DUAL_MODE)
 		val16 |= (0x22 << lane);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_XGXSBLK1_LANECTRL0, val16);
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_XGXSBLK1_LANECTRL1, &val16);
 	val16 &= ~(0x0303 << (lane << 1));
 	val16 |= (0x0101 << (lane << 1));
-	अगर (phy->flags & FLAGS_WC_DUAL_MODE) अणु
+	if (phy->flags & FLAGS_WC_DUAL_MODE) {
 		val16 &= ~(0x0c0c << (lane << 1));
 		val16 |= (0x0404 << (lane << 1));
-	पूर्ण
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_XGXSBLK1_LANECTRL1, val16);
 	/* Restore AER */
 	bnx2x_set_aer_mmd(params, phy);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_warpcore_loopback(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_set_warpcore_loopback(struct bnx2x_phy *phy,
+					struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val16;
 	u32 lane;
 	DP(NETIF_MSG_LINK, "Setting Warpcore loopback type %x, speed %d\n",
 		       params->loopback_mode, phy->req_line_speed);
 
-	अगर (phy->req_line_speed < SPEED_10000 ||
-	    phy->supported & SUPPORTED_20000baseKR2_Full) अणु
+	if (phy->req_line_speed < SPEED_10000 ||
+	    phy->supported & SUPPORTED_20000baseKR2_Full) {
 		/* 10/100/1000/20G-KR2 */
 
-		/* Update those 1-copy रेजिस्टरs */
+		/* Update those 1-copy registers */
 		CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 				  MDIO_AER_BLOCK_AER_REG, 0);
 		/* Enable 1G MDIO (1-copy) */
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_XGXSBLK0_XGXSCONTROL,
 					 0x10);
 		/* Set 1G loopback based on lane (1-copy) */
 		lane = bnx2x_get_warpcore_lane(phy, params);
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_XGXSBLK1_LANECTRL2, &val16);
 		val16 |= (1<<lane);
-		अगर (phy->flags & FLAGS_WC_DUAL_MODE)
+		if (phy->flags & FLAGS_WC_DUAL_MODE)
 			val16 |= (2<<lane);
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 				 MDIO_WC_REG_XGXSBLK1_LANECTRL2,
 				 val16);
 
-		/* Switch back to 4-copy रेजिस्टरs */
+		/* Switch back to 4-copy registers */
 		bnx2x_set_aer_mmd(params, phy);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* 10G / 20G-DXGXS */
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_COMBO_IEEE0_MIICTRL,
 					 0x4000);
-		bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read_or_write(bp, phy, MDIO_WC_DEVAD,
 					 MDIO_WC_REG_IEEE0BLK_MIICNTL, 0x1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 
-अटल व्योम bnx2x_sync_link(काष्ठा link_params *params,
-			     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_sync_link(struct link_params *params,
+			     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 link_10g_plus;
-	अगर (vars->link_status & LINK_STATUS_PHYSICAL_LINK_FLAG)
+	if (vars->link_status & LINK_STATUS_PHYSICAL_LINK_FLAG)
 		vars->phy_flags |= PHY_PHYSICAL_LINK_FLAG;
 	vars->link_up = (vars->link_status & LINK_STATUS_LINK_UP);
-	अगर (vars->link_up) अणु
+	if (vars->link_up) {
 		DP(NETIF_MSG_LINK, "phy link up\n");
 
 		vars->phy_link_up = 1;
 		vars->duplex = DUPLEX_FULL;
-		चयन (vars->link_status &
-			LINK_STATUS_SPEED_AND_DUPLEX_MASK) अणु
-		हाल LINK_10THD:
+		switch (vars->link_status &
+			LINK_STATUS_SPEED_AND_DUPLEX_MASK) {
+		case LINK_10THD:
 			vars->duplex = DUPLEX_HALF;
 			fallthrough;
-		हाल LINK_10TFD:
+		case LINK_10TFD:
 			vars->line_speed = SPEED_10;
-			अवरोध;
+			break;
 
-		हाल LINK_100TXHD:
+		case LINK_100TXHD:
 			vars->duplex = DUPLEX_HALF;
 			fallthrough;
-		हाल LINK_100T4:
-		हाल LINK_100TXFD:
+		case LINK_100T4:
+		case LINK_100TXFD:
 			vars->line_speed = SPEED_100;
-			अवरोध;
+			break;
 
-		हाल LINK_1000THD:
+		case LINK_1000THD:
 			vars->duplex = DUPLEX_HALF;
 			fallthrough;
-		हाल LINK_1000TFD:
+		case LINK_1000TFD:
 			vars->line_speed = SPEED_1000;
-			अवरोध;
+			break;
 
-		हाल LINK_2500THD:
+		case LINK_2500THD:
 			vars->duplex = DUPLEX_HALF;
 			fallthrough;
-		हाल LINK_2500TFD:
+		case LINK_2500TFD:
 			vars->line_speed = SPEED_2500;
-			अवरोध;
+			break;
 
-		हाल LINK_10GTFD:
+		case LINK_10GTFD:
 			vars->line_speed = SPEED_10000;
-			अवरोध;
-		हाल LINK_20GTFD:
+			break;
+		case LINK_20GTFD:
 			vars->line_speed = SPEED_20000;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 		vars->flow_ctrl = 0;
-		अगर (vars->link_status & LINK_STATUS_TX_FLOW_CONTROL_ENABLED)
+		if (vars->link_status & LINK_STATUS_TX_FLOW_CONTROL_ENABLED)
 			vars->flow_ctrl |= BNX2X_FLOW_CTRL_TX;
 
-		अगर (vars->link_status & LINK_STATUS_RX_FLOW_CONTROL_ENABLED)
+		if (vars->link_status & LINK_STATUS_RX_FLOW_CONTROL_ENABLED)
 			vars->flow_ctrl |= BNX2X_FLOW_CTRL_RX;
 
-		अगर (!vars->flow_ctrl)
+		if (!vars->flow_ctrl)
 			vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
 
-		अगर (vars->line_speed &&
+		if (vars->line_speed &&
 		    ((vars->line_speed == SPEED_10) ||
-		     (vars->line_speed == SPEED_100))) अणु
+		     (vars->line_speed == SPEED_100))) {
 			vars->phy_flags |= PHY_SGMII_FLAG;
-		पूर्ण अन्यथा अणु
+		} else {
 			vars->phy_flags &= ~PHY_SGMII_FLAG;
-		पूर्ण
-		अगर (vars->line_speed &&
+		}
+		if (vars->line_speed &&
 		    USES_WARPCORE(bp) &&
 		    (vars->line_speed == SPEED_1000))
 			vars->phy_flags |= PHY_SGMII_FLAG;
 		/* Anything 10 and over uses the bmac */
 		link_10g_plus = (vars->line_speed >= SPEED_10000);
 
-		अगर (link_10g_plus) अणु
-			अगर (USES_WARPCORE(bp))
+		if (link_10g_plus) {
+			if (USES_WARPCORE(bp))
 				vars->mac_type = MAC_TYPE_XMAC;
-			अन्यथा
+			else
 				vars->mac_type = MAC_TYPE_BMAC;
-		पूर्ण अन्यथा अणु
-			अगर (USES_WARPCORE(bp))
+		} else {
+			if (USES_WARPCORE(bp))
 				vars->mac_type = MAC_TYPE_UMAC;
-			अन्यथा
+			else
 				vars->mac_type = MAC_TYPE_EMAC;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Link करोwn */
+		}
+	} else { /* Link down */
 		DP(NETIF_MSG_LINK, "phy link down\n");
 
 		vars->phy_link_up = 0;
@@ -4795,41 +4794,41 @@
 
 		/* Indicate no mac active */
 		vars->mac_type = MAC_TYPE_NONE;
-		अगर (vars->link_status & LINK_STATUS_PHYSICAL_LINK_FLAG)
+		if (vars->link_status & LINK_STATUS_PHYSICAL_LINK_FLAG)
 			vars->phy_flags |= PHY_HALF_OPEN_CONN_FLAG;
-		अगर (vars->link_status & LINK_STATUS_SFP_TX_FAULT)
+		if (vars->link_status & LINK_STATUS_SFP_TX_FAULT)
 			vars->phy_flags |= PHY_SFP_TX_FAULT_FLAG;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम bnx2x_link_status_update(काष्ठा link_params *params,
-			      काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+void bnx2x_link_status_update(struct link_params *params,
+			      struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 sync_offset, media_types;
 	/* Update PHY configuration */
 	set_phy_vars(params, vars);
 
 	vars->link_status = REG_RD(bp, params->shmem_base +
-				   दुरत्व(काष्ठा shmem_region,
+				   offsetof(struct shmem_region,
 					    port_mb[port].link_status));
 
 	/* Force link UP in non LOOPBACK_EXT loopback mode(s) */
-	अगर (params->loopback_mode != LOOPBACK_NONE &&
+	if (params->loopback_mode != LOOPBACK_NONE &&
 	    params->loopback_mode != LOOPBACK_EXT)
 		vars->link_status |= LINK_STATUS_LINK_UP;
 
-	अगर (bnx2x_eee_has_cap(params))
+	if (bnx2x_eee_has_cap(params))
 		vars->eee_status = REG_RD(bp, params->shmem2_base +
-					  दुरत्व(काष्ठा shmem2_region,
+					  offsetof(struct shmem2_region,
 						   eee_status[params->port]));
 
 	vars->phy_flags = PHY_XGXS_FLAG;
 	bnx2x_sync_link(params, vars);
 	/* Sync media type */
 	sync_offset = params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
+			offsetof(struct shmem_region,
 				 dev_info.port_hw_config[port].media_type);
 	media_types = REG_RD(bp, sync_offset);
 
@@ -4846,39 +4845,39 @@
 
 	/* Sync AEU offset */
 	sync_offset = params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
-				 dev_info.port_hw_config[port].aeu_पूर्णांक_mask);
+			offsetof(struct shmem_region,
+				 dev_info.port_hw_config[port].aeu_int_mask);
 
-	vars->aeu_पूर्णांक_mask = REG_RD(bp, sync_offset);
+	vars->aeu_int_mask = REG_RD(bp, sync_offset);
 
 	/* Sync PFC status */
-	अगर (vars->link_status & LINK_STATUS_PFC_ENABLED)
+	if (vars->link_status & LINK_STATUS_PFC_ENABLED)
 		params->feature_config_flags |=
 					FEATURE_CONFIG_PFC_ENABLED;
-	अन्यथा
+	else
 		params->feature_config_flags &=
 					~FEATURE_CONFIG_PFC_ENABLED;
 
-	अगर (SHMEM2_HAS(bp, link_attr_sync))
+	if (SHMEM2_HAS(bp, link_attr_sync))
 		params->link_attr_sync = SHMEM2_RD(bp,
 						 link_attr_sync[params->port]);
 
 	DP(NETIF_MSG_LINK, "link_status 0x%x  phy_link_up %x int_mask 0x%x\n",
-		 vars->link_status, vars->phy_link_up, vars->aeu_पूर्णांक_mask);
+		 vars->link_status, vars->phy_link_up, vars->aeu_int_mask);
 	DP(NETIF_MSG_LINK, "line_speed %x  duplex %x  flow_ctrl 0x%x\n",
 		 vars->line_speed, vars->duplex, vars->flow_ctrl);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_master_ln(काष्ठा link_params *params,
-				काष्ठा bnx2x_phy *phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_set_master_ln(struct link_params *params,
+				struct bnx2x_phy *phy)
+{
+	struct bnx2x *bp = params->bp;
 	u16 new_master_ln, ser_lane;
 	ser_lane = ((params->lane_config &
 		     PORT_HW_CFG_LANE_SWAP_CFG_MASTER_MASK) >>
 		    PORT_HW_CFG_LANE_SWAP_CFG_MASTER_SHIFT);
 
-	/* Set the master_ln क्रम AN */
+	/* Set the master_ln for AN */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_XGXS_BLOCK2,
 			  MDIO_XGXS_BLOCK2_TEST_MODE_LANE,
@@ -4888,13 +4887,13 @@
 			  MDIO_REG_BANK_XGXS_BLOCK2 ,
 			  MDIO_XGXS_BLOCK2_TEST_MODE_LANE,
 			  (new_master_ln | ser_lane));
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_reset_unicore(काष्ठा link_params *params,
-			       काष्ठा bnx2x_phy *phy,
+static int bnx2x_reset_unicore(struct link_params *params,
+			       struct bnx2x_phy *phy,
 			       u8 set_serdes)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 mii_control;
 	u16 i;
 	CL22_RD_OVER_CL45(bp, phy,
@@ -4907,11 +4906,11 @@
 			  MDIO_COMBO_IEEE0_MII_CONTROL,
 			  (mii_control |
 			   MDIO_COMBO_IEEO_MII_CONTROL_RESET));
-	अगर (set_serdes)
+	if (set_serdes)
 		bnx2x_set_serdes_access(bp, params->port);
 
-	/* Wait क्रम the reset to self clear */
-	क्रम (i = 0; i < MDIO_ACCESS_TIMEOUT; i++) अणु
+	/* Wait for the reset to self clear */
+	for (i = 0; i < MDIO_ACCESS_TIMEOUT; i++) {
 		udelay(5);
 
 		/* The reset erased the previous bank value */
@@ -4920,24 +4919,24 @@
 				  MDIO_COMBO_IEEE0_MII_CONTROL,
 				  &mii_control);
 
-		अगर (!(mii_control & MDIO_COMBO_IEEO_MII_CONTROL_RESET)) अणु
+		if (!(mii_control & MDIO_COMBO_IEEO_MII_CONTROL_RESET)) {
 			udelay(5);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	netdev_err(bp->dev,  "Warning: PHY was not initialized,"
 			      " Port %d\n",
 			 params->port);
 	DP(NETIF_MSG_LINK, "BUG! XGXS is still in reset!\n");
-	वापस -EINVAL;
+	return -EINVAL;
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_swap_lanes(काष्ठा link_params *params,
-				 काष्ठा bnx2x_phy *phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_set_swap_lanes(struct link_params *params,
+				 struct bnx2x_phy *phy)
+{
+	struct bnx2x *bp = params->bp;
 	/* Each two bits represents a lane number:
 	 * No swap is 0123 => 0x1b no need to enable the swap
 	 */
@@ -4950,44 +4949,44 @@
 			 PORT_HW_CFG_LANE_SWAP_CFG_TX_MASK) >>
 			PORT_HW_CFG_LANE_SWAP_CFG_TX_SHIFT);
 
-	अगर (rx_lane_swap != 0x1b) अणु
+	if (rx_lane_swap != 0x1b) {
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_XGXS_BLOCK2,
 				  MDIO_XGXS_BLOCK2_RX_LN_SWAP,
 				  (rx_lane_swap |
 				   MDIO_XGXS_BLOCK2_RX_LN_SWAP_ENABLE |
 				   MDIO_XGXS_BLOCK2_RX_LN_SWAP_FORCE_ENABLE));
-	पूर्ण अन्यथा अणु
+	} else {
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_XGXS_BLOCK2,
 				  MDIO_XGXS_BLOCK2_RX_LN_SWAP, 0);
-	पूर्ण
+	}
 
-	अगर (tx_lane_swap != 0x1b) अणु
+	if (tx_lane_swap != 0x1b) {
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_XGXS_BLOCK2,
 				  MDIO_XGXS_BLOCK2_TX_LN_SWAP,
 				  (tx_lane_swap |
 				   MDIO_XGXS_BLOCK2_TX_LN_SWAP_ENABLE));
-	पूर्ण अन्यथा अणु
+	} else {
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_XGXS_BLOCK2,
 				  MDIO_XGXS_BLOCK2_TX_LN_SWAP, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_set_parallel_detection(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_set_parallel_detection(struct bnx2x_phy *phy,
+					 struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 control2;
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_A_1000X_CONTROL2,
 			  &control2);
-	अगर (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)
+	if (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)
 		control2 |= MDIO_SERDES_DIGITAL_A_1000X_CONTROL2_PRL_DT_EN;
-	अन्यथा
+	else
 		control2 &= ~MDIO_SERDES_DIGITAL_A_1000X_CONTROL2_PRL_DT_EN;
 	DP(NETIF_MSG_LINK, "phy->speed_cap_mask = 0x%x, control2 = 0x%x\n",
 		phy->speed_cap_mask, control2);
@@ -4996,9 +4995,9 @@
 			  MDIO_SERDES_DIGITAL_A_1000X_CONTROL2,
 			  control2);
 
-	अगर ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT) &&
+	if ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT) &&
 	     (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) अणु
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) {
 		DP(NETIF_MSG_LINK, "XGXS\n");
 
 		CL22_WR_OVER_CL45(bp, phy,
@@ -5026,15 +5025,15 @@
 				  MDIO_XGXS_BLOCK2_UNICORE_MODE_10G,
 				  MDIO_XGXS_BLOCK2_UNICORE_MODE_10G_CX4_XGXS |
 				  MDIO_XGXS_BLOCK2_UNICORE_MODE_10G_HIGIG_XGXS);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_set_स्वतःneg(काष्ठा bnx2x_phy *phy,
-			      काष्ठा link_params *params,
-			      काष्ठा link_vars *vars,
+static void bnx2x_set_autoneg(struct bnx2x_phy *phy,
+			      struct link_params *params,
+			      struct link_vars *vars,
 			      u8 enable_cl73)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 reg_val;
 
 	/* CL37 Autoneg */
@@ -5043,9 +5042,9 @@
 			  MDIO_COMBO_IEEE0_MII_CONTROL, &reg_val);
 
 	/* CL37 Autoneg Enabled */
-	अगर (vars->line_speed == SPEED_AUTO_NEG)
+	if (vars->line_speed == SPEED_AUTO_NEG)
 		reg_val |= MDIO_COMBO_IEEO_MII_CONTROL_AN_EN;
-	अन्यथा /* CL37 Autoneg Disabled */
+	else /* CL37 Autoneg Disabled */
 		reg_val &= ~(MDIO_COMBO_IEEO_MII_CONTROL_AN_EN |
 			     MDIO_COMBO_IEEO_MII_CONTROL_RESTART_AN);
 
@@ -5061,35 +5060,35 @@
 	reg_val &= ~(MDIO_SERDES_DIGITAL_A_1000X_CONTROL1_SIGNAL_DETECT_EN |
 		    MDIO_SERDES_DIGITAL_A_1000X_CONTROL1_INVERT_SIGNAL_DETECT);
 	reg_val |= MDIO_SERDES_DIGITAL_A_1000X_CONTROL1_FIBER_MODE;
-	अगर (vars->line_speed == SPEED_AUTO_NEG)
+	if (vars->line_speed == SPEED_AUTO_NEG)
 		reg_val |= MDIO_SERDES_DIGITAL_A_1000X_CONTROL1_AUTODET;
-	अन्यथा
+	else
 		reg_val &= ~MDIO_SERDES_DIGITAL_A_1000X_CONTROL1_AUTODET;
 
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_A_1000X_CONTROL1, reg_val);
 
-	/* Enable TetonII and BAM स्वतःneg */
+	/* Enable TetonII and BAM autoneg */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_BAM_NEXT_PAGE,
 			  MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL,
 			  &reg_val);
-	अगर (vars->line_speed == SPEED_AUTO_NEG) अणु
+	if (vars->line_speed == SPEED_AUTO_NEG) {
 		/* Enable BAM aneg Mode and TetonII aneg Mode */
 		reg_val |= (MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL_BAM_MODE |
 			    MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL_TETON_AN);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* TetonII and BAM Autoneg Disabled */
 		reg_val &= ~(MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL_BAM_MODE |
 			     MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL_TETON_AN);
-	पूर्ण
+	}
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_BAM_NEXT_PAGE,
 			  MDIO_BAM_NEXT_PAGE_MP5_NEXT_PAGE_CTRL,
 			  reg_val);
 
-	अगर (enable_cl73) अणु
+	if (enable_cl73) {
 		/* Enable Cl73 FSM status bits */
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_CL73_USERB0,
@@ -5109,10 +5108,10 @@
 				  MDIO_REG_BANK_CL73_IEEEB1,
 				  MDIO_CL73_IEEEB1_AN_ADV2,
 				  &reg_val);
-		अगर (phy->speed_cap_mask &
+		if (phy->speed_cap_mask &
 		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)
 			reg_val |= MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KX4;
-		अगर (phy->speed_cap_mask &
+		if (phy->speed_cap_mask &
 		    PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)
 			reg_val |= MDIO_CL73_IEEEB1_AN_ADV2_ADVR_1000M_KX;
 
@@ -5124,74 +5123,74 @@
 		/* CL73 Autoneg Enabled */
 		reg_val = MDIO_CL73_IEEEB0_CL73_AN_CONTROL_AN_EN;
 
-	पूर्ण अन्यथा /* CL73 Autoneg Disabled */
+	} else /* CL73 Autoneg Disabled */
 		reg_val = 0;
 
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_CL73_IEEEB0,
 			  MDIO_CL73_IEEEB0_CL73_AN_CONTROL, reg_val);
-पूर्ण
+}
 
-/* Program SerDes, क्रमced speed */
-अटल व्योम bnx2x_program_serdes(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+/* Program SerDes, forced speed */
+static void bnx2x_program_serdes(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 reg_val;
 
-	/* Program duplex, disable स्वतःneg and sgmii*/
+	/* Program duplex, disable autoneg and sgmii*/
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_COMBO_IEEE0,
 			  MDIO_COMBO_IEEE0_MII_CONTROL, &reg_val);
 	reg_val &= ~(MDIO_COMBO_IEEO_MII_CONTROL_FULL_DUPLEX |
 		     MDIO_COMBO_IEEO_MII_CONTROL_AN_EN |
 		     MDIO_COMBO_IEEO_MII_CONTROL_MAN_SGMII_SP_MASK);
-	अगर (phy->req_duplex == DUPLEX_FULL)
+	if (phy->req_duplex == DUPLEX_FULL)
 		reg_val |= MDIO_COMBO_IEEO_MII_CONTROL_FULL_DUPLEX;
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_COMBO_IEEE0,
 			  MDIO_COMBO_IEEE0_MII_CONTROL, reg_val);
 
 	/* Program speed
-	 *  - needed only अगर the speed is greater than 1G (2.5G or 10G)
+	 *  - needed only if the speed is greater than 1G (2.5G or 10G)
 	 */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_MISC1, &reg_val);
-	/* Clearing the speed value beक्रमe setting the right speed */
+	/* Clearing the speed value before setting the right speed */
 	DP(NETIF_MSG_LINK, "MDIO_REG_BANK_SERDES_DIGITAL = 0x%x\n", reg_val);
 
 	reg_val &= ~(MDIO_SERDES_DIGITAL_MISC1_FORCE_SPEED_MASK |
 		     MDIO_SERDES_DIGITAL_MISC1_FORCE_SPEED_SEL);
 
-	अगर (!((vars->line_speed == SPEED_1000) ||
+	if (!((vars->line_speed == SPEED_1000) ||
 	      (vars->line_speed == SPEED_100) ||
-	      (vars->line_speed == SPEED_10))) अणु
+	      (vars->line_speed == SPEED_10))) {
 
 		reg_val |= (MDIO_SERDES_DIGITAL_MISC1_REFCLK_SEL_156_25M |
 			    MDIO_SERDES_DIGITAL_MISC1_FORCE_SPEED_SEL);
-		अगर (vars->line_speed == SPEED_10000)
+		if (vars->line_speed == SPEED_10000)
 			reg_val |=
 				MDIO_SERDES_DIGITAL_MISC1_FORCE_SPEED_10G_CX4;
-	पूर्ण
+	}
 
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_MISC1, reg_val);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_brcm_cl37_advertisement(काष्ठा bnx2x_phy *phy,
-					      काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_set_brcm_cl37_advertisement(struct bnx2x_phy *phy,
+					      struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val = 0;
 
 	/* Set extended capabilities */
-	अगर (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_2_5G)
+	if (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_2_5G)
 		val |= MDIO_OVER_1G_UP1_2_5G;
-	अगर (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)
+	if (phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)
 		val |= MDIO_OVER_1G_UP1_10G;
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_OVER_1G,
@@ -5200,13 +5199,13 @@
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_OVER_1G,
 			  MDIO_OVER_1G_UP3, 0x400);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_ieee_aneg_advertisement(काष्ठा bnx2x_phy *phy,
-					      काष्ठा link_params *params,
+static void bnx2x_set_ieee_aneg_advertisement(struct bnx2x_phy *phy,
+					      struct link_params *params,
 					      u16 ieee_fc)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 val;
 	/* For AN, we are always publishing full duplex */
 
@@ -5221,19 +5220,19 @@
 	CL22_WR_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_CL73_IEEEB1,
 			  MDIO_CL73_IEEEB1_AN_ADV1, val);
-पूर्ण
+}
 
-अटल व्योम bnx2x_restart_स्वतःneg(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
+static void bnx2x_restart_autoneg(struct bnx2x_phy *phy,
+				  struct link_params *params,
 				  u8 enable_cl73)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 mii_control;
 
 	DP(NETIF_MSG_LINK, "bnx2x_restart_autoneg\n");
 	/* Enable and restart BAM/CL37 aneg */
 
-	अगर (enable_cl73) अणु
+	if (enable_cl73) {
 		CL22_RD_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_CL73_IEEEB0,
 				  MDIO_CL73_IEEEB0_CL73_AN_CONTROL,
@@ -5245,7 +5244,7 @@
 				  (mii_control |
 				  MDIO_CL73_IEEEB0_CL73_AN_CONTROL_AN_EN |
 				  MDIO_CL73_IEEEB0_CL73_AN_CONTROL_RESTART_AN));
-	पूर्ण अन्यथा अणु
+	} else {
 
 		CL22_RD_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_COMBO_IEEE0,
@@ -5260,14 +5259,14 @@
 				  (mii_control |
 				   MDIO_COMBO_IEEO_MII_CONTROL_AN_EN |
 				   MDIO_COMBO_IEEO_MII_CONTROL_RESTART_AN));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_initialize_sgmii_process(काष्ठा bnx2x_phy *phy,
-					   काष्ठा link_params *params,
-					   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_initialize_sgmii_process(struct bnx2x_phy *phy,
+					   struct link_params *params,
+					   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 control1;
 
 	/* In SGMII mode, the unicore is always slave */
@@ -5286,9 +5285,9 @@
 			  MDIO_SERDES_DIGITAL_A_1000X_CONTROL1,
 			  control1);
 
-	/* If क्रमced speed */
-	अगर (!(vars->line_speed == SPEED_AUTO_NEG)) अणु
-		/* Set speed, disable स्वतःneg */
+	/* If forced speed */
+	if (!(vars->line_speed == SPEED_AUTO_NEG)) {
+		/* Set speed, disable autoneg */
 		u16 mii_control;
 
 		CL22_RD_OVER_CL45(bp, phy,
@@ -5299,27 +5298,27 @@
 				 MDIO_COMBO_IEEO_MII_CONTROL_MAN_SGMII_SP_MASK|
 				 MDIO_COMBO_IEEO_MII_CONTROL_FULL_DUPLEX);
 
-		चयन (vars->line_speed) अणु
-		हाल SPEED_100:
+		switch (vars->line_speed) {
+		case SPEED_100:
 			mii_control |=
 				MDIO_COMBO_IEEO_MII_CONTROL_MAN_SGMII_SP_100;
-			अवरोध;
-		हाल SPEED_1000:
+			break;
+		case SPEED_1000:
 			mii_control |=
 				MDIO_COMBO_IEEO_MII_CONTROL_MAN_SGMII_SP_1000;
-			अवरोध;
-		हाल SPEED_10:
-			/* There is nothing to set क्रम 10M */
-			अवरोध;
-		शेष:
-			/* Invalid speed क्रम SGMII */
+			break;
+		case SPEED_10:
+			/* There is nothing to set for 10M */
+			break;
+		default:
+			/* Invalid speed for SGMII */
 			DP(NETIF_MSG_LINK, "Invalid line_speed 0x%x\n",
 				  vars->line_speed);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Setting the full duplex */
-		अगर (phy->req_duplex == DUPLEX_FULL)
+		if (phy->req_duplex == DUPLEX_FULL)
 			mii_control |=
 				MDIO_COMBO_IEEO_MII_CONTROL_FULL_DUPLEX;
 		CL22_WR_OVER_CL45(bp, phy,
@@ -5327,21 +5326,21 @@
 				  MDIO_COMBO_IEEE0_MII_CONTROL,
 				  mii_control);
 
-	पूर्ण अन्यथा अणु /* AN mode */
+	} else { /* AN mode */
 		/* Enable and restart AN */
-		bnx2x_restart_स्वतःneg(phy, params, 0);
-	पूर्ण
-पूर्ण
+		bnx2x_restart_autoneg(phy, params, 0);
+	}
+}
 
 /* Link management
  */
-अटल पूर्णांक bnx2x_direct_parallel_detect_used(काष्ठा bnx2x_phy *phy,
-					     काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_direct_parallel_detect_used(struct bnx2x_phy *phy,
+					     struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 pd_10g, status2_1000x;
-	अगर (phy->req_line_speed != SPEED_AUTO_NEG)
-		वापस 0;
+	if (phy->req_line_speed != SPEED_AUTO_NEG)
+		return 0;
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_A_1000X_STATUS2,
@@ -5350,135 +5349,135 @@
 			  MDIO_REG_BANK_SERDES_DIGITAL,
 			  MDIO_SERDES_DIGITAL_A_1000X_STATUS2,
 			  &status2_1000x);
-	अगर (status2_1000x & MDIO_SERDES_DIGITAL_A_1000X_STATUS2_AN_DISABLED) अणु
+	if (status2_1000x & MDIO_SERDES_DIGITAL_A_1000X_STATUS2_AN_DISABLED) {
 		DP(NETIF_MSG_LINK, "1G parallel detect link on port %d\n",
 			 params->port);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_10G_PARALLEL_DETECT,
 			  MDIO_10G_PARALLEL_DETECT_PAR_DET_10G_STATUS,
 			  &pd_10g);
 
-	अगर (pd_10g & MDIO_10G_PARALLEL_DETECT_PAR_DET_10G_STATUS_PD_LINK) अणु
+	if (pd_10g & MDIO_10G_PARALLEL_DETECT_PAR_DET_10G_STATUS_PD_LINK) {
 		DP(NETIF_MSG_LINK, "10G parallel detect link on port %d\n",
 			 params->port);
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-अटल व्योम bnx2x_update_adv_fc(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params,
-				काष्ठा link_vars *vars,
+static void bnx2x_update_adv_fc(struct bnx2x_phy *phy,
+				struct link_params *params,
+				struct link_vars *vars,
 				u32 gp_status)
-अणु
-	u16 ld_छोड़ो;   /* local driver */
-	u16 lp_छोड़ो;   /* link partner */
-	u16 छोड़ो_result;
-	काष्ठा bnx2x *bp = params->bp;
-	अगर ((gp_status &
+{
+	u16 ld_pause;   /* local driver */
+	u16 lp_pause;   /* link partner */
+	u16 pause_result;
+	struct bnx2x *bp = params->bp;
+	if ((gp_status &
 	     (MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_AUTONEG_COMPLETE |
 	      MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_MR_LP_NP_AN_ABLE)) ==
 	    (MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_AUTONEG_COMPLETE |
-	     MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_MR_LP_NP_AN_ABLE)) अणु
+	     MDIO_GP_STATUS_TOP_AN_STATUS1_CL73_MR_LP_NP_AN_ABLE)) {
 
 		CL22_RD_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_CL73_IEEEB1,
 				  MDIO_CL73_IEEEB1_AN_ADV1,
-				  &ld_छोड़ो);
+				  &ld_pause);
 		CL22_RD_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_CL73_IEEEB1,
 				  MDIO_CL73_IEEEB1_AN_LP_ADV1,
-				  &lp_छोड़ो);
-		छोड़ो_result = (ld_छोड़ो &
+				  &lp_pause);
+		pause_result = (ld_pause &
 				MDIO_CL73_IEEEB1_AN_ADV1_PAUSE_MASK) >> 8;
-		छोड़ो_result |= (lp_छोड़ो &
+		pause_result |= (lp_pause &
 				 MDIO_CL73_IEEEB1_AN_LP_ADV1_PAUSE_MASK) >> 10;
-		DP(NETIF_MSG_LINK, "pause_result CL73 0x%x\n", छोड़ो_result);
-	पूर्ण अन्यथा अणु
+		DP(NETIF_MSG_LINK, "pause_result CL73 0x%x\n", pause_result);
+	} else {
 		CL22_RD_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_COMBO_IEEE0,
 				  MDIO_COMBO_IEEE0_AUTO_NEG_ADV,
-				  &ld_छोड़ो);
+				  &ld_pause);
 		CL22_RD_OVER_CL45(bp, phy,
 			MDIO_REG_BANK_COMBO_IEEE0,
 			MDIO_COMBO_IEEE0_AUTO_NEG_LINK_PARTNER_ABILITY1,
-			&lp_छोड़ो);
-		छोड़ो_result = (ld_छोड़ो &
+			&lp_pause);
+		pause_result = (ld_pause &
 				MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_MASK)>>5;
-		छोड़ो_result |= (lp_छोड़ो &
+		pause_result |= (lp_pause &
 				 MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_MASK)>>7;
-		DP(NETIF_MSG_LINK, "pause_result CL37 0x%x\n", छोड़ो_result);
-	पूर्ण
-	bnx2x_छोड़ो_resolve(phy, params, vars, छोड़ो_result);
+		DP(NETIF_MSG_LINK, "pause_result CL37 0x%x\n", pause_result);
+	}
+	bnx2x_pause_resolve(phy, params, vars, pause_result);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_flow_ctrl_resolve(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params,
-				    काष्ठा link_vars *vars,
+static void bnx2x_flow_ctrl_resolve(struct bnx2x_phy *phy,
+				    struct link_params *params,
+				    struct link_vars *vars,
 				    u32 gp_status)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
 
-	/* Resolve from gp_status in हाल of AN complete and not sgmii */
-	अगर (phy->req_flow_ctrl != BNX2X_FLOW_CTRL_AUTO) अणु
+	/* Resolve from gp_status in case of AN complete and not sgmii */
+	if (phy->req_flow_ctrl != BNX2X_FLOW_CTRL_AUTO) {
 		/* Update the advertised flow-controled of LD/LP in AN */
-		अगर (phy->req_line_speed == SPEED_AUTO_NEG)
+		if (phy->req_line_speed == SPEED_AUTO_NEG)
 			bnx2x_update_adv_fc(phy, params, vars, gp_status);
 		/* But set the flow-control result as the requested one */
 		vars->flow_ctrl = phy->req_flow_ctrl;
-	पूर्ण अन्यथा अगर (phy->req_line_speed != SPEED_AUTO_NEG)
-		vars->flow_ctrl = params->req_fc_स्वतः_adv;
-	अन्यथा अगर ((gp_status & MDIO_AN_CL73_OR_37_COMPLETE) &&
-		 (!(vars->phy_flags & PHY_SGMII_FLAG))) अणु
-		अगर (bnx2x_direct_parallel_detect_used(phy, params)) अणु
-			vars->flow_ctrl = params->req_fc_स्वतः_adv;
-			वापस;
-		पूर्ण
+	} else if (phy->req_line_speed != SPEED_AUTO_NEG)
+		vars->flow_ctrl = params->req_fc_auto_adv;
+	else if ((gp_status & MDIO_AN_CL73_OR_37_COMPLETE) &&
+		 (!(vars->phy_flags & PHY_SGMII_FLAG))) {
+		if (bnx2x_direct_parallel_detect_used(phy, params)) {
+			vars->flow_ctrl = params->req_fc_auto_adv;
+			return;
+		}
 		bnx2x_update_adv_fc(phy, params, vars, gp_status);
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "flow_ctrl 0x%x\n", vars->flow_ctrl);
-पूर्ण
+}
 
-अटल व्योम bnx2x_check_fallback_to_cl37(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_check_fallback_to_cl37(struct bnx2x_phy *phy,
+					 struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 rx_status, ustat_val, cl37_fsm_received;
 	DP(NETIF_MSG_LINK, "bnx2x_check_fallback_to_cl37\n");
-	/* Step 1: Make sure संकेत is detected */
+	/* Step 1: Make sure signal is detected */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_RX0,
 			  MDIO_RX0_RX_STATUS,
 			  &rx_status);
-	अगर ((rx_status & MDIO_RX0_RX_STATUS_SIGDET) !=
-	    (MDIO_RX0_RX_STATUS_SIGDET)) अणु
+	if ((rx_status & MDIO_RX0_RX_STATUS_SIGDET) !=
+	    (MDIO_RX0_RX_STATUS_SIGDET)) {
 		DP(NETIF_MSG_LINK, "Signal is not detected. Restoring CL73."
 			     "rx_status(0x80b0) = 0x%x\n", rx_status);
 		CL22_WR_OVER_CL45(bp, phy,
 				  MDIO_REG_BANK_CL73_IEEEB0,
 				  MDIO_CL73_IEEEB0_CL73_AN_CONTROL,
 				  MDIO_CL73_IEEEB0_CL73_AN_CONTROL_AN_EN);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* Step 2: Check CL73 state machine */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_CL73_USERB0,
 			  MDIO_CL73_USERB0_CL73_USTAT1,
 			  &ustat_val);
-	अगर ((ustat_val &
+	if ((ustat_val &
 	     (MDIO_CL73_USERB0_CL73_USTAT1_LINK_STATUS_CHECK |
 	      MDIO_CL73_USERB0_CL73_USTAT1_AN_GOOD_CHECK_BAM37)) !=
 	    (MDIO_CL73_USERB0_CL73_USTAT1_LINK_STATUS_CHECK |
-	      MDIO_CL73_USERB0_CL73_USTAT1_AN_GOOD_CHECK_BAM37)) अणु
+	      MDIO_CL73_USERB0_CL73_USTAT1_AN_GOOD_CHECK_BAM37)) {
 		DP(NETIF_MSG_LINK, "CL73 state-machine is not stable. "
 			     "ustat_val(0x8371) = 0x%x\n", ustat_val);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* Step 3: Check CL37 Message Pages received to indicate LP
 	 * supports only CL37
 	 */
@@ -5486,20 +5485,20 @@
 			  MDIO_REG_BANK_REMOTE_PHY,
 			  MDIO_REMOTE_PHY_MISC_RX_STATUS,
 			  &cl37_fsm_received);
-	अगर ((cl37_fsm_received &
+	if ((cl37_fsm_received &
 	     (MDIO_REMOTE_PHY_MISC_RX_STATUS_CL37_FSM_RECEIVED_OVER1G_MSG |
 	     MDIO_REMOTE_PHY_MISC_RX_STATUS_CL37_FSM_RECEIVED_BRCM_OUI_MSG)) !=
 	    (MDIO_REMOTE_PHY_MISC_RX_STATUS_CL37_FSM_RECEIVED_OVER1G_MSG |
-	      MDIO_REMOTE_PHY_MISC_RX_STATUS_CL37_FSM_RECEIVED_BRCM_OUI_MSG)) अणु
+	      MDIO_REMOTE_PHY_MISC_RX_STATUS_CL37_FSM_RECEIVED_BRCM_OUI_MSG)) {
 		DP(NETIF_MSG_LINK, "No CL37 FSM were received. "
 			     "misc_rx_status(0x8330) = 0x%x\n",
 			 cl37_fsm_received);
-		वापस;
-	पूर्ण
-	/* The combined cl37/cl73 fsm state inक्रमmation indicating that
-	 * we are connected to a device which करोes not support cl73, but
-	 * करोes support cl37 BAM. In this हाल we disable cl73 and
-	 * restart cl37 स्वतः-neg
+		return;
+	}
+	/* The combined cl37/cl73 fsm state information indicating that
+	 * we are connected to a device which does not support cl73, but
+	 * does support cl37 BAM. In this case we disable cl73 and
+	 * restart cl37 auto-neg
 	 */
 
 	/* Disable CL73 */
@@ -5507,102 +5506,102 @@
 			  MDIO_REG_BANK_CL73_IEEEB0,
 			  MDIO_CL73_IEEEB0_CL73_AN_CONTROL,
 			  0);
-	/* Restart CL37 स्वतःneg */
-	bnx2x_restart_स्वतःneg(phy, params, 0);
+	/* Restart CL37 autoneg */
+	bnx2x_restart_autoneg(phy, params, 0);
 	DP(NETIF_MSG_LINK, "Disabling CL73, and restarting CL37 autoneg\n");
-पूर्ण
+}
 
-अटल व्योम bnx2x_xgxs_an_resolve(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
-				  काष्ठा link_vars *vars,
+static void bnx2x_xgxs_an_resolve(struct bnx2x_phy *phy,
+				  struct link_params *params,
+				  struct link_vars *vars,
 				  u32 gp_status)
-अणु
-	अगर (gp_status & MDIO_AN_CL73_OR_37_COMPLETE)
+{
+	if (gp_status & MDIO_AN_CL73_OR_37_COMPLETE)
 		vars->link_status |=
 			LINK_STATUS_AUTO_NEGOTIATE_COMPLETE;
 
-	अगर (bnx2x_direct_parallel_detect_used(phy, params))
+	if (bnx2x_direct_parallel_detect_used(phy, params))
 		vars->link_status |=
 			LINK_STATUS_PARALLEL_DETECTION_USED;
-पूर्ण
-अटल पूर्णांक bnx2x_get_link_speed_duplex(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
-				      काष्ठा link_vars *vars,
+}
+static int bnx2x_get_link_speed_duplex(struct bnx2x_phy *phy,
+				     struct link_params *params,
+				      struct link_vars *vars,
 				      u16 is_link_up,
 				      u16 speed_mask,
 				      u16 is_duplex)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	अगर (phy->req_line_speed == SPEED_AUTO_NEG)
+{
+	struct bnx2x *bp = params->bp;
+	if (phy->req_line_speed == SPEED_AUTO_NEG)
 		vars->link_status |= LINK_STATUS_AUTO_NEGOTIATE_ENABLED;
-	अगर (is_link_up) अणु
+	if (is_link_up) {
 		DP(NETIF_MSG_LINK, "phy link up\n");
 
 		vars->phy_link_up = 1;
 		vars->link_status |= LINK_STATUS_LINK_UP;
 
-		चयन (speed_mask) अणु
-		हाल GP_STATUS_10M:
+		switch (speed_mask) {
+		case GP_STATUS_10M:
 			vars->line_speed = SPEED_10;
-			अगर (is_duplex == DUPLEX_FULL)
+			if (is_duplex == DUPLEX_FULL)
 				vars->link_status |= LINK_10TFD;
-			अन्यथा
+			else
 				vars->link_status |= LINK_10THD;
-			अवरोध;
+			break;
 
-		हाल GP_STATUS_100M:
+		case GP_STATUS_100M:
 			vars->line_speed = SPEED_100;
-			अगर (is_duplex == DUPLEX_FULL)
+			if (is_duplex == DUPLEX_FULL)
 				vars->link_status |= LINK_100TXFD;
-			अन्यथा
+			else
 				vars->link_status |= LINK_100TXHD;
-			अवरोध;
+			break;
 
-		हाल GP_STATUS_1G:
-		हाल GP_STATUS_1G_KX:
+		case GP_STATUS_1G:
+		case GP_STATUS_1G_KX:
 			vars->line_speed = SPEED_1000;
-			अगर (is_duplex == DUPLEX_FULL)
+			if (is_duplex == DUPLEX_FULL)
 				vars->link_status |= LINK_1000TFD;
-			अन्यथा
+			else
 				vars->link_status |= LINK_1000THD;
-			अवरोध;
+			break;
 
-		हाल GP_STATUS_2_5G:
+		case GP_STATUS_2_5G:
 			vars->line_speed = SPEED_2500;
-			अगर (is_duplex == DUPLEX_FULL)
+			if (is_duplex == DUPLEX_FULL)
 				vars->link_status |= LINK_2500TFD;
-			अन्यथा
+			else
 				vars->link_status |= LINK_2500THD;
-			अवरोध;
+			break;
 
-		हाल GP_STATUS_5G:
-		हाल GP_STATUS_6G:
+		case GP_STATUS_5G:
+		case GP_STATUS_6G:
 			DP(NETIF_MSG_LINK,
 				 "link speed unsupported  gp_status 0x%x\n",
 				  speed_mask);
-			वापस -EINVAL;
+			return -EINVAL;
 
-		हाल GP_STATUS_10G_KX4:
-		हाल GP_STATUS_10G_HIG:
-		हाल GP_STATUS_10G_CX4:
-		हाल GP_STATUS_10G_KR:
-		हाल GP_STATUS_10G_SFI:
-		हाल GP_STATUS_10G_XFI:
+		case GP_STATUS_10G_KX4:
+		case GP_STATUS_10G_HIG:
+		case GP_STATUS_10G_CX4:
+		case GP_STATUS_10G_KR:
+		case GP_STATUS_10G_SFI:
+		case GP_STATUS_10G_XFI:
 			vars->line_speed = SPEED_10000;
 			vars->link_status |= LINK_10GTFD;
-			अवरोध;
-		हाल GP_STATUS_20G_DXGXS:
-		हाल GP_STATUS_20G_KR2:
+			break;
+		case GP_STATUS_20G_DXGXS:
+		case GP_STATUS_20G_KR2:
 			vars->line_speed = SPEED_20000;
 			vars->link_status |= LINK_20GTFD;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DP(NETIF_MSG_LINK,
 				  "link speed unsupported gp_status 0x%x\n",
 				  speed_mask);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु /* link_करोwn */
+			return -EINVAL;
+		}
+	} else { /* link_down */
 		DP(NETIF_MSG_LINK, "phy link down\n");
 
 		vars->phy_link_up = 0;
@@ -5610,66 +5609,66 @@
 		vars->duplex = DUPLEX_FULL;
 		vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
 		vars->mac_type = MAC_TYPE_NONE;
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, " phy_link_up %x line_speed %d\n",
 		    vars->phy_link_up, vars->line_speed);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 bnx2x_link_settings_status(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_link_settings_status(struct bnx2x_phy *phy,
+				     struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 
 	u16 gp_status, duplex = DUPLEX_HALF, link_up = 0, speed_mask;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	/* Read gp_status */
 	CL22_RD_OVER_CL45(bp, phy,
 			  MDIO_REG_BANK_GP_STATUS,
 			  MDIO_GP_STATUS_TOP_AN_STATUS1,
 			  &gp_status);
-	अगर (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_DUPLEX_STATUS)
+	if (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_DUPLEX_STATUS)
 		duplex = DUPLEX_FULL;
-	अगर (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS)
+	if (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS)
 		link_up = 1;
 	speed_mask = gp_status & GP_STATUS_SPEED_MASK;
 	DP(NETIF_MSG_LINK, "gp_status 0x%x, is_link_up %d, speed_mask 0x%x\n",
 		       gp_status, link_up, speed_mask);
 	rc = bnx2x_get_link_speed_duplex(phy, params, vars, link_up, speed_mask,
 					 duplex);
-	अगर (rc == -EINVAL)
-		वापस rc;
+	if (rc == -EINVAL)
+		return rc;
 
-	अगर (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS) अणु
-		अगर (SINGLE_MEDIA_सूचीECT(params)) अणु
+	if (gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS) {
+		if (SINGLE_MEDIA_DIRECT(params)) {
 			vars->duplex = duplex;
 			bnx2x_flow_ctrl_resolve(phy, params, vars, gp_status);
-			अगर (phy->req_line_speed == SPEED_AUTO_NEG)
+			if (phy->req_line_speed == SPEED_AUTO_NEG)
 				bnx2x_xgxs_an_resolve(phy, params, vars,
 						      gp_status);
-		पूर्ण
-	पूर्ण अन्यथा अणु /* Link_करोwn */
-		अगर ((phy->req_line_speed == SPEED_AUTO_NEG) &&
-		    SINGLE_MEDIA_सूचीECT(params)) अणु
-			/* Check संकेत is detected */
+		}
+	} else { /* Link_down */
+		if ((phy->req_line_speed == SPEED_AUTO_NEG) &&
+		    SINGLE_MEDIA_DIRECT(params)) {
+			/* Check signal is detected */
 			bnx2x_check_fallback_to_cl37(phy, params);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Read LP advertised speeds*/
-	अगर (SINGLE_MEDIA_सूचीECT(params) &&
-	    (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE)) अणु
+	if (SINGLE_MEDIA_DIRECT(params) &&
+	    (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE)) {
 		u16 val;
 
 		CL22_RD_OVER_CL45(bp, phy, MDIO_REG_BANK_CL73_IEEEB1,
 				  MDIO_CL73_IEEEB1_AN_LP_ADV2, &val);
 
-		अगर (val & MDIO_CL73_IEEEB1_AN_ADV2_ADVR_1000M_KX)
+		if (val & MDIO_CL73_IEEEB1_AN_ADV2_ADVR_1000M_KX)
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE;
-		अगर (val & (MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KX4 |
+		if (val & (MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KX4 |
 			   MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KR))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
@@ -5677,128 +5676,128 @@
 		CL22_RD_OVER_CL45(bp, phy, MDIO_REG_BANK_OVER_1G,
 				  MDIO_OVER_1G_LP_UP1, &val);
 
-		अगर (val & MDIO_OVER_1G_UP1_2_5G)
+		if (val & MDIO_OVER_1G_UP1_2_5G)
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_2500XFD_CAPABLE;
-		अगर (val & (MDIO_OVER_1G_UP1_10G | MDIO_OVER_1G_UP1_10GH))
+		if (val & (MDIO_OVER_1G_UP1_10G | MDIO_OVER_1G_UP1_10GH))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
-	पूर्ण
+	}
 
 	DP(NETIF_MSG_LINK, "duplex %x  flow_ctrl 0x%x link_status 0x%x\n",
 		   vars->duplex, vars->flow_ctrl, vars->link_status);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u8 bnx2x_warpcore_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_warpcore_read_status(struct bnx2x_phy *phy,
+				     struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 lane;
 	u16 gp_status1, gp_speed, link_up, duplex = DUPLEX_FULL;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	lane = bnx2x_get_warpcore_lane(phy, params);
 	/* Read gp_status */
-	अगर ((params->loopback_mode) &&
-	    (phy->flags & FLAGS_WC_DUAL_MODE)) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	if ((params->loopback_mode) &&
+	    (phy->flags & FLAGS_WC_DUAL_MODE)) {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_DIGITAL5_LINK_STATUS, &link_up);
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_DIGITAL5_LINK_STATUS, &link_up);
 		link_up &= 0x1;
-	पूर्ण अन्यथा अगर ((phy->req_line_speed > SPEED_10000) &&
-		(phy->supported & SUPPORTED_20000baseMLD2_Full)) अणु
+	} else if ((phy->req_line_speed > SPEED_10000) &&
+		(phy->supported & SUPPORTED_20000baseMLD2_Full)) {
 		u16 temp_link_up;
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				1, &temp_link_up);
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				1, &link_up);
 		DP(NETIF_MSG_LINK, "PCS RX link status = 0x%x-->0x%x\n",
 			       temp_link_up, link_up);
 		link_up &= (1<<2);
-		अगर (link_up)
+		if (link_up)
 			bnx2x_ext_phy_resolve_fc(phy, params, vars);
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	} else {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_GP2_STATUS_GP_2_1,
 				&gp_status1);
 		DP(NETIF_MSG_LINK, "0x81d1 = 0x%x\n", gp_status1);
-		/* Check क्रम either KR, 1G, or AN up. */
+		/* Check for either KR, 1G, or AN up. */
 		link_up = ((gp_status1 >> 8) |
 			   (gp_status1 >> 12) |
 			   (gp_status1)) &
 			(1 << lane);
-		अगर (phy->supported & SUPPORTED_20000baseKR2_Full) अणु
+		if (phy->supported & SUPPORTED_20000baseKR2_Full) {
 			u16 an_link;
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 					MDIO_AN_REG_STATUS, &an_link);
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+			bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 					MDIO_AN_REG_STATUS, &an_link);
 			link_up |= (an_link & (1<<2));
-		पूर्ण
-		अगर (link_up && SINGLE_MEDIA_सूचीECT(params)) अणु
+		}
+		if (link_up && SINGLE_MEDIA_DIRECT(params)) {
 			u16 pd, gp_status4;
-			अगर (phy->req_line_speed == SPEED_AUTO_NEG) अणु
+			if (phy->req_line_speed == SPEED_AUTO_NEG) {
 				/* Check Autoneg complete */
-				bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+				bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 						MDIO_WC_REG_GP2_STATUS_GP_2_4,
 						&gp_status4);
-				अगर (gp_status4 & ((1<<12)<<lane))
+				if (gp_status4 & ((1<<12)<<lane))
 					vars->link_status |=
 					LINK_STATUS_AUTO_NEGOTIATE_COMPLETE;
 
 				/* Check parallel detect used */
-				bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+				bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 						MDIO_WC_REG_PAR_DET_10G_STATUS,
 						&pd);
-				अगर (pd & (1<<15))
+				if (pd & (1<<15))
 					vars->link_status |=
 					LINK_STATUS_PARALLEL_DETECTION_USED;
-			पूर्ण
+			}
 			bnx2x_ext_phy_resolve_fc(phy, params, vars);
 			vars->duplex = duplex;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) &&
-	    SINGLE_MEDIA_सूचीECT(params)) अणु
+	if ((vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) &&
+	    SINGLE_MEDIA_DIRECT(params)) {
 		u16 val;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_LP_AUTO_NEG2, &val);
 
-		अगर (val & MDIO_CL73_IEEEB1_AN_ADV2_ADVR_1000M_KX)
+		if (val & MDIO_CL73_IEEEB1_AN_ADV2_ADVR_1000M_KX)
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE;
-		अगर (val & (MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KX4 |
+		if (val & (MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KX4 |
 			   MDIO_CL73_IEEEB1_AN_ADV2_ADVR_10G_KR))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_DIGITAL3_LP_UP1, &val);
 
-		अगर (val & MDIO_OVER_1G_UP1_2_5G)
+		if (val & MDIO_OVER_1G_UP1_2_5G)
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_2500XFD_CAPABLE;
-		अगर (val & (MDIO_OVER_1G_UP1_10G | MDIO_OVER_1G_UP1_10GH))
+		if (val & (MDIO_OVER_1G_UP1_10G | MDIO_OVER_1G_UP1_10GH))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
 
-	पूर्ण
+	}
 
 
-	अगर (lane < 2) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	if (lane < 2) {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_GP2_STATUS_GP_2_2, &gp_speed);
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	} else {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_GP2_STATUS_GP_2_3, &gp_speed);
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "lane %d gp_speed 0x%x\n", lane, gp_speed);
 
-	अगर ((lane & 1) == 0)
+	if ((lane & 1) == 0)
 		gp_speed <<= 8;
 	gp_speed &= 0x3f00;
 	link_up = !!link_up;
@@ -5806,19 +5805,19 @@
 	rc = bnx2x_get_link_speed_duplex(phy, params, vars, link_up, gp_speed,
 					 duplex);
 
-	/* In हाल of KR link करोwn, start up the recovering procedure */
-	अगर ((!link_up) && (phy->media_type == ETH_PHY_KR) &&
+	/* In case of KR link down, start up the recovering procedure */
+	if ((!link_up) && (phy->media_type == ETH_PHY_KR) &&
 	    (!(phy->flags & FLAGS_WC_DUAL_MODE)))
 		vars->rx_tx_asic_rst = MAX_KR_LINK_RETRY;
 
 	DP(NETIF_MSG_LINK, "duplex %x  flow_ctrl 0x%x link_status 0x%x\n",
 		   vars->duplex, vars->flow_ctrl, vars->link_status);
-	वापस rc;
-पूर्ण
-अटल व्योम bnx2x_set_gmii_tx_driver(काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	काष्ठा bnx2x_phy *phy = &params->phy[INT_PHY];
+	return rc;
+}
+static void bnx2x_set_gmii_tx_driver(struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	struct bnx2x_phy *phy = &params->phy[INT_PHY];
 	u16 lp_up2;
 	u16 tx_driver;
 	u16 bank;
@@ -5833,31 +5832,31 @@
 		   MDIO_OVER_1G_LP_UP2_PREEMPHASIS_SHIFT) <<
 		  MDIO_TX0_TX_DRIVER_PREEMPHASIS_SHIFT);
 
-	अगर (lp_up2 == 0)
-		वापस;
+	if (lp_up2 == 0)
+		return;
 
-	क्रम (bank = MDIO_REG_BANK_TX0; bank <= MDIO_REG_BANK_TX3;
-	      bank += (MDIO_REG_BANK_TX1 - MDIO_REG_BANK_TX0)) अणु
+	for (bank = MDIO_REG_BANK_TX0; bank <= MDIO_REG_BANK_TX3;
+	      bank += (MDIO_REG_BANK_TX1 - MDIO_REG_BANK_TX0)) {
 		CL22_RD_OVER_CL45(bp, phy,
 				  bank,
 				  MDIO_TX0_TX_DRIVER, &tx_driver);
 
 		/* Replace tx_driver bits [15:12] */
-		अगर (lp_up2 !=
-		    (tx_driver & MDIO_TX0_TX_DRIVER_PREEMPHASIS_MASK)) अणु
+		if (lp_up2 !=
+		    (tx_driver & MDIO_TX0_TX_DRIVER_PREEMPHASIS_MASK)) {
 			tx_driver &= ~MDIO_TX0_TX_DRIVER_PREEMPHASIS_MASK;
 			tx_driver |= lp_up2;
 			CL22_WR_OVER_CL45(bp, phy,
 					  bank,
 					  MDIO_TX0_TX_DRIVER, tx_driver);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक bnx2x_emac_program(काष्ठा link_params *params,
-			      काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_emac_program(struct link_params *params,
+			      struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u16 mode = 0;
 
@@ -5867,120 +5866,120 @@
 		       (EMAC_MODE_25G_MODE |
 			EMAC_MODE_PORT_MII_10M |
 			EMAC_MODE_HALF_DUPLEX));
-	चयन (vars->line_speed) अणु
-	हाल SPEED_10:
+	switch (vars->line_speed) {
+	case SPEED_10:
 		mode |= EMAC_MODE_PORT_MII_10M;
-		अवरोध;
+		break;
 
-	हाल SPEED_100:
+	case SPEED_100:
 		mode |= EMAC_MODE_PORT_MII;
-		अवरोध;
+		break;
 
-	हाल SPEED_1000:
+	case SPEED_1000:
 		mode |= EMAC_MODE_PORT_GMII;
-		अवरोध;
+		break;
 
-	हाल SPEED_2500:
+	case SPEED_2500:
 		mode |= (EMAC_MODE_25G_MODE | EMAC_MODE_PORT_GMII);
-		अवरोध;
+		break;
 
-	शेष:
-		/* 10G not valid क्रम EMAC */
+	default:
+		/* 10G not valid for EMAC */
 		DP(NETIF_MSG_LINK, "Invalid line_speed 0x%x\n",
 			   vars->line_speed);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (vars->duplex == DUPLEX_HALF)
+	if (vars->duplex == DUPLEX_HALF)
 		mode |= EMAC_MODE_HALF_DUPLEX;
 	bnx2x_bits_en(bp,
 		      GRCBASE_EMAC0 + port*0x400 + EMAC_REG_EMAC_MODE,
 		      mode);
 
 	bnx2x_set_led(params, vars, LED_MODE_OPER, vars->line_speed);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_set_preemphasis(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params)
-अणु
+static void bnx2x_set_preemphasis(struct bnx2x_phy *phy,
+				  struct link_params *params)
+{
 
 	u16 bank, i = 0;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	क्रम (bank = MDIO_REG_BANK_RX0, i = 0; bank <= MDIO_REG_BANK_RX3;
-	      bank += (MDIO_REG_BANK_RX1-MDIO_REG_BANK_RX0), i++) अणु
+	for (bank = MDIO_REG_BANK_RX0, i = 0; bank <= MDIO_REG_BANK_RX3;
+	      bank += (MDIO_REG_BANK_RX1-MDIO_REG_BANK_RX0), i++) {
 			CL22_WR_OVER_CL45(bp, phy,
 					  bank,
 					  MDIO_RX0_RX_EQ_BOOST,
 					  phy->rx_preemphasis[i]);
-	पूर्ण
+	}
 
-	क्रम (bank = MDIO_REG_BANK_TX0, i = 0; bank <= MDIO_REG_BANK_TX3;
-		      bank += (MDIO_REG_BANK_TX1 - MDIO_REG_BANK_TX0), i++) अणु
+	for (bank = MDIO_REG_BANK_TX0, i = 0; bank <= MDIO_REG_BANK_TX3;
+		      bank += (MDIO_REG_BANK_TX1 - MDIO_REG_BANK_TX0), i++) {
 			CL22_WR_OVER_CL45(bp, phy,
 					  bank,
 					  MDIO_TX0_TX_DRIVER,
 					  phy->tx_preemphasis[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_xgxs_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u8 enable_cl73 = (SINGLE_MEDIA_सूचीECT(params) ||
+static void bnx2x_xgxs_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	u8 enable_cl73 = (SINGLE_MEDIA_DIRECT(params) ||
 			  (params->loopback_mode == LOOPBACK_XGXS));
-	अगर (!(vars->phy_flags & PHY_SGMII_FLAG)) अणु
-		अगर (SINGLE_MEDIA_सूचीECT(params) &&
+	if (!(vars->phy_flags & PHY_SGMII_FLAG)) {
+		if (SINGLE_MEDIA_DIRECT(params) &&
 		    (params->feature_config_flags &
 		     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED))
 			bnx2x_set_preemphasis(phy, params);
 
 		/* Forced speed requested? */
-		अगर (vars->line_speed != SPEED_AUTO_NEG ||
-		    (SINGLE_MEDIA_सूचीECT(params) &&
-		     params->loopback_mode == LOOPBACK_EXT)) अणु
+		if (vars->line_speed != SPEED_AUTO_NEG ||
+		    (SINGLE_MEDIA_DIRECT(params) &&
+		     params->loopback_mode == LOOPBACK_EXT)) {
 			DP(NETIF_MSG_LINK, "not SGMII, no AN\n");
 
-			/* Disable स्वतःneg */
-			bnx2x_set_स्वतःneg(phy, params, vars, 0);
+			/* Disable autoneg */
+			bnx2x_set_autoneg(phy, params, vars, 0);
 
 			/* Program speed and duplex */
 			bnx2x_program_serdes(phy, params, vars);
 
-		पूर्ण अन्यथा अणु /* AN_mode */
+		} else { /* AN_mode */
 			DP(NETIF_MSG_LINK, "not SGMII, AN\n");
 
 			/* AN enabled */
 			bnx2x_set_brcm_cl37_advertisement(phy, params);
 
-			/* Program duplex & छोड़ो advertisement (क्रम aneg) */
+			/* Program duplex & pause advertisement (for aneg) */
 			bnx2x_set_ieee_aneg_advertisement(phy, params,
 							  vars->ieee_fc);
 
-			/* Enable स्वतःneg */
-			bnx2x_set_स्वतःneg(phy, params, vars, enable_cl73);
+			/* Enable autoneg */
+			bnx2x_set_autoneg(phy, params, vars, enable_cl73);
 
 			/* Enable and restart AN */
-			bnx2x_restart_स्वतःneg(phy, params, enable_cl73);
-		पूर्ण
+			bnx2x_restart_autoneg(phy, params, enable_cl73);
+		}
 
-	पूर्ण अन्यथा अणु /* SGMII mode */
+	} else { /* SGMII mode */
 		DP(NETIF_MSG_LINK, "SGMII\n");
 
 		bnx2x_initialize_sgmii_process(phy, params, vars);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnx2x_prepare_xgxs(काष्ठा bnx2x_phy *phy,
-			  काष्ठा link_params *params,
-			  काष्ठा link_vars *vars)
-अणु
-	पूर्णांक rc;
+static int bnx2x_prepare_xgxs(struct bnx2x_phy *phy,
+			  struct link_params *params,
+			  struct link_vars *vars)
+{
+	int rc;
 	vars->phy_flags |= PHY_XGXS_FLAG;
-	अगर ((phy->req_line_speed &&
+	if ((phy->req_line_speed &&
 	     ((phy->req_line_speed == SPEED_100) ||
 	      (phy->req_line_speed == SPEED_10))) ||
 	    (!phy->req_line_speed &&
@@ -5988,96 +5987,96 @@
 	      PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_FULL) &&
 	     (phy->speed_cap_mask <
 	      PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)) ||
-	    (phy->type == PORT_HW_CFG_SERDES_EXT_PHY_TYPE_सूचीECT_SD))
+	    (phy->type == PORT_HW_CFG_SERDES_EXT_PHY_TYPE_DIRECT_SD))
 		vars->phy_flags |= PHY_SGMII_FLAG;
-	अन्यथा
+	else
 		vars->phy_flags &= ~PHY_SGMII_FLAG;
 
 	bnx2x_calc_ieee_aneg_adv(phy, params, &vars->ieee_fc);
 	bnx2x_set_aer_mmd(params, phy);
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT)
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT)
 		bnx2x_set_master_ln(params, phy);
 
 	rc = bnx2x_reset_unicore(params, phy, 0);
-	/* Reset the SerDes and रुको क्रम reset bit वापस low */
-	अगर (rc)
-		वापस rc;
+	/* Reset the SerDes and wait for reset bit return low */
+	if (rc)
+		return rc;
 
 	bnx2x_set_aer_mmd(params, phy);
 	/* Setting the masterLn_def again after the reset */
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT) अणु
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT) {
 		bnx2x_set_master_ln(params, phy);
 		bnx2x_set_swap_lanes(params, phy);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल u16 bnx2x_रुको_reset_complete(काष्ठा bnx2x *bp,
-				     काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params)
-अणु
+static u16 bnx2x_wait_reset_complete(struct bnx2x *bp,
+				     struct bnx2x_phy *phy,
+				     struct link_params *params)
+{
 	u16 cnt, ctrl;
-	/* Wait क्रम soft reset to get cleared up to 1 sec */
-	क्रम (cnt = 0; cnt < 1000; cnt++) अणु
-		अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE)
-			bnx2x_cl22_पढ़ो(bp, phy,
+	/* Wait for soft reset to get cleared up to 1 sec */
+	for (cnt = 0; cnt < 1000; cnt++) {
+		if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE)
+			bnx2x_cl22_read(bp, phy,
 				MDIO_PMA_REG_CTRL, &ctrl);
-		अन्यथा
-			bnx2x_cl45_पढ़ो(bp, phy,
+		else
+			bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_CTRL, &ctrl);
-		अगर (!(ctrl & (1<<15)))
-			अवरोध;
+		if (!(ctrl & (1<<15)))
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
-	अगर (cnt == 1000)
+	if (cnt == 1000)
 		netdev_err(bp->dev,  "Warning: PHY was not initialized,"
 				      " Port %d\n",
 			 params->port);
 	DP(NETIF_MSG_LINK, "control reg 0x%x (after %d ms)\n", ctrl, cnt);
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 
-अटल व्योम bnx2x_link_पूर्णांक_enable(काष्ठा link_params *params)
-अणु
+static void bnx2x_link_int_enable(struct link_params *params)
+{
 	u8 port = params->port;
 	u32 mask;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	/* Setting the status to report on link up क्रम either XGXS or SerDes */
-	अगर (CHIP_IS_E3(bp)) अणु
+	/* Setting the status to report on link up for either XGXS or SerDes */
+	if (CHIP_IS_E3(bp)) {
 		mask = NIG_MASK_XGXS0_LINK_STATUS;
-		अगर (!(SINGLE_MEDIA_सूचीECT(params)))
+		if (!(SINGLE_MEDIA_DIRECT(params)))
 			mask |= NIG_MASK_MI_INT;
-	पूर्ण अन्यथा अगर (params->चयन_cfg == SWITCH_CFG_10G) अणु
+	} else if (params->switch_cfg == SWITCH_CFG_10G) {
 		mask = (NIG_MASK_XGXS0_LINK10G |
 			NIG_MASK_XGXS0_LINK_STATUS);
 		DP(NETIF_MSG_LINK, "enabled XGXS interrupt\n");
-		अगर (!(SINGLE_MEDIA_सूचीECT(params)) &&
+		if (!(SINGLE_MEDIA_DIRECT(params)) &&
 			params->phy[INT_PHY].type !=
-				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE) अणु
+				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE) {
 			mask |= NIG_MASK_MI_INT;
 			DP(NETIF_MSG_LINK, "enabled external phy int\n");
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अणु /* SerDes */
+	} else { /* SerDes */
 		mask = NIG_MASK_SERDES0_LINK_STATUS;
 		DP(NETIF_MSG_LINK, "enabled SerDes interrupt\n");
-		अगर (!(SINGLE_MEDIA_सूचीECT(params)) &&
+		if (!(SINGLE_MEDIA_DIRECT(params)) &&
 			params->phy[INT_PHY].type !=
-				PORT_HW_CFG_SERDES_EXT_PHY_TYPE_NOT_CONN) अणु
+				PORT_HW_CFG_SERDES_EXT_PHY_TYPE_NOT_CONN) {
 			mask |= NIG_MASK_MI_INT;
 			DP(NETIF_MSG_LINK, "enabled external phy int\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	bnx2x_bits_en(bp,
 		      NIG_REG_MASK_INTERRUPT_PORT0 + port*4,
 		      mask);
 
 	DP(NETIF_MSG_LINK, "port %x, is_xgxs %x, int_status 0x%x\n", port,
-		 (params->चयन_cfg == SWITCH_CFG_10G),
+		 (params->switch_cfg == SWITCH_CFG_10G),
 		 REG_RD(bp, NIG_REG_STATUS_INTERRUPT_PORT0 + port*4));
 	DP(NETIF_MSG_LINK, " int_mask 0x%x, MI_INT %x, SERDES_LINK %x\n",
 		 REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 + port*4),
@@ -6086,64 +6085,64 @@
 	DP(NETIF_MSG_LINK, " 10G %x, XGXS_LINK %x\n",
 	   REG_RD(bp, NIG_REG_XGXS0_STATUS_LINK10G + port*0x68),
 	   REG_RD(bp, NIG_REG_XGXS0_STATUS_LINK_STATUS + port*0x68));
-पूर्ण
+}
 
-अटल व्योम bnx2x_rearm_latch_संकेत(काष्ठा bnx2x *bp, u8 port,
-				     u8 exp_mi_पूर्णांक)
-अणु
+static void bnx2x_rearm_latch_signal(struct bnx2x *bp, u8 port,
+				     u8 exp_mi_int)
+{
 	u32 latch_status = 0;
 
-	/* Disable the MI INT ( बाह्यal phy पूर्णांक ) by writing 1 to the
-	 * status रेजिस्टर. Link करोwn indication is high-active-संकेत,
-	 * so in this हाल we need to ग_लिखो the status to clear the XOR
+	/* Disable the MI INT ( external phy int ) by writing 1 to the
+	 * status register. Link down indication is high-active-signal,
+	 * so in this case we need to write the status to clear the XOR
 	 */
-	/* Read Latched संकेतs */
+	/* Read Latched signals */
 	latch_status = REG_RD(bp,
 				    NIG_REG_LATCH_STATUS_0 + port*8);
 	DP(NETIF_MSG_LINK, "latch_status = 0x%x\n", latch_status);
-	/* Handle only those with latched-संकेत=up.*/
-	अगर (exp_mi_पूर्णांक)
+	/* Handle only those with latched-signal=up.*/
+	if (exp_mi_int)
 		bnx2x_bits_en(bp,
 			      NIG_REG_STATUS_INTERRUPT_PORT0
 			      + port*4,
 			      NIG_STATUS_EMAC0_MI_INT);
-	अन्यथा
+	else
 		bnx2x_bits_dis(bp,
 			       NIG_REG_STATUS_INTERRUPT_PORT0
 			       + port*4,
 			       NIG_STATUS_EMAC0_MI_INT);
 
-	अगर (latch_status & 1) अणु
+	if (latch_status & 1) {
 
-		/* For all latched-संकेत=up : Re-Arm Latch संकेतs */
+		/* For all latched-signal=up : Re-Arm Latch signals */
 		REG_WR(bp, NIG_REG_LATCH_STATUS_0 + port*8,
 		       (latch_status & 0xfffe) | (latch_status & 1));
-	पूर्ण
-	/* For all latched-संकेत=up,Write original_संकेत to status */
-पूर्ण
+	}
+	/* For all latched-signal=up,Write original_signal to status */
+}
 
-अटल व्योम bnx2x_link_पूर्णांक_ack(काष्ठा link_params *params,
-			       काष्ठा link_vars *vars, u8 is_10g_plus)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_link_int_ack(struct link_params *params,
+			       struct link_vars *vars, u8 is_10g_plus)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 	u32 mask;
 	/* First reset all status we assume only one line will be
-	 * change at a समय
+	 * change at a time
 	 */
 	bnx2x_bits_dis(bp, NIG_REG_STATUS_INTERRUPT_PORT0 + port*4,
 		       (NIG_STATUS_XGXS0_LINK10G |
 			NIG_STATUS_XGXS0_LINK_STATUS |
 			NIG_STATUS_SERDES0_LINK_STATUS));
-	अगर (vars->phy_link_up) अणु
-		अगर (USES_WARPCORE(bp))
+	if (vars->phy_link_up) {
+		if (USES_WARPCORE(bp))
 			mask = NIG_STATUS_XGXS0_LINK_STATUS;
-		अन्यथा अणु
-			अगर (is_10g_plus)
+		else {
+			if (is_10g_plus)
 				mask = NIG_STATUS_XGXS0_LINK10G;
-			अन्यथा अगर (params->चयन_cfg == SWITCH_CFG_10G) अणु
-				/* Disable the link पूर्णांकerrupt by writing 1 to
-				 * the relevant lane in the status रेजिस्टर
+			else if (params->switch_cfg == SWITCH_CFG_10G) {
+				/* Disable the link interrupt by writing 1 to
+				 * the relevant lane in the status register
 				 */
 				u32 ser_lane =
 					((params->lane_config &
@@ -6151,121 +6150,121 @@
 				    PORT_HW_CFG_LANE_SWAP_CFG_MASTER_SHIFT);
 				mask = ((1 << ser_lane) <<
 				       NIG_STATUS_XGXS0_LINK_STATUS_SIZE);
-			पूर्ण अन्यथा
+			} else
 				mask = NIG_STATUS_SERDES0_LINK_STATUS;
-		पूर्ण
+		}
 		DP(NETIF_MSG_LINK, "Ack link up interrupt with mask 0x%x\n",
 			       mask);
 		bnx2x_bits_en(bp,
 			      NIG_REG_STATUS_INTERRUPT_PORT0 + port*4,
 			      mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnx2x_null_क्रमmat_ver(u32 spirom_ver, u8 *str, u16 *len)
-अणु
+static int bnx2x_null_format_ver(u32 spirom_ver, u8 *str, u16 *len)
+{
 	str[0] = '\0';
 	(*len)--;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_क्रमmat_ver(u32 num, u8 *str, u16 *len)
-अणु
+static int bnx2x_format_ver(u32 num, u8 *str, u16 *len)
+{
 	u16 ret;
 
-	अगर (*len < 10) अणु
-		/* Need more than 10अक्षरs क्रम this क्रमmat */
-		bnx2x_null_क्रमmat_ver(num, str, len);
-		वापस -EINVAL;
-	पूर्ण
+	if (*len < 10) {
+		/* Need more than 10chars for this format */
+		bnx2x_null_format_ver(num, str, len);
+		return -EINVAL;
+	}
 
-	ret = scnम_लिखो(str, *len, "%hx.%hx", num >> 16, num);
+	ret = scnprintf(str, *len, "%hx.%hx", num >> 16, num);
 	*len -= ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_3_seq_क्रमmat_ver(u32 num, u8 *str, u16 *len)
-अणु
+static int bnx2x_3_seq_format_ver(u32 num, u8 *str, u16 *len)
+{
 	u16 ret;
 
-	अगर (*len < 10) अणु
-		/* Need more than 10अक्षरs क्रम this क्रमmat */
-		bnx2x_null_क्रमmat_ver(num, str, len);
-		वापस -EINVAL;
-	पूर्ण
+	if (*len < 10) {
+		/* Need more than 10chars for this format */
+		bnx2x_null_format_ver(num, str, len);
+		return -EINVAL;
+	}
 
-	ret = scnम_लिखो(str, *len, "%hhx.%hhx.%hhx", num >> 16, num >> 8, num);
+	ret = scnprintf(str, *len, "%hhx.%hhx.%hhx", num >> 16, num >> 8, num);
 	*len -= ret;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bnx2x_get_ext_phy_fw_version(काष्ठा link_params *params, u8 *version,
+int bnx2x_get_ext_phy_fw_version(struct link_params *params, u8 *version,
 				 u16 len)
-अणु
-	काष्ठा bnx2x *bp;
+{
+	struct bnx2x *bp;
 	u32 spirom_ver = 0;
-	पूर्णांक status = 0;
+	int status = 0;
 	u8 *ver_p = version;
-	u16 reमुख्य_len = len;
-	अगर (version == शून्य || params == शून्य)
-		वापस -EINVAL;
+	u16 remain_len = len;
+	if (version == NULL || params == NULL)
+		return -EINVAL;
 	bp = params->bp;
 
-	/* Extract first बाह्यal phy*/
+	/* Extract first external phy*/
 	version[0] = '\0';
 	spirom_ver = REG_RD(bp, params->phy[EXT_PHY1].ver_addr);
 
-	अगर (params->phy[EXT_PHY1].क्रमmat_fw_ver) अणु
-		status |= params->phy[EXT_PHY1].क्रमmat_fw_ver(spirom_ver,
+	if (params->phy[EXT_PHY1].format_fw_ver) {
+		status |= params->phy[EXT_PHY1].format_fw_ver(spirom_ver,
 							      ver_p,
-							      &reमुख्य_len);
-		ver_p += (len - reमुख्य_len);
-	पूर्ण
-	अगर ((params->num_phys == MAX_PHYS) &&
-	    (params->phy[EXT_PHY2].ver_addr != 0)) अणु
+							      &remain_len);
+		ver_p += (len - remain_len);
+	}
+	if ((params->num_phys == MAX_PHYS) &&
+	    (params->phy[EXT_PHY2].ver_addr != 0)) {
 		spirom_ver = REG_RD(bp, params->phy[EXT_PHY2].ver_addr);
-		अगर (params->phy[EXT_PHY2].क्रमmat_fw_ver) अणु
+		if (params->phy[EXT_PHY2].format_fw_ver) {
 			*ver_p = '/';
 			ver_p++;
-			reमुख्य_len--;
-			status |= params->phy[EXT_PHY2].क्रमmat_fw_ver(
+			remain_len--;
+			status |= params->phy[EXT_PHY2].format_fw_ver(
 				spirom_ver,
 				ver_p,
-				&reमुख्य_len);
-			ver_p = version + (len - reमुख्य_len);
-		पूर्ण
-	पूर्ण
+				&remain_len);
+			ver_p = version + (len - remain_len);
+		}
+	}
 	*ver_p = '\0';
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम bnx2x_set_xgxs_loopback(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params)
-अणु
+static void bnx2x_set_xgxs_loopback(struct bnx2x_phy *phy,
+				    struct link_params *params)
+{
 	u8 port = params->port;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	अगर (phy->req_line_speed != SPEED_1000) अणु
+	if (phy->req_line_speed != SPEED_1000) {
 		u32 md_devad = 0;
 
 		DP(NETIF_MSG_LINK, "XGXS 10G loopback enable\n");
 
-		अगर (!CHIP_IS_E3(bp)) अणु
+		if (!CHIP_IS_E3(bp)) {
 			/* Change the uni_phy_addr in the nig */
 			md_devad = REG_RD(bp, (NIG_REG_XGXS0_CTRL_MD_DEVAD +
 					       port*0x18));
 
 			REG_WR(bp, NIG_REG_XGXS0_CTRL_MD_DEVAD + port*0x18,
 			       0x5);
-		पूर्ण
+		}
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 5,
 				 (MDIO_REG_BANK_AER_BLOCK +
 				  (MDIO_AER_BLOCK_AER_REG & 0xf)),
 				 0x2800);
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 5,
 				 (MDIO_REG_BANK_CL73_IEEEB0 +
 				  (MDIO_CL73_IEEEB0_CL73_AN_CONTROL & 0xf)),
@@ -6274,124 +6273,124 @@
 		/* Set aer mmd back */
 		bnx2x_set_aer_mmd(params, phy);
 
-		अगर (!CHIP_IS_E3(bp)) अणु
+		if (!CHIP_IS_E3(bp)) {
 			/* And md_devad */
 			REG_WR(bp, NIG_REG_XGXS0_CTRL_MD_DEVAD + port*0x18,
 			       md_devad);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		u16 mii_ctrl;
 		DP(NETIF_MSG_LINK, "XGXS 1G loopback enable\n");
-		bnx2x_cl45_पढ़ो(bp, phy, 5,
+		bnx2x_cl45_read(bp, phy, 5,
 				(MDIO_REG_BANK_COMBO_IEEE0 +
 				(MDIO_COMBO_IEEE0_MII_CONTROL & 0xf)),
 				&mii_ctrl);
-		bnx2x_cl45_ग_लिखो(bp, phy, 5,
+		bnx2x_cl45_write(bp, phy, 5,
 				 (MDIO_REG_BANK_COMBO_IEEE0 +
 				 (MDIO_COMBO_IEEE0_MII_CONTROL & 0xf)),
 				 mii_ctrl |
 				 MDIO_COMBO_IEEO_MII_CONTROL_LOOPBACK);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक bnx2x_set_led(काष्ठा link_params *params,
-		  काष्ठा link_vars *vars, u8 mode, u32 speed)
-अणु
+int bnx2x_set_led(struct link_params *params,
+		  struct link_vars *vars, u8 mode, u32 speed)
+{
 	u8 port = params->port;
 	u16 hw_led_mode = params->hw_led_mode;
-	पूर्णांक rc = 0;
+	int rc = 0;
 	u8 phy_idx;
-	u32 पंचांगp;
+	u32 tmp;
 	u32 emac_base = port ? GRCBASE_EMAC1 : GRCBASE_EMAC0;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "bnx2x_set_led: port %x, mode %d\n", port, mode);
 	DP(NETIF_MSG_LINK, "speed 0x%x, hw_led_mode 0x%x\n",
 		 speed, hw_led_mode);
-	/* In हाल */
-	क्रम (phy_idx = EXT_PHY1; phy_idx < MAX_PHYS; phy_idx++) अणु
-		अगर (params->phy[phy_idx].set_link_led) अणु
+	/* In case */
+	for (phy_idx = EXT_PHY1; phy_idx < MAX_PHYS; phy_idx++) {
+		if (params->phy[phy_idx].set_link_led) {
 			params->phy[phy_idx].set_link_led(
 				&params->phy[phy_idx], params, mode);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	चयन (mode) अणु
-	हाल LED_MODE_FRONT_PANEL_OFF:
-	हाल LED_MODE_OFF:
+	switch (mode) {
+	case LED_MODE_FRONT_PANEL_OFF:
+	case LED_MODE_OFF:
 		REG_WR(bp, NIG_REG_LED_10G_P0 + port*4, 0);
 		REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4,
 		       SHARED_HW_CFG_LED_MAC1);
 
-		पंचांगp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
-		अगर (params->phy[EXT_PHY1].type ==
+		tmp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
+		if (params->phy[EXT_PHY1].type ==
 			PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE)
-			पंचांगp &= ~(EMAC_LED_1000MB_OVERRIDE |
+			tmp &= ~(EMAC_LED_1000MB_OVERRIDE |
 				EMAC_LED_100MB_OVERRIDE |
 				EMAC_LED_10MB_OVERRIDE);
-		अन्यथा
-			पंचांगp |= EMAC_LED_OVERRIDE;
+		else
+			tmp |= EMAC_LED_OVERRIDE;
 
-		EMAC_WR(bp, EMAC_REG_EMAC_LED, पंचांगp);
-		अवरोध;
+		EMAC_WR(bp, EMAC_REG_EMAC_LED, tmp);
+		break;
 
-	हाल LED_MODE_OPER:
-		/* For all other phys, OPER mode is same as ON, so in हाल
-		 * link is करोwn, करो nothing
+	case LED_MODE_OPER:
+		/* For all other phys, OPER mode is same as ON, so in case
+		 * link is down, do nothing
 		 */
-		अगर (!vars->link_up)
-			अवरोध;
+		if (!vars->link_up)
+			break;
 		fallthrough;
-	हाल LED_MODE_ON:
-		अगर (((params->phy[EXT_PHY1].type ==
+	case LED_MODE_ON:
+		if (((params->phy[EXT_PHY1].type ==
 			  PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727) ||
 			 (params->phy[EXT_PHY1].type ==
 			  PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722)) &&
-		    CHIP_IS_E2(bp) && params->num_phys == 2) अणु
-			/* This is a work-around क्रम E2+8727 Configurations */
-			अगर (mode == LED_MODE_ON ||
-				speed == SPEED_10000)अणु
+		    CHIP_IS_E2(bp) && params->num_phys == 2) {
+			/* This is a work-around for E2+8727 Configurations */
+			if (mode == LED_MODE_ON ||
+				speed == SPEED_10000){
 				REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4, 0);
 				REG_WR(bp, NIG_REG_LED_10G_P0 + port*4, 1);
 
-				पंचांगp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
+				tmp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
 				EMAC_WR(bp, EMAC_REG_EMAC_LED,
-					(पंचांगp | EMAC_LED_OVERRIDE));
+					(tmp | EMAC_LED_OVERRIDE));
 				/* Return here without enabling traffic
 				 * LED blink and setting rate in ON mode.
 				 * In oper mode, enabling LED blink
 				 * and setting rate is needed.
 				 */
-				अगर (mode == LED_MODE_ON)
-					वापस rc;
-			पूर्ण
-		पूर्ण अन्यथा अगर (SINGLE_MEDIA_सूचीECT(params)) अणु
-			/* This is a work-around क्रम HW issue found when link
+				if (mode == LED_MODE_ON)
+					return rc;
+			}
+		} else if (SINGLE_MEDIA_DIRECT(params)) {
+			/* This is a work-around for HW issue found when link
 			 * is up in CL73
 			 */
-			अगर ((!CHIP_IS_E3(bp)) ||
+			if ((!CHIP_IS_E3(bp)) ||
 			    (CHIP_IS_E3(bp) &&
 			     mode == LED_MODE_ON))
 				REG_WR(bp, NIG_REG_LED_10G_P0 + port*4, 1);
 
-			अगर (CHIP_IS_E1x(bp) ||
+			if (CHIP_IS_E1x(bp) ||
 			    CHIP_IS_E2(bp) ||
 			    (mode == LED_MODE_ON))
 				REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4, 0);
-			अन्यथा
+			else
 				REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4,
 				       hw_led_mode);
-		पूर्ण अन्यथा अगर ((params->phy[EXT_PHY1].type ==
+		} else if ((params->phy[EXT_PHY1].type ==
 			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE) &&
-			   (mode == LED_MODE_ON)) अणु
+			   (mode == LED_MODE_ON)) {
 			REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4, 0);
-			पंचांगp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
-			EMAC_WR(bp, EMAC_REG_EMAC_LED, पंचांगp |
+			tmp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
+			EMAC_WR(bp, EMAC_REG_EMAC_LED, tmp |
 				EMAC_LED_OVERRIDE | EMAC_LED_1000MB_OVERRIDE);
 			/* Break here; otherwise, it'll disable the
-			 * पूर्णांकended override.
+			 * intended override.
 			 */
-			अवरोध;
-		पूर्ण अन्यथा अणु
+			break;
+		} else {
 			u32 nig_led_mode = ((params->hw_led_mode <<
 					     SHARED_HW_CFG_LED_MODE_SHIFT) ==
 					    SHARED_HW_CFG_LED_EXTPHY2) ?
@@ -6399,106 +6398,106 @@
 				 SHARED_HW_CFG_LED_MODE_SHIFT) : hw_led_mode;
 			REG_WR(bp, NIG_REG_LED_MODE_P0 + port*4,
 			       nig_led_mode);
-		पूर्ण
+		}
 
 		REG_WR(bp, NIG_REG_LED_CONTROL_OVERRIDE_TRAFFIC_P0 + port*4, 0);
 		/* Set blinking rate to ~15.9Hz */
-		अगर (CHIP_IS_E3(bp))
+		if (CHIP_IS_E3(bp))
 			REG_WR(bp, NIG_REG_LED_CONTROL_BLINK_RATE_P0 + port*4,
 			       LED_BLINK_RATE_VAL_E3);
-		अन्यथा
+		else
 			REG_WR(bp, NIG_REG_LED_CONTROL_BLINK_RATE_P0 + port*4,
 			       LED_BLINK_RATE_VAL_E1X_E2);
 		REG_WR(bp, NIG_REG_LED_CONTROL_BLINK_RATE_ENA_P0 +
 		       port*4, 1);
-		पंचांगp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
+		tmp = EMAC_RD(bp, EMAC_REG_EMAC_LED);
 		EMAC_WR(bp, EMAC_REG_EMAC_LED,
-			(पंचांगp & (~EMAC_LED_OVERRIDE)));
+			(tmp & (~EMAC_LED_OVERRIDE)));
 
-		अगर (CHIP_IS_E1(bp) &&
+		if (CHIP_IS_E1(bp) &&
 		    ((speed == SPEED_2500) ||
 		     (speed == SPEED_1000) ||
 		     (speed == SPEED_100) ||
-		     (speed == SPEED_10))) अणु
-			/* For speeds less than 10G LED scheme is dअगरferent */
+		     (speed == SPEED_10))) {
+			/* For speeds less than 10G LED scheme is different */
 			REG_WR(bp, NIG_REG_LED_CONTROL_OVERRIDE_TRAFFIC_P0
 			       + port*4, 1);
 			REG_WR(bp, NIG_REG_LED_CONTROL_TRAFFIC_P0 +
 			       port*4, 0);
 			REG_WR(bp, NIG_REG_LED_CONTROL_BLINK_TRAFFIC_P0 +
 			       port*4, 1);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		rc = -EINVAL;
 		DP(NETIF_MSG_LINK, "bnx2x_set_led: Invalid led mode %d\n",
 			 mode);
-		अवरोध;
-	पूर्ण
-	वापस rc;
+		break;
+	}
+	return rc;
 
-पूर्ण
+}
 
-/* This function comes to reflect the actual link state पढ़ो सूचीECTLY from the
+/* This function comes to reflect the actual link state read DIRECTLY from the
  * HW
  */
-पूर्णांक bnx2x_test_link(काष्ठा link_params *params, काष्ठा link_vars *vars,
+int bnx2x_test_link(struct link_params *params, struct link_vars *vars,
 		    u8 is_serdes)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 gp_status = 0, phy_index = 0;
 	u8 ext_phy_link_up = 0, serdes_phy_type;
-	काष्ठा link_vars temp_vars;
-	काष्ठा bnx2x_phy *पूर्णांक_phy = &params->phy[INT_PHY];
+	struct link_vars temp_vars;
+	struct bnx2x_phy *int_phy = &params->phy[INT_PHY];
 
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		u16 link_up;
-		अगर (params->req_line_speed[LINK_CONFIG_IDX(INT_PHY)]
-		    > SPEED_10000) अणु
+		if (params->req_line_speed[LINK_CONFIG_IDX(INT_PHY)]
+		    > SPEED_10000) {
 			/* Check 20G link */
-			bnx2x_cl45_पढ़ो(bp, पूर्णांक_phy, MDIO_WC_DEVAD,
+			bnx2x_cl45_read(bp, int_phy, MDIO_WC_DEVAD,
 					1, &link_up);
-			bnx2x_cl45_पढ़ो(bp, पूर्णांक_phy, MDIO_WC_DEVAD,
+			bnx2x_cl45_read(bp, int_phy, MDIO_WC_DEVAD,
 					1, &link_up);
 			link_up &= (1<<2);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Check 10G link and below*/
-			u8 lane = bnx2x_get_warpcore_lane(पूर्णांक_phy, params);
-			bnx2x_cl45_पढ़ो(bp, पूर्णांक_phy, MDIO_WC_DEVAD,
+			u8 lane = bnx2x_get_warpcore_lane(int_phy, params);
+			bnx2x_cl45_read(bp, int_phy, MDIO_WC_DEVAD,
 					MDIO_WC_REG_GP2_STATUS_GP_2_1,
 					&gp_status);
 			gp_status = ((gp_status >> 8) & 0xf) |
 				((gp_status >> 12) & 0xf);
 			link_up = gp_status & (1 << lane);
-		पूर्ण
-		अगर (!link_up)
-			वापस -ESRCH;
-	पूर्ण अन्यथा अणु
-		CL22_RD_OVER_CL45(bp, पूर्णांक_phy,
+		}
+		if (!link_up)
+			return -ESRCH;
+	} else {
+		CL22_RD_OVER_CL45(bp, int_phy,
 			  MDIO_REG_BANK_GP_STATUS,
 			  MDIO_GP_STATUS_TOP_AN_STATUS1,
 			  &gp_status);
-		/* Link is up only अगर both local phy and बाह्यal phy are up */
-		अगर (!(gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS))
-			वापस -ESRCH;
-	पूर्ण
-	/* In XGXS loopback mode, करो not check बाह्यal PHY */
-	अगर (params->loopback_mode == LOOPBACK_XGXS)
-		वापस 0;
+		/* Link is up only if both local phy and external phy are up */
+		if (!(gp_status & MDIO_GP_STATUS_TOP_AN_STATUS1_LINK_STATUS))
+			return -ESRCH;
+	}
+	/* In XGXS loopback mode, do not check external PHY */
+	if (params->loopback_mode == LOOPBACK_XGXS)
+		return 0;
 
-	चयन (params->num_phys) अणु
-	हाल 1:
-		/* No बाह्यal PHY */
-		वापस 0;
-	हाल 2:
-		ext_phy_link_up = params->phy[EXT_PHY1].पढ़ो_status(
+	switch (params->num_phys) {
+	case 1:
+		/* No external PHY */
+		return 0;
+	case 2:
+		ext_phy_link_up = params->phy[EXT_PHY1].read_status(
 			&params->phy[EXT_PHY1],
 			params, &temp_vars);
-		अवरोध;
-	हाल 3: /* Dual Media */
-		क्रम (phy_index = EXT_PHY1; phy_index < params->num_phys;
-		      phy_index++) अणु
+		break;
+	case 3: /* Dual Media */
+		for (phy_index = EXT_PHY1; phy_index < params->num_phys;
+		      phy_index++) {
 			serdes_phy_type = ((params->phy[phy_index].media_type ==
 					    ETH_PHY_SFPP_10G_FIBER) ||
 					   (params->phy[phy_index].media_type ==
@@ -6508,117 +6507,117 @@
 					   (params->phy[phy_index].media_type ==
 					    ETH_PHY_DA_TWINAX));
 
-			अगर (is_serdes != serdes_phy_type)
-				जारी;
-			अगर (params->phy[phy_index].पढ़ो_status) अणु
+			if (is_serdes != serdes_phy_type)
+				continue;
+			if (params->phy[phy_index].read_status) {
 				ext_phy_link_up |=
-					params->phy[phy_index].पढ़ो_status(
+					params->phy[phy_index].read_status(
 						&params->phy[phy_index],
 						params, &temp_vars);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	अगर (ext_phy_link_up)
-		वापस 0;
-	वापस -ESRCH;
-पूर्ण
+			}
+		}
+		break;
+	}
+	if (ext_phy_link_up)
+		return 0;
+	return -ESRCH;
+}
 
-अटल पूर्णांक bnx2x_link_initialize(काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
+static int bnx2x_link_initialize(struct link_params *params,
+				 struct link_vars *vars)
+{
 	u8 phy_index, non_ext_phy;
-	काष्ठा bnx2x *bp = params->bp;
-	/* In हाल of बाह्यal phy existence, the line speed would be the
-	 * line speed linked up by the बाह्यal phy. In हाल it is direct
+	struct bnx2x *bp = params->bp;
+	/* In case of external phy existence, the line speed would be the
+	 * line speed linked up by the external phy. In case it is direct
 	 * only, then the line_speed during initialization will be
 	 * equal to the req_line_speed
 	 */
 	vars->line_speed = params->phy[INT_PHY].req_line_speed;
 
-	/* Initialize the पूर्णांकernal phy in हाल this is a direct board
-	 * (no बाह्यal phys), or this board has बाह्यal phy which requires
+	/* Initialize the internal phy in case this is a direct board
+	 * (no external phys), or this board has external phy which requires
 	 * to first.
 	 */
-	अगर (!USES_WARPCORE(bp))
+	if (!USES_WARPCORE(bp))
 		bnx2x_prepare_xgxs(&params->phy[INT_PHY], params, vars);
-	/* init ext phy and enable link state पूर्णांक */
-	non_ext_phy = (SINGLE_MEDIA_सूचीECT(params) ||
+	/* init ext phy and enable link state int */
+	non_ext_phy = (SINGLE_MEDIA_DIRECT(params) ||
 		       (params->loopback_mode == LOOPBACK_XGXS));
 
-	अगर (non_ext_phy ||
+	if (non_ext_phy ||
 	    (params->phy[EXT_PHY1].flags & FLAGS_INIT_XGXS_FIRST) ||
-	    (params->loopback_mode == LOOPBACK_EXT_PHY)) अणु
-		काष्ठा bnx2x_phy *phy = &params->phy[INT_PHY];
-		अगर (vars->line_speed == SPEED_AUTO_NEG &&
+	    (params->loopback_mode == LOOPBACK_EXT_PHY)) {
+		struct bnx2x_phy *phy = &params->phy[INT_PHY];
+		if (vars->line_speed == SPEED_AUTO_NEG &&
 		    (CHIP_IS_E1x(bp) ||
 		     CHIP_IS_E2(bp)))
 			bnx2x_set_parallel_detection(phy, params);
-		अगर (params->phy[INT_PHY].config_init)
+		if (params->phy[INT_PHY].config_init)
 			params->phy[INT_PHY].config_init(phy, params, vars);
-	पूर्ण
+	}
 
-	/* Re-पढ़ो this value in हाल it was changed inside config_init due to
+	/* Re-read this value in case it was changed inside config_init due to
 	 * limitations of optic module
 	 */
 	vars->line_speed = params->phy[INT_PHY].req_line_speed;
 
-	/* Init बाह्यal phy*/
-	अगर (non_ext_phy) अणु
-		अगर (params->phy[INT_PHY].supported &
+	/* Init external phy*/
+	if (non_ext_phy) {
+		if (params->phy[INT_PHY].supported &
 		    SUPPORTED_FIBRE)
 			vars->link_status |= LINK_STATUS_SERDES_LINK;
-	पूर्ण अन्यथा अणु
-		क्रम (phy_index = EXT_PHY1; phy_index < params->num_phys;
-		      phy_index++) अणु
-			/* No need to initialize second phy in हाल of first
-			 * phy only selection. In हाल of second phy, we करो
+	} else {
+		for (phy_index = EXT_PHY1; phy_index < params->num_phys;
+		      phy_index++) {
+			/* No need to initialize second phy in case of first
+			 * phy only selection. In case of second phy, we do
 			 * need to initialize the first phy, since they are
 			 * connected.
 			 */
-			अगर (params->phy[phy_index].supported &
+			if (params->phy[phy_index].supported &
 			    SUPPORTED_FIBRE)
 				vars->link_status |= LINK_STATUS_SERDES_LINK;
 
-			अगर (phy_index == EXT_PHY2 &&
+			if (phy_index == EXT_PHY2 &&
 			    (bnx2x_phy_selection(params) ==
-			     PORT_HW_CFG_PHY_SELECTION_FIRST_PHY)) अणु
+			     PORT_HW_CFG_PHY_SELECTION_FIRST_PHY)) {
 				DP(NETIF_MSG_LINK,
 				   "Not initializing second phy\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 			params->phy[phy_index].config_init(
 				&params->phy[phy_index],
 				params, vars);
-		पूर्ण
-	पूर्ण
-	/* Reset the पूर्णांकerrupt indication after phy was initialized */
+		}
+	}
+	/* Reset the interrupt indication after phy was initialized */
 	bnx2x_bits_dis(bp, NIG_REG_STATUS_INTERRUPT_PORT0 +
 		       params->port*4,
 		       (NIG_STATUS_XGXS0_LINK10G |
 			NIG_STATUS_XGXS0_LINK_STATUS |
 			NIG_STATUS_SERDES0_LINK_STATUS |
 			NIG_MASK_MI_INT));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_पूर्णांक_link_reset(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params)
-अणु
+static void bnx2x_int_link_reset(struct bnx2x_phy *phy,
+				 struct link_params *params)
+{
 	/* Reset the SerDes/XGXS */
 	REG_WR(params->bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_3_CLEAR,
 	       (0x1ff << (params->port*16)));
-पूर्ण
+}
 
-अटल व्योम bnx2x_common_ext_link_reset(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_common_ext_link_reset(struct bnx2x_phy *phy,
+					struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 gpio_port;
 	/* HW reset */
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		gpio_port = BP_PATH(bp);
-	अन्यथा
+	else
 		gpio_port = params->port;
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW,
@@ -6627,12 +6626,12 @@
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW,
 		       gpio_port);
 	DP(NETIF_MSG_LINK, "reset external PHY\n");
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_update_link_करोwn(काष्ठा link_params *params,
-				  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_update_link_down(struct link_params *params,
+				  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port = params->port;
 
 	DP(NETIF_MSG_LINK, "Port %x: Link is down\n", port);
@@ -6650,16 +6649,16 @@
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + port*4, 1);
 
 	/* Disable emac */
-	अगर (!CHIP_IS_E3(bp))
+	if (!CHIP_IS_E3(bp))
 		REG_WR(bp, NIG_REG_NIG_EMAC0_EN + port*4, 0);
 
 	usleep_range(10000, 20000);
 	/* Reset BigMac/Xmac */
-	अगर (CHIP_IS_E1x(bp) ||
+	if (CHIP_IS_E1x(bp) ||
 	    CHIP_IS_E2(bp))
 		bnx2x_set_bmac_rx(bp, params->chip_id, params->port, 0);
 
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		/* Prevent LPI Generation by chip */
 		REG_WR(bp, MISC_REG_CPMU_LP_FW_ENABLE_P0 + (params->port << 2),
 		       0);
@@ -6671,82 +6670,82 @@
 		bnx2x_update_mng_eee(params, vars->eee_status);
 		bnx2x_set_xmac_rxtx(params, 0);
 		bnx2x_set_umac_rxtx(params, 0);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_update_link_up(काष्ठा link_params *params,
-				काष्ठा link_vars *vars,
+static int bnx2x_update_link_up(struct link_params *params,
+				struct link_vars *vars,
 				u8 link_10g)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 phy_idx, port = params->port;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	vars->link_status |= (LINK_STATUS_LINK_UP |
 			      LINK_STATUS_PHYSICAL_LINK_FLAG);
 	vars->phy_flags |= PHY_PHYSICAL_LINK_FLAG;
 
-	अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
+	if (vars->flow_ctrl & BNX2X_FLOW_CTRL_TX)
 		vars->link_status |=
 			LINK_STATUS_TX_FLOW_CONTROL_ENABLED;
 
-	अगर (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
+	if (vars->flow_ctrl & BNX2X_FLOW_CTRL_RX)
 		vars->link_status |=
 			LINK_STATUS_RX_FLOW_CONTROL_ENABLED;
-	अगर (USES_WARPCORE(bp)) अणु
-		अगर (link_10g) अणु
-			अगर (bnx2x_xmac_enable(params, vars, 0) ==
-			    -ESRCH) अणु
+	if (USES_WARPCORE(bp)) {
+		if (link_10g) {
+			if (bnx2x_xmac_enable(params, vars, 0) ==
+			    -ESRCH) {
 				DP(NETIF_MSG_LINK, "Found errors on XMAC\n");
 				vars->link_up = 0;
 				vars->phy_flags |= PHY_HALF_OPEN_CONN_FLAG;
 				vars->link_status &= ~LINK_STATUS_LINK_UP;
-			पूर्ण
-		पूर्ण अन्यथा
+			}
+		} else
 			bnx2x_umac_enable(params, vars, 0);
 		bnx2x_set_led(params, vars,
 			      LED_MODE_OPER, vars->line_speed);
 
-		अगर ((vars->eee_status & SHMEM_EEE_ACTIVE_BIT) &&
-		    (vars->eee_status & SHMEM_EEE_LPI_REQUESTED_BIT)) अणु
+		if ((vars->eee_status & SHMEM_EEE_ACTIVE_BIT) &&
+		    (vars->eee_status & SHMEM_EEE_LPI_REQUESTED_BIT)) {
 			DP(NETIF_MSG_LINK, "Enabling LPI assertion\n");
 			REG_WR(bp, MISC_REG_CPMU_LP_FW_ENABLE_P0 +
 			       (params->port << 2), 1);
 			REG_WR(bp, MISC_REG_CPMU_LP_DR_ENABLE, 1);
 			REG_WR(bp, MISC_REG_CPMU_LP_MASK_ENT_P0 +
 			       (params->port << 2), 0xfc20);
-		पूर्ण
-	पूर्ण
-	अगर ((CHIP_IS_E1x(bp) ||
-	     CHIP_IS_E2(bp))) अणु
-		अगर (link_10g) अणु
-			अगर (bnx2x_bmac_enable(params, vars, 0, 1) ==
-			    -ESRCH) अणु
+		}
+	}
+	if ((CHIP_IS_E1x(bp) ||
+	     CHIP_IS_E2(bp))) {
+		if (link_10g) {
+			if (bnx2x_bmac_enable(params, vars, 0, 1) ==
+			    -ESRCH) {
 				DP(NETIF_MSG_LINK, "Found errors on BMAC\n");
 				vars->link_up = 0;
 				vars->phy_flags |= PHY_HALF_OPEN_CONN_FLAG;
 				vars->link_status &= ~LINK_STATUS_LINK_UP;
-			पूर्ण
+			}
 
 			bnx2x_set_led(params, vars,
 				      LED_MODE_OPER, SPEED_10000);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = bnx2x_emac_program(params, vars);
 			bnx2x_emac_enable(params, vars, 0);
 
 			/* AN complete? */
-			अगर ((vars->link_status &
+			if ((vars->link_status &
 			     LINK_STATUS_AUTO_NEGOTIATE_COMPLETE)
 			    && (!(vars->phy_flags & PHY_SGMII_FLAG)) &&
-			    SINGLE_MEDIA_सूचीECT(params))
+			    SINGLE_MEDIA_DIRECT(params))
 				bnx2x_set_gmii_tx_driver(params);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* PBF - link up */
-	अगर (CHIP_IS_E1x(bp))
+	if (CHIP_IS_E1x(bp))
 		rc |= bnx2x_pbf_update(params, vars->flow_ctrl,
 				       vars->line_speed);
 
@@ -6757,62 +6756,62 @@
 	bnx2x_update_mng(params, vars->link_status);
 	bnx2x_update_mng_eee(params, vars->eee_status);
 	/* Check remote fault */
-	क्रम (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) अणु
-		अगर (params->phy[phy_idx].flags & FLAGS_TX_ERROR_CHECK) अणु
-			bnx2x_check_half_खोलो_conn(params, vars, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) {
+		if (params->phy[phy_idx].flags & FLAGS_TX_ERROR_CHECK) {
+			bnx2x_check_half_open_conn(params, vars, 0);
+			break;
+		}
+	}
 	msleep(20);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम bnx2x_chng_link_count(काष्ठा link_params *params, bool clear)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_chng_link_count(struct link_params *params, bool clear)
+{
+	struct bnx2x *bp = params->bp;
 	u32 addr, val;
 
-	/* Verअगरy the link_change_count is supported by the MFW */
-	अगर (!(SHMEM2_HAS(bp, link_change_count)))
-		वापस;
+	/* Verify the link_change_count is supported by the MFW */
+	if (!(SHMEM2_HAS(bp, link_change_count)))
+		return;
 
 	addr = params->shmem2_base +
-		दुरत्व(काष्ठा shmem2_region, link_change_count[params->port]);
-	अगर (clear)
+		offsetof(struct shmem2_region, link_change_count[params->port]);
+	if (clear)
 		val = 0;
-	अन्यथा
+	else
 		val = REG_RD(bp, addr) + 1;
 	REG_WR(bp, addr, val);
-पूर्ण
+}
 
 /* The bnx2x_link_update function should be called upon link
- * पूर्णांकerrupt.
+ * interrupt.
  * Link is considered up as follows:
- * - सूचीECT_SINGLE_MEDIA - Only XGXS link (पूर्णांकernal link) needs
+ * - DIRECT_SINGLE_MEDIA - Only XGXS link (internal link) needs
  *   to be up
- * - SINGLE_MEDIA - The link between the 577xx and the बाह्यal
- *   phy (XGXS) need to up as well as the बाह्यal link of the
+ * - SINGLE_MEDIA - The link between the 577xx and the external
+ *   phy (XGXS) need to up as well as the external link of the
  *   phy (PHY_EXT1)
  * - DUAL_MEDIA - The link between the 577xx and the first
- *   बाह्यal phy needs to be up, and at least one of the 2
- *   बाह्यal phy link must be up.
+ *   external phy needs to be up, and at least one of the 2
+ *   external phy link must be up.
  */
-पूर्णांक bnx2x_link_update(काष्ठा link_params *params, काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	काष्ठा link_vars phy_vars[MAX_PHYS];
+int bnx2x_link_update(struct link_params *params, struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	struct link_vars phy_vars[MAX_PHYS];
 	u8 port = params->port;
 	u8 link_10g_plus, phy_index;
 	u32 prev_link_status = vars->link_status;
 	u8 ext_phy_link_up = 0, cur_link_up;
-	पूर्णांक rc = 0;
-	u8 is_mi_पूर्णांक = 0;
+	int rc = 0;
+	u8 is_mi_int = 0;
 	u16 ext_phy_line_speed = 0, prev_line_speed = vars->line_speed;
-	u8 active_बाह्यal_phy = INT_PHY;
+	u8 active_external_phy = INT_PHY;
 	vars->phy_flags &= ~PHY_HALF_OPEN_CONN_FLAG;
 	vars->link_status &= ~LINK_UPDATE_MASK;
-	क्रम (phy_index = INT_PHY; phy_index < params->num_phys;
-	      phy_index++) अणु
+	for (phy_index = INT_PHY; phy_index < params->num_phys;
+	      phy_index++) {
 		phy_vars[phy_index].flow_ctrl = 0;
 		phy_vars[phy_index].link_status = 0;
 		phy_vars[phy_index].line_speed = 0;
@@ -6820,22 +6819,22 @@
 		phy_vars[phy_index].phy_link_up = 0;
 		phy_vars[phy_index].link_up = 0;
 		phy_vars[phy_index].fault_detected = 0;
-		/* dअगरferent consideration, since vars holds inner state */
+		/* different consideration, since vars holds inner state */
 		phy_vars[phy_index].eee_status = vars->eee_status;
-	पूर्ण
+	}
 
-	अगर (USES_WARPCORE(bp))
+	if (USES_WARPCORE(bp))
 		bnx2x_set_aer_mmd(params, &params->phy[INT_PHY]);
 
 	DP(NETIF_MSG_LINK, "port %x, XGXS?%x, int_status 0x%x\n",
 		 port, (vars->phy_flags & PHY_XGXS_FLAG),
 		 REG_RD(bp, NIG_REG_STATUS_INTERRUPT_PORT0 + port*4));
 
-	is_mi_पूर्णांक = (u8)(REG_RD(bp, NIG_REG_EMAC0_STATUS_MISC_MI_INT +
+	is_mi_int = (u8)(REG_RD(bp, NIG_REG_EMAC0_STATUS_MISC_MI_INT +
 				port*0x18) > 0);
 	DP(NETIF_MSG_LINK, "int_mask 0x%x MI_INT %x, SERDES_LINK %x\n",
 		 REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 + port*4),
-		 is_mi_पूर्णांक,
+		 is_mi_int,
 		 REG_RD(bp, NIG_REG_SERDES0_STATUS_LINK_STATUS + port*0x3c));
 
 	DP(NETIF_MSG_LINK, " 10G %x, XGXS_LINK %x\n",
@@ -6843,58 +6842,58 @@
 	  REG_RD(bp, NIG_REG_XGXS0_STATUS_LINK_STATUS + port*0x68));
 
 	/* Disable emac */
-	अगर (!CHIP_IS_E3(bp))
+	if (!CHIP_IS_E3(bp))
 		REG_WR(bp, NIG_REG_NIG_EMAC0_EN + port*4, 0);
 
 	/* Step 1:
-	 * Check बाह्यal link change only क्रम बाह्यal phys, and apply
-	 * priority selection between them in हाल the link on both phys
+	 * Check external link change only for external phys, and apply
+	 * priority selection between them in case the link on both phys
 	 * is up. Note that instead of the common vars, a temporary
-	 * vars argument is used since each phy may have dअगरferent link/
+	 * vars argument is used since each phy may have different link/
 	 * speed/duplex result
 	 */
-	क्रम (phy_index = EXT_PHY1; phy_index < params->num_phys;
-	      phy_index++) अणु
-		काष्ठा bnx2x_phy *phy = &params->phy[phy_index];
-		अगर (!phy->पढ़ो_status)
-			जारी;
+	for (phy_index = EXT_PHY1; phy_index < params->num_phys;
+	      phy_index++) {
+		struct bnx2x_phy *phy = &params->phy[phy_index];
+		if (!phy->read_status)
+			continue;
 		/* Read link status and params of this ext phy */
-		cur_link_up = phy->पढ़ो_status(phy, params,
+		cur_link_up = phy->read_status(phy, params,
 					       &phy_vars[phy_index]);
-		अगर (cur_link_up) अणु
+		if (cur_link_up) {
 			DP(NETIF_MSG_LINK, "phy in index %d link is up\n",
 				   phy_index);
-		पूर्ण अन्यथा अणु
+		} else {
 			DP(NETIF_MSG_LINK, "phy in index %d link is down\n",
 				   phy_index);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!ext_phy_link_up) अणु
+		if (!ext_phy_link_up) {
 			ext_phy_link_up = 1;
-			active_बाह्यal_phy = phy_index;
-		पूर्ण अन्यथा अणु
-			चयन (bnx2x_phy_selection(params)) अणु
-			हाल PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT:
-			हाल PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
+			active_external_phy = phy_index;
+		} else {
+			switch (bnx2x_phy_selection(params)) {
+			case PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT:
+			case PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
 			/* In this option, the first PHY makes sure to pass the
 			 * traffic through itself only.
 			 * It's not clear how to reset the link on the second
 			 * phy.
 			 */
-				active_बाह्यal_phy = EXT_PHY1;
-				अवरोध;
-			हाल PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
+				active_external_phy = EXT_PHY1;
+				break;
+			case PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
 			/* In this option, the first PHY makes sure to pass the
 			 * traffic through the second PHY.
 			 */
-				active_बाह्यal_phy = EXT_PHY2;
-				अवरोध;
-			शेष:
-			/* Link indication on both PHYs with the following हालs
+				active_external_phy = EXT_PHY2;
+				break;
+			default:
+			/* Link indication on both PHYs with the following cases
 			 * is invalid:
 			 * - FIRST_PHY means that second phy wasn't initialized,
-			 * hence its link is expected to be करोwn
+			 * hence its link is expected to be down
 			 * - SECOND_PHY means that first phy should not be able
 			 * to link up by itself (using configuration)
 			 * - DEFAULT should be overridden during initialization
@@ -6903,312 +6902,312 @@
 					   "mpc=0x%x. DISABLING LINK !!!\n",
 					   params->multi_phy_config);
 				ext_phy_link_up = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	prev_line_speed = vars->line_speed;
 	/* Step 2:
-	 * Read the status of the पूर्णांकernal phy. In हाल of
-	 * सूचीECT_SINGLE_MEDIA board, this link is the बाह्यal link,
+	 * Read the status of the internal phy. In case of
+	 * DIRECT_SINGLE_MEDIA board, this link is the external link,
 	 * otherwise this is the link between the 577xx and the first
-	 * बाह्यal phy
+	 * external phy
 	 */
-	अगर (params->phy[INT_PHY].पढ़ो_status)
-		params->phy[INT_PHY].पढ़ो_status(
+	if (params->phy[INT_PHY].read_status)
+		params->phy[INT_PHY].read_status(
 			&params->phy[INT_PHY],
 			params, vars);
 	/* The INT_PHY flow control reside in the vars. This include the
-	 * हाल where the speed or flow control are not set to AUTO.
-	 * Otherwise, the active बाह्यal phy flow control result is set
-	 * to the vars. The ext_phy_line_speed is needed to check अगर the
-	 * speed is dअगरferent between the पूर्णांकernal phy and बाह्यal phy.
-	 * This हाल may be result of पूर्णांकermediate link speed change.
+	 * case where the speed or flow control are not set to AUTO.
+	 * Otherwise, the active external phy flow control result is set
+	 * to the vars. The ext_phy_line_speed is needed to check if the
+	 * speed is different between the internal phy and external phy.
+	 * This case may be result of intermediate link speed change.
 	 */
-	अगर (active_बाह्यal_phy > INT_PHY) अणु
-		vars->flow_ctrl = phy_vars[active_बाह्यal_phy].flow_ctrl;
+	if (active_external_phy > INT_PHY) {
+		vars->flow_ctrl = phy_vars[active_external_phy].flow_ctrl;
 		/* Link speed is taken from the XGXS. AN and FC result from
-		 * the बाह्यal phy.
+		 * the external phy.
 		 */
-		vars->link_status |= phy_vars[active_बाह्यal_phy].link_status;
+		vars->link_status |= phy_vars[active_external_phy].link_status;
 
-		/* अगर active_बाह्यal_phy is first PHY and link is up - disable
-		 * disable TX on second बाह्यal PHY
+		/* if active_external_phy is first PHY and link is up - disable
+		 * disable TX on second external PHY
 		 */
-		अगर (active_बाह्यal_phy == EXT_PHY1) अणु
-			अगर (params->phy[EXT_PHY2].phy_specअगरic_func) अणु
+		if (active_external_phy == EXT_PHY1) {
+			if (params->phy[EXT_PHY2].phy_specific_func) {
 				DP(NETIF_MSG_LINK,
 				   "Disabling TX on EXT_PHY2\n");
-				params->phy[EXT_PHY2].phy_specअगरic_func(
+				params->phy[EXT_PHY2].phy_specific_func(
 					&params->phy[EXT_PHY2],
 					params, DISABLE_TX);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		ext_phy_line_speed = phy_vars[active_बाह्यal_phy].line_speed;
-		vars->duplex = phy_vars[active_बाह्यal_phy].duplex;
-		अगर (params->phy[active_बाह्यal_phy].supported &
+		ext_phy_line_speed = phy_vars[active_external_phy].line_speed;
+		vars->duplex = phy_vars[active_external_phy].duplex;
+		if (params->phy[active_external_phy].supported &
 		    SUPPORTED_FIBRE)
 			vars->link_status |= LINK_STATUS_SERDES_LINK;
-		अन्यथा
+		else
 			vars->link_status &= ~LINK_STATUS_SERDES_LINK;
 
-		vars->eee_status = phy_vars[active_बाह्यal_phy].eee_status;
+		vars->eee_status = phy_vars[active_external_phy].eee_status;
 
 		DP(NETIF_MSG_LINK, "Active external phy selected: %x\n",
-			   active_बाह्यal_phy);
-	पूर्ण
+			   active_external_phy);
+	}
 
-	क्रम (phy_index = EXT_PHY1; phy_index < params->num_phys;
-	      phy_index++) अणु
-		अगर (params->phy[phy_index].flags &
-		    FLAGS_REARM_LATCH_SIGNAL) अणु
-			bnx2x_rearm_latch_संकेत(bp, port,
+	for (phy_index = EXT_PHY1; phy_index < params->num_phys;
+	      phy_index++) {
+		if (params->phy[phy_index].flags &
+		    FLAGS_REARM_LATCH_SIGNAL) {
+			bnx2x_rearm_latch_signal(bp, port,
 						 phy_index ==
-						 active_बाह्यal_phy);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+						 active_external_phy);
+			break;
+		}
+	}
 	DP(NETIF_MSG_LINK, "vars->flow_ctrl = 0x%x, vars->link_status = 0x%x,"
 		   " ext_phy_line_speed = %d\n", vars->flow_ctrl,
 		   vars->link_status, ext_phy_line_speed);
-	/* Upon link speed change set the NIG पूर्णांकo drain mode. Comes to
+	/* Upon link speed change set the NIG into drain mode. Comes to
 	 * deals with possible FIFO glitch due to clk change when speed
-	 * is decreased without link करोwn indicator
+	 * is decreased without link down indicator
 	 */
 
-	अगर (vars->phy_link_up) अणु
-		अगर (!(SINGLE_MEDIA_सूचीECT(params)) && ext_phy_link_up &&
-		    (ext_phy_line_speed != vars->line_speed)) अणु
+	if (vars->phy_link_up) {
+		if (!(SINGLE_MEDIA_DIRECT(params)) && ext_phy_link_up &&
+		    (ext_phy_line_speed != vars->line_speed)) {
 			DP(NETIF_MSG_LINK, "Internal link speed %d is"
 				   " different than the external"
 				   " link speed %d\n", vars->line_speed,
 				   ext_phy_line_speed);
 			vars->phy_link_up = 0;
-		पूर्ण अन्यथा अगर (prev_line_speed != vars->line_speed) अणु
+		} else if (prev_line_speed != vars->line_speed) {
 			REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4,
 			       0);
 			usleep_range(1000, 2000);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Anything 10 and over uses the bmac */
 	link_10g_plus = (vars->line_speed >= SPEED_10000);
 
-	bnx2x_link_पूर्णांक_ack(params, vars, link_10g_plus);
+	bnx2x_link_int_ack(params, vars, link_10g_plus);
 
-	/* In हाल बाह्यal phy link is up, and पूर्णांकernal link is करोwn
+	/* In case external phy link is up, and internal link is down
 	 * (not initialized yet probably after link initialization, it
 	 * needs to be initialized.
-	 * Note that after link करोwn-up as result of cable plug, the xgxs
+	 * Note that after link down-up as result of cable plug, the xgxs
 	 * link would probably become up again without the need
 	 * initialize it
 	 */
-	अगर (!(SINGLE_MEDIA_सूचीECT(params))) अणु
+	if (!(SINGLE_MEDIA_DIRECT(params))) {
 		DP(NETIF_MSG_LINK, "ext_phy_link_up = %d, int_link_up = %d,"
 			   " init_preceding = %d\n", ext_phy_link_up,
 			   vars->phy_link_up,
 			   params->phy[EXT_PHY1].flags &
 			   FLAGS_INIT_XGXS_FIRST);
-		अगर (!(params->phy[EXT_PHY1].flags &
+		if (!(params->phy[EXT_PHY1].flags &
 		      FLAGS_INIT_XGXS_FIRST)
-		    && ext_phy_link_up && !vars->phy_link_up) अणु
+		    && ext_phy_link_up && !vars->phy_link_up) {
 			vars->line_speed = ext_phy_line_speed;
-			अगर (vars->line_speed < SPEED_1000)
+			if (vars->line_speed < SPEED_1000)
 				vars->phy_flags |= PHY_SGMII_FLAG;
-			अन्यथा
+			else
 				vars->phy_flags &= ~PHY_SGMII_FLAG;
 
-			अगर (params->phy[INT_PHY].config_init)
+			if (params->phy[INT_PHY].config_init)
 				params->phy[INT_PHY].config_init(
 					&params->phy[INT_PHY], params,
 						vars);
-		पूर्ण
-	पूर्ण
-	/* Link is up only अगर both local phy and बाह्यal phy (in हाल of
+		}
+	}
+	/* Link is up only if both local phy and external phy (in case of
 	 * non-direct board) are up and no fault detected on active PHY.
 	 */
 	vars->link_up = (vars->phy_link_up &&
 			 (ext_phy_link_up ||
-			  SINGLE_MEDIA_सूचीECT(params)) &&
-			 (phy_vars[active_बाह्यal_phy].fault_detected == 0));
+			  SINGLE_MEDIA_DIRECT(params)) &&
+			 (phy_vars[active_external_phy].fault_detected == 0));
 
-	/* Update the PFC configuration in हाल it was changed */
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
+	/* Update the PFC configuration in case it was changed */
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
 		vars->link_status |= LINK_STATUS_PFC_ENABLED;
-	अन्यथा
+	else
 		vars->link_status &= ~LINK_STATUS_PFC_ENABLED;
 
-	अगर (vars->link_up)
+	if (vars->link_up)
 		rc = bnx2x_update_link_up(params, vars, link_10g_plus);
-	अन्यथा
-		rc = bnx2x_update_link_करोwn(params, vars);
+	else
+		rc = bnx2x_update_link_down(params, vars);
 
-	अगर ((prev_link_status ^ vars->link_status) & LINK_STATUS_LINK_UP)
+	if ((prev_link_status ^ vars->link_status) & LINK_STATUS_LINK_UP)
 		bnx2x_chng_link_count(params, false);
 
 	/* Update MCP link status was changed */
-	अगर (params->feature_config_flags & FEATURE_CONFIG_BC_SUPPORTS_AFEX)
+	if (params->feature_config_flags & FEATURE_CONFIG_BC_SUPPORTS_AFEX)
 		bnx2x_fw_command(bp, DRV_MSG_CODE_LINK_STATUS_CHANGED, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*****************************************************************************/
 /*			    External Phy section			     */
 /*****************************************************************************/
-व्योम bnx2x_ext_phy_hw_reset(काष्ठा bnx2x *bp, u8 port)
-अणु
+void bnx2x_ext_phy_hw_reset(struct bnx2x *bp, u8 port)
+{
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, port);
 	usleep_range(1000, 2000);
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, port);
-पूर्ण
+}
 
-अटल व्योम bnx2x_save_spirom_version(काष्ठा bnx2x *bp, u8 port,
+static void bnx2x_save_spirom_version(struct bnx2x *bp, u8 port,
 				      u32 spirom_ver, u32 ver_addr)
-अणु
+{
 	DP(NETIF_MSG_LINK, "FW version 0x%x:0x%x for port %d\n",
 		 (u16)(spirom_ver>>16), (u16)spirom_ver, port);
 
-	अगर (ver_addr)
+	if (ver_addr)
 		REG_WR(bp, ver_addr, spirom_ver);
-पूर्ण
+}
 
-अटल व्योम bnx2x_save_bcm_spirom_ver(काष्ठा bnx2x *bp,
-				      काष्ठा bnx2x_phy *phy,
+static void bnx2x_save_bcm_spirom_ver(struct bnx2x *bp,
+				      struct bnx2x_phy *phy,
 				      u8 port)
-अणु
+{
 	u16 fw_ver1, fw_ver2;
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_ROM_VER1, &fw_ver1);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_ROM_VER2, &fw_ver2);
 	bnx2x_save_spirom_version(bp, port, (u32)(fw_ver1<<16 | fw_ver2),
 				  phy->ver_addr);
-पूर्ण
+}
 
-अटल व्योम bnx2x_ext_phy_10G_an_resolve(काष्ठा bnx2x *bp,
-				       काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_vars *vars)
-अणु
+static void bnx2x_ext_phy_10G_an_resolve(struct bnx2x *bp,
+				       struct bnx2x_phy *phy,
+				       struct link_vars *vars)
+{
 	u16 val;
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD,
 			MDIO_AN_REG_STATUS, &val);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD,
 			MDIO_AN_REG_STATUS, &val);
-	अगर (val & (1<<5))
+	if (val & (1<<5))
 		vars->link_status |= LINK_STATUS_AUTO_NEGOTIATE_COMPLETE;
-	अगर ((val & (1<<0)) == 0)
+	if ((val & (1<<0)) == 0)
 		vars->link_status |= LINK_STATUS_PARALLEL_DETECTION_USED;
-पूर्ण
+}
 
 /******************************************************************/
 /*		common BCM8073/BCM8727 PHY SECTION		  */
 /******************************************************************/
-अटल व्योम bnx2x_8073_resolve_fc(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
-				  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	अगर (phy->req_line_speed == SPEED_10 ||
-	    phy->req_line_speed == SPEED_100) अणु
+static void bnx2x_8073_resolve_fc(struct bnx2x_phy *phy,
+				  struct link_params *params,
+				  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	if (phy->req_line_speed == SPEED_10 ||
+	    phy->req_line_speed == SPEED_100) {
 		vars->flow_ctrl = phy->req_flow_ctrl;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (bnx2x_ext_phy_resolve_fc(phy, params, vars) &&
-	    (vars->flow_ctrl == BNX2X_FLOW_CTRL_NONE)) अणु
-		u16 छोड़ो_result;
-		u16 ld_छोड़ो;		/* local */
-		u16 lp_छोड़ो;		/* link partner */
-		bnx2x_cl45_पढ़ो(bp, phy,
+	if (bnx2x_ext_phy_resolve_fc(phy, params, vars) &&
+	    (vars->flow_ctrl == BNX2X_FLOW_CTRL_NONE)) {
+		u16 pause_result;
+		u16 ld_pause;		/* local */
+		u16 lp_pause;		/* link partner */
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
-				MDIO_AN_REG_CL37_FC_LD, &ld_छोड़ो);
+				MDIO_AN_REG_CL37_FC_LD, &ld_pause);
 
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
-				MDIO_AN_REG_CL37_FC_LP, &lp_छोड़ो);
-		छोड़ो_result = (ld_छोड़ो &
+				MDIO_AN_REG_CL37_FC_LP, &lp_pause);
+		pause_result = (ld_pause &
 				MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) >> 5;
-		छोड़ो_result |= (lp_छोड़ो &
+		pause_result |= (lp_pause &
 				 MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) >> 7;
 
-		bnx2x_छोड़ो_resolve(phy, params, vars, छोड़ो_result);
+		bnx2x_pause_resolve(phy, params, vars, pause_result);
 		DP(NETIF_MSG_LINK, "Ext PHY CL37 pause result 0x%x\n",
-			   छोड़ो_result);
-	पूर्ण
-पूर्ण
-अटल पूर्णांक bnx2x_8073_8727_बाह्यal_rom_boot(काष्ठा bnx2x *bp,
-					     काष्ठा bnx2x_phy *phy,
+			   pause_result);
+	}
+}
+static int bnx2x_8073_8727_external_rom_boot(struct bnx2x *bp,
+					     struct bnx2x_phy *phy,
 					     u8 port)
-अणु
+{
 	u32 count = 0;
 	u16 fw_ver1, fw_msgout;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
-	/* Boot port from बाह्यal ROM  */
+	/* Boot port from external ROM  */
 	/* EDC grst */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 0x0001);
 
 	/* Ucode reboot and rst */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 0x008c);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_MISC_CTRL1, 0x0001);
 
-	/* Reset पूर्णांकernal microprocessor */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Reset internal microprocessor */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 MDIO_PMA_REG_GEN_CTRL_ROM_MICRO_RESET);
 
 	/* Release srst bit */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 MDIO_PMA_REG_GEN_CTRL_ROM_RESET_INTERNAL_MP);
 
-	/* Delay 100ms per the PHY specअगरications */
+	/* Delay 100ms per the PHY specifications */
 	msleep(100);
 
-	/* 8073 someबार taking दीर्घer to करोwnload */
-	करो अणु
+	/* 8073 sometimes taking longer to download */
+	do {
 		count++;
-		अगर (count > 300) अणु
+		if (count > 300) {
 			DP(NETIF_MSG_LINK,
 				 "bnx2x_8073_8727_external_rom_boot port %x:"
 				 "Download failed. fw version = 0x%x\n",
 				 port, fw_ver1);
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_ROM_VER1, &fw_ver1);
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_M8051_MSGOUT_REG, &fw_msgout);
 
 		usleep_range(1000, 2000);
-	पूर्ण जबतक (fw_ver1 == 0 || fw_ver1 == 0x4321 ||
+	} while (fw_ver1 == 0 || fw_ver1 == 0x4321 ||
 			((fw_msgout & 0xff) != 0x03 && (phy->type ==
 			PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073)));
 
 	/* Clear ser_boot_ctl bit */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_MISC_CTRL1, 0x0000);
 	bnx2x_save_bcm_spirom_ver(bp, phy, port);
@@ -7218,1331 +7217,1331 @@
 		 "Download complete. fw version = 0x%x\n",
 		 port, fw_ver1);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /******************************************************************/
 /*			BCM8073 PHY SECTION			  */
 /******************************************************************/
-अटल पूर्णांक bnx2x_8073_is_snr_needed(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy)
-अणु
-	/* This is only required क्रम 8073A1, version 102 only */
+static int bnx2x_8073_is_snr_needed(struct bnx2x *bp, struct bnx2x_phy *phy)
+{
+	/* This is only required for 8073A1, version 102 only */
 	u16 val;
 
 	/* Read 8073 HW revision*/
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8073_CHIP_REV, &val);
 
-	अगर (val != 1) अणु
+	if (val != 1) {
 		/* No need to workaround in 8073 A1 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_ROM_VER2, &val);
 
-	/* SNR should be applied only क्रम version 0x102 */
-	अगर (val != 0x102)
-		वापस 0;
+	/* SNR should be applied only for version 0x102 */
+	if (val != 0x102)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक bnx2x_8073_xaui_wa(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy)
-अणु
+static int bnx2x_8073_xaui_wa(struct bnx2x *bp, struct bnx2x_phy *phy)
+{
 	u16 val, cnt, cnt1 ;
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8073_CHIP_REV, &val);
 
-	अगर (val > 0) अणु
+	if (val > 0) {
 		/* No need to workaround in 8073 A1 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* XAUI workaround in 8073 A0: */
 
 	/* After loading the boot ROM and restarting Autoneg, poll
 	 * Dev1, Reg $C820:
 	 */
 
-	क्रम (cnt = 0; cnt < 1000; cnt++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (cnt = 0; cnt < 1000; cnt++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8073_SPEED_LINK_STATUS,
 				&val);
-		  /* If bit [14] = 0 or bit [13] = 0, जारी on with
-		   * प्रणाली initialization (XAUI work-around not required, as
+		  /* If bit [14] = 0 or bit [13] = 0, continue on with
+		   * system initialization (XAUI work-around not required, as
 		   * these bits indicate 2.5G or 1G link up).
 		   */
-		अगर (!(val & (1<<14)) || !(val & (1<<13))) अणु
+		if (!(val & (1<<14)) || !(val & (1<<13))) {
 			DP(NETIF_MSG_LINK, "XAUI work-around not required\n");
-			वापस 0;
-		पूर्ण अन्यथा अगर (!(val & (1<<15))) अणु
+			return 0;
+		} else if (!(val & (1<<15))) {
 			DP(NETIF_MSG_LINK, "bit 15 went off\n");
 			/* If bit 15 is 0, then poll Dev1, Reg $C841 until it's
 			 * MSB (bit15) goes to 1 (indicating that the XAUI
-			 * workaround has completed), then जारी on with
-			 * प्रणाली initialization.
+			 * workaround has completed), then continue on with
+			 * system initialization.
 			 */
-			क्रम (cnt1 = 0; cnt1 < 1000; cnt1++) अणु
-				bnx2x_cl45_पढ़ो(bp, phy,
+			for (cnt1 = 0; cnt1 < 1000; cnt1++) {
+				bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8073_XAUI_WA, &val);
-				अगर (val & (1<<15)) अणु
+				if (val & (1<<15)) {
 					DP(NETIF_MSG_LINK,
 					  "XAUI workaround has completed\n");
-					वापस 0;
-				पूर्ण
+					return 0;
+				}
 				usleep_range(3000, 6000);
-			पूर्ण
-			अवरोध;
-		पूर्ण
+			}
+			break;
+		}
 		usleep_range(3000, 6000);
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "Warning: XAUI work-around timeout !!!\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम bnx2x_807x_क्रमce_10G(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy)
-अणु
+static void bnx2x_807x_force_10G(struct bnx2x *bp, struct bnx2x_phy *phy)
+{
 	/* Force KR or KX */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x2040);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2, 0x000b);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_BCM_CTRL, 0x0000);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x0000);
-पूर्ण
+}
 
-अटल व्योम bnx2x_8073_set_छोड़ो_cl37(काष्ठा link_params *params,
-				      काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_vars *vars)
-अणु
+static void bnx2x_8073_set_pause_cl37(struct link_params *params,
+				      struct bnx2x_phy *phy,
+				      struct link_vars *vars)
+{
 	u16 cl37_val;
-	काष्ठा bnx2x *bp = params->bp;
-	bnx2x_cl45_पढ़ो(bp, phy,
+	struct bnx2x *bp = params->bp;
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD, &cl37_val);
 
 	cl37_val &= ~MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH;
 	/* Please refer to Table 28B-3 of 802.3ab-1999 spec. */
 	bnx2x_calc_ieee_aneg_adv(phy, params, &vars->ieee_fc);
-	अगर ((vars->ieee_fc &
+	if ((vars->ieee_fc &
 	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_SYMMETRIC) ==
-	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_SYMMETRIC) अणु
+	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_SYMMETRIC) {
 		cl37_val |=  MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_SYMMETRIC;
-	पूर्ण
-	अगर ((vars->ieee_fc &
+	}
+	if ((vars->ieee_fc &
 	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) ==
-	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) अणु
+	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) {
 		cl37_val |=  MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC;
-	पूर्ण
-	अगर ((vars->ieee_fc &
+	}
+	if ((vars->ieee_fc &
 	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) ==
-	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) अणु
+	    MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) {
 		cl37_val |= MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH;
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK,
 		 "Ext phy AN advertize cl37 0x%x\n", cl37_val);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD, cl37_val);
 	msleep(500);
-पूर्ण
+}
 
-अटल व्योम bnx2x_8073_specअगरic_func(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
+static void bnx2x_8073_specific_func(struct bnx2x_phy *phy,
+				     struct link_params *params,
 				     u32 action)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	चयन (action) अणु
-	हाल PHY_INIT:
+{
+	struct bnx2x *bp = params->bp;
+	switch (action) {
+	case PHY_INIT:
 		/* Enable LASI */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL, (1<<2));
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL,  0x0004);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम bnx2x_8073_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u16 val = 0, पंचांगp1;
+static void bnx2x_8073_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	u16 val = 0, tmp1;
 	u8 gpio_port;
 	DP(NETIF_MSG_LINK, "Init 8073\n");
 
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		gpio_port = BP_PATH(bp);
-	अन्यथा
+	else
 		gpio_port = params->port;
-	/* Restore normal घातer mode*/
+	/* Restore normal power mode*/
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, gpio_port);
 
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, gpio_port);
 
-	bnx2x_8073_specअगरic_func(phy, params, PHY_INIT);
-	bnx2x_8073_set_छोड़ो_cl37(params, phy, vars);
+	bnx2x_8073_specific_func(phy, params, PHY_INIT);
+	bnx2x_8073_set_pause_cl37(params, phy, vars);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &पंचांगp1);
+	bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &tmp1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &पंचांगp1);
+	bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &tmp1);
 
-	DP(NETIF_MSG_LINK, "Before rom RX_ALARM(port1): 0x%x\n", पंचांगp1);
+	DP(NETIF_MSG_LINK, "Before rom RX_ALARM(port1): 0x%x\n", tmp1);
 
-	/* Swap polarity अगर required - Must be करोne only in non-1G mode */
-	अगर (params->lane_config & PORT_HW_CFG_SWAP_PHY_POLARITY_ENABLED) अणु
+	/* Swap polarity if required - Must be done only in non-1G mode */
+	if (params->lane_config & PORT_HW_CFG_SWAP_PHY_POLARITY_ENABLED) {
 		/* Configure the 8073 to swap _P and _N of the KR lines */
 		DP(NETIF_MSG_LINK, "Swapping polarity for the 8073\n");
-		/* 10G Rx/Tx and 1G Tx संकेत polarity swap */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		/* 10G Rx/Tx and 1G Tx signal polarity swap */
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8073_OPT_DIGITAL_CTRL, &val);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_8073_OPT_DIGITAL_CTRL,
 				 (val | (3<<9)));
-	पूर्ण
+	}
 
 
 	/* Enable CL37 BAM */
-	अगर (REG_RD(bp, params->shmem_base +
-			 दुरत्व(काष्ठा shmem_region, dev_info.
-				  port_hw_config[params->port].शेष_cfg)) &
-	    PORT_HW_CFG_ENABLE_BAM_ON_KR_ENABLED) अणु
+	if (REG_RD(bp, params->shmem_base +
+			 offsetof(struct shmem_region, dev_info.
+				  port_hw_config[params->port].default_cfg)) &
+	    PORT_HW_CFG_ENABLE_BAM_ON_KR_ENABLED) {
 
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
 				MDIO_AN_REG_8073_BAM, &val);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8073_BAM, val | 1);
 		DP(NETIF_MSG_LINK, "Enable CL37 BAM on KR\n");
-	पूर्ण
-	अगर (params->loopback_mode == LOOPBACK_EXT) अणु
-		bnx2x_807x_क्रमce_10G(bp, phy);
+	}
+	if (params->loopback_mode == LOOPBACK_EXT) {
+		bnx2x_807x_force_10G(bp, phy);
 		DP(NETIF_MSG_LINK, "Forced speed 10G on 807X\n");
-		वापस;
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		return;
+	} else {
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_BCM_CTRL, 0x0002);
-	पूर्ण
-	अगर (phy->req_line_speed != SPEED_AUTO_NEG) अणु
-		अगर (phy->req_line_speed == SPEED_10000) अणु
+	}
+	if (phy->req_line_speed != SPEED_AUTO_NEG) {
+		if (phy->req_line_speed == SPEED_10000) {
 			val = (1<<7);
-		पूर्ण अन्यथा अगर (phy->req_line_speed ==  SPEED_2500) अणु
+		} else if (phy->req_line_speed ==  SPEED_2500) {
 			val = (1<<5);
 			/* Note that 2.5G works only when used with 1G
 			 * advertisement
 			 */
-		पूर्ण अन्यथा
+		} else
 			val = (1<<5);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = 0;
-		अगर (phy->speed_cap_mask &
+		if (phy->speed_cap_mask &
 			PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)
 			val |= (1<<7);
 
 		/* Note that 2.5G works only when used with 1G advertisement */
-		अगर (phy->speed_cap_mask &
+		if (phy->speed_cap_mask &
 			(PORT_HW_CFG_SPEED_CAPABILITY_D0_1G |
 			 PORT_HW_CFG_SPEED_CAPABILITY_D0_2_5G))
 			val |= (1<<5);
 		DP(NETIF_MSG_LINK, "807x autoneg val = 0x%x\n", val);
-	पूर्ण
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV, val);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_8073_2_5G, &पंचांगp1);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV, val);
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_8073_2_5G, &tmp1);
 
-	अगर (((phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_2_5G) &&
+	if (((phy->speed_cap_mask & PORT_HW_CFG_SPEED_CAPABILITY_D0_2_5G) &&
 	     (phy->req_line_speed == SPEED_AUTO_NEG)) ||
-	    (phy->req_line_speed == SPEED_2500)) अणु
+	    (phy->req_line_speed == SPEED_2500)) {
 		u16 phy_ver;
-		/* Allow 2.5G क्रम A1 and above */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		/* Allow 2.5G for A1 and above */
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD, MDIO_PMA_REG_8073_CHIP_REV,
 				&phy_ver);
 		DP(NETIF_MSG_LINK, "Add 2.5G\n");
-		अगर (phy_ver > 0)
-			पंचांगp1 |= 1;
-		अन्यथा
-			पंचांगp1 &= 0xfffe;
-	पूर्ण अन्यथा अणु
+		if (phy_ver > 0)
+			tmp1 |= 1;
+		else
+			tmp1 &= 0xfffe;
+	} else {
 		DP(NETIF_MSG_LINK, "Disable 2.5G\n");
-		पंचांगp1 &= 0xfffe;
-	पूर्ण
+		tmp1 &= 0xfffe;
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_8073_2_5G, पंचांगp1);
-	/* Add support क्रम CL37 (passive mode) II */
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_8073_2_5G, tmp1);
+	/* Add support for CL37 (passive mode) II */
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD, &पंचांगp1);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD,
-			 (पंचांगp1 | ((phy->req_duplex == DUPLEX_FULL) ?
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD, &tmp1);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD,
+			 (tmp1 | ((phy->req_duplex == DUPLEX_FULL) ?
 				  0x20 : 0x40)));
 
-	/* Add support क्रम CL37 (passive mode) III */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x1000);
+	/* Add support for CL37 (passive mode) III */
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x1000);
 
-	/* The SNR will improve about 2db by changing BW and FEE मुख्य
+	/* The SNR will improve about 2db by changing BW and FEE main
 	 * tap. Rest commands are executed after link is up
-	 * Change FFE मुख्य cursor to 5 in EDC रेजिस्टर
+	 * Change FFE main cursor to 5 in EDC register
 	 */
-	अगर (bnx2x_8073_is_snr_needed(bp, phy))
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	if (bnx2x_8073_is_snr_needed(bp, phy))
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_EDC_FFE_MAIN,
 				 0xFB0C);
 
 	/* Enable FEC (Forware Error Correction) Request in the AN */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV2, &पंचांगp1);
-	पंचांगp1 |= (1<<15);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV2, पंचांगp1);
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV2, &tmp1);
+	tmp1 |= (1<<15);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_ADV2, tmp1);
 
-	bnx2x_ext_phy_set_छोड़ो(params, phy, vars);
+	bnx2x_ext_phy_set_pause(params, phy, vars);
 
-	/* Restart स्वतःneg */
+	/* Restart autoneg */
 	msleep(500);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x1200);
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x1200);
 	DP(NETIF_MSG_LINK, "807x Autoneg Restart: Advertise 1G=%x, 10G=%x\n",
 		   ((val & (1<<5)) > 0), ((val & (1<<7)) > 0));
-पूर्ण
+}
 
-अटल u8 bnx2x_8073_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_8073_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 link_up = 0;
 	u16 val1, val2;
 	u16 link_status = 0;
 	u16 an1000_status = 0;
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val1);
 
 	DP(NETIF_MSG_LINK, "8703 LASI status 0x%x\n", val1);
 
-	/* Clear the पूर्णांकerrupt LASI status रेजिस्टर */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	/* Clear the interrupt LASI status register */
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PCS_DEVAD, MDIO_PCS_REG_STATUS, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PCS_DEVAD, MDIO_PCS_REG_STATUS, &val1);
 	DP(NETIF_MSG_LINK, "807x PCS status 0x%x->0x%x\n", val2, val1);
 	/* Clear MSG-OUT */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &val1);
 
 	/* Check the LASI */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &val2);
 
 	DP(NETIF_MSG_LINK, "KR 0x9003 0x%x\n", val2);
 
 	/* Check the link status */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PCS_DEVAD, MDIO_PCS_REG_STATUS, &val2);
 	DP(NETIF_MSG_LINK, "KR PCS status 0x%x\n", val2);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val1);
 	link_up = ((val1 & 4) == 4);
 	DP(NETIF_MSG_LINK, "PMA_REG_STATUS=0x%x\n", val1);
 
-	अगर (link_up &&
-	     ((phy->req_line_speed != SPEED_10000))) अणु
-		अगर (bnx2x_8073_xaui_wa(bp, phy) != 0)
-			वापस 0;
-	पूर्ण
-	bnx2x_cl45_पढ़ो(bp, phy,
+	if (link_up &&
+	     ((phy->req_line_speed != SPEED_10000))) {
+		if (bnx2x_8073_xaui_wa(bp, phy) != 0)
+			return 0;
+	}
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_LINK_STATUS, &an1000_status);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_LINK_STATUS, &an1000_status);
 
 	/* Check the link status on 1.1.2 */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val1);
 	DP(NETIF_MSG_LINK, "KR PMA status 0x%x->0x%x,"
 		   "an_link_status=0x%x\n", val2, val1, an1000_status);
 
 	link_up = (((val1 & 4) == 4) || (an1000_status & (1<<1)));
-	अगर (link_up && bnx2x_8073_is_snr_needed(bp, phy)) अणु
-		/* The SNR will improve about 2dbby changing the BW and FEE मुख्य
-		 * tap. The 1st ग_लिखो to change FFE मुख्य tap is set beक्रमe
-		 * restart AN. Change PLL Bandwidth in EDC रेजिस्टर
+	if (link_up && bnx2x_8073_is_snr_needed(bp, phy)) {
+		/* The SNR will improve about 2dbby changing the BW and FEE main
+		 * tap. The 1st write to change FFE main tap is set before
+		 * restart AN. Change PLL Bandwidth in EDC register
 		 */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_PLL_BANDWIDTH,
 				 0x26BC);
 
-		/* Change CDR Bandwidth in EDC रेजिस्टर */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		/* Change CDR Bandwidth in EDC register */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_CDR_BANDWIDTH,
 				 0x0333);
-	पूर्ण
-	bnx2x_cl45_पढ़ो(bp, phy,
+	}
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_8073_SPEED_LINK_STATUS,
 			&link_status);
 
-	/* Bits 0..2 --> speed detected, bits 13..15--> link is करोwn */
-	अगर ((link_status & (1<<2)) && (!(link_status & (1<<15)))) अणु
+	/* Bits 0..2 --> speed detected, bits 13..15--> link is down */
+	if ((link_status & (1<<2)) && (!(link_status & (1<<15)))) {
 		link_up = 1;
 		vars->line_speed = SPEED_10000;
 		DP(NETIF_MSG_LINK, "port %x: External link up in 10G\n",
 			   params->port);
-	पूर्ण अन्यथा अगर ((link_status & (1<<1)) && (!(link_status & (1<<14)))) अणु
+	} else if ((link_status & (1<<1)) && (!(link_status & (1<<14)))) {
 		link_up = 1;
 		vars->line_speed = SPEED_2500;
 		DP(NETIF_MSG_LINK, "port %x: External link up in 2.5G\n",
 			   params->port);
-	पूर्ण अन्यथा अगर ((link_status & (1<<0)) && (!(link_status & (1<<13)))) अणु
+	} else if ((link_status & (1<<0)) && (!(link_status & (1<<13)))) {
 		link_up = 1;
 		vars->line_speed = SPEED_1000;
 		DP(NETIF_MSG_LINK, "port %x: External link up in 1G\n",
 			   params->port);
-	पूर्ण अन्यथा अणु
+	} else {
 		link_up = 0;
 		DP(NETIF_MSG_LINK, "port %x: External link is down\n",
 			   params->port);
-	पूर्ण
+	}
 
-	अगर (link_up) अणु
-		/* Swap polarity अगर required */
-		अगर (params->lane_config &
-		    PORT_HW_CFG_SWAP_PHY_POLARITY_ENABLED) अणु
+	if (link_up) {
+		/* Swap polarity if required */
+		if (params->lane_config &
+		    PORT_HW_CFG_SWAP_PHY_POLARITY_ENABLED) {
 			/* Configure the 8073 to swap P and N of the KR lines */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_XS_DEVAD,
 					MDIO_XS_REG_8073_RX_CTRL_PCIE, &val1);
 			/* Set bit 3 to invert Rx in 1G mode and clear this bit
 			 * when it`s in 10G mode.
 			 */
-			अगर (vars->line_speed == SPEED_1000) अणु
+			if (vars->line_speed == SPEED_1000) {
 				DP(NETIF_MSG_LINK, "Swapping 1G polarity for"
 					      "the 8073\n");
 				val1 |= (1<<3);
-			पूर्ण अन्यथा
+			} else
 				val1 &= ~(1<<3);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_XS_DEVAD,
 					 MDIO_XS_REG_8073_RX_CTRL_PCIE,
 					 val1);
-		पूर्ण
+		}
 		bnx2x_ext_phy_10G_an_resolve(bp, phy, vars);
 		bnx2x_8073_resolve_fc(phy, params, vars);
 		vars->duplex = DUPLEX_FULL;
-	पूर्ण
+	}
 
-	अगर (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+	if (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) {
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_LP_AUTO_NEG2, &val1);
 
-		अगर (val1 & (1<<5))
+		if (val1 & (1<<5))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE;
-		अगर (val1 & (1<<7))
+		if (val1 & (1<<7))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
-	पूर्ण
+	}
 
-	वापस link_up;
-पूर्ण
+	return link_up;
+}
 
-अटल व्योम bnx2x_8073_link_reset(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8073_link_reset(struct bnx2x_phy *phy,
+				  struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 gpio_port;
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		gpio_port = BP_PATH(bp);
-	अन्यथा
+	else
 		gpio_port = params->port;
 	DP(NETIF_MSG_LINK, "Setting 8073 port %d into low power mode\n",
 	   gpio_port);
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW,
 		       gpio_port);
-पूर्ण
+}
 
 /******************************************************************/
 /*			BCM8705 PHY SECTION			  */
 /******************************************************************/
-अटल व्योम bnx2x_8705_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8705_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "init 8705\n");
-	/* Restore normal घातer mode*/
+	/* Restore normal power mode*/
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, params->port);
 	/* HW reset */
 	bnx2x_ext_phy_hw_reset(bp, params->port);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0xa040);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0xa040);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_MISC_CTRL, 0x8288);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER, 0x7fbf);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_CMU_PLL_BYPASS, 0x0100);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_WIS_DEVAD, MDIO_WIS_REG_LASI_CNTL, 0x1);
-	/* BCM8705 करोesn't have microcode, hence the 0 */
+	/* BCM8705 doesn't have microcode, hence the 0 */
 	bnx2x_save_spirom_version(bp, params->port, params->shmem_base, 0);
-पूर्ण
+}
 
-अटल u8 bnx2x_8705_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
+static u8 bnx2x_8705_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
 	u8 link_up = 0;
 	u16 val1, rx_sd;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "read status 8705\n");
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 		      MDIO_WIS_DEVAD, MDIO_WIS_REG_LASI_STATUS, &val1);
 	DP(NETIF_MSG_LINK, "8705 LASI status 0x%x\n", val1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 		      MDIO_WIS_DEVAD, MDIO_WIS_REG_LASI_STATUS, &val1);
 	DP(NETIF_MSG_LINK, "8705 LASI status 0x%x\n", val1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 		      MDIO_PMA_DEVAD, MDIO_PMA_REG_RX_SD, &rx_sd);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 		      MDIO_PMA_DEVAD, 0xc809, &val1);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 		      MDIO_PMA_DEVAD, 0xc809, &val1);
 
 	DP(NETIF_MSG_LINK, "8705 1.c809 val=0x%x\n", val1);
 	link_up = ((rx_sd & 0x1) && (val1 & (1<<9)) && ((val1 & (1<<8)) == 0));
-	अगर (link_up) अणु
+	if (link_up) {
 		vars->line_speed = SPEED_10000;
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
-	पूर्ण
-	वापस link_up;
-पूर्ण
+	}
+	return link_up;
+}
 
 /******************************************************************/
 /*			SFP+ module Section			  */
 /******************************************************************/
-अटल व्योम bnx2x_set_disable_pmd_transmit(काष्ठा link_params *params,
-					   काष्ठा bnx2x_phy *phy,
+static void bnx2x_set_disable_pmd_transmit(struct link_params *params,
+					   struct bnx2x_phy *phy,
 					   u8 pmd_dis)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	/* Disable transmitter only क्रम bootcodes which can enable it afterwards
-	 * (क्रम D3 link)
+{
+	struct bnx2x *bp = params->bp;
+	/* Disable transmitter only for bootcodes which can enable it afterwards
+	 * (for D3 link)
 	 */
-	अगर (pmd_dis) अणु
-		अगर (params->feature_config_flags &
+	if (pmd_dis) {
+		if (params->feature_config_flags &
 		     FEATURE_CONFIG_BC_SUPPORTS_SFP_TX_DISABLED)
 			DP(NETIF_MSG_LINK, "Disabling PMD transmitter\n");
-		अन्यथा अणु
+		else {
 			DP(NETIF_MSG_LINK, "NOT disabling PMD transmitter\n");
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा
+			return;
+		}
+	} else
 		DP(NETIF_MSG_LINK, "Enabling PMD transmitter\n");
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_TX_DISABLE, pmd_dis);
-पूर्ण
+}
 
-अटल u8 bnx2x_get_gpio_port(काष्ठा link_params *params)
-अणु
+static u8 bnx2x_get_gpio_port(struct link_params *params)
+{
 	u8 gpio_port;
 	u32 swap_val, swap_override;
-	काष्ठा bnx2x *bp = params->bp;
-	अगर (CHIP_IS_E2(bp))
+	struct bnx2x *bp = params->bp;
+	if (CHIP_IS_E2(bp))
 		gpio_port = BP_PATH(bp);
-	अन्यथा
+	else
 		gpio_port = params->port;
 	swap_val = REG_RD(bp, NIG_REG_PORT_SWAP);
 	swap_override = REG_RD(bp, NIG_REG_STRAP_OVERRIDE);
-	वापस gpio_port ^ (swap_val && swap_override);
-पूर्ण
+	return gpio_port ^ (swap_val && swap_override);
+}
 
-अटल व्योम bnx2x_sfp_e1e2_set_transmitter(काष्ठा link_params *params,
-					   काष्ठा bnx2x_phy *phy,
+static void bnx2x_sfp_e1e2_set_transmitter(struct link_params *params,
+					   struct bnx2x_phy *phy,
 					   u8 tx_en)
-अणु
+{
 	u16 val;
 	u8 port = params->port;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	u32 tx_en_mode;
 
 	/* Disable/Enable transmitter ( TX laser of the SFP+ module.)*/
 	tx_en_mode = REG_RD(bp, params->shmem_base +
-			    दुरत्व(काष्ठा shmem_region,
+			    offsetof(struct shmem_region,
 				     dev_info.port_hw_config[port].sfp_ctrl)) &
 		PORT_HW_CFG_TX_LASER_MASK;
 	DP(NETIF_MSG_LINK, "Setting transmitter tx_en=%x for port %x "
 			   "mode = %x\n", tx_en, port, tx_en_mode);
-	चयन (tx_en_mode) अणु
-	हाल PORT_HW_CFG_TX_LASER_MDIO:
+	switch (tx_en_mode) {
+	case PORT_HW_CFG_TX_LASER_MDIO:
 
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_PHY_IDENTIFIER,
 				&val);
 
-		अगर (tx_en)
+		if (tx_en)
 			val &= ~(1<<15);
-		अन्यथा
+		else
 			val |= (1<<15);
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_PHY_IDENTIFIER,
 				 val);
-	अवरोध;
-	हाल PORT_HW_CFG_TX_LASER_GPIO0:
-	हाल PORT_HW_CFG_TX_LASER_GPIO1:
-	हाल PORT_HW_CFG_TX_LASER_GPIO2:
-	हाल PORT_HW_CFG_TX_LASER_GPIO3:
-	अणु
+	break;
+	case PORT_HW_CFG_TX_LASER_GPIO0:
+	case PORT_HW_CFG_TX_LASER_GPIO1:
+	case PORT_HW_CFG_TX_LASER_GPIO2:
+	case PORT_HW_CFG_TX_LASER_GPIO3:
+	{
 		u16 gpio_pin;
 		u8 gpio_port, gpio_mode;
-		अगर (tx_en)
+		if (tx_en)
 			gpio_mode = MISC_REGISTERS_GPIO_OUTPUT_HIGH;
-		अन्यथा
+		else
 			gpio_mode = MISC_REGISTERS_GPIO_OUTPUT_LOW;
 
 		gpio_pin = tx_en_mode - PORT_HW_CFG_TX_LASER_GPIO0;
 		gpio_port = bnx2x_get_gpio_port(params);
 		bnx2x_set_gpio(bp, gpio_pin, gpio_mode, gpio_port);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		DP(NETIF_MSG_LINK, "Invalid TX_LASER_MDIO 0x%x\n", tx_en_mode);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम bnx2x_sfp_set_transmitter(काष्ठा link_params *params,
-				      काष्ठा bnx2x_phy *phy,
+static void bnx2x_sfp_set_transmitter(struct link_params *params,
+				      struct bnx2x_phy *phy,
 				      u8 tx_en)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "Setting SFP+ transmitter to %d\n", tx_en);
-	अगर (CHIP_IS_E3(bp))
+	if (CHIP_IS_E3(bp))
 		bnx2x_sfp_e3_set_transmitter(params, phy, tx_en);
-	अन्यथा
+	else
 		bnx2x_sfp_e1e2_set_transmitter(params, phy, tx_en);
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_8726_पढ़ो_sfp_module_eeprom(काष्ठा bnx2x_phy *phy,
-					     काष्ठा link_params *params,
+static int bnx2x_8726_read_sfp_module_eeprom(struct bnx2x_phy *phy,
+					     struct link_params *params,
 					     u8 dev_addr, u16 addr, u8 byte_cnt,
 					     u8 *o_buf, u8 is_init)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 val = 0;
 	u16 i;
-	अगर (byte_cnt > SFP_EEPROM_PAGE_SIZE) अणु
+	if (byte_cnt > SFP_EEPROM_PAGE_SIZE) {
 		DP(NETIF_MSG_LINK,
 		   "Reading from eeprom is limited to 0xf\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Set the पढ़ो command byte count */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+		return -EINVAL;
+	}
+	/* Set the read command byte count */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_SFP_TWO_WIRE_BYTE_CNT,
 			 (byte_cnt | (dev_addr << 8)));
 
-	/* Set the पढ़ो command address */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Set the read command address */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_SFP_TWO_WIRE_MEM_ADDR,
 			 addr);
 
-	/* Activate पढ़ो command */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Activate read command */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_SFP_TWO_WIRE_CTRL,
 			 0x2c0f);
 
-	/* Wait up to 500us क्रम command complete status */
-	क्रम (i = 0; i < 100; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	/* Wait up to 500us for command complete status */
+	for (i = 0; i < 100; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_SFP_TWO_WIRE_CTRL, &val);
-		अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
+		if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
 		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE)
-			अवरोध;
+			break;
 		udelay(5);
-	पूर्ण
+	}
 
-	अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) !=
-		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE) अणु
+	if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) !=
+		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE) {
 		DP(NETIF_MSG_LINK,
 			 "Got bad status 0x%x when reading from SFP+ EEPROM\n",
 			 (val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Read the buffer */
-	क्रम (i = 0; i < byte_cnt; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (i = 0; i < byte_cnt; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8726_TWO_WIRE_DATA_BUF + i, &val);
 		o_buf[i] = (u8)(val & MDIO_PMA_REG_8726_TWO_WIRE_DATA_MASK);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 100; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (i = 0; i < 100; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_SFP_TWO_WIRE_CTRL, &val);
-		अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
+		if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
 		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_IDLE)
-			वापस 0;
+			return 0;
 		usleep_range(1000, 2000);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
-अटल व्योम bnx2x_warpcore_घातer_module(काष्ठा link_params *params,
-					u8 घातer)
-अणु
+static void bnx2x_warpcore_power_module(struct link_params *params,
+					u8 power)
+{
 	u32 pin_cfg;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
 	pin_cfg = (REG_RD(bp, params->shmem_base +
-			  दुरत्व(काष्ठा shmem_region,
+			  offsetof(struct shmem_region,
 			dev_info.port_hw_config[params->port].e3_sfp_ctrl)) &
 			PORT_HW_CFG_E3_PWR_DIS_MASK) >>
 			PORT_HW_CFG_E3_PWR_DIS_SHIFT;
 
-	अगर (pin_cfg == PIN_CFG_NA)
-		वापस;
+	if (pin_cfg == PIN_CFG_NA)
+		return;
 	DP(NETIF_MSG_LINK, "Setting SFP+ module power to %d using pin cfg %d\n",
-		       घातer, pin_cfg);
-	/* Low ==> corresponding SFP+ module is घातered
-	 * high ==> the SFP+ module is घातered करोwn
+		       power, pin_cfg);
+	/* Low ==> corresponding SFP+ module is powered
+	 * high ==> the SFP+ module is powered down
 	 */
-	bnx2x_set_cfg_pin(bp, pin_cfg, घातer ^ 1);
-पूर्ण
-अटल पूर्णांक bnx2x_warpcore_पढ़ो_sfp_module_eeprom(काष्ठा bnx2x_phy *phy,
-						 काष्ठा link_params *params,
+	bnx2x_set_cfg_pin(bp, pin_cfg, power ^ 1);
+}
+static int bnx2x_warpcore_read_sfp_module_eeprom(struct bnx2x_phy *phy,
+						 struct link_params *params,
 						 u8 dev_addr,
 						 u16 addr, u8 byte_cnt,
 						 u8 *o_buf, u8 is_init)
-अणु
-	पूर्णांक rc = 0;
+{
+	int rc = 0;
 	u8 i, j = 0, cnt = 0;
 	u32 data_array[4];
 	u16 addr32;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	अगर (byte_cnt > SFP_EEPROM_PAGE_SIZE) अणु
+	if (byte_cnt > SFP_EEPROM_PAGE_SIZE) {
 		DP(NETIF_MSG_LINK,
 		   "Reading from eeprom is limited to 16 bytes\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* 4 byte aligned address */
 	addr32 = addr & (~0x3);
-	करो अणु
-		अगर ((!is_init) && (cnt == I2C_WA_PWR_ITER)) अणु
-			bnx2x_warpcore_घातer_module(params, 0);
+	do {
+		if ((!is_init) && (cnt == I2C_WA_PWR_ITER)) {
+			bnx2x_warpcore_power_module(params, 0);
 			/* Note that 100us are not enough here */
 			usleep_range(1000, 2000);
-			bnx2x_warpcore_घातer_module(params, 1);
-		पूर्ण
-		rc = bnx2x_bsc_पढ़ो(params, bp, dev_addr, addr32, 0, byte_cnt,
+			bnx2x_warpcore_power_module(params, 1);
+		}
+		rc = bnx2x_bsc_read(params, bp, dev_addr, addr32, 0, byte_cnt,
 				    data_array);
-	पूर्ण जबतक ((rc != 0) && (++cnt < I2C_WA_RETRY_CNT));
+	} while ((rc != 0) && (++cnt < I2C_WA_RETRY_CNT));
 
-	अगर (rc == 0) अणु
-		क्रम (i = (addr - addr32); i < byte_cnt + (addr - addr32); i++) अणु
+	if (rc == 0) {
+		for (i = (addr - addr32); i < byte_cnt + (addr - addr32); i++) {
 			o_buf[j] = *((u8 *)data_array + i);
 			j++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bnx2x_8727_पढ़ो_sfp_module_eeprom(काष्ठा bnx2x_phy *phy,
-					     काष्ठा link_params *params,
+static int bnx2x_8727_read_sfp_module_eeprom(struct bnx2x_phy *phy,
+					     struct link_params *params,
 					     u8 dev_addr, u16 addr, u8 byte_cnt,
 					     u8 *o_buf, u8 is_init)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 val, i;
 
-	अगर (byte_cnt > SFP_EEPROM_PAGE_SIZE) अणु
+	if (byte_cnt > SFP_EEPROM_PAGE_SIZE) {
 		DP(NETIF_MSG_LINK,
 		   "Reading from eeprom is limited to 0xf\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Set 2-wire transfer rate of SFP+ module EEPROM
-	 * to 100Khz since some DACs(direct attached cables) करो
+	 * to 100Khz since some DACs(direct attached cables) do
 	 * not work at 400Khz.
 	 */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8727_TWO_WIRE_SLAVE_ADDR,
 			 ((dev_addr << 8) | 1));
 
-	/* Need to पढ़ो from 1.8000 to clear it */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	/* Need to read from 1.8000 to clear it */
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_SFP_TWO_WIRE_CTRL,
 			&val);
 
-	/* Set the पढ़ो command byte count */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Set the read command byte count */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_SFP_TWO_WIRE_BYTE_CNT,
 			 ((byte_cnt < 2) ? 2 : byte_cnt));
 
-	/* Set the पढ़ो command address */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Set the read command address */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_SFP_TWO_WIRE_MEM_ADDR,
 			 addr);
 	/* Set the destination address */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 0x8004,
 			 MDIO_PMA_REG_8727_TWO_WIRE_DATA_BUF);
 
-	/* Activate पढ़ो command */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Activate read command */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_SFP_TWO_WIRE_CTRL,
 			 0x8002);
-	/* Wait appropriate समय क्रम two-wire command to finish beक्रमe
-	 * polling the status रेजिस्टर
+	/* Wait appropriate time for two-wire command to finish before
+	 * polling the status register
 	 */
 	usleep_range(1000, 2000);
 
-	/* Wait up to 500us क्रम command complete status */
-	क्रम (i = 0; i < 100; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	/* Wait up to 500us for command complete status */
+	for (i = 0; i < 100; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_SFP_TWO_WIRE_CTRL, &val);
-		अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
+		if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
 		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE)
-			अवरोध;
+			break;
 		udelay(5);
-	पूर्ण
+	}
 
-	अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) !=
-		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE) अणु
+	if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) !=
+		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_COMPLETE) {
 		DP(NETIF_MSG_LINK,
 			 "Got bad status 0x%x when reading from SFP+ EEPROM\n",
 			 (val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK));
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Read the buffer */
-	क्रम (i = 0; i < byte_cnt; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (i = 0; i < byte_cnt; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8727_TWO_WIRE_DATA_BUF + i, &val);
 		o_buf[i] = (u8)(val & MDIO_PMA_REG_8727_TWO_WIRE_DATA_MASK);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 100; i++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (i = 0; i < 100; i++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_SFP_TWO_WIRE_CTRL, &val);
-		अगर ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
+		if ((val & MDIO_PMA_REG_SFP_TWO_WIRE_CTRL_STATUS_MASK) ==
 		    MDIO_PMA_REG_SFP_TWO_WIRE_STATUS_IDLE)
-			वापस 0;
+			return 0;
 		usleep_range(1000, 2000);
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
-पूर्णांक bnx2x_पढ़ो_sfp_module_eeprom(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params, u8 dev_addr,
+	return -EINVAL;
+}
+int bnx2x_read_sfp_module_eeprom(struct bnx2x_phy *phy,
+				 struct link_params *params, u8 dev_addr,
 				 u16 addr, u16 byte_cnt, u8 *o_buf)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा bnx2x *bp = params->bp;
+{
+	int rc = 0;
+	struct bnx2x *bp = params->bp;
 	u8 xfer_size;
 	u8 *user_data = o_buf;
-	पढ़ो_sfp_module_eeprom_func_p पढ़ो_func;
+	read_sfp_module_eeprom_func_p read_func;
 
-	अगर ((dev_addr != 0xa0) && (dev_addr != 0xa2)) अणु
+	if ((dev_addr != 0xa0) && (dev_addr != 0xa2)) {
 		DP(NETIF_MSG_LINK, "invalid dev_addr 0x%x\n", dev_addr);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (phy->type) अणु
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
-		पढ़ो_func = bnx2x_8726_पढ़ो_sfp_module_eeprom;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
-		पढ़ो_func = bnx2x_8727_पढ़ो_sfp_module_eeprom;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT:
-		पढ़ो_func = bnx2x_warpcore_पढ़ो_sfp_module_eeprom;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch (phy->type) {
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
+		read_func = bnx2x_8726_read_sfp_module_eeprom;
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
+		read_func = bnx2x_8727_read_sfp_module_eeprom;
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT:
+		read_func = bnx2x_warpcore_read_sfp_module_eeprom;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	जबतक (!rc && (byte_cnt > 0)) अणु
+	while (!rc && (byte_cnt > 0)) {
 		xfer_size = (byte_cnt > SFP_EEPROM_PAGE_SIZE) ?
 			SFP_EEPROM_PAGE_SIZE : byte_cnt;
-		rc = पढ़ो_func(phy, params, dev_addr, addr, xfer_size,
+		rc = read_func(phy, params, dev_addr, addr, xfer_size,
 			       user_data, 0);
 		byte_cnt -= xfer_size;
 		user_data += xfer_size;
 		addr += xfer_size;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक bnx2x_get_edc_mode(काष्ठा bnx2x_phy *phy,
-			      काष्ठा link_params *params,
+static int bnx2x_get_edc_mode(struct bnx2x_phy *phy,
+			      struct link_params *params,
 			      u16 *edc_mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u32 sync_offset = 0, phy_idx, media_types;
 	u8 val[SFP_EEPROM_FC_TX_TECH_ADDR + 1], check_limiting_mode = 0;
 	*edc_mode = EDC_MODE_LIMITING;
 	phy->media_type = ETH_PHY_UNSPECIFIED;
-	/* First check क्रम copper cable */
-	अगर (bnx2x_पढ़ो_sfp_module_eeprom(phy,
+	/* First check for copper cable */
+	if (bnx2x_read_sfp_module_eeprom(phy,
 					 params,
 					 I2C_DEV_ADDR_A0,
 					 0,
 					 SFP_EEPROM_FC_TX_TECH_ADDR + 1,
-					 (u8 *)val) != 0) अणु
+					 (u8 *)val) != 0) {
 		DP(NETIF_MSG_LINK, "Failed to read from SFP+ module EEPROM\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	params->link_attr_sync &= ~LINK_SFP_EEPROM_COMP_CODE_MASK;
 	params->link_attr_sync |= val[SFP_EEPROM_10G_COMP_CODE_ADDR] <<
 		LINK_SFP_EEPROM_COMP_CODE_SHIFT;
 	bnx2x_update_link_attr(params, params->link_attr_sync);
-	चयन (val[SFP_EEPROM_CON_TYPE_ADDR]) अणु
-	हाल SFP_EEPROM_CON_TYPE_VAL_COPPER:
-	अणु
+	switch (val[SFP_EEPROM_CON_TYPE_ADDR]) {
+	case SFP_EEPROM_CON_TYPE_VAL_COPPER:
+	{
 		u8 copper_module_type;
 		phy->media_type = ETH_PHY_DA_TWINAX;
-		/* Check अगर its active cable (includes SFP+ module)
+		/* Check if its active cable (includes SFP+ module)
 		 * of passive cable
 		 */
 		copper_module_type = val[SFP_EEPROM_FC_TX_TECH_ADDR];
 
-		अगर (copper_module_type &
-		    SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_ACTIVE) अणु
+		if (copper_module_type &
+		    SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_ACTIVE) {
 			DP(NETIF_MSG_LINK, "Active Copper cable detected\n");
-			अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT)
+			if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT)
 				*edc_mode = EDC_MODE_ACTIVE_DAC;
-			अन्यथा
+			else
 				check_limiting_mode = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			*edc_mode = EDC_MODE_PASSIVE_DAC;
-			/* Even in हाल PASSIVE_DAC indication is not set,
+			/* Even in case PASSIVE_DAC indication is not set,
 			 * treat it as a passive DAC cable, since some cables
-			 * करोn't have this indication.
+			 * don't have this indication.
 			 */
-			अगर (copper_module_type &
-			    SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_PASSIVE) अणु
+			if (copper_module_type &
+			    SFP_EEPROM_FC_TX_TECH_BITMASK_COPPER_PASSIVE) {
 				DP(NETIF_MSG_LINK,
 				   "Passive Copper cable detected\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				DP(NETIF_MSG_LINK,
 				   "Unknown copper-cable-type\n");
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल SFP_EEPROM_CON_TYPE_VAL_UNKNOWN:
-	हाल SFP_EEPROM_CON_TYPE_VAL_LC:
-	हाल SFP_EEPROM_CON_TYPE_VAL_RJ45:
+			}
+		}
+		break;
+	}
+	case SFP_EEPROM_CON_TYPE_VAL_UNKNOWN:
+	case SFP_EEPROM_CON_TYPE_VAL_LC:
+	case SFP_EEPROM_CON_TYPE_VAL_RJ45:
 		check_limiting_mode = 1;
-		अगर (((val[SFP_EEPROM_10G_COMP_CODE_ADDR] &
+		if (((val[SFP_EEPROM_10G_COMP_CODE_ADDR] &
 		     (SFP_EEPROM_10G_COMP_CODE_SR_MASK |
 		      SFP_EEPROM_10G_COMP_CODE_LR_MASK |
 		       SFP_EEPROM_10G_COMP_CODE_LRM_MASK)) == 0) &&
-		    (val[SFP_EEPROM_1G_COMP_CODE_ADDR] != 0)) अणु
+		    (val[SFP_EEPROM_1G_COMP_CODE_ADDR] != 0)) {
 			DP(NETIF_MSG_LINK, "1G SFP module detected\n");
 			phy->media_type = ETH_PHY_SFP_1G_FIBER;
-			अगर (phy->req_line_speed != SPEED_1000) अणु
+			if (phy->req_line_speed != SPEED_1000) {
 				u8 gport = params->port;
 				phy->req_line_speed = SPEED_1000;
-				अगर (!CHIP_IS_E1x(bp)) अणु
+				if (!CHIP_IS_E1x(bp)) {
 					gport = BP_PATH(bp) +
 					(params->port << 1);
-				पूर्ण
+				}
 				netdev_err(bp->dev,
 					   "Warning: Link speed was forced to 1000Mbps. Current SFP module in port %d is not compliant with 10G Ethernet\n",
 					   gport);
-			पूर्ण
-			अगर (val[SFP_EEPROM_1G_COMP_CODE_ADDR] &
-			    SFP_EEPROM_1G_COMP_CODE_BASE_T) अणु
+			}
+			if (val[SFP_EEPROM_1G_COMP_CODE_ADDR] &
+			    SFP_EEPROM_1G_COMP_CODE_BASE_T) {
 				bnx2x_sfp_set_transmitter(params, phy, 0);
 				msleep(40);
 				bnx2x_sfp_set_transmitter(params, phy, 1);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			पूर्णांक idx, cfg_idx = 0;
+			}
+		} else {
+			int idx, cfg_idx = 0;
 			DP(NETIF_MSG_LINK, "10G Optic module detected\n");
-			क्रम (idx = INT_PHY; idx < MAX_PHYS; idx++) अणु
-				अगर (params->phy[idx].type == phy->type) अणु
+			for (idx = INT_PHY; idx < MAX_PHYS; idx++) {
+				if (params->phy[idx].type == phy->type) {
 					cfg_idx = LINK_CONFIG_IDX(idx);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 			phy->media_type = ETH_PHY_SFPP_10G_FIBER;
 			phy->req_line_speed = params->req_line_speed[cfg_idx];
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		DP(NETIF_MSG_LINK, "Unable to determine module type 0x%x !!!\n",
 			 val[SFP_EEPROM_CON_TYPE_ADDR]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sync_offset = params->shmem_base +
-		दुरत्व(काष्ठा shmem_region,
+		offsetof(struct shmem_region,
 			 dev_info.port_hw_config[params->port].media_type);
 	media_types = REG_RD(bp, sync_offset);
-	/* Update media type क्रम non-PMF sync */
-	क्रम (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) अणु
-		अगर (&(params->phy[phy_idx]) == phy) अणु
+	/* Update media type for non-PMF sync */
+	for (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) {
+		if (&(params->phy[phy_idx]) == phy) {
 			media_types &= ~(PORT_HW_CFG_MEDIA_TYPE_PHY0_MASK <<
 				(PORT_HW_CFG_MEDIA_TYPE_PHY1_SHIFT * phy_idx));
 			media_types |= ((phy->media_type &
 					PORT_HW_CFG_MEDIA_TYPE_PHY0_MASK) <<
 				(PORT_HW_CFG_MEDIA_TYPE_PHY1_SHIFT * phy_idx));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	REG_WR(bp, sync_offset, media_types);
-	अगर (check_limiting_mode) अणु
+	if (check_limiting_mode) {
 		u8 options[SFP_EEPROM_OPTIONS_SIZE];
-		अगर (bnx2x_पढ़ो_sfp_module_eeprom(phy,
+		if (bnx2x_read_sfp_module_eeprom(phy,
 						 params,
 						 I2C_DEV_ADDR_A0,
 						 SFP_EEPROM_OPTIONS_ADDR,
 						 SFP_EEPROM_OPTIONS_SIZE,
-						 options) != 0) अणु
+						 options) != 0) {
 			DP(NETIF_MSG_LINK,
 			   "Failed to read Option field from module EEPROM\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर ((options[0] & SFP_EEPROM_OPTIONS_LINEAR_RX_OUT_MASK))
+			return -EINVAL;
+		}
+		if ((options[0] & SFP_EEPROM_OPTIONS_LINEAR_RX_OUT_MASK))
 			*edc_mode = EDC_MODE_LINEAR;
-		अन्यथा
+		else
 			*edc_mode = EDC_MODE_LIMITING;
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "EDC mode is set to 0x%x\n", *edc_mode);
-	वापस 0;
-पूर्ण
-/* This function पढ़ो the relevant field from the module (SFP+), and verअगरy it
+	return 0;
+}
+/* This function read the relevant field from the module (SFP+), and verify it
  * is compliant with this board
  */
-अटल पूर्णांक bnx2x_verअगरy_sfp_module(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_verify_sfp_module(struct bnx2x_phy *phy,
+				   struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u32 val, cmd;
 	u32 fw_resp, fw_cmd_param;
-	अक्षर venकरोr_name[SFP_EEPROM_VENDOR_NAME_SIZE+1];
-	अक्षर venकरोr_pn[SFP_EEPROM_PART_NO_SIZE+1];
+	char vendor_name[SFP_EEPROM_VENDOR_NAME_SIZE+1];
+	char vendor_pn[SFP_EEPROM_PART_NO_SIZE+1];
 	phy->flags &= ~FLAGS_SFP_NOT_APPROVED;
 	val = REG_RD(bp, params->shmem_base +
-			 दुरत्व(काष्ठा shmem_region, dev_info.
+			 offsetof(struct shmem_region, dev_info.
 				  port_feature_config[params->port].config));
-	अगर ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
-	    PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_NO_ENFORCEMENT) अणु
+	if ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
+	    PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_NO_ENFORCEMENT) {
 		DP(NETIF_MSG_LINK, "NOT enforcing module verification\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (params->feature_config_flags &
-	    FEATURE_CONFIG_BC_SUPPORTS_DUAL_PHY_OPT_MDL_VRFY) अणु
-		/* Use specअगरic phy request */
+	if (params->feature_config_flags &
+	    FEATURE_CONFIG_BC_SUPPORTS_DUAL_PHY_OPT_MDL_VRFY) {
+		/* Use specific phy request */
 		cmd = DRV_MSG_CODE_VRFY_SPECIFIC_PHY_OPT_MDL;
-	पूर्ण अन्यथा अगर (params->feature_config_flags &
-		   FEATURE_CONFIG_BC_SUPPORTS_OPT_MDL_VRFY) अणु
-		/* Use first phy request only in हाल of non-dual media*/
-		अगर (DUAL_MEDIA(params)) अणु
+	} else if (params->feature_config_flags &
+		   FEATURE_CONFIG_BC_SUPPORTS_OPT_MDL_VRFY) {
+		/* Use first phy request only in case of non-dual media*/
+		if (DUAL_MEDIA(params)) {
 			DP(NETIF_MSG_LINK,
 			   "FW does not support OPT MDL verification\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cmd = DRV_MSG_CODE_VRFY_FIRST_PHY_OPT_MDL;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* No support in OPT MDL detection */
 		DP(NETIF_MSG_LINK,
 		   "FW does not support OPT MDL verification\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	fw_cmd_param = FW_PARAM_SET(phy->addr, phy->type, phy->mdio_ctrl);
 	fw_resp = bnx2x_fw_command(bp, cmd, fw_cmd_param);
-	अगर (fw_resp == FW_MSG_CODE_VRFY_OPT_MDL_SUCCESS) अणु
+	if (fw_resp == FW_MSG_CODE_VRFY_OPT_MDL_SUCCESS) {
 		DP(NETIF_MSG_LINK, "Approved module\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Format the warning message */
-	अगर (bnx2x_पढ़ो_sfp_module_eeprom(phy,
+	if (bnx2x_read_sfp_module_eeprom(phy,
 					 params,
 					 I2C_DEV_ADDR_A0,
 					 SFP_EEPROM_VENDOR_NAME_ADDR,
 					 SFP_EEPROM_VENDOR_NAME_SIZE,
-					 (u8 *)venकरोr_name))
-		venकरोr_name[0] = '\0';
-	अन्यथा
-		venकरोr_name[SFP_EEPROM_VENDOR_NAME_SIZE] = '\0';
-	अगर (bnx2x_पढ़ो_sfp_module_eeprom(phy,
+					 (u8 *)vendor_name))
+		vendor_name[0] = '\0';
+	else
+		vendor_name[SFP_EEPROM_VENDOR_NAME_SIZE] = '\0';
+	if (bnx2x_read_sfp_module_eeprom(phy,
 					 params,
 					 I2C_DEV_ADDR_A0,
 					 SFP_EEPROM_PART_NO_ADDR,
 					 SFP_EEPROM_PART_NO_SIZE,
-					 (u8 *)venकरोr_pn))
-		venकरोr_pn[0] = '\0';
-	अन्यथा
-		venकरोr_pn[SFP_EEPROM_PART_NO_SIZE] = '\0';
+					 (u8 *)vendor_pn))
+		vendor_pn[0] = '\0';
+	else
+		vendor_pn[SFP_EEPROM_PART_NO_SIZE] = '\0';
 
 	netdev_err(bp->dev,  "Warning: Unqualified SFP+ module detected,"
 			      " Port %d from %s part number %s\n",
-			 params->port, venकरोr_name, venकरोr_pn);
-	अगर ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) !=
+			 params->port, vendor_name, vendor_pn);
+	if ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) !=
 	    PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_WARNING_MSG)
 		phy->flags |= FLAGS_SFP_NOT_APPROVED;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक bnx2x_रुको_क्रम_sfp_module_initialized(काष्ठा bnx2x_phy *phy,
-						 काष्ठा link_params *params)
+static int bnx2x_wait_for_sfp_module_initialized(struct bnx2x_phy *phy,
+						 struct link_params *params)
 
-अणु
+{
 	u8 val;
-	पूर्णांक rc;
-	काष्ठा bnx2x *bp = params->bp;
-	u16 समयout;
-	/* Initialization समय after hot-plug may take up to 300ms क्रम
+	int rc;
+	struct bnx2x *bp = params->bp;
+	u16 timeout;
+	/* Initialization time after hot-plug may take up to 300ms for
 	 * some phys type ( e.g. JDSU )
 	 */
 
-	क्रम (समयout = 0; समयout < 60; समयout++) अणु
-		अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT)
-			rc = bnx2x_warpcore_पढ़ो_sfp_module_eeprom(
+	for (timeout = 0; timeout < 60; timeout++) {
+		if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT)
+			rc = bnx2x_warpcore_read_sfp_module_eeprom(
 				phy, params, I2C_DEV_ADDR_A0, 1, 1, &val,
 				1);
-		अन्यथा
-			rc = bnx2x_पढ़ो_sfp_module_eeprom(phy, params,
+		else
+			rc = bnx2x_read_sfp_module_eeprom(phy, params,
 							  I2C_DEV_ADDR_A0,
 							  1, 1, &val);
-		अगर (rc == 0) अणु
+		if (rc == 0) {
 			DP(NETIF_MSG_LINK,
 			   "SFP+ module initialization took %d ms\n",
-			   समयout * 5);
-			वापस 0;
-		पूर्ण
+			   timeout * 5);
+			return 0;
+		}
 		usleep_range(5000, 10000);
-	पूर्ण
-	rc = bnx2x_पढ़ो_sfp_module_eeprom(phy, params, I2C_DEV_ADDR_A0,
+	}
+	rc = bnx2x_read_sfp_module_eeprom(phy, params, I2C_DEV_ADDR_A0,
 					  1, 1, &val);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम bnx2x_8727_घातer_module(काष्ठा bnx2x *bp,
-				    काष्ठा bnx2x_phy *phy,
-				    u8 is_घातer_up) अणु
-	/* Make sure GPIOs are not using क्रम LED mode */
+static void bnx2x_8727_power_module(struct bnx2x *bp,
+				    struct bnx2x_phy *phy,
+				    u8 is_power_up) {
+	/* Make sure GPIOs are not using for LED mode */
 	u16 val;
-	/* In the GPIO रेजिस्टर, bit 4 is use to determine अगर the GPIOs are
-	 * operating as INPUT or as OUTPUT. Bit 1 is क्रम input, and 0 क्रम
+	/* In the GPIO register, bit 4 is use to determine if the GPIOs are
+	 * operating as INPUT or as OUTPUT. Bit 1 is for input, and 0 for
 	 * output
-	 * Bits 0-1 determine the GPIOs value क्रम OUTPUT in हाल bit 4 val is 0
-	 * Bits 8-9 determine the GPIOs value क्रम INPUT in हाल bit 4 val is 1
+	 * Bits 0-1 determine the GPIOs value for OUTPUT in case bit 4 val is 0
+	 * Bits 8-9 determine the GPIOs value for INPUT in case bit 4 val is 1
 	 * where the 1st bit is the over-current(only input), and 2nd bit is
-	 * क्रम घातer( only output )
+	 * for power( only output )
 	 *
-	 * In हाल of NOC feature is disabled and घातer is up, set GPIO control
+	 * In case of NOC feature is disabled and power is up, set GPIO control
 	 *  as input to enable listening of over-current indication
 	 */
-	अगर (phy->flags & FLAGS_NOC)
-		वापस;
-	अगर (is_घातer_up)
+	if (phy->flags & FLAGS_NOC)
+		return;
+	if (is_power_up)
 		val = (1<<4);
-	अन्यथा
-		/* Set GPIO control to OUTPUT, and set the घातer bit
-		 * to according to the is_घातer_up
+	else
+		/* Set GPIO control to OUTPUT, and set the power bit
+		 * to according to the is_power_up
 		 */
 		val = (1<<1);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8727_GPIO_CTRL,
 			 val);
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_8726_set_limiting_mode(काष्ठा bnx2x *bp,
-					काष्ठा bnx2x_phy *phy,
+static int bnx2x_8726_set_limiting_mode(struct bnx2x *bp,
+					struct bnx2x_phy *phy,
 					u16 edc_mode)
-अणु
+{
 	u16 cur_limiting_mode;
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_ROM_VER2,
 			&cur_limiting_mode);
 	DP(NETIF_MSG_LINK, "Current Limiting mode is 0x%x\n",
 		 cur_limiting_mode);
 
-	अगर (edc_mode == EDC_MODE_LIMITING) अणु
+	if (edc_mode == EDC_MODE_LIMITING) {
 		DP(NETIF_MSG_LINK, "Setting LIMITING MODE\n");
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_ROM_VER2,
 				 EDC_MODE_LIMITING);
-	पूर्ण अन्यथा अणु /* LRM mode ( शेष )*/
+	} else { /* LRM mode ( default )*/
 
 		DP(NETIF_MSG_LINK, "Setting LRM MODE\n");
 
-		/* Changing to LRM mode takes quite few seconds. So करो it only
-		 * अगर current mode is limiting (शेष is LRM)
+		/* Changing to LRM mode takes quite few seconds. So do it only
+		 * if current mode is limiting (default is LRM)
 		 */
-		अगर (cur_limiting_mode != EDC_MODE_LIMITING)
-			वापस 0;
+		if (cur_limiting_mode != EDC_MODE_LIMITING)
+			return 0;
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_LRM_MODE,
 				 0);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_ROM_VER2,
 				 0x128);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_MISC_CTRL0,
 				 0x4008);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_LRM_MODE,
 				 0xaaaa);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_8727_set_limiting_mode(काष्ठा bnx2x *bp,
-					काष्ठा bnx2x_phy *phy,
+static int bnx2x_8727_set_limiting_mode(struct bnx2x *bp,
+					struct bnx2x_phy *phy,
 					u16 edc_mode)
-अणु
-	u16 phy_identअगरier;
+{
+	u16 phy_identifier;
 	u16 rom_ver2_val;
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_PHY_IDENTIFIER,
-			&phy_identअगरier);
+			&phy_identifier);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_PHY_IDENTIFIER,
-			 (phy_identअगरier & ~(1<<9)));
+			 (phy_identifier & ~(1<<9)));
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_ROM_VER2,
 			&rom_ver2_val);
 	/* Keep the MSB 8-bits, and set the LSB 8-bits with the edc_mode */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_ROM_VER2,
 			 (rom_ver2_val & 0xff00) | (edc_mode & 0x00ff));
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_PHY_IDENTIFIER,
-			 (phy_identअगरier | (1<<9)));
+			 (phy_identifier | (1<<9)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_8727_specअगरic_func(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
+static void bnx2x_8727_specific_func(struct bnx2x_phy *phy,
+				     struct link_params *params,
 				     u32 action)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 val;
-	चयन (action) अणु
-	हाल DISABLE_TX:
+	switch (action) {
+	case DISABLE_TX:
 		bnx2x_sfp_set_transmitter(params, phy, 0);
-		अवरोध;
-	हाल ENABLE_TX:
-		अगर (!(phy->flags & FLAGS_SFP_NOT_APPROVED))
+		break;
+	case ENABLE_TX:
+		if (!(phy->flags & FLAGS_SFP_NOT_APPROVED))
 			bnx2x_sfp_set_transmitter(params, phy, 1);
-		अवरोध;
-	हाल PHY_INIT:
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		break;
+	case PHY_INIT:
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL,
 				 (1<<2) | (1<<5));
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_TXCTRL,
 				 0);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0x0006);
-		/* Make MOD_ABS give पूर्णांकerrupt on change */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+		/* Make MOD_ABS give interrupt on change */
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8727_PCS_OPT_CTRL,
 				&val);
 		val |= (1<<12);
-		अगर (phy->flags & FLAGS_NOC)
+		if (phy->flags & FLAGS_NOC)
 			val |= (3<<5);
-		/* Set 8727 GPIOs to input to allow पढ़ोing from the 8727 GPIO0
+		/* Set 8727 GPIOs to input to allow reading from the 8727 GPIO0
 		 * status which reflect SFP+ module over-current
 		 */
-		अगर (!(phy->flags & FLAGS_NOC))
+		if (!(phy->flags & FLAGS_NOC))
 			val &= 0xff8f; /* Reset bits 4-6 */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_PCS_OPT_CTRL,
 				 val);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP(NETIF_MSG_LINK, "Function 0x%x not supported by 8727\n",
 		   action);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-अटल व्योम bnx2x_set_e1e2_module_fault_led(काष्ठा link_params *params,
+static void bnx2x_set_e1e2_module_fault_led(struct link_params *params,
 					   u8 gpio_mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 
 	u32 fault_led_gpio = REG_RD(bp, params->shmem_base +
-			    दुरत्व(काष्ठा shmem_region,
+			    offsetof(struct shmem_region,
 			dev_info.port_hw_config[params->port].sfp_ctrl)) &
 		PORT_HW_CFG_FAULT_MODULE_LED_MASK;
-	चयन (fault_led_gpio) अणु
-	हाल PORT_HW_CFG_FAULT_MODULE_LED_DISABLED:
-		वापस;
-	हाल PORT_HW_CFG_FAULT_MODULE_LED_GPIO0:
-	हाल PORT_HW_CFG_FAULT_MODULE_LED_GPIO1:
-	हाल PORT_HW_CFG_FAULT_MODULE_LED_GPIO2:
-	हाल PORT_HW_CFG_FAULT_MODULE_LED_GPIO3:
-	अणु
+	switch (fault_led_gpio) {
+	case PORT_HW_CFG_FAULT_MODULE_LED_DISABLED:
+		return;
+	case PORT_HW_CFG_FAULT_MODULE_LED_GPIO0:
+	case PORT_HW_CFG_FAULT_MODULE_LED_GPIO1:
+	case PORT_HW_CFG_FAULT_MODULE_LED_GPIO2:
+	case PORT_HW_CFG_FAULT_MODULE_LED_GPIO3:
+	{
 		u8 gpio_port = bnx2x_get_gpio_port(params);
 		u16 gpio_pin = fault_led_gpio -
 			PORT_HW_CFG_FAULT_MODULE_LED_GPIO0;
@@ -8550,155 +8549,155 @@
 				   "pin %x port %x mode %x\n",
 			       gpio_pin, gpio_port, gpio_mode);
 		bnx2x_set_gpio(bp, gpio_pin, gpio_mode, gpio_port);
-	पूर्ण
-	अवरोध;
-	शेष:
+	}
+	break;
+	default:
 		DP(NETIF_MSG_LINK, "Error: Invalid fault led mode 0x%x\n",
 			       fault_led_gpio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_set_e3_module_fault_led(काष्ठा link_params *params,
+static void bnx2x_set_e3_module_fault_led(struct link_params *params,
 					  u8 gpio_mode)
-अणु
+{
 	u32 pin_cfg;
 	u8 port = params->port;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	pin_cfg = (REG_RD(bp, params->shmem_base +
-			 दुरत्व(काष्ठा shmem_region,
+			 offsetof(struct shmem_region,
 				  dev_info.port_hw_config[port].e3_sfp_ctrl)) &
 		PORT_HW_CFG_E3_FAULT_MDL_LED_MASK) >>
 		PORT_HW_CFG_E3_FAULT_MDL_LED_SHIFT;
 	DP(NETIF_MSG_LINK, "Setting Fault LED to %d using pin cfg %d\n",
 		       gpio_mode, pin_cfg);
 	bnx2x_set_cfg_pin(bp, pin_cfg, gpio_mode);
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_sfp_module_fault_led(काष्ठा link_params *params,
+static void bnx2x_set_sfp_module_fault_led(struct link_params *params,
 					   u8 gpio_mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "Setting SFP+ module fault LED to %d\n", gpio_mode);
-	अगर (CHIP_IS_E3(bp)) अणु
-		/* Low ==> अगर SFP+ module is supported otherwise
-		 * High ==> अगर SFP+ module is not on the approved venकरोr list
+	if (CHIP_IS_E3(bp)) {
+		/* Low ==> if SFP+ module is supported otherwise
+		 * High ==> if SFP+ module is not on the approved vendor list
 		 */
 		bnx2x_set_e3_module_fault_led(params, gpio_mode);
-	पूर्ण अन्यथा
+	} else
 		bnx2x_set_e1e2_module_fault_led(params, gpio_mode);
-पूर्ण
+}
 
-अटल व्योम bnx2x_warpcore_hw_reset(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	bnx2x_warpcore_घातer_module(params, 0);
-	/* Put Warpcore in low घातer mode */
+static void bnx2x_warpcore_hw_reset(struct bnx2x_phy *phy,
+				    struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	bnx2x_warpcore_power_module(params, 0);
+	/* Put Warpcore in low power mode */
 	REG_WR(bp, MISC_REG_WC0_RESET, 0x0c0e);
 
-	/* Put LCPLL in low घातer mode */
+	/* Put LCPLL in low power mode */
 	REG_WR(bp, MISC_REG_LCPLL_E40_PWRDWN, 1);
 	REG_WR(bp, MISC_REG_LCPLL_E40_RESETB_ANA, 0);
 	REG_WR(bp, MISC_REG_LCPLL_E40_RESETB_DIG, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_घातer_sfp_module(काष्ठा link_params *params,
-				   काष्ठा bnx2x_phy *phy,
-				   u8 घातer)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	DP(NETIF_MSG_LINK, "Setting SFP+ power to %x\n", घातer);
+static void bnx2x_power_sfp_module(struct link_params *params,
+				   struct bnx2x_phy *phy,
+				   u8 power)
+{
+	struct bnx2x *bp = params->bp;
+	DP(NETIF_MSG_LINK, "Setting SFP+ power to %x\n", power);
 
-	चयन (phy->type) अणु
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
-		bnx2x_8727_घातer_module(params->bp, phy, घातer);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT:
-		bnx2x_warpcore_घातer_module(params, घातer);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
-अटल व्योम bnx2x_warpcore_set_limiting_mode(काष्ठा link_params *params,
-					     काष्ठा bnx2x_phy *phy,
+	switch (phy->type) {
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
+		bnx2x_8727_power_module(params->bp, phy, power);
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT:
+		bnx2x_warpcore_power_module(params, power);
+		break;
+	default:
+		break;
+	}
+}
+static void bnx2x_warpcore_set_limiting_mode(struct link_params *params,
+					     struct bnx2x_phy *phy,
 					     u16 edc_mode)
-अणु
+{
 	u16 val = 0;
 	u16 mode = MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE_DEFAULT;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
 	u8 lane = bnx2x_get_warpcore_lane(phy, params);
-	/* This is a global रेजिस्टर which controls all lanes */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	/* This is a global register which controls all lanes */
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE, &val);
 	val &= ~(0xf << (lane << 2));
 
-	चयन (edc_mode) अणु
-	हाल EDC_MODE_LINEAR:
-	हाल EDC_MODE_LIMITING:
+	switch (edc_mode) {
+	case EDC_MODE_LINEAR:
+	case EDC_MODE_LIMITING:
 		mode = MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE_DEFAULT;
-		अवरोध;
-	हाल EDC_MODE_PASSIVE_DAC:
-	हाल EDC_MODE_ACTIVE_DAC:
+		break;
+	case EDC_MODE_PASSIVE_DAC:
+	case EDC_MODE_ACTIVE_DAC:
 		mode = MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE_SFP_DAC;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	val |= (mode << (lane << 2));
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_WC_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_WC_DEVAD,
 			 MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE, val);
-	/* A must पढ़ो */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	/* A must read */
+	bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 			MDIO_WC_REG_UC_INFO_B1_FIRMWARE_MODE, &val);
 
-	/* Restart microcode to re-पढ़ो the new mode */
+	/* Restart microcode to re-read the new mode */
 	bnx2x_warpcore_reset_lane(bp, phy, 1);
 	bnx2x_warpcore_reset_lane(bp, phy, 0);
 
-पूर्ण
+}
 
-अटल व्योम bnx2x_set_limiting_mode(काष्ठा link_params *params,
-				    काष्ठा bnx2x_phy *phy,
+static void bnx2x_set_limiting_mode(struct link_params *params,
+				    struct bnx2x_phy *phy,
 				    u16 edc_mode)
-अणु
-	चयन (phy->type) अणु
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
+{
+	switch (phy->type) {
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
 		bnx2x_8726_set_limiting_mode(params->bp, phy, edc_mode);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
 		bnx2x_8727_set_limiting_mode(params->bp, phy, edc_mode);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT:
 		bnx2x_warpcore_set_limiting_mode(params, phy, edc_mode);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक bnx2x_sfp_module_detection(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_sfp_module_detection(struct bnx2x_phy *phy,
+				      struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 edc_mode;
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	u32 val = REG_RD(bp, params->shmem_base +
-			     दुरत्व(काष्ठा shmem_region, dev_info.
+			     offsetof(struct shmem_region, dev_info.
 				     port_feature_config[params->port].config));
-	/* Enabled transmitter by शेष */
+	/* Enabled transmitter by default */
 	bnx2x_sfp_set_transmitter(params, phy, 1);
 	DP(NETIF_MSG_LINK, "SFP+ module plugged in/out detected on port %d\n",
 		 params->port);
 	/* Power up module */
-	bnx2x_घातer_sfp_module(params, phy, 1);
-	अगर (bnx2x_get_edc_mode(phy, params, &edc_mode) != 0) अणु
+	bnx2x_power_sfp_module(params, phy, 1);
+	if (bnx2x_get_edc_mode(phy, params, &edc_mode) != 0) {
 		DP(NETIF_MSG_LINK, "Failed to get valid module type\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (bnx2x_verअगरy_sfp_module(phy, params) != 0) अणु
+		return -EINVAL;
+	} else if (bnx2x_verify_sfp_module(phy, params) != 0) {
 		/* Check SFP+ module compatibility */
 		DP(NETIF_MSG_LINK, "Module verification failed!!\n");
 		rc = -EINVAL;
@@ -8706,53 +8705,53 @@
 		bnx2x_set_sfp_module_fault_led(params,
 					       MISC_REGISTERS_GPIO_HIGH);
 
-		/* Check अगर need to घातer करोwn the SFP+ module */
-		अगर ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
-		     PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_POWER_DOWN) अणु
+		/* Check if need to power down the SFP+ module */
+		if ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
+		     PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_POWER_DOWN) {
 			DP(NETIF_MSG_LINK, "Shutdown SFP+ module!!\n");
-			bnx2x_घातer_sfp_module(params, phy, 0);
-			वापस rc;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			bnx2x_power_sfp_module(params, phy, 0);
+			return rc;
+		}
+	} else {
 		/* Turn off fault module-detected led */
 		bnx2x_set_sfp_module_fault_led(params, MISC_REGISTERS_GPIO_LOW);
-	पूर्ण
+	}
 
 	/* Check and set limiting mode / LRM mode on 8726. On 8727 it
-	 * is करोne स्वतःmatically
+	 * is done automatically
 	 */
 	bnx2x_set_limiting_mode(params, phy, edc_mode);
 
-	/* Disable transmit क्रम this module अगर the module is not approved, and
+	/* Disable transmit for this module if the module is not approved, and
 	 * laser needs to be disabled.
 	 */
-	अगर ((rc) &&
+	if ((rc) &&
 	    ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
 	     PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_DISABLE_TX_LASER))
 		bnx2x_sfp_set_transmitter(params, phy, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम bnx2x_handle_module_detect_पूर्णांक(काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	काष्ठा bnx2x_phy *phy;
+void bnx2x_handle_module_detect_int(struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	struct bnx2x_phy *phy;
 	u32 gpio_val;
 	u8 gpio_num, gpio_port;
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		phy = &params->phy[INT_PHY];
-		/* Always enable TX laser,will be disabled in हाल of fault */
+		/* Always enable TX laser,will be disabled in case of fault */
 		bnx2x_sfp_set_transmitter(params, phy, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		phy = &params->phy[EXT_PHY1];
-	पूर्ण
-	अगर (bnx2x_get_mod_असल_पूर्णांक_cfg(bp, params->chip_id, params->shmem_base,
+	}
+	if (bnx2x_get_mod_abs_int_cfg(bp, params->chip_id, params->shmem_base,
 				      params->port, &gpio_num, &gpio_port) ==
-	    -EINVAL) अणु
+	    -EINVAL) {
 		DP(NETIF_MSG_LINK, "Failed to get MOD_ABS interrupt config\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Set valid module led off */
 	bnx2x_set_sfp_module_fault_led(params, MISC_REGISTERS_GPIO_HIGH);
@@ -8760,721 +8759,721 @@
 	/* Get current gpio val reflecting module plugged in / out*/
 	gpio_val = bnx2x_get_gpio(bp, gpio_num, gpio_port);
 
-	/* Call the handling function in हाल module is detected */
-	अगर (gpio_val == 0) अणु
+	/* Call the handling function in case module is detected */
+	if (gpio_val == 0) {
 		bnx2x_set_mdio_emac_per_phy(bp, params);
 		bnx2x_set_aer_mmd(params, phy);
 
-		bnx2x_घातer_sfp_module(params, phy, 1);
-		bnx2x_set_gpio_पूर्णांक(bp, gpio_num,
+		bnx2x_power_sfp_module(params, phy, 1);
+		bnx2x_set_gpio_int(bp, gpio_num,
 				   MISC_REGISTERS_GPIO_INT_OUTPUT_CLR,
 				   gpio_port);
-		अगर (bnx2x_रुको_क्रम_sfp_module_initialized(phy, params) == 0) अणु
+		if (bnx2x_wait_for_sfp_module_initialized(phy, params) == 0) {
 			bnx2x_sfp_module_detection(phy, params);
-			अगर (CHIP_IS_E3(bp)) अणु
+			if (CHIP_IS_E3(bp)) {
 				u16 rx_tx_in_reset;
-				/* In हाल WC is out of reset, reconfigure the
-				 * link speed जबतक taking पूर्णांकo account 1G
+				/* In case WC is out of reset, reconfigure the
+				 * link speed while taking into account 1G
 				 * module limitation.
 				 */
-				bnx2x_cl45_पढ़ो(bp, phy,
+				bnx2x_cl45_read(bp, phy,
 						MDIO_WC_DEVAD,
 						MDIO_WC_REG_DIGITAL5_MISC6,
 						&rx_tx_in_reset);
-				अगर ((!rx_tx_in_reset) &&
+				if ((!rx_tx_in_reset) &&
 				    (params->link_flags &
-				     PHY_INITIALIZED)) अणु
+				     PHY_INITIALIZED)) {
 					bnx2x_warpcore_reset_lane(bp, phy, 1);
 					bnx2x_warpcore_config_sfi(phy, params);
 					bnx2x_warpcore_reset_lane(bp, phy, 0);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				}
+			}
+		} else {
 			DP(NETIF_MSG_LINK, "SFP+ module is not initialized\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		bnx2x_set_gpio_पूर्णांक(bp, gpio_num,
+		}
+	} else {
+		bnx2x_set_gpio_int(bp, gpio_num,
 				   MISC_REGISTERS_GPIO_INT_OUTPUT_SET,
 				   gpio_port);
 		/* Module was plugged out.
-		 * Disable transmit क्रम this module
+		 * Disable transmit for this module
 		 */
 		phy->media_type = ETH_PHY_NOT_PRESENT;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /******************************************************************/
 /*		Used by 8706 and 8727                             */
 /******************************************************************/
-अटल व्योम bnx2x_sfp_mask_fault(काष्ठा bnx2x *bp,
-				 काष्ठा bnx2x_phy *phy,
+static void bnx2x_sfp_mask_fault(struct bnx2x *bp,
+				 struct bnx2x_phy *phy,
 				 u16 alarm_status_offset,
 				 u16 alarm_ctrl_offset)
-अणु
+{
 	u16 alarm_status, val;
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, alarm_status_offset,
 			&alarm_status);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, alarm_status_offset,
 			&alarm_status);
 	/* Mask or enable the fault event. */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD, alarm_ctrl_offset, &val);
-	अगर (alarm_status & (1<<0))
+	bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD, alarm_ctrl_offset, &val);
+	if (alarm_status & (1<<0))
 		val &= ~(1<<0);
-	अन्यथा
+	else
 		val |= (1<<0);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, alarm_ctrl_offset, val);
-पूर्ण
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, alarm_ctrl_offset, val);
+}
 /******************************************************************/
 /*		common BCM8706/BCM8726 PHY SECTION		  */
 /******************************************************************/
-अटल u8 bnx2x_8706_8726_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params,
-				      काष्ठा link_vars *vars)
-अणु
+static u8 bnx2x_8706_8726_read_status(struct bnx2x_phy *phy,
+				      struct link_params *params,
+				      struct link_vars *vars)
+{
 	u8 link_up = 0;
 	u16 val1, val2, rx_sd, pcs_status;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "XGXS 8706/8726\n");
 	/* Clear RX Alarm*/
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &val2);
 
 	bnx2x_sfp_mask_fault(bp, phy, MDIO_PMA_LASI_TXSTAT,
 			     MDIO_PMA_LASI_TXCTRL);
 
 	/* Clear LASI indication*/
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val1);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val2);
 	DP(NETIF_MSG_LINK, "8706/8726 LASI status 0x%x--> 0x%x\n", val1, val2);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_RX_SD, &rx_sd);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PCS_DEVAD, MDIO_PCS_REG_STATUS, &pcs_status);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_LINK_STATUS, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_LINK_STATUS, &val2);
 
 	DP(NETIF_MSG_LINK, "8706/8726 rx_sd 0x%x pcs_status 0x%x 1Gbps"
 			" link_status 0x%x\n", rx_sd, pcs_status, val2);
-	/* Link is up अगर both bit 0 of pmd_rx_sd and bit 0 of pcs_status
-	 * are set, or अगर the स्वतःneg bit 1 is set
+	/* Link is up if both bit 0 of pmd_rx_sd and bit 0 of pcs_status
+	 * are set, or if the autoneg bit 1 is set
 	 */
 	link_up = ((rx_sd & pcs_status & 0x1) || (val2 & (1<<1)));
-	अगर (link_up) अणु
-		अगर (val2 & (1<<1))
+	if (link_up) {
+		if (val2 & (1<<1))
 			vars->line_speed = SPEED_1000;
-		अन्यथा
+		else
 			vars->line_speed = SPEED_10000;
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
 		vars->duplex = DUPLEX_FULL;
-	पूर्ण
+	}
 
 	/* Capture 10G link fault. Read twice to clear stale value. */
-	अगर (vars->line_speed == SPEED_10000) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+	if (vars->line_speed == SPEED_10000) {
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			    MDIO_PMA_LASI_TXSTAT, &val1);
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			    MDIO_PMA_LASI_TXSTAT, &val1);
-		अगर (val1 & (1<<0))
+		if (val1 & (1<<0))
 			vars->fault_detected = 1;
-	पूर्ण
+	}
 
-	वापस link_up;
-पूर्ण
+	return link_up;
+}
 
 /******************************************************************/
 /*			BCM8706 PHY SECTION			  */
 /******************************************************************/
-अटल व्योम bnx2x_8706_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static void bnx2x_8706_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
 	u32 tx_en_mode;
-	u16 cnt, val, पंचांगp1;
-	काष्ठा bnx2x *bp = params->bp;
+	u16 cnt, val, tmp1;
+	struct bnx2x *bp = params->bp;
 
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, params->port);
 	/* HW reset */
 	bnx2x_ext_phy_hw_reset(bp, params->port);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0xa040);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0xa040);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
 	/* Wait until fw is loaded */
-	क्रम (cnt = 0; cnt < 100; cnt++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	for (cnt = 0; cnt < 100; cnt++) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD, MDIO_PMA_REG_ROM_VER1, &val);
-		अगर (val)
-			अवरोध;
+		if (val)
+			break;
 		usleep_range(10000, 20000);
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "XGXS 8706 is initialized after %d ms\n", cnt);
-	अगर ((params->feature_config_flags &
-	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) अणु
+	if ((params->feature_config_flags &
+	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) {
 		u8 i;
 		u16 reg;
-		क्रम (i = 0; i < 4; i++) अणु
+		for (i = 0; i < 4; i++) {
 			reg = MDIO_XS_8706_REG_BANK_RX0 +
 				i*(MDIO_XS_8706_REG_BANK_RX1 -
 				   MDIO_XS_8706_REG_BANK_RX0);
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_XS_DEVAD, reg, &val);
+			bnx2x_cl45_read(bp, phy, MDIO_XS_DEVAD, reg, &val);
 			/* Clear first 3 bits of the control */
 			val &= ~0x7;
 			/* Set control bits according to configuration */
 			val |= (phy->rx_preemphasis[i] & 0x7);
 			DP(NETIF_MSG_LINK, "Setting RX Equalizer to BCM8706"
 				   " reg 0x%x <-- val 0x%x\n", reg, val);
-			bnx2x_cl45_ग_लिखो(bp, phy, MDIO_XS_DEVAD, reg, val);
-		पूर्ण
-	पूर्ण
+			bnx2x_cl45_write(bp, phy, MDIO_XS_DEVAD, reg, val);
+		}
+	}
 	/* Force speed */
-	अगर (phy->req_line_speed == SPEED_10000) अणु
+	if (phy->req_line_speed == SPEED_10000) {
 		DP(NETIF_MSG_LINK, "XGXS 8706 force 10Gbps\n");
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_DIGITAL_CTRL, 0x400);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_TXCTRL,
 				 0);
-		/* Arm LASI क्रम link and Tx fault. */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		/* Arm LASI for link and Tx fault. */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 3);
-	पूर्ण अन्यथा अणु
-		/* Force 1Gbps using स्वतःneg with 1G advertisement */
+	} else {
+		/* Force 1Gbps using autoneg with 1G advertisement */
 
 		/* Allow CL37 through CL73 */
 		DP(NETIF_MSG_LINK, "XGXS 8706 AutoNeg\n");
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_CL73, 0x040c);
 
 		/* Enable Full-Duplex advertisement on CL37 */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LP, 0x0020);
 		/* Enable CL37 AN */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x1000);
 		/* 1G support */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_ADV, (1<<5));
 
 		/* Enable clause 73 AN */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x1200);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL,
 				 0x0400);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL,
 				 0x0004);
-	पूर्ण
+	}
 	bnx2x_save_bcm_spirom_ver(bp, phy, params->port);
 
-	/* If TX Laser is controlled by GPIO_0, करो not let PHY go पूर्णांकo low
-	 * घातer mode, अगर TX Laser is disabled
+	/* If TX Laser is controlled by GPIO_0, do not let PHY go into low
+	 * power mode, if TX Laser is disabled
 	 */
 
 	tx_en_mode = REG_RD(bp, params->shmem_base +
-			    दुरत्व(काष्ठा shmem_region,
+			    offsetof(struct shmem_region,
 				dev_info.port_hw_config[params->port].sfp_ctrl))
 			& PORT_HW_CFG_TX_LASER_MASK;
 
-	अगर (tx_en_mode == PORT_HW_CFG_TX_LASER_GPIO0) अणु
+	if (tx_en_mode == PORT_HW_CFG_TX_LASER_GPIO0) {
 		DP(NETIF_MSG_LINK, "Enabling TXONOFF_PWRDN_DIS\n");
-		bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_DIGITAL_CTRL, &पंचांगp1);
-		पंचांगp1 |= 0x1;
-		bnx2x_cl45_ग_लिखो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_DIGITAL_CTRL, पंचांगp1);
-	पूर्ण
-पूर्ण
+		bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_DIGITAL_CTRL, &tmp1);
+		tmp1 |= 0x1;
+		bnx2x_cl45_write(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_DIGITAL_CTRL, tmp1);
+	}
+}
 
-अटल u8 bnx2x_8706_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
-	वापस bnx2x_8706_8726_पढ़ो_status(phy, params, vars);
-पूर्ण
+static u8 bnx2x_8706_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
+	return bnx2x_8706_8726_read_status(phy, params, vars);
+}
 
 /******************************************************************/
 /*			BCM8726 PHY SECTION			  */
 /******************************************************************/
-अटल व्योम bnx2x_8726_config_loopback(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8726_config_loopback(struct bnx2x_phy *phy,
+				       struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "PMA/PMD ext_phy_loopback: 8726\n");
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x0001);
-पूर्ण
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x0001);
+}
 
-अटल व्योम bnx2x_8726_बाह्यal_rom_boot(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	/* Need to रुको 100ms after reset */
+static void bnx2x_8726_external_rom_boot(struct bnx2x_phy *phy,
+					 struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	/* Need to wait 100ms after reset */
 	msleep(100);
 
 	/* Micro controller re-boot */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_GEN_CTRL, 0x018B);
 
 	/* Set soft reset */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 MDIO_PMA_REG_GEN_CTRL_ROM_MICRO_RESET);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_MISC_CTRL1, 0x0001);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL,
 			 MDIO_PMA_REG_GEN_CTRL_ROM_RESET_INTERNAL_MP);
 
-	/* Wait क्रम 150ms क्रम microcode load */
+	/* Wait for 150ms for microcode load */
 	msleep(150);
 
 	/* Disable serial boot control, tristates pins SS_N, SCK, MOSI, MISO */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_MISC_CTRL1, 0x0000);
 
 	msleep(200);
 	bnx2x_save_bcm_spirom_ver(bp, phy, params->port);
-पूर्ण
+}
 
-अटल u8 bnx2x_8726_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_8726_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val1;
-	u8 link_up = bnx2x_8706_8726_पढ़ो_status(phy, params, vars);
-	अगर (link_up) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	u8 link_up = bnx2x_8706_8726_read_status(phy, params, vars);
+	if (link_up) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER,
 				&val1);
-		अगर (val1 & (1<<15)) अणु
+		if (val1 & (1<<15)) {
 			DP(NETIF_MSG_LINK, "Tx is disabled\n");
 			link_up = 0;
 			vars->line_speed = 0;
-		पूर्ण
-	पूर्ण
-	वापस link_up;
-पूर्ण
+		}
+	}
+	return link_up;
+}
 
 
-अटल व्योम bnx2x_8726_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8726_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "Initializing BCM8726\n");
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1<<15);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1<<15);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	bnx2x_8726_बाह्यal_rom_boot(phy, params);
+	bnx2x_8726_external_rom_boot(phy, params);
 
 	/* Need to call module detected on initialization since the module
-	 * detection triggered by actual module insertion might occur beक्रमe
+	 * detection triggered by actual module insertion might occur before
 	 * driver is loaded, and when driver is loaded, it reset all
-	 * रेजिस्टरs, including the transmitter
+	 * registers, including the transmitter
 	 */
 	bnx2x_sfp_module_detection(phy, params);
 
-	अगर (phy->req_line_speed == SPEED_1000) अणु
+	if (phy->req_line_speed == SPEED_1000) {
 		DP(NETIF_MSG_LINK, "Setting 1G force\n");
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x40);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2, 0xD);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0x5);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL,
 				 0x400);
-	पूर्ण अन्यथा अगर ((phy->req_line_speed == SPEED_AUTO_NEG) &&
+	} else if ((phy->req_line_speed == SPEED_AUTO_NEG) &&
 		   (phy->speed_cap_mask &
 		      PORT_HW_CFG_SPEED_CAPABILITY_D0_1G) &&
 		   ((phy->speed_cap_mask &
 		      PORT_HW_CFG_SPEED_CAPABILITY_D0_10G) !=
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) अणु
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) {
 		DP(NETIF_MSG_LINK, "Setting 1G clause37\n");
 		/* Set Flow control */
-		bnx2x_ext_phy_set_छोड़ो(params, phy, vars);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_ext_phy_set_pause(params, phy, vars);
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_ADV, 0x20);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_CL73, 0x040c);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_FC_LD, 0x0020);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x1000);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x1200);
-		/* Enable RX-ALARM control to receive पूर्णांकerrupt क्रम 1G speed
+		/* Enable RX-ALARM control to receive interrupt for 1G speed
 		 * change
 		 */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0x4);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL,
 				 0x400);
 
-	पूर्ण अन्यथा अणु /* Default 10G. Set only LASI control */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	} else { /* Default 10G. Set only LASI control */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 1);
-	पूर्ण
+	}
 
-	/* Set TX PreEmphasis अगर needed */
-	अगर ((params->feature_config_flags &
-	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) अणु
+	/* Set TX PreEmphasis if needed */
+	if ((params->feature_config_flags &
+	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) {
 		DP(NETIF_MSG_LINK,
 		   "Setting TX_CTRL1 0x%x, TX_CTRL2 0x%x\n",
 			 phy->tx_preemphasis[0],
 			 phy->tx_preemphasis[1]);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_8726_TX_CTRL1,
 				 phy->tx_preemphasis[0]);
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_8726_TX_CTRL2,
 				 phy->tx_preemphasis[1]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_8726_link_reset(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8726_link_reset(struct bnx2x_phy *phy,
+				  struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "bnx2x_8726_link_reset port %d\n", params->port);
-	/* Set serial boot control क्रम बाह्यal load */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	/* Set serial boot control for external load */
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_GEN_CTRL, 0x0001);
-पूर्ण
+}
 
 /******************************************************************/
 /*			BCM8727 PHY SECTION			  */
 /******************************************************************/
 
-अटल व्योम bnx2x_8727_set_link_led(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params, u8 mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u16 led_mode_biपंचांगask = 0;
-	u16 gpio_pins_biपंचांगask = 0;
+static void bnx2x_8727_set_link_led(struct bnx2x_phy *phy,
+				    struct link_params *params, u8 mode)
+{
+	struct bnx2x *bp = params->bp;
+	u16 led_mode_bitmask = 0;
+	u16 gpio_pins_bitmask = 0;
 	u16 val;
-	/* Only NOC flavor requires to set the LED specअगरically */
-	अगर (!(phy->flags & FLAGS_NOC))
-		वापस;
-	चयन (mode) अणु
-	हाल LED_MODE_FRONT_PANEL_OFF:
-	हाल LED_MODE_OFF:
-		led_mode_biपंचांगask = 0;
-		gpio_pins_biपंचांगask = 0x03;
-		अवरोध;
-	हाल LED_MODE_ON:
-		led_mode_biपंचांगask = 0;
-		gpio_pins_biपंचांगask = 0x02;
-		अवरोध;
-	हाल LED_MODE_OPER:
-		led_mode_biपंचांगask = 0x60;
-		gpio_pins_biपंचांगask = 0x11;
-		अवरोध;
-	पूर्ण
-	bnx2x_cl45_पढ़ो(bp, phy,
+	/* Only NOC flavor requires to set the LED specifically */
+	if (!(phy->flags & FLAGS_NOC))
+		return;
+	switch (mode) {
+	case LED_MODE_FRONT_PANEL_OFF:
+	case LED_MODE_OFF:
+		led_mode_bitmask = 0;
+		gpio_pins_bitmask = 0x03;
+		break;
+	case LED_MODE_ON:
+		led_mode_bitmask = 0;
+		gpio_pins_bitmask = 0x02;
+		break;
+	case LED_MODE_OPER:
+		led_mode_bitmask = 0x60;
+		gpio_pins_bitmask = 0x11;
+		break;
+	}
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8727_PCS_OPT_CTRL,
 			&val);
 	val &= 0xff8f;
-	val |= led_mode_biपंचांगask;
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	val |= led_mode_bitmask;
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8727_PCS_OPT_CTRL,
 			 val);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8727_GPIO_CTRL,
 			&val);
 	val &= 0xffe0;
-	val |= gpio_pins_biपंचांगask;
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	val |= gpio_pins_bitmask;
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8727_GPIO_CTRL,
 			 val);
-पूर्ण
-अटल व्योम bnx2x_8727_hw_reset(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params) अणु
+}
+static void bnx2x_8727_hw_reset(struct bnx2x_phy *phy,
+				struct link_params *params) {
 	u32 swap_val, swap_override;
 	u8 port;
 	/* The PHY reset is controlled by GPIO 1. Fake the port number
-	 * to cancel the swap करोne in set_gpio()
+	 * to cancel the swap done in set_gpio()
 	 */
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	swap_val = REG_RD(bp, NIG_REG_PORT_SWAP);
 	swap_override = REG_RD(bp, NIG_REG_STRAP_OVERRIDE);
 	port = (swap_val && swap_override) ^ 1;
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, port);
-पूर्ण
+}
 
-अटल व्योम bnx2x_8727_config_speed(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u16 पंचांगp1, val;
+static void bnx2x_8727_config_speed(struct bnx2x_phy *phy,
+				    struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	u16 tmp1, val;
 	/* Set option 1G speed */
-	अगर ((phy->req_line_speed == SPEED_1000) ||
-	    (phy->media_type == ETH_PHY_SFP_1G_FIBER)) अणु
+	if ((phy->req_line_speed == SPEED_1000) ||
+	    (phy->media_type == ETH_PHY_SFP_1G_FIBER)) {
 		DP(NETIF_MSG_LINK, "Setting 1G force\n");
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x40);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2, 0xD);
-		bnx2x_cl45_पढ़ो(bp, phy,
-				MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2, &पंचांगp1);
-		DP(NETIF_MSG_LINK, "1.7 = 0x%x\n", पंचांगp1);
-		/* Power करोwn the XAUI until link is up in हाल of dual-media
+		bnx2x_cl45_read(bp, phy,
+				MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2, &tmp1);
+		DP(NETIF_MSG_LINK, "1.7 = 0x%x\n", tmp1);
+		/* Power down the XAUI until link is up in case of dual-media
 		 * and 1G
 		 */
-		अगर (DUAL_MEDIA(params)) अणु
-			bnx2x_cl45_पढ़ो(bp, phy,
+		if (DUAL_MEDIA(params)) {
+			bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8727_PCS_GP, &val);
 			val |= (3<<10);
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8727_PCS_GP, val);
-		पूर्ण
-	पूर्ण अन्यथा अगर ((phy->req_line_speed == SPEED_AUTO_NEG) &&
+		}
+	} else if ((phy->req_line_speed == SPEED_AUTO_NEG) &&
 		   ((phy->speed_cap_mask &
 		     PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)) &&
 		   ((phy->speed_cap_mask &
 		      PORT_HW_CFG_SPEED_CAPABILITY_D0_10G) !=
-		   PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) अणु
+		   PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) {
 
 		DP(NETIF_MSG_LINK, "Setting 1G clause37\n");
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_8727_MISC_CTRL, 0);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x1300);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Since the 8727 has only single reset pin, need to set the 10G
-		 * रेजिस्टरs although it is शेष
+		 * registers although it is default
 		 */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_8727_MISC_CTRL,
 				 0x0020);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_CL37_AN, 0x0100);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x2040);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_10G_CTRL2,
 				 0x0008);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_8727_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static void bnx2x_8727_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
 	u32 tx_en_mode;
-	u16 पंचांगp1, mod_असल, पंचांगp2;
-	काष्ठा bnx2x *bp = params->bp;
+	u16 tmp1, mod_abs, tmp2;
+	struct bnx2x *bp = params->bp;
 	/* Enable PMD link, MOD_ABS_FLT, and 1G link alarm */
 
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
 	DP(NETIF_MSG_LINK, "Initializing BCM8727\n");
 
-	bnx2x_8727_specअगरic_func(phy, params, PHY_INIT);
-	/* Initially configure MOD_ABS to पूर्णांकerrupt when module is
+	bnx2x_8727_specific_func(phy, params, PHY_INIT);
+	/* Initially configure MOD_ABS to interrupt when module is
 	 * presence( bit 8)
 	 */
-	bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER, &mod_असल);
-	/* Set EDC off by setting OPTXLOS संकेत input to low (bit 9).
-	 * When the EDC is off it locks onto a reference घड़ी and aव्योमs
+	bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER, &mod_abs);
+	/* Set EDC off by setting OPTXLOS signal input to low (bit 9).
+	 * When the EDC is off it locks onto a reference clock and avoids
 	 * becoming 'lost'
 	 */
-	mod_असल &= ~(1<<8);
-	अगर (!(phy->flags & FLAGS_NOC))
-		mod_असल &= ~(1<<9);
-	bnx2x_cl45_ग_लिखो(bp, phy,
-			 MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER, mod_असल);
+	mod_abs &= ~(1<<8);
+	if (!(phy->flags & FLAGS_NOC))
+		mod_abs &= ~(1<<9);
+	bnx2x_cl45_write(bp, phy,
+			 MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER, mod_abs);
 
 	/* Enable/Disable PHY transmitter output */
 	bnx2x_set_disable_pmd_transmit(params, phy, 0);
 
-	bnx2x_8727_घातer_module(bp, phy, 1);
+	bnx2x_8727_power_module(bp, phy, 1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &पंचांगp1);
+	bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &tmp1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &पंचांगp1);
+	bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT, &tmp1);
 
 	bnx2x_8727_config_speed(phy, params);
 
 
-	/* Set TX PreEmphasis अगर needed */
-	अगर ((params->feature_config_flags &
-	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) अणु
+	/* Set TX PreEmphasis if needed */
+	if ((params->feature_config_flags &
+	     FEATURE_CONFIG_OVERRIDE_PREEMPHASIS_ENABLED)) {
 		DP(NETIF_MSG_LINK, "Setting TX_CTRL1 0x%x, TX_CTRL2 0x%x\n",
 			   phy->tx_preemphasis[0],
 			   phy->tx_preemphasis[1]);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_TX_CTRL1,
 				 phy->tx_preemphasis[0]);
 
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_TX_CTRL2,
 				 phy->tx_preemphasis[1]);
-	पूर्ण
+	}
 
-	/* If TX Laser is controlled by GPIO_0, करो not let PHY go पूर्णांकo low
-	 * घातer mode, अगर TX Laser is disabled
+	/* If TX Laser is controlled by GPIO_0, do not let PHY go into low
+	 * power mode, if TX Laser is disabled
 	 */
 	tx_en_mode = REG_RD(bp, params->shmem_base +
-			    दुरत्व(काष्ठा shmem_region,
+			    offsetof(struct shmem_region,
 				dev_info.port_hw_config[params->port].sfp_ctrl))
 			& PORT_HW_CFG_TX_LASER_MASK;
 
-	अगर (tx_en_mode == PORT_HW_CFG_TX_LASER_GPIO0) अणु
+	if (tx_en_mode == PORT_HW_CFG_TX_LASER_GPIO0) {
 
 		DP(NETIF_MSG_LINK, "Enabling TXONOFF_PWRDN_DIS\n");
-		bnx2x_cl45_पढ़ो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_OPT_CFG_REG, &पंचांगp2);
-		पंचांगp2 |= 0x1000;
-		पंचांगp2 &= 0xFFEF;
-		bnx2x_cl45_ग_लिखो(bp, phy,
-			MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_OPT_CFG_REG, पंचांगp2);
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_OPT_CFG_REG, &tmp2);
+		tmp2 |= 0x1000;
+		tmp2 &= 0xFFEF;
+		bnx2x_cl45_write(bp, phy,
+			MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_OPT_CFG_REG, tmp2);
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER,
-				&पंचांगp2);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+				&tmp2);
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_PHY_IDENTIFIER,
-				 (पंचांगp2 & 0x7fff));
-	पूर्ण
-पूर्ण
+				 (tmp2 & 0x7fff));
+	}
+}
 
-अटल व्योम bnx2x_8727_handle_mod_असल(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u16 mod_असल, rx_alarm_status;
+static void bnx2x_8727_handle_mod_abs(struct bnx2x_phy *phy,
+				      struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
+	u16 mod_abs, rx_alarm_status;
 	u32 val = REG_RD(bp, params->shmem_base +
-			     दुरत्व(काष्ठा shmem_region, dev_info.
+			     offsetof(struct shmem_region, dev_info.
 				      port_feature_config[params->port].
 				      config));
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
-			MDIO_PMA_REG_PHY_IDENTIFIER, &mod_असल);
-	अगर (mod_असल & (1<<8)) अणु
+			MDIO_PMA_REG_PHY_IDENTIFIER, &mod_abs);
+	if (mod_abs & (1<<8)) {
 
-		/* Module is असलent */
+		/* Module is absent */
 		DP(NETIF_MSG_LINK,
 		   "MOD_ABS indication show module is absent\n");
 		phy->media_type = ETH_PHY_NOT_PRESENT;
-		/* 1. Set mod_असल to detect next module
+		/* 1. Set mod_abs to detect next module
 		 *    presence event
-		 * 2. Set EDC off by setting OPTXLOS संकेत input to low
+		 * 2. Set EDC off by setting OPTXLOS signal input to low
 		 *    (bit 9).
-		 *    When the EDC is off it locks onto a reference घड़ी and
-		 *    aव्योमs becoming 'lost'.
+		 *    When the EDC is off it locks onto a reference clock and
+		 *    avoids becoming 'lost'.
 		 */
-		mod_असल &= ~(1<<8);
-		अगर (!(phy->flags & FLAGS_NOC))
-			mod_असल &= ~(1<<9);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		mod_abs &= ~(1<<8);
+		if (!(phy->flags & FLAGS_NOC))
+			mod_abs &= ~(1<<9);
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
-				 MDIO_PMA_REG_PHY_IDENTIFIER, mod_असल);
+				 MDIO_PMA_REG_PHY_IDENTIFIER, mod_abs);
 
-		/* Clear RX alarm since it stays up as दीर्घ as
-		 * the mod_असल wasn't changed
+		/* Clear RX alarm since it stays up as long as
+		 * the mod_abs wasn't changed
 		 */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_LASI_RXSTAT, &rx_alarm_status);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Module is present */
 		DP(NETIF_MSG_LINK,
 		   "MOD_ABS indication show module is present\n");
-		/* First disable transmitter, and अगर the module is ok, the
+		/* First disable transmitter, and if the module is ok, the
 		 * module_detection will enable it
-		 * 1. Set mod_असल to detect next module असलent event ( bit 8)
-		 * 2. Restore the शेष polarity of the OPRXLOS संकेत and
-		 * this संकेत will then correctly indicate the presence or
-		 * असलence of the Rx संकेत. (bit 9)
+		 * 1. Set mod_abs to detect next module absent event ( bit 8)
+		 * 2. Restore the default polarity of the OPRXLOS signal and
+		 * this signal will then correctly indicate the presence or
+		 * absence of the Rx signal. (bit 9)
 		 */
-		mod_असल |= (1<<8);
-		अगर (!(phy->flags & FLAGS_NOC))
-			mod_असल |= (1<<9);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		mod_abs |= (1<<8);
+		if (!(phy->flags & FLAGS_NOC))
+			mod_abs |= (1<<9);
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
-				 MDIO_PMA_REG_PHY_IDENTIFIER, mod_असल);
+				 MDIO_PMA_REG_PHY_IDENTIFIER, mod_abs);
 
-		/* Clear RX alarm since it stays up as दीर्घ as the mod_असल
-		 * wasn't changed. This is need to be करोne beक्रमe calling the
+		/* Clear RX alarm since it stays up as long as the mod_abs
+		 * wasn't changed. This is need to be done before calling the
 		 * module detection, otherwise it will clear* the link update
 		 * alarm
 		 */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_LASI_RXSTAT, &rx_alarm_status);
 
 
-		अगर ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
+		if ((val & PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_MASK) ==
 		    PORT_FEAT_CFG_OPT_MDL_ENFRCMNT_DISABLE_TX_LASER)
 			bnx2x_sfp_set_transmitter(params, phy, 0);
 
-		अगर (bnx2x_रुको_क्रम_sfp_module_initialized(phy, params) == 0)
+		if (bnx2x_wait_for_sfp_module_initialized(phy, params) == 0)
 			bnx2x_sfp_module_detection(phy, params);
-		अन्यथा
+		else
 			DP(NETIF_MSG_LINK, "SFP+ module is not initialized\n");
 
 		/* Reconfigure link speed based on module type limitations */
 		bnx2x_8727_config_speed(phy, params);
-	पूर्ण
+	}
 
 	DP(NETIF_MSG_LINK, "8727 RX_ALARM_STATUS 0x%x\n",
 		   rx_alarm_status);
-	/* No need to check link status in हाल of module plugged in/out */
-पूर्ण
+	/* No need to check link status in case of module plugged in/out */
+}
 
-अटल u8 bnx2x_8727_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
+static u8 bnx2x_8727_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
 
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 link_up = 0, oc_port = params->port;
 	u16 link_status = 0;
 	u16 rx_alarm_status, lasi_ctrl, val1;
 
-	/* If PHY is not initialized, करो not check link status */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	/* If PHY is not initialized, do not check link status */
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL,
 			&lasi_ctrl);
-	अगर (!lasi_ctrl)
-		वापस 0;
+	if (!lasi_ctrl)
+		return 0;
 
 	/* Check the LASI on Rx */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXSTAT,
 			&rx_alarm_status);
 	vars->line_speed = 0;
@@ -9483,26 +9482,26 @@
 	bnx2x_sfp_mask_fault(bp, phy, MDIO_PMA_LASI_TXSTAT,
 			     MDIO_PMA_LASI_TXCTRL);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val1);
 
 	DP(NETIF_MSG_LINK, "8727 LASI status 0x%x\n", val1);
 
 	/* Clear MSG-OUT */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_M8051_MSGOUT_REG, &val1);
 
 	/* If a module is present and there is need to check
-	 * क्रम over current
+	 * for over current
 	 */
-	अगर (!(phy->flags & FLAGS_NOC) && !(rx_alarm_status & (1<<5))) अणु
+	if (!(phy->flags & FLAGS_NOC) && !(rx_alarm_status & (1<<5))) {
 		/* Check over-current using 8727 GPIO0 input*/
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD, MDIO_PMA_REG_8727_GPIO_CTRL,
 				&val1);
 
-		अगर ((val1 & (1<<8)) == 0) अणु
-			अगर (!CHIP_IS_E1x(bp))
+		if ((val1 & (1<<8)) == 0) {
+			if (!CHIP_IS_E1x(bp))
 				oc_port = BP_PATH(bp) + (params->port << 1);
 			DP(NETIF_MSG_LINK,
 			   "8727 Power fault has been detected on port %d\n",
@@ -9515,110 +9514,110 @@
 					    "restart the system to clear this "
 					    "error.\n",
 			 oc_port);
-			/* Disable all RX_ALARMs except क्रम mod_असल */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			/* Disable all RX_ALARMs except for mod_abs */
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_LASI_RXCTRL, (1<<5));
 
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_PHY_IDENTIFIER, &val1);
-			/* Wait क्रम module_असलent_event */
+			/* Wait for module_absent_event */
 			val1 |= (1<<8);
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_PHY_IDENTIFIER, val1);
 			/* Clear RX alarm */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_LASI_RXSTAT, &rx_alarm_status);
-			bnx2x_8727_घातer_module(params->bp, phy, 0);
-			वापस 0;
-		पूर्ण
-	पूर्ण /* Over current check */
+			bnx2x_8727_power_module(params->bp, phy, 0);
+			return 0;
+		}
+	} /* Over current check */
 
-	/* When module असलent bit is set, check module */
-	अगर (rx_alarm_status & (1<<5)) अणु
-		bnx2x_8727_handle_mod_असल(phy, params);
-		/* Enable all mod_असल and link detection bits */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	/* When module absent bit is set, check module */
+	if (rx_alarm_status & (1<<5)) {
+		bnx2x_8727_handle_mod_abs(phy, params);
+		/* Enable all mod_abs and link detection bits */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_LASI_RXCTRL,
 				 ((1<<5) | (1<<2)));
-	पूर्ण
+	}
 
-	अगर (!(phy->flags & FLAGS_SFP_NOT_APPROVED)) अणु
+	if (!(phy->flags & FLAGS_SFP_NOT_APPROVED)) {
 		DP(NETIF_MSG_LINK, "Enabling 8727 TX laser\n");
 		bnx2x_sfp_set_transmitter(params, phy, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		DP(NETIF_MSG_LINK, "Tx is disabled\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8073_SPEED_LINK_STATUS, &link_status);
 
 	/* Bits 0..2 --> speed detected,
-	 * Bits 13..15--> link is करोwn
+	 * Bits 13..15--> link is down
 	 */
-	अगर ((link_status & (1<<2)) && (!(link_status & (1<<15)))) अणु
+	if ((link_status & (1<<2)) && (!(link_status & (1<<15)))) {
 		link_up = 1;
 		vars->line_speed = SPEED_10000;
 		DP(NETIF_MSG_LINK, "port %x: External link up in 10G\n",
 			   params->port);
-	पूर्ण अन्यथा अगर ((link_status & (1<<0)) && (!(link_status & (1<<13)))) अणु
+	} else if ((link_status & (1<<0)) && (!(link_status & (1<<13)))) {
 		link_up = 1;
 		vars->line_speed = SPEED_1000;
 		DP(NETIF_MSG_LINK, "port %x: External link up in 1G\n",
 			   params->port);
-	पूर्ण अन्यथा अणु
+	} else {
 		link_up = 0;
 		DP(NETIF_MSG_LINK, "port %x: External link is down\n",
 			   params->port);
-	पूर्ण
+	}
 
 	/* Capture 10G link fault. */
-	अगर (vars->line_speed == SPEED_10000) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+	if (vars->line_speed == SPEED_10000) {
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			    MDIO_PMA_LASI_TXSTAT, &val1);
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD,
 			    MDIO_PMA_LASI_TXSTAT, &val1);
 
-		अगर (val1 & (1<<0)) अणु
+		if (val1 & (1<<0)) {
 			vars->fault_detected = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (link_up) अणु
+	if (link_up) {
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
 		vars->duplex = DUPLEX_FULL;
 		DP(NETIF_MSG_LINK, "duplex = 0x%x\n", vars->duplex);
-	पूर्ण
+	}
 
-	अगर ((DUAL_MEDIA(params)) &&
-	    (phy->req_line_speed == SPEED_1000)) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	if ((DUAL_MEDIA(params)) &&
+	    (phy->req_line_speed == SPEED_1000)) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_8727_PCS_GP, &val1);
-		/* In हाल of dual-media board and 1G, घातer up the XAUI side,
-		 * otherwise घातer it करोwn. For 10G it is करोne स्वतःmatically
+		/* In case of dual-media board and 1G, power up the XAUI side,
+		 * otherwise power it down. For 10G it is done automatically
 		 */
-		अगर (link_up)
+		if (link_up)
 			val1 &= ~(3<<10);
-		अन्यथा
+		else
 			val1 |= (3<<10);
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_8727_PCS_GP, val1);
-	पूर्ण
-	वापस link_up;
-पूर्ण
+	}
+	return link_up;
+}
 
-अटल व्योम bnx2x_8727_link_reset(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_8727_link_reset(struct bnx2x_phy *phy,
+				  struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 
 	/* Enable/Disable PHY transmitter output */
 	bnx2x_set_disable_pmd_transmit(params, phy, 1);
@@ -9626,603 +9625,603 @@
 	/* Disable Transmitter */
 	bnx2x_sfp_set_transmitter(params, phy, 0);
 	/* Clear LASI */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0);
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0);
 
-पूर्ण
+}
 
 /******************************************************************/
 /*		BCM8481/BCM84823/BCM84833 PHY SECTION	          */
 /******************************************************************/
-अटल पूर्णांक bnx2x_is_8483x_8485x(काष्ठा bnx2x_phy *phy)
-अणु
-	वापस ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833) ||
+static int bnx2x_is_8483x_8485x(struct bnx2x_phy *phy)
+{
+	return ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833) ||
 		(phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) ||
 		(phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858));
-पूर्ण
+}
 
-अटल व्योम bnx2x_save_848xx_spirom_version(काष्ठा bnx2x_phy *phy,
-					    काष्ठा bnx2x *bp,
+static void bnx2x_save_848xx_spirom_version(struct bnx2x_phy *phy,
+					    struct bnx2x *bp,
 					    u8 port)
-अणु
+{
 	u16 val, fw_ver2, cnt, i;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
-		अणुMDIO_PMA_DEVAD, 0xA819, 0x0014पूर्ण,
-		अणुMDIO_PMA_DEVAD, 0xA81A, 0xc200पूर्ण,
-		अणुMDIO_PMA_DEVAD, 0xA81B, 0x0000पूर्ण,
-		अणुMDIO_PMA_DEVAD, 0xA81C, 0x0300पूर्ण,
-		अणुMDIO_PMA_DEVAD, 0xA817, 0x0009पूर्ण
-	पूर्ण;
+	static struct bnx2x_reg_set reg_set[] = {
+		{MDIO_PMA_DEVAD, 0xA819, 0x0014},
+		{MDIO_PMA_DEVAD, 0xA81A, 0xc200},
+		{MDIO_PMA_DEVAD, 0xA81B, 0x0000},
+		{MDIO_PMA_DEVAD, 0xA81C, 0x0300},
+		{MDIO_PMA_DEVAD, 0xA817, 0x0009}
+	};
 	u16 fw_ver1;
 
-	अगर (bnx2x_is_8483x_8485x(phy)) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD, 0x400f, &fw_ver1);
-		अगर (phy->type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
+	if (bnx2x_is_8483x_8485x(phy)) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD, 0x400f, &fw_ver1);
+		if (phy->type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
 			fw_ver1 &= 0xfff;
 		bnx2x_save_spirom_version(bp, port, fw_ver1, phy->ver_addr);
-	पूर्ण अन्यथा अणु
-		/* For 32-bit रेजिस्टरs in 848xx, access via MDIO2ARM i/f. */
+	} else {
+		/* For 32-bit registers in 848xx, access via MDIO2ARM i/f. */
 		/* (1) set reg 0xc200_0014(SPI_BRIDGE_CTRL_2) to 0x03000000 */
-		क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-			bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad,
+		for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+			bnx2x_cl45_write(bp, phy, reg_set[i].devad,
 					 reg_set[i].reg, reg_set[i].val);
 
-		क्रम (cnt = 0; cnt < 100; cnt++) अणु
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD, 0xA818, &val);
-			अगर (val & 1)
-				अवरोध;
+		for (cnt = 0; cnt < 100; cnt++) {
+			bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD, 0xA818, &val);
+			if (val & 1)
+				break;
 			udelay(5);
-		पूर्ण
-		अगर (cnt == 100) अणु
+		}
+		if (cnt == 100) {
 			DP(NETIF_MSG_LINK, "Unable to read 848xx "
 					"phy fw version(1)\n");
 			bnx2x_save_spirom_version(bp, port, 0,
 						  phy->ver_addr);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 
-		/* 2) पढ़ो रेजिस्टर 0xc200_0000 (SPI_FW_STATUS) */
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, 0xA819, 0x0000);
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, 0xA81A, 0xc200);
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, 0xA817, 0x000A);
-		क्रम (cnt = 0; cnt < 100; cnt++) अणु
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD, 0xA818, &val);
-			अगर (val & 1)
-				अवरोध;
+		/* 2) read register 0xc200_0000 (SPI_FW_STATUS) */
+		bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, 0xA819, 0x0000);
+		bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, 0xA81A, 0xc200);
+		bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, 0xA817, 0x000A);
+		for (cnt = 0; cnt < 100; cnt++) {
+			bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD, 0xA818, &val);
+			if (val & 1)
+				break;
 			udelay(5);
-		पूर्ण
-		अगर (cnt == 100) अणु
+		}
+		if (cnt == 100) {
 			DP(NETIF_MSG_LINK, "Unable to read 848xx phy fw "
 					"version(2)\n");
 			bnx2x_save_spirom_version(bp, port, 0,
 						  phy->ver_addr);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* lower 16 bits of the रेजिस्टर SPI_FW_STATUS */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD, 0xA81B, &fw_ver1);
-		/* upper 16 bits of रेजिस्टर SPI_FW_STATUS */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_PMA_DEVAD, 0xA81C, &fw_ver2);
+		/* lower 16 bits of the register SPI_FW_STATUS */
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD, 0xA81B, &fw_ver1);
+		/* upper 16 bits of register SPI_FW_STATUS */
+		bnx2x_cl45_read(bp, phy, MDIO_PMA_DEVAD, 0xA81C, &fw_ver2);
 
 		bnx2x_save_spirom_version(bp, port, (fw_ver2<<16) | fw_ver1,
 					  phy->ver_addr);
-	पूर्ण
+	}
 
-पूर्ण
-अटल व्योम bnx2x_848xx_set_led(काष्ठा bnx2x *bp,
-				काष्ठा bnx2x_phy *phy)
-अणु
+}
+static void bnx2x_848xx_set_led(struct bnx2x *bp,
+				struct bnx2x_phy *phy)
+{
 	u16 val, led3_blink_rate, offset, i;
-	अटल काष्ठा bnx2x_reg_set reg_set[] = अणु
-		अणुMDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED1_MASK, 0x0080पूर्ण,
-		अणुMDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED2_MASK, 0x0018पूर्ण,
-		अणुMDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED3_MASK, 0x0006पूर्ण,
-		अणुMDIO_PMA_DEVAD, MDIO_PMA_REG_84823_CTL_SLOW_CLK_CNT_HIGH,
-			MDIO_PMA_REG_84823_BLINK_RATE_VAL_15P9HZपूर्ण,
-		अणुMDIO_AN_DEVAD, 0xFFFB, 0xFFFDपूर्ण
-	पूर्ण;
+	static struct bnx2x_reg_set reg_set[] = {
+		{MDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED1_MASK, 0x0080},
+		{MDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED2_MASK, 0x0018},
+		{MDIO_PMA_DEVAD, MDIO_PMA_REG_8481_LED3_MASK, 0x0006},
+		{MDIO_PMA_DEVAD, MDIO_PMA_REG_84823_CTL_SLOW_CLK_CNT_HIGH,
+			MDIO_PMA_REG_84823_BLINK_RATE_VAL_15P9HZ},
+		{MDIO_AN_DEVAD, 0xFFFB, 0xFFFD}
+	};
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
 		/* Set LED5 source */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_8481_LED5_MASK,
 				 0x90);
 		led3_blink_rate = 0x000f;
-	पूर्ण अन्यथा अणु
+	} else {
 		led3_blink_rate = 0x0000;
-	पूर्ण
+	}
 	/* Set LED3 BLINK */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8481_LED3_BLINK,
 			 led3_blink_rate);
 
 	/* PHYC_CTL_LED_CTL */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_8481_LINK_SIGNAL, &val);
 	val &= 0xFE00;
 	val |= 0x0092;
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
 		val |= 2 << 12; /* LED5 ON based on source */
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_8481_LINK_SIGNAL, val);
 
-	क्रम (i = 0; i < ARRAY_SIZE(reg_set); i++)
-		bnx2x_cl45_ग_लिखो(bp, phy, reg_set[i].devad, reg_set[i].reg,
+	for (i = 0; i < ARRAY_SIZE(reg_set); i++)
+		bnx2x_cl45_write(bp, phy, reg_set[i].devad, reg_set[i].reg,
 				 reg_set[i].val);
 
-	अगर (bnx2x_is_8483x_8485x(phy))
+	if (bnx2x_is_8483x_8485x(phy))
 		offset = MDIO_PMA_REG_84833_CTL_LED_CTL_1;
-	अन्यथा
+	else
 		offset = MDIO_PMA_REG_84823_CTL_LED_CTL_1;
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858)
 		val = MDIO_PMA_REG_84858_ALLOW_GPHY_ACT |
 		      MDIO_PMA_REG_84823_LED3_STRETCH_EN;
-	अन्यथा
+	else
 		val = MDIO_PMA_REG_84823_LED3_STRETCH_EN;
 
-	/* stretch_en क्रम LEDs */
-	bnx2x_cl45_पढ़ो_or_ग_लिखो(bp, phy,
+	/* stretch_en for LEDs */
+	bnx2x_cl45_read_or_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 offset,
 				 val);
-पूर्ण
+}
 
-अटल व्योम bnx2x_848xx_specअगरic_func(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params,
+static void bnx2x_848xx_specific_func(struct bnx2x_phy *phy,
+				      struct link_params *params,
 				      u32 action)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	चयन (action) अणु
-	हाल PHY_INIT:
-		अगर (bnx2x_is_8483x_8485x(phy)) अणु
+{
+	struct bnx2x *bp = params->bp;
+	switch (action) {
+	case PHY_INIT:
+		if (bnx2x_is_8483x_8485x(phy)) {
 			/* Save spirom version */
 			bnx2x_save_848xx_spirom_version(phy, bp, params->port);
-		पूर्ण
+		}
 		/* This phy uses the NIG latch mechanism since link indication
-		 * arrives through its LED4 and not via its LASI संकेत, so we
-		 * get steady संकेत instead of clear on पढ़ो
+		 * arrives through its LED4 and not via its LASI signal, so we
+		 * get steady signal instead of clear on read
 		 */
 		bnx2x_bits_en(bp, NIG_REG_LATCH_BC_0 + params->port*4,
 			      1 << NIG_LATCH_BC_ENABLE_MI_INT);
 
 		bnx2x_848xx_set_led(bp, phy);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक bnx2x_848xx_cmn_config_init(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params,
-				       काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	u16 स्वतःneg_val, an_1000_val, an_10_100_val;
+static int bnx2x_848xx_cmn_config_init(struct bnx2x_phy *phy,
+				       struct link_params *params,
+				       struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	u16 autoneg_val, an_1000_val, an_10_100_val;
 
-	bnx2x_848xx_specअगरic_func(phy, params, PHY_INIT);
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_848xx_specific_func(phy, params, PHY_INIT);
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 0x0000);
 
 	/* set 1000 speed advertisement */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_8481_1000T_CTRL,
 			&an_1000_val);
 
-	bnx2x_ext_phy_set_छोड़ो(params, phy, vars);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_ext_phy_set_pause(params, phy, vars);
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD,
 			MDIO_AN_REG_8481_LEGACY_AN_ADV,
 			&an_10_100_val);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_8481_LEGACY_MII_CTRL,
-			&स्वतःneg_val);
-	/* Disable क्रमced speed */
-	स्वतःneg_val &= ~((1<<6) | (1<<8) | (1<<9) | (1<<12) | (1<<13));
+			&autoneg_val);
+	/* Disable forced speed */
+	autoneg_val &= ~((1<<6) | (1<<8) | (1<<9) | (1<<12) | (1<<13));
 	an_10_100_val &= ~((1<<5) | (1<<6) | (1<<7) | (1<<8));
 
-	अगर (((phy->req_line_speed == SPEED_AUTO_NEG) &&
+	if (((phy->req_line_speed == SPEED_AUTO_NEG) &&
 	     (phy->speed_cap_mask &
 	     PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)) ||
-	    (phy->req_line_speed == SPEED_1000)) अणु
+	    (phy->req_line_speed == SPEED_1000)) {
 		an_1000_val |= (1<<8);
-		स्वतःneg_val |= (1<<9 | 1<<12);
-		अगर (phy->req_duplex == DUPLEX_FULL)
+		autoneg_val |= (1<<9 | 1<<12);
+		if (phy->req_duplex == DUPLEX_FULL)
 			an_1000_val |= (1<<9);
 		DP(NETIF_MSG_LINK, "Advertising 1G\n");
-	पूर्ण अन्यथा
+	} else
 		an_1000_val &= ~((1<<8) | (1<<9));
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_8481_1000T_CTRL,
 			 an_1000_val);
 
 	/* Set 10/100 speed advertisement */
-	अगर (phy->req_line_speed == SPEED_AUTO_NEG) अणु
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_FULL) अणु
-			/* Enable स्वतःneg and restart स्वतःneg क्रम legacy speeds
+	if (phy->req_line_speed == SPEED_AUTO_NEG) {
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_FULL) {
+			/* Enable autoneg and restart autoneg for legacy speeds
 			 */
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			an_10_100_val |= (1<<8);
 			DP(NETIF_MSG_LINK, "Advertising 100M-FD\n");
-		पूर्ण
+		}
 
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_HALF) अणु
-			/* Enable स्वतःneg and restart स्वतःneg क्रम legacy speeds
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_HALF) {
+			/* Enable autoneg and restart autoneg for legacy speeds
 			 */
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			an_10_100_val |= (1<<7);
 			DP(NETIF_MSG_LINK, "Advertising 100M-HD\n");
-		पूर्ण
+		}
 
-		अगर ((phy->speed_cap_mask &
+		if ((phy->speed_cap_mask &
 		     PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_FULL) &&
-		    (phy->supported & SUPPORTED_10baseT_Full)) अणु
+		    (phy->supported & SUPPORTED_10baseT_Full)) {
 			an_10_100_val |= (1<<6);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 10M-FD\n");
-		पूर्ण
+		}
 
-		अगर ((phy->speed_cap_mask &
+		if ((phy->speed_cap_mask &
 		     PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_HALF) &&
-		    (phy->supported & SUPPORTED_10baseT_Half)) अणु
+		    (phy->supported & SUPPORTED_10baseT_Half)) {
 			an_10_100_val |= (1<<5);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 10M-HD\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Only 10/100 are allowed to work in FORCE mode */
-	अगर ((phy->req_line_speed == SPEED_100) &&
+	if ((phy->req_line_speed == SPEED_100) &&
 	    (phy->supported &
 	     (SUPPORTED_100baseT_Half |
-	      SUPPORTED_100baseT_Full))) अणु
-		स्वतःneg_val |= (1<<13);
-		/* Enabled AUTO-MDIX when स्वतःneg is disabled */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	      SUPPORTED_100baseT_Full))) {
+		autoneg_val |= (1<<13);
+		/* Enabled AUTO-MDIX when autoneg is disabled */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_8481_AUX_CTRL,
 				 (1<<15 | 1<<9 | 7<<0));
-		/* The PHY needs this set even क्रम क्रमced link. */
+		/* The PHY needs this set even for forced link. */
 		an_10_100_val |= (1<<8) | (1<<7);
 		DP(NETIF_MSG_LINK, "Setting 100M force\n");
-	पूर्ण
-	अगर ((phy->req_line_speed == SPEED_10) &&
+	}
+	if ((phy->req_line_speed == SPEED_10) &&
 	    (phy->supported &
 	     (SUPPORTED_10baseT_Half |
-	      SUPPORTED_10baseT_Full))) अणु
-		/* Enabled AUTO-MDIX when स्वतःneg is disabled */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	      SUPPORTED_10baseT_Full))) {
+		/* Enabled AUTO-MDIX when autoneg is disabled */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD, MDIO_AN_REG_8481_AUX_CTRL,
 				 (1<<15 | 1<<9 | 7<<0));
 		DP(NETIF_MSG_LINK, "Setting 10M force\n");
-	पूर्ण
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_8481_LEGACY_AN_ADV,
 			 an_10_100_val);
 
-	अगर (phy->req_duplex == DUPLEX_FULL)
-		स्वतःneg_val |= (1<<8);
+	if (phy->req_duplex == DUPLEX_FULL)
+		autoneg_val |= (1<<8);
 
-	/* Always ग_लिखो this अगर this is not 84833/4.
-	 * For 84833/4, ग_लिखो it only when it's a क्रमced speed.
+	/* Always write this if this is not 84833/4.
+	 * For 84833/4, write it only when it's a forced speed.
 	 */
-	अगर (!bnx2x_is_8483x_8485x(phy) ||
-	    ((स्वतःneg_val & (1<<12)) == 0))
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	if (!bnx2x_is_8483x_8485x(phy) ||
+	    ((autoneg_val & (1<<12)) == 0))
+		bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD,
-			 MDIO_AN_REG_8481_LEGACY_MII_CTRL, स्वतःneg_val);
+			 MDIO_AN_REG_8481_LEGACY_MII_CTRL, autoneg_val);
 
-	अगर (((phy->req_line_speed == SPEED_AUTO_NEG) &&
+	if (((phy->req_line_speed == SPEED_AUTO_NEG) &&
 	    (phy->speed_cap_mask &
 	     PORT_HW_CFG_SPEED_CAPABILITY_D0_10G)) ||
-		(phy->req_line_speed == SPEED_10000)) अणु
+		(phy->req_line_speed == SPEED_10000)) {
 			DP(NETIF_MSG_LINK, "Advertising 10G\n");
-			/* Restart स्वतःneg क्रम 10G*/
+			/* Restart autoneg for 10G*/
 
-			bnx2x_cl45_पढ़ो_or_ग_लिखो(
+			bnx2x_cl45_read_or_write(
 				bp, phy,
 				MDIO_AN_DEVAD,
 				MDIO_AN_REG_8481_10GBASE_T_AN_CTRL,
 				0x1000);
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_AN_DEVAD, MDIO_AN_REG_CTRL,
 					 0x3200);
-	पूर्ण अन्यथा
-		bnx2x_cl45_ग_लिखो(bp, phy,
+	} else
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_10GBASE_T_AN_CTRL,
 				 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_8481_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	/* Restore normal घातer mode*/
+static void bnx2x_8481_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	/* Restore normal power mode*/
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, params->port);
 
 	/* HW reset */
 	bnx2x_ext_phy_hw_reset(bp, params->port);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1<<15);
+	bnx2x_cl45_write(bp, phy, MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1<<15);
 	bnx2x_848xx_cmn_config_init(phy, params, vars);
-पूर्ण
+}
 
-#घोषणा PHY848xx_CMDHDLR_WAIT 300
-#घोषणा PHY848xx_CMDHDLR_MAX_ARGS 5
+#define PHY848xx_CMDHDLR_WAIT 300
+#define PHY848xx_CMDHDLR_MAX_ARGS 5
 
-अटल पूर्णांक bnx2x_84858_cmd_hdlr(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params,
+static int bnx2x_84858_cmd_hdlr(struct bnx2x_phy *phy,
+				struct link_params *params,
 				u16 fw_cmd,
-				u16 cmd_args[], पूर्णांक argc)
-अणु
-	पूर्णांक idx;
+				u16 cmd_args[], int argc)
+{
+	int idx;
 	u16 val;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 
-	/* Step 1: Poll the STATUS रेजिस्टर to see whether the previous command
-	 * is in progress or the प्रणाली is busy (CMD_IN_PROGRESS or
-	 * SYSTEM_BUSY). If previous command is in progress or प्रणाली is busy,
+	/* Step 1: Poll the STATUS register to see whether the previous command
+	 * is in progress or the system is busy (CMD_IN_PROGRESS or
+	 * SYSTEM_BUSY). If previous command is in progress or system is busy,
 	 * check again until the previous command finishes execution and the
-	 * प्रणाली is available क्रम taking command
+	 * system is available for taking command
 	 */
 
-	क्रम (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	for (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_848xx_CMD_HDLR_STATUS, &val);
-		अगर ((val != PHY84858_STATUS_CMD_IN_PROGRESS) &&
+		if ((val != PHY84858_STATUS_CMD_IN_PROGRESS) &&
 		    (val != PHY84858_STATUS_CMD_SYSTEM_BUSY))
-			अवरोध;
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
-	अगर (idx >= PHY848xx_CMDHDLR_WAIT) अणु
+	}
+	if (idx >= PHY848xx_CMDHDLR_WAIT) {
 		DP(NETIF_MSG_LINK, "FW cmd: FW not ready.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Step2: If any parameters are required क्रम the function, ग_लिखो them
-	 * to the required DATA रेजिस्टरs
+	/* Step2: If any parameters are required for the function, write them
+	 * to the required DATA registers
 	 */
 
-	क्रम (idx = 0; idx < argc; idx++) अणु
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+	for (idx = 0; idx < argc; idx++) {
+		bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 				 MDIO_848xx_CMD_HDLR_DATA1 + idx,
 				 cmd_args[idx]);
-	पूर्ण
+	}
 
-	/* Step3: When the firmware is पढ़ोy क्रम commands, ग_लिखो the 'Command
-	 * code' to the CMD रेजिस्टर
+	/* Step3: When the firmware is ready for commands, write the 'Command
+	 * code' to the CMD register
 	 */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 			 MDIO_848xx_CMD_HDLR_COMMAND, fw_cmd);
 
-	/* Step4: Once the command has been written, poll the STATUS रेजिस्टर
+	/* Step4: Once the command has been written, poll the STATUS register
 	 * to check whether the command has completed (CMD_COMPLETED_PASS/
 	 * CMD_FOR_CMDS or CMD_COMPLETED_ERROR).
 	 */
 
-	क्रम (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	for (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_848xx_CMD_HDLR_STATUS, &val);
-		अगर ((val == PHY84858_STATUS_CMD_COMPLETE_PASS) ||
+		if ((val == PHY84858_STATUS_CMD_COMPLETE_PASS) ||
 		    (val == PHY84858_STATUS_CMD_COMPLETE_ERROR))
-			अवरोध;
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
-	अगर ((idx >= PHY848xx_CMDHDLR_WAIT) ||
-	    (val == PHY84858_STATUS_CMD_COMPLETE_ERROR)) अणु
+	}
+	if ((idx >= PHY848xx_CMDHDLR_WAIT) ||
+	    (val == PHY84858_STATUS_CMD_COMPLETE_ERROR)) {
 		DP(NETIF_MSG_LINK, "FW cmd failed.\n");
-		वापस -EINVAL;
-	पूर्ण
-	/* Step5: Once the command has completed, पढ़ो the specficied DATA
-	 * रेजिस्टरs क्रम any saved results क्रम the command, अगर applicable
+		return -EINVAL;
+	}
+	/* Step5: Once the command has completed, read the specficied DATA
+	 * registers for any saved results for the command, if applicable
 	 */
 
-	/* Gather वापसing data */
-	क्रम (idx = 0; idx < argc; idx++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	/* Gather returning data */
+	for (idx = 0; idx < argc; idx++) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_848xx_CMD_HDLR_DATA1 + idx,
 				&cmd_args[idx]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_84833_cmd_hdlr(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params, u16 fw_cmd,
-				u16 cmd_args[], पूर्णांक argc, पूर्णांक process)
-अणु
-	पूर्णांक idx;
+static int bnx2x_84833_cmd_hdlr(struct bnx2x_phy *phy,
+				struct link_params *params, u16 fw_cmd,
+				u16 cmd_args[], int argc, int process)
+{
+	int idx;
 	u16 val;
-	काष्ठा bnx2x *bp = params->bp;
-	पूर्णांक rc = 0;
+	struct bnx2x *bp = params->bp;
+	int rc = 0;
 
-	अगर (process == PHY84833_MB_PROCESS2) अणु
+	if (process == PHY84833_MB_PROCESS2) {
 		/* Write CMD_OPEN_OVERRIDE to STATUS reg */
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 				 MDIO_848xx_CMD_HDLR_STATUS,
 				 PHY84833_STATUS_CMD_OPEN_OVERRIDE);
-	पूर्ण
+	}
 
-	क्रम (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	for (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_848xx_CMD_HDLR_STATUS, &val);
-		अगर (val == PHY84833_STATUS_CMD_OPEN_FOR_CMDS)
-			अवरोध;
+		if (val == PHY84833_STATUS_CMD_OPEN_FOR_CMDS)
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
-	अगर (idx >= PHY848xx_CMDHDLR_WAIT) अणु
+	}
+	if (idx >= PHY848xx_CMDHDLR_WAIT) {
 		DP(NETIF_MSG_LINK, "FW cmd: FW not ready.\n");
-		/* अगर the status is CMD_COMPLETE_PASS or CMD_COMPLETE_ERROR
+		/* if the status is CMD_COMPLETE_PASS or CMD_COMPLETE_ERROR
 		 * clear the status to CMD_CLEAR_COMPLETE
 		 */
-		अगर (val == PHY84833_STATUS_CMD_COMPLETE_PASS ||
-		    val == PHY84833_STATUS_CMD_COMPLETE_ERROR) अणु
-			bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+		if (val == PHY84833_STATUS_CMD_COMPLETE_PASS ||
+		    val == PHY84833_STATUS_CMD_COMPLETE_ERROR) {
+			bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 					 MDIO_848xx_CMD_HDLR_STATUS,
 					 PHY84833_STATUS_CMD_CLEAR_COMPLETE);
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
-	अगर (process == PHY84833_MB_PROCESS1 ||
-	    process == PHY84833_MB_PROCESS2) अणु
+		}
+		return -EINVAL;
+	}
+	if (process == PHY84833_MB_PROCESS1 ||
+	    process == PHY84833_MB_PROCESS2) {
 		/* Prepare argument(s) */
-		क्रम (idx = 0; idx < argc; idx++) अणु
-			bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+		for (idx = 0; idx < argc; idx++) {
+			bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 					 MDIO_848xx_CMD_HDLR_DATA1 + idx,
 					 cmd_args[idx]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 			MDIO_848xx_CMD_HDLR_COMMAND, fw_cmd);
-	क्रम (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	for (idx = 0; idx < PHY848xx_CMDHDLR_WAIT; idx++) {
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_848xx_CMD_HDLR_STATUS, &val);
-		अगर ((val == PHY84833_STATUS_CMD_COMPLETE_PASS) ||
+		if ((val == PHY84833_STATUS_CMD_COMPLETE_PASS) ||
 		    (val == PHY84833_STATUS_CMD_COMPLETE_ERROR))
-			अवरोध;
+			break;
 		usleep_range(1000, 2000);
-	पूर्ण
-	अगर ((idx >= PHY848xx_CMDHDLR_WAIT) ||
-	    (val == PHY84833_STATUS_CMD_COMPLETE_ERROR)) अणु
+	}
+	if ((idx >= PHY848xx_CMDHDLR_WAIT) ||
+	    (val == PHY84833_STATUS_CMD_COMPLETE_ERROR)) {
 		DP(NETIF_MSG_LINK, "FW cmd failed.\n");
 		rc = -EINVAL;
-	पूर्ण
-	अगर (process == PHY84833_MB_PROCESS3 && rc == 0) अणु
-		/* Gather वापसing data */
-		क्रम (idx = 0; idx < argc; idx++) अणु
-			bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	}
+	if (process == PHY84833_MB_PROCESS3 && rc == 0) {
+		/* Gather returning data */
+		for (idx = 0; idx < argc; idx++) {
+			bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 					MDIO_848xx_CMD_HDLR_DATA1 + idx,
 					&cmd_args[idx]);
-		पूर्ण
-	पूर्ण
-	अगर (val == PHY84833_STATUS_CMD_COMPLETE_ERROR ||
-	    val == PHY84833_STATUS_CMD_COMPLETE_PASS) अणु
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+		}
+	}
+	if (val == PHY84833_STATUS_CMD_COMPLETE_ERROR ||
+	    val == PHY84833_STATUS_CMD_COMPLETE_PASS) {
+		bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 				 MDIO_848xx_CMD_HDLR_STATUS,
 				 PHY84833_STATUS_CMD_CLEAR_COMPLETE);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक bnx2x_848xx_cmd_hdlr(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params,
+static int bnx2x_848xx_cmd_hdlr(struct bnx2x_phy *phy,
+				struct link_params *params,
 				u16 fw_cmd,
-					   u16 cmd_args[], पूर्णांक argc,
-					   पूर्णांक process)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+					   u16 cmd_args[], int argc,
+					   int process)
+{
+	struct bnx2x *bp = params->bp;
 
-	अगर ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) ||
+	if ((phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) ||
 	    (REG_RD(bp, params->shmem2_base +
-		    दुरत्व(काष्ठा shmem2_region,
+		    offsetof(struct shmem2_region,
 			     link_attr_sync[params->port])) &
-	     LINK_ATTR_84858)) अणु
-		वापस bnx2x_84858_cmd_hdlr(phy, params, fw_cmd, cmd_args,
+	     LINK_ATTR_84858)) {
+		return bnx2x_84858_cmd_hdlr(phy, params, fw_cmd, cmd_args,
 					    argc);
-	पूर्ण अन्यथा अणु
-		वापस bnx2x_84833_cmd_hdlr(phy, params, fw_cmd, cmd_args,
+	} else {
+		return bnx2x_84833_cmd_hdlr(phy, params, fw_cmd, cmd_args,
 					    argc, process);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bnx2x_848xx_pair_swap_cfg(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
+static int bnx2x_848xx_pair_swap_cfg(struct bnx2x_phy *phy,
+				     struct link_params *params,
+				     struct link_vars *vars)
+{
 	u32 pair_swap;
 	u16 data[PHY848xx_CMDHDLR_MAX_ARGS];
-	पूर्णांक status;
-	काष्ठा bnx2x *bp = params->bp;
+	int status;
+	struct bnx2x *bp = params->bp;
 
-	/* Check क्रम configuration. */
+	/* Check for configuration. */
 	pair_swap = REG_RD(bp, params->shmem_base +
-			   दुरत्व(काष्ठा shmem_region,
+			   offsetof(struct shmem_region,
 			dev_info.port_hw_config[params->port].xgbt_phy_cfg)) &
 		PORT_HW_CFG_RJ45_PAIR_SWAP_MASK;
 
-	अगर (pair_swap == 0)
-		वापस 0;
+	if (pair_swap == 0)
+		return 0;
 
-	/* Only the second argument is used क्रम this command */
+	/* Only the second argument is used for this command */
 	data[1] = (u16)pair_swap;
 
 	status = bnx2x_848xx_cmd_hdlr(phy, params,
 				      PHY848xx_CMD_SET_PAIR_SWAP, data,
 				      2, PHY84833_MB_PROCESS2);
-	अगर (status == 0)
+	if (status == 0)
 		DP(NETIF_MSG_LINK, "Pairswap OK, val=0x%x\n", data[1]);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल u8 bnx2x_84833_get_reset_gpios(काष्ठा bnx2x *bp,
+static u8 bnx2x_84833_get_reset_gpios(struct bnx2x *bp,
 				      u32 shmem_base_path[],
 				      u32 chip_id)
-अणु
+{
 	u32 reset_pin[2];
 	u32 idx;
 	u8 reset_gpios;
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		/* Assume that these will be GPIOs, not EPIOs. */
-		क्रम (idx = 0; idx < 2; idx++) अणु
-			/* Map config param to रेजिस्टर bit. */
+		for (idx = 0; idx < 2; idx++) {
+			/* Map config param to register bit. */
 			reset_pin[idx] = REG_RD(bp, shmem_base_path[idx] +
-				दुरत्व(काष्ठा shmem_region,
+				offsetof(struct shmem_region,
 				dev_info.port_hw_config[0].e3_cmn_pin_cfg));
 			reset_pin[idx] = (reset_pin[idx] &
 				PORT_HW_CFG_E3_PHY_RESET_MASK) >>
 				PORT_HW_CFG_E3_PHY_RESET_SHIFT;
 			reset_pin[idx] -= PIN_CFG_GPIO0_P0;
 			reset_pin[idx] = (1 << reset_pin[idx]);
-		पूर्ण
+		}
 		reset_gpios = (u8)(reset_pin[0] | reset_pin[1]);
-	पूर्ण अन्यथा अणु
-		/* E2, look from dअगरf place of shmem. */
-		क्रम (idx = 0; idx < 2; idx++) अणु
+	} else {
+		/* E2, look from diff place of shmem. */
+		for (idx = 0; idx < 2; idx++) {
 			reset_pin[idx] = REG_RD(bp, shmem_base_path[idx] +
-				दुरत्व(काष्ठा shmem_region,
-				dev_info.port_hw_config[0].शेष_cfg));
+				offsetof(struct shmem_region,
+				dev_info.port_hw_config[0].default_cfg));
 			reset_pin[idx] &= PORT_HW_CFG_EXT_PHY_GPIO_RST_MASK;
 			reset_pin[idx] -= PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO0_P0;
 			reset_pin[idx] >>= PORT_HW_CFG_EXT_PHY_GPIO_RST_SHIFT;
 			reset_pin[idx] = (1 << reset_pin[idx]);
-		पूर्ण
+		}
 		reset_gpios = (u8)(reset_pin[0] | reset_pin[1]);
-	पूर्ण
+	}
 
-	वापस reset_gpios;
-पूर्ण
+	return reset_gpios;
+}
 
-अटल व्योम bnx2x_84833_hw_reset_phy(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_84833_hw_reset_phy(struct bnx2x_phy *phy,
+				     struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 reset_gpios;
 	u32 other_shmem_base_addr = REG_RD(bp, params->shmem2_base +
-				दुरत्व(काष्ठा shmem2_region,
+				offsetof(struct shmem2_region,
 				other_shmem_base_addr));
 
 	u32 shmem_base_path[2];
 
-	/* Work around क्रम 84833 LED failure inside RESET status */
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	/* Work around for 84833 LED failure inside RESET status */
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 		MDIO_AN_REG_8481_LEGACY_MII_CTRL,
 		MDIO_AN_REG_8481_MII_CTRL_FORCE_1G);
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 		MDIO_AN_REG_8481_1G_100T_EXT_CTRL,
 		MIDO_AN_REG_8481_EXT_CTRL_FORCE_LEDS_OFF);
 
@@ -10236,14 +10235,14 @@
 	udelay(10);
 	DP(NETIF_MSG_LINK, "84833 hw reset on pin values 0x%x\n",
 		reset_gpios);
-पूर्ण
+}
 
-अटल पूर्णांक bnx2x_8483x_disable_eee(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	पूर्णांक rc;
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_8483x_disable_eee(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	int rc;
+	struct bnx2x *bp = params->bp;
 	u16 cmd_args = 0;
 
 	DP(NETIF_MSG_LINK, "Don't Advertise 10GBase-T EEE\n");
@@ -10251,91 +10250,91 @@
 	/* Prevent Phy from working in EEE and advertising it */
 	rc = bnx2x_848xx_cmd_hdlr(phy, params, PHY848xx_CMD_SET_EEE_MODE,
 				  &cmd_args, 1, PHY84833_MB_PROCESS1);
-	अगर (rc) अणु
+	if (rc) {
 		DP(NETIF_MSG_LINK, "EEE disable failed.\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस bnx2x_eee_disable(phy, params, vars);
-पूर्ण
+	return bnx2x_eee_disable(phy, params, vars);
+}
 
-अटल पूर्णांक bnx2x_8483x_enable_eee(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
-	पूर्णांक rc;
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_8483x_enable_eee(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
+	int rc;
+	struct bnx2x *bp = params->bp;
 	u16 cmd_args = 1;
 
 	rc = bnx2x_848xx_cmd_hdlr(phy, params, PHY848xx_CMD_SET_EEE_MODE,
 				  &cmd_args, 1, PHY84833_MB_PROCESS1);
-	अगर (rc) अणु
+	if (rc) {
 		DP(NETIF_MSG_LINK, "EEE enable failed.\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस bnx2x_eee_advertise(phy, params, vars, SHMEM_EEE_10G_ADV);
-पूर्ण
+	return bnx2x_eee_advertise(phy, params, vars, SHMEM_EEE_10G_ADV);
+}
 
-#घोषणा PHY84833_CONSTANT_LATENCY 1193
-अटल व्योम bnx2x_848x3_config_init(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params,
-				    काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+#define PHY84833_CONSTANT_LATENCY 1193
+static void bnx2x_848x3_config_init(struct bnx2x_phy *phy,
+				    struct link_params *params,
+				    struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port, initialize = 1;
 	u16 val;
 	u32 actual_phy_selection;
 	u16 cmd_args[PHY848xx_CMDHDLR_MAX_ARGS];
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	usleep_range(1000, 2000);
 
-	अगर (!(CHIP_IS_E1x(bp)))
+	if (!(CHIP_IS_E1x(bp)))
 		port = BP_PATH(bp);
-	अन्यथा
+	else
 		port = params->port;
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) अणु
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) {
 		bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_3,
 			       MISC_REGISTERS_GPIO_OUTPUT_HIGH,
 			       port);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* MDIO reset */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_CTRL, 0x8000);
-	पूर्ण
+	}
 
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	/* Wait क्रम GPHY to come out of reset */
+	/* Wait for GPHY to come out of reset */
 	msleep(50);
-	अगर (!bnx2x_is_8483x_8485x(phy)) अणु
-		/* BCM84823 requires that XGXS links up first @ 10G क्रम normal
+	if (!bnx2x_is_8483x_8485x(phy)) {
+		/* BCM84823 requires that XGXS links up first @ 10G for normal
 		 * behavior.
 		 */
 		u16 temp;
 		temp = vars->line_speed;
 		vars->line_speed = SPEED_10000;
-		bnx2x_set_स्वतःneg(&params->phy[INT_PHY], params, vars, 0);
+		bnx2x_set_autoneg(&params->phy[INT_PHY], params, vars, 0);
 		bnx2x_program_serdes(&params->phy[INT_PHY], params, vars);
 		vars->line_speed = temp;
-	पूर्ण
-	/* Check अगर this is actually BCM84858 */
-	अगर (phy->type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
+	}
+	/* Check if this is actually BCM84858 */
+	if (phy->type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
 		u16 hw_rev;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_848xx_ID_MSB, &hw_rev);
-		अगर (hw_rev == BCM84858_PHY_ID) अणु
+		if (hw_rev == BCM84858_PHY_ID) {
 			params->link_attr_sync |= LINK_ATTR_84858;
 			bnx2x_update_link_attr(params, params->link_attr_sync);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Set dual-media configuration according to configuration */
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 			MDIO_CTL_REG_84823_MEDIA, &val);
 	val &= ~(MDIO_CTL_REG_84823_MEDIA_MAC_MASK |
 		 MDIO_CTL_REG_84823_MEDIA_LINE_MASK |
@@ -10343,43 +10342,43 @@
 		 MDIO_CTL_REG_84823_MEDIA_PRIORITY_MASK |
 		 MDIO_CTL_REG_84823_MEDIA_FIBER_1G);
 
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		val &= ~(MDIO_CTL_REG_84823_MEDIA_MAC_MASK |
 			 MDIO_CTL_REG_84823_MEDIA_LINE_MASK);
-	पूर्ण अन्यथा अणु
+	} else {
 		val |= (MDIO_CTL_REG_84823_CTRL_MAC_XFI |
 			MDIO_CTL_REG_84823_MEDIA_LINE_XAUI_L);
-	पूर्ण
+	}
 
 	actual_phy_selection = bnx2x_phy_selection(params);
 
-	चयन (actual_phy_selection) अणु
-	हाल PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT:
+	switch (actual_phy_selection) {
+	case PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT:
 		/* Do nothing. Essentially this is like the priority copper */
-		अवरोध;
-	हाल PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
+		break;
+	case PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
 		val |= MDIO_CTL_REG_84823_MEDIA_PRIORITY_COPPER;
-		अवरोध;
-	हाल PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
+		break;
+	case PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
 		val |= MDIO_CTL_REG_84823_MEDIA_PRIORITY_FIBER;
-		अवरोध;
-	हाल PORT_HW_CFG_PHY_SELECTION_FIRST_PHY:
+		break;
+	case PORT_HW_CFG_PHY_SELECTION_FIRST_PHY:
 		/* Do nothing here. The first PHY won't be initialized at all */
-		अवरोध;
-	हाल PORT_HW_CFG_PHY_SELECTION_SECOND_PHY:
+		break;
+	case PORT_HW_CFG_PHY_SELECTION_SECOND_PHY:
 		val |= MDIO_CTL_REG_84823_MEDIA_COPPER_CORE_DOWN;
 		initialize = 0;
-		अवरोध;
-	पूर्ण
-	अगर (params->phy[EXT_PHY2].req_line_speed == SPEED_1000)
+		break;
+	}
+	if (params->phy[EXT_PHY2].req_line_speed == SPEED_1000)
 		val |= MDIO_CTL_REG_84823_MEDIA_FIBER_1G;
 
-	bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+	bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 			 MDIO_CTL_REG_84823_MEDIA, val);
 	DP(NETIF_MSG_LINK, "Multi_phy config = 0x%x, Media control = 0x%x\n",
 		   params->multi_phy_config, val);
 
-	अगर (bnx2x_is_8483x_8485x(phy)) अणु
+	if (bnx2x_is_8483x_8485x(phy)) {
 		bnx2x_848xx_pair_swap_cfg(phy, params, vars);
 
 		/* Keep AutogrEEEn disabled. */
@@ -10390,128 +10389,128 @@
 		rc = bnx2x_848xx_cmd_hdlr(phy, params,
 					  PHY848xx_CMD_SET_EEE_MODE, cmd_args,
 					  4, PHY84833_MB_PROCESS1);
-		अगर (rc)
+		if (rc)
 			DP(NETIF_MSG_LINK, "Cfg AutogrEEEn failed.\n");
-	पूर्ण
-	अगर (initialize)
+	}
+	if (initialize)
 		rc = bnx2x_848xx_cmn_config_init(phy, params, vars);
-	अन्यथा
+	else
 		bnx2x_save_848xx_spirom_version(phy, bp, params->port);
-	/* 84833 PHY has a better feature and करोesn't need to support this. */
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) अणु
+	/* 84833 PHY has a better feature and doesn't need to support this. */
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) {
 		u32 cms_enable = REG_RD(bp, params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
-			dev_info.port_hw_config[params->port].शेष_cfg)) &
+			offsetof(struct shmem_region,
+			dev_info.port_hw_config[params->port].default_cfg)) &
 			PORT_HW_CFG_ENABLE_CMS_MASK;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 				MDIO_CTL_REG_84823_USER_CTRL_REG, &val);
-		अगर (cms_enable)
+		if (cms_enable)
 			val |= MDIO_CTL_REG_84823_USER_CTRL_CMS;
-		अन्यथा
+		else
 			val &= ~MDIO_CTL_REG_84823_USER_CTRL_CMS;
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_CTL_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_CTL_DEVAD,
 				 MDIO_CTL_REG_84823_USER_CTRL_REG, val);
-	पूर्ण
+	}
 
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_CTL_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_CTL_DEVAD,
 			MDIO_84833_TOP_CFG_FW_REV, &val);
 
 	/* Configure EEE support */
-	अगर ((val >= MDIO_84833_TOP_CFG_FW_EEE) &&
+	if ((val >= MDIO_84833_TOP_CFG_FW_EEE) &&
 	    (val != MDIO_84833_TOP_CFG_FW_NO_EEE) &&
-	    bnx2x_eee_has_cap(params)) अणु
+	    bnx2x_eee_has_cap(params)) {
 		rc = bnx2x_eee_initial_config(params, vars, SHMEM_EEE_10G_ADV);
-		अगर (rc) अणु
+		if (rc) {
 			DP(NETIF_MSG_LINK, "Failed to configure EEE timers\n");
 			bnx2x_8483x_disable_eee(phy, params, vars);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर ((phy->req_duplex == DUPLEX_FULL) &&
+		if ((phy->req_duplex == DUPLEX_FULL) &&
 		    (params->eee_mode & EEE_MODE_ADV_LPI) &&
-		    (bnx2x_eee_calc_समयr(params) ||
+		    (bnx2x_eee_calc_timer(params) ||
 		     !(params->eee_mode & EEE_MODE_ENABLE_LPI)))
 			rc = bnx2x_8483x_enable_eee(phy, params, vars);
-		अन्यथा
+		else
 			rc = bnx2x_8483x_disable_eee(phy, params, vars);
-		अगर (rc) अणु
+		if (rc) {
 			DP(NETIF_MSG_LINK, "Failed to set EEE advertisement\n");
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		vars->eee_status &= ~SHMEM_EEE_SUPPORTED_MASK;
-	पूर्ण
+	}
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833) अणु
-		/* Additional settings क्रम jumbo packets in 1000BASE-T mode */
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833) {
+		/* Additional settings for jumbo packets in 1000BASE-T mode */
 		/* Allow rx extended length */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_8481_AUX_CTRL, &val);
 		val |= 0x4000;
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_AUX_CTRL, val);
 		/* TX FIFO Elasticity LSB */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_8481_1G_100T_EXT_CTRL, &val);
 		val |= 0x1;
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_1G_100T_EXT_CTRL, val);
 		/* TX FIFO Elasticity MSB */
-		/* Enable expansion रेजिस्टर 0x46 (Pattern Generator status) */
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+		/* Enable expansion register 0x46 (Pattern Generator status) */
+		bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_EXPANSION_REG_ACCESS, 0xf46);
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_8481_EXPANSION_REG_RD_RW, &val);
 		val |= 0x4000;
-		bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_EXPANSION_REG_RD_RW, val);
-	पूर्ण
+	}
 
-	अगर (bnx2x_is_8483x_8485x(phy)) अणु
+	if (bnx2x_is_8483x_8485x(phy)) {
 		/* Bring PHY out of super isolate mode as the final step. */
-		bnx2x_cl45_पढ़ो_and_ग_लिखो(bp, phy,
+		bnx2x_cl45_read_and_write(bp, phy,
 					  MDIO_CTL_DEVAD,
 					  MDIO_84833_TOP_CFG_XGPHY_STRAP1,
 					  (u16)~MDIO_84833_SUPER_ISOLATE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u8 bnx2x_848xx_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				  काष्ठा link_params *params,
-				  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_848xx_read_status(struct bnx2x_phy *phy,
+				  struct link_params *params,
+				  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val, val1, val2;
 	u8 link_up = 0;
 
 
 	/* Check 10G-BaseT link status */
-	/* Check PMD संकेत ok */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	/* Check PMD signal ok */
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, 0xFFFA, &val1);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_8481_PMD_SIGNAL,
 			&val2);
 	DP(NETIF_MSG_LINK, "BCM848xx: PMD_SIGNAL 1.a811 = 0x%x\n", val2);
 
 	/* Check link 10G */
-	अगर (val2 & (1<<11)) अणु
+	if (val2 & (1<<11)) {
 		vars->line_speed = SPEED_10000;
 		vars->duplex = DUPLEX_FULL;
 		link_up = 1;
 		bnx2x_ext_phy_10G_an_resolve(bp, phy, vars);
-	पूर्ण अन्यथा अणु /* Check Legacy speed link */
+	} else { /* Check Legacy speed link */
 		u16 legacy_status, legacy_speed;
 
-		/* Enable expansion रेजिस्टर 0x42 (Operation mode status) */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		/* Enable expansion register 0x42 (Operation mode status) */
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_AN_DEVAD,
 				 MDIO_AN_REG_8481_EXPANSION_REG_ACCESS, 0xf42);
 
 		/* Get legacy speed operation status */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD,
 				MDIO_AN_REG_8481_EXPANSION_REG_RD_RW,
 				&legacy_status);
@@ -10520,21 +10519,21 @@
 		   legacy_status);
 		link_up = ((legacy_status & (1<<11)) == (1<<11));
 		legacy_speed = (legacy_status & (3<<9));
-		अगर (legacy_speed == (0<<9))
+		if (legacy_speed == (0<<9))
 			vars->line_speed = SPEED_10;
-		अन्यथा अगर (legacy_speed == (1<<9))
+		else if (legacy_speed == (1<<9))
 			vars->line_speed = SPEED_100;
-		अन्यथा अगर (legacy_speed == (2<<9))
+		else if (legacy_speed == (2<<9))
 			vars->line_speed = SPEED_1000;
-		अन्यथा अणु /* Should not happen: Treat as link करोwn */
+		else { /* Should not happen: Treat as link down */
 			vars->line_speed = 0;
 			link_up = 0;
-		पूर्ण
+		}
 
-		अगर (link_up) अणु
-			अगर (legacy_status & (1<<8))
+		if (link_up) {
+			if (legacy_status & (1<<8))
 				vars->duplex = DUPLEX_FULL;
-			अन्यथा
+			else
 				vars->duplex = DUPLEX_HALF;
 
 			DP(NETIF_MSG_LINK,
@@ -10542,238 +10541,238 @@
 			   vars->line_speed,
 			   (vars->duplex == DUPLEX_FULL));
 			/* Check legacy speed AN resolution */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_AN_DEVAD,
 					MDIO_AN_REG_8481_LEGACY_MII_STATUS,
 					&val);
-			अगर (val & (1<<5))
+			if (val & (1<<5))
 				vars->link_status |=
 					LINK_STATUS_AUTO_NEGOTIATE_COMPLETE;
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_AN_DEVAD,
 					MDIO_AN_REG_8481_LEGACY_AN_EXPANSION,
 					&val);
-			अगर ((val & (1<<0)) == 0)
+			if ((val & (1<<0)) == 0)
 				vars->link_status |=
 					LINK_STATUS_PARALLEL_DETECTION_USED;
-		पूर्ण
-	पूर्ण
-	अगर (link_up) अणु
+		}
+	}
+	if (link_up) {
 		DP(NETIF_MSG_LINK, "BCM848x3: link speed is %d\n",
 			   vars->line_speed);
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
 
 		/* Read LP advertised speeds */
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_CL37_FC_LP, &val);
-		अगर (val & (1<<5))
+		if (val & (1<<5))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10THD_CAPABLE;
-		अगर (val & (1<<6))
+		if (val & (1<<6))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10TFD_CAPABLE;
-		अगर (val & (1<<7))
+		if (val & (1<<7))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_100TXHD_CAPABLE;
-		अगर (val & (1<<8))
+		if (val & (1<<8))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_100TXFD_CAPABLE;
-		अगर (val & (1<<9))
+		if (val & (1<<9))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_100T4_CAPABLE;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_1000T_STATUS, &val);
 
-		अगर (val & (1<<10))
+		if (val & (1<<10))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_1000THD_CAPABLE;
-		अगर (val & (1<<11))
+		if (val & (1<<11))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE;
 
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+		bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 				MDIO_AN_REG_MASTER_STATUS, &val);
 
-		अगर (val & (1<<11))
+		if (val & (1<<11))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
 
-		/* Determine अगर EEE was negotiated */
-		अगर (bnx2x_is_8483x_8485x(phy))
+		/* Determine if EEE was negotiated */
+		if (bnx2x_is_8483x_8485x(phy))
 			bnx2x_eee_an_resolve(phy, params, vars);
-	पूर्ण
+	}
 
-	वापस link_up;
-पूर्ण
+	return link_up;
+}
 
-अटल पूर्णांक bnx2x_8485x_क्रमmat_ver(u32 raw_ver, u8 *str, u16 *len)
-अणु
+static int bnx2x_8485x_format_ver(u32 raw_ver, u8 *str, u16 *len)
+{
 	u32 num;
 
 	num = ((raw_ver & 0xF80) >> 7) << 16 | ((raw_ver & 0x7F) << 8) |
 	      ((raw_ver & 0xF000) >> 12);
-	वापस bnx2x_3_seq_क्रमmat_ver(num, str, len);
-पूर्ण
+	return bnx2x_3_seq_format_ver(num, str, len);
+}
 
-अटल पूर्णांक bnx2x_848xx_क्रमmat_ver(u32 raw_ver, u8 *str, u16 *len)
-अणु
+static int bnx2x_848xx_format_ver(u32 raw_ver, u8 *str, u16 *len)
+{
 	u32 spirom_ver;
 
 	spirom_ver = ((raw_ver & 0xF80) >> 7) << 16 | (raw_ver & 0x7F);
-	वापस bnx2x_क्रमmat_ver(spirom_ver, str, len);
-पूर्ण
+	return bnx2x_format_ver(spirom_ver, str, len);
+}
 
-अटल व्योम bnx2x_8481_hw_reset(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params)
-अणु
+static void bnx2x_8481_hw_reset(struct bnx2x_phy *phy,
+				struct link_params *params)
+{
 	bnx2x_set_gpio(params->bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, 0);
 	bnx2x_set_gpio(params->bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, 1);
-पूर्ण
+}
 
-अटल व्योम bnx2x_8481_link_reset(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params)
-अणु
-	bnx2x_cl45_ग_लिखो(params->bp, phy,
+static void bnx2x_8481_link_reset(struct bnx2x_phy *phy,
+					struct link_params *params)
+{
+	bnx2x_cl45_write(params->bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, 0x0000);
-	bnx2x_cl45_ग_लिखो(params->bp, phy,
+	bnx2x_cl45_write(params->bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1);
-पूर्ण
+}
 
-अटल व्योम bnx2x_848x3_link_reset(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_848x3_link_reset(struct bnx2x_phy *phy,
+				   struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port;
 	u16 val16;
 
-	अगर (!(CHIP_IS_E1x(bp)))
+	if (!(CHIP_IS_E1x(bp)))
 		port = BP_PATH(bp);
-	अन्यथा
+	else
 		port = params->port;
 
-	अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) अणु
+	if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823) {
 		bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_3,
 			       MISC_REGISTERS_GPIO_OUTPUT_LOW,
 			       port);
-	पूर्ण अन्यथा अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	} else {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_CTL_DEVAD,
 				MDIO_84833_TOP_CFG_XGPHY_STRAP1, &val16);
 		val16 |= MDIO_84833_SUPER_ISOLATE;
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_CTL_DEVAD,
 				 MDIO_84833_TOP_CFG_XGPHY_STRAP1, val16);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम bnx2x_848xx_set_link_led(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params, u8 mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_848xx_set_link_led(struct bnx2x_phy *phy,
+				     struct link_params *params, u8 mode)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val;
 	u8 port;
 
-	अगर (!(CHIP_IS_E1x(bp)))
+	if (!(CHIP_IS_E1x(bp)))
 		port = BP_PATH(bp);
-	अन्यथा
+	else
 		port = params->port;
 
-	चयन (mode) अणु
-	हाल LED_MODE_OFF:
+	switch (mode) {
+	case LED_MODE_OFF:
 
 		DP(NETIF_MSG_LINK, "Port 0x%x: LED MODE OFF\n", port);
 
-		अगर ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
-		    SHARED_HW_CFG_LED_EXTPHY1) अणु
+		if ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
+		    SHARED_HW_CFG_LED_EXTPHY1) {
 
 			/* Set LED masks */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LED1_MASK,
 					0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LED2_MASK,
 					0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LED3_MASK,
 					0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LED5_MASK,
 					0x0);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* LED 1 OFF */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x0);
 
-			अगर (phy->type ==
-				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
+			if (phy->type ==
+				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
 				/* LED 2 OFF */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED2_MASK,
 						 0x0);
 				/* LED 3 OFF */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED3_MASK,
 						 0x0);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल LED_MODE_FRONT_PANEL_OFF:
+			}
+		}
+		break;
+	case LED_MODE_FRONT_PANEL_OFF:
 
 		DP(NETIF_MSG_LINK, "Port 0x%x: LED MODE FRONT PANEL OFF\n",
 		   port);
 
-		अगर ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
-		    SHARED_HW_CFG_LED_EXTPHY1) अणु
+		if ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
+		    SHARED_HW_CFG_LED_EXTPHY1) {
 
 			/* Set LED masks */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED2_MASK,
 					 0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED3_MASK,
 					 0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED5_MASK,
 					 0x20);
 
-		पूर्ण अन्यथा अणु
-			bnx2x_cl45_ग_लिखो(bp, phy,
+		} else {
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x0);
-			अगर (phy->type ==
-			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) अणु
-				/* Disable MI_INT पूर्णांकerrupt beक्रमe setting LED4
-				 * source to स्थिरant off.
+			if (phy->type ==
+			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) {
+				/* Disable MI_INT interrupt before setting LED4
+				 * source to constant off.
 				 */
-				अगर (REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
+				if (REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
 					   params->port*4) &
-				    NIG_MASK_MI_INT) अणु
+				    NIG_MASK_MI_INT) {
 					params->link_flags |=
 					LINK_FLAGS_INT_DISABLED;
 
@@ -10782,79 +10781,79 @@
 						NIG_REG_MASK_INTERRUPT_PORT0 +
 						params->port*4,
 						NIG_MASK_MI_INT);
-				पूर्ण
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				}
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_SIGNAL_MASK,
 						 0x0);
-			पूर्ण
-			अगर (phy->type ==
-				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
+			}
+			if (phy->type ==
+				PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
 				/* LED 2 OFF */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED2_MASK,
 						 0x0);
 				/* LED 3 OFF */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED3_MASK,
 						 0x0);
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल LED_MODE_ON:
+			}
+		}
+		break;
+	case LED_MODE_ON:
 
 		DP(NETIF_MSG_LINK, "Port 0x%x: LED MODE ON\n", port);
 
-		अगर ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
-		    SHARED_HW_CFG_LED_EXTPHY1) अणु
+		if ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
+		    SHARED_HW_CFG_LED_EXTPHY1) {
 			/* Set control reg */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LINK_SIGNAL,
 					&val);
 			val &= 0x8000;
 			val |= 0x2492;
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LINK_SIGNAL,
 					 val);
 
 			/* Set LED masks */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x0);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED2_MASK,
 					 0x20);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED3_MASK,
 					 0x20);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED5_MASK,
 					 0x0);
-		पूर्ण अन्यथा अणु
-			bnx2x_cl45_ग_लिखो(bp, phy,
+		} else {
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x20);
-			अगर (phy->type ==
-			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) अणु
-				/* Disable MI_INT पूर्णांकerrupt beक्रमe setting LED4
-				 * source to स्थिरant on.
+			if (phy->type ==
+			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) {
+				/* Disable MI_INT interrupt before setting LED4
+				 * source to constant on.
 				 */
-				अगर (REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
+				if (REG_RD(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
 					   params->port*4) &
-				    NIG_MASK_MI_INT) अणु
+				    NIG_MASK_MI_INT) {
 					params->link_flags |=
 					LINK_FLAGS_INT_DISABLED;
 
@@ -10863,79 +10862,79 @@
 						NIG_REG_MASK_INTERRUPT_PORT0 +
 						params->port*4,
 						NIG_MASK_MI_INT);
-				पूर्ण
-			पूर्ण
-			अगर (phy->type ==
-			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
-				/* Tell LED3 to स्थिरant on */
-				bnx2x_cl45_पढ़ो(bp, phy,
+				}
+			}
+			if (phy->type ==
+			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
+				/* Tell LED3 to constant on */
+				bnx2x_cl45_read(bp, phy,
 						MDIO_PMA_DEVAD,
 						MDIO_PMA_REG_8481_LINK_SIGNAL,
 						&val);
 				val &= ~(7<<6);
 				val |= (2<<6);  /* A83B[8:6]= 2 */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LINK_SIGNAL,
 						 val);
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED3_MASK,
 						 0x20);
-			पूर्ण अन्यथा अणु
-				bnx2x_cl45_ग_लिखो(bp, phy,
+			} else {
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_SIGNAL_MASK,
 						 0x20);
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल LED_MODE_OPER:
+	case LED_MODE_OPER:
 
 		DP(NETIF_MSG_LINK, "Port 0x%x: LED MODE OPER\n", port);
 
-		अगर ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
-		    SHARED_HW_CFG_LED_EXTPHY1) अणु
+		if ((params->hw_led_mode << SHARED_HW_CFG_LED_MODE_SHIFT) ==
+		    SHARED_HW_CFG_LED_EXTPHY1) {
 
 			/* Set control reg */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LINK_SIGNAL,
 					&val);
 
-			अगर (!((val &
+			if (!((val &
 			       MDIO_PMA_REG_8481_LINK_SIGNAL_LED4_ENABLE_MASK)
-			  >> MDIO_PMA_REG_8481_LINK_SIGNAL_LED4_ENABLE_SHIFT)) अणु
+			  >> MDIO_PMA_REG_8481_LINK_SIGNAL_LED4_ENABLE_SHIFT)) {
 				DP(NETIF_MSG_LINK, "Setting LINK_SIGNAL\n");
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LINK_SIGNAL,
 						 0xa492);
-			पूर्ण
+			}
 
 			/* Set LED masks */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 0x10);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED2_MASK,
 					 0x80);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED3_MASK,
 					 0x98);
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED5_MASK,
 					 0x40);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* EXTPHY2 LED mode indicate that the 100M/1G/10G LED
 			 * sources are all wired through LED1, rather than only
 			 * 10G in other modes.
@@ -10944,113 +10943,113 @@
 				SHARED_HW_CFG_LED_MODE_SHIFT) ==
 			       SHARED_HW_CFG_LED_EXTPHY2) ? 0x98 : 0x80;
 
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LED1_MASK,
 					 val);
 
 			/* Tell LED3 to blink on source */
-			bnx2x_cl45_पढ़ो(bp, phy,
+			bnx2x_cl45_read(bp, phy,
 					MDIO_PMA_DEVAD,
 					MDIO_PMA_REG_8481_LINK_SIGNAL,
 					&val);
 			val &= ~(7<<6);
 			val |= (1<<6); /* A83B[8:6]= 1 */
-			bnx2x_cl45_ग_लिखो(bp, phy,
+			bnx2x_cl45_write(bp, phy,
 					 MDIO_PMA_DEVAD,
 					 MDIO_PMA_REG_8481_LINK_SIGNAL,
 					 val);
-			अगर (phy->type ==
-			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) अणु
-				bnx2x_cl45_ग_लिखो(bp, phy,
+			if (phy->type ==
+			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858) {
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED2_MASK,
 						 0x18);
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_LED3_MASK,
 						 0x06);
-			पूर्ण
-			अगर (phy->type ==
-			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) अणु
-				/* Restore LED4 source to बाह्यal link,
-				 * and re-enable पूर्णांकerrupts.
+			}
+			if (phy->type ==
+			    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834) {
+				/* Restore LED4 source to external link,
+				 * and re-enable interrupts.
 				 */
-				bnx2x_cl45_ग_लिखो(bp, phy,
+				bnx2x_cl45_write(bp, phy,
 						 MDIO_PMA_DEVAD,
 						 MDIO_PMA_REG_8481_SIGNAL_MASK,
 						 0x40);
-				अगर (params->link_flags &
-				    LINK_FLAGS_INT_DISABLED) अणु
-					bnx2x_link_पूर्णांक_enable(params);
+				if (params->link_flags &
+				    LINK_FLAGS_INT_DISABLED) {
+					bnx2x_link_int_enable(params);
 					params->link_flags &=
 						~LINK_FLAGS_INT_DISABLED;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
+				}
+			}
+		}
+		break;
+	}
 
-	/* This is a workaround क्रम E3+84833 until स्वतःneg
+	/* This is a workaround for E3+84833 until autoneg
 	 * restart is fixed in f/w
 	 */
-	अगर (CHIP_IS_E3(bp)) अणु
-		bnx2x_cl45_पढ़ो(bp, phy, MDIO_WC_DEVAD,
+	if (CHIP_IS_E3(bp)) {
+		bnx2x_cl45_read(bp, phy, MDIO_WC_DEVAD,
 				MDIO_WC_REG_GP2_STATUS_GP_2_1, &val);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /******************************************************************/
 /*			54618SE PHY SECTION			  */
 /******************************************************************/
-अटल व्योम bnx2x_54618se_specअगरic_func(काष्ठा bnx2x_phy *phy,
-					काष्ठा link_params *params,
+static void bnx2x_54618se_specific_func(struct bnx2x_phy *phy,
+					struct link_params *params,
 					u32 action)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u16 temp;
-	चयन (action) अणु
-	हाल PHY_INIT:
+	switch (action) {
+	case PHY_INIT:
 		/* Configure LED4: set to INTR (0x6). */
-		/* Accessing shaकरोw रेजिस्टर 0xe. */
-		bnx2x_cl22_ग_लिखो(bp, phy,
+		/* Accessing shadow register 0xe. */
+		bnx2x_cl22_write(bp, phy,
 				 MDIO_REG_GPHY_SHADOW,
 				 MDIO_REG_GPHY_SHADOW_LED_SEL2);
-		bnx2x_cl22_पढ़ो(bp, phy,
+		bnx2x_cl22_read(bp, phy,
 				MDIO_REG_GPHY_SHADOW,
 				&temp);
 		temp &= ~(0xf << 4);
 		temp |= (0x6 << 4);
-		bnx2x_cl22_ग_लिखो(bp, phy,
+		bnx2x_cl22_write(bp, phy,
 				 MDIO_REG_GPHY_SHADOW,
 				 MDIO_REG_GPHY_SHADOW_WR_ENA | temp);
 		/* Configure INTR based on link status change. */
-		bnx2x_cl22_ग_लिखो(bp, phy,
+		bnx2x_cl22_write(bp, phy,
 				 MDIO_REG_INTR_MASK,
 				 ~MDIO_REG_INTR_MASK_LINK_STATUS);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम bnx2x_54618se_config_init(काष्ठा bnx2x_phy *phy,
-				      काष्ठा link_params *params,
-				      काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_54618se_config_init(struct bnx2x_phy *phy,
+				      struct link_params *params,
+				      struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 port;
-	u16 स्वतःneg_val, an_1000_val, an_10_100_val, fc_val, temp;
+	u16 autoneg_val, an_1000_val, an_10_100_val, fc_val, temp;
 	u32 cfg_pin;
 
 	DP(NETIF_MSG_LINK, "54618SE cfg init\n");
 	usleep_range(1000, 2000);
 
 	/* This works with E3 only, no need to check the chip
-	 * beक्रमe determining the port.
+	 * before determining the port.
 	 */
 	port = params->port;
 
 	cfg_pin = (REG_RD(bp, params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
+			offsetof(struct shmem_region,
 			dev_info.port_hw_config[port].e3_cmn_pin_cfg)) &
 			PORT_HW_CFG_E3_PHY_RESET_MASK) >>
 			PORT_HW_CFG_E3_PHY_RESET_SHIFT;
@@ -11058,28 +11057,28 @@
 	/* Drive pin high to bring the GPHY out of reset. */
 	bnx2x_set_cfg_pin(bp, cfg_pin, 1);
 
-	/* रुको क्रम GPHY to reset */
+	/* wait for GPHY to reset */
 	msleep(50);
 
 	/* reset phy */
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_cl22_write(bp, phy,
 			 MDIO_PMA_REG_CTRL, 0x8000);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	/* Wait क्रम GPHY to reset */
+	/* Wait for GPHY to reset */
 	msleep(50);
 
 
-	bnx2x_54618se_specअगरic_func(phy, params, PHY_INIT);
-	/* Flip the संकेत detect polarity (set 0x1c.0x1e[8]). */
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_54618se_specific_func(phy, params, PHY_INIT);
+	/* Flip the signal detect polarity (set 0x1c.0x1e[8]). */
+	bnx2x_cl22_write(bp, phy,
 			MDIO_REG_GPHY_SHADOW,
 			MDIO_REG_GPHY_SHADOW_AUTO_DET_MED);
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			MDIO_REG_GPHY_SHADOW,
 			&temp);
 	temp |= MDIO_REG_GPHY_SHADOW_INVERT_FIB_SD;
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_cl22_write(bp, phy,
 			MDIO_REG_GPHY_SHADOW,
 			MDIO_REG_GPHY_SHADOW_WR_ENA | temp);
 
@@ -11087,262 +11086,262 @@
 	/* Please refer to Table 28B-3 of 802.3ab-1999 spec. */
 	bnx2x_calc_ieee_aneg_adv(phy, params, &vars->ieee_fc);
 	fc_val = 0;
-	अगर ((vars->ieee_fc & MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) ==
+	if ((vars->ieee_fc & MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC) ==
 			MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_ASYMMETRIC)
 		fc_val |= MDIO_AN_REG_ADV_PAUSE_ASYMMETRIC;
 
-	अगर ((vars->ieee_fc & MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) ==
+	if ((vars->ieee_fc & MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH) ==
 			MDIO_COMBO_IEEE0_AUTO_NEG_ADV_PAUSE_BOTH)
 		fc_val |= MDIO_AN_REG_ADV_PAUSE_PAUSE;
 
 	/* Read all advertisement */
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			0x09,
 			&an_1000_val);
 
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			0x04,
 			&an_10_100_val);
 
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			MDIO_PMA_REG_CTRL,
-			&स्वतःneg_val);
+			&autoneg_val);
 
-	/* Disable क्रमced speed */
-	स्वतःneg_val &= ~((1<<6) | (1<<8) | (1<<9) | (1<<12) | (1<<13));
+	/* Disable forced speed */
+	autoneg_val &= ~((1<<6) | (1<<8) | (1<<9) | (1<<12) | (1<<13));
 	an_10_100_val &= ~((1<<5) | (1<<6) | (1<<7) | (1<<8) | (1<<10) |
 			   (1<<11));
 
-	अगर (((phy->req_line_speed == SPEED_AUTO_NEG) &&
+	if (((phy->req_line_speed == SPEED_AUTO_NEG) &&
 	     (phy->speed_cap_mask &
 	      PORT_HW_CFG_SPEED_CAPABILITY_D0_1G)) ||
-	    (phy->req_line_speed == SPEED_1000)) अणु
+	    (phy->req_line_speed == SPEED_1000)) {
 		an_1000_val |= (1<<8);
-		स्वतःneg_val |= (1<<9 | 1<<12);
-		अगर (phy->req_duplex == DUPLEX_FULL)
+		autoneg_val |= (1<<9 | 1<<12);
+		if (phy->req_duplex == DUPLEX_FULL)
 			an_1000_val |= (1<<9);
 		DP(NETIF_MSG_LINK, "Advertising 1G\n");
-	पूर्ण अन्यथा
+	} else
 		an_1000_val &= ~((1<<8) | (1<<9));
 
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_cl22_write(bp, phy,
 			0x09,
 			an_1000_val);
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			0x09,
 			&an_1000_val);
 
 	/* Advertise 10/100 link speed */
-	अगर (phy->req_line_speed == SPEED_AUTO_NEG) अणु
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_HALF) अणु
+	if (phy->req_line_speed == SPEED_AUTO_NEG) {
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_HALF) {
 			an_10_100_val |= (1<<5);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 10M-HD\n");
-		पूर्ण
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_FULL) अणु
+		}
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_FULL) {
 			an_10_100_val |= (1<<6);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 10M-FD\n");
-		पूर्ण
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_HALF) अणु
+		}
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_HALF) {
 			an_10_100_val |= (1<<7);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 100M-HD\n");
-		पूर्ण
-		अगर (phy->speed_cap_mask &
-		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_FULL) अणु
+		}
+		if (phy->speed_cap_mask &
+		    PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_FULL) {
 			an_10_100_val |= (1<<8);
-			स्वतःneg_val |= (1<<9 | 1<<12);
+			autoneg_val |= (1<<9 | 1<<12);
 			DP(NETIF_MSG_LINK, "Advertising 100M-FD\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Only 10/100 are allowed to work in FORCE mode */
-	अगर (phy->req_line_speed == SPEED_100) अणु
-		स्वतःneg_val |= (1<<13);
-		/* Enabled AUTO-MDIX when स्वतःneg is disabled */
-		bnx2x_cl22_ग_लिखो(bp, phy,
+	if (phy->req_line_speed == SPEED_100) {
+		autoneg_val |= (1<<13);
+		/* Enabled AUTO-MDIX when autoneg is disabled */
+		bnx2x_cl22_write(bp, phy,
 				0x18,
 				(1<<15 | 1<<9 | 7<<0));
 		DP(NETIF_MSG_LINK, "Setting 100M force\n");
-	पूर्ण
-	अगर (phy->req_line_speed == SPEED_10) अणु
-		/* Enabled AUTO-MDIX when स्वतःneg is disabled */
-		bnx2x_cl22_ग_लिखो(bp, phy,
+	}
+	if (phy->req_line_speed == SPEED_10) {
+		/* Enabled AUTO-MDIX when autoneg is disabled */
+		bnx2x_cl22_write(bp, phy,
 				0x18,
 				(1<<15 | 1<<9 | 7<<0));
 		DP(NETIF_MSG_LINK, "Setting 10M force\n");
-	पूर्ण
+	}
 
-	अगर ((phy->flags & FLAGS_EEE) && bnx2x_eee_has_cap(params)) अणु
-		पूर्णांक rc;
+	if ((phy->flags & FLAGS_EEE) && bnx2x_eee_has_cap(params)) {
+		int rc;
 
-		bnx2x_cl22_ग_लिखो(bp, phy, MDIO_REG_GPHY_EXP_ACCESS,
+		bnx2x_cl22_write(bp, phy, MDIO_REG_GPHY_EXP_ACCESS,
 				 MDIO_REG_GPHY_EXP_ACCESS_TOP |
 				 MDIO_REG_GPHY_EXP_TOP_2K_BUF);
-		bnx2x_cl22_पढ़ो(bp, phy, MDIO_REG_GPHY_EXP_ACCESS_GATE, &temp);
+		bnx2x_cl22_read(bp, phy, MDIO_REG_GPHY_EXP_ACCESS_GATE, &temp);
 		temp &= 0xfffe;
-		bnx2x_cl22_ग_लिखो(bp, phy, MDIO_REG_GPHY_EXP_ACCESS_GATE, temp);
+		bnx2x_cl22_write(bp, phy, MDIO_REG_GPHY_EXP_ACCESS_GATE, temp);
 
 		rc = bnx2x_eee_initial_config(params, vars, SHMEM_EEE_1G_ADV);
-		अगर (rc) अणु
+		if (rc) {
 			DP(NETIF_MSG_LINK, "Failed to configure EEE timers\n");
 			bnx2x_eee_disable(phy, params, vars);
-		पूर्ण अन्यथा अगर ((params->eee_mode & EEE_MODE_ADV_LPI) &&
+		} else if ((params->eee_mode & EEE_MODE_ADV_LPI) &&
 			   (phy->req_duplex == DUPLEX_FULL) &&
-			   (bnx2x_eee_calc_समयr(params) ||
-			    !(params->eee_mode & EEE_MODE_ENABLE_LPI))) अणु
+			   (bnx2x_eee_calc_timer(params) ||
+			    !(params->eee_mode & EEE_MODE_ENABLE_LPI))) {
 			/* Need to advertise EEE only when requested,
-			 * and either no LPI निश्चितion was requested,
-			 * or it was requested and a valid समयr was set.
-			 * Also notice full duplex is required क्रम EEE.
+			 * and either no LPI assertion was requested,
+			 * or it was requested and a valid timer was set.
+			 * Also notice full duplex is required for EEE.
 			 */
 			bnx2x_eee_advertise(phy, params, vars,
 					    SHMEM_EEE_1G_ADV);
-		पूर्ण अन्यथा अणु
+		} else {
 			DP(NETIF_MSG_LINK, "Don't Advertise 1GBase-T EEE\n");
 			bnx2x_eee_disable(phy, params, vars);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		vars->eee_status &= ~SHMEM_EEE_1G_ADV <<
 				    SHMEM_EEE_SUPPORTED_SHIFT;
 
-		अगर (phy->flags & FLAGS_EEE) अणु
-			/* Handle legacy स्वतः-grEEEn */
-			अगर (params->feature_config_flags &
-			    FEATURE_CONFIG_AUTOGREEEN_ENABLED) अणु
+		if (phy->flags & FLAGS_EEE) {
+			/* Handle legacy auto-grEEEn */
+			if (params->feature_config_flags &
+			    FEATURE_CONFIG_AUTOGREEEN_ENABLED) {
 				temp = 6;
 				DP(NETIF_MSG_LINK, "Enabling Auto-GrEEEn\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				temp = 0;
 				DP(NETIF_MSG_LINK, "Don't Adv. EEE\n");
-			पूर्ण
-			bnx2x_cl45_ग_लिखो(bp, phy, MDIO_AN_DEVAD,
+			}
+			bnx2x_cl45_write(bp, phy, MDIO_AN_DEVAD,
 					 MDIO_AN_REG_EEE_ADV, temp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_cl22_write(bp, phy,
 			0x04,
 			an_10_100_val | fc_val);
 
-	अगर (phy->req_duplex == DUPLEX_FULL)
-		स्वतःneg_val |= (1<<8);
+	if (phy->req_duplex == DUPLEX_FULL)
+		autoneg_val |= (1<<8);
 
-	bnx2x_cl22_ग_लिखो(bp, phy,
-			MDIO_PMA_REG_CTRL, स्वतःneg_val);
-पूर्ण
+	bnx2x_cl22_write(bp, phy,
+			MDIO_PMA_REG_CTRL, autoneg_val);
+}
 
 
-अटल व्योम bnx2x_5461x_set_link_led(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params, u8 mode)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_5461x_set_link_led(struct bnx2x_phy *phy,
+				       struct link_params *params, u8 mode)
+{
+	struct bnx2x *bp = params->bp;
 	u16 temp;
 
-	bnx2x_cl22_ग_लिखो(bp, phy,
+	bnx2x_cl22_write(bp, phy,
 		MDIO_REG_GPHY_SHADOW,
 		MDIO_REG_GPHY_SHADOW_LED_SEL1);
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 		MDIO_REG_GPHY_SHADOW,
 		&temp);
 	temp &= 0xff00;
 
 	DP(NETIF_MSG_LINK, "54618x set link led (mode=%x)\n", mode);
-	चयन (mode) अणु
-	हाल LED_MODE_FRONT_PANEL_OFF:
-	हाल LED_MODE_OFF:
+	switch (mode) {
+	case LED_MODE_FRONT_PANEL_OFF:
+	case LED_MODE_OFF:
 		temp |= 0x00ee;
-		अवरोध;
-	हाल LED_MODE_OPER:
+		break;
+	case LED_MODE_OPER:
 		temp |= 0x0001;
-		अवरोध;
-	हाल LED_MODE_ON:
+		break;
+	case LED_MODE_ON:
 		temp |= 0x00ff;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	bnx2x_cl22_ग_लिखो(bp, phy,
+		break;
+	default:
+		break;
+	}
+	bnx2x_cl22_write(bp, phy,
 		MDIO_REG_GPHY_SHADOW,
 		MDIO_REG_GPHY_SHADOW_WR_ENA | temp);
-	वापस;
-पूर्ण
+	return;
+}
 
 
-अटल व्योम bnx2x_54618se_link_reset(काष्ठा bnx2x_phy *phy,
-				     काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_54618se_link_reset(struct bnx2x_phy *phy,
+				     struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u32 cfg_pin;
 	u8 port;
 
-	/* In हाल of no EPIO routed to reset the GPHY, put it
-	 * in low घातer mode.
+	/* In case of no EPIO routed to reset the GPHY, put it
+	 * in low power mode.
 	 */
-	bnx2x_cl22_ग_लिखो(bp, phy, MDIO_PMA_REG_CTRL, 0x800);
+	bnx2x_cl22_write(bp, phy, MDIO_PMA_REG_CTRL, 0x800);
 	/* This works with E3 only, no need to check the chip
-	 * beक्रमe determining the port.
+	 * before determining the port.
 	 */
 	port = params->port;
 	cfg_pin = (REG_RD(bp, params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
+			offsetof(struct shmem_region,
 			dev_info.port_hw_config[port].e3_cmn_pin_cfg)) &
 			PORT_HW_CFG_E3_PHY_RESET_MASK) >>
 			PORT_HW_CFG_E3_PHY_RESET_SHIFT;
 
 	/* Drive pin low to put GPHY in reset. */
 	bnx2x_set_cfg_pin(bp, cfg_pin, 0);
-पूर्ण
+}
 
-अटल u8 bnx2x_54618se_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params,
-				    काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_54618se_read_status(struct bnx2x_phy *phy,
+				    struct link_params *params,
+				    struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val;
 	u8 link_up = 0;
 	u16 legacy_status, legacy_speed;
 
 	/* Get speed operation status */
-	bnx2x_cl22_पढ़ो(bp, phy,
+	bnx2x_cl22_read(bp, phy,
 			MDIO_REG_GPHY_AUX_STATUS,
 			&legacy_status);
 	DP(NETIF_MSG_LINK, "54618SE read_status: 0x%x\n", legacy_status);
 
-	/* Read status to clear the PHY पूर्णांकerrupt. */
-	bnx2x_cl22_पढ़ो(bp, phy,
+	/* Read status to clear the PHY interrupt. */
+	bnx2x_cl22_read(bp, phy,
 			MDIO_REG_INTR_STATUS,
 			&val);
 
 	link_up = ((legacy_status & (1<<2)) == (1<<2));
 
-	अगर (link_up) अणु
+	if (link_up) {
 		legacy_speed = (legacy_status & (7<<8));
-		अगर (legacy_speed == (7<<8)) अणु
+		if (legacy_speed == (7<<8)) {
 			vars->line_speed = SPEED_1000;
 			vars->duplex = DUPLEX_FULL;
-		पूर्ण अन्यथा अगर (legacy_speed == (6<<8)) अणु
+		} else if (legacy_speed == (6<<8)) {
 			vars->line_speed = SPEED_1000;
 			vars->duplex = DUPLEX_HALF;
-		पूर्ण अन्यथा अगर (legacy_speed == (5<<8)) अणु
+		} else if (legacy_speed == (5<<8)) {
 			vars->line_speed = SPEED_100;
 			vars->duplex = DUPLEX_FULL;
-		पूर्ण
-		/* Omitting 100Base-T4 क्रम now */
-		अन्यथा अगर (legacy_speed == (3<<8)) अणु
+		}
+		/* Omitting 100Base-T4 for now */
+		else if (legacy_speed == (3<<8)) {
 			vars->line_speed = SPEED_100;
 			vars->duplex = DUPLEX_HALF;
-		पूर्ण अन्यथा अगर (legacy_speed == (2<<8)) अणु
+		} else if (legacy_speed == (2<<8)) {
 			vars->line_speed = SPEED_10;
 			vars->duplex = DUPLEX_FULL;
-		पूर्ण अन्यथा अगर (legacy_speed == (1<<8)) अणु
+		} else if (legacy_speed == (1<<8)) {
 			vars->line_speed = SPEED_10;
 			vars->duplex = DUPLEX_HALF;
-		पूर्ण अन्यथा /* Should not happen */
+		} else /* Should not happen */
 			vars->line_speed = 0;
 
 		DP(NETIF_MSG_LINK,
@@ -11351,16 +11350,16 @@
 		   (vars->duplex == DUPLEX_FULL));
 
 		/* Check legacy speed AN resolution */
-		bnx2x_cl22_पढ़ो(bp, phy,
+		bnx2x_cl22_read(bp, phy,
 				0x01,
 				&val);
-		अगर (val & (1<<5))
+		if (val & (1<<5))
 			vars->link_status |=
 				LINK_STATUS_AUTO_NEGOTIATE_COMPLETE;
-		bnx2x_cl22_पढ़ो(bp, phy,
+		bnx2x_cl22_read(bp, phy,
 				0x06,
 				&val);
-		अगर ((val & (1<<0)) == 0)
+		if ((val & (1<<0)) == 0)
 			vars->link_status |=
 				LINK_STATUS_PARALLEL_DETECTION_USED;
 
@@ -11369,156 +11368,156 @@
 
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
 
-		अगर (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) अणु
+		if (vars->link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) {
 			/* Report LP advertised speeds */
-			bnx2x_cl22_पढ़ो(bp, phy, 0x5, &val);
+			bnx2x_cl22_read(bp, phy, 0x5, &val);
 
-			अगर (val & (1<<5))
+			if (val & (1<<5))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_10THD_CAPABLE;
-			अगर (val & (1<<6))
+			if (val & (1<<6))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_10TFD_CAPABLE;
-			अगर (val & (1<<7))
+			if (val & (1<<7))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_100TXHD_CAPABLE;
-			अगर (val & (1<<8))
+			if (val & (1<<8))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_100TXFD_CAPABLE;
-			अगर (val & (1<<9))
+			if (val & (1<<9))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_100T4_CAPABLE;
 
-			bnx2x_cl22_पढ़ो(bp, phy, 0xa, &val);
-			अगर (val & (1<<10))
+			bnx2x_cl22_read(bp, phy, 0xa, &val);
+			if (val & (1<<10))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_1000THD_CAPABLE;
-			अगर (val & (1<<11))
+			if (val & (1<<11))
 				vars->link_status |=
 				  LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE;
 
-			अगर ((phy->flags & FLAGS_EEE) &&
+			if ((phy->flags & FLAGS_EEE) &&
 			    bnx2x_eee_has_cap(params))
 				bnx2x_eee_an_resolve(phy, params, vars);
-		पूर्ण
-	पूर्ण
-	वापस link_up;
-पूर्ण
+		}
+	}
+	return link_up;
+}
 
-अटल व्योम bnx2x_54618se_config_loopback(काष्ठा bnx2x_phy *phy,
-					  काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_54618se_config_loopback(struct bnx2x_phy *phy,
+					  struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	u16 val;
 	u32 umac_base = params->port ? GRCBASE_UMAC1 : GRCBASE_UMAC0;
 
 	DP(NETIF_MSG_LINK, "2PMA/PMD ext_phy_loopback: 54618se\n");
 
 	/* Enable master/slave manual mmode and set to master */
-	/* mii ग_लिखो 9 [bits set 11 12] */
-	bnx2x_cl22_ग_लिखो(bp, phy, 0x09, 3<<11);
+	/* mii write 9 [bits set 11 12] */
+	bnx2x_cl22_write(bp, phy, 0x09, 3<<11);
 
-	/* क्रमced 1G and disable स्वतःneg */
-	/* set val [mii पढ़ो 0] */
+	/* forced 1G and disable autoneg */
+	/* set val [mii read 0] */
 	/* set val [expr $val & [bits clear 6 12 13]] */
 	/* set val [expr $val | [bits set 6 8]] */
-	/* mii ग_लिखो 0 $val */
-	bnx2x_cl22_पढ़ो(bp, phy, 0x00, &val);
+	/* mii write 0 $val */
+	bnx2x_cl22_read(bp, phy, 0x00, &val);
 	val &= ~((1<<6) | (1<<12) | (1<<13));
 	val |= (1<<6) | (1<<8);
-	bnx2x_cl22_ग_लिखो(bp, phy, 0x00, val);
+	bnx2x_cl22_write(bp, phy, 0x00, val);
 
-	/* Set बाह्यal loopback and Tx using 6dB coding */
-	/* mii ग_लिखो 0x18 7 */
-	/* set val [mii पढ़ो 0x18] */
-	/* mii ग_लिखो 0x18 [expr $val | [bits set 10 15]] */
-	bnx2x_cl22_ग_लिखो(bp, phy, 0x18, 7);
-	bnx2x_cl22_पढ़ो(bp, phy, 0x18, &val);
-	bnx2x_cl22_ग_लिखो(bp, phy, 0x18, val | (1<<10) | (1<<15));
+	/* Set external loopback and Tx using 6dB coding */
+	/* mii write 0x18 7 */
+	/* set val [mii read 0x18] */
+	/* mii write 0x18 [expr $val | [bits set 10 15]] */
+	bnx2x_cl22_write(bp, phy, 0x18, 7);
+	bnx2x_cl22_read(bp, phy, 0x18, &val);
+	bnx2x_cl22_write(bp, phy, 0x18, val | (1<<10) | (1<<15));
 
-	/* This रेजिस्टर खोलोs the gate क्रम the UMAC despite its name */
+	/* This register opens the gate for the UMAC despite its name */
 	REG_WR(bp, NIG_REG_EGRESS_EMAC0_PORT + params->port*4, 1);
 
 	/* Maximum Frame Length (RW). Defines a 14-Bit maximum frame
 	 * length used by the MAC receive logic to check frames.
 	 */
 	REG_WR(bp, umac_base + UMAC_REG_MAXFR, 0x2710);
-पूर्ण
+}
 
 /******************************************************************/
 /*			SFX7101 PHY SECTION			  */
 /******************************************************************/
-अटल व्योम bnx2x_7101_config_loopback(काष्ठा bnx2x_phy *phy,
-				       काष्ठा link_params *params)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_7101_config_loopback(struct bnx2x_phy *phy,
+				       struct link_params *params)
+{
+	struct bnx2x *bp = params->bp;
 	/* SFX7101_XGXS_TEST1 */
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_XS_DEVAD, MDIO_XS_SFX7101_XGXS_TEST1, 0x100);
-पूर्ण
+}
 
-अटल व्योम bnx2x_7101_config_init(काष्ठा bnx2x_phy *phy,
-				   काष्ठा link_params *params,
-				   काष्ठा link_vars *vars)
-अणु
+static void bnx2x_7101_config_init(struct bnx2x_phy *phy,
+				   struct link_params *params,
+				   struct link_vars *vars)
+{
 	u16 fw_ver1, fw_ver2, val;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "Setting the SFX7101 LASI indication\n");
 
-	/* Restore normal घातer mode*/
+	/* Restore normal power mode*/
 	bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_HIGH, params->port);
 	/* HW reset */
 	bnx2x_ext_phy_hw_reset(bp, params->port);
-	bnx2x_रुको_reset_complete(bp, phy, params);
+	bnx2x_wait_reset_complete(bp, phy, params);
 
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_LASI_CTRL, 0x1);
 	DP(NETIF_MSG_LINK, "Setting the SFX7101 LED to blink on traffic\n");
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD, MDIO_PMA_REG_7107_LED_CNTL, (1<<3));
 
-	bnx2x_ext_phy_set_छोड़ो(params, phy, vars);
-	/* Restart स्वतःneg */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_ext_phy_set_pause(params, phy, vars);
+	/* Restart autoneg */
+	bnx2x_cl45_read(bp, phy,
 			MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, &val);
 	val |= 0x200;
-	bnx2x_cl45_ग_लिखो(bp, phy,
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_AN_DEVAD, MDIO_AN_REG_CTRL, val);
 
 	/* Save spirom version */
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_7101_VER1, &fw_ver1);
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_7101_VER2, &fw_ver2);
 	bnx2x_save_spirom_version(bp, params->port,
 				  (u32)(fw_ver1<<16 | fw_ver2), phy->ver_addr);
-पूर्ण
+}
 
-अटल u8 bnx2x_7101_पढ़ो_status(काष्ठा bnx2x_phy *phy,
-				 काष्ठा link_params *params,
-				 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static u8 bnx2x_7101_read_status(struct bnx2x_phy *phy,
+				 struct link_params *params,
+				 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u8 link_up;
 	u16 val1, val2;
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_LASI_STAT, &val1);
 	DP(NETIF_MSG_LINK, "10G-base-T LASI status 0x%x->0x%x\n",
 		   val2, val1);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val2);
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD, MDIO_PMA_REG_STATUS, &val1);
 	DP(NETIF_MSG_LINK, "10G-base-T PMA status 0x%x->0x%x\n",
 		   val2, val1);
 	link_up = ((val1 & 4) == 4);
-	/* If link is up prपूर्णांक the AN outcome of the SFX7101 PHY */
-	अगर (link_up) अणु
-		bnx2x_cl45_पढ़ो(bp, phy,
+	/* If link is up print the AN outcome of the SFX7101 PHY */
+	if (link_up) {
+		bnx2x_cl45_read(bp, phy,
 				MDIO_AN_DEVAD, MDIO_AN_REG_MASTER_STATUS,
 				&val2);
 		vars->line_speed = SPEED_10000;
@@ -11529,95 +11528,95 @@
 		bnx2x_ext_phy_resolve_fc(phy, params, vars);
 
 		/* Read LP advertised speeds */
-		अगर (val2 & (1<<11))
+		if (val2 & (1<<11))
 			vars->link_status |=
 				LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE;
-	पूर्ण
-	वापस link_up;
-पूर्ण
+	}
+	return link_up;
+}
 
-अटल पूर्णांक bnx2x_7101_क्रमmat_ver(u32 spirom_ver, u8 *str, u16 *len)
-अणु
-	अगर (*len < 5)
-		वापस -EINVAL;
+static int bnx2x_7101_format_ver(u32 spirom_ver, u8 *str, u16 *len)
+{
+	if (*len < 5)
+		return -EINVAL;
 	str[0] = (spirom_ver & 0xFF);
 	str[1] = (spirom_ver & 0xFF00) >> 8;
 	str[2] = (spirom_ver & 0xFF0000) >> 16;
 	str[3] = (spirom_ver & 0xFF000000) >> 24;
 	str[4] = '\0';
 	*len -= 5;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम bnx2x_sfx7101_sp_sw_reset(काष्ठा bnx2x *bp, काष्ठा bnx2x_phy *phy)
-अणु
+void bnx2x_sfx7101_sp_sw_reset(struct bnx2x *bp, struct bnx2x_phy *phy)
+{
 	u16 val, cnt;
 
-	bnx2x_cl45_पढ़ो(bp, phy,
+	bnx2x_cl45_read(bp, phy,
 			MDIO_PMA_DEVAD,
 			MDIO_PMA_REG_7101_RESET, &val);
 
-	क्रम (cnt = 0; cnt < 10; cnt++) अणु
+	for (cnt = 0; cnt < 10; cnt++) {
 		msleep(50);
 		/* Writes a self-clearing reset */
-		bnx2x_cl45_ग_लिखो(bp, phy,
+		bnx2x_cl45_write(bp, phy,
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_7101_RESET,
 				 (val | (1<<15)));
-		/* Wait क्रम clear */
-		bnx2x_cl45_पढ़ो(bp, phy,
+		/* Wait for clear */
+		bnx2x_cl45_read(bp, phy,
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_7101_RESET, &val);
 
-		अगर ((val & (1<<15)) == 0)
-			अवरोध;
-	पूर्ण
-पूर्ण
+		if ((val & (1<<15)) == 0)
+			break;
+	}
+}
 
-अटल व्योम bnx2x_7101_hw_reset(काष्ठा bnx2x_phy *phy,
-				काष्ठा link_params *params) अणु
-	/* Low घातer mode is controlled by GPIO 2 */
+static void bnx2x_7101_hw_reset(struct bnx2x_phy *phy,
+				struct link_params *params) {
+	/* Low power mode is controlled by GPIO 2 */
 	bnx2x_set_gpio(params->bp, MISC_REGISTERS_GPIO_2,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, params->port);
 	/* The PHY reset is controlled by GPIO 1 */
 	bnx2x_set_gpio(params->bp, MISC_REGISTERS_GPIO_1,
 		       MISC_REGISTERS_GPIO_OUTPUT_LOW, params->port);
-पूर्ण
+}
 
-अटल व्योम bnx2x_7101_set_link_led(काष्ठा bnx2x_phy *phy,
-				    काष्ठा link_params *params, u8 mode)
-अणु
+static void bnx2x_7101_set_link_led(struct bnx2x_phy *phy,
+				    struct link_params *params, u8 mode)
+{
 	u16 val = 0;
-	काष्ठा bnx2x *bp = params->bp;
-	चयन (mode) अणु
-	हाल LED_MODE_FRONT_PANEL_OFF:
-	हाल LED_MODE_OFF:
+	struct bnx2x *bp = params->bp;
+	switch (mode) {
+	case LED_MODE_FRONT_PANEL_OFF:
+	case LED_MODE_OFF:
 		val = 2;
-		अवरोध;
-	हाल LED_MODE_ON:
+		break;
+	case LED_MODE_ON:
 		val = 1;
-		अवरोध;
-	हाल LED_MODE_OPER:
+		break;
+	case LED_MODE_OPER:
 		val = 0;
-		अवरोध;
-	पूर्ण
-	bnx2x_cl45_ग_लिखो(bp, phy,
+		break;
+	}
+	bnx2x_cl45_write(bp, phy,
 			 MDIO_PMA_DEVAD,
 			 MDIO_PMA_REG_7107_LINK_LED_CNTL,
 			 val);
-पूर्ण
+}
 
 /******************************************************************/
 /*			STATIC PHY DECLARATION			  */
 /******************************************************************/
 
-अटल स्थिर काष्ठा bnx2x_phy phy_null = अणु
+static const struct bnx2x_phy phy_null = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_NOT_CONN,
 	.addr		= 0,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_INIT_XGXS_FIRST,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= 0,
 	.media_type	= ETH_PHY_NOT_PRESENT,
@@ -11627,23 +11626,23 @@
 	.speed_cap_mask	= 0,
 	.req_duplex	= 0,
 	.rsrv		= 0,
-	.config_init	= शून्य,
-	.पढ़ो_status	= शून्य,
-	.link_reset	= शून्य,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= शून्य,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.config_init	= NULL,
+	.read_status	= NULL,
+	.link_reset	= NULL,
+	.config_loopback = NULL,
+	.format_fw_ver	= NULL,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_serdes = अणु
-	.type		= PORT_HW_CFG_SERDES_EXT_PHY_TYPE_सूचीECT,
+static const struct bnx2x_phy phy_serdes = {
+	.type		= PORT_HW_CFG_SERDES_EXT_PHY_TYPE_DIRECT,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= 0,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -11663,22 +11662,22 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_xgxs_config_init,
-	.पढ़ो_status	= bnx2x_link_settings_status,
-	.link_reset	= bnx2x_पूर्णांक_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= शून्य,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.read_status	= bnx2x_link_settings_status,
+	.link_reset	= bnx2x_int_link_reset,
+	.config_loopback = NULL,
+	.format_fw_ver	= NULL,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_xgxs = अणु
-	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT,
+static const struct bnx2x_phy phy_xgxs = {
+	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= 0,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -11699,21 +11698,21 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_xgxs_config_init,
-	.पढ़ो_status	= bnx2x_link_settings_status,
-	.link_reset	= bnx2x_पूर्णांक_link_reset,
+	.read_status	= bnx2x_link_settings_status,
+	.link_reset	= bnx2x_int_link_reset,
 	.config_loopback = bnx2x_set_xgxs_loopback,
-	.क्रमmat_fw_ver	= शून्य,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = bnx2x_xgxs_specअगरic_func
-पूर्ण;
-अटल स्थिर काष्ठा bnx2x_phy phy_warpcore = अणु
-	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT,
+	.format_fw_ver	= NULL,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = bnx2x_xgxs_specific_func
+};
+static const struct bnx2x_phy phy_warpcore = {
+	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_TX_ERROR_CHECK,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -11737,23 +11736,23 @@
 	/* req_duplex = */0,
 	/* rsrv = */0,
 	.config_init	= bnx2x_warpcore_config_init,
-	.पढ़ो_status	= bnx2x_warpcore_पढ़ो_status,
+	.read_status	= bnx2x_warpcore_read_status,
 	.link_reset	= bnx2x_warpcore_link_reset,
 	.config_loopback = bnx2x_set_warpcore_loopback,
-	.क्रमmat_fw_ver	= शून्य,
+	.format_fw_ver	= NULL,
 	.hw_reset	= bnx2x_warpcore_hw_reset,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
 
 
-अटल स्थिर काष्ठा bnx2x_phy phy_7101 = अणु
+static const struct bnx2x_phy phy_7101 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_FAN_FAILURE_DET_REQ,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_TP |
@@ -11768,21 +11767,21 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_7101_config_init,
-	.पढ़ो_status	= bnx2x_7101_पढ़ो_status,
+	.read_status	= bnx2x_7101_read_status,
 	.link_reset	= bnx2x_common_ext_link_reset,
 	.config_loopback = bnx2x_7101_config_loopback,
-	.क्रमmat_fw_ver	= bnx2x_7101_क्रमmat_ver,
+	.format_fw_ver	= bnx2x_7101_format_ver,
 	.hw_reset	= bnx2x_7101_hw_reset,
 	.set_link_led	= bnx2x_7101_set_link_led,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
-अटल स्थिर काष्ठा bnx2x_phy phy_8073 = अणु
+	.phy_specific_func = NULL
+};
+static const struct bnx2x_phy phy_8073 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= 0,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_2500baseX_Full |
@@ -11799,21 +11798,21 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8073_config_init,
-	.पढ़ो_status	= bnx2x_8073_पढ़ो_status,
+	.read_status	= bnx2x_8073_read_status,
 	.link_reset	= bnx2x_8073_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_क्रमmat_ver,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = bnx2x_8073_specअगरic_func
-पूर्ण;
-अटल स्थिर काष्ठा bnx2x_phy phy_8705 = अणु
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_format_ver,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = bnx2x_8073_specific_func
+};
+static const struct bnx2x_phy phy_8705 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8705,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_INIT_XGXS_FIRST,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_FIBRE |
@@ -11827,21 +11826,21 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8705_config_init,
-	.पढ़ो_status	= bnx2x_8705_पढ़ो_status,
+	.read_status	= bnx2x_8705_read_status,
 	.link_reset	= bnx2x_common_ext_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_null_क्रमmat_ver,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
-अटल स्थिर काष्ठा bnx2x_phy phy_8706 = अणु
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_null_format_ver,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
+static const struct bnx2x_phy phy_8706 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8706,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_INIT_XGXS_FIRST,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_1000baseT_Full |
@@ -11856,23 +11855,23 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8706_config_init,
-	.पढ़ो_status	= bnx2x_8706_पढ़ो_status,
+	.read_status	= bnx2x_8706_read_status,
 	.link_reset	= bnx2x_common_ext_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_क्रमmat_ver,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_format_ver,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_8726 = अणु
+static const struct bnx2x_phy phy_8726 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= (FLAGS_INIT_XGXS_FIRST |
 			   FLAGS_TX_ERROR_CHECK),
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_1000baseT_Full |
@@ -11888,23 +11887,23 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8726_config_init,
-	.पढ़ो_status	= bnx2x_8726_पढ़ो_status,
+	.read_status	= bnx2x_8726_read_status,
 	.link_reset	= bnx2x_8726_link_reset,
 	.config_loopback = bnx2x_8726_config_loopback,
-	.क्रमmat_fw_ver	= bnx2x_क्रमmat_ver,
-	.hw_reset	= शून्य,
-	.set_link_led	= शून्य,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.format_fw_ver	= bnx2x_format_ver,
+	.hw_reset	= NULL,
+	.set_link_led	= NULL,
+	.phy_specific_func = NULL
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_8727 = अणु
+static const struct bnx2x_phy phy_8727 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= (FLAGS_FAN_FAILURE_DET_REQ |
 			   FLAGS_TX_ERROR_CHECK),
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10000baseT_Full |
 			   SUPPORTED_1000baseT_Full |
@@ -11919,22 +11918,22 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8727_config_init,
-	.पढ़ो_status	= bnx2x_8727_पढ़ो_status,
+	.read_status	= bnx2x_8727_read_status,
 	.link_reset	= bnx2x_8727_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_क्रमmat_ver,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_format_ver,
 	.hw_reset	= bnx2x_8727_hw_reset,
 	.set_link_led	= bnx2x_8727_set_link_led,
-	.phy_specअगरic_func = bnx2x_8727_specअगरic_func
-पूर्ण;
-अटल स्थिर काष्ठा bnx2x_phy phy_8481 = अणु
+	.phy_specific_func = bnx2x_8727_specific_func
+};
+static const struct bnx2x_phy phy_8481 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8481,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_FAN_FAILURE_DET_REQ |
 			  FLAGS_REARM_LATCH_SIGNAL,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -11954,24 +11953,24 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_8481_config_init,
-	.पढ़ो_status	= bnx2x_848xx_पढ़ो_status,
+	.read_status	= bnx2x_848xx_read_status,
 	.link_reset	= bnx2x_8481_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_848xx_क्रमmat_ver,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_848xx_format_ver,
 	.hw_reset	= bnx2x_8481_hw_reset,
 	.set_link_led	= bnx2x_848xx_set_link_led,
-	.phy_specअगरic_func = शून्य
-पूर्ण;
+	.phy_specific_func = NULL
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_84823 = अणु
+static const struct bnx2x_phy phy_84823 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= (FLAGS_FAN_FAILURE_DET_REQ |
 			   FLAGS_REARM_LATCH_SIGNAL |
 			   FLAGS_TX_ERROR_CHECK),
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -11991,24 +11990,24 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_848x3_config_init,
-	.पढ़ो_status	= bnx2x_848xx_पढ़ो_status,
+	.read_status	= bnx2x_848xx_read_status,
 	.link_reset	= bnx2x_848x3_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_848xx_क्रमmat_ver,
-	.hw_reset	= शून्य,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_848xx_format_ver,
+	.hw_reset	= NULL,
 	.set_link_led	= bnx2x_848xx_set_link_led,
-	.phy_specअगरic_func = bnx2x_848xx_specअगरic_func
-पूर्ण;
+	.phy_specific_func = bnx2x_848xx_specific_func
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_84833 = अणु
+static const struct bnx2x_phy phy_84833 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= (FLAGS_FAN_FAILURE_DET_REQ |
 			   FLAGS_REARM_LATCH_SIGNAL |
 			   FLAGS_TX_ERROR_CHECK),
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_100baseT_Half |
 			   SUPPORTED_100baseT_Full |
@@ -12026,23 +12025,23 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_848x3_config_init,
-	.पढ़ो_status	= bnx2x_848xx_पढ़ो_status,
+	.read_status	= bnx2x_848xx_read_status,
 	.link_reset	= bnx2x_848x3_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_848xx_क्रमmat_ver,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_848xx_format_ver,
 	.hw_reset	= bnx2x_84833_hw_reset_phy,
 	.set_link_led	= bnx2x_848xx_set_link_led,
-	.phy_specअगरic_func = bnx2x_848xx_specअगरic_func
-पूर्ण;
+	.phy_specific_func = bnx2x_848xx_specific_func
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_84834 = अणु
+static const struct bnx2x_phy phy_84834 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_FAN_FAILURE_DET_REQ |
 			    FLAGS_REARM_LATCH_SIGNAL,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_100baseT_Half |
 			   SUPPORTED_100baseT_Full |
@@ -12060,23 +12059,23 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_848x3_config_init,
-	.पढ़ो_status	= bnx2x_848xx_पढ़ो_status,
+	.read_status	= bnx2x_848xx_read_status,
 	.link_reset	= bnx2x_848x3_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_848xx_क्रमmat_ver,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_848xx_format_ver,
 	.hw_reset	= bnx2x_84833_hw_reset_phy,
 	.set_link_led	= bnx2x_848xx_set_link_led,
-	.phy_specअगरic_func = bnx2x_848xx_specअगरic_func
-पूर्ण;
+	.phy_specific_func = bnx2x_848xx_specific_func
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_84858 = अणु
+static const struct bnx2x_phy phy_84858 = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_FAN_FAILURE_DET_REQ |
 			    FLAGS_REARM_LATCH_SIGNAL,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_100baseT_Half |
 			   SUPPORTED_100baseT_Full |
@@ -12094,22 +12093,22 @@
 	.req_duplex	= 0,
 	.rsrv		= 0,
 	.config_init	= bnx2x_848x3_config_init,
-	.पढ़ो_status	= bnx2x_848xx_पढ़ो_status,
+	.read_status	= bnx2x_848xx_read_status,
 	.link_reset	= bnx2x_848x3_link_reset,
-	.config_loopback = शून्य,
-	.क्रमmat_fw_ver	= bnx2x_8485x_क्रमmat_ver,
+	.config_loopback = NULL,
+	.format_fw_ver	= bnx2x_8485x_format_ver,
 	.hw_reset	= bnx2x_84833_hw_reset_phy,
 	.set_link_led	= bnx2x_848xx_set_link_led,
-	.phy_specअगरic_func = bnx2x_848xx_specअगरic_func
-पूर्ण;
+	.phy_specific_func = bnx2x_848xx_specific_func
+};
 
-अटल स्थिर काष्ठा bnx2x_phy phy_54618se = अणु
+static const struct bnx2x_phy phy_54618se = {
 	.type		= PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE,
 	.addr		= 0xff,
 	.def_md_devad	= 0,
 	.flags		= FLAGS_INIT_XGXS_FIRST,
-	.rx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
-	.tx_preemphasis	= अणु0xffff, 0xffff, 0xffff, 0xffffपूर्ण,
+	.rx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
+	.tx_preemphasis	= {0xffff, 0xffff, 0xffff, 0xffff},
 	.mdio_ctrl	= 0,
 	.supported	= (SUPPORTED_10baseT_Half |
 			   SUPPORTED_10baseT_Full |
@@ -12128,111 +12127,111 @@
 	/* req_duplex = */0,
 	/* rsrv = */0,
 	.config_init	= bnx2x_54618se_config_init,
-	.पढ़ो_status	= bnx2x_54618se_पढ़ो_status,
+	.read_status	= bnx2x_54618se_read_status,
 	.link_reset	= bnx2x_54618se_link_reset,
 	.config_loopback = bnx2x_54618se_config_loopback,
-	.क्रमmat_fw_ver	= शून्य,
-	.hw_reset	= शून्य,
+	.format_fw_ver	= NULL,
+	.hw_reset	= NULL,
 	.set_link_led	= bnx2x_5461x_set_link_led,
-	.phy_specअगरic_func = bnx2x_54618se_specअगरic_func
-पूर्ण;
+	.phy_specific_func = bnx2x_54618se_specific_func
+};
 /*****************************************************************/
 /*                                                               */
 /* Populate the phy according. Main function: bnx2x_populate_phy   */
 /*                                                               */
 /*****************************************************************/
 
-अटल व्योम bnx2x_populate_preemphasis(काष्ठा bnx2x *bp, u32 shmem_base,
-				     काष्ठा bnx2x_phy *phy, u8 port,
+static void bnx2x_populate_preemphasis(struct bnx2x *bp, u32 shmem_base,
+				     struct bnx2x_phy *phy, u8 port,
 				     u8 phy_index)
-अणु
+{
 	/* Get the 4 lanes xgxs config rx and tx */
 	u32 rx = 0, tx = 0, i;
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		/* INT_PHY and EXT_PHY1 share the same value location in
 		 * the shmem. When num_phys is greater than 1, than this value
 		 * applies only to EXT_PHY1
 		 */
-		अगर (phy_index == INT_PHY || phy_index == EXT_PHY1) अणु
+		if (phy_index == INT_PHY || phy_index == EXT_PHY1) {
 			rx = REG_RD(bp, shmem_base +
-				    दुरत्व(काष्ठा shmem_region,
+				    offsetof(struct shmem_region,
 			  dev_info.port_hw_config[port].xgxs_config_rx[i<<1]));
 
 			tx = REG_RD(bp, shmem_base +
-				    दुरत्व(काष्ठा shmem_region,
+				    offsetof(struct shmem_region,
 			  dev_info.port_hw_config[port].xgxs_config_tx[i<<1]));
-		पूर्ण अन्यथा अणु
+		} else {
 			rx = REG_RD(bp, shmem_base +
-				    दुरत्व(काष्ठा shmem_region,
+				    offsetof(struct shmem_region,
 			 dev_info.port_hw_config[port].xgxs_config2_rx[i<<1]));
 
 			tx = REG_RD(bp, shmem_base +
-				    दुरत्व(काष्ठा shmem_region,
+				    offsetof(struct shmem_region,
 			 dev_info.port_hw_config[port].xgxs_config2_rx[i<<1]));
-		पूर्ण
+		}
 
 		phy->rx_preemphasis[i << 1] = ((rx>>16) & 0xffff);
 		phy->rx_preemphasis[(i << 1) + 1] = (rx & 0xffff);
 
 		phy->tx_preemphasis[i << 1] = ((tx>>16) & 0xffff);
 		phy->tx_preemphasis[(i << 1) + 1] = (tx & 0xffff);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 bnx2x_get_ext_phy_config(काष्ठा bnx2x *bp, u32 shmem_base,
+static u32 bnx2x_get_ext_phy_config(struct bnx2x *bp, u32 shmem_base,
 				    u8 phy_index, u8 port)
-अणु
+{
 	u32 ext_phy_config = 0;
-	चयन (phy_index) अणु
-	हाल EXT_PHY1:
+	switch (phy_index) {
+	case EXT_PHY1:
 		ext_phy_config = REG_RD(bp, shmem_base +
-					      दुरत्व(काष्ठा shmem_region,
-			dev_info.port_hw_config[port].बाह्यal_phy_config));
-		अवरोध;
-	हाल EXT_PHY2:
+					      offsetof(struct shmem_region,
+			dev_info.port_hw_config[port].external_phy_config));
+		break;
+	case EXT_PHY2:
 		ext_phy_config = REG_RD(bp, shmem_base +
-					      दुरत्व(काष्ठा shmem_region,
-			dev_info.port_hw_config[port].बाह्यal_phy_config2));
-		अवरोध;
-	शेष:
+					      offsetof(struct shmem_region,
+			dev_info.port_hw_config[port].external_phy_config2));
+		break;
+	default:
 		DP(NETIF_MSG_LINK, "Invalid phy_index %d\n", phy_index);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ext_phy_config;
-पूर्ण
-अटल पूर्णांक bnx2x_populate_पूर्णांक_phy(काष्ठा bnx2x *bp, u32 shmem_base, u8 port,
-				  काष्ठा bnx2x_phy *phy)
-अणु
+	return ext_phy_config;
+}
+static int bnx2x_populate_int_phy(struct bnx2x *bp, u32 shmem_base, u8 port,
+				  struct bnx2x_phy *phy)
+{
 	u32 phy_addr;
 	u32 chip_id;
-	u32 चयन_cfg = (REG_RD(bp, shmem_base +
-				       दुरत्व(काष्ठा shmem_region,
+	u32 switch_cfg = (REG_RD(bp, shmem_base +
+				       offsetof(struct shmem_region,
 			dev_info.port_feature_config[port].link_config)) &
 			  PORT_FEATURE_CONNECTED_SWITCH_MASK);
 	chip_id = (REG_RD(bp, MISC_REG_CHIP_NUM) << 16) |
 		((REG_RD(bp, MISC_REG_CHIP_REV) & 0xf) << 12);
 
 	DP(NETIF_MSG_LINK, ":chip_id = 0x%x\n", chip_id);
-	अगर (USES_WARPCORE(bp)) अणु
-		u32 serdes_net_अगर;
+	if (USES_WARPCORE(bp)) {
+		u32 serdes_net_if;
 		phy_addr = REG_RD(bp,
 				  MISC_REG_WC0_CTRL_PHY_ADDR);
 		*phy = phy_warpcore;
-		अगर (REG_RD(bp, MISC_REG_PORT4MODE_EN_OVWR) == 0x3)
+		if (REG_RD(bp, MISC_REG_PORT4MODE_EN_OVWR) == 0x3)
 			phy->flags |= FLAGS_4_PORT_MODE;
-		अन्यथा
+		else
 			phy->flags &= ~FLAGS_4_PORT_MODE;
 			/* Check Dual mode */
-		serdes_net_अगर = (REG_RD(bp, shmem_base +
-					दुरत्व(काष्ठा shmem_region, dev_info.
-					port_hw_config[port].शेष_cfg)) &
+		serdes_net_if = (REG_RD(bp, shmem_base +
+					offsetof(struct shmem_region, dev_info.
+					port_hw_config[port].default_cfg)) &
 				 PORT_HW_CFG_NET_SERDES_IF_MASK);
 		/* Set the appropriate supported and flags indications per
-		 * पूर्णांकerface type of the chip
+		 * interface type of the chip
 		 */
-		चयन (serdes_net_अगर) अणु
-		हाल PORT_HW_CFG_NET_SERDES_IF_SGMII:
+		switch (serdes_net_if) {
+		case PORT_HW_CFG_NET_SERDES_IF_SGMII:
 			phy->supported &= (SUPPORTED_10baseT_Half |
 					   SUPPORTED_10baseT_Full |
 					   SUPPORTED_100baseT_Half |
@@ -12243,24 +12242,24 @@
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
 			phy->media_type = ETH_PHY_BASE_T;
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_XFI:
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_XFI:
 			phy->supported &= (SUPPORTED_1000baseT_Full |
 					   SUPPORTED_10000baseT_Full |
 					   SUPPORTED_FIBRE |
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
 			phy->media_type = ETH_PHY_XFP_FIBER;
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_SFI:
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_SFI:
 			phy->supported &= (SUPPORTED_1000baseT_Full |
 					   SUPPORTED_10000baseT_Full |
 					   SUPPORTED_FIBRE |
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
 			phy->media_type = ETH_PHY_SFPP_10G_FIBER;
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_KR:
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_KR:
 			phy->media_type = ETH_PHY_KR;
 			phy->supported &= (SUPPORTED_1000baseKX_Full |
 					   SUPPORTED_10000baseKR_Full |
@@ -12268,16 +12267,16 @@
 					   SUPPORTED_Autoneg |
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_DXGXS:
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_DXGXS:
 			phy->media_type = ETH_PHY_KR;
 			phy->flags |= FLAGS_WC_DUAL_MODE;
 			phy->supported &= (SUPPORTED_20000baseMLD2_Full |
 					   SUPPORTED_FIBRE |
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
-			अवरोध;
-		हाल PORT_HW_CFG_NET_SERDES_IF_KR2:
+			break;
+		case PORT_HW_CFG_NET_SERDES_IF_KR2:
 			phy->media_type = ETH_PHY_KR;
 			phy->flags |= FLAGS_WC_DUAL_MODE;
 			phy->supported &= (SUPPORTED_20000baseKR2_Full |
@@ -12288,274 +12287,274 @@
 					   SUPPORTED_Pause |
 					   SUPPORTED_Asym_Pause);
 			phy->flags &= ~FLAGS_TX_ERROR_CHECK;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DP(NETIF_MSG_LINK, "Unknown WC interface type 0x%x\n",
-				       serdes_net_अगर);
-			अवरोध;
-		पूर्ण
+				       serdes_net_if);
+			break;
+		}
 
-		/* Enable MDC/MDIO work-around क्रम E3 A0 since मुक्त running MDC
+		/* Enable MDC/MDIO work-around for E3 A0 since free running MDC
 		 * was not set as expected. For B0, ECO will be enabled so there
 		 * won't be an issue there
 		 */
-		अगर (CHIP_REV(bp) == CHIP_REV_Ax)
+		if (CHIP_REV(bp) == CHIP_REV_Ax)
 			phy->flags |= FLAGS_MDC_MDIO_WA;
-		अन्यथा
+		else
 			phy->flags |= FLAGS_MDC_MDIO_WA_B0;
-	पूर्ण अन्यथा अणु
-		चयन (चयन_cfg) अणु
-		हाल SWITCH_CFG_1G:
+	} else {
+		switch (switch_cfg) {
+		case SWITCH_CFG_1G:
 			phy_addr = REG_RD(bp,
 					  NIG_REG_SERDES0_CTRL_PHY_ADDR +
 					  port * 0x10);
 			*phy = phy_serdes;
-			अवरोध;
-		हाल SWITCH_CFG_10G:
+			break;
+		case SWITCH_CFG_10G:
 			phy_addr = REG_RD(bp,
 					  NIG_REG_XGXS0_CTRL_PHY_ADDR +
 					  port * 0x18);
 			*phy = phy_xgxs;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DP(NETIF_MSG_LINK, "Invalid switch_cfg\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	phy->addr = (u8)phy_addr;
 	phy->mdio_ctrl = bnx2x_get_emac_base(bp,
 					    SHARED_HW_CFG_MDC_MDIO_ACCESS1_BOTH,
 					    port);
-	अगर (CHIP_IS_E2(bp))
+	if (CHIP_IS_E2(bp))
 		phy->def_md_devad = E2_DEFAULT_PHY_DEV_ADDR;
-	अन्यथा
+	else
 		phy->def_md_devad = DEFAULT_PHY_DEV_ADDR;
 
 	DP(NETIF_MSG_LINK, "Internal phy port=%d, addr=0x%x, mdio_ctl=0x%x\n",
 		   port, phy->addr, phy->mdio_ctrl);
 
 	bnx2x_populate_preemphasis(bp, shmem_base, phy, port, INT_PHY);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_populate_ext_phy(काष्ठा bnx2x *bp,
+static int bnx2x_populate_ext_phy(struct bnx2x *bp,
 				  u8 phy_index,
 				  u32 shmem_base,
 				  u32 shmem2_base,
 				  u8 port,
-				  काष्ठा bnx2x_phy *phy)
-अणु
+				  struct bnx2x_phy *phy)
+{
 	u32 ext_phy_config, phy_type, config2;
 	u32 mdc_mdio_access = SHARED_HW_CFG_MDC_MDIO_ACCESS1_BOTH;
 	ext_phy_config = bnx2x_get_ext_phy_config(bp, shmem_base,
 						  phy_index, port);
 	phy_type = XGXS_EXT_PHY_TYPE(ext_phy_config);
 	/* Select the phy type */
-	चयन (phy_type) अणु
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073:
+	switch (phy_type) {
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073:
 		mdc_mdio_access = SHARED_HW_CFG_MDC_MDIO_ACCESS1_SWAPPED;
 		*phy = phy_8073;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8705:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8705:
 		*phy = phy_8705;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8706:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8706:
 		*phy = phy_8706;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
 		mdc_mdio_access = SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC1;
 		*phy = phy_8726;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727_NOC:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727_NOC:
 		/* BCM8727_NOC => BCM8727 no over current */
 		mdc_mdio_access = SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC1;
 		*phy = phy_8727;
 		phy->flags |= FLAGS_NOC;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
 		mdc_mdio_access = SHARED_HW_CFG_MDC_MDIO_ACCESS1_EMAC1;
 		*phy = phy_8727;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8481:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8481:
 		*phy = phy_8481;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84823:
 		*phy = phy_84823;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833:
 		*phy = phy_84833;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834:
 		*phy = phy_84834;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858:
 		*phy = phy_84858;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54616:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54616:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE:
 		*phy = phy_54618se;
-		अगर (phy_type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE)
+		if (phy_type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM54618SE)
 			phy->flags |= FLAGS_EEE;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101:
 		*phy = phy_7101;
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE:
 		*phy = phy_null;
-		वापस -EINVAL;
-	शेष:
+		return -EINVAL;
+	default:
 		*phy = phy_null;
-		/* In हाल बाह्यal PHY wasn't found */
-		अगर ((phy_type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_सूचीECT) &&
+		/* In case external PHY wasn't found */
+		if ((phy_type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_DIRECT) &&
 		    (phy_type != PORT_HW_CFG_XGXS_EXT_PHY_TYPE_NOT_CONN))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		return 0;
+	}
 
 	phy->addr = XGXS_EXT_PHY_ADDR(ext_phy_config);
 	bnx2x_populate_preemphasis(bp, shmem_base, phy, port, phy_index);
 
-	/* The shmem address of the phy version is located on dअगरferent
-	 * काष्ठाures. In हाल this काष्ठाure is too old, करो not set
+	/* The shmem address of the phy version is located on different
+	 * structures. In case this structure is too old, do not set
 	 * the address
 	 */
-	config2 = REG_RD(bp, shmem_base + दुरत्व(काष्ठा shmem_region,
+	config2 = REG_RD(bp, shmem_base + offsetof(struct shmem_region,
 					dev_info.shared_hw_config.config2));
-	अगर (phy_index == EXT_PHY1) अणु
-		phy->ver_addr = shmem_base + दुरत्व(काष्ठा shmem_region,
+	if (phy_index == EXT_PHY1) {
+		phy->ver_addr = shmem_base + offsetof(struct shmem_region,
 				port_mb[port].ext_phy_fw_version);
 
-		/* Check specअगरic mdc mdio settings */
-		अगर (config2 & SHARED_HW_CFG_MDC_MDIO_ACCESS1_MASK)
+		/* Check specific mdc mdio settings */
+		if (config2 & SHARED_HW_CFG_MDC_MDIO_ACCESS1_MASK)
 			mdc_mdio_access = config2 &
 			SHARED_HW_CFG_MDC_MDIO_ACCESS1_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 size = REG_RD(bp, shmem2_base);
 
-		अगर (size >
-		    दुरत्व(काष्ठा shmem2_region, ext_phy_fw_version2)) अणु
+		if (size >
+		    offsetof(struct shmem2_region, ext_phy_fw_version2)) {
 			phy->ver_addr = shmem2_base +
-			    दुरत्व(काष्ठा shmem2_region,
+			    offsetof(struct shmem2_region,
 				     ext_phy_fw_version2[port]);
-		पूर्ण
-		/* Check specअगरic mdc mdio settings */
-		अगर (config2 & SHARED_HW_CFG_MDC_MDIO_ACCESS2_MASK)
+		}
+		/* Check specific mdc mdio settings */
+		if (config2 & SHARED_HW_CFG_MDC_MDIO_ACCESS2_MASK)
 			mdc_mdio_access = (config2 &
 			SHARED_HW_CFG_MDC_MDIO_ACCESS2_MASK) >>
 			(SHARED_HW_CFG_MDC_MDIO_ACCESS2_SHIFT -
 			 SHARED_HW_CFG_MDC_MDIO_ACCESS1_SHIFT);
-	पूर्ण
+	}
 	phy->mdio_ctrl = bnx2x_get_emac_base(bp, mdc_mdio_access, port);
 
-	अगर (bnx2x_is_8483x_8485x(phy) && (phy->ver_addr)) अणु
-		/* Remove 100Mb link supported क्रम BCM84833/4 when phy fw
+	if (bnx2x_is_8483x_8485x(phy) && (phy->ver_addr)) {
+		/* Remove 100Mb link supported for BCM84833/4 when phy fw
 		 * version lower than or equal to 1.39
 		 */
 		u32 raw_ver = REG_RD(bp, phy->ver_addr);
-		अगर (((raw_ver & 0x7F) <= 39) &&
+		if (((raw_ver & 0x7F) <= 39) &&
 		    (((raw_ver & 0xF80) >> 7) <= 1))
 			phy->supported &= ~(SUPPORTED_100baseT_Half |
 					    SUPPORTED_100baseT_Full);
-	पूर्ण
+	}
 
 	DP(NETIF_MSG_LINK, "phy_type 0x%x port %d found in index %d\n",
 		   phy_type, port, phy_index);
 	DP(NETIF_MSG_LINK, "             addr=0x%x, mdio_ctl=0x%x\n",
 		   phy->addr, phy->mdio_ctrl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_populate_phy(काष्ठा bnx2x *bp, u8 phy_index, u32 shmem_base,
-			      u32 shmem2_base, u8 port, काष्ठा bnx2x_phy *phy)
-अणु
+static int bnx2x_populate_phy(struct bnx2x *bp, u8 phy_index, u32 shmem_base,
+			      u32 shmem2_base, u8 port, struct bnx2x_phy *phy)
+{
 	phy->type = PORT_HW_CFG_XGXS_EXT_PHY_TYPE_NOT_CONN;
-	अगर (phy_index == INT_PHY)
-		वापस bnx2x_populate_पूर्णांक_phy(bp, shmem_base, port, phy);
+	if (phy_index == INT_PHY)
+		return bnx2x_populate_int_phy(bp, shmem_base, port, phy);
 
-	वापस bnx2x_populate_ext_phy(bp, phy_index, shmem_base, shmem2_base,
+	return bnx2x_populate_ext_phy(bp, phy_index, shmem_base, shmem2_base,
 					port, phy);
-पूर्ण
+}
 
-अटल व्योम bnx2x_phy_def_cfg(काष्ठा link_params *params,
-			      काष्ठा bnx2x_phy *phy,
+static void bnx2x_phy_def_cfg(struct link_params *params,
+			      struct bnx2x_phy *phy,
 			      u8 phy_index)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u32 link_config;
-	/* Populate the शेष phy configuration क्रम MF mode */
-	अगर (phy_index == EXT_PHY2) अणु
+	/* Populate the default phy configuration for MF mode */
+	if (phy_index == EXT_PHY2) {
 		link_config = REG_RD(bp, params->shmem_base +
-				     दुरत्व(काष्ठा shmem_region, dev_info.
+				     offsetof(struct shmem_region, dev_info.
 			port_feature_config[params->port].link_config2));
 		phy->speed_cap_mask = REG_RD(bp, params->shmem_base +
-					     दुरत्व(काष्ठा shmem_region,
+					     offsetof(struct shmem_region,
 						      dev_info.
 			port_hw_config[params->port].speed_capability_mask2));
-	पूर्ण अन्यथा अणु
+	} else {
 		link_config = REG_RD(bp, params->shmem_base +
-				     दुरत्व(काष्ठा shmem_region, dev_info.
+				     offsetof(struct shmem_region, dev_info.
 				port_feature_config[params->port].link_config));
 		phy->speed_cap_mask = REG_RD(bp, params->shmem_base +
-					     दुरत्व(काष्ठा shmem_region,
+					     offsetof(struct shmem_region,
 						      dev_info.
 			port_hw_config[params->port].speed_capability_mask));
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK,
 	   "Default config phy idx %x cfg 0x%x speed_cap_mask 0x%x\n",
 	   phy_index, link_config, phy->speed_cap_mask);
 
 	phy->req_duplex = DUPLEX_FULL;
-	चयन (link_config  & PORT_FEATURE_LINK_SPEED_MASK) अणु
-	हाल PORT_FEATURE_LINK_SPEED_10M_HALF:
+	switch (link_config  & PORT_FEATURE_LINK_SPEED_MASK) {
+	case PORT_FEATURE_LINK_SPEED_10M_HALF:
 		phy->req_duplex = DUPLEX_HALF;
 		fallthrough;
-	हाल PORT_FEATURE_LINK_SPEED_10M_FULL:
+	case PORT_FEATURE_LINK_SPEED_10M_FULL:
 		phy->req_line_speed = SPEED_10;
-		अवरोध;
-	हाल PORT_FEATURE_LINK_SPEED_100M_HALF:
+		break;
+	case PORT_FEATURE_LINK_SPEED_100M_HALF:
 		phy->req_duplex = DUPLEX_HALF;
 		fallthrough;
-	हाल PORT_FEATURE_LINK_SPEED_100M_FULL:
+	case PORT_FEATURE_LINK_SPEED_100M_FULL:
 		phy->req_line_speed = SPEED_100;
-		अवरोध;
-	हाल PORT_FEATURE_LINK_SPEED_1G:
+		break;
+	case PORT_FEATURE_LINK_SPEED_1G:
 		phy->req_line_speed = SPEED_1000;
-		अवरोध;
-	हाल PORT_FEATURE_LINK_SPEED_2_5G:
+		break;
+	case PORT_FEATURE_LINK_SPEED_2_5G:
 		phy->req_line_speed = SPEED_2500;
-		अवरोध;
-	हाल PORT_FEATURE_LINK_SPEED_10G_CX4:
+		break;
+	case PORT_FEATURE_LINK_SPEED_10G_CX4:
 		phy->req_line_speed = SPEED_10000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		phy->req_line_speed = SPEED_AUTO_NEG;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (link_config  & PORT_FEATURE_FLOW_CONTROL_MASK) अणु
-	हाल PORT_FEATURE_FLOW_CONTROL_AUTO:
+	switch (link_config  & PORT_FEATURE_FLOW_CONTROL_MASK) {
+	case PORT_FEATURE_FLOW_CONTROL_AUTO:
 		phy->req_flow_ctrl = BNX2X_FLOW_CTRL_AUTO;
-		अवरोध;
-	हाल PORT_FEATURE_FLOW_CONTROL_TX:
+		break;
+	case PORT_FEATURE_FLOW_CONTROL_TX:
 		phy->req_flow_ctrl = BNX2X_FLOW_CTRL_TX;
-		अवरोध;
-	हाल PORT_FEATURE_FLOW_CONTROL_RX:
+		break;
+	case PORT_FEATURE_FLOW_CONTROL_RX:
 		phy->req_flow_ctrl = BNX2X_FLOW_CTRL_RX;
-		अवरोध;
-	हाल PORT_FEATURE_FLOW_CONTROL_BOTH:
+		break;
+	case PORT_FEATURE_FLOW_CONTROL_BOTH:
 		phy->req_flow_ctrl = BNX2X_FLOW_CTRL_BOTH;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		phy->req_flow_ctrl = BNX2X_FLOW_CTRL_NONE;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-u32 bnx2x_phy_selection(काष्ठा link_params *params)
-अणु
+u32 bnx2x_phy_selection(struct link_params *params)
+{
 	u32 phy_config_swapped, prio_cfg;
-	u32 वापस_cfg = PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT;
+	u32 return_cfg = PORT_HW_CFG_PHY_SELECTION_HARDWARE_DEFAULT;
 
 	phy_config_swapped = params->multi_phy_config &
 		PORT_HW_CFG_PHY_SWAPPED_ENABLED;
@@ -12563,105 +12562,105 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	prio_cfg = params->multi_phy_config &
 			PORT_HW_CFG_PHY_SELECTION_MASK;
 
-	अगर (phy_config_swapped) अणु
-		चयन (prio_cfg) अणु
-		हाल PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
-		     वापस_cfg = PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY;
-		     अवरोध;
-		हाल PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
-		     वापस_cfg = PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY;
-		     अवरोध;
-		हाल PORT_HW_CFG_PHY_SELECTION_SECOND_PHY:
-		     वापस_cfg = PORT_HW_CFG_PHY_SELECTION_FIRST_PHY;
-		     अवरोध;
-		हाल PORT_HW_CFG_PHY_SELECTION_FIRST_PHY:
-		     वापस_cfg = PORT_HW_CFG_PHY_SELECTION_SECOND_PHY;
-		     अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस_cfg = prio_cfg;
+	if (phy_config_swapped) {
+		switch (prio_cfg) {
+		case PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY:
+		     return_cfg = PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY;
+		     break;
+		case PORT_HW_CFG_PHY_SELECTION_SECOND_PHY_PRIORITY:
+		     return_cfg = PORT_HW_CFG_PHY_SELECTION_FIRST_PHY_PRIORITY;
+		     break;
+		case PORT_HW_CFG_PHY_SELECTION_SECOND_PHY:
+		     return_cfg = PORT_HW_CFG_PHY_SELECTION_FIRST_PHY;
+		     break;
+		case PORT_HW_CFG_PHY_SELECTION_FIRST_PHY:
+		     return_cfg = PORT_HW_CFG_PHY_SELECTION_SECOND_PHY;
+		     break;
+		}
+	} else
+		return_cfg = prio_cfg;
 
-	वापस वापस_cfg;
-पूर्ण
+	return return_cfg;
+}
 
-पूर्णांक bnx2x_phy_probe(काष्ठा link_params *params)
-अणु
+int bnx2x_phy_probe(struct link_params *params)
+{
 	u8 phy_index, actual_phy_idx;
 	u32 phy_config_swapped, sync_offset, media_types;
-	काष्ठा bnx2x *bp = params->bp;
-	काष्ठा bnx2x_phy *phy;
+	struct bnx2x *bp = params->bp;
+	struct bnx2x_phy *phy;
 	params->num_phys = 0;
 	DP(NETIF_MSG_LINK, "Begin phy probe\n");
 	phy_config_swapped = params->multi_phy_config &
 		PORT_HW_CFG_PHY_SWAPPED_ENABLED;
 
-	क्रम (phy_index = INT_PHY; phy_index < MAX_PHYS;
-	      phy_index++) अणु
+	for (phy_index = INT_PHY; phy_index < MAX_PHYS;
+	      phy_index++) {
 		actual_phy_idx = phy_index;
-		अगर (phy_config_swapped) अणु
-			अगर (phy_index == EXT_PHY1)
+		if (phy_config_swapped) {
+			if (phy_index == EXT_PHY1)
 				actual_phy_idx = EXT_PHY2;
-			अन्यथा अगर (phy_index == EXT_PHY2)
+			else if (phy_index == EXT_PHY2)
 				actual_phy_idx = EXT_PHY1;
-		पूर्ण
+		}
 		DP(NETIF_MSG_LINK, "phy_config_swapped %x, phy_index %x,"
 			       " actual_phy_idx %x\n", phy_config_swapped,
 			   phy_index, actual_phy_idx);
 		phy = &params->phy[actual_phy_idx];
-		अगर (bnx2x_populate_phy(bp, phy_index, params->shmem_base,
+		if (bnx2x_populate_phy(bp, phy_index, params->shmem_base,
 				       params->shmem2_base, params->port,
-				       phy) != 0) अणु
+				       phy) != 0) {
 			params->num_phys = 0;
 			DP(NETIF_MSG_LINK, "phy probe failed in phy index %d\n",
 				   phy_index);
-			क्रम (phy_index = INT_PHY;
+			for (phy_index = INT_PHY;
 			      phy_index < MAX_PHYS;
 			      phy_index++)
 				*phy = phy_null;
-			वापस -EINVAL;
-		पूर्ण
-		अगर (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_NOT_CONN)
-			अवरोध;
+			return -EINVAL;
+		}
+		if (phy->type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_NOT_CONN)
+			break;
 
-		अगर (params->feature_config_flags &
+		if (params->feature_config_flags &
 		    FEATURE_CONFIG_DISABLE_REMOTE_FAULT_DET)
 			phy->flags &= ~FLAGS_TX_ERROR_CHECK;
 
-		अगर (!(params->feature_config_flags &
+		if (!(params->feature_config_flags &
 		      FEATURE_CONFIG_MT_SUPPORT))
 			phy->flags |= FLAGS_MDC_MDIO_WA_G;
 
 		sync_offset = params->shmem_base +
-			दुरत्व(काष्ठा shmem_region,
+			offsetof(struct shmem_region,
 			dev_info.port_hw_config[params->port].media_type);
 		media_types = REG_RD(bp, sync_offset);
 
-		/* Update media type क्रम non-PMF sync only क्रम the first समय
-		 * In हाल the media type changes afterwards, it will be updated
+		/* Update media type for non-PMF sync only for the first time
+		 * In case the media type changes afterwards, it will be updated
 		 * using the update_status function
 		 */
-		अगर ((media_types & (PORT_HW_CFG_MEDIA_TYPE_PHY0_MASK <<
+		if ((media_types & (PORT_HW_CFG_MEDIA_TYPE_PHY0_MASK <<
 				    (PORT_HW_CFG_MEDIA_TYPE_PHY1_SHIFT *
-				     actual_phy_idx))) == 0) अणु
+				     actual_phy_idx))) == 0) {
 			media_types |= ((phy->media_type &
 					PORT_HW_CFG_MEDIA_TYPE_PHY0_MASK) <<
 				(PORT_HW_CFG_MEDIA_TYPE_PHY1_SHIFT *
 				 actual_phy_idx));
-		पूर्ण
+		}
 		REG_WR(bp, sync_offset, media_types);
 
 		bnx2x_phy_def_cfg(params, phy, phy_index);
 		params->num_phys++;
-	पूर्ण
+	}
 
 	DP(NETIF_MSG_LINK, "End phy probe. #phys found %x\n", params->num_phys);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnx2x_init_bmac_loopback(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_init_bmac_loopback(struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	vars->link_up = 1;
 	vars->line_speed = SPEED_10000;
 	vars->duplex = DUPLEX_FULL;
@@ -12670,18 +12669,18 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	vars->phy_flags = PHY_XGXS_FLAG;
 
-	bnx2x_xgxs_deनिश्चित(params);
+	bnx2x_xgxs_deassert(params);
 
 	/* Set bmac loopback */
 	bnx2x_bmac_enable(params, vars, 1, 1);
 
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port * 4, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_init_emac_loopback(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_init_emac_loopback(struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	vars->link_up = 1;
 	vars->line_speed = SPEED_1000;
 	vars->duplex = DUPLEX_FULL;
@@ -12690,27 +12689,27 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	vars->phy_flags = PHY_XGXS_FLAG;
 
-	bnx2x_xgxs_deनिश्चित(params);
+	bnx2x_xgxs_deassert(params);
 	/* Set bmac loopback */
 	bnx2x_emac_enable(params, vars, 1);
 	bnx2x_emac_program(params, vars);
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port * 4, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_init_xmac_loopback(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_init_xmac_loopback(struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	vars->link_up = 1;
-	अगर (!params->req_line_speed[0])
+	if (!params->req_line_speed[0])
 		vars->line_speed = SPEED_10000;
-	अन्यथा
+	else
 		vars->line_speed = params->req_line_speed[0];
 	vars->duplex = DUPLEX_FULL;
 	vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
 	vars->mac_type = MAC_TYPE_XMAC;
 	vars->phy_flags = PHY_XGXS_FLAG;
-	/* Set WC to loopback mode since link is required to provide घड़ी
+	/* Set WC to loopback mode since link is required to provide clock
 	 * to the XMAC in 20G mode
 	 */
 	bnx2x_set_aer_mmd(params, &params->phy[0]);
@@ -12721,12 +12720,12 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	bnx2x_xmac_enable(params, vars, 1);
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_init_umac_loopback(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_init_umac_loopback(struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	vars->link_up = 1;
 	vars->line_speed = SPEED_1000;
 	vars->duplex = DUPLEX_FULL;
@@ -12736,114 +12735,114 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	bnx2x_umac_enable(params, vars, 1);
 
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
-पूर्ण
+}
 
-अटल व्योम bnx2x_init_xgxs_loopback(काष्ठा link_params *params,
-				     काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
-	काष्ठा bnx2x_phy *पूर्णांक_phy = &params->phy[INT_PHY];
+static void bnx2x_init_xgxs_loopback(struct link_params *params,
+				     struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
+	struct bnx2x_phy *int_phy = &params->phy[INT_PHY];
 	vars->link_up = 1;
 	vars->flow_ctrl = BNX2X_FLOW_CTRL_NONE;
 	vars->duplex = DUPLEX_FULL;
-	अगर (params->req_line_speed[0] == SPEED_1000)
+	if (params->req_line_speed[0] == SPEED_1000)
 		vars->line_speed = SPEED_1000;
-	अन्यथा अगर ((params->req_line_speed[0] == SPEED_20000) ||
-		 (पूर्णांक_phy->flags & FLAGS_WC_DUAL_MODE))
+	else if ((params->req_line_speed[0] == SPEED_20000) ||
+		 (int_phy->flags & FLAGS_WC_DUAL_MODE))
 		vars->line_speed = SPEED_20000;
-	अन्यथा
+	else
 		vars->line_speed = SPEED_10000;
 
-	अगर (!USES_WARPCORE(bp))
-		bnx2x_xgxs_deनिश्चित(params);
+	if (!USES_WARPCORE(bp))
+		bnx2x_xgxs_deassert(params);
 	bnx2x_link_initialize(params, vars);
 
-	अगर (params->req_line_speed[0] == SPEED_1000) अणु
-		अगर (USES_WARPCORE(bp))
+	if (params->req_line_speed[0] == SPEED_1000) {
+		if (USES_WARPCORE(bp))
 			bnx2x_umac_enable(params, vars, 0);
-		अन्यथा अणु
+		else {
 			bnx2x_emac_program(params, vars);
 			bnx2x_emac_enable(params, vars, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (USES_WARPCORE(bp))
+		}
+	} else {
+		if (USES_WARPCORE(bp))
 			bnx2x_xmac_enable(params, vars, 0);
-		अन्यथा
+		else
 			bnx2x_bmac_enable(params, vars, 0, 1);
-	पूर्ण
+	}
 
-	अगर (params->loopback_mode == LOOPBACK_XGXS) अणु
+	if (params->loopback_mode == LOOPBACK_XGXS) {
 		/* Set 10G XGXS loopback */
-		पूर्णांक_phy->config_loopback(पूर्णांक_phy, params);
-	पूर्ण अन्यथा अणु
-		/* Set बाह्यal phy loopback */
+		int_phy->config_loopback(int_phy, params);
+	} else {
+		/* Set external phy loopback */
 		u8 phy_index;
-		क्रम (phy_index = EXT_PHY1;
+		for (phy_index = EXT_PHY1;
 		      phy_index < params->num_phys; phy_index++)
-			अगर (params->phy[phy_index].config_loopback)
+			if (params->phy[phy_index].config_loopback)
 				params->phy[phy_index].config_loopback(
 					&params->phy[phy_index],
 					params);
-	पूर्ण
+	}
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
 
 	bnx2x_set_led(params, vars, LED_MODE_OPER, vars->line_speed);
-पूर्ण
+}
 
-व्योम bnx2x_set_rx_filter(काष्ठा link_params *params, u8 en)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+void bnx2x_set_rx_filter(struct link_params *params, u8 en)
+{
+	struct bnx2x *bp = params->bp;
 	u8 val = en * 0x1F;
 
-	/* Open / बंद the gate between the NIG and the BRB */
-	अगर (!CHIP_IS_E1x(bp))
+	/* Open / close the gate between the NIG and the BRB */
+	if (!CHIP_IS_E1x(bp))
 		val |= en * 0x20;
 	REG_WR(bp, NIG_REG_LLH0_BRB1_DRV_MASK + params->port*4, val);
 
-	अगर (!CHIP_IS_E1(bp)) अणु
+	if (!CHIP_IS_E1(bp)) {
 		REG_WR(bp, NIG_REG_LLH0_BRB1_DRV_MASK_MF + params->port*4,
 		       en*0x3);
-	पूर्ण
+	}
 
 	REG_WR(bp, (params->port ? NIG_REG_LLH1_BRB1_NOT_MCP :
 		    NIG_REG_LLH0_BRB1_NOT_MCP), en);
-पूर्ण
-अटल पूर्णांक bnx2x_aव्योम_link_flap(काष्ठा link_params *params,
-					    काष्ठा link_vars *vars)
-अणु
+}
+static int bnx2x_avoid_link_flap(struct link_params *params,
+					    struct link_vars *vars)
+{
 	u32 phy_idx;
-	u32 करोnt_clear_stat, lfa_sts;
-	काष्ठा bnx2x *bp = params->bp;
+	u32 dont_clear_stat, lfa_sts;
+	struct bnx2x *bp = params->bp;
 
 	bnx2x_set_mdio_emac_per_phy(bp, params);
 	/* Sync the link parameters */
 	bnx2x_link_status_update(params, vars);
 
 	/*
-	 * The module verअगरication was alपढ़ोy करोne by previous link owner,
+	 * The module verification was already done by previous link owner,
 	 * so this call is meant only to get warning message
 	 */
 
-	क्रम (phy_idx = INT_PHY; phy_idx < params->num_phys; phy_idx++) अणु
-		काष्ठा bnx2x_phy *phy = &params->phy[phy_idx];
-		अगर (phy->phy_specअगरic_func) अणु
+	for (phy_idx = INT_PHY; phy_idx < params->num_phys; phy_idx++) {
+		struct bnx2x_phy *phy = &params->phy[phy_idx];
+		if (phy->phy_specific_func) {
 			DP(NETIF_MSG_LINK, "Calling PHY specific func\n");
-			phy->phy_specअगरic_func(phy, params, PHY_INIT);
-		पूर्ण
-		अगर ((phy->media_type == ETH_PHY_SFPP_10G_FIBER) ||
+			phy->phy_specific_func(phy, params, PHY_INIT);
+		}
+		if ((phy->media_type == ETH_PHY_SFPP_10G_FIBER) ||
 		    (phy->media_type == ETH_PHY_SFP_1G_FIBER) ||
 		    (phy->media_type == ETH_PHY_DA_TWINAX))
-			bnx2x_verअगरy_sfp_module(phy, params);
-	पूर्ण
+			bnx2x_verify_sfp_module(phy, params);
+	}
 	lfa_sts = REG_RD(bp, params->lfa_base +
-			 दुरत्व(काष्ठा shmem_lfa,
+			 offsetof(struct shmem_lfa,
 				  lfa_sts));
 
-	करोnt_clear_stat = lfa_sts & SHMEM_LFA_DONT_CLEAR_STAT;
+	dont_clear_stat = lfa_sts & SHMEM_LFA_DONT_CLEAR_STAT;
 
 	/* Re-enable the NIG/MAC */
-	अगर (CHIP_IS_E3(bp)) अणु
-		अगर (!करोnt_clear_stat) अणु
+	if (CHIP_IS_E3(bp)) {
+		if (!dont_clear_stat) {
 			REG_WR(bp, GRCBASE_MISC +
 			       MISC_REGISTERS_RESET_REG_2_CLEAR,
 			       (MISC_REGISTERS_RESET_REG_2_MSTAT0 <<
@@ -12852,17 +12851,17 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 			       MISC_REGISTERS_RESET_REG_2_SET,
 			       (MISC_REGISTERS_RESET_REG_2_MSTAT0 <<
 				params->port));
-		पूर्ण
-		अगर (vars->line_speed < SPEED_10000)
+		}
+		if (vars->line_speed < SPEED_10000)
 			bnx2x_umac_enable(params, vars, 0);
-		अन्यथा
+		else
 			bnx2x_xmac_enable(params, vars, 0);
-	पूर्ण अन्यथा अणु
-		अगर (vars->line_speed < SPEED_10000)
+	} else {
+		if (vars->line_speed < SPEED_10000)
 			bnx2x_emac_enable(params, vars, 0);
-		अन्यथा
-			bnx2x_bmac_enable(params, vars, 0, !करोnt_clear_stat);
-	पूर्ण
+		else
+			bnx2x_bmac_enable(params, vars, 0, !dont_clear_stat);
+	}
 
 	/* Increment LFA count */
 	lfa_sts = ((lfa_sts & ~LINK_FLAP_AVOIDANCE_COUNT_MASK) |
@@ -12873,57 +12872,57 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	lfa_sts &= ~LFA_LINK_FLAP_REASON_MASK;
 
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, lfa_sts), lfa_sts);
+	       offsetof(struct shmem_lfa, lfa_sts), lfa_sts);
 
 	/* Disable NIG DRAIN */
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
 
-	/* Enable पूर्णांकerrupts */
-	bnx2x_link_पूर्णांक_enable(params);
-	वापस 0;
-पूर्ण
+	/* Enable interrupts */
+	bnx2x_link_int_enable(params);
+	return 0;
+}
 
-अटल व्योम bnx2x_cannot_aव्योम_link_flap(काष्ठा link_params *params,
-					 काष्ठा link_vars *vars,
-					 पूर्णांक lfa_status)
-अणु
-	u32 lfa_sts, cfg_idx, पंचांगp_val;
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_cannot_avoid_link_flap(struct link_params *params,
+					 struct link_vars *vars,
+					 int lfa_status)
+{
+	u32 lfa_sts, cfg_idx, tmp_val;
+	struct bnx2x *bp = params->bp;
 
 	bnx2x_link_reset(params, vars, 1);
 
-	अगर (!params->lfa_base)
-		वापस;
+	if (!params->lfa_base)
+		return;
 	/* Store the new link parameters */
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, req_duplex),
+	       offsetof(struct shmem_lfa, req_duplex),
 	       params->req_duplex[0] | (params->req_duplex[1] << 16));
 
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, req_flow_ctrl),
+	       offsetof(struct shmem_lfa, req_flow_ctrl),
 	       params->req_flow_ctrl[0] | (params->req_flow_ctrl[1] << 16));
 
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, req_line_speed),
+	       offsetof(struct shmem_lfa, req_line_speed),
 	       params->req_line_speed[0] | (params->req_line_speed[1] << 16));
 
-	क्रम (cfg_idx = 0; cfg_idx < SHMEM_LINK_CONFIG_SIZE; cfg_idx++) अणु
+	for (cfg_idx = 0; cfg_idx < SHMEM_LINK_CONFIG_SIZE; cfg_idx++) {
 		REG_WR(bp, params->lfa_base +
-		       दुरत्व(काष्ठा shmem_lfa,
+		       offsetof(struct shmem_lfa,
 				speed_cap_mask[cfg_idx]),
 		       params->speed_cap_mask[cfg_idx]);
-	पूर्ण
+	}
 
-	पंचांगp_val = REG_RD(bp, params->lfa_base +
-			 दुरत्व(काष्ठा shmem_lfa, additional_config));
-	पंचांगp_val &= ~REQ_FC_AUTO_ADV_MASK;
-	पंचांगp_val |= params->req_fc_स्वतः_adv;
+	tmp_val = REG_RD(bp, params->lfa_base +
+			 offsetof(struct shmem_lfa, additional_config));
+	tmp_val &= ~REQ_FC_AUTO_ADV_MASK;
+	tmp_val |= params->req_fc_auto_adv;
 
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, additional_config), पंचांगp_val);
+	       offsetof(struct shmem_lfa, additional_config), tmp_val);
 
 	lfa_sts = REG_RD(bp, params->lfa_base +
-			 दुरत्व(काष्ठा shmem_lfa, lfa_sts));
+			 offsetof(struct shmem_lfa, lfa_sts));
 
 	/* Clear the "Don't Clear Statistics" bit, and set reason */
 	lfa_sts &= ~SHMEM_LFA_DONT_CLEAR_STAT;
@@ -12939,20 +12938,20 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 		       LINK_FLAP_COUNT_OFFSET) + 1) & 0xff)
 		    << LINK_FLAP_COUNT_OFFSET));
 	REG_WR(bp, params->lfa_base +
-	       दुरत्व(काष्ठा shmem_lfa, lfa_sts), lfa_sts);
+	       offsetof(struct shmem_lfa, lfa_sts), lfa_sts);
 	/* Proceed with regular link initialization */
-पूर्ण
+}
 
-पूर्णांक bnx2x_phy_init(काष्ठा link_params *params, काष्ठा link_vars *vars)
-अणु
-	पूर्णांक lfa_status;
-	काष्ठा bnx2x *bp = params->bp;
+int bnx2x_phy_init(struct link_params *params, struct link_vars *vars)
+{
+	int lfa_status;
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "Phy Initialization started\n");
 	DP(NETIF_MSG_LINK, "(1) req_speed %d, req_flowctrl %d\n",
 		   params->req_line_speed[0], params->req_flow_ctrl[0]);
 	DP(NETIF_MSG_LINK, "(2) req_speed %d, req_flowctrl %d\n",
 		   params->req_line_speed[1], params->req_flow_ctrl[1]);
-	DP(NETIF_MSG_LINK, "req_adv_flow_ctrl 0x%x\n", params->req_fc_स्वतः_adv);
+	DP(NETIF_MSG_LINK, "req_adv_flow_ctrl 0x%x\n", params->req_fc_auto_adv);
 	vars->link_status = 0;
 	vars->phy_link_up = 0;
 	vars->link_up = 0;
@@ -12963,20 +12962,20 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	vars->phy_flags = 0;
 	vars->check_kr2_recovery_cnt = 0;
 	params->link_flags = PHY_INITIALIZED;
-	/* Driver खोलोs NIG-BRB filters */
+	/* Driver opens NIG-BRB filters */
 	bnx2x_set_rx_filter(params, 1);
 	bnx2x_chng_link_count(params, true);
-	/* Check अगर link flap can be aव्योमed */
+	/* Check if link flap can be avoided */
 	lfa_status = bnx2x_check_lfa(params);
 
-	अगर (lfa_status == 0) अणु
+	if (lfa_status == 0) {
 		DP(NETIF_MSG_LINK, "Link Flap Avoidance in progress\n");
-		वापस bnx2x_aव्योम_link_flap(params, vars);
-	पूर्ण
+		return bnx2x_avoid_link_flap(params, vars);
+	}
 
 	DP(NETIF_MSG_LINK, "Cannot avoid link flap lfa_sta=0x%x\n",
 		       lfa_status);
-	bnx2x_cannot_aव्योम_link_flap(params, vars, lfa_status);
+	bnx2x_cannot_avoid_link_flap(params, vars, lfa_status);
 
 	/* Disable attentions */
 	bnx2x_bits_dis(bp, NIG_REG_MASK_INTERRUPT_PORT0 + params->port*4,
@@ -12987,55 +12986,55 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	bnx2x_emac_init(params, vars);
 
-	अगर (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
+	if (params->feature_config_flags & FEATURE_CONFIG_PFC_ENABLED)
 		vars->link_status |= LINK_STATUS_PFC_ENABLED;
 
-	अगर (params->num_phys == 0) अणु
+	if (params->num_phys == 0) {
 		DP(NETIF_MSG_LINK, "No phy found for initialization !!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	set_phy_vars(params, vars);
 
 	DP(NETIF_MSG_LINK, "Num of phys on board: %d\n", params->num_phys);
-	चयन (params->loopback_mode) अणु
-	हाल LOOPBACK_BMAC:
+	switch (params->loopback_mode) {
+	case LOOPBACK_BMAC:
 		bnx2x_init_bmac_loopback(params, vars);
-		अवरोध;
-	हाल LOOPBACK_EMAC:
+		break;
+	case LOOPBACK_EMAC:
 		bnx2x_init_emac_loopback(params, vars);
-		अवरोध;
-	हाल LOOPBACK_XMAC:
+		break;
+	case LOOPBACK_XMAC:
 		bnx2x_init_xmac_loopback(params, vars);
-		अवरोध;
-	हाल LOOPBACK_UMAC:
+		break;
+	case LOOPBACK_UMAC:
 		bnx2x_init_umac_loopback(params, vars);
-		अवरोध;
-	हाल LOOPBACK_XGXS:
-	हाल LOOPBACK_EXT_PHY:
+		break;
+	case LOOPBACK_XGXS:
+	case LOOPBACK_EXT_PHY:
 		bnx2x_init_xgxs_loopback(params, vars);
-		अवरोध;
-	शेष:
-		अगर (!CHIP_IS_E3(bp)) अणु
-			अगर (params->चयन_cfg == SWITCH_CFG_10G)
-				bnx2x_xgxs_deनिश्चित(params);
-			अन्यथा
-				bnx2x_serdes_deनिश्चित(bp, params->port);
-		पूर्ण
+		break;
+	default:
+		if (!CHIP_IS_E3(bp)) {
+			if (params->switch_cfg == SWITCH_CFG_10G)
+				bnx2x_xgxs_deassert(params);
+			else
+				bnx2x_serdes_deassert(bp, params->port);
+		}
 		bnx2x_link_initialize(params, vars);
 		msleep(30);
-		bnx2x_link_पूर्णांक_enable(params);
-		अवरोध;
-	पूर्ण
+		bnx2x_link_int_enable(params);
+		break;
+	}
 	bnx2x_update_mng(params, vars->link_status);
 
 	bnx2x_update_mng_eee(params, vars->eee_status);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक bnx2x_link_reset(काष्ठा link_params *params, काष्ठा link_vars *vars,
+int bnx2x_link_reset(struct link_params *params, struct link_vars *vars,
 		     u8 reset_ext_phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+{
+	struct bnx2x *bp = params->bp;
 	u8 phy_index, port = params->port, clear_latch_ind = 0;
 	DP(NETIF_MSG_LINK, "Resetting the link of port %d\n", port);
 	/* Disable attentions */
@@ -13054,20 +13053,20 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	/* Activate nig drain */
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + port*4, 1);
 
-	/* Disable nig egress पूर्णांकerface */
-	अगर (!CHIP_IS_E3(bp)) अणु
+	/* Disable nig egress interface */
+	if (!CHIP_IS_E3(bp)) {
 		REG_WR(bp, NIG_REG_BMAC0_OUT_EN + port*4, 0);
 		REG_WR(bp, NIG_REG_EGRESS_EMAC0_OUT_EN + port*4, 0);
-	पूर्ण
+	}
 
-	अगर (!CHIP_IS_E3(bp)) अणु
+	if (!CHIP_IS_E3(bp)) {
 		bnx2x_set_bmac_rx(bp, params->chip_id, port, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		bnx2x_set_xmac_rxtx(params, 0);
 		bnx2x_set_umac_rxtx(params, 0);
-	पूर्ण
+	}
 	/* Disable emac */
-	अगर (!CHIP_IS_E3(bp))
+	if (!CHIP_IS_E3(bp))
 		REG_WR(bp, NIG_REG_NIG_EMAC0_EN + port*4, 0);
 
 	usleep_range(10000, 20000);
@@ -13078,63 +13077,63 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	bnx2x_set_mdio_emac_per_phy(bp, params);
 	bnx2x_set_led(params, vars, LED_MODE_OFF, 0);
 
-	अगर (reset_ext_phy) अणु
-		क्रम (phy_index = EXT_PHY1; phy_index < params->num_phys;
-		      phy_index++) अणु
-			अगर (params->phy[phy_index].link_reset) अणु
+	if (reset_ext_phy) {
+		for (phy_index = EXT_PHY1; phy_index < params->num_phys;
+		      phy_index++) {
+			if (params->phy[phy_index].link_reset) {
 				bnx2x_set_aer_mmd(params,
 						  &params->phy[phy_index]);
 				params->phy[phy_index].link_reset(
 					&params->phy[phy_index],
 					params);
-			पूर्ण
-			अगर (params->phy[phy_index].flags &
+			}
+			if (params->phy[phy_index].flags &
 			    FLAGS_REARM_LATCH_SIGNAL)
 				clear_latch_ind = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (clear_latch_ind) अणु
+	if (clear_latch_ind) {
 		/* Clear latching indication */
-		bnx2x_rearm_latch_संकेत(bp, port, 0);
+		bnx2x_rearm_latch_signal(bp, port, 0);
 		bnx2x_bits_dis(bp, NIG_REG_LATCH_BC_0 + port*4,
 			       1 << NIG_LATCH_BC_ENABLE_MI_INT);
-	पूर्ण
-	अगर (params->phy[INT_PHY].link_reset)
+	}
+	if (params->phy[INT_PHY].link_reset)
 		params->phy[INT_PHY].link_reset(
 			&params->phy[INT_PHY], params);
 
-	/* Disable nig ingress पूर्णांकerface */
-	अगर (!CHIP_IS_E3(bp)) अणु
+	/* Disable nig ingress interface */
+	if (!CHIP_IS_E3(bp)) {
 		/* Reset BigMac */
 		REG_WR(bp, GRCBASE_MISC + MISC_REGISTERS_RESET_REG_2_CLEAR,
 		       (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << port));
 		REG_WR(bp, NIG_REG_BMAC0_IN_EN + port*4, 0);
 		REG_WR(bp, NIG_REG_EMAC0_IN_EN + port*4, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 xmac_base = (params->port) ? GRCBASE_XMAC1 : GRCBASE_XMAC0;
 		bnx2x_set_xumac_nig(params, 0, 0);
-		अगर (REG_RD(bp, MISC_REG_RESET_REG_2) &
+		if (REG_RD(bp, MISC_REG_RESET_REG_2) &
 		    MISC_REGISTERS_RESET_REG_2_XMAC)
 			REG_WR(bp, xmac_base + XMAC_REG_CTRL,
 			       XMAC_CTRL_REG_SOFT_RESET);
-	पूर्ण
+	}
 	vars->link_up = 0;
 	vars->phy_flags = 0;
-	वापस 0;
-पूर्ण
-पूर्णांक bnx2x_lfa_reset(काष्ठा link_params *params,
-			       काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+	return 0;
+}
+int bnx2x_lfa_reset(struct link_params *params,
+			       struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	vars->link_up = 0;
 	vars->phy_flags = 0;
 	params->link_flags &= ~PHY_INITIALIZED;
-	अगर (!params->lfa_base)
-		वापस bnx2x_link_reset(params, vars, 1);
+	if (!params->lfa_base)
+		return bnx2x_link_reset(params, vars, 1);
 	/*
-	 * Activate NIG drain so that during this समय the device won't send
-	 * anything जबतक it is unable to response.
+	 * Activate NIG drain so that during this time the device won't send
+	 * anything while it is unable to response.
 	 */
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 1);
 
@@ -13142,14 +13141,14 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	 * Close gracefully the gate from BMAC to NIG such that no half packets
 	 * are passed.
 	 */
-	अगर (!CHIP_IS_E3(bp))
+	if (!CHIP_IS_E3(bp))
 		bnx2x_set_bmac_rx(bp, params->chip_id, params->port, 0);
 
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		bnx2x_set_xmac_rxtx(params, 0);
 		bnx2x_set_umac_rxtx(params, 0);
-	पूर्ण
-	/* Wait 10ms क्रम the pipe to clean up*/
+	}
+	/* Wait 10ms for the pipe to clean up*/
 	usleep_range(10000, 20000);
 
 	/* Clean the NIG-BRB using the network filters in a way that will
@@ -13158,33 +13157,33 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	bnx2x_set_rx_filter(params, 0);
 
 	/*
-	 * Re-खोलो the gate between the BMAC and the NIG, after verअगरying the
-	 * gate to the BRB is बंदd, otherwise packets may arrive to the
-	 * firmware beक्रमe driver had initialized it. The target is to achieve
-	 * minimum management protocol करोwn समय.
+	 * Re-open the gate between the BMAC and the NIG, after verifying the
+	 * gate to the BRB is closed, otherwise packets may arrive to the
+	 * firmware before driver had initialized it. The target is to achieve
+	 * minimum management protocol down time.
 	 */
-	अगर (!CHIP_IS_E3(bp))
+	if (!CHIP_IS_E3(bp))
 		bnx2x_set_bmac_rx(bp, params->chip_id, params->port, 1);
 
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		bnx2x_set_xmac_rxtx(params, 1);
 		bnx2x_set_umac_rxtx(params, 1);
-	पूर्ण
+	}
 	/* Disable NIG drain */
 	REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /****************************************************************************/
 /*				Common function				    */
 /****************************************************************************/
-अटल पूर्णांक bnx2x_8073_common_init_phy(काष्ठा bnx2x *bp,
+static int bnx2x_8073_common_init_phy(struct bnx2x *bp,
 				      u32 shmem_base_path[],
 				      u32 shmem2_base_path[], u8 phy_index,
 				      u32 chip_id)
-अणु
-	काष्ठा bnx2x_phy phy[PORT_MAX];
-	काष्ठा bnx2x_phy *phy_blk[PORT_MAX];
+{
+	struct bnx2x_phy phy[PORT_MAX];
+	struct bnx2x_phy *phy_blk[PORT_MAX];
 	u16 val;
 	s8 port = 0;
 	s8 port_of_path = 0;
@@ -13194,26 +13193,26 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	port ^= (swap_val && swap_override);
 	bnx2x_ext_phy_hw_reset(bp, port);
 	/* PART1 - Reset both phys */
-	क्रम (port = PORT_MAX - 1; port >= PORT_0; port--) अणु
+	for (port = PORT_MAX - 1; port >= PORT_0; port--) {
 		u32 shmem_base, shmem2_base;
-		/* In E2, same phy is using क्रम port0 of the two paths */
-		अगर (CHIP_IS_E1x(bp)) अणु
+		/* In E2, same phy is using for port0 of the two paths */
+		if (CHIP_IS_E1x(bp)) {
 			shmem_base = shmem_base_path[0];
 			shmem2_base = shmem2_base_path[0];
 			port_of_path = port;
-		पूर्ण अन्यथा अणु
+		} else {
 			shmem_base = shmem_base_path[port];
 			shmem2_base = shmem2_base_path[port];
 			port_of_path = 0;
-		पूर्ण
+		}
 
-		/* Extract the ext phy address क्रम the port */
-		अगर (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
+		/* Extract the ext phy address for the port */
+		if (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
 				       port_of_path, &phy[port]) !=
-		    0) अणु
+		    0) {
 			DP(NETIF_MSG_LINK, "populate_phy failed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		/* Disable attentions */
 		bnx2x_bits_dis(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
 			       port_of_path*4,
@@ -13222,98 +13221,98 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 				NIG_MASK_SERDES0_LINK_STATUS |
 				NIG_MASK_MI_INT));
 
-		/* Need to take the phy out of low घातer mode in order
-		 * to ग_लिखो to access its रेजिस्टरs
+		/* Need to take the phy out of low power mode in order
+		 * to write to access its registers
 		 */
 		bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 			       MISC_REGISTERS_GPIO_OUTPUT_HIGH,
 			       port);
 
 		/* Reset the phy */
-		bnx2x_cl45_ग_लिखो(bp, &phy[port],
+		bnx2x_cl45_write(bp, &phy[port],
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_CTRL,
 				 1<<15);
-	पूर्ण
+	}
 
 	/* Add delay of 150ms after reset */
 	msleep(150);
 
-	अगर (phy[PORT_0].addr & 0x1) अणु
+	if (phy[PORT_0].addr & 0x1) {
 		phy_blk[PORT_0] = &(phy[PORT_1]);
 		phy_blk[PORT_1] = &(phy[PORT_0]);
-	पूर्ण अन्यथा अणु
+	} else {
 		phy_blk[PORT_0] = &(phy[PORT_0]);
 		phy_blk[PORT_1] = &(phy[PORT_1]);
-	पूर्ण
+	}
 
 	/* PART2 - Download firmware to both phys */
-	क्रम (port = PORT_MAX - 1; port >= PORT_0; port--) अणु
-		अगर (CHIP_IS_E1x(bp))
+	for (port = PORT_MAX - 1; port >= PORT_0; port--) {
+		if (CHIP_IS_E1x(bp))
 			port_of_path = port;
-		अन्यथा
+		else
 			port_of_path = 0;
 
 		DP(NETIF_MSG_LINK, "Loading spirom for phy address 0x%x\n",
 			   phy_blk[port]->addr);
-		अगर (bnx2x_8073_8727_बाह्यal_rom_boot(bp, phy_blk[port],
+		if (bnx2x_8073_8727_external_rom_boot(bp, phy_blk[port],
 						      port_of_path))
-			वापस -EINVAL;
+			return -EINVAL;
 
-		/* Only set bit 10 = 1 (Tx घातer करोwn) */
-		bnx2x_cl45_पढ़ो(bp, phy_blk[port],
+		/* Only set bit 10 = 1 (Tx power down) */
+		bnx2x_cl45_read(bp, phy_blk[port],
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_TX_POWER_DOWN, &val);
 
 		/* Phase1 of TX_POWER_DOWN reset */
-		bnx2x_cl45_ग_लिखो(bp, phy_blk[port],
+		bnx2x_cl45_write(bp, phy_blk[port],
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_TX_POWER_DOWN,
 				 (val | 1<<10));
-	पूर्ण
+	}
 
-	/* Toggle Transmitter: Power करोwn and then up with 600ms delay
+	/* Toggle Transmitter: Power down and then up with 600ms delay
 	 * between
 	 */
 	msleep(600);
 
 	/* PART3 - complete TX_POWER_DOWN process, and set GPIO2 back to low */
-	क्रम (port = PORT_MAX - 1; port >= PORT_0; port--) अणु
+	for (port = PORT_MAX - 1; port >= PORT_0; port--) {
 		/* Phase2 of POWER_DOWN_RESET */
-		/* Release bit 10 (Release Tx घातer करोwn) */
-		bnx2x_cl45_पढ़ो(bp, phy_blk[port],
+		/* Release bit 10 (Release Tx power down) */
+		bnx2x_cl45_read(bp, phy_blk[port],
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_TX_POWER_DOWN, &val);
 
-		bnx2x_cl45_ग_लिखो(bp, phy_blk[port],
+		bnx2x_cl45_write(bp, phy_blk[port],
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_TX_POWER_DOWN, (val & (~(1<<10))));
 		usleep_range(15000, 30000);
 
-		/* Read modअगरy ग_लिखो the SPI-ROM version select रेजिस्टर */
-		bnx2x_cl45_पढ़ो(bp, phy_blk[port],
+		/* Read modify write the SPI-ROM version select register */
+		bnx2x_cl45_read(bp, phy_blk[port],
 				MDIO_PMA_DEVAD,
 				MDIO_PMA_REG_EDC_FFE_MAIN, &val);
-		bnx2x_cl45_ग_लिखो(bp, phy_blk[port],
+		bnx2x_cl45_write(bp, phy_blk[port],
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_EDC_FFE_MAIN, (val | (1<<12)));
 
 		/* set GPIO2 back to LOW */
 		bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_2,
 			       MISC_REGISTERS_GPIO_OUTPUT_LOW, port);
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल पूर्णांक bnx2x_8726_common_init_phy(काष्ठा bnx2x *bp,
+	}
+	return 0;
+}
+static int bnx2x_8726_common_init_phy(struct bnx2x *bp,
 				      u32 shmem_base_path[],
 				      u32 shmem2_base_path[], u8 phy_index,
 				      u32 chip_id)
-अणु
+{
 	u32 val;
 	s8 port;
-	काष्ठा bnx2x_phy phy;
-	/* Use port1 because of the अटल port-swap */
-	/* Enable the module detection पूर्णांकerrupt */
+	struct bnx2x_phy phy;
+	/* Use port1 because of the static port-swap */
+	/* Enable the module detection interrupt */
 	val = REG_RD(bp, MISC_REG_GPIO_EVENT_EN);
 	val |= ((1<<MISC_REGISTERS_GPIO_3)|
 		(1<<(MISC_REGISTERS_GPIO_3 + MISC_REGISTERS_GPIO_PORT_SHIFT)));
@@ -13321,27 +13320,27 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	bnx2x_ext_phy_hw_reset(bp, 0);
 	usleep_range(5000, 10000);
-	क्रम (port = 0; port < PORT_MAX; port++) अणु
+	for (port = 0; port < PORT_MAX; port++) {
 		u32 shmem_base, shmem2_base;
 
-		/* In E2, same phy is using क्रम port0 of the two paths */
-		अगर (CHIP_IS_E1x(bp)) अणु
+		/* In E2, same phy is using for port0 of the two paths */
+		if (CHIP_IS_E1x(bp)) {
 			shmem_base = shmem_base_path[0];
 			shmem2_base = shmem2_base_path[0];
-		पूर्ण अन्यथा अणु
+		} else {
 			shmem_base = shmem_base_path[port];
 			shmem2_base = shmem2_base_path[port];
-		पूर्ण
-		/* Extract the ext phy address क्रम the port */
-		अगर (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
+		}
+		/* Extract the ext phy address for the port */
+		if (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
 				       port, &phy) !=
-		    0) अणु
+		    0) {
 			DP(NETIF_MSG_LINK, "populate phy failed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* Reset phy*/
-		bnx2x_cl45_ग_लिखो(bp, &phy,
+		bnx2x_cl45_write(bp, &phy,
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_GEN_CTRL, 0x0001);
 
 
@@ -13349,65 +13348,65 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 		bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_0,
 			       MISC_REGISTERS_GPIO_HIGH,
 			       port);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-अटल व्योम bnx2x_get_ext_phy_reset_gpio(काष्ठा bnx2x *bp, u32 shmem_base,
+	return 0;
+}
+static void bnx2x_get_ext_phy_reset_gpio(struct bnx2x *bp, u32 shmem_base,
 					 u8 *io_gpio, u8 *io_port)
-अणु
+{
 
 	u32 phy_gpio_reset = REG_RD(bp, shmem_base +
-					  दुरत्व(काष्ठा shmem_region,
-				dev_info.port_hw_config[PORT_0].शेष_cfg));
-	चयन (phy_gpio_reset) अणु
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO0_P0:
+					  offsetof(struct shmem_region,
+				dev_info.port_hw_config[PORT_0].default_cfg));
+	switch (phy_gpio_reset) {
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO0_P0:
 		*io_gpio = 0;
 		*io_port = 0;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO1_P0:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO1_P0:
 		*io_gpio = 1;
 		*io_port = 0;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO2_P0:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO2_P0:
 		*io_gpio = 2;
 		*io_port = 0;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO3_P0:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO3_P0:
 		*io_gpio = 3;
 		*io_port = 0;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO0_P1:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO0_P1:
 		*io_gpio = 0;
 		*io_port = 1;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO1_P1:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO1_P1:
 		*io_gpio = 1;
 		*io_port = 1;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO2_P1:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO2_P1:
 		*io_gpio = 2;
 		*io_port = 1;
-		अवरोध;
-	हाल PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO3_P1:
+		break;
+	case PORT_HW_CFG_EXT_PHY_GPIO_RST_GPIO3_P1:
 		*io_gpio = 3;
 		*io_port = 1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* Don't override the io_gpio and io_port */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक bnx2x_8727_common_init_phy(काष्ठा bnx2x *bp,
+static int bnx2x_8727_common_init_phy(struct bnx2x *bp,
 				      u32 shmem_base_path[],
 				      u32 shmem2_base_path[], u8 phy_index,
 				      u32 chip_id)
-अणु
+{
 	s8 port, reset_gpio;
 	u32 swap_val, swap_override;
-	काष्ठा bnx2x_phy phy[PORT_MAX];
-	काष्ठा bnx2x_phy *phy_blk[PORT_MAX];
+	struct bnx2x_phy phy[PORT_MAX];
+	struct bnx2x_phy *phy_blk[PORT_MAX];
 	s8 port_of_path;
 	swap_val = REG_RD(bp, NIG_REG_PORT_SWAP);
 	swap_override = REG_RD(bp, NIG_REG_STRAP_OVERRIDE);
@@ -13434,27 +13433,27 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	usleep_range(5000, 10000);
 
 	/* PART1 - Reset both phys */
-	क्रम (port = PORT_MAX - 1; port >= PORT_0; port--) अणु
+	for (port = PORT_MAX - 1; port >= PORT_0; port--) {
 		u32 shmem_base, shmem2_base;
 
-		/* In E2, same phy is using क्रम port0 of the two paths */
-		अगर (CHIP_IS_E1x(bp)) अणु
+		/* In E2, same phy is using for port0 of the two paths */
+		if (CHIP_IS_E1x(bp)) {
 			shmem_base = shmem_base_path[0];
 			shmem2_base = shmem2_base_path[0];
 			port_of_path = port;
-		पूर्ण अन्यथा अणु
+		} else {
 			shmem_base = shmem_base_path[port];
 			shmem2_base = shmem2_base_path[port];
 			port_of_path = 0;
-		पूर्ण
+		}
 
-		/* Extract the ext phy address क्रम the port */
-		अगर (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
+		/* Extract the ext phy address for the port */
+		if (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
 				       port_of_path, &phy[port]) !=
-				       0) अणु
+				       0) {
 			DP(NETIF_MSG_LINK, "populate phy failed\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		/* disable attentions */
 		bnx2x_bits_dis(bp, NIG_REG_MASK_INTERRUPT_PORT0 +
 			       port_of_path*4,
@@ -13465,45 +13464,45 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 
 		/* Reset the phy */
-		bnx2x_cl45_ग_लिखो(bp, &phy[port],
+		bnx2x_cl45_write(bp, &phy[port],
 				 MDIO_PMA_DEVAD, MDIO_PMA_REG_CTRL, 1<<15);
-	पूर्ण
+	}
 
 	/* Add delay of 150ms after reset */
 	msleep(150);
-	अगर (phy[PORT_0].addr & 0x1) अणु
+	if (phy[PORT_0].addr & 0x1) {
 		phy_blk[PORT_0] = &(phy[PORT_1]);
 		phy_blk[PORT_1] = &(phy[PORT_0]);
-	पूर्ण अन्यथा अणु
+	} else {
 		phy_blk[PORT_0] = &(phy[PORT_0]);
 		phy_blk[PORT_1] = &(phy[PORT_1]);
-	पूर्ण
+	}
 	/* PART2 - Download firmware to both phys */
-	क्रम (port = PORT_MAX - 1; port >= PORT_0; port--) अणु
-		अगर (CHIP_IS_E1x(bp))
+	for (port = PORT_MAX - 1; port >= PORT_0; port--) {
+		if (CHIP_IS_E1x(bp))
 			port_of_path = port;
-		अन्यथा
+		else
 			port_of_path = 0;
 		DP(NETIF_MSG_LINK, "Loading spirom for phy address 0x%x\n",
 			   phy_blk[port]->addr);
-		अगर (bnx2x_8073_8727_बाह्यal_rom_boot(bp, phy_blk[port],
+		if (bnx2x_8073_8727_external_rom_boot(bp, phy_blk[port],
 						      port_of_path))
-			वापस -EINVAL;
+			return -EINVAL;
 		/* Disable PHY transmitter output */
-		bnx2x_cl45_ग_लिखो(bp, phy_blk[port],
+		bnx2x_cl45_write(bp, phy_blk[port],
 				 MDIO_PMA_DEVAD,
 				 MDIO_PMA_REG_TX_DISABLE, 1);
 
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_84833_common_init_phy(काष्ठा bnx2x *bp,
+static int bnx2x_84833_common_init_phy(struct bnx2x *bp,
 						u32 shmem_base_path[],
 						u32 shmem2_base_path[],
 						u8 phy_index,
 						u32 chip_id)
-अणु
+{
 	u8 reset_gpios;
 	reset_gpios = bnx2x_84833_get_reset_gpios(bp, shmem_base_path, chip_id);
 	bnx2x_set_mult_gpio(bp, reset_gpios, MISC_REGISTERS_GPIO_OUTPUT_LOW);
@@ -13511,68 +13510,68 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	bnx2x_set_mult_gpio(bp, reset_gpios, MISC_REGISTERS_GPIO_OUTPUT_HIGH);
 	DP(NETIF_MSG_LINK, "84833 reset pulse on pin values 0x%x\n",
 		reset_gpios);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bnx2x_ext_phy_common_init(काष्ठा bnx2x *bp, u32 shmem_base_path[],
+static int bnx2x_ext_phy_common_init(struct bnx2x *bp, u32 shmem_base_path[],
 				     u32 shmem2_base_path[], u8 phy_index,
 				     u32 ext_phy_type, u32 chip_id)
-अणु
-	पूर्णांक rc = 0;
+{
+	int rc = 0;
 
-	चयन (ext_phy_type) अणु
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073:
+	switch (ext_phy_type) {
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8073:
 		rc = bnx2x_8073_common_init_phy(bp, shmem_base_path,
 						shmem2_base_path,
 						phy_index, chip_id);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727_NOC:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8722:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8727_NOC:
 		rc = bnx2x_8727_common_init_phy(bp, shmem_base_path,
 						shmem2_base_path,
 						phy_index, chip_id);
-		अवरोध;
+		break;
 
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726:
 		/* GPIO1 affects both ports, so there's need to pull
-		 * it क्रम single port alone
+		 * it for single port alone
 		 */
 		rc = bnx2x_8726_common_init_phy(bp, shmem_base_path,
 						shmem2_base_path,
 						phy_index, chip_id);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834:
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84834:
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84858:
 		/* GPIO3's are linked, and so both need to be toggled
 		 * to obtain required 2us pulse.
 		 */
 		rc = bnx2x_84833_common_init_phy(bp, shmem_base_path,
 						shmem2_base_path,
 						phy_index, chip_id);
-		अवरोध;
-	हाल PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE:
+		break;
+	case PORT_HW_CFG_XGXS_EXT_PHY_TYPE_FAILURE:
 		rc = -EINVAL;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP(NETIF_MSG_LINK,
 			   "ext_phy 0x%x common init not required\n",
 			   ext_phy_type);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (rc)
+	if (rc)
 		netdev_err(bp->dev,  "Warning: PHY was not initialized,"
 				      " Port %d\n",
 			 0);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक bnx2x_common_init_phy(काष्ठा bnx2x *bp, u32 shmem_base_path[],
+int bnx2x_common_init_phy(struct bnx2x *bp, u32 shmem_base_path[],
 			  u32 shmem2_base_path[], u32 chip_id)
-अणु
-	पूर्णांक rc = 0;
+{
+	int rc = 0;
 	u32 phy_ver, val;
 	u8 phy_index = 0;
 	u32 ext_phy_type, ext_phy_config;
@@ -13580,24 +13579,24 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 	bnx2x_set_mdio_clk(bp, chip_id, GRCBASE_EMAC0);
 	bnx2x_set_mdio_clk(bp, chip_id, GRCBASE_EMAC1);
 	DP(NETIF_MSG_LINK, "Begin common phy init\n");
-	अगर (CHIP_IS_E3(bp)) अणु
+	if (CHIP_IS_E3(bp)) {
 		/* Enable EPIO */
 		val = REG_RD(bp, MISC_REG_GEN_PURP_HWG);
 		REG_WR(bp, MISC_REG_GEN_PURP_HWG, val | 1);
-	पूर्ण
-	/* Check अगर common init was alपढ़ोy करोne */
+	}
+	/* Check if common init was already done */
 	phy_ver = REG_RD(bp, shmem_base_path[0] +
-			 दुरत्व(काष्ठा shmem_region,
+			 offsetof(struct shmem_region,
 				  port_mb[PORT_0].ext_phy_fw_version));
-	अगर (phy_ver) अणु
+	if (phy_ver) {
 		DP(NETIF_MSG_LINK, "Not doing common init; phy ver is 0x%x\n",
 			       phy_ver);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Read the ext_phy_type क्रम arbitrary port(0) */
-	क्रम (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
-	      phy_index++) अणु
+	/* Read the ext_phy_type for arbitrary port(0) */
+	for (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
+	      phy_index++) {
 		ext_phy_config = bnx2x_get_ext_phy_config(bp,
 							  shmem_base_path[0],
 							  phy_index, 0);
@@ -13606,30 +13605,30 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 						shmem2_base_path,
 						phy_index, ext_phy_type,
 						chip_id);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल व्योम bnx2x_check_over_curr(काष्ठा link_params *params,
-				  काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_check_over_curr(struct link_params *params,
+				  struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u32 cfg_pin;
 	u8 port = params->port;
 	u32 pin_val;
 
 	cfg_pin = (REG_RD(bp, params->shmem_base +
-			  दुरत्व(काष्ठा shmem_region,
+			  offsetof(struct shmem_region,
 			       dev_info.port_hw_config[port].e3_cmn_pin_cfg1)) &
 		   PORT_HW_CFG_E3_OVER_CURRENT_MASK) >>
 		PORT_HW_CFG_E3_OVER_CURRENT_SHIFT;
 
-	/* Ignore check अगर no बाह्यal input PIN available */
-	अगर (bnx2x_get_cfg_pin(bp, cfg_pin, &pin_val) != 0)
-		वापस;
+	/* Ignore check if no external input PIN available */
+	if (bnx2x_get_cfg_pin(bp, cfg_pin, &pin_val) != 0)
+		return;
 
-	अगर (!pin_val) अणु
-		अगर ((vars->phy_flags & PHY_OVER_CURRENT_FLAG) == 0) अणु
+	if (!pin_val) {
+		if ((vars->phy_flags & PHY_OVER_CURRENT_FLAG) == 0) {
 			netdev_err(bp->dev, "Error:  Power fault on Port %d has"
 					    " been detected and the power to "
 					    "that SFP+ module has been removed"
@@ -13639,47 +13638,47 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 					    " error.\n",
 			 params->port);
 			vars->phy_flags |= PHY_OVER_CURRENT_FLAG;
-			bnx2x_warpcore_घातer_module(params, 0);
-		पूर्ण
-	पूर्ण अन्यथा
+			bnx2x_warpcore_power_module(params, 0);
+		}
+	} else
 		vars->phy_flags &= ~PHY_OVER_CURRENT_FLAG;
-पूर्ण
+}
 
-/* Returns 0 अगर no change occurred since last check; 1 otherwise. */
-अटल u8 bnx2x_analyze_link_error(काष्ठा link_params *params,
-				    काष्ठा link_vars *vars, u32 status,
-				    u32 phy_flag, u32 link_flag, u8 notअगरy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+/* Returns 0 if no change occurred since last check; 1 otherwise. */
+static u8 bnx2x_analyze_link_error(struct link_params *params,
+				    struct link_vars *vars, u32 status,
+				    u32 phy_flag, u32 link_flag, u8 notify)
+{
+	struct bnx2x *bp = params->bp;
 	/* Compare new value with previous value */
 	u8 led_mode;
 	u32 old_status = (vars->phy_flags & phy_flag) ? 1 : 0;
 
-	अगर ((status ^ old_status) == 0)
-		वापस 0;
+	if ((status ^ old_status) == 0)
+		return 0;
 
-	/* If values dअगरfer */
-	चयन (phy_flag) अणु
-	हाल PHY_HALF_OPEN_CONN_FLAG:
+	/* If values differ */
+	switch (phy_flag) {
+	case PHY_HALF_OPEN_CONN_FLAG:
 		DP(NETIF_MSG_LINK, "Analyze Remote Fault\n");
-		अवरोध;
-	हाल PHY_SFP_TX_FAULT_FLAG:
+		break;
+	case PHY_SFP_TX_FAULT_FLAG:
 		DP(NETIF_MSG_LINK, "Analyze TX Fault\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DP(NETIF_MSG_LINK, "Analyze UNKNOWN\n");
-	पूर्ण
+	}
 	DP(NETIF_MSG_LINK, "Link changed:[%x %x]->%x\n", vars->link_up,
 	   old_status, status);
 
-	/* Do not touch the link in हाल physical link करोwn */
-	अगर ((vars->phy_flags & PHY_PHYSICAL_LINK_FLAG) == 0)
-		वापस 1;
+	/* Do not touch the link in case physical link down */
+	if ((vars->phy_flags & PHY_PHYSICAL_LINK_FLAG) == 0)
+		return 1;
 
 	/* a. Update shmem->link_status accordingly
 	 * b. Update link_vars->link_up
 	 */
-	अगर (status) अणु
+	if (status) {
 		vars->link_status &= ~LINK_STATUS_LINK_UP;
 		vars->link_status |= link_flag;
 		vars->link_up = 0;
@@ -13687,11 +13686,11 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 		/* activate nig drain */
 		REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 1);
-		/* Set LED mode to off since the PHY करोesn't know about these
+		/* Set LED mode to off since the PHY doesn't know about these
 		 * errors
 		 */
 		led_mode = LED_MODE_OFF;
-	पूर्ण अन्यथा अणु
+	} else {
 		vars->link_status |= LINK_STATUS_LINK_UP;
 		vars->link_status &= ~link_flag;
 		vars->link_up = 1;
@@ -13700,7 +13699,7 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 		/* Clear nig drain */
 		REG_WR(bp, NIG_REG_EGRESS_DRAIN0_MODE + params->port*4, 0);
-	पूर्ण
+	}
 	bnx2x_sync_link(params, vars);
 	/* Update the LED according to the link state */
 	bnx2x_set_led(params, vars, led_mode, SPEED_10000);
@@ -13710,39 +13709,39 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 	/* C. Trigger General Attention */
 	vars->periodic_flags |= PERIODIC_FLAGS_LINK_EVENT;
-	अगर (notअगरy)
-		bnx2x_notअगरy_link_changed(bp);
+	if (notify)
+		bnx2x_notify_link_changed(bp);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /******************************************************************************
 * Description:
-*	This function checks क्रम half खोलोed connection change indication.
+*	This function checks for half opened connection change indication.
 *	When such change occurs, it calls the bnx2x_analyze_link_error
-*	to check अगर Remote Fault is set or cleared. Reception of remote fault
+*	to check if Remote Fault is set or cleared. Reception of remote fault
 *	status message in the MAC indicates that the peer's MAC has detected
-*	a fault, क्रम example, due to अवरोध in the TX side of fiber.
+*	a fault, for example, due to break in the TX side of fiber.
 *
 ******************************************************************************/
-अटल पूर्णांक bnx2x_check_half_खोलो_conn(काष्ठा link_params *params,
-				      काष्ठा link_vars *vars,
-				      u8 notअगरy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static int bnx2x_check_half_open_conn(struct link_params *params,
+				      struct link_vars *vars,
+				      u8 notify)
+{
+	struct bnx2x *bp = params->bp;
 	u32 lss_status = 0;
 	u32 mac_base;
-	/* In हाल link status is physically up @ 10G करो */
-	अगर (((vars->phy_flags & PHY_PHYSICAL_LINK_FLAG) == 0) ||
+	/* In case link status is physically up @ 10G do */
+	if (((vars->phy_flags & PHY_PHYSICAL_LINK_FLAG) == 0) ||
 	    (REG_RD(bp, NIG_REG_EGRESS_EMAC0_PORT + params->port*4)))
-		वापस 0;
+		return 0;
 
-	अगर (CHIP_IS_E3(bp) &&
+	if (CHIP_IS_E3(bp) &&
 	    (REG_RD(bp, MISC_REG_RESET_REG_2) &
-	      (MISC_REGISTERS_RESET_REG_2_XMAC))) अणु
+	      (MISC_REGISTERS_RESET_REG_2_XMAC))) {
 		/* Check E3 XMAC */
 		/* Note that link speed cannot be queried here, since it may be
-		 * zero जबतक link is करोwn. In हाल UMAC is active, LSS will
+		 * zero while link is down. In case UMAC is active, LSS will
 		 * simply not be set
 		 */
 		mac_base = (params->port) ? GRCBASE_XMAC1 : GRCBASE_XMAC0;
@@ -13752,23 +13751,23 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 		REG_WR(bp, mac_base + XMAC_REG_CLEAR_RX_LSS_STATUS,
 		       XMAC_CLEAR_RX_LSS_STATUS_REG_CLEAR_LOCAL_FAULT_STATUS |
 		       XMAC_CLEAR_RX_LSS_STATUS_REG_CLEAR_REMOTE_FAULT_STATUS);
-		अगर (REG_RD(bp, mac_base + XMAC_REG_RX_LSS_STATUS))
+		if (REG_RD(bp, mac_base + XMAC_REG_RX_LSS_STATUS))
 			lss_status = 1;
 
 		bnx2x_analyze_link_error(params, vars, lss_status,
 					 PHY_HALF_OPEN_CONN_FLAG,
-					 LINK_STATUS_NONE, notअगरy);
-	पूर्ण अन्यथा अगर (REG_RD(bp, MISC_REG_RESET_REG_2) &
-		   (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << params->port)) अणु
+					 LINK_STATUS_NONE, notify);
+	} else if (REG_RD(bp, MISC_REG_RESET_REG_2) &
+		   (MISC_REGISTERS_RESET_REG_2_RST_BMAC0 << params->port)) {
 		/* Check E1X / E2 BMAC */
 		u32 lss_status_reg;
 		u32 wb_data[2];
 		mac_base = params->port ? NIG_REG_INGRESS_BMAC1_MEM :
 			NIG_REG_INGRESS_BMAC0_MEM;
 		/*  Read BIGMAC_REGISTER_RX_LSS_STATUS */
-		अगर (CHIP_IS_E2(bp))
+		if (CHIP_IS_E2(bp))
 			lss_status_reg = BIGMAC2_REGISTER_RX_LSS_STAT;
-		अन्यथा
+		else
 			lss_status_reg = BIGMAC_REGISTER_RX_LSS_STATUS;
 
 		REG_RD_DMAE(bp, mac_base + lss_status_reg, wb_data, 2);
@@ -13776,109 +13775,109 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 
 		bnx2x_analyze_link_error(params, vars, lss_status,
 					 PHY_HALF_OPEN_CONN_FLAG,
-					 LINK_STATUS_NONE, notअगरy);
-	पूर्ण
-	वापस 0;
-पूर्ण
-अटल व्योम bnx2x_sfp_tx_fault_detection(काष्ठा bnx2x_phy *phy,
-					 काष्ठा link_params *params,
-					 काष्ठा link_vars *vars)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+					 LINK_STATUS_NONE, notify);
+	}
+	return 0;
+}
+static void bnx2x_sfp_tx_fault_detection(struct bnx2x_phy *phy,
+					 struct link_params *params,
+					 struct link_vars *vars)
+{
+	struct bnx2x *bp = params->bp;
 	u32 cfg_pin, value = 0;
 	u8 led_change, port = params->port;
 
 	/* Get The SFP+ TX_Fault controlling pin ([eg]pio) */
-	cfg_pin = (REG_RD(bp, params->shmem_base + दुरत्व(काष्ठा shmem_region,
+	cfg_pin = (REG_RD(bp, params->shmem_base + offsetof(struct shmem_region,
 			  dev_info.port_hw_config[port].e3_cmn_pin_cfg)) &
 		   PORT_HW_CFG_E3_TX_FAULT_MASK) >>
 		  PORT_HW_CFG_E3_TX_FAULT_SHIFT;
 
-	अगर (bnx2x_get_cfg_pin(bp, cfg_pin, &value)) अणु
+	if (bnx2x_get_cfg_pin(bp, cfg_pin, &value)) {
 		DP(NETIF_MSG_LINK, "Failed to read pin 0x%02x\n", cfg_pin);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	led_change = bnx2x_analyze_link_error(params, vars, value,
 					      PHY_SFP_TX_FAULT_FLAG,
 					      LINK_STATUS_SFP_TX_FAULT, 1);
 
-	अगर (led_change) अणु
-		/* Change TX_Fault led, set link status क्रम further syncs */
+	if (led_change) {
+		/* Change TX_Fault led, set link status for further syncs */
 		u8 led_mode;
 
-		अगर (vars->phy_flags & PHY_SFP_TX_FAULT_FLAG) अणु
+		if (vars->phy_flags & PHY_SFP_TX_FAULT_FLAG) {
 			led_mode = MISC_REGISTERS_GPIO_HIGH;
 			vars->link_status |= LINK_STATUS_SFP_TX_FAULT;
-		पूर्ण अन्यथा अणु
+		} else {
 			led_mode = MISC_REGISTERS_GPIO_LOW;
 			vars->link_status &= ~LINK_STATUS_SFP_TX_FAULT;
-		पूर्ण
+		}
 
 		/* If module is unapproved, led should be on regardless */
-		अगर (!(phy->flags & FLAGS_SFP_NOT_APPROVED)) अणु
+		if (!(phy->flags & FLAGS_SFP_NOT_APPROVED)) {
 			DP(NETIF_MSG_LINK, "Change TX_Fault LED: ->%x\n",
 			   led_mode);
 			bnx2x_set_e3_module_fault_led(params, led_mode);
-		पूर्ण
-	पूर्ण
-पूर्ण
-अटल व्योम bnx2x_kr2_recovery(काष्ठा link_params *params,
-			       काष्ठा link_vars *vars,
-			       काष्ठा bnx2x_phy *phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+		}
+	}
+}
+static void bnx2x_kr2_recovery(struct link_params *params,
+			       struct link_vars *vars,
+			       struct bnx2x_phy *phy)
+{
+	struct bnx2x *bp = params->bp;
 	DP(NETIF_MSG_LINK, "KR2 recovery\n");
 	bnx2x_warpcore_enable_AN_KR2(phy, params, vars);
 	bnx2x_warpcore_restart_AN_KR(phy, params);
-पूर्ण
+}
 
-अटल व्योम bnx2x_check_kr2_wa(काष्ठा link_params *params,
-			       काष्ठा link_vars *vars,
-			       काष्ठा bnx2x_phy *phy)
-अणु
-	काष्ठा bnx2x *bp = params->bp;
+static void bnx2x_check_kr2_wa(struct link_params *params,
+			       struct link_vars *vars,
+			       struct bnx2x_phy *phy)
+{
+	struct bnx2x *bp = params->bp;
 	u16 base_page, next_page, not_kr2_device, lane;
-	पूर्णांक sigdet;
+	int sigdet;
 
-	/* Once KR2 was disabled, रुको 5 seconds beक्रमe checking KR2 recovery
-	 * Since some चयनes tend to reinit the AN process and clear the
+	/* Once KR2 was disabled, wait 5 seconds before checking KR2 recovery
+	 * Since some switches tend to reinit the AN process and clear the
 	 * the advertised BP/NP after ~2 seconds causing the KR2 to be disabled
-	 * and recovered many बार
+	 * and recovered many times
 	 */
-	अगर (vars->check_kr2_recovery_cnt > 0) अणु
+	if (vars->check_kr2_recovery_cnt > 0) {
 		vars->check_kr2_recovery_cnt--;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sigdet = bnx2x_warpcore_get_sigdet(phy, params);
-	अगर (!sigdet) अणु
-		अगर (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) अणु
+	if (!sigdet) {
+		if (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) {
 			bnx2x_kr2_recovery(params, vars, phy);
 			DP(NETIF_MSG_LINK, "No sigdet\n");
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	lane = bnx2x_get_warpcore_lane(phy, params);
 	CL22_WR_OVER_CL45(bp, phy, MDIO_REG_BANK_AER_BLOCK,
 			  MDIO_AER_BLOCK_AER_REG, lane);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 			MDIO_AN_REG_LP_AUTO_NEG, &base_page);
-	bnx2x_cl45_पढ़ो(bp, phy, MDIO_AN_DEVAD,
+	bnx2x_cl45_read(bp, phy, MDIO_AN_DEVAD,
 			MDIO_AN_REG_LP_AUTO_NEG2, &next_page);
 	bnx2x_set_aer_mmd(params, phy);
 
 	/* CL73 has not begun yet */
-	अगर (base_page == 0) अणु
-		अगर (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) अणु
+	if (base_page == 0) {
+		if (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) {
 			bnx2x_kr2_recovery(params, vars, phy);
 			DP(NETIF_MSG_LINK, "No BP\n");
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	/* In हाल NP bit is not set in the BasePage, or it is set,
+	/* In case NP bit is not set in the BasePage, or it is set,
 	 * but only KX is advertised, declare this link partner as non-KR2
 	 * device.
 	 */
@@ -13886,96 +13885,96 @@ u32 bnx2x_phy_selection(काष्ठा link_params *params)
 			  (((base_page & 0x8000) &&
 			    ((next_page & 0xe0) == 0x20))));
 
-	/* In हाल KR2 is alपढ़ोy disabled, check अगर we need to re-enable it */
-	अगर (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) अणु
-		अगर (!not_kr2_device) अणु
+	/* In case KR2 is already disabled, check if we need to re-enable it */
+	if (!(params->link_attr_sync & LINK_ATTR_SYNC_KR2_ENABLE)) {
+		if (!not_kr2_device) {
 			DP(NETIF_MSG_LINK, "BP=0x%x, NP=0x%x\n", base_page,
 			   next_page);
 			bnx2x_kr2_recovery(params, vars, phy);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 	/* KR2 is enabled, but not KR2 device */
-	अगर (not_kr2_device) अणु
+	if (not_kr2_device) {
 		/* Disable KR2 on both lanes */
 		DP(NETIF_MSG_LINK, "BP=0x%x, NP=0x%x\n", base_page, next_page);
 		bnx2x_disable_kr2(params, vars, phy);
 		/* Restart AN on leading lane */
 		bnx2x_warpcore_restart_AN_KR(phy, params);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-व्योम bnx2x_period_func(काष्ठा link_params *params, काष्ठा link_vars *vars)
-अणु
+void bnx2x_period_func(struct link_params *params, struct link_vars *vars)
+{
 	u16 phy_idx;
-	काष्ठा bnx2x *bp = params->bp;
-	क्रम (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) अणु
-		अगर (params->phy[phy_idx].flags & FLAGS_TX_ERROR_CHECK) अणु
+	struct bnx2x *bp = params->bp;
+	for (phy_idx = INT_PHY; phy_idx < MAX_PHYS; phy_idx++) {
+		if (params->phy[phy_idx].flags & FLAGS_TX_ERROR_CHECK) {
 			bnx2x_set_aer_mmd(params, &params->phy[phy_idx]);
-			अगर (bnx2x_check_half_खोलो_conn(params, vars, 1) !=
+			if (bnx2x_check_half_open_conn(params, vars, 1) !=
 			    0)
 				DP(NETIF_MSG_LINK, "Fault detection failed\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (CHIP_IS_E3(bp)) अणु
-		काष्ठा bnx2x_phy *phy = &params->phy[INT_PHY];
+	if (CHIP_IS_E3(bp)) {
+		struct bnx2x_phy *phy = &params->phy[INT_PHY];
 		bnx2x_set_aer_mmd(params, phy);
-		अगर (((phy->req_line_speed == SPEED_AUTO_NEG) &&
+		if (((phy->req_line_speed == SPEED_AUTO_NEG) &&
 		     (phy->speed_cap_mask &
 		      PORT_HW_CFG_SPEED_CAPABILITY_D0_20G)) ||
 		    (phy->req_line_speed == SPEED_20000))
 			bnx2x_check_kr2_wa(params, vars, phy);
 		bnx2x_check_over_curr(params, vars);
-		अगर (vars->rx_tx_asic_rst)
-			bnx2x_warpcore_config_runसमय(phy, params, vars);
+		if (vars->rx_tx_asic_rst)
+			bnx2x_warpcore_config_runtime(phy, params, vars);
 
-		अगर ((REG_RD(bp, params->shmem_base +
-			    दुरत्व(काष्ठा shmem_region, dev_info.
-				port_hw_config[params->port].शेष_cfg))
+		if ((REG_RD(bp, params->shmem_base +
+			    offsetof(struct shmem_region, dev_info.
+				port_hw_config[params->port].default_cfg))
 		    & PORT_HW_CFG_NET_SERDES_IF_MASK) ==
-		    PORT_HW_CFG_NET_SERDES_IF_SFI) अणु
-			अगर (bnx2x_is_sfp_module_plugged(phy, params)) अणु
+		    PORT_HW_CFG_NET_SERDES_IF_SFI) {
+			if (bnx2x_is_sfp_module_plugged(phy, params)) {
 				bnx2x_sfp_tx_fault_detection(phy, params, vars);
-			पूर्ण अन्यथा अगर (vars->link_status &
-				LINK_STATUS_SFP_TX_FAULT) अणु
-				/* Clean trail, पूर्णांकerrupt corrects the leds */
+			} else if (vars->link_status &
+				LINK_STATUS_SFP_TX_FAULT) {
+				/* Clean trail, interrupt corrects the leds */
 				vars->link_status &= ~LINK_STATUS_SFP_TX_FAULT;
 				vars->phy_flags &= ~PHY_SFP_TX_FAULT_FLAG;
 				/* Update link status in the shared memory */
 				bnx2x_update_mng(params, vars->link_status);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-u8 bnx2x_fan_failure_det_req(काष्ठा bnx2x *bp,
+u8 bnx2x_fan_failure_det_req(struct bnx2x *bp,
 			     u32 shmem_base,
 			     u32 shmem2_base,
 			     u8 port)
-अणु
+{
 	u8 phy_index, fan_failure_det_req = 0;
-	काष्ठा bnx2x_phy phy;
-	क्रम (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
-	      phy_index++) अणु
-		अगर (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
+	struct bnx2x_phy phy;
+	for (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
+	      phy_index++) {
+		if (bnx2x_populate_phy(bp, phy_index, shmem_base, shmem2_base,
 				       port, &phy)
-		    != 0) अणु
+		    != 0) {
 			DP(NETIF_MSG_LINK, "populate phy failed\n");
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		fan_failure_det_req |= (phy.flags &
 					FLAGS_FAN_FAILURE_DET_REQ);
-	पूर्ण
-	वापस fan_failure_det_req;
-पूर्ण
+	}
+	return fan_failure_det_req;
+}
 
-व्योम bnx2x_hw_reset_phy(काष्ठा link_params *params)
-अणु
+void bnx2x_hw_reset_phy(struct link_params *params)
+{
 	u8 phy_index;
-	काष्ठा bnx2x *bp = params->bp;
+	struct bnx2x *bp = params->bp;
 	bnx2x_update_mng(params, 0);
 	bnx2x_bits_dis(bp, NIG_REG_MASK_INTERRUPT_PORT0 + params->port*4,
 		       (NIG_MASK_XGXS0_LINK_STATUS |
@@ -13983,51 +13982,51 @@ u8 bnx2x_fan_failure_det_req(काष्ठा bnx2x *bp,
 			NIG_MASK_SERDES0_LINK_STATUS |
 			NIG_MASK_MI_INT));
 
-	क्रम (phy_index = INT_PHY; phy_index < MAX_PHYS;
-	      phy_index++) अणु
-		अगर (params->phy[phy_index].hw_reset) अणु
+	for (phy_index = INT_PHY; phy_index < MAX_PHYS;
+	      phy_index++) {
+		if (params->phy[phy_index].hw_reset) {
 			params->phy[phy_index].hw_reset(
 				&params->phy[phy_index],
 				params);
 			params->phy[phy_index] = phy_null;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम bnx2x_init_mod_असल_पूर्णांक(काष्ठा bnx2x *bp, काष्ठा link_vars *vars,
+void bnx2x_init_mod_abs_int(struct bnx2x *bp, struct link_vars *vars,
 			    u32 chip_id, u32 shmem_base, u32 shmem2_base,
 			    u8 port)
-अणु
+{
 	u8 gpio_num = 0xff, gpio_port = 0xff, phy_index;
 	u32 val;
 	u32 offset, aeu_mask, swap_val, swap_override, sync_offset;
-	अगर (CHIP_IS_E3(bp)) अणु
-		अगर (bnx2x_get_mod_असल_पूर्णांक_cfg(bp, chip_id,
+	if (CHIP_IS_E3(bp)) {
+		if (bnx2x_get_mod_abs_int_cfg(bp, chip_id,
 					      shmem_base,
 					      port,
 					      &gpio_num,
 					      &gpio_port) != 0)
-			वापस;
-	पूर्ण अन्यथा अणु
-		काष्ठा bnx2x_phy phy;
-		क्रम (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
-		      phy_index++) अणु
-			अगर (bnx2x_populate_phy(bp, phy_index, shmem_base,
+			return;
+	} else {
+		struct bnx2x_phy phy;
+		for (phy_index = EXT_PHY1; phy_index < MAX_PHYS;
+		      phy_index++) {
+			if (bnx2x_populate_phy(bp, phy_index, shmem_base,
 					       shmem2_base, port, &phy)
-			    != 0) अणु
+			    != 0) {
 				DP(NETIF_MSG_LINK, "populate phy failed\n");
-				वापस;
-			पूर्ण
-			अगर (phy.type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726) अणु
+				return;
+			}
+			if (phy.type == PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM8726) {
 				gpio_num = MISC_REGISTERS_GPIO_3;
 				gpio_port = port;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (gpio_num == 0xff)
-		वापस;
+	if (gpio_num == 0xff)
+		return;
 
 	/* Set GPIO3 to trigger SFP+ module insertion/removal */
 	bnx2x_set_gpio(bp, gpio_num, MISC_REGISTERS_GPIO_INPUT_HI_Z, gpio_port);
@@ -14036,29 +14035,29 @@ u8 bnx2x_fan_failure_det_req(काष्ठा bnx2x *bp,
 	swap_override = REG_RD(bp, NIG_REG_STRAP_OVERRIDE);
 	gpio_port ^= (swap_val && swap_override);
 
-	vars->aeu_पूर्णांक_mask = AEU_INPUTS_ATTN_BITS_GPIO0_FUNCTION_0 <<
+	vars->aeu_int_mask = AEU_INPUTS_ATTN_BITS_GPIO0_FUNCTION_0 <<
 		(gpio_num + (gpio_port << 2));
 
 	sync_offset = shmem_base +
-		दुरत्व(काष्ठा shmem_region,
-			 dev_info.port_hw_config[port].aeu_पूर्णांक_mask);
-	REG_WR(bp, sync_offset, vars->aeu_पूर्णांक_mask);
+		offsetof(struct shmem_region,
+			 dev_info.port_hw_config[port].aeu_int_mask);
+	REG_WR(bp, sync_offset, vars->aeu_int_mask);
 
 	DP(NETIF_MSG_LINK, "Setting MOD_ABS (GPIO%d_P%d) AEU to 0x%x\n",
-		       gpio_num, gpio_port, vars->aeu_पूर्णांक_mask);
+		       gpio_num, gpio_port, vars->aeu_int_mask);
 
-	अगर (port == 0)
+	if (port == 0)
 		offset = MISC_REG_AEU_ENABLE1_FUNC_0_OUT_0;
-	अन्यथा
+	else
 		offset = MISC_REG_AEU_ENABLE1_FUNC_1_OUT_0;
 
-	/* Open appropriate AEU क्रम पूर्णांकerrupts */
+	/* Open appropriate AEU for interrupts */
 	aeu_mask = REG_RD(bp, offset);
-	aeu_mask |= vars->aeu_पूर्णांक_mask;
+	aeu_mask |= vars->aeu_int_mask;
 	REG_WR(bp, offset, aeu_mask);
 
-	/* Enable the GPIO to trigger पूर्णांकerrupt */
+	/* Enable the GPIO to trigger interrupt */
 	val = REG_RD(bp, MISC_REG_GPIO_EVENT_EN);
 	val |= 1 << (gpio_num + (gpio_port << 2));
 	REG_WR(bp, MISC_REG_GPIO_EVENT_EN, val);
-पूर्ण
+}

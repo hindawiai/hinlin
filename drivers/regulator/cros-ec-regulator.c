@@ -1,256 +1,255 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 //
 // Copyright 2020 Google LLC.
 
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_data/cros_ec_proto.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/slab.h>
 
-काष्ठा cros_ec_regulator_data अणु
-	काष्ठा regulator_desc desc;
-	काष्ठा regulator_dev *dev;
-	काष्ठा cros_ec_device *ec_dev;
+struct cros_ec_regulator_data {
+	struct regulator_desc desc;
+	struct regulator_dev *dev;
+	struct cros_ec_device *ec_dev;
 
 	u32 index;
 
 	u16 *voltages_mV;
 	u16 num_voltages;
-पूर्ण;
+};
 
-अटल पूर्णांक cros_ec_cmd(काष्ठा cros_ec_device *ec, u32 version, u32 command,
-		       व्योम *outdata, u32 outsize, व्योम *indata, u32 insize)
-अणु
-	काष्ठा cros_ec_command *msg;
-	पूर्णांक ret;
+static int cros_ec_cmd(struct cros_ec_device *ec, u32 version, u32 command,
+		       void *outdata, u32 outsize, void *indata, u32 insize)
+{
+	struct cros_ec_command *msg;
+	int ret;
 
-	msg = kzalloc(माप(*msg) + max(outsize, insize), GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	msg = kzalloc(sizeof(*msg) + max(outsize, insize), GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 
 	msg->version = version;
 	msg->command = command;
 	msg->outsize = outsize;
 	msg->insize = insize;
 
-	अगर (outdata && outsize > 0)
-		स_नकल(msg->data, outdata, outsize);
+	if (outdata && outsize > 0)
+		memcpy(msg->data, outdata, outsize);
 
 	ret = cros_ec_cmd_xfer_status(ec, msg);
-	अगर (ret < 0)
-		जाओ cleanup;
+	if (ret < 0)
+		goto cleanup;
 
-	अगर (insize)
-		स_नकल(indata, msg->data, insize);
+	if (insize)
+		memcpy(indata, msg->data, insize);
 
 cleanup:
-	kमुक्त(msg);
-	वापस ret;
-पूर्ण
+	kfree(msg);
+	return ret;
+}
 
-अटल पूर्णांक cros_ec_regulator_enable(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
-	काष्ठा ec_params_regulator_enable cmd = अणु
+static int cros_ec_regulator_enable(struct regulator_dev *dev)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+	struct ec_params_regulator_enable cmd = {
 		.index = data->index,
 		.enable = 1,
-	पूर्ण;
+	};
 
-	वापस cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_ENABLE, &cmd,
-			  माप(cmd), शून्य, 0);
-पूर्ण
+	return cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_ENABLE, &cmd,
+			  sizeof(cmd), NULL, 0);
+}
 
-अटल पूर्णांक cros_ec_regulator_disable(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
-	काष्ठा ec_params_regulator_enable cmd = अणु
+static int cros_ec_regulator_disable(struct regulator_dev *dev)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+	struct ec_params_regulator_enable cmd = {
 		.index = data->index,
 		.enable = 0,
-	पूर्ण;
+	};
 
-	वापस cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_ENABLE, &cmd,
-			  माप(cmd), शून्य, 0);
-पूर्ण
+	return cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_ENABLE, &cmd,
+			  sizeof(cmd), NULL, 0);
+}
 
-अटल पूर्णांक cros_ec_regulator_is_enabled(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
-	काष्ठा ec_params_regulator_is_enabled cmd = अणु
+static int cros_ec_regulator_is_enabled(struct regulator_dev *dev)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+	struct ec_params_regulator_is_enabled cmd = {
 		.index = data->index,
-	पूर्ण;
-	काष्ठा ec_response_regulator_is_enabled resp;
-	पूर्णांक ret;
+	};
+	struct ec_response_regulator_is_enabled resp;
+	int ret;
 
 	ret = cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_IS_ENABLED, &cmd,
-			  माप(cmd), &resp, माप(resp));
-	अगर (ret < 0)
-		वापस ret;
-	वापस resp.enabled;
-पूर्ण
+			  sizeof(cmd), &resp, sizeof(resp));
+	if (ret < 0)
+		return ret;
+	return resp.enabled;
+}
 
-अटल पूर्णांक cros_ec_regulator_list_voltage(काष्ठा regulator_dev *dev,
-					  अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+static int cros_ec_regulator_list_voltage(struct regulator_dev *dev,
+					  unsigned int selector)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
 
-	अगर (selector >= data->num_voltages)
-		वापस -EINVAL;
+	if (selector >= data->num_voltages)
+		return -EINVAL;
 
-	वापस data->voltages_mV[selector] * 1000;
-पूर्ण
+	return data->voltages_mV[selector] * 1000;
+}
 
-अटल पूर्णांक cros_ec_regulator_get_voltage(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
-	काष्ठा ec_params_regulator_get_voltage cmd = अणु
+static int cros_ec_regulator_get_voltage(struct regulator_dev *dev)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+	struct ec_params_regulator_get_voltage cmd = {
 		.index = data->index,
-	पूर्ण;
-	काष्ठा ec_response_regulator_get_voltage resp;
-	पूर्णांक ret;
+	};
+	struct ec_response_regulator_get_voltage resp;
+	int ret;
 
 	ret = cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_GET_VOLTAGE, &cmd,
-			  माप(cmd), &resp, माप(resp));
-	अगर (ret < 0)
-		वापस ret;
-	वापस resp.voltage_mv * 1000;
-पूर्ण
+			  sizeof(cmd), &resp, sizeof(resp));
+	if (ret < 0)
+		return ret;
+	return resp.voltage_mv * 1000;
+}
 
-अटल पूर्णांक cros_ec_regulator_set_voltage(काष्ठा regulator_dev *dev, पूर्णांक min_uV,
-					 पूर्णांक max_uV, अचिन्हित पूर्णांक *selector)
-अणु
-	काष्ठा cros_ec_regulator_data *data = rdev_get_drvdata(dev);
-	पूर्णांक min_mV = DIV_ROUND_UP(min_uV, 1000);
-	पूर्णांक max_mV = max_uV / 1000;
-	काष्ठा ec_params_regulator_set_voltage cmd = अणु
+static int cros_ec_regulator_set_voltage(struct regulator_dev *dev, int min_uV,
+					 int max_uV, unsigned int *selector)
+{
+	struct cros_ec_regulator_data *data = rdev_get_drvdata(dev);
+	int min_mV = DIV_ROUND_UP(min_uV, 1000);
+	int max_mV = max_uV / 1000;
+	struct ec_params_regulator_set_voltage cmd = {
 		.index = data->index,
 		.min_mv = min_mV,
 		.max_mv = max_mV,
-	पूर्ण;
+	};
 
 	/*
-	 * This can happen when the given range [min_uV, max_uV] करोesn't
+	 * This can happen when the given range [min_uV, max_uV] doesn't
 	 * contain any voltage that can be represented exactly in mV.
 	 */
-	अगर (min_mV > max_mV)
-		वापस -EINVAL;
+	if (min_mV > max_mV)
+		return -EINVAL;
 
-	वापस cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_SET_VOLTAGE, &cmd,
-			   माप(cmd), शून्य, 0);
-पूर्ण
+	return cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_SET_VOLTAGE, &cmd,
+			   sizeof(cmd), NULL, 0);
+}
 
-अटल स्थिर काष्ठा regulator_ops cros_ec_regulator_voltage_ops = अणु
+static const struct regulator_ops cros_ec_regulator_voltage_ops = {
 	.enable = cros_ec_regulator_enable,
 	.disable = cros_ec_regulator_disable,
 	.is_enabled = cros_ec_regulator_is_enabled,
 	.list_voltage = cros_ec_regulator_list_voltage,
 	.get_voltage = cros_ec_regulator_get_voltage,
 	.set_voltage = cros_ec_regulator_set_voltage,
-पूर्ण;
+};
 
-अटल पूर्णांक cros_ec_regulator_init_info(काष्ठा device *dev,
-				       काष्ठा cros_ec_regulator_data *data)
-अणु
-	काष्ठा ec_params_regulator_get_info cmd = अणु
+static int cros_ec_regulator_init_info(struct device *dev,
+				       struct cros_ec_regulator_data *data)
+{
+	struct ec_params_regulator_get_info cmd = {
 		.index = data->index,
-	पूर्ण;
-	काष्ठा ec_response_regulator_get_info resp;
-	पूर्णांक ret;
+	};
+	struct ec_response_regulator_get_info resp;
+	int ret;
 
 	ret = cros_ec_cmd(data->ec_dev, 0, EC_CMD_REGULATOR_GET_INFO, &cmd,
-			   माप(cmd), &resp, माप(resp));
-	अगर (ret < 0)
-		वापस ret;
+			   sizeof(cmd), &resp, sizeof(resp));
+	if (ret < 0)
+		return ret;
 
 	data->num_voltages =
 		min_t(u16, ARRAY_SIZE(resp.voltages_mv), resp.num_voltages);
 	data->voltages_mV =
 		devm_kmemdup(dev, resp.voltages_mv,
-			     माप(u16) * data->num_voltages, GFP_KERNEL);
-	अगर (!data->voltages_mV)
-		वापस -ENOMEM;
+			     sizeof(u16) * data->num_voltages, GFP_KERNEL);
+	if (!data->voltages_mV)
+		return -ENOMEM;
 
 	data->desc.n_voltages = data->num_voltages;
 
-	/* Make sure the वापसed name is always a valid string */
+	/* Make sure the returned name is always a valid string */
 	resp.name[ARRAY_SIZE(resp.name) - 1] = '\0';
 	data->desc.name = devm_kstrdup(dev, resp.name, GFP_KERNEL);
-	अगर (!data->desc.name)
-		वापस -ENOMEM;
+	if (!data->desc.name)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cros_ec_regulator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा cros_ec_regulator_data *drvdata;
-	काष्ठा regulator_init_data *init_data;
-	काष्ठा regulator_config cfg = अणुपूर्ण;
-	काष्ठा regulator_desc *desc;
-	पूर्णांक ret;
+static int cros_ec_regulator_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct cros_ec_regulator_data *drvdata;
+	struct regulator_init_data *init_data;
+	struct regulator_config cfg = {};
+	struct regulator_desc *desc;
+	int ret;
 
 	drvdata = devm_kzalloc(
-		&pdev->dev, माप(काष्ठा cros_ec_regulator_data), GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+		&pdev->dev, sizeof(struct cros_ec_regulator_data), GFP_KERNEL);
+	if (!drvdata)
+		return -ENOMEM;
 
 	drvdata->ec_dev = dev_get_drvdata(dev->parent);
 	desc = &drvdata->desc;
 
 	init_data = of_get_regulator_init_data(dev, np, desc);
-	अगर (!init_data)
-		वापस -EINVAL;
+	if (!init_data)
+		return -EINVAL;
 
-	ret = of_property_पढ़ो_u32(np, "reg", &drvdata->index);
-	अगर (ret < 0)
-		वापस ret;
+	ret = of_property_read_u32(np, "reg", &drvdata->index);
+	if (ret < 0)
+		return ret;
 
 	desc->owner = THIS_MODULE;
 	desc->type = REGULATOR_VOLTAGE;
 	desc->ops = &cros_ec_regulator_voltage_ops;
 
 	ret = cros_ec_regulator_init_info(dev, drvdata);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	cfg.dev = &pdev->dev;
 	cfg.init_data = init_data;
 	cfg.driver_data = drvdata;
 	cfg.of_node = np;
 
-	drvdata->dev = devm_regulator_रेजिस्टर(dev, &drvdata->desc, &cfg);
-	अगर (IS_ERR(drvdata->dev)) अणु
+	drvdata->dev = devm_regulator_register(dev, &drvdata->desc, &cfg);
+	if (IS_ERR(drvdata->dev)) {
 		ret = PTR_ERR(drvdata->dev);
 		dev_err(&pdev->dev, "Failed to register regulator: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, drvdata);
+	platform_set_drvdata(pdev, drvdata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id regulator_cros_ec_of_match[] = अणु
-	अणु .compatible = "google,cros-ec-regulator", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id regulator_cros_ec_of_match[] = {
+	{ .compatible = "google,cros-ec-regulator", },
+	{}
+};
 MODULE_DEVICE_TABLE(of, regulator_cros_ec_of_match);
 
-अटल काष्ठा platक्रमm_driver cros_ec_regulator_driver = अणु
+static struct platform_driver cros_ec_regulator_driver = {
 	.probe		= cros_ec_regulator_probe,
-	.driver		= अणु
+	.driver		= {
 		.name		= "cros-ec-regulator",
 		.of_match_table = regulator_cros_ec_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(cros_ec_regulator_driver);
+module_platform_driver(cros_ec_regulator_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("ChromeOS EC controlled regulator");

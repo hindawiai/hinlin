@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * max31790.c - Part of lm_sensors, Linux kernel modules क्रम hardware
+ * max31790.c - Part of lm_sensors, Linux kernel modules for hardware
  *             monitoring.
  *
  * (C) 2015 by Il Han <corone.il.han@gmail.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/err.h>
+#include <linux/hwmon.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-/* MAX31790 रेजिस्टरs */
-#घोषणा MAX31790_REG_GLOBAL_CONFIG	0x00
-#घोषणा MAX31790_REG_FAN_CONFIG(ch)	(0x02 + (ch))
-#घोषणा MAX31790_REG_FAN_DYNAMICS(ch)	(0x08 + (ch))
-#घोषणा MAX31790_REG_FAN_FAULT_STATUS2	0x10
-#घोषणा MAX31790_REG_FAN_FAULT_STATUS1	0x11
-#घोषणा MAX31790_REG_TACH_COUNT(ch)	(0x18 + (ch) * 2)
-#घोषणा MAX31790_REG_PWM_DUTY_CYCLE(ch)	(0x30 + (ch) * 2)
-#घोषणा MAX31790_REG_PWMOUT(ch)		(0x40 + (ch) * 2)
-#घोषणा MAX31790_REG_TARGET_COUNT(ch)	(0x50 + (ch) * 2)
+/* MAX31790 registers */
+#define MAX31790_REG_GLOBAL_CONFIG	0x00
+#define MAX31790_REG_FAN_CONFIG(ch)	(0x02 + (ch))
+#define MAX31790_REG_FAN_DYNAMICS(ch)	(0x08 + (ch))
+#define MAX31790_REG_FAN_FAULT_STATUS2	0x10
+#define MAX31790_REG_FAN_FAULT_STATUS1	0x11
+#define MAX31790_REG_TACH_COUNT(ch)	(0x18 + (ch) * 2)
+#define MAX31790_REG_PWM_DUTY_CYCLE(ch)	(0x30 + (ch) * 2)
+#define MAX31790_REG_PWMOUT(ch)		(0x40 + (ch) * 2)
+#define MAX31790_REG_TARGET_COUNT(ch)	(0x50 + (ch) * 2)
 
-/* Fan Config रेजिस्टर bits */
-#घोषणा MAX31790_FAN_CFG_RPM_MODE	0x80
-#घोषणा MAX31790_FAN_CFG_TACH_INPUT_EN	0x08
-#घोषणा MAX31790_FAN_CFG_TACH_INPUT	0x01
+/* Fan Config register bits */
+#define MAX31790_FAN_CFG_RPM_MODE	0x80
+#define MAX31790_FAN_CFG_TACH_INPUT_EN	0x08
+#define MAX31790_FAN_CFG_TACH_INPUT	0x01
 
-/* Fan Dynamics रेजिस्टर bits */
-#घोषणा MAX31790_FAN_DYN_SR_SHIFT	5
-#घोषणा MAX31790_FAN_DYN_SR_MASK	0xE0
-#घोषणा SR_FROM_REG(reg)		(((reg) & MAX31790_FAN_DYN_SR_MASK) \
+/* Fan Dynamics register bits */
+#define MAX31790_FAN_DYN_SR_SHIFT	5
+#define MAX31790_FAN_DYN_SR_MASK	0xE0
+#define SR_FROM_REG(reg)		(((reg) & MAX31790_FAN_DYN_SR_MASK) \
 					 >> MAX31790_FAN_DYN_SR_SHIFT)
 
-#घोषणा FAN_RPM_MIN			120
-#घोषणा FAN_RPM_MAX			7864320
+#define FAN_RPM_MIN			120
+#define FAN_RPM_MAX			7864320
 
-#घोषणा RPM_FROM_REG(reg, sr)		(((reg) >> 4) ? \
+#define RPM_FROM_REG(reg, sr)		(((reg) >> 4) ? \
 					 ((60 * (sr) * 8192) / ((reg) >> 4)) : \
 					 FAN_RPM_MAX)
-#घोषणा RPM_TO_REG(rpm, sr)		((60 * (sr) * 8192) / ((rpm) * 2))
+#define RPM_TO_REG(rpm, sr)		((60 * (sr) * 8192) / ((rpm) * 2))
 
-#घोषणा NR_CHANNEL			6
+#define NR_CHANNEL			6
 
 /*
- * Client data (each client माला_लो its own)
+ * Client data (each client gets its own)
  */
-काष्ठा max31790_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex update_lock;
+struct max31790_data {
+	struct i2c_client *client;
+	struct mutex update_lock;
 	bool valid; /* zero until following fields are valid */
-	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
+	unsigned long last_updated; /* in jiffies */
 
-	/* रेजिस्टर values */
+	/* register values */
 	u8 fan_config[NR_CHANNEL];
 	u8 fan_dynamics[NR_CHANNEL];
 	u16 fault_status;
 	u16 tach[NR_CHANNEL * 2];
 	u16 pwm[NR_CHANNEL];
 	u16 target_count[NR_CHANNEL];
-पूर्ण;
+};
 
-अटल काष्ठा max31790_data *max31790_update_device(काष्ठा device *dev)
-अणु
-	काष्ठा max31790_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा max31790_data *ret = data;
-	पूर्णांक i;
-	पूर्णांक rv;
+static struct max31790_data *max31790_update_device(struct device *dev)
+{
+	struct max31790_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	struct max31790_data *ret = data;
+	int i;
+	int rv;
 
 	mutex_lock(&data->update_lock);
 
-	अगर (समय_after(jअगरfies, data->last_updated + HZ) || !data->valid) अणु
-		rv = i2c_smbus_पढ़ो_byte_data(client,
+	if (time_after(jiffies, data->last_updated + HZ) || !data->valid) {
+		rv = i2c_smbus_read_byte_data(client,
 				MAX31790_REG_FAN_FAULT_STATUS1);
-		अगर (rv < 0)
-			जाओ पात;
+		if (rv < 0)
+			goto abort;
 		data->fault_status = rv & 0x3F;
 
-		rv = i2c_smbus_पढ़ो_byte_data(client,
+		rv = i2c_smbus_read_byte_data(client,
 				MAX31790_REG_FAN_FAULT_STATUS2);
-		अगर (rv < 0)
-			जाओ पात;
+		if (rv < 0)
+			goto abort;
 		data->fault_status |= (rv & 0x3F) << 6;
 
-		क्रम (i = 0; i < NR_CHANNEL; i++) अणु
-			rv = i2c_smbus_पढ़ो_word_swapped(client,
+		for (i = 0; i < NR_CHANNEL; i++) {
+			rv = i2c_smbus_read_word_swapped(client,
 					MAX31790_REG_TACH_COUNT(i));
-			अगर (rv < 0)
-				जाओ पात;
+			if (rv < 0)
+				goto abort;
 			data->tach[i] = rv;
 
-			अगर (data->fan_config[i]
-			    & MAX31790_FAN_CFG_TACH_INPUT) अणु
-				rv = i2c_smbus_पढ़ो_word_swapped(client,
+			if (data->fan_config[i]
+			    & MAX31790_FAN_CFG_TACH_INPUT) {
+				rv = i2c_smbus_read_word_swapped(client,
 					MAX31790_REG_TACH_COUNT(NR_CHANNEL
 								+ i));
-				अगर (rv < 0)
-					जाओ पात;
+				if (rv < 0)
+					goto abort;
 				data->tach[NR_CHANNEL + i] = rv;
-			पूर्ण अन्यथा अणु
-				rv = i2c_smbus_पढ़ो_word_swapped(client,
+			} else {
+				rv = i2c_smbus_read_word_swapped(client,
 						MAX31790_REG_PWMOUT(i));
-				अगर (rv < 0)
-					जाओ पात;
+				if (rv < 0)
+					goto abort;
 				data->pwm[i] = rv;
 
-				rv = i2c_smbus_पढ़ो_word_swapped(client,
+				rv = i2c_smbus_read_word_swapped(client,
 						MAX31790_REG_TARGET_COUNT(i));
-				अगर (rv < 0)
-					जाओ पात;
+				if (rv < 0)
+					goto abort;
 				data->target_count[i] = rv;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		data->last_updated = jअगरfies;
+		data->last_updated = jiffies;
 		data->valid = true;
-	पूर्ण
-	जाओ करोne;
+	}
+	goto done;
 
-पात:
+abort:
 	data->valid = false;
 	ret = ERR_PTR(rv);
 
-करोne:
+done:
 	mutex_unlock(&data->update_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर u8 tach_period[8] = अणु 1, 2, 4, 8, 16, 32, 32, 32 पूर्ण;
+static const u8 tach_period[8] = { 1, 2, 4, 8, 16, 32, 32, 32 };
 
-अटल u8 get_tach_period(u8 fan_dynamics)
-अणु
-	वापस tach_period[SR_FROM_REG(fan_dynamics)];
-पूर्ण
+static u8 get_tach_period(u8 fan_dynamics)
+{
+	return tach_period[SR_FROM_REG(fan_dynamics)];
+}
 
-अटल u8 bits_क्रम_tach_period(पूर्णांक rpm)
-अणु
+static u8 bits_for_tach_period(int rpm)
+{
 	u8 bits;
 
-	अगर (rpm < 500)
+	if (rpm < 500)
 		bits = 0x0;
-	अन्यथा अगर (rpm < 1000)
+	else if (rpm < 1000)
 		bits = 0x1;
-	अन्यथा अगर (rpm < 2000)
+	else if (rpm < 2000)
 		bits = 0x2;
-	अन्यथा अगर (rpm < 4000)
+	else if (rpm < 4000)
 		bits = 0x3;
-	अन्यथा अगर (rpm < 8000)
+	else if (rpm < 8000)
 		bits = 0x4;
-	अन्यथा
+	else
 		bits = 0x5;
 
-	वापस bits;
-पूर्ण
+	return bits;
+}
 
-अटल पूर्णांक max31790_पढ़ो_fan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			     दीर्घ *val)
-अणु
-	काष्ठा max31790_data *data = max31790_update_device(dev);
-	पूर्णांक sr, rpm;
+static int max31790_read_fan(struct device *dev, u32 attr, int channel,
+			     long *val)
+{
+	struct max31790_data *data = max31790_update_device(dev);
+	int sr, rpm;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	चयन (attr) अणु
-	हाल hwmon_fan_input:
+	switch (attr) {
+	case hwmon_fan_input:
 		sr = get_tach_period(data->fan_dynamics[channel]);
 		rpm = RPM_FROM_REG(data->tach[channel], sr);
 		*val = rpm;
-		वापस 0;
-	हाल hwmon_fan_target:
+		return 0;
+	case hwmon_fan_target:
 		sr = get_tach_period(data->fan_dynamics[channel]);
 		rpm = RPM_FROM_REG(data->target_count[channel], sr);
 		*val = rpm;
-		वापस 0;
-	हाल hwmon_fan_fault:
+		return 0;
+	case hwmon_fan_fault:
 		*val = !!(data->fault_status & (1 << channel));
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक max31790_ग_लिखो_fan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			      दीर्घ val)
-अणु
-	काष्ठा max31790_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक target_count;
-	पूर्णांक err = 0;
+static int max31790_write_fan(struct device *dev, u32 attr, int channel,
+			      long val)
+{
+	struct max31790_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
+	int target_count;
+	int err = 0;
 	u8 bits;
-	पूर्णांक sr;
+	int sr;
 
 	mutex_lock(&data->update_lock);
 
-	चयन (attr) अणु
-	हाल hwmon_fan_target:
+	switch (attr) {
+	case hwmon_fan_target:
 		val = clamp_val(val, FAN_RPM_MIN, FAN_RPM_MAX);
-		bits = bits_क्रम_tach_period(val);
+		bits = bits_for_tach_period(val);
 		data->fan_dynamics[channel] =
 			((data->fan_dynamics[channel] &
 			  ~MAX31790_FAN_DYN_SR_MASK) |
 			 (bits << MAX31790_FAN_DYN_SR_SHIFT));
-		err = i2c_smbus_ग_लिखो_byte_data(client,
+		err = i2c_smbus_write_byte_data(client,
 					MAX31790_REG_FAN_DYNAMICS(channel),
 					data->fan_dynamics[channel]);
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 
 		sr = get_tach_period(data->fan_dynamics[channel]);
 		target_count = RPM_TO_REG(val, sr);
@@ -220,179 +219,179 @@
 
 		data->target_count[channel] = target_count << 5;
 
-		err = i2c_smbus_ग_लिखो_word_swapped(client,
+		err = i2c_smbus_write_word_swapped(client,
 					MAX31790_REG_TARGET_COUNT(channel),
 					data->target_count[channel]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल umode_t max31790_fan_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा max31790_data *data = _data;
+static umode_t max31790_fan_is_visible(const void *_data, u32 attr, int channel)
+{
+	const struct max31790_data *data = _data;
 	u8 fan_config = data->fan_config[channel % NR_CHANNEL];
 
-	चयन (attr) अणु
-	हाल hwmon_fan_input:
-	हाल hwmon_fan_fault:
-		अगर (channel < NR_CHANNEL ||
+	switch (attr) {
+	case hwmon_fan_input:
+	case hwmon_fan_fault:
+		if (channel < NR_CHANNEL ||
 		    (fan_config & MAX31790_FAN_CFG_TACH_INPUT))
-			वापस 0444;
-		वापस 0;
-	हाल hwmon_fan_target:
-		अगर (channel < NR_CHANNEL &&
+			return 0444;
+		return 0;
+	case hwmon_fan_target:
+		if (channel < NR_CHANNEL &&
 		    !(fan_config & MAX31790_FAN_CFG_TACH_INPUT))
-			वापस 0644;
-		वापस 0;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+			return 0644;
+		return 0;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक max31790_पढ़ो_pwm(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			     दीर्घ *val)
-अणु
-	काष्ठा max31790_data *data = max31790_update_device(dev);
+static int max31790_read_pwm(struct device *dev, u32 attr, int channel,
+			     long *val)
+{
+	struct max31790_data *data = max31790_update_device(dev);
 	u8 fan_config;
 
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
 	fan_config = data->fan_config[channel];
 
-	चयन (attr) अणु
-	हाल hwmon_pwm_input:
+	switch (attr) {
+	case hwmon_pwm_input:
 		*val = data->pwm[channel] >> 8;
-		वापस 0;
-	हाल hwmon_pwm_enable:
-		अगर (fan_config & MAX31790_FAN_CFG_RPM_MODE)
+		return 0;
+	case hwmon_pwm_enable:
+		if (fan_config & MAX31790_FAN_CFG_RPM_MODE)
 			*val = 2;
-		अन्यथा अगर (fan_config & MAX31790_FAN_CFG_TACH_INPUT_EN)
+		else if (fan_config & MAX31790_FAN_CFG_TACH_INPUT_EN)
 			*val = 1;
-		अन्यथा
+		else
 			*val = 0;
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक max31790_ग_लिखो_pwm(काष्ठा device *dev, u32 attr, पूर्णांक channel,
-			      दीर्घ val)
-अणु
-	काष्ठा max31790_data *data = dev_get_drvdata(dev);
-	काष्ठा i2c_client *client = data->client;
+static int max31790_write_pwm(struct device *dev, u32 attr, int channel,
+			      long val)
+{
+	struct max31790_data *data = dev_get_drvdata(dev);
+	struct i2c_client *client = data->client;
 	u8 fan_config;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	mutex_lock(&data->update_lock);
 
-	चयन (attr) अणु
-	हाल hwmon_pwm_input:
-		अगर (val < 0 || val > 255) अणु
+	switch (attr) {
+	case hwmon_pwm_input:
+		if (val < 0 || val > 255) {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		data->pwm[channel] = val << 8;
-		err = i2c_smbus_ग_लिखो_word_swapped(client,
+		err = i2c_smbus_write_word_swapped(client,
 						   MAX31790_REG_PWMOUT(channel),
 						   data->pwm[channel]);
-		अवरोध;
-	हाल hwmon_pwm_enable:
+		break;
+	case hwmon_pwm_enable:
 		fan_config = data->fan_config[channel];
-		अगर (val == 0) अणु
+		if (val == 0) {
 			fan_config &= ~(MAX31790_FAN_CFG_TACH_INPUT_EN |
 					MAX31790_FAN_CFG_RPM_MODE);
-		पूर्ण अन्यथा अगर (val == 1) अणु
+		} else if (val == 1) {
 			fan_config = (fan_config |
 				      MAX31790_FAN_CFG_TACH_INPUT_EN) &
 				     ~MAX31790_FAN_CFG_RPM_MODE;
-		पूर्ण अन्यथा अगर (val == 2) अणु
+		} else if (val == 2) {
 			fan_config |= MAX31790_FAN_CFG_TACH_INPUT_EN |
 				      MAX31790_FAN_CFG_RPM_MODE;
-		पूर्ण अन्यथा अणु
+		} else {
 			err = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		data->fan_config[channel] = fan_config;
-		err = i2c_smbus_ग_लिखो_byte_data(client,
+		err = i2c_smbus_write_byte_data(client,
 					MAX31790_REG_FAN_CONFIG(channel),
 					fan_config);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&data->update_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल umode_t max31790_pwm_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा max31790_data *data = _data;
+static umode_t max31790_pwm_is_visible(const void *_data, u32 attr, int channel)
+{
+	const struct max31790_data *data = _data;
 	u8 fan_config = data->fan_config[channel];
 
-	चयन (attr) अणु
-	हाल hwmon_pwm_input:
-	हाल hwmon_pwm_enable:
-		अगर (!(fan_config & MAX31790_FAN_CFG_TACH_INPUT))
-			वापस 0644;
-		वापस 0;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+	switch (attr) {
+	case hwmon_pwm_input:
+	case hwmon_pwm_enable:
+		if (!(fan_config & MAX31790_FAN_CFG_TACH_INPUT))
+			return 0644;
+		return 0;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक max31790_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_fan:
-		वापस max31790_पढ़ो_fan(dev, attr, channel, val);
-	हाल hwmon_pwm:
-		वापस max31790_पढ़ो_pwm(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int max31790_read(struct device *dev, enum hwmon_sensor_types type,
+			 u32 attr, int channel, long *val)
+{
+	switch (type) {
+	case hwmon_fan:
+		return max31790_read_fan(dev, attr, channel, val);
+	case hwmon_pwm:
+		return max31790_read_pwm(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक max31790_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			  u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	चयन (type) अणु
-	हाल hwmon_fan:
-		वापस max31790_ग_लिखो_fan(dev, attr, channel, val);
-	हाल hwmon_pwm:
-		वापस max31790_ग_लिखो_pwm(dev, attr, channel, val);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int max31790_write(struct device *dev, enum hwmon_sensor_types type,
+			  u32 attr, int channel, long val)
+{
+	switch (type) {
+	case hwmon_fan:
+		return max31790_write_fan(dev, attr, channel, val);
+	case hwmon_pwm:
+		return max31790_write_pwm(dev, attr, channel, val);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल umode_t max31790_is_visible(स्थिर व्योम *data,
-				   क्रमागत hwmon_sensor_types type,
-				   u32 attr, पूर्णांक channel)
-अणु
-	चयन (type) अणु
-	हाल hwmon_fan:
-		वापस max31790_fan_is_visible(data, attr, channel);
-	हाल hwmon_pwm:
-		वापस max31790_pwm_is_visible(data, attr, channel);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static umode_t max31790_is_visible(const void *data,
+				   enum hwmon_sensor_types type,
+				   u32 attr, int channel)
+{
+	switch (type) {
+	case hwmon_fan:
+		return max31790_fan_is_visible(data, attr, channel);
+	case hwmon_pwm:
+		return max31790_pwm_is_visible(data, attr, channel);
+	default:
+		return 0;
+	}
+}
 
-अटल स्थिर काष्ठा hwmon_channel_info *max31790_info[] = अणु
+static const struct hwmon_channel_info *max31790_info[] = {
 	HWMON_CHANNEL_INFO(fan,
 			   HWMON_F_INPUT | HWMON_F_TARGET | HWMON_F_FAULT,
 			   HWMON_F_INPUT | HWMON_F_TARGET | HWMON_F_FAULT,
@@ -413,57 +412,57 @@
 			   HWMON_PWM_INPUT | HWMON_PWM_ENABLE,
 			   HWMON_PWM_INPUT | HWMON_PWM_ENABLE,
 			   HWMON_PWM_INPUT | HWMON_PWM_ENABLE),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops max31790_hwmon_ops = अणु
+static const struct hwmon_ops max31790_hwmon_ops = {
 	.is_visible = max31790_is_visible,
-	.पढ़ो = max31790_पढ़ो,
-	.ग_लिखो = max31790_ग_लिखो,
-पूर्ण;
+	.read = max31790_read,
+	.write = max31790_write,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info max31790_chip_info = अणु
+static const struct hwmon_chip_info max31790_chip_info = {
 	.ops = &max31790_hwmon_ops,
 	.info = max31790_info,
-पूर्ण;
+};
 
-अटल पूर्णांक max31790_init_client(काष्ठा i2c_client *client,
-				काष्ठा max31790_data *data)
-अणु
-	पूर्णांक i, rv;
+static int max31790_init_client(struct i2c_client *client,
+				struct max31790_data *data)
+{
+	int i, rv;
 
-	क्रम (i = 0; i < NR_CHANNEL; i++) अणु
-		rv = i2c_smbus_पढ़ो_byte_data(client,
+	for (i = 0; i < NR_CHANNEL; i++) {
+		rv = i2c_smbus_read_byte_data(client,
 				MAX31790_REG_FAN_CONFIG(i));
-		अगर (rv < 0)
-			वापस rv;
+		if (rv < 0)
+			return rv;
 		data->fan_config[i] = rv;
 
-		rv = i2c_smbus_पढ़ो_byte_data(client,
+		rv = i2c_smbus_read_byte_data(client,
 				MAX31790_REG_FAN_DYNAMICS(i));
-		अगर (rv < 0)
-			वापस rv;
+		if (rv < 0)
+			return rv;
 		data->fan_dynamics[i] = rv;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक max31790_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_adapter *adapter = client->adapter;
-	काष्ठा device *dev = &client->dev;
-	काष्ठा max31790_data *data;
-	काष्ठा device *hwmon_dev;
-	पूर्णांक err;
+static int max31790_probe(struct i2c_client *client)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	struct device *dev = &client->dev;
+	struct max31790_data *data;
+	struct device *hwmon_dev;
+	int err;
 
-	अगर (!i2c_check_functionality(adapter,
+	if (!i2c_check_functionality(adapter,
 			I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	data = devm_kzalloc(dev, माप(काष्ठा max31790_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(struct max31790_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->update_lock);
@@ -472,31 +471,31 @@
 	 * Initialize the max31790 chip
 	 */
 	err = max31790_init_client(client, data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, client->name,
+	hwmon_dev = devm_hwmon_device_register_with_info(dev, client->name,
 							 data,
 							 &max31790_chip_info,
-							 शून्य);
+							 NULL);
 
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id max31790_id[] = अणु
-	अणु "max31790", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id max31790_id[] = {
+	{ "max31790", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, max31790_id);
 
-अटल काष्ठा i2c_driver max31790_driver = अणु
+static struct i2c_driver max31790_driver = {
 	.class		= I2C_CLASS_HWMON,
 	.probe_new	= max31790_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "max31790",
-	पूर्ण,
+	},
 	.id_table	= max31790_id,
-पूर्ण;
+};
 
 module_i2c_driver(max31790_driver);
 

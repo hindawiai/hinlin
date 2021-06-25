@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Controller of पढ़ो/ग_लिखो thपढ़ोs क्रम virtio-trace
+ * Controller of read/write threads for virtio-trace
  *
  * Copyright (C) 2012 Hitachi, Ltd.
  * Created by Yoshihiro Yunomae <yoshihiro.yunomae.ez@hitachi.com>
  *            Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <fcntl.h>
-#समावेश <poll.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश "trace-agent.h"
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "trace-agent.h"
 
-#घोषणा HOST_MSG_SIZE		256
-#घोषणा EVENT_WAIT_MSEC		100
+#define HOST_MSG_SIZE		256
+#define EVENT_WAIT_MSEC		100
 
-अटल अस्थिर संक_पूर्ण_प्रकार global_संकेत_val;
-bool global_sig_receive;	/* शेष false */
-bool global_run_operation;	/* शेष false*/
+static volatile sig_atomic_t global_signal_val;
+bool global_sig_receive;	/* default false */
+bool global_run_operation;	/* default false*/
 
-/* Handle संक_इति/संक_विघ्न/SIGQUIT to निकास */
-अटल व्योम संकेत_handler(पूर्णांक sig)
-अणु
-	global_संकेत_val = sig;
-पूर्ण
+/* Handle SIGTERM/SIGINT/SIGQUIT to exit */
+static void signal_handler(int sig)
+{
+	global_signal_val = sig;
+}
 
-पूर्णांक rw_ctl_init(स्थिर अक्षर *ctl_path)
-अणु
-	पूर्णांक ctl_fd;
+int rw_ctl_init(const char *ctl_path)
+{
+	int ctl_fd;
 
-	ctl_fd = खोलो(ctl_path, O_RDONLY);
-	अगर (ctl_fd == -1) अणु
+	ctl_fd = open(ctl_path, O_RDONLY);
+	if (ctl_fd == -1) {
 		pr_err("Cannot open ctl_fd\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस ctl_fd;
+	return ctl_fd;
 
 error:
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
-अटल पूर्णांक रुको_order(पूर्णांक ctl_fd)
-अणु
-	काष्ठा pollfd poll_fd;
-	पूर्णांक ret = 0;
+static int wait_order(int ctl_fd)
+{
+	struct pollfd poll_fd;
+	int ret = 0;
 
-	जबतक (!global_sig_receive) अणु
+	while (!global_sig_receive) {
 		poll_fd.fd = ctl_fd;
 		poll_fd.events = POLLIN;
 
 		ret = poll(&poll_fd, 1, EVENT_WAIT_MSEC);
 
-		अगर (global_संकेत_val) अणु
+		if (global_signal_val) {
 			global_sig_receive = true;
-			pr_info("Receive interrupt %d\n", global_संकेत_val);
+			pr_info("Receive interrupt %d\n", global_signal_val);
 
-			/* Wakes rw-thपढ़ोs when they are sleeping */
-			अगर (!global_run_operation)
-				pthपढ़ो_cond_broadcast(&cond_wakeup);
+			/* Wakes rw-threads when they are sleeping */
+			if (!global_run_operation)
+				pthread_cond_broadcast(&cond_wakeup);
 
 			ret = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("Polling error\n");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (ret)
-			अवरोध;
-	पूर्ण;
+		if (ret)
+			break;
+	};
 
-	वापस ret;
+	return ret;
 
 error:
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}
 
 /*
- * contol पढ़ो/ग_लिखो thपढ़ोs by handling global_run_operation
+ * contol read/write threads by handling global_run_operation
  */
-व्योम *rw_ctl_loop(पूर्णांक ctl_fd)
-अणु
-	sमाप_प्रकार rlen;
-	अक्षर buf[HOST_MSG_SIZE];
-	पूर्णांक ret;
+void *rw_ctl_loop(int ctl_fd)
+{
+	ssize_t rlen;
+	char buf[HOST_MSG_SIZE];
+	int ret;
 
-	/* Setup संकेत handlers */
-	संकेत(संक_इति, संकेत_handler);
-	संकेत(संक_विघ्न, संकेत_handler);
-	संकेत(SIGQUIT, संकेत_handler);
+	/* Setup signal handlers */
+	signal(SIGTERM, signal_handler);
+	signal(SIGINT, signal_handler);
+	signal(SIGQUIT, signal_handler);
 
-	जबतक (!global_sig_receive) अणु
+	while (!global_sig_receive) {
 
-		ret = रुको_order(ctl_fd);
-		अगर (ret < 0)
-			अवरोध;
+		ret = wait_order(ctl_fd);
+		if (ret < 0)
+			break;
 
-		rlen = पढ़ो(ctl_fd, buf, माप(buf));
-		अगर (rlen < 0) अणु
+		rlen = read(ctl_fd, buf, sizeof(buf));
+		if (rlen < 0) {
 			pr_err("read data error in ctl thread\n");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (rlen == 2 && buf[0] == '1') अणु
+		if (rlen == 2 && buf[0] == '1') {
 			/*
-			 * If host ग_लिखोs '1' to a control path,
-			 * this controller wakes all पढ़ो/ग_लिखो thपढ़ोs.
+			 * If host writes '1' to a control path,
+			 * this controller wakes all read/write threads.
 			 */
 			global_run_operation = true;
-			pthपढ़ो_cond_broadcast(&cond_wakeup);
+			pthread_cond_broadcast(&cond_wakeup);
 			pr_debug("Wake up all read/write threads\n");
-		पूर्ण अन्यथा अगर (rlen == 2 && buf[0] == '0') अणु
+		} else if (rlen == 2 && buf[0] == '0') {
 			/*
-			 * If host ग_लिखोs '0' to a control path, पढ़ो/ग_लिखो
-			 * thपढ़ोs will रुको क्रम notअगरication from Host.
+			 * If host writes '0' to a control path, read/write
+			 * threads will wait for notification from Host.
 			 */
 			global_run_operation = false;
 			pr_debug("Stop all read/write threads\n");
-		पूर्ण अन्यथा
+		} else
 			pr_info("Invalid host notification: %s\n", buf);
-	पूर्ण
+	}
 
-	वापस शून्य;
+	return NULL;
 
 error:
-	निकास(निकास_त्रुटि);
-पूर्ण
+	exit(EXIT_FAILURE);
+}

@@ -1,200 +1,199 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 National Instruments Corp.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
+#include <linux/acpi.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
 
-#घोषणा NIC78BX_USER1_LED_MASK		0x3
-#घोषणा NIC78BX_USER1_GREEN_LED		BIT(0)
-#घोषणा NIC78BX_USER1_YELLOW_LED	BIT(1)
+#define NIC78BX_USER1_LED_MASK		0x3
+#define NIC78BX_USER1_GREEN_LED		BIT(0)
+#define NIC78BX_USER1_YELLOW_LED	BIT(1)
 
-#घोषणा NIC78BX_USER2_LED_MASK		0xC
-#घोषणा NIC78BX_USER2_GREEN_LED		BIT(2)
-#घोषणा NIC78BX_USER2_YELLOW_LED	BIT(3)
+#define NIC78BX_USER2_LED_MASK		0xC
+#define NIC78BX_USER2_GREEN_LED		BIT(2)
+#define NIC78BX_USER2_YELLOW_LED	BIT(3)
 
-#घोषणा NIC78BX_LOCK_REG_OFFSET		1
-#घोषणा NIC78BX_LOCK_VALUE		0xA5
-#घोषणा NIC78BX_UNLOCK_VALUE		0x5A
+#define NIC78BX_LOCK_REG_OFFSET		1
+#define NIC78BX_LOCK_VALUE		0xA5
+#define NIC78BX_UNLOCK_VALUE		0x5A
 
-#घोषणा NIC78BX_USER_LED_IO_SIZE	2
+#define NIC78BX_USER_LED_IO_SIZE	2
 
-काष्ठा nic78bx_led_data अणु
+struct nic78bx_led_data {
 	u16 io_base;
 	spinlock_t lock;
-	काष्ठा platक्रमm_device *pdev;
-पूर्ण;
+	struct platform_device *pdev;
+};
 
-काष्ठा nic78bx_led अणु
+struct nic78bx_led {
 	u8 bit;
 	u8 mask;
-	काष्ठा nic78bx_led_data *data;
-	काष्ठा led_classdev cdev;
-पूर्ण;
+	struct nic78bx_led_data *data;
+	struct led_classdev cdev;
+};
 
-अटल अंतरभूत काष्ठा nic78bx_led *to_nic78bx_led(काष्ठा led_classdev *cdev)
-अणु
-	वापस container_of(cdev, काष्ठा nic78bx_led, cdev);
-पूर्ण
+static inline struct nic78bx_led *to_nic78bx_led(struct led_classdev *cdev)
+{
+	return container_of(cdev, struct nic78bx_led, cdev);
+}
 
-अटल व्योम nic78bx_brightness_set(काष्ठा led_classdev *cdev,
-				  क्रमागत led_brightness brightness)
-अणु
-	काष्ठा nic78bx_led *nled = to_nic78bx_led(cdev);
-	अचिन्हित दीर्घ flags;
+static void nic78bx_brightness_set(struct led_classdev *cdev,
+				  enum led_brightness brightness)
+{
+	struct nic78bx_led *nled = to_nic78bx_led(cdev);
+	unsigned long flags;
 	u8 value;
 
 	spin_lock_irqsave(&nled->data->lock, flags);
 	value = inb(nled->data->io_base);
 
-	अगर (brightness) अणु
+	if (brightness) {
 		value &= ~nled->mask;
 		value |= nled->bit;
-	पूर्ण अन्यथा अणु
+	} else {
 		value &= ~nled->bit;
-	पूर्ण
+	}
 
 	outb(value, nled->data->io_base);
 	spin_unlock_irqrestore(&nled->data->lock, flags);
-पूर्ण
+}
 
-अटल क्रमागत led_brightness nic78bx_brightness_get(काष्ठा led_classdev *cdev)
-अणु
-	काष्ठा nic78bx_led *nled = to_nic78bx_led(cdev);
-	अचिन्हित दीर्घ flags;
+static enum led_brightness nic78bx_brightness_get(struct led_classdev *cdev)
+{
+	struct nic78bx_led *nled = to_nic78bx_led(cdev);
+	unsigned long flags;
 	u8 value;
 
 	spin_lock_irqsave(&nled->data->lock, flags);
 	value = inb(nled->data->io_base);
 	spin_unlock_irqrestore(&nled->data->lock, flags);
 
-	वापस (value & nled->bit) ? 1 : LED_OFF;
-पूर्ण
+	return (value & nled->bit) ? 1 : LED_OFF;
+}
 
-अटल काष्ठा nic78bx_led nic78bx_leds[] = अणु
-	अणु
+static struct nic78bx_led nic78bx_leds[] = {
+	{
 		.bit = NIC78BX_USER1_GREEN_LED,
 		.mask = NIC78BX_USER1_LED_MASK,
-		.cdev = अणु
+		.cdev = {
 			.name = "nilrt:green:user1",
 			.max_brightness = 1,
 			.brightness_set = nic78bx_brightness_set,
 			.brightness_get = nic78bx_brightness_get,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.bit = NIC78BX_USER1_YELLOW_LED,
 		.mask = NIC78BX_USER1_LED_MASK,
-		.cdev = अणु
+		.cdev = {
 			.name = "nilrt:yellow:user1",
 			.max_brightness = 1,
 			.brightness_set = nic78bx_brightness_set,
 			.brightness_get = nic78bx_brightness_get,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.bit = NIC78BX_USER2_GREEN_LED,
 		.mask = NIC78BX_USER2_LED_MASK,
-		.cdev = अणु
+		.cdev = {
 			.name = "nilrt:green:user2",
 			.max_brightness = 1,
 			.brightness_set = nic78bx_brightness_set,
 			.brightness_get = nic78bx_brightness_get,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.bit = NIC78BX_USER2_YELLOW_LED,
 		.mask = NIC78BX_USER2_LED_MASK,
-		.cdev = अणु
+		.cdev = {
 			.name = "nilrt:yellow:user2",
 			.max_brightness = 1,
 			.brightness_set = nic78bx_brightness_set,
 			.brightness_get = nic78bx_brightness_get,
-		पूर्ण
-	पूर्ण
-पूर्ण;
+		}
+	}
+};
 
-अटल पूर्णांक nic78bx_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा nic78bx_led_data *led_data;
-	काष्ठा resource *io_rc;
-	पूर्णांक ret, i;
+static int nic78bx_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct nic78bx_led_data *led_data;
+	struct resource *io_rc;
+	int ret, i;
 
-	led_data = devm_kzalloc(dev, माप(*led_data), GFP_KERNEL);
-	अगर (!led_data)
-		वापस -ENOMEM;
+	led_data = devm_kzalloc(dev, sizeof(*led_data), GFP_KERNEL);
+	if (!led_data)
+		return -ENOMEM;
 
 	led_data->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, led_data);
+	platform_set_drvdata(pdev, led_data);
 
-	io_rc = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
-	अगर (!io_rc) अणु
+	io_rc = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	if (!io_rc) {
 		dev_err(dev, "missing IO resources\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (resource_size(io_rc) < NIC78BX_USER_LED_IO_SIZE) अणु
+	if (resource_size(io_rc) < NIC78BX_USER_LED_IO_SIZE) {
 		dev_err(dev, "IO region too small\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!devm_request_region(dev, io_rc->start, resource_size(io_rc),
-				 KBUILD_MODNAME)) अणु
+	if (!devm_request_region(dev, io_rc->start, resource_size(io_rc),
+				 KBUILD_MODNAME)) {
 		dev_err(dev, "failed to get IO region\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	led_data->io_base = io_rc->start;
 	spin_lock_init(&led_data->lock);
 
-	क्रम (i = 0; i < ARRAY_SIZE(nic78bx_leds); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(nic78bx_leds); i++) {
 		nic78bx_leds[i].data = led_data;
 
-		ret = devm_led_classdev_रेजिस्टर(dev, &nic78bx_leds[i].cdev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = devm_led_classdev_register(dev, &nic78bx_leds[i].cdev);
+		if (ret)
+			return ret;
+	}
 
-	/* Unlock LED रेजिस्टर */
+	/* Unlock LED register */
 	outb(NIC78BX_UNLOCK_VALUE,
 	     led_data->io_base + NIC78BX_LOCK_REG_OFFSET);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nic78bx_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा nic78bx_led_data *led_data = platक्रमm_get_drvdata(pdev);
+static int nic78bx_remove(struct platform_device *pdev)
+{
+	struct nic78bx_led_data *led_data = platform_get_drvdata(pdev);
 
-	/* Lock LED रेजिस्टर */
+	/* Lock LED register */
 	outb(NIC78BX_LOCK_VALUE,
 	     led_data->io_base + NIC78BX_LOCK_REG_OFFSET);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा acpi_device_id led_device_ids[] = अणु
-	अणु"NIC78B3", 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id led_device_ids[] = {
+	{"NIC78B3", 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, led_device_ids);
 
-अटल काष्ठा platक्रमm_driver led_driver = अणु
+static struct platform_driver led_driver = {
 	.probe = nic78bx_probe,
-	.हटाओ = nic78bx_हटाओ,
-	.driver = अणु
+	.remove = nic78bx_remove,
+	.driver = {
 		.name = KBUILD_MODNAME,
 		.acpi_match_table = ACPI_PTR(led_device_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(led_driver);
+module_platform_driver(led_driver);
 
 MODULE_DESCRIPTION("National Instruments PXI User LEDs driver");
 MODULE_AUTHOR("Hui Chun Ong <hui.chun.ong@ni.com>");

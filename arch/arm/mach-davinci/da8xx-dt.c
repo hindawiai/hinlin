@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  *
- * Modअगरied from mach-omap/omap2/board-generic.c
+ * Modified from mach-omap/omap2/board-generic.c
  */
 
-#समावेश <यंत्र/mach/arch.h>
+#include <asm/mach/arch.h>
 
-#समावेश <mach/common.h>
-#समावेश <mach/da8xx.h>
+#include <mach/common.h>
+#include <mach/da8xx.h>
 
-#अगर_घोषित CONFIG_ARCH_DAVINCI_DA850
+#ifdef CONFIG_ARCH_DAVINCI_DA850
 
-अटल व्योम __init da850_init_machine(व्योम)
-अणु
+static void __init da850_init_machine(void)
+{
 	davinci_pm_init();
 	pdata_quirks_init();
-पूर्ण
+}
 
-अटल स्थिर अक्षर *स्थिर da850_boards_compat[] __initस्थिर = अणु
+static const char *const da850_boards_compat[] __initconst = {
 	"enbw,cmc",
 	"ti,da850-lcdk",
 	"ti,da850-evm",
 	"ti,da850",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 DT_MACHINE_START(DA850_DT, "Generic DA850/OMAP-L138/AM18x")
 	.map_io		= da850_init,
@@ -34,4 +33,4 @@ DT_MACHINE_START(DA850_DT, "Generic DA850/OMAP-L138/AM18x")
 	.init_late	= davinci_init_late,
 MACHINE_END
 
-#पूर्ण_अगर
+#endif

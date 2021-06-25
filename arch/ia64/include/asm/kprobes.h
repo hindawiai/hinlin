@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_KPROBES_H
-#घोषणा _ASM_KPROBES_H
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_KPROBES_H
+#define _ASM_KPROBES_H
 /*
  *  Kernel Probes (KProbes)
  *
  * Copyright (C) IBM Corporation, 2002, 2004
  * Copyright (C) Intel Corporation, 2005
  *
- * 2005-Apr     Rusty Lynch <rusty.lynch@पूर्णांकel.com> and Anil S Keshavamurthy
- *              <anil.s.keshavamurthy@पूर्णांकel.com> adapted from i386
+ * 2005-Apr     Rusty Lynch <rusty.lynch@intel.com> and Anil S Keshavamurthy
+ *              <anil.s.keshavamurthy@intel.com> adapted from i386
  */
-#समावेश <यंत्र-generic/kprobes.h>
-#समावेश <यंत्र/अवरोध.h>
+#include <asm-generic/kprobes.h>
+#include <asm/break.h>
 
-#घोषणा BREAK_INST	(दीर्घ)(__IA64_BREAK_KPROBE << 6)
+#define BREAK_INST	(long)(__IA64_BREAK_KPROBE << 6)
 
-#अगर_घोषित CONFIG_KPROBES
+#ifdef CONFIG_KPROBES
 
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/percpu.h>
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/percpu.h>
 
-#घोषणा __ARCH_WANT_KPROBES_INSN_SLOT
-#घोषणा MAX_INSN_SIZE   2	/* last half is क्रम kprobe-booster */
-#घोषणा NOP_M_INST	(दीर्घ)(1<<27)
-#घोषणा BRL_INST(i1, i2) ((दीर्घ)((0xcL << 37) |	/* brl */ \
+#define __ARCH_WANT_KPROBES_INSN_SLOT
+#define MAX_INSN_SIZE   2	/* last half is for kprobe-booster */
+#define NOP_M_INST	(long)(1<<27)
+#define BRL_INST(i1, i2) ((long)((0xcL << 37) |	/* brl */ \
 				(0x1L << 12) |	/* many */ \
 				(((i1) & 1) << 36) | ((i2) << 13))) /* imm */
 
-प्रकार जोड़ cmp_inst अणु
-	काष्ठा अणु
-	अचिन्हित दीर्घ दीर्घ qp : 6;
-	अचिन्हित दीर्घ दीर्घ p1 : 6;
-	अचिन्हित दीर्घ दीर्घ c  : 1;
-	अचिन्हित दीर्घ दीर्घ r2 : 7;
-	अचिन्हित दीर्घ दीर्घ r3 : 7;
-	अचिन्हित दीर्घ दीर्घ p2 : 6;
-	अचिन्हित दीर्घ दीर्घ ta : 1;
-	अचिन्हित दीर्घ दीर्घ x2 : 2;
-	अचिन्हित दीर्घ दीर्घ tb : 1;
-	अचिन्हित दीर्घ दीर्घ opcode : 4;
-	अचिन्हित दीर्घ दीर्घ reserved : 23;
-	पूर्णf;
-	अचिन्हित दीर्घ दीर्घ l;
-पूर्ण cmp_inst_t;
+typedef union cmp_inst {
+	struct {
+	unsigned long long qp : 6;
+	unsigned long long p1 : 6;
+	unsigned long long c  : 1;
+	unsigned long long r2 : 7;
+	unsigned long long r3 : 7;
+	unsigned long long p2 : 6;
+	unsigned long long ta : 1;
+	unsigned long long x2 : 2;
+	unsigned long long tb : 1;
+	unsigned long long opcode : 4;
+	unsigned long long reserved : 23;
+	}f;
+	unsigned long long l;
+} cmp_inst_t;
 
-काष्ठा kprobe;
+struct kprobe;
 
-प्रकार काष्ठा _bundle अणु
-	काष्ठा अणु
-		अचिन्हित दीर्घ दीर्घ ढाँचा : 5;
-		अचिन्हित दीर्घ दीर्घ slot0 : 41;
-		अचिन्हित दीर्घ दीर्घ slot1_p0 : 64-46;
-	पूर्ण quad0;
-	काष्ठा अणु
-		अचिन्हित दीर्घ दीर्घ slot1_p1 : 41 - (64-46);
-		अचिन्हित दीर्घ दीर्घ slot2 : 41;
-	पूर्ण quad1;
-पूर्ण __attribute__((__aligned__(16)))  bundle_t;
+typedef struct _bundle {
+	struct {
+		unsigned long long template : 5;
+		unsigned long long slot0 : 41;
+		unsigned long long slot1_p0 : 64-46;
+	} quad0;
+	struct {
+		unsigned long long slot1_p1 : 41 - (64-46);
+		unsigned long long slot2 : 41;
+	} quad1;
+} __attribute__((__aligned__(16)))  bundle_t;
 
-काष्ठा prev_kprobe अणु
-	काष्ठा kprobe *kp;
-	अचिन्हित दीर्घ status;
-पूर्ण;
+struct prev_kprobe {
+	struct kprobe *kp;
+	unsigned long status;
+};
 
-#घोषणा	MAX_PARAM_RSE_SIZE	(0x60+0x60/0x3f)
+#define	MAX_PARAM_RSE_SIZE	(0x60+0x60/0x3f)
 /* per-cpu kprobe control block */
-#घोषणा ARCH_PREV_KPROBE_SZ 2
-काष्ठा kprobe_ctlblk अणु
-	अचिन्हित दीर्घ kprobe_status;
-	अचिन्हित दीर्घ *bsp;
-	अचिन्हित दीर्घ cfm;
+#define ARCH_PREV_KPROBE_SZ 2
+struct kprobe_ctlblk {
+	unsigned long kprobe_status;
+	unsigned long *bsp;
+	unsigned long cfm;
 	atomic_t prev_kprobe_index;
-	काष्ठा prev_kprobe prev_kprobe[ARCH_PREV_KPROBE_SZ];
-पूर्ण;
+	struct prev_kprobe prev_kprobe[ARCH_PREV_KPROBE_SZ];
+};
 
-#घोषणा kretprobe_blacklist_size 0
+#define kretprobe_blacklist_size 0
 
-#घोषणा SLOT0_OPCODE_SHIFT	(37)
-#घोषणा SLOT1_p1_OPCODE_SHIFT	(37 - (64-46))
-#घोषणा SLOT2_OPCODE_SHIFT 	(37)
+#define SLOT0_OPCODE_SHIFT	(37)
+#define SLOT1_p1_OPCODE_SHIFT	(37 - (64-46))
+#define SLOT2_OPCODE_SHIFT 	(37)
 
-#घोषणा INसूचीECT_CALL_OPCODE		(1)
-#घोषणा IP_RELATIVE_CALL_OPCODE		(5)
-#घोषणा IP_RELATIVE_BRANCH_OPCODE	(4)
-#घोषणा IP_RELATIVE_PREDICT_OPCODE	(7)
-#घोषणा LONG_BRANCH_OPCODE		(0xC)
-#घोषणा LONG_CALL_OPCODE		(0xD)
-#घोषणा flush_insn_slot(p)		करो अणु पूर्ण जबतक (0)
+#define INDIRECT_CALL_OPCODE		(1)
+#define IP_RELATIVE_CALL_OPCODE		(5)
+#define IP_RELATIVE_BRANCH_OPCODE	(4)
+#define IP_RELATIVE_PREDICT_OPCODE	(7)
+#define LONG_BRANCH_OPCODE		(0xC)
+#define LONG_CALL_OPCODE		(0xD)
+#define flush_insn_slot(p)		do { } while (0)
 
-प्रकार काष्ठा kprobe_opcode अणु
+typedef struct kprobe_opcode {
 	bundle_t bundle;
-पूर्ण kprobe_opcode_t;
+} kprobe_opcode_t;
 
-/* Architecture specअगरic copy of original inकाष्ठाion*/
-काष्ठा arch_specअगरic_insn अणु
-	/* copy of the inकाष्ठाion to be emulated */
+/* Architecture specific copy of original instruction*/
+struct arch_specific_insn {
+	/* copy of the instruction to be emulated */
 	kprobe_opcode_t *insn;
- #घोषणा INST_FLAG_FIX_RELATIVE_IP_ADDR		1
- #घोषणा INST_FLAG_FIX_BRANCH_REG		2
- #घोषणा INST_FLAG_BREAK_INST			4
- #घोषणा INST_FLAG_BOOSTABLE			8
- 	अचिन्हित दीर्घ inst_flag;
- 	अचिन्हित लघु target_br_reg;
-	अचिन्हित लघु slot;
-पूर्ण;
+ #define INST_FLAG_FIX_RELATIVE_IP_ADDR		1
+ #define INST_FLAG_FIX_BRANCH_REG		2
+ #define INST_FLAG_BREAK_INST			4
+ #define INST_FLAG_BOOSTABLE			8
+ 	unsigned long inst_flag;
+ 	unsigned short target_br_reg;
+	unsigned short slot;
+};
 
-बाह्य पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr);
-बाह्य पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
-				    अचिन्हित दीर्घ val, व्योम *data);
+extern int kprobe_fault_handler(struct pt_regs *regs, int trapnr);
+extern int kprobe_exceptions_notify(struct notifier_block *self,
+				    unsigned long val, void *data);
 
-बाह्य व्योम invalidate_stacked_regs(व्योम);
-बाह्य व्योम flush_रेजिस्टर_stack(व्योम);
-बाह्य व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p);
+extern void invalidate_stacked_regs(void);
+extern void flush_register_stack(void);
+extern void arch_remove_kprobe(struct kprobe *p);
 
-#पूर्ण_अगर /* CONFIG_KPROBES */
-#पूर्ण_अगर /* _ASM_KPROBES_H */
+#endif /* CONFIG_KPROBES */
+#endif /* _ASM_KPROBES_H */

@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * cxd2880_पूर्णांकeg.c
+ * cxd2880_integ.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
- * पूर्णांकegration layer common functions
+ * integration layer common functions
  *
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#समावेश <linux/kसमय.स>
-#समावेश <linux/त्रुटिसं.स>
+#include <linux/ktime.h>
+#include <linux/errno.h>
 
-#समावेश "cxd2880_tnrdmd.h"
-#समावेश "cxd2880_tnrdmd_mon.h"
-#समावेश "cxd2880_integ.h"
+#include "cxd2880_tnrdmd.h"
+#include "cxd2880_tnrdmd_mon.h"
+#include "cxd2880_integ.h"
 
-पूर्णांक cxd2880_पूर्णांकeg_init(काष्ठा cxd2880_tnrdmd *tnr_dmd)
-अणु
-	पूर्णांक ret;
-	kसमय_प्रकार start;
+int cxd2880_integ_init(struct cxd2880_tnrdmd *tnr_dmd)
+{
+	int ret;
+	ktime_t start;
 	u8 cpu_task_completed = 0;
 
-	अगर (!tnr_dmd)
-		वापस -EINVAL;
+	if (!tnr_dmd)
+		return -EINVAL;
 
 	ret = cxd2880_tnrdmd_init1(tnr_dmd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	start = kसमय_get();
+	start = ktime_get();
 
-	जबतक (1) अणु
+	while (1) {
 		ret =
-		    cxd2880_tnrdmd_check_पूर्णांकernal_cpu_status(tnr_dmd,
+		    cxd2880_tnrdmd_check_internal_cpu_status(tnr_dmd,
 						     &cpu_task_completed);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (cpu_task_completed)
-			अवरोध;
+		if (cpu_task_completed)
+			break;
 
-		अगर (kसमय_प्रकारo_ms(kसमय_sub(kसमय_get(), start)) >
+		if (ktime_to_ms(ktime_sub(ktime_get(), start)) >
 					CXD2880_TNRDMD_WAIT_INIT_TIMEOUT)
-			वापस -ETIMEDOUT;
+			return -ETIMEDOUT;
 
 		usleep_range(CXD2880_TNRDMD_WAIT_INIT_INTVL,
 			     CXD2880_TNRDMD_WAIT_INIT_INTVL + 1000);
-	पूर्ण
+	}
 
-	वापस cxd2880_tnrdmd_init2(tnr_dmd);
-पूर्ण
+	return cxd2880_tnrdmd_init2(tnr_dmd);
+}
 
-पूर्णांक cxd2880_पूर्णांकeg_cancel(काष्ठा cxd2880_tnrdmd *tnr_dmd)
-अणु
-	अगर (!tnr_dmd)
-		वापस -EINVAL;
+int cxd2880_integ_cancel(struct cxd2880_tnrdmd *tnr_dmd)
+{
+	if (!tnr_dmd)
+		return -EINVAL;
 
 	atomic_set(&tnr_dmd->cancel, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cxd2880_पूर्णांकeg_check_cancellation(काष्ठा cxd2880_tnrdmd *tnr_dmd)
-अणु
-	अगर (!tnr_dmd)
-		वापस -EINVAL;
+int cxd2880_integ_check_cancellation(struct cxd2880_tnrdmd *tnr_dmd)
+{
+	if (!tnr_dmd)
+		return -EINVAL;
 
-	अगर (atomic_पढ़ो(&tnr_dmd->cancel) != 0)
-		वापस -ECANCELED;
+	if (atomic_read(&tnr_dmd->cancel) != 0)
+		return -ECANCELED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

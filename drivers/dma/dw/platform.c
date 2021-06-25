@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Platक्रमm driver क्रम the Synopsys DesignWare DMA Controller
+ * Platform driver for the Synopsys DesignWare DMA Controller
  *
- * Copyright (C) 2007-2008 Aपंचांगel Corporation
+ * Copyright (C) 2007-2008 Atmel Corporation
  * Copyright (C) 2010-2011 ST Microelectronics
  * Copyright (C) 2013 Intel Corporation
  *
  * Some parts of this driver are derived from the original dw_dmac.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/of.h>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/clk.h>
+#include <linux/pm_runtime.h>
+#include <linux/platform_device.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/of.h>
+#include <linux/acpi.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#घोषणा DRV_NAME	"dw_dmac"
+#define DRV_NAME	"dw_dmac"
 
-अटल पूर्णांक dw_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा dw_dma_chip_pdata *match;
-	काष्ठा dw_dma_chip_pdata *data;
-	काष्ठा dw_dma_chip *chip;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक err;
+static int dw_probe(struct platform_device *pdev)
+{
+	const struct dw_dma_chip_pdata *match;
+	struct dw_dma_chip_pdata *data;
+	struct dw_dma_chip *chip;
+	struct device *dev = &pdev->dev;
+	int err;
 
 	match = device_get_match_data(dev);
-	अगर (!match)
-		वापस -ENODEV;
+	if (!match)
+		return -ENODEV;
 
-	data = devm_kmemdup(&pdev->dev, match, माप(*match), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kmemdup(&pdev->dev, match, sizeof(*match), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
-	chip->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (chip->irq < 0)
-		वापस chip->irq;
+	chip->irq = platform_get_irq(pdev, 0);
+	if (chip->irq < 0)
+		return chip->irq;
 
-	chip->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(chip->regs))
-		वापस PTR_ERR(chip->regs);
+	chip->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(chip->regs))
+		return PTR_ERR(chip->regs);
 
 	err = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!data->pdata)
+	if (!data->pdata)
 		data->pdata = dev_get_platdata(dev);
-	अगर (!data->pdata)
+	if (!data->pdata)
 		data->pdata = dw_dma_parse_dt(pdev);
 
 	chip->dev = dev;
@@ -68,152 +67,152 @@
 	data->chip = chip;
 
 	chip->clk = devm_clk_get_optional(chip->dev, "hclk");
-	अगर (IS_ERR(chip->clk))
-		वापस PTR_ERR(chip->clk);
+	if (IS_ERR(chip->clk))
+		return PTR_ERR(chip->clk);
 	err = clk_prepare_enable(chip->clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	err = data->probe(chip);
-	अगर (err)
-		जाओ err_dw_dma_probe;
+	if (err)
+		goto err_dw_dma_probe;
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	dw_dma_of_controller_रेजिस्टर(chip->dw);
+	dw_dma_of_controller_register(chip->dw);
 
-	dw_dma_acpi_controller_रेजिस्टर(chip->dw);
+	dw_dma_acpi_controller_register(chip->dw);
 
-	वापस 0;
+	return 0;
 
 err_dw_dma_probe:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 	clk_disable_unprepare(chip->clk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dw_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = platक्रमm_get_drvdata(pdev);
-	काष्ठा dw_dma_chip *chip = data->chip;
-	पूर्णांक ret;
+static int dw_remove(struct platform_device *pdev)
+{
+	struct dw_dma_chip_pdata *data = platform_get_drvdata(pdev);
+	struct dw_dma_chip *chip = data->chip;
+	int ret;
 
-	dw_dma_acpi_controller_मुक्त(chip->dw);
+	dw_dma_acpi_controller_free(chip->dw);
 
-	dw_dma_of_controller_मुक्त(chip->dw);
+	dw_dma_of_controller_free(chip->dw);
 
-	ret = data->हटाओ(chip);
-	अगर (ret)
+	ret = data->remove(chip);
+	if (ret)
 		dev_warn(chip->dev, "can't remove device properly: %d\n", ret);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 	clk_disable_unprepare(chip->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dw_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = platक्रमm_get_drvdata(pdev);
-	काष्ठा dw_dma_chip *chip = data->chip;
+static void dw_shutdown(struct platform_device *pdev)
+{
+	struct dw_dma_chip_pdata *data = platform_get_drvdata(pdev);
+	struct dw_dma_chip *chip = data->chip;
 
 	/*
-	 * We have to call करो_dw_dma_disable() to stop any ongoing transfer. On
-	 * some platक्रमms we can't करो that since DMA device is घातered off.
-	 * Moreover we have no possibility to check अगर the platक्रमm is affected
-	 * or not. That's why we call pm_runसमय_get_sync() / pm_runसमय_put()
+	 * We have to call do_dw_dma_disable() to stop any ongoing transfer. On
+	 * some platforms we can't do that since DMA device is powered off.
+	 * Moreover we have no possibility to check if the platform is affected
+	 * or not. That's why we call pm_runtime_get_sync() / pm_runtime_put()
 	 * unconditionally. On the other hand we can't use
-	 * pm_runसमय_suspended() because runसमय PM framework is not fully
+	 * pm_runtime_suspended() because runtime PM framework is not fully
 	 * used by the driver.
 	 */
-	pm_runसमय_get_sync(chip->dev);
-	करो_dw_dma_disable(chip);
-	pm_runसमय_put_sync_suspend(chip->dev);
+	pm_runtime_get_sync(chip->dev);
+	do_dw_dma_disable(chip);
+	pm_runtime_put_sync_suspend(chip->dev);
 
 	clk_disable_unprepare(chip->clk);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id dw_dma_of_id_table[] = अणु
-	अणु .compatible = "snps,dma-spear1340", .data = &dw_dma_chip_pdata पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id dw_dma_of_id_table[] = {
+	{ .compatible = "snps,dma-spear1340", .data = &dw_dma_chip_pdata },
+	{}
+};
 MODULE_DEVICE_TABLE(of, dw_dma_of_id_table);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id dw_dma_acpi_id_table[] = अणु
-	अणु "INTL9C60", (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
-	अणु "80862286", (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
-	अणु "808622C0", (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id dw_dma_acpi_id_table[] = {
+	{ "INTL9C60", (kernel_ulong_t)&dw_dma_chip_pdata },
+	{ "80862286", (kernel_ulong_t)&dw_dma_chip_pdata },
+	{ "808622C0", (kernel_ulong_t)&dw_dma_chip_pdata },
 
 	/* Elkhart Lake iDMA 32-bit (PSE DMA) */
-	अणु "80864BB4", (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
-	अणु "80864BB5", (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
-	अणु "80864BB6", (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
+	{ "80864BB4", (kernel_ulong_t)&idma32_chip_pdata },
+	{ "80864BB5", (kernel_ulong_t)&idma32_chip_pdata },
+	{ "80864BB6", (kernel_ulong_t)&idma32_chip_pdata },
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, dw_dma_acpi_id_table);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक dw_suspend_late(काष्ठा device *dev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = dev_get_drvdata(dev);
-	काष्ठा dw_dma_chip *chip = data->chip;
+static int dw_suspend_late(struct device *dev)
+{
+	struct dw_dma_chip_pdata *data = dev_get_drvdata(dev);
+	struct dw_dma_chip *chip = data->chip;
 
-	करो_dw_dma_disable(chip);
+	do_dw_dma_disable(chip);
 	clk_disable_unprepare(chip->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_resume_early(काष्ठा device *dev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = dev_get_drvdata(dev);
-	काष्ठा dw_dma_chip *chip = data->chip;
-	पूर्णांक ret;
+static int dw_resume_early(struct device *dev)
+{
+	struct dw_dma_chip_pdata *data = dev_get_drvdata(dev);
+	struct dw_dma_chip *chip = data->chip;
+	int ret;
 
 	ret = clk_prepare_enable(chip->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस करो_dw_dma_enable(chip);
-पूर्ण
+	return do_dw_dma_enable(chip);
+}
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा dev_pm_ops dw_dev_pm_ops = अणु
+static const struct dev_pm_ops dw_dev_pm_ops = {
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(dw_suspend_late, dw_resume_early)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver dw_driver = अणु
+static struct platform_driver dw_driver = {
 	.probe		= dw_probe,
-	.हटाओ		= dw_हटाओ,
-	.shutकरोwn       = dw_shutकरोwn,
-	.driver = अणु
+	.remove		= dw_remove,
+	.shutdown       = dw_shutdown,
+	.driver = {
 		.name	= DRV_NAME,
 		.pm	= &dw_dev_pm_ops,
 		.of_match_table = of_match_ptr(dw_dma_of_id_table),
 		.acpi_match_table = ACPI_PTR(dw_dma_acpi_id_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init dw_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&dw_driver);
-पूर्ण
+static int __init dw_init(void)
+{
+	return platform_driver_register(&dw_driver);
+}
 subsys_initcall(dw_init);
 
-अटल व्योम __निकास dw_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&dw_driver);
-पूर्ण
-module_निकास(dw_निकास);
+static void __exit dw_exit(void)
+{
+	platform_driver_unregister(&dw_driver);
+}
+module_exit(dw_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Synopsys DesignWare DMA Controller platform driver");

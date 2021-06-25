@@ -1,347 +1,346 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Fieldbus Device Driver Core
  *
  */
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
+#include <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/idr.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
 
 /* move to <linux/fieldbus_dev.h> when taking this out of staging */
-#समावेश "fieldbus_dev.h"
+#include "fieldbus_dev.h"
 
 /* Maximum number of fieldbus devices */
-#घोषणा MAX_FIELDBUSES		32
+#define MAX_FIELDBUSES		32
 
-/* the dev_t काष्ठाure to store the dynamically allocated fieldbus devices */
-अटल dev_t fieldbus_devt;
-अटल DEFINE_IDA(fieldbus_ida);
-अटल DEFINE_MUTEX(fieldbus_mtx);
+/* the dev_t structure to store the dynamically allocated fieldbus devices */
+static dev_t fieldbus_devt;
+static DEFINE_IDA(fieldbus_ida);
+static DEFINE_MUTEX(fieldbus_mtx);
 
-अटल sमाप_प्रकार online_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t online_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", !!fb->online);
-पूर्ण
-अटल DEVICE_ATTR_RO(online);
+	return sprintf(buf, "%d\n", !!fb->online);
+}
+static DEVICE_ATTR_RO(online);
 
-अटल sमाप_प्रकार enabled_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			    अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t enabled_show(struct device *dev, struct device_attribute *attr,
+			    char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
-	अगर (!fb->enable_get)
-		वापस -EINVAL;
-	वापस प्र_लिखो(buf, "%d\n", !!fb->enable_get(fb));
-पूर्ण
+	if (!fb->enable_get)
+		return -EINVAL;
+	return sprintf(buf, "%d\n", !!fb->enable_get(fb));
+}
 
-अटल sमाप_प्रकार enabled_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t enabled_store(struct device *dev, struct device_attribute *attr,
+			     const char *buf, size_t n)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 	bool value;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!fb->simple_enable_set)
-		वापस -ENOTSUPP;
+	if (!fb->simple_enable_set)
+		return -ENOTSUPP;
 	ret = kstrtobool(buf, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = fb->simple_enable_set(fb, value);
-	अगर (ret < 0)
-		वापस ret;
-	वापस n;
-पूर्ण
-अटल DEVICE_ATTR_RW(enabled);
+	if (ret < 0)
+		return ret;
+	return n;
+}
+static DEVICE_ATTR_RW(enabled);
 
-अटल sमाप_प्रकार card_name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t card_name_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
 	/*
-	 * card_name was provided by child driver, could potentially be दीर्घ.
+	 * card_name was provided by child driver, could potentially be long.
 	 * protect against buffer overrun.
 	 */
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", fb->card_name);
-पूर्ण
-अटल DEVICE_ATTR_RO(card_name);
+	return snprintf(buf, PAGE_SIZE, "%s\n", fb->card_name);
+}
+static DEVICE_ATTR_RO(card_name);
 
-अटल sमाप_प्रकार पढ़ो_area_size_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t read_area_size_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%zu\n", fb->पढ़ो_area_sz);
-पूर्ण
-अटल DEVICE_ATTR_RO(पढ़ो_area_size);
+	return sprintf(buf, "%zu\n", fb->read_area_sz);
+}
+static DEVICE_ATTR_RO(read_area_size);
 
-अटल sमाप_प्रकार ग_लिखो_area_size_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t write_area_size_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%zu\n", fb->ग_लिखो_area_sz);
-पूर्ण
-अटल DEVICE_ATTR_RO(ग_लिखो_area_size);
+	return sprintf(buf, "%zu\n", fb->write_area_sz);
+}
+static DEVICE_ATTR_RO(write_area_size);
 
-अटल sमाप_प्रकार fieldbus_id_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static ssize_t fieldbus_id_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 
-	वापस fb->fieldbus_id_get(fb, buf, PAGE_SIZE);
-पूर्ण
-अटल DEVICE_ATTR_RO(fieldbus_id);
+	return fb->fieldbus_id_get(fb, buf, PAGE_SIZE);
+}
+static DEVICE_ATTR_RO(fieldbus_id);
 
-अटल sमाप_प्रकार fieldbus_type_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
-	स्थिर अक्षर *t;
+static ssize_t fieldbus_type_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
+	const char *t;
 
-	चयन (fb->fieldbus_type) अणु
-	हाल FIELDBUS_DEV_TYPE_PROFINET:
+	switch (fb->fieldbus_type) {
+	case FIELDBUS_DEV_TYPE_PROFINET:
 		t = "profinet";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		t = "unknown";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस प्र_लिखो(buf, "%s\n", t);
-पूर्ण
-अटल DEVICE_ATTR_RO(fieldbus_type);
+	return sprintf(buf, "%s\n", t);
+}
+static DEVICE_ATTR_RO(fieldbus_type);
 
-अटल काष्ठा attribute *fieldbus_attrs[] = अणु
+static struct attribute *fieldbus_attrs[] = {
 	&dev_attr_enabled.attr,
 	&dev_attr_card_name.attr,
 	&dev_attr_fieldbus_id.attr,
-	&dev_attr_पढ़ो_area_size.attr,
-	&dev_attr_ग_लिखो_area_size.attr,
+	&dev_attr_read_area_size.attr,
+	&dev_attr_write_area_size.attr,
 	&dev_attr_online.attr,
 	&dev_attr_fieldbus_type.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t fieldbus_is_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-				   पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा fieldbus_dev *fb = dev_get_drvdata(dev);
+static umode_t fieldbus_is_visible(struct kobject *kobj, struct attribute *attr,
+				   int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct fieldbus_dev *fb = dev_get_drvdata(dev);
 	umode_t mode = attr->mode;
 
-	अगर (attr == &dev_attr_enabled.attr) अणु
+	if (attr == &dev_attr_enabled.attr) {
 		mode = 0;
-		अगर (fb->enable_get)
+		if (fb->enable_get)
 			mode |= 0444;
-		अगर (fb->simple_enable_set)
+		if (fb->simple_enable_set)
 			mode |= 0200;
-	पूर्ण
+	}
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-अटल स्थिर काष्ठा attribute_group fieldbus_group = अणु
+static const struct attribute_group fieldbus_group = {
 	.attrs = fieldbus_attrs,
 	.is_visible = fieldbus_is_visible,
-पूर्ण;
+};
 __ATTRIBUTE_GROUPS(fieldbus);
 
-अटल काष्ठा class fieldbus_class = अणु
+static struct class fieldbus_class = {
 	.name =		"fieldbus_dev",
 	.owner =	THIS_MODULE,
 	.dev_groups =	fieldbus_groups,
-पूर्ण;
+};
 
-काष्ठा fb_खोलो_file अणु
-	काष्ठा fieldbus_dev *fbdev;
-	पूर्णांक dc_event;
-पूर्ण;
+struct fb_open_file {
+	struct fieldbus_dev *fbdev;
+	int dc_event;
+};
 
-अटल पूर्णांक fieldbus_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा fb_खोलो_file *of;
-	काष्ठा fieldbus_dev *fbdev = container_of(inode->i_cdev,
-						काष्ठा fieldbus_dev,
+static int fieldbus_open(struct inode *inode, struct file *filp)
+{
+	struct fb_open_file *of;
+	struct fieldbus_dev *fbdev = container_of(inode->i_cdev,
+						struct fieldbus_dev,
 						cdev);
 
-	of = kzalloc(माप(*of), GFP_KERNEL);
-	अगर (!of)
-		वापस -ENOMEM;
+	of = kzalloc(sizeof(*of), GFP_KERNEL);
+	if (!of)
+		return -ENOMEM;
 	of->fbdev = fbdev;
-	filp->निजी_data = of;
-	वापस 0;
-पूर्ण
+	filp->private_data = of;
+	return 0;
+}
 
-अटल पूर्णांक fieldbus_release(काष्ठा inode *node, काष्ठा file *filp)
-अणु
-	काष्ठा fb_खोलो_file *of = filp->निजी_data;
+static int fieldbus_release(struct inode *node, struct file *filp)
+{
+	struct fb_open_file *of = filp->private_data;
 
-	kमुक्त(of);
-	वापस 0;
-पूर्ण
+	kfree(of);
+	return 0;
+}
 
-अटल sमाप_प्रकार fieldbus_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार size,
+static ssize_t fieldbus_read(struct file *filp, char __user *buf, size_t size,
 			     loff_t *offset)
-अणु
-	काष्ठा fb_खोलो_file *of = filp->निजी_data;
-	काष्ठा fieldbus_dev *fbdev = of->fbdev;
+{
+	struct fb_open_file *of = filp->private_data;
+	struct fieldbus_dev *fbdev = of->fbdev;
 
 	of->dc_event = fbdev->dc_event;
-	वापस fbdev->पढ़ो_area(fbdev, buf, size, offset);
-पूर्ण
+	return fbdev->read_area(fbdev, buf, size, offset);
+}
 
-अटल sमाप_प्रकार fieldbus_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
-			      माप_प्रकार size, loff_t *offset)
-अणु
-	काष्ठा fb_खोलो_file *of = filp->निजी_data;
-	काष्ठा fieldbus_dev *fbdev = of->fbdev;
+static ssize_t fieldbus_write(struct file *filp, const char __user *buf,
+			      size_t size, loff_t *offset)
+{
+	struct fb_open_file *of = filp->private_data;
+	struct fieldbus_dev *fbdev = of->fbdev;
 
-	वापस fbdev->ग_लिखो_area(fbdev, buf, size, offset);
-पूर्ण
+	return fbdev->write_area(fbdev, buf, size, offset);
+}
 
-अटल __poll_t fieldbus_poll(काष्ठा file *filp, poll_table *रुको)
-अणु
-	काष्ठा fb_खोलो_file *of = filp->निजी_data;
-	काष्ठा fieldbus_dev *fbdev = of->fbdev;
+static __poll_t fieldbus_poll(struct file *filp, poll_table *wait)
+{
+	struct fb_open_file *of = filp->private_data;
+	struct fieldbus_dev *fbdev = of->fbdev;
 	__poll_t mask = EPOLLIN | EPOLLRDNORM | EPOLLOUT | EPOLLWRNORM;
 
-	poll_रुको(filp, &fbdev->dc_wq, रुको);
+	poll_wait(filp, &fbdev->dc_wq, wait);
 	/* data changed ? */
-	अगर (fbdev->dc_event != of->dc_event)
+	if (fbdev->dc_event != of->dc_event)
 		mask |= EPOLLPRI | EPOLLERR;
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations fieldbus_fops = अणु
-	.खोलो		= fieldbus_खोलो,
+static const struct file_operations fieldbus_fops = {
+	.open		= fieldbus_open,
 	.release	= fieldbus_release,
-	.पढ़ो		= fieldbus_पढ़ो,
-	.ग_लिखो		= fieldbus_ग_लिखो,
+	.read		= fieldbus_read,
+	.write		= fieldbus_write,
 	.poll		= fieldbus_poll,
 	.llseek		= generic_file_llseek,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-व्योम fieldbus_dev_area_updated(काष्ठा fieldbus_dev *fb)
-अणु
+void fieldbus_dev_area_updated(struct fieldbus_dev *fb)
+{
 	fb->dc_event++;
 	wake_up_all(&fb->dc_wq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fieldbus_dev_area_updated);
 
-व्योम fieldbus_dev_online_changed(काष्ठा fieldbus_dev *fb, bool online)
-अणु
+void fieldbus_dev_online_changed(struct fieldbus_dev *fb, bool online)
+{
 	fb->online = online;
 	kobject_uevent(&fb->dev->kobj, KOBJ_CHANGE);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(fieldbus_dev_online_changed);
 
-अटल व्योम __fieldbus_dev_unरेजिस्टर(काष्ठा fieldbus_dev *fb)
-अणु
-	अगर (!fb)
-		वापस;
+static void __fieldbus_dev_unregister(struct fieldbus_dev *fb)
+{
+	if (!fb)
+		return;
 	device_destroy(&fieldbus_class, fb->cdev.dev);
 	cdev_del(&fb->cdev);
-	ida_simple_हटाओ(&fieldbus_ida, fb->id);
-पूर्ण
+	ida_simple_remove(&fieldbus_ida, fb->id);
+}
 
-व्योम fieldbus_dev_unरेजिस्टर(काष्ठा fieldbus_dev *fb)
-अणु
+void fieldbus_dev_unregister(struct fieldbus_dev *fb)
+{
 	mutex_lock(&fieldbus_mtx);
-	__fieldbus_dev_unरेजिस्टर(fb);
+	__fieldbus_dev_unregister(fb);
 	mutex_unlock(&fieldbus_mtx);
-पूर्ण
-EXPORT_SYMBOL_GPL(fieldbus_dev_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(fieldbus_dev_unregister);
 
-अटल पूर्णांक __fieldbus_dev_रेजिस्टर(काष्ठा fieldbus_dev *fb)
-अणु
+static int __fieldbus_dev_register(struct fieldbus_dev *fb)
+{
 	dev_t devno;
-	पूर्णांक err;
+	int err;
 
-	अगर (!fb)
-		वापस -EINVAL;
-	अगर (!fb->पढ़ो_area || !fb->ग_लिखो_area || !fb->fieldbus_id_get)
-		वापस -EINVAL;
+	if (!fb)
+		return -EINVAL;
+	if (!fb->read_area || !fb->write_area || !fb->fieldbus_id_get)
+		return -EINVAL;
 	fb->id = ida_simple_get(&fieldbus_ida, 0, MAX_FIELDBUSES, GFP_KERNEL);
-	अगर (fb->id < 0)
-		वापस fb->id;
+	if (fb->id < 0)
+		return fb->id;
 	devno = MKDEV(MAJOR(fieldbus_devt), fb->id);
-	init_रुकोqueue_head(&fb->dc_wq);
+	init_waitqueue_head(&fb->dc_wq);
 	cdev_init(&fb->cdev, &fieldbus_fops);
 	err = cdev_add(&fb->cdev, devno, 1);
-	अगर (err) अणु
+	if (err) {
 		pr_err("fieldbus_dev%d unable to add device %d:%d\n",
 		       fb->id, MAJOR(fieldbus_devt), fb->id);
-		जाओ err_cdev;
-	पूर्ण
+		goto err_cdev;
+	}
 	fb->dev = device_create(&fieldbus_class, fb->parent, devno, fb,
 				"fieldbus_dev%d", fb->id);
-	अगर (IS_ERR(fb->dev)) अणु
+	if (IS_ERR(fb->dev)) {
 		err = PTR_ERR(fb->dev);
-		जाओ err_dev_create;
-	पूर्ण
-	वापस 0;
+		goto err_dev_create;
+	}
+	return 0;
 
 err_dev_create:
 	cdev_del(&fb->cdev);
 err_cdev:
-	ida_simple_हटाओ(&fieldbus_ida, fb->id);
-	वापस err;
-पूर्ण
+	ida_simple_remove(&fieldbus_ida, fb->id);
+	return err;
+}
 
-पूर्णांक fieldbus_dev_रेजिस्टर(काष्ठा fieldbus_dev *fb)
-अणु
-	पूर्णांक err;
+int fieldbus_dev_register(struct fieldbus_dev *fb)
+{
+	int err;
 
 	mutex_lock(&fieldbus_mtx);
-	err = __fieldbus_dev_रेजिस्टर(fb);
+	err = __fieldbus_dev_register(fb);
 	mutex_unlock(&fieldbus_mtx);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(fieldbus_dev_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(fieldbus_dev_register);
 
-अटल पूर्णांक __init fieldbus_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init fieldbus_init(void)
+{
+	int err;
 
-	err = class_रेजिस्टर(&fieldbus_class);
-	अगर (err < 0) अणु
+	err = class_register(&fieldbus_class);
+	if (err < 0) {
 		pr_err("fieldbus_dev: could not register class\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = alloc_chrdev_region(&fieldbus_devt, 0,
 				  MAX_FIELDBUSES, "fieldbus_dev");
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("fieldbus_dev: unable to allocate char dev region\n");
-		जाओ err_alloc;
-	पूर्ण
-	वापस 0;
+		goto err_alloc;
+	}
+	return 0;
 
 err_alloc:
-	class_unरेजिस्टर(&fieldbus_class);
-	वापस err;
-पूर्ण
+	class_unregister(&fieldbus_class);
+	return err;
+}
 
-अटल व्योम __निकास fieldbus_निकास(व्योम)
-अणु
-	unरेजिस्टर_chrdev_region(fieldbus_devt, MAX_FIELDBUSES);
-	class_unरेजिस्टर(&fieldbus_class);
+static void __exit fieldbus_exit(void)
+{
+	unregister_chrdev_region(fieldbus_devt, MAX_FIELDBUSES);
+	class_unregister(&fieldbus_class);
 	ida_destroy(&fieldbus_ida);
-पूर्ण
+}
 
 subsys_initcall(fieldbus_init);
-module_निकास(fieldbus_निकास);
+module_exit(fieldbus_exit);
 
 MODULE_AUTHOR("Sven Van Asbroeck <TheSven73@gmail.com>");
 MODULE_AUTHOR("Jonathan Stiles <jonathans@arcx.com>");

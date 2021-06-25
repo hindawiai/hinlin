@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus "Core"
  *
@@ -7,344 +6,344 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <linux/greybus.h>
-#समावेश "greybus_trace.h"
+#define CREATE_TRACE_POINTS
+#include <linux/greybus.h>
+#include "greybus_trace.h"
 
-#घोषणा GB_BUNDLE_AUTOSUSPEND_MS	3000
+#define GB_BUNDLE_AUTOSUSPEND_MS	3000
 
-/* Allow greybus to be disabled at boot अगर needed */
-अटल bool nogreybus;
-#अगर_घोषित MODULE
+/* Allow greybus to be disabled at boot if needed */
+static bool nogreybus;
+#ifdef MODULE
 module_param(nogreybus, bool, 0444);
-#अन्यथा
+#else
 core_param(nogreybus, nogreybus, bool, 0444);
-#पूर्ण_अगर
-पूर्णांक greybus_disabled(व्योम)
-अणु
-	वापस nogreybus;
-पूर्ण
+#endif
+int greybus_disabled(void)
+{
+	return nogreybus;
+}
 EXPORT_SYMBOL_GPL(greybus_disabled);
 
-अटल bool greybus_match_one_id(काष्ठा gb_bundle *bundle,
-				 स्थिर काष्ठा greybus_bundle_id *id)
-अणु
-	अगर ((id->match_flags & GREYBUS_ID_MATCH_VENDOR) &&
-	    (id->venकरोr != bundle->पूर्णांकf->venकरोr_id))
-		वापस false;
+static bool greybus_match_one_id(struct gb_bundle *bundle,
+				 const struct greybus_bundle_id *id)
+{
+	if ((id->match_flags & GREYBUS_ID_MATCH_VENDOR) &&
+	    (id->vendor != bundle->intf->vendor_id))
+		return false;
 
-	अगर ((id->match_flags & GREYBUS_ID_MATCH_PRODUCT) &&
-	    (id->product != bundle->पूर्णांकf->product_id))
-		वापस false;
+	if ((id->match_flags & GREYBUS_ID_MATCH_PRODUCT) &&
+	    (id->product != bundle->intf->product_id))
+		return false;
 
-	अगर ((id->match_flags & GREYBUS_ID_MATCH_CLASS) &&
+	if ((id->match_flags & GREYBUS_ID_MATCH_CLASS) &&
 	    (id->class != bundle->class))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा greybus_bundle_id *
-greybus_match_id(काष्ठा gb_bundle *bundle, स्थिर काष्ठा greybus_bundle_id *id)
-अणु
-	अगर (!id)
-		वापस शून्य;
+static const struct greybus_bundle_id *
+greybus_match_id(struct gb_bundle *bundle, const struct greybus_bundle_id *id)
+{
+	if (!id)
+		return NULL;
 
-	क्रम (; id->venकरोr || id->product || id->class || id->driver_info;
-									id++) अणु
-		अगर (greybus_match_one_id(bundle, id))
-			वापस id;
-	पूर्ण
+	for (; id->vendor || id->product || id->class || id->driver_info;
+									id++) {
+		if (greybus_match_one_id(bundle, id))
+			return id;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक greybus_match_device(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा greybus_driver *driver = to_greybus_driver(drv);
-	काष्ठा gb_bundle *bundle;
-	स्थिर काष्ठा greybus_bundle_id *id;
+static int greybus_match_device(struct device *dev, struct device_driver *drv)
+{
+	struct greybus_driver *driver = to_greybus_driver(drv);
+	struct gb_bundle *bundle;
+	const struct greybus_bundle_id *id;
 
-	अगर (!is_gb_bundle(dev))
-		वापस 0;
+	if (!is_gb_bundle(dev))
+		return 0;
 
 	bundle = to_gb_bundle(dev);
 
 	id = greybus_match_id(bundle, driver->id_table);
-	अगर (id)
-		वापस 1;
+	if (id)
+		return 1;
 	/* FIXME - Dynamic ids? */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक greybus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा gb_host_device *hd;
-	काष्ठा gb_module *module = शून्य;
-	काष्ठा gb_पूर्णांकerface *पूर्णांकf = शून्य;
-	काष्ठा gb_control *control = शून्य;
-	काष्ठा gb_bundle *bundle = शून्य;
-	काष्ठा gb_svc *svc = शून्य;
+static int greybus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct gb_host_device *hd;
+	struct gb_module *module = NULL;
+	struct gb_interface *intf = NULL;
+	struct gb_control *control = NULL;
+	struct gb_bundle *bundle = NULL;
+	struct gb_svc *svc = NULL;
 
-	अगर (is_gb_host_device(dev)) अणु
+	if (is_gb_host_device(dev)) {
 		hd = to_gb_host_device(dev);
-	पूर्ण अन्यथा अगर (is_gb_module(dev)) अणु
+	} else if (is_gb_module(dev)) {
 		module = to_gb_module(dev);
 		hd = module->hd;
-	पूर्ण अन्यथा अगर (is_gb_पूर्णांकerface(dev)) अणु
-		पूर्णांकf = to_gb_पूर्णांकerface(dev);
-		module = पूर्णांकf->module;
-		hd = पूर्णांकf->hd;
-	पूर्ण अन्यथा अगर (is_gb_control(dev)) अणु
+	} else if (is_gb_interface(dev)) {
+		intf = to_gb_interface(dev);
+		module = intf->module;
+		hd = intf->hd;
+	} else if (is_gb_control(dev)) {
 		control = to_gb_control(dev);
-		पूर्णांकf = control->पूर्णांकf;
-		module = पूर्णांकf->module;
-		hd = पूर्णांकf->hd;
-	पूर्ण अन्यथा अगर (is_gb_bundle(dev)) अणु
+		intf = control->intf;
+		module = intf->module;
+		hd = intf->hd;
+	} else if (is_gb_bundle(dev)) {
 		bundle = to_gb_bundle(dev);
-		पूर्णांकf = bundle->पूर्णांकf;
-		module = पूर्णांकf->module;
-		hd = पूर्णांकf->hd;
-	पूर्ण अन्यथा अगर (is_gb_svc(dev)) अणु
+		intf = bundle->intf;
+		module = intf->module;
+		hd = intf->hd;
+	} else if (is_gb_svc(dev)) {
 		svc = to_gb_svc(dev);
 		hd = svc->hd;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_WARN(dev, "uevent for unknown greybus device \"type\"!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (add_uevent_var(env, "BUS=%u", hd->bus_id))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "BUS=%u", hd->bus_id))
+		return -ENOMEM;
 
-	अगर (module) अणु
-		अगर (add_uevent_var(env, "MODULE=%u", module->module_id))
-			वापस -ENOMEM;
-	पूर्ण
+	if (module) {
+		if (add_uevent_var(env, "MODULE=%u", module->module_id))
+			return -ENOMEM;
+	}
 
-	अगर (पूर्णांकf) अणु
-		अगर (add_uevent_var(env, "INTERFACE=%u", पूर्णांकf->पूर्णांकerface_id))
-			वापस -ENOMEM;
-		अगर (add_uevent_var(env, "GREYBUS_ID=%08x/%08x",
-				   पूर्णांकf->venकरोr_id, पूर्णांकf->product_id))
-			वापस -ENOMEM;
-	पूर्ण
+	if (intf) {
+		if (add_uevent_var(env, "INTERFACE=%u", intf->interface_id))
+			return -ENOMEM;
+		if (add_uevent_var(env, "GREYBUS_ID=%08x/%08x",
+				   intf->vendor_id, intf->product_id))
+			return -ENOMEM;
+	}
 
-	अगर (bundle) अणु
+	if (bundle) {
 		// FIXME
 		// add a uevent that can "load" a bundle type
 		// This is what we need to bind a driver to so use the info
 		// in gmod here as well
 
-		अगर (add_uevent_var(env, "BUNDLE=%u", bundle->id))
-			वापस -ENOMEM;
-		अगर (add_uevent_var(env, "BUNDLE_CLASS=%02x", bundle->class))
-			वापस -ENOMEM;
-	पूर्ण
+		if (add_uevent_var(env, "BUNDLE=%u", bundle->id))
+			return -ENOMEM;
+		if (add_uevent_var(env, "BUNDLE_CLASS=%02x", bundle->class))
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम greybus_shutकरोwn(काष्ठा device *dev)
-अणु
-	अगर (is_gb_host_device(dev)) अणु
-		काष्ठा gb_host_device *hd;
+static void greybus_shutdown(struct device *dev)
+{
+	if (is_gb_host_device(dev)) {
+		struct gb_host_device *hd;
 
 		hd = to_gb_host_device(dev);
-		gb_hd_shutकरोwn(hd);
-	पूर्ण
-पूर्ण
+		gb_hd_shutdown(hd);
+	}
+}
 
-काष्ठा bus_type greybus_bus_type = अणु
+struct bus_type greybus_bus_type = {
 	.name =		"greybus",
 	.match =	greybus_match_device,
 	.uevent =	greybus_uevent,
-	.shutकरोwn =	greybus_shutकरोwn,
-पूर्ण;
+	.shutdown =	greybus_shutdown,
+};
 
-अटल पूर्णांक greybus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा greybus_driver *driver = to_greybus_driver(dev->driver);
-	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
-	स्थिर काष्ठा greybus_bundle_id *id;
-	पूर्णांक retval;
+static int greybus_probe(struct device *dev)
+{
+	struct greybus_driver *driver = to_greybus_driver(dev->driver);
+	struct gb_bundle *bundle = to_gb_bundle(dev);
+	const struct greybus_bundle_id *id;
+	int retval;
 
 	/* match id */
 	id = greybus_match_id(bundle, driver->id_table);
-	अगर (!id)
-		वापस -ENODEV;
+	if (!id)
+		return -ENODEV;
 
-	retval = pm_runसमय_get_sync(&bundle->पूर्णांकf->dev);
-	अगर (retval < 0) अणु
-		pm_runसमय_put_noidle(&bundle->पूर्णांकf->dev);
-		वापस retval;
-	पूर्ण
+	retval = pm_runtime_get_sync(&bundle->intf->dev);
+	if (retval < 0) {
+		pm_runtime_put_noidle(&bundle->intf->dev);
+		return retval;
+	}
 
-	retval = gb_control_bundle_activate(bundle->पूर्णांकf->control, bundle->id);
-	अगर (retval) अणु
-		pm_runसमय_put(&bundle->पूर्णांकf->dev);
-		वापस retval;
-	पूर्ण
+	retval = gb_control_bundle_activate(bundle->intf->control, bundle->id);
+	if (retval) {
+		pm_runtime_put(&bundle->intf->dev);
+		return retval;
+	}
 
 	/*
 	 * Unbound bundle devices are always deactivated. During probe, the
-	 * Runसमय PM is set to enabled and active and the usage count is
-	 * incremented. If the driver supports runसमय PM, it should call
-	 * pm_runसमय_put() in its probe routine and pm_runसमय_get_sync()
-	 * in हटाओ routine.
+	 * Runtime PM is set to enabled and active and the usage count is
+	 * incremented. If the driver supports runtime PM, it should call
+	 * pm_runtime_put() in its probe routine and pm_runtime_get_sync()
+	 * in remove routine.
 	 */
-	pm_runसमय_set_स्वतःsuspend_delay(dev, GB_BUNDLE_AUTOSUSPEND_MS);
-	pm_runसमय_use_स्वतःsuspend(dev);
-	pm_runसमय_get_noresume(dev);
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
+	pm_runtime_set_autosuspend_delay(dev, GB_BUNDLE_AUTOSUSPEND_MS);
+	pm_runtime_use_autosuspend(dev);
+	pm_runtime_get_noresume(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
 
 	retval = driver->probe(bundle, id);
-	अगर (retval) अणु
+	if (retval) {
 		/*
 		 * Catch buggy drivers that fail to destroy their connections.
 		 */
 		WARN_ON(!list_empty(&bundle->connections));
 
-		gb_control_bundle_deactivate(bundle->पूर्णांकf->control, bundle->id);
+		gb_control_bundle_deactivate(bundle->intf->control, bundle->id);
 
-		pm_runसमय_disable(dev);
-		pm_runसमय_set_suspended(dev);
-		pm_runसमय_put_noidle(dev);
-		pm_runसमय_करोnt_use_स्वतःsuspend(dev);
-		pm_runसमय_put(&bundle->पूर्णांकf->dev);
+		pm_runtime_disable(dev);
+		pm_runtime_set_suspended(dev);
+		pm_runtime_put_noidle(dev);
+		pm_runtime_dont_use_autosuspend(dev);
+		pm_runtime_put(&bundle->intf->dev);
 
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	pm_runसमय_put(&bundle->पूर्णांकf->dev);
+	pm_runtime_put(&bundle->intf->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक greybus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा greybus_driver *driver = to_greybus_driver(dev->driver);
-	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
-	काष्ठा gb_connection *connection;
-	पूर्णांक retval;
+static int greybus_remove(struct device *dev)
+{
+	struct greybus_driver *driver = to_greybus_driver(dev->driver);
+	struct gb_bundle *bundle = to_gb_bundle(dev);
+	struct gb_connection *connection;
+	int retval;
 
-	retval = pm_runसमय_get_sync(dev);
-	अगर (retval < 0)
+	retval = pm_runtime_get_sync(dev);
+	if (retval < 0)
 		dev_err(dev, "failed to resume bundle: %d\n", retval);
 
 	/*
-	 * Disable (non-offloaded) connections early in हाल the पूर्णांकerface is
-	 * alपढ़ोy gone to aव्योम unceccessary operation समयouts during
+	 * Disable (non-offloaded) connections early in case the interface is
+	 * already gone to avoid unceccessary operation timeouts during
 	 * driver disconnect. Otherwise, only disable incoming requests.
 	 */
-	list_क्रम_each_entry(connection, &bundle->connections, bundle_links) अणु
-		अगर (gb_connection_is_offloaded(connection))
-			जारी;
+	list_for_each_entry(connection, &bundle->connections, bundle_links) {
+		if (gb_connection_is_offloaded(connection))
+			continue;
 
-		अगर (bundle->पूर्णांकf->disconnected)
-			gb_connection_disable_क्रमced(connection);
-		अन्यथा
+		if (bundle->intf->disconnected)
+			gb_connection_disable_forced(connection);
+		else
 			gb_connection_disable_rx(connection);
-	पूर्ण
+	}
 
 	driver->disconnect(bundle);
 
 	/* Catch buggy drivers that fail to destroy their connections. */
 	WARN_ON(!list_empty(&bundle->connections));
 
-	अगर (!bundle->पूर्णांकf->disconnected)
-		gb_control_bundle_deactivate(bundle->पूर्णांकf->control, bundle->id);
+	if (!bundle->intf->disconnected)
+		gb_control_bundle_deactivate(bundle->intf->control, bundle->id);
 
-	pm_runसमय_put_noidle(dev);
-	pm_runसमय_disable(dev);
-	pm_runसमय_set_suspended(dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(dev);
-	pm_runसमय_put_noidle(dev);
+	pm_runtime_put_noidle(dev);
+	pm_runtime_disable(dev);
+	pm_runtime_set_suspended(dev);
+	pm_runtime_dont_use_autosuspend(dev);
+	pm_runtime_put_noidle(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक greybus_रेजिस्टर_driver(काष्ठा greybus_driver *driver, काष्ठा module *owner,
-			    स्थिर अक्षर *mod_name)
-अणु
-	पूर्णांक retval;
+int greybus_register_driver(struct greybus_driver *driver, struct module *owner,
+			    const char *mod_name)
+{
+	int retval;
 
-	अगर (greybus_disabled())
-		वापस -ENODEV;
+	if (greybus_disabled())
+		return -ENODEV;
 
 	driver->driver.bus = &greybus_bus_type;
 	driver->driver.name = driver->name;
 	driver->driver.probe = greybus_probe;
-	driver->driver.हटाओ = greybus_हटाओ;
+	driver->driver.remove = greybus_remove;
 	driver->driver.owner = owner;
 	driver->driver.mod_name = mod_name;
 
-	retval = driver_रेजिस्टर(&driver->driver);
-	अगर (retval)
-		वापस retval;
+	retval = driver_register(&driver->driver);
+	if (retval)
+		return retval;
 
 	pr_info("registered new driver %s\n", driver->name);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(greybus_रेजिस्टर_driver);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(greybus_register_driver);
 
-व्योम greybus_deरेजिस्टर_driver(काष्ठा greybus_driver *driver)
-अणु
-	driver_unरेजिस्टर(&driver->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(greybus_deरेजिस्टर_driver);
+void greybus_deregister_driver(struct greybus_driver *driver)
+{
+	driver_unregister(&driver->driver);
+}
+EXPORT_SYMBOL_GPL(greybus_deregister_driver);
 
-अटल पूर्णांक __init gb_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init gb_init(void)
+{
+	int retval;
 
-	अगर (greybus_disabled())
-		वापस -ENODEV;
+	if (greybus_disabled())
+		return -ENODEV;
 
-	BUILD_BUG_ON(CPORT_ID_MAX >= (दीर्घ)CPORT_ID_BAD);
+	BUILD_BUG_ON(CPORT_ID_MAX >= (long)CPORT_ID_BAD);
 
 	gb_debugfs_init();
 
-	retval = bus_रेजिस्टर(&greybus_bus_type);
-	अगर (retval) अणु
+	retval = bus_register(&greybus_bus_type);
+	if (retval) {
 		pr_err("bus_register failed (%d)\n", retval);
-		जाओ error_bus;
-	पूर्ण
+		goto error_bus;
+	}
 
 	retval = gb_hd_init();
-	अगर (retval) अणु
+	if (retval) {
 		pr_err("gb_hd_init failed (%d)\n", retval);
-		जाओ error_hd;
-	पूर्ण
+		goto error_hd;
+	}
 
 	retval = gb_operation_init();
-	अगर (retval) अणु
+	if (retval) {
 		pr_err("gb_operation_init failed (%d)\n", retval);
-		जाओ error_operation;
-	पूर्ण
-	वापस 0;	/* Success */
+		goto error_operation;
+	}
+	return 0;	/* Success */
 
 error_operation:
-	gb_hd_निकास();
+	gb_hd_exit();
 error_hd:
-	bus_unरेजिस्टर(&greybus_bus_type);
+	bus_unregister(&greybus_bus_type);
 error_bus:
 	gb_debugfs_cleanup();
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 module_init(gb_init);
 
-अटल व्योम __निकास gb_निकास(व्योम)
-अणु
-	gb_operation_निकास();
-	gb_hd_निकास();
-	bus_unरेजिस्टर(&greybus_bus_type);
+static void __exit gb_exit(void)
+{
+	gb_operation_exit();
+	gb_hd_exit();
+	bus_unregister(&greybus_bus_type);
 	gb_debugfs_cleanup();
-	tracepoपूर्णांक_synchronize_unरेजिस्टर();
-पूर्ण
-module_निकास(gb_निकास);
+	tracepoint_synchronize_unregister();
+}
+module_exit(gb_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Greg Kroah-Hartman <gregkh@linuxfoundation.org>");

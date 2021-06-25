@@ -1,115 +1,114 @@
-<शैली गुरु>
 /*
- * Kernel Debugger Architecture Independent Breakpoपूर्णांक Handler
+ * Kernel Debugger Architecture Independent Breakpoint Handler
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 1999-2004 Silicon Graphics, Inc.  All Rights Reserved.
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kdb.h>
-#समावेश <linux/kgdb.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश "kdb_private.h"
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/kdb.h>
+#include <linux/kgdb.h>
+#include <linux/smp.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+#include "kdb_private.h"
 
 /*
- * Table of kdb_अवरोधpoपूर्णांकs
+ * Table of kdb_breakpoints
  */
-kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
+kdb_bp_t kdb_breakpoints[KDB_MAXBPT];
 
-अटल व्योम kdb_setsinglestep(काष्ठा pt_regs *regs)
-अणु
+static void kdb_setsinglestep(struct pt_regs *regs)
+{
 	KDB_STATE_SET(DOING_SS);
-पूर्ण
+}
 
-अटल अक्षर *kdb_rwtypes[] = अणु
+static char *kdb_rwtypes[] = {
 	"Instruction(i)",
 	"Instruction(Register)",
 	"Data Write",
 	"I/O",
 	"Data Access"
-पूर्ण;
+};
 
-अटल अक्षर *kdb_bptype(kdb_bp_t *bp)
-अणु
-	अगर (bp->bp_type < 0 || bp->bp_type > 4)
-		वापस "";
+static char *kdb_bptype(kdb_bp_t *bp)
+{
+	if (bp->bp_type < 0 || bp->bp_type > 4)
+		return "";
 
-	वापस kdb_rwtypes[bp->bp_type];
-पूर्ण
+	return kdb_rwtypes[bp->bp_type];
+}
 
-अटल पूर्णांक kdb_parsebp(पूर्णांक argc, स्थिर अक्षर **argv, पूर्णांक *nextargp, kdb_bp_t *bp)
-अणु
-	पूर्णांक nextarg = *nextargp;
-	पूर्णांक diag;
+static int kdb_parsebp(int argc, const char **argv, int *nextargp, kdb_bp_t *bp)
+{
+	int nextarg = *nextargp;
+	int diag;
 
 	bp->bph_length = 1;
-	अगर ((argc + 1) != nextarg) अणु
-		अगर (strnहालcmp(argv[nextarg], "datar", माप("datar")) == 0)
+	if ((argc + 1) != nextarg) {
+		if (strncasecmp(argv[nextarg], "datar", sizeof("datar")) == 0)
 			bp->bp_type = BP_ACCESS_WATCHPOINT;
-		अन्यथा अगर (strnहालcmp(argv[nextarg], "dataw", माप("dataw")) == 0)
+		else if (strncasecmp(argv[nextarg], "dataw", sizeof("dataw")) == 0)
 			bp->bp_type = BP_WRITE_WATCHPOINT;
-		अन्यथा अगर (strnहालcmp(argv[nextarg], "inst", माप("inst")) == 0)
+		else if (strncasecmp(argv[nextarg], "inst", sizeof("inst")) == 0)
 			bp->bp_type = BP_HARDWARE_BREAKPOINT;
-		अन्यथा
-			वापस KDB_ARGCOUNT;
+		else
+			return KDB_ARGCOUNT;
 
 		bp->bph_length = 1;
 
 		nextarg++;
 
-		अगर ((argc + 1) != nextarg) अणु
-			अचिन्हित दीर्घ len;
+		if ((argc + 1) != nextarg) {
+			unsigned long len;
 
-			diag = kdbgetularg((अक्षर *)argv[nextarg],
+			diag = kdbgetularg((char *)argv[nextarg],
 					   &len);
-			अगर (diag)
-				वापस diag;
+			if (diag)
+				return diag;
 
 
-			अगर (len > 8)
-				वापस KDB_BADLENGTH;
+			if (len > 8)
+				return KDB_BADLENGTH;
 
 			bp->bph_length = len;
 			nextarg++;
-		पूर्ण
+		}
 
-		अगर ((argc + 1) != nextarg)
-			वापस KDB_ARGCOUNT;
-	पूर्ण
+		if ((argc + 1) != nextarg)
+			return KDB_ARGCOUNT;
+	}
 
 	*nextargp = nextarg;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _kdb_bp_हटाओ(kdb_bp_t *bp)
-अणु
-	पूर्णांक ret = 1;
-	अगर (!bp->bp_installed)
-		वापस ret;
-	अगर (!bp->bp_type)
-		ret = dbg_हटाओ_sw_अवरोध(bp->bp_addr);
-	अन्यथा
-		ret = arch_kgdb_ops.हटाओ_hw_अवरोधpoपूर्णांक(bp->bp_addr,
+static int _kdb_bp_remove(kdb_bp_t *bp)
+{
+	int ret = 1;
+	if (!bp->bp_installed)
+		return ret;
+	if (!bp->bp_type)
+		ret = dbg_remove_sw_break(bp->bp_addr);
+	else
+		ret = arch_kgdb_ops.remove_hw_breakpoint(bp->bp_addr,
 			 bp->bph_length,
 			 bp->bp_type);
-	अगर (ret == 0)
+	if (ret == 0)
 		bp->bp_installed = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम kdb_handle_bp(काष्ठा pt_regs *regs, kdb_bp_t *bp)
-अणु
-	अगर (KDB_DEBUG(BP))
-		kdb_म_लिखो("regs->ip = 0x%lx\n", inकाष्ठाion_poपूर्णांकer(regs));
+static void kdb_handle_bp(struct pt_regs *regs, kdb_bp_t *bp)
+{
+	if (KDB_DEBUG(BP))
+		kdb_printf("regs->ip = 0x%lx\n", instruction_pointer(regs));
 
 	/*
 	 * Setup single step
@@ -121,81 +120,81 @@ kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
 	 */
 	bp->bp_delay = 0;
 	bp->bp_delayed = 1;
-पूर्ण
+}
 
-अटल पूर्णांक _kdb_bp_install(काष्ठा pt_regs *regs, kdb_bp_t *bp)
-अणु
-	पूर्णांक ret;
+static int _kdb_bp_install(struct pt_regs *regs, kdb_bp_t *bp)
+{
+	int ret;
 	/*
-	 * Install the अवरोधpoपूर्णांक, अगर it is not alपढ़ोy installed.
+	 * Install the breakpoint, if it is not already installed.
 	 */
 
-	अगर (KDB_DEBUG(BP))
-		kdb_म_लिखो("%s: bp_installed %d\n",
+	if (KDB_DEBUG(BP))
+		kdb_printf("%s: bp_installed %d\n",
 			   __func__, bp->bp_installed);
-	अगर (!KDB_STATE(SSBPT))
+	if (!KDB_STATE(SSBPT))
 		bp->bp_delay = 0;
-	अगर (bp->bp_installed)
-		वापस 1;
-	अगर (bp->bp_delay || (bp->bp_delayed && KDB_STATE(DOING_SS))) अणु
-		अगर (KDB_DEBUG(BP))
-			kdb_म_लिखो("%s: delayed bp\n", __func__);
+	if (bp->bp_installed)
+		return 1;
+	if (bp->bp_delay || (bp->bp_delayed && KDB_STATE(DOING_SS))) {
+		if (KDB_DEBUG(BP))
+			kdb_printf("%s: delayed bp\n", __func__);
 		kdb_handle_bp(regs, bp);
-		वापस 0;
-	पूर्ण
-	अगर (!bp->bp_type)
-		ret = dbg_set_sw_अवरोध(bp->bp_addr);
-	अन्यथा
-		ret = arch_kgdb_ops.set_hw_अवरोधpoपूर्णांक(bp->bp_addr,
+		return 0;
+	}
+	if (!bp->bp_type)
+		ret = dbg_set_sw_break(bp->bp_addr);
+	else
+		ret = arch_kgdb_ops.set_hw_breakpoint(bp->bp_addr,
 			 bp->bph_length,
 			 bp->bp_type);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		bp->bp_installed = 1;
-	पूर्ण अन्यथा अणु
-		kdb_म_लिखो("%s: failed to set breakpoint at 0x%lx\n",
+	} else {
+		kdb_printf("%s: failed to set breakpoint at 0x%lx\n",
 			   __func__, bp->bp_addr);
-		अगर (!bp->bp_type) अणु
-			kdb_म_लिखो("Software breakpoints are unavailable.\n"
+		if (!bp->bp_type) {
+			kdb_printf("Software breakpoints are unavailable.\n"
 				   "  Boot the kernel with rodata=off\n"
 				   "  OR use hw breaks: help bph\n");
-		पूर्ण
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return 1;
+	}
+	return 0;
+}
 
 /*
  * kdb_bp_install
  *
- *	Install kdb_अवरोधpoपूर्णांकs prior to वापसing from the
- *	kernel debugger.  This allows the kdb_अवरोधpoपूर्णांकs to be set
- *	upon functions that are used पूर्णांकernally by kdb, such as
- *	prपूर्णांकk().  This function is only called once per kdb session.
+ *	Install kdb_breakpoints prior to returning from the
+ *	kernel debugger.  This allows the kdb_breakpoints to be set
+ *	upon functions that are used internally by kdb, such as
+ *	printk().  This function is only called once per kdb session.
  */
-व्योम kdb_bp_install(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i;
+void kdb_bp_install(struct pt_regs *regs)
+{
+	int i;
 
-	क्रम (i = 0; i < KDB_MAXBPT; i++) अणु
-		kdb_bp_t *bp = &kdb_अवरोधpoपूर्णांकs[i];
+	for (i = 0; i < KDB_MAXBPT; i++) {
+		kdb_bp_t *bp = &kdb_breakpoints[i];
 
-		अगर (KDB_DEBUG(BP)) अणु
-			kdb_म_लिखो("%s: bp %d bp_enabled %d\n",
+		if (KDB_DEBUG(BP)) {
+			kdb_printf("%s: bp %d bp_enabled %d\n",
 				   __func__, i, bp->bp_enabled);
-		पूर्ण
-		अगर (bp->bp_enabled)
+		}
+		if (bp->bp_enabled)
 			_kdb_bp_install(regs, bp);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * kdb_bp_हटाओ
+ * kdb_bp_remove
  *
- *	Remove kdb_अवरोधpoपूर्णांकs upon entry to the kernel debugger.
+ *	Remove kdb_breakpoints upon entry to the kernel debugger.
  *
  * Parameters:
  *	None.
- * Outमाला_दो:
+ * Outputs:
  *	None.
  * Returns:
  *	None.
@@ -203,31 +202,31 @@ kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
  *	None.
  * Remarks:
  */
-व्योम kdb_bp_हटाओ(व्योम)
-अणु
-	पूर्णांक i;
+void kdb_bp_remove(void)
+{
+	int i;
 
-	क्रम (i = KDB_MAXBPT - 1; i >= 0; i--) अणु
-		kdb_bp_t *bp = &kdb_अवरोधpoपूर्णांकs[i];
+	for (i = KDB_MAXBPT - 1; i >= 0; i--) {
+		kdb_bp_t *bp = &kdb_breakpoints[i];
 
-		अगर (KDB_DEBUG(BP)) अणु
-			kdb_म_लिखो("%s: bp %d bp_enabled %d\n",
+		if (KDB_DEBUG(BP)) {
+			kdb_printf("%s: bp %d bp_enabled %d\n",
 				   __func__, i, bp->bp_enabled);
-		पूर्ण
-		अगर (bp->bp_enabled)
-			_kdb_bp_हटाओ(bp);
-	पूर्ण
-पूर्ण
+		}
+		if (bp->bp_enabled)
+			_kdb_bp_remove(bp);
+	}
+}
 
 
 /*
- * kdb_prपूर्णांकbp
+ * kdb_printbp
  *
- *	Internal function to क्रमmat and prपूर्णांक a अवरोधpoपूर्णांक entry.
+ *	Internal function to format and print a breakpoint entry.
  *
  * Parameters:
  *	None.
- * Outमाला_दो:
+ * Outputs:
  *	None.
  * Returns:
  *	None.
@@ -236,22 +235,22 @@ kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
  * Remarks:
  */
 
-अटल व्योम kdb_prपूर्णांकbp(kdb_bp_t *bp, पूर्णांक i)
-अणु
-	kdb_म_लिखो("%s ", kdb_bptype(bp));
-	kdb_म_लिखो("BP #%d at ", i);
-	kdb_symbol_prपूर्णांक(bp->bp_addr, शून्य, KDB_SP_DEFAULT);
+static void kdb_printbp(kdb_bp_t *bp, int i)
+{
+	kdb_printf("%s ", kdb_bptype(bp));
+	kdb_printf("BP #%d at ", i);
+	kdb_symbol_print(bp->bp_addr, NULL, KDB_SP_DEFAULT);
 
-	अगर (bp->bp_enabled)
-		kdb_म_लिखो("\n    is enabled ");
-	अन्यथा
-		kdb_म_लिखो("\n    is disabled");
+	if (bp->bp_enabled)
+		kdb_printf("\n    is enabled ");
+	else
+		kdb_printf("\n    is disabled");
 
-	kdb_म_लिखो("  addr at %016lx, hardtype=%d installed=%d\n",
+	kdb_printf("  addr at %016lx, hardtype=%d installed=%d\n",
 		   bp->bp_addr, bp->bp_type, bp->bp_installed);
 
-	kdb_म_लिखो("\n");
-पूर्ण
+	kdb_printf("\n");
+}
 
 /*
  * kdb_bp
@@ -263,232 +262,232 @@ kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
  * Parameters:
  *	argc	Count of arguments in argv
  *	argv	Space delimited command line arguments
- * Outमाला_दो:
+ * Outputs:
  *	None.
  * Returns:
- *	Zero क्रम success, a kdb diagnostic अगर failure.
+ *	Zero for success, a kdb diagnostic if failure.
  * Locking:
  *	None.
  * Remarks:
  *
- *	bp	Set अवरोधpoपूर्णांक on all cpus.  Only use hardware assist अगर need.
- *	bph	Set अवरोधpoपूर्णांक on all cpus.  Force hardware रेजिस्टर
+ *	bp	Set breakpoint on all cpus.  Only use hardware assist if need.
+ *	bph	Set breakpoint on all cpus.  Force hardware register
  */
 
-अटल पूर्णांक kdb_bp(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	पूर्णांक i, bpno;
+static int kdb_bp(int argc, const char **argv)
+{
+	int i, bpno;
 	kdb_bp_t *bp, *bp_check;
-	पूर्णांक diag;
-	अक्षर *symname = शून्य;
-	दीर्घ offset = 0ul;
-	पूर्णांक nextarg;
-	kdb_bp_t ढाँचा = अणु0पूर्ण;
+	int diag;
+	char *symname = NULL;
+	long offset = 0ul;
+	int nextarg;
+	kdb_bp_t template = {0};
 
-	अगर (argc == 0) अणु
+	if (argc == 0) {
 		/*
-		 * Display अवरोधpoपूर्णांक table
+		 * Display breakpoint table
 		 */
-		क्रम (bpno = 0, bp = kdb_अवरोधpoपूर्णांकs; bpno < KDB_MAXBPT;
-		     bpno++, bp++) अणु
-			अगर (bp->bp_मुक्त)
-				जारी;
-			kdb_prपूर्णांकbp(bp, bpno);
-		पूर्ण
+		for (bpno = 0, bp = kdb_breakpoints; bpno < KDB_MAXBPT;
+		     bpno++, bp++) {
+			if (bp->bp_free)
+				continue;
+			kdb_printbp(bp, bpno);
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	nextarg = 1;
-	diag = kdbgetaddrarg(argc, argv, &nextarg, &ढाँचा.bp_addr,
+	diag = kdbgetaddrarg(argc, argv, &nextarg, &template.bp_addr,
 			     &offset, &symname);
-	अगर (diag)
-		वापस diag;
-	अगर (!ढाँचा.bp_addr)
-		वापस KDB_BADINT;
+	if (diag)
+		return diag;
+	if (!template.bp_addr)
+		return KDB_BADINT;
 
 	/*
-	 * This check is redundant (since the अवरोधpoपूर्णांक machinery should
-	 * be करोing the same check during kdb_bp_install) but gives the
+	 * This check is redundant (since the breakpoint machinery should
+	 * be doing the same check during kdb_bp_install) but gives the
 	 * user immediate feedback.
 	 */
-	diag = kgdb_validate_अवरोध_address(ढाँचा.bp_addr);
-	अगर (diag)
-		वापस diag;
+	diag = kgdb_validate_break_address(template.bp_addr);
+	if (diag)
+		return diag;
 
 	/*
-	 * Find an empty bp काष्ठाure to allocate
+	 * Find an empty bp structure to allocate
 	 */
-	क्रम (bpno = 0, bp = kdb_अवरोधpoपूर्णांकs; bpno < KDB_MAXBPT; bpno++, bp++) अणु
-		अगर (bp->bp_मुक्त)
-			अवरोध;
-	पूर्ण
+	for (bpno = 0, bp = kdb_breakpoints; bpno < KDB_MAXBPT; bpno++, bp++) {
+		if (bp->bp_free)
+			break;
+	}
 
-	अगर (bpno == KDB_MAXBPT)
-		वापस KDB_TOOMANYBPT;
+	if (bpno == KDB_MAXBPT)
+		return KDB_TOOMANYBPT;
 
-	अगर (म_भेद(argv[0], "bph") == 0) अणु
-		ढाँचा.bp_type = BP_HARDWARE_BREAKPOINT;
-		diag = kdb_parsebp(argc, argv, &nextarg, &ढाँचा);
-		अगर (diag)
-			वापस diag;
-	पूर्ण अन्यथा अणु
-		ढाँचा.bp_type = BP_BREAKPOINT;
-	पूर्ण
+	if (strcmp(argv[0], "bph") == 0) {
+		template.bp_type = BP_HARDWARE_BREAKPOINT;
+		diag = kdb_parsebp(argc, argv, &nextarg, &template);
+		if (diag)
+			return diag;
+	} else {
+		template.bp_type = BP_BREAKPOINT;
+	}
 
 	/*
-	 * Check क्रम clashing अवरोधpoपूर्णांकs.
+	 * Check for clashing breakpoints.
 	 *
-	 * Note, in this design we can't have hardware अवरोधpoपूर्णांकs
-	 * enabled क्रम both पढ़ो and ग_लिखो on the same address.
+	 * Note, in this design we can't have hardware breakpoints
+	 * enabled for both read and write on the same address.
 	 */
-	क्रम (i = 0, bp_check = kdb_अवरोधpoपूर्णांकs; i < KDB_MAXBPT;
-	     i++, bp_check++) अणु
-		अगर (!bp_check->bp_मुक्त &&
-		    bp_check->bp_addr == ढाँचा.bp_addr) अणु
-			kdb_म_लिखो("You already have a breakpoint at "
-				   kdb_bfd_vma_fmt0 "\n", ढाँचा.bp_addr);
-			वापस KDB_DUPBPT;
-		पूर्ण
-	पूर्ण
+	for (i = 0, bp_check = kdb_breakpoints; i < KDB_MAXBPT;
+	     i++, bp_check++) {
+		if (!bp_check->bp_free &&
+		    bp_check->bp_addr == template.bp_addr) {
+			kdb_printf("You already have a breakpoint at "
+				   kdb_bfd_vma_fmt0 "\n", template.bp_addr);
+			return KDB_DUPBPT;
+		}
+	}
 
-	ढाँचा.bp_enabled = 1;
+	template.bp_enabled = 1;
 
 	/*
-	 * Actually allocate the अवरोधpoपूर्णांक found earlier
+	 * Actually allocate the breakpoint found earlier
 	 */
-	*bp = ढाँचा;
-	bp->bp_मुक्त = 0;
+	*bp = template;
+	bp->bp_free = 0;
 
-	kdb_prपूर्णांकbp(bp, bpno);
+	kdb_printbp(bp, bpno);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * kdb_bc
  *
  *	Handles the 'bc', 'be', and 'bd' commands
  *
- *	[bd|bc|be] <अवरोधpoपूर्णांक-number>
+ *	[bd|bc|be] <breakpoint-number>
  *	[bd|bc|be] *
  *
  * Parameters:
  *	argc	Count of arguments in argv
  *	argv	Space delimited command line arguments
- * Outमाला_दो:
+ * Outputs:
  *	None.
  * Returns:
- *	Zero क्रम success, a kdb diagnostic क्रम failure
+ *	Zero for success, a kdb diagnostic for failure
  * Locking:
  *	None.
  * Remarks:
  */
-अटल पूर्णांक kdb_bc(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	अचिन्हित दीर्घ addr;
-	kdb_bp_t *bp = शून्य;
-	पूर्णांक lowbp = KDB_MAXBPT;
-	पूर्णांक highbp = 0;
-	पूर्णांक करोne = 0;
-	पूर्णांक i;
-	पूर्णांक diag = 0;
+static int kdb_bc(int argc, const char **argv)
+{
+	unsigned long addr;
+	kdb_bp_t *bp = NULL;
+	int lowbp = KDB_MAXBPT;
+	int highbp = 0;
+	int done = 0;
+	int i;
+	int diag = 0;
 
-	पूर्णांक cmd;			/* KDBCMD_B? */
-#घोषणा KDBCMD_BC	0
-#घोषणा KDBCMD_BE	1
-#घोषणा KDBCMD_BD	2
+	int cmd;			/* KDBCMD_B? */
+#define KDBCMD_BC	0
+#define KDBCMD_BE	1
+#define KDBCMD_BD	2
 
-	अगर (म_भेद(argv[0], "be") == 0)
+	if (strcmp(argv[0], "be") == 0)
 		cmd = KDBCMD_BE;
-	अन्यथा अगर (म_भेद(argv[0], "bd") == 0)
+	else if (strcmp(argv[0], "bd") == 0)
 		cmd = KDBCMD_BD;
-	अन्यथा
+	else
 		cmd = KDBCMD_BC;
 
-	अगर (argc != 1)
-		वापस KDB_ARGCOUNT;
+	if (argc != 1)
+		return KDB_ARGCOUNT;
 
-	अगर (म_भेद(argv[1], "*") == 0) अणु
+	if (strcmp(argv[1], "*") == 0) {
 		lowbp = 0;
 		highbp = KDB_MAXBPT;
-	पूर्ण अन्यथा अणु
+	} else {
 		diag = kdbgetularg(argv[1], &addr);
-		अगर (diag)
-			वापस diag;
+		if (diag)
+			return diag;
 
 		/*
-		 * For addresses less than the maximum अवरोधpoपूर्णांक number,
-		 * assume that the अवरोधpoपूर्णांक number is desired.
+		 * For addresses less than the maximum breakpoint number,
+		 * assume that the breakpoint number is desired.
 		 */
-		अगर (addr < KDB_MAXBPT) अणु
+		if (addr < KDB_MAXBPT) {
 			lowbp = highbp = addr;
 			highbp++;
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0, bp = kdb_अवरोधpoपूर्णांकs; i < KDB_MAXBPT;
-			    i++, bp++) अणु
-				अगर (bp->bp_addr == addr) अणु
+		} else {
+			for (i = 0, bp = kdb_breakpoints; i < KDB_MAXBPT;
+			    i++, bp++) {
+				if (bp->bp_addr == addr) {
 					lowbp = highbp = i;
 					highbp++;
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				}
+			}
+		}
+	}
 
 	/*
-	 * Now operate on the set of अवरोधpoपूर्णांकs matching the input
-	 * criteria (either '*' क्रम all, or an inभागidual अवरोधpoपूर्णांक).
+	 * Now operate on the set of breakpoints matching the input
+	 * criteria (either '*' for all, or an individual breakpoint).
 	 */
-	क्रम (bp = &kdb_अवरोधpoपूर्णांकs[lowbp], i = lowbp;
+	for (bp = &kdb_breakpoints[lowbp], i = lowbp;
 	    i < highbp;
-	    i++, bp++) अणु
-		अगर (bp->bp_मुक्त)
-			जारी;
+	    i++, bp++) {
+		if (bp->bp_free)
+			continue;
 
-		करोne++;
+		done++;
 
-		चयन (cmd) अणु
-		हाल KDBCMD_BC:
+		switch (cmd) {
+		case KDBCMD_BC:
 			bp->bp_enabled = 0;
 
-			kdb_म_लिखो("Breakpoint %d at "
+			kdb_printf("Breakpoint %d at "
 				   kdb_bfd_vma_fmt " cleared\n",
 				   i, bp->bp_addr);
 
 			bp->bp_addr = 0;
-			bp->bp_मुक्त = 1;
+			bp->bp_free = 1;
 
-			अवरोध;
-		हाल KDBCMD_BE:
+			break;
+		case KDBCMD_BE:
 			bp->bp_enabled = 1;
 
-			kdb_म_लिखो("Breakpoint %d at "
+			kdb_printf("Breakpoint %d at "
 				   kdb_bfd_vma_fmt " enabled",
 				   i, bp->bp_addr);
 
-			kdb_म_लिखो("\n");
-			अवरोध;
-		हाल KDBCMD_BD:
-			अगर (!bp->bp_enabled)
-				अवरोध;
+			kdb_printf("\n");
+			break;
+		case KDBCMD_BD:
+			if (!bp->bp_enabled)
+				break;
 
 			bp->bp_enabled = 0;
 
-			kdb_म_लिखो("Breakpoint %d at "
+			kdb_printf("Breakpoint %d at "
 				   kdb_bfd_vma_fmt " disabled\n",
 				   i, bp->bp_addr);
 
-			अवरोध;
-		पूर्ण
-		अगर (bp->bp_delay && (cmd == KDBCMD_BC || cmd == KDBCMD_BD)) अणु
+			break;
+		}
+		if (bp->bp_delay && (cmd == KDBCMD_BC || cmd == KDBCMD_BD)) {
 			bp->bp_delay = 0;
 			KDB_STATE_CLEAR(SSBPT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (!करोne) ? KDB_BPTNOTFOUND : 0;
-पूर्ण
+	return (!done) ? KDB_BPTNOTFOUND : 0;
+}
 
 /*
  * kdb_ss
@@ -500,93 +499,93 @@ kdb_bp_t kdb_अवरोधpoपूर्णांकs[KDB_MAXBPT];
  * Parameters:
  *	argc	Argument count
  *	argv	Argument vector
- * Outमाला_दो:
+ * Outputs:
  *	None.
  * Returns:
- *	KDB_CMD_SS क्रम success, a kdb error अगर failure.
+ *	KDB_CMD_SS for success, a kdb error if failure.
  * Locking:
  *	None.
  * Remarks:
  *
- *	Set the arch specअगरic option to trigger a debug trap after the next
- *	inकाष्ठाion.
+ *	Set the arch specific option to trigger a debug trap after the next
+ *	instruction.
  */
 
-अटल पूर्णांक kdb_ss(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	अगर (argc != 0)
-		वापस KDB_ARGCOUNT;
+static int kdb_ss(int argc, const char **argv)
+{
+	if (argc != 0)
+		return KDB_ARGCOUNT;
 	/*
 	 * Set trace flag and go.
 	 */
 	KDB_STATE_SET(DOING_SS);
-	वापस KDB_CMD_SS;
-पूर्ण
+	return KDB_CMD_SS;
+}
 
-अटल kdbtab_t bptab[] = अणु
-	अणु	.cmd_name = "bp",
+static kdbtab_t bptab[] = {
+	{	.cmd_name = "bp",
 		.cmd_func = kdb_bp,
 		.cmd_usage = "[<vaddr>]",
 		.cmd_help = "Set/Display breakpoints",
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL | KDB_REPEAT_NO_ARGS,
-	पूर्ण,
-	अणु	.cmd_name = "bl",
+	},
+	{	.cmd_name = "bl",
 		.cmd_func = kdb_bp,
 		.cmd_usage = "[<vaddr>]",
 		.cmd_help = "Display breakpoints",
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL | KDB_REPEAT_NO_ARGS,
-	पूर्ण,
-	अणु	.cmd_name = "bc",
+	},
+	{	.cmd_name = "bc",
 		.cmd_func = kdb_bc,
 		.cmd_usage = "<bpnum>",
 		.cmd_help = "Clear Breakpoint",
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL,
-	पूर्ण,
-	अणु	.cmd_name = "be",
+	},
+	{	.cmd_name = "be",
 		.cmd_func = kdb_bc,
 		.cmd_usage = "<bpnum>",
 		.cmd_help = "Enable Breakpoint",
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL,
-	पूर्ण,
-	अणु	.cmd_name = "bd",
+	},
+	{	.cmd_name = "bd",
 		.cmd_func = kdb_bc,
 		.cmd_usage = "<bpnum>",
 		.cmd_help = "Disable Breakpoint",
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL,
-	पूर्ण,
-	अणु	.cmd_name = "ss",
+	},
+	{	.cmd_name = "ss",
 		.cmd_func = kdb_ss,
 		.cmd_usage = "",
 		.cmd_help = "Single Step",
 		.cmd_minlen = 1,
 		.cmd_flags = KDB_ENABLE_FLOW_CTRL | KDB_REPEAT_NO_ARGS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल kdbtab_t bphcmd = अणु
+static kdbtab_t bphcmd = {
 	.cmd_name = "bph",
 	.cmd_func = kdb_bp,
 	.cmd_usage = "[<vaddr>]",
 	.cmd_help = "[datar [length]|dataw [length]]   Set hw brk",
 	.cmd_flags = KDB_ENABLE_FLOW_CTRL | KDB_REPEAT_NO_ARGS,
-पूर्ण;
+};
 
-/* Initialize the अवरोधpoपूर्णांक table and रेजिस्टर	अवरोधpoपूर्णांक commands. */
+/* Initialize the breakpoint table and register	breakpoint commands. */
 
-व्योम __init kdb_initbptab(व्योम)
-अणु
-	पूर्णांक i;
+void __init kdb_initbptab(void)
+{
+	int i;
 	kdb_bp_t *bp;
 
 	/*
-	 * First समय initialization.
+	 * First time initialization.
 	 */
-	स_रखो(&kdb_अवरोधpoपूर्णांकs, '\0', माप(kdb_अवरोधpoपूर्णांकs));
+	memset(&kdb_breakpoints, '\0', sizeof(kdb_breakpoints));
 
-	क्रम (i = 0, bp = kdb_अवरोधpoपूर्णांकs; i < KDB_MAXBPT; i++, bp++)
-		bp->bp_मुक्त = 1;
+	for (i = 0, bp = kdb_breakpoints; i < KDB_MAXBPT; i++, bp++)
+		bp->bp_free = 1;
 
-	kdb_रेजिस्टर_table(bptab, ARRAY_SIZE(bptab));
-	अगर (arch_kgdb_ops.flags & KGDB_HW_BREAKPOINT)
-		kdb_रेजिस्टर_table(&bphcmd, 1);
-पूर्ण
+	kdb_register_table(bptab, ARRAY_SIZE(bptab));
+	if (arch_kgdb_ops.flags & KGDB_HW_BREAKPOINT)
+		kdb_register_table(&bphcmd, 1);
+}

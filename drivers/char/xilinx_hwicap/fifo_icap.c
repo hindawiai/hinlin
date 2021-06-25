@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*****************************************************************************
  *
  *     Author: Xilinx, Inc.
  *
- *     This program is मुक्त software; you can redistribute it and/or modअगरy it
+ *     This program is free software; you can redistribute it and/or modify it
  *     under the terms of the GNU General Public License as published by the
  *     Free Software Foundation; either version 2 of the License, or (at your
  *     option) any later version.
@@ -25,338 +24,338 @@
  *     (c) Copyright 2007-2008 Xilinx Inc.
  *     All rights reserved.
  *
- *     You should have received a copy of the GNU General Public License aदीर्घ
- *     with this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ *     You should have received a copy of the GNU General Public License along
+ *     with this program; if not, write to the Free Software Foundation, Inc.,
  *     675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *****************************************************************************/
 
-#समावेश "fifo_icap.h"
+#include "fifo_icap.h"
 
-/* Register offsets क्रम the XHwIcap device. */
-#घोषणा XHI_GIER_OFFSET	0x1C  /* Device Global Interrupt Enable Reg */
-#घोषणा XHI_IPISR_OFFSET 0x20  /* Interrupt Status Register */
-#घोषणा XHI_IPIER_OFFSET 0x28  /* Interrupt Enable Register */
-#घोषणा XHI_WF_OFFSET 0x100 /* Write FIFO */
-#घोषणा XHI_RF_OFFSET 0x104 /* Read FIFO */
-#घोषणा XHI_SZ_OFFSET 0x108 /* Size Register */
-#घोषणा XHI_CR_OFFSET 0x10C /* Control Register */
-#घोषणा XHI_SR_OFFSET 0x110 /* Status Register */
-#घोषणा XHI_WFV_OFFSET 0x114 /* Write FIFO Vacancy Register */
-#घोषणा XHI_RFO_OFFSET 0x118 /* Read FIFO Occupancy Register */
+/* Register offsets for the XHwIcap device. */
+#define XHI_GIER_OFFSET	0x1C  /* Device Global Interrupt Enable Reg */
+#define XHI_IPISR_OFFSET 0x20  /* Interrupt Status Register */
+#define XHI_IPIER_OFFSET 0x28  /* Interrupt Enable Register */
+#define XHI_WF_OFFSET 0x100 /* Write FIFO */
+#define XHI_RF_OFFSET 0x104 /* Read FIFO */
+#define XHI_SZ_OFFSET 0x108 /* Size Register */
+#define XHI_CR_OFFSET 0x10C /* Control Register */
+#define XHI_SR_OFFSET 0x110 /* Status Register */
+#define XHI_WFV_OFFSET 0x114 /* Write FIFO Vacancy Register */
+#define XHI_RFO_OFFSET 0x118 /* Read FIFO Occupancy Register */
 
 /* Device Global Interrupt Enable Register (GIER) bit definitions */
 
-#घोषणा XHI_GIER_GIE_MASK 0x80000000 /* Global Interrupt enable Mask */
+#define XHI_GIER_GIE_MASK 0x80000000 /* Global Interrupt enable Mask */
 
 /**
  * HwIcap Device Interrupt Status/Enable Registers
  *
- * Interrupt Status Register (IPISR) : This रेजिस्टर holds the
- * पूर्णांकerrupt status flags क्रम the device. These bits are toggle on
- * ग_लिखो.
+ * Interrupt Status Register (IPISR) : This register holds the
+ * interrupt status flags for the device. These bits are toggle on
+ * write.
  *
- * Interrupt Enable Register (IPIER) : This रेजिस्टर is used to enable
- * पूर्णांकerrupt sources क्रम the device.
- * Writing a '1' to a bit enables the corresponding पूर्णांकerrupt.
- * Writing a '0' to a bit disables the corresponding पूर्णांकerrupt.
+ * Interrupt Enable Register (IPIER) : This register is used to enable
+ * interrupt sources for the device.
+ * Writing a '1' to a bit enables the corresponding interrupt.
+ * Writing a '0' to a bit disables the corresponding interrupt.
  *
- * IPISR/IPIER रेजिस्टरs have the same bit definitions and are only defined
+ * IPISR/IPIER registers have the same bit definitions and are only defined
  * once.
  */
-#घोषणा XHI_IPIXR_RFULL_MASK 0x00000008 /* Read FIFO Full */
-#घोषणा XHI_IPIXR_WEMPTY_MASK 0x00000004 /* Write FIFO Empty */
-#घोषणा XHI_IPIXR_RDP_MASK 0x00000002 /* Read FIFO half full */
-#घोषणा XHI_IPIXR_WRP_MASK 0x00000001 /* Write FIFO half full */
-#घोषणा XHI_IPIXR_ALL_MASK 0x0000000F /* Mask of all पूर्णांकerrupts */
+#define XHI_IPIXR_RFULL_MASK 0x00000008 /* Read FIFO Full */
+#define XHI_IPIXR_WEMPTY_MASK 0x00000004 /* Write FIFO Empty */
+#define XHI_IPIXR_RDP_MASK 0x00000002 /* Read FIFO half full */
+#define XHI_IPIXR_WRP_MASK 0x00000001 /* Write FIFO half full */
+#define XHI_IPIXR_ALL_MASK 0x0000000F /* Mask of all interrupts */
 
 /* Control Register (CR) */
-#घोषणा XHI_CR_SW_RESET_MASK 0x00000008 /* SW Reset Mask */
-#घोषणा XHI_CR_FIFO_CLR_MASK 0x00000004 /* FIFO Clear Mask */
-#घोषणा XHI_CR_READ_MASK 0x00000002 /* Read from ICAP to FIFO */
-#घोषणा XHI_CR_WRITE_MASK 0x00000001 /* Write from FIFO to ICAP */
+#define XHI_CR_SW_RESET_MASK 0x00000008 /* SW Reset Mask */
+#define XHI_CR_FIFO_CLR_MASK 0x00000004 /* FIFO Clear Mask */
+#define XHI_CR_READ_MASK 0x00000002 /* Read from ICAP to FIFO */
+#define XHI_CR_WRITE_MASK 0x00000001 /* Write from FIFO to ICAP */
 
 
-#घोषणा XHI_WFO_MAX_VACANCY 1024 /* Max Write FIFO Vacancy, in words */
-#घोषणा XHI_RFO_MAX_OCCUPANCY 256 /* Max Read FIFO Occupancy, in words */
-/* The maximum amount we can request from fअगरo_icap_get_configuration
+#define XHI_WFO_MAX_VACANCY 1024 /* Max Write FIFO Vacancy, in words */
+#define XHI_RFO_MAX_OCCUPANCY 256 /* Max Read FIFO Occupancy, in words */
+/* The maximum amount we can request from fifo_icap_get_configuration
    at once, in bytes. */
-#घोषणा XHI_MAX_READ_TRANSACTION_WORDS 0xFFF
+#define XHI_MAX_READ_TRANSACTION_WORDS 0xFFF
 
 
 /**
- * fअगरo_icap_fअगरo_ग_लिखो - Write data to the ग_लिखो FIFO.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_fifo_write - Write data to the write FIFO.
+ * @drvdata: a pointer to the drvdata.
  * @data: the 32-bit value to be written to the FIFO.
  *
- * This function will silently fail अगर the fअगरo is full.
+ * This function will silently fail if the fifo is full.
  **/
-अटल अंतरभूत व्योम fअगरo_icap_fअगरo_ग_लिखो(काष्ठा hwicap_drvdata *drvdata,
+static inline void fifo_icap_fifo_write(struct hwicap_drvdata *drvdata,
 		u32 data)
-अणु
+{
 	dev_dbg(drvdata->dev, "fifo_write: %x\n", data);
 	out_be32(drvdata->base_address + XHI_WF_OFFSET, data);
-पूर्ण
+}
 
 /**
- * fअगरo_icap_fअगरo_पढ़ो - Read data from the Read FIFO.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_fifo_read - Read data from the Read FIFO.
+ * @drvdata: a pointer to the drvdata.
  *
- * This function will silently fail अगर the fअगरo is empty.
+ * This function will silently fail if the fifo is empty.
  **/
-अटल अंतरभूत u32 fअगरo_icap_fअगरo_पढ़ो(काष्ठा hwicap_drvdata *drvdata)
-अणु
+static inline u32 fifo_icap_fifo_read(struct hwicap_drvdata *drvdata)
+{
 	u32 data = in_be32(drvdata->base_address + XHI_RF_OFFSET);
 	dev_dbg(drvdata->dev, "fifo_read: %x\n", data);
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /**
- * fअगरo_icap_set_पढ़ो_size - Set the the size रेजिस्टर.
- * @drvdata: a poपूर्णांकer to the drvdata.
- * @data: the size of the following पढ़ो transaction, in words.
+ * fifo_icap_set_read_size - Set the the size register.
+ * @drvdata: a pointer to the drvdata.
+ * @data: the size of the following read transaction, in words.
  **/
-अटल अंतरभूत व्योम fअगरo_icap_set_पढ़ो_size(काष्ठा hwicap_drvdata *drvdata,
+static inline void fifo_icap_set_read_size(struct hwicap_drvdata *drvdata,
 		u32 data)
-अणु
+{
 	out_be32(drvdata->base_address + XHI_SZ_OFFSET, data);
-पूर्ण
+}
 
 /**
- * fअगरo_icap_start_config - Initiate a configuration (ग_लिखो) to the device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_start_config - Initiate a configuration (write) to the device.
+ * @drvdata: a pointer to the drvdata.
  **/
-अटल अंतरभूत व्योम fअगरo_icap_start_config(काष्ठा hwicap_drvdata *drvdata)
-अणु
+static inline void fifo_icap_start_config(struct hwicap_drvdata *drvdata)
+{
 	out_be32(drvdata->base_address + XHI_CR_OFFSET, XHI_CR_WRITE_MASK);
 	dev_dbg(drvdata->dev, "configuration started\n");
-पूर्ण
+}
 
 /**
- * fअगरo_icap_start_पढ़ोback - Initiate a पढ़ोback from the device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_start_readback - Initiate a readback from the device.
+ * @drvdata: a pointer to the drvdata.
  **/
-अटल अंतरभूत व्योम fअगरo_icap_start_पढ़ोback(काष्ठा hwicap_drvdata *drvdata)
-अणु
+static inline void fifo_icap_start_readback(struct hwicap_drvdata *drvdata)
+{
 	out_be32(drvdata->base_address + XHI_CR_OFFSET, XHI_CR_READ_MASK);
 	dev_dbg(drvdata->dev, "readback started\n");
-पूर्ण
+}
 
 /**
- * fअगरo_icap_get_status - Get the contents of the status रेजिस्टर.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_get_status - Get the contents of the status register.
+ * @drvdata: a pointer to the drvdata.
  *
- * The status रेजिस्टर contains the ICAP status and the करोne bit.
+ * The status register contains the ICAP status and the done bit.
  *
  * D8 - cfgerr
  * D7 - dalign
  * D6 - rip
- * D5 - in_पात_l
+ * D5 - in_abort_l
  * D4 - Always 1
  * D3 - Always 1
  * D2 - Always 1
  * D1 - Always 1
  * D0 - Done bit
  **/
-u32 fअगरo_icap_get_status(काष्ठा hwicap_drvdata *drvdata)
-अणु
+u32 fifo_icap_get_status(struct hwicap_drvdata *drvdata)
+{
 	u32 status = in_be32(drvdata->base_address + XHI_SR_OFFSET);
 	dev_dbg(drvdata->dev, "Getting status = %x\n", status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * fअगरo_icap_busy - Return true अगर the ICAP is still processing a transaction.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_busy - Return true if the ICAP is still processing a transaction.
+ * @drvdata: a pointer to the drvdata.
  **/
-अटल अंतरभूत u32 fअगरo_icap_busy(काष्ठा hwicap_drvdata *drvdata)
-अणु
+static inline u32 fifo_icap_busy(struct hwicap_drvdata *drvdata)
+{
 	u32 status = in_be32(drvdata->base_address + XHI_SR_OFFSET);
-	वापस (status & XHI_SR_DONE_MASK) ? 0 : 1;
-पूर्ण
+	return (status & XHI_SR_DONE_MASK) ? 0 : 1;
+}
 
 /**
- * fअगरo_icap_ग_लिखो_fअगरo_vacancy - Query the ग_लिखो fअगरo available space.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_write_fifo_vacancy - Query the write fifo available space.
+ * @drvdata: a pointer to the drvdata.
  *
- * Return the number of words that can be safely pushed पूर्णांकo the ग_लिखो fअगरo.
+ * Return the number of words that can be safely pushed into the write fifo.
  **/
-अटल अंतरभूत u32 fअगरo_icap_ग_लिखो_fअगरo_vacancy(
-		काष्ठा hwicap_drvdata *drvdata)
-अणु
-	वापस in_be32(drvdata->base_address + XHI_WFV_OFFSET);
-पूर्ण
+static inline u32 fifo_icap_write_fifo_vacancy(
+		struct hwicap_drvdata *drvdata)
+{
+	return in_be32(drvdata->base_address + XHI_WFV_OFFSET);
+}
 
 /**
- * fअगरo_icap_पढ़ो_fअगरo_occupancy - Query the पढ़ो fअगरo available data.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_read_fifo_occupancy - Query the read fifo available data.
+ * @drvdata: a pointer to the drvdata.
  *
- * Return the number of words that can be safely पढ़ो from the पढ़ो fअगरo.
+ * Return the number of words that can be safely read from the read fifo.
  **/
-अटल अंतरभूत u32 fअगरo_icap_पढ़ो_fअगरo_occupancy(
-		काष्ठा hwicap_drvdata *drvdata)
-अणु
-	वापस in_be32(drvdata->base_address + XHI_RFO_OFFSET);
-पूर्ण
+static inline u32 fifo_icap_read_fifo_occupancy(
+		struct hwicap_drvdata *drvdata)
+{
+	return in_be32(drvdata->base_address + XHI_RFO_OFFSET);
+}
 
 /**
- * fअगरo_icap_set_configuration - Send configuration data to the ICAP.
- * @drvdata: a poपूर्णांकer to the drvdata.
- * @frame_buffer: a poपूर्णांकer to the data to be written to the
+ * fifo_icap_set_configuration - Send configuration data to the ICAP.
+ * @drvdata: a pointer to the drvdata.
+ * @frame_buffer: a pointer to the data to be written to the
  *		ICAP device.
- * @num_words: the number of words (32 bit) to ग_लिखो to the ICAP
+ * @num_words: the number of words (32 bit) to write to the ICAP
  *		device.
 
- * This function ग_लिखोs the given user data to the Write FIFO in
+ * This function writes the given user data to the Write FIFO in
  * polled mode and starts the transfer of the data to
  * the ICAP device.
  **/
-पूर्णांक fअगरo_icap_set_configuration(काष्ठा hwicap_drvdata *drvdata,
+int fifo_icap_set_configuration(struct hwicap_drvdata *drvdata,
 		u32 *frame_buffer, u32 num_words)
-अणु
+{
 
-	u32 ग_लिखो_fअगरo_vacancy = 0;
+	u32 write_fifo_vacancy = 0;
 	u32 retries = 0;
-	u32 reमुख्यing_words;
+	u32 remaining_words;
 
 	dev_dbg(drvdata->dev, "fifo_set_configuration\n");
 
 	/*
-	 * Check अगर the ICAP device is Busy with the last Read/Write
+	 * Check if the ICAP device is Busy with the last Read/Write
 	 */
-	अगर (fअगरo_icap_busy(drvdata))
-		वापस -EBUSY;
+	if (fifo_icap_busy(drvdata))
+		return -EBUSY;
 
 	/*
-	 * Set up the buffer poपूर्णांकer and the words to be transferred.
+	 * Set up the buffer pointer and the words to be transferred.
 	 */
-	reमुख्यing_words = num_words;
+	remaining_words = num_words;
 
-	जबतक (reमुख्यing_words > 0) अणु
+	while (remaining_words > 0) {
 		/*
-		 * Wait until we have some data in the fअगरo.
+		 * Wait until we have some data in the fifo.
 		 */
-		जबतक (ग_लिखो_fअगरo_vacancy == 0) अणु
-			ग_लिखो_fअगरo_vacancy =
-				fअगरo_icap_ग_लिखो_fअगरo_vacancy(drvdata);
+		while (write_fifo_vacancy == 0) {
+			write_fifo_vacancy =
+				fifo_icap_write_fifo_vacancy(drvdata);
 			retries++;
-			अगर (retries > XHI_MAX_RETRIES)
-				वापस -EIO;
-		पूर्ण
+			if (retries > XHI_MAX_RETRIES)
+				return -EIO;
+		}
 
 		/*
-		 * Write data पूर्णांकo the Write FIFO.
+		 * Write data into the Write FIFO.
 		 */
-		जबतक ((ग_लिखो_fअगरo_vacancy != 0) &&
-				(reमुख्यing_words > 0)) अणु
-			fअगरo_icap_fअगरo_ग_लिखो(drvdata, *frame_buffer);
+		while ((write_fifo_vacancy != 0) &&
+				(remaining_words > 0)) {
+			fifo_icap_fifo_write(drvdata, *frame_buffer);
 
-			reमुख्यing_words--;
-			ग_लिखो_fअगरo_vacancy--;
+			remaining_words--;
+			write_fifo_vacancy--;
 			frame_buffer++;
-		पूर्ण
-		/* Start pushing whatever is in the FIFO पूर्णांकo the ICAP. */
-		fअगरo_icap_start_config(drvdata);
-	पूर्ण
+		}
+		/* Start pushing whatever is in the FIFO into the ICAP. */
+		fifo_icap_start_config(drvdata);
+	}
 
-	/* Wait until the ग_लिखो has finished. */
-	जबतक (fअगरo_icap_busy(drvdata)) अणु
+	/* Wait until the write has finished. */
+	while (fifo_icap_busy(drvdata)) {
 		retries++;
-		अगर (retries > XHI_MAX_RETRIES)
-			अवरोध;
-	पूर्ण
+		if (retries > XHI_MAX_RETRIES)
+			break;
+	}
 
 	dev_dbg(drvdata->dev, "done fifo_set_configuration\n");
 
 	/*
-	 * If the requested number of words have not been पढ़ो from
+	 * If the requested number of words have not been read from
 	 * the device then indicate failure.
 	 */
-	अगर (reमुख्यing_words != 0)
-		वापस -EIO;
+	if (remaining_words != 0)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * fअगरo_icap_get_configuration - Read configuration data from the device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_get_configuration - Read configuration data from the device.
+ * @drvdata: a pointer to the drvdata.
  * @data: Address of the data representing the partial bitstream
  * @size: the size of the partial bitstream in 32 bit words.
  *
- * This function पढ़ोs the specअगरied number of words from the ICAP device in
+ * This function reads the specified number of words from the ICAP device in
  * the polled mode.
  */
-पूर्णांक fअगरo_icap_get_configuration(काष्ठा hwicap_drvdata *drvdata,
+int fifo_icap_get_configuration(struct hwicap_drvdata *drvdata,
 		u32 *frame_buffer, u32 num_words)
-अणु
+{
 
-	u32 पढ़ो_fअगरo_occupancy = 0;
+	u32 read_fifo_occupancy = 0;
 	u32 retries = 0;
 	u32 *data = frame_buffer;
-	u32 reमुख्यing_words;
-	u32 words_to_पढ़ो;
+	u32 remaining_words;
+	u32 words_to_read;
 
 	dev_dbg(drvdata->dev, "fifo_get_configuration\n");
 
 	/*
-	 * Check अगर the ICAP device is Busy with the last Write/Read
+	 * Check if the ICAP device is Busy with the last Write/Read
 	 */
-	अगर (fअगरo_icap_busy(drvdata))
-		वापस -EBUSY;
+	if (fifo_icap_busy(drvdata))
+		return -EBUSY;
 
-	reमुख्यing_words = num_words;
+	remaining_words = num_words;
 
-	जबतक (reमुख्यing_words > 0) अणु
-		words_to_पढ़ो = reमुख्यing_words;
+	while (remaining_words > 0) {
+		words_to_read = remaining_words;
 		/* The hardware has a limit on the number of words
-		   that can be पढ़ो at one समय.  */
-		अगर (words_to_पढ़ो > XHI_MAX_READ_TRANSACTION_WORDS)
-			words_to_पढ़ो = XHI_MAX_READ_TRANSACTION_WORDS;
+		   that can be read at one time.  */
+		if (words_to_read > XHI_MAX_READ_TRANSACTION_WORDS)
+			words_to_read = XHI_MAX_READ_TRANSACTION_WORDS;
 
-		reमुख्यing_words -= words_to_पढ़ो;
+		remaining_words -= words_to_read;
 
-		fअगरo_icap_set_पढ़ो_size(drvdata, words_to_पढ़ो);
-		fअगरo_icap_start_पढ़ोback(drvdata);
+		fifo_icap_set_read_size(drvdata, words_to_read);
+		fifo_icap_start_readback(drvdata);
 
-		जबतक (words_to_पढ़ो > 0) अणु
-			/* Wait until we have some data in the fअगरo. */
-			जबतक (पढ़ो_fअगरo_occupancy == 0) अणु
-				पढ़ो_fअगरo_occupancy =
-					fअगरo_icap_पढ़ो_fअगरo_occupancy(drvdata);
+		while (words_to_read > 0) {
+			/* Wait until we have some data in the fifo. */
+			while (read_fifo_occupancy == 0) {
+				read_fifo_occupancy =
+					fifo_icap_read_fifo_occupancy(drvdata);
 				retries++;
-				अगर (retries > XHI_MAX_RETRIES)
-					वापस -EIO;
-			पूर्ण
+				if (retries > XHI_MAX_RETRIES)
+					return -EIO;
+			}
 
-			अगर (पढ़ो_fअगरo_occupancy > words_to_पढ़ो)
-				पढ़ो_fअगरo_occupancy = words_to_पढ़ो;
+			if (read_fifo_occupancy > words_to_read)
+				read_fifo_occupancy = words_to_read;
 
-			words_to_पढ़ो -= पढ़ो_fअगरo_occupancy;
+			words_to_read -= read_fifo_occupancy;
 
 			/* Read the data from the Read FIFO. */
-			जबतक (पढ़ो_fअगरo_occupancy != 0) अणु
-				*data++ = fअगरo_icap_fअगरo_पढ़ो(drvdata);
-				पढ़ो_fअगरo_occupancy--;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			while (read_fifo_occupancy != 0) {
+				*data++ = fifo_icap_fifo_read(drvdata);
+				read_fifo_occupancy--;
+			}
+		}
+	}
 
 	dev_dbg(drvdata->dev, "done fifo_get_configuration\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * buffer_icap_reset - Reset the logic of the icap device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * @drvdata: a pointer to the drvdata.
  *
- * This function क्रमces the software reset of the complete HWICAP device.
- * All the रेजिस्टरs will वापस to the शेष value and the FIFO is also
+ * This function forces the software reset of the complete HWICAP device.
+ * All the registers will return to the default value and the FIFO is also
  * flushed as a part of this software reset.
  */
-व्योम fअगरo_icap_reset(काष्ठा hwicap_drvdata *drvdata)
-अणु
+void fifo_icap_reset(struct hwicap_drvdata *drvdata)
+{
 	u32 reg_data;
 	/*
 	 * Reset the device by setting/clearing the RESET bit in the
@@ -370,14 +369,14 @@ u32 fअगरo_icap_get_status(काष्ठा hwicap_drvdata *drvdata)
 	out_be32(drvdata->base_address + XHI_CR_OFFSET,
 				reg_data & (~XHI_CR_SW_RESET_MASK));
 
-पूर्ण
+}
 
 /**
- * fअगरo_icap_flush_fअगरo - This function flushes the FIFOs in the device.
- * @drvdata: a poपूर्णांकer to the drvdata.
+ * fifo_icap_flush_fifo - This function flushes the FIFOs in the device.
+ * @drvdata: a pointer to the drvdata.
  */
-व्योम fअगरo_icap_flush_fअगरo(काष्ठा hwicap_drvdata *drvdata)
-अणु
+void fifo_icap_flush_fifo(struct hwicap_drvdata *drvdata)
+{
 	u32 reg_data;
 	/*
 	 * Flush the FIFO by setting/clearing the FIFO Clear bit in the
@@ -390,5 +389,5 @@ u32 fअगरo_icap_get_status(काष्ठा hwicap_drvdata *drvdata)
 
 	out_be32(drvdata->base_address + XHI_CR_OFFSET,
 				reg_data & (~XHI_CR_FIFO_CLR_MASK));
-पूर्ण
+}
 

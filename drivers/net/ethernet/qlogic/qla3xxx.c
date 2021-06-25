@@ -1,51 +1,50 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * QLogic QLA3xxx NIC HBA Driver
  * Copyright (c)  2003-2006 QLogic Corporation
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/in.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/prefetch.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/dmapool.h>
+#include <linux/mempool.h>
+#include <linux/spinlock.h>
+#include <linux/kthread.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/ip.h>
+#include <linux/in.h>
+#include <linux/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/if_vlan.h>
+#include <linux/delay.h>
+#include <linux/mm.h>
+#include <linux/prefetch.h>
 
-#समावेश "qla3xxx.h"
+#include "qla3xxx.h"
 
-#घोषणा DRV_NAME	"qla3xxx"
-#घोषणा DRV_STRING	"QLogic ISP3XXX Network Driver"
-#घोषणा DRV_VERSION	"v2.03.00-k5"
+#define DRV_NAME	"qla3xxx"
+#define DRV_STRING	"QLogic ISP3XXX Network Driver"
+#define DRV_VERSION	"v2.03.00-k5"
 
-अटल स्थिर अक्षर ql3xxx_driver_name[] = DRV_NAME;
-अटल स्थिर अक्षर ql3xxx_driver_version[] = DRV_VERSION;
+static const char ql3xxx_driver_name[] = DRV_NAME;
+static const char ql3xxx_driver_version[] = DRV_VERSION;
 
-#घोषणा TIMED_OUT_MSG							\
+#define TIMED_OUT_MSG							\
 "Timed out waiting for management port to get free before issuing command\n"
 
 MODULE_AUTHOR("QLogic Corporation");
@@ -53,264 +52,264 @@ MODULE_DESCRIPTION("QLogic ISP3XXX Network Driver " DRV_VERSION " ");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
-अटल स्थिर u32 शेष_msg
+static const u32 default_msg
     = NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK
     | NETIF_MSG_IFUP | NETIF_MSG_IFDOWN;
 
-अटल पूर्णांक debug = -1;		/* शेषs above */
-module_param(debug, पूर्णांक, 0);
+static int debug = -1;		/* defaults above */
+module_param(debug, int, 0);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-अटल पूर्णांक msi;
-module_param(msi, पूर्णांक, 0);
+static int msi;
+module_param(msi, int, 0);
 MODULE_PARM_DESC(msi, "Turn on Message Signaled Interrupts.");
 
-अटल स्थिर काष्ठा pci_device_id ql3xxx_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QL3022_DEVICE_ID)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QL3032_DEVICE_ID)पूर्ण,
+static const struct pci_device_id ql3xxx_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QL3022_DEVICE_ID)},
+	{PCI_DEVICE(PCI_VENDOR_ID_QLOGIC, QL3032_DEVICE_ID)},
 	/* required last entry */
-	अणु0,पूर्ण
-पूर्ण;
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 
 /*
  *  These are the known PHY's which are used
  */
-क्रमागत PHY_DEVICE_TYPE अणु
+enum PHY_DEVICE_TYPE {
    PHY_TYPE_UNKNOWN   = 0,
    PHY_VITESSE_VSC8211,
    PHY_AGERE_ET1011C,
    MAX_PHY_DEV_TYPES
-पूर्ण;
+};
 
-काष्ठा PHY_DEVICE_INFO अणु
-	स्थिर क्रमागत PHY_DEVICE_TYPE	phyDevice;
-	स्थिर u32		phyIdOUI;
-	स्थिर u16		phyIdModel;
-	स्थिर अक्षर		*name;
-पूर्ण;
+struct PHY_DEVICE_INFO {
+	const enum PHY_DEVICE_TYPE	phyDevice;
+	const u32		phyIdOUI;
+	const u16		phyIdModel;
+	const char		*name;
+};
 
-अटल स्थिर काष्ठा PHY_DEVICE_INFO PHY_DEVICES[] = अणु
-	अणुPHY_TYPE_UNKNOWN,    0x000000, 0x0, "PHY_TYPE_UNKNOWN"पूर्ण,
-	अणुPHY_VITESSE_VSC8211, 0x0003f1, 0xb, "PHY_VITESSE_VSC8211"पूर्ण,
-	अणुPHY_AGERE_ET1011C,   0x00a0bc, 0x1, "PHY_AGERE_ET1011C"पूर्ण,
-पूर्ण;
+static const struct PHY_DEVICE_INFO PHY_DEVICES[] = {
+	{PHY_TYPE_UNKNOWN,    0x000000, 0x0, "PHY_TYPE_UNKNOWN"},
+	{PHY_VITESSE_VSC8211, 0x0003f1, 0xb, "PHY_VITESSE_VSC8211"},
+	{PHY_AGERE_ET1011C,   0x00a0bc, 0x1, "PHY_AGERE_ET1011C"},
+};
 
 
 /*
  * Caller must take hw_lock.
  */
-अटल पूर्णांक ql_sem_spinlock(काष्ठा ql3_adapter *qdev,
+static int ql_sem_spinlock(struct ql3_adapter *qdev,
 			    u32 sem_mask, u32 sem_bits)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	u32 value;
-	अचिन्हित पूर्णांक seconds = 3;
+	unsigned int seconds = 3;
 
-	करो अणु
-		ग_लिखोl((sem_mask | sem_bits),
+	do {
+		writel((sem_mask | sem_bits),
 		       &port_regs->CommonRegs.semaphoreReg);
-		value = पढ़ोl(&port_regs->CommonRegs.semaphoreReg);
-		अगर ((value & (sem_mask >> 16)) == sem_bits)
-			वापस 0;
+		value = readl(&port_regs->CommonRegs.semaphoreReg);
+		if ((value & (sem_mask >> 16)) == sem_bits)
+			return 0;
 		mdelay(1000);
-	पूर्ण जबतक (--seconds);
-	वापस -1;
-पूर्ण
+	} while (--seconds);
+	return -1;
+}
 
-अटल व्योम ql_sem_unlock(काष्ठा ql3_adapter *qdev, u32 sem_mask)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
-	ग_लिखोl(sem_mask, &port_regs->CommonRegs.semaphoreReg);
-	पढ़ोl(&port_regs->CommonRegs.semaphoreReg);
-पूर्ण
+static void ql_sem_unlock(struct ql3_adapter *qdev, u32 sem_mask)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
+	writel(sem_mask, &port_regs->CommonRegs.semaphoreReg);
+	readl(&port_regs->CommonRegs.semaphoreReg);
+}
 
-अटल पूर्णांक ql_sem_lock(काष्ठा ql3_adapter *qdev, u32 sem_mask, u32 sem_bits)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static int ql_sem_lock(struct ql3_adapter *qdev, u32 sem_mask, u32 sem_bits)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	u32 value;
 
-	ग_लिखोl((sem_mask | sem_bits), &port_regs->CommonRegs.semaphoreReg);
-	value = पढ़ोl(&port_regs->CommonRegs.semaphoreReg);
-	वापस ((value & (sem_mask >> 16)) == sem_bits);
-पूर्ण
+	writel((sem_mask | sem_bits), &port_regs->CommonRegs.semaphoreReg);
+	value = readl(&port_regs->CommonRegs.semaphoreReg);
+	return ((value & (sem_mask >> 16)) == sem_bits);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_रुको_क्रम_drvr_lock(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक i = 0;
+static int ql_wait_for_drvr_lock(struct ql3_adapter *qdev)
+{
+	int i = 0;
 
-	करो अणु
-		अगर (ql_sem_lock(qdev,
+	do {
+		if (ql_sem_lock(qdev,
 				QL_DRVR_SEM_MASK,
 				(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index)
-				 * 2) << 1)) अणु
-			netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev,
+				 * 2) << 1)) {
+			netdev_printk(KERN_DEBUG, qdev->ndev,
 				      "driver lock acquired\n");
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		ssleep(1);
-	पूर्ण जबतक (++i < 10);
+	} while (++i < 10);
 
 	netdev_err(qdev->ndev, "Timed out waiting for driver lock...\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_set_रेजिस्टर_page(काष्ठा ql3_adapter *qdev, u32 page)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_set_register_page(struct ql3_adapter *qdev, u32 page)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
-	ग_लिखोl(((ISP_CONTROL_NP_MASK << 16) | page),
+	writel(((ISP_CONTROL_NP_MASK << 16) | page),
 			&port_regs->CommonRegs.ispControlStatus);
-	पढ़ोl(&port_regs->CommonRegs.ispControlStatus);
+	readl(&port_regs->CommonRegs.ispControlStatus);
 	qdev->current_page = page;
-पूर्ण
+}
 
-अटल u32 ql_पढ़ो_common_reg_l(काष्ठा ql3_adapter *qdev, u32 __iomem *reg)
-अणु
+static u32 ql_read_common_reg_l(struct ql3_adapter *qdev, u32 __iomem *reg)
+{
 	u32 value;
-	अचिन्हित दीर्घ hw_flags;
+	unsigned long hw_flags;
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-	value = पढ़ोl(reg);
+	value = readl(reg);
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल u32 ql_पढ़ो_common_reg(काष्ठा ql3_adapter *qdev, u32 __iomem *reg)
-अणु
-	वापस पढ़ोl(reg);
-पूर्ण
+static u32 ql_read_common_reg(struct ql3_adapter *qdev, u32 __iomem *reg)
+{
+	return readl(reg);
+}
 
-अटल u32 ql_पढ़ो_page0_reg_l(काष्ठा ql3_adapter *qdev, u32 __iomem *reg)
-अणु
+static u32 ql_read_page0_reg_l(struct ql3_adapter *qdev, u32 __iomem *reg)
+{
 	u32 value;
-	अचिन्हित दीर्घ hw_flags;
+	unsigned long hw_flags;
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
 
-	अगर (qdev->current_page != 0)
-		ql_set_रेजिस्टर_page(qdev, 0);
-	value = पढ़ोl(reg);
+	if (qdev->current_page != 0)
+		ql_set_register_page(qdev, 0);
+	value = readl(reg);
 
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल u32 ql_पढ़ो_page0_reg(काष्ठा ql3_adapter *qdev, u32 __iomem *reg)
-अणु
-	अगर (qdev->current_page != 0)
-		ql_set_रेजिस्टर_page(qdev, 0);
-	वापस पढ़ोl(reg);
-पूर्ण
+static u32 ql_read_page0_reg(struct ql3_adapter *qdev, u32 __iomem *reg)
+{
+	if (qdev->current_page != 0)
+		ql_set_register_page(qdev, 0);
+	return readl(reg);
+}
 
-अटल व्योम ql_ग_लिखो_common_reg_l(काष्ठा ql3_adapter *qdev,
+static void ql_write_common_reg_l(struct ql3_adapter *qdev,
 				u32 __iomem *reg, u32 value)
-अणु
-	अचिन्हित दीर्घ hw_flags;
+{
+	unsigned long hw_flags;
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
+	writel(value, reg);
+	readl(reg);
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-पूर्ण
+}
 
-अटल व्योम ql_ग_लिखो_common_reg(काष्ठा ql3_adapter *qdev,
+static void ql_write_common_reg(struct ql3_adapter *qdev,
 				u32 __iomem *reg, u32 value)
-अणु
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
-पूर्ण
+{
+	writel(value, reg);
+	readl(reg);
+}
 
-अटल व्योम ql_ग_लिखो_nvram_reg(काष्ठा ql3_adapter *qdev,
+static void ql_write_nvram_reg(struct ql3_adapter *qdev,
 				u32 __iomem *reg, u32 value)
-अणु
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
+{
+	writel(value, reg);
+	readl(reg);
 	udelay(1);
-पूर्ण
+}
 
-अटल व्योम ql_ग_लिखो_page0_reg(काष्ठा ql3_adapter *qdev,
+static void ql_write_page0_reg(struct ql3_adapter *qdev,
 			       u32 __iomem *reg, u32 value)
-अणु
-	अगर (qdev->current_page != 0)
-		ql_set_रेजिस्टर_page(qdev, 0);
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
-पूर्ण
+{
+	if (qdev->current_page != 0)
+		ql_set_register_page(qdev, 0);
+	writel(value, reg);
+	readl(reg);
+}
 
 /*
  * Caller holds hw_lock. Only called during init.
  */
-अटल व्योम ql_ग_लिखो_page1_reg(काष्ठा ql3_adapter *qdev,
+static void ql_write_page1_reg(struct ql3_adapter *qdev,
 			       u32 __iomem *reg, u32 value)
-अणु
-	अगर (qdev->current_page != 1)
-		ql_set_रेजिस्टर_page(qdev, 1);
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
-पूर्ण
+{
+	if (qdev->current_page != 1)
+		ql_set_register_page(qdev, 1);
+	writel(value, reg);
+	readl(reg);
+}
 
 /*
  * Caller holds hw_lock. Only called during init.
  */
-अटल व्योम ql_ग_लिखो_page2_reg(काष्ठा ql3_adapter *qdev,
+static void ql_write_page2_reg(struct ql3_adapter *qdev,
 			       u32 __iomem *reg, u32 value)
-अणु
-	अगर (qdev->current_page != 2)
-		ql_set_रेजिस्टर_page(qdev, 2);
-	ग_लिखोl(value, reg);
-	पढ़ोl(reg);
-पूर्ण
+{
+	if (qdev->current_page != 2)
+		ql_set_register_page(qdev, 2);
+	writel(value, reg);
+	readl(reg);
+}
 
-अटल व्योम ql_disable_पूर्णांकerrupts(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_disable_interrupts(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
-	ql_ग_लिखो_common_reg_l(qdev, &port_regs->CommonRegs.ispInterruptMaskReg,
+	ql_write_common_reg_l(qdev, &port_regs->CommonRegs.ispInterruptMaskReg,
 			    (ISP_IMR_ENABLE_INT << 16));
 
-पूर्ण
+}
 
-अटल व्योम ql_enable_पूर्णांकerrupts(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_enable_interrupts(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
-	ql_ग_लिखो_common_reg_l(qdev, &port_regs->CommonRegs.ispInterruptMaskReg,
+	ql_write_common_reg_l(qdev, &port_regs->CommonRegs.ispInterruptMaskReg,
 			    ((0xff << 16) | ISP_IMR_ENABLE_INT));
 
-पूर्ण
+}
 
-अटल व्योम ql_release_to_lrg_buf_मुक्त_list(काष्ठा ql3_adapter *qdev,
-					    काष्ठा ql_rcv_buf_cb *lrg_buf_cb)
-अणु
+static void ql_release_to_lrg_buf_free_list(struct ql3_adapter *qdev,
+					    struct ql_rcv_buf_cb *lrg_buf_cb)
+{
 	dma_addr_t map;
-	पूर्णांक err;
-	lrg_buf_cb->next = शून्य;
+	int err;
+	lrg_buf_cb->next = NULL;
 
-	अगर (qdev->lrg_buf_मुक्त_tail == शून्य) अणु	/* The list is empty  */
-		qdev->lrg_buf_मुक्त_head = qdev->lrg_buf_मुक्त_tail = lrg_buf_cb;
-	पूर्ण अन्यथा अणु
-		qdev->lrg_buf_मुक्त_tail->next = lrg_buf_cb;
-		qdev->lrg_buf_मुक्त_tail = lrg_buf_cb;
-	पूर्ण
+	if (qdev->lrg_buf_free_tail == NULL) {	/* The list is empty  */
+		qdev->lrg_buf_free_head = qdev->lrg_buf_free_tail = lrg_buf_cb;
+	} else {
+		qdev->lrg_buf_free_tail->next = lrg_buf_cb;
+		qdev->lrg_buf_free_tail = lrg_buf_cb;
+	}
 
-	अगर (!lrg_buf_cb->skb) अणु
+	if (!lrg_buf_cb->skb) {
 		lrg_buf_cb->skb = netdev_alloc_skb(qdev->ndev,
 						   qdev->lrg_buffer_len);
-		अगर (unlikely(!lrg_buf_cb->skb)) अणु
+		if (unlikely(!lrg_buf_cb->skb)) {
 			qdev->lrg_buf_skb_check++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * We save some space to copy the ethhdr from first
 			 * buffer
@@ -321,16 +320,16 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 					     qdev->lrg_buffer_len - QL_HEADER_SPACE,
 					     DMA_FROM_DEVICE);
 			err = dma_mapping_error(&qdev->pdev->dev, map);
-			अगर (err) अणु
+			if (err) {
 				netdev_err(qdev->ndev,
 					   "PCI mapping failed with error: %d\n",
 					   err);
-				dev_kमुक्त_skb(lrg_buf_cb->skb);
-				lrg_buf_cb->skb = शून्य;
+				dev_kfree_skb(lrg_buf_cb->skb);
+				lrg_buf_cb->skb = NULL;
 
 				qdev->lrg_buf_skb_check++;
-				वापस;
-			पूर्ण
+				return;
+			}
 
 			lrg_buf_cb->buf_phy_addr_low =
 			    cpu_to_le32(LS_64BITS(map));
@@ -340,1131 +339,1131 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 			dma_unmap_len_set(lrg_buf_cb, maplen,
 					  qdev->lrg_buffer_len -
 					  QL_HEADER_SPACE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	qdev->lrg_buf_मुक्त_count++;
-पूर्ण
+	qdev->lrg_buf_free_count++;
+}
 
-अटल काष्ठा ql_rcv_buf_cb *ql_get_from_lrg_buf_मुक्त_list(काष्ठा ql3_adapter
+static struct ql_rcv_buf_cb *ql_get_from_lrg_buf_free_list(struct ql3_adapter
 							   *qdev)
-अणु
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb = qdev->lrg_buf_मुक्त_head;
+{
+	struct ql_rcv_buf_cb *lrg_buf_cb = qdev->lrg_buf_free_head;
 
-	अगर (lrg_buf_cb != शून्य) अणु
-		qdev->lrg_buf_मुक्त_head = lrg_buf_cb->next;
-		अगर (qdev->lrg_buf_मुक्त_head == शून्य)
-			qdev->lrg_buf_मुक्त_tail = शून्य;
-		qdev->lrg_buf_मुक्त_count--;
-	पूर्ण
+	if (lrg_buf_cb != NULL) {
+		qdev->lrg_buf_free_head = lrg_buf_cb->next;
+		if (qdev->lrg_buf_free_head == NULL)
+			qdev->lrg_buf_free_tail = NULL;
+		qdev->lrg_buf_free_count--;
+	}
 
-	वापस lrg_buf_cb;
-पूर्ण
+	return lrg_buf_cb;
+}
 
-अटल u32 addrBits = EEPROM_NO_ADDR_BITS;
-अटल u32 dataBits = EEPROM_NO_DATA_BITS;
+static u32 addrBits = EEPROM_NO_ADDR_BITS;
+static u32 dataBits = EEPROM_NO_DATA_BITS;
 
-अटल व्योम fm93c56a_deselect(काष्ठा ql3_adapter *qdev);
-अटल व्योम eeprom_पढ़ोword(काष्ठा ql3_adapter *qdev, u32 eepromAddr,
-			    अचिन्हित लघु *value);
+static void fm93c56a_deselect(struct ql3_adapter *qdev);
+static void eeprom_readword(struct ql3_adapter *qdev, u32 eepromAddr,
+			    unsigned short *value);
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम fm93c56a_select(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void fm93c56a_select(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	__iomem u32 *spir = &port_regs->CommonRegs.serialPortInterfaceReg;
 
 	qdev->eeprom_cmd_data = AUBURN_EEPROM_CS_1;
-	ql_ग_लिखो_nvram_reg(qdev, spir, ISP_NVRAM_MASK | qdev->eeprom_cmd_data);
-पूर्ण
+	ql_write_nvram_reg(qdev, spir, ISP_NVRAM_MASK | qdev->eeprom_cmd_data);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम fm93c56a_cmd(काष्ठा ql3_adapter *qdev, u32 cmd, u32 eepromAddr)
-अणु
-	पूर्णांक i;
+static void fm93c56a_cmd(struct ql3_adapter *qdev, u32 cmd, u32 eepromAddr)
+{
+	int i;
 	u32 mask;
 	u32 dataBit;
 	u32 previousBit;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	__iomem u32 *spir = &port_regs->CommonRegs.serialPortInterfaceReg;
 
-	/* Clock in a zero, then करो the start bit */
-	ql_ग_लिखो_nvram_reg(qdev, spir,
+	/* Clock in a zero, then do the start bit */
+	ql_write_nvram_reg(qdev, spir,
 			   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 			    AUBURN_EEPROM_DO_1));
-	ql_ग_लिखो_nvram_reg(qdev, spir,
+	ql_write_nvram_reg(qdev, spir,
 			   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 			    AUBURN_EEPROM_DO_1 | AUBURN_EEPROM_CLK_RISE));
-	ql_ग_लिखो_nvram_reg(qdev, spir,
+	ql_write_nvram_reg(qdev, spir,
 			   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 			    AUBURN_EEPROM_DO_1 | AUBURN_EEPROM_CLK_FALL));
 
 	mask = 1 << (FM93C56A_CMD_BITS - 1);
-	/* Force the previous data bit to be dअगरferent */
+	/* Force the previous data bit to be different */
 	previousBit = 0xffff;
-	क्रम (i = 0; i < FM93C56A_CMD_BITS; i++) अणु
+	for (i = 0; i < FM93C56A_CMD_BITS; i++) {
 		dataBit = (cmd & mask)
 			? AUBURN_EEPROM_DO_1
 			: AUBURN_EEPROM_DO_0;
-		अगर (previousBit != dataBit) अणु
+		if (previousBit != dataBit) {
 			/* If the bit changed, change the DO state to match */
-			ql_ग_लिखो_nvram_reg(qdev, spir,
+			ql_write_nvram_reg(qdev, spir,
 					   (ISP_NVRAM_MASK |
 					    qdev->eeprom_cmd_data | dataBit));
 			previousBit = dataBit;
-		पूर्ण
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+		}
+		ql_write_nvram_reg(qdev, spir,
 				   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				    dataBit | AUBURN_EEPROM_CLK_RISE));
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+		ql_write_nvram_reg(qdev, spir,
 				   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				    dataBit | AUBURN_EEPROM_CLK_FALL));
 		cmd = cmd << 1;
-	पूर्ण
+	}
 
 	mask = 1 << (addrBits - 1);
-	/* Force the previous data bit to be dअगरferent */
+	/* Force the previous data bit to be different */
 	previousBit = 0xffff;
-	क्रम (i = 0; i < addrBits; i++) अणु
+	for (i = 0; i < addrBits; i++) {
 		dataBit = (eepromAddr & mask) ? AUBURN_EEPROM_DO_1
 			: AUBURN_EEPROM_DO_0;
-		अगर (previousBit != dataBit) अणु
+		if (previousBit != dataBit) {
 			/*
 			 * If the bit changed, then change the DO state to
 			 * match
 			 */
-			ql_ग_लिखो_nvram_reg(qdev, spir,
+			ql_write_nvram_reg(qdev, spir,
 					   (ISP_NVRAM_MASK |
 					    qdev->eeprom_cmd_data | dataBit));
 			previousBit = dataBit;
-		पूर्ण
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+		}
+		ql_write_nvram_reg(qdev, spir,
 				   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				    dataBit | AUBURN_EEPROM_CLK_RISE));
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+		ql_write_nvram_reg(qdev, spir,
 				   (ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				    dataBit | AUBURN_EEPROM_CLK_FALL));
 		eepromAddr = eepromAddr << 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम fm93c56a_deselect(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void fm93c56a_deselect(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	__iomem u32 *spir = &port_regs->CommonRegs.serialPortInterfaceReg;
 
 	qdev->eeprom_cmd_data = AUBURN_EEPROM_CS_0;
-	ql_ग_लिखो_nvram_reg(qdev, spir, ISP_NVRAM_MASK | qdev->eeprom_cmd_data);
-पूर्ण
+	ql_write_nvram_reg(qdev, spir, ISP_NVRAM_MASK | qdev->eeprom_cmd_data);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम fm93c56a_datain(काष्ठा ql3_adapter *qdev, अचिन्हित लघु *value)
-अणु
-	पूर्णांक i;
+static void fm93c56a_datain(struct ql3_adapter *qdev, unsigned short *value)
+{
+	int i;
 	u32 data = 0;
 	u32 dataBit;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	__iomem u32 *spir = &port_regs->CommonRegs.serialPortInterfaceReg;
 
 	/* Read the data bits */
 	/* The first bit is a dummy.  Clock right over it. */
-	क्रम (i = 0; i < dataBits; i++) अणु
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+	for (i = 0; i < dataBits; i++) {
+		ql_write_nvram_reg(qdev, spir,
 				   ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				   AUBURN_EEPROM_CLK_RISE);
-		ql_ग_लिखो_nvram_reg(qdev, spir,
+		ql_write_nvram_reg(qdev, spir,
 				   ISP_NVRAM_MASK | qdev->eeprom_cmd_data |
 				   AUBURN_EEPROM_CLK_FALL);
-		dataBit = (ql_पढ़ो_common_reg(qdev, spir) &
+		dataBit = (ql_read_common_reg(qdev, spir) &
 			   AUBURN_EEPROM_DI_1) ? 1 : 0;
 		data = (data << 1) | dataBit;
-	पूर्ण
+	}
 	*value = (u16)data;
-पूर्ण
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम eeprom_पढ़ोword(काष्ठा ql3_adapter *qdev,
-			    u32 eepromAddr, अचिन्हित लघु *value)
-अणु
+static void eeprom_readword(struct ql3_adapter *qdev,
+			    u32 eepromAddr, unsigned short *value)
+{
 	fm93c56a_select(qdev);
-	fm93c56a_cmd(qdev, (पूर्णांक)FM93C56A_READ, eepromAddr);
+	fm93c56a_cmd(qdev, (int)FM93C56A_READ, eepromAddr);
 	fm93c56a_datain(qdev, value);
 	fm93c56a_deselect(qdev);
-पूर्ण
+}
 
-अटल व्योम ql_set_mac_addr(काष्ठा net_device *ndev, u16 *addr)
-अणु
+static void ql_set_mac_addr(struct net_device *ndev, u16 *addr)
+{
 	__le16 *p = (__le16 *)ndev->dev_addr;
 	p[0] = cpu_to_le16(addr[0]);
 	p[1] = cpu_to_le16(addr[1]);
 	p[2] = cpu_to_le16(addr[2]);
-पूर्ण
+}
 
-अटल पूर्णांक ql_get_nvram_params(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_get_nvram_params(struct ql3_adapter *qdev)
+{
 	u16 *pEEPROMData;
 	u16 checksum = 0;
 	u32 index;
-	अचिन्हित दीर्घ hw_flags;
+	unsigned long hw_flags;
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
 
 	pEEPROMData = (u16 *)&qdev->nvram_data;
 	qdev->eeprom_cmd_data = 0;
-	अगर (ql_sem_spinlock(qdev, QL_NVRAM_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_NVRAM_SEM_MASK,
 			(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
-			 2) << 10)) अणु
+			 2) << 10)) {
 		pr_err("%s: Failed ql_sem_spinlock()\n", __func__);
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	क्रम (index = 0; index < EEPROM_SIZE; index++) अणु
-		eeprom_पढ़ोword(qdev, index, pEEPROMData);
+	for (index = 0; index < EEPROM_SIZE; index++) {
+		eeprom_readword(qdev, index, pEEPROMData);
 		checksum += *pEEPROMData;
 		pEEPROMData++;
-	पूर्ण
+	}
 	ql_sem_unlock(qdev, QL_NVRAM_SEM_MASK);
 
-	अगर (checksum != 0) अणु
+	if (checksum != 0) {
 		netdev_err(qdev->ndev, "checksum should be zero, is %x!!\n",
 			   checksum);
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	वापस checksum;
-पूर्ण
+	return checksum;
+}
 
-अटल स्थिर u32 PHYAddr[2] = अणु
+static const u32 PHYAddr[2] = {
 	PORT0_PHY_ADDRESS, PORT1_PHY_ADDRESS
-पूर्ण;
+};
 
-अटल पूर्णांक ql_रुको_क्रम_mii_पढ़ोy(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_wait_for_mii_ready(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 temp;
-	पूर्णांक count = 1000;
+	int count = 1000;
 
-	जबतक (count) अणु
-		temp = ql_पढ़ो_page0_reg(qdev, &port_regs->macMIIStatusReg);
-		अगर (!(temp & MAC_MII_STATUS_BSY))
-			वापस 0;
+	while (count) {
+		temp = ql_read_page0_reg(qdev, &port_regs->macMIIStatusReg);
+		if (!(temp & MAC_MII_STATUS_BSY))
+			return 0;
 		udelay(10);
 		count--;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 
-अटल व्योम ql_mii_enable_scan_mode(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mii_enable_scan_mode(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 scanControl;
 
-	अगर (qdev->numPorts > 1) अणु
+	if (qdev->numPorts > 1) {
 		/* Auto scan will cycle through multiple ports */
 		scanControl = MAC_MII_CONTROL_AS | MAC_MII_CONTROL_SC;
-	पूर्ण अन्यथा अणु
+	} else {
 		scanControl = MAC_MII_CONTROL_SC;
-	पूर्ण
+	}
 
 	/*
-	 * Scan रेजिस्टर 1 of PHY/PETBI,
+	 * Scan register 1 of PHY/PETBI,
 	 * Set up to scan both devices
-	 * The स्वतःscan starts from the first रेजिस्टर, completes
-	 * the last one beक्रमe rolling over to the first
+	 * The autoscan starts from the first register, completes
+	 * the last one before rolling over to the first
 	 */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   PHYAddr[0] | MII_SCAN_REGISTER);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   (scanControl) |
 			   ((MAC_MII_CONTROL_SC | MAC_MII_CONTROL_AS) << 16));
-पूर्ण
+}
 
-अटल u8 ql_mii_disable_scan_mode(काष्ठा ql3_adapter *qdev)
-अणु
+static u8 ql_mii_disable_scan_mode(struct ql3_adapter *qdev)
+{
 	u8 ret;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-					qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+					qdev->mem_map_registers;
 
-	/* See अगर scan mode is enabled beक्रमe we turn it off */
-	अगर (ql_पढ़ो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg) &
-	    (MAC_MII_CONTROL_AS | MAC_MII_CONTROL_SC)) अणु
+	/* See if scan mode is enabled before we turn it off */
+	if (ql_read_page0_reg(qdev, &port_regs->macMIIMgmtControlReg) &
+	    (MAC_MII_CONTROL_AS | MAC_MII_CONTROL_SC)) {
 		/* Scan is enabled */
 		ret = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Scan is disabled */
 		ret = 0;
-	पूर्ण
+	}
 
 	/*
-	 * When disabling scan mode you must first change the MII रेजिस्टर
+	 * When disabling scan mode you must first change the MII register
 	 * address
 	 */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   PHYAddr[0] | MII_SCAN_REGISTER);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   ((MAC_MII_CONTROL_SC | MAC_MII_CONTROL_AS |
 			     MAC_MII_CONTROL_RC) << 16));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ql_mii_ग_लिखो_reg_ex(काष्ठा ql3_adapter *qdev,
+static int ql_mii_write_reg_ex(struct ql3_adapter *qdev,
 			       u16 regAddr, u16 value, u32 phyAddr)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u8 scanWasEnabled;
 
 	scanWasEnabled = ql_mii_disable_scan_mode(qdev);
 
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   phyAddr | regAddr);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtDataReg, value);
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtDataReg, value);
 
-	/* Wait क्रम ग_लिखो to complete 9/10/04 SJP */
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	/* Wait for write to complete 9/10/04 SJP */
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	अगर (scanWasEnabled)
+	if (scanWasEnabled)
 		ql_mii_enable_scan_mode(qdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_mii_पढ़ो_reg_ex(काष्ठा ql3_adapter *qdev, u16 regAddr,
+static int ql_mii_read_reg_ex(struct ql3_adapter *qdev, u16 regAddr,
 			      u16 *value, u32 phyAddr)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u8 scanWasEnabled;
 	u32 temp;
 
 	scanWasEnabled = ql_mii_disable_scan_mode(qdev);
 
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   phyAddr | regAddr);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   (MAC_MII_CONTROL_RC << 16));
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   (MAC_MII_CONTROL_RC << 16) | MAC_MII_CONTROL_RC);
 
-	/* Wait क्रम the पढ़ो to complete */
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	/* Wait for the read to complete */
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->macMIIMgmtDataReg);
+	temp = ql_read_page0_reg(qdev, &port_regs->macMIIMgmtDataReg);
 	*value = (u16) temp;
 
-	अगर (scanWasEnabled)
+	if (scanWasEnabled)
 		ql_mii_enable_scan_mode(qdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_mii_ग_लिखो_reg(काष्ठा ql3_adapter *qdev, u16 regAddr, u16 value)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_mii_write_reg(struct ql3_adapter *qdev, u16 regAddr, u16 value)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 
 	ql_mii_disable_scan_mode(qdev);
 
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   qdev->PHYAddr | regAddr);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtDataReg, value);
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtDataReg, value);
 
-	/* Wait क्रम ग_लिखो to complete. */
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	/* Wait for write to complete. */
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
 	ql_mii_enable_scan_mode(qdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_mii_पढ़ो_reg(काष्ठा ql3_adapter *qdev, u16 regAddr, u16 *value)
-अणु
+static int ql_mii_read_reg(struct ql3_adapter *qdev, u16 regAddr, u16 *value)
+{
 	u32 temp;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 
 	ql_mii_disable_scan_mode(qdev);
 
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtAddrReg,
 			   qdev->PHYAddr | regAddr);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   (MAC_MII_CONTROL_RC << 16));
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   (MAC_MII_CONTROL_RC << 16) | MAC_MII_CONTROL_RC);
 
-	/* Wait क्रम the पढ़ो to complete */
-	अगर (ql_रुको_क्रम_mii_पढ़ोy(qdev)) अणु
-		netअगर_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
-		वापस -1;
-	पूर्ण
+	/* Wait for the read to complete */
+	if (ql_wait_for_mii_ready(qdev)) {
+		netif_warn(qdev, link, qdev->ndev, TIMED_OUT_MSG);
+		return -1;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->macMIIMgmtDataReg);
+	temp = ql_read_page0_reg(qdev, &port_regs->macMIIMgmtDataReg);
 	*value = (u16) temp;
 
 	ql_mii_enable_scan_mode(qdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_petbi_reset(काष्ठा ql3_adapter *qdev)
-अणु
-	ql_mii_ग_लिखो_reg(qdev, PETBI_CONTROL_REG, PETBI_CTRL_SOFT_RESET);
-पूर्ण
+static void ql_petbi_reset(struct ql3_adapter *qdev)
+{
+	ql_mii_write_reg(qdev, PETBI_CONTROL_REG, PETBI_CTRL_SOFT_RESET);
+}
 
-अटल व्योम ql_petbi_start_neg(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_petbi_start_neg(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
 	/* Enable Auto-negotiation sense */
-	ql_mii_पढ़ो_reg(qdev, PETBI_TBI_CTRL, &reg);
+	ql_mii_read_reg(qdev, PETBI_TBI_CTRL, &reg);
 	reg |= PETBI_TBI_AUTO_SENSE;
-	ql_mii_ग_लिखो_reg(qdev, PETBI_TBI_CTRL, reg);
+	ql_mii_write_reg(qdev, PETBI_TBI_CTRL, reg);
 
-	ql_mii_ग_लिखो_reg(qdev, PETBI_NEG_ADVER,
+	ql_mii_write_reg(qdev, PETBI_NEG_ADVER,
 			 PETBI_NEG_PAUSE | PETBI_NEG_DUPLEX);
 
-	ql_mii_ग_लिखो_reg(qdev, PETBI_CONTROL_REG,
+	ql_mii_write_reg(qdev, PETBI_CONTROL_REG,
 			 PETBI_CTRL_AUTO_NEG | PETBI_CTRL_RESTART_NEG |
 			 PETBI_CTRL_FULL_DUPLEX | PETBI_CTRL_SPEED_1000);
 
-पूर्ण
+}
 
-अटल व्योम ql_petbi_reset_ex(काष्ठा ql3_adapter *qdev)
-अणु
-	ql_mii_ग_लिखो_reg_ex(qdev, PETBI_CONTROL_REG, PETBI_CTRL_SOFT_RESET,
+static void ql_petbi_reset_ex(struct ql3_adapter *qdev)
+{
+	ql_mii_write_reg_ex(qdev, PETBI_CONTROL_REG, PETBI_CTRL_SOFT_RESET,
 			    PHYAddr[qdev->mac_index]);
-पूर्ण
+}
 
-अटल व्योम ql_petbi_start_neg_ex(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_petbi_start_neg_ex(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
 	/* Enable Auto-negotiation sense */
-	ql_mii_पढ़ो_reg_ex(qdev, PETBI_TBI_CTRL, &reg,
+	ql_mii_read_reg_ex(qdev, PETBI_TBI_CTRL, &reg,
 			   PHYAddr[qdev->mac_index]);
 	reg |= PETBI_TBI_AUTO_SENSE;
-	ql_mii_ग_लिखो_reg_ex(qdev, PETBI_TBI_CTRL, reg,
+	ql_mii_write_reg_ex(qdev, PETBI_TBI_CTRL, reg,
 			    PHYAddr[qdev->mac_index]);
 
-	ql_mii_ग_लिखो_reg_ex(qdev, PETBI_NEG_ADVER,
+	ql_mii_write_reg_ex(qdev, PETBI_NEG_ADVER,
 			    PETBI_NEG_PAUSE | PETBI_NEG_DUPLEX,
 			    PHYAddr[qdev->mac_index]);
 
-	ql_mii_ग_लिखो_reg_ex(qdev, PETBI_CONTROL_REG,
+	ql_mii_write_reg_ex(qdev, PETBI_CONTROL_REG,
 			    PETBI_CTRL_AUTO_NEG | PETBI_CTRL_RESTART_NEG |
 			    PETBI_CTRL_FULL_DUPLEX | PETBI_CTRL_SPEED_1000,
 			    PHYAddr[qdev->mac_index]);
-पूर्ण
+}
 
-अटल व्योम ql_petbi_init(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_petbi_init(struct ql3_adapter *qdev)
+{
 	ql_petbi_reset(qdev);
 	ql_petbi_start_neg(qdev);
-पूर्ण
+}
 
-अटल व्योम ql_petbi_init_ex(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_petbi_init_ex(struct ql3_adapter *qdev)
+{
 	ql_petbi_reset_ex(qdev);
 	ql_petbi_start_neg_ex(qdev);
-पूर्ण
+}
 
-अटल पूर्णांक ql_is_petbi_neg_छोड़ो(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_is_petbi_neg_pause(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
-	अगर (ql_mii_पढ़ो_reg(qdev, PETBI_NEG_PARTNER, &reg) < 0)
-		वापस 0;
+	if (ql_mii_read_reg(qdev, PETBI_NEG_PARTNER, &reg) < 0)
+		return 0;
 
-	वापस (reg & PETBI_NEG_PAUSE_MASK) == PETBI_NEG_PAUSE;
-पूर्ण
+	return (reg & PETBI_NEG_PAUSE_MASK) == PETBI_NEG_PAUSE;
+}
 
-अटल व्योम phyAgereSpecअगरicInit(काष्ठा ql3_adapter *qdev, u32 miiAddr)
-अणु
+static void phyAgereSpecificInit(struct ql3_adapter *qdev, u32 miiAddr)
+{
 	netdev_info(qdev->ndev, "enabling Agere specific PHY\n");
-	/* घातer करोwn device bit 11 = 1 */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x00, 0x1940, miiAddr);
+	/* power down device bit 11 = 1 */
+	ql_mii_write_reg_ex(qdev, 0x00, 0x1940, miiAddr);
 	/* enable diagnostic mode bit 2 = 1 */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x12, 0x840e, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x12, 0x840e, miiAddr);
 	/* 1000MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x10, 0x8805, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x10, 0x8805, miiAddr);
 	/* 1000MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x11, 0xf03e, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x11, 0xf03e, miiAddr);
 	/* 100MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x10, 0x8806, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x10, 0x8806, miiAddr);
 	/* 100MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x11, 0x003e, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x11, 0x003e, miiAddr);
 	/* 10MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x10, 0x8807, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x10, 0x8807, miiAddr);
 	/* 10MB amplitude adjust (see Agere errata) */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x11, 0x1f00, miiAddr);
-	/* poपूर्णांक to hidden reg 0x2806 */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x10, 0x2806, miiAddr);
+	ql_mii_write_reg_ex(qdev, 0x11, 0x1f00, miiAddr);
+	/* point to hidden reg 0x2806 */
+	ql_mii_write_reg_ex(qdev, 0x10, 0x2806, miiAddr);
 	/* Write new PHYAD w/bit 5 set */
-	ql_mii_ग_लिखो_reg_ex(qdev, 0x11,
+	ql_mii_write_reg_ex(qdev, 0x11,
 			    0x0020 | (PHYAddr[qdev->mac_index] >> 8), miiAddr);
 	/*
 	 * Disable diagnostic mode bit 2 = 0
 	 * Power up device bit 11 = 0
 	 * Link up (on) and activity (blink)
 	 */
-	ql_mii_ग_लिखो_reg(qdev, 0x12, 0x840a);
-	ql_mii_ग_लिखो_reg(qdev, 0x00, 0x1140);
-	ql_mii_ग_लिखो_reg(qdev, 0x1c, 0xfaf0);
-पूर्ण
+	ql_mii_write_reg(qdev, 0x12, 0x840a);
+	ql_mii_write_reg(qdev, 0x00, 0x1140);
+	ql_mii_write_reg(qdev, 0x1c, 0xfaf0);
+}
 
-अटल क्रमागत PHY_DEVICE_TYPE getPhyType(काष्ठा ql3_adapter *qdev,
+static enum PHY_DEVICE_TYPE getPhyType(struct ql3_adapter *qdev,
 				       u16 phyIdReg0, u16 phyIdReg1)
-अणु
-	क्रमागत PHY_DEVICE_TYPE result = PHY_TYPE_UNKNOWN;
+{
+	enum PHY_DEVICE_TYPE result = PHY_TYPE_UNKNOWN;
 	u32   oui;
 	u16   model;
-	पूर्णांक i;
+	int i;
 
-	अगर (phyIdReg0 == 0xffff)
-		वापस result;
+	if (phyIdReg0 == 0xffff)
+		return result;
 
-	अगर (phyIdReg1 == 0xffff)
-		वापस result;
+	if (phyIdReg1 == 0xffff)
+		return result;
 
-	/* oui is split between two रेजिस्टरs */
+	/* oui is split between two registers */
 	oui = (phyIdReg0 << 6) | ((phyIdReg1 & PHY_OUI_1_MASK) >> 10);
 
 	model = (phyIdReg1 & PHY_MODEL_MASK) >> 4;
 
-	/* Scan table क्रम this PHY */
-	क्रम (i = 0; i < MAX_PHY_DEV_TYPES; i++) अणु
-		अगर ((oui == PHY_DEVICES[i].phyIdOUI) &&
-		    (model == PHY_DEVICES[i].phyIdModel)) अणु
+	/* Scan table for this PHY */
+	for (i = 0; i < MAX_PHY_DEV_TYPES; i++) {
+		if ((oui == PHY_DEVICES[i].phyIdOUI) &&
+		    (model == PHY_DEVICES[i].phyIdModel)) {
 			netdev_info(qdev->ndev, "Phy: %s\n",
 				    PHY_DEVICES[i].name);
 			result = PHY_DEVICES[i].phyDevice;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक ql_phy_get_speed(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_phy_get_speed(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
-	चयन (qdev->phyType) अणु
-	हाल PHY_AGERE_ET1011C: अणु
-		अगर (ql_mii_पढ़ो_reg(qdev, 0x1A, &reg) < 0)
-			वापस 0;
+	switch (qdev->phyType) {
+	case PHY_AGERE_ET1011C: {
+		if (ql_mii_read_reg(qdev, 0x1A, &reg) < 0)
+			return 0;
 
 		reg = (reg >> 8) & 3;
-		अवरोध;
-	पूर्ण
-	शेष:
-		अगर (ql_mii_पढ़ो_reg(qdev, AUX_CONTROL_STATUS, &reg) < 0)
-			वापस 0;
+		break;
+	}
+	default:
+		if (ql_mii_read_reg(qdev, AUX_CONTROL_STATUS, &reg) < 0)
+			return 0;
 
 		reg = (((reg & 0x18) >> 3) & 3);
-	पूर्ण
+	}
 
-	चयन (reg) अणु
-	हाल 2:
-		वापस SPEED_1000;
-	हाल 1:
-		वापस SPEED_100;
-	हाल 0:
-		वापस SPEED_10;
-	शेष:
-		वापस -1;
-	पूर्ण
-पूर्ण
+	switch (reg) {
+	case 2:
+		return SPEED_1000;
+	case 1:
+		return SPEED_100;
+	case 0:
+		return SPEED_10;
+	default:
+		return -1;
+	}
+}
 
-अटल पूर्णांक ql_is_full_dup(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_is_full_dup(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
-	चयन (qdev->phyType) अणु
-	हाल PHY_AGERE_ET1011C: अणु
-		अगर (ql_mii_पढ़ो_reg(qdev, 0x1A, &reg))
-			वापस 0;
+	switch (qdev->phyType) {
+	case PHY_AGERE_ET1011C: {
+		if (ql_mii_read_reg(qdev, 0x1A, &reg))
+			return 0;
 
-		वापस ((reg & 0x0080) && (reg & 0x1000)) != 0;
-	पूर्ण
-	हाल PHY_VITESSE_VSC8211:
-	शेष: अणु
-		अगर (ql_mii_पढ़ो_reg(qdev, AUX_CONTROL_STATUS, &reg) < 0)
-			वापस 0;
-		वापस (reg & PHY_AUX_DUPLEX_STAT) != 0;
-	पूर्ण
-	पूर्ण
-पूर्ण
+		return ((reg & 0x0080) && (reg & 0x1000)) != 0;
+	}
+	case PHY_VITESSE_VSC8211:
+	default: {
+		if (ql_mii_read_reg(qdev, AUX_CONTROL_STATUS, &reg) < 0)
+			return 0;
+		return (reg & PHY_AUX_DUPLEX_STAT) != 0;
+	}
+	}
+}
 
-अटल पूर्णांक ql_is_phy_neg_छोड़ो(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_is_phy_neg_pause(struct ql3_adapter *qdev)
+{
 	u16 reg;
 
-	अगर (ql_mii_पढ़ो_reg(qdev, PHY_NEG_PARTNER, &reg) < 0)
-		वापस 0;
+	if (ql_mii_read_reg(qdev, PHY_NEG_PARTNER, &reg) < 0)
+		return 0;
 
-	वापस (reg & PHY_NEG_PAUSE) != 0;
-पूर्ण
+	return (reg & PHY_NEG_PAUSE) != 0;
+}
 
-अटल पूर्णांक PHY_Setup(काष्ठा ql3_adapter *qdev)
-अणु
+static int PHY_Setup(struct ql3_adapter *qdev)
+{
 	u16   reg1;
 	u16   reg2;
 	bool  agereAddrChangeNeeded = false;
 	u32 miiAddr = 0;
-	पूर्णांक err;
+	int err;
 
-	/*  Determine the PHY we are using by पढ़ोing the ID's */
-	err = ql_mii_पढ़ो_reg(qdev, PHY_ID_0_REG, &reg1);
-	अगर (err != 0) अणु
+	/*  Determine the PHY we are using by reading the ID's */
+	err = ql_mii_read_reg(qdev, PHY_ID_0_REG, &reg1);
+	if (err != 0) {
 		netdev_err(qdev->ndev, "Could not read from reg PHY_ID_0_REG\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = ql_mii_पढ़ो_reg(qdev, PHY_ID_1_REG, &reg2);
-	अगर (err != 0) अणु
+	err = ql_mii_read_reg(qdev, PHY_ID_1_REG, &reg2);
+	if (err != 0) {
 		netdev_err(qdev->ndev, "Could not read from reg PHY_ID_1_REG\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/*  Check अगर we have a Agere PHY */
-	अगर ((reg1 == 0xffff) || (reg2 == 0xffff)) अणु
+	/*  Check if we have a Agere PHY */
+	if ((reg1 == 0xffff) || (reg2 == 0xffff)) {
 
 		/* Determine which MII address we should be using
 		   determined by the index of the card */
-		अगर (qdev->mac_index == 0)
+		if (qdev->mac_index == 0)
 			miiAddr = MII_AGERE_ADDR_1;
-		अन्यथा
+		else
 			miiAddr = MII_AGERE_ADDR_2;
 
-		err = ql_mii_पढ़ो_reg_ex(qdev, PHY_ID_0_REG, &reg1, miiAddr);
-		अगर (err != 0) अणु
+		err = ql_mii_read_reg_ex(qdev, PHY_ID_0_REG, &reg1, miiAddr);
+		if (err != 0) {
 			netdev_err(qdev->ndev,
 				   "Could not read from reg PHY_ID_0_REG after Agere detected\n");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		err = ql_mii_पढ़ो_reg_ex(qdev, PHY_ID_1_REG, &reg2, miiAddr);
-		अगर (err != 0) अणु
+		err = ql_mii_read_reg_ex(qdev, PHY_ID_1_REG, &reg2, miiAddr);
+		if (err != 0) {
 			netdev_err(qdev->ndev, "Could not read from reg PHY_ID_1_REG after Agere detected\n");
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		/*  We need to remember to initialize the Agere PHY */
 		agereAddrChangeNeeded = true;
-	पूर्ण
+	}
 
 	/*  Determine the particular PHY we have on board to apply
-	    PHY specअगरic initializations */
+	    PHY specific initializations */
 	qdev->phyType = getPhyType(qdev, reg1, reg2);
 
-	अगर ((qdev->phyType == PHY_AGERE_ET1011C) && agereAddrChangeNeeded) अणु
-		/* need this here so address माला_लो changed */
-		phyAgereSpecअगरicInit(qdev, miiAddr);
-	पूर्ण अन्यथा अगर (qdev->phyType == PHY_TYPE_UNKNOWN) अणु
+	if ((qdev->phyType == PHY_AGERE_ET1011C) && agereAddrChangeNeeded) {
+		/* need this here so address gets changed */
+		phyAgereSpecificInit(qdev, miiAddr);
+	} else if (qdev->phyType == PHY_TYPE_UNKNOWN) {
 		netdev_err(qdev->ndev, "PHY is unknown\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_mac_enable(काष्ठा ql3_adapter *qdev, u32 enable)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mac_enable(struct ql3_adapter *qdev, u32 enable)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 value;
 
-	अगर (enable)
+	if (enable)
 		value = (MAC_CONFIG_REG_PE | (MAC_CONFIG_REG_PE << 16));
-	अन्यथा
+	else
 		value = (MAC_CONFIG_REG_PE << 16);
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
-पूर्ण
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
+	else
+		ql_write_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_mac_cfg_soft_reset(काष्ठा ql3_adapter *qdev, u32 enable)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mac_cfg_soft_reset(struct ql3_adapter *qdev, u32 enable)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 value;
 
-	अगर (enable)
+	if (enable)
 		value = (MAC_CONFIG_REG_SR | (MAC_CONFIG_REG_SR << 16));
-	अन्यथा
+	else
 		value = (MAC_CONFIG_REG_SR << 16);
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
-पूर्ण
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
+	else
+		ql_write_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_mac_cfg_gig(काष्ठा ql3_adapter *qdev, u32 enable)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mac_cfg_gig(struct ql3_adapter *qdev, u32 enable)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 value;
 
-	अगर (enable)
+	if (enable)
 		value = (MAC_CONFIG_REG_GM | (MAC_CONFIG_REG_GM << 16));
-	अन्यथा
+	else
 		value = (MAC_CONFIG_REG_GM << 16);
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
-पूर्ण
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
+	else
+		ql_write_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_mac_cfg_full_dup(काष्ठा ql3_adapter *qdev, u32 enable)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mac_cfg_full_dup(struct ql3_adapter *qdev, u32 enable)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 value;
 
-	अगर (enable)
+	if (enable)
 		value = (MAC_CONFIG_REG_FD | (MAC_CONFIG_REG_FD << 16));
-	अन्यथा
+	else
 		value = (MAC_CONFIG_REG_FD << 16);
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
-पूर्ण
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
+	else
+		ql_write_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_mac_cfg_छोड़ो(काष्ठा ql3_adapter *qdev, u32 enable)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static void ql_mac_cfg_pause(struct ql3_adapter *qdev, u32 enable)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 value;
 
-	अगर (enable)
+	if (enable)
 		value =
 		    ((MAC_CONFIG_REG_TF | MAC_CONFIG_REG_RF) |
 		     ((MAC_CONFIG_REG_TF | MAC_CONFIG_REG_RF) << 16));
-	अन्यथा
+	else
 		value = ((MAC_CONFIG_REG_TF | MAC_CONFIG_REG_RF) << 16);
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
-पूर्ण
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev, &port_regs->mac1ConfigReg, value);
+	else
+		ql_write_page0_reg(qdev, &port_regs->mac0ConfigReg, value);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_is_fiber(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_is_fiber(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = PORT_STATUS_SM0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = PORT_STATUS_SM1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	वापस (temp & bitToCheck) != 0;
-पूर्ण
+	temp = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	return (temp & bitToCheck) != 0;
+}
 
-अटल पूर्णांक ql_is_स्वतः_cfg(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_is_auto_cfg(struct ql3_adapter *qdev)
+{
 	u16 reg;
-	ql_mii_पढ़ो_reg(qdev, 0x00, &reg);
-	वापस (reg & 0x1000) != 0;
-पूर्ण
+	ql_mii_read_reg(qdev, 0x00, &reg);
+	return (reg & 0x1000) != 0;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_is_स्वतः_neg_complete(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_is_auto_neg_complete(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = PORT_STATUS_AC0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = PORT_STATUS_AC1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	अगर (temp & bitToCheck) अणु
-		netअगर_info(qdev, link, qdev->ndev, "Auto-Negotiate complete\n");
-		वापस 1;
-	पूर्ण
-	netअगर_info(qdev, link, qdev->ndev, "Auto-Negotiate incomplete\n");
-	वापस 0;
-पूर्ण
+	temp = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	if (temp & bitToCheck) {
+		netif_info(qdev, link, qdev->ndev, "Auto-Negotiate complete\n");
+		return 1;
+	}
+	netif_info(qdev, link, qdev->ndev, "Auto-Negotiate incomplete\n");
+	return 0;
+}
 
 /*
- *  ql_is_neg_छोड़ो() वापसs 1 अगर छोड़ो was negotiated to be on
+ *  ql_is_neg_pause() returns 1 if pause was negotiated to be on
  */
-अटल पूर्णांक ql_is_neg_छोड़ो(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (ql_is_fiber(qdev))
-		वापस ql_is_petbi_neg_छोड़ो(qdev);
-	अन्यथा
-		वापस ql_is_phy_neg_छोड़ो(qdev);
-पूर्ण
+static int ql_is_neg_pause(struct ql3_adapter *qdev)
+{
+	if (ql_is_fiber(qdev))
+		return ql_is_petbi_neg_pause(qdev);
+	else
+		return ql_is_phy_neg_pause(qdev);
+}
 
-अटल पूर्णांक ql_स्वतः_neg_error(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_auto_neg_error(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = PORT_STATUS_AE0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = PORT_STATUS_AE1;
-		अवरोध;
-	पूर्ण
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	वापस (temp & bitToCheck) != 0;
-पूर्ण
+		break;
+	}
+	temp = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	return (temp & bitToCheck) != 0;
+}
 
-अटल u32 ql_get_link_speed(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (ql_is_fiber(qdev))
-		वापस SPEED_1000;
-	अन्यथा
-		वापस ql_phy_get_speed(qdev);
-पूर्ण
+static u32 ql_get_link_speed(struct ql3_adapter *qdev)
+{
+	if (ql_is_fiber(qdev))
+		return SPEED_1000;
+	else
+		return ql_phy_get_speed(qdev);
+}
 
-अटल पूर्णांक ql_is_link_full_dup(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (ql_is_fiber(qdev))
-		वापस 1;
-	अन्यथा
-		वापस ql_is_full_dup(qdev);
-पूर्ण
+static int ql_is_link_full_dup(struct ql3_adapter *qdev)
+{
+	if (ql_is_fiber(qdev))
+		return 1;
+	else
+		return ql_is_full_dup(qdev);
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_link_करोwn_detect(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_link_down_detect(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = ISP_CONTROL_LINK_DN_0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = ISP_CONTROL_LINK_DN_1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	temp =
-	    ql_पढ़ो_common_reg(qdev, &port_regs->CommonRegs.ispControlStatus);
-	वापस (temp & bitToCheck) != 0;
-पूर्ण
+	    ql_read_common_reg(qdev, &port_regs->CommonRegs.ispControlStatus);
+	return (temp & bitToCheck) != 0;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_link_करोwn_detect_clear(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_link_down_detect_clear(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
-		ql_ग_लिखो_common_reg(qdev,
+	switch (qdev->mac_index) {
+	case 0:
+		ql_write_common_reg(qdev,
 				    &port_regs->CommonRegs.ispControlStatus,
 				    (ISP_CONTROL_LINK_DN_0) |
 				    (ISP_CONTROL_LINK_DN_0 << 16));
-		अवरोध;
+		break;
 
-	हाल 1:
-		ql_ग_लिखो_common_reg(qdev,
+	case 1:
+		ql_write_common_reg(qdev,
 				    &port_regs->CommonRegs.ispControlStatus,
 				    (ISP_CONTROL_LINK_DN_1) |
 				    (ISP_CONTROL_LINK_DN_1 << 16));
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 1;
-	पूर्ण
+	default:
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_this_adapter_controls_port(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static int ql_this_adapter_controls_port(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = PORT_STATUS_F1_ENABLED;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = PORT_STATUS_F3_ENABLED;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	अगर (temp & bitToCheck) अणु
-		netअगर_prपूर्णांकk(qdev, link, KERN_DEBUG, qdev->ndev,
+	temp = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	if (temp & bitToCheck) {
+		netif_printk(qdev, link, KERN_DEBUG, qdev->ndev,
 			     "not link master\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	netअगर_prपूर्णांकk(qdev, link, KERN_DEBUG, qdev->ndev, "link master\n");
-	वापस 1;
-पूर्ण
+	netif_printk(qdev, link, KERN_DEBUG, qdev->ndev, "link master\n");
+	return 1;
+}
 
-अटल व्योम ql_phy_reset_ex(काष्ठा ql3_adapter *qdev)
-अणु
-	ql_mii_ग_लिखो_reg_ex(qdev, CONTROL_REG, PHY_CTRL_SOFT_RESET,
+static void ql_phy_reset_ex(struct ql3_adapter *qdev)
+{
+	ql_mii_write_reg_ex(qdev, CONTROL_REG, PHY_CTRL_SOFT_RESET,
 			    PHYAddr[qdev->mac_index]);
-पूर्ण
+}
 
-अटल व्योम ql_phy_start_neg_ex(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_phy_start_neg_ex(struct ql3_adapter *qdev)
+{
 	u16 reg;
 	u16 portConfiguration;
 
-	अगर (qdev->phyType == PHY_AGERE_ET1011C)
-		ql_mii_ग_लिखो_reg(qdev, 0x13, 0x0000);
-					/* turn off बाह्यal loopback */
+	if (qdev->phyType == PHY_AGERE_ET1011C)
+		ql_mii_write_reg(qdev, 0x13, 0x0000);
+					/* turn off external loopback */
 
-	अगर (qdev->mac_index == 0)
+	if (qdev->mac_index == 0)
 		portConfiguration =
 			qdev->nvram_data.macCfg_port0.portConfiguration;
-	अन्यथा
+	else
 		portConfiguration =
 			qdev->nvram_data.macCfg_port1.portConfiguration;
 
 	/*  Some HBA's in the field are set to 0 and they need to
-	    be reपूर्णांकerpreted with a शेष value */
-	अगर (portConfiguration == 0)
+	    be reinterpreted with a default value */
+	if (portConfiguration == 0)
 		portConfiguration = PORT_CONFIG_DEFAULT;
 
 	/* Set the 1000 advertisements */
-	ql_mii_पढ़ो_reg_ex(qdev, PHY_GIG_CONTROL, &reg,
+	ql_mii_read_reg_ex(qdev, PHY_GIG_CONTROL, &reg,
 			   PHYAddr[qdev->mac_index]);
 	reg &= ~PHY_GIG_ALL_PARAMS;
 
-	अगर (portConfiguration & PORT_CONFIG_1000MB_SPEED) अणु
-		अगर (portConfiguration & PORT_CONFIG_FULL_DUPLEX_ENABLED)
+	if (portConfiguration & PORT_CONFIG_1000MB_SPEED) {
+		if (portConfiguration & PORT_CONFIG_FULL_DUPLEX_ENABLED)
 			reg |= PHY_GIG_ADV_1000F;
-		अन्यथा
+		else
 			reg |= PHY_GIG_ADV_1000H;
-	पूर्ण
+	}
 
-	ql_mii_ग_लिखो_reg_ex(qdev, PHY_GIG_CONTROL, reg,
+	ql_mii_write_reg_ex(qdev, PHY_GIG_CONTROL, reg,
 			    PHYAddr[qdev->mac_index]);
 
-	/* Set the 10/100 & छोड़ो negotiation advertisements */
-	ql_mii_पढ़ो_reg_ex(qdev, PHY_NEG_ADVER, &reg,
+	/* Set the 10/100 & pause negotiation advertisements */
+	ql_mii_read_reg_ex(qdev, PHY_NEG_ADVER, &reg,
 			   PHYAddr[qdev->mac_index]);
 	reg &= ~PHY_NEG_ALL_PARAMS;
 
-	अगर (portConfiguration & PORT_CONFIG_SYM_PAUSE_ENABLED)
+	if (portConfiguration & PORT_CONFIG_SYM_PAUSE_ENABLED)
 		reg |= PHY_NEG_ASY_PAUSE | PHY_NEG_SYM_PAUSE;
 
-	अगर (portConfiguration & PORT_CONFIG_FULL_DUPLEX_ENABLED) अणु
-		अगर (portConfiguration & PORT_CONFIG_100MB_SPEED)
+	if (portConfiguration & PORT_CONFIG_FULL_DUPLEX_ENABLED) {
+		if (portConfiguration & PORT_CONFIG_100MB_SPEED)
 			reg |= PHY_NEG_ADV_100F;
 
-		अगर (portConfiguration & PORT_CONFIG_10MB_SPEED)
+		if (portConfiguration & PORT_CONFIG_10MB_SPEED)
 			reg |= PHY_NEG_ADV_10F;
-	पूर्ण
+	}
 
-	अगर (portConfiguration & PORT_CONFIG_HALF_DUPLEX_ENABLED) अणु
-		अगर (portConfiguration & PORT_CONFIG_100MB_SPEED)
+	if (portConfiguration & PORT_CONFIG_HALF_DUPLEX_ENABLED) {
+		if (portConfiguration & PORT_CONFIG_100MB_SPEED)
 			reg |= PHY_NEG_ADV_100H;
 
-		अगर (portConfiguration & PORT_CONFIG_10MB_SPEED)
+		if (portConfiguration & PORT_CONFIG_10MB_SPEED)
 			reg |= PHY_NEG_ADV_10H;
-	पूर्ण
+	}
 
-	अगर (portConfiguration & PORT_CONFIG_1000MB_SPEED)
+	if (portConfiguration & PORT_CONFIG_1000MB_SPEED)
 		reg |= 1;
 
-	ql_mii_ग_लिखो_reg_ex(qdev, PHY_NEG_ADVER, reg,
+	ql_mii_write_reg_ex(qdev, PHY_NEG_ADVER, reg,
 			    PHYAddr[qdev->mac_index]);
 
-	ql_mii_पढ़ो_reg_ex(qdev, CONTROL_REG, &reg, PHYAddr[qdev->mac_index]);
+	ql_mii_read_reg_ex(qdev, CONTROL_REG, &reg, PHYAddr[qdev->mac_index]);
 
-	ql_mii_ग_लिखो_reg_ex(qdev, CONTROL_REG,
+	ql_mii_write_reg_ex(qdev, CONTROL_REG,
 			    reg | PHY_CTRL_RESTART_NEG | PHY_CTRL_AUTO_NEG,
 			    PHYAddr[qdev->mac_index]);
-पूर्ण
+}
 
-अटल व्योम ql_phy_init_ex(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_phy_init_ex(struct ql3_adapter *qdev)
+{
 	ql_phy_reset_ex(qdev);
 	PHY_Setup(qdev);
 	ql_phy_start_neg_ex(qdev);
-पूर्ण
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल u32 ql_get_link_state(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+static u32 ql_get_link_state(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 	u32 bitToCheck = 0;
 	u32 temp, linkState;
 
-	चयन (qdev->mac_index) अणु
-	हाल 0:
+	switch (qdev->mac_index) {
+	case 0:
 		bitToCheck = PORT_STATUS_UP0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bitToCheck = PORT_STATUS_UP1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	temp = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	अगर (temp & bitToCheck)
+	temp = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	if (temp & bitToCheck)
 		linkState = LS_UP;
-	अन्यथा
+	else
 		linkState = LS_DOWN;
 
-	वापस linkState;
-पूर्ण
+	return linkState;
+}
 
-अटल पूर्णांक ql_port_start(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+static int ql_port_start(struct ql3_adapter *qdev)
+{
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 		(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
-			 2) << 7)) अणु
+			 2) << 7)) {
 		netdev_err(qdev->ndev, "Could not get hw lock for GIO\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (ql_is_fiber(qdev)) अणु
+	if (ql_is_fiber(qdev)) {
 		ql_petbi_init(qdev);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Copper port */
 		ql_phy_init_ex(qdev);
-	पूर्ण
+	}
 
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_finish_स्वतः_neg(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_finish_auto_neg(struct ql3_adapter *qdev)
+{
 
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 		(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
 			 2) << 7))
-		वापस -1;
+		return -1;
 
-	अगर (!ql_स्वतः_neg_error(qdev)) अणु
-		अगर (test_bit(QL_LINK_MASTER, &qdev->flags)) अणु
+	if (!ql_auto_neg_error(qdev)) {
+		if (test_bit(QL_LINK_MASTER, &qdev->flags)) {
 			/* configure the MAC */
-			netअगर_prपूर्णांकk(qdev, link, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, link, KERN_DEBUG, qdev->ndev,
 				     "Configuring link\n");
 			ql_mac_cfg_soft_reset(qdev, 1);
 			ql_mac_cfg_gig(qdev,
@@ -1474,169 +1473,169 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 			ql_mac_cfg_full_dup(qdev,
 					    ql_is_link_full_dup
 					    (qdev));
-			ql_mac_cfg_छोड़ो(qdev,
-					 ql_is_neg_छोड़ो
+			ql_mac_cfg_pause(qdev,
+					 ql_is_neg_pause
 					 (qdev));
 			ql_mac_cfg_soft_reset(qdev, 0);
 
 			/* enable the MAC */
-			netअगर_prपूर्णांकk(qdev, link, KERN_DEBUG, qdev->ndev,
+			netif_printk(qdev, link, KERN_DEBUG, qdev->ndev,
 				     "Enabling mac\n");
 			ql_mac_enable(qdev, 1);
-		पूर्ण
+		}
 
 		qdev->port_link_state = LS_UP;
-		netअगर_start_queue(qdev->ndev);
-		netअगर_carrier_on(qdev->ndev);
-		netअगर_info(qdev, link, qdev->ndev,
+		netif_start_queue(qdev->ndev);
+		netif_carrier_on(qdev->ndev);
+		netif_info(qdev, link, qdev->ndev,
 			   "Link is up at %d Mbps, %s duplex\n",
 			   ql_get_link_speed(qdev),
 			   ql_is_link_full_dup(qdev) ? "full" : "half");
 
-	पूर्ण अन्यथा अणु	/* Remote error detected */
+	} else {	/* Remote error detected */
 
-		अगर (test_bit(QL_LINK_MASTER, &qdev->flags)) अणु
-			netअगर_prपूर्णांकk(qdev, link, KERN_DEBUG, qdev->ndev,
+		if (test_bit(QL_LINK_MASTER, &qdev->flags)) {
+			netif_printk(qdev, link, KERN_DEBUG, qdev->ndev,
 				     "Remote error detected. Calling ql_port_start()\n");
 			/*
 			 * ql_port_start() is shared code and needs
 			 * to lock the PHY on it's own.
 			 */
 			ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
-			अगर (ql_port_start(qdev))	/* Restart port */
-				वापस -1;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			if (ql_port_start(qdev))	/* Restart port */
+				return -1;
+			return 0;
+		}
+	}
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_link_state_machine_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ql3_adapter *qdev =
-		container_of(work, काष्ठा ql3_adapter, link_state_work.work);
+static void ql_link_state_machine_work(struct work_struct *work)
+{
+	struct ql3_adapter *qdev =
+		container_of(work, struct ql3_adapter, link_state_work.work);
 
 	u32 curr_link_state;
-	अचिन्हित दीर्घ hw_flags;
+	unsigned long hw_flags;
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
 
 	curr_link_state = ql_get_link_state(qdev);
 
-	अगर (test_bit(QL_RESET_ACTIVE, &qdev->flags)) अणु
-		netअगर_info(qdev, link, qdev->ndev,
+	if (test_bit(QL_RESET_ACTIVE, &qdev->flags)) {
+		netif_info(qdev, link, qdev->ndev,
 			   "Reset in progress, skip processing link state\n");
 
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
-		/* Restart समयr on 2 second पूर्णांकerval. */
-		mod_समयr(&qdev->adapter_समयr, jअगरfies + HZ * 1);
+		/* Restart timer on 2 second interval. */
+		mod_timer(&qdev->adapter_timer, jiffies + HZ * 1);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (qdev->port_link_state) अणु
-	शेष:
-		अगर (test_bit(QL_LINK_MASTER, &qdev->flags))
+	switch (qdev->port_link_state) {
+	default:
+		if (test_bit(QL_LINK_MASTER, &qdev->flags))
 			ql_port_start(qdev);
 		qdev->port_link_state = LS_DOWN;
 		fallthrough;
 
-	हाल LS_DOWN:
-		अगर (curr_link_state == LS_UP) अणु
-			netअगर_info(qdev, link, qdev->ndev, "Link is up\n");
-			अगर (ql_is_स्वतः_neg_complete(qdev))
-				ql_finish_स्वतः_neg(qdev);
+	case LS_DOWN:
+		if (curr_link_state == LS_UP) {
+			netif_info(qdev, link, qdev->ndev, "Link is up\n");
+			if (ql_is_auto_neg_complete(qdev))
+				ql_finish_auto_neg(qdev);
 
-			अगर (qdev->port_link_state == LS_UP)
-				ql_link_करोwn_detect_clear(qdev);
+			if (qdev->port_link_state == LS_UP)
+				ql_link_down_detect_clear(qdev);
 
 			qdev->port_link_state = LS_UP;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल LS_UP:
+	case LS_UP:
 		/*
-		 * See अगर the link is currently करोwn or went करोwn and came
+		 * See if the link is currently down or went down and came
 		 * back up
 		 */
-		अगर (curr_link_state == LS_DOWN) अणु
-			netअगर_info(qdev, link, qdev->ndev, "Link is down\n");
+		if (curr_link_state == LS_DOWN) {
+			netif_info(qdev, link, qdev->ndev, "Link is down\n");
 			qdev->port_link_state = LS_DOWN;
-		पूर्ण
-		अगर (ql_link_करोwn_detect(qdev))
+		}
+		if (ql_link_down_detect(qdev))
 			qdev->port_link_state = LS_DOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
-	/* Restart समयr on 2 second पूर्णांकerval. */
-	mod_समयr(&qdev->adapter_समयr, jअगरfies + HZ * 1);
-पूर्ण
+	/* Restart timer on 2 second interval. */
+	mod_timer(&qdev->adapter_timer, jiffies + HZ * 1);
+}
 
 /*
  * Caller must take hw_lock and QL_PHY_GIO_SEM.
  */
-अटल व्योम ql_get_phy_owner(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (ql_this_adapter_controls_port(qdev))
+static void ql_get_phy_owner(struct ql3_adapter *qdev)
+{
+	if (ql_this_adapter_controls_port(qdev))
 		set_bit(QL_LINK_MASTER, &qdev->flags);
-	अन्यथा
+	else
 		clear_bit(QL_LINK_MASTER, &qdev->flags);
-पूर्ण
+}
 
 /*
  * Caller must take hw_lock and QL_PHY_GIO_SEM.
  */
-अटल व्योम ql_init_scan_mode(काष्ठा ql3_adapter *qdev)
-अणु
+static void ql_init_scan_mode(struct ql3_adapter *qdev)
+{
 	ql_mii_enable_scan_mode(qdev);
 
-	अगर (test_bit(QL_LINK_OPTICAL, &qdev->flags)) अणु
-		अगर (ql_this_adapter_controls_port(qdev))
+	if (test_bit(QL_LINK_OPTICAL, &qdev->flags)) {
+		if (ql_this_adapter_controls_port(qdev))
 			ql_petbi_init_ex(qdev);
-	पूर्ण अन्यथा अणु
-		अगर (ql_this_adapter_controls_port(qdev))
+	} else {
+		if (ql_this_adapter_controls_port(qdev))
 			ql_phy_init_ex(qdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * MII_Setup needs to be called beक्रमe taking the PHY out of reset
- * so that the management पूर्णांकerface घड़ी speed can be set properly.
- * It would be better अगर we had a way to disable MDC until after the
- * PHY is out of reset, but we करोn't have that capability.
+ * MII_Setup needs to be called before taking the PHY out of reset
+ * so that the management interface clock speed can be set properly.
+ * It would be better if we had a way to disable MDC until after the
+ * PHY is out of reset, but we don't have that capability.
  */
-अटल पूर्णांक ql_mii_setup(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_mii_setup(struct ql3_adapter *qdev)
+{
 	u32 reg;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
 
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 			(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
 			 2) << 7))
-		वापस -1;
+		return -1;
 
-	अगर (qdev->device_id == QL3032_DEVICE_ID)
-		ql_ग_लिखो_page0_reg(qdev,
+	if (qdev->device_id == QL3032_DEVICE_ID)
+		ql_write_page0_reg(qdev,
 			&port_regs->macMIIMgmtControlReg, 0x0f00000);
 
-	/* Divide 125MHz घड़ी by 28 to meet PHY timing requirements */
+	/* Divide 125MHz clock by 28 to meet PHY timing requirements */
 	reg = MAC_MII_CONTROL_CLK_SEL_DIV28;
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
+	ql_write_page0_reg(qdev, &port_regs->macMIIMgmtControlReg,
 			   reg | ((MAC_MII_CONTROL_CLK_SEL_MASK) << 16));
 
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा SUPPORTED_OPTICAL_MODES	(SUPPORTED_1000baseT_Full |	\
+#define SUPPORTED_OPTICAL_MODES	(SUPPORTED_1000baseT_Full |	\
 				 SUPPORTED_FIBRE |		\
 				 SUPPORTED_Autoneg)
-#घोषणा SUPPORTED_TP_MODES	(SUPPORTED_10baseT_Half |	\
+#define SUPPORTED_TP_MODES	(SUPPORTED_10baseT_Half |	\
 				 SUPPORTED_10baseT_Full |	\
 				 SUPPORTED_100baseT_Half |	\
 				 SUPPORTED_100baseT_Full |	\
@@ -1645,81 +1644,81 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 				 SUPPORTED_Autoneg |		\
 				 SUPPORTED_TP)			\
 
-अटल u32 ql_supported_modes(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (test_bit(QL_LINK_OPTICAL, &qdev->flags))
-		वापस SUPPORTED_OPTICAL_MODES;
+static u32 ql_supported_modes(struct ql3_adapter *qdev)
+{
+	if (test_bit(QL_LINK_OPTICAL, &qdev->flags))
+		return SUPPORTED_OPTICAL_MODES;
 
-	वापस SUPPORTED_TP_MODES;
-पूर्ण
+	return SUPPORTED_TP_MODES;
+}
 
-अटल पूर्णांक ql_get_स्वतः_cfg_status(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक status;
-	अचिन्हित दीर्घ hw_flags;
+static int ql_get_auto_cfg_status(struct ql3_adapter *qdev)
+{
+	int status;
+	unsigned long hw_flags;
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 			    (QL_RESOURCE_BITS_BASE_CODE |
-			     (qdev->mac_index) * 2) << 7)) अणु
+			     (qdev->mac_index) * 2) << 7)) {
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-		वापस 0;
-	पूर्ण
-	status = ql_is_स्वतः_cfg(qdev);
+		return 0;
+	}
+	status = ql_is_auto_cfg(qdev);
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल u32 ql_get_speed(काष्ठा ql3_adapter *qdev)
-अणु
+static u32 ql_get_speed(struct ql3_adapter *qdev)
+{
 	u32 status;
-	अचिन्हित दीर्घ hw_flags;
+	unsigned long hw_flags;
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 			    (QL_RESOURCE_BITS_BASE_CODE |
-			     (qdev->mac_index) * 2) << 7)) अणु
+			     (qdev->mac_index) * 2) << 7)) {
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	status = ql_get_link_speed(qdev);
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ql_get_full_dup(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक status;
-	अचिन्हित दीर्घ hw_flags;
+static int ql_get_full_dup(struct ql3_adapter *qdev)
+{
+	int status;
+	unsigned long hw_flags;
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 			    (QL_RESOURCE_BITS_BASE_CODE |
-			     (qdev->mac_index) * 2) << 7)) अणु
+			     (qdev->mac_index) * 2) << 7)) {
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	status = ql_is_link_full_dup(qdev);
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ql_get_link_ksettings(काष्ठा net_device *ndev,
-				 काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
+static int ql_get_link_ksettings(struct net_device *ndev,
+				 struct ethtool_link_ksettings *cmd)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
 	u32 supported, advertising;
 
 	supported = ql_supported_modes(qdev);
 
-	अगर (test_bit(QL_LINK_OPTICAL, &qdev->flags)) अणु
+	if (test_bit(QL_LINK_OPTICAL, &qdev->flags)) {
 		cmd->base.port = PORT_FIBRE;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->base.port = PORT_TP;
 		cmd->base.phy_address = qdev->PHYAddr;
-	पूर्ण
+	}
 	advertising = ql_supported_modes(qdev);
-	cmd->base.स्वतःneg = ql_get_स्वतः_cfg_status(qdev);
+	cmd->base.autoneg = ql_get_auto_cfg_status(qdev);
 	cmd->base.speed = ql_get_speed(qdev);
 	cmd->base.duplex = ql_get_full_dup(qdev);
 
@@ -1728,75 +1727,75 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_get_drvinfo(काष्ठा net_device *ndev,
-			   काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	strlcpy(drvinfo->driver, ql3xxx_driver_name, माप(drvinfo->driver));
+static void ql_get_drvinfo(struct net_device *ndev,
+			   struct ethtool_drvinfo *drvinfo)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	strlcpy(drvinfo->driver, ql3xxx_driver_name, sizeof(drvinfo->driver));
 	strlcpy(drvinfo->version, ql3xxx_driver_version,
-		माप(drvinfo->version));
+		sizeof(drvinfo->version));
 	strlcpy(drvinfo->bus_info, pci_name(qdev->pdev),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल u32 ql_get_msglevel(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	वापस qdev->msg_enable;
-पूर्ण
+static u32 ql_get_msglevel(struct net_device *ndev)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	return qdev->msg_enable;
+}
 
-अटल व्योम ql_set_msglevel(काष्ठा net_device *ndev, u32 value)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
+static void ql_set_msglevel(struct net_device *ndev, u32 value)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
 	qdev->msg_enable = value;
-पूर्ण
+}
 
-अटल व्योम ql_get_छोड़ोparam(काष्ठा net_device *ndev,
-			      काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_get_pauseparam(struct net_device *ndev,
+			      struct ethtool_pauseparam *pause)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
 	u32 reg;
-	अगर (qdev->mac_index == 0)
-		reg = ql_पढ़ो_page0_reg(qdev, &port_regs->mac0ConfigReg);
-	अन्यथा
-		reg = ql_पढ़ो_page0_reg(qdev, &port_regs->mac1ConfigReg);
+	if (qdev->mac_index == 0)
+		reg = ql_read_page0_reg(qdev, &port_regs->mac0ConfigReg);
+	else
+		reg = ql_read_page0_reg(qdev, &port_regs->mac1ConfigReg);
 
-	छोड़ो->स्वतःneg  = ql_get_स्वतः_cfg_status(qdev);
-	छोड़ो->rx_छोड़ो = (reg & MAC_CONFIG_REG_RF) >> 2;
-	छोड़ो->tx_छोड़ो = (reg & MAC_CONFIG_REG_TF) >> 1;
-पूर्ण
+	pause->autoneg  = ql_get_auto_cfg_status(qdev);
+	pause->rx_pause = (reg & MAC_CONFIG_REG_RF) >> 2;
+	pause->tx_pause = (reg & MAC_CONFIG_REG_TF) >> 1;
+}
 
-अटल स्थिर काष्ठा ethtool_ops ql3xxx_ethtool_ops = अणु
+static const struct ethtool_ops ql3xxx_ethtool_ops = {
 	.get_drvinfo = ql_get_drvinfo,
 	.get_link = ethtool_op_get_link,
 	.get_msglevel = ql_get_msglevel,
 	.set_msglevel = ql_set_msglevel,
-	.get_छोड़ोparam = ql_get_छोड़ोparam,
+	.get_pauseparam = ql_get_pauseparam,
 	.get_link_ksettings = ql_get_link_ksettings,
-पूर्ण;
+};
 
-अटल पूर्णांक ql_populate_मुक्त_queue(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb = qdev->lrg_buf_मुक्त_head;
+static int ql_populate_free_queue(struct ql3_adapter *qdev)
+{
+	struct ql_rcv_buf_cb *lrg_buf_cb = qdev->lrg_buf_free_head;
 	dma_addr_t map;
-	पूर्णांक err;
+	int err;
 
-	जबतक (lrg_buf_cb) अणु
-		अगर (!lrg_buf_cb->skb) अणु
+	while (lrg_buf_cb) {
+		if (!lrg_buf_cb->skb) {
 			lrg_buf_cb->skb =
 				netdev_alloc_skb(qdev->ndev,
 						 qdev->lrg_buffer_len);
-			अगर (unlikely(!lrg_buf_cb->skb)) अणु
-				netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev,
+			if (unlikely(!lrg_buf_cb->skb)) {
+				netdev_printk(KERN_DEBUG, qdev->ndev,
 					      "Failed netdev_alloc_skb()\n");
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				break;
+			} else {
 				/*
 				 * We save some space to copy the ethhdr from
 				 * first buffer
@@ -1808,14 +1807,14 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 						     DMA_FROM_DEVICE);
 
 				err = dma_mapping_error(&qdev->pdev->dev, map);
-				अगर (err) अणु
+				if (err) {
 					netdev_err(qdev->ndev,
 						   "PCI mapping failed with error: %d\n",
 						   err);
-					dev_kमुक्त_skb(lrg_buf_cb->skb);
-					lrg_buf_cb->skb = शून्य;
-					अवरोध;
-				पूर्ण
+					dev_kfree_skb(lrg_buf_cb->skb);
+					lrg_buf_cb->skb = NULL;
+					break;
+				}
 
 
 				lrg_buf_cb->buf_phy_addr_low =
@@ -1827,64 +1826,64 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 						  qdev->lrg_buffer_len -
 						  QL_HEADER_SPACE);
 				--qdev->lrg_buf_skb_check;
-				अगर (!qdev->lrg_buf_skb_check)
-					वापस 1;
-			पूर्ण
-		पूर्ण
+				if (!qdev->lrg_buf_skb_check)
+					return 1;
+			}
+		}
 		lrg_buf_cb = lrg_buf_cb->next;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_update_small_bufq_prod_index(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_update_small_bufq_prod_index(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
-	अगर (qdev->small_buf_release_cnt >= 16) अणु
-		जबतक (qdev->small_buf_release_cnt >= 16) अणु
+	if (qdev->small_buf_release_cnt >= 16) {
+		while (qdev->small_buf_release_cnt >= 16) {
 			qdev->small_buf_q_producer_index++;
 
-			अगर (qdev->small_buf_q_producer_index ==
+			if (qdev->small_buf_q_producer_index ==
 			    NUM_SBUFQ_ENTRIES)
 				qdev->small_buf_q_producer_index = 0;
 			qdev->small_buf_release_cnt -= 8;
-		पूर्ण
+		}
 		wmb();
-		ग_लिखोl_relaxed(qdev->small_buf_q_producer_index,
+		writel_relaxed(qdev->small_buf_q_producer_index,
 			       &port_regs->CommonRegs.rxSmallQProducerIndex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल व्योम ql_update_lrg_bufq_prod_index(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा bufq_addr_element *lrg_buf_q_ele;
-	पूर्णांक i;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_update_lrg_bufq_prod_index(struct ql3_adapter *qdev)
+{
+	struct bufq_addr_element *lrg_buf_q_ele;
+	int i;
+	struct ql_rcv_buf_cb *lrg_buf_cb;
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 
-	अगर ((qdev->lrg_buf_मुक्त_count >= 8) &&
-	    (qdev->lrg_buf_release_cnt >= 16)) अणु
+	if ((qdev->lrg_buf_free_count >= 8) &&
+	    (qdev->lrg_buf_release_cnt >= 16)) {
 
-		अगर (qdev->lrg_buf_skb_check)
-			अगर (!ql_populate_मुक्त_queue(qdev))
-				वापस;
+		if (qdev->lrg_buf_skb_check)
+			if (!ql_populate_free_queue(qdev))
+				return;
 
-		lrg_buf_q_ele = qdev->lrg_buf_next_मुक्त;
+		lrg_buf_q_ele = qdev->lrg_buf_next_free;
 
-		जबतक ((qdev->lrg_buf_release_cnt >= 16) &&
-		       (qdev->lrg_buf_मुक्त_count >= 8)) अणु
+		while ((qdev->lrg_buf_release_cnt >= 16) &&
+		       (qdev->lrg_buf_free_count >= 8)) {
 
-			क्रम (i = 0; i < 8; i++) अणु
+			for (i = 0; i < 8; i++) {
 				lrg_buf_cb =
-				    ql_get_from_lrg_buf_मुक्त_list(qdev);
+				    ql_get_from_lrg_buf_free_list(qdev);
 				lrg_buf_q_ele->addr_high =
 				    lrg_buf_cb->buf_phy_addr_high;
 				lrg_buf_q_ele->addr_low =
@@ -1892,114 +1891,114 @@ MODULE_DEVICE_TABLE(pci, ql3xxx_pci_tbl);
 				lrg_buf_q_ele++;
 
 				qdev->lrg_buf_release_cnt--;
-			पूर्ण
+			}
 
 			qdev->lrg_buf_q_producer_index++;
 
-			अगर (qdev->lrg_buf_q_producer_index ==
+			if (qdev->lrg_buf_q_producer_index ==
 			    qdev->num_lbufq_entries)
 				qdev->lrg_buf_q_producer_index = 0;
 
-			अगर (qdev->lrg_buf_q_producer_index ==
-			    (qdev->num_lbufq_entries - 1)) अणु
+			if (qdev->lrg_buf_q_producer_index ==
+			    (qdev->num_lbufq_entries - 1)) {
 				lrg_buf_q_ele = qdev->lrg_buf_q_virt_addr;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		wmb();
-		qdev->lrg_buf_next_मुक्त = lrg_buf_q_ele;
-		ग_लिखोl(qdev->lrg_buf_q_producer_index,
+		qdev->lrg_buf_next_free = lrg_buf_q_ele;
+		writel(qdev->lrg_buf_q_producer_index,
 			&port_regs->CommonRegs.rxLargeQProducerIndex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ql_process_mac_tx_पूर्णांकr(काष्ठा ql3_adapter *qdev,
-				   काष्ठा ob_mac_iocb_rsp *mac_rsp)
-अणु
-	काष्ठा ql_tx_buf_cb *tx_cb;
-	पूर्णांक i;
+static void ql_process_mac_tx_intr(struct ql3_adapter *qdev,
+				   struct ob_mac_iocb_rsp *mac_rsp)
+{
+	struct ql_tx_buf_cb *tx_cb;
+	int i;
 
-	अगर (mac_rsp->flags & OB_MAC_IOCB_RSP_S) अणु
+	if (mac_rsp->flags & OB_MAC_IOCB_RSP_S) {
 		netdev_warn(qdev->ndev,
 			    "Frame too short but it was padded and sent\n");
-	पूर्ण
+	}
 
 	tx_cb = &qdev->tx_buf[mac_rsp->transaction_id];
 
-	/*  Check the transmit response flags क्रम any errors */
-	अगर (mac_rsp->flags & OB_MAC_IOCB_RSP_S) अणु
+	/*  Check the transmit response flags for any errors */
+	if (mac_rsp->flags & OB_MAC_IOCB_RSP_S) {
 		netdev_err(qdev->ndev,
 			   "Frame too short to be legal, frame not sent\n");
 
 		qdev->ndev->stats.tx_errors++;
-		जाओ frame_not_sent;
-	पूर्ण
+		goto frame_not_sent;
+	}
 
-	अगर (tx_cb->seg_count == 0) अणु
+	if (tx_cb->seg_count == 0) {
 		netdev_err(qdev->ndev, "tx_cb->seg_count == 0: %d\n",
 			   mac_rsp->transaction_id);
 
 		qdev->ndev->stats.tx_errors++;
-		जाओ invalid_seg_count;
-	पूर्ण
+		goto invalid_seg_count;
+	}
 
 	dma_unmap_single(&qdev->pdev->dev,
 			 dma_unmap_addr(&tx_cb->map[0], mapaddr),
 			 dma_unmap_len(&tx_cb->map[0], maplen), DMA_TO_DEVICE);
 	tx_cb->seg_count--;
-	अगर (tx_cb->seg_count) अणु
-		क्रम (i = 1; i < tx_cb->seg_count; i++) अणु
+	if (tx_cb->seg_count) {
+		for (i = 1; i < tx_cb->seg_count; i++) {
 			dma_unmap_page(&qdev->pdev->dev,
 				       dma_unmap_addr(&tx_cb->map[i], mapaddr),
 				       dma_unmap_len(&tx_cb->map[i], maplen),
 				       DMA_TO_DEVICE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	qdev->ndev->stats.tx_packets++;
 	qdev->ndev->stats.tx_bytes += tx_cb->skb->len;
 
 frame_not_sent:
-	dev_kमुक्त_skb_irq(tx_cb->skb);
-	tx_cb->skb = शून्य;
+	dev_kfree_skb_irq(tx_cb->skb);
+	tx_cb->skb = NULL;
 
 invalid_seg_count:
 	atomic_inc(&qdev->tx_count);
-पूर्ण
+}
 
-अटल व्योम ql_get_sbuf(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (++qdev->small_buf_index == NUM_SMALL_BUFFERS)
+static void ql_get_sbuf(struct ql3_adapter *qdev)
+{
+	if (++qdev->small_buf_index == NUM_SMALL_BUFFERS)
 		qdev->small_buf_index = 0;
 	qdev->small_buf_release_cnt++;
-पूर्ण
+}
 
-अटल काष्ठा ql_rcv_buf_cb *ql_get_lbuf(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb = शून्य;
+static struct ql_rcv_buf_cb *ql_get_lbuf(struct ql3_adapter *qdev)
+{
+	struct ql_rcv_buf_cb *lrg_buf_cb = NULL;
 	lrg_buf_cb = &qdev->lrg_buf[qdev->lrg_buf_index];
 	qdev->lrg_buf_release_cnt++;
-	अगर (++qdev->lrg_buf_index == qdev->num_large_buffers)
+	if (++qdev->lrg_buf_index == qdev->num_large_buffers)
 		qdev->lrg_buf_index = 0;
-	वापस lrg_buf_cb;
-पूर्ण
+	return lrg_buf_cb;
+}
 
 /*
- * The dअगरference between 3022 and 3032 क्रम inbound completions:
+ * The difference between 3022 and 3032 for inbound completions:
  * 3022 uses two buffers per completion.  The first buffer contains
- * (some) header info, the second the reमुख्यder of the headers plus
+ * (some) header info, the second the remainder of the headers plus
  * the data.  For this chip we reserve some space at the top of the
  * receive buffer so that the header info in buffer one can be
- * prepended to the buffer two.  Buffer two is the sent up जबतक
- * buffer one is वापसed to the hardware to be reused.
- * 3032 receives all of it's data and headers in one buffer क्रम a
- * simpler process.  3032 also supports checksum verअगरication as
- * can be seen in ql_process_macip_rx_पूर्णांकr().
+ * prepended to the buffer two.  Buffer two is the sent up while
+ * buffer one is returned to the hardware to be reused.
+ * 3032 receives all of it's data and headers in one buffer for a
+ * simpler process.  3032 also supports checksum verification as
+ * can be seen in ql_process_macip_rx_intr().
  */
-अटल व्योम ql_process_mac_rx_पूर्णांकr(काष्ठा ql3_adapter *qdev,
-				   काष्ठा ib_mac_iocb_rsp *ib_mac_rsp_ptr)
-अणु
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb1 = शून्य;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb2 = शून्य;
-	काष्ठा sk_buff *skb;
+static void ql_process_mac_rx_intr(struct ql3_adapter *qdev,
+				   struct ib_mac_iocb_rsp *ib_mac_rsp_ptr)
+{
+	struct ql_rcv_buf_cb *lrg_buf_cb1 = NULL;
+	struct ql_rcv_buf_cb *lrg_buf_cb2 = NULL;
+	struct sk_buff *skb;
 	u16 length = le16_to_cpu(ib_mac_rsp_ptr->length);
 
 	/*
@@ -2007,7 +2006,7 @@ invalid_seg_count:
 	 */
 	ql_get_sbuf(qdev);
 
-	अगर (qdev->device_id == QL3022_DEVICE_ID)
+	if (qdev->device_id == QL3022_DEVICE_ID)
 		lrg_buf_cb1 = ql_get_lbuf(qdev);
 
 	/* start of second buffer */
@@ -2022,24 +2021,24 @@ invalid_seg_count:
 			 dma_unmap_addr(lrg_buf_cb2, mapaddr),
 			 dma_unmap_len(lrg_buf_cb2, maplen), DMA_FROM_DEVICE);
 	prefetch(skb->data);
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 	skb->protocol = eth_type_trans(skb, qdev->ndev);
 
 	napi_gro_receive(&qdev->napi, skb);
-	lrg_buf_cb2->skb = शून्य;
+	lrg_buf_cb2->skb = NULL;
 
-	अगर (qdev->device_id == QL3022_DEVICE_ID)
-		ql_release_to_lrg_buf_मुक्त_list(qdev, lrg_buf_cb1);
-	ql_release_to_lrg_buf_मुक्त_list(qdev, lrg_buf_cb2);
-पूर्ण
+	if (qdev->device_id == QL3022_DEVICE_ID)
+		ql_release_to_lrg_buf_free_list(qdev, lrg_buf_cb1);
+	ql_release_to_lrg_buf_free_list(qdev, lrg_buf_cb2);
+}
 
-अटल व्योम ql_process_macip_rx_पूर्णांकr(काष्ठा ql3_adapter *qdev,
-				     काष्ठा ib_ip_iocb_rsp *ib_ip_rsp_ptr)
-अणु
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb1 = शून्य;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb2 = शून्य;
-	काष्ठा sk_buff *skb1 = शून्य, *skb2;
-	काष्ठा net_device *ndev = qdev->ndev;
+static void ql_process_macip_rx_intr(struct ql3_adapter *qdev,
+				     struct ib_ip_iocb_rsp *ib_ip_rsp_ptr)
+{
+	struct ql_rcv_buf_cb *lrg_buf_cb1 = NULL;
+	struct ql_rcv_buf_cb *lrg_buf_cb2 = NULL;
+	struct sk_buff *skb1 = NULL, *skb2;
+	struct net_device *ndev = qdev->ndev;
 	u16 length = le16_to_cpu(ib_ip_rsp_ptr->length);
 	u16 size = 0;
 
@@ -2049,14 +2048,14 @@ invalid_seg_count:
 
 	ql_get_sbuf(qdev);
 
-	अगर (qdev->device_id == QL3022_DEVICE_ID) अणु
+	if (qdev->device_id == QL3022_DEVICE_ID) {
 		/* start of first buffer on 3022 */
 		lrg_buf_cb1 = ql_get_lbuf(qdev);
 		skb1 = lrg_buf_cb1->skb;
 		size = ETH_HLEN;
-		अगर (*((u16 *) skb1->data) != 0xFFFF)
+		if (*((u16 *) skb1->data) != 0xFFFF)
 			size += VLAN_ETH_HLEN - ETH_HLEN;
-	पूर्ण
+	}
 
 	/* start of second buffer */
 	lrg_buf_cb2 = ql_get_lbuf(qdev);
@@ -2068,167 +2067,167 @@ invalid_seg_count:
 			 dma_unmap_len(lrg_buf_cb2, maplen), DMA_FROM_DEVICE);
 	prefetch(skb2->data);
 
-	skb_checksum_none_निश्चित(skb2);
-	अगर (qdev->device_id == QL3022_DEVICE_ID) अणु
+	skb_checksum_none_assert(skb2);
+	if (qdev->device_id == QL3022_DEVICE_ID) {
 		/*
 		 * Copy the ethhdr from first buffer to second. This
-		 * is necessary क्रम 3022 IP completions.
+		 * is necessary for 3022 IP completions.
 		 */
 		skb_copy_from_linear_data_offset(skb1, VLAN_ID_LEN,
 						 skb_push(skb2, size), size);
-	पूर्ण अन्यथा अणु
+	} else {
 		u16 checksum = le16_to_cpu(ib_ip_rsp_ptr->checksum);
-		अगर (checksum &
+		if (checksum &
 			(IB_IP_IOCB_RSP_3032_ICE |
-			 IB_IP_IOCB_RSP_3032_CE)) अणु
+			 IB_IP_IOCB_RSP_3032_CE)) {
 			netdev_err(ndev,
 				   "%s: Bad checksum for this %s packet, checksum = %x\n",
 				   __func__,
 				   ((checksum & IB_IP_IOCB_RSP_3032_TCP) ?
 				    "TCP" : "UDP"), checksum);
-		पूर्ण अन्यथा अगर ((checksum & IB_IP_IOCB_RSP_3032_TCP) ||
+		} else if ((checksum & IB_IP_IOCB_RSP_3032_TCP) ||
 				(checksum & IB_IP_IOCB_RSP_3032_UDP &&
-				!(checksum & IB_IP_IOCB_RSP_3032_NUC))) अणु
+				!(checksum & IB_IP_IOCB_RSP_3032_NUC))) {
 			skb2->ip_summed = CHECKSUM_UNNECESSARY;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	skb2->protocol = eth_type_trans(skb2, qdev->ndev);
 
 	napi_gro_receive(&qdev->napi, skb2);
 	ndev->stats.rx_packets++;
 	ndev->stats.rx_bytes += length;
-	lrg_buf_cb2->skb = शून्य;
+	lrg_buf_cb2->skb = NULL;
 
-	अगर (qdev->device_id == QL3022_DEVICE_ID)
-		ql_release_to_lrg_buf_मुक्त_list(qdev, lrg_buf_cb1);
-	ql_release_to_lrg_buf_मुक्त_list(qdev, lrg_buf_cb2);
-पूर्ण
+	if (qdev->device_id == QL3022_DEVICE_ID)
+		ql_release_to_lrg_buf_free_list(qdev, lrg_buf_cb1);
+	ql_release_to_lrg_buf_free_list(qdev, lrg_buf_cb2);
+}
 
-अटल पूर्णांक ql_tx_rx_clean(काष्ठा ql3_adapter *qdev, पूर्णांक budget)
-अणु
-	काष्ठा net_rsp_iocb *net_rsp;
-	काष्ठा net_device *ndev = qdev->ndev;
-	पूर्णांक work_करोne = 0;
+static int ql_tx_rx_clean(struct ql3_adapter *qdev, int budget)
+{
+	struct net_rsp_iocb *net_rsp;
+	struct net_device *ndev = qdev->ndev;
+	int work_done = 0;
 
 	/* While there are entries in the completion queue. */
-	जबतक ((le32_to_cpu(*(qdev->prsp_producer_index)) !=
-		qdev->rsp_consumer_index) && (work_करोne < budget)) अणु
+	while ((le32_to_cpu(*(qdev->prsp_producer_index)) !=
+		qdev->rsp_consumer_index) && (work_done < budget)) {
 
 		net_rsp = qdev->rsp_current;
 		rmb();
 		/*
-		 * Fix 4032 chip's unकरोcumented "feature" where bit-8 is set
-		 * अगर the inbound completion is क्रम a VLAN.
+		 * Fix 4032 chip's undocumented "feature" where bit-8 is set
+		 * if the inbound completion is for a VLAN.
 		 */
-		अगर (qdev->device_id == QL3032_DEVICE_ID)
+		if (qdev->device_id == QL3032_DEVICE_ID)
 			net_rsp->opcode &= 0x7f;
-		चयन (net_rsp->opcode) अणु
+		switch (net_rsp->opcode) {
 
-		हाल OPCODE_OB_MAC_IOCB_FN0:
-		हाल OPCODE_OB_MAC_IOCB_FN2:
-			ql_process_mac_tx_पूर्णांकr(qdev, (काष्ठा ob_mac_iocb_rsp *)
+		case OPCODE_OB_MAC_IOCB_FN0:
+		case OPCODE_OB_MAC_IOCB_FN2:
+			ql_process_mac_tx_intr(qdev, (struct ob_mac_iocb_rsp *)
 					       net_rsp);
-			अवरोध;
+			break;
 
-		हाल OPCODE_IB_MAC_IOCB:
-		हाल OPCODE_IB_3032_MAC_IOCB:
-			ql_process_mac_rx_पूर्णांकr(qdev, (काष्ठा ib_mac_iocb_rsp *)
+		case OPCODE_IB_MAC_IOCB:
+		case OPCODE_IB_3032_MAC_IOCB:
+			ql_process_mac_rx_intr(qdev, (struct ib_mac_iocb_rsp *)
 					       net_rsp);
-			work_करोne++;
-			अवरोध;
+			work_done++;
+			break;
 
-		हाल OPCODE_IB_IP_IOCB:
-		हाल OPCODE_IB_3032_IP_IOCB:
-			ql_process_macip_rx_पूर्णांकr(qdev, (काष्ठा ib_ip_iocb_rsp *)
+		case OPCODE_IB_IP_IOCB:
+		case OPCODE_IB_3032_IP_IOCB:
+			ql_process_macip_rx_intr(qdev, (struct ib_ip_iocb_rsp *)
 						 net_rsp);
-			work_करोne++;
-			अवरोध;
-		शेष: अणु
-			u32 *पंचांगp = (u32 *)net_rsp;
+			work_done++;
+			break;
+		default: {
+			u32 *tmp = (u32 *)net_rsp;
 			netdev_err(ndev,
 				   "Hit default case, not handled!\n"
 				   "	dropping the packet, opcode = %x\n"
 				   "0x%08lx 0x%08lx 0x%08lx 0x%08lx\n",
 				   net_rsp->opcode,
-				   (अचिन्हित दीर्घ पूर्णांक)पंचांगp[0],
-				   (अचिन्हित दीर्घ पूर्णांक)पंचांगp[1],
-				   (अचिन्हित दीर्घ पूर्णांक)पंचांगp[2],
-				   (अचिन्हित दीर्घ पूर्णांक)पंचांगp[3]);
-		पूर्ण
-		पूर्ण
+				   (unsigned long int)tmp[0],
+				   (unsigned long int)tmp[1],
+				   (unsigned long int)tmp[2],
+				   (unsigned long int)tmp[3]);
+		}
+		}
 
 		qdev->rsp_consumer_index++;
 
-		अगर (qdev->rsp_consumer_index == NUM_RSP_Q_ENTRIES) अणु
+		if (qdev->rsp_consumer_index == NUM_RSP_Q_ENTRIES) {
 			qdev->rsp_consumer_index = 0;
 			qdev->rsp_current = qdev->rsp_q_virt_addr;
-		पूर्ण अन्यथा अणु
+		} else {
 			qdev->rsp_current++;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल पूर्णांक ql_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा ql3_adapter *qdev = container_of(napi, काष्ठा ql3_adapter, napi);
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
-	पूर्णांक work_करोne;
+static int ql_poll(struct napi_struct *napi, int budget)
+{
+	struct ql3_adapter *qdev = container_of(napi, struct ql3_adapter, napi);
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
+	int work_done;
 
-	work_करोne = ql_tx_rx_clean(qdev, budget);
+	work_done = ql_tx_rx_clean(qdev, budget);
 
-	अगर (work_करोne < budget && napi_complete_करोne(napi, work_करोne)) अणु
-		अचिन्हित दीर्घ flags;
+	if (work_done < budget && napi_complete_done(napi, work_done)) {
+		unsigned long flags;
 
 		spin_lock_irqsave(&qdev->hw_lock, flags);
 		ql_update_small_bufq_prod_index(qdev);
 		ql_update_lrg_bufq_prod_index(qdev);
-		ग_लिखोl(qdev->rsp_consumer_index,
+		writel(qdev->rsp_consumer_index,
 			    &port_regs->CommonRegs.rspQConsumerIndex);
 		spin_unlock_irqrestore(&qdev->hw_lock, flags);
 
-		ql_enable_पूर्णांकerrupts(qdev);
-	पूर्ण
-	वापस work_करोne;
-पूर्ण
+		ql_enable_interrupts(qdev);
+	}
+	return work_done;
+}
 
-अटल irqवापस_t ql3xxx_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t ql3xxx_isr(int irq, void *dev_id)
+{
 
-	काष्ठा net_device *ndev = dev_id;
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+	struct net_device *ndev = dev_id;
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	u32 value;
-	पूर्णांक handled = 1;
+	int handled = 1;
 	u32 var;
 
-	value = ql_पढ़ो_common_reg_l(qdev,
+	value = ql_read_common_reg_l(qdev,
 				     &port_regs->CommonRegs.ispControlStatus);
 
-	अगर (value & (ISP_CONTROL_FE | ISP_CONTROL_RI)) अणु
+	if (value & (ISP_CONTROL_FE | ISP_CONTROL_RI)) {
 		spin_lock(&qdev->adapter_lock);
-		netअगर_stop_queue(qdev->ndev);
-		netअगर_carrier_off(qdev->ndev);
-		ql_disable_पूर्णांकerrupts(qdev);
+		netif_stop_queue(qdev->ndev);
+		netif_carrier_off(qdev->ndev);
+		ql_disable_interrupts(qdev);
 		qdev->port_link_state = LS_DOWN;
 		set_bit(QL_RESET_ACTIVE, &qdev->flags) ;
 
-		अगर (value & ISP_CONTROL_FE) अणु
+		if (value & ISP_CONTROL_FE) {
 			/*
 			 * Chip Fatal Error.
 			 */
 			var =
-			    ql_पढ़ो_page0_reg_l(qdev,
+			    ql_read_page0_reg_l(qdev,
 					      &port_regs->PortFatalErrStatus);
 			netdev_warn(ndev,
 				    "Resetting chip. PortFatalErrStatus register = 0x%x\n",
 				    var);
 			set_bit(QL_RESET_START, &qdev->flags) ;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Soft Reset Requested.
 			 */
@@ -2236,79 +2235,79 @@ invalid_seg_count:
 			netdev_err(ndev,
 				   "Another function issued a reset to the chip. ISR value = %x\n",
 				   value);
-		पूर्ण
+		}
 		queue_delayed_work(qdev->workqueue, &qdev->reset_work, 0);
 		spin_unlock(&qdev->adapter_lock);
-	पूर्ण अन्यथा अगर (value & ISP_IMR_DISABLE_CMPL_INT) अणु
-		ql_disable_पूर्णांकerrupts(qdev);
-		अगर (likely(napi_schedule_prep(&qdev->napi)))
+	} else if (value & ISP_IMR_DISABLE_CMPL_INT) {
+		ql_disable_interrupts(qdev);
+		if (likely(napi_schedule_prep(&qdev->napi)))
 			__napi_schedule(&qdev->napi);
-	पूर्ण अन्यथा
-		वापस IRQ_NONE;
+	} else
+		return IRQ_NONE;
 
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
 /*
- * Get the total number of segments needed क्रम the given number of fragments.
+ * Get the total number of segments needed for the given number of fragments.
  * This is necessary because outbound address lists (OAL) will be used when
  * more than two frags are given.  Each address list has 5 addr/len pairs.
- * The 5th pair in each OAL is used to  poपूर्णांक to the next OAL अगर more frags
+ * The 5th pair in each OAL is used to  point to the next OAL if more frags
  * are coming.  That is why the frags:segment count ratio is not linear.
  */
-अटल पूर्णांक ql_get_seg_count(काष्ठा ql3_adapter *qdev, अचिन्हित लघु frags)
-अणु
-	अगर (qdev->device_id == QL3022_DEVICE_ID)
-		वापस 1;
+static int ql_get_seg_count(struct ql3_adapter *qdev, unsigned short frags)
+{
+	if (qdev->device_id == QL3022_DEVICE_ID)
+		return 1;
 
-	अगर (frags <= 2)
-		वापस frags + 1;
-	अन्यथा अगर (frags <= 6)
-		वापस frags + 2;
-	अन्यथा अगर (frags <= 10)
-		वापस frags + 3;
-	अन्यथा अगर (frags <= 14)
-		वापस frags + 4;
-	अन्यथा अगर (frags <= 18)
-		वापस frags + 5;
-	वापस -1;
-पूर्ण
+	if (frags <= 2)
+		return frags + 1;
+	else if (frags <= 6)
+		return frags + 2;
+	else if (frags <= 10)
+		return frags + 3;
+	else if (frags <= 14)
+		return frags + 4;
+	else if (frags <= 18)
+		return frags + 5;
+	return -1;
+}
 
-अटल व्योम ql_hw_csum_setup(स्थिर काष्ठा sk_buff *skb,
-			     काष्ठा ob_mac_iocb_req *mac_iocb_ptr)
-अणु
-	स्थिर काष्ठा iphdr *ip = ip_hdr(skb);
+static void ql_hw_csum_setup(const struct sk_buff *skb,
+			     struct ob_mac_iocb_req *mac_iocb_ptr)
+{
+	const struct iphdr *ip = ip_hdr(skb);
 
 	mac_iocb_ptr->ip_hdr_off = skb_network_offset(skb);
 	mac_iocb_ptr->ip_hdr_len = ip->ihl;
 
-	अगर (ip->protocol == IPPROTO_TCP) अणु
+	if (ip->protocol == IPPROTO_TCP) {
 		mac_iocb_ptr->flags1 |= OB_3032MAC_IOCB_REQ_TC |
 			OB_3032MAC_IOCB_REQ_IC;
-	पूर्ण अन्यथा अणु
+	} else {
 		mac_iocb_ptr->flags1 |= OB_3032MAC_IOCB_REQ_UC |
 			OB_3032MAC_IOCB_REQ_IC;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 /*
- * Map the buffers क्रम this transmit.
- * This will वापस NETDEV_TX_BUSY or NETDEV_TX_OK based on success.
+ * Map the buffers for this transmit.
+ * This will return NETDEV_TX_BUSY or NETDEV_TX_OK based on success.
  */
-अटल पूर्णांक ql_send_map(काष्ठा ql3_adapter *qdev,
-				काष्ठा ob_mac_iocb_req *mac_iocb_ptr,
-				काष्ठा ql_tx_buf_cb *tx_cb,
-				काष्ठा sk_buff *skb)
-अणु
-	काष्ठा oal *oal;
-	काष्ठा oal_entry *oal_entry;
-	पूर्णांक len = skb_headlen(skb);
+static int ql_send_map(struct ql3_adapter *qdev,
+				struct ob_mac_iocb_req *mac_iocb_ptr,
+				struct ql_tx_buf_cb *tx_cb,
+				struct sk_buff *skb)
+{
+	struct oal *oal;
+	struct oal_entry *oal_entry;
+	int len = skb_headlen(skb);
 	dma_addr_t map;
-	पूर्णांक err;
-	पूर्णांक completed_segs, i;
-	पूर्णांक seg_cnt, seg = 0;
-	पूर्णांक frag_cnt = (पूर्णांक)skb_shinfo(skb)->nr_frags;
+	int err;
+	int completed_segs, i;
+	int seg_cnt, seg = 0;
+	int frag_cnt = (int)skb_shinfo(skb)->nr_frags;
 
 	seg_cnt = tx_cb->seg_count;
 	/*
@@ -2317,14 +2316,14 @@ invalid_seg_count:
 	map = dma_map_single(&qdev->pdev->dev, skb->data, len, DMA_TO_DEVICE);
 
 	err = dma_mapping_error(&qdev->pdev->dev, map);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(qdev->ndev, "PCI mapping failed with error: %d\n",
 			   err);
 
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
-	oal_entry = (काष्ठा oal_entry *)&mac_iocb_ptr->buf_addr0_low;
+	oal_entry = (struct oal_entry *)&mac_iocb_ptr->buf_addr0_low;
 	oal_entry->dma_lo = cpu_to_le32(LS_64BITS(map));
 	oal_entry->dma_hi = cpu_to_le32(MS_64BITS(map));
 	oal_entry->len = cpu_to_le32(len);
@@ -2332,70 +2331,70 @@ invalid_seg_count:
 	dma_unmap_len_set(&tx_cb->map[seg], maplen, len);
 	seg++;
 
-	अगर (seg_cnt == 1) अणु
+	if (seg_cnt == 1) {
 		/* Terminate the last segment. */
 		oal_entry->len |= cpu_to_le32(OAL_LAST_ENTRY);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 	oal = tx_cb->oal;
-	क्रम (completed_segs = 0;
+	for (completed_segs = 0;
 	     completed_segs < frag_cnt;
-	     completed_segs++, seg++) अणु
+	     completed_segs++, seg++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[completed_segs];
 		oal_entry++;
 		/*
-		 * Check क्रम continuation requirements.
+		 * Check for continuation requirements.
 		 * It's strange but necessary.
-		 * Continuation entry poपूर्णांकs to outbound address list.
+		 * Continuation entry points to outbound address list.
 		 */
-		अगर ((seg == 2 && seg_cnt > 3) ||
+		if ((seg == 2 && seg_cnt > 3) ||
 		    (seg == 7 && seg_cnt > 8) ||
 		    (seg == 12 && seg_cnt > 13) ||
-		    (seg == 17 && seg_cnt > 18)) अणु
+		    (seg == 17 && seg_cnt > 18)) {
 			map = dma_map_single(&qdev->pdev->dev, oal,
-					     माप(काष्ठा oal),
+					     sizeof(struct oal),
 					     DMA_TO_DEVICE);
 
 			err = dma_mapping_error(&qdev->pdev->dev, map);
-			अगर (err) अणु
+			if (err) {
 				netdev_err(qdev->ndev,
 					   "PCI mapping outbound address list with error: %d\n",
 					   err);
-				जाओ map_error;
-			पूर्ण
+				goto map_error;
+			}
 
 			oal_entry->dma_lo = cpu_to_le32(LS_64BITS(map));
 			oal_entry->dma_hi = cpu_to_le32(MS_64BITS(map));
-			oal_entry->len = cpu_to_le32(माप(काष्ठा oal) |
+			oal_entry->len = cpu_to_le32(sizeof(struct oal) |
 						     OAL_CONT_ENTRY);
 			dma_unmap_addr_set(&tx_cb->map[seg], mapaddr, map);
 			dma_unmap_len_set(&tx_cb->map[seg], maplen,
-					  माप(काष्ठा oal));
-			oal_entry = (काष्ठा oal_entry *)oal;
+					  sizeof(struct oal));
+			oal_entry = (struct oal_entry *)oal;
 			oal++;
 			seg++;
-		पूर्ण
+		}
 
 		map = skb_frag_dma_map(&qdev->pdev->dev, frag, 0, skb_frag_size(frag),
 				       DMA_TO_DEVICE);
 
 		err = dma_mapping_error(&qdev->pdev->dev, map);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(qdev->ndev,
 				   "PCI mapping frags failed with error: %d\n",
 				   err);
-			जाओ map_error;
-		पूर्ण
+			goto map_error;
+		}
 
 		oal_entry->dma_lo = cpu_to_le32(LS_64BITS(map));
 		oal_entry->dma_hi = cpu_to_le32(MS_64BITS(map));
 		oal_entry->len = cpu_to_le32(skb_frag_size(frag));
 		dma_unmap_addr_set(&tx_cb->map[seg], mapaddr, map);
 		dma_unmap_len_set(&tx_cb->map[seg], maplen, skb_frag_size(frag));
-		पूर्ण
+		}
 	/* Terminate the last segment. */
 	oal_entry->len |= cpu_to_le32(OAL_LAST_ENTRY);
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 map_error:
 	/* A PCI mapping failed and now we will need to back out
@@ -2404,202 +2403,202 @@ map_error:
 	 */
 
 	seg = 1;
-	oal_entry = (काष्ठा oal_entry *)&mac_iocb_ptr->buf_addr0_low;
+	oal_entry = (struct oal_entry *)&mac_iocb_ptr->buf_addr0_low;
 	oal = tx_cb->oal;
-	क्रम (i = 0; i < completed_segs; i++, seg++) अणु
+	for (i = 0; i < completed_segs; i++, seg++) {
 		oal_entry++;
 
 		/*
-		 * Check क्रम continuation requirements.
+		 * Check for continuation requirements.
 		 * It's strange but necessary.
 		 */
 
-		अगर ((seg == 2 && seg_cnt > 3) ||
+		if ((seg == 2 && seg_cnt > 3) ||
 		    (seg == 7 && seg_cnt > 8) ||
 		    (seg == 12 && seg_cnt > 13) ||
-		    (seg == 17 && seg_cnt > 18)) अणु
+		    (seg == 17 && seg_cnt > 18)) {
 			dma_unmap_single(&qdev->pdev->dev,
 					 dma_unmap_addr(&tx_cb->map[seg], mapaddr),
 					 dma_unmap_len(&tx_cb->map[seg], maplen),
 					 DMA_TO_DEVICE);
 			oal++;
 			seg++;
-		पूर्ण
+		}
 
 		dma_unmap_page(&qdev->pdev->dev,
 			       dma_unmap_addr(&tx_cb->map[seg], mapaddr),
 			       dma_unmap_len(&tx_cb->map[seg], maplen),
 			       DMA_TO_DEVICE);
-	पूर्ण
+	}
 
 	dma_unmap_single(&qdev->pdev->dev,
 			 dma_unmap_addr(&tx_cb->map[0], mapaddr),
 			 dma_unmap_addr(&tx_cb->map[0], maplen),
 			 DMA_TO_DEVICE);
 
-	वापस NETDEV_TX_BUSY;
+	return NETDEV_TX_BUSY;
 
-पूर्ण
+}
 
 /*
- * The dअगरference between 3022 and 3032 sends:
+ * The difference between 3022 and 3032 sends:
  * 3022 only supports a simple single segment transmission.
  * 3032 supports checksumming and scatter/gather lists (fragments).
  * The 3032 supports sglists by using the 3 addr/len pairs (ALP)
  * in the IOCB plus a chain of outbound address lists (OAL) that
  * each contain 5 ALPs.  The last ALP of the IOCB (3rd) or OAL (5th)
- * will be used to poपूर्णांक to an OAL when more ALP entries are required.
+ * will be used to point to an OAL when more ALP entries are required.
  * The IOCB is always the top of the chain followed by one or more
  * OALs (when necessary).
  */
-अटल netdev_tx_t ql3xxx_send(काष्ठा sk_buff *skb,
-			       काष्ठा net_device *ndev)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
-	काष्ठा ql_tx_buf_cb *tx_cb;
+static netdev_tx_t ql3xxx_send(struct sk_buff *skb,
+			       struct net_device *ndev)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
+	struct ql_tx_buf_cb *tx_cb;
 	u32 tot_len = skb->len;
-	काष्ठा ob_mac_iocb_req *mac_iocb_ptr;
+	struct ob_mac_iocb_req *mac_iocb_ptr;
 
-	अगर (unlikely(atomic_पढ़ो(&qdev->tx_count) < 2))
-		वापस NETDEV_TX_BUSY;
+	if (unlikely(atomic_read(&qdev->tx_count) < 2))
+		return NETDEV_TX_BUSY;
 
 	tx_cb = &qdev->tx_buf[qdev->req_producer_index];
 	tx_cb->seg_count = ql_get_seg_count(qdev,
 					     skb_shinfo(skb)->nr_frags);
-	अगर (tx_cb->seg_count == -1) अणु
+	if (tx_cb->seg_count == -1) {
 		netdev_err(ndev, "%s: invalid segment count!\n", __func__);
-		वापस NETDEV_TX_OK;
-	पूर्ण
+		return NETDEV_TX_OK;
+	}
 
 	mac_iocb_ptr = tx_cb->queue_entry;
-	स_रखो((व्योम *)mac_iocb_ptr, 0, माप(काष्ठा ob_mac_iocb_req));
+	memset((void *)mac_iocb_ptr, 0, sizeof(struct ob_mac_iocb_req));
 	mac_iocb_ptr->opcode = qdev->mac_ob_opcode;
 	mac_iocb_ptr->flags = OB_MAC_IOCB_REQ_X;
 	mac_iocb_ptr->flags |= qdev->mb_bit_mask;
 	mac_iocb_ptr->transaction_id = qdev->req_producer_index;
 	mac_iocb_ptr->data_len = cpu_to_le16((u16) tot_len);
 	tx_cb->skb = skb;
-	अगर (qdev->device_id == QL3032_DEVICE_ID &&
+	if (qdev->device_id == QL3032_DEVICE_ID &&
 	    skb->ip_summed == CHECKSUM_PARTIAL)
 		ql_hw_csum_setup(skb, mac_iocb_ptr);
 
-	अगर (ql_send_map(qdev, mac_iocb_ptr, tx_cb, skb) != NETDEV_TX_OK) अणु
+	if (ql_send_map(qdev, mac_iocb_ptr, tx_cb, skb) != NETDEV_TX_OK) {
 		netdev_err(ndev, "%s: Could not map the segments!\n", __func__);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		return NETDEV_TX_BUSY;
+	}
 
 	wmb();
 	qdev->req_producer_index++;
-	अगर (qdev->req_producer_index == NUM_REQ_Q_ENTRIES)
+	if (qdev->req_producer_index == NUM_REQ_Q_ENTRIES)
 		qdev->req_producer_index = 0;
 	wmb();
-	ql_ग_लिखो_common_reg_l(qdev,
+	ql_write_common_reg_l(qdev,
 			    &port_regs->CommonRegs.reqQProducerIndex,
 			    qdev->req_producer_index);
 
-	netअगर_prपूर्णांकk(qdev, tx_queued, KERN_DEBUG, ndev,
+	netif_printk(qdev, tx_queued, KERN_DEBUG, ndev,
 		     "tx queued, slot %d, len %d\n",
 		     qdev->req_producer_index, skb->len);
 
 	atomic_dec(&qdev->tx_count);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक ql_alloc_net_req_rsp_queues(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_alloc_net_req_rsp_queues(struct ql3_adapter *qdev)
+{
 	qdev->req_q_size =
-	    (u32) (NUM_REQ_Q_ENTRIES * माप(काष्ठा ob_mac_iocb_req));
+	    (u32) (NUM_REQ_Q_ENTRIES * sizeof(struct ob_mac_iocb_req));
 
-	qdev->rsp_q_size = NUM_RSP_Q_ENTRIES * माप(काष्ठा net_rsp_iocb);
+	qdev->rsp_q_size = NUM_RSP_Q_ENTRIES * sizeof(struct net_rsp_iocb);
 
 	/* The barrier is required to ensure request and response queue
-	 * addr ग_लिखोs to the रेजिस्टरs.
+	 * addr writes to the registers.
 	 */
 	wmb();
 
 	qdev->req_q_virt_addr =
-	    dma_alloc_coherent(&qdev->pdev->dev, (माप_प्रकार)qdev->req_q_size,
+	    dma_alloc_coherent(&qdev->pdev->dev, (size_t)qdev->req_q_size,
 			       &qdev->req_q_phy_addr, GFP_KERNEL);
 
-	अगर ((qdev->req_q_virt_addr == शून्य) ||
-	    LS_64BITS(qdev->req_q_phy_addr) & (qdev->req_q_size - 1)) अणु
+	if ((qdev->req_q_virt_addr == NULL) ||
+	    LS_64BITS(qdev->req_q_phy_addr) & (qdev->req_q_size - 1)) {
 		netdev_err(qdev->ndev, "reqQ failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	qdev->rsp_q_virt_addr =
-	    dma_alloc_coherent(&qdev->pdev->dev, (माप_प्रकार)qdev->rsp_q_size,
+	    dma_alloc_coherent(&qdev->pdev->dev, (size_t)qdev->rsp_q_size,
 			       &qdev->rsp_q_phy_addr, GFP_KERNEL);
 
-	अगर ((qdev->rsp_q_virt_addr == शून्य) ||
-	    LS_64BITS(qdev->rsp_q_phy_addr) & (qdev->rsp_q_size - 1)) अणु
+	if ((qdev->rsp_q_virt_addr == NULL) ||
+	    LS_64BITS(qdev->rsp_q_phy_addr) & (qdev->rsp_q_size - 1)) {
 		netdev_err(qdev->ndev, "rspQ allocation failed\n");
-		dma_मुक्त_coherent(&qdev->pdev->dev, (माप_प्रकार)qdev->req_q_size,
+		dma_free_coherent(&qdev->pdev->dev, (size_t)qdev->req_q_size,
 				  qdev->req_q_virt_addr, qdev->req_q_phy_addr);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	set_bit(QL_ALLOC_REQ_RSP_Q_DONE, &qdev->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_मुक्त_net_req_rsp_queues(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (!test_bit(QL_ALLOC_REQ_RSP_Q_DONE, &qdev->flags)) अणु
+static void ql_free_net_req_rsp_queues(struct ql3_adapter *qdev)
+{
+	if (!test_bit(QL_ALLOC_REQ_RSP_Q_DONE, &qdev->flags)) {
 		netdev_info(qdev->ndev, "Already done\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dma_मुक्त_coherent(&qdev->pdev->dev, qdev->req_q_size,
+	dma_free_coherent(&qdev->pdev->dev, qdev->req_q_size,
 			  qdev->req_q_virt_addr, qdev->req_q_phy_addr);
 
-	qdev->req_q_virt_addr = शून्य;
+	qdev->req_q_virt_addr = NULL;
 
-	dma_मुक्त_coherent(&qdev->pdev->dev, qdev->rsp_q_size,
+	dma_free_coherent(&qdev->pdev->dev, qdev->rsp_q_size,
 			  qdev->rsp_q_virt_addr, qdev->rsp_q_phy_addr);
 
-	qdev->rsp_q_virt_addr = शून्य;
+	qdev->rsp_q_virt_addr = NULL;
 
 	clear_bit(QL_ALLOC_REQ_RSP_Q_DONE, &qdev->flags);
-पूर्ण
+}
 
-अटल पूर्णांक ql_alloc_buffer_queues(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_alloc_buffer_queues(struct ql3_adapter *qdev)
+{
 	/* Create Large Buffer Queue */
 	qdev->lrg_buf_q_size =
-		qdev->num_lbufq_entries * माप(काष्ठा lrg_buf_q_entry);
-	अगर (qdev->lrg_buf_q_size < PAGE_SIZE)
+		qdev->num_lbufq_entries * sizeof(struct lrg_buf_q_entry);
+	if (qdev->lrg_buf_q_size < PAGE_SIZE)
 		qdev->lrg_buf_q_alloc_size = PAGE_SIZE;
-	अन्यथा
+	else
 		qdev->lrg_buf_q_alloc_size = qdev->lrg_buf_q_size * 2;
 
-	qdev->lrg_buf = kदो_स्मृति_array(qdev->num_large_buffers,
-				      माप(काष्ठा ql_rcv_buf_cb),
+	qdev->lrg_buf = kmalloc_array(qdev->num_large_buffers,
+				      sizeof(struct ql_rcv_buf_cb),
 				      GFP_KERNEL);
-	अगर (qdev->lrg_buf == शून्य)
-		वापस -ENOMEM;
+	if (qdev->lrg_buf == NULL)
+		return -ENOMEM;
 
 	qdev->lrg_buf_q_alloc_virt_addr =
 		dma_alloc_coherent(&qdev->pdev->dev,
 				   qdev->lrg_buf_q_alloc_size,
 				   &qdev->lrg_buf_q_alloc_phy_addr, GFP_KERNEL);
 
-	अगर (qdev->lrg_buf_q_alloc_virt_addr == शून्य) अणु
+	if (qdev->lrg_buf_q_alloc_virt_addr == NULL) {
 		netdev_err(qdev->ndev, "lBufQ failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	qdev->lrg_buf_q_virt_addr = qdev->lrg_buf_q_alloc_virt_addr;
 	qdev->lrg_buf_q_phy_addr = qdev->lrg_buf_q_alloc_phy_addr;
 
 	/* Create Small Buffer Queue */
 	qdev->small_buf_q_size =
-		NUM_SBUFQ_ENTRIES * माप(काष्ठा lrg_buf_q_entry);
-	अगर (qdev->small_buf_q_size < PAGE_SIZE)
+		NUM_SBUFQ_ENTRIES * sizeof(struct lrg_buf_q_entry);
+	if (qdev->small_buf_q_size < PAGE_SIZE)
 		qdev->small_buf_q_alloc_size = PAGE_SIZE;
-	अन्यथा
+	else
 		qdev->small_buf_q_alloc_size = qdev->small_buf_q_size * 2;
 
 	qdev->small_buf_q_alloc_virt_addr =
@@ -2607,49 +2606,49 @@ map_error:
 				   qdev->small_buf_q_alloc_size,
 				   &qdev->small_buf_q_alloc_phy_addr, GFP_KERNEL);
 
-	अगर (qdev->small_buf_q_alloc_virt_addr == शून्य) अणु
+	if (qdev->small_buf_q_alloc_virt_addr == NULL) {
 		netdev_err(qdev->ndev, "Small Buffer Queue allocation failed\n");
-		dma_मुक्त_coherent(&qdev->pdev->dev,
+		dma_free_coherent(&qdev->pdev->dev,
 				  qdev->lrg_buf_q_alloc_size,
 				  qdev->lrg_buf_q_alloc_virt_addr,
 				  qdev->lrg_buf_q_alloc_phy_addr);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	qdev->small_buf_q_virt_addr = qdev->small_buf_q_alloc_virt_addr;
 	qdev->small_buf_q_phy_addr = qdev->small_buf_q_alloc_phy_addr;
 	set_bit(QL_ALLOC_BUFQS_DONE, &qdev->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_मुक्त_buffer_queues(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (!test_bit(QL_ALLOC_BUFQS_DONE, &qdev->flags)) अणु
+static void ql_free_buffer_queues(struct ql3_adapter *qdev)
+{
+	if (!test_bit(QL_ALLOC_BUFQS_DONE, &qdev->flags)) {
 		netdev_info(qdev->ndev, "Already done\n");
-		वापस;
-	पूर्ण
-	kमुक्त(qdev->lrg_buf);
-	dma_मुक्त_coherent(&qdev->pdev->dev, qdev->lrg_buf_q_alloc_size,
+		return;
+	}
+	kfree(qdev->lrg_buf);
+	dma_free_coherent(&qdev->pdev->dev, qdev->lrg_buf_q_alloc_size,
 			  qdev->lrg_buf_q_alloc_virt_addr,
 			  qdev->lrg_buf_q_alloc_phy_addr);
 
-	qdev->lrg_buf_q_virt_addr = शून्य;
+	qdev->lrg_buf_q_virt_addr = NULL;
 
-	dma_मुक्त_coherent(&qdev->pdev->dev, qdev->small_buf_q_alloc_size,
+	dma_free_coherent(&qdev->pdev->dev, qdev->small_buf_q_alloc_size,
 			  qdev->small_buf_q_alloc_virt_addr,
 			  qdev->small_buf_q_alloc_phy_addr);
 
-	qdev->small_buf_q_virt_addr = शून्य;
+	qdev->small_buf_q_virt_addr = NULL;
 
 	clear_bit(QL_ALLOC_BUFQS_DONE, &qdev->flags);
-पूर्ण
+}
 
-अटल पूर्णांक ql_alloc_small_buffers(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक i;
-	काष्ठा bufq_addr_element *small_buf_q_entry;
+static int ql_alloc_small_buffers(struct ql3_adapter *qdev)
+{
+	int i;
+	struct bufq_addr_element *small_buf_q_entry;
 
-	/* Currently we allocate on one of memory and use it क्रम smallbuffers */
+	/* Currently we allocate on one of memory and use it for smallbuffers */
 	qdev->small_buf_total_size =
 		(QL_ADDR_ELE_PER_BUFQ_ENTRY * NUM_SBUFQ_ENTRIES *
 		 QL_SMALL_BUFFER_SIZE);
@@ -2659,10 +2658,10 @@ map_error:
 				   qdev->small_buf_total_size,
 				   &qdev->small_buf_phy_addr, GFP_KERNEL);
 
-	अगर (qdev->small_buf_virt_addr == शून्य) अणु
+	if (qdev->small_buf_virt_addr == NULL) {
 		netdev_err(qdev->ndev, "Failed to get small buffer memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	qdev->small_buf_phy_addr_low = LS_64BITS(qdev->small_buf_phy_addr);
 	qdev->small_buf_phy_addr_high = MS_64BITS(qdev->small_buf_phy_addr);
@@ -2670,93 +2669,93 @@ map_error:
 	small_buf_q_entry = qdev->small_buf_q_virt_addr;
 
 	/* Initialize the small buffer queue. */
-	क्रम (i = 0; i < (QL_ADDR_ELE_PER_BUFQ_ENTRY * NUM_SBUFQ_ENTRIES); i++) अणु
+	for (i = 0; i < (QL_ADDR_ELE_PER_BUFQ_ENTRY * NUM_SBUFQ_ENTRIES); i++) {
 		small_buf_q_entry->addr_high =
 		    cpu_to_le32(qdev->small_buf_phy_addr_high);
 		small_buf_q_entry->addr_low =
 		    cpu_to_le32(qdev->small_buf_phy_addr_low +
 				(i * QL_SMALL_BUFFER_SIZE));
 		small_buf_q_entry++;
-	पूर्ण
+	}
 	qdev->small_buf_index = 0;
 	set_bit(QL_ALLOC_SMALL_BUF_DONE, &qdev->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql_मुक्त_small_buffers(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (!test_bit(QL_ALLOC_SMALL_BUF_DONE, &qdev->flags)) अणु
+static void ql_free_small_buffers(struct ql3_adapter *qdev)
+{
+	if (!test_bit(QL_ALLOC_SMALL_BUF_DONE, &qdev->flags)) {
 		netdev_info(qdev->ndev, "Already done\n");
-		वापस;
-	पूर्ण
-	अगर (qdev->small_buf_virt_addr != शून्य) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev,
+		return;
+	}
+	if (qdev->small_buf_virt_addr != NULL) {
+		dma_free_coherent(&qdev->pdev->dev,
 				  qdev->small_buf_total_size,
 				  qdev->small_buf_virt_addr,
 				  qdev->small_buf_phy_addr);
 
-		qdev->small_buf_virt_addr = शून्य;
-	पूर्ण
-पूर्ण
+		qdev->small_buf_virt_addr = NULL;
+	}
+}
 
-अटल व्योम ql_मुक्त_large_buffers(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb;
+static void ql_free_large_buffers(struct ql3_adapter *qdev)
+{
+	int i = 0;
+	struct ql_rcv_buf_cb *lrg_buf_cb;
 
-	क्रम (i = 0; i < qdev->num_large_buffers; i++) अणु
+	for (i = 0; i < qdev->num_large_buffers; i++) {
 		lrg_buf_cb = &qdev->lrg_buf[i];
-		अगर (lrg_buf_cb->skb) अणु
-			dev_kमुक्त_skb(lrg_buf_cb->skb);
+		if (lrg_buf_cb->skb) {
+			dev_kfree_skb(lrg_buf_cb->skb);
 			dma_unmap_single(&qdev->pdev->dev,
 					 dma_unmap_addr(lrg_buf_cb, mapaddr),
 					 dma_unmap_len(lrg_buf_cb, maplen),
 					 DMA_FROM_DEVICE);
-			स_रखो(lrg_buf_cb, 0, माप(काष्ठा ql_rcv_buf_cb));
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			memset(lrg_buf_cb, 0, sizeof(struct ql_rcv_buf_cb));
+		} else {
+			break;
+		}
+	}
+}
 
-अटल व्योम ql_init_large_buffers(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक i;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb;
-	काष्ठा bufq_addr_element *buf_addr_ele = qdev->lrg_buf_q_virt_addr;
+static void ql_init_large_buffers(struct ql3_adapter *qdev)
+{
+	int i;
+	struct ql_rcv_buf_cb *lrg_buf_cb;
+	struct bufq_addr_element *buf_addr_ele = qdev->lrg_buf_q_virt_addr;
 
-	क्रम (i = 0; i < qdev->num_large_buffers; i++) अणु
+	for (i = 0; i < qdev->num_large_buffers; i++) {
 		lrg_buf_cb = &qdev->lrg_buf[i];
 		buf_addr_ele->addr_high = lrg_buf_cb->buf_phy_addr_high;
 		buf_addr_ele->addr_low = lrg_buf_cb->buf_phy_addr_low;
 		buf_addr_ele++;
-	पूर्ण
+	}
 	qdev->lrg_buf_index = 0;
 	qdev->lrg_buf_skb_check = 0;
-पूर्ण
+}
 
-अटल पूर्णांक ql_alloc_large_buffers(काष्ठा ql3_adapter *qdev)
-अणु
-	पूर्णांक i;
-	काष्ठा ql_rcv_buf_cb *lrg_buf_cb;
-	काष्ठा sk_buff *skb;
+static int ql_alloc_large_buffers(struct ql3_adapter *qdev)
+{
+	int i;
+	struct ql_rcv_buf_cb *lrg_buf_cb;
+	struct sk_buff *skb;
 	dma_addr_t map;
-	पूर्णांक err;
+	int err;
 
-	क्रम (i = 0; i < qdev->num_large_buffers; i++) अणु
+	for (i = 0; i < qdev->num_large_buffers; i++) {
 		lrg_buf_cb = &qdev->lrg_buf[i];
-		स_रखो(lrg_buf_cb, 0, माप(काष्ठा ql_rcv_buf_cb));
+		memset(lrg_buf_cb, 0, sizeof(struct ql_rcv_buf_cb));
 
 		skb = netdev_alloc_skb(qdev->ndev,
 				       qdev->lrg_buffer_len);
-		अगर (unlikely(!skb)) अणु
+		if (unlikely(!skb)) {
 			/* Better luck next round */
 			netdev_err(qdev->ndev,
 				   "large buff alloc failed for %d bytes at index %d\n",
 				   qdev->lrg_buffer_len * 2, i);
-			ql_मुक्त_large_buffers(qdev);
-			वापस -ENOMEM;
-		पूर्ण अन्यथा अणु
+			ql_free_large_buffers(qdev);
+			return -ENOMEM;
+		} else {
 			lrg_buf_cb->index = i;
 			/*
 			 * We save some space to copy the ethhdr from first
@@ -2768,14 +2767,14 @@ map_error:
 					     DMA_FROM_DEVICE);
 
 			err = dma_mapping_error(&qdev->pdev->dev, map);
-			अगर (err) अणु
+			if (err) {
 				netdev_err(qdev->ndev,
 					   "PCI mapping failed with error: %d\n",
 					   err);
-				dev_kमुक्त_skb_irq(skb);
-				ql_मुक्त_large_buffers(qdev);
-				वापस -ENOMEM;
-			पूर्ण
+				dev_kfree_skb_irq(skb);
+				ql_free_large_buffers(qdev);
+				return -ENOMEM;
+			}
 
 			lrg_buf_cb->skb = skb;
 			dma_unmap_addr_set(lrg_buf_cb, mapaddr, map);
@@ -2786,60 +2785,60 @@ map_error:
 			    cpu_to_le32(LS_64BITS(map));
 			lrg_buf_cb->buf_phy_addr_high =
 			    cpu_to_le32(MS_64BITS(map));
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम ql_मुक्त_send_मुक्त_list(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql_tx_buf_cb *tx_cb;
-	पूर्णांक i;
+static void ql_free_send_free_list(struct ql3_adapter *qdev)
+{
+	struct ql_tx_buf_cb *tx_cb;
+	int i;
 
 	tx_cb = &qdev->tx_buf[0];
-	क्रम (i = 0; i < NUM_REQ_Q_ENTRIES; i++) अणु
-		kमुक्त(tx_cb->oal);
-		tx_cb->oal = शून्य;
+	for (i = 0; i < NUM_REQ_Q_ENTRIES; i++) {
+		kfree(tx_cb->oal);
+		tx_cb->oal = NULL;
 		tx_cb++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ql_create_send_मुक्त_list(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql_tx_buf_cb *tx_cb;
-	पूर्णांक i;
-	काष्ठा ob_mac_iocb_req *req_q_curr = qdev->req_q_virt_addr;
+static int ql_create_send_free_list(struct ql3_adapter *qdev)
+{
+	struct ql_tx_buf_cb *tx_cb;
+	int i;
+	struct ob_mac_iocb_req *req_q_curr = qdev->req_q_virt_addr;
 
-	/* Create मुक्त list of transmit buffers */
-	क्रम (i = 0; i < NUM_REQ_Q_ENTRIES; i++) अणु
+	/* Create free list of transmit buffers */
+	for (i = 0; i < NUM_REQ_Q_ENTRIES; i++) {
 
 		tx_cb = &qdev->tx_buf[i];
-		tx_cb->skb = शून्य;
+		tx_cb->skb = NULL;
 		tx_cb->queue_entry = req_q_curr;
 		req_q_curr++;
-		tx_cb->oal = kदो_स्मृति(512, GFP_KERNEL);
-		अगर (tx_cb->oal == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		tx_cb->oal = kmalloc(512, GFP_KERNEL);
+		if (tx_cb->oal == NULL)
+			return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ql_alloc_mem_resources(काष्ठा ql3_adapter *qdev)
-अणु
-	अगर (qdev->ndev->mtu == NORMAL_MTU_SIZE) अणु
+static int ql_alloc_mem_resources(struct ql3_adapter *qdev)
+{
+	if (qdev->ndev->mtu == NORMAL_MTU_SIZE) {
 		qdev->num_lbufq_entries = NUM_LBUFQ_ENTRIES;
 		qdev->lrg_buffer_len = NORMAL_MTU_SIZE;
-	पूर्ण अन्यथा अगर (qdev->ndev->mtu == JUMBO_MTU_SIZE) अणु
+	} else if (qdev->ndev->mtu == JUMBO_MTU_SIZE) {
 		/*
 		 * Bigger buffers, so less of them.
 		 */
 		qdev->num_lbufq_entries = JUMBO_NUM_LBUFQ_ENTRIES;
 		qdev->lrg_buffer_len = JUMBO_MTU_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(qdev->ndev, "Invalid mtu size: %d.  Only %d and %d are accepted.\n",
 			   qdev->ndev->mtu, NORMAL_MTU_SIZE, JUMBO_MTU_SIZE);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	qdev->num_large_buffers =
 		qdev->num_lbufq_entries * QL_ADDR_ELE_PER_BUFQ_ENTRY;
 	qdev->lrg_buffer_len += VLAN_ETH_HLEN + VLAN_ID_LEN + QL_HEADER_SPACE;
@@ -2847,20 +2846,20 @@ map_error:
 		(qdev->lrg_buffer_len - QL_HEADER_SPACE) + ETHERNET_CRC_SIZE;
 
 	/*
-	 * First allocate a page of shared memory and use it क्रम shaकरोw
+	 * First allocate a page of shared memory and use it for shadow
 	 * locations of Network Request Queue Consumer Address Register and
 	 * Network Completion Queue Producer Index Register
 	 */
-	qdev->shaकरोw_reg_virt_addr =
+	qdev->shadow_reg_virt_addr =
 		dma_alloc_coherent(&qdev->pdev->dev, PAGE_SIZE,
-				   &qdev->shaकरोw_reg_phy_addr, GFP_KERNEL);
+				   &qdev->shadow_reg_phy_addr, GFP_KERNEL);
 
-	अगर (qdev->shaकरोw_reg_virt_addr != शून्य) अणु
-		qdev->preq_consumer_index = qdev->shaकरोw_reg_virt_addr;
+	if (qdev->shadow_reg_virt_addr != NULL) {
+		qdev->preq_consumer_index = qdev->shadow_reg_virt_addr;
 		qdev->req_consumer_index_phy_addr_high =
-			MS_64BITS(qdev->shaकरोw_reg_phy_addr);
+			MS_64BITS(qdev->shadow_reg_phy_addr);
 		qdev->req_consumer_index_phy_addr_low =
-			LS_64BITS(qdev->shaकरोw_reg_phy_addr);
+			LS_64BITS(qdev->shadow_reg_phy_addr);
 
 		qdev->prsp_producer_index =
 			(__le32 *) (((u8 *) qdev->preq_consumer_index) + 8);
@@ -2868,151 +2867,151 @@ map_error:
 			qdev->req_consumer_index_phy_addr_high;
 		qdev->rsp_producer_index_phy_addr_low =
 			qdev->req_consumer_index_phy_addr_low + 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(qdev->ndev, "shadowReg Alloc failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (ql_alloc_net_req_rsp_queues(qdev) != 0) अणु
+	if (ql_alloc_net_req_rsp_queues(qdev) != 0) {
 		netdev_err(qdev->ndev, "ql_alloc_net_req_rsp_queues failed\n");
-		जाओ err_req_rsp;
-	पूर्ण
+		goto err_req_rsp;
+	}
 
-	अगर (ql_alloc_buffer_queues(qdev) != 0) अणु
+	if (ql_alloc_buffer_queues(qdev) != 0) {
 		netdev_err(qdev->ndev, "ql_alloc_buffer_queues failed\n");
-		जाओ err_buffer_queues;
-	पूर्ण
+		goto err_buffer_queues;
+	}
 
-	अगर (ql_alloc_small_buffers(qdev) != 0) अणु
+	if (ql_alloc_small_buffers(qdev) != 0) {
 		netdev_err(qdev->ndev, "ql_alloc_small_buffers failed\n");
-		जाओ err_small_buffers;
-	पूर्ण
+		goto err_small_buffers;
+	}
 
-	अगर (ql_alloc_large_buffers(qdev) != 0) अणु
+	if (ql_alloc_large_buffers(qdev) != 0) {
 		netdev_err(qdev->ndev, "ql_alloc_large_buffers failed\n");
-		जाओ err_small_buffers;
-	पूर्ण
+		goto err_small_buffers;
+	}
 
 	/* Initialize the large buffer queue. */
 	ql_init_large_buffers(qdev);
-	अगर (ql_create_send_मुक्त_list(qdev))
-		जाओ err_मुक्त_list;
+	if (ql_create_send_free_list(qdev))
+		goto err_free_list;
 
 	qdev->rsp_current = qdev->rsp_q_virt_addr;
 
-	वापस 0;
-err_मुक्त_list:
-	ql_मुक्त_send_मुक्त_list(qdev);
+	return 0;
+err_free_list:
+	ql_free_send_free_list(qdev);
 err_small_buffers:
-	ql_मुक्त_buffer_queues(qdev);
+	ql_free_buffer_queues(qdev);
 err_buffer_queues:
-	ql_मुक्त_net_req_rsp_queues(qdev);
+	ql_free_net_req_rsp_queues(qdev);
 err_req_rsp:
-	dma_मुक्त_coherent(&qdev->pdev->dev, PAGE_SIZE,
-			  qdev->shaकरोw_reg_virt_addr,
-			  qdev->shaकरोw_reg_phy_addr);
+	dma_free_coherent(&qdev->pdev->dev, PAGE_SIZE,
+			  qdev->shadow_reg_virt_addr,
+			  qdev->shadow_reg_phy_addr);
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम ql_मुक्त_mem_resources(काष्ठा ql3_adapter *qdev)
-अणु
-	ql_मुक्त_send_मुक्त_list(qdev);
-	ql_मुक्त_large_buffers(qdev);
-	ql_मुक्त_small_buffers(qdev);
-	ql_मुक्त_buffer_queues(qdev);
-	ql_मुक्त_net_req_rsp_queues(qdev);
-	अगर (qdev->shaकरोw_reg_virt_addr != शून्य) अणु
-		dma_मुक्त_coherent(&qdev->pdev->dev, PAGE_SIZE,
-				  qdev->shaकरोw_reg_virt_addr,
-				  qdev->shaकरोw_reg_phy_addr);
-		qdev->shaकरोw_reg_virt_addr = शून्य;
-	पूर्ण
-पूर्ण
+static void ql_free_mem_resources(struct ql3_adapter *qdev)
+{
+	ql_free_send_free_list(qdev);
+	ql_free_large_buffers(qdev);
+	ql_free_small_buffers(qdev);
+	ql_free_buffer_queues(qdev);
+	ql_free_net_req_rsp_queues(qdev);
+	if (qdev->shadow_reg_virt_addr != NULL) {
+		dma_free_coherent(&qdev->pdev->dev, PAGE_SIZE,
+				  qdev->shadow_reg_virt_addr,
+				  qdev->shadow_reg_phy_addr);
+		qdev->shadow_reg_virt_addr = NULL;
+	}
+}
 
-अटल पूर्णांक ql_init_misc_रेजिस्टरs(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_local_ram_रेजिस्टरs __iomem *local_ram =
-	    (व्योम __iomem *)qdev->mem_map_रेजिस्टरs;
+static int ql_init_misc_registers(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_local_ram_registers __iomem *local_ram =
+	    (void __iomem *)qdev->mem_map_registers;
 
-	अगर (ql_sem_spinlock(qdev, QL_DDR_RAM_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_DDR_RAM_SEM_MASK,
 			(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
 			 2) << 4))
-		वापस -1;
+		return -1;
 
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->bufletSize, qdev->nvram_data.bufletSize);
 
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->maxBufletCount,
 			   qdev->nvram_data.bufletCount);
 
-	ql_ग_लिखो_page2_reg(qdev,
-			   &local_ram->मुक्तBufletThresholdLow,
-			   (qdev->nvram_data.tcpWinकरोwThreshold25 << 16) |
-			   (qdev->nvram_data.tcpWinकरोwThreshold0));
+	ql_write_page2_reg(qdev,
+			   &local_ram->freeBufletThresholdLow,
+			   (qdev->nvram_data.tcpWindowThreshold25 << 16) |
+			   (qdev->nvram_data.tcpWindowThreshold0));
 
-	ql_ग_लिखो_page2_reg(qdev,
-			   &local_ram->मुक्तBufletThresholdHigh,
-			   qdev->nvram_data.tcpWinकरोwThreshold50);
+	ql_write_page2_reg(qdev,
+			   &local_ram->freeBufletThresholdHigh,
+			   qdev->nvram_data.tcpWindowThreshold50);
 
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->ipHashTableBase,
 			   (qdev->nvram_data.ipHashTableBaseHi << 16) |
 			   qdev->nvram_data.ipHashTableBaseLo);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->ipHashTableCount,
 			   qdev->nvram_data.ipHashTableSize);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->tcpHashTableBase,
 			   (qdev->nvram_data.tcpHashTableBaseHi << 16) |
 			   qdev->nvram_data.tcpHashTableBaseLo);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->tcpHashTableCount,
 			   qdev->nvram_data.tcpHashTableSize);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->ncbBase,
 			   (qdev->nvram_data.ncbTableBaseHi << 16) |
 			   qdev->nvram_data.ncbTableBaseLo);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->maxNcbCount,
 			   qdev->nvram_data.ncbTableSize);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->drbBase,
 			   (qdev->nvram_data.drbTableBaseHi << 16) |
 			   qdev->nvram_data.drbTableBaseLo);
-	ql_ग_लिखो_page2_reg(qdev,
+	ql_write_page2_reg(qdev,
 			   &local_ram->maxDrbCount,
 			   qdev->nvram_data.drbTableSize);
 	ql_sem_unlock(qdev, QL_DDR_RAM_SEM_MASK);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ql_adapter_initialize(काष्ठा ql3_adapter *qdev)
-अणु
+static int ql_adapter_initialize(struct ql3_adapter *qdev)
+{
 	u32 value;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	__iomem u32 *spir = &port_regs->CommonRegs.serialPortInterfaceReg;
-	काष्ठा ql3xxx_host_memory_रेजिस्टरs __iomem *hmem_regs =
-		(व्योम __iomem *)port_regs;
+	struct ql3xxx_host_memory_registers __iomem *hmem_regs =
+		(void __iomem *)port_regs;
 	u32 delay = 10;
-	पूर्णांक status = 0;
+	int status = 0;
 
-	अगर (ql_mii_setup(qdev))
-		वापस -1;
+	if (ql_mii_setup(qdev))
+		return -1;
 
 	/* Bring out PHY out of reset */
-	ql_ग_लिखो_common_reg(qdev, spir,
+	ql_write_common_reg(qdev, spir,
 			    (ISP_SERIAL_PORT_IF_WE |
 			     (ISP_SERIAL_PORT_IF_WE << 16)));
-	/* Give the PHY समय to come out of reset. */
+	/* Give the PHY time to come out of reset. */
 	mdelay(100);
 	qdev->port_link_state = LS_DOWN;
-	netअगर_carrier_off(qdev->ndev);
+	netif_carrier_off(qdev->ndev);
 
-	/* V2 chip fix क्रम ARS-39168. */
-	ql_ग_लिखो_common_reg(qdev, spir,
+	/* V2 chip fix for ARS-39168. */
+	ql_write_common_reg(qdev, spir,
 			    (ISP_SERIAL_PORT_IF_SDE |
 			     (ISP_SERIAL_PORT_IF_SDE << 16)));
 
@@ -3021,72 +3020,72 @@ err_req_rsp:
 	atomic_set(&qdev->tx_count, NUM_REQ_Q_ENTRIES);
 	qdev->req_producer_index = 0;
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->reqConsumerIndexAddrHigh,
 			   qdev->req_consumer_index_phy_addr_high);
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->reqConsumerIndexAddrLow,
 			   qdev->req_consumer_index_phy_addr_low);
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->reqBaseAddrHigh,
 			   MS_64BITS(qdev->req_q_phy_addr));
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->reqBaseAddrLow,
 			   LS_64BITS(qdev->req_q_phy_addr));
-	ql_ग_लिखो_page1_reg(qdev, &hmem_regs->reqLength, NUM_REQ_Q_ENTRIES);
+	ql_write_page1_reg(qdev, &hmem_regs->reqLength, NUM_REQ_Q_ENTRIES);
 
 	/* Response Queue Registers */
 	*((__le16 *) (qdev->prsp_producer_index)) = 0;
 	qdev->rsp_consumer_index = 0;
 	qdev->rsp_current = qdev->rsp_q_virt_addr;
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rspProducerIndexAddrHigh,
 			   qdev->rsp_producer_index_phy_addr_high);
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rspProducerIndexAddrLow,
 			   qdev->rsp_producer_index_phy_addr_low);
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rspBaseAddrHigh,
 			   MS_64BITS(qdev->rsp_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rspBaseAddrLow,
 			   LS_64BITS(qdev->rsp_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev, &hmem_regs->rspLength, NUM_RSP_Q_ENTRIES);
+	ql_write_page1_reg(qdev, &hmem_regs->rspLength, NUM_RSP_Q_ENTRIES);
 
 	/* Large Buffer Queue */
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxLargeQBaseAddrHigh,
 			   MS_64BITS(qdev->lrg_buf_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxLargeQBaseAddrLow,
 			   LS_64BITS(qdev->lrg_buf_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxLargeQLength,
 			   qdev->num_lbufq_entries);
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxLargeBufferLength,
 			   qdev->lrg_buffer_len);
 
 	/* Small Buffer Queue */
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxSmallQBaseAddrHigh,
 			   MS_64BITS(qdev->small_buf_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxSmallQBaseAddrLow,
 			   LS_64BITS(qdev->small_buf_q_phy_addr));
 
-	ql_ग_लिखो_page1_reg(qdev, &hmem_regs->rxSmallQLength, NUM_SBUFQ_ENTRIES);
-	ql_ग_लिखो_page1_reg(qdev,
+	ql_write_page1_reg(qdev, &hmem_regs->rxSmallQLength, NUM_SBUFQ_ENTRIES);
+	ql_write_page1_reg(qdev,
 			   &hmem_regs->rxSmallBufferLength,
 			   QL_SMALL_BUFFER_SIZE);
 
@@ -3094,70 +3093,70 @@ err_req_rsp:
 	qdev->small_buf_release_cnt = 8;
 	qdev->lrg_buf_q_producer_index = qdev->num_lbufq_entries - 1;
 	qdev->lrg_buf_release_cnt = 8;
-	qdev->lrg_buf_next_मुक्त = qdev->lrg_buf_q_virt_addr;
+	qdev->lrg_buf_next_free = qdev->lrg_buf_q_virt_addr;
 	qdev->small_buf_index = 0;
 	qdev->lrg_buf_index = 0;
-	qdev->lrg_buf_मुक्त_count = 0;
-	qdev->lrg_buf_मुक्त_head = शून्य;
-	qdev->lrg_buf_मुक्त_tail = शून्य;
+	qdev->lrg_buf_free_count = 0;
+	qdev->lrg_buf_free_head = NULL;
+	qdev->lrg_buf_free_tail = NULL;
 
-	ql_ग_लिखो_common_reg(qdev,
+	ql_write_common_reg(qdev,
 			    &port_regs->CommonRegs.
 			    rxSmallQProducerIndex,
 			    qdev->small_buf_q_producer_index);
-	ql_ग_लिखो_common_reg(qdev,
+	ql_write_common_reg(qdev,
 			    &port_regs->CommonRegs.
 			    rxLargeQProducerIndex,
 			    qdev->lrg_buf_q_producer_index);
 
 	/*
-	 * Find out अगर the chip has alपढ़ोy been initialized.  If it has, then
+	 * Find out if the chip has already been initialized.  If it has, then
 	 * we skip some of the initialization.
 	 */
 	clear_bit(QL_LINK_MASTER, &qdev->flags);
-	value = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	अगर ((value & PORT_STATUS_IC) == 0) अणु
+	value = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	if ((value & PORT_STATUS_IC) == 0) {
 
 		/* Chip has not been configured yet, so let it rip. */
-		अगर (ql_init_misc_रेजिस्टरs(qdev)) अणु
+		if (ql_init_misc_registers(qdev)) {
 			status = -1;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		value = qdev->nvram_data.tcpMaxWinकरोwSize;
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->tcpMaxWinकरोw, value);
+		value = qdev->nvram_data.tcpMaxWindowSize;
+		ql_write_page0_reg(qdev, &port_regs->tcpMaxWindow, value);
 
 		value = (0xFFFF << 16) | qdev->nvram_data.extHwConfig;
 
-		अगर (ql_sem_spinlock(qdev, QL_FLASH_SEM_MASK,
+		if (ql_sem_spinlock(qdev, QL_FLASH_SEM_MASK,
 				(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index)
-				 * 2) << 13)) अणु
+				 * 2) << 13)) {
 			status = -1;
-			जाओ out;
-		पूर्ण
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->ExternalHWConfig, value);
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->InternalChipConfig,
+			goto out;
+		}
+		ql_write_page0_reg(qdev, &port_regs->ExternalHWConfig, value);
+		ql_write_page0_reg(qdev, &port_regs->InternalChipConfig,
 				   (((INTERNAL_CHIP_SD | INTERNAL_CHIP_WE) <<
 				     16) | (INTERNAL_CHIP_SD |
 					    INTERNAL_CHIP_WE)));
 		ql_sem_unlock(qdev, QL_FLASH_SEM_MASK);
-	पूर्ण
+	}
 
-	अगर (qdev->mac_index)
-		ql_ग_लिखो_page0_reg(qdev,
+	if (qdev->mac_index)
+		ql_write_page0_reg(qdev,
 				   &port_regs->mac1MaxFrameLengthReg,
 				   qdev->max_frame_size);
-	अन्यथा
-		ql_ग_लिखो_page0_reg(qdev,
+	else
+		ql_write_page0_reg(qdev,
 					   &port_regs->mac0MaxFrameLengthReg,
 					   qdev->max_frame_size);
 
-	अगर (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
+	if (ql_sem_spinlock(qdev, QL_PHY_GIO_SEM_MASK,
 			(QL_RESOURCE_BITS_BASE_CODE | (qdev->mac_index) *
-			 2) << 7)) अणु
+			 2) << 7)) {
 		status = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	PHY_Setup(qdev);
 	ql_init_scan_mode(qdev);
@@ -3166,90 +3165,90 @@ err_req_rsp:
 	/* Load the MAC Configuration */
 
 	/* Program lower 32 bits of the MAC address */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
-			   (MAC_ADDR_INसूचीECT_PTR_REG_RP_MASK << 16));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrDataReg,
+	ql_write_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
+			   (MAC_ADDR_INDIRECT_PTR_REG_RP_MASK << 16));
+	ql_write_page0_reg(qdev, &port_regs->macAddrDataReg,
 			   ((qdev->ndev->dev_addr[2] << 24)
 			    | (qdev->ndev->dev_addr[3] << 16)
 			    | (qdev->ndev->dev_addr[4] << 8)
 			    | qdev->ndev->dev_addr[5]));
 
 	/* Program top 16 bits of the MAC address */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
-			   ((MAC_ADDR_INसूचीECT_PTR_REG_RP_MASK << 16) | 1));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrDataReg,
+	ql_write_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
+			   ((MAC_ADDR_INDIRECT_PTR_REG_RP_MASK << 16) | 1));
+	ql_write_page0_reg(qdev, &port_regs->macAddrDataReg,
 			   ((qdev->ndev->dev_addr[0] << 8)
 			    | qdev->ndev->dev_addr[1]));
 
 	/* Enable Primary MAC */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
-			   ((MAC_ADDR_INसूचीECT_PTR_REG_PE << 16) |
-			    MAC_ADDR_INसूचीECT_PTR_REG_PE));
+	ql_write_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
+			   ((MAC_ADDR_INDIRECT_PTR_REG_PE << 16) |
+			    MAC_ADDR_INDIRECT_PTR_REG_PE));
 
 	/* Clear Primary and Secondary IP addresses */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->ipAddrIndexReg,
+	ql_write_page0_reg(qdev, &port_regs->ipAddrIndexReg,
 			   ((IP_ADDR_INDEX_REG_MASK << 16) |
 			    (qdev->mac_index << 2)));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->ipAddrDataReg, 0);
+	ql_write_page0_reg(qdev, &port_regs->ipAddrDataReg, 0);
 
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->ipAddrIndexReg,
+	ql_write_page0_reg(qdev, &port_regs->ipAddrIndexReg,
 			   ((IP_ADDR_INDEX_REG_MASK << 16) |
 			    ((qdev->mac_index << 2) + 1)));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->ipAddrDataReg, 0);
+	ql_write_page0_reg(qdev, &port_regs->ipAddrDataReg, 0);
 
 	ql_sem_unlock(qdev, QL_PHY_GIO_SEM_MASK);
 
 	/* Indicate Configuration Complete */
-	ql_ग_लिखो_page0_reg(qdev,
+	ql_write_page0_reg(qdev,
 			   &port_regs->portControl,
 			   ((PORT_CONTROL_CC << 16) | PORT_CONTROL_CC));
 
-	करो अणु
-		value = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-		अगर (value & PORT_STATUS_IC)
-			अवरोध;
+	do {
+		value = ql_read_page0_reg(qdev, &port_regs->portStatus);
+		if (value & PORT_STATUS_IC)
+			break;
 		spin_unlock_irq(&qdev->hw_lock);
 		msleep(500);
 		spin_lock_irq(&qdev->hw_lock);
-	पूर्ण जबतक (--delay);
+	} while (--delay);
 
-	अगर (delay == 0) अणु
+	if (delay == 0) {
 		netdev_err(qdev->ndev, "Hw Initialization timeout\n");
 		status = -1;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Enable Ethernet Function */
-	अगर (qdev->device_id == QL3032_DEVICE_ID) अणु
+	if (qdev->device_id == QL3032_DEVICE_ID) {
 		value =
 		    (QL3032_PORT_CONTROL_EF | QL3032_PORT_CONTROL_KIE |
 		     QL3032_PORT_CONTROL_EIv6 | QL3032_PORT_CONTROL_EIv4 |
 			QL3032_PORT_CONTROL_ET);
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->functionControl,
+		ql_write_page0_reg(qdev, &port_regs->functionControl,
 				   ((value << 16) | value));
-	पूर्ण अन्यथा अणु
+	} else {
 		value =
 		    (PORT_CONTROL_EF | PORT_CONTROL_ET | PORT_CONTROL_EI |
 		     PORT_CONTROL_HH);
-		ql_ग_लिखो_page0_reg(qdev, &port_regs->portControl,
+		ql_write_page0_reg(qdev, &port_regs->portControl,
 				   ((value << 16) | value));
-	पूर्ण
+	}
 
 
 out:
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Caller holds hw_lock.
  */
-अटल पूर्णांक ql_adapter_reset(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
-	पूर्णांक status = 0;
+static int ql_adapter_reset(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
+	int status = 0;
 	u16 value;
-	पूर्णांक max_रुको_समय;
+	int max_wait_time;
 
 	set_bit(QL_RESET_ACTIVE, &qdev->flags);
 	clear_bit(QL_RESET_DONE, &qdev->flags);
@@ -3257,121 +3256,121 @@ out:
 	/*
 	 * Issue soft reset to chip.
 	 */
-	netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev, "Issue soft reset to chip\n");
-	ql_ग_लिखो_common_reg(qdev,
+	netdev_printk(KERN_DEBUG, qdev->ndev, "Issue soft reset to chip\n");
+	ql_write_common_reg(qdev,
 			    &port_regs->CommonRegs.ispControlStatus,
 			    ((ISP_CONTROL_SR << 16) | ISP_CONTROL_SR));
 
-	/* Wait 3 seconds क्रम reset to complete. */
-	netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev,
+	/* Wait 3 seconds for reset to complete. */
+	netdev_printk(KERN_DEBUG, qdev->ndev,
 		      "Wait 10 milliseconds for reset to complete\n");
 
-	/* Wait until the firmware tells us the Soft Reset is करोne */
-	max_रुको_समय = 5;
-	करो अणु
+	/* Wait until the firmware tells us the Soft Reset is done */
+	max_wait_time = 5;
+	do {
 		value =
-		    ql_पढ़ो_common_reg(qdev,
+		    ql_read_common_reg(qdev,
 				       &port_regs->CommonRegs.ispControlStatus);
-		अगर ((value & ISP_CONTROL_SR) == 0)
-			अवरोध;
+		if ((value & ISP_CONTROL_SR) == 0)
+			break;
 
 		ssleep(1);
-	पूर्ण जबतक ((--max_रुको_समय));
+	} while ((--max_wait_time));
 
 	/*
 	 * Also, make sure that the Network Reset Interrupt bit has been
 	 * cleared after the soft reset has taken place.
 	 */
 	value =
-	    ql_पढ़ो_common_reg(qdev, &port_regs->CommonRegs.ispControlStatus);
-	अगर (value & ISP_CONTROL_RI) अणु
-		netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev,
+	    ql_read_common_reg(qdev, &port_regs->CommonRegs.ispControlStatus);
+	if (value & ISP_CONTROL_RI) {
+		netdev_printk(KERN_DEBUG, qdev->ndev,
 			      "clearing RI after reset\n");
-		ql_ग_लिखो_common_reg(qdev,
+		ql_write_common_reg(qdev,
 				    &port_regs->CommonRegs.
 				    ispControlStatus,
 				    ((ISP_CONTROL_RI << 16) | ISP_CONTROL_RI));
-	पूर्ण
+	}
 
-	अगर (max_रुको_समय == 0) अणु
+	if (max_wait_time == 0) {
 		/* Issue Force Soft Reset */
-		ql_ग_लिखो_common_reg(qdev,
+		ql_write_common_reg(qdev,
 				    &port_regs->CommonRegs.
 				    ispControlStatus,
 				    ((ISP_CONTROL_FSR << 16) |
 				     ISP_CONTROL_FSR));
 		/*
 		 * Wait until the firmware tells us the Force Soft Reset is
-		 * करोne
+		 * done
 		 */
-		max_रुको_समय = 5;
-		करो अणु
-			value = ql_पढ़ो_common_reg(qdev,
+		max_wait_time = 5;
+		do {
+			value = ql_read_common_reg(qdev,
 						   &port_regs->CommonRegs.
 						   ispControlStatus);
-			अगर ((value & ISP_CONTROL_FSR) == 0)
-				अवरोध;
+			if ((value & ISP_CONTROL_FSR) == 0)
+				break;
 			ssleep(1);
-		पूर्ण जबतक ((--max_रुको_समय));
-	पूर्ण
-	अगर (max_रुको_समय == 0)
+		} while ((--max_wait_time));
+	}
+	if (max_wait_time == 0)
 		status = 1;
 
 	clear_bit(QL_RESET_ACTIVE, &qdev->flags);
 	set_bit(QL_RESET_DONE, &qdev->flags);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल व्योम ql_set_mac_info(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_set_mac_info(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	u32 value, port_status;
 	u8 func_number;
 
 	/* Get the function number */
 	value =
-	    ql_पढ़ो_common_reg_l(qdev, &port_regs->CommonRegs.ispControlStatus);
+	    ql_read_common_reg_l(qdev, &port_regs->CommonRegs.ispControlStatus);
 	func_number = (u8) ((value >> 4) & OPCODE_FUNC_ID_MASK);
-	port_status = ql_पढ़ो_page0_reg(qdev, &port_regs->portStatus);
-	चयन (value & ISP_CONTROL_FN_MASK) अणु
-	हाल ISP_CONTROL_FN0_NET:
+	port_status = ql_read_page0_reg(qdev, &port_regs->portStatus);
+	switch (value & ISP_CONTROL_FN_MASK) {
+	case ISP_CONTROL_FN0_NET:
 		qdev->mac_index = 0;
 		qdev->mac_ob_opcode = OUTBOUND_MAC_IOCB | func_number;
 		qdev->mb_bit_mask = FN0_MA_BITS_MASK;
 		qdev->PHYAddr = PORT0_PHY_ADDRESS;
-		अगर (port_status & PORT_STATUS_SM0)
+		if (port_status & PORT_STATUS_SM0)
 			set_bit(QL_LINK_OPTICAL, &qdev->flags);
-		अन्यथा
+		else
 			clear_bit(QL_LINK_OPTICAL, &qdev->flags);
-		अवरोध;
+		break;
 
-	हाल ISP_CONTROL_FN1_NET:
+	case ISP_CONTROL_FN1_NET:
 		qdev->mac_index = 1;
 		qdev->mac_ob_opcode = OUTBOUND_MAC_IOCB | func_number;
 		qdev->mb_bit_mask = FN1_MA_BITS_MASK;
 		qdev->PHYAddr = PORT1_PHY_ADDRESS;
-		अगर (port_status & PORT_STATUS_SM1)
+		if (port_status & PORT_STATUS_SM1)
 			set_bit(QL_LINK_OPTICAL, &qdev->flags);
-		अन्यथा
+		else
 			clear_bit(QL_LINK_OPTICAL, &qdev->flags);
-		अवरोध;
+		break;
 
-	हाल ISP_CONTROL_FN0_SCSI:
-	हाल ISP_CONTROL_FN1_SCSI:
-	शेष:
-		netdev_prपूर्णांकk(KERN_DEBUG, qdev->ndev,
+	case ISP_CONTROL_FN0_SCSI:
+	case ISP_CONTROL_FN1_SCSI:
+	default:
+		netdev_printk(KERN_DEBUG, qdev->ndev,
 			      "Invalid function number, ispControlStatus = 0x%x\n",
 			      value);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	qdev->numPorts = qdev->nvram_data.version_and_numPorts >> 8;
-पूर्ण
+}
 
-अटल व्योम ql_display_dev_info(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	काष्ठा pci_dev *pdev = qdev->pdev;
+static void ql_display_dev_info(struct net_device *ndev)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	struct pci_dev *pdev = qdev->pdev;
 
 	netdev_info(ndev,
 		    "%s Adapter %d RevisionID %d found %s on PCI slot %d\n",
@@ -3382,308 +3381,308 @@ out:
 		test_bit(QL_LINK_OPTICAL, &qdev->flags) ? "OPTICAL" : "COPPER");
 
 	/*
-	 * Prपूर्णांक PCI bus width/type.
+	 * Print PCI bus width/type.
 	 */
 	netdev_info(ndev, "Bus interface is %s %s\n",
 		    ((qdev->pci_width == 64) ? "64-bit" : "32-bit"),
 		    ((qdev->pci_x) ? "PCI-X" : "PCI"));
 
 	netdev_info(ndev, "mem  IO base address adjusted = 0x%p\n",
-		    qdev->mem_map_रेजिस्टरs);
+		    qdev->mem_map_registers);
 	netdev_info(ndev, "Interrupt number = %d\n", pdev->irq);
 
-	netअगर_info(qdev, probe, ndev, "MAC address %pM\n", ndev->dev_addr);
-पूर्ण
+	netif_info(qdev, probe, ndev, "MAC address %pM\n", ndev->dev_addr);
+}
 
-अटल पूर्णांक ql_adapter_करोwn(काष्ठा ql3_adapter *qdev, पूर्णांक करो_reset)
-अणु
-	काष्ठा net_device *ndev = qdev->ndev;
-	पूर्णांक retval = 0;
+static int ql_adapter_down(struct ql3_adapter *qdev, int do_reset)
+{
+	struct net_device *ndev = qdev->ndev;
+	int retval = 0;
 
-	netअगर_stop_queue(ndev);
-	netअगर_carrier_off(ndev);
+	netif_stop_queue(ndev);
+	netif_carrier_off(ndev);
 
 	clear_bit(QL_ADAPTER_UP, &qdev->flags);
 	clear_bit(QL_LINK_MASTER, &qdev->flags);
 
-	ql_disable_पूर्णांकerrupts(qdev);
+	ql_disable_interrupts(qdev);
 
-	मुक्त_irq(qdev->pdev->irq, ndev);
+	free_irq(qdev->pdev->irq, ndev);
 
-	अगर (qdev->msi && test_bit(QL_MSI_ENABLED, &qdev->flags)) अणु
+	if (qdev->msi && test_bit(QL_MSI_ENABLED, &qdev->flags)) {
 		netdev_info(qdev->ndev, "calling pci_disable_msi()\n");
 		clear_bit(QL_MSI_ENABLED, &qdev->flags);
 		pci_disable_msi(qdev->pdev);
-	पूर्ण
+	}
 
-	del_समयr_sync(&qdev->adapter_समयr);
+	del_timer_sync(&qdev->adapter_timer);
 
 	napi_disable(&qdev->napi);
 
-	अगर (करो_reset) अणु
-		पूर्णांक soft_reset;
-		अचिन्हित दीर्घ hw_flags;
+	if (do_reset) {
+		int soft_reset;
+		unsigned long hw_flags;
 
 		spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-		अगर (ql_रुको_क्रम_drvr_lock(qdev)) अणु
+		if (ql_wait_for_drvr_lock(qdev)) {
 			soft_reset = ql_adapter_reset(qdev);
-			अगर (soft_reset) अणु
+			if (soft_reset) {
 				netdev_err(ndev, "ql_adapter_reset(%d) FAILED!\n",
 					   qdev->index);
-			पूर्ण
+			}
 			netdev_err(ndev,
 				   "Releasing driver lock via chip reset\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_err(ndev,
 				   "Could not acquire driver lock to do reset!\n");
 			retval = -1;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	पूर्ण
-	ql_मुक्त_mem_resources(qdev);
-	वापस retval;
-पूर्ण
+	}
+	ql_free_mem_resources(qdev);
+	return retval;
+}
 
-अटल पूर्णांक ql_adapter_up(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा net_device *ndev = qdev->ndev;
-	पूर्णांक err;
-	अचिन्हित दीर्घ irq_flags = IRQF_SHARED;
-	अचिन्हित दीर्घ hw_flags;
+static int ql_adapter_up(struct ql3_adapter *qdev)
+{
+	struct net_device *ndev = qdev->ndev;
+	int err;
+	unsigned long irq_flags = IRQF_SHARED;
+	unsigned long hw_flags;
 
-	अगर (ql_alloc_mem_resources(qdev)) अणु
+	if (ql_alloc_mem_resources(qdev)) {
 		netdev_err(ndev, "Unable to  allocate buffers\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (qdev->msi) अणु
-		अगर (pci_enable_msi(qdev->pdev)) अणु
+	if (qdev->msi) {
+		if (pci_enable_msi(qdev->pdev)) {
 			netdev_err(ndev,
 				   "User requested MSI, but MSI failed to initialize.  Continuing without MSI.\n");
 			qdev->msi = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_info(ndev, "MSI Enabled...\n");
 			set_bit(QL_MSI_ENABLED, &qdev->flags);
 			irq_flags &= ~IRQF_SHARED;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	err = request_irq(qdev->pdev->irq, ql3xxx_isr,
 			  irq_flags, ndev->name, ndev);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(ndev,
 			   "Failed to reserve interrupt %d - already in use\n",
 			   qdev->pdev->irq);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
 
-	err = ql_रुको_क्रम_drvr_lock(qdev);
-	अगर (err) अणु
+	err = ql_wait_for_drvr_lock(qdev);
+	if (err) {
 		err = ql_adapter_initialize(qdev);
-		अगर (err) अणु
+		if (err) {
 			netdev_err(ndev, "Unable to initialize adapter\n");
-			जाओ err_init;
-		पूर्ण
+			goto err_init;
+		}
 		netdev_err(ndev, "Releasing driver lock\n");
 		ql_sem_unlock(qdev, QL_DRVR_SEM_MASK);
-	पूर्ण अन्यथा अणु
+	} else {
 		netdev_err(ndev, "Could not acquire driver lock\n");
-		जाओ err_lock;
-	पूर्ण
+		goto err_lock;
+	}
 
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
 	set_bit(QL_ADAPTER_UP, &qdev->flags);
 
-	mod_समयr(&qdev->adapter_समयr, jअगरfies + HZ * 1);
+	mod_timer(&qdev->adapter_timer, jiffies + HZ * 1);
 
 	napi_enable(&qdev->napi);
-	ql_enable_पूर्णांकerrupts(qdev);
-	वापस 0;
+	ql_enable_interrupts(qdev);
+	return 0;
 
 err_init:
 	ql_sem_unlock(qdev, QL_DRVR_SEM_MASK);
 err_lock:
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
-	मुक्त_irq(qdev->pdev->irq, ndev);
+	free_irq(qdev->pdev->irq, ndev);
 err_irq:
-	अगर (qdev->msi && test_bit(QL_MSI_ENABLED, &qdev->flags)) अणु
+	if (qdev->msi && test_bit(QL_MSI_ENABLED, &qdev->flags)) {
 		netdev_info(ndev, "calling pci_disable_msi()\n");
 		clear_bit(QL_MSI_ENABLED, &qdev->flags);
 		pci_disable_msi(qdev->pdev);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक ql_cycle_adapter(काष्ठा ql3_adapter *qdev, पूर्णांक reset)
-अणु
-	अगर (ql_adapter_करोwn(qdev, reset) || ql_adapter_up(qdev)) अणु
+static int ql_cycle_adapter(struct ql3_adapter *qdev, int reset)
+{
+	if (ql_adapter_down(qdev, reset) || ql_adapter_up(qdev)) {
 		netdev_err(qdev->ndev,
 			   "Driver up/down cycle failed, closing device\n");
 		rtnl_lock();
-		dev_बंद(qdev->ndev);
+		dev_close(qdev->ndev);
 		rtnl_unlock();
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ql3xxx_बंद(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
+static int ql3xxx_close(struct net_device *ndev)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
 
 	/*
-	 * Wait क्रम device to recover from a reset.
+	 * Wait for device to recover from a reset.
 	 * (Rarely happens, but possible.)
 	 */
-	जबतक (!test_bit(QL_ADAPTER_UP, &qdev->flags))
+	while (!test_bit(QL_ADAPTER_UP, &qdev->flags))
 		msleep(50);
 
-	ql_adapter_करोwn(qdev, QL_DO_RESET);
-	वापस 0;
-पूर्ण
+	ql_adapter_down(qdev, QL_DO_RESET);
+	return 0;
+}
 
-अटल पूर्णांक ql3xxx_खोलो(काष्ठा net_device *ndev)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	वापस ql_adapter_up(qdev);
-पूर्ण
+static int ql3xxx_open(struct net_device *ndev)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	return ql_adapter_up(qdev);
+}
 
-अटल पूर्णांक ql3xxx_set_mac_address(काष्ठा net_device *ndev, व्योम *p)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-			qdev->mem_map_रेजिस्टरs;
-	काष्ठा sockaddr *addr = p;
-	अचिन्हित दीर्घ hw_flags;
+static int ql3xxx_set_mac_address(struct net_device *ndev, void *p)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
+	struct ql3xxx_port_registers __iomem *port_regs =
+			qdev->mem_map_registers;
+	struct sockaddr *addr = p;
+	unsigned long hw_flags;
 
-	अगर (netअगर_running(ndev))
-		वापस -EBUSY;
+	if (netif_running(ndev))
+		return -EBUSY;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	स_नकल(ndev->dev_addr, addr->sa_data, ndev->addr_len);
+	memcpy(ndev->dev_addr, addr->sa_data, ndev->addr_len);
 
 	spin_lock_irqsave(&qdev->hw_lock, hw_flags);
 	/* Program lower 32 bits of the MAC address */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
-			   (MAC_ADDR_INसूचीECT_PTR_REG_RP_MASK << 16));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrDataReg,
+	ql_write_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
+			   (MAC_ADDR_INDIRECT_PTR_REG_RP_MASK << 16));
+	ql_write_page0_reg(qdev, &port_regs->macAddrDataReg,
 			   ((ndev->dev_addr[2] << 24) | (ndev->
 							 dev_addr[3] << 16) |
 			    (ndev->dev_addr[4] << 8) | ndev->dev_addr[5]));
 
 	/* Program top 16 bits of the MAC address */
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
-			   ((MAC_ADDR_INसूचीECT_PTR_REG_RP_MASK << 16) | 1));
-	ql_ग_लिखो_page0_reg(qdev, &port_regs->macAddrDataReg,
+	ql_write_page0_reg(qdev, &port_regs->macAddrIndirectPtrReg,
+			   ((MAC_ADDR_INDIRECT_PTR_REG_RP_MASK << 16) | 1));
+	ql_write_page0_reg(qdev, &port_regs->macAddrDataReg,
 			   ((ndev->dev_addr[0] << 8) | ndev->dev_addr[1]));
 	spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ql3xxx_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
+static void ql3xxx_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+{
+	struct ql3_adapter *qdev = netdev_priv(ndev);
 
 	netdev_err(ndev, "Resetting...\n");
 	/*
 	 * Stop the queues, we've got a problem.
 	 */
-	netअगर_stop_queue(ndev);
+	netif_stop_queue(ndev);
 
 	/*
 	 * Wake up the worker to process this event.
 	 */
-	queue_delayed_work(qdev->workqueue, &qdev->tx_समयout_work, 0);
-पूर्ण
+	queue_delayed_work(qdev->workqueue, &qdev->tx_timeout_work, 0);
+}
 
-अटल व्योम ql_reset_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ql3_adapter *qdev =
-		container_of(work, काष्ठा ql3_adapter, reset_work.work);
-	काष्ठा net_device *ndev = qdev->ndev;
+static void ql_reset_work(struct work_struct *work)
+{
+	struct ql3_adapter *qdev =
+		container_of(work, struct ql3_adapter, reset_work.work);
+	struct net_device *ndev = qdev->ndev;
 	u32 value;
-	काष्ठा ql_tx_buf_cb *tx_cb;
-	पूर्णांक max_रुको_समय, i;
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
-	अचिन्हित दीर्घ hw_flags;
+	struct ql_tx_buf_cb *tx_cb;
+	int max_wait_time, i;
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
+	unsigned long hw_flags;
 
-	अगर (test_bit((QL_RESET_PER_SCSI | QL_RESET_START), &qdev->flags)) अणु
+	if (test_bit((QL_RESET_PER_SCSI | QL_RESET_START), &qdev->flags)) {
 		clear_bit(QL_LINK_MASTER, &qdev->flags);
 
 		/*
-		 * Loop through the active list and वापस the skb.
+		 * Loop through the active list and return the skb.
 		 */
-		क्रम (i = 0; i < NUM_REQ_Q_ENTRIES; i++) अणु
-			पूर्णांक j;
+		for (i = 0; i < NUM_REQ_Q_ENTRIES; i++) {
+			int j;
 			tx_cb = &qdev->tx_buf[i];
-			अगर (tx_cb->skb) अणु
-				netdev_prपूर्णांकk(KERN_DEBUG, ndev,
+			if (tx_cb->skb) {
+				netdev_printk(KERN_DEBUG, ndev,
 					      "Freeing lost SKB\n");
 				dma_unmap_single(&qdev->pdev->dev,
 						 dma_unmap_addr(&tx_cb->map[0], mapaddr),
 						 dma_unmap_len(&tx_cb->map[0], maplen),
 						 DMA_TO_DEVICE);
-				क्रम (j = 1; j < tx_cb->seg_count; j++) अणु
+				for (j = 1; j < tx_cb->seg_count; j++) {
 					dma_unmap_page(&qdev->pdev->dev,
 						       dma_unmap_addr(&tx_cb->map[j], mapaddr),
 						       dma_unmap_len(&tx_cb->map[j], maplen),
 						       DMA_TO_DEVICE);
-				पूर्ण
-				dev_kमुक्त_skb(tx_cb->skb);
-				tx_cb->skb = शून्य;
-			पूर्ण
-		पूर्ण
+				}
+				dev_kfree_skb(tx_cb->skb);
+				tx_cb->skb = NULL;
+			}
+		}
 
 		netdev_err(ndev, "Clearing NRI after reset\n");
 		spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-		ql_ग_लिखो_common_reg(qdev,
+		ql_write_common_reg(qdev,
 				    &port_regs->CommonRegs.
 				    ispControlStatus,
 				    ((ISP_CONTROL_RI << 16) | ISP_CONTROL_RI));
 		/*
-		 * Wait the क्रम Soft Reset to Complete.
+		 * Wait the for Soft Reset to Complete.
 		 */
-		max_रुको_समय = 10;
-		करो अणु
-			value = ql_पढ़ो_common_reg(qdev,
+		max_wait_time = 10;
+		do {
+			value = ql_read_common_reg(qdev,
 						   &port_regs->CommonRegs.
 
 						   ispControlStatus);
-			अगर ((value & ISP_CONTROL_SR) == 0) अणु
-				netdev_prपूर्णांकk(KERN_DEBUG, ndev,
+			if ((value & ISP_CONTROL_SR) == 0) {
+				netdev_printk(KERN_DEBUG, ndev,
 					      "reset completed\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (value & ISP_CONTROL_RI) अणु
-				netdev_prपूर्णांकk(KERN_DEBUG, ndev,
+			if (value & ISP_CONTROL_RI) {
+				netdev_printk(KERN_DEBUG, ndev,
 					      "clearing NRI after reset\n");
-				ql_ग_लिखो_common_reg(qdev,
+				ql_write_common_reg(qdev,
 						    &port_regs->
 						    CommonRegs.
 						    ispControlStatus,
 						    ((ISP_CONTROL_RI <<
 						      16) | ISP_CONTROL_RI));
-			पूर्ण
+			}
 
 			spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 			ssleep(1);
 			spin_lock_irqsave(&qdev->hw_lock, hw_flags);
-		पूर्ण जबतक (--max_रुको_समय);
+		} while (--max_wait_time);
 		spin_unlock_irqrestore(&qdev->hw_lock, hw_flags);
 
-		अगर (value & ISP_CONTROL_SR) अणु
+		if (value & ISP_CONTROL_SR) {
 
 			/*
 			 * Set the reset flags and clear the board again.
-			 * Nothing अन्यथा to करो...
+			 * Nothing else to do...
 			 */
 			netdev_err(ndev,
 				   "Timed out waiting for reset to complete\n");
@@ -3691,96 +3690,96 @@ err_irq:
 			clear_bit(QL_RESET_PER_SCSI, &qdev->flags);
 			clear_bit(QL_RESET_START, &qdev->flags);
 			ql_cycle_adapter(qdev, QL_DO_RESET);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		clear_bit(QL_RESET_ACTIVE, &qdev->flags);
 		clear_bit(QL_RESET_PER_SCSI, &qdev->flags);
 		clear_bit(QL_RESET_START, &qdev->flags);
 		ql_cycle_adapter(qdev, QL_NO_RESET);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ql_tx_समयout_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ql3_adapter *qdev =
-		container_of(work, काष्ठा ql3_adapter, tx_समयout_work.work);
+static void ql_tx_timeout_work(struct work_struct *work)
+{
+	struct ql3_adapter *qdev =
+		container_of(work, struct ql3_adapter, tx_timeout_work.work);
 
 	ql_cycle_adapter(qdev, QL_DO_RESET);
-पूर्ण
+}
 
-अटल व्योम ql_get_board_info(काष्ठा ql3_adapter *qdev)
-अणु
-	काष्ठा ql3xxx_port_रेजिस्टरs __iomem *port_regs =
-		qdev->mem_map_रेजिस्टरs;
+static void ql_get_board_info(struct ql3_adapter *qdev)
+{
+	struct ql3xxx_port_registers __iomem *port_regs =
+		qdev->mem_map_registers;
 	u32 value;
 
-	value = ql_पढ़ो_page0_reg_l(qdev, &port_regs->portStatus);
+	value = ql_read_page0_reg_l(qdev, &port_regs->portStatus);
 
 	qdev->chip_rev_id = ((value & PORT_STATUS_REV_ID_MASK) >> 12);
-	अगर (value & PORT_STATUS_64)
+	if (value & PORT_STATUS_64)
 		qdev->pci_width = 64;
-	अन्यथा
+	else
 		qdev->pci_width = 32;
-	अगर (value & PORT_STATUS_X)
+	if (value & PORT_STATUS_X)
 		qdev->pci_x = 1;
-	अन्यथा
+	else
 		qdev->pci_x = 0;
 	qdev->pci_slot = (u8) PCI_SLOT(qdev->pdev->devfn);
-पूर्ण
+}
 
-अटल व्योम ql3xxx_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ql3_adapter *qdev = from_समयr(qdev, t, adapter_समयr);
+static void ql3xxx_timer(struct timer_list *t)
+{
+	struct ql3_adapter *qdev = from_timer(qdev, t, adapter_timer);
 	queue_delayed_work(qdev->workqueue, &qdev->link_state_work, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा net_device_ops ql3xxx_netdev_ops = अणु
-	.nकरो_खोलो		= ql3xxx_खोलो,
-	.nकरो_start_xmit		= ql3xxx_send,
-	.nकरो_stop		= ql3xxx_बंद,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_mac_address	= ql3xxx_set_mac_address,
-	.nकरो_tx_समयout		= ql3xxx_tx_समयout,
-पूर्ण;
+static const struct net_device_ops ql3xxx_netdev_ops = {
+	.ndo_open		= ql3xxx_open,
+	.ndo_start_xmit		= ql3xxx_send,
+	.ndo_stop		= ql3xxx_close,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_mac_address	= ql3xxx_set_mac_address,
+	.ndo_tx_timeout		= ql3xxx_tx_timeout,
+};
 
-अटल पूर्णांक ql3xxx_probe(काष्ठा pci_dev *pdev,
-			स्थिर काष्ठा pci_device_id *pci_entry)
-अणु
-	काष्ठा net_device *ndev = शून्य;
-	काष्ठा ql3_adapter *qdev = शून्य;
-	अटल पूर्णांक cards_found;
-	पूर्णांक pci_using_dac, err;
+static int ql3xxx_probe(struct pci_dev *pdev,
+			const struct pci_device_id *pci_entry)
+{
+	struct net_device *ndev = NULL;
+	struct ql3_adapter *qdev = NULL;
+	static int cards_found;
+	int pci_using_dac, err;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		pr_err("%s cannot enable PCI device\n", pci_name(pdev));
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	अगर (err) अणु
+	if (err) {
 		pr_err("%s cannot obtain PCI resources\n", pci_name(pdev));
-		जाओ err_out_disable_pdev;
-	पूर्ण
+		goto err_out_disable_pdev;
+	}
 
 	pci_set_master(pdev);
 
-	अगर (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)))
+	if (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)))
 		pci_using_dac = 1;
-	अन्यथा अगर (!(err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))))
+	else if (!(err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))))
 		pci_using_dac = 0;
 
-	अगर (err) अणु
+	if (err) {
 		pr_err("%s no usable DMA configuration\n", pci_name(pdev));
-		जाओ err_out_मुक्त_regions;
-	पूर्ण
+		goto err_out_free_regions;
+	}
 
-	ndev = alloc_etherdev(माप(काष्ठा ql3_adapter));
-	अगर (!ndev) अणु
+	ndev = alloc_etherdev(sizeof(struct ql3_adapter));
+	if (!ndev) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_regions;
-	पूर्ण
+		goto err_out_free_regions;
+	}
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
@@ -3792,140 +3791,140 @@ err_irq:
 	qdev->pdev = pdev;
 	qdev->device_id = pci_entry->device;
 	qdev->port_link_state = LS_DOWN;
-	अगर (msi)
+	if (msi)
 		qdev->msi = 1;
 
-	qdev->msg_enable = netअगर_msg_init(debug, शेष_msg);
+	qdev->msg_enable = netif_msg_init(debug, default_msg);
 
-	अगर (pci_using_dac)
+	if (pci_using_dac)
 		ndev->features |= NETIF_F_HIGHDMA;
-	अगर (qdev->device_id == QL3032_DEVICE_ID)
+	if (qdev->device_id == QL3032_DEVICE_ID)
 		ndev->features |= NETIF_F_IP_CSUM | NETIF_F_SG;
 
-	qdev->mem_map_रेजिस्टरs = pci_ioremap_bar(pdev, 1);
-	अगर (!qdev->mem_map_रेजिस्टरs) अणु
+	qdev->mem_map_registers = pci_ioremap_bar(pdev, 1);
+	if (!qdev->mem_map_registers) {
 		pr_err("%s: cannot map device registers\n", pci_name(pdev));
 		err = -EIO;
-		जाओ err_out_मुक्त_ndev;
-	पूर्ण
+		goto err_out_free_ndev;
+	}
 
 	spin_lock_init(&qdev->adapter_lock);
 	spin_lock_init(&qdev->hw_lock);
 
-	/* Set driver entry poपूर्णांकs */
+	/* Set driver entry points */
 	ndev->netdev_ops = &ql3xxx_netdev_ops;
 	ndev->ethtool_ops = &ql3xxx_ethtool_ops;
-	ndev->watchकरोg_समयo = 5 * HZ;
+	ndev->watchdog_timeo = 5 * HZ;
 
-	netअगर_napi_add(ndev, &qdev->napi, ql_poll, 64);
+	netif_napi_add(ndev, &qdev->napi, ql_poll, 64);
 
 	ndev->irq = pdev->irq;
 
 	/* make sure the EEPROM is good */
-	अगर (ql_get_nvram_params(qdev)) अणु
+	if (ql_get_nvram_params(qdev)) {
 		pr_alert("%s: Adapter #%d, Invalid NVRAM parameters\n",
 			 __func__, qdev->index);
 		err = -EIO;
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
 	ql_set_mac_info(qdev);
 
 	/* Validate and set parameters */
-	अगर (qdev->mac_index) अणु
+	if (qdev->mac_index) {
 		ndev->mtu = qdev->nvram_data.macCfg_port1.etherMtu_mac ;
 		ql_set_mac_addr(ndev, qdev->nvram_data.funcCfg_fn2.macAddress);
-	पूर्ण अन्यथा अणु
+	} else {
 		ndev->mtu = qdev->nvram_data.macCfg_port0.etherMtu_mac ;
 		ql_set_mac_addr(ndev, qdev->nvram_data.funcCfg_fn0.macAddress);
-	पूर्ण
+	}
 
 	ndev->tx_queue_len = NUM_REQ_Q_ENTRIES;
 
-	/* Record PCI bus inक्रमmation. */
+	/* Record PCI bus information. */
 	ql_get_board_info(qdev);
 
 	/*
-	 * Set the Maximum Memory Read Byte Count value. We करो this to handle
+	 * Set the Maximum Memory Read Byte Count value. We do this to handle
 	 * jumbo frames.
 	 */
-	अगर (qdev->pci_x)
-		pci_ग_लिखो_config_word(pdev, (पूर्णांक)0x4e, (u16) 0x0036);
+	if (qdev->pci_x)
+		pci_write_config_word(pdev, (int)0x4e, (u16) 0x0036);
 
-	err = रेजिस्टर_netdev(ndev);
-	अगर (err) अणु
+	err = register_netdev(ndev);
+	if (err) {
 		pr_err("%s: cannot register net device\n", pci_name(pdev));
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
-	/* we're going to reset, so assume we have no link क्रम now */
+	/* we're going to reset, so assume we have no link for now */
 
-	netअगर_carrier_off(ndev);
-	netअगर_stop_queue(ndev);
+	netif_carrier_off(ndev);
+	netif_stop_queue(ndev);
 
-	qdev->workqueue = create_singlethपढ़ो_workqueue(ndev->name);
-	अगर (!qdev->workqueue) अणु
-		unरेजिस्टर_netdev(ndev);
+	qdev->workqueue = create_singlethread_workqueue(ndev->name);
+	if (!qdev->workqueue) {
+		unregister_netdev(ndev);
 		err = -ENOMEM;
-		जाओ err_out_iounmap;
-	पूर्ण
+		goto err_out_iounmap;
+	}
 
 	INIT_DELAYED_WORK(&qdev->reset_work, ql_reset_work);
-	INIT_DELAYED_WORK(&qdev->tx_समयout_work, ql_tx_समयout_work);
+	INIT_DELAYED_WORK(&qdev->tx_timeout_work, ql_tx_timeout_work);
 	INIT_DELAYED_WORK(&qdev->link_state_work, ql_link_state_machine_work);
 
-	समयr_setup(&qdev->adapter_समयr, ql3xxx_समयr, 0);
-	qdev->adapter_समयr.expires = jअगरfies + HZ * 2;	/* two second delay */
+	timer_setup(&qdev->adapter_timer, ql3xxx_timer, 0);
+	qdev->adapter_timer.expires = jiffies + HZ * 2;	/* two second delay */
 
-	अगर (!cards_found) अणु
+	if (!cards_found) {
 		pr_alert("%s\n", DRV_STRING);
 		pr_alert("Driver name: %s, Version: %s\n",
 			 DRV_NAME, DRV_VERSION);
-	पूर्ण
+	}
 	ql_display_dev_info(ndev);
 
 	cards_found++;
-	वापस 0;
+	return 0;
 
 err_out_iounmap:
-	iounmap(qdev->mem_map_रेजिस्टरs);
-err_out_मुक्त_ndev:
-	मुक्त_netdev(ndev);
-err_out_मुक्त_regions:
+	iounmap(qdev->mem_map_registers);
+err_out_free_ndev:
+	free_netdev(ndev);
+err_out_free_regions:
 	pci_release_regions(pdev);
 err_out_disable_pdev:
 	pci_disable_device(pdev);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम ql3xxx_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *ndev = pci_get_drvdata(pdev);
-	काष्ठा ql3_adapter *qdev = netdev_priv(ndev);
+static void ql3xxx_remove(struct pci_dev *pdev)
+{
+	struct net_device *ndev = pci_get_drvdata(pdev);
+	struct ql3_adapter *qdev = netdev_priv(ndev);
 
-	unरेजिस्टर_netdev(ndev);
+	unregister_netdev(ndev);
 
-	ql_disable_पूर्णांकerrupts(qdev);
+	ql_disable_interrupts(qdev);
 
-	अगर (qdev->workqueue) अणु
+	if (qdev->workqueue) {
 		cancel_delayed_work(&qdev->reset_work);
-		cancel_delayed_work(&qdev->tx_समयout_work);
+		cancel_delayed_work(&qdev->tx_timeout_work);
 		destroy_workqueue(qdev->workqueue);
-		qdev->workqueue = शून्य;
-	पूर्ण
+		qdev->workqueue = NULL;
+	}
 
-	iounmap(qdev->mem_map_रेजिस्टरs);
+	iounmap(qdev->mem_map_registers);
 	pci_release_regions(pdev);
-	मुक्त_netdev(ndev);
-पूर्ण
+	free_netdev(ndev);
+}
 
-अटल काष्ठा pci_driver ql3xxx_driver = अणु
+static struct pci_driver ql3xxx_driver = {
 
 	.name = DRV_NAME,
 	.id_table = ql3xxx_pci_tbl,
 	.probe = ql3xxx_probe,
-	.हटाओ = ql3xxx_हटाओ,
-पूर्ण;
+	.remove = ql3xxx_remove,
+};
 
 module_pci_driver(ql3xxx_driver);

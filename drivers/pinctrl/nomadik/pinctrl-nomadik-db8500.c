@@ -1,190 +1,189 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश "pinctrl-nomadik.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/pinctrl/pinctrl.h>
+#include "pinctrl-nomadik.h"
 
-/* All the pins that can be used क्रम GPIO and some other functions */
-#घोषणा _GPIO(offset)		(offset)
+/* All the pins that can be used for GPIO and some other functions */
+#define _GPIO(offset)		(offset)
 
-#घोषणा DB8500_PIN_AJ5		_GPIO(0)
-#घोषणा DB8500_PIN_AJ3		_GPIO(1)
-#घोषणा DB8500_PIN_AH4		_GPIO(2)
-#घोषणा DB8500_PIN_AH3		_GPIO(3)
-#घोषणा DB8500_PIN_AH6		_GPIO(4)
-#घोषणा DB8500_PIN_AG6		_GPIO(5)
-#घोषणा DB8500_PIN_AF6		_GPIO(6)
-#घोषणा DB8500_PIN_AG5		_GPIO(7)
-#घोषणा DB8500_PIN_AD5		_GPIO(8)
-#घोषणा DB8500_PIN_AE4		_GPIO(9)
-#घोषणा DB8500_PIN_AF5		_GPIO(10)
-#घोषणा DB8500_PIN_AG4		_GPIO(11)
-#घोषणा DB8500_PIN_AC4		_GPIO(12)
-#घोषणा DB8500_PIN_AF3		_GPIO(13)
-#घोषणा DB8500_PIN_AE3		_GPIO(14)
-#घोषणा DB8500_PIN_AC3		_GPIO(15)
-#घोषणा DB8500_PIN_AD3		_GPIO(16)
-#घोषणा DB8500_PIN_AD4		_GPIO(17)
-#घोषणा DB8500_PIN_AC2		_GPIO(18)
-#घोषणा DB8500_PIN_AC1		_GPIO(19)
-#घोषणा DB8500_PIN_AB4		_GPIO(20)
-#घोषणा DB8500_PIN_AB3		_GPIO(21)
-#घोषणा DB8500_PIN_AA3		_GPIO(22)
-#घोषणा DB8500_PIN_AA4		_GPIO(23)
-#घोषणा DB8500_PIN_AB2		_GPIO(24)
-#घोषणा DB8500_PIN_Y4		_GPIO(25)
-#घोषणा DB8500_PIN_Y2		_GPIO(26)
-#घोषणा DB8500_PIN_AA2		_GPIO(27)
-#घोषणा DB8500_PIN_AA1		_GPIO(28)
-#घोषणा DB8500_PIN_W2		_GPIO(29)
-#घोषणा DB8500_PIN_W3		_GPIO(30)
-#घोषणा DB8500_PIN_V3		_GPIO(31)
-#घोषणा DB8500_PIN_V2		_GPIO(32)
-#घोषणा DB8500_PIN_AF2		_GPIO(33)
-#घोषणा DB8500_PIN_AE1		_GPIO(34)
-#घोषणा DB8500_PIN_AE2		_GPIO(35)
-#घोषणा DB8500_PIN_AG2		_GPIO(36)
+#define DB8500_PIN_AJ5		_GPIO(0)
+#define DB8500_PIN_AJ3		_GPIO(1)
+#define DB8500_PIN_AH4		_GPIO(2)
+#define DB8500_PIN_AH3		_GPIO(3)
+#define DB8500_PIN_AH6		_GPIO(4)
+#define DB8500_PIN_AG6		_GPIO(5)
+#define DB8500_PIN_AF6		_GPIO(6)
+#define DB8500_PIN_AG5		_GPIO(7)
+#define DB8500_PIN_AD5		_GPIO(8)
+#define DB8500_PIN_AE4		_GPIO(9)
+#define DB8500_PIN_AF5		_GPIO(10)
+#define DB8500_PIN_AG4		_GPIO(11)
+#define DB8500_PIN_AC4		_GPIO(12)
+#define DB8500_PIN_AF3		_GPIO(13)
+#define DB8500_PIN_AE3		_GPIO(14)
+#define DB8500_PIN_AC3		_GPIO(15)
+#define DB8500_PIN_AD3		_GPIO(16)
+#define DB8500_PIN_AD4		_GPIO(17)
+#define DB8500_PIN_AC2		_GPIO(18)
+#define DB8500_PIN_AC1		_GPIO(19)
+#define DB8500_PIN_AB4		_GPIO(20)
+#define DB8500_PIN_AB3		_GPIO(21)
+#define DB8500_PIN_AA3		_GPIO(22)
+#define DB8500_PIN_AA4		_GPIO(23)
+#define DB8500_PIN_AB2		_GPIO(24)
+#define DB8500_PIN_Y4		_GPIO(25)
+#define DB8500_PIN_Y2		_GPIO(26)
+#define DB8500_PIN_AA2		_GPIO(27)
+#define DB8500_PIN_AA1		_GPIO(28)
+#define DB8500_PIN_W2		_GPIO(29)
+#define DB8500_PIN_W3		_GPIO(30)
+#define DB8500_PIN_V3		_GPIO(31)
+#define DB8500_PIN_V2		_GPIO(32)
+#define DB8500_PIN_AF2		_GPIO(33)
+#define DB8500_PIN_AE1		_GPIO(34)
+#define DB8500_PIN_AE2		_GPIO(35)
+#define DB8500_PIN_AG2		_GPIO(36)
 /* Hole */
-#घोषणा DB8500_PIN_F3		_GPIO(64)
-#घोषणा DB8500_PIN_F1		_GPIO(65)
-#घोषणा DB8500_PIN_G3		_GPIO(66)
-#घोषणा DB8500_PIN_G2		_GPIO(67)
-#घोषणा DB8500_PIN_E1		_GPIO(68)
-#घोषणा DB8500_PIN_E2		_GPIO(69)
-#घोषणा DB8500_PIN_G5		_GPIO(70)
-#घोषणा DB8500_PIN_G4		_GPIO(71)
-#घोषणा DB8500_PIN_H4		_GPIO(72)
-#घोषणा DB8500_PIN_H3		_GPIO(73)
-#घोषणा DB8500_PIN_J3		_GPIO(74)
-#घोषणा DB8500_PIN_H2		_GPIO(75)
-#घोषणा DB8500_PIN_J2		_GPIO(76)
-#घोषणा DB8500_PIN_H1		_GPIO(77)
-#घोषणा DB8500_PIN_F4		_GPIO(78)
-#घोषणा DB8500_PIN_E3		_GPIO(79)
-#घोषणा DB8500_PIN_E4		_GPIO(80)
-#घोषणा DB8500_PIN_D2		_GPIO(81)
-#घोषणा DB8500_PIN_C1		_GPIO(82)
-#घोषणा DB8500_PIN_D3		_GPIO(83)
-#घोषणा DB8500_PIN_C2		_GPIO(84)
-#घोषणा DB8500_PIN_D5		_GPIO(85)
-#घोषणा DB8500_PIN_C6		_GPIO(86)
-#घोषणा DB8500_PIN_B3		_GPIO(87)
-#घोषणा DB8500_PIN_C4		_GPIO(88)
-#घोषणा DB8500_PIN_E6		_GPIO(89)
-#घोषणा DB8500_PIN_A3		_GPIO(90)
-#घोषणा DB8500_PIN_B6		_GPIO(91)
-#घोषणा DB8500_PIN_D6		_GPIO(92)
-#घोषणा DB8500_PIN_B7		_GPIO(93)
-#घोषणा DB8500_PIN_D7		_GPIO(94)
-#घोषणा DB8500_PIN_E8		_GPIO(95)
-#घोषणा DB8500_PIN_D8		_GPIO(96)
-#घोषणा DB8500_PIN_D9		_GPIO(97)
+#define DB8500_PIN_F3		_GPIO(64)
+#define DB8500_PIN_F1		_GPIO(65)
+#define DB8500_PIN_G3		_GPIO(66)
+#define DB8500_PIN_G2		_GPIO(67)
+#define DB8500_PIN_E1		_GPIO(68)
+#define DB8500_PIN_E2		_GPIO(69)
+#define DB8500_PIN_G5		_GPIO(70)
+#define DB8500_PIN_G4		_GPIO(71)
+#define DB8500_PIN_H4		_GPIO(72)
+#define DB8500_PIN_H3		_GPIO(73)
+#define DB8500_PIN_J3		_GPIO(74)
+#define DB8500_PIN_H2		_GPIO(75)
+#define DB8500_PIN_J2		_GPIO(76)
+#define DB8500_PIN_H1		_GPIO(77)
+#define DB8500_PIN_F4		_GPIO(78)
+#define DB8500_PIN_E3		_GPIO(79)
+#define DB8500_PIN_E4		_GPIO(80)
+#define DB8500_PIN_D2		_GPIO(81)
+#define DB8500_PIN_C1		_GPIO(82)
+#define DB8500_PIN_D3		_GPIO(83)
+#define DB8500_PIN_C2		_GPIO(84)
+#define DB8500_PIN_D5		_GPIO(85)
+#define DB8500_PIN_C6		_GPIO(86)
+#define DB8500_PIN_B3		_GPIO(87)
+#define DB8500_PIN_C4		_GPIO(88)
+#define DB8500_PIN_E6		_GPIO(89)
+#define DB8500_PIN_A3		_GPIO(90)
+#define DB8500_PIN_B6		_GPIO(91)
+#define DB8500_PIN_D6		_GPIO(92)
+#define DB8500_PIN_B7		_GPIO(93)
+#define DB8500_PIN_D7		_GPIO(94)
+#define DB8500_PIN_E8		_GPIO(95)
+#define DB8500_PIN_D8		_GPIO(96)
+#define DB8500_PIN_D9		_GPIO(97)
 /* Hole */
-#घोषणा DB8500_PIN_A5		_GPIO(128)
-#घोषणा DB8500_PIN_B4		_GPIO(129)
-#घोषणा DB8500_PIN_C8		_GPIO(130)
-#घोषणा DB8500_PIN_A12		_GPIO(131)
-#घोषणा DB8500_PIN_C10		_GPIO(132)
-#घोषणा DB8500_PIN_B10		_GPIO(133)
-#घोषणा DB8500_PIN_B9		_GPIO(134)
-#घोषणा DB8500_PIN_A9		_GPIO(135)
-#घोषणा DB8500_PIN_C7		_GPIO(136)
-#घोषणा DB8500_PIN_A7		_GPIO(137)
-#घोषणा DB8500_PIN_C5		_GPIO(138)
-#घोषणा DB8500_PIN_C9		_GPIO(139)
-#घोषणा DB8500_PIN_B11		_GPIO(140)
-#घोषणा DB8500_PIN_C12		_GPIO(141)
-#घोषणा DB8500_PIN_C11		_GPIO(142)
-#घोषणा DB8500_PIN_D12		_GPIO(143)
-#घोषणा DB8500_PIN_B13		_GPIO(144)
-#घोषणा DB8500_PIN_C13		_GPIO(145)
-#घोषणा DB8500_PIN_D13		_GPIO(146)
-#घोषणा DB8500_PIN_C15		_GPIO(147)
-#घोषणा DB8500_PIN_B16		_GPIO(148)
-#घोषणा DB8500_PIN_B14		_GPIO(149)
-#घोषणा DB8500_PIN_C14		_GPIO(150)
-#घोषणा DB8500_PIN_D17		_GPIO(151)
-#घोषणा DB8500_PIN_D16		_GPIO(152)
-#घोषणा DB8500_PIN_B17		_GPIO(153)
-#घोषणा DB8500_PIN_C16		_GPIO(154)
-#घोषणा DB8500_PIN_C19		_GPIO(155)
-#घोषणा DB8500_PIN_C17		_GPIO(156)
-#घोषणा DB8500_PIN_A18		_GPIO(157)
-#घोषणा DB8500_PIN_C18		_GPIO(158)
-#घोषणा DB8500_PIN_B19		_GPIO(159)
-#घोषणा DB8500_PIN_B20		_GPIO(160)
-#घोषणा DB8500_PIN_D21		_GPIO(161)
-#घोषणा DB8500_PIN_D20		_GPIO(162)
-#घोषणा DB8500_PIN_C20		_GPIO(163)
-#घोषणा DB8500_PIN_B21		_GPIO(164)
-#घोषणा DB8500_PIN_C21		_GPIO(165)
-#घोषणा DB8500_PIN_A22		_GPIO(166)
-#घोषणा DB8500_PIN_B24		_GPIO(167)
-#घोषणा DB8500_PIN_C22		_GPIO(168)
-#घोषणा DB8500_PIN_D22		_GPIO(169)
-#घोषणा DB8500_PIN_C23		_GPIO(170)
-#घोषणा DB8500_PIN_D23		_GPIO(171)
+#define DB8500_PIN_A5		_GPIO(128)
+#define DB8500_PIN_B4		_GPIO(129)
+#define DB8500_PIN_C8		_GPIO(130)
+#define DB8500_PIN_A12		_GPIO(131)
+#define DB8500_PIN_C10		_GPIO(132)
+#define DB8500_PIN_B10		_GPIO(133)
+#define DB8500_PIN_B9		_GPIO(134)
+#define DB8500_PIN_A9		_GPIO(135)
+#define DB8500_PIN_C7		_GPIO(136)
+#define DB8500_PIN_A7		_GPIO(137)
+#define DB8500_PIN_C5		_GPIO(138)
+#define DB8500_PIN_C9		_GPIO(139)
+#define DB8500_PIN_B11		_GPIO(140)
+#define DB8500_PIN_C12		_GPIO(141)
+#define DB8500_PIN_C11		_GPIO(142)
+#define DB8500_PIN_D12		_GPIO(143)
+#define DB8500_PIN_B13		_GPIO(144)
+#define DB8500_PIN_C13		_GPIO(145)
+#define DB8500_PIN_D13		_GPIO(146)
+#define DB8500_PIN_C15		_GPIO(147)
+#define DB8500_PIN_B16		_GPIO(148)
+#define DB8500_PIN_B14		_GPIO(149)
+#define DB8500_PIN_C14		_GPIO(150)
+#define DB8500_PIN_D17		_GPIO(151)
+#define DB8500_PIN_D16		_GPIO(152)
+#define DB8500_PIN_B17		_GPIO(153)
+#define DB8500_PIN_C16		_GPIO(154)
+#define DB8500_PIN_C19		_GPIO(155)
+#define DB8500_PIN_C17		_GPIO(156)
+#define DB8500_PIN_A18		_GPIO(157)
+#define DB8500_PIN_C18		_GPIO(158)
+#define DB8500_PIN_B19		_GPIO(159)
+#define DB8500_PIN_B20		_GPIO(160)
+#define DB8500_PIN_D21		_GPIO(161)
+#define DB8500_PIN_D20		_GPIO(162)
+#define DB8500_PIN_C20		_GPIO(163)
+#define DB8500_PIN_B21		_GPIO(164)
+#define DB8500_PIN_C21		_GPIO(165)
+#define DB8500_PIN_A22		_GPIO(166)
+#define DB8500_PIN_B24		_GPIO(167)
+#define DB8500_PIN_C22		_GPIO(168)
+#define DB8500_PIN_D22		_GPIO(169)
+#define DB8500_PIN_C23		_GPIO(170)
+#define DB8500_PIN_D23		_GPIO(171)
 /* Hole */
-#घोषणा DB8500_PIN_AJ27		_GPIO(192)
-#घोषणा DB8500_PIN_AH27		_GPIO(193)
-#घोषणा DB8500_PIN_AF27		_GPIO(194)
-#घोषणा DB8500_PIN_AG28		_GPIO(195)
-#घोषणा DB8500_PIN_AG26		_GPIO(196)
-#घोषणा DB8500_PIN_AH24		_GPIO(197)
-#घोषणा DB8500_PIN_AG25		_GPIO(198)
-#घोषणा DB8500_PIN_AH23		_GPIO(199)
-#घोषणा DB8500_PIN_AH26		_GPIO(200)
-#घोषणा DB8500_PIN_AF24		_GPIO(201)
-#घोषणा DB8500_PIN_AF25		_GPIO(202)
-#घोषणा DB8500_PIN_AE23		_GPIO(203)
-#घोषणा DB8500_PIN_AF23		_GPIO(204)
-#घोषणा DB8500_PIN_AG23		_GPIO(205)
-#घोषणा DB8500_PIN_AG24		_GPIO(206)
-#घोषणा DB8500_PIN_AJ23		_GPIO(207)
-#घोषणा DB8500_PIN_AH16		_GPIO(208)
-#घोषणा DB8500_PIN_AG15		_GPIO(209)
-#घोषणा DB8500_PIN_AJ15		_GPIO(210)
-#घोषणा DB8500_PIN_AG14		_GPIO(211)
-#घोषणा DB8500_PIN_AF13		_GPIO(212)
-#घोषणा DB8500_PIN_AG13		_GPIO(213)
-#घोषणा DB8500_PIN_AH15		_GPIO(214)
-#घोषणा DB8500_PIN_AH13		_GPIO(215)
-#घोषणा DB8500_PIN_AG12		_GPIO(216)
-#घोषणा DB8500_PIN_AH12		_GPIO(217)
-#घोषणा DB8500_PIN_AH11		_GPIO(218)
-#घोषणा DB8500_PIN_AG10		_GPIO(219)
-#घोषणा DB8500_PIN_AH10		_GPIO(220)
-#घोषणा DB8500_PIN_AJ11		_GPIO(221)
-#घोषणा DB8500_PIN_AJ9		_GPIO(222)
-#घोषणा DB8500_PIN_AH9		_GPIO(223)
-#घोषणा DB8500_PIN_AG9		_GPIO(224)
-#घोषणा DB8500_PIN_AG8		_GPIO(225)
-#घोषणा DB8500_PIN_AF8		_GPIO(226)
-#घोषणा DB8500_PIN_AH7		_GPIO(227)
-#घोषणा DB8500_PIN_AJ6		_GPIO(228)
-#घोषणा DB8500_PIN_AG7		_GPIO(229)
-#घोषणा DB8500_PIN_AF7		_GPIO(230)
+#define DB8500_PIN_AJ27		_GPIO(192)
+#define DB8500_PIN_AH27		_GPIO(193)
+#define DB8500_PIN_AF27		_GPIO(194)
+#define DB8500_PIN_AG28		_GPIO(195)
+#define DB8500_PIN_AG26		_GPIO(196)
+#define DB8500_PIN_AH24		_GPIO(197)
+#define DB8500_PIN_AG25		_GPIO(198)
+#define DB8500_PIN_AH23		_GPIO(199)
+#define DB8500_PIN_AH26		_GPIO(200)
+#define DB8500_PIN_AF24		_GPIO(201)
+#define DB8500_PIN_AF25		_GPIO(202)
+#define DB8500_PIN_AE23		_GPIO(203)
+#define DB8500_PIN_AF23		_GPIO(204)
+#define DB8500_PIN_AG23		_GPIO(205)
+#define DB8500_PIN_AG24		_GPIO(206)
+#define DB8500_PIN_AJ23		_GPIO(207)
+#define DB8500_PIN_AH16		_GPIO(208)
+#define DB8500_PIN_AG15		_GPIO(209)
+#define DB8500_PIN_AJ15		_GPIO(210)
+#define DB8500_PIN_AG14		_GPIO(211)
+#define DB8500_PIN_AF13		_GPIO(212)
+#define DB8500_PIN_AG13		_GPIO(213)
+#define DB8500_PIN_AH15		_GPIO(214)
+#define DB8500_PIN_AH13		_GPIO(215)
+#define DB8500_PIN_AG12		_GPIO(216)
+#define DB8500_PIN_AH12		_GPIO(217)
+#define DB8500_PIN_AH11		_GPIO(218)
+#define DB8500_PIN_AG10		_GPIO(219)
+#define DB8500_PIN_AH10		_GPIO(220)
+#define DB8500_PIN_AJ11		_GPIO(221)
+#define DB8500_PIN_AJ9		_GPIO(222)
+#define DB8500_PIN_AH9		_GPIO(223)
+#define DB8500_PIN_AG9		_GPIO(224)
+#define DB8500_PIN_AG8		_GPIO(225)
+#define DB8500_PIN_AF8		_GPIO(226)
+#define DB8500_PIN_AH7		_GPIO(227)
+#define DB8500_PIN_AJ6		_GPIO(228)
+#define DB8500_PIN_AG7		_GPIO(229)
+#define DB8500_PIN_AF7		_GPIO(230)
 /* Hole */
-#घोषणा DB8500_PIN_AF28		_GPIO(256)
-#घोषणा DB8500_PIN_AE29		_GPIO(257)
-#घोषणा DB8500_PIN_AD29		_GPIO(258)
-#घोषणा DB8500_PIN_AC29		_GPIO(259)
-#घोषणा DB8500_PIN_AD28		_GPIO(260)
-#घोषणा DB8500_PIN_AD26		_GPIO(261)
-#घोषणा DB8500_PIN_AE26		_GPIO(262)
-#घोषणा DB8500_PIN_AG29		_GPIO(263)
-#घोषणा DB8500_PIN_AE27		_GPIO(264)
-#घोषणा DB8500_PIN_AD27		_GPIO(265)
-#घोषणा DB8500_PIN_AC28		_GPIO(266)
-#घोषणा DB8500_PIN_AC27		_GPIO(267)
+#define DB8500_PIN_AF28		_GPIO(256)
+#define DB8500_PIN_AE29		_GPIO(257)
+#define DB8500_PIN_AD29		_GPIO(258)
+#define DB8500_PIN_AC29		_GPIO(259)
+#define DB8500_PIN_AD28		_GPIO(260)
+#define DB8500_PIN_AD26		_GPIO(261)
+#define DB8500_PIN_AE26		_GPIO(262)
+#define DB8500_PIN_AG29		_GPIO(263)
+#define DB8500_PIN_AE27		_GPIO(264)
+#define DB8500_PIN_AD27		_GPIO(265)
+#define DB8500_PIN_AC28		_GPIO(266)
+#define DB8500_PIN_AC27		_GPIO(267)
 
 /*
  * The names of the pins are denoted by GPIO number and ball name, even
- * though they can be used क्रम other things than GPIO, this is the first
+ * though they can be used for other things than GPIO, this is the first
  * column in the table of the data sheet and often used on schematics and
  * such.
  */
-अटल स्थिर काष्ठा pinctrl_pin_desc nmk_db8500_pins[] = अणु
+static const struct pinctrl_pin_desc nmk_db8500_pins[] = {
 	PINCTRL_PIN(DB8500_PIN_AJ5, "GPIO0_AJ5"),
 	PINCTRL_PIN(DB8500_PIN_AJ3, "GPIO1_AJ3"),
 	PINCTRL_PIN(DB8500_PIN_AH4, "GPIO2_AH4"),
@@ -355,35 +354,35 @@
 	PINCTRL_PIN(DB8500_PIN_AD27, "GPIO265_AD27"),
 	PINCTRL_PIN(DB8500_PIN_AC28, "GPIO266_AC28"),
 	PINCTRL_PIN(DB8500_PIN_AC27, "GPIO267_AC27"),
-पूर्ण;
+};
 
 /*
  * Read the pin group names like this:
- * u0_a_1    = first groups of pins क्रम uart0 on alt function a
- * i2c2_b_2  = second group of pins क्रम i2c2 on alt function b
+ * u0_a_1    = first groups of pins for uart0 on alt function a
+ * i2c2_b_2  = second group of pins for i2c2 on alt function b
  *
  * The groups are arranged as sets per altfunction column, so we can
- * mux in one group at a समय by selecting the same altfunction क्रम them
- * all. When functions require pins on dअगरferent altfunctions, you need
+ * mux in one group at a time by selecting the same altfunction for them
+ * all. When functions require pins on different altfunctions, you need
  * to combine several groups.
  */
 
 /* Altfunction A column */
-अटल स्थिर अचिन्हित u0_a_1_pins[] = अणु DB8500_PIN_AJ5, DB8500_PIN_AJ3,
-					DB8500_PIN_AH4, DB8500_PIN_AH3 पूर्ण;
-अटल स्थिर अचिन्हित u1rxtx_a_1_pins[] = अणु DB8500_PIN_AH6, DB8500_PIN_AG6 पूर्ण;
-अटल स्थिर अचिन्हित u1ctsrts_a_1_pins[] = अणु DB8500_PIN_AF6, DB8500_PIN_AG5 पूर्ण;
+static const unsigned u0_a_1_pins[] = { DB8500_PIN_AJ5, DB8500_PIN_AJ3,
+					DB8500_PIN_AH4, DB8500_PIN_AH3 };
+static const unsigned u1rxtx_a_1_pins[] = { DB8500_PIN_AH6, DB8500_PIN_AG6 };
+static const unsigned u1ctsrts_a_1_pins[] = { DB8500_PIN_AF6, DB8500_PIN_AG5 };
 /* Image processor I2C line, this is driven by image processor firmware */
-अटल स्थिर अचिन्हित ipi2c_a_1_pins[] = अणु DB8500_PIN_AD5, DB8500_PIN_AE4 पूर्ण;
-अटल स्थिर अचिन्हित ipi2c_a_2_pins[] = अणु DB8500_PIN_AF5, DB8500_PIN_AG4 पूर्ण;
+static const unsigned ipi2c_a_1_pins[] = { DB8500_PIN_AD5, DB8500_PIN_AE4 };
+static const unsigned ipi2c_a_2_pins[] = { DB8500_PIN_AF5, DB8500_PIN_AG4 };
 /* MSP0 can only be on these pins, but TXD and RXD can be flipped */
-अटल स्थिर अचिन्हित msp0txrx_a_1_pins[] = अणु DB8500_PIN_AC4, DB8500_PIN_AC3 पूर्ण;
-अटल स्थिर अचिन्हित msp0tfstck_a_1_pins[] = अणु DB8500_PIN_AF3, DB8500_PIN_AE3 पूर्ण;
-अटल स्थिर अचिन्हित msp0rfsrck_a_1_pins[] = अणु DB8500_PIN_AD3, DB8500_PIN_AD4 पूर्ण;
-/* Basic pins of the MMC/SD card 0 पूर्णांकerface */
-अटल स्थिर अचिन्हित mc0_a_1_pins[] = अणु DB8500_PIN_AC2, /* MC0_CMDसूची */
-					 DB8500_PIN_AC1, /* MC0_DAT0सूची */
-					 DB8500_PIN_AB4, /* MC0_DAT2सूची */
+static const unsigned msp0txrx_a_1_pins[] = { DB8500_PIN_AC4, DB8500_PIN_AC3 };
+static const unsigned msp0tfstck_a_1_pins[] = { DB8500_PIN_AF3, DB8500_PIN_AE3 };
+static const unsigned msp0rfsrck_a_1_pins[] = { DB8500_PIN_AD3, DB8500_PIN_AD4 };
+/* Basic pins of the MMC/SD card 0 interface */
+static const unsigned mc0_a_1_pins[] = { DB8500_PIN_AC2, /* MC0_CMDDIR */
+					 DB8500_PIN_AC1, /* MC0_DAT0DIR */
+					 DB8500_PIN_AB4, /* MC0_DAT2DIR */
 					 DB8500_PIN_AA3, /* MC0_FBCLK */
 					 DB8500_PIN_AA4, /* MC0_CLK */
 					 DB8500_PIN_AB2, /* MC0_CMD */
@@ -391,290 +390,290 @@
 					 DB8500_PIN_Y2,  /* MC0_DAT1 */
 					 DB8500_PIN_AA2, /* MC0_DAT2 */
 					 DB8500_PIN_AA1  /* MC0_DAT3 */
-पूर्ण;
-/* MMC/SD card 0 पूर्णांकerface without CMD/DAT0/DAT2 direction control */
-अटल स्थिर अचिन्हित mc0_a_2_pins[] = अणु DB8500_PIN_AA3, /* MC0_FBCLK */
+};
+/* MMC/SD card 0 interface without CMD/DAT0/DAT2 direction control */
+static const unsigned mc0_a_2_pins[] = { DB8500_PIN_AA3, /* MC0_FBCLK */
 					 DB8500_PIN_AA4, /* MC0_CLK */
 					 DB8500_PIN_AB2, /* MC0_CMD */
 					 DB8500_PIN_Y4,  /* MC0_DAT0 */
 					 DB8500_PIN_Y2,  /* MC0_DAT1 */
 					 DB8500_PIN_AA2, /* MC0_DAT2 */
 					 DB8500_PIN_AA1  /* MC0_DAT3 */
-पूर्ण;
-/* Often only 4 bits are used, then these are not needed (only used क्रम MMC) */
-अटल स्थिर अचिन्हित mc0_dat47_a_1_pins[] = अणु DB8500_PIN_W2, /* MC0_DAT4 */
+};
+/* Often only 4 bits are used, then these are not needed (only used for MMC) */
+static const unsigned mc0_dat47_a_1_pins[] = { DB8500_PIN_W2, /* MC0_DAT4 */
 					       DB8500_PIN_W3, /* MC0_DAT5 */
 					       DB8500_PIN_V3, /* MC0_DAT6 */
 					       DB8500_PIN_V2  /* MC0_DAT7 */
-पूर्ण;
-अटल स्थिर अचिन्हित mc0dat31dir_a_1_pins[] = अणु DB8500_PIN_AB3 पूर्ण; /* MC0_DAT31सूची */
+};
+static const unsigned mc0dat31dir_a_1_pins[] = { DB8500_PIN_AB3 }; /* MC0_DAT31DIR */
 /* MSP1 can only be on these pins, but TXD and RXD can be flipped */
-अटल स्थिर अचिन्हित msp1txrx_a_1_pins[] = अणु DB8500_PIN_AF2, DB8500_PIN_AG2 पूर्ण;
-अटल स्थिर अचिन्हित msp1_a_1_pins[] = अणु DB8500_PIN_AE1, DB8500_PIN_AE2 पूर्ण;
-/* LCD पूर्णांकerface */
-अटल स्थिर अचिन्हित lcdb_a_1_pins[] = अणु DB8500_PIN_F3, DB8500_PIN_F1,
-					  DB8500_PIN_G3, DB8500_PIN_G2 पूर्ण;
-अटल स्थिर अचिन्हित lcdvsi0_a_1_pins[] = अणु DB8500_PIN_E1 पूर्ण;
-अटल स्थिर अचिन्हित lcdvsi1_a_1_pins[] = अणु DB8500_PIN_E2 पूर्ण;
-अटल स्थिर अचिन्हित lcd_d0_d7_a_1_pins[] = अणु
+static const unsigned msp1txrx_a_1_pins[] = { DB8500_PIN_AF2, DB8500_PIN_AG2 };
+static const unsigned msp1_a_1_pins[] = { DB8500_PIN_AE1, DB8500_PIN_AE2 };
+/* LCD interface */
+static const unsigned lcdb_a_1_pins[] = { DB8500_PIN_F3, DB8500_PIN_F1,
+					  DB8500_PIN_G3, DB8500_PIN_G2 };
+static const unsigned lcdvsi0_a_1_pins[] = { DB8500_PIN_E1 };
+static const unsigned lcdvsi1_a_1_pins[] = { DB8500_PIN_E2 };
+static const unsigned lcd_d0_d7_a_1_pins[] = {
 	DB8500_PIN_G5, DB8500_PIN_G4, DB8500_PIN_H4, DB8500_PIN_H3,
-	DB8500_PIN_J3, DB8500_PIN_H2, DB8500_PIN_J2, DB8500_PIN_H1 पूर्ण;
+	DB8500_PIN_J3, DB8500_PIN_H2, DB8500_PIN_J2, DB8500_PIN_H1 };
 /* D8 thru D11 often used as TVOUT lines */
-अटल स्थिर अचिन्हित lcd_d8_d11_a_1_pins[] = अणु DB8500_PIN_F4,
-	DB8500_PIN_E3, DB8500_PIN_E4, DB8500_PIN_D2 पूर्ण;
-अटल स्थिर अचिन्हित lcd_d12_d15_a_1_pins[] = अणु
-	DB8500_PIN_C1, DB8500_PIN_D3, DB8500_PIN_C2, DB8500_PIN_D5 पूर्ण;
-अटल स्थिर अचिन्हित lcd_d12_d23_a_1_pins[] = अणु
+static const unsigned lcd_d8_d11_a_1_pins[] = { DB8500_PIN_F4,
+	DB8500_PIN_E3, DB8500_PIN_E4, DB8500_PIN_D2 };
+static const unsigned lcd_d12_d15_a_1_pins[] = {
+	DB8500_PIN_C1, DB8500_PIN_D3, DB8500_PIN_C2, DB8500_PIN_D5 };
+static const unsigned lcd_d12_d23_a_1_pins[] = {
 	DB8500_PIN_C1, DB8500_PIN_D3, DB8500_PIN_C2, DB8500_PIN_D5,
 	DB8500_PIN_C6, DB8500_PIN_B3, DB8500_PIN_C4, DB8500_PIN_E6,
-	DB8500_PIN_A3, DB8500_PIN_B6, DB8500_PIN_D6, DB8500_PIN_B7 पूर्ण;
-अटल स्थिर अचिन्हित kp_a_1_pins[] = अणु DB8500_PIN_D7, DB8500_PIN_E8,
-	DB8500_PIN_D8, DB8500_PIN_D9 पूर्ण;
-अटल स्थिर अचिन्हित kpskaskb_a_1_pins[] = अणु DB8500_PIN_D17, DB8500_PIN_D16 पूर्ण;
-अटल स्थिर अचिन्हित kp_a_2_pins[] = अणु
+	DB8500_PIN_A3, DB8500_PIN_B6, DB8500_PIN_D6, DB8500_PIN_B7 };
+static const unsigned kp_a_1_pins[] = { DB8500_PIN_D7, DB8500_PIN_E8,
+	DB8500_PIN_D8, DB8500_PIN_D9 };
+static const unsigned kpskaskb_a_1_pins[] = { DB8500_PIN_D17, DB8500_PIN_D16 };
+static const unsigned kp_a_2_pins[] = {
 	DB8500_PIN_B17, DB8500_PIN_C16, DB8500_PIN_C19, DB8500_PIN_C17,
 	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19, DB8500_PIN_B20,
 	DB8500_PIN_D21, DB8500_PIN_D20, DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
-/* MC2 has 8 data lines and no direction control, so only क्रम (e)MMC */
-अटल स्थिर अचिन्हित mc2_a_1_pins[] = अणु DB8500_PIN_A5, DB8500_PIN_B4,
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
+/* MC2 has 8 data lines and no direction control, so only for (e)MMC */
+static const unsigned mc2_a_1_pins[] = { DB8500_PIN_A5, DB8500_PIN_B4,
 	DB8500_PIN_C8, DB8500_PIN_A12, DB8500_PIN_C10, DB8500_PIN_B10,
 	DB8500_PIN_B9, DB8500_PIN_A9, DB8500_PIN_C7, DB8500_PIN_A7,
-	DB8500_PIN_C5 पूर्ण;
-अटल स्थिर अचिन्हित ssp1_a_1_pins[] = अणु DB8500_PIN_C9, DB8500_PIN_B11,
-					  DB8500_PIN_C12, DB8500_PIN_C11 पूर्ण;
-अटल स्थिर अचिन्हित ssp0_a_1_pins[] = अणु DB8500_PIN_D12, DB8500_PIN_B13,
-					  DB8500_PIN_C13, DB8500_PIN_D13 पूर्ण;
-अटल स्थिर अचिन्हित i2c0_a_1_pins[] = अणु DB8500_PIN_C15, DB8500_PIN_B16 पूर्ण;
+	DB8500_PIN_C5 };
+static const unsigned ssp1_a_1_pins[] = { DB8500_PIN_C9, DB8500_PIN_B11,
+					  DB8500_PIN_C12, DB8500_PIN_C11 };
+static const unsigned ssp0_a_1_pins[] = { DB8500_PIN_D12, DB8500_PIN_B13,
+					  DB8500_PIN_C13, DB8500_PIN_D13 };
+static const unsigned i2c0_a_1_pins[] = { DB8500_PIN_C15, DB8500_PIN_B16 };
 /*
  * Image processor GPIO pins are named "ipgpio" and have their own
  * numberspace
  */
-अटल स्थिर अचिन्हित ipgpio0_a_1_pins[] = अणु DB8500_PIN_B14 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio1_a_1_pins[] = अणु DB8500_PIN_C14 पूर्ण;
+static const unsigned ipgpio0_a_1_pins[] = { DB8500_PIN_B14 };
+static const unsigned ipgpio1_a_1_pins[] = { DB8500_PIN_C14 };
 /* Three modem pins named RF_PURn, MODEM_STATE and MODEM_PWREN */
-अटल स्थिर अचिन्हित modem_a_1_pins[] = अणु DB8500_PIN_D22, DB8500_PIN_C23,
-					   DB8500_PIN_D23 पूर्ण;
+static const unsigned modem_a_1_pins[] = { DB8500_PIN_D22, DB8500_PIN_C23,
+					   DB8500_PIN_D23 };
 /*
- * This MSP cannot चयन RX and TX, SCK in a separate group since this
+ * This MSP cannot switch RX and TX, SCK in a separate group since this
  * seems to be optional.
  */
-अटल स्थिर अचिन्हित msp2sck_a_1_pins[] = अणु DB8500_PIN_AJ27 पूर्ण;
-अटल स्थिर अचिन्हित msp2_a_1_pins[] = अणु DB8500_PIN_AH27, DB8500_PIN_AF27,
-					  DB8500_PIN_AG28, DB8500_PIN_AG26 पूर्ण;
-अटल स्थिर अचिन्हित mc4_a_1_pins[] = अणु DB8500_PIN_AH24, DB8500_PIN_AG25,
+static const unsigned msp2sck_a_1_pins[] = { DB8500_PIN_AJ27 };
+static const unsigned msp2_a_1_pins[] = { DB8500_PIN_AH27, DB8500_PIN_AF27,
+					  DB8500_PIN_AG28, DB8500_PIN_AG26 };
+static const unsigned mc4_a_1_pins[] = { DB8500_PIN_AH24, DB8500_PIN_AG25,
 	DB8500_PIN_AH23, DB8500_PIN_AH26, DB8500_PIN_AF24, DB8500_PIN_AF25,
 	DB8500_PIN_AE23, DB8500_PIN_AF23, DB8500_PIN_AG23, DB8500_PIN_AG24,
-	DB8500_PIN_AJ23 पूर्ण;
-/* MC1 has only 4 data pins, deचिन्हित क्रम SD or SDIO exclusively */
-अटल स्थिर अचिन्हित mc1_a_1_pins[] = अणु DB8500_PIN_AH16, DB8500_PIN_AG15,
+	DB8500_PIN_AJ23 };
+/* MC1 has only 4 data pins, designed for SD or SDIO exclusively */
+static const unsigned mc1_a_1_pins[] = { DB8500_PIN_AH16, DB8500_PIN_AG15,
 	DB8500_PIN_AJ15, DB8500_PIN_AG14, DB8500_PIN_AF13, DB8500_PIN_AG13,
-	DB8500_PIN_AH15 पूर्ण;
-अटल स्थिर अचिन्हित mc1_a_2_pins[] = अणु DB8500_PIN_AH16, DB8500_PIN_AJ15,
-	DB8500_PIN_AG14, DB8500_PIN_AF13, DB8500_PIN_AG13, DB8500_PIN_AH15 पूर्ण;
-अटल स्थिर अचिन्हित mc1dir_a_1_pins[] = अणु DB8500_PIN_AH13, DB8500_PIN_AG12,
-	DB8500_PIN_AH12, DB8500_PIN_AH11 पूर्ण;
-अटल स्थिर अचिन्हित hsir_a_1_pins[] = अणु DB8500_PIN_AG10, DB8500_PIN_AH10,
-	DB8500_PIN_AJ11 पूर्ण;
-अटल स्थिर अचिन्हित hsit_a_1_pins[] = अणु DB8500_PIN_AJ9, DB8500_PIN_AH9,
-	DB8500_PIN_AG9, DB8500_PIN_AG8, DB8500_PIN_AF8 पूर्ण;
-अटल स्थिर अचिन्हित hsit_a_2_pins[] = अणु DB8500_PIN_AJ9, DB8500_PIN_AH9,
-	DB8500_PIN_AG9, DB8500_PIN_AG8 पूर्ण;
-अटल स्थिर अचिन्हित clkout1_a_1_pins[] = अणु DB8500_PIN_AH7 पूर्ण;
-अटल स्थिर अचिन्हित clkout1_a_2_pins[] = अणु DB8500_PIN_AG7 पूर्ण;
-अटल स्थिर अचिन्हित clkout2_a_1_pins[] = अणु DB8500_PIN_AJ6 पूर्ण;
-अटल स्थिर अचिन्हित clkout2_a_2_pins[] = अणु DB8500_PIN_AF7 पूर्ण;
-अटल स्थिर अचिन्हित usb_a_1_pins[] = अणु DB8500_PIN_AF28, DB8500_PIN_AE29,
+	DB8500_PIN_AH15 };
+static const unsigned mc1_a_2_pins[] = { DB8500_PIN_AH16, DB8500_PIN_AJ15,
+	DB8500_PIN_AG14, DB8500_PIN_AF13, DB8500_PIN_AG13, DB8500_PIN_AH15 };
+static const unsigned mc1dir_a_1_pins[] = { DB8500_PIN_AH13, DB8500_PIN_AG12,
+	DB8500_PIN_AH12, DB8500_PIN_AH11 };
+static const unsigned hsir_a_1_pins[] = { DB8500_PIN_AG10, DB8500_PIN_AH10,
+	DB8500_PIN_AJ11 };
+static const unsigned hsit_a_1_pins[] = { DB8500_PIN_AJ9, DB8500_PIN_AH9,
+	DB8500_PIN_AG9, DB8500_PIN_AG8, DB8500_PIN_AF8 };
+static const unsigned hsit_a_2_pins[] = { DB8500_PIN_AJ9, DB8500_PIN_AH9,
+	DB8500_PIN_AG9, DB8500_PIN_AG8 };
+static const unsigned clkout1_a_1_pins[] = { DB8500_PIN_AH7 };
+static const unsigned clkout1_a_2_pins[] = { DB8500_PIN_AG7 };
+static const unsigned clkout2_a_1_pins[] = { DB8500_PIN_AJ6 };
+static const unsigned clkout2_a_2_pins[] = { DB8500_PIN_AF7 };
+static const unsigned usb_a_1_pins[] = { DB8500_PIN_AF28, DB8500_PIN_AE29,
 	DB8500_PIN_AD29, DB8500_PIN_AC29, DB8500_PIN_AD28, DB8500_PIN_AD26,
 	DB8500_PIN_AE26, DB8500_PIN_AG29, DB8500_PIN_AE27, DB8500_PIN_AD27,
-	DB8500_PIN_AC28, DB8500_PIN_AC27 पूर्ण;
+	DB8500_PIN_AC28, DB8500_PIN_AC27 };
 
 /* Altfunction B column */
-अटल स्थिर अचिन्हित trig_b_1_pins[] = अणु DB8500_PIN_AJ5, DB8500_PIN_AJ3 पूर्ण;
-अटल स्थिर अचिन्हित i2c4_b_1_pins[] = अणु DB8500_PIN_AH6, DB8500_PIN_AG6 पूर्ण;
-अटल स्थिर अचिन्हित i2c1_b_1_pins[] = अणु DB8500_PIN_AF6, DB8500_PIN_AG5 पूर्ण;
-अटल स्थिर अचिन्हित i2c2_b_1_pins[] = अणु DB8500_PIN_AD5, DB8500_PIN_AE4 पूर्ण;
-अटल स्थिर अचिन्हित i2c2_b_2_pins[] = अणु DB8500_PIN_AF5, DB8500_PIN_AG4 पूर्ण;
-अटल स्थिर अचिन्हित msp0txrx_b_1_pins[] = अणु DB8500_PIN_AC4, DB8500_PIN_AC3 पूर्ण;
-अटल स्थिर अचिन्हित i2c1_b_2_pins[] = अणु DB8500_PIN_AD3, DB8500_PIN_AD4 पूर्ण;
-/* Just RX and TX क्रम UART2 */
-अटल स्थिर अचिन्हित u2rxtx_b_1_pins[] = अणु DB8500_PIN_AC2, DB8500_PIN_AC1 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodtx_b_1_pins[] = अणु DB8500_PIN_AB4 पूर्ण;
-अटल स्थिर अचिन्हित msp0sck_b_1_pins[] = अणु DB8500_PIN_AB3 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodrx_b_1_pins[] = अणु DB8500_PIN_AA3 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगmod_b_1_pins[] = अणु DB8500_PIN_AA4, DB8500_PIN_Y4,
-	DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodrx_b_2_pins[] = अणु DB8500_PIN_AB2 पूर्ण;
-अटल स्थिर अचिन्हित spi3_b_1_pins[] = अणु DB8500_PIN_W2, DB8500_PIN_W3,
-					  DB8500_PIN_V3, DB8500_PIN_V2 पूर्ण;
-अटल स्थिर अचिन्हित msp1txrx_b_1_pins[] = अणु DB8500_PIN_AF2, DB8500_PIN_AG2 पूर्ण;
-अटल स्थिर अचिन्हित kp_b_1_pins[] = अणु DB8500_PIN_F3, DB8500_PIN_F1,
+static const unsigned trig_b_1_pins[] = { DB8500_PIN_AJ5, DB8500_PIN_AJ3 };
+static const unsigned i2c4_b_1_pins[] = { DB8500_PIN_AH6, DB8500_PIN_AG6 };
+static const unsigned i2c1_b_1_pins[] = { DB8500_PIN_AF6, DB8500_PIN_AG5 };
+static const unsigned i2c2_b_1_pins[] = { DB8500_PIN_AD5, DB8500_PIN_AE4 };
+static const unsigned i2c2_b_2_pins[] = { DB8500_PIN_AF5, DB8500_PIN_AG4 };
+static const unsigned msp0txrx_b_1_pins[] = { DB8500_PIN_AC4, DB8500_PIN_AC3 };
+static const unsigned i2c1_b_2_pins[] = { DB8500_PIN_AD3, DB8500_PIN_AD4 };
+/* Just RX and TX for UART2 */
+static const unsigned u2rxtx_b_1_pins[] = { DB8500_PIN_AC2, DB8500_PIN_AC1 };
+static const unsigned uartmodtx_b_1_pins[] = { DB8500_PIN_AB4 };
+static const unsigned msp0sck_b_1_pins[] = { DB8500_PIN_AB3 };
+static const unsigned uartmodrx_b_1_pins[] = { DB8500_PIN_AA3 };
+static const unsigned stmmod_b_1_pins[] = { DB8500_PIN_AA4, DB8500_PIN_Y4,
+	DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 };
+static const unsigned uartmodrx_b_2_pins[] = { DB8500_PIN_AB2 };
+static const unsigned spi3_b_1_pins[] = { DB8500_PIN_W2, DB8500_PIN_W3,
+					  DB8500_PIN_V3, DB8500_PIN_V2 };
+static const unsigned msp1txrx_b_1_pins[] = { DB8500_PIN_AF2, DB8500_PIN_AG2 };
+static const unsigned kp_b_1_pins[] = { DB8500_PIN_F3, DB8500_PIN_F1,
 	DB8500_PIN_G3, DB8500_PIN_G2, DB8500_PIN_E1, DB8500_PIN_E2,
 	DB8500_PIN_G5, DB8500_PIN_G4, DB8500_PIN_H4, DB8500_PIN_H3,
 	DB8500_PIN_J3, DB8500_PIN_H2, DB8500_PIN_J2, DB8500_PIN_H1,
 	DB8500_PIN_F4, DB8500_PIN_E3, DB8500_PIN_E4, DB8500_PIN_D2,
-	DB8500_PIN_C1, DB8500_PIN_D3, DB8500_PIN_C2, DB8500_PIN_D5 पूर्ण;
-अटल स्थिर अचिन्हित kp_b_2_pins[] = अणु DB8500_PIN_F3, DB8500_PIN_F1,
-	DB8500_PIN_G3, DB8500_PIN_G2, DB8500_PIN_F4, DB8500_PIN_E3पूर्ण;
-अटल स्थिर अचिन्हित sm_b_1_pins[] = अणु DB8500_PIN_C6, DB8500_PIN_B3,
+	DB8500_PIN_C1, DB8500_PIN_D3, DB8500_PIN_C2, DB8500_PIN_D5 };
+static const unsigned kp_b_2_pins[] = { DB8500_PIN_F3, DB8500_PIN_F1,
+	DB8500_PIN_G3, DB8500_PIN_G2, DB8500_PIN_F4, DB8500_PIN_E3};
+static const unsigned sm_b_1_pins[] = { DB8500_PIN_C6, DB8500_PIN_B3,
 	DB8500_PIN_C4, DB8500_PIN_E6, DB8500_PIN_A3, DB8500_PIN_B6,
 	DB8500_PIN_D6, DB8500_PIN_B7, DB8500_PIN_D7, DB8500_PIN_D8,
 	DB8500_PIN_D9, DB8500_PIN_A5, DB8500_PIN_B4, DB8500_PIN_C8,
 	DB8500_PIN_A12, DB8500_PIN_C10, DB8500_PIN_B10, DB8500_PIN_B9,
 	DB8500_PIN_A9, DB8500_PIN_C7, DB8500_PIN_A7, DB8500_PIN_C5,
-	DB8500_PIN_C9 पूर्ण;
+	DB8500_PIN_C9 };
 /* This chip select pin can be "ps0" in alt C so have it separately */
-अटल स्थिर अचिन्हित smcs0_b_1_pins[] = अणु DB8500_PIN_E8 पूर्ण;
+static const unsigned smcs0_b_1_pins[] = { DB8500_PIN_E8 };
 /* This chip select pin can be "ps1" in alt C so have it separately */
-अटल स्थिर अचिन्हित smcs1_b_1_pins[] = अणु DB8500_PIN_B14 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio7_b_1_pins[] = अणु DB8500_PIN_B11 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio2_b_1_pins[] = अणु DB8500_PIN_C12 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio3_b_1_pins[] = अणु DB8500_PIN_C11 पूर्ण;
-अटल स्थिर अचिन्हित lcdaclk_b_1_pins[] = अणु DB8500_PIN_C14 पूर्ण;
-अटल स्थिर अचिन्हित lcda_b_1_pins[] = अणु DB8500_PIN_D22,
-	DB8500_PIN_C23, DB8500_PIN_D23 पूर्ण;
-अटल स्थिर अचिन्हित lcd_b_1_pins[] = अणु DB8500_PIN_D17, DB8500_PIN_D16,
+static const unsigned smcs1_b_1_pins[] = { DB8500_PIN_B14 };
+static const unsigned ipgpio7_b_1_pins[] = { DB8500_PIN_B11 };
+static const unsigned ipgpio2_b_1_pins[] = { DB8500_PIN_C12 };
+static const unsigned ipgpio3_b_1_pins[] = { DB8500_PIN_C11 };
+static const unsigned lcdaclk_b_1_pins[] = { DB8500_PIN_C14 };
+static const unsigned lcda_b_1_pins[] = { DB8500_PIN_D22,
+	DB8500_PIN_C23, DB8500_PIN_D23 };
+static const unsigned lcd_b_1_pins[] = { DB8500_PIN_D17, DB8500_PIN_D16,
 	DB8500_PIN_B17, DB8500_PIN_C16, DB8500_PIN_C19, DB8500_PIN_C17,
 	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19, DB8500_PIN_B20,
 	DB8500_PIN_D21, DB8500_PIN_D20, DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
-अटल स्थिर अचिन्हित lcd_d16_d23_b_1_pins[] = अणु
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
+static const unsigned lcd_d16_d23_b_1_pins[] = {
 	DB8500_PIN_D21, DB8500_PIN_D20, DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
-अटल स्थिर अचिन्हित ddrtrig_b_1_pins[] = अणु DB8500_PIN_AJ27 पूर्ण;
-अटल स्थिर अचिन्हित pwl_b_1_pins[] = अणु DB8500_PIN_AF25 पूर्ण;
-अटल स्थिर अचिन्हित spi1_b_1_pins[] = अणु DB8500_PIN_AG15, DB8500_PIN_AF13,
-					  DB8500_PIN_AG13, DB8500_PIN_AH15 पूर्ण;
-अटल स्थिर अचिन्हित mc3_b_1_pins[] = अणु DB8500_PIN_AH13, DB8500_PIN_AG12,
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
+static const unsigned ddrtrig_b_1_pins[] = { DB8500_PIN_AJ27 };
+static const unsigned pwl_b_1_pins[] = { DB8500_PIN_AF25 };
+static const unsigned spi1_b_1_pins[] = { DB8500_PIN_AG15, DB8500_PIN_AF13,
+					  DB8500_PIN_AG13, DB8500_PIN_AH15 };
+static const unsigned mc3_b_1_pins[] = { DB8500_PIN_AH13, DB8500_PIN_AG12,
 	DB8500_PIN_AH12, DB8500_PIN_AH11, DB8500_PIN_AG10, DB8500_PIN_AH10,
 	DB8500_PIN_AJ11, DB8500_PIN_AJ9, DB8500_PIN_AH9, DB8500_PIN_AG9,
-	DB8500_PIN_AG8 पूर्ण;
-अटल स्थिर अचिन्हित pwl_b_2_pins[] = अणु DB8500_PIN_AF8 पूर्ण;
-अटल स्थिर अचिन्हित pwl_b_3_pins[] = अणु DB8500_PIN_AG7 पूर्ण;
-अटल स्थिर अचिन्हित pwl_b_4_pins[] = अणु DB8500_PIN_AF7 पूर्ण;
+	DB8500_PIN_AG8 };
+static const unsigned pwl_b_2_pins[] = { DB8500_PIN_AF8 };
+static const unsigned pwl_b_3_pins[] = { DB8500_PIN_AG7 };
+static const unsigned pwl_b_4_pins[] = { DB8500_PIN_AF7 };
 
 /* Altfunction C column */
-अटल स्थिर अचिन्हित ipjtag_c_1_pins[] = अणु DB8500_PIN_AJ5, DB8500_PIN_AJ3,
-	DB8500_PIN_AH4, DB8500_PIN_AH3, DB8500_PIN_AH6 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio6_c_1_pins[] = अणु DB8500_PIN_AG6 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio0_c_1_pins[] = अणु DB8500_PIN_AF6 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio1_c_1_pins[] = अणु DB8500_PIN_AG5 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio3_c_1_pins[] = अणु DB8500_PIN_AF5 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio2_c_1_pins[] = अणु DB8500_PIN_AG4 पूर्ण;
-अटल स्थिर अचिन्हित slim0_c_1_pins[] = अणु DB8500_PIN_AD3, DB8500_PIN_AD4 पूर्ण;
-/* Optional 4-bit Memory Stick पूर्णांकerface */
-अटल स्थिर अचिन्हित ms_c_1_pins[] = अणु DB8500_PIN_AC2, DB8500_PIN_AC1,
+static const unsigned ipjtag_c_1_pins[] = { DB8500_PIN_AJ5, DB8500_PIN_AJ3,
+	DB8500_PIN_AH4, DB8500_PIN_AH3, DB8500_PIN_AH6 };
+static const unsigned ipgpio6_c_1_pins[] = { DB8500_PIN_AG6 };
+static const unsigned ipgpio0_c_1_pins[] = { DB8500_PIN_AF6 };
+static const unsigned ipgpio1_c_1_pins[] = { DB8500_PIN_AG5 };
+static const unsigned ipgpio3_c_1_pins[] = { DB8500_PIN_AF5 };
+static const unsigned ipgpio2_c_1_pins[] = { DB8500_PIN_AG4 };
+static const unsigned slim0_c_1_pins[] = { DB8500_PIN_AD3, DB8500_PIN_AD4 };
+/* Optional 4-bit Memory Stick interface */
+static const unsigned ms_c_1_pins[] = { DB8500_PIN_AC2, DB8500_PIN_AC1,
 	DB8500_PIN_AB3, DB8500_PIN_AA3, DB8500_PIN_AA4, DB8500_PIN_AB2,
-	DB8500_PIN_Y4, DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 पूर्ण;
-अटल स्थिर अचिन्हित iptrigout_c_1_pins[] = अणु DB8500_PIN_AB4 पूर्ण;
-अटल स्थिर अचिन्हित u2rxtx_c_1_pins[] = अणु DB8500_PIN_W2, DB8500_PIN_W3 पूर्ण;
-अटल स्थिर अचिन्हित u2ctsrts_c_1_pins[] = अणु DB8500_PIN_V3, DB8500_PIN_V2 पूर्ण;
-अटल स्थिर अचिन्हित u0_c_1_pins[] = अणु DB8500_PIN_AF2, DB8500_PIN_AE1,
-					DB8500_PIN_AE2, DB8500_PIN_AG2 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio4_c_1_pins[] = अणु DB8500_PIN_F3 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio5_c_1_pins[] = अणु DB8500_PIN_F1 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio6_c_2_pins[] = अणु DB8500_PIN_G3 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio7_c_1_pins[] = अणु DB8500_PIN_G2 पूर्ण;
-अटल स्थिर अचिन्हित smcleale_c_1_pins[] = अणु DB8500_PIN_E1, DB8500_PIN_E2 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगape_c_1_pins[] = अणु DB8500_PIN_G5, DB8500_PIN_G4,
-	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3 पूर्ण;
-अटल स्थिर अचिन्हित u2rxtx_c_2_pins[] = अणु DB8500_PIN_H2, DB8500_PIN_J2 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio2_c_2_pins[] = अणु DB8500_PIN_F4 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio3_c_2_pins[] = अणु DB8500_PIN_E3 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio4_c_2_pins[] = अणु DB8500_PIN_E4 पूर्ण;
-अटल स्थिर अचिन्हित ipgpio5_c_2_pins[] = अणु DB8500_PIN_D2 पूर्ण;
-अटल स्थिर अचिन्हित mc5_c_1_pins[] = अणु DB8500_PIN_C6, DB8500_PIN_B3,
+	DB8500_PIN_Y4, DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 };
+static const unsigned iptrigout_c_1_pins[] = { DB8500_PIN_AB4 };
+static const unsigned u2rxtx_c_1_pins[] = { DB8500_PIN_W2, DB8500_PIN_W3 };
+static const unsigned u2ctsrts_c_1_pins[] = { DB8500_PIN_V3, DB8500_PIN_V2 };
+static const unsigned u0_c_1_pins[] = { DB8500_PIN_AF2, DB8500_PIN_AE1,
+					DB8500_PIN_AE2, DB8500_PIN_AG2 };
+static const unsigned ipgpio4_c_1_pins[] = { DB8500_PIN_F3 };
+static const unsigned ipgpio5_c_1_pins[] = { DB8500_PIN_F1 };
+static const unsigned ipgpio6_c_2_pins[] = { DB8500_PIN_G3 };
+static const unsigned ipgpio7_c_1_pins[] = { DB8500_PIN_G2 };
+static const unsigned smcleale_c_1_pins[] = { DB8500_PIN_E1, DB8500_PIN_E2 };
+static const unsigned stmape_c_1_pins[] = { DB8500_PIN_G5, DB8500_PIN_G4,
+	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3 };
+static const unsigned u2rxtx_c_2_pins[] = { DB8500_PIN_H2, DB8500_PIN_J2 };
+static const unsigned ipgpio2_c_2_pins[] = { DB8500_PIN_F4 };
+static const unsigned ipgpio3_c_2_pins[] = { DB8500_PIN_E3 };
+static const unsigned ipgpio4_c_2_pins[] = { DB8500_PIN_E4 };
+static const unsigned ipgpio5_c_2_pins[] = { DB8500_PIN_D2 };
+static const unsigned mc5_c_1_pins[] = { DB8500_PIN_C6, DB8500_PIN_B3,
 	DB8500_PIN_C4, DB8500_PIN_E6, DB8500_PIN_A3, DB8500_PIN_B6,
 	DB8500_PIN_D6, DB8500_PIN_B7, DB8500_PIN_D7, DB8500_PIN_D8,
-	DB8500_PIN_D9 पूर्ण;
-अटल स्थिर अचिन्हित mc2rstn_c_1_pins[] = अणु DB8500_PIN_C8 पूर्ण;
-अटल स्थिर अचिन्हित kp_c_1_pins[] = अणु DB8500_PIN_C9, DB8500_PIN_B11,
+	DB8500_PIN_D9 };
+static const unsigned mc2rstn_c_1_pins[] = { DB8500_PIN_C8 };
+static const unsigned kp_c_1_pins[] = { DB8500_PIN_C9, DB8500_PIN_B11,
 	DB8500_PIN_C12, DB8500_PIN_C11, DB8500_PIN_D17, DB8500_PIN_D16,
-	DB8500_PIN_C23, DB8500_PIN_D23 पूर्ण;
-अटल स्थिर अचिन्हित smps0_c_1_pins[] = अणु DB8500_PIN_E8 पूर्ण;
-अटल स्थिर अचिन्हित smps1_c_1_pins[] = अणु DB8500_PIN_B14 पूर्ण;
-अटल स्थिर अचिन्हित u2rxtx_c_3_pins[] = अणु DB8500_PIN_B17, DB8500_PIN_C16 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगape_c_2_pins[] = अणु DB8500_PIN_C19, DB8500_PIN_C17,
-	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodrx_c_1_pins[] = अणु DB8500_PIN_D21 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodtx_c_1_pins[] = अणु DB8500_PIN_D20 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगmod_c_1_pins[] = अणु DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24 पूर्ण;
-अटल स्थिर अचिन्हित usbsim_c_1_pins[] = अणु DB8500_PIN_D22 पूर्ण;
-अटल स्थिर अचिन्हित mc4rstn_c_1_pins[] = अणु DB8500_PIN_AF25 पूर्ण;
-अटल स्थिर अचिन्हित clkout1_c_1_pins[] = अणु DB8500_PIN_AH13 पूर्ण;
-अटल स्थिर अचिन्हित clkout2_c_1_pins[] = अणु DB8500_PIN_AH12 पूर्ण;
-अटल स्थिर अचिन्हित i2c3_c_1_pins[] = अणु DB8500_PIN_AG12, DB8500_PIN_AH11 पूर्ण;
-अटल स्थिर अचिन्हित spi0_c_1_pins[] = अणु DB8500_PIN_AH10, DB8500_PIN_AH9,
-					  DB8500_PIN_AG9, DB8500_PIN_AG8 पूर्ण;
-अटल स्थिर अचिन्हित usbsim_c_2_pins[] = अणु DB8500_PIN_AF8 पूर्ण;
-अटल स्थिर अचिन्हित i2c3_c_2_pins[] = अणु DB8500_PIN_AG7, DB8500_PIN_AF7 पूर्ण;
+	DB8500_PIN_C23, DB8500_PIN_D23 };
+static const unsigned smps0_c_1_pins[] = { DB8500_PIN_E8 };
+static const unsigned smps1_c_1_pins[] = { DB8500_PIN_B14 };
+static const unsigned u2rxtx_c_3_pins[] = { DB8500_PIN_B17, DB8500_PIN_C16 };
+static const unsigned stmape_c_2_pins[] = { DB8500_PIN_C19, DB8500_PIN_C17,
+	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19 };
+static const unsigned uartmodrx_c_1_pins[] = { DB8500_PIN_D21 };
+static const unsigned uartmodtx_c_1_pins[] = { DB8500_PIN_D20 };
+static const unsigned stmmod_c_1_pins[] = { DB8500_PIN_C20, DB8500_PIN_B21,
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24 };
+static const unsigned usbsim_c_1_pins[] = { DB8500_PIN_D22 };
+static const unsigned mc4rstn_c_1_pins[] = { DB8500_PIN_AF25 };
+static const unsigned clkout1_c_1_pins[] = { DB8500_PIN_AH13 };
+static const unsigned clkout2_c_1_pins[] = { DB8500_PIN_AH12 };
+static const unsigned i2c3_c_1_pins[] = { DB8500_PIN_AG12, DB8500_PIN_AH11 };
+static const unsigned spi0_c_1_pins[] = { DB8500_PIN_AH10, DB8500_PIN_AH9,
+					  DB8500_PIN_AG9, DB8500_PIN_AG8 };
+static const unsigned usbsim_c_2_pins[] = { DB8500_PIN_AF8 };
+static const unsigned i2c3_c_2_pins[] = { DB8500_PIN_AG7, DB8500_PIN_AF7 };
 
 /* Other C1 column */
-अटल स्थिर अचिन्हित u2rx_oc1_1_pins[] = अणु DB8500_PIN_AB2 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगape_oc1_1_pins[] = अणु DB8500_PIN_AA4, DB8500_PIN_Y4,
-	DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 पूर्ण;
-अटल स्थिर अचिन्हित remap0_oc1_1_pins[] = अणु DB8500_PIN_E1 पूर्ण;
-अटल स्थिर अचिन्हित remap1_oc1_1_pins[] = अणु DB8500_PIN_E2 पूर्ण;
-अटल स्थिर अचिन्हित pपंचांगa9_oc1_1_pins[] = अणु DB8500_PIN_G5, DB8500_PIN_G4,
+static const unsigned u2rx_oc1_1_pins[] = { DB8500_PIN_AB2 };
+static const unsigned stmape_oc1_1_pins[] = { DB8500_PIN_AA4, DB8500_PIN_Y4,
+	DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 };
+static const unsigned remap0_oc1_1_pins[] = { DB8500_PIN_E1 };
+static const unsigned remap1_oc1_1_pins[] = { DB8500_PIN_E2 };
+static const unsigned ptma9_oc1_1_pins[] = { DB8500_PIN_G5, DB8500_PIN_G4,
 	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3, DB8500_PIN_H2,
-	DB8500_PIN_J2, DB8500_PIN_H1 पूर्ण;
-अटल स्थिर अचिन्हित kp_oc1_1_pins[] = अणु DB8500_PIN_C6, DB8500_PIN_B3,
+	DB8500_PIN_J2, DB8500_PIN_H1 };
+static const unsigned kp_oc1_1_pins[] = { DB8500_PIN_C6, DB8500_PIN_B3,
 	DB8500_PIN_C4, DB8500_PIN_E6, DB8500_PIN_A3, DB8500_PIN_B6,
-	DB8500_PIN_D6, DB8500_PIN_B7 पूर्ण;
-अटल स्थिर अचिन्हित rf_oc1_1_pins[] = अणु DB8500_PIN_D8, DB8500_PIN_D9 पूर्ण;
-अटल स्थिर अचिन्हित hxclk_oc1_1_pins[] = अणु DB8500_PIN_D16 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodrx_oc1_1_pins[] = अणु DB8500_PIN_B17 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodtx_oc1_1_pins[] = अणु DB8500_PIN_C16 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगmod_oc1_1_pins[] = अणु DB8500_PIN_C19, DB8500_PIN_C17,
-	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19 पूर्ण;
-अटल स्थिर अचिन्हित hxgpio_oc1_1_pins[] = अणु DB8500_PIN_D21, DB8500_PIN_D20,
+	DB8500_PIN_D6, DB8500_PIN_B7 };
+static const unsigned rf_oc1_1_pins[] = { DB8500_PIN_D8, DB8500_PIN_D9 };
+static const unsigned hxclk_oc1_1_pins[] = { DB8500_PIN_D16 };
+static const unsigned uartmodrx_oc1_1_pins[] = { DB8500_PIN_B17 };
+static const unsigned uartmodtx_oc1_1_pins[] = { DB8500_PIN_C16 };
+static const unsigned stmmod_oc1_1_pins[] = { DB8500_PIN_C19, DB8500_PIN_C17,
+	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19 };
+static const unsigned hxgpio_oc1_1_pins[] = { DB8500_PIN_D21, DB8500_PIN_D20,
 	DB8500_PIN_C20, DB8500_PIN_B21, DB8500_PIN_C21, DB8500_PIN_A22,
-	DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
-अटल स्थिर अचिन्हित rf_oc1_2_pins[] = अणु DB8500_PIN_C23, DB8500_PIN_D23 पूर्ण;
-अटल स्थिर अचिन्हित spi2_oc1_1_pins[] = अणु DB8500_PIN_AH13, DB8500_PIN_AG12,
-	DB8500_PIN_AH12, DB8500_PIN_AH11 पूर्ण;
-अटल स्थिर अचिन्हित spi2_oc1_2_pins[] = अणु DB8500_PIN_AH13, DB8500_PIN_AH12,
-	DB8500_PIN_AH11 पूर्ण;
+	DB8500_PIN_B24, DB8500_PIN_C22 };
+static const unsigned rf_oc1_2_pins[] = { DB8500_PIN_C23, DB8500_PIN_D23 };
+static const unsigned spi2_oc1_1_pins[] = { DB8500_PIN_AH13, DB8500_PIN_AG12,
+	DB8500_PIN_AH12, DB8500_PIN_AH11 };
+static const unsigned spi2_oc1_2_pins[] = { DB8500_PIN_AH13, DB8500_PIN_AH12,
+	DB8500_PIN_AH11 };
 
 /* Other C2 column */
-अटल स्थिर अचिन्हित sbag_oc2_1_pins[] = अणु DB8500_PIN_AA4, DB8500_PIN_AB2,
-	DB8500_PIN_Y4, DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 पूर्ण;
-अटल स्थिर अचिन्हित eपंचांगr4_oc2_1_pins[] = अणु DB8500_PIN_G5, DB8500_PIN_G4,
+static const unsigned sbag_oc2_1_pins[] = { DB8500_PIN_AA4, DB8500_PIN_AB2,
+	DB8500_PIN_Y4, DB8500_PIN_Y2, DB8500_PIN_AA2, DB8500_PIN_AA1 };
+static const unsigned etmr4_oc2_1_pins[] = { DB8500_PIN_G5, DB8500_PIN_G4,
 	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3, DB8500_PIN_H2,
-	DB8500_PIN_J2, DB8500_PIN_H1 पूर्ण;
-अटल स्थिर अचिन्हित pपंचांगa9_oc2_1_pins[] = अणु DB8500_PIN_D17, DB8500_PIN_D16,
+	DB8500_PIN_J2, DB8500_PIN_H1 };
+static const unsigned ptma9_oc2_1_pins[] = { DB8500_PIN_D17, DB8500_PIN_D16,
 	DB8500_PIN_B17, DB8500_PIN_C16, DB8500_PIN_C19, DB8500_PIN_C17,
 	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19, DB8500_PIN_B20,
 	DB8500_PIN_D21, DB8500_PIN_D20,	DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
 
 /* Other C3 column */
-अटल स्थिर अचिन्हित sपंचांगmod_oc3_1_pins[] = अणु DB8500_PIN_AB2, DB8500_PIN_W2,
-	DB8500_PIN_W3, DB8500_PIN_V3, DB8500_PIN_V2 पूर्ण;
-अटल स्थिर अचिन्हित sपंचांगmod_oc3_2_pins[] = अणु DB8500_PIN_G5, DB8500_PIN_G4,
-	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodrx_oc3_1_pins[] = अणु DB8500_PIN_H2 पूर्ण;
-अटल स्थिर अचिन्हित uarपंचांगodtx_oc3_1_pins[] = अणु DB8500_PIN_J2 पूर्ण;
-अटल स्थिर अचिन्हित eपंचांगr4_oc3_1_pins[] = अणु DB8500_PIN_D17, DB8500_PIN_D16,
+static const unsigned stmmod_oc3_1_pins[] = { DB8500_PIN_AB2, DB8500_PIN_W2,
+	DB8500_PIN_W3, DB8500_PIN_V3, DB8500_PIN_V2 };
+static const unsigned stmmod_oc3_2_pins[] = { DB8500_PIN_G5, DB8500_PIN_G4,
+	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3 };
+static const unsigned uartmodrx_oc3_1_pins[] = { DB8500_PIN_H2 };
+static const unsigned uartmodtx_oc3_1_pins[] = { DB8500_PIN_J2 };
+static const unsigned etmr4_oc3_1_pins[] = { DB8500_PIN_D17, DB8500_PIN_D16,
 	DB8500_PIN_B17, DB8500_PIN_C16, DB8500_PIN_C19, DB8500_PIN_C17,
 	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19, DB8500_PIN_B20,
 	DB8500_PIN_D21, DB8500_PIN_D20,	DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
 
 /* Other C4 column */
-अटल स्थिर अचिन्हित sbag_oc4_1_pins[] = अणु DB8500_PIN_G5, DB8500_PIN_G4,
-	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3, DB8500_PIN_H1 पूर्ण;
-अटल स्थिर अचिन्हित hwobs_oc4_1_pins[] = अणु DB8500_PIN_D17, DB8500_PIN_D16,
+static const unsigned sbag_oc4_1_pins[] = { DB8500_PIN_G5, DB8500_PIN_G4,
+	DB8500_PIN_H4, DB8500_PIN_H3, DB8500_PIN_J3, DB8500_PIN_H1 };
+static const unsigned hwobs_oc4_1_pins[] = { DB8500_PIN_D17, DB8500_PIN_D16,
 	DB8500_PIN_B17, DB8500_PIN_C16, DB8500_PIN_C19, DB8500_PIN_C17,
 	DB8500_PIN_A18, DB8500_PIN_C18, DB8500_PIN_B19, DB8500_PIN_B20,
 	DB8500_PIN_D21, DB8500_PIN_D20,	DB8500_PIN_C20, DB8500_PIN_B21,
-	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 पूर्ण;
+	DB8500_PIN_C21, DB8500_PIN_A22, DB8500_PIN_B24, DB8500_PIN_C22 };
 
-#घोषणा DB8500_PIN_GROUP(a, b) अणु .name = #a, .pins = a##_pins,		\
-			.npins = ARRAY_SIZE(a##_pins), .altsetting = b पूर्ण
+#define DB8500_PIN_GROUP(a, b) { .name = #a, .pins = a##_pins,		\
+			.npins = ARRAY_SIZE(a##_pins), .altsetting = b }
 
-अटल स्थिर काष्ठा nmk_pingroup nmk_db8500_groups[] = अणु
+static const struct nmk_pingroup nmk_db8500_groups[] = {
 	/* Altfunction A column */
 	DB8500_PIN_GROUP(u0_a_1, NMK_GPIO_ALT_A),
 	DB8500_PIN_GROUP(u1rxtx_a_1, NMK_GPIO_ALT_A),
@@ -730,11 +729,11 @@
 	DB8500_PIN_GROUP(msp0txrx_b_1, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(i2c1_b_2, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(u2rxtx_b_1, NMK_GPIO_ALT_B),
-	DB8500_PIN_GROUP(uarपंचांगodtx_b_1, NMK_GPIO_ALT_B),
+	DB8500_PIN_GROUP(uartmodtx_b_1, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(msp0sck_b_1, NMK_GPIO_ALT_B),
-	DB8500_PIN_GROUP(uarपंचांगodrx_b_1, NMK_GPIO_ALT_B),
-	DB8500_PIN_GROUP(sपंचांगmod_b_1, NMK_GPIO_ALT_B),
-	DB8500_PIN_GROUP(uarपंचांगodrx_b_2, NMK_GPIO_ALT_B),
+	DB8500_PIN_GROUP(uartmodrx_b_1, NMK_GPIO_ALT_B),
+	DB8500_PIN_GROUP(stmmod_b_1, NMK_GPIO_ALT_B),
+	DB8500_PIN_GROUP(uartmodrx_b_2, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(spi3_b_1, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(msp1txrx_b_1, NMK_GPIO_ALT_B),
 	DB8500_PIN_GROUP(kp_b_1, NMK_GPIO_ALT_B),
@@ -774,7 +773,7 @@
 	DB8500_PIN_GROUP(ipgpio6_c_2, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(ipgpio7_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(smcleale_c_1, NMK_GPIO_ALT_C),
-	DB8500_PIN_GROUP(sपंचांगape_c_1, NMK_GPIO_ALT_C),
+	DB8500_PIN_GROUP(stmape_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(u2rxtx_c_2, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(ipgpio2_c_2, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(ipgpio3_c_2, NMK_GPIO_ALT_C),
@@ -786,10 +785,10 @@
 	DB8500_PIN_GROUP(smps0_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(smps1_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(u2rxtx_c_3, NMK_GPIO_ALT_C),
-	DB8500_PIN_GROUP(sपंचांगape_c_2, NMK_GPIO_ALT_C),
-	DB8500_PIN_GROUP(uarपंचांगodrx_c_1, NMK_GPIO_ALT_C),
-	DB8500_PIN_GROUP(uarपंचांगodtx_c_1, NMK_GPIO_ALT_C),
-	DB8500_PIN_GROUP(sपंचांगmod_c_1, NMK_GPIO_ALT_C),
+	DB8500_PIN_GROUP(stmape_c_2, NMK_GPIO_ALT_C),
+	DB8500_PIN_GROUP(uartmodrx_c_1, NMK_GPIO_ALT_C),
+	DB8500_PIN_GROUP(uartmodtx_c_1, NMK_GPIO_ALT_C),
+	DB8500_PIN_GROUP(stmmod_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(usbsim_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(mc4rstn_c_1, NMK_GPIO_ALT_C),
 	DB8500_PIN_GROUP(clkout1_c_1, NMK_GPIO_ALT_C),
@@ -800,38 +799,38 @@
 	DB8500_PIN_GROUP(i2c3_c_2, NMK_GPIO_ALT_C),
 	/* Other alt C1 column */
 	DB8500_PIN_GROUP(u2rx_oc1_1, NMK_GPIO_ALT_C1),
-	DB8500_PIN_GROUP(sपंचांगape_oc1_1, NMK_GPIO_ALT_C1),
+	DB8500_PIN_GROUP(stmape_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(remap0_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(remap1_oc1_1, NMK_GPIO_ALT_C1),
-	DB8500_PIN_GROUP(pपंचांगa9_oc1_1, NMK_GPIO_ALT_C1),
+	DB8500_PIN_GROUP(ptma9_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(kp_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(rf_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(hxclk_oc1_1, NMK_GPIO_ALT_C1),
-	DB8500_PIN_GROUP(uarपंचांगodrx_oc1_1, NMK_GPIO_ALT_C1),
-	DB8500_PIN_GROUP(uarपंचांगodtx_oc1_1, NMK_GPIO_ALT_C1),
-	DB8500_PIN_GROUP(sपंचांगmod_oc1_1, NMK_GPIO_ALT_C1),
+	DB8500_PIN_GROUP(uartmodrx_oc1_1, NMK_GPIO_ALT_C1),
+	DB8500_PIN_GROUP(uartmodtx_oc1_1, NMK_GPIO_ALT_C1),
+	DB8500_PIN_GROUP(stmmod_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(hxgpio_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(rf_oc1_2, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(spi2_oc1_1, NMK_GPIO_ALT_C1),
 	DB8500_PIN_GROUP(spi2_oc1_2, NMK_GPIO_ALT_C1),
 	/* Other alt C2 column */
 	DB8500_PIN_GROUP(sbag_oc2_1, NMK_GPIO_ALT_C2),
-	DB8500_PIN_GROUP(eपंचांगr4_oc2_1, NMK_GPIO_ALT_C2),
-	DB8500_PIN_GROUP(pपंचांगa9_oc2_1, NMK_GPIO_ALT_C2),
+	DB8500_PIN_GROUP(etmr4_oc2_1, NMK_GPIO_ALT_C2),
+	DB8500_PIN_GROUP(ptma9_oc2_1, NMK_GPIO_ALT_C2),
 	/* Other alt C3 column */
-	DB8500_PIN_GROUP(sपंचांगmod_oc3_1, NMK_GPIO_ALT_C3),
-	DB8500_PIN_GROUP(sपंचांगmod_oc3_2, NMK_GPIO_ALT_C3),
-	DB8500_PIN_GROUP(uarपंचांगodrx_oc3_1, NMK_GPIO_ALT_C3),
-	DB8500_PIN_GROUP(uarपंचांगodtx_oc3_1, NMK_GPIO_ALT_C3),
-	DB8500_PIN_GROUP(eपंचांगr4_oc3_1, NMK_GPIO_ALT_C3),
+	DB8500_PIN_GROUP(stmmod_oc3_1, NMK_GPIO_ALT_C3),
+	DB8500_PIN_GROUP(stmmod_oc3_2, NMK_GPIO_ALT_C3),
+	DB8500_PIN_GROUP(uartmodrx_oc3_1, NMK_GPIO_ALT_C3),
+	DB8500_PIN_GROUP(uartmodtx_oc3_1, NMK_GPIO_ALT_C3),
+	DB8500_PIN_GROUP(etmr4_oc3_1, NMK_GPIO_ALT_C3),
 	/* Other alt C4 column */
 	DB8500_PIN_GROUP(sbag_oc4_1, NMK_GPIO_ALT_C4),
 	DB8500_PIN_GROUP(hwobs_oc4_1, NMK_GPIO_ALT_C4),
-पूर्ण;
+};
 
 /* We use this macro to define the groups applicable to a function */
-#घोषणा DB8500_FUNC_GROUPS(a, b...)	   \
-अटल स्थिर अक्षर * स्थिर a##_groups[] = अणु b पूर्ण;
+#define DB8500_FUNC_GROUPS(a, b...)	   \
+static const char * const a##_groups[] = { b };
 
 DB8500_FUNC_GROUPS(u0, "u0_a_1", "u0_c_1");
 DB8500_FUNC_GROUPS(u1, "u1rxtx_a_1", "u1ctsrts_a_1");
@@ -844,7 +843,7 @@ DB8500_FUNC_GROUPS(u2, "u2rxtx_b_1", "u2rxtx_c_1", "u2ctsrts_c_1",
 DB8500_FUNC_GROUPS(ipi2c, "ipi2c_a_1", "ipi2c_a_2");
 /*
  * MSP0 can only be on a certain set of pins, but the TX/RX pins can be
- * चयनed around by selecting the altfunction A or B. The SCK pin is
+ * switched around by selecting the altfunction A or B. The SCK pin is
  * only available on the altfunction B.
  */
 DB8500_FUNC_GROUPS(msp0, "msp0txrx_a_1", "msp0tfstck_a_1", "msp0rfstck_a_1",
@@ -880,13 +879,13 @@ DB8500_FUNC_GROUPS(i2c4, "i2c4_b_1");
 DB8500_FUNC_GROUPS(i2c1, "i2c1_b_1", "i2c1_b_2");
 DB8500_FUNC_GROUPS(i2c2, "i2c2_b_1", "i2c2_b_2");
 /*
- * The modem UART can output its RX and TX pins in some dअगरferent places,
+ * The modem UART can output its RX and TX pins in some different places,
  * so select one of each.
  */
-DB8500_FUNC_GROUPS(uarपंचांगod, "uartmodtx_b_1", "uartmodrx_b_1", "uartmodrx_b_2",
+DB8500_FUNC_GROUPS(uartmod, "uartmodtx_b_1", "uartmodrx_b_1", "uartmodrx_b_2",
 		"uartmodrx_c_1", "uartmod_tx_c_1", "uartmodrx_oc1_1",
 		"uartmodtx_oc1_1", "uartmodrx_oc3_1", "uartmodtx_oc3_1");
-DB8500_FUNC_GROUPS(sपंचांगmod, "stmmod_b_1", "stmmod_c_1", "stmmod_oc1_1",
+DB8500_FUNC_GROUPS(stmmod, "stmmod_b_1", "stmmod_c_1", "stmmod_oc1_1",
 		"stmmod_oc3_1", "stmmod_oc3_2");
 DB8500_FUNC_GROUPS(spi3, "spi3_b_1");
 /* Select between CS0 on alt B or PS1 on alt C */
@@ -901,7 +900,7 @@ DB8500_FUNC_GROUPS(ipjtag, "ipjtag_c_1");
 DB8500_FUNC_GROUPS(slim0, "slim0_c_1");
 DB8500_FUNC_GROUPS(ms, "ms_c_1");
 DB8500_FUNC_GROUPS(iptrigout, "iptrigout_c_1");
-DB8500_FUNC_GROUPS(sपंचांगape, "stmape_c_1", "stmape_c_2", "stmape_oc1_1");
+DB8500_FUNC_GROUPS(stmape, "stmape_c_1", "stmape_c_2", "stmape_oc1_1");
 DB8500_FUNC_GROUPS(mc5, "mc5_c_1");
 DB8500_FUNC_GROUPS(usbsim, "usbsim_c_1", "usbsim_c_2");
 DB8500_FUNC_GROUPS(i2c3, "i2c3_c_1", "i2c3_c_2");
@@ -909,19 +908,19 @@ DB8500_FUNC_GROUPS(spi0, "spi0_c_1");
 DB8500_FUNC_GROUPS(spi2, "spi2_oc1_1", "spi2_oc1_2");
 DB8500_FUNC_GROUPS(remap, "remap0_oc1_1", "remap1_oc1_1");
 DB8500_FUNC_GROUPS(sbag, "sbag_oc2_1", "sbag_oc4_1");
-DB8500_FUNC_GROUPS(pपंचांग, "ptma9_oc1_1", "ptma9_oc2_1");
+DB8500_FUNC_GROUPS(ptm, "ptma9_oc1_1", "ptma9_oc2_1");
 DB8500_FUNC_GROUPS(rf, "rf_oc1_1", "rf_oc1_2");
 DB8500_FUNC_GROUPS(hx, "hxclk_oc1_1", "hxgpio_oc1_1");
-DB8500_FUNC_GROUPS(eपंचांग, "etmr4_oc2_1", "etmr4_oc3_1");
+DB8500_FUNC_GROUPS(etm, "etmr4_oc2_1", "etmr4_oc3_1");
 DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
-#घोषणा FUNCTION(fname)					\
-	अणु						\
+#define FUNCTION(fname)					\
+	{						\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा nmk_function nmk_db8500_functions[] = अणु
+static const struct nmk_function nmk_db8500_functions[] = {
 	FUNCTION(u0),
 	FUNCTION(u1),
 	FUNCTION(u2),
@@ -947,8 +946,8 @@ DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
 	FUNCTION(i2c4),
 	FUNCTION(i2c1),
 	FUNCTION(i2c2),
-	FUNCTION(uarपंचांगod),
-	FUNCTION(sपंचांगmod),
+	FUNCTION(uartmod),
+	FUNCTION(stmmod),
 	FUNCTION(spi3),
 	FUNCTION(sm),
 	FUNCTION(lcda),
@@ -960,7 +959,7 @@ DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
 	FUNCTION(slim0),
 	FUNCTION(ms),
 	FUNCTION(iptrigout),
-	FUNCTION(sपंचांगape),
+	FUNCTION(stmape),
 	FUNCTION(mc5),
 	FUNCTION(usbsim),
 	FUNCTION(i2c3),
@@ -968,14 +967,14 @@ DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
 	FUNCTION(spi2),
 	FUNCTION(remap),
 	FUNCTION(sbag),
-	FUNCTION(pपंचांग),
+	FUNCTION(ptm),
 	FUNCTION(rf),
 	FUNCTION(hx),
-	FUNCTION(eपंचांग),
+	FUNCTION(etm),
 	FUNCTION(hwobs),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा prcm_gpiocr_altcx_pin_desc db8500_altcx_pins[] = अणु
+static const struct prcm_gpiocr_altcx_pin_desc db8500_altcx_pins[] = {
 	PRCM_GPIOCR_ALTCX(23,	true, PRCM_IDX_GPIOCR1, 9,	/* STMAPE_CLK_a */
 				true, PRCM_IDX_GPIOCR1, 7,	/* SBAG_CLK_a */
 				false, 0, 0,
@@ -1246,14 +1245,14 @@ DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
 				false, 0, 0,
 				false, 0, 0
 	),
-पूर्ण;
+};
 
-अटल स्थिर u16 db8500_prcm_gpiocr_regs[] = अणु
+static const u16 db8500_prcm_gpiocr_regs[] = {
 	[PRCM_IDX_GPIOCR1] = 0x138,
 	[PRCM_IDX_GPIOCR2] = 0x574,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nmk_pinctrl_soc_data nmk_db8500_soc = अणु
+static const struct nmk_pinctrl_soc_data nmk_db8500_soc = {
 	.pins = nmk_db8500_pins,
 	.npins = ARRAY_SIZE(nmk_db8500_pins),
 	.functions = nmk_db8500_functions,
@@ -1262,10 +1261,10 @@ DB8500_FUNC_GROUPS(hwobs, "hwobs_oc4_1");
 	.ngroups = ARRAY_SIZE(nmk_db8500_groups),
 	.altcx_pins = db8500_altcx_pins,
 	.npins_altcx = ARRAY_SIZE(db8500_altcx_pins),
-	.prcm_gpiocr_रेजिस्टरs = db8500_prcm_gpiocr_regs,
-पूर्ण;
+	.prcm_gpiocr_registers = db8500_prcm_gpiocr_regs,
+};
 
-व्योम nmk_pinctrl_db8500_init(स्थिर काष्ठा nmk_pinctrl_soc_data **soc)
-अणु
+void nmk_pinctrl_db8500_init(const struct nmk_pinctrl_soc_data **soc)
+{
 	*soc = &nmk_db8500_soc;
-पूर्ण
+}

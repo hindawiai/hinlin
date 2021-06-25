@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  hrसमयrs - High-resolution kernel समयrs
+ *  hrtimers - High-resolution kernel timers
  *
  *   Copyright(C) 2005, Thomas Gleixner <tglx@linutronix.de>
  *   Copyright(C) 2005, Red Hat, Inc., Ingo Molnar
@@ -10,34 +9,34 @@
  *
  *  Started by: Thomas Gleixner and Ingo Molnar
  */
-#अगर_अघोषित _LINUX_HRTIMER_H
-#घोषणा _LINUX_HRTIMER_H
+#ifndef _LINUX_HRTIMER_H
+#define _LINUX_HRTIMER_H
 
-#समावेश <linux/hrसमयr_defs.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/समयrqueue.h>
+#include <linux/hrtimer_defs.h>
+#include <linux/rbtree.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/percpu.h>
+#include <linux/seqlock.h>
+#include <linux/timer.h>
+#include <linux/timerqueue.h>
 
-काष्ठा hrसमयr_घड़ी_base;
-काष्ठा hrसमयr_cpu_base;
+struct hrtimer_clock_base;
+struct hrtimer_cpu_base;
 
 /*
- * Mode arguments of xxx_hrसमयr functions:
+ * Mode arguments of xxx_hrtimer functions:
  *
- * HRTIMER_MODE_ABS		- Time value is असलolute
+ * HRTIMER_MODE_ABS		- Time value is absolute
  * HRTIMER_MODE_REL		- Time value is relative to now
  * HRTIMER_MODE_PINNED		- Timer is bound to CPU (is only considered
- *				  when starting the समयr)
+ *				  when starting the timer)
  * HRTIMER_MODE_SOFT		- Timer callback function will be executed in
  *				  soft irq context
  * HRTIMER_MODE_HARD		- Timer callback function will be executed in
  *				  hard irq context even on PREEMPT_RT.
  */
-क्रमागत hrसमयr_mode अणु
+enum hrtimer_mode {
 	HRTIMER_MODE_ABS	= 0x00,
 	HRTIMER_MODE_REL	= 0x01,
 	HRTIMER_MODE_PINNED	= 0x02,
@@ -58,117 +57,117 @@
 
 	HRTIMER_MODE_ABS_PINNED_HARD = HRTIMER_MODE_ABS_PINNED | HRTIMER_MODE_HARD,
 	HRTIMER_MODE_REL_PINNED_HARD = HRTIMER_MODE_REL_PINNED | HRTIMER_MODE_HARD,
-पूर्ण;
+};
 
 /*
- * Return values क्रम the callback function
+ * Return values for the callback function
  */
-क्रमागत hrसमयr_restart अणु
+enum hrtimer_restart {
 	HRTIMER_NORESTART,	/* Timer is not restarted */
 	HRTIMER_RESTART,	/* Timer must be restarted */
-पूर्ण;
+};
 
 /*
- * Values to track state of the समयr
+ * Values to track state of the timer
  *
  * Possible states:
  *
  * 0x00		inactive
- * 0x01		enqueued पूर्णांकo rbtree
+ * 0x01		enqueued into rbtree
  *
- * The callback state is not part of the समयr->state because clearing it would
- * mean touching the समयr after the callback, this makes it impossible to मुक्त
- * the समयr from the callback function.
+ * The callback state is not part of the timer->state because clearing it would
+ * mean touching the timer after the callback, this makes it impossible to free
+ * the timer from the callback function.
  *
- * Thereक्रमe we track the callback state in:
+ * Therefore we track the callback state in:
  *
- *	समयr->base->cpu_base->running == समयr
+ *	timer->base->cpu_base->running == timer
  *
  * On SMP it is possible to have a "callback function running and enqueued"
- * status. It happens क्रम example when a posix समयr expired and the callback
- * queued a संकेत. Between dropping the lock which protects the posix समयr
- * and reacquiring the base lock of the hrसमयr, another CPU can deliver the
- * संकेत and rearm the समयr.
+ * status. It happens for example when a posix timer expired and the callback
+ * queued a signal. Between dropping the lock which protects the posix timer
+ * and reacquiring the base lock of the hrtimer, another CPU can deliver the
+ * signal and rearm the timer.
  *
- * All state transitions are रक्षित by cpu_base->lock.
+ * All state transitions are protected by cpu_base->lock.
  */
-#घोषणा HRTIMER_STATE_INACTIVE	0x00
-#घोषणा HRTIMER_STATE_ENQUEUED	0x01
+#define HRTIMER_STATE_INACTIVE	0x00
+#define HRTIMER_STATE_ENQUEUED	0x01
 
 /**
- * काष्ठा hrसमयr - the basic hrसमयr काष्ठाure
- * @node:	समयrqueue node, which also manages node.expires,
- *		the असलolute expiry समय in the hrसमयrs पूर्णांकernal
- *		representation. The समय is related to the घड़ी on
- *		which the समयr is based. Is setup by adding
- *		slack to the _softexpires value. For non range समयrs
+ * struct hrtimer - the basic hrtimer structure
+ * @node:	timerqueue node, which also manages node.expires,
+ *		the absolute expiry time in the hrtimers internal
+ *		representation. The time is related to the clock on
+ *		which the timer is based. Is setup by adding
+ *		slack to the _softexpires value. For non range timers
  *		identical to _softexpires.
- * @_softexpires: the असलolute earliest expiry समय of the hrसमयr.
- *		The समय which was given as expiry समय when the समयr
+ * @_softexpires: the absolute earliest expiry time of the hrtimer.
+ *		The time which was given as expiry time when the timer
  *		was armed.
- * @function:	समयr expiry callback function
- * @base:	poपूर्णांकer to the समयr base (per cpu and per घड़ी)
- * @state:	state inक्रमmation (See bit values above)
- * @is_rel:	Set अगर the समयr was armed relative
- * @is_soft:	Set अगर hrसमयr will be expired in soft पूर्णांकerrupt context.
- * @is_hard:	Set अगर hrसमयr will be expired in hard पूर्णांकerrupt context
+ * @function:	timer expiry callback function
+ * @base:	pointer to the timer base (per cpu and per clock)
+ * @state:	state information (See bit values above)
+ * @is_rel:	Set if the timer was armed relative
+ * @is_soft:	Set if hrtimer will be expired in soft interrupt context.
+ * @is_hard:	Set if hrtimer will be expired in hard interrupt context
  *		even on RT.
  *
- * The hrसमयr काष्ठाure must be initialized by hrसमयr_init()
+ * The hrtimer structure must be initialized by hrtimer_init()
  */
-काष्ठा hrसमयr अणु
-	काष्ठा समयrqueue_node		node;
-	kसमय_प्रकार				_softexpires;
-	क्रमागत hrसमयr_restart		(*function)(काष्ठा hrसमयr *);
-	काष्ठा hrसमयr_घड़ी_base	*base;
+struct hrtimer {
+	struct timerqueue_node		node;
+	ktime_t				_softexpires;
+	enum hrtimer_restart		(*function)(struct hrtimer *);
+	struct hrtimer_clock_base	*base;
 	u8				state;
 	u8				is_rel;
 	u8				is_soft;
 	u8				is_hard;
-पूर्ण;
+};
 
 /**
- * काष्ठा hrसमयr_sleeper - simple sleeper काष्ठाure
- * @समयr:	embedded समयr काष्ठाure
+ * struct hrtimer_sleeper - simple sleeper structure
+ * @timer:	embedded timer structure
  * @task:	task to wake up
  *
- * task is set to शून्य, when the समयr expires.
+ * task is set to NULL, when the timer expires.
  */
-काष्ठा hrसमयr_sleeper अणु
-	काष्ठा hrसमयr समयr;
-	काष्ठा task_काष्ठा *task;
-पूर्ण;
+struct hrtimer_sleeper {
+	struct hrtimer timer;
+	struct task_struct *task;
+};
 
-#अगर_घोषित CONFIG_64BIT
-# define __hrसमयr_घड़ी_base_align	____cacheline_aligned
-#अन्यथा
-# define __hrसमयr_घड़ी_base_align
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+# define __hrtimer_clock_base_align	____cacheline_aligned
+#else
+# define __hrtimer_clock_base_align
+#endif
 
 /**
- * काष्ठा hrसमयr_घड़ी_base - the समयr base क्रम a specअगरic घड़ी
- * @cpu_base:		per cpu घड़ी base
- * @index:		घड़ी type index क्रम per_cpu support when moving a
- *			समयr to a base on another cpu.
- * @घड़ीid:		घड़ी id क्रम per_cpu support
- * @seq:		seqcount around __run_hrसमयr
- * @running:		poपूर्णांकer to the currently running hrसमयr
- * @active:		red black tree root node क्रम the active समयrs
- * @get_समय:		function to retrieve the current समय of the घड़ी
- * @offset:		offset of this घड़ी to the monotonic base
+ * struct hrtimer_clock_base - the timer base for a specific clock
+ * @cpu_base:		per cpu clock base
+ * @index:		clock type index for per_cpu support when moving a
+ *			timer to a base on another cpu.
+ * @clockid:		clock id for per_cpu support
+ * @seq:		seqcount around __run_hrtimer
+ * @running:		pointer to the currently running hrtimer
+ * @active:		red black tree root node for the active timers
+ * @get_time:		function to retrieve the current time of the clock
+ * @offset:		offset of this clock to the monotonic base
  */
-काष्ठा hrसमयr_घड़ी_base अणु
-	काष्ठा hrसमयr_cpu_base	*cpu_base;
-	अचिन्हित पूर्णांक		index;
-	घड़ीid_t		घड़ीid;
+struct hrtimer_clock_base {
+	struct hrtimer_cpu_base	*cpu_base;
+	unsigned int		index;
+	clockid_t		clockid;
 	seqcount_raw_spinlock_t	seq;
-	काष्ठा hrसमयr		*running;
-	काष्ठा समयrqueue_head	active;
-	kसमय_प्रकार			(*get_समय)(व्योम);
-	kसमय_प्रकार			offset;
-पूर्ण __hrसमयr_घड़ी_base_align;
+	struct hrtimer		*running;
+	struct timerqueue_head	active;
+	ktime_t			(*get_time)(void);
+	ktime_t			offset;
+} __hrtimer_clock_base_align;
 
-क्रमागत  hrसमयr_base_type अणु
+enum  hrtimer_base_type {
 	HRTIMER_BASE_MONOTONIC,
 	HRTIMER_BASE_REALTIME,
 	HRTIMER_BASE_BOOTTIME,
@@ -178,367 +177,367 @@
 	HRTIMER_BASE_BOOTTIME_SOFT,
 	HRTIMER_BASE_TAI_SOFT,
 	HRTIMER_MAX_CLOCK_BASES,
-पूर्ण;
+};
 
 /**
- * काष्ठा hrसमयr_cpu_base - the per cpu घड़ी bases
- * @lock:		lock protecting the base and associated घड़ी bases
- *			and समयrs
+ * struct hrtimer_cpu_base - the per cpu clock bases
+ * @lock:		lock protecting the base and associated clock bases
+ *			and timers
  * @cpu:		cpu number
- * @active_bases:	Bitfield to mark bases with active समयrs
- * @घड़ी_was_set_seq:	Sequence counter of घड़ी was set events
+ * @active_bases:	Bitfield to mark bases with active timers
+ * @clock_was_set_seq:	Sequence counter of clock was set events
  * @hres_active:	State of high resolution mode
- * @in_hrtirq:		hrसमयr_पूर्णांकerrupt() is currently executing
- * @hang_detected:	The last hrसमयr पूर्णांकerrupt detected a hang
- * @softirq_activated:	displays, अगर the softirq is उठाओd - update of softirq
+ * @in_hrtirq:		hrtimer_interrupt() is currently executing
+ * @hang_detected:	The last hrtimer interrupt detected a hang
+ * @softirq_activated:	displays, if the softirq is raised - update of softirq
  *			related settings is not required then.
- * @nr_events:		Total number of hrसमयr पूर्णांकerrupt events
- * @nr_retries:		Total number of hrसमयr पूर्णांकerrupt retries
- * @nr_hangs:		Total number of hrसमयr पूर्णांकerrupt hangs
- * @max_hang_समय:	Maximum समय spent in hrसमयr_पूर्णांकerrupt
- * @softirq_expiry_lock: Lock which is taken जबतक softirq based hrसमयr are
+ * @nr_events:		Total number of hrtimer interrupt events
+ * @nr_retries:		Total number of hrtimer interrupt retries
+ * @nr_hangs:		Total number of hrtimer interrupt hangs
+ * @max_hang_time:	Maximum time spent in hrtimer_interrupt
+ * @softirq_expiry_lock: Lock which is taken while softirq based hrtimer are
  *			 expired
- * @समयr_रुकोers:	A hrसमयr_cancel() invocation रुकोs क्रम the समयr
+ * @timer_waiters:	A hrtimer_cancel() invocation waits for the timer
  *			callback to finish.
- * @expires_next:	असलolute समय of the next event, is required क्रम remote
- *			hrसमयr enqueue; it is the total first expiry समय (hard
- *			and soft hrसमयr are taken पूर्णांकo account)
- * @next_समयr:		Poपूर्णांकer to the first expiring समयr
- * @softirq_expires_next: Time to check, अगर soft queues needs also to be expired
- * @softirq_next_समयr: Poपूर्णांकer to the first expiring softirq based समयr
- * @घड़ी_base:		array of घड़ी bases क्रम this cpu
+ * @expires_next:	absolute time of the next event, is required for remote
+ *			hrtimer enqueue; it is the total first expiry time (hard
+ *			and soft hrtimer are taken into account)
+ * @next_timer:		Pointer to the first expiring timer
+ * @softirq_expires_next: Time to check, if soft queues needs also to be expired
+ * @softirq_next_timer: Pointer to the first expiring softirq based timer
+ * @clock_base:		array of clock bases for this cpu
  *
- * Note: next_समयr is just an optimization क्रम __हटाओ_hrसमयr().
- *	 Do not dereference the poपूर्णांकer because it is not reliable on
+ * Note: next_timer is just an optimization for __remove_hrtimer().
+ *	 Do not dereference the pointer because it is not reliable on
  *	 cross cpu removals.
  */
-काष्ठा hrसमयr_cpu_base अणु
+struct hrtimer_cpu_base {
 	raw_spinlock_t			lock;
-	अचिन्हित पूर्णांक			cpu;
-	अचिन्हित पूर्णांक			active_bases;
-	अचिन्हित पूर्णांक			घड़ी_was_set_seq;
-	अचिन्हित पूर्णांक			hres_active		: 1,
+	unsigned int			cpu;
+	unsigned int			active_bases;
+	unsigned int			clock_was_set_seq;
+	unsigned int			hres_active		: 1,
 					in_hrtirq		: 1,
 					hang_detected		: 1,
 					softirq_activated       : 1;
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
-	अचिन्हित पूर्णांक			nr_events;
-	अचिन्हित लघु			nr_retries;
-	अचिन्हित लघु			nr_hangs;
-	अचिन्हित पूर्णांक			max_hang_समय;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PREEMPT_RT
+#ifdef CONFIG_HIGH_RES_TIMERS
+	unsigned int			nr_events;
+	unsigned short			nr_retries;
+	unsigned short			nr_hangs;
+	unsigned int			max_hang_time;
+#endif
+#ifdef CONFIG_PREEMPT_RT
 	spinlock_t			softirq_expiry_lock;
-	atomic_t			समयr_रुकोers;
-#पूर्ण_अगर
-	kसमय_प्रकार				expires_next;
-	काष्ठा hrसमयr			*next_समयr;
-	kसमय_प्रकार				softirq_expires_next;
-	काष्ठा hrसमयr			*softirq_next_समयr;
-	काष्ठा hrसमयr_घड़ी_base	घड़ी_base[HRTIMER_MAX_CLOCK_BASES];
-पूर्ण ____cacheline_aligned;
+	atomic_t			timer_waiters;
+#endif
+	ktime_t				expires_next;
+	struct hrtimer			*next_timer;
+	ktime_t				softirq_expires_next;
+	struct hrtimer			*softirq_next_timer;
+	struct hrtimer_clock_base	clock_base[HRTIMER_MAX_CLOCK_BASES];
+} ____cacheline_aligned;
 
-अटल अंतरभूत व्योम hrसमयr_set_expires(काष्ठा hrसमयr *समयr, kसमय_प्रकार समय)
-अणु
-	समयr->node.expires = समय;
-	समयr->_softexpires = समय;
-पूर्ण
+static inline void hrtimer_set_expires(struct hrtimer *timer, ktime_t time)
+{
+	timer->node.expires = time;
+	timer->_softexpires = time;
+}
 
-अटल अंतरभूत व्योम hrसमयr_set_expires_range(काष्ठा hrसमयr *समयr, kसमय_प्रकार समय, kसमय_प्रकार delta)
-अणु
-	समयr->_softexpires = समय;
-	समयr->node.expires = kसमय_add_safe(समय, delta);
-पूर्ण
+static inline void hrtimer_set_expires_range(struct hrtimer *timer, ktime_t time, ktime_t delta)
+{
+	timer->_softexpires = time;
+	timer->node.expires = ktime_add_safe(time, delta);
+}
 
-अटल अंतरभूत व्योम hrसमयr_set_expires_range_ns(काष्ठा hrसमयr *समयr, kसमय_प्रकार समय, u64 delta)
-अणु
-	समयr->_softexpires = समय;
-	समयr->node.expires = kसमय_add_safe(समय, ns_to_kसमय(delta));
-पूर्ण
+static inline void hrtimer_set_expires_range_ns(struct hrtimer *timer, ktime_t time, u64 delta)
+{
+	timer->_softexpires = time;
+	timer->node.expires = ktime_add_safe(time, ns_to_ktime(delta));
+}
 
-अटल अंतरभूत व्योम hrसमयr_set_expires_tv64(काष्ठा hrसमयr *समयr, s64 tv64)
-अणु
-	समयr->node.expires = tv64;
-	समयr->_softexpires = tv64;
-पूर्ण
+static inline void hrtimer_set_expires_tv64(struct hrtimer *timer, s64 tv64)
+{
+	timer->node.expires = tv64;
+	timer->_softexpires = tv64;
+}
 
-अटल अंतरभूत व्योम hrसमयr_add_expires(काष्ठा hrसमयr *समयr, kसमय_प्रकार समय)
-अणु
-	समयr->node.expires = kसमय_add_safe(समयr->node.expires, समय);
-	समयr->_softexpires = kसमय_add_safe(समयr->_softexpires, समय);
-पूर्ण
+static inline void hrtimer_add_expires(struct hrtimer *timer, ktime_t time)
+{
+	timer->node.expires = ktime_add_safe(timer->node.expires, time);
+	timer->_softexpires = ktime_add_safe(timer->_softexpires, time);
+}
 
-अटल अंतरभूत व्योम hrसमयr_add_expires_ns(काष्ठा hrसमयr *समयr, u64 ns)
-अणु
-	समयr->node.expires = kसमय_add_ns(समयr->node.expires, ns);
-	समयr->_softexpires = kसमय_add_ns(समयr->_softexpires, ns);
-पूर्ण
+static inline void hrtimer_add_expires_ns(struct hrtimer *timer, u64 ns)
+{
+	timer->node.expires = ktime_add_ns(timer->node.expires, ns);
+	timer->_softexpires = ktime_add_ns(timer->_softexpires, ns);
+}
 
-अटल अंतरभूत kसमय_प्रकार hrसमयr_get_expires(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->node.expires;
-पूर्ण
+static inline ktime_t hrtimer_get_expires(const struct hrtimer *timer)
+{
+	return timer->node.expires;
+}
 
-अटल अंतरभूत kसमय_प्रकार hrसमयr_get_softexpires(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->_softexpires;
-पूर्ण
+static inline ktime_t hrtimer_get_softexpires(const struct hrtimer *timer)
+{
+	return timer->_softexpires;
+}
 
-अटल अंतरभूत s64 hrसमयr_get_expires_tv64(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->node.expires;
-पूर्ण
-अटल अंतरभूत s64 hrसमयr_get_softexpires_tv64(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->_softexpires;
-पूर्ण
+static inline s64 hrtimer_get_expires_tv64(const struct hrtimer *timer)
+{
+	return timer->node.expires;
+}
+static inline s64 hrtimer_get_softexpires_tv64(const struct hrtimer *timer)
+{
+	return timer->_softexpires;
+}
 
-अटल अंतरभूत s64 hrसमयr_get_expires_ns(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस kसमय_प्रकारo_ns(समयr->node.expires);
-पूर्ण
+static inline s64 hrtimer_get_expires_ns(const struct hrtimer *timer)
+{
+	return ktime_to_ns(timer->node.expires);
+}
 
-अटल अंतरभूत kसमय_प्रकार hrसमयr_expires_reमुख्यing(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस kसमय_sub(समयr->node.expires, समयr->base->get_समय());
-पूर्ण
+static inline ktime_t hrtimer_expires_remaining(const struct hrtimer *timer)
+{
+	return ktime_sub(timer->node.expires, timer->base->get_time());
+}
 
-अटल अंतरभूत kसमय_प्रकार hrसमयr_cb_get_समय(काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->base->get_समय();
-पूर्ण
+static inline ktime_t hrtimer_cb_get_time(struct hrtimer *timer)
+{
+	return timer->base->get_time();
+}
 
-अटल अंतरभूत पूर्णांक hrसमयr_is_hres_active(काष्ठा hrसमयr *समयr)
-अणु
-	वापस IS_ENABLED(CONFIG_HIGH_RES_TIMERS) ?
-		समयr->base->cpu_base->hres_active : 0;
-पूर्ण
+static inline int hrtimer_is_hres_active(struct hrtimer *timer)
+{
+	return IS_ENABLED(CONFIG_HIGH_RES_TIMERS) ?
+		timer->base->cpu_base->hres_active : 0;
+}
 
-#अगर_घोषित CONFIG_HIGH_RES_TIMERS
-काष्ठा घड़ी_event_device;
+#ifdef CONFIG_HIGH_RES_TIMERS
+struct clock_event_device;
 
-बाह्य व्योम hrसमयr_पूर्णांकerrupt(काष्ठा घड़ी_event_device *dev);
+extern void hrtimer_interrupt(struct clock_event_device *dev);
 
-बाह्य व्योम घड़ी_was_set_delayed(व्योम);
+extern void clock_was_set_delayed(void);
 
-बाह्य अचिन्हित पूर्णांक hrसमयr_resolution;
+extern unsigned int hrtimer_resolution;
 
-#अन्यथा
+#else
 
-#घोषणा hrसमयr_resolution	(अचिन्हित पूर्णांक)LOW_RES_NSEC
+#define hrtimer_resolution	(unsigned int)LOW_RES_NSEC
 
-अटल अंतरभूत व्योम घड़ी_was_set_delayed(व्योम) अणु पूर्ण
+static inline void clock_was_set_delayed(void) { }
 
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत kसमय_प्रकार
-__hrसमयr_expires_reमुख्यing_adjusted(स्थिर काष्ठा hrसमयr *समयr, kसमय_प्रकार now)
-अणु
-	kसमय_प्रकार rem = kसमय_sub(समयr->node.expires, now);
+static inline ktime_t
+__hrtimer_expires_remaining_adjusted(const struct hrtimer *timer, ktime_t now)
+{
+	ktime_t rem = ktime_sub(timer->node.expires, now);
 
 	/*
-	 * Adjust relative समयrs क्रम the extra we added in
-	 * hrसमयr_start_range_ns() to prevent लघु समयouts.
+	 * Adjust relative timers for the extra we added in
+	 * hrtimer_start_range_ns() to prevent short timeouts.
 	 */
-	अगर (IS_ENABLED(CONFIG_TIME_LOW_RES) && समयr->is_rel)
-		rem -= hrसमयr_resolution;
-	वापस rem;
-पूर्ण
+	if (IS_ENABLED(CONFIG_TIME_LOW_RES) && timer->is_rel)
+		rem -= hrtimer_resolution;
+	return rem;
+}
 
-अटल अंतरभूत kसमय_प्रकार
-hrसमयr_expires_reमुख्यing_adjusted(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस __hrसमयr_expires_reमुख्यing_adjusted(समयr,
-						    समयr->base->get_समय());
-पूर्ण
+static inline ktime_t
+hrtimer_expires_remaining_adjusted(const struct hrtimer *timer)
+{
+	return __hrtimer_expires_remaining_adjusted(timer,
+						    timer->base->get_time());
+}
 
-बाह्य व्योम घड़ी_was_set(व्योम);
-#अगर_घोषित CONFIG_TIMERFD
-बाह्य व्योम समयrfd_घड़ी_was_set(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम समयrfd_घड़ी_was_set(व्योम) अणु पूर्ण
-#पूर्ण_अगर
-बाह्य व्योम hrसमयrs_resume(व्योम);
+extern void clock_was_set(void);
+#ifdef CONFIG_TIMERFD
+extern void timerfd_clock_was_set(void);
+#else
+static inline void timerfd_clock_was_set(void) { }
+#endif
+extern void hrtimers_resume(void);
 
-DECLARE_PER_CPU(काष्ठा tick_device, tick_cpu_device);
+DECLARE_PER_CPU(struct tick_device, tick_cpu_device);
 
-#अगर_घोषित CONFIG_PREEMPT_RT
-व्योम hrसमयr_cancel_रुको_running(स्थिर काष्ठा hrसमयr *समयr);
-#अन्यथा
-अटल अंतरभूत व्योम hrसमयr_cancel_रुको_running(काष्ठा hrसमयr *समयr)
-अणु
+#ifdef CONFIG_PREEMPT_RT
+void hrtimer_cancel_wait_running(const struct hrtimer *timer);
+#else
+static inline void hrtimer_cancel_wait_running(struct hrtimer *timer)
+{
 	cpu_relax();
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* Exported समयr functions: */
+/* Exported timer functions: */
 
-/* Initialize समयrs: */
-बाह्य व्योम hrसमयr_init(काष्ठा hrसमयr *समयr, घड़ीid_t which_घड़ी,
-			 क्रमागत hrसमयr_mode mode);
-बाह्य व्योम hrसमयr_init_sleeper(काष्ठा hrसमयr_sleeper *sl, घड़ीid_t घड़ी_id,
-				 क्रमागत hrसमयr_mode mode);
+/* Initialize timers: */
+extern void hrtimer_init(struct hrtimer *timer, clockid_t which_clock,
+			 enum hrtimer_mode mode);
+extern void hrtimer_init_sleeper(struct hrtimer_sleeper *sl, clockid_t clock_id,
+				 enum hrtimer_mode mode);
 
-#अगर_घोषित CONFIG_DEBUG_OBJECTS_TIMERS
-बाह्य व्योम hrसमयr_init_on_stack(काष्ठा hrसमयr *समयr, घड़ीid_t which_घड़ी,
-				  क्रमागत hrसमयr_mode mode);
-बाह्य व्योम hrसमयr_init_sleeper_on_stack(काष्ठा hrसमयr_sleeper *sl,
-					  घड़ीid_t घड़ी_id,
-					  क्रमागत hrसमयr_mode mode);
+#ifdef CONFIG_DEBUG_OBJECTS_TIMERS
+extern void hrtimer_init_on_stack(struct hrtimer *timer, clockid_t which_clock,
+				  enum hrtimer_mode mode);
+extern void hrtimer_init_sleeper_on_stack(struct hrtimer_sleeper *sl,
+					  clockid_t clock_id,
+					  enum hrtimer_mode mode);
 
-बाह्य व्योम destroy_hrसमयr_on_stack(काष्ठा hrसमयr *समयr);
-#अन्यथा
-अटल अंतरभूत व्योम hrसमयr_init_on_stack(काष्ठा hrसमयr *समयr,
-					 घड़ीid_t which_घड़ी,
-					 क्रमागत hrसमयr_mode mode)
-अणु
-	hrसमयr_init(समयr, which_घड़ी, mode);
-पूर्ण
+extern void destroy_hrtimer_on_stack(struct hrtimer *timer);
+#else
+static inline void hrtimer_init_on_stack(struct hrtimer *timer,
+					 clockid_t which_clock,
+					 enum hrtimer_mode mode)
+{
+	hrtimer_init(timer, which_clock, mode);
+}
 
-अटल अंतरभूत व्योम hrसमयr_init_sleeper_on_stack(काष्ठा hrसमयr_sleeper *sl,
-						 घड़ीid_t घड़ी_id,
-						 क्रमागत hrसमयr_mode mode)
-अणु
-	hrसमयr_init_sleeper(sl, घड़ी_id, mode);
-पूर्ण
+static inline void hrtimer_init_sleeper_on_stack(struct hrtimer_sleeper *sl,
+						 clockid_t clock_id,
+						 enum hrtimer_mode mode)
+{
+	hrtimer_init_sleeper(sl, clock_id, mode);
+}
 
-अटल अंतरभूत व्योम destroy_hrसमयr_on_stack(काष्ठा hrसमयr *समयr) अणु पूर्ण
-#पूर्ण_अगर
+static inline void destroy_hrtimer_on_stack(struct hrtimer *timer) { }
+#endif
 
-/* Basic समयr operations: */
-बाह्य व्योम hrसमयr_start_range_ns(काष्ठा hrसमयr *समयr, kसमय_प्रकार tim,
-				   u64 range_ns, स्थिर क्रमागत hrसमयr_mode mode);
+/* Basic timer operations: */
+extern void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+				   u64 range_ns, const enum hrtimer_mode mode);
 
 /**
- * hrसमयr_start - (re)start an hrसमयr
- * @समयr:	the समयr to be added
- * @tim:	expiry समय
- * @mode:	समयr mode: असलolute (HRTIMER_MODE_ABS) or
+ * hrtimer_start - (re)start an hrtimer
+ * @timer:	the timer to be added
+ * @tim:	expiry time
+ * @mode:	timer mode: absolute (HRTIMER_MODE_ABS) or
  *		relative (HRTIMER_MODE_REL), and pinned (HRTIMER_MODE_PINNED);
- *		softirq based mode is considered क्रम debug purpose only!
+ *		softirq based mode is considered for debug purpose only!
  */
-अटल अंतरभूत व्योम hrसमयr_start(काष्ठा hrसमयr *समयr, kसमय_प्रकार tim,
-				 स्थिर क्रमागत hrसमयr_mode mode)
-अणु
-	hrसमयr_start_range_ns(समयr, tim, 0, mode);
-पूर्ण
+static inline void hrtimer_start(struct hrtimer *timer, ktime_t tim,
+				 const enum hrtimer_mode mode)
+{
+	hrtimer_start_range_ns(timer, tim, 0, mode);
+}
 
-बाह्य पूर्णांक hrसमयr_cancel(काष्ठा hrसमयr *समयr);
-बाह्य पूर्णांक hrसमयr_try_to_cancel(काष्ठा hrसमयr *समयr);
+extern int hrtimer_cancel(struct hrtimer *timer);
+extern int hrtimer_try_to_cancel(struct hrtimer *timer);
 
-अटल अंतरभूत व्योम hrसमयr_start_expires(काष्ठा hrसमयr *समयr,
-					 क्रमागत hrसमयr_mode mode)
-अणु
+static inline void hrtimer_start_expires(struct hrtimer *timer,
+					 enum hrtimer_mode mode)
+{
 	u64 delta;
-	kसमय_प्रकार soft, hard;
-	soft = hrसमयr_get_softexpires(समयr);
-	hard = hrसमयr_get_expires(समयr);
-	delta = kसमय_प्रकारo_ns(kसमय_sub(hard, soft));
-	hrसमयr_start_range_ns(समयr, soft, delta, mode);
-पूर्ण
+	ktime_t soft, hard;
+	soft = hrtimer_get_softexpires(timer);
+	hard = hrtimer_get_expires(timer);
+	delta = ktime_to_ns(ktime_sub(hard, soft));
+	hrtimer_start_range_ns(timer, soft, delta, mode);
+}
 
-व्योम hrसमयr_sleeper_start_expires(काष्ठा hrसमयr_sleeper *sl,
-				   क्रमागत hrसमयr_mode mode);
+void hrtimer_sleeper_start_expires(struct hrtimer_sleeper *sl,
+				   enum hrtimer_mode mode);
 
-अटल अंतरभूत व्योम hrसमयr_restart(काष्ठा hrसमयr *समयr)
-अणु
-	hrसमयr_start_expires(समयr, HRTIMER_MODE_ABS);
-पूर्ण
+static inline void hrtimer_restart(struct hrtimer *timer)
+{
+	hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
+}
 
-/* Query समयrs: */
-बाह्य kसमय_प्रकार __hrसमयr_get_reमुख्यing(स्थिर काष्ठा hrसमयr *समयr, bool adjust);
+/* Query timers: */
+extern ktime_t __hrtimer_get_remaining(const struct hrtimer *timer, bool adjust);
 
 /**
- * hrसमयr_get_reमुख्यing - get reमुख्यing समय क्रम the समयr
- * @समयr:	the समयr to पढ़ो
+ * hrtimer_get_remaining - get remaining time for the timer
+ * @timer:	the timer to read
  */
-अटल अंतरभूत kसमय_प्रकार hrसमयr_get_reमुख्यing(स्थिर काष्ठा hrसमयr *समयr)
-अणु
-	वापस __hrसमयr_get_reमुख्यing(समयr, false);
-पूर्ण
+static inline ktime_t hrtimer_get_remaining(const struct hrtimer *timer)
+{
+	return __hrtimer_get_remaining(timer, false);
+}
 
-बाह्य u64 hrसमयr_get_next_event(व्योम);
-बाह्य u64 hrसमयr_next_event_without(स्थिर काष्ठा hrसमयr *exclude);
+extern u64 hrtimer_get_next_event(void);
+extern u64 hrtimer_next_event_without(const struct hrtimer *exclude);
 
-बाह्य bool hrसमयr_active(स्थिर काष्ठा hrसमयr *समयr);
+extern bool hrtimer_active(const struct hrtimer *timer);
 
 /**
- * hrसमयr_is_queued - check, whether the समयr is on one of the queues
- * @समयr:	Timer to check
+ * hrtimer_is_queued - check, whether the timer is on one of the queues
+ * @timer:	Timer to check
  *
- * Returns: True अगर the समयr is queued, false otherwise
+ * Returns: True if the timer is queued, false otherwise
  *
  * The function can be used lockless, but it gives only a current snapshot.
  */
-अटल अंतरभूत bool hrसमयr_is_queued(काष्ठा hrसमयr *समयr)
-अणु
-	/* The READ_ONCE pairs with the update functions of समयr->state */
-	वापस !!(READ_ONCE(समयr->state) & HRTIMER_STATE_ENQUEUED);
-पूर्ण
+static inline bool hrtimer_is_queued(struct hrtimer *timer)
+{
+	/* The READ_ONCE pairs with the update functions of timer->state */
+	return !!(READ_ONCE(timer->state) & HRTIMER_STATE_ENQUEUED);
+}
 
 /*
- * Helper function to check, whether the समयr is running the callback
+ * Helper function to check, whether the timer is running the callback
  * function
  */
-अटल अंतरभूत पूर्णांक hrसमयr_callback_running(काष्ठा hrसमयr *समयr)
-अणु
-	वापस समयr->base->running == समयr;
-पूर्ण
+static inline int hrtimer_callback_running(struct hrtimer *timer)
+{
+	return timer->base->running == timer;
+}
 
-/* Forward a hrसमयr so it expires after now: */
-बाह्य u64
-hrसमयr_क्रमward(काष्ठा hrसमयr *समयr, kसमय_प्रकार now, kसमय_प्रकार पूर्णांकerval);
+/* Forward a hrtimer so it expires after now: */
+extern u64
+hrtimer_forward(struct hrtimer *timer, ktime_t now, ktime_t interval);
 
 /**
- * hrसमयr_क्रमward_now - क्रमward the समयr expiry so it expires after now
- * @समयr:	hrसमयr to क्रमward
- * @पूर्णांकerval:	the पूर्णांकerval to क्रमward
+ * hrtimer_forward_now - forward the timer expiry so it expires after now
+ * @timer:	hrtimer to forward
+ * @interval:	the interval to forward
  *
- * Forward the समयr expiry so it will expire after the current समय
- * of the hrसमयr घड़ी base. Returns the number of overruns.
+ * Forward the timer expiry so it will expire after the current time
+ * of the hrtimer clock base. Returns the number of overruns.
  *
- * Can be safely called from the callback function of @समयr. If
- * called from other contexts @समयr must neither be enqueued nor
+ * Can be safely called from the callback function of @timer. If
+ * called from other contexts @timer must neither be enqueued nor
  * running the callback and the caller needs to take care of
  * serialization.
  *
- * Note: This only updates the समयr expiry value and करोes not requeue
- * the समयr.
+ * Note: This only updates the timer expiry value and does not requeue
+ * the timer.
  */
-अटल अंतरभूत u64 hrसमयr_क्रमward_now(काष्ठा hrसमयr *समयr,
-				      kसमय_प्रकार पूर्णांकerval)
-अणु
-	वापस hrसमयr_क्रमward(समयr, समयr->base->get_समय(), पूर्णांकerval);
-पूर्ण
+static inline u64 hrtimer_forward_now(struct hrtimer *timer,
+				      ktime_t interval)
+{
+	return hrtimer_forward(timer, timer->base->get_time(), interval);
+}
 
 /* Precise sleep: */
 
-बाह्य पूर्णांक nanosleep_copyout(काष्ठा restart_block *, काष्ठा बारpec64 *);
-बाह्य दीर्घ hrसमयr_nanosleep(kसमय_प्रकार rqtp, स्थिर क्रमागत hrसमयr_mode mode,
-			      स्थिर घड़ीid_t घड़ीid);
+extern int nanosleep_copyout(struct restart_block *, struct timespec64 *);
+extern long hrtimer_nanosleep(ktime_t rqtp, const enum hrtimer_mode mode,
+			      const clockid_t clockid);
 
-बाह्य पूर्णांक schedule_hrसमयout_range(kसमय_प्रकार *expires, u64 delta,
-				    स्थिर क्रमागत hrसमयr_mode mode);
-बाह्य पूर्णांक schedule_hrसमयout_range_घड़ी(kसमय_प्रकार *expires,
+extern int schedule_hrtimeout_range(ktime_t *expires, u64 delta,
+				    const enum hrtimer_mode mode);
+extern int schedule_hrtimeout_range_clock(ktime_t *expires,
 					  u64 delta,
-					  स्थिर क्रमागत hrसमयr_mode mode,
-					  घड़ीid_t घड़ी_id);
-बाह्य पूर्णांक schedule_hrसमयout(kसमय_प्रकार *expires, स्थिर क्रमागत hrसमयr_mode mode);
+					  const enum hrtimer_mode mode,
+					  clockid_t clock_id);
+extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mode mode);
 
-/* Soft पूर्णांकerrupt function to run the hrसमयr queues: */
-बाह्य व्योम hrसमयr_run_queues(व्योम);
+/* Soft interrupt function to run the hrtimer queues: */
+extern void hrtimer_run_queues(void);
 
 /* Bootup initialization: */
-बाह्य व्योम __init hrसमयrs_init(व्योम);
+extern void __init hrtimers_init(void);
 
-/* Show pending समयrs: */
-बाह्य व्योम sysrq_समयr_list_show(व्योम);
+/* Show pending timers: */
+extern void sysrq_timer_list_show(void);
 
-पूर्णांक hrसमयrs_prepare_cpu(अचिन्हित पूर्णांक cpu);
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-पूर्णांक hrसमयrs_dead_cpu(अचिन्हित पूर्णांक cpu);
-#अन्यथा
-#घोषणा hrसमयrs_dead_cpu	शून्य
-#पूर्ण_अगर
+int hrtimers_prepare_cpu(unsigned int cpu);
+#ifdef CONFIG_HOTPLUG_CPU
+int hrtimers_dead_cpu(unsigned int cpu);
+#else
+#define hrtimers_dead_cpu	NULL
+#endif
 
-#पूर्ण_अगर
+#endif

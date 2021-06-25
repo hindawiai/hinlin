@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Microchip KSZ9477 series रेजिस्टर access through SPI
+ * Microchip KSZ9477 series register access through SPI
  *
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/spi/spi.h>
 
-#समावेश "ksz_common.h"
+#include "ksz_common.h"
 
-#घोषणा SPI_ADDR_SHIFT			24
-#घोषणा SPI_ADDR_ALIGN			3
-#घोषणा SPI_TURNAROUND_SHIFT		5
+#define SPI_ADDR_SHIFT			24
+#define SPI_ADDR_ALIGN			3
+#define SPI_TURNAROUND_SHIFT		5
 
 KSZ_REGMAP_TABLE(ksz9477, 32, SPI_ADDR_SHIFT,
 		 SPI_TURNAROUND_SHIFT, SPI_ADDR_ALIGN);
 
-अटल पूर्णांक ksz9477_spi_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा regmap_config rc;
-	काष्ठा ksz_device *dev;
-	पूर्णांक i, ret;
+static int ksz9477_spi_probe(struct spi_device *spi)
+{
+	struct regmap_config rc;
+	struct ksz_device *dev;
+	int i, ret;
 
-	dev = ksz_चयन_alloc(&spi->dev, spi);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = ksz_switch_alloc(&spi->dev, spi);
+	if (!dev)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ksz9477_regmap_config); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ksz9477_regmap_config); i++) {
 		rc = ksz9477_regmap_config[i];
 		rc.lock_arg = &dev->regmap_mutex;
 		dev->regmap[i] = devm_regmap_init_spi(spi, &rc);
-		अगर (IS_ERR(dev->regmap[i])) अणु
+		if (IS_ERR(dev->regmap[i])) {
 			ret = PTR_ERR(dev->regmap[i]);
 			dev_err(&spi->dev,
 				"Failed to initialize regmap%i: %d\n",
 				ksz9477_regmap_config[i].val_bits, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (spi->dev.platक्रमm_data)
-		dev->pdata = spi->dev.platक्रमm_data;
+	if (spi->dev.platform_data)
+		dev->pdata = spi->dev.platform_data;
 
 	/* setup spi */
 	spi->mode = SPI_MODE_3;
 	ret = spi_setup(spi);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = ksz9477_चयन_रेजिस्टर(dev);
+	ret = ksz9477_switch_register(dev);
 
 	/* Main DSA driver may not be started yet. */
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spi_set_drvdata(spi, dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ksz9477_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ksz_device *dev = spi_get_drvdata(spi);
+static int ksz9477_spi_remove(struct spi_device *spi)
+{
+	struct ksz_device *dev = spi_get_drvdata(spi);
 
-	अगर (dev)
-		ksz_चयन_हटाओ(dev);
+	if (dev)
+		ksz_switch_remove(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ksz9477_spi_shutकरोwn(काष्ठा spi_device *spi)
-अणु
-	काष्ठा ksz_device *dev = spi_get_drvdata(spi);
+static void ksz9477_spi_shutdown(struct spi_device *spi)
+{
+	struct ksz_device *dev = spi_get_drvdata(spi);
 
-	अगर (dev && dev->dev_ops->shutकरोwn)
-		dev->dev_ops->shutकरोwn(dev);
-पूर्ण
+	if (dev && dev->dev_ops->shutdown)
+		dev->dev_ops->shutdown(dev);
+}
 
-अटल स्थिर काष्ठा of_device_id ksz9477_dt_ids[] = अणु
-	अणु .compatible = "microchip,ksz9477" पूर्ण,
-	अणु .compatible = "microchip,ksz9897" पूर्ण,
-	अणु .compatible = "microchip,ksz9893" पूर्ण,
-	अणु .compatible = "microchip,ksz9563" पूर्ण,
-	अणु .compatible = "microchip,ksz8563" पूर्ण,
-	अणु .compatible = "microchip,ksz9567" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ksz9477_dt_ids[] = {
+	{ .compatible = "microchip,ksz9477" },
+	{ .compatible = "microchip,ksz9897" },
+	{ .compatible = "microchip,ksz9893" },
+	{ .compatible = "microchip,ksz9563" },
+	{ .compatible = "microchip,ksz8563" },
+	{ .compatible = "microchip,ksz9567" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ksz9477_dt_ids);
 
-अटल काष्ठा spi_driver ksz9477_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver ksz9477_spi_driver = {
+	.driver = {
 		.name	= "ksz9477-switch",
 		.owner	= THIS_MODULE,
 		.of_match_table = of_match_ptr(ksz9477_dt_ids),
-	पूर्ण,
+	},
 	.probe	= ksz9477_spi_probe,
-	.हटाओ	= ksz9477_spi_हटाओ,
-	.shutकरोwn = ksz9477_spi_shutकरोwn,
-पूर्ण;
+	.remove	= ksz9477_spi_remove,
+	.shutdown = ksz9477_spi_shutdown,
+};
 
 module_spi_driver(ksz9477_spi_driver);
 

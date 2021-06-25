@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __IA_CSS_DVS_HOST_H
-#घोषणा __IA_CSS_DVS_HOST_H
+#ifndef __IA_CSS_DVS_HOST_H
+#define __IA_CSS_DVS_HOST_H
 
-#समावेश "ia_css_frame_public.h"
-#समावेश "ia_css_binary.h"
-#समावेश "sh_css_params.h"
+#include "ia_css_frame_public.h"
+#include "ia_css_binary.h"
+#include "sh_css_params.h"
 
-#समावेश "ia_css_types.h"
-#समावेश "ia_css_dvs_types.h"
-#समावेश "ia_css_dvs_param.h"
+#include "ia_css_types.h"
+#include "ia_css_dvs_types.h"
+#include "ia_css_dvs_param.h"
 
-/* For bilinear पूर्णांकerpolation, we need to add +1 to input block height calculation.
- * For bicubic पूर्णांकerpolation, we will need to add +3 instaed */
-#घोषणा DVS_GDC_BLI_INTERP_ENVELOPE 1
-#घोषणा DVS_GDC_BCI_INTERP_ENVELOPE 3
+/* For bilinear interpolation, we need to add +1 to input block height calculation.
+ * For bicubic interpolation, we will need to add +3 instaed */
+#define DVS_GDC_BLI_INTERP_ENVELOPE 1
+#define DVS_GDC_BCI_INTERP_ENVELOPE 3
 
-व्योम
+void
 ia_css_dvs_config(
-    काष्ठा sh_css_isp_dvs_isp_config      *to,
-    स्थिर काष्ठा ia_css_dvs_configuration *from,
-    अचिन्हित पूर्णांक size);
+    struct sh_css_isp_dvs_isp_config      *to,
+    const struct ia_css_dvs_configuration *from,
+    unsigned int size);
 
-व्योम
+void
 ia_css_dvs_configure(
-    स्थिर काष्ठा ia_css_binary     *binary,
-    स्थिर काष्ठा ia_css_frame_info *from);
+    const struct ia_css_binary     *binary,
+    const struct ia_css_frame_info *from);
 
-व्योम
+void
 convert_dvs_6axis_config(
-    काष्ठा ia_css_isp_parameters *params,
-    स्थिर काष्ठा ia_css_binary *binary);
+    struct ia_css_isp_parameters *params,
+    const struct ia_css_binary *binary);
 
-काष्ठा ia_css_host_data *
+struct ia_css_host_data *
 convert_allocate_dvs_6axis_config(
-    स्थिर काष्ठा ia_css_dvs_6axis_config *dvs_6axis_config,
-    स्थिर काष्ठा ia_css_binary *binary,
-    स्थिर काष्ठा ia_css_frame_info *dvs_in_frame_info);
+    const struct ia_css_dvs_6axis_config *dvs_6axis_config,
+    const struct ia_css_binary *binary,
+    const struct ia_css_frame_info *dvs_in_frame_info);
 
-पूर्णांक
+int
 store_dvs_6axis_config(
-    स्थिर काष्ठा ia_css_dvs_6axis_config *dvs_6axis_config,
-    स्थिर काष्ठा ia_css_binary *binary,
-    स्थिर काष्ठा ia_css_frame_info *dvs_in_frame_info,
+    const struct ia_css_dvs_6axis_config *dvs_6axis_config,
+    const struct ia_css_binary *binary,
+    const struct ia_css_frame_info *dvs_in_frame_info,
     ia_css_ptr ddr_addr_y);
 
-#पूर्ण_अगर /* __IA_CSS_DVS_HOST_H */
+#endif /* __IA_CSS_DVS_HOST_H */

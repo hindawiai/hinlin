@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  *  SGI GBE frame buffer driver
  *
@@ -6,104 +5,104 @@
  *  Copyright (C) 2002 Vivien Chappelier <vivien.chappelier@linux-mips.org>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the मुख्य directory of this archive क्रम
+ *  License. See the file COPYING in the main directory of this archive for
  *  more details.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/gfp.h>
+#include <linux/fb.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/io.h>
 
-#अगर_घोषित CONFIG_MIPS
-#समावेश <यंत्र/addrspace.h>
-#पूर्ण_अगर
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/tlbflush.h>
+#ifdef CONFIG_MIPS
+#include <asm/addrspace.h>
+#endif
+#include <asm/byteorder.h>
+#include <asm/tlbflush.h>
 
-#समावेश <video/gbe.h>
+#include <video/gbe.h>
 
-अटल काष्ठा sgi_gbe *gbe;
+static struct sgi_gbe *gbe;
 
-काष्ठा gbefb_par अणु
-	काष्ठा fb_var_screeninfo var;
-	काष्ठा gbe_timing_info timing;
-	पूर्णांक wc_cookie;
-	पूर्णांक valid;
-पूर्ण;
+struct gbefb_par {
+	struct fb_var_screeninfo var;
+	struct gbe_timing_info timing;
+	int wc_cookie;
+	int valid;
+};
 
-#घोषणा GBE_BASE	0x16000000 /* SGI O2 */
+#define GBE_BASE	0x16000000 /* SGI O2 */
 
-/* macro क्रम fastest ग_लिखो-though access to the framebuffer */
-#अगर_घोषित CONFIG_MIPS
-#अगर_घोषित CONFIG_CPU_R10000
-#घोषणा pgprot_fb(_prot) (((_prot) & (~_CACHE_MASK)) | _CACHE_UNCACHED_ACCELERATED)
-#अन्यथा
-#घोषणा pgprot_fb(_prot) (((_prot) & (~_CACHE_MASK)) | _CACHE_CACHABLE_NO_WA)
-#पूर्ण_अगर
-#पूर्ण_अगर
+/* macro for fastest write-though access to the framebuffer */
+#ifdef CONFIG_MIPS
+#ifdef CONFIG_CPU_R10000
+#define pgprot_fb(_prot) (((_prot) & (~_CACHE_MASK)) | _CACHE_UNCACHED_ACCELERATED)
+#else
+#define pgprot_fb(_prot) (((_prot) & (~_CACHE_MASK)) | _CACHE_CACHABLE_NO_WA)
+#endif
+#endif
 
 /*
- *  RAM we reserve क्रम the frame buffer. This defines the maximum screen
+ *  RAM we reserve for the frame buffer. This defines the maximum screen
  *  size
  */
-#अगर CONFIG_FB_GBE_MEM > 8
-#त्रुटि GBE Framebuffer cannot use more than 8MB of memory
-#पूर्ण_अगर
+#if CONFIG_FB_GBE_MEM > 8
+#error GBE Framebuffer cannot use more than 8MB of memory
+#endif
 
-#घोषणा TILE_SHIFT 16
-#घोषणा TILE_SIZE (1 << TILE_SHIFT)
-#घोषणा TILE_MASK (TILE_SIZE - 1)
+#define TILE_SHIFT 16
+#define TILE_SIZE (1 << TILE_SHIFT)
+#define TILE_MASK (TILE_SIZE - 1)
 
-अटल अचिन्हित पूर्णांक gbe_mem_size = CONFIG_FB_GBE_MEM * 1024*1024;
-अटल व्योम *gbe_mem;
-अटल dma_addr_t gbe_dma_addr;
-अटल अचिन्हित दीर्घ gbe_mem_phys;
+static unsigned int gbe_mem_size = CONFIG_FB_GBE_MEM * 1024*1024;
+static void *gbe_mem;
+static dma_addr_t gbe_dma_addr;
+static unsigned long gbe_mem_phys;
 
-अटल काष्ठा अणु
-	uपूर्णांक16_t *cpu;
+static struct {
+	uint16_t *cpu;
 	dma_addr_t dma;
-पूर्ण gbe_tiles;
+} gbe_tiles;
 
-अटल पूर्णांक gbe_revision;
+static int gbe_revision;
 
-अटल पूर्णांक ypan, ywrap;
+static int ypan, ywrap;
 
-अटल uपूर्णांक32_t pseuकरो_palette[16];
-अटल uपूर्णांक32_t gbe_cmap[256];
-अटल पूर्णांक gbe_turned_on; /* 0 turned off, 1 turned on */
+static uint32_t pseudo_palette[16];
+static uint32_t gbe_cmap[256];
+static int gbe_turned_on; /* 0 turned off, 1 turned on */
 
-अटल अक्षर *mode_option = शून्य;
+static char *mode_option = NULL;
 
-/* शेष CRT mode */
-अटल काष्ठा fb_var_screeninfo शेष_var_CRT = अणु
-	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz करोtघड़ी) */
+/* default CRT mode */
+static struct fb_var_screeninfo default_var_CRT = {
+	/* 640x480, 60 Hz, Non-Interlaced (25.175 MHz dotclock) */
 	.xres		= 640,
 	.yres		= 480,
-	.xres_भव	= 640,
-	.yres_भव	= 480,
+	.xres_virtual	= 640,
+	.yres_virtual	= 480,
 	.xoffset	= 0,
 	.yoffset	= 0,
 	.bits_per_pixel	= 8,
 	.grayscale	= 0,
-	.red		= अणु 0, 8, 0 पूर्ण,
-	.green		= अणु 0, 8, 0 पूर्ण,
-	.blue		= अणु 0, 8, 0 पूर्ण,
-	.transp		= अणु 0, 0, 0 पूर्ण,
+	.red		= { 0, 8, 0 },
+	.green		= { 0, 8, 0 },
+	.blue		= { 0, 8, 0 },
+	.transp		= { 0, 0, 0 },
 	.nonstd		= 0,
 	.activate	= 0,
 	.height		= -1,
 	.width		= -1,
 	.accel_flags	= 0,
-	.pixघड़ी	= 39722,	/* picoseconds */
+	.pixclock	= 39722,	/* picoseconds */
 	.left_margin	= 48,
 	.right_margin	= 16,
 	.upper_margin	= 33,
@@ -112,29 +111,29 @@
 	.vsync_len	= 2,
 	.sync		= 0,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 
-/* शेष LCD mode */
-अटल काष्ठा fb_var_screeninfo शेष_var_LCD = अणु
+/* default LCD mode */
+static struct fb_var_screeninfo default_var_LCD = {
 	/* 1600x1024, 8 bpp */
 	.xres		= 1600,
 	.yres		= 1024,
-	.xres_भव	= 1600,
-	.yres_भव	= 1024,
+	.xres_virtual	= 1600,
+	.yres_virtual	= 1024,
 	.xoffset	= 0,
 	.yoffset	= 0,
 	.bits_per_pixel	= 8,
 	.grayscale	= 0,
-	.red		= अणु 0, 8, 0 पूर्ण,
-	.green		= अणु 0, 8, 0 पूर्ण,
-	.blue		= अणु 0, 8, 0 पूर्ण,
-	.transp		= अणु 0, 0, 0 पूर्ण,
+	.red		= { 0, 8, 0 },
+	.green		= { 0, 8, 0 },
+	.blue		= { 0, 8, 0 },
+	.transp		= { 0, 0, 0 },
 	.nonstd		= 0,
 	.activate	= 0,
 	.height		= -1,
 	.width		= -1,
 	.accel_flags	= 0,
-	.pixघड़ी	= 9353,
+	.pixclock	= 9353,
 	.left_margin	= 20,
 	.right_margin	= 30,
 	.upper_margin	= 37,
@@ -143,15 +142,15 @@
 	.vsync_len	= 3,
 	.sync		= 0,
 	.vmode		= FB_VMODE_NONINTERLACED
-पूर्ण;
+};
 
-/* शेष modedb mode */
-/* 640x480, 60 Hz, Non-Interlaced (25.172 MHz करोtघड़ी) */
-अटल काष्ठा fb_videomode शेष_mode_CRT = अणु
+/* default modedb mode */
+/* 640x480, 60 Hz, Non-Interlaced (25.172 MHz dotclock) */
+static struct fb_videomode default_mode_CRT = {
 	.refresh	= 60,
 	.xres		= 640,
 	.yres		= 480,
-	.pixघड़ी	= 39722,
+	.pixclock	= 39722,
 	.left_margin	= 48,
 	.right_margin	= 16,
 	.upper_margin	= 33,
@@ -160,13 +159,13 @@
 	.vsync_len	= 2,
 	.sync		= 0,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 /* 1600x1024 SGI flatpanel 1600sw */
-अटल काष्ठा fb_videomode शेष_mode_LCD = अणु
+static struct fb_videomode default_mode_LCD = {
 	/* 1600x1024, 8 bpp */
 	.xres		= 1600,
 	.yres		= 1024,
-	.pixघड़ी	= 9353,
+	.pixclock	= 9353,
 	.left_margin	= 20,
 	.right_margin	= 30,
 	.upper_margin	= 37,
@@ -174,39 +173,39 @@
 	.hsync_len	= 20,
 	.vsync_len	= 3,
 	.vmode		= FB_VMODE_NONINTERLACED,
-पूर्ण;
+};
 
-अटल काष्ठा fb_videomode *शेष_mode = &शेष_mode_CRT;
-अटल काष्ठा fb_var_screeninfo *शेष_var = &शेष_var_CRT;
+static struct fb_videomode *default_mode = &default_mode_CRT;
+static struct fb_var_screeninfo *default_var = &default_var_CRT;
 
-अटल पूर्णांक flat_panel_enabled = 0;
+static int flat_panel_enabled = 0;
 
-अटल व्योम gbe_reset(व्योम)
-अणु
-	/* Turn on करोtघड़ी PLL */
+static void gbe_reset(void)
+{
+	/* Turn on dotclock PLL */
 	gbe->ctrlstat = 0x300aa000;
-पूर्ण
+}
 
 
 /*
  * Function:	gbe_turn_off
  * Parameters:	(None)
  * Description:	This should turn off the monitor and gbe.  This is used
- *              when चयनing between the serial console and the graphics
+ *              when switching between the serial console and the graphics
  *              console.
  */
 
-अटल व्योम gbe_turn_off(व्योम)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक val, y, vpixen_off;
+static void gbe_turn_off(void)
+{
+	int i;
+	unsigned int val, y, vpixen_off;
 
 	gbe_turned_on = 0;
 
-	/* check अगर pixel counter is on */
+	/* check if pixel counter is on */
 	val = gbe->vt_xy;
-	अगर (GET_GBE_FIELD(VT_XY, FREEZE, val) == 1)
-		वापस;
+	if (GET_GBE_FIELD(VT_XY, FREEZE, val) == 1)
+		return;
 
 	/* turn off DMA */
 	val = gbe->ovr_control;
@@ -222,195 +221,195 @@
 	gbe->did_control = val;
 	udelay(1000);
 
-	/* We have to रुको through two vertical retrace periods beक्रमe
-	 * the pixel DMA is turned off क्रम sure. */
-	क्रम (i = 0; i < 10000; i++) अणु
+	/* We have to wait through two vertical retrace periods before
+	 * the pixel DMA is turned off for sure. */
+	for (i = 0; i < 10000; i++) {
 		val = gbe->frm_inhwctrl;
-		अगर (GET_GBE_FIELD(FRM_INHWCTRL, FRM_DMA_ENABLE, val)) अणु
+		if (GET_GBE_FIELD(FRM_INHWCTRL, FRM_DMA_ENABLE, val)) {
 			udelay(10);
-		पूर्ण अन्यथा अणु
+		} else {
 			val = gbe->ovr_inhwctrl;
-			अगर (GET_GBE_FIELD(OVR_INHWCTRL, OVR_DMA_ENABLE, val)) अणु
+			if (GET_GBE_FIELD(OVR_INHWCTRL, OVR_DMA_ENABLE, val)) {
 				udelay(10);
-			पूर्ण अन्यथा अणु
+			} else {
 				val = gbe->did_inhwctrl;
-				अगर (GET_GBE_FIELD(DID_INHWCTRL, DID_DMA_ENABLE, val)) अणु
+				if (GET_GBE_FIELD(DID_INHWCTRL, DID_DMA_ENABLE, val)) {
 					udelay(10);
-				पूर्ण अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn off DMA timed out\n");
+				} else
+					break;
+			}
+		}
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn off DMA timed out\n");
 
-	/* रुको क्रम vpixen_off */
+	/* wait for vpixen_off */
 	val = gbe->vt_vpixen;
 	vpixen_off = GET_GBE_FIELD(VT_VPIXEN, VPIXEN_OFF, val);
 
-	क्रम (i = 0; i < 100000; i++) अणु
+	for (i = 0; i < 100000; i++) {
 		val = gbe->vt_xy;
 		y = GET_GBE_FIELD(VT_XY, Y, val);
-		अगर (y < vpixen_off)
-			अवरोध;
+		if (y < vpixen_off)
+			break;
 		udelay(1);
-	पूर्ण
-	अगर (i == 100000)
-		prपूर्णांकk(KERN_ERR
+	}
+	if (i == 100000)
+		printk(KERN_ERR
 		       "gbefb: wait for vpixen_off timed out\n");
-	क्रम (i = 0; i < 10000; i++) अणु
+	for (i = 0; i < 10000; i++) {
 		val = gbe->vt_xy;
 		y = GET_GBE_FIELD(VT_XY, Y, val);
-		अगर (y > vpixen_off)
-			अवरोध;
+		if (y > vpixen_off)
+			break;
 		udelay(1);
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: wait for vpixen_off timed out\n");
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: wait for vpixen_off timed out\n");
 
 	/* turn off pixel counter */
 	val = 0;
 	SET_GBE_FIELD(VT_XY, FREEZE, val, 1);
 	gbe->vt_xy = val;
 	mdelay(10);
-	क्रम (i = 0; i < 10000; i++) अणु
+	for (i = 0; i < 10000; i++) {
 		val = gbe->vt_xy;
-		अगर (GET_GBE_FIELD(VT_XY, FREEZE, val) != 1)
+		if (GET_GBE_FIELD(VT_XY, FREEZE, val) != 1)
 			udelay(10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn off pixel clock timed out\n");
+		else
+			break;
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn off pixel clock timed out\n");
 
-	/* turn off करोt घड़ी */
-	val = gbe->करोtघड़ी;
+	/* turn off dot clock */
+	val = gbe->dotclock;
 	SET_GBE_FIELD(DOTCLK, RUN, val, 0);
-	gbe->करोtघड़ी = val;
+	gbe->dotclock = val;
 	mdelay(10);
-	क्रम (i = 0; i < 10000; i++) अणु
-		val = gbe->करोtघड़ी;
-		अगर (GET_GBE_FIELD(DOTCLK, RUN, val))
+	for (i = 0; i < 10000; i++) {
+		val = gbe->dotclock;
+		if (GET_GBE_FIELD(DOTCLK, RUN, val))
 			udelay(10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn off dotclock timed out\n");
+		else
+			break;
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn off dotclock timed out\n");
 
 	/* reset the frame DMA FIFO */
-	val = gbe->frm_माप_प्रकारile;
+	val = gbe->frm_size_tile;
 	SET_GBE_FIELD(FRM_SIZE_TILE, FRM_FIFO_RESET, val, 1);
-	gbe->frm_माप_प्रकारile = val;
+	gbe->frm_size_tile = val;
 	SET_GBE_FIELD(FRM_SIZE_TILE, FRM_FIFO_RESET, val, 0);
-	gbe->frm_माप_प्रकारile = val;
-पूर्ण
+	gbe->frm_size_tile = val;
+}
 
-अटल व्योम gbe_turn_on(व्योम)
-अणु
-	अचिन्हित पूर्णांक val, i;
+static void gbe_turn_on(void)
+{
+	unsigned int val, i;
 
 	/*
-	 * Check अगर pixel counter is off, क्रम unknown reason this
+	 * Check if pixel counter is off, for unknown reason this
 	 * code hangs Visual Workstations
 	 */
-	अगर (gbe_revision < 2) अणु
+	if (gbe_revision < 2) {
 		val = gbe->vt_xy;
-		अगर (GET_GBE_FIELD(VT_XY, FREEZE, val) == 0)
-			वापस;
-	पूर्ण
+		if (GET_GBE_FIELD(VT_XY, FREEZE, val) == 0)
+			return;
+	}
 
-	/* turn on करोt घड़ी */
-	val = gbe->करोtघड़ी;
+	/* turn on dot clock */
+	val = gbe->dotclock;
 	SET_GBE_FIELD(DOTCLK, RUN, val, 1);
-	gbe->करोtघड़ी = val;
+	gbe->dotclock = val;
 	mdelay(10);
-	क्रम (i = 0; i < 10000; i++) अणु
-		val = gbe->करोtघड़ी;
-		अगर (GET_GBE_FIELD(DOTCLK, RUN, val) != 1)
+	for (i = 0; i < 10000; i++) {
+		val = gbe->dotclock;
+		if (GET_GBE_FIELD(DOTCLK, RUN, val) != 1)
 			udelay(10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn on dotclock timed out\n");
+		else
+			break;
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn on dotclock timed out\n");
 
 	/* turn on pixel counter */
 	val = 0;
 	SET_GBE_FIELD(VT_XY, FREEZE, val, 0);
 	gbe->vt_xy = val;
 	mdelay(10);
-	क्रम (i = 0; i < 10000; i++) अणु
+	for (i = 0; i < 10000; i++) {
 		val = gbe->vt_xy;
-		अगर (GET_GBE_FIELD(VT_XY, FREEZE, val))
+		if (GET_GBE_FIELD(VT_XY, FREEZE, val))
 			udelay(10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn on pixel clock timed out\n");
+		else
+			break;
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn on pixel clock timed out\n");
 
 	/* turn on DMA */
 	val = gbe->frm_control;
 	SET_GBE_FIELD(FRM_CONTROL, FRM_DMA_ENABLE, val, 1);
 	gbe->frm_control = val;
 	udelay(1000);
-	क्रम (i = 0; i < 10000; i++) अणु
+	for (i = 0; i < 10000; i++) {
 		val = gbe->frm_inhwctrl;
-		अगर (GET_GBE_FIELD(FRM_INHWCTRL, FRM_DMA_ENABLE, val) != 1)
+		if (GET_GBE_FIELD(FRM_INHWCTRL, FRM_DMA_ENABLE, val) != 1)
 			udelay(10);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-	अगर (i == 10000)
-		prपूर्णांकk(KERN_ERR "gbefb: turn on DMA timed out\n");
+		else
+			break;
+	}
+	if (i == 10000)
+		printk(KERN_ERR "gbefb: turn on DMA timed out\n");
 
 	gbe_turned_on = 1;
-पूर्ण
+}
 
-अटल व्योम gbe_loadcmap(व्योम)
-अणु
-	पूर्णांक i, j;
+static void gbe_loadcmap(void)
+{
+	int i, j;
 
-	क्रम (i = 0; i < 256; i++) अणु
-		क्रम (j = 0; j < 1000 && gbe->cm_fअगरo >= 63; j++)
+	for (i = 0; i < 256; i++) {
+		for (j = 0; j < 1000 && gbe->cm_fifo >= 63; j++)
 			udelay(10);
-		अगर (j == 1000)
-			prपूर्णांकk(KERN_ERR "gbefb: cmap FIFO timeout\n");
+		if (j == 1000)
+			printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
 
 		gbe->cmap[i] = gbe_cmap[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *  Blank the display.
  */
-अटल पूर्णांक gbefb_blank(पूर्णांक blank, काष्ठा fb_info *info)
-अणु
+static int gbefb_blank(int blank, struct fb_info *info)
+{
 	/* 0 unblank, 1 blank, 2 no vsync, 3 no hsync, 4 off */
-	चयन (blank) अणु
-	हाल FB_BLANK_UNBLANK:		/* unblank */
+	switch (blank) {
+	case FB_BLANK_UNBLANK:		/* unblank */
 		gbe_turn_on();
 		gbe_loadcmap();
-		अवरोध;
+		break;
 
-	हाल FB_BLANK_NORMAL:		/* blank */
+	case FB_BLANK_NORMAL:		/* blank */
 		gbe_turn_off();
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* Nothing */
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
 /*
- *  Setup flatpanel related रेजिस्टरs.
+ *  Setup flatpanel related registers.
  */
-अटल व्योम gbefb_setup_flatpanel(काष्ठा gbe_timing_info *timing)
-अणु
-	पूर्णांक fp_wid, fp_hgt, fp_vbs, fp_vbe;
+static void gbefb_setup_flatpanel(struct gbe_timing_info *timing)
+{
+	int fp_wid, fp_hgt, fp_vbs, fp_vbe;
 	u32 outputVal = 0;
 
 	SET_GBE_FIELD(VT_FLAGS, HDRV_INVERT, outputVal,
@@ -439,29 +438,29 @@
 	SET_GBE_FIELD(FP_VDRV, ON, outputVal, 1);
 	SET_GBE_FIELD(FP_VDRV, OFF, outputVal, fp_hgt + 1);
 	gbe->fp_vdrv = outputVal;
-पूर्ण
+}
 
-काष्ठा gbe_pll_info अणु
-	पूर्णांक घड़ी_rate;
-	पूर्णांक fvco_min;
-	पूर्णांक fvco_max;
-पूर्ण;
+struct gbe_pll_info {
+	int clock_rate;
+	int fvco_min;
+	int fvco_max;
+};
 
-अटल काष्ठा gbe_pll_info gbe_pll_table[2] = अणु
-	अणु 20, 80, 220 पूर्ण,
-	अणु 27, 80, 220 पूर्ण,
-पूर्ण;
+static struct gbe_pll_info gbe_pll_table[2] = {
+	{ 20, 80, 220 },
+	{ 27, 80, 220 },
+};
 
-अटल पूर्णांक compute_gbe_timing(काष्ठा fb_var_screeninfo *var,
-			      काष्ठा gbe_timing_info *timing)
-अणु
-	पूर्णांक pll_m, pll_n, pll_p, error, best_m, best_n, best_p, best_error;
-	पूर्णांक pixघड़ी;
-	काष्ठा gbe_pll_info *gbe_pll;
+static int compute_gbe_timing(struct fb_var_screeninfo *var,
+			      struct gbe_timing_info *timing)
+{
+	int pll_m, pll_n, pll_p, error, best_m, best_n, best_p, best_error;
+	int pixclock;
+	struct gbe_pll_info *gbe_pll;
 
-	अगर (gbe_revision < 2)
+	if (gbe_revision < 2)
 		gbe_pll = &gbe_pll_table[0];
-	अन्यथा
+	else
 		gbe_pll = &gbe_pll_table[1];
 
 	/* Determine valid resolution and timing
@@ -471,43 +470,43 @@
 	 * fout = fvco / (2**pll_p) */
 	best_error = 1000000000;
 	best_n = best_m = best_p = 0;
-	क्रम (pll_p = 0; pll_p < 4; pll_p++)
-		क्रम (pll_m = 1; pll_m < 256; pll_m++)
-			क्रम (pll_n = 1; pll_n < 64; pll_n++) अणु
-				pixघड़ी = (1000000 / gbe_pll->घड़ी_rate) *
+	for (pll_p = 0; pll_p < 4; pll_p++)
+		for (pll_m = 1; pll_m < 256; pll_m++)
+			for (pll_n = 1; pll_n < 64; pll_n++) {
+				pixclock = (1000000 / gbe_pll->clock_rate) *
 						(pll_n << pll_p) / pll_m;
 
-				error = var->pixघड़ी - pixघड़ी;
+				error = var->pixclock - pixclock;
 
-				अगर (error < 0)
+				if (error < 0)
 					error = -error;
 
-				अगर (error < best_error &&
+				if (error < best_error &&
 				    pll_m / pll_n >
-				    gbe_pll->fvco_min / gbe_pll->घड़ी_rate &&
+				    gbe_pll->fvco_min / gbe_pll->clock_rate &&
  				    pll_m / pll_n <
-				    gbe_pll->fvco_max / gbe_pll->घड़ी_rate) अणु
+				    gbe_pll->fvco_max / gbe_pll->clock_rate) {
 					best_error = error;
 					best_m = pll_m;
 					best_n = pll_n;
 					best_p = pll_p;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-	अगर (!best_n || !best_m)
-		वापस -EINVAL;	/* Resolution to high */
+	if (!best_n || !best_m)
+		return -EINVAL;	/* Resolution to high */
 
-	pixघड़ी = (1000000 / gbe_pll->घड़ी_rate) *
+	pixclock = (1000000 / gbe_pll->clock_rate) *
 		(best_n << best_p) / best_m;
 
-	/* set video timing inक्रमmation */
-	अगर (timing) अणु
+	/* set video timing information */
+	if (timing) {
 		timing->width = var->xres;
 		timing->height = var->yres;
 		timing->pll_m = best_m;
 		timing->pll_n = best_n;
 		timing->pll_p = best_p;
-		timing->cfreq = gbe_pll->घड़ी_rate * 1000 * timing->pll_m /
+		timing->cfreq = gbe_pll->clock_rate * 1000 * timing->pll_m /
 			(timing->pll_n << timing->pll_p);
 		timing->htotal = var->left_margin + var->xres +
 				var->right_margin + var->hsync_len;
@@ -523,23 +522,23 @@
 		timing->vblank_end = timing->vtotal;
 		timing->vsync_start = var->yres + var->lower_margin + 1;
 		timing->vsync_end = timing->vsync_start + var->vsync_len;
-	पूर्ण
+	}
 
-	वापस pixघड़ी;
-पूर्ण
+	return pixclock;
+}
 
-अटल व्योम gbe_set_timing_info(काष्ठा gbe_timing_info *timing)
-अणु
-	पूर्णांक temp;
-	अचिन्हित पूर्णांक val;
+static void gbe_set_timing_info(struct gbe_timing_info *timing)
+{
+	int temp;
+	unsigned int val;
 
-	/* setup करोt घड़ी PLL */
+	/* setup dot clock PLL */
 	val = 0;
 	SET_GBE_FIELD(DOTCLK, M, val, timing->pll_m - 1);
 	SET_GBE_FIELD(DOTCLK, N, val, timing->pll_n - 1);
 	SET_GBE_FIELD(DOTCLK, P, val, timing->pll_p);
-	SET_GBE_FIELD(DOTCLK, RUN, val, 0);	/* करो not start yet */
-	gbe->करोtघड़ी = val;
+	SET_GBE_FIELD(DOTCLK, RUN, val, 0);	/* do not start yet */
+	gbe->dotclock = val;
 	mdelay(10);
 
 	/* setup pixel counter */
@@ -548,7 +547,7 @@
 	SET_GBE_FIELD(VT_XYMAX, MAXY, val, timing->vtotal);
 	gbe->vt_xymax = val;
 
-	/* setup video timing संकेतs */
+	/* setup video timing signals */
 	val = 0;
 	SET_GBE_FIELD(VT_VSYNC, VSYNC_ON, val, timing->vsync_start);
 	SET_GBE_FIELD(VT_VSYNC, VSYNC_OFF, val, timing->vsync_end);
@@ -568,7 +567,7 @@
 		      timing->hblank_end - 3);
 	gbe->vt_hblank = val;
 
-	/* setup पूर्णांकernal timing संकेतs */
+	/* setup internal timing signals */
 	val = 0;
 	SET_GBE_FIELD(VT_VCMAP, VCMAP_ON, val, timing->vblank_start);
 	SET_GBE_FIELD(VT_VCMAP, VCMAP_OFF, val, timing->vblank_end);
@@ -580,27 +579,27 @@
 
 	val = 0;
 	temp = timing->vblank_start - timing->vblank_end - 1;
-	अगर (temp > 0)
+	if (temp > 0)
 		temp = -temp;
 
-	अगर (flat_panel_enabled)
+	if (flat_panel_enabled)
 		gbefb_setup_flatpanel(timing);
 
 	SET_GBE_FIELD(DID_START_XY, DID_STARTY, val, (u32) temp);
-	अगर (timing->hblank_end >= 20)
+	if (timing->hblank_end >= 20)
 		SET_GBE_FIELD(DID_START_XY, DID_STARTX, val,
 			      timing->hblank_end - 20);
-	अन्यथा
+	else
 		SET_GBE_FIELD(DID_START_XY, DID_STARTX, val,
 			      timing->htotal - (20 - timing->hblank_end));
 	gbe->did_start_xy = val;
 
 	val = 0;
 	SET_GBE_FIELD(CRS_START_XY, CRS_STARTY, val, (u32) (temp + 1));
-	अगर (timing->hblank_end >= GBE_CRS_MAGIC)
+	if (timing->hblank_end >= GBE_CRS_MAGIC)
 		SET_GBE_FIELD(CRS_START_XY, CRS_STARTX, val,
 			      timing->hblank_end - GBE_CRS_MAGIC);
-	अन्यथा
+	else
 		SET_GBE_FIELD(CRS_START_XY, CRS_STARTX, val,
 			      timing->htotal - (GBE_CRS_MAGIC -
 						timing->hblank_end));
@@ -613,7 +612,7 @@
 
 	val = 0;
 	temp = timing->hblank_end - GBE_PIXEN_MAGIC_ON;
-	अगर (temp < 0)
+	if (temp < 0)
 		temp += timing->htotal;	/* allow blank to wrap around */
 
 	SET_GBE_FIELD(VT_HPIXEN, HPIXEN_ON, val, temp);
@@ -631,26 +630,26 @@
 	val = 0;
 	SET_GBE_FIELD(VT_FLAGS, SYNC_LOW, val, 1);
 	gbe->vt_flags = val;
-पूर्ण
+}
 
 /*
  *  Set the hardware according to 'par'.
  */
 
-अटल पूर्णांक gbefb_set_par(काष्ठा fb_info *info)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक wholeTilesX, partTilesX, maxPixelsPerTileX;
-	पूर्णांक height_pix;
-	पूर्णांक xpmax, ypmax;	/* Monitor resolution */
-	पूर्णांक bytesPerPixel;	/* Bytes per pixel */
-	काष्ठा gbefb_par *par = (काष्ठा gbefb_par *) info->par;
+static int gbefb_set_par(struct fb_info *info)
+{
+	int i;
+	unsigned int val;
+	int wholeTilesX, partTilesX, maxPixelsPerTileX;
+	int height_pix;
+	int xpmax, ypmax;	/* Monitor resolution */
+	int bytesPerPixel;	/* Bytes per pixel */
+	struct gbefb_par *par = (struct gbefb_par *) info->par;
 
 	compute_gbe_timing(&info->var, &par->timing);
 
 	bytesPerPixel = info->var.bits_per_pixel / 8;
-	info->fix.line_length = info->var.xres_भव * bytesPerPixel;
+	info->fix.line_length = info->var.xres_virtual * bytesPerPixel;
 	xpmax = par->timing.width;
 	ypmax = par->timing.height;
 
@@ -662,34 +661,34 @@
 
 	/* initialize DIDs */
 	val = 0;
-	चयन (bytesPerPixel) अणु
-	हाल 1:
+	switch (bytesPerPixel) {
+	case 1:
 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_I8);
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_ARGB5);
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_RGB8);
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	SET_GBE_FIELD(WID, BUF, val, GBE_BMODE_BOTH);
 
-	क्रम (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++)
 		gbe->mode_regs[i] = val;
 
-	/* Initialize पूर्णांकerrupts */
-	gbe->vt_पूर्णांकr01 = 0xffffffff;
-	gbe->vt_पूर्णांकr23 = 0xffffffff;
+	/* Initialize interrupts */
+	gbe->vt_intr01 = 0xffffffff;
+	gbe->vt_intr23 = 0xffffffff;
 
 	/* HACK:
 	   The GBE hardware uses a tiled memory to screen mapping. Tiles are
-	   blocks of 512x128, 256x128 or 128x128 pixels, respectively क्रम 8bit,
+	   blocks of 512x128, 256x128 or 128x128 pixels, respectively for 8bit,
 	   16bit and 32 bit modes (64 kB). They cover the screen with partial
-	   tiles on the right and/or bottom of the screen अगर needed.
+	   tiles on the right and/or bottom of the screen if needed.
 	   For example in 640x480 8 bit mode the mapping is:
 
 	   <-------- 640 ----->
@@ -707,20 +706,20 @@
 	   v  96    [tile 6]        [tile 7]
 	   32 offscreen
 
-	   Tiles have the advantage that they can be allocated inभागidually in
+	   Tiles have the advantage that they can be allocated individually in
 	   memory. However, this mapping is not linear at all, which is not
 	   really convenient. In order to support linear addressing, the GBE
-	   DMA hardware is fooled पूर्णांकo thinking the screen is only one tile
+	   DMA hardware is fooled into thinking the screen is only one tile
 	   large and but has a greater height, so that the DMA transfer covers
 	   the same region.
 	   Tiles are still allocated as independent chunks of 64KB of
 	   continuous physical memory and remapped so that the kernel sees the
-	   framebuffer as a continuous भव memory. The GBE tile table is
+	   framebuffer as a continuous virtual memory. The GBE tile table is
 	   set up so that each tile references one of these 64k blocks:
 
 	   GBE -> tile list    framebuffer           TLB   <------------ CPU
 	          [ tile 0 ] -> [ 64KB ]  <- [ 16x 4KB page entries ]     ^
-	             ...           ...              ...       linear भव FB
+	             ...           ...              ...       linear virtual FB
 	          [ tile n ] -> [ 64KB ]  <- [ 16x 4KB page entries ]     v
 
 
@@ -741,8 +740,8 @@
 	       33333333333333334444    22222222222222222222
 	       <      512     >        <  256 >               102*640+256 = 64k
 
-	   NOTE: The only mode क्रम which this is not working is 800x600 8bit,
-	   as 800*600/512 = 937.5 which is not पूर्णांकeger and thus causes
+	   NOTE: The only mode for which this is not working is 800x600 8bit,
+	   as 800*600/512 = 937.5 which is not integer and thus causes
 	   flickering.
 	   I guess this is not so important as one can use 640x480 8bit or
 	   800x600 16bit anyway.
@@ -754,7 +753,7 @@
 	/*               ...                */
 	val = 0;
 	SET_GBE_FIELD(FRM_CONTROL, FRM_TILE_PTR, val, gbe_tiles.dma >> 9);
-	SET_GBE_FIELD(FRM_CONTROL, FRM_DMA_ENABLE, val, 0); /* करो not start */
+	SET_GBE_FIELD(FRM_CONTROL, FRM_DMA_ENABLE, val, 0); /* do not start */
 	SET_GBE_FIELD(FRM_CONTROL, FRM_LINEAR, val, 0);
 	gbe->frm_control = val;
 
@@ -767,21 +766,21 @@
 	SET_GBE_FIELD(FRM_SIZE_TILE, FRM_WIDTH_TILE, val, wholeTilesX);
 	SET_GBE_FIELD(FRM_SIZE_TILE, FRM_RHS, val, partTilesX);
 
-	चयन (bytesPerPixel) अणु
-	हाल 1:
+	switch (bytesPerPixel) {
+	case 1:
 		SET_GBE_FIELD(FRM_SIZE_TILE, FRM_DEPTH, val,
 			      GBE_FRM_DEPTH_8);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		SET_GBE_FIELD(FRM_SIZE_TILE, FRM_DEPTH, val,
 			      GBE_FRM_DEPTH_16);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		SET_GBE_FIELD(FRM_SIZE_TILE, FRM_DEPTH, val,
 			      GBE_FRM_DEPTH_32);
-		अवरोध;
-	पूर्ण
-	gbe->frm_माप_प्रकारile = val;
+		break;
+	}
+	gbe->frm_size_tile = val;
 
 	/* compute tweaked height */
 	height_pix = xpmax * ypmax / maxPixelsPerTileX;
@@ -802,151 +801,151 @@
 
 	/* Initialize the gamma map */
 	udelay(10);
-	क्रम (i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		gbe->gmap[i] = (i << 24) | (i << 16) | (i << 8);
 
 	/* Initialize the color map */
-	क्रम (i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		gbe_cmap[i] = (i << 8) | (i << 16) | (i << 24);
 
 	gbe_loadcmap();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम gbefb_encode_fix(काष्ठा fb_fix_screeninfo *fix,
-			     काष्ठा fb_var_screeninfo *var)
-अणु
-	स_रखो(fix, 0, माप(काष्ठा fb_fix_screeninfo));
-	म_नकल(fix->id, "SGI GBE");
-	fix->smem_start = (अचिन्हित दीर्घ) gbe_mem;
+static void gbefb_encode_fix(struct fb_fix_screeninfo *fix,
+			     struct fb_var_screeninfo *var)
+{
+	memset(fix, 0, sizeof(struct fb_fix_screeninfo));
+	strcpy(fix->id, "SGI GBE");
+	fix->smem_start = (unsigned long) gbe_mem;
 	fix->smem_len = gbe_mem_size;
 	fix->type = FB_TYPE_PACKED_PIXELS;
 	fix->type_aux = 0;
 	fix->accel = FB_ACCEL_NONE;
-	चयन (var->bits_per_pixel) अणु
-	हाल 8:
+	switch (var->bits_per_pixel) {
+	case 8:
 		fix->visual = FB_VISUAL_PSEUDOCOLOR;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fix->visual = FB_VISUAL_TRUECOLOR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	fix->ywrapstep = 0;
 	fix->xpanstep = 0;
 	fix->ypanstep = 0;
-	fix->line_length = var->xres_भव * var->bits_per_pixel / 8;
+	fix->line_length = var->xres_virtual * var->bits_per_pixel / 8;
 	fix->mmio_start = GBE_BASE;
-	fix->mmio_len = माप(काष्ठा sgi_gbe);
-पूर्ण
+	fix->mmio_len = sizeof(struct sgi_gbe);
+}
 
 /*
- *  Set a single color रेजिस्टर. The values supplied are alपढ़ोy
- *  rounded करोwn to the hardware's capabilities (according to the
- *  entries in the var काष्ठाure). Return != 0 क्रम invalid regno.
+ *  Set a single color register. The values supplied are already
+ *  rounded down to the hardware's capabilities (according to the
+ *  entries in the var structure). Return != 0 for invalid regno.
  */
 
-अटल पूर्णांक gbefb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
-			     अचिन्हित blue, अचिन्हित transp,
-			     काष्ठा fb_info *info)
-अणु
-	पूर्णांक i;
+static int gbefb_setcolreg(unsigned regno, unsigned red, unsigned green,
+			     unsigned blue, unsigned transp,
+			     struct fb_info *info)
+{
+	int i;
 
-	अगर (regno > 255)
-		वापस 1;
+	if (regno > 255)
+		return 1;
 	red >>= 8;
 	green >>= 8;
 	blue >>= 8;
 
-	अगर (info->var.bits_per_pixel <= 8) अणु
+	if (info->var.bits_per_pixel <= 8) {
 		gbe_cmap[regno] = (red << 24) | (green << 16) | (blue << 8);
-		अगर (gbe_turned_on) अणु
-			/* रुको क्रम the color map FIFO to have a मुक्त entry */
-			क्रम (i = 0; i < 1000 && gbe->cm_fअगरo >= 63; i++)
+		if (gbe_turned_on) {
+			/* wait for the color map FIFO to have a free entry */
+			for (i = 0; i < 1000 && gbe->cm_fifo >= 63; i++)
 				udelay(10);
-			अगर (i == 1000) अणु
-				prपूर्णांकk(KERN_ERR "gbefb: cmap FIFO timeout\n");
-				वापस 1;
-			पूर्ण
+			if (i == 1000) {
+				printk(KERN_ERR "gbefb: cmap FIFO timeout\n");
+				return 1;
+			}
 			gbe->cmap[regno] = gbe_cmap[regno];
-		पूर्ण
-	पूर्ण अन्यथा अगर (regno < 16) अणु
-		चयन (info->var.bits_per_pixel) अणु
-		हाल 15:
-		हाल 16:
+		}
+	} else if (regno < 16) {
+		switch (info->var.bits_per_pixel) {
+		case 15:
+		case 16:
 			red >>= 3;
 			green >>= 3;
 			blue >>= 3;
-			pseuकरो_palette[regno] =
+			pseudo_palette[regno] =
 				(red << info->var.red.offset) |
 				(green << info->var.green.offset) |
 				(blue << info->var.blue.offset);
-			अवरोध;
-		हाल 32:
-			pseuकरो_palette[regno] =
+			break;
+		case 32:
+			pseudo_palette[regno] =
 				(red << info->var.red.offset) |
 				(green << info->var.green.offset) |
 				(blue << info->var.blue.offset);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *  Check video mode validity, eventually modअगरy var to best match.
+ *  Check video mode validity, eventually modify var to best match.
  */
-अटल पूर्णांक gbefb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
-अणु
-	अचिन्हित पूर्णांक line_length;
-	काष्ठा gbe_timing_info timing;
-	पूर्णांक ret;
+static int gbefb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
+{
+	unsigned int line_length;
+	struct gbe_timing_info timing;
+	int ret;
 
 	/* Limit bpp to 8, 16, and 32 */
-	अगर (var->bits_per_pixel <= 8)
+	if (var->bits_per_pixel <= 8)
 		var->bits_per_pixel = 8;
-	अन्यथा अगर (var->bits_per_pixel <= 16)
+	else if (var->bits_per_pixel <= 16)
 		var->bits_per_pixel = 16;
-	अन्यथा अगर (var->bits_per_pixel <= 32)
+	else if (var->bits_per_pixel <= 32)
 		var->bits_per_pixel = 32;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	/* Check the mode can be mapped linearly with the tile table trick. */
 	/* This requires width x height x bytes/pixel be a multiple of 512 */
-	अगर ((var->xres * var->yres * var->bits_per_pixel) & 4095)
-		वापस -EINVAL;
+	if ((var->xres * var->yres * var->bits_per_pixel) & 4095)
+		return -EINVAL;
 
-	var->grayscale = 0;	/* No grayscale क्रम now */
+	var->grayscale = 0;	/* No grayscale for now */
 
 	ret = compute_gbe_timing(var, &timing);
-	var->pixघड़ी = ret;
-	अगर (ret < 0)
-		वापस -EINVAL;
+	var->pixclock = ret;
+	if (ret < 0)
+		return -EINVAL;
 
-	/* Adjust भव resolution, अगर necessary */
-	अगर (var->xres > var->xres_भव || (!ywrap && !ypan))
-		var->xres_भव = var->xres;
-	अगर (var->yres > var->yres_भव || (!ywrap && !ypan))
-		var->yres_भव = var->yres;
+	/* Adjust virtual resolution, if necessary */
+	if (var->xres > var->xres_virtual || (!ywrap && !ypan))
+		var->xres_virtual = var->xres;
+	if (var->yres > var->yres_virtual || (!ywrap && !ypan))
+		var->yres_virtual = var->yres;
 
-	अगर (var->vmode & FB_VMODE_CONUPDATE) अणु
+	if (var->vmode & FB_VMODE_CONUPDATE) {
 		var->vmode |= FB_VMODE_YWRAP;
 		var->xoffset = info->var.xoffset;
 		var->yoffset = info->var.yoffset;
-	पूर्ण
+	}
 
-	/* No grayscale क्रम now */
+	/* No grayscale for now */
 	var->grayscale = 0;
 
 	/* Memory limit */
-	line_length = var->xres_भव * var->bits_per_pixel / 8;
-	अगर (line_length * var->yres_भव > gbe_mem_size)
-		वापस -ENOMEM;	/* Virtual resolution too high */
+	line_length = var->xres_virtual * var->bits_per_pixel / 8;
+	if (line_length * var->yres_virtual > gbe_mem_size)
+		return -ENOMEM;	/* Virtual resolution too high */
 
-	चयन (var->bits_per_pixel) अणु
-	हाल 8:
+	switch (var->bits_per_pixel) {
+	case 8:
 		var->red.offset = 0;
 		var->red.length = 8;
 		var->green.offset = 0;
@@ -955,8 +954,8 @@
 		var->blue.length = 8;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		अवरोध;
-	हाल 16:		/* RGB 1555 */
+		break;
+	case 16:		/* RGB 1555 */
 		var->red.offset = 10;
 		var->red.length = 5;
 		var->green.offset = 5;
@@ -965,8 +964,8 @@
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		अवरोध;
-	हाल 32:		/* RGB 8888 */
+		break;
+	case 32:		/* RGB 8888 */
 		var->red.offset = 24;
 		var->red.length = 8;
 		var->green.offset = 16;
@@ -975,8 +974,8 @@
 		var->blue.length = 8;
 		var->transp.offset = 0;
 		var->transp.length = 8;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	var->red.msb_right = 0;
 	var->green.msb_right = 0;
 	var->blue.msb_right = 0;
@@ -989,61 +988,61 @@
 	var->hsync_len = timing.hsync_end - timing.hsync_start;
 	var->vsync_len = timing.vsync_end - timing.vsync_start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gbefb_mmap(काष्ठा fb_info *info,
-			काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ size = vma->vm_end - vma->vm_start;
-	अचिन्हित दीर्घ offset = vma->vm_pgoff << PAGE_SHIFT;
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ phys_addr, phys_size;
+static int gbefb_mmap(struct fb_info *info,
+			struct vm_area_struct *vma)
+{
+	unsigned long size = vma->vm_end - vma->vm_start;
+	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
+	unsigned long addr;
+	unsigned long phys_addr, phys_size;
 	u16 *tile;
 
 	/* check range */
-	अगर (vma->vm_pgoff > (~0UL >> PAGE_SHIFT))
-		वापस -EINVAL;
-	अगर (size > gbe_mem_size)
-		वापस -EINVAL;
-	अगर (offset > gbe_mem_size - size)
-		वापस -EINVAL;
+	if (vma->vm_pgoff > (~0UL >> PAGE_SHIFT))
+		return -EINVAL;
+	if (size > gbe_mem_size)
+		return -EINVAL;
+	if (offset > gbe_mem_size - size)
+		return -EINVAL;
 
-	/* remap using the fastest ग_लिखो-through mode on architecture */
+	/* remap using the fastest write-through mode on architecture */
 	/* try not polluting the cache when possible */
-#अगर_घोषित CONFIG_MIPS
+#ifdef CONFIG_MIPS
 	pgprot_val(vma->vm_page_prot) =
 		pgprot_fb(pgprot_val(vma->vm_page_prot));
-#पूर्ण_अगर
+#endif
 	/* VM_IO | VM_DONTEXPAND | VM_DONTDUMP are set by remap_pfn_range() */
 
-	/* look क्रम the starting tile */
+	/* look for the starting tile */
 	tile = &gbe_tiles.cpu[offset >> TILE_SHIFT];
 	addr = vma->vm_start;
 	offset &= TILE_MASK;
 
 	/* remap each tile separately */
-	करो अणु
-		phys_addr = (((अचिन्हित दीर्घ) (*tile)) << TILE_SHIFT) + offset;
-		अगर ((offset + size) < TILE_SIZE)
+	do {
+		phys_addr = (((unsigned long) (*tile)) << TILE_SHIFT) + offset;
+		if ((offset + size) < TILE_SIZE)
 			phys_size = size;
-		अन्यथा
+		else
 			phys_size = TILE_SIZE - offset;
 
-		अगर (remap_pfn_range(vma, addr, phys_addr >> PAGE_SHIFT,
+		if (remap_pfn_range(vma, addr, phys_addr >> PAGE_SHIFT,
 						phys_size, vma->vm_page_prot))
-			वापस -EAGAIN;
+			return -EAGAIN;
 
 		offset = 0;
 		size -= phys_size;
 		addr += phys_size;
 		tile++;
-	पूर्ण जबतक (size);
+	} while (size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा fb_ops gbefb_ops = अणु
+static const struct fb_ops gbefb_ops = {
 	.owner		= THIS_MODULE,
 	.fb_check_var	= gbefb_check_var,
 	.fb_set_par	= gbefb_set_par,
@@ -1053,153 +1052,153 @@
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-पूर्ण;
+};
 
 /*
  * sysfs
  */
 
-अटल sमाप_प्रकार gbefb_show_memsize(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", gbe_mem_size);
-पूर्ण
+static ssize_t gbefb_show_memsize(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%u\n", gbe_mem_size);
+}
 
-अटल DEVICE_ATTR(size, S_IRUGO, gbefb_show_memsize, शून्य);
+static DEVICE_ATTR(size, S_IRUGO, gbefb_show_memsize, NULL);
 
-अटल sमाप_प्रकार gbefb_show_rev(काष्ठा device *device, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", gbe_revision);
-पूर्ण
+static ssize_t gbefb_show_rev(struct device *device, struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", gbe_revision);
+}
 
-अटल DEVICE_ATTR(revision, S_IRUGO, gbefb_show_rev, शून्य);
+static DEVICE_ATTR(revision, S_IRUGO, gbefb_show_rev, NULL);
 
-अटल व्योम gbefb_हटाओ_sysfs(काष्ठा device *dev)
-अणु
-	device_हटाओ_file(dev, &dev_attr_size);
-	device_हटाओ_file(dev, &dev_attr_revision);
-पूर्ण
+static void gbefb_remove_sysfs(struct device *dev)
+{
+	device_remove_file(dev, &dev_attr_size);
+	device_remove_file(dev, &dev_attr_revision);
+}
 
-अटल व्योम gbefb_create_sysfs(काष्ठा device *dev)
-अणु
+static void gbefb_create_sysfs(struct device *dev)
+{
 	device_create_file(dev, &dev_attr_size);
 	device_create_file(dev, &dev_attr_revision);
-पूर्ण
+}
 
 /*
  * Initialization
  */
 
-अटल पूर्णांक gbefb_setup(अक्षर *options)
-अणु
-	अक्षर *this_opt;
+static int gbefb_setup(char *options)
+{
+	char *this_opt;
 
-	अगर (!options || !*options)
-		वापस 0;
+	if (!options || !*options)
+		return 0;
 
-	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
-		अगर (!म_भेदन(this_opt, "monitor:", 8)) अणु
-			अगर (!म_भेदन(this_opt + 8, "crt", 3)) अणु
+	while ((this_opt = strsep(&options, ",")) != NULL) {
+		if (!strncmp(this_opt, "monitor:", 8)) {
+			if (!strncmp(this_opt + 8, "crt", 3)) {
 				flat_panel_enabled = 0;
-				शेष_var = &शेष_var_CRT;
-				शेष_mode = &शेष_mode_CRT;
-			पूर्ण अन्यथा अगर (!म_भेदन(this_opt + 8, "1600sw", 6) ||
-				   !म_भेदन(this_opt + 8, "lcd", 3)) अणु
+				default_var = &default_var_CRT;
+				default_mode = &default_mode_CRT;
+			} else if (!strncmp(this_opt + 8, "1600sw", 6) ||
+				   !strncmp(this_opt + 8, "lcd", 3)) {
 				flat_panel_enabled = 1;
-				शेष_var = &शेष_var_LCD;
-				शेष_mode = &शेष_mode_LCD;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "mem:", 4)) अणु
+				default_var = &default_var_LCD;
+				default_mode = &default_mode_LCD;
+			}
+		} else if (!strncmp(this_opt, "mem:", 4)) {
 			gbe_mem_size = memparse(this_opt + 4, &this_opt);
-			अगर (gbe_mem_size > CONFIG_FB_GBE_MEM * 1024 * 1024)
+			if (gbe_mem_size > CONFIG_FB_GBE_MEM * 1024 * 1024)
 				gbe_mem_size = CONFIG_FB_GBE_MEM * 1024 * 1024;
-			अगर (gbe_mem_size < TILE_SIZE)
+			if (gbe_mem_size < TILE_SIZE)
 				gbe_mem_size = TILE_SIZE;
-		पूर्ण अन्यथा
+		} else
 			mode_option = this_opt;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक gbefb_probe(काष्ठा platक्रमm_device *p_dev)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा fb_info *info;
-	काष्ठा gbefb_par *par;
-#अगर_अघोषित MODULE
-	अक्षर *options = शून्य;
-#पूर्ण_अगर
+static int gbefb_probe(struct platform_device *p_dev)
+{
+	int i, ret = 0;
+	struct fb_info *info;
+	struct gbefb_par *par;
+#ifndef MODULE
+	char *options = NULL;
+#endif
 
-	info = framebuffer_alloc(माप(काष्ठा gbefb_par), &p_dev->dev);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = framebuffer_alloc(sizeof(struct gbefb_par), &p_dev->dev);
+	if (!info)
+		return -ENOMEM;
 
-#अगर_अघोषित MODULE
-	अगर (fb_get_options("gbefb", &options)) अणु
+#ifndef MODULE
+	if (fb_get_options("gbefb", &options)) {
 		ret = -ENODEV;
-		जाओ out_release_framebuffer;
-	पूर्ण
+		goto out_release_framebuffer;
+	}
 	gbefb_setup(options);
-#पूर्ण_अगर
+#endif
 
-	अगर (!request_mem_region(GBE_BASE, माप(काष्ठा sgi_gbe), "GBE")) अणु
-		prपूर्णांकk(KERN_ERR "gbefb: couldn't reserve mmio region\n");
+	if (!request_mem_region(GBE_BASE, sizeof(struct sgi_gbe), "GBE")) {
+		printk(KERN_ERR "gbefb: couldn't reserve mmio region\n");
 		ret = -EBUSY;
-		जाओ out_release_framebuffer;
-	पूर्ण
+		goto out_release_framebuffer;
+	}
 
-	gbe = (काष्ठा sgi_gbe *) devm_ioremap(&p_dev->dev, GBE_BASE,
-					      माप(काष्ठा sgi_gbe));
-	अगर (!gbe) अणु
-		prपूर्णांकk(KERN_ERR "gbefb: couldn't map mmio region\n");
+	gbe = (struct sgi_gbe *) devm_ioremap(&p_dev->dev, GBE_BASE,
+					      sizeof(struct sgi_gbe));
+	if (!gbe) {
+		printk(KERN_ERR "gbefb: couldn't map mmio region\n");
 		ret = -ENXIO;
-		जाओ out_release_mem_region;
-	पूर्ण
+		goto out_release_mem_region;
+	}
 	gbe_revision = gbe->ctrlstat & 15;
 
 	gbe_tiles.cpu = dmam_alloc_coherent(&p_dev->dev,
-				GBE_TLB_SIZE * माप(uपूर्णांक16_t),
+				GBE_TLB_SIZE * sizeof(uint16_t),
 				&gbe_tiles.dma, GFP_KERNEL);
-	अगर (!gbe_tiles.cpu) अणु
-		prपूर्णांकk(KERN_ERR "gbefb: couldn't allocate tiles table\n");
+	if (!gbe_tiles.cpu) {
+		printk(KERN_ERR "gbefb: couldn't allocate tiles table\n");
 		ret = -ENOMEM;
-		जाओ out_release_mem_region;
-	पूर्ण
+		goto out_release_mem_region;
+	}
 
-	अगर (gbe_mem_phys) अणु
-		/* memory was allocated at boot समय */
+	if (gbe_mem_phys) {
+		/* memory was allocated at boot time */
 		gbe_mem = devm_ioremap_wc(&p_dev->dev, gbe_mem_phys,
 					  gbe_mem_size);
-		अगर (!gbe_mem) अणु
-			prपूर्णांकk(KERN_ERR "gbefb: couldn't map framebuffer\n");
+		if (!gbe_mem) {
+			printk(KERN_ERR "gbefb: couldn't map framebuffer\n");
 			ret = -ENOMEM;
-			जाओ out_release_mem_region;
-		पूर्ण
+			goto out_release_mem_region;
+		}
 
 		gbe_dma_addr = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* try to allocate memory with the classical allocator
 		 * this has high chance to fail on low memory machines */
 		gbe_mem = dmam_alloc_attrs(&p_dev->dev, gbe_mem_size,
 				&gbe_dma_addr, GFP_KERNEL,
 				DMA_ATTR_WRITE_COMBINE);
-		अगर (!gbe_mem) अणु
-			prपूर्णांकk(KERN_ERR "gbefb: couldn't allocate framebuffer memory\n");
+		if (!gbe_mem) {
+			printk(KERN_ERR "gbefb: couldn't allocate framebuffer memory\n");
 			ret = -ENOMEM;
-			जाओ out_release_mem_region;
-		पूर्ण
+			goto out_release_mem_region;
+		}
 
-		gbe_mem_phys = (अचिन्हित दीर्घ) gbe_dma_addr;
-	पूर्ण
+		gbe_mem_phys = (unsigned long) gbe_dma_addr;
+	}
 
 	par = info->par;
 	par->wc_cookie = arch_phys_wc_add(gbe_mem_phys, gbe_mem_size);
 
-	/* map framebuffer memory पूर्णांकo tiles table */
-	क्रम (i = 0; i < (gbe_mem_size >> TILE_SHIFT); i++)
+	/* map framebuffer memory into tiles table */
+	for (i = 0; i < (gbe_mem_size >> TILE_SHIFT); i++)
 		gbe_tiles.cpu[i] = (gbe_mem_phys >> TILE_SHIFT) + i;
 
 	info->fbops = &gbefb_ops;
-	info->pseuकरो_palette = pseuकरो_palette;
+	info->pseudo_palette = pseudo_palette;
 	info->flags = FBINFO_DEFAULT;
 	info->screen_base = gbe_mem;
 	fb_alloc_cmap(&info->cmap, 256, 0);
@@ -1207,89 +1206,89 @@
 	/* reset GBE */
 	gbe_reset();
 
-	/* turn on शेष video mode */
-	अगर (fb_find_mode(&par->var, info, mode_option, शून्य, 0,
-			 शेष_mode, 8) == 0)
-		par->var = *शेष_var;
+	/* turn on default video mode */
+	if (fb_find_mode(&par->var, info, mode_option, NULL, 0,
+			 default_mode, 8) == 0)
+		par->var = *default_var;
 	info->var = par->var;
 	gbefb_check_var(&par->var, info);
 	gbefb_encode_fix(&info->fix, &info->var);
 
-	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
-		prपूर्णांकk(KERN_ERR "gbefb: couldn't register framebuffer\n");
+	if (register_framebuffer(info) < 0) {
+		printk(KERN_ERR "gbefb: couldn't register framebuffer\n");
 		ret = -ENXIO;
-		जाओ out_gbe_unmap;
-	पूर्ण
+		goto out_gbe_unmap;
+	}
 
-	platक्रमm_set_drvdata(p_dev, info);
+	platform_set_drvdata(p_dev, info);
 	gbefb_create_sysfs(&p_dev->dev);
 
 	fb_info(info, "%s rev %d @ 0x%08x using %dkB memory\n",
-		info->fix.id, gbe_revision, (अचिन्हित)GBE_BASE,
+		info->fix.id, gbe_revision, (unsigned)GBE_BASE,
 		gbe_mem_size >> 10);
 
-	वापस 0;
+	return 0;
 
 out_gbe_unmap:
 	arch_phys_wc_del(par->wc_cookie);
 out_release_mem_region:
-	release_mem_region(GBE_BASE, माप(काष्ठा sgi_gbe));
+	release_mem_region(GBE_BASE, sizeof(struct sgi_gbe));
 out_release_framebuffer:
 	framebuffer_release(info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gbefb_हटाओ(काष्ठा platक्रमm_device* p_dev)
-अणु
-	काष्ठा fb_info *info = platक्रमm_get_drvdata(p_dev);
-	काष्ठा gbefb_par *par = info->par;
+static int gbefb_remove(struct platform_device* p_dev)
+{
+	struct fb_info *info = platform_get_drvdata(p_dev);
+	struct gbefb_par *par = info->par;
 
-	unरेजिस्टर_framebuffer(info);
+	unregister_framebuffer(info);
 	gbe_turn_off();
 	arch_phys_wc_del(par->wc_cookie);
-	release_mem_region(GBE_BASE, माप(काष्ठा sgi_gbe));
-	gbefb_हटाओ_sysfs(&p_dev->dev);
+	release_mem_region(GBE_BASE, sizeof(struct sgi_gbe));
+	gbefb_remove_sysfs(&p_dev->dev);
 	framebuffer_release(info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver gbefb_driver = अणु
+static struct platform_driver gbefb_driver = {
 	.probe = gbefb_probe,
-	.हटाओ = gbefb_हटाओ,
-	.driver	= अणु
+	.remove = gbefb_remove,
+	.driver	= {
 		.name = "gbefb",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device *gbefb_device;
+static struct platform_device *gbefb_device;
 
-अटल पूर्णांक __init gbefb_init(व्योम)
-अणु
-	पूर्णांक ret = platक्रमm_driver_रेजिस्टर(&gbefb_driver);
-	अगर (!ret) अणु
-		gbefb_device = platक्रमm_device_alloc("gbefb", 0);
-		अगर (gbefb_device) अणु
-			ret = platक्रमm_device_add(gbefb_device);
-		पूर्ण अन्यथा अणु
+static int __init gbefb_init(void)
+{
+	int ret = platform_driver_register(&gbefb_driver);
+	if (!ret) {
+		gbefb_device = platform_device_alloc("gbefb", 0);
+		if (gbefb_device) {
+			ret = platform_device_add(gbefb_device);
+		} else {
 			ret = -ENOMEM;
-		पूर्ण
-		अगर (ret) अणु
-			platक्रमm_device_put(gbefb_device);
-			platक्रमm_driver_unरेजिस्टर(&gbefb_driver);
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+		if (ret) {
+			platform_device_put(gbefb_device);
+			platform_driver_unregister(&gbefb_driver);
+		}
+	}
+	return ret;
+}
 
-अटल व्योम __निकास gbefb_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(gbefb_device);
-	platक्रमm_driver_unरेजिस्टर(&gbefb_driver);
-पूर्ण
+static void __exit gbefb_exit(void)
+{
+	platform_device_unregister(gbefb_device);
+	platform_driver_unregister(&gbefb_driver);
+}
 
 module_init(gbefb_init);
-module_निकास(gbefb_निकास);
+module_exit(gbefb_exit);
 
 MODULE_LICENSE("GPL");

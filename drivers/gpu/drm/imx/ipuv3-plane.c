@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * i.MX IPUv3 DP Overlay Planes
  *
  * Copyright (C) 2013 Philipp Zabel, Pengutronix
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश <video/imx-ipu-v3.h>
+#include <video/imx-ipu-v3.h>
 
-#समावेश "imx-drm.h"
-#समावेश "ipuv3-plane.h"
+#include "imx-drm.h"
+#include "ipuv3-plane.h"
 
-काष्ठा ipu_plane_state अणु
-	काष्ठा drm_plane_state base;
+struct ipu_plane_state {
+	struct drm_plane_state base;
 	bool use_pre;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा ipu_plane_state *
-to_ipu_plane_state(काष्ठा drm_plane_state *p)
-अणु
-	वापस container_of(p, काष्ठा ipu_plane_state, base);
-पूर्ण
+static inline struct ipu_plane_state *
+to_ipu_plane_state(struct drm_plane_state *p)
+{
+	return container_of(p, struct ipu_plane_state, base);
+}
 
-अटल अंतरभूत काष्ठा ipu_plane *to_ipu_plane(काष्ठा drm_plane *p)
-अणु
-	वापस container_of(p, काष्ठा ipu_plane, base);
-पूर्ण
+static inline struct ipu_plane *to_ipu_plane(struct drm_plane *p)
+{
+	return container_of(p, struct ipu_plane, base);
+}
 
-अटल स्थिर uपूर्णांक32_t ipu_plane_क्रमmats[] = अणु
+static const uint32_t ipu_plane_formats[] = {
 	DRM_FORMAT_ARGB1555,
 	DRM_FORMAT_XRGB1555,
 	DRM_FORMAT_ABGR1555,
@@ -71,589 +70,589 @@ to_ipu_plane_state(काष्ठा drm_plane_state *p)
 	DRM_FORMAT_BGR888_A8,
 	DRM_FORMAT_RGBX8888_A8,
 	DRM_FORMAT_BGRX8888_A8,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक64_t ipu_क्रमmat_modअगरiers[] = अणु
+static const uint64_t ipu_format_modifiers[] = {
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक64_t pre_क्रमmat_modअगरiers[] = अणु
+static const uint64_t pre_format_modifiers[] = {
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_VIVANTE_TILED,
 	DRM_FORMAT_MOD_VIVANTE_SUPER_TILED,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-पूर्णांक ipu_plane_irq(काष्ठा ipu_plane *ipu_plane)
-अणु
-	वापस ipu_idmac_channel_irq(ipu_plane->ipu, ipu_plane->ipu_ch,
-				     IPU_IRQ_खातापूर्ण);
-पूर्ण
+int ipu_plane_irq(struct ipu_plane *ipu_plane)
+{
+	return ipu_idmac_channel_irq(ipu_plane->ipu, ipu_plane->ipu_ch,
+				     IPU_IRQ_EOF);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-drm_plane_state_to_eba(काष्ठा drm_plane_state *state, पूर्णांक plane)
-अणु
-	काष्ठा drm_framebuffer *fb = state->fb;
-	काष्ठा drm_gem_cma_object *cma_obj;
-	पूर्णांक x = state->src.x1 >> 16;
-	पूर्णांक y = state->src.y1 >> 16;
+static inline unsigned long
+drm_plane_state_to_eba(struct drm_plane_state *state, int plane)
+{
+	struct drm_framebuffer *fb = state->fb;
+	struct drm_gem_cma_object *cma_obj;
+	int x = state->src.x1 >> 16;
+	int y = state->src.y1 >> 16;
 
 	cma_obj = drm_fb_cma_get_gem_obj(fb, plane);
 	BUG_ON(!cma_obj);
 
-	वापस cma_obj->paddr + fb->offsets[plane] + fb->pitches[plane] * y +
-	       fb->क्रमmat->cpp[plane] * x;
-पूर्ण
+	return cma_obj->paddr + fb->offsets[plane] + fb->pitches[plane] * y +
+	       fb->format->cpp[plane] * x;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-drm_plane_state_to_ubo(काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा drm_framebuffer *fb = state->fb;
-	काष्ठा drm_gem_cma_object *cma_obj;
-	अचिन्हित दीर्घ eba = drm_plane_state_to_eba(state, 0);
-	पूर्णांक x = state->src.x1 >> 16;
-	पूर्णांक y = state->src.y1 >> 16;
+static inline unsigned long
+drm_plane_state_to_ubo(struct drm_plane_state *state)
+{
+	struct drm_framebuffer *fb = state->fb;
+	struct drm_gem_cma_object *cma_obj;
+	unsigned long eba = drm_plane_state_to_eba(state, 0);
+	int x = state->src.x1 >> 16;
+	int y = state->src.y1 >> 16;
 
 	cma_obj = drm_fb_cma_get_gem_obj(fb, 1);
 	BUG_ON(!cma_obj);
 
-	x /= fb->क्रमmat->hsub;
-	y /= fb->क्रमmat->vsub;
+	x /= fb->format->hsub;
+	y /= fb->format->vsub;
 
-	वापस cma_obj->paddr + fb->offsets[1] + fb->pitches[1] * y +
-	       fb->क्रमmat->cpp[1] * x - eba;
-पूर्ण
+	return cma_obj->paddr + fb->offsets[1] + fb->pitches[1] * y +
+	       fb->format->cpp[1] * x - eba;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-drm_plane_state_to_vbo(काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा drm_framebuffer *fb = state->fb;
-	काष्ठा drm_gem_cma_object *cma_obj;
-	अचिन्हित दीर्घ eba = drm_plane_state_to_eba(state, 0);
-	पूर्णांक x = state->src.x1 >> 16;
-	पूर्णांक y = state->src.y1 >> 16;
+static inline unsigned long
+drm_plane_state_to_vbo(struct drm_plane_state *state)
+{
+	struct drm_framebuffer *fb = state->fb;
+	struct drm_gem_cma_object *cma_obj;
+	unsigned long eba = drm_plane_state_to_eba(state, 0);
+	int x = state->src.x1 >> 16;
+	int y = state->src.y1 >> 16;
 
 	cma_obj = drm_fb_cma_get_gem_obj(fb, 2);
 	BUG_ON(!cma_obj);
 
-	x /= fb->क्रमmat->hsub;
-	y /= fb->क्रमmat->vsub;
+	x /= fb->format->hsub;
+	y /= fb->format->vsub;
 
-	वापस cma_obj->paddr + fb->offsets[2] + fb->pitches[2] * y +
-	       fb->क्रमmat->cpp[2] * x - eba;
-पूर्ण
+	return cma_obj->paddr + fb->offsets[2] + fb->pitches[2] * y +
+	       fb->format->cpp[2] * x - eba;
+}
 
-अटल व्योम ipu_plane_put_resources(काष्ठा drm_device *dev, व्योम *ptr)
-अणु
-	काष्ठा ipu_plane *ipu_plane = ptr;
+static void ipu_plane_put_resources(struct drm_device *dev, void *ptr)
+{
+	struct ipu_plane *ipu_plane = ptr;
 
-	अगर (!IS_ERR_OR_शून्य(ipu_plane->dp))
+	if (!IS_ERR_OR_NULL(ipu_plane->dp))
 		ipu_dp_put(ipu_plane->dp);
-	अगर (!IS_ERR_OR_शून्य(ipu_plane->dmfc))
+	if (!IS_ERR_OR_NULL(ipu_plane->dmfc))
 		ipu_dmfc_put(ipu_plane->dmfc);
-	अगर (!IS_ERR_OR_शून्य(ipu_plane->ipu_ch))
+	if (!IS_ERR_OR_NULL(ipu_plane->ipu_ch))
 		ipu_idmac_put(ipu_plane->ipu_ch);
-	अगर (!IS_ERR_OR_शून्य(ipu_plane->alpha_ch))
+	if (!IS_ERR_OR_NULL(ipu_plane->alpha_ch))
 		ipu_idmac_put(ipu_plane->alpha_ch);
-पूर्ण
+}
 
-अटल पूर्णांक ipu_plane_get_resources(काष्ठा drm_device *dev,
-				   काष्ठा ipu_plane *ipu_plane)
-अणु
-	पूर्णांक ret;
-	पूर्णांक alpha_ch;
+static int ipu_plane_get_resources(struct drm_device *dev,
+				   struct ipu_plane *ipu_plane)
+{
+	int ret;
+	int alpha_ch;
 
 	ipu_plane->ipu_ch = ipu_idmac_get(ipu_plane->ipu, ipu_plane->dma);
-	अगर (IS_ERR(ipu_plane->ipu_ch)) अणु
+	if (IS_ERR(ipu_plane->ipu_ch)) {
 		ret = PTR_ERR(ipu_plane->ipu_ch);
 		DRM_ERROR("failed to get idmac channel: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = drmm_add_action_or_reset(dev, ipu_plane_put_resources, ipu_plane);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	alpha_ch = ipu_channel_alpha_channel(ipu_plane->dma);
-	अगर (alpha_ch >= 0) अणु
+	if (alpha_ch >= 0) {
 		ipu_plane->alpha_ch = ipu_idmac_get(ipu_plane->ipu, alpha_ch);
-		अगर (IS_ERR(ipu_plane->alpha_ch)) अणु
+		if (IS_ERR(ipu_plane->alpha_ch)) {
 			ret = PTR_ERR(ipu_plane->alpha_ch);
 			DRM_ERROR("failed to get alpha idmac channel %d: %d\n",
 				  alpha_ch, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	ipu_plane->dmfc = ipu_dmfc_get(ipu_plane->ipu, ipu_plane->dma);
-	अगर (IS_ERR(ipu_plane->dmfc)) अणु
+	if (IS_ERR(ipu_plane->dmfc)) {
 		ret = PTR_ERR(ipu_plane->dmfc);
 		DRM_ERROR("failed to get dmfc: ret %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ipu_plane->dp_flow >= 0) अणु
+	if (ipu_plane->dp_flow >= 0) {
 		ipu_plane->dp = ipu_dp_get(ipu_plane->ipu, ipu_plane->dp_flow);
-		अगर (IS_ERR(ipu_plane->dp)) अणु
+		if (IS_ERR(ipu_plane->dp)) {
 			ret = PTR_ERR(ipu_plane->dp);
 			DRM_ERROR("failed to get dp flow: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool ipu_plane_separate_alpha(काष्ठा ipu_plane *ipu_plane)
-अणु
-	चयन (ipu_plane->base.state->fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_RGB565_A8:
-	हाल DRM_FORMAT_BGR565_A8:
-	हाल DRM_FORMAT_RGB888_A8:
-	हाल DRM_FORMAT_BGR888_A8:
-	हाल DRM_FORMAT_RGBX8888_A8:
-	हाल DRM_FORMAT_BGRX8888_A8:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool ipu_plane_separate_alpha(struct ipu_plane *ipu_plane)
+{
+	switch (ipu_plane->base.state->fb->format->format) {
+	case DRM_FORMAT_RGB565_A8:
+	case DRM_FORMAT_BGR565_A8:
+	case DRM_FORMAT_RGB888_A8:
+	case DRM_FORMAT_BGR888_A8:
+	case DRM_FORMAT_RGBX8888_A8:
+	case DRM_FORMAT_BGRX8888_A8:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल व्योम ipu_plane_enable(काष्ठा ipu_plane *ipu_plane)
-अणु
-	अगर (ipu_plane->dp)
+static void ipu_plane_enable(struct ipu_plane *ipu_plane)
+{
+	if (ipu_plane->dp)
 		ipu_dp_enable(ipu_plane->ipu);
 	ipu_dmfc_enable_channel(ipu_plane->dmfc);
 	ipu_idmac_enable_channel(ipu_plane->ipu_ch);
-	अगर (ipu_plane_separate_alpha(ipu_plane))
+	if (ipu_plane_separate_alpha(ipu_plane))
 		ipu_idmac_enable_channel(ipu_plane->alpha_ch);
-	अगर (ipu_plane->dp)
+	if (ipu_plane->dp)
 		ipu_dp_enable_channel(ipu_plane->dp);
-पूर्ण
+}
 
-व्योम ipu_plane_disable(काष्ठा ipu_plane *ipu_plane, bool disable_dp_channel)
-अणु
-	पूर्णांक ret;
+void ipu_plane_disable(struct ipu_plane *ipu_plane, bool disable_dp_channel)
+{
+	int ret;
 
 	DRM_DEBUG_KMS("[%d] %s\n", __LINE__, __func__);
 
-	ret = ipu_idmac_रुको_busy(ipu_plane->ipu_ch, 50);
-	अगर (ret == -ETIMEDOUT) अणु
+	ret = ipu_idmac_wait_busy(ipu_plane->ipu_ch, 50);
+	if (ret == -ETIMEDOUT) {
 		DRM_ERROR("[PLANE:%d] IDMAC timeout\n",
 			  ipu_plane->base.base.id);
-	पूर्ण
+	}
 
-	अगर (ipu_plane->dp && disable_dp_channel)
+	if (ipu_plane->dp && disable_dp_channel)
 		ipu_dp_disable_channel(ipu_plane->dp, false);
 	ipu_idmac_disable_channel(ipu_plane->ipu_ch);
-	अगर (ipu_plane->alpha_ch)
+	if (ipu_plane->alpha_ch)
 		ipu_idmac_disable_channel(ipu_plane->alpha_ch);
 	ipu_dmfc_disable_channel(ipu_plane->dmfc);
-	अगर (ipu_plane->dp)
+	if (ipu_plane->dp)
 		ipu_dp_disable(ipu_plane->ipu);
-	अगर (ipu_prg_present(ipu_plane->ipu))
+	if (ipu_prg_present(ipu_plane->ipu))
 		ipu_prg_channel_disable(ipu_plane->ipu_ch);
-पूर्ण
+}
 
-व्योम ipu_plane_disable_deferred(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा ipu_plane *ipu_plane = to_ipu_plane(plane);
+void ipu_plane_disable_deferred(struct drm_plane *plane)
+{
+	struct ipu_plane *ipu_plane = to_ipu_plane(plane);
 
-	अगर (ipu_plane->disabling) अणु
+	if (ipu_plane->disabling) {
 		ipu_plane->disabling = false;
 		ipu_plane_disable(ipu_plane, false);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ipu_plane_disable_deferred);
 
-अटल व्योम ipu_plane_state_reset(काष्ठा drm_plane *plane)
-अणु
-	अचिन्हित पूर्णांक zpos = (plane->type == DRM_PLANE_TYPE_PRIMARY) ? 0 : 1;
-	काष्ठा ipu_plane_state *ipu_state;
+static void ipu_plane_state_reset(struct drm_plane *plane)
+{
+	unsigned int zpos = (plane->type == DRM_PLANE_TYPE_PRIMARY) ? 0 : 1;
+	struct ipu_plane_state *ipu_state;
 
-	अगर (plane->state) अणु
+	if (plane->state) {
 		ipu_state = to_ipu_plane_state(plane->state);
 		__drm_atomic_helper_plane_destroy_state(plane->state);
-		kमुक्त(ipu_state);
-		plane->state = शून्य;
-	पूर्ण
+		kfree(ipu_state);
+		plane->state = NULL;
+	}
 
-	ipu_state = kzalloc(माप(*ipu_state), GFP_KERNEL);
+	ipu_state = kzalloc(sizeof(*ipu_state), GFP_KERNEL);
 
-	अगर (ipu_state) अणु
+	if (ipu_state) {
 		__drm_atomic_helper_plane_reset(plane, &ipu_state->base);
 		ipu_state->base.zpos = zpos;
 		ipu_state->base.normalized_zpos = zpos;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा drm_plane_state *
-ipu_plane_duplicate_state(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा ipu_plane_state *state;
+static struct drm_plane_state *
+ipu_plane_duplicate_state(struct drm_plane *plane)
+{
+	struct ipu_plane_state *state;
 
-	अगर (WARN_ON(!plane->state))
-		वापस शून्य;
+	if (WARN_ON(!plane->state))
+		return NULL;
 
-	state = kदो_स्मृति(माप(*state), GFP_KERNEL);
-	अगर (state)
+	state = kmalloc(sizeof(*state), GFP_KERNEL);
+	if (state)
 		__drm_atomic_helper_plane_duplicate_state(plane, &state->base);
 
-	वापस &state->base;
-पूर्ण
+	return &state->base;
+}
 
-अटल व्योम ipu_plane_destroy_state(काष्ठा drm_plane *plane,
-				    काष्ठा drm_plane_state *state)
-अणु
-	काष्ठा ipu_plane_state *ipu_state = to_ipu_plane_state(state);
+static void ipu_plane_destroy_state(struct drm_plane *plane,
+				    struct drm_plane_state *state)
+{
+	struct ipu_plane_state *ipu_state = to_ipu_plane_state(state);
 
 	__drm_atomic_helper_plane_destroy_state(state);
-	kमुक्त(ipu_state);
-पूर्ण
+	kfree(ipu_state);
+}
 
-अटल bool ipu_plane_क्रमmat_mod_supported(काष्ठा drm_plane *plane,
-					   uपूर्णांक32_t क्रमmat, uपूर्णांक64_t modअगरier)
-अणु
-	काष्ठा ipu_soc *ipu = to_ipu_plane(plane)->ipu;
+static bool ipu_plane_format_mod_supported(struct drm_plane *plane,
+					   uint32_t format, uint64_t modifier)
+{
+	struct ipu_soc *ipu = to_ipu_plane(plane)->ipu;
 
-	/* linear is supported क्रम all planes and क्रमmats */
-	अगर (modअगरier == DRM_FORMAT_MOD_LINEAR)
-		वापस true;
+	/* linear is supported for all planes and formats */
+	if (modifier == DRM_FORMAT_MOD_LINEAR)
+		return true;
 
-	/* without a PRG there are no supported modअगरiers */
-	अगर (!ipu_prg_present(ipu))
-		वापस false;
+	/* without a PRG there are no supported modifiers */
+	if (!ipu_prg_present(ipu))
+		return false;
 
-	वापस ipu_prg_क्रमmat_supported(ipu, क्रमmat, modअगरier);
-पूर्ण
+	return ipu_prg_format_supported(ipu, format, modifier);
+}
 
-अटल स्थिर काष्ठा drm_plane_funcs ipu_plane_funcs = अणु
+static const struct drm_plane_funcs ipu_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.reset		= ipu_plane_state_reset,
 	.atomic_duplicate_state	= ipu_plane_duplicate_state,
 	.atomic_destroy_state	= ipu_plane_destroy_state,
-	.क्रमmat_mod_supported = ipu_plane_क्रमmat_mod_supported,
-पूर्ण;
+	.format_mod_supported = ipu_plane_format_mod_supported,
+};
 
-अटल पूर्णांक ipu_plane_atomic_check(काष्ठा drm_plane *plane,
-				  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static int ipu_plane_atomic_check(struct drm_plane *plane,
+				  struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा device *dev = plane->dev->dev;
-	काष्ठा drm_framebuffer *fb = new_state->fb;
-	काष्ठा drm_framebuffer *old_fb = old_state->fb;
-	अचिन्हित दीर्घ eba, ubo, vbo, old_ubo, old_vbo, alpha_eba;
+	struct drm_crtc_state *crtc_state;
+	struct device *dev = plane->dev->dev;
+	struct drm_framebuffer *fb = new_state->fb;
+	struct drm_framebuffer *old_fb = old_state->fb;
+	unsigned long eba, ubo, vbo, old_ubo, old_vbo, alpha_eba;
 	bool can_position = (plane->type == DRM_PLANE_TYPE_OVERLAY);
-	पूर्णांक ret;
+	int ret;
 
 	/* Ok to disable */
-	अगर (!fb)
-		वापस 0;
+	if (!fb)
+		return 0;
 
-	अगर (WARN_ON(!new_state->crtc))
-		वापस -EINVAL;
+	if (WARN_ON(!new_state->crtc))
+		return -EINVAL;
 
 	crtc_state =
 		drm_atomic_get_existing_crtc_state(state,
 						   new_state->crtc);
-	अगर (WARN_ON(!crtc_state))
-		वापस -EINVAL;
+	if (WARN_ON(!crtc_state))
+		return -EINVAL;
 
 	ret = drm_atomic_helper_check_plane_state(new_state, crtc_state,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  can_position, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* nothing to check when disabling or disabled */
-	अगर (!crtc_state->enable)
-		वापस 0;
+	if (!crtc_state->enable)
+		return 0;
 
-	चयन (plane->type) अणु
-	हाल DRM_PLANE_TYPE_PRIMARY:
+	switch (plane->type) {
+	case DRM_PLANE_TYPE_PRIMARY:
 		/* full plane minimum width is 13 pixels */
-		अगर (drm_rect_width(&new_state->dst) < 13)
-			वापस -EINVAL;
-		अवरोध;
-	हाल DRM_PLANE_TYPE_OVERLAY:
-		अवरोध;
-	शेष:
+		if (drm_rect_width(&new_state->dst) < 13)
+			return -EINVAL;
+		break;
+	case DRM_PLANE_TYPE_OVERLAY:
+		break;
+	default:
 		dev_warn(dev, "Unsupported plane type %d\n", plane->type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (drm_rect_height(&new_state->dst) < 2)
-		वापस -EINVAL;
+	if (drm_rect_height(&new_state->dst) < 2)
+		return -EINVAL;
 
 	/*
-	 * We support resizing active plane or changing its क्रमmat by
-	 * क्रमcing CRTC mode change in plane's ->atomic_check callback
+	 * We support resizing active plane or changing its format by
+	 * forcing CRTC mode change in plane's ->atomic_check callback
 	 * and disabling all affected active planes in CRTC's ->atomic_disable
 	 * callback.  The planes will be reenabled in plane's ->atomic_update
 	 * callback.
 	 */
-	अगर (old_fb &&
+	if (old_fb &&
 	    (drm_rect_width(&new_state->dst) != drm_rect_width(&old_state->dst) ||
 	     drm_rect_height(&new_state->dst) != drm_rect_height(&old_state->dst) ||
-	     fb->क्रमmat != old_fb->क्रमmat))
+	     fb->format != old_fb->format))
 		crtc_state->mode_changed = true;
 
 	eba = drm_plane_state_to_eba(new_state, 0);
 
-	अगर (eba & 0x7)
-		वापस -EINVAL;
+	if (eba & 0x7)
+		return -EINVAL;
 
-	अगर (fb->pitches[0] < 1 || fb->pitches[0] > 16384)
-		वापस -EINVAL;
+	if (fb->pitches[0] < 1 || fb->pitches[0] > 16384)
+		return -EINVAL;
 
-	अगर (old_fb && fb->pitches[0] != old_fb->pitches[0])
+	if (old_fb && fb->pitches[0] != old_fb->pitches[0])
 		crtc_state->mode_changed = true;
 
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_YUV420:
-	हाल DRM_FORMAT_YVU420:
-	हाल DRM_FORMAT_YUV422:
-	हाल DRM_FORMAT_YVU422:
-	हाल DRM_FORMAT_YUV444:
-	हाल DRM_FORMAT_YVU444:
+	switch (fb->format->format) {
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YUV444:
+	case DRM_FORMAT_YVU444:
 		/*
-		 * Multiplanar क्रमmats have to meet the following restrictions:
+		 * Multiplanar formats have to meet the following restrictions:
 		 * - The (up to) three plane addresses are EBA, EBA+UBO, EBA+VBO
 		 * - EBA, UBO and VBO are a multiple of 8
-		 * - UBO and VBO are अचिन्हित and not larger than 0xfffff8
-		 * - Only EBA may be changed जबतक scanout is active
+		 * - UBO and VBO are unsigned and not larger than 0xfffff8
+		 * - Only EBA may be changed while scanout is active
 		 * - The strides of U and V planes must be identical.
 		 */
 		vbo = drm_plane_state_to_vbo(new_state);
 
-		अगर (vbo & 0x7 || vbo > 0xfffff8)
-			वापस -EINVAL;
+		if (vbo & 0x7 || vbo > 0xfffff8)
+			return -EINVAL;
 
-		अगर (old_fb && (fb->क्रमmat == old_fb->क्रमmat)) अणु
+		if (old_fb && (fb->format == old_fb->format)) {
 			old_vbo = drm_plane_state_to_vbo(old_state);
-			अगर (vbo != old_vbo)
+			if (vbo != old_vbo)
 				crtc_state->mode_changed = true;
-		पूर्ण
+		}
 
-		अगर (fb->pitches[1] != fb->pitches[2])
-			वापस -EINVAL;
+		if (fb->pitches[1] != fb->pitches[2])
+			return -EINVAL;
 
 		fallthrough;
-	हाल DRM_FORMAT_NV12:
-	हाल DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV16:
 		ubo = drm_plane_state_to_ubo(new_state);
 
-		अगर (ubo & 0x7 || ubo > 0xfffff8)
-			वापस -EINVAL;
+		if (ubo & 0x7 || ubo > 0xfffff8)
+			return -EINVAL;
 
-		अगर (old_fb && (fb->क्रमmat == old_fb->क्रमmat)) अणु
+		if (old_fb && (fb->format == old_fb->format)) {
 			old_ubo = drm_plane_state_to_ubo(old_state);
-			अगर (ubo != old_ubo)
+			if (ubo != old_ubo)
 				crtc_state->mode_changed = true;
-		पूर्ण
+		}
 
-		अगर (fb->pitches[1] < 1 || fb->pitches[1] > 16384)
-			वापस -EINVAL;
+		if (fb->pitches[1] < 1 || fb->pitches[1] > 16384)
+			return -EINVAL;
 
-		अगर (old_fb && old_fb->pitches[1] != fb->pitches[1])
+		if (old_fb && old_fb->pitches[1] != fb->pitches[1])
 			crtc_state->mode_changed = true;
 
 		/*
-		 * The x/y offsets must be even in हाल of horizontal/vertical
+		 * The x/y offsets must be even in case of horizontal/vertical
 		 * chroma subsampling.
 		 */
-		अगर (((new_state->src.x1 >> 16) & (fb->क्रमmat->hsub - 1)) ||
-		    ((new_state->src.y1 >> 16) & (fb->क्रमmat->vsub - 1)))
-			वापस -EINVAL;
-		अवरोध;
-	हाल DRM_FORMAT_RGB565_A8:
-	हाल DRM_FORMAT_BGR565_A8:
-	हाल DRM_FORMAT_RGB888_A8:
-	हाल DRM_FORMAT_BGR888_A8:
-	हाल DRM_FORMAT_RGBX8888_A8:
-	हाल DRM_FORMAT_BGRX8888_A8:
+		if (((new_state->src.x1 >> 16) & (fb->format->hsub - 1)) ||
+		    ((new_state->src.y1 >> 16) & (fb->format->vsub - 1)))
+			return -EINVAL;
+		break;
+	case DRM_FORMAT_RGB565_A8:
+	case DRM_FORMAT_BGR565_A8:
+	case DRM_FORMAT_RGB888_A8:
+	case DRM_FORMAT_BGR888_A8:
+	case DRM_FORMAT_RGBX8888_A8:
+	case DRM_FORMAT_BGRX8888_A8:
 		alpha_eba = drm_plane_state_to_eba(new_state, 1);
-		अगर (alpha_eba & 0x7)
-			वापस -EINVAL;
+		if (alpha_eba & 0x7)
+			return -EINVAL;
 
-		अगर (fb->pitches[1] < 1 || fb->pitches[1] > 16384)
-			वापस -EINVAL;
+		if (fb->pitches[1] < 1 || fb->pitches[1] > 16384)
+			return -EINVAL;
 
-		अगर (old_fb && old_fb->pitches[1] != fb->pitches[1])
+		if (old_fb && old_fb->pitches[1] != fb->pitches[1])
 			crtc_state->mode_changed = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ipu_plane_atomic_disable(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा ipu_plane *ipu_plane = to_ipu_plane(plane);
+static void ipu_plane_atomic_disable(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct ipu_plane *ipu_plane = to_ipu_plane(plane);
 
-	अगर (ipu_plane->dp)
+	if (ipu_plane->dp)
 		ipu_dp_disable_channel(ipu_plane->dp, true);
 	ipu_plane->disabling = true;
-पूर्ण
+}
 
-अटल पूर्णांक ipu_chan_assign_axi_id(पूर्णांक ipu_chan)
-अणु
-	चयन (ipu_chan) अणु
-	हाल IPUV3_CHANNEL_MEM_BG_SYNC:
-		वापस 1;
-	हाल IPUV3_CHANNEL_MEM_FG_SYNC:
-		वापस 2;
-	हाल IPUV3_CHANNEL_MEM_DC_SYNC:
-		वापस 3;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int ipu_chan_assign_axi_id(int ipu_chan)
+{
+	switch (ipu_chan) {
+	case IPUV3_CHANNEL_MEM_BG_SYNC:
+		return 1;
+	case IPUV3_CHANNEL_MEM_FG_SYNC:
+		return 2;
+	case IPUV3_CHANNEL_MEM_DC_SYNC:
+		return 3;
+	default:
+		return 0;
+	}
+}
 
-अटल व्योम ipu_calculate_bursts(u32 width, u32 cpp, u32 stride,
+static void ipu_calculate_bursts(u32 width, u32 cpp, u32 stride,
 				 u8 *burstsize, u8 *num_bursts)
-अणु
-	स्थिर अचिन्हित पूर्णांक width_bytes = width * cpp;
-	अचिन्हित पूर्णांक npb, bursts;
+{
+	const unsigned int width_bytes = width * cpp;
+	unsigned int npb, bursts;
 
 	/* Maximum number of pixels per burst without overshooting stride */
-	क्रम (npb = 64 / cpp; npb > 0; --npb) अणु
-		अगर (round_up(width_bytes, npb * cpp) <= stride)
-			अवरोध;
-	पूर्ण
+	for (npb = 64 / cpp; npb > 0; --npb) {
+		if (round_up(width_bytes, npb * cpp) <= stride)
+			break;
+	}
 	*burstsize = npb;
 
 	/* Maximum number of consecutive bursts without overshooting stride */
-	क्रम (bursts = 8; bursts > 1; bursts /= 2) अणु
-		अगर (round_up(width_bytes, npb * cpp * bursts) <= stride)
-			अवरोध;
-	पूर्ण
+	for (bursts = 8; bursts > 1; bursts /= 2) {
+		if (round_up(width_bytes, npb * cpp * bursts) <= stride)
+			break;
+	}
 	*num_bursts = bursts;
-पूर्ण
+}
 
-अटल व्योम ipu_plane_atomic_update(काष्ठा drm_plane *plane,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void ipu_plane_atomic_update(struct drm_plane *plane,
+				    struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा ipu_plane *ipu_plane = to_ipu_plane(plane);
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+	struct ipu_plane *ipu_plane = to_ipu_plane(plane);
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा ipu_plane_state *ipu_state = to_ipu_plane_state(new_state);
-	काष्ठा drm_crtc_state *crtc_state = new_state->crtc->state;
-	काष्ठा drm_framebuffer *fb = new_state->fb;
-	काष्ठा drm_rect *dst = &new_state->dst;
-	अचिन्हित दीर्घ eba, ubo, vbo;
-	अचिन्हित दीर्घ alpha_eba = 0;
-	क्रमागत ipu_color_space ics;
-	अचिन्हित पूर्णांक axi_id = 0;
-	स्थिर काष्ठा drm_क्रमmat_info *info;
+	struct ipu_plane_state *ipu_state = to_ipu_plane_state(new_state);
+	struct drm_crtc_state *crtc_state = new_state->crtc->state;
+	struct drm_framebuffer *fb = new_state->fb;
+	struct drm_rect *dst = &new_state->dst;
+	unsigned long eba, ubo, vbo;
+	unsigned long alpha_eba = 0;
+	enum ipu_color_space ics;
+	unsigned int axi_id = 0;
+	const struct drm_format_info *info;
 	u8 burstsize, num_bursts;
 	u32 width, height;
-	पूर्णांक active;
+	int active;
 
-	अगर (ipu_plane->dp_flow == IPU_DP_FLOW_SYNC_FG)
-		ipu_dp_set_winकरोw_pos(ipu_plane->dp, dst->x1, dst->y1);
+	if (ipu_plane->dp_flow == IPU_DP_FLOW_SYNC_FG)
+		ipu_dp_set_window_pos(ipu_plane->dp, dst->x1, dst->y1);
 
-	चयन (ipu_plane->dp_flow) अणु
-	हाल IPU_DP_FLOW_SYNC_BG:
-		अगर (new_state->normalized_zpos == 1) अणु
+	switch (ipu_plane->dp_flow) {
+	case IPU_DP_FLOW_SYNC_BG:
+		if (new_state->normalized_zpos == 1) {
 			ipu_dp_set_global_alpha(ipu_plane->dp,
-						!fb->क्रमmat->has_alpha, 0xff,
+						!fb->format->has_alpha, 0xff,
 						true);
-		पूर्ण अन्यथा अणु
+		} else {
 			ipu_dp_set_global_alpha(ipu_plane->dp, true, 0, true);
-		पूर्ण
-		अवरोध;
-	हाल IPU_DP_FLOW_SYNC_FG:
-		अगर (new_state->normalized_zpos == 1) अणु
+		}
+		break;
+	case IPU_DP_FLOW_SYNC_FG:
+		if (new_state->normalized_zpos == 1) {
 			ipu_dp_set_global_alpha(ipu_plane->dp,
-						!fb->क्रमmat->has_alpha, 0xff,
+						!fb->format->has_alpha, 0xff,
 						false);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	eba = drm_plane_state_to_eba(new_state, 0);
 
 	/*
 	 * Configure PRG channel and attached PRE, this changes the EBA to an
-	 * पूर्णांकernal SRAM location.
+	 * internal SRAM location.
 	 */
-	अगर (ipu_state->use_pre) अणु
+	if (ipu_state->use_pre) {
 		axi_id = ipu_chan_assign_axi_id(ipu_plane->dma);
 		ipu_prg_channel_configure(ipu_plane->ipu_ch, axi_id,
 					  drm_rect_width(&new_state->src) >> 16,
 					  drm_rect_height(&new_state->src) >> 16,
-					  fb->pitches[0], fb->क्रमmat->क्रमmat,
-					  fb->modअगरier, &eba);
-	पूर्ण
+					  fb->pitches[0], fb->format->format,
+					  fb->modifier, &eba);
+	}
 
-	अगर (old_state->fb && !drm_atomic_crtc_needs_modeset(crtc_state)) अणु
-		/* nothing to करो अगर PRE is used */
-		अगर (ipu_state->use_pre)
-			वापस;
+	if (old_state->fb && !drm_atomic_crtc_needs_modeset(crtc_state)) {
+		/* nothing to do if PRE is used */
+		if (ipu_state->use_pre)
+			return;
 		active = ipu_idmac_get_current_buffer(ipu_plane->ipu_ch);
 		ipu_cpmem_set_buffer(ipu_plane->ipu_ch, !active, eba);
 		ipu_idmac_select_buffer(ipu_plane->ipu_ch, !active);
-		अगर (ipu_plane_separate_alpha(ipu_plane)) अणु
+		if (ipu_plane_separate_alpha(ipu_plane)) {
 			active = ipu_idmac_get_current_buffer(ipu_plane->alpha_ch);
 			ipu_cpmem_set_buffer(ipu_plane->alpha_ch, !active,
 					     alpha_eba);
 			ipu_idmac_select_buffer(ipu_plane->alpha_ch, !active);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	ics = ipu_drm_fourcc_to_colorspace(fb->क्रमmat->क्रमmat);
-	चयन (ipu_plane->dp_flow) अणु
-	हाल IPU_DP_FLOW_SYNC_BG:
+	ics = ipu_drm_fourcc_to_colorspace(fb->format->format);
+	switch (ipu_plane->dp_flow) {
+	case IPU_DP_FLOW_SYNC_BG:
 		ipu_dp_setup_channel(ipu_plane->dp, ics, IPUV3_COLORSPACE_RGB);
-		अवरोध;
-	हाल IPU_DP_FLOW_SYNC_FG:
+		break;
+	case IPU_DP_FLOW_SYNC_FG:
 		ipu_dp_setup_channel(ipu_plane->dp, ics,
 					IPUV3_COLORSPACE_UNKNOWN);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ipu_dmfc_config_रुको4eot(ipu_plane->dmfc, drm_rect_width(dst));
+	ipu_dmfc_config_wait4eot(ipu_plane->dmfc, drm_rect_width(dst));
 
 	width = drm_rect_width(&new_state->src) >> 16;
 	height = drm_rect_height(&new_state->src) >> 16;
-	info = drm_क्रमmat_info(fb->क्रमmat->क्रमmat);
+	info = drm_format_info(fb->format->format);
 	ipu_calculate_bursts(width, info->cpp[0], fb->pitches[0],
 			     &burstsize, &num_bursts);
 
 	ipu_cpmem_zero(ipu_plane->ipu_ch);
 	ipu_cpmem_set_resolution(ipu_plane->ipu_ch, width, height);
-	ipu_cpmem_set_fmt(ipu_plane->ipu_ch, fb->क्रमmat->क्रमmat);
+	ipu_cpmem_set_fmt(ipu_plane->ipu_ch, fb->format->format);
 	ipu_cpmem_set_burstsize(ipu_plane->ipu_ch, burstsize);
 	ipu_cpmem_set_high_priority(ipu_plane->ipu_ch);
 	ipu_idmac_enable_watermark(ipu_plane->ipu_ch, true);
-	ipu_idmac_set_द्विगुन_buffer(ipu_plane->ipu_ch, 1);
+	ipu_idmac_set_double_buffer(ipu_plane->ipu_ch, 1);
 	ipu_cpmem_set_stride(ipu_plane->ipu_ch, fb->pitches[0]);
 	ipu_cpmem_set_axi_id(ipu_plane->ipu_ch, axi_id);
 
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_YUV420:
-	हाल DRM_FORMAT_YVU420:
-	हाल DRM_FORMAT_YUV422:
-	हाल DRM_FORMAT_YVU422:
-	हाल DRM_FORMAT_YUV444:
-	हाल DRM_FORMAT_YVU444:
+	switch (fb->format->format) {
+	case DRM_FORMAT_YUV420:
+	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_YUV422:
+	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_YUV444:
+	case DRM_FORMAT_YVU444:
 		ubo = drm_plane_state_to_ubo(new_state);
 		vbo = drm_plane_state_to_vbo(new_state);
-		अगर (fb->क्रमmat->क्रमmat == DRM_FORMAT_YVU420 ||
-		    fb->क्रमmat->क्रमmat == DRM_FORMAT_YVU422 ||
-		    fb->क्रमmat->क्रमmat == DRM_FORMAT_YVU444)
+		if (fb->format->format == DRM_FORMAT_YVU420 ||
+		    fb->format->format == DRM_FORMAT_YVU422 ||
+		    fb->format->format == DRM_FORMAT_YVU444)
 			swap(ubo, vbo);
 
 		ipu_cpmem_set_yuv_planar_full(ipu_plane->ipu_ch,
@@ -662,9 +661,9 @@ ipu_plane_duplicate_state(काष्ठा drm_plane *plane)
 		dev_dbg(ipu_plane->base.dev->dev,
 			"phy = %lu %lu %lu, x = %d, y = %d", eba, ubo, vbo,
 			new_state->src.x1 >> 16, new_state->src.y1 >> 16);
-		अवरोध;
-	हाल DRM_FORMAT_NV12:
-	हाल DRM_FORMAT_NV16:
+		break;
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV16:
 		ubo = drm_plane_state_to_ubo(new_state);
 
 		ipu_cpmem_set_yuv_planar_full(ipu_plane->ipu_ch,
@@ -673,13 +672,13 @@ ipu_plane_duplicate_state(काष्ठा drm_plane *plane)
 		dev_dbg(ipu_plane->base.dev->dev,
 			"phy = %lu %lu, x = %d, y = %d", eba, ubo,
 			new_state->src.x1 >> 16, new_state->src.y1 >> 16);
-		अवरोध;
-	हाल DRM_FORMAT_RGB565_A8:
-	हाल DRM_FORMAT_BGR565_A8:
-	हाल DRM_FORMAT_RGB888_A8:
-	हाल DRM_FORMAT_BGR888_A8:
-	हाल DRM_FORMAT_RGBX8888_A8:
-	हाल DRM_FORMAT_BGRX8888_A8:
+		break;
+	case DRM_FORMAT_RGB565_A8:
+	case DRM_FORMAT_BGR565_A8:
+	case DRM_FORMAT_RGB888_A8:
+	case DRM_FORMAT_BGR888_A8:
+	case DRM_FORMAT_RGBX8888_A8:
+	case DRM_FORMAT_BGRX8888_A8:
 		alpha_eba = drm_plane_state_to_eba(new_state, 1);
 		num_bursts = 0;
 
@@ -693,184 +692,184 @@ ipu_plane_duplicate_state(काष्ठा drm_plane *plane)
 		ipu_cpmem_set_resolution(ipu_plane->alpha_ch,
 					 drm_rect_width(&new_state->src) >> 16,
 					 drm_rect_height(&new_state->src) >> 16);
-		ipu_cpmem_set_क्रमmat_passthrough(ipu_plane->alpha_ch, 8);
+		ipu_cpmem_set_format_passthrough(ipu_plane->alpha_ch, 8);
 		ipu_cpmem_set_high_priority(ipu_plane->alpha_ch);
-		ipu_idmac_set_द्विगुन_buffer(ipu_plane->alpha_ch, 1);
+		ipu_idmac_set_double_buffer(ipu_plane->alpha_ch, 1);
 		ipu_cpmem_set_stride(ipu_plane->alpha_ch, fb->pitches[1]);
 		ipu_cpmem_set_burstsize(ipu_plane->alpha_ch, 16);
 		ipu_cpmem_set_buffer(ipu_plane->alpha_ch, 0, alpha_eba);
 		ipu_cpmem_set_buffer(ipu_plane->alpha_ch, 1, alpha_eba);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(ipu_plane->base.dev->dev, "phys = %lu, x = %d, y = %d",
 			eba, new_state->src.x1 >> 16, new_state->src.y1 >> 16);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ipu_cpmem_set_buffer(ipu_plane->ipu_ch, 0, eba);
 	ipu_cpmem_set_buffer(ipu_plane->ipu_ch, 1, eba);
 	ipu_idmac_lock_enable(ipu_plane->ipu_ch, num_bursts);
 	ipu_plane_enable(ipu_plane);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs ipu_plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs ipu_plane_helper_funcs = {
 	.prepare_fb = drm_gem_plane_helper_prepare_fb,
 	.atomic_check = ipu_plane_atomic_check,
 	.atomic_disable = ipu_plane_atomic_disable,
 	.atomic_update = ipu_plane_atomic_update,
-पूर्ण;
+};
 
-bool ipu_plane_atomic_update_pending(काष्ठा drm_plane *plane)
-अणु
-	काष्ठा ipu_plane *ipu_plane = to_ipu_plane(plane);
-	काष्ठा drm_plane_state *state = plane->state;
-	काष्ठा ipu_plane_state *ipu_state = to_ipu_plane_state(state);
+bool ipu_plane_atomic_update_pending(struct drm_plane *plane)
+{
+	struct ipu_plane *ipu_plane = to_ipu_plane(plane);
+	struct drm_plane_state *state = plane->state;
+	struct ipu_plane_state *ipu_state = to_ipu_plane_state(state);
 
 	/* disabled crtcs must not block the update */
-	अगर (!state->crtc)
-		वापस false;
+	if (!state->crtc)
+		return false;
 
-	अगर (ipu_state->use_pre)
-		वापस ipu_prg_channel_configure_pending(ipu_plane->ipu_ch);
+	if (ipu_state->use_pre)
+		return ipu_prg_channel_configure_pending(ipu_plane->ipu_ch);
 
 	/*
-	 * Pretend no update is pending in the non-PRE/PRG हाल. For this to
+	 * Pretend no update is pending in the non-PRE/PRG case. For this to
 	 * happen, an atomic update would have to be deferred until after the
-	 * start of the next frame and simultaneously पूर्णांकerrupt latency would
+	 * start of the next frame and simultaneously interrupt latency would
 	 * have to be high enough to let the atomic update finish and issue an
-	 * event beक्रमe the previous end of frame पूर्णांकerrupt handler can be
+	 * event before the previous end of frame interrupt handler can be
 	 * executed.
 	 */
-	वापस false;
-पूर्ण
-पूर्णांक ipu_planes_assign_pre(काष्ठा drm_device *dev,
-			  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *old_crtc_state, *crtc_state;
-	काष्ठा drm_plane_state *plane_state;
-	काष्ठा ipu_plane_state *ipu_state;
-	काष्ठा ipu_plane *ipu_plane;
-	काष्ठा drm_plane *plane;
-	काष्ठा drm_crtc *crtc;
-	पूर्णांक available_pres = ipu_prg_max_active_channels();
-	पूर्णांक ret, i;
+	return false;
+}
+int ipu_planes_assign_pre(struct drm_device *dev,
+			  struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *old_crtc_state, *crtc_state;
+	struct drm_plane_state *plane_state;
+	struct ipu_plane_state *ipu_state;
+	struct ipu_plane *ipu_plane;
+	struct drm_plane *plane;
+	struct drm_crtc *crtc;
+	int available_pres = ipu_prg_max_active_channels();
+	int ret, i;
 
-	क्रम_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, crtc_state, i) अणु
+	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, crtc_state, i) {
 		ret = drm_atomic_add_affected_planes(state, crtc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
 	 * We are going over the planes in 2 passes: first we assign PREs to
-	 * planes with a tiling modअगरier, which need the PREs to resolve पूर्णांकo
+	 * planes with a tiling modifier, which need the PREs to resolve into
 	 * linear. Any failure to assign a PRE there is fatal. In the second
 	 * pass we try to assign PREs to linear FBs, to improve memory access
-	 * patterns क्रम them. Failure at this poपूर्णांक is non-fatal, as we can
+	 * patterns for them. Failure at this point is non-fatal, as we can
 	 * scan out linear FBs without a PRE.
 	 */
-	क्रम_each_new_plane_in_state(state, plane, plane_state, i) अणु
+	for_each_new_plane_in_state(state, plane, plane_state, i) {
 		ipu_state = to_ipu_plane_state(plane_state);
 		ipu_plane = to_ipu_plane(plane);
 
-		अगर (!plane_state->fb) अणु
+		if (!plane_state->fb) {
 			ipu_state->use_pre = false;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!(plane_state->fb->flags & DRM_MODE_FB_MODIFIERS) ||
-		    plane_state->fb->modअगरier == DRM_FORMAT_MOD_LINEAR)
-			जारी;
+		if (!(plane_state->fb->flags & DRM_MODE_FB_MODIFIERS) ||
+		    plane_state->fb->modifier == DRM_FORMAT_MOD_LINEAR)
+			continue;
 
-		अगर (!ipu_prg_present(ipu_plane->ipu) || !available_pres)
-			वापस -EINVAL;
+		if (!ipu_prg_present(ipu_plane->ipu) || !available_pres)
+			return -EINVAL;
 
-		अगर (!ipu_prg_क्रमmat_supported(ipu_plane->ipu,
-					      plane_state->fb->क्रमmat->क्रमmat,
-					      plane_state->fb->modअगरier))
-			वापस -EINVAL;
+		if (!ipu_prg_format_supported(ipu_plane->ipu,
+					      plane_state->fb->format->format,
+					      plane_state->fb->modifier))
+			return -EINVAL;
 
 		ipu_state->use_pre = true;
 		available_pres--;
-	पूर्ण
+	}
 
-	क्रम_each_new_plane_in_state(state, plane, plane_state, i) अणु
+	for_each_new_plane_in_state(state, plane, plane_state, i) {
 		ipu_state = to_ipu_plane_state(plane_state);
 		ipu_plane = to_ipu_plane(plane);
 
-		अगर (!plane_state->fb) अणु
+		if (!plane_state->fb) {
 			ipu_state->use_pre = false;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर ((plane_state->fb->flags & DRM_MODE_FB_MODIFIERS) &&
-		    plane_state->fb->modअगरier != DRM_FORMAT_MOD_LINEAR)
-			जारी;
+		if ((plane_state->fb->flags & DRM_MODE_FB_MODIFIERS) &&
+		    plane_state->fb->modifier != DRM_FORMAT_MOD_LINEAR)
+			continue;
 
-		/* make sure that modअगरier is initialized */
-		plane_state->fb->modअगरier = DRM_FORMAT_MOD_LINEAR;
+		/* make sure that modifier is initialized */
+		plane_state->fb->modifier = DRM_FORMAT_MOD_LINEAR;
 
-		अगर (ipu_prg_present(ipu_plane->ipu) && available_pres &&
-		    ipu_prg_क्रमmat_supported(ipu_plane->ipu,
-					     plane_state->fb->क्रमmat->क्रमmat,
-					     plane_state->fb->modअगरier)) अणु
+		if (ipu_prg_present(ipu_plane->ipu) && available_pres &&
+		    ipu_prg_format_supported(ipu_plane->ipu,
+					     plane_state->fb->format->format,
+					     plane_state->fb->modifier)) {
 			ipu_state->use_pre = true;
 			available_pres--;
-		पूर्ण अन्यथा अणु
+		} else {
 			ipu_state->use_pre = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ipu_planes_assign_pre);
 
-काष्ठा ipu_plane *ipu_plane_init(काष्ठा drm_device *dev, काष्ठा ipu_soc *ipu,
-				 पूर्णांक dma, पूर्णांक dp, अचिन्हित पूर्णांक possible_crtcs,
-				 क्रमागत drm_plane_type type)
-अणु
-	काष्ठा ipu_plane *ipu_plane;
-	स्थिर uपूर्णांक64_t *modअगरiers = ipu_क्रमmat_modअगरiers;
-	अचिन्हित पूर्णांक zpos = (type == DRM_PLANE_TYPE_PRIMARY) ? 0 : 1;
-	पूर्णांक ret;
+struct ipu_plane *ipu_plane_init(struct drm_device *dev, struct ipu_soc *ipu,
+				 int dma, int dp, unsigned int possible_crtcs,
+				 enum drm_plane_type type)
+{
+	struct ipu_plane *ipu_plane;
+	const uint64_t *modifiers = ipu_format_modifiers;
+	unsigned int zpos = (type == DRM_PLANE_TYPE_PRIMARY) ? 0 : 1;
+	int ret;
 
 	DRM_DEBUG_KMS("channel %d, dp flow %d, possible_crtcs=0x%x\n",
 		      dma, dp, possible_crtcs);
 
-	ipu_plane = drmm_universal_plane_alloc(dev, काष्ठा ipu_plane, base,
+	ipu_plane = drmm_universal_plane_alloc(dev, struct ipu_plane, base,
 					       possible_crtcs, &ipu_plane_funcs,
-					       ipu_plane_क्रमmats,
-					       ARRAY_SIZE(ipu_plane_क्रमmats),
-					       modअगरiers, type, शून्य);
-	अगर (IS_ERR(ipu_plane)) अणु
+					       ipu_plane_formats,
+					       ARRAY_SIZE(ipu_plane_formats),
+					       modifiers, type, NULL);
+	if (IS_ERR(ipu_plane)) {
 		DRM_ERROR("failed to allocate and initialize %s plane\n",
 			  zpos ? "overlay" : "primary");
-		वापस ipu_plane;
-	पूर्ण
+		return ipu_plane;
+	}
 
 	ipu_plane->ipu = ipu;
 	ipu_plane->dma = dma;
 	ipu_plane->dp_flow = dp;
 
-	अगर (ipu_prg_present(ipu))
-		modअगरiers = pre_क्रमmat_modअगरiers;
+	if (ipu_prg_present(ipu))
+		modifiers = pre_format_modifiers;
 
 	drm_plane_helper_add(&ipu_plane->base, &ipu_plane_helper_funcs);
 
-	अगर (dp == IPU_DP_FLOW_SYNC_BG || dp == IPU_DP_FLOW_SYNC_FG)
+	if (dp == IPU_DP_FLOW_SYNC_BG || dp == IPU_DP_FLOW_SYNC_FG)
 		ret = drm_plane_create_zpos_property(&ipu_plane->base, zpos, 0,
 						     1);
-	अन्यथा
+	else
 		ret = drm_plane_create_zpos_immutable_property(&ipu_plane->base,
 							       0);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	ret = ipu_plane_get_resources(dev, ipu_plane);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("failed to get %s plane resources: %pe\n",
 			  zpos ? "overlay" : "primary", &ret);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	वापस ipu_plane;
-पूर्ण
+	return ipu_plane;
+}

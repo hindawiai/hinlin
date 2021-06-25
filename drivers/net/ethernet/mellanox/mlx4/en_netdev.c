@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,135 +31,135 @@
  *
  */
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hash.h>
-#समावेश <net/ip.h>
-#समावेश <net/vxlan.h>
-#समावेश <net/devlink.h>
+#include <linux/bpf.h>
+#include <linux/etherdevice.h>
+#include <linux/tcp.h>
+#include <linux/if_vlan.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/hash.h>
+#include <net/ip.h>
+#include <net/vxlan.h>
+#include <net/devlink.h>
 
-#समावेश <linux/mlx4/driver.h>
-#समावेश <linux/mlx4/device.h>
-#समावेश <linux/mlx4/cmd.h>
-#समावेश <linux/mlx4/cq.h>
+#include <linux/mlx4/driver.h>
+#include <linux/mlx4/device.h>
+#include <linux/mlx4/cmd.h>
+#include <linux/mlx4/cq.h>
 
-#समावेश "mlx4_en.h"
-#समावेश "en_port.h"
+#include "mlx4_en.h"
+#include "en_port.h"
 
-#घोषणा MLX4_EN_MAX_XDP_MTU ((पूर्णांक)(PAGE_SIZE - ETH_HLEN - (2 * VLAN_HLEN) - \
+#define MLX4_EN_MAX_XDP_MTU ((int)(PAGE_SIZE - ETH_HLEN - (2 * VLAN_HLEN) - \
 				XDP_PACKET_HEADROOM -			    \
-				SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info))))
+				SKB_DATA_ALIGN(sizeof(struct skb_shared_info))))
 
-पूर्णांक mlx4_en_setup_tc(काष्ठा net_device *dev, u8 up)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	पूर्णांक i;
-	अचिन्हित पूर्णांक offset = 0;
+int mlx4_en_setup_tc(struct net_device *dev, u8 up)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	int i;
+	unsigned int offset = 0;
 
-	अगर (up && up != MLX4_EN_NUM_UP_HIGH)
-		वापस -EINVAL;
+	if (up && up != MLX4_EN_NUM_UP_HIGH)
+		return -EINVAL;
 
 	netdev_set_num_tc(dev, up);
-	netअगर_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
+	netif_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
 	/* Partition Tx queues evenly amongst UP's */
-	क्रम (i = 0; i < up; i++) अणु
+	for (i = 0; i < up; i++) {
 		netdev_set_tc_queue(dev, i, priv->num_tx_rings_p_up, offset);
 		offset += priv->num_tx_rings_p_up;
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_MLX4_EN_DCB
-	अगर (!mlx4_is_slave(priv->mdev->dev)) अणु
-		अगर (up) अणु
-			अगर (priv->dcbx_cap)
+#ifdef CONFIG_MLX4_EN_DCB
+	if (!mlx4_is_slave(priv->mdev->dev)) {
+		if (up) {
+			if (priv->dcbx_cap)
 				priv->flags |= MLX4_EN_FLAG_DCB_ENABLED;
-		पूर्ण अन्यथा अणु
+		} else {
 			priv->flags &= ~MLX4_EN_FLAG_DCB_ENABLED;
 			priv->cee_config.pfc_state = false;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर /* CONFIG_MLX4_EN_DCB */
+		}
+	}
+#endif /* CONFIG_MLX4_EN_DCB */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_en_alloc_tx_queue_per_tc(काष्ठा net_device *dev, u8 tc)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_port_profile new_prof;
-	काष्ठा mlx4_en_priv *पंचांगp;
-	पूर्णांक total_count;
-	पूर्णांक port_up = 0;
-	पूर्णांक err = 0;
+int mlx4_en_alloc_tx_queue_per_tc(struct net_device *dev, u8 tc)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_port_profile new_prof;
+	struct mlx4_en_priv *tmp;
+	int total_count;
+	int port_up = 0;
+	int err = 0;
 
-	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
 	mutex_lock(&mdev->state_lock);
-	स_नकल(&new_prof, priv->prof, माप(काष्ठा mlx4_en_port_profile));
+	memcpy(&new_prof, priv->prof, sizeof(struct mlx4_en_port_profile));
 	new_prof.num_up = (tc == 0) ? MLX4_EN_NUM_UP_LOW :
 				      MLX4_EN_NUM_UP_HIGH;
 	new_prof.tx_ring_num[TX] = new_prof.num_tx_rings_p_up *
 				   new_prof.num_up;
 	total_count = new_prof.tx_ring_num[TX] + new_prof.tx_ring_num[TX_XDP];
-	अगर (total_count > MAX_TX_RINGS) अणु
+	if (total_count > MAX_TX_RINGS) {
 		err = -EINVAL;
 		en_err(priv,
 		       "Total number of TX and XDP rings (%d) exceeds the maximum supported (%d)\n",
 		       total_count, MAX_TX_RINGS);
-		जाओ out;
-	पूर्ण
-	err = mlx4_en_try_alloc_resources(priv, पंचांगp, &new_prof, true);
-	अगर (err)
-		जाओ out;
+		goto out;
+	}
+	err = mlx4_en_try_alloc_resources(priv, tmp, &new_prof, true);
+	if (err)
+		goto out;
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	mlx4_en_safe_replace_resources(priv, पंचांगp);
-	अगर (port_up) अणु
+	mlx4_en_safe_replace_resources(priv, tmp);
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed starting port for setup TC\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	err = mlx4_en_setup_tc(dev, tc);
 out:
 	mutex_unlock(&mdev->state_lock);
-	kमुक्त(पंचांगp);
-	वापस err;
-पूर्ण
+	kfree(tmp);
+	return err;
+}
 
-अटल पूर्णांक __mlx4_en_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
-			      व्योम *type_data)
-अणु
-	काष्ठा tc_mqprio_qopt *mqprio = type_data;
+static int __mlx4_en_setup_tc(struct net_device *dev, enum tc_setup_type type,
+			      void *type_data)
+{
+	struct tc_mqprio_qopt *mqprio = type_data;
 
-	अगर (type != TC_SETUP_QDISC_MQPRIO)
-		वापस -EOPNOTSUPP;
+	if (type != TC_SETUP_QDISC_MQPRIO)
+		return -EOPNOTSUPP;
 
-	अगर (mqprio->num_tc && mqprio->num_tc != MLX4_EN_NUM_UP_HIGH)
-		वापस -EINVAL;
+	if (mqprio->num_tc && mqprio->num_tc != MLX4_EN_NUM_UP_HIGH)
+		return -EINVAL;
 
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
 
-	वापस mlx4_en_alloc_tx_queue_per_tc(dev, mqprio->num_tc);
-पूर्ण
+	return mlx4_en_alloc_tx_queue_per_tc(dev, mqprio->num_tc);
+}
 
-#अगर_घोषित CONFIG_RFS_ACCEL
+#ifdef CONFIG_RFS_ACCEL
 
-काष्ठा mlx4_en_filter अणु
-	काष्ठा list_head next;
-	काष्ठा work_काष्ठा work;
+struct mlx4_en_filter {
+	struct list_head next;
+	struct work_struct work;
 
 	u8     ip_proto;
 	__be32 src_ip;
@@ -168,66 +167,66 @@ out:
 	__be16 src_port;
 	__be16 dst_port;
 
-	पूर्णांक rxq_index;
-	काष्ठा mlx4_en_priv *priv;
-	u32 flow_id;			/* RFS infraकाष्ठाure id */
-	पूर्णांक id;				/* mlx4_en driver id */
+	int rxq_index;
+	struct mlx4_en_priv *priv;
+	u32 flow_id;			/* RFS infrastructure id */
+	int id;				/* mlx4_en driver id */
 	u64 reg_id;			/* Flow steering API id */
-	u8 activated;			/* Used to prevent expiry beक्रमe filter
+	u8 activated;			/* Used to prevent expiry before filter
 					 * is attached
 					 */
-	काष्ठा hlist_node filter_chain;
-पूर्ण;
+	struct hlist_node filter_chain;
+};
 
-अटल व्योम mlx4_en_filter_rfs_expire(काष्ठा mlx4_en_priv *priv);
+static void mlx4_en_filter_rfs_expire(struct mlx4_en_priv *priv);
 
-अटल क्रमागत mlx4_net_trans_rule_id mlx4_ip_proto_to_trans_rule_id(u8 ip_proto)
-अणु
-	चयन (ip_proto) अणु
-	हाल IPPROTO_UDP:
-		वापस MLX4_NET_TRANS_RULE_ID_UDP;
-	हाल IPPROTO_TCP:
-		वापस MLX4_NET_TRANS_RULE_ID_TCP;
-	शेष:
-		वापस MLX4_NET_TRANS_RULE_NUM;
-	पूर्ण
-पूर्ण;
+static enum mlx4_net_trans_rule_id mlx4_ip_proto_to_trans_rule_id(u8 ip_proto)
+{
+	switch (ip_proto) {
+	case IPPROTO_UDP:
+		return MLX4_NET_TRANS_RULE_ID_UDP;
+	case IPPROTO_TCP:
+		return MLX4_NET_TRANS_RULE_ID_TCP;
+	default:
+		return MLX4_NET_TRANS_RULE_NUM;
+	}
+};
 
 /* Must not acquire state_lock, as its corresponding work_sync
- * is करोne under it.
+ * is done under it.
  */
-अटल व्योम mlx4_en_filter_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_en_filter *filter = container_of(work,
-						     काष्ठा mlx4_en_filter,
+static void mlx4_en_filter_work(struct work_struct *work)
+{
+	struct mlx4_en_filter *filter = container_of(work,
+						     struct mlx4_en_filter,
 						     work);
-	काष्ठा mlx4_en_priv *priv = filter->priv;
-	काष्ठा mlx4_spec_list spec_tcp_udp = अणु
+	struct mlx4_en_priv *priv = filter->priv;
+	struct mlx4_spec_list spec_tcp_udp = {
 		.id = mlx4_ip_proto_to_trans_rule_id(filter->ip_proto),
-		अणु
-			.tcp_udp = अणु
+		{
+			.tcp_udp = {
 				.dst_port = filter->dst_port,
-				.dst_port_msk = (__क्रमce __be16)-1,
+				.dst_port_msk = (__force __be16)-1,
 				.src_port = filter->src_port,
-				.src_port_msk = (__क्रमce __be16)-1,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा mlx4_spec_list spec_ip = अणु
+				.src_port_msk = (__force __be16)-1,
+			},
+		},
+	};
+	struct mlx4_spec_list spec_ip = {
 		.id = MLX4_NET_TRANS_RULE_ID_IPV4,
-		अणु
-			.ipv4 = अणु
+		{
+			.ipv4 = {
 				.dst_ip = filter->dst_ip,
-				.dst_ip_msk = (__क्रमce __be32)-1,
+				.dst_ip_msk = (__force __be32)-1,
 				.src_ip = filter->src_ip,
-				.src_ip_msk = (__क्रमce __be32)-1,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण;
-	काष्ठा mlx4_spec_list spec_eth = अणु
+				.src_ip_msk = (__force __be32)-1,
+			},
+		},
+	};
+	struct mlx4_spec_list spec_eth = {
 		.id = MLX4_NET_TRANS_RULE_ID_ETH,
-	पूर्ण;
-	काष्ठा mlx4_net_trans_rule rule = अणु
+	};
+	struct mlx4_net_trans_rule rule = {
 		.list = LIST_HEAD_INIT(rule.list),
 		.queue_mode = MLX4_NET_TRANS_Q_LIFO,
 		.exclusive = 1,
@@ -235,67 +234,67 @@ out:
 		.promisc_mode = MLX4_FS_REGULAR,
 		.port = priv->port,
 		.priority = MLX4_DOMAIN_RFS,
-	पूर्ण;
-	पूर्णांक rc;
+	};
+	int rc;
 	__be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
 
-	अगर (spec_tcp_udp.id >= MLX4_NET_TRANS_RULE_NUM) अणु
+	if (spec_tcp_udp.id >= MLX4_NET_TRANS_RULE_NUM) {
 		en_warn(priv, "RFS: ignoring unsupported ip protocol (%d)\n",
 			filter->ip_proto);
-		जाओ ignore;
-	पूर्ण
+		goto ignore;
+	}
 	list_add_tail(&spec_eth.list, &rule.list);
 	list_add_tail(&spec_ip.list, &rule.list);
 	list_add_tail(&spec_tcp_udp.list, &rule.list);
 
 	rule.qpn = priv->rss_map.qps[filter->rxq_index].qpn;
-	स_नकल(spec_eth.eth.dst_mac, priv->dev->dev_addr, ETH_ALEN);
-	स_नकल(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
+	memcpy(spec_eth.eth.dst_mac, priv->dev->dev_addr, ETH_ALEN);
+	memcpy(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
 
 	filter->activated = 0;
 
-	अगर (filter->reg_id) अणु
+	if (filter->reg_id) {
 		rc = mlx4_flow_detach(priv->mdev->dev, filter->reg_id);
-		अगर (rc && rc != -ENOENT)
+		if (rc && rc != -ENOENT)
 			en_err(priv, "Error detaching flow. rc = %d\n", rc);
-	पूर्ण
+	}
 
 	rc = mlx4_flow_attach(priv->mdev->dev, &rule, &filter->reg_id);
-	अगर (rc)
+	if (rc)
 		en_err(priv, "Error attaching flow. err = %d\n", rc);
 
 ignore:
 	mlx4_en_filter_rfs_expire(priv);
 
 	filter->activated = 1;
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा hlist_head *
-filter_hash_bucket(काष्ठा mlx4_en_priv *priv, __be32 src_ip, __be32 dst_ip,
+static inline struct hlist_head *
+filter_hash_bucket(struct mlx4_en_priv *priv, __be32 src_ip, __be32 dst_ip,
 		   __be16 src_port, __be16 dst_port)
-अणु
-	अचिन्हित दीर्घ l;
-	पूर्णांक bucket_idx;
+{
+	unsigned long l;
+	int bucket_idx;
 
-	l = (__क्रमce अचिन्हित दीर्घ)src_port |
-	    ((__क्रमce अचिन्हित दीर्घ)dst_port << 2);
-	l ^= (__क्रमce अचिन्हित दीर्घ)(src_ip ^ dst_ip);
+	l = (__force unsigned long)src_port |
+	    ((__force unsigned long)dst_port << 2);
+	l ^= (__force unsigned long)(src_ip ^ dst_ip);
 
-	bucket_idx = hash_दीर्घ(l, MLX4_EN_FILTER_HASH_SHIFT);
+	bucket_idx = hash_long(l, MLX4_EN_FILTER_HASH_SHIFT);
 
-	वापस &priv->filter_hash[bucket_idx];
-पूर्ण
+	return &priv->filter_hash[bucket_idx];
+}
 
-अटल काष्ठा mlx4_en_filter *
-mlx4_en_filter_alloc(काष्ठा mlx4_en_priv *priv, पूर्णांक rxq_index, __be32 src_ip,
+static struct mlx4_en_filter *
+mlx4_en_filter_alloc(struct mlx4_en_priv *priv, int rxq_index, __be32 src_ip,
 		     __be32 dst_ip, u8 ip_proto, __be16 src_port,
 		     __be16 dst_port, u32 flow_id)
-अणु
-	काष्ठा mlx4_en_filter *filter = शून्य;
+{
+	struct mlx4_en_filter *filter = NULL;
 
-	filter = kzalloc(माप(काष्ठा mlx4_en_filter), GFP_ATOMIC);
-	अगर (!filter)
-		वापस शून्य;
+	filter = kzalloc(sizeof(struct mlx4_en_filter), GFP_ATOMIC);
+	if (!filter)
+		return NULL;
 
 	filter->priv = priv;
 	filter->rxq_index = rxq_index;
@@ -316,73 +315,73 @@ mlx4_en_filter_alloc(काष्ठा mlx4_en_priv *priv, पूर्णा�
 		       filter_hash_bucket(priv, src_ip, dst_ip, src_port,
 					  dst_port));
 
-	वापस filter;
-पूर्ण
+	return filter;
+}
 
-अटल व्योम mlx4_en_filter_मुक्त(काष्ठा mlx4_en_filter *filter)
-अणु
-	काष्ठा mlx4_en_priv *priv = filter->priv;
-	पूर्णांक rc;
+static void mlx4_en_filter_free(struct mlx4_en_filter *filter)
+{
+	struct mlx4_en_priv *priv = filter->priv;
+	int rc;
 
 	list_del(&filter->next);
 
 	rc = mlx4_flow_detach(priv->mdev->dev, filter->reg_id);
-	अगर (rc && rc != -ENOENT)
+	if (rc && rc != -ENOENT)
 		en_err(priv, "Error detaching flow. rc = %d\n", rc);
 
-	kमुक्त(filter);
-पूर्ण
+	kfree(filter);
+}
 
-अटल अंतरभूत काष्ठा mlx4_en_filter *
-mlx4_en_filter_find(काष्ठा mlx4_en_priv *priv, __be32 src_ip, __be32 dst_ip,
+static inline struct mlx4_en_filter *
+mlx4_en_filter_find(struct mlx4_en_priv *priv, __be32 src_ip, __be32 dst_ip,
 		    u8 ip_proto, __be16 src_port, __be16 dst_port)
-अणु
-	काष्ठा mlx4_en_filter *filter;
-	काष्ठा mlx4_en_filter *ret = शून्य;
+{
+	struct mlx4_en_filter *filter;
+	struct mlx4_en_filter *ret = NULL;
 
-	hlist_क्रम_each_entry(filter,
+	hlist_for_each_entry(filter,
 			     filter_hash_bucket(priv, src_ip, dst_ip,
 						src_port, dst_port),
-			     filter_chain) अणु
-		अगर (filter->src_ip == src_ip &&
+			     filter_chain) {
+		if (filter->src_ip == src_ip &&
 		    filter->dst_ip == dst_ip &&
 		    filter->ip_proto == ip_proto &&
 		    filter->src_port == src_port &&
-		    filter->dst_port == dst_port) अणु
+		    filter->dst_port == dst_port) {
 			ret = filter;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-mlx4_en_filter_rfs(काष्ठा net_device *net_dev, स्थिर काष्ठा sk_buff *skb,
+static int
+mlx4_en_filter_rfs(struct net_device *net_dev, const struct sk_buff *skb,
 		   u16 rxq_index, u32 flow_id)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(net_dev);
-	काष्ठा mlx4_en_filter *filter;
-	स्थिर काष्ठा iphdr *ip;
-	स्थिर __be16 *ports;
+{
+	struct mlx4_en_priv *priv = netdev_priv(net_dev);
+	struct mlx4_en_filter *filter;
+	const struct iphdr *ip;
+	const __be16 *ports;
 	u8 ip_proto;
 	__be32 src_ip;
 	__be32 dst_ip;
 	__be16 src_port;
 	__be16 dst_port;
-	पूर्णांक nhoff = skb_network_offset(skb);
-	पूर्णांक ret = 0;
+	int nhoff = skb_network_offset(skb);
+	int ret = 0;
 
-	अगर (skb->protocol != htons(ETH_P_IP))
-		वापस -EPROTONOSUPPORT;
+	if (skb->protocol != htons(ETH_P_IP))
+		return -EPROTONOSUPPORT;
 
-	ip = (स्थिर काष्ठा iphdr *)(skb->data + nhoff);
-	अगर (ip_is_fragment(ip))
-		वापस -EPROTONOSUPPORT;
+	ip = (const struct iphdr *)(skb->data + nhoff);
+	if (ip_is_fragment(ip))
+		return -EPROTONOSUPPORT;
 
-	अगर ((ip->protocol != IPPROTO_TCP) && (ip->protocol != IPPROTO_UDP))
-		वापस -EPROTONOSUPPORT;
-	ports = (स्थिर __be16 *)(skb->data + nhoff + 4 * ip->ihl);
+	if ((ip->protocol != IPPROTO_TCP) && (ip->protocol != IPPROTO_UDP))
+		return -EPROTONOSUPPORT;
+	ports = (const __be16 *)(skb->data + nhoff + 4 * ip->ihl);
 
 	ip_proto = ip->protocol;
 	src_ip = ip->saddr;
@@ -393,20 +392,20 @@ mlx4_en_filter_rfs(काष्ठा net_device *net_dev, स्थिर क�
 	spin_lock_bh(&priv->filters_lock);
 	filter = mlx4_en_filter_find(priv, src_ip, dst_ip, ip_proto,
 				     src_port, dst_port);
-	अगर (filter) अणु
-		अगर (filter->rxq_index == rxq_index)
-			जाओ out;
+	if (filter) {
+		if (filter->rxq_index == rxq_index)
+			goto out;
 
 		filter->rxq_index = rxq_index;
-	पूर्ण अन्यथा अणु
+	} else {
 		filter = mlx4_en_filter_alloc(priv, rxq_index,
 					      src_ip, dst_ip, ip_proto,
 					      src_port, dst_port, flow_id);
-		अगर (!filter) अणु
+		if (!filter) {
 			ret = -ENOMEM;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	queue_work(priv->mdev->workqueue, &filter->work);
 
@@ -415,68 +414,68 @@ out:
 err:
 	spin_unlock_bh(&priv->filters_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम mlx4_en_cleanup_filters(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_filter *filter, *पंचांगp;
+void mlx4_en_cleanup_filters(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_filter *filter, *tmp;
 	LIST_HEAD(del_list);
 
 	spin_lock_bh(&priv->filters_lock);
-	list_क्रम_each_entry_safe(filter, पंचांगp, &priv->filters, next) अणु
+	list_for_each_entry_safe(filter, tmp, &priv->filters, next) {
 		list_move(&filter->next, &del_list);
 		hlist_del(&filter->filter_chain);
-	पूर्ण
+	}
 	spin_unlock_bh(&priv->filters_lock);
 
-	list_क्रम_each_entry_safe(filter, पंचांगp, &del_list, next) अणु
+	list_for_each_entry_safe(filter, tmp, &del_list, next) {
 		cancel_work_sync(&filter->work);
-		mlx4_en_filter_मुक्त(filter);
-	पूर्ण
-पूर्ण
+		mlx4_en_filter_free(filter);
+	}
+}
 
-अटल व्योम mlx4_en_filter_rfs_expire(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_filter *filter = शून्य, *पंचांगp, *last_filter = शून्य;
+static void mlx4_en_filter_rfs_expire(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_filter *filter = NULL, *tmp, *last_filter = NULL;
 	LIST_HEAD(del_list);
-	पूर्णांक i = 0;
+	int i = 0;
 
 	spin_lock_bh(&priv->filters_lock);
-	list_क्रम_each_entry_safe(filter, पंचांगp, &priv->filters, next) अणु
-		अगर (i > MLX4_EN_FILTER_EXPIRY_QUOTA)
-			अवरोध;
+	list_for_each_entry_safe(filter, tmp, &priv->filters, next) {
+		if (i > MLX4_EN_FILTER_EXPIRY_QUOTA)
+			break;
 
-		अगर (filter->activated &&
+		if (filter->activated &&
 		    !work_pending(&filter->work) &&
 		    rps_may_expire_flow(priv->dev,
 					filter->rxq_index, filter->flow_id,
-					filter->id)) अणु
+					filter->id)) {
 			list_move(&filter->next, &del_list);
 			hlist_del(&filter->filter_chain);
-		पूर्ण अन्यथा
+		} else
 			last_filter = filter;
 
 		i++;
-	पूर्ण
+	}
 
-	अगर (last_filter && (&last_filter->next != priv->filters.next))
+	if (last_filter && (&last_filter->next != priv->filters.next))
 		list_move(&priv->filters, &last_filter->next);
 
 	spin_unlock_bh(&priv->filters_lock);
 
-	list_क्रम_each_entry_safe(filter, पंचांगp, &del_list, next)
-		mlx4_en_filter_मुक्त(filter);
-पूर्ण
-#पूर्ण_अगर
+	list_for_each_entry_safe(filter, tmp, &del_list, next)
+		mlx4_en_filter_free(filter);
+}
+#endif
 
-अटल पूर्णांक mlx4_en_vlan_rx_add_vid(काष्ठा net_device *dev,
+static int mlx4_en_vlan_rx_add_vid(struct net_device *dev,
 				   __be16 proto, u16 vid)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err;
-	पूर्णांक idx;
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err;
+	int idx;
 
 	en_dbg(HW, priv, "adding VLAN:%d\n", vid);
 
@@ -484,28 +483,28 @@ err:
 
 	/* Add VID to port VLAN filter */
 	mutex_lock(&mdev->state_lock);
-	अगर (mdev->device_up && priv->port_up) अणु
+	if (mdev->device_up && priv->port_up) {
 		err = mlx4_SET_VLAN_FLTR(mdev->dev, priv);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed configuring VLAN filter\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	err = mlx4_रेजिस्टर_vlan(mdev->dev, priv->port, vid, &idx);
-	अगर (err)
+			goto out;
+		}
+	}
+	err = mlx4_register_vlan(mdev->dev, priv->port, vid, &idx);
+	if (err)
 		en_dbg(HW, priv, "Failed adding vlan %d\n", vid);
 
 out:
 	mutex_unlock(&mdev->state_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_vlan_rx_समाप्त_vid(काष्ठा net_device *dev,
+static int mlx4_en_vlan_rx_kill_vid(struct net_device *dev,
 				    __be16 proto, u16 vid)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err = 0;
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err = 0;
 
 	en_dbg(HW, priv, "Killing VID:%d\n", vid);
 
@@ -513,555 +512,555 @@ out:
 
 	/* Remove VID from port VLAN filter */
 	mutex_lock(&mdev->state_lock);
-	mlx4_unरेजिस्टर_vlan(mdev->dev, priv->port, vid);
+	mlx4_unregister_vlan(mdev->dev, priv->port, vid);
 
-	अगर (mdev->device_up && priv->port_up) अणु
+	if (mdev->device_up && priv->port_up) {
 		err = mlx4_SET_VLAN_FLTR(mdev->dev, priv);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed configuring VLAN filter\n");
-	पूर्ण
+	}
 	mutex_unlock(&mdev->state_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_u64_to_mac(अचिन्हित अक्षर dst_mac[ETH_ALEN + 2], u64 src_mac)
-अणु
-	पूर्णांक i;
-	क्रम (i = ETH_ALEN - 1; i >= 0; --i) अणु
+static void mlx4_en_u64_to_mac(unsigned char dst_mac[ETH_ALEN + 2], u64 src_mac)
+{
+	int i;
+	for (i = ETH_ALEN - 1; i >= 0; --i) {
 		dst_mac[i] = src_mac & 0xff;
 		src_mac >>= 8;
-	पूर्ण
-	स_रखो(&dst_mac[ETH_ALEN], 0, 2);
-पूर्ण
+	}
+	memset(&dst_mac[ETH_ALEN], 0, 2);
+}
 
 
-अटल पूर्णांक mlx4_en_tunnel_steer_add(काष्ठा mlx4_en_priv *priv, अचिन्हित अक्षर *addr,
-				    पूर्णांक qpn, u64 *reg_id)
-अणु
-	पूर्णांक err;
+static int mlx4_en_tunnel_steer_add(struct mlx4_en_priv *priv, unsigned char *addr,
+				    int qpn, u64 *reg_id)
+{
+	int err;
 
-	अगर (priv->mdev->dev->caps.tunnel_offload_mode != MLX4_TUNNEL_OFFLOAD_MODE_VXLAN ||
+	if (priv->mdev->dev->caps.tunnel_offload_mode != MLX4_TUNNEL_OFFLOAD_MODE_VXLAN ||
 	    priv->mdev->dev->caps.dmfs_high_steer_mode == MLX4_STEERING_DMFS_A0_STATIC)
-		वापस 0; /* करो nothing */
+		return 0; /* do nothing */
 
 	err = mlx4_tunnel_steer_add(priv->mdev->dev, addr, priv->port, qpn,
 				    MLX4_DOMAIN_NIC, reg_id);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "failed to add vxlan steering rule, err %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	en_dbg(DRV, priv, "added vxlan steering rule, mac %pM reg_id %llx\n", addr, *reg_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक mlx4_en_uc_steer_add(काष्ठा mlx4_en_priv *priv,
-				अचिन्हित अक्षर *mac, पूर्णांक *qpn, u64 *reg_id)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_dev *dev = mdev->dev;
-	पूर्णांक err;
+static int mlx4_en_uc_steer_add(struct mlx4_en_priv *priv,
+				unsigned char *mac, int *qpn, u64 *reg_id)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_dev *dev = mdev->dev;
+	int err;
 
-	चयन (dev->caps.steering_mode) अणु
-	हाल MLX4_STEERING_MODE_B0: अणु
-		काष्ठा mlx4_qp qp;
-		u8 gid[16] = अणु0पूर्ण;
+	switch (dev->caps.steering_mode) {
+	case MLX4_STEERING_MODE_B0: {
+		struct mlx4_qp qp;
+		u8 gid[16] = {0};
 
 		qp.qpn = *qpn;
-		स_नकल(&gid[10], mac, ETH_ALEN);
+		memcpy(&gid[10], mac, ETH_ALEN);
 		gid[5] = priv->port;
 
 		err = mlx4_unicast_attach(dev, &qp, gid, 0, MLX4_PROT_ETH);
-		अवरोध;
-	पूर्ण
-	हाल MLX4_STEERING_MODE_DEVICE_MANAGED: अणु
-		काष्ठा mlx4_spec_list spec_eth = अणु अणुशून्यपूर्ण पूर्ण;
+		break;
+	}
+	case MLX4_STEERING_MODE_DEVICE_MANAGED: {
+		struct mlx4_spec_list spec_eth = { {NULL} };
 		__be64 mac_mask = cpu_to_be64(MLX4_MAC_MASK << 16);
 
-		काष्ठा mlx4_net_trans_rule rule = अणु
+		struct mlx4_net_trans_rule rule = {
 			.queue_mode = MLX4_NET_TRANS_Q_FIFO,
 			.exclusive = 0,
 			.allow_loopback = 1,
 			.promisc_mode = MLX4_FS_REGULAR,
 			.priority = MLX4_DOMAIN_NIC,
-		पूर्ण;
+		};
 
 		rule.port = priv->port;
 		rule.qpn = *qpn;
 		INIT_LIST_HEAD(&rule.list);
 
 		spec_eth.id = MLX4_NET_TRANS_RULE_ID_ETH;
-		स_नकल(spec_eth.eth.dst_mac, mac, ETH_ALEN);
-		स_नकल(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
+		memcpy(spec_eth.eth.dst_mac, mac, ETH_ALEN);
+		memcpy(spec_eth.eth.dst_mac_msk, &mac_mask, ETH_ALEN);
 		list_add_tail(&spec_eth.list, &rule.list);
 
 		err = mlx4_flow_attach(dev, &rule, reg_id);
-		अवरोध;
-	पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	अगर (err)
+		break;
+	}
+	default:
+		return -EINVAL;
+	}
+	if (err)
 		en_warn(priv, "Failed Attaching Unicast\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_uc_steer_release(काष्ठा mlx4_en_priv *priv,
-				     अचिन्हित अक्षर *mac, पूर्णांक qpn, u64 reg_id)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_dev *dev = mdev->dev;
+static void mlx4_en_uc_steer_release(struct mlx4_en_priv *priv,
+				     unsigned char *mac, int qpn, u64 reg_id)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_dev *dev = mdev->dev;
 
-	चयन (dev->caps.steering_mode) अणु
-	हाल MLX4_STEERING_MODE_B0: अणु
-		काष्ठा mlx4_qp qp;
-		u8 gid[16] = अणु0पूर्ण;
+	switch (dev->caps.steering_mode) {
+	case MLX4_STEERING_MODE_B0: {
+		struct mlx4_qp qp;
+		u8 gid[16] = {0};
 
 		qp.qpn = qpn;
-		स_नकल(&gid[10], mac, ETH_ALEN);
+		memcpy(&gid[10], mac, ETH_ALEN);
 		gid[5] = priv->port;
 
 		mlx4_unicast_detach(dev, &qp, gid, MLX4_PROT_ETH);
-		अवरोध;
-	पूर्ण
-	हाल MLX4_STEERING_MODE_DEVICE_MANAGED: अणु
+		break;
+	}
+	case MLX4_STEERING_MODE_DEVICE_MANAGED: {
 		mlx4_flow_detach(dev, reg_id);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		en_err(priv, "Invalid steering mode.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx4_en_get_qp(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_dev *dev = mdev->dev;
-	पूर्णांक index = 0;
-	पूर्णांक err = 0;
-	पूर्णांक *qpn = &priv->base_qpn;
+static int mlx4_en_get_qp(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_dev *dev = mdev->dev;
+	int index = 0;
+	int err = 0;
+	int *qpn = &priv->base_qpn;
 	u64 mac = mlx4_mac_to_u64(priv->dev->dev_addr);
 
 	en_dbg(DRV, priv, "Registering MAC: %pM for adding\n",
 	       priv->dev->dev_addr);
-	index = mlx4_रेजिस्टर_mac(dev, priv->port, mac);
-	अगर (index < 0) अणु
+	index = mlx4_register_mac(dev, priv->port, mac);
+	if (index < 0) {
 		err = index;
 		en_err(priv, "Failed adding MAC: %pM\n",
 		       priv->dev->dev_addr);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	en_info(priv, "Steering Mode %d\n", dev->caps.steering_mode);
 
-	अगर (dev->caps.steering_mode == MLX4_STEERING_MODE_A0) अणु
-		पूर्णांक base_qpn = mlx4_get_base_qpn(dev, priv->port);
+	if (dev->caps.steering_mode == MLX4_STEERING_MODE_A0) {
+		int base_qpn = mlx4_get_base_qpn(dev, priv->port);
 		*qpn = base_qpn + index;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = mlx4_qp_reserve_range(dev, 1, 1, qpn, MLX4_RESERVE_A0_QP,
 				    MLX4_RES_USAGE_DRIVER);
 	en_dbg(DRV, priv, "Reserved qp %d\n", *qpn);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed to reserve qp for mac registration\n");
-		mlx4_unरेजिस्टर_mac(dev, priv->port, mac);
-		वापस err;
-	पूर्ण
+		mlx4_unregister_mac(dev, priv->port, mac);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx4_en_put_qp(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_dev *dev = mdev->dev;
-	पूर्णांक qpn = priv->base_qpn;
+static void mlx4_en_put_qp(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_dev *dev = mdev->dev;
+	int qpn = priv->base_qpn;
 
-	अगर (dev->caps.steering_mode == MLX4_STEERING_MODE_A0) अणु
+	if (dev->caps.steering_mode == MLX4_STEERING_MODE_A0) {
 		u64 mac = mlx4_mac_to_u64(priv->dev->dev_addr);
 		en_dbg(DRV, priv, "Registering MAC: %pM for deleting\n",
 		       priv->dev->dev_addr);
-		mlx4_unरेजिस्टर_mac(dev, priv->port, mac);
-	पूर्ण अन्यथा अणु
+		mlx4_unregister_mac(dev, priv->port, mac);
+	} else {
 		en_dbg(DRV, priv, "Releasing qp: port %d, qpn %d\n",
 		       priv->port, qpn);
 		mlx4_qp_release_range(dev, qpn, 1);
 		priv->flags &= ~MLX4_EN_FLAG_FORCE_PROMISC;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx4_en_replace_mac(काष्ठा mlx4_en_priv *priv, पूर्णांक qpn,
-			       अचिन्हित अक्षर *new_mac, अचिन्हित अक्षर *prev_mac)
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_dev *dev = mdev->dev;
-	पूर्णांक err = 0;
+static int mlx4_en_replace_mac(struct mlx4_en_priv *priv, int qpn,
+			       unsigned char *new_mac, unsigned char *prev_mac)
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_dev *dev = mdev->dev;
+	int err = 0;
 	u64 new_mac_u64 = mlx4_mac_to_u64(new_mac);
 
-	अगर (dev->caps.steering_mode != MLX4_STEERING_MODE_A0) अणु
-		काष्ठा hlist_head *bucket;
-		अचिन्हित पूर्णांक mac_hash;
-		काष्ठा mlx4_mac_entry *entry;
-		काष्ठा hlist_node *पंचांगp;
+	if (dev->caps.steering_mode != MLX4_STEERING_MODE_A0) {
+		struct hlist_head *bucket;
+		unsigned int mac_hash;
+		struct mlx4_mac_entry *entry;
+		struct hlist_node *tmp;
 		u64 prev_mac_u64 = mlx4_mac_to_u64(prev_mac);
 
 		bucket = &priv->mac_hash[prev_mac[MLX4_EN_MAC_HASH_IDX]];
-		hlist_क्रम_each_entry_safe(entry, पंचांगp, bucket, hlist) अणु
-			अगर (ether_addr_equal_64bits(entry->mac, prev_mac)) अणु
+		hlist_for_each_entry_safe(entry, tmp, bucket, hlist) {
+			if (ether_addr_equal_64bits(entry->mac, prev_mac)) {
 				mlx4_en_uc_steer_release(priv, entry->mac,
 							 qpn, entry->reg_id);
-				mlx4_unरेजिस्टर_mac(dev, priv->port,
+				mlx4_unregister_mac(dev, priv->port,
 						    prev_mac_u64);
 				hlist_del_rcu(&entry->hlist);
 				synchronize_rcu();
-				स_नकल(entry->mac, new_mac, ETH_ALEN);
+				memcpy(entry->mac, new_mac, ETH_ALEN);
 				entry->reg_id = 0;
 				mac_hash = new_mac[MLX4_EN_MAC_HASH_IDX];
 				hlist_add_head_rcu(&entry->hlist,
 						   &priv->mac_hash[mac_hash]);
-				mlx4_रेजिस्टर_mac(dev, priv->port, new_mac_u64);
+				mlx4_register_mac(dev, priv->port, new_mac_u64);
 				err = mlx4_en_uc_steer_add(priv, new_mac,
 							   &qpn,
 							   &entry->reg_id);
-				अगर (err)
-					वापस err;
-				अगर (priv->tunnel_reg_id) अणु
+				if (err)
+					return err;
+				if (priv->tunnel_reg_id) {
 					mlx4_flow_detach(priv->mdev->dev, priv->tunnel_reg_id);
 					priv->tunnel_reg_id = 0;
-				पूर्ण
+				}
 				err = mlx4_en_tunnel_steer_add(priv, new_mac, qpn,
 							       &priv->tunnel_reg_id);
-				वापस err;
-			पूर्ण
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+				return err;
+			}
+		}
+		return -EINVAL;
+	}
 
-	वापस __mlx4_replace_mac(dev, priv->port, qpn, new_mac_u64);
-पूर्ण
+	return __mlx4_replace_mac(dev, priv->port, qpn, new_mac_u64);
+}
 
-अटल व्योम mlx4_en_update_user_mac(काष्ठा mlx4_en_priv *priv,
-				    अचिन्हित अक्षर new_mac[ETH_ALEN + 2])
-अणु
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err;
+static void mlx4_en_update_user_mac(struct mlx4_en_priv *priv,
+				    unsigned char new_mac[ETH_ALEN + 2])
+{
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err;
 
-	अगर (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_USER_MAC_EN))
-		वापस;
+	if (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_USER_MAC_EN))
+		return;
 
 	err = mlx4_SET_PORT_user_mac(mdev->dev, priv->port, new_mac);
-	अगर (err)
+	if (err)
 		en_err(priv, "Failed to pass user MAC(%pM) to Firmware for port %d, with error %d\n",
 		       new_mac, priv->port, err);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_करो_set_mac(काष्ठा mlx4_en_priv *priv,
-			      अचिन्हित अक्षर new_mac[ETH_ALEN + 2])
-अणु
-	पूर्णांक err = 0;
+static int mlx4_en_do_set_mac(struct mlx4_en_priv *priv,
+			      unsigned char new_mac[ETH_ALEN + 2])
+{
+	int err = 0;
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		/* Remove old MAC and insert the new one */
 		err = mlx4_en_replace_mac(priv, priv->base_qpn,
 					  new_mac, priv->current_mac);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed changing HW MAC address\n");
-	पूर्ण अन्यथा
+	} else
 		en_dbg(HW, priv, "Port is down while registering mac, exiting...\n");
 
-	अगर (!err)
-		स_नकल(priv->current_mac, new_mac, माप(priv->current_mac));
+	if (!err)
+		memcpy(priv->current_mac, new_mac, sizeof(priv->current_mac));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_en_set_mac(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा sockaddr *saddr = addr;
-	अचिन्हित अक्षर new_mac[ETH_ALEN + 2];
-	पूर्णांक err;
+static int mlx4_en_set_mac(struct net_device *dev, void *addr)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct sockaddr *saddr = addr;
+	unsigned char new_mac[ETH_ALEN + 2];
+	int err;
 
-	अगर (!is_valid_ether_addr(saddr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(saddr->sa_data))
+		return -EADDRNOTAVAIL;
 
 	mutex_lock(&mdev->state_lock);
-	स_नकल(new_mac, saddr->sa_data, ETH_ALEN);
-	err = mlx4_en_करो_set_mac(priv, new_mac);
-	अगर (err)
-		जाओ out;
+	memcpy(new_mac, saddr->sa_data, ETH_ALEN);
+	err = mlx4_en_do_set_mac(priv, new_mac);
+	if (err)
+		goto out;
 
-	स_नकल(dev->dev_addr, saddr->sa_data, ETH_ALEN);
+	memcpy(dev->dev_addr, saddr->sa_data, ETH_ALEN);
 	mlx4_en_update_user_mac(priv, new_mac);
 out:
 	mutex_unlock(&mdev->state_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_clear_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_mc_list *पंचांगp, *mc_to_del;
+static void mlx4_en_clear_list(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_mc_list *tmp, *mc_to_del;
 
-	list_क्रम_each_entry_safe(mc_to_del, पंचांगp, &priv->mc_list, list) अणु
+	list_for_each_entry_safe(mc_to_del, tmp, &priv->mc_list, list) {
 		list_del(&mc_to_del->list);
-		kमुक्त(mc_to_del);
-	पूर्ण
-पूर्ण
+		kfree(mc_to_del);
+	}
+}
 
-अटल व्योम mlx4_en_cache_mclist(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा netdev_hw_addr *ha;
-	काष्ठा mlx4_en_mc_list *पंचांगp;
+static void mlx4_en_cache_mclist(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct netdev_hw_addr *ha;
+	struct mlx4_en_mc_list *tmp;
 
 	mlx4_en_clear_list(dev);
-	netdev_क्रम_each_mc_addr(ha, dev) अणु
-		पंचांगp = kzalloc(माप(काष्ठा mlx4_en_mc_list), GFP_ATOMIC);
-		अगर (!पंचांगp) अणु
+	netdev_for_each_mc_addr(ha, dev) {
+		tmp = kzalloc(sizeof(struct mlx4_en_mc_list), GFP_ATOMIC);
+		if (!tmp) {
 			mlx4_en_clear_list(dev);
-			वापस;
-		पूर्ण
-		स_नकल(पंचांगp->addr, ha->addr, ETH_ALEN);
-		list_add_tail(&पंचांगp->list, &priv->mc_list);
-	पूर्ण
-पूर्ण
+			return;
+		}
+		memcpy(tmp->addr, ha->addr, ETH_ALEN);
+		list_add_tail(&tmp->list, &priv->mc_list);
+	}
+}
 
-अटल व्योम update_mclist_flags(काष्ठा mlx4_en_priv *priv,
-				काष्ठा list_head *dst,
-				काष्ठा list_head *src)
-अणु
-	काष्ठा mlx4_en_mc_list *dst_पंचांगp, *src_पंचांगp, *new_mc;
+static void update_mclist_flags(struct mlx4_en_priv *priv,
+				struct list_head *dst,
+				struct list_head *src)
+{
+	struct mlx4_en_mc_list *dst_tmp, *src_tmp, *new_mc;
 	bool found;
 
-	/* Find all the entries that should be हटाओd from dst,
+	/* Find all the entries that should be removed from dst,
 	 * These are the entries that are not found in src
 	 */
-	list_क्रम_each_entry(dst_पंचांगp, dst, list) अणु
+	list_for_each_entry(dst_tmp, dst, list) {
 		found = false;
-		list_क्रम_each_entry(src_पंचांगp, src, list) अणु
-			अगर (ether_addr_equal(dst_पंचांगp->addr, src_पंचांगp->addr)) अणु
+		list_for_each_entry(src_tmp, src, list) {
+			if (ether_addr_equal(dst_tmp->addr, src_tmp->addr)) {
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!found)
-			dst_पंचांगp->action = MCLIST_REM;
-	पूर्ण
+				break;
+			}
+		}
+		if (!found)
+			dst_tmp->action = MCLIST_REM;
+	}
 
 	/* Add entries that exist in src but not in dst
 	 * mark them as need to add
 	 */
-	list_क्रम_each_entry(src_पंचांगp, src, list) अणु
+	list_for_each_entry(src_tmp, src, list) {
 		found = false;
-		list_क्रम_each_entry(dst_पंचांगp, dst, list) अणु
-			अगर (ether_addr_equal(dst_पंचांगp->addr, src_पंचांगp->addr)) अणु
-				dst_पंचांगp->action = MCLIST_NONE;
+		list_for_each_entry(dst_tmp, dst, list) {
+			if (ether_addr_equal(dst_tmp->addr, src_tmp->addr)) {
+				dst_tmp->action = MCLIST_NONE;
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!found) अणु
-			new_mc = kmemdup(src_पंचांगp,
-					 माप(काष्ठा mlx4_en_mc_list),
+				break;
+			}
+		}
+		if (!found) {
+			new_mc = kmemdup(src_tmp,
+					 sizeof(struct mlx4_en_mc_list),
 					 GFP_KERNEL);
-			अगर (!new_mc)
-				वापस;
+			if (!new_mc)
+				return;
 
 			new_mc->action = MCLIST_ADD;
 			list_add_tail(&new_mc->list, dst);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम mlx4_en_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static void mlx4_en_set_rx_mode(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	अगर (!priv->port_up)
-		वापस;
+	if (!priv->port_up)
+		return;
 
 	queue_work(priv->mdev->workqueue, &priv->rx_mode_task);
-पूर्ण
+}
 
-अटल व्योम mlx4_en_set_promisc_mode(काष्ठा mlx4_en_priv *priv,
-				     काष्ठा mlx4_en_dev *mdev)
-अणु
-	पूर्णांक err = 0;
+static void mlx4_en_set_promisc_mode(struct mlx4_en_priv *priv,
+				     struct mlx4_en_dev *mdev)
+{
+	int err = 0;
 
-	अगर (!(priv->flags & MLX4_EN_FLAG_PROMISC)) अणु
-		अगर (netअगर_msg_rx_status(priv))
+	if (!(priv->flags & MLX4_EN_FLAG_PROMISC)) {
+		if (netif_msg_rx_status(priv))
 			en_warn(priv, "Entering promiscuous mode\n");
 		priv->flags |= MLX4_EN_FLAG_PROMISC;
 
 		/* Enable promiscouos mode */
-		चयन (mdev->dev->caps.steering_mode) अणु
-		हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
+		switch (mdev->dev->caps.steering_mode) {
+		case MLX4_STEERING_MODE_DEVICE_MANAGED:
 			err = mlx4_flow_steer_promisc_add(mdev->dev,
 							  priv->port,
 							  priv->base_qpn,
 							  MLX4_FS_ALL_DEFAULT);
-			अगर (err)
+			if (err)
 				en_err(priv, "Failed enabling promiscuous mode\n");
 			priv->flags |= MLX4_EN_FLAG_MC_PROMISC;
-			अवरोध;
+			break;
 
-		हाल MLX4_STEERING_MODE_B0:
+		case MLX4_STEERING_MODE_B0:
 			err = mlx4_unicast_promisc_add(mdev->dev,
 						       priv->base_qpn,
 						       priv->port);
-			अगर (err)
+			if (err)
 				en_err(priv, "Failed enabling unicast promiscuous mode\n");
 
-			/* Add the शेष qp number as multicast
+			/* Add the default qp number as multicast
 			 * promisc
 			 */
-			अगर (!(priv->flags & MLX4_EN_FLAG_MC_PROMISC)) अणु
+			if (!(priv->flags & MLX4_EN_FLAG_MC_PROMISC)) {
 				err = mlx4_multicast_promisc_add(mdev->dev,
 								 priv->base_qpn,
 								 priv->port);
-				अगर (err)
+				if (err)
 					en_err(priv, "Failed enabling multicast promiscuous mode\n");
 				priv->flags |= MLX4_EN_FLAG_MC_PROMISC;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल MLX4_STEERING_MODE_A0:
+		case MLX4_STEERING_MODE_A0:
 			err = mlx4_SET_PORT_qpn_calc(mdev->dev,
 						     priv->port,
 						     priv->base_qpn,
 						     1);
-			अगर (err)
+			if (err)
 				en_err(priv, "Failed enabling promiscuous mode\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Disable port multicast filter (unconditionally) */
 		err = mlx4_SET_MCAST_FLTR(mdev->dev, priv->port, 0,
 					  0, MLX4_MCAST_DISABLE);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling multicast filter\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx4_en_clear_promisc_mode(काष्ठा mlx4_en_priv *priv,
-				       काष्ठा mlx4_en_dev *mdev)
-अणु
-	पूर्णांक err = 0;
+static void mlx4_en_clear_promisc_mode(struct mlx4_en_priv *priv,
+				       struct mlx4_en_dev *mdev)
+{
+	int err = 0;
 
-	अगर (netअगर_msg_rx_status(priv))
+	if (netif_msg_rx_status(priv))
 		en_warn(priv, "Leaving promiscuous mode\n");
 	priv->flags &= ~MLX4_EN_FLAG_PROMISC;
 
 	/* Disable promiscouos mode */
-	चयन (mdev->dev->caps.steering_mode) अणु
-	हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
-		err = mlx4_flow_steer_promisc_हटाओ(mdev->dev,
+	switch (mdev->dev->caps.steering_mode) {
+	case MLX4_STEERING_MODE_DEVICE_MANAGED:
+		err = mlx4_flow_steer_promisc_remove(mdev->dev,
 						     priv->port,
 						     MLX4_FS_ALL_DEFAULT);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling promiscuous mode\n");
 		priv->flags &= ~MLX4_EN_FLAG_MC_PROMISC;
-		अवरोध;
+		break;
 
-	हाल MLX4_STEERING_MODE_B0:
-		err = mlx4_unicast_promisc_हटाओ(mdev->dev,
+	case MLX4_STEERING_MODE_B0:
+		err = mlx4_unicast_promisc_remove(mdev->dev,
 						  priv->base_qpn,
 						  priv->port);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling unicast promiscuous mode\n");
 		/* Disable Multicast promisc */
-		अगर (priv->flags & MLX4_EN_FLAG_MC_PROMISC) अणु
-			err = mlx4_multicast_promisc_हटाओ(mdev->dev,
+		if (priv->flags & MLX4_EN_FLAG_MC_PROMISC) {
+			err = mlx4_multicast_promisc_remove(mdev->dev,
 							    priv->base_qpn,
 							    priv->port);
-			अगर (err)
+			if (err)
 				en_err(priv, "Failed disabling multicast promiscuous mode\n");
 			priv->flags &= ~MLX4_EN_FLAG_MC_PROMISC;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल MLX4_STEERING_MODE_A0:
+	case MLX4_STEERING_MODE_A0:
 		err = mlx4_SET_PORT_qpn_calc(mdev->dev,
 					     priv->port,
 					     priv->base_qpn, 0);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling promiscuous mode\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम mlx4_en_करो_multicast(काष्ठा mlx4_en_priv *priv,
-				 काष्ठा net_device *dev,
-				 काष्ठा mlx4_en_dev *mdev)
-अणु
-	काष्ठा mlx4_en_mc_list *mclist, *पंचांगp;
+static void mlx4_en_do_multicast(struct mlx4_en_priv *priv,
+				 struct net_device *dev,
+				 struct mlx4_en_dev *mdev)
+{
+	struct mlx4_en_mc_list *mclist, *tmp;
 	u64 mcast_addr = 0;
-	u8 mc_list[16] = अणु0पूर्ण;
-	पूर्णांक err = 0;
+	u8 mc_list[16] = {0};
+	int err = 0;
 
 	/* Enable/disable the multicast filter according to IFF_ALLMULTI */
-	अगर (dev->flags & IFF_ALLMULTI) अणु
+	if (dev->flags & IFF_ALLMULTI) {
 		err = mlx4_SET_MCAST_FLTR(mdev->dev, priv->port, 0,
 					  0, MLX4_MCAST_DISABLE);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling multicast filter\n");
 
-		/* Add the शेष qp number as multicast promisc */
-		अगर (!(priv->flags & MLX4_EN_FLAG_MC_PROMISC)) अणु
-			चयन (mdev->dev->caps.steering_mode) अणु
-			हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
+		/* Add the default qp number as multicast promisc */
+		if (!(priv->flags & MLX4_EN_FLAG_MC_PROMISC)) {
+			switch (mdev->dev->caps.steering_mode) {
+			case MLX4_STEERING_MODE_DEVICE_MANAGED:
 				err = mlx4_flow_steer_promisc_add(mdev->dev,
 								  priv->port,
 								  priv->base_qpn,
 								  MLX4_FS_MC_DEFAULT);
-				अवरोध;
+				break;
 
-			हाल MLX4_STEERING_MODE_B0:
+			case MLX4_STEERING_MODE_B0:
 				err = mlx4_multicast_promisc_add(mdev->dev,
 								 priv->base_qpn,
 								 priv->port);
-				अवरोध;
+				break;
 
-			हाल MLX4_STEERING_MODE_A0:
-				अवरोध;
-			पूर्ण
-			अगर (err)
+			case MLX4_STEERING_MODE_A0:
+				break;
+			}
+			if (err)
 				en_err(priv, "Failed entering multicast promisc mode\n");
 			priv->flags |= MLX4_EN_FLAG_MC_PROMISC;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* Disable Multicast promisc */
-		अगर (priv->flags & MLX4_EN_FLAG_MC_PROMISC) अणु
-			चयन (mdev->dev->caps.steering_mode) अणु
-			हाल MLX4_STEERING_MODE_DEVICE_MANAGED:
-				err = mlx4_flow_steer_promisc_हटाओ(mdev->dev,
+		if (priv->flags & MLX4_EN_FLAG_MC_PROMISC) {
+			switch (mdev->dev->caps.steering_mode) {
+			case MLX4_STEERING_MODE_DEVICE_MANAGED:
+				err = mlx4_flow_steer_promisc_remove(mdev->dev,
 								     priv->port,
 								     MLX4_FS_MC_DEFAULT);
-				अवरोध;
+				break;
 
-			हाल MLX4_STEERING_MODE_B0:
-				err = mlx4_multicast_promisc_हटाओ(mdev->dev,
+			case MLX4_STEERING_MODE_B0:
+				err = mlx4_multicast_promisc_remove(mdev->dev,
 								    priv->base_qpn,
 								    priv->port);
-				अवरोध;
+				break;
 
-			हाल MLX4_STEERING_MODE_A0:
-				अवरोध;
-			पूर्ण
-			अगर (err)
+			case MLX4_STEERING_MODE_A0:
+				break;
+			}
+			if (err)
 				en_err(priv, "Failed disabling multicast promiscuous mode\n");
 			priv->flags &= ~MLX4_EN_FLAG_MC_PROMISC;
-		पूर्ण
+		}
 
 		err = mlx4_SET_MCAST_FLTR(mdev->dev, priv->port, 0,
 					  0, MLX4_MCAST_DISABLE);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed disabling multicast filter\n");
 
 		/* Flush mcast filter and init it with broadcast address */
@@ -1069,47 +1068,47 @@ out:
 				    1, MLX4_MCAST_CONFIG);
 
 		/* Update multicast list - we cache all addresses so they won't
-		 * change जबतक HW is updated holding the command semaphor */
-		netअगर_addr_lock_bh(dev);
+		 * change while HW is updated holding the command semaphor */
+		netif_addr_lock_bh(dev);
 		mlx4_en_cache_mclist(dev);
-		netअगर_addr_unlock_bh(dev);
-		list_क्रम_each_entry(mclist, &priv->mc_list, list) अणु
+		netif_addr_unlock_bh(dev);
+		list_for_each_entry(mclist, &priv->mc_list, list) {
 			mcast_addr = mlx4_mac_to_u64(mclist->addr);
 			mlx4_SET_MCAST_FLTR(mdev->dev, priv->port,
 					    mcast_addr, 0, MLX4_MCAST_CONFIG);
-		पूर्ण
+		}
 		err = mlx4_SET_MCAST_FLTR(mdev->dev, priv->port, 0,
 					  0, MLX4_MCAST_ENABLE);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed enabling multicast filter\n");
 
 		update_mclist_flags(priv, &priv->curr_list, &priv->mc_list);
-		list_क्रम_each_entry_safe(mclist, पंचांगp, &priv->curr_list, list) अणु
-			अगर (mclist->action == MCLIST_REM) अणु
+		list_for_each_entry_safe(mclist, tmp, &priv->curr_list, list) {
+			if (mclist->action == MCLIST_REM) {
 				/* detach this address and delete from list */
-				स_नकल(&mc_list[10], mclist->addr, ETH_ALEN);
+				memcpy(&mc_list[10], mclist->addr, ETH_ALEN);
 				mc_list[5] = priv->port;
 				err = mlx4_multicast_detach(mdev->dev,
 							    priv->rss_map.indir_qp,
 							    mc_list,
 							    MLX4_PROT_ETH,
 							    mclist->reg_id);
-				अगर (err)
+				if (err)
 					en_err(priv, "Fail to detach multicast address\n");
 
-				अगर (mclist->tunnel_reg_id) अणु
+				if (mclist->tunnel_reg_id) {
 					err = mlx4_flow_detach(priv->mdev->dev, mclist->tunnel_reg_id);
-					अगर (err)
+					if (err)
 						en_err(priv, "Failed to detach multicast address\n");
-				पूर्ण
+				}
 
-				/* हटाओ from list */
+				/* remove from list */
 				list_del(&mclist->list);
-				kमुक्त(mclist);
-			पूर्ण अन्यथा अगर (mclist->action == MCLIST_ADD) अणु
+				kfree(mclist);
+			} else if (mclist->action == MCLIST_ADD) {
 				/* attach the address */
-				स_नकल(&mc_list[10], mclist->addr, ETH_ALEN);
-				/* needed क्रम B0 steering support */
+				memcpy(&mc_list[10], mclist->addr, ETH_ALEN);
+				/* needed for B0 steering support */
 				mc_list[5] = priv->port;
 				err = mlx4_multicast_attach(mdev->dev,
 							    priv->rss_map.indir_qp,
@@ -1117,296 +1116,296 @@ out:
 							    priv->port, 0,
 							    MLX4_PROT_ETH,
 							    &mclist->reg_id);
-				अगर (err)
+				if (err)
 					en_err(priv, "Fail to attach multicast address\n");
 
 				err = mlx4_en_tunnel_steer_add(priv, &mc_list[10], priv->base_qpn,
 							       &mclist->tunnel_reg_id);
-				अगर (err)
+				if (err)
 					en_err(priv, "Failed to attach multicast address\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम mlx4_en_करो_uc_filter(काष्ठा mlx4_en_priv *priv,
-				 काष्ठा net_device *dev,
-				 काष्ठा mlx4_en_dev *mdev)
-अणु
-	काष्ठा netdev_hw_addr *ha;
-	काष्ठा mlx4_mac_entry *entry;
-	काष्ठा hlist_node *पंचांगp;
+static void mlx4_en_do_uc_filter(struct mlx4_en_priv *priv,
+				 struct net_device *dev,
+				 struct mlx4_en_dev *mdev)
+{
+	struct netdev_hw_addr *ha;
+	struct mlx4_mac_entry *entry;
+	struct hlist_node *tmp;
 	bool found;
 	u64 mac;
-	पूर्णांक err = 0;
-	काष्ठा hlist_head *bucket;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक हटाओd = 0;
+	int err = 0;
+	struct hlist_head *bucket;
+	unsigned int i;
+	int removed = 0;
 	u32 prev_flags;
 
-	/* Note that we करो not need to protect our mac_hash traversal with rcu,
-	 * since all modअगरication code is रक्षित by mdev->state_lock
+	/* Note that we do not need to protect our mac_hash traversal with rcu,
+	 * since all modification code is protected by mdev->state_lock
 	 */
 
-	/* find what to हटाओ */
-	क्रम (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i) अणु
+	/* find what to remove */
+	for (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i) {
 		bucket = &priv->mac_hash[i];
-		hlist_क्रम_each_entry_safe(entry, पंचांगp, bucket, hlist) अणु
+		hlist_for_each_entry_safe(entry, tmp, bucket, hlist) {
 			found = false;
-			netdev_क्रम_each_uc_addr(ha, dev) अणु
-				अगर (ether_addr_equal_64bits(entry->mac,
-							    ha->addr)) अणु
+			netdev_for_each_uc_addr(ha, dev) {
+				if (ether_addr_equal_64bits(entry->mac,
+							    ha->addr)) {
 					found = true;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			/* MAC address of the port is not in uc list */
-			अगर (ether_addr_equal_64bits(entry->mac,
+			if (ether_addr_equal_64bits(entry->mac,
 						    priv->current_mac))
 				found = true;
 
-			अगर (!found) अणु
+			if (!found) {
 				mac = mlx4_mac_to_u64(entry->mac);
 				mlx4_en_uc_steer_release(priv, entry->mac,
 							 priv->base_qpn,
 							 entry->reg_id);
-				mlx4_unरेजिस्टर_mac(mdev->dev, priv->port, mac);
+				mlx4_unregister_mac(mdev->dev, priv->port, mac);
 
 				hlist_del_rcu(&entry->hlist);
-				kमुक्त_rcu(entry, rcu);
+				kfree_rcu(entry, rcu);
 				en_dbg(DRV, priv, "Removed MAC %pM on port:%d\n",
 				       entry->mac, priv->port);
-				++हटाओd;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				++removed;
+			}
+		}
+	}
 
-	/* अगर we didn't हटाओ anything, there is no use in trying to add
-	 * again once we are in a क्रमced promisc mode state
+	/* if we didn't remove anything, there is no use in trying to add
+	 * again once we are in a forced promisc mode state
 	 */
-	अगर ((priv->flags & MLX4_EN_FLAG_FORCE_PROMISC) && 0 == हटाओd)
-		वापस;
+	if ((priv->flags & MLX4_EN_FLAG_FORCE_PROMISC) && 0 == removed)
+		return;
 
 	prev_flags = priv->flags;
 	priv->flags &= ~MLX4_EN_FLAG_FORCE_PROMISC;
 
 	/* find what to add */
-	netdev_क्रम_each_uc_addr(ha, dev) अणु
+	netdev_for_each_uc_addr(ha, dev) {
 		found = false;
 		bucket = &priv->mac_hash[ha->addr[MLX4_EN_MAC_HASH_IDX]];
-		hlist_क्रम_each_entry(entry, bucket, hlist) अणु
-			अगर (ether_addr_equal_64bits(entry->mac, ha->addr)) अणु
+		hlist_for_each_entry(entry, bucket, hlist) {
+			if (ether_addr_equal_64bits(entry->mac, ha->addr)) {
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!found) अणु
-			entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-			अगर (!entry) अणु
+		if (!found) {
+			entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+			if (!entry) {
 				en_err(priv, "Failed adding MAC %pM on port:%d (out of memory)\n",
 				       ha->addr, priv->port);
 				priv->flags |= MLX4_EN_FLAG_FORCE_PROMISC;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			mac = mlx4_mac_to_u64(ha->addr);
-			स_नकल(entry->mac, ha->addr, ETH_ALEN);
-			err = mlx4_रेजिस्टर_mac(mdev->dev, priv->port, mac);
-			अगर (err < 0) अणु
+			memcpy(entry->mac, ha->addr, ETH_ALEN);
+			err = mlx4_register_mac(mdev->dev, priv->port, mac);
+			if (err < 0) {
 				en_err(priv, "Failed registering MAC %pM on port %d: %d\n",
 				       ha->addr, priv->port, err);
-				kमुक्त(entry);
+				kfree(entry);
 				priv->flags |= MLX4_EN_FLAG_FORCE_PROMISC;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			err = mlx4_en_uc_steer_add(priv, ha->addr,
 						   &priv->base_qpn,
 						   &entry->reg_id);
-			अगर (err) अणु
+			if (err) {
 				en_err(priv, "Failed adding MAC %pM on port %d: %d\n",
 				       ha->addr, priv->port, err);
-				mlx4_unरेजिस्टर_mac(mdev->dev, priv->port, mac);
-				kमुक्त(entry);
+				mlx4_unregister_mac(mdev->dev, priv->port, mac);
+				kfree(entry);
 				priv->flags |= MLX4_EN_FLAG_FORCE_PROMISC;
-				अवरोध;
-			पूर्ण अन्यथा अणु
-				अचिन्हित पूर्णांक mac_hash;
+				break;
+			} else {
+				unsigned int mac_hash;
 				en_dbg(DRV, priv, "Added MAC %pM on port:%d\n",
 				       ha->addr, priv->port);
 				mac_hash = ha->addr[MLX4_EN_MAC_HASH_IDX];
 				bucket = &priv->mac_hash[mac_hash];
 				hlist_add_head_rcu(&entry->hlist, bucket);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (priv->flags & MLX4_EN_FLAG_FORCE_PROMISC) अणु
+	if (priv->flags & MLX4_EN_FLAG_FORCE_PROMISC) {
 		en_warn(priv, "Forcing promiscuous mode on port:%d\n",
 			priv->port);
-	पूर्ण अन्यथा अगर (prev_flags & MLX4_EN_FLAG_FORCE_PROMISC) अणु
+	} else if (prev_flags & MLX4_EN_FLAG_FORCE_PROMISC) {
 		en_warn(priv, "Stop forcing promiscuous mode on port:%d\n",
 			priv->port);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx4_en_करो_set_rx_mode(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_en_priv *priv = container_of(work, काष्ठा mlx4_en_priv,
+static void mlx4_en_do_set_rx_mode(struct work_struct *work)
+{
+	struct mlx4_en_priv *priv = container_of(work, struct mlx4_en_priv,
 						 rx_mode_task);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा net_device *dev = priv->dev;
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct net_device *dev = priv->dev;
 
 	mutex_lock(&mdev->state_lock);
-	अगर (!mdev->device_up) अणु
+	if (!mdev->device_up) {
 		en_dbg(HW, priv, "Card is not up, ignoring rx mode change.\n");
-		जाओ out;
-	पूर्ण
-	अगर (!priv->port_up) अणु
+		goto out;
+	}
+	if (!priv->port_up) {
 		en_dbg(HW, priv, "Port is down, ignoring rx mode change.\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!netअगर_carrier_ok(dev)) अणु
-		अगर (!mlx4_en_QUERY_PORT(mdev, priv->port)) अणु
-			अगर (priv->port_state.link_state) अणु
+	if (!netif_carrier_ok(dev)) {
+		if (!mlx4_en_QUERY_PORT(mdev, priv->port)) {
+			if (priv->port_state.link_state) {
 				priv->last_link_state = MLX4_DEV_EVENT_PORT_UP;
-				netअगर_carrier_on(dev);
+				netif_carrier_on(dev);
 				en_dbg(LINK, priv, "Link Up\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (dev->priv_flags & IFF_UNICAST_FLT)
-		mlx4_en_करो_uc_filter(priv, dev, mdev);
+	if (dev->priv_flags & IFF_UNICAST_FLT)
+		mlx4_en_do_uc_filter(priv, dev, mdev);
 
 	/* Promsicuous mode: disable all filters */
-	अगर ((dev->flags & IFF_PROMISC) ||
-	    (priv->flags & MLX4_EN_FLAG_FORCE_PROMISC)) अणु
+	if ((dev->flags & IFF_PROMISC) ||
+	    (priv->flags & MLX4_EN_FLAG_FORCE_PROMISC)) {
 		mlx4_en_set_promisc_mode(priv, mdev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Not in promiscuous mode */
-	अगर (priv->flags & MLX4_EN_FLAG_PROMISC)
+	if (priv->flags & MLX4_EN_FLAG_PROMISC)
 		mlx4_en_clear_promisc_mode(priv, mdev);
 
-	mlx4_en_करो_multicast(priv, dev, mdev);
+	mlx4_en_do_multicast(priv, dev, mdev);
 out:
 	mutex_unlock(&mdev->state_lock);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_set_rss_steer_rules(काष्ठा mlx4_en_priv *priv)
-अणु
+static int mlx4_en_set_rss_steer_rules(struct mlx4_en_priv *priv)
+{
 	u64 reg_id;
-	पूर्णांक err = 0;
-	पूर्णांक *qpn = &priv->base_qpn;
-	काष्ठा mlx4_mac_entry *entry;
+	int err = 0;
+	int *qpn = &priv->base_qpn;
+	struct mlx4_mac_entry *entry;
 
 	err = mlx4_en_uc_steer_add(priv, priv->dev->dev_addr, qpn, &reg_id);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mlx4_en_tunnel_steer_add(priv, priv->dev->dev_addr, *qpn,
 				       &priv->tunnel_reg_id);
-	अगर (err)
-		जाओ tunnel_err;
+	if (err)
+		goto tunnel_err;
 
-	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
-	अगर (!entry) अणु
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry) {
 		err = -ENOMEM;
-		जाओ alloc_err;
-	पूर्ण
+		goto alloc_err;
+	}
 
-	स_नकल(entry->mac, priv->dev->dev_addr, माप(entry->mac));
-	स_नकल(priv->current_mac, entry->mac, माप(priv->current_mac));
+	memcpy(entry->mac, priv->dev->dev_addr, sizeof(entry->mac));
+	memcpy(priv->current_mac, entry->mac, sizeof(priv->current_mac));
 	entry->reg_id = reg_id;
 	hlist_add_head_rcu(&entry->hlist,
 			   &priv->mac_hash[entry->mac[MLX4_EN_MAC_HASH_IDX]]);
 
-	वापस 0;
+	return 0;
 
 alloc_err:
-	अगर (priv->tunnel_reg_id)
+	if (priv->tunnel_reg_id)
 		mlx4_flow_detach(priv->mdev->dev, priv->tunnel_reg_id);
 
 tunnel_err:
 	mlx4_en_uc_steer_release(priv, priv->dev->dev_addr, *qpn, reg_id);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlx4_en_delete_rss_steer_rules(काष्ठा mlx4_en_priv *priv)
-अणु
+static void mlx4_en_delete_rss_steer_rules(struct mlx4_en_priv *priv)
+{
 	u64 mac;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक qpn = priv->base_qpn;
-	काष्ठा hlist_head *bucket;
-	काष्ठा hlist_node *पंचांगp;
-	काष्ठा mlx4_mac_entry *entry;
+	unsigned int i;
+	int qpn = priv->base_qpn;
+	struct hlist_head *bucket;
+	struct hlist_node *tmp;
+	struct mlx4_mac_entry *entry;
 
-	क्रम (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i) अणु
+	for (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i) {
 		bucket = &priv->mac_hash[i];
-		hlist_क्रम_each_entry_safe(entry, पंचांगp, bucket, hlist) अणु
+		hlist_for_each_entry_safe(entry, tmp, bucket, hlist) {
 			mac = mlx4_mac_to_u64(entry->mac);
 			en_dbg(DRV, priv, "Registering MAC:%pM for deleting\n",
 			       entry->mac);
 			mlx4_en_uc_steer_release(priv, entry->mac,
 						 qpn, entry->reg_id);
 
-			mlx4_unरेजिस्टर_mac(priv->mdev->dev, priv->port, mac);
+			mlx4_unregister_mac(priv->mdev->dev, priv->port, mac);
 			hlist_del_rcu(&entry->hlist);
-			kमुक्त_rcu(entry, rcu);
-		पूर्ण
-	पूर्ण
+			kfree_rcu(entry, rcu);
+		}
+	}
 
-	अगर (priv->tunnel_reg_id) अणु
+	if (priv->tunnel_reg_id) {
 		mlx4_flow_detach(priv->mdev->dev, priv->tunnel_reg_id);
 		priv->tunnel_reg_id = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlx4_en_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX][txqueue];
+static void mlx4_en_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX][txqueue];
 
-	अगर (netअगर_msg_समयr(priv))
+	if (netif_msg_timer(priv))
 		en_warn(priv, "Tx timeout called on port:%d\n", priv->port);
 
 	en_warn(priv, "TX timeout on queue: %d, QP: 0x%x, CQ: 0x%x, Cons: 0x%x, Prod: 0x%x\n",
 		txqueue, tx_ring->qpn, tx_ring->sp_cqn,
 		tx_ring->cons, tx_ring->prod);
 
-	priv->port_stats.tx_समयout++;
-	अगर (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state)) अणु
+	priv->port_stats.tx_timeout++;
+	if (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state)) {
 		en_dbg(DRV, priv, "Scheduling port restart\n");
 		queue_work(mdev->workqueue, &priv->restart_task);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम
-mlx4_en_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static void
+mlx4_en_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
 	spin_lock_bh(&priv->stats_lock);
 	mlx4_en_fold_software_stats(dev);
 	netdev_stats_to_stats64(stats, &dev->stats);
 	spin_unlock_bh(&priv->stats_lock);
-पूर्ण
+}
 
-अटल व्योम mlx4_en_set_शेष_moderation(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_cq *cq;
-	पूर्णांक i, t;
+static void mlx4_en_set_default_moderation(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_cq *cq;
+	int i, t;
 
-	/* If we haven't received a specअगरic coalescing setting
+	/* If we haven't received a specific coalescing setting
 	 * (module param), we set the moderation parameters as follows:
 	 * - moder_cnt is set to the number of mtu sized packets to
 	 *   satisfy our coalescing target.
-	 * - moder_समय is set to a fixed value.
+	 * - moder_time is set to a fixed value.
 	 */
 	priv->rx_frames = MLX4_EN_RX_COAL_TARGET;
 	priv->rx_usecs = MLX4_EN_RX_COAL_TIME;
@@ -1416,223 +1415,223 @@ mlx4_en_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_
 	       priv->dev->mtu, priv->rx_frames, priv->rx_usecs);
 
 	/* Setup cq moderation params */
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		cq = priv->rx_cq[i];
 		cq->moder_cnt = priv->rx_frames;
-		cq->moder_समय = priv->rx_usecs;
-		priv->last_moder_समय[i] = MLX4_EN_AUTO_CONF;
+		cq->moder_time = priv->rx_usecs;
+		priv->last_moder_time[i] = MLX4_EN_AUTO_CONF;
 		priv->last_moder_packets[i] = 0;
 		priv->last_moder_bytes[i] = 0;
-	पूर्ण
+	}
 
-	क्रम (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
+	for (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
 			cq = priv->tx_cq[t][i];
 			cq->moder_cnt = priv->tx_frames;
-			cq->moder_समय = priv->tx_usecs;
-		पूर्ण
-	पूर्ण
+			cq->moder_time = priv->tx_usecs;
+		}
+	}
 
-	/* Reset स्वतः-moderation params */
+	/* Reset auto-moderation params */
 	priv->pkt_rate_low = MLX4_EN_RX_RATE_LOW;
 	priv->rx_usecs_low = MLX4_EN_RX_COAL_TIME_LOW;
 	priv->pkt_rate_high = MLX4_EN_RX_RATE_HIGH;
 	priv->rx_usecs_high = MLX4_EN_RX_COAL_TIME_HIGH;
-	priv->sample_पूर्णांकerval = MLX4_EN_SAMPLE_INTERVAL;
+	priv->sample_interval = MLX4_EN_SAMPLE_INTERVAL;
 	priv->adaptive_rx_coal = 1;
-	priv->last_moder_jअगरfies = 0;
+	priv->last_moder_jiffies = 0;
 	priv->last_moder_tx_packets = 0;
-पूर्ण
+}
 
-अटल व्योम mlx4_en_स्वतः_moderation(काष्ठा mlx4_en_priv *priv)
-अणु
-	अचिन्हित दीर्घ period = (अचिन्हित दीर्घ) (jअगरfies - priv->last_moder_jअगरfies);
+static void mlx4_en_auto_moderation(struct mlx4_en_priv *priv)
+{
+	unsigned long period = (unsigned long) (jiffies - priv->last_moder_jiffies);
 	u32 pkt_rate_high, pkt_rate_low;
-	काष्ठा mlx4_en_cq *cq;
-	अचिन्हित दीर्घ packets;
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ avg_pkt_size;
-	अचिन्हित दीर्घ rx_packets;
-	अचिन्हित दीर्घ rx_bytes;
-	अचिन्हित दीर्घ rx_pkt_dअगरf;
-	पूर्णांक moder_समय;
-	पूर्णांक ring, err;
+	struct mlx4_en_cq *cq;
+	unsigned long packets;
+	unsigned long rate;
+	unsigned long avg_pkt_size;
+	unsigned long rx_packets;
+	unsigned long rx_bytes;
+	unsigned long rx_pkt_diff;
+	int moder_time;
+	int ring, err;
 
-	अगर (!priv->adaptive_rx_coal || period < priv->sample_पूर्णांकerval * HZ)
-		वापस;
+	if (!priv->adaptive_rx_coal || period < priv->sample_interval * HZ)
+		return;
 
 	pkt_rate_low = READ_ONCE(priv->pkt_rate_low);
 	pkt_rate_high = READ_ONCE(priv->pkt_rate_high);
 
-	क्रम (ring = 0; ring < priv->rx_ring_num; ring++) अणु
+	for (ring = 0; ring < priv->rx_ring_num; ring++) {
 		rx_packets = READ_ONCE(priv->rx_ring[ring]->packets);
 		rx_bytes = READ_ONCE(priv->rx_ring[ring]->bytes);
 
-		rx_pkt_dअगरf = rx_packets - priv->last_moder_packets[ring];
-		packets = rx_pkt_dअगरf;
+		rx_pkt_diff = rx_packets - priv->last_moder_packets[ring];
+		packets = rx_pkt_diff;
 		rate = packets * HZ / period;
 		avg_pkt_size = packets ? (rx_bytes -
 				priv->last_moder_bytes[ring]) / packets : 0;
 
-		/* Apply स्वतः-moderation only when packet rate
+		/* Apply auto-moderation only when packet rate
 		 * exceeds a rate that it matters */
-		अगर (rate > (MLX4_EN_RX_RATE_THRESH / priv->rx_ring_num) &&
-		    avg_pkt_size > MLX4_EN_AVG_PKT_SMALL) अणु
-			अगर (rate <= pkt_rate_low)
-				moder_समय = priv->rx_usecs_low;
-			अन्यथा अगर (rate >= pkt_rate_high)
-				moder_समय = priv->rx_usecs_high;
-			अन्यथा
-				moder_समय = (rate - pkt_rate_low) *
+		if (rate > (MLX4_EN_RX_RATE_THRESH / priv->rx_ring_num) &&
+		    avg_pkt_size > MLX4_EN_AVG_PKT_SMALL) {
+			if (rate <= pkt_rate_low)
+				moder_time = priv->rx_usecs_low;
+			else if (rate >= pkt_rate_high)
+				moder_time = priv->rx_usecs_high;
+			else
+				moder_time = (rate - pkt_rate_low) *
 					(priv->rx_usecs_high - priv->rx_usecs_low) /
 					(pkt_rate_high - pkt_rate_low) +
 					priv->rx_usecs_low;
-		पूर्ण अन्यथा अणु
-			moder_समय = priv->rx_usecs_low;
-		पूर्ण
+		} else {
+			moder_time = priv->rx_usecs_low;
+		}
 
 		cq = priv->rx_cq[ring];
-		अगर (moder_समय != priv->last_moder_समय[ring] ||
-		    cq->moder_cnt != priv->rx_frames) अणु
-			priv->last_moder_समय[ring] = moder_समय;
-			cq->moder_समय = moder_समय;
+		if (moder_time != priv->last_moder_time[ring] ||
+		    cq->moder_cnt != priv->rx_frames) {
+			priv->last_moder_time[ring] = moder_time;
+			cq->moder_time = moder_time;
 			cq->moder_cnt = priv->rx_frames;
 			err = mlx4_en_set_cq_moder(priv, cq);
-			अगर (err)
+			if (err)
 				en_err(priv, "Failed modifying moderation for cq:%d\n",
 				       ring);
-		पूर्ण
+		}
 		priv->last_moder_packets[ring] = rx_packets;
 		priv->last_moder_bytes[ring] = rx_bytes;
-	पूर्ण
+	}
 
-	priv->last_moder_jअगरfies = jअगरfies;
-पूर्ण
+	priv->last_moder_jiffies = jiffies;
+}
 
-अटल व्योम mlx4_en_करो_get_stats(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delay = to_delayed_work(work);
-	काष्ठा mlx4_en_priv *priv = container_of(delay, काष्ठा mlx4_en_priv,
+static void mlx4_en_do_get_stats(struct work_struct *work)
+{
+	struct delayed_work *delay = to_delayed_work(work);
+	struct mlx4_en_priv *priv = container_of(delay, struct mlx4_en_priv,
 						 stats_task);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err;
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err;
 
 	mutex_lock(&mdev->state_lock);
-	अगर (mdev->device_up) अणु
-		अगर (priv->port_up) अणु
+	if (mdev->device_up) {
+		if (priv->port_up) {
 			err = mlx4_en_DUMP_ETH_STATS(mdev, priv->port, 0);
-			अगर (err)
+			if (err)
 				en_dbg(HW, priv, "Could not update stats\n");
 
-			mlx4_en_स्वतः_moderation(priv);
-		पूर्ण
+			mlx4_en_auto_moderation(priv);
+		}
 
 		queue_delayed_work(mdev->workqueue, &priv->stats_task, STATS_DELAY);
-	पूर्ण
-	अगर (mdev->mac_हटाओd[MLX4_MAX_PORTS + 1 - priv->port]) अणु
-		mlx4_en_करो_set_mac(priv, priv->current_mac);
-		mdev->mac_हटाओd[MLX4_MAX_PORTS + 1 - priv->port] = 0;
-	पूर्ण
+	}
+	if (mdev->mac_removed[MLX4_MAX_PORTS + 1 - priv->port]) {
+		mlx4_en_do_set_mac(priv, priv->current_mac);
+		mdev->mac_removed[MLX4_MAX_PORTS + 1 - priv->port] = 0;
+	}
 	mutex_unlock(&mdev->state_lock);
-पूर्ण
+}
 
-/* mlx4_en_service_task - Run service task क्रम tasks that needed to be करोne
+/* mlx4_en_service_task - Run service task for tasks that needed to be done
  * periodically
  */
-अटल व्योम mlx4_en_service_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delay = to_delayed_work(work);
-	काष्ठा mlx4_en_priv *priv = container_of(delay, काष्ठा mlx4_en_priv,
+static void mlx4_en_service_task(struct work_struct *work)
+{
+	struct delayed_work *delay = to_delayed_work(work);
+	struct mlx4_en_priv *priv = container_of(delay, struct mlx4_en_priv,
 						 service_task);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_dev *mdev = priv->mdev;
 
 	mutex_lock(&mdev->state_lock);
-	अगर (mdev->device_up) अणु
-		अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
+	if (mdev->device_up) {
+		if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
 			mlx4_en_ptp_overflow_check(mdev);
 
 		mlx4_en_recover_from_oom(priv);
 		queue_delayed_work(mdev->workqueue, &priv->service_task,
 				   SERVICE_TASK_DELAY);
-	पूर्ण
+	}
 	mutex_unlock(&mdev->state_lock);
-पूर्ण
+}
 
-अटल व्योम mlx4_en_linkstate(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_en_priv *priv = container_of(work, काष्ठा mlx4_en_priv,
+static void mlx4_en_linkstate(struct work_struct *work)
+{
+	struct mlx4_en_priv *priv = container_of(work, struct mlx4_en_priv,
 						 linkstate_task);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक linkstate = priv->link_state;
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int linkstate = priv->link_state;
 
 	mutex_lock(&mdev->state_lock);
 	/* If observable port state changed set carrier state and
-	 * report to प्रणाली log */
-	अगर (priv->last_link_state != linkstate) अणु
-		अगर (linkstate == MLX4_DEV_EVENT_PORT_DOWN) अणु
+	 * report to system log */
+	if (priv->last_link_state != linkstate) {
+		if (linkstate == MLX4_DEV_EVENT_PORT_DOWN) {
 			en_info(priv, "Link Down\n");
-			netअगर_carrier_off(priv->dev);
-		पूर्ण अन्यथा अणु
+			netif_carrier_off(priv->dev);
+		} else {
 			en_info(priv, "Link Up\n");
-			netअगर_carrier_on(priv->dev);
-		पूर्ण
-	पूर्ण
+			netif_carrier_on(priv->dev);
+		}
+	}
 	priv->last_link_state = linkstate;
 	mutex_unlock(&mdev->state_lock);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_init_affinity_hपूर्णांक(काष्ठा mlx4_en_priv *priv, पूर्णांक ring_idx)
-अणु
-	काष्ठा mlx4_en_rx_ring *ring = priv->rx_ring[ring_idx];
-	पूर्णांक numa_node = priv->mdev->dev->numa_node;
+static int mlx4_en_init_affinity_hint(struct mlx4_en_priv *priv, int ring_idx)
+{
+	struct mlx4_en_rx_ring *ring = priv->rx_ring[ring_idx];
+	int numa_node = priv->mdev->dev->numa_node;
 
-	अगर (!zalloc_cpumask_var(&ring->affinity_mask, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&ring->affinity_mask, GFP_KERNEL))
+		return -ENOMEM;
 
-	cpumask_set_cpu(cpumask_local_spपढ़ो(ring_idx, numa_node),
+	cpumask_set_cpu(cpumask_local_spread(ring_idx, numa_node),
 			ring->affinity_mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx4_en_मुक्त_affinity_hपूर्णांक(काष्ठा mlx4_en_priv *priv, पूर्णांक ring_idx)
-अणु
-	मुक्त_cpumask_var(priv->rx_ring[ring_idx]->affinity_mask);
-पूर्ण
+static void mlx4_en_free_affinity_hint(struct mlx4_en_priv *priv, int ring_idx)
+{
+	free_cpumask_var(priv->rx_ring[ring_idx]->affinity_mask);
+}
 
-अटल व्योम mlx4_en_init_recycle_ring(काष्ठा mlx4_en_priv *priv,
-				      पूर्णांक tx_ring_idx)
-अणु
-	काष्ठा mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX_XDP][tx_ring_idx];
-	पूर्णांक rr_index = tx_ring_idx;
+static void mlx4_en_init_recycle_ring(struct mlx4_en_priv *priv,
+				      int tx_ring_idx)
+{
+	struct mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX_XDP][tx_ring_idx];
+	int rr_index = tx_ring_idx;
 
-	tx_ring->मुक्त_tx_desc = mlx4_en_recycle_tx_desc;
+	tx_ring->free_tx_desc = mlx4_en_recycle_tx_desc;
 	tx_ring->recycle_ring = priv->rx_ring[rr_index];
 	en_dbg(DRV, priv, "Set tx_ring[%d][%d]->recycle_ring = rx_ring[%d]\n",
 	       TX_XDP, tx_ring_idx, rr_index);
-पूर्ण
+}
 
-पूर्णांक mlx4_en_start_port(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_cq *cq;
-	काष्ठा mlx4_en_tx_ring *tx_ring;
-	पूर्णांक rx_index = 0;
-	पूर्णांक err = 0;
-	पूर्णांक i, t;
-	पूर्णांक j;
-	u8 mc_list[16] = अणु0पूर्ण;
+int mlx4_en_start_port(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_cq *cq;
+	struct mlx4_en_tx_ring *tx_ring;
+	int rx_index = 0;
+	int err = 0;
+	int i, t;
+	int j;
+	u8 mc_list[16] = {0};
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		en_dbg(DRV, priv, "start port called while port already up\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	INIT_LIST_HEAD(&priv->mc_list);
 	INIT_LIST_HEAD(&priv->curr_list);
 	INIT_LIST_HEAD(&priv->ethtool_list);
-	स_रखो(&priv->ethtool_rules[0], 0,
-	       माप(काष्ठा ethtool_flow_id) * MAX_NUM_OF_FS_RULES);
+	memset(&priv->ethtool_rules[0], 0,
+	       sizeof(struct ethtool_flow_id) * MAX_NUM_OF_FS_RULES);
 
 	/* Calculate Rx buf size */
 	dev->mtu = min(dev->mtu, priv->max_mtu);
@@ -1641,87 +1640,87 @@ mlx4_en_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_
 
 	/* Configure rx cq's and rings */
 	err = mlx4_en_activate_rx_rings(priv);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed to activate RX rings\n");
-		वापस err;
-	पूर्ण
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+		return err;
+	}
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		cq = priv->rx_cq[i];
 
-		err = mlx4_en_init_affinity_hपूर्णांक(priv, i);
-		अगर (err) अणु
+		err = mlx4_en_init_affinity_hint(priv, i);
+		if (err) {
 			en_err(priv, "Failed preparing IRQ affinity hint\n");
-			जाओ cq_err;
-		पूर्ण
+			goto cq_err;
+		}
 
 		err = mlx4_en_activate_cq(priv, cq, i);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed activating Rx CQ\n");
-			mlx4_en_मुक्त_affinity_hपूर्णांक(priv, i);
-			जाओ cq_err;
-		पूर्ण
+			mlx4_en_free_affinity_hint(priv, i);
+			goto cq_err;
+		}
 
-		क्रम (j = 0; j < cq->size; j++) अणु
-			काष्ठा mlx4_cqe *cqe = शून्य;
+		for (j = 0; j < cq->size; j++) {
+			struct mlx4_cqe *cqe = NULL;
 
 			cqe = mlx4_en_get_cqe(cq->buf, j, priv->cqe_size) +
 			      priv->cqe_factor;
 			cqe->owner_sr_opcode = MLX4_CQE_OWNER_MASK;
-		पूर्ण
+		}
 
 		err = mlx4_en_set_cq_moder(priv, cq);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed setting cq moderation parameters\n");
 			mlx4_en_deactivate_cq(priv, cq);
-			mlx4_en_मुक्त_affinity_hपूर्णांक(priv, i);
-			जाओ cq_err;
-		पूर्ण
+			mlx4_en_free_affinity_hint(priv, i);
+			goto cq_err;
+		}
 		mlx4_en_arm_cq(priv, cq);
 		priv->rx_ring[i]->cqn = cq->mcq.cqn;
 		++rx_index;
-	पूर्ण
+	}
 
 	/* Set qp number */
 	en_dbg(DRV, priv, "Getting qp number for port %d\n", priv->port);
 	err = mlx4_en_get_qp(priv);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed getting eth qp\n");
-		जाओ cq_err;
-	पूर्ण
-	mdev->mac_हटाओd[priv->port] = 0;
+		goto cq_err;
+	}
+	mdev->mac_removed[priv->port] = 0;
 
 	priv->counter_index =
-			mlx4_get_शेष_counter_index(mdev->dev, priv->port);
+			mlx4_get_default_counter_index(mdev->dev, priv->port);
 
 	err = mlx4_en_config_rss_steer(priv);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed configuring rss steering\n");
-		जाओ mac_err;
-	पूर्ण
+		goto mac_err;
+	}
 
 	err = mlx4_en_create_drop_qp(priv);
-	अगर (err)
-		जाओ rss_err;
+	if (err)
+		goto rss_err;
 
 	/* Configure tx cq's and rings */
-	क्रम (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
+	for (t = 0 ; t < MLX4_EN_NUM_TX_TYPES; t++) {
 		u8 num_tx_rings_p_up = t == TX ?
 			priv->num_tx_rings_p_up : priv->tx_ring_num[t];
 
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
 			/* Configure cq */
 			cq = priv->tx_cq[t][i];
 			err = mlx4_en_activate_cq(priv, cq, i);
-			अगर (err) अणु
+			if (err) {
 				en_err(priv, "Failed allocating Tx CQ\n");
-				जाओ tx_err;
-			पूर्ण
+				goto tx_err;
+			}
 			err = mlx4_en_set_cq_moder(priv, cq);
-			अगर (err) अणु
+			if (err) {
 				en_err(priv, "Failed setting cq moderation parameters\n");
 				mlx4_en_deactivate_cq(priv, cq);
-				जाओ tx_err;
-			पूर्ण
+				goto tx_err;
+			}
 			en_dbg(DRV, priv,
 			       "Resetting index of collapsed CQ:%d to -1\n", i);
 			cq->buf->wqe_index = cpu_to_be16(0xffff);
@@ -1731,170 +1730,170 @@ mlx4_en_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_
 			err = mlx4_en_activate_tx_ring(priv, tx_ring,
 						       cq->mcq.cqn,
 						       i / num_tx_rings_p_up);
-			अगर (err) अणु
+			if (err) {
 				en_err(priv, "Failed allocating Tx ring\n");
 				mlx4_en_deactivate_cq(priv, cq);
-				जाओ tx_err;
-			पूर्ण
+				goto tx_err;
+			}
 			clear_bit(MLX4_EN_TX_RING_STATE_RECOVERING, &tx_ring->state);
-			अगर (t != TX_XDP) अणु
+			if (t != TX_XDP) {
 				tx_ring->tx_queue = netdev_get_tx_queue(dev, i);
-				tx_ring->recycle_ring = शून्य;
+				tx_ring->recycle_ring = NULL;
 
-				/* Arm CQ क्रम TX completions */
+				/* Arm CQ for TX completions */
 				mlx4_en_arm_cq(priv, cq);
 
-			पूर्ण अन्यथा अणु
+			} else {
 				mlx4_en_init_tx_xdp_ring_descs(priv, tx_ring);
 				mlx4_en_init_recycle_ring(priv, i);
 				/* XDP TX CQ should never be armed */
-			पूर्ण
+			}
 
 			/* Set initial ownership of all Tx TXBBs to SW (1) */
-			क्रम (j = 0; j < tx_ring->buf_size; j += STAMP_STRIDE)
+			for (j = 0; j < tx_ring->buf_size; j += STAMP_STRIDE)
 				*((u32 *)(tx_ring->buf + j)) = 0xffffffff;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Configure port */
 	err = mlx4_SET_PORT_general(mdev->dev, priv->port,
 				    priv->rx_skb_size + ETH_FCS_LEN,
-				    priv->prof->tx_छोड़ो,
+				    priv->prof->tx_pause,
 				    priv->prof->tx_ppp,
-				    priv->prof->rx_छोड़ो,
+				    priv->prof->rx_pause,
 				    priv->prof->rx_ppp);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed setting port general configurations for port %d, with error %d\n",
 		       priv->port, err);
-		जाओ tx_err;
-	पूर्ण
+		goto tx_err;
+	}
 
 	err = mlx4_SET_PORT_user_mtu(mdev->dev, priv->port, dev->mtu);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed to pass user MTU(%d) to Firmware for port %d, with error %d\n",
 		       dev->mtu, priv->port, err);
-		जाओ tx_err;
-	पूर्ण
+		goto tx_err;
+	}
 
-	/* Set शेष qp number */
+	/* Set default qp number */
 	err = mlx4_SET_PORT_qpn_calc(mdev->dev, priv->port, priv->base_qpn, 0);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed setting default qp numbers\n");
-		जाओ tx_err;
-	पूर्ण
+		goto tx_err;
+	}
 
-	अगर (mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) अणु
+	if (mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) {
 		err = mlx4_SET_PORT_VXLAN(mdev->dev, priv->port, VXLAN_STEER_BY_OUTER_MAC, 1);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed setting port L2 tunnel configuration, err %d\n",
 			       err);
-			जाओ tx_err;
-		पूर्ण
-	पूर्ण
+			goto tx_err;
+		}
+	}
 
 	/* Init port */
 	en_dbg(HW, priv, "Initializing port\n");
 	err = mlx4_INIT_PORT(mdev->dev, priv->port);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed Initializing port\n");
-		जाओ tx_err;
-	पूर्ण
+		goto tx_err;
+	}
 
 	/* Set Unicast and VXLAN steering rules */
-	अगर (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0 &&
+	if (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0 &&
 	    mlx4_en_set_rss_steer_rules(priv))
 		mlx4_warn(mdev, "Failed setting steering rules\n");
 
 	/* Attach rx QP to bradcast address */
 	eth_broadcast_addr(&mc_list[10]);
-	mc_list[5] = priv->port; /* needed क्रम B0 steering support */
-	अगर (mlx4_multicast_attach(mdev->dev, priv->rss_map.indir_qp, mc_list,
+	mc_list[5] = priv->port; /* needed for B0 steering support */
+	if (mlx4_multicast_attach(mdev->dev, priv->rss_map.indir_qp, mc_list,
 				  priv->port, 0, MLX4_PROT_ETH,
 				  &priv->broadcast_id))
 		mlx4_warn(mdev, "Failed Attaching Broadcast\n");
 
-	/* Must reकरो promiscuous mode setup. */
+	/* Must redo promiscuous mode setup. */
 	priv->flags &= ~(MLX4_EN_FLAG_PROMISC | MLX4_EN_FLAG_MC_PROMISC);
 
 	/* Schedule multicast task to populate multicast list */
 	queue_work(mdev->workqueue, &priv->rx_mode_task);
 
-	अगर (priv->mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN)
+	if (priv->mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN)
 		udp_tunnel_nic_reset_ntf(dev);
 
 	priv->port_up = true;
 
-	/* Process all completions अगर exist to prevent
-	 * the queues मुक्तzing अगर they are full
+	/* Process all completions if exist to prevent
+	 * the queues freezing if they are full
 	 */
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		local_bh_disable();
 		napi_schedule(&priv->rx_cq[i]->napi);
 		local_bh_enable();
-	पूर्ण
+	}
 
 	clear_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state);
-	netअगर_tx_start_all_queues(dev);
-	netअगर_device_attach(dev);
+	netif_tx_start_all_queues(dev);
+	netif_device_attach(dev);
 
-	वापस 0;
+	return 0;
 
 tx_err:
-	अगर (t == MLX4_EN_NUM_TX_TYPES) अणु
+	if (t == MLX4_EN_NUM_TX_TYPES) {
 		t--;
 		i = priv->tx_ring_num[t];
-	पूर्ण
-	जबतक (t >= 0) अणु
-		जबतक (i--) अणु
+	}
+	while (t >= 0) {
+		while (i--) {
 			mlx4_en_deactivate_tx_ring(priv, priv->tx_ring[t][i]);
 			mlx4_en_deactivate_cq(priv, priv->tx_cq[t][i]);
-		पूर्ण
-		अगर (!t--)
-			अवरोध;
+		}
+		if (!t--)
+			break;
 		i = priv->tx_ring_num[t];
-	पूर्ण
+	}
 	mlx4_en_destroy_drop_qp(priv);
 rss_err:
 	mlx4_en_release_rss_steer(priv);
 mac_err:
 	mlx4_en_put_qp(priv);
 cq_err:
-	जबतक (rx_index--) अणु
+	while (rx_index--) {
 		mlx4_en_deactivate_cq(priv, priv->rx_cq[rx_index]);
-		mlx4_en_मुक्त_affinity_hपूर्णांक(priv, rx_index);
-	पूर्ण
-	क्रम (i = 0; i < priv->rx_ring_num; i++)
+		mlx4_en_free_affinity_hint(priv, rx_index);
+	}
+	for (i = 0; i < priv->rx_ring_num; i++)
 		mlx4_en_deactivate_rx_ring(priv, priv->rx_ring[i]);
 
-	वापस err; /* need to बंद devices */
-पूर्ण
+	return err; /* need to close devices */
+}
 
 
-व्योम mlx4_en_stop_port(काष्ठा net_device *dev, पूर्णांक detach)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_mc_list *mclist, *पंचांगp;
-	काष्ठा ethtool_flow_id *flow, *पंचांगp_flow;
-	पूर्णांक i, t;
-	u8 mc_list[16] = अणु0पूर्ण;
+void mlx4_en_stop_port(struct net_device *dev, int detach)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_mc_list *mclist, *tmp;
+	struct ethtool_flow_id *flow, *tmp_flow;
+	int i, t;
+	u8 mc_list[16] = {0};
 
-	अगर (!priv->port_up) अणु
+	if (!priv->port_up) {
 		en_dbg(DRV, priv, "stop port called while port already down\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* बंद port*/
+	/* close port*/
 	mlx4_CLOSE_PORT(mdev->dev, priv->port);
 
 	/* Synchronize with tx routine */
-	netअगर_tx_lock_bh(dev);
-	अगर (detach)
-		netअगर_device_detach(dev);
-	netअगर_tx_stop_all_queues(dev);
-	netअगर_tx_unlock_bh(dev);
+	netif_tx_lock_bh(dev);
+	if (detach)
+		netif_device_detach(dev);
+	netif_tx_stop_all_queues(dev);
+	netif_tx_unlock_bh(dev);
 
-	netअगर_tx_disable(dev);
+	netif_tx_disable(dev);
 
 	spin_lock_bh(&priv->stats_lock);
 	mlx4_en_fold_software_stats(dev);
@@ -1905,145 +1904,145 @@ cq_err:
 	priv->counter_index = MLX4_SINK_COUNTER_INDEX(mdev->dev);
 
 	/* Promsicuous mode */
-	अगर (mdev->dev->caps.steering_mode ==
-	    MLX4_STEERING_MODE_DEVICE_MANAGED) अणु
+	if (mdev->dev->caps.steering_mode ==
+	    MLX4_STEERING_MODE_DEVICE_MANAGED) {
 		priv->flags &= ~(MLX4_EN_FLAG_PROMISC |
 				 MLX4_EN_FLAG_MC_PROMISC);
-		mlx4_flow_steer_promisc_हटाओ(mdev->dev,
+		mlx4_flow_steer_promisc_remove(mdev->dev,
 					       priv->port,
 					       MLX4_FS_ALL_DEFAULT);
-		mlx4_flow_steer_promisc_हटाओ(mdev->dev,
+		mlx4_flow_steer_promisc_remove(mdev->dev,
 					       priv->port,
 					       MLX4_FS_MC_DEFAULT);
-	पूर्ण अन्यथा अगर (priv->flags & MLX4_EN_FLAG_PROMISC) अणु
+	} else if (priv->flags & MLX4_EN_FLAG_PROMISC) {
 		priv->flags &= ~MLX4_EN_FLAG_PROMISC;
 
 		/* Disable promiscouos mode */
-		mlx4_unicast_promisc_हटाओ(mdev->dev, priv->base_qpn,
+		mlx4_unicast_promisc_remove(mdev->dev, priv->base_qpn,
 					    priv->port);
 
 		/* Disable Multicast promisc */
-		अगर (priv->flags & MLX4_EN_FLAG_MC_PROMISC) अणु
-			mlx4_multicast_promisc_हटाओ(mdev->dev, priv->base_qpn,
+		if (priv->flags & MLX4_EN_FLAG_MC_PROMISC) {
+			mlx4_multicast_promisc_remove(mdev->dev, priv->base_qpn,
 						      priv->port);
 			priv->flags &= ~MLX4_EN_FLAG_MC_PROMISC;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Detach All multicasts */
 	eth_broadcast_addr(&mc_list[10]);
-	mc_list[5] = priv->port; /* needed क्रम B0 steering support */
+	mc_list[5] = priv->port; /* needed for B0 steering support */
 	mlx4_multicast_detach(mdev->dev, priv->rss_map.indir_qp, mc_list,
 			      MLX4_PROT_ETH, priv->broadcast_id);
-	list_क्रम_each_entry(mclist, &priv->curr_list, list) अणु
-		स_नकल(&mc_list[10], mclist->addr, ETH_ALEN);
+	list_for_each_entry(mclist, &priv->curr_list, list) {
+		memcpy(&mc_list[10], mclist->addr, ETH_ALEN);
 		mc_list[5] = priv->port;
 		mlx4_multicast_detach(mdev->dev, priv->rss_map.indir_qp,
 				      mc_list, MLX4_PROT_ETH, mclist->reg_id);
-		अगर (mclist->tunnel_reg_id)
+		if (mclist->tunnel_reg_id)
 			mlx4_flow_detach(mdev->dev, mclist->tunnel_reg_id);
-	पूर्ण
+	}
 	mlx4_en_clear_list(dev);
-	list_क्रम_each_entry_safe(mclist, पंचांगp, &priv->curr_list, list) अणु
+	list_for_each_entry_safe(mclist, tmp, &priv->curr_list, list) {
 		list_del(&mclist->list);
-		kमुक्त(mclist);
-	पूर्ण
+		kfree(mclist);
+	}
 
 	/* Flush multicast filter */
 	mlx4_SET_MCAST_FLTR(mdev->dev, priv->port, 0, 1, MLX4_MCAST_CONFIG);
 
-	/* Remove flow steering rules क्रम the port*/
-	अगर (mdev->dev->caps.steering_mode ==
-	    MLX4_STEERING_MODE_DEVICE_MANAGED) अणु
+	/* Remove flow steering rules for the port*/
+	if (mdev->dev->caps.steering_mode ==
+	    MLX4_STEERING_MODE_DEVICE_MANAGED) {
 		ASSERT_RTNL();
-		list_क्रम_each_entry_safe(flow, पंचांगp_flow,
-					 &priv->ethtool_list, list) अणु
+		list_for_each_entry_safe(flow, tmp_flow,
+					 &priv->ethtool_list, list) {
 			mlx4_flow_detach(mdev->dev, flow->id);
 			list_del(&flow->list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mlx4_en_destroy_drop_qp(priv);
 
 	/* Free TX Rings */
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
 			mlx4_en_deactivate_tx_ring(priv, priv->tx_ring[t][i]);
 			mlx4_en_deactivate_cq(priv, priv->tx_cq[t][i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	msleep(10);
 
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++)
-			mlx4_en_मुक्त_tx_buf(dev, priv->tx_ring[t][i]);
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++)
+		for (i = 0; i < priv->tx_ring_num[t]; i++)
+			mlx4_en_free_tx_buf(dev, priv->tx_ring[t][i]);
 
-	अगर (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0)
+	if (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0)
 		mlx4_en_delete_rss_steer_rules(priv);
 
 	/* Free RSS qps */
 	mlx4_en_release_rss_steer(priv);
 
-	/* Unरेजिस्टर Mac address क्रम the port */
+	/* Unregister Mac address for the port */
 	mlx4_en_put_qp(priv);
-	अगर (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_REASSIGN_MAC_EN))
-		mdev->mac_हटाओd[priv->port] = 1;
+	if (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_REASSIGN_MAC_EN))
+		mdev->mac_removed[priv->port] = 1;
 
 	/* Free RX Rings */
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-		काष्ठा mlx4_en_cq *cq = priv->rx_cq[i];
+	for (i = 0; i < priv->rx_ring_num; i++) {
+		struct mlx4_en_cq *cq = priv->rx_cq[i];
 
 		napi_synchronize(&cq->napi);
 		mlx4_en_deactivate_rx_ring(priv, priv->rx_ring[i]);
 		mlx4_en_deactivate_cq(priv, cq);
 
-		mlx4_en_मुक्त_affinity_hपूर्णांक(priv, i);
-	पूर्ण
-पूर्ण
+		mlx4_en_free_affinity_hint(priv, i);
+	}
+}
 
-अटल व्योम mlx4_en_restart(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_en_priv *priv = container_of(work, काष्ठा mlx4_en_priv,
+static void mlx4_en_restart(struct work_struct *work)
+{
+	struct mlx4_en_priv *priv = container_of(work, struct mlx4_en_priv,
 						 restart_task);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा net_device *dev = priv->dev;
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct net_device *dev = priv->dev;
 
 	en_dbg(DRV, priv, "Watchdog task called for port %d\n", priv->port);
 
 	rtnl_lock();
 	mutex_lock(&mdev->state_lock);
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		mlx4_en_stop_port(dev, 1);
-		अगर (mlx4_en_start_port(dev))
+		if (mlx4_en_start_port(dev))
 			en_err(priv, "Failed restarting port %d\n", priv->port);
-	पूर्ण
+	}
 	mutex_unlock(&mdev->state_lock);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम mlx4_en_clear_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_tx_ring **tx_ring;
-	पूर्णांक i;
+static void mlx4_en_clear_stats(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_tx_ring **tx_ring;
+	int i;
 
-	अगर (!mlx4_is_slave(mdev->dev))
-		अगर (mlx4_en_DUMP_ETH_STATS(mdev, priv->port, 1))
+	if (!mlx4_is_slave(mdev->dev))
+		if (mlx4_en_DUMP_ETH_STATS(mdev, priv->port, 1))
 			en_dbg(HW, priv, "Failed dumping statistics\n");
 
-	स_रखो(&priv->pkstats, 0, माप(priv->pkstats));
-	स_रखो(&priv->port_stats, 0, माप(priv->port_stats));
-	स_रखो(&priv->rx_flowstats, 0, माप(priv->rx_flowstats));
-	स_रखो(&priv->tx_flowstats, 0, माप(priv->tx_flowstats));
-	स_रखो(&priv->rx_priority_flowstats, 0,
-	       माप(priv->rx_priority_flowstats));
-	स_रखो(&priv->tx_priority_flowstats, 0,
-	       माप(priv->tx_priority_flowstats));
-	स_रखो(&priv->pf_stats, 0, माप(priv->pf_stats));
+	memset(&priv->pkstats, 0, sizeof(priv->pkstats));
+	memset(&priv->port_stats, 0, sizeof(priv->port_stats));
+	memset(&priv->rx_flowstats, 0, sizeof(priv->rx_flowstats));
+	memset(&priv->tx_flowstats, 0, sizeof(priv->tx_flowstats));
+	memset(&priv->rx_priority_flowstats, 0,
+	       sizeof(priv->rx_priority_flowstats));
+	memset(&priv->tx_priority_flowstats, 0,
+	       sizeof(priv->tx_priority_flowstats));
+	memset(&priv->pf_stats, 0, sizeof(priv->pf_stats));
 
 	tx_ring = priv->tx_ring[TX];
-	क्रम (i = 0; i < priv->tx_ring_num[TX]; i++) अणु
+	for (i = 0; i < priv->tx_ring_num[TX]; i++) {
 		tx_ring[i]->bytes = 0;
 		tx_ring[i]->packets = 0;
 		tx_ring[i]->tx_csum = 0;
@@ -2052,161 +2051,161 @@ cq_err:
 		tx_ring[i]->wake_queue = 0;
 		tx_ring[i]->tso_packets = 0;
 		tx_ring[i]->xmit_more = 0;
-	पूर्ण
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	}
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		priv->rx_ring[i]->bytes = 0;
 		priv->rx_ring[i]->packets = 0;
 		priv->rx_ring[i]->csum_ok = 0;
 		priv->rx_ring[i]->csum_none = 0;
 		priv->rx_ring[i]->csum_complete = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mlx4_en_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err = 0;
+static int mlx4_en_open(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err = 0;
 
 	mutex_lock(&mdev->state_lock);
 
-	अगर (!mdev->device_up) अणु
+	if (!mdev->device_up) {
 		en_err(priv, "Cannot open - device down/disabled\n");
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Reset HW statistics and SW counters */
 	mlx4_en_clear_stats(dev);
 
 	err = mlx4_en_start_port(dev);
-	अगर (err)
+	if (err)
 		en_err(priv, "Failed starting port:%d\n", priv->port);
 
 out:
 	mutex_unlock(&mdev->state_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक mlx4_en_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+static int mlx4_en_close(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 
 	en_dbg(IFDOWN, priv, "Close port called\n");
 
 	mutex_lock(&mdev->state_lock);
 
 	mlx4_en_stop_port(dev, 0);
-	netअगर_carrier_off(dev);
+	netif_carrier_off(dev);
 
 	mutex_unlock(&mdev->state_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mlx4_en_मुक्त_resources(काष्ठा mlx4_en_priv *priv)
-अणु
-	पूर्णांक i, t;
+static void mlx4_en_free_resources(struct mlx4_en_priv *priv)
+{
+	int i, t;
 
-#अगर_घोषित CONFIG_RFS_ACCEL
-	priv->dev->rx_cpu_rmap = शून्य;
-#पूर्ण_अगर
+#ifdef CONFIG_RFS_ACCEL
+	priv->dev->rx_cpu_rmap = NULL;
+#endif
 
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
-			अगर (priv->tx_ring[t] && priv->tx_ring[t][i])
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
+			if (priv->tx_ring[t] && priv->tx_ring[t][i])
 				mlx4_en_destroy_tx_ring(priv,
 							&priv->tx_ring[t][i]);
-			अगर (priv->tx_cq[t] && priv->tx_cq[t][i])
+			if (priv->tx_cq[t] && priv->tx_cq[t][i])
 				mlx4_en_destroy_cq(priv, &priv->tx_cq[t][i]);
-		पूर्ण
-		kमुक्त(priv->tx_ring[t]);
-		kमुक्त(priv->tx_cq[t]);
-	पूर्ण
+		}
+		kfree(priv->tx_ring[t]);
+		kfree(priv->tx_cq[t]);
+	}
 
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-		अगर (priv->rx_ring[i])
+	for (i = 0; i < priv->rx_ring_num; i++) {
+		if (priv->rx_ring[i])
 			mlx4_en_destroy_rx_ring(priv, &priv->rx_ring[i],
 				priv->prof->rx_ring_size, priv->stride);
-		अगर (priv->rx_cq[i])
+		if (priv->rx_cq[i])
 			mlx4_en_destroy_cq(priv, &priv->rx_cq[i]);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_alloc_resources(काष्ठा mlx4_en_priv *priv)
-अणु
-	काष्ठा mlx4_en_port_profile *prof = priv->prof;
-	पूर्णांक i, t;
-	पूर्णांक node;
+static int mlx4_en_alloc_resources(struct mlx4_en_priv *priv)
+{
+	struct mlx4_en_port_profile *prof = priv->prof;
+	int i, t;
+	int node;
 
 	/* Create tx Rings */
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
 			node = cpu_to_node(i % num_online_cpus());
-			अगर (mlx4_en_create_cq(priv, &priv->tx_cq[t][i],
+			if (mlx4_en_create_cq(priv, &priv->tx_cq[t][i],
 					      prof->tx_ring_size, i, t, node))
-				जाओ err;
+				goto err;
 
-			अगर (mlx4_en_create_tx_ring(priv, &priv->tx_ring[t][i],
+			if (mlx4_en_create_tx_ring(priv, &priv->tx_ring[t][i],
 						   prof->tx_ring_size,
 						   TXBB_SIZE, node, i))
-				जाओ err;
-		पूर्ण
-	पूर्ण
+				goto err;
+		}
+	}
 
 	/* Create rx Rings */
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
+	for (i = 0; i < priv->rx_ring_num; i++) {
 		node = cpu_to_node(i % num_online_cpus());
-		अगर (mlx4_en_create_cq(priv, &priv->rx_cq[i],
+		if (mlx4_en_create_cq(priv, &priv->rx_cq[i],
 				      prof->rx_ring_size, i, RX, node))
-			जाओ err;
+			goto err;
 
-		अगर (mlx4_en_create_rx_ring(priv, &priv->rx_ring[i],
+		if (mlx4_en_create_rx_ring(priv, &priv->rx_ring[i],
 					   prof->rx_ring_size, priv->stride,
 					   node, i))
-			जाओ err;
+			goto err;
 
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_RFS_ACCEL
+#ifdef CONFIG_RFS_ACCEL
 	priv->dev->rx_cpu_rmap = mlx4_get_cpu_rmap(priv->mdev->dev, priv->port);
-#पूर्ण_अगर
+#endif
 
-	वापस 0;
+	return 0;
 
 err:
 	en_err(priv, "Failed to allocate NIC resources\n");
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-		अगर (priv->rx_ring[i])
+	for (i = 0; i < priv->rx_ring_num; i++) {
+		if (priv->rx_ring[i])
 			mlx4_en_destroy_rx_ring(priv, &priv->rx_ring[i],
 						prof->rx_ring_size,
 						priv->stride);
-		अगर (priv->rx_cq[i])
+		if (priv->rx_cq[i])
 			mlx4_en_destroy_cq(priv, &priv->rx_cq[i]);
-	पूर्ण
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-		क्रम (i = 0; i < priv->tx_ring_num[t]; i++) अणु
-			अगर (priv->tx_ring[t][i])
+	}
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
+		for (i = 0; i < priv->tx_ring_num[t]; i++) {
+			if (priv->tx_ring[t][i])
 				mlx4_en_destroy_tx_ring(priv,
 							&priv->tx_ring[t][i]);
-			अगर (priv->tx_cq[t][i])
+			if (priv->tx_cq[t][i])
 				mlx4_en_destroy_cq(priv, &priv->tx_cq[t][i]);
-		पूर्ण
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		}
+	}
+	return -ENOMEM;
+}
 
 
-अटल पूर्णांक mlx4_en_copy_priv(काष्ठा mlx4_en_priv *dst,
-			     काष्ठा mlx4_en_priv *src,
-			     काष्ठा mlx4_en_port_profile *prof)
-अणु
-	पूर्णांक t;
+static int mlx4_en_copy_priv(struct mlx4_en_priv *dst,
+			     struct mlx4_en_priv *src,
+			     struct mlx4_en_port_profile *prof)
+{
+	int t;
 
-	स_नकल(&dst->hwtstamp_config, &prof->hwtstamp_config,
-	       माप(dst->hwtstamp_config));
+	memcpy(&dst->hwtstamp_config, &prof->hwtstamp_config,
+	       sizeof(dst->hwtstamp_config));
 	dst->num_tx_rings_p_up = prof->num_tx_rings_p_up;
 	dst->rx_ring_num = prof->rx_ring_num;
 	dst->flags = prof->flags;
@@ -2214,715 +2213,715 @@ err:
 	dst->port = src->port;
 	dst->dev = src->dev;
 	dst->prof = prof;
-	dst->stride = roundup_घात_of_two(माप(काष्ठा mlx4_en_rx_desc) +
+	dst->stride = roundup_pow_of_two(sizeof(struct mlx4_en_rx_desc) +
 					 DS_SIZE * MLX4_EN_MAX_RX_FRAGS);
 
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
 		dst->tx_ring_num[t] = prof->tx_ring_num[t];
-		अगर (!dst->tx_ring_num[t])
-			जारी;
+		if (!dst->tx_ring_num[t])
+			continue;
 
-		dst->tx_ring[t] = kसुस्मृति(MAX_TX_RINGS,
-					  माप(काष्ठा mlx4_en_tx_ring *),
+		dst->tx_ring[t] = kcalloc(MAX_TX_RINGS,
+					  sizeof(struct mlx4_en_tx_ring *),
 					  GFP_KERNEL);
-		अगर (!dst->tx_ring[t])
-			जाओ err_मुक्त_tx;
+		if (!dst->tx_ring[t])
+			goto err_free_tx;
 
-		dst->tx_cq[t] = kसुस्मृति(MAX_TX_RINGS,
-					माप(काष्ठा mlx4_en_cq *),
+		dst->tx_cq[t] = kcalloc(MAX_TX_RINGS,
+					sizeof(struct mlx4_en_cq *),
 					GFP_KERNEL);
-		अगर (!dst->tx_cq[t]) अणु
-			kमुक्त(dst->tx_ring[t]);
-			जाओ err_मुक्त_tx;
-		पूर्ण
-	पूर्ण
+		if (!dst->tx_cq[t]) {
+			kfree(dst->tx_ring[t]);
+			goto err_free_tx;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_tx:
-	जबतक (t--) अणु
-		kमुक्त(dst->tx_ring[t]);
-		kमुक्त(dst->tx_cq[t]);
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+err_free_tx:
+	while (t--) {
+		kfree(dst->tx_ring[t]);
+		kfree(dst->tx_cq[t]);
+	}
+	return -ENOMEM;
+}
 
-अटल व्योम mlx4_en_update_priv(काष्ठा mlx4_en_priv *dst,
-				काष्ठा mlx4_en_priv *src)
-अणु
-	पूर्णांक t;
-	स_नकल(dst->rx_ring, src->rx_ring,
-	       माप(काष्ठा mlx4_en_rx_ring *) * src->rx_ring_num);
-	स_नकल(dst->rx_cq, src->rx_cq,
-	       माप(काष्ठा mlx4_en_cq *) * src->rx_ring_num);
-	स_नकल(&dst->hwtstamp_config, &src->hwtstamp_config,
-	       माप(dst->hwtstamp_config));
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
+static void mlx4_en_update_priv(struct mlx4_en_priv *dst,
+				struct mlx4_en_priv *src)
+{
+	int t;
+	memcpy(dst->rx_ring, src->rx_ring,
+	       sizeof(struct mlx4_en_rx_ring *) * src->rx_ring_num);
+	memcpy(dst->rx_cq, src->rx_cq,
+	       sizeof(struct mlx4_en_cq *) * src->rx_ring_num);
+	memcpy(&dst->hwtstamp_config, &src->hwtstamp_config,
+	       sizeof(dst->hwtstamp_config));
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
 		dst->tx_ring_num[t] = src->tx_ring_num[t];
 		dst->tx_ring[t] = src->tx_ring[t];
 		dst->tx_cq[t] = src->tx_cq[t];
-	पूर्ण
+	}
 	dst->num_tx_rings_p_up = src->num_tx_rings_p_up;
 	dst->rx_ring_num = src->rx_ring_num;
-	स_नकल(dst->prof, src->prof, माप(काष्ठा mlx4_en_port_profile));
-पूर्ण
+	memcpy(dst->prof, src->prof, sizeof(struct mlx4_en_port_profile));
+}
 
-पूर्णांक mlx4_en_try_alloc_resources(काष्ठा mlx4_en_priv *priv,
-				काष्ठा mlx4_en_priv *पंचांगp,
-				काष्ठा mlx4_en_port_profile *prof,
+int mlx4_en_try_alloc_resources(struct mlx4_en_priv *priv,
+				struct mlx4_en_priv *tmp,
+				struct mlx4_en_port_profile *prof,
 				bool carry_xdp_prog)
-अणु
-	काष्ठा bpf_prog *xdp_prog;
-	पूर्णांक i, t;
+{
+	struct bpf_prog *xdp_prog;
+	int i, t;
 
-	mlx4_en_copy_priv(पंचांगp, priv, prof);
+	mlx4_en_copy_priv(tmp, priv, prof);
 
-	अगर (mlx4_en_alloc_resources(पंचांगp)) अणु
+	if (mlx4_en_alloc_resources(tmp)) {
 		en_warn(priv,
 			"%s: Resource allocation failed, using previous configuration\n",
 			__func__);
-		क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
-			kमुक्त(पंचांगp->tx_ring[t]);
-			kमुक्त(पंचांगp->tx_cq[t]);
-		पूर्ण
-		वापस -ENOMEM;
-	पूर्ण
+		for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
+			kfree(tmp->tx_ring[t]);
+			kfree(tmp->tx_cq[t]);
+		}
+		return -ENOMEM;
+	}
 
 	/* All rx_rings has the same xdp_prog.  Pick the first one. */
-	xdp_prog = rcu_dereference_रक्षित(
+	xdp_prog = rcu_dereference_protected(
 		priv->rx_ring[0]->xdp_prog,
 		lockdep_is_held(&priv->mdev->state_lock));
 
-	अगर (xdp_prog && carry_xdp_prog) अणु
-		bpf_prog_add(xdp_prog, पंचांगp->rx_ring_num);
-		क्रम (i = 0; i < पंचांगp->rx_ring_num; i++)
-			rcu_assign_poपूर्णांकer(पंचांगp->rx_ring[i]->xdp_prog,
+	if (xdp_prog && carry_xdp_prog) {
+		bpf_prog_add(xdp_prog, tmp->rx_ring_num);
+		for (i = 0; i < tmp->rx_ring_num; i++)
+			rcu_assign_pointer(tmp->rx_ring[i]->xdp_prog,
 					   xdp_prog);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx4_en_safe_replace_resources(काष्ठा mlx4_en_priv *priv,
-				    काष्ठा mlx4_en_priv *पंचांगp)
-अणु
-	mlx4_en_मुक्त_resources(priv);
-	mlx4_en_update_priv(priv, पंचांगp);
-पूर्ण
+void mlx4_en_safe_replace_resources(struct mlx4_en_priv *priv,
+				    struct mlx4_en_priv *tmp)
+{
+	mlx4_en_free_resources(priv);
+	mlx4_en_update_priv(priv, tmp);
+}
 
-व्योम mlx4_en_destroy_netdev(काष्ठा net_device *dev)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
+void mlx4_en_destroy_netdev(struct net_device *dev)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
 
 	en_dbg(DRV, priv, "Destroying netdev on port:%d\n", priv->port);
 
-	/* Unरेजिस्टर device - this will बंद the port अगर it was up */
-	अगर (priv->रेजिस्टरed) अणु
+	/* Unregister device - this will close the port if it was up */
+	if (priv->registered) {
 		devlink_port_type_clear(mlx4_get_devlink_port(mdev->dev,
 							      priv->port));
-		unरेजिस्टर_netdev(dev);
-	पूर्ण
+		unregister_netdev(dev);
+	}
 
-	अगर (priv->allocated)
-		mlx4_मुक्त_hwq_res(mdev->dev, &priv->res, MLX4_EN_PAGE_SIZE);
+	if (priv->allocated)
+		mlx4_free_hwq_res(mdev->dev, &priv->res, MLX4_EN_PAGE_SIZE);
 
 	cancel_delayed_work(&priv->stats_task);
 	cancel_delayed_work(&priv->service_task);
-	/* flush any pending task क्रम this netdev */
+	/* flush any pending task for this netdev */
 	flush_workqueue(mdev->workqueue);
 
-	अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
-		mlx4_en_हटाओ_बारtamp(mdev);
+	if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
+		mlx4_en_remove_timestamp(mdev);
 
 	/* Detach the netdev so tasks would not attempt to access it */
 	mutex_lock(&mdev->state_lock);
-	mdev->pndev[priv->port] = शून्य;
-	mdev->upper[priv->port] = शून्य;
+	mdev->pndev[priv->port] = NULL;
+	mdev->upper[priv->port] = NULL;
 
-#अगर_घोषित CONFIG_RFS_ACCEL
+#ifdef CONFIG_RFS_ACCEL
 	mlx4_en_cleanup_filters(priv);
-#पूर्ण_अगर
+#endif
 
-	mlx4_en_मुक्त_resources(priv);
+	mlx4_en_free_resources(priv);
 	mutex_unlock(&mdev->state_lock);
 
-	मुक्त_netdev(dev);
-पूर्ण
+	free_netdev(dev);
+}
 
-अटल bool mlx4_en_check_xdp_mtu(काष्ठा net_device *dev, पूर्णांक mtu)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static bool mlx4_en_check_xdp_mtu(struct net_device *dev, int mtu)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	अगर (mtu > MLX4_EN_MAX_XDP_MTU) अणु
+	if (mtu > MLX4_EN_MAX_XDP_MTU) {
 		en_err(priv, "mtu:%d > max:%d when XDP prog is attached\n",
 		       mtu, MLX4_EN_MAX_XDP_MTU);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक mlx4_en_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	पूर्णांक err = 0;
+static int mlx4_en_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	int err = 0;
 
 	en_dbg(DRV, priv, "Change MTU called - current:%d new:%d\n",
 		 dev->mtu, new_mtu);
 
-	अगर (priv->tx_ring_num[TX_XDP] &&
+	if (priv->tx_ring_num[TX_XDP] &&
 	    !mlx4_en_check_xdp_mtu(dev, new_mtu))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	dev->mtu = new_mtu;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		mutex_lock(&mdev->state_lock);
-		अगर (!mdev->device_up) अणु
+		if (!mdev->device_up) {
 			/* NIC is probably restarting - let restart task reset
 			 * the port */
 			en_dbg(DRV, priv, "Change MTU called with card down!?\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			mlx4_en_stop_port(dev, 1);
 			err = mlx4_en_start_port(dev);
-			अगर (err) अणु
+			if (err) {
 				en_err(priv, "Failed restarting port:%d\n",
 					 priv->port);
-				अगर (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING,
+				if (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING,
 						      &priv->state))
 					queue_work(mdev->workqueue, &priv->restart_task);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		mutex_unlock(&mdev->state_lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_hwtstamp_set(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा hwtstamp_config config;
+static int mlx4_en_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct hwtstamp_config config;
 
-	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
-		वापस -EFAULT;
+	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
+		return -EFAULT;
 
-	/* reserved क्रम future extensions */
-	अगर (config.flags)
-		वापस -EINVAL;
+	/* reserved for future extensions */
+	if (config.flags)
+		return -EINVAL;
 
-	/* device करोesn't support समय stamping */
-	अगर (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS))
-		वापस -EINVAL;
+	/* device doesn't support time stamping */
+	if (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS))
+		return -EINVAL;
 
-	/* TX HW बारtamp */
-	चयन (config.tx_type) अणु
-	हाल HWTSTAMP_TX_OFF:
-	हाल HWTSTAMP_TX_ON:
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+	/* TX HW timestamp */
+	switch (config.tx_type) {
+	case HWTSTAMP_TX_OFF:
+	case HWTSTAMP_TX_ON:
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	/* RX HW बारtamp */
-	चयन (config.rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
-		अवरोध;
-	हाल HWTSTAMP_FILTER_ALL:
-	हाल HWTSTAMP_FILTER_SOME:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-	हाल HWTSTAMP_FILTER_NTP_ALL:
+	/* RX HW timestamp */
+	switch (config.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
+		break;
+	case HWTSTAMP_FILTER_ALL:
+	case HWTSTAMP_FILTER_SOME:
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	case HWTSTAMP_FILTER_NTP_ALL:
 		config.rx_filter = HWTSTAMP_FILTER_ALL;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	अगर (mlx4_en_reset_config(dev, config, dev->features)) अणु
+	if (mlx4_en_reset_config(dev, config, dev->features)) {
 		config.tx_type = HWTSTAMP_TX_OFF;
 		config.rx_filter = HWTSTAMP_FILTER_NONE;
-	पूर्ण
+	}
 
-	वापस copy_to_user(अगरr->अगरr_data, &config,
-			    माप(config)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(ifr->ifr_data, &config,
+			    sizeof(config)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक mlx4_en_hwtstamp_get(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+static int mlx4_en_hwtstamp_get(struct net_device *dev, struct ifreq *ifr)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
 
-	वापस copy_to_user(अगरr->अगरr_data, &priv->hwtstamp_config,
-			    माप(priv->hwtstamp_config)) ? -EFAULT : 0;
-पूर्ण
+	return copy_to_user(ifr->ifr_data, &priv->hwtstamp_config,
+			    sizeof(priv->hwtstamp_config)) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक mlx4_en_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल SIOCSHWTSTAMP:
-		वापस mlx4_en_hwtstamp_set(dev, अगरr);
-	हाल SIOCGHWTSTAMP:
-		वापस mlx4_en_hwtstamp_get(dev, अगरr);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int mlx4_en_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	switch (cmd) {
+	case SIOCSHWTSTAMP:
+		return mlx4_en_hwtstamp_set(dev, ifr);
+	case SIOCGHWTSTAMP:
+		return mlx4_en_hwtstamp_get(dev, ifr);
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल netdev_features_t mlx4_en_fix_features(काष्ठा net_device *netdev,
+static netdev_features_t mlx4_en_fix_features(struct net_device *netdev,
 					      netdev_features_t features)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(netdev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(netdev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	/* Since there is no support क्रम separate RX C-TAG/S-TAG vlan accel
+	/* Since there is no support for separate RX C-TAG/S-TAG vlan accel
 	 * enable/disable make sure S-TAG flag is always in same state as
 	 * C-TAG.
 	 */
-	अगर (features & NETIF_F_HW_VLAN_CTAG_RX &&
+	if (features & NETIF_F_HW_VLAN_CTAG_RX &&
 	    !(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_SKIP_OUTER_VLAN))
 		features |= NETIF_F_HW_VLAN_STAG_RX;
-	अन्यथा
+	else
 		features &= ~NETIF_F_HW_VLAN_STAG_RX;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक mlx4_en_set_features(काष्ठा net_device *netdev,
+static int mlx4_en_set_features(struct net_device *netdev,
 		netdev_features_t features)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(netdev);
+{
+	struct mlx4_en_priv *priv = netdev_priv(netdev);
 	bool reset = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_RXFCS)) अणु
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_RXFCS)) {
 		en_info(priv, "Turn %s RX-FCS\n",
 			(features & NETIF_F_RXFCS) ? "ON" : "OFF");
 		reset = true;
-	पूर्ण
+	}
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_RXALL)) अणु
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_RXALL)) {
 		u8 ignore_fcs_value = (features & NETIF_F_RXALL) ? 1 : 0;
 
 		en_info(priv, "Turn %s RX-ALL\n",
 			ignore_fcs_value ? "ON" : "OFF");
 		ret = mlx4_SET_PORT_fcs_check(priv->mdev->dev,
 					      priv->port, ignore_fcs_value);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_CTAG_RX)) अणु
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_CTAG_RX)) {
 		en_info(priv, "Turn %s RX vlan strip offload\n",
 			(features & NETIF_F_HW_VLAN_CTAG_RX) ? "ON" : "OFF");
 		reset = true;
-	पूर्ण
+	}
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_CTAG_TX))
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_CTAG_TX))
 		en_info(priv, "Turn %s TX vlan strip offload\n",
 			(features & NETIF_F_HW_VLAN_CTAG_TX) ? "ON" : "OFF");
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_STAG_TX))
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_HW_VLAN_STAG_TX))
 		en_info(priv, "Turn %s TX S-VLAN strip offload\n",
 			(features & NETIF_F_HW_VLAN_STAG_TX) ? "ON" : "OFF");
 
-	अगर (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_LOOPBACK)) अणु
+	if (DEV_FEATURE_CHANGED(netdev, features, NETIF_F_LOOPBACK)) {
 		en_info(priv, "Turn %s loopback\n",
 			(features & NETIF_F_LOOPBACK) ? "ON" : "OFF");
 		mlx4_en_update_loopback_state(netdev, features);
-	पूर्ण
+	}
 
-	अगर (reset) अणु
+	if (reset) {
 		ret = mlx4_en_reset_config(netdev, priv->hwtstamp_config,
 					   features);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlx4_en_set_vf_mac(काष्ठा net_device *dev, पूर्णांक queue, u8 *mac)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_set_vf_mac(struct net_device *dev, int queue, u8 *mac)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_set_vf_mac(mdev->dev, en_priv->port, queue, mac);
-पूर्ण
+	return mlx4_set_vf_mac(mdev->dev, en_priv->port, queue, mac);
+}
 
-अटल पूर्णांक mlx4_en_set_vf_vlan(काष्ठा net_device *dev, पूर्णांक vf, u16 vlan, u8 qos,
+static int mlx4_en_set_vf_vlan(struct net_device *dev, int vf, u16 vlan, u8 qos,
 			       __be16 vlan_proto)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_set_vf_vlan(mdev->dev, en_priv->port, vf, vlan, qos,
+	return mlx4_set_vf_vlan(mdev->dev, en_priv->port, vf, vlan, qos,
 				vlan_proto);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_set_vf_rate(काष्ठा net_device *dev, पूर्णांक vf, पूर्णांक min_tx_rate,
-			       पूर्णांक max_tx_rate)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_set_vf_rate(struct net_device *dev, int vf, int min_tx_rate,
+			       int max_tx_rate)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_set_vf_rate(mdev->dev, en_priv->port, vf, min_tx_rate,
+	return mlx4_set_vf_rate(mdev->dev, en_priv->port, vf, min_tx_rate,
 				max_tx_rate);
-पूर्ण
+}
 
-अटल पूर्णांक mlx4_en_set_vf_spoofchk(काष्ठा net_device *dev, पूर्णांक vf, bool setting)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_set_vf_spoofchk(struct net_device *dev, int vf, bool setting)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_set_vf_spoofchk(mdev->dev, en_priv->port, vf, setting);
-पूर्ण
+	return mlx4_set_vf_spoofchk(mdev->dev, en_priv->port, vf, setting);
+}
 
-अटल पूर्णांक mlx4_en_get_vf_config(काष्ठा net_device *dev, पूर्णांक vf, काष्ठा अगरla_vf_info *ivf)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_get_vf_config(struct net_device *dev, int vf, struct ifla_vf_info *ivf)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_get_vf_config(mdev->dev, en_priv->port, vf, ivf);
-पूर्ण
+	return mlx4_get_vf_config(mdev->dev, en_priv->port, vf, ivf);
+}
 
-अटल पूर्णांक mlx4_en_set_vf_link_state(काष्ठा net_device *dev, पूर्णांक vf, पूर्णांक link_state)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_set_vf_link_state(struct net_device *dev, int vf, int link_state)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_set_vf_link_state(mdev->dev, en_priv->port, vf, link_state);
-पूर्ण
+	return mlx4_set_vf_link_state(mdev->dev, en_priv->port, vf, link_state);
+}
 
-अटल पूर्णांक mlx4_en_get_vf_stats(काष्ठा net_device *dev, पूर्णांक vf,
-				काष्ठा अगरla_vf_stats *vf_stats)
-अणु
-	काष्ठा mlx4_en_priv *en_priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = en_priv->mdev;
+static int mlx4_en_get_vf_stats(struct net_device *dev, int vf,
+				struct ifla_vf_stats *vf_stats)
+{
+	struct mlx4_en_priv *en_priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = en_priv->mdev;
 
-	वापस mlx4_get_vf_stats(mdev->dev, en_priv->port, vf, vf_stats);
-पूर्ण
+	return mlx4_get_vf_stats(mdev->dev, en_priv->port, vf, vf_stats);
+}
 
-#घोषणा PORT_ID_BYTE_LEN 8
-अटल पूर्णांक mlx4_en_get_phys_port_id(काष्ठा net_device *dev,
-				    काष्ठा netdev_phys_item_id *ppid)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_dev *mdev = priv->mdev->dev;
-	पूर्णांक i;
+#define PORT_ID_BYTE_LEN 8
+static int mlx4_en_get_phys_port_id(struct net_device *dev,
+				    struct netdev_phys_item_id *ppid)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_dev *mdev = priv->mdev->dev;
+	int i;
 	u64 phys_port_id = mdev->caps.phys_port_id[priv->port];
 
-	अगर (!phys_port_id)
-		वापस -EOPNOTSUPP;
+	if (!phys_port_id)
+		return -EOPNOTSUPP;
 
-	ppid->id_len = माप(phys_port_id);
-	क्रम (i = PORT_ID_BYTE_LEN - 1; i >= 0; --i) अणु
+	ppid->id_len = sizeof(phys_port_id);
+	for (i = PORT_ID_BYTE_LEN - 1; i >= 0; --i) {
 		ppid->id[i] =  phys_port_id & 0xff;
 		phys_port_id >>= 8;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक mlx4_udp_tunnel_sync(काष्ठा net_device *dev, अचिन्हित पूर्णांक table)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा udp_tunnel_info ti;
-	पूर्णांक ret;
+static int mlx4_udp_tunnel_sync(struct net_device *dev, unsigned int table)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct udp_tunnel_info ti;
+	int ret;
 
 	udp_tunnel_nic_get_port(dev, table, 0, &ti);
 	priv->vxlan_port = ti.port;
 
 	ret = mlx4_config_vxlan_port(priv->mdev->dev, priv->vxlan_port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस mlx4_SET_PORT_VXLAN(priv->mdev->dev, priv->port,
+	return mlx4_SET_PORT_VXLAN(priv->mdev->dev, priv->port,
 				   VXLAN_STEER_BY_OUTER_MAC,
 				   !!priv->vxlan_port);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा udp_tunnel_nic_info mlx4_udp_tunnels = अणु
+static const struct udp_tunnel_nic_info mlx4_udp_tunnels = {
 	.sync_table	= mlx4_udp_tunnel_sync,
 	.flags		= UDP_TUNNEL_NIC_INFO_MAY_SLEEP |
 			  UDP_TUNNEL_NIC_INFO_IPV4_ONLY,
-	.tables		= अणु
-		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.tables		= {
+		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN, },
+	},
+};
 
-अटल netdev_features_t mlx4_en_features_check(काष्ठा sk_buff *skb,
-						काष्ठा net_device *dev,
+static netdev_features_t mlx4_en_features_check(struct sk_buff *skb,
+						struct net_device *dev,
 						netdev_features_t features)
-अणु
+{
 	features = vlan_features_check(skb, features);
 	features = vxlan_features_check(skb, features);
 
-	/* The ConnectX-3 करोesn't support outer IPv6 checksums but it करोes
+	/* The ConnectX-3 doesn't support outer IPv6 checksums but it does
 	 * support inner IPv6 checksums and segmentation so  we need to
-	 * strip that feature अगर this is an IPv6 encapsulated frame.
+	 * strip that feature if this is an IPv6 encapsulated frame.
 	 */
-	अगर (skb->encapsulation &&
-	    (skb->ip_summed == CHECKSUM_PARTIAL)) अणु
-		काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
+	if (skb->encapsulation &&
+	    (skb->ip_summed == CHECKSUM_PARTIAL)) {
+		struct mlx4_en_priv *priv = netdev_priv(dev);
 
-		अगर (!priv->vxlan_port ||
+		if (!priv->vxlan_port ||
 		    (ip_hdr(skb)->version != 4) ||
 		    (udp_hdr(skb)->dest != priv->vxlan_port))
 			features &= ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-	पूर्ण
+	}
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक mlx4_en_set_tx_maxrate(काष्ठा net_device *dev, पूर्णांक queue_index, u32 maxrate)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX][queue_index];
-	काष्ठा mlx4_update_qp_params params;
-	पूर्णांक err;
+static int mlx4_en_set_tx_maxrate(struct net_device *dev, int queue_index, u32 maxrate)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_tx_ring *tx_ring = priv->tx_ring[TX][queue_index];
+	struct mlx4_update_qp_params params;
+	int err;
 
-	अगर (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_QP_RATE_LIMIT))
-		वापस -EOPNOTSUPP;
+	if (!(priv->mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_QP_RATE_LIMIT))
+		return -EOPNOTSUPP;
 
-	/* rate provided to us in Mbs, check अगर it fits पूर्णांकo 12 bits, अगर not use Gbs */
-	अगर (maxrate >> 12) अणु
+	/* rate provided to us in Mbs, check if it fits into 12 bits, if not use Gbs */
+	if (maxrate >> 12) {
 		params.rate_unit = MLX4_QP_RATE_LIMIT_GBS;
 		params.rate_val  = maxrate / 1000;
-	पूर्ण अन्यथा अगर (maxrate) अणु
+	} else if (maxrate) {
 		params.rate_unit = MLX4_QP_RATE_LIMIT_MBS;
 		params.rate_val  = maxrate;
-	पूर्ण अन्यथा अणु /* zero serves to revoke the QP rate-limitation */
+	} else { /* zero serves to revoke the QP rate-limitation */
 		params.rate_unit = 0;
 		params.rate_val  = 0;
-	पूर्ण
+	}
 
 	err = mlx4_update_qp(priv->mdev->dev, tx_ring->qpn, MLX4_UPDATE_QP_RATE_LIMIT,
 			     &params);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlx4_xdp_set(काष्ठा net_device *dev, काष्ठा bpf_prog *prog)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_port_profile new_prof;
-	काष्ठा bpf_prog *old_prog;
-	काष्ठा mlx4_en_priv *पंचांगp;
-	पूर्णांक tx_changed = 0;
-	पूर्णांक xdp_ring_num;
-	पूर्णांक port_up = 0;
-	पूर्णांक err;
-	पूर्णांक i;
+static int mlx4_xdp_set(struct net_device *dev, struct bpf_prog *prog)
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_port_profile new_prof;
+	struct bpf_prog *old_prog;
+	struct mlx4_en_priv *tmp;
+	int tx_changed = 0;
+	int xdp_ring_num;
+	int port_up = 0;
+	int err;
+	int i;
 
 	xdp_ring_num = prog ? priv->rx_ring_num : 0;
 
 	/* No need to reconfigure buffers when simply swapping the
-	 * program क्रम a new one.
+	 * program for a new one.
 	 */
-	अगर (priv->tx_ring_num[TX_XDP] == xdp_ring_num) अणु
-		अगर (prog)
+	if (priv->tx_ring_num[TX_XDP] == xdp_ring_num) {
+		if (prog)
 			bpf_prog_add(prog, priv->rx_ring_num - 1);
 
 		mutex_lock(&mdev->state_lock);
-		क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-			old_prog = rcu_dereference_रक्षित(
+		for (i = 0; i < priv->rx_ring_num; i++) {
+			old_prog = rcu_dereference_protected(
 					priv->rx_ring[i]->xdp_prog,
 					lockdep_is_held(&mdev->state_lock));
-			rcu_assign_poपूर्णांकer(priv->rx_ring[i]->xdp_prog, prog);
-			अगर (old_prog)
+			rcu_assign_pointer(priv->rx_ring[i]->xdp_prog, prog);
+			if (old_prog)
 				bpf_prog_put(old_prog);
-		पूर्ण
+		}
 		mutex_unlock(&mdev->state_lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!mlx4_en_check_xdp_mtu(dev, dev->mtu))
-		वापस -EOPNOTSUPP;
+	if (!mlx4_en_check_xdp_mtu(dev, dev->mtu))
+		return -EOPNOTSUPP;
 
-	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
-	अगर (prog)
+	if (prog)
 		bpf_prog_add(prog, priv->rx_ring_num - 1);
 
 	mutex_lock(&mdev->state_lock);
-	स_नकल(&new_prof, priv->prof, माप(काष्ठा mlx4_en_port_profile));
+	memcpy(&new_prof, priv->prof, sizeof(struct mlx4_en_port_profile));
 	new_prof.tx_ring_num[TX_XDP] = xdp_ring_num;
 
-	अगर (priv->tx_ring_num[TX] + xdp_ring_num > MAX_TX_RINGS) अणु
+	if (priv->tx_ring_num[TX] + xdp_ring_num > MAX_TX_RINGS) {
 		tx_changed = 1;
 		new_prof.tx_ring_num[TX] =
 			MAX_TX_RINGS - ALIGN(xdp_ring_num, priv->prof->num_up);
 		en_warn(priv, "Reducing the number of TX rings, to not exceed the max total rings number.\n");
-	पूर्ण
+	}
 
-	err = mlx4_en_try_alloc_resources(priv, पंचांगp, &new_prof, false);
-	अगर (err) अणु
-		अगर (prog)
+	err = mlx4_en_try_alloc_resources(priv, tmp, &new_prof, false);
+	if (err) {
+		if (prog)
 			bpf_prog_sub(prog, priv->rx_ring_num - 1);
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	mlx4_en_safe_replace_resources(priv, पंचांगp);
-	अगर (tx_changed)
-		netअगर_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
+	mlx4_en_safe_replace_resources(priv, tmp);
+	if (tx_changed)
+		netif_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
 
-	क्रम (i = 0; i < priv->rx_ring_num; i++) अणु
-		old_prog = rcu_dereference_रक्षित(
+	for (i = 0; i < priv->rx_ring_num; i++) {
+		old_prog = rcu_dereference_protected(
 					priv->rx_ring[i]->xdp_prog,
 					lockdep_is_held(&mdev->state_lock));
-		rcu_assign_poपूर्णांकer(priv->rx_ring[i]->xdp_prog, prog);
-		अगर (old_prog)
+		rcu_assign_pointer(priv->rx_ring[i]->xdp_prog, prog);
+		if (old_prog)
 			bpf_prog_put(old_prog);
-	पूर्ण
+	}
 
-	अगर (port_up) अणु
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed starting port %d for XDP change\n",
 			       priv->port);
-			अगर (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state))
+			if (!test_and_set_bit(MLX4_EN_STATE_FLAG_RESTARTING, &priv->state))
 				queue_work(mdev->workqueue, &priv->restart_task);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 unlock_out:
 	mutex_unlock(&mdev->state_lock);
-	kमुक्त(पंचांगp);
-	वापस err;
-पूर्ण
+	kfree(tmp);
+	return err;
+}
 
-अटल पूर्णांक mlx4_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
-अणु
-	चयन (xdp->command) अणु
-	हाल XDP_SETUP_PROG:
-		वापस mlx4_xdp_set(dev, xdp->prog);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int mlx4_xdp(struct net_device *dev, struct netdev_bpf *xdp)
+{
+	switch (xdp->command) {
+	case XDP_SETUP_PROG:
+		return mlx4_xdp_set(dev, xdp->prog);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा net_device_ops mlx4_netdev_ops = अणु
-	.nकरो_खोलो		= mlx4_en_खोलो,
-	.nकरो_stop		= mlx4_en_बंद,
-	.nकरो_start_xmit		= mlx4_en_xmit,
-	.nकरो_select_queue	= mlx4_en_select_queue,
-	.nकरो_get_stats64	= mlx4_en_get_stats64,
-	.nकरो_set_rx_mode	= mlx4_en_set_rx_mode,
-	.nकरो_set_mac_address	= mlx4_en_set_mac,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_change_mtu		= mlx4_en_change_mtu,
-	.nकरो_करो_ioctl		= mlx4_en_ioctl,
-	.nकरो_tx_समयout		= mlx4_en_tx_समयout,
-	.nकरो_vlan_rx_add_vid	= mlx4_en_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= mlx4_en_vlan_rx_समाप्त_vid,
-	.nकरो_set_features	= mlx4_en_set_features,
-	.nकरो_fix_features	= mlx4_en_fix_features,
-	.nकरो_setup_tc		= __mlx4_en_setup_tc,
-#अगर_घोषित CONFIG_RFS_ACCEL
-	.nकरो_rx_flow_steer	= mlx4_en_filter_rfs,
-#पूर्ण_अगर
-	.nकरो_get_phys_port_id	= mlx4_en_get_phys_port_id,
-	.nकरो_features_check	= mlx4_en_features_check,
-	.nकरो_set_tx_maxrate	= mlx4_en_set_tx_maxrate,
-	.nकरो_bpf		= mlx4_xdp,
-पूर्ण;
+static const struct net_device_ops mlx4_netdev_ops = {
+	.ndo_open		= mlx4_en_open,
+	.ndo_stop		= mlx4_en_close,
+	.ndo_start_xmit		= mlx4_en_xmit,
+	.ndo_select_queue	= mlx4_en_select_queue,
+	.ndo_get_stats64	= mlx4_en_get_stats64,
+	.ndo_set_rx_mode	= mlx4_en_set_rx_mode,
+	.ndo_set_mac_address	= mlx4_en_set_mac,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= mlx4_en_change_mtu,
+	.ndo_do_ioctl		= mlx4_en_ioctl,
+	.ndo_tx_timeout		= mlx4_en_tx_timeout,
+	.ndo_vlan_rx_add_vid	= mlx4_en_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= mlx4_en_vlan_rx_kill_vid,
+	.ndo_set_features	= mlx4_en_set_features,
+	.ndo_fix_features	= mlx4_en_fix_features,
+	.ndo_setup_tc		= __mlx4_en_setup_tc,
+#ifdef CONFIG_RFS_ACCEL
+	.ndo_rx_flow_steer	= mlx4_en_filter_rfs,
+#endif
+	.ndo_get_phys_port_id	= mlx4_en_get_phys_port_id,
+	.ndo_features_check	= mlx4_en_features_check,
+	.ndo_set_tx_maxrate	= mlx4_en_set_tx_maxrate,
+	.ndo_bpf		= mlx4_xdp,
+};
 
-अटल स्थिर काष्ठा net_device_ops mlx4_netdev_ops_master = अणु
-	.nकरो_खोलो		= mlx4_en_खोलो,
-	.nकरो_stop		= mlx4_en_बंद,
-	.nकरो_start_xmit		= mlx4_en_xmit,
-	.nकरो_select_queue	= mlx4_en_select_queue,
-	.nकरो_get_stats64	= mlx4_en_get_stats64,
-	.nकरो_set_rx_mode	= mlx4_en_set_rx_mode,
-	.nकरो_set_mac_address	= mlx4_en_set_mac,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_change_mtu		= mlx4_en_change_mtu,
-	.nकरो_tx_समयout		= mlx4_en_tx_समयout,
-	.nकरो_vlan_rx_add_vid	= mlx4_en_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid	= mlx4_en_vlan_rx_समाप्त_vid,
-	.nकरो_set_vf_mac		= mlx4_en_set_vf_mac,
-	.nकरो_set_vf_vlan	= mlx4_en_set_vf_vlan,
-	.nकरो_set_vf_rate	= mlx4_en_set_vf_rate,
-	.nकरो_set_vf_spoofchk	= mlx4_en_set_vf_spoofchk,
-	.nकरो_set_vf_link_state	= mlx4_en_set_vf_link_state,
-	.nकरो_get_vf_stats       = mlx4_en_get_vf_stats,
-	.nकरो_get_vf_config	= mlx4_en_get_vf_config,
-	.nकरो_set_features	= mlx4_en_set_features,
-	.nकरो_fix_features	= mlx4_en_fix_features,
-	.nकरो_setup_tc		= __mlx4_en_setup_tc,
-#अगर_घोषित CONFIG_RFS_ACCEL
-	.nकरो_rx_flow_steer	= mlx4_en_filter_rfs,
-#पूर्ण_अगर
-	.nकरो_get_phys_port_id	= mlx4_en_get_phys_port_id,
-	.nकरो_features_check	= mlx4_en_features_check,
-	.nकरो_set_tx_maxrate	= mlx4_en_set_tx_maxrate,
-	.nकरो_bpf		= mlx4_xdp,
-पूर्ण;
+static const struct net_device_ops mlx4_netdev_ops_master = {
+	.ndo_open		= mlx4_en_open,
+	.ndo_stop		= mlx4_en_close,
+	.ndo_start_xmit		= mlx4_en_xmit,
+	.ndo_select_queue	= mlx4_en_select_queue,
+	.ndo_get_stats64	= mlx4_en_get_stats64,
+	.ndo_set_rx_mode	= mlx4_en_set_rx_mode,
+	.ndo_set_mac_address	= mlx4_en_set_mac,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= mlx4_en_change_mtu,
+	.ndo_tx_timeout		= mlx4_en_tx_timeout,
+	.ndo_vlan_rx_add_vid	= mlx4_en_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid	= mlx4_en_vlan_rx_kill_vid,
+	.ndo_set_vf_mac		= mlx4_en_set_vf_mac,
+	.ndo_set_vf_vlan	= mlx4_en_set_vf_vlan,
+	.ndo_set_vf_rate	= mlx4_en_set_vf_rate,
+	.ndo_set_vf_spoofchk	= mlx4_en_set_vf_spoofchk,
+	.ndo_set_vf_link_state	= mlx4_en_set_vf_link_state,
+	.ndo_get_vf_stats       = mlx4_en_get_vf_stats,
+	.ndo_get_vf_config	= mlx4_en_get_vf_config,
+	.ndo_set_features	= mlx4_en_set_features,
+	.ndo_fix_features	= mlx4_en_fix_features,
+	.ndo_setup_tc		= __mlx4_en_setup_tc,
+#ifdef CONFIG_RFS_ACCEL
+	.ndo_rx_flow_steer	= mlx4_en_filter_rfs,
+#endif
+	.ndo_get_phys_port_id	= mlx4_en_get_phys_port_id,
+	.ndo_features_check	= mlx4_en_features_check,
+	.ndo_set_tx_maxrate	= mlx4_en_set_tx_maxrate,
+	.ndo_bpf		= mlx4_xdp,
+};
 
-काष्ठा mlx4_en_bond अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा mlx4_en_priv *priv;
-	पूर्णांक is_bonded;
-	काष्ठा mlx4_port_map port_map;
-पूर्ण;
+struct mlx4_en_bond {
+	struct work_struct work;
+	struct mlx4_en_priv *priv;
+	int is_bonded;
+	struct mlx4_port_map port_map;
+};
 
-अटल व्योम mlx4_en_bond_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx4_en_bond *bond = container_of(work,
-						     काष्ठा mlx4_en_bond,
+static void mlx4_en_bond_work(struct work_struct *work)
+{
+	struct mlx4_en_bond *bond = container_of(work,
+						     struct mlx4_en_bond,
 						     work);
-	पूर्णांक err = 0;
-	काष्ठा mlx4_dev *dev = bond->priv->mdev->dev;
+	int err = 0;
+	struct mlx4_dev *dev = bond->priv->mdev->dev;
 
-	अगर (bond->is_bonded) अणु
-		अगर (!mlx4_is_bonded(dev)) अणु
+	if (bond->is_bonded) {
+		if (!mlx4_is_bonded(dev)) {
 			err = mlx4_bond(dev);
-			अगर (err)
+			if (err)
 				en_err(bond->priv, "Fail to bond device\n");
-		पूर्ण
-		अगर (!err) अणु
+		}
+		if (!err) {
 			err = mlx4_port_map_set(dev, &bond->port_map);
-			अगर (err)
+			if (err)
 				en_err(bond->priv, "Fail to set port map [%d][%d]: %d\n",
 				       bond->port_map.port1,
 				       bond->port_map.port2,
 				       err);
-		पूर्ण
-	पूर्ण अन्यथा अगर (mlx4_is_bonded(dev)) अणु
+		}
+	} else if (mlx4_is_bonded(dev)) {
 		err = mlx4_unbond(dev);
-		अगर (err)
+		if (err)
 			en_err(bond->priv, "Fail to unbond device\n");
-	पूर्ण
+	}
 	dev_put(bond->priv->dev);
-	kमुक्त(bond);
-पूर्ण
+	kfree(bond);
+}
 
-अटल पूर्णांक mlx4_en_queue_bond_work(काष्ठा mlx4_en_priv *priv, पूर्णांक is_bonded,
+static int mlx4_en_queue_bond_work(struct mlx4_en_priv *priv, int is_bonded,
 				   u8 v2p_p1, u8 v2p_p2)
-अणु
-	काष्ठा mlx4_en_bond *bond = शून्य;
+{
+	struct mlx4_en_bond *bond = NULL;
 
-	bond = kzalloc(माप(*bond), GFP_ATOMIC);
-	अगर (!bond)
-		वापस -ENOMEM;
+	bond = kzalloc(sizeof(*bond), GFP_ATOMIC);
+	if (!bond)
+		return -ENOMEM;
 
 	INIT_WORK(&bond->work, mlx4_en_bond_work);
 	bond->priv = priv;
@@ -2931,251 +2930,251 @@ unlock_out:
 	bond->port_map.port2 = v2p_p2;
 	dev_hold(priv->dev);
 	queue_work(priv->mdev->workqueue, &bond->work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx4_en_netdev_event(काष्ठा notअगरier_block *this,
-			 अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा net_device *ndev = netdev_notअगरier_info_to_dev(ptr);
+int mlx4_en_netdev_event(struct notifier_block *this,
+			 unsigned long event, void *ptr)
+{
+	struct net_device *ndev = netdev_notifier_info_to_dev(ptr);
 	u8 port = 0;
-	काष्ठा mlx4_en_dev *mdev;
-	काष्ठा mlx4_dev *dev;
-	पूर्णांक i, num_eth_ports = 0;
-	bool करो_bond = true;
-	काष्ठा mlx4_en_priv *priv;
+	struct mlx4_en_dev *mdev;
+	struct mlx4_dev *dev;
+	int i, num_eth_ports = 0;
+	bool do_bond = true;
+	struct mlx4_en_priv *priv;
 	u8 v2p_port1 = 0;
 	u8 v2p_port2 = 0;
 
-	अगर (!net_eq(dev_net(ndev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(ndev), &init_net))
+		return NOTIFY_DONE;
 
-	mdev = container_of(this, काष्ठा mlx4_en_dev, nb);
+	mdev = container_of(this, struct mlx4_en_dev, nb);
 	dev = mdev->dev;
 
-	/* Go पूर्णांकo this mode only when two network devices set on two ports
+	/* Go into this mode only when two network devices set on two ports
 	 * of the same mlx4 device are slaves of the same bonding master
 	 */
-	mlx4_क्रमeach_port(i, dev, MLX4_PORT_TYPE_ETH) अणु
+	mlx4_foreach_port(i, dev, MLX4_PORT_TYPE_ETH) {
 		++num_eth_ports;
-		अगर (!port && (mdev->pndev[i] == ndev))
+		if (!port && (mdev->pndev[i] == ndev))
 			port = i;
 		mdev->upper[i] = mdev->pndev[i] ?
-			netdev_master_upper_dev_get(mdev->pndev[i]) : शून्य;
+			netdev_master_upper_dev_get(mdev->pndev[i]) : NULL;
 		/* condition not met: network device is a slave */
-		अगर (!mdev->upper[i])
-			करो_bond = false;
-		अगर (num_eth_ports < 2)
-			जारी;
+		if (!mdev->upper[i])
+			do_bond = false;
+		if (num_eth_ports < 2)
+			continue;
 		/* condition not met: same master */
-		अगर (mdev->upper[i] != mdev->upper[i-1])
-			करो_bond = false;
-	पूर्ण
+		if (mdev->upper[i] != mdev->upper[i-1])
+			do_bond = false;
+	}
 	/* condition not met: 2 salves */
-	करो_bond = (num_eth_ports ==  2) ? करो_bond : false;
+	do_bond = (num_eth_ports ==  2) ? do_bond : false;
 
 	/* handle only events that come with enough info */
-	अगर ((करो_bond && (event != NETDEV_BONDING_INFO)) || !port)
-		वापस NOTIFY_DONE;
+	if ((do_bond && (event != NETDEV_BONDING_INFO)) || !port)
+		return NOTIFY_DONE;
 
 	priv = netdev_priv(ndev);
-	अगर (करो_bond) अणु
-		काष्ठा netdev_notअगरier_bonding_info *notअगरier_info = ptr;
-		काष्ठा netdev_bonding_info *bonding_info =
-			&notअगरier_info->bonding_info;
+	if (do_bond) {
+		struct netdev_notifier_bonding_info *notifier_info = ptr;
+		struct netdev_bonding_info *bonding_info =
+			&notifier_info->bonding_info;
 
 		/* required mode 1, 2 or 4 */
-		अगर ((bonding_info->master.bond_mode != BOND_MODE_ACTIVEBACKUP) &&
+		if ((bonding_info->master.bond_mode != BOND_MODE_ACTIVEBACKUP) &&
 		    (bonding_info->master.bond_mode != BOND_MODE_XOR) &&
 		    (bonding_info->master.bond_mode != BOND_MODE_8023AD))
-			करो_bond = false;
+			do_bond = false;
 
 		/* require exactly 2 slaves */
-		अगर (bonding_info->master.num_slaves != 2)
-			करो_bond = false;
+		if (bonding_info->master.num_slaves != 2)
+			do_bond = false;
 
 		/* calc v2p */
-		अगर (करो_bond) अणु
-			अगर (bonding_info->master.bond_mode ==
-			    BOND_MODE_ACTIVEBACKUP) अणु
-				/* in active-backup mode भव ports are
+		if (do_bond) {
+			if (bonding_info->master.bond_mode ==
+			    BOND_MODE_ACTIVEBACKUP) {
+				/* in active-backup mode virtual ports are
 				 * mapped to the physical port of the active
 				 * slave */
-				अगर (bonding_info->slave.state ==
-				    BOND_STATE_BACKUP) अणु
-					अगर (port == 1) अणु
+				if (bonding_info->slave.state ==
+				    BOND_STATE_BACKUP) {
+					if (port == 1) {
 						v2p_port1 = 2;
 						v2p_port2 = 2;
-					पूर्ण अन्यथा अणु
+					} else {
 						v2p_port1 = 1;
 						v2p_port2 = 1;
-					पूर्ण
-				पूर्ण अन्यथा अणु /* BOND_STATE_ACTIVE */
-					अगर (port == 1) अणु
+					}
+				} else { /* BOND_STATE_ACTIVE */
+					if (port == 1) {
 						v2p_port1 = 1;
 						v2p_port2 = 1;
-					पूर्ण अन्यथा अणु
+					} else {
 						v2p_port1 = 2;
 						v2p_port2 = 2;
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अणु /* Active-Active */
-				/* in active-active mode a भव port is
-				 * mapped to the native physical port अगर and only
-				 * अगर the physical port is up */
+					}
+				}
+			} else { /* Active-Active */
+				/* in active-active mode a virtual port is
+				 * mapped to the native physical port if and only
+				 * if the physical port is up */
 				__s8 link = bonding_info->slave.link;
 
-				अगर (port == 1)
+				if (port == 1)
 					v2p_port2 = 2;
-				अन्यथा
+				else
 					v2p_port1 = 1;
-				अगर ((link == BOND_LINK_UP) ||
-				    (link == BOND_LINK_FAIL)) अणु
-					अगर (port == 1)
+				if ((link == BOND_LINK_UP) ||
+				    (link == BOND_LINK_FAIL)) {
+					if (port == 1)
 						v2p_port1 = 1;
-					अन्यथा
+					else
 						v2p_port2 = 2;
-				पूर्ण अन्यथा अणु /* BOND_LINK_DOWN || BOND_LINK_BACK */
-					अगर (port == 1)
+				} else { /* BOND_LINK_DOWN || BOND_LINK_BACK */
+					if (port == 1)
 						v2p_port1 = 2;
-					अन्यथा
+					else
 						v2p_port2 = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	mlx4_en_queue_bond_work(priv, करो_bond,
+	mlx4_en_queue_bond_work(priv, do_bond,
 				v2p_port1, v2p_port2);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-व्योम mlx4_en_update_pfc_stats_biपंचांगap(काष्ठा mlx4_dev *dev,
-				     काष्ठा mlx4_en_stats_biपंचांगap *stats_biपंचांगap,
-				     u8 rx_ppp, u8 rx_छोड़ो,
-				     u8 tx_ppp, u8 tx_छोड़ो)
-अणु
-	पूर्णांक last_i = NUM_MAIN_STATS + NUM_PORT_STATS + NUM_PF_STATS;
+void mlx4_en_update_pfc_stats_bitmap(struct mlx4_dev *dev,
+				     struct mlx4_en_stats_bitmap *stats_bitmap,
+				     u8 rx_ppp, u8 rx_pause,
+				     u8 tx_ppp, u8 tx_pause)
+{
+	int last_i = NUM_MAIN_STATS + NUM_PORT_STATS + NUM_PF_STATS;
 
-	अगर (!mlx4_is_slave(dev) &&
-	    (dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_FLOWSTATS_EN)) अणु
-		mutex_lock(&stats_biपंचांगap->mutex);
-		biपंचांगap_clear(stats_biपंचांगap->biपंचांगap, last_i, NUM_FLOW_STATS);
+	if (!mlx4_is_slave(dev) &&
+	    (dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_FLOWSTATS_EN)) {
+		mutex_lock(&stats_bitmap->mutex);
+		bitmap_clear(stats_bitmap->bitmap, last_i, NUM_FLOW_STATS);
 
-		अगर (rx_ppp)
-			biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i,
+		if (rx_ppp)
+			bitmap_set(stats_bitmap->bitmap, last_i,
 				   NUM_FLOW_PRIORITY_STATS_RX);
 		last_i += NUM_FLOW_PRIORITY_STATS_RX;
 
-		अगर (rx_छोड़ो && !(rx_ppp))
-			biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i,
+		if (rx_pause && !(rx_ppp))
+			bitmap_set(stats_bitmap->bitmap, last_i,
 				   NUM_FLOW_STATS_RX);
 		last_i += NUM_FLOW_STATS_RX;
 
-		अगर (tx_ppp)
-			biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i,
+		if (tx_ppp)
+			bitmap_set(stats_bitmap->bitmap, last_i,
 				   NUM_FLOW_PRIORITY_STATS_TX);
 		last_i += NUM_FLOW_PRIORITY_STATS_TX;
 
-		अगर (tx_छोड़ो && !(tx_ppp))
-			biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i,
+		if (tx_pause && !(tx_ppp))
+			bitmap_set(stats_bitmap->bitmap, last_i,
 				   NUM_FLOW_STATS_TX);
 		last_i += NUM_FLOW_STATS_TX;
 
-		mutex_unlock(&stats_biपंचांगap->mutex);
-	पूर्ण
-पूर्ण
+		mutex_unlock(&stats_bitmap->mutex);
+	}
+}
 
-व्योम mlx4_en_set_stats_biपंचांगap(काष्ठा mlx4_dev *dev,
-			      काष्ठा mlx4_en_stats_biपंचांगap *stats_biपंचांगap,
-			      u8 rx_ppp, u8 rx_छोड़ो,
-			      u8 tx_ppp, u8 tx_छोड़ो)
-अणु
-	पूर्णांक last_i = 0;
+void mlx4_en_set_stats_bitmap(struct mlx4_dev *dev,
+			      struct mlx4_en_stats_bitmap *stats_bitmap,
+			      u8 rx_ppp, u8 rx_pause,
+			      u8 tx_ppp, u8 tx_pause)
+{
+	int last_i = 0;
 
-	mutex_init(&stats_biपंचांगap->mutex);
-	biपंचांगap_zero(stats_biपंचांगap->biपंचांगap, NUM_ALL_STATS);
+	mutex_init(&stats_bitmap->mutex);
+	bitmap_zero(stats_bitmap->bitmap, NUM_ALL_STATS);
 
-	अगर (mlx4_is_slave(dev)) अणु
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+	if (mlx4_is_slave(dev)) {
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(rx_packets), 1);
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(tx_packets), 1);
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(rx_bytes), 1);
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(tx_bytes), 1);
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(rx_dropped), 1);
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i +
+		bitmap_set(stats_bitmap->bitmap, last_i +
 					 MLX4_FIND_NETDEV_STAT(tx_dropped), 1);
-	पूर्ण अन्यथा अणु
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i, NUM_MAIN_STATS);
-	पूर्ण
+	} else {
+		bitmap_set(stats_bitmap->bitmap, last_i, NUM_MAIN_STATS);
+	}
 	last_i += NUM_MAIN_STATS;
 
-	biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i, NUM_PORT_STATS);
+	bitmap_set(stats_bitmap->bitmap, last_i, NUM_PORT_STATS);
 	last_i += NUM_PORT_STATS;
 
-	अगर (mlx4_is_master(dev))
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i,
+	if (mlx4_is_master(dev))
+		bitmap_set(stats_bitmap->bitmap, last_i,
 			   NUM_PF_STATS);
 	last_i += NUM_PF_STATS;
 
-	mlx4_en_update_pfc_stats_biपंचांगap(dev, stats_biपंचांगap,
-					rx_ppp, rx_छोड़ो,
-					tx_ppp, tx_छोड़ो);
+	mlx4_en_update_pfc_stats_bitmap(dev, stats_bitmap,
+					rx_ppp, rx_pause,
+					tx_ppp, tx_pause);
 	last_i += NUM_FLOW_STATS;
 
-	अगर (!mlx4_is_slave(dev))
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i, NUM_PKT_STATS);
+	if (!mlx4_is_slave(dev))
+		bitmap_set(stats_bitmap->bitmap, last_i, NUM_PKT_STATS);
 	last_i += NUM_PKT_STATS;
 
-	biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i, NUM_XDP_STATS);
+	bitmap_set(stats_bitmap->bitmap, last_i, NUM_XDP_STATS);
 	last_i += NUM_XDP_STATS;
 
-	अगर (!mlx4_is_slave(dev))
-		biपंचांगap_set(stats_biपंचांगap->biपंचांगap, last_i, NUM_PHY_STATS);
+	if (!mlx4_is_slave(dev))
+		bitmap_set(stats_bitmap->bitmap, last_i, NUM_PHY_STATS);
 	last_i += NUM_PHY_STATS;
-पूर्ण
+}
 
-पूर्णांक mlx4_en_init_netdev(काष्ठा mlx4_en_dev *mdev, पूर्णांक port,
-			काष्ठा mlx4_en_port_profile *prof)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा mlx4_en_priv *priv;
-	पूर्णांक i, t;
-	पूर्णांक err;
+int mlx4_en_init_netdev(struct mlx4_en_dev *mdev, int port,
+			struct mlx4_en_port_profile *prof)
+{
+	struct net_device *dev;
+	struct mlx4_en_priv *priv;
+	int i, t;
+	int err;
 
-	dev = alloc_etherdev_mqs(माप(काष्ठा mlx4_en_priv),
+	dev = alloc_etherdev_mqs(sizeof(struct mlx4_en_priv),
 				 MAX_TX_RINGS, MAX_RX_RINGS);
-	अगर (dev == शून्य)
-		वापस -ENOMEM;
+	if (dev == NULL)
+		return -ENOMEM;
 
-	netअगर_set_real_num_tx_queues(dev, prof->tx_ring_num[TX]);
-	netअगर_set_real_num_rx_queues(dev, prof->rx_ring_num);
+	netif_set_real_num_tx_queues(dev, prof->tx_ring_num[TX]);
+	netif_set_real_num_rx_queues(dev, prof->rx_ring_num);
 
 	SET_NETDEV_DEV(dev, &mdev->dev->persist->pdev->dev);
 	dev->dev_port = port - 1;
 
 	/*
-	 * Initialize driver निजी data
+	 * Initialize driver private data
 	 */
 
 	priv = netdev_priv(dev);
-	स_रखो(priv, 0, माप(काष्ठा mlx4_en_priv));
+	memset(priv, 0, sizeof(struct mlx4_en_priv));
 	priv->counter_index = MLX4_SINK_COUNTER_INDEX(mdev->dev);
 	spin_lock_init(&priv->stats_lock);
-	INIT_WORK(&priv->rx_mode_task, mlx4_en_करो_set_rx_mode);
+	INIT_WORK(&priv->rx_mode_task, mlx4_en_do_set_rx_mode);
 	INIT_WORK(&priv->restart_task, mlx4_en_restart);
 	INIT_WORK(&priv->linkstate_task, mlx4_en_linkstate);
-	INIT_DELAYED_WORK(&priv->stats_task, mlx4_en_करो_get_stats);
+	INIT_DELAYED_WORK(&priv->stats_task, mlx4_en_do_get_stats);
 	INIT_DELAYED_WORK(&priv->service_task, mlx4_en_service_task);
-#अगर_घोषित CONFIG_RFS_ACCEL
+#ifdef CONFIG_RFS_ACCEL
 	INIT_LIST_HEAD(&priv->filters);
 	spin_lock_init(&priv->filters_lock);
-#पूर्ण_अगर
+#endif
 
 	priv->dev = dev;
 	priv->mdev = mdev;
@@ -3189,118 +3188,118 @@ unlock_out:
 			MLX4_WQE_CTRL_SOLICITED);
 	priv->num_tx_rings_p_up = mdev->profile.max_num_tx_rings_p_up;
 	priv->tx_work_limit = MLX4_EN_DEFAULT_TX_WORK;
-	netdev_rss_key_fill(priv->rss_key, माप(priv->rss_key));
+	netdev_rss_key_fill(priv->rss_key, sizeof(priv->rss_key));
 
-	क्रम (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) अणु
+	for (t = 0; t < MLX4_EN_NUM_TX_TYPES; t++) {
 		priv->tx_ring_num[t] = prof->tx_ring_num[t];
-		अगर (!priv->tx_ring_num[t])
-			जारी;
+		if (!priv->tx_ring_num[t])
+			continue;
 
-		priv->tx_ring[t] = kसुस्मृति(MAX_TX_RINGS,
-					   माप(काष्ठा mlx4_en_tx_ring *),
+		priv->tx_ring[t] = kcalloc(MAX_TX_RINGS,
+					   sizeof(struct mlx4_en_tx_ring *),
 					   GFP_KERNEL);
-		अगर (!priv->tx_ring[t]) अणु
+		if (!priv->tx_ring[t]) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-		priv->tx_cq[t] = kसुस्मृति(MAX_TX_RINGS,
-					 माप(काष्ठा mlx4_en_cq *),
+			goto out;
+		}
+		priv->tx_cq[t] = kcalloc(MAX_TX_RINGS,
+					 sizeof(struct mlx4_en_cq *),
 					 GFP_KERNEL);
-		अगर (!priv->tx_cq[t]) अणु
+		if (!priv->tx_cq[t]) {
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	priv->rx_ring_num = prof->rx_ring_num;
 	priv->cqe_factor = (mdev->dev->caps.cqe_size == 64) ? 1 : 0;
 	priv->cqe_size = mdev->dev->caps.cqe_size;
 	priv->mac_index = -1;
 	priv->msg_enable = MLX4_EN_MSG_LEVEL;
-#अगर_घोषित CONFIG_MLX4_EN_DCB
-	अगर (!mlx4_is_slave(priv->mdev->dev)) अणु
+#ifdef CONFIG_MLX4_EN_DCB
+	if (!mlx4_is_slave(priv->mdev->dev)) {
 		u8 prio;
 
-		क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; ++prio) अणु
+		for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; ++prio) {
 			priv->ets.prio_tc[prio] = prio;
 			priv->ets.tc_tsa[prio]  = IEEE_8021QAZ_TSA_VENDOR;
-		पूर्ण
+		}
 
 		priv->dcbx_cap = DCB_CAP_DCBX_VER_CEE | DCB_CAP_DCBX_HOST |
 			DCB_CAP_DCBX_VER_IEEE;
 		priv->flags |= MLX4_EN_DCB_ENABLED;
 		priv->cee_config.pfc_state = false;
 
-		क्रम (i = 0; i < MLX4_EN_NUM_UP_HIGH; i++)
+		for (i = 0; i < MLX4_EN_NUM_UP_HIGH; i++)
 			priv->cee_config.dcb_pfc[i] = pfc_disabled;
 
-		अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETS_CFG) अणु
+		if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_ETS_CFG) {
 			dev->dcbnl_ops = &mlx4_en_dcbnl_ops;
-		पूर्ण अन्यथा अणु
+		} else {
 			en_info(priv, "enabling only PFC DCB ops\n");
 			dev->dcbnl_ops = &mlx4_en_dcbnl_pfc_ops;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	क्रम (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i)
+	for (i = 0; i < MLX4_EN_MAC_HASH_SIZE; ++i)
 		INIT_HLIST_HEAD(&priv->mac_hash[i]);
 
-	/* Query क्रम शेष mac and max mtu */
+	/* Query for default mac and max mtu */
 	priv->max_mtu = mdev->dev->caps.eth_mtu_cap[priv->port];
 
-	अगर (mdev->dev->caps.rx_checksum_flags_port[priv->port] &
+	if (mdev->dev->caps.rx_checksum_flags_port[priv->port] &
 	    MLX4_RX_CSUM_MODE_VAL_NON_TCP_UDP)
 		priv->flags |= MLX4_EN_FLAG_RX_CSUM_NON_TCP_UDP;
 
-	/* Set शेष MAC */
+	/* Set default MAC */
 	dev->addr_len = ETH_ALEN;
 	mlx4_en_u64_to_mac(dev->dev_addr, mdev->dev->caps.def_mac[priv->port]);
-	अगर (!is_valid_ether_addr(dev->dev_addr)) अणु
+	if (!is_valid_ether_addr(dev->dev_addr)) {
 		en_err(priv, "Port: %d, invalid mac burned: %pM, quitting\n",
 		       priv->port, dev->dev_addr);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण अन्यथा अगर (mlx4_is_slave(priv->mdev->dev) &&
-		   (priv->mdev->dev->port_अक्रमom_macs & 1 << priv->port)) अणु
-		/* Ranकरोm MAC was asचिन्हित in mlx4_slave_cap
+		goto out;
+	} else if (mlx4_is_slave(priv->mdev->dev) &&
+		   (priv->mdev->dev->port_random_macs & 1 << priv->port)) {
+		/* Random MAC was assigned in mlx4_slave_cap
 		 * in mlx4_core module
 		 */
 		dev->addr_assign_type |= NET_ADDR_RANDOM;
 		en_warn(priv, "Assigned random MAC address %pM\n", dev->dev_addr);
-	पूर्ण
+	}
 
-	स_नकल(priv->current_mac, dev->dev_addr, माप(priv->current_mac));
+	memcpy(priv->current_mac, dev->dev_addr, sizeof(priv->current_mac));
 
-	priv->stride = roundup_घात_of_two(माप(काष्ठा mlx4_en_rx_desc) +
+	priv->stride = roundup_pow_of_two(sizeof(struct mlx4_en_rx_desc) +
 					  DS_SIZE * MLX4_EN_MAX_RX_FRAGS);
 	err = mlx4_en_alloc_resources(priv);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Initialize समय stamping config */
+	/* Initialize time stamping config */
 	priv->hwtstamp_config.flags = 0;
 	priv->hwtstamp_config.tx_type = HWTSTAMP_TX_OFF;
 	priv->hwtstamp_config.rx_filter = HWTSTAMP_FILTER_NONE;
 
-	/* Allocate page क्रम receive rings */
+	/* Allocate page for receive rings */
 	err = mlx4_alloc_hwq_res(mdev->dev, &priv->res,
 				MLX4_EN_PAGE_SIZE);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed to allocate page for rx qps\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	priv->allocated = 1;
 
 	/*
-	 * Initialize netdev entry poपूर्णांकs
+	 * Initialize netdev entry points
 	 */
-	अगर (mlx4_is_master(priv->mdev->dev))
+	if (mlx4_is_master(priv->mdev->dev))
 		dev->netdev_ops = &mlx4_netdev_ops_master;
-	अन्यथा
+	else
 		dev->netdev_ops = &mlx4_netdev_ops;
-	dev->watchकरोg_समयo = MLX4_EN_WATCHDOG_TIMEOUT;
-	netअगर_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
-	netअगर_set_real_num_rx_queues(dev, priv->rx_ring_num);
+	dev->watchdog_timeo = MLX4_EN_WATCHDOG_TIMEOUT;
+	netif_set_real_num_tx_queues(dev, priv->tx_ring_num[TX]);
+	netif_set_real_num_rx_queues(dev, priv->rx_ring_num);
 
 	dev->ethtool_ops = &mlx4_en_ethtool_ops;
 
@@ -3308,11 +3307,11 @@ unlock_out:
 	 * Set driver features
 	 */
 	dev->hw_features = NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-	अगर (mdev->LSO_support)
+	if (mdev->LSO_support)
 		dev->hw_features |= NETIF_F_TSO | NETIF_F_TSO6;
 
-	अगर (mdev->dev->caps.tunnel_offload_mode ==
-	    MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) अणु
+	if (mdev->dev->caps.tunnel_offload_mode ==
+	    MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) {
 		dev->hw_features |= NETIF_F_GSO_UDP_TUNNEL |
 				    NETIF_F_GSO_UDP_TUNNEL_CSUM |
 				    NETIF_F_GSO_PARTIAL;
@@ -3328,7 +3327,7 @@ unlock_out:
 				       NETIF_F_GSO_PARTIAL;
 
 		dev->udp_tunnel_nic_info = &mlx4_udp_tunnels;
-	पूर्ण
+	}
 
 	dev->vlan_features = dev->hw_features;
 
@@ -3339,24 +3338,24 @@ unlock_out:
 	dev->hw_features |= NETIF_F_LOOPBACK |
 			NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX;
 
-	अगर (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_SKIP_OUTER_VLAN)) अणु
+	if (!(mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_SKIP_OUTER_VLAN)) {
 		dev->features |= NETIF_F_HW_VLAN_STAG_RX |
 			NETIF_F_HW_VLAN_STAG_FILTER;
 		dev->hw_features |= NETIF_F_HW_VLAN_STAG_RX;
-	पूर्ण
+	}
 
-	अगर (mlx4_is_slave(mdev->dev)) अणु
+	if (mlx4_is_slave(mdev->dev)) {
 		bool vlan_offload_disabled;
-		पूर्णांक phv;
+		int phv;
 
 		err = get_phv_bit(mdev->dev, port, &phv);
-		अगर (!err && phv) अणु
+		if (!err && phv) {
 			dev->hw_features |= NETIF_F_HW_VLAN_STAG_TX;
 			priv->pflags |= MLX4_EN_PRIV_FLAGS_PHV;
-		पूर्ण
+		}
 		err = mlx4_get_is_vlan_offload_disabled(mdev->dev, port,
 							&vlan_offload_disabled);
-		अगर (!err && vlan_offload_disabled) अणु
+		if (!err && vlan_offload_disabled) {
 			dev->hw_features &= ~(NETIF_F_HW_VLAN_CTAG_TX |
 					      NETIF_F_HW_VLAN_CTAG_RX |
 					      NETIF_F_HW_VLAN_STAG_TX |
@@ -3365,48 +3364,48 @@ unlock_out:
 					   NETIF_F_HW_VLAN_CTAG_RX |
 					   NETIF_F_HW_VLAN_STAG_TX |
 					   NETIF_F_HW_VLAN_STAG_RX);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PHV_EN &&
+		}
+	} else {
+		if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_PHV_EN &&
 		    !(mdev->dev->caps.flags2 &
 		      MLX4_DEV_CAP_FLAG2_SKIP_OUTER_VLAN))
 			dev->hw_features |= NETIF_F_HW_VLAN_STAG_TX;
-	पूर्ण
+	}
 
-	अगर (mdev->dev->caps.flags & MLX4_DEV_CAP_FLAG_FCS_KEEP)
+	if (mdev->dev->caps.flags & MLX4_DEV_CAP_FLAG_FCS_KEEP)
 		dev->hw_features |= NETIF_F_RXFCS;
 
-	अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_IGNORE_FCS)
+	if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_IGNORE_FCS)
 		dev->hw_features |= NETIF_F_RXALL;
 
-	अगर (mdev->dev->caps.steering_mode ==
+	if (mdev->dev->caps.steering_mode ==
 	    MLX4_STEERING_MODE_DEVICE_MANAGED &&
 	    mdev->dev->caps.dmfs_high_steer_mode != MLX4_STEERING_DMFS_A0_STATIC)
 		dev->hw_features |= NETIF_F_NTUPLE;
 
-	अगर (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0)
+	if (mdev->dev->caps.steering_mode != MLX4_STEERING_MODE_A0)
 		dev->priv_flags |= IFF_UNICAST_FLT;
 
-	/* Setting a शेष hash function value */
-	अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_TOP) अणु
+	/* Setting a default hash function value */
+	if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_TOP) {
 		priv->rss_hash_fn = ETH_RSS_HASH_TOP;
-	पूर्ण अन्यथा अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_XOR) अणु
+	} else if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_RSS_XOR) {
 		priv->rss_hash_fn = ETH_RSS_HASH_XOR;
-	पूर्ण अन्यथा अणु
+	} else {
 		en_warn(priv,
 			"No RSS hash capabilities exposed, using Toeplitz\n");
 		priv->rss_hash_fn = ETH_RSS_HASH_TOP;
-	पूर्ण
+	}
 
-	/* MTU range: 68 - hw-specअगरic max */
+	/* MTU range: 68 - hw-specific max */
 	dev->min_mtu = ETH_MIN_MTU;
 	dev->max_mtu = priv->max_mtu;
 
 	mdev->pndev[port] = dev;
-	mdev->upper[port] = शून्य;
+	mdev->upper[port] = NULL;
 
-	netअगर_carrier_off(dev);
-	mlx4_en_set_शेष_moderation(priv);
+	netif_carrier_off(dev);
+	mlx4_en_set_default_moderation(priv);
 
 	en_warn(priv, "Using %d TX rings\n", prof->tx_ring_num[TX]);
 	en_warn(priv, "Using %d RX rings\n", prof->rx_ring_num);
@@ -3417,150 +3416,150 @@ unlock_out:
 	mlx4_en_calc_rx_buf(dev);
 	err = mlx4_SET_PORT_general(mdev->dev, priv->port,
 				    priv->rx_skb_size + ETH_FCS_LEN,
-				    prof->tx_छोड़ो, prof->tx_ppp,
-				    prof->rx_छोड़ो, prof->rx_ppp);
-	अगर (err) अणु
+				    prof->tx_pause, prof->tx_ppp,
+				    prof->rx_pause, prof->rx_ppp);
+	if (err) {
 		en_err(priv, "Failed setting port general configurations for port %d, with error %d\n",
 		       priv->port, err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) अणु
+	if (mdev->dev->caps.tunnel_offload_mode == MLX4_TUNNEL_OFFLOAD_MODE_VXLAN) {
 		err = mlx4_SET_PORT_VXLAN(mdev->dev, priv->port, VXLAN_STEER_BY_OUTER_MAC, 1);
-		अगर (err) अणु
+		if (err) {
 			en_err(priv, "Failed setting port L2 tunnel configuration, err %d\n",
 			       err);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Init port */
 	en_warn(priv, "Initializing port\n");
 	err = mlx4_INIT_PORT(mdev->dev, priv->port);
-	अगर (err) अणु
+	if (err) {
 		en_err(priv, "Failed Initializing port\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	queue_delayed_work(mdev->workqueue, &priv->stats_task, STATS_DELAY);
 
-	/* Initialize समय stamp mechanism */
-	अगर (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
-		mlx4_en_init_बारtamp(mdev);
+	/* Initialize time stamp mechanism */
+	if (mdev->dev->caps.flags2 & MLX4_DEV_CAP_FLAG2_TS)
+		mlx4_en_init_timestamp(mdev);
 
 	queue_delayed_work(mdev->workqueue, &priv->service_task,
 			   SERVICE_TASK_DELAY);
 
-	mlx4_en_set_stats_biपंचांगap(mdev->dev, &priv->stats_biपंचांगap,
+	mlx4_en_set_stats_bitmap(mdev->dev, &priv->stats_bitmap,
 				 mdev->profile.prof[priv->port].rx_ppp,
-				 mdev->profile.prof[priv->port].rx_छोड़ो,
+				 mdev->profile.prof[priv->port].rx_pause,
 				 mdev->profile.prof[priv->port].tx_ppp,
-				 mdev->profile.prof[priv->port].tx_छोड़ो);
+				 mdev->profile.prof[priv->port].tx_pause);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		en_err(priv, "Netdev registration failed for port %d\n", port);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	priv->रेजिस्टरed = 1;
+	priv->registered = 1;
 	devlink_port_type_eth_set(mlx4_get_devlink_port(mdev->dev, priv->port),
 				  dev);
 
-	वापस 0;
+	return 0;
 
 out:
 	mlx4_en_destroy_netdev(dev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mlx4_en_reset_config(काष्ठा net_device *dev,
-			 काष्ठा hwtstamp_config ts_config,
+int mlx4_en_reset_config(struct net_device *dev,
+			 struct hwtstamp_config ts_config,
 			 netdev_features_t features)
-अणु
-	काष्ठा mlx4_en_priv *priv = netdev_priv(dev);
-	काष्ठा mlx4_en_dev *mdev = priv->mdev;
-	काष्ठा mlx4_en_port_profile new_prof;
-	काष्ठा mlx4_en_priv *पंचांगp;
-	पूर्णांक port_up = 0;
-	पूर्णांक err = 0;
+{
+	struct mlx4_en_priv *priv = netdev_priv(dev);
+	struct mlx4_en_dev *mdev = priv->mdev;
+	struct mlx4_en_port_profile new_prof;
+	struct mlx4_en_priv *tmp;
+	int port_up = 0;
+	int err = 0;
 
-	अगर (priv->hwtstamp_config.tx_type == ts_config.tx_type &&
+	if (priv->hwtstamp_config.tx_type == ts_config.tx_type &&
 	    priv->hwtstamp_config.rx_filter == ts_config.rx_filter &&
 	    !DEV_FEATURE_CHANGED(dev, features, NETIF_F_HW_VLAN_CTAG_RX) &&
 	    !DEV_FEATURE_CHANGED(dev, features, NETIF_F_RXFCS))
-		वापस 0; /* Nothing to change */
+		return 0; /* Nothing to change */
 
-	अगर (DEV_FEATURE_CHANGED(dev, features, NETIF_F_HW_VLAN_CTAG_RX) &&
+	if (DEV_FEATURE_CHANGED(dev, features, NETIF_F_HW_VLAN_CTAG_RX) &&
 	    (features & NETIF_F_HW_VLAN_CTAG_RX) &&
-	    (priv->hwtstamp_config.rx_filter != HWTSTAMP_FILTER_NONE)) अणु
+	    (priv->hwtstamp_config.rx_filter != HWTSTAMP_FILTER_NONE)) {
 		en_warn(priv, "Can't turn ON rx vlan offload while time-stamping rx filter is ON\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
 
 	mutex_lock(&mdev->state_lock);
 
-	स_नकल(&new_prof, priv->prof, माप(काष्ठा mlx4_en_port_profile));
-	स_नकल(&new_prof.hwtstamp_config, &ts_config, माप(ts_config));
+	memcpy(&new_prof, priv->prof, sizeof(struct mlx4_en_port_profile));
+	memcpy(&new_prof.hwtstamp_config, &ts_config, sizeof(ts_config));
 
-	err = mlx4_en_try_alloc_resources(priv, पंचांगp, &new_prof, true);
-	अगर (err)
-		जाओ out;
+	err = mlx4_en_try_alloc_resources(priv, tmp, &new_prof, true);
+	if (err)
+		goto out;
 
-	अगर (priv->port_up) अणु
+	if (priv->port_up) {
 		port_up = 1;
 		mlx4_en_stop_port(dev, 1);
-	पूर्ण
+	}
 
-	mlx4_en_safe_replace_resources(priv, पंचांगp);
+	mlx4_en_safe_replace_resources(priv, tmp);
 
-	अगर (DEV_FEATURE_CHANGED(dev, features, NETIF_F_HW_VLAN_CTAG_RX)) अणु
-		अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (DEV_FEATURE_CHANGED(dev, features, NETIF_F_HW_VLAN_CTAG_RX)) {
+		if (features & NETIF_F_HW_VLAN_CTAG_RX)
 			dev->features |= NETIF_F_HW_VLAN_CTAG_RX;
-		अन्यथा
+		else
 			dev->features &= ~NETIF_F_HW_VLAN_CTAG_RX;
-	पूर्ण अन्यथा अगर (ts_config.rx_filter == HWTSTAMP_FILTER_NONE) अणु
-		/* RX समय-stamping is OFF, update the RX vlan offload
+	} else if (ts_config.rx_filter == HWTSTAMP_FILTER_NONE) {
+		/* RX time-stamping is OFF, update the RX vlan offload
 		 * to the latest wanted state
 		 */
-		अगर (dev->wanted_features & NETIF_F_HW_VLAN_CTAG_RX)
+		if (dev->wanted_features & NETIF_F_HW_VLAN_CTAG_RX)
 			dev->features |= NETIF_F_HW_VLAN_CTAG_RX;
-		अन्यथा
+		else
 			dev->features &= ~NETIF_F_HW_VLAN_CTAG_RX;
-	पूर्ण
+	}
 
-	अगर (DEV_FEATURE_CHANGED(dev, features, NETIF_F_RXFCS)) अणु
-		अगर (features & NETIF_F_RXFCS)
+	if (DEV_FEATURE_CHANGED(dev, features, NETIF_F_RXFCS)) {
+		if (features & NETIF_F_RXFCS)
 			dev->features |= NETIF_F_RXFCS;
-		अन्यथा
+		else
 			dev->features &= ~NETIF_F_RXFCS;
-	पूर्ण
+	}
 
-	/* RX vlan offload and RX समय-stamping can't co-exist !
+	/* RX vlan offload and RX time-stamping can't co-exist !
 	 * Regardless of the caller's choice,
-	 * Turn Off RX vlan offload in हाल of समय-stamping is ON
+	 * Turn Off RX vlan offload in case of time-stamping is ON
 	 */
-	अगर (ts_config.rx_filter != HWTSTAMP_FILTER_NONE) अणु
-		अगर (dev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (ts_config.rx_filter != HWTSTAMP_FILTER_NONE) {
+		if (dev->features & NETIF_F_HW_VLAN_CTAG_RX)
 			en_warn(priv, "Turning off RX vlan offload since RX time-stamping is ON\n");
 		dev->features &= ~NETIF_F_HW_VLAN_CTAG_RX;
-	पूर्ण
+	}
 
-	अगर (port_up) अणु
+	if (port_up) {
 		err = mlx4_en_start_port(dev);
-		अगर (err)
+		if (err)
 			en_err(priv, "Failed starting port\n");
-	पूर्ण
+	}
 
-	अगर (!err)
+	if (!err)
 		err = mlx4_en_moderation_update(priv);
 out:
 	mutex_unlock(&mdev->state_lock);
-	kमुक्त(पंचांगp);
-	अगर (!err)
+	kfree(tmp);
+	if (!err)
 		netdev_features_change(dev);
-	वापस err;
-पूर्ण
+	return err;
+}

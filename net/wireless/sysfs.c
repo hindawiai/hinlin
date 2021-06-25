@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file provides /sys/class/ieee80211/<wiphy name>/
- * and some शेष attributes.
+ * and some default attributes.
  *
  * Copyright 2005-2006	Jiri Benc <jbenc@suse.cz>
  * Copyright 2006	Johannes Berg <johannes@sipsolutions.net>
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/nl80211.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <net/cfg80211.h>
-#समावेश "sysfs.h"
-#समावेश "core.h"
-#समावेश "rdev-ops.h"
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/nl80211.h>
+#include <linux/rtnetlink.h>
+#include <net/cfg80211.h>
+#include "sysfs.h"
+#include "core.h"
+#include "rdev-ops.h"
 
-अटल अंतरभूत काष्ठा cfg80211_रेजिस्टरed_device *dev_to_rdev(
-	काष्ठा device *dev)
-अणु
-	वापस container_of(dev, काष्ठा cfg80211_रेजिस्टरed_device, wiphy.dev);
-पूर्ण
+static inline struct cfg80211_registered_device *dev_to_rdev(
+	struct device *dev)
+{
+	return container_of(dev, struct cfg80211_registered_device, wiphy.dev);
+}
 
-#घोषणा SHOW_FMT(name, fmt, member)					\
-अटल sमाप_प्रकार name ## _show(काष्ठा device *dev,			\
-			      काष्ठा device_attribute *attr,		\
-			      अक्षर *buf)				\
-अणु									\
-	वापस प्र_लिखो(buf, fmt "\n", dev_to_rdev(dev)->member);	\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name)
+#define SHOW_FMT(name, fmt, member)					\
+static ssize_t name ## _show(struct device *dev,			\
+			      struct device_attribute *attr,		\
+			      char *buf)				\
+{									\
+	return sprintf(buf, fmt "\n", dev_to_rdev(dev)->member);	\
+}									\
+static DEVICE_ATTR_RO(name)
 
 SHOW_FMT(index, "%d", wiphy_idx);
 SHOW_FMT(macaddress, "%pM", wiphy.perm_addr);
 SHOW_FMT(address_mask, "%pM", wiphy.addr_mask);
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा wiphy *wiphy = &dev_to_rdev(dev)->wiphy;
+static ssize_t name_show(struct device *dev,
+			 struct device_attribute *attr,
+			 char *buf)
+{
+	struct wiphy *wiphy = &dev_to_rdev(dev)->wiphy;
 
-	वापस प्र_लिखो(buf, "%s\n", wiphy_name(wiphy));
-पूर्ण
-अटल DEVICE_ATTR_RO(name);
+	return sprintf(buf, "%s\n", wiphy_name(wiphy));
+}
+static DEVICE_ATTR_RO(name);
 
-अटल sमाप_प्रकार addresses_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा wiphy *wiphy = &dev_to_rdev(dev)->wiphy;
-	अक्षर *start = buf;
-	पूर्णांक i;
+static ssize_t addresses_show(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct wiphy *wiphy = &dev_to_rdev(dev)->wiphy;
+	char *start = buf;
+	int i;
 
-	अगर (!wiphy->addresses)
-		वापस प्र_लिखो(buf, "%pM\n", wiphy->perm_addr);
+	if (!wiphy->addresses)
+		return sprintf(buf, "%pM\n", wiphy->perm_addr);
 
-	क्रम (i = 0; i < wiphy->n_addresses; i++)
-		buf += प्र_लिखो(buf, "%pM\n", wiphy->addresses[i].addr);
+	for (i = 0; i < wiphy->n_addresses; i++)
+		buf += sprintf(buf, "%pM\n", wiphy->addresses[i].addr);
 
-	वापस buf - start;
-पूर्ण
-अटल DEVICE_ATTR_RO(addresses);
+	return buf - start;
+}
+static DEVICE_ATTR_RO(addresses);
 
-अटल काष्ठा attribute *ieee80211_attrs[] = अणु
+static struct attribute *ieee80211_attrs[] = {
 	&dev_attr_index.attr,
 	&dev_attr_macaddress.attr,
 	&dev_attr_address_mask.attr,
 	&dev_attr_addresses.attr,
 	&dev_attr_name.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(ieee80211);
 
-अटल व्योम wiphy_dev_release(काष्ठा device *dev)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
+static void wiphy_dev_release(struct device *dev)
+{
+	struct cfg80211_registered_device *rdev = dev_to_rdev(dev);
 
-	cfg80211_dev_मुक्त(rdev);
-पूर्ण
+	cfg80211_dev_free(rdev);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल व्योम cfg80211_leave_all(काष्ठा cfg80211_रेजिस्टरed_device *rdev)
-अणु
-	काष्ठा wireless_dev *wdev;
+#ifdef CONFIG_PM_SLEEP
+static void cfg80211_leave_all(struct cfg80211_registered_device *rdev)
+{
+	struct wireless_dev *wdev;
 
-	list_क्रम_each_entry(wdev, &rdev->wiphy.wdev_list, list)
+	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list)
 		cfg80211_leave(rdev, wdev);
-पूर्ण
+}
 
-अटल पूर्णांक wiphy_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
-	पूर्णांक ret = 0;
+static int wiphy_suspend(struct device *dev)
+{
+	struct cfg80211_registered_device *rdev = dev_to_rdev(dev);
+	int ret = 0;
 
-	rdev->suspend_at = kसमय_get_bootसमय_seconds();
+	rdev->suspend_at = ktime_get_boottime_seconds();
 
 	rtnl_lock();
 	wiphy_lock(&rdev->wiphy);
-	अगर (rdev->wiphy.रेजिस्टरed) अणु
-		अगर (!rdev->wiphy.wowlan_config) अणु
+	if (rdev->wiphy.registered) {
+		if (!rdev->wiphy.wowlan_config) {
 			cfg80211_leave_all(rdev);
 			cfg80211_process_rdev_events(rdev);
-		पूर्ण
-		अगर (rdev->ops->suspend)
+		}
+		if (rdev->ops->suspend)
 			ret = rdev_suspend(rdev, rdev->wiphy.wowlan_config);
-		अगर (ret == 1) अणु
+		if (ret == 1) {
 			/* Driver refuse to configure wowlan */
 			cfg80211_leave_all(rdev);
 			cfg80211_process_rdev_events(rdev);
-			ret = rdev_suspend(rdev, शून्य);
-		पूर्ण
-	पूर्ण
+			ret = rdev_suspend(rdev, NULL);
+		}
+	}
 	wiphy_unlock(&rdev->wiphy);
 	rtnl_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wiphy_resume(काष्ठा device *dev)
-अणु
-	काष्ठा cfg80211_रेजिस्टरed_device *rdev = dev_to_rdev(dev);
-	पूर्णांक ret = 0;
+static int wiphy_resume(struct device *dev)
+{
+	struct cfg80211_registered_device *rdev = dev_to_rdev(dev);
+	int ret = 0;
 
-	/* Age scan results with समय spent in suspend */
-	cfg80211_bss_age(rdev, kसमय_get_bootसमय_seconds() - rdev->suspend_at);
+	/* Age scan results with time spent in suspend */
+	cfg80211_bss_age(rdev, ktime_get_boottime_seconds() - rdev->suspend_at);
 
 	rtnl_lock();
 	wiphy_lock(&rdev->wiphy);
-	अगर (rdev->wiphy.रेजिस्टरed && rdev->ops->resume)
+	if (rdev->wiphy.registered && rdev->ops->resume)
 		ret = rdev_resume(rdev);
 	wiphy_unlock(&rdev->wiphy);
 
-	अगर (ret)
-		cfg80211_shutकरोwn_all_पूर्णांकerfaces(&rdev->wiphy);
+	if (ret)
+		cfg80211_shutdown_all_interfaces(&rdev->wiphy);
 
 	rtnl_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल SIMPLE_DEV_PM_OPS(wiphy_pm_ops, wiphy_suspend, wiphy_resume);
-#घोषणा WIPHY_PM_OPS (&wiphy_pm_ops)
-#अन्यथा
-#घोषणा WIPHY_PM_OPS शून्य
-#पूर्ण_अगर
+static SIMPLE_DEV_PM_OPS(wiphy_pm_ops, wiphy_suspend, wiphy_resume);
+#define WIPHY_PM_OPS (&wiphy_pm_ops)
+#else
+#define WIPHY_PM_OPS NULL
+#endif
 
-अटल स्थिर व्योम *wiphy_namespace(काष्ठा device *d)
-अणु
-	काष्ठा wiphy *wiphy = container_of(d, काष्ठा wiphy, dev);
+static const void *wiphy_namespace(struct device *d)
+{
+	struct wiphy *wiphy = container_of(d, struct wiphy, dev);
 
-	वापस wiphy_net(wiphy);
-पूर्ण
+	return wiphy_net(wiphy);
+}
 
-काष्ठा class ieee80211_class = अणु
+struct class ieee80211_class = {
 	.name = "ieee80211",
 	.owner = THIS_MODULE,
 	.dev_release = wiphy_dev_release,
@@ -164,14 +163,14 @@ ATTRIBUTE_GROUPS(ieee80211);
 	.pm = WIPHY_PM_OPS,
 	.ns_type = &net_ns_type_operations,
 	.namespace = wiphy_namespace,
-पूर्ण;
+};
 
-पूर्णांक wiphy_sysfs_init(व्योम)
-अणु
-	वापस class_रेजिस्टर(&ieee80211_class);
-पूर्ण
+int wiphy_sysfs_init(void)
+{
+	return class_register(&ieee80211_class);
+}
 
-व्योम wiphy_sysfs_निकास(व्योम)
-अणु
-	class_unरेजिस्टर(&ieee80211_class);
-पूर्ण
+void wiphy_sysfs_exit(void)
+{
+	class_unregister(&ieee80211_class);
+}

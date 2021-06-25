@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hfs/attr.c
  *
@@ -9,146 +8,146 @@
  */
 
 
-#समावेश <linux/fs.h>
-#समावेश <linux/xattr.h>
+#include <linux/fs.h>
+#include <linux/xattr.h>
 
-#समावेश "hfs_fs.h"
-#समावेश "btree.h"
+#include "hfs_fs.h"
+#include "btree.h"
 
-क्रमागत hfs_xattr_type अणु
+enum hfs_xattr_type {
 	HFS_TYPE,
 	HFS_CREATOR,
-पूर्ण;
+};
 
-अटल पूर्णांक __hfs_setxattr(काष्ठा inode *inode, क्रमागत hfs_xattr_type type,
-			  स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा hfs_find_data fd;
+static int __hfs_setxattr(struct inode *inode, enum hfs_xattr_type type,
+			  const void *value, size_t size, int flags)
+{
+	struct hfs_find_data fd;
 	hfs_cat_rec rec;
-	काष्ठा hfs_cat_file *file;
-	पूर्णांक res;
+	struct hfs_cat_file *file;
+	int res;
 
-	अगर (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
-		वापस -EOPNOTSUPP;
+	if (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
+		return -EOPNOTSUPP;
 
 	res = hfs_find_init(HFS_SB(inode->i_sb)->cat_tree, &fd);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 	fd.search_key->cat = HFS_I(inode)->cat_key;
 	res = hfs_brec_find(&fd);
-	अगर (res)
-		जाओ out;
-	hfs_bnode_पढ़ो(fd.bnode, &rec, fd.entryoffset,
-			माप(काष्ठा hfs_cat_file));
+	if (res)
+		goto out;
+	hfs_bnode_read(fd.bnode, &rec, fd.entryoffset,
+			sizeof(struct hfs_cat_file));
 	file = &rec.file;
 
-	चयन (type) अणु
-	हाल HFS_TYPE:
-		अगर (size == 4)
-			स_नकल(&file->UsrWds.fdType, value, 4);
-		अन्यथा
-			res = -दुस्फल;
-		अवरोध;
+	switch (type) {
+	case HFS_TYPE:
+		if (size == 4)
+			memcpy(&file->UsrWds.fdType, value, 4);
+		else
+			res = -ERANGE;
+		break;
 
-	हाल HFS_CREATOR:
-		अगर (size == 4)
-			स_नकल(&file->UsrWds.fdCreator, value, 4);
-		अन्यथा
-			res = -दुस्फल;
-		अवरोध;
-	पूर्ण
+	case HFS_CREATOR:
+		if (size == 4)
+			memcpy(&file->UsrWds.fdCreator, value, 4);
+		else
+			res = -ERANGE;
+		break;
+	}
 
-	अगर (!res)
-		hfs_bnode_ग_लिखो(fd.bnode, &rec, fd.entryoffset,
-				माप(काष्ठा hfs_cat_file));
+	if (!res)
+		hfs_bnode_write(fd.bnode, &rec, fd.entryoffset,
+				sizeof(struct hfs_cat_file));
 out:
-	hfs_find_निकास(&fd);
-	वापस res;
-पूर्ण
+	hfs_find_exit(&fd);
+	return res;
+}
 
-अटल sमाप_प्रकार __hfs_getxattr(काष्ठा inode *inode, क्रमागत hfs_xattr_type type,
-			      व्योम *value, माप_प्रकार size)
-अणु
-	काष्ठा hfs_find_data fd;
+static ssize_t __hfs_getxattr(struct inode *inode, enum hfs_xattr_type type,
+			      void *value, size_t size)
+{
+	struct hfs_find_data fd;
 	hfs_cat_rec rec;
-	काष्ठा hfs_cat_file *file;
-	sमाप_प्रकार res = 0;
+	struct hfs_cat_file *file;
+	ssize_t res = 0;
 
-	अगर (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
-		वापस -EOPNOTSUPP;
+	if (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
+		return -EOPNOTSUPP;
 
-	अगर (size) अणु
+	if (size) {
 		res = hfs_find_init(HFS_SB(inode->i_sb)->cat_tree, &fd);
-		अगर (res)
-			वापस res;
+		if (res)
+			return res;
 		fd.search_key->cat = HFS_I(inode)->cat_key;
 		res = hfs_brec_find(&fd);
-		अगर (res)
-			जाओ out;
-		hfs_bnode_पढ़ो(fd.bnode, &rec, fd.entryoffset,
-				माप(काष्ठा hfs_cat_file));
-	पूर्ण
+		if (res)
+			goto out;
+		hfs_bnode_read(fd.bnode, &rec, fd.entryoffset,
+				sizeof(struct hfs_cat_file));
+	}
 	file = &rec.file;
 
-	चयन (type) अणु
-	हाल HFS_TYPE:
-		अगर (size >= 4) अणु
-			स_नकल(value, &file->UsrWds.fdType, 4);
+	switch (type) {
+	case HFS_TYPE:
+		if (size >= 4) {
+			memcpy(value, &file->UsrWds.fdType, 4);
 			res = 4;
-		पूर्ण अन्यथा
-			res = size ? -दुस्फल : 4;
-		अवरोध;
+		} else
+			res = size ? -ERANGE : 4;
+		break;
 
-	हाल HFS_CREATOR:
-		अगर (size >= 4) अणु
-			स_नकल(value, &file->UsrWds.fdCreator, 4);
+	case HFS_CREATOR:
+		if (size >= 4) {
+			memcpy(value, &file->UsrWds.fdCreator, 4);
 			res = 4;
-		पूर्ण अन्यथा
-			res = size ? -दुस्फल : 4;
-		अवरोध;
-	पूर्ण
+		} else
+			res = size ? -ERANGE : 4;
+		break;
+	}
 
 out:
-	अगर (size)
-		hfs_find_निकास(&fd);
-	वापस res;
-पूर्ण
+	if (size)
+		hfs_find_exit(&fd);
+	return res;
+}
 
-अटल पूर्णांक hfs_xattr_get(स्थिर काष्ठा xattr_handler *handler,
-			 काष्ठा dentry *unused, काष्ठा inode *inode,
-			 स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
-अणु
-	वापस __hfs_getxattr(inode, handler->flags, value, size);
-पूर्ण
+static int hfs_xattr_get(const struct xattr_handler *handler,
+			 struct dentry *unused, struct inode *inode,
+			 const char *name, void *value, size_t size)
+{
+	return __hfs_getxattr(inode, handler->flags, value, size);
+}
 
-अटल पूर्णांक hfs_xattr_set(स्थिर काष्ठा xattr_handler *handler,
-			 काष्ठा user_namespace *mnt_userns,
-			 काष्ठा dentry *unused, काष्ठा inode *inode,
-			 स्थिर अक्षर *name, स्थिर व्योम *value, माप_प्रकार size,
-			 पूर्णांक flags)
-अणु
-	अगर (!value)
-		वापस -EOPNOTSUPP;
+static int hfs_xattr_set(const struct xattr_handler *handler,
+			 struct user_namespace *mnt_userns,
+			 struct dentry *unused, struct inode *inode,
+			 const char *name, const void *value, size_t size,
+			 int flags)
+{
+	if (!value)
+		return -EOPNOTSUPP;
 
-	वापस __hfs_setxattr(inode, handler->flags, value, size, flags);
-पूर्ण
+	return __hfs_setxattr(inode, handler->flags, value, size, flags);
+}
 
-अटल स्थिर काष्ठा xattr_handler hfs_creator_handler = अणु
+static const struct xattr_handler hfs_creator_handler = {
 	.name = "hfs.creator",
 	.flags = HFS_CREATOR,
 	.get = hfs_xattr_get,
 	.set = hfs_xattr_set,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा xattr_handler hfs_type_handler = अणु
+static const struct xattr_handler hfs_type_handler = {
 	.name = "hfs.type",
 	.flags = HFS_TYPE,
 	.get = hfs_xattr_get,
 	.set = hfs_xattr_set,
-पूर्ण;
+};
 
-स्थिर काष्ठा xattr_handler *hfs_xattr_handlers[] = अणु
+const struct xattr_handler *hfs_xattr_handlers[] = {
 	&hfs_creator_handler,
 	&hfs_type_handler,
-	शून्य
-पूर्ण;
+	NULL
+};

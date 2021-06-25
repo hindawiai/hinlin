@@ -1,157 +1,156 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
- *  Copyright (C) 2004 Aurelien Alleaume <slts@मुक्त.fr>
+ *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
 /*
 
-   This source file is specअगरically deचिन्हित to पूर्णांकerface with the
+   This source file is specifically designed to interface with the
    cx2584x, in kernels 2.6.16 or newer.
 
 */
 
-#समावेश "pvrusb2-cx2584x-v4l.h"
+#include "pvrusb2-cx2584x-v4l.h"
 
 
-#समावेश "pvrusb2-hdw-internal.h"
-#समावेश "pvrusb2-debug.h"
-#समावेश <media/drv-पूर्णांकf/cx25840.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <linux/त्रुटिसं.स>
+#include "pvrusb2-hdw-internal.h"
+#include "pvrusb2-debug.h"
+#include <media/drv-intf/cx25840.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-common.h>
+#include <linux/errno.h>
 
 
-काष्ठा routing_scheme_item अणु
-	पूर्णांक vid;
-	पूर्णांक aud;
-पूर्ण;
+struct routing_scheme_item {
+	int vid;
+	int aud;
+};
 
-काष्ठा routing_scheme अणु
-	स्थिर काष्ठा routing_scheme_item *def;
-	अचिन्हित पूर्णांक cnt;
-पूर्ण;
+struct routing_scheme {
+	const struct routing_scheme_item *def;
+	unsigned int cnt;
+};
 
-अटल स्थिर काष्ठा routing_scheme_item routing_scheme0[] = अणु
-	[PVR2_CVAL_INPUT_TV] = अणु
+static const struct routing_scheme_item routing_scheme0[] = {
+	[PVR2_CVAL_INPUT_TV] = {
 		.vid = CX25840_COMPOSITE7,
 		.aud = CX25840_AUDIO8,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_RADIO] = अणु /* Treat the same as composite */
+	},
+	[PVR2_CVAL_INPUT_RADIO] = { /* Treat the same as composite */
 		.vid = CX25840_COMPOSITE3,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_COMPOSITE] = अणु
+	},
+	[PVR2_CVAL_INPUT_COMPOSITE] = {
 		.vid = CX25840_COMPOSITE3,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_SVIDEO] = अणु
+	},
+	[PVR2_CVAL_INPUT_SVIDEO] = {
 		.vid = CX25840_SVIDEO1,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा routing_scheme routing_def0 = अणु
+static const struct routing_scheme routing_def0 = {
 	.def = routing_scheme0,
 	.cnt = ARRAY_SIZE(routing_scheme0),
-पूर्ण;
+};
 
-/* Specअगरic to gotview device */
-अटल स्थिर काष्ठा routing_scheme_item routing_schemegv[] = अणु
-	[PVR2_CVAL_INPUT_TV] = अणु
+/* Specific to gotview device */
+static const struct routing_scheme_item routing_schemegv[] = {
+	[PVR2_CVAL_INPUT_TV] = {
 		.vid = CX25840_COMPOSITE2,
 		.aud = CX25840_AUDIO5,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_RADIO] = अणु
-		/* line-in is used क्रम radio and composite.  A GPIO is
-		   used to चयन between the two choices. */
+	},
+	[PVR2_CVAL_INPUT_RADIO] = {
+		/* line-in is used for radio and composite.  A GPIO is
+		   used to switch between the two choices. */
 		.vid = CX25840_COMPOSITE1,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_COMPOSITE] = अणु
+	},
+	[PVR2_CVAL_INPUT_COMPOSITE] = {
 		.vid = CX25840_COMPOSITE1,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_SVIDEO] = अणु
+	},
+	[PVR2_CVAL_INPUT_SVIDEO] = {
 		.vid = (CX25840_SVIDEO_LUMA3|CX25840_SVIDEO_CHROMA4),
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा routing_scheme routing_defgv = अणु
+static const struct routing_scheme routing_defgv = {
 	.def = routing_schemegv,
 	.cnt = ARRAY_SIZE(routing_schemegv),
-पूर्ण;
+};
 
-/* Specअगरic to grअसलter av400 device */
-अटल स्थिर काष्ठा routing_scheme_item routing_schemeav400[] = अणु
-	[PVR2_CVAL_INPUT_COMPOSITE] = अणु
+/* Specific to grabster av400 device */
+static const struct routing_scheme_item routing_schemeav400[] = {
+	[PVR2_CVAL_INPUT_COMPOSITE] = {
 		.vid = CX25840_COMPOSITE1,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_SVIDEO] = अणु
+	},
+	[PVR2_CVAL_INPUT_SVIDEO] = {
 		.vid = (CX25840_SVIDEO_LUMA2|CX25840_SVIDEO_CHROMA4),
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा routing_scheme routing_defav400 = अणु
+static const struct routing_scheme routing_defav400 = {
 	.def = routing_schemeav400,
 	.cnt = ARRAY_SIZE(routing_schemeav400),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा routing_scheme_item routing_scheme160xxx[] = अणु
-	[PVR2_CVAL_INPUT_TV] = अणु
+static const struct routing_scheme_item routing_scheme160xxx[] = {
+	[PVR2_CVAL_INPUT_TV] = {
 		.vid = CX25840_COMPOSITE7,
 		.aud = CX25840_AUDIO8,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_RADIO] = अणु
+	},
+	[PVR2_CVAL_INPUT_RADIO] = {
 		.vid = CX25840_COMPOSITE4,
 		.aud = CX25840_AUDIO6,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_COMPOSITE] = अणु
+	},
+	[PVR2_CVAL_INPUT_COMPOSITE] = {
 		.vid = CX25840_COMPOSITE3,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-	[PVR2_CVAL_INPUT_SVIDEO] = अणु
+	},
+	[PVR2_CVAL_INPUT_SVIDEO] = {
 		.vid = CX25840_SVIDEO1,
 		.aud = CX25840_AUDIO_SERIAL,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा routing_scheme routing_def160xxx = अणु
+static const struct routing_scheme routing_def160xxx = {
 	.def = routing_scheme160xxx,
 	.cnt = ARRAY_SIZE(routing_scheme160xxx),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा routing_scheme *routing_schemes[] = अणु
+static const struct routing_scheme *routing_schemes[] = {
 	[PVR2_ROUTING_SCHEME_HAUPPAUGE] = &routing_def0,
 	[PVR2_ROUTING_SCHEME_GOTVIEW] = &routing_defgv,
 	[PVR2_ROUTING_SCHEME_AV400] = &routing_defav400,
 	[PVR2_ROUTING_SCHEME_HAUP160XXX] = &routing_def160xxx,
-पूर्ण;
+};
 
-व्योम pvr2_cx25840_subdev_update(काष्ठा pvr2_hdw *hdw, काष्ठा v4l2_subdev *sd)
-अणु
+void pvr2_cx25840_subdev_update(struct pvr2_hdw *hdw, struct v4l2_subdev *sd)
+{
 	pvr2_trace(PVR2_TRACE_CHIPS, "subdev cx2584x update...");
-	अगर (hdw->input_dirty || hdw->क्रमce_dirty) अणु
-		क्रमागत cx25840_video_input vid_input;
-		क्रमागत cx25840_audio_input aud_input;
-		स्थिर काष्ठा routing_scheme *sp;
-		अचिन्हित पूर्णांक sid = hdw->hdw_desc->संकेत_routing_scheme;
+	if (hdw->input_dirty || hdw->force_dirty) {
+		enum cx25840_video_input vid_input;
+		enum cx25840_audio_input aud_input;
+		const struct routing_scheme *sp;
+		unsigned int sid = hdw->hdw_desc->signal_routing_scheme;
 
 		sp = (sid < ARRAY_SIZE(routing_schemes)) ?
-			routing_schemes[sid] : शून्य;
-		अगर ((sp == शून्य) ||
+			routing_schemes[sid] : NULL;
+		if ((sp == NULL) ||
 		    (hdw->input_val < 0) ||
-		    (hdw->input_val >= sp->cnt)) अणु
+		    (hdw->input_val >= sp->cnt)) {
 			pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 				   "*** WARNING *** subdev cx2584x set_input: Invalid routing scheme (%u) and/or input (%d)",
 				   sid, hdw->input_val);
-			वापस;
-		पूर्ण
+			return;
+		}
 		vid_input = sp->def[hdw->input_val].vid;
 		aud_input = sp->def[hdw->input_val].aud;
 		pvr2_trace(PVR2_TRACE_CHIPS,
@@ -159,5 +158,5 @@
 			   vid_input, aud_input);
 		sd->ops->video->s_routing(sd, (u32)vid_input, 0, 0);
 		sd->ops->audio->s_routing(sd, (u32)aud_input, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,449 +1,448 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2014 Emilio Lथकpez
- * Emilio Lथकpez <emilio@elopez.com.ar>
+ * Copyright (C) 2014 Emilio López
+ * Emilio López <emilio@elopez.com.ar>
  */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/bitmap.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of_dma.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश "virt-dma.h"
+#include "virt-dma.h"
 
-/** Common macros to normal and dedicated DMA रेजिस्टरs **/
+/** Common macros to normal and dedicated DMA registers **/
 
-#घोषणा SUN4I_DMA_CFG_LOADING			BIT(31)
-#घोषणा SUN4I_DMA_CFG_DST_DATA_WIDTH(width)	((width) << 25)
-#घोषणा SUN4I_DMA_CFG_DST_BURST_LENGTH(len)	((len) << 23)
-#घोषणा SUN4I_DMA_CFG_DST_ADDR_MODE(mode)	((mode) << 21)
-#घोषणा SUN4I_DMA_CFG_DST_DRQ_TYPE(type)	((type) << 16)
-#घोषणा SUN4I_DMA_CFG_SRC_DATA_WIDTH(width)	((width) << 9)
-#घोषणा SUN4I_DMA_CFG_SRC_BURST_LENGTH(len)	((len) << 7)
-#घोषणा SUN4I_DMA_CFG_SRC_ADDR_MODE(mode)	((mode) << 5)
-#घोषणा SUN4I_DMA_CFG_SRC_DRQ_TYPE(type)	(type)
+#define SUN4I_DMA_CFG_LOADING			BIT(31)
+#define SUN4I_DMA_CFG_DST_DATA_WIDTH(width)	((width) << 25)
+#define SUN4I_DMA_CFG_DST_BURST_LENGTH(len)	((len) << 23)
+#define SUN4I_DMA_CFG_DST_ADDR_MODE(mode)	((mode) << 21)
+#define SUN4I_DMA_CFG_DST_DRQ_TYPE(type)	((type) << 16)
+#define SUN4I_DMA_CFG_SRC_DATA_WIDTH(width)	((width) << 9)
+#define SUN4I_DMA_CFG_SRC_BURST_LENGTH(len)	((len) << 7)
+#define SUN4I_DMA_CFG_SRC_ADDR_MODE(mode)	((mode) << 5)
+#define SUN4I_DMA_CFG_SRC_DRQ_TYPE(type)	(type)
 
-/** Normal DMA रेजिस्टर values **/
+/** Normal DMA register values **/
 
 /* Normal DMA source/destination data request type values */
-#घोषणा SUN4I_NDMA_DRQ_TYPE_SDRAM		0x16
-#घोषणा SUN4I_NDMA_DRQ_TYPE_LIMIT		(0x1F + 1)
+#define SUN4I_NDMA_DRQ_TYPE_SDRAM		0x16
+#define SUN4I_NDMA_DRQ_TYPE_LIMIT		(0x1F + 1)
 
-/** Normal DMA रेजिस्टर layout **/
-
-/* Dedicated DMA source/destination address mode values */
-#घोषणा SUN4I_NDMA_ADDR_MODE_LINEAR		0
-#घोषणा SUN4I_NDMA_ADDR_MODE_IO			1
-
-/* Normal DMA configuration रेजिस्टर layout */
-#घोषणा SUN4I_NDMA_CFG_CONT_MODE		BIT(30)
-#घोषणा SUN4I_NDMA_CFG_WAIT_STATE(n)		((n) << 27)
-#घोषणा SUN4I_NDMA_CFG_DST_NON_SECURE		BIT(22)
-#घोषणा SUN4I_NDMA_CFG_BYTE_COUNT_MODE_REMAIN	BIT(15)
-#घोषणा SUN4I_NDMA_CFG_SRC_NON_SECURE		BIT(6)
-
-/** Dedicated DMA रेजिस्टर values **/
+/** Normal DMA register layout **/
 
 /* Dedicated DMA source/destination address mode values */
-#घोषणा SUN4I_DDMA_ADDR_MODE_LINEAR		0
-#घोषणा SUN4I_DDMA_ADDR_MODE_IO			1
-#घोषणा SUN4I_DDMA_ADDR_MODE_HORIZONTAL_PAGE	2
-#घोषणा SUN4I_DDMA_ADDR_MODE_VERTICAL_PAGE	3
+#define SUN4I_NDMA_ADDR_MODE_LINEAR		0
+#define SUN4I_NDMA_ADDR_MODE_IO			1
+
+/* Normal DMA configuration register layout */
+#define SUN4I_NDMA_CFG_CONT_MODE		BIT(30)
+#define SUN4I_NDMA_CFG_WAIT_STATE(n)		((n) << 27)
+#define SUN4I_NDMA_CFG_DST_NON_SECURE		BIT(22)
+#define SUN4I_NDMA_CFG_BYTE_COUNT_MODE_REMAIN	BIT(15)
+#define SUN4I_NDMA_CFG_SRC_NON_SECURE		BIT(6)
+
+/** Dedicated DMA register values **/
+
+/* Dedicated DMA source/destination address mode values */
+#define SUN4I_DDMA_ADDR_MODE_LINEAR		0
+#define SUN4I_DDMA_ADDR_MODE_IO			1
+#define SUN4I_DDMA_ADDR_MODE_HORIZONTAL_PAGE	2
+#define SUN4I_DDMA_ADDR_MODE_VERTICAL_PAGE	3
 
 /* Dedicated DMA source/destination data request type values */
-#घोषणा SUN4I_DDMA_DRQ_TYPE_SDRAM		0x1
-#घोषणा SUN4I_DDMA_DRQ_TYPE_LIMIT		(0x1F + 1)
+#define SUN4I_DDMA_DRQ_TYPE_SDRAM		0x1
+#define SUN4I_DDMA_DRQ_TYPE_LIMIT		(0x1F + 1)
 
-/** Dedicated DMA रेजिस्टर layout **/
+/** Dedicated DMA register layout **/
 
-/* Dedicated DMA configuration रेजिस्टर layout */
-#घोषणा SUN4I_DDMA_CFG_BUSY			BIT(30)
-#घोषणा SUN4I_DDMA_CFG_CONT_MODE		BIT(29)
-#घोषणा SUN4I_DDMA_CFG_DST_NON_SECURE		BIT(28)
-#घोषणा SUN4I_DDMA_CFG_BYTE_COUNT_MODE_REMAIN	BIT(15)
-#घोषणा SUN4I_DDMA_CFG_SRC_NON_SECURE		BIT(12)
+/* Dedicated DMA configuration register layout */
+#define SUN4I_DDMA_CFG_BUSY			BIT(30)
+#define SUN4I_DDMA_CFG_CONT_MODE		BIT(29)
+#define SUN4I_DDMA_CFG_DST_NON_SECURE		BIT(28)
+#define SUN4I_DDMA_CFG_BYTE_COUNT_MODE_REMAIN	BIT(15)
+#define SUN4I_DDMA_CFG_SRC_NON_SECURE		BIT(12)
 
-/* Dedicated DMA parameter रेजिस्टर layout */
-#घोषणा SUN4I_DDMA_PARA_DST_DATA_BLK_SIZE(n)	(((n) - 1) << 24)
-#घोषणा SUN4I_DDMA_PARA_DST_WAIT_CYCLES(n)	(((n) - 1) << 16)
-#घोषणा SUN4I_DDMA_PARA_SRC_DATA_BLK_SIZE(n)	(((n) - 1) << 8)
-#घोषणा SUN4I_DDMA_PARA_SRC_WAIT_CYCLES(n)	(((n) - 1) << 0)
+/* Dedicated DMA parameter register layout */
+#define SUN4I_DDMA_PARA_DST_DATA_BLK_SIZE(n)	(((n) - 1) << 24)
+#define SUN4I_DDMA_PARA_DST_WAIT_CYCLES(n)	(((n) - 1) << 16)
+#define SUN4I_DDMA_PARA_SRC_DATA_BLK_SIZE(n)	(((n) - 1) << 8)
+#define SUN4I_DDMA_PARA_SRC_WAIT_CYCLES(n)	(((n) - 1) << 0)
 
-/** DMA रेजिस्टर offsets **/
+/** DMA register offsets **/
 
-/* General रेजिस्टर offsets */
-#घोषणा SUN4I_DMA_IRQ_ENABLE_REG		0x0
-#घोषणा SUN4I_DMA_IRQ_PENDING_STATUS_REG	0x4
+/* General register offsets */
+#define SUN4I_DMA_IRQ_ENABLE_REG		0x0
+#define SUN4I_DMA_IRQ_PENDING_STATUS_REG	0x4
 
-/* Normal DMA रेजिस्टर offsets */
-#घोषणा SUN4I_NDMA_CHANNEL_REG_BASE(n)		(0x100 + (n) * 0x20)
-#घोषणा SUN4I_NDMA_CFG_REG			0x0
-#घोषणा SUN4I_NDMA_SRC_ADDR_REG			0x4
-#घोषणा SUN4I_NDMA_DST_ADDR_REG		0x8
-#घोषणा SUN4I_NDMA_BYTE_COUNT_REG		0xC
+/* Normal DMA register offsets */
+#define SUN4I_NDMA_CHANNEL_REG_BASE(n)		(0x100 + (n) * 0x20)
+#define SUN4I_NDMA_CFG_REG			0x0
+#define SUN4I_NDMA_SRC_ADDR_REG			0x4
+#define SUN4I_NDMA_DST_ADDR_REG		0x8
+#define SUN4I_NDMA_BYTE_COUNT_REG		0xC
 
-/* Dedicated DMA रेजिस्टर offsets */
-#घोषणा SUN4I_DDMA_CHANNEL_REG_BASE(n)		(0x300 + (n) * 0x20)
-#घोषणा SUN4I_DDMA_CFG_REG			0x0
-#घोषणा SUN4I_DDMA_SRC_ADDR_REG			0x4
-#घोषणा SUN4I_DDMA_DST_ADDR_REG		0x8
-#घोषणा SUN4I_DDMA_BYTE_COUNT_REG		0xC
-#घोषणा SUN4I_DDMA_PARA_REG			0x18
+/* Dedicated DMA register offsets */
+#define SUN4I_DDMA_CHANNEL_REG_BASE(n)		(0x300 + (n) * 0x20)
+#define SUN4I_DDMA_CFG_REG			0x0
+#define SUN4I_DDMA_SRC_ADDR_REG			0x4
+#define SUN4I_DDMA_DST_ADDR_REG		0x8
+#define SUN4I_DDMA_BYTE_COUNT_REG		0xC
+#define SUN4I_DDMA_PARA_REG			0x18
 
 /** DMA Driver **/
 
 /*
  * Normal DMA has 8 channels, and Dedicated DMA has another 8, so
  * that's 16 channels. As for endpoints, there's 29 and 21
- * respectively. Given that the Normal DMA endpoपूर्णांकs (other than
+ * respectively. Given that the Normal DMA endpoints (other than
  * SDRAM) can be used as tx/rx, we need 78 vchans in total
  */
-#घोषणा SUN4I_NDMA_NR_MAX_CHANNELS	8
-#घोषणा SUN4I_DDMA_NR_MAX_CHANNELS	8
-#घोषणा SUN4I_DMA_NR_MAX_CHANNELS					\
+#define SUN4I_NDMA_NR_MAX_CHANNELS	8
+#define SUN4I_DDMA_NR_MAX_CHANNELS	8
+#define SUN4I_DMA_NR_MAX_CHANNELS					\
 	(SUN4I_NDMA_NR_MAX_CHANNELS + SUN4I_DDMA_NR_MAX_CHANNELS)
-#घोषणा SUN4I_NDMA_NR_MAX_VCHANS	(29 * 2 - 1)
-#घोषणा SUN4I_DDMA_NR_MAX_VCHANS	21
-#घोषणा SUN4I_DMA_NR_MAX_VCHANS						\
+#define SUN4I_NDMA_NR_MAX_VCHANS	(29 * 2 - 1)
+#define SUN4I_DDMA_NR_MAX_VCHANS	21
+#define SUN4I_DMA_NR_MAX_VCHANS						\
 	(SUN4I_NDMA_NR_MAX_VCHANS + SUN4I_DDMA_NR_MAX_VCHANS)
 
-/* This set of SUN4I_DDMA timing parameters were found experimentally जबतक
+/* This set of SUN4I_DDMA timing parameters were found experimentally while
  * working with the SPI driver and seem to make it behave correctly */
-#घोषणा SUN4I_DDMA_MAGIC_SPI_PARAMETERS \
+#define SUN4I_DDMA_MAGIC_SPI_PARAMETERS \
 	(SUN4I_DDMA_PARA_DST_DATA_BLK_SIZE(1) |			\
 	 SUN4I_DDMA_PARA_SRC_DATA_BLK_SIZE(1) |				\
 	 SUN4I_DDMA_PARA_DST_WAIT_CYCLES(2) |				\
 	 SUN4I_DDMA_PARA_SRC_WAIT_CYCLES(2))
 
-काष्ठा sun4i_dma_pchan अणु
+struct sun4i_dma_pchan {
 	/* Register base of channel */
-	व्योम __iomem			*base;
+	void __iomem			*base;
 	/* vchan currently being serviced */
-	काष्ठा sun4i_dma_vchan		*vchan;
+	struct sun4i_dma_vchan		*vchan;
 	/* Is this a dedicated pchan? */
-	पूर्णांक				is_dedicated;
-पूर्ण;
+	int				is_dedicated;
+};
 
-काष्ठा sun4i_dma_vchan अणु
-	काष्ठा virt_dma_chan		vc;
-	काष्ठा dma_slave_config		cfg;
-	काष्ठा sun4i_dma_pchan		*pchan;
-	काष्ठा sun4i_dma_promise	*processing;
-	काष्ठा sun4i_dma_contract	*contract;
-	u8				endpoपूर्णांक;
-	पूर्णांक				is_dedicated;
-पूर्ण;
+struct sun4i_dma_vchan {
+	struct virt_dma_chan		vc;
+	struct dma_slave_config		cfg;
+	struct sun4i_dma_pchan		*pchan;
+	struct sun4i_dma_promise	*processing;
+	struct sun4i_dma_contract	*contract;
+	u8				endpoint;
+	int				is_dedicated;
+};
 
-काष्ठा sun4i_dma_promise अणु
+struct sun4i_dma_promise {
 	u32				cfg;
 	u32				para;
 	dma_addr_t			src;
 	dma_addr_t			dst;
-	माप_प्रकार				len;
-	काष्ठा list_head		list;
-पूर्ण;
+	size_t				len;
+	struct list_head		list;
+};
 
 /* A contract is a set of promises */
-काष्ठा sun4i_dma_contract अणु
-	काष्ठा virt_dma_desc		vd;
-	काष्ठा list_head		demands;
-	काष्ठा list_head		completed_demands;
-	पूर्णांक				is_cyclic;
-पूर्ण;
+struct sun4i_dma_contract {
+	struct virt_dma_desc		vd;
+	struct list_head		demands;
+	struct list_head		completed_demands;
+	int				is_cyclic;
+};
 
-काष्ठा sun4i_dma_dev अणु
+struct sun4i_dma_dev {
 	DECLARE_BITMAP(pchans_used, SUN4I_DMA_NR_MAX_CHANNELS);
-	काष्ठा dma_device		slave;
-	काष्ठा sun4i_dma_pchan		*pchans;
-	काष्ठा sun4i_dma_vchan		*vchans;
-	व्योम __iomem			*base;
-	काष्ठा clk			*clk;
-	पूर्णांक				irq;
+	struct dma_device		slave;
+	struct sun4i_dma_pchan		*pchans;
+	struct sun4i_dma_vchan		*vchans;
+	void __iomem			*base;
+	struct clk			*clk;
+	int				irq;
 	spinlock_t			lock;
-पूर्ण;
+};
 
-अटल काष्ठा sun4i_dma_dev *to_sun4i_dma_dev(काष्ठा dma_device *dev)
-अणु
-	वापस container_of(dev, काष्ठा sun4i_dma_dev, slave);
-पूर्ण
+static struct sun4i_dma_dev *to_sun4i_dma_dev(struct dma_device *dev)
+{
+	return container_of(dev, struct sun4i_dma_dev, slave);
+}
 
-अटल काष्ठा sun4i_dma_vchan *to_sun4i_dma_vchan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा sun4i_dma_vchan, vc.chan);
-पूर्ण
+static struct sun4i_dma_vchan *to_sun4i_dma_vchan(struct dma_chan *chan)
+{
+	return container_of(chan, struct sun4i_dma_vchan, vc.chan);
+}
 
-अटल काष्ठा sun4i_dma_contract *to_sun4i_dma_contract(काष्ठा virt_dma_desc *vd)
-अणु
-	वापस container_of(vd, काष्ठा sun4i_dma_contract, vd);
-पूर्ण
+static struct sun4i_dma_contract *to_sun4i_dma_contract(struct virt_dma_desc *vd)
+{
+	return container_of(vd, struct sun4i_dma_contract, vd);
+}
 
-अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
-अणु
-	वापस &chan->dev->device;
-पूर्ण
+static struct device *chan2dev(struct dma_chan *chan)
+{
+	return &chan->dev->device;
+}
 
-अटल पूर्णांक convert_burst(u32 maxburst)
-अणु
-	अगर (maxburst > 8)
-		वापस -EINVAL;
+static int convert_burst(u32 maxburst)
+{
+	if (maxburst > 8)
+		return -EINVAL;
 
 	/* 1 -> 0, 4 -> 1, 8 -> 2 */
-	वापस (maxburst >> 2);
-पूर्ण
+	return (maxburst >> 2);
+}
 
-अटल पूर्णांक convert_buswidth(क्रमागत dma_slave_buswidth addr_width)
-अणु
-	अगर (addr_width > DMA_SLAVE_BUSWIDTH_4_BYTES)
-		वापस -EINVAL;
+static int convert_buswidth(enum dma_slave_buswidth addr_width)
+{
+	if (addr_width > DMA_SLAVE_BUSWIDTH_4_BYTES)
+		return -EINVAL;
 
 	/* 8 (1 byte) -> 0, 16 (2 bytes) -> 1, 32 (4 bytes) -> 2 */
-	वापस (addr_width >> 1);
-पूर्ण
+	return (addr_width >> 1);
+}
 
-अटल व्योम sun4i_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+static void sun4i_dma_free_chan_resources(struct dma_chan *chan)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
 
-	vchan_मुक्त_chan_resources(&vchan->vc);
-पूर्ण
+	vchan_free_chan_resources(&vchan->vc);
+}
 
-अटल काष्ठा sun4i_dma_pchan *find_and_use_pchan(काष्ठा sun4i_dma_dev *priv,
-						  काष्ठा sun4i_dma_vchan *vchan)
-अणु
-	काष्ठा sun4i_dma_pchan *pchan = शून्य, *pchans = priv->pchans;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i, max;
+static struct sun4i_dma_pchan *find_and_use_pchan(struct sun4i_dma_dev *priv,
+						  struct sun4i_dma_vchan *vchan)
+{
+	struct sun4i_dma_pchan *pchan = NULL, *pchans = priv->pchans;
+	unsigned long flags;
+	int i, max;
 
 	/*
 	 * pchans 0-SUN4I_NDMA_NR_MAX_CHANNELS are normal, and
 	 * SUN4I_NDMA_NR_MAX_CHANNELS+ are dedicated ones
 	 */
-	अगर (vchan->is_dedicated) अणु
+	if (vchan->is_dedicated) {
 		i = SUN4I_NDMA_NR_MAX_CHANNELS;
 		max = SUN4I_DMA_NR_MAX_CHANNELS;
-	पूर्ण अन्यथा अणु
+	} else {
 		i = 0;
 		max = SUN4I_NDMA_NR_MAX_CHANNELS;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&priv->lock, flags);
-	क्रम_each_clear_bit_from(i, priv->pchans_used, max) अणु
+	for_each_clear_bit_from(i, priv->pchans_used, max) {
 		pchan = &pchans[i];
 		pchan->vchan = vchan;
 		set_bit(i, priv->pchans_used);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	वापस pchan;
-पूर्ण
+	return pchan;
+}
 
-अटल व्योम release_pchan(काष्ठा sun4i_dma_dev *priv,
-			  काष्ठा sun4i_dma_pchan *pchan)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक nr = pchan - priv->pchans;
+static void release_pchan(struct sun4i_dma_dev *priv,
+			  struct sun4i_dma_pchan *pchan)
+{
+	unsigned long flags;
+	int nr = pchan - priv->pchans;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	pchan->vchan = शून्य;
+	pchan->vchan = NULL;
 	clear_bit(nr, priv->pchans_used);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल व्योम configure_pchan(काष्ठा sun4i_dma_pchan *pchan,
-			    काष्ठा sun4i_dma_promise *d)
-अणु
+static void configure_pchan(struct sun4i_dma_pchan *pchan,
+			    struct sun4i_dma_promise *d)
+{
 	/*
 	 * Configure addresses and misc parameters depending on type
 	 * SUN4I_DDMA has an extra field with timing parameters
 	 */
-	अगर (pchan->is_dedicated) अणु
-		ग_लिखोl_relaxed(d->src, pchan->base + SUN4I_DDMA_SRC_ADDR_REG);
-		ग_लिखोl_relaxed(d->dst, pchan->base + SUN4I_DDMA_DST_ADDR_REG);
-		ग_लिखोl_relaxed(d->len, pchan->base + SUN4I_DDMA_BYTE_COUNT_REG);
-		ग_लिखोl_relaxed(d->para, pchan->base + SUN4I_DDMA_PARA_REG);
-		ग_लिखोl_relaxed(d->cfg, pchan->base + SUN4I_DDMA_CFG_REG);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl_relaxed(d->src, pchan->base + SUN4I_NDMA_SRC_ADDR_REG);
-		ग_लिखोl_relaxed(d->dst, pchan->base + SUN4I_NDMA_DST_ADDR_REG);
-		ग_लिखोl_relaxed(d->len, pchan->base + SUN4I_NDMA_BYTE_COUNT_REG);
-		ग_लिखोl_relaxed(d->cfg, pchan->base + SUN4I_NDMA_CFG_REG);
-	पूर्ण
-पूर्ण
+	if (pchan->is_dedicated) {
+		writel_relaxed(d->src, pchan->base + SUN4I_DDMA_SRC_ADDR_REG);
+		writel_relaxed(d->dst, pchan->base + SUN4I_DDMA_DST_ADDR_REG);
+		writel_relaxed(d->len, pchan->base + SUN4I_DDMA_BYTE_COUNT_REG);
+		writel_relaxed(d->para, pchan->base + SUN4I_DDMA_PARA_REG);
+		writel_relaxed(d->cfg, pchan->base + SUN4I_DDMA_CFG_REG);
+	} else {
+		writel_relaxed(d->src, pchan->base + SUN4I_NDMA_SRC_ADDR_REG);
+		writel_relaxed(d->dst, pchan->base + SUN4I_NDMA_DST_ADDR_REG);
+		writel_relaxed(d->len, pchan->base + SUN4I_NDMA_BYTE_COUNT_REG);
+		writel_relaxed(d->cfg, pchan->base + SUN4I_NDMA_CFG_REG);
+	}
+}
 
-अटल व्योम set_pchan_पूर्णांकerrupt(काष्ठा sun4i_dma_dev *priv,
-				काष्ठा sun4i_dma_pchan *pchan,
-				पूर्णांक half, पूर्णांक end)
-अणु
+static void set_pchan_interrupt(struct sun4i_dma_dev *priv,
+				struct sun4i_dma_pchan *pchan,
+				int half, int end)
+{
 	u32 reg;
-	पूर्णांक pchan_number = pchan - priv->pchans;
-	अचिन्हित दीर्घ flags;
+	int pchan_number = pchan - priv->pchans;
+	unsigned long flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	reg = पढ़ोl_relaxed(priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
+	reg = readl_relaxed(priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
 
-	अगर (half)
+	if (half)
 		reg |= BIT(pchan_number * 2);
-	अन्यथा
+	else
 		reg &= ~BIT(pchan_number * 2);
 
-	अगर (end)
+	if (end)
 		reg |= BIT(pchan_number * 2 + 1);
-	अन्यथा
+	else
 		reg &= ~BIT(pchan_number * 2 + 1);
 
-	ग_लिखोl_relaxed(reg, priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
+	writel_relaxed(reg, priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
 /*
  * Execute pending operations on a vchan
  *
  * When given a vchan, this function will try to acquire a suitable
- * pchan and, अगर successful, will configure it to fulfill a promise
+ * pchan and, if successful, will configure it to fulfill a promise
  * from the next pending contract.
  *
  * This function must be called with &vchan->vc.lock held.
  */
-अटल पूर्णांक __execute_vchan_pending(काष्ठा sun4i_dma_dev *priv,
-				   काष्ठा sun4i_dma_vchan *vchan)
-अणु
-	काष्ठा sun4i_dma_promise *promise = शून्य;
-	काष्ठा sun4i_dma_contract *contract = शून्य;
-	काष्ठा sun4i_dma_pchan *pchan;
-	काष्ठा virt_dma_desc *vd;
-	पूर्णांक ret;
+static int __execute_vchan_pending(struct sun4i_dma_dev *priv,
+				   struct sun4i_dma_vchan *vchan)
+{
+	struct sun4i_dma_promise *promise = NULL;
+	struct sun4i_dma_contract *contract = NULL;
+	struct sun4i_dma_pchan *pchan;
+	struct virt_dma_desc *vd;
+	int ret;
 
-	lockdep_निश्चित_held(&vchan->vc.lock);
+	lockdep_assert_held(&vchan->vc.lock);
 
-	/* We need a pchan to करो anything, so secure one अगर available */
+	/* We need a pchan to do anything, so secure one if available */
 	pchan = find_and_use_pchan(priv, vchan);
-	अगर (!pchan)
-		वापस -EBUSY;
+	if (!pchan)
+		return -EBUSY;
 
 	/*
-	 * Channel endpoपूर्णांकs must not be repeated, so अगर this vchan
-	 * has alपढ़ोy submitted some work, we can't करो anything अन्यथा
+	 * Channel endpoints must not be repeated, so if this vchan
+	 * has already submitted some work, we can't do anything else
 	 */
-	अगर (vchan->processing) अणु
+	if (vchan->processing) {
 		dev_dbg(chan2dev(&vchan->vc.chan),
 			"processing something to this endpoint already\n");
 		ret = -EBUSY;
-		जाओ release_pchan;
-	पूर्ण
+		goto release_pchan;
+	}
 
-	करो अणु
+	do {
 		/* Figure out which contract we're working with today */
 		vd = vchan_next_desc(&vchan->vc);
-		अगर (!vd) अणु
+		if (!vd) {
 			dev_dbg(chan2dev(&vchan->vc.chan),
 				"No pending contract found");
 			ret = 0;
-			जाओ release_pchan;
-		पूर्ण
+			goto release_pchan;
+		}
 
 		contract = to_sun4i_dma_contract(vd);
-		अगर (list_empty(&contract->demands)) अणु
+		if (list_empty(&contract->demands)) {
 			/* The contract has been completed so mark it as such */
 			list_del(&contract->vd.node);
 			vchan_cookie_complete(&contract->vd);
 			dev_dbg(chan2dev(&vchan->vc.chan),
 				"Empty contract found and marked complete");
-		पूर्ण
-	पूर्ण जबतक (list_empty(&contract->demands));
+		}
+	} while (list_empty(&contract->demands));
 
-	/* Now find out what we need to करो */
+	/* Now find out what we need to do */
 	promise = list_first_entry(&contract->demands,
-				   काष्ठा sun4i_dma_promise, list);
+				   struct sun4i_dma_promise, list);
 	vchan->processing = promise;
 
 	/* ... and make it reality */
-	अगर (promise) अणु
+	if (promise) {
 		vchan->contract = contract;
 		vchan->pchan = pchan;
-		set_pchan_पूर्णांकerrupt(priv, pchan, contract->is_cyclic, 1);
+		set_pchan_interrupt(priv, pchan, contract->is_cyclic, 1);
 		configure_pchan(pchan, promise);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 release_pchan:
 	release_pchan(priv, pchan);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sanitize_config(काष्ठा dma_slave_config *sconfig,
-			   क्रमागत dma_transfer_direction direction)
-अणु
-	चयन (direction) अणु
-	हाल DMA_MEM_TO_DEV:
-		अगर ((sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) ||
+static int sanitize_config(struct dma_slave_config *sconfig,
+			   enum dma_transfer_direction direction)
+{
+	switch (direction) {
+	case DMA_MEM_TO_DEV:
+		if ((sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) ||
 		    !sconfig->dst_maxburst)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+		if (sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			sconfig->src_addr_width = sconfig->dst_addr_width;
 
-		अगर (!sconfig->src_maxburst)
+		if (!sconfig->src_maxburst)
 			sconfig->src_maxburst = sconfig->dst_maxburst;
 
-		अवरोध;
+		break;
 
-	हाल DMA_DEV_TO_MEM:
-		अगर ((sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) ||
+	case DMA_DEV_TO_MEM:
+		if ((sconfig->src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED) ||
 		    !sconfig->src_maxburst)
-			वापस -EINVAL;
+			return -EINVAL;
 
-		अगर (sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+		if (sconfig->dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			sconfig->dst_addr_width = sconfig->src_addr_width;
 
-		अगर (!sconfig->dst_maxburst)
+		if (!sconfig->dst_maxburst)
 			sconfig->dst_maxburst = sconfig->src_maxburst;
 
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Generate a promise, to be used in a normal DMA contract.
  *
- * A NDMA promise contains all the inक्रमmation required to program the
+ * A NDMA promise contains all the information required to program the
  * normal part of the DMA Engine and get data copied. A non-executed
  * promise will live in the demands list on a contract. Once it has been
- * completed, it will be moved to the completed demands list क्रम later मुक्तing.
- * All linked promises will be मुक्तd when the corresponding contract is मुक्तd
+ * completed, it will be moved to the completed demands list for later freeing.
+ * All linked promises will be freed when the corresponding contract is freed
  */
-अटल काष्ठा sun4i_dma_promise *
-generate_ndma_promise(काष्ठा dma_chan *chan, dma_addr_t src, dma_addr_t dest,
-		      माप_प्रकार len, काष्ठा dma_slave_config *sconfig,
-		      क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा sun4i_dma_promise *promise;
-	पूर्णांक ret;
+static struct sun4i_dma_promise *
+generate_ndma_promise(struct dma_chan *chan, dma_addr_t src, dma_addr_t dest,
+		      size_t len, struct dma_slave_config *sconfig,
+		      enum dma_transfer_direction direction)
+{
+	struct sun4i_dma_promise *promise;
+	int ret;
 
 	ret = sanitize_config(sconfig, direction);
-	अगर (ret)
-		वापस शून्य;
+	if (ret)
+		return NULL;
 
-	promise = kzalloc(माप(*promise), GFP_NOWAIT);
-	अगर (!promise)
-		वापस शून्य;
+	promise = kzalloc(sizeof(*promise), GFP_NOWAIT);
+	if (!promise)
+		return NULL;
 
 	promise->src = src;
 	promise->dst = dest;
@@ -458,54 +457,54 @@ generate_ndma_promise(काष्ठा dma_chan *chan, dma_addr_t src, dma_add
 
 	/* Source burst */
 	ret = convert_burst(sconfig->src_maxburst);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_SRC_BURST_LENGTH(ret);
 
 	/* Destination burst */
 	ret = convert_burst(sconfig->dst_maxburst);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_DST_BURST_LENGTH(ret);
 
 	/* Source bus width */
 	ret = convert_buswidth(sconfig->src_addr_width);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_SRC_DATA_WIDTH(ret);
 
 	/* Destination bus width */
 	ret = convert_buswidth(sconfig->dst_addr_width);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_DST_DATA_WIDTH(ret);
 
-	वापस promise;
+	return promise;
 
 fail:
-	kमुक्त(promise);
-	वापस शून्य;
-पूर्ण
+	kfree(promise);
+	return NULL;
+}
 
 /*
  * Generate a promise, to be used in a dedicated DMA contract.
  *
- * A DDMA promise contains all the inक्रमmation required to program the
+ * A DDMA promise contains all the information required to program the
  * Dedicated part of the DMA Engine and get data copied. A non-executed
  * promise will live in the demands list on a contract. Once it has been
- * completed, it will be moved to the completed demands list क्रम later मुक्तing.
- * All linked promises will be मुक्तd when the corresponding contract is मुक्तd
+ * completed, it will be moved to the completed demands list for later freeing.
+ * All linked promises will be freed when the corresponding contract is freed
  */
-अटल काष्ठा sun4i_dma_promise *
-generate_ddma_promise(काष्ठा dma_chan *chan, dma_addr_t src, dma_addr_t dest,
-		      माप_प्रकार len, काष्ठा dma_slave_config *sconfig)
-अणु
-	काष्ठा sun4i_dma_promise *promise;
-	पूर्णांक ret;
+static struct sun4i_dma_promise *
+generate_ddma_promise(struct dma_chan *chan, dma_addr_t src, dma_addr_t dest,
+		      size_t len, struct dma_slave_config *sconfig)
+{
+	struct sun4i_dma_promise *promise;
+	int ret;
 
-	promise = kzalloc(माप(*promise), GFP_NOWAIT);
-	अगर (!promise)
-		वापस शून्य;
+	promise = kzalloc(sizeof(*promise), GFP_NOWAIT);
+	if (!promise)
+		return NULL;
 
 	promise->src = src;
 	promise->dst = dest;
@@ -515,533 +514,533 @@ generate_ddma_promise(काष्ठा dma_chan *chan, dma_addr_t src, dma_add
 
 	/* Source burst */
 	ret = convert_burst(sconfig->src_maxburst);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_SRC_BURST_LENGTH(ret);
 
 	/* Destination burst */
 	ret = convert_burst(sconfig->dst_maxburst);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_DST_BURST_LENGTH(ret);
 
 	/* Source bus width */
 	ret = convert_buswidth(sconfig->src_addr_width);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_SRC_DATA_WIDTH(ret);
 
 	/* Destination bus width */
 	ret = convert_buswidth(sconfig->dst_addr_width);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 	promise->cfg |= SUN4I_DMA_CFG_DST_DATA_WIDTH(ret);
 
-	वापस promise;
+	return promise;
 
 fail:
-	kमुक्त(promise);
-	वापस शून्य;
-पूर्ण
+	kfree(promise);
+	return NULL;
+}
 
 /*
  * Generate a contract
  *
- * Contracts function as DMA descriptors. As our hardware करोes not support
+ * Contracts function as DMA descriptors. As our hardware does not support
  * linked lists, we need to implement SG via software. We use a contract
  * to hold all the pieces of the request and process them serially one
  * after another. Each piece is represented as a promise.
  */
-अटल काष्ठा sun4i_dma_contract *generate_dma_contract(व्योम)
-अणु
-	काष्ठा sun4i_dma_contract *contract;
+static struct sun4i_dma_contract *generate_dma_contract(void)
+{
+	struct sun4i_dma_contract *contract;
 
-	contract = kzalloc(माप(*contract), GFP_NOWAIT);
-	अगर (!contract)
-		वापस शून्य;
+	contract = kzalloc(sizeof(*contract), GFP_NOWAIT);
+	if (!contract)
+		return NULL;
 
 	INIT_LIST_HEAD(&contract->demands);
 	INIT_LIST_HEAD(&contract->completed_demands);
 
-	वापस contract;
-पूर्ण
+	return contract;
+}
 
 /*
  * Get next promise on a cyclic transfer
  *
  * Cyclic contracts contain a series of promises which are executed on a
- * loop. This function वापसs the next promise from a cyclic contract,
- * so it can be programmed पूर्णांकo the hardware.
+ * loop. This function returns the next promise from a cyclic contract,
+ * so it can be programmed into the hardware.
  */
-अटल काष्ठा sun4i_dma_promise *
-get_next_cyclic_promise(काष्ठा sun4i_dma_contract *contract)
-अणु
-	काष्ठा sun4i_dma_promise *promise;
+static struct sun4i_dma_promise *
+get_next_cyclic_promise(struct sun4i_dma_contract *contract)
+{
+	struct sun4i_dma_promise *promise;
 
 	promise = list_first_entry_or_null(&contract->demands,
-					   काष्ठा sun4i_dma_promise, list);
-	अगर (!promise) अणु
+					   struct sun4i_dma_promise, list);
+	if (!promise) {
 		list_splice_init(&contract->completed_demands,
 				 &contract->demands);
 		promise = list_first_entry(&contract->demands,
-					   काष्ठा sun4i_dma_promise, list);
-	पूर्ण
+					   struct sun4i_dma_promise, list);
+	}
 
-	वापस promise;
-पूर्ण
+	return promise;
+}
 
 /*
  * Free a contract and all its associated promises
  */
-अटल व्योम sun4i_dma_मुक्त_contract(काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा sun4i_dma_contract *contract = to_sun4i_dma_contract(vd);
-	काष्ठा sun4i_dma_promise *promise, *पंचांगp;
+static void sun4i_dma_free_contract(struct virt_dma_desc *vd)
+{
+	struct sun4i_dma_contract *contract = to_sun4i_dma_contract(vd);
+	struct sun4i_dma_promise *promise, *tmp;
 
 	/* Free all the demands and completed demands */
-	list_क्रम_each_entry_safe(promise, पंचांगp, &contract->demands, list)
-		kमुक्त(promise);
+	list_for_each_entry_safe(promise, tmp, &contract->demands, list)
+		kfree(promise);
 
-	list_क्रम_each_entry_safe(promise, पंचांगp, &contract->completed_demands, list)
-		kमुक्त(promise);
+	list_for_each_entry_safe(promise, tmp, &contract->completed_demands, list)
+		kfree(promise);
 
-	kमुक्त(contract);
-पूर्ण
+	kfree(contract);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sun4i_dma_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dest,
-			  dma_addr_t src, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
-	काष्ठा sun4i_dma_promise *promise;
-	काष्ठा sun4i_dma_contract *contract;
+static struct dma_async_tx_descriptor *
+sun4i_dma_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest,
+			  dma_addr_t src, size_t len, unsigned long flags)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun4i_dma_promise *promise;
+	struct sun4i_dma_contract *contract;
 
 	contract = generate_dma_contract();
-	अगर (!contract)
-		वापस शून्य;
+	if (!contract)
+		return NULL;
 
 	/*
-	 * We can only करो the copy to bus aligned addresses, so
-	 * choose the best one so we get decent perक्रमmance. We also
-	 * maximize the burst size क्रम this same reason.
+	 * We can only do the copy to bus aligned addresses, so
+	 * choose the best one so we get decent performance. We also
+	 * maximize the burst size for this same reason.
 	 */
 	sconfig->src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	sconfig->dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	sconfig->src_maxburst = 8;
 	sconfig->dst_maxburst = 8;
 
-	अगर (vchan->is_dedicated)
+	if (vchan->is_dedicated)
 		promise = generate_ddma_promise(chan, src, dest, len, sconfig);
-	अन्यथा
+	else
 		promise = generate_ndma_promise(chan, src, dest, len, sconfig,
 						DMA_MEM_TO_MEM);
 
-	अगर (!promise) अणु
-		kमुक्त(contract);
-		वापस शून्य;
-	पूर्ण
+	if (!promise) {
+		kfree(contract);
+		return NULL;
+	}
 
-	/* Configure स_नकल mode */
-	अगर (vchan->is_dedicated) अणु
+	/* Configure memcpy mode */
+	if (vchan->is_dedicated) {
 		promise->cfg |= SUN4I_DMA_CFG_SRC_DRQ_TYPE(SUN4I_DDMA_DRQ_TYPE_SDRAM) |
 				SUN4I_DMA_CFG_DST_DRQ_TYPE(SUN4I_DDMA_DRQ_TYPE_SDRAM);
-	पूर्ण अन्यथा अणु
+	} else {
 		promise->cfg |= SUN4I_DMA_CFG_SRC_DRQ_TYPE(SUN4I_NDMA_DRQ_TYPE_SDRAM) |
 				SUN4I_DMA_CFG_DST_DRQ_TYPE(SUN4I_NDMA_DRQ_TYPE_SDRAM);
-	पूर्ण
+	}
 
 	/* Fill the contract with our only promise */
 	list_add_tail(&promise->list, &contract->demands);
 
 	/* And add it to the vchan */
-	वापस vchan_tx_prep(&vchan->vc, &contract->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&vchan->vc, &contract->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sun4i_dma_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t buf, माप_प्रकार len,
-			  माप_प्रकार period_len, क्रमागत dma_transfer_direction dir,
-			  अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
-	काष्ठा sun4i_dma_promise *promise;
-	काष्ठा sun4i_dma_contract *contract;
+static struct dma_async_tx_descriptor *
+sun4i_dma_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf, size_t len,
+			  size_t period_len, enum dma_transfer_direction dir,
+			  unsigned long flags)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun4i_dma_promise *promise;
+	struct sun4i_dma_contract *contract;
 	dma_addr_t src, dest;
-	u32 endpoपूर्णांकs;
-	पूर्णांक nr_periods, offset, plength, i;
+	u32 endpoints;
+	int nr_periods, offset, plength, i;
 	u8 ram_type, io_mode, linear_mode;
 
-	अगर (!is_slave_direction(dir)) अणु
+	if (!is_slave_direction(dir)) {
 		dev_err(chan2dev(chan), "Invalid DMA direction\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	contract = generate_dma_contract();
-	अगर (!contract)
-		वापस शून्य;
+	if (!contract)
+		return NULL;
 
 	contract->is_cyclic = 1;
 
-	अगर (vchan->is_dedicated) अणु
+	if (vchan->is_dedicated) {
 		io_mode = SUN4I_DDMA_ADDR_MODE_IO;
 		linear_mode = SUN4I_DDMA_ADDR_MODE_LINEAR;
 		ram_type = SUN4I_DDMA_DRQ_TYPE_SDRAM;
-	पूर्ण अन्यथा अणु
+	} else {
 		io_mode = SUN4I_NDMA_ADDR_MODE_IO;
 		linear_mode = SUN4I_NDMA_ADDR_MODE_LINEAR;
 		ram_type = SUN4I_NDMA_DRQ_TYPE_SDRAM;
-	पूर्ण
+	}
 
-	अगर (dir == DMA_MEM_TO_DEV) अणु
+	if (dir == DMA_MEM_TO_DEV) {
 		src = buf;
 		dest = sconfig->dst_addr;
-		endpoपूर्णांकs = SUN4I_DMA_CFG_DST_DRQ_TYPE(vchan->endpoपूर्णांक) |
+		endpoints = SUN4I_DMA_CFG_DST_DRQ_TYPE(vchan->endpoint) |
 			    SUN4I_DMA_CFG_DST_ADDR_MODE(io_mode) |
 			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(ram_type) |
 			    SUN4I_DMA_CFG_SRC_ADDR_MODE(linear_mode);
-	पूर्ण अन्यथा अणु
+	} else {
 		src = sconfig->src_addr;
 		dest = buf;
-		endpoपूर्णांकs = SUN4I_DMA_CFG_DST_DRQ_TYPE(ram_type) |
+		endpoints = SUN4I_DMA_CFG_DST_DRQ_TYPE(ram_type) |
 			    SUN4I_DMA_CFG_DST_ADDR_MODE(linear_mode) |
-			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(vchan->endpoपूर्णांक) |
+			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(vchan->endpoint) |
 			    SUN4I_DMA_CFG_SRC_ADDR_MODE(io_mode);
-	पूर्ण
+	}
 
 	/*
-	 * We will be using half करोne पूर्णांकerrupts to make two periods
+	 * We will be using half done interrupts to make two periods
 	 * out of a promise, so we need to program the DMA engine less
 	 * often
 	 */
 
 	/*
-	 * The engine can पूर्णांकerrupt on half-transfer, so we can use
-	 * this feature to program the engine half as often as अगर we
+	 * The engine can interrupt on half-transfer, so we can use
+	 * this feature to program the engine half as often as if we
 	 * didn't use it (keep in mind the hardware doesn't support
 	 * linked lists).
 	 *
-	 * Say you have a set of periods (| marks the start/end, I क्रम
-	 * पूर्णांकerrupt, P क्रम programming the engine to करो a new
-	 * transfer), the easy but slow way would be to करो
+	 * Say you have a set of periods (| marks the start/end, I for
+	 * interrupt, P for programming the engine to do a new
+	 * transfer), the easy but slow way would be to do
 	 *
 	 *  |---|---|---|---| (periods / promises)
 	 *  P  I,P I,P I,P  I
 	 *
-	 * Using half transfer पूर्णांकerrupts you can करो
+	 * Using half transfer interrupts you can do
 	 *
 	 *  |-------|-------| (promises as configured on hw)
 	 *  |---|---|---|---| (periods)
 	 *  P   I  I,P  I   I
 	 *
-	 * Which requires half the engine programming क्रम the same
+	 * Which requires half the engine programming for the same
 	 * functionality.
 	 */
 	nr_periods = DIV_ROUND_UP(len / period_len, 2);
-	क्रम (i = 0; i < nr_periods; i++) अणु
+	for (i = 0; i < nr_periods; i++) {
 		/* Calculate the offset in the buffer and the length needed */
 		offset = i * period_len * 2;
 		plength = min((len - offset), (period_len * 2));
-		अगर (dir == DMA_MEM_TO_DEV)
+		if (dir == DMA_MEM_TO_DEV)
 			src = buf + offset;
-		अन्यथा
+		else
 			dest = buf + offset;
 
 		/* Make the promise */
-		अगर (vchan->is_dedicated)
+		if (vchan->is_dedicated)
 			promise = generate_ddma_promise(chan, src, dest,
 							plength, sconfig);
-		अन्यथा
+		else
 			promise = generate_ndma_promise(chan, src, dest,
 							plength, sconfig, dir);
 
-		अगर (!promise) अणु
-			/* TODO: should we मुक्त everything? */
-			वापस शून्य;
-		पूर्ण
-		promise->cfg |= endpoपूर्णांकs;
+		if (!promise) {
+			/* TODO: should we free everything? */
+			return NULL;
+		}
+		promise->cfg |= endpoints;
 
 		/* Then add it to the contract */
 		list_add_tail(&promise->list, &contract->demands);
-	पूर्ण
+	}
 
 	/* And add it to the vchan */
-	वापस vchan_tx_prep(&vchan->vc, &contract->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&vchan->vc, &contract->vd, flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-sun4i_dma_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-			अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction dir,
-			अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
-	काष्ठा sun4i_dma_promise *promise;
-	काष्ठा sun4i_dma_contract *contract;
+static struct dma_async_tx_descriptor *
+sun4i_dma_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
+			unsigned int sg_len, enum dma_transfer_direction dir,
+			unsigned long flags, void *context)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun4i_dma_promise *promise;
+	struct sun4i_dma_contract *contract;
 	u8 ram_type, io_mode, linear_mode;
-	काष्ठा scatterlist *sg;
+	struct scatterlist *sg;
 	dma_addr_t srcaddr, dstaddr;
-	u32 endpoपूर्णांकs, para;
-	पूर्णांक i;
+	u32 endpoints, para;
+	int i;
 
-	अगर (!sgl)
-		वापस शून्य;
+	if (!sgl)
+		return NULL;
 
-	अगर (!is_slave_direction(dir)) अणु
+	if (!is_slave_direction(dir)) {
 		dev_err(chan2dev(chan), "Invalid DMA direction\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	contract = generate_dma_contract();
-	अगर (!contract)
-		वापस शून्य;
+	if (!contract)
+		return NULL;
 
-	अगर (vchan->is_dedicated) अणु
+	if (vchan->is_dedicated) {
 		io_mode = SUN4I_DDMA_ADDR_MODE_IO;
 		linear_mode = SUN4I_DDMA_ADDR_MODE_LINEAR;
 		ram_type = SUN4I_DDMA_DRQ_TYPE_SDRAM;
-	पूर्ण अन्यथा अणु
+	} else {
 		io_mode = SUN4I_NDMA_ADDR_MODE_IO;
 		linear_mode = SUN4I_NDMA_ADDR_MODE_LINEAR;
 		ram_type = SUN4I_NDMA_DRQ_TYPE_SDRAM;
-	पूर्ण
+	}
 
-	अगर (dir == DMA_MEM_TO_DEV)
-		endpoपूर्णांकs = SUN4I_DMA_CFG_DST_DRQ_TYPE(vchan->endpoपूर्णांक) |
+	if (dir == DMA_MEM_TO_DEV)
+		endpoints = SUN4I_DMA_CFG_DST_DRQ_TYPE(vchan->endpoint) |
 			    SUN4I_DMA_CFG_DST_ADDR_MODE(io_mode) |
 			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(ram_type) |
 			    SUN4I_DMA_CFG_SRC_ADDR_MODE(linear_mode);
-	अन्यथा
-		endpoपूर्णांकs = SUN4I_DMA_CFG_DST_DRQ_TYPE(ram_type) |
+	else
+		endpoints = SUN4I_DMA_CFG_DST_DRQ_TYPE(ram_type) |
 			    SUN4I_DMA_CFG_DST_ADDR_MODE(linear_mode) |
-			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(vchan->endpoपूर्णांक) |
+			    SUN4I_DMA_CFG_SRC_DRQ_TYPE(vchan->endpoint) |
 			    SUN4I_DMA_CFG_SRC_ADDR_MODE(io_mode);
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		/* Figure out addresses */
-		अगर (dir == DMA_MEM_TO_DEV) अणु
+		if (dir == DMA_MEM_TO_DEV) {
 			srcaddr = sg_dma_address(sg);
 			dstaddr = sconfig->dst_addr;
-		पूर्ण अन्यथा अणु
+		} else {
 			srcaddr = sconfig->src_addr;
 			dstaddr = sg_dma_address(sg);
-		पूर्ण
+		}
 
 		/*
 		 * These are the magic DMA engine timings that keep SPI going.
-		 * I haven't seen any पूर्णांकerface on DMAEngine to configure
-		 * timings, and so far they seem to work क्रम everything we
-		 * support, so I've kept them here. I don't know अगर other
-		 * devices need dअगरferent timings because, as usual, we only
+		 * I haven't seen any interface on DMAEngine to configure
+		 * timings, and so far they seem to work for everything we
+		 * support, so I've kept them here. I don't know if other
+		 * devices need different timings because, as usual, we only
 		 * have the "para" bitfield meanings, but no comment on what
-		 * the values should be when करोing a certain operation :|
+		 * the values should be when doing a certain operation :|
 		 */
 		para = SUN4I_DDMA_MAGIC_SPI_PARAMETERS;
 
 		/* And make a suitable promise */
-		अगर (vchan->is_dedicated)
+		if (vchan->is_dedicated)
 			promise = generate_ddma_promise(chan, srcaddr, dstaddr,
 							sg_dma_len(sg),
 							sconfig);
-		अन्यथा
+		else
 			promise = generate_ndma_promise(chan, srcaddr, dstaddr,
 							sg_dma_len(sg),
 							sconfig, dir);
 
-		अगर (!promise)
-			वापस शून्य; /* TODO: should we मुक्त everything? */
+		if (!promise)
+			return NULL; /* TODO: should we free everything? */
 
-		promise->cfg |= endpoपूर्णांकs;
+		promise->cfg |= endpoints;
 		promise->para = para;
 
 		/* Then add it to the contract */
 		list_add_tail(&promise->list, &contract->demands);
-	पूर्ण
+	}
 
 	/*
-	 * Once we've got all the promises पढ़ोy, add the contract
+	 * Once we've got all the promises ready, add the contract
 	 * to the pending list on the vchan
 	 */
-	वापस vchan_tx_prep(&vchan->vc, &contract->vd, flags);
-पूर्ण
+	return vchan_tx_prep(&vchan->vc, &contract->vd, flags);
+}
 
-अटल पूर्णांक sun4i_dma_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun4i_dma_dev *priv = to_sun4i_dma_dev(chan->device);
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	काष्ठा sun4i_dma_pchan *pchan = vchan->pchan;
+static int sun4i_dma_terminate_all(struct dma_chan *chan)
+{
+	struct sun4i_dma_dev *priv = to_sun4i_dma_dev(chan->device);
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	struct sun4i_dma_pchan *pchan = vchan->pchan;
 	LIST_HEAD(head);
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 	vchan_get_all_descriptors(&vchan->vc, &head);
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
 	/*
-	 * Clearing the configuration रेजिस्टर will halt the pchan. Interrupts
-	 * may still trigger, so करोn't क्रमget to disable them.
+	 * Clearing the configuration register will halt the pchan. Interrupts
+	 * may still trigger, so don't forget to disable them.
 	 */
-	अगर (pchan) अणु
-		अगर (pchan->is_dedicated)
-			ग_लिखोl(0, pchan->base + SUN4I_DDMA_CFG_REG);
-		अन्यथा
-			ग_लिखोl(0, pchan->base + SUN4I_NDMA_CFG_REG);
-		set_pchan_पूर्णांकerrupt(priv, pchan, 0, 0);
+	if (pchan) {
+		if (pchan->is_dedicated)
+			writel(0, pchan->base + SUN4I_DDMA_CFG_REG);
+		else
+			writel(0, pchan->base + SUN4I_NDMA_CFG_REG);
+		set_pchan_interrupt(priv, pchan, 0, 0);
 		release_pchan(priv, pchan);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 	/* Clear these so the vchan is usable again */
-	vchan->processing = शून्य;
-	vchan->pchan = शून्य;
+	vchan->processing = NULL;
+	vchan->pchan = NULL;
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	vchan_dma_desc_मुक्त_list(&vchan->vc, &head);
+	vchan_dma_desc_free_list(&vchan->vc, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun4i_dma_config(काष्ठा dma_chan *chan,
-			    काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+static int sun4i_dma_config(struct dma_chan *chan,
+			    struct dma_slave_config *config)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
 
-	स_नकल(&vchan->cfg, config, माप(*config));
+	memcpy(&vchan->cfg, config, sizeof(*config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dma_chan *sun4i_dma_of_xlate(काष्ठा of_phandle_args *dma_spec,
-					   काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा sun4i_dma_dev *priv = ofdma->of_dma_data;
-	काष्ठा sun4i_dma_vchan *vchan;
-	काष्ठा dma_chan *chan;
+static struct dma_chan *sun4i_dma_of_xlate(struct of_phandle_args *dma_spec,
+					   struct of_dma *ofdma)
+{
+	struct sun4i_dma_dev *priv = ofdma->of_dma_data;
+	struct sun4i_dma_vchan *vchan;
+	struct dma_chan *chan;
 	u8 is_dedicated = dma_spec->args[0];
-	u8 endpoपूर्णांक = dma_spec->args[1];
+	u8 endpoint = dma_spec->args[1];
 
-	/* Check अगर type is Normal or Dedicated */
-	अगर (is_dedicated != 0 && is_dedicated != 1)
-		वापस शून्य;
+	/* Check if type is Normal or Dedicated */
+	if (is_dedicated != 0 && is_dedicated != 1)
+		return NULL;
 
-	/* Make sure the endpoपूर्णांक looks sane */
-	अगर ((is_dedicated && endpoपूर्णांक >= SUN4I_DDMA_DRQ_TYPE_LIMIT) ||
-	    (!is_dedicated && endpoपूर्णांक >= SUN4I_NDMA_DRQ_TYPE_LIMIT))
-		वापस शून्य;
+	/* Make sure the endpoint looks sane */
+	if ((is_dedicated && endpoint >= SUN4I_DDMA_DRQ_TYPE_LIMIT) ||
+	    (!is_dedicated && endpoint >= SUN4I_NDMA_DRQ_TYPE_LIMIT))
+		return NULL;
 
 	chan = dma_get_any_slave_channel(&priv->slave);
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
-	/* Assign the endpoपूर्णांक to the vchan */
+	/* Assign the endpoint to the vchan */
 	vchan = to_sun4i_dma_vchan(chan);
 	vchan->is_dedicated = is_dedicated;
-	vchan->endpoपूर्णांक = endpoपूर्णांक;
+	vchan->endpoint = endpoint;
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल क्रमागत dma_status sun4i_dma_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status sun4i_dma_tx_status(struct dma_chan *chan,
 					   dma_cookie_t cookie,
-					   काष्ठा dma_tx_state *state)
-अणु
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	काष्ठा sun4i_dma_pchan *pchan = vchan->pchan;
-	काष्ठा sun4i_dma_contract *contract;
-	काष्ठा sun4i_dma_promise *promise;
-	काष्ठा virt_dma_desc *vd;
-	अचिन्हित दीर्घ flags;
-	क्रमागत dma_status ret;
-	माप_प्रकार bytes = 0;
+					   struct dma_tx_state *state)
+{
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	struct sun4i_dma_pchan *pchan = vchan->pchan;
+	struct sun4i_dma_contract *contract;
+	struct sun4i_dma_promise *promise;
+	struct virt_dma_desc *vd;
+	unsigned long flags;
+	enum dma_status ret;
+	size_t bytes = 0;
 
 	ret = dma_cookie_status(chan, cookie, state);
-	अगर (!state || (ret == DMA_COMPLETE))
-		वापस ret;
+	if (!state || (ret == DMA_COMPLETE))
+		return ret;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 	vd = vchan_find_desc(&vchan->vc, cookie);
-	अगर (!vd)
-		जाओ निकास;
+	if (!vd)
+		goto exit;
 	contract = to_sun4i_dma_contract(vd);
 
-	list_क्रम_each_entry(promise, &contract->demands, list)
+	list_for_each_entry(promise, &contract->demands, list)
 		bytes += promise->len;
 
 	/*
-	 * The hardware is configured to वापस the reमुख्यing byte
+	 * The hardware is configured to return the remaining byte
 	 * quantity. If possible, replace the first listed element's
-	 * full size with the actual reमुख्यing amount
+	 * full size with the actual remaining amount
 	 */
 	promise = list_first_entry_or_null(&contract->demands,
-					   काष्ठा sun4i_dma_promise, list);
-	अगर (promise && pchan) अणु
+					   struct sun4i_dma_promise, list);
+	if (promise && pchan) {
 		bytes -= promise->len;
-		अगर (pchan->is_dedicated)
-			bytes += पढ़ोl(pchan->base + SUN4I_DDMA_BYTE_COUNT_REG);
-		अन्यथा
-			bytes += पढ़ोl(pchan->base + SUN4I_NDMA_BYTE_COUNT_REG);
-	पूर्ण
+		if (pchan->is_dedicated)
+			bytes += readl(pchan->base + SUN4I_DDMA_BYTE_COUNT_REG);
+		else
+			bytes += readl(pchan->base + SUN4I_NDMA_BYTE_COUNT_REG);
+	}
 
-निकास:
+exit:
 
 	dma_set_residue(state, bytes);
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sun4i_dma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun4i_dma_dev *priv = to_sun4i_dma_dev(chan->device);
-	काष्ठा sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
-	अचिन्हित दीर्घ flags;
+static void sun4i_dma_issue_pending(struct dma_chan *chan)
+{
+	struct sun4i_dma_dev *priv = to_sun4i_dma_dev(chan->device);
+	struct sun4i_dma_vchan *vchan = to_sun4i_dma_vchan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
 	/*
-	 * If there are pending transactions क्रम this vchan, push one of
-	 * them पूर्णांकo the engine to get the ball rolling.
+	 * If there are pending transactions for this vchan, push one of
+	 * them into the engine to get the ball rolling.
 	 */
-	अगर (vchan_issue_pending(&vchan->vc))
+	if (vchan_issue_pending(&vchan->vc))
 		__execute_vchan_pending(priv, vchan);
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
-पूर्ण
+}
 
-अटल irqवापस_t sun4i_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sun4i_dma_dev *priv = dev_id;
-	काष्ठा sun4i_dma_pchan *pchans = priv->pchans, *pchan;
-	काष्ठा sun4i_dma_vchan *vchan;
-	काष्ठा sun4i_dma_contract *contract;
-	काष्ठा sun4i_dma_promise *promise;
-	अचिन्हित दीर्घ pendirq, irqs, disableirqs;
-	पूर्णांक bit, i, मुक्त_room, allow_mitigation = 1;
+static irqreturn_t sun4i_dma_interrupt(int irq, void *dev_id)
+{
+	struct sun4i_dma_dev *priv = dev_id;
+	struct sun4i_dma_pchan *pchans = priv->pchans, *pchan;
+	struct sun4i_dma_vchan *vchan;
+	struct sun4i_dma_contract *contract;
+	struct sun4i_dma_promise *promise;
+	unsigned long pendirq, irqs, disableirqs;
+	int bit, i, free_room, allow_mitigation = 1;
 
-	pendirq = पढ़ोl_relaxed(priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
+	pendirq = readl_relaxed(priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
 
 handle_pending:
 
 	disableirqs = 0;
-	मुक्त_room = 0;
+	free_room = 0;
 
-	क्रम_each_set_bit(bit, &pendirq, 32) अणु
+	for_each_set_bit(bit, &pendirq, 32) {
 		pchan = &pchans[bit >> 1];
 		vchan = pchan->vchan;
-		अगर (!vchan) /* a terminated channel may still पूर्णांकerrupt */
-			जारी;
+		if (!vchan) /* a terminated channel may still interrupt */
+			continue;
 		contract = vchan->contract;
 
 		/*
-		 * Disable the IRQ and मुक्त the pchan अगर it's an end
-		 * पूर्णांकerrupt (odd bit)
+		 * Disable the IRQ and free the pchan if it's an end
+		 * interrupt (odd bit)
 		 */
-		अगर (bit & 1) अणु
+		if (bit & 1) {
 			spin_lock(&vchan->vc.lock);
 
 			/*
-			 * Move the promise पूर्णांकo the completed list now that
-			 * we're करोne with it
+			 * Move the promise into the completed list now that
+			 * we're done with it
 			 */
 			list_del(&vchan->processing->list);
 			list_add_tail(&vchan->processing->list,
@@ -1052,103 +1051,103 @@ handle_pending:
 			 * - There's always something we can dispatch
 			 * - We need to run the callback
 			 * - Latency is very important, as this is used by audio
-			 * We thereक्रमe just cycle through the list and dispatch
+			 * We therefore just cycle through the list and dispatch
 			 * whatever we have here, reusing the pchan. There's
-			 * no need to run the thपढ़ो after this.
+			 * no need to run the thread after this.
 			 *
 			 * For non-cyclic transfers we need to look around,
-			 * so we can program some more work, or notअगरy the
+			 * so we can program some more work, or notify the
 			 * client that their transfers have been completed.
 			 */
-			अगर (contract->is_cyclic) अणु
+			if (contract->is_cyclic) {
 				promise = get_next_cyclic_promise(contract);
 				vchan->processing = promise;
 				configure_pchan(pchan, promise);
 				vchan_cyclic_callback(&contract->vd);
-			पूर्ण अन्यथा अणु
-				vchan->processing = शून्य;
-				vchan->pchan = शून्य;
+			} else {
+				vchan->processing = NULL;
+				vchan->pchan = NULL;
 
-				मुक्त_room = 1;
+				free_room = 1;
 				disableirqs |= BIT(bit);
 				release_pchan(priv, pchan);
-			पूर्ण
+			}
 
 			spin_unlock(&vchan->vc.lock);
-		पूर्ण अन्यथा अणु
-			/* Half करोne पूर्णांकerrupt */
-			अगर (contract->is_cyclic)
+		} else {
+			/* Half done interrupt */
+			if (contract->is_cyclic)
 				vchan_cyclic_callback(&contract->vd);
-			अन्यथा
+			else
 				disableirqs |= BIT(bit);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Disable the IRQs क्रम events we handled */
+	/* Disable the IRQs for events we handled */
 	spin_lock(&priv->lock);
-	irqs = पढ़ोl_relaxed(priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
-	ग_लिखोl_relaxed(irqs & ~disableirqs,
+	irqs = readl_relaxed(priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
+	writel_relaxed(irqs & ~disableirqs,
 		       priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
 	spin_unlock(&priv->lock);
 
-	/* Writing 1 to the pending field will clear the pending पूर्णांकerrupt */
-	ग_लिखोl_relaxed(pendirq, priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
+	/* Writing 1 to the pending field will clear the pending interrupt */
+	writel_relaxed(pendirq, priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
 
 	/*
-	 * If a pchan was मुक्तd, we may be able to schedule something अन्यथा,
+	 * If a pchan was freed, we may be able to schedule something else,
 	 * so have a look around
 	 */
-	अगर (मुक्त_room) अणु
-		क्रम (i = 0; i < SUN4I_DMA_NR_MAX_VCHANS; i++) अणु
+	if (free_room) {
+		for (i = 0; i < SUN4I_DMA_NR_MAX_VCHANS; i++) {
 			vchan = &priv->vchans[i];
 			spin_lock(&vchan->vc.lock);
 			__execute_vchan_pending(priv, vchan);
 			spin_unlock(&vchan->vc.lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Handle newer पूर्णांकerrupts अगर some showed up, but only करो it once
-	 * to aव्योम a too दीर्घ a loop
+	 * Handle newer interrupts if some showed up, but only do it once
+	 * to avoid a too long a loop
 	 */
-	अगर (allow_mitigation) अणु
-		pendirq = पढ़ोl_relaxed(priv->base +
+	if (allow_mitigation) {
+		pendirq = readl_relaxed(priv->base +
 					SUN4I_DMA_IRQ_PENDING_STATUS_REG);
-		अगर (pendirq) अणु
+		if (pendirq) {
 			allow_mitigation = 0;
-			जाओ handle_pending;
-		पूर्ण
-	पूर्ण
+			goto handle_pending;
+		}
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sun4i_dma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun4i_dma_dev *priv;
-	काष्ठा resource *res;
-	पूर्णांक i, j, ret;
+static int sun4i_dma_probe(struct platform_device *pdev)
+{
+	struct sun4i_dma_dev *priv;
+	struct resource *res;
+	int i, j, ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	priv->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (priv->irq < 0)
-		वापस priv->irq;
+	priv->irq = platform_get_irq(pdev, 0);
+	if (priv->irq < 0)
+		return priv->irq;
 
-	priv->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(priv->clk)) अणु
+	priv->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(priv->clk)) {
 		dev_err(&pdev->dev, "No clock specified\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	spin_lock_init(&priv->lock);
 
 	dma_cap_zero(priv->slave.cap_mask);
@@ -1158,11 +1157,11 @@ handle_pending:
 	dma_cap_set(DMA_SLAVE, priv->slave.cap_mask);
 
 	INIT_LIST_HEAD(&priv->slave.channels);
-	priv->slave.device_मुक्त_chan_resources	= sun4i_dma_मुक्त_chan_resources;
+	priv->slave.device_free_chan_resources	= sun4i_dma_free_chan_resources;
 	priv->slave.device_tx_status		= sun4i_dma_tx_status;
 	priv->slave.device_issue_pending	= sun4i_dma_issue_pending;
 	priv->slave.device_prep_slave_sg	= sun4i_dma_prep_slave_sg;
-	priv->slave.device_prep_dma_स_नकल	= sun4i_dma_prep_dma_स_नकल;
+	priv->slave.device_prep_dma_memcpy	= sun4i_dma_prep_dma_memcpy;
 	priv->slave.device_prep_dma_cyclic	= sun4i_dma_prep_dma_cyclic;
 	priv->slave.device_config		= sun4i_dma_config;
 	priv->slave.device_terminate_all	= sun4i_dma_terminate_all;
@@ -1179,112 +1178,112 @@ handle_pending:
 
 	priv->slave.dev = &pdev->dev;
 
-	priv->pchans = devm_kसुस्मृति(&pdev->dev, SUN4I_DMA_NR_MAX_CHANNELS,
-				    माप(काष्ठा sun4i_dma_pchan), GFP_KERNEL);
-	priv->vchans = devm_kसुस्मृति(&pdev->dev, SUN4I_DMA_NR_MAX_VCHANS,
-				    माप(काष्ठा sun4i_dma_vchan), GFP_KERNEL);
-	अगर (!priv->vchans || !priv->pchans)
-		वापस -ENOMEM;
+	priv->pchans = devm_kcalloc(&pdev->dev, SUN4I_DMA_NR_MAX_CHANNELS,
+				    sizeof(struct sun4i_dma_pchan), GFP_KERNEL);
+	priv->vchans = devm_kcalloc(&pdev->dev, SUN4I_DMA_NR_MAX_VCHANS,
+				    sizeof(struct sun4i_dma_vchan), GFP_KERNEL);
+	if (!priv->vchans || !priv->pchans)
+		return -ENOMEM;
 
 	/*
 	 * [0..SUN4I_NDMA_NR_MAX_CHANNELS) are normal pchans, and
 	 * [SUN4I_NDMA_NR_MAX_CHANNELS..SUN4I_DMA_NR_MAX_CHANNELS) are
 	 * dedicated ones
 	 */
-	क्रम (i = 0; i < SUN4I_NDMA_NR_MAX_CHANNELS; i++)
+	for (i = 0; i < SUN4I_NDMA_NR_MAX_CHANNELS; i++)
 		priv->pchans[i].base = priv->base +
 			SUN4I_NDMA_CHANNEL_REG_BASE(i);
 
-	क्रम (j = 0; i < SUN4I_DMA_NR_MAX_CHANNELS; i++, j++) अणु
+	for (j = 0; i < SUN4I_DMA_NR_MAX_CHANNELS; i++, j++) {
 		priv->pchans[i].base = priv->base +
 			SUN4I_DDMA_CHANNEL_REG_BASE(j);
 		priv->pchans[i].is_dedicated = 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < SUN4I_DMA_NR_MAX_VCHANS; i++) अणु
-		काष्ठा sun4i_dma_vchan *vchan = &priv->vchans[i];
+	for (i = 0; i < SUN4I_DMA_NR_MAX_VCHANS; i++) {
+		struct sun4i_dma_vchan *vchan = &priv->vchans[i];
 
 		spin_lock_init(&vchan->vc.lock);
-		vchan->vc.desc_मुक्त = sun4i_dma_मुक्त_contract;
+		vchan->vc.desc_free = sun4i_dma_free_contract;
 		vchan_init(&vchan->vc, &priv->slave);
-	पूर्ण
+	}
 
 	ret = clk_prepare_enable(priv->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Couldn't enable the clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * Make sure the IRQs are all disabled and accounted क्रम. The bootloader
+	 * Make sure the IRQs are all disabled and accounted for. The bootloader
 	 * likes to leave these dirty
 	 */
-	ग_लिखोl(0, priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
-	ग_लिखोl(0xFFFFFFFF, priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
+	writel(0, priv->base + SUN4I_DMA_IRQ_ENABLE_REG);
+	writel(0xFFFFFFFF, priv->base + SUN4I_DMA_IRQ_PENDING_STATUS_REG);
 
-	ret = devm_request_irq(&pdev->dev, priv->irq, sun4i_dma_पूर्णांकerrupt,
+	ret = devm_request_irq(&pdev->dev, priv->irq, sun4i_dma_interrupt,
 			       0, dev_name(&pdev->dev), priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Cannot request IRQ\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	ret = dma_async_device_रेजिस्टर(&priv->slave);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&priv->slave);
+	if (ret) {
 		dev_warn(&pdev->dev, "Failed to register DMA engine device\n");
-		जाओ err_clk_disable;
-	पूर्ण
+		goto err_clk_disable;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node, sun4i_dma_of_xlate,
+	ret = of_dma_controller_register(pdev->dev.of_node, sun4i_dma_of_xlate,
 					 priv);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "of_dma_controller_register failed\n");
-		जाओ err_dma_unरेजिस्टर;
-	पूर्ण
+		goto err_dma_unregister;
+	}
 
 	dev_dbg(&pdev->dev, "Successfully probed SUN4I_DMA\n");
 
-	वापस 0;
+	return 0;
 
-err_dma_unरेजिस्टर:
-	dma_async_device_unरेजिस्टर(&priv->slave);
+err_dma_unregister:
+	dma_async_device_unregister(&priv->slave);
 err_clk_disable:
 	clk_disable_unprepare(priv->clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sun4i_dma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun4i_dma_dev *priv = platक्रमm_get_drvdata(pdev);
+static int sun4i_dma_remove(struct platform_device *pdev)
+{
+	struct sun4i_dma_dev *priv = platform_get_drvdata(pdev);
 
 	/* Disable IRQ so no more work is scheduled */
 	disable_irq(priv->irq);
 
-	of_dma_controller_मुक्त(pdev->dev.of_node);
-	dma_async_device_unरेजिस्टर(&priv->slave);
+	of_dma_controller_free(pdev->dev.of_node);
+	dma_async_device_unregister(&priv->slave);
 
 	clk_disable_unprepare(priv->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id sun4i_dma_match[] = अणु
-	अणु .compatible = "allwinner,sun4i-a10-dma" पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id sun4i_dma_match[] = {
+	{ .compatible = "allwinner,sun4i-a10-dma" },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, sun4i_dma_match);
 
-अटल काष्ठा platक्रमm_driver sun4i_dma_driver = अणु
+static struct platform_driver sun4i_dma_driver = {
 	.probe	= sun4i_dma_probe,
-	.हटाओ	= sun4i_dma_हटाओ,
-	.driver	= अणु
+	.remove	= sun4i_dma_remove,
+	.driver	= {
 		.name		= "sun4i-dma",
 		.of_match_table	= sun4i_dma_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(sun4i_dma_driver);
+module_platform_driver(sun4i_dma_driver);
 
 MODULE_DESCRIPTION("Allwinner A10 Dedicated DMA Controller Driver");
-MODULE_AUTHOR("Emilio Lथकpez <emilio@elopez.com.ar>");
+MODULE_AUTHOR("Emilio López <emilio@elopez.com.ar>");
 MODULE_LICENSE("GPL");

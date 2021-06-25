@@ -1,12 +1,11 @@
-<शैली गुरु>
 /* Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,26 +22,26 @@
  *
  */
 
-#अगर_अघोषित __DAL_DPP_DCN10_H__
-#घोषणा __DAL_DPP_DCN10_H__
+#ifndef __DAL_DPP_DCN10_H__
+#define __DAL_DPP_DCN10_H__
 
-#समावेश "dpp.h"
+#include "dpp.h"
 
-#घोषणा TO_DCN10_DPP(dpp)\
-	container_of(dpp, काष्ठा dcn10_dpp, base)
+#define TO_DCN10_DPP(dpp)\
+	container_of(dpp, struct dcn10_dpp, base)
 
-/* TODO: Use correct number of taps. Using polaris values क्रम now */
-#घोषणा LB_TOTAL_NUMBER_OF_ENTRIES 5124
-#घोषणा LB_BITS_PER_ENTRY 144
+/* TODO: Use correct number of taps. Using polaris values for now */
+#define LB_TOTAL_NUMBER_OF_ENTRIES 5124
+#define LB_BITS_PER_ENTRY 144
 
-#घोषणा TF_SF(reg_name, field_name, post_fix)\
+#define TF_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-//Used to resolve corner हाल
-#घोषणा TF2_SF(reg_name, field_name, post_fix)\
+//Used to resolve corner case
+#define TF2_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## _ ## field_name ## post_fix
 
-#घोषणा TF_REG_LIST_DCN(id) \
+#define TF_REG_LIST_DCN(id) \
 	SRI(CM_GAMUT_REMAP_CONTROL, CM, id),\
 	SRI(CM_GAMUT_REMAP_C11_C12, CM, id),\
 	SRI(CM_GAMUT_REMAP_C13_C14, CM, id),\
@@ -128,7 +127,7 @@
 
 
 
-#घोषणा TF_REG_LIST_DCN10(id) \
+#define TF_REG_LIST_DCN10(id) \
 	TF_REG_LIST_DCN(id), \
 	SRI(CM_COMA_C11_C12, CM, id),\
 	SRI(CM_COMA_C33_C34, CM, id),\
@@ -181,7 +180,7 @@
 	SRI(CM_CMOUT_CONTROL, CM, id)
 
 
-#घोषणा TF_REG_LIST_SH_MASK_DCN(mask_sh)\
+#define TF_REG_LIST_SH_MASK_DCN(mask_sh)\
 	TF_SF(CM0_CM_GAMUT_REMAP_CONTROL, CM_GAMUT_REMAP_MODE, mask_sh),\
 	TF_SF(CM0_CM_GAMUT_REMAP_C11_C12, CM_GAMUT_REMAP_C11, mask_sh),\
 	TF_SF(CM0_CM_GAMUT_REMAP_C11_C12, CM_GAMUT_REMAP_C12, mask_sh),\
@@ -335,7 +334,7 @@
 	TF_SF(DPP_TOP0_DPP_CONTROL, DPP_CLOCK_ENABLE, mask_sh), \
 	TF_SF(CM0_CM_HDR_MULT_COEF, CM_HDR_MULT_COEF, mask_sh)
 
-#घोषणा TF_REG_LIST_SH_MASK_DCN10(mask_sh)\
+#define TF_REG_LIST_SH_MASK_DCN10(mask_sh)\
 	TF_REG_LIST_SH_MASK_DCN(mask_sh),\
 	TF_SF(DSCL0_LB_DATA_FORMAT, PIXEL_DEPTH, mask_sh),\
 	TF_SF(DSCL0_LB_DATA_FORMAT, PIXEL_EXPAN_MODE, mask_sh),\
@@ -442,9 +441,9 @@
 
 /*
  *
-	DCN1 CM debug status रेजिस्टर definition
+	DCN1 CM debug status register definition
 
-	रेजिस्टर :ID9_CM_STATUS करो
+	register :ID9_CM_STATUS do
 	implement_ref :cm
 	map to:  :cmdebugind, at: j
 	width 32
@@ -458,7 +457,7 @@
 		field :ID9_HDR_BYPASS, [9], R
 		field :ID9_GAMUT_REMAP_MODE, [11..10], R
 		field :ID9_RGAM_LUT_MODE, [14..12], R
-		#1 मुक्त bit
+		#1 free bit
 		field :ID9_OCSC_MODE, [18..16], R
 		field :ID9_DENORM_MODE, [21..19], R
 		field :ID9_ROUND_TRUNC_MODE, [25..22], R
@@ -467,15 +466,15 @@
 	end
 */
 
-#घोषणा TF_DEBUG_REG_LIST_SH_DCN10 \
+#define TF_DEBUG_REG_LIST_SH_DCN10 \
 	.CM_TEST_DEBUG_DATA_ID9_ICSC_MODE = 4, \
 	.CM_TEST_DEBUG_DATA_ID9_OCSC_MODE = 16
 
-#घोषणा TF_DEBUG_REG_LIST_MASK_DCN10 \
+#define TF_DEBUG_REG_LIST_MASK_DCN10 \
 	.CM_TEST_DEBUG_DATA_ID9_ICSC_MODE = 0x30, \
 	.CM_TEST_DEBUG_DATA_ID9_OCSC_MODE = 0x70000
 
-#घोषणा TF_REG_FIELD_LIST(type) \
+#define TF_REG_FIELD_LIST(type) \
 	type EXT_OVERSCAN_LEFT; \
 	type EXT_OVERSCAN_RIGHT; \
 	type EXT_OVERSCAN_BOTTOM; \
@@ -1090,434 +1089,434 @@
 	type CUR0_FP_BIAS; \
 	type CUR0_FP_SCALE;
 
-काष्ठा dcn_dpp_shअगरt अणु
-	TF_REG_FIELD_LIST(uपूर्णांक8_t)
-पूर्ण;
+struct dcn_dpp_shift {
+	TF_REG_FIELD_LIST(uint8_t)
+};
 
-काष्ठा dcn_dpp_mask अणु
-	TF_REG_FIELD_LIST(uपूर्णांक32_t)
-पूर्ण;
+struct dcn_dpp_mask {
+	TF_REG_FIELD_LIST(uint32_t)
+};
 
-#घोषणा DPP_COMMON_REG_VARIABLE_LIST \
-	uपूर्णांक32_t DSCL_EXT_OVERSCAN_LEFT_RIGHT; \
-	uपूर्णांक32_t DSCL_EXT_OVERSCAN_TOP_BOTTOM; \
-	uपूर्णांक32_t OTG_H_BLANK; \
-	uपूर्णांक32_t OTG_V_BLANK; \
-	uपूर्णांक32_t DSCL_MEM_PWR_CTRL; \
-	uपूर्णांक32_t DSCL_MEM_PWR_STATUS; \
-	uपूर्णांक32_t SCL_MODE; \
-	uपूर्णांक32_t LB_DATA_FORMAT; \
-	uपूर्णांक32_t LB_MEMORY_CTRL; \
-	uपूर्णांक32_t DSCL_AUTOCAL; \
-	uपूर्णांक32_t SCL_BLACK_OFFSET; \
-	uपूर्णांक32_t SCL_TAP_CONTROL; \
-	uपूर्णांक32_t SCL_COEF_RAM_TAP_SELECT; \
-	uपूर्णांक32_t SCL_COEF_RAM_TAP_DATA; \
-	uपूर्णांक32_t DSCL_2TAP_CONTROL; \
-	uपूर्णांक32_t MPC_SIZE; \
-	uपूर्णांक32_t SCL_HORZ_FILTER_SCALE_RATIO; \
-	uपूर्णांक32_t SCL_VERT_FILTER_SCALE_RATIO; \
-	uपूर्णांक32_t SCL_HORZ_FILTER_SCALE_RATIO_C; \
-	uपूर्णांक32_t SCL_VERT_FILTER_SCALE_RATIO_C; \
-	uपूर्णांक32_t SCL_HORZ_FILTER_INIT; \
-	uपूर्णांक32_t SCL_HORZ_FILTER_INIT_C; \
-	uपूर्णांक32_t SCL_VERT_FILTER_INIT; \
-	uपूर्णांक32_t SCL_VERT_FILTER_INIT_BOT; \
-	uपूर्णांक32_t SCL_VERT_FILTER_INIT_C; \
-	uपूर्णांक32_t SCL_VERT_FILTER_INIT_BOT_C; \
-	uपूर्णांक32_t RECOUT_START; \
-	uपूर्णांक32_t RECOUT_SIZE; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_CONTROL; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C11_C12; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C13_C14; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C21_C22; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C23_C24; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C31_C32; \
-	uपूर्णांक32_t CM_GAMUT_REMAP_C33_C34; \
-	uपूर्णांक32_t CM_COMA_C11_C12; \
-	uपूर्णांक32_t CM_COMA_C33_C34; \
-	uपूर्णांक32_t CM_COMB_C11_C12; \
-	uपूर्णांक32_t CM_COMB_C33_C34; \
-	uपूर्णांक32_t CM_OCSC_CONTROL; \
-	uपूर्णांक32_t CM_OCSC_C11_C12; \
-	uपूर्णांक32_t CM_OCSC_C33_C34; \
-	uपूर्णांक32_t CM_MEM_PWR_CTRL; \
-	uपूर्णांक32_t CM_RGAM_LUT_DATA; \
-	uपूर्णांक32_t CM_RGAM_LUT_WRITE_EN_MASK; \
-	uपूर्णांक32_t CM_RGAM_LUT_INDEX; \
-	uपूर्णांक32_t CM_RGAM_RAMB_START_CNTL_B; \
-	uपूर्णांक32_t CM_RGAM_RAMB_START_CNTL_G; \
-	uपूर्णांक32_t CM_RGAM_RAMB_START_CNTL_R; \
-	uपूर्णांक32_t CM_RGAM_RAMB_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_RGAM_RAMB_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_RGAM_RAMB_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL1_B; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL2_B; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL1_G; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL2_G; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL1_R; \
-	uपूर्णांक32_t CM_RGAM_RAMB_END_CNTL2_R; \
-	uपूर्णांक32_t CM_RGAM_RAMB_REGION_0_1; \
-	uपूर्णांक32_t CM_RGAM_RAMB_REGION_32_33; \
-	uपूर्णांक32_t CM_RGAM_RAMA_START_CNTL_B; \
-	uपूर्णांक32_t CM_RGAM_RAMA_START_CNTL_G; \
-	uपूर्णांक32_t CM_RGAM_RAMA_START_CNTL_R; \
-	uपूर्णांक32_t CM_RGAM_RAMA_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_RGAM_RAMA_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_RGAM_RAMA_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL1_B; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL2_B; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL1_G; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL2_G; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL1_R; \
-	uपूर्णांक32_t CM_RGAM_RAMA_END_CNTL2_R; \
-	uपूर्णांक32_t CM_RGAM_RAMA_REGION_0_1; \
-	uपूर्णांक32_t CM_RGAM_RAMA_REGION_32_33; \
-	uपूर्णांक32_t CM_RGAM_CONTROL; \
-	uपूर्णांक32_t CM_CMOUT_CONTROL; \
-	uपूर्णांक32_t CM_BLNDGAM_LUT_WRITE_EN_MASK; \
-	uपूर्णांक32_t CM_BLNDGAM_CONTROL; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_START_CNTL_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_START_CNTL_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_START_CNTL_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL1_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL2_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL1_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL2_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL1_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_END_CNTL2_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_0_1; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_2_3; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_4_5; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_6_7; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_8_9; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_10_11; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_12_13; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_14_15; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_16_17; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_18_19; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_20_21; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_22_23; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_24_25; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_26_27; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_28_29; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_30_31; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMB_REGION_32_33; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_START_CNTL_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_START_CNTL_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_START_CNTL_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL1_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL2_B; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL1_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL2_G; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL1_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_END_CNTL2_R; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_0_1; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_2_3; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_4_5; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_6_7; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_8_9; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_10_11; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_12_13; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_14_15; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_16_17; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_18_19; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_20_21; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_22_23; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_24_25; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_26_27; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_28_29; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_30_31; \
-	uपूर्णांक32_t CM_BLNDGAM_RAMA_REGION_32_33; \
-	uपूर्णांक32_t CM_BLNDGAM_LUT_INDEX; \
-	uपूर्णांक32_t CM_3DLUT_MODE; \
-	uपूर्णांक32_t CM_3DLUT_INDEX; \
-	uपूर्णांक32_t CM_3DLUT_DATA; \
-	uपूर्णांक32_t CM_3DLUT_DATA_30BIT; \
-	uपूर्णांक32_t CM_3DLUT_READ_WRITE_CONTROL; \
-	uपूर्णांक32_t CM_SHAPER_LUT_WRITE_EN_MASK; \
-	uपूर्णांक32_t CM_SHAPER_CONTROL; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_START_CNTL_B; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_START_CNTL_G; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_START_CNTL_R; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_END_CNTL_B; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_END_CNTL_G; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_END_CNTL_R; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_0_1; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_2_3; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_4_5; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_6_7; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_8_9; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_10_11; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_12_13; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_14_15; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_16_17; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_18_19; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_20_21; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_22_23; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_24_25; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_26_27; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_28_29; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_30_31; \
-	uपूर्णांक32_t CM_SHAPER_RAMB_REGION_32_33; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_START_CNTL_B; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_START_CNTL_G; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_START_CNTL_R; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_END_CNTL_B; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_END_CNTL_G; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_END_CNTL_R; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_0_1; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_2_3; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_4_5; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_6_7; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_8_9; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_10_11; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_12_13; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_14_15; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_16_17; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_18_19; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_20_21; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_22_23; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_24_25; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_26_27; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_28_29; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_30_31; \
-	uपूर्णांक32_t CM_SHAPER_RAMA_REGION_32_33; \
-	uपूर्णांक32_t CM_SHAPER_LUT_INDEX; \
-	uपूर्णांक32_t CM_SHAPER_LUT_DATA; \
-	uपूर्णांक32_t CM_ICSC_CONTROL; \
-	uपूर्णांक32_t CM_ICSC_C11_C12; \
-	uपूर्णांक32_t CM_ICSC_C33_C34; \
-	uपूर्णांक32_t CM_BNS_VALUES_R; \
-	uपूर्णांक32_t CM_BNS_VALUES_G; \
-	uपूर्णांक32_t CM_BNS_VALUES_B; \
-	uपूर्णांक32_t CM_DGAM_RAMB_START_CNTL_B; \
-	uपूर्णांक32_t CM_DGAM_RAMB_START_CNTL_G; \
-	uपूर्णांक32_t CM_DGAM_RAMB_START_CNTL_R; \
-	uपूर्णांक32_t CM_DGAM_RAMB_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_DGAM_RAMB_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_DGAM_RAMB_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL1_B; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL2_B; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL1_G; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL2_G; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL1_R; \
-	uपूर्णांक32_t CM_DGAM_RAMB_END_CNTL2_R; \
-	uपूर्णांक32_t CM_DGAM_RAMB_REGION_0_1; \
-	uपूर्णांक32_t CM_DGAM_RAMB_REGION_14_15; \
-	uपूर्णांक32_t CM_DGAM_RAMA_START_CNTL_B; \
-	uपूर्णांक32_t CM_DGAM_RAMA_START_CNTL_G; \
-	uपूर्णांक32_t CM_DGAM_RAMA_START_CNTL_R; \
-	uपूर्णांक32_t CM_DGAM_RAMA_SLOPE_CNTL_B; \
-	uपूर्णांक32_t CM_DGAM_RAMA_SLOPE_CNTL_G; \
-	uपूर्णांक32_t CM_DGAM_RAMA_SLOPE_CNTL_R; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL1_B; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL2_B; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL1_G; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL2_G; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL1_R; \
-	uपूर्णांक32_t CM_DGAM_RAMA_END_CNTL2_R; \
-	uपूर्णांक32_t CM_DGAM_RAMA_REGION_0_1; \
-	uपूर्णांक32_t CM_DGAM_RAMA_REGION_14_15; \
-	uपूर्णांक32_t CM_DGAM_LUT_WRITE_EN_MASK; \
-	uपूर्णांक32_t CM_DGAM_LUT_INDEX; \
-	uपूर्णांक32_t CM_DGAM_LUT_DATA; \
-	uपूर्णांक32_t CM_CONTROL; \
-	uपूर्णांक32_t CM_DGAM_CONTROL; \
-	uपूर्णांक32_t CM_IGAM_CONTROL; \
-	uपूर्णांक32_t CM_IGAM_LUT_RW_CONTROL; \
-	uपूर्णांक32_t CM_IGAM_LUT_RW_INDEX; \
-	uपूर्णांक32_t CM_IGAM_LUT_SEQ_COLOR; \
-	uपूर्णांक32_t CM_TEST_DEBUG_INDEX; \
-	uपूर्णांक32_t CM_TEST_DEBUG_DATA; \
-	uपूर्णांक32_t FORMAT_CONTROL; \
-	uपूर्णांक32_t CNVC_SURFACE_PIXEL_FORMAT; \
-	uपूर्णांक32_t CURSOR_CONTROL; \
-	uपूर्णांक32_t CURSOR0_CONTROL; \
-	uपूर्णांक32_t CURSOR0_COLOR0; \
-	uपूर्णांक32_t CURSOR0_COLOR1; \
-	uपूर्णांक32_t DPP_CONTROL; \
-	uपूर्णांक32_t CM_HDR_MULT_COEF; \
-	uपूर्णांक32_t CURSOR0_FP_SCALE_BIAS;
+#define DPP_COMMON_REG_VARIABLE_LIST \
+	uint32_t DSCL_EXT_OVERSCAN_LEFT_RIGHT; \
+	uint32_t DSCL_EXT_OVERSCAN_TOP_BOTTOM; \
+	uint32_t OTG_H_BLANK; \
+	uint32_t OTG_V_BLANK; \
+	uint32_t DSCL_MEM_PWR_CTRL; \
+	uint32_t DSCL_MEM_PWR_STATUS; \
+	uint32_t SCL_MODE; \
+	uint32_t LB_DATA_FORMAT; \
+	uint32_t LB_MEMORY_CTRL; \
+	uint32_t DSCL_AUTOCAL; \
+	uint32_t SCL_BLACK_OFFSET; \
+	uint32_t SCL_TAP_CONTROL; \
+	uint32_t SCL_COEF_RAM_TAP_SELECT; \
+	uint32_t SCL_COEF_RAM_TAP_DATA; \
+	uint32_t DSCL_2TAP_CONTROL; \
+	uint32_t MPC_SIZE; \
+	uint32_t SCL_HORZ_FILTER_SCALE_RATIO; \
+	uint32_t SCL_VERT_FILTER_SCALE_RATIO; \
+	uint32_t SCL_HORZ_FILTER_SCALE_RATIO_C; \
+	uint32_t SCL_VERT_FILTER_SCALE_RATIO_C; \
+	uint32_t SCL_HORZ_FILTER_INIT; \
+	uint32_t SCL_HORZ_FILTER_INIT_C; \
+	uint32_t SCL_VERT_FILTER_INIT; \
+	uint32_t SCL_VERT_FILTER_INIT_BOT; \
+	uint32_t SCL_VERT_FILTER_INIT_C; \
+	uint32_t SCL_VERT_FILTER_INIT_BOT_C; \
+	uint32_t RECOUT_START; \
+	uint32_t RECOUT_SIZE; \
+	uint32_t CM_GAMUT_REMAP_CONTROL; \
+	uint32_t CM_GAMUT_REMAP_C11_C12; \
+	uint32_t CM_GAMUT_REMAP_C13_C14; \
+	uint32_t CM_GAMUT_REMAP_C21_C22; \
+	uint32_t CM_GAMUT_REMAP_C23_C24; \
+	uint32_t CM_GAMUT_REMAP_C31_C32; \
+	uint32_t CM_GAMUT_REMAP_C33_C34; \
+	uint32_t CM_COMA_C11_C12; \
+	uint32_t CM_COMA_C33_C34; \
+	uint32_t CM_COMB_C11_C12; \
+	uint32_t CM_COMB_C33_C34; \
+	uint32_t CM_OCSC_CONTROL; \
+	uint32_t CM_OCSC_C11_C12; \
+	uint32_t CM_OCSC_C33_C34; \
+	uint32_t CM_MEM_PWR_CTRL; \
+	uint32_t CM_RGAM_LUT_DATA; \
+	uint32_t CM_RGAM_LUT_WRITE_EN_MASK; \
+	uint32_t CM_RGAM_LUT_INDEX; \
+	uint32_t CM_RGAM_RAMB_START_CNTL_B; \
+	uint32_t CM_RGAM_RAMB_START_CNTL_G; \
+	uint32_t CM_RGAM_RAMB_START_CNTL_R; \
+	uint32_t CM_RGAM_RAMB_SLOPE_CNTL_B; \
+	uint32_t CM_RGAM_RAMB_SLOPE_CNTL_G; \
+	uint32_t CM_RGAM_RAMB_SLOPE_CNTL_R; \
+	uint32_t CM_RGAM_RAMB_END_CNTL1_B; \
+	uint32_t CM_RGAM_RAMB_END_CNTL2_B; \
+	uint32_t CM_RGAM_RAMB_END_CNTL1_G; \
+	uint32_t CM_RGAM_RAMB_END_CNTL2_G; \
+	uint32_t CM_RGAM_RAMB_END_CNTL1_R; \
+	uint32_t CM_RGAM_RAMB_END_CNTL2_R; \
+	uint32_t CM_RGAM_RAMB_REGION_0_1; \
+	uint32_t CM_RGAM_RAMB_REGION_32_33; \
+	uint32_t CM_RGAM_RAMA_START_CNTL_B; \
+	uint32_t CM_RGAM_RAMA_START_CNTL_G; \
+	uint32_t CM_RGAM_RAMA_START_CNTL_R; \
+	uint32_t CM_RGAM_RAMA_SLOPE_CNTL_B; \
+	uint32_t CM_RGAM_RAMA_SLOPE_CNTL_G; \
+	uint32_t CM_RGAM_RAMA_SLOPE_CNTL_R; \
+	uint32_t CM_RGAM_RAMA_END_CNTL1_B; \
+	uint32_t CM_RGAM_RAMA_END_CNTL2_B; \
+	uint32_t CM_RGAM_RAMA_END_CNTL1_G; \
+	uint32_t CM_RGAM_RAMA_END_CNTL2_G; \
+	uint32_t CM_RGAM_RAMA_END_CNTL1_R; \
+	uint32_t CM_RGAM_RAMA_END_CNTL2_R; \
+	uint32_t CM_RGAM_RAMA_REGION_0_1; \
+	uint32_t CM_RGAM_RAMA_REGION_32_33; \
+	uint32_t CM_RGAM_CONTROL; \
+	uint32_t CM_CMOUT_CONTROL; \
+	uint32_t CM_BLNDGAM_LUT_WRITE_EN_MASK; \
+	uint32_t CM_BLNDGAM_CONTROL; \
+	uint32_t CM_BLNDGAM_RAMB_START_CNTL_B; \
+	uint32_t CM_BLNDGAM_RAMB_START_CNTL_G; \
+	uint32_t CM_BLNDGAM_RAMB_START_CNTL_R; \
+	uint32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_B; \
+	uint32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_G; \
+	uint32_t CM_BLNDGAM_RAMB_SLOPE_CNTL_R; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL1_B; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL2_B; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL1_G; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL2_G; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL1_R; \
+	uint32_t CM_BLNDGAM_RAMB_END_CNTL2_R; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_0_1; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_2_3; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_4_5; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_6_7; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_8_9; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_10_11; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_12_13; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_14_15; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_16_17; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_18_19; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_20_21; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_22_23; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_24_25; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_26_27; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_28_29; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_30_31; \
+	uint32_t CM_BLNDGAM_RAMB_REGION_32_33; \
+	uint32_t CM_BLNDGAM_RAMA_START_CNTL_B; \
+	uint32_t CM_BLNDGAM_RAMA_START_CNTL_G; \
+	uint32_t CM_BLNDGAM_RAMA_START_CNTL_R; \
+	uint32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_B; \
+	uint32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_G; \
+	uint32_t CM_BLNDGAM_RAMA_SLOPE_CNTL_R; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL1_B; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL2_B; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL1_G; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL2_G; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL1_R; \
+	uint32_t CM_BLNDGAM_RAMA_END_CNTL2_R; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_0_1; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_2_3; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_4_5; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_6_7; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_8_9; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_10_11; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_12_13; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_14_15; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_16_17; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_18_19; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_20_21; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_22_23; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_24_25; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_26_27; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_28_29; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_30_31; \
+	uint32_t CM_BLNDGAM_RAMA_REGION_32_33; \
+	uint32_t CM_BLNDGAM_LUT_INDEX; \
+	uint32_t CM_3DLUT_MODE; \
+	uint32_t CM_3DLUT_INDEX; \
+	uint32_t CM_3DLUT_DATA; \
+	uint32_t CM_3DLUT_DATA_30BIT; \
+	uint32_t CM_3DLUT_READ_WRITE_CONTROL; \
+	uint32_t CM_SHAPER_LUT_WRITE_EN_MASK; \
+	uint32_t CM_SHAPER_CONTROL; \
+	uint32_t CM_SHAPER_RAMB_START_CNTL_B; \
+	uint32_t CM_SHAPER_RAMB_START_CNTL_G; \
+	uint32_t CM_SHAPER_RAMB_START_CNTL_R; \
+	uint32_t CM_SHAPER_RAMB_END_CNTL_B; \
+	uint32_t CM_SHAPER_RAMB_END_CNTL_G; \
+	uint32_t CM_SHAPER_RAMB_END_CNTL_R; \
+	uint32_t CM_SHAPER_RAMB_REGION_0_1; \
+	uint32_t CM_SHAPER_RAMB_REGION_2_3; \
+	uint32_t CM_SHAPER_RAMB_REGION_4_5; \
+	uint32_t CM_SHAPER_RAMB_REGION_6_7; \
+	uint32_t CM_SHAPER_RAMB_REGION_8_9; \
+	uint32_t CM_SHAPER_RAMB_REGION_10_11; \
+	uint32_t CM_SHAPER_RAMB_REGION_12_13; \
+	uint32_t CM_SHAPER_RAMB_REGION_14_15; \
+	uint32_t CM_SHAPER_RAMB_REGION_16_17; \
+	uint32_t CM_SHAPER_RAMB_REGION_18_19; \
+	uint32_t CM_SHAPER_RAMB_REGION_20_21; \
+	uint32_t CM_SHAPER_RAMB_REGION_22_23; \
+	uint32_t CM_SHAPER_RAMB_REGION_24_25; \
+	uint32_t CM_SHAPER_RAMB_REGION_26_27; \
+	uint32_t CM_SHAPER_RAMB_REGION_28_29; \
+	uint32_t CM_SHAPER_RAMB_REGION_30_31; \
+	uint32_t CM_SHAPER_RAMB_REGION_32_33; \
+	uint32_t CM_SHAPER_RAMA_START_CNTL_B; \
+	uint32_t CM_SHAPER_RAMA_START_CNTL_G; \
+	uint32_t CM_SHAPER_RAMA_START_CNTL_R; \
+	uint32_t CM_SHAPER_RAMA_END_CNTL_B; \
+	uint32_t CM_SHAPER_RAMA_END_CNTL_G; \
+	uint32_t CM_SHAPER_RAMA_END_CNTL_R; \
+	uint32_t CM_SHAPER_RAMA_REGION_0_1; \
+	uint32_t CM_SHAPER_RAMA_REGION_2_3; \
+	uint32_t CM_SHAPER_RAMA_REGION_4_5; \
+	uint32_t CM_SHAPER_RAMA_REGION_6_7; \
+	uint32_t CM_SHAPER_RAMA_REGION_8_9; \
+	uint32_t CM_SHAPER_RAMA_REGION_10_11; \
+	uint32_t CM_SHAPER_RAMA_REGION_12_13; \
+	uint32_t CM_SHAPER_RAMA_REGION_14_15; \
+	uint32_t CM_SHAPER_RAMA_REGION_16_17; \
+	uint32_t CM_SHAPER_RAMA_REGION_18_19; \
+	uint32_t CM_SHAPER_RAMA_REGION_20_21; \
+	uint32_t CM_SHAPER_RAMA_REGION_22_23; \
+	uint32_t CM_SHAPER_RAMA_REGION_24_25; \
+	uint32_t CM_SHAPER_RAMA_REGION_26_27; \
+	uint32_t CM_SHAPER_RAMA_REGION_28_29; \
+	uint32_t CM_SHAPER_RAMA_REGION_30_31; \
+	uint32_t CM_SHAPER_RAMA_REGION_32_33; \
+	uint32_t CM_SHAPER_LUT_INDEX; \
+	uint32_t CM_SHAPER_LUT_DATA; \
+	uint32_t CM_ICSC_CONTROL; \
+	uint32_t CM_ICSC_C11_C12; \
+	uint32_t CM_ICSC_C33_C34; \
+	uint32_t CM_BNS_VALUES_R; \
+	uint32_t CM_BNS_VALUES_G; \
+	uint32_t CM_BNS_VALUES_B; \
+	uint32_t CM_DGAM_RAMB_START_CNTL_B; \
+	uint32_t CM_DGAM_RAMB_START_CNTL_G; \
+	uint32_t CM_DGAM_RAMB_START_CNTL_R; \
+	uint32_t CM_DGAM_RAMB_SLOPE_CNTL_B; \
+	uint32_t CM_DGAM_RAMB_SLOPE_CNTL_G; \
+	uint32_t CM_DGAM_RAMB_SLOPE_CNTL_R; \
+	uint32_t CM_DGAM_RAMB_END_CNTL1_B; \
+	uint32_t CM_DGAM_RAMB_END_CNTL2_B; \
+	uint32_t CM_DGAM_RAMB_END_CNTL1_G; \
+	uint32_t CM_DGAM_RAMB_END_CNTL2_G; \
+	uint32_t CM_DGAM_RAMB_END_CNTL1_R; \
+	uint32_t CM_DGAM_RAMB_END_CNTL2_R; \
+	uint32_t CM_DGAM_RAMB_REGION_0_1; \
+	uint32_t CM_DGAM_RAMB_REGION_14_15; \
+	uint32_t CM_DGAM_RAMA_START_CNTL_B; \
+	uint32_t CM_DGAM_RAMA_START_CNTL_G; \
+	uint32_t CM_DGAM_RAMA_START_CNTL_R; \
+	uint32_t CM_DGAM_RAMA_SLOPE_CNTL_B; \
+	uint32_t CM_DGAM_RAMA_SLOPE_CNTL_G; \
+	uint32_t CM_DGAM_RAMA_SLOPE_CNTL_R; \
+	uint32_t CM_DGAM_RAMA_END_CNTL1_B; \
+	uint32_t CM_DGAM_RAMA_END_CNTL2_B; \
+	uint32_t CM_DGAM_RAMA_END_CNTL1_G; \
+	uint32_t CM_DGAM_RAMA_END_CNTL2_G; \
+	uint32_t CM_DGAM_RAMA_END_CNTL1_R; \
+	uint32_t CM_DGAM_RAMA_END_CNTL2_R; \
+	uint32_t CM_DGAM_RAMA_REGION_0_1; \
+	uint32_t CM_DGAM_RAMA_REGION_14_15; \
+	uint32_t CM_DGAM_LUT_WRITE_EN_MASK; \
+	uint32_t CM_DGAM_LUT_INDEX; \
+	uint32_t CM_DGAM_LUT_DATA; \
+	uint32_t CM_CONTROL; \
+	uint32_t CM_DGAM_CONTROL; \
+	uint32_t CM_IGAM_CONTROL; \
+	uint32_t CM_IGAM_LUT_RW_CONTROL; \
+	uint32_t CM_IGAM_LUT_RW_INDEX; \
+	uint32_t CM_IGAM_LUT_SEQ_COLOR; \
+	uint32_t CM_TEST_DEBUG_INDEX; \
+	uint32_t CM_TEST_DEBUG_DATA; \
+	uint32_t FORMAT_CONTROL; \
+	uint32_t CNVC_SURFACE_PIXEL_FORMAT; \
+	uint32_t CURSOR_CONTROL; \
+	uint32_t CURSOR0_CONTROL; \
+	uint32_t CURSOR0_COLOR0; \
+	uint32_t CURSOR0_COLOR1; \
+	uint32_t DPP_CONTROL; \
+	uint32_t CM_HDR_MULT_COEF; \
+	uint32_t CURSOR0_FP_SCALE_BIAS;
 
-काष्ठा dcn_dpp_रेजिस्टरs अणु
+struct dcn_dpp_registers {
 	DPP_COMMON_REG_VARIABLE_LIST
-पूर्ण;
+};
 
-काष्ठा dcn10_dpp अणु
-	काष्ठा dpp base;
+struct dcn10_dpp {
+	struct dpp base;
 
-	स्थिर काष्ठा dcn_dpp_रेजिस्टरs *tf_regs;
-	स्थिर काष्ठा dcn_dpp_shअगरt *tf_shअगरt;
-	स्थिर काष्ठा dcn_dpp_mask *tf_mask;
+	const struct dcn_dpp_registers *tf_regs;
+	const struct dcn_dpp_shift *tf_shift;
+	const struct dcn_dpp_mask *tf_mask;
 
-	स्थिर uपूर्णांक16_t *filter_v;
-	स्थिर uपूर्णांक16_t *filter_h;
-	स्थिर uपूर्णांक16_t *filter_v_c;
-	स्थिर uपूर्णांक16_t *filter_h_c;
-	पूर्णांक lb_pixel_depth_supported;
-	पूर्णांक lb_memory_size;
-	पूर्णांक lb_bits_per_entry;
-	bool is_ग_लिखो_to_ram_a_safe;
-	काष्ठा scaler_data scl_data;
-	काष्ठा pwl_params pwl_data;
-पूर्ण;
+	const uint16_t *filter_v;
+	const uint16_t *filter_h;
+	const uint16_t *filter_v_c;
+	const uint16_t *filter_h_c;
+	int lb_pixel_depth_supported;
+	int lb_memory_size;
+	int lb_bits_per_entry;
+	bool is_write_to_ram_a_safe;
+	struct scaler_data scl_data;
+	struct pwl_params pwl_data;
+};
 
-क्रमागत dcn10_input_csc_select अणु
+enum dcn10_input_csc_select {
 	INPUT_CSC_SELECT_BYPASS = 0,
 	INPUT_CSC_SELECT_ICSC = 1,
 	INPUT_CSC_SELECT_COMA = 2
-पूर्ण;
+};
 
-व्योम dpp1_set_cursor_attributes(
-		काष्ठा dpp *dpp_base,
-		काष्ठा dc_cursor_attributes *cursor_attributes);
+void dpp1_set_cursor_attributes(
+		struct dpp *dpp_base,
+		struct dc_cursor_attributes *cursor_attributes);
 
-व्योम dpp1_set_cursor_position(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा dc_cursor_position *pos,
-		स्थिर काष्ठा dc_cursor_mi_param *param,
-		uपूर्णांक32_t width,
-		uपूर्णांक32_t height);
+void dpp1_set_cursor_position(
+		struct dpp *dpp_base,
+		const struct dc_cursor_position *pos,
+		const struct dc_cursor_mi_param *param,
+		uint32_t width,
+		uint32_t height);
 
-व्योम dpp1_cnv_set_optional_cursor_attributes(
-			काष्ठा dpp *dpp_base,
-			काष्ठा dpp_cursor_attributes *attr);
+void dpp1_cnv_set_optional_cursor_attributes(
+			struct dpp *dpp_base,
+			struct dpp_cursor_attributes *attr);
 
 bool dpp1_dscl_is_lb_conf_valid(
-		पूर्णांक उच्चमान_vratio,
-		पूर्णांक num_partitions,
-		पूर्णांक vtaps);
+		int ceil_vratio,
+		int num_partitions,
+		int vtaps);
 
-व्योम dpp1_dscl_calc_lb_num_partitions(
-		स्थिर काष्ठा scaler_data *scl_data,
-		क्रमागत lb_memory_config lb_config,
-		पूर्णांक *num_part_y,
-		पूर्णांक *num_part_c);
+void dpp1_dscl_calc_lb_num_partitions(
+		const struct scaler_data *scl_data,
+		enum lb_memory_config lb_config,
+		int *num_part_y,
+		int *num_part_c);
 
-व्योम dpp1_degamma_ram_select(
-		काष्ठा dpp *dpp_base,
+void dpp1_degamma_ram_select(
+		struct dpp *dpp_base,
 							bool use_ram_a);
 
-व्योम dpp1_program_degamma_luta_settings(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_params *params);
+void dpp1_program_degamma_luta_settings(
+		struct dpp *dpp_base,
+		const struct pwl_params *params);
 
-व्योम dpp1_program_degamma_lutb_settings(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_params *params);
+void dpp1_program_degamma_lutb_settings(
+		struct dpp *dpp_base,
+		const struct pwl_params *params);
 
-व्योम dpp1_program_degamma_lut(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_result_data *rgb,
-		uपूर्णांक32_t num,
+void dpp1_program_degamma_lut(
+		struct dpp *dpp_base,
+		const struct pwl_result_data *rgb,
+		uint32_t num,
 		bool is_ram_a);
 
-व्योम dpp1_घातer_on_degamma_lut(
-		काष्ठा dpp *dpp_base,
-	bool घातer_on);
+void dpp1_power_on_degamma_lut(
+		struct dpp *dpp_base,
+	bool power_on);
 
-व्योम dpp1_program_input_csc(
-		काष्ठा dpp *dpp_base,
-		क्रमागत dc_color_space color_space,
-		क्रमागत dcn10_input_csc_select select,
-		स्थिर काष्ठा out_csc_color_matrix *tbl_entry);
+void dpp1_program_input_csc(
+		struct dpp *dpp_base,
+		enum dc_color_space color_space,
+		enum dcn10_input_csc_select select,
+		const struct out_csc_color_matrix *tbl_entry);
 
-व्योम dpp1_program_bias_and_scale(
-		काष्ठा dpp *dpp_base,
-		काष्ठा dc_bias_and_scale *params);
+void dpp1_program_bias_and_scale(
+		struct dpp *dpp_base,
+		struct dc_bias_and_scale *params);
 
-व्योम dpp1_program_input_lut(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा dc_gamma *gamma);
+void dpp1_program_input_lut(
+		struct dpp *dpp_base,
+		const struct dc_gamma *gamma);
 
-व्योम dpp1_full_bypass(काष्ठा dpp *dpp_base);
+void dpp1_full_bypass(struct dpp *dpp_base);
 
-व्योम dpp1_set_degamma(
-		काष्ठा dpp *dpp_base,
-		क्रमागत ipp_degamma_mode mode);
+void dpp1_set_degamma(
+		struct dpp *dpp_base,
+		enum ipp_degamma_mode mode);
 
-व्योम dpp1_set_degamma_pwl(काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_params *params);
+void dpp1_set_degamma_pwl(struct dpp *dpp_base,
+		const struct pwl_params *params);
 
 
-व्योम dpp_पढ़ो_state(काष्ठा dpp *dpp_base,
-		काष्ठा dcn_dpp_state *s);
+void dpp_read_state(struct dpp *dpp_base,
+		struct dcn_dpp_state *s);
 
-व्योम dpp_reset(काष्ठा dpp *dpp_base);
+void dpp_reset(struct dpp *dpp_base);
 
-व्योम dpp1_cm_program_regamma_lut(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_result_data *rgb,
-		uपूर्णांक32_t num);
+void dpp1_cm_program_regamma_lut(
+		struct dpp *dpp_base,
+		const struct pwl_result_data *rgb,
+		uint32_t num);
 
-व्योम dpp1_cm_घातer_on_regamma_lut(
-	काष्ठा dpp *dpp_base,
-	bool घातer_on);
+void dpp1_cm_power_on_regamma_lut(
+	struct dpp *dpp_base,
+	bool power_on);
 
-व्योम dpp1_cm_configure_regamma_lut(
-		काष्ठा dpp *dpp_base,
+void dpp1_cm_configure_regamma_lut(
+		struct dpp *dpp_base,
 		bool is_ram_a);
 
 /*program re gamma RAM A*/
-व्योम dpp1_cm_program_regamma_luta_settings(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_params *params);
+void dpp1_cm_program_regamma_luta_settings(
+		struct dpp *dpp_base,
+		const struct pwl_params *params);
 
 /*program re gamma RAM B*/
-व्योम dpp1_cm_program_regamma_lutb_settings(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा pwl_params *params);
-व्योम dpp1_cm_set_output_csc_adjusपंचांगent(
-		काष्ठा dpp *dpp_base,
-		स्थिर uपूर्णांक16_t *regval);
+void dpp1_cm_program_regamma_lutb_settings(
+		struct dpp *dpp_base,
+		const struct pwl_params *params);
+void dpp1_cm_set_output_csc_adjustment(
+		struct dpp *dpp_base,
+		const uint16_t *regval);
 
-व्योम dpp1_cm_set_output_csc_शेष(
-		काष्ठा dpp *dpp_base,
-		क्रमागत dc_color_space colorspace);
+void dpp1_cm_set_output_csc_default(
+		struct dpp *dpp_base,
+		enum dc_color_space colorspace);
 
-व्योम dpp1_cm_set_gamut_remap(
-	काष्ठा dpp *dpp,
-	स्थिर काष्ठा dpp_grph_csc_adjusपंचांगent *adjust);
+void dpp1_cm_set_gamut_remap(
+	struct dpp *dpp,
+	const struct dpp_grph_csc_adjustment *adjust);
 
-व्योम dpp1_dscl_set_scaler_manual_scale(
-	काष्ठा dpp *dpp_base,
-	स्थिर काष्ठा scaler_data *scl_data);
+void dpp1_dscl_set_scaler_manual_scale(
+	struct dpp *dpp_base,
+	const struct scaler_data *scl_data);
 
-व्योम dpp1_cnv_setup (
-		काष्ठा dpp *dpp_base,
-		क्रमागत surface_pixel_क्रमmat क्रमmat,
-		क्रमागत expansion_mode mode,
-		काष्ठा dc_csc_transक्रमm input_csc_color_matrix,
-		क्रमागत dc_color_space input_color_space,
-		काष्ठा cnv_alpha_2bit_lut *alpha_2bit_lut);
+void dpp1_cnv_setup (
+		struct dpp *dpp_base,
+		enum surface_pixel_format format,
+		enum expansion_mode mode,
+		struct dc_csc_transform input_csc_color_matrix,
+		enum dc_color_space input_color_space,
+		struct cnv_alpha_2bit_lut *alpha_2bit_lut);
 
-व्योम dpp1_full_bypass(काष्ठा dpp *dpp_base);
+void dpp1_full_bypass(struct dpp *dpp_base);
 
-व्योम dpp1_dppclk_control(
-		काष्ठा dpp *dpp_base,
-		bool dppclk_भाग,
+void dpp1_dppclk_control(
+		struct dpp *dpp_base,
+		bool dppclk_div,
 		bool enable);
 
-व्योम dpp1_set_hdr_multiplier(
-		काष्ठा dpp *dpp_base,
-		uपूर्णांक32_t multiplier);
+void dpp1_set_hdr_multiplier(
+		struct dpp *dpp_base,
+		uint32_t multiplier);
 
 bool dpp1_get_optimal_number_of_taps(
-		काष्ठा dpp *dpp,
-		काष्ठा scaler_data *scl_data,
-		स्थिर काष्ठा scaling_taps *in_taps);
+		struct dpp *dpp,
+		struct scaler_data *scl_data,
+		const struct scaling_taps *in_taps);
 
-व्योम dpp1_स्थिरruct(काष्ठा dcn10_dpp *dpp1,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dcn_dpp_रेजिस्टरs *tf_regs,
-	स्थिर काष्ठा dcn_dpp_shअगरt *tf_shअगरt,
-	स्थिर काष्ठा dcn_dpp_mask *tf_mask);
-#पूर्ण_अगर
+void dpp1_construct(struct dcn10_dpp *dpp1,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dcn_dpp_registers *tf_regs,
+	const struct dcn_dpp_shift *tf_shift,
+	const struct dcn_dpp_mask *tf_mask);
+#endif

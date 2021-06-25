@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Orb related data काष्ठाures.
+ * Orb related data structures.
  *
  * Copyright IBM Corp. 2007, 2011
  *
@@ -10,24 +9,24 @@
  *	      Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
-#अगर_अघोषित S390_ORB_H
-#घोषणा S390_ORB_H
+#ifndef S390_ORB_H
+#define S390_ORB_H
 
 /*
  * Command-mode operation request block
  */
-काष्ठा cmd_orb अणु
-	u32 पूर्णांकparm;	/* पूर्णांकerruption parameter */
+struct cmd_orb {
+	u32 intparm;	/* interruption parameter */
 	u32 key:4;	/* flags, like key, suspend control, etc. */
 	u32 spnd:1;	/* suspend control */
 	u32 res1:1;	/* reserved */
-	u32 mod:1;	/* modअगरication control */
+	u32 mod:1;	/* modification control */
 	u32 sync:1;	/* synchronize control */
-	u32 fmt:1;	/* क्रमmat control */
+	u32 fmt:1;	/* format control */
 	u32 pfch:1;	/* prefetch control */
-	u32 isic:1;	/* initial-status-पूर्णांकerruption control */
+	u32 isic:1;	/* initial-status-interruption control */
 	u32 alcc:1;	/* address-limit-checking control */
-	u32 ssic:1;	/* suppress-suspended-पूर्णांकerr. control */
+	u32 ssic:1;	/* suppress-suspended-interr. control */
 	u32 res2:1;	/* reserved */
 	u32 c64:1;	/* IDAW/QDIO 64 bit control  */
 	u32 i2k:1;	/* IDAW 2/4kB block size control */
@@ -36,13 +35,13 @@
 	u32 zero:6;	/* reserved zeros */
 	u32 orbx:1;	/* ORB extension control */
 	u32 cpa;	/* channel program address */
-पूर्ण  __packed __aligned(4);
+}  __packed __aligned(4);
 
 /*
  * Transport-mode operation request block
  */
-काष्ठा पंचांग_orb अणु
-	u32 पूर्णांकparm;
+struct tm_orb {
+	u32 intparm;
 	u32 key:4;
 	u32:9;
 	u32 b:1;
@@ -59,13 +58,13 @@
 	u32:32;
 	u32:32;
 	u32:32;
-पूर्ण  __packed __aligned(4);
+}  __packed __aligned(4);
 
 /*
  * eadm operation request block
  */
-काष्ठा eadm_orb अणु
-	u32 पूर्णांकparm;
+struct eadm_orb {
+	u32 intparm;
 	u32 key:4;
 	u32:4;
 	u32 compat1:1;
@@ -82,12 +81,12 @@
 	u32:32;
 	u32:32;
 	u32:32;
-पूर्ण  __packed __aligned(4);
+}  __packed __aligned(4);
 
-जोड़ orb अणु
-	काष्ठा cmd_orb cmd;
-	काष्ठा पंचांग_orb पंचांग;
-	काष्ठा eadm_orb eadm;
-पूर्ण  __packed __aligned(4);
+union orb {
+	struct cmd_orb cmd;
+	struct tm_orb tm;
+	struct eadm_orb eadm;
+}  __packed __aligned(4);
 
-#पूर्ण_अगर /* S390_ORB_H */
+#endif /* S390_ORB_H */

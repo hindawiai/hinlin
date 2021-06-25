@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Cryptographic API.
- * Glue code क्रम the SHA1 Secure Hash Algorithm assembler implementation
+ * Glue code for the SHA1 Secure Hash Algorithm assembler implementation
  *
  * This file is based on sha1_generic.c and sha1_ssse3_glue.c
  *
  * Copyright (c) Alan Smithee.
- * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
  * Copyright (c) Jean-Francois Dive <jef@linuxbe.org>
  * Copyright (c) Mathias Krause <minipli@googlemail.com>
  */
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha1_base.h>
-#समावेश <यंत्र/byteorder.h>
+#include <crypto/internal/hash.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <crypto/sha1.h>
+#include <crypto/sha1_base.h>
+#include <asm/byteorder.h>
 
-#समावेश "sha1.h"
+#include "sha1.h"
 
-यंत्रlinkage व्योम sha1_block_data_order(u32 *digest,
-		स्थिर अचिन्हित अक्षर *data, अचिन्हित पूर्णांक rounds);
+asmlinkage void sha1_block_data_order(u32 *digest,
+		const unsigned char *data, unsigned int rounds);
 
-पूर्णांक sha1_update_arm(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		    अचिन्हित पूर्णांक len)
-अणु
+int sha1_update_arm(struct shash_desc *desc, const u8 *data,
+		    unsigned int len)
+{
 	/* make sure casting to sha1_block_fn() is safe */
-	BUILD_BUG_ON(दुरत्व(काष्ठा sha1_state, state) != 0);
+	BUILD_BUG_ON(offsetof(struct sha1_state, state) != 0);
 
-	वापस sha1_base_करो_update(desc, data, len,
+	return sha1_base_do_update(desc, data, len,
 				   (sha1_block_fn *)sha1_block_data_order);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sha1_update_arm);
 
-अटल पूर्णांक sha1_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	sha1_base_करो_finalize(desc, (sha1_block_fn *)sha1_block_data_order);
-	वापस sha1_base_finish(desc, out);
-पूर्ण
+static int sha1_final(struct shash_desc *desc, u8 *out)
+{
+	sha1_base_do_finalize(desc, (sha1_block_fn *)sha1_block_data_order);
+	return sha1_base_finish(desc, out);
+}
 
-पूर्णांक sha1_finup_arm(काष्ठा shash_desc *desc, स्थिर u8 *data,
-		   अचिन्हित पूर्णांक len, u8 *out)
-अणु
-	sha1_base_करो_update(desc, data, len,
+int sha1_finup_arm(struct shash_desc *desc, const u8 *data,
+		   unsigned int len, u8 *out)
+{
+	sha1_base_do_update(desc, data, len,
 			    (sha1_block_fn *)sha1_block_data_order);
-	वापस sha1_final(desc, out);
-पूर्ण
+	return sha1_final(desc, out);
+}
 EXPORT_SYMBOL_GPL(sha1_finup_arm);
 
-अटल काष्ठा shash_alg alg = अणु
+static struct shash_alg alg = {
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init		=	sha1_base_init,
 	.update		=	sha1_update_arm,
 	.final		=	sha1_final,
 	.finup		=	sha1_finup_arm,
-	.descsize	=	माप(काष्ठा sha1_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha1_state),
+	.base		=	{
 		.cra_name	=	"sha1",
 		.cra_driver_name=	"sha1-asm",
 		.cra_priority	=	150,
 		.cra_blocksize	=	SHA1_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 
-अटल पूर्णांक __init sha1_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_shash(&alg);
-पूर्ण
+static int __init sha1_mod_init(void)
+{
+	return crypto_register_shash(&alg);
+}
 
 
-अटल व्योम __निकास sha1_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_shash(&alg);
-पूर्ण
+static void __exit sha1_mod_fini(void)
+{
+	crypto_unregister_shash(&alg);
+}
 
 
 module_init(sha1_mod_init);
-module_निकास(sha1_mod_fini);
+module_exit(sha1_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA1 Secure Hash Algorithm (ARM)");

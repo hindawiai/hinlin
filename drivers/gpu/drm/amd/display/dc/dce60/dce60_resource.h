@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Mauro Rossi <issor.oruam@gmail.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,25 +23,25 @@
  *
  */
 
-#अगर_अघोषित __DC_RESOURCE_DCE60_H__
-#घोषणा __DC_RESOURCE_DCE60_H__
+#ifndef __DC_RESOURCE_DCE60_H__
+#define __DC_RESOURCE_DCE60_H__
 
-#समावेश "core_types.h"
+#include "core_types.h"
 
-काष्ठा dc;
-काष्ठा resource_pool;
+struct dc;
+struct resource_pool;
 
-काष्ठा resource_pool *dce60_create_resource_pool(
-	uपूर्णांक8_t num_भव_links,
-	काष्ठा dc *dc);
+struct resource_pool *dce60_create_resource_pool(
+	uint8_t num_virtual_links,
+	struct dc *dc);
 
-काष्ठा resource_pool *dce61_create_resource_pool(
-	uपूर्णांक8_t num_भव_links,
-	काष्ठा dc *dc);
+struct resource_pool *dce61_create_resource_pool(
+	uint8_t num_virtual_links,
+	struct dc *dc);
 
-काष्ठा resource_pool *dce64_create_resource_pool(
-	uपूर्णांक8_t num_भव_links,
-	काष्ठा dc *dc);
+struct resource_pool *dce64_create_resource_pool(
+	uint8_t num_virtual_links,
+	struct dc *dc);
 
-#पूर्ण_अगर /* __DC_RESOURCE_DCE60_H__ */
+#endif /* __DC_RESOURCE_DCE60_H__ */
 

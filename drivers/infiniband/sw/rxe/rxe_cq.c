@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "rxe.h"
-#समावेश "rxe_loc.h"
-#समावेश "rxe_queue.h"
+#include <linux/vmalloc.h>
+#include "rxe.h"
+#include "rxe_loc.h"
+#include "rxe_queue.h"
 
-पूर्णांक rxe_cq_chk_attr(काष्ठा rxe_dev *rxe, काष्ठा rxe_cq *cq,
-		    पूर्णांक cqe, पूर्णांक comp_vector)
-अणु
-	पूर्णांक count;
+int rxe_cq_chk_attr(struct rxe_dev *rxe, struct rxe_cq *cq,
+		    int cqe, int comp_vector)
+{
+	int count;
 
-	अगर (cqe <= 0) अणु
+	if (cqe <= 0) {
 		pr_warn("cqe(%d) <= 0\n", cqe);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (cqe > rxe->attr.max_cqe) अणु
+	if (cqe > rxe->attr.max_cqe) {
 		pr_warn("cqe(%d) > max_cqe(%d)\n",
 			cqe, rxe->attr.max_cqe);
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
-	अगर (cq) अणु
+	if (cq) {
 		count = queue_count(cq->queue);
-		अगर (cqe < count) अणु
+		if (cqe < count) {
 			pr_warn("cqe(%d) < current # elements in queue (%d)",
 				cqe, count);
-			जाओ err1;
-		पूर्ण
-	पूर्ण
+			goto err1;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err1:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम rxe_send_complete(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा rxe_cq *cq = from_tasklet(cq, t, comp_task);
-	अचिन्हित दीर्घ flags;
+static void rxe_send_complete(struct tasklet_struct *t)
+{
+	struct rxe_cq *cq = from_tasklet(cq, t, comp_task);
+	unsigned long flags;
 
 	spin_lock_irqsave(&cq->cq_lock, flags);
-	अगर (cq->is_dying) अणु
+	if (cq->is_dying) {
 		spin_unlock_irqrestore(&cq->cq_lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 	spin_unlock_irqrestore(&cq->cq_lock, flags);
 
 	cq->ibcq.comp_handler(&cq->ibcq, cq->ibcq.cq_context);
-पूर्ण
+}
 
-पूर्णांक rxe_cq_from_init(काष्ठा rxe_dev *rxe, काष्ठा rxe_cq *cq, पूर्णांक cqe,
-		     पूर्णांक comp_vector, काष्ठा ib_udata *udata,
-		     काष्ठा rxe_create_cq_resp __user *uresp)
-अणु
-	पूर्णांक err;
+int rxe_cq_from_init(struct rxe_dev *rxe, struct rxe_cq *cq, int cqe,
+		     int comp_vector, struct ib_udata *udata,
+		     struct rxe_create_cq_resp __user *uresp)
+{
+	int err;
 
 	cq->queue = rxe_queue_init(rxe, &cqe,
-				   माप(काष्ठा rxe_cqe));
-	अगर (!cq->queue) अणु
+				   sizeof(struct rxe_cqe));
+	if (!cq->queue) {
 		pr_warn("unable to create cq\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	err = करो_mmap_info(rxe, uresp ? &uresp->mi : शून्य, udata,
+	err = do_mmap_info(rxe, uresp ? &uresp->mi : NULL, udata,
 			   cq->queue->buf, cq->queue->buf_size, &cq->queue->ip);
-	अगर (err) अणु
-		vमुक्त(cq->queue->buf);
-		kमुक्त(cq->queue);
-		वापस err;
-	पूर्ण
+	if (err) {
+		vfree(cq->queue->buf);
+		kfree(cq->queue);
+		return err;
+	}
 
-	अगर (uresp)
+	if (uresp)
 		cq->is_user = 1;
 
 	cq->is_dying = false;
@@ -85,70 +84,70 @@ err1:
 
 	spin_lock_init(&cq->cq_lock);
 	cq->ibcq.cqe = cqe;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक rxe_cq_resize_queue(काष्ठा rxe_cq *cq, पूर्णांक cqe,
-			काष्ठा rxe_resize_cq_resp __user *uresp,
-			काष्ठा ib_udata *udata)
-अणु
-	पूर्णांक err;
+int rxe_cq_resize_queue(struct rxe_cq *cq, int cqe,
+			struct rxe_resize_cq_resp __user *uresp,
+			struct ib_udata *udata)
+{
+	int err;
 
-	err = rxe_queue_resize(cq->queue, (अचिन्हित पूर्णांक *)&cqe,
-			       माप(काष्ठा rxe_cqe), udata,
-			       uresp ? &uresp->mi : शून्य, शून्य, &cq->cq_lock);
-	अगर (!err)
+	err = rxe_queue_resize(cq->queue, (unsigned int *)&cqe,
+			       sizeof(struct rxe_cqe), udata,
+			       uresp ? &uresp->mi : NULL, NULL, &cq->cq_lock);
+	if (!err)
 		cq->ibcq.cqe = cqe;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक rxe_cq_post(काष्ठा rxe_cq *cq, काष्ठा rxe_cqe *cqe, पूर्णांक solicited)
-अणु
-	काष्ठा ib_event ev;
-	अचिन्हित दीर्घ flags;
+int rxe_cq_post(struct rxe_cq *cq, struct rxe_cqe *cqe, int solicited)
+{
+	struct ib_event ev;
+	unsigned long flags;
 
 	spin_lock_irqsave(&cq->cq_lock, flags);
 
-	अगर (unlikely(queue_full(cq->queue))) अणु
+	if (unlikely(queue_full(cq->queue))) {
 		spin_unlock_irqrestore(&cq->cq_lock, flags);
-		अगर (cq->ibcq.event_handler) अणु
+		if (cq->ibcq.event_handler) {
 			ev.device = cq->ibcq.device;
 			ev.element.cq = &cq->ibcq;
 			ev.event = IB_EVENT_CQ_ERR;
 			cq->ibcq.event_handler(&ev, cq->ibcq.cq_context);
-		पूर्ण
+		}
 
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	स_नकल(producer_addr(cq->queue), cqe, माप(*cqe));
+	memcpy(producer_addr(cq->queue), cqe, sizeof(*cqe));
 
 	advance_producer(cq->queue);
 	spin_unlock_irqrestore(&cq->cq_lock, flags);
 
-	अगर ((cq->notअगरy == IB_CQ_NEXT_COMP) ||
-	    (cq->notअगरy == IB_CQ_SOLICITED && solicited)) अणु
-		cq->notअगरy = 0;
+	if ((cq->notify == IB_CQ_NEXT_COMP) ||
+	    (cq->notify == IB_CQ_SOLICITED && solicited)) {
+		cq->notify = 0;
 		tasklet_schedule(&cq->comp_task);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम rxe_cq_disable(काष्ठा rxe_cq *cq)
-अणु
-	अचिन्हित दीर्घ flags;
+void rxe_cq_disable(struct rxe_cq *cq)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&cq->cq_lock, flags);
 	cq->is_dying = true;
 	spin_unlock_irqrestore(&cq->cq_lock, flags);
-पूर्ण
+}
 
-व्योम rxe_cq_cleanup(काष्ठा rxe_pool_entry *arg)
-अणु
-	काष्ठा rxe_cq *cq = container_of(arg, typeof(*cq), pelem);
+void rxe_cq_cleanup(struct rxe_pool_entry *arg)
+{
+	struct rxe_cq *cq = container_of(arg, typeof(*cq), pelem);
 
-	अगर (cq->queue)
+	if (cq->queue)
 		rxe_queue_cleanup(cq->queue);
-पूर्ण
+}

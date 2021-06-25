@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/parisc/mm/ioremap.c
  *
@@ -8,62 +7,62 @@
  * (C) Copyright 2005 Kyle McMartin <kyle@parisc-linux.org>
  */
 
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/mm.h>
 
 /*
  * Generic mapping function (not visible outside):
  */
 
 /*
- * Remap an arbitrary physical address space पूर्णांकo the kernel भव
+ * Remap an arbitrary physical address space into the kernel virtual
  * address space.
  *
  * NOTE! We need to allow non-page-aligned mappings too: we will obviously
- * have to convert them पूर्णांकo an offset in a page-aligned mapping, but the
+ * have to convert them into an offset in a page-aligned mapping, but the
  * caller shouldn't need to know that small detail.
  */
-व्योम __iomem *ioremap(अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
-अणु
-	व्योम __iomem *addr;
-	काष्ठा vm_काष्ठा *area;
-	अचिन्हित दीर्घ offset, last_addr;
+void __iomem *ioremap(unsigned long phys_addr, unsigned long size)
+{
+	void __iomem *addr;
+	struct vm_struct *area;
+	unsigned long offset, last_addr;
 	pgprot_t pgprot;
 
-#अगर_घोषित CONFIG_EISA
-	अचिन्हित दीर्घ end = phys_addr + size - 1;
+#ifdef CONFIG_EISA
+	unsigned long end = phys_addr + size - 1;
 	/* Support EISA addresses */
-	अगर ((phys_addr >= 0x00080000 && end < 0x000fffff) ||
+	if ((phys_addr >= 0x00080000 && end < 0x000fffff) ||
 	    (phys_addr >= 0x00500000 && end < 0x03bfffff))
 		phys_addr |= F_EXTEND(0xfc000000);
-#पूर्ण_अगर
+#endif
 
 	/* Don't allow wraparound or zero size */
 	last_addr = phys_addr + size - 1;
-	अगर (!size || last_addr < phys_addr)
-		वापस शून्य;
+	if (!size || last_addr < phys_addr)
+		return NULL;
 
 	/*
 	 * Don't allow anybody to remap normal RAM that we're using..
 	 */
-	अगर (phys_addr < virt_to_phys(high_memory)) अणु
-		अक्षर *t_addr, *t_end;
-		काष्ठा page *page;
+	if (phys_addr < virt_to_phys(high_memory)) {
+		char *t_addr, *t_end;
+		struct page *page;
 
 		t_addr = __va(phys_addr);
 		t_end = t_addr + (size - 1);
 	   
-		क्रम (page = virt_to_page(t_addr); 
-		     page <= virt_to_page(t_end); page++) अणु
-			अगर(!PageReserved(page))
-				वापस शून्य;
-		पूर्ण
-	पूर्ण
+		for (page = virt_to_page(t_addr); 
+		     page <= virt_to_page(t_end); page++) {
+			if(!PageReserved(page))
+				return NULL;
+		}
+	}
 
-	pgprot = __pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_सूचीTY |
+	pgprot = __pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY |
 			  _PAGE_ACCESSED | _PAGE_NO_CACHE);
 
 	/*
@@ -74,28 +73,28 @@
 	size = PAGE_ALIGN(last_addr + 1) - phys_addr;
 
 	/*
-	 * Ok, go क्रम it..
+	 * Ok, go for it..
 	 */
 	area = get_vm_area(size, VM_IOREMAP);
-	अगर (!area)
-		वापस शून्य;
+	if (!area)
+		return NULL;
 
-	addr = (व्योम __iomem *) area->addr;
-	अगर (ioremap_page_range((अचिन्हित दीर्घ)addr, (अचिन्हित दीर्घ)addr + size,
-			       phys_addr, pgprot)) अणु
+	addr = (void __iomem *) area->addr;
+	if (ioremap_page_range((unsigned long)addr, (unsigned long)addr + size,
+			       phys_addr, pgprot)) {
 		vunmap(addr);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस (व्योम __iomem *) (offset + (अक्षर __iomem *)addr);
-पूर्ण
+	return (void __iomem *) (offset + (char __iomem *)addr);
+}
 EXPORT_SYMBOL(ioremap);
 
-व्योम iounmap(स्थिर अस्थिर व्योम __iomem *io_addr)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)io_addr & PAGE_MASK;
+void iounmap(const volatile void __iomem *io_addr)
+{
+	unsigned long addr = (unsigned long)io_addr & PAGE_MASK;
 
-	अगर (is_vदो_स्मृति_addr((व्योम *)addr))
-		vunmap((व्योम *)addr);
-पूर्ण
+	if (is_vmalloc_addr((void *)addr))
+		vunmap((void *)addr);
+}
 EXPORT_SYMBOL(iounmap);

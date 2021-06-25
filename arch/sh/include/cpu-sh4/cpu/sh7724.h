@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH7724_H__
-#घोषणा __ASM_SH7724_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH7724_H__
+#define __ASM_SH7724_H__
 
 /* Boot Mode Pins:
  *
@@ -18,7 +17,7 @@
  * GPIO_FN_xx - GPIO used to select pin function
  * GPIO_Pxx - GPIO mapped to real I/O pin on CPU
  */
-क्रमागत अणु
+enum {
 	/* PTA */
 	GPIO_PTA7, GPIO_PTA6, GPIO_PTA5, GPIO_PTA4,
 	GPIO_PTA3, GPIO_PTA2, GPIO_PTA1, GPIO_PTA0,
@@ -139,7 +138,7 @@
 	GPIO_FN_IDED3,  GPIO_FN_IDED2,  GPIO_FN_IDED1,  GPIO_FN_IDED0,
 	GPIO_FN_IDEA2,     GPIO_FN_IDEA1,     GPIO_FN_IDEA0,  GPIO_FN_IDEIOWR,
 	GPIO_FN_IODREQ,    GPIO_FN_IDECS0,    GPIO_FN_IDECS1, GPIO_FN_IDEIORD,
-	GPIO_FN_सूचीECTION, GPIO_FN_EXBUF_ENB, GPIO_FN_IDERST, GPIO_FN_IODACK,
+	GPIO_FN_DIRECTION, GPIO_FN_EXBUF_ENB, GPIO_FN_IDERST, GPIO_FN_IODACK,
 	GPIO_FN_IDEINT,    GPIO_FN_IDEIORDY,
 
 	/* TPU (PTB/PTR/PTS) */
@@ -267,9 +266,9 @@
 	GPIO_FN_INTC_IRQ7, GPIO_FN_INTC_IRQ6, GPIO_FN_INTC_IRQ5,
 	GPIO_FN_INTC_IRQ4, GPIO_FN_INTC_IRQ3, GPIO_FN_INTC_IRQ2,
 	GPIO_FN_INTC_IRQ1, GPIO_FN_INTC_IRQ0,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	HWBLK_TLB, HWBLK_IC, HWBLK_OC, HWBLK_RSMEM, HWBLK_ILMEM, HWBLK_L2C,
 	HWBLK_FPU, HWBLK_INTC, HWBLK_DMAC0, HWBLK_SHYWAY,
 	HWBLK_HUDI, HWBLK_UBC,
@@ -283,9 +282,9 @@
 	HWBLK_2DDMAC, HWBLK_SPU, HWBLK_JPU, HWBLK_VOU,
 	HWBLK_BEU0, HWBLK_CEU0,	HWBLK_VEU0, HWBLK_VPU, HWBLK_LCDC,
 	HWBLK_NR,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	SHDMA_SLAVE_INVALID,
 	SHDMA_SLAVE_SCIF0_TX,
 	SHDMA_SLAVE_SCIF0_RX,
@@ -311,10 +310,10 @@
 	SHDMA_SLAVE_SDHI0_RX,
 	SHDMA_SLAVE_SDHI1_TX,
 	SHDMA_SLAVE_SDHI1_RX,
-पूर्ण;
+};
 
-बाह्य काष्ठा clk sh7724_fsimcka_clk;
-बाह्य काष्ठा clk sh7724_fsimckb_clk;
-बाह्य काष्ठा clk sh7724_dv_clki;
+extern struct clk sh7724_fsimcka_clk;
+extern struct clk sh7724_fsimckb_clk;
+extern struct clk sh7724_dv_clki;
 
-#पूर्ण_अगर /* __ASM_SH7724_H__ */
+#endif /* __ASM_SH7724_H__ */

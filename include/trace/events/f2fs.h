@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM f2fs
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM f2fs
 
-#अगर !defined(_TRACE_F2FS_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_F2FS_H
+#if !defined(_TRACE_F2FS_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_F2FS_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <uapi/linux/f2fs.h>
+#include <linux/tracepoint.h>
+#include <uapi/linux/f2fs.h>
 
-#घोषणा show_dev(dev)		MAJOR(dev), MINOR(dev)
-#घोषणा show_dev_ino(entry)	show_dev(entry->dev), (अचिन्हित दीर्घ)entry->ino
+#define show_dev(dev)		MAJOR(dev), MINOR(dev)
+#define show_dev_ino(entry)	show_dev(entry->dev), (unsigned long)entry->ino
 
 TRACE_DEFINE_ENUM(NODE);
 TRACE_DEFINE_ENUM(DATA);
@@ -54,124 +53,124 @@ TRACE_DEFINE_ENUM(CP_TRIMMED);
 TRACE_DEFINE_ENUM(CP_PAUSE);
 TRACE_DEFINE_ENUM(CP_RESIZE);
 
-#घोषणा show_block_type(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु NODE,		"NODE" पूर्ण,				\
-		अणु DATA,		"DATA" पूर्ण,				\
-		अणु META,		"META" पूर्ण,				\
-		अणु META_FLUSH,	"META_FLUSH" पूर्ण,				\
-		अणु INMEM,	"INMEM" पूर्ण,				\
-		अणु INMEM_DROP,	"INMEM_DROP" पूर्ण,				\
-		अणु INMEM_INVALIDATE,	"INMEM_INVALIDATE" पूर्ण,		\
-		अणु INMEM_REVOKE,	"INMEM_REVOKE" पूर्ण,			\
-		अणु IPU,		"IN-PLACE" पूर्ण,				\
-		अणु OPU,		"OUT-OF-PLACE" पूर्ण)
+#define show_block_type(type)						\
+	__print_symbolic(type,						\
+		{ NODE,		"NODE" },				\
+		{ DATA,		"DATA" },				\
+		{ META,		"META" },				\
+		{ META_FLUSH,	"META_FLUSH" },				\
+		{ INMEM,	"INMEM" },				\
+		{ INMEM_DROP,	"INMEM_DROP" },				\
+		{ INMEM_INVALIDATE,	"INMEM_INVALIDATE" },		\
+		{ INMEM_REVOKE,	"INMEM_REVOKE" },			\
+		{ IPU,		"IN-PLACE" },				\
+		{ OPU,		"OUT-OF-PLACE" })
 
-#घोषणा show_block_temp(temp)						\
-	__prपूर्णांक_symbolic(temp,						\
-		अणु HOT,		"HOT" पूर्ण,				\
-		अणु WARM,		"WARM" पूर्ण,				\
-		अणु COLD,		"COLD" पूर्ण)
+#define show_block_temp(temp)						\
+	__print_symbolic(temp,						\
+		{ HOT,		"HOT" },				\
+		{ WARM,		"WARM" },				\
+		{ COLD,		"COLD" })
 
-#घोषणा F2FS_OP_FLAGS (REQ_RAHEAD | REQ_SYNC | REQ_META | REQ_PRIO |	\
+#define F2FS_OP_FLAGS (REQ_RAHEAD | REQ_SYNC | REQ_META | REQ_PRIO |	\
 			REQ_PREFLUSH | REQ_FUA)
-#घोषणा F2FS_BIO_FLAG_MASK(t)	(t & F2FS_OP_FLAGS)
+#define F2FS_BIO_FLAG_MASK(t)	(t & F2FS_OP_FLAGS)
 
-#घोषणा show_bio_type(op,op_flags)	show_bio_op(op),		\
+#define show_bio_type(op,op_flags)	show_bio_op(op),		\
 						show_bio_op_flags(op_flags)
 
-#घोषणा show_bio_op(op)		blk_op_str(op)
+#define show_bio_op(op)		blk_op_str(op)
 
-#घोषणा show_bio_op_flags(flags)					\
-	__prपूर्णांक_flags(F2FS_BIO_FLAG_MASK(flags), "|",			\
-		अणु REQ_RAHEAD,		"R" पूर्ण,				\
-		अणु REQ_SYNC,		"S" पूर्ण,				\
-		अणु REQ_META,		"M" पूर्ण,				\
-		अणु REQ_PRIO,		"P" पूर्ण,				\
-		अणु REQ_PREFLUSH,		"PF" पूर्ण,				\
-		अणु REQ_FUA,		"FUA" पूर्ण)
+#define show_bio_op_flags(flags)					\
+	__print_flags(F2FS_BIO_FLAG_MASK(flags), "|",			\
+		{ REQ_RAHEAD,		"R" },				\
+		{ REQ_SYNC,		"S" },				\
+		{ REQ_META,		"M" },				\
+		{ REQ_PRIO,		"P" },				\
+		{ REQ_PREFLUSH,		"PF" },				\
+		{ REQ_FUA,		"FUA" })
 
-#घोषणा show_data_type(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु CURSEG_HOT_DATA, 	"Hot DATA" पूर्ण,			\
-		अणु CURSEG_WARM_DATA, 	"Warm DATA" पूर्ण,			\
-		अणु CURSEG_COLD_DATA, 	"Cold DATA" पूर्ण,			\
-		अणु CURSEG_HOT_NODE, 	"Hot NODE" पूर्ण,			\
-		अणु CURSEG_WARM_NODE, 	"Warm NODE" पूर्ण,			\
-		अणु CURSEG_COLD_NODE, 	"Cold NODE" पूर्ण,			\
-		अणु NO_CHECK_TYPE, 	"No TYPE" पूर्ण)
+#define show_data_type(type)						\
+	__print_symbolic(type,						\
+		{ CURSEG_HOT_DATA, 	"Hot DATA" },			\
+		{ CURSEG_WARM_DATA, 	"Warm DATA" },			\
+		{ CURSEG_COLD_DATA, 	"Cold DATA" },			\
+		{ CURSEG_HOT_NODE, 	"Hot NODE" },			\
+		{ CURSEG_WARM_NODE, 	"Warm NODE" },			\
+		{ CURSEG_COLD_NODE, 	"Cold NODE" },			\
+		{ NO_CHECK_TYPE, 	"No TYPE" })
 
-#घोषणा show_file_type(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु 0,		"FILE" पूर्ण,				\
-		अणु 1,		"DIR" पूर्ण)
+#define show_file_type(type)						\
+	__print_symbolic(type,						\
+		{ 0,		"FILE" },				\
+		{ 1,		"DIR" })
 
-#घोषणा show_gc_type(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु FG_GC,	"Foreground GC" पूर्ण,			\
-		अणु BG_GC,	"Background GC" पूर्ण)
+#define show_gc_type(type)						\
+	__print_symbolic(type,						\
+		{ FG_GC,	"Foreground GC" },			\
+		{ BG_GC,	"Background GC" })
 
-#घोषणा show_alloc_mode(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु LFS,		"LFS-mode" पूर्ण,				\
-		अणु SSR,		"SSR-mode" पूर्ण,				\
-		अणु AT_SSR,	"AT_SSR-mode" पूर्ण)
+#define show_alloc_mode(type)						\
+	__print_symbolic(type,						\
+		{ LFS,		"LFS-mode" },				\
+		{ SSR,		"SSR-mode" },				\
+		{ AT_SSR,	"AT_SSR-mode" })
 
-#घोषणा show_victim_policy(type)					\
-	__prपूर्णांक_symbolic(type,						\
-		अणु GC_GREEDY,	"Greedy" पूर्ण,				\
-		अणु GC_CB,	"Cost-Benefit" पूर्ण,			\
-		अणु GC_AT,	"Age-threshold" पूर्ण)
+#define show_victim_policy(type)					\
+	__print_symbolic(type,						\
+		{ GC_GREEDY,	"Greedy" },				\
+		{ GC_CB,	"Cost-Benefit" },			\
+		{ GC_AT,	"Age-threshold" })
 
-#घोषणा show_cpreason(type)						\
-	__prपूर्णांक_flags(type, "|",					\
-		अणु CP_UMOUNT,	"Umount" पूर्ण,				\
-		अणु CP_FASTBOOT,	"Fastboot" पूर्ण,				\
-		अणु CP_SYNC,	"Sync" पूर्ण,				\
-		अणु CP_RECOVERY,	"Recovery" पूर्ण,				\
-		अणु CP_DISCARD,	"Discard" पूर्ण,				\
-		अणु CP_PAUSE,	"Pause" पूर्ण,				\
-		अणु CP_TRIMMED,	"Trimmed" पूर्ण,				\
-		अणु CP_RESIZE,	"Resize" पूर्ण)
+#define show_cpreason(type)						\
+	__print_flags(type, "|",					\
+		{ CP_UMOUNT,	"Umount" },				\
+		{ CP_FASTBOOT,	"Fastboot" },				\
+		{ CP_SYNC,	"Sync" },				\
+		{ CP_RECOVERY,	"Recovery" },				\
+		{ CP_DISCARD,	"Discard" },				\
+		{ CP_PAUSE,	"Pause" },				\
+		{ CP_TRIMMED,	"Trimmed" },				\
+		{ CP_RESIZE,	"Resize" })
 
-#घोषणा show_fsync_cpreason(type)					\
-	__prपूर्णांक_symbolic(type,						\
-		अणु CP_NO_NEEDED,		"no needed" पूर्ण,			\
-		अणु CP_NON_REGULAR,	"non regular" पूर्ण,		\
-		अणु CP_COMPRESSED,	"compressed" पूर्ण,			\
-		अणु CP_HARDLINK,		"hardlink" पूर्ण,			\
-		अणु CP_SB_NEED_CP,	"sb needs cp" पूर्ण,		\
-		अणु CP_WRONG_PINO,	"wrong pino" पूर्ण,			\
-		अणु CP_NO_SPC_ROLL,	"no space roll forward" पूर्ण,	\
-		अणु CP_NODE_NEED_CP,	"node needs cp" पूर्ण,		\
-		अणु CP_FASTBOOT_MODE,	"fastboot mode" पूर्ण,		\
-		अणु CP_SPEC_LOG_NUM,	"log type is 2" पूर्ण,		\
-		अणु CP_RECOVER_सूची,	"dir needs recovery" पूर्ण)
+#define show_fsync_cpreason(type)					\
+	__print_symbolic(type,						\
+		{ CP_NO_NEEDED,		"no needed" },			\
+		{ CP_NON_REGULAR,	"non regular" },		\
+		{ CP_COMPRESSED,	"compressed" },			\
+		{ CP_HARDLINK,		"hardlink" },			\
+		{ CP_SB_NEED_CP,	"sb needs cp" },		\
+		{ CP_WRONG_PINO,	"wrong pino" },			\
+		{ CP_NO_SPC_ROLL,	"no space roll forward" },	\
+		{ CP_NODE_NEED_CP,	"node needs cp" },		\
+		{ CP_FASTBOOT_MODE,	"fastboot mode" },		\
+		{ CP_SPEC_LOG_NUM,	"log type is 2" },		\
+		{ CP_RECOVER_DIR,	"dir needs recovery" })
 
-#घोषणा show_shutकरोwn_mode(type)					\
-	__prपूर्णांक_symbolic(type,						\
-		अणु F2FS_GOING_DOWN_FULLSYNC,	"full sync" पूर्ण,		\
-		अणु F2FS_GOING_DOWN_METASYNC,	"meta sync" पूर्ण,		\
-		अणु F2FS_GOING_DOWN_NOSYNC,	"no sync" पूर्ण,		\
-		अणु F2FS_GOING_DOWN_METAFLUSH,	"meta flush" पूर्ण,		\
-		अणु F2FS_GOING_DOWN_NEED_FSCK,	"need fsck" पूर्ण)
+#define show_shutdown_mode(type)					\
+	__print_symbolic(type,						\
+		{ F2FS_GOING_DOWN_FULLSYNC,	"full sync" },		\
+		{ F2FS_GOING_DOWN_METASYNC,	"meta sync" },		\
+		{ F2FS_GOING_DOWN_NOSYNC,	"no sync" },		\
+		{ F2FS_GOING_DOWN_METAFLUSH,	"meta flush" },		\
+		{ F2FS_GOING_DOWN_NEED_FSCK,	"need fsck" })
 
-#घोषणा show_compress_algorithm(type)					\
-	__prपूर्णांक_symbolic(type,						\
-		अणु COMPRESS_LZO,		"LZO" पूर्ण,			\
-		अणु COMPRESS_LZ4,		"LZ4" पूर्ण,			\
-		अणु COMPRESS_ZSTD,	"ZSTD" पूर्ण,			\
-		अणु COMPRESS_LZORLE,	"LZO-RLE" पूर्ण)
+#define show_compress_algorithm(type)					\
+	__print_symbolic(type,						\
+		{ COMPRESS_LZO,		"LZO" },			\
+		{ COMPRESS_LZ4,		"LZ4" },			\
+		{ COMPRESS_ZSTD,	"ZSTD" },			\
+		{ COMPRESS_LZORLE,	"LZO-RLE" })
 
-काष्ठा f2fs_sb_info;
-काष्ठा f2fs_io_info;
-काष्ठा extent_info;
-काष्ठा victim_sel_policy;
-काष्ठा f2fs_map_blocks;
+struct f2fs_sb_info;
+struct f2fs_io_info;
+struct extent_info;
+struct victim_sel_policy;
+struct f2fs_map_blocks;
 
 DECLARE_EVENT_CLASS(f2fs__inode,
 
-	TP_PROTO(काष्ठा inode *inode),
+	TP_PROTO(struct inode *inode),
 
 	TP_ARGS(inode),
 
@@ -181,7 +180,7 @@ DECLARE_EVENT_CLASS(f2fs__inode,
 		__field(ino_t,	pino)
 		__field(umode_t, mode)
 		__field(loff_t,	size)
-		__field(अचिन्हित पूर्णांक, nlink)
+		__field(unsigned int, nlink)
 		__field(blkcnt_t, blocks)
 		__field(__u8,	advise)
 	),
@@ -197,27 +196,27 @@ DECLARE_EVENT_CLASS(f2fs__inode,
 		__entry->advise	= F2FS_I(inode)->i_advise;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pino = %lu, i_mode = 0x%hx, "
+	TP_printk("dev = (%d,%d), ino = %lu, pino = %lu, i_mode = 0x%hx, "
 		"i_size = %lld, i_nlink = %u, i_blocks = %llu, i_advise = 0x%x",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ)__entry->pino,
+		(unsigned long)__entry->pino,
 		__entry->mode,
 		__entry->size,
-		(अचिन्हित पूर्णांक)__entry->nlink,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blocks,
-		(अचिन्हित अक्षर)__entry->advise)
+		(unsigned int)__entry->nlink,
+		(unsigned long long)__entry->blocks,
+		(unsigned char)__entry->advise)
 );
 
-DECLARE_EVENT_CLASS(f2fs__inode_निकास,
+DECLARE_EVENT_CLASS(f2fs__inode_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(पूर्णांक,	ret)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -226,30 +225,30 @@ DECLARE_EVENT_CLASS(f2fs__inode_निकास,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, ret = %d",
+	TP_printk("dev = (%d,%d), ino = %lu, ret = %d",
 		show_dev_ino(__entry),
 		__entry->ret)
 );
 
 DEFINE_EVENT(f2fs__inode, f2fs_sync_file_enter,
 
-	TP_PROTO(काष्ठा inode *inode),
+	TP_PROTO(struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
-TRACE_EVENT(f2fs_sync_file_निकास,
+TRACE_EVENT(f2fs_sync_file_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक cp_reason, पूर्णांक datasync, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int cp_reason, int datasync, int ret),
 
 	TP_ARGS(inode, cp_reason, datasync, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(पूर्णांक,	cp_reason)
-		__field(पूर्णांक,	datasync)
-		__field(पूर्णांक,	ret)
+		__field(int,	cp_reason)
+		__field(int,	datasync)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -260,7 +259,7 @@ TRACE_EVENT(f2fs_sync_file_निकास,
 		__entry->ret		= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, cp_reason: %s, "
+	TP_printk("dev = (%d,%d), ino = %lu, cp_reason: %s, "
 		"datasync = %d, ret = %d",
 		show_dev_ino(__entry),
 		show_fsync_cpreason(__entry->cp_reason),
@@ -270,59 +269,59 @@ TRACE_EVENT(f2fs_sync_file_निकास,
 
 TRACE_EVENT(f2fs_sync_fs,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक रुको),
+	TP_PROTO(struct super_block *sb, int wait),
 
-	TP_ARGS(sb, रुको),
+	TP_ARGS(sb, wait),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(पूर्णांक,	dirty)
-		__field(पूर्णांक,	रुको)
+		__field(int,	dirty)
+		__field(int,	wait)
 	),
 
 	TP_fast_assign(
 		__entry->dev	= sb->s_dev;
-		__entry->dirty	= is_sbi_flag_set(F2FS_SB(sb), SBI_IS_सूचीTY);
-		__entry->रुको	= रुको;
+		__entry->dirty	= is_sbi_flag_set(F2FS_SB(sb), SBI_IS_DIRTY);
+		__entry->wait	= wait;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), superblock is %s, wait = %d",
+	TP_printk("dev = (%d,%d), superblock is %s, wait = %d",
 		show_dev(__entry->dev),
 		__entry->dirty ? "dirty" : "not dirty",
-		__entry->रुको)
+		__entry->wait)
 );
 
 DEFINE_EVENT(f2fs__inode, f2fs_iget,
 
-	TP_PROTO(काष्ठा inode *inode),
+	TP_PROTO(struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_iget_निकास,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_iget_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 DEFINE_EVENT(f2fs__inode, f2fs_evict_inode,
 
-	TP_PROTO(काष्ठा inode *inode),
+	TP_PROTO(struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_new_inode,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_new_inode,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 TRACE_EVENT(f2fs_unlink_enter,
 
-	TP_PROTO(काष्ठा inode *dir, काष्ठा dentry *dentry),
+	TP_PROTO(struct inode *dir, struct dentry *dentry),
 
 	TP_ARGS(dir, dentry),
 
@@ -331,7 +330,7 @@ TRACE_EVENT(f2fs_unlink_enter,
 		__field(ino_t,	ino)
 		__field(loff_t,	size)
 		__field(blkcnt_t, blocks)
-		__field(स्थिर अक्षर *,	name)
+		__field(const char *,	name)
 	),
 
 	TP_fast_assign(
@@ -342,47 +341,47 @@ TRACE_EVENT(f2fs_unlink_enter,
 		__entry->name	= dentry->d_name.name;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), dir ino = %lu, i_size = %lld, "
+	TP_printk("dev = (%d,%d), dir ino = %lu, i_size = %lld, "
 		"i_blocks = %llu, name = %s",
 		show_dev_ino(__entry),
 		__entry->size,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blocks,
+		(unsigned long long)__entry->blocks,
 		__entry->name)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_unlink_निकास,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_unlink_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_drop_inode,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_drop_inode,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 DEFINE_EVENT(f2fs__inode, f2fs_truncate,
 
-	TP_PROTO(काष्ठा inode *inode),
+	TP_PROTO(struct inode *inode),
 
 	TP_ARGS(inode)
 );
 
 TRACE_EVENT(f2fs_truncate_data_blocks_range,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t nid, अचिन्हित पूर्णांक ofs, पूर्णांक मुक्त),
+	TP_PROTO(struct inode *inode, nid_t nid, unsigned int ofs, int free),
 
-	TP_ARGS(inode, nid,  ofs, मुक्त),
+	TP_ARGS(inode, nid,  ofs, free),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(nid_t,	nid)
-		__field(अचिन्हित पूर्णांक,	ofs)
-		__field(पूर्णांक,	मुक्त)
+		__field(unsigned int,	ofs)
+		__field(int,	free)
 	),
 
 	TP_fast_assign(
@@ -390,19 +389,19 @@ TRACE_EVENT(f2fs_truncate_data_blocks_range,
 		__entry->ino	= inode->i_ino;
 		__entry->nid	= nid;
 		__entry->ofs	= ofs;
-		__entry->मुक्त	= मुक्त;
+		__entry->free	= free;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, nid = %u, offset = %u, freed = %d",
+	TP_printk("dev = (%d,%d), ino = %lu, nid = %u, offset = %u, freed = %d",
 		show_dev_ino(__entry),
-		(अचिन्हित पूर्णांक)__entry->nid,
+		(unsigned int)__entry->nid,
 		__entry->ofs,
-		__entry->मुक्त)
+		__entry->free)
 );
 
 DECLARE_EVENT_CLASS(f2fs__truncate_op,
 
-	TP_PROTO(काष्ठा inode *inode, u64 from),
+	TP_PROTO(struct inode *inode, u64 from),
 
 	TP_ARGS(inode, from),
 
@@ -422,45 +421,45 @@ DECLARE_EVENT_CLASS(f2fs__truncate_op,
 		__entry->from	= from;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, i_size = %lld, i_blocks = %llu, "
+	TP_printk("dev = (%d,%d), ino = %lu, i_size = %lld, i_blocks = %llu, "
 		"start file offset = %llu",
 		show_dev_ino(__entry),
 		__entry->size,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blocks,
-		(अचिन्हित दीर्घ दीर्घ)__entry->from)
+		(unsigned long long)__entry->blocks,
+		(unsigned long long)__entry->from)
 );
 
 DEFINE_EVENT(f2fs__truncate_op, f2fs_truncate_blocks_enter,
 
-	TP_PROTO(काष्ठा inode *inode, u64 from),
+	TP_PROTO(struct inode *inode, u64 from),
 
 	TP_ARGS(inode, from)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_truncate_blocks_निकास,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_truncate_blocks_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 DEFINE_EVENT(f2fs__truncate_op, f2fs_truncate_inode_blocks_enter,
 
-	TP_PROTO(काष्ठा inode *inode, u64 from),
+	TP_PROTO(struct inode *inode, u64 from),
 
 	TP_ARGS(inode, from)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_truncate_inode_blocks_निकास,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_truncate_inode_blocks_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 DECLARE_EVENT_CLASS(f2fs__truncate_node,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t nid, block_t blk_addr),
+	TP_PROTO(struct inode *inode, nid_t nid, block_t blk_addr),
 
 	TP_ARGS(inode, nid, blk_addr),
 
@@ -478,36 +477,36 @@ DECLARE_EVENT_CLASS(f2fs__truncate_node,
 		__entry->blk_addr	= blk_addr;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, nid = %u, block_address = 0x%llx",
+	TP_printk("dev = (%d,%d), ino = %lu, nid = %u, block_address = 0x%llx",
 		show_dev_ino(__entry),
-		(अचिन्हित पूर्णांक)__entry->nid,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blk_addr)
+		(unsigned int)__entry->nid,
+		(unsigned long long)__entry->blk_addr)
 );
 
 DEFINE_EVENT(f2fs__truncate_node, f2fs_truncate_nodes_enter,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t nid, block_t blk_addr),
+	TP_PROTO(struct inode *inode, nid_t nid, block_t blk_addr),
 
 	TP_ARGS(inode, nid, blk_addr)
 );
 
-DEFINE_EVENT(f2fs__inode_निकास, f2fs_truncate_nodes_निकास,
+DEFINE_EVENT(f2fs__inode_exit, f2fs_truncate_nodes_exit,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int ret),
 
 	TP_ARGS(inode, ret)
 );
 
 DEFINE_EVENT(f2fs__truncate_node, f2fs_truncate_node,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t nid, block_t blk_addr),
+	TP_PROTO(struct inode *inode, nid_t nid, block_t blk_addr),
 
 	TP_ARGS(inode, nid, blk_addr)
 );
 
 TRACE_EVENT(f2fs_truncate_partial_nodes,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t *nid, पूर्णांक depth, पूर्णांक err),
+	TP_PROTO(struct inode *inode, nid_t *nid, int depth, int err),
 
 	TP_ARGS(inode, nid, depth, err),
 
@@ -515,8 +514,8 @@ TRACE_EVENT(f2fs_truncate_partial_nodes,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(nid_t,	nid[3])
-		__field(पूर्णांक,	depth)
-		__field(पूर्णांक,	err)
+		__field(int,	depth)
+		__field(int,	err)
 	),
 
 	TP_fast_assign(
@@ -529,29 +528,29 @@ TRACE_EVENT(f2fs_truncate_partial_nodes,
 		__entry->err	= err;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, "
+	TP_printk("dev = (%d,%d), ino = %lu, "
 		"nid[0] = %u, nid[1] = %u, nid[2] = %u, depth = %d, err = %d",
 		show_dev_ino(__entry),
-		(अचिन्हित पूर्णांक)__entry->nid[0],
-		(अचिन्हित पूर्णांक)__entry->nid[1],
-		(अचिन्हित पूर्णांक)__entry->nid[2],
+		(unsigned int)__entry->nid[0],
+		(unsigned int)__entry->nid[1],
+		(unsigned int)__entry->nid[2],
 		__entry->depth,
 		__entry->err)
 );
 
-TRACE_EVENT(f2fs_file_ग_लिखो_iter,
+TRACE_EVENT(f2fs_file_write_iter,
 
-	TP_PROTO(काष्ठा inode *inode, अचिन्हित दीर्घ offset,
-		अचिन्हित दीर्घ length, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, unsigned long offset,
+		unsigned long length, int ret),
 
 	TP_ARGS(inode, offset, length, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(अचिन्हित दीर्घ, offset)
-		__field(अचिन्हित दीर्घ, length)
-		__field(पूर्णांक,	ret)
+		__field(unsigned long, offset)
+		__field(unsigned long, length)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -562,7 +561,7 @@ TRACE_EVENT(f2fs_file_ग_लिखो_iter,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, "
+	TP_printk("dev = (%d,%d), ino = %lu, "
 		"offset = %lu, length = %lu, written(err) = %d",
 		show_dev_ino(__entry),
 		__entry->offset,
@@ -571,7 +570,7 @@ TRACE_EVENT(f2fs_file_ग_लिखो_iter,
 );
 
 TRACE_EVENT(f2fs_map_blocks,
-	TP_PROTO(काष्ठा inode *inode, काष्ठा f2fs_map_blocks *map, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, struct f2fs_map_blocks *map, int ret),
 
 	TP_ARGS(inode, map, ret),
 
@@ -580,11 +579,11 @@ TRACE_EVENT(f2fs_map_blocks,
 		__field(ino_t,	ino)
 		__field(block_t,	m_lblk)
 		__field(block_t,	m_pblk)
-		__field(अचिन्हित पूर्णांक,	m_len)
-		__field(अचिन्हित पूर्णांक,	m_flags)
-		__field(पूर्णांक,	m_seg_type)
+		__field(unsigned int,	m_len)
+		__field(unsigned int,	m_flags)
+		__field(int,	m_seg_type)
 		__field(bool,	m_may_create)
-		__field(पूर्णांक,	ret)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -599,13 +598,13 @@ TRACE_EVENT(f2fs_map_blocks,
 		__entry->ret		= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, file offset = %llu, "
+	TP_printk("dev = (%d,%d), ino = %lu, file offset = %llu, "
 		"start blkaddr = 0x%llx, len = 0x%llx, flags = %u,"
 		"seg_type = %d, may_create = %d, err = %d",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ दीर्घ)__entry->m_lblk,
-		(अचिन्हित दीर्घ दीर्घ)__entry->m_pblk,
-		(अचिन्हित दीर्घ दीर्घ)__entry->m_len,
+		(unsigned long long)__entry->m_lblk,
+		(unsigned long long)__entry->m_pblk,
+		(unsigned long long)__entry->m_len,
 		__entry->m_flags,
 		__entry->m_seg_type,
 		__entry->m_may_create,
@@ -614,54 +613,54 @@ TRACE_EVENT(f2fs_map_blocks,
 
 TRACE_EVENT(f2fs_background_gc,
 
-	TP_PROTO(काष्ठा super_block *sb, अचिन्हित पूर्णांक रुको_ms,
-			अचिन्हित पूर्णांक preमुक्त, अचिन्हित पूर्णांक मुक्त),
+	TP_PROTO(struct super_block *sb, unsigned int wait_ms,
+			unsigned int prefree, unsigned int free),
 
-	TP_ARGS(sb, रुको_ms, preमुक्त, मुक्त),
+	TP_ARGS(sb, wait_ms, prefree, free),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(अचिन्हित पूर्णांक,	रुको_ms)
-		__field(अचिन्हित पूर्णांक,	preमुक्त)
-		__field(अचिन्हित पूर्णांक,	मुक्त)
+		__field(unsigned int,	wait_ms)
+		__field(unsigned int,	prefree)
+		__field(unsigned int,	free)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= sb->s_dev;
-		__entry->रुको_ms	= रुको_ms;
-		__entry->preमुक्त	= preमुक्त;
-		__entry->मुक्त		= मुक्त;
+		__entry->wait_ms	= wait_ms;
+		__entry->prefree	= prefree;
+		__entry->free		= free;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), wait_ms = %u, prefree = %u, free = %u",
+	TP_printk("dev = (%d,%d), wait_ms = %u, prefree = %u, free = %u",
 		show_dev(__entry->dev),
-		__entry->रुको_ms,
-		__entry->preमुक्त,
-		__entry->मुक्त)
+		__entry->wait_ms,
+		__entry->prefree,
+		__entry->free)
 );
 
 TRACE_EVENT(f2fs_gc_begin,
 
-	TP_PROTO(काष्ठा super_block *sb, bool sync, bool background,
-			दीर्घ दीर्घ dirty_nodes, दीर्घ दीर्घ dirty_dents,
-			दीर्घ दीर्घ dirty_imeta, अचिन्हित पूर्णांक मुक्त_sec,
-			अचिन्हित पूर्णांक मुक्त_seg, पूर्णांक reserved_seg,
-			अचिन्हित पूर्णांक preमुक्त_seg),
+	TP_PROTO(struct super_block *sb, bool sync, bool background,
+			long long dirty_nodes, long long dirty_dents,
+			long long dirty_imeta, unsigned int free_sec,
+			unsigned int free_seg, int reserved_seg,
+			unsigned int prefree_seg),
 
 	TP_ARGS(sb, sync, background, dirty_nodes, dirty_dents, dirty_imeta,
-		मुक्त_sec, मुक्त_seg, reserved_seg, preमुक्त_seg),
+		free_sec, free_seg, reserved_seg, prefree_seg),
 
 	TP_STRUCT__entry(
 		__field(dev_t,		dev)
 		__field(bool,		sync)
 		__field(bool,		background)
-		__field(दीर्घ दीर्घ,	dirty_nodes)
-		__field(दीर्घ दीर्घ,	dirty_dents)
-		__field(दीर्घ दीर्घ,	dirty_imeta)
-		__field(अचिन्हित पूर्णांक,	मुक्त_sec)
-		__field(अचिन्हित पूर्णांक,	मुक्त_seg)
-		__field(पूर्णांक,		reserved_seg)
-		__field(अचिन्हित पूर्णांक,	preमुक्त_seg)
+		__field(long long,	dirty_nodes)
+		__field(long long,	dirty_dents)
+		__field(long long,	dirty_imeta)
+		__field(unsigned int,	free_sec)
+		__field(unsigned int,	free_seg)
+		__field(int,		reserved_seg)
+		__field(unsigned int,	prefree_seg)
 	),
 
 	TP_fast_assign(
@@ -671,13 +670,13 @@ TRACE_EVENT(f2fs_gc_begin,
 		__entry->dirty_nodes	= dirty_nodes;
 		__entry->dirty_dents	= dirty_dents;
 		__entry->dirty_imeta	= dirty_imeta;
-		__entry->मुक्त_sec	= मुक्त_sec;
-		__entry->मुक्त_seg	= मुक्त_seg;
+		__entry->free_sec	= free_sec;
+		__entry->free_seg	= free_seg;
 		__entry->reserved_seg	= reserved_seg;
-		__entry->preमुक्त_seg	= preमुक्त_seg;
+		__entry->prefree_seg	= prefree_seg;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), sync = %d, background = %d, nodes = %lld, "
+	TP_printk("dev = (%d,%d), sync = %d, background = %d, nodes = %lld, "
 		"dents = %lld, imeta = %lld, free_sec:%u, free_seg:%u, "
 		"rsv_seg:%d, prefree_seg:%u",
 		show_dev(__entry->dev),
@@ -686,87 +685,87 @@ TRACE_EVENT(f2fs_gc_begin,
 		__entry->dirty_nodes,
 		__entry->dirty_dents,
 		__entry->dirty_imeta,
-		__entry->मुक्त_sec,
-		__entry->मुक्त_seg,
+		__entry->free_sec,
+		__entry->free_seg,
 		__entry->reserved_seg,
-		__entry->preमुक्त_seg)
+		__entry->prefree_seg)
 );
 
 TRACE_EVENT(f2fs_gc_end,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक ret, पूर्णांक seg_मुक्तd,
-			पूर्णांक sec_मुक्तd, दीर्घ दीर्घ dirty_nodes,
-			दीर्घ दीर्घ dirty_dents, दीर्घ दीर्घ dirty_imeta,
-			अचिन्हित पूर्णांक मुक्त_sec, अचिन्हित पूर्णांक मुक्त_seg,
-			पूर्णांक reserved_seg, अचिन्हित पूर्णांक preमुक्त_seg),
+	TP_PROTO(struct super_block *sb, int ret, int seg_freed,
+			int sec_freed, long long dirty_nodes,
+			long long dirty_dents, long long dirty_imeta,
+			unsigned int free_sec, unsigned int free_seg,
+			int reserved_seg, unsigned int prefree_seg),
 
-	TP_ARGS(sb, ret, seg_मुक्तd, sec_मुक्तd, dirty_nodes, dirty_dents,
-		dirty_imeta, मुक्त_sec, मुक्त_seg, reserved_seg, preमुक्त_seg),
+	TP_ARGS(sb, ret, seg_freed, sec_freed, dirty_nodes, dirty_dents,
+		dirty_imeta, free_sec, free_seg, reserved_seg, prefree_seg),
 
 	TP_STRUCT__entry(
 		__field(dev_t,		dev)
-		__field(पूर्णांक,		ret)
-		__field(पूर्णांक,		seg_मुक्तd)
-		__field(पूर्णांक,		sec_मुक्तd)
-		__field(दीर्घ दीर्घ,	dirty_nodes)
-		__field(दीर्घ दीर्घ,	dirty_dents)
-		__field(दीर्घ दीर्घ,	dirty_imeta)
-		__field(अचिन्हित पूर्णांक,	मुक्त_sec)
-		__field(अचिन्हित पूर्णांक,	मुक्त_seg)
-		__field(पूर्णांक,		reserved_seg)
-		__field(अचिन्हित पूर्णांक,	preमुक्त_seg)
+		__field(int,		ret)
+		__field(int,		seg_freed)
+		__field(int,		sec_freed)
+		__field(long long,	dirty_nodes)
+		__field(long long,	dirty_dents)
+		__field(long long,	dirty_imeta)
+		__field(unsigned int,	free_sec)
+		__field(unsigned int,	free_seg)
+		__field(int,		reserved_seg)
+		__field(unsigned int,	prefree_seg)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= sb->s_dev;
 		__entry->ret		= ret;
-		__entry->seg_मुक्तd	= seg_मुक्तd;
-		__entry->sec_मुक्तd	= sec_मुक्तd;
+		__entry->seg_freed	= seg_freed;
+		__entry->sec_freed	= sec_freed;
 		__entry->dirty_nodes	= dirty_nodes;
 		__entry->dirty_dents	= dirty_dents;
 		__entry->dirty_imeta	= dirty_imeta;
-		__entry->मुक्त_sec	= मुक्त_sec;
-		__entry->मुक्त_seg	= मुक्त_seg;
+		__entry->free_sec	= free_sec;
+		__entry->free_seg	= free_seg;
 		__entry->reserved_seg	= reserved_seg;
-		__entry->preमुक्त_seg	= preमुक्त_seg;
+		__entry->prefree_seg	= prefree_seg;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ret = %d, seg_freed = %d, sec_freed = %d, "
+	TP_printk("dev = (%d,%d), ret = %d, seg_freed = %d, sec_freed = %d, "
 		"nodes = %lld, dents = %lld, imeta = %lld, free_sec:%u, "
 		"free_seg:%u, rsv_seg:%d, prefree_seg:%u",
 		show_dev(__entry->dev),
 		__entry->ret,
-		__entry->seg_मुक्तd,
-		__entry->sec_मुक्तd,
+		__entry->seg_freed,
+		__entry->sec_freed,
 		__entry->dirty_nodes,
 		__entry->dirty_dents,
 		__entry->dirty_imeta,
-		__entry->मुक्त_sec,
-		__entry->मुक्त_seg,
+		__entry->free_sec,
+		__entry->free_seg,
 		__entry->reserved_seg,
-		__entry->preमुक्त_seg)
+		__entry->prefree_seg)
 );
 
 TRACE_EVENT(f2fs_get_victim,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक gc_type,
-			काष्ठा victim_sel_policy *p, अचिन्हित पूर्णांक pre_victim,
-			अचिन्हित पूर्णांक preमुक्त, अचिन्हित पूर्णांक मुक्त),
+	TP_PROTO(struct super_block *sb, int type, int gc_type,
+			struct victim_sel_policy *p, unsigned int pre_victim,
+			unsigned int prefree, unsigned int free),
 
-	TP_ARGS(sb, type, gc_type, p, pre_victim, preमुक्त, मुक्त),
+	TP_ARGS(sb, type, gc_type, p, pre_victim, prefree, free),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(पूर्णांक,	type)
-		__field(पूर्णांक,	gc_type)
-		__field(पूर्णांक,	alloc_mode)
-		__field(पूर्णांक,	gc_mode)
-		__field(अचिन्हित पूर्णांक,	victim)
-		__field(अचिन्हित पूर्णांक,	cost)
-		__field(अचिन्हित पूर्णांक,	ofs_unit)
-		__field(अचिन्हित पूर्णांक,	pre_victim)
-		__field(अचिन्हित पूर्णांक,	preमुक्त)
-		__field(अचिन्हित पूर्णांक,	मुक्त)
+		__field(int,	type)
+		__field(int,	gc_type)
+		__field(int,	alloc_mode)
+		__field(int,	gc_mode)
+		__field(unsigned int,	victim)
+		__field(unsigned int,	cost)
+		__field(unsigned int,	ofs_unit)
+		__field(unsigned int,	pre_victim)
+		__field(unsigned int,	prefree)
+		__field(unsigned int,	free)
 	),
 
 	TP_fast_assign(
@@ -779,11 +778,11 @@ TRACE_EVENT(f2fs_get_victim,
 		__entry->cost		= p->min_cost;
 		__entry->ofs_unit	= p->ofs_unit;
 		__entry->pre_victim	= pre_victim;
-		__entry->preमुक्त	= preमुक्त;
-		__entry->मुक्त		= मुक्त;
+		__entry->prefree	= prefree;
+		__entry->free		= free;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), type = %s, policy = (%s, %s, %s), "
+	TP_printk("dev = (%d,%d), type = %s, policy = (%s, %s, %s), "
 		"victim = %u, cost = %u, ofs_unit = %u, "
 		"pre_victim_secno = %d, prefree = %u, free = %u",
 		show_dev(__entry->dev),
@@ -794,22 +793,22 @@ TRACE_EVENT(f2fs_get_victim,
 		__entry->victim,
 		__entry->cost,
 		__entry->ofs_unit,
-		(पूर्णांक)__entry->pre_victim,
-		__entry->preमुक्त,
-		__entry->मुक्त)
+		(int)__entry->pre_victim,
+		__entry->prefree,
+		__entry->free)
 );
 
 TRACE_EVENT(f2fs_lookup_start,
 
-	TP_PROTO(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags),
+	TP_PROTO(struct inode *dir, struct dentry *dentry, unsigned int flags),
 
 	TP_ARGS(dir, dentry, flags),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(स्थिर अक्षर *,	name)
-		__field(अचिन्हित पूर्णांक, flags)
+		__field(const char *,	name)
+		__field(unsigned int, flags)
 	),
 
 	TP_fast_assign(
@@ -819,7 +818,7 @@ TRACE_EVENT(f2fs_lookup_start,
 		__entry->flags	= flags;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), pino = %lu, name:%s, flags:%u",
+	TP_printk("dev = (%d,%d), pino = %lu, name:%s, flags:%u",
 		show_dev_ino(__entry),
 		__entry->name,
 		__entry->flags)
@@ -827,17 +826,17 @@ TRACE_EVENT(f2fs_lookup_start,
 
 TRACE_EVENT(f2fs_lookup_end,
 
-	TP_PROTO(काष्ठा inode *dir, काष्ठा dentry *dentry, nid_t ino,
-		पूर्णांक err),
+	TP_PROTO(struct inode *dir, struct dentry *dentry, nid_t ino,
+		int err),
 
 	TP_ARGS(dir, dentry, ino, err),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(स्थिर अक्षर *,	name)
+		__field(const char *,	name)
 		__field(nid_t,	cino)
-		__field(पूर्णांक,	err)
+		__field(int,	err)
 	),
 
 	TP_fast_assign(
@@ -848,16 +847,16 @@ TRACE_EVENT(f2fs_lookup_end,
 		__entry->err	= err;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), pino = %lu, name:%s, ino:%u, err:%d",
+	TP_printk("dev = (%d,%d), pino = %lu, name:%s, ino:%u, err:%d",
 		show_dev_ino(__entry),
 		__entry->name,
 		__entry->cino,
 		__entry->err)
 );
 
-TRACE_EVENT(f2fs_सूची_पढ़ो,
+TRACE_EVENT(f2fs_readdir,
 
-	TP_PROTO(काष्ठा inode *dir, loff_t start_pos, loff_t end_pos, पूर्णांक err),
+	TP_PROTO(struct inode *dir, loff_t start_pos, loff_t end_pos, int err),
 
 	TP_ARGS(dir, start_pos, end_pos, err),
 
@@ -866,7 +865,7 @@ TRACE_EVENT(f2fs_सूची_पढ़ो,
 		__field(ino_t,	ino)
 		__field(loff_t,	start)
 		__field(loff_t,	end)
-		__field(पूर्णांक,	err)
+		__field(int,	err)
 	),
 
 	TP_fast_assign(
@@ -877,7 +876,7 @@ TRACE_EVENT(f2fs_सूची_पढ़ो,
 		__entry->err	= err;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, start_pos:%llu, end_pos:%llu, err:%d",
+	TP_printk("dev = (%d,%d), ino = %lu, start_pos:%llu, end_pos:%llu, err:%d",
 		show_dev_ino(__entry),
 		__entry->start,
 		__entry->end,
@@ -886,20 +885,20 @@ TRACE_EVENT(f2fs_सूची_पढ़ो,
 
 TRACE_EVENT(f2fs_fallocate,
 
-	TP_PROTO(काष्ठा inode *inode, पूर्णांक mode,
-				loff_t offset, loff_t len, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, int mode,
+				loff_t offset, loff_t len, int ret),
 
 	TP_ARGS(inode, mode, offset, len, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(पूर्णांक,	mode)
+		__field(int,	mode)
 		__field(loff_t,	offset)
 		__field(loff_t,	len)
 		__field(loff_t, size)
 		__field(blkcnt_t, blocks)
-		__field(पूर्णांक,	ret)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -913,20 +912,20 @@ TRACE_EVENT(f2fs_fallocate,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, mode = %x, offset = %lld, "
+	TP_printk("dev = (%d,%d), ino = %lu, mode = %x, offset = %lld, "
 		"len = %lld,  i_size = %lld, i_blocks = %llu, ret = %d",
 		show_dev_ino(__entry),
 		__entry->mode,
-		(अचिन्हित दीर्घ दीर्घ)__entry->offset,
-		(अचिन्हित दीर्घ दीर्घ)__entry->len,
-		(अचिन्हित दीर्घ दीर्घ)__entry->size,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blocks,
+		(unsigned long long)__entry->offset,
+		(unsigned long long)__entry->len,
+		(unsigned long long)__entry->size,
+		(unsigned long long)__entry->blocks,
 		__entry->ret)
 );
 
 TRACE_EVENT(f2fs_direct_IO_enter,
 
-	TP_PROTO(काष्ठा inode *inode, loff_t offset, अचिन्हित दीर्घ len, पूर्णांक rw),
+	TP_PROTO(struct inode *inode, loff_t offset, unsigned long len, int rw),
 
 	TP_ARGS(inode, offset, len, rw),
 
@@ -934,8 +933,8 @@ TRACE_EVENT(f2fs_direct_IO_enter,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(loff_t,	pos)
-		__field(अचिन्हित दीर्घ,	len)
-		__field(पूर्णांक,	rw)
+		__field(unsigned long,	len)
+		__field(int,	rw)
 	),
 
 	TP_fast_assign(
@@ -946,17 +945,17 @@ TRACE_EVENT(f2fs_direct_IO_enter,
 		__entry->rw	= rw;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu pos = %lld len = %lu rw = %d",
+	TP_printk("dev = (%d,%d), ino = %lu pos = %lld len = %lu rw = %d",
 		show_dev_ino(__entry),
 		__entry->pos,
 		__entry->len,
 		__entry->rw)
 );
 
-TRACE_EVENT(f2fs_direct_IO_निकास,
+TRACE_EVENT(f2fs_direct_IO_exit,
 
-	TP_PROTO(काष्ठा inode *inode, loff_t offset, अचिन्हित दीर्घ len,
-		 पूर्णांक rw, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, loff_t offset, unsigned long len,
+		 int rw, int ret),
 
 	TP_ARGS(inode, offset, len, rw, ret),
 
@@ -964,9 +963,9 @@ TRACE_EVENT(f2fs_direct_IO_निकास,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(loff_t,	pos)
-		__field(अचिन्हित दीर्घ,	len)
-		__field(पूर्णांक,	rw)
-		__field(पूर्णांक,	ret)
+		__field(unsigned long,	len)
+		__field(int,	rw)
+		__field(int,	ret)
 	),
 
 	TP_fast_assign(
@@ -978,7 +977,7 @@ TRACE_EVENT(f2fs_direct_IO_निकास,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu pos = %lld len = %lu "
+	TP_printk("dev = (%d,%d), ino = %lu pos = %lld len = %lu "
 		"rw = %d ret = %d",
 		show_dev_ino(__entry),
 		__entry->pos,
@@ -989,7 +988,7 @@ TRACE_EVENT(f2fs_direct_IO_निकास,
 
 TRACE_EVENT(f2fs_reserve_new_blocks,
 
-	TP_PROTO(काष्ठा inode *inode, nid_t nid, अचिन्हित पूर्णांक ofs_in_node,
+	TP_PROTO(struct inode *inode, nid_t nid, unsigned int ofs_in_node,
 							blkcnt_t count),
 
 	TP_ARGS(inode, nid, ofs_in_node, count),
@@ -997,7 +996,7 @@ TRACE_EVENT(f2fs_reserve_new_blocks,
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(nid_t, nid)
-		__field(अचिन्हित पूर्णांक, ofs_in_node)
+		__field(unsigned int, ofs_in_node)
 		__field(blkcnt_t, count)
 	),
 
@@ -1008,16 +1007,16 @@ TRACE_EVENT(f2fs_reserve_new_blocks,
 		__entry->count = count;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), nid = %u, ofs_in_node = %u, count = %llu",
+	TP_printk("dev = (%d,%d), nid = %u, ofs_in_node = %u, count = %llu",
 		show_dev(__entry->dev),
-		(अचिन्हित पूर्णांक)__entry->nid,
+		(unsigned int)__entry->nid,
 		__entry->ofs_in_node,
-		(अचिन्हित दीर्घ दीर्घ)__entry->count)
+		(unsigned long long)__entry->count)
 );
 
 DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 
-	TP_PROTO(काष्ठा page *page, काष्ठा f2fs_io_info *fio),
+	TP_PROTO(struct page *page, struct f2fs_io_info *fio),
 
 	TP_ARGS(page, fio),
 
@@ -1027,10 +1026,10 @@ DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 		__field(pgoff_t, index)
 		__field(block_t, old_blkaddr)
 		__field(block_t, new_blkaddr)
-		__field(पूर्णांक, op)
-		__field(पूर्णांक, op_flags)
-		__field(पूर्णांक, temp)
-		__field(पूर्णांक, type)
+		__field(int, op)
+		__field(int, op_flags)
+		__field(int, temp)
+		__field(int, type)
 	),
 
 	TP_fast_assign(
@@ -1045,12 +1044,12 @@ DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 		__entry->type		= fio->type;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, page_index = 0x%lx, "
+	TP_printk("dev = (%d,%d), ino = %lu, page_index = 0x%lx, "
 		"oldaddr = 0x%llx, newaddr = 0x%llx, rw = %s(%s), type = %s_%s",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ)__entry->index,
-		(अचिन्हित दीर्घ दीर्घ)__entry->old_blkaddr,
-		(अचिन्हित दीर्घ दीर्घ)__entry->new_blkaddr,
+		(unsigned long)__entry->index,
+		(unsigned long long)__entry->old_blkaddr,
+		(unsigned long long)__entry->new_blkaddr,
 		show_bio_type(__entry->op, __entry->op_flags),
 		show_block_temp(__entry->temp),
 		show_block_type(__entry->type))
@@ -1058,16 +1057,16 @@ DECLARE_EVENT_CLASS(f2fs__submit_page_bio,
 
 DEFINE_EVENT_CONDITION(f2fs__submit_page_bio, f2fs_submit_page_bio,
 
-	TP_PROTO(काष्ठा page *page, काष्ठा f2fs_io_info *fio),
+	TP_PROTO(struct page *page, struct f2fs_io_info *fio),
 
 	TP_ARGS(page, fio),
 
 	TP_CONDITION(page->mapping)
 );
 
-DEFINE_EVENT_CONDITION(f2fs__submit_page_bio, f2fs_submit_page_ग_लिखो,
+DEFINE_EVENT_CONDITION(f2fs__submit_page_bio, f2fs_submit_page_write,
 
-	TP_PROTO(काष्ठा page *page, काष्ठा f2fs_io_info *fio),
+	TP_PROTO(struct page *page, struct f2fs_io_info *fio),
 
 	TP_ARGS(page, fio),
 
@@ -1076,18 +1075,18 @@ DEFINE_EVENT_CONDITION(f2fs__submit_page_bio, f2fs_submit_page_ग_लिखो,
 
 DECLARE_EVENT_CLASS(f2fs__bio,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, काष्ठा bio *bio),
+	TP_PROTO(struct super_block *sb, int type, struct bio *bio),
 
 	TP_ARGS(sb, type, bio),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(dev_t,	target)
-		__field(पूर्णांक,	op)
-		__field(पूर्णांक,	op_flags)
-		__field(पूर्णांक,	type)
+		__field(int,	op)
+		__field(int,	op_flags)
+		__field(int,	type)
 		__field(sector_t,	sector)
-		__field(अचिन्हित पूर्णांक,	size)
+		__field(unsigned int,	size)
 	),
 
 	TP_fast_assign(
@@ -1100,55 +1099,55 @@ DECLARE_EVENT_CLASS(f2fs__bio,
 		__entry->size		= bio->bi_iter.bi_size;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d)/(%d,%d), rw = %s(%s), %s, sector = %lld, size = %u",
+	TP_printk("dev = (%d,%d)/(%d,%d), rw = %s(%s), %s, sector = %lld, size = %u",
 		show_dev(__entry->target),
 		show_dev(__entry->dev),
 		show_bio_type(__entry->op, __entry->op_flags),
 		show_block_type(__entry->type),
-		(अचिन्हित दीर्घ दीर्घ)__entry->sector,
+		(unsigned long long)__entry->sector,
 		__entry->size)
 );
 
-DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_prepare_ग_लिखो_bio,
+DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_prepare_write_bio,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, काष्ठा bio *bio),
-
-	TP_ARGS(sb, type, bio),
-
-	TP_CONDITION(bio)
-);
-
-DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_prepare_पढ़ो_bio,
-
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, काष्ठा bio *bio),
+	TP_PROTO(struct super_block *sb, int type, struct bio *bio),
 
 	TP_ARGS(sb, type, bio),
 
 	TP_CONDITION(bio)
 );
 
-DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_submit_पढ़ो_bio,
+DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_prepare_read_bio,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, काष्ठा bio *bio),
-
-	TP_ARGS(sb, type, bio),
-
-	TP_CONDITION(bio)
-);
-
-DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_submit_ग_लिखो_bio,
-
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, काष्ठा bio *bio),
+	TP_PROTO(struct super_block *sb, int type, struct bio *bio),
 
 	TP_ARGS(sb, type, bio),
 
 	TP_CONDITION(bio)
 );
 
-TRACE_EVENT(f2fs_ग_लिखो_begin,
+DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_submit_read_bio,
 
-	TP_PROTO(काष्ठा inode *inode, loff_t pos, अचिन्हित पूर्णांक len,
-				अचिन्हित पूर्णांक flags),
+	TP_PROTO(struct super_block *sb, int type, struct bio *bio),
+
+	TP_ARGS(sb, type, bio),
+
+	TP_CONDITION(bio)
+);
+
+DEFINE_EVENT_CONDITION(f2fs__bio, f2fs_submit_write_bio,
+
+	TP_PROTO(struct super_block *sb, int type, struct bio *bio),
+
+	TP_ARGS(sb, type, bio),
+
+	TP_CONDITION(bio)
+);
+
+TRACE_EVENT(f2fs_write_begin,
+
+	TP_PROTO(struct inode *inode, loff_t pos, unsigned int len,
+				unsigned int flags),
 
 	TP_ARGS(inode, pos, len, flags),
 
@@ -1156,8 +1155,8 @@ TRACE_EVENT(f2fs_ग_लिखो_begin,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(loff_t,	pos)
-		__field(अचिन्हित पूर्णांक, len)
-		__field(अचिन्हित पूर्णांक, flags)
+		__field(unsigned int, len)
+		__field(unsigned int, flags)
 	),
 
 	TP_fast_assign(
@@ -1168,17 +1167,17 @@ TRACE_EVENT(f2fs_ग_लिखो_begin,
 		__entry->flags	= flags;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pos = %llu, len = %u, flags = %u",
+	TP_printk("dev = (%d,%d), ino = %lu, pos = %llu, len = %u, flags = %u",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ दीर्घ)__entry->pos,
+		(unsigned long long)__entry->pos,
 		__entry->len,
 		__entry->flags)
 );
 
-TRACE_EVENT(f2fs_ग_लिखो_end,
+TRACE_EVENT(f2fs_write_end,
 
-	TP_PROTO(काष्ठा inode *inode, loff_t pos, अचिन्हित पूर्णांक len,
-				अचिन्हित पूर्णांक copied),
+	TP_PROTO(struct inode *inode, loff_t pos, unsigned int len,
+				unsigned int copied),
 
 	TP_ARGS(inode, pos, len, copied),
 
@@ -1186,8 +1185,8 @@ TRACE_EVENT(f2fs_ग_लिखो_end,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(loff_t,	pos)
-		__field(अचिन्हित पूर्णांक, len)
-		__field(अचिन्हित पूर्णांक, copied)
+		__field(unsigned int, len)
+		__field(unsigned int, copied)
 	),
 
 	TP_fast_assign(
@@ -1198,27 +1197,27 @@ TRACE_EVENT(f2fs_ग_लिखो_end,
 		__entry->copied	= copied;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pos = %llu, len = %u, copied = %u",
+	TP_printk("dev = (%d,%d), ino = %lu, pos = %llu, len = %u, copied = %u",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ दीर्घ)__entry->pos,
+		(unsigned long long)__entry->pos,
 		__entry->len,
 		__entry->copied)
 );
 
 DECLARE_EVENT_CLASS(f2fs__page,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(पूर्णांक, type)
-		__field(पूर्णांक, dir)
+		__field(int, type)
+		__field(int, dir)
 		__field(pgoff_t, index)
-		__field(पूर्णांक, dirty)
-		__field(पूर्णांक, uptodate)
+		__field(int, dirty)
+		__field(int, uptodate)
 	),
 
 	TP_fast_assign(
@@ -1226,74 +1225,74 @@ DECLARE_EVENT_CLASS(f2fs__page,
 		__entry->ino	= page_file_mapping(page)->host->i_ino;
 		__entry->type	= type;
 		__entry->dir	=
-			S_ISसूची(page_file_mapping(page)->host->i_mode);
+			S_ISDIR(page_file_mapping(page)->host->i_mode);
 		__entry->index	= page->index;
 		__entry->dirty	= PageDirty(page);
 		__entry->uptodate = PageUptodate(page);
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, %s, %s, index = %lu, "
+	TP_printk("dev = (%d,%d), ino = %lu, %s, %s, index = %lu, "
 		"dirty = %d, uptodate = %d",
 		show_dev_ino(__entry),
 		show_block_type(__entry->type),
 		show_file_type(__entry->dir),
-		(अचिन्हित दीर्घ)__entry->index,
+		(unsigned long)__entry->index,
 		__entry->dirty,
 		__entry->uptodate)
 );
 
-DEFINE_EVENT(f2fs__page, f2fs_ग_लिखोpage,
+DEFINE_EVENT(f2fs__page, f2fs_writepage,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
-
-	TP_ARGS(page, type)
-);
-
-DEFINE_EVENT(f2fs__page, f2fs_करो_ग_लिखो_data_page,
-
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
-DEFINE_EVENT(f2fs__page, f2fs_पढ़ोpage,
+DEFINE_EVENT(f2fs__page, f2fs_do_write_data_page,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
+
+	TP_ARGS(page, type)
+);
+
+DEFINE_EVENT(f2fs__page, f2fs_readpage,
+
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
 DEFINE_EVENT(f2fs__page, f2fs_set_page_dirty,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
-DEFINE_EVENT(f2fs__page, f2fs_vm_page_mkग_लिखो,
+DEFINE_EVENT(f2fs__page, f2fs_vm_page_mkwrite,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
-DEFINE_EVENT(f2fs__page, f2fs_रेजिस्टर_inmem_page,
+DEFINE_EVENT(f2fs__page, f2fs_register_inmem_page,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
 DEFINE_EVENT(f2fs__page, f2fs_commit_inmem_page,
 
-	TP_PROTO(काष्ठा page *page, पूर्णांक type),
+	TP_PROTO(struct page *page, int type),
 
 	TP_ARGS(page, type)
 );
 
 TRACE_EVENT(f2fs_filemap_fault,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t index, अचिन्हित दीर्घ ret),
+	TP_PROTO(struct inode *inode, pgoff_t index, unsigned long ret),
 
 	TP_ARGS(inode, index, ret),
 
@@ -1301,7 +1300,7 @@ TRACE_EVENT(f2fs_filemap_fault,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(pgoff_t, index)
-		__field(अचिन्हित दीर्घ, ret)
+		__field(unsigned long, ret)
 	),
 
 	TP_fast_assign(
@@ -1311,79 +1310,79 @@ TRACE_EVENT(f2fs_filemap_fault,
 		__entry->ret	= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, index = %lu, ret = %lx",
+	TP_printk("dev = (%d,%d), ino = %lu, index = %lu, ret = %lx",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ)__entry->index,
+		(unsigned long)__entry->index,
 		__entry->ret)
 );
 
-TRACE_EVENT(f2fs_ग_लिखोpages,
+TRACE_EVENT(f2fs_writepages,
 
-	TP_PROTO(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc, पूर्णांक type),
+	TP_PROTO(struct inode *inode, struct writeback_control *wbc, int type),
 
 	TP_ARGS(inode, wbc, type),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(पूर्णांक,	type)
-		__field(पूर्णांक,	dir)
-		__field(दीर्घ,	nr_to_ग_लिखो)
-		__field(दीर्घ,	pages_skipped)
+		__field(int,	type)
+		__field(int,	dir)
+		__field(long,	nr_to_write)
+		__field(long,	pages_skipped)
 		__field(loff_t,	range_start)
 		__field(loff_t,	range_end)
-		__field(pgoff_t, ग_लिखोback_index)
-		__field(पूर्णांक,	sync_mode)
-		__field(अक्षर,	क्रम_kupdate)
-		__field(अक्षर,	क्रम_background)
-		__field(अक्षर,	tagged_ग_लिखोpages)
-		__field(अक्षर,	क्रम_reclaim)
-		__field(अक्षर,	range_cyclic)
-		__field(अक्षर,	क्रम_sync)
+		__field(pgoff_t, writeback_index)
+		__field(int,	sync_mode)
+		__field(char,	for_kupdate)
+		__field(char,	for_background)
+		__field(char,	tagged_writepages)
+		__field(char,	for_reclaim)
+		__field(char,	range_cyclic)
+		__field(char,	for_sync)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= inode->i_sb->s_dev;
 		__entry->ino		= inode->i_ino;
 		__entry->type		= type;
-		__entry->dir		= S_ISसूची(inode->i_mode);
-		__entry->nr_to_ग_लिखो	= wbc->nr_to_ग_लिखो;
+		__entry->dir		= S_ISDIR(inode->i_mode);
+		__entry->nr_to_write	= wbc->nr_to_write;
 		__entry->pages_skipped	= wbc->pages_skipped;
 		__entry->range_start	= wbc->range_start;
 		__entry->range_end	= wbc->range_end;
-		__entry->ग_लिखोback_index = inode->i_mapping->ग_लिखोback_index;
+		__entry->writeback_index = inode->i_mapping->writeback_index;
 		__entry->sync_mode	= wbc->sync_mode;
-		__entry->क्रम_kupdate	= wbc->क्रम_kupdate;
-		__entry->क्रम_background	= wbc->क्रम_background;
-		__entry->tagged_ग_लिखोpages	= wbc->tagged_ग_लिखोpages;
-		__entry->क्रम_reclaim	= wbc->क्रम_reclaim;
+		__entry->for_kupdate	= wbc->for_kupdate;
+		__entry->for_background	= wbc->for_background;
+		__entry->tagged_writepages	= wbc->tagged_writepages;
+		__entry->for_reclaim	= wbc->for_reclaim;
 		__entry->range_cyclic	= wbc->range_cyclic;
-		__entry->क्रम_sync	= wbc->क्रम_sync;
+		__entry->for_sync	= wbc->for_sync;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, %s, %s, nr_to_write %ld, "
+	TP_printk("dev = (%d,%d), ino = %lu, %s, %s, nr_to_write %ld, "
 		"skipped %ld, start %lld, end %lld, wb_idx %lu, sync_mode %d, "
 		"kupdate %u background %u tagged %u reclaim %u cyclic %u sync %u",
 		show_dev_ino(__entry),
 		show_block_type(__entry->type),
 		show_file_type(__entry->dir),
-		__entry->nr_to_ग_लिखो,
+		__entry->nr_to_write,
 		__entry->pages_skipped,
 		__entry->range_start,
 		__entry->range_end,
-		(अचिन्हित दीर्घ)__entry->ग_लिखोback_index,
+		(unsigned long)__entry->writeback_index,
 		__entry->sync_mode,
-		__entry->क्रम_kupdate,
-		__entry->क्रम_background,
-		__entry->tagged_ग_लिखोpages,
-		__entry->क्रम_reclaim,
+		__entry->for_kupdate,
+		__entry->for_background,
+		__entry->tagged_writepages,
+		__entry->for_reclaim,
 		__entry->range_cyclic,
-		__entry->क्रम_sync)
+		__entry->for_sync)
 );
 
-TRACE_EVENT(f2fs_पढ़ोpages,
+TRACE_EVENT(f2fs_readpages,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t start, अचिन्हित पूर्णांक nrpage),
+	TP_PROTO(struct inode *inode, pgoff_t start, unsigned int nrpage),
 
 	TP_ARGS(inode, start, nrpage),
 
@@ -1391,7 +1390,7 @@ TRACE_EVENT(f2fs_पढ़ोpages,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(pgoff_t,	start)
-		__field(अचिन्हित पूर्णांक,	nrpage)
+		__field(unsigned int,	nrpage)
 	),
 
 	TP_fast_assign(
@@ -1401,22 +1400,22 @@ TRACE_EVENT(f2fs_पढ़ोpages,
 		__entry->nrpage	= nrpage;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, start = %lu nrpage = %u",
+	TP_printk("dev = (%d,%d), ino = %lu, start = %lu nrpage = %u",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ)__entry->start,
+		(unsigned long)__entry->start,
 		__entry->nrpage)
 );
 
-TRACE_EVENT(f2fs_ग_लिखो_checkpoपूर्णांक,
+TRACE_EVENT(f2fs_write_checkpoint,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक reason, अक्षर *msg),
+	TP_PROTO(struct super_block *sb, int reason, char *msg),
 
 	TP_ARGS(sb, reason, msg),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(पूर्णांक,	reason)
-		__field(अक्षर *,	msg)
+		__field(int,	reason)
+		__field(char *,	msg)
 	),
 
 	TP_fast_assign(
@@ -1425,7 +1424,7 @@ TRACE_EVENT(f2fs_ग_लिखो_checkpoपूर्णांक,
 		__entry->msg		= msg;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), checkpoint for %s, state = %s",
+	TP_printk("dev = (%d,%d), checkpoint for %s, state = %s",
 		show_dev(__entry->dev),
 		show_cpreason(__entry->reason),
 		__entry->msg)
@@ -1433,7 +1432,7 @@ TRACE_EVENT(f2fs_ग_लिखो_checkpoपूर्णांक,
 
 DECLARE_EVENT_CLASS(f2fs_discard,
 
-	TP_PROTO(काष्ठा block_device *dev, block_t blkstart, block_t blklen),
+	TP_PROTO(struct block_device *dev, block_t blkstart, block_t blklen),
 
 	TP_ARGS(dev, blkstart, blklen),
 
@@ -1449,36 +1448,36 @@ DECLARE_EVENT_CLASS(f2fs_discard,
 		__entry->blklen = blklen;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), blkstart = 0x%llx, blklen = 0x%llx",
+	TP_printk("dev = (%d,%d), blkstart = 0x%llx, blklen = 0x%llx",
 		show_dev(__entry->dev),
-		(अचिन्हित दीर्घ दीर्घ)__entry->blkstart,
-		(अचिन्हित दीर्घ दीर्घ)__entry->blklen)
+		(unsigned long long)__entry->blkstart,
+		(unsigned long long)__entry->blklen)
 );
 
 DEFINE_EVENT(f2fs_discard, f2fs_queue_discard,
 
-	TP_PROTO(काष्ठा block_device *dev, block_t blkstart, block_t blklen),
+	TP_PROTO(struct block_device *dev, block_t blkstart, block_t blklen),
 
 	TP_ARGS(dev, blkstart, blklen)
 );
 
 DEFINE_EVENT(f2fs_discard, f2fs_issue_discard,
 
-	TP_PROTO(काष्ठा block_device *dev, block_t blkstart, block_t blklen),
+	TP_PROTO(struct block_device *dev, block_t blkstart, block_t blklen),
 
 	TP_ARGS(dev, blkstart, blklen)
 );
 
-DEFINE_EVENT(f2fs_discard, f2fs_हटाओ_discard,
+DEFINE_EVENT(f2fs_discard, f2fs_remove_discard,
 
-	TP_PROTO(काष्ठा block_device *dev, block_t blkstart, block_t blklen),
+	TP_PROTO(struct block_device *dev, block_t blkstart, block_t blklen),
 
 	TP_ARGS(dev, blkstart, blklen)
 );
 
 TRACE_EVENT(f2fs_issue_reset_zone,
 
-	TP_PROTO(काष्ठा block_device *dev, block_t blkstart),
+	TP_PROTO(struct block_device *dev, block_t blkstart),
 
 	TP_ARGS(dev, blkstart),
 
@@ -1492,23 +1491,23 @@ TRACE_EVENT(f2fs_issue_reset_zone,
 		__entry->blkstart = blkstart;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), reset zone at block = 0x%llx",
+	TP_printk("dev = (%d,%d), reset zone at block = 0x%llx",
 		show_dev(__entry->dev),
-		(अचिन्हित दीर्घ दीर्घ)__entry->blkstart)
+		(unsigned long long)__entry->blkstart)
 );
 
 TRACE_EVENT(f2fs_issue_flush,
 
-	TP_PROTO(काष्ठा block_device *dev, अचिन्हित पूर्णांक nobarrier,
-				अचिन्हित पूर्णांक flush_merge, पूर्णांक ret),
+	TP_PROTO(struct block_device *dev, unsigned int nobarrier,
+				unsigned int flush_merge, int ret),
 
 	TP_ARGS(dev, nobarrier, flush_merge, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(अचिन्हित पूर्णांक, nobarrier)
-		__field(अचिन्हित पूर्णांक, flush_merge)
-		__field(पूर्णांक,  ret)
+		__field(unsigned int, nobarrier)
+		__field(unsigned int, flush_merge)
+		__field(int,  ret)
 	),
 
 	TP_fast_assign(
@@ -1518,7 +1517,7 @@ TRACE_EVENT(f2fs_issue_flush,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), %s %s, ret = %d",
+	TP_printk("dev = (%d,%d), %s %s, ret = %d",
 		show_dev(__entry->dev),
 		__entry->nobarrier ? "skip (nobarrier)" : "issue",
 		__entry->flush_merge ? " with flush_merge" : "",
@@ -1527,14 +1526,14 @@ TRACE_EVENT(f2fs_issue_flush,
 
 TRACE_EVENT(f2fs_lookup_extent_tree_start,
 
-	TP_PROTO(काष्ठा inode *inode, अचिन्हित पूर्णांक pgofs),
+	TP_PROTO(struct inode *inode, unsigned int pgofs),
 
 	TP_ARGS(inode, pgofs),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(अचिन्हित पूर्णांक, pgofs)
+		__field(unsigned int, pgofs)
 	),
 
 	TP_fast_assign(
@@ -1543,15 +1542,15 @@ TRACE_EVENT(f2fs_lookup_extent_tree_start,
 		__entry->pgofs = pgofs;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pgofs = %u",
+	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u",
 		show_dev_ino(__entry),
 		__entry->pgofs)
 );
 
 TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 
-	TP_PROTO(काष्ठा inode *inode, अचिन्हित पूर्णांक pgofs,
-						काष्ठा extent_info *ei),
+	TP_PROTO(struct inode *inode, unsigned int pgofs,
+						struct extent_info *ei),
 
 	TP_ARGS(inode, pgofs, ei),
 
@@ -1560,10 +1559,10 @@ TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(अचिन्हित पूर्णांक, pgofs)
-		__field(अचिन्हित पूर्णांक, fofs)
+		__field(unsigned int, pgofs)
+		__field(unsigned int, fofs)
 		__field(u32, blk)
-		__field(अचिन्हित पूर्णांक, len)
+		__field(unsigned int, len)
 	),
 
 	TP_fast_assign(
@@ -1575,7 +1574,7 @@ TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 		__entry->len = ei->len;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pgofs = %u, "
+	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u, "
 		"ext_info(fofs: %u, blk: %u, len: %u)",
 		show_dev_ino(__entry),
 		__entry->pgofs,
@@ -1586,17 +1585,17 @@ TRACE_EVENT_CONDITION(f2fs_lookup_extent_tree_end,
 
 TRACE_EVENT(f2fs_update_extent_tree_range,
 
-	TP_PROTO(काष्ठा inode *inode, अचिन्हित पूर्णांक pgofs, block_t blkaddr,
-						अचिन्हित पूर्णांक len),
+	TP_PROTO(struct inode *inode, unsigned int pgofs, block_t blkaddr,
+						unsigned int len),
 
 	TP_ARGS(inode, pgofs, blkaddr, len),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(अचिन्हित पूर्णांक, pgofs)
+		__field(unsigned int, pgofs)
 		__field(u32, blk)
-		__field(अचिन्हित पूर्णांक, len)
+		__field(unsigned int, len)
 	),
 
 	TP_fast_assign(
@@ -1607,7 +1606,7 @@ TRACE_EVENT(f2fs_update_extent_tree_range,
 		__entry->len = len;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, pgofs = %u, "
+	TP_printk("dev = (%d,%d), ino = %lu, pgofs = %u, "
 					"blkaddr = %u, len = %u",
 		show_dev_ino(__entry),
 		__entry->pgofs,
@@ -1617,15 +1616,15 @@ TRACE_EVENT(f2fs_update_extent_tree_range,
 
 TRACE_EVENT(f2fs_shrink_extent_tree,
 
-	TP_PROTO(काष्ठा f2fs_sb_info *sbi, अचिन्हित पूर्णांक node_cnt,
-						अचिन्हित पूर्णांक tree_cnt),
+	TP_PROTO(struct f2fs_sb_info *sbi, unsigned int node_cnt,
+						unsigned int tree_cnt),
 
 	TP_ARGS(sbi, node_cnt, tree_cnt),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(अचिन्हित पूर्णांक, node_cnt)
-		__field(अचिन्हित पूर्णांक, tree_cnt)
+		__field(unsigned int, node_cnt)
+		__field(unsigned int, tree_cnt)
 	),
 
 	TP_fast_assign(
@@ -1634,7 +1633,7 @@ TRACE_EVENT(f2fs_shrink_extent_tree,
 		__entry->tree_cnt = tree_cnt;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), shrunk: node_cnt = %u, tree_cnt = %u",
+	TP_printk("dev = (%d,%d), shrunk: node_cnt = %u, tree_cnt = %u",
 		show_dev(__entry->dev),
 		__entry->node_cnt,
 		__entry->tree_cnt)
@@ -1642,14 +1641,14 @@ TRACE_EVENT(f2fs_shrink_extent_tree,
 
 TRACE_EVENT(f2fs_destroy_extent_tree,
 
-	TP_PROTO(काष्ठा inode *inode, अचिन्हित पूर्णांक node_cnt),
+	TP_PROTO(struct inode *inode, unsigned int node_cnt),
 
 	TP_ARGS(inode, node_cnt),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
-		__field(अचिन्हित पूर्णांक, node_cnt)
+		__field(unsigned int, node_cnt)
 	),
 
 	TP_fast_assign(
@@ -1658,20 +1657,20 @@ TRACE_EVENT(f2fs_destroy_extent_tree,
 		__entry->node_cnt = node_cnt;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, destroyed: node_cnt = %u",
+	TP_printk("dev = (%d,%d), ino = %lu, destroyed: node_cnt = %u",
 		show_dev_ino(__entry),
 		__entry->node_cnt)
 );
 
 DECLARE_EVENT_CLASS(f2fs_sync_dirty_inodes,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, s64 count),
+	TP_PROTO(struct super_block *sb, int type, s64 count),
 
 	TP_ARGS(sb, type, count),
 
 	TP_STRUCT__entry(
 		__field(dev_t, dev)
-		__field(पूर्णांक, type)
+		__field(int, type)
 		__field(s64, count)
 	),
 
@@ -1681,7 +1680,7 @@ DECLARE_EVENT_CLASS(f2fs_sync_dirty_inodes,
 		__entry->count	= count;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), %s, dirty count = %lld",
+	TP_printk("dev = (%d,%d), %s, dirty count = %lld",
 		show_dev(__entry->dev),
 		show_file_type(__entry->type),
 		__entry->count)
@@ -1689,28 +1688,28 @@ DECLARE_EVENT_CLASS(f2fs_sync_dirty_inodes,
 
 DEFINE_EVENT(f2fs_sync_dirty_inodes, f2fs_sync_dirty_inodes_enter,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, s64 count),
+	TP_PROTO(struct super_block *sb, int type, s64 count),
 
 	TP_ARGS(sb, type, count)
 );
 
-DEFINE_EVENT(f2fs_sync_dirty_inodes, f2fs_sync_dirty_inodes_निकास,
+DEFINE_EVENT(f2fs_sync_dirty_inodes, f2fs_sync_dirty_inodes_exit,
 
-	TP_PROTO(काष्ठा super_block *sb, पूर्णांक type, s64 count),
+	TP_PROTO(struct super_block *sb, int type, s64 count),
 
 	TP_ARGS(sb, type, count)
 );
 
-TRACE_EVENT(f2fs_shutकरोwn,
+TRACE_EVENT(f2fs_shutdown,
 
-	TP_PROTO(काष्ठा f2fs_sb_info *sbi, अचिन्हित पूर्णांक mode, पूर्णांक ret),
+	TP_PROTO(struct f2fs_sb_info *sbi, unsigned int mode, int ret),
 
 	TP_ARGS(sbi, mode, ret),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(अचिन्हित पूर्णांक, mode)
-		__field(पूर्णांक, ret)
+		__field(unsigned int, mode)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -1719,16 +1718,16 @@ TRACE_EVENT(f2fs_shutकरोwn,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), mode: %s, ret:%d",
+	TP_printk("dev = (%d,%d), mode: %s, ret:%d",
 		show_dev(__entry->dev),
-		show_shutकरोwn_mode(__entry->mode),
+		show_shutdown_mode(__entry->mode),
 		__entry->ret)
 );
 
 DECLARE_EVENT_CLASS(f2fs_zip_start,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-			अचिन्हित पूर्णांक cluster_size, अचिन्हित अक्षर algtype),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+			unsigned int cluster_size, unsigned char algtype),
 
 	TP_ARGS(inode, cluster_idx, cluster_size, algtype),
 
@@ -1736,8 +1735,8 @@ DECLARE_EVENT_CLASS(f2fs_zip_start,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(pgoff_t, idx)
-		__field(अचिन्हित पूर्णांक, size)
-		__field(अचिन्हित पूर्णांक, algtype)
+		__field(unsigned int, size)
+		__field(unsigned int, algtype)
 	),
 
 	TP_fast_assign(
@@ -1748,7 +1747,7 @@ DECLARE_EVENT_CLASS(f2fs_zip_start,
 		__entry->algtype = algtype;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, cluster_idx:%lu, "
+	TP_printk("dev = (%d,%d), ino = %lu, cluster_idx:%lu, "
 		"cluster_size = %u, algorithm = %s",
 		show_dev_ino(__entry),
 		__entry->idx,
@@ -1758,8 +1757,8 @@ DECLARE_EVENT_CLASS(f2fs_zip_start,
 
 DECLARE_EVENT_CLASS(f2fs_zip_end,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-			अचिन्हित पूर्णांक compressed_size, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+			unsigned int compressed_size, int ret),
 
 	TP_ARGS(inode, cluster_idx, compressed_size, ret),
 
@@ -1767,8 +1766,8 @@ DECLARE_EVENT_CLASS(f2fs_zip_end,
 		__field(dev_t,	dev)
 		__field(ino_t,	ino)
 		__field(pgoff_t, idx)
-		__field(अचिन्हित पूर्णांक, size)
-		__field(अचिन्हित पूर्णांक, ret)
+		__field(unsigned int, size)
+		__field(unsigned int, ret)
 	),
 
 	TP_fast_assign(
@@ -1779,7 +1778,7 @@ DECLARE_EVENT_CLASS(f2fs_zip_end,
 		__entry->ret = ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, cluster_idx:%lu, "
+	TP_printk("dev = (%d,%d), ino = %lu, cluster_idx:%lu, "
 		"compressed_size = %u, ret = %d",
 		show_dev_ino(__entry),
 		__entry->idx,
@@ -1789,71 +1788,71 @@ DECLARE_EVENT_CLASS(f2fs_zip_end,
 
 DEFINE_EVENT(f2fs_zip_start, f2fs_compress_pages_start,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-		अचिन्हित पूर्णांक cluster_size, अचिन्हित अक्षर algtype),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+		unsigned int cluster_size, unsigned char algtype),
 
 	TP_ARGS(inode, cluster_idx, cluster_size, algtype)
 );
 
 DEFINE_EVENT(f2fs_zip_start, f2fs_decompress_pages_start,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-		अचिन्हित पूर्णांक cluster_size, अचिन्हित अक्षर algtype),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+		unsigned int cluster_size, unsigned char algtype),
 
 	TP_ARGS(inode, cluster_idx, cluster_size, algtype)
 );
 
 DEFINE_EVENT(f2fs_zip_end, f2fs_compress_pages_end,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-			अचिन्हित पूर्णांक compressed_size, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+			unsigned int compressed_size, int ret),
 
 	TP_ARGS(inode, cluster_idx, compressed_size, ret)
 );
 
 DEFINE_EVENT(f2fs_zip_end, f2fs_decompress_pages_end,
 
-	TP_PROTO(काष्ठा inode *inode, pgoff_t cluster_idx,
-			अचिन्हित पूर्णांक compressed_size, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, pgoff_t cluster_idx,
+			unsigned int compressed_size, int ret),
 
 	TP_ARGS(inode, cluster_idx, compressed_size, ret)
 );
 
 TRACE_EVENT(f2fs_iostat,
 
-	TP_PROTO(काष्ठा f2fs_sb_info *sbi, अचिन्हित दीर्घ दीर्घ *iostat),
+	TP_PROTO(struct f2fs_sb_info *sbi, unsigned long long *iostat),
 
 	TP_ARGS(sbi, iostat),
 
 	TP_STRUCT__entry(
 		__field(dev_t,	dev)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_dio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_bio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_wio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_mio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_dio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_nio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_mio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_gc_dio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_gc_nio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_cp_dio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_cp_nio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_cp_mio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_drio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_brio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_rio)
-		__field(अचिन्हित दीर्घ दीर्घ,	app_mrio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_drio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_gdrio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_cdrio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_nrio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_mrio)
-		__field(अचिन्हित दीर्घ दीर्घ,	fs_discard)
+		__field(unsigned long long,	app_dio)
+		__field(unsigned long long,	app_bio)
+		__field(unsigned long long,	app_wio)
+		__field(unsigned long long,	app_mio)
+		__field(unsigned long long,	fs_dio)
+		__field(unsigned long long,	fs_nio)
+		__field(unsigned long long,	fs_mio)
+		__field(unsigned long long,	fs_gc_dio)
+		__field(unsigned long long,	fs_gc_nio)
+		__field(unsigned long long,	fs_cp_dio)
+		__field(unsigned long long,	fs_cp_nio)
+		__field(unsigned long long,	fs_cp_mio)
+		__field(unsigned long long,	app_drio)
+		__field(unsigned long long,	app_brio)
+		__field(unsigned long long,	app_rio)
+		__field(unsigned long long,	app_mrio)
+		__field(unsigned long long,	fs_drio)
+		__field(unsigned long long,	fs_gdrio)
+		__field(unsigned long long,	fs_cdrio)
+		__field(unsigned long long,	fs_nrio)
+		__field(unsigned long long,	fs_mrio)
+		__field(unsigned long long,	fs_discard)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= sbi->sb->s_dev;
-		__entry->app_dio	= iostat[APP_सूचीECT_IO];
+		__entry->app_dio	= iostat[APP_DIRECT_IO];
 		__entry->app_bio	= iostat[APP_BUFFERED_IO];
 		__entry->app_wio	= iostat[APP_WRITE_IO];
 		__entry->app_mio	= iostat[APP_MAPPED_IO];
@@ -1865,7 +1864,7 @@ TRACE_EVENT(f2fs_iostat,
 		__entry->fs_cp_dio	= iostat[FS_CP_DATA_IO];
 		__entry->fs_cp_nio	= iostat[FS_CP_NODE_IO];
 		__entry->fs_cp_mio	= iostat[FS_CP_META_IO];
-		__entry->app_drio	= iostat[APP_सूचीECT_READ_IO];
+		__entry->app_drio	= iostat[APP_DIRECT_READ_IO];
 		__entry->app_brio	= iostat[APP_BUFFERED_READ_IO];
 		__entry->app_rio	= iostat[APP_READ_IO];
 		__entry->app_mrio	= iostat[APP_MAPPED_READ_IO];
@@ -1877,7 +1876,7 @@ TRACE_EVENT(f2fs_iostat,
 		__entry->fs_discard	= iostat[FS_DISCARD];
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), "
+	TP_printk("dev = (%d,%d), "
 		"app [write=%llu (direct=%llu, buffered=%llu), mapped=%llu], "
 		"fs [data=%llu, node=%llu, meta=%llu, discard=%llu], "
 		"gc [data=%llu, node=%llu], "
@@ -1897,7 +1896,7 @@ TRACE_EVENT(f2fs_iostat,
 
 TRACE_EVENT(f2fs_bmap,
 
-	TP_PROTO(काष्ठा inode *inode, sector_t lblock, sector_t pblock),
+	TP_PROTO(struct inode *inode, sector_t lblock, sector_t pblock),
 
 	TP_ARGS(inode, lblock, pblock),
 
@@ -1915,16 +1914,16 @@ TRACE_EVENT(f2fs_bmap,
 		__entry->pblock		= pblock;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, lblock:%lld, pblock:%lld",
+	TP_printk("dev = (%d,%d), ino = %lu, lblock:%lld, pblock:%lld",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ दीर्घ)__entry->lblock,
-		(अचिन्हित दीर्घ दीर्घ)__entry->pblock)
+		(unsigned long long)__entry->lblock,
+		(unsigned long long)__entry->pblock)
 );
 
 TRACE_EVENT(f2fs_fiemap,
 
-	TP_PROTO(काष्ठा inode *inode, sector_t lblock, sector_t pblock,
-		अचिन्हित दीर्घ दीर्घ len, अचिन्हित पूर्णांक flags, पूर्णांक ret),
+	TP_PROTO(struct inode *inode, sector_t lblock, sector_t pblock,
+		unsigned long long len, unsigned int flags, int ret),
 
 	TP_ARGS(inode, lblock, pblock, len, flags, ret),
 
@@ -1933,9 +1932,9 @@ TRACE_EVENT(f2fs_fiemap,
 		__field(ino_t, ino)
 		__field(sector_t, lblock)
 		__field(sector_t, pblock)
-		__field(अचिन्हित दीर्घ दीर्घ, len)
-		__field(अचिन्हित पूर्णांक, flags)
-		__field(पूर्णांक, ret)
+		__field(unsigned long long, len)
+		__field(unsigned int, flags)
+		__field(int, ret)
 	),
 
 	TP_fast_assign(
@@ -1948,17 +1947,17 @@ TRACE_EVENT(f2fs_fiemap,
 		__entry->ret		= ret;
 	),
 
-	TP_prपूर्णांकk("dev = (%d,%d), ino = %lu, lblock:%lld, pblock:%lld, "
+	TP_printk("dev = (%d,%d), ino = %lu, lblock:%lld, pblock:%lld, "
 		"len:%llu, flags:%u, ret:%d",
 		show_dev_ino(__entry),
-		(अचिन्हित दीर्घ दीर्घ)__entry->lblock,
-		(अचिन्हित दीर्घ दीर्घ)__entry->pblock,
+		(unsigned long long)__entry->lblock,
+		(unsigned long long)__entry->pblock,
 		__entry->len,
 		__entry->flags,
 		__entry->ret)
 );
 
-#पूर्ण_अगर /* _TRACE_F2FS_H */
+#endif /* _TRACE_F2FS_H */
 
  /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

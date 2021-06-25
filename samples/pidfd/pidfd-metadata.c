@@ -1,121 +1,120 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
-#समावेश <err.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <सीमा.स>
-#समावेश <sched.h>
-#समावेश <संकेत.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#अगर_अघोषित CLONE_PIDFD
-#घोषणा CLONE_PIDFD 0x00001000
-#पूर्ण_अगर
+#ifndef CLONE_PIDFD
+#define CLONE_PIDFD 0x00001000
+#endif
 
-#अगर_अघोषित __NR_pidfd_send_संकेत
-#घोषणा __NR_pidfd_send_संकेत -1
-#पूर्ण_अगर
+#ifndef __NR_pidfd_send_signal
+#define __NR_pidfd_send_signal -1
+#endif
 
-अटल पूर्णांक करो_child(व्योम *args)
-अणु
-	म_लिखो("%d\n", getpid());
-	_निकास(निकास_सफल);
-पूर्ण
+static int do_child(void *args)
+{
+	printf("%d\n", getpid());
+	_exit(EXIT_SUCCESS);
+}
 
-अटल pid_t pidfd_clone(पूर्णांक flags, पूर्णांक *pidfd)
-अणु
-	माप_प्रकार stack_size = 1024;
-	अक्षर *stack[1024] = अणु 0 पूर्ण;
+static pid_t pidfd_clone(int flags, int *pidfd)
+{
+	size_t stack_size = 1024;
+	char *stack[1024] = { 0 };
 
-#अगर_घोषित __ia64__
-	वापस __clone2(करो_child, stack, stack_size, flags | SIGCHLD, शून्य, pidfd);
-#अन्यथा
-	वापस clone(करो_child, stack + stack_size, flags | SIGCHLD, शून्य, pidfd);
-#पूर्ण_अगर
-पूर्ण
+#ifdef __ia64__
+	return __clone2(do_child, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
+#else
+	return clone(do_child, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
+#endif
+}
 
-अटल अंतरभूत पूर्णांक sys_pidfd_send_संकेत(पूर्णांक pidfd, पूर्णांक sig, siginfo_t *info,
-					अचिन्हित पूर्णांक flags)
-अणु
-	वापस syscall(__NR_pidfd_send_संकेत, pidfd, sig, info, flags);
-पूर्ण
+static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
+					unsigned int flags)
+{
+	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
+}
 
-अटल पूर्णांक pidfd_metadata_fd(pid_t pid, पूर्णांक pidfd)
-अणु
-	पूर्णांक procfd, ret;
-	अक्षर path[100];
+static int pidfd_metadata_fd(pid_t pid, int pidfd)
+{
+	int procfd, ret;
+	char path[100];
 
-	snम_लिखो(path, माप(path), "/proc/%d", pid);
-	procfd = खोलो(path, O_सूचीECTORY | O_RDONLY | O_CLOEXEC);
-	अगर (procfd < 0) अणु
+	snprintf(path, sizeof(path), "/proc/%d", pid);
+	procfd = open(path, O_DIRECTORY | O_RDONLY | O_CLOEXEC);
+	if (procfd < 0) {
 		warn("Failed to open %s\n", path);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Verअगरy that the pid has not been recycled and our /proc/<pid> handle
+	 * Verify that the pid has not been recycled and our /proc/<pid> handle
 	 * is still valid.
 	 */
-	ret = sys_pidfd_send_संकेत(pidfd, 0, शून्य, 0);
-	अगर (ret < 0) अणु
-		चयन (त्रुटि_सं) अणु
-		हाल EPERM:
-			/* Process exists, just not allowed to संकेत it. */
-			अवरोध;
-		शेष:
+	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
+	if (ret < 0) {
+		switch (errno) {
+		case EPERM:
+			/* Process exists, just not allowed to signal it. */
+			break;
+		default:
 			warn("Failed to signal process\n");
-			बंद(procfd);
+			close(procfd);
 			procfd = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस procfd;
-पूर्ण
+	return procfd;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	पूर्णांक pidfd = -1, ret = निकास_त्रुटि;
-	अक्षर buf[4096] = अणु 0 पूर्ण;
+int main(int argc, char *argv[])
+{
+	int pidfd = -1, ret = EXIT_FAILURE;
+	char buf[4096] = { 0 };
 	pid_t pid;
-	पूर्णांक procfd, statusfd;
-	sमाप_प्रकार bytes;
+	int procfd, statusfd;
+	ssize_t bytes;
 
 	pid = pidfd_clone(CLONE_PIDFD, &pidfd);
-	अगर (pid < 0)
+	if (pid < 0)
 		err(ret, "CLONE_PIDFD");
-	अगर (pidfd == -1) अणु
+	if (pidfd == -1) {
 		warnx("CLONE_PIDFD is not supported by the kernel");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	procfd = pidfd_metadata_fd(pid, pidfd);
-	बंद(pidfd);
-	अगर (procfd < 0)
-		जाओ out;
+	close(pidfd);
+	if (procfd < 0)
+		goto out;
 
-	statusfd = खोलोat(procfd, "status", O_RDONLY | O_CLOEXEC);
-	बंद(procfd);
-	अगर (statusfd < 0)
-		जाओ out;
+	statusfd = openat(procfd, "status", O_RDONLY | O_CLOEXEC);
+	close(procfd);
+	if (statusfd < 0)
+		goto out;
 
-	bytes = पढ़ो(statusfd, buf, माप(buf));
-	अगर (bytes > 0)
-		bytes = ग_लिखो(STDOUT_खाताNO, buf, bytes);
-	बंद(statusfd);
-	ret = निकास_सफल;
+	bytes = read(statusfd, buf, sizeof(buf));
+	if (bytes > 0)
+		bytes = write(STDOUT_FILENO, buf, bytes);
+	close(statusfd);
+	ret = EXIT_SUCCESS;
 
 out:
-	(व्योम)रुको(शून्य);
+	(void)wait(NULL);
 
-	निकास(ret);
-पूर्ण
+	exit(ret);
+}

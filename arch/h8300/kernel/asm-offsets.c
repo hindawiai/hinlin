@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * This program is used to generate definitions needed by
  * assembly language modules.
  *
  * We use the technique used in the OSF Mach kernel code:
- * generate यंत्र statements containing #घोषणाs,
+ * generate asm statements containing #defines,
  * compile this file to assembler, and then extract the
- * #घोषणाs from the assembly-language output.
+ * #defines from the assembly-language output.
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/kbuild.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/ptrace.h>
+#include <linux/stddef.h>
+#include <linux/sched.h>
+#include <linux/kernel_stat.h>
+#include <linux/ptrace.h>
+#include <linux/hardirq.h>
+#include <linux/kbuild.h>
+#include <asm/irq.h>
+#include <asm/ptrace.h>
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	/* offsets पूर्णांकo the task काष्ठा */
-	OFFSET(TASK_STATE, task_काष्ठा, state);
-	OFFSET(TASK_FLAGS, task_काष्ठा, flags);
-	OFFSET(TASK_PTRACE, task_काष्ठा, ptrace);
-	OFFSET(TASK_BLOCKED, task_काष्ठा, blocked);
-	OFFSET(TASK_THREAD, task_काष्ठा, thपढ़ो);
-	OFFSET(TASK_THREAD_INFO, task_काष्ठा, stack);
-	OFFSET(TASK_MM, task_काष्ठा, mm);
-	OFFSET(TASK_ACTIVE_MM, task_काष्ठा, active_mm);
+int main(void)
+{
+	/* offsets into the task struct */
+	OFFSET(TASK_STATE, task_struct, state);
+	OFFSET(TASK_FLAGS, task_struct, flags);
+	OFFSET(TASK_PTRACE, task_struct, ptrace);
+	OFFSET(TASK_BLOCKED, task_struct, blocked);
+	OFFSET(TASK_THREAD, task_struct, thread);
+	OFFSET(TASK_THREAD_INFO, task_struct, stack);
+	OFFSET(TASK_MM, task_struct, mm);
+	OFFSET(TASK_ACTIVE_MM, task_struct, active_mm);
 
-	/* offsets पूर्णांकo the irq_cpustat_t काष्ठा */
-	DEFINE(CPUSTAT_SOFTIRQ_PENDING, दुरत्व(irq_cpustat_t,
+	/* offsets into the irq_cpustat_t struct */
+	DEFINE(CPUSTAT_SOFTIRQ_PENDING, offsetof(irq_cpustat_t,
 						 __softirq_pending));
 
-	/* offsets पूर्णांकo the thपढ़ो काष्ठा */
-	OFFSET(THREAD_KSP, thपढ़ो_काष्ठा, ksp);
-	OFFSET(THREAD_USP, thपढ़ो_काष्ठा, usp);
-	OFFSET(THREAD_CCR, thपढ़ो_काष्ठा, ccr);
+	/* offsets into the thread struct */
+	OFFSET(THREAD_KSP, thread_struct, ksp);
+	OFFSET(THREAD_USP, thread_struct, usp);
+	OFFSET(THREAD_CCR, thread_struct, ccr);
 
-	/* offsets पूर्णांकo the pt_regs काष्ठा */
-	DEFINE(LER0,  दुरत्व(काष्ठा pt_regs, er0)      - माप(दीर्घ));
-	DEFINE(LER1,  दुरत्व(काष्ठा pt_regs, er1)      - माप(दीर्घ));
-	DEFINE(LER2,  दुरत्व(काष्ठा pt_regs, er2)      - माप(दीर्घ));
-	DEFINE(LER3,  दुरत्व(काष्ठा pt_regs, er3)      - माप(दीर्घ));
-	DEFINE(LER4,  दुरत्व(काष्ठा pt_regs, er4)      - माप(दीर्घ));
-	DEFINE(LER5,  दुरत्व(काष्ठा pt_regs, er5)      - माप(दीर्घ));
-	DEFINE(LER6,  दुरत्व(काष्ठा pt_regs, er6)      - माप(दीर्घ));
-	DEFINE(LORIG, दुरत्व(काष्ठा pt_regs, orig_er0) - माप(दीर्घ));
-	DEFINE(LSP,   दुरत्व(काष्ठा pt_regs, sp)       - माप(दीर्घ));
-	DEFINE(LCCR,  दुरत्व(काष्ठा pt_regs, ccr)      - माप(दीर्घ));
-	DEFINE(LVEC,  दुरत्व(काष्ठा pt_regs, vector)   - माप(दीर्घ));
-#अगर defined(CONFIG_CPU_H8S)
-	DEFINE(LEXR,  दुरत्व(काष्ठा pt_regs, exr)      - माप(दीर्घ));
-#पूर्ण_अगर
-	DEFINE(LRET,  दुरत्व(काष्ठा pt_regs, pc)       - माप(दीर्घ));
+	/* offsets into the pt_regs struct */
+	DEFINE(LER0,  offsetof(struct pt_regs, er0)      - sizeof(long));
+	DEFINE(LER1,  offsetof(struct pt_regs, er1)      - sizeof(long));
+	DEFINE(LER2,  offsetof(struct pt_regs, er2)      - sizeof(long));
+	DEFINE(LER3,  offsetof(struct pt_regs, er3)      - sizeof(long));
+	DEFINE(LER4,  offsetof(struct pt_regs, er4)      - sizeof(long));
+	DEFINE(LER5,  offsetof(struct pt_regs, er5)      - sizeof(long));
+	DEFINE(LER6,  offsetof(struct pt_regs, er6)      - sizeof(long));
+	DEFINE(LORIG, offsetof(struct pt_regs, orig_er0) - sizeof(long));
+	DEFINE(LSP,   offsetof(struct pt_regs, sp)       - sizeof(long));
+	DEFINE(LCCR,  offsetof(struct pt_regs, ccr)      - sizeof(long));
+	DEFINE(LVEC,  offsetof(struct pt_regs, vector)   - sizeof(long));
+#if defined(CONFIG_CPU_H8S)
+	DEFINE(LEXR,  offsetof(struct pt_regs, exr)      - sizeof(long));
+#endif
+	DEFINE(LRET,  offsetof(struct pt_regs, pc)       - sizeof(long));
 
 	DEFINE(PT_PTRACED, PT_PTRACED);
 
-	/* offsets in thपढ़ो_info काष्ठाure */
-	OFFSET(TI_TASK, thपढ़ो_info, task);
-	OFFSET(TI_FLAGS, thपढ़ो_info, flags);
-	OFFSET(TI_CPU, thपढ़ो_info, cpu);
-	OFFSET(TI_PRE, thपढ़ो_info, preempt_count);
-#अगर_घोषित CONFIG_PREEMPTION
-	DEFINE(TI_PRE_COUNT, दुरत्व(काष्ठा thपढ़ो_info, preempt_count));
-#पूर्ण_अगर
+	/* offsets in thread_info structure */
+	OFFSET(TI_TASK, thread_info, task);
+	OFFSET(TI_FLAGS, thread_info, flags);
+	OFFSET(TI_CPU, thread_info, cpu);
+	OFFSET(TI_PRE, thread_info, preempt_count);
+#ifdef CONFIG_PREEMPTION
+	DEFINE(TI_PRE_COUNT, offsetof(struct thread_info, preempt_count));
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

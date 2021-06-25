@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,26 +19,26 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "gk104.h"
-#समावेश "cgrp.h"
-#समावेश "changk104.h"
-#समावेश "user.h"
+#include "gk104.h"
+#include "cgrp.h"
+#include "changk104.h"
+#include "user.h"
 
-#समावेश <core/client.h>
-#समावेश <core/gpuobj.h>
-#समावेश <subdev/bar.h>
-#समावेश <subdev/fault.h>
-#समावेश <subdev/top.h>
-#समावेश <subdev/समयr.h>
-#समावेश <engine/sw.h>
+#include <core/client.h>
+#include <core/gpuobj.h>
+#include <subdev/bar.h>
+#include <subdev/fault.h>
+#include <subdev/top.h>
+#include <subdev/timer.h>
+#include <engine/sw.h>
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-अटल व्योम
-tu102_fअगरo_runlist_commit(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक runl,
-			  काष्ठा nvkm_memory *mem, पूर्णांक nr)
-अणु
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+static void
+tu102_fifo_runlist_commit(struct gk104_fifo *fifo, int runl,
+			  struct nvkm_memory *mem, int nr)
+{
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	u64 addr = nvkm_memory_addr(mem);
 	/*XXX: target? */
 
@@ -47,282 +46,282 @@ tu102_fअगरo_runlist_commit(काष्ठा gk104_fअगरo *fअग�
 	nvkm_wr32(device, 0x002b04 + (runl * 0x10), upper_32_bits(addr));
 	nvkm_wr32(device, 0x002b08 + (runl * 0x10), nr);
 
-	/*XXX: how to रुको? can you even रुको? */
-पूर्ण
+	/*XXX: how to wait? can you even wait? */
+}
 
-स्थिर काष्ठा gk104_fअगरo_runlist_func
-tu102_fअगरo_runlist = अणु
+const struct gk104_fifo_runlist_func
+tu102_fifo_runlist = {
 	.size = 16,
-	.cgrp = gv100_fअगरo_runlist_cgrp,
-	.chan = gv100_fअगरo_runlist_chan,
-	.commit = tu102_fअगरo_runlist_commit,
-पूर्ण;
+	.cgrp = gv100_fifo_runlist_cgrp,
+	.chan = gv100_fifo_runlist_chan,
+	.commit = tu102_fifo_runlist_commit,
+};
 
-अटल स्थिर काष्ठा nvkm_क्रमागत
-tu102_fअगरo_fault_engine[] = अणु
-	अणु 0x01, "DISPLAY" पूर्ण,
-	अणु 0x03, "PTP" पूर्ण,
-	अणु 0x06, "PWR_PMU" पूर्ण,
-	अणु 0x08, "IFB", शून्य, NVKM_ENGINE_IFB पूर्ण,
-	अणु 0x09, "PERF" पूर्ण,
-	अणु 0x1f, "PHYSICAL" पूर्ण,
-	अणु 0x20, "HOST0" पूर्ण,
-	अणु 0x21, "HOST1" पूर्ण,
-	अणु 0x22, "HOST2" पूर्ण,
-	अणु 0x23, "HOST3" पूर्ण,
-	अणु 0x24, "HOST4" पूर्ण,
-	अणु 0x25, "HOST5" पूर्ण,
-	अणु 0x26, "HOST6" पूर्ण,
-	अणु 0x27, "HOST7" पूर्ण,
-	अणु 0x28, "HOST8" पूर्ण,
-	अणु 0x29, "HOST9" पूर्ण,
-	अणु 0x2a, "HOST10" पूर्ण,
-	अणु 0x2b, "HOST11" पूर्ण,
-	अणु 0x2c, "HOST12" पूर्ण,
-	अणु 0x2d, "HOST13" पूर्ण,
-	अणु 0x2e, "HOST14" पूर्ण,
-	अणु 0x80, "BAR1", शून्य, NVKM_SUBDEV_BAR पूर्ण,
-	अणु 0xc0, "BAR2", शून्य, NVKM_SUBDEV_INSTMEM पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct nvkm_enum
+tu102_fifo_fault_engine[] = {
+	{ 0x01, "DISPLAY" },
+	{ 0x03, "PTP" },
+	{ 0x06, "PWR_PMU" },
+	{ 0x08, "IFB", NULL, NVKM_ENGINE_IFB },
+	{ 0x09, "PERF" },
+	{ 0x1f, "PHYSICAL" },
+	{ 0x20, "HOST0" },
+	{ 0x21, "HOST1" },
+	{ 0x22, "HOST2" },
+	{ 0x23, "HOST3" },
+	{ 0x24, "HOST4" },
+	{ 0x25, "HOST5" },
+	{ 0x26, "HOST6" },
+	{ 0x27, "HOST7" },
+	{ 0x28, "HOST8" },
+	{ 0x29, "HOST9" },
+	{ 0x2a, "HOST10" },
+	{ 0x2b, "HOST11" },
+	{ 0x2c, "HOST12" },
+	{ 0x2d, "HOST13" },
+	{ 0x2e, "HOST14" },
+	{ 0x80, "BAR1", NULL, NVKM_SUBDEV_BAR },
+	{ 0xc0, "BAR2", NULL, NVKM_SUBDEV_INSTMEM },
+	{}
+};
 
-अटल व्योम
-tu102_fअगरo_pbdma_init(काष्ठा gk104_fअगरo *fअगरo)
-अणु
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
-	स्थिर u32 mask = (1 << fअगरo->pbdma_nr) - 1;
-	/*XXX: this is a bit of a guess at this poपूर्णांक in समय. */
+static void
+tu102_fifo_pbdma_init(struct gk104_fifo *fifo)
+{
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
+	const u32 mask = (1 << fifo->pbdma_nr) - 1;
+	/*XXX: this is a bit of a guess at this point in time. */
 	nvkm_mask(device, 0xb65000, 0x80000fff, 0x80000000 | mask);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा gk104_fअगरo_pbdma_func
-tu102_fअगरo_pbdma = अणु
-	.nr = gm200_fअगरo_pbdma_nr,
-	.init = tu102_fअगरo_pbdma_init,
-	.init_समयout = gk208_fअगरo_pbdma_init_समयout,
-पूर्ण;
+static const struct gk104_fifo_pbdma_func
+tu102_fifo_pbdma = {
+	.nr = gm200_fifo_pbdma_nr,
+	.init = tu102_fifo_pbdma_init,
+	.init_timeout = gk208_fifo_pbdma_init_timeout,
+};
 
-अटल स्थिर काष्ठा gk104_fअगरo_func
-tu102_fअगरo = अणु
-	.pbdma = &tu102_fअगरo_pbdma,
-	.fault.access = gv100_fअगरo_fault_access,
-	.fault.engine = tu102_fअगरo_fault_engine,
-	.fault.reason = gv100_fअगरo_fault_reason,
-	.fault.hubclient = gv100_fअगरo_fault_hubclient,
-	.fault.gpcclient = gv100_fअगरo_fault_gpcclient,
-	.runlist = &tu102_fअगरo_runlist,
-	.user = अणुअणु-1,-1,VOLTA_USERMODE_A       पूर्ण, tu102_fअगरo_user_new   पूर्ण,
-	.chan = अणुअणु 0, 0,TURING_CHANNEL_GPFIFO_Aपूर्ण, tu102_fअगरo_gpfअगरo_new पूर्ण,
-	.cgrp_क्रमce = true,
-पूर्ण;
+static const struct gk104_fifo_func
+tu102_fifo = {
+	.pbdma = &tu102_fifo_pbdma,
+	.fault.access = gv100_fifo_fault_access,
+	.fault.engine = tu102_fifo_fault_engine,
+	.fault.reason = gv100_fifo_fault_reason,
+	.fault.hubclient = gv100_fifo_fault_hubclient,
+	.fault.gpcclient = gv100_fifo_fault_gpcclient,
+	.runlist = &tu102_fifo_runlist,
+	.user = {{-1,-1,VOLTA_USERMODE_A       }, tu102_fifo_user_new   },
+	.chan = {{ 0, 0,TURING_CHANNEL_GPFIFO_A}, tu102_fifo_gpfifo_new },
+	.cgrp_force = true,
+};
 
-अटल व्योम
-tu102_fअगरo_recover_work(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo = container_of(w, typeof(*fअगरo), recover.work);
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
-	काष्ठा nvkm_engine *engine;
-	अचिन्हित दीर्घ flags;
-	u32 engm, runm, toकरो;
-	पूर्णांक engn, runl;
+static void
+tu102_fifo_recover_work(struct work_struct *w)
+{
+	struct gk104_fifo *fifo = container_of(w, typeof(*fifo), recover.work);
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
+	struct nvkm_engine *engine;
+	unsigned long flags;
+	u32 engm, runm, todo;
+	int engn, runl;
 
-	spin_lock_irqsave(&fअगरo->base.lock, flags);
-	runm = fअगरo->recover.runm;
-	engm = fअगरo->recover.engm;
-	fअगरo->recover.engm = 0;
-	fअगरo->recover.runm = 0;
-	spin_unlock_irqrestore(&fअगरo->base.lock, flags);
+	spin_lock_irqsave(&fifo->base.lock, flags);
+	runm = fifo->recover.runm;
+	engm = fifo->recover.engm;
+	fifo->recover.engm = 0;
+	fifo->recover.runm = 0;
+	spin_unlock_irqrestore(&fifo->base.lock, flags);
 
 	nvkm_mask(device, 0x002630, runm, runm);
 
-	क्रम (toकरो = engm; engn = __ffs(toकरो), toकरो; toकरो &= ~BIT(engn)) अणु
-		अगर ((engine = fअगरo->engine[engn].engine)) अणु
+	for (todo = engm; engn = __ffs(todo), todo; todo &= ~BIT(engn)) {
+		if ((engine = fifo->engine[engn].engine)) {
 			nvkm_subdev_fini(&engine->subdev, false);
 			WARN_ON(nvkm_subdev_init(&engine->subdev));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (toकरो = runm; runl = __ffs(toकरो), toकरो; toकरो &= ~BIT(runl))
-		gk104_fअगरo_runlist_update(fअगरo, runl);
+	for (todo = runm; runl = __ffs(todo), todo; todo &= ~BIT(runl))
+		gk104_fifo_runlist_update(fifo, runl);
 
 	nvkm_mask(device, 0x002630, runm, 0x00000000);
-पूर्ण
+}
 
-अटल व्योम tu102_fअगरo_recover_engn(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक engn);
+static void tu102_fifo_recover_engn(struct gk104_fifo *fifo, int engn);
 
-अटल व्योम
-tu102_fअगरo_recover_runl(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक runl)
-अणु
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर u32 runm = BIT(runl);
+static void
+tu102_fifo_recover_runl(struct gk104_fifo *fifo, int runl)
+{
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	const u32 runm = BIT(runl);
 
-	निश्चित_spin_locked(&fअगरo->base.lock);
-	अगर (fअगरo->recover.runm & runm)
-		वापस;
-	fअगरo->recover.runm |= runm;
+	assert_spin_locked(&fifo->base.lock);
+	if (fifo->recover.runm & runm)
+		return;
+	fifo->recover.runm |= runm;
 
 	/* Block runlist to prevent channel assignment(s) from changing. */
 	nvkm_mask(device, 0x002630, runm, runm);
 
 	/* Schedule recovery. */
 	nvkm_warn(subdev, "runlist %d: scheduled for recovery\n", runl);
-	schedule_work(&fअगरo->recover.work);
-पूर्ण
+	schedule_work(&fifo->recover.work);
+}
 
-अटल काष्ठा gk104_fअगरo_chan *
-tu102_fअगरo_recover_chid(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक runl, पूर्णांक chid)
-अणु
-	काष्ठा gk104_fअगरo_chan *chan;
-	काष्ठा nvkm_fअगरo_cgrp *cgrp;
+static struct gk104_fifo_chan *
+tu102_fifo_recover_chid(struct gk104_fifo *fifo, int runl, int chid)
+{
+	struct gk104_fifo_chan *chan;
+	struct nvkm_fifo_cgrp *cgrp;
 
-	list_क्रम_each_entry(chan, &fअगरo->runlist[runl].chan, head) अणु
-		अगर (chan->base.chid == chid) अणु
+	list_for_each_entry(chan, &fifo->runlist[runl].chan, head) {
+		if (chan->base.chid == chid) {
 			list_del_init(&chan->head);
-			वापस chan;
-		पूर्ण
-	पूर्ण
+			return chan;
+		}
+	}
 
-	list_क्रम_each_entry(cgrp, &fअगरo->runlist[runl].cgrp, head) अणु
-		अगर (cgrp->id == chid) अणु
+	list_for_each_entry(cgrp, &fifo->runlist[runl].cgrp, head) {
+		if (cgrp->id == chid) {
 			chan = list_first_entry(&cgrp->chan, typeof(*chan), head);
 			list_del_init(&chan->head);
-			अगर (!--cgrp->chan_nr)
+			if (!--cgrp->chan_nr)
 				list_del_init(&cgrp->head);
-			वापस chan;
-		पूर्ण
-	पूर्ण
+			return chan;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-tu102_fअगरo_recover_chan(काष्ठा nvkm_fअगरo *base, पूर्णांक chid)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo = gk104_fअगरo(base);
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर u32  stat = nvkm_rd32(device, 0x800004 + (chid * 0x08));
-	स्थिर u32  runl = (stat & 0x000f0000) >> 16;
-	स्थिर bool used = (stat & 0x00000001);
-	अचिन्हित दीर्घ engn, engm = fअगरo->runlist[runl].engm;
-	काष्ठा gk104_fअगरo_chan *chan;
+static void
+tu102_fifo_recover_chan(struct nvkm_fifo *base, int chid)
+{
+	struct gk104_fifo *fifo = gk104_fifo(base);
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	const u32  stat = nvkm_rd32(device, 0x800004 + (chid * 0x08));
+	const u32  runl = (stat & 0x000f0000) >> 16;
+	const bool used = (stat & 0x00000001);
+	unsigned long engn, engm = fifo->runlist[runl].engm;
+	struct gk104_fifo_chan *chan;
 
-	निश्चित_spin_locked(&fअगरo->base.lock);
-	अगर (!used)
-		वापस;
+	assert_spin_locked(&fifo->base.lock);
+	if (!used)
+		return;
 
-	/* Lookup SW state क्रम channel, and mark it as dead. */
-	chan = tu102_fअगरo_recover_chid(fअगरo, runl, chid);
-	अगर (chan) अणु
-		chan->समाप्तed = true;
-		nvkm_fअगरo_kevent(&fअगरo->base, chid);
-	पूर्ण
+	/* Lookup SW state for channel, and mark it as dead. */
+	chan = tu102_fifo_recover_chid(fifo, runl, chid);
+	if (chan) {
+		chan->killed = true;
+		nvkm_fifo_kevent(&fifo->base, chid);
+	}
 
 	/* Disable channel. */
 	nvkm_wr32(device, 0x800004 + (chid * 0x08), stat | 0x00000800);
 	nvkm_warn(subdev, "channel %d: killed\n", chid);
 
 	/* Block channel assignments from changing during recovery. */
-	tu102_fअगरo_recover_runl(fअगरo, runl);
+	tu102_fifo_recover_runl(fifo, runl);
 
-	/* Schedule recovery क्रम any engines the channel is on. */
-	क्रम_each_set_bit(engn, &engm, fअगरo->engine_nr) अणु
-		काष्ठा gk104_fअगरo_engine_status status;
+	/* Schedule recovery for any engines the channel is on. */
+	for_each_set_bit(engn, &engm, fifo->engine_nr) {
+		struct gk104_fifo_engine_status status;
 
-		gk104_fअगरo_engine_status(fअगरo, engn, &status);
-		अगर (!status.chan || status.chan->id != chid)
-			जारी;
-		tu102_fअगरo_recover_engn(fअगरo, engn);
-	पूर्ण
-पूर्ण
+		gk104_fifo_engine_status(fifo, engn, &status);
+		if (!status.chan || status.chan->id != chid)
+			continue;
+		tu102_fifo_recover_engn(fifo, engn);
+	}
+}
 
-अटल व्योम
-tu102_fअगरo_recover_engn(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक engn)
-अणु
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर u32 runl = fअगरo->engine[engn].runl;
-	स्थिर u32 engm = BIT(engn);
-	काष्ठा gk104_fअगरo_engine_status status;
+static void
+tu102_fifo_recover_engn(struct gk104_fifo *fifo, int engn)
+{
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	const u32 runl = fifo->engine[engn].runl;
+	const u32 engm = BIT(engn);
+	struct gk104_fifo_engine_status status;
 
-	निश्चित_spin_locked(&fअगरo->base.lock);
-	अगर (fअगरo->recover.engm & engm)
-		वापस;
-	fअगरo->recover.engm |= engm;
+	assert_spin_locked(&fifo->base.lock);
+	if (fifo->recover.engm & engm)
+		return;
+	fifo->recover.engm |= engm;
 
 	/* Block channel assignments from changing during recovery. */
-	tu102_fअगरo_recover_runl(fअगरo, runl);
+	tu102_fifo_recover_runl(fifo, runl);
 
-	/* Determine which channel (अगर any) is currently on the engine. */
-	gk104_fअगरo_engine_status(fअगरo, engn, &status);
-	अगर (status.chan) अणु
-		/* The channel is not दीर्घer viable, समाप्त it. */
-		tu102_fअगरo_recover_chan(&fअगरo->base, status.chan->id);
-	पूर्ण
+	/* Determine which channel (if any) is currently on the engine. */
+	gk104_fifo_engine_status(fifo, engn, &status);
+	if (status.chan) {
+		/* The channel is not longer viable, kill it. */
+		tu102_fifo_recover_chan(&fifo->base, status.chan->id);
+	}
 
 	/* Preempt the runlist */
 	nvkm_wr32(device, 0x2638, BIT(runl));
 
 	/* Schedule recovery. */
 	nvkm_warn(subdev, "engine %d: scheduled for recovery\n", engn);
-	schedule_work(&fअगरo->recover.work);
-पूर्ण
+	schedule_work(&fifo->recover.work);
+}
 
-अटल व्योम
-tu102_fअगरo_fault(काष्ठा nvkm_fअगरo *base, काष्ठा nvkm_fault_data *info)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo = gk104_fअगरo(base);
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	स्थिर काष्ठा nvkm_क्रमागत *er, *ee, *ec, *ea;
-	काष्ठा nvkm_engine *engine = शून्य;
-	काष्ठा nvkm_fअगरo_chan *chan;
-	अचिन्हित दीर्घ flags;
-	स्थिर अक्षर *en = "";
-	अक्षर ct[8] = "HUB/";
-	पूर्णांक engn;
+static void
+tu102_fifo_fault(struct nvkm_fifo *base, struct nvkm_fault_data *info)
+{
+	struct gk104_fifo *fifo = gk104_fifo(base);
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	const struct nvkm_enum *er, *ee, *ec, *ea;
+	struct nvkm_engine *engine = NULL;
+	struct nvkm_fifo_chan *chan;
+	unsigned long flags;
+	const char *en = "";
+	char ct[8] = "HUB/";
+	int engn;
 
-	er = nvkm_क्रमागत_find(fअगरo->func->fault.reason, info->reason);
-	ee = nvkm_क्रमागत_find(fअगरo->func->fault.engine, info->engine);
-	अगर (info->hub) अणु
-		ec = nvkm_क्रमागत_find(fअगरo->func->fault.hubclient, info->client);
-	पूर्ण अन्यथा अणु
-		ec = nvkm_क्रमागत_find(fअगरo->func->fault.gpcclient, info->client);
-		snम_लिखो(ct, माप(ct), "GPC%d/", info->gpc);
-	पूर्ण
-	ea = nvkm_क्रमागत_find(fअगरo->func->fault.access, info->access);
+	er = nvkm_enum_find(fifo->func->fault.reason, info->reason);
+	ee = nvkm_enum_find(fifo->func->fault.engine, info->engine);
+	if (info->hub) {
+		ec = nvkm_enum_find(fifo->func->fault.hubclient, info->client);
+	} else {
+		ec = nvkm_enum_find(fifo->func->fault.gpcclient, info->client);
+		snprintf(ct, sizeof(ct), "GPC%d/", info->gpc);
+	}
+	ea = nvkm_enum_find(fifo->func->fault.access, info->access);
 
-	अगर (ee && ee->data2) अणु
-		चयन (ee->data2) अणु
-		हाल NVKM_SUBDEV_BAR:
+	if (ee && ee->data2) {
+		switch (ee->data2) {
+		case NVKM_SUBDEV_BAR:
 			nvkm_bar_bar1_reset(device);
-			अवरोध;
-		हाल NVKM_SUBDEV_INSTMEM:
+			break;
+		case NVKM_SUBDEV_INSTMEM:
 			nvkm_bar_bar2_reset(device);
-			अवरोध;
-		हाल NVKM_ENGINE_IFB:
+			break;
+		case NVKM_ENGINE_IFB:
 			nvkm_mask(device, 0x001718, 0x00000000, 0x00000000);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			engine = nvkm_device_engine(device, ee->data2, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ee == शून्य) अणु
-		काष्ठा nvkm_subdev *subdev = nvkm_top_fault(device, info->engine);
-		अगर (subdev) अणु
-			अगर (subdev->func == &nvkm_engine)
+	if (ee == NULL) {
+		struct nvkm_subdev *subdev = nvkm_top_fault(device, info->engine);
+		if (subdev) {
+			if (subdev->func == &nvkm_engine)
 				engine = container_of(subdev, typeof(*engine), subdev);
 			en = engine->subdev.name;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		en = ee->name;
-	पूर्ण
+	}
 
-	spin_lock_irqsave(&fअगरo->base.lock, flags);
-	chan = nvkm_fअगरo_chan_inst_locked(&fअगरo->base, info->inst);
+	spin_lock_irqsave(&fifo->base.lock, flags);
+	chan = nvkm_fifo_chan_inst_locked(&fifo->base, info->inst);
 
 	nvkm_error(subdev,
 		   "fault %02x [%s] at %016llx engine %02x [%s] client %02x "
@@ -334,145 +333,145 @@ tu102_fअगरo_fault(काष्ठा nvkm_fअगरo *base, काष्�
 		   info->inst, chan ? chan->object.client->name : "unknown");
 
 	/* Kill the channel that caused the fault. */
-	अगर (chan)
-		tu102_fअगरo_recover_chan(&fअगरo->base, chan->chid);
+	if (chan)
+		tu102_fifo_recover_chan(&fifo->base, chan->chid);
 
-	/* Channel recovery will probably have alपढ़ोy करोne this क्रम the
-	 * correct engine(s), but just in हाल we can't find the channel
-	 * inक्रमmation...
+	/* Channel recovery will probably have already done this for the
+	 * correct engine(s), but just in case we can't find the channel
+	 * information...
 	 */
-	क्रम (engn = 0; engn < fअगरo->engine_nr && engine; engn++) अणु
-		अगर (fअगरo->engine[engn].engine == engine) अणु
-			tu102_fअगरo_recover_engn(fअगरo, engn);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (engn = 0; engn < fifo->engine_nr && engine; engn++) {
+		if (fifo->engine[engn].engine == engine) {
+			tu102_fifo_recover_engn(fifo, engn);
+			break;
+		}
+	}
 
-	spin_unlock_irqrestore(&fअगरo->base.lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&fifo->base.lock, flags);
+}
 
-अटल व्योम
-tu102_fअगरo_पूर्णांकr_ctxsw_समयout(काष्ठा gk104_fअगरo *fअगरo)
-अणु
-	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
-	अचिन्हित दीर्घ flags, engm;
+static void
+tu102_fifo_intr_ctxsw_timeout(struct gk104_fifo *fifo)
+{
+	struct nvkm_device *device = fifo->base.engine.subdev.device;
+	unsigned long flags, engm;
 	u32 engn;
 
-	spin_lock_irqsave(&fअगरo->base.lock, flags);
+	spin_lock_irqsave(&fifo->base.lock, flags);
 
 	engm = nvkm_rd32(device, 0x2a30);
 	nvkm_wr32(device, 0x2a30, engm);
 
-	क्रम_each_set_bit(engn, &engm, 32)
-		tu102_fअगरo_recover_engn(fअगरo, engn);
+	for_each_set_bit(engn, &engm, 32)
+		tu102_fifo_recover_engn(fifo, engn);
 
-	spin_unlock_irqrestore(&fअगरo->base.lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&fifo->base.lock, flags);
+}
 
-अटल व्योम
-tu102_fअगरo_पूर्णांकr_sched(काष्ठा gk104_fअगरo *fअगरo)
-अणु
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	u32 पूर्णांकr = nvkm_rd32(device, 0x00254c);
-	u32 code = पूर्णांकr & 0x000000ff;
+static void
+tu102_fifo_intr_sched(struct gk104_fifo *fifo)
+{
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
+	u32 intr = nvkm_rd32(device, 0x00254c);
+	u32 code = intr & 0x000000ff;
 
 	nvkm_error(subdev, "SCHED_ERROR %02x\n", code);
-पूर्ण
+}
 
-अटल व्योम
-tu102_fअगरo_पूर्णांकr(काष्ठा nvkm_fअगरo *base)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo = gk104_fअगरo(base);
-	काष्ठा nvkm_subdev *subdev = &fअगरo->base.engine.subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static void
+tu102_fifo_intr(struct nvkm_fifo *base)
+{
+	struct gk104_fifo *fifo = gk104_fifo(base);
+	struct nvkm_subdev *subdev = &fifo->base.engine.subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 mask = nvkm_rd32(device, 0x002140);
 	u32 stat = nvkm_rd32(device, 0x002100) & mask;
 
-	अगर (stat & 0x00000001) अणु
-		gk104_fअगरo_पूर्णांकr_bind(fअगरo);
+	if (stat & 0x00000001) {
+		gk104_fifo_intr_bind(fifo);
 		nvkm_wr32(device, 0x002100, 0x00000001);
 		stat &= ~0x00000001;
-	पूर्ण
+	}
 
-	अगर (stat & 0x00000002) अणु
-		tu102_fअगरo_पूर्णांकr_ctxsw_समयout(fअगरo);
+	if (stat & 0x00000002) {
+		tu102_fifo_intr_ctxsw_timeout(fifo);
 		stat &= ~0x00000002;
-	पूर्ण
+	}
 
-	अगर (stat & 0x00000100) अणु
-		tu102_fअगरo_पूर्णांकr_sched(fअगरo);
+	if (stat & 0x00000100) {
+		tu102_fifo_intr_sched(fifo);
 		nvkm_wr32(device, 0x002100, 0x00000100);
 		stat &= ~0x00000100;
-	पूर्ण
+	}
 
-	अगर (stat & 0x00010000) अणु
-		gk104_fअगरo_पूर्णांकr_chsw(fअगरo);
+	if (stat & 0x00010000) {
+		gk104_fifo_intr_chsw(fifo);
 		nvkm_wr32(device, 0x002100, 0x00010000);
 		stat &= ~0x00010000;
-	पूर्ण
+	}
 
-	अगर (stat & 0x20000000) अणु
+	if (stat & 0x20000000) {
 		u32 mask = nvkm_rd32(device, 0x0025a0);
 
-		जबतक (mask) अणु
+		while (mask) {
 			u32 unit = __ffs(mask);
 
-			gk104_fअगरo_पूर्णांकr_pbdma_0(fअगरo, unit);
-			gk104_fअगरo_पूर्णांकr_pbdma_1(fअगरo, unit);
+			gk104_fifo_intr_pbdma_0(fifo, unit);
+			gk104_fifo_intr_pbdma_1(fifo, unit);
 			nvkm_wr32(device, 0x0025a0, (1 << unit));
 			mask &= ~(1 << unit);
-		पूर्ण
+		}
 		stat &= ~0x20000000;
-	पूर्ण
+	}
 
-	अगर (stat & 0x40000000) अणु
-		gk104_fअगरo_पूर्णांकr_runlist(fअगरo);
+	if (stat & 0x40000000) {
+		gk104_fifo_intr_runlist(fifo);
 		stat &= ~0x40000000;
-	पूर्ण
+	}
 
-	अगर (stat & 0x80000000) अणु
+	if (stat & 0x80000000) {
 		nvkm_wr32(device, 0x002100, 0x80000000);
-		gk104_fअगरo_पूर्णांकr_engine(fअगरo);
+		gk104_fifo_intr_engine(fifo);
 		stat &= ~0x80000000;
-	पूर्ण
+	}
 
-	अगर (stat) अणु
+	if (stat) {
 		nvkm_error(subdev, "INTR %08x\n", stat);
 		nvkm_mask(device, 0x002140, stat, 0x00000000);
 		nvkm_wr32(device, 0x002100, stat);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा nvkm_fअगरo_func
-tu102_fअगरo_ = अणु
-	.dtor = gk104_fअगरo_dtor,
-	.oneinit = gk104_fअगरo_oneinit,
-	.info = gk104_fअगरo_info,
-	.init = gk104_fअगरo_init,
-	.fini = gk104_fअगरo_fini,
-	.पूर्णांकr = tu102_fअगरo_पूर्णांकr,
-	.fault = tu102_fअगरo_fault,
-	.engine_id = gk104_fअगरo_engine_id,
-	.id_engine = gk104_fअगरo_id_engine,
-	.uevent_init = gk104_fअगरo_uevent_init,
-	.uevent_fini = gk104_fअगरo_uevent_fini,
-	.recover_chan = tu102_fअगरo_recover_chan,
-	.class_get = gk104_fअगरo_class_get,
-	.class_new = gk104_fअगरo_class_new,
-पूर्ण;
+static const struct nvkm_fifo_func
+tu102_fifo_ = {
+	.dtor = gk104_fifo_dtor,
+	.oneinit = gk104_fifo_oneinit,
+	.info = gk104_fifo_info,
+	.init = gk104_fifo_init,
+	.fini = gk104_fifo_fini,
+	.intr = tu102_fifo_intr,
+	.fault = tu102_fifo_fault,
+	.engine_id = gk104_fifo_engine_id,
+	.id_engine = gk104_fifo_id_engine,
+	.uevent_init = gk104_fifo_uevent_init,
+	.uevent_fini = gk104_fifo_uevent_fini,
+	.recover_chan = tu102_fifo_recover_chan,
+	.class_get = gk104_fifo_class_get,
+	.class_new = gk104_fifo_class_new,
+};
 
-पूर्णांक
-tu102_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_fअगरo **pfअगरo)
-अणु
-	काष्ठा gk104_fअगरo *fअगरo;
+int
+tu102_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_fifo **pfifo)
+{
+	struct gk104_fifo *fifo;
 
-	अगर (!(fअगरo = kzalloc(माप(*fअगरo), GFP_KERNEL)))
-		वापस -ENOMEM;
-	fअगरo->func = &tu102_fअगरo;
-	INIT_WORK(&fअगरo->recover.work, tu102_fअगरo_recover_work);
-	*pfअगरo = &fअगरo->base;
+	if (!(fifo = kzalloc(sizeof(*fifo), GFP_KERNEL)))
+		return -ENOMEM;
+	fifo->func = &tu102_fifo;
+	INIT_WORK(&fifo->recover.work, tu102_fifo_recover_work);
+	*pfifo = &fifo->base;
 
-	वापस nvkm_fअगरo_ctor(&tu102_fअगरo_, device, type, inst, 4096, &fअगरo->base);
-पूर्ण
+	return nvkm_fifo_ctor(&tu102_fifo_, device, type, inst, 4096, &fifo->base);
+}

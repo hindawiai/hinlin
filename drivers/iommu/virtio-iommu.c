@@ -1,940 +1,939 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Virtio driver क्रम the paraभवized IOMMU
+ * Virtio driver for the paravirtualized IOMMU
  *
  * Copyright (C) 2019 Arm Limited
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-iommu.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/पूर्णांकerval_tree.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_iommu.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_config.h>
-#समावेश <linux/virtio_ids.h>
-#समावेश <linux/रुको.h>
+#include <linux/amba/bus.h>
+#include <linux/delay.h>
+#include <linux/dma-iommu.h>
+#include <linux/freezer.h>
+#include <linux/interval_tree.h>
+#include <linux/iommu.h>
+#include <linux/module.h>
+#include <linux/of_iommu.h>
+#include <linux/of_platform.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/virtio.h>
+#include <linux/virtio_config.h>
+#include <linux/virtio_ids.h>
+#include <linux/wait.h>
 
-#समावेश <uapi/linux/virtio_iommu.h>
+#include <uapi/linux/virtio_iommu.h>
 
-#घोषणा MSI_IOVA_BASE			0x8000000
-#घोषणा MSI_IOVA_LENGTH			0x100000
+#define MSI_IOVA_BASE			0x8000000
+#define MSI_IOVA_LENGTH			0x100000
 
-#घोषणा VIOMMU_REQUEST_VQ		0
-#घोषणा VIOMMU_EVENT_VQ			1
-#घोषणा VIOMMU_NR_VQS			2
+#define VIOMMU_REQUEST_VQ		0
+#define VIOMMU_EVENT_VQ			1
+#define VIOMMU_NR_VQS			2
 
-काष्ठा viommu_dev अणु
-	काष्ठा iommu_device		iommu;
-	काष्ठा device			*dev;
-	काष्ठा virtio_device		*vdev;
+struct viommu_dev {
+	struct iommu_device		iommu;
+	struct device			*dev;
+	struct virtio_device		*vdev;
 
-	काष्ठा ida			करोमुख्य_ids;
+	struct ida			domain_ids;
 
-	काष्ठा virtqueue		*vqs[VIOMMU_NR_VQS];
+	struct virtqueue		*vqs[VIOMMU_NR_VQS];
 	spinlock_t			request_lock;
-	काष्ठा list_head		requests;
-	व्योम				*evts;
+	struct list_head		requests;
+	void				*evts;
 
 	/* Device configuration */
-	काष्ठा iommu_करोमुख्य_geometry	geometry;
-	u64				pgsize_biपंचांगap;
-	u32				first_करोमुख्य;
-	u32				last_करोमुख्य;
+	struct iommu_domain_geometry	geometry;
+	u64				pgsize_bitmap;
+	u32				first_domain;
+	u32				last_domain;
 	/* Supported MAP flags */
 	u32				map_flags;
 	u32				probe_size;
-पूर्ण;
+};
 
-काष्ठा viommu_mapping अणु
+struct viommu_mapping {
 	phys_addr_t			paddr;
-	काष्ठा पूर्णांकerval_tree_node	iova;
+	struct interval_tree_node	iova;
 	u32				flags;
-पूर्ण;
+};
 
-काष्ठा viommu_करोमुख्य अणु
-	काष्ठा iommu_करोमुख्य		करोमुख्य;
-	काष्ठा viommu_dev		*viommu;
-	काष्ठा mutex			mutex; /* protects viommu poपूर्णांकer */
-	अचिन्हित पूर्णांक			id;
+struct viommu_domain {
+	struct iommu_domain		domain;
+	struct viommu_dev		*viommu;
+	struct mutex			mutex; /* protects viommu pointer */
+	unsigned int			id;
 	u32				map_flags;
 
 	spinlock_t			mappings_lock;
-	काष्ठा rb_root_cached		mappings;
+	struct rb_root_cached		mappings;
 
-	अचिन्हित दीर्घ			nr_endpoपूर्णांकs;
-पूर्ण;
+	unsigned long			nr_endpoints;
+};
 
-काष्ठा viommu_endpoपूर्णांक अणु
-	काष्ठा device			*dev;
-	काष्ठा viommu_dev		*viommu;
-	काष्ठा viommu_करोमुख्य		*vकरोमुख्य;
-	काष्ठा list_head		resv_regions;
-पूर्ण;
+struct viommu_endpoint {
+	struct device			*dev;
+	struct viommu_dev		*viommu;
+	struct viommu_domain		*vdomain;
+	struct list_head		resv_regions;
+};
 
-काष्ठा viommu_request अणु
-	काष्ठा list_head		list;
-	व्योम				*ग_लिखोback;
-	अचिन्हित पूर्णांक			ग_लिखो_offset;
-	अचिन्हित पूर्णांक			len;
-	अक्षर				buf[];
-पूर्ण;
+struct viommu_request {
+	struct list_head		list;
+	void				*writeback;
+	unsigned int			write_offset;
+	unsigned int			len;
+	char				buf[];
+};
 
-#घोषणा VIOMMU_FAULT_RESV_MASK		0xffffff00
+#define VIOMMU_FAULT_RESV_MASK		0xffffff00
 
-काष्ठा viommu_event अणु
-	जोड़ अणु
+struct viommu_event {
+	union {
 		u32			head;
-		काष्ठा virtio_iommu_fault fault;
-	पूर्ण;
-पूर्ण;
+		struct virtio_iommu_fault fault;
+	};
+};
 
-#घोषणा to_viommu_करोमुख्य(करोमुख्य)	\
-	container_of(करोमुख्य, काष्ठा viommu_करोमुख्य, करोमुख्य)
+#define to_viommu_domain(domain)	\
+	container_of(domain, struct viommu_domain, domain)
 
-अटल पूर्णांक viommu_get_req_त्रुटि_सं(व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा virtio_iommu_req_tail *tail = buf + len - माप(*tail);
+static int viommu_get_req_errno(void *buf, size_t len)
+{
+	struct virtio_iommu_req_tail *tail = buf + len - sizeof(*tail);
 
-	चयन (tail->status) अणु
-	हाल VIRTIO_IOMMU_S_OK:
-		वापस 0;
-	हाल VIRTIO_IOMMU_S_UNSUPP:
-		वापस -ENOSYS;
-	हाल VIRTIO_IOMMU_S_INVAL:
-		वापस -EINVAL;
-	हाल VIRTIO_IOMMU_S_RANGE:
-		वापस -दुस्फल;
-	हाल VIRTIO_IOMMU_S_NOENT:
-		वापस -ENOENT;
-	हाल VIRTIO_IOMMU_S_FAULT:
-		वापस -EFAULT;
-	हाल VIRTIO_IOMMU_S_NOMEM:
-		वापस -ENOMEM;
-	हाल VIRTIO_IOMMU_S_IOERR:
-	हाल VIRTIO_IOMMU_S_DEVERR:
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+	switch (tail->status) {
+	case VIRTIO_IOMMU_S_OK:
+		return 0;
+	case VIRTIO_IOMMU_S_UNSUPP:
+		return -ENOSYS;
+	case VIRTIO_IOMMU_S_INVAL:
+		return -EINVAL;
+	case VIRTIO_IOMMU_S_RANGE:
+		return -ERANGE;
+	case VIRTIO_IOMMU_S_NOENT:
+		return -ENOENT;
+	case VIRTIO_IOMMU_S_FAULT:
+		return -EFAULT;
+	case VIRTIO_IOMMU_S_NOMEM:
+		return -ENOMEM;
+	case VIRTIO_IOMMU_S_IOERR:
+	case VIRTIO_IOMMU_S_DEVERR:
+	default:
+		return -EIO;
+	}
+}
 
-अटल व्योम viommu_set_req_status(व्योम *buf, माप_प्रकार len, पूर्णांक status)
-अणु
-	काष्ठा virtio_iommu_req_tail *tail = buf + len - माप(*tail);
+static void viommu_set_req_status(void *buf, size_t len, int status)
+{
+	struct virtio_iommu_req_tail *tail = buf + len - sizeof(*tail);
 
 	tail->status = status;
-पूर्ण
+}
 
-अटल off_t viommu_get_ग_लिखो_desc_offset(काष्ठा viommu_dev *viommu,
-					  काष्ठा virtio_iommu_req_head *req,
-					  माप_प्रकार len)
-अणु
-	माप_प्रकार tail_size = माप(काष्ठा virtio_iommu_req_tail);
+static off_t viommu_get_write_desc_offset(struct viommu_dev *viommu,
+					  struct virtio_iommu_req_head *req,
+					  size_t len)
+{
+	size_t tail_size = sizeof(struct virtio_iommu_req_tail);
 
-	अगर (req->type == VIRTIO_IOMMU_T_PROBE)
-		वापस len - viommu->probe_size - tail_size;
+	if (req->type == VIRTIO_IOMMU_T_PROBE)
+		return len - viommu->probe_size - tail_size;
 
-	वापस len - tail_size;
-पूर्ण
+	return len - tail_size;
+}
 
 /*
  * __viommu_sync_req - Complete all in-flight requests
  *
- * Wait क्रम all added requests to complete. When this function वापसs, all
- * requests that were in-flight at the समय of the call have completed.
+ * Wait for all added requests to complete. When this function returns, all
+ * requests that were in-flight at the time of the call have completed.
  */
-अटल पूर्णांक __viommu_sync_req(काष्ठा viommu_dev *viommu)
-अणु
-	अचिन्हित पूर्णांक len;
-	माप_प्रकार ग_लिखो_len;
-	काष्ठा viommu_request *req;
-	काष्ठा virtqueue *vq = viommu->vqs[VIOMMU_REQUEST_VQ];
+static int __viommu_sync_req(struct viommu_dev *viommu)
+{
+	unsigned int len;
+	size_t write_len;
+	struct viommu_request *req;
+	struct virtqueue *vq = viommu->vqs[VIOMMU_REQUEST_VQ];
 
-	निश्चित_spin_locked(&viommu->request_lock);
+	assert_spin_locked(&viommu->request_lock);
 
 	virtqueue_kick(vq);
 
-	जबतक (!list_empty(&viommu->requests)) अणु
+	while (!list_empty(&viommu->requests)) {
 		len = 0;
 		req = virtqueue_get_buf(vq, &len);
-		अगर (!req)
-			जारी;
+		if (!req)
+			continue;
 
-		अगर (!len)
+		if (!len)
 			viommu_set_req_status(req->buf, req->len,
 					      VIRTIO_IOMMU_S_IOERR);
 
-		ग_लिखो_len = req->len - req->ग_लिखो_offset;
-		अगर (req->ग_लिखोback && len == ग_लिखो_len)
-			स_नकल(req->ग_लिखोback, req->buf + req->ग_लिखो_offset,
-			       ग_लिखो_len);
+		write_len = req->len - req->write_offset;
+		if (req->writeback && len == write_len)
+			memcpy(req->writeback, req->buf + req->write_offset,
+			       write_len);
 
 		list_del(&req->list);
-		kमुक्त(req);
-	पूर्ण
+		kfree(req);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viommu_sync_req(काष्ठा viommu_dev *viommu)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int viommu_sync_req(struct viommu_dev *viommu)
+{
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&viommu->request_lock, flags);
 	ret = __viommu_sync_req(viommu);
-	अगर (ret)
+	if (ret)
 		dev_dbg(viommu->dev, "could not sync requests (%d)\n", ret);
 	spin_unlock_irqrestore(&viommu->request_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * __viommu_add_request - Add one request to the queue
- * @buf: poपूर्णांकer to the request buffer
+ * @buf: pointer to the request buffer
  * @len: length of the request buffer
- * @ग_लिखोback: copy data back to the buffer when the request completes.
+ * @writeback: copy data back to the buffer when the request completes.
  *
- * Add a request to the queue. Only synchronize the queue अगर it's alपढ़ोy full.
- * Otherwise करोn't kick the queue nor रुको क्रम requests to complete.
+ * Add a request to the queue. Only synchronize the queue if it's already full.
+ * Otherwise don't kick the queue nor wait for requests to complete.
  *
- * When @ग_लिखोback is true, data written by the device, including the request
- * status, is copied पूर्णांकo @buf after the request completes. This is unsafe अगर
+ * When @writeback is true, data written by the device, including the request
+ * status, is copied into @buf after the request completes. This is unsafe if
  * the caller allocates @buf on stack and drops the lock between add_req() and
  * sync_req().
  *
- * Return 0 अगर the request was successfully added to the queue.
+ * Return 0 if the request was successfully added to the queue.
  */
-अटल पूर्णांक __viommu_add_req(काष्ठा viommu_dev *viommu, व्योम *buf, माप_प्रकार len,
-			    bool ग_लिखोback)
-अणु
-	पूर्णांक ret;
-	off_t ग_लिखो_offset;
-	काष्ठा viommu_request *req;
-	काष्ठा scatterlist top_sg, bottom_sg;
-	काष्ठा scatterlist *sg[2] = अणु &top_sg, &bottom_sg पूर्ण;
-	काष्ठा virtqueue *vq = viommu->vqs[VIOMMU_REQUEST_VQ];
+static int __viommu_add_req(struct viommu_dev *viommu, void *buf, size_t len,
+			    bool writeback)
+{
+	int ret;
+	off_t write_offset;
+	struct viommu_request *req;
+	struct scatterlist top_sg, bottom_sg;
+	struct scatterlist *sg[2] = { &top_sg, &bottom_sg };
+	struct virtqueue *vq = viommu->vqs[VIOMMU_REQUEST_VQ];
 
-	निश्चित_spin_locked(&viommu->request_lock);
+	assert_spin_locked(&viommu->request_lock);
 
-	ग_लिखो_offset = viommu_get_ग_लिखो_desc_offset(viommu, buf, len);
-	अगर (ग_लिखो_offset <= 0)
-		वापस -EINVAL;
+	write_offset = viommu_get_write_desc_offset(viommu, buf, len);
+	if (write_offset <= 0)
+		return -EINVAL;
 
-	req = kzalloc(माप(*req) + len, GFP_ATOMIC);
-	अगर (!req)
-		वापस -ENOMEM;
+	req = kzalloc(sizeof(*req) + len, GFP_ATOMIC);
+	if (!req)
+		return -ENOMEM;
 
 	req->len = len;
-	अगर (ग_लिखोback) अणु
-		req->ग_लिखोback = buf + ग_लिखो_offset;
-		req->ग_लिखो_offset = ग_लिखो_offset;
-	पूर्ण
-	स_नकल(&req->buf, buf, ग_लिखो_offset);
+	if (writeback) {
+		req->writeback = buf + write_offset;
+		req->write_offset = write_offset;
+	}
+	memcpy(&req->buf, buf, write_offset);
 
-	sg_init_one(&top_sg, req->buf, ग_लिखो_offset);
-	sg_init_one(&bottom_sg, req->buf + ग_लिखो_offset, len - ग_लिखो_offset);
+	sg_init_one(&top_sg, req->buf, write_offset);
+	sg_init_one(&bottom_sg, req->buf + write_offset, len - write_offset);
 
 	ret = virtqueue_add_sgs(vq, sg, 1, 1, req, GFP_ATOMIC);
-	अगर (ret == -ENOSPC) अणु
+	if (ret == -ENOSPC) {
 		/* If the queue is full, sync and retry */
-		अगर (!__viommu_sync_req(viommu))
+		if (!__viommu_sync_req(viommu))
 			ret = virtqueue_add_sgs(vq, sg, 1, 1, req, GFP_ATOMIC);
-	पूर्ण
-	अगर (ret)
-		जाओ err_मुक्त;
+	}
+	if (ret)
+		goto err_free;
 
 	list_add_tail(&req->list, &viommu->requests);
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kमुक्त(req);
-	वापस ret;
-पूर्ण
+err_free:
+	kfree(req);
+	return ret;
+}
 
-अटल पूर्णांक viommu_add_req(काष्ठा viommu_dev *viommu, व्योम *buf, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int viommu_add_req(struct viommu_dev *viommu, void *buf, size_t len)
+{
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&viommu->request_lock, flags);
 	ret = __viommu_add_req(viommu, buf, len, false);
-	अगर (ret)
+	if (ret)
 		dev_dbg(viommu->dev, "could not add request: %d\n", ret);
 	spin_unlock_irqrestore(&viommu->request_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Send a request and रुको क्रम it to complete. Return the request status (as an
- * त्रुटि_सं)
+ * Send a request and wait for it to complete. Return the request status (as an
+ * errno)
  */
-अटल पूर्णांक viommu_send_req_sync(काष्ठा viommu_dev *viommu, व्योम *buf,
-				माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+static int viommu_send_req_sync(struct viommu_dev *viommu, void *buf,
+				size_t len)
+{
+	int ret;
+	unsigned long flags;
 
 	spin_lock_irqsave(&viommu->request_lock, flags);
 
 	ret = __viommu_add_req(viommu, buf, len, true);
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(viommu->dev, "could not add request (%d)\n", ret);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ret = __viommu_sync_req(viommu);
-	अगर (ret) अणु
+	if (ret) {
 		dev_dbg(viommu->dev, "could not sync requests (%d)\n", ret);
 		/* Fall-through (get the actual request status) */
-	पूर्ण
+	}
 
-	ret = viommu_get_req_त्रुटि_सं(buf, len);
+	ret = viommu_get_req_errno(buf, len);
 out_unlock:
 	spin_unlock_irqrestore(&viommu->request_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * viommu_add_mapping - add a mapping to the पूर्णांकernal tree
+ * viommu_add_mapping - add a mapping to the internal tree
  *
- * On success, वापस the new mapping. Otherwise वापस शून्य.
+ * On success, return the new mapping. Otherwise return NULL.
  */
-अटल पूर्णांक viommu_add_mapping(काष्ठा viommu_करोमुख्य *vकरोमुख्य, अचिन्हित दीर्घ iova,
-			      phys_addr_t paddr, माप_प्रकार size, u32 flags)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा viommu_mapping *mapping;
+static int viommu_add_mapping(struct viommu_domain *vdomain, unsigned long iova,
+			      phys_addr_t paddr, size_t size, u32 flags)
+{
+	unsigned long irqflags;
+	struct viommu_mapping *mapping;
 
-	mapping = kzalloc(माप(*mapping), GFP_ATOMIC);
-	अगर (!mapping)
-		वापस -ENOMEM;
+	mapping = kzalloc(sizeof(*mapping), GFP_ATOMIC);
+	if (!mapping)
+		return -ENOMEM;
 
 	mapping->paddr		= paddr;
 	mapping->iova.start	= iova;
 	mapping->iova.last	= iova + size - 1;
 	mapping->flags		= flags;
 
-	spin_lock_irqsave(&vकरोमुख्य->mappings_lock, irqflags);
-	पूर्णांकerval_tree_insert(&mapping->iova, &vकरोमुख्य->mappings);
-	spin_unlock_irqrestore(&vकरोमुख्य->mappings_lock, irqflags);
+	spin_lock_irqsave(&vdomain->mappings_lock, irqflags);
+	interval_tree_insert(&mapping->iova, &vdomain->mappings);
+	spin_unlock_irqrestore(&vdomain->mappings_lock, irqflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * viommu_del_mappings - हटाओ mappings from the पूर्णांकernal tree
+ * viommu_del_mappings - remove mappings from the internal tree
  *
- * @vकरोमुख्य: the करोमुख्य
+ * @vdomain: the domain
  * @iova: start of the range
  * @size: size of the range. A size of 0 corresponds to the entire address
  *	space.
  *
- * On success, वापसs the number of unmapped bytes (>= size)
+ * On success, returns the number of unmapped bytes (>= size)
  */
-अटल माप_प्रकार viommu_del_mappings(काष्ठा viommu_करोमुख्य *vकरोमुख्य,
-				  अचिन्हित दीर्घ iova, माप_प्रकार size)
-अणु
-	माप_प्रकार unmapped = 0;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ last = iova + size - 1;
-	काष्ठा viommu_mapping *mapping = शून्य;
-	काष्ठा पूर्णांकerval_tree_node *node, *next;
+static size_t viommu_del_mappings(struct viommu_domain *vdomain,
+				  unsigned long iova, size_t size)
+{
+	size_t unmapped = 0;
+	unsigned long flags;
+	unsigned long last = iova + size - 1;
+	struct viommu_mapping *mapping = NULL;
+	struct interval_tree_node *node, *next;
 
-	spin_lock_irqsave(&vकरोमुख्य->mappings_lock, flags);
-	next = पूर्णांकerval_tree_iter_first(&vकरोमुख्य->mappings, iova, last);
-	जबतक (next) अणु
+	spin_lock_irqsave(&vdomain->mappings_lock, flags);
+	next = interval_tree_iter_first(&vdomain->mappings, iova, last);
+	while (next) {
 		node = next;
-		mapping = container_of(node, काष्ठा viommu_mapping, iova);
-		next = पूर्णांकerval_tree_iter_next(node, iova, last);
+		mapping = container_of(node, struct viommu_mapping, iova);
+		next = interval_tree_iter_next(node, iova, last);
 
 		/* Trying to split a mapping? */
-		अगर (mapping->iova.start < iova)
-			अवरोध;
+		if (mapping->iova.start < iova)
+			break;
 
 		/*
-		 * Virtio-iommu करोesn't allow UNMAP to split a mapping created
-		 * with a single MAP request, so हटाओ the full mapping.
+		 * Virtio-iommu doesn't allow UNMAP to split a mapping created
+		 * with a single MAP request, so remove the full mapping.
 		 */
 		unmapped += mapping->iova.last - mapping->iova.start + 1;
 
-		पूर्णांकerval_tree_हटाओ(node, &vकरोमुख्य->mappings);
-		kमुक्त(mapping);
-	पूर्ण
-	spin_unlock_irqrestore(&vकरोमुख्य->mappings_lock, flags);
+		interval_tree_remove(node, &vdomain->mappings);
+		kfree(mapping);
+	}
+	spin_unlock_irqrestore(&vdomain->mappings_lock, flags);
 
-	वापस unmapped;
-पूर्ण
+	return unmapped;
+}
 
 /*
  * viommu_replay_mappings - re-send MAP requests
  *
- * When reattaching a करोमुख्य that was previously detached from all endpoपूर्णांकs,
+ * When reattaching a domain that was previously detached from all endpoints,
  * mappings were deleted from the device. Re-create the mappings available in
- * the पूर्णांकernal tree.
+ * the internal tree.
  */
-अटल पूर्णांक viommu_replay_mappings(काष्ठा viommu_करोमुख्य *vकरोमुख्य)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा viommu_mapping *mapping;
-	काष्ठा पूर्णांकerval_tree_node *node;
-	काष्ठा virtio_iommu_req_map map;
+static int viommu_replay_mappings(struct viommu_domain *vdomain)
+{
+	int ret = 0;
+	unsigned long flags;
+	struct viommu_mapping *mapping;
+	struct interval_tree_node *node;
+	struct virtio_iommu_req_map map;
 
-	spin_lock_irqsave(&vकरोमुख्य->mappings_lock, flags);
-	node = पूर्णांकerval_tree_iter_first(&vकरोमुख्य->mappings, 0, -1UL);
-	जबतक (node) अणु
-		mapping = container_of(node, काष्ठा viommu_mapping, iova);
-		map = (काष्ठा virtio_iommu_req_map) अणु
+	spin_lock_irqsave(&vdomain->mappings_lock, flags);
+	node = interval_tree_iter_first(&vdomain->mappings, 0, -1UL);
+	while (node) {
+		mapping = container_of(node, struct viommu_mapping, iova);
+		map = (struct virtio_iommu_req_map) {
 			.head.type	= VIRTIO_IOMMU_T_MAP,
-			.करोमुख्य		= cpu_to_le32(vकरोमुख्य->id),
+			.domain		= cpu_to_le32(vdomain->id),
 			.virt_start	= cpu_to_le64(mapping->iova.start),
 			.virt_end	= cpu_to_le64(mapping->iova.last),
 			.phys_start	= cpu_to_le64(mapping->paddr),
 			.flags		= cpu_to_le32(mapping->flags),
-		पूर्ण;
+		};
 
-		ret = viommu_send_req_sync(vकरोमुख्य->viommu, &map, माप(map));
-		अगर (ret)
-			अवरोध;
+		ret = viommu_send_req_sync(vdomain->viommu, &map, sizeof(map));
+		if (ret)
+			break;
 
-		node = पूर्णांकerval_tree_iter_next(node, 0, -1UL);
-	पूर्ण
-	spin_unlock_irqrestore(&vकरोमुख्य->mappings_lock, flags);
+		node = interval_tree_iter_next(node, 0, -1UL);
+	}
+	spin_unlock_irqrestore(&vdomain->mappings_lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक viommu_add_resv_mem(काष्ठा viommu_endpoपूर्णांक *vdev,
-			       काष्ठा virtio_iommu_probe_resv_mem *mem,
-			       माप_प्रकार len)
-अणु
-	माप_प्रकार size;
+static int viommu_add_resv_mem(struct viommu_endpoint *vdev,
+			       struct virtio_iommu_probe_resv_mem *mem,
+			       size_t len)
+{
+	size_t size;
 	u64 start64, end64;
 	phys_addr_t start, end;
-	काष्ठा iommu_resv_region *region = शून्य;
-	अचिन्हित दीर्घ prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
+	struct iommu_resv_region *region = NULL;
+	unsigned long prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
 
 	start = start64 = le64_to_cpu(mem->start);
 	end = end64 = le64_to_cpu(mem->end);
 	size = end64 - start64 + 1;
 
 	/* Catch any overflow, including the unlikely end64 - start64 + 1 = 0 */
-	अगर (start != start64 || end != end64 || size < end64 - start64)
-		वापस -EOVERFLOW;
+	if (start != start64 || end != end64 || size < end64 - start64)
+		return -EOVERFLOW;
 
-	अगर (len < माप(*mem))
-		वापस -EINVAL;
+	if (len < sizeof(*mem))
+		return -EINVAL;
 
-	चयन (mem->subtype) अणु
-	शेष:
+	switch (mem->subtype) {
+	default:
 		dev_warn(vdev->dev, "unknown resv mem subtype 0x%x\n",
 			 mem->subtype);
 		fallthrough;
-	हाल VIRTIO_IOMMU_RESV_MEM_T_RESERVED:
+	case VIRTIO_IOMMU_RESV_MEM_T_RESERVED:
 		region = iommu_alloc_resv_region(start, size, 0,
 						 IOMMU_RESV_RESERVED);
-		अवरोध;
-	हाल VIRTIO_IOMMU_RESV_MEM_T_MSI:
+		break;
+	case VIRTIO_IOMMU_RESV_MEM_T_MSI:
 		region = iommu_alloc_resv_region(start, size, prot,
 						 IOMMU_RESV_MSI);
-		अवरोध;
-	पूर्ण
-	अगर (!region)
-		वापस -ENOMEM;
+		break;
+	}
+	if (!region)
+		return -ENOMEM;
 
 	list_add(&region->list, &vdev->resv_regions);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viommu_probe_endpoपूर्णांक(काष्ठा viommu_dev *viommu, काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+static int viommu_probe_endpoint(struct viommu_dev *viommu, struct device *dev)
+{
+	int ret;
 	u16 type, len;
-	माप_प्रकार cur = 0;
-	माप_प्रकार probe_len;
-	काष्ठा virtio_iommu_req_probe *probe;
-	काष्ठा virtio_iommu_probe_property *prop;
-	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	काष्ठा viommu_endpoपूर्णांक *vdev = dev_iommu_priv_get(dev);
+	size_t cur = 0;
+	size_t probe_len;
+	struct virtio_iommu_req_probe *probe;
+	struct virtio_iommu_probe_property *prop;
+	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	struct viommu_endpoint *vdev = dev_iommu_priv_get(dev);
 
-	अगर (!fwspec->num_ids)
-		वापस -EINVAL;
+	if (!fwspec->num_ids)
+		return -EINVAL;
 
-	probe_len = माप(*probe) + viommu->probe_size +
-		    माप(काष्ठा virtio_iommu_req_tail);
+	probe_len = sizeof(*probe) + viommu->probe_size +
+		    sizeof(struct virtio_iommu_req_tail);
 	probe = kzalloc(probe_len, GFP_KERNEL);
-	अगर (!probe)
-		वापस -ENOMEM;
+	if (!probe)
+		return -ENOMEM;
 
 	probe->head.type = VIRTIO_IOMMU_T_PROBE;
 	/*
-	 * For now, assume that properties of an endpoपूर्णांक that outमाला_दो multiple
+	 * For now, assume that properties of an endpoint that outputs multiple
 	 * IDs are consistent. Only probe the first one.
 	 */
-	probe->endpoपूर्णांक = cpu_to_le32(fwspec->ids[0]);
+	probe->endpoint = cpu_to_le32(fwspec->ids[0]);
 
 	ret = viommu_send_req_sync(viommu, probe, probe_len);
-	अगर (ret)
-		जाओ out_मुक्त;
+	if (ret)
+		goto out_free;
 
-	prop = (व्योम *)probe->properties;
+	prop = (void *)probe->properties;
 	type = le16_to_cpu(prop->type) & VIRTIO_IOMMU_PROBE_T_MASK;
 
-	जबतक (type != VIRTIO_IOMMU_PROBE_T_NONE &&
-	       cur < viommu->probe_size) अणु
-		len = le16_to_cpu(prop->length) + माप(*prop);
+	while (type != VIRTIO_IOMMU_PROBE_T_NONE &&
+	       cur < viommu->probe_size) {
+		len = le16_to_cpu(prop->length) + sizeof(*prop);
 
-		चयन (type) अणु
-		हाल VIRTIO_IOMMU_PROBE_T_RESV_MEM:
-			ret = viommu_add_resv_mem(vdev, (व्योम *)prop, len);
-			अवरोध;
-		शेष:
+		switch (type) {
+		case VIRTIO_IOMMU_PROBE_T_RESV_MEM:
+			ret = viommu_add_resv_mem(vdev, (void *)prop, len);
+			break;
+		default:
 			dev_err(dev, "unknown viommu prop 0x%x\n", type);
-		पूर्ण
+		}
 
-		अगर (ret)
+		if (ret)
 			dev_err(dev, "failed to parse viommu prop 0x%x\n", type);
 
 		cur += len;
-		अगर (cur >= viommu->probe_size)
-			अवरोध;
+		if (cur >= viommu->probe_size)
+			break;
 
-		prop = (व्योम *)probe->properties + cur;
+		prop = (void *)probe->properties + cur;
 		type = le16_to_cpu(prop->type) & VIRTIO_IOMMU_PROBE_T_MASK;
-	पूर्ण
+	}
 
-out_मुक्त:
-	kमुक्त(probe);
-	वापस ret;
-पूर्ण
+out_free:
+	kfree(probe);
+	return ret;
+}
 
-अटल पूर्णांक viommu_fault_handler(काष्ठा viommu_dev *viommu,
-				काष्ठा virtio_iommu_fault *fault)
-अणु
-	अक्षर *reason_str;
+static int viommu_fault_handler(struct viommu_dev *viommu,
+				struct virtio_iommu_fault *fault)
+{
+	char *reason_str;
 
 	u8 reason	= fault->reason;
 	u32 flags	= le32_to_cpu(fault->flags);
-	u32 endpoपूर्णांक	= le32_to_cpu(fault->endpoपूर्णांक);
+	u32 endpoint	= le32_to_cpu(fault->endpoint);
 	u64 address	= le64_to_cpu(fault->address);
 
-	चयन (reason) अणु
-	हाल VIRTIO_IOMMU_FAULT_R_DOMAIN:
+	switch (reason) {
+	case VIRTIO_IOMMU_FAULT_R_DOMAIN:
 		reason_str = "domain";
-		अवरोध;
-	हाल VIRTIO_IOMMU_FAULT_R_MAPPING:
+		break;
+	case VIRTIO_IOMMU_FAULT_R_MAPPING:
 		reason_str = "page";
-		अवरोध;
-	हाल VIRTIO_IOMMU_FAULT_R_UNKNOWN:
-	शेष:
+		break;
+	case VIRTIO_IOMMU_FAULT_R_UNKNOWN:
+	default:
 		reason_str = "unknown";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* TODO: find EP by ID and report_iommu_fault */
-	अगर (flags & VIRTIO_IOMMU_FAULT_F_ADDRESS)
+	if (flags & VIRTIO_IOMMU_FAULT_F_ADDRESS)
 		dev_err_ratelimited(viommu->dev, "%s fault from EP %u at %#llx [%s%s%s]\n",
-				    reason_str, endpoपूर्णांक, address,
+				    reason_str, endpoint, address,
 				    flags & VIRTIO_IOMMU_FAULT_F_READ ? "R" : "",
 				    flags & VIRTIO_IOMMU_FAULT_F_WRITE ? "W" : "",
 				    flags & VIRTIO_IOMMU_FAULT_F_EXEC ? "X" : "");
-	अन्यथा
+	else
 		dev_err_ratelimited(viommu->dev, "%s fault from EP %u\n",
-				    reason_str, endpoपूर्णांक);
-	वापस 0;
-पूर्ण
+				    reason_str, endpoint);
+	return 0;
+}
 
-अटल व्योम viommu_event_handler(काष्ठा virtqueue *vq)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक len;
-	काष्ठा scatterlist sg[1];
-	काष्ठा viommu_event *evt;
-	काष्ठा viommu_dev *viommu = vq->vdev->priv;
+static void viommu_event_handler(struct virtqueue *vq)
+{
+	int ret;
+	unsigned int len;
+	struct scatterlist sg[1];
+	struct viommu_event *evt;
+	struct viommu_dev *viommu = vq->vdev->priv;
 
-	जबतक ((evt = virtqueue_get_buf(vq, &len)) != शून्य) अणु
-		अगर (len > माप(*evt)) अणु
+	while ((evt = virtqueue_get_buf(vq, &len)) != NULL) {
+		if (len > sizeof(*evt)) {
 			dev_err(viommu->dev,
 				"invalid event buffer (len %u != %zu)\n",
-				len, माप(*evt));
-		पूर्ण अन्यथा अगर (!(evt->head & VIOMMU_FAULT_RESV_MASK)) अणु
+				len, sizeof(*evt));
+		} else if (!(evt->head & VIOMMU_FAULT_RESV_MASK)) {
 			viommu_fault_handler(viommu, &evt->fault);
-		पूर्ण
+		}
 
-		sg_init_one(sg, evt, माप(*evt));
+		sg_init_one(sg, evt, sizeof(*evt));
 		ret = virtqueue_add_inbuf(vq, sg, 1, evt, GFP_ATOMIC);
-		अगर (ret)
+		if (ret)
 			dev_err(viommu->dev, "could not add event buffer\n");
-	पूर्ण
+	}
 
 	virtqueue_kick(vq);
-पूर्ण
+}
 
 /* IOMMU API */
 
-अटल काष्ठा iommu_करोमुख्य *viommu_करोमुख्य_alloc(अचिन्हित type)
-अणु
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य;
+static struct iommu_domain *viommu_domain_alloc(unsigned type)
+{
+	struct viommu_domain *vdomain;
 
-	अगर (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_DMA)
-		वापस शून्य;
+	if (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_DMA)
+		return NULL;
 
-	vकरोमुख्य = kzalloc(माप(*vकरोमुख्य), GFP_KERNEL);
-	अगर (!vकरोमुख्य)
-		वापस शून्य;
+	vdomain = kzalloc(sizeof(*vdomain), GFP_KERNEL);
+	if (!vdomain)
+		return NULL;
 
-	mutex_init(&vकरोमुख्य->mutex);
-	spin_lock_init(&vकरोमुख्य->mappings_lock);
-	vकरोमुख्य->mappings = RB_ROOT_CACHED;
+	mutex_init(&vdomain->mutex);
+	spin_lock_init(&vdomain->mappings_lock);
+	vdomain->mappings = RB_ROOT_CACHED;
 
-	अगर (type == IOMMU_DOMAIN_DMA &&
-	    iommu_get_dma_cookie(&vकरोमुख्य->करोमुख्य)) अणु
-		kमुक्त(vकरोमुख्य);
-		वापस शून्य;
-	पूर्ण
+	if (type == IOMMU_DOMAIN_DMA &&
+	    iommu_get_dma_cookie(&vdomain->domain)) {
+		kfree(vdomain);
+		return NULL;
+	}
 
-	वापस &vकरोमुख्य->करोमुख्य;
-पूर्ण
+	return &vdomain->domain;
+}
 
-अटल पूर्णांक viommu_करोमुख्य_finalise(काष्ठा viommu_endpoपूर्णांक *vdev,
-				  काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ viommu_page_size;
-	काष्ठा viommu_dev *viommu = vdev->viommu;
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+static int viommu_domain_finalise(struct viommu_endpoint *vdev,
+				  struct iommu_domain *domain)
+{
+	int ret;
+	unsigned long viommu_page_size;
+	struct viommu_dev *viommu = vdev->viommu;
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	viommu_page_size = 1UL << __ffs(viommu->pgsize_biपंचांगap);
-	अगर (viommu_page_size > PAGE_SIZE) अणु
+	viommu_page_size = 1UL << __ffs(viommu->pgsize_bitmap);
+	if (viommu_page_size > PAGE_SIZE) {
 		dev_err(vdev->dev,
 			"granule 0x%lx larger than system page size 0x%lx\n",
 			viommu_page_size, PAGE_SIZE);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = ida_alloc_range(&viommu->करोमुख्य_ids, viommu->first_करोमुख्य,
-			      viommu->last_करोमुख्य, GFP_KERNEL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ida_alloc_range(&viommu->domain_ids, viommu->first_domain,
+			      viommu->last_domain, GFP_KERNEL);
+	if (ret < 0)
+		return ret;
 
-	vकरोमुख्य->id		= (अचिन्हित पूर्णांक)ret;
+	vdomain->id		= (unsigned int)ret;
 
-	करोमुख्य->pgsize_biपंचांगap	= viommu->pgsize_biपंचांगap;
-	करोमुख्य->geometry	= viommu->geometry;
+	domain->pgsize_bitmap	= viommu->pgsize_bitmap;
+	domain->geometry	= viommu->geometry;
 
-	vकरोमुख्य->map_flags	= viommu->map_flags;
-	vकरोमुख्य->viommu		= viommu;
+	vdomain->map_flags	= viommu->map_flags;
+	vdomain->viommu		= viommu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम viommu_करोमुख्य_मुक्त(काष्ठा iommu_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+static void viommu_domain_free(struct iommu_domain *domain)
+{
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	iommu_put_dma_cookie(करोमुख्य);
+	iommu_put_dma_cookie(domain);
 
-	/* Free all reमुख्यing mappings (size 2^64) */
-	viommu_del_mappings(vकरोमुख्य, 0, 0);
+	/* Free all remaining mappings (size 2^64) */
+	viommu_del_mappings(vdomain, 0, 0);
 
-	अगर (vकरोमुख्य->viommu)
-		ida_मुक्त(&vकरोमुख्य->viommu->करोमुख्य_ids, vकरोमुख्य->id);
+	if (vdomain->viommu)
+		ida_free(&vdomain->viommu->domain_ids, vdomain->id);
 
-	kमुक्त(vकरोमुख्य);
-पूर्ण
+	kfree(vdomain);
+}
 
-अटल पूर्णांक viommu_attach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	काष्ठा virtio_iommu_req_attach req;
-	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	काष्ठा viommu_endpoपूर्णांक *vdev = dev_iommu_priv_get(dev);
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+static int viommu_attach_dev(struct iommu_domain *domain, struct device *dev)
+{
+	int i;
+	int ret = 0;
+	struct virtio_iommu_req_attach req;
+	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	struct viommu_endpoint *vdev = dev_iommu_priv_get(dev);
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	mutex_lock(&vकरोमुख्य->mutex);
-	अगर (!vकरोमुख्य->viommu) अणु
+	mutex_lock(&vdomain->mutex);
+	if (!vdomain->viommu) {
 		/*
-		 * Properly initialize the करोमुख्य now that we know which viommu
+		 * Properly initialize the domain now that we know which viommu
 		 * owns it.
 		 */
-		ret = viommu_करोमुख्य_finalise(vdev, करोमुख्य);
-	पूर्ण अन्यथा अगर (vकरोमुख्य->viommu != vdev->viommu) अणु
+		ret = viommu_domain_finalise(vdev, domain);
+	} else if (vdomain->viommu != vdev->viommu) {
 		dev_err(dev, "cannot attach to foreign vIOMMU\n");
 		ret = -EXDEV;
-	पूर्ण
-	mutex_unlock(&vकरोमुख्य->mutex);
+	}
+	mutex_unlock(&vdomain->mutex);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * In the virtio-iommu device, when attaching the endpoपूर्णांक to a new
-	 * करोमुख्य, it is detached from the old one and, अगर as as a result the
-	 * old करोमुख्य isn't attached to any endpoपूर्णांक, all mappings are हटाओd
-	 * from the old करोमुख्य and it is मुक्तd.
+	 * In the virtio-iommu device, when attaching the endpoint to a new
+	 * domain, it is detached from the old one and, if as as a result the
+	 * old domain isn't attached to any endpoint, all mappings are removed
+	 * from the old domain and it is freed.
 	 *
-	 * In the driver the old करोमुख्य still exists, and its mappings will be
-	 * recreated अगर it माला_लो reattached to an endpoपूर्णांक. Otherwise it will be
-	 * मुक्तd explicitly.
+	 * In the driver the old domain still exists, and its mappings will be
+	 * recreated if it gets reattached to an endpoint. Otherwise it will be
+	 * freed explicitly.
 	 *
-	 * vdev->vकरोमुख्य is रक्षित by group->mutex
+	 * vdev->vdomain is protected by group->mutex
 	 */
-	अगर (vdev->vकरोमुख्य)
-		vdev->vकरोमुख्य->nr_endpoपूर्णांकs--;
+	if (vdev->vdomain)
+		vdev->vdomain->nr_endpoints--;
 
-	req = (काष्ठा virtio_iommu_req_attach) अणु
+	req = (struct virtio_iommu_req_attach) {
 		.head.type	= VIRTIO_IOMMU_T_ATTACH,
-		.करोमुख्य		= cpu_to_le32(vकरोमुख्य->id),
-	पूर्ण;
+		.domain		= cpu_to_le32(vdomain->id),
+	};
 
-	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
-		req.endpoपूर्णांक = cpu_to_le32(fwspec->ids[i]);
+	for (i = 0; i < fwspec->num_ids; i++) {
+		req.endpoint = cpu_to_le32(fwspec->ids[i]);
 
-		ret = viommu_send_req_sync(vकरोमुख्य->viommu, &req, माप(req));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = viommu_send_req_sync(vdomain->viommu, &req, sizeof(req));
+		if (ret)
+			return ret;
+	}
 
-	अगर (!vकरोमुख्य->nr_endpoपूर्णांकs) अणु
+	if (!vdomain->nr_endpoints) {
 		/*
-		 * This endpoपूर्णांक is the first to be attached to the करोमुख्य.
+		 * This endpoint is the first to be attached to the domain.
 		 * Replay existing mappings (e.g. SW MSI).
 		 */
-		ret = viommu_replay_mappings(vकरोमुख्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = viommu_replay_mappings(vdomain);
+		if (ret)
+			return ret;
+	}
 
-	vकरोमुख्य->nr_endpoपूर्णांकs++;
-	vdev->vकरोमुख्य = vकरोमुख्य;
+	vdomain->nr_endpoints++;
+	vdev->vdomain = vdomain;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
-		      phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot, gfp_t gfp)
-अणु
-	पूर्णांक ret;
+static int viommu_map(struct iommu_domain *domain, unsigned long iova,
+		      phys_addr_t paddr, size_t size, int prot, gfp_t gfp)
+{
+	int ret;
 	u32 flags;
-	काष्ठा virtio_iommu_req_map map;
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+	struct virtio_iommu_req_map map;
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
 	flags = (prot & IOMMU_READ ? VIRTIO_IOMMU_MAP_F_READ : 0) |
 		(prot & IOMMU_WRITE ? VIRTIO_IOMMU_MAP_F_WRITE : 0) |
 		(prot & IOMMU_MMIO ? VIRTIO_IOMMU_MAP_F_MMIO : 0);
 
-	अगर (flags & ~vकरोमुख्य->map_flags)
-		वापस -EINVAL;
+	if (flags & ~vdomain->map_flags)
+		return -EINVAL;
 
-	ret = viommu_add_mapping(vकरोमुख्य, iova, paddr, size, flags);
-	अगर (ret)
-		वापस ret;
+	ret = viommu_add_mapping(vdomain, iova, paddr, size, flags);
+	if (ret)
+		return ret;
 
-	map = (काष्ठा virtio_iommu_req_map) अणु
+	map = (struct virtio_iommu_req_map) {
 		.head.type	= VIRTIO_IOMMU_T_MAP,
-		.करोमुख्य		= cpu_to_le32(vकरोमुख्य->id),
+		.domain		= cpu_to_le32(vdomain->id),
 		.virt_start	= cpu_to_le64(iova),
 		.phys_start	= cpu_to_le64(paddr),
 		.virt_end	= cpu_to_le64(iova + size - 1),
 		.flags		= cpu_to_le32(flags),
-	पूर्ण;
+	};
 
-	अगर (!vकरोमुख्य->nr_endpoपूर्णांकs)
-		वापस 0;
+	if (!vdomain->nr_endpoints)
+		return 0;
 
-	ret = viommu_send_req_sync(vकरोमुख्य->viommu, &map, माप(map));
-	अगर (ret)
-		viommu_del_mappings(vकरोमुख्य, iova, size);
+	ret = viommu_send_req_sync(vdomain->viommu, &map, sizeof(map));
+	if (ret)
+		viommu_del_mappings(vdomain, iova, size);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल माप_प्रकार viommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
-			   माप_प्रकार size, काष्ठा iommu_iotlb_gather *gather)
-अणु
-	पूर्णांक ret = 0;
-	माप_प्रकार unmapped;
-	काष्ठा virtio_iommu_req_unmap unmap;
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+static size_t viommu_unmap(struct iommu_domain *domain, unsigned long iova,
+			   size_t size, struct iommu_iotlb_gather *gather)
+{
+	int ret = 0;
+	size_t unmapped;
+	struct virtio_iommu_req_unmap unmap;
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	unmapped = viommu_del_mappings(vकरोमुख्य, iova, size);
-	अगर (unmapped < size)
-		वापस 0;
+	unmapped = viommu_del_mappings(vdomain, iova, size);
+	if (unmapped < size)
+		return 0;
 
-	/* Device alपढ़ोy हटाओd all mappings after detach. */
-	अगर (!vकरोमुख्य->nr_endpoपूर्णांकs)
-		वापस unmapped;
+	/* Device already removed all mappings after detach. */
+	if (!vdomain->nr_endpoints)
+		return unmapped;
 
-	unmap = (काष्ठा virtio_iommu_req_unmap) अणु
+	unmap = (struct virtio_iommu_req_unmap) {
 		.head.type	= VIRTIO_IOMMU_T_UNMAP,
-		.करोमुख्य		= cpu_to_le32(vकरोमुख्य->id),
+		.domain		= cpu_to_le32(vdomain->id),
 		.virt_start	= cpu_to_le64(iova),
 		.virt_end	= cpu_to_le64(iova + unmapped - 1),
-	पूर्ण;
+	};
 
-	ret = viommu_add_req(vकरोमुख्य->viommu, &unmap, माप(unmap));
-	वापस ret ? 0 : unmapped;
-पूर्ण
+	ret = viommu_add_req(vdomain->viommu, &unmap, sizeof(unmap));
+	return ret ? 0 : unmapped;
+}
 
-अटल phys_addr_t viommu_iova_to_phys(काष्ठा iommu_करोमुख्य *करोमुख्य,
+static phys_addr_t viommu_iova_to_phys(struct iommu_domain *domain,
 				       dma_addr_t iova)
-अणु
+{
 	u64 paddr = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा viommu_mapping *mapping;
-	काष्ठा पूर्णांकerval_tree_node *node;
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+	unsigned long flags;
+	struct viommu_mapping *mapping;
+	struct interval_tree_node *node;
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	spin_lock_irqsave(&vकरोमुख्य->mappings_lock, flags);
-	node = पूर्णांकerval_tree_iter_first(&vकरोमुख्य->mappings, iova, iova);
-	अगर (node) अणु
-		mapping = container_of(node, काष्ठा viommu_mapping, iova);
+	spin_lock_irqsave(&vdomain->mappings_lock, flags);
+	node = interval_tree_iter_first(&vdomain->mappings, iova, iova);
+	if (node) {
+		mapping = container_of(node, struct viommu_mapping, iova);
 		paddr = mapping->paddr + (iova - mapping->iova.start);
-	पूर्ण
-	spin_unlock_irqrestore(&vकरोमुख्य->mappings_lock, flags);
+	}
+	spin_unlock_irqrestore(&vdomain->mappings_lock, flags);
 
-	वापस paddr;
-पूर्ण
+	return paddr;
+}
 
-अटल व्योम viommu_iotlb_sync(काष्ठा iommu_करोमुख्य *करोमुख्य,
-			      काष्ठा iommu_iotlb_gather *gather)
-अणु
-	काष्ठा viommu_करोमुख्य *vकरोमुख्य = to_viommu_करोमुख्य(करोमुख्य);
+static void viommu_iotlb_sync(struct iommu_domain *domain,
+			      struct iommu_iotlb_gather *gather)
+{
+	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	viommu_sync_req(vकरोमुख्य->viommu);
-पूर्ण
+	viommu_sync_req(vdomain->viommu);
+}
 
-अटल व्योम viommu_get_resv_regions(काष्ठा device *dev, काष्ठा list_head *head)
-अणु
-	काष्ठा iommu_resv_region *entry, *new_entry, *msi = शून्य;
-	काष्ठा viommu_endpoपूर्णांक *vdev = dev_iommu_priv_get(dev);
-	पूर्णांक prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
+static void viommu_get_resv_regions(struct device *dev, struct list_head *head)
+{
+	struct iommu_resv_region *entry, *new_entry, *msi = NULL;
+	struct viommu_endpoint *vdev = dev_iommu_priv_get(dev);
+	int prot = IOMMU_WRITE | IOMMU_NOEXEC | IOMMU_MMIO;
 
-	list_क्रम_each_entry(entry, &vdev->resv_regions, list) अणु
-		अगर (entry->type == IOMMU_RESV_MSI)
+	list_for_each_entry(entry, &vdev->resv_regions, list) {
+		if (entry->type == IOMMU_RESV_MSI)
 			msi = entry;
 
-		new_entry = kmemdup(entry, माप(*entry), GFP_KERNEL);
-		अगर (!new_entry)
-			वापस;
+		new_entry = kmemdup(entry, sizeof(*entry), GFP_KERNEL);
+		if (!new_entry)
+			return;
 		list_add_tail(&new_entry->list, head);
-	पूर्ण
+	}
 
 	/*
-	 * If the device didn't रेजिस्टर any bypass MSI winकरोw, add a
+	 * If the device didn't register any bypass MSI window, add a
 	 * software-mapped region.
 	 */
-	अगर (!msi) अणु
+	if (!msi) {
 		msi = iommu_alloc_resv_region(MSI_IOVA_BASE, MSI_IOVA_LENGTH,
 					      prot, IOMMU_RESV_SW_MSI);
-		अगर (!msi)
-			वापस;
+		if (!msi)
+			return;
 
 		list_add_tail(&msi->list, head);
-	पूर्ण
+	}
 
 	iommu_dma_get_resv_regions(dev, head);
-पूर्ण
+}
 
-अटल काष्ठा iommu_ops viommu_ops;
-अटल काष्ठा virtio_driver virtio_iommu_drv;
+static struct iommu_ops viommu_ops;
+static struct virtio_driver virtio_iommu_drv;
 
-अटल पूर्णांक viommu_match_node(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	वापस dev->parent->fwnode == data;
-पूर्ण
+static int viommu_match_node(struct device *dev, const void *data)
+{
+	return dev->parent->fwnode == data;
+}
 
-अटल काष्ठा viommu_dev *viommu_get_by_fwnode(काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा device *dev = driver_find_device(&virtio_iommu_drv.driver, शून्य,
+static struct viommu_dev *viommu_get_by_fwnode(struct fwnode_handle *fwnode)
+{
+	struct device *dev = driver_find_device(&virtio_iommu_drv.driver, NULL,
 						fwnode, viommu_match_node);
 	put_device(dev);
 
-	वापस dev ? dev_to_virtio(dev)->priv : शून्य;
-पूर्ण
+	return dev ? dev_to_virtio(dev)->priv : NULL;
+}
 
-अटल काष्ठा iommu_device *viommu_probe_device(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा viommu_endpoपूर्णांक *vdev;
-	काष्ठा viommu_dev *viommu = शून्य;
-	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+static struct iommu_device *viommu_probe_device(struct device *dev)
+{
+	int ret;
+	struct viommu_endpoint *vdev;
+	struct viommu_dev *viommu = NULL;
+	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
 
-	अगर (!fwspec || fwspec->ops != &viommu_ops)
-		वापस ERR_PTR(-ENODEV);
+	if (!fwspec || fwspec->ops != &viommu_ops)
+		return ERR_PTR(-ENODEV);
 
 	viommu = viommu_get_by_fwnode(fwspec->iommu_fwnode);
-	अगर (!viommu)
-		वापस ERR_PTR(-ENODEV);
+	if (!viommu)
+		return ERR_PTR(-ENODEV);
 
-	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
-	अगर (!vdev)
-		वापस ERR_PTR(-ENOMEM);
+	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
+	if (!vdev)
+		return ERR_PTR(-ENOMEM);
 
 	vdev->dev = dev;
 	vdev->viommu = viommu;
 	INIT_LIST_HEAD(&vdev->resv_regions);
 	dev_iommu_priv_set(dev, vdev);
 
-	अगर (viommu->probe_size) अणु
-		/* Get additional inक्रमmation क्रम this endpoपूर्णांक */
-		ret = viommu_probe_endpoपूर्णांक(viommu, dev);
-		अगर (ret)
-			जाओ err_मुक्त_dev;
-	पूर्ण
+	if (viommu->probe_size) {
+		/* Get additional information for this endpoint */
+		ret = viommu_probe_endpoint(viommu, dev);
+		if (ret)
+			goto err_free_dev;
+	}
 
-	वापस &viommu->iommu;
+	return &viommu->iommu;
 
-err_मुक्त_dev:
+err_free_dev:
 	generic_iommu_put_resv_regions(dev, &vdev->resv_regions);
-	kमुक्त(vdev);
+	kfree(vdev);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम viommu_release_device(काष्ठा device *dev)
-अणु
-	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	काष्ठा viommu_endpoपूर्णांक *vdev;
+static void viommu_release_device(struct device *dev)
+{
+	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	struct viommu_endpoint *vdev;
 
-	अगर (!fwspec || fwspec->ops != &viommu_ops)
-		वापस;
+	if (!fwspec || fwspec->ops != &viommu_ops)
+		return;
 
 	vdev = dev_iommu_priv_get(dev);
 
 	generic_iommu_put_resv_regions(dev, &vdev->resv_regions);
-	kमुक्त(vdev);
-पूर्ण
+	kfree(vdev);
+}
 
-अटल काष्ठा iommu_group *viommu_device_group(काष्ठा device *dev)
-अणु
-	अगर (dev_is_pci(dev))
-		वापस pci_device_group(dev);
-	अन्यथा
-		वापस generic_device_group(dev);
-पूर्ण
+static struct iommu_group *viommu_device_group(struct device *dev)
+{
+	if (dev_is_pci(dev))
+		return pci_device_group(dev);
+	else
+		return generic_device_group(dev);
+}
 
-अटल पूर्णांक viommu_of_xlate(काष्ठा device *dev, काष्ठा of_phandle_args *args)
-अणु
-	वापस iommu_fwspec_add_ids(dev, args->args, 1);
-पूर्ण
+static int viommu_of_xlate(struct device *dev, struct of_phandle_args *args)
+{
+	return iommu_fwspec_add_ids(dev, args->args, 1);
+}
 
-अटल काष्ठा iommu_ops viommu_ops = अणु
-	.करोमुख्य_alloc		= viommu_करोमुख्य_alloc,
-	.करोमुख्य_मुक्त		= viommu_करोमुख्य_मुक्त,
+static struct iommu_ops viommu_ops = {
+	.domain_alloc		= viommu_domain_alloc,
+	.domain_free		= viommu_domain_free,
 	.attach_dev		= viommu_attach_dev,
 	.map			= viommu_map,
 	.unmap			= viommu_unmap,
@@ -947,208 +946,208 @@ err_मुक्त_dev:
 	.put_resv_regions	= generic_iommu_put_resv_regions,
 	.of_xlate		= viommu_of_xlate,
 	.owner			= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक viommu_init_vqs(काष्ठा viommu_dev *viommu)
-अणु
-	काष्ठा virtio_device *vdev = dev_to_virtio(viommu->dev);
-	स्थिर अक्षर *names[] = अणु "request", "event" पूर्ण;
-	vq_callback_t *callbacks[] = अणु
-		शून्य, /* No async requests */
+static int viommu_init_vqs(struct viommu_dev *viommu)
+{
+	struct virtio_device *vdev = dev_to_virtio(viommu->dev);
+	const char *names[] = { "request", "event" };
+	vq_callback_t *callbacks[] = {
+		NULL, /* No async requests */
 		viommu_event_handler,
-	पूर्ण;
+	};
 
-	वापस virtio_find_vqs(vdev, VIOMMU_NR_VQS, viommu->vqs, callbacks,
-			       names, शून्य);
-पूर्ण
+	return virtio_find_vqs(vdev, VIOMMU_NR_VQS, viommu->vqs, callbacks,
+			       names, NULL);
+}
 
-अटल पूर्णांक viommu_fill_evtq(काष्ठा viommu_dev *viommu)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा scatterlist sg[1];
-	काष्ठा viommu_event *evts;
-	काष्ठा virtqueue *vq = viommu->vqs[VIOMMU_EVENT_VQ];
-	माप_प्रकार nr_evts = vq->num_मुक्त;
+static int viommu_fill_evtq(struct viommu_dev *viommu)
+{
+	int i, ret;
+	struct scatterlist sg[1];
+	struct viommu_event *evts;
+	struct virtqueue *vq = viommu->vqs[VIOMMU_EVENT_VQ];
+	size_t nr_evts = vq->num_free;
 
-	viommu->evts = evts = devm_kदो_स्मृति_array(viommu->dev, nr_evts,
-						 माप(*evts), GFP_KERNEL);
-	अगर (!evts)
-		वापस -ENOMEM;
+	viommu->evts = evts = devm_kmalloc_array(viommu->dev, nr_evts,
+						 sizeof(*evts), GFP_KERNEL);
+	if (!evts)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < nr_evts; i++) अणु
-		sg_init_one(sg, &evts[i], माप(*evts));
+	for (i = 0; i < nr_evts; i++) {
+		sg_init_one(sg, &evts[i], sizeof(*evts));
 		ret = virtqueue_add_inbuf(vq, sg, 1, &evts[i], GFP_KERNEL);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक viommu_probe(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा device *parent_dev = vdev->dev.parent;
-	काष्ठा viommu_dev *viommu = शून्य;
-	काष्ठा device *dev = &vdev->dev;
+static int viommu_probe(struct virtio_device *vdev)
+{
+	struct device *parent_dev = vdev->dev.parent;
+	struct viommu_dev *viommu = NULL;
+	struct device *dev = &vdev->dev;
 	u64 input_start = 0;
 	u64 input_end = -1UL;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1) ||
+	if (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1) ||
 	    !virtio_has_feature(vdev, VIRTIO_IOMMU_F_MAP_UNMAP))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	viommu = devm_kzalloc(dev, माप(*viommu), GFP_KERNEL);
-	अगर (!viommu)
-		वापस -ENOMEM;
+	viommu = devm_kzalloc(dev, sizeof(*viommu), GFP_KERNEL);
+	if (!viommu)
+		return -ENOMEM;
 
 	spin_lock_init(&viommu->request_lock);
-	ida_init(&viommu->करोमुख्य_ids);
+	ida_init(&viommu->domain_ids);
 	viommu->dev = dev;
 	viommu->vdev = vdev;
 	INIT_LIST_HEAD(&viommu->requests);
 
 	ret = viommu_init_vqs(viommu);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	virtio_cपढ़ो_le(vdev, काष्ठा virtio_iommu_config, page_size_mask,
-			&viommu->pgsize_biपंचांगap);
+	virtio_cread_le(vdev, struct virtio_iommu_config, page_size_mask,
+			&viommu->pgsize_bitmap);
 
-	अगर (!viommu->pgsize_biपंचांगap) अणु
+	if (!viommu->pgsize_bitmap) {
 		ret = -EINVAL;
-		जाओ err_मुक्त_vqs;
-	पूर्ण
+		goto err_free_vqs;
+	}
 
 	viommu->map_flags = VIRTIO_IOMMU_MAP_F_READ | VIRTIO_IOMMU_MAP_F_WRITE;
-	viommu->last_करोमुख्य = ~0U;
+	viommu->last_domain = ~0U;
 
 	/* Optional features */
-	virtio_cपढ़ो_le_feature(vdev, VIRTIO_IOMMU_F_INPUT_RANGE,
-				काष्ठा virtio_iommu_config, input_range.start,
+	virtio_cread_le_feature(vdev, VIRTIO_IOMMU_F_INPUT_RANGE,
+				struct virtio_iommu_config, input_range.start,
 				&input_start);
 
-	virtio_cपढ़ो_le_feature(vdev, VIRTIO_IOMMU_F_INPUT_RANGE,
-				काष्ठा virtio_iommu_config, input_range.end,
+	virtio_cread_le_feature(vdev, VIRTIO_IOMMU_F_INPUT_RANGE,
+				struct virtio_iommu_config, input_range.end,
 				&input_end);
 
-	virtio_cपढ़ो_le_feature(vdev, VIRTIO_IOMMU_F_DOMAIN_RANGE,
-				काष्ठा virtio_iommu_config, करोमुख्य_range.start,
-				&viommu->first_करोमुख्य);
+	virtio_cread_le_feature(vdev, VIRTIO_IOMMU_F_DOMAIN_RANGE,
+				struct virtio_iommu_config, domain_range.start,
+				&viommu->first_domain);
 
-	virtio_cपढ़ो_le_feature(vdev, VIRTIO_IOMMU_F_DOMAIN_RANGE,
-				काष्ठा virtio_iommu_config, करोमुख्य_range.end,
-				&viommu->last_करोमुख्य);
+	virtio_cread_le_feature(vdev, VIRTIO_IOMMU_F_DOMAIN_RANGE,
+				struct virtio_iommu_config, domain_range.end,
+				&viommu->last_domain);
 
-	virtio_cपढ़ो_le_feature(vdev, VIRTIO_IOMMU_F_PROBE,
-				काष्ठा virtio_iommu_config, probe_size,
+	virtio_cread_le_feature(vdev, VIRTIO_IOMMU_F_PROBE,
+				struct virtio_iommu_config, probe_size,
 				&viommu->probe_size);
 
-	viommu->geometry = (काष्ठा iommu_करोमुख्य_geometry) अणु
+	viommu->geometry = (struct iommu_domain_geometry) {
 		.aperture_start	= input_start,
 		.aperture_end	= input_end,
-		.क्रमce_aperture	= true,
-	पूर्ण;
+		.force_aperture	= true,
+	};
 
-	अगर (virtio_has_feature(vdev, VIRTIO_IOMMU_F_MMIO))
+	if (virtio_has_feature(vdev, VIRTIO_IOMMU_F_MMIO))
 		viommu->map_flags |= VIRTIO_IOMMU_MAP_F_MMIO;
 
-	viommu_ops.pgsize_biपंचांगap = viommu->pgsize_biपंचांगap;
+	viommu_ops.pgsize_bitmap = viommu->pgsize_bitmap;
 
-	virtio_device_पढ़ोy(vdev);
+	virtio_device_ready(vdev);
 
 	/* Populate the event queue with buffers */
 	ret = viommu_fill_evtq(viommu);
-	अगर (ret)
-		जाओ err_मुक्त_vqs;
+	if (ret)
+		goto err_free_vqs;
 
-	ret = iommu_device_sysfs_add(&viommu->iommu, dev, शून्य, "%s",
+	ret = iommu_device_sysfs_add(&viommu->iommu, dev, NULL, "%s",
 				     virtio_bus_name(vdev));
-	अगर (ret)
-		जाओ err_मुक्त_vqs;
+	if (ret)
+		goto err_free_vqs;
 
-	iommu_device_रेजिस्टर(&viommu->iommu, &viommu_ops, parent_dev);
+	iommu_device_register(&viommu->iommu, &viommu_ops, parent_dev);
 
-#अगर_घोषित CONFIG_PCI
-	अगर (pci_bus_type.iommu_ops != &viommu_ops) अणु
+#ifdef CONFIG_PCI
+	if (pci_bus_type.iommu_ops != &viommu_ops) {
 		ret = bus_set_iommu(&pci_bus_type, &viommu_ops);
-		अगर (ret)
-			जाओ err_unरेजिस्टर;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_ARM_AMBA
-	अगर (amba_bustype.iommu_ops != &viommu_ops) अणु
+		if (ret)
+			goto err_unregister;
+	}
+#endif
+#ifdef CONFIG_ARM_AMBA
+	if (amba_bustype.iommu_ops != &viommu_ops) {
 		ret = bus_set_iommu(&amba_bustype, &viommu_ops);
-		अगर (ret)
-			जाओ err_unरेजिस्टर;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (platक्रमm_bus_type.iommu_ops != &viommu_ops) अणु
-		ret = bus_set_iommu(&platक्रमm_bus_type, &viommu_ops);
-		अगर (ret)
-			जाओ err_unरेजिस्टर;
-	पूर्ण
+		if (ret)
+			goto err_unregister;
+	}
+#endif
+	if (platform_bus_type.iommu_ops != &viommu_ops) {
+		ret = bus_set_iommu(&platform_bus_type, &viommu_ops);
+		if (ret)
+			goto err_unregister;
+	}
 
 	vdev->priv = viommu;
 
 	dev_info(dev, "input address: %u bits\n",
 		 order_base_2(viommu->geometry.aperture_end));
-	dev_info(dev, "page mask: %#llx\n", viommu->pgsize_biपंचांगap);
+	dev_info(dev, "page mask: %#llx\n", viommu->pgsize_bitmap);
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर:
-	iommu_device_sysfs_हटाओ(&viommu->iommu);
-	iommu_device_unरेजिस्टर(&viommu->iommu);
-err_मुक्त_vqs:
+err_unregister:
+	iommu_device_sysfs_remove(&viommu->iommu);
+	iommu_device_unregister(&viommu->iommu);
+err_free_vqs:
 	vdev->config->del_vqs(vdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम viommu_हटाओ(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा viommu_dev *viommu = vdev->priv;
+static void viommu_remove(struct virtio_device *vdev)
+{
+	struct viommu_dev *viommu = vdev->priv;
 
-	iommu_device_sysfs_हटाओ(&viommu->iommu);
-	iommu_device_unरेजिस्टर(&viommu->iommu);
+	iommu_device_sysfs_remove(&viommu->iommu);
+	iommu_device_unregister(&viommu->iommu);
 
 	/* Stop all virtqueues */
 	vdev->config->reset(vdev);
 	vdev->config->del_vqs(vdev);
 
 	dev_info(&vdev->dev, "device removed\n");
-पूर्ण
+}
 
-अटल व्योम viommu_config_changed(काष्ठा virtio_device *vdev)
-अणु
+static void viommu_config_changed(struct virtio_device *vdev)
+{
 	dev_warn(&vdev->dev, "config changed\n");
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक features[] = अणु
+static unsigned int features[] = {
 	VIRTIO_IOMMU_F_MAP_UNMAP,
 	VIRTIO_IOMMU_F_INPUT_RANGE,
 	VIRTIO_IOMMU_F_DOMAIN_RANGE,
 	VIRTIO_IOMMU_F_PROBE,
 	VIRTIO_IOMMU_F_MMIO,
-पूर्ण;
+};
 
-अटल काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_IOMMU, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_IOMMU, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 MODULE_DEVICE_TABLE(virtio, id_table);
 
-अटल काष्ठा virtio_driver virtio_iommu_drv = अणु
+static struct virtio_driver virtio_iommu_drv = {
 	.driver.name		= KBUILD_MODNAME,
 	.driver.owner		= THIS_MODULE,
 	.id_table		= id_table,
 	.feature_table		= features,
 	.feature_table_size	= ARRAY_SIZE(features),
 	.probe			= viommu_probe,
-	.हटाओ			= viommu_हटाओ,
+	.remove			= viommu_remove,
 	.config_changed		= viommu_config_changed,
-पूर्ण;
+};
 
 module_virtio_driver(virtio_iommu_drv);
 

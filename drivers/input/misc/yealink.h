@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * drivers/usb/input/yealink.h
  *
  * Copyright (c) 2005 Henk Vergonet <Henk.Vergonet@gmail.com>
  */
-#अगर_अघोषित INPUT_YEALINK_H
-#घोषणा INPUT_YEALINK_H
+#ifndef INPUT_YEALINK_H
+#define INPUT_YEALINK_H
 
-/* Using the control channel on पूर्णांकerface 3 various aspects of the phone
+/* Using the control channel on interface 3 various aspects of the phone
  * can be controlled like LCD, LED, dialtone and the ringtone.
  */
 
-काष्ठा yld_ctl_packet अणु
+struct yld_ctl_packet {
 	u8	cmd;		/* command code, see below */
 	u8	size;		/* 1-11, size of used data bytes. */
-	__be16	offset;		/* पूर्णांकernal packet offset */
+	__be16	offset;		/* internal packet offset */
 	u8	data[11];
 	s8	sum;		/* negative sum of 15 preceding bytes */
-पूर्ण __attribute__ ((packed));
+} __attribute__ ((packed));
 
-#घोषणा USB_PKT_LEN	माप(काष्ठा yld_ctl_packet)
+#define USB_PKT_LEN	sizeof(struct yld_ctl_packet)
 
 /* The following yld_ctl_packet's are available: */
 
-/* Init रेजिस्टरs
+/* Init registers
  *
  * cmd		0x8e
  * size		10
  * offset	0
  * data		0,0,0,0....
  */
-#घोषणा CMD_INIT		0x8e
+#define CMD_INIT		0x8e
 
 /* Request key scan
  *
  * cmd		0x80
  * size		1
  * offset	0
- * data[0]	on वापस वापसs the key number, अगर it changes there's a new
+ * data[0]	on return returns the key number, if it changes there's a new
  * 		key pressed.
  */
-#घोषणा CMD_KEYPRESS		0x80
+#define CMD_KEYPRESS		0x80
 
 /* Request scancode
  *
  * cmd		0x81
  * size		1
  * offset	key number [0-1f]
- * data[0]	on वापस वापसs the scancode
+ * data[0]	on return returns the scancode
  */
-#घोषणा CMD_SCANCODE		0x81
+#define CMD_SCANCODE		0x81
 
 /* Set LCD
  *
@@ -59,7 +58,7 @@
  * offset	0-23
  * data		segment bits
  */
-#घोषणा CMD_LCD			0x04
+#define CMD_LCD			0x04
 
 /* Set led
  *
@@ -68,7 +67,7 @@
  * offset	0
  * data[0]	0 OFF / 1 ON
  */
-#घोषणा CMD_LED			0x05
+#define CMD_LED			0x05
 
 /* Set ringtone volume
  *
@@ -77,7 +76,7 @@
  * offset	0
  * data[0]	0-0xff  volume
  */
-#घोषणा CMD_RING_VOLUME		0x11
+#define CMD_RING_VOLUME		0x11
 
 /* Set ringtone notes
  *
@@ -86,7 +85,7 @@
  * offset	0->
  * data		binary representation LE16(-freq), LE16(duration) ....
  */
-#घोषणा CMD_RING_NOTE		0x02
+#define CMD_RING_NOTE		0x02
 
 /* Sound ringtone via the speaker on the back
  *
@@ -95,7 +94,7 @@
  * offset	0
  * data[0]	0 OFF / 0x24 ON
  */
-#घोषणा CMD_RINGTONE		0x03
+#define CMD_RINGTONE		0x03
 
 /* Sound dial tone via the ear speaker
  *
@@ -104,14 +103,14 @@
  * offset	0
  * data[0]	0 OFF / 1 ON
  */
-#घोषणा CMD_DIALTONE		0x09
+#define CMD_DIALTONE		0x09
 
-#पूर्ण_अगर /* INPUT_YEALINK_H */
+#endif /* INPUT_YEALINK_H */
 
 
-#अगर defined(_SEG) && defined(_PIC)
-/* This table maps the LCD segments onto inभागidual bit positions in the
- * yld_status काष्ठा.
+#if defined(_SEG) && defined(_PIC)
+/* This table maps the LCD segments onto individual bit positions in the
+ * yld_status struct.
  */
 
 /* LCD, each segment must be driven separately.
@@ -132,8 +131,8 @@
  *	Format		: 18.e8.M8.88...188
  *	Icon names	: M D : IN OUT STORE
  */
-#घोषणा LCD_LINE1_OFFSET	0
-#घोषणा LCD_LINE1_SIZE		17
+#define LCD_LINE1_OFFSET	0
+#define LCD_LINE1_SIZE		17
 
 /* Note: first g then f =>			       !      !      */
 /* _SEG(    type    a      b      c      d      e      g      f   )  */
@@ -159,8 +158,8 @@
  *	Format		: .........
  *	Pict. name	: NEW REP SU MO TU WE TH FR SA
  */
-#घोषणा LCD_LINE2_OFFSET	LCD_LINE1_OFFSET + LCD_LINE1_SIZE
-#घोषणा LCD_LINE2_SIZE		9
+#define LCD_LINE2_OFFSET	LCD_LINE1_OFFSET + LCD_LINE1_SIZE
+#define LCD_LINE2_SIZE		9
 
 	_PIC('.', 23,2 , "NEW"	),
 	_PIC('.', 23,4 , "REP"	),
@@ -175,8 +174,8 @@
 /* Line 3
  *	Format		: 888888888888
  */
-#घोषणा LCD_LINE3_OFFSET	LCD_LINE2_OFFSET + LCD_LINE2_SIZE
-#घोषणा LCD_LINE3_SIZE		12
+#define LCD_LINE3_OFFSET	LCD_LINE2_OFFSET + LCD_LINE2_SIZE
+#define LCD_LINE3_SIZE		12
 
 	_SEG('8', 22,16, 22,32, 22,64, 22,128, 23,128, 23,64, 23,32  ),
 	_SEG('8', 20,16, 20,32, 20,64, 20,128, 21,128, 21,64, 21,32  ),
@@ -194,14 +193,14 @@
 /* Line 4
  *
  * The LED, DIALTONE and RINGTONE are implemented as icons and use the same
- * sysfs पूर्णांकerface.
+ * sysfs interface.
  */
-#घोषणा LCD_LINE4_OFFSET	LCD_LINE3_OFFSET + LCD_LINE3_SIZE
+#define LCD_LINE4_OFFSET	LCD_LINE3_OFFSET + LCD_LINE3_SIZE
 
-	_PIC('.', दुरत्व(काष्ठा yld_status, led)	, 0x01, "LED" ),
-	_PIC('.', दुरत्व(काष्ठा yld_status, dialtone) , 0x01, "DIALTONE" ),
-	_PIC('.', दुरत्व(काष्ठा yld_status, ringtone) , 0x24, "RINGTONE" ),
+	_PIC('.', offsetof(struct yld_status, led)	, 0x01, "LED" ),
+	_PIC('.', offsetof(struct yld_status, dialtone) , 0x01, "DIALTONE" ),
+	_PIC('.', offsetof(struct yld_status, ringtone) , 0x24, "RINGTONE" ),
 
-#अघोषित _SEG
-#अघोषित _PIC
-#पूर्ण_अगर /* _SEG && _PIC */
+#undef _SEG
+#undef _PIC
+#endif /* _SEG && _PIC */

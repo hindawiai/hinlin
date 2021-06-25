@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  Driver क्रम the Conexant CX25821 PCIe bridge
+ *  Driver for the Conexant CX25821 PCIe bridge
  *
  *  Copyright (C) 2009 Conexant Systems Inc.
  *  Authors  <shu.lin@conexant.com>, <hiep.huynh@conexant.com>
  *  Based on Steven Toth <stoth@linuxtv.org> cx23885 driver
  */
 
-#अगर_अघोषित CX25821_VIDEO_H_
-#घोषणा CX25821_VIDEO_H_
+#ifndef CX25821_VIDEO_H_
+#define CX25821_VIDEO_H_
 
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kmod.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/kthread.h>
+#include <asm/div64.h>
 
-#समावेश "cx25821.h"
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-event.h>
+#include "cx25821.h"
+#include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-event.h>
 
-#घोषणा VIDEO_DEBUG 0
+#define VIDEO_DEBUG 0
 
-#घोषणा dprपूर्णांकk(level, fmt, arg...)					\
-करो अणु									\
-	अगर (VIDEO_DEBUG >= level)					\
-		prपूर्णांकk(KERN_DEBUG "%s/0: " fmt, dev->name, ##arg);	\
-पूर्ण जबतक (0)
+#define dprintk(level, fmt, arg...)					\
+do {									\
+	if (VIDEO_DEBUG >= level)					\
+		printk(KERN_DEBUG "%s/0: " fmt, dev->name, ##arg);	\
+} while (0)
 
-#घोषणा FORMAT_FLAGS_PACKED       0x01
-बाह्य व्योम cx25821_video_wakeup(काष्ठा cx25821_dev *dev,
-				 काष्ठा cx25821_dmaqueue *q, u32 count);
+#define FORMAT_FLAGS_PACKED       0x01
+extern void cx25821_video_wakeup(struct cx25821_dev *dev,
+				 struct cx25821_dmaqueue *q, u32 count);
 
-बाह्य पूर्णांक cx25821_start_video_dma(काष्ठा cx25821_dev *dev,
-				   काष्ठा cx25821_dmaqueue *q,
-				   काष्ठा cx25821_buffer *buf,
-				   स्थिर काष्ठा sram_channel *channel);
+extern int cx25821_start_video_dma(struct cx25821_dev *dev,
+				   struct cx25821_dmaqueue *q,
+				   struct cx25821_buffer *buf,
+				   const struct sram_channel *channel);
 
-बाह्य पूर्णांक cx25821_video_irq(काष्ठा cx25821_dev *dev, पूर्णांक chan_num, u32 status);
-बाह्य व्योम cx25821_video_unरेजिस्टर(काष्ठा cx25821_dev *dev, पूर्णांक chan_num);
-बाह्य पूर्णांक cx25821_video_रेजिस्टर(काष्ठा cx25821_dev *dev);
+extern int cx25821_video_irq(struct cx25821_dev *dev, int chan_num, u32 status);
+extern void cx25821_video_unregister(struct cx25821_dev *dev, int chan_num);
+extern int cx25821_video_register(struct cx25821_dev *dev);
 
-#पूर्ण_अगर
+#endif

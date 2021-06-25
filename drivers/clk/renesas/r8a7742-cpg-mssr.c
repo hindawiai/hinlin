@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a7742 Clock Pulse Generator / Module Standby and Software Reset
  *
  * Copyright (C) 2020 Renesas Electronics Corp.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/soc/renesas/rcar-rst.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/soc/renesas/rcar-rst.h>
 
-#समावेश <dt-bindings/घड़ी/r8a7742-cpg-mssr.h>
+#include <dt-bindings/clock/r8a7742-cpg-mssr.h>
 
-#समावेश "renesas-cpg-mssr.h"
-#समावेश "rcar-gen2-cpg.h"
+#include "renesas-cpg-mssr.h"
+#include "rcar-gen2-cpg.h"
 
-क्रमागत clk_ids अणु
-	/* Core Clock Outमाला_दो exported to DT */
+enum clk_ids {
+	/* Core Clock Outputs exported to DT */
 	LAST_DT_CORE_CLK = R8A7742_CLK_OSC,
 
 	/* External Input Clocks */
@@ -33,10 +32,10 @@
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cpg_core_clk r8a7742_core_clks[] __initस्थिर = अणु
-	/* External Clock Inमाला_दो */
+static const struct cpg_core_clk r8a7742_core_clks[] __initconst = {
+	/* External Clock Inputs */
 	DEF_INPUT("extal",	CLK_EXTAL),
 	DEF_INPUT("usb_extal",	CLK_USB_EXTAL),
 
@@ -48,7 +47,7 @@
 
 	DEF_FIXED(".pll1_div2",	CLK_PLL1_DIV2, CLK_PLL1, 2, 1),
 
-	/* Core Clock Outमाला_दो */
+	/* Core Clock Outputs */
 	DEF_BASE("z",    R8A7742_CLK_Z,    CLK_TYPE_GEN2_Z,	CLK_PLL0),
 	DEF_BASE("lb",   R8A7742_CLK_LB,   CLK_TYPE_GEN2_LB,	CLK_PLL1),
 	DEF_BASE("sdh",  R8A7742_CLK_SDH,  CLK_TYPE_GEN2_SDH,	CLK_PLL1),
@@ -78,9 +77,9 @@
 	DEF_DIV6P1("sd3",  R8A7742_CLK_SD3,	CLK_PLL1_DIV2,	0x26c),
 	DEF_DIV6P1("mmc0", R8A7742_CLK_MMC0,	CLK_PLL1_DIV2,	0x240),
 	DEF_DIV6P1("mmc1", R8A7742_CLK_MMC1,	CLK_PLL1_DIV2,	0x244),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mssr_mod_clk r8a7742_mod_clks[] __initस्थिर = अणु
+static const struct mssr_mod_clk r8a7742_mod_clks[] __initconst = {
 	DEF_MOD("msiof0",		   0,	R8A7742_CLK_MP),
 	DEF_MOD("vcp1",			 100,	R8A7742_CLK_ZS),
 	DEF_MOD("vcp0",			 101,	R8A7742_CLK_ZS),
@@ -198,12 +197,12 @@
 	DEF_MOD("scu-src2",		1029,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src1",		1030,	MOD_CLK_ID(1017)),
 	DEF_MOD("scu-src0",		1031,	MOD_CLK_ID(1017)),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक r8a7742_crit_mod_clks[] __initस्थिर = अणु
+static const unsigned int r8a7742_crit_mod_clks[] __initconst = {
 	MOD_CLK_ID(402),	/* RWDT */
 	MOD_CLK_ID(408),	/* INTC-SYS (GIC) */
-पूर्ण;
+};
 
 /*
  * CPG Clock Data
@@ -224,38 +223,38 @@
  *
  * *1 :	Table 7.5a indicates VCO output (PLLx = VCO/2)
  */
-#घोषणा CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 12) | \
+#define CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 12) | \
 					 (((md) & BIT(13)) >> 12) | \
 					 (((md) & BIT(19)) >> 19))
 
-अटल स्थिर काष्ठा rcar_gen2_cpg_pll_config cpg_pll_configs[8] __initस्थिर = अणु
-	/* EXTAL भाग	PLL1 mult	PLL3 mult */
-	अणु 1,		208,		106,	पूर्ण,
-	अणु 1,		208,		88,	पूर्ण,
-	अणु 1,		156,		80,	पूर्ण,
-	अणु 1,		156,		66,	पूर्ण,
-	अणु 2,		240,		122,	पूर्ण,
-	अणु 2,		240,		102,	पूर्ण,
-	अणु 2,		208,		106,	पूर्ण,
-	अणु 2,		208,		88,	पूर्ण,
-पूर्ण;
+static const struct rcar_gen2_cpg_pll_config cpg_pll_configs[8] __initconst = {
+	/* EXTAL div	PLL1 mult	PLL3 mult */
+	{ 1,		208,		106,	},
+	{ 1,		208,		88,	},
+	{ 1,		156,		80,	},
+	{ 1,		156,		66,	},
+	{ 2,		240,		122,	},
+	{ 2,		240,		102,	},
+	{ 2,		208,		106,	},
+	{ 2,		208,		88,	},
+};
 
-अटल पूर्णांक __init r8a7742_cpg_mssr_init(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा rcar_gen2_cpg_pll_config *cpg_pll_config;
+static int __init r8a7742_cpg_mssr_init(struct device *dev)
+{
+	const struct rcar_gen2_cpg_pll_config *cpg_pll_config;
 	u32 cpg_mode;
-	पूर्णांक error;
+	int error;
 
-	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
-	अगर (error)
-		वापस error;
+	error = rcar_rst_read_mode_pins(&cpg_mode);
+	if (error)
+		return error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
 
-	वापस rcar_gen2_cpg_init(cpg_pll_config, 2, cpg_mode);
-पूर्ण
+	return rcar_gen2_cpg_init(cpg_pll_config, 2, cpg_mode);
+}
 
-स्थिर काष्ठा cpg_mssr_info r8a7742_cpg_mssr_info __initस्थिर = अणु
+const struct cpg_mssr_info r8a7742_cpg_mssr_info __initconst = {
 	/* Core Clocks */
 	.core_clks = r8a7742_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a7742_core_clks),
@@ -273,5 +272,5 @@
 
 	/* Callbacks */
 	.init = r8a7742_cpg_mssr_init,
-	.cpg_clk_रेजिस्टर = rcar_gen2_cpg_clk_रेजिस्टर,
-पूर्ण;
+	.cpg_clk_register = rcar_gen2_cpg_clk_register,
+};

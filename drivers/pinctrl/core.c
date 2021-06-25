@@ -1,619 +1,618 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Core driver क्रम the pin control subप्रणाली
+ * Core driver for the pin control subsystem
  *
  * Copyright (C) 2011-2012 ST-Ericsson SA
- * Written on behalf of Linaro क्रम ST-Ericsson
+ * Written on behalf of Linaro for ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  *
  * Copyright (C) 2012 NVIDIA CORPORATION. All rights reserved.
  */
-#घोषणा pr_fmt(fmt) "pinctrl core: " fmt
+#define pr_fmt(fmt) "pinctrl core: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/list.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/machine.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/list.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/machine.h>
 
-#अगर_घोषित CONFIG_GPIOLIB
-#समावेश "../gpio/gpiolib.h"
-#समावेश <यंत्र-generic/gpपन.स>
-#पूर्ण_अगर
+#ifdef CONFIG_GPIOLIB
+#include "../gpio/gpiolib.h"
+#include <asm-generic/gpio.h>
+#endif
 
-#समावेश "core.h"
-#समावेश "devicetree.h"
-#समावेश "pinmux.h"
-#समावेश "pinconf.h"
+#include "core.h"
+#include "devicetree.h"
+#include "pinmux.h"
+#include "pinconf.h"
 
 
-अटल bool pinctrl_dummy_state;
+static bool pinctrl_dummy_state;
 
 /* Mutex taken to protect pinctrl_list */
-अटल DEFINE_MUTEX(pinctrl_list_mutex);
+static DEFINE_MUTEX(pinctrl_list_mutex);
 
 /* Mutex taken to protect pinctrl_maps */
 DEFINE_MUTEX(pinctrl_maps_mutex);
 
 /* Mutex taken to protect pinctrldev_list */
-अटल DEFINE_MUTEX(pinctrldev_list_mutex);
+static DEFINE_MUTEX(pinctrldev_list_mutex);
 
-/* Global list of pin control devices (काष्ठा pinctrl_dev) */
-अटल LIST_HEAD(pinctrldev_list);
+/* Global list of pin control devices (struct pinctrl_dev) */
+static LIST_HEAD(pinctrldev_list);
 
-/* List of pin controller handles (काष्ठा pinctrl) */
-अटल LIST_HEAD(pinctrl_list);
+/* List of pin controller handles (struct pinctrl) */
+static LIST_HEAD(pinctrl_list);
 
-/* List of pinctrl maps (काष्ठा pinctrl_maps) */
+/* List of pinctrl maps (struct pinctrl_maps) */
 LIST_HEAD(pinctrl_maps);
 
 
 /**
- * pinctrl_provide_dummies() - indicate अगर pinctrl provides dummy state support
+ * pinctrl_provide_dummies() - indicate if pinctrl provides dummy state support
  *
- * Usually this function is called by platक्रमms without pinctrl driver support
+ * Usually this function is called by platforms without pinctrl driver support
  * but run with some shared drivers using pinctrl APIs.
- * After calling this function, the pinctrl core will वापस successfully
- * with creating a dummy state क्रम the driver to keep going smoothly.
+ * After calling this function, the pinctrl core will return successfully
+ * with creating a dummy state for the driver to keep going smoothly.
  */
-व्योम pinctrl_provide_dummies(व्योम)
-अणु
+void pinctrl_provide_dummies(void)
+{
 	pinctrl_dummy_state = true;
-पूर्ण
+}
 
-स्थिर अक्षर *pinctrl_dev_get_name(काष्ठा pinctrl_dev *pctldev)
-अणु
-	/* We're not allowed to रेजिस्टर devices without name */
-	वापस pctldev->desc->name;
-पूर्ण
+const char *pinctrl_dev_get_name(struct pinctrl_dev *pctldev)
+{
+	/* We're not allowed to register devices without name */
+	return pctldev->desc->name;
+}
 EXPORT_SYMBOL_GPL(pinctrl_dev_get_name);
 
-स्थिर अक्षर *pinctrl_dev_get_devname(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस dev_name(pctldev->dev);
-पूर्ण
+const char *pinctrl_dev_get_devname(struct pinctrl_dev *pctldev)
+{
+	return dev_name(pctldev->dev);
+}
 EXPORT_SYMBOL_GPL(pinctrl_dev_get_devname);
 
-व्योम *pinctrl_dev_get_drvdata(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस pctldev->driver_data;
-पूर्ण
+void *pinctrl_dev_get_drvdata(struct pinctrl_dev *pctldev)
+{
+	return pctldev->driver_data;
+}
 EXPORT_SYMBOL_GPL(pinctrl_dev_get_drvdata);
 
 /**
  * get_pinctrl_dev_from_devname() - look up pin controller device
- * @devname: the name of a device instance, as वापसed by dev_name()
+ * @devname: the name of a device instance, as returned by dev_name()
  *
  * Looks up a pin control device matching a certain device name or pure device
- * poपूर्णांकer, the pure device poपूर्णांकer will take precedence.
+ * pointer, the pure device pointer will take precedence.
  */
-काष्ठा pinctrl_dev *get_pinctrl_dev_from_devname(स्थिर अक्षर *devname)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
+struct pinctrl_dev *get_pinctrl_dev_from_devname(const char *devname)
+{
+	struct pinctrl_dev *pctldev;
 
-	अगर (!devname)
-		वापस शून्य;
+	if (!devname)
+		return NULL;
 
 	mutex_lock(&pinctrldev_list_mutex);
 
-	list_क्रम_each_entry(pctldev, &pinctrldev_list, node) अणु
-		अगर (!म_भेद(dev_name(pctldev->dev), devname)) अणु
+	list_for_each_entry(pctldev, &pinctrldev_list, node) {
+		if (!strcmp(dev_name(pctldev->dev), devname)) {
 			/* Matched on device name */
 			mutex_unlock(&pinctrldev_list_mutex);
-			वापस pctldev;
-		पूर्ण
-	पूर्ण
+			return pctldev;
+		}
+	}
 
 	mutex_unlock(&pinctrldev_list_mutex);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा pinctrl_dev *get_pinctrl_dev_from_of_node(काष्ठा device_node *np)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
+struct pinctrl_dev *get_pinctrl_dev_from_of_node(struct device_node *np)
+{
+	struct pinctrl_dev *pctldev;
 
 	mutex_lock(&pinctrldev_list_mutex);
 
-	list_क्रम_each_entry(pctldev, &pinctrldev_list, node)
-		अगर (pctldev->dev->of_node == np) अणु
+	list_for_each_entry(pctldev, &pinctrldev_list, node)
+		if (pctldev->dev->of_node == np) {
 			mutex_unlock(&pinctrldev_list_mutex);
-			वापस pctldev;
-		पूर्ण
+			return pctldev;
+		}
 
 	mutex_unlock(&pinctrldev_list_mutex);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
  * pin_get_from_name() - look up a pin number from a name
  * @pctldev: the pin control device to lookup the pin on
  * @name: the name of the pin to look up
  */
-पूर्णांक pin_get_from_name(काष्ठा pinctrl_dev *pctldev, स्थिर अक्षर *name)
-अणु
-	अचिन्हित i, pin;
+int pin_get_from_name(struct pinctrl_dev *pctldev, const char *name)
+{
+	unsigned i, pin;
 
 	/* The pin number can be retrived from the pin controller descriptor */
-	क्रम (i = 0; i < pctldev->desc->npins; i++) अणु
-		काष्ठा pin_desc *desc;
+	for (i = 0; i < pctldev->desc->npins; i++) {
+		struct pin_desc *desc;
 
 		pin = pctldev->desc->pins[i].number;
 		desc = pin_desc_get(pctldev, pin);
 		/* Pin space may be sparse */
-		अगर (desc && !म_भेद(name, desc->name))
-			वापस pin;
-	पूर्ण
+		if (desc && !strcmp(name, desc->name))
+			return pin;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * pin_get_name() - look up a pin name from a pin id
  * @pctldev: the pin control device to lookup the pin on
  * @pin: pin number/id to look up
  */
-स्थिर अक्षर *pin_get_name(काष्ठा pinctrl_dev *pctldev, स्थिर अचिन्हित pin)
-अणु
-	स्थिर काष्ठा pin_desc *desc;
+const char *pin_get_name(struct pinctrl_dev *pctldev, const unsigned pin)
+{
+	const struct pin_desc *desc;
 
 	desc = pin_desc_get(pctldev, pin);
-	अगर (!desc) अणु
+	if (!desc) {
 		dev_err(pctldev->dev, "failed to get pin(%d) name\n",
 			pin);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस desc->name;
-पूर्ण
+	return desc->name;
+}
 EXPORT_SYMBOL_GPL(pin_get_name);
 
 /* Deletes a range of pin descriptors */
-अटल व्योम pinctrl_मुक्त_pindescs(काष्ठा pinctrl_dev *pctldev,
-				  स्थिर काष्ठा pinctrl_pin_desc *pins,
-				  अचिन्हित num_pins)
-अणु
-	पूर्णांक i;
+static void pinctrl_free_pindescs(struct pinctrl_dev *pctldev,
+				  const struct pinctrl_pin_desc *pins,
+				  unsigned num_pins)
+{
+	int i;
 
-	क्रम (i = 0; i < num_pins; i++) अणु
-		काष्ठा pin_desc *pindesc;
+	for (i = 0; i < num_pins; i++) {
+		struct pin_desc *pindesc;
 
 		pindesc = radix_tree_lookup(&pctldev->pin_desc_tree,
 					    pins[i].number);
-		अगर (pindesc) अणु
+		if (pindesc) {
 			radix_tree_delete(&pctldev->pin_desc_tree,
 					  pins[i].number);
-			अगर (pindesc->dynamic_name)
-				kमुक्त(pindesc->name);
-		पूर्ण
-		kमुक्त(pindesc);
-	पूर्ण
-पूर्ण
+			if (pindesc->dynamic_name)
+				kfree(pindesc->name);
+		}
+		kfree(pindesc);
+	}
+}
 
-अटल पूर्णांक pinctrl_रेजिस्टर_one_pin(काष्ठा pinctrl_dev *pctldev,
-				    स्थिर काष्ठा pinctrl_pin_desc *pin)
-अणु
-	काष्ठा pin_desc *pindesc;
+static int pinctrl_register_one_pin(struct pinctrl_dev *pctldev,
+				    const struct pinctrl_pin_desc *pin)
+{
+	struct pin_desc *pindesc;
 
 	pindesc = pin_desc_get(pctldev, pin->number);
-	अगर (pindesc) अणु
+	if (pindesc) {
 		dev_err(pctldev->dev, "pin %d already registered\n",
 			pin->number);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pindesc = kzalloc(माप(*pindesc), GFP_KERNEL);
-	अगर (!pindesc)
-		वापस -ENOMEM;
+	pindesc = kzalloc(sizeof(*pindesc), GFP_KERNEL);
+	if (!pindesc)
+		return -ENOMEM;
 
 	/* Set owner */
 	pindesc->pctldev = pctldev;
 
 	/* Copy basic pin info */
-	अगर (pin->name) अणु
+	if (pin->name) {
 		pindesc->name = pin->name;
-	पूर्ण अन्यथा अणु
-		pindesc->name = kaप्र_लिखो(GFP_KERNEL, "PIN%u", pin->number);
-		अगर (!pindesc->name) अणु
-			kमुक्त(pindesc);
-			वापस -ENOMEM;
-		पूर्ण
+	} else {
+		pindesc->name = kasprintf(GFP_KERNEL, "PIN%u", pin->number);
+		if (!pindesc->name) {
+			kfree(pindesc);
+			return -ENOMEM;
+		}
 		pindesc->dynamic_name = true;
-	पूर्ण
+	}
 
 	pindesc->drv_data = pin->drv_data;
 
 	radix_tree_insert(&pctldev->pin_desc_tree, pin->number, pindesc);
 	pr_debug("registered pin %d (%s) on %s\n",
 		 pin->number, pindesc->name, pctldev->desc->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pinctrl_रेजिस्टर_pins(काष्ठा pinctrl_dev *pctldev,
-				 स्थिर काष्ठा pinctrl_pin_desc *pins,
-				 अचिन्हित num_descs)
-अणु
-	अचिन्हित i;
-	पूर्णांक ret = 0;
+static int pinctrl_register_pins(struct pinctrl_dev *pctldev,
+				 const struct pinctrl_pin_desc *pins,
+				 unsigned num_descs)
+{
+	unsigned i;
+	int ret = 0;
 
-	क्रम (i = 0; i < num_descs; i++) अणु
-		ret = pinctrl_रेजिस्टर_one_pin(pctldev, &pins[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < num_descs; i++) {
+		ret = pinctrl_register_one_pin(pctldev, &pins[i]);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * gpio_to_pin() - GPIO range GPIO number to pin number translation
- * @range: GPIO range used क्रम the translation
+ * @range: GPIO range used for the translation
  * @gpio: gpio pin to translate to a pin number
  *
- * Finds the pin number क्रम a given GPIO using the specअगरied GPIO range
- * as a base क्रम translation. The distinction between linear GPIO ranges
+ * Finds the pin number for a given GPIO using the specified GPIO range
+ * as a base for translation. The distinction between linear GPIO ranges
  * and pin list based GPIO ranges is managed correctly by this function.
  *
- * This function assumes the gpio is part of the specअगरied GPIO range, use
- * only after making sure this is the हाल (e.g. by calling it on the
+ * This function assumes the gpio is part of the specified GPIO range, use
+ * only after making sure this is the case (e.g. by calling it on the
  * result of successful pinctrl_get_device_gpio_range calls)!
  */
-अटल अंतरभूत पूर्णांक gpio_to_pin(काष्ठा pinctrl_gpio_range *range,
-				अचिन्हित पूर्णांक gpio)
-अणु
-	अचिन्हित पूर्णांक offset = gpio - range->base;
-	अगर (range->pins)
-		वापस range->pins[offset];
-	अन्यथा
-		वापस range->pin_base + offset;
-पूर्ण
+static inline int gpio_to_pin(struct pinctrl_gpio_range *range,
+				unsigned int gpio)
+{
+	unsigned int offset = gpio - range->base;
+	if (range->pins)
+		return range->pins[offset];
+	else
+		return range->pin_base + offset;
+}
 
 /**
- * pinctrl_match_gpio_range() - check अगर a certain GPIO pin is in range
+ * pinctrl_match_gpio_range() - check if a certain GPIO pin is in range
  * @pctldev: pin controller device to check
  * @gpio: gpio pin to check taken from the global GPIO pin space
  *
  * Tries to match a GPIO pin number to the ranges handled by a certain pin
- * controller, वापस the range or शून्य
+ * controller, return the range or NULL
  */
-अटल काष्ठा pinctrl_gpio_range *
-pinctrl_match_gpio_range(काष्ठा pinctrl_dev *pctldev, अचिन्हित gpio)
-अणु
-	काष्ठा pinctrl_gpio_range *range;
+static struct pinctrl_gpio_range *
+pinctrl_match_gpio_range(struct pinctrl_dev *pctldev, unsigned gpio)
+{
+	struct pinctrl_gpio_range *range;
 
 	mutex_lock(&pctldev->mutex);
 	/* Loop over the ranges */
-	list_क्रम_each_entry(range, &pctldev->gpio_ranges, node) अणु
-		/* Check अगर we're in the valid range */
-		अगर (gpio >= range->base &&
-		    gpio < range->base + range->npins) अणु
+	list_for_each_entry(range, &pctldev->gpio_ranges, node) {
+		/* Check if we're in the valid range */
+		if (gpio >= range->base &&
+		    gpio < range->base + range->npins) {
 			mutex_unlock(&pctldev->mutex);
-			वापस range;
-		पूर्ण
-	पूर्ण
+			return range;
+		}
+	}
 	mutex_unlock(&pctldev->mutex);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * pinctrl_पढ़ोy_क्रम_gpio_range() - check अगर other GPIO pins of
+ * pinctrl_ready_for_gpio_range() - check if other GPIO pins of
  * the same GPIO chip are in range
  * @gpio: gpio pin to check taken from the global GPIO pin space
  *
- * This function is complement of pinctrl_match_gpio_range(). If the वापस
- * value of pinctrl_match_gpio_range() is शून्य, this function could be used
- * to check whether pinctrl device is पढ़ोy or not. Maybe some GPIO pins
- * of the same GPIO chip करोn't have back-end pinctrl पूर्णांकerface.
- * If the वापस value is true, it means that pinctrl device is पढ़ोy & the
- * certain GPIO pin करोesn't have back-end pinctrl device. If the वापस value
- * is false, it means that pinctrl device may not be पढ़ोy.
+ * This function is complement of pinctrl_match_gpio_range(). If the return
+ * value of pinctrl_match_gpio_range() is NULL, this function could be used
+ * to check whether pinctrl device is ready or not. Maybe some GPIO pins
+ * of the same GPIO chip don't have back-end pinctrl interface.
+ * If the return value is true, it means that pinctrl device is ready & the
+ * certain GPIO pin doesn't have back-end pinctrl device. If the return value
+ * is false, it means that pinctrl device may not be ready.
  */
-#अगर_घोषित CONFIG_GPIOLIB
-अटल bool pinctrl_पढ़ोy_क्रम_gpio_range(अचिन्हित gpio)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	काष्ठा pinctrl_gpio_range *range = शून्य;
-	काष्ठा gpio_chip *chip = gpio_to_chip(gpio);
+#ifdef CONFIG_GPIOLIB
+static bool pinctrl_ready_for_gpio_range(unsigned gpio)
+{
+	struct pinctrl_dev *pctldev;
+	struct pinctrl_gpio_range *range = NULL;
+	struct gpio_chip *chip = gpio_to_chip(gpio);
 
-	अगर (WARN(!chip, "no gpio_chip for gpio%i?", gpio))
-		वापस false;
+	if (WARN(!chip, "no gpio_chip for gpio%i?", gpio))
+		return false;
 
 	mutex_lock(&pinctrldev_list_mutex);
 
 	/* Loop over the pin controllers */
-	list_क्रम_each_entry(pctldev, &pinctrldev_list, node) अणु
+	list_for_each_entry(pctldev, &pinctrldev_list, node) {
 		/* Loop over the ranges */
 		mutex_lock(&pctldev->mutex);
-		list_क्रम_each_entry(range, &pctldev->gpio_ranges, node) अणु
-			/* Check अगर any gpio range overlapped with gpio chip */
-			अगर (range->base + range->npins - 1 < chip->base ||
+		list_for_each_entry(range, &pctldev->gpio_ranges, node) {
+			/* Check if any gpio range overlapped with gpio chip */
+			if (range->base + range->npins - 1 < chip->base ||
 			    range->base > chip->base + chip->ngpio - 1)
-				जारी;
+				continue;
 			mutex_unlock(&pctldev->mutex);
 			mutex_unlock(&pinctrldev_list_mutex);
-			वापस true;
-		पूर्ण
+			return true;
+		}
 		mutex_unlock(&pctldev->mutex);
-	पूर्ण
+	}
 
 	mutex_unlock(&pinctrldev_list_mutex);
 
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल bool pinctrl_पढ़ोy_क्रम_gpio_range(अचिन्हित gpio) अणु वापस true; पूर्ण
-#पूर्ण_अगर
+	return false;
+}
+#else
+static bool pinctrl_ready_for_gpio_range(unsigned gpio) { return true; }
+#endif
 
 /**
- * pinctrl_get_device_gpio_range() - find device क्रम GPIO range
- * @gpio: the pin to locate the pin controller क्रम
- * @outdev: the pin control device अगर found
- * @outrange: the GPIO range अगर found
+ * pinctrl_get_device_gpio_range() - find device for GPIO range
+ * @gpio: the pin to locate the pin controller for
+ * @outdev: the pin control device if found
+ * @outrange: the GPIO range if found
  *
  * Find the pin controller handling a certain GPIO pin from the pinspace of
- * the GPIO subप्रणाली, वापस the device and the matching GPIO range. Returns
- * -EPROBE_DEFER अगर the GPIO range could not be found in any device since it
- * may still have not been रेजिस्टरed.
+ * the GPIO subsystem, return the device and the matching GPIO range. Returns
+ * -EPROBE_DEFER if the GPIO range could not be found in any device since it
+ * may still have not been registered.
  */
-अटल पूर्णांक pinctrl_get_device_gpio_range(अचिन्हित gpio,
-					 काष्ठा pinctrl_dev **outdev,
-					 काष्ठा pinctrl_gpio_range **outrange)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
+static int pinctrl_get_device_gpio_range(unsigned gpio,
+					 struct pinctrl_dev **outdev,
+					 struct pinctrl_gpio_range **outrange)
+{
+	struct pinctrl_dev *pctldev;
 
 	mutex_lock(&pinctrldev_list_mutex);
 
 	/* Loop over the pin controllers */
-	list_क्रम_each_entry(pctldev, &pinctrldev_list, node) अणु
-		काष्ठा pinctrl_gpio_range *range;
+	list_for_each_entry(pctldev, &pinctrldev_list, node) {
+		struct pinctrl_gpio_range *range;
 
 		range = pinctrl_match_gpio_range(pctldev, gpio);
-		अगर (range) अणु
+		if (range) {
 			*outdev = pctldev;
 			*outrange = range;
 			mutex_unlock(&pinctrldev_list_mutex);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	mutex_unlock(&pinctrldev_list_mutex);
 
-	वापस -EPROBE_DEFER;
-पूर्ण
+	return -EPROBE_DEFER;
+}
 
 /**
- * pinctrl_add_gpio_range() - रेजिस्टर a GPIO range क्रम a controller
+ * pinctrl_add_gpio_range() - register a GPIO range for a controller
  * @pctldev: pin controller device to add the range to
  * @range: the GPIO range to add
  *
  * This adds a range of GPIOs to be handled by a certain pin controller. Call
- * this to रेजिस्टर handled ranges after रेजिस्टरing your pin controller.
+ * this to register handled ranges after registering your pin controller.
  */
-व्योम pinctrl_add_gpio_range(काष्ठा pinctrl_dev *pctldev,
-			    काष्ठा pinctrl_gpio_range *range)
-अणु
+void pinctrl_add_gpio_range(struct pinctrl_dev *pctldev,
+			    struct pinctrl_gpio_range *range)
+{
 	mutex_lock(&pctldev->mutex);
 	list_add_tail(&range->node, &pctldev->gpio_ranges);
 	mutex_unlock(&pctldev->mutex);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pinctrl_add_gpio_range);
 
-व्योम pinctrl_add_gpio_ranges(काष्ठा pinctrl_dev *pctldev,
-			     काष्ठा pinctrl_gpio_range *ranges,
-			     अचिन्हित nranges)
-अणु
-	पूर्णांक i;
+void pinctrl_add_gpio_ranges(struct pinctrl_dev *pctldev,
+			     struct pinctrl_gpio_range *ranges,
+			     unsigned nranges)
+{
+	int i;
 
-	क्रम (i = 0; i < nranges; i++)
+	for (i = 0; i < nranges; i++)
 		pinctrl_add_gpio_range(pctldev, &ranges[i]);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pinctrl_add_gpio_ranges);
 
-काष्ठा pinctrl_dev *pinctrl_find_and_add_gpio_range(स्थिर अक्षर *devname,
-		काष्ठा pinctrl_gpio_range *range)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
+struct pinctrl_dev *pinctrl_find_and_add_gpio_range(const char *devname,
+		struct pinctrl_gpio_range *range)
+{
+	struct pinctrl_dev *pctldev;
 
 	pctldev = get_pinctrl_dev_from_devname(devname);
 
 	/*
 	 * If we can't find this device, let's assume that is because
-	 * it has not probed yet, so the driver trying to रेजिस्टर this
+	 * it has not probed yet, so the driver trying to register this
 	 * range need to defer probing.
 	 */
-	अगर (!pctldev) अणु
-		वापस ERR_PTR(-EPROBE_DEFER);
-	पूर्ण
+	if (!pctldev) {
+		return ERR_PTR(-EPROBE_DEFER);
+	}
 	pinctrl_add_gpio_range(pctldev, range);
 
-	वापस pctldev;
-पूर्ण
+	return pctldev;
+}
 EXPORT_SYMBOL_GPL(pinctrl_find_and_add_gpio_range);
 
-पूर्णांक pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev, स्थिर अक्षर *pin_group,
-				स्थिर अचिन्हित **pins, अचिन्हित *num_pins)
-अणु
-	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	पूर्णांक gs;
+int pinctrl_get_group_pins(struct pinctrl_dev *pctldev, const char *pin_group,
+				const unsigned **pins, unsigned *num_pins)
+{
+	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	int gs;
 
-	अगर (!pctlops->get_group_pins)
-		वापस -EINVAL;
+	if (!pctlops->get_group_pins)
+		return -EINVAL;
 
 	gs = pinctrl_get_group_selector(pctldev, pin_group);
-	अगर (gs < 0)
-		वापस gs;
+	if (gs < 0)
+		return gs;
 
-	वापस pctlops->get_group_pins(pctldev, gs, pins, num_pins);
-पूर्ण
+	return pctlops->get_group_pins(pctldev, gs, pins, num_pins);
+}
 EXPORT_SYMBOL_GPL(pinctrl_get_group_pins);
 
-काष्ठा pinctrl_gpio_range *
-pinctrl_find_gpio_range_from_pin_nolock(काष्ठा pinctrl_dev *pctldev,
-					अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा pinctrl_gpio_range *range;
+struct pinctrl_gpio_range *
+pinctrl_find_gpio_range_from_pin_nolock(struct pinctrl_dev *pctldev,
+					unsigned int pin)
+{
+	struct pinctrl_gpio_range *range;
 
 	/* Loop over the ranges */
-	list_क्रम_each_entry(range, &pctldev->gpio_ranges, node) अणु
-		/* Check अगर we're in the valid range */
-		अगर (range->pins) अणु
-			पूर्णांक a;
-			क्रम (a = 0; a < range->npins; a++) अणु
-				अगर (range->pins[a] == pin)
-					वापस range;
-			पूर्ण
-		पूर्ण अन्यथा अगर (pin >= range->pin_base &&
+	list_for_each_entry(range, &pctldev->gpio_ranges, node) {
+		/* Check if we're in the valid range */
+		if (range->pins) {
+			int a;
+			for (a = 0; a < range->npins; a++) {
+				if (range->pins[a] == pin)
+					return range;
+			}
+		} else if (pin >= range->pin_base &&
 			   pin < range->pin_base + range->npins)
-			वापस range;
-	पूर्ण
+			return range;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(pinctrl_find_gpio_range_from_pin_nolock);
 
 /**
- * pinctrl_find_gpio_range_from_pin() - locate the GPIO range क्रम a pin
+ * pinctrl_find_gpio_range_from_pin() - locate the GPIO range for a pin
  * @pctldev: the pin controller device to look in
- * @pin: a controller-local number to find the range क्रम
+ * @pin: a controller-local number to find the range for
  */
-काष्ठा pinctrl_gpio_range *
-pinctrl_find_gpio_range_from_pin(काष्ठा pinctrl_dev *pctldev,
-				 अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा pinctrl_gpio_range *range;
+struct pinctrl_gpio_range *
+pinctrl_find_gpio_range_from_pin(struct pinctrl_dev *pctldev,
+				 unsigned int pin)
+{
+	struct pinctrl_gpio_range *range;
 
 	mutex_lock(&pctldev->mutex);
 	range = pinctrl_find_gpio_range_from_pin_nolock(pctldev, pin);
 	mutex_unlock(&pctldev->mutex);
 
-	वापस range;
-पूर्ण
+	return range;
+}
 EXPORT_SYMBOL_GPL(pinctrl_find_gpio_range_from_pin);
 
 /**
- * pinctrl_हटाओ_gpio_range() - हटाओ a range of GPIOs from a pin controller
- * @pctldev: pin controller device to हटाओ the range from
- * @range: the GPIO range to हटाओ
+ * pinctrl_remove_gpio_range() - remove a range of GPIOs from a pin controller
+ * @pctldev: pin controller device to remove the range from
+ * @range: the GPIO range to remove
  */
-व्योम pinctrl_हटाओ_gpio_range(काष्ठा pinctrl_dev *pctldev,
-			       काष्ठा pinctrl_gpio_range *range)
-अणु
+void pinctrl_remove_gpio_range(struct pinctrl_dev *pctldev,
+			       struct pinctrl_gpio_range *range)
+{
 	mutex_lock(&pctldev->mutex);
 	list_del(&range->node);
 	mutex_unlock(&pctldev->mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_हटाओ_gpio_range);
+}
+EXPORT_SYMBOL_GPL(pinctrl_remove_gpio_range);
 
-#अगर_घोषित CONFIG_GENERIC_PINCTRL_GROUPS
+#ifdef CONFIG_GENERIC_PINCTRL_GROUPS
 
 /**
- * pinctrl_generic_get_group_count() - वापसs the number of pin groups
+ * pinctrl_generic_get_group_count() - returns the number of pin groups
  * @pctldev: pin controller device
  */
-पूर्णांक pinctrl_generic_get_group_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	वापस pctldev->num_groups;
-पूर्ण
+int pinctrl_generic_get_group_count(struct pinctrl_dev *pctldev)
+{
+	return pctldev->num_groups;
+}
 EXPORT_SYMBOL_GPL(pinctrl_generic_get_group_count);
 
 /**
- * pinctrl_generic_get_group_name() - वापसs the name of a pin group
+ * pinctrl_generic_get_group_name() - returns the name of a pin group
  * @pctldev: pin controller device
  * @selector: group number
  */
-स्थिर अक्षर *pinctrl_generic_get_group_name(काष्ठा pinctrl_dev *pctldev,
-					   अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा group_desc *group;
+const char *pinctrl_generic_get_group_name(struct pinctrl_dev *pctldev,
+					   unsigned int selector)
+{
+	struct group_desc *group;
 
 	group = radix_tree_lookup(&pctldev->pin_group_tree,
 				  selector);
-	अगर (!group)
-		वापस शून्य;
+	if (!group)
+		return NULL;
 
-	वापस group->name;
-पूर्ण
+	return group->name;
+}
 EXPORT_SYMBOL_GPL(pinctrl_generic_get_group_name);
 
 /**
- * pinctrl_generic_get_group_pins() - माला_लो the pin group pins
+ * pinctrl_generic_get_group_pins() - gets the pin group pins
  * @pctldev: pin controller device
  * @selector: group number
  * @pins: pins in the group
  * @num_pins: number of pins in the group
  */
-पूर्णांक pinctrl_generic_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-				   अचिन्हित पूर्णांक selector,
-				   स्थिर अचिन्हित पूर्णांक **pins,
-				   अचिन्हित पूर्णांक *num_pins)
-अणु
-	काष्ठा group_desc *group;
+int pinctrl_generic_get_group_pins(struct pinctrl_dev *pctldev,
+				   unsigned int selector,
+				   const unsigned int **pins,
+				   unsigned int *num_pins)
+{
+	struct group_desc *group;
 
 	group = radix_tree_lookup(&pctldev->pin_group_tree,
 				  selector);
-	अगर (!group) अणु
+	if (!group) {
 		dev_err(pctldev->dev, "%s could not find pingroup%i\n",
 			__func__, selector);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	*pins = group->pins;
 	*num_pins = group->num_pins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pinctrl_generic_get_group_pins);
 
 /**
- * pinctrl_generic_get_group() - वापसs a pin group based on the number
+ * pinctrl_generic_get_group() - returns a pin group based on the number
  * @pctldev: pin controller device
  * @selector: group number
  */
-काष्ठा group_desc *pinctrl_generic_get_group(काष्ठा pinctrl_dev *pctldev,
-					     अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा group_desc *group;
+struct group_desc *pinctrl_generic_get_group(struct pinctrl_dev *pctldev,
+					     unsigned int selector)
+{
+	struct group_desc *group;
 
 	group = radix_tree_lookup(&pctldev->pin_group_tree,
 				  selector);
-	अगर (!group)
-		वापस शून्य;
+	if (!group)
+		return NULL;
 
-	वापस group;
-पूर्ण
+	return group;
+}
 EXPORT_SYMBOL_GPL(pinctrl_generic_get_group);
 
-अटल पूर्णांक pinctrl_generic_group_name_to_selector(काष्ठा pinctrl_dev *pctldev,
-						  स्थिर अक्षर *function)
-अणु
-	स्थिर काष्ठा pinctrl_ops *ops = pctldev->desc->pctlops;
-	पूर्णांक ngroups = ops->get_groups_count(pctldev);
-	पूर्णांक selector = 0;
+static int pinctrl_generic_group_name_to_selector(struct pinctrl_dev *pctldev,
+						  const char *function)
+{
+	const struct pinctrl_ops *ops = pctldev->desc->pctlops;
+	int ngroups = ops->get_groups_count(pctldev);
+	int selector = 0;
 
-	/* See अगर this pctldev has this group */
-	जबतक (selector < ngroups) अणु
-		स्थिर अक्षर *gname = ops->get_group_name(pctldev, selector);
+	/* See if this pctldev has this group */
+	while (selector < ngroups) {
+		const char *gname = ops->get_group_name(pctldev, selector);
 
-		अगर (gname && !म_भेद(function, gname))
-			वापस selector;
+		if (gname && !strcmp(function, gname))
+			return selector;
 
 		selector++;
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * pinctrl_generic_add_group() - adds a new pin group
@@ -621,28 +620,28 @@ EXPORT_SYMBOL_GPL(pinctrl_generic_get_group);
  * @name: name of the pin group
  * @pins: pins in the pin group
  * @num_pins: number of pins in the pin group
- * @data: pin controller driver specअगरic data
+ * @data: pin controller driver specific data
  *
  * Note that the caller must take care of locking.
  */
-पूर्णांक pinctrl_generic_add_group(काष्ठा pinctrl_dev *pctldev, स्थिर अक्षर *name,
-			      पूर्णांक *pins, पूर्णांक num_pins, व्योम *data)
-अणु
-	काष्ठा group_desc *group;
-	पूर्णांक selector;
+int pinctrl_generic_add_group(struct pinctrl_dev *pctldev, const char *name,
+			      int *pins, int num_pins, void *data)
+{
+	struct group_desc *group;
+	int selector;
 
-	अगर (!name)
-		वापस -EINVAL;
+	if (!name)
+		return -EINVAL;
 
 	selector = pinctrl_generic_group_name_to_selector(pctldev, name);
-	अगर (selector >= 0)
-		वापस selector;
+	if (selector >= 0)
+		return selector;
 
 	selector = pctldev->num_groups;
 
-	group = devm_kzalloc(pctldev->dev, माप(*group), GFP_KERNEL);
-	अगर (!group)
-		वापस -ENOMEM;
+	group = devm_kzalloc(pctldev->dev, sizeof(*group), GFP_KERNEL);
+	if (!group)
+		return -ENOMEM;
 
 	group->name = name;
 	group->pins = pins;
@@ -653,141 +652,141 @@ EXPORT_SYMBOL_GPL(pinctrl_generic_get_group);
 
 	pctldev->num_groups++;
 
-	वापस selector;
-पूर्ण
+	return selector;
+}
 EXPORT_SYMBOL_GPL(pinctrl_generic_add_group);
 
 /**
- * pinctrl_generic_हटाओ_group() - हटाओs a numbered pin group
+ * pinctrl_generic_remove_group() - removes a numbered pin group
  * @pctldev: pin controller device
  * @selector: group number
  *
  * Note that the caller must take care of locking.
  */
-पूर्णांक pinctrl_generic_हटाओ_group(काष्ठा pinctrl_dev *pctldev,
-				 अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा group_desc *group;
+int pinctrl_generic_remove_group(struct pinctrl_dev *pctldev,
+				 unsigned int selector)
+{
+	struct group_desc *group;
 
 	group = radix_tree_lookup(&pctldev->pin_group_tree,
 				  selector);
-	अगर (!group)
-		वापस -ENOENT;
+	if (!group)
+		return -ENOENT;
 
 	radix_tree_delete(&pctldev->pin_group_tree, selector);
-	devm_kमुक्त(pctldev->dev, group);
+	devm_kfree(pctldev->dev, group);
 
 	pctldev->num_groups--;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_generic_हटाओ_group);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pinctrl_generic_remove_group);
 
 /**
- * pinctrl_generic_मुक्त_groups() - हटाओs all pin groups
+ * pinctrl_generic_free_groups() - removes all pin groups
  * @pctldev: pin controller device
  *
  * Note that the caller must take care of locking. The pinctrl groups
- * are allocated with devm_kzalloc() so no need to मुक्त them here.
+ * are allocated with devm_kzalloc() so no need to free them here.
  */
-अटल व्योम pinctrl_generic_मुक्त_groups(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा radix_tree_iter iter;
-	व्योम __rcu **slot;
+static void pinctrl_generic_free_groups(struct pinctrl_dev *pctldev)
+{
+	struct radix_tree_iter iter;
+	void __rcu **slot;
 
-	radix_tree_क्रम_each_slot(slot, &pctldev->pin_group_tree, &iter, 0)
+	radix_tree_for_each_slot(slot, &pctldev->pin_group_tree, &iter, 0)
 		radix_tree_delete(&pctldev->pin_group_tree, iter.index);
 
 	pctldev->num_groups = 0;
-पूर्ण
+}
 
-#अन्यथा
-अटल अंतरभूत व्योम pinctrl_generic_मुक्त_groups(काष्ठा pinctrl_dev *pctldev)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_GENERIC_PINCTRL_GROUPS */
+#else
+static inline void pinctrl_generic_free_groups(struct pinctrl_dev *pctldev)
+{
+}
+#endif /* CONFIG_GENERIC_PINCTRL_GROUPS */
 
 /**
- * pinctrl_get_group_selector() - वापसs the group selector क्रम a group
+ * pinctrl_get_group_selector() - returns the group selector for a group
  * @pctldev: the pin controller handling the group
  * @pin_group: the pin group to look up
  */
-पूर्णांक pinctrl_get_group_selector(काष्ठा pinctrl_dev *pctldev,
-			       स्थिर अक्षर *pin_group)
-अणु
-	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	अचिन्हित ngroups = pctlops->get_groups_count(pctldev);
-	अचिन्हित group_selector = 0;
+int pinctrl_get_group_selector(struct pinctrl_dev *pctldev,
+			       const char *pin_group)
+{
+	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	unsigned ngroups = pctlops->get_groups_count(pctldev);
+	unsigned group_selector = 0;
 
-	जबतक (group_selector < ngroups) अणु
-		स्थिर अक्षर *gname = pctlops->get_group_name(pctldev,
+	while (group_selector < ngroups) {
+		const char *gname = pctlops->get_group_name(pctldev,
 							    group_selector);
-		अगर (gname && !म_भेद(gname, pin_group)) अणु
+		if (gname && !strcmp(gname, pin_group)) {
 			dev_dbg(pctldev->dev,
 				"found group selector %u for %s\n",
 				group_selector,
 				pin_group);
-			वापस group_selector;
-		पूर्ण
+			return group_selector;
+		}
 
 		group_selector++;
-	पूर्ण
+	}
 
 	dev_err(pctldev->dev, "does not have pin group %s\n",
 		pin_group);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-bool pinctrl_gpio_can_use_line(अचिन्हित gpio)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	काष्ठा pinctrl_gpio_range *range;
+bool pinctrl_gpio_can_use_line(unsigned gpio)
+{
+	struct pinctrl_dev *pctldev;
+	struct pinctrl_gpio_range *range;
 	bool result;
-	पूर्णांक pin;
+	int pin;
 
 	/*
-	 * Try to obtain GPIO range, अगर it fails
+	 * Try to obtain GPIO range, if it fails
 	 * we're probably dealing with GPIO driver
 	 * without a backing pin controller - bail out.
 	 */
-	अगर (pinctrl_get_device_gpio_range(gpio, &pctldev, &range))
-		वापस true;
+	if (pinctrl_get_device_gpio_range(gpio, &pctldev, &range))
+		return true;
 
 	mutex_lock(&pctldev->mutex);
 
 	/* Convert to the pin controllers number space */
 	pin = gpio_to_pin(range, gpio);
 
-	result = pinmux_can_be_used_क्रम_gpio(pctldev, pin);
+	result = pinmux_can_be_used_for_gpio(pctldev, pin);
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL_GPL(pinctrl_gpio_can_use_line);
 
 /**
  * pinctrl_gpio_request() - request a single pin to be used as GPIO
- * @gpio: the GPIO pin number from the GPIO subप्रणाली number space
+ * @gpio: the GPIO pin number from the GPIO subsystem number space
  *
  * This function should *ONLY* be used from gpiolib-based GPIO drivers,
- * as part of their gpio_request() semantics, platक्रमms and inभागidual drivers
+ * as part of their gpio_request() semantics, platforms and individual drivers
  * shall *NOT* request GPIO pins to be muxed in.
  */
-पूर्णांक pinctrl_gpio_request(अचिन्हित gpio)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	काष्ठा pinctrl_gpio_range *range;
-	पूर्णांक ret;
-	पूर्णांक pin;
+int pinctrl_gpio_request(unsigned gpio)
+{
+	struct pinctrl_dev *pctldev;
+	struct pinctrl_gpio_range *range;
+	int ret;
+	int pin;
 
 	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	अगर (ret) अणु
-		अगर (pinctrl_पढ़ोy_क्रम_gpio_range(gpio))
+	if (ret) {
+		if (pinctrl_ready_for_gpio_range(gpio))
 			ret = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	mutex_lock(&pctldev->mutex);
 
@@ -798,51 +797,51 @@ EXPORT_SYMBOL_GPL(pinctrl_gpio_can_use_line);
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pinctrl_gpio_request);
 
 /**
- * pinctrl_gpio_मुक्त() - मुक्त control on a single pin, currently used as GPIO
- * @gpio: the GPIO pin number from the GPIO subप्रणाली number space
+ * pinctrl_gpio_free() - free control on a single pin, currently used as GPIO
+ * @gpio: the GPIO pin number from the GPIO subsystem number space
  *
  * This function should *ONLY* be used from gpiolib-based GPIO drivers,
- * as part of their gpio_मुक्त() semantics, platक्रमms and inभागidual drivers
+ * as part of their gpio_free() semantics, platforms and individual drivers
  * shall *NOT* request GPIO pins to be muxed out.
  */
-व्योम pinctrl_gpio_मुक्त(अचिन्हित gpio)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	काष्ठा pinctrl_gpio_range *range;
-	पूर्णांक ret;
-	पूर्णांक pin;
+void pinctrl_gpio_free(unsigned gpio)
+{
+	struct pinctrl_dev *pctldev;
+	struct pinctrl_gpio_range *range;
+	int ret;
+	int pin;
 
 	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	अगर (ret) अणु
-		वापस;
-	पूर्ण
+	if (ret) {
+		return;
+	}
 	mutex_lock(&pctldev->mutex);
 
 	/* Convert to the pin controllers number space */
 	pin = gpio_to_pin(range, gpio);
 
-	pinmux_मुक्त_gpio(pctldev, pin, range);
+	pinmux_free_gpio(pctldev, pin, range);
 
 	mutex_unlock(&pctldev->mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_gpio_मुक्त);
+}
+EXPORT_SYMBOL_GPL(pinctrl_gpio_free);
 
-अटल पूर्णांक pinctrl_gpio_direction(अचिन्हित gpio, bool input)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	काष्ठा pinctrl_gpio_range *range;
-	पूर्णांक ret;
-	पूर्णांक pin;
+static int pinctrl_gpio_direction(unsigned gpio, bool input)
+{
+	struct pinctrl_dev *pctldev;
+	struct pinctrl_gpio_range *range;
+	int ret;
+	int pin;
 
 	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	अगर (ret) अणु
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		return ret;
+	}
 
 	mutex_lock(&pctldev->mutex);
 
@@ -852,251 +851,251 @@ EXPORT_SYMBOL_GPL(pinctrl_gpio_मुक्त);
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pinctrl_gpio_direction_input() - request a GPIO pin to go पूर्णांकo input mode
- * @gpio: the GPIO pin number from the GPIO subप्रणाली number space
+ * pinctrl_gpio_direction_input() - request a GPIO pin to go into input mode
+ * @gpio: the GPIO pin number from the GPIO subsystem number space
  *
  * This function should *ONLY* be used from gpiolib-based GPIO drivers,
- * as part of their gpio_direction_input() semantics, platक्रमms and inभागidual
+ * as part of their gpio_direction_input() semantics, platforms and individual
  * drivers shall *NOT* touch pin control GPIO calls.
  */
-पूर्णांक pinctrl_gpio_direction_input(अचिन्हित gpio)
-अणु
-	वापस pinctrl_gpio_direction(gpio, true);
-पूर्ण
+int pinctrl_gpio_direction_input(unsigned gpio)
+{
+	return pinctrl_gpio_direction(gpio, true);
+}
 EXPORT_SYMBOL_GPL(pinctrl_gpio_direction_input);
 
 /**
- * pinctrl_gpio_direction_output() - request a GPIO pin to go पूर्णांकo output mode
- * @gpio: the GPIO pin number from the GPIO subप्रणाली number space
+ * pinctrl_gpio_direction_output() - request a GPIO pin to go into output mode
+ * @gpio: the GPIO pin number from the GPIO subsystem number space
  *
  * This function should *ONLY* be used from gpiolib-based GPIO drivers,
- * as part of their gpio_direction_output() semantics, platक्रमms and inभागidual
+ * as part of their gpio_direction_output() semantics, platforms and individual
  * drivers shall *NOT* touch pin control GPIO calls.
  */
-पूर्णांक pinctrl_gpio_direction_output(अचिन्हित gpio)
-अणु
-	वापस pinctrl_gpio_direction(gpio, false);
-पूर्ण
+int pinctrl_gpio_direction_output(unsigned gpio)
+{
+	return pinctrl_gpio_direction(gpio, false);
+}
 EXPORT_SYMBOL_GPL(pinctrl_gpio_direction_output);
 
 /**
  * pinctrl_gpio_set_config() - Apply config to given GPIO pin
- * @gpio: the GPIO pin number from the GPIO subप्रणाली number space
+ * @gpio: the GPIO pin number from the GPIO subsystem number space
  * @config: the configuration to apply to the GPIO
  *
- * This function should *ONLY* be used from gpiolib-based GPIO drivers, अगर
+ * This function should *ONLY* be used from gpiolib-based GPIO drivers, if
  * they need to call the underlying pin controller to change GPIO config
- * (क्रम example set debounce समय).
+ * (for example set debounce time).
  */
-पूर्णांक pinctrl_gpio_set_config(अचिन्हित gpio, अचिन्हित दीर्घ config)
-अणु
-	अचिन्हित दीर्घ configs[] = अणु config पूर्ण;
-	काष्ठा pinctrl_gpio_range *range;
-	काष्ठा pinctrl_dev *pctldev;
-	पूर्णांक ret, pin;
+int pinctrl_gpio_set_config(unsigned gpio, unsigned long config)
+{
+	unsigned long configs[] = { config };
+	struct pinctrl_gpio_range *range;
+	struct pinctrl_dev *pctldev;
+	int ret, pin;
 
 	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&pctldev->mutex);
 	pin = gpio_to_pin(range, gpio);
 	ret = pinconf_set_config(pctldev, pin, configs, ARRAY_SIZE(configs));
 	mutex_unlock(&pctldev->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pinctrl_gpio_set_config);
 
-अटल काष्ठा pinctrl_state *find_state(काष्ठा pinctrl *p,
-					स्थिर अक्षर *name)
-अणु
-	काष्ठा pinctrl_state *state;
+static struct pinctrl_state *find_state(struct pinctrl *p,
+					const char *name)
+{
+	struct pinctrl_state *state;
 
-	list_क्रम_each_entry(state, &p->states, node)
-		अगर (!म_भेद(state->name, name))
-			वापस state;
+	list_for_each_entry(state, &p->states, node)
+		if (!strcmp(state->name, name))
+			return state;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा pinctrl_state *create_state(काष्ठा pinctrl *p,
-					  स्थिर अक्षर *name)
-अणु
-	काष्ठा pinctrl_state *state;
+static struct pinctrl_state *create_state(struct pinctrl *p,
+					  const char *name)
+{
+	struct pinctrl_state *state;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस ERR_PTR(-ENOMEM);
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return ERR_PTR(-ENOMEM);
 
 	state->name = name;
 	INIT_LIST_HEAD(&state->settings);
 
 	list_add_tail(&state->node, &p->states);
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल पूर्णांक add_setting(काष्ठा pinctrl *p, काष्ठा pinctrl_dev *pctldev,
-		       स्थिर काष्ठा pinctrl_map *map)
-अणु
-	काष्ठा pinctrl_state *state;
-	काष्ठा pinctrl_setting *setting;
-	पूर्णांक ret;
+static int add_setting(struct pinctrl *p, struct pinctrl_dev *pctldev,
+		       const struct pinctrl_map *map)
+{
+	struct pinctrl_state *state;
+	struct pinctrl_setting *setting;
+	int ret;
 
 	state = find_state(p, map->name);
-	अगर (!state)
+	if (!state)
 		state = create_state(p, map->name);
-	अगर (IS_ERR(state))
-		वापस PTR_ERR(state);
+	if (IS_ERR(state))
+		return PTR_ERR(state);
 
-	अगर (map->type == PIN_MAP_TYPE_DUMMY_STATE)
-		वापस 0;
+	if (map->type == PIN_MAP_TYPE_DUMMY_STATE)
+		return 0;
 
-	setting = kzalloc(माप(*setting), GFP_KERNEL);
-	अगर (!setting)
-		वापस -ENOMEM;
+	setting = kzalloc(sizeof(*setting), GFP_KERNEL);
+	if (!setting)
+		return -ENOMEM;
 
 	setting->type = map->type;
 
-	अगर (pctldev)
+	if (pctldev)
 		setting->pctldev = pctldev;
-	अन्यथा
+	else
 		setting->pctldev =
 			get_pinctrl_dev_from_devname(map->ctrl_dev_name);
-	अगर (!setting->pctldev) अणु
-		kमुक्त(setting);
+	if (!setting->pctldev) {
+		kfree(setting);
 		/* Do not defer probing of hogs (circular loop) */
-		अगर (!म_भेद(map->ctrl_dev_name, map->dev_name))
-			वापस -ENODEV;
+		if (!strcmp(map->ctrl_dev_name, map->dev_name))
+			return -ENODEV;
 		/*
 		 * OK let us guess that the driver is not there yet, and
 		 * let's defer obtaining this pinctrl handle to later...
 		 */
 		dev_info(p->dev, "unknown pinctrl device %s in map entry, deferring probe",
 			map->ctrl_dev_name);
-		वापस -EPROBE_DEFER;
-	पूर्ण
+		return -EPROBE_DEFER;
+	}
 
 	setting->dev_name = map->dev_name;
 
-	चयन (map->type) अणु
-	हाल PIN_MAP_TYPE_MUX_GROUP:
+	switch (map->type) {
+	case PIN_MAP_TYPE_MUX_GROUP:
 		ret = pinmux_map_to_setting(map, setting);
-		अवरोध;
-	हाल PIN_MAP_TYPE_CONFIGS_PIN:
-	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+		break;
+	case PIN_MAP_TYPE_CONFIGS_PIN:
+	case PIN_MAP_TYPE_CONFIGS_GROUP:
 		ret = pinconf_map_to_setting(map, setting);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	अगर (ret < 0) अणु
-		kमुक्त(setting);
-		वापस ret;
-	पूर्ण
+		break;
+	}
+	if (ret < 0) {
+		kfree(setting);
+		return ret;
+	}
 
 	list_add_tail(&setting->node, &state->settings);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pinctrl *find_pinctrl(काष्ठा device *dev)
-अणु
-	काष्ठा pinctrl *p;
+static struct pinctrl *find_pinctrl(struct device *dev)
+{
+	struct pinctrl *p;
 
 	mutex_lock(&pinctrl_list_mutex);
-	list_क्रम_each_entry(p, &pinctrl_list, node)
-		अगर (p->dev == dev) अणु
+	list_for_each_entry(p, &pinctrl_list, node)
+		if (p->dev == dev) {
 			mutex_unlock(&pinctrl_list_mutex);
-			वापस p;
-		पूर्ण
+			return p;
+		}
 
 	mutex_unlock(&pinctrl_list_mutex);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम pinctrl_मुक्त(काष्ठा pinctrl *p, bool inlist);
+static void pinctrl_free(struct pinctrl *p, bool inlist);
 
-अटल काष्ठा pinctrl *create_pinctrl(काष्ठा device *dev,
-				      काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा pinctrl *p;
-	स्थिर अक्षर *devname;
-	काष्ठा pinctrl_maps *maps_node;
-	पूर्णांक i;
-	स्थिर काष्ठा pinctrl_map *map;
-	पूर्णांक ret;
+static struct pinctrl *create_pinctrl(struct device *dev,
+				      struct pinctrl_dev *pctldev)
+{
+	struct pinctrl *p;
+	const char *devname;
+	struct pinctrl_maps *maps_node;
+	int i;
+	const struct pinctrl_map *map;
+	int ret;
 
 	/*
-	 * create the state cookie holder काष्ठा pinctrl क्रम each
+	 * create the state cookie holder struct pinctrl for each
 	 * mapping, this is what consumers will get when requesting
 	 * a pin control handle with pinctrl_get()
 	 */
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस ERR_PTR(-ENOMEM);
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
 	p->dev = dev;
 	INIT_LIST_HEAD(&p->states);
 	INIT_LIST_HEAD(&p->dt_maps);
 
 	ret = pinctrl_dt_to_map(p, pctldev);
-	अगर (ret < 0) अणु
-		kमुक्त(p);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret < 0) {
+		kfree(p);
+		return ERR_PTR(ret);
+	}
 
 	devname = dev_name(dev);
 
 	mutex_lock(&pinctrl_maps_mutex);
 	/* Iterate over the pin control maps to locate the right ones */
-	क्रम_each_maps(maps_node, i, map) अणु
-		/* Map must be क्रम this device */
-		अगर (म_भेद(map->dev_name, devname))
-			जारी;
+	for_each_maps(maps_node, i, map) {
+		/* Map must be for this device */
+		if (strcmp(map->dev_name, devname))
+			continue;
 		/*
-		 * If pctldev is not null, we are claiming hog क्रम it,
+		 * If pctldev is not null, we are claiming hog for it,
 		 * that means, setting that is served by pctldev by itself.
 		 *
-		 * Thus we must skip map that is क्रम this device but is served
+		 * Thus we must skip map that is for this device but is served
 		 * by other device.
 		 */
-		अगर (pctldev &&
-		    म_भेद(dev_name(pctldev->dev), map->ctrl_dev_name))
-			जारी;
+		if (pctldev &&
+		    strcmp(dev_name(pctldev->dev), map->ctrl_dev_name))
+			continue;
 
 		ret = add_setting(p, pctldev, map);
 		/*
-		 * At this poपूर्णांक the adding of a setting may:
+		 * At this point the adding of a setting may:
 		 *
-		 * - Defer, अगर the pinctrl device is not yet available
-		 * - Fail, अगर the pinctrl device is not yet available,
+		 * - Defer, if the pinctrl device is not yet available
+		 * - Fail, if the pinctrl device is not yet available,
 		 *   AND the setting is a hog. We cannot defer that, since
 		 *   the hog will kick in immediately after the device
-		 *   is रेजिस्टरed.
+		 *   is registered.
 		 *
-		 * If the error वापसed was not -EPROBE_DEFER then we
-		 * accumulate the errors to see अगर we end up with
-		 * an -EPROBE_DEFER later, as that is the worst हाल.
+		 * If the error returned was not -EPROBE_DEFER then we
+		 * accumulate the errors to see if we end up with
+		 * an -EPROBE_DEFER later, as that is the worst case.
 		 */
-		अगर (ret == -EPROBE_DEFER) अणु
-			pinctrl_मुक्त(p, false);
+		if (ret == -EPROBE_DEFER) {
+			pinctrl_free(p, false);
 			mutex_unlock(&pinctrl_maps_mutex);
-			वापस ERR_PTR(ret);
-		पूर्ण
-	पूर्ण
+			return ERR_PTR(ret);
+		}
+	}
 	mutex_unlock(&pinctrl_maps_mutex);
 
-	अगर (ret < 0) अणु
-		/* If some other error than deferral occurred, वापस here */
-		pinctrl_मुक्त(p, false);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret < 0) {
+		/* If some other error than deferral occurred, return here */
+		pinctrl_free(p, false);
+		return ERR_PTR(ret);
+	}
 
 	kref_init(&p->users);
 
@@ -1105,97 +1104,97 @@ EXPORT_SYMBOL_GPL(pinctrl_gpio_set_config);
 	list_add_tail(&p->node, &pinctrl_list);
 	mutex_unlock(&pinctrl_list_mutex);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
 /**
- * pinctrl_get() - retrieves the pinctrl handle क्रम a device
- * @dev: the device to obtain the handle क्रम
+ * pinctrl_get() - retrieves the pinctrl handle for a device
+ * @dev: the device to obtain the handle for
  */
-काष्ठा pinctrl *pinctrl_get(काष्ठा device *dev)
-अणु
-	काष्ठा pinctrl *p;
+struct pinctrl *pinctrl_get(struct device *dev)
+{
+	struct pinctrl *p;
 
-	अगर (WARN_ON(!dev))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!dev))
+		return ERR_PTR(-EINVAL);
 
 	/*
-	 * See अगर somebody अन्यथा (such as the device core) has alपढ़ोy
-	 * obtained a handle to the pinctrl क्रम this device. In that हाल,
-	 * वापस another poपूर्णांकer to it.
+	 * See if somebody else (such as the device core) has already
+	 * obtained a handle to the pinctrl for this device. In that case,
+	 * return another pointer to it.
 	 */
 	p = find_pinctrl(dev);
-	अगर (p) अणु
+	if (p) {
 		dev_dbg(dev, "obtain a copy of previously claimed pinctrl\n");
 		kref_get(&p->users);
-		वापस p;
-	पूर्ण
+		return p;
+	}
 
-	वापस create_pinctrl(dev, शून्य);
-पूर्ण
+	return create_pinctrl(dev, NULL);
+}
 EXPORT_SYMBOL_GPL(pinctrl_get);
 
-अटल व्योम pinctrl_मुक्त_setting(bool disable_setting,
-				 काष्ठा pinctrl_setting *setting)
-अणु
-	चयन (setting->type) अणु
-	हाल PIN_MAP_TYPE_MUX_GROUP:
-		अगर (disable_setting)
+static void pinctrl_free_setting(bool disable_setting,
+				 struct pinctrl_setting *setting)
+{
+	switch (setting->type) {
+	case PIN_MAP_TYPE_MUX_GROUP:
+		if (disable_setting)
 			pinmux_disable_setting(setting);
-		pinmux_मुक्त_setting(setting);
-		अवरोध;
-	हाल PIN_MAP_TYPE_CONFIGS_PIN:
-	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
-		pinconf_मुक्त_setting(setting);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		pinmux_free_setting(setting);
+		break;
+	case PIN_MAP_TYPE_CONFIGS_PIN:
+	case PIN_MAP_TYPE_CONFIGS_GROUP:
+		pinconf_free_setting(setting);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम pinctrl_मुक्त(काष्ठा pinctrl *p, bool inlist)
-अणु
-	काष्ठा pinctrl_state *state, *n1;
-	काष्ठा pinctrl_setting *setting, *n2;
+static void pinctrl_free(struct pinctrl *p, bool inlist)
+{
+	struct pinctrl_state *state, *n1;
+	struct pinctrl_setting *setting, *n2;
 
 	mutex_lock(&pinctrl_list_mutex);
-	list_क्रम_each_entry_safe(state, n1, &p->states, node) अणु
-		list_क्रम_each_entry_safe(setting, n2, &state->settings, node) अणु
-			pinctrl_मुक्त_setting(state == p->state, setting);
+	list_for_each_entry_safe(state, n1, &p->states, node) {
+		list_for_each_entry_safe(setting, n2, &state->settings, node) {
+			pinctrl_free_setting(state == p->state, setting);
 			list_del(&setting->node);
-			kमुक्त(setting);
-		पूर्ण
+			kfree(setting);
+		}
 		list_del(&state->node);
-		kमुक्त(state);
-	पूर्ण
+		kfree(state);
+	}
 
-	pinctrl_dt_मुक्त_maps(p);
+	pinctrl_dt_free_maps(p);
 
-	अगर (inlist)
+	if (inlist)
 		list_del(&p->node);
-	kमुक्त(p);
+	kfree(p);
 	mutex_unlock(&pinctrl_list_mutex);
-पूर्ण
+}
 
 /**
  * pinctrl_release() - release the pinctrl handle
  * @kref: the kref in the pinctrl being released
  */
-अटल व्योम pinctrl_release(काष्ठा kref *kref)
-अणु
-	काष्ठा pinctrl *p = container_of(kref, काष्ठा pinctrl, users);
+static void pinctrl_release(struct kref *kref)
+{
+	struct pinctrl *p = container_of(kref, struct pinctrl, users);
 
-	pinctrl_मुक्त(p, true);
-पूर्ण
+	pinctrl_free(p, true);
+}
 
 /**
  * pinctrl_put() - decrease use count on a previously claimed pinctrl handle
  * @p: the pinctrl handle to release
  */
-व्योम pinctrl_put(काष्ठा pinctrl *p)
-अणु
+void pinctrl_put(struct pinctrl *p)
+{
 	kref_put(&p->users, pinctrl_release);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pinctrl_put);
 
 /**
@@ -1203,265 +1202,265 @@ EXPORT_SYMBOL_GPL(pinctrl_put);
  * @p: the pinctrl handle to retrieve the state from
  * @name: the state name to retrieve
  */
-काष्ठा pinctrl_state *pinctrl_lookup_state(काष्ठा pinctrl *p,
-						 स्थिर अक्षर *name)
-अणु
-	काष्ठा pinctrl_state *state;
+struct pinctrl_state *pinctrl_lookup_state(struct pinctrl *p,
+						 const char *name)
+{
+	struct pinctrl_state *state;
 
 	state = find_state(p, name);
-	अगर (!state) अणु
-		अगर (pinctrl_dummy_state) अणु
+	if (!state) {
+		if (pinctrl_dummy_state) {
 			/* create dummy state */
 			dev_dbg(p->dev, "using pinctrl dummy state (%s)\n",
 				name);
 			state = create_state(p, name);
-		पूर्ण अन्यथा
+		} else
 			state = ERR_PTR(-ENODEV);
-	पूर्ण
+	}
 
-	वापस state;
-पूर्ण
+	return state;
+}
 EXPORT_SYMBOL_GPL(pinctrl_lookup_state);
 
-अटल व्योम pinctrl_link_add(काष्ठा pinctrl_dev *pctldev,
-			     काष्ठा device *consumer)
-अणु
-	अगर (pctldev->desc->link_consumers)
+static void pinctrl_link_add(struct pinctrl_dev *pctldev,
+			     struct device *consumer)
+{
+	if (pctldev->desc->link_consumers)
 		device_link_add(consumer, pctldev->dev,
 				DL_FLAG_PM_RUNTIME |
 				DL_FLAG_AUTOREMOVE_CONSUMER);
-पूर्ण
+}
 
 /**
  * pinctrl_commit_state() - select/activate/program a pinctrl state to HW
- * @p: the pinctrl handle क्रम the device that requests configuration
+ * @p: the pinctrl handle for the device that requests configuration
  * @state: the state handle to select/activate/program
  */
-अटल पूर्णांक pinctrl_commit_state(काष्ठा pinctrl *p, काष्ठा pinctrl_state *state)
-अणु
-	काष्ठा pinctrl_setting *setting, *setting2;
-	काष्ठा pinctrl_state *old_state = p->state;
-	पूर्णांक ret;
+static int pinctrl_commit_state(struct pinctrl *p, struct pinctrl_state *state)
+{
+	struct pinctrl_setting *setting, *setting2;
+	struct pinctrl_state *old_state = p->state;
+	int ret;
 
-	अगर (p->state) अणु
+	if (p->state) {
 		/*
-		 * For each pinmux setting in the old state, क्रमget SW's record
-		 * of mux owner क्रम that pingroup. Any pingroups which are
+		 * For each pinmux setting in the old state, forget SW's record
+		 * of mux owner for that pingroup. Any pingroups which are
 		 * still owned by the new state will be re-acquired by the call
 		 * to pinmux_enable_setting() in the loop below.
 		 */
-		list_क्रम_each_entry(setting, &p->state->settings, node) अणु
-			अगर (setting->type != PIN_MAP_TYPE_MUX_GROUP)
-				जारी;
+		list_for_each_entry(setting, &p->state->settings, node) {
+			if (setting->type != PIN_MAP_TYPE_MUX_GROUP)
+				continue;
 			pinmux_disable_setting(setting);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	p->state = शून्य;
+	p->state = NULL;
 
-	/* Apply all the settings क्रम the new state - pinmux first */
-	list_क्रम_each_entry(setting, &state->settings, node) अणु
-		चयन (setting->type) अणु
-		हाल PIN_MAP_TYPE_MUX_GROUP:
+	/* Apply all the settings for the new state - pinmux first */
+	list_for_each_entry(setting, &state->settings, node) {
+		switch (setting->type) {
+		case PIN_MAP_TYPE_MUX_GROUP:
 			ret = pinmux_enable_setting(setting);
-			अवरोध;
-		हाल PIN_MAP_TYPE_CONFIGS_PIN:
-		हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+			break;
+		case PIN_MAP_TYPE_CONFIGS_PIN:
+		case PIN_MAP_TYPE_CONFIGS_GROUP:
 			ret = 0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret < 0)
-			जाओ unapply_new_state;
+		if (ret < 0)
+			goto unapply_new_state;
 
 		/* Do not link hogs (circular dependency) */
-		अगर (p != setting->pctldev->p)
+		if (p != setting->pctldev->p)
 			pinctrl_link_add(setting->pctldev, p->dev);
-	पूर्ण
+	}
 
-	/* Apply all the settings क्रम the new state - pinconf after */
-	list_क्रम_each_entry(setting, &state->settings, node) अणु
-		चयन (setting->type) अणु
-		हाल PIN_MAP_TYPE_MUX_GROUP:
+	/* Apply all the settings for the new state - pinconf after */
+	list_for_each_entry(setting, &state->settings, node) {
+		switch (setting->type) {
+		case PIN_MAP_TYPE_MUX_GROUP:
 			ret = 0;
-			अवरोध;
-		हाल PIN_MAP_TYPE_CONFIGS_PIN:
-		हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+			break;
+		case PIN_MAP_TYPE_CONFIGS_PIN:
+		case PIN_MAP_TYPE_CONFIGS_GROUP:
 			ret = pinconf_apply_setting(setting);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (ret < 0) अणु
-			जाओ unapply_new_state;
-		पूर्ण
+		if (ret < 0) {
+			goto unapply_new_state;
+		}
 
 		/* Do not link hogs (circular dependency) */
-		अगर (p != setting->pctldev->p)
+		if (p != setting->pctldev->p)
 			pinctrl_link_add(setting->pctldev, p->dev);
-	पूर्ण
+	}
 
 	p->state = state;
 
-	वापस 0;
+	return 0;
 
 unapply_new_state:
 	dev_err(p->dev, "Error applying setting, reverse things back\n");
 
-	list_क्रम_each_entry(setting2, &state->settings, node) अणु
-		अगर (&setting2->node == &setting->node)
-			अवरोध;
+	list_for_each_entry(setting2, &state->settings, node) {
+		if (&setting2->node == &setting->node)
+			break;
 		/*
-		 * All we can करो here is pinmux_disable_setting.
-		 * That means that some pins are muxed dअगरferently now
-		 * than they were beक्रमe applying the setting (We can't
+		 * All we can do here is pinmux_disable_setting.
+		 * That means that some pins are muxed differently now
+		 * than they were before applying the setting (We can't
 		 * "unmux a pin"!), but it's not a big deal since the pins
-		 * are मुक्त to be muxed by another apply_setting.
+		 * are free to be muxed by another apply_setting.
 		 */
-		अगर (setting2->type == PIN_MAP_TYPE_MUX_GROUP)
+		if (setting2->type == PIN_MAP_TYPE_MUX_GROUP)
 			pinmux_disable_setting(setting2);
-	पूर्ण
+	}
 
-	/* There's no infinite recursive loop here because p->state is शून्य */
-	अगर (old_state)
+	/* There's no infinite recursive loop here because p->state is NULL */
+	if (old_state)
 		pinctrl_select_state(p, old_state);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * pinctrl_select_state() - select/activate/program a pinctrl state to HW
- * @p: the pinctrl handle क्रम the device that requests configuration
+ * @p: the pinctrl handle for the device that requests configuration
  * @state: the state handle to select/activate/program
  */
-पूर्णांक pinctrl_select_state(काष्ठा pinctrl *p, काष्ठा pinctrl_state *state)
-अणु
-	अगर (p->state == state)
-		वापस 0;
+int pinctrl_select_state(struct pinctrl *p, struct pinctrl_state *state)
+{
+	if (p->state == state)
+		return 0;
 
-	वापस pinctrl_commit_state(p, state);
-पूर्ण
+	return pinctrl_commit_state(p, state);
+}
 EXPORT_SYMBOL_GPL(pinctrl_select_state);
 
-अटल व्योम devm_pinctrl_release(काष्ठा device *dev, व्योम *res)
-अणु
-	pinctrl_put(*(काष्ठा pinctrl **)res);
-पूर्ण
+static void devm_pinctrl_release(struct device *dev, void *res)
+{
+	pinctrl_put(*(struct pinctrl **)res);
+}
 
 /**
  * devm_pinctrl_get() - Resource managed pinctrl_get()
- * @dev: the device to obtain the handle क्रम
+ * @dev: the device to obtain the handle for
  *
- * If there is a need to explicitly destroy the वापसed काष्ठा pinctrl,
+ * If there is a need to explicitly destroy the returned struct pinctrl,
  * devm_pinctrl_put() should be used, rather than plain pinctrl_put().
  */
-काष्ठा pinctrl *devm_pinctrl_get(काष्ठा device *dev)
-अणु
-	काष्ठा pinctrl **ptr, *p;
+struct pinctrl *devm_pinctrl_get(struct device *dev)
+{
+	struct pinctrl **ptr, *p;
 
-	ptr = devres_alloc(devm_pinctrl_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_pinctrl_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	p = pinctrl_get(dev);
-	अगर (!IS_ERR(p)) अणु
+	if (!IS_ERR(p)) {
 		*ptr = p;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL_GPL(devm_pinctrl_get);
 
-अटल पूर्णांक devm_pinctrl_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा pinctrl **p = res;
+static int devm_pinctrl_match(struct device *dev, void *res, void *data)
+{
+	struct pinctrl **p = res;
 
-	वापस *p == data;
-पूर्ण
+	return *p == data;
+}
 
 /**
  * devm_pinctrl_put() - Resource managed pinctrl_put()
  * @p: the pinctrl handle to release
  *
- * Deallocate a काष्ठा pinctrl obtained via devm_pinctrl_get(). Normally
+ * Deallocate a struct pinctrl obtained via devm_pinctrl_get(). Normally
  * this function will not need to be called and the resource management
- * code will ensure that the resource is मुक्तd.
+ * code will ensure that the resource is freed.
  */
-व्योम devm_pinctrl_put(काष्ठा pinctrl *p)
-अणु
+void devm_pinctrl_put(struct pinctrl *p)
+{
 	WARN_ON(devres_release(p->dev, devm_pinctrl_release,
 			       devm_pinctrl_match, p));
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(devm_pinctrl_put);
 
 /**
- * pinctrl_रेजिस्टर_mappings() - रेजिस्टर a set of pin controller mappings
- * @maps: the pincontrol mappings table to रेजिस्टर. Note the pinctrl-core
+ * pinctrl_register_mappings() - register a set of pin controller mappings
+ * @maps: the pincontrol mappings table to register. Note the pinctrl-core
  *	keeps a reference to the passed in maps, so they should _not_ be
  *	marked with __initdata.
  * @num_maps: the number of maps in the mapping table
  */
-पूर्णांक pinctrl_रेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *maps,
-			      अचिन्हित num_maps)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा pinctrl_maps *maps_node;
+int pinctrl_register_mappings(const struct pinctrl_map *maps,
+			      unsigned num_maps)
+{
+	int i, ret;
+	struct pinctrl_maps *maps_node;
 
 	pr_debug("add %u pinctrl maps\n", num_maps);
 
 	/* First sanity check the new mapping */
-	क्रम (i = 0; i < num_maps; i++) अणु
-		अगर (!maps[i].dev_name) अणु
+	for (i = 0; i < num_maps; i++) {
+		if (!maps[i].dev_name) {
 			pr_err("failed to register map %s (%d): no device given\n",
 			       maps[i].name, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (!maps[i].name) अणु
+		if (!maps[i].name) {
 			pr_err("failed to register map %d: no map name given\n",
 			       i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (maps[i].type != PIN_MAP_TYPE_DUMMY_STATE &&
-				!maps[i].ctrl_dev_name) अणु
+		if (maps[i].type != PIN_MAP_TYPE_DUMMY_STATE &&
+				!maps[i].ctrl_dev_name) {
 			pr_err("failed to register map %s (%d): no pin control device given\n",
 			       maps[i].name, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		चयन (maps[i].type) अणु
-		हाल PIN_MAP_TYPE_DUMMY_STATE:
-			अवरोध;
-		हाल PIN_MAP_TYPE_MUX_GROUP:
+		switch (maps[i].type) {
+		case PIN_MAP_TYPE_DUMMY_STATE:
+			break;
+		case PIN_MAP_TYPE_MUX_GROUP:
 			ret = pinmux_validate_map(&maps[i], i);
-			अगर (ret < 0)
-				वापस ret;
-			अवरोध;
-		हाल PIN_MAP_TYPE_CONFIGS_PIN:
-		हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+			if (ret < 0)
+				return ret;
+			break;
+		case PIN_MAP_TYPE_CONFIGS_PIN:
+		case PIN_MAP_TYPE_CONFIGS_GROUP:
 			ret = pinconf_validate_map(&maps[i], i);
-			अगर (ret < 0)
-				वापस ret;
-			अवरोध;
-		शेष:
+			if (ret < 0)
+				return ret;
+			break;
+		default:
 			pr_err("failed to register map %s (%d): invalid type given\n",
 			       maps[i].name, i);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	maps_node = kzalloc(माप(*maps_node), GFP_KERNEL);
-	अगर (!maps_node)
-		वापस -ENOMEM;
+	maps_node = kzalloc(sizeof(*maps_node), GFP_KERNEL);
+	if (!maps_node)
+		return -ENOMEM;
 
 	maps_node->maps = maps;
 	maps_node->num_maps = num_maps;
@@ -1470,642 +1469,642 @@ EXPORT_SYMBOL_GPL(devm_pinctrl_put);
 	list_add_tail(&maps_node->node, &pinctrl_maps);
 	mutex_unlock(&pinctrl_maps_mutex);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_रेजिस्टर_mappings);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pinctrl_register_mappings);
 
 /**
- * pinctrl_unरेजिस्टर_mappings() - unरेजिस्टर a set of pin controller mappings
- * @map: the pincontrol mappings table passed to pinctrl_रेजिस्टर_mappings()
- *	when रेजिस्टरing the mappings.
+ * pinctrl_unregister_mappings() - unregister a set of pin controller mappings
+ * @map: the pincontrol mappings table passed to pinctrl_register_mappings()
+ *	when registering the mappings.
  */
-व्योम pinctrl_unरेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *map)
-अणु
-	काष्ठा pinctrl_maps *maps_node;
+void pinctrl_unregister_mappings(const struct pinctrl_map *map)
+{
+	struct pinctrl_maps *maps_node;
 
 	mutex_lock(&pinctrl_maps_mutex);
-	list_क्रम_each_entry(maps_node, &pinctrl_maps, node) अणु
-		अगर (maps_node->maps == map) अणु
+	list_for_each_entry(maps_node, &pinctrl_maps, node) {
+		if (maps_node->maps == map) {
 			list_del(&maps_node->node);
-			kमुक्त(maps_node);
+			kfree(maps_node);
 			mutex_unlock(&pinctrl_maps_mutex);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	mutex_unlock(&pinctrl_maps_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_unरेजिस्टर_mappings);
+}
+EXPORT_SYMBOL_GPL(pinctrl_unregister_mappings);
 
 /**
- * pinctrl_क्रमce_sleep() - turn a given controller device पूर्णांकo sleep state
+ * pinctrl_force_sleep() - turn a given controller device into sleep state
  * @pctldev: pin controller device
  */
-पूर्णांक pinctrl_क्रमce_sleep(काष्ठा pinctrl_dev *pctldev)
-अणु
-	अगर (!IS_ERR(pctldev->p) && !IS_ERR(pctldev->hog_sleep))
-		वापस pinctrl_commit_state(pctldev->p, pctldev->hog_sleep);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_क्रमce_sleep);
+int pinctrl_force_sleep(struct pinctrl_dev *pctldev)
+{
+	if (!IS_ERR(pctldev->p) && !IS_ERR(pctldev->hog_sleep))
+		return pinctrl_commit_state(pctldev->p, pctldev->hog_sleep);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pinctrl_force_sleep);
 
 /**
- * pinctrl_क्रमce_शेष() - turn a given controller device पूर्णांकo शेष state
+ * pinctrl_force_default() - turn a given controller device into default state
  * @pctldev: pin controller device
  */
-पूर्णांक pinctrl_क्रमce_शेष(काष्ठा pinctrl_dev *pctldev)
-अणु
-	अगर (!IS_ERR(pctldev->p) && !IS_ERR(pctldev->hog_शेष))
-		वापस pinctrl_commit_state(pctldev->p, pctldev->hog_शेष);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_क्रमce_शेष);
+int pinctrl_force_default(struct pinctrl_dev *pctldev)
+{
+	if (!IS_ERR(pctldev->p) && !IS_ERR(pctldev->hog_default))
+		return pinctrl_commit_state(pctldev->p, pctldev->hog_default);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pinctrl_force_default);
 
 /**
- * pinctrl_init_करोne() - tell pinctrl probe is करोne
+ * pinctrl_init_done() - tell pinctrl probe is done
  *
- * We'll use this समय to चयन the pins from "init" to "default" unless the
+ * We'll use this time to switch the pins from "init" to "default" unless the
  * driver selected some other state.
  *
- * @dev: device to that's करोne probing
+ * @dev: device to that's done probing
  */
-पूर्णांक pinctrl_init_करोne(काष्ठा device *dev)
-अणु
-	काष्ठा dev_pin_info *pins = dev->pins;
-	पूर्णांक ret;
+int pinctrl_init_done(struct device *dev)
+{
+	struct dev_pin_info *pins = dev->pins;
+	int ret;
 
-	अगर (!pins)
-		वापस 0;
+	if (!pins)
+		return 0;
 
-	अगर (IS_ERR(pins->init_state))
-		वापस 0; /* No such state */
+	if (IS_ERR(pins->init_state))
+		return 0; /* No such state */
 
-	अगर (pins->p->state != pins->init_state)
-		वापस 0; /* Not at init anyway */
+	if (pins->p->state != pins->init_state)
+		return 0; /* Not at init anyway */
 
-	अगर (IS_ERR(pins->शेष_state))
-		वापस 0; /* No शेष state */
+	if (IS_ERR(pins->default_state))
+		return 0; /* No default state */
 
-	ret = pinctrl_select_state(pins->p, pins->शेष_state);
-	अगर (ret)
+	ret = pinctrl_select_state(pins->p, pins->default_state);
+	if (ret)
 		dev_err(dev, "failed to activate default pinctrl state\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pinctrl_select_bound_state(काष्ठा device *dev,
-				      काष्ठा pinctrl_state *state)
-अणु
-	काष्ठा dev_pin_info *pins = dev->pins;
-	पूर्णांक ret;
+static int pinctrl_select_bound_state(struct device *dev,
+				      struct pinctrl_state *state)
+{
+	struct dev_pin_info *pins = dev->pins;
+	int ret;
 
-	अगर (IS_ERR(state))
-		वापस 0; /* No such state */
+	if (IS_ERR(state))
+		return 0; /* No such state */
 	ret = pinctrl_select_state(pins->p, state);
-	अगर (ret)
+	if (ret)
 		dev_err(dev, "failed to activate pinctrl state %s\n",
 			state->name);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pinctrl_select_शेष_state() - select शेष pinctrl state
- * @dev: device to select शेष state क्रम
+ * pinctrl_select_default_state() - select default pinctrl state
+ * @dev: device to select default state for
  */
-पूर्णांक pinctrl_select_शेष_state(काष्ठा device *dev)
-अणु
-	अगर (!dev->pins)
-		वापस 0;
+int pinctrl_select_default_state(struct device *dev)
+{
+	if (!dev->pins)
+		return 0;
 
-	वापस pinctrl_select_bound_state(dev, dev->pins->शेष_state);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_select_शेष_state);
+	return pinctrl_select_bound_state(dev, dev->pins->default_state);
+}
+EXPORT_SYMBOL_GPL(pinctrl_select_default_state);
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
 /**
- * pinctrl_pm_select_शेष_state() - select शेष pinctrl state क्रम PM
- * @dev: device to select शेष state क्रम
+ * pinctrl_pm_select_default_state() - select default pinctrl state for PM
+ * @dev: device to select default state for
  */
-पूर्णांक pinctrl_pm_select_शेष_state(काष्ठा device *dev)
-अणु
-	वापस pinctrl_select_शेष_state(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_pm_select_शेष_state);
+int pinctrl_pm_select_default_state(struct device *dev)
+{
+	return pinctrl_select_default_state(dev);
+}
+EXPORT_SYMBOL_GPL(pinctrl_pm_select_default_state);
 
 /**
- * pinctrl_pm_select_sleep_state() - select sleep pinctrl state क्रम PM
- * @dev: device to select sleep state क्रम
+ * pinctrl_pm_select_sleep_state() - select sleep pinctrl state for PM
+ * @dev: device to select sleep state for
  */
-पूर्णांक pinctrl_pm_select_sleep_state(काष्ठा device *dev)
-अणु
-	अगर (!dev->pins)
-		वापस 0;
+int pinctrl_pm_select_sleep_state(struct device *dev)
+{
+	if (!dev->pins)
+		return 0;
 
-	वापस pinctrl_select_bound_state(dev, dev->pins->sleep_state);
-पूर्ण
+	return pinctrl_select_bound_state(dev, dev->pins->sleep_state);
+}
 EXPORT_SYMBOL_GPL(pinctrl_pm_select_sleep_state);
 
 /**
- * pinctrl_pm_select_idle_state() - select idle pinctrl state क्रम PM
- * @dev: device to select idle state क्रम
+ * pinctrl_pm_select_idle_state() - select idle pinctrl state for PM
+ * @dev: device to select idle state for
  */
-पूर्णांक pinctrl_pm_select_idle_state(काष्ठा device *dev)
-अणु
-	अगर (!dev->pins)
-		वापस 0;
+int pinctrl_pm_select_idle_state(struct device *dev)
+{
+	if (!dev->pins)
+		return 0;
 
-	वापस pinctrl_select_bound_state(dev, dev->pins->idle_state);
-पूर्ण
+	return pinctrl_select_bound_state(dev, dev->pins->idle_state);
+}
 EXPORT_SYMBOL_GPL(pinctrl_pm_select_idle_state);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल पूर्णांक pinctrl_pins_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl_dev *pctldev = s->निजी;
-	स्थिर काष्ठा pinctrl_ops *ops = pctldev->desc->pctlops;
-	अचिन्हित i, pin;
-#अगर_घोषित CONFIG_GPIOLIB
-	काष्ठा pinctrl_gpio_range *range;
-	काष्ठा gpio_chip *chip;
-	पूर्णांक gpio_num;
-#पूर्ण_अगर
+static int pinctrl_pins_show(struct seq_file *s, void *what)
+{
+	struct pinctrl_dev *pctldev = s->private;
+	const struct pinctrl_ops *ops = pctldev->desc->pctlops;
+	unsigned i, pin;
+#ifdef CONFIG_GPIOLIB
+	struct pinctrl_gpio_range *range;
+	struct gpio_chip *chip;
+	int gpio_num;
+#endif
 
-	seq_म_लिखो(s, "registered pins: %d\n", pctldev->desc->npins);
+	seq_printf(s, "registered pins: %d\n", pctldev->desc->npins);
 
 	mutex_lock(&pctldev->mutex);
 
 	/* The pin number can be retrived from the pin controller descriptor */
-	क्रम (i = 0; i < pctldev->desc->npins; i++) अणु
-		काष्ठा pin_desc *desc;
+	for (i = 0; i < pctldev->desc->npins; i++) {
+		struct pin_desc *desc;
 
 		pin = pctldev->desc->pins[i].number;
 		desc = pin_desc_get(pctldev, pin);
 		/* Pin space may be sparse */
-		अगर (!desc)
-			जारी;
+		if (!desc)
+			continue;
 
-		seq_म_लिखो(s, "pin %d (%s) ", pin, desc->name);
+		seq_printf(s, "pin %d (%s) ", pin, desc->name);
 
-#अगर_घोषित CONFIG_GPIOLIB
+#ifdef CONFIG_GPIOLIB
 		gpio_num = -1;
-		list_क्रम_each_entry(range, &pctldev->gpio_ranges, node) अणु
-			अगर ((pin >= range->pin_base) &&
-			    (pin < (range->pin_base + range->npins))) अणु
+		list_for_each_entry(range, &pctldev->gpio_ranges, node) {
+			if ((pin >= range->pin_base) &&
+			    (pin < (range->pin_base + range->npins))) {
 				gpio_num = range->base + (pin - range->pin_base);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (gpio_num >= 0)
+				break;
+			}
+		}
+		if (gpio_num >= 0)
 			chip = gpio_to_chip(gpio_num);
-		अन्यथा
-			chip = शून्य;
-		अगर (chip)
-			seq_म_लिखो(s, "%u:%s ", gpio_num - chip->gpiodev->base, chip->label);
-		अन्यथा
-			seq_माला_दो(s, "0:? ");
-#पूर्ण_अगर
+		else
+			chip = NULL;
+		if (chip)
+			seq_printf(s, "%u:%s ", gpio_num - chip->gpiodev->base, chip->label);
+		else
+			seq_puts(s, "0:? ");
+#endif
 
-		/* Driver-specअगरic info per pin */
-		अगर (ops->pin_dbg_show)
+		/* Driver-specific info per pin */
+		if (ops->pin_dbg_show)
 			ops->pin_dbg_show(pctldev, s, pin);
 
-		seq_माला_दो(s, "\n");
-	पूर्ण
+		seq_puts(s, "\n");
+	}
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl_pins);
 
-अटल पूर्णांक pinctrl_groups_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl_dev *pctldev = s->निजी;
-	स्थिर काष्ठा pinctrl_ops *ops = pctldev->desc->pctlops;
-	अचिन्हित ngroups, selector = 0;
+static int pinctrl_groups_show(struct seq_file *s, void *what)
+{
+	struct pinctrl_dev *pctldev = s->private;
+	const struct pinctrl_ops *ops = pctldev->desc->pctlops;
+	unsigned ngroups, selector = 0;
 
 	mutex_lock(&pctldev->mutex);
 
 	ngroups = ops->get_groups_count(pctldev);
 
-	seq_माला_दो(s, "registered pin groups:\n");
-	जबतक (selector < ngroups) अणु
-		स्थिर अचिन्हित *pins = शून्य;
-		अचिन्हित num_pins = 0;
-		स्थिर अक्षर *gname = ops->get_group_name(pctldev, selector);
-		स्थिर अक्षर *pname;
-		पूर्णांक ret = 0;
-		पूर्णांक i;
+	seq_puts(s, "registered pin groups:\n");
+	while (selector < ngroups) {
+		const unsigned *pins = NULL;
+		unsigned num_pins = 0;
+		const char *gname = ops->get_group_name(pctldev, selector);
+		const char *pname;
+		int ret = 0;
+		int i;
 
-		अगर (ops->get_group_pins)
+		if (ops->get_group_pins)
 			ret = ops->get_group_pins(pctldev, selector,
 						  &pins, &num_pins);
-		अगर (ret)
-			seq_म_लिखो(s, "%s [ERROR GETTING PINS]\n",
+		if (ret)
+			seq_printf(s, "%s [ERROR GETTING PINS]\n",
 				   gname);
-		अन्यथा अणु
-			seq_म_लिखो(s, "group: %s\n", gname);
-			क्रम (i = 0; i < num_pins; i++) अणु
+		else {
+			seq_printf(s, "group: %s\n", gname);
+			for (i = 0; i < num_pins; i++) {
 				pname = pin_get_name(pctldev, pins[i]);
-				अगर (WARN_ON(!pname)) अणु
+				if (WARN_ON(!pname)) {
 					mutex_unlock(&pctldev->mutex);
-					वापस -EINVAL;
-				पूर्ण
-				seq_म_लिखो(s, "pin %d (%s)\n", pins[i], pname);
-			पूर्ण
-			seq_माला_दो(s, "\n");
-		पूर्ण
+					return -EINVAL;
+				}
+				seq_printf(s, "pin %d (%s)\n", pins[i], pname);
+			}
+			seq_puts(s, "\n");
+		}
 		selector++;
-	पूर्ण
+	}
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl_groups);
 
-अटल पूर्णांक pinctrl_gpioranges_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl_dev *pctldev = s->निजी;
-	काष्ठा pinctrl_gpio_range *range;
+static int pinctrl_gpioranges_show(struct seq_file *s, void *what)
+{
+	struct pinctrl_dev *pctldev = s->private;
+	struct pinctrl_gpio_range *range;
 
-	seq_माला_दो(s, "GPIO ranges handled:\n");
+	seq_puts(s, "GPIO ranges handled:\n");
 
 	mutex_lock(&pctldev->mutex);
 
 	/* Loop over the ranges */
-	list_क्रम_each_entry(range, &pctldev->gpio_ranges, node) अणु
-		अगर (range->pins) अणु
-			पूर्णांक a;
-			seq_म_लिखो(s, "%u: %s GPIOS [%u - %u] PINS {",
+	list_for_each_entry(range, &pctldev->gpio_ranges, node) {
+		if (range->pins) {
+			int a;
+			seq_printf(s, "%u: %s GPIOS [%u - %u] PINS {",
 				range->id, range->name,
 				range->base, (range->base + range->npins - 1));
-			क्रम (a = 0; a < range->npins - 1; a++)
-				seq_म_लिखो(s, "%u, ", range->pins[a]);
-			seq_म_लिखो(s, "%u}\n", range->pins[a]);
-		पूर्ण
-		अन्यथा
-			seq_म_लिखो(s, "%u: %s GPIOS [%u - %u] PINS [%u - %u]\n",
+			for (a = 0; a < range->npins - 1; a++)
+				seq_printf(s, "%u, ", range->pins[a]);
+			seq_printf(s, "%u}\n", range->pins[a]);
+		}
+		else
+			seq_printf(s, "%u: %s GPIOS [%u - %u] PINS [%u - %u]\n",
 				range->id, range->name,
 				range->base, (range->base + range->npins - 1),
 				range->pin_base,
 				(range->pin_base + range->npins - 1));
-	पूर्ण
+	}
 
 	mutex_unlock(&pctldev->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl_gpioranges);
 
-अटल पूर्णांक pinctrl_devices_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
+static int pinctrl_devices_show(struct seq_file *s, void *what)
+{
+	struct pinctrl_dev *pctldev;
 
-	seq_माला_दो(s, "name [pinmux] [pinconf]\n");
+	seq_puts(s, "name [pinmux] [pinconf]\n");
 
 	mutex_lock(&pinctrldev_list_mutex);
 
-	list_क्रम_each_entry(pctldev, &pinctrldev_list, node) अणु
-		seq_म_लिखो(s, "%s ", pctldev->desc->name);
-		अगर (pctldev->desc->pmxops)
-			seq_माला_दो(s, "yes ");
-		अन्यथा
-			seq_माला_दो(s, "no ");
-		अगर (pctldev->desc->confops)
-			seq_माला_दो(s, "yes");
-		अन्यथा
-			seq_माला_दो(s, "no");
-		seq_माला_दो(s, "\n");
-	पूर्ण
+	list_for_each_entry(pctldev, &pinctrldev_list, node) {
+		seq_printf(s, "%s ", pctldev->desc->name);
+		if (pctldev->desc->pmxops)
+			seq_puts(s, "yes ");
+		else
+			seq_puts(s, "no ");
+		if (pctldev->desc->confops)
+			seq_puts(s, "yes");
+		else
+			seq_puts(s, "no");
+		seq_puts(s, "\n");
+	}
 
 	mutex_unlock(&pinctrldev_list_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl_devices);
 
-अटल अंतरभूत स्थिर अक्षर *map_type(क्रमागत pinctrl_map_type type)
-अणु
-	अटल स्थिर अक्षर * स्थिर names[] = अणु
+static inline const char *map_type(enum pinctrl_map_type type)
+{
+	static const char * const names[] = {
 		"INVALID",
 		"DUMMY_STATE",
 		"MUX_GROUP",
 		"CONFIGS_PIN",
 		"CONFIGS_GROUP",
-	पूर्ण;
+	};
 
-	अगर (type >= ARRAY_SIZE(names))
-		वापस "UNKNOWN";
+	if (type >= ARRAY_SIZE(names))
+		return "UNKNOWN";
 
-	वापस names[type];
-पूर्ण
+	return names[type];
+}
 
-अटल पूर्णांक pinctrl_maps_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl_maps *maps_node;
-	पूर्णांक i;
-	स्थिर काष्ठा pinctrl_map *map;
+static int pinctrl_maps_show(struct seq_file *s, void *what)
+{
+	struct pinctrl_maps *maps_node;
+	int i;
+	const struct pinctrl_map *map;
 
-	seq_माला_दो(s, "Pinctrl maps:\n");
+	seq_puts(s, "Pinctrl maps:\n");
 
 	mutex_lock(&pinctrl_maps_mutex);
-	क्रम_each_maps(maps_node, i, map) अणु
-		seq_म_लिखो(s, "device %s\nstate %s\ntype %s (%d)\n",
+	for_each_maps(maps_node, i, map) {
+		seq_printf(s, "device %s\nstate %s\ntype %s (%d)\n",
 			   map->dev_name, map->name, map_type(map->type),
 			   map->type);
 
-		अगर (map->type != PIN_MAP_TYPE_DUMMY_STATE)
-			seq_म_लिखो(s, "controlling device %s\n",
+		if (map->type != PIN_MAP_TYPE_DUMMY_STATE)
+			seq_printf(s, "controlling device %s\n",
 				   map->ctrl_dev_name);
 
-		चयन (map->type) अणु
-		हाल PIN_MAP_TYPE_MUX_GROUP:
+		switch (map->type) {
+		case PIN_MAP_TYPE_MUX_GROUP:
 			pinmux_show_map(s, map);
-			अवरोध;
-		हाल PIN_MAP_TYPE_CONFIGS_PIN:
-		हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+			break;
+		case PIN_MAP_TYPE_CONFIGS_PIN:
+		case PIN_MAP_TYPE_CONFIGS_GROUP:
 			pinconf_show_map(s, map);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		seq_अ_दो(s, '\n');
-	पूर्ण
+		seq_putc(s, '\n');
+	}
 	mutex_unlock(&pinctrl_maps_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl_maps);
 
-अटल पूर्णांक pinctrl_show(काष्ठा seq_file *s, व्योम *what)
-अणु
-	काष्ठा pinctrl *p;
-	काष्ठा pinctrl_state *state;
-	काष्ठा pinctrl_setting *setting;
+static int pinctrl_show(struct seq_file *s, void *what)
+{
+	struct pinctrl *p;
+	struct pinctrl_state *state;
+	struct pinctrl_setting *setting;
 
-	seq_माला_दो(s, "Requested pin control handlers their pinmux maps:\n");
+	seq_puts(s, "Requested pin control handlers their pinmux maps:\n");
 
 	mutex_lock(&pinctrl_list_mutex);
 
-	list_क्रम_each_entry(p, &pinctrl_list, node) अणु
-		seq_म_लिखो(s, "device: %s current state: %s\n",
+	list_for_each_entry(p, &pinctrl_list, node) {
+		seq_printf(s, "device: %s current state: %s\n",
 			   dev_name(p->dev),
 			   p->state ? p->state->name : "none");
 
-		list_क्रम_each_entry(state, &p->states, node) अणु
-			seq_म_लिखो(s, "  state: %s\n", state->name);
+		list_for_each_entry(state, &p->states, node) {
+			seq_printf(s, "  state: %s\n", state->name);
 
-			list_क्रम_each_entry(setting, &state->settings, node) अणु
-				काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+			list_for_each_entry(setting, &state->settings, node) {
+				struct pinctrl_dev *pctldev = setting->pctldev;
 
-				seq_म_लिखो(s, "    type: %s controller %s ",
+				seq_printf(s, "    type: %s controller %s ",
 					   map_type(setting->type),
 					   pinctrl_dev_get_name(pctldev));
 
-				चयन (setting->type) अणु
-				हाल PIN_MAP_TYPE_MUX_GROUP:
+				switch (setting->type) {
+				case PIN_MAP_TYPE_MUX_GROUP:
 					pinmux_show_setting(s, setting);
-					अवरोध;
-				हाल PIN_MAP_TYPE_CONFIGS_PIN:
-				हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+					break;
+				case PIN_MAP_TYPE_CONFIGS_PIN:
+				case PIN_MAP_TYPE_CONFIGS_GROUP:
 					pinconf_show_setting(s, setting);
-					अवरोध;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
 
 	mutex_unlock(&pinctrl_list_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(pinctrl);
 
-अटल काष्ठा dentry *debugfs_root;
+static struct dentry *debugfs_root;
 
-अटल व्योम pinctrl_init_device_debugfs(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा dentry *device_root;
-	स्थिर अक्षर *debugfs_name;
+static void pinctrl_init_device_debugfs(struct pinctrl_dev *pctldev)
+{
+	struct dentry *device_root;
+	const char *debugfs_name;
 
-	अगर (pctldev->desc->name &&
-			म_भेद(dev_name(pctldev->dev), pctldev->desc->name)) अणु
-		debugfs_name = devm_kaप्र_लिखो(pctldev->dev, GFP_KERNEL,
+	if (pctldev->desc->name &&
+			strcmp(dev_name(pctldev->dev), pctldev->desc->name)) {
+		debugfs_name = devm_kasprintf(pctldev->dev, GFP_KERNEL,
 				"%s-%s", dev_name(pctldev->dev),
 				pctldev->desc->name);
-		अगर (!debugfs_name) अणु
+		if (!debugfs_name) {
 			pr_warn("failed to determine debugfs dir name for %s\n",
 				dev_name(pctldev->dev));
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		debugfs_name = dev_name(pctldev->dev);
-	पूर्ण
+	}
 
 	device_root = debugfs_create_dir(debugfs_name, debugfs_root);
 	pctldev->device_root = device_root;
 
-	अगर (IS_ERR(device_root) || !device_root) अणु
+	if (IS_ERR(device_root) || !device_root) {
 		pr_warn("failed to create debugfs directory for %s\n",
 			dev_name(pctldev->dev));
-		वापस;
-	पूर्ण
+		return;
+	}
 	debugfs_create_file("pins", 0444,
 			    device_root, pctldev, &pinctrl_pins_fops);
 	debugfs_create_file("pingroups", 0444,
 			    device_root, pctldev, &pinctrl_groups_fops);
 	debugfs_create_file("gpio-ranges", 0444,
 			    device_root, pctldev, &pinctrl_gpioranges_fops);
-	अगर (pctldev->desc->pmxops)
+	if (pctldev->desc->pmxops)
 		pinmux_init_device_debugfs(device_root, pctldev);
-	अगर (pctldev->desc->confops)
+	if (pctldev->desc->confops)
 		pinconf_init_device_debugfs(device_root, pctldev);
-पूर्ण
+}
 
-अटल व्योम pinctrl_हटाओ_device_debugfs(काष्ठा pinctrl_dev *pctldev)
-अणु
-	debugfs_हटाओ_recursive(pctldev->device_root);
-पूर्ण
+static void pinctrl_remove_device_debugfs(struct pinctrl_dev *pctldev)
+{
+	debugfs_remove_recursive(pctldev->device_root);
+}
 
-अटल व्योम pinctrl_init_debugfs(व्योम)
-अणु
-	debugfs_root = debugfs_create_dir("pinctrl", शून्य);
-	अगर (IS_ERR(debugfs_root) || !debugfs_root) अणु
+static void pinctrl_init_debugfs(void)
+{
+	debugfs_root = debugfs_create_dir("pinctrl", NULL);
+	if (IS_ERR(debugfs_root) || !debugfs_root) {
 		pr_warn("failed to create debugfs directory\n");
-		debugfs_root = शून्य;
-		वापस;
-	पूर्ण
+		debugfs_root = NULL;
+		return;
+	}
 
 	debugfs_create_file("pinctrl-devices", 0444,
-			    debugfs_root, शून्य, &pinctrl_devices_fops);
+			    debugfs_root, NULL, &pinctrl_devices_fops);
 	debugfs_create_file("pinctrl-maps", 0444,
-			    debugfs_root, शून्य, &pinctrl_maps_fops);
+			    debugfs_root, NULL, &pinctrl_maps_fops);
 	debugfs_create_file("pinctrl-handles", 0444,
-			    debugfs_root, शून्य, &pinctrl_fops);
-पूर्ण
+			    debugfs_root, NULL, &pinctrl_fops);
+}
 
-#अन्यथा /* CONFIG_DEBUG_FS */
+#else /* CONFIG_DEBUG_FS */
 
-अटल व्योम pinctrl_init_device_debugfs(काष्ठा pinctrl_dev *pctldev)
-अणु
-पूर्ण
+static void pinctrl_init_device_debugfs(struct pinctrl_dev *pctldev)
+{
+}
 
-अटल व्योम pinctrl_init_debugfs(व्योम)
-अणु
-पूर्ण
+static void pinctrl_init_debugfs(void)
+{
+}
 
-अटल व्योम pinctrl_हटाओ_device_debugfs(काष्ठा pinctrl_dev *pctldev)
-अणु
-पूर्ण
+static void pinctrl_remove_device_debugfs(struct pinctrl_dev *pctldev)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक pinctrl_check_ops(काष्ठा pinctrl_dev *pctldev)
-अणु
-	स्थिर काष्ठा pinctrl_ops *ops = pctldev->desc->pctlops;
+static int pinctrl_check_ops(struct pinctrl_dev *pctldev)
+{
+	const struct pinctrl_ops *ops = pctldev->desc->pctlops;
 
-	अगर (!ops ||
+	if (!ops ||
 	    !ops->get_groups_count ||
 	    !ops->get_group_name)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * pinctrl_init_controller() - init a pin controller device
- * @pctldesc: descriptor क्रम this pin controller
- * @dev: parent device क्रम this pin controller
- * @driver_data: निजी pin controller data क्रम this pin controller
+ * @pctldesc: descriptor for this pin controller
+ * @dev: parent device for this pin controller
+ * @driver_data: private pin controller data for this pin controller
  */
-अटल काष्ठा pinctrl_dev *
-pinctrl_init_controller(काष्ठा pinctrl_desc *pctldesc, काष्ठा device *dev,
-			व्योम *driver_data)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	पूर्णांक ret;
+static struct pinctrl_dev *
+pinctrl_init_controller(struct pinctrl_desc *pctldesc, struct device *dev,
+			void *driver_data)
+{
+	struct pinctrl_dev *pctldev;
+	int ret;
 
-	अगर (!pctldesc)
-		वापस ERR_PTR(-EINVAL);
-	अगर (!pctldesc->name)
-		वापस ERR_PTR(-EINVAL);
+	if (!pctldesc)
+		return ERR_PTR(-EINVAL);
+	if (!pctldesc->name)
+		return ERR_PTR(-EINVAL);
 
-	pctldev = kzalloc(माप(*pctldev), GFP_KERNEL);
-	अगर (!pctldev)
-		वापस ERR_PTR(-ENOMEM);
+	pctldev = kzalloc(sizeof(*pctldev), GFP_KERNEL);
+	if (!pctldev)
+		return ERR_PTR(-ENOMEM);
 
-	/* Initialize pin control device काष्ठा */
+	/* Initialize pin control device struct */
 	pctldev->owner = pctldesc->owner;
 	pctldev->desc = pctldesc;
 	pctldev->driver_data = driver_data;
 	INIT_RADIX_TREE(&pctldev->pin_desc_tree, GFP_KERNEL);
-#अगर_घोषित CONFIG_GENERIC_PINCTRL_GROUPS
+#ifdef CONFIG_GENERIC_PINCTRL_GROUPS
 	INIT_RADIX_TREE(&pctldev->pin_group_tree, GFP_KERNEL);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_GENERIC_PINMUX_FUNCTIONS
+#endif
+#ifdef CONFIG_GENERIC_PINMUX_FUNCTIONS
 	INIT_RADIX_TREE(&pctldev->pin_function_tree, GFP_KERNEL);
-#पूर्ण_अगर
+#endif
 	INIT_LIST_HEAD(&pctldev->gpio_ranges);
 	INIT_LIST_HEAD(&pctldev->node);
 	pctldev->dev = dev;
 	mutex_init(&pctldev->mutex);
 
-	/* check core ops क्रम sanity */
+	/* check core ops for sanity */
 	ret = pinctrl_check_ops(pctldev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "pinctrl ops lacks necessary functions\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	/* If we're implementing pinmuxing, check the ops क्रम sanity */
-	अगर (pctldesc->pmxops) अणु
+	/* If we're implementing pinmuxing, check the ops for sanity */
+	if (pctldesc->pmxops) {
 		ret = pinmux_check_ops(pctldev);
-		अगर (ret)
-			जाओ out_err;
-	पूर्ण
+		if (ret)
+			goto out_err;
+	}
 
-	/* If we're implementing pinconfig, check the ops क्रम sanity */
-	अगर (pctldesc->confops) अणु
+	/* If we're implementing pinconfig, check the ops for sanity */
+	if (pctldesc->confops) {
 		ret = pinconf_check_ops(pctldev);
-		अगर (ret)
-			जाओ out_err;
-	पूर्ण
+		if (ret)
+			goto out_err;
+	}
 
 	/* Register all the pins */
 	dev_dbg(dev, "try to register %d pins ...\n",  pctldesc->npins);
-	ret = pinctrl_रेजिस्टर_pins(pctldev, pctldesc->pins, pctldesc->npins);
-	अगर (ret) अणु
+	ret = pinctrl_register_pins(pctldev, pctldesc->pins, pctldesc->npins);
+	if (ret) {
 		dev_err(dev, "error during pin registration\n");
-		pinctrl_मुक्त_pindescs(pctldev, pctldesc->pins,
+		pinctrl_free_pindescs(pctldev, pctldesc->pins,
 				      pctldesc->npins);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	वापस pctldev;
+	return pctldev;
 
 out_err:
 	mutex_destroy(&pctldev->mutex);
-	kमुक्त(pctldev);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(pctldev);
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक pinctrl_claim_hogs(काष्ठा pinctrl_dev *pctldev)
-अणु
+static int pinctrl_claim_hogs(struct pinctrl_dev *pctldev)
+{
 	pctldev->p = create_pinctrl(pctldev->dev, pctldev);
-	अगर (PTR_ERR(pctldev->p) == -ENODEV) अणु
+	if (PTR_ERR(pctldev->p) == -ENODEV) {
 		dev_dbg(pctldev->dev, "no hogs found\n");
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (IS_ERR(pctldev->p)) अणु
+	if (IS_ERR(pctldev->p)) {
 		dev_err(pctldev->dev, "error claiming hogs: %li\n",
 			PTR_ERR(pctldev->p));
 
-		वापस PTR_ERR(pctldev->p);
-	पूर्ण
+		return PTR_ERR(pctldev->p);
+	}
 
-	pctldev->hog_शेष =
+	pctldev->hog_default =
 		pinctrl_lookup_state(pctldev->p, PINCTRL_STATE_DEFAULT);
-	अगर (IS_ERR(pctldev->hog_शेष)) अणु
+	if (IS_ERR(pctldev->hog_default)) {
 		dev_dbg(pctldev->dev,
 			"failed to lookup the default state\n");
-	पूर्ण अन्यथा अणु
-		अगर (pinctrl_select_state(pctldev->p,
-					 pctldev->hog_शेष))
+	} else {
+		if (pinctrl_select_state(pctldev->p,
+					 pctldev->hog_default))
 			dev_err(pctldev->dev,
 				"failed to select default state\n");
-	पूर्ण
+	}
 
 	pctldev->hog_sleep =
 		pinctrl_lookup_state(pctldev->p,
 				     PINCTRL_STATE_SLEEP);
-	अगर (IS_ERR(pctldev->hog_sleep))
+	if (IS_ERR(pctldev->hog_sleep))
 		dev_dbg(pctldev->dev,
 			"failed to lookup the sleep state\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pinctrl_enable(काष्ठा pinctrl_dev *pctldev)
-अणु
-	पूर्णांक error;
+int pinctrl_enable(struct pinctrl_dev *pctldev)
+{
+	int error;
 
 	error = pinctrl_claim_hogs(pctldev);
-	अगर (error) अणु
+	if (error) {
 		dev_err(pctldev->dev, "could not claim hogs: %i\n",
 			error);
 		mutex_destroy(&pctldev->mutex);
-		kमुक्त(pctldev);
+		kfree(pctldev);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	mutex_lock(&pinctrldev_list_mutex);
 	list_add_tail(&pctldev->node, &pinctrldev_list);
@@ -2113,216 +2112,216 @@ out_err:
 
 	pinctrl_init_device_debugfs(pctldev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pinctrl_enable);
 
 /**
- * pinctrl_रेजिस्टर() - रेजिस्टर a pin controller device
- * @pctldesc: descriptor क्रम this pin controller
- * @dev: parent device क्रम this pin controller
- * @driver_data: निजी pin controller data क्रम this pin controller
+ * pinctrl_register() - register a pin controller device
+ * @pctldesc: descriptor for this pin controller
+ * @dev: parent device for this pin controller
+ * @driver_data: private pin controller data for this pin controller
  *
- * Note that pinctrl_रेजिस्टर() is known to have problems as the pin
- * controller driver functions are called beक्रमe the driver has a
- * काष्ठा pinctrl_dev handle. To aव्योम issues later on, please use the
- * new pinctrl_रेजिस्टर_and_init() below instead.
+ * Note that pinctrl_register() is known to have problems as the pin
+ * controller driver functions are called before the driver has a
+ * struct pinctrl_dev handle. To avoid issues later on, please use the
+ * new pinctrl_register_and_init() below instead.
  */
-काष्ठा pinctrl_dev *pinctrl_रेजिस्टर(काष्ठा pinctrl_desc *pctldesc,
-				    काष्ठा device *dev, व्योम *driver_data)
-अणु
-	काष्ठा pinctrl_dev *pctldev;
-	पूर्णांक error;
+struct pinctrl_dev *pinctrl_register(struct pinctrl_desc *pctldesc,
+				    struct device *dev, void *driver_data)
+{
+	struct pinctrl_dev *pctldev;
+	int error;
 
 	pctldev = pinctrl_init_controller(pctldesc, dev, driver_data);
-	अगर (IS_ERR(pctldev))
-		वापस pctldev;
+	if (IS_ERR(pctldev))
+		return pctldev;
 
 	error = pinctrl_enable(pctldev);
-	अगर (error)
-		वापस ERR_PTR(error);
+	if (error)
+		return ERR_PTR(error);
 
-	वापस pctldev;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_रेजिस्टर);
+	return pctldev;
+}
+EXPORT_SYMBOL_GPL(pinctrl_register);
 
 /**
- * pinctrl_रेजिस्टर_and_init() - रेजिस्टर and init pin controller device
- * @pctldesc: descriptor क्रम this pin controller
- * @dev: parent device क्रम this pin controller
- * @driver_data: निजी pin controller data क्रम this pin controller
+ * pinctrl_register_and_init() - register and init pin controller device
+ * @pctldesc: descriptor for this pin controller
+ * @dev: parent device for this pin controller
+ * @driver_data: private pin controller data for this pin controller
  * @pctldev: pin controller device
  *
  * Note that pinctrl_enable() still needs to be manually called after
- * this once the driver is पढ़ोy.
+ * this once the driver is ready.
  */
-पूर्णांक pinctrl_रेजिस्टर_and_init(काष्ठा pinctrl_desc *pctldesc,
-			      काष्ठा device *dev, व्योम *driver_data,
-			      काष्ठा pinctrl_dev **pctldev)
-अणु
-	काष्ठा pinctrl_dev *p;
+int pinctrl_register_and_init(struct pinctrl_desc *pctldesc,
+			      struct device *dev, void *driver_data,
+			      struct pinctrl_dev **pctldev)
+{
+	struct pinctrl_dev *p;
 
 	p = pinctrl_init_controller(pctldesc, dev, driver_data);
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
 	/*
 	 * We have pinctrl_start() call functions in the pin controller
-	 * driver with create_pinctrl() क्रम at least dt_node_to_map(). So
-	 * let's make sure pctldev is properly initialized क्रम the
-	 * pin controller driver beक्रमe we करो anything.
+	 * driver with create_pinctrl() for at least dt_node_to_map(). So
+	 * let's make sure pctldev is properly initialized for the
+	 * pin controller driver before we do anything.
 	 */
 	*pctldev = p;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_रेजिस्टर_and_init);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pinctrl_register_and_init);
 
 /**
- * pinctrl_unरेजिस्टर() - unरेजिस्टर pinmux
- * @pctldev: pin controller to unरेजिस्टर
+ * pinctrl_unregister() - unregister pinmux
+ * @pctldev: pin controller to unregister
  *
- * Called by pinmux drivers to unरेजिस्टर a pinmux.
+ * Called by pinmux drivers to unregister a pinmux.
  */
-व्योम pinctrl_unरेजिस्टर(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा pinctrl_gpio_range *range, *n;
+void pinctrl_unregister(struct pinctrl_dev *pctldev)
+{
+	struct pinctrl_gpio_range *range, *n;
 
-	अगर (!pctldev)
-		वापस;
+	if (!pctldev)
+		return;
 
 	mutex_lock(&pctldev->mutex);
-	pinctrl_हटाओ_device_debugfs(pctldev);
+	pinctrl_remove_device_debugfs(pctldev);
 	mutex_unlock(&pctldev->mutex);
 
-	अगर (!IS_ERR_OR_शून्य(pctldev->p))
+	if (!IS_ERR_OR_NULL(pctldev->p))
 		pinctrl_put(pctldev->p);
 
 	mutex_lock(&pinctrldev_list_mutex);
 	mutex_lock(&pctldev->mutex);
 	/* TODO: check that no pinmuxes are still active? */
 	list_del(&pctldev->node);
-	pinmux_generic_मुक्त_functions(pctldev);
-	pinctrl_generic_मुक्त_groups(pctldev);
+	pinmux_generic_free_functions(pctldev);
+	pinctrl_generic_free_groups(pctldev);
 	/* Destroy descriptor tree */
-	pinctrl_मुक्त_pindescs(pctldev, pctldev->desc->pins,
+	pinctrl_free_pindescs(pctldev, pctldev->desc->pins,
 			      pctldev->desc->npins);
-	/* हटाओ gpio ranges map */
-	list_क्रम_each_entry_safe(range, n, &pctldev->gpio_ranges, node)
+	/* remove gpio ranges map */
+	list_for_each_entry_safe(range, n, &pctldev->gpio_ranges, node)
 		list_del(&range->node);
 
 	mutex_unlock(&pctldev->mutex);
 	mutex_destroy(&pctldev->mutex);
-	kमुक्त(pctldev);
+	kfree(pctldev);
 	mutex_unlock(&pinctrldev_list_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(pinctrl_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(pinctrl_unregister);
 
-अटल व्योम devm_pinctrl_dev_release(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा pinctrl_dev *pctldev = *(काष्ठा pinctrl_dev **)res;
+static void devm_pinctrl_dev_release(struct device *dev, void *res)
+{
+	struct pinctrl_dev *pctldev = *(struct pinctrl_dev **)res;
 
-	pinctrl_unरेजिस्टर(pctldev);
-पूर्ण
+	pinctrl_unregister(pctldev);
+}
 
-अटल पूर्णांक devm_pinctrl_dev_match(काष्ठा device *dev, व्योम *res, व्योम *data)
-अणु
-	काष्ठा pctldev **r = res;
+static int devm_pinctrl_dev_match(struct device *dev, void *res, void *data)
+{
+	struct pctldev **r = res;
 
-	अगर (WARN_ON(!r || !*r))
-		वापस 0;
+	if (WARN_ON(!r || !*r))
+		return 0;
 
-	वापस *r == data;
-पूर्ण
+	return *r == data;
+}
 
 /**
- * devm_pinctrl_रेजिस्टर() - Resource managed version of pinctrl_रेजिस्टर().
- * @dev: parent device क्रम this pin controller
- * @pctldesc: descriptor क्रम this pin controller
- * @driver_data: निजी pin controller data क्रम this pin controller
+ * devm_pinctrl_register() - Resource managed version of pinctrl_register().
+ * @dev: parent device for this pin controller
+ * @pctldesc: descriptor for this pin controller
+ * @driver_data: private pin controller data for this pin controller
  *
- * Returns an error poपूर्णांकer अगर pincontrol रेजिस्टर failed. Otherwise
- * it वापसs valid pinctrl handle.
+ * Returns an error pointer if pincontrol register failed. Otherwise
+ * it returns valid pinctrl handle.
  *
- * The pinctrl device will be स्वतःmatically released when the device is unbound.
+ * The pinctrl device will be automatically released when the device is unbound.
  */
-काष्ठा pinctrl_dev *devm_pinctrl_रेजिस्टर(काष्ठा device *dev,
-					  काष्ठा pinctrl_desc *pctldesc,
-					  व्योम *driver_data)
-अणु
-	काष्ठा pinctrl_dev **ptr, *pctldev;
+struct pinctrl_dev *devm_pinctrl_register(struct device *dev,
+					  struct pinctrl_desc *pctldesc,
+					  void *driver_data)
+{
+	struct pinctrl_dev **ptr, *pctldev;
 
-	ptr = devres_alloc(devm_pinctrl_dev_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_pinctrl_dev_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
-	pctldev = pinctrl_रेजिस्टर(pctldesc, dev, driver_data);
-	अगर (IS_ERR(pctldev)) अणु
-		devres_मुक्त(ptr);
-		वापस pctldev;
-	पूर्ण
+	pctldev = pinctrl_register(pctldesc, dev, driver_data);
+	if (IS_ERR(pctldev)) {
+		devres_free(ptr);
+		return pctldev;
+	}
 
 	*ptr = pctldev;
 	devres_add(dev, ptr);
 
-	वापस pctldev;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_pinctrl_रेजिस्टर);
+	return pctldev;
+}
+EXPORT_SYMBOL_GPL(devm_pinctrl_register);
 
 /**
- * devm_pinctrl_रेजिस्टर_and_init() - Resource managed pinctrl रेजिस्टर and init
- * @dev: parent device क्रम this pin controller
- * @pctldesc: descriptor क्रम this pin controller
- * @driver_data: निजी pin controller data क्रम this pin controller
+ * devm_pinctrl_register_and_init() - Resource managed pinctrl register and init
+ * @dev: parent device for this pin controller
+ * @pctldesc: descriptor for this pin controller
+ * @driver_data: private pin controller data for this pin controller
  * @pctldev: pin controller device
  *
  * Returns zero on success or an error number on failure.
  *
- * The pinctrl device will be स्वतःmatically released when the device is unbound.
+ * The pinctrl device will be automatically released when the device is unbound.
  */
-पूर्णांक devm_pinctrl_रेजिस्टर_and_init(काष्ठा device *dev,
-				   काष्ठा pinctrl_desc *pctldesc,
-				   व्योम *driver_data,
-				   काष्ठा pinctrl_dev **pctldev)
-अणु
-	काष्ठा pinctrl_dev **ptr;
-	पूर्णांक error;
+int devm_pinctrl_register_and_init(struct device *dev,
+				   struct pinctrl_desc *pctldesc,
+				   void *driver_data,
+				   struct pinctrl_dev **pctldev)
+{
+	struct pinctrl_dev **ptr;
+	int error;
 
-	ptr = devres_alloc(devm_pinctrl_dev_release, माप(*ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	ptr = devres_alloc(devm_pinctrl_dev_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return -ENOMEM;
 
-	error = pinctrl_रेजिस्टर_and_init(pctldesc, dev, driver_data, pctldev);
-	अगर (error) अणु
-		devres_मुक्त(ptr);
-		वापस error;
-	पूर्ण
+	error = pinctrl_register_and_init(pctldesc, dev, driver_data, pctldev);
+	if (error) {
+		devres_free(ptr);
+		return error;
+	}
 
 	*ptr = *pctldev;
 	devres_add(dev, ptr);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_pinctrl_रेजिस्टर_and_init);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_pinctrl_register_and_init);
 
 /**
- * devm_pinctrl_unरेजिस्टर() - Resource managed version of pinctrl_unरेजिस्टर().
- * @dev: device क्रम which which resource was allocated
- * @pctldev: the pinctrl device to unरेजिस्टर.
+ * devm_pinctrl_unregister() - Resource managed version of pinctrl_unregister().
+ * @dev: device for which which resource was allocated
+ * @pctldev: the pinctrl device to unregister.
  */
-व्योम devm_pinctrl_unरेजिस्टर(काष्ठा device *dev, काष्ठा pinctrl_dev *pctldev)
-अणु
+void devm_pinctrl_unregister(struct device *dev, struct pinctrl_dev *pctldev)
+{
 	WARN_ON(devres_release(dev, devm_pinctrl_dev_release,
 			       devm_pinctrl_dev_match, pctldev));
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_pinctrl_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(devm_pinctrl_unregister);
 
-अटल पूर्णांक __init pinctrl_init(व्योम)
-अणु
+static int __init pinctrl_init(void)
+{
 	pr_info("initialized pinctrl subsystem\n");
 	pinctrl_init_debugfs();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* init early since many drivers really need to initialized pinmux early */
 core_initcall(pinctrl_init);

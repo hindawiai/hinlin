@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * sorttable.h
  *
@@ -18,31 +17,31 @@
  * Copyright 2010 Steven Rostedt <srostedt@redhat.com>, Red Hat Inc.
  */
 
-#अघोषित extable_ent_size
-#अघोषित compare_extable
-#अघोषित करो_sort
-#अघोषित Elf_Addr
-#अघोषित Elf_Ehdr
-#अघोषित Elf_Shdr
-#अघोषित Elf_Rel
-#अघोषित Elf_Rela
-#अघोषित Elf_Sym
-#अघोषित ELF_R_SYM
-#अघोषित Elf_r_sym
-#अघोषित ELF_R_INFO
-#अघोषित Elf_r_info
-#अघोषित ELF_ST_BIND
-#अघोषित ELF_ST_TYPE
-#अघोषित fn_ELF_R_SYM
-#अघोषित fn_ELF_R_INFO
-#अघोषित uपूर्णांक_t
-#अघोषित _r
-#अघोषित _w
+#undef extable_ent_size
+#undef compare_extable
+#undef do_sort
+#undef Elf_Addr
+#undef Elf_Ehdr
+#undef Elf_Shdr
+#undef Elf_Rel
+#undef Elf_Rela
+#undef Elf_Sym
+#undef ELF_R_SYM
+#undef Elf_r_sym
+#undef ELF_R_INFO
+#undef Elf_r_info
+#undef ELF_ST_BIND
+#undef ELF_ST_TYPE
+#undef fn_ELF_R_SYM
+#undef fn_ELF_R_INFO
+#undef uint_t
+#undef _r
+#undef _w
 
-#अगर_घोषित SORTTABLE_64
+#ifdef SORTTABLE_64
 # define extable_ent_size	16
 # define compare_extable	compare_extable_64
-# define करो_sort		करो_sort_64
+# define do_sort		do_sort_64
 # define Elf_Addr		Elf64_Addr
 # define Elf_Ehdr		Elf64_Ehdr
 # define Elf_Shdr		Elf64_Shdr
@@ -57,13 +56,13 @@
 # define ELF_ST_TYPE		ELF64_ST_TYPE
 # define fn_ELF_R_SYM		fn_ELF64_R_SYM
 # define fn_ELF_R_INFO		fn_ELF64_R_INFO
-# define uपूर्णांक_t			uपूर्णांक64_t
+# define uint_t			uint64_t
 # define _r			r8
 # define _w			w8
-#अन्यथा
+#else
 # define extable_ent_size	8
 # define compare_extable	compare_extable_32
-# define करो_sort		करो_sort_32
+# define do_sort		do_sort_32
 # define Elf_Addr		Elf32_Addr
 # define Elf_Ehdr		Elf32_Ehdr
 # define Elf_Shdr		Elf32_Shdr
@@ -78,42 +77,42 @@
 # define ELF_ST_TYPE		ELF32_ST_TYPE
 # define fn_ELF_R_SYM		fn_ELF32_R_SYM
 # define fn_ELF_R_INFO		fn_ELF32_R_INFO
-# define uपूर्णांक_t			uपूर्णांक32_t
+# define uint_t			uint32_t
 # define _r			r
 # define _w			w
-#पूर्ण_अगर
+#endif
 
-#अगर defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
+#if defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
 /* ORC unwinder only support X86_64 */
-#समावेश <त्रुटिसं.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <यंत्र/orc_types.h>
+#include <errno.h>
+#include <pthread.h>
+#include <asm/orc_types.h>
 
-#घोषणा ERRSTR_MAXSZ	256
+#define ERRSTR_MAXSZ	256
 
-अक्षर g_err[ERRSTR_MAXSZ];
-पूर्णांक *g_orc_ip_table;
-काष्ठा orc_entry *g_orc_table;
+char g_err[ERRSTR_MAXSZ];
+int *g_orc_ip_table;
+struct orc_entry *g_orc_table;
 
-pthपढ़ो_t orc_sort_thपढ़ो;
+pthread_t orc_sort_thread;
 
-अटल अंतरभूत अचिन्हित दीर्घ orc_ip(स्थिर पूर्णांक *ip)
-अणु
-	वापस (अचिन्हित दीर्घ)ip + *ip;
-पूर्ण
+static inline unsigned long orc_ip(const int *ip)
+{
+	return (unsigned long)ip + *ip;
+}
 
-अटल पूर्णांक orc_sort_cmp(स्थिर व्योम *_a, स्थिर व्योम *_b)
-अणु
-	काष्ठा orc_entry *orc_a;
-	स्थिर पूर्णांक *a = g_orc_ip_table + *(पूर्णांक *)_a;
-	स्थिर पूर्णांक *b = g_orc_ip_table + *(पूर्णांक *)_b;
-	अचिन्हित दीर्घ a_val = orc_ip(a);
-	अचिन्हित दीर्घ b_val = orc_ip(b);
+static int orc_sort_cmp(const void *_a, const void *_b)
+{
+	struct orc_entry *orc_a;
+	const int *a = g_orc_ip_table + *(int *)_a;
+	const int *b = g_orc_ip_table + *(int *)_b;
+	unsigned long a_val = orc_ip(a);
+	unsigned long b_val = orc_ip(b);
 
-	अगर (a_val > b_val)
-		वापस 1;
-	अगर (a_val < b_val)
-		वापस -1;
+	if (a_val > b_val)
+		return 1;
+	if (a_val < b_val)
+		return -1;
 
 	/*
 	 * The "weak" section terminator entries need to always be on the left
@@ -122,235 +121,235 @@ pthपढ़ो_t orc_sort_thपढ़ो;
 	 * whitelisted .o files which didn't get objtool generation.
 	 */
 	orc_a = g_orc_table + (a - g_orc_ip_table);
-	वापस orc_a->sp_reg == ORC_REG_UNDEFINED && !orc_a->end ? -1 : 1;
-पूर्ण
+	return orc_a->sp_reg == ORC_REG_UNDEFINED && !orc_a->end ? -1 : 1;
+}
 
-अटल व्योम *sort_orctable(व्योम *arg)
-अणु
-	पूर्णांक i;
-	पूर्णांक *idxs = शून्य;
-	पूर्णांक *पंचांगp_orc_ip_table = शून्य;
-	काष्ठा orc_entry *पंचांगp_orc_table = शून्य;
-	अचिन्हित पूर्णांक *orc_ip_size = (अचिन्हित पूर्णांक *)arg;
-	अचिन्हित पूर्णांक num_entries = *orc_ip_size / माप(पूर्णांक);
-	अचिन्हित पूर्णांक orc_size = num_entries * माप(काष्ठा orc_entry);
+static void *sort_orctable(void *arg)
+{
+	int i;
+	int *idxs = NULL;
+	int *tmp_orc_ip_table = NULL;
+	struct orc_entry *tmp_orc_table = NULL;
+	unsigned int *orc_ip_size = (unsigned int *)arg;
+	unsigned int num_entries = *orc_ip_size / sizeof(int);
+	unsigned int orc_size = num_entries * sizeof(struct orc_entry);
 
-	idxs = (पूर्णांक *)दो_स्मृति(*orc_ip_size);
-	अगर (!idxs) अणु
-		snम_लिखो(g_err, ERRSTR_MAXSZ, "malloc idxs: %s",
-			 म_त्रुटि(त्रुटि_सं));
-		pthपढ़ो_निकास(g_err);
-	पूर्ण
+	idxs = (int *)malloc(*orc_ip_size);
+	if (!idxs) {
+		snprintf(g_err, ERRSTR_MAXSZ, "malloc idxs: %s",
+			 strerror(errno));
+		pthread_exit(g_err);
+	}
 
-	पंचांगp_orc_ip_table = (पूर्णांक *)दो_स्मृति(*orc_ip_size);
-	अगर (!पंचांगp_orc_ip_table) अणु
-		snम_लिखो(g_err, ERRSTR_MAXSZ, "malloc tmp_orc_ip_table: %s",
-			 म_त्रुटि(त्रुटि_सं));
-		pthपढ़ो_निकास(g_err);
-	पूर्ण
+	tmp_orc_ip_table = (int *)malloc(*orc_ip_size);
+	if (!tmp_orc_ip_table) {
+		snprintf(g_err, ERRSTR_MAXSZ, "malloc tmp_orc_ip_table: %s",
+			 strerror(errno));
+		pthread_exit(g_err);
+	}
 
-	पंचांगp_orc_table = (काष्ठा orc_entry *)दो_स्मृति(orc_size);
-	अगर (!पंचांगp_orc_table) अणु
-		snम_लिखो(g_err, ERRSTR_MAXSZ, "malloc tmp_orc_table: %s",
-			 म_त्रुटि(त्रुटि_सं));
-		pthपढ़ो_निकास(g_err);
-	पूर्ण
+	tmp_orc_table = (struct orc_entry *)malloc(orc_size);
+	if (!tmp_orc_table) {
+		snprintf(g_err, ERRSTR_MAXSZ, "malloc tmp_orc_table: %s",
+			 strerror(errno));
+		pthread_exit(g_err);
+	}
 
-	/* initialize indices array, convert ip_table to असलolute address */
-	क्रम (i = 0; i < num_entries; i++) अणु
+	/* initialize indices array, convert ip_table to absolute address */
+	for (i = 0; i < num_entries; i++) {
 		idxs[i] = i;
-		पंचांगp_orc_ip_table[i] = g_orc_ip_table[i] + i * माप(पूर्णांक);
-	पूर्ण
-	स_नकल(पंचांगp_orc_table, g_orc_table, orc_size);
+		tmp_orc_ip_table[i] = g_orc_ip_table[i] + i * sizeof(int);
+	}
+	memcpy(tmp_orc_table, g_orc_table, orc_size);
 
-	क्विक(idxs, num_entries, माप(पूर्णांक), orc_sort_cmp);
+	qsort(idxs, num_entries, sizeof(int), orc_sort_cmp);
 
-	क्रम (i = 0; i < num_entries; i++) अणु
-		अगर (idxs[i] == i)
-			जारी;
+	for (i = 0; i < num_entries; i++) {
+		if (idxs[i] == i)
+			continue;
 
 		/* convert back to relative address */
-		g_orc_ip_table[i] = पंचांगp_orc_ip_table[idxs[i]] - i * माप(पूर्णांक);
-		g_orc_table[i] = पंचांगp_orc_table[idxs[i]];
-	पूर्ण
+		g_orc_ip_table[i] = tmp_orc_ip_table[idxs[i]] - i * sizeof(int);
+		g_orc_table[i] = tmp_orc_table[idxs[i]];
+	}
 
-	मुक्त(idxs);
-	मुक्त(पंचांगp_orc_ip_table);
-	मुक्त(पंचांगp_orc_table);
-	pthपढ़ो_निकास(शून्य);
-पूर्ण
-#पूर्ण_अगर
+	free(idxs);
+	free(tmp_orc_ip_table);
+	free(tmp_orc_table);
+	pthread_exit(NULL);
+}
+#endif
 
-अटल पूर्णांक compare_extable(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
+static int compare_extable(const void *a, const void *b)
+{
 	Elf_Addr av = _r(a);
 	Elf_Addr bv = _r(b);
 
-	अगर (av < bv)
-		वापस -1;
-	अगर (av > bv)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (av < bv)
+		return -1;
+	if (av > bv)
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक करो_sort(Elf_Ehdr *ehdr,
-		   अक्षर स्थिर *स्थिर fname,
+static int do_sort(Elf_Ehdr *ehdr,
+		   char const *const fname,
 		   table_sort_t custom_sort)
-अणु
-	पूर्णांक rc = -1;
-	Elf_Shdr *s, *shdr = (Elf_Shdr *)((अक्षर *)ehdr + _r(&ehdr->e_shoff));
-	Elf_Shdr *strtab_sec = शून्य;
-	Elf_Shdr *symtab_sec = शून्य;
-	Elf_Shdr *extab_sec = शून्य;
+{
+	int rc = -1;
+	Elf_Shdr *s, *shdr = (Elf_Shdr *)((char *)ehdr + _r(&ehdr->e_shoff));
+	Elf_Shdr *strtab_sec = NULL;
+	Elf_Shdr *symtab_sec = NULL;
+	Elf_Shdr *extab_sec = NULL;
 	Elf_Sym *sym;
-	स्थिर Elf_Sym *symtab;
-	Elf32_Word *symtab_shndx = शून्य;
-	Elf_Sym *sort_needed_sym = शून्य;
+	const Elf_Sym *symtab;
+	Elf32_Word *symtab_shndx = NULL;
+	Elf_Sym *sort_needed_sym = NULL;
 	Elf_Shdr *sort_needed_sec;
-	Elf_Rel *relocs = शून्य;
-	पूर्णांक relocs_size = 0;
-	uपूर्णांक32_t *sort_needed_loc;
-	स्थिर अक्षर *secstrings;
-	स्थिर अक्षर *strtab;
-	अक्षर *extab_image;
-	पूर्णांक extab_index = 0;
-	पूर्णांक i;
-	पूर्णांक idx;
-	अचिन्हित पूर्णांक shnum;
-	अचिन्हित पूर्णांक shstrndx;
-#अगर defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
-	अचिन्हित पूर्णांक orc_ip_size = 0;
-	अचिन्हित पूर्णांक orc_size = 0;
-	अचिन्हित पूर्णांक orc_num_entries = 0;
-#पूर्ण_अगर
+	Elf_Rel *relocs = NULL;
+	int relocs_size = 0;
+	uint32_t *sort_needed_loc;
+	const char *secstrings;
+	const char *strtab;
+	char *extab_image;
+	int extab_index = 0;
+	int i;
+	int idx;
+	unsigned int shnum;
+	unsigned int shstrndx;
+#if defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
+	unsigned int orc_ip_size = 0;
+	unsigned int orc_size = 0;
+	unsigned int orc_num_entries = 0;
+#endif
 
 	shstrndx = r2(&ehdr->e_shstrndx);
-	अगर (shstrndx == SHN_XINDEX)
+	if (shstrndx == SHN_XINDEX)
 		shstrndx = r(&shdr[0].sh_link);
-	secstrings = (स्थिर अक्षर *)ehdr + _r(&shdr[shstrndx].sh_offset);
+	secstrings = (const char *)ehdr + _r(&shdr[shstrndx].sh_offset);
 
 	shnum = r2(&ehdr->e_shnum);
-	अगर (shnum == SHN_UNDEF)
+	if (shnum == SHN_UNDEF)
 		shnum = _r(&shdr[0].sh_size);
 
-	क्रम (i = 0, s = shdr; s < shdr + shnum; i++, s++) अणु
+	for (i = 0, s = shdr; s < shdr + shnum; i++, s++) {
 		idx = r(&s->sh_name);
-		अगर (!म_भेद(secstrings + idx, "__ex_table")) अणु
+		if (!strcmp(secstrings + idx, "__ex_table")) {
 			extab_sec = s;
 			extab_index = i;
-		पूर्ण
-		अगर (!म_भेद(secstrings + idx, ".symtab"))
+		}
+		if (!strcmp(secstrings + idx, ".symtab"))
 			symtab_sec = s;
-		अगर (!म_भेद(secstrings + idx, ".strtab"))
+		if (!strcmp(secstrings + idx, ".strtab"))
 			strtab_sec = s;
 
-		अगर ((r(&s->sh_type) == SHT_REL ||
+		if ((r(&s->sh_type) == SHT_REL ||
 		     r(&s->sh_type) == SHT_RELA) &&
-		    r(&s->sh_info) == extab_index) अणु
-			relocs = (व्योम *)ehdr + _r(&s->sh_offset);
+		    r(&s->sh_info) == extab_index) {
+			relocs = (void *)ehdr + _r(&s->sh_offset);
 			relocs_size = _r(&s->sh_size);
-		पूर्ण
-		अगर (r(&s->sh_type) == SHT_SYMTAB_SHNDX)
-			symtab_shndx = (Elf32_Word *)((स्थिर अक्षर *)ehdr +
+		}
+		if (r(&s->sh_type) == SHT_SYMTAB_SHNDX)
+			symtab_shndx = (Elf32_Word *)((const char *)ehdr +
 						      _r(&s->sh_offset));
 
-#अगर defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
+#if defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
 		/* locate the ORC unwind tables */
-		अगर (!म_भेद(secstrings + idx, ".orc_unwind_ip")) अणु
+		if (!strcmp(secstrings + idx, ".orc_unwind_ip")) {
 			orc_ip_size = s->sh_size;
-			g_orc_ip_table = (पूर्णांक *)((व्योम *)ehdr +
+			g_orc_ip_table = (int *)((void *)ehdr +
 						   s->sh_offset);
-		पूर्ण
-		अगर (!म_भेद(secstrings + idx, ".orc_unwind")) अणु
+		}
+		if (!strcmp(secstrings + idx, ".orc_unwind")) {
 			orc_size = s->sh_size;
-			g_orc_table = (काष्ठा orc_entry *)((व्योम *)ehdr +
+			g_orc_table = (struct orc_entry *)((void *)ehdr +
 							     s->sh_offset);
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण /* क्रम loop */
+		}
+#endif
+	} /* for loop */
 
-#अगर defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
-	अगर (!g_orc_ip_table || !g_orc_table) अणु
-		ख_लिखो(मानक_त्रुटि,
+#if defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
+	if (!g_orc_ip_table || !g_orc_table) {
+		fprintf(stderr,
 			"incomplete ORC unwind tables in file: %s\n", fname);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	orc_num_entries = orc_ip_size / माप(पूर्णांक);
-	अगर (orc_ip_size % माप(पूर्णांक) != 0 ||
-	    orc_size % माप(काष्ठा orc_entry) != 0 ||
-	    orc_num_entries != orc_size / माप(काष्ठा orc_entry)) अणु
-		ख_लिखो(मानक_त्रुटि,
+	orc_num_entries = orc_ip_size / sizeof(int);
+	if (orc_ip_size % sizeof(int) != 0 ||
+	    orc_size % sizeof(struct orc_entry) != 0 ||
+	    orc_num_entries != orc_size / sizeof(struct orc_entry)) {
+		fprintf(stderr,
 			"inconsistent ORC unwind table entries in file: %s\n",
 			fname);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* create thपढ़ो to sort ORC unwind tables concurrently */
-	अगर (pthपढ़ो_create(&orc_sort_thपढ़ो, शून्य,
-			   sort_orctable, &orc_ip_size)) अणु
-		ख_लिखो(मानक_त्रुटि,
+	/* create thread to sort ORC unwind tables concurrently */
+	if (pthread_create(&orc_sort_thread, NULL,
+			   sort_orctable, &orc_ip_size)) {
+		fprintf(stderr,
 			"pthread_create orc_sort_thread failed '%s': %s\n",
-			म_त्रुटि(त्रुटि_सं), fname);
-		जाओ out;
-	पूर्ण
-#पूर्ण_अगर
-	अगर (!extab_sec) अणु
-		ख_लिखो(मानक_त्रुटि,	"no __ex_table in file: %s\n", fname);
-		जाओ out;
-	पूर्ण
+			strerror(errno), fname);
+		goto out;
+	}
+#endif
+	if (!extab_sec) {
+		fprintf(stderr,	"no __ex_table in file: %s\n", fname);
+		goto out;
+	}
 
-	अगर (!symtab_sec) अणु
-		ख_लिखो(मानक_त्रुटि,	"no .symtab in file: %s\n", fname);
-		जाओ out;
-	पूर्ण
+	if (!symtab_sec) {
+		fprintf(stderr,	"no .symtab in file: %s\n", fname);
+		goto out;
+	}
 
-	अगर (!strtab_sec) अणु
-		ख_लिखो(मानक_त्रुटि,	"no .strtab in file: %s\n", fname);
-		जाओ out;
-	पूर्ण
+	if (!strtab_sec) {
+		fprintf(stderr,	"no .strtab in file: %s\n", fname);
+		goto out;
+	}
 
-	extab_image = (व्योम *)ehdr + _r(&extab_sec->sh_offset);
-	strtab = (स्थिर अक्षर *)ehdr + _r(&strtab_sec->sh_offset);
-	symtab = (स्थिर Elf_Sym *)((स्थिर अक्षर *)ehdr +
+	extab_image = (void *)ehdr + _r(&extab_sec->sh_offset);
+	strtab = (const char *)ehdr + _r(&strtab_sec->sh_offset);
+	symtab = (const Elf_Sym *)((const char *)ehdr +
 						  _r(&symtab_sec->sh_offset));
 
-	अगर (custom_sort) अणु
+	if (custom_sort) {
 		custom_sort(extab_image, _r(&extab_sec->sh_size));
-	पूर्ण अन्यथा अणु
-		पूर्णांक num_entries = _r(&extab_sec->sh_size) / extable_ent_size;
-		क्विक(extab_image, num_entries,
+	} else {
+		int num_entries = _r(&extab_sec->sh_size) / extable_ent_size;
+		qsort(extab_image, num_entries,
 		      extable_ent_size, compare_extable);
-	पूर्ण
+	}
 
-	/* If there were relocations, we no दीर्घer need them. */
-	अगर (relocs)
-		स_रखो(relocs, 0, relocs_size);
+	/* If there were relocations, we no longer need them. */
+	if (relocs)
+		memset(relocs, 0, relocs_size);
 
-	/* find the flag मुख्य_extable_sort_needed */
-	क्रम (sym = (व्योम *)ehdr + _r(&symtab_sec->sh_offset);
-	     sym < sym + _r(&symtab_sec->sh_size) / माप(Elf_Sym);
-	     sym++) अणु
-		अगर (ELF_ST_TYPE(sym->st_info) != STT_OBJECT)
-			जारी;
-		अगर (!म_भेद(strtab + r(&sym->st_name),
-			    "main_extable_sort_needed")) अणु
+	/* find the flag main_extable_sort_needed */
+	for (sym = (void *)ehdr + _r(&symtab_sec->sh_offset);
+	     sym < sym + _r(&symtab_sec->sh_size) / sizeof(Elf_Sym);
+	     sym++) {
+		if (ELF_ST_TYPE(sym->st_info) != STT_OBJECT)
+			continue;
+		if (!strcmp(strtab + r(&sym->st_name),
+			    "main_extable_sort_needed")) {
 			sort_needed_sym = sym;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!sort_needed_sym) अणु
-		ख_लिखो(मानक_त्रुटि,
+	if (!sort_needed_sym) {
+		fprintf(stderr,
 			"no main_extable_sort_needed symbol in file: %s\n",
 			fname);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sort_needed_sec = &shdr[get_secindex(r2(&sym->st_shndx),
 					     sort_needed_sym - symtab,
 					     symtab_shndx)];
-	sort_needed_loc = (व्योम *)ehdr +
+	sort_needed_loc = (void *)ehdr +
 		_r(&sort_needed_sec->sh_offset) +
 		_r(&sort_needed_sym->st_value) -
 		_r(&sort_needed_sec->sh_addr);
@@ -360,22 +359,22 @@ pthपढ़ो_t orc_sort_thपढ़ो;
 	rc = 0;
 
 out:
-#अगर defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
-	अगर (orc_sort_thपढ़ो) अणु
-		व्योम *retval = शून्य;
-		/* रुको क्रम ORC tables sort करोne */
-		rc = pthपढ़ो_join(orc_sort_thपढ़ो, &retval);
-		अगर (rc)
-			ख_लिखो(मानक_त्रुटि,
+#if defined(SORTTABLE_64) && defined(UNWINDER_ORC_ENABLED)
+	if (orc_sort_thread) {
+		void *retval = NULL;
+		/* wait for ORC tables sort done */
+		rc = pthread_join(orc_sort_thread, &retval);
+		if (rc)
+			fprintf(stderr,
 				"pthread_join failed '%s': %s\n",
-				म_त्रुटि(त्रुटि_सं), fname);
-		अन्यथा अगर (retval) अणु
+				strerror(errno), fname);
+		else if (retval) {
 			rc = -1;
-			ख_लिखो(मानक_त्रुटि,
+			fprintf(stderr,
 				"failed to sort ORC tables '%s': %s\n",
-				(अक्षर *)retval, fname);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	वापस rc;
-पूर्ण
+				(char *)retval, fname);
+		}
+	}
+#endif
+	return rc;
+}

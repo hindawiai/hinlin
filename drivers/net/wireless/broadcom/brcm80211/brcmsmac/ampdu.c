@@ -1,97 +1,96 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#समावेश <net/mac80211.h>
+#include <net/mac80211.h>
 
-#समावेश "rate.h"
-#समावेश "scb.h"
-#समावेश "phy/phy_hal.h"
-#समावेश "antsel.h"
-#समावेश "main.h"
-#समावेश "ampdu.h"
-#समावेश "debug.h"
-#समावेश "brcms_trace_events.h"
+#include "rate.h"
+#include "scb.h"
+#include "phy/phy_hal.h"
+#include "antsel.h"
+#include "main.h"
+#include "ampdu.h"
+#include "debug.h"
+#include "brcms_trace_events.h"
 
 /* max number of mpdus in an ampdu */
-#घोषणा AMPDU_MAX_MPDU			32
+#define AMPDU_MAX_MPDU			32
 /* max number of mpdus in an ampdu to a legacy */
-#घोषणा AMPDU_NUM_MPDU_LEGACY		16
-/* max Tx ba winकरोw size (in pdu) */
-#घोषणा AMPDU_TX_BA_MAX_WSIZE		64
-/* शेष Tx ba winकरोw size (in pdu) */
-#घोषणा AMPDU_TX_BA_DEF_WSIZE		64
-/* शेष Rx ba winकरोw size (in pdu) */
-#घोषणा AMPDU_RX_BA_DEF_WSIZE		64
-/* max Rx ba winकरोw size (in pdu) */
-#घोषणा AMPDU_RX_BA_MAX_WSIZE		64
+#define AMPDU_NUM_MPDU_LEGACY		16
+/* max Tx ba window size (in pdu) */
+#define AMPDU_TX_BA_MAX_WSIZE		64
+/* default Tx ba window size (in pdu) */
+#define AMPDU_TX_BA_DEF_WSIZE		64
+/* default Rx ba window size (in pdu) */
+#define AMPDU_RX_BA_DEF_WSIZE		64
+/* max Rx ba window size (in pdu) */
+#define AMPDU_RX_BA_MAX_WSIZE		64
 /* max dur of tx ampdu (in msec) */
-#घोषणा	AMPDU_MAX_DUR			5
-/* शेष tx retry limit */
-#घोषणा AMPDU_DEF_RETRY_LIMIT		5
-/* शेष tx retry limit at reg rate */
-#घोषणा AMPDU_DEF_RR_RETRY_LIMIT	2
-/* शेष ffpld reserved bytes */
-#घोषणा AMPDU_DEF_FFPLD_RSVD		2048
-/* # of inis to be मुक्तd on detach */
-#घोषणा AMPDU_INI_FREE			10
-/* max # of mpdus released at a समय */
-#घोषणा	AMPDU_SCB_MAX_RELEASE		20
+#define	AMPDU_MAX_DUR			5
+/* default tx retry limit */
+#define AMPDU_DEF_RETRY_LIMIT		5
+/* default tx retry limit at reg rate */
+#define AMPDU_DEF_RR_RETRY_LIMIT	2
+/* default ffpld reserved bytes */
+#define AMPDU_DEF_FFPLD_RSVD		2048
+/* # of inis to be freed on detach */
+#define AMPDU_INI_FREE			10
+/* max # of mpdus released at a time */
+#define	AMPDU_SCB_MAX_RELEASE		20
 
-#घोषणा NUM_FFPLD_FIFO 4	/* number of fअगरo concerned by pre-loading */
-#घोषणा FFPLD_TX_MAX_UNFL   200	/* शेष value of the average number of ampdu
+#define NUM_FFPLD_FIFO 4	/* number of fifo concerned by pre-loading */
+#define FFPLD_TX_MAX_UNFL   200	/* default value of the average number of ampdu
 				 * without underflows
 				 */
-#घोषणा FFPLD_MPDU_SIZE 1800	/* estimate of maximum mpdu size */
-#घोषणा FFPLD_MAX_MCS 23	/* we करोn't deal with mcs 32 */
-#घोषणा FFPLD_PLD_INCR 1000	/* increments in bytes */
-#घोषणा FFPLD_MAX_AMPDU_CNT 5000	/* maximum number of ampdu we
+#define FFPLD_MPDU_SIZE 1800	/* estimate of maximum mpdu size */
+#define FFPLD_MAX_MCS 23	/* we don't deal with mcs 32 */
+#define FFPLD_PLD_INCR 1000	/* increments in bytes */
+#define FFPLD_MAX_AMPDU_CNT 5000	/* maximum number of ampdu we
 					 * accumulate between resets.
 					 */
 
-#घोषणा AMPDU_DELIMITER_LEN	4
+#define AMPDU_DELIMITER_LEN	4
 
 /* max allowed number of mpdus in an ampdu (2 streams) */
-#घोषणा AMPDU_NUM_MPDU		16
+#define AMPDU_NUM_MPDU		16
 
-#घोषणा TX_SEQ_TO_INDEX(seq) ((seq) % AMPDU_TX_BA_MAX_WSIZE)
+#define TX_SEQ_TO_INDEX(seq) ((seq) % AMPDU_TX_BA_MAX_WSIZE)
 
-/* max possible overhead per mpdu in the ampdu; 3 is क्रम roundup अगर needed */
-#घोषणा AMPDU_MAX_MPDU_OVERHEAD (FCS_LEN + DOT11_ICV_AES_LEN +\
+/* max possible overhead per mpdu in the ampdu; 3 is for roundup if needed */
+#define AMPDU_MAX_MPDU_OVERHEAD (FCS_LEN + DOT11_ICV_AES_LEN +\
 	AMPDU_DELIMITER_LEN + 3\
 	+ DOT11_A4_HDR_LEN + DOT11_QOS_LEN + DOT11_IV_MAX_LEN)
 
 /* modulo add/sub, bound = 2^k */
-#घोषणा MODADD_POW2(x, y, bound) (((x) + (y)) & ((bound) - 1))
-#घोषणा MODSUB_POW2(x, y, bound) (((x) - (y)) & ((bound) - 1))
+#define MODADD_POW2(x, y, bound) (((x) + (y)) & ((bound) - 1))
+#define MODSUB_POW2(x, y, bound) (((x) - (y)) & ((bound) - 1))
 
-/* काष्ठाure to hold tx fअगरo inक्रमmation and pre-loading state
- * counters specअगरic to tx underflows of ampdus
- * some counters might be redundant with the ones in wlc or ampdu काष्ठाures.
- * This allows to मुख्यtain a specअगरic state independently of
+/* structure to hold tx fifo information and pre-loading state
+ * counters specific to tx underflows of ampdus
+ * some counters might be redundant with the ones in wlc or ampdu structures.
+ * This allows to maintain a specific state independently of
  * how often and/or when the wlc counters are updated.
  *
  * ampdu_pld_size: number of bytes to be pre-loaded
  * mcs2ampdu_table: per-mcs max # of mpdus in an ampdu
- * prev_txfunfl: num of underflows last पढ़ो from the HW macstats counter
- * accum_txfunfl: num of underflows since we modअगरied pld params
- * accum_txampdu: num of tx ampdu since we modअगरied pld params
- * prev_txampdu: previous पढ़ोing of tx ampdu
+ * prev_txfunfl: num of underflows last read from the HW macstats counter
+ * accum_txfunfl: num of underflows since we modified pld params
+ * accum_txampdu: num of tx ampdu since we modified pld params
+ * prev_txampdu: previous reading of tx ampdu
  * dmaxferrate: estimated dma avg xfer rate in kbits/sec
  */
-काष्ठा brcms_fअगरo_info अणु
+struct brcms_fifo_info {
 	u16 ampdu_pld_size;
 	u8 mcs2ampdu_table[FFPLD_MAX_MCS + 1];
 	u16 prev_txfunfl;
@@ -99,15 +98,15 @@
 	u32 accum_txampdu;
 	u32 prev_txampdu;
 	u32 dmaxferrate;
-पूर्ण;
+};
 
-/* AMPDU module specअगरic state
+/* AMPDU module specific state
  *
- * wlc: poपूर्णांकer to मुख्य wlc काष्ठाure
+ * wlc: pointer to main wlc structure
  * scb_handle: scb cubby handle to retrieve data from scb
  * ini_enable: per-tid initiator enable/disable of ampdu
- * ba_tx_wsize: Tx ba winकरोw size (in pdu)
- * ba_rx_wsize: Rx ba winकरोw size (in pdu)
+ * ba_tx_wsize: Tx ba window size (in pdu)
+ * ba_rx_wsize: Rx ba window size (in pdu)
  * retry_limit: mpdu transmit retry limit
  * rr_retry_limit: mpdu transmit retry limit at regular rate
  * retry_limit_tid: per-tid mpdu transmit retry limit
@@ -116,16 +115,16 @@
  * max_pdu: max pdus allowed in ampdu
  * dur: max duration of an ampdu (in msec)
  * rx_factor: maximum rx ampdu factor (0-3) ==> 2^(13+x) bytes
- * ffpld_rsvd: number of bytes to reserve क्रम preload
+ * ffpld_rsvd: number of bytes to reserve for preload
  * max_txlen: max size of ampdu per mcs, bw and sgi
  * mfbr: enable multiple fallback rate
  * tx_max_funl: underflows should be kept such that
  *		(tx_max_funfl*underflows) < tx frames
- * fअगरo_tb: table of fअगरo infos
+ * fifo_tb: table of fifo infos
  */
-काष्ठा ampdu_info अणु
-	काष्ठा brcms_c_info *wlc;
-	पूर्णांक scb_handle;
+struct ampdu_info {
+	struct brcms_c_info *wlc;
+	int scb_handle;
 	u8 ini_enable[AMPDU_MAX_SCB_TID];
 	u8 ba_tx_wsize;
 	u8 ba_rx_wsize;
@@ -141,20 +140,20 @@
 	u32 max_txlen[MCS_TABLE_SIZE][2][2];
 	bool mfbr;
 	u32 tx_max_funl;
-	काष्ठा brcms_fअगरo_info fअगरo_tb[NUM_FFPLD_FIFO];
-पूर्ण;
+	struct brcms_fifo_info fifo_tb[NUM_FFPLD_FIFO];
+};
 
-/* used क्रम flushing ampdu packets */
-काष्ठा cb_del_ampdu_pars अणु
-	काष्ठा ieee80211_sta *sta;
+/* used for flushing ampdu packets */
+struct cb_del_ampdu_pars {
+	struct ieee80211_sta *sta;
 	u16 tid;
-पूर्ण;
+};
 
-अटल व्योम brcms_c_scb_ampdu_update_max_txlen(काष्ठा ampdu_info *ampdu, u8 dur)
-अणु
+static void brcms_c_scb_ampdu_update_max_txlen(struct ampdu_info *ampdu, u8 dur)
+{
 	u32 rate, mcs;
 
-	क्रम (mcs = 0; mcs < MCS_TABLE_SIZE; mcs++) अणु
+	for (mcs = 0; mcs < MCS_TABLE_SIZE; mcs++) {
 		/* rate is in Kbps; dur is in msec ==> len = (rate * dur) / 8 */
 		/* 20MHz, No SGI */
 		rate = mcs_2_rate(mcs, false, false);
@@ -168,77 +167,77 @@
 		/* 40 MHz, SGI */
 		rate = mcs_2_rate(mcs, true, true);
 		ampdu->max_txlen[mcs][1][1] = (rate * dur) >> 3;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool brcms_c_ampdu_cap(काष्ठा ampdu_info *ampdu)
-अणु
-	अगर (BRCMS_PHY_11N_CAP(ampdu->wlc->band))
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+static bool brcms_c_ampdu_cap(struct ampdu_info *ampdu)
+{
+	if (BRCMS_PHY_11N_CAP(ampdu->wlc->band))
+		return true;
+	else
+		return false;
+}
 
-अटल पूर्णांक brcms_c_ampdu_set(काष्ठा ampdu_info *ampdu, bool on)
-अणु
-	काष्ठा brcms_c_info *wlc = ampdu->wlc;
-	काष्ठा bcma_device *core = wlc->hw->d11core;
+static int brcms_c_ampdu_set(struct ampdu_info *ampdu, bool on)
+{
+	struct brcms_c_info *wlc = ampdu->wlc;
+	struct bcma_device *core = wlc->hw->d11core;
 
 	wlc->pub->_ampdu = false;
 
-	अगर (on) अणु
-		अगर (!(wlc->pub->_n_enab & SUPPORT_11N)) अणु
+	if (on) {
+		if (!(wlc->pub->_n_enab & SUPPORT_11N)) {
 			brcms_err(core, "wl%d: driver not nmode enabled\n",
 				  wlc->pub->unit);
-			वापस -ENOTSUPP;
-		पूर्ण
-		अगर (!brcms_c_ampdu_cap(ampdu)) अणु
+			return -ENOTSUPP;
+		}
+		if (!brcms_c_ampdu_cap(ampdu)) {
 			brcms_err(core, "wl%d: device not ampdu capable\n",
 				  wlc->pub->unit);
-			वापस -ENOTSUPP;
-		पूर्ण
+			return -ENOTSUPP;
+		}
 		wlc->pub->_ampdu = on;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम brcms_c_ffpld_init(काष्ठा ampdu_info *ampdu)
-अणु
-	पूर्णांक i, j;
-	काष्ठा brcms_fअगरo_info *fअगरo;
+static void brcms_c_ffpld_init(struct ampdu_info *ampdu)
+{
+	int i, j;
+	struct brcms_fifo_info *fifo;
 
-	क्रम (j = 0; j < NUM_FFPLD_FIFO; j++) अणु
-		fअगरo = (ampdu->fअगरo_tb + j);
-		fअगरo->ampdu_pld_size = 0;
-		क्रम (i = 0; i <= FFPLD_MAX_MCS; i++)
-			fअगरo->mcs2ampdu_table[i] = 255;
-		fअगरo->dmaxferrate = 0;
-		fअगरo->accum_txampdu = 0;
-		fअगरo->prev_txfunfl = 0;
-		fअगरo->accum_txfunfl = 0;
+	for (j = 0; j < NUM_FFPLD_FIFO; j++) {
+		fifo = (ampdu->fifo_tb + j);
+		fifo->ampdu_pld_size = 0;
+		for (i = 0; i <= FFPLD_MAX_MCS; i++)
+			fifo->mcs2ampdu_table[i] = 255;
+		fifo->dmaxferrate = 0;
+		fifo->accum_txampdu = 0;
+		fifo->prev_txfunfl = 0;
+		fifo->accum_txfunfl = 0;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा ampdu_info *brcms_c_ampdu_attach(काष्ठा brcms_c_info *wlc)
-अणु
-	काष्ठा ampdu_info *ampdu;
-	पूर्णांक i;
+struct ampdu_info *brcms_c_ampdu_attach(struct brcms_c_info *wlc)
+{
+	struct ampdu_info *ampdu;
+	int i;
 
-	ampdu = kzalloc(माप(काष्ठा ampdu_info), GFP_ATOMIC);
-	अगर (!ampdu)
-		वापस शून्य;
+	ampdu = kzalloc(sizeof(struct ampdu_info), GFP_ATOMIC);
+	if (!ampdu)
+		return NULL;
 
 	ampdu->wlc = wlc;
 
-	क्रम (i = 0; i < AMPDU_MAX_SCB_TID; i++)
+	for (i = 0; i < AMPDU_MAX_SCB_TID; i++)
 		ampdu->ini_enable[i] = true;
-	/* Disable ampdu क्रम VO by शेष */
+	/* Disable ampdu for VO by default */
 	ampdu->ini_enable[PRIO_8021D_VO] = false;
 	ampdu->ini_enable[PRIO_8021D_NC] = false;
 
-	/* Disable ampdu क्रम BK by शेष since not enough fअगरo space */
+	/* Disable ampdu for BK by default since not enough fifo space */
 	ampdu->ini_enable[PRIO_8021D_NONE] = false;
 	ampdu->ini_enable[PRIO_8021D_BK] = false;
 
@@ -250,290 +249,290 @@
 
 	ampdu->ffpld_rsvd = AMPDU_DEF_FFPLD_RSVD;
 	/*
-	 * bump max ampdu rcv size to 64k क्रम all 11n
+	 * bump max ampdu rcv size to 64k for all 11n
 	 * devices except 4321A0 and 4321A1
 	 */
-	अगर (BRCMS_ISNPHY(wlc->band) && NREV_LT(wlc->band->phyrev, 2))
+	if (BRCMS_ISNPHY(wlc->band) && NREV_LT(wlc->band->phyrev, 2))
 		ampdu->rx_factor = IEEE80211_HT_MAX_AMPDU_32K;
-	अन्यथा
+	else
 		ampdu->rx_factor = IEEE80211_HT_MAX_AMPDU_64K;
 	ampdu->retry_limit = AMPDU_DEF_RETRY_LIMIT;
 	ampdu->rr_retry_limit = AMPDU_DEF_RR_RETRY_LIMIT;
 
-	क्रम (i = 0; i < AMPDU_MAX_SCB_TID; i++) अणु
+	for (i = 0; i < AMPDU_MAX_SCB_TID; i++) {
 		ampdu->retry_limit_tid[i] = ampdu->retry_limit;
 		ampdu->rr_retry_limit_tid[i] = ampdu->rr_retry_limit;
-	पूर्ण
+	}
 
 	brcms_c_scb_ampdu_update_max_txlen(ampdu, ampdu->dur);
 	ampdu->mfbr = false;
-	/* try to set ampdu to the शेष value */
+	/* try to set ampdu to the default value */
 	brcms_c_ampdu_set(ampdu, wlc->pub->_ampdu);
 
 	ampdu->tx_max_funl = FFPLD_TX_MAX_UNFL;
 	brcms_c_ffpld_init(ampdu);
 
-	वापस ampdu;
-पूर्ण
+	return ampdu;
+}
 
-व्योम brcms_c_ampdu_detach(काष्ठा ampdu_info *ampdu)
-अणु
-	kमुक्त(ampdu);
-पूर्ण
+void brcms_c_ampdu_detach(struct ampdu_info *ampdu)
+{
+	kfree(ampdu);
+}
 
-अटल व्योम brcms_c_scb_ampdu_update_config(काष्ठा ampdu_info *ampdu,
-					    काष्ठा scb *scb)
-अणु
-	काष्ठा scb_ampdu *scb_ampdu = &scb->scb_ampdu;
-	पूर्णांक i;
+static void brcms_c_scb_ampdu_update_config(struct ampdu_info *ampdu,
+					    struct scb *scb)
+{
+	struct scb_ampdu *scb_ampdu = &scb->scb_ampdu;
+	int i;
 
 	scb_ampdu->max_pdu = AMPDU_NUM_MPDU;
 
-	/* go back to legacy size अगर some preloading is occurring */
-	क्रम (i = 0; i < NUM_FFPLD_FIFO; i++) अणु
-		अगर (ampdu->fअगरo_tb[i].ampdu_pld_size > FFPLD_PLD_INCR)
+	/* go back to legacy size if some preloading is occurring */
+	for (i = 0; i < NUM_FFPLD_FIFO; i++) {
+		if (ampdu->fifo_tb[i].ampdu_pld_size > FFPLD_PLD_INCR)
 			scb_ampdu->max_pdu = AMPDU_NUM_MPDU_LEGACY;
-	पूर्ण
+	}
 
 	/* apply user override */
-	अगर (ampdu->max_pdu != AUTO)
+	if (ampdu->max_pdu != AUTO)
 		scb_ampdu->max_pdu = (u8) ampdu->max_pdu;
 
 	scb_ampdu->release = min_t(u8, scb_ampdu->max_pdu,
 				   AMPDU_SCB_MAX_RELEASE);
 
-	अगर (scb_ampdu->max_rx_ampdu_bytes)
+	if (scb_ampdu->max_rx_ampdu_bytes)
 		scb_ampdu->release = min_t(u8, scb_ampdu->release,
 			scb_ampdu->max_rx_ampdu_bytes / 1600);
 
 	scb_ampdu->release = min(scb_ampdu->release,
-				 ampdu->fअगरo_tb[TX_AC_BE_FIFO].
+				 ampdu->fifo_tb[TX_AC_BE_FIFO].
 				 mcs2ampdu_table[FFPLD_MAX_MCS]);
-पूर्ण
+}
 
-अटल व्योम brcms_c_scb_ampdu_update_config_all(काष्ठा ampdu_info *ampdu)
-अणु
+static void brcms_c_scb_ampdu_update_config_all(struct ampdu_info *ampdu)
+{
 	brcms_c_scb_ampdu_update_config(ampdu, &ampdu->wlc->pri_scb);
-पूर्ण
+}
 
-अटल व्योम brcms_c_ffpld_calc_mcs2ampdu_table(काष्ठा ampdu_info *ampdu, पूर्णांक f)
-अणु
-	पूर्णांक i;
-	u32 phy_rate, dma_rate, पंचांगp;
+static void brcms_c_ffpld_calc_mcs2ampdu_table(struct ampdu_info *ampdu, int f)
+{
+	int i;
+	u32 phy_rate, dma_rate, tmp;
 	u8 max_mpdu;
-	काष्ठा brcms_fअगरo_info *fअगरo = (ampdu->fअगरo_tb + f);
+	struct brcms_fifo_info *fifo = (ampdu->fifo_tb + f);
 
 	/* recompute the dma rate */
-	/* note : we भागide/multiply by 100 to aव्योम पूर्णांकeger overflows */
-	max_mpdu = min_t(u8, fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS],
+	/* note : we divide/multiply by 100 to avoid integer overflows */
+	max_mpdu = min_t(u8, fifo->mcs2ampdu_table[FFPLD_MAX_MCS],
 			 AMPDU_NUM_MPDU_LEGACY);
 	phy_rate = mcs_2_rate(FFPLD_MAX_MCS, true, false);
 	dma_rate =
 	    (((phy_rate / 100) *
-	      (max_mpdu * FFPLD_MPDU_SIZE - fअगरo->ampdu_pld_size))
+	      (max_mpdu * FFPLD_MPDU_SIZE - fifo->ampdu_pld_size))
 	     / (max_mpdu * FFPLD_MPDU_SIZE)) * 100;
-	fअगरo->dmaxferrate = dma_rate;
+	fifo->dmaxferrate = dma_rate;
 
-	/* fill up the mcs2ampdu table; करो not recalc the last mcs */
+	/* fill up the mcs2ampdu table; do not recalc the last mcs */
 	dma_rate = dma_rate >> 7;
-	क्रम (i = 0; i < FFPLD_MAX_MCS; i++) अणु
-		/* shअगरting to keep it within पूर्णांकeger range */
+	for (i = 0; i < FFPLD_MAX_MCS; i++) {
+		/* shifting to keep it within integer range */
 		phy_rate = mcs_2_rate(i, true, false) >> 7;
-		अगर (phy_rate > dma_rate) अणु
-			पंचांगp = ((fअगरo->ampdu_pld_size * phy_rate) /
+		if (phy_rate > dma_rate) {
+			tmp = ((fifo->ampdu_pld_size * phy_rate) /
 			       ((phy_rate - dma_rate) * FFPLD_MPDU_SIZE)) + 1;
-			पंचांगp = min_t(u32, पंचांगp, 255);
-			fअगरo->mcs2ampdu_table[i] = (u8) पंचांगp;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			tmp = min_t(u32, tmp, 255);
+			fifo->mcs2ampdu_table[i] = (u8) tmp;
+		}
+	}
+}
 
 /* evaluate the dma transfer rate using the tx underflows as feedback.
- * If necessary, increase tx fअगरo preloading. If not enough,
- * decrease maximum ampdu size क्रम each mcs till underflows stop
- * Return 1 अगर pre-loading not active, -1 अगर not an underflow event,
- * 0 अगर pre-loading module took care of the event.
+ * If necessary, increase tx fifo preloading. If not enough,
+ * decrease maximum ampdu size for each mcs till underflows stop
+ * Return 1 if pre-loading not active, -1 if not an underflow event,
+ * 0 if pre-loading module took care of the event.
  */
-अटल पूर्णांक brcms_c_ffpld_check_txfunfl(काष्ठा brcms_c_info *wlc, पूर्णांक fid)
-अणु
-	काष्ठा ampdu_info *ampdu = wlc->ampdu;
+static int brcms_c_ffpld_check_txfunfl(struct brcms_c_info *wlc, int fid)
+{
+	struct ampdu_info *ampdu = wlc->ampdu;
 	u32 phy_rate = mcs_2_rate(FFPLD_MAX_MCS, true, false);
 	u32 txunfl_ratio;
 	u8 max_mpdu;
 	u32 current_ampdu_cnt = 0;
 	u16 max_pld_size;
 	u32 new_txunfl;
-	काष्ठा brcms_fअगरo_info *fअगरo = (ampdu->fअगरo_tb + fid);
-	uपूर्णांक xmtfअगरo_sz;
+	struct brcms_fifo_info *fifo = (ampdu->fifo_tb + fid);
+	uint xmtfifo_sz;
 	u16 cur_txunfl;
 
-	/* वापस अगर we got here क्रम a dअगरferent reason than underflows */
-	cur_txunfl = brcms_b_पढ़ो_shm(wlc->hw,
+	/* return if we got here for a different reason than underflows */
+	cur_txunfl = brcms_b_read_shm(wlc->hw,
 				      M_UCODE_MACSTAT +
-				      दुरत्व(काष्ठा macstat, txfunfl[fid]));
-	new_txunfl = (u16) (cur_txunfl - fअगरo->prev_txfunfl);
-	अगर (new_txunfl == 0) अणु
+				      offsetof(struct macstat, txfunfl[fid]));
+	new_txunfl = (u16) (cur_txunfl - fifo->prev_txfunfl);
+	if (new_txunfl == 0) {
 		brcms_dbg_ht(wlc->hw->d11core,
 			     "TX status FRAG set but no tx underflows\n");
-		वापस -1;
-	पूर्ण
-	fअगरo->prev_txfunfl = cur_txunfl;
+		return -1;
+	}
+	fifo->prev_txfunfl = cur_txunfl;
 
-	अगर (!ampdu->tx_max_funl)
-		वापस 1;
+	if (!ampdu->tx_max_funl)
+		return 1;
 
-	/* check अगर fअगरo is big enough */
-	अगर (brcms_b_xmtfअगरo_sz_get(wlc->hw, fid, &xmtfअगरo_sz))
-		वापस -1;
+	/* check if fifo is big enough */
+	if (brcms_b_xmtfifo_sz_get(wlc->hw, fid, &xmtfifo_sz))
+		return -1;
 
-	अगर ((TXFIFO_SIZE_UNIT * (u32) xmtfअगरo_sz) <= ampdu->ffpld_rsvd)
-		वापस 1;
+	if ((TXFIFO_SIZE_UNIT * (u32) xmtfifo_sz) <= ampdu->ffpld_rsvd)
+		return 1;
 
-	max_pld_size = TXFIFO_SIZE_UNIT * xmtfअगरo_sz - ampdu->ffpld_rsvd;
-	fअगरo->accum_txfunfl += new_txunfl;
+	max_pld_size = TXFIFO_SIZE_UNIT * xmtfifo_sz - ampdu->ffpld_rsvd;
+	fifo->accum_txfunfl += new_txunfl;
 
-	/* we need to रुको क्रम at least 10 underflows */
-	अगर (fअगरo->accum_txfunfl < 10)
-		वापस 0;
+	/* we need to wait for at least 10 underflows */
+	if (fifo->accum_txfunfl < 10)
+		return 0;
 
 	brcms_dbg_ht(wlc->hw->d11core, "ampdu_count %d  tx_underflows %d\n",
-		     current_ampdu_cnt, fअगरo->accum_txfunfl);
+		     current_ampdu_cnt, fifo->accum_txfunfl);
 
 	/*
 	   compute the current ratio of tx unfl per ampdu.
 	   When the current ampdu count becomes too
-	   big जबतक the ratio reमुख्यs small, we reset
+	   big while the ratio remains small, we reset
 	   the current count in order to not
-	   पूर्णांकroduce too big of a latency in detecting a
+	   introduce too big of a latency in detecting a
 	   large amount of tx underflows later.
 	 */
 
-	txunfl_ratio = current_ampdu_cnt / fअगरo->accum_txfunfl;
+	txunfl_ratio = current_ampdu_cnt / fifo->accum_txfunfl;
 
-	अगर (txunfl_ratio > ampdu->tx_max_funl) अणु
-		अगर (current_ampdu_cnt >= FFPLD_MAX_AMPDU_CNT)
-			fअगरo->accum_txfunfl = 0;
+	if (txunfl_ratio > ampdu->tx_max_funl) {
+		if (current_ampdu_cnt >= FFPLD_MAX_AMPDU_CNT)
+			fifo->accum_txfunfl = 0;
 
-		वापस 0;
-	पूर्ण
-	max_mpdu = min_t(u8, fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS],
+		return 0;
+	}
+	max_mpdu = min_t(u8, fifo->mcs2ampdu_table[FFPLD_MAX_MCS],
 			 AMPDU_NUM_MPDU_LEGACY);
 
-	/* In हाल max value max_pdu is alपढ़ोy lower than
-	   the fअगरo depth, there is nothing more we can करो.
+	/* In case max value max_pdu is already lower than
+	   the fifo depth, there is nothing more we can do.
 	 */
 
-	अगर (fअगरo->ampdu_pld_size >= max_mpdu * FFPLD_MPDU_SIZE) अणु
-		fअगरo->accum_txfunfl = 0;
-		वापस 0;
-	पूर्ण
+	if (fifo->ampdu_pld_size >= max_mpdu * FFPLD_MPDU_SIZE) {
+		fifo->accum_txfunfl = 0;
+		return 0;
+	}
 
-	अगर (fअगरo->ampdu_pld_size < max_pld_size) अणु
+	if (fifo->ampdu_pld_size < max_pld_size) {
 
 		/* increment by TX_FIFO_PLD_INC bytes */
-		fअगरo->ampdu_pld_size += FFPLD_PLD_INCR;
-		अगर (fअगरo->ampdu_pld_size > max_pld_size)
-			fअगरo->ampdu_pld_size = max_pld_size;
+		fifo->ampdu_pld_size += FFPLD_PLD_INCR;
+		if (fifo->ampdu_pld_size > max_pld_size)
+			fifo->ampdu_pld_size = max_pld_size;
 
 		/* update scb release size */
 		brcms_c_scb_ampdu_update_config_all(ampdu);
 
 		/*
-		 * compute a new dma xfer rate क्रम max_mpdu @ max mcs.
+		 * compute a new dma xfer rate for max_mpdu @ max mcs.
 		 * This is the minimum dma rate that can achieve no
-		 * underflow condition क्रम the current mpdu size.
+		 * underflow condition for the current mpdu size.
 		 *
-		 * note : we भागide/multiply by 100 to aव्योम पूर्णांकeger overflows
+		 * note : we divide/multiply by 100 to avoid integer overflows
 		 */
-		fअगरo->dmaxferrate =
+		fifo->dmaxferrate =
 		    (((phy_rate / 100) *
-		      (max_mpdu * FFPLD_MPDU_SIZE - fअगरo->ampdu_pld_size))
+		      (max_mpdu * FFPLD_MPDU_SIZE - fifo->ampdu_pld_size))
 		     / (max_mpdu * FFPLD_MPDU_SIZE)) * 100;
 
 		brcms_dbg_ht(wlc->hw->d11core,
 			     "DMA estimated transfer rate %d; "
 			     "pre-load size %d\n",
-			     fअगरo->dmaxferrate, fअगरo->ampdu_pld_size);
-	पूर्ण अन्यथा अणु
+			     fifo->dmaxferrate, fifo->ampdu_pld_size);
+	} else {
 
 		/* decrease ampdu size */
-		अगर (fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS] > 1) अणु
-			अगर (fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS] == 255)
-				fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS] =
+		if (fifo->mcs2ampdu_table[FFPLD_MAX_MCS] > 1) {
+			if (fifo->mcs2ampdu_table[FFPLD_MAX_MCS] == 255)
+				fifo->mcs2ampdu_table[FFPLD_MAX_MCS] =
 				    AMPDU_NUM_MPDU_LEGACY - 1;
-			अन्यथा
-				fअगरo->mcs2ampdu_table[FFPLD_MAX_MCS] -= 1;
+			else
+				fifo->mcs2ampdu_table[FFPLD_MAX_MCS] -= 1;
 
 			/* recompute the table */
 			brcms_c_ffpld_calc_mcs2ampdu_table(ampdu, fid);
 
 			/* update scb release size */
 			brcms_c_scb_ampdu_update_config_all(ampdu);
-		पूर्ण
-	पूर्ण
-	fअगरo->accum_txfunfl = 0;
-	वापस 0;
-पूर्ण
+		}
+	}
+	fifo->accum_txfunfl = 0;
+	return 0;
+}
 
-व्योम
-brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
-	u8 ba_wsize,		/* negotiated ba winकरोw size (in pdu) */
-	uपूर्णांक max_rx_ampdu_bytes) /* from ht_cap in beacon */
-अणु
-	काष्ठा scb_ampdu *scb_ampdu;
-	काष्ठा scb_ampdu_tid_ini *ini;
-	काष्ठा ampdu_info *ampdu = wlc->ampdu;
-	काष्ठा scb *scb = &wlc->pri_scb;
+void
+brcms_c_ampdu_tx_operational(struct brcms_c_info *wlc, u8 tid,
+	u8 ba_wsize,		/* negotiated ba window size (in pdu) */
+	uint max_rx_ampdu_bytes) /* from ht_cap in beacon */
+{
+	struct scb_ampdu *scb_ampdu;
+	struct scb_ampdu_tid_ini *ini;
+	struct ampdu_info *ampdu = wlc->ampdu;
+	struct scb *scb = &wlc->pri_scb;
 	scb_ampdu = &scb->scb_ampdu;
 
-	अगर (!ampdu->ini_enable[tid]) अणु
+	if (!ampdu->ini_enable[tid]) {
 		brcms_err(wlc->hw->d11core, "%s: Rejecting tid %d\n",
 			  __func__, tid);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ini = &scb_ampdu->ini[tid];
 	ini->tid = tid;
 	ini->scb = scb_ampdu->scb;
 	ini->ba_wsize = ba_wsize;
 	scb_ampdu->max_rx_ampdu_bytes = max_rx_ampdu_bytes;
-पूर्ण
+}
 
-व्योम brcms_c_ampdu_reset_session(काष्ठा brcms_ampdu_session *session,
-				 काष्ठा brcms_c_info *wlc)
-अणु
+void brcms_c_ampdu_reset_session(struct brcms_ampdu_session *session,
+				 struct brcms_c_info *wlc)
+{
 	session->wlc = wlc;
 	skb_queue_head_init(&session->skb_list);
 	session->max_ampdu_len = 0;    /* determined from first MPDU */
 	session->max_ampdu_frames = 0; /* determined from first MPDU */
 	session->ampdu_len = 0;
 	session->dma_len = 0;
-पूर्ण
+}
 
 /*
- * Preps the given packet क्रम AMPDU based on the session data. If the
+ * Preps the given packet for AMPDU based on the session data. If the
  * frame cannot be accomodated in the current session, -ENOSPC is
- * वापसed.
+ * returned.
  */
-पूर्णांक brcms_c_ampdu_add_frame(काष्ठा brcms_ampdu_session *session,
-			    काष्ठा sk_buff *p)
-अणु
-	काष्ठा brcms_c_info *wlc = session->wlc;
-	काष्ठा ampdu_info *ampdu = wlc->ampdu;
-	काष्ठा scb *scb = &wlc->pri_scb;
-	काष्ठा scb_ampdu *scb_ampdu = &scb->scb_ampdu;
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(p);
-	काष्ठा ieee80211_tx_rate *txrate = tx_info->status.rates;
-	काष्ठा d11txh *txh = (काष्ठा d11txh *)p->data;
-	अचिन्हित ampdu_frames;
+int brcms_c_ampdu_add_frame(struct brcms_ampdu_session *session,
+			    struct sk_buff *p)
+{
+	struct brcms_c_info *wlc = session->wlc;
+	struct ampdu_info *ampdu = wlc->ampdu;
+	struct scb *scb = &wlc->pri_scb;
+	struct scb_ampdu *scb_ampdu = &scb->scb_ampdu;
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(p);
+	struct ieee80211_tx_rate *txrate = tx_info->status.rates;
+	struct d11txh *txh = (struct d11txh *)p->data;
+	unsigned ampdu_frames;
 	u8 ndelim, tid;
 	u8 *plcp;
-	uपूर्णांक len;
+	uint len;
 	u16 mcl;
 	bool fbr_iscck;
 	bool rr;
 
-	ndelim = txh->RTSPLCPFallback[AMPDU_FBR_शून्य_DELIM];
+	ndelim = txh->RTSPLCPFallback[AMPDU_FBR_NULL_DELIM];
 	plcp = (u8 *)(txh + 1);
 	fbr_iscck = !(le16_to_cpu(txh->XtraFrameTypes) & 0x03);
 	len = fbr_iscck ? BRCMS_GET_CCK_PLCP_LEN(txh->FragPLCPFallback) :
@@ -541,29 +540,29 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 	len = roundup(len, 4) + (ndelim + 1) * AMPDU_DELIMITER_LEN;
 
 	ampdu_frames = skb_queue_len(&session->skb_list);
-	अगर (ampdu_frames != 0) अणु
-		काष्ठा sk_buff *first;
+	if (ampdu_frames != 0) {
+		struct sk_buff *first;
 
-		अगर (ampdu_frames + 1 > session->max_ampdu_frames ||
+		if (ampdu_frames + 1 > session->max_ampdu_frames ||
 		    session->ampdu_len + len > session->max_ampdu_len)
-			वापस -ENOSPC;
+			return -ENOSPC;
 
 		/*
-		 * We aren't really out of space अगर the new frame is of
-		 * a dअगरferent priority, but we want the same behaviour
-		 * so वापस -ENOSPC anyway.
+		 * We aren't really out of space if the new frame is of
+		 * a different priority, but we want the same behaviour
+		 * so return -ENOSPC anyway.
 		 *
 		 * XXX: The old AMPDU code did this, but is it really
 		 * necessary?
 		 */
 		first = skb_peek(&session->skb_list);
-		अगर (p->priority != first->priority)
-			वापस -ENOSPC;
-	पूर्ण
+		if (p->priority != first->priority)
+			return -ENOSPC;
+	}
 
 	/*
 	 * Now that we're sure this frame can be accomodated, update the
-	 * session inक्रमmation.
+	 * session information.
 	 */
 	session->ampdu_len += len;
 	session->dma_len += p->len;
@@ -571,27 +570,27 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 	tid = (u8)p->priority;
 
 	/* Handle retry limits */
-	अगर (txrate[0].count <= ampdu->rr_retry_limit_tid[tid]) अणु
+	if (txrate[0].count <= ampdu->rr_retry_limit_tid[tid]) {
 		txrate[0].count++;
 		rr = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		txrate[1].count++;
 		rr = false;
-	पूर्ण
+	}
 
-	अगर (ampdu_frames == 0) अणु
+	if (ampdu_frames == 0) {
 		u8 plcp0, plcp3, is40, sgi, mcs;
-		uपूर्णांक fअगरo = le16_to_cpu(txh->TxFrameID) & TXFID_QUEUE_MASK;
-		काष्ठा brcms_fअगरo_info *f = &ampdu->fअगरo_tb[fअगरo];
+		uint fifo = le16_to_cpu(txh->TxFrameID) & TXFID_QUEUE_MASK;
+		struct brcms_fifo_info *f = &ampdu->fifo_tb[fifo];
 
-		अगर (rr) अणु
+		if (rr) {
 			plcp0 = plcp[0];
 			plcp3 = plcp[3];
-		पूर्ण अन्यथा अणु
+		} else {
 			plcp0 = txh->FragPLCPFallback[0];
 			plcp3 = txh->FragPLCPFallback[3];
 
-		पूर्ण
+		}
 
 		/* Limit AMPDU size based on MCS */
 		is40 = (plcp0 & MIMO_PLCP_40MHZ) ? 1 : 0;
@@ -601,12 +600,12 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 					     ampdu->max_txlen[mcs][is40][sgi]);
 
 		session->max_ampdu_frames = scb_ampdu->max_pdu;
-		अगर (mcs_2_rate(mcs, true, false) >= f->dmaxferrate) अणु
+		if (mcs_2_rate(mcs, true, false) >= f->dmaxferrate) {
 			session->max_ampdu_frames =
 				min_t(u16, f->mcs2ampdu_table[mcs],
 				      session->max_ampdu_frames);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * Treat all frames as "middle" frames of AMPDU here. First and
@@ -617,30 +616,30 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 	mcl |= (TXC_AMPDU_MIDDLE << TXC_AMPDU_SHIFT);
 	mcl &= ~(TXC_STARTMSDU | TXC_SENDRTS | TXC_SENDCTS);
 	txh->MacTxControlLow = cpu_to_le16(mcl);
-	txh->PreloadSize = 0;	/* always शेष to 0 */
+	txh->PreloadSize = 0;	/* always default to 0 */
 
 	skb_queue_tail(&session->skb_list, p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम brcms_c_ampdu_finalize(काष्ठा brcms_ampdu_session *session)
-अणु
-	काष्ठा brcms_c_info *wlc = session->wlc;
-	काष्ठा ampdu_info *ampdu = wlc->ampdu;
-	काष्ठा sk_buff *first, *last;
-	काष्ठा d11txh *txh;
-	काष्ठा ieee80211_tx_info *tx_info;
-	काष्ठा ieee80211_tx_rate *txrate;
+void brcms_c_ampdu_finalize(struct brcms_ampdu_session *session)
+{
+	struct brcms_c_info *wlc = session->wlc;
+	struct ampdu_info *ampdu = wlc->ampdu;
+	struct sk_buff *first, *last;
+	struct d11txh *txh;
+	struct ieee80211_tx_info *tx_info;
+	struct ieee80211_tx_rate *txrate;
 	u8 ndelim;
 	u8 *plcp;
-	uपूर्णांक len;
-	uपूर्णांक fअगरo;
-	काष्ठा brcms_fअगरo_info *f;
+	uint len;
+	uint fifo;
+	struct brcms_fifo_info *f;
 	u16 mcl;
 	bool fbr;
 	bool fbr_iscck;
-	काष्ठा ieee80211_rts *rts;
+	struct ieee80211_rts *rts;
 	bool use_rts = false, use_cts = false;
 	u16 dma_len = session->dma_len;
 	u16 mimo_ctlchbw = PHY_TXC1_BW_20MHZ;
@@ -653,28 +652,28 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 	u8 rts_preamble_type = BRCMS_LONG_PREAMBLE;
 	u8 rts_fbr_preamble_type = BRCMS_LONG_PREAMBLE;
 
-	अगर (skb_queue_empty(&session->skb_list))
-		वापस;
+	if (skb_queue_empty(&session->skb_list))
+		return;
 
 	first = skb_peek(&session->skb_list);
 	last = skb_peek_tail(&session->skb_list);
 
 	/* Need to fix up last MPDU first to adjust AMPDU length */
-	txh = (काष्ठा d11txh *)last->data;
-	fअगरo = le16_to_cpu(txh->TxFrameID) & TXFID_QUEUE_MASK;
-	f = &ampdu->fअगरo_tb[fअगरo];
+	txh = (struct d11txh *)last->data;
+	fifo = le16_to_cpu(txh->TxFrameID) & TXFID_QUEUE_MASK;
+	f = &ampdu->fifo_tb[fifo];
 
 	mcl = le16_to_cpu(txh->MacTxControlLow);
 	mcl &= ~TXC_AMPDU_MASK;
 	mcl |= (TXC_AMPDU_LAST << TXC_AMPDU_SHIFT);
 	txh->MacTxControlLow = cpu_to_le16(mcl);
 
-	/* हटाओ the null delimiter after last mpdu */
-	ndelim = txh->RTSPLCPFallback[AMPDU_FBR_शून्य_DELIM];
-	txh->RTSPLCPFallback[AMPDU_FBR_शून्य_DELIM] = 0;
+	/* remove the null delimiter after last mpdu */
+	ndelim = txh->RTSPLCPFallback[AMPDU_FBR_NULL_DELIM];
+	txh->RTSPLCPFallback[AMPDU_FBR_NULL_DELIM] = 0;
 	session->ampdu_len -= ndelim * AMPDU_DELIMITER_LEN;
 
-	/* हटाओ the pad len from last mpdu */
+	/* remove the pad len from last mpdu */
 	fbr_iscck = ((le16_to_cpu(txh->XtraFrameTypes) & 0x3) == 0);
 	len = fbr_iscck ? BRCMS_GET_CCK_PLCP_LEN(txh->FragPLCPFallback) :
 			  BRCMS_GET_MIMO_PLCP_LEN(txh->FragPLCPFallback);
@@ -683,105 +682,105 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 	/* Now fix up the first MPDU */
 	tx_info = IEEE80211_SKB_CB(first);
 	txrate = tx_info->status.rates;
-	txh = (काष्ठा d11txh *)first->data;
+	txh = (struct d11txh *)first->data;
 	plcp = (u8 *)(txh + 1);
-	rts = (काष्ठा ieee80211_rts *)&txh->rts_frame;
+	rts = (struct ieee80211_rts *)&txh->rts_frame;
 
 	mcl = le16_to_cpu(txh->MacTxControlLow);
 	/* If only one MPDU leave it marked as last */
-	अगर (first != last) अणु
+	if (first != last) {
 		mcl &= ~TXC_AMPDU_MASK;
 		mcl |= (TXC_AMPDU_FIRST << TXC_AMPDU_SHIFT);
-	पूर्ण
+	}
 	mcl |= TXC_STARTMSDU;
-	अगर (ieee80211_is_rts(rts->frame_control)) अणु
+	if (ieee80211_is_rts(rts->frame_control)) {
 		mcl |= TXC_SENDRTS;
 		use_rts = true;
-	पूर्ण
-	अगर (ieee80211_is_cts(rts->frame_control)) अणु
+	}
+	if (ieee80211_is_cts(rts->frame_control)) {
 		mcl |= TXC_SENDCTS;
 		use_cts = true;
-	पूर्ण
+	}
 	txh->MacTxControlLow = cpu_to_le16(mcl);
 
 	fbr = txrate[1].count > 0;
-	अगर (!fbr)
+	if (!fbr)
 		plcp0 = plcp[0];
-	अन्यथा
+	else
 		plcp0 = txh->FragPLCPFallback[0];
 
 	is40 = (plcp0 & MIMO_PLCP_40MHZ) ? 1 : 0;
 	mcs = plcp0 & ~MIMO_PLCP_40MHZ;
 
-	अगर (is40) अणु
-		अगर (CHSPEC_SB_UPPER(wlc_phy_chanspec_get(wlc->band->pi)))
+	if (is40) {
+		if (CHSPEC_SB_UPPER(wlc_phy_chanspec_get(wlc->band->pi)))
 			mimo_ctlchbw = PHY_TXC1_BW_20MHZ_UP;
-		अन्यथा
+		else
 			mimo_ctlchbw = PHY_TXC1_BW_20MHZ;
-	पूर्ण
+	}
 
 	/* rebuild the rspec and rspec_fallback */
 	rspec = RSPEC_MIMORATE;
 	rspec |= plcp[0] & ~MIMO_PLCP_40MHZ;
-	अगर (plcp[0] & MIMO_PLCP_40MHZ)
+	if (plcp[0] & MIMO_PLCP_40MHZ)
 		rspec |= (PHY_TXC1_BW_40MHZ << RSPEC_BW_SHIFT);
 
 	fbr_iscck = !(le16_to_cpu(txh->XtraFrameTypes) & 0x03);
-	अगर (fbr_iscck) अणु
+	if (fbr_iscck) {
 		rspec_fallback =
 			cck_rspec(cck_phy2mac_rate(txh->FragPLCPFallback[0]));
-	पूर्ण अन्यथा अणु
+	} else {
 		rspec_fallback = RSPEC_MIMORATE;
 		rspec_fallback |= txh->FragPLCPFallback[0] & ~MIMO_PLCP_40MHZ;
-		अगर (txh->FragPLCPFallback[0] & MIMO_PLCP_40MHZ)
+		if (txh->FragPLCPFallback[0] & MIMO_PLCP_40MHZ)
 			rspec_fallback |= PHY_TXC1_BW_40MHZ << RSPEC_BW_SHIFT;
-	पूर्ण
+	}
 
-	अगर (use_rts || use_cts) अणु
+	if (use_rts || use_cts) {
 		rts_rspec =
 			brcms_c_rspec_to_rts_rspec(wlc, rspec,
 						   false, mimo_ctlchbw);
 		rts_rspec_fallback =
 			brcms_c_rspec_to_rts_rspec(wlc, rspec_fallback,
 						   false, mimo_ctlchbw);
-	पूर्ण
+	}
 
 	BRCMS_SET_MIMO_PLCP_LEN(plcp, session->ampdu_len);
 	/* mark plcp to indicate ampdu */
 	BRCMS_SET_MIMO_PLCP_AMPDU(plcp);
 
 	/* reset the mixed mode header durations */
-	अगर (txh->MModeLen) अणु
+	if (txh->MModeLen) {
 		u16 mmodelen = brcms_c_calc_lsig_len(wlc, rspec,
 						     session->ampdu_len);
 		txh->MModeLen = cpu_to_le16(mmodelen);
 		preamble_type = BRCMS_MM_PREAMBLE;
-	पूर्ण
-	अगर (txh->MModeFbrLen) अणु
+	}
+	if (txh->MModeFbrLen) {
 		u16 mmfbrlen = brcms_c_calc_lsig_len(wlc, rspec_fallback,
 						     session->ampdu_len);
 		txh->MModeFbrLen = cpu_to_le16(mmfbrlen);
 		fbr_preamble_type = BRCMS_MM_PREAMBLE;
-	पूर्ण
+	}
 
 	/* set the preload length */
-	अगर (mcs_2_rate(mcs, true, false) >= f->dmaxferrate) अणु
+	if (mcs_2_rate(mcs, true, false) >= f->dmaxferrate) {
 		dma_len = min(dma_len, f->ampdu_pld_size);
 		txh->PreloadSize = cpu_to_le16(dma_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		txh->PreloadSize = 0;
-	पूर्ण
+	}
 
 	mch = le16_to_cpu(txh->MacTxControlHigh);
 
 	/* update RTS dur fields */
-	अगर (use_rts || use_cts) अणु
+	if (use_rts || use_cts) {
 		u16 durid;
-		अगर ((mch & TXC_PREAMBLE_RTS_MAIN_SHORT) ==
+		if ((mch & TXC_PREAMBLE_RTS_MAIN_SHORT) ==
 		    TXC_PREAMBLE_RTS_MAIN_SHORT)
 			rts_preamble_type = BRCMS_SHORT_PREAMBLE;
 
-		अगर ((mch & TXC_PREAMBLE_RTS_FB_SHORT) ==
+		if ((mch & TXC_PREAMBLE_RTS_FB_SHORT) ==
 		     TXC_PREAMBLE_RTS_FB_SHORT)
 			rts_fbr_preamble_type = BRCMS_SHORT_PREAMBLE;
 
@@ -801,161 +800,161 @@ brcms_c_ampdu_tx_operational(काष्ठा brcms_c_info *wlc, u8 tid,
 		txh->TxFesTimeNormal = rts->duration;
 		/* set fallback rate version of TxFesTimeNormal */
 		txh->TxFesTimeFallback = txh->RTSDurFallback;
-	पूर्ण
+	}
 
-	/* set flag and plcp क्रम fallback rate */
-	अगर (fbr) अणु
+	/* set flag and plcp for fallback rate */
+	if (fbr) {
 		mch |= TXC_AMPDU_FBR;
 		txh->MacTxControlHigh = cpu_to_le16(mch);
 		BRCMS_SET_MIMO_PLCP_AMPDU(plcp);
 		BRCMS_SET_MIMO_PLCP_AMPDU(txh->FragPLCPFallback);
-	पूर्ण
+	}
 
 	brcms_dbg_ht(wlc->hw->d11core, "wl%d: count %d ampdu_len %d\n",
 		     wlc->pub->unit, skb_queue_len(&session->skb_list),
 		     session->ampdu_len);
-पूर्ण
+}
 
-अटल व्योम
-brcms_c_ampdu_rate_status(काष्ठा brcms_c_info *wlc,
-			  काष्ठा ieee80211_tx_info *tx_info,
-			  काष्ठा tx_status *txs, u8 mcs)
-अणु
-	काष्ठा ieee80211_tx_rate *txrate = tx_info->status.rates;
-	पूर्णांक i;
+static void
+brcms_c_ampdu_rate_status(struct brcms_c_info *wlc,
+			  struct ieee80211_tx_info *tx_info,
+			  struct tx_status *txs, u8 mcs)
+{
+	struct ieee80211_tx_rate *txrate = tx_info->status.rates;
+	int i;
 
 	/* clear the rest of the rates */
-	क्रम (i = 2; i < IEEE80211_TX_MAX_RATES; i++) अणु
+	for (i = 2; i < IEEE80211_TX_MAX_RATES; i++) {
 		txrate[i].idx = -1;
 		txrate[i].count = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-brcms_c_ampdu_करोtxstatus_complete(काष्ठा ampdu_info *ampdu, काष्ठा scb *scb,
-			      काष्ठा sk_buff *p, काष्ठा tx_status *txs,
+static void
+brcms_c_ampdu_dotxstatus_complete(struct ampdu_info *ampdu, struct scb *scb,
+			      struct sk_buff *p, struct tx_status *txs,
 			      u32 s1, u32 s2)
-अणु
-	काष्ठा scb_ampdu *scb_ampdu;
-	काष्ठा brcms_c_info *wlc = ampdu->wlc;
-	काष्ठा scb_ampdu_tid_ini *ini;
-	u8 biपंचांगap[8], queue, tid;
-	काष्ठा d11txh *txh;
+{
+	struct scb_ampdu *scb_ampdu;
+	struct brcms_c_info *wlc = ampdu->wlc;
+	struct scb_ampdu_tid_ini *ini;
+	u8 bitmap[8], queue, tid;
+	struct d11txh *txh;
 	u8 *plcp;
-	काष्ठा ieee80211_hdr *h;
+	struct ieee80211_hdr *h;
 	u16 seq, start_seq = 0, bindex, index, mcl;
 	u8 mcs = 0;
 	bool ba_recd = false, ack_recd = false;
 	u8 suc_mpdu = 0, tot_mpdu = 0;
-	uपूर्णांक supr_status;
+	uint supr_status;
 	bool retry = true;
 	u16 mimoantsel = 0;
 	u8 retry_limit;
-	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(p);
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(p);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	u8 hole[AMPDU_MAX_MPDU];
-	स_रखो(hole, 0, माप(hole));
-#पूर्ण_अगर
+	memset(hole, 0, sizeof(hole));
+#endif
 
 	scb_ampdu = &scb->scb_ampdu;
 	tid = (u8) (p->priority);
 
 	ini = &scb_ampdu->ini[tid];
 	retry_limit = ampdu->retry_limit_tid[tid];
-	स_रखो(biपंचांगap, 0, माप(biपंचांगap));
+	memset(bitmap, 0, sizeof(bitmap));
 	queue = txs->frameid & TXFID_QUEUE_MASK;
 	supr_status = txs->status & TX_STATUS_SUPR_MASK;
 
-	अगर (txs->status & TX_STATUS_ACK_RCV) अणु
+	if (txs->status & TX_STATUS_ACK_RCV) {
 		WARN_ON(!(txs->status & TX_STATUS_INTERMEDIATE));
 		start_seq = txs->sequence >> SEQNUM_SHIFT;
-		biपंचांगap[0] = (txs->status & TX_STATUS_BA_BMAP03_MASK) >>
+		bitmap[0] = (txs->status & TX_STATUS_BA_BMAP03_MASK) >>
 		    TX_STATUS_BA_BMAP03_SHIFT;
 
 		WARN_ON(s1 & TX_STATUS_INTERMEDIATE);
 		WARN_ON(!(s1 & TX_STATUS_AMPDU));
 
-		biपंचांगap[0] |=
+		bitmap[0] |=
 		    (s1 & TX_STATUS_BA_BMAP47_MASK) <<
 		    TX_STATUS_BA_BMAP47_SHIFT;
-		biपंचांगap[1] = (s1 >> 8) & 0xff;
-		biपंचांगap[2] = (s1 >> 16) & 0xff;
-		biपंचांगap[3] = (s1 >> 24) & 0xff;
+		bitmap[1] = (s1 >> 8) & 0xff;
+		bitmap[2] = (s1 >> 16) & 0xff;
+		bitmap[3] = (s1 >> 24) & 0xff;
 
-		biपंचांगap[4] = s2 & 0xff;
-		biपंचांगap[5] = (s2 >> 8) & 0xff;
-		biपंचांगap[6] = (s2 >> 16) & 0xff;
-		biपंचांगap[7] = (s2 >> 24) & 0xff;
+		bitmap[4] = s2 & 0xff;
+		bitmap[5] = (s2 >> 8) & 0xff;
+		bitmap[6] = (s2 >> 16) & 0xff;
+		bitmap[7] = (s2 >> 24) & 0xff;
 
 		ba_recd = true;
-	पूर्ण अन्यथा अणु
-		अगर (supr_status) अणु
-			अगर (supr_status == TX_STATUS_SUPR_BADCH) अणु
+	} else {
+		if (supr_status) {
+			if (supr_status == TX_STATUS_SUPR_BADCH) {
 				brcms_dbg_ht(wlc->hw->d11core,
 					  "%s: Pkt tx suppressed, illegal channel possibly %d\n",
 					  __func__, CHSPEC_CHANNEL(
-					  wlc->शेष_bss->chanspec));
-			पूर्ण अन्यथा अणु
-				अगर (supr_status != TX_STATUS_SUPR_FRAG)
+					  wlc->default_bss->chanspec));
+			} else {
+				if (supr_status != TX_STATUS_SUPR_FRAG)
 					brcms_err(wlc->hw->d11core,
 						  "%s: supr_status 0x%x\n",
 						  __func__, supr_status);
-			पूर्ण
-			/* no need to retry क्रम badch; will fail again */
-			अगर (supr_status == TX_STATUS_SUPR_BADCH ||
-			    supr_status == TX_STATUS_SUPR_EXPTIME) अणु
+			}
+			/* no need to retry for badch; will fail again */
+			if (supr_status == TX_STATUS_SUPR_BADCH ||
+			    supr_status == TX_STATUS_SUPR_EXPTIME) {
 				retry = false;
-			पूर्ण अन्यथा अगर (supr_status == TX_STATUS_SUPR_EXPTIME) अणु
+			} else if (supr_status == TX_STATUS_SUPR_EXPTIME) {
 				/* TX underflow:
 				 *   try tuning pre-loading or ampdu size
 				 */
-			पूर्ण अन्यथा अगर (supr_status == TX_STATUS_SUPR_FRAG) अणु
+			} else if (supr_status == TX_STATUS_SUPR_FRAG) {
 				/*
-				 * अगर there were underflows, but pre-loading
-				 * is not active, notअगरy rate adaptation.
+				 * if there were underflows, but pre-loading
+				 * is not active, notify rate adaptation.
 				 */
 				brcms_c_ffpld_check_txfunfl(wlc, queue);
-			पूर्ण
-		पूर्ण अन्यथा अगर (txs->phyerr) अणु
+			}
+		} else if (txs->phyerr) {
 			brcms_dbg_ht(wlc->hw->d11core,
 				     "%s: ampdu tx phy error (0x%x)\n",
 				     __func__, txs->phyerr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* loop through all pkts and retry अगर not acked */
-	जबतक (p) अणु
+	/* loop through all pkts and retry if not acked */
+	while (p) {
 		tx_info = IEEE80211_SKB_CB(p);
-		txh = (काष्ठा d11txh *) p->data;
+		txh = (struct d11txh *) p->data;
 		mcl = le16_to_cpu(txh->MacTxControlLow);
 		plcp = (u8 *) (txh + 1);
-		h = (काष्ठा ieee80211_hdr *)(plcp + D11_PHY_HDR_LEN);
+		h = (struct ieee80211_hdr *)(plcp + D11_PHY_HDR_LEN);
 		seq = le16_to_cpu(h->seq_ctrl) >> SEQNUM_SHIFT;
 
-		trace_brcms_txdesc(&wlc->hw->d11core->dev, txh, माप(*txh));
+		trace_brcms_txdesc(&wlc->hw->d11core->dev, txh, sizeof(*txh));
 
-		अगर (tot_mpdu == 0) अणु
+		if (tot_mpdu == 0) {
 			mcs = plcp[0] & MIMO_PLCP_MCS_MASK;
 			mimoantsel = le16_to_cpu(txh->ABI_MimoAntSel);
-		पूर्ण
+		}
 
 		index = TX_SEQ_TO_INDEX(seq);
 		ack_recd = false;
-		अगर (ba_recd) अणु
-			पूर्णांक block_acked;
+		if (ba_recd) {
+			int block_acked;
 
 			bindex = MODSUB_POW2(seq, start_seq, SEQNUM_MAX);
-			अगर (bindex < AMPDU_TX_BA_MAX_WSIZE)
-				block_acked = isset(biपंचांगap, bindex);
-			अन्यथा
+			if (bindex < AMPDU_TX_BA_MAX_WSIZE)
+				block_acked = isset(bitmap, bindex);
+			else
 				block_acked = 0;
 			brcms_dbg_ht(wlc->hw->d11core,
 				     "tid %d seq %d, start_seq %d, bindex %d set %d, index %d\n",
 				     tid, seq, start_seq, bindex,
 				     block_acked, index);
-			/* अगर acked then clear bit and मुक्त packet */
-			अगर (block_acked) अणु
+			/* if acked then clear bit and free packet */
+			if (block_acked) {
 				ini->txretry[index] = 0;
 
 				/*
@@ -977,22 +976,22 @@ brcms_c_ampdu_करोtxstatus_complete(काष्ठा ampdu_info *ampdu, �
 							    p);
 				ack_recd = true;
 				suc_mpdu++;
-			पूर्ण
-		पूर्ण
-		/* either retransmit or send bar अगर ack not recd */
-		अगर (!ack_recd) अणु
-			अगर (retry && (ini->txretry[index] < (पूर्णांक)retry_limit)) अणु
-				पूर्णांक ret;
+			}
+		}
+		/* either retransmit or send bar if ack not recd */
+		if (!ack_recd) {
+			if (retry && (ini->txretry[index] < (int)retry_limit)) {
+				int ret;
 				ini->txretry[index]++;
-				ret = brcms_c_txfअगरo(wlc, queue, p);
+				ret = brcms_c_txfifo(wlc, queue, p);
 				/*
 				 * We shouldn't be out of space in the DMA
 				 * ring here since we're reinserting a frame
 				 * that was just pulled out.
 				 */
 				WARN_ONCE(ret, "queue %d out of txds\n", queue);
-			पूर्ण अन्यथा अणु
-				/* Retry समयout */
+			} else {
+				/* Retry timeout */
 				ieee80211_tx_info_clear_status(tx_info);
 				tx_info->status.ampdu_ack_len = 0;
 				tx_info->status.ampdu_len = 1;
@@ -1005,127 +1004,127 @@ brcms_c_ampdu_करोtxstatus_complete(काष्ठा ampdu_info *ampdu, �
 					     seq);
 				ieee80211_tx_status_irqsafe(wlc->pub->ieee_hw,
 							    p);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		tot_mpdu++;
 
-		/* अवरोध out अगर last packet of ampdu */
-		अगर (((mcl & TXC_AMPDU_MASK) >> TXC_AMPDU_SHIFT) ==
+		/* break out if last packet of ampdu */
+		if (((mcl & TXC_AMPDU_MASK) >> TXC_AMPDU_SHIFT) ==
 		    TXC_AMPDU_LAST)
-			अवरोध;
+			break;
 
 		p = dma_getnexttxp(wlc->hw->di[queue], DMA_RANGE_TRANSMITTED);
-	पूर्ण
+	}
 
 	/* update rate state */
 	brcms_c_antsel_antsel2id(wlc->asi, mimoantsel);
-पूर्ण
+}
 
-व्योम
-brcms_c_ampdu_करोtxstatus(काष्ठा ampdu_info *ampdu, काष्ठा scb *scb,
-		     काष्ठा sk_buff *p, काष्ठा tx_status *txs)
-अणु
-	काष्ठा brcms_c_info *wlc = ampdu->wlc;
+void
+brcms_c_ampdu_dotxstatus(struct ampdu_info *ampdu, struct scb *scb,
+		     struct sk_buff *p, struct tx_status *txs)
+{
+	struct brcms_c_info *wlc = ampdu->wlc;
 	u32 s1 = 0, s2 = 0;
 
 	/* BMAC_NOTE: For the split driver, second level txstatus comes later
-	 * So अगर the ACK was received then रुको क्रम the second level अन्यथा just
+	 * So if the ACK was received then wait for the second level else just
 	 * call the first one
 	 */
-	अगर (txs->status & TX_STATUS_ACK_RCV) अणु
+	if (txs->status & TX_STATUS_ACK_RCV) {
 		u8 status_delay = 0;
 
-		/* रुको till the next 8 bytes of txstatus is available */
-		s1 = bcma_पढ़ो32(wlc->hw->d11core, D11REGOFFS(frmtxstatus));
-		जबतक ((s1 & TXS_V) == 0) अणु
+		/* wait till the next 8 bytes of txstatus is available */
+		s1 = bcma_read32(wlc->hw->d11core, D11REGOFFS(frmtxstatus));
+		while ((s1 & TXS_V) == 0) {
 			udelay(1);
 			status_delay++;
-			अगर (status_delay > 10)
-				वापस; /* error condition */
-			s1 = bcma_पढ़ो32(wlc->hw->d11core,
+			if (status_delay > 10)
+				return; /* error condition */
+			s1 = bcma_read32(wlc->hw->d11core,
 					 D11REGOFFS(frmtxstatus));
-		पूर्ण
+		}
 
-		s2 = bcma_पढ़ो32(wlc->hw->d11core, D11REGOFFS(frmtxstatus2));
-	पूर्ण
+		s2 = bcma_read32(wlc->hw->d11core, D11REGOFFS(frmtxstatus2));
+	}
 
-	अगर (scb) अणु
-		brcms_c_ampdu_करोtxstatus_complete(ampdu, scb, p, txs, s1, s2);
-	पूर्ण अन्यथा अणु
-		/* loop through all pkts and मुक्त */
+	if (scb) {
+		brcms_c_ampdu_dotxstatus_complete(ampdu, scb, p, txs, s1, s2);
+	} else {
+		/* loop through all pkts and free */
 		u8 queue = txs->frameid & TXFID_QUEUE_MASK;
-		काष्ठा d11txh *txh;
+		struct d11txh *txh;
 		u16 mcl;
-		जबतक (p) अणु
-			txh = (काष्ठा d11txh *) p->data;
+		while (p) {
+			txh = (struct d11txh *) p->data;
 			trace_brcms_txdesc(&wlc->hw->d11core->dev, txh,
-					   माप(*txh));
+					   sizeof(*txh));
 			mcl = le16_to_cpu(txh->MacTxControlLow);
-			brcmu_pkt_buf_मुक्त_skb(p);
-			/* अवरोध out अगर last packet of ampdu */
-			अगर (((mcl & TXC_AMPDU_MASK) >> TXC_AMPDU_SHIFT) ==
+			brcmu_pkt_buf_free_skb(p);
+			/* break out if last packet of ampdu */
+			if (((mcl & TXC_AMPDU_MASK) >> TXC_AMPDU_SHIFT) ==
 			    TXC_AMPDU_LAST)
-				अवरोध;
+				break;
 			p = dma_getnexttxp(wlc->hw->di[queue],
 					   DMA_RANGE_TRANSMITTED);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम brcms_c_ampdu_macaddr_upd(काष्ठा brcms_c_info *wlc)
-अणु
-	अक्षर ढाँचा[T_RAM_ACCESS_SZ * 2];
+void brcms_c_ampdu_macaddr_upd(struct brcms_c_info *wlc)
+{
+	char template[T_RAM_ACCESS_SZ * 2];
 
-	/* driver needs to ग_लिखो the ta in the ढाँचा; ta is at offset 16 */
-	स_रखो(ढाँचा, 0, माप(ढाँचा));
-	स_नकल(ढाँचा, wlc->pub->cur_etheraddr, ETH_ALEN);
-	brcms_b_ग_लिखो_ढाँचा_ram(wlc->hw, (T_BA_TPL_BASE + 16),
+	/* driver needs to write the ta in the template; ta is at offset 16 */
+	memset(template, 0, sizeof(template));
+	memcpy(template, wlc->pub->cur_etheraddr, ETH_ALEN);
+	brcms_b_write_template_ram(wlc->hw, (T_BA_TPL_BASE + 16),
 				  (T_RAM_ACCESS_SZ * 2),
-				  ढाँचा);
-पूर्ण
+				  template);
+}
 
-bool brcms_c_aggregatable(काष्ठा brcms_c_info *wlc, u8 tid)
-अणु
-	वापस wlc->ampdu->ini_enable[tid];
-पूर्ण
+bool brcms_c_aggregatable(struct brcms_c_info *wlc, u8 tid)
+{
+	return wlc->ampdu->ini_enable[tid];
+}
 
-व्योम brcms_c_ampdu_shm_upd(काष्ठा ampdu_info *ampdu)
-अणु
-	काष्ठा brcms_c_info *wlc = ampdu->wlc;
+void brcms_c_ampdu_shm_upd(struct ampdu_info *ampdu)
+{
+	struct brcms_c_info *wlc = ampdu->wlc;
 
 	/*
-	 * Extend ucode पूर्णांकernal watchकरोg समयr to
+	 * Extend ucode internal watchdog timer to
 	 * match larger received frames
 	 */
-	अगर ((ampdu->rx_factor & IEEE80211_HT_AMPDU_PARM_FACTOR) ==
-	    IEEE80211_HT_MAX_AMPDU_64K) अणु
-		brcms_b_ग_लिखो_shm(wlc->hw, M_MIMO_MAXSYM, MIMO_MAXSYM_MAX);
-		brcms_b_ग_लिखो_shm(wlc->hw, M_WATCHDOG_8TU, WATCHDOG_8TU_MAX);
-	पूर्ण अन्यथा अणु
-		brcms_b_ग_लिखो_shm(wlc->hw, M_MIMO_MAXSYM, MIMO_MAXSYM_DEF);
-		brcms_b_ग_लिखो_shm(wlc->hw, M_WATCHDOG_8TU, WATCHDOG_8TU_DEF);
-	पूर्ण
-पूर्ण
+	if ((ampdu->rx_factor & IEEE80211_HT_AMPDU_PARM_FACTOR) ==
+	    IEEE80211_HT_MAX_AMPDU_64K) {
+		brcms_b_write_shm(wlc->hw, M_MIMO_MAXSYM, MIMO_MAXSYM_MAX);
+		brcms_b_write_shm(wlc->hw, M_WATCHDOG_8TU, WATCHDOG_8TU_MAX);
+	} else {
+		brcms_b_write_shm(wlc->hw, M_MIMO_MAXSYM, MIMO_MAXSYM_DEF);
+		brcms_b_write_shm(wlc->hw, M_WATCHDOG_8TU, WATCHDOG_8TU_DEF);
+	}
+}
 
 /*
  * callback function that helps invalidating ampdu packets in a DMA queue
  */
-अटल व्योम dma_cb_fn_ampdu(व्योम *txi, व्योम *arg_a)
-अणु
-	काष्ठा ieee80211_sta *sta = arg_a;
-	काष्ठा ieee80211_tx_info *tx_info = (काष्ठा ieee80211_tx_info *)txi;
+static void dma_cb_fn_ampdu(void *txi, void *arg_a)
+{
+	struct ieee80211_sta *sta = arg_a;
+	struct ieee80211_tx_info *tx_info = (struct ieee80211_tx_info *)txi;
 
-	अगर ((tx_info->flags & IEEE80211_TX_CTL_AMPDU) &&
-	    (tx_info->rate_driver_data[0] == sta || sta == शून्य))
-		tx_info->rate_driver_data[0] = शून्य;
-पूर्ण
+	if ((tx_info->flags & IEEE80211_TX_CTL_AMPDU) &&
+	    (tx_info->rate_driver_data[0] == sta || sta == NULL))
+		tx_info->rate_driver_data[0] = NULL;
+}
 
 /*
- * When a remote party is no दीर्घer available क्रम ampdu communication, any
+ * When a remote party is no longer available for ampdu communication, any
  * pending tx ampdu packets in the driver have to be flushed.
  */
-व्योम brcms_c_ampdu_flush(काष्ठा brcms_c_info *wlc,
-		     काष्ठा ieee80211_sta *sta, u16 tid)
-अणु
+void brcms_c_ampdu_flush(struct brcms_c_info *wlc,
+		     struct ieee80211_sta *sta, u16 tid)
+{
 	brcms_c_inval_dma_pkts(wlc->hw, sta, dma_cb_fn_ampdu);
-पूर्ण
+}

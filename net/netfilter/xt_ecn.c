@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Xtables module क्रम matching the value of the IPv4/IPv6 and TCP ECN bits
+ * Xtables module for matching the value of the IPv4/IPv6 and TCP ECN bits
  *
- * (C) 2002 by Harald Welte <laक्रमge@gnumonks.org>
+ * (C) 2002 by Harald Welte <laforge@gnumonks.org>
  * (C) 2011 Patrick McHardy <kaber@trash.net>
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <net/ip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/tcp.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <net/ip.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/tcp.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_ecn.h>
-#समावेश <linux/netfilter_ipv4/ip_tables.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_ecn.h>
+#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
 
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: Explicit Congestion Notification (ECN) flag match");
@@ -25,153 +24,153 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("ipt_ecn");
 MODULE_ALIAS("ip6t_ecn");
 
-अटल bool match_tcp(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_ecn_info *einfo = par->matchinfo;
-	काष्ठा tcphdr _tcph;
-	स्थिर काष्ठा tcphdr *th;
+static bool match_tcp(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_ecn_info *einfo = par->matchinfo;
+	struct tcphdr _tcph;
+	const struct tcphdr *th;
 
-	/* In practice, TCP match करोes this, so can't fail.  But let's
+	/* In practice, TCP match does this, so can't fail.  But let's
 	 * be good citizens.
 	 */
-	th = skb_header_poपूर्णांकer(skb, par->thoff, माप(_tcph), &_tcph);
-	अगर (th == शून्य)
-		वापस false;
+	th = skb_header_pointer(skb, par->thoff, sizeof(_tcph), &_tcph);
+	if (th == NULL)
+		return false;
 
-	अगर (einfo->operation & XT_ECN_OP_MATCH_ECE) अणु
-		अगर (einfo->invert & XT_ECN_OP_MATCH_ECE) अणु
-			अगर (th->ece == 1)
-				वापस false;
-		पूर्ण अन्यथा अणु
-			अगर (th->ece == 0)
-				वापस false;
-		पूर्ण
-	पूर्ण
+	if (einfo->operation & XT_ECN_OP_MATCH_ECE) {
+		if (einfo->invert & XT_ECN_OP_MATCH_ECE) {
+			if (th->ece == 1)
+				return false;
+		} else {
+			if (th->ece == 0)
+				return false;
+		}
+	}
 
-	अगर (einfo->operation & XT_ECN_OP_MATCH_CWR) अणु
-		अगर (einfo->invert & XT_ECN_OP_MATCH_CWR) अणु
-			अगर (th->cwr == 1)
-				वापस false;
-		पूर्ण अन्यथा अणु
-			अगर (th->cwr == 0)
-				वापस false;
-		पूर्ण
-	पूर्ण
+	if (einfo->operation & XT_ECN_OP_MATCH_CWR) {
+		if (einfo->invert & XT_ECN_OP_MATCH_CWR) {
+			if (th->cwr == 1)
+				return false;
+		} else {
+			if (th->cwr == 0)
+				return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत bool match_ip(स्थिर काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा xt_ecn_info *einfo)
-अणु
-	वापस ((ip_hdr(skb)->tos & XT_ECN_IP_MASK) == einfo->ip_ect) ^
+static inline bool match_ip(const struct sk_buff *skb,
+			    const struct xt_ecn_info *einfo)
+{
+	return ((ip_hdr(skb)->tos & XT_ECN_IP_MASK) == einfo->ip_ect) ^
 	       !!(einfo->invert & XT_ECN_OP_MATCH_IP);
-पूर्ण
+}
 
-अटल bool ecn_mt4(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_ecn_info *info = par->matchinfo;
+static bool ecn_mt4(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_ecn_info *info = par->matchinfo;
 
-	अगर (info->operation & XT_ECN_OP_MATCH_IP && !match_ip(skb, info))
-		वापस false;
+	if (info->operation & XT_ECN_OP_MATCH_IP && !match_ip(skb, info))
+		return false;
 
-	अगर (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
+	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
 	    !match_tcp(skb, par))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक ecn_mt_check4(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_ecn_info *info = par->matchinfo;
-	स्थिर काष्ठा ipt_ip *ip = par->entryinfo;
+static int ecn_mt_check4(const struct xt_mtchk_param *par)
+{
+	const struct xt_ecn_info *info = par->matchinfo;
+	const struct ipt_ip *ip = par->entryinfo;
 
-	अगर (info->operation & XT_ECN_OP_MATCH_MASK)
-		वापस -EINVAL;
+	if (info->operation & XT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	अगर (info->invert & XT_ECN_OP_MATCH_MASK)
-		वापस -EINVAL;
+	if (info->invert & XT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	अगर (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
-	    (ip->proto != IPPROTO_TCP || ip->invflags & IPT_INV_PROTO)) अणु
+	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
+	    (ip->proto != IPPROTO_TCP || ip->invflags & IPT_INV_PROTO)) {
 		pr_info_ratelimited("cannot match TCP bits for non-tcp packets\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool match_ipv6(स्थिर काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा xt_ecn_info *einfo)
-अणु
-	वापस (((ipv6_hdr(skb)->flow_lbl[0] >> 4) & XT_ECN_IP_MASK) ==
+static inline bool match_ipv6(const struct sk_buff *skb,
+			      const struct xt_ecn_info *einfo)
+{
+	return (((ipv6_hdr(skb)->flow_lbl[0] >> 4) & XT_ECN_IP_MASK) ==
 	        einfo->ip_ect) ^
 	       !!(einfo->invert & XT_ECN_OP_MATCH_IP);
-पूर्ण
+}
 
-अटल bool ecn_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_ecn_info *info = par->matchinfo;
+static bool ecn_mt6(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_ecn_info *info = par->matchinfo;
 
-	अगर (info->operation & XT_ECN_OP_MATCH_IP && !match_ipv6(skb, info))
-		वापस false;
+	if (info->operation & XT_ECN_OP_MATCH_IP && !match_ipv6(skb, info))
+		return false;
 
-	अगर (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
+	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
 	    !match_tcp(skb, par))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक ecn_mt_check6(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_ecn_info *info = par->matchinfo;
-	स्थिर काष्ठा ip6t_ip6 *ip = par->entryinfo;
+static int ecn_mt_check6(const struct xt_mtchk_param *par)
+{
+	const struct xt_ecn_info *info = par->matchinfo;
+	const struct ip6t_ip6 *ip = par->entryinfo;
 
-	अगर (info->operation & XT_ECN_OP_MATCH_MASK)
-		वापस -EINVAL;
+	if (info->operation & XT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	अगर (info->invert & XT_ECN_OP_MATCH_MASK)
-		वापस -EINVAL;
+	if (info->invert & XT_ECN_OP_MATCH_MASK)
+		return -EINVAL;
 
-	अगर (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
-	    (ip->proto != IPPROTO_TCP || ip->invflags & IP6T_INV_PROTO)) अणु
+	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
+	    (ip->proto != IPPROTO_TCP || ip->invflags & IP6T_INV_PROTO)) {
 		pr_info_ratelimited("cannot match TCP bits for non-tcp packets\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xt_match ecn_mt_reg[] __पढ़ो_mostly = अणु
-	अणु
+static struct xt_match ecn_mt_reg[] __read_mostly = {
+	{
 		.name		= "ecn",
 		.family		= NFPROTO_IPV4,
 		.match		= ecn_mt4,
-		.matchsize	= माप(काष्ठा xt_ecn_info),
+		.matchsize	= sizeof(struct xt_ecn_info),
 		.checkentry	= ecn_mt_check4,
 		.me		= THIS_MODULE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name		= "ecn",
 		.family		= NFPROTO_IPV6,
 		.match		= ecn_mt6,
-		.matchsize	= माप(काष्ठा xt_ecn_info),
+		.matchsize	= sizeof(struct xt_ecn_info),
 		.checkentry	= ecn_mt_check6,
 		.me		= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ecn_mt_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_matches(ecn_mt_reg, ARRAY_SIZE(ecn_mt_reg));
-पूर्ण
+static int __init ecn_mt_init(void)
+{
+	return xt_register_matches(ecn_mt_reg, ARRAY_SIZE(ecn_mt_reg));
+}
 
-अटल व्योम __निकास ecn_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_matches(ecn_mt_reg, ARRAY_SIZE(ecn_mt_reg));
-पूर्ण
+static void __exit ecn_mt_exit(void)
+{
+	xt_unregister_matches(ecn_mt_reg, ARRAY_SIZE(ecn_mt_reg));
+}
 
 module_init(ecn_mt_init);
-module_निकास(ecn_mt_निकास);
+module_exit(ecn_mt_exit);

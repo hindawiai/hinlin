@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/serial_sci.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/पन.स>
-#समावेश <cpu/serial.h>
-#समावेश <cpu/gpपन.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/serial_sci.h>
+#include <linux/serial_core.h>
+#include <linux/io.h>
+#include <cpu/serial.h>
+#include <cpu/gpio.h>
 
-अटल व्योम sh7720_sci_init_pins(काष्ठा uart_port *port, अचिन्हित पूर्णांक cflag)
-अणु
-	अचिन्हित लघु data;
+static void sh7720_sci_init_pins(struct uart_port *port, unsigned int cflag)
+{
+	unsigned short data;
 
-	अगर (cflag & CRTSCTS) अणु
+	if (cflag & CRTSCTS) {
 		/* enable RTS/CTS */
-		अगर (port->mapbase == 0xa4430000) अणु /* SCIF0 */
-			/* Clear PTCR bit 9-2; enable all scअगर pins but sck */
-			data = __raw_पढ़ोw(PORT_PTCR);
-			__raw_ग_लिखोw((data & 0xfc03), PORT_PTCR);
-		पूर्ण अन्यथा अगर (port->mapbase == 0xa4438000) अणु /* SCIF1 */
+		if (port->mapbase == 0xa4430000) { /* SCIF0 */
+			/* Clear PTCR bit 9-2; enable all scif pins but sck */
+			data = __raw_readw(PORT_PTCR);
+			__raw_writew((data & 0xfc03), PORT_PTCR);
+		} else if (port->mapbase == 0xa4438000) { /* SCIF1 */
 			/* Clear PVCR bit 9-2 */
-			data = __raw_पढ़ोw(PORT_PVCR);
-			__raw_ग_लिखोw((data & 0xfc03), PORT_PVCR);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (port->mapbase == 0xa4430000) अणु /* SCIF0 */
+			data = __raw_readw(PORT_PVCR);
+			__raw_writew((data & 0xfc03), PORT_PVCR);
+		}
+	} else {
+		if (port->mapbase == 0xa4430000) { /* SCIF0 */
 			/* Clear PTCR bit 5-2; enable only tx and rx  */
-			data = __raw_पढ़ोw(PORT_PTCR);
-			__raw_ग_लिखोw((data & 0xffc3), PORT_PTCR);
-		पूर्ण अन्यथा अगर (port->mapbase == 0xa4438000) अणु /* SCIF1 */
+			data = __raw_readw(PORT_PTCR);
+			__raw_writew((data & 0xffc3), PORT_PTCR);
+		} else if (port->mapbase == 0xa4438000) { /* SCIF1 */
 			/* Clear PVCR bit 5-2 */
-			data = __raw_पढ़ोw(PORT_PVCR);
-			__raw_ग_लिखोw((data & 0xffc3), PORT_PVCR);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			data = __raw_readw(PORT_PVCR);
+			__raw_writew((data & 0xffc3), PORT_PVCR);
+		}
+	}
+}
 
-काष्ठा plat_sci_port_ops sh7720_sci_port_ops = अणु
+struct plat_sci_port_ops sh7720_sci_port_ops = {
 	.init_pins	= sh7720_sci_init_pins,
-पूर्ण;
+};

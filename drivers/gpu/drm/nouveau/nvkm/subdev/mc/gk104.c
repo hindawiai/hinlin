@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,46 +21,46 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-स्थिर काष्ठा nvkm_mc_map
-gk104_mc_reset[] = अणु
-	अणु 0x00000100, NVKM_ENGINE_FIFO पूर्ण,
-	अणु 0x00002000, NVKM_SUBDEV_PMU, 0, true पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+const struct nvkm_mc_map
+gk104_mc_reset[] = {
+	{ 0x00000100, NVKM_ENGINE_FIFO },
+	{ 0x00002000, NVKM_SUBDEV_PMU, 0, true },
+	{}
+};
 
-स्थिर काष्ठा nvkm_mc_map
-gk104_mc_पूर्णांकr[] = अणु
-	अणु 0x04000000, NVKM_ENGINE_DISP पूर्ण,
-	अणु 0x00000100, NVKM_ENGINE_FIFO पूर्ण,
-	अणु 0x40000000, NVKM_SUBDEV_PRIVRING पूर्ण,
-	अणु 0x10000000, NVKM_SUBDEV_BUS पूर्ण,
-	अणु 0x08000000, NVKM_SUBDEV_FB पूर्ण,
-	अणु 0x02000000, NVKM_SUBDEV_LTC पूर्ण,
-	अणु 0x01000000, NVKM_SUBDEV_PMU पूर्ण,
-	अणु 0x00200000, NVKM_SUBDEV_GPIO पूर्ण,
-	अणु 0x00200000, NVKM_SUBDEV_I2C पूर्ण,
-	अणु 0x00100000, NVKM_SUBDEV_TIMER पूर्ण,
-	अणु 0x00040000, NVKM_SUBDEV_THERM पूर्ण,
-	अणु 0x00002000, NVKM_SUBDEV_FB पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+const struct nvkm_mc_map
+gk104_mc_intr[] = {
+	{ 0x04000000, NVKM_ENGINE_DISP },
+	{ 0x00000100, NVKM_ENGINE_FIFO },
+	{ 0x40000000, NVKM_SUBDEV_PRIVRING },
+	{ 0x10000000, NVKM_SUBDEV_BUS },
+	{ 0x08000000, NVKM_SUBDEV_FB },
+	{ 0x02000000, NVKM_SUBDEV_LTC },
+	{ 0x01000000, NVKM_SUBDEV_PMU },
+	{ 0x00200000, NVKM_SUBDEV_GPIO },
+	{ 0x00200000, NVKM_SUBDEV_I2C },
+	{ 0x00100000, NVKM_SUBDEV_TIMER },
+	{ 0x00040000, NVKM_SUBDEV_THERM },
+	{ 0x00002000, NVKM_SUBDEV_FB },
+	{},
+};
 
-अटल स्थिर काष्ठा nvkm_mc_func
-gk104_mc = अणु
+static const struct nvkm_mc_func
+gk104_mc = {
 	.init = nv50_mc_init,
-	.पूर्णांकr = gk104_mc_पूर्णांकr,
-	.पूर्णांकr_unarm = gf100_mc_पूर्णांकr_unarm,
-	.पूर्णांकr_rearm = gf100_mc_पूर्णांकr_rearm,
-	.पूर्णांकr_mask = gf100_mc_पूर्णांकr_mask,
-	.पूर्णांकr_stat = gf100_mc_पूर्णांकr_stat,
+	.intr = gk104_mc_intr,
+	.intr_unarm = gf100_mc_intr_unarm,
+	.intr_rearm = gf100_mc_intr_rearm,
+	.intr_mask = gf100_mc_intr_mask,
+	.intr_stat = gf100_mc_intr_stat,
 	.reset = gk104_mc_reset,
 	.unk260 = gf100_mc_unk260,
-पूर्ण;
+};
 
-पूर्णांक
-gk104_mc_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_mc **pmc)
-अणु
-	वापस nvkm_mc_new_(&gk104_mc, device, type, inst, pmc);
-पूर्ण
+int
+gk104_mc_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_mc **pmc)
+{
+	return nvkm_mc_new_(&gk104_mc, device, type, inst, pmc);
+}

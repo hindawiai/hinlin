@@ -1,168 +1,167 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * An rtc driver क्रम the Dallas DS1742
+ * An rtc driver for the Dallas DS1742
  *
  * Copyright (C) 2006 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  *
- * Copyright (C) 2006 Torsten Ertbjerg Rयंत्रussen <tr@newtec.dk>
+ * Copyright (C) 2006 Torsten Ertbjerg Rasmussen <tr@newtec.dk>
  *  - nvram size determined from resource
  *  - this ds1742 driver now supports ds1743.
  */
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
+#include <linux/bcd.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/delay.h>
+#include <linux/jiffies.h>
+#include <linux/rtc.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/module.h>
 
-#घोषणा RTC_SIZE		8
+#define RTC_SIZE		8
 
-#घोषणा RTC_CONTROL		0
-#घोषणा RTC_CENTURY		0
-#घोषणा RTC_SECONDS		1
-#घोषणा RTC_MINUTES		2
-#घोषणा RTC_HOURS		3
-#घोषणा RTC_DAY			4
-#घोषणा RTC_DATE		5
-#घोषणा RTC_MONTH		6
-#घोषणा RTC_YEAR		7
+#define RTC_CONTROL		0
+#define RTC_CENTURY		0
+#define RTC_SECONDS		1
+#define RTC_MINUTES		2
+#define RTC_HOURS		3
+#define RTC_DAY			4
+#define RTC_DATE		5
+#define RTC_MONTH		6
+#define RTC_YEAR		7
 
-#घोषणा RTC_CENTURY_MASK	0x3f
-#घोषणा RTC_SECONDS_MASK	0x7f
-#घोषणा RTC_DAY_MASK		0x07
+#define RTC_CENTURY_MASK	0x3f
+#define RTC_SECONDS_MASK	0x7f
+#define RTC_DAY_MASK		0x07
 
-/* Bits in the Control/Century रेजिस्टर */
-#घोषणा RTC_WRITE		0x80
-#घोषणा RTC_READ		0x40
+/* Bits in the Control/Century register */
+#define RTC_WRITE		0x80
+#define RTC_READ		0x40
 
-/* Bits in the Seconds रेजिस्टर */
-#घोषणा RTC_STOP		0x80
+/* Bits in the Seconds register */
+#define RTC_STOP		0x80
 
-/* Bits in the Day रेजिस्टर */
-#घोषणा RTC_BATT_FLAG		0x80
+/* Bits in the Day register */
+#define RTC_BATT_FLAG		0x80
 
-काष्ठा rtc_plat_data अणु
-	व्योम __iomem *ioaddr_nvram;
-	व्योम __iomem *ioaddr_rtc;
-	अचिन्हित दीर्घ last_jअगरfies;
-पूर्ण;
+struct rtc_plat_data {
+	void __iomem *ioaddr_nvram;
+	void __iomem *ioaddr_rtc;
+	unsigned long last_jiffies;
+};
 
-अटल पूर्णांक ds1742_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
-	व्योम __iomem *ioaddr = pdata->ioaddr_rtc;
+static int ds1742_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
+	void __iomem *ioaddr = pdata->ioaddr_rtc;
 	u8 century;
 
-	century = bin2bcd((पंचांग->पंचांग_year + 1900) / 100);
+	century = bin2bcd((tm->tm_year + 1900) / 100);
 
-	ग_लिखोb(RTC_WRITE, ioaddr + RTC_CONTROL);
+	writeb(RTC_WRITE, ioaddr + RTC_CONTROL);
 
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_year % 100), ioaddr + RTC_YEAR);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mon + 1), ioaddr + RTC_MONTH);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_wday) & RTC_DAY_MASK, ioaddr + RTC_DAY);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mday), ioaddr + RTC_DATE);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_hour), ioaddr + RTC_HOURS);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_min), ioaddr + RTC_MINUTES);
-	ग_लिखोb(bin2bcd(पंचांग->पंचांग_sec) & RTC_SECONDS_MASK, ioaddr + RTC_SECONDS);
+	writeb(bin2bcd(tm->tm_year % 100), ioaddr + RTC_YEAR);
+	writeb(bin2bcd(tm->tm_mon + 1), ioaddr + RTC_MONTH);
+	writeb(bin2bcd(tm->tm_wday) & RTC_DAY_MASK, ioaddr + RTC_DAY);
+	writeb(bin2bcd(tm->tm_mday), ioaddr + RTC_DATE);
+	writeb(bin2bcd(tm->tm_hour), ioaddr + RTC_HOURS);
+	writeb(bin2bcd(tm->tm_min), ioaddr + RTC_MINUTES);
+	writeb(bin2bcd(tm->tm_sec) & RTC_SECONDS_MASK, ioaddr + RTC_SECONDS);
 
-	/* RTC_CENTURY and RTC_CONTROL share same रेजिस्टर */
-	ग_लिखोb(RTC_WRITE | (century & RTC_CENTURY_MASK), ioaddr + RTC_CENTURY);
-	ग_लिखोb(century & RTC_CENTURY_MASK, ioaddr + RTC_CONTROL);
-	वापस 0;
-पूर्ण
+	/* RTC_CENTURY and RTC_CONTROL share same register */
+	writeb(RTC_WRITE | (century & RTC_CENTURY_MASK), ioaddr + RTC_CENTURY);
+	writeb(century & RTC_CENTURY_MASK, ioaddr + RTC_CONTROL);
+	return 0;
+}
 
-अटल पूर्णांक ds1742_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
-	व्योम __iomem *ioaddr = pdata->ioaddr_rtc;
-	अचिन्हित पूर्णांक year, month, day, hour, minute, second, week;
-	अचिन्हित पूर्णांक century;
+static int ds1742_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
+	void __iomem *ioaddr = pdata->ioaddr_rtc;
+	unsigned int year, month, day, hour, minute, second, week;
+	unsigned int century;
 
-	/* give enough समय to update RTC in हाल of continuous पढ़ो */
-	अगर (pdata->last_jअगरfies == jअगरfies)
+	/* give enough time to update RTC in case of continuous read */
+	if (pdata->last_jiffies == jiffies)
 		msleep(1);
-	pdata->last_jअगरfies = jअगरfies;
-	ग_लिखोb(RTC_READ, ioaddr + RTC_CONTROL);
-	second = पढ़ोb(ioaddr + RTC_SECONDS) & RTC_SECONDS_MASK;
-	minute = पढ़ोb(ioaddr + RTC_MINUTES);
-	hour = पढ़ोb(ioaddr + RTC_HOURS);
-	day = पढ़ोb(ioaddr + RTC_DATE);
-	week = पढ़ोb(ioaddr + RTC_DAY) & RTC_DAY_MASK;
-	month = पढ़ोb(ioaddr + RTC_MONTH);
-	year = पढ़ोb(ioaddr + RTC_YEAR);
-	century = पढ़ोb(ioaddr + RTC_CENTURY) & RTC_CENTURY_MASK;
-	ग_लिखोb(0, ioaddr + RTC_CONTROL);
-	पंचांग->पंचांग_sec = bcd2bin(second);
-	पंचांग->पंचांग_min = bcd2bin(minute);
-	पंचांग->पंचांग_hour = bcd2bin(hour);
-	पंचांग->पंचांग_mday = bcd2bin(day);
-	पंचांग->पंचांग_wday = bcd2bin(week);
-	पंचांग->पंचांग_mon = bcd2bin(month) - 1;
-	/* year is 1900 + पंचांग->पंचांग_year */
-	पंचांग->पंचांग_year = bcd2bin(year) + bcd2bin(century) * 100 - 1900;
+	pdata->last_jiffies = jiffies;
+	writeb(RTC_READ, ioaddr + RTC_CONTROL);
+	second = readb(ioaddr + RTC_SECONDS) & RTC_SECONDS_MASK;
+	minute = readb(ioaddr + RTC_MINUTES);
+	hour = readb(ioaddr + RTC_HOURS);
+	day = readb(ioaddr + RTC_DATE);
+	week = readb(ioaddr + RTC_DAY) & RTC_DAY_MASK;
+	month = readb(ioaddr + RTC_MONTH);
+	year = readb(ioaddr + RTC_YEAR);
+	century = readb(ioaddr + RTC_CENTURY) & RTC_CENTURY_MASK;
+	writeb(0, ioaddr + RTC_CONTROL);
+	tm->tm_sec = bcd2bin(second);
+	tm->tm_min = bcd2bin(minute);
+	tm->tm_hour = bcd2bin(hour);
+	tm->tm_mday = bcd2bin(day);
+	tm->tm_wday = bcd2bin(week);
+	tm->tm_mon = bcd2bin(month) - 1;
+	/* year is 1900 + tm->tm_year */
+	tm->tm_year = bcd2bin(year) + bcd2bin(century) * 100 - 1900;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops ds1742_rtc_ops = अणु
-	.पढ़ो_समय	= ds1742_rtc_पढ़ो_समय,
-	.set_समय	= ds1742_rtc_set_समय,
-पूर्ण;
+static const struct rtc_class_ops ds1742_rtc_ops = {
+	.read_time	= ds1742_rtc_read_time,
+	.set_time	= ds1742_rtc_set_time,
+};
 
-अटल पूर्णांक ds1742_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
-			     माप_प्रकार bytes)
-अणु
-	काष्ठा rtc_plat_data *pdata = priv;
-	व्योम __iomem *ioaddr = pdata->ioaddr_nvram;
+static int ds1742_nvram_read(void *priv, unsigned int pos, void *val,
+			     size_t bytes)
+{
+	struct rtc_plat_data *pdata = priv;
+	void __iomem *ioaddr = pdata->ioaddr_nvram;
 	u8 *buf = val;
 
-	क्रम (; bytes; bytes--)
-		*buf++ = पढ़ोb(ioaddr + pos++);
-	वापस 0;
-पूर्ण
+	for (; bytes; bytes--)
+		*buf++ = readb(ioaddr + pos++);
+	return 0;
+}
 
-अटल पूर्णांक ds1742_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
-			      माप_प्रकार bytes)
-अणु
-	काष्ठा rtc_plat_data *pdata = priv;
-	व्योम __iomem *ioaddr = pdata->ioaddr_nvram;
+static int ds1742_nvram_write(void *priv, unsigned int pos, void *val,
+			      size_t bytes)
+{
+	struct rtc_plat_data *pdata = priv;
+	void __iomem *ioaddr = pdata->ioaddr_nvram;
 	u8 *buf = val;
 
-	क्रम (; bytes; bytes--)
-		ग_लिखोb(*buf++, ioaddr + pos++);
-	वापस 0;
-पूर्ण
+	for (; bytes; bytes--)
+		writeb(*buf++, ioaddr + pos++);
+	return 0;
+}
 
-अटल पूर्णांक ds1742_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rtc_device *rtc;
-	काष्ठा resource *res;
-	अचिन्हित पूर्णांक cen, sec;
-	काष्ठा rtc_plat_data *pdata;
-	व्योम __iomem *ioaddr;
-	पूर्णांक ret = 0;
-	काष्ठा nvmem_config nvmem_cfg = अणु
+static int ds1742_rtc_probe(struct platform_device *pdev)
+{
+	struct rtc_device *rtc;
+	struct resource *res;
+	unsigned int cen, sec;
+	struct rtc_plat_data *pdata;
+	void __iomem *ioaddr;
+	int ret = 0;
+	struct nvmem_config nvmem_cfg = {
 		.name = "ds1742_nvram",
-		.reg_पढ़ो = ds1742_nvram_पढ़ो,
-		.reg_ग_लिखो = ds1742_nvram_ग_लिखो,
-	पूर्ण;
+		.reg_read = ds1742_nvram_read,
+		.reg_write = ds1742_nvram_write,
+	};
 
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ioaddr = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(ioaddr))
-		वापस PTR_ERR(ioaddr);
+	if (IS_ERR(ioaddr))
+		return PTR_ERR(ioaddr);
 
 	pdata->ioaddr_nvram = ioaddr;
 	pdata->ioaddr_rtc = ioaddr + resource_size(res) - RTC_SIZE;
@@ -170,52 +169,52 @@
 	nvmem_cfg.size = resource_size(res) - RTC_SIZE;
 	nvmem_cfg.priv = pdata;
 
-	/* turn RTC on अगर it was not on */
+	/* turn RTC on if it was not on */
 	ioaddr = pdata->ioaddr_rtc;
-	sec = पढ़ोb(ioaddr + RTC_SECONDS);
-	अगर (sec & RTC_STOP) अणु
+	sec = readb(ioaddr + RTC_SECONDS);
+	if (sec & RTC_STOP) {
 		sec &= RTC_SECONDS_MASK;
-		cen = पढ़ोb(ioaddr + RTC_CENTURY) & RTC_CENTURY_MASK;
-		ग_लिखोb(RTC_WRITE, ioaddr + RTC_CONTROL);
-		ग_लिखोb(sec, ioaddr + RTC_SECONDS);
-		ग_लिखोb(cen & RTC_CENTURY_MASK, ioaddr + RTC_CONTROL);
-	पूर्ण
-	अगर (!(पढ़ोb(ioaddr + RTC_DAY) & RTC_BATT_FLAG))
+		cen = readb(ioaddr + RTC_CENTURY) & RTC_CENTURY_MASK;
+		writeb(RTC_WRITE, ioaddr + RTC_CONTROL);
+		writeb(sec, ioaddr + RTC_SECONDS);
+		writeb(cen & RTC_CENTURY_MASK, ioaddr + RTC_CONTROL);
+	}
+	if (!(readb(ioaddr + RTC_DAY) & RTC_BATT_FLAG))
 		dev_warn(&pdev->dev, "voltage-low detected.\n");
 
-	pdata->last_jअगरfies = jअगरfies;
-	platक्रमm_set_drvdata(pdev, pdata);
+	pdata->last_jiffies = jiffies;
+	platform_set_drvdata(pdev, pdata);
 
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(rtc))
-		वापस PTR_ERR(rtc);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
 
 	rtc->ops = &ds1742_rtc_ops;
 
-	ret = devm_rtc_रेजिस्टर_device(rtc);
-	अगर (ret)
-		वापस ret;
+	ret = devm_rtc_register_device(rtc);
+	if (ret)
+		return ret;
 
-	devm_rtc_nvmem_रेजिस्टर(rtc, &nvmem_cfg);
+	devm_rtc_nvmem_register(rtc, &nvmem_cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused ds1742_rtc_of_match[] = अणु
-	अणु .compatible = "maxim,ds1742", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id __maybe_unused ds1742_rtc_of_match[] = {
+	{ .compatible = "maxim,ds1742", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ds1742_rtc_of_match);
 
-अटल काष्ठा platक्रमm_driver ds1742_rtc_driver = अणु
+static struct platform_driver ds1742_rtc_driver = {
 	.probe		= ds1742_rtc_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "rtc-ds1742",
 		.of_match_table = of_match_ptr(ds1742_rtc_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ds1742_rtc_driver);
+module_platform_driver(ds1742_rtc_driver);
 
 MODULE_AUTHOR("Atsushi Nemoto <anemo@mba.ocn.ne.jp>");
 MODULE_DESCRIPTION("Dallas DS1742 RTC driver");

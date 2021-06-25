@@ -1,215 +1,214 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2009, Steven Rostedt <srostedt@redhat.com>
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <त्रुटिसं.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
-#समावेश "debug.h"
-#समावेश "trace-event.h"
+#include "debug.h"
+#include "trace-event.h"
 
-#समावेश <linux/प्रकार.स>
+#include <linux/ctype.h>
 
-अटल पूर्णांक get_common_field(काष्ठा scripting_context *context,
-			    पूर्णांक *offset, पूर्णांक *size, स्थिर अक्षर *type)
-अणु
-	काष्ठा tep_handle *pevent = context->pevent;
-	काष्ठा tep_event *event;
-	काष्ठा tep_क्रमmat_field *field;
+static int get_common_field(struct scripting_context *context,
+			    int *offset, int *size, const char *type)
+{
+	struct tep_handle *pevent = context->pevent;
+	struct tep_event *event;
+	struct tep_format_field *field;
 
-	अगर (!*size) अणु
+	if (!*size) {
 
 		event = tep_get_first_event(pevent);
-		अगर (!event)
-			वापस 0;
+		if (!event)
+			return 0;
 
 		field = tep_find_common_field(event, type);
-		अगर (!field)
-			वापस 0;
+		if (!field)
+			return 0;
 		*offset = field->offset;
 		*size = field->size;
-	पूर्ण
+	}
 
-	वापस tep_पढ़ो_number(pevent, context->event_data + *offset, *size);
-पूर्ण
+	return tep_read_number(pevent, context->event_data + *offset, *size);
+}
 
-पूर्णांक common_lock_depth(काष्ठा scripting_context *context)
-अणु
-	अटल पूर्णांक offset;
-	अटल पूर्णांक size;
-	पूर्णांक ret;
+int common_lock_depth(struct scripting_context *context)
+{
+	static int offset;
+	static int size;
+	int ret;
 
 	ret = get_common_field(context, &size, &offset,
 			       "common_lock_depth");
-	अगर (ret < 0)
-		वापस -1;
+	if (ret < 0)
+		return -1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक common_flags(काष्ठा scripting_context *context)
-अणु
-	अटल पूर्णांक offset;
-	अटल पूर्णांक size;
-	पूर्णांक ret;
+int common_flags(struct scripting_context *context)
+{
+	static int offset;
+	static int size;
+	int ret;
 
 	ret = get_common_field(context, &size, &offset,
 			       "common_flags");
-	अगर (ret < 0)
-		वापस -1;
+	if (ret < 0)
+		return -1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक common_pc(काष्ठा scripting_context *context)
-अणु
-	अटल पूर्णांक offset;
-	अटल पूर्णांक size;
-	पूर्णांक ret;
+int common_pc(struct scripting_context *context)
+{
+	static int offset;
+	static int size;
+	int ret;
 
 	ret = get_common_field(context, &size, &offset,
 			       "common_preempt_count");
-	अगर (ret < 0)
-		वापस -1;
+	if (ret < 0)
+		return -1;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अचिन्हित दीर्घ दीर्घ
-raw_field_value(काष्ठा tep_event *event, स्थिर अक्षर *name, व्योम *data)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	अचिन्हित दीर्घ दीर्घ val;
+unsigned long long
+raw_field_value(struct tep_event *event, const char *name, void *data)
+{
+	struct tep_format_field *field;
+	unsigned long long val;
 
 	field = tep_find_any_field(event, name);
-	अगर (!field)
-		वापस 0ULL;
+	if (!field)
+		return 0ULL;
 
-	tep_पढ़ो_number_field(field, data, &val);
+	tep_read_number_field(field, data, &val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अचिन्हित दीर्घ दीर्घ पढ़ो_size(काष्ठा tep_event *event, व्योम *ptr, पूर्णांक size)
-अणु
-	वापस tep_पढ़ो_number(event->tep, ptr, size);
-पूर्ण
+unsigned long long read_size(struct tep_event *event, void *ptr, int size)
+{
+	return tep_read_number(event->tep, ptr, size);
+}
 
-व्योम event_क्रमmat__ख_लिखो(काष्ठा tep_event *event,
-			   पूर्णांक cpu, व्योम *data, पूर्णांक size, खाता *fp)
-अणु
-	काष्ठा tep_record record;
-	काष्ठा trace_seq s;
+void event_format__fprintf(struct tep_event *event,
+			   int cpu, void *data, int size, FILE *fp)
+{
+	struct tep_record record;
+	struct trace_seq s;
 
-	स_रखो(&record, 0, माप(record));
+	memset(&record, 0, sizeof(record));
 	record.cpu = cpu;
 	record.size = size;
 	record.data = data;
 
 	trace_seq_init(&s);
-	tep_prपूर्णांक_event(event->tep, &s, &record, "%s", TEP_PRINT_INFO);
-	trace_seq_करो_ख_लिखो(&s, fp);
+	tep_print_event(event->tep, &s, &record, "%s", TEP_PRINT_INFO);
+	trace_seq_do_fprintf(&s, fp);
 	trace_seq_destroy(&s);
-पूर्ण
+}
 
-व्योम event_क्रमmat__prपूर्णांक(काष्ठा tep_event *event,
-			 पूर्णांक cpu, व्योम *data, पूर्णांक size)
-अणु
-	वापस event_क्रमmat__ख_लिखो(event, cpu, data, size, मानक_निकास);
-पूर्ण
+void event_format__print(struct tep_event *event,
+			 int cpu, void *data, int size)
+{
+	return event_format__fprintf(event, cpu, data, size, stdout);
+}
 
-व्योम parse_ftrace_prपूर्णांकk(काष्ठा tep_handle *pevent,
-			 अक्षर *file, अचिन्हित पूर्णांक size __maybe_unused)
-अणु
-	अचिन्हित दीर्घ दीर्घ addr;
-	अक्षर *prपूर्णांकk;
-	अक्षर *line;
-	अक्षर *next = शून्य;
-	अक्षर *addr_str;
-	अक्षर *fmt = शून्य;
+void parse_ftrace_printk(struct tep_handle *pevent,
+			 char *file, unsigned int size __maybe_unused)
+{
+	unsigned long long addr;
+	char *printk;
+	char *line;
+	char *next = NULL;
+	char *addr_str;
+	char *fmt = NULL;
 
-	line = म_मोहर_r(file, "\n", &next);
-	जबतक (line) अणु
-		addr_str = म_मोहर_r(line, ":", &fmt);
-		अगर (!addr_str) अणु
+	line = strtok_r(file, "\n", &next);
+	while (line) {
+		addr_str = strtok_r(line, ":", &fmt);
+		if (!addr_str) {
 			pr_warning("printk format with empty entry");
-			अवरोध;
-		पूर्ण
-		addr = म_से_अदीर्घl(addr_str, शून्य, 16);
+			break;
+		}
+		addr = strtoull(addr_str, NULL, 16);
 		/* fmt still has a space, skip it */
-		prपूर्णांकk = strdup(fmt+1);
-		line = म_मोहर_r(शून्य, "\n", &next);
-		tep_रेजिस्टर_prपूर्णांक_string(pevent, prपूर्णांकk, addr);
-		मुक्त(prपूर्णांकk);
-	पूर्ण
-पूर्ण
+		printk = strdup(fmt+1);
+		line = strtok_r(NULL, "\n", &next);
+		tep_register_print_string(pevent, printk, addr);
+		free(printk);
+	}
+}
 
-व्योम parse_saved_cmdline(काष्ठा tep_handle *pevent,
-			 अक्षर *file, अचिन्हित पूर्णांक size __maybe_unused)
-अणु
-	अक्षर comm[17]; /* Max comm length in the kernel is 16. */
-	अक्षर *line;
-	अक्षर *next = शून्य;
-	पूर्णांक pid;
+void parse_saved_cmdline(struct tep_handle *pevent,
+			 char *file, unsigned int size __maybe_unused)
+{
+	char comm[17]; /* Max comm length in the kernel is 16. */
+	char *line;
+	char *next = NULL;
+	int pid;
 
-	line = म_मोहर_r(file, "\n", &next);
-	जबतक (line) अणु
-		अगर (माला_पूछो(line, "%d %16s", &pid, comm) == 2)
-			tep_रेजिस्टर_comm(pevent, comm, pid);
-		line = म_मोहर_r(शून्य, "\n", &next);
-	पूर्ण
-पूर्ण
+	line = strtok_r(file, "\n", &next);
+	while (line) {
+		if (sscanf(line, "%d %16s", &pid, comm) == 2)
+			tep_register_comm(pevent, comm, pid);
+		line = strtok_r(NULL, "\n", &next);
+	}
+}
 
-पूर्णांक parse_ftrace_file(काष्ठा tep_handle *pevent, अक्षर *buf, अचिन्हित दीर्घ size)
-अणु
-	वापस tep_parse_event(pevent, buf, size, "ftrace");
-पूर्ण
+int parse_ftrace_file(struct tep_handle *pevent, char *buf, unsigned long size)
+{
+	return tep_parse_event(pevent, buf, size, "ftrace");
+}
 
-पूर्णांक parse_event_file(काष्ठा tep_handle *pevent,
-		     अक्षर *buf, अचिन्हित दीर्घ size, अक्षर *sys)
-अणु
-	वापस tep_parse_event(pevent, buf, size, sys);
-पूर्ण
+int parse_event_file(struct tep_handle *pevent,
+		     char *buf, unsigned long size, char *sys)
+{
+	return tep_parse_event(pevent, buf, size, sys);
+}
 
-काष्ठा flag अणु
-	स्थिर अक्षर *name;
-	अचिन्हित दीर्घ दीर्घ value;
-पूर्ण;
+struct flag {
+	const char *name;
+	unsigned long long value;
+};
 
-अटल स्थिर काष्ठा flag flags[] = अणु
-	अणु "HI_SOFTIRQ", 0 पूर्ण,
-	अणु "TIMER_SOFTIRQ", 1 पूर्ण,
-	अणु "NET_TX_SOFTIRQ", 2 पूर्ण,
-	अणु "NET_RX_SOFTIRQ", 3 पूर्ण,
-	अणु "BLOCK_SOFTIRQ", 4 पूर्ण,
-	अणु "IRQ_POLL_SOFTIRQ", 5 पूर्ण,
-	अणु "TASKLET_SOFTIRQ", 6 पूर्ण,
-	अणु "SCHED_SOFTIRQ", 7 पूर्ण,
-	अणु "HRTIMER_SOFTIRQ", 8 पूर्ण,
-	अणु "RCU_SOFTIRQ", 9 पूर्ण,
+static const struct flag flags[] = {
+	{ "HI_SOFTIRQ", 0 },
+	{ "TIMER_SOFTIRQ", 1 },
+	{ "NET_TX_SOFTIRQ", 2 },
+	{ "NET_RX_SOFTIRQ", 3 },
+	{ "BLOCK_SOFTIRQ", 4 },
+	{ "IRQ_POLL_SOFTIRQ", 5 },
+	{ "TASKLET_SOFTIRQ", 6 },
+	{ "SCHED_SOFTIRQ", 7 },
+	{ "HRTIMER_SOFTIRQ", 8 },
+	{ "RCU_SOFTIRQ", 9 },
 
-	अणु "HRTIMER_NORESTART", 0 पूर्ण,
-	अणु "HRTIMER_RESTART", 1 पूर्ण,
-पूर्ण;
+	{ "HRTIMER_NORESTART", 0 },
+	{ "HRTIMER_RESTART", 1 },
+};
 
-अचिन्हित दीर्घ दीर्घ eval_flag(स्थिर अक्षर *flag)
-अणु
-	पूर्णांक i;
+unsigned long long eval_flag(const char *flag)
+{
+	int i;
 
 	/*
-	 * Some flags in the क्रमmat files करो not get converted.
-	 * If the flag is not numeric, see अगर it is something that
-	 * we alपढ़ोy know about.
+	 * Some flags in the format files do not get converted.
+	 * If the flag is not numeric, see if it is something that
+	 * we already know about.
 	 */
-	अगर (है_अंक(flag[0]))
-		वापस म_से_अदीर्घl(flag, शून्य, 0);
+	if (isdigit(flag[0]))
+		return strtoull(flag, NULL, 0);
 
-	क्रम (i = 0; i < (पूर्णांक)(माप(flags)/माप(flags[0])); i++)
-		अगर (म_भेद(flags[i].name, flag) == 0)
-			वापस flags[i].value;
+	for (i = 0; i < (int)(sizeof(flags)/sizeof(flags[0])); i++)
+		if (strcmp(flags[i].name, flag) == 0)
+			return flags[i].value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

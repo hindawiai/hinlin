@@ -1,150 +1,149 @@
-<शैली गुरु>
 /*
- * Default घड़ी type
+ * Default clock type
  *
  * Copyright (C) 2005-2008, 2015 Texas Instruments, Inc.
  * Copyright (C) 2004-2010 Nokia Corporation
  *
  * Contacts:
- * Riअक्षरd Woodruff <r-woodruff2@ti.com>
+ * Richard Woodruff <r-woodruff2@ti.com>
  * Paul Walmsley
  * Tero Kristo <t-kristo@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk/ti.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/clk/ti.h>
+#include <linux/delay.h>
 
-#समावेश "clock.h"
+#include "clock.h"
 
 /*
- * MAX_MODULE_ENABLE_WAIT: maximum of number of microseconds to रुको
- * क्रम a module to indicate that it is no दीर्घer in idle
+ * MAX_MODULE_ENABLE_WAIT: maximum of number of microseconds to wait
+ * for a module to indicate that it is no longer in idle
  */
-#घोषणा MAX_MODULE_ENABLE_WAIT		100000
+#define MAX_MODULE_ENABLE_WAIT		100000
 
 /*
- * CM module रेजिस्टर offsets, used क्रम calculating the companion
- * रेजिस्टर addresses.
+ * CM module register offsets, used for calculating the companion
+ * register addresses.
  */
-#घोषणा CM_FCLKEN			0x0000
-#घोषणा CM_ICLKEN			0x0010
+#define CM_FCLKEN			0x0000
+#define CM_ICLKEN			0x0010
 
 /**
- * _रुको_idlest_generic - रुको क्रम a module to leave the idle state
- * @clk: module घड़ी to रुको क्रम (needed क्रम रेजिस्टर offsets)
- * @reg: भव address of module IDLEST रेजिस्टर
- * @mask: value to mask against to determine अगर the module is active
- * @idlest: idle state indicator (0 or 1) क्रम the घड़ी
- * @name: name of the घड़ी (क्रम prपूर्णांकk)
+ * _wait_idlest_generic - wait for a module to leave the idle state
+ * @clk: module clock to wait for (needed for register offsets)
+ * @reg: virtual address of module IDLEST register
+ * @mask: value to mask against to determine if the module is active
+ * @idlest: idle state indicator (0 or 1) for the clock
+ * @name: name of the clock (for printk)
  *
- * Wait क्रम a module to leave idle, where its idle-status रेजिस्टर is
- * not inside the CM module.  Returns 1 अगर the module left idle
- * promptly, or 0 अगर the module did not leave idle beक्रमe the समयout
- * elapsed.  XXX Deprecated - should be moved पूर्णांकo drivers क्रम the
- * inभागidual IP block that the IDLEST रेजिस्टर exists in.
+ * Wait for a module to leave idle, where its idle-status register is
+ * not inside the CM module.  Returns 1 if the module left idle
+ * promptly, or 0 if the module did not leave idle before the timeout
+ * elapsed.  XXX Deprecated - should be moved into drivers for the
+ * individual IP block that the IDLEST register exists in.
  */
-अटल पूर्णांक _रुको_idlest_generic(काष्ठा clk_hw_omap *clk,
-				काष्ठा clk_omap_reg *reg,
-				u32 mask, u8 idlest, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i = 0, ena = 0;
+static int _wait_idlest_generic(struct clk_hw_omap *clk,
+				struct clk_omap_reg *reg,
+				u32 mask, u8 idlest, const char *name)
+{
+	int i = 0, ena = 0;
 
 	ena = (idlest) ? 0 : mask;
 
 	/* Wait until module enters enabled state */
-	क्रम (i = 0; i < MAX_MODULE_ENABLE_WAIT; i++) अणु
-		अगर ((ti_clk_ll_ops->clk_पढ़ोl(reg) & mask) == ena)
-			अवरोध;
+	for (i = 0; i < MAX_MODULE_ENABLE_WAIT; i++) {
+		if ((ti_clk_ll_ops->clk_readl(reg) & mask) == ena)
+			break;
 		udelay(1);
-	पूर्ण
+	}
 
-	अगर (i < MAX_MODULE_ENABLE_WAIT)
+	if (i < MAX_MODULE_ENABLE_WAIT)
 		pr_debug("omap clock: module associated with clock %s ready after %d loops\n",
 			 name, i);
-	अन्यथा
+	else
 		pr_err("omap clock: module associated with clock %s didn't enable in %d tries\n",
 		       name, MAX_MODULE_ENABLE_WAIT);
 
-	वापस (i < MAX_MODULE_ENABLE_WAIT) ? 1 : 0;
-पूर्ण
+	return (i < MAX_MODULE_ENABLE_WAIT) ? 1 : 0;
+}
 
 /**
- * _omap2_module_रुको_पढ़ोy - रुको क्रम an OMAP module to leave IDLE
- * @clk: काष्ठा clk * beदीर्घing to the module
+ * _omap2_module_wait_ready - wait for an OMAP module to leave IDLE
+ * @clk: struct clk * belonging to the module
  *
- * If the necessary घड़ीs क्रम the OMAP hardware IP block that
- * corresponds to घड़ी @clk are enabled, then रुको क्रम the module to
- * indicate पढ़ोiness (i.e., to leave IDLE).  This code करोes not
- * beदीर्घ in the घड़ी code and will be moved in the medium term to
- * module-dependent code.  No वापस value.
+ * If the necessary clocks for the OMAP hardware IP block that
+ * corresponds to clock @clk are enabled, then wait for the module to
+ * indicate readiness (i.e., to leave IDLE).  This code does not
+ * belong in the clock code and will be moved in the medium term to
+ * module-dependent code.  No return value.
  */
-अटल व्योम _omap2_module_रुको_पढ़ोy(काष्ठा clk_hw_omap *clk)
-अणु
-	काष्ठा clk_omap_reg companion_reg, idlest_reg;
+static void _omap2_module_wait_ready(struct clk_hw_omap *clk)
+{
+	struct clk_omap_reg companion_reg, idlest_reg;
 	u8 other_bit, idlest_bit, idlest_val, idlest_reg_id;
 	s16 prcm_mod;
-	पूर्णांक r;
+	int r;
 
-	/* Not all modules have multiple घड़ीs that their IDLEST depends on */
-	अगर (clk->ops->find_companion) अणु
+	/* Not all modules have multiple clocks that their IDLEST depends on */
+	if (clk->ops->find_companion) {
 		clk->ops->find_companion(clk, &companion_reg, &other_bit);
-		अगर (!(ti_clk_ll_ops->clk_पढ़ोl(&companion_reg) &
+		if (!(ti_clk_ll_ops->clk_readl(&companion_reg) &
 		      (1 << other_bit)))
-			वापस;
-	पूर्ण
+			return;
+	}
 
 	clk->ops->find_idlest(clk, &idlest_reg, &idlest_bit, &idlest_val);
 	r = ti_clk_ll_ops->cm_split_idlest_reg(&idlest_reg, &prcm_mod,
 					       &idlest_reg_id);
-	अगर (r) अणु
-		/* IDLEST रेजिस्टर not in the CM module */
-		_रुको_idlest_generic(clk, &idlest_reg, (1 << idlest_bit),
+	if (r) {
+		/* IDLEST register not in the CM module */
+		_wait_idlest_generic(clk, &idlest_reg, (1 << idlest_bit),
 				     idlest_val, clk_hw_get_name(&clk->hw));
-	पूर्ण अन्यथा अणु
-		ti_clk_ll_ops->cm_रुको_module_पढ़ोy(0, prcm_mod, idlest_reg_id,
+	} else {
+		ti_clk_ll_ops->cm_wait_module_ready(0, prcm_mod, idlest_reg_id,
 						    idlest_bit);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * omap2_clk_dflt_find_companion - find companion घड़ी to @clk
- * @clk: काष्ठा clk * to find the companion घड़ी of
- * @other_reg: व्योम __iomem ** to वापस the companion घड़ी CM_*CLKEN va in
- * @other_bit: u8 ** to वापस the companion घड़ी bit shअगरt in
+ * omap2_clk_dflt_find_companion - find companion clock to @clk
+ * @clk: struct clk * to find the companion clock of
+ * @other_reg: void __iomem ** to return the companion clock CM_*CLKEN va in
+ * @other_bit: u8 ** to return the companion clock bit shift in
  *
- * Note: We करोn't need special code here क्रम INVERT_ENABLE क्रम the
- * समय being since INVERT_ENABLE only applies to घड़ीs enabled by
+ * Note: We don't need special code here for INVERT_ENABLE for the
+ * time being since INVERT_ENABLE only applies to clocks enabled by
  * CM_CLKEN_PLL
  *
  * Convert CM_ICLKEN* <-> CM_FCLKEN*.  This conversion assumes it's
  * just a matter of XORing the bits.
  *
- * Some घड़ीs करोn't have companion घड़ीs.  For example, modules with
- * only an पूर्णांकerface घड़ी (such as MAILBOXES) करोn't have a companion
- * घड़ी.  Right now, this code relies on the hardware exporting a bit
- * in the correct companion रेजिस्टर that indicates that the
+ * Some clocks don't have companion clocks.  For example, modules with
+ * only an interface clock (such as MAILBOXES) don't have a companion
+ * clock.  Right now, this code relies on the hardware exporting a bit
+ * in the correct companion register that indicates that the
  * nonexistent 'companion clock' is active.  Future patches will
- * associate this type of code with per-module data काष्ठाures to
- * aव्योम this issue, and हटाओ the casts.  No वापस value.
+ * associate this type of code with per-module data structures to
+ * avoid this issue, and remove the casts.  No return value.
  */
-व्योम omap2_clk_dflt_find_companion(काष्ठा clk_hw_omap *clk,
-				   काष्ठा clk_omap_reg *other_reg,
+void omap2_clk_dflt_find_companion(struct clk_hw_omap *clk,
+				   struct clk_omap_reg *other_reg,
 				   u8 *other_bit)
-अणु
-	स_नकल(other_reg, &clk->enable_reg, माप(*other_reg));
+{
+	memcpy(other_reg, &clk->enable_reg, sizeof(*other_reg));
 
 	/*
 	 * Convert CM_ICLKEN* <-> CM_FCLKEN*.  This conversion assumes
@@ -153,27 +152,27 @@
 	other_reg->offset ^= (CM_FCLKEN ^ CM_ICLKEN);
 
 	*other_bit = clk->enable_bit;
-पूर्ण
+}
 
 /**
- * omap2_clk_dflt_find_idlest - find CM_IDLEST reg va, bit shअगरt क्रम @clk
- * @clk: काष्ठा clk * to find IDLEST info क्रम
- * @idlest_reg: व्योम __iomem ** to वापस the CM_IDLEST va in
- * @idlest_bit: u8 * to वापस the CM_IDLEST bit shअगरt in
- * @idlest_val: u8 * to वापस the idle status indicator
+ * omap2_clk_dflt_find_idlest - find CM_IDLEST reg va, bit shift for @clk
+ * @clk: struct clk * to find IDLEST info for
+ * @idlest_reg: void __iomem ** to return the CM_IDLEST va in
+ * @idlest_bit: u8 * to return the CM_IDLEST bit shift in
+ * @idlest_val: u8 * to return the idle status indicator
  *
- * Return the CM_IDLEST रेजिस्टर address and bit shअगरt corresponding
- * to the module that "owns" this घड़ी.  This शेष code assumes
- * that the CM_IDLEST bit shअगरt is the CM_*CLKEN bit shअगरt, and that
- * the IDLEST रेजिस्टर address ID corresponds to the CM_*CLKEN
- * रेजिस्टर address ID (e.g., that CM_FCLKEN2 corresponds to
- * CM_IDLEST2).  This is not true क्रम all modules.  No वापस value.
+ * Return the CM_IDLEST register address and bit shift corresponding
+ * to the module that "owns" this clock.  This default code assumes
+ * that the CM_IDLEST bit shift is the CM_*CLKEN bit shift, and that
+ * the IDLEST register address ID corresponds to the CM_*CLKEN
+ * register address ID (e.g., that CM_FCLKEN2 corresponds to
+ * CM_IDLEST2).  This is not true for all modules.  No return value.
  */
-व्योम omap2_clk_dflt_find_idlest(काष्ठा clk_hw_omap *clk,
-				काष्ठा clk_omap_reg *idlest_reg, u8 *idlest_bit,
+void omap2_clk_dflt_find_idlest(struct clk_hw_omap *clk,
+				struct clk_omap_reg *idlest_reg, u8 *idlest_bit,
 				u8 *idlest_val)
-अणु
-	स_नकल(idlest_reg, &clk->enable_reg, माप(*idlest_reg));
+{
+	memcpy(idlest_reg, &clk->enable_reg, sizeof(*idlest_reg));
 
 	idlest_reg->offset &= ~0xf0;
 	idlest_reg->offset |= 0x20;
@@ -181,118 +180,118 @@
 	*idlest_bit = clk->enable_bit;
 
 	/*
-	 * 24xx uses 0 to indicate not पढ़ोy, and 1 to indicate पढ़ोy.
+	 * 24xx uses 0 to indicate not ready, and 1 to indicate ready.
 	 * 34xx reverses this, just to keep us on our toes
 	 * AM35xx uses both, depending on the module.
 	 */
 	*idlest_val = ti_clk_get_features()->cm_idlest_val;
-पूर्ण
+}
 
 /**
- * omap2_dflt_clk_enable - enable a घड़ी in the hardware
- * @hw: काष्ठा clk_hw * of the घड़ी to enable
+ * omap2_dflt_clk_enable - enable a clock in the hardware
+ * @hw: struct clk_hw * of the clock to enable
  *
- * Enable the घड़ी @hw in the hardware.  We first call पूर्णांकo the OMAP
- * घड़ीकरोमुख्य code to "enable" the corresponding घड़ीकरोमुख्य अगर this
- * is the first enabled user of the घड़ीकरोमुख्य.  Then program the
- * hardware to enable the घड़ी.  Then रुको क्रम the IP block that uses
- * this घड़ी to leave idle (अगर applicable).  Returns the error value
- * from clkdm_clk_enable() अगर it terminated with an error, or -EINVAL
- * अगर @hw has a null घड़ी enable_reg, or zero upon success.
+ * Enable the clock @hw in the hardware.  We first call into the OMAP
+ * clockdomain code to "enable" the corresponding clockdomain if this
+ * is the first enabled user of the clockdomain.  Then program the
+ * hardware to enable the clock.  Then wait for the IP block that uses
+ * this clock to leave idle (if applicable).  Returns the error value
+ * from clkdm_clk_enable() if it terminated with an error, or -EINVAL
+ * if @hw has a null clock enable_reg, or zero upon success.
  */
-पूर्णांक omap2_dflt_clk_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk;
+int omap2_dflt_clk_enable(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk;
 	u32 v;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	bool clkdm_control;
 
-	अगर (ti_clk_get_features()->flags & TI_CLK_DISABLE_CLKDM_CONTROL)
+	if (ti_clk_get_features()->flags & TI_CLK_DISABLE_CLKDM_CONTROL)
 		clkdm_control = false;
-	अन्यथा
+	else
 		clkdm_control = true;
 
 	clk = to_clk_hw_omap(hw);
 
-	अगर (clkdm_control && clk->clkdm) अणु
+	if (clkdm_control && clk->clkdm) {
 		ret = ti_clk_ll_ops->clkdm_clk_enable(clk->clkdm, hw->clk);
-		अगर (ret) अणु
+		if (ret) {
 			WARN(1,
 			     "%s: could not enable %s's clockdomain %s: %d\n",
 			     __func__, clk_hw_get_name(hw),
 			     clk->clkdm_name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* FIXME should not have INVERT_ENABLE bit here */
-	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
-	अगर (clk->flags & INVERT_ENABLE)
+	v = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
+	if (clk->flags & INVERT_ENABLE)
 		v &= ~(1 << clk->enable_bit);
-	अन्यथा
+	else
 		v |= (1 << clk->enable_bit);
-	ti_clk_ll_ops->clk_ग_लिखोl(v, &clk->enable_reg);
-	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg); /* OCP barrier */
+	ti_clk_ll_ops->clk_writel(v, &clk->enable_reg);
+	v = ti_clk_ll_ops->clk_readl(&clk->enable_reg); /* OCP barrier */
 
-	अगर (clk->ops && clk->ops->find_idlest)
-		_omap2_module_रुको_पढ़ोy(clk);
+	if (clk->ops && clk->ops->find_idlest)
+		_omap2_module_wait_ready(clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * omap2_dflt_clk_disable - disable a घड़ी in the hardware
- * @hw: काष्ठा clk_hw * of the घड़ी to disable
+ * omap2_dflt_clk_disable - disable a clock in the hardware
+ * @hw: struct clk_hw * of the clock to disable
  *
- * Disable the घड़ी @hw in the hardware, and call पूर्णांकo the OMAP
- * घड़ीकरोमुख्य code to "disable" the corresponding घड़ीकरोमुख्य अगर all
- * घड़ीs/hwmods in that घड़ीकरोमुख्य are now disabled.  No वापस
+ * Disable the clock @hw in the hardware, and call into the OMAP
+ * clockdomain code to "disable" the corresponding clockdomain if all
+ * clocks/hwmods in that clockdomain are now disabled.  No return
  * value.
  */
-व्योम omap2_dflt_clk_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk;
+void omap2_dflt_clk_disable(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk;
 	u32 v;
 
 	clk = to_clk_hw_omap(hw);
 
-	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
-	अगर (clk->flags & INVERT_ENABLE)
+	v = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
+	if (clk->flags & INVERT_ENABLE)
 		v |= (1 << clk->enable_bit);
-	अन्यथा
+	else
 		v &= ~(1 << clk->enable_bit);
-	ti_clk_ll_ops->clk_ग_लिखोl(v, &clk->enable_reg);
+	ti_clk_ll_ops->clk_writel(v, &clk->enable_reg);
 	/* No OCP barrier needed here since it is a disable operation */
 
-	अगर (!(ti_clk_get_features()->flags & TI_CLK_DISABLE_CLKDM_CONTROL) &&
+	if (!(ti_clk_get_features()->flags & TI_CLK_DISABLE_CLKDM_CONTROL) &&
 	    clk->clkdm)
 		ti_clk_ll_ops->clkdm_clk_disable(clk->clkdm, hw->clk);
-पूर्ण
+}
 
 /**
- * omap2_dflt_clk_is_enabled - is घड़ी enabled in the hardware?
- * @hw: काष्ठा clk_hw * to check
+ * omap2_dflt_clk_is_enabled - is clock enabled in the hardware?
+ * @hw: struct clk_hw * to check
  *
- * Return 1 अगर the घड़ी represented by @hw is enabled in the
- * hardware, or 0 otherwise.  Intended क्रम use in the काष्ठा
- * clk_ops.is_enabled function poपूर्णांकer.
+ * Return 1 if the clock represented by @hw is enabled in the
+ * hardware, or 0 otherwise.  Intended for use in the struct
+ * clk_ops.is_enabled function pointer.
  */
-पूर्णांक omap2_dflt_clk_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+int omap2_dflt_clk_is_enabled(struct clk_hw *hw)
+{
+	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
 	u32 v;
 
-	v = ti_clk_ll_ops->clk_पढ़ोl(&clk->enable_reg);
+	v = ti_clk_ll_ops->clk_readl(&clk->enable_reg);
 
-	अगर (clk->flags & INVERT_ENABLE)
+	if (clk->flags & INVERT_ENABLE)
 		v ^= BIT(clk->enable_bit);
 
 	v &= BIT(clk->enable_bit);
 
-	वापस v ? 1 : 0;
-पूर्ण
+	return v ? 1 : 0;
+}
 
-स्थिर काष्ठा clk_hw_omap_ops clkhwops_रुको = अणु
+const struct clk_hw_omap_ops clkhwops_wait = {
 	.find_idlest	= omap2_clk_dflt_find_idlest,
 	.find_companion	= omap2_clk_dflt_find_companion,
-पूर्ण;
+};

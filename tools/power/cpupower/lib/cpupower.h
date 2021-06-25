@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __CPUPOWER_CPUPOWER_H__
-#घोषणा __CPUPOWER_CPUPOWER_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __CPUPOWER_CPUPOWER_H__
+#define __CPUPOWER_CPUPOWER_H__
 
-काष्ठा cpuघातer_topology अणु
-	/* Amount of CPU cores, packages and thपढ़ोs per core in the प्रणाली */
-	अचिन्हित पूर्णांक cores;
-	अचिन्हित पूर्णांक pkgs;
-	अचिन्हित पूर्णांक thपढ़ोs; /* per core */
+struct cpupower_topology {
+	/* Amount of CPU cores, packages and threads per core in the system */
+	unsigned int cores;
+	unsigned int pkgs;
+	unsigned int threads; /* per core */
 
-	/* Array माला_लो दो_स्मृतिated with cores entries, holding per core info */
-	काष्ठा cpuid_core_info *core_info;
-पूर्ण;
+	/* Array gets mallocated with cores entries, holding per core info */
+	struct cpuid_core_info *core_info;
+};
 
-काष्ठा cpuid_core_info अणु
-	पूर्णांक pkg;
-	पूर्णांक core;
-	पूर्णांक cpu;
+struct cpuid_core_info {
+	int pkg;
+	int core;
+	int cpu;
 
 	/* flags */
-	अचिन्हित पूर्णांक is_online:1;
-पूर्ण;
+	unsigned int is_online:1;
+};
 
-#अगर_घोषित __cplusplus
-बाह्य "C" अणु
-#पूर्ण_अगर
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-पूर्णांक get_cpu_topology(काष्ठा cpuघातer_topology *cpu_top);
-व्योम cpu_topology_release(काष्ठा cpuघातer_topology cpu_top);
-पूर्णांक cpuघातer_is_cpu_online(अचिन्हित पूर्णांक cpu);
+int get_cpu_topology(struct cpupower_topology *cpu_top);
+void cpu_topology_release(struct cpupower_topology cpu_top);
+int cpupower_is_cpu_online(unsigned int cpu);
 
-#अगर_घोषित __cplusplus
-पूर्ण
-#पूर्ण_अगर
+#ifdef __cplusplus
+}
+#endif
 
-#पूर्ण_अगर
+#endif

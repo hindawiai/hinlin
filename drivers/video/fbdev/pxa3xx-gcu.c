@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  pxa3xx-gcu.c - Linux kernel module क्रम PXA3xx graphics controllers
+ *  pxa3xx-gcu.c - Linux kernel module for PXA3xx graphics controllers
  *
  *  This driver needs a DirectFB counterpart in user space, communication
  *  is handled via mmap()ed memory areas and an ioctl.
  *
  *  Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  *  Copyright (c) 2009 Janine Kropp <nin@directfb.org>
- *  Copyright (c) 2009 Denis Oliver Kropp <करोk@directfb.org>
+ *  Copyright (c) 2009 Denis Oliver Kropp <dok@directfb.org>
  */
 
 /*
  * WARNING: This controller is attached to System Bus 2 of the PXA which
  * needs its arbiter to be enabled explicitly (CKENB & 1<<9).
- * There is currently no way to करो this from Linux, so you need to teach
- * your bootloader क्रम now.
+ * There is currently no way to do this from Linux, so you need to teach
+ * your bootloader for now.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/miscdevice.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include <linux/ioctl.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/fs.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
-#समावेश "pxa3xx-gcu.h"
+#include "pxa3xx-gcu.h"
 
-#घोषणा DRV_NAME	"pxa3xx-gcu"
+#define DRV_NAME	"pxa3xx-gcu"
 
-#घोषणा REG_GCCR	0x00
-#घोषणा GCCR_SYNC_CLR	(1 << 9)
-#घोषणा GCCR_BP_RST	(1 << 8)
-#घोषणा GCCR_ABORT	(1 << 6)
-#घोषणा GCCR_STOP	(1 << 4)
+#define REG_GCCR	0x00
+#define GCCR_SYNC_CLR	(1 << 9)
+#define GCCR_BP_RST	(1 << 8)
+#define GCCR_ABORT	(1 << 6)
+#define GCCR_STOP	(1 << 4)
 
-#घोषणा REG_GCISCR	0x04
-#घोषणा REG_GCIECR	0x08
-#घोषणा REG_GCRBBR	0x20
-#घोषणा REG_GCRBLR	0x24
-#घोषणा REG_GCRBHR	0x28
-#घोषणा REG_GCRBTR	0x2C
-#घोषणा REG_GCRBEXHR	0x30
+#define REG_GCISCR	0x04
+#define REG_GCIECR	0x08
+#define REG_GCRBBR	0x20
+#define REG_GCRBLR	0x24
+#define REG_GCRBHR	0x28
+#define REG_GCRBTR	0x2C
+#define REG_GCRBEXHR	0x30
 
-#घोषणा IE_EOB		(1 << 0)
-#घोषणा IE_EEOB		(1 << 5)
-#घोषणा IE_ALL		0xff
+#define IE_EOB		(1 << 0)
+#define IE_EEOB		(1 << 5)
+#define IE_ALL		0xff
 
-#घोषणा SHARED_SIZE	PAGE_ALIGN(माप(काष्ठा pxa3xx_gcu_shared))
+#define SHARED_SIZE	PAGE_ALIGN(sizeof(struct pxa3xx_gcu_shared))
 
-/* #घोषणा PXA3XX_GCU_DEBUG */
-/* #घोषणा PXA3XX_GCU_DEBUG_TIMER */
+/* #define PXA3XX_GCU_DEBUG */
+/* #define PXA3XX_GCU_DEBUG_TIMER */
 
-#अगर_घोषित PXA3XX_GCU_DEBUG
-#घोषणा QDUMP(msg)					\
-	करो अणु						\
+#ifdef PXA3XX_GCU_DEBUG
+#define QDUMP(msg)					\
+	do {						\
 		QPRINT(priv, KERN_DEBUG, msg);		\
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा QDUMP(msg)	करो अणुपूर्ण जबतक (0)
-#पूर्ण_अगर
+	} while (0)
+#else
+#define QDUMP(msg)	do {} while (0)
+#endif
 
-#घोषणा QERROR(msg)					\
-	करो अणु						\
+#define QERROR(msg)					\
+	do {						\
 		QPRINT(priv, KERN_ERR, msg);		\
-	पूर्ण जबतक (0)
+	} while (0)
 
-काष्ठा pxa3xx_gcu_batch अणु
-	काष्ठा pxa3xx_gcu_batch *next;
+struct pxa3xx_gcu_batch {
+	struct pxa3xx_gcu_batch *next;
 	u32			*ptr;
 	dma_addr_t		 phys;
-	अचिन्हित दीर्घ		 length;
-पूर्ण;
+	unsigned long		 length;
+};
 
-काष्ठा pxa3xx_gcu_priv अणु
-	काष्ठा device		 *dev;
-	व्योम __iomem		 *mmio_base;
-	काष्ठा clk		 *clk;
-	काष्ठा pxa3xx_gcu_shared *shared;
+struct pxa3xx_gcu_priv {
+	struct device		 *dev;
+	void __iomem		 *mmio_base;
+	struct clk		 *clk;
+	struct pxa3xx_gcu_shared *shared;
 	dma_addr_t		  shared_phys;
-	काष्ठा resource		 *resource_mem;
-	काष्ठा miscdevice	  misc_dev;
-	रुको_queue_head_t	  रुको_idle;
-	रुको_queue_head_t	  रुको_मुक्त;
+	struct resource		 *resource_mem;
+	struct miscdevice	  misc_dev;
+	wait_queue_head_t	  wait_idle;
+	wait_queue_head_t	  wait_free;
 	spinlock_t		  spinlock;
-	काष्ठा बारpec64	  base_समय;
+	struct timespec64	  base_time;
 
-	काष्ठा pxa3xx_gcu_batch *मुक्त;
-	काष्ठा pxa3xx_gcu_batch *पढ़ोy;
-	काष्ठा pxa3xx_gcu_batch *पढ़ोy_last;
-	काष्ठा pxa3xx_gcu_batch *running;
-पूर्ण;
+	struct pxa3xx_gcu_batch *free;
+	struct pxa3xx_gcu_batch *ready;
+	struct pxa3xx_gcu_batch *ready_last;
+	struct pxa3xx_gcu_batch *running;
+};
 
-अटल अंतरभूत अचिन्हित दीर्घ
-gc_पढ़ोl(काष्ठा pxa3xx_gcu_priv *priv, अचिन्हित पूर्णांक off)
-अणु
-	वापस __raw_पढ़ोl(priv->mmio_base + off);
-पूर्ण
+static inline unsigned long
+gc_readl(struct pxa3xx_gcu_priv *priv, unsigned int off)
+{
+	return __raw_readl(priv->mmio_base + off);
+}
 
-अटल अंतरभूत व्योम
-gc_ग_लिखोl(काष्ठा pxa3xx_gcu_priv *priv, अचिन्हित पूर्णांक off, अचिन्हित दीर्घ val)
-अणु
-	__raw_ग_लिखोl(val, priv->mmio_base + off);
-पूर्ण
+static inline void
+gc_writel(struct pxa3xx_gcu_priv *priv, unsigned int off, unsigned long val)
+{
+	__raw_writel(val, priv->mmio_base + off);
+}
 
-#घोषणा QPRINT(priv, level, msg)					\
-	करो अणु								\
-		काष्ठा बारpec64 ts;					\
-		काष्ठा pxa3xx_gcu_shared *shared = priv->shared;	\
-		u32 base = gc_पढ़ोl(priv, REG_GCRBBR);			\
+#define QPRINT(priv, level, msg)					\
+	do {								\
+		struct timespec64 ts;					\
+		struct pxa3xx_gcu_shared *shared = priv->shared;	\
+		u32 base = gc_readl(priv, REG_GCRBBR);			\
 									\
-		kसमय_get_ts64(&ts);					\
-		ts = बारpec64_sub(ts, priv->base_समय);		\
+		ktime_get_ts64(&ts);					\
+		ts = timespec64_sub(ts, priv->base_time);		\
 									\
-		prपूर्णांकk(level "%lld.%03ld.%03ld - %-17s: %-21s (%s, "	\
+		printk(level "%lld.%03ld.%03ld - %-17s: %-21s (%s, "	\
 			"STATUS "					\
 			"0x%02lx, B 0x%08lx [%ld], E %5ld, H %5ld, "	\
 			"T %5ld)\n",					\
@@ -131,137 +130,137 @@ gc_ग_लिखोl(काष्ठा pxa3xx_gcu_priv *priv, अचिन्�
 			(ts.tv_nsec % NSEC_PER_MSEC) / USEC_PER_MSEC,	\
 			__func__, msg,					\
 			shared->hw_running ? "running" : "   idle",	\
-			gc_पढ़ोl(priv, REG_GCISCR),			\
-			gc_पढ़ोl(priv, REG_GCRBBR),			\
-			gc_पढ़ोl(priv, REG_GCRBLR),			\
-			(gc_पढ़ोl(priv, REG_GCRBEXHR) - base) / 4,	\
-			(gc_पढ़ोl(priv, REG_GCRBHR) - base) / 4,	\
-			(gc_पढ़ोl(priv, REG_GCRBTR) - base) / 4);	\
-	पूर्ण जबतक (0)
+			gc_readl(priv, REG_GCISCR),			\
+			gc_readl(priv, REG_GCRBBR),			\
+			gc_readl(priv, REG_GCRBLR),			\
+			(gc_readl(priv, REG_GCRBEXHR) - base) / 4,	\
+			(gc_readl(priv, REG_GCRBHR) - base) / 4,	\
+			(gc_readl(priv, REG_GCRBTR) - base) / 4);	\
+	} while (0)
 
-अटल व्योम
-pxa3xx_gcu_reset(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
+static void
+pxa3xx_gcu_reset(struct pxa3xx_gcu_priv *priv)
+{
 	QDUMP("RESET");
 
-	/* disable पूर्णांकerrupts */
-	gc_ग_लिखोl(priv, REG_GCIECR, 0);
+	/* disable interrupts */
+	gc_writel(priv, REG_GCIECR, 0);
 
 	/* reset hardware */
-	gc_ग_लिखोl(priv, REG_GCCR, GCCR_ABORT);
-	gc_ग_लिखोl(priv, REG_GCCR, 0);
+	gc_writel(priv, REG_GCCR, GCCR_ABORT);
+	gc_writel(priv, REG_GCCR, 0);
 
-	स_रखो(priv->shared, 0, SHARED_SIZE);
+	memset(priv->shared, 0, SHARED_SIZE);
 	priv->shared->buffer_phys = priv->shared_phys;
 	priv->shared->magic = PXA3XX_GCU_SHARED_MAGIC;
 
-	kसमय_get_ts64(&priv->base_समय);
+	ktime_get_ts64(&priv->base_time);
 
-	/* set up the ring buffer poपूर्णांकers */
-	gc_ग_लिखोl(priv, REG_GCRBLR, 0);
-	gc_ग_लिखोl(priv, REG_GCRBBR, priv->shared_phys);
-	gc_ग_लिखोl(priv, REG_GCRBTR, priv->shared_phys);
+	/* set up the ring buffer pointers */
+	gc_writel(priv, REG_GCRBLR, 0);
+	gc_writel(priv, REG_GCRBBR, priv->shared_phys);
+	gc_writel(priv, REG_GCRBTR, priv->shared_phys);
 
 	/* enable all IRQs except EOB */
-	gc_ग_लिखोl(priv, REG_GCIECR, IE_ALL & ~IE_EOB);
-पूर्ण
+	gc_writel(priv, REG_GCIECR, IE_ALL & ~IE_EOB);
+}
 
-अटल व्योम
-dump_whole_state(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	काष्ठा pxa3xx_gcu_shared *sh = priv->shared;
-	u32 base = gc_पढ़ोl(priv, REG_GCRBBR);
+static void
+dump_whole_state(struct pxa3xx_gcu_priv *priv)
+{
+	struct pxa3xx_gcu_shared *sh = priv->shared;
+	u32 base = gc_readl(priv, REG_GCRBBR);
 
 	QDUMP("DUMP");
 
-	prपूर्णांकk(KERN_DEBUG "== PXA3XX-GCU DUMP ==\n"
+	printk(KERN_DEBUG "== PXA3XX-GCU DUMP ==\n"
 		"%s, STATUS 0x%02lx, B 0x%08lx [%ld], E %5ld, H %5ld, T %5ld\n",
 		sh->hw_running ? "running" : "idle   ",
-		gc_पढ़ोl(priv, REG_GCISCR),
-		gc_पढ़ोl(priv, REG_GCRBBR),
-		gc_पढ़ोl(priv, REG_GCRBLR),
-		(gc_पढ़ोl(priv, REG_GCRBEXHR) - base) / 4,
-		(gc_पढ़ोl(priv, REG_GCRBHR) - base) / 4,
-		(gc_पढ़ोl(priv, REG_GCRBTR) - base) / 4);
-पूर्ण
+		gc_readl(priv, REG_GCISCR),
+		gc_readl(priv, REG_GCRBBR),
+		gc_readl(priv, REG_GCRBLR),
+		(gc_readl(priv, REG_GCRBEXHR) - base) / 4,
+		(gc_readl(priv, REG_GCRBHR) - base) / 4,
+		(gc_readl(priv, REG_GCRBTR) - base) / 4);
+}
 
-अटल व्योम
-flush_running(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	काष्ठा pxa3xx_gcu_batch *running = priv->running;
-	काष्ठा pxa3xx_gcu_batch *next;
+static void
+flush_running(struct pxa3xx_gcu_priv *priv)
+{
+	struct pxa3xx_gcu_batch *running = priv->running;
+	struct pxa3xx_gcu_batch *next;
 
-	जबतक (running) अणु
+	while (running) {
 		next = running->next;
-		running->next = priv->मुक्त;
-		priv->मुक्त = running;
+		running->next = priv->free;
+		priv->free = running;
 		running = next;
-	पूर्ण
+	}
 
-	priv->running = शून्य;
-पूर्ण
+	priv->running = NULL;
+}
 
-अटल व्योम
-run_पढ़ोy(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	अचिन्हित पूर्णांक num = 0;
-	काष्ठा pxa3xx_gcu_shared *shared = priv->shared;
-	काष्ठा pxa3xx_gcu_batch	*पढ़ोy = priv->पढ़ोy;
+static void
+run_ready(struct pxa3xx_gcu_priv *priv)
+{
+	unsigned int num = 0;
+	struct pxa3xx_gcu_shared *shared = priv->shared;
+	struct pxa3xx_gcu_batch	*ready = priv->ready;
 
 	QDUMP("Start");
 
-	BUG_ON(!पढ़ोy);
+	BUG_ON(!ready);
 
 	shared->buffer[num++] = 0x05000000;
 
-	जबतक (पढ़ोy) अणु
+	while (ready) {
 		shared->buffer[num++] = 0x00000001;
-		shared->buffer[num++] = पढ़ोy->phys;
-		पढ़ोy = पढ़ोy->next;
-	पूर्ण
+		shared->buffer[num++] = ready->phys;
+		ready = ready->next;
+	}
 
 	shared->buffer[num++] = 0x05000000;
-	priv->running = priv->पढ़ोy;
-	priv->पढ़ोy = priv->पढ़ोy_last = शून्य;
-	gc_ग_लिखोl(priv, REG_GCRBLR, 0);
+	priv->running = priv->ready;
+	priv->ready = priv->ready_last = NULL;
+	gc_writel(priv, REG_GCRBLR, 0);
 	shared->hw_running = 1;
 
 	/* ring base address */
-	gc_ग_लिखोl(priv, REG_GCRBBR, shared->buffer_phys);
+	gc_writel(priv, REG_GCRBBR, shared->buffer_phys);
 
 	/* ring tail address */
-	gc_ग_लिखोl(priv, REG_GCRBTR, shared->buffer_phys + num * 4);
+	gc_writel(priv, REG_GCRBTR, shared->buffer_phys + num * 4);
 
 	/* ring length */
-	gc_ग_लिखोl(priv, REG_GCRBLR, ((num + 63) & ~63) * 4);
-पूर्ण
+	gc_writel(priv, REG_GCRBLR, ((num + 63) & ~63) * 4);
+}
 
-अटल irqवापस_t
-pxa3xx_gcu_handle_irq(पूर्णांक irq, व्योम *ctx)
-अणु
-	काष्ठा pxa3xx_gcu_priv *priv = ctx;
-	काष्ठा pxa3xx_gcu_shared *shared = priv->shared;
-	u32 status = gc_पढ़ोl(priv, REG_GCISCR) & IE_ALL;
+static irqreturn_t
+pxa3xx_gcu_handle_irq(int irq, void *ctx)
+{
+	struct pxa3xx_gcu_priv *priv = ctx;
+	struct pxa3xx_gcu_shared *shared = priv->shared;
+	u32 status = gc_readl(priv, REG_GCISCR) & IE_ALL;
 
 	QDUMP("-Interrupt");
 
-	अगर (!status)
-		वापस IRQ_NONE;
+	if (!status)
+		return IRQ_NONE;
 
 	spin_lock(&priv->spinlock);
-	shared->num_पूर्णांकerrupts++;
+	shared->num_interrupts++;
 
-	अगर (status & IE_EEOB) अणु
+	if (status & IE_EEOB) {
 		QDUMP(" [EEOB]");
 
 		flush_running(priv);
-		wake_up_all(&priv->रुको_मुक्त);
+		wake_up_all(&priv->wait_free);
 
-		अगर (priv->पढ़ोy) अणु
-			run_पढ़ोy(priv);
-		पूर्ण अन्यथा अणु
+		if (priv->ready) {
+			run_ready(priv);
+		} else {
 			/* There is no more data prepared by the userspace.
-			 * Set hw_running = 0 and रुको क्रम the next userspace
+			 * Set hw_running = 0 and wait for the next userspace
 			 * kick-off */
 			shared->num_idle++;
 			shared->hw_running = 0;
@@ -269,155 +268,155 @@ pxa3xx_gcu_handle_irq(पूर्णांक irq, व्योम *ctx)
 			QDUMP(" '-> Idle.");
 
 			/* set ring buffer length to zero */
-			gc_ग_लिखोl(priv, REG_GCRBLR, 0);
+			gc_writel(priv, REG_GCRBLR, 0);
 
-			wake_up_all(&priv->रुको_idle);
-		पूर्ण
+			wake_up_all(&priv->wait_idle);
+		}
 
-		shared->num_करोne++;
-	पूर्ण अन्यथा अणु
+		shared->num_done++;
+	} else {
 		QERROR(" [???]");
 		dump_whole_state(priv);
-	पूर्ण
+	}
 
-	/* Clear the पूर्णांकerrupt */
-	gc_ग_लिखोl(priv, REG_GCISCR, status);
+	/* Clear the interrupt */
+	gc_writel(priv, REG_GCISCR, status);
 	spin_unlock(&priv->spinlock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक
-pxa3xx_gcu_रुको_idle(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	पूर्णांक ret = 0;
+static int
+pxa3xx_gcu_wait_idle(struct pxa3xx_gcu_priv *priv)
+{
+	int ret = 0;
 
 	QDUMP("Waiting for idle...");
 
 	/* Does not need to be atomic. There's a lock in user space,
-	 * but anyhow, this is just क्रम statistics. */
-	priv->shared->num_रुको_idle++;
+	 * but anyhow, this is just for statistics. */
+	priv->shared->num_wait_idle++;
 
-	जबतक (priv->shared->hw_running) अणु
-		पूर्णांक num = priv->shared->num_पूर्णांकerrupts;
-		u32 rbexhr = gc_पढ़ोl(priv, REG_GCRBEXHR);
+	while (priv->shared->hw_running) {
+		int num = priv->shared->num_interrupts;
+		u32 rbexhr = gc_readl(priv, REG_GCRBEXHR);
 
-		ret = रुको_event_पूर्णांकerruptible_समयout(priv->रुको_idle,
+		ret = wait_event_interruptible_timeout(priv->wait_idle,
 					!priv->shared->hw_running, HZ*4);
 
-		अगर (ret != 0)
-			अवरोध;
+		if (ret != 0)
+			break;
 
-		अगर (gc_पढ़ोl(priv, REG_GCRBEXHR) == rbexhr &&
-		    priv->shared->num_पूर्णांकerrupts == num) अणु
+		if (gc_readl(priv, REG_GCRBEXHR) == rbexhr &&
+		    priv->shared->num_interrupts == num) {
 			QERROR("TIMEOUT");
 			ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	QDUMP("done");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-pxa3xx_gcu_रुको_मुक्त(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	पूर्णांक ret = 0;
+static int
+pxa3xx_gcu_wait_free(struct pxa3xx_gcu_priv *priv)
+{
+	int ret = 0;
 
 	QDUMP("Waiting for free...");
 
 	/* Does not need to be atomic. There's a lock in user space,
-	 * but anyhow, this is just क्रम statistics. */
-	priv->shared->num_रुको_मुक्त++;
+	 * but anyhow, this is just for statistics. */
+	priv->shared->num_wait_free++;
 
-	जबतक (!priv->मुक्त) अणु
-		u32 rbexhr = gc_पढ़ोl(priv, REG_GCRBEXHR);
+	while (!priv->free) {
+		u32 rbexhr = gc_readl(priv, REG_GCRBEXHR);
 
-		ret = रुको_event_पूर्णांकerruptible_समयout(priv->रुको_मुक्त,
-						       priv->मुक्त, HZ*4);
+		ret = wait_event_interruptible_timeout(priv->wait_free,
+						       priv->free, HZ*4);
 
-		अगर (ret < 0)
-			अवरोध;
+		if (ret < 0)
+			break;
 
-		अगर (ret > 0)
-			जारी;
+		if (ret > 0)
+			continue;
 
-		अगर (gc_पढ़ोl(priv, REG_GCRBEXHR) == rbexhr) अणु
+		if (gc_readl(priv, REG_GCRBEXHR) == rbexhr) {
 			QERROR("TIMEOUT");
 			ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	QDUMP("done");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Misc device layer */
 
-अटल अंतरभूत काष्ठा pxa3xx_gcu_priv *to_pxa3xx_gcu_priv(काष्ठा file *file)
-अणु
-	काष्ठा miscdevice *dev = file->निजी_data;
-	वापस container_of(dev, काष्ठा pxa3xx_gcu_priv, misc_dev);
-पूर्ण
+static inline struct pxa3xx_gcu_priv *to_pxa3xx_gcu_priv(struct file *file)
+{
+	struct miscdevice *dev = file->private_data;
+	return container_of(dev, struct pxa3xx_gcu_priv, misc_dev);
+}
 
 /*
- * provide an empty .खोलो callback, so the core sets file->निजी_data
- * क्रम us.
+ * provide an empty .open callback, so the core sets file->private_data
+ * for us.
  */
-अटल पूर्णांक pxa3xx_gcu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int pxa3xx_gcu_open(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल sमाप_प्रकार
-pxa3xx_gcu_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *buff,
-		 माप_प्रकार count, loff_t *offp)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
-	काष्ठा pxa3xx_gcu_batch	*buffer;
-	काष्ठा pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
+static ssize_t
+pxa3xx_gcu_write(struct file *file, const char *buff,
+		 size_t count, loff_t *offp)
+{
+	int ret;
+	unsigned long flags;
+	struct pxa3xx_gcu_batch	*buffer;
+	struct pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
 
-	पूर्णांक words = count / 4;
+	int words = count / 4;
 
 	/* Does not need to be atomic. There's a lock in user space,
-	 * but anyhow, this is just क्रम statistics. */
-	priv->shared->num_ग_लिखोs++;
+	 * but anyhow, this is just for statistics. */
+	priv->shared->num_writes++;
 	priv->shared->num_words += words;
 
-	/* Last word reserved क्रम batch buffer end command */
-	अगर (words >= PXA3XX_GCU_BATCH_WORDS)
-		वापस -E2BIG;
+	/* Last word reserved for batch buffer end command */
+	if (words >= PXA3XX_GCU_BATCH_WORDS)
+		return -E2BIG;
 
-	/* Wait क्रम a मुक्त buffer */
-	अगर (!priv->मुक्त) अणु
-		ret = pxa3xx_gcu_रुको_मुक्त(priv);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	/* Wait for a free buffer */
+	if (!priv->free) {
+		ret = pxa3xx_gcu_wait_free(priv);
+		if (ret < 0)
+			return ret;
+	}
 
 	/*
-	 * Get buffer from मुक्त list
+	 * Get buffer from free list
 	 */
 	spin_lock_irqsave(&priv->spinlock, flags);
-	buffer = priv->मुक्त;
-	priv->मुक्त = buffer->next;
+	buffer = priv->free;
+	priv->free = buffer->next;
 	spin_unlock_irqrestore(&priv->spinlock, flags);
 
 
-	/* Copy data from user पूर्णांकo buffer */
+	/* Copy data from user into buffer */
 	ret = copy_from_user(buffer->ptr, buff, words * 4);
-	अगर (ret) अणु
+	if (ret) {
 		spin_lock_irqsave(&priv->spinlock, flags);
-		buffer->next = priv->मुक्त;
-		priv->मुक्त = buffer;
+		buffer->next = priv->free;
+		priv->free = buffer;
 		spin_unlock_irqrestore(&priv->spinlock, flags);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	buffer->length = words;
 
@@ -425,292 +424,292 @@ pxa3xx_gcu_ग_लिखो(काष्ठा file *file, स्थिर अ�
 	buffer->ptr[words] = 0x01000000;
 
 	/*
-	 * Add buffer to पढ़ोy list
+	 * Add buffer to ready list
 	 */
 	spin_lock_irqsave(&priv->spinlock, flags);
 
-	buffer->next = शून्य;
+	buffer->next = NULL;
 
-	अगर (priv->पढ़ोy) अणु
-		BUG_ON(priv->पढ़ोy_last == शून्य);
+	if (priv->ready) {
+		BUG_ON(priv->ready_last == NULL);
 
-		priv->पढ़ोy_last->next = buffer;
-	पूर्ण अन्यथा
-		priv->पढ़ोy = buffer;
+		priv->ready_last->next = buffer;
+	} else
+		priv->ready = buffer;
 
-	priv->पढ़ोy_last = buffer;
+	priv->ready_last = buffer;
 
-	अगर (!priv->shared->hw_running)
-		run_पढ़ोy(priv);
+	if (!priv->shared->hw_running)
+		run_ready(priv);
 
 	spin_unlock_irqrestore(&priv->spinlock, flags);
 
-	वापस words * 4;
-पूर्ण
+	return words * 4;
+}
 
 
-अटल दीर्घ
-pxa3xx_gcu_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
+static long
+pxa3xx_gcu_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	unsigned long flags;
+	struct pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
 
-	चयन (cmd) अणु
-	हाल PXA3XX_GCU_IOCTL_RESET:
+	switch (cmd) {
+	case PXA3XX_GCU_IOCTL_RESET:
 		spin_lock_irqsave(&priv->spinlock, flags);
 		pxa3xx_gcu_reset(priv);
 		spin_unlock_irqrestore(&priv->spinlock, flags);
-		वापस 0;
+		return 0;
 
-	हाल PXA3XX_GCU_IOCTL_WAIT_IDLE:
-		वापस pxa3xx_gcu_रुको_idle(priv);
-	पूर्ण
+	case PXA3XX_GCU_IOCTL_WAIT_IDLE:
+		return pxa3xx_gcu_wait_idle(priv);
+	}
 
-	वापस -ENOSYS;
-पूर्ण
+	return -ENOSYS;
+}
 
-अटल पूर्णांक
-pxa3xx_gcu_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित पूर्णांक size = vma->vm_end - vma->vm_start;
-	काष्ठा pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
+static int
+pxa3xx_gcu_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	unsigned int size = vma->vm_end - vma->vm_start;
+	struct pxa3xx_gcu_priv *priv = to_pxa3xx_gcu_priv(file);
 
-	चयन (vma->vm_pgoff) अणु
-	हाल 0:
+	switch (vma->vm_pgoff) {
+	case 0:
 		/* hand out the shared data area */
-		अगर (size != SHARED_SIZE)
-			वापस -EINVAL;
+		if (size != SHARED_SIZE)
+			return -EINVAL;
 
-		वापस dma_mmap_coherent(priv->dev, vma,
+		return dma_mmap_coherent(priv->dev, vma,
 			priv->shared, priv->shared_phys, size);
 
-	हाल SHARED_SIZE >> PAGE_SHIFT:
-		/* hand out the MMIO base क्रम direct रेजिस्टर access
+	case SHARED_SIZE >> PAGE_SHIFT:
+		/* hand out the MMIO base for direct register access
 		 * from userspace */
-		अगर (size != resource_size(priv->resource_mem))
-			वापस -EINVAL;
+		if (size != resource_size(priv->resource_mem))
+			return -EINVAL;
 
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-		वापस io_remap_pfn_range(vma, vma->vm_start,
+		return io_remap_pfn_range(vma, vma->vm_start,
 				priv->resource_mem->start >> PAGE_SHIFT,
 				size, vma->vm_page_prot);
-	पूर्ण
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
-#अगर_घोषित PXA3XX_GCU_DEBUG_TIMER
-अटल काष्ठा समयr_list pxa3xx_gcu_debug_समयr;
-अटल काष्ठा pxa3xx_gcu_priv *debug_समयr_priv;
+#ifdef PXA3XX_GCU_DEBUG_TIMER
+static struct timer_list pxa3xx_gcu_debug_timer;
+static struct pxa3xx_gcu_priv *debug_timer_priv;
 
-अटल व्योम pxa3xx_gcu_debug_समयकरोut(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा pxa3xx_gcu_priv *priv = debug_समयr_priv;
+static void pxa3xx_gcu_debug_timedout(struct timer_list *unused)
+{
+	struct pxa3xx_gcu_priv *priv = debug_timer_priv;
 
 	QERROR("Timer DUMP");
 
-	mod_समयr(&pxa3xx_gcu_debug_समयr, jअगरfies + 5 * HZ);
-पूर्ण
+	mod_timer(&pxa3xx_gcu_debug_timer, jiffies + 5 * HZ);
+}
 
-अटल व्योम pxa3xx_gcu_init_debug_समयr(काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	/* init the समयr काष्ठाure */
-	debug_समयr_priv = priv;
-	समयr_setup(&pxa3xx_gcu_debug_समयr, pxa3xx_gcu_debug_समयकरोut, 0);
-	pxa3xx_gcu_debug_समयकरोut(शून्य);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम pxa3xx_gcu_init_debug_समयr(काष्ठा pxa3xx_gcu_priv *priv) अणुपूर्ण
-#पूर्ण_अगर
+static void pxa3xx_gcu_init_debug_timer(struct pxa3xx_gcu_priv *priv)
+{
+	/* init the timer structure */
+	debug_timer_priv = priv;
+	timer_setup(&pxa3xx_gcu_debug_timer, pxa3xx_gcu_debug_timedout, 0);
+	pxa3xx_gcu_debug_timedout(NULL);
+}
+#else
+static inline void pxa3xx_gcu_init_debug_timer(struct pxa3xx_gcu_priv *priv) {}
+#endif
 
-अटल पूर्णांक
-pxa3xx_gcu_add_buffer(काष्ठा device *dev,
-		      काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	काष्ठा pxa3xx_gcu_batch *buffer;
+static int
+pxa3xx_gcu_add_buffer(struct device *dev,
+		      struct pxa3xx_gcu_priv *priv)
+{
+	struct pxa3xx_gcu_batch *buffer;
 
-	buffer = kzalloc(माप(काष्ठा pxa3xx_gcu_batch), GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kzalloc(sizeof(struct pxa3xx_gcu_batch), GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
 	buffer->ptr = dma_alloc_coherent(dev, PXA3XX_GCU_BATCH_WORDS * 4,
 					 &buffer->phys, GFP_KERNEL);
-	अगर (!buffer->ptr) अणु
-		kमुक्त(buffer);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!buffer->ptr) {
+		kfree(buffer);
+		return -ENOMEM;
+	}
 
-	buffer->next = priv->मुक्त;
-	priv->मुक्त = buffer;
+	buffer->next = priv->free;
+	priv->free = buffer;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-pxa3xx_gcu_मुक्त_buffers(काष्ठा device *dev,
-			काष्ठा pxa3xx_gcu_priv *priv)
-अणु
-	काष्ठा pxa3xx_gcu_batch *next, *buffer = priv->मुक्त;
+static void
+pxa3xx_gcu_free_buffers(struct device *dev,
+			struct pxa3xx_gcu_priv *priv)
+{
+	struct pxa3xx_gcu_batch *next, *buffer = priv->free;
 
-	जबतक (buffer) अणु
+	while (buffer) {
 		next = buffer->next;
 
-		dma_मुक्त_coherent(dev, PXA3XX_GCU_BATCH_WORDS * 4,
+		dma_free_coherent(dev, PXA3XX_GCU_BATCH_WORDS * 4,
 				  buffer->ptr, buffer->phys);
 
-		kमुक्त(buffer);
+		kfree(buffer);
 		buffer = next;
-	पूर्ण
+	}
 
-	priv->मुक्त = शून्य;
-पूर्ण
+	priv->free = NULL;
+}
 
-अटल स्थिर काष्ठा file_operations pxa3xx_gcu_miscdev_fops = अणु
+static const struct file_operations pxa3xx_gcu_miscdev_fops = {
 	.owner =		THIS_MODULE,
-	.खोलो =			pxa3xx_gcu_खोलो,
-	.ग_लिखो =		pxa3xx_gcu_ग_लिखो,
+	.open =			pxa3xx_gcu_open,
+	.write =		pxa3xx_gcu_write,
 	.unlocked_ioctl =	pxa3xx_gcu_ioctl,
 	.mmap =			pxa3xx_gcu_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक pxa3xx_gcu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक i, ret, irq;
-	काष्ठा resource *r;
-	काष्ठा pxa3xx_gcu_priv *priv;
-	काष्ठा device *dev = &pdev->dev;
+static int pxa3xx_gcu_probe(struct platform_device *pdev)
+{
+	int i, ret, irq;
+	struct resource *r;
+	struct pxa3xx_gcu_priv *priv;
+	struct device *dev = &pdev->dev;
 
-	priv = devm_kzalloc(dev, माप(काष्ठा pxa3xx_gcu_priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct pxa3xx_gcu_priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	init_रुकोqueue_head(&priv->रुको_idle);
-	init_रुकोqueue_head(&priv->रुको_मुक्त);
+	init_waitqueue_head(&priv->wait_idle);
+	init_waitqueue_head(&priv->wait_free);
 	spin_lock_init(&priv->spinlock);
 
-	/* we allocate the misc device काष्ठाure as part of our own allocation,
-	 * so we can get a poपूर्णांकer to our priv काष्ठाure later on with
+	/* we allocate the misc device structure as part of our own allocation,
+	 * so we can get a pointer to our priv structure later on with
 	 * container_of(). This isn't really necessary as we have a fixed minor
-	 * number anyway, but this is to aव्योम अटलs. */
+	 * number anyway, but this is to avoid statics. */
 
 	priv->misc_dev.minor	= PXA3XX_GCU_MINOR,
 	priv->misc_dev.name	= DRV_NAME,
 	priv->misc_dev.fops	= &pxa3xx_gcu_miscdev_fops;
 
 	/* handle IO resources */
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->mmio_base = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(priv->mmio_base))
-		वापस PTR_ERR(priv->mmio_base);
+	if (IS_ERR(priv->mmio_base))
+		return PTR_ERR(priv->mmio_base);
 
-	/* enable the घड़ी */
-	priv->clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(priv->clk)) अणु
+	/* enable the clock */
+	priv->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(priv->clk)) {
 		dev_err(dev, "failed to get clock\n");
-		वापस PTR_ERR(priv->clk);
-	पूर्ण
+		return PTR_ERR(priv->clk);
+	}
 
 	/* request the IRQ */
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		dev_err(dev, "no IRQ defined: %d\n", irq);
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
 	ret = devm_request_irq(dev, irq, pxa3xx_gcu_handle_irq,
 			       0, DRV_NAME, priv);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "request_irq failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* allocate dma memory */
 	priv->shared = dma_alloc_coherent(dev, SHARED_SIZE,
 					  &priv->shared_phys, GFP_KERNEL);
-	अगर (!priv->shared) अणु
+	if (!priv->shared) {
 		dev_err(dev, "failed to allocate DMA memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* रेजिस्टर misc device */
-	ret = misc_रेजिस्टर(&priv->misc_dev);
-	अगर (ret < 0) अणु
+	/* register misc device */
+	ret = misc_register(&priv->misc_dev);
+	if (ret < 0) {
 		dev_err(dev, "misc_register() for minor %d failed\n",
 			PXA3XX_GCU_MINOR);
-		जाओ err_मुक्त_dma;
-	पूर्ण
+		goto err_free_dma;
+	}
 
 	ret = clk_prepare_enable(priv->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to enable clock\n");
-		जाओ err_misc_deरेजिस्टर;
-	पूर्ण
+		goto err_misc_deregister;
+	}
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		ret = pxa3xx_gcu_add_buffer(dev, priv);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to allocate DMA memory\n");
-			जाओ err_disable_clk;
-		पूर्ण
-	पूर्ण
+			goto err_disable_clk;
+		}
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	priv->resource_mem = r;
 	priv->dev = dev;
 	pxa3xx_gcu_reset(priv);
-	pxa3xx_gcu_init_debug_समयr(priv);
+	pxa3xx_gcu_init_debug_timer(priv);
 
 	dev_info(dev, "registered @0x%p, DMA 0x%p (%d bytes), IRQ %d\n",
-			(व्योम *) r->start, (व्योम *) priv->shared_phys,
+			(void *) r->start, (void *) priv->shared_phys,
 			SHARED_SIZE, irq);
-	वापस 0;
+	return 0;
 
-err_मुक्त_dma:
-	dma_मुक्त_coherent(dev, SHARED_SIZE,
+err_free_dma:
+	dma_free_coherent(dev, SHARED_SIZE,
 			priv->shared, priv->shared_phys);
 
-err_misc_deरेजिस्टर:
-	misc_deरेजिस्टर(&priv->misc_dev);
+err_misc_deregister:
+	misc_deregister(&priv->misc_dev);
 
 err_disable_clk:
 	clk_disable_unprepare(priv->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pxa3xx_gcu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pxa3xx_gcu_priv *priv = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
+static int pxa3xx_gcu_remove(struct platform_device *pdev)
+{
+	struct pxa3xx_gcu_priv *priv = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
 
-	pxa3xx_gcu_रुको_idle(priv);
-	misc_deरेजिस्टर(&priv->misc_dev);
-	dma_मुक्त_coherent(dev, SHARED_SIZE, priv->shared, priv->shared_phys);
-	pxa3xx_gcu_मुक्त_buffers(dev, priv);
+	pxa3xx_gcu_wait_idle(priv);
+	misc_deregister(&priv->misc_dev);
+	dma_free_coherent(dev, SHARED_SIZE, priv->shared, priv->shared_phys);
+	pxa3xx_gcu_free_buffers(dev, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id pxa3xx_gcu_of_match[] = अणु
-	अणु .compatible = "marvell,pxa300-gcu", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id pxa3xx_gcu_of_match[] = {
+	{ .compatible = "marvell,pxa300-gcu", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, pxa3xx_gcu_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver pxa3xx_gcu_driver = अणु
+static struct platform_driver pxa3xx_gcu_driver = {
 	.probe	  = pxa3xx_gcu_probe,
-	.हटाओ	 = pxa3xx_gcu_हटाओ,
-	.driver	 = अणु
+	.remove	 = pxa3xx_gcu_remove,
+	.driver	 = {
 		.name   = DRV_NAME,
 		.of_match_table = of_match_ptr(pxa3xx_gcu_of_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(pxa3xx_gcu_driver);
+module_platform_driver(pxa3xx_gcu_driver);
 
 MODULE_DESCRIPTION("PXA3xx graphics controller unit driver");
 MODULE_LICENSE("GPL");

@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* SHA-512 code by Jean-Luc Cooke <jlcooke@certainkey.com>
  *
  * Copyright (c) Jean-Luc Cooke <jlcooke@certainkey.com>
- * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
  * Copyright (c) 2003 Kyle McMartin <kyle@debian.org>
  */
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/types.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/sha512_base.h>
-#समावेश <linux/percpu.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/unaligned.h>
+#include <crypto/internal/hash.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/crypto.h>
+#include <linux/types.h>
+#include <crypto/sha2.h>
+#include <crypto/sha512_base.h>
+#include <linux/percpu.h>
+#include <asm/byteorder.h>
+#include <asm/unaligned.h>
 
-स्थिर u8 sha384_zero_message_hash[SHA384_DIGEST_SIZE] = अणु
+const u8 sha384_zero_message_hash[SHA384_DIGEST_SIZE] = {
 	0x38, 0xb0, 0x60, 0xa7, 0x51, 0xac, 0x96, 0x38,
 	0x4c, 0xd9, 0x32, 0x7e, 0xb1, 0xb1, 0xe3, 0x6a,
 	0x21, 0xfd, 0xb7, 0x11, 0x14, 0xbe, 0x07, 0x43,
 	0x4c, 0x0c, 0xc7, 0xbf, 0x63, 0xf6, 0xe1, 0xda,
 	0x27, 0x4e, 0xde, 0xbf, 0xe7, 0x6f, 0x65, 0xfb,
 	0xd5, 0x1a, 0xd2, 0xf1, 0x48, 0x98, 0xb9, 0x5b
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sha384_zero_message_hash);
 
-स्थिर u8 sha512_zero_message_hash[SHA512_DIGEST_SIZE] = अणु
+const u8 sha512_zero_message_hash[SHA512_DIGEST_SIZE] = {
 	0xcf, 0x83, 0xe1, 0x35, 0x7e, 0xef, 0xb8, 0xbd,
 	0xf1, 0x54, 0x28, 0x50, 0xd6, 0x6d, 0x80, 0x07,
 	0xd6, 0x20, 0xe4, 0x05, 0x0b, 0x57, 0x15, 0xdc,
@@ -38,20 +37,20 @@ EXPORT_SYMBOL_GPL(sha384_zero_message_hash);
 	0xff, 0x83, 0x18, 0xd2, 0x87, 0x7e, 0xec, 0x2f,
 	0x63, 0xb9, 0x31, 0xbd, 0x47, 0x41, 0x7a, 0x81,
 	0xa5, 0x38, 0x32, 0x7a, 0xf9, 0x27, 0xda, 0x3e
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(sha512_zero_message_hash);
 
-अटल अंतरभूत u64 Ch(u64 x, u64 y, u64 z)
-अणु
-        वापस z ^ (x & (y ^ z));
-पूर्ण
+static inline u64 Ch(u64 x, u64 y, u64 z)
+{
+        return z ^ (x & (y ^ z));
+}
 
-अटल अंतरभूत u64 Maj(u64 x, u64 y, u64 z)
-अणु
-        वापस (x & y) | (z & (x | y));
-पूर्ण
+static inline u64 Maj(u64 x, u64 y, u64 z)
+{
+        return (x & y) | (z & (x | y));
+}
 
-अटल स्थिर u64 sha512_K[80] = अणु
+static const u64 sha512_K[80] = {
         0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 0xb5c0fbcfec4d3b2fULL,
         0xe9b5dba58189dbbcULL, 0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL,
         0x923f82a4af194f9bULL, 0xab1c5ed5da6d8118ULL, 0xd807aa98a3030242ULL,
@@ -79,50 +78,50 @@ EXPORT_SYMBOL_GPL(sha512_zero_message_hash);
         0x28db77f523047d84ULL, 0x32caab7b40c72493ULL, 0x3c9ebe0a15c9bebcULL,
         0x431d67c49c100d4cULL, 0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL,
         0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL,
-पूर्ण;
+};
 
-#घोषणा e0(x)       (ror64(x,28) ^ ror64(x,34) ^ ror64(x,39))
-#घोषणा e1(x)       (ror64(x,14) ^ ror64(x,18) ^ ror64(x,41))
-#घोषणा s0(x)       (ror64(x, 1) ^ ror64(x, 8) ^ (x >> 7))
-#घोषणा s1(x)       (ror64(x,19) ^ ror64(x,61) ^ (x >> 6))
+#define e0(x)       (ror64(x,28) ^ ror64(x,34) ^ ror64(x,39))
+#define e1(x)       (ror64(x,14) ^ ror64(x,18) ^ ror64(x,41))
+#define s0(x)       (ror64(x, 1) ^ ror64(x, 8) ^ (x >> 7))
+#define s1(x)       (ror64(x,19) ^ ror64(x,61) ^ (x >> 6))
 
-अटल अंतरभूत व्योम LOAD_OP(पूर्णांक I, u64 *W, स्थिर u8 *input)
-अणु
+static inline void LOAD_OP(int I, u64 *W, const u8 *input)
+{
 	W[I] = get_unaligned_be64((__u64 *)input + I);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम BLEND_OP(पूर्णांक I, u64 *W)
-अणु
+static inline void BLEND_OP(int I, u64 *W)
+{
 	W[I & 15] += s1(W[(I-2) & 15]) + W[(I-7) & 15] + s0(W[(I-15) & 15]);
-पूर्ण
+}
 
-अटल व्योम
-sha512_transक्रमm(u64 *state, स्थिर u8 *input)
-अणु
+static void
+sha512_transform(u64 *state, const u8 *input)
+{
 	u64 a, b, c, d, e, f, g, h, t1, t2;
 
-	पूर्णांक i;
+	int i;
 	u64 W[16];
 
-	/* load the state पूर्णांकo our रेजिस्टरs */
+	/* load the state into our registers */
 	a=state[0];   b=state[1];   c=state[2];   d=state[3];
 	e=state[4];   f=state[5];   g=state[6];   h=state[7];
 
 	/* now iterate */
-	क्रम (i=0; i<80; i+=8) अणु
-		अगर (!(i & 8)) अणु
-			पूर्णांक j;
+	for (i=0; i<80; i+=8) {
+		if (!(i & 8)) {
+			int j;
 
-			अगर (i < 16) अणु
+			if (i < 16) {
 				/* load the input */
-				क्रम (j = 0; j < 16; j++)
+				for (j = 0; j < 16; j++)
 					LOAD_OP(i + j, W, input);
-			पूर्ण अन्यथा अणु
-				क्रम (j = 0; j < 16; j++) अणु
+			} else {
+				for (j = 0; j < 16; j++) {
 					BLEND_OP(i + j, W);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		t1 = h + e1(e) + Ch(e,f,g) + sha512_K[i  ] + W[(i & 15)];
 		t2 = e0(a) + Maj(a,b,c);    d+=t1;    h=t1+t2;
@@ -140,87 +139,87 @@ sha512_transक्रमm(u64 *state, स्थिर u8 *input)
 		t2 = e0(c) + Maj(c,d,e);    f+=t1;    b=t1+t2;
 		t1 = a + e1(f) + Ch(f,g,h) + sha512_K[i+7] + W[(i & 15) + 7];
 		t2 = e0(b) + Maj(b,c,d);    e+=t1;    a=t1+t2;
-	पूर्ण
+	}
 
 	state[0] += a; state[1] += b; state[2] += c; state[3] += d;
 	state[4] += e; state[5] += f; state[6] += g; state[7] += h;
 
 	/* erase our data */
 	a = b = c = d = e = f = g = h = t1 = t2 = 0;
-पूर्ण
+}
 
-अटल व्योम sha512_generic_block_fn(काष्ठा sha512_state *sst, u8 स्थिर *src,
-				    पूर्णांक blocks)
-अणु
-	जबतक (blocks--) अणु
-		sha512_transक्रमm(sst->state, src);
+static void sha512_generic_block_fn(struct sha512_state *sst, u8 const *src,
+				    int blocks)
+{
+	while (blocks--) {
+		sha512_transform(sst->state, src);
 		src += SHA512_BLOCK_SIZE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक crypto_sha512_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-			अचिन्हित पूर्णांक len)
-अणु
-	वापस sha512_base_करो_update(desc, data, len, sha512_generic_block_fn);
-पूर्ण
+int crypto_sha512_update(struct shash_desc *desc, const u8 *data,
+			unsigned int len)
+{
+	return sha512_base_do_update(desc, data, len, sha512_generic_block_fn);
+}
 EXPORT_SYMBOL(crypto_sha512_update);
 
-अटल पूर्णांक sha512_final(काष्ठा shash_desc *desc, u8 *hash)
-अणु
-	sha512_base_करो_finalize(desc, sha512_generic_block_fn);
-	वापस sha512_base_finish(desc, hash);
-पूर्ण
+static int sha512_final(struct shash_desc *desc, u8 *hash)
+{
+	sha512_base_do_finalize(desc, sha512_generic_block_fn);
+	return sha512_base_finish(desc, hash);
+}
 
-पूर्णांक crypto_sha512_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-			अचिन्हित पूर्णांक len, u8 *hash)
-अणु
-	sha512_base_करो_update(desc, data, len, sha512_generic_block_fn);
-	वापस sha512_final(desc, hash);
-पूर्ण
+int crypto_sha512_finup(struct shash_desc *desc, const u8 *data,
+			unsigned int len, u8 *hash)
+{
+	sha512_base_do_update(desc, data, len, sha512_generic_block_fn);
+	return sha512_final(desc, hash);
+}
 EXPORT_SYMBOL(crypto_sha512_finup);
 
-अटल काष्ठा shash_alg sha512_algs[2] = अणु अणु
+static struct shash_alg sha512_algs[2] = { {
 	.digestsize	=	SHA512_DIGEST_SIZE,
 	.init		=	sha512_base_init,
 	.update		=	crypto_sha512_update,
 	.final		=	sha512_final,
 	.finup		=	crypto_sha512_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha512",
 		.cra_driver_name =	"sha512-generic",
 		.cra_priority	=	100,
 		.cra_blocksize	=	SHA512_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण, अणु
+	}
+}, {
 	.digestsize	=	SHA384_DIGEST_SIZE,
 	.init		=	sha384_base_init,
 	.update		=	crypto_sha512_update,
 	.final		=	sha512_final,
 	.finup		=	crypto_sha512_finup,
-	.descsize	=	माप(काष्ठा sha512_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha512_state),
+	.base		=	{
 		.cra_name	=	"sha384",
 		.cra_driver_name =	"sha384-generic",
 		.cra_priority	=	100,
 		.cra_blocksize	=	SHA384_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };
 
-अटल पूर्णांक __init sha512_generic_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_shashes(sha512_algs, ARRAY_SIZE(sha512_algs));
-पूर्ण
+static int __init sha512_generic_mod_init(void)
+{
+	return crypto_register_shashes(sha512_algs, ARRAY_SIZE(sha512_algs));
+}
 
-अटल व्योम __निकास sha512_generic_mod_fini(व्योम)
-अणु
-	crypto_unरेजिस्टर_shashes(sha512_algs, ARRAY_SIZE(sha512_algs));
-पूर्ण
+static void __exit sha512_generic_mod_fini(void)
+{
+	crypto_unregister_shashes(sha512_algs, ARRAY_SIZE(sha512_algs));
+}
 
 subsys_initcall(sha512_generic_mod_init);
-module_निकास(sha512_generic_mod_fini);
+module_exit(sha512_generic_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA-512 and SHA-384 Secure Hash Algorithms");

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * sht15.c - support क्रम the SHT15 Temperature and Humidity Sensor
+ * sht15.c - support for the SHT15 Temperature and Humidity Sensor
  *
  * Portions Copyright (c) 2010-2012 Savoir-faire Linux Inc.
  *          Jerome Oufella <jerome.oufella@savoirfairelinux.com>
@@ -11,78 +10,78 @@
  *
  * Copyright (c) 2007 Wouter Horre
  *
- * For further inक्रमmation, see the Documentation/hwmon/sht15.rst file.
+ * For further information, see the Documentation/hwmon/sht15.rst file.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/err.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitrev.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/of.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/jiffies.h>
+#include <linux/err.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <linux/atomic.h>
+#include <linux/bitrev.h>
+#include <linux/gpio/consumer.h>
+#include <linux/of.h>
 
 /* Commands */
-#घोषणा SHT15_MEASURE_TEMP		0x03
-#घोषणा SHT15_MEASURE_RH		0x05
-#घोषणा SHT15_WRITE_STATUS		0x06
-#घोषणा SHT15_READ_STATUS		0x07
-#घोषणा SHT15_SOFT_RESET		0x1E
+#define SHT15_MEASURE_TEMP		0x03
+#define SHT15_MEASURE_RH		0x05
+#define SHT15_WRITE_STATUS		0x06
+#define SHT15_READ_STATUS		0x07
+#define SHT15_SOFT_RESET		0x1E
 
 /* Min timings */
-#घोषणा SHT15_TSCKL			100	/* (nsecs) घड़ी low */
-#घोषणा SHT15_TSCKH			100	/* (nsecs) घड़ी high */
-#घोषणा SHT15_TSU			150	/* (nsecs) data setup समय */
-#घोषणा SHT15_TSRST			11	/* (msecs) soft reset समय */
+#define SHT15_TSCKL			100	/* (nsecs) clock low */
+#define SHT15_TSCKH			100	/* (nsecs) clock high */
+#define SHT15_TSU			150	/* (nsecs) data setup time */
+#define SHT15_TSRST			11	/* (msecs) soft reset time */
 
 /* Status Register Bits */
-#घोषणा SHT15_STATUS_LOW_RESOLUTION	0x01
-#घोषणा SHT15_STATUS_NO_OTP_RELOAD	0x02
-#घोषणा SHT15_STATUS_HEATER		0x04
-#घोषणा SHT15_STATUS_LOW_BATTERY	0x40
+#define SHT15_STATUS_LOW_RESOLUTION	0x01
+#define SHT15_STATUS_NO_OTP_RELOAD	0x02
+#define SHT15_STATUS_HEATER		0x04
+#define SHT15_STATUS_LOW_BATTERY	0x40
 
 /* List of supported chips */
-क्रमागत sht15_chips अणु sht10, sht11, sht15, sht71, sht75 पूर्ण;
+enum sht15_chips { sht10, sht11, sht15, sht71, sht75 };
 
-/* Actions the driver may be करोing */
-क्रमागत sht15_state अणु
+/* Actions the driver may be doing */
+enum sht15_state {
 	SHT15_READING_NOTHING,
 	SHT15_READING_TEMP,
 	SHT15_READING_HUMID
-पूर्ण;
+};
 
 /**
- * काष्ठा sht15_temppair - elements of voltage dependent temp calc
+ * struct sht15_temppair - elements of voltage dependent temp calc
  * @vdd:	supply voltage in microvolts
  * @d1:		see data sheet
  */
-काष्ठा sht15_temppair अणु
-	पूर्णांक vdd; /* microvolts */
-	पूर्णांक d1;
-पूर्ण;
+struct sht15_temppair {
+	int vdd; /* microvolts */
+	int d1;
+};
 
 /* Table 9 from datasheet - relates temperature calculation to supply voltage */
-अटल स्थिर काष्ठा sht15_temppair temppoपूर्णांकs[] = अणु
-	अणु 2500000, -39400 पूर्ण,
-	अणु 3000000, -39600 पूर्ण,
-	अणु 3500000, -39700 पूर्ण,
-	अणु 4000000, -39800 पूर्ण,
-	अणु 5000000, -40100 पूर्ण,
-पूर्ण;
+static const struct sht15_temppair temppoints[] = {
+	{ 2500000, -39400 },
+	{ 3000000, -39600 },
+	{ 3500000, -39700 },
+	{ 4000000, -39800 },
+	{ 5000000, -40100 },
+};
 
 /* Table from CRC datasheet, section 2.4 */
-अटल स्थिर u8 sht15_crc8_table[] = अणु
+static const u8 sht15_crc8_table[] = {
 	0,	49,	98,	83,	196,	245,	166,	151,
 	185,	136,	219,	234,	125,	76,	31,	46,
 	67,	114,	33,	16,	135,	182,	229,	212,
@@ -115,142 +114,142 @@
 	120,	73,	26,	43,	188,	141,	222,	239,
 	130,	179,	224,	209,	70,	119,	36,	21,
 	59,	10,	89,	104,	255,	206,	157,	172
-पूर्ण;
+};
 
 /**
- * काष्ठा sht15_data - device instance specअगरic data
- * @sck:		घड़ी GPIO line
+ * struct sht15_data - device instance specific data
+ * @sck:		clock GPIO line
  * @data:		data GPIO line
- * @पढ़ो_work:		bh of पूर्णांकerrupt handler.
- * @रुको_queue:		रुको queue क्रम getting values from device.
- * @val_temp:		last temperature value पढ़ो from device.
- * @val_humid:		last humidity value पढ़ो from device.
- * @val_status:		last status रेजिस्टर value पढ़ो from device.
- * @checksum_ok:	last value पढ़ो from the device passed CRC validation.
+ * @read_work:		bh of interrupt handler.
+ * @wait_queue:		wait queue for getting values from device.
+ * @val_temp:		last temperature value read from device.
+ * @val_humid:		last humidity value read from device.
+ * @val_status:		last status register value read from device.
+ * @checksum_ok:	last value read from the device passed CRC validation.
  * @checksumming:	flag used to enable the data validation with CRC.
- * @state:		state identअगरying the action the driver is करोing.
+ * @state:		state identifying the action the driver is doing.
  * @measurements_valid:	are the current stored measures valid (start condition).
  * @status_valid:	is the current stored status valid (start condition).
- * @last_measurement:	समय of last measure.
- * @last_status:	समय of last status पढ़ोing.
- * @पढ़ो_lock:		mutex to ensure only one पढ़ो in progress at a समय.
- * @dev:		associate device काष्ठाure.
- * @hwmon_dev:		device associated with hwmon subप्रणाली.
- * @reg:		associated regulator (अगर specअगरied).
- * @nb:			notअगरier block to handle notअगरications of voltage
+ * @last_measurement:	time of last measure.
+ * @last_status:	time of last status reading.
+ * @read_lock:		mutex to ensure only one read in progress at a time.
+ * @dev:		associate device structure.
+ * @hwmon_dev:		device associated with hwmon subsystem.
+ * @reg:		associated regulator (if specified).
+ * @nb:			notifier block to handle notifications of voltage
  *                      changes.
  * @supply_uv:		local copy of supply voltage used to allow use of
- *                      regulator consumer अगर available.
+ *                      regulator consumer if available.
  * @supply_uv_valid:	indicates that an updated value has not yet been
  *			obtained from the regulator and so any calculations
  *			based upon it will be invalid.
- * @update_supply_work:	work काष्ठा that is used to update the supply_uv.
- * @पूर्णांकerrupt_handled:	flag used to indicate a handler has been scheduled.
+ * @update_supply_work:	work struct that is used to update the supply_uv.
+ * @interrupt_handled:	flag used to indicate a handler has been scheduled.
  */
-काष्ठा sht15_data अणु
-	काष्ठा gpio_desc		*sck;
-	काष्ठा gpio_desc		*data;
-	काष्ठा work_काष्ठा		पढ़ो_work;
-	रुको_queue_head_t		रुको_queue;
-	uपूर्णांक16_t			val_temp;
-	uपूर्णांक16_t			val_humid;
+struct sht15_data {
+	struct gpio_desc		*sck;
+	struct gpio_desc		*data;
+	struct work_struct		read_work;
+	wait_queue_head_t		wait_queue;
+	uint16_t			val_temp;
+	uint16_t			val_humid;
 	u8				val_status;
 	bool				checksum_ok;
 	bool				checksumming;
-	क्रमागत sht15_state		state;
+	enum sht15_state		state;
 	bool				measurements_valid;
 	bool				status_valid;
-	अचिन्हित दीर्घ			last_measurement;
-	अचिन्हित दीर्घ			last_status;
-	काष्ठा mutex			पढ़ो_lock;
-	काष्ठा device			*dev;
-	काष्ठा device			*hwmon_dev;
-	काष्ठा regulator		*reg;
-	काष्ठा notअगरier_block		nb;
-	पूर्णांक				supply_uv;
+	unsigned long			last_measurement;
+	unsigned long			last_status;
+	struct mutex			read_lock;
+	struct device			*dev;
+	struct device			*hwmon_dev;
+	struct regulator		*reg;
+	struct notifier_block		nb;
+	int				supply_uv;
 	bool				supply_uv_valid;
-	काष्ठा work_काष्ठा		update_supply_work;
-	atomic_t			पूर्णांकerrupt_handled;
-पूर्ण;
+	struct work_struct		update_supply_work;
+	atomic_t			interrupt_handled;
+};
 
 /**
  * sht15_crc8() - compute crc8
- * @data:	sht15 specअगरic data.
+ * @data:	sht15 specific data.
  * @value:	sht15 retrieved data.
  * @len:	Length of retrieved data
  *
  * This implements section 2 of the CRC datasheet.
  */
-अटल u8 sht15_crc8(काष्ठा sht15_data *data,
-		स्थिर u8 *value,
-		पूर्णांक len)
-अणु
+static u8 sht15_crc8(struct sht15_data *data,
+		const u8 *value,
+		int len)
+{
 	u8 crc = bitrev8(data->val_status & 0x0F);
 
-	जबतक (len--) अणु
+	while (len--) {
 		crc = sht15_crc8_table[*value ^ crc];
 		value++;
-	पूर्ण
+	}
 
-	वापस crc;
-पूर्ण
+	return crc;
+}
 
 /**
- * sht15_connection_reset() - reset the comms पूर्णांकerface
- * @data:	sht15 specअगरic data
+ * sht15_connection_reset() - reset the comms interface
+ * @data:	sht15 specific data
  *
  * This implements section 3.4 of the data sheet
  */
-अटल पूर्णांक sht15_connection_reset(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक i, err;
+static int sht15_connection_reset(struct sht15_data *data)
+{
+	int i, err;
 
 	err = gpiod_direction_output(data->data, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ndelay(SHT15_TSCKL);
 	gpiod_set_value(data->sck, 0);
 	ndelay(SHT15_TSCKL);
-	क्रम (i = 0; i < 9; ++i) अणु
+	for (i = 0; i < 9; ++i) {
 		gpiod_set_value(data->sck, 1);
 		ndelay(SHT15_TSCKH);
 		gpiod_set_value(data->sck, 0);
 		ndelay(SHT15_TSCKL);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * sht15_send_bit() - send an inभागidual bit to the device
+ * sht15_send_bit() - send an individual bit to the device
  * @data:	device state data
  * @val:	value of bit to be sent
  */
-अटल अंतरभूत व्योम sht15_send_bit(काष्ठा sht15_data *data, पूर्णांक val)
-अणु
+static inline void sht15_send_bit(struct sht15_data *data, int val)
+{
 	gpiod_set_value(data->data, val);
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->sck, 1);
 	ndelay(SHT15_TSCKH);
 	gpiod_set_value(data->sck, 0);
-	ndelay(SHT15_TSCKL); /* घड़ी low समय */
-पूर्ण
+	ndelay(SHT15_TSCKL); /* clock low time */
+}
 
 /**
- * sht15_transmission_start() - specअगरic sequence क्रम new transmission
+ * sht15_transmission_start() - specific sequence for new transmission
  * @data:	device state data
  *
- * Timings क्रम this are not करोcumented on the data sheet, so very
+ * Timings for this are not documented on the data sheet, so very
  * conservative ones used in implementation. This implements
  * figure 12 on the data sheet.
  */
-अटल पूर्णांक sht15_transmission_start(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक err;
+static int sht15_transmission_start(struct sht15_data *data)
+{
+	int err;
 
 	/* ensure data is high and output */
 	err = gpiod_direction_output(data->data, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->sck, 0);
 	ndelay(SHT15_TSCKL);
@@ -266,49 +265,49 @@
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->sck, 0);
 	ndelay(SHT15_TSCKL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * sht15_send_byte() - send a single byte to the device
  * @data:	device state
  * @byte:	value to be sent
  */
-अटल व्योम sht15_send_byte(काष्ठा sht15_data *data, u8 byte)
-अणु
-	पूर्णांक i;
+static void sht15_send_byte(struct sht15_data *data, u8 byte)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		sht15_send_bit(data, !!(byte & 0x80));
 		byte <<= 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * sht15_रुको_क्रम_response() - checks क्रम ack from device
+ * sht15_wait_for_response() - checks for ack from device
  * @data:	device state
  */
-अटल पूर्णांक sht15_रुको_क्रम_response(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक err;
+static int sht15_wait_for_response(struct sht15_data *data)
+{
+	int err;
 
 	err = gpiod_direction_input(data->data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	gpiod_set_value(data->sck, 1);
 	ndelay(SHT15_TSCKH);
-	अगर (gpiod_get_value(data->data)) अणु
+	if (gpiod_get_value(data->data)) {
 		gpiod_set_value(data->sck, 0);
 		dev_err(data->dev, "Command not acknowledged\n");
 		err = sht15_connection_reset(data);
-		अगर (err)
-			वापस err;
-		वापस -EIO;
-	पूर्ण
+		if (err)
+			return err;
+		return -EIO;
+	}
 	gpiod_set_value(data->sck, 0);
 	ndelay(SHT15_TSCKL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * sht15_send_cmd() - Sends a command to the device.
@@ -316,53 +315,53 @@
  * @cmd:	command byte to be sent
  *
  * On entry, sck is output low, data is output pull high
- * and the पूर्णांकerrupt disabled.
+ * and the interrupt disabled.
  */
-अटल पूर्णांक sht15_send_cmd(काष्ठा sht15_data *data, u8 cmd)
-अणु
-	पूर्णांक err;
+static int sht15_send_cmd(struct sht15_data *data, u8 cmd)
+{
+	int err;
 
 	err = sht15_transmission_start(data);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	sht15_send_byte(data, cmd);
-	वापस sht15_रुको_क्रम_response(data);
-पूर्ण
+	return sht15_wait_for_response(data);
+}
 
 /**
  * sht15_soft_reset() - send a soft reset command
- * @data:	sht15 specअगरic data.
+ * @data:	sht15 specific data.
  *
  * As described in section 3.2 of the datasheet.
  */
-अटल पूर्णांक sht15_soft_reset(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक ret;
+static int sht15_soft_reset(struct sht15_data *data)
+{
+	int ret;
 
 	ret = sht15_send_cmd(data, SHT15_SOFT_RESET);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	msleep(SHT15_TSRST);
-	/* device resets शेष hardware status रेजिस्टर value */
+	/* device resets default hardware status register value */
 	data->val_status = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * sht15_ack() - send a ack
- * @data:	sht15 specअगरic data.
+ * @data:	sht15 specific data.
  *
  * Each byte of data is acknowledged by pulling the data line
- * low क्रम one घड़ी pulse.
+ * low for one clock pulse.
  */
-अटल पूर्णांक sht15_ack(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक err;
+static int sht15_ack(struct sht15_data *data)
+{
+	int err;
 
 	err = gpiod_direction_output(data->data, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->sck, 1);
 	ndelay(SHT15_TSU);
@@ -370,268 +369,268 @@
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->data, 1);
 
-	वापस gpiod_direction_input(data->data);
-पूर्ण
+	return gpiod_direction_input(data->data);
+}
 
 /**
- * sht15_end_transmission() - notअगरy device of end of transmission
+ * sht15_end_transmission() - notify device of end of transmission
  * @data:	device state.
  *
- * This is basically a NAK (single घड़ी pulse, data high).
+ * This is basically a NAK (single clock pulse, data high).
  */
-अटल पूर्णांक sht15_end_transmission(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक err;
+static int sht15_end_transmission(struct sht15_data *data)
+{
+	int err;
 
 	err = gpiod_direction_output(data->data, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ndelay(SHT15_TSU);
 	gpiod_set_value(data->sck, 1);
 	ndelay(SHT15_TSCKH);
 	gpiod_set_value(data->sck, 0);
 	ndelay(SHT15_TSCKL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sht15_पढ़ो_byte() - Read a byte back from the device
+ * sht15_read_byte() - Read a byte back from the device
  * @data:	device state.
  */
-अटल u8 sht15_पढ़ो_byte(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक i;
+static u8 sht15_read_byte(struct sht15_data *data)
+{
+	int i;
 	u8 byte = 0;
 
-	क्रम (i = 0; i < 8; ++i) अणु
+	for (i = 0; i < 8; ++i) {
 		byte <<= 1;
 		gpiod_set_value(data->sck, 1);
 		ndelay(SHT15_TSCKH);
 		byte |= !!gpiod_get_value(data->data);
 		gpiod_set_value(data->sck, 0);
 		ndelay(SHT15_TSCKL);
-	पूर्ण
-	वापस byte;
-पूर्ण
+	}
+	return byte;
+}
 
 /**
- * sht15_send_status() - ग_लिखो the status रेजिस्टर byte
- * @data:	sht15 specअगरic data.
- * @status:	the byte to set the status रेजिस्टर with.
+ * sht15_send_status() - write the status register byte
+ * @data:	sht15 specific data.
+ * @status:	the byte to set the status register with.
  *
  * As described in figure 14 and table 5 of the datasheet.
  */
-अटल पूर्णांक sht15_send_status(काष्ठा sht15_data *data, u8 status)
-अणु
-	पूर्णांक err;
+static int sht15_send_status(struct sht15_data *data, u8 status)
+{
+	int err;
 
 	err = sht15_send_cmd(data, SHT15_WRITE_STATUS);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = gpiod_direction_output(data->data, 1);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	ndelay(SHT15_TSU);
 	sht15_send_byte(data, status);
-	err = sht15_रुको_क्रम_response(data);
-	अगर (err)
-		वापस err;
+	err = sht15_wait_for_response(data);
+	if (err)
+		return err;
 
 	data->val_status = status;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sht15_update_status() - get updated status रेजिस्टर from device अगर too old
- * @data:	device instance specअगरic data.
+ * sht15_update_status() - get updated status register from device if too old
+ * @data:	device instance specific data.
  *
  * As described in figure 15 and table 5 of the datasheet.
  */
-अटल पूर्णांक sht15_update_status(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक ret = 0;
+static int sht15_update_status(struct sht15_data *data)
+{
+	int ret = 0;
 	u8 status;
 	u8 previous_config;
 	u8 dev_checksum = 0;
 	u8 checksum_vals[2];
-	पूर्णांक समयout = HZ;
+	int timeout = HZ;
 
-	mutex_lock(&data->पढ़ो_lock);
-	अगर (समय_after(jअगरfies, data->last_status + समयout)
-			|| !data->status_valid) अणु
+	mutex_lock(&data->read_lock);
+	if (time_after(jiffies, data->last_status + timeout)
+			|| !data->status_valid) {
 		ret = sht15_send_cmd(data, SHT15_READ_STATUS);
-		अगर (ret)
-			जाओ unlock;
-		status = sht15_पढ़ो_byte(data);
+		if (ret)
+			goto unlock;
+		status = sht15_read_byte(data);
 
-		अगर (data->checksumming) अणु
+		if (data->checksumming) {
 			sht15_ack(data);
-			dev_checksum = bitrev8(sht15_पढ़ो_byte(data));
+			dev_checksum = bitrev8(sht15_read_byte(data));
 			checksum_vals[0] = SHT15_READ_STATUS;
 			checksum_vals[1] = status;
 			data->checksum_ok = (sht15_crc8(data, checksum_vals, 2)
 					== dev_checksum);
-		पूर्ण
+		}
 
 		ret = sht15_end_transmission(data);
-		अगर (ret)
-			जाओ unlock;
+		if (ret)
+			goto unlock;
 
 		/*
-		 * Perक्रमm checksum validation on the received data.
-		 * Specअगरication mentions that in हाल a checksum verअगरication
+		 * Perform checksum validation on the received data.
+		 * Specification mentions that in case a checksum verification
 		 * fails, a soft reset command must be sent to the device.
 		 */
-		अगर (data->checksumming && !data->checksum_ok) अणु
+		if (data->checksumming && !data->checksum_ok) {
 			previous_config = data->val_status & 0x07;
 			ret = sht15_soft_reset(data);
-			अगर (ret)
-				जाओ unlock;
-			अगर (previous_config) अणु
+			if (ret)
+				goto unlock;
+			if (previous_config) {
 				ret = sht15_send_status(data, previous_config);
-				अगर (ret) अणु
+				if (ret) {
 					dev_err(data->dev,
 						"CRC validation failed, unable "
 						"to restore device settings\n");
-					जाओ unlock;
-				पूर्ण
-			पूर्ण
+					goto unlock;
+				}
+			}
 			ret = -EAGAIN;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		data->val_status = status;
 		data->status_valid = true;
-		data->last_status = jअगरfies;
-	पूर्ण
+		data->last_status = jiffies;
+	}
 
 unlock:
-	mutex_unlock(&data->पढ़ो_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&data->read_lock);
+	return ret;
+}
 
 /**
  * sht15_measurement() - get a new value from device
- * @data:		device instance specअगरic data
+ * @data:		device instance specific data
  * @command:		command sent to request value
- * @समयout_msecs:	समयout after which comms are assumed
+ * @timeout_msecs:	timeout after which comms are assumed
  *			to have failed are reset.
  */
-अटल पूर्णांक sht15_measurement(काष्ठा sht15_data *data,
-			     पूर्णांक command,
-			     पूर्णांक समयout_msecs)
-अणु
-	पूर्णांक ret;
+static int sht15_measurement(struct sht15_data *data,
+			     int command,
+			     int timeout_msecs)
+{
+	int ret;
 	u8 previous_config;
 
 	ret = sht15_send_cmd(data, command);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = gpiod_direction_input(data->data);
-	अगर (ret)
-		वापस ret;
-	atomic_set(&data->पूर्णांकerrupt_handled, 0);
+	if (ret)
+		return ret;
+	atomic_set(&data->interrupt_handled, 0);
 
 	enable_irq(gpiod_to_irq(data->data));
-	अगर (gpiod_get_value(data->data) == 0) अणु
+	if (gpiod_get_value(data->data) == 0) {
 		disable_irq_nosync(gpiod_to_irq(data->data));
-		/* Only relevant अगर the पूर्णांकerrupt hasn't occurred. */
-		अगर (!atomic_पढ़ो(&data->पूर्णांकerrupt_handled))
-			schedule_work(&data->पढ़ो_work);
-	पूर्ण
-	ret = रुको_event_समयout(data->रुको_queue,
+		/* Only relevant if the interrupt hasn't occurred. */
+		if (!atomic_read(&data->interrupt_handled))
+			schedule_work(&data->read_work);
+	}
+	ret = wait_event_timeout(data->wait_queue,
 				 (data->state == SHT15_READING_NOTHING),
-				 msecs_to_jअगरfies(समयout_msecs));
-	अगर (data->state != SHT15_READING_NOTHING) अणु /* I/O error occurred */
+				 msecs_to_jiffies(timeout_msecs));
+	if (data->state != SHT15_READING_NOTHING) { /* I/O error occurred */
 		data->state = SHT15_READING_NOTHING;
-		वापस -EIO;
-	पूर्ण अन्यथा अगर (ret == 0) अणु /* समयout occurred */
+		return -EIO;
+	} else if (ret == 0) { /* timeout occurred */
 		disable_irq_nosync(gpiod_to_irq(data->data));
 		ret = sht15_connection_reset(data);
-		अगर (ret)
-			वापस ret;
-		वापस -ETIME;
-	पूर्ण
+		if (ret)
+			return ret;
+		return -ETIME;
+	}
 
 	/*
-	 *  Perक्रमm checksum validation on the received data.
-	 *  Specअगरication mentions that in हाल a checksum verअगरication fails,
+	 *  Perform checksum validation on the received data.
+	 *  Specification mentions that in case a checksum verification fails,
 	 *  a soft reset command must be sent to the device.
 	 */
-	अगर (data->checksumming && !data->checksum_ok) अणु
+	if (data->checksumming && !data->checksum_ok) {
 		previous_config = data->val_status & 0x07;
 		ret = sht15_soft_reset(data);
-		अगर (ret)
-			वापस ret;
-		अगर (previous_config) अणु
+		if (ret)
+			return ret;
+		if (previous_config) {
 			ret = sht15_send_status(data, previous_config);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(data->dev,
 					"CRC validation failed, unable "
 					"to restore device settings\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		वापस -EAGAIN;
-	पूर्ण
+				return ret;
+			}
+		}
+		return -EAGAIN;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * sht15_update_measurements() - get updated measures from device अगर too old
+ * sht15_update_measurements() - get updated measures from device if too old
  * @data:	device state
  */
-अटल पूर्णांक sht15_update_measurements(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक समयout = HZ;
+static int sht15_update_measurements(struct sht15_data *data)
+{
+	int ret = 0;
+	int timeout = HZ;
 
-	mutex_lock(&data->पढ़ो_lock);
-	अगर (समय_after(jअगरfies, data->last_measurement + समयout)
-	    || !data->measurements_valid) अणु
+	mutex_lock(&data->read_lock);
+	if (time_after(jiffies, data->last_measurement + timeout)
+	    || !data->measurements_valid) {
 		data->state = SHT15_READING_HUMID;
 		ret = sht15_measurement(data, SHT15_MEASURE_RH, 160);
-		अगर (ret)
-			जाओ unlock;
+		if (ret)
+			goto unlock;
 		data->state = SHT15_READING_TEMP;
 		ret = sht15_measurement(data, SHT15_MEASURE_TEMP, 400);
-		अगर (ret)
-			जाओ unlock;
+		if (ret)
+			goto unlock;
 		data->measurements_valid = true;
-		data->last_measurement = jअगरfies;
-	पूर्ण
+		data->last_measurement = jiffies;
+	}
 
 unlock:
-	mutex_unlock(&data->पढ़ो_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&data->read_lock);
+	return ret;
+}
 
 /**
- * sht15_calc_temp() - convert the raw पढ़ोing to a temperature
+ * sht15_calc_temp() - convert the raw reading to a temperature
  * @data:	device state
  *
  * As per section 4.3 of the data sheet.
  */
-अटल अंतरभूत पूर्णांक sht15_calc_temp(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक d1 = temppoपूर्णांकs[0].d1;
-	पूर्णांक d2 = (data->val_status & SHT15_STATUS_LOW_RESOLUTION) ? 40 : 10;
-	पूर्णांक i;
+static inline int sht15_calc_temp(struct sht15_data *data)
+{
+	int d1 = temppoints[0].d1;
+	int d2 = (data->val_status & SHT15_STATUS_LOW_RESOLUTION) ? 40 : 10;
+	int i;
 
-	क्रम (i = ARRAY_SIZE(temppoपूर्णांकs) - 1; i > 0; i--)
-		/* Find poपूर्णांकer to पूर्णांकerpolate */
-		अगर (data->supply_uv > temppoपूर्णांकs[i - 1].vdd) अणु
-			d1 = (data->supply_uv - temppoपूर्णांकs[i - 1].vdd)
-				* (temppoपूर्णांकs[i].d1 - temppoपूर्णांकs[i - 1].d1)
-				/ (temppoपूर्णांकs[i].vdd - temppoपूर्णांकs[i - 1].vdd)
-				+ temppoपूर्णांकs[i - 1].d1;
-			अवरोध;
-		पूर्ण
+	for (i = ARRAY_SIZE(temppoints) - 1; i > 0; i--)
+		/* Find pointer to interpolate */
+		if (data->supply_uv > temppoints[i - 1].vdd) {
+			d1 = (data->supply_uv - temppoints[i - 1].vdd)
+				* (temppoints[i].d1 - temppoints[i - 1].d1)
+				/ (temppoints[i].vdd - temppoints[i - 1].vdd)
+				+ temppoints[i - 1].d1;
+			break;
+		}
 
-	वापस data->val_temp * d2 + d1;
-पूर्ण
+	return data->val_temp * d2 + d1;
+}
 
 /**
  * sht15_calc_humid() - using last temperature convert raw to humid
@@ -643,87 +642,87 @@ unlock:
  * The sensor is assumed to be V3, which is compatible with V4.
  * Humidity conversion coefficients are shown in table 7 of the datasheet.
  */
-अटल अंतरभूत पूर्णांक sht15_calc_humid(काष्ठा sht15_data *data)
-अणु
-	पूर्णांक rh_linear; /* milli percent */
-	पूर्णांक temp = sht15_calc_temp(data);
-	पूर्णांक c2, c3;
-	पूर्णांक t2;
-	स्थिर पूर्णांक c1 = -4;
+static inline int sht15_calc_humid(struct sht15_data *data)
+{
+	int rh_linear; /* milli percent */
+	int temp = sht15_calc_temp(data);
+	int c2, c3;
+	int t2;
+	const int c1 = -4;
 
-	अगर (data->val_status & SHT15_STATUS_LOW_RESOLUTION) अणु
+	if (data->val_status & SHT15_STATUS_LOW_RESOLUTION) {
 		c2 = 648000; /* x 10 ^ -6 */
 		c3 = -7200;  /* x 10 ^ -7 */
 		t2 = 1280;
-	पूर्ण अन्यथा अणु
+	} else {
 		c2 = 40500;  /* x 10 ^ -6 */
 		c3 = -28;    /* x 10 ^ -7 */
 		t2 = 80;
-	पूर्ण
+	}
 
 	rh_linear = c1 * 1000
 		+ c2 * data->val_humid / 1000
 		+ (data->val_humid * data->val_humid * c3) / 10000;
-	वापस (temp - 25000) * (10000 + t2 * data->val_humid)
+	return (temp - 25000) * (10000 + t2 * data->val_humid)
 		/ 1000000 + rh_linear;
-पूर्ण
+}
 
 /**
- * sht15_show_status() - show status inक्रमmation in sysfs
+ * sht15_show_status() - show status information in sysfs
  * @dev:	device.
  * @attr:	device attribute.
- * @buf:	sysfs buffer where inक्रमmation is written to.
+ * @buf:	sysfs buffer where information is written to.
  *
- * Will be called on पढ़ो access to temp1_fault, humidity1_fault
+ * Will be called on read access to temp1_fault, humidity1_fault
  * and heater_enable sysfs attributes.
- * Returns number of bytes written पूर्णांकo buffer, negative त्रुटि_सं on error.
+ * Returns number of bytes written into buffer, negative errno on error.
  */
-अटल sमाप_प्रकार sht15_status_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा sht15_data *data = dev_get_drvdata(dev);
+static ssize_t sht15_status_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	int ret;
+	struct sht15_data *data = dev_get_drvdata(dev);
 	u8 bit = to_sensor_dev_attr(attr)->index;
 
 	ret = sht15_update_status(data);
 
-	वापस ret ? ret : प्र_लिखो(buf, "%d\n", !!(data->val_status & bit));
-पूर्ण
+	return ret ? ret : sprintf(buf, "%d\n", !!(data->val_status & bit));
+}
 
 /**
  * sht15_store_heater() - change heater state via sysfs
  * @dev:	device.
  * @attr:	device attribute.
- * @buf:	sysfs buffer to पढ़ो the new heater state from.
+ * @buf:	sysfs buffer to read the new heater state from.
  * @count:	length of the data.
  *
- * Will be called on ग_लिखो access to heater_enable sysfs attribute.
- * Returns number of bytes actually decoded, negative त्रुटि_सं on error.
+ * Will be called on write access to heater_enable sysfs attribute.
+ * Returns number of bytes actually decoded, negative errno on error.
  */
-अटल sमाप_प्रकार sht15_status_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
-	काष्ठा sht15_data *data = dev_get_drvdata(dev);
-	दीर्घ value;
+static ssize_t sht15_status_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	int ret;
+	struct sht15_data *data = dev_get_drvdata(dev);
+	long value;
 	u8 status;
 
-	अगर (kम_से_दीर्घ(buf, 10, &value))
-		वापस -EINVAL;
+	if (kstrtol(buf, 10, &value))
+		return -EINVAL;
 
-	mutex_lock(&data->पढ़ो_lock);
+	mutex_lock(&data->read_lock);
 	status = data->val_status & 0x07;
-	अगर (!!value)
+	if (!!value)
 		status |= SHT15_STATUS_HEATER;
-	अन्यथा
+	else
 		status &= ~SHT15_STATUS_HEATER;
 
 	ret = sht15_send_status(data, status);
-	mutex_unlock(&data->पढ़ो_lock);
+	mutex_unlock(&data->read_lock);
 
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
 /**
  * sht15_show_temp() - show temperature measurement value in sysfs
@@ -731,21 +730,21 @@ unlock:
  * @attr:	device attribute.
  * @buf:	sysfs buffer where measurement values are written to.
  *
- * Will be called on पढ़ो access to temp1_input sysfs attribute.
- * Returns number of bytes written पूर्णांकo buffer, negative त्रुटि_सं on error.
+ * Will be called on read access to temp1_input sysfs attribute.
+ * Returns number of bytes written into buffer, negative errno on error.
  */
-अटल sमाप_प्रकार sht15_temp_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा sht15_data *data = dev_get_drvdata(dev);
+static ssize_t sht15_temp_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	int ret;
+	struct sht15_data *data = dev_get_drvdata(dev);
 
-	/* Technically no need to पढ़ो humidity as well */
+	/* Technically no need to read humidity as well */
 	ret = sht15_update_measurements(data);
 
-	वापस ret ? ret : प्र_लिखो(buf, "%d\n",
+	return ret ? ret : sprintf(buf, "%d\n",
 				   sht15_calc_temp(data));
-पूर्ण
+}
 
 /**
  * sht15_show_humidity() - show humidity measurement value in sysfs
@@ -753,316 +752,316 @@ unlock:
  * @attr:	device attribute.
  * @buf:	sysfs buffer where measurement values are written to.
  *
- * Will be called on पढ़ो access to humidity1_input sysfs attribute.
- * Returns number of bytes written पूर्णांकo buffer, negative त्रुटि_सं on error.
+ * Will be called on read access to humidity1_input sysfs attribute.
+ * Returns number of bytes written into buffer, negative errno on error.
  */
-अटल sमाप_प्रकार sht15_humidity_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	पूर्णांक ret;
-	काष्ठा sht15_data *data = dev_get_drvdata(dev);
+static ssize_t sht15_humidity_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	int ret;
+	struct sht15_data *data = dev_get_drvdata(dev);
 
 	ret = sht15_update_measurements(data);
 
-	वापस ret ? ret : प्र_लिखो(buf, "%d\n", sht15_calc_humid(data));
-पूर्ण
+	return ret ? ret : sprintf(buf, "%d\n", sht15_calc_humid(data));
+}
 
-अटल sमाप_प्रकार name_show(काष्ठा device *dev,
-			 काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	वापस प्र_लिखो(buf, "%s\n", pdev->name);
-पूर्ण
+static ssize_t name_show(struct device *dev,
+			 struct device_attribute *attr,
+			 char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	return sprintf(buf, "%s\n", pdev->name);
+}
 
-अटल SENSOR_DEVICE_ATTR_RO(temp1_input, sht15_temp, 0);
-अटल SENSOR_DEVICE_ATTR_RO(humidity1_input, sht15_humidity, 0);
-अटल SENSOR_DEVICE_ATTR_RO(temp1_fault, sht15_status,
+static SENSOR_DEVICE_ATTR_RO(temp1_input, sht15_temp, 0);
+static SENSOR_DEVICE_ATTR_RO(humidity1_input, sht15_humidity, 0);
+static SENSOR_DEVICE_ATTR_RO(temp1_fault, sht15_status,
 			     SHT15_STATUS_LOW_BATTERY);
-अटल SENSOR_DEVICE_ATTR_RO(humidity1_fault, sht15_status,
+static SENSOR_DEVICE_ATTR_RO(humidity1_fault, sht15_status,
 			     SHT15_STATUS_LOW_BATTERY);
-अटल SENSOR_DEVICE_ATTR_RW(heater_enable, sht15_status, SHT15_STATUS_HEATER);
-अटल DEVICE_ATTR_RO(name);
-अटल काष्ठा attribute *sht15_attrs[] = अणु
+static SENSOR_DEVICE_ATTR_RW(heater_enable, sht15_status, SHT15_STATUS_HEATER);
+static DEVICE_ATTR_RO(name);
+static struct attribute *sht15_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_humidity1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_fault.dev_attr.attr,
 	&sensor_dev_attr_humidity1_fault.dev_attr.attr,
 	&sensor_dev_attr_heater_enable.dev_attr.attr,
 	&dev_attr_name.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group sht15_attr_group = अणु
+static const struct attribute_group sht15_attr_group = {
 	.attrs = sht15_attrs,
-पूर्ण;
+};
 
-अटल irqवापस_t sht15_पूर्णांकerrupt_fired(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा sht15_data *data = d;
+static irqreturn_t sht15_interrupt_fired(int irq, void *d)
+{
+	struct sht15_data *data = d;
 
-	/* First disable the पूर्णांकerrupt */
+	/* First disable the interrupt */
 	disable_irq_nosync(irq);
-	atomic_inc(&data->पूर्णांकerrupt_handled);
-	/* Then schedule a पढ़ोing work काष्ठा */
-	अगर (data->state != SHT15_READING_NOTHING)
-		schedule_work(&data->पढ़ो_work);
-	वापस IRQ_HANDLED;
-पूर्ण
+	atomic_inc(&data->interrupt_handled);
+	/* Then schedule a reading work struct */
+	if (data->state != SHT15_READING_NOTHING)
+		schedule_work(&data->read_work);
+	return IRQ_HANDLED;
+}
 
-अटल व्योम sht15_bh_पढ़ो_data(काष्ठा work_काष्ठा *work_s)
-अणु
-	uपूर्णांक16_t val = 0;
+static void sht15_bh_read_data(struct work_struct *work_s)
+{
+	uint16_t val = 0;
 	u8 dev_checksum = 0;
 	u8 checksum_vals[3];
-	काष्ठा sht15_data *data
-		= container_of(work_s, काष्ठा sht15_data,
-			       पढ़ो_work);
+	struct sht15_data *data
+		= container_of(work_s, struct sht15_data,
+			       read_work);
 
-	/* Firstly, verअगरy the line is low */
-	अगर (gpiod_get_value(data->data)) अणु
+	/* Firstly, verify the line is low */
+	if (gpiod_get_value(data->data)) {
 		/*
-		 * If not, then start the पूर्णांकerrupt again - care here as could
-		 * have gone low in meanसमय so verअगरy it hasn't!
+		 * If not, then start the interrupt again - care here as could
+		 * have gone low in meantime so verify it hasn't!
 		 */
-		atomic_set(&data->पूर्णांकerrupt_handled, 0);
+		atomic_set(&data->interrupt_handled, 0);
 		enable_irq(gpiod_to_irq(data->data));
 		/* If still not occurred or another handler was scheduled */
-		अगर (gpiod_get_value(data->data)
-		    || atomic_पढ़ो(&data->पूर्णांकerrupt_handled))
-			वापस;
-	पूर्ण
+		if (gpiod_get_value(data->data)
+		    || atomic_read(&data->interrupt_handled))
+			return;
+	}
 
 	/* Read the data back from the device */
-	val = sht15_पढ़ो_byte(data);
+	val = sht15_read_byte(data);
 	val <<= 8;
-	अगर (sht15_ack(data))
-		जाओ wakeup;
-	val |= sht15_पढ़ो_byte(data);
+	if (sht15_ack(data))
+		goto wakeup;
+	val |= sht15_read_byte(data);
 
-	अगर (data->checksumming) अणु
+	if (data->checksumming) {
 		/*
-		 * Ask the device क्रम a checksum and पढ़ो it back.
+		 * Ask the device for a checksum and read it back.
 		 * Note: the device sends the checksum byte reversed.
 		 */
-		अगर (sht15_ack(data))
-			जाओ wakeup;
-		dev_checksum = bitrev8(sht15_पढ़ो_byte(data));
+		if (sht15_ack(data))
+			goto wakeup;
+		dev_checksum = bitrev8(sht15_read_byte(data));
 		checksum_vals[0] = (data->state == SHT15_READING_TEMP) ?
 			SHT15_MEASURE_TEMP : SHT15_MEASURE_RH;
 		checksum_vals[1] = (u8) (val >> 8);
 		checksum_vals[2] = (u8) val;
 		data->checksum_ok
 			= (sht15_crc8(data, checksum_vals, 3) == dev_checksum);
-	पूर्ण
+	}
 
-	/* Tell the device we are करोne */
-	अगर (sht15_end_transmission(data))
-		जाओ wakeup;
+	/* Tell the device we are done */
+	if (sht15_end_transmission(data))
+		goto wakeup;
 
-	चयन (data->state) अणु
-	हाल SHT15_READING_TEMP:
+	switch (data->state) {
+	case SHT15_READING_TEMP:
 		data->val_temp = val;
-		अवरोध;
-	हाल SHT15_READING_HUMID:
+		break;
+	case SHT15_READING_HUMID:
 		data->val_humid = val;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	data->state = SHT15_READING_NOTHING;
 wakeup:
-	wake_up(&data->रुको_queue);
-पूर्ण
+	wake_up(&data->wait_queue);
+}
 
-अटल व्योम sht15_update_voltage(काष्ठा work_काष्ठा *work_s)
-अणु
-	काष्ठा sht15_data *data
-		= container_of(work_s, काष्ठा sht15_data,
+static void sht15_update_voltage(struct work_struct *work_s)
+{
+	struct sht15_data *data
+		= container_of(work_s, struct sht15_data,
 			       update_supply_work);
 	data->supply_uv = regulator_get_voltage(data->reg);
-पूर्ण
+}
 
 /**
- * sht15_invalidate_voltage() - mark supply voltage invalid when notअगरied by reg
- * @nb:		associated notअगरication काष्ठाure
+ * sht15_invalidate_voltage() - mark supply voltage invalid when notified by reg
+ * @nb:		associated notification structure
  * @event:	voltage regulator state change event code
  * @ignored:	function parameter - ignored here
  *
- * Note that as the notअगरication code holds the regulator lock, we have
+ * Note that as the notification code holds the regulator lock, we have
  * to schedule an update of the supply voltage rather than getting it directly.
  */
-अटल पूर्णांक sht15_invalidate_voltage(काष्ठा notअगरier_block *nb,
-				    अचिन्हित दीर्घ event,
-				    व्योम *ignored)
-अणु
-	काष्ठा sht15_data *data = container_of(nb, काष्ठा sht15_data, nb);
+static int sht15_invalidate_voltage(struct notifier_block *nb,
+				    unsigned long event,
+				    void *ignored)
+{
+	struct sht15_data *data = container_of(nb, struct sht15_data, nb);
 
-	अगर (event == REGULATOR_EVENT_VOLTAGE_CHANGE)
+	if (event == REGULATOR_EVENT_VOLTAGE_CHANGE)
 		data->supply_uv_valid = false;
 	schedule_work(&data->update_supply_work);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id sht15_dt_match[] = अणु
-	अणु .compatible = "sensirion,sht15" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id sht15_dt_match[] = {
+	{ .compatible = "sensirion,sht15" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, sht15_dt_match);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक sht15_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
-	काष्ठा sht15_data *data;
+static int sht15_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct sht15_data *data;
 
-	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	INIT_WORK(&data->पढ़ो_work, sht15_bh_पढ़ो_data);
+	INIT_WORK(&data->read_work, sht15_bh_read_data);
 	INIT_WORK(&data->update_supply_work, sht15_update_voltage);
-	platक्रमm_set_drvdata(pdev, data);
-	mutex_init(&data->पढ़ो_lock);
+	platform_set_drvdata(pdev, data);
+	mutex_init(&data->read_lock);
 	data->dev = &pdev->dev;
-	init_रुकोqueue_head(&data->रुको_queue);
+	init_waitqueue_head(&data->wait_queue);
 
 	/*
 	 * If a regulator is available,
 	 * query what the supply voltage actually is!
 	 */
 	data->reg = devm_regulator_get_optional(data->dev, "vcc");
-	अगर (!IS_ERR(data->reg)) अणु
-		पूर्णांक voltage;
+	if (!IS_ERR(data->reg)) {
+		int voltage;
 
 		voltage = regulator_get_voltage(data->reg);
-		अगर (voltage)
+		if (voltage)
 			data->supply_uv = voltage;
 
 		ret = regulator_enable(data->reg);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(&pdev->dev,
 				"failed to enable regulator: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/*
-		 * Setup a notअगरier block to update this अगर another device
+		 * Setup a notifier block to update this if another device
 		 * causes the voltage to change
 		 */
-		data->nb.notअगरier_call = &sht15_invalidate_voltage;
-		ret = regulator_रेजिस्टर_notअगरier(data->reg, &data->nb);
-		अगर (ret) अणु
+		data->nb.notifier_call = &sht15_invalidate_voltage;
+		ret = regulator_register_notifier(data->reg, &data->nb);
+		if (ret) {
 			dev_err(&pdev->dev,
 				"regulator notifier request failed\n");
 			regulator_disable(data->reg);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* Try requesting the GPIOs */
 	data->sck = devm_gpiod_get(&pdev->dev, "clk", GPIOD_OUT_LOW);
-	अगर (IS_ERR(data->sck)) अणु
+	if (IS_ERR(data->sck)) {
 		ret = PTR_ERR(data->sck);
 		dev_err(&pdev->dev, "clock line GPIO request failed\n");
-		जाओ err_release_reg;
-	पूर्ण
+		goto err_release_reg;
+	}
 	data->data = devm_gpiod_get(&pdev->dev, "data", GPIOD_IN);
-	अगर (IS_ERR(data->data)) अणु
+	if (IS_ERR(data->data)) {
 		ret = PTR_ERR(data->data);
 		dev_err(&pdev->dev, "data line GPIO request failed\n");
-		जाओ err_release_reg;
-	पूर्ण
+		goto err_release_reg;
+	}
 
 	ret = devm_request_irq(&pdev->dev, gpiod_to_irq(data->data),
-			       sht15_पूर्णांकerrupt_fired,
+			       sht15_interrupt_fired,
 			       IRQF_TRIGGER_FALLING,
 			       "sht15 data",
 			       data);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to get irq for data line\n");
-		जाओ err_release_reg;
-	पूर्ण
+		goto err_release_reg;
+	}
 	disable_irq_nosync(gpiod_to_irq(data->data));
 	ret = sht15_connection_reset(data);
-	अगर (ret)
-		जाओ err_release_reg;
+	if (ret)
+		goto err_release_reg;
 	ret = sht15_soft_reset(data);
-	अगर (ret)
-		जाओ err_release_reg;
+	if (ret)
+		goto err_release_reg;
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &sht15_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "sysfs create failed\n");
-		जाओ err_release_reg;
-	पूर्ण
+		goto err_release_reg;
+	}
 
-	data->hwmon_dev = hwmon_device_रेजिस्टर(data->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(data->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		ret = PTR_ERR(data->hwmon_dev);
-		जाओ err_release_sysfs_group;
-	पूर्ण
+		goto err_release_sysfs_group;
+	}
 
-	वापस 0;
+	return 0;
 
 err_release_sysfs_group:
-	sysfs_हटाओ_group(&pdev->dev.kobj, &sht15_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &sht15_attr_group);
 err_release_reg:
-	अगर (!IS_ERR(data->reg)) अणु
-		regulator_unरेजिस्टर_notअगरier(data->reg, &data->nb);
+	if (!IS_ERR(data->reg)) {
+		regulator_unregister_notifier(data->reg, &data->nb);
 		regulator_disable(data->reg);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक sht15_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sht15_data *data = platक्रमm_get_drvdata(pdev);
+static int sht15_remove(struct platform_device *pdev)
+{
+	struct sht15_data *data = platform_get_drvdata(pdev);
 
 	/*
-	 * Make sure any पढ़ोs from the device are करोne and
+	 * Make sure any reads from the device are done and
 	 * prevent new ones beginning
 	 */
-	mutex_lock(&data->पढ़ो_lock);
-	अगर (sht15_soft_reset(data)) अणु
-		mutex_unlock(&data->पढ़ो_lock);
-		वापस -EFAULT;
-	पूर्ण
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
-	sysfs_हटाओ_group(&pdev->dev.kobj, &sht15_attr_group);
-	अगर (!IS_ERR(data->reg)) अणु
-		regulator_unरेजिस्टर_notअगरier(data->reg, &data->nb);
+	mutex_lock(&data->read_lock);
+	if (sht15_soft_reset(data)) {
+		mutex_unlock(&data->read_lock);
+		return -EFAULT;
+	}
+	hwmon_device_unregister(data->hwmon_dev);
+	sysfs_remove_group(&pdev->dev.kobj, &sht15_attr_group);
+	if (!IS_ERR(data->reg)) {
+		regulator_unregister_notifier(data->reg, &data->nb);
 		regulator_disable(data->reg);
-	पूर्ण
+	}
 
-	mutex_unlock(&data->पढ़ो_lock);
+	mutex_unlock(&data->read_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id sht15_device_ids[] = अणु
-	अणु "sht10", sht10 पूर्ण,
-	अणु "sht11", sht11 पूर्ण,
-	अणु "sht15", sht15 पूर्ण,
-	अणु "sht71", sht71 पूर्ण,
-	अणु "sht75", sht75 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, sht15_device_ids);
+static const struct platform_device_id sht15_device_ids[] = {
+	{ "sht10", sht10 },
+	{ "sht11", sht11 },
+	{ "sht15", sht15 },
+	{ "sht71", sht71 },
+	{ "sht75", sht75 },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, sht15_device_ids);
 
-अटल काष्ठा platक्रमm_driver sht15_driver = अणु
-	.driver = अणु
+static struct platform_driver sht15_driver = {
+	.driver = {
 		.name = "sht15",
 		.of_match_table = of_match_ptr(sht15_dt_match),
-	पूर्ण,
+	},
 	.probe = sht15_probe,
-	.हटाओ = sht15_हटाओ,
+	.remove = sht15_remove,
 	.id_table = sht15_device_ids,
-पूर्ण;
-module_platक्रमm_driver(sht15_driver);
+};
+module_platform_driver(sht15_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Sensirion SHT15 temperature and humidity sensor driver");

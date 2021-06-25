@@ -1,85 +1,84 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
-#अगर_अघोषित _NVME_H
-#घोषणा _NVME_H
+#ifndef _NVME_H
+#define _NVME_H
 
-#समावेश <linux/nvme.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <linux/lightnvm.h>
-#समावेश <linux/sed-opal.h>
-#समावेश <linux/fault-inject.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/t10-pi.h>
+#include <linux/nvme.h>
+#include <linux/cdev.h>
+#include <linux/pci.h>
+#include <linux/kref.h>
+#include <linux/blk-mq.h>
+#include <linux/lightnvm.h>
+#include <linux/sed-opal.h>
+#include <linux/fault-inject.h>
+#include <linux/rcupdate.h>
+#include <linux/wait.h>
+#include <linux/t10-pi.h>
 
-#समावेश <trace/events/block.h>
+#include <trace/events/block.h>
 
-बाह्य अचिन्हित पूर्णांक nvme_io_समयout;
-#घोषणा NVME_IO_TIMEOUT	(nvme_io_समयout * HZ)
+extern unsigned int nvme_io_timeout;
+#define NVME_IO_TIMEOUT	(nvme_io_timeout * HZ)
 
-बाह्य अचिन्हित पूर्णांक admin_समयout;
-#घोषणा NVME_ADMIN_TIMEOUT	(admin_समयout * HZ)
+extern unsigned int admin_timeout;
+#define NVME_ADMIN_TIMEOUT	(admin_timeout * HZ)
 
-#घोषणा NVME_DEFAULT_KATO	5
+#define NVME_DEFAULT_KATO	5
 
-#अगर_घोषित CONFIG_ARCH_NO_SG_CHAIN
-#घोषणा  NVME_INLINE_SG_CNT  0
-#घोषणा  NVME_INLINE_METADATA_SG_CNT  0
-#अन्यथा
-#घोषणा  NVME_INLINE_SG_CNT  2
-#घोषणा  NVME_INLINE_METADATA_SG_CNT  1
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_NO_SG_CHAIN
+#define  NVME_INLINE_SG_CNT  0
+#define  NVME_INLINE_METADATA_SG_CNT  0
+#else
+#define  NVME_INLINE_SG_CNT  2
+#define  NVME_INLINE_METADATA_SG_CNT  1
+#endif
 
 /*
- * Default to a 4K page size, with the पूर्णांकention to update this
- * path in the future to accommodate architectures with dअगरfering
+ * Default to a 4K page size, with the intention to update this
+ * path in the future to accommodate architectures with differing
  * kernel and IO page sizes.
  */
-#घोषणा NVME_CTRL_PAGE_SHIFT	12
-#घोषणा NVME_CTRL_PAGE_SIZE	(1 << NVME_CTRL_PAGE_SHIFT)
+#define NVME_CTRL_PAGE_SHIFT	12
+#define NVME_CTRL_PAGE_SIZE	(1 << NVME_CTRL_PAGE_SHIFT)
 
-बाह्य काष्ठा workqueue_काष्ठा *nvme_wq;
-बाह्य काष्ठा workqueue_काष्ठा *nvme_reset_wq;
-बाह्य काष्ठा workqueue_काष्ठा *nvme_delete_wq;
+extern struct workqueue_struct *nvme_wq;
+extern struct workqueue_struct *nvme_reset_wq;
+extern struct workqueue_struct *nvme_delete_wq;
 
-क्रमागत अणु
+enum {
 	NVME_NS_LBA		= 0,
 	NVME_NS_LIGHTNVM	= 1,
-पूर्ण;
+};
 
 /*
- * List of workarounds क्रम devices that required behavior not specअगरied in
+ * List of workarounds for devices that required behavior not specified in
  * the standard.
  */
-क्रमागत nvme_quirks अणु
+enum nvme_quirks {
 	/*
-	 * Prefers I/O aligned to a stripe size specअगरied in a venकरोr
-	 * specअगरic Identअगरy field.
+	 * Prefers I/O aligned to a stripe size specified in a vendor
+	 * specific Identify field.
 	 */
 	NVME_QUIRK_STRIPE_SIZE			= (1 << 0),
 
 	/*
-	 * The controller करोesn't handle Identअगरy value others than 0 or 1
+	 * The controller doesn't handle Identify value others than 0 or 1
 	 * correctly.
 	 */
 	NVME_QUIRK_IDENTIFY_CNS			= (1 << 1),
 
 	/*
-	 * The controller deterministically वापसs O's on पढ़ोs to
+	 * The controller deterministically returns O's on reads to
 	 * logical blocks that deallocate was called on.
 	 */
 	NVME_QUIRK_DEALLOCATE_ZEROES		= (1 << 2),
 
 	/*
-	 * The controller needs a delay beक्रमe starts checking the device
-	 * पढ़ोiness, which is करोne by पढ़ोing the NVME_CSTS_RDY bit.
+	 * The controller needs a delay before starts checking the device
+	 * readiness, which is done by reading the NVME_CSTS_RDY bit.
 	 */
 	NVME_QUIRK_DELAY_BEFORE_CHK_RDY		= (1 << 3),
 
@@ -94,7 +93,7 @@
 	NVME_QUIRK_NO_DEEPEST_PS		= (1 << 5),
 
 	/*
-	 * Supports the LighNVM command set अगर indicated in vs[1].
+	 * Supports the LighNVM command set if indicated in vs[1].
 	 */
 	NVME_QUIRK_LIGHTNVM			= (1 << 6),
 
@@ -119,7 +118,7 @@
 	NVME_QUIRK_SIMPLE_SUSPEND		= (1 << 10),
 
 	/*
-	 * Use only one पूर्णांकerrupt vector क्रम all queues
+	 * Use only one interrupt vector for all queues
 	 */
 	NVME_QUIRK_SINGLE_VECTOR		= (1 << 11),
 
@@ -139,64 +138,64 @@
 	NVME_QUIRK_NO_TEMP_THRESH_CHANGE	= (1 << 14),
 
 	/*
-	 * The controller करोesn't handle the Identअगरy Namespace
-	 * Identअगरication Descriptor list subcommand despite claiming
+	 * The controller doesn't handle the Identify Namespace
+	 * Identification Descriptor list subcommand despite claiming
 	 * NVMe 1.3 compliance.
 	 */
 	NVME_QUIRK_NO_NS_DESC_LIST		= (1 << 15),
 
 	/*
-	 * The controller करोes not properly handle DMA addresses over
+	 * The controller does not properly handle DMA addresses over
 	 * 48 bits.
 	 */
 	NVME_QUIRK_DMA_ADDRESS_BITS_48		= (1 << 16),
-पूर्ण;
+};
 
 /*
- * Common request काष्ठाure क्रम NVMe passthrough.  All drivers must have
- * this काष्ठाure as the first member of their request-निजी data.
+ * Common request structure for NVMe passthrough.  All drivers must have
+ * this structure as the first member of their request-private data.
  */
-काष्ठा nvme_request अणु
-	काष्ठा nvme_command	*cmd;
-	जोड़ nvme_result	result;
+struct nvme_request {
+	struct nvme_command	*cmd;
+	union nvme_result	result;
 	u8			retries;
 	u8			flags;
 	u16			status;
-	काष्ठा nvme_ctrl	*ctrl;
-पूर्ण;
+	struct nvme_ctrl	*ctrl;
+};
 
 /*
  * Mark a bio as coming in through the mpath node.
  */
-#घोषणा REQ_NVME_MPATH		REQ_DRV
+#define REQ_NVME_MPATH		REQ_DRV
 
-क्रमागत अणु
+enum {
 	NVME_REQ_CANCELLED		= (1 << 0),
 	NVME_REQ_USERCMD		= (1 << 1),
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा nvme_request *nvme_req(काष्ठा request *req)
-अणु
-	वापस blk_mq_rq_to_pdu(req);
-पूर्ण
+static inline struct nvme_request *nvme_req(struct request *req)
+{
+	return blk_mq_rq_to_pdu(req);
+}
 
-अटल अंतरभूत u16 nvme_req_qid(काष्ठा request *req)
-अणु
-	अगर (!req->q->queuedata)
-		वापस 0;
+static inline u16 nvme_req_qid(struct request *req)
+{
+	if (!req->q->queuedata)
+		return 0;
 
-	वापस req->mq_hctx->queue_num + 1;
-पूर्ण
+	return req->mq_hctx->queue_num + 1;
+}
 
-/* The below value is the specअगरic amount of delay needed beक्रमe checking
- * पढ़ोiness in हाल of the PCI_DEVICE(0x1c58, 0x0003), which needs the
+/* The below value is the specific amount of delay needed before checking
+ * readiness in case of the PCI_DEVICE(0x1c58, 0x0003), which needs the
  * NVME_QUIRK_DELAY_BEFORE_CHK_RDY quirk enabled. The value (in ms) was
  * found empirically.
  */
-#घोषणा NVME_QUIRK_DELAY_AMOUNT		2300
+#define NVME_QUIRK_DELAY_AMOUNT		2300
 
 /*
- * क्रमागत nvme_ctrl_state: Controller state
+ * enum nvme_ctrl_state: Controller state
  *
  * @NVME_CTRL_NEW:		New controller just allocated, initial state
  * @NVME_CTRL_LIVE:		Controller is connected and I/O capable
@@ -207,14 +206,14 @@
  * @NVME_CTRL_DELETING_NOIO:	Controller is deleting and I/O is not
  *				disabled/failed immediately. This state comes
  * 				after all async event processing took place and
- * 				beक्रमe ns removal and the controller deletion
+ * 				before ns removal and the controller deletion
  * 				progress
  * @NVME_CTRL_DEAD:		Controller is non-present/unresponsive during
- *				shutकरोwn or removal. In this हाल we क्रमcibly
- *				समाप्त all inflight I/O as they have no chance to
+ *				shutdown or removal. In this case we forcibly
+ *				kill all inflight I/O as they have no chance to
  *				complete
  */
-क्रमागत nvme_ctrl_state अणु
+enum nvme_ctrl_state {
 	NVME_CTRL_NEW,
 	NVME_CTRL_LIVE,
 	NVME_CTRL_RESETTING,
@@ -222,50 +221,50 @@
 	NVME_CTRL_DELETING,
 	NVME_CTRL_DELETING_NOIO,
 	NVME_CTRL_DEAD,
-पूर्ण;
+};
 
-काष्ठा nvme_fault_inject अणु
-#अगर_घोषित CONFIG_FAULT_INJECTION_DEBUG_FS
-	काष्ठा fault_attr attr;
-	काष्ठा dentry *parent;
-	bool करोnt_retry;	/* DNR, करो not retry */
+struct nvme_fault_inject {
+#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
+	struct fault_attr attr;
+	struct dentry *parent;
+	bool dont_retry;	/* DNR, do not retry */
 	u16 status;		/* status code */
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा nvme_ctrl अणु
+struct nvme_ctrl {
 	bool comp_seen;
-	क्रमागत nvme_ctrl_state state;
-	bool identअगरied;
+	enum nvme_ctrl_state state;
+	bool identified;
 	spinlock_t lock;
-	काष्ठा mutex scan_lock;
-	स्थिर काष्ठा nvme_ctrl_ops *ops;
-	काष्ठा request_queue *admin_q;
-	काष्ठा request_queue *connect_q;
-	काष्ठा request_queue *fabrics_q;
-	काष्ठा device *dev;
-	पूर्णांक instance;
-	पूर्णांक numa_node;
-	काष्ठा blk_mq_tag_set *tagset;
-	काष्ठा blk_mq_tag_set *admin_tagset;
-	काष्ठा list_head namespaces;
-	काष्ठा rw_semaphore namespaces_rwsem;
-	काष्ठा device ctrl_device;
-	काष्ठा device *device;	/* अक्षर device */
-#अगर_घोषित CONFIG_NVME_HWMON
-	काष्ठा device *hwmon_device;
-#पूर्ण_अगर
-	काष्ठा cdev cdev;
-	काष्ठा work_काष्ठा reset_work;
-	काष्ठा work_काष्ठा delete_work;
-	रुको_queue_head_t state_wq;
+	struct mutex scan_lock;
+	const struct nvme_ctrl_ops *ops;
+	struct request_queue *admin_q;
+	struct request_queue *connect_q;
+	struct request_queue *fabrics_q;
+	struct device *dev;
+	int instance;
+	int numa_node;
+	struct blk_mq_tag_set *tagset;
+	struct blk_mq_tag_set *admin_tagset;
+	struct list_head namespaces;
+	struct rw_semaphore namespaces_rwsem;
+	struct device ctrl_device;
+	struct device *device;	/* char device */
+#ifdef CONFIG_NVME_HWMON
+	struct device *hwmon_device;
+#endif
+	struct cdev cdev;
+	struct work_struct reset_work;
+	struct work_struct delete_work;
+	wait_queue_head_t state_wq;
 
-	काष्ठा nvme_subप्रणाली *subsys;
-	काष्ठा list_head subsys_entry;
+	struct nvme_subsystem *subsys;
+	struct list_head subsys_entry;
 
-	काष्ठा opal_dev *opal_dev;
+	struct opal_dev *opal_dev;
 
-	अक्षर name[12];
+	char name[12];
 	u16 cntlid;
 
 	u32 ctrl_config;
@@ -275,13 +274,13 @@
 	u64 cap;
 	u32 max_hw_sectors;
 	u32 max_segments;
-	u32 max_पूर्णांकegrity_segments;
+	u32 max_integrity_segments;
 	u32 max_discard_sectors;
 	u32 max_discard_segments;
 	u32 max_zeroes_sectors;
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
+#ifdef CONFIG_BLK_DEV_ZONED
 	u32 max_zone_append;
-#पूर्ण_अगर
+#endif
 	u16 crdt[3];
 	u16 oncs;
 	u16 oacs;
@@ -289,7 +288,7 @@
 	u16 nr_streams;
 	u16 sqsize;
 	u32 max_namespaces;
-	atomic_t पात_limit;
+	atomic_t abort_limit;
 	u8 vwc;
 	u32 vs;
 	u32 sgls;
@@ -301,33 +300,33 @@
 	u32 oaes;
 	u32 aen_result;
 	u32 ctratt;
-	अचिन्हित पूर्णांक shutकरोwn_समयout;
-	अचिन्हित पूर्णांक kato;
-	bool subप्रणाली;
-	अचिन्हित दीर्घ quirks;
-	काष्ठा nvme_id_घातer_state psd[32];
-	काष्ठा nvme_effects_log *effects;
-	काष्ठा xarray cels;
-	काष्ठा work_काष्ठा scan_work;
-	काष्ठा work_काष्ठा async_event_work;
-	काष्ठा delayed_work ka_work;
-	काष्ठा delayed_work failfast_work;
-	काष्ठा nvme_command ka_cmd;
-	काष्ठा work_काष्ठा fw_act_work;
-	अचिन्हित दीर्घ events;
+	unsigned int shutdown_timeout;
+	unsigned int kato;
+	bool subsystem;
+	unsigned long quirks;
+	struct nvme_id_power_state psd[32];
+	struct nvme_effects_log *effects;
+	struct xarray cels;
+	struct work_struct scan_work;
+	struct work_struct async_event_work;
+	struct delayed_work ka_work;
+	struct delayed_work failfast_work;
+	struct nvme_command ka_cmd;
+	struct work_struct fw_act_work;
+	unsigned long events;
 
-#अगर_घोषित CONFIG_NVME_MULTIPATH
+#ifdef CONFIG_NVME_MULTIPATH
 	/* asymmetric namespace access: */
 	u8 anacap;
 	u8 anatt;
 	u32 anagrpmax;
 	u32 nanagrpid;
-	काष्ठा mutex ana_lock;
-	काष्ठा nvme_ana_rsp_hdr *ana_log_buf;
-	माप_प्रकार ana_log_size;
-	काष्ठा समयr_list anatt_समयr;
-	काष्ठा work_काष्ठा ana_work;
-#पूर्ण_अगर
+	struct mutex ana_lock;
+	struct nvme_ana_rsp_hdr *ana_log_buf;
+	size_t ana_log_size;
+	struct timer_list anatt_timer;
+	struct work_struct ana_work;
+#endif
 
 	/* Power saving configuration */
 	u64 ps_max_latency_us;
@@ -342,545 +341,545 @@
 	/* Fabrics only */
 	u32 ioccsz;
 	u32 iorcsz;
-	u16 icकरोff;
+	u16 icdoff;
 	u16 maxcmd;
-	पूर्णांक nr_reconnects;
-	अचिन्हित दीर्घ flags;
-#घोषणा NVME_CTRL_FAILFAST_EXPIRED	0
-	काष्ठा nvmf_ctrl_options *opts;
+	int nr_reconnects;
+	unsigned long flags;
+#define NVME_CTRL_FAILFAST_EXPIRED	0
+	struct nvmf_ctrl_options *opts;
 
-	काष्ठा page *discard_page;
-	अचिन्हित दीर्घ discard_page_busy;
+	struct page *discard_page;
+	unsigned long discard_page_busy;
 
-	काष्ठा nvme_fault_inject fault_inject;
-पूर्ण;
+	struct nvme_fault_inject fault_inject;
+};
 
-क्रमागत nvme_iopolicy अणु
+enum nvme_iopolicy {
 	NVME_IOPOLICY_NUMA,
 	NVME_IOPOLICY_RR,
-पूर्ण;
+};
 
-काष्ठा nvme_subप्रणाली अणु
-	पूर्णांक			instance;
-	काष्ठा device		dev;
+struct nvme_subsystem {
+	int			instance;
+	struct device		dev;
 	/*
-	 * Because we unरेजिस्टर the device on the last put we need
+	 * Because we unregister the device on the last put we need
 	 * a separate refcount.
 	 */
-	काष्ठा kref		ref;
-	काष्ठा list_head	entry;
-	काष्ठा mutex		lock;
-	काष्ठा list_head	ctrls;
-	काष्ठा list_head	nsheads;
-	अक्षर			subnqn[NVMF_NQN_SIZE];
-	अक्षर			serial[20];
-	अक्षर			model[40];
-	अक्षर			firmware_rev[8];
+	struct kref		ref;
+	struct list_head	entry;
+	struct mutex		lock;
+	struct list_head	ctrls;
+	struct list_head	nsheads;
+	char			subnqn[NVMF_NQN_SIZE];
+	char			serial[20];
+	char			model[40];
+	char			firmware_rev[8];
 	u8			cmic;
-	u16			venकरोr_id;
+	u16			vendor_id;
 	u16			awupf;	/* 0's based awupf value. */
-	काष्ठा ida		ns_ida;
-#अगर_घोषित CONFIG_NVME_MULTIPATH
-	क्रमागत nvme_iopolicy	iopolicy;
-#पूर्ण_अगर
-पूर्ण;
+	struct ida		ns_ida;
+#ifdef CONFIG_NVME_MULTIPATH
+	enum nvme_iopolicy	iopolicy;
+#endif
+};
 
 /*
- * Container काष्ठाure क्रम uniqueue namespace identअगरiers.
+ * Container structure for uniqueue namespace identifiers.
  */
-काष्ठा nvme_ns_ids अणु
+struct nvme_ns_ids {
 	u8	eui64[8];
 	u8	nguid[16];
 	uuid_t	uuid;
 	u8	csi;
-पूर्ण;
+};
 
 /*
- * Anchor काष्ठाure क्रम namespaces.  There is one क्रम each namespace in a
- * NVMe subप्रणाली that any of our controllers can see, and the namespace
- * काष्ठाure क्रम each controller is chained of it.  For निजी namespaces
- * there is a 1:1 relation to our namespace काष्ठाures, that is ->list
- * only ever has a single entry क्रम निजी namespaces.
+ * Anchor structure for namespaces.  There is one for each namespace in a
+ * NVMe subsystem that any of our controllers can see, and the namespace
+ * structure for each controller is chained of it.  For private namespaces
+ * there is a 1:1 relation to our namespace structures, that is ->list
+ * only ever has a single entry for private namespaces.
  */
-काष्ठा nvme_ns_head अणु
-	काष्ठा list_head	list;
-	काष्ठा srcu_काष्ठा      srcu;
-	काष्ठा nvme_subप्रणाली	*subsys;
-	अचिन्हित		ns_id;
-	काष्ठा nvme_ns_ids	ids;
-	काष्ठा list_head	entry;
-	काष्ठा kref		ref;
+struct nvme_ns_head {
+	struct list_head	list;
+	struct srcu_struct      srcu;
+	struct nvme_subsystem	*subsys;
+	unsigned		ns_id;
+	struct nvme_ns_ids	ids;
+	struct list_head	entry;
+	struct kref		ref;
 	bool			shared;
-	पूर्णांक			instance;
-	काष्ठा nvme_effects_log *effects;
+	int			instance;
+	struct nvme_effects_log *effects;
 
-	काष्ठा cdev		cdev;
-	काष्ठा device		cdev_device;
+	struct cdev		cdev;
+	struct device		cdev_device;
 
-	काष्ठा gendisk		*disk;
-#अगर_घोषित CONFIG_NVME_MULTIPATH
-	काष्ठा bio_list		requeue_list;
+	struct gendisk		*disk;
+#ifdef CONFIG_NVME_MULTIPATH
+	struct bio_list		requeue_list;
 	spinlock_t		requeue_lock;
-	काष्ठा work_काष्ठा	requeue_work;
-	काष्ठा mutex		lock;
-	अचिन्हित दीर्घ		flags;
-#घोषणा NVME_NSHEAD_DISK_LIVE	0
-	काष्ठा nvme_ns __rcu	*current_path[];
-#पूर्ण_अगर
-पूर्ण;
+	struct work_struct	requeue_work;
+	struct mutex		lock;
+	unsigned long		flags;
+#define NVME_NSHEAD_DISK_LIVE	0
+	struct nvme_ns __rcu	*current_path[];
+#endif
+};
 
-अटल अंतरभूत bool nvme_ns_head_multipath(काष्ठा nvme_ns_head *head)
-अणु
-	वापस IS_ENABLED(CONFIG_NVME_MULTIPATH) && head->disk;
-पूर्ण
+static inline bool nvme_ns_head_multipath(struct nvme_ns_head *head)
+{
+	return IS_ENABLED(CONFIG_NVME_MULTIPATH) && head->disk;
+}
 
-क्रमागत nvme_ns_features अणु
-	NVME_NS_EXT_LBAS = 1 << 0, /* support extended LBA क्रमmat */
+enum nvme_ns_features {
+	NVME_NS_EXT_LBAS = 1 << 0, /* support extended LBA format */
 	NVME_NS_METADATA_SUPPORTED = 1 << 1, /* support getting generated md */
-पूर्ण;
+};
 
-काष्ठा nvme_ns अणु
-	काष्ठा list_head list;
+struct nvme_ns {
+	struct list_head list;
 
-	काष्ठा nvme_ctrl *ctrl;
-	काष्ठा request_queue *queue;
-	काष्ठा gendisk *disk;
-#अगर_घोषित CONFIG_NVME_MULTIPATH
-	क्रमागत nvme_ana_state ana_state;
+	struct nvme_ctrl *ctrl;
+	struct request_queue *queue;
+	struct gendisk *disk;
+#ifdef CONFIG_NVME_MULTIPATH
+	enum nvme_ana_state ana_state;
 	u32 ana_grpid;
-#पूर्ण_अगर
-	काष्ठा list_head siblings;
-	काष्ठा nvm_dev *ndev;
-	काष्ठा kref kref;
-	काष्ठा nvme_ns_head *head;
+#endif
+	struct list_head siblings;
+	struct nvm_dev *ndev;
+	struct kref kref;
+	struct nvme_ns_head *head;
 
-	पूर्णांक lba_shअगरt;
+	int lba_shift;
 	u16 ms;
 	u16 sgs;
 	u32 sws;
 	u8 pi_type;
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
+#ifdef CONFIG_BLK_DEV_ZONED
 	u64 zsze;
-#पूर्ण_अगर
-	अचिन्हित दीर्घ features;
-	अचिन्हित दीर्घ flags;
-#घोषणा NVME_NS_REMOVING	0
-#घोषणा NVME_NS_DEAD     	1
-#घोषणा NVME_NS_ANA_PENDING	2
-#घोषणा NVME_NS_FORCE_RO	3
+#endif
+	unsigned long features;
+	unsigned long flags;
+#define NVME_NS_REMOVING	0
+#define NVME_NS_DEAD     	1
+#define NVME_NS_ANA_PENDING	2
+#define NVME_NS_FORCE_RO	3
 
-	काष्ठा cdev		cdev;
-	काष्ठा device		cdev_device;
+	struct cdev		cdev;
+	struct device		cdev_device;
 
-	काष्ठा nvme_fault_inject fault_inject;
+	struct nvme_fault_inject fault_inject;
 
-पूर्ण;
+};
 
 /* NVMe ns supports metadata actions by the controller (generate/strip) */
-अटल अंतरभूत bool nvme_ns_has_pi(काष्ठा nvme_ns *ns)
-अणु
-	वापस ns->pi_type && ns->ms == माप(काष्ठा t10_pi_tuple);
-पूर्ण
+static inline bool nvme_ns_has_pi(struct nvme_ns *ns)
+{
+	return ns->pi_type && ns->ms == sizeof(struct t10_pi_tuple);
+}
 
-काष्ठा nvme_ctrl_ops अणु
-	स्थिर अक्षर *name;
-	काष्ठा module *module;
-	अचिन्हित पूर्णांक flags;
-#घोषणा NVME_F_FABRICS			(1 << 0)
-#घोषणा NVME_F_METADATA_SUPPORTED	(1 << 1)
-#घोषणा NVME_F_PCI_P2PDMA		(1 << 2)
-	पूर्णांक (*reg_पढ़ो32)(काष्ठा nvme_ctrl *ctrl, u32 off, u32 *val);
-	पूर्णांक (*reg_ग_लिखो32)(काष्ठा nvme_ctrl *ctrl, u32 off, u32 val);
-	पूर्णांक (*reg_पढ़ो64)(काष्ठा nvme_ctrl *ctrl, u32 off, u64 *val);
-	व्योम (*मुक्त_ctrl)(काष्ठा nvme_ctrl *ctrl);
-	व्योम (*submit_async_event)(काष्ठा nvme_ctrl *ctrl);
-	व्योम (*delete_ctrl)(काष्ठा nvme_ctrl *ctrl);
-	पूर्णांक (*get_address)(काष्ठा nvme_ctrl *ctrl, अक्षर *buf, पूर्णांक size);
-पूर्ण;
+struct nvme_ctrl_ops {
+	const char *name;
+	struct module *module;
+	unsigned int flags;
+#define NVME_F_FABRICS			(1 << 0)
+#define NVME_F_METADATA_SUPPORTED	(1 << 1)
+#define NVME_F_PCI_P2PDMA		(1 << 2)
+	int (*reg_read32)(struct nvme_ctrl *ctrl, u32 off, u32 *val);
+	int (*reg_write32)(struct nvme_ctrl *ctrl, u32 off, u32 val);
+	int (*reg_read64)(struct nvme_ctrl *ctrl, u32 off, u64 *val);
+	void (*free_ctrl)(struct nvme_ctrl *ctrl);
+	void (*submit_async_event)(struct nvme_ctrl *ctrl);
+	void (*delete_ctrl)(struct nvme_ctrl *ctrl);
+	int (*get_address)(struct nvme_ctrl *ctrl, char *buf, int size);
+};
 
-#अगर_घोषित CONFIG_FAULT_INJECTION_DEBUG_FS
-व्योम nvme_fault_inject_init(काष्ठा nvme_fault_inject *fault_inj,
-			    स्थिर अक्षर *dev_name);
-व्योम nvme_fault_inject_fini(काष्ठा nvme_fault_inject *fault_inject);
-व्योम nvme_should_fail(काष्ठा request *req);
-#अन्यथा
-अटल अंतरभूत व्योम nvme_fault_inject_init(काष्ठा nvme_fault_inject *fault_inj,
-					  स्थिर अक्षर *dev_name)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_fault_inject_fini(काष्ठा nvme_fault_inject *fault_inj)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_should_fail(काष्ठा request *req) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
+void nvme_fault_inject_init(struct nvme_fault_inject *fault_inj,
+			    const char *dev_name);
+void nvme_fault_inject_fini(struct nvme_fault_inject *fault_inject);
+void nvme_should_fail(struct request *req);
+#else
+static inline void nvme_fault_inject_init(struct nvme_fault_inject *fault_inj,
+					  const char *dev_name)
+{
+}
+static inline void nvme_fault_inject_fini(struct nvme_fault_inject *fault_inj)
+{
+}
+static inline void nvme_should_fail(struct request *req) {}
+#endif
 
-अटल अंतरभूत पूर्णांक nvme_reset_subप्रणाली(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अगर (!ctrl->subप्रणाली)
-		वापस -ENOTTY;
-	वापस ctrl->ops->reg_ग_लिखो32(ctrl, NVME_REG_NSSR, 0x4E564D65);
-पूर्ण
+static inline int nvme_reset_subsystem(struct nvme_ctrl *ctrl)
+{
+	if (!ctrl->subsystem)
+		return -ENOTTY;
+	return ctrl->ops->reg_write32(ctrl, NVME_REG_NSSR, 0x4E564D65);
+}
 
 /*
  * Convert a 512B sector number to a device logical block number.
  */
-अटल अंतरभूत u64 nvme_sect_to_lba(काष्ठा nvme_ns *ns, sector_t sector)
-अणु
-	वापस sector >> (ns->lba_shअगरt - SECTOR_SHIFT);
-पूर्ण
+static inline u64 nvme_sect_to_lba(struct nvme_ns *ns, sector_t sector)
+{
+	return sector >> (ns->lba_shift - SECTOR_SHIFT);
+}
 
 /*
  * Convert a device logical block number to a 512B sector number.
  */
-अटल अंतरभूत sector_t nvme_lba_to_sect(काष्ठा nvme_ns *ns, u64 lba)
-अणु
-	वापस lba << (ns->lba_shअगरt - SECTOR_SHIFT);
-पूर्ण
+static inline sector_t nvme_lba_to_sect(struct nvme_ns *ns, u64 lba)
+{
+	return lba << (ns->lba_shift - SECTOR_SHIFT);
+}
 
 /*
  * Convert byte length to nvme's 0-based num dwords
  */
-अटल अंतरभूत u32 nvme_bytes_to_numd(माप_प्रकार len)
-अणु
-	वापस (len >> 2) - 1;
-पूर्ण
+static inline u32 nvme_bytes_to_numd(size_t len)
+{
+	return (len >> 2) - 1;
+}
 
-अटल अंतरभूत bool nvme_is_ana_error(u16 status)
-अणु
-	चयन (status & 0x7ff) अणु
-	हाल NVME_SC_ANA_TRANSITION:
-	हाल NVME_SC_ANA_INACCESSIBLE:
-	हाल NVME_SC_ANA_PERSISTENT_LOSS:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static inline bool nvme_is_ana_error(u16 status)
+{
+	switch (status & 0x7ff) {
+	case NVME_SC_ANA_TRANSITION:
+	case NVME_SC_ANA_INACCESSIBLE:
+	case NVME_SC_ANA_PERSISTENT_LOSS:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल अंतरभूत bool nvme_is_path_error(u16 status)
-अणु
-	/* check क्रम a status code type of 'path related status' */
-	वापस (status & 0x700) == 0x300;
-पूर्ण
+static inline bool nvme_is_path_error(u16 status)
+{
+	/* check for a status code type of 'path related status' */
+	return (status & 0x700) == 0x300;
+}
 
 /*
- * Fill in the status and result inक्रमmation from the CQE, and then figure out
- * अगर blk-mq will need to use IPI magic to complete the request, and अगर yes करो
+ * Fill in the status and result information from the CQE, and then figure out
+ * if blk-mq will need to use IPI magic to complete the request, and if yes do
  * so.  If not let the caller complete the request without an indirect function
  * call.
  */
-अटल अंतरभूत bool nvme_try_complete_req(काष्ठा request *req, __le16 status,
-		जोड़ nvme_result result)
-अणु
-	काष्ठा nvme_request *rq = nvme_req(req);
+static inline bool nvme_try_complete_req(struct request *req, __le16 status,
+		union nvme_result result)
+{
+	struct nvme_request *rq = nvme_req(req);
 
 	rq->status = le16_to_cpu(status) >> 1;
 	rq->result = result;
 	/* inject error when permitted by fault injection framework */
 	nvme_should_fail(req);
-	अगर (unlikely(blk_should_fake_समयout(req->q)))
-		वापस true;
-	वापस blk_mq_complete_request_remote(req);
-पूर्ण
+	if (unlikely(blk_should_fake_timeout(req->q)))
+		return true;
+	return blk_mq_complete_request_remote(req);
+}
 
-अटल अंतरभूत व्योम nvme_get_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
+static inline void nvme_get_ctrl(struct nvme_ctrl *ctrl)
+{
 	get_device(ctrl->device);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_put_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
+static inline void nvme_put_ctrl(struct nvme_ctrl *ctrl)
+{
 	put_device(ctrl->device);
-पूर्ण
+}
 
-अटल अंतरभूत bool nvme_is_aen_req(u16 qid, __u16 command_id)
-अणु
-	वापस !qid && command_id >= NVME_AQ_BLK_MQ_DEPTH;
-पूर्ण
+static inline bool nvme_is_aen_req(u16 qid, __u16 command_id)
+{
+	return !qid && command_id >= NVME_AQ_BLK_MQ_DEPTH;
+}
 
-व्योम nvme_complete_rq(काष्ठा request *req);
-blk_status_t nvme_host_path_error(काष्ठा request *req);
-bool nvme_cancel_request(काष्ठा request *req, व्योम *data, bool reserved);
-व्योम nvme_cancel_tagset(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_cancel_admin_tagset(काष्ठा nvme_ctrl *ctrl);
-bool nvme_change_ctrl_state(काष्ठा nvme_ctrl *ctrl,
-		क्रमागत nvme_ctrl_state new_state);
-bool nvme_रुको_reset(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_disable_ctrl(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_enable_ctrl(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_shutकरोwn_ctrl(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_init_ctrl(काष्ठा nvme_ctrl *ctrl, काष्ठा device *dev,
-		स्थिर काष्ठा nvme_ctrl_ops *ops, अचिन्हित दीर्घ quirks);
-व्योम nvme_uninit_ctrl(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_start_ctrl(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_stop_ctrl(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_init_ctrl_finish(काष्ठा nvme_ctrl *ctrl);
+void nvme_complete_rq(struct request *req);
+blk_status_t nvme_host_path_error(struct request *req);
+bool nvme_cancel_request(struct request *req, void *data, bool reserved);
+void nvme_cancel_tagset(struct nvme_ctrl *ctrl);
+void nvme_cancel_admin_tagset(struct nvme_ctrl *ctrl);
+bool nvme_change_ctrl_state(struct nvme_ctrl *ctrl,
+		enum nvme_ctrl_state new_state);
+bool nvme_wait_reset(struct nvme_ctrl *ctrl);
+int nvme_disable_ctrl(struct nvme_ctrl *ctrl);
+int nvme_enable_ctrl(struct nvme_ctrl *ctrl);
+int nvme_shutdown_ctrl(struct nvme_ctrl *ctrl);
+int nvme_init_ctrl(struct nvme_ctrl *ctrl, struct device *dev,
+		const struct nvme_ctrl_ops *ops, unsigned long quirks);
+void nvme_uninit_ctrl(struct nvme_ctrl *ctrl);
+void nvme_start_ctrl(struct nvme_ctrl *ctrl);
+void nvme_stop_ctrl(struct nvme_ctrl *ctrl);
+int nvme_init_ctrl_finish(struct nvme_ctrl *ctrl);
 
-व्योम nvme_हटाओ_namespaces(काष्ठा nvme_ctrl *ctrl);
+void nvme_remove_namespaces(struct nvme_ctrl *ctrl);
 
-पूर्णांक nvme_sec_submit(व्योम *data, u16 spsp, u8 secp, व्योम *buffer, माप_प्रकार len,
+int nvme_sec_submit(void *data, u16 spsp, u8 secp, void *buffer, size_t len,
 		bool send);
 
-व्योम nvme_complete_async_event(काष्ठा nvme_ctrl *ctrl, __le16 status,
-		अस्थिर जोड़ nvme_result *res);
+void nvme_complete_async_event(struct nvme_ctrl *ctrl, __le16 status,
+		volatile union nvme_result *res);
 
-व्योम nvme_stop_queues(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_start_queues(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_समाप्त_queues(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_sync_queues(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_sync_io_queues(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_unमुक्तze(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_रुको_मुक्तze(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_रुको_मुक्तze_समयout(काष्ठा nvme_ctrl *ctrl, दीर्घ समयout);
-व्योम nvme_start_मुक्तze(काष्ठा nvme_ctrl *ctrl);
+void nvme_stop_queues(struct nvme_ctrl *ctrl);
+void nvme_start_queues(struct nvme_ctrl *ctrl);
+void nvme_kill_queues(struct nvme_ctrl *ctrl);
+void nvme_sync_queues(struct nvme_ctrl *ctrl);
+void nvme_sync_io_queues(struct nvme_ctrl *ctrl);
+void nvme_unfreeze(struct nvme_ctrl *ctrl);
+void nvme_wait_freeze(struct nvme_ctrl *ctrl);
+int nvme_wait_freeze_timeout(struct nvme_ctrl *ctrl, long timeout);
+void nvme_start_freeze(struct nvme_ctrl *ctrl);
 
-#घोषणा NVME_QID_ANY -1
-काष्ठा request *nvme_alloc_request(काष्ठा request_queue *q,
-		काष्ठा nvme_command *cmd, blk_mq_req_flags_t flags);
-व्योम nvme_cleanup_cmd(काष्ठा request *req);
-blk_status_t nvme_setup_cmd(काष्ठा nvme_ns *ns, काष्ठा request *req);
-blk_status_t nvme_fail_nonपढ़ोy_command(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा request *req);
-bool __nvme_check_पढ़ोy(काष्ठा nvme_ctrl *ctrl, काष्ठा request *rq,
+#define NVME_QID_ANY -1
+struct request *nvme_alloc_request(struct request_queue *q,
+		struct nvme_command *cmd, blk_mq_req_flags_t flags);
+void nvme_cleanup_cmd(struct request *req);
+blk_status_t nvme_setup_cmd(struct nvme_ns *ns, struct request *req);
+blk_status_t nvme_fail_nonready_command(struct nvme_ctrl *ctrl,
+		struct request *req);
+bool __nvme_check_ready(struct nvme_ctrl *ctrl, struct request *rq,
 		bool queue_live);
 
-अटल अंतरभूत bool nvme_check_पढ़ोy(काष्ठा nvme_ctrl *ctrl, काष्ठा request *rq,
+static inline bool nvme_check_ready(struct nvme_ctrl *ctrl, struct request *rq,
 		bool queue_live)
-अणु
-	अगर (likely(ctrl->state == NVME_CTRL_LIVE))
-		वापस true;
-	अगर (ctrl->ops->flags & NVME_F_FABRICS &&
+{
+	if (likely(ctrl->state == NVME_CTRL_LIVE))
+		return true;
+	if (ctrl->ops->flags & NVME_F_FABRICS &&
 	    ctrl->state == NVME_CTRL_DELETING)
-		वापस true;
-	वापस __nvme_check_पढ़ोy(ctrl, rq, queue_live);
-पूर्ण
-पूर्णांक nvme_submit_sync_cmd(काष्ठा request_queue *q, काष्ठा nvme_command *cmd,
-		व्योम *buf, अचिन्हित bufflen);
-पूर्णांक __nvme_submit_sync_cmd(काष्ठा request_queue *q, काष्ठा nvme_command *cmd,
-		जोड़ nvme_result *result, व्योम *buffer, अचिन्हित bufflen,
-		अचिन्हित समयout, पूर्णांक qid, पूर्णांक at_head,
+		return true;
+	return __nvme_check_ready(ctrl, rq, queue_live);
+}
+int nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
+		void *buf, unsigned bufflen);
+int __nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
+		union nvme_result *result, void *buffer, unsigned bufflen,
+		unsigned timeout, int qid, int at_head,
 		blk_mq_req_flags_t flags, bool poll);
-पूर्णांक nvme_set_features(काष्ठा nvme_ctrl *dev, अचिन्हित पूर्णांक fid,
-		      अचिन्हित पूर्णांक dword11, व्योम *buffer, माप_प्रकार buflen,
+int nvme_set_features(struct nvme_ctrl *dev, unsigned int fid,
+		      unsigned int dword11, void *buffer, size_t buflen,
 		      u32 *result);
-पूर्णांक nvme_get_features(काष्ठा nvme_ctrl *dev, अचिन्हित पूर्णांक fid,
-		      अचिन्हित पूर्णांक dword11, व्योम *buffer, माप_प्रकार buflen,
+int nvme_get_features(struct nvme_ctrl *dev, unsigned int fid,
+		      unsigned int dword11, void *buffer, size_t buflen,
 		      u32 *result);
-पूर्णांक nvme_set_queue_count(काष्ठा nvme_ctrl *ctrl, पूर्णांक *count);
-व्योम nvme_stop_keep_alive(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_reset_ctrl(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_reset_ctrl_sync(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_try_sched_reset(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_delete_ctrl(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_queue_scan(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_get_log(काष्ठा nvme_ctrl *ctrl, u32 nsid, u8 log_page, u8 lsp, u8 csi,
-		व्योम *log, माप_प्रकार size, u64 offset);
-काष्ठा nvme_ns *nvme_get_ns_from_disk(काष्ठा gendisk *disk,
-		काष्ठा nvme_ns_head **head, पूर्णांक *srcu_idx);
-व्योम nvme_put_ns_from_disk(काष्ठा nvme_ns_head *head, पूर्णांक idx);
-bool nvme_tryget_ns_head(काष्ठा nvme_ns_head *head);
-व्योम nvme_put_ns_head(काष्ठा nvme_ns_head *head);
-पूर्णांक nvme_cdev_add(काष्ठा cdev *cdev, काष्ठा device *cdev_device,
-		स्थिर काष्ठा file_operations *fops, काष्ठा module *owner);
-व्योम nvme_cdev_del(काष्ठा cdev *cdev, काष्ठा device *cdev_device);
-पूर्णांक nvme_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-दीर्घ nvme_ns_chr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-पूर्णांक nvme_ns_head_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
-		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-दीर्घ nvme_ns_head_chr_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-		अचिन्हित दीर्घ arg);
-दीर्घ nvme_dev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-		अचिन्हित दीर्घ arg);
-पूर्णांक nvme_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo);
+int nvme_set_queue_count(struct nvme_ctrl *ctrl, int *count);
+void nvme_stop_keep_alive(struct nvme_ctrl *ctrl);
+int nvme_reset_ctrl(struct nvme_ctrl *ctrl);
+int nvme_reset_ctrl_sync(struct nvme_ctrl *ctrl);
+int nvme_try_sched_reset(struct nvme_ctrl *ctrl);
+int nvme_delete_ctrl(struct nvme_ctrl *ctrl);
+void nvme_queue_scan(struct nvme_ctrl *ctrl);
+int nvme_get_log(struct nvme_ctrl *ctrl, u32 nsid, u8 log_page, u8 lsp, u8 csi,
+		void *log, size_t size, u64 offset);
+struct nvme_ns *nvme_get_ns_from_disk(struct gendisk *disk,
+		struct nvme_ns_head **head, int *srcu_idx);
+void nvme_put_ns_from_disk(struct nvme_ns_head *head, int idx);
+bool nvme_tryget_ns_head(struct nvme_ns_head *head);
+void nvme_put_ns_head(struct nvme_ns_head *head);
+int nvme_cdev_add(struct cdev *cdev, struct device *cdev_device,
+		const struct file_operations *fops, struct module *owner);
+void nvme_cdev_del(struct cdev *cdev, struct device *cdev_device);
+int nvme_ioctl(struct block_device *bdev, fmode_t mode,
+		unsigned int cmd, unsigned long arg);
+long nvme_ns_chr_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+int nvme_ns_head_ioctl(struct block_device *bdev, fmode_t mode,
+		unsigned int cmd, unsigned long arg);
+long nvme_ns_head_chr_ioctl(struct file *file, unsigned int cmd,
+		unsigned long arg);
+long nvme_dev_ioctl(struct file *file, unsigned int cmd,
+		unsigned long arg);
+int nvme_getgeo(struct block_device *bdev, struct hd_geometry *geo);
 
-बाह्य स्थिर काष्ठा attribute_group *nvme_ns_id_attr_groups[];
-बाह्य स्थिर काष्ठा pr_ops nvme_pr_ops;
-बाह्य स्थिर काष्ठा block_device_operations nvme_ns_head_ops;
+extern const struct attribute_group *nvme_ns_id_attr_groups[];
+extern const struct pr_ops nvme_pr_ops;
+extern const struct block_device_operations nvme_ns_head_ops;
 
-#अगर_घोषित CONFIG_NVME_MULTIPATH
-अटल अंतरभूत bool nvme_ctrl_use_ana(काष्ठा nvme_ctrl *ctrl)
-अणु
-	वापस ctrl->ana_log_buf != शून्य;
-पूर्ण
+#ifdef CONFIG_NVME_MULTIPATH
+static inline bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl)
+{
+	return ctrl->ana_log_buf != NULL;
+}
 
-व्योम nvme_mpath_unमुक्तze(काष्ठा nvme_subप्रणाली *subsys);
-व्योम nvme_mpath_रुको_मुक्तze(काष्ठा nvme_subप्रणाली *subsys);
-व्योम nvme_mpath_start_मुक्तze(काष्ठा nvme_subप्रणाली *subsys);
-bool nvme_mpath_set_disk_name(काष्ठा nvme_ns *ns, अक्षर *disk_name, पूर्णांक *flags);
-व्योम nvme_failover_req(काष्ठा request *req);
-व्योम nvme_kick_requeue_lists(काष्ठा nvme_ctrl *ctrl);
-पूर्णांक nvme_mpath_alloc_disk(काष्ठा nvme_ctrl *ctrl,काष्ठा nvme_ns_head *head);
-व्योम nvme_mpath_add_disk(काष्ठा nvme_ns *ns, काष्ठा nvme_id_ns *id);
-व्योम nvme_mpath_हटाओ_disk(काष्ठा nvme_ns_head *head);
-पूर्णांक nvme_mpath_init_identअगरy(काष्ठा nvme_ctrl *ctrl, काष्ठा nvme_id_ctrl *id);
-व्योम nvme_mpath_init_ctrl(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_mpath_uninit(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_mpath_stop(काष्ठा nvme_ctrl *ctrl);
-bool nvme_mpath_clear_current_path(काष्ठा nvme_ns *ns);
-व्योम nvme_mpath_clear_ctrl_paths(काष्ठा nvme_ctrl *ctrl);
-काष्ठा nvme_ns *nvme_find_path(काष्ठा nvme_ns_head *head);
+void nvme_mpath_unfreeze(struct nvme_subsystem *subsys);
+void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys);
+void nvme_mpath_start_freeze(struct nvme_subsystem *subsys);
+bool nvme_mpath_set_disk_name(struct nvme_ns *ns, char *disk_name, int *flags);
+void nvme_failover_req(struct request *req);
+void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
+int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
+void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
+void nvme_mpath_remove_disk(struct nvme_ns_head *head);
+int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id);
+void nvme_mpath_init_ctrl(struct nvme_ctrl *ctrl);
+void nvme_mpath_uninit(struct nvme_ctrl *ctrl);
+void nvme_mpath_stop(struct nvme_ctrl *ctrl);
+bool nvme_mpath_clear_current_path(struct nvme_ns *ns);
+void nvme_mpath_clear_ctrl_paths(struct nvme_ctrl *ctrl);
+struct nvme_ns *nvme_find_path(struct nvme_ns_head *head);
 
-अटल अंतरभूत व्योम nvme_mpath_check_last_path(काष्ठा nvme_ns *ns)
-अणु
-	काष्ठा nvme_ns_head *head = ns->head;
+static inline void nvme_mpath_check_last_path(struct nvme_ns *ns)
+{
+	struct nvme_ns_head *head = ns->head;
 
-	अगर (head->disk && list_empty(&head->list))
+	if (head->disk && list_empty(&head->list))
 		kblockd_schedule_work(&head->requeue_work);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_trace_bio_complete(काष्ठा request *req)
-अणु
-	काष्ठा nvme_ns *ns = req->q->queuedata;
+static inline void nvme_trace_bio_complete(struct request *req)
+{
+	struct nvme_ns *ns = req->q->queuedata;
 
-	अगर (req->cmd_flags & REQ_NVME_MPATH)
+	if (req->cmd_flags & REQ_NVME_MPATH)
 		trace_block_bio_complete(ns->head->disk->queue, req->bio);
-पूर्ण
+}
 
-बाह्य काष्ठा device_attribute dev_attr_ana_grpid;
-बाह्य काष्ठा device_attribute dev_attr_ana_state;
-बाह्य काष्ठा device_attribute subsys_attr_iopolicy;
+extern struct device_attribute dev_attr_ana_grpid;
+extern struct device_attribute dev_attr_ana_state;
+extern struct device_attribute subsys_attr_iopolicy;
 
-#अन्यथा
-अटल अंतरभूत bool nvme_ctrl_use_ana(काष्ठा nvme_ctrl *ctrl)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत bool nvme_mpath_set_disk_name(काष्ठा nvme_ns *ns, अक्षर *disk_name,
-		पूर्णांक *flags)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम nvme_failover_req(काष्ठा request *req)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_kick_requeue_lists(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक nvme_mpath_alloc_disk(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा nvme_ns_head *head)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_add_disk(काष्ठा nvme_ns *ns,
-		काष्ठा nvme_id_ns *id)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_हटाओ_disk(काष्ठा nvme_ns_head *head)
-अणु
-पूर्ण
-अटल अंतरभूत bool nvme_mpath_clear_current_path(काष्ठा nvme_ns *ns)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_clear_ctrl_paths(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_check_last_path(काष्ठा nvme_ns *ns)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_trace_bio_complete(काष्ठा request *req)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_init_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-अटल अंतरभूत पूर्णांक nvme_mpath_init_identअगरy(काष्ठा nvme_ctrl *ctrl,
-		काष्ठा nvme_id_ctrl *id)
-अणु
-	अगर (ctrl->subsys->cmic & NVME_CTRL_CMIC_ANA)
+#else
+static inline bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl)
+{
+	return false;
+}
+static inline bool nvme_mpath_set_disk_name(struct nvme_ns *ns, char *disk_name,
+		int *flags)
+{
+	return false;
+}
+static inline void nvme_failover_req(struct request *req)
+{
+}
+static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+{
+}
+static inline int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,
+		struct nvme_ns_head *head)
+{
+	return 0;
+}
+static inline void nvme_mpath_add_disk(struct nvme_ns *ns,
+		struct nvme_id_ns *id)
+{
+}
+static inline void nvme_mpath_remove_disk(struct nvme_ns_head *head)
+{
+}
+static inline bool nvme_mpath_clear_current_path(struct nvme_ns *ns)
+{
+	return false;
+}
+static inline void nvme_mpath_clear_ctrl_paths(struct nvme_ctrl *ctrl)
+{
+}
+static inline void nvme_mpath_check_last_path(struct nvme_ns *ns)
+{
+}
+static inline void nvme_trace_bio_complete(struct request *req)
+{
+}
+static inline void nvme_mpath_init_ctrl(struct nvme_ctrl *ctrl)
+{
+}
+static inline int nvme_mpath_init_identify(struct nvme_ctrl *ctrl,
+		struct nvme_id_ctrl *id)
+{
+	if (ctrl->subsys->cmic & NVME_CTRL_CMIC_ANA)
 		dev_warn(ctrl->device,
 "Please enable CONFIG_NVME_MULTIPATH for full support of multi-port devices.\n");
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_uninit(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_stop(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_unमुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_रुको_मुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-पूर्ण
-अटल अंतरभूत व्योम nvme_mpath_start_मुक्तze(काष्ठा nvme_subप्रणाली *subsys)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NVME_MULTIPATH */
+	return 0;
+}
+static inline void nvme_mpath_uninit(struct nvme_ctrl *ctrl)
+{
+}
+static inline void nvme_mpath_stop(struct nvme_ctrl *ctrl)
+{
+}
+static inline void nvme_mpath_unfreeze(struct nvme_subsystem *subsys)
+{
+}
+static inline void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
+{
+}
+static inline void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
+{
+}
+#endif /* CONFIG_NVME_MULTIPATH */
 
-पूर्णांक nvme_revalidate_zones(काष्ठा nvme_ns *ns);
-#अगर_घोषित CONFIG_BLK_DEV_ZONED
-पूर्णांक nvme_update_zone_info(काष्ठा nvme_ns *ns, अचिन्हित lbaf);
-पूर्णांक nvme_report_zones(काष्ठा gendisk *disk, sector_t sector,
-		      अचिन्हित पूर्णांक nr_zones, report_zones_cb cb, व्योम *data);
+int nvme_revalidate_zones(struct nvme_ns *ns);
+#ifdef CONFIG_BLK_DEV_ZONED
+int nvme_update_zone_info(struct nvme_ns *ns, unsigned lbaf);
+int nvme_report_zones(struct gendisk *disk, sector_t sector,
+		      unsigned int nr_zones, report_zones_cb cb, void *data);
 
-blk_status_t nvme_setup_zone_mgmt_send(काष्ठा nvme_ns *ns, काष्ठा request *req,
-				       काष्ठा nvme_command *cmnd,
-				       क्रमागत nvme_zone_mgmt_action action);
-#अन्यथा
-#घोषणा nvme_report_zones शून्य
+blk_status_t nvme_setup_zone_mgmt_send(struct nvme_ns *ns, struct request *req,
+				       struct nvme_command *cmnd,
+				       enum nvme_zone_mgmt_action action);
+#else
+#define nvme_report_zones NULL
 
-अटल अंतरभूत blk_status_t nvme_setup_zone_mgmt_send(काष्ठा nvme_ns *ns,
-		काष्ठा request *req, काष्ठा nvme_command *cmnd,
-		क्रमागत nvme_zone_mgmt_action action)
-अणु
-	वापस BLK_STS_NOTSUPP;
-पूर्ण
+static inline blk_status_t nvme_setup_zone_mgmt_send(struct nvme_ns *ns,
+		struct request *req, struct nvme_command *cmnd,
+		enum nvme_zone_mgmt_action action)
+{
+	return BLK_STS_NOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक nvme_update_zone_info(काष्ठा nvme_ns *ns, अचिन्हित lbaf)
-अणु
+static inline int nvme_update_zone_info(struct nvme_ns *ns, unsigned lbaf)
+{
 	dev_warn(ns->ctrl->device,
 		 "Please enable CONFIG_BLK_DEV_ZONED to support ZNS devices\n");
-	वापस -EPROTONOSUPPORT;
-पूर्ण
-#पूर्ण_अगर
+	return -EPROTONOSUPPORT;
+}
+#endif
 
-#अगर_घोषित CONFIG_NVM
-पूर्णांक nvme_nvm_रेजिस्टर(काष्ठा nvme_ns *ns, अक्षर *disk_name, पूर्णांक node);
-व्योम nvme_nvm_unरेजिस्टर(काष्ठा nvme_ns *ns);
-बाह्य स्थिर काष्ठा attribute_group nvme_nvm_attr_group;
-पूर्णांक nvme_nvm_ioctl(काष्ठा nvme_ns *ns, अचिन्हित पूर्णांक cmd, व्योम __user *argp);
-#अन्यथा
-अटल अंतरभूत पूर्णांक nvme_nvm_रेजिस्टर(काष्ठा nvme_ns *ns, अक्षर *disk_name,
-				    पूर्णांक node)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_NVM
+int nvme_nvm_register(struct nvme_ns *ns, char *disk_name, int node);
+void nvme_nvm_unregister(struct nvme_ns *ns);
+extern const struct attribute_group nvme_nvm_attr_group;
+int nvme_nvm_ioctl(struct nvme_ns *ns, unsigned int cmd, void __user *argp);
+#else
+static inline int nvme_nvm_register(struct nvme_ns *ns, char *disk_name,
+				    int node)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nvme_nvm_unरेजिस्टर(काष्ठा nvme_ns *ns) अणुपूर्ण;
-अटल अंतरभूत पूर्णांक nvme_nvm_ioctl(काष्ठा nvme_ns *ns, अचिन्हित पूर्णांक cmd,
-		व्योम __user *argp)
-अणु
-	वापस -ENOTTY;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NVM */
+static inline void nvme_nvm_unregister(struct nvme_ns *ns) {};
+static inline int nvme_nvm_ioctl(struct nvme_ns *ns, unsigned int cmd,
+		void __user *argp)
+{
+	return -ENOTTY;
+}
+#endif /* CONFIG_NVM */
 
-अटल अंतरभूत काष्ठा nvme_ns *nvme_get_ns_from_dev(काष्ठा device *dev)
-अणु
-	वापस dev_to_disk(dev)->निजी_data;
-पूर्ण
+static inline struct nvme_ns *nvme_get_ns_from_dev(struct device *dev)
+{
+	return dev_to_disk(dev)->private_data;
+}
 
-#अगर_घोषित CONFIG_NVME_HWMON
-पूर्णांक nvme_hwmon_init(काष्ठा nvme_ctrl *ctrl);
-व्योम nvme_hwmon_निकास(काष्ठा nvme_ctrl *ctrl);
-#अन्यथा
-अटल अंतरभूत पूर्णांक nvme_hwmon_init(काष्ठा nvme_ctrl *ctrl)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_NVME_HWMON
+int nvme_hwmon_init(struct nvme_ctrl *ctrl);
+void nvme_hwmon_exit(struct nvme_ctrl *ctrl);
+#else
+static inline int nvme_hwmon_init(struct nvme_ctrl *ctrl)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nvme_hwmon_निकास(काष्ठा nvme_ctrl *ctrl)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void nvme_hwmon_exit(struct nvme_ctrl *ctrl)
+{
+}
+#endif
 
-u32 nvme_command_effects(काष्ठा nvme_ctrl *ctrl, काष्ठा nvme_ns *ns,
+u32 nvme_command_effects(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 			 u8 opcode);
-व्योम nvme_execute_passthru_rq(काष्ठा request *rq);
-काष्ठा nvme_ctrl *nvme_ctrl_from_file(काष्ठा file *file);
-काष्ठा nvme_ns *nvme_find_get_ns(काष्ठा nvme_ctrl *ctrl, अचिन्हित nsid);
-व्योम nvme_put_ns(काष्ठा nvme_ns *ns);
+void nvme_execute_passthru_rq(struct request *rq);
+struct nvme_ctrl *nvme_ctrl_from_file(struct file *file);
+struct nvme_ns *nvme_find_get_ns(struct nvme_ctrl *ctrl, unsigned nsid);
+void nvme_put_ns(struct nvme_ns *ns);
 
-#पूर्ण_अगर /* _NVME_H */
+#endif /* _NVME_H */

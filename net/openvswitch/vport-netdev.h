@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2007-2011 Nicira, Inc.
  */
 
-#अगर_अघोषित VPORT_NETDEV_H
-#घोषणा VPORT_NETDEV_H 1
+#ifndef VPORT_NETDEV_H
+#define VPORT_NETDEV_H 1
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rcupdate.h>
+#include <linux/netdevice.h>
+#include <linux/rcupdate.h>
 
-#समावेश "vport.h"
+#include "vport.h"
 
-काष्ठा vport *ovs_netdev_get_vport(काष्ठा net_device *dev);
+struct vport *ovs_netdev_get_vport(struct net_device *dev);
 
-काष्ठा vport *ovs_netdev_link(काष्ठा vport *vport, स्थिर अक्षर *name);
-व्योम ovs_netdev_detach_dev(काष्ठा vport *);
+struct vport *ovs_netdev_link(struct vport *vport, const char *name);
+void ovs_netdev_detach_dev(struct vport *);
 
-पूर्णांक __init ovs_netdev_init(व्योम);
-व्योम ovs_netdev_निकास(व्योम);
+int __init ovs_netdev_init(void);
+void ovs_netdev_exit(void);
 
-व्योम ovs_netdev_tunnel_destroy(काष्ठा vport *vport);
-#पूर्ण_अगर /* vport_netdev.h */
+void ovs_netdev_tunnel_destroy(struct vport *vport);
+#endif /* vport_netdev.h */
